@@ -1,12 +1,21 @@
 =head1 LICENSE
 
-  Copyright (c) 1999-2013 The European Bioinformatics Institute and
-  Genome Research Limited.  All rights reserved.
+Copyright [1999-2013] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
-  This software is distributed under a modified Apache license.
-  For license details, please see
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
 
-   http://www.ensembl.org/info/about/code_licence.html
+     http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+
+=cut
+
 
 =head1 CONTACT
 
@@ -29,7 +38,6 @@ alignment as input into the QuickTree program which then generates a
 simple phylogenetic tree to be broken down into 2 pieces.
 
 Google QuickTree to get the latest tar.gz from the Sanger.
-Google sreformat to get the sequence reformatter that switches from fasta to stockholm.
 
 input_id/parameters format eg: "{'gene_tree_id'=>1234,'clusterset_id'=>1}"
     gene_tree_id : use 'id' to fetch a cluster from the ProteinTree
@@ -54,14 +62,6 @@ $quicktreebreak->write_output(); #writes to DB
 
 Ensembl Team. Individual contributions can be found in the CVS log.
 
-=head1 MAINTAINER
-
-$Author$
-
-=head VERSION
-
-$Revision$
-
 =head1 APPENDIX
 
 The rest of the documentation details each of the object methods.
@@ -76,13 +76,12 @@ use IO::File;
 use File::Basename;
 
 use Bio::AlignIO;
-use Bio::SimpleAlign;
 
 use Bio::EnsEMBL::Compara::Graph::NewickParser;
 use Bio::EnsEMBL::Compara::GeneTree;
 use Bio::EnsEMBL::Compara::GeneTreeNode;
 
-use base ('Bio::EnsEMBL::Compara::RunnableDB::RunCommand');
+use base ('Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::StoreTree', 'Bio::EnsEMBL::Compara::RunnableDB::RunCommand');
 
 
 =head2 fetch_input
@@ -99,19 +98,15 @@ use base ('Bio::EnsEMBL::Compara::RunnableDB::RunCommand');
 sub fetch_input {
     my $self = shift @_;
 
-    my $gene_tree_id = $self->param('gene_tree_id') || die "'gene_tree_id' must be defined";
+    my $gene_tree_id = $self->param_required('gene_tree_id');
     my $gene_tree    = $self->compara_dba->get_GeneTreeAdaptor->fetch_by_dbID($gene_tree_id) or die "Could not fetch gene_tree with gene_tree_id='$gene_tree_id'";
     $self->param('gene_tree', $gene_tree);
 
     # We reload the cigar lines in case the subtrees are partially written
     $self->param('cigar_lines', $self->compara_dba->get_AlignedMemberAdaptor->fetch_all_by_gene_align_id($gene_tree->gene_align_id));
 
-    $self->param('mlss_id') or die "'mlss_id' is an obligatory parameter";
-
-    foreach my $exe_name (qw(sreformat_exe quicktree_exe)) {
-        my $exe = $self->param($exe_name) or die "'$exe_name' is an obligatory parameter";
-        die "Cannot execute '$exe'" unless (-x $exe);
-    }
+    my $exe = $self->param_required('quicktree_exe');
+    die "Cannot execute '$exe'" unless (-x $exe);
 
     ## 'tags_to_copy' can also be set
 }
@@ -238,7 +233,7 @@ sub post_cleanup {
 sub do_quicktree_loop {
     my $self = shift;
     my $supertree_root = shift;
-    my $input_aln = $self->dumpTreeMultipleAlignmentToWorkdir($supertree_root->children->[0]);
+    my $input_aln = $self->dumpAlignedMemberSetAsStockholm($supertree_root->children->[0]);
     my $quicktree_newick_string = $self->run_quicktreebreak($input_aln);
     my $newtree = Bio::EnsEMBL::Compara::Graph::NewickParser::parse_newick_into_tree($quicktree_newick_string);
     my @todo = ();
@@ -257,39 +252,6 @@ sub do_quicktree_loop {
     $self->rec_update_indexing($supertree_root);
 }
 
-
-
-sub dumpTreeMultipleAlignmentToWorkdir {
-    my $self = shift;
-    my $member_set = shift;
-
-    my $aln_file = $self->worker_temp_directory.'supertree.aln';
-
-    # Getting the multiple alignment
-    my $sa = $member_set->get_SimpleAlign(-id_type => 'MEMBER', -stop2x => 1);
-
-    $sa->set_displayname_flat(1);
-    # Now outputing the alignment
-    open(OUTSEQ, ">$aln_file") or die "Could not open '$aln_file' for writing : $!";
-    my $alignIO = Bio::AlignIO->newFh( -fh => \*OUTSEQ, -format => "fasta");
-    print $alignIO $sa;
-    close OUTSEQ;
-
-    print STDERR "Using sreformat to change to stockholm format\n" if ($self->debug);
-    my $stk_file = $self->worker_temp_directory.'supertree.stk';
-
-    my $sreformat_exe = $self->param('sreformat_exe');
-    my $cmd = "$sreformat_exe stockholm $aln_file > $stk_file";
-
-    if(system($cmd)) {
-        die "Error running command [$cmd] : $!";
-    }
-    unless(-e $stk_file and -s $stk_file) {
-        die "'$cmd' did not produce any data in '$stk_file'";
-    }
-
-    return $stk_file;
-}
 
 sub run_quicktreebreak {
     my $self = shift;

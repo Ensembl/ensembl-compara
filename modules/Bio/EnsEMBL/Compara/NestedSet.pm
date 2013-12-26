@@ -1,3 +1,21 @@
+=head1 LICENSE
+
+Copyright [1999-2013] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+     http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+
+=cut
+
 =head1 NAME
 
 NestedSet - DESCRIPTION of Object
@@ -30,10 +48,11 @@ package Bio::EnsEMBL::Compara::NestedSet;
 
 use strict;
 use warnings;
+
 use Bio::EnsEMBL::Utils::Exception;
 use Bio::EnsEMBL::Utils::Argument;
 
-use Bio::EnsEMBL::Utils::Exception qw(deprecate throw);
+use Bio::EnsEMBL::Utils::Exception qw(deprecate throw warning);
 use Bio::EnsEMBL::Utils::Scalar qw(:assert);
 
 use Bio::TreeIO;
@@ -43,6 +62,43 @@ our @ISA = qw(Bio::EnsEMBL::Compara::Graph::Node);
 #################################################
 # Factory methods
 #################################################
+
+=head2 cast
+
+  Arg1          : class (string)
+  Description   : Creates a copy of tree casting the nodes to a given class
+  Example       : my $sp_tree = $tree->cast('Bio::EnsEMBL::Compara::SpeciesTreeNode');
+  ReturnType    : An object of the specified class
+  Exceptions    : none
+  Caller        : general
+
+=cut
+
+## If this subroutine works we should merge it with copy
+sub cast {
+    my ($self, $class, $adaptor) = @_;
+
+    eval "require $class";
+
+    my $copy = $self->SUPER::copy;
+    bless $copy, $class;
+    $copy->adaptor($adaptor) if (defined $adaptor);
+
+    $copy->node_id($self->node_id) if ($copy->can('node_id'));
+    $copy->distance_to_parent($self->distance_to_parent);
+    $copy->left_index($self->left_index);
+    $copy->right_index($self->right_index);
+
+    $copy->{_children_loaded} = $self->{_children_loaded};
+
+    $copy->_complete_cast_node($self) if ($copy->can('_complete_cast_node'));
+
+    for my $child (@{$self->children}) {
+        $copy->add_child($child->cast($class, $adaptor));
+    }
+
+    return $copy;
+}
 
 =head2 copy
 
@@ -56,7 +112,7 @@ our @ISA = qw(Bio::EnsEMBL::Compara::Graph::Node);
 
 sub copy {
   my $self = shift;
-  
+
   my $mycopy = $self->SUPER::copy; 
   bless $mycopy, ref $self;
 
@@ -64,7 +120,7 @@ sub copy {
   $mycopy->left_index($self->left_index);
   $mycopy->right_index($self->right_index);
 
-  foreach my $child (@{$self->children}) {  
+  foreach my $child (@{$self->children}) {
     $mycopy->add_child($child->copy);
   }
   return $mycopy;
@@ -143,7 +199,7 @@ sub add_child {
   #create_link_to_node is a safe method which checks if connection exists
   my $link = $self->create_link_to_node($child);
   $child->_set_parent_link($link);
-  $self->{'_children_loaded'} = 1; 
+  $self->{'_children_loaded'} = 1;
   $link->distance_between($dist);
   return $link;
 }
@@ -299,6 +355,7 @@ sub children {
   foreach my $link (@{$self->links}) {
     next unless(defined($link));
     my $neighbor = $link->get_neighbor($self);
+    throw("Not neighbor found\n") unless (defined $neighbor);
     my $parent_link = $neighbor->parent_link;
     next unless($parent_link);
     next unless($parent_link eq $link);
@@ -840,8 +897,7 @@ sub string_node {
     my $isdub = ($self->get_tagvalue('node_type', '') eq 'dubious');
 
     if ($isdup) {
-        my $taxon_name = $self->get_tagvalue('taxon_name', '');
-        if ($taxon_name =~ /\S+\ \S+/) {
+        if ($self->species_tree_node->genome_db_id) {
             $str .= "Dup ";
         } else {
             $str .= "DUP ";
@@ -852,8 +908,8 @@ sub string_node {
         $str .= "DD  ";
        $str .= 'SIS=0 ';
     }
-    if($self->has_tag("bootstrap")) { my $bootstrap_value = $self->get_tagvalue("bootstrap"); $str .= "B=$bootstrap_value "; }
-    if($self->has_tag("taxon_name")) { my $taxon_name_value = $self->get_tagvalue("taxon_name"); $str .="T=$taxon_name_value "; }
+    if($self->has_tag("bootstrap")) { my $bootstrap_value = $self->bootstrap(); $str .= "B=$bootstrap_value "; }
+    if($self->taxonomy_level) { my $taxon_name_value = $self->taxonomy_level(); $str .="T=$taxon_name_value "; }
     $str .= sprintf("%s %d,%d)", $self->node_id, $self->left_index, $self->right_index);
     $str .= sprintf("%s\n", $self->name || '');
     return $str;
@@ -894,12 +950,12 @@ my %ryo_modes = (
     'njtree' => '%{o}%{-T(is_incomplete)|E"*"}%{-T(is_incomplete,0,*)}',
 );
 
-my $nhx0 = '%{n-_|T(taxon_name)}:%{d}';
-my $nhx1 = ':D=%{-E"N"}%{T(node_type,duplication,Y)-}%{T(node_type,dubious,Y)-}%{T(node_type,gene_split,Y)-}%{T(node_type,speciation,N)}%{":B="T(bootstrap)}';
-my $nhx2 = ':T=%{-x}%{T(taxon_id)-}';
+my $nhx0 = '%{n-_|C(taxonomy_level)}:%{d}';
+my $nhx1 = ':%{-E"D=N"}%{C(_newick_dup_code)-}%{":B="C(bootstrap)}';
+my $nhx2 = ':T=%{-x}%{C(species_tree_node,taxon_id)-}';
 
 my %nhx_ryo_modes_1 = (
-    'member_id_taxon_id' => '%{-m}%{o-}_%{-x}%{T(taxon_id)-}:%{d}',
+    'member_id_taxon_id' => '%{-m}%{o-}_%{-x}%{C(species_tree_node,taxon_id)-}:%{d}',
     'protein_id' => '%{-n}'.$nhx0,
     'transcript_id' => '%{-r}'.$nhx0,
     'gene_id' => '%{-i}'.$nhx0,
@@ -921,7 +977,7 @@ my %nhx_ryo_modes_2 = (
     'full_web' => $nhx1.$nhx2,
     'display_label' => $nhx1.$nhx2,
     'display_label_composite' => $nhx1.$nhx2,
-    'treebest_ortho' => $nhx1.$nhx2.':S=%{-x}%{T(taxon_id)-}',
+    'treebest_ortho' => $nhx1.$nhx2.':S=%{-x}%{C(species_tree_node,taxon_id)-}',
 );
 
 
@@ -1363,34 +1419,47 @@ sub scale_max_to {
 #
 ##################################
 
+sub find_node_by_field {
+    my ($self, $field, $value) = @_;
+
+    unless ($self->can($field)) {
+        warning("No method $field available for class $self\n");
+        return undef;
+    }
+
+    return $self if((defined $self->$field) and ($self->$field eq $value));
+
+    my $children = $self->children;
+    for my $child (@$children) {
+        my $found = $child->find_node_by_field($field, $value);
+        return $found if(defined $found);
+    }
+    return undef;
+}
+
 sub find_node_by_name {
   my $self = shift;
   my $name = shift;
-  
-  return $self if((defined $self->name) && $name eq $self->name);
-  
-  my $children = $self->children;
-  foreach my $child_node (@$children) {
-    my $found = $child_node->find_node_by_name($name);
-    return $found if(defined($found));
-  }
-  
-  return undef;
+
+  return $self->find_node_by_field('name', $name);
 }
 
 sub find_node_by_node_id {
   my $self = shift;
   my $node_id = shift;
-  
-  return $self if($node_id eq $self->node_id);
-  
-  my $children = $self->children;
-  foreach my $child_node (@$children) {
-    my $found = $child_node->find_node_by_node_id($node_id);
-    return $found if(defined($found));
-  }
-  
-  return undef;
+
+  return $self->find_node_by_field('node_id', $node_id);
+}
+
+sub find_leaf_by_field {
+    my ($self, $field, $value) = @_;
+
+    my $leaves = $self->get_all_leaves;
+    for my $leaf (@$leaves) {
+        return $leaf if(($leaf->can($field)) && (defined $leaf->$field) && ($leaf->$field eq $value));
+    }
+
+    return undef;
 }
 
 sub find_leaf_by_name {
@@ -1398,13 +1467,7 @@ sub find_leaf_by_name {
   my $name = shift;
 
   return $self if((defined $self->name) and ($name eq $self->name));
-
-  my $leaves = $self->get_all_leaves;
-  foreach my $leaf (@$leaves) {
-    return $leaf if((defined $leaf->name) and ($name eq $leaf->name));
-  }
-
-  return undef;
+  return $self->find_leaf_by_field('name', $name);
 }
 
 sub find_leaf_by_node_id {
@@ -1412,13 +1475,7 @@ sub find_leaf_by_node_id {
   my $node_id = shift;
 
   return $self if($node_id eq $self->node_id);
-
-  my $leaves = $self->get_all_leaves;
-  foreach my $leaf (@$leaves) {
-    return $leaf if($node_id eq $leaf->node_id);
-  }
-
-  return undef;
+  return $self->find_leaf_by_field('node_id', $node_id);
 }
 
 

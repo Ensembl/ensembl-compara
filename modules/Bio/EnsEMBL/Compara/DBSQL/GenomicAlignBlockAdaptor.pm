@@ -1,12 +1,21 @@
 =head1 LICENSE
 
-  Copyright (c) 1999-2013 The European Bioinformatics Institute and
-  Genome Research Limited.  All rights reserved.
+Copyright [1999-2013] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
-  This software is distributed under a modified Apache license.
-  For license details, please see
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
 
-    http://www.ensembl.org/info/about/code_licence.html
+     http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+
+=cut
+
 
 =head1 CONTACT
 
@@ -104,8 +113,10 @@ The rest of the documentation details each of the object methods. Internal metho
 
 
 package Bio::EnsEMBL::Compara::DBSQL::GenomicAlignBlockAdaptor;
+
 use vars qw(@ISA);
 use strict;
+use warnings;
 
 use Bio::EnsEMBL::DBSQL::BaseAdaptor;
 use Bio::EnsEMBL::Compara::GenomicAlignBlock;
@@ -471,16 +482,8 @@ sub fetch_all_by_MethodLinkSpeciesSet_Slice {
     return $all_genomic_align_blocks;
   }
 
-  my $gdb_a = $self->db->get_GenomeDBAdaptor();
-	my $meta_container = $reference_slice->adaptor->db->get_MetaContainer();
-	my $primary_species_name = $meta_container->get_production_name();
-  my ($highest_cs) = @{$slice_adaptor->db->get_CoordSystemAdaptor->fetch_all()};
-  my $primary_species_assembly = $highest_cs->version();
   my $genome_db_adaptor = $self->db->get_GenomeDBAdaptor;
-  my $genome_db = $genome_db_adaptor->fetch_by_name_assembly(
-          $primary_species_name,
-          $primary_species_assembly
-      );
+  my $genome_db = $genome_db_adaptor->fetch_by_Slice($reference_slice);
 
 #  my $projection_segments = $reference_slice->project('toplevel');
   my $filter_projections = 1;

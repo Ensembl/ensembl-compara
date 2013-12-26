@@ -1,3 +1,21 @@
+=head1 LICENSE
+
+Copyright [1999-2013] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+     http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+
+=cut
+
 
 =pod 
 
@@ -53,26 +71,18 @@ sub default_options {
 
     # connection parameters to various databases:
 
-        'pipeline_db' => {                      # the production database itself (will be created)
-            -host   => 'farmdb1',
-            -port   => 3306,
-            -user   => 'wormadmin',
-            -pass   => $self->o('password'),                    
-            -dbname => 'worm_compara_homology_'.$self->o('rel_with_suffix'),
-        },
+        # The production database
+        'host'          => 'farmdb1',
+        'user'          => 'wormadmin',
+        'dbowner'       => 'worm',
+        'pipeline_name' => 'compara_homology_'.$self->o('rel_with_suffix'),
 
-        'master_db' => {                        # the master database for synchronization of various ids
-            -host   => 'farmdb1',
-            -port   => 3306,
-            -user   => 'ensro',
-            -pass   => '',
-            -dbname => 'worm_compara_master',
-        },
+        # the master database for synchronization of various ids
+        'master_db'     => 'mysql://ensro@farmdb1:3306/worm_compara_master',
 
     # switch off the reuse:
         'reuse_core_sources_locs'   => [ ],
-        'prev_release'              => 0,   # 0 is the default and it means "take current release number and subtract 1"
-        'reuse_db'                  => 0,
+        'reuse_db'                  => undef,
     };
 }
 

@@ -1,4 +1,18 @@
 #!/usr/bin/env perl
+# Copyright [1999-2013] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+# 
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+# 
+#      http://www.apache.org/licenses/LICENSE-2.0
+# 
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
 
 use warnings;
 use strict;
@@ -10,9 +24,6 @@ my $description = q{
 ##
 ## AUTHORS
 ##    Javier Herrero (jherrero@ebi.ac.uk)
-##
-## COPYRIGHT
-##    This script is part of the Ensembl project http://www.ensembl.org
 ##
 ## DESCRIPTION
 ##    This script creates a new MethodLinkSpeciesSet based on the
@@ -31,9 +42,6 @@ create_mlss.pl
 
  Javier Herrero (jherrero@ebi.ac.uk)
 
-=head1 COPYRIGHT
-
-This script is part of the Ensembl project http://www.ensembl.org
 
 =head1 DESCRIPTION
 
@@ -376,7 +384,7 @@ foreach my $genome_db_ids (@new_input_genome_db_ids) {
     }
   }
   
-  my $method = Bio::EnsEMBL::Compara::Method->new( -type => $method_link_type );
+  my $method = $ma->fetch_by_type($method_link_type) or Bio::EnsEMBL::Compara::Method->new( -type => $method_link_type );
   my $species_set = Bio::EnsEMBL::Compara::SpeciesSet->new( -genome_dbs => $all_genome_dbs );
 
   my $new_mlss = Bio::EnsEMBL::Compara::MethodLinkSpeciesSet->new(
@@ -391,7 +399,7 @@ foreach my $genome_db_ids (@new_input_genome_db_ids) {
   $name = undef if ($pairwise || $singleton);
 
   if ($species_set_name) {
-      $new_mlss-store_tag('name', $species_set_name);
+      $species_set->store_tag('name', $species_set_name);
   }
 
 }

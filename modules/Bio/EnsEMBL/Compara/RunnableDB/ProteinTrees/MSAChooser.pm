@@ -1,12 +1,21 @@
 =head1 LICENSE
 
-  Copyright (c) 1999-2013 The European Bioinformatics Institute and
-  Genome Research Limited.  All rights reserved.
+Copyright [1999-2013] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
-  This software is distributed under a modified Apache license.
-  For license details, please see
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
 
-   http://www.ensembl.org/info/about/code_licence.html
+     http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+
+=cut
+
 
 =head1 CONTACT
 
@@ -45,14 +54,6 @@ $mcoffee->write_output(); #writes to DB
 
 Ensembl Team. Individual contributions can be found in the CVS log.
 
-=head1 MAINTAINER
-
-$Author$
-
-=head VERSION
-
-$Revision$
-
 =head1 APPENDIX
 
 The rest of the documentation details each of the object methods.
@@ -69,7 +70,6 @@ use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
 sub param_defaults {
     return {
-        'treebreak_gene_count'  => 400,                     # if the resulting cluster is bigger, it is dataflown to QuickTreeBreak
         'mafft_gene_count'      => 200,                     # if the cluster is biggger, automatically switch to Mafft
         'mafft_runtime'         => 7200,                    # if the previous run was longer, automatically switch to mafft
     };
@@ -90,26 +90,16 @@ sub fetch_input {
     my( $self) = @_;
 
     # Getting parameters and objects from the database
-    my $protein_tree_id = $self->param('gene_tree_id') or die "'gene_tree_id' is an obligatory parameter";
+    my $protein_tree_id = $self->param_required('gene_tree_id');
 
     my $tree = $self->compara_dba->get_GeneTreeAdaptor->fetch_by_root_id($protein_tree_id);
     die "Unfetchable tree root_id=$protein_tree_id\n" unless $tree;
 
-    my $gene_count = scalar(@{$tree->get_all_Members});
+    my $gene_count = $tree->get_value_for_tag('gene_count');
     die "Unfetchable leaves root_id=$protein_tree_id\n" unless $gene_count;
-    $tree->root->release_tree;
-    $tree->clear;
     
-    if ($gene_count > $self->param('treebreak_gene_count')) {
-        # Create an alignment job and the waiting quicktree break job
-        $self->dataflow_output_id($self->input_id, 4);
-        $self->dataflow_output_id($self->input_id, 5);
-        $self->input_job->incomplete(0);
-        die "Cluster root_id=$protein_tree_id over threshold (gene_count=$gene_count > ".($self->param('treebreak_gene_count'))."), dataflowing to QuickTreeBreak\n";
-    }
-
     # The tree follows the "normal" path: create an alignment job
-    my $reuse_aln_runtime = $tree->get_tagvalue('reuse_aln_runtime', 0) / 1000;
+    my $reuse_aln_runtime = $tree->get_value_for_tag('reuse_aln_runtime', 0) / 1000;
 
     if ($gene_count > $self->param('mafft_gene_count')) {
         # Cluster too large

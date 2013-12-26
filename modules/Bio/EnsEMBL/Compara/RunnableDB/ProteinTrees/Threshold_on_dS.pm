@@ -1,3 +1,21 @@
+=head1 LICENSE
+
+Copyright [1999-2013] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+     http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+
+=cut
+
 =pod 
 
 =head1 NAME
@@ -11,7 +29,7 @@ Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::Threshold_on_dS
 This is a homology compara specific runnableDB, that based on a
 method_link_species_set_id, calculates the median dS where dS
 values are available, and stores 2*median in the threshold_on_ds
-column in the homology table.
+tag of the current method_link_species_set
 
 =cut
 
@@ -86,12 +104,9 @@ sub run {
 sub write_output {
     my $self = shift @_;
 
-    # Updates the table
-    my $sql = 'UPDATE homology SET threshold_on_ds = ? WHERE method_link_species_set_id = ?';
-    my $sth = $self->compara_dba->dbc->prepare($sql);
-    $sth->execute($self->param('threshold'), $self->param('mlss_id'));
-    $sth->finish;
-    print STDERR " stored\n";
+    # Updates the tag
+    my $mlss = $self->compara_dba->get_MethodLinkSpeciesSetAdaptor->fetch_by_dbID($self->param('mlss_id'));
+    $mlss->store_tag('threshold_on_ds', $self->param('threshold'));
 }
 
 

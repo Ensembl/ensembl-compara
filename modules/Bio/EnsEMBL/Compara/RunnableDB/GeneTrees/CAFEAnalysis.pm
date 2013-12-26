@@ -1,12 +1,21 @@
 =head1 LICENSE
 
-  Copyright (c) 1999-2013 The European Bioinformatics Institute and
-  Genome Research Limited.  All rights reserved.
+Copyright [1999-2013] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
-  This software is distributed under a modified Apache license.
-  For license details, please see
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
 
-    http://www.ensembl.org/info/about/code_licence.html
+     http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+
+=cut
+
 
 =head1 CONTACT
 
@@ -67,20 +76,15 @@ sub param_defaults {
 sub fetch_input {
     my ($self) = @_;
 
-    unless ( $self->param('fam_id') ) {
-        die ('fam_id is not set');
-    }
+    $self->param_required('fam_id');
+    $self->param_required('mlss_id');
+    $self->param_required('lambda');
 
-    unless ( $self->param('mlss_id') ) {
-        die ('mlss_id must be set')
-    }
+    my $cafeTree_Adaptor = $self->compara_dba->get_CAFEGeneFamilyAdaptor;
+    $self->param('cafeTree_Adaptor', $cafeTree_Adaptor);
 
-    unless ( $self->param('lambda') ) {
-        die ('lambda is an obligatory parameter');
-    }
-
-    my $cafetree_Adaptor = $self->compara_dba->get_CAFEGeneFamilyAdaptor;
-    $self->param('cafeTree_Adaptor', $cafetree_Adaptor);
+    my $speciesTree_Adaptor = $self->compara_dba->get_SpeciesTreeAdaptor;
+    $self->param('speciesTree_Adaptor', $speciesTree_Adaptor);
 
     my $genomeDB_Adaptor = $self->compara_dba->get_GenomeDBAdaptor;
     $self->param('genomeDB_Adaptor', $genomeDB_Adaptor);
@@ -198,6 +202,7 @@ sub parse_cafe_output {
     my $fmt = '%{-n}%{":"o}';
 
     my $cafeTree_Adaptor = $self->param('cafeTree_Adaptor');  # A CAFEGeneFamilyAdaptor
+    my $speciesTree_Adaptor = $self->param('speciesTree_Adaptor');
     my $mlss_id = $self->param('mlss_id');
 #    my $pvalue_lim = $self->param('pvalue_lim');
     my $cafe_out_file = $self->param('cafe_out_file') . ".cafe";
@@ -210,7 +215,8 @@ sub parse_cafe_output {
     my $tree_line = <$fh>;
     my $tree_str = substr($tree_line, 5, length($tree_line) - 6);
     $tree_str .= ";";
-    my $tree = Bio::EnsEMBL::Compara::Graph::NewickParser::parse_newick_into_tree($tree_str, "Bio::EnsEMBL::Compara::CAFEGeneFamily");
+#    my $tree = Bio::EnsEMBL::Compara::Graph::NewickParser::parse_newick_into_tree($tree_str, "Bio::EnsEMBL::Compara::CAFEGeneFamily");
+    my $tree = Bio::EnsEMBL::Compara::Graph::NewickParser::parse_newick_into_tree($tree_str);
     print STDERR "CAFE TREE: $tree_str\n" if ($self->debug);
 
     my $lambda_line = <$fh>;
@@ -225,7 +231,7 @@ sub parse_cafe_output {
 
     my $idsTree = Bio::EnsEMBL::Compara::Graph::NewickParser::parse_newick_into_tree($ids_tree_str);
 
-    print STDERR $idsTree->newick_format('ryo', '%{-n}%{":"d}'), "\n" if ($self->debug);
+    print STDERR "IDS TREE: " , $idsTree->newick_format('ryo', '%{-n}%{":"d}'), "\n" if ($self->debug);
 
     my %cafeIDs2nodeIDs = ();
     for my $node (@{$idsTree->get_all_nodes()}) {
@@ -258,25 +264,12 @@ sub parse_cafe_output {
         my %info_by_nodes;
         for my $node (@{$fam_tree->get_all_nodes()}) {
             my $name = $node->name();
-#            my $node_id = $node->node_id();
             my ($n_members) = $name =~ /_(\d+)/;
             $n_members = 0 if (! defined $n_members); ## It may be absent from the orig data (but in the tree)
             $name =~ s/_\d+//;
             $name =~ s/\./_/g;
             $info_by_nodes{$name}{'n_members'} = $n_members;
-#            $info_by_nodes{$node_id}{'n_members'} = $n_members;
 
-            my $taxon_id;
-            if (! $node->is_leaf()) {
-                $taxon_id = $name;
-            } else {
-                my $genomeDB = $genomeDB_Adaptor->fetch_by_name_assembly($name);
-                $taxon_id = $genomeDB->taxon_id();
-            }
-
-            $info_by_nodes{$name}{'taxon_id'} = $taxon_id;
-#            $info_by_nodes{$node_id}{'taxon_id'} = $taxon_id;
-#            $info_by_nodes{$node_id}{'name'} = $name;
         }
 
         $pvalue_pairs =~ tr/(/[/;
@@ -296,50 +289,46 @@ sub parse_cafe_output {
 
             $info_by_nodes{$name1}{'pvalue'} = $val_fst if (! defined $info_by_nodes{$name1}{'pvalue'} || $info_by_nodes{$name1}{'pvalue'} > $val_fst);
             $info_by_nodes{$name2}{'pvalue'} = $val_snd if (! defined $info_by_nodes{$name2}{'pvalue'} || $info_by_nodes{$name2}{'pvalue'} > $val_snd);
-#            $info_by_nodes{$id_fst}{'pvalue'} = $val_fst;
-#            $info_by_nodes{$id_snd}{'pvalue'} = $val_snd;
-
         }
 
         $tree->print_tree(0.2) if ($self->debug());
 
-        my $sth2 = $self->compara_dba->dbc->prepare("SELECT root_id FROM species_tree_root WHERE method_link_species_set_id = ?");
-        $sth2->execute($self->param('mlss_id'));
-        my ($root_id) = $sth2->fetchrow_array();
-        $sth2->finish;
-        print STDERR "ROOT_ID is $root_id\n" if ($self->debug());
+        my $speciesTree = $self->param('speciesTree_Adaptor')->fetch_by_method_link_species_set_id_label($mlss_id, 'cafe');
 
-        my $lca_name = $tree->root->name;
-        print STDERR "LCA name is $lca_name\n" if ($self->debug);
-        my $sth = $self->compara_dba->dbc->prepare("SELECT node_id FROM species_tree_node_tag WHERE tag = 'taxon_id' AND value = ?");
-        $sth->execute($lca_name);
-        my ($lca_id) = $sth->fetchrow_array();
-        my $cafe_gene_family_id = $cafeTree_Adaptor->store_gene_family($root_id, $lca_id, $gene_tree_root_id, $pvalue_avg, $lambda);
+        my $cafeGeneFamily = Bio::EnsEMBL::Compara::CAFEGeneFamily->new_from_SpeciesTree($speciesTree);
 
+        my $root_id = $cafeGeneFamily->root->node_id();
+
+        my $lca_taxon_id = $tree->root->name;
+        print STDERR "LCA TAXON ID IS $lca_taxon_id\n" if ($self->debug);
+
+        my $lca_node = $speciesTree->root->find_nodes_by_field_value('node_name', $lca_taxon_id)->[0]; # Allows _dup
+        my $lca_node_id = $lca_node->node_id();
+        $cafeGeneFamily->lca_id($lca_node_id);
+        $cafeGeneFamily->gene_tree_root_id($gene_tree_root_id);
+        $cafeGeneFamily->pvalue_avg($pvalue_avg);
+        $cafeGeneFamily->lambdas($lambda);
 
         # We store the attributes
         for my $node (@{$fam_tree->get_all_nodes()}) {
-#            my $id = $node->node_id();
             my $n = $node->name();
             $n =~ s/\./_/g;
             $n =~ s/_\d+$//;
             print STDERR "Storing node name $n\n" if ($self->debug);
 
-            my $taxon_id = $info_by_nodes{$n}{taxon_id};
             my $n_members = $info_by_nodes{$n}{n_members};
             my $pvalue = $info_by_nodes{$n}{pvalue};
 
-            print STDERR "Retrieving node_id for taxon $taxon_id\n" if ($self->debug);
-            print STDERR "Storing TAXON_ID: $taxon_id, N_MEMBERS: $n_members, PVALUE: $pvalue\n\n" if ($self->debug);
-            my $sth = $self->compara_dba->dbc->prepare("SELECT node_id FROM species_tree_node_tag WHERE tag = 'taxon_id' AND value = ?");
-            $sth->execute($taxon_id);
-            while (my ($species_tree_node_id) = $sth->fetchrow_array()) {
-#            my ($species_tree_node_id) = $sth->fetchrow_array();
-                $cafeTree_Adaptor->store_species_gene($cafe_gene_family_id, $species_tree_node_id, $taxon_id, $n_members, $pvalue);
+            print STDERR "Storing N_MEMBERS: $n_members, PVALUE: $pvalue\n" if ($self->debug);
+            my $cafe_nodes = $cafeGeneFamily->root->find_nodes_by_taxon_id_or_species_name($n, $node->is_leaf);
+
+            for my $cafe_node (@$cafe_nodes) {
+                $cafe_node->n_members($n_members);
+                $cafe_node->pvalue($pvalue);
             }
-            $sth->finish();
+
         }
-        $sth->finish();
+        $cafeTree_Adaptor->store($cafeGeneFamily);
     }
     return
 }

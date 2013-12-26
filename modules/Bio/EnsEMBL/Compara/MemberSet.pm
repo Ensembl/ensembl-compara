@@ -1,12 +1,21 @@
 =head1 LICENSE
 
-  Copyright (c) 1999-2013 The European Bioinformatics Institute and
-  Genome Research Limited.  All rights reserved.
+Copyright [1999-2013] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
-  This software is distributed under a modified Apache license.
-  For license details, please see
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
 
-    http://www.ensembl.org/info/about/code_licence.html
+     http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+
+=cut
+
 
 =head1 CONTACT
 
@@ -47,7 +56,12 @@ sequence, which is represented as an Member object.
 package Bio::EnsEMBL::Compara::MemberSet;
 
 use strict;
+use warnings;
+
 use Scalar::Util qw(weaken);
+
+use Bio::SeqIO;
+
 use Bio::EnsEMBL::Utils::Argument;
 use Bio::EnsEMBL::Utils::Scalar qw(:all);
 use Bio::EnsEMBL::Utils::Exception;
@@ -472,35 +486,32 @@ sub gene_list {  # DEPRECATED
 
 
 sub print_sequences_to_fasta {
-    my ($self, $pep_file, $subset_header) = @_;
-    my $pep_counter = 0;
-    open PEP, ">$pep_file";
+    my ($self, $pep_file) = @_;
+    return $self->print_sequences_to_file(-file => $pep_file, -format => 'fasta', -id_type => 'MEMBER');
+}
+
+sub print_sequences_to_file {
+    my $self = shift;
+
+    my ($file, $fh, $format, $unique_seqs, $seq_type, $id_type) =
+        rearrange([qw(FILE FH FORMAT UNIQ_SEQ SEQ_TYPE ID_TYPE)], @_);
+
+    my $seqio = Bio::SeqIO->new( -file => ($file ? ">$file" : undef), -fh => $fh, -format => $format );
+
+    my %seq_hash = ();
     foreach my $member (@{$self->get_all_Members}) {
         next if $member->source_name eq 'ENSEMBLGENE';
-        my $member_stable_id = $member->stable_id;
-        my $member_id = $member->member_id;
-        my $seq = $member->sequence;
+        next unless $member->isa('Bio::EnsEMBL::Compara::SeqMember');
 
-        if ($subset_header) {
-            my $source_name = $member->source_name;
-            my $genome_db_id = $member->genome_db_id || 0;
-            my $description = $member->description;
-            print PEP ">$source_name:$member_stable_id IDs:$genome_db_id:$member_id $description\n";
-        } else {
-            print PEP ">$member_id\n";
-        }
-        $seq =~ s/(.{72})/$1\n/g;
-        chomp $seq;
-        unless (defined($seq)) {
-            my $set_id = $self->dbID;
-            die "member $member_stable_id in MemberSet $set_id doesn't have a sequence";
-        }
-        print PEP $seq,"\n";
-        $pep_counter++;
+        my $bioseq = $member->bioseq(-SEQ_TYPE => $seq_type, -ID_TYPE => $id_type);
+        next if $unique_seqs and $seq_hash{$bioseq->seq};
+        $seq_hash{$bioseq->seq} = 1;
+
+        $seqio->write_seq($bioseq);
     }
-    close PEP;
-    return $pep_counter;
+    return scalar(keys %seq_hash);
 }
+
 
 
 #################################

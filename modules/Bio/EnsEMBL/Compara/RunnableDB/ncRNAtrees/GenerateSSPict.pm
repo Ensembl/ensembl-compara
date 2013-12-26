@@ -1,6 +1,21 @@
-#
-# You may distribute this module under the same terms as perl itself
-#
+=head1 LICENSE
+
+Copyright [1999-2013] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+     http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+
+=cut
+
 
 =pod
 
@@ -44,9 +59,7 @@ use base ('Bio::EnsEMBL::Compara::RunnableDB::RunCommand', 'Bio::EnsEMBL::Compar
 sub fetch_input {
     my ($self) = @_;
 
-    $self->input_job->transient_error(0);
-    my $nc_tree_id = $self->param('gene_tree_id') or $self->throw("A 'gene_tree_id' is mandatory");
-    $self->input_job->transient_error(1);
+    my $nc_tree_id = $self->param_required('gene_tree_id');
 
     my $nc_tree = $self->compara_dba->get_GeneTreeAdaptor->fetch_by_dbID($nc_tree_id) or die "Could not fetch nc_tree with id=$nc_tree_id\n";
     $self->param('nc_tree', $nc_tree);
@@ -125,7 +138,7 @@ sub get_cons_aln {
 sub get_plot {
     my ($self) = @_;
 
-    my $r2r_exe = $self->param('r2r_exe') || die "path to r2r is not specified\n";
+    my $r2r_exe = $self->param_required('r2r_exe');
     my $aln_file = $self->param('aln_file');
     my $tree = $self->param('nc_tree');
 
@@ -189,7 +202,7 @@ sub fix_aln_file {
 sub run_r2r_and_check {
     my ($self, $opts, $infile, $outfile, $extra_params) = @_;
 
-    my $r2r_exe = $self->param('r2r_exe') || die "path to r2r is undefined\n";
+    my $r2r_exe = $self->param_required('r2r_exe');
     my $cmd = "$r2r_exe $opts $infile $outfile $extra_params";
     my $runCmd = $self->run_command($cmd);
 

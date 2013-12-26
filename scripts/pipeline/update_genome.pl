@@ -1,4 +1,18 @@
 #!/usr/local/ensembl/bin/perl -w
+# Copyright [1999-2013] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+# 
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+# 
+#      http://www.apache.org/licenses/LICENSE-2.0
+# 
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
 
 use strict;
 
@@ -9,9 +23,6 @@ my $description = q{
 ##
 ## AUTHORS
 ##    Javier Herrero (jherrero@ebi.ac.uk)
-##
-## COPYRIGHT
-##    This script is part of the Ensembl project http://www.ensembl.org
 ##
 ## DESCRIPTION
 ##    This script takes the new core DB and a compara DB in production fase
@@ -33,9 +44,6 @@ update_genome.pl
 
  Javier Herrero (jherrero@ebi.ac.uk)
 
-=head1 COPYRIGHT
-
-This script is part of the Ensembl project http://www.ensembl.org
 
 =head1 DESCRIPTION
 
@@ -157,6 +165,9 @@ can be used multiple times
 
 use Bio::EnsEMBL::Registry;
 use Bio::EnsEMBL::Utils::Exception qw(throw warning verbose);
+
+use Bio::EnsEMBL::Compara::Utils::CoreDBAdaptor;
+
 use Getopt::Long;
 
 my $usage = qq{
@@ -249,7 +260,6 @@ my $compara_db = Bio::EnsEMBL::Registry->get_DBAdaptor($compara, "compara");
 throw ("Cannot connect to database [$compara]") if (!$compara_db);
 
 my $genome_db = update_genome_db($species_db, $compara_db, $force);
-print "Bio::EnsEMBL::Compara::GenomeDB->dbID: ", $genome_db->dbID, "\n\n";
 
 update_collections($compara_db, $genome_db, \@collection);
 
@@ -281,72 +291,54 @@ exit(0);
 sub update_genome_db {
   my ($species_dba, $compara_dba, $force) = @_;
 
-  my $slice_adaptor = $species_dba->get_adaptor("Slice");
   my $genome_db_adaptor = $compara_dba->get_GenomeDBAdaptor();
-  my $meta_container = $species_dba->get_MetaContainer;
-
-  my $species_production_name;
-  if (defined($species_name)) {
-    $species_production_name = $species_name;
-  } else {
-    $species_production_name = $meta_container->get_production_name();
-    if (!$species_production_name) {
-      throw "Cannot get the species name from the database. Use the --species_name option";
-    }
-  }
-  my ($highest_cs) = @{$slice_adaptor->db->get_CoordSystemAdaptor->fetch_all()};
-  my $primary_species_assembly = $highest_cs->version();
-  my $genome_db = eval {$genome_db_adaptor->fetch_by_name_assembly(
-          $species_production_name,
-          $primary_species_assembly
-      )};
+  my $genome_db = eval {$genome_db_adaptor->fetch_by_core_DBAdaptor($species_dba)};
 
   if ($genome_db and $genome_db->dbID) {
     if (not $force) {
+      my $species_production_name = $genome_db->name;
+      my $this_assembly = $genome_db->assembly;
       throw "GenomeDB with this name [$species_production_name] and assembly".
-        " [$primary_species_assembly] is already in the compara DB [$compara]\n".
+        " [$this_assembly] is already in the compara DB [$compara]\n".
         "You can use the --force option IF YOU REALLY KNOW WHAT YOU ARE DOING!!";
     }
   } elsif ($force) {
-    print "GenomeDB with this name [$species_production_name] and assembly".
-        " [$primary_species_assembly] is not in the compara DB [$compara]\n".
+    print "GenomeDB with this name [$species_name] and the corret assembly".
+        " is not in the compara DB [$compara]\n".
         "You don't need the --force option!!";
     print "Press [Enter] to continue or Ctrl+C to cancel...";
     <STDIN>;
   }
 
-	my $genebuild = $meta_container->get_genebuild();
-	if (! $genebuild) {
-			warning "Cannot find genebuild.version in meta table for $species_production_name";
-			$genebuild = '';
-	}
 
-  print "New assembly and genebuild: ", join(" -- ", $primary_species_assembly, $genebuild),"\n\n";
-
-  ## New genebuild!
   if ($genome_db) {
 
-    $genome_db->genebuild( $genebuild );
+    print "GenomeDB before update: ", $genome_db->toString, "\n";
+
+    # Get fresher information from the core database
+    $genome_db->db_adaptor($species_dba, 1);
+
+    # And store it back in Compara
     $genome_db_adaptor->update($genome_db);
+
+    print "GenomeDB after update: ", $genome_db->toString, "\n\n";
 
   }
   ## New genome or new assembly!!
   else {
 
-    if (!defined($taxon_id)) {
-      $taxon_id = $meta_container->get_taxonomy_id();
-    }
-    if (!defined($taxon_id)) {
-      throw "Cannot find species.taxonomy_id in meta table for $species_production_name.\n".
+    $genome_db = Bio::EnsEMBL::Compara::GenomeDB->new(
+        -DB_ADAPTOR => $species_dba,
+
+        -TAXON_ID   => $taxon_id,
+        -NAME       => $species_name,
+    );
+
+    if (!defined($genome_db->taxon_id)) {
+      throw "Cannot find species.taxonomy_id in meta table for $species_name.\n".
           "   You can use the --taxon_id option";
     }
-    print "New genome in compara. Taxon #$taxon_id; Name: $species_production_name; Assembly $primary_species_assembly\n\n";
-
-    $genome_db       = Bio::EnsEMBL::Compara::GenomeDB->new();
-    $genome_db->taxon_id( $taxon_id );
-    $genome_db->name( $species_production_name );
-    $genome_db->assembly( $primary_species_assembly );
-    $genome_db->genebuild( $genebuild );
+    print "New GenomeDB for Compara: ", $genome_db->toString, "\n";
 
     #New ID search if $offset is true
 
@@ -362,6 +354,8 @@ sub update_genome_db {
     }
 
     $genome_db_adaptor->store($genome_db);
+    print " -> Successfully stored with genome_db_id=".$genome_db->dbID."\n\n";
+
   }
   return $genome_db;
 }

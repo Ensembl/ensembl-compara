@@ -1,4 +1,18 @@
 #!/usr/bin/env perl -w
+# Copyright [1999-2013] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+# 
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+# 
+#      http://www.apache.org/licenses/LICENSE-2.0
+# 
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
 
 my $description = q{
 ###########################################################################
@@ -8,9 +22,6 @@ my $description = q{
 ## AUTHORS
 ##    Abel Ureta-Vidal (abel@ebi.ac.uk)
 ##    Javier Herrero (jherrero@ebi.ac.uk)
-##
-## COPYRIGHT
-##    This modules is part of the Ensembl project http://www.ensembl.org
 ##
 ## DESCRIPTION
 ##    This script dumps (pairwise or multiple) genomic alignments from
@@ -524,7 +535,7 @@ if ($skip_species && !$file_of_genomic_align_block_ids) {
       $skip_species, 'core', 'MetaContainer');
   throw("Registry configuration file has no data for connecting to <$skip_species>")
       if (!$this_meta_container_adaptor);
-  $skip_species = $this_meta_container_adaptor->get_Species->binomial;
+  $skip_species = $this_meta_container_adaptor->get_scientific_name;
 
   $skip_genomic_align_blocks = $genomic_align_set_adaptor->
       fetch_all_by_MethodLinkSpeciesSet($method_link_species_set);

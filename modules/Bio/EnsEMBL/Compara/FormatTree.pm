@@ -1,12 +1,21 @@
 =head1 LICENSE
 
-  Copyright (c) 1999-2013 The European Bioinformatics Institute and
-  Genome Research Limited.  All rights reserved.
+Copyright [1999-2013] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
-  This software is distributed under a modified Apache license.
-  For license details, please see
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
 
-    http://www.ensembl.org/info/about/code_licence.html
+     http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+
+=cut
+
 
 =head1 CONTACT
 
@@ -151,8 +160,11 @@ Code        : Letter_code
 
 # C(name)
 my $name_cb = sub {
-  my ($self) = @_;
-  return $self->{tree}->name;
+    my ($self) = @_;
+    if ($self->{tree}->can('node_name') && defined $self->{tree}->node_name) {
+        return $self->{tree}->node_name;
+    }
+    return $self->{tree}->name;
 };
 
 my $distance_to_parent_cb = sub {
@@ -254,11 +266,11 @@ my $taxon_id_cb = sub {
 my $sp_name_cb = sub {
   my ($self) = @_;
   my $species_name;
-  if ($self->{tree}->isa('Bio::EnsEMBL::Compara::GeneTreeMember')) {
+  if ($self->{tree}->can('genome_db')) {
       $species_name = $self->{tree}->genome_db->name;
       $species_name =~ s/\ /\_/g;
       return $species_name;
-  } elsif ($self->{tree}->isa('Bio::EnsEMBL::Compara::CAFEGeneFamily')){
+  } elsif ($self->{tree}->can('taxon_id')) {
       my $taxon_id = $self->{tree}->taxon_id();
       my $genome_db_adaptor = $self->{tree}->adaptor->db->get_GenomeDBAdaptor;
       my $genome_db;

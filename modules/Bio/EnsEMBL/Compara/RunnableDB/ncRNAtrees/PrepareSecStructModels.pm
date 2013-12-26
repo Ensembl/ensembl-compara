@@ -1,12 +1,21 @@
 =head1 LICENSE
 
-  Copyright (c) 1999-2013 The European Bioinformatics Institute and
-  Genome Research Limited.  All rights reserved.
+Copyright [1999-2013] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
-  This software is distributed under a modified Apache license.
-  For license details, please see
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
 
-    http://www.ensembl.org/info/about/code_licence.html
+     http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+
+=cut
+
 
 =head1 CONTACT
 
@@ -81,9 +90,7 @@ sub param_defaults {
 sub fetch_input {
     my $self = shift @_;
 
-    $self->input_job->transient_error(0);
-    my $nc_tree_id = $self->param('gene_tree_id') || die "'gene_tree_id' is an obligatory numeric parameter\n";
-    $self->input_job->transient_error(1);
+    my $nc_tree_id = $self->param_required('gene_tree_id');
 
     my $nc_tree = $self->compara_dba->get_GeneTreeAdaptor->fetch_by_dbID($nc_tree_id) or $self->throw("Could not fetch nc_tree with id=$nc_tree_id");
     $self->param('gene_tree', $nc_tree);
@@ -95,7 +102,7 @@ sub fetch_input {
     my $aln_seq_type = 'filtered';
     $self->param('aln_seq_type', $aln_seq_type);
     my $aln = Bio::EnsEMBL::Compara::AlignedMemberSet->new(-seq_type => $aln_seq_type, -dbID => $alignment_id, -adaptor => $self->compara_dba->get_AlignedMemberAdaptor);
-    $nc_tree->attach_alignment($alignment_id, 'filtered');
+    $nc_tree->attach_alignment($aln);
 
 ### !! Struct files are not used in this first tree!!
     if(my $input_aln = $self->_dumpMultipleAlignmentStructToWorkdir() ) {
@@ -178,36 +185,36 @@ sub _run_bootstrap_raxml {
 
 #For RAxML 7.2.8, selecting the GTRGAMMA model has a very different effect (command line = -m GTRGAMMA -x -f a). This option causes GTRGAMMA to be used both during the rapid bootstrapping AND inference of the best tree. The result is that it takes much longer to produce results using GTRGAMMA in RAxML 7.0.4, and the analysis is different from the one run using RAxML 7.0.4, where GTRCAT was used to conduct the bootstrapping phase. If you wish to run the same analysis you ran using RAxML 7.0.4, you must instead choose the model GTRCAT (-m GTRCAT -x -f a)
 
-  my $aln_file = $self->param('input_aln');
-  return unless (defined($aln_file));
+    my $aln_file = $self->param('input_aln');
+    return unless (defined($aln_file));
 
-  my $raxml_tag = $self->param('gene_tree')->root_id . "." . $self->worker->process_id . ".raxml";
+    my $raxml_tag = $self->param('gene_tree')->root_id . "." . $self->worker->process_id . ".raxml";
 
-  my $raxml_exe = $self->param('raxml_exe')
-    or die "'raxml_exe' is an obligatory parameter";
+    my $raxml_exe = $self->param_required('raxml_exe');
 
-  die "Cannot execute '$raxml_exe'" unless(-x $raxml_exe);
+    die "Cannot execute '$raxml_exe'" unless(-x $raxml_exe);
 
-  my $bootstrap_num = 10;
-  my $tag = 'ml_it_' . $bootstrap_num;
+    my $bootstrap_num = 10;
+    my $tag = 'ml_it_' . $bootstrap_num;
 
-  # Checks if the bootstrap tree is already in the DB (is this a rerun?)
-  if ($self->param('gene_tree')->has_tag($tag)) {
-    my $eval_tree;
-    # Checks the tree string can be parsed succsesfully
-    eval {
-      $eval_tree = Bio::EnsEMBL::Compara::Graph::NewickParser::parse_newick_into_tree($self->param('gene_tree')->get_value_for_tag($tag));
-    };
-    if (defined($eval_tree) and !$@ and !$self->debug) {
-      # The bootstrap RAxML tree has been obtained already and the tree can be parsed successfully.
-      return;
+    # Checks if the bootstrap tree is already in the DB (is this a rerun?)
+    if ($self->param('gene_tree')->has_tag($tag)) {
+        my $eval_tree;
+        # Checks the tree string can be parsed succsesfully
+        eval {
+            $eval_tree = Bio::EnsEMBL::Compara::Graph::NewickParser::parse_newick_into_tree($self->param('gene_tree')->get_value_for_tag($tag));
+        };
+        if (defined($eval_tree) and !$@ and !$self->debug) {
+            # The bootstrap RAxML tree has been obtained already and the tree can be parsed successfully.
+            return;
+        }
     }
-  }
 
-  # /software/ensembl/compara/raxml/RAxML-7.2.8-ALPHA/raxmlHPC-SSE3
-  # -m GTRGAMMA -s nctree_20327.aln -N 10 -n nctree_20327.raxml.10
+    my $cores = $self->param('raxml_number_of_cores');
+
   my $cmd = $raxml_exe;
-  $cmd .= " -T 2"; # ATTN, you need the PTHREADS version of raxml for this
+  $cmd .= " -p 12345";
+  $cmd .= " -T $cores"; # ATTN, you need the PTHREADS version of raxml for this
   $cmd .= " -m GTRGAMMA";
   $cmd .= " -s $aln_file";
   $cmd .= " -N $bootstrap_num";
@@ -266,15 +273,8 @@ sub _dumpMultipleAlignmentStructToWorkdir {
     open(OUTSEQ, ">$aln_file")
         or $self->throw("Error opening $aln_file for write");
 
-    # Using append_taxon_id will give nice seqnames_taxonids needed for
-    # njtree species_tree matching
-    my %sa_params = ($self->param('use_genomedb_id')) ?	('-APPEND_GENOMEDB_ID', 1) : ('-APPEND_TAXON_ID', 1);
-
-    my $sa = $tree->get_SimpleAlign
-        (
-         -id_type => 'MEMBER',
-         %sa_params,
-        );
+    $self->prepareTemporaryMemberNames($tree);
+    my $sa = $tree->get_SimpleAlign(-id_type => 'TMP');
     $sa->set_displayname_flat(1);
 
     # Phylip header

@@ -1,4 +1,18 @@
 #!/usr/local/ensembl/bin/perl -w
+# Copyright [1999-2013] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+# 
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+# 
+#      http://www.apache.org/licenses/LICENSE-2.0
+# 
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
 
 use strict;
 use Bio::EnsEMBL::Registry;
@@ -108,13 +122,13 @@ my $dfa = Bio::EnsEMBL::Registry->get_adaptor($src_dbname,'compara','DnaFrag');
 my $mlssa = Bio::EnsEMBL::Registry->get_adaptor($src_dbname,'compara','MethodLinkSpeciesSet');
 
 my $qy_slice = $qy_sa->fetch_by_region('toplevel',$seq_region,$seq_region_start,$seq_region_end);
-my $qy_binomial = Bio::EnsEMBL::Registry->get_adaptor($qy_species,'core','MetaContainer')->get_Species->binomial;
+my $qy_binomial = Bio::EnsEMBL::Registry->get_adaptor($qy_species,'core','MetaContainer')->get_scientific_name;
 my $qy_gdb = $gdba->fetch_by_name_assembly($qy_binomial);
 my ($qy_dnafrag) = @{$dfa->fetch_all_by_GenomeDB_region($qy_gdb,$qy_slice->coord_system->name,$qy_slice->seq_region_name)};
 
 my %tg_slices;
 my %tg_dnafrags;
-my $tg_binomial = Bio::EnsEMBL::Registry->get_adaptor($tg_species,'core','MetaContainer')->get_Species->binomial;
+my $tg_binomial = Bio::EnsEMBL::Registry->get_adaptor($tg_species,'core','MetaContainer')->get_scientific_name;
 my $tg_gdb = $gdba->fetch_by_name_assembly($tg_binomial);
 
 my $mlss = $mlssa->fetch_by_method_link_type_genome_db_ids($src_method_link_type, [$qy_gdb->dbID, $tg_gdb->dbID]);

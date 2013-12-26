@@ -132,7 +132,7 @@ b) If you are not using a master database, remember to unset the master_db param
 3.2- Lastz_conf.pm, Lastz_primate_conf.pm or TBlat_conf.pm
 Options you may wish to change:
 
-a) The location of the core databases is defined in PairAligner_conf.pm and defaults to the staging servers. However, the location of the core databases can be defined specifically and the 'curr_core_dbs_locs' set. You must set curr_core_sources_locs to '' to over-ride the default values given in PairAligner_conf.pm. This is useful to use a local core database.
+a) The location of the core databases is defined in PairAligner_conf.pm and defaults to the staging servers. However, the location of the core databases can be defined specifically and the 'curr_core_dbs_locs' set. You must set curr_core_sources_locs to '' to over-ride the default values given in PairAligner_conf.pm. This is useful when using a local core database.
 
 'reference' => {
 		-host           => "host_name",
@@ -151,9 +151,9 @@ a) The location of the core databases is defined in PairAligner_conf.pm and defa
 'curr_core_dbs_locs'    => [ $self->o('reference'), $self->o('non_reference') ],
 'curr_core_sources_locs'=> '',
 
-b) ref_species, default is 'homo_sapiens'.
+b) ref_species. This defines the which species in the pair to use as the reference. The other is automatically the non-reference.
 
-c) default_chunks
+c) default_chunks. Chunking parameters for the reference and non-reference species.
 
 d) pair_aligner_options
 
@@ -196,8 +196,8 @@ It is possible to run the pipeline in several ways.
 1) Using a master database and method_link_species_set_id (mlss_id)
 This is the recommended way and will work for a single pairwise alignment
 
-eg. master database, 2 primates, writing statistics to database
-init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::Lastz_primate_conf -dbname hsap_pabe_lastz_66 -password *** -mlss_id 557 -config_url "mysql://user:pass@host:port/pair_aligner_config"
+eg. master database, 2 primates
+init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::Lastz_primate_conf -dbname hsap_pabe_lastz_66 -password *** -mlss_id 557 -ref_species homo_sapiens
 
 2) Using a master database and a pairwise alignment configuration file
 This should work with several pairwise analyses in the same database
@@ -205,34 +205,55 @@ This should work with several pairwise analyses in the same database
 eg
 init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::Lastz_conf -dbname hsap_mmus_rnov_lastz_66 -password *** -conf_file my_conf_file
 
-3) Using no master and a pairwise alignment configuration file
+3) Using a master database and a collection
+A collection is a name associated with a set of species. A collection can be populated using the $ENSEMBL_CVS_ROOT_DIR/ensembl-compara/scripts/pipeline/update_genome.pl script. 
+A collection can be used to run several small pairwise pipelines in a single database. If a reference species is defined using the ref_species flag, this reference will be run against all the species in the collection. The collection must additionally contain the reference species.
+eg if the ref_species is human and the collection contains human, dog, horse and mouse the following pairs will be created:
+human vs dog
+human vs horse
+human vs mouse
+
+If no ref_species is defined, a triganual matix of all vs all will be created:
+human vs dog
+human vs horse
+human vs mouse
+dog vs horse
+dog vs mouse
+horse vs mouse
+Note that it should not matter which species is the reference and which the non-reference since the order cannot be defined.
+
+It is also necessary to skip the automatic setting of the internal ids by setting in the configuration file:
+'skip_set_internal_ids' => 1,
+
+
+4) Using no master and a pairwise alignment configuration file
 This should work with several pairwise analyses in the same database
 
-4) Using no master and no configuration file
+5) Using no master and no configuration file
 This uses the defaults and species details must be set in the pipeline configuration file and not in a registry configuration file. Will only work for a single pairwise alignment.
 
 Examples
 ~~~~~~~~
 A number of example pipelines have been set up over a small region for human vs mouse and human vs rat.
-The master database is set to be a compara release for these tests and the human/mouse method_link_species_set is 410 for BLASTZ_NET alignments. Since the examples use lastz, the final LASTZ_NET mlss_id will not be 410. In normal situations, the mlss_id set in the master will correspond to the mlss_id in the pipeline database. 
+The master database is set to be a compara release for these tests and the human/mouse method_link_species_set is 601 for LASTZ_NET alignments. Since the examples use lastz, the final LASTZ_NET mlss_id will not be 601. In normal situations, the mlss_id set in the master will correspond to the mlss_id in the pipeline database. 
 
 1) Master database and a method_link_species_set. Define core databases using 'curr_core_sources_locs'.
-init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::Example::LastzMaster_conf -dbname hsap_mmus_pairaligner_test -password *** -dump_dir /location/of/dir/to/dump/nib_files/ -pipeline_db -host=compara3 -mlss_id 410
+init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::Example::LastzMaster_conf -dbname hsap_mmus_pairaligner_test -password *** -dump_dir /location/of/dir/to/dump/nib_files/ -host compara3 -mlss_id 601 --ref_species homo_sapiens
 
 2) Master database and a method_link_species_set. Define core databases using registry file
-init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::Example::LastzMasterReg_conf -dbname hsap_mmus_pairaligner_test -password *** -dump_dir /location/of/dir/to/dump/nib_files/ -pipeline_db -host=compara3 -mlss_id 410 -reg_conf $ENSEMBL_CVS_ROOT_DIR/ensembl-compara/modules/Bio/EnsEMBL/Compara/PipeConfig/Example/reg.conf
+init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::Example::LastzMasterReg_conf -dbname hsap_mmus_pairaligner_test -password *** -dump_dir /location/of/dir/to/dump/nib_files/ -host compara3 -mlss_id 601 -reg_conf $ENSEMBL_CVS_ROOT_DIR/ensembl-compara/modules/Bio/EnsEMBL/Compara/PipeConfig/Example/reg.conf --ref_species homo_sapiens
  
 3) Master database and a method_link_species_set. Define core databases directly in pipeline config file
-init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::Example::LastzMasterCore_conf -dbname hsap_mmus_pairaligner_test -password *** -dump_dir /location/of/dir/to/dump/nib_files/ -pipeline_db -host=compara3 --mlss_id 410 
+init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::Example::LastzMasterCore_conf -dbname hsap_mmus_pairaligner_test -password *** -dump_dir /location/of/dir/to/dump/nib_files/ -host compara3 --mlss_id 601 --ref_species homo_sapiens
 
 4) Master database and a pairwise alignment configuration file. Run human vs mouse and human vs rat alignments.
-init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::Example::LastzMasterConf_conf -dbname hsap_rodent_pairaligner_test  -password *** -conf_file $ENSEMBL_CVS_ROOT_DIR/ensembl-compara/modules/Bio/EnsEMBL/Compara/PipeConfig/Example/lastz.conf -pipeline_db -host=compara3
+init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::Example::LastzMasterConf_conf -dbname hsap_rodent_pairaligner_test  -password *** -conf_file $ENSEMBL_CVS_ROOT_DIR/ensembl-compara/modules/Bio/EnsEMBL/Compara/PipeConfig/Example/lastz.conf -host compara3
 
 5) No master and pairwise alignment configuration file. Run human vs mouse and human vs rat alignments
-init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::Example::LastzNoMasterConf_conf -dbname hsap_rodent_pairaligner_test  -password *** -conf_file ENSEMBL_CVS_ROOT_DIR/ensembl-compara/modules/Bio/EnsEMBL/Compara/PipeConfig/Example/lastz.conf -dump_dir /location/of/dir/to/dump/nib_files/ -pipeline_db -host=compara3 
+init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::Example::LastzNoMasterConf_conf -dbname hsap_rodent_pairaligner_test  -password *** -conf_file $ENSEMBL_CVS_ROOT_DIR/ensembl-compara/modules/Bio/EnsEMBL/Compara/PipeConfig/Example/lastz.conf -dump_dir /location/of/dir/to/dump/nib_files/ -host compara3 
 
 6) No master. Define core databases directly in the pipeline config file
-init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::Example::LastzNoMaster_conf -dbname hsap_mmus_pairaligner_test -password *** -dump_dir /location/of/dir/to/dump/nib_files/ -pipeline_db -host=compara3
+init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::Example::LastzNoMaster_conf -dbname hsap_mmus_pairaligner_test -password *** -dump_dir /location/of/dir/to/dump/nib_files/ -host compara3
 
 
 6- Run the beekeeper
@@ -242,4 +263,4 @@ Details on how to run the beekeeper are given in the README-beekeeper document.
 
 7- Healthchecks and Statistics
    ~~~~~~~~~~~~~~~~~~~~~~~~~~~
-A few simple healthchecks are performed and the results are written to the job_message table. Simple coverage statistics are also performed and again, the results are written to the job_message table.
+A few simple healthchecks are performed and the results are written to the log_message table. Simple coverage statistics are also performed and again, the results are written to the log_message table.

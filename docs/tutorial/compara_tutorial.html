@@ -1,0 +1,349 @@
+<html>
+<head>
+<title>Compara API Tutorial</title>
+
+<link rel="stylesheet" type="text/css" media="all" href="/info/docs/api/compara/highlight.css"/>
+</head>
+
+<body>
+
+<h1>Compara API Tutorial</h1>
+
+
+<h2>Introduction</h2>
+
+<p>
+This tutorial is an introduction to the <a href="index.html">EnsEMBL Compara API</a>.
+Knowledge of the 
+<a href="/info/docs/api/core/index.html">EnsEMBL Core API</a> and of the concepts and conventions in the
+<a href="/info/docs/api/core/core_tutorial.html">EnsEMBL Core API tutorial</a> is assumed.
+Documentation about the Compara database schema is available in
+<a href="http://cvs.sanger.ac.uk/cgi-bin/viewvc.cgi/ensembl-compara/docs/?root=ensembl">ensembl-compara/docs/</a>
+from the EnsEMBL CVS repository, and while is not necessary for this tutorial,
+an understanding of the database tables may help as many of the adaptor modules are table-specific.
+</p>
+
+
+<h2>Installing the API</h2>
+
+<p>
+<a href="/info/docs/api/api_installation.html">API installation</a> and updating is the same as per the core API.
+</p>
+
+<h2>Connecting to an EnsEMBL Compara database</h2>
+
+<h3>Connection parameters</h3>
+
+<p>
+Starting from release 48 EnsEMBL has been running two public MySQL servers on
+        <code>host=ensembldb.ensembl.org</code>. The server accessible on
+        <code>port=3306</code> and <code>port=4306</code> hosts all databases prior
+        to release 48, and the server on <code>port=5306</code> hosts all newer
+        databases starting from release 48.
+</p>
+
+<h3>There are two API ways to connect to the EnsEMBL Compara database:</h3>
+<ul>
+<li>In most cases you will prefer the implicit way - using Bio::EnsEMBL::Registry module,
+which can read either a global or a specific configuration file or auto-configure itself.</li>
+<li>However there are cases where you might want more flexibility provided by the
+explicit creation of a Bio::EnsEMBL::Compara::DBSQL::DBAdaptor.</li>
+</ul>
+
+<h3>Implicitly, using the Bio::EnsEMBL::Registry auto-configuration feature (recommended)</h3>
+
+<p>
+For using the auto-configuration feature, you will first need to supply the connection parameters to the
+Registry loader. For instance, if you want to connect to the the public EnsEMBL databases you can
+use the following command in your scripts:
+</p>
+
+<pre class="code">
+[[INCLUDE::/info/docs/api/compara/tut_registry1.inc]]
+</pre>
+
+<p>
+This will initialize the Registry, from which you will be able to create object-specific adaptors later.
+
+Alternatively, you can use a shorter version based on a URL:</p>
+
+<pre class="code">
+[[INCLUDE::/info/docs/api/compara/tut_registry2.inc]]
+</pre>
+
+<h3>Implicitly, using the Bio::EnsEMBL::Registry configuration file</h3>
+
+<p>
+You will need to have a registry configuration file set up.
+By default, it takes the file defined by the ENSEMBL_REGISTRY environment variable or
+the file named .ensembl_init in your home directory if the former is not found.
+Additionally, you can use a specific file
+(see perldoc Bio::EnsEMBL::Registry or later in this document for some examples on how to use a different file).
+Please, refer to the <a href="/info/docs/api/registry.html">EnsEMBL registry documentation</a> for details about this option.
+</p>
+
+<h3>Explicitly, using the Bio::EnsEMBL::Compara::DBSQL::DBAdaptor</h3>
+
+<p>
+EnsEMBL Compara data, like core data, is stored in a MySQL relational database.
+If you want to access a Compara database, you will need to connect to it.
+This is done in exactly the same way as to connect to an EnsEMBL core database,
+but using a Compara-specific DBAdaptor. One parameter you have to supply
+in addition to the ones needed by the Registry is the <code>-dbname</code>, which by convention contains the release number:
+</p>
+
+<pre class="code">
+[[INCLUDE::/info/docs/api/compara/tut_registry3.inc]]
+</pre>
+
+<h2>EnsEMBL Compara object-specific adaptors</h2>
+
+<p>
+EnsEMBL Compara adaptors are used to fetch data from the database. Data are returned as EnsEMBL objects.
+For instance, the GenomeDBAdaptor returns Bio::EnsEMBL::Compara::GenomeDB objects.
+</p>
+
+<p>
+Below is a non-exhaustive list of EnsEMBL Compara adaptors that are most often used:
+</p>
+
+<ul>
+<li>GenomeDBAdaptor to fetch Bio::EnsEMBL::Compara::GenomeDB objects</li>
+<li>DnaFragAdaptor to fetch Bio::EnsEMBL::Compara::DnaFrag objects</li>
+<li>GenomicAlignBlockAdaptor to fetch Bio::EnsEMBL::Compara::GenomicAlignBlock objects</li>
+<li>DnaAlignFeatureAdaptor to fetch Bio::EnsEMBL::DnaDnaAlignFeature objects
+(note that this adaptor returns an EnsEMBL Core object)</li>
+<li>SyntenyRegionAdaptor to fetch Bio::EnsEMBL::Compara::SyntenyRegion objects</li>
+<li>GeneMemberAdaptor to fetch Bio::EnsEMBL::Compara::GeneMember objects</li>
+<li>GeneTreeAdaptor to fetch Bio::EnsEMBL::Compara::GeneTree objects</li>
+<li>HomologyAdaptor to fetch Bio::EnsEMBL::Compara::Homology objects</li>
+<li>FamilyAdaptor to fetch Bio::EnsEMBL::Compara::Family objects</li>
+</ul>
+
+<p>
+Only some of these adaptors will be used for illustration as part of this tutorial through commented perl scripts code.
+</p>
+
+<p>
+You can get the adaptors from the Registry with the get_adaptor command. You need to specify three arguments: the
+species name, the type of database and the type of object. Therefore, in order to get the GenomeDBAdaptor for the
+Compara database, you will need the following command:
+</p>
+
+<pre class="code">
+[[INCLUDE::/info/docs/api/compara/tut_genomedb1.inc]]
+</pre>
+
+<p>
+<strong>NB:</strong> As the EnsEMBL Compara DB is a multi-species database, the standard species name is 'Multi'. The type of the
+database is 'compara'.
+</p>
+
+<h2>Code Conventions</h2>
+
+<p>
+Refer to the <a href="/info/docs/api/core/index.html">EnsEMBL core tutorial</a> for a good description of the coding conventions normally used in EnsEMBL.
+</p>
+
+<p>
+We can divide the fetching methods of the ObjectAdaptors into two categories: the <code>fetch_by</code> and <code>fetch_all_by</code>. The former return one single object while the latter return a reference to an array of objects.
+</p>
+
+<pre class="code">
+[[INCLUDE::/info/docs/api/compara/tut_genomedb2.inc]]
+</pre>
+
+<pre class="code">
+[[INCLUDE::/info/docs/api/compara/tut_genomedb3.inc]]
+</pre>
+
+<h2>Whole Genome Alignments</h2>
+
+<p>
+The Compara database contains a number of different types of whole genome alignments.
+A listing about what are these different types can be found in the ensembl-compara/docs/schema_doc.html document in method_link section.
+</p>
+
+<h3>GenomicAlignBlock objects</h3>
+
+<p>
+GenomicAlignBlocks are the preferred way to store and fetch genomic alignments.
+A GenomicAlignBlock contains several GenomicAlign objects.
+Every GenomicAlign object corresponds to a piece of genomic sequence aligned with the other GenomicAlign in the same GenomicAlignBlock.
+A GenomicAlign object is always in relation with other GenomicAlign objects
+and this relation is defined through the GenomicAlignBlock object.
+Therefore the usual way to fetch genomic alignments is by fetching GenomicAlignBlock objects.
+We have to start by getting the corresponding adaptor:
+</p>
+
+<pre class="code">
+[[INCLUDE::/info/docs/api/compara/tut_align1.inc]]
+</pre>
+
+<p>
+In order to fetch the right alignments we need to specify a couple of data: 
+the type of alignment and the piece of genomic sequence in which we are looking for alignments. 
+The type of alignment is a more tricky now: 
+you need to specify both the alignment method and the set of genomes. 
+In order to simply this task, you could use the new Bio::EnsEMBL::Compara::MethodLinkSpeciesSet object. 
+The best way to use them is by fetching them from the database:
+</p>
+
+<pre class="code">
+[[INCLUDE::/info/docs/api/compara/tut_align2.inc]]
+</pre>
+
+<p>
+There are two ways to fetch GenomicAlignBlocks. 
+One uses Bio::EnsEMBL::Slice objects while the second one is based on
+Bio::EnsEMBL::Compara::DnaFrag objects for specifying the piece of genomic
+sequence in which we are looking for alignments.
+</p>
+
+<pre class="code">
+[[INCLUDE::/info/docs/api/compara/tut_align3.inc]]
+</pre>
+
+<p>
+Here is an example script with all of this:
+</p>
+
+<pre class="code">
+[[INCLUDE::/info/docs/api/compara/tut_align4.inc]]
+</pre>
+
+<h2>Homologies and Protein clusters</h2>
+
+<p>
+All the homologies and families refer to GeneMembers and SeqMembers. Homology objects store orthologous and paralogous relationships between members and Family objects are clusters of members.
+</p>
+
+
+<h3>*Member objects</h3>
+
+<p>
+A member represent either a gene (GeneMember) or a sequence-bearing locus, e.g. a protein or a transcript (SeqMember). Most of them
+are defined in the corresponding EnsEMBL core database. For
+instance, the sequence for the human gene ENSG00000004059
+is stored in the human core database.
+</p>
+
+<p>
+The fetch_by_source_stable_id method of the corresponding *MemberAdaptor takes two arguments. The first one is the
+source of the member and can be:
+</p>
+
+<dl>
+<dt>for GeneMember</dt>
+<dd>
+	<ul>
+	<li>ENSEMBLGENE, derived from an EnsEMBL gene</li>
+	</ul>
+</dd>
+<dt>for SeqMember</dt>
+<dd>
+	<ul>
+	<li>ENSEMBLPEP, derived from an EnsEMBL translation</li>
+	<li>ENSEMBLTRANS, derived from an EnsEMBL transcript</li>
+	<li>Uniprot/SWISSPROT, derived from a Uniprot/Swissprot entry</li>
+	<li>Uniprot/SPTREMBL, derived from a Uniprot/SP-TrEMBL entry</li>
+	</ul>
+</dd>
+</dl>
+
+<p>
+The second argument is the identifier for the member. Here is a simple example:
+</p>
+
+<pre class="code">
+[[INCLUDE::/info/docs/api/compara/tut_member1.inc]]
+</pre>
+
+<p>
+The *Member objects have several attributes:
+</p>
+<ul>
+<li><code>source_name</code> and <code>stable_id</code> define this member.</li>
+<li><code>chr_name</code>, <code>chr_start</code>, <code>chr_end</code>, <code>chr_strand</code> locate this member on the genome but
+are only available for ENSEMBLGENE and ENSEMBLPEP.</li>
+<li><code>taxon_id</code> corresponds to the NCBI taxonomy identifier (see
+<a href="http://www.ncbi.nlm.nih.gov/Taxonomy/taxonomyhome.html/">http://www.ncbi.nlm.nih.gov/Taxonomy/taxonomyhome.html/</a>
+for more details).</li>
+<li><code>taxon</code> returns a Bio::EnsEMBL::Compara::NCBITaxon object.
+From this object you can get additional information about the species.</li>
+</ul>
+
+<pre class="code">
+[[INCLUDE::/info/docs/api/compara/tut_member2.inc]]
+</pre>
+
+<p>
+In our example the species is human, so the output will look like this:
+</p>
+<pre>
+common_name:    human
+genus:          Homo
+species:        sapiens
+binomial:       Homo sapiens
+classification:	sapiens Homo Hominidae Catarrhini Haplorrhini Primates Euarchontoglires Eutheria Mammalia Euteleostomi Vertebrata Craniata Chordata Metazoa Eukaryota
+</pre>
+
+
+<h3>Homology Objects</h3>
+
+<p>
+A Homology object represents either an orthologous or paralogous relationships between two members.
+</p>
+
+<p>
+Typically you want to get homologies for a given gene. The HomologyAdaptor has a
+fetching method called fetch_all_by_Member(). You will need the GeneMember object for your
+query gene, therefore you will fetch the GeneMember first like in this example:
+</p>
+
+<pre class="code">
+[[INCLUDE::/info/docs/api/compara/tut_homology1.inc]]
+</pre>
+
+<p>
+Each homology relation has exactly 2 members, you should find there the initial member used as a query.
+The get_all_Members method returns an array of SeqMember objects. The SeqMember is actually an AlignedMember
+(for the underlying protein) and contains information about how this SeqMember has been aligned.
+</p>
+
+<pre class="code">
+[[INCLUDE::/info/docs/api/compara/tut_homology2.inc]]
+</pre>
+
+<p>
+You can get the original alignment used to define an homology:
+</p>
+
+<pre class="code">
+[[INCLUDE::/info/docs/api/compara/tut_homology3.inc]]
+</pre>
+
+<h3>Family Objects</h3>
+
+<p>
+Families are clusters of proteins including all the EnsEMBL proteins plus all the
+metazoan SwissProt and SP-Trembl entries. The object and the adaptor are really
+similar to the previous ones.
+</p>
+
+<pre class="code">
+[[INCLUDE::/info/docs/api/compara/tut_family1.inc]]
+</pre>
+
+
+<h2>Further help</h2>
+
+<p>
+For additional information or help mail the <a href="mailto:dev&#64;ensembl.org">ensembl dev</a> mailing list.
+You will need to subscribe to this <a href="/info/about/contact/mailing.html">mailing list</a> to use it.
+</p>
+
+<!-- End of real content -->
+
+</body>
+</html>

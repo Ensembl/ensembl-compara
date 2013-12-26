@@ -1,12 +1,21 @@
 =head1 LICENSE
 
-  Copyright (c) 1999-2013 The European Bioinformatics Institute and
-  Genome Research Limited.  All rights reserved.
+Copyright [1999-2013] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
-  This software is distributed under a modified Apache license.
-  For license details, please see
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
 
-   http://www.ensembl.org/info/about/code_licence.html
+     http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+
+=cut
+
 
 =head1 CONTACT
 
@@ -38,6 +47,8 @@ The rest of the documentation details each of the object methods. Internal metho
 package Bio::EnsEMBL::Compara::GenomicAlignTree;
 
 use strict;
+use warnings;
+
 use Bio::EnsEMBL::Utils::Argument;
 use Bio::EnsEMBL::Utils::Exception;
 use Bio::SimpleAlign;
@@ -1116,6 +1127,227 @@ sub release_tree {
 
   # Call SUPER method, which will now work as expected
   $self->SUPER::release_tree();
+}
+
+=head2 repeatmask
+
+  Arg [1]    : string. Can be "soft" or "hard"
+  Example    : $genomic_align_tree->repeatmask("soft")
+  Description: Adds masking to sequences in the GenomicAlignTree object
+  Returntype : Masked sequences in original GenomicAlignTree object
+  Exceptions : none
+  Caller     : general
+  Status     : At risk
+
+=cut
+
+sub repeatmask {
+  my ($self, $mask) = @_;
+
+  #apply masking
+  foreach my $this_node (@{$self->get_all_sorted_genomic_align_nodes()}) {
+    my $genomic_align_group = $this_node->genomic_align_group;
+    next if (!$genomic_align_group);
+      
+    foreach my $this_genomic_align (@{$genomic_align_group->get_all_GenomicAligns}) {
+      if ($mask && $this_genomic_align->dnafrag->name !~ /Ancestor/) {
+	if ($mask =~ /^soft/) {
+	    $this_genomic_align->original_sequence($this_genomic_align->get_Slice->get_repeatmasked_seq(undef,1)->seq);
+	  } elsif ($mask =~ /^hard/) {
+	    $this_genomic_align->original_sequence($this_genomic_align->get_Slice->get_repeatmasked_seq()->seq);
+	  }
+      }
+    }
+  }
+  return $self;
+}
+
+=head2 prune
+
+  Arg [1]    : arrayref of species to be displayed. Must be a sub-set of the species in the GenomicAlignTree.
+  Example    : my $new_tree = $genomic_align_tree->prune(["human", "chimp"])
+  Description: Prunes a GenomicAlignTree object to return a sub-set of species
+  Returntype : Pruned GenomicAlignTree object
+  Exceptions : none
+  Caller     : general
+  Status     : At risk
+
+=cut
+
+sub prune {
+    my ($self, $display_species_set) = @_;
+    
+    #prune tree to keep only those species in the display_species_set (plus their ancestral nodes)
+    return $self unless (defined $display_species_set && @$display_species_set > 0);
+        
+    #use registry names and convert to scientific names
+    my @display_species_set_scientific_names;
+    foreach my $species (@$display_species_set) {
+        my $genome_db = $self->adaptor->db->get_GenomeDBAdaptor->fetch_by_registry_name($species);
+        push @display_species_set_scientific_names, $genome_db->name;
+    }
+    
+    foreach my $this_leaf (@{$self->get_all_leaves}) {
+        my $genomic_aligns = $this_leaf->genomic_align_group->get_all_GenomicAligns;
+        my $species_name = $genomic_aligns->[0]->genome_db->name;
+        #unless ($species_name ~~ @display_species_set_scientific_names) {
+        unless (grep {$species_name eq $_}  @display_species_set_scientific_names) {
+            $this_leaf->disavow_parent;
+        }
+    }
+    #returns a new tree because the root may have changed
+    return $self->minimize_tree;    
+}
+
+=head2 summary_as_hash
+
+  Arg [1]    : (optional) boolean. Used for fragmented (low coverage) genomes. If true, create a single sequence of concatenated fragments for each leaf. If false, create an array of sequences for each leaf.
+  Arg [2]    : (optional) boolean. Use the aligned (true) or original (no insertions) sequence (false)
+  Example    : $genomic_align_tree->summary_as_hash(1, 1)
+  Description: Retrieves a textual summary of this GenomicAlignTree object
+  Returntype : Array of hashref of descriptive strings
+  Exceptions : none
+  Caller     : general
+  Status     : At risk
+
+=cut
+
+sub summary_as_hash {
+    my ( $self, $compact_alignments, $aligned ) = @_;
+
+    my $reverse = 1 - $self->original_strand;
+  
+    my $all_genomic_aligns;
+    foreach my $this_node (@{$self->get_all_sorted_genomic_align_nodes()}) {
+      my $genomic_align_group = $this_node->genomic_align_group;
+      next if (!$genomic_align_group);
+      if  ($compact_alignments) {
+	push(@{$all_genomic_aligns}, $genomic_align_group);
+      } else {
+	foreach my $this_genomic_align (@{$genomic_align_group->get_all_GenomicAligns}) {
+	  push @$all_genomic_aligns, $this_genomic_align;
+	}	
+      }
+    }
+
+    my $genome_db_name_counter;
+    my $alignment_summary;
+    foreach my $genomic_align (@$all_genomic_aligns) {
+      my ($dnafrag_name, $dnafrag_start, $dnafrag_end, $dnafrag_length, $dnafrag_strand);
+      my $seq;
+      if ($aligned) {
+	#aligned sequence
+	$seq = $genomic_align->aligned_sequence;
+      } else {
+	#get original sequence
+	$seq = $genomic_align->original_sequence;
+      }
+      #next if($alignSeq=~/^[\.\-]+$/);
+      
+      my $species_name = $genomic_align->genome_db->name;
+      $species_name =~ s/(.)\w* (...)\w*/$1$2/;
+      
+      my $description = "";
+      #Need to sort out composite genomic_aligns too (get_coordinates)
+      if ($genomic_align->can("get_all_GenomicAligns") and @{$genomic_align->get_all_GenomicAligns} > 1) {
+	## This is a composite segment.
+	## We need to fix the name
+	my @names;
+	foreach my $this_composite_genomic_align (@{$genomic_align->get_all_GenomicAligns}) {
+	  push(@names, $this_composite_genomic_align->get_Slice->name);
+	}
+	
+	$dnafrag_name = "Composite";
+	$description = "$dnafrag_name is: " . join(" + ", @names);
+	$dnafrag_start = 1; 
+	$dnafrag_end = $self->length;  
+	$dnafrag_strand = ($reverse?-1:1);
+      } else {
+	$dnafrag_name = $genomic_align->dnafrag->name;
+	$dnafrag_start = $genomic_align->dnafrag_start;
+	$dnafrag_end = $genomic_align->dnafrag_end;
+	$dnafrag_length = $genomic_align->dnafrag->length;
+	$dnafrag_strand = $genomic_align->dnafrag_strand;
+      }
+      
+      my $summary;
+      %$summary = ('start' => $dnafrag_start,
+		   'end' => $dnafrag_end,
+		   'strand' => $dnafrag_strand,
+		   'species' => $species_name,
+		   'seq_region' => $dnafrag_name,
+		   'seq' => $seq,
+		   'description' => $description);
+      push @$alignment_summary, $summary;
+    }
+    return $alignment_summary;
+}
+
+=head2 node_type
+
+  Arg [1]    : Getter/setter of the node_type attribute. Currently only "duplication"
+  Example    : $genomic_align_tree->node_type()
+  Description: It shows the event that took place at that node. 
+  Returntype : string
+  Exceptions : none
+  Caller     : general
+  Status     : At risk
+
+=cut
+
+sub node_type {
+  my $self = shift;
+
+  if (@_) {
+    $self->{node_type} = shift;
+  }
+
+  return $self->{node_type};
+}
+
+=head2 annotate_node_type
+
+  Example    : $genomic_align_tree->annotate_node_type()
+  Description: Find and annotate the duplication nodes in a tree
+  Returntype : 
+  Exceptions : none
+  Caller     : general
+  Status     : At risk
+
+=cut
+
+sub annotate_node_type {
+    my ($self) = @_;
+
+    my $duplications;
+    my $leaf_names;
+
+    #find the 2 children of a node
+    my $children = $self->sorted_children;
+    my $child1 = $children->[0];
+    my $child2 = $children->[1];
+
+    #Find all the leaves of child1
+    my $all_leaves = $child1->get_all_leaves;
+    foreach my $this_leaf (@$all_leaves) {
+        my $name = $this_leaf->get_all_genomic_aligns_for_node->[0]->genome_db->name;
+        $duplications->{$name} = 1;
+    }
+
+    #Find all the leaves of child2 and if there are any shared species with child1, we have found a 
+    #duplication node.
+    $all_leaves = $child2->get_all_leaves;
+    foreach my $this_leaf (@$all_leaves) {
+        my $name = $this_leaf->get_all_genomic_aligns_for_node->[0]->genome_db->name;
+        if ($duplications->{$name}) {
+            $self->node_type("duplication");
+        }
+    }
+
+    #recurse for each child until we get to the leaves
+    foreach my $child (@$children) {
+        annotate_node_type($child) unless ($child->is_leaf);
+    }
 }
 
 #sub DESTROY {

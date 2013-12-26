@@ -1,6 +1,21 @@
-#
-# You may distribute this module under the same terms as perl itself
-#
+=head1 LICENSE
+
+Copyright [1999-2013] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+     http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+
+=cut
+
 # POD documentation - main docs before the code
 
 =pod 
@@ -133,6 +148,18 @@ sub get_profiles {
     }
     $self->load_hmmprofile($hmm, $acc, $name, $consensus->{$name});
     close($fh);
+}
+
+sub load_hmm_profile {
+    my ($self, $hmm, $acc, $name, $consensus) = @_;
+    my $hmm_profile = Bio::EnsEMBL::Compara::HMMProfile->new();
+    $hmm_profile->model_id($acc);
+    $hmm_profile->name($name);
+    $hmm_profile->type($self->param('type')); ##
+    $hmm_profile->profile($hmm);
+    $hmm_profile->consensus($consensus);
+    $self->compara_dba->get_HMMProfileAdaptor()->store($hmm_profile);
+    return;
 }
 
 sub get_consensus_from_HMMs {

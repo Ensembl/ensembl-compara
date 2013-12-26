@@ -1,3 +1,21 @@
+=head1 LICENSE
+
+Copyright [1999-2013] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+     http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+
+=cut
+
 
 =pod 
 
@@ -12,13 +30,13 @@
         # compute and store the mapping between TreeFam v.7 and ProteinTrees of rel.64:
 
     time standaloneJob.pl Bio::EnsEMBL::Compara::RunnableDB::TreefamXrefMapper \
-        -compara_db "mysql://ensadmin:${ENSADMIN_PSW}@compara3/mm14_compara_homology_64" -release 64 -tf_release 7 -tag_prefix ''
+        -compara_db "mysql://ensadmin:${ENSADMIN_PSW}@compara3/mm14_compara_homology_64" -tf_release 7 -tag_prefix ''
 
 
         # compute and store the mapping between TreeFam v.8 and ProteinTrees of rel.64:
 
     time standaloneJob.pl Bio::EnsEMBL::Compara::RunnableDB::TreefamXrefMapper \
-        -compara_db "mysql://ensadmin:${ENSADMIN_PSW}@compara3/mm14_compara_homology_64" -release 64 -tf_release 8 -tag_prefix 'dev_'
+        -compara_db "mysql://ensadmin:${ENSADMIN_PSW}@compara3/mm14_compara_homology_64" -tf_release 8 -tag_prefix 'dev_'
 
 =cut
 
@@ -46,17 +64,14 @@ use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 sub fetch_input {
     my $self = shift @_;
 
-    my $release    = $self->param('release')    || die "'release' is an obligatory numeric parameter, please set it in the input_id hashref";
-    my $tf_release = $self->param('tf_release') || die "'tf_release' is an obligatory numeric parameter, please set it in the input_id hashref";
-    my $tf_type    = $self->param('tf_type')    || 'c';     # 'c' means 'CLEAN', 'w' means 'FULL'
+    my $release    = $self->compara_dba->get_MetaContainer->get_schema_version;
+    my $tf_release = $self->param_required('tf_release');
 
-    unless(defined($self->param('tag_prefix'))) {  # we prefer to check this parameter now, not after everything has been computed.
-        die "'tag_prefix' is an obligatory parameter, even if set to empty string; plase set it in the input_id hashref";
-    }
+    $self->param_required('tag_prefix');
 
     my $adaptor = Bio::EnsEMBL::Compara::StableId::Adaptor->new();
 
-    my $from_ncs = $adaptor->fetch_ncs($tf_release, $tf_type);
+    my $from_ncs = $adaptor->fetch_ncs($tf_release, 'tf');
     my $to_ncs   = $adaptor->fetch_ncs($release,    't',     $self->compara_dba->dbc);
     my $ncsl     = Bio::EnsEMBL::Compara::StableId::NamedClusterSetLink->new(-FROM => $from_ncs, -TO => $to_ncs);
 

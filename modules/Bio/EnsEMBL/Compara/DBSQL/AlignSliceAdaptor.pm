@@ -1,12 +1,21 @@
 =head1 LICENSE
 
-  Copyright (c) 1999-2013 The European Bioinformatics Institute and
-  Genome Research Limited.  All rights reserved.
+Copyright [1999-2013] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
-  This software is distributed under a modified Apache license.
-  For license details, please see
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
 
-    http://www.ensembl.org/info/about/code_licence.html
+     http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+
+=cut
+
 
 =head1 CONTACT
 
@@ -75,6 +84,8 @@ The rest of the documentation details each of the object methods. Internal metho
 package Bio::EnsEMBL::Compara::DBSQL::AlignSliceAdaptor;
 
 use strict;
+use warnings;
+
 use Bio::EnsEMBL::DBSQL::BaseAdaptor;
 use Bio::EnsEMBL::Utils::Exception qw(throw warning info);
 use Bio::EnsEMBL::Compara::AlignSlice;
@@ -112,7 +123,6 @@ our @ISA = qw(Bio::EnsEMBL::DBSQL::BaseAdaptor);
 
 sub fetch_by_Slice_MethodLinkSpeciesSet {
   my ($self, $reference_slice, $method_link_species_set, $expanded, $solve_overlapping, $target_slice) = @_;
-
   throw("[$reference_slice] is not a Bio::EnsEMBL::Slice")
       unless ($reference_slice and ref($reference_slice) and
           $reference_slice->isa("Bio::EnsEMBL::Slice"));
@@ -120,9 +130,19 @@ sub fetch_by_Slice_MethodLinkSpeciesSet {
       unless ($method_link_species_set and ref($method_link_species_set) and
           $method_link_species_set->isa("Bio::EnsEMBL::Compara::MethodLinkSpeciesSet"));
 
+
   # Use cache whenever possible
+  my $solve_overlapping_detail;
+  if ($solve_overlapping eq "restrict") {
+    $solve_overlapping_detail = "merge-overlaps";
+  } elsif ($solve_overlapping) {
+    $solve_overlapping_detail = "all-overlaps";
+  } else {
+    $solve_overlapping_detail = "no-overlaps";
+  }
   my $key = $reference_slice->name.":".$method_link_species_set->dbID.":".($expanded?"exp":"cond").
-      ":".($solve_overlapping?"fake-overlap":"non-overlap");
+      ":".$solve_overlapping_detail;
+
   if (defined($target_slice)) {
     throw("[$target_slice] is not a Bio::EnsEMBL::Slice")
         unless ($target_slice and ref($target_slice) and

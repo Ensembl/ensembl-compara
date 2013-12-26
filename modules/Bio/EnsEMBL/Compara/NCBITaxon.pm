@@ -1,3 +1,21 @@
+=head1 LICENSE
+
+Copyright [1999-2013] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+     http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+
+=cut
+
 =head1 NAME
 
 NCBITaxon - DESCRIPTION of Object
@@ -34,6 +52,8 @@ The rest of the documentation details each of the object methods. Internal metho
 package Bio::EnsEMBL::Compara::NCBITaxon;
 
 use strict;
+use warnings;
+
 use Bio::EnsEMBL::Compara::NestedSet;
 use Bio::EnsEMBL::Utils::Exception;
 use Bio::EnsEMBL::Utils::Argument;
@@ -65,18 +85,16 @@ sub copy {
 }
 
 
+## ncbi_taxid is an alias for dbID
 sub ncbi_taxid {
-  my $self = shift;
-  my $value = shift;
-  $self->node_id($value) if($value); 
-  return $self->node_id;
+    my $next = $_[0]->can('dbID');
+    goto($next);
 }
 
+## taxon_id is an alias for dbID
 sub taxon_id {
-  my $self = shift;
-  my $value = shift;
-  $self->node_id($value) if($value); 
-  return $self->node_id;
+    my $next = $_[0]->can('dbID');
+    goto($next);
 }
 
 sub dbID {
@@ -438,31 +456,6 @@ sub short_name {
 sub get_short_name {
   my $self = shift;
   return $self->short_name;
-}
-
-
-sub RAP_species_format {
-  my $self = shift;
-  my $newick = "";
-  
-  if($self->get_child_count() > 0) {
-    $newick .= "(";
-    my $first_child=1;
-    foreach my $child (@{$self->sorted_children}) {  
-      $newick .= "," unless($first_child);
-      $newick .= $child->newick_format;
-      $first_child = 0;
-    }
-    $newick .= ")";
-  }
-  
-  $newick .= sprintf("\"%s\"", $self->name,);
-  $newick .= sprintf(":%1.4f", $self->distance_to_parent) if($self->distance_to_parent > 0);
-
-  if(!($self->has_parent)) {
-    $newick .= ";";
-  }
-  return $newick;
 }
 
 

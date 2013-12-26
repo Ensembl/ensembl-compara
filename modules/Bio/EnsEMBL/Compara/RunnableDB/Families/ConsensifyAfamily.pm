@@ -1,3 +1,21 @@
+=head1 LICENSE
+
+Copyright [1999-2013] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+     http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+
+=cut
+
 package Bio::EnsEMBL::Compara::RunnableDB::Families::ConsensifyAfamily;
 
 # RunnableDB to assemble the consensus annotations on the fly
@@ -12,7 +30,7 @@ use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 sub fetch_input {
     my $self = shift @_;
 
-    my $start_family_id = $self->param('family_id') || die "'family_id' is an obligatory parameter, please set it in the input_id hashref";
+    my $start_family_id = $self->param_required('family_id');
     my $minibatch       = $self->param('minibatch') || 1;
     my $end_family_id   = $start_family_id+$minibatch-1;
 

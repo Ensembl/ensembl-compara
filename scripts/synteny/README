@@ -112,7 +112,7 @@ It dumps the homologues in gff format for all the genome.
 
 You can dump any types of homologues, just give the type(s) as parameters (comma separated, no space). 
 The usual types are: ortholog_one2one, ortholog_one2many, ortholog_many2many,
-		     between_species_paralog, within_species_paralog, apparent_ortholog_one2one                   
+		     between_species_paralog, within_species_paralog
 It is recommended to use the orthologs ones only as the paralogs would probably mess up the result.		      
 
 Eg-1: 

@@ -1,3 +1,21 @@
+=head1 LICENSE
+
+Copyright [1999-2013] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+     http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+
+=cut
+
 
 =pod 
 
@@ -59,23 +77,6 @@ sub compara_dba {
 }
 
 
-=head2 _load_species_tree_tag_from_mlss
-
-Loads into param() the tag describing the species tree, from the method link species set (using the 'mlss_id' param)
-
-=cut
-
-sub _load_species_tree_tag_from_mlss {
-    my $self = shift @_;
-
-    my $mlss_id = $self->param('mlss_id') or die "'mlss_id' is an obligatory to get the default species tree";
-    my $mlss = $self->compara_dba->get_MethodLinkSpeciesSetAdaptor->fetch_by_dbID($mlss_id);
-    die "Could not fetch MethodLinkSpeciesSet with the dbID '$mlss_id'" unless defined $mlss;
-
-    my $species_tree_string = $mlss->get_value_for_tag('species_tree');
-    $self->param('species_tree_string', $species_tree_string) or die "Could not fetch the 'species_tree' tag from the MethodLinkSpeciesSet dbID=$mlss_id";
-
-}
 
 =head2 get_species_tree_file
 
@@ -93,16 +94,14 @@ sub get_species_tree_file {
 
     unless( $self->param('species_tree_file') ) {
 
-        $self->_load_species_tree_tag_from_mlss unless $self->param('species_tree_string');
-
-        my $species_tree_string = $self->param('species_tree_string');
+        my $species_tree_string = $self->get_species_tree_string();
         eval {
             use Bio::EnsEMBL::Compara::Graph::NewickParser;
             my $eval_species_tree = Bio::EnsEMBL::Compara::Graph::NewickParser::parse_newick_into_tree($species_tree_string);
             my @leaves = @{$eval_species_tree->get_all_leaves};
         };
         if($@) {
-            die "Error parsing species tree from the string '$species_tree_string'";
+            die "Error '$@' parsing species tree from the string '$species_tree_string'";
         }
 
             # store the string in a local file:
@@ -116,6 +115,14 @@ sub get_species_tree_file {
     return $self->param('species_tree_file');
 }
 
+sub _load_species_tree_string_from_db {
+    my ($self) = @_;
+
+    my $mlss_id = $self->param_required('mlss_id');
+    my $label = $self->param('label') || 'default';
+    my $species_tree_string = $self->compara_dba->get_SpeciesTreeAdaptor->fetch_by_method_link_species_set_id_label($mlss_id, $label)->species_tree();
+    $self->param('species_tree_string', $species_tree_string);
+}
 
 =head2 get_species_tree_string
 
@@ -133,7 +140,7 @@ sub get_species_tree_string {
         if( my $species_tree_file = $self->param('species_tree_file') ) {
             $self->param('species_tree_string', $self->_slurp( $species_tree_file ));
         } else {
-            $self->_load_species_tree_tag_from_mlss;
+            $self->_load_species_tree_string_from_db;
         }
     }
     return  $self->param('species_tree_string');

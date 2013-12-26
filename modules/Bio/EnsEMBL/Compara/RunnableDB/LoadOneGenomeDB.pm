@@ -1,3 +1,21 @@
+=head1 LICENSE
+
+Copyright [1999-2013] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+     http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+
+=cut
+
 
 =pod 
 
@@ -6,6 +24,9 @@
 Bio::EnsEMBL::Compara::RunnableDB::LoadOneGenomeDB
 
 =head1 SYNOPSIS
+
+        # [preparation] make sure we have copied across NCBI taxonomy information about our species (Human) :
+    mysqldump --defaults-group-suffix=_compara3 --where="taxon_id=9606" mp12_compara_homology_72 ncbi_taxa_node ncbi_taxa_name | mysql lg4_compara_generic
 
         # load a genome_db given a class/keyvalue locator (genome_db_id will be generated)
     standaloneJob.pl LoadOneGenomeDB.pm -compara_db "mysql://ensadmin:${ENSADMIN_PSW}@compara2/lg4_test_load1genome" \
@@ -80,7 +101,6 @@ my $suffix_separator = '__cut_here__';
 sub fetch_input {
     my $self = shift @_;
 
-    my $assembly_name = $self->param('assembly_name');
     my $core_dba;
 
     if(my $locator = $self->param('locator') ) {   # use the locator and skip the registry
@@ -95,23 +115,22 @@ sub fetch_input {
 
             $core_dba = Bio::EnsEMBL::DBSQL::DBAdaptor->new( -DBCONN => $dbc );
 
-            $self->param('locator', $core_dba->locator() );  # substitute the given locator by one in conventional format
+            $self->param('locator', $core_dba->locator($suffix_separator) );  # substitute the given locator by one in conventional format
         }
 
     } elsif( $self->param('species_name') ) {    # perform our tricky multiregistry search: find the last one still suitable
 
-        my $genebuild = $self->param('genebuild');
-
         foreach my $this_core_dba (@{$self->iterate_through_registered_species}) {
 
-            my $this_assembly = $this_core_dba->extract_assembly_name();
+            my $this_assembly = $this_core_dba->assembly_name();
             my $this_start_date = $this_core_dba->get_MetaContainer->get_genebuild();
 
-            $genebuild ||= $this_start_date;
-            $assembly_name ||= $this_assembly;
+            my $genebuild = $self->param('genebuild') || $this_start_date;
+            my $assembly_name = $self->param('assembly_name') || $this_assembly;
 
             if($this_assembly eq $assembly_name && $this_start_date eq $genebuild) {
                 $core_dba = $this_core_dba;
+                $self->param('assembly_name', $assembly_name);
 
                 if($self->param('first_found')) {
                     last;
@@ -125,9 +144,6 @@ sub fetch_input {
 
     if( $core_dba ) {
         $self->param('core_dba', $core_dba);
-        if($assembly_name) {
-            $self->param('assembly_name', $assembly_name);
-        }
     } else {
         die "Could not find species_name='".$self->param('species_name')."', assembly_name='".$self->param('assembly_name')."' on the servers provided, please investigate";
     }
@@ -136,33 +152,7 @@ sub fetch_input {
 sub run {
     my $self = shift @_;
 
-    my $core_dba            = $self->param('core_dba');
-    my $meta_container      = $core_dba->get_MetaContainer;
-
-    my $assembly_name_in_db = $core_dba->extract_assembly_name();
-    my $assembly_name       = $self->param('assembly_name') || $assembly_name_in_db;
-    if($assembly_name ne $assembly_name_in_db) {
-        die "The required assembly_name ('$assembly_name') is different from the one found in the database ('$assembly_name_in_db'), please investigate";
-    }
-
-    my $taxon_id_in_db      = $meta_container->get_taxonomy_id();
-    my $taxon_id            = $self->param('taxon_id')  || $taxon_id_in_db;
-    if($taxon_id != $taxon_id_in_db) {
-        die "taxon_id parameter ($taxon_id) is different from the one defined in the database ($taxon_id_in_db), please investigate";
-    }
-
-    my $genome_db_id    = $self->param('genome_db_id')      || undef;
-    my $genebuild       = $meta_container->get_genebuild()    || '';
-    my $genome_name     = $meta_container->get_production_name() or die "Could not fetch production_name, please investigate";
-    my $locator         = $self->param('locator') || $core_dba->locator();
-
-    my $genome_db       = Bio::EnsEMBL::Compara::GenomeDB->new();
-    $genome_db->dbID( $genome_db_id );
-    $genome_db->taxon_id( $taxon_id );
-    $genome_db->name( $genome_name );
-    $genome_db->assembly( $assembly_name );
-    $genome_db->genebuild( $genebuild );
-    $genome_db->locator( $locator );
+    my $genome_db = $self->create_genome_db($self->param('core_dba'), $self->param('genome_db_id'), $self->param('assembly_name'), $self->param('taxon_id'), $self->param('locator'), $self->param('has_karyotype'), $self->param('is_high_coverage'));
 
     $self->param('genome_db', $genome_db);
 }
@@ -170,7 +160,34 @@ sub run {
 sub write_output {      # store the genome_db and dataflow
     my $self = shift;
 
-    my $genome_db               = $self->param('genome_db');
+    $self->store_and_dataflow_genome_db($self->param('genome_db'));
+}
+
+# ------------------------- non-interface subroutines -----------------------------------
+
+sub create_genome_db {
+    my ($self, $core_dba, $asked_genome_db_id, $asked_assembly_name, $asked_taxon_id, $asked_locator, $asked_has_karyotype, $asked_is_high_coverage) = @_;
+
+    my $locator         = $asked_locator || $core_dba->locator($suffix_separator);
+
+    my $genome_db       = Bio::EnsEMBL::Compara::GenomeDB->new(
+        -DB_ADAPTOR => $core_dba,
+
+        -TAXON_ID => $asked_taxon_id,
+        -ASSEMBLY => $asked_assembly_name,
+        -HAS_KARYOTYPE => $asked_has_karyotype,
+        -IS_HIGH_COVERAGE => $asked_is_high_coverage,
+    );
+    $genome_db->dbID( $asked_genome_db_id ) if $asked_genome_db_id;
+    $genome_db->locator( $locator );
+
+    return $genome_db;
+}
+
+sub store_and_dataflow_genome_db {
+    my $self = shift @_;
+    my $genome_db = shift @_;
+    my $branch = shift @_ || 1;
 
     $self->compara_dba->get_GenomeDBAdaptor->store($genome_db);
     my $genome_db_id            = $genome_db->dbID();
@@ -180,19 +197,27 @@ sub write_output {      # store the genome_db and dataflow
     $self->dataflow_output_id( {
         'genome_db_id' => $genome_db_id,
         ($pseudo_stableID_prefix ? ('pseudo_stableID_prefix' => $pseudo_stableID_prefix) : ())
-    }, 1);
+    }, $branch);
 }
-
-# ------------------------- non-interface subroutines -----------------------------------
 
 sub iterate_through_registered_species {
     my $self = shift;
 
+    my $registry_conf_file = $self->param('registry_conf_file');
     my $registry_dbs = $self->param('registry_dbs') || [];
     my $registry_files = $self->param('registry_files') || [];
-    $registry_dbs || $registry_files || die "unless 'locator' is specified, 'registry_dbs' or 'registry_files' become obligatory parameter";
+    $registry_conf_file || $registry_dbs || $registry_files || die "unless 'locator' is specified, 'registry_conf_file', 'registry_dbs' or 'registry_files' become obligatory parameter";
 
     my @core_dba_list = ();
+
+    if ($registry_conf_file) {
+
+        Bio::EnsEMBL::Registry->load_all( $registry_conf_file, undef, "no_clear" );
+        my $this_core_dba = Bio::EnsEMBL::Registry->get_DBAdaptor($self->param('species_name'), 'core');
+
+        push @core_dba_list, $this_core_dba if ($this_core_dba);
+
+    }
 
     for(my $r_ind=0; $r_ind<scalar(@$registry_dbs); $r_ind++) {
         Bio::EnsEMBL::Registry->load_registry_from_db( %{ $registry_dbs->[$r_ind] }, -species_suffix => $suffix_separator.$r_ind, -db_version => $self->param('db_version') );
@@ -211,27 +236,7 @@ sub iterate_through_registered_species {
     return \@core_dba_list;
 }
 
-sub Bio::EnsEMBL::DBSQL::DBAdaptor::extract_assembly_name {  # with much regret I have to introduce the highly demanded method this way
-    my $self = shift @_;
 
-    my ($cs) = @{$self->get_CoordSystemAdaptor->fetch_all()};
-    my $assembly_name = $cs->version;
-
-    return $assembly_name;
-}
-
-sub Bio::EnsEMBL::DBSQL::DBAdaptor::locator {  # this is another similar hack (to be included or at least offered for inclusion into Core codebase)
-    my $self         = shift @_;
-
-    my ($species_safe) = split(/$suffix_separator/, $self->species());  # The suffix was added to attain uniqueness and avoid collision, now we have to chop it off again.
-
-    my $dbc = $self->dbc();
-
-    return sprintf(
-          "%s/host=%s;port=%s;user=%s;pass=%s;dbname=%s;species=%s;species_id=%s;disconnect_when_inactive=%d",
-          ref($self), $dbc->host(), $dbc->port(), $dbc->username(), $dbc->password(), $dbc->dbname(), $species_safe, $self->species_id, 1,
-    );
-}
 
 1;
 

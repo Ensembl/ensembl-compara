@@ -1,3 +1,17 @@
+# Copyright [1999-2013] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+# 
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+# 
+#      http://www.apache.org/licenses/LICENSE-2.0
+# 
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
 use strict;
 use warnings;
 
@@ -21,7 +35,7 @@ my $homo_sapiens = Bio::EnsEMBL::Test::MultiTestDB->new("homo_sapiens");
 my $hs_dba = $homo_sapiens->get_DBAdaptor('core');
 my $compara_dba = $multi->get_DBAdaptor('compara');
 
-my $human_name     = $hs_dba->get_MetaContainer->get_Species->binomial;
+my $human_name     = $hs_dba->get_MetaContainer->get_scientific_name;
 my $human_assembly = $hs_dba->get_CoordSystemAdaptor->fetch_all->[0]->version;
 
 my $gdba = $compara_dba->get_GenomeDBAdaptor;
@@ -50,9 +64,9 @@ ok( $member->description, $description );
 ok( $member->source_name, $source_name );
 ok( $member->adaptor->isa("Bio::EnsEMBL::Compara::DBSQL::MemberAdaptor") );
 ok( $member->chr_name, $chr_name );
-ok( $member->chr_start, $chr_start );
-ok( $member->chr_end, $chr_end );
-ok( $member->chr_strand, $chr_strand );
+ok( $member->dnafrag_start, $chr_start );
+ok( $member->dnafrag_end, $chr_end );
+ok( $member->dnafrag_strand, $chr_strand );
 ok( $member->taxon_id, $taxon_id );
 ok( $member->genome_db_id, $genome_db_id );
 ok( ! $member->sequence_id );
@@ -71,9 +85,9 @@ ok( $member->description, $description );
 ok( $member->source_name, $source_name );
 ok( $member->adaptor->isa("Bio::EnsEMBL::Compara::DBSQL::MemberAdaptor") );
 ok( $member->chr_name, $chr_name );
-ok( $member->chr_start, $chr_start );
-ok( $member->chr_end, $chr_end );
-ok( $member->chr_strand, $chr_strand );
+ok( $member->dnafrag_start, $chr_start );
+ok( $member->dnafrag_end, $chr_end );
+ok( $member->dnafrag_strand, $chr_strand );
 ok( $member->taxon_id, $taxon_id );
 ok( $member->genome_db_id, $genome_db_id );
 ok( $member->sequence_id );

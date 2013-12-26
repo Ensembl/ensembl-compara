@@ -1,3 +1,21 @@
+=head1 LICENSE
+
+Copyright [1999-2013] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+     http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+
+=cut
+
 =head1 NAME
 
 NestedSetAdaptor - DESCRIPTION of Object
@@ -20,6 +38,8 @@ The rest of the documentation details each of the object methods. Internal metho
 package Bio::EnsEMBL::Compara::DBSQL::NCBITaxonAdaptor;
 
 use strict;
+use warnings;
+
 use Bio::EnsEMBL::Utils::Scalar qw(:assert);
 use Bio::EnsEMBL::Utils::Exception qw(throw warning deprecate);
 use Bio::EnsEMBL::Compara::NCBITaxon;
@@ -135,6 +155,37 @@ sub fetch_node_by_genome_db_id {
 
   $self->bind_param_generic_fetch($gdbID, SQL_INTEGER);
   return $self->generic_fetch_one($constraint, $join);
+}
+
+
+=head2 fetch_all_nodes_by_name
+
+  Arg [1]    : $name: the name to search in the database. It can be
+                a MySQL pattern (e.g. with '%' or '_')
+  Arg [2]    : $name_class: a name class to restrict the search to
+                (such as 'synonym', 'common name', etc)
+  Example    : $dogs = $nbcitaxonDBA->fetch_all_nodes_by_name('Canis%');
+  Description: Returns the list of NCBITaxon objects that match $name
+                (and $name_class if given)
+  Returntype : arrayref of Bio::EnsEMBL::Compara::NCBITaxon
+  Exceptions : none
+  Caller     : general
+
+=cut
+
+sub fetch_all_nodes_by_name {
+    my ($self, $name, $name_class) = @_;
+
+    if ($name_class) {
+        my $join = [[['ncbi_taxa_name', 'n2'], 'n2.name_class = ? AND t.taxon_id = n2.taxon_id']];
+        $self->bind_param_generic_fetch($name, SQL_VARCHAR);
+        $self->bind_param_generic_fetch($name_class, SQL_VARCHAR);
+        return $self->generic_fetch('n2.name LIKE ?', $join);
+    } else{
+        my $join = [[['ncbi_taxa_name', 'n2'], 't.taxon_id = n2.taxon_id']];
+        $self->bind_param_generic_fetch($name, SQL_VARCHAR);
+        return $self->generic_fetch('n2.name LIKE ?', $join);
+    }
 }
 
 

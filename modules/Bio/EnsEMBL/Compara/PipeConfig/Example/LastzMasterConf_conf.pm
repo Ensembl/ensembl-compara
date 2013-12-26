@@ -1,3 +1,21 @@
+=head1 LICENSE
+
+Copyright [1999-2013] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+     http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+
+=cut
+
 package Bio::EnsEMBL::Compara::PipeConfig::Example::LastzMasterConf_conf;
 
 #
@@ -18,7 +36,7 @@ sub default_options {
 	    %{$self->SUPER::default_options},   # inherit the generic ones
 	    'pipeline_name'         => 'LASTZ_CONF_'.$self->o('rel_with_suffix'),   # name the pipeline to differentiate the submitted processes
 	    #'master_db' => 'mysql://user@host/ensembl_compara_master',
-	    master_db => 'mysql://ensro@ens-livemirror:3306/ensembl_compara_68', #set to ensembl release for test only
+	    master_db => 'mysql://ensro@ens-livemirror:3306/ensembl_compara_73', #set to ensembl release for test only
 
 	    #Location of executables
 	    'pair_aligner_exe' => '/software/ensembl/compara/bin/lastz',

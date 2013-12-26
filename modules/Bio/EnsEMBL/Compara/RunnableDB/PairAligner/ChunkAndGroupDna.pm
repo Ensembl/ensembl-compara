@@ -1,12 +1,21 @@
 =head1 LICENSE
 
-  Copyright (c) 1999-2013 The European Bioinformatics Institute and
-  Genome Research Limited.  All rights reserved.
+Copyright [1999-2013] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
-  This software is distributed under a modified Apache license.
-  For license details, please see
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
 
-    http://www.ensembl.org/info/about/code_licence.html
+     http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+
+=cut
+
 
 =head1 CONTACT
 
@@ -245,19 +254,19 @@ sub create_chunks
                                                         $self->param('chunkset_counter')));
 
   $self->param('chunkset_counter', ($self->param('chunkset_counter') + 1));
-  
   #Temporary fix to problem in core when masking haplotypes because the
   #assembly mapper is cached but shouldn't be
   #if including haplotypes
-  my $asm;
-  if (defined $self->param('include_non_reference')) {
-      my $asma = $genome_db->db_adaptor->get_AssemblyMapperAdaptor;
-      my $csa = $genome_db->db_adaptor->get_CoordSystemAdaptor;
-      my $cs1 = $csa->fetch_by_name("Chromosome",$genome_db->assembly);
-      my $cs2 = $csa->fetch_by_name("Contig");
-      $asm = $asma->fetch_by_CoordSystems($cs1,$cs2);
-  }
+#  my $asm;
+#  if (defined $self->param('include_non_reference')) {
+#      my $asma = $genome_db->db_adaptor->get_AssemblyMapperAdaptor;
+#      my $csa = $genome_db->db_adaptor->get_CoordSystemAdaptor;
+#      my $cs1 = $csa->fetch_by_name("Chromosome",$genome_db->assembly);
+#      my $cs2 = $csa->fetch_by_name("Contig");
+#      $asm = $asma->fetch_by_CoordSystems($cs1,$cs2);
+#  }
   my $starttime = time();
+
   foreach my $chr (@{$chromosomes}) {
     #print "fetching dnafrag\n";
     if (defined $self->param('region')) {
@@ -295,9 +304,9 @@ sub create_chunks
     $self->create_dnafrag_chunks($dnafrag, $masking_options, $chr->start, $chr->end);
     #Temporary fix to problem in core when masking haplotypes because the
     #assembly mapper is cached but shouldn't be  
-    if (defined $asm) {
-	$asm->flush;
-    }
+    #if (defined $asm) {
+#	$asm->flush;
+#    }
   }
 
   print "genome_db ",$genome_db->dbID, " : total time ", (time()-$starttime), " secs\n";
@@ -418,15 +427,29 @@ sub create_dnafrag_chunks {
             $self->param('chunkset_counter',($self->param('chunkset_counter') + 1));
         }
 
-      #Store dnafrag_chunk_set to hold of the dnafrag_chunk_set_id
+        #Store dnafrag_chunk_set to hold of the dnafrag_chunk_set_id
         my $dnafrag_chunk_set_id = $self->param('current_chunkset')->dbID;
         unless ($self->param('current_chunkset')->dbID) {
             $dnafrag_chunk_set_id = $self->compara_dba->get_DnaFragChunkSetAdaptor->store($self->param('current_chunkset'));
         }
         
-      $chunk->dnafrag_chunk_set_id($dnafrag_chunk_set_id);
-      $self->param('current_chunkset')->add_DnaFragChunk($chunk);
+        $chunk->dnafrag_chunk_set_id($dnafrag_chunk_set_id);
+        $self->param('current_chunkset')->add_DnaFragChunk($chunk);
         $self->compara_dba->get_DnaFragChunkAdaptor->store($chunk);
+
+        #MT must be stored on it's own in a chunkset so create a new one
+        if ($chunk->dnafrag->isMT) {
+            print "Creating new chunkset for MT\n";
+            #Create new current_chunkset object
+            if(($self->param('current_chunkset')->count > 0)) {
+                $self->param('current_chunkset', new Bio::EnsEMBL::Compara::Production::DnaFragChunkSet);
+                $self->param('current_chunkset')->description(sprintf("collection_id:%d group:%d",
+                                                                      $self->param('dna_collection')->dbID, 
+                                                                      $self->param('chunkset_counter')));
+                $self->param('current_chunkset')->dna_collection($self->param('dna_collection'));
+                $self->param('chunkset_counter',($self->param('chunkset_counter') + 1));
+            }
+        }
 
       if($self->debug) {
         printf("dna_collection : chunk (%d) %s\n",$chunk->dbID, $chunk->display_id);

@@ -1,12 +1,21 @@
 =head1 LICENSE
 
-  Copyright (c) 1999-2013 The European Bioinformatics Institute and
-  Genome Research Limited.  All rights reserved.
+Copyright [1999-2013] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
-  This software is distributed under a modified Apache license.
-  For license details, please see
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
 
-   http://www.ensembl.org/info/about/code_licence.html
+     http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+
+=cut
+
 
 =head1 CONTACT
 
@@ -25,14 +34,6 @@ Bio::EnsEMBL::Compara::DBSQL::TagAdaptor
 Generic adaptor that gives a database backend for tags / attributes (to
 use with Bio::EnsEMBL::Compara::Taggable). There can be any number of
 values for tags, but at most one for each attribute.
-
-=head1 MAINTAINER
-
-$Author$
-
-=head VERSION
-
-$Revision$
 
 =head1 APPENDIX
 
@@ -243,12 +244,15 @@ sub _store_tagvalue {
         #print STDERR "attr\n";
         warn "Trying to overload the value of an attribute ($tag) ! This is not allowed for $self. The new value will replace the old one.\n" if $allow_overloading;
         # It is an attribute
-        my $sth = $self->prepare("INSERT IGNORE INTO $db_attrtable ($db_keyname) VALUES (?)");
-        $sth->execute($object->$perl_keyname);
+        my $sth = $self->prepare("UPDATE $db_attrtable SET $tag=? WHERE $db_keyname=?");
+        my $nrows = $sth->execute($value, $object->$perl_keyname);
         $sth->finish;
-        $sth = $self->prepare("UPDATE $db_attrtable SET $tag=? WHERE $db_keyname=?");
-        $sth->execute($value, $object->$perl_keyname);
-        $sth->finish;
+        if ($nrows == 0) {
+            # We assume that all the columns have a "DEFAULT NULL" in their definition
+            $sth = $self->prepare("INSERT IGNORE INTO $db_attrtable ($db_keyname, $tag) VALUES (?, ?)");
+            $sth->execute($object->$perl_keyname, $value);
+            $sth->finish;
+        }
 
     } elsif ($allow_overloading) {
         #print STDERR "tag+\n";
@@ -262,12 +266,23 @@ sub _store_tagvalue {
     } else {
         #print STDERR "tag\n";
         # It is a tag with only one value allowed
-        my $sth = $self->prepare("DELETE FROM $db_tagtable WHERE $db_keyname=? AND tag=?");
-        $sth->execute($object->$perl_keyname, $tag);
+        my $sth = $self->prepare("UPDATE $db_tagtable SET value = ? WHERE $db_keyname=? AND tag=?");
+        my $nrows = $sth->execute($value, $object->$perl_keyname, $tag);
         $sth->finish;
-        $sth = $self->prepare("INSERT INTO $db_tagtable ($db_keyname, tag, value) VALUES (?, ?, ?)");
-        $sth->execute($object->$perl_keyname, $tag, $value);
-        $sth->finish;
+
+        if ($nrows == 0) {
+            # INSERT
+            $sth = $self->prepare("INSERT INTO $db_tagtable ($db_keyname, tag, value) VALUES (?, ?, ?)");
+            $sth->execute($object->$perl_keyname, $tag, $value);
+            $sth->finish;
+
+        } elsif ($nrows > 1) {
+            $nrows = $nrows-1;
+            my $sth = $self->prepare("DELETE FROM $db_tagtable WHERE $db_keyname=? AND tag=? LIMIT $nrows");
+            $sth->execute($object->$perl_keyname, $tag);
+            $sth->finish;
+        }
+
     }
 }
 

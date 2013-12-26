@@ -1,6 +1,21 @@
-#
-# You may distribute this module under the same terms as perl itself
-#
+=head1 LICENSE
+
+Copyright [1999-2013] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+     http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+
+=cut
+
 # POD documentation - main docs before the code
 
 =pod 
@@ -61,6 +76,7 @@ use Data::Dumper;
 use Bio::AlignIO;
 use Bio::EnsEMBL::BaseAlignFeature;
 use Bio::EnsEMBL::Compara::HMMProfile;
+use Bio::EnsEMBL::Compara::Utils::Cigars;
 
 use base ('Bio::EnsEMBL::Compara::RunnableDB::RunCommand', 'Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
@@ -86,20 +102,29 @@ sub param_defaults {
 sub fetch_input {
     my $self = shift @_;
 
-    $self->input_job->transient_error(0);
-    my $nc_tree_id = $self->param('gene_tree_id') || die "'gene_tree_id' is an obligatory numeric parameter\n";
-    $self->input_job->transient_error(1);
+    my $nc_tree_id = $self->param_required('gene_tree_id');
 
     my $nc_tree = $self->compara_dba->get_GeneTreeAdaptor->fetch_by_dbID($nc_tree_id) or die "Could not fetch nc_tree with id=$nc_tree_id\n";
-
-#     my $n_nodes = $nc_tree->get_tagvalue('gene_count');
-#     if ($n_nodes == 1) {
-#         die "Only one member in tree $nc_tree_id";
-#     }
-
+    $nc_tree->preload();
     $self->param('gene_tree', $nc_tree);
 
-    $self->param('model_id_hash', {});
+    my %model_id_hash = ();
+    my @no_acc_members = ();
+    foreach my $member (@{$nc_tree->get_all_Members}) {
+        my $description = $member->description;
+        unless (defined($description) && $description =~ /Acc\:(\w+)/) {
+            warn "No accession for [$description]";
+            push @no_acc_members, $member->dbID;
+        } else {
+            $model_id_hash{$1} = 1;
+        }
+    }
+    unless (keys %model_id_hash) {
+        die "No Accs found for gene_tree_id $nc_tree_id : ", join ",",@no_acc_members;
+    }
+    if (scalar keys %model_id_hash > 1) {
+        print STDERR "WARNING: More than one model: ", join(",",keys %model_id_hash), "\n";
+    }
 
     $self->param('input_fasta', $self->dump_sequences_to_workdir($nc_tree));
 
@@ -169,71 +194,28 @@ sub dump_sequences_to_workdir {
   my $self = shift;
   my $cluster = shift;
 
-  my $fastafile = $self->worker_temp_directory . "cluster_" . $cluster->root_id . ".fasta";
+  my $root_id = $cluster->root_id;
+  my $fastafile = $self->worker_temp_directory . "cluster_" . $root_id . ".fasta";
   print STDERR "fastafile: $fastafile\n" if($self->debug);
 
-  my $seq_id_hash;
-  my $residues = 0;
-  print STDERR "fetching sequences...\n" if ($self->debug);
-
-  my $root_id = $cluster->root_id;
-  my $member_list = $cluster->get_all_leaves;
-  if (2 > scalar @$member_list) {
+  my $tag_gene_count = scalar(@{$cluster->get_all_leaves});
+  if ($tag_gene_count < 2) {
 #      $self->input_job->transient_error(0);
       $self->input_job->incomplete(0);
       die ("Only one member for cluster [$root_id]");
 #      return undef
   }
   print STDERR "Counting number of members\n" if ($self->debug);
-  my $tag_gene_count = scalar(@{$member_list});
 
-  open(OUTSEQ, ">$fastafile")
-    or $self->throw("Error opening $fastafile for write!");
-  my $count = 0;
+  my $count = $cluster->print_sequences_to_file( -file => $fastafile, -uniq_seq => 1, -id_type => 'SEQUENCE');
 
-  my @no_acc_members = ();
-  foreach my $member (@{$member_list}) {
-    my $sequence_id;
-    eval {$sequence_id = $member->sequence_id;};
-    if ($@) {
-      $DB::single=1;1;
-    }
-    next if($seq_id_hash->{$sequence_id});
-    my $description;
-    eval { $description = $member->description; };
-    unless (defined($description) && $description =~ /Acc\:(\w+)/) {
-      warn ("No accession for [$description]");
-      push @no_acc_members, $member->dbID;
-    }
-    $seq_id_hash->{$sequence_id} = 1;
-    $count++;
-    my $member_model_id = $1;
-
-    $self->param('model_id_hash')->{$member_model_id} = 1;
-
-    my $seq = $member->sequence;
-    $residues += $member->seq_length;
-    $seq =~ s/(.{72})/$1\n/g;
-    chomp $seq;
-    print STDERR $member->sequence_id. "\n" if ($self->debug);
-    print OUTSEQ ">". $member->sequence_id. "\n$seq\n";
-    print STDERR "sequences $count\n" if ($count % 50 == 0);
-  }
-  close(OUTSEQ);
-  unless (keys %{$self->param('model_id_hash')}) {
-      die "No Accs found for gene_tree_id $root_id : ", join ",",@no_acc_members;
-  }
-
-
-  if(scalar keys (%{$seq_id_hash}) <= 1) {
+  if ($count == 1) {
     $self->update_single_peptide_tree($cluster);
     $self->param('single_peptide_tree', 1);
   }
 
-  my $this_hash_count = scalar keys %$seq_id_hash;
-  my $perc_unique = ($this_hash_count / $tag_gene_count) * 100;
-  print "tag_gene_count $tag_gene_count\n";
-  print "Percent unique sequences: $perc_unique ($this_hash_count / $tag_gene_count)\n" if ($self->debug);
+  my $perc_unique = ($count / $tag_gene_count) * 100;
+  print "Percent unique sequences: $perc_unique ($count / $tag_gene_count)\n" if ($self->debug);
 
   return $fastafile;
 }
@@ -258,28 +240,13 @@ sub run_infernal {
   my $stk_output = $self->worker_temp_directory . "output.stk";
   my $nc_tree_id = $self->param('gene_tree_id');
 
-  my $cmalign_exe = $self->param('cmalign_exe')
-    or die "'cmalign_exe' is an obligatory parameter";
+  my $cmalign_exe = $self->param_required('cmalign_exe');
 
   die "Cannot execute '$cmalign_exe'" unless(-x $cmalign_exe);
 
 
   my $model_id;
 
-#   if (1 < scalar keys %{$self->param('model_id_hash')}) {
-#     # We revert to the clustering_id tag, which maps to the RFAM
-#     # 'name' field in hmm_profile (e.g. 'mir-135' instead of 'RF00246')
-#     print STDERR "WARNING: More than one model: ", join(",",keys %{$self->param('model_id_hash')}), "\n";
-#     $model_id = $self->param('gene_tree')->get_tagvalue('clustering_id') or $self->throw("'clustering_id' tag for this tree is not defined");
-#     # $self->throw("This cluster has more than one associated model");
-#   } else {
-#     my @models = keys %{$self->param('model_id_hash')};
-#     $model_id = $models[0] or die ("model_id_hash is empty?");
-#   }
-
-  if (scalar keys %{$self->param('model_id_hash')} > 1) {
-      print STDERR "WARNING: More than one model: ", join(",",keys %{$self->param('model_id_hash')}), "\n";
-  }
   $model_id = $self->param('gene_tree')->get_tagvalue('clustering_id') or $self->throw("'clustering_id' tag for this tree is not defined");
 
   $self->param('model_id', $model_id );
@@ -329,8 +296,7 @@ sub run_infernal {
   my $refined_stk_output = $stk_output . ".refined";
   my $refined_profile = $self->param('profile_file') . ".refined";
 
-  my $cmbuild_exe = $self->param('cmbuild_exe')
-    or die "'cmbuild_exe' is an obligatory parameter";
+  my $cmbuild_exe = $self->param_required('cmbuild_exe');
 
   die "Cannot execute '$cmbuild_exe'" unless(-x $cmbuild_exe);
 
@@ -346,16 +312,6 @@ sub run_infernal {
 
   $self->param('stk_output', $refined_stk_output);
   $self->param('refined_profile', $refined_profile);
-
-  # Reformat with sreformat
-  my $fasta_output = $self->worker_temp_directory . "output.fasta";
-  my $cmd = "/usr/local/ensembl/bin/sreformat a2m $refined_stk_output > $fasta_output";
-  $command = $self->run_command($cmd);
-  if($command->exit_code) {
-    $self->throw("error running sreformat, $!\n");
-  }
-
-  $self->param('infernal_output', $fasta_output);
 
   return 0;
 }
@@ -379,10 +335,10 @@ sub dump_model {
 
 sub parse_and_store_alignment_into_tree {
   my $self = shift;
-  my $infernal_output =  $self->param('infernal_output');
+  my $stk_output =  $self->param('stk_output');
   my $tree = $self->param('gene_tree');
 
-  return unless($infernal_output);
+  return unless($stk_output);
 
   #
   # parse SS_cons lines and store into nc_tree_tag
@@ -406,8 +362,8 @@ sub parse_and_store_alignment_into_tree {
 
   # fasta format
   my $aln_io = Bio::AlignIO->new
-    (-file => "$infernal_output",
-     -format => 'fasta');
+    (-file => "$stk_output",
+     -format => 'stockholm');
   my $aln = $aln_io->next_aln;
   foreach my $seq ($aln->each_seq) {
     $align_hash{$seq->display_id} = $seq->seq;
@@ -446,7 +402,7 @@ sub parse_and_store_alignment_into_tree {
     }
 
   }
-  $self->compara_dba->get_AlignedMemberAdaptor->store($tree);
+  $self->compara_dba->get_GeneAlignAdaptor->store($tree);
   return undef;
 }
 
@@ -483,23 +439,7 @@ sub get_cigar_lines {
         # columns are consensus and which are inserts (otherwise, cmbuild makes
         # an automated guess, based on the frequency of gaps in each column)
         $alignment_string =~ s/\./\-/g;            # Infernal returns dots even though they are gaps
-        $alignment_string = uc($alignment_string); # Infernal can lower-case regions
-        $alignment_string =~ s/\-([A-Z])/\- $1/g;
-        $alignment_string =~ s/([A-Z])\-/$1 \-/g;
-
-        my @cigar_segments = split " ",$alignment_string;
-
-        my $cigar_line = "";
-        foreach my $segment (@cigar_segments) {
-            my $seglength = length($segment);
-            $seglength = "" if ($seglength == 1);
-            if ($segment =~ /^\-+$/) {
-                $cigar_line .= $seglength . "D";
-            } else {
-                $cigar_line .= $seglength . "M";
-            }
-        }
-        $cigar_hash->{$id} = $cigar_line;
+        $cigar_hash->{$id} = Bio::EnsEMBL::Compara::Utils::Cigars::cigar_from_alignment_string(uc($alignment_string));
     }
     return ($cigar_hash, $alignment_length);
 }
@@ -522,7 +462,7 @@ sub store_fasta_alignment {
         ## Check that the cigar length (Ms) matches the sequence length
 #         my @cigar_match_lengths = map { if ($_ eq '') {$_ = 1} else {$_ = $_;} } map { $_ =~ /^(\d*)/ } ( $member->cigar_line =~ /(\d*[M])/g );
 #         my $seq_cigar_length; map { $seq_cigar_length += $_ } @cigar_match_lengths;
-#         my $member_sequence = $member->get_other_sequence('filtered');
+#         my $member_sequence = $member->other_sequence('filtered');
 #         $member_sequence =~ s/\*//g;
 #         print STDERR "MEMBER_SEQUENCE: $member_sequence\n";
 #         print STDERR "+++ $seq_cigar_length +++ \n";#, length($member_sequence) , "\n";
@@ -544,7 +484,7 @@ sub store_fasta_alignment {
         $sequence_adaptor->store_other_sequence($member, $seq, 'filtered');
     }
 
-    $self->compara_dba->get_AlignedMemberAdaptor->store($aln);
+    $self->compara_dba->get_GeneAlignAdaptor->store($aln);
     $self->param('alignment_id', $aln->dbID);
 #    $aln->root->release_tree();
 #    $aln->clear();
@@ -618,7 +558,7 @@ sub store_refined_profile {
     my $type = "infernal-refined";
     my $refined_profile_file = $self->param('refined_profile');
     my $hmmProfile_Adaptor = $self->compara_dba->get_HMMProfileAdaptor();
-    my $name = $hmmProfile_Adaptor->fetch_by_model_id($model_id)->name();
+    my $name = $hmmProfile_Adaptor->fetch_all_by_model_id_type($model_id)->[0]->name();
 
     my $refined_profile = $self->_slurp($refined_profile_file);
 

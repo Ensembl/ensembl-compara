@@ -1,3 +1,21 @@
+=head1 LICENSE
+
+Copyright [1999-2013] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+     http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+
+=cut
+
 package Bio::EnsEMBL::Compara::RunnableDB::Families::ParseMCLintoFamilies;
 
 # RunnableDB to parse the MCL output and load the families
@@ -18,7 +36,7 @@ sub run {   # nothing to run, just write_output()
 sub write_output {
     my $self = shift @_;
 
-    my $mcl_name        = $self->param('mcl_name')      || die "'mcl_name' is an obligatory parameter, please set it in the input_id hashref";
+    my $mcl_name        = $self->param_required('mcl_name');
     my $family_prefix   = $self->param('family_prefix') || 'ENSF';
     my $family_offset   = $self->param('family_offset') || 0;
 

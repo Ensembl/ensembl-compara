@@ -1,3 +1,21 @@
+=head1 LICENSE
+
+Copyright [1999-2013] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+     http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+
+=cut
+
 ##
 ## Configuration file for DumpMultiAlign pipeline
 #Release 65
@@ -32,13 +50,14 @@ sub default_options {
     return {
 	%{$self->SUPER::default_options},   # inherit the generic ones
 
-	'release'       => 71,
+	'release'       => 74,
         'pipeline_name' => 'DUMP_'.$self->o('release'),  # name used by the beekeeper to prefix job names on the farm
 
         'dbname' => 'dumpMultiAlign'.$self->o('release'),  # database suffix (without user name prepended)
 
         'pipeline_db' => {                               # connection parameters
-            -host   => 'compara2',
+            -driver => 'mysql',
+            -host   => 'compara4',
             -port   => 3306,
             -user   => 'ensadmin',
             -pass   => $self->o('password'),
@@ -68,6 +87,7 @@ sub default_options {
             -port   => 3306,
             -user   => 'ensro',
             -pass   => '',
+            -driver => 'mysql',
         },
 
 	#Location of core and, optionally, compara db
@@ -90,6 +110,8 @@ sub default_options {
 	'maf_output_dir' => "",
 	'species_tree_file' => $self->o('ensembl_cvs_root_dir')."/ensembl-compara/scripts/pipeline/species_tree_blength.nh",
 	'high_coverage_mlss_id' => "",
+        'memory_suffix' => "", #temporary fix to define the memory requirements in resource_classes
+
     };
 }
 
@@ -122,8 +144,7 @@ sub resource_classes {
 
     return {
             %{$self->SUPER::resource_classes},  # inherit 'default' from the parent class
-
-            '2GbMem' => {'LSF' => '-M2000000 -R"select[mem>2000] rusage[mem=2000]"' },
+            '2GbMem' => { 'LSF' => '-C0 -M2000' . $self->o('memory_suffix') .' -R"select[mem>2000] rusage[mem=2000]"' },  
     };
 }
 

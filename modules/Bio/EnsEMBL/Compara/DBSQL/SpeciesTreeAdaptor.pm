@@ -1,161 +1,179 @@
+=head1 LICENSE
 
-=pod
+Copyright [1999-2013] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
-=head1 NAME
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
 
-    Bio::EnsEMBL::Compara::DBSQL::SpeciesTreeAdaptor
+     http://www.apache.org/licenses/LICENSE-2.0
 
-=head1 SYNOPSIS
-
-    my $species_tree = $compara_dba->get_SpeciesTreeAdaptor->create_species_tree();                                         # include all available species from genome_db by default
-
-    my $species_tree = $compara_dba->get_SpeciesTreeAdaptor->create_species_tree( -species_set_id => 12345 );               # only use the species from given species_set
-
-    my $species_tree = $compara_dba->get_SpeciesTreeAdaptor->create_species_tree( -param1 => value1, -param2 => value2 );   # more complex scenarios
-
-=head1 DESCRIPTION
-
-    This is not strictly a DBSQL adaptor, because there is no corresponding DB-persistent object type.
-    This module encapsulates functionality to create/manipulate species trees in the form of subroutines
-    ( and so the code should be easier to reuse than that in ensembl-compara/scripts/tree ).
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
 
 =cut
 
+
+=head1 CONTACT
+
+  Please email comments or questions to the public Ensembl
+  developers list at <dev@ensembl.org>.
+
+  Questions may also be sent to the Ensembl help desk at
+  <helpdesk@ensembl.org>.
+
+=head1 NAME
+
+Bio::EnsEMBL::Compara::DBSQL::SpeciesTreeAdaptor
+
+=head1 SYNOPSIS
+
+
+=head1 DESCRIPTION
+
+  SpeciesTreeAdaptor - Adaptor for different species trees used in ensembl-compara
+
+
+=head1 APPENDIX
+
+  The rest of the documentation details each of the object methods. Internal methods are usually preceded with a _
+
+=cut
 
 package Bio::EnsEMBL::Compara::DBSQL::SpeciesTreeAdaptor;
 
 use strict;
-use Bio::EnsEMBL::Utils::Argument;
-use Bio::EnsEMBL::Compara::NestedSet;
+use warnings;
+use Data::Dumper;
 
-use base ('Bio::EnsEMBL::DBSQL::BaseAdaptor');
+use Bio::EnsEMBL::Compara::SpeciesTree;
+use Bio::EnsEMBL::Compara::SpeciesTreeNode;
+use Bio::EnsEMBL::Compara::Graph::NewickParser;
 
+use base ('Bio::EnsEMBL::Compara::DBSQL::BaseAdaptor');
 
-=head2 create_species_tree
+sub new_from_newick {
+    my ($self, $newick, $label, $name_method, $taxon_id_method) = @_;
 
-    Create a taxonomy tree from original NCBI taxonomy tree by only using a subset of taxa (provided either as a list or species_set or all_genome_dbs)
+    my $st = Bio::EnsEMBL::Compara::Graph::NewickParser::parse_newick_into_tree($newick, 'Bio::EnsEMBL::Compara::SpeciesTreeNode');
 
-=cut
+    my $st_root = $self->db->get_SpeciesTreeNodeAdaptor->new_from_NestedSet($st, $name_method, $taxon_id_method);
 
-sub create_species_tree {
-    my ($self, @args) = @_;
+    my $speciesTree = Bio::EnsEMBL::Compara::SpeciesTree->new();
+    $speciesTree->label($label);
+    $speciesTree->species_tree($newick);
+    $speciesTree->root($st_root);
 
-    my ($no_previous, $species_set_id, $extrataxon_sequenced, $extrataxon_incomplete, $multifurcation_deletes_node, $multifurcation_deletes_all_subnodes) =
-        rearrange([qw(NO_PREVIOUS SPECIES_SET_ID EXTRATAXON_SEQUENCED EXTRATAXON_INCOMPLETE MULTIFURCATION_DELETES_NODE MULTIFURCATION_DELETES_ALL_SUBNODES)], @args);
+    return $speciesTree;
+}
 
-    my $compara_dba = $self->db();
+sub fetch_all {
+    my ($self) = @_;
 
-    my $taxon_adaptor = $compara_dba->get_NCBITaxonAdaptor;
-    my $root;
+    my $constraint = "stn.node_id = str.root_id";
+    return $self->generic_fetch($constraint);
+}
 
-        # loading the initial set of taxa from genome_db:
-    if(!$no_previous or $species_set_id) {
-        
-        my $gdb_list = $species_set_id
-            ? $compara_dba->get_SpeciesSetAdaptor->fetch_by_dbID($species_set_id)->genome_dbs()
-            : $compara_dba->get_GenomeDBAdaptor->fetch_all;
+sub fetch_by_method_link_species_set_id_label {
+    my ($self, $mlss_id, $label) = @_;
 
-        foreach my $gdb (@$gdb_list) {
-            my $taxon_name = $gdb->name;
-            next if ($taxon_name =~ /ncestral/);
-            my $taxon_id = $gdb->taxon_id;
-            my $taxon = $taxon_adaptor->fetch_node_by_taxon_id($taxon_id);
-            $taxon->release_children;
+    $label = 'default' unless (defined $label);
 
-            $root = $taxon->root unless($root);
-            $root->merge_node_via_shared_ancestor($taxon);
-        }
+    my $constraint = "method_link_species_set_id = $mlss_id AND label = '$label'";
+    my $sp_trees = $self->generic_fetch($constraint);
+    return $sp_trees->[0];
+}
+
+sub fetch_all_by_method_link_species_set_id_label_pattern {
+ my ($self, $mlss_id, $label) = @_; 
+ $label = 'default' unless (defined $label);
+ my $constraint = "method_link_species_set_id = $mlss_id AND label LIKE '%$label%'";
+ return  $self->generic_fetch($constraint);
+}
+
+sub fetch_by_root_id {
+    my ($self, $root_id) = @_;
+
+    my $constraint = "root_id = $root_id";
+    my $sp_trees = $self->generic_fetch($constraint);
+    return $sp_trees->[0];
+}
+
+sub store {
+    my ($self, $tree, $mlss_id) = @_;
+    
+    if($mlss_id){
+     $tree->method_link_species_set_id($mlss_id);
+    } else {
+     $mlss_id = $tree->method_link_species_set_id;
     }
 
-        # loading from extrataxon_sequenced:
-    foreach my $extra_taxon (@$extrataxon_sequenced) {
-        my $taxon = $taxon_adaptor->fetch_node_by_taxon_id($extra_taxon);
-        next unless defined($taxon);
-        my $taxon_name = $taxon->name;
-        my $taxon_id = $taxon->taxon_id;
-        $taxon->release_children;
+    my $species_tree_node_adaptor = $self->db->get_SpeciesTreeNodeAdaptor();
 
-        $root = $taxon->root unless($root);
-        $root->merge_node_via_shared_ancestor($taxon);
-    }
+    # Store the nodes
+    my $root_id = $species_tree_node_adaptor->store($tree->root, $mlss_id);
+    $tree->{'_root_id'} = $root_id;
 
-        # loading from extrataxon_incomplete:
-    foreach my $extra_taxon (@$extrataxon_incomplete) {
-        my $taxon = $taxon_adaptor->fetch_node_by_taxon_id($extra_taxon);
-        my $taxon_name = $taxon->name;
-        my $taxon_id = $taxon->taxon_id;
-        $taxon->release_children;
+    # Store the rest of the nodes
+    # for my $child (@{$tree->root->get_all_nodes}) {
+    #     print "ROOT_ID FOR NODE IS: ", $child->root->node_id, "\n";
+    #     $species_tree_node_adaptor->store($child);
+    # }
 
-        $root = $taxon->root unless($root);
-        $root->merge_node_via_shared_ancestor($taxon);
-        $taxon->add_tag('is_incomplete', '1');
-    }
+    # Store the tree in the header table
+    # method_link_species_set_id must be set to its real value to honour the foreign key
+    my $sth = $self->prepare('INSERT INTO species_tree_root (root_id, method_link_species_set_id, label, species_tree) VALUES (?,?,?,?)');
+    $sth->execute($root_id, $tree->method_link_species_set_id, $tree->label || 'default', $tree->species_tree);
 
-    $root = $root->minimize_tree if (defined($root));
-
-        # Deleting nodes to further multifurcate:
-    my @subnodes = $root->get_all_subnodes;
-    foreach my $extra_taxon (@$multifurcation_deletes_node) {
-        my $taxon = $taxon_adaptor->fetch_node_by_taxon_id($extra_taxon);
-        my $taxon_name = $taxon->name;
-        my $taxon_id = $taxon->taxon_id;
-        foreach my $node (@subnodes) {
-            next unless ($node->node_id == $extra_taxon);
-            my $node_children = $node->children;
-            foreach my $child (@$node_children) {
-                $node->parent->add_child($child);
-            }
-            $node->disavow_parent;
-        }
-    }
-
-        # Deleting subnodes down to a given node:
-    @subnodes = $root->get_all_subnodes;
-    foreach my $extra_taxon (@$multifurcation_deletes_all_subnodes) {
-        my $taxon = $taxon_adaptor->fetch_node_by_taxon_id($extra_taxon);
-        my $taxon_name = $taxon->name;
-        my $taxon_id = $taxon->taxon_id;
-        my $node_in_root = $root->find_node_by_node_id($taxon_id);
-        foreach my $node ($node_in_root->get_all_subnodes) {
-            next if ($node->is_leaf);
-            my $node_children = $node->children;
-            foreach my $child (@$node_children) {
-                $node->parent->add_child($child);
-            }
-            $node->disavow_parent;
-        }
-    }
-
-    return $root;
+    $tree->adaptor($self);
+    return $root_id;
 }
 
 
-=head2 prune_tree
+sub _columns {
+    return qw ( str.root_id
+                str.method_link_species_set_id
+                str.species_tree
+                str.label
+             );
+}
 
-    Only retain the leaves that belong to the species_set
+sub _tables {
+    return (['species_tree_root','str']);
+}
 
-=cut
+sub _objs_from_sth {
+    my ($self, $sth) = @_;
+    my $tree_list = [];
 
-sub prune_tree {
-    my ($self, $input_tree, $species_set_id) = @_;
-
-    my $compara_dba = $self->db();
-
-    my $gdb_list = $species_set_id
-        ? $compara_dba->get_SpeciesSetAdaptor->fetch_by_dbID($species_set_id)->genome_dbs()
-        : $compara_dba->get_GenomeDBAdaptor->fetch_all;
-
-    my %leaves_names = map { ($_ => 1) } grep { !/ancestral/ } map { lc($_->name) } @$gdb_list;
-
-    foreach my $leaf (@{$input_tree->get_all_leaves}) {
-        unless ($leaves_names{lc($leaf->name)}) {
-            #print $leaf->name," leaf disavowing parent\n";
-            $leaf->disavow_parent;
-            $input_tree = $input_tree->minimize_tree;
-        }
+    while (my $rowhash = $sth->fetchrow_hashref) {
+        my $tree = $self->create_instance_from_rowhash($rowhash);
+        push @$tree_list, $tree;
     }
+    return $tree_list;
+}
 
-    return $input_tree;
+sub create_instance_from_rowhash {
+    my ($self, $rowhash) = @_;
+
+    my $tree = new Bio::EnsEMBL::Compara::SpeciesTree;
+    $self->init_instance_from_rowhash($tree, $rowhash);
+    return $tree;
+}
+
+sub init_instance_from_rowhash {
+    my ($self, $tree, $rowhash) = @_;
+
+    $tree->method_link_species_set_id($rowhash->{method_link_species_set_id});
+    $tree->species_tree($rowhash->{species_tree});
+    $tree->label($rowhash->{label});
+    $tree->root_id($rowhash->{root_id});
+
+    $tree->adaptor($self);
+    return $tree;
 }
 
 1;

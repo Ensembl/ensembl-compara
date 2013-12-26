@@ -1,12 +1,21 @@
 =head1 LICENSE
 
-  Copyright (c) 1999-2013 The European Bioinformatics Institute and
-  Genome Research Limited.  All rights reserved.
+Copyright [1999-2013] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
-  This software is distributed under a modified Apache license.
-  For license details, please see
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
 
-   http://www.ensembl.org/info/about/code_licence.html
+     http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+
+=cut
+
 
 =head1 CONTACT
 
@@ -34,14 +43,6 @@ Adaptor to retrieve nodes of gene trees
 
 Ensembl Team. Individual contributions can be found in the CVS log.
 
-=head1 MAINTAINER
-
-$Author$
-
-=head VERSION
-
-$Revision$
-
 =head1 APPENDIX
 
 The rest of the documentation details each of the object methods.
@@ -52,6 +53,7 @@ Internal methods are usually preceded with an underscore (_)
 package Bio::EnsEMBL::Compara::DBSQL::GeneTreeNodeAdaptor;
 
 use strict;
+use warnings;
 
 use Bio::EnsEMBL::Utils::Exception qw(throw warning deprecate);
 use Bio::EnsEMBL::Utils::Argument qw(rearrange);
@@ -209,19 +211,17 @@ sub store_node {
 
     assert_ref($node, 'Bio::EnsEMBL::Compara::GeneTreeNode');
 
-    my $new_node = 0;
     if (not($node->adaptor and $node->adaptor->isa('Bio::EnsEMBL::Compara::DBSQL::GeneTreeNodeAdaptor') and $node->adaptor eq $self)) {
         my $sth = $self->prepare("INSERT INTO gene_tree_node VALUES ()");
         $sth->execute();
         $node->node_id( $sth->{'mysql_insertid'} );
-        $new_node = 1;
     }
 
     my $parent_id = undef;
     $parent_id = $node->parent->node_id if($node->parent);
 
     my $root_id = $node->root->node_id;
-    #print "inserting new_noe=$new_node parent_id=$parent_id, root_id=$root_id\n";
+    #print "inserting parent_id=$parent_id, root_id=$root_id\n";
     my $member_id = undef;
     $member_id = $node->member_id if $node->isa('Bio::EnsEMBL::Compara::GeneTreeMember');
 
@@ -273,8 +273,15 @@ sub delete_node {
   $self->dbc->do("DELETE from gene_tree_node_tag    WHERE node_id = $node_id");
   $self->dbc->do("DELETE from gene_tree_node_attr   WHERE node_id = $node_id");
   $self->dbc->do("UPDATE gene_tree_node SET root_id = NULL WHERE node_id = $node_id");
-  $self->dbc->do("DELETE homology_member from homology_member JOIN homology using(homology_id) WHERE ancestor_node_id = $node_id");
-  $self->dbc->do("DELETE from homology WHERE ancestor_node_id = $node_id");
+  $self->dbc->do("DELETE homology_member from homology_member JOIN homology using(homology_id) WHERE gene_tree_node_id = $node_id");
+  $self->dbc->do("DELETE from homology WHERE gene_tree_node_id = $node_id");
+
+  # The node is actually a root. We have to clear the entry in gene_tree_root
+  if ($node_id == $node->tree->root->node_id) {
+    $self->dbc->do("DELETE FROM gene_tree_root_tag WHERE root_id = $node_id");
+    $self->dbc->do("DELETE FROM gene_tree_root WHERE root_id = $node_id");
+  }
+
   $self->dbc->do("DELETE from gene_tree_node   WHERE node_id = $node_id");
 }
 

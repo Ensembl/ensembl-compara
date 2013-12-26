@@ -1,4 +1,18 @@
 #!/usr/bin/env perl
+# Copyright [1999-2013] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+# 
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+# 
+#      http://www.apache.org/licenses/LICENSE-2.0
+# 
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
 
 use strict;
 use warnings;
@@ -20,7 +34,6 @@ my $fasta_cds_out;
 my $nh_out;
 my $nhx_out;
 my $orthoxml;
-my $orthoxml_possorthol;
 my $phyloxml;
 my $aa = 1;
 my $dirpath;
@@ -37,7 +50,6 @@ GetOptions('help'           => \$help,
            'nh|nh_out=s'    => \$nh_out,
            'nhx|nhx_out=s'  => \$nhx_out,
            'oxml|orthoxml=s'    => \$orthoxml,
-           'oxmlp|orthoxml_possorthol=s'   => \$orthoxml_possorthol,
            'pxml|phyloxml=s'    => \$phyloxml,
            'aa=s'           => \$aa,
            'dirpath=s'      => \$dirpath,
@@ -63,7 +75,6 @@ string is the filename extension. If string is 1, the default extension will be 
 --fasta_out string      amino-acid multiple alignment in FASTA format (aa.fasta)
 --fasta_cds_out string  nucleotide multiple alignment in FASTA format (cds.fasta)
 --orthoxml string               tree in OrthoXML format (orthoxml.xml)
---orthoxml_possorthol string   tree in OrthoXML format -including possible orthlogs- (orthoxml_possorthol.xml)
 --phyloxml string               tree in PhyloXML format (phyloxml.xml)
 
 This scripts assumes that the compara db is linked to all the core dbs
@@ -132,14 +143,14 @@ foreach my $tree_id (@tree_ids) {
   my $root = $tree->root;
 
   $tree_id = "tree.".$tree_id;
+  my %fasta_names = ('protein' => 'aa.fasta', 'ncrna' => 'nt.fasta');
 
   dump_if_wanted($aln_out, $tree_id, 'aln.emf', \&dumpTreeMultipleAlignment, $root, []);
   dump_if_wanted($nh_out, $tree_id, 'nh.emf', \&dumpNewickTree, $root, [0]);
   dump_if_wanted($nhx_out, $tree_id, 'nhx.emf', \&dumpNewickTree, $root, [1]);
-  dump_if_wanted($fasta_out, $tree_id, 'aa.fasta', \&dumpTreeFasta, $root, [0]);
+  dump_if_wanted($fasta_out, $tree_id, $fasta_names{$tree->member_type}, \&dumpTreeFasta, $root, [0]);
   dump_if_wanted($fasta_cds_out, $tree_id, 'cds.fasta', \&dumpTreeFasta, $root, [1]);
   dump_if_wanted($orthoxml, $tree_id, 'orthoxml.xml', \&dumpTreeOrthoXML, $root, [0]);
-  dump_if_wanted($orthoxml_possorthol, $tree_id, 'orthoxml_possorthol.xml', \&dumpTreeOrthoXML, $root, [1]);
   dump_if_wanted($phyloxml, $tree_id, 'phyloxml.xml', \&dumpTreePhyloXML, $root);
 
   $root->release_tree;
@@ -155,13 +166,13 @@ sub dumpTreeMultipleAlignment {
     #SEQ organism peptide_stable_id chr sequence_start sequence_stop strand gene_stable_id display_label
     my $species = $leaf->genome_db->name;
     $species =~ s/ /_/;
-    print $fh "SEQ $species ".$leaf->stable_id." ".$leaf->chr_name." ".$leaf->chr_start." ".$leaf->chr_end." ".$leaf->chr_strand." ".$leaf->gene_member->stable_id." ".($leaf->gene_member->display_label || "NULL") ."\n";
+    print $fh "SEQ $species ".$leaf->stable_id." ".$leaf->chr_name." ".$leaf->dnafrag_start." ".$leaf->dnafrag_end." ".$leaf->dnafrag_strand." ".$leaf->gene_member->stable_id." ".($leaf->gene_member->display_label || "NULL") ."\n";
 
     my $alignment_string;
     if ($aa) {
       $alignment_string = $leaf->alignment_string;
     } else {
-      $alignment_string = $leaf->cdna_alignment_string;
+      $alignment_string = $leaf->alignment_string('cds');
     }
     for (my $i = 0; $i<length($alignment_string); $i++) {
       $aligned_seqs[$i] .= substr($alignment_string, $i, 1);
@@ -170,6 +181,11 @@ sub dumpTreeMultipleAlignment {
 # will need to update the script when we will produce omega score for each column
 # of the alignment.
 # print "SCORE NULL\n";
+
+  # Here come the trees
+  print $fh "TREE newick ", $tree->newick_format('simple'), "\n";
+  print $fh "TREE nhx ", $tree->nhx_format, "\n";
+
   print $fh "DATA\n";
   print $fh join("\n", @aligned_seqs);
   print $fh "\n//\n\n";
@@ -186,7 +202,7 @@ sub dumpNewickTree {
     #SEQ organism peptide_stable_id chr sequence_start sequence_stop strand gene_stable_id display_label
     my $species = $leaf->genome_db->name;
     $species =~ s/ /_/;
-    print $fh "SEQ $species ".$leaf->stable_id." ".$leaf->chr_name." ".$leaf->chr_start." ".$leaf->chr_end." ".$leaf->chr_strand." ".$leaf->gene_member->stable_id." ".($leaf->gene_member->display_label || "NULL") ."\n";
+    print $fh "SEQ $species ".$leaf->stable_id." ".$leaf->chr_name." ".$leaf->dnafrag_start." ".$leaf->dnafrag_end." ".$leaf->dnafrag_strand." ".$leaf->gene_member->stable_id." ".($leaf->gene_member->display_label || "NULL") ."\n";
   }
 # will need to update the script when we will produce omega score for each column
 # of the alignment.
@@ -209,7 +225,7 @@ sub dumpTreeFasta {
     warn("missing tree\n") unless($tree);
     my $sa;
 
-    $sa = $tree->get_SimpleAlign(-id_type => 'STABLE', -CDNA=>$cdna);
+    $sa = $tree->get_SimpleAlign(-id_type => 'STABLE', $cdna ? (-seq_type => 'cds') : () );
     $sa->set_displayname_flat(1);
     my $alignIO = Bio::AlignIO->newFh(-fh => $fh,
                                       -format => 'fasta'
@@ -221,9 +237,8 @@ sub dumpTreeFasta {
 sub dumpTreeOrthoXML {
     my $tree = shift;
     my $fh = shift;
-    my $poss_ortho = shift;
 
-    my $w = Bio::EnsEMBL::Compara::Graph::OrthoXMLWriter->new(-SOURCE => 'compara', -SOURCE_VERSION => software_version(), -HANDLE => $fh, -POSSIBLE_ORTHOLOGS => $poss_ortho, -NO_RELEASE_TREES => 1);
+    my $w = Bio::EnsEMBL::Compara::Graph::OrthoXMLWriter->new(-SOURCE => 'compara', -SOURCE_VERSION => software_version(), -HANDLE => $fh, -NO_RELEASE_TREES => 1);
     $w->write_trees($tree);
     $w->finish();
 }

@@ -1,12 +1,21 @@
 =head1 LICENSE
 
-  Copyright (c) 1999-2013 The European Bioinformatics Institute and
-  Genome Research Limited.  All rights reserved.
+Copyright [1999-2013] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
-  This software is distributed under a modified Apache license.
-  For license details, please see
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
 
-    http://www.ensembl.org/info/about/code_licence.html
+     http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+
+=cut
+
 
 =head1 CONTACT
 
@@ -51,6 +60,7 @@ sub param_defaults {
             'tree_fmt'         => '%{n}%{":"d}',
             'norm_factor'      => 0.1,
             'norm_factor_step' => 0.1,
+            'label'            => 'cafe',
     };
 }
 
@@ -67,21 +77,19 @@ sub param_defaults {
 sub fetch_input {
     my ($self) = @_;
 
-    $self->param('cafe_tree_string', $self->get_tree_string_from_mlss_tag());
+#    $self->param('cafe_tree_string', $self->get_tree_string_from_mlss_tag());
+    $self->get_species_tree_string;
+    print STDERR "SPECIES TREE STRING IS: ", $self->param('species_tree_string'), "\n";
     $self->get_cafe_tree_from_string();
 
-    unless ( $self->param('mlss_id') ) {
-        die ('mlss_id is mandatory');
-    }
+    $self->param_required('mlss_id');
 
 ## Needed for lambda calculation
     if (! defined $self->param('lambda') && ! defined $self->param('cafe_shell')) {
         die ('cafe_shell is mandatory if lambda is not provided');
     }
 
-    unless ( $self->param('type') ) {
-        die ('type is mandatory [prot|nc]');
-    }
+    $self->param_required('type');
 
     $self->param('adaptor', $self->compara_dba->get_GeneTreeAdaptor);
 
@@ -113,7 +121,7 @@ sub run {
     print STDERR "FINAL LAMBDA IS ", $self->param('lambda'), "\n";
     if (!defined $self->param('perFamTable') || $self->param('perFamTable') == 0) {
         my $sth = $self->compara_dba->dbc->prepare("INSERT INTO CAFE_data (fam_id, tree, tabledata) VALUES (?,?,?);");
-        $sth->execute(1, $self->param('cafe_tree_string'), $table);
+        $sth->execute(1, $self->param('species_tree_string'), $table);
         $sth->finish();
         $self->param('all_fams', [1]);
     } else {
@@ -408,7 +416,7 @@ sub get_script {
     my $tmp_dir = $self->worker_temp_directory;
     my $cafe_shell = $self->param('cafe_shell');
     my $mlss_id = $self->param('mlss_id');
-    my $cafe_tree_string = $self->param('cafe_tree_string');
+    my $cafe_tree_string = $self->param('species_tree_string');
     chop($cafe_tree_string); #remove final semicolon
     $cafe_tree_string =~ s/:\d+$//; # remove last branch length
     my $script_file = "${tmp_dir}/cafe_${mlss_id}_lambda.sh";

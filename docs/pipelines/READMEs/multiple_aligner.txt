@@ -30,8 +30,8 @@ $ENSEMBL_CVS_ROOT_DIR/ensembl-compara/modules/Bio/EnsEMBL/Compara/PipeConfig/Mer
   mercator:
   'mercator_exe'              => '/software/ensembl/compara/mercator',
 
-  ncbi blastz:
-  'blast_exe_dir'             => '/software/ensembl/compara/ncbi-blast-2.2.23+/bin',
+  ncbi blast:
+  'blast_bin_dir'             => '/software/ensembl/compara/ncbi-blast-2.2.27+/bin',
 
   gerp:
   'gerp_exe_dir'              => '/software/ensembl/compara/gerp/GERPv2.1',
@@ -86,7 +86,7 @@ work_dir                        => directory for writing files needed by blast a
 jar_file                        => location of Pecan jar file
 gerp_exe_dir                    => location of gerp executable directory
 mercator_exe                    => location of mercator executable
-blast_exe_dir                   => location of ncbi blast executable
+blast_bin_dir                   => location of ncbi blast binaries
 master_db_name                  => name of "master" database
 
 pipeline_db			=> production database			

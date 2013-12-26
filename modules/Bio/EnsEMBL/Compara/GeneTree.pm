@@ -1,12 +1,21 @@
 =head1 LICENSE
 
-  Copyright (c) 1999-2013 The European Bioinformatics Institute and
-  Genome Research Limited.  All rights reserved.
+Copyright [1999-2013] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
-  This software is distributed under a modified Apache license.
-  For license details, please see
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
 
-   http://www.ensembl.org/info/about/code_licence.html
+     http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+
+=cut
+
 
 =head1 CONTACT
 
@@ -36,14 +45,6 @@ It implements the AlignedMemberSet interface (via the leaves).
 
 Ensembl Team. Individual contributions can be found in the CVS log.
 
-=head1 MAINTAINER
-
-$Author$
-
-=head VERSION
-
-$Revision$
-
 =head1 APPENDIX
 
 The rest of the documentation details each of the object methods.
@@ -60,6 +61,7 @@ use Bio::EnsEMBL::Compara::GeneTreeNode;
 use Bio::EnsEMBL::Compara::GeneTreeMember;
 
 use strict;
+use warnings;
 
 use base ('Bio::EnsEMBL::Compara::AlignedMemberSet', 'Bio::EnsEMBL::Compara::Taggable');
 
@@ -207,6 +209,23 @@ sub gene_align_id {
 }
 
 
+=head2
+
+  Description : Getter for the species-tree this gene tree is reconciled with
+  Returntype  : Bio::EnsEMBL::Compara::SpeciesTree
+  Example     : my $species_tree = $gene_tree->species_tree;
+  Caller      : General
+
+=cut
+
+sub species_tree {
+    my $self = shift;
+    if (not defined $self->{_species_tree} and defined $self->adaptor) {
+        $self->{_species_tree} = $self->adaptor->db->get_SpeciesTreeAdaptor->fetch_by_method_link_species_set_id_label($self->method_link_species_set_id, 'default');
+    }
+    return $self->{_species_tree};
+}
+
 
 ################
 # Tree loading #
@@ -269,6 +288,20 @@ sub preload {
 
     # Loads all the tags in one go
     $self->adaptor->db->get_GeneTreeNodeAdaptor->_load_tagvalues_multiple( $self->root->get_all_nodes );
+
+    # For retro-compatibility, we need to fill in taxon_id and taxon_name
+    my %cache_stns = ();
+    foreach my $node (@{$self->root->get_all_nodes}) {
+        next unless $node->has_tag('species_tree_node_id');
+        my $stn_id = $node->get_value_for_tag('species_tree_node_id');
+        if (exists $cache_stns{$stn_id}) {
+            $node->{_species_tree_node} = $cache_stns{$stn_id};
+        } else {
+            $cache_stns{$stn_id} = $node->species_tree_node;
+        }
+        $node->add_tag('taxon_id', $node->species_tree_node->taxon_id);
+        $node->add_tag('taxon_name', $node->species_tree_node->node_name);
+    }
 
     # Loads all the gene members in one go
     my %leaves;

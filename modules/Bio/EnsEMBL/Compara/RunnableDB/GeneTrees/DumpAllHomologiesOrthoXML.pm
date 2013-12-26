@@ -1,12 +1,21 @@
 =head1 LICENSE
 
-  Copyright (c) 1999-2013 The European Bioinformatics Institute and
-  Genome Research Limited.  All rights reserved.
+Copyright [1999-2013] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
-  This software is distributed under a modified Apache license.
-  For license details, please see
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
 
-   http://www.ensembl.org/info/about/code_licence.html
+     http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+
+=cut
+
 
 =head1 CONTACT
 
@@ -40,14 +49,6 @@ standaloneJob.pl Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::DumpAllHomologies
 
 Ensembl Team. Individual contributions can be found in the CVS log.
 
-=head1 MAINTAINER
-
-$Author$
-
-=head VERSION
-
-$Revision$
-
 =head1 APPENDIX
 
 The rest of the documentation details each of the object methods.
@@ -68,7 +69,8 @@ use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
 sub param_defaults {
     return {
-        "ortholog_method_link_id" => 201,
+        "ortholog_method_link_id"   => 201,
+        "strict_orthologies"        => 0,
            };
 }
 
@@ -113,6 +115,9 @@ sub run {
         my $range = $self->param('id_range');
         $range =~ s/-/ AND /;
         $sql .= " AND homology_id BETWEEN $range";
+    }
+    if ($self->param('strict_orthologies')) {
+        $sql .= " AND is_tree_compliant = 1";
     }
     $sth = $self->compara_dba->dbc->prepare($sql, {mysql_use_result=>1});
 

@@ -1,12 +1,21 @@
 =head1 LICENSE
 
-  Copyright (c) 1999-2013 The European Bioinformatics Institute and
-  Genome Research Limited.  All rights reserved.
+Copyright [1999-2013] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
-  This software is distributed under a modified Apache license.
-  For license details, please see
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
 
-    http://www.ensembl.org/info/about/code_licence.html
+     http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+
+=cut
+
 
 =head1 CONTACT
 
@@ -70,9 +79,12 @@ use base ('Bio::EnsEMBL::Compara::RunnableDB::RunCommand', 'Bio::EnsEMBL::Compar
 sub fetch_input {
     my ($self) = @_;
 
-    $self->input_job->transient_error(0);
-    my $nc_tree_id = $self->param('gene_tree_id') || die "'gene_tree_id' is an obligatory parameter\n";
-    $self->input_job->transient_error(1);
+    ## FastTree2 uses all the cores available by default. We want to limit this because we may have already asked for a limited amount of cores in our resource description
+    ## To limit this the OMP_NUM_THREADS env variable must be set
+    ## We assume that 'raxml_number_of_cores' param is set to the number of cores specified in the resource description
+    $ENV{'OMP_NUM_THREADS'} = $self->param('raxml_number_of_cores');
+
+    my $nc_tree_id = $self->param_required('gene_tree_id');
 
     my $nc_tree = $self->compara_dba->get_GeneTreeAdaptor->fetch_by_dbID($nc_tree_id) or $self->throw("Couldn't fetch nc_tree with id $nc_tree_id\n");
     $self->param('nc_tree', $nc_tree);
@@ -81,7 +93,7 @@ sub fetch_input {
     my $aln_seq_type = $self->param('aln_seq_type');
     $nc_tree->gene_align_id($alignment_id);
     my $aln = Bio::EnsEMBL::Compara::AlignedMemberSet->new(-seq_type => $aln_seq_type, -dbID => $alignment_id, -adaptor => $self->compara_dba->get_AlignedMemberAdaptor);
-    $nc_tree->attach_alignment($alignment_id, $aln_seq_type);
+    $nc_tree->attach_alignment($aln);
 
     if (my $input_aln = $self->_dumpMultipleAlignmentStructToWorkdir($nc_tree) ) {
         $self->param('input_aln', $input_aln);
@@ -144,8 +156,7 @@ sub _run_fasttree {
     my $root_id = $self->param('nc_tree')->root_id;
     my $fasttree_tag = $root_id . ".". $self->worker->process_id . ".fasttree";
 
-    my $fasttree_exe = $self->param('fasttree_exe')
-        or die "'fasttree_exe' is an obligatory parameter";
+    my $fasttree_exe = $self->param_required('fasttree_exe');
 
     die "Cannot execute '$fasttree_exe'" unless(-x $fasttree_exe);
 
@@ -177,8 +188,7 @@ sub _run_parsimonator {
     my $root_id = $self->param('nc_tree')->root_id;
     my $parsimonator_tag = $root_id . "." . $self->worker->process_id . ".parsimonator";
 
-    my $parsimonator_exe = $self->param('parsimonator_exe')
-        or die "'parsimonator_exe' is an obligatory parameter";
+    my $parsimonator_exe = $self->param_required('parsimonator_exe');
 
     die "Cannot execute '$parsimonator_exe'" unless(-x $parsimonator_exe);
 
@@ -207,14 +217,15 @@ sub _run_raxml_light {
 
     my $raxmlight_tag = $root_id . "." . $self->worker->process_id . ".raxmlight";
 
-    my $raxmlLight_exe = $self->param('raxmlLight_exe')
-        or die "'raxmlLight_exe' is an obligatory parameter";
+    my $raxmlLight_exe = $self->param_required('raxmlLight_exe');
+    my $raxml_number_of_cores = $self->param('raxml_number_of_cores');
 
     die "Cannot execute '$raxmlLight_exe'" unless(-x $raxmlLight_exe);
 
     my $tag = defined $self->param('raxmlLightTag') ? $self->param('raxmlLightTag') : 'ft_it_ml';
 #    my $tag = 'ft_it_ml';
     my $cmd = $raxmlLight_exe;
+    $cmd .= " -T $raxml_number_of_cores";
     $cmd .= " -m GTRGAMMA";
     $cmd .= " -s $aln_file";
     $cmd .= " -t $parsimony_tree";
@@ -253,15 +264,8 @@ sub _dumpMultipleAlignmentStructToWorkdir {
   open(OUTSEQ, ">$aln_file")
     or $self->throw("Error opening $aln_file for write");
 
-  # Using append_taxon_id will give nice seqnames_taxonids needed for
-  # njtree species_tree matching
-  my %sa_params = ($self->param('use_genomedb_id')) ?	('-APPEND_GENOMEDB_ID', 1) : ('-APPEND_TAXON_ID', 1);
-
-  my $sa = $tree->get_SimpleAlign
-    (
-     -id_type => 'MEMBER',
-     %sa_params,
-    );
+  $self->prepareTemporaryMemberNames($tree);
+  my $sa = $tree->get_SimpleAlign(-id_type => 'TMP');
   $sa->set_displayname_flat(1);
 
     # Aln in fasta format (if needed)

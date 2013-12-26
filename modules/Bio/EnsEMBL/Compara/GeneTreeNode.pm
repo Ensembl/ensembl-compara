@@ -1,12 +1,21 @@
 =head1 LICENSE
 
-  Copyright (c) 1999-2013 The European Bioinformatics Institute and
-  Genome Research Limited.  All rights reserved.
+Copyright [1999-2013] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
-  This software is distributed under a modified Apache license.
-  For license details, please see
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
 
-   http://www.ensembl.org/info/about/code_licence.html
+     http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+
+=cut
+
 
 =head1 CONTACT
 
@@ -35,14 +44,6 @@ Phylogenetic tree
 
 Ensembl Team. Individual contributions can be found in the CVS log.
 
-=head1 MAINTAINER
-
-$Author$
-
-=head VERSION
-
-$Revision$
-
 =head1 APPENDIX
 
 The rest of the documentation details each of the object methods.
@@ -53,6 +54,7 @@ Internal methods are usually preceded with an underscore (_)
 package Bio::EnsEMBL::Compara::GeneTreeNode;
 
 use strict;
+use warnings;
 
 use IO::File;
 
@@ -62,6 +64,151 @@ use Bio::EnsEMBL::Utils::Exception;
 use Bio::EnsEMBL::Compara::AlignedMemberSet;
 
 use base ('Bio::EnsEMBL::Compara::NestedSet');
+
+# Attributes / tags
+
+=head2 species_tree_node
+
+  Description: Getter for the node in the species tree the current node refers to
+
+=cut
+
+sub species_tree_node {
+    my $self = shift;
+    if ($self->get_value_for_tag('species_tree_node_id') and not $self->{_species_tree_node}) {
+        $self->{_species_tree_node} = $self->adaptor->db->get_SpeciesTreeNodeAdaptor->fetch_node_by_node_id($self->get_value_for_tag('species_tree_node_id'));
+    }
+    return $self->{_species_tree_node};
+}
+
+
+=head2 _species_tree_node_id
+
+  Description: Internal getter for the node ID of the species tree node related
+               to the current gene tree node
+
+=cut
+
+sub _species_tree_node_id {
+    my $self = shift;
+    return $self->get_value_for_tag('species_tree_node_id')
+}
+
+
+=head2 taxonomy_level
+
+  Example    : $taxonomy_level = $homology->taxonomy_level();
+  Description: getter of string description of homology taxonomy_level.
+               Examples: 'Chordata', 'Euteleostomi', 'Homo sapiens'
+  Returntype : string
+  Exceptions : none
+  Caller     : general
+
+=cut
+
+sub taxonomy_level {
+    my $self = shift;
+    return undef unless $self->species_tree_node();
+    return $self->species_tree_node()->node_name();
+}
+
+
+=head2 taxon_id
+
+  Description: DEPRECATED: GeneTreeNode::taxon_id is deprecated and will be removed in e76. Please use GeneTreeNode::species_tree_node()->taxon_id() instead
+
+=cut
+
+sub taxon_id {  ## DEPRECATED
+    my $self = shift;
+    deprecate('GeneTreeNode::taxon_id is deprecated and will be removed in e76, Please use GeneTreeNode::species_tree_node()->taxon_id() instead');
+    return undef unless $self->species_tree_node();
+    return $self->species_tree_node()->taxon_id;
+}
+
+
+=head2 taxon
+
+  Description: DEPRECATED: GeneTreeNode::taxon is deprecated and will be removed in e76, Please use GeneTreeNode::species_tree_node()->taxon() instead
+
+=cut
+
+sub taxon {  ## DEPRECATED
+    my $self = shift;
+    deprecate('GeneTreeNode::taxon is deprecated and will be removed in e76, Please use GeneTreeNode::species_tree_node()->taxon() instead');
+    return undef unless $self->species_tree_node();
+    return $self->species_tree_node()->taxon;
+}
+
+
+=head2 node_type
+
+  Description: Getter for the node_type attribute. It shows the event that took place
+               at that node. Currently, one of "duplication", "speciation", "dubious",
+               and "gene_split"
+
+=cut
+
+sub node_type {
+    my $self = shift;
+    return $self->get_value_for_tag('node_type');
+}
+
+sub _newick_dup_code {
+    my $self = shift;
+    my $node_type = $self->node_type;
+    return 'D=N' if ($node_type eq 'speciation');
+    return 'DD=Y' if ($node_type eq 'dubious');
+    return 'D=Y';
+}
+
+
+=head2 lost_taxa
+
+  Description: Returns the list of the taxon ID (cf the NCBI database) of the taxa
+               that have lost that gene on the branch leading to the current node
+
+=cut
+
+sub lost_taxa {
+    my $self = shift;
+    unless ($self->{_lost_species_tree_nodes}) {
+        my @nodes;
+        foreach my $dbID (@{$self->get_all_values_for_tag('lost_species_tree_node_id')}) {
+            push @nodes, $self->adaptor->db->get_SpeciesTreeNodeAdaptor->fetch_node_by_node_id($dbID);
+        }
+        $self->{_lost_species_tree_nodes} = \@nodes;
+    }
+    return $self->{_lost_species_tree_nodes};
+}
+
+
+=head2 duplication_confidence_score
+
+  Description: Returns the confidence score of the duplication node (between 0 and 1)
+               "dubious" nodes always return 0, "speciation" nodes always return undef
+
+=cut
+
+sub duplication_confidence_score {
+    my $self = shift;
+    return $self->get_value_for_tag('duplication_confidence_score');
+}
+
+
+=head2 bootstrap
+
+  Description: Returns the bootstrap value of that node (between 0 and 100)
+
+=cut
+
+sub bootstrap {
+    my $self = shift;
+    return $self->get_value_for_tag('bootstrap');
+}
+
+
+
 
 
 sub tree {
@@ -141,7 +288,7 @@ sub get_AlignedMemberSet {
         -adaptor => $self->adaptor,
         -method_link_species_set_id => $self->tree->method_link_species_set_id,
         -stable_id => $self->tree->stable_id,
-        -version => sprintf("%d.%d", $self->tree->version, $self->node_id),
+        -version => sprintf("%d.%d", $self->tree->version || 0, $self->node_id),
     );
     foreach my $member (@{$self->get_all_leaves}) {
         $set->add_Member($member) if $member->isa('Bio::EnsEMBL::Compara::GeneTreeMember');
@@ -226,6 +373,23 @@ sub keep_nodes_by_taxon_ids {
   return $self->remove_nodes(\@to_delete);
 
 }
+
+
+sub get_tagvalue {
+    my $self = shift;
+    my $tag = shift;
+    my $default = shift;
+
+    if (($tag eq 'taxon_id') or ($tag eq 'taxon_name')) {
+        deprecate("The $tag tag has been deprecated. Please use species_tree_node() from the gene-tree node to get taxon information");
+        if (not $self->has_tag($tag) and $self->has_tag('species_tree_node_id')) {
+            $self->add_tag('taxon_id', $self->species_tree_node->taxon_id);
+            $self->add_tag('taxon_name', $self->species_tree_node->node_name);
+        }
+    }
+    return $self->SUPER::get_tagvalue($tag, $default);
+}
+
 
 1;
 

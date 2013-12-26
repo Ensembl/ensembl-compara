@@ -1,27 +1,52 @@
+=head1 LICENSE
+
+Copyright [1999-2013] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+     http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+
+=cut
+
 package Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::StoreTree;
 
 use strict;
+use warnings;
 
 use Data::Dumper;
 
+use Bio::AlignIO;
+
 use Bio::EnsEMBL::Utils::Scalar qw(:assert);
+use Bio::EnsEMBL::Utils::SqlHelper;
 use Bio::EnsEMBL::Compara::AlignedMember;
 use Bio::EnsEMBL::Compara::Graph::NewickParser;
 
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
-sub _name_for_prot {
+
+sub prepareTemporaryMemberNames {
     my $self = shift;
-    my $prot = shift;
-    return ($prot->member_id)."_".($self->param('use_genomedb_id') ? $prot->genome_db_id : $prot->taxon_id);
+    my $gene_tree = shift;
+
+    my $lookup = eval($self->compara_dba->get_MethodLinkSpeciesSetAdaptor->fetch_by_dbID($self->param_required('mlss_id'))->get_value_for_tag('gdb2stn'));
+    foreach my $member (@{$gene_tree->get_all_Members}) {
+        $member->{_tmp_name} = sprintf('%d_%d', $member->member_id, $lookup->{$member->genome_db_id});
+    }
 }
 
 sub dumpTreeMultipleAlignmentToWorkdir {
   my $self = shift;
   my $gene_tree = shift;
-  my $convert_to_stockholm = shift;
   
-  my $leafcount = scalar(@{$gene_tree->get_all_Members});
 
   my $file_root = $self->worker_temp_directory. ($gene_tree->dbID || $gene_tree->gene_align_id);
   $file_root =~ s/\/\//\//g;  # converts any // in path to /
@@ -29,15 +54,13 @@ sub dumpTreeMultipleAlignmentToWorkdir {
   my $aln_file = $file_root . '.aln';
   return $aln_file if(-e $aln_file);
   if($self->debug) {
+    my $leafcount = scalar(@{$gene_tree->get_all_Members});
     printf("dumpTreeMultipleAlignmentToWorkdir : %d members\n", $leafcount);
     print("aln_file = '$aln_file'\n");
   }
 
-  # Using append_taxon_id will give nice seqnames_taxonids needed for
-  # njtree species_tree matching
-  my %sa_params = $self->param('use_genomedb_id') ? ('-APPEND_GENOMEDB_ID', 1) : ('-APPEND_TAXON_ID', 1);
-
   print STDERR "fetching alignment\n" if ($self->debug);
+  $self->prepareTemporaryMemberNames($gene_tree);
 
   ########################################
   # Gene split mirroring code
@@ -51,15 +74,14 @@ sub dumpTreeMultipleAlignmentToWorkdir {
     $sth->execute($self->param('gene_tree_id'));
     my $gene_splits = $sth->fetchall_arrayref();
     $sth->finish;
-    $sth = $self->compara_dba->dbc->prepare('SELECT node_id FROM split_genes JOIN gene_tree_node USING (member_id) WHERE root_id = ? AND gene_split_id = ?');
+    $sth = $self->compara_dba->dbc->prepare('SELECT node_id FROM split_genes JOIN gene_tree_node USING (member_id) WHERE root_id = ? AND gene_split_id = ? ORDER BY member_id');
     foreach my $gene_split (@$gene_splits) {
       $sth->execute($self->param('gene_tree_id'), $gene_split->[0]);
       my $partial_genes = $sth->fetchall_arrayref;
       my $node1 = shift @$partial_genes;
       my $protein1 = $gene_tree->root->find_leaf_by_node_id($node1->[0]);
       #print STDERR "node1 ", $node1, " ", $protein1, "\n";
-      my $name1 = $self->_name_for_prot($protein1);
-      my $cdna = $protein1->cdna_alignment_string;
+      my $cdna = $protein1->alignment_string('cds');
       print STDERR "cnda $cdna\n" if $self->debug;
         # We start with the original cdna alignment string of the first gene, and
         # add the position in the other cdna for every gap position, and iterate
@@ -75,18 +97,17 @@ sub dumpTreeMultipleAlignmentToWorkdir {
       foreach my $node2 (@$partial_genes) {
         my $protein2 = $gene_tree->root->find_leaf_by_node_id($node2->[0]);
         #print STDERR "node2 ", $node2, " ", $protein2, "\n";
-        my $name2 = $self->_name_for_prot($protein2);
-        $split_genes{$name2} = $name1;
+        $split_genes{$protein2->{_tmp_name}} = $protein1->{_tmp_name};
         #print STDERR Dumper(%split_genes);
-        print STDERR "Joining in ", $protein1->stable_id, " / $name1 and ", $protein2->stable_id, " / $name2 in input cdna alignment\n" if ($self->debug);
-        my $other_cdna = $protein2->cdna_alignment_string;
+        print STDERR "Joining in ", $protein1->stable_id, " and ", $protein2->stable_id, " in input cdna alignment\n" if ($self->debug);
+        my $other_cdna = $protein2->alignment_string('cds');
         print STDERR "cnda2 $other_cdna\n" if $self->debug;
         $cdna =~ s/-/substr($other_cdna, pos($cdna), 1)/eg;
         print STDERR "cnda $cdna\n" if $self->debug;
       }
-        # We then directly override the cached cdna_alignment_string
-        # hash, which will be used next time is called for
-      $protein1->{'cdna_alignment_string'} = $cdna;
+        # We then directly override the cached alignment_string_cds
+        # entry in the hash, which will be used next time it is called
+      $protein1->{'alignment_string_cds'} = $cdna;
     }
 
     # Removing duplicate sequences of split genes
@@ -96,10 +117,9 @@ sub dumpTreeMultipleAlignmentToWorkdir {
  
   # Getting the multiple alignment
   my $sa = $gene_tree->get_SimpleAlign(
-     -id_type => 'MEMBER',
-     -cdna => $self->param('cdna'),
+     -id_type => 'TMP',
      -stop2x => 1,
-     %sa_params,
+     $self->param('cdna') ? (-seq_type => 'cds') : (),
   );
   if ($self->param('check_split_genes')) {
     foreach my $gene_to_remove (keys %{$self->param('split_genes')}) {
@@ -117,27 +137,39 @@ sub dumpTreeMultipleAlignmentToWorkdir {
     die "There are no alignments in '$aln_file', cannot continue";
   }
 
-  return $aln_file unless $convert_to_stockholm;
-
-  print STDERR "Using sreformat to change to stockholm format\n" if ($self->debug);
-  my $stk_file = $file_root . '.stk';
-
-  my $sreformat_exe = $self->param('sreformat_exe')
-        or die "'sreformat_exe' is an obligatory parameter";
-
-  die "Cannot execute '$sreformat_exe'" unless(-x $sreformat_exe);
-
-  my $cmd = "$sreformat_exe stockholm $aln_file > $stk_file";
-
-  if(system($cmd)) {
-    die "Error running command [$cmd] : $!";
-  }
-  unless(-e $stk_file and -s $stk_file) {
-    die "'$cmd' did not produce any data in '$stk_file'";
-  }
-
-  return $stk_file;
+  return $aln_file
 }
+
+
+sub dumpAlignedMemberSetAsStockholm {
+
+    my $self = shift;
+    my $gene_tree = shift;
+
+    my $file_root = $self->worker_temp_directory.'/align';
+    $file_root =~ s/\/\//\//g;  # converts any // in path to /
+
+    print STDERR "fetching alignment\n" if ($self->debug);
+
+    # Getting the multiple alignment
+    my $sa = $gene_tree->get_SimpleAlign(
+            -id_type => 'MEMBER',
+            $self->param('cdna') ? (-seq_type => 'cds') : (),
+            -stop2x => 1,
+            );
+
+    $sa->set_displayname_flat(1);
+
+    # Now outputing the alignment
+    my $stk_file = $file_root . '.stk';
+    open(OUTSEQ, ">$stk_file") or die "Could not open '$stk_file' for writing : $!";
+    my $alignIO = Bio::AlignIO->newFh( -fh => \*OUTSEQ, -format => "stockholm");
+    print $alignIO $sa;
+    close OUTSEQ;
+    return $stk_file;
+}
+
+
 
 sub store_genetree
 {
@@ -148,8 +180,22 @@ sub store_genetree
     printf("PHYML::store_genetree\n") if($self->debug);
 
     $tree->root->build_leftright_indexing(1);
-    $self->compara_dba->get_GeneTreeAdaptor->store($tree);
-    $self->compara_dba->get_GeneTreeNodeAdaptor->delete_nodes_not_in_tree($tree->root);
+
+    # Make sure the same commands are inside and outside of the transaction
+    if ($self->param('do_transactions')) {
+        my $helper = Bio::EnsEMBL::Utils::SqlHelper->new(-DB_CONNECTION => $self->compara_dba->dbc);
+        $helper->transaction(
+            -RETRY => 3, -PAUSE => 5,
+            -CALLBACK => sub {
+                $self->compara_dba->get_GeneTreeAdaptor->store($tree);
+                $self->compara_dba->get_GeneTreeNodeAdaptor->delete_nodes_not_in_tree($tree->root);
+            }
+        );
+    } else {
+        $self->compara_dba->get_GeneTreeAdaptor->store($tree);
+        $self->compara_dba->get_GeneTreeNodeAdaptor->delete_nodes_not_in_tree($tree->root);
+    }
+
 
     if($self->debug >1) {
         print("done storing - now print\n");
@@ -173,7 +219,9 @@ sub store_node_tags
     }
 
     my $node_type = '';
-    if (not $node->is_leaf) {
+    if ($node->is_leaf) {
+        $node->delete_tag('node_type');
+    } else {
         if ($node->has_tag('gene_split')) {
             $node_type = 'gene_split';
         } elsif ($node->get_tagvalue("DD", 0)) {
@@ -187,41 +235,44 @@ sub store_node_tags
         print "node_type: $node_type\n" if ($self->debug);
     }
 
+    $node->delete_tag('lost_species_tree_node_id');
     if ($node->has_tag("E")) {
         my $n_lost = $node->get_tagvalue("E");
         $n_lost =~ s/.{2}//;        # get rid of the initial $-
         my @lost_taxa = split('-', $n_lost);
-        my $topup = 0;   # is used to delete all the pre-existing lost_taxon_id
+        my $topup = 0;
         foreach my $taxon (@lost_taxa) {
-            print "lost_taxon_id : $taxon\n" if ($self->debug);
-            $node->store_tag('lost_taxon_id', $taxon, $topup);
+            print "lost_species_tree_node_id : $taxon\n" if ($self->debug);
+            $node->store_tag('lost_species_tree_node_id', $taxon, $topup);
             $topup = 1;
         }
     }
+    return if $node->is_leaf;
 
+    $node->delete_tag('tree_support');
     if ($node->has_tag('T') and $self->param('store_tree_support')) {
         my $binary_support = $node->get_tagvalue('T');
         my $i = 0;
-        my $topup = 0;   # is used to delete all the pre-existing tree_support
         while ($binary_support) {
             if ($binary_support & 1) {
                 print 'tree_support : ', $ref_support->[$i], "\n" if ($self->debug);
-                $node->store_tag('tree_support', $ref_support->[$i], $topup);
-                $topup = 1;
+                $node->store_tag('tree_support', $ref_support->[$i], 1);
             }
             $binary_support >>= 1;
             $i++;
         }
     }
 
-    my %mapped_tags = ('B' => 'bootstrap', 'SIS' => 'species_intersection_score', 'S' => 'treebest_taxon_id');
+    my %mapped_tags = ('B' => 'bootstrap', 'SIS' => 'species_intersection_score', 'S' => 'species_tree_node_id');
     foreach my $tag (keys %mapped_tags) {
-        next unless $node->has_tag($tag);
-        my $value = $node->get_tagvalue($tag);
         my $db_tag = $mapped_tags{$tag};
-
-        $node->store_tag($db_tag, $value);
-        print "$tag as $db_tag: $value\n" if ($self->debug);
+        if ($node->has_tag($tag)) {
+            my $value = $node->get_tagvalue($tag);
+            $node->store_tag($db_tag, $value);
+            print "$tag as $db_tag: $value\n" if ($self->debug);
+        } else {
+            $node->delete_tag($db_tag);
+        }
     }
 
     foreach my $child (@{$node->children}) {
@@ -263,8 +314,7 @@ sub parse_newick_into_tree {
         $newnode->add_child($othernode);
         $newnode->add_child($node);
         $newnode->add_tag('gene_split', 1);
-        $newnode->add_tag('T', $othernode->get_tagvalue('T'));
-        $othernode->remove_tag('T');
+        $newnode->add_tag('S', $othernode->get_tagvalue('S'));
         $newnode->print_tree(10) if $self->debug;
     }
   }
@@ -370,7 +420,21 @@ sub store_tree_into_clusterset {
     $clusterset->root->add_child($clusterset_leaf);
     $clusterset_leaf->add_child($newtree->root);
     $newtree->clusterset_id($clusterset->clusterset_id);
-    $clusterset->adaptor->db->get_GeneTreeNodeAdaptor->store_nodes_rec($clusterset_leaf);
+
+    # Make sure the same commands are inside and outside of the transaction
+    if ($self->param('do_transactions')) {
+        my $helper = Bio::EnsEMBL::Utils::SqlHelper->new(-DB_CONNECTION => $self->compara_dba->dbc);
+        $helper->transaction(
+            -RETRY => 3, -PAUSE => 5,
+            -CALLBACK => sub {
+                $clusterset->adaptor->db->get_GeneTreeNodeAdaptor->store_nodes_rec($clusterset_leaf);
+            }
+        );
+    } else {
+        $clusterset->adaptor->db->get_GeneTreeNodeAdaptor->store_nodes_rec($clusterset_leaf);
+    }
+
+
 
 }
 
@@ -392,7 +456,6 @@ sub fetch_or_create_other_tree {
         # Reformat things
         foreach my $member (@{$newtree->get_all_Members}) {
             $member->cigar_line(undef);
-            $member->stable_id($self->_name_for_prot($member));
             $member->{'_children_loaded'} = 1;
         }
         $newtree->ref_root_id($tree->root_id);

@@ -1,6 +1,21 @@
-#
-# You may distribute this module under the same terms as perl itself
-#
+=head1 LICENSE
+
+Copyright [1999-2013] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+     http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+
+=cut
+
 # POD documentation - main docs before the code
 
 =pod 
@@ -57,19 +72,17 @@ use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 sub fetch_input {
     my $self = shift @_;
 
-    my $mlss_id      = $self->param('mlss_id') or die "'mlss_id' is an obligatory parameter";
+    my $mlss_id      = $self->param_required('mlss_id');
 
-    my $genome_db_id = $self->param('genome_db_id') or die "'genome_db_id' is an obligatory parameter";
+    my $genome_db_id = $self->param_required('genome_db_id');
     my $genome_db    = $self->compara_dba->get_GenomeDBAdaptor->fetch_by_dbID($genome_db_id) or die "no genome_db for id='$genome_db_id'";
 
-    my $per_genome_suffix = $self->param('per_genome_suffix') || ($genome_db->name . '_' . $genome_db_id);
-    my $table_name  = 'peptide_align_feature_' . $per_genome_suffix;
+    my $table_name  = 'peptide_align_feature_' . $genome_db_id;
     $self->param('table_name', $table_name);
 
     unless(defined($self->param('outgroup_category'))) {    # it can either be passed in or computed
-        my $outgroups = $self->param('outgroups') || [];
-        my $gdb_in_outgroups  = { map { ($_ => 1) } @$outgroups }->{ $genome_db_id } || 0;
-        my $outgroup_category = $gdb_in_outgroups ? 2 : 1;
+        my $outgroups = $self->param('outgroups') || {};
+        my $outgroup_category =  $outgroups->{$genome_db->name} || 1;
         $self->param('outgroup_category', $outgroup_category);
     }
 }

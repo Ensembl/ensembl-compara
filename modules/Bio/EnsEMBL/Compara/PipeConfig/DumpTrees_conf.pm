@@ -1,3 +1,21 @@
+=head1 LICENSE
+
+Copyright [1999-2013] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+     http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+
+=cut
+
 
 =pod 
 
@@ -44,23 +62,15 @@ sub default_options {
     return {
         %{ $self->SUPER::default_options() },               # inherit other stuff from the base class
 
-        'rel'               => 72,                                              # current release number
         'rel_suffix'        => '',                                              # empty string by default
-        'rel_with_suffix'   => $self->o('rel').$self->o('rel_suffix'),          # for convenience
+        'rel_with_suffix'   => $self->o('ensembl_release').$self->o('rel_suffix'),          # for convenience
         'rel_coord'         => $self->o('ENV', 'USER'),                         # by default, the release coordinator is doing the dumps
         # Commented out to make sure people define it on the command line
         'member_type'       => 'protein',                                       # either 'protein' or 'ncrna'
 
         'pipeline_name'     => $self->o('member_type').'_'.$self->o('rel_with_suffix').'_dumps', # name used by the beekeeper to prefix job names on the farm
 
-        'rel_db'      => {
-            -host         => 'compara3',
-            -dbname       => sprintf('%s_ensembl_compara_%s', $self->o('rel_coord'), $self->o('rel')),
-            -port         => 3306,
-            -user         => 'ensro',
-            -pass         => '',
-            -driver       => 'mysql',
-        },
+        'rel_db'            => sprintf('mysql://ensro@%s/%s_ensembl_compara_%s', $self->o('rel_db_host'), $self->o('rel_coord'), $self->o('ensembl_release')),
 
         'capacity'    => 100,                                                       # how many trees can be dumped in parallel
         'batch_size'  => 25,                                                        # how may trees' dumping jobs can be batched together
@@ -97,8 +107,8 @@ sub resource_classes {
     my ($self) = @_;
     return {
         %{$self->SUPER::resource_classes},  # inherit 'default' from the parent class
-         '500Mb_job'    => {'LSF' => '-C0 -M500000   -R"select[mem>500]   rusage[mem=500]"' },
-         '1Gb_job'      => {'LSF' => '-C0 -M1000000  -R"select[mem>1000]  rusage[mem=1000]"' },
+         '500Mb_job'    => {'LSF' => '-C0 -M500   -R"select[mem>500]   rusage[mem=500]"' },
+         '1Gb_job'      => {'LSF' => '-C0 -M1000  -R"select[mem>1000]  rusage[mem=1000]"' },
     };
 }
 
@@ -132,8 +142,8 @@ sub pipeline_analyses {
           { -logic_name => 'dump_for_uniprot',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
             -parameters => {
-                'db_conn'       => $self->dbconn_2_mysql('rel_db', 1),
-                'file_name'     => sprintf('ensembl.GeneTree_content.e%d.txt', $self->o('rel')),
+                'db_conn'       => $self->o('rel_db'),
+                'file_name'     => sprintf('ensembl.GeneTree_content.e%d.txt', $self->o('ensembl_release')),
                 'target_dir'    => $self->o('target_dir'),
                 'query'         => sprintf q|
                     SELECT 
@@ -153,7 +163,7 @@ sub pipeline_analyses {
                 |, $self->o('member_type'), 'default'
             },
             -input_ids => [
-                {'cmd' => 'mysql #db_conn# -N -q -e "#query#" > #target_dir#/#file_name#',},
+                {'cmd' => 'echo "#query# | db_cmd.pl -url #db_conn# -extra "-N -q" > #target_dir#/#file_name#',},
             ],
             -flow_into => {
                 1 => { 'archive_long_files' => { 'full_name' => '#target_dir#/#file_name#' } },
@@ -172,10 +182,11 @@ sub pipeline_analyses {
             },
             -input_ids => [
                 {'id_range' => '#'.$self->o('member_type').'_tree_range#', 'file' => '#target_dir#/xml/#name_root#.allhomologies.orthoxml.xml'},
+                {'id_range' => '#'.$self->o('member_type').'_tree_range#', 'file' => '#target_dir#/xml/#name_root#.allhomologies_strict.orthoxml.xml', 'strict_orthologies' => 1},
             ],
             -flow_into => {
                 1 => {
-                    'archive_long_files' => { 'full_name' => '#target_dir#/xml/#name_root#.allhomologies.orthoxml.xml', },
+                    'archive_long_files' => { 'full_name' => '#file#', },
                     }
             },
         },
@@ -188,16 +199,14 @@ sub pipeline_analyses {
                 'target_dir'            => $self->o('target_dir'),
                 'tree_type'             => 'tree',
                 'member_type'           => $self->o('member_type'),
-                'file'                  => '#target_dir#/xml/#name_root#.alltrees#filesuffix#.orthoxml.xml',
             },
             -input_ids => [
-                {'filesuffix' => ''},
-                {'filesuffix' => '_possorthol', 'possible_orth' => 1},
+                {'file' => '#target_dir#/xml/#name_root#.alltrees.orthoxml.xml',}
             ],
             -rc_name => '1Gb_job',
             -flow_into => {
                 1 => {
-                    'archive_long_files' => { 'full_name' => '#target_dir#/xml/#name_root#.alltrees#filesuffix#.orthoxml.xml' },
+                    'archive_long_files' => { 'full_name' => '#file#' },
                     }
             },
         },
@@ -206,10 +215,10 @@ sub pipeline_analyses {
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
             -parameters => {
                 'db_conn'               => $self->o('rel_db'),
-                'query'                 => sprintf 'SELECT root_id AS tree_id FROM gene_tree_root WHERE tree_type = "tree" AND clusterset_id = "default" AND member_type = "%s"', $self->o('member_type'),
+                'inputquery'                 => sprintf 'SELECT root_id AS tree_id FROM gene_tree_root WHERE tree_type = "tree" AND clusterset_id = "default" AND member_type = "%s"', $self->o('member_type'),
             },
             -input_ids => [
-                { 'inputquery' => '#query#', },
+                {},
             ],
             -meadow_type => 'LOCAL',
             -flow_into => {
@@ -221,16 +230,16 @@ sub pipeline_analyses {
         {   -logic_name    => 'dump_a_tree',
             -module        => 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
             -parameters    => {
-                'db_url'            => $self->dbconn_2_url('rel_db'),
+                'db_url'            => $self->o('rel_db'),
                 'dump_script'       => $self->o('dump_script'),
                 'work_dir'          => $self->o('work_dir'),
-                'protein_tree_args' => '-nh 1 -a 1 -nhx 1 -f 1 -fc 1 -oxml 1 -oxmlp 1 -pxml 1',
-                'ncrna_tree_args'   => '-nh 1 -a 1 -nhx 1 -f 1 -oxml 1 -oxmlp 1 -pxml 1',
+                'protein_tree_args' => '-nh 1 -a 1 -nhx 1 -f 1 -fc 1 -oxml 1 -pxml 1',
+                'ncrna_tree_args'   => '-nh 1 -a 1 -nhx 1 -f 1 -oxml 1 -pxml 1',
                 'cmd'               => '#dump_script# --url #db_url# --dirpath #work_dir#/#hash_dir# --tree_id #tree_id# #'.$self->o('member_type').'_tree_args#',
             },
             -hive_capacity => $self->o('capacity'),       # allow several workers to perform identical tasks in parallel
             -batch_size    => $self->o('batch_size'),
-            -rc_name       => '500Mb_job',
+            -rc_name       => '1Gb_job',
         },
 
         {   -logic_name => 'generate_collations',
@@ -238,7 +247,7 @@ sub pipeline_analyses {
             -parameters => {
                 'name_root'         => $self->o('name_root'),
                 'protein_tree_list' => [ 'aln.emf', 'nh.emf', 'nhx.emf', 'aa.fasta', 'cds.fasta' ],
-                'ncrna_tree_list'   => [ 'aln.emf', 'nh.emf', 'nhx.emf', 'aa.fasta' ],
+                'ncrna_tree_list'   => [ 'aln.emf', 'nh.emf', 'nhx.emf', 'nt.fasta' ],
                 'inputlist'         => '#'.$self->o('member_type').'_tree_list#',
                 'column_names'      => [ 'extension' ],
             },
@@ -266,8 +275,8 @@ sub pipeline_analyses {
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
             -parameters => {
                 'name_root'         => $self->o('name_root'),
-                'protein_tree_list' => [ 'orthoxml.xml', 'orthoxml_possorthol.xml', 'phyloxml.xml' ],
-                'ncrna_tree_list'   => [ 'orthoxml.xml', 'orthoxml_possorthol.xml', 'phyloxml.xml' ],
+                'protein_tree_list' => [ 'orthoxml.xml', 'phyloxml.xml' ],
+                'ncrna_tree_list'   => [ 'orthoxml.xml', 'phyloxml.xml' ],
                 'inputlist'         => '#'.$self->o('member_type').'_tree_list#',
                 'column_names'      => [ 'extension' ],
             },

@@ -1,9 +1,27 @@
+=head1 LICENSE
+
+Copyright [1999-2013] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+     http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+
+=cut
+
 
 =pod 
 
 =head1 NAME
 
-Bio::EnsEMBL::Compara::RunnableDB::LoadOneGenomeDB
+Bio::EnsEMBL::Compara::RunnableDB::LoadMembersFromFiles
 
 =head1 DESCRIPTION
 
@@ -87,9 +105,9 @@ sub write_output {
             if (exists $gene_coordinates->{$sequence->id}) {
                 my $coord = $gene_coordinates->{$sequence->id};
                 $gene_member->chr_name($coord->[0]);
-                $gene_member->chr_start($coord->[1]);
-                $gene_member->chr_end($coord->[2]);
-                $gene_member->chr_strand($coord->[3]);
+                $gene_member->dnafrag_start($coord->[1]);
+                $gene_member->dnafrag_end($coord->[2]);
+                $gene_member->dnafrag_strand($coord->[3]);
             } else {
                 warn $sequence->id, " does not have gene coordinates\n";
             }
@@ -109,9 +127,9 @@ sub write_output {
             if (exists $cds_coordinates->{$sequence->id}) {
                 my $coord = $cds_coordinates->{$sequence->id};
                 $pep_member->chr_name($coord->[0]);
-                $pep_member->chr_start($coord->[1]);
-                $pep_member->chr_end($coord->[2]);
-                $pep_member->chr_strand($coord->[3]);
+                $pep_member->dnafrag_start($coord->[1]);
+                $pep_member->dnafrag_end($coord->[2]);
+                $pep_member->dnafrag_strand($coord->[3]);
             } else {
                 warn $sequence->id, " does not have cds coordinates\n";
             }
@@ -122,7 +140,6 @@ sub write_output {
             $seq_member_adaptor->_set_member_as_canonical($pep_member);
 
             if (exists $cds_seq->{$sequence->id}) {
-                $pep_member->sequence_cds( $cds_seq->{$sequence->id}->seq );
                 $sequence_adaptor->store_other_sequence($pep_member, $cds_seq->{$sequence->id}->seq, 'cds');
             } elsif ($self->param('need_cds_seq')) {
                 die $sequence->id, " does not have cds sequence\n";

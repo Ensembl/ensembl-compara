@@ -1,12 +1,21 @@
 =head1 LICENSE
 
-  Copyright (c) 1999-2013 The European Bioinformatics Institute and
-  Genome Research Limited.  All rights reserved.
+Copyright [1999-2013] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
-  This software is distributed under a modified Apache license.
-  For license details, please see
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
 
-    http://www.ensembl.org/info/about/code_licence.html
+     http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+
+=cut
+
 
 =head1 CONTACT
 
@@ -50,8 +59,9 @@ use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
 sub param_defaults {
     return {
-            'tree_fmt' => '%{n}%{":"d}',
+            'tree_fmt'   => '%{n}%{":"d}',
             'pvalue_lim' => 0.01,
+            'label'      => 'full_species_tree',
            };
 }
 
@@ -69,6 +79,11 @@ sub param_defaults {
 sub fetch_input {
     my ($self) = @_;
 
+    $self->param_required('mlss_id');
+
+    my $speciesTree_Adaptor = $self->compara_dba->get_SpeciesTreeAdaptor();
+    $self->param('speciesTree_Adaptor', $speciesTree_Adaptor);
+
     my $genomeDB_Adaptor = $self->compara_dba->get_GenomeDBAdaptor();
     $self->param('genomeDB_Adaptor', $genomeDB_Adaptor);
 
@@ -77,16 +92,12 @@ sub fetch_input {
 
     my $CAFETree_Adaptor = $self->compara_dba->get_CAFEGeneFamilyAdaptor();
     $self->param('cafeTree_Adaptor', $CAFETree_Adaptor);
-    print STDERR $CAFETree_Adaptor;
 
-    my $species_tree_meta_key = $self->param('species_tree_meta_key');
-
-    my $full_species_tree = $self->get_species_tree_string($species_tree_meta_key);
-    $self->param('full_species_tree', $full_species_tree);
+#    my $full_species_tree = $self->get_species_tree_string($label); ## Now in Runnable::BaseRunnable
+    my $full_species_tree = $self->compara_dba->get_SpeciesTreeAdaptor->fetch_by_method_link_species_set_id_label($self->param('mlss_id'), $self->param('label'));
+    $self->param('full_species_tree', $full_species_tree); ## This is the full tree, not the string
 
     $self->param('tree_fmt', '%{n}%{":"d}'); # format for the tree
-
-    die "mlss_id is an obligatory parameter\n" unless (defined $self->param('mlss_id'));
 
     my $cafe_species = eval $self->param('cafe_species');
     $self->param('cafe_species', $cafe_species);
@@ -100,89 +111,58 @@ sub fetch_input {
 
 sub run {
     my ($self) = @_;
-    my $species_tree_string = $self->param('full_species_tree');
+    my $species_tree = $self->param('full_species_tree');
+    my $species_tree_root = $species_tree->root;
+    $species_tree_root->print_tree(0.2);
     my $species = $self->param('cafe_species');
     my $fmt = $self->param('tree_fmt');
     my $mlss_id = $self->param('mlss_id');
     my $pvalue_lim = $self->param('pvalue_lim');
     print STDERR Dumper $species if ($self->debug());
-    my $eval_species_tree = Bio::EnsEMBL::Compara::Graph::NewickParser::parse_newick_into_tree($species_tree_string);
+#    my $eval_species_tree = Bio::EnsEMBL::Compara::Graph::NewickParser::parse_newick_into_tree($species_tree_string);
 
-    $self->include_distance_to_parent($eval_species_tree);
-    print STDERR "AFTER dtp:\n", $eval_species_tree->newick_format('ryo', $fmt), "\n" if ($self->debug());
-    $self->fix_ensembl_timetree_mya($eval_species_tree);
-    print STDERR "AFTER fix_mya:\n", $eval_species_tree->newick_format('ryo', $fmt), "\n" if ($self->debug());
-    $self->ensembl_timetree_mya_to_distance_to_parent($eval_species_tree);
-    print STDERR "AFTER mya:\n", $eval_species_tree->newick_format('ryo', $fmt), "\n" if ($self->debug());
-    $self->include_names($eval_species_tree);
-    print STDERR "AFTER names:\n", $eval_species_tree->newick_format('ryo', $fmt), "\n" if ($self->debug());
-    $self->ultrametrize($eval_species_tree);
-    print STDERR "AFTER ultrametrize:\n", $eval_species_tree->newick_format('ryo', $fmt), "\n" if ($self->debug());
-    my $binTree = $self->binarize($eval_species_tree);
-    print STDERR "AFTER binarize:\n", $binTree->newick_format('ryo', $fmt), "\n" if ($self->debug());
+    $self->include_distance_to_parent($species_tree_root);
+    $self->fix_ensembl_timetree_mya($species_tree_root);
+    $self->ensembl_timetree_mya_to_distance_to_parent($species_tree_root);
+    $self->include_names($species_tree_root);
+    $self->ultrametrize($species_tree_root);
+    my $binTree = $self->binarize($species_tree_root);
     $self->fix_zeros($binTree);
-    print STDERR "AFTER fixing the zeros:\n", $binTree->newick_format('ryo', $fmt), "\n" if ($self->debug());
-    my $cafeTree;
+
+    my $cafe_tree_root;
     if (defined $species) {
-        print STDERR "The tree is going to be pruned\n" if ($self->debug());
-        $cafeTree = $self->prune_tree($binTree, $species);
+        $cafe_tree_root = $self->prune_tree($binTree, $species);
     } else {
-        print STDERR "The tree is NOT going to be pruned\n" if ($self->debug());
-        $cafeTree = $binTree;
+        $cafe_tree_root = $binTree;
     }
-#     if ($self->debug) {
-#         $self->check_tree($cafeTree);
-#     }
+    if ($self->debug) {
+        $self->check_tree($cafe_tree_root);
+    }
+
+    ## The modified tree is put back in the species tree object
+    $species_tree->root($cafe_tree_root);
+
+    # Store the tree (At this point, it is a species tree not a CAFE tree)
+    my $speciesTree_Adaptor = $self->param('speciesTree_Adaptor');
+
+    my $cafe_tree_str = $cafe_tree_root->newick_format('ryo', $fmt);
+    print STDERR "Tree to store:\n$cafe_tree_str\n" if ($self->debug);
 
 
-    # Store the tree
-    my $cafeTree_Adaptor = $self->param('cafeTree_Adaptor');
-    my $cafeTreeStr = $cafeTree->newick_format('ryo', $fmt);
-    print STDERR "Tree to store:\n$cafeTreeStr\n" if ($self->debug);
+    $species_tree->species_tree($cafe_tree_str);
+    $species_tree->label('cafe');
+    $speciesTree_Adaptor->store($species_tree);
 
-    # The tree is inserted in the method_link_species_set_tag table
-    my $sql = "INSERT INTO method_link_species_set_tag VALUES(?,?,?)";
-    my $sth = $self->compara_dba->dbc->prepare($sql);
-    $sth->execute($mlss_id, 'cafe_tree_string', $cafeTreeStr);
-    $sth->finish;
-
-    # The tree is stored as a CAFEGeneFamily
-    my $tree = Bio::EnsEMBL::Compara::Graph::NewickParser::parse_newick_into_tree($cafeTreeStr, 'Bio::EnsEMBL::Compara::CAFEGeneFamily');
-    $tree->species_tree($cafeTreeStr);
-    $tree->pvalue_lim($pvalue_lim);
-    $tree->method_link_species_set_id($mlss_id);
-    $cafeTree_Adaptor->store_tree($tree);
 }
 
 sub write_output {
     my ($self) = @_;
-    # To CAFETable
-#     $self->dataflow_output_id (
-#                                {
-#                                 'cafe_tree_string_meta_key', $self->param('cafe_tree_string_meta_key'),
-#                                }, 1
-#                               );
 }
 
 
 #############################
 ## Internal methods #########
 #############################
-
-sub get_species_tree_string {
-    my ($self, $species_tree_meta_key) = @_;
-
-    my $table_name = 'meta';
-    my $table_key = 'meta_key';
-    my $table_column = 'meta_value';
-    my $table_value = $species_tree_meta_key;
-
-    my $sth = $self->compara_dba->dbc->prepare( "select $table_column from $table_name where $table_key=?" );
-    $sth->execute($table_value);
-    my ($species_tree_string) = $sth->fetchrow_array;
-    $sth->finish;
-    return $species_tree_string;
-}
 
 sub get_taxon_id_from_dbID {
     my ($self, $dbID) = @_;
@@ -205,18 +185,16 @@ sub is_in {
 sub include_distance_to_parent {
     my ($self, $tree) = @_;
     my $NCBItaxon_Adaptor = $self->param('NCBItaxon_Adaptor');
-
     my $nodes = $tree->get_all_nodes();
     for my $node (@$nodes) {
         unless ($node->is_leaf) {
-            my $taxon_id = $node->name();
+            my $taxon_id = $node->taxon_id();
             my $ncbiTaxon = $NCBItaxon_Adaptor->fetch_node_by_taxon_id($taxon_id);
             my $mya = $ncbiTaxon->get_tagvalue('ensembl timetree mya');
             for my $child (@{$node->children}) {
                 if ($mya) {
                     $child->distance_to_parent(int($mya));
                 } else {
-                    print STDERR "++ taxon_id " . $child->name() . " doesn't have 'ensembl timetree mya' tag (defaulting to 0)\n" if ($self->debug);
                     $child->distance_to_parent(0);
                 }
             }
@@ -241,7 +219,7 @@ sub fix_path {
                 next;
             }
             if ($node->parent()->distance_to_parent() < $node->distance_to_parent()) {
-                $node->distance_to_parent($node->parent()->distance_to_parent());
+                $node->distance_to_parent($node->parent()->distance_to_parent()) if ($node->parent->has_parent); ## The last if is because the root doesn't have proper mya set
             }
         } else {
             return
@@ -271,7 +249,7 @@ sub mya_to_dtp_1path {
                 return;
             }
         }
-        if ($node->distance_to_parent != 0) {
+        if ($node->distance_to_parent != 0 && $node->has_parent) {
             $dtp = $node->distance_to_parent - $d;
         }
         $node->distance_to_parent($dtp);
@@ -290,8 +268,8 @@ sub include_names {
     my $genomeDB_Adaptor = $self->param('genomeDB_Adaptor');
     my $leaves = $tree->get_all_leaves();
     for my $leaf ( @$leaves ) {
-        my $taxon_id = $leaf->name();
-        $taxon_id =~ s/\*//g;
+        my $taxon_id = $leaf->taxon_id();
+#        $taxon_id =~ s/\*//g;
         my $genomeDB = $genomeDB_Adaptor->fetch_by_taxon_id($taxon_id);
         my $name = $genomeDB->name();
         $name =~ s/_/\./g;
@@ -325,33 +303,43 @@ sub get_longest_path {
 
 sub binarize {
     my ($self, $orig_tree) = @_;
-    my $newTree = Bio::EnsEMBL::Compara::NestedSet->new();
+    my $newTree = $orig_tree->new();
     $newTree->name('root');
+    $newTree->taxon_id($orig_tree->taxon_id);
+    $newTree->genome_db_id($orig_tree->genome_db_id);
     $newTree->node_id('0');
-    _binarize($orig_tree, $newTree);
+    _binarize($orig_tree, $newTree, {});
     return $newTree;
 }
 
 sub _binarize {
-    my ($origTree, $binTree) = @_;
+    my ($origTree, $binTree, $taxon_ids) = @_;
     my $children = $origTree->children();
     for my $child (@$children) {
-        my $newNode = Bio::EnsEMBL::Compara::NestedSet->new();
-        $newNode->name($child->name());
+        my $newNode = $child->new();
+        $newNode->taxon_id($child->taxon_id);
+        $taxon_ids->{$child->parent->taxon_id}++;
+        $newNode->genome_db_id($child->genome_db_id);
+        $newNode->name($child->name() || $child->taxon_id); 
         $newNode->node_id($child->node_id());
         $newNode->distance_to_parent($child->distance_to_parent()); # no parent!!
+        $newNode->node_name($child->name);
         if (scalar @{$binTree->children()} > 1) {
             $child->disavow_parent();
-            my $newBranch = Bio::EnsEMBL::Compara::NestedSet->new();
+            my $newBranch = $child->new();
             for my $c (@{$binTree->children()}) {
                 $c->distance_to_parent(0);
                 $newBranch->add_child($c);
             }
             $binTree->add_child($newBranch);
-            $newBranch->name($newBranch->parent()->name());
+            $newBranch->name($newBranch->parent->name);
+            $newBranch->taxon_id($newBranch->parent->taxon_id);
+            $newBranch->genome_db_id($newBranch->parent->genome_db_id);
+            my $suffix = $taxon_ids->{$newBranch->parent->taxon_id} ? ".dup" . $taxon_ids->{$newBranch->parent->taxon_id} : "";
+            $newBranch->node_name($newBranch->parent->name . $suffix);
         }
         $binTree->add_child($newNode);
-        _binarize($child, $newNode);
+        _binarize($child, $newNode, $taxon_ids);
     }
 }
 
@@ -408,6 +396,10 @@ sub remove_nodes {
                 }
                 $node->disavow_parent();
                 if ($parent->has_parent) {
+                    ## We avoid having "_dup" nodes without no "_dup" versions
+                    if ($siblings->[0]->node_name =~ /_dup$/) {
+                        $siblings->[0]->node_name($parent->node_name);
+                    }
                     my $grandpa = $parent->parent();
                     my $dtg = $parent->distance_to_parent();
                     $parent->disavow_parent();
@@ -479,6 +471,7 @@ sub is_ultrametric {
 
 sub path_length {
   my ($node) = @_;
+  print STDERR "PATH LENGTH FOR ", $node->taxon_id;
   my $d = 0;
   for (;;){
     $d += $node->distance_to_parent();
@@ -488,6 +481,7 @@ sub path_length {
       last;
     }
   }
+  print STDERR " IS $d\n";
   return $d;
 }
 

@@ -1,14 +1,19 @@
 #!/usr/bin/env perl
+# Copyright [1999-2013] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+# 
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+# 
+#      http://www.apache.org/licenses/LICENSE-2.0
+# 
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
 
-=head1 LICENSE
 
-  Copyright (c) 1999-2013 The European Bioinformatics Institute and
-  Genome Research Limited.  All rights reserved.
-
-  This software is distributed under a modified Apache license.
-  For license details, please see
-
-    http://www.ensembl.org/info/about/code_licence.html
 
 =head1 CONTACT
 
@@ -26,7 +31,7 @@
 
  create_patch_pairaligner_conf.pl --help  
 
- create_patch_pairaligner_conf.pl --master_url mysql://ensro@compara1:3306/sf5_ensembl_compara_master --ref_species homo_sapiens --species rattus_norvegicus,macaca_mulatta,pan_troglodytes,gallus_gallus,ornithorhynchus_anatinus,monodelphis_domestica,pongo_abelii,equus_caballus,bos_taurus,sus_scrofa,gorilla_gorilla,callithrix_jacchus,oryctolagus_cuniculus --ref_url mysql://ensro@ens-staging1:3306/homo_sapiens_core_68_37 --ensembl_version 68 --host ens-livemirror --dump_dir /lustre/scratch109/ensembl/kb3/scratch/hive/release_68/nib_files --haplotypes chromosome:HG1292_PATCH,chromosome:HG1287_PATCH,chromosome:HG1293_PATCH,chromosome:HG1322_PATCH,chromosome:HG1304_PATCH,chromosome:HG1308_PATCH,chromosome:HG962_PATCH,chromosome:HG871_PATCH,chromosome:HG1211_PATCH,chromosome:HG271_PATCH,chromosome:HSCHR3_1_CTG1 > lastz.conf
+ create_patch_pairaligner_conf.pl --master_url mysql://ensro@compara1:3306/sf5_ensembl_compara_master --ref_species homo_sapiens --ref_url mysql://ensro@ens-staging1:3306/homo_sapiens_core_68_37 --ensembl_version 68 --host ens-livemirror --dump_dir /lustre/scratch109/ensembl/kb3/scratch/hive/release_68/nib_files --haplotypes chromosome:HG1292_PATCH,chromosome:HG1287_PATCH,chromosome:HG1293_PATCH,chromosome:HG1322_PATCH,chromosome:HG1304_PATCH,chromosome:HG1308_PATCH,chromosome:HG962_PATCH,chromosome:HG871_PATCH,chromosome:HG1211_PATCH,chromosome:HG271_PATCH,chromosome:HSCHR3_1_CTG1 > lastz.conf
 
 =head1 DESCRIPTION
 
@@ -51,8 +56,11 @@ Create the lastz configuration script for just the reference species patches aga
 Location of the ensembl compara master database containing the new patches. Must be of the format:
 mysql://user@host:port/ensembl_compara_master
 
+=item B<--skip_species>
+List of non-reference pair aligner species to skip from this pipeline because they are new species and will have the current set of patches present in the normal pairwise pipeline
+
 =item B<--species>
-List of non-reference pair aligner species 
+List of non-reference pair aligner species. This is not normally required since the pairwise alignments to be run are determined automatically depending on whether the non-reference species has chromosomes. This will over-ride this mechanism and can be used for running human against the mouse patches using human as the reference.
 
 =item B<[--ref_species]>
 Reference species. Default homo_sapiens
@@ -93,11 +101,9 @@ Set include_non_reference attribute for the reference species. Default 1. Set to
 =item B<--non_ref_include_non_reference>
 Set include_non_reference attribute for the non-reference species. Default 0. Set to 1 when doing human vs mouse patches.
 
-
 =back
 
 =cut
-
 
 use strict;
 use warnings;
@@ -105,11 +111,6 @@ use warnings;
 use Bio::EnsEMBL::Registry;
 use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
 use Bio::EnsEMBL::Utils::URI qw/parse_uri/;
-
-
-my $reg = "Bio::EnsEMBL::Registry";
-$reg->no_version_check(1);
-
 use Getopt::Long;
 
 my $ref_species = "homo_sapiens";
@@ -118,11 +119,12 @@ my $ref_url;
 my $host = "ens-livemirror";
 my $port = "3306";
 my $user = "ensro";
-my $ensembl_version = 62;
-my $dump_dir = "/lustre/scratch109/ensembl/" . $ENV{USER} ."/scratch/hive/release_" . $ensembl_version . "/nib_files/";
+my $ensembl_version = 74;
+my $dump_dir;
 my $patches;
 my $non_ref_patches;
 my $species = [];
+my $skip_species = [];
 my $exception_species = [];
 my $ref_include_non_reference = 1;
 my $non_ref_include_non_reference = 0;
@@ -146,11 +148,15 @@ GetOptions(
   'patches=s' => \$patches,
   'non_ref_patches=s' => \$non_ref_patches,
   'species=s@' => $species,
+  'skip_species=s@' => $skip_species,
   'master_url=s' => \$master_url,
   'exception_species=s@' => $exception_species,
   'ref_include_non_reference=i' => \$ref_include_non_reference,
   'non_ref_include_non_reference=i' => \$non_ref_include_non_reference,
  );
+
+my $reg = "Bio::EnsEMBL::Registry";
+$reg->no_version_check(1);
 
 #Load pipeline db
 my $compara_dba;
@@ -166,10 +172,14 @@ if ($ref_include_non_reference && $non_ref_include_non_reference) {
     throw("It is not advisable to find matches between patches of different species. Please only set either ref_include_non_reference or non_ref_include_non_reference");
 }
 
+#Set default dump_dir
+$dump_dir = "/lustre/scratch109/ensembl/" . $ENV{USER} ."/scratch/hive/release_" . $ensembl_version . "/nib_files/" unless ($dump_dir);
 
 #Parse ref_url 
 my $uri = parse_uri($ref_url);
 my %ref_core = $uri->generate_dbsql_params();
+
+$reg->load_registry_from_url($ref_url);
 
 my $mlss_adaptor = $compara_dba->get_MethodLinkSpeciesSetAdaptor;
 
@@ -177,16 +187,55 @@ my $mlss_adaptor = $compara_dba->get_MethodLinkSpeciesSetAdaptor;
 my $genome_db_adaptor = $compara_dba->get_GenomeDBAdaptor;
 #my $all_genome_dbs = $genome_db_adaptor->fetch_all();
 
-#Allow species to be specified as either --species spp1 --species spp2 --species spp3 or --species spp1,spp2,spp3
-@$species = split(/,/, join(',', @$species));
-
-#Add ref_species to list of species
-push @$species, $ref_species;
+#find list of LASTZ_NET alignments in master
+my $ref_genome_db = $genome_db_adaptor->fetch_by_registry_name($ref_species);
+my $pairwise_mlsss = $mlss_adaptor->fetch_all_by_method_link_type_GenomeDB('LASTZ_NET', $ref_genome_db);
+push $pairwise_mlsss, @{$mlss_adaptor->fetch_all_by_method_link_type_GenomeDB('BLASTZ_NET', $ref_genome_db)};
+my $dnafrag_adaptor = $compara_dba->get_DnaFragAdaptor;
 
 my $all_genome_dbs;
-foreach my $spp (@$species) {
-    my $genome_db = $genome_db_adaptor->fetch_by_name_assembly($spp);
-    push @$all_genome_dbs, $genome_db;
+#add ref_genome_db
+push @$all_genome_dbs, $ref_genome_db;
+
+my %unique_genome_dbs;
+#If a set of species is set, use these else automatically determine which species to use depending on whether they
+#are have chromosomes.
+if ($species && @$species > 0) {
+    foreach my $spp (@$species) {
+        my $genome_db = $genome_db_adaptor->fetch_by_name_assembly($spp);
+        $unique_genome_dbs{$genome_db->name} = $genome_db;
+    }
+} else {
+    foreach my $mlss (@$pairwise_mlsss) {
+        #print "name " . $mlss->name . " " . $mlss->dbID . "\n";
+        my $genome_dbs = $mlss->species_set_obj->genome_dbs;
+        
+        foreach my $genome_db (@$genome_dbs) {
+            #find non-reference species
+            if ($genome_db->name ne $ref_genome_db->name) {
+                #skip anything that isn't current
+                next unless ($genome_db->assembly_default);
+                my $dnafrags = $dnafrag_adaptor->fetch_all_by_GenomeDB_region($genome_db, 'chromosome');
+                if (@$dnafrags > 1) {
+                    #print "   found " . @$dnafrags . " chromosomes in " . $genome_db->name . "\n";
+                    #find non-ref genome_dbs (may be present in blastz and lastz)
+                    $unique_genome_dbs{$genome_db->name} = $genome_db;
+                } else {
+                    #print "   no chromosomes found in " . $genome_db->name . "\n";
+                }
+            }
+        }
+    }
+}
+
+#Allow species to be specified as either --species spp1 --species spp2 --species spp3 or --species spp1,spp2,spp3
+@$skip_species = split(/,/, join(',', @$skip_species));
+foreach my $name (keys %unique_genome_dbs) {
+    #skip anything in the skip_species array 
+    #next if ($name ~~ @$skip_species);
+    next if (grep {$name eq $_}  @$skip_species); 
+#    print $unique_genome_dbs{$name}->name . "\n";
+    push @$all_genome_dbs, $unique_genome_dbs{$name};
 }
 
 #Allow exception_species to be specified as either --exception_species spp1 --exception_species spp2 --exception_species spp3 or --exception_species spp1,spp2,spp3
@@ -241,7 +290,6 @@ my $primate_matrix = $ENV{'ENSEMBL_CVS_ROOT_DIR'}. "/ensembl-compara/scripts/pip
 %{$pair_aligner->{exception}} = ('parameters' => "\"{method_link=>\'LASTZ_RAW\',options=>\'T=1 K=5000 L=5000 H=3000 M=10 O=400 E=30 Q=$primate_matrix --ambiguous=iupac\'}\"");
 
 %{$pair_aligner->{mammal}} = ('parameters' => "\"{method_link=>\'LASTZ_RAW\',options=>\'T=1 K=3000 L=3000 H=2200 O=400 E=30 --ambiguous=iupac\'}\"");
-
 
 my $ref_gdb;
 my $genome_dbs;

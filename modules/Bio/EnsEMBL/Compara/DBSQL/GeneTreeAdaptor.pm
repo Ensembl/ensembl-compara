@@ -1,12 +1,21 @@
 =head1 LICENSE
 
-  Copyright (c) 1999-2013 The European Bioinformatics Institute and
-  Genome Research Limited.  All rights reserved.
+Copyright [1999-2013] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
-  This software is distributed under a modified Apache license.
-  For license details, please see
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
 
-   http://www.ensembl.org/info/about/code_licence.html
+     http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+
+=cut
+
 
 =head1 CONTACT
 
@@ -36,14 +45,6 @@ with the GeneTreeNodeAdaptor).
 
 Ensembl Team. Individual contributions can be found in the CVS log.
 
-=head1 MAINTAINER
-
-$Author$
-
-=head VERSION
-
-$Revision$
-
 =head1 APPENDIX
 
 The rest of the documentation details each of the object methods.
@@ -54,6 +55,8 @@ Internal methods are usually preceded with an underscore (_)
 package Bio::EnsEMBL::Compara::DBSQL::GeneTreeAdaptor;
 
 use strict;
+use warnings;
+
 use Data::Dumper;
 use Bio::EnsEMBL::Utils::Argument qw(rearrange);
 use Bio::EnsEMBL::Utils::Scalar qw(:assert);
@@ -394,13 +397,30 @@ sub delete_tree {
         $gene_tree_node_Adaptor->delete_node($node);
     }
 
-    # Then remove the tree
-    my $root_id = $tree->root->node_id;
-    $self->dbc->do("DELETE FROM gene_tree_root_tag WHERE root_id = $root_id");
-    $self->dbc->do("DELETE FROM gene_tree_root WHERE root_id = $root_id");
+    # Only for "default" trees
+    unless ($tree->ref_root_id) {
+
+        # Linked trees must be removed as well as they refer to the default tree
+        foreach my $other_tree (@{$self->fetch_all_linked_trees($tree)}) {
+            $other_tree->preload();
+            $self->delete_tree($other_tree);
+            $other_tree->release_tree();
+        }
+    }
 
     # Finally remove the root node
     $gene_tree_node_Adaptor->delete_node($tree->root);
+
+    # Only for "default" trees
+    unless ($tree->ref_root_id) {
+        # The alignment only if it exists (In NCRecoverEPO we don't have an alignment yet)
+        $gene_tree_node_Adaptor->db->get_GeneAlignAdaptor->delete($tree->gene_align_id) if (defined $tree->gene_align_id);
+
+        # The HMM profile
+        my $root_id = $tree->root->node_id;
+        $self->dbc->do("DELETE FROM hmm_profile WHERE model_id = '$root_id'");
+    }
+
 }
 
 

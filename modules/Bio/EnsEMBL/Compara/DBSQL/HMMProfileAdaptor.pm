@@ -1,3 +1,21 @@
+=head1 LICENSE
+
+Copyright [1999-2013] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+     http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+
+=cut
+
 =head1 NAME
 
 HMMProfileAdaptor
@@ -17,11 +35,18 @@ The rest of the documentation details each of the object methods. Internal metho
 package Bio::EnsEMBL::Compara::DBSQL::HMMProfileAdaptor;
 
 use strict;
+use warnings;
+
 use Data::Dumper;
 
 use Bio::EnsEMBL::Compara::HMMProfile;
 
 use Bio::EnsEMBL::Utils::Exception qw(throw warning deprecate); ## All needed?
+
+use Bio::EnsEMBL::Utils::IO qw/:slurp/;
+
+use Compress::Zlib;
+
 use DBI qw(:sql_types);
 use base ('Bio::EnsEMBL::Compara::DBSQL::BaseAdaptor');
 
@@ -52,7 +77,7 @@ sub fetch_all_by_type {
 
   Arg [1]       : The database model_id for the hmm_profile/s
   Arg [2]       : (optional) The type of the hmm_profile to retrieve
-  Example       : $profiles = $hmmProfileAdaptor->fetch_all_by_model_id($model_id);
+  Example       : $profiles = $hmmProfileAdaptor->fetch_all_by_model_id_type($model_id);
   Description   : Returns the HMMProfile/s object/s for the given model_id
   ReturnType    : Arrayref of Bio::EnsEMBL::Compara::HMMProfile's
   Exceptions    : If $model_id is not defined
@@ -156,7 +181,7 @@ sub _columns {
     return ( 'h.model_id',
              'h.name',
              'type',
-             'hc_profile',
+             'compressed_profile',
              'consensus',
            );
 }
@@ -187,7 +212,9 @@ sub init_instance_from_rowhash() {
     $obj->model_id($rowhash->{model_id});
     $obj->name($rowhash->{name});
     $obj->type($rowhash->{type});
-    $obj->profile($rowhash->{hc_profile});
+    # MySQL-style compression -UNCOMPRESS()-
+    # The first 4 bytes are the length of the text in little-endian
+    $obj->profile( Compress::Zlib::uncompress( substr($rowhash->{compressed_profile},4) ) );
     $obj->consensus($rowhash->{consensus});
 
     return $obj;
@@ -200,29 +227,16 @@ sub store {
         throw("set arg must be a [Bio::EnsEMBL::Compara::HMMProfile] not a $obj");
     }
 
-    my $sql = "REPLACE INTO hmm_profile(model_id, name, type, hc_profile, consensus) VALUES (?,?,?,?,?)";
+
+
+    # MySQL-style compression -COMPRESS()-
+    # The first 4 bytes are the length of the text in little-endian
+    my $compressed_profile = pack('V', length($obj->profile())).Compress::Zlib::compress($obj->profile(), Z_BEST_COMPRESSION);
+
+    my $sql = "REPLACE INTO hmm_profile(model_id, name, type, compressed_profile, consensus) VALUES (?,?,?,?,?)";
     my $sth = $self->prepare($sql);
 
-    ## If the profile is too big it is likely to reach the 'max_allowed_packet' in the server
-    my $max_size = 1024 * 1024 * 15; # 15Mb
-    if (length ($obj->profile) < $max_size) {
-        $sth->execute($obj->model_id(), $obj->name(), $obj->type(), $obj->profile(), $obj->consensus());
-        $sth->finish();
-        return;
-    }
-
-#    print STDERR "The profile is too big... I will divide it in smaller chunks\n" if ($self->debug);
-
-    ## The profile is divided into smaller chunks
-    my @chunks = unpack "a$max_size" x ((length($obj->profile)/$max_size)-1) . "a*", $obj->profile;
-
-    $sth->execute($obj->model_id(), $obj->name(), $obj->type(), shift @chunks, $obj->consensus());
-    my $sql2 = "UPDATE hmm_profile SET hc_profile=CONCAT(hc_profile, ?) WHERE model_id = ? and type = ?";
-    my $sth2  = $self->prepare($sql2);
-    for my $chunk (@chunks) {
-        $sth2->execute($chunk, $obj->model_id, $obj->type);
-    }
-    $sth2->finish();
+    $sth->execute($obj->model_id(), $obj->name(), $obj->type(), $compressed_profile, $obj->consensus());
 
     return;
 }

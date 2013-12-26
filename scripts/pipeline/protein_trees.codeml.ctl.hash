@@ -14,7 +14,7 @@
 "kappa" => 2,
 "fix_omega" => 0,
 "omega" => .4,
-"fix_alpha" => 0,
+"fix_alpha" => 1,
 "alpha" => 0.,
 "Malpha" => 0,
 "ncatG" => 8,

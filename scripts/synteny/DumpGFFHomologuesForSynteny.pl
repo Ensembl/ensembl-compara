@@ -1,4 +1,18 @@
 #!/usr/bin/env perl
+# Copyright [1999-2013] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+# 
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+# 
+#      http://www.apache.org/licenses/LICENSE-2.0
+# 
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
 
 use strict;
 use warnings;
@@ -89,14 +103,14 @@ foreach my $ortho_type (@A_ortholog_types) {
       #print "\tSpecies: $qy_species [Q] & $tg_species [T]\n" ;
 
       if ($genom eq $qy_species) {
-        $Q_chr_start = $member->chr_start();
-        $Q_chr_end = $member->chr_end();
-        $Q_chr_std = $member->chr_strand();
+        $Q_chr_start = $member->dnafrag_start();
+        $Q_chr_end = $member->dnafrag_end();
+        $Q_chr_std = $member->dnafrag_strand();
         $Q_chr_name = $member->chr_name();
       } elsif ($genom eq $tg_species) {
-        $T_chr_start = $member->chr_start();
-        $T_chr_end = $member->chr_end();
-        $T_chr_std = $member->chr_strand();
+        $T_chr_start = $member->dnafrag_start();
+        $T_chr_end = $member->dnafrag_end();
+        $T_chr_std = $member->dnafrag_strand();
         $T_chr_name = $member->chr_name();
       } else {
         print STDERR "WARNING!! This genome is neither QUERY nor SPECIES!\n" ;

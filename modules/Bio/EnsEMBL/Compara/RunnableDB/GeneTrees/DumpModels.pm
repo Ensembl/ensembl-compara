@@ -1,6 +1,21 @@
-#
-# You may distribute this module under the same terms as perl itself
-#
+=head1 LICENSE
+
+Copyright [1999-2013] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+     http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+
+=cut
+
 # POD documentation - main docs before the code
 
 =pod 
@@ -60,17 +75,16 @@ sub param_defaults {
 sub fetch_input {
     my ($self) = @_;
 
-    die "blast_path has to be set\n" if (!defined $self->param('blast_path'));
+    die "blast_bin_dir has to be set\n" if (!defined $self->param('blast_bin_dir'));
 
-    my $pantherScore_path = $self->param('pantherScore_path');
-    $self->throw('pantherScore_path is an obligatory parameter') unless (defined $pantherScore_path);
+    my $pantherScore_path = $self->param_required('pantherScore_path');
 
     push @INC, "$pantherScore_path/lib";
     require FamLibBuilder;
 #    import FamLibBuilder;
 
 
-    my $basedir = $self->param('hmm_library_basedir') or die "The base dir of the library is needed\n";
+    my $basedir = $self->param_required('hmm_library_basedir');
     my $hmmLibrary = FamLibBuilder->new($basedir, "prod");
 
     my $code = $hmmLibrary->create();
@@ -122,16 +136,13 @@ sub dump_models {
 
     my $sql = "SELECT model_id FROM hmm_profile"; ## mysql runs out of memory if we include here all the profiles
     my $sth = $self->compara_dba->dbc->prepare($sql);
-    my $sql2 = "SELECT hc_profile FROM hmm_profile WHERE model_id = ?";
-    my $sth2 = $self->compara_dba->dbc->prepare($sql2);
     $sth->execute();
     while (my ($model_id) = $sth->fetchrow) {
         print STDERR "Dumping model_id $model_id into $bookDir/$model_id\n";
         mkdir "$bookDir/$model_id" or die $!;
         open my $fh, ">", "$bookDir/$model_id/hmmer.hmm" or die $!;
-        $sth2->execute($model_id);
-        my ($profile) = $sth2->fetchrow;
-        print $fh $profile;
+        my $hmm_object = $self->compara_dba->get_HMMProfileAdaptor->fetch_all_by_model_id_type($model_id);
+        print $fh $hmm_object->profile;
         close($fh);
     }
 }
@@ -155,8 +166,8 @@ sub create_blast_db {
     close($consFh);
 
     ## Create the blast db
-    my $blast_path = $self->param('blast_path');
-    my $formatdb_exe = "$blast_path/makeblastdb";
+    my $blast_bin_dir = $self->param('blast_bin_dir');
+    my $formatdb_exe = "$blast_bin_dir/makeblastdb";
     my $cmd = "$formatdb_exe -dbtype prot -in $globalsDir/con.Fasta";
     if (my $err = system($cmd)) {
         die "Problem creating the blastdb: $err\n";

@@ -1,4 +1,18 @@
 #!/usr/bin/perl
+# Copyright [1999-2013] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+# 
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+# 
+#      http://www.apache.org/licenses/LICENSE-2.0
+# 
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
 
 use warnings;
 
@@ -8,10 +22,6 @@ use warnings;
 #
 # Written by Javier Herrero (jherrero@ebi.ac.uk)
 #
-# Copyright (c) 1999-2013. EnsEMBL Team
-#
-# You may distribute this module under the same terms as perl itself
-
 =head1 NAME
 
 alignSliceAdaptor.t
@@ -45,11 +55,6 @@ This script uses a small compara database build following the specifitions given
 
 Javier Herrero (jherrero@ebi.ac.uk)
 
-=head1 COPYRIGHT
-
-Copyright (c) 1999-2013. EnsEMBL Team
-
-You may distribute this module under the same terms as perl itself
 
 =head1 CONTACT
 
@@ -108,7 +113,7 @@ foreach my $this_species (reverse sort @$species) {
   $species_db_adaptor->{$this_species} = $species_db->{$this_species}->get_DBAdaptor('core');
   
   $species_gdb->{$this_species} = $genome_db_adaptor->fetch_by_name_assembly(
-          $species_db_adaptor->{$this_species}->get_MetaContainer->get_Species->binomial,
+          $species_db_adaptor->{$this_species}->get_MetaContainer->get_scientific_name,
           $species_db_adaptor->{$this_species}->get_CoordSystemAdaptor->fetch_all->[0]->version
       );
   $species_gdb->{$this_species}->db_adaptor($species_db_adaptor->{$this_species});

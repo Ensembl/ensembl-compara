@@ -1,4 +1,18 @@
 #!/usr/local/ensembl/bin/perl -w
+# Copyright [1999-2013] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+# 
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+# 
+#      http://www.apache.org/licenses/LICENSE-2.0
+# 
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
 
 #
 # Test script for Bio::EnsEMBL::Compara::DBSQL::DnaAlignFeatureAdaptor module
@@ -6,10 +20,6 @@
 # Written by Abel Ureta-Vidal (abel@ebi.ac.uk)
 # Updated by Javier Herrero (jherrero@ebi.ac.uk)
 #
-# Copyright (c) 1999-2013. EnsEMBL Team
-#
-# You may distribute this module under the same terms as perl itself
-
 =head1 NAME
 
 dnaAlignFeatureAdaptor.t
@@ -49,11 +59,6 @@ This script includes 22 tests.
 Abel Ureta-Vidal (abel@ebi.ac.uk)
 Javier Herrero (jherrero@ebi.ac.uk)
 
-=head1 COPYRIGHT
-
-Copyright (c) 1999-2013. EnsEMBL Team
-
-You may distribute this module under the same terms as perl itself
 
 =head1 CONTACT
 
@@ -94,11 +99,11 @@ my $rn_dba = $rattus_norvegicus->get_DBAdaptor('core');
 my $gg_dba = $gallus_gallus->get_DBAdaptor('core');
 my $compara_dba = $multi->get_DBAdaptor('compara');
 
-my $human_name     = $hs_dba->get_MetaContainer->get_Species->binomial;
+my $human_name     = $hs_dba->get_MetaContainer->get_scientific_name;
 my $human_assembly = $hs_dba->get_CoordSystemAdaptor->fetch_all->[0]->version;
-my $rat_name       = $rn_dba->get_MetaContainer->get_Species->binomial;
+my $rat_name       = $rn_dba->get_MetaContainer->get_scientific_name;
 my $rat_assembly   = $rn_dba->get_CoordSystemAdaptor->fetch_all->[0]->version;
-my $chicken_name       = $gg_dba->get_MetaContainer->get_Species->binomial;
+my $chicken_name       = $gg_dba->get_MetaContainer->get_scientific_name;
 my $chicken_assembly   = $gg_dba->get_CoordSystemAdaptor->fetch_all->[0]->version;
 
 my $gdba = $compara_dba->get_GenomeDBAdaptor;

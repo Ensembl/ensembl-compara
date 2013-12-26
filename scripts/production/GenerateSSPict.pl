@@ -1,8 +1,19 @@
 #!/usr/bin/env perl
+# Copyright [1999-2013] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+# 
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+# 
+#      http://www.apache.org/licenses/LICENSE-2.0
+# 
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
 
-#
-# You may distribute this module under the same terms as perl itself
-#
+
 
 =pod
 
@@ -61,7 +72,7 @@ GetOptions(
            "help"            => \$help,
           );
 
-if ($help) {
+if (! defined $member_id || $help) {
       print <<'EOH';
 GenerateSSPict.pl -- Generate secondary structure of Ensembl ncRNA trees
 ./GenerateSSPict.pl -compara_url <compara_url> -id <gene_member_stable_id>
@@ -69,10 +80,10 @@ GenerateSSPict.pl -- Generate secondary structure of Ensembl ncRNA trees
 Options:
     --url                 [Optional] URL for Ensembl databases
     --compara_url         [Optional] URL for Ensembl Compara database
-    --conf | --registry    [Optional] Path to a configuration file
-    --id   | --member_id              Ensembl gene member stable id
+    --conf | --registry   [Optional] Path to a configuration file
+    --id   | --member_id             Ensembl gene member stable id
     --r2r_exe                        Path to the r2r executable
-                                    [Defaults to /software/ensembl/compara/R2R-1.0.3/src/r2r]
+                                     [Defaults to /software/ensembl/compara/R2R-1.0.3/src/r2r]
     --thumbnail           [Optional] If present, only a thumbnail of the family is created
     --help                [Optional] Print this message & exit
 
@@ -102,19 +113,23 @@ my $geneMemberAdaptor = $compara_dba->get_GeneMemberAdaptor();
 my $seqMemberAdaptor  = $compara_dba->get_SeqMemberAdaptor();
 my $geneTreeAdaptor   = $compara_dba->get_GeneTreeAdaptor();
 
-my $member = $geneMemberAdaptor->fetch_by_source_stable_id(undef, $member_id);
-my $peptide = $seqMemberAdaptor->fetch_canonical_for_gene_member_id($member->member_id);
-
+my $member = $geneMemberAdaptor->fetch_by_source_stable_id('ENSEMBLGENE', $member_id);
+check($member, "member", $member_id);
+my $transc = $seqMemberAdaptor->fetch_canonical_for_gene_member_id($member->member_id);
+check($transc, "transcript", $member_id);
 my $geneTree = $geneTreeAdaptor->fetch_default_for_Member($member);
+check($geneTree, "GeneTree", $member_id);
 my $model_name = $geneTree->get_tagvalue('model_name');
+check($model_name, "model_name", $member_id);
 my $ss_cons = $geneTree->get_tagvalue('ss_cons');
+check($ss_cons, "ss_cons", $member_id);
 my $input_aln = $geneTree->get_SimpleAlign( -id => 'MEMBER' );
 my $aln_filename = dumpMultipleAlignment($input_aln, $model_name, $ss_cons);
 
 if ($thumbnail) {
     getThumbnail($aln_filename, $geneTree);
 } else {
-    getPlot($aln_filename, $geneTree, $peptide->stable_id);
+    getPlot($aln_filename, $geneTree, $transc->stable_id);
 }
 
 sub dumpMultipleAlignment {
@@ -192,10 +207,19 @@ sub run_r2r_and_check {
     die "$r2r_exe doesn't exist\n" unless (-e $r2r_exe);
 
     my $cmd = "$r2r_exe $opts $infile $outfile $extra_params";
-    print STDERR "CMD: $cmd\n";
+#    print STDERR "CMD: $cmd\n";
     system($cmd);
     if (! -e $outfile) {
         die "Problem running r2r: $outfile doesn't exist\nThis is the command I tried to run:\n$cmd\n";
     }
     return;
+}
+
+
+sub check {
+    my ($val, $type, $member_id) = @_;
+    unless (defined $val) {
+        print STDERR "No $type found for $member_id in the database\n";
+        exit(1);
+    }
 }

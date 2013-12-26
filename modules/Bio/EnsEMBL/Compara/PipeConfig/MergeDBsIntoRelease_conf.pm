@@ -1,3 +1,21 @@
+=head1 LICENSE
+
+Copyright [1999-2013] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+     http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+
+=cut
+
 
 =pod 
 
@@ -35,11 +53,10 @@ sub default_options {
     return {
         %{$self->SUPER::default_options},
 
-        'host'            => 'compara3',    # where the pipeline database will be created
-        'release'         => '71',          # current ensembl release number
-        'rel_suffix'      => 'c',            # an empty string by default, a letter otherwise
+        'host'            => 'compara4',    # where the pipeline database will be created
+        'rel_suffix'      => '',            # an empty string by default, a letter otherwise
 
-        'rel_with_suffix' => $self->o('release').$self->o('rel_suffix'),
+        'rel_with_suffix' => $self->o('ensembl_release').$self->o('rel_suffix'),
         'pipeline_name'   => 'pipeline_dbmerge_'.$self->o('rel_with_suffix'),   # also used to differentiate submitted processes
 
         'copying_capacity'  => 10,                                  # how many tables can be dumped and re-created in parallel (too many will slow the process down)
@@ -51,15 +68,16 @@ sub default_options {
         'backup_tables'     => 1,
 
         'urls'              => {
-            'protein_db'    => 'mysql://ensro@compara1/mm14_compara_homology_71',
-            'ncrna_db'      => 'mysql://ensro@compara2/mp12_compara_nctrees_71',
-            'family_db'     => 'mysql://ensro@compara4/lg4_compara_families_71',
-            'projection_db' => 'mysql://ensro@compara3/mm14_homology_projections_71',
-            'prev_rel_db'   => 'mysql://ensro@ens-livemirror/ensembl_compara_70',
-
-            #'curr_rel_db'   => 'mysql://ensro@compara3/kb3_ensembl_compara_71',
-            'curr_rel_db'   => 'mysql://ensadmin:'.$self->o('password').'@compara3/mm14_full_merge2',
             'master_db'     => 'mysql://ensro@compara1/sf5_ensembl_compara_master',
+            'prev_rel_db'   => 'mysql://ensro@ens-livemirror/ensembl_compara_72',   # <----- make sure this refers to the previous release!
+
+                                        # make sure that for the rest of the databases you have servers' and owners' names right:
+            'curr_rel_db'   => 'mysql://ensadmin:'.$self->o('password').'@compara2/'.$self->o('ENV','USER').'_ensembl_compara_'.$self->o('ensembl_release'),
+
+            'protein_db'    => 'mysql://ensro@compara1/mm14_compara_homology_'.$self->o('ensembl_release'),
+            'ncrna_db'      => 'mysql://ensro@compara3/mp12_compara_nctrees_'.$self->o('ensembl_release'),
+            'family_db'     => 'mysql://ensro@compara2/lg4_compara_families_'.$self->o('ensembl_release'),
+            'projection_db' => 'mysql://ensro@compara3/mm14_homology_projections_'.$self->o('ensembl_release'),
         },
 
         'only_tables'       => {
@@ -71,6 +89,7 @@ sub default_options {
             'mapping_session'   => 'master_db',
             'member'            => 'projection_db',
             'sequence'          => 'projection_db',
+            'peptide_align_feature_%' => 'protein_db',
         },
 
         'ignored_tables'    => {

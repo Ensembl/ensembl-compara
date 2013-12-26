@@ -1,12 +1,21 @@
 =head1 LICENSE
 
-  Copyright (c) 1999-2013 The European Bioinformatics Institute and
-  Genome Research Limited.  All rights reserved.
+Copyright [1999-2013] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
-  This software is distributed under a modified Apache license.
-  For license details, please see
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
 
-    http://www.ensembl.org/info/about/code_licence.html
+     http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+
+=cut
+
 
 =head1 CONTACT
 
@@ -56,58 +65,38 @@ The rest of the documentation details each of the object methods. Internal metho
 
 package Bio::EnsEMBL::Compara::DBSQL::DnaFragAdaptor;
 
-use vars qw(@ISA);
-
 use strict;
+use warnings;
+
 use Bio::EnsEMBL::DBSQL::BaseAdaptor;
 use Bio::EnsEMBL::Compara::DnaFrag;
 use Bio::EnsEMBL::Utils::Exception qw( throw warning verbose );
 
-@ISA = qw(Bio::EnsEMBL::DBSQL::BaseAdaptor);
+use Bio::EnsEMBL::DBSQL::Support::LruIdCache;
+
+use base qw(Bio::EnsEMBL::Compara::DBSQL::BaseAdaptor);
 
 
-=head2 fetch_by_dbID
+#
+# Virtual / overriden methods from Bio::EnsEMBL::DBSQL::BaseAdaptor
+######################################################################
 
-  Arg [1]    : integer $db_id
-  Example    : my $dnafrag = $dnafrag_adaptor->fetch_by_dbID(905406);
-  Description: Returns the Bio::EnsEMBL::Compara::DnaFrag object corresponding to the database internal identifier
-  Returntype : Bio::EnsEMBL::Compara::DnaFrag
-  Exceptions : throw if $dbid is not supplied. 
-  Caller     : general
-  Status     : Stable
-
-=cut
-
-sub fetch_by_dbID {
-  my ($self,$dbid) = @_;
-
-  if( !defined $dbid) {
-    $self->throw("Must fetch by dbid");
-  }
-
-  $self->{'_dna_frag_id_cache'} ||= {};
-
-  if($self->{'_dna_frag_id_cache'}->{$dbid}) {
-    return $self->{'_dna_frag_id_cache'}->{$dbid};
-  }
-
-  my $columns = join(", ", $self->_columns);
-  my $tablenames = join(', ', map({ join(' ', @$_) } $self->_tables));
-  my $sql = "SELECT $columns FROM $tablenames WHERE df.dnafrag_id = ?";
-
-  my $sth = $self->prepare($sql);
-
-  $sth->execute($dbid);
-
-  my $dna_frags = $self->_objs_from_sth($sth);
-
-  $self->throw("No dnafrag with this dbID $dbid") unless(@$dna_frags);
-
-  $self->{'_dna_frag_id_cache'}->{$dbid} = $dna_frags->[0];
-
-  return $dna_frags->[0];
+sub ignore_cache_override {
+    return 1;
 }
 
+sub _build_id_cache {
+    my $self = shift;
+    my $cache = Bio::EnsEMBL::DBSQL::Support::LruIdCache->new($self, 3000);
+    $cache->build_cache();
+    return $cache;
+}
+
+
+
+#
+# FETCH methods
+#####################
 
 
 =head2 fetch_by_GenomeDB_and_name
@@ -147,14 +136,11 @@ sub fetch_by_GenomeDB_and_name {
     throw("[$genome_db] must be Bio::EnsEMBL::Compara::GenomeDB\n");
   }
 
-  my $columns = join(", ", $self->_columns);
-  my $tablenames = join(', ', map({ join(' ', @$_) } $self->_tables));
-  my $sql = "SELECT $columns FROM $tablenames WHERE df.genome_db_id = ? AND df.name = ?";
 
-  my $sth = $self->prepare($sql);
-  $sth->execute($genome_db_id, $name);
+  $self->bind_param_generic_fetch($genome_db_id, SQL_INTEGER);
+  $self->bind_param_generic_fetch($name, SQL_VARCHAR);
+  $dnafrag = $self->generic_fetch_one('df.genome_db_id = ? AND df.name = ?');
 
-  $dnafrag = $self->_objs_from_sth($sth)->[0];
   if (!$dnafrag) {
     warning("No Bio::EnsEMBL::Compara::DnaFrag found for ".$genome_db->name."(".$genome_db->assembly."),".
         " chromosome $name");
@@ -200,31 +186,27 @@ sub fetch_all_by_GenomeDB_region {
 #    $self->throw('dnafrag_type argument must be defined');
 #  }
 
-  my $columns = join(", ", $self->_columns);
-  my $tablenames = join(', ', map({ join(' ', @$_) } $self->_tables));
-  my $sql = "SELECT $columns FROM $tablenames WHERE df.genome_db_id = ?";
-
-  my @bind_values = ($gdb_id);
+  my $sql = "df.genome_db_id = ?";
+  $self->bind_param_generic_fetch($gdb_id, SQL_INTEGER);
 
   if(defined $coord_system_name) {
+   unless ($coord_system_name eq "toplevel"){
     $sql .= ' AND df.coord_system_name = ?';
-    push @bind_values, "$coord_system_name";
+    $self->bind_param_generic_fetch($coord_system_name, SQL_VARCHAR);
+   }
   }
 
   if(defined $name) {
     $sql .= ' AND df.name = ?';
-    push @bind_values, "$name";
+    $self->bind_param_generic_fetch($name, SQL_VARCHAR);
   }
 
   if(defined $is_reference) {
     $sql .= ' AND df.is_reference = ?';
-    push @bind_values, "$is_reference";
+    $self->bind_param_generic_fetch($is_reference, SQL_INTEGER);
   }
 
-  my $sth = $self->prepare($sql);
-  $sth->execute(@bind_values);
-
-  return $self->_objs_from_sth($sth);
+  return $self->generic_fetch($sql);
 }
 
 
@@ -350,7 +332,9 @@ sub _objs_from_sth {
 
   while ($sth->fetch()) {
 
-    my $this_dnafrag = Bio::EnsEMBL::Compara::DnaFrag->new_fast(
+    my $this_dnafrag = $self->_id_cache->cache->{$dbID};
+    if (not defined $this_dnafrag) {
+        $this_dnafrag = Bio::EnsEMBL::Compara::DnaFrag->new_fast(
             {'dbID' => $dbID,
             'adaptor' => $self,
             'length' => $length,
@@ -359,7 +343,8 @@ sub _objs_from_sth {
             'coord_system_name' => $coord_system_name,
             'is_reference' => $is_reference}
         );
-
+        $self->_id_cache->put($dbID, $this_dnafrag);
+    }
 
     push(@$these_dnafrags, $this_dnafrag);
   }

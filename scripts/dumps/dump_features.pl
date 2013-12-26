@@ -1,4 +1,18 @@
 #!/usr/bin/env perl
+# Copyright [1999-2013] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+# 
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+# 
+#      http://www.apache.org/licenses/LICENSE-2.0
+# 
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
 use strict;
 use warnings;
 
@@ -26,6 +40,7 @@ my $user;
 my $dbname;
 my $port;
 my $help;
+my $urls;
 
 my $desc = "
 USAGE dump_features.pl [options] --feature FEATURE
@@ -68,6 +83,7 @@ Options:
 GetOptions(
   'reg_conf=s' => \$reg_conf,
   'url=s' => \$url,
+  'urls=s' => \@$urls,
   'compara_url=s' => \$compara_url,
   'species=s' => \$species,
   'regions=s' => \$regions,
@@ -106,6 +122,10 @@ if ($reg_conf) {
     -species => $species, 
     -group => 'core',
     -dbname => $dbname);
+} elsif ($urls && @$urls > 0) {
+    foreach my $this_url (@$urls) {
+        $reg->load_registry_from_url($this_url);
+    }
 } else {
   $reg->load_registry_from_url($url);
 }

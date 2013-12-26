@@ -1,12 +1,21 @@
 =head1 LICENSE
 
-  Copyright (c) 1999-2013 The European Bioinformatics Institute and
-  Genome Research Limited.  All rights reserved.
+Copyright [1999-2013] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
-  This software is distributed under a modified Apache license.
-  For license details, please see
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
 
-    http://www.ensembl.org/info/about/code_licence.html
+     http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+
+=cut
+
 
 =head1 CONTACT
 
@@ -136,11 +145,11 @@ sub dumpMercatorFiles {
   open F, ">$file";
   foreach my $member (@{$ma->fetch_all_by_source_genome_db_id('ENSEMBLPEP', $gdb_id)}) {
       my $strand = "+";
-      $strand = "-" if ($member->chr_strand == -1);
+      $strand = "-" if ($member->dnafrag_strand == -1);
       my $chr_name = $member->chr_name;
       if (defined($dnafrags->{$member->chr_name})) {
 	  foreach my $this_start (sort {$a <=> $b} keys %{$dnafrags->{$member->chr_name}}) {
-	      if ($this_start > $member->chr_start - 1) {
+	      if ($this_start > $member->dnafrag_start - 1) {
 		  last;
 	      } else {
 		  $chr_name = ($dnafrags->{$member->chr_name}->{$this_start} or $member->chr_name);
@@ -150,8 +159,8 @@ sub dumpMercatorFiles {
       print F $member->dbID . "\t" .
         $chr_name ."\t" .
           $strand . "\t" .
-            ($member->chr_start - 1) ."\t" .
-              $member->chr_end ."\t1\n";
+            ($member->dnafrag_start - 1) ."\t" .
+              $member->dnafrag_end ."\t1\n";
   }
   close F;
 
@@ -222,7 +231,7 @@ sub get_table_name_from_dbID {
   my $gdb = $gdba->fetch_by_dbID($gdb_id);
   return $table_name if (!$gdb);
 
-  $table_name .= "_" . lc($gdb->name) . "_" . $gdb_id;
+  $table_name .= "_" . $gdb_id;
   $table_name =~ s/ /_/g;
 
   return $table_name;

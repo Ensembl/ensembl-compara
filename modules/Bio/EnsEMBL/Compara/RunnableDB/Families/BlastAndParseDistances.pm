@@ -1,3 +1,21 @@
+=head1 LICENSE
+
+Copyright [1999-2013] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+     http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+
+=cut
+
 package Bio::EnsEMBL::Compara::RunnableDB::Families::BlastAndParseDistances;
 
 use strict;
@@ -79,7 +97,7 @@ sub name2index { # can load the name2index mapping from db/file if necessary
 sub fetch_input {
     my $self = shift @_;
 
-    my $start_seq_id            = $self->param('sequence_id') || die "'sequence_id' is an obligatory parameter, please set it in the input_id hashref";
+    my $start_seq_id            = $self->param_required('sequence_id');
     my $minibatch               = $self->param('minibatch')   || 1;
     my $debug                   = $self->debug() || $self->param('debug') || 0;
 
@@ -97,7 +115,7 @@ sub fetch_input {
 }
 
 sub parse_blast_table_into_matrix_hash {
-    my ($self, $filename, $min_self_dist) = @_;
+    my ($self, $filename, $min_self_similarity) = @_;
 
     my $roundto    = $self->param('roundto') || 0.0001;
 
@@ -115,20 +133,22 @@ sub parse_blast_table_into_matrix_hash {
                 $curr_index = $self->name2index($curr_name)
                     || die "Parser could not map '$curr_name' to sequence_id";
 
-                $matrix_hash{$curr_index}{$curr_index} = $min_self_dist;   # stop losing singletons whose evalue to themselves is *above* 'evalue_limit' threshold
-                                                                           # (that is, the ones that are "not even similar to themselves")
+                $matrix_hash{$curr_index}{$curr_index} = $min_self_similarity;  # stop losing singletons whose evalue to themselves is *above* 'evalue_limit' threshold
+                                                                                # (that is, the ones that are "not even similar to themselves")
             }
         } else {
             my ($qname, $hname, $evalue) = split(/\s+/, $line);
 
             my $hit_index = $self->name2index($hname);
                 # we MUST be explicitly numeric here:
-            my $distance  = ($evalue != 0) ? -log($evalue)/log(10) : 200;
+            my $new_similarity  = ($evalue != 0) ? -log($evalue)/log(10) : 200;
 
                 # do the rounding to prevent the unnecessary growth of tables/files
-            $distance = int($distance / $roundto) * $roundto;
+            $new_similarity = int($new_similarity / $roundto) * $roundto;
 
-            $matrix_hash{$curr_index}{$hit_index} = $distance;
+            my $prev_similarity = $matrix_hash{$curr_index}{$hit_index};
+
+            $matrix_hash{$curr_index}{$hit_index} = $new_similarity unless(defined($prev_similarity) && $new_similarity<$prev_similarity);
         }
     }
     close BLASTTABLE;
@@ -150,12 +170,12 @@ sub run {
     }
 
     my $blastdb_dir             = $self->param('blastdb_dir');
-    my $blastdb_name            = $self->param('blastdb_name')  || die "'blastdb_name' is an obligatory parameter";
+    my $blastdb_name            = $self->param_required('blastdb_name');
 
     my $start_seq_id            = $self->param('sequence_id');
     my $minibatch               = $self->param('minibatch')     || 1;
 
-    my $blast_bin_dir           = $self->param('blast_bin_dir') || die "'blast_bin_dir' is an obligatory parameter";
+    my $blast_bin_dir           = $self->param_required('blast_bin_dir');
     my $blast_params            = $self->param('blast_params')  || '';  # no parameters to C++ binary means having composition stats on and -seg masking off
     my $evalue_limit            = $self->param('evalue_limit')  || 0.00001;
     my $tophits                 = $self->param('tophits')       || 250;
@@ -172,7 +192,7 @@ sub run {
     }
 
     my $blastdb = ($blastdb_dir ? $blastdb_dir.'/' : '').$blastdb_name;
-    my $cmd = "${blast_bin_dir}/blastp -db $blastdb $blast_params -evalue $evalue_limit -num_descriptions $tophits -out $blast_outfile -outfmt '7 qacc sacc evalue'";
+    my $cmd = "${blast_bin_dir}/blastp -db $blastdb $blast_params -evalue $evalue_limit -max_target_seqs $tophits -out $blast_outfile -outfmt '7 qacc sacc evalue'";
 
     if($debug) {
         warn "CMD:\t$cmd\n";

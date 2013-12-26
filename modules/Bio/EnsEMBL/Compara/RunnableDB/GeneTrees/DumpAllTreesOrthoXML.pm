@@ -1,12 +1,21 @@
 =head1 LICENSE
 
-  Copyright (c) 1999-2013 The European Bioinformatics Institute and
-  Genome Research Limited.  All rights reserved.
+Copyright [1999-2013] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
-  This software is distributed under a modified Apache license.
-  For license details, please see
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
 
-   http://www.ensembl.org/info/about/code_licence.html
+     http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+
+=cut
+
 
 =head1 CONTACT
 
@@ -29,8 +38,6 @@ It requires one parameter:
  - compara_db: connection parameters to the Compara database
 
 The following parameters are optional:
- - possible_orth: [boolean] (default 0) whether or not low confidence
-                   duplications should be treated as speciations
  - file: [string] output file to dump (otherwise: standard output)
 
 =head1 SYNOPSIS
@@ -41,14 +48,6 @@ standaloneJob.pl Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::DumpAllTreesOrtho
 =head1 AUTHORSHIP
 
 Ensembl Team. Individual contributions can be found in the CVS log.
-
-=head1 MAINTAINER
-
-$Author$
-
-=head VERSION
-
-$Revision$
 
 =head1 APPENDIX
 
@@ -67,12 +66,6 @@ use Bio::EnsEMBL::Compara::Graph::OrthoXMLWriter;
 
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
-sub param_defaults {
-    return {
-            'possible_orth' => 0,
-           };
-}
-
 
 sub fetch_input {
     my ($self) = @_;
@@ -87,7 +80,6 @@ sub fetch_input {
     # Creates the OrthoXML writer
     my $w = Bio::EnsEMBL::Compara::Graph::OrthoXMLWriter->new(
             -HANDLE => $self->param('file_handle'),
-            -POSSIBLE_ORTHOLOGS => $self->param('possible_orth'),
             -SOURCE => "Ensembl Compara",
             -SOURCE_VERSION => software_version(),
             );

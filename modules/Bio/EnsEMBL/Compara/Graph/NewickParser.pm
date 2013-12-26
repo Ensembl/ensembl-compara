@@ -1,12 +1,21 @@
 =head1 LICENSE
 
-  Copyright (c) 1999-2013 The European Bioinformatics Institute and
-  Genome Research Limited.  All rights reserved.
+Copyright [1999-2013] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
-  This software is distributed under a modified Apache license.
-  For license details, please see
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
 
-   http://www.ensembl.org/info/about/code_licence.html
+     http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+
+=cut
+
 
 =head1 CONTACT
 
@@ -30,14 +39,6 @@ can be called directly.
 
 Ensembl Team. Individual contributions can be found in the CVS log.
 
-=head1 MAINTAINER
-
-$Author$
-
-=head VERSION
-
-$Revision$
-
 =head1 APPENDIX
 
 The rest of the documentation details each of the object methods.
@@ -48,7 +49,9 @@ Internal methods are usually preceded with an underscore (_)
 package Bio::EnsEMBL::Compara::Graph::NewickParser;
 
 use strict;
-use Switch;
+use warnings;
+
+
 use Bio::EnsEMBL::Compara::NestedSet;
 use Bio::EnsEMBL::Utils::Exception qw(throw warning);
 
@@ -83,8 +86,7 @@ sub parse_newick_into_tree
   while(defined($token)) {
     if($debug) { printf("state %d : '%s'\n", $state, $token); };
     
-    switch ($state) {
-      case 1 { #new node
+    if ($state == 1) { #new node
         $node = new Bio::EnsEMBL::Compara::NestedSet;
 	  if (defined $class) {
           # Make sure that the class is loaded
@@ -104,7 +106,7 @@ sub parse_newick_into_tree
           $state = 2;
         }
       }
-      case 2 { #naming a node
+      elsif ($state == 2) { #naming a node
         if(!($token =~ /[\[\:\,\)\;]/)) { 
           $node->name($token);
           if($debug) { print("    naming leaf"); $node->print_node; }
@@ -112,7 +114,7 @@ sub parse_newick_into_tree
         }
         $state = 3;
       }
-      case 3 { # optional : and distance
+      elsif ($state == 3) { # optional : and distance
         if($token eq ':') {
           $token = next_token(\$newick, "[,);");
           $node->distance_to_parent($token);
@@ -123,7 +125,7 @@ sub parse_newick_into_tree
         }
         $state = 4;
       }
-      case 4 { # optional NHX tags
+      elsif ($state == 4) { # optional NHX tags
         if($token =~ /\[\&\&NHX/) {
             # careful: this regexp gets rid of all NHX wrapping in one step
             $token =~ /\[\&\&NHX\:(\S+)\]/;
@@ -164,7 +166,7 @@ sub parse_newick_into_tree
         }
         $state = 5;
       }
-      case 5 { # end node
+      elsif ($state == 5) { # end node
         if($token eq ')') {
           if($debug) { print("end set : "); $lastset->print_node; }
           $node = $lastset;        
@@ -191,10 +193,9 @@ sub parse_newick_into_tree
         }
       }
 
-      case 13 {
+      elsif ($state == 13) {
         throw("parse error: nothing expected after ;");
       }
-    }
   }
   # Tags of the root node are lost otherwise
   $root->{_tags} = $node->{_tags} unless $root eq $node;

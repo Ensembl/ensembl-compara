@@ -1,12 +1,21 @@
 =head1 LICENSE
 
-  Copyright (c) 1999-2013 The European Bioinformatics Institute and
-  Genome Research Limited.  All rights reserved.
+Copyright [1999-2013] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
-  This software is distributed under a modified Apache license.
-  For license details, please see
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
 
-    http://www.ensembl.org/info/about/code_licence.html
+     http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+
+=cut
+
 
 =head1 CONTACT
 
@@ -44,7 +53,12 @@ At the moment used primarily in NestedSet Tree data-structure, but there are pla
 package Bio::EnsEMBL::Compara::AlignedMember;
 
 use strict;
+use warnings;
+
+use feature qw(switch);
+
 use Bio::EnsEMBL::Utils::Exception;
+use Bio::EnsEMBL::Compara::Utils::Cigars;
 
 use base ('Bio::EnsEMBL::Compara::SeqMember');
 
@@ -115,7 +129,15 @@ sub copy {
 
 sub cigar_line {
   my $self = shift;
-  $self->{'_cigar_line'} = shift if(@_);
+  if (@_) {
+    my $cigar = shift;
+    if ($self->{'_cigar_line'} and $self->{'_cigar_line'} ne $cigar) {
+      foreach my $k (keys %$self) {
+        delete $self->{$k} if $k =~ /alignment_string/;
+      }
+    }
+    $self->{'_cigar_line'} = $cigar;
+  }
   return $self->{'_cigar_line'};
 }
 
@@ -283,13 +305,16 @@ sub set {
 
 =head2 alignment_string
 
-  Arg [1]     : (optional) bool $exon_cased
+  Arg [1]     : (optional) string $seq_type
+                  Identifier of the sequence that should be used instead of
+                  the default protein / ncRNA sequence
   Example     : my $alignment_string = $object->alignment_string();
-  Example     : my $alignment_string = $object->alignment_string(1);
+  Example     : my $alignment_string_cased = $object->alignment_string('exon_cased');
   Description : Returns the aligned sequence for this object. For sequences
-                split in exons, the $exon_cased flag permits to request
+                split in exons, the 'exon_cased' seq_type permits to request
                 that each exon is represented in alternative upper and lower
-                case.
+                case, whilst the 'exon_bounded' seq_type adds whitespaces
+                between the exons.
                 For local alignments, when the alignment does not cover the
                 whole protein, only the part of the sequence in the alignemnt
                 is returned. Currently only global alignments are provided.
@@ -303,113 +328,60 @@ sub set {
 =cut
 
 sub alignment_string {
-  my $self = shift;
-  my $exon_cased = shift;
+    my $self = shift;
+    my $seq_type = shift;
 
-  # Use different keys for exon-cased and non exon-cased sequences
-  my $key = 'alignment_string';
-  if ($exon_cased) {
-    $key = 'alignment_string_cased';
-  } elsif (defined $self->{'alignment_string_cased'} and !defined($self->{'alignment_string'})) {
-    # non exon-cased sequence can be easily obtained from the exon-cased one.
-    $self->{'alignment_string'} = uc($self->{'alignment_string_cased'})
-  }
-
-  unless (defined $self->{$key}) {
-    my $sequence;
-    if ($exon_cased) {
-      $sequence = $self->sequence_exon_cased;
-    } else {
-      $sequence = $self->sequence;
-    }
-    $self->{$key} = $self->_compose_sequence_with_cigar($sequence);
-  }
-
-  return $self->{$key};
-}
-
-sub alignment_string_generic {
-  my $self = shift;
-  my $seq_type = shift;
-
-  my $key = 'alignment_string';
-  if ($seq_type) {
-    $key .= "_$seq_type";
-  }
-
-  unless (defined $self->{$key}) {
-    my $sequence;
+    my $key = 'alignment_string';
     if ($seq_type) {
-      $sequence = $self->get_other_sequence($seq_type);
-    } else {
-      $sequence = $self->sequence;
-    }
-    $self->{$key} = $self->_compose_sequence_with_cigar($sequence);
-  }
+        if ("$seq_type" eq '1') {
+            $seq_type = 'exon_cased';
+            deprecate('AlignedMember::alignment_string(1) is deprecated. Please use AlignedMember::alignment_string("exon_cased") instead');
+        }
+        $key .= "_$seq_type";
 
-  return $self->{$key};
+    } else {
+        if ((not defined $self->{$key}) and (defined $self->{$key.'_exon_cased'})) {
+            # non exon-cased sequence can be easily obtained from the exon-cased one.
+            $self->{$key} = uc($self->{$key.'_exon_cased'});
+        }
+    }
+
+    if (not defined $self->{$key}) {
+        my $sequence = $self->other_sequence($seq_type);
+        $sequence =~ s/b|o|j/\ /g if $seq_type and ($seq_type eq 'exon_bounded');
+        my $expansion_factor = 1;
+        $expansion_factor = 3 if $seq_type and ($seq_type eq 'cds');
+        $self->{$key} = $self->_compose_sequence_with_cigar($sequence, $expansion_factor);
+    }
+
+    return $self->{$key};
 }
+
 
 
 =head2 alignment_string_bounded
 
-  Arg [1]     : none
-  Example     : my $alignment_string_bounded = $object->alignment_string_bounded();
-  Description : Returns the aligned sequence for this object with padding characters
-                representing the introns.
-  Returntype  : string
-  Exceptions  : see _compose_sequence_with_cigar
-  Caller      : general
-  Status      : Stable
+  Description : DEPRECATED: Use alignment_string('exon_bounded') instead. alignment_string_bounded() will be removed in e76
 
 =cut
 
-sub alignment_string_bounded {
-  my $self = shift;
-
-  unless (defined $self->{'alignment_string_bounded'}) {
-    my $sequence_exon_bounded = $self->sequence_exon_bounded;
-    $sequence_exon_bounded =~ s/b|o|j/\ /g;
-    $self->{'alignment_string_bounded'} = $self->_compose_sequence_with_cigar($sequence_exon_bounded);
-  }
-
-  return $self->{'alignment_string_bounded'};
+sub alignment_string_bounded {  ## DEPRECATED
+    my $self = shift;
+    deprecate('AlignedMember::alignment_string_bounded() is deprecated and will be removed in e76. Please use SeqMember::alignment_string("exon_bounded") instead');
+    return $self->alignment_string('exon_bounded');
 }
 
 
 =head2 cdna_alignment_string
 
-  Arg [1]    : none
-  Example    : my $cdna_alignment = $aligned_member->cdna_alignment_string();
-  Description: Converts the peptide alignment string to a cdna alignment
-               string.  This only works for EnsEMBL peptides whose cdna can
-               be retrieved from the attached core databse.
-               If the cdna cannot be retrieved undef is returned and a
-               warning is thrown.
-  Returntype : string
-  Exceptions : see _compose_sequence_with_cigar
-  Caller     : general
+  Description : DEPRECATED: Use alignment_string('cds') instead. cdna_alignment_string() will be removed in e76
 
 =cut
 
-sub cdna_alignment_string {
-  my $self = shift;
-
-  unless (defined $self->{'cdna_alignment_string'}) {
-
-    my $cdna;
-    eval { $cdna = $self->sequence_cds;};
-    if ($@) {
-      throw("can't connect to CORE to get transcript and cdna for "
-            . "genome_db_id:" . $self->genome_db_id )
-        unless($self->get_Transcript);
-      $cdna = $self->get_Transcript->translateable_seq;
-    }
-
-    $self->{'cdna_alignment_string'} = $self->_compose_sequence_with_cigar($cdna, 3);
-  }
-  
-  return $self->{'cdna_alignment_string'};
+sub cdna_alignment_string { ## DEPRECATED
+    my $self = shift;
+    deprecate('AlignedMember::cdna_alignment_string() is deprecated and will be removed in e76. Please use SeqMember::alignment_string("cds") instead');
+    return $self->alignment_string('cds');
 }
 
 
@@ -417,7 +389,7 @@ sub cdna_alignment_string {
 
   Arg [1]    : String $sequence
   Arg [2]    : Integer $expansion_factor (default: 1)
-  Example    : my $alignment_string = $aligned_member->_compose_sequence_with_cigar($aligned_member->sequence_cds, 3)
+  Example    : my $alignment_string = $aligned_member->_compose_sequence_with_cigar($aligned_member->other_sequence('cds'), 3)
   Description: Converts the given sequence into an alignment string
                by composing it with the cigar_line. $expansion_factor
                can be set to accomodate CDS sequences
@@ -434,7 +406,7 @@ sub _compose_sequence_with_cigar {
     my $expansion_factor = shift || 1;
 
     unless (defined $self->cigar_line && $self->cigar_line ne "") {
-        throw("To get an alignment_string, the cigar_line needs to be define\n");
+        throw("To get an alignment_string, the cigar_line needs to be define. Please check '".$self->stable_id."'\n");
     }
 
     # cigar_start and cigar_end
@@ -447,37 +419,7 @@ sub _compose_sequence_with_cigar {
         $sequence = substr($sequence, $offset, $length);
     }
 
-    my $cigar_line = $self->cigar_line;
-    $cigar_line =~ s/([MD])/$1 /g;
-    my @cigar_segments = split " ", $cigar_line;
-    my $alignment_string = "";
-    my $seq_start = 0;
-    foreach my $segment (@cigar_segments) {
-        if ($segment =~ /^(\d*)D$/) {
-            
-            # Gap
-            my $length = $1 || 1;
-            $alignment_string .= "-" x ($length * $expansion_factor);
-
-        } elsif ($segment =~ /^(\d*)M$/) {
-
-            # Match
-            my $length = $1 || 1;
-            $length *= $expansion_factor;
-            my $substring = substr($sequence,$seq_start,$length);
-            if ($substring =~ /\ /) {
-                my $num_boundaries = $substring =~ s/(\ )/$1/g;
-                $length += $num_boundaries;
-                $substring = substr($sequence,$seq_start,$length);
-            }
-            if (length($substring) < $length) {
-                $substring .= ('N' x ($length - length($substring)));
-            }
-            $alignment_string .= $substring;
-            $seq_start += $length;
-        }
-    }
-    return $alignment_string;
+    return Bio::EnsEMBL::Compara::Utils::Cigars::compose_sequence_with_cigar($sequence, $self->cigar_line, $expansion_factor);
 }
 
 

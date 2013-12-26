@@ -1,12 +1,21 @@
 =head1 LICENSE
 
-  Copyright (c) 1999-2013 The European Bioinformatics Institute and
-  Genome Research Limited.  All rights reserved.
+Copyright [1999-2013] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
-  This software is distributed under a modified Apache license.
-  For license details, please see
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
 
-   http://www.ensembl.org/info/about/code_licence.html
+     http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+
+=cut
+
 
 =head1 CONTACT
 
@@ -47,14 +56,6 @@ $otree->write_output(); #writes to DB
 =head1 AUTHORSHIP
 
 Ensembl Team. Individual contributions can be found in the CVS log.
-
-=head1 MAINTAINER
-
-$Author$
-
-=head VERSION
-
-$Revision$
 
 =head1 APPENDIX
 
@@ -108,7 +109,7 @@ sub fetch_input {
 
     $self->param('homologyDBA', $self->compara_dba->get_HomologyAdaptor);
 
-    my $tree_id = $self->param('gene_tree_id') or die "'gene_tree_id' is an obligatory parameter";
+    my $tree_id = $self->param_required('gene_tree_id');
     my $gene_tree = $self->compara_dba->get_GeneTreeAdaptor->fetch_by_root_id($tree_id) or die "Could not fetch gene_tree with tree_id='$tree_id'";
     $gene_tree->preload();
     $self->param('gene_tree', $gene_tree->root);
@@ -119,7 +120,6 @@ sub fetch_input {
     unless($self->param('gene_tree')) {
         $self->throw("undefined GeneTree as input\n");
     }
-    $self->param('taxon_tree', $self->load_species_tree_from_string( $self->get_species_tree_string ) );
 
 }
 
@@ -169,11 +169,6 @@ sub post_cleanup {
     $self->param('gene_tree')->release_tree;
     $self->param('gene_tree', undef);
   }
-  if($self->param('taxon_tree')) {
-    printf("OrthoTree::post_cleanup  releasing taxon_tree\n") if($self->debug);
-    $self->param('taxon_tree')->release_tree;
-    $self->param('taxon_tree', undef);
-  }
 
   $self->SUPER::post_cleanup if $self->can("SUPER::post_cleanup");
 }
@@ -190,7 +185,6 @@ sub run_analysis {
   my $self = shift;
 
   my $gene_tree = $self->param('gene_tree');
-  my $tree_node_id = $gene_tree->node_id;
 
   print "Getting all leaves\n";
   my @all_gene_leaves = @{$gene_tree->get_all_leaves};
@@ -208,7 +202,6 @@ sub run_analysis {
   # duplication confidence scores
   foreach my $node (@{$gene_tree->get_all_nodes}) {
       next unless scalar(@{$node->children});
-      $self->get_ancestor_taxon_level($node);
       if ($node->get_tagvalue('node_type') ne 'speciation') {
           $self->duplication_confidence_score($node);
       } else {
@@ -224,8 +217,9 @@ sub run_analysis {
   #gene/gene link
   printf("%d genes in tree\n", scalar(@{$gene_tree->get_all_leaves})) if $self->debug;
   printf("build fully linked graph\n") if($self->debug);
-  my @genepairlinks;
+  my %genepairlinks;
   my $graphcount = 0;
+  my $has_match = $self->param('has_match', {});
 
   foreach my $ancestor (reverse @{$gene_tree->get_all_nodes}) {
     next unless scalar(@{$ancestor->children});
@@ -236,8 +230,7 @@ sub run_analysis {
      foreach my $gene2 (@$leaves2) {
       my $genepairlink = new Bio::EnsEMBL::Compara::Graph::Link($gene1, $gene2);
       $genepairlink->add_tag("ancestor", $ancestor);
-      $genepairlink->add_tag("tree_node_id", $tree_node_id);
-      push @genepairlinks, $genepairlink;
+      push @{$genepairlinks{$ancestor->get_tagvalue('node_type')}}, $genepairlink;
       print STDERR "build graph $graphcount\n" if ($graphcount++ % 100 == 0);
      }
     }
@@ -245,14 +238,41 @@ sub run_analysis {
   printf("%d pairings\n", $graphcount) if $self->debug;
 
   $gene_tree->print_tree($self->param('tree_scale')) if($self->debug);
-
-  #analyze every gene pair (genepairlink) to get its classification
-  printf("analyze links\n") if($self->debug);
+  $self->param('homology_links', []);
   $self->param('orthotree_homology_counts', {});
-  foreach my $genepairlink (@genepairlinks) {
-    $self->analyze_genepairlink($genepairlink);
+
+  foreach my $genepairlink (@{$genepairlinks{speciation}}) {
+    $self->tag_genepairlink($genepairlink, $self->tag_orthologues($genepairlink), 1);
   }
-  
+  foreach my $genepairlink (@{$genepairlinks{dubious}}) {
+    $self->tag_genepairlink($genepairlink, $self->tag_orthologues($genepairlink), 0);
+  }
+  foreach my $genepairlink (@{$genepairlinks{gene_split}}) {
+    $self->tag_genepairlink($genepairlink, 'gene_split', 1);
+  }
+
+  my @todo4 = ();
+  foreach my $genepairlink (@{$genepairlinks{duplication}}) {
+      my ($pep1, $pep2) = $genepairlink->get_nodes;
+      if ($pep1->genome_db_id == $pep2->genome_db_id) {
+          $self->tag_genepairlink($genepairlink, 'within_species_paralog', 1);
+      } elsif ($self->is_level3_orthologues($genepairlink)) {
+          $self->tag_genepairlink($genepairlink, $self->tag_orthologues($genepairlink), 0);
+      } else {
+          push @todo4, $genepairlink;
+      }
+  }
+
+  foreach my $genepairlink (@todo4) {
+      my $other = $self->is_level4_orthologues($genepairlink);
+      if (defined $other) {
+          my $type = $self->tag_orthologues($genepairlink);
+          if ($other->get_tagvalue('orthotree_type') eq $type) {
+              $self->tag_genepairlink($genepairlink, $type, 0);
+          }
+      }
+  }
+
   #display summary stats of analysis 
   if($self->debug) {
     printf("orthotree homologies\n");
@@ -260,39 +280,6 @@ sub run_analysis {
       printf ( "  %13s : %d\n", $type, $self->param('orthotree_homology_counts')->{$type} );
     }
   }
-  $self->param('homology_links', \@genepairlinks);
-}
-
-
-sub analyze_genepairlink {
-  my $self = shift;
-  my $genepairlink = shift;
-
-  my ($gene1, $gene2) = $genepairlink->get_nodes;
-
-  #do classification analysis : as filter stack
-  if($self->inspecies_paralog_test($genepairlink)) { }
-  elsif($self->direct_ortholog_test($genepairlink)) { } 
-  elsif($self->ancient_residual_test($genepairlink)) { } 
-  elsif($self->one2many_ortholog_test($genepairlink)) { } 
-  elsif($self->outspecies_test($genepairlink)) { }
-  else {
-    printf ( "OOPS!!!! %s - %s\n", $gene1->gene_member->stable_id, $gene2->gene_member->stable_id);
-  }
-
-  my $type = $genepairlink->get_tagvalue('orthotree_type');
-  if($type) {
-    if(!defined($self->param('orthotree_homology_counts')->{$type})) {
-      $self->param('orthotree_homology_counts')->{$type} = 1;
-    } else {
-      $self->param('orthotree_homology_counts')->{$type}++;
-    }
-  }
-
-  #display results
-  $self->display_link_analysis($genepairlink) if($self->debug >1);
-
-  return undef;
 }
 
 
@@ -326,66 +313,15 @@ sub display_link_analysis
   printf("%9s)", $ancestor->node_id);
   printf(" %.4f ", $ancestor->get_tagvalue('duplication_confidence_score'));
 
-  printf(" %s %s\n",
+  printf(" %s %d %s\n",
          $genepairlink->get_tagvalue('orthotree_type'), 
+         $genepairlink->get_tagvalue('is_tree_compliant'),
          $ancestor->get_tagvalue('taxon_name'),
         );
 
   return undef;
 }
 
-sub load_species_tree_from_string {
-  my ($self, $species_tree_string) = @_;
-
-  my $taxonDBA  = $self->compara_dba->get_NCBITaxonAdaptor();
-  my $genomeDBA = $self->compara_dba->get_GenomeDBAdaptor();
-  
-  my $taxon_tree = Bio::EnsEMBL::Compara::Graph::NewickParser::parse_newick_into_tree($species_tree_string);
-  
-  my %used_ids;
-  
-  foreach my $node (@{$taxon_tree->all_nodes_in_graph()}) {
-    
-    #Split based on - to remove comments & sub * for internal nodes.
-    #The ID assigned by NewickParser is not the real ID therefore we need to subsitute this in
-    my ($id) = split('-',$node->name);
-    $id =~ s/\*//;
-    
-    #If it looks like a number then assume we are working with an ID (Taxon or GenomeDB)
-    if (looks_like_number($id)) {
-      $node->node_id($id);
-      
-      if($self->param('use_genomedb_id')) {
-          my $gdb = $genomeDBA->fetch_by_dbID($id);
-          $self->throw("Cannot find a GenomeDB for the ID ${id}. Ensure your tree is correct and you are using use_genomedb_id correctly") if !defined $gdb;
-          $node->name($gdb->name());
-          $used_ids{$id} = 1;
-          $node->add_tag('_found_genomedb', 1);
-      }
-      else {
-          my $ncbi_node = $taxonDBA->fetch_node_by_taxon_id($id);
-          $node->name($ncbi_node->name) if (defined $ncbi_node);
-      }
-    } else { # doesn't look like number
-      $node->name($id);
-    }
-    $node->add_tag('taxon_id', $id);
-  }
-
-  # if genome_db hasn't been found (it means that id doesn't looks_like_number)
-  if($self->param('use_genomedb_id')) {
-      print "Searching for overlapping identifiers\n" if $self->debug();
-      my $max_id = max(keys(%used_ids));
-      foreach my $node (@{$taxon_tree->all_nodes_in_graph()}) {
-          if($used_ids{$node->node_id()} && ! $node->get_tagvalue('_found_genomedb')) {
-              $max_id++;
-              $node->node_id($max_id);
-          }
-      }
-  }
-  
-  return $taxon_tree;
-}
 
 sub get_ancestor_species_hash
 {
@@ -417,38 +353,6 @@ sub get_ancestor_species_hash
 
     $node->add_tag("species_hash", $species_hash);
     return $species_hash;
-}
-
-
-sub get_ancestor_taxon_level {
-  my ($self, $ancestor) = @_;
-
-  printf("calculate ancestor taxon level for node_id=%d\n", $ancestor->node_id) if $self->debug;
-  my $taxon_tree = $self->param('taxon_tree');
-  my $species_hash = $self->get_ancestor_species_hash($ancestor);
-
-  my $taxon_level;
-  foreach my $gdbID (keys(%$species_hash)) {
-      my $taxon;
-
-      if($self->param('use_genomedb_id')) {
-            $taxon = $taxon_tree->find_node_by_node_id($gdbID);
-            $self->throw("Missing node in species (taxon) tree for $gdbID") unless $taxon;
-      }
-      else {
-          my $gdb = $self->compara_dba->get_GenomeDBAdaptor->fetch_by_dbID($gdbID);
-          $taxon = $taxon_tree->find_node_by_node_id($gdb->taxon_id);
-          $self->throw("oops missing taxon " . $gdb->taxon_id ."\n") unless $taxon;
-      }
-
-    if($taxon_level) {
-      $taxon_level = $taxon_level->find_first_shared_ancestor($taxon);
-    } else {
-      $taxon_level = $taxon;
-    }
-  }
-  $ancestor->store_tag('taxon_id', $taxon_level->get_tagvalue('taxon_id'));
-  $ancestor->store_tag('taxon_name', $taxon_level->name);
 }
 
 
@@ -495,19 +399,19 @@ sub duplication_confidence_score {
 sub delete_old_homologies {
     my $self = shift;
 
-    my $tree_node_id = $self->param('gene_tree')->node_id;
+    my $tree_node_id = $self->param('gene_tree_id');
 
     # New method all in one go -- requires key on tree_node_id
     print "deleting old homologies\n" if ($self->debug);
 
     # Delete first the members
-    my $sql1 = 'DELETE homology_member FROM homology JOIN homology_member USING (homology_id) WHERE tree_node_id=?';
+    my $sql1 = 'DELETE homology_member FROM homology JOIN homology_member USING (homology_id) WHERE gene_tree_root_id = ?';
     my $sth1 = $self->compara_dba->dbc->prepare($sql1);
     $sth1->execute($tree_node_id);
     $sth1->finish;
 
     # And then the homologies
-    my $sql2 = 'DELETE FROM homology WHERE tree_node_id=?';
+    my $sql2 = 'DELETE FROM homology WHERE gene_tree_root_id = ?';
     my $sth2 = $self->compara_dba->dbc->prepare($sql2);
     $sth2->execute($tree_node_id);
     $sth2->finish;
@@ -522,164 +426,86 @@ sub delete_old_homologies {
 ########################################################
 
 
-sub direct_ortholog_test
+sub tag_genepairlink
 {
-  my $self = shift;
-  my $genepairlink = shift;
+    my $self = shift;
+    my $genepairlink = shift;
+    my $orthotree_type = shift;
+    my $is_tree_compliant = shift;
 
-  #strictest ortholog test: 
-  #  - genes are from different species
-  #  - no ancestral duplication events
-  #  - these genes are only copies of the ancestor for their species
+    $genepairlink->add_tag('orthotree_type', $orthotree_type);
+    $genepairlink->add_tag('is_tree_compliant', $is_tree_compliant);
 
-  return undef if($genepairlink->get_tagvalue('has_dups'));
+    if ($orthotree_type =~ /ortholog/) {
+        my ($pep1, $pep2) = $genepairlink->get_nodes;
+        my $has_match = $self->param('has_match');
+        $has_match->{$pep1->member_id}->{$pep2->genome_db_id} = $genepairlink;
+        $has_match->{$pep2->member_id}->{$pep1->genome_db_id} = $genepairlink;
+    }
 
-  my ($pep1, $pep2) = $genepairlink->get_nodes;
-  return undef if($pep1->genome_db_id == $pep2->genome_db_id);
+    $self->param('orthotree_homology_counts')->{$orthotree_type}++;
+    push @{$self->param('homology_links')}, $genepairlink;
 
-  my $ancestor = $genepairlink->get_tagvalue('ancestor');
-  my $species_hash = $self->get_ancestor_species_hash($ancestor);
-
-  #RAP seems to miss some duplication events so check the species 
-  #counts for these two species to make sure they are the only
-  #representatives of these species under the ancestor
-  my $count1 = $species_hash->{$pep1->genome_db_id};
-  my $count2 = $species_hash->{$pep2->genome_db_id};
-
-  return undef if($count1>1);
-  return undef if($count2>1);
-
-  #passed all the tests -> it's a simple ortholog
-  $genepairlink->add_tag("orthotree_type", 'ortholog_one2one');
-  return 1;
 }
 
 
-sub inspecies_paralog_test
+sub tag_orthologues
 {
-  my $self = shift;
-  my $genepairlink = shift;
+    my $self = shift;
+    my $genepairlink = shift;
 
-  #simplest paralog test: 
-  #  - both genes are from the same species
-  #  - and just label with taxonomic level
+    my ($pep1, $pep2) = $genepairlink->get_nodes;
+    my $ancestor = $genepairlink->get_tagvalue('ancestor');
+    my $species_hash = $self->get_ancestor_species_hash($ancestor);
+    my $count1 = $species_hash->{$pep1->genome_db_id};
+    my $count2 = $species_hash->{$pep2->genome_db_id};
 
-  my ($pep1, $pep2) = $genepairlink->get_nodes;
-  return undef unless($pep1->genome_db_id == $pep2->genome_db_id);
-
-  my $ancestor = $genepairlink->get_tagvalue('ancestor');
-
-  #my $species_hash = $self->get_ancestor_species_hash($ancestor);
-  #foreach my $gdbID (keys(%$species_hash)) {
-  #  return undef unless($gdbID == $pep1->genome_db_id);
-  #}
-
-  #passed all the tests -> it's an inspecies_paralog
-#  $genepairlink->add_tag("orthotree_type", 'inspecies_paralog');
-  $genepairlink->add_tag("orthotree_type", 'within_species_paralog');
-  $genepairlink->add_tag("orthotree_type", 'contiguous_gene_split') if $ancestor->get_tagvalue('node_type') eq 'gene_split';
-  return 1;
+    if ($count1 == 1 and $count2 == 1) {
+        return 'ortholog_one2one';
+    } elsif ($count1 == 1 or $count2 == 1) {
+        return 'ortholog_one2many';
+    } else {
+        return 'ortholog_many2many';
+    }
 }
 
 
-sub ancient_residual_test
+
+
+sub is_level3_orthologues
 {
-  my $self = shift;
-  my $genepairlink = shift;
+    my $self = shift;
+    my $genepairlink = shift;
 
-  #test 3: getting a bit more complex:
-  #  - genes are from different species
-  #  - there is evidence for duplication events elsewhere in the history
-  #  - but these two genes are the only remaining representative of
-  #    the ancestor
+    my $has_match = $self->param('has_match');
+    my ($pep1, $pep2) = $genepairlink->get_nodes;
 
-  my ($pep1, $pep2) = $genepairlink->get_nodes;
-  return undef if($pep1->genome_db_id == $pep2->genome_db_id);
+    return (not $has_match->{$pep1->member_id}->{$pep2->genome_db_id} and not $has_match->{$pep2->member_id}->{$pep1->genome_db_id});
+}
 
-  my $ancestor = $genepairlink->get_tagvalue('ancestor');
-  my $species_hash = $self->get_ancestor_species_hash($ancestor);
+sub is_level4_orthologues
+{
+    my $self = shift;
+    my $genepairlink = shift;
 
-  #check these are the only representatives of the ancestor
-  my $count1 = $species_hash->{$pep1->genome_db_id};
-  my $count2 = $species_hash->{$pep2->genome_db_id};
+    my $has_match = $self->param('has_match');
+    my ($pep1, $pep2) = $genepairlink->get_nodes;
 
-  return undef if($count1>1);
-  return undef if($count2>1);
-
-  #passed all the tests -> it's a simple ortholog
-  # print $ancestor->node_id, " ", $ancestor->name,"\n";
-
-#  my $sis_value = $ancestor->get_tagvalue("species_intersection_score");
-  if ($ancestor->get_tagvalue('node_type', '') eq 'duplication') {
-    $genepairlink->add_tag("orthotree_type", 'apparent_ortholog_one2one');
-    # Duplication_confidence_score
-  } else {
-    $genepairlink->add_tag("orthotree_type", 'ortholog_one2one');
-  }
-  return 1;
+    return undef if $has_match->{$pep1->member_id}->{$pep2->genome_db_id} and $has_match->{$pep2->member_id}->{$pep1->genome_db_id};
+    
+    my $dcs = $genepairlink->get_tagvalue('ancestor')->get_tagvalue('duplication_confidence_score');
+    return undef unless $dcs < $self->param('no_between');
+    return $has_match->{$pep1->member_id}->{$pep2->genome_db_id} || $has_match->{$pep2->member_id}->{$pep1->genome_db_id};
 }
 
 
-sub one2many_ortholog_test
+sub complain
 {
-  my $self = shift;
-  my $genepairlink = shift;
+    my $self = shift;
+    my $genepairlink = shift;
 
-  #test 4: getting a bit more complex yet again:
-  #  - genes are from different species
-  #  - but there is evidence for duplication events in the history
-  #  - one of the genes is the only remaining representative of the
-  #  ancestor in its species
-  #  - but the other gene has multiple copies in it's species 
-  #  (first level of orthogroup analysis)
-
-  my ($pep1, $pep2) = $genepairlink->get_nodes;
-  return undef if($pep1->genome_db_id == $pep2->genome_db_id);
-
-  my $ancestor = $genepairlink->get_tagvalue('ancestor');
-  my $species_hash = $self->get_ancestor_species_hash($ancestor);
-
-  my $count1 = $species_hash->{$pep1->genome_db_id};
-  my $count2 = $species_hash->{$pep2->genome_db_id};
-
-  #one of the genes must be the only copy of the gene
-  #and the other must appear more than once in the ancestry
-  return undef unless 
-    (
-     ($count1==1 and $count2>1) or ($count1>1 and $count2==1)
-    );
-
-  if ($ancestor->get_tagvalue('node_type', '') eq 'duplication') {
-    return undef;
-  }
-
-  #passed all the tests -> it's a one2many ortholog
-  $genepairlink->add_tag("orthotree_type", 'ortholog_one2many');
-  return 1;
-}
-
-
-sub outspecies_test
-{
-  my $self = shift;
-  my $genepairlink = shift;
-
-  #last test: left over pairs:
-  #  - genes are from different species
-  #  - if ancestor is 'DUP' -> paralog else 'ortholog'
-
-  my ($pep1, $pep2) = $genepairlink->get_nodes;
-  return undef if($pep1->genome_db_id == $pep2->genome_db_id);
-
-  my $ancestor = $genepairlink->get_tagvalue('ancestor');
-
-  #ultra simple ortho/paralog classification
-  if ($ancestor->get_tagvalue('node_type', '') eq 'duplication') {
-    $genepairlink->add_tag("orthotree_type", 'possible_ortholog');
-  } else {
-      $genepairlink->add_tag("orthotree_type", 'ortholog_many2many');
-  }
-  return 1;
+    my ($pep1, $pep2) = $genepairlink->get_nodes;
+    printf ( "OOPS!!!! %s - %s\n", $pep1->gene_member->stable_id, $pep2->gene_member->stable_id);
 }
 
 
@@ -697,10 +523,6 @@ sub store_homologies {
   my $hlinkscount = 0;
   foreach my $genepairlink (@{$self->param('homology_links')}) {
     $self->display_link_analysis($genepairlink) if($self->debug>2);
-    my $type = $genepairlink->get_tagvalue("orthotree_type");
-    my $dcs = $genepairlink->get_tagvalue('ancestor')->get_tagvalue('duplication_confidence_score');
-    next if ($type eq 'possible_ortholog' and $dcs > $self->param('no_between'));
-
     $self->store_gene_link_as_homology($genepairlink) if $self->param('store_homologies');
     print STDERR "homology links $hlinkscount\n" if ($hlinkscount++ % 500 == 0);
   }
@@ -719,20 +541,14 @@ sub store_gene_link_as_homology {
 
   my $type = $genepairlink->get_tagvalue('orthotree_type');
   return unless($type);
+  my $is_tree_compliant = $genepairlink->get_tagvalue('is_tree_compliant');
   my $ancestor = $genepairlink->get_tagvalue('ancestor');
-  my $subtype = $ancestor->get_tagvalue('taxon_name');
-  warn "Tag tree_node_id undefined\n" unless $genepairlink->has_tag('tree_node_id');
-  my $tree_node_id = $genepairlink->get_tagvalue('tree_node_id');
 
   my ($gene1, $gene2) = $genepairlink->get_nodes;
 
   # get the mlss from the database
-  my $mlss_type;
-  if ((not $type =~ /^ortholog/) and (not $type =~ /^apparent_ortholog/)) {
-      $mlss_type = "ENSEMBL_PARALOGUES";
-  } else {
-      $mlss_type = "ENSEMBL_ORTHOLOGUES";
-  }
+  my $mlss_type = ($type =~ /^ortholog/ ? 'ENSEMBL_ORTHOLOGUES' : 'ENSEMBL_PARALOGUES');
+  $mlss_type = 'ENSEMBL_PROJECTIONS' if $type eq 'alt_allele';
   my $gdbs;
   if ($gene1->genome_db->dbID == $gene2->genome_db->dbID) {
       $gdbs = [$gene1->genome_db];
@@ -744,25 +560,26 @@ sub store_gene_link_as_homology {
   # create an Homology object
   my $homology = new Bio::EnsEMBL::Compara::Homology;
   $homology->description($type);
-  $homology->subtype($subtype);
-  $homology->ancestor_node_id($ancestor->node_id);
-  $homology->tree_node_id($tree_node_id);
+  $homology->is_tree_compliant($is_tree_compliant);
+  $homology->gene_tree_node($ancestor) if $ancestor;
   $homology->method_link_species_set($mlss);
+  $homology->_species_tree_node_id($ancestor->get_value_for_tag('species_tree_node_id')) if $ancestor;
   
-  $homology->add_Member($gene1);
-  $homology->add_Member($gene2);
+  $homology->add_Member($gene1->Bio::EnsEMBL::Compara::AlignedMember::copy);
+  $homology->add_Member($gene2->Bio::EnsEMBL::Compara::AlignedMember::copy);
   $homology->update_alignment_stats;
 
   my $key = $mlss->dbID . "_" . $gene1->dbID;
   $self->param('homology_consistency')->{$key}{$type} = 1;
 
-  # at this stage, contiguous_gene_split have been retrieved from the node types
+  # at this stage, gene_split have been retrieved from the node types
   if ($self->param('tag_split_genes')) {
     # Potential split genes: within_species_paralog that do not overlap at all
-    if ($type eq 'within_species_paralog' && 0 == $gene1->perc_id && 0 == $gene2->perc_id && 0 == $gene1->perc_pos && 0 == $gene2->perc_pos) {
+    if (($type eq 'within_species_paralog') and ($homology->get_all_Members->[0]->perc_cov == 0) and ($homology->get_all_Members->[1]->perc_cov == 0)) {
         $self->param('orthotree_homology_counts')->{'within_species_paralog'}--;
-        $homology->description('putative_gene_split');
-        $self->param('orthotree_homology_counts')->{'putative_gene_split'}++;
+        $homology->description('gene_split');
+        $homology->is_tree_compliant(0);
+        $self->param('orthotree_homology_counts')->{'gene_split'}++;
     }
   }
   
@@ -782,7 +599,7 @@ sub check_homology_consistency {
         my $count = scalar(keys %{$self->param('homology_consistency')->{$mlss_member_id}});
 
         next if $count == 1;
-        next if $count == 2 and exists $self->param('homology_consistency')->{$mlss_member_id}->{contiguous_gene_split} and exists $self->param('homology_consistency')->{$mlss_member_id}->{within_species_paralog};
+        next if $count == 2 and exists $self->param('homology_consistency')->{$mlss_member_id}->{gene_split} and exists $self->param('homology_consistency')->{$mlss_member_id}->{within_species_paralog};
 
         my ($mlss, $member_id) = split("_", $mlss_member_id);
         $bad_key = "mlss member_id : $mlss $member_id";

@@ -1,12 +1,21 @@
 =head1 LICENSE
 
-  Copyright (c) 1999-2013 The European Bioinformatics Institute and
-  Genome Research Limited.  All rights reserved.
+Copyright [1999-2013] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
-  This software is distributed under a modified Apache license.
-  For license details, please see
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
 
-   http://www.ensembl.org/info/about/code_licence.html
+     http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+
+=cut
+
 
 =head1 CONTACT
 
@@ -46,14 +55,6 @@ $buildhmm->write_output(); #writes to DB
 
 Ensembl Team. Individual contributions can be found in the CVS log.
 
-=head1 MAINTAINER
-
-$Author$
-
-=head VERSION
-
-$Revision$
-
 =head1 APPENDIX
 
 The rest of the documentation details each of the object methods.
@@ -80,7 +81,7 @@ sub param_defaults {
 sub fetch_input {
     my $self = shift @_;
 
-    my $protein_tree_id     = $self->param('gene_tree_id') or die "'gene_tree_id' is an obligatory parameter";
+    my $protein_tree_id     = $self->param_required('gene_tree_id');
     my $protein_tree        = $self->compara_dba->get_GeneTreeAdaptor->fetch_by_dbID( $protein_tree_id )
                                         or die "Could not fetch protein_tree with gene_tree_id='$protein_tree_id'";
     $self->param('protein_tree', $protein_tree);
@@ -123,7 +124,7 @@ sub fetch_input {
 
     $self->param('protein_align', Bio::EnsEMBL::Compara::AlignedMemberSet->new(-dbid => $self->param('gene_tree_id'), -members => $members));
 
-    my $buildhmm_exe = $self->param('buildhmm_exe') or die "'buildhmm_exe' is an obligatory parameter";
+    my $buildhmm_exe = $self->param_required('buildhmm_exe');
     die "Cannot execute '$buildhmm_exe'" unless(-x $buildhmm_exe);
 
     return
@@ -188,7 +189,7 @@ sub post_cleanup {
 sub run_buildhmm {
     my $self = shift;
 
-    my $stk_file = $self->dumpTreeMultipleAlignmentToWorkdir($self->param('protein_align'), 1);
+    my $stk_file = $self->dumpAlignedMemberSetAsStockholm($self->param('protein_align'));
     my $hmm_file = $self->param('hmm_file', $stk_file . '_hmmbuild.hmm');
 
     ## as in treefam
@@ -223,18 +224,15 @@ sub store_hmmprofile {
 #  my $model_id = sprintf('%d_%s', $self->param('gene_tree_id'), $self->param('hmm_type'));
   my $model_id = $self->param('gene_tree_id');
   my $type = "tree_hmm_" . $self->param('hmm_type');
-  my $hc_profile = $hmm_text;
 
   my $hmmProfile = Bio::EnsEMBL::Compara::HMMProfile->new();
   $hmmProfile->model_id($model_id);
   $hmmProfile->name($model_id);
   $hmmProfile->type($type);
-  $hmmProfile->profile($hc_profile);
+  $hmmProfile->profile($hmm_text);
 
   $self->compara_dba->get_HMMProfileAdaptor()->store($hmmProfile);
 
-#  my $sth = $self->compara_dba->dbc->prepare('REPLACE INTO hmm_profile (model_id,type,hc_profile) VALUES (?,?,?)');
-#  $sth->execute(sprintf('%d_%s', $self->param('gene_tree_id'), $self->param('hmm_type')), 'hmmer', $hmm_text);
 }
 
 1;

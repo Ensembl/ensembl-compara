@@ -1,12 +1,21 @@
 =head1 LICENSE
 
-  Copyright (c) 1999-2013 The European Bioinformatics Institute and
-  Genome Research Limited.  All rights reserved.
+Copyright [1999-2013] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
-  This software is distributed under a modified Apache license.
-  For license details, please see
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
 
-   http://www.ensembl.org/info/about/code_licence.html
+     http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+
+=cut
+
 
 =head1 CONTACT
 
@@ -29,14 +38,6 @@ Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::HMMClassify
 =head1 AUTHORSHIP
 
 Ensembl Team. Individual contributions can be found in the CVS log.
-
-=head1 MAINTAINER
-
-$Author$
-
-=head VERSION
-
-$Revision$
 
 =head1 APPENDIX
 
@@ -67,23 +68,19 @@ sub param_defaults {
 sub fetch_input {
     my ($self) = @_;
 
-    my $pantherScore_path = $self->param('pantherScore_path');
-    $self->throw('pantherScore_path is an obligatory parameter') unless (defined $pantherScore_path);
+    my $pantherScore_path = $self->param_required('pantherScore_path');
 
     push @INC, "$pantherScore_path/lib";
     require FamLibBuilder;
 #    import FamLibBuilder;
 
-    my $genome_db_id = $self->param('genome_db_id');
-    if (! defined $genome_db_id) {
-        $self->throw('genome_db_id is an obligatory parameter');
-    }
+    my $genome_db_id = $self->param_required('genome_db_id');
     my $genome_db = $self->compara_dba->get_GenomeDBAdaptor->fetch_by_dbID($genome_db_id);
     $self->param('genome_db', $genome_db);
 
-    $self->throw('cluster_dir is an obligatory parameter') unless (defined $self->param('cluster_dir'));
-    $self->throw('blast_path is an obligatory parameter') unless (defined $self->param('blast_path'));
-    $self->throw('hmm_library_basedir is an obligatory parameter') unless (defined $self->param('hmm_library_basedir'));
+    $self->param_required('cluster_dir');
+    $self->param_required('blast_bin_dir');
+    $self->param_required('hmm_library_basedir');
     my $hmmLibrary = FamLibBuilder->new($self->param('hmm_library_basedir'), 'prod');
     $self->throw('No valid HMM library found at ' . $self->param('library_path')) unless ($hmmLibrary->exists());
     $self->param('hmmLibrary', $hmmLibrary);
@@ -132,7 +129,7 @@ sub dump_sequences_to_workdir {
     print STDERR "fastafile: $fastafile\n" if ($self->debug);
 
     my $members = $self->compara_dba->get_SeqMemberAdaptor->fetch_all_canonical_by_source_genome_db_id('ENSEMBLPEP', $genome_db_id);
-    Bio::EnsEMBL::Compara::MemberSet->new(-members => $members)->print_sequences_to_fasta($fastafile);
+    Bio::EnsEMBL::Compara::MemberSet->new(-members => $members)->print_sequences_to_file($fastafile);
     $self->param('fastafile', $fastafile);
 
 }
@@ -144,7 +141,7 @@ sub run_HMM_search {
     my $pantherScore_path = $self->param('pantherScore_path');
     my $pantherScore_exe = "$pantherScore_path/pantherScore.pl";
     my $hmmLibrary = $self->param('hmmLibrary');
-    my $blast_path = $self->param('blast_path');
+    my $blast_bin_dir = $self->param('blast_bin_dir');
     my $hmmer_path = $self->param('hmmer_path');
     my $hmmer_cutoff = $self->param('hmmer_cutoff'); ## Not used for now!!
     my $library_path = $hmmLibrary->libDir();
@@ -156,7 +153,7 @@ sub run_HMM_search {
     open my $hmm_res, ">", "$cluster_dir/${genome_db_id}.hmmres" or die $!;
 
 
-    my $cmd = "PATH=\$PATH:$blast_path:$hmmer_path; PERL5LIB=\$PERL5LIB:$pantherScore_path/lib; $pantherScore_exe -l $library_path -i $fastafile -D I -b $blast_path 2>/dev/null";
+    my $cmd = "PATH=\$PATH:$blast_bin_dir:$hmmer_path; PERL5LIB=\$PERL5LIB:$pantherScore_path/lib; $pantherScore_exe -l $library_path -i $fastafile -D I -b $blast_bin_dir 2>/dev/null";
     print STDERR "$cmd\n" if ($self->debug());
 
     $self->compara_dba->dbc->disconnect_when_inactive(1);

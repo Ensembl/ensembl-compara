@@ -1,3 +1,21 @@
+=head1 LICENSE
+
+Copyright [1999-2013] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+     http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+
+=cut
+
 
 =pod 
 
@@ -17,12 +35,6 @@ supported keys:
     'genome_db_id'  => <number>
         the id of the genome to be checked (main input_id parameter)
         
-    'release'       => <number>
-        number of the current release
-
-    'prev_release'  => <number>
-        (optional) number of the previous release for reuse purposes (may coincide, may be 2 or more releases behind, etc)
-
     'registry_dbs'  => <list_of_dbconn_hashes>
         list of hashes with registry connection parameters (tried in succession).
 
@@ -55,10 +67,6 @@ sub fetch_input {
     my $genome_db    = $genome_db_adaptor->fetch_by_dbID($genome_db_id) or die "Could not fetch genome_db with genome_db_id='$genome_db_id'";
     my $species_name = $self->param('species_name', $genome_db->name());
 
-    unless($self->param('per_genome_suffix')) {
-        $self->param('per_genome_suffix', "${species_name}_${genome_db_id}");
-    }
-
     return if(defined($self->param('reuse_this')));  # bypass fetch_input() and run() in case 'reuse_this' has already been passed
 
 
@@ -79,9 +87,6 @@ sub fetch_input {
             }
         }
     }
-
-    my $curr_release = $self->param('release');
-    my $prev_release = $self->param('prev_release') || ($curr_release - 1);
 
     if(my $reuse_db = $self->param('reuse_db')) {
 
@@ -122,6 +127,8 @@ sub fetch_input {
 
             Bio::EnsEMBL::Registry->no_version_check(1);
 
+            my $prev_release = $reuse_compara_dba->get_MetaContainer->get_schema_version;
+
             # load the prev.release registry:
             foreach my $prev_reg_conn (@{ $self->param('registry_dbs') }) {
                 Bio::EnsEMBL::Registry->load_registry_from_db( %{ $prev_reg_conn }, -db_version => $prev_release, -species_suffix => $suffix_separator.$prev_release );
@@ -137,8 +144,8 @@ sub fetch_input {
         if ($prev_core_dba) {
             my $curr_core_dba = $self->param('curr_core_dba', $genome_db->db_adaptor);
 
-            my $curr_assembly = $curr_core_dba->extract_assembly_name;
-            my $prev_assembly = $prev_core_dba->extract_assembly_name;
+            my $curr_assembly = $curr_core_dba->assembly_name;
+            my $prev_assembly = $prev_core_dba->assembly_name;
 
             if($curr_assembly ne $prev_assembly) {
 
@@ -189,13 +196,11 @@ sub write_output {      # store the genome_db and dataflow
 
     my $genome_db_id        = $self->param('genome_db_id');
     my $reuse_this          = $self->param('reuse_this');
-    my $per_genome_suffix   = $self->param('per_genome_suffix');
 
         # same composition of the output, independent of the branch:
     my $output_hash = {
         'genome_db_id'       => $genome_db_id,
         'reuse_this'         => $reuse_this,
-        'per_genome_suffix'  => $per_genome_suffix,
     };
 
         # all jobs dataflow into branch 1:
@@ -214,15 +219,6 @@ sub comes_from_core_database {
     return ($genome_db->locator =~ /^Bio::EnsEMBL::Compara::GenomeMF/ ? 0 : 1);
 }
 
-sub Bio::EnsEMBL::DBSQL::DBAdaptor::extract_assembly_name {
-    my $self = shift @_;
-
-    my ($cs) = @{$self->get_CoordSystemAdaptor->fetch_all()};
-    my $assembly_name = $cs->version;
-
-    return $assembly_name;
-}
-
 
 sub hash_all_exons_from_dbc {
     my $dba = shift @_;
@@ -235,14 +231,14 @@ sub hash_all_exons_from_dbc {
            AND et.exon_id=e.exon_id
            AND t.seq_region_id = sr.seq_region_id
            AND sr.coord_system_id = cs.coord_system_id
-           AND t.biotype=?
+           AND t.canonical_translation_id IS NOT NULL
            AND cs.species_id =?
     };
 
     my %exon_set = ();
 
     my $sth = $dbc->prepare($sql);
-    $sth->execute('protein_coding', $dba->species_id());
+    $sth->execute($dba->species_id());
 
     while(my ($key) = $sth->fetchrow()) {
         $exon_set{$key} = 1;

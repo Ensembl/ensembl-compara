@@ -1,12 +1,21 @@
 =head1 LICENSE
 
-  Copyright (c) 1999-2013 The European Bioinformatics Institute and
-  Genome Research Limited.  All rights reserved.
+Copyright [1999-2013] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
-  This software is distributed under a modified Apache license.
-  For license details, please see
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
 
-    http://www.ensembl.org/info/about/code_licence.html
+     http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+
+=cut
+
 
 =head1 CONTACT
 
@@ -140,7 +149,8 @@ sub fetch_input {
   #
   # create method_link_species_set
   #
-  my $method = Bio::EnsEMBL::Compara::Method->new( -type => $self->param('method_link_type') );
+  my $method = Bio::EnsEMBL::Compara::Method->new( -type => $self->param('method_link_type'),
+                                                   -class => "GenomicAlignBlock.pairwise_alignment");
 
   my $species_set_obj = Bio::EnsEMBL::Compara::SpeciesSet->new(
         -genome_dbs => ($first_qy_chunk->dnafrag->genome_db->dbID == $first_db_chunk->dnafrag->genome_db->dbID)
@@ -185,10 +195,10 @@ sub run
   $self->compara_dba->dbc->disconnect_when_inactive(1);  
 
   my $starttime = time();
-
+  my $work_dir = $self->worker_temp_directory;
   foreach my $runnable (@{$self->param('runnable')}) {
       throw("Runnable module not set") unless($runnable);
-      $runnable->run();
+      $runnable->run($work_dir);
   }
 
   if($self->debug){printf("%1.3f secs to run %s pairwise\n", (time()-$starttime), $self->param('method_link_type'));}
@@ -221,7 +231,6 @@ sub delete_fasta_dumps_but_these {
 
 sub write_output {
   my( $self) = @_;
-
   my $starttime = time();
 
   #since the Blast runnable takes in analysis parameters rather than an
@@ -294,21 +303,40 @@ sub dumpChunkSetToWorkdir
 
   my $chunk_array = $chunkSet->get_all_DnaFragChunks;
   if($self->debug){printf("dumpChunkSetToWorkdir : %s : %d chunks\n", $fastafile, $chunkSet->count());}
-  
+
+  #Load all sequences in a dnafrag_chunk_set and set masking options
+  my $sequence_ids;
   foreach my $chunk (@$chunk_array) {
     $chunk->masking_options($dna_collection->masking_options);
+    push @$sequence_ids, $chunk->sequence_id;
+  }
+
+  #Retrieve all sequences except those with sequence_id=0 (too big to be stored). 
+  #Returned in the same order as the sequence_ids which are in the same order as the chunks in chunk_array
+  my $sequences =  $self->compara_dba->get_SequenceAdaptor->fetch_by_dbIDs($sequence_ids, $self->param('sequence_batch_size'));
+
+  foreach my $chunk (@$chunk_array) {
+      #only have sequences for chunks with sequence_id > 0 - but this resets the sequence_id to 0. Why?
+
+      my $this_seq_id = $chunk->sequence_id; #save seq_id
+      $chunk->sequence(shift $sequences) if ($chunk->sequence_id > 0); #this sets sequence_id=0
+      $chunk->sequence_id($this_seq_id); #reset seq_id
+
+      #Retrieve sequences with sequence_id=0 (ie too big to store in the sequence table)
     my $bioseq = $chunk->bioseq;
+
+    # This may not be necessary now as already have all the sequences in the sequence table
     if($chunk->sequence_id==0) {
-      $self->compara_dba->get_DnaFragChunkAdaptor->update_sequence($chunk);
+      my $this_seq_id = $self->compara_dba->get_DnaFragChunkAdaptor->update_sequence($chunk);
     }
 
     $output_seq->write_seq($bioseq);
   }
+
   close OUTSEQ;
   if($self->debug){printf("  %1.3f secs to dump\n", (time()-$starttime));}
   return $fastafile
 }
-
 
 sub dumpChunkToWorkdir
 {

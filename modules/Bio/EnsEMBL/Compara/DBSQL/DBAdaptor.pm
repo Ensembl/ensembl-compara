@@ -1,12 +1,21 @@
 =head1 LICENSE
 
-  Copyright (c) 1999-2013 The European Bioinformatics Institute and
-  Genome Research Limited.  All rights reserved.
+Copyright [1999-2013] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
-  This software is distributed under a modified Apache license.
-  For license details, please see
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
 
-   http://www.ensembl.org/info/about/code_licence.html
+     http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+
+=cut
+
 
 =head1 CONTACT
 
@@ -40,14 +49,6 @@ This object represents the handle for a comparative DNA alignment database
 
 Ensembl Team. Individual contributions can be found in the CVS log.
 
-=head1 MAINTAINER
-
-$Author$
-
-=head VERSION
-
-$Revision$
-
 =head1 APPENDIX
 
 The rest of the documentation details each of the object methods.
@@ -58,6 +59,8 @@ Internal methods are usually preceded with an underscore (_)
 package Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
 
 use strict;
+use warnings;
+
 use Carp;
 use Bio::EnsEMBL::Utils::Argument;
 use Bio::EnsEMBL::Utils::Exception;
@@ -136,7 +139,6 @@ sub get_available_adaptors {
   my %pairs =  (
             # inherited from core:
         'MetaContainer'         => 'Bio::EnsEMBL::DBSQL::MetaContainer',
-        'Analysis'              => 'Bio::EnsEMBL::DBSQL::AnalysisAdaptor',
 
             # internal:
         'Method'                => 'Bio::EnsEMBL::Compara::DBSQL::MethodAdaptor',
@@ -144,7 +146,6 @@ sub get_available_adaptors {
         'SpeciesSet'            => 'Bio::EnsEMBL::Compara::DBSQL::SpeciesSetAdaptor',
         'MethodLinkSpeciesSet'  => 'Bio::EnsEMBL::Compara::DBSQL::MethodLinkSpeciesSetAdaptor',
         'NCBITaxon'             => 'Bio::EnsEMBL::Compara::DBSQL::NCBITaxonAdaptor',
-        'SpeciesTree'           => 'Bio::EnsEMBL::Compara::DBSQL::SpeciesTreeAdaptor',
         'HMMProfile'            => 'Bio::EnsEMBL::Compara::DBSQL::HMMProfileAdaptor',
 
             # genomic:
@@ -180,6 +181,9 @@ sub get_available_adaptors {
         'GeneTree'              => 'Bio::EnsEMBL::Compara::DBSQL::GeneTreeAdaptor',
         'GeneTreeNode'          => 'Bio::EnsEMBL::Compara::DBSQL::GeneTreeNodeAdaptor',
         'CAFEGeneFamily'        => 'Bio::EnsEMBL::Compara::DBSQL::CAFEGeneFamilyAdaptor',
+        'SpeciesTree'           => 'Bio::EnsEMBL::Compara::DBSQL::SpeciesTreeAdaptor',
+        'SpeciesTreeNode'       => 'Bio::EnsEMBL::Compara::DBSQL::SpeciesTreeNodeAdaptor',
+        'CAFEGeneFamilyNode'    => 'Bio::EnsEMBL::Compara::DBSQL::CAFEGeneFamilyNodeAdaptor',
 
             # obsolete:
         'Domain'                => 'Bio::EnsEMBL::Compara::DBSQL::DomainAdaptor',

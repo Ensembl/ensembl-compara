@@ -1,12 +1,21 @@
 =head1 LICENSE
 
-  Copyright (c) 1999-2013 The European Bioinformatics Institute and
-  Genome Research Limited.  All rights reserved.
+Copyright [1999-2013] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
-  This software is distributed under a modified Apache license.
-  For license details, please see
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
 
-    http://www.ensembl.org/info/about/code_licence.html
+     http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+
+=cut
+
 
 =head1 CONTACT
 
@@ -41,8 +50,11 @@ base of Family, Homology and GeneTree.
 package Bio::EnsEMBL::Compara::AlignedMemberSet;
 
 use strict;
+use warnings;
+
 use Scalar::Util qw(weaken);
 
+use Bio::LocatableSeq;
 use Bio::AlignIO;
 
 use Bio::EnsEMBL::Utils::Argument;
@@ -50,6 +62,7 @@ use Bio::EnsEMBL::Utils::Scalar qw(:assert);
 use Bio::EnsEMBL::Utils::Exception;
 
 use Bio::EnsEMBL::Compara::AlignedMember;
+use Bio::EnsEMBL::Compara::Utils::Cigars;
 
 use base ('Bio::EnsEMBL::Compara::MemberSet');
 
@@ -183,75 +196,40 @@ sub _attr_to_copy_list {
 # Alignment sections #
 ######################
 
-=head2 read_clustalw
+
+=head2 load_cigars_from_file
 
   Arg [1]    : string $file 
-               The name of the file containing the clustalw output  
-  Example    : $family->read_clustalw('/tmp/clustalw.aln');
-  Description: Parses the output from clustalw and sets the alignment strings
-               of each of the memebers of this family
+               The name of the file containing the multiple alignment
+  Arg [-IMPORT_SEQ] : (opt) boolean (default: false)
+               Whether the sequences of the members should be reassigned
+               using the alignment file
+  Arg [-FORMAT]     : (opt) string (default: undef)
+               The format of the alignment. By default, BioPerl will try to
+               guess it from the file extension.  Refer to
+               http://www.bioperl.org/wiki/HOWTO:AlignIO_and_SimpleAlign
+               for a list of the supported formats.
+  Example    : $family->load_cigars_from_file('/tmp/clustalw.aln');
+  Description: Parses the multiple alignment fileand sets the cigar lines
+               of each of the memebers of this AlignedMemberSet
   Returntype : none
   Exceptions : thrown if file cannot be parsed
-               warning if alignment file contains identifiers for sequences
-               which are not members of this family
-  Caller     : general
+               dies if a sequence identifier cannot be found in the set
+               dies if there is a sequence mismatch with the set
 
 =cut
 
-sub read_clustalw {
-    my $self = shift;
-    my $file = shift;
+sub load_cigars_from_file {
+    my ($self, $file, @args) = @_;
 
-    my %align_hash;
-    my $FH = IO::File->new();
-    $FH->open($file) || throw("Could not open alignment file [$file]");
-
-    <$FH>; #skip header
-    while(<$FH>) {
-        next if($_ =~ /^\s+/);  #skip lines that start with space
-
-        my ($id, $align) = split;
-        $align_hash{$id} ||= '';
-        $align_hash{$id} .= $align;
+    my $format;
+    my $import_seq;
+    if (scalar @args) {
+        ($import_seq, $format) =
+            rearrange([qw(IMPORT_SEQ FORMAT)], @args);
     }
 
-    $FH->close;
-
-    #place all members in a hash on their member name
-    my %member_hash;
-    foreach my $member (@{$self->get_all_Members}) {
-        $member_hash{$member->stable_id} = $member;
-    }
-
-    #assign cigar_line to each of the member attribute
-    foreach my $id (keys %align_hash) {
-        throw("No member for alignment portion: [$id]") unless exists $member_hash{$id};
-
-        my $alignment_string = $align_hash{$id};
-        $alignment_string =~ s/\-([A-Z])/\- $1/g;
-        $alignment_string =~ s/([A-Z])\-/$1 \-/g;
-
-        my @cigar_segments = split " ",$alignment_string;
-
-        my $cigar_line = "";
-        foreach my $segment (@cigar_segments) {
-            my $seglength = length($segment);
-            $seglength = "" if ($seglength == 1);
-            if ($segment =~ /^\-+$/) {
-                $cigar_line .= $seglength . "D";
-            } else {
-                $cigar_line .= $seglength . "M";
-            }
-        }
-
-        $member_hash{$id}->cigar_line($cigar_line);
-    }
-}
-
-sub load_cigars_from_fasta {
-    my ($self, $file, $import_seq) = @_;
-
-    my $alignio = Bio::AlignIO->new(-file => "$file", -format => "fasta");
+    my $alignio = Bio::AlignIO->new(-file => $file, -format => $format);
 
     my $aln = $alignio->next_aln or die "Bio::AlignIO could not get next_aln() from file '$file'";
     $self->aln_length($aln->length);
@@ -270,22 +248,47 @@ sub load_cigars_from_fasta {
         $id =~ s/_.*$//;
         throw("No member for alignment portion: [$id]") unless exists $member_hash{$id};
 
-        my $cigar_line = '';
-        my $seq_string = $seq->seq();
-        while($seq_string=~/(?:\b|^)(.)(.*?)(?:\b|$)/g) {
-            $cigar_line .= ($2 ? length($2)+1 : '').(($1 eq '-') ? 'D' : 'M');
-        }
-
+        my $cigar_line = Bio::EnsEMBL::Compara::Utils::Cigars::cigar_from_alignment_string($seq->seq());
         $member_hash{$id}->cigar_line($cigar_line);
 
+        my $seqseq = $seq->seq();
+        $seqseq =~ s/-//g;
         if ($import_seq) {
-            my $nucl_seq = $seq->seq();
-            $nucl_seq =~ s/-//g;
-            $member_hash{$id}->sequence($nucl_seq);
+            $member_hash{$id}->sequence($seqseq);
+        } else {
+            die "'$id' has a different sequence in the file '$file'" if $member_hash{$id}->sequence ne $seqseq;
         }
     }
 }
 
+
+=head2 read_clustalw
+
+    Description : DEPRECATED. read_clustalw() is deprecated. Please use $self->load_cigars_from_file($file, -format => 'clustalw') instead.
+
+=cut
+
+sub read_clustalw {  # DEPRECATED
+    my $self = shift;
+    my $file = shift;
+
+    deprecate('read_clustalw() is deprecated. Please use $self->load_cigars_from_file($file, -format => \'clustalw\') instead');
+    return $self->load_cigars_from_file($file, -format => 'clustalw');
+}
+
+
+=head2 load_cigars_from_fasta
+
+    Description: DEPRECATED: load_cigars_from_fasta() is deprecated. Please use $self->load_cigars_from_file($file, -format => 'fasta') instead (possibly with a -import_seq argument.
+
+=cut
+
+sub load_cigars_from_fasta { # DEPRECATED
+    my ($self, $file, $import_seq) = @_;
+
+    deprecate('load_cigars_from_fasta() is deprecated. Please use $self->load_cigars_from_file($file, -format => \'fasta\') instead (possibly with a -import_seq argument');
+    return $self->load_cigars_from_file($file, -format => 'fasta', -import_seq => $import_seq);
+}
 
 
 =head2 get_SimpleAlign
@@ -294,6 +297,7 @@ sub load_cigars_from_fasta {
         : whether redundant sequences should be discarded
     Arg [-CDNA] : (opt) boolean (default: false)
         : whether the CDS sequence should be used instead of the default sequence
+        : This option is deprec-ated in favour of -SEQ_TYPE => 'cds'
     Arg [-ID_TYPE] (opt) string (one of 'STABLE'*, 'SEQ', 'MEMBER')
         : which identifier should be used as sequence names: the stable_id, the sequence_id, or the member_id
     Arg [-STOP2X] (opt) boolean (default: false)
@@ -306,10 +310,14 @@ sub load_cigars_from_fasta {
         : whether the genome_db_id should be added to the sequence names
     Arg [-EXON_CASED] (opt) boolean (default: false)
         : whether the case of the sequence should change at each exon
+        : This option is deprec-ated in favour of -SEQ_TYPE => 'exon_cased'
     Arg [-KEEP_GAPS] (opt) boolean (default: false)
         : whether columns that only contain gaps should be kept in the alignment
+    Arg [-SEQ_TYPE] (opt) string
+        : which sequence should be used instead of the default one.
+        : Can be 'exon_cased' for proteins and ncRNAs, and 'cds' for proteins only
 
-  Example    : $tree->get_SimpleAlign(-CDNA => 1);
+  Example    : $tree->get_SimpleAlign(-SEQ_TYPE => 'cds');
   Description: Returns the alignment as a BioPerl object
   Returntype : Bio::SimpleAlign
   Exceptions : none
@@ -330,10 +338,22 @@ sub get_SimpleAlign {
     my $append_genomedb_id = 0;
     my $exon_cased = 0;
     my $keep_gaps = 0;
+    my $seq_type = undef;
     if (scalar @args) {
-        ($unique_seqs, $cdna, $id_type, $stop2x, $append_taxon_id, $append_sp_short_name, $append_genomedb_id, $exon_cased, $keep_gaps) =
-            rearrange([qw(UNIQ_SEQ CDNA ID_TYPE STOP2X APPEND_TAXON_ID APPEND_SP_SHORT_NAME APPEND_GENOMEDB_ID EXON_CASED KEEP_GAPS)], @args);
+        ($unique_seqs, $cdna, $id_type, $stop2x, $append_taxon_id, $append_sp_short_name, $append_genomedb_id, $exon_cased, $keep_gaps, $seq_type) =
+            rearrange([qw(UNIQ_SEQ CDNA ID_TYPE STOP2X APPEND_TAXON_ID APPEND_SP_SHORT_NAME APPEND_GENOMEDB_ID EXON_CASED KEEP_GAPS SEQ_TYPE)], @args);
     }
+
+    warn "-CDNA => 1 in AlignedMemberSet::get_SimpleAlign is deprecated. Please use -SEQ_TYPE => 'cds' instead" if $cdna;
+    die "-CDNA and -SEQ_TYPE cannot be both defined in AlignedMemberSet::get_SimpleAlign" if $cdna and $seq_type;
+    $seq_type = 'cds' if $cdna;
+
+    warn "-EXON_CASED => 1 in AlignedMemberSet::get_SimpleAlign is deprecated. Please use -SEQ_TYPE => 'exon_cased' instead" if $exon_cased;
+    die "-EXON_CASED and -SEQ_TYPE cannot be both defined in AlignedMemberSet::get_SimpleAlign" if $exon_cased and $seq_type;
+    $seq_type = 'exon_cased' if $exon_cased;
+
+    die "-SEQ_TYPE cannot be specified if \$self->seq_type is already defined" if $seq_type and $self->seq_type;
+    $seq_type = $self->seq_type unless $seq_type;
 
     my $sa = Bio::SimpleAlign->new();
 
@@ -341,15 +361,11 @@ sub get_SimpleAlign {
     #Check to see if the method is called 'addSeq' or 'add_seq'
     my $bio07 = ($sa->can('add_seq') ? 0 : 1);
 
-    my $seq_id_hash = {};
+    my $seq_hash = {};
     foreach my $member (@{$self->get_all_Members}) {
 
         next if $member->source_name eq 'ENSEMBLGENE';
-        next if $member->source_name =~ m/^Uniprot/i and $cdna;
-
-        # Print unique sequences only ?
-        next if($unique_seqs and $seq_id_hash->{$member->sequence_id});
-        $seq_id_hash->{$member->sequence_id} = 1;
+        next if $member->source_name =~ m/^Uniprot/i and $seq_type;
 
         # The correct codon table
         if ($member->chr_name =~ /mt/i) {
@@ -368,25 +384,21 @@ sub get_SimpleAlign {
             }
         }
 
-        my $seqstr;
-        my $alphabet;
-        if ($cdna) {
-            $seqstr = $member->cdna_alignment_string();
-            $seqstr =~ s/\s+//g;
-            $alphabet = 'dna';
-        } elsif ($self->seq_type) {
-            $seqstr = $member->alignment_string_generic($self->seq_type);
-            $alphabet = 'protein';
-        } else {
-            $seqstr = $member->alignment_string($exon_cased);
-            $alphabet = 'protein';
-        }
-        next if(!$seqstr);
+        my $seqstr = $member->alignment_string($seq_type);
+        next unless $seqstr;
+
+        # Print unique sequences only ?
+        next if $unique_seqs and $seq_hash->{$seqstr};
+        $seq_hash->{$seqstr} = 1;
+
+        my $alphabet = $member->source_name eq 'ENSEMBLTRANS' ? 'dna' : 'protein';
+        $alphabet = 'dna' if $seq_type and ($seq_type eq 'cds');
 
         # Sequence name
         my $seqID = $member->stable_id;
         $seqID = $member->sequence_id if $id_type and $id_type eq 'SEQ';
         $seqID = $member->member_id if $id_type and $id_type eq 'MEMBER';
+        $seqID = $member->{_tmp_name} if $id_type and $id_type eq 'TMP';
         $seqID .= "_" . $member->taxon_id if($append_taxon_id);
         $seqID .= "_" . $member->genome_db_id if ($append_genomedb_id);
 
@@ -428,56 +440,14 @@ sub get_SimpleAlign {
 # constituent leaf nodes.
 sub consensus_cigar_line {
 
-   my $self = shift;
-   my @cigars;
+    my $self = shift;
+    my @cigars;
 
-   # First get an 'expanded' cigar string for each leaf of the subtree
-   my @all_members = @{$self->get_all_Members};
-   my $num_members = scalar(@all_members);
-   foreach my $leaf (@all_members) {
-     next unless( UNIVERSAL::can( $leaf, 'cigar_line' ) );
-     my $cigar = $leaf->cigar_line;
-     my $newcigar = "";
-#     $cigar =~ s/(\d*)([A-Z])/$2 x ($1||1)/ge; #Expand
-      while ($cigar =~ /(\d*)([A-Z])/g) {
-          $newcigar .= $2 x ($1 || 1);
-      }
-     $cigar = $newcigar;
-     push @cigars, $cigar;
-   }
-
-   # Itterate through each character of the expanded cigars.
-   # If there is a 'D' at a given location in any cigar,
-   # set the consensus to 'D', otherwise assume an 'M'.
-   # TODO: Fix assumption that cigar strings are always the same length,
-   # and start at the same point.
-   my $cigar_len = length( $cigars[0] );
-   my $cons_cigar;
-   for( my $i=0; $i<$cigar_len; $i++ ){
-     my $char = 'M';
-     my $num_deletions = 0;
-     foreach my $cigar( @cigars ){
-       if ( substr($cigar,$i,1) eq 'D'){
-         $num_deletions++;
-       }
-     }
-     if ($num_deletions * 3 > 2 * $num_members) {
-       $char = "D";
-     } elsif ($num_deletions * 3 > $num_members) {
-       $char = "m";
-     }
-     $cons_cigar .= $char;
-   }
-
-   # Collapse the consensus cigar, e.g. 'DDDD' = 4D
-#   $cons_cigar =~ s/(\w)(\1*)/($2?length($2)+1:"").$1/ge;
-   my $collapsed_cigar = "";
-   while ($cons_cigar =~ /(D+|M+|I+|m+)/g) {
-     $collapsed_cigar .= (length($1) == 1 ? "" : length($1)) . substr($1,0,1)
- }
-   $cons_cigar = $collapsed_cigar;
-   # Return the consensus
-   return $cons_cigar;
+    my @all_members = @{$self->get_all_Members};
+    foreach my $leaf (@all_members) {
+        push @cigars, $leaf->cigar_line;
+    }
+    return Bio::EnsEMBL::Compara::Utils::Cigars::consensus_cigar_line(@cigars);
 }
 
 
@@ -595,7 +565,7 @@ sub get_4D_SimpleAlign {
     my %member_seqstr;
     foreach my $member (@{$self->get_all_Members}) {
         next if $member->source_name ne 'ENSEMBLPEP';
-        my $seqstr = $member->cdna_alignment_string();
+        my $seqstr = $member->alignment_string('cds');
         next if(!$seqstr);
         #print STDERR $seqstr,"\n";
         my @tmp_tab = split /\s+/, $seqstr;
@@ -742,178 +712,93 @@ sub update_alignment_stats {
     my $genes = $self->get_all_Members;
     my $ngenes = scalar(@$genes);
 
+    # New cigars
+    my @new_cigars = Bio::EnsEMBL::Compara::Utils::Cigars::minimize_cigars(map {$_->cigar_line} @$genes);
+    for (my $j=0; $j<$ngenes; $j++) {
+        $genes->[$j]->cigar_line($new_cigars[$j]);
+    }
+
+    my @aln = map {$_->alignment_string} @$genes;
+    my $aln_length = length($aln[0]);
+
+    my @seq_length   = (0) x $ngenes;
+    my @nmatch_id    = (0) x $ngenes;
+    my @nmatch_pos   = (0) x $ngenes;
+    my @nmatch_cov   = (0) x $ngenes;
+
     if ($ngenes == 2) {
         # This code is >4 times faster with pairs of genes
 
         my $gene1 = $genes->[0];
         my $gene2 = $genes->[1];
-        my $new_aln1_cigarline = "";
-        my $new_aln2_cigarline = "";
 
-        my $matches = 0;
-        my $identical_matches = 0;
-        my $positive_matches = 0;
-
-        my ($aln1state, $aln2state);
-        my ($aln1count, $aln2count);
-
-        my @aln1 = split(//, $gene1->alignment_string);
-        my @aln2 = split(//, $gene2->alignment_string);
-
-        my $seq_length1 = 0;
-        my $seq_length2 = 0;
+        my @aln1 = split(//, $aln[0]);
+        my @aln2 = split(//, $aln[1]);
 
         for (my $i=0; $i <= $#aln1; $i++) {
-            next if ($aln1[$i] eq '-' && $aln2[$i] eq '-');
-            my $cur_aln1state = ($aln1[$i] eq '-' ? 'D' : 'M');
-            my $cur_aln2state = ($aln2[$i] eq '-' ? 'D' : 'M');
-            $seq_length1++ if $cur_aln1state eq 'M';
-            $seq_length2++ if $cur_aln2state eq 'M';
-            if ($cur_aln1state eq 'M' && $cur_aln2state eq 'M') {
-                $matches++;
+            my $gap1 = ($aln1[$i] eq '-');
+            my $gap2 = ($aln2[$i] eq '-');
+            $seq_length[0]++ unless $gap1;
+            $seq_length[1]++ unless $gap2;
+            if (not $gap1 and not $gap2) {
+                $nmatch_cov[0]++;
                 if ($aln1[$i] eq $aln2[$i]) {
-                    $identical_matches++;
-                    $positive_matches++;
+                    $nmatch_id[0]++;
+                    $nmatch_pos[0]++;
                 } elsif ($matrix_hash{uc $aln1[$i]}{uc $aln2[$i]} > 0) {
-                    $positive_matches++;
-                }
-            }
-            unless (defined $aln1state) {
-                $aln1count = 1;
-                $aln2count = 1;
-                $aln1state = $cur_aln1state;
-                $aln2state = $cur_aln2state;
-                next;
-            }
-            if ($cur_aln1state eq $aln1state) {
-                $aln1count++;
-            } else {
-                if ($aln1count == 1) {
-                    $new_aln1_cigarline .= $aln1state;
-                } else {
-                    $new_aln1_cigarline .= $aln1count.$aln1state;
-                }
-                $aln1count = 1;
-                $aln1state = $cur_aln1state;
-            }
-            if ($cur_aln2state eq $aln2state) {
-                $aln2count++;
-            } else {
-                if ($aln2count == 1) {
-                    $new_aln2_cigarline .= $aln2state;
-                } else {
-                    $new_aln2_cigarline .= $aln2count.$aln2state;
-                }
-                $aln2count = 1;
-                $aln2state = $cur_aln2state;
-            }
-        }
-        if ($aln1count == 1) {
-            $new_aln1_cigarline .= $aln1state;
-        } else {
-            $new_aln1_cigarline .= $aln1count.$aln1state;
-        }
-        if ($aln2count == 1) {
-            $new_aln2_cigarline .= $aln2state;
-        } else {
-            $new_aln2_cigarline .= $aln2count.$aln2state;
-        }
-        unless (0 == $seq_length1) {
-            $gene1->cigar_line($new_aln1_cigarline);
-            $gene1->perc_id( int((100.0 * $identical_matches / $seq_length1 + 0.5)) );
-            $gene1->perc_pos( int((100.0 * $positive_matches  / $seq_length1 + 0.5)) );
-            $gene1->perc_cov( int((100.0 * $matches / $seq_length1 + 0.5)) );
-        }
-        unless (0 == $seq_length2) {
-            $gene2->cigar_line($new_aln2_cigarline);
-            $gene2->perc_id( int((100.0 * $identical_matches / $seq_length2 + 0.5)) );
-            $gene2->perc_pos( int((100.0 * $positive_matches  / $seq_length2 + 0.5)) );
-            $gene2->perc_cov( int((100.0 * $matches / $seq_length2 + 0.5)) );
-        }
-        return undef;
-    }
-
-    my $min_seq = shift;
-    $min_seq = int($min_seq * $ngenes) if $min_seq <= 1;
-
-    my @new_cigars   = ('') x $ngenes;
-    my @nmatch_id    = (0) x $ngenes; 
-    my @nmatch_pos   = (0) x $ngenes; 
-    my @nmatch_cov   = (0) x $ngenes; 
-    my @seq_length   = (0) x $ngenes;
-    my @alncount     = (1) x $ngenes;
-    my @alnstate     = (undef) x $ngenes;
-    my @cur_alnstate = (undef) x $ngenes;
-
-    my @aln = map {$_->alignment_string} @$genes;
-    my $aln_length = length($aln[0]);
-
-    for (my $i=0; $i < $aln_length; $i++) {
-
-        my @char_i =  map {substr($_, $i, 1)} @aln;
-        #print "pos $i: ", join('/', @char_i), "\n";
-
-        my %seen;
-        map {$seen{$_}++} @char_i;
-        next if $seen{'-'} == $ngenes;
-        my $is_cov_match = ($seen{'-'} <= $ngenes-2);
-        delete $seen{'-'};
-        
-        my %pos_chars = ();
-        my @chars = keys %seen;
-        while (my $c1 = shift @chars) {
-            foreach my $c2 (@chars) {
-                if (($matrix_hash{uc $c1}{uc $c2} > 0) and ($seen{$c1}+$seen{$c2} >= $min_seq)) {
-                    $pos_chars{$c1} = 1;
-                    $pos_chars{$c2} = 1;
+                    $nmatch_pos[0]++;
                 }
             }
         }
 
-        for (my $j=0; $j<$ngenes; $j++) {
-            if ($char_i[$j] eq '-') {
-                $cur_alnstate[$j] = 'D';
-            } else {
-                $seq_length[$j]++;
-                $nmatch_cov[$j]++ if $is_cov_match;
-                $cur_alnstate[$j] = 'M';
-                if ($seen{$char_i[$j]} >= $min_seq) {
-                    $nmatch_id[$j]++;
-                    $nmatch_pos[$j]++;
-                } elsif (exists $pos_chars{$char_i[$j]}) {
-                    $nmatch_pos[$j]++;
+        $nmatch_id[1] = $nmatch_id[0];
+        $nmatch_pos[1] = $nmatch_pos[0];
+        $nmatch_cov[1] = $nmatch_cov[0];
+
+    } else {
+
+        my $min_seq = shift;
+        $min_seq = int($min_seq * $ngenes) if $min_seq <= 1;
+
+        for (my $i=0; $i < $aln_length; $i++) {
+
+            my @char_i =  map {substr($_, $i, 1)} @aln;
+            #print "pos $i: ", join('/', @char_i), "\n";
+
+            my %seen;
+            map {$seen{$_}++} @char_i;
+            next if $seen{'-'} == $ngenes;
+            my $is_cov_match = ($seen{'-'} <= $ngenes-2);
+            delete $seen{'-'};
+
+            my %pos_chars = ();
+            my @chars = keys %seen;
+            while (my $c1 = shift @chars) {
+                foreach my $c2 (@chars) {
+                    if (($matrix_hash{uc $c1}{uc $c2} > 0) and ($seen{$c1}+$seen{$c2} >= $min_seq)) {
+                        $pos_chars{$c1} = 1;
+                        $pos_chars{$c2} = 1;
+                    }
                 }
             }
-        }
 
-        if ($i == 0) {
-            @alnstate = @cur_alnstate;
-            next;
-        }
-
-        for (my $j=0; $j<$ngenes; $j++) {
-            if ($cur_alnstate[$j] eq $alnstate[$j]) {
-                $alncount[$j]++;
-            } else {
-                if ($alncount[$j] == 1) {
-                    $new_cigars[$j] .= $alnstate[$j];
-                } else {
-                    $new_cigars[$j] .= $alncount[$j].$alnstate[$j];
+            for (my $j=0; $j<$ngenes; $j++) {
+                if ($char_i[$j] ne '-') {
+                    $seq_length[$j]++;
+                    $nmatch_cov[$j]++ if $is_cov_match;
+                    if ($seen{$char_i[$j]} >= $min_seq) {
+                        $nmatch_id[$j]++;
+                        $nmatch_pos[$j]++;
+                    } elsif (exists $pos_chars{$char_i[$j]}) {
+                        $nmatch_pos[$j]++;
+                    }
                 }
-                $alncount[$j] = 1;
-                $alnstate[$j] = $cur_alnstate[$j];
             }
         }
     }
 
     for (my $j=0; $j<$ngenes; $j++) {
-        if ($alncount[$j] == 1) {
-            $new_cigars[$j] .= $alnstate[$j];
-        } else {
-            $new_cigars[$j] .= $alncount[$j].$alnstate[$j];
-        }
-        $genes->[$j]->cigar_line($new_cigars[$j]);
-        unless (0 == $seq_length[$j]) {
+        if ($seq_length[$j]) {
             $genes->[$j]->perc_id( int((100.0 * $nmatch_id[$j] / $seq_length[$j] + 0.5)) );
             $genes->[$j]->perc_pos( int((100.0 * $nmatch_pos[$j] / $seq_length[$j] + 0.5)) );
             $genes->[$j]->perc_cov( int((100.0 * $nmatch_cov[$j] / $seq_length[$j] + 0.5)) );

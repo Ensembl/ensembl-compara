@@ -1,12 +1,21 @@
 =head1 LICENSE
 
-  Copyright (c) 1999-2013 The European Bioinformatics Institute and
-  Genome Research Limited.  All rights reserved.
+Copyright [1999-2013] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
-  This software is distributed under a modified Apache license.
-  For license details, please see
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
 
-    http://www.ensembl.org/info/about/code_licence.html
+     http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+
+=cut
+
 
 =head1 CONTACT
 
@@ -66,17 +75,6 @@ sub object_class {
     return 'Bio::EnsEMBL::Compara::Method';
 }
 
-
-
-#################################################################
-# Implements Bio::EnsEMBL::Compara::DBSQL::BaseFullCacheAdaptor #
-#################################################################
-
-sub _add_to_cache {
-    my ($self, $method) = @_;
-    $self->SUPER::_add_to_cache($method);
-    $self->{_type_cache}->{lc $method->type()} = $method;
-}
 
 
 
@@ -140,8 +138,7 @@ sub _objs_from_sth {
 sub fetch_by_type {
     my ($self, $type) = @_;
 
-    $self->_id_cache;
-    return $self->{_type_cache}->{lc $type};
+    return $self->_id_cache->get_by_additional_lookup('type', uc $type);
 }
 
 
@@ -187,8 +184,20 @@ sub store {
     if(my $reference_dba = $self->db->reference_dba()) {
         $reference_dba->get_MethodAdaptor->store( $method );
     }
+    if ($self->_synchronise($method)) {
 
-    unless($self->_synchronise($method)) {
+        my $sql = 'UPDATE method_link SET class = ? WHERE method_link_id = ?';
+        my $sth = $self->prepare( $sql ) or die "Could not prepare $sql\n";
+
+        my $return_code = $sth->execute( $method->class(), $method->dbID() )
+            or die "Could not store ".$method->toString."\n";
+
+        $sth->finish();
+
+        $self->_id_cache->remove($method->dbID);
+
+    } else {
+
         my $sql = 'INSERT INTO method_link (method_link_id, type, class) VALUES (?, ?, ?)';
         my $sth = $self->prepare( $sql ) or die "Could not prepare $sql\n";
 
@@ -198,11 +207,40 @@ sub store {
         $self->attach($method, $self->dbc->db_handle->last_insert_id(undef, undef, 'method_link', 'method_link_id') );
         $sth->finish();
     }
-
-    $self->_add_to_cache($method);
+    
+    $self->_id_cache->put($method->dbID, $method);
     return $method;
 }
 
+
+############################################################
+# Implements Bio::EnsEMBL::Compara::DBSQL::BaseFullAdaptor #
+############################################################
+
+
+sub _build_id_cache {
+    my $self = shift;
+    return Bio::EnsEMBL::Compara::DBSQL::Cache::Method->new($self);
+}
+
+
+package Bio::EnsEMBL::Compara::DBSQL::Cache::Method;
+
+
+use base qw/Bio::EnsEMBL::DBSQL::Support::FullIdCache/;
+use strict;
+use warnings;
+
+sub support_additional_lookups {
+    return 1;
+}
+
+sub compute_keys {
+    my ($self, $method) = @_;
+    return {
+        type => uc $method->type(),
+    }
+}
 
 
 1;

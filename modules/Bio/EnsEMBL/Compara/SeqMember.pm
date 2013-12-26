@@ -1,12 +1,21 @@
 =head1 LICENSE
 
-  Copyright (c) 1999-2013 The European Bioinformatics Institute and
-  Genome Research Limited.  All rights reserved.
+Copyright [1999-2013] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
-  This software is distributed under a modified Apache license.
-  For license details, please see
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
 
-   http://www.ensembl.org/info/about/code_licence.html
+     http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+
+=cut
+
 
 =head1 CONTACT
 
@@ -34,14 +43,6 @@ It is currently used for proteins and RNAs.
 
 Ensembl Team. Individual contributions can be found in the CVS log.
 
-=head1 MAINTAINER
-
-$Author$
-
-=head VERSION
-
-$Revision$
-
 =head1 APPENDIX
 
 The rest of the documentation details each of the object methods.
@@ -53,6 +54,9 @@ Internal methods are usually preceded with an underscore (_)
 package Bio::EnsEMBL::Compara::SeqMember;
 
 use strict;
+#use warnings;
+
+#use feature qw(switch);
 
 use Bio::Seq;
 
@@ -107,6 +111,7 @@ sub copy {
   my $mycopy = $self->SUPER::copy(@_);
   bless $mycopy, 'Bio::EnsEMBL::Compara::SeqMember';
   
+  $mycopy->sequence($self->sequence);
   $mycopy->sequence_id($self->sequence_id);
   $mycopy->gene_member_id($self->gene_member_id);
   
@@ -145,12 +150,14 @@ sub new_from_transcript {
   $self->taxon_id($genome_db->taxon_id);
   $self->genome_db_id($genome_db->dbID);
   $self->chr_name($transcript->seq_region_name);
-  $self->chr_start($transcript->coding_region_start);
-  $self->chr_end($transcript->coding_region_end);
-  $self->chr_strand($transcript->seq_region_strand);
-  $self->display_name($transcript->display_xref->display_id);
+  $self->dnafrag_strand($transcript->seq_region_strand);
+  $self->display_label($transcript->display_xref->display_id) if $transcript->display_xref;
 
   if(($translate eq 'translate') or ($translate eq 'yes')) {
+      # coordinates
+    $self->dnafrag_start($transcript->coding_region_start);
+    $self->dnafrag_end($transcript->coding_region_end);
+
     if(not defined($transcript->translation)) {
       throw("request to translate a transcript without a defined translation",
             $transcript->stable_id);
@@ -180,10 +187,12 @@ sub new_from_transcript {
       warn("zero length sequence from translation " . $transcript->translation->stable_id."\n");
     }
     else {
-      #$seq_string =~ s/(.{72})/$1\n/g;
       $self->sequence($seq_string);
     }
   } elsif ($translate eq 'ncrna') {
+    # Coordinates
+    $self->dnafrag_start($transcript->seq_region_start);
+    $self->dnafrag_end($transcript->seq_region_end);
     unless (defined $transcript->stable_id) {
       throw("COREDB error: does not contain transcript stable id for transcript_id ".$transcript->dbID."\n");
     }
@@ -304,10 +313,10 @@ sub new_from_transcript {
 
 sub sequence {
   my $self = shift;
-
-  if(@_) {
+  my $sequence = shift;
+  if(defined $sequence) {
     $self->{'_seq_length'} = undef;
-    $self->{'_sequence'} = shift;
+    $self->{'_sequence'} = $sequence;
     $self->{'_seq_length'} = length($self->{'_sequence'}) if(defined($self->{'_sequence'}));
     return $self->{'_sequence'};
   }
@@ -326,78 +335,77 @@ sub sequence {
 
 =head2 sequence_exon_cased
 
-  Args       : none
-  Example    : my $sequence_exon_cased = $member->sequence_exon_cased;
-  Description: Get the sequence string of this member with alternating upper
-                and lower case corresponding to the translateable exons.
-  Returntype : string
-  Exceptions : none
-  Caller     : general
+  Description: DEPRECATED. Will be removed in e76. Use SeqMember::other_sequence('exon_cased', $sequence) instead
 
 =cut
 
-sub sequence_exon_cased {
-  my $self = shift;
+sub sequence_exon_cased {  ## DEPRECATED
+    my $self = shift;
+    my $sequence = shift;
 
-  $self->{_sequence_exon_cased} = $self->_compose_sequence_exon_cased unless exists $self->{_sequence_exon_cased};
-
-  return $self->{_sequence_exon_cased};
-}
-
-sub _compose_sequence_exon_cased {
-  my $self = shift;
-  my $sequence = $self->sequence;
-  my $trans = $self->get_Transcript;
-  my @exons = @{$trans->get_all_translateable_Exons};
-  return $sequence if (1 == scalar @exons);
-
-  my %splice_site;
-  my $pep_len = 0;
-  my $overlap_len = 0;
-  while (my $exon = shift @exons) {
-    my $exon_len = $exon->length;
-    my $pep_seq = $exon->peptide($trans)->length;
-    # remove the first char of seq if overlap ($exon->peptide()) return full overlapping exon seq
-    $pep_seq -= 1 if ($overlap_len);
-    $pep_len += $pep_seq;
-    if ($overlap_len = (($exon_len + $overlap_len ) %3)){          # if there is an overlap
-      $splice_site{$pep_len-1}{'overlap'} = $pep_len -1;         # stores overlapping aa-exon boundary
-    } else {
-      $overlap_len = 0;
-    }
-    $splice_site{$pep_len}{'phase'} = $overlap_len;                 # positions of exon boundary
-  }
-
-  my @exon_sequences = ();
-  foreach my $pep_len (sort {$b<=>$a} keys %splice_site) { # We start from the end
-    next if (defined($splice_site{$pep_len}{'overlap'}));
-    next if ($pep_len > length($sequence)); # Get rid of 1 codon STOP exons in the protein
-    my $length = $pep_len;
-    $length-- if (defined($splice_site{$pep_len}{'phase'}) && 1 == $splice_site{$pep_len}{'phase'});
-    my $peptide;
-    $peptide = substr($sequence,$length,length($sequence),'');
-    unshift(@exon_sequences, $peptide);
-  }
-  unshift(@exon_sequences, $sequence); # First exon (last piece of sequence left)
-
-  my $splice = 1;
-  foreach my $exon_sequence (@exon_sequences) {
-    if ($splice % 2 == 0) {
-      $exon_sequence = lc($exon_sequence);
-    }
-    $splice++;
-  }  
-  my $seqsplice = join("", @exon_sequences);
-
-  return $seqsplice;
+    deprecate('SeqMember::sequence_exon_cased($sequence) is deprecated and will be removed in e76. Use SeqMember::other_sequence("exon_cased", $sequence) instead');
+    return $self->other_sequence('exon_cased', $sequence);
 }
 
 
 =head2 sequence_exon_bounded
 
-  Args       : (opt) string
-  Example    : my $sequence_exon_bounded = $member->sequence_exon_bounded;
-  Description: Get/Set the sequence string of this member with exon boundaries
+  Description: DEPRECATED. Will be removed in e76. Use SeqMember::other_sequence('exon_bounded', $sequence) instead
+
+=cut
+
+sub sequence_exon_bounded { ## DEPRECATED
+    my $self = shift;
+    my $sequence = shift;
+
+    deprecate('SeqMember::sequence_exon_bounded($sequence) is deprecated and will be removed in e76. Use SeqMember::other_sequence("exon_bounded", $sequence) instead');
+    return $self->other_sequence('exon_bounded', $sequence);
+}
+
+
+=head2 sequence_cds
+
+  Description: DEPRECATED. Will be removed in e76. Use SeqMember::other_sequence('cds', $sequence) instead
+
+=cut
+
+sub sequence_cds {  ## DEPRECATED
+    my $self = shift;
+    my $sequence = shift;
+
+    deprecate('SeqMember::sequence_cds($sequence) is deprecated and will be removed in e76. Use SeqMember::other_sequence("cds", $sequence) instead');
+    return $self->other_sequence('cds', $sequence);
+}
+
+
+=head2 get_other_sequence
+
+  Description: DEPRECATED. Will be removed in e76. Use SeqMember::other_sequence($seq_type) instead
+
+=cut
+
+sub get_other_sequence {  ## DEPRECATED
+    my $self = shift;
+    my $seq_type = shift;
+
+    deprecate('SeqMember::get_other_sequence($seq_type) is deprecated and will be removed in e76. Use SeqMember::other_sequence($seq_type) instead');
+    return $self->other_sequence($seq_type);
+}
+
+
+=head2 other_sequence
+
+  Arg [1]    : string $seq_type
+  Arg [2]    : (opt) string $sequence
+  Example    : my $filtered_seq = $member->other_sequence('filtered');
+  Description: Get/Set the alternative sequence of type $seq_type for this member.
+                Currently, proteins have 'cds', 'exon_bounded' and 'exon_cased'
+                sequences, while RNAs have 'seq_with_flanking' sequences.
+                The undef $seq_type maps to the default sequence ($member->sequence())
+                If $sequence is set: store it in the database.
+                'exon_cased' maps to the sequence string of this member with alternating upper
+                and lower case corresponding to the translateable exons.
+                'exon_bounded' maps to the sequence string of this member with exon boundaries
                 denoted as O, B, or J depending on the phase (O=0, B=1, J=2)
   Returntype : string
   Exceptions : none
@@ -405,129 +413,121 @@ sub _compose_sequence_exon_cased {
 
 =cut
 
-sub sequence_exon_bounded {
-  my $self = shift;
+sub other_sequence {
+    my $self = shift;
+    my $seq_type = shift;
+    my $sequence = shift;
 
-  if(@_) {
-    $self->{'_sequence_exon_bounded'} = shift;
-    return $self->{'_sequence_exon_bounded'};
-  }
+    # Defaults to "->sequence()"
+    return $self->sequence($sequence) unless $seq_type;
 
-  if(!defined($self->{'_sequence_exon_bounded'})) {
-    $self->{'_sequence_exon_bounded'} = $self->adaptor->db->get_SequenceAdaptor->fetch_other_sequence_by_member_id_type($self->member_id, 'exon_bounded');
-  }
+    my $key = "_sequence_$seq_type";
 
-  if(!defined($self->{'_sequence_exon_bounded'})) {
-    $self->{'_sequence_exon_bounded'} = $self->_compose_sequence_exon_bounded;
-  }
+    # Called as a setter
+    if (defined $sequence) {
+        $self->adaptor->db->get_SequenceAdaptor->store_other_sequence($self, $sequence, $seq_type);
+        $self->{$key} = $sequence;
+    }
 
-  return $self->{'_sequence_exon_bounded'};
+    # First option, we look in the compara db
+    if (not defined $self->{$key}) {
+        $self->{$key} = $self->adaptor->db->get_SequenceAdaptor->fetch_other_sequence_by_member_id_type($self->member_id, $seq_type);
+    }
+
+    # Second option, we build the sequence from the core db
+    if (not defined $self->{$key}) {
+        if ($seq_type eq 'cds') {
+            $self->_prepare_cds_sequence;
+        } elsif ($seq_type =~ /^exon_/) {
+            $self->_prepare_exon_sequences;
+        }
+    }
+
+    return $self->{$key};
 }
 
+# This method gets the CDS of a peptide
+sub _prepare_cds_sequence {
+    my $self = shift;
 
-sub _compose_sequence_exon_bounded {
-  my $self = shift;
+    die "ncRNA transcripts don't have CDS sequences. Their nucleotide sequence is directly accessible with SeqMember::sequence().\n" if $self->source_name eq 'ENSEMBLTRANS';
+    die "Uniprot entries don't have CDS sequences. They are only defined at the protein level.\n" if $self->source_name =~ m/^Uniprot/;
 
-  my $sequence = $self->sequence;
-  my $trans = $self->get_Transcript;
-  my @exons = @{$trans->get_all_translateable_Exons};
-  return $sequence if (1 == scalar @exons);
-
-  my %splice_site;
-  my $pep_len = 0;
-  my $overlap_len = 0;
-  while (my $exon = shift @exons) {
-    my $exon_len = $exon->length;
-    my $pep_seq = $exon->peptide($trans)->length;
-    # remove the first char of seq if overlap ($exon->peptide()) return full overlapping exon seq
-    $pep_seq -= 1 if ($overlap_len);
-    $pep_len += $pep_seq;
-    if ($overlap_len = (($exon_len + $overlap_len ) %3)){          # if there is an overlap
-      $splice_site{$pep_len-1}{'overlap'} = $pep_len -1;         # stores overlapping aa-exon boundary
+    if ($self->source_name eq 'ENSEMBLPEP') {
+        $self->{_sequence_cds} = $self->get_Transcript->translateable_seq;
     } else {
-      $overlap_len = 0;
+        warn "SeqMember doesn't know how to get a CDS sequence for ", $self->source_name;
+        $self->{_sequence_cds} = '';
     }
-    $splice_site{$pep_len}{'phase'} = $overlap_len;                 # positions of exon boundary
-  }
-
-  my $seqsplice = '';
-  foreach my $pep_len (sort {$b<=>$a} keys %splice_site) { # We start from the end
-    next if (defined($splice_site{$pep_len}{'overlap'}));
-    next if ($pep_len > length($sequence)); # Get rid of 1 codon STOP exons in the protein
-    my $length = $pep_len;
-    $length-- if (defined($splice_site{$pep_len}{'phase'}) && 1 == $splice_site{$pep_len}{'phase'});
-    my $peptide;
-    $peptide = substr($sequence,$length,length($sequence),'');
-    $seqsplice = $peptide . $seqsplice;
-    $seqsplice = 'o' . $seqsplice if (0 == $splice_site{$pep_len}{'phase'});
-    $seqsplice = 'b' . $seqsplice if (1 == $splice_site{$pep_len}{'phase'});
-    $seqsplice = 'j' . $seqsplice if (2 == $splice_site{$pep_len}{'phase'});
-  }
-  $seqsplice = $sequence . $seqsplice; # First exon AS IS
-
-  return $seqsplice;
 }
 
+# This method gets the exons of the peptide, and builds the exon_cased and exon_bounded sequences
+# Given that it is quite slow, all the exon-based sequences should be computed here
+sub _prepare_exon_sequences {
+    my $self = shift;
 
-=head2 sequence_cds
+    # If there is the exon_bounded sequence, it is only a matter of splitting it and alternating the case
+    my $exon_bounded_seq = $self->{_sequence_exon_bounded};
+    $exon_bounded_seq = $self->adaptor->db->get_SequenceAdaptor->fetch_other_sequence_by_member_id_type($self->member_id, 'exon_bounded') unless $exon_bounded_seq;
+    my @exon_sequences = ();
+    if ($exon_bounded_seq) {
+        $self->{_sequence_exon_bounded} = $exon_bounded_seq;
+        @exon_sequences = split( /[boj]/, $exon_bounded_seq);
 
-  Args       : (opt) string
-  Example    : my $sequence_cds = $member->sequence_cds;
-  Description: Get/Set the nucleotide sequence of this member
-  Returntype : string
-  Exceptions : none
-  Caller     : general
+    } else {
 
-=cut
+        my $sequence = $self->sequence;
+        my $trans = $self->get_Transcript;
+        my @exons = @{$trans->get_all_translateable_Exons};
+        if ((scalar @exons) == 1) {
+            $self->{_sequence_exon_cased} = $sequence;
+            $self->{_sequence_exon_bounded} = $sequence;
+            return;
+        }
 
-sub sequence_cds {
-  my $self = shift;
+        # Otherwise, we have to parse the exons
+        my %splice_site;
+        my $pep_len = 0;
+        my $overlap_len = 0;
+        while (my $exon = shift @exons) {
+            my $exon_len = $exon->length;
+            my $pep_seq = $exon->peptide($trans)->length;
+            # remove the first char of seq if overlap ($exon->peptide()) return full overlapping exon seq
+            $pep_seq -= 1 if ($overlap_len);
+            $pep_len += $pep_seq;
+            if ($overlap_len = (($exon_len + $overlap_len ) %3)){          # if there is an overlap
+                $splice_site{$pep_len-1}{'overlap'} = $pep_len -1;         # stores overlapping aa-exon boundary
+            } else {
+                $overlap_len = 0;
+            }
+            $splice_site{$pep_len}{'phase'} = $overlap_len;                 # positions of exon boundary
+        }
 
-  if(@_) {
-    $self->{'_sequence_cds'} = shift;
-    return $self->{'_sequence_cds'};
-  }
-
-  if(!defined($self->{'_sequence_cds'})) {
-    $self->{'_sequence_cds'} = $self->adaptor->db->get_SequenceAdaptor->fetch_other_sequence_by_member_id_type($self->member_id, 'cds');
-  }
-
-  if(!defined($self->{'_sequence_cds'})) {
-    if ($self->source_name =~ m/^Uniprot/) {
-      warn "Uniprot entries don't have CDS sequences\n";
-      return "";
+        my $seqsplice = '';
+        my %boundary_chars = (0 => 'o', 1 => 'b', 2 => 'j');
+        foreach my $pep_len (sort {$b<=>$a} keys %splice_site) { # We start from the end
+            next if (defined($splice_site{$pep_len}{'overlap'}));
+            next if ($pep_len > length($sequence)); # Get rid of 1 codon STOP exons in the protein
+                my $length = $pep_len;
+            $length-- if (defined($splice_site{$pep_len}{'phase'}) && 1 == $splice_site{$pep_len}{'phase'});
+            my $peptide;
+            $peptide = substr($sequence,$length,length($sequence),'');
+            unshift(@exon_sequences, $peptide);
+            $seqsplice = $boundary_chars{$splice_site{$pep_len}{'phase'}}. $peptide. $seqsplice;
+        }
+        unshift(@exon_sequences, $sequence); # First exon AS IS (last piece of sequence left)
+            $seqsplice = $sequence . $seqsplice; # First exon AS IS
+            $self->{_sequence_exon_bounded} = $seqsplice;
     }
-    $self->{'_sequence_cds'} = $self->get_Transcript->translateable_seq;
-  }
 
-  return $self->{'_sequence_cds'};
-}
-
-
-=head2 get_other_sequence
-
-  Args       : string $seq_type
-  Example    : my $filtered_seq = $member->get_other_sequence('filtered');
-  Description: Get the alternative sequence of type $seq_type for this member.
-                Currently, proteins have 'cds', 'exon_bounded' and 'filtered'
-                sequences, while RNAs have 'seq_with_flanking' sequences.
-  Returntype : string
-  Exceptions : none
-  Caller     : general
-
-=cut
-
-sub get_other_sequence {
-  my $self = shift;
-  my $seq_type = shift;
-
-  my $key = "_sequence_other_$seq_type";
-
-  if(!defined($self->{$key})) {
-    $self->{$key} = $self->adaptor->db->get_SequenceAdaptor->fetch_other_sequence_by_member_id_type($self->member_id, $seq_type);
-  }
-
-  return $self->{$key};
+    my $splice = 1;
+    foreach my $exon_sequence (@exon_sequences) {
+        if ($splice % 2 == 0) {
+            $exon_sequence = lc($exon_sequence);
+        }
+        $splice++;
+    }
+    $self->{_sequence_exon_cased} = join('', @exon_sequences);
 }
 
 
@@ -603,24 +603,32 @@ sub gene_member_id {
 =cut
 
 sub bioseq {
-  my $self = shift;
+    my $self = shift;
+    my ($seq_type, $id_type) =
+        rearrange([qw(SEQ_TYPE ID_TYPE)], @_);
 
-  throw("Member stable_id undefined") unless defined($self->stable_id());
-  throw("No sequence for member " . $self->stable_id()) unless defined($self->sequence());
+    throw("Member stable_id undefined") unless defined($self->stable_id());
 
-  my $seqname;
-  if (defined($self->genome_db_id) and defined($self->dbID)) {
-    $seqname = "IDs:" . $self->genome_db_id . ":" . $self->dbID . " " .
-        $self->source_name . ":" . $self->stable_id;
-  } else {
-    $seqname = $self->source_name . ":" . $self->stable_id;
-  }
-  my $seq = Bio::Seq->new(-seq        => $self->sequence(),
-                          -primary_id => $self->dbID,
-                          -display_id => $seqname,
-                          -desc       => $self->description(),
-                         );
-  return $seq;
+    my $sequence = $self->other_sequence($seq_type);
+    throw("No sequence for member " . $self->stable_id()) unless defined($sequence);
+
+    my $alphabet = $self->source_name eq 'ENSEMBLTRANS' ? 'dna' : 'protein';
+    $alphabet = 'dna' if $seq_type and ($seq_type eq 'cds');
+
+    my $seqname = $self->member_id;
+    if ($id_type) {
+        $seqname = $self->sequence_id if $id_type =~ m/^SEQ/i;
+        $seqname = $self->stable_id if $id_type =~ m/^STA/i;
+        $seqname = $self->stable_id.($self->version ? '.'.$self->version : '') if $id_type =~ m/^VER/i;
+        $seqname = $self->source_name . ':' . $self->stable_id if $id_type =~ m/^SOU/i;
+    };
+
+    return Bio::Seq->new(
+        -seq                => $sequence,
+        -display_id         => $seqname,
+        -desc               => $self->description(),
+        -alphabet           => $alphabet,
+    );
 }
 
 

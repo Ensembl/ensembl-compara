@@ -1,3 +1,21 @@
+=head1 LICENSE
+
+Copyright [1999-2013] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+     http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+
+=cut
+
 package Bio::EnsEMBL::Compara::RunnableDB::ncRNAtrees::NCGenomicAlignment;
 
 use strict;
@@ -168,13 +186,11 @@ sub run_mafft {
     my $mafft_output = $self->worker_temp_directory . "/mafft_".$nc_tree_id . ".msa";
     $self->param('mafft_output',$mafft_output);
 
-    my $mafft_exe      = $self->param('mafft_exe')
-        or die "'mafft_exe' is an obligatory parameter";
+    my $mafft_exe      = $self->param_required('mafft_exe');
 
     die "Cannot execute '$mafft_exe'" unless(-x $mafft_exe);
 
-    my $mafft_binaries = $self->param('mafft_binaries')
-        or die "'mafft_binaries' is an obligatory parameter";
+    my $mafft_binaries = $self->param_required('mafft_binaries');
 
     $ENV{MAFFT_BINARIES} = $mafft_binaries;
 
@@ -201,19 +217,19 @@ sub run_RAxML {
 
     $self->param('raxml_output',"$raxml_outdir/RAxML_bestTree.$raxml_outfile");
 
-    my $raxml_exe = $self->param('raxml_exe')
-        or die "'raxml_exe' is an obligatory parameter";
+    my $raxml_exe = $self->param_required('raxml_exe');
 
     die "Cannot execute '$raxml_exe'" unless(-x $raxml_exe);
 
     my $bootstrap_num = 10;  ## Should be soft-coded?
+    my $raxml_number_of_cores = $self->param('raxml_number_of_cores');
     my $cmd = $raxml_exe;
-    $cmd .= " -T 2";
+    $cmd .= " -p 12345";
+    $cmd .= " -T $raxml_number_of_cores";
     $cmd .= " -m GTRGAMMA";
     $cmd .= " -s $aln_file";
     $cmd .= " -N $bootstrap_num";
     $cmd .= " -n $raxml_outfile";
-#    $cmd .= " 2> $raxml_err_file";
 
     my $command = $self->run_command("cd $raxml_outdir; $cmd");
     if ($command->exit_code) {
@@ -267,8 +283,7 @@ sub run_prank {
     # For now, we will be using #1
     my $prank_output = $self->worker_temp_directory . "/prank_${nc_tree_id}.prank";
 
-    my $prank_exe = $self->param('prank_exe')
-        or die "'prank_exe' is an obligatory parameter";
+    my $prank_exe = $self->param_required('prank_exe');
 
     die "Cannot execute '$prank_exe'" unless(-x $prank_exe);
 
@@ -345,7 +360,8 @@ sub store_fasta_alignment {
         $sequence_adaptor->store_other_sequence($member, $member->sequence, 'seq_with_flanking');
     }
 
-    $self->compara_dba->get_AlignedMemberAdaptor->store($aln);
+#    $self->compara_dba->get_AlignedMemberAdaptor->store($aln);
+    $self->compara_dba->get_GeneAlignAdaptor->store($aln);
     $self->param('alignment_id', $aln->dbID);
     return;
 }

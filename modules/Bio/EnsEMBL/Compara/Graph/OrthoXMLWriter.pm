@@ -1,3 +1,21 @@
+=head1 LICENSE
+
+Copyright [1999-2013] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+     http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+
+=cut
+
 package Bio::EnsEMBL::Compara::Graph::OrthoXMLWriter;
 
 =pod
@@ -52,24 +70,6 @@ a new XML document create a new instance of this object.
 
 See inline
 
-=head1 MAINTAINER
-
-$Author$
-
-=head VERSION
-
-$Revision$
-
-=head1 LICENSE
-
- Copyright (c) 1999-2013 The European Bioinformatics Institute and
- Genome Research Limited.  All rights reserved.
-
- This software is distributed under a modified Apache license.
- For license details, please see
-
-   http://www.ensembl.org/info/about/code_licence.html
-
 =head1 CONTACT
 
  Please email comments or questions to the public Ensembl
@@ -107,8 +107,6 @@ my $ortho_uri = 'http://orthoXML.org';
   Arg[NO_RELEASE_TREES] : Boolean; if set to true this will force the writer
                           to avoid calling C<release_tree()> on every tree
                           given. Defaults to false
-  Arg[POSSIBLE_ORTHOLOGS] : Boolean: if set to true, duplication nodes with a
-                            score < 0.25 are considered as speciations
   Description : Creates a new tree writer object. 
   Returntype  : Instance of the writer
   Exceptions  : None
@@ -124,17 +122,15 @@ sub new {
   $class = ref($class) || $class;
   my $self = $class->SUPER::new(@args);
   
-  my ($source, $source_version, $no_release_trees, $possible_orthologs) = 
-    rearrange([qw(source source_version no_release_trees possible_orthologs)], @args);
+  my ($source, $source_version, $no_release_trees) =
+    rearrange([qw(source source_version no_release_trees)], @args);
 
   $source ||= 'Unknown';
   $source_version ||= 'Unknown';
-  $possible_orthologs = 0 unless defined $possible_orthologs;
 
   $self->source($source);
   $self->source_version($source_version);
   $self->no_release_trees($no_release_trees);
-  $self->possible_orthologs($possible_orthologs);
 
   return $self;
 }
@@ -209,21 +205,6 @@ sub source_version {
 }
 
 =pod
-
-=head2 possible_orthologs()
-
-  Arg [0] : Boolean; indicates if we want to treat not-supported duplications as speciations
-  Returntype : Boolean
-  Exceptions : None
-  Status     : Stable
- 
-=cut
-
-sub possible_orthologs {
-  my ($self, $possible_orthologs) = @_;
-  $self->{possible_orthologs} = $possible_orthologs if defined $possible_orthologs;
-  return $self->{possible_orthologs};
-}
 
 
 =head2 write_trees()
@@ -358,7 +339,7 @@ sub _write_tree {
   no warnings 'recursion';
   
   # an OrthoXML file must begin with a orthologGroup
-  if (_is_reliable_duplication($self, $tree)) {
+  if (not $tree->is_leaf() and ($tree->node_type ne 'speciation')) {
     # Goes recursively until the next speciation node
     foreach my $child (@{$tree->children()}) {
       $self->_write_tree($child);
@@ -371,17 +352,6 @@ sub _write_tree {
   return;
 }
 
-sub _is_reliable_duplication {
-  my $self = shift;
-  my $node = shift;
-  my $node_type = $node->get_tagvalue('node_type');
-  return 0 unless defined $node_type;
-  return 0 if $node_type eq 'speciation';
-  return 1 if $node_type eq 'gene_split';
-  return 1 if not $self->possible_orthologs();
-  my $sis = $node->get_tagvalue('duplication_confidence_score');
-  return ((defined $sis) and ($sis >= 0.25));
-}
 
 sub _process {
   my ($self, $node) = @_;
@@ -391,7 +361,7 @@ sub _process {
     return $self->_writer->emptyTag("geneRef", "id" => $node->member_id);
   }
   elsif(check_ref($node, 'Bio::EnsEMBL::Compara::GeneTreeNode')) {
-    my $tagname = _is_reliable_duplication($self, $node) ? "paralogGroup" : "orthologGroup";
+    my $tagname = $node->node_type ne 'speciation' ? "paralogGroup" : "orthologGroup";
 
     my $w = $self->_writer();
     $w->startTag(
@@ -419,19 +389,20 @@ sub _genetreenode_body {
   
    # Scores
   foreach my $tag (qw(duplication_confidence_score bootstrap)) {
-    my $value = $node->get_tagvalue($tag);
+    next unless $node->has_tag($tag);
+    my $value = $node->$tag;
     if (defined $value and $value ne '') {
       $w->emptyTag('score', 'id' => $tag, 'value' => $value);
     }
   }
   
   # Properties
-  foreach my $tag (qw(taxon_id taxon_name)) {
-    my $value = $node->get_tagvalue($tag);
-    if (defined $value and $value ne '') {
-      $w->emptyTag('property', 'name' => $tag, 'value' => $value);
+  my $tax_level = $node->taxonomy_level;
+  if ($tax_level) {
+      $w->emptyTag('property', 'name' => 'taxon_name', 'value' => $tax_level);
+      my $tax_id    = $node->species_tree_node->taxon_id;
+      $w->emptyTag('property', 'name' => 'taxon_id', 'value' => $tax_id) if $tax_id;
     }
-  }
 
   # dubious_duplication is in another field
   if ($node->get_tagvalue('node_type', '') eq 'dubious') {

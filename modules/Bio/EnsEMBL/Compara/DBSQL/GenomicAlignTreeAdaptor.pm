@@ -1,12 +1,21 @@
 =head1 LICENSE
 
-  Copyright (c) 1999-2013 The European Bioinformatics Institute and
-  Genome Research Limited.  All rights reserved.
+Copyright [1999-2013] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
-  This software is distributed under a modified Apache license.
-  For license details, please see
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
 
-    http://www.ensembl.org/info/about/code_licence.html
+     http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+
+=cut
+
 
 =head1 CONTACT
 
@@ -35,6 +44,8 @@ The rest of the documentation details each of the object methods. Internal metho
 package Bio::EnsEMBL::Compara::DBSQL::GenomicAlignTreeAdaptor;
 
 use strict;
+use warnings;
+
 use Bio::EnsEMBL::Compara::GenomicAlignTree;
 use Bio::EnsEMBL::Compara::GenomicAlignGroup;
 use Bio::EnsEMBL::Compara::GenomicAlign;
@@ -429,7 +440,7 @@ sub fetch_by_genomic_align_block_id {
                 fetch_all_by_genomic_align_block_id. Retrieve the corresponding
                Bio::EnsEMBL::Compara::GenomicAlignTree object. 
   Returntype : Bio::EnsEMBL::Compara::GenomicAlignTree object. 
-  Exceptions : Returns ref. to an empty array if no matching
+  Exceptions : Returns undef if no 
                Bio::EnsEMBL::Compara::GenomicAlignTree object can be retrieved
   Caller     : $object->method_name
   Status     : At risk
@@ -456,6 +467,9 @@ sub _fetch_by_genomic_align_block {
   my ($root_id) = $sth->fetchrow_array();
   $sth->finish();
 
+  #return unless a root_id has been found
+  return undef unless ($root_id);
+
   #print STDERR "root_id $root_id\n";
   #whole tree
   $sql = "SELECT " . join(",", $self->_columns) .  
@@ -477,7 +491,7 @@ sub _fetch_by_genomic_align_block {
     warning("Found more than 1 tree. This shouldn't happen. Returning the first one only");
   }
   if (@$genomic_align_trees == 0) {
-    return;
+    return undef;
   }
   my $genomic_align_tree = $genomic_align_trees->[0];
 

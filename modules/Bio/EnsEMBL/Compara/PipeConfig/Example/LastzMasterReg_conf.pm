@@ -1,3 +1,21 @@
+=head1 LICENSE
+
+Copyright [1999-2013] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+     http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+
+=cut
+
 package Bio::EnsEMBL::Compara::PipeConfig::Example::LastzMasterReg_conf;
 
 #
@@ -19,7 +37,7 @@ sub default_options {
 	    'pipeline_name'         => 'LASTZ_TEST_'.$self->o('rel_with_suffix'),   # name the pipeline to differentiate the submitted processes
 
 	    #'master_db' => 'mysql://user@host/ensembl_compara_master',
-	    'master_db' => 'mysql://ensro@ens-livemirror/ensembl_compara_68', #Use a release database for the test only.
+	    'master_db' => 'mysql://ensro@ens-livemirror/ensembl_compara_73', #Use a release database for the test only.
 	    'mlss_id'   => 601,
 
 	    'curr_core_sources_locs'    => '',

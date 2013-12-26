@@ -1,12 +1,21 @@
 =head1 LICENSE
 
-  Copyright (c) 1999-2013 The European Bioinformatics Institute and
-  Genome Research Limited.  All rights reserved.
+Copyright [1999-2013] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
-  This software is distributed under a modified Apache license.
-  For license details, please see
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
 
-    http://www.ensembl.org/info/about/code_licence.html
+     http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+
+=cut
+
 
 =head1 CONTACT
 
@@ -131,24 +140,24 @@ sub dumpNibFiles {
 
       my $nibfile = "$dump_loc/". $dna_object->dnafrag->name . ".nib";
 
-      #don't dump nibfile if it already exists
-      next if (-e $nibfile);
-
-      my $fastafile = "$dump_loc/". $dna_object->dnafrag->name . ".fa";
-
-      #$dna_object->dump_to_fasta_file($fastafile);
-      #use this version to solve problem of very large chromosomes eg opossum
-      $dna_object->dump_chunks_to_fasta_file($fastafile);
-
-      if (-e $self->param('faToNib_exe')) {
-	  system($self->param('faToNib_exe'), "$fastafile", "$nibfile") and die("Could not convert fasta file $fastafile to nib: $!\n");
-      } else {
-	  die("Unable to find faToNib. Must either define faToNib_exe or it must be in your path");
+      #don't dump nibfile if it already exists and don't want to overwrite. Default is to overwrite
+      if (! -e $nibfile || $self->param("overwrite")) {
+          my $fastafile = "$dump_loc/". $dna_object->dnafrag->name . ".fa";
+          
+          #$dna_object->dump_to_fasta_file($fastafile);
+          #use this version to solve problem of very large chromosomes eg opossum
+          $dna_object->dump_chunks_to_fasta_file($fastafile);
+          
+          if (-e $self->param('faToNib_exe')) {
+              system($self->param('faToNib_exe'), "$fastafile", "$nibfile") and die("Could not convert fasta file $fastafile to nib: $!\n");
+          } else {
+              die("Unable to find faToNib. Must either define faToNib_exe or it must be in your path");
+          }
+          
+          unlink $fastafile;
+          $dna_object = undef;
       }
-
-      unlink $fastafile;
-      $dna_object = undef;
-    }
+  }
 
   if($self->debug){printf("%1.3f secs to dump nib for \"%s\" collection\n", (time()-$starttime), $self->param('collection_name'));}
 

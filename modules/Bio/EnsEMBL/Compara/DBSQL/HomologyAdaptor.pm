@@ -1,6 +1,25 @@
+=head1 LICENSE
+
+Copyright [1999-2013] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+     http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+
+=cut
+
 package Bio::EnsEMBL::Compara::DBSQL::HomologyAdaptor;
 
 use strict;
+use warnings;
 
 use Bio::EnsEMBL::Compara::Homology;
 use Bio::EnsEMBL::Compara::DBSQL::BaseRelationAdaptor;
@@ -133,24 +152,12 @@ sub fetch_all_by_Member_method_link_type {  # DEPRECATED
   return $self->fetch_all_by_Member($member, -METHOD_LINK_TYPE => $method_link_type);
 }
 
-=head2 fetch_all_by_Member_MethodLinkSpeciesSet
-
-  DEPRECATED: Use fetch_all_by_Member($member, -METHOD_LINK_SPECIES_SET => $method_link_species_set) instead.
-
-=cut
-
-sub fetch_all_by_Member_MethodLinkSpeciesSet {  # DEPRECATED
-  my ($self, $member, $method_link_species_set) = @_;
-  deprecate('fetch_all_by_Member_MethodLinkSpeciesSet() is deprecated and will be removed in e74. Use fetch_all_by_Member($member, -METHOD_LINK_SPECIES_SET => $method_link_species_set) instead.');
-  return $self->fetch_all_by_Member($member, -METHOD_LINK_SPECIES_SET => $method_link_species_set);
-}
-
 
 =head2 fetch_by_Member_Member
 
   Arg [1]    : Bio::EnsEMBL::Compara::Member $member
   Arg [2]    : Bio::EnsEMBL::Compara::Member $member
-  Example    : $homologies = $HomologyAdaptor->fetch_by_Member_Member_method_link_type(
+  Example    : $homologies = $HomologyAdaptor->fetch_by_Member_Member(
                    $member1->gene_member, $member2->gene_member);
   Description: fetch the homology relationships with the given member pair.
   Returntype : a Bio::EnsEMBL::Compara::Homology object or undef
@@ -181,90 +188,6 @@ sub fetch_by_Member_Member {
   return $self->generic_fetch_one($constraint, $join);
 }
 
-
-=head2 fetch_by_Member_Member_method_link_type
-
-  DEPRECATED: Use fetch_by_Member_Member() instead and filter by $method_link_type on your side.
-
-=cut
-
-sub fetch_by_Member_Member_method_link_type {  # DEPRECATED
-  my ($self, $member1, $member2, $method_link_type) = @_;
-
-  deprecate('fetch_by_Member_Member_method_link_type() is deprecated and will be removed in e74. Use fetch_by_Member_Member() instead and filter by $method_link_type on your side.');
-  my $homology = $self->fetch_by_Member_Member($member1, $member2);
-  return undef unless defined $homology;
-
-  $method_link_type = 'ENSEMBL_ORTHOLOGUES' unless (defined($method_link_type));
-  if ($member1->genome_db_id == $member2->genome_db_id) {
-    $method_link_type = 'ENSEMBL_PARALOGUES';
-  }
-  return $homology->method_link_species_set->method->type eq $method_link_type ? $homology : undef;
-}
-
-=head2 fetch_by_Member_id_Member_id
-
-  Arg [1]    : int $member_id1
-  Arg [2]    : int $member_id2
-  Example    : $homologies = $HomologyAdaptor->fetch_by_Member_id_Member_id(
-                   $member_id1, $member_id2);
-  Description: fetch the homology relationships for a given member_id pair
-  Returntype : a Bio::EnsEMBL::Compara::Homology object
-  Exceptions : none
-  Caller     : 
-
-=cut
-
-sub fetch_by_Member_id_Member_id {  # DEPRECATED
-  my ($self, $member_id1, $member_id2) = @_;
-
-  deprecate('fetch_by_Member_id_Member_id() is deprecated and will be removed in e74. Use fetch_by_Member_Member() instead. If you need to fetch some members for that, please contact us.');
-
-  unless ($member_id1 ne $member_id2) {
-    throw("The members should be different");
-  }
-  my $join = [[['homology_member', 'hm1'], 'h.homology_id = hm1.homology_id'],[['homology_member', 'hm2'], 'h.homology_id = hm2.homology_id']];
-
-  my $constraint .= ' hm1.member_id = ?';
-  $self->bind_param_generic_fetch($member_id1, SQL_INTEGER);
-  $constraint .= ' AND hm2.member_id = ?';
-  $self->bind_param_generic_fetch($member_id2, SQL_INTEGER);
-
-  return $self->generic_fetch_one($constraint, $join);
-}
-
-=head2 fetch_by_PMember_id_PMember_id
-
-  Arg [1]    : int $member_id1
-  Arg [2]    : int $member_id2
-  Example    : $homologies = $HomologyAdaptor->fetch_by_Member_id_Member_id(
-                   $member_id1, $member_id2);
-  Description: fetch the homology relationships for a given peptide_member_id pair
-  Returntype : a Bio::EnsEMBL::Compara::Homology object
-  Exceptions : none
-  Caller     : 
-
-=cut
-
-sub fetch_by_PMember_id_PMember_id {   # DEPRECATED
-  my ($self, $member_id1, $member_id2) = @_;
-
-  deprecate('fetch_by_PMember_id_PMember_id() is deprecated and will be removed in e74. Use fetch_by_Member_Member() instead. If you need to fetch some members for that, please contact us.');
-
-  unless ($member_id1 ne $member_id2) {
-    throw("The members should be different");
-  }
-  my $join = [[['homology_member', 'hm1'], 'h.homology_id = hm1.homology_id'],[['homology_member', 'hm2'], 'h.homology_id = hm2.homology_id']];
-
-  my $constraint .= ' hm1.peptide_member_id = ?';
-  $self->bind_param_generic_fetch($member_id1, SQL_INTEGER);
-  $constraint .= ' AND hm2.peptide_member_id = ?';
-  $self->bind_param_generic_fetch($member_id2, SQL_INTEGER);
-
-  $self->{'_this_one_first'} = $member_id1;
-
-  return $self->generic_fetch_one($constraint, $join);
-}
 
 
 =head2 fetch_all_by_MethodLinkSpeciesSet
@@ -383,10 +306,7 @@ sub fetch_all_in_paralogues_from_Member_NCBITaxon {
     assert_ref($member, 'Bio::EnsEMBL::Compara::Member');
     assert_ref($boundary_species, 'Bio::EnsEMBL::Compara::NCBITaxon');
 
-    my $all_paras = $self->fetch_all_by_Member_MethodLinkSpeciesSet(
-        $member,
-        $self->db->get_MethodLinkSpeciesSetAdaptor->fetch_by_method_link_type_GenomeDBs('ENSEMBL_PARALOGUES', [$member->genome_db]),
-    );
+    my $all_paras = $self->fetch_all_by_Member($member, -METHOD_LINK_SPECIES_SET => $self->db->get_MethodLinkSpeciesSetAdaptor->fetch_by_method_link_type_GenomeDBs('ENSEMBL_PARALOGUES', [$member->genome_db]));
     return $self->_filter_paralogues_by_ancestral_species($all_paras, $member->genome_db, $boundary_species, 1);
 }
 
@@ -410,10 +330,7 @@ sub fetch_all_out_paralogues_from_Member_NCBITaxon {
     assert_ref($member, 'Bio::EnsEMBL::Compara::Member');
     assert_ref($boundary_species, 'Bio::EnsEMBL::Compara::NCBITaxon');
 
-    my $all_paras = $self->fetch_all_by_Member_MethodLinkSpeciesSet(
-        $member,
-        $self->db->get_MethodLinkSpeciesSetAdaptor->fetch_by_method_link_type_GenomeDBs('ENSEMBL_PARALOGUES', [$member->genome_db]),
-    );
+    my $all_paras = $self->fetch_all_by_Member($member, -METHOD_LINK_SPECIES_SET => $self->db->get_MethodLinkSpeciesSetAdaptor->fetch_by_method_link_type_GenomeDBs('ENSEMBL_PARALOGUES', [$member->genome_db]));
     return $self->_filter_paralogues_by_ancestral_species($all_paras, $member->genome_db, $boundary_species, 0);
 }
 
@@ -518,7 +435,7 @@ sub fetch_orthocluster_with_Member {
   my $member = shift;
   
   assert_ref($member, 'Bio::EnsEMBL::Compara::Member');
-  my $member = $member->get_canonical_SeqMember if $member->isa('Bio::EnsEMBL::Compara::GeneMember');
+  $member = $member->get_canonical_SeqMember if $member->isa('Bio::EnsEMBL::Compara::GeneMember');
 
   my $ortho_set = {};
   my $member_set = {};
@@ -580,26 +497,26 @@ sub _columns {
   return qw (h.homology_id
              h.method_link_species_set_id
              h.description
-             h.subtype
+             h.is_tree_compliant
              h.dn
              h.ds
              h.n
              h.s
              h.lnl
-             h.threshold_on_ds
-             h.ancestor_node_id
-             h.tree_node_id);
+             h.species_tree_node_id
+             h.gene_tree_node_id
+             h.gene_tree_root_id);
 }
 
 sub _objs_from_sth {
   my ($self, $sth) = @_;
   
-  my ($homology_id, $description, $dn, $ds, $n, $s, $lnl, $threshold_on_ds,
-      $method_link_species_set_id, $subtype, $ancestor_node_id, $tree_node_id);
+  my ($homology_id, $description, $is_tree_compliant, $dn, $ds, $n, $s, $lnl,
+      $method_link_species_set_id, $species_tree_node_id, $gene_tree_node_id, $gene_tree_root_id);
 
   $sth->bind_columns(\$homology_id, \$method_link_species_set_id,
-                     \$description, \$subtype, \$dn, \$ds,
-                     \$n, \$s, \$lnl, \$threshold_on_ds, \$ancestor_node_id, \$tree_node_id);
+                     \$description, \$is_tree_compliant, \$dn, \$ds,
+                     \$n, \$s, \$lnl, \$species_tree_node_id, \$gene_tree_node_id, \$gene_tree_root_id);
 
   my @homologies = ();
   
@@ -608,17 +525,17 @@ sub _objs_from_sth {
             '_adaptor'                      => $self,           # field name NOT in sync with Bio::EnsEMBL::Storable
             '_dbID'                         => $homology_id,    # field name NOT in sync with Bio::EnsEMBL::Storable
             '_description'                  => $description,
+            '_is_tree_compliant'            => $is_tree_compliant,
             '_method_link_species_set_id'   => $method_link_species_set_id,
-            '_subtype'                      => $subtype,
             '_dn'                           => $dn,
             '_ds'                           => $ds,
             '_n'                            => $n,
             '_s'                            => $s,
             '_lnl'                          => $lnl,
-            '_threshold_on_ds'              => $threshold_on_ds,
             '_this_one_first'               => $self->{'_this_one_first'},
-            '_ancestor_node_id'             => $ancestor_node_id,
-            '_tree_node_id'                 => $tree_node_id,
+            '_species_tree_node_id'         => $species_tree_node_id,
+            '_gene_tree_node_id'            => $gene_tree_node_id,
+            '_gene_tree_root_id'            => $gene_tree_root_id,
        });
   }
   
@@ -657,9 +574,9 @@ sub store {
   $hom->method_link_species_set_id($hom->method_link_species_set->dbID);
   
   unless($hom->dbID) {
-    my $sql = 'INSERT INTO homology (method_link_species_set_id, description, subtype, ancestor_node_id, tree_node_id) VALUES (?,?,?,?,?)';
+    my $sql = 'INSERT INTO homology (method_link_species_set_id, description, is_tree_compliant, species_tree_node_id, gene_tree_node_id, gene_tree_root_id) VALUES (?,?,?,?,?,?)';
     my $sth = $self->prepare($sql);
-    $sth->execute($hom->method_link_species_set_id, $hom->description, $hom->subtype, $hom->ancestor_node_id, $hom->tree_node_id);
+    $sth->execute($hom->method_link_species_set_id, $hom->description, $hom->is_tree_compliant, $hom->{_species_tree_node_id}, $hom->{_gene_tree_node_id}, $hom->{_gene_tree_root_id});
     $hom->dbID($sth->{'mysql_insertid'});
   }
 
@@ -700,21 +617,10 @@ sub update_genetic_distance {
     return $self;
   }
 
-  my $sql = "UPDATE homology SET dn=?, ds=?, n=?, s=?, lnl=?";
-
-  if (defined $hom->threshold_on_ds) {
-    $sql .= ", threshold_on_ds=?";
-  }
-
-  $sql .= " WHERE homology_id=?";
+  my $sql = 'UPDATE homology SET dn=?, ds=?, n=?, s=?, lnl=? WHERE homology_id=?';
 
   my $sth = $self->prepare($sql);
-
-  if (defined $hom->threshold_on_ds) {
-    $sth->execute($hom->{'_dn'},$hom->{'_ds'},$hom->n, $hom->s, $hom->lnl, $hom->threshold_on_ds, $hom->dbID);
-  } else {
-    $sth->execute($hom->{'_dn'},$hom->{'_ds'},$hom->n, $hom->s, $hom->lnl, $hom->dbID);
-  }
+  $sth->execute($hom->{'_dn'},$hom->{'_ds'},$hom->n, $hom->s, $hom->lnl, $hom->dbID);
   $sth->finish();
 
   return $self;

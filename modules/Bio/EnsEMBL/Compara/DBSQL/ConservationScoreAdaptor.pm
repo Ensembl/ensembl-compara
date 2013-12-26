@@ -1,12 +1,21 @@
 =head1 LICENSE
 
-  Copyright (c) 1999-2013 The European Bioinformatics Institute and
-  Genome Research Limited.  All rights reserved.
+Copyright [1999-2013] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
-  This software is distributed under a modified Apache license.
-  For license details, please see
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
 
-    http://www.ensembl.org/info/about/code_licence.html
+     http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+
+=cut
+
 
 =head1 CONTACT
 
@@ -66,8 +75,10 @@ The rest of the documentation details each of the object methods. Internal metho
 
 
 package Bio::EnsEMBL::Compara::DBSQL::ConservationScoreAdaptor;
+
 use vars qw(@ISA);
 use strict;
+use warnings;
 
 use POSIX qw(floor);
 
@@ -1781,18 +1792,8 @@ sub _get_all_ref_genomic_aligns {
 	return $light_genomic_aligns;
     }
 
-    my $gdb_a = $self->db->get_GenomeDBAdaptor();
-    my $meta_container = $slice->adaptor->db->get_MetaContainer();
-    my $primary_species_name = $meta_container->get_production_name();
-    my ($highest_cs) = @{$slice_adaptor->db->get_CoordSystemAdaptor->fetch_all()};
-    my $primary_species_assembly = $highest_cs->version();
-    my $genome_db_adaptor = $self->db->get_GenomeDBAdaptor;
-    my $genome_db = $genome_db_adaptor->fetch_by_name_assembly(
-		        $primary_species_name,
-                        $primary_species_assembly);
     my $dnafrag_adaptor = $self->db->get_DnaFragAdaptor;
-    my $dnafrag = $dnafrag_adaptor->fetch_by_GenomeDB_and_name(
-			    $genome_db, $slice->seq_region_name);
+    my $dnafrag = $dnafrag_adaptor->fetch_by_Slice($slice);
     next if (!$dnafrag);
 
     my $max_alignment_length = $mlss->max_alignment_length;
@@ -1840,6 +1841,20 @@ sub _get_all_ref_genomic_aligns {
     }  
     return $light_genomic_aligns;
 }
+
+sub count_by_mlss_id {
+    my ($self, $mlss_id) = @_;
+
+    my $sql = "SELECT count(*) FROM conservation_score cs JOIN genomic_align_block gab USING(genomic_align_block_id) JOIN method_link_species_set_tag mlss_tag ON(gab.method_link_species_set_id=mlss_tag.value) WHERE mlss_tag.tag = 'msa_mlss_id' AND mlss_tag.method_link_species_set_id = ?";
+
+    my $sth = $self->prepare($sql);
+    $sth->execute($mlss_id);
+    my ($count) = $sth->fetchrow_array();
+    $sth->finish();
+
+    return $count;
+}
+
 
 1;
 

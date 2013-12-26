@@ -1,6 +1,21 @@
-#Ensembl module for Bio::EnsEMBL::Compara::Production::EPOanchors::MapAnchors
-# You may distribute this module under the same terms as perl itself
-#
+=head1 LICENSE
+
+Copyright [1999-2013] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+     http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+
+=cut
+
 # POD documentation - main docs before the code
 =head1 NAME
 
@@ -149,7 +164,7 @@ sub merge_overlapping_target_regions { #merge overlapping target regions hit by 
 		                                        print STDERR "possible palindromic sequences: $anchor ", 
 								"$mapped_anchors->{$anchor}{$targ_info}->[$i]->[2] ", 
 								$mapped_anchors->{$anchor}{$targ_info}->[$i+1]->[2], "\n";
-		                                        $mapped_anchors->{$anchor}{$targ_info}->[$i]->[2] = 0;
+		                                        $mapped_anchors->{$anchor}{$targ_info}->[$i]->[2] = 1; # arbitrarily set the strand to 1 in the merged hit
 		                                }       
 		                                if($mapped_anchors->{$anchor}{$targ_info}->[$i]->[1] < 
 							$mapped_anchors->{$anchor}{$targ_info}->[$i+1]->[1]) {

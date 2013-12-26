@@ -1,3 +1,21 @@
+=head1 LICENSE
+
+Copyright [1999-2013] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+     http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+
+=cut
+
 =head1 NAME
 
  Bio::EnsEMBL::Compara::PipeConfig::PairAligner_conf
@@ -56,7 +74,7 @@ sub default_options {
         #'ensembl_cvs_root_dir' => $ENV{'HOME'}.'/src/ensembl_main/', 
         'ensembl_cvs_root_dir' => $ENV{'ENSEMBL_CVS_ROOT_DIR'}, 
 
-	'release'               => '72',
+	'release'               => '74',
         'release_suffix'        => '',    # an empty string by default, a letter otherwise
 	#'dbname'               => '', #Define on the command line. Compara database name eg hsap_ggor_lastz_64
 
@@ -64,12 +82,14 @@ sub default_options {
         'rel_with_suffix'       => $self->o('release').$self->o('release_suffix'),
         'pipeline_name'         => 'LASTZ_'.$self->o('rel_with_suffix'),   # name the pipeline to differentiate the submitted processes
 
+        'host'        => 'compara1',                        #separate parameter to use the resources aswell
         'pipeline_db' => {                                  # connection parameters
-            -host   => 'compara1',
+            -host   => $self->o('host'),
             -port   => 3306,
             -user   => 'ensadmin',
             -pass   => $self->o('password'), 
-            -dbname => $ENV{USER}.'_'.$self->o('dbname'),    
+            -dbname => $ENV{USER}.'_'.$self->o('dbname'),
+            -driver => 'mysql',
         },
 
 	'master_db' => 'mysql://ensro@compara1/sf5_ensembl_compara_master',
@@ -112,6 +132,9 @@ sub default_options {
 	#Set for single pairwise mode
 	'mlss_id' => '',
 
+        #Collection name 
+        'collection' => '',
+
 	#Set to use pairwise configuration file
 	'conf_file' => '',
 
@@ -119,7 +142,7 @@ sub default_options {
 	'reg_conf' => '',
 
 	#Reference species (if not using pairwise configuration file)
-	'ref_species' => 'homo_sapiens',
+        'ref_species' => undef,
 
 	#directory to dump nib files
 	'dump_dir' => '/lustre/scratch110/ensembl/' . $ENV{USER} . '/pair_aligner/nib_files/' . 'release_' . $self->o('rel_with_suffix') . '/',
@@ -130,6 +153,9 @@ sub default_options {
 	#include only MT, in some cases we only want to align MT chromosomes (set to 1 for MT only and 0 for normal mode). 
 	#Also the name of the MT chromosome in the db must be the string "MT".    
 	'MT_only' => 0, # if MT_only is set to 1, then include_MT must also be set to 1
+
+        #Get sequences from database in batches of $sequence_batch_size.
+        'sequence_batch_size' => 1000,
 
 	#min length to dump dna as nib file
 	'dump_min_size' => 11500000, 
@@ -229,7 +255,12 @@ sub default_options {
 	'bed_dir' => '/lustre/scratch110/ensembl/' . $ENV{USER} . '/pair_aligner/bed_dir/' . 'release_' . $self->o('rel_with_suffix') . '/',
 	'output_dir' => '/lustre/scratch110/ensembl/' . $ENV{USER} . '/pair_aligner/feature_dumps/' . 'release_' . $self->o('rel_with_suffix') . '/',
             
-        'memory_suffix' => "", #temporary fix to define the memory requirements in resource_classes
+        #
+        #Resource requirements
+        #
+        'memory_suffix' => "",                    #temporary fix to define the memory requirements in resource_classes
+        'dbresource'    => 'my'.$self->o('host'), # will work for compara1..compara4, but will have to be set manually otherwise
+        'aligner_capacity' => 2000,
 
     };
 }
@@ -272,12 +303,14 @@ sub pipeline_wide_parameters {  # these parameter values are visible to all anal
 
 sub resource_classes {
     my ($self) = @_;
+
+    my $host = $self->o('pipeline_db')->{host};
     return {
             %{$self->SUPER::resource_classes},  # inherit 'default' from the parent class
             '100Mb' => { 'LSF' => '-C0 -M100' . $self->o('memory_suffix') .' -R"select[mem>100] rusage[mem=100]"' },
             '1Gb'   => { 'LSF' => '-C0 -M1000' . $self->o('memory_suffix') .' -R"select[mem>1000] rusage[mem=1000]"' },
-            '1.8Gb' => { 'LSF' => '-C0 -M1800' . $self->o('memory_suffix') .' -R"select[mem>1800] rusage[mem=1800]"' },
-            '3.6Gb' => { 'LSF' => '-C0 -M3600' . $self->o('memory_suffix') .' -R"select[mem>3600] rusage[mem=3600]"' },
+            '1.8Gb' => { 'LSF' => '-C0 -M1800' . $self->o('memory_suffix') .' -R"select[mem>1800 && '.$self->o('dbresource').'<'.$self->o('aligner_capacity').'] rusage[mem=1800,'.$self->o('dbresource').'=10:duration=3]"' },
+            '3.6Gb' => { 'LSF' => '-C0 -M3600' . $self->o('memory_suffix') .' -R"select[mem>3600 && '.$self->o('dbresource').'<'.$self->o('aligner_capacity').'] rusage[mem=3600,'.$self->o('dbresource').'=10:duration=3]"' },
     };
 }
 
@@ -305,14 +338,15 @@ sub pipeline_analyses {
 
 # ---------------------------------------------[Run poplulate_new_database.pl script ]---------------------------------------------------
 	    {  -logic_name => 'populate_new_database',
-	       -module     => 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
+	       -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GenomicAlignBlock::PopulateNewDatabase',
 	       -parameters    => {
 				  'program'        => $self->o('populate_new_database_exe'),
-				  'mlss_id'        => $self->o('mlss_id'),
 				  'reg_conf'        => $self->o('reg_conf'),
-#				  'cmd'            => "#program# --master " . $self->dbconn_2_url('master_db') . " --MT_only " . $self->o('MT_only') . " --new " . $self->dbconn_2_url('pipeline_db') . " --species #speciesList# --mlss #mlss_id# --reg-conf #reg_conf# ",
-				  #If no master set, then use notation below
-				  'cmd'            => "#program# --master " . $self->o('master_db') . " --new " . $self->dbconn_2_url('pipeline_db') . " --MT_only " . $self->o('MT_only') . " --species #speciesList# --mlss #mlss_id# --reg-conf #reg_conf# ",
+				  'mlss_id'        => $self->o('mlss_id'),
+                                  'collection'     => $self->o('collection'),
+                                  'master_db'      => $self->o('master_db'),
+                                  'pipeline_db'    => $self->dbconn_2_url('pipeline_db'),
+                                  'MT_only'        => $self->o('MT_only'),
 				 },
 	       -flow_into => {
 			      1 => [ 'parse_pair_aligner_conf' ],
@@ -338,6 +372,7 @@ sub pipeline_analyses {
   				  'default_net_input' => $self->o('net_input_method_link'),
 				  'net_ref_species' => $self->o('net_ref_species'),
 				  'mlss_id' => $self->o('mlss_id'),
+                                  'collection' => $self->o('collection'),
 				  'registry_dbs' => $self->o('curr_core_sources_locs'),
 				  'core_dbs' => $self->o('curr_core_dbs_locs'),
 				  'master_db' => $self->o('master_db'),
@@ -370,7 +405,7 @@ sub pipeline_analyses {
 	       -rc_name => '1.8Gb',
  	    },
  	    {  -logic_name => 'store_sequence',
- 	       -hive_capacity => 100,
+ 	       -hive_capacity => 50,
  	       -module     => 'Bio::EnsEMBL::Compara::RunnableDB::PairAligner::StoreSequence',
  	       -parameters => { },
 	       -flow_into => {
@@ -537,6 +572,7 @@ sub pipeline_analyses {
  	       -parameters => {
 			       'faToNib_exe' => $self->o('faToNib_exe'),
 			       'dump_nib'=>1,
+                               'overwrite'=>1,
 			      },
 	       -can_be_empty  => 1, 
 	       -hive_capacity => 10,
@@ -550,6 +586,7 @@ sub pipeline_analyses {
  	       -parameters => {
 			       'faToNib_exe' => $self->o('faToNib_exe'),
 			       'dump_nib'=>1,
+                               'overwrite'=>1,
 			      },
 	       -hive_capacity => 10,
 	       -can_be_empty  => 1, 
@@ -649,9 +686,9 @@ sub pipeline_analyses {
 	    },
  	    {  -logic_name => 'update_max_alignment_length_after_net',
  	       -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GenomicAlignBlock::UpdateMaxAlignmentLength',
- 	       -parameters => { 
-			       'quick' => $self->o('quick'),
-			      },
+# 	       -parameters => { 
+#			       'quick' => $self->o('quick'),
+#			      },
 	       -rc_name => '100Mb',
  	    },
 	    { -logic_name => 'healthcheck',

@@ -1,4 +1,18 @@
 #!/usr/bin/env perl
+# Copyright [1999-2013] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+# 
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+# 
+#      http://www.apache.org/licenses/LICENSE-2.0
+# 
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
 
 =head1
   this script does homology dumps generated with this SQL statement from two different
@@ -66,7 +80,7 @@ $self->{$url1} = Bio::EnsEMBL::Hive::URLFactory->fetch($url1 . ';type=compara');
 $self->{$url2} = Bio::EnsEMBL::Hive::URLFactory->fetch($url2 . ';type=compara');
 
 my ($homology_description_ranking_set1, $homology_description_ranking_set2) = @{do($conf)};
-my @para_desc = qw(within_species_paralog other_paralog putative_gene_split contiguous_gene_split);
+my @para_desc = qw(within_species_paralog other_paralog gene_split);
 my $url1_needs_para = scalar(grep {$homology_description_ranking_set1->{$_}}  @para_desc);
 my $url2_needs_para = scalar(grep {$homology_description_ranking_set2->{$_}}  @para_desc);
 
@@ -152,6 +166,7 @@ sub compare_homology_sets
 
   print "\n$url1 -- in the final table shown in left down\n";
   $homology_set1 = load_homology_set($self, 'ENSEMBL_ORTHOLOGUES',[$gdb1,$gdb2],$url1);
+  $homology_set1->merge(load_homology_set($self, 'ENSEMBL_PARALOGUES',[$gdb1,$gdb2],$url1));
   $homology_set1->merge(load_homology_set($self, 'ENSEMBL_PARALOGUES',[$gdb1],$url1)) if $url1_needs_para;
   $homology_set1->merge(load_homology_set($self, 'ENSEMBL_PARALOGUES',[$gdb2],$url1)) if $url1_needs_para;
   $homology_set1->print_stats;
@@ -160,6 +175,7 @@ sub compare_homology_sets
 
   print "\n$url2 -- in the final table shown in horizontal right\n";
   $homology_set2 = load_homology_set($self, 'ENSEMBL_ORTHOLOGUES',[$gdb1,$gdb2],$url2);
+  $homology_set2->merge(load_homology_set($self, 'ENSEMBL_PARALOGUES',[$gdb1,$gdb2],$url2));
   $homology_set2->merge(load_homology_set($self, 'ENSEMBL_PARALOGUES',[$gdb1],$url2)) if $url2_needs_para;
   $homology_set2->merge(load_homology_set($self, 'ENSEMBL_PARALOGUES',[$gdb2],$url2)) if $url2_needs_para;
   $homology_set2->print_stats;

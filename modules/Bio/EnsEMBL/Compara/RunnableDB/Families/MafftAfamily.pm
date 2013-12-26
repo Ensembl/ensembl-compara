@@ -1,3 +1,21 @@
+=head1 LICENSE
+
+Copyright [1999-2013] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+     http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+
+=cut
+
 package Bio::EnsEMBL::Compara::RunnableDB::Families::MafftAfamily;
 
 use strict;
@@ -8,7 +26,7 @@ use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 sub fetch_input {
     my $self = shift @_;
 
-    my $family_id               = $self->param('family_id')   || die "'family_id' is an obligatory parameter, please set it in the input_id hashref";
+    my $family_id               = $self->param_required('family_id');
 
     my $family = $self->compara_dba()->get_FamilyAdaptor()->fetch_by_dbID($family_id)
                 || die "family $family_id could not have been fetched by the adaptor";
@@ -27,10 +45,10 @@ sub fetch_input {
 
     my $worker_temp_directory   = $self->worker_temp_directory;
 
-    my $pep_file    = $worker_temp_directory . "family_${family_id}.pep";
+    my $pep_file    = $worker_temp_directory . "family_${family_id}.fa";
     my $mafft_file  = $worker_temp_directory . "family_${family_id}.mafft";
 
-    my $pep_counter = $family->print_sequences_to_fasta($pep_file);
+    my $pep_counter = $family->print_sequences_to_file($pep_file);
 
     if ($pep_counter == 0) {
         unlink $pep_file;
@@ -65,7 +83,7 @@ sub run {
     my $self = shift @_;
 
     my $family_id               = $self->param('family_id');
-    my $mafft_root_dir          = $self->param('mafft_root_dir') || die "'mafft_root_dir' is an obligatory parameter";
+    my $mafft_root_dir          = $self->param_required('mafft_root_dir');
     my $mafft_executable        = $self->param('mafft_exec')     || ( $mafft_root_dir . '/bin/mafft' );
     my $mafft_args              = $self->param('mafft_args')     || '';
 
@@ -78,7 +96,9 @@ sub run {
 
     # $ENV{MAFFT_BINARIES} = $mafft_root_dir.'/bin'; # not needed (actually, in the way) for newer versions of MAFFT
 
-    my $cmd_line = "$mafft_executable --anysymbol $mafft_args $pep_file > $mafft_file"; # helps when Uniprot sequence contains 'U' or other funny aminoacid codes
+        # --anysymbol helps when Uniprot sequence contains 'U' or other funny aminoacid codes
+        # --thread 1 is supposed to prevent forking
+    my $cmd_line = "$mafft_executable --anysymbol --thread 1 $mafft_args $pep_file > $mafft_file";
     # my $cmd_line = "$mafft_executable $mafft_args $pep_file > $mafft_file";
     if($self->debug) {
         warn "About to execute: $cmd_line\n";

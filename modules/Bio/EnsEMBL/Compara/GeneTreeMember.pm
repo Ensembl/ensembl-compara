@@ -1,12 +1,21 @@
 =head1 LICENSE
 
-  Copyright (c) 1999-2013 The European Bioinformatics Institute and
-  Genome Research Limited.  All rights reserved.
+Copyright [1999-2013] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
-  This software is distributed under a modified Apache license.
-  For license details, please see
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
 
-   http://www.ensembl.org/info/about/code_licence.html
+     http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+
+=cut
+
 
 =head1 CONTACT
 
@@ -38,14 +47,6 @@ GeneTreeNode) and an aligned member (inherits from AlignedMember).
 
 Ensembl Team. Individual contributions can be found in the CVS log.
 
-=head1 MAINTAINER
-
-$Author$
-
-=head VERSION
-
-$Revision$
-
 =head1 APPENDIX
 
 The rest of the documentation details each of the object methods.
@@ -56,6 +57,7 @@ Internal methods are usually preceded with an underscore (_)
 package Bio::EnsEMBL::Compara::GeneTreeMember;
 
 use strict;
+use warnings;
 
 use base ('Bio::EnsEMBL::Compara::AlignedMember', 'Bio::EnsEMBL::Compara::GeneTreeNode');  # careful with the order; new() is currently inherited from Member-AlignedMember branch
 
@@ -103,16 +105,12 @@ sub string_node {
   my $self  = shift;
   my $str = sprintf("(%s %d,%d)", $self->node_id, $self->left_index, $self->right_index);
     if($self->genome_db_id and $self->adaptor) {
-      my $genome_db = $self->genome_db;
-      if (!defined($genome_db)) {
-        $DB::single=1;1;
-      }
-      $str .= sprintf(" %s", $genome_db->name) 
+      $str .= sprintf(" %s", $self->genome_db->name) 
     }
   if($self->gene_member) {
     $str .= sprintf(" %s %s %s:%d-%d",
       $self->gene_member->stable_id, $self->gene_member->display_label || '', $self->gene_member->chr_name,
-      $self->gene_member->chr_start, $self->gene_member->chr_end);
+      $self->gene_member->dnafrag_start, $self->gene_member->dnafrag_end);
   } elsif($self->stable_id) {
     $str .= sprintf(" (%d) %s", $self->member_id, $self->stable_id);
   }

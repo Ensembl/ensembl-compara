@@ -1,3 +1,21 @@
+=head1 LICENSE
+
+Copyright [1999-2013] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+     http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+
+=cut
+
 package Bio::EnsEMBL::Compara::PipeConfig::Example::LastzNoMaster_conf;
 
 #
@@ -23,14 +41,14 @@ sub default_options {
  		       -host           => "ens-livemirror",
  		       -port           => 3306,
  		       -user           => "ensro",
- 		       -dbname         => "homo_sapiens_core_68_37",
+ 		       -dbname         => "homo_sapiens_core_73_37",
 		       -species        => "homo_sapiens"
  		      },
  	    'non_reference' => {
  		       '-host'           => "ens-livemirror",
  		       '-port'           => 3306,
  		       '-user'           => "ensro",
- 		       '-dbname'         => "mus_musculus_core_68_38",
+ 		       '-dbname'         => "mus_musculus_core_73_38",
  		       '-species'        => "mus_musculus"
  		      },
 	    'curr_core_dbs_locs'    => [ $self->o('reference'), $self->o('non_reference') ],

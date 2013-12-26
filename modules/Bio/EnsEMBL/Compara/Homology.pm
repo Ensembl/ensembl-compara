@@ -1,6 +1,26 @@
+=head1 LICENSE
+
+Copyright [1999-2013] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+     http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+
+=cut
+
 package Bio::EnsEMBL::Compara::Homology;
 
 use strict;
+use warnings;
+
 use Bio::EnsEMBL::Utils::Exception qw( deprecate throw warning );
 
 use base ('Bio::EnsEMBL::Compara::AlignedMemberSet');
@@ -32,11 +52,6 @@ Bio::EnsEMBL::Compara::Homology - Homology between two proteins
 
 Ensembl Team
 
-=head1 COPYRIGHT
-
-Copyright (c) 1999-2013. Ensembl Team
-
-You may distribute this module under the same terms as perl itself
 
 =head1 CONTACT
 
@@ -56,80 +71,28 @@ The rest of the documentation details each of the object methods. Internal metho
 =cut
 
 
-=head2 subtype
+=head2 is_tree_compliant
 
-  Arg [1]    : string $subtype (optional)
-  Example    : $subtype = $homology->subtype();
-               $homology->subtype($subtype);
-  Description: getter/setter of string description of homology subtype.
-               Examples: 'Chordata', 'Euteleostomi', 'Homo sapiens'
-  Returntype : string
+  Arg [1]    : float $is_tree_compliant (optional)
+  Example    : $is_compliant = $homology->is_tree_compliant();
+               $homology->is_tree_compliant(1);
+  Description: getter/setter for a flag that shows whether the homology is fully compliant with the tree
+  Returntype : int
   Exceptions : none
   Caller     : general
 
 =cut
 
-sub subtype {
+sub is_tree_compliant {
   my $self = shift;
-  # deprecate("Use taxonomy_level() instead.");
-  return $self->taxonomy_level(@_);
+  $self->{'_is_tree_compliant'} = shift if(@_);
+  return $self->{'_is_tree_compliant'};
 }
 
 
-=head2 taxonomy_level
 
-  Arg [1]    : string $taxonomy_level (optional)
-  Example    : $taxonomy_level = $homology->taxonomy_level();
-               $homology->taxonomy_level($taxonomy_level);
-  Description: getter/setter of string description of homology taxonomy_level.
-               Examples: 'Chordata', 'Euteleostomi', 'Homo sapiens'
-  Returntype : string
-  Exceptions : none
-  Caller     : general
-
-=cut
-
-sub taxonomy_level {
-  my $self = shift;
-  $self->{'_subtype'} = shift if(@_);
-  $self->{'_subtype'} = '' unless($self->{'_subtype'});
-  return $self->{'_subtype'};
-}
-
-
-=head2 taxonomy_alias
-
-  Arg [1]    : string $taxonomy_alias (optional)
-  Example    : $taxonomy_alias = $homology->taxonomy_alias();
-               $homology->taxonomy_alias($taxonomy_alias);
-  Description: get string description of homology taxonomy_alias.
-               Examples: 'Chordates', 'Bony vertebrates', 'Homo sapiens'
-               Defaults to taxonomy_level if alias is not in the db
-  Returntype : string
-  Exceptions : none
-  Caller     : general
-
-=cut
-
-sub taxonomy_alias {
-
-    my $self = shift;
-
-    my $ancestor_node_id = $self->ancestor_node_id;
-    return unless $ancestor_node_id;
-
-    my $ancestor_node = $self->adaptor->db->get_GeneTreeNodeAdaptor->fetch_node_by_node_id($ancestor_node_id);
-    return unless $ancestor_node;
-
-    my $taxon_id = $ancestor_node->get_tagvalue('taxon_id');
-    return unless $taxon_id;
-
-    my $taxon = $self->adaptor->db->get_NCBITaxonAdaptor->fetch_node_by_taxon_id($taxon_id);
-    return unless $taxon;
-
-    return $taxon->ensembl_alias();
-}
-
+## dN/dS methods
+#################
 
 =head2 n
 
@@ -189,10 +152,12 @@ sub lnl {
 
 =head2 threshold_on_ds
 
-  Arg [1]    : float $threshold_ond_ds (optional)
+  Arg [1]    : float $threshold_on_ds (optional)
   Example    : $lnl = $homology->threshold_on_ds();
                $homology->threshold_on_ds(1.01340);
   Description: getter/setter of the threshold on ds for which the dnds ratio still makes sense.
+               Note that threshold_on_ds is a property of the current MethodLinkSpeciesSet, and
+               is shared by all its homologies
   Returntype : float
   Exceptions : none
   Caller     : general
@@ -201,8 +166,8 @@ sub lnl {
 
 sub threshold_on_ds {
   my $self = shift;
-  $self->{'_threshold_on_ds'} = shift if(@_);
-  return $self->{'_threshold_on_ds'};
+  $self->method_link_species_set->add_tag('threshold_on_ds', shift) if (@_);
+  return $self->method_link_species_set->get_value_for_tag('threshold_on_ds');
 }
 
 =head2 dn
@@ -257,8 +222,8 @@ sub ds {
   $apply_threshold_on_ds = 1 unless (defined $apply_threshold_on_ds);
 
   if (defined $self->{'_ds'} && 
-      defined $self->{'_threshold_on_ds'} &&
-      $self->{'_ds'} > $self->{'_threshold_on_ds'}) {
+      defined $self->threshold_on_ds &&
+      $self->{'_ds'} > $self->threshold_on_ds) {
     
     if ($apply_threshold_on_ds) {
       return undef;
@@ -294,11 +259,7 @@ sub dnds_ratio {
   my $ds = $self->ds(undef, $apply_threshold_on_ds);
   my $dn = $self->dn(undef, $apply_threshold_on_ds);
 
-  unless (defined $dn &&
-          defined $ds &&
-          $ds !=0) {
-    return undef;
-  }
+  return undef if (not defined $dn) or (not defined $ds) or ($ds == 0);
 
   unless (defined $self->{'_dnds_ratio'}) {
     $self->{'_dnds_ratio'} = sprintf("%.5f",$dn/$ds);
@@ -308,6 +269,8 @@ sub dnds_ratio {
 }
 
 
+## General I/O
+###############
 
 =head2 print_homology
 
@@ -355,68 +318,161 @@ sub homology_key {
 }
 
 
-=head2 node_id
+=head2 gene_tree_node
 
-  Arg [1]    : int $node_id (optional)
-  Example    : $node_id = $homology->node_id();
-               $homology->subtype($node_id);
-  Description: getter/setter of integer that refer to a node_id in the protein_tree data.
-  Returntype : int
+  Arg [1]    : GeneTreeNode $node (optional)
+  Example    : $node = $homology->gene_tree_node();
+  Description: getter/setter for the GeneTreeNode this homology refers to
+  Returntype : GeneTreeNode
   Exceptions : none
   Caller     : general
 
 =cut
 
-sub node_id {
-  my $self = shift;
+sub gene_tree_node {
+    my $self = shift;
 
-  $self->{'_ancestor_node_id'} = shift if(@_);
-  $self->{'_ancestor_node_id'} = '' unless($self->{'_ancestor_node_id'});
-  return $self->{'_ancestor_node_id'};
-  
+    if (@_) {
+        $self->{_gene_tree_node} = shift;
+        $self->{_gene_tree} = $self->{_gene_tree_node}->tree;
+        $self->{_gene_tree_node_id} = $self->{_gene_tree_node}->node_id;
+        $self->{_gene_tree_root_id} = $self->{_gene_tree_node}->{_root_id};
+    } elsif (not exists $self->{_gene_tree_node} and defined $self->{_gene_tree_node_id}) {
+        $self->{_gene_tree_node} = $self->adaptor->db->get_GeneTreeNodeAdaptor->fetch_node_by_node_id($self->{_gene_tree_node_id});
+        $self->{_gene_tree} = $self->{_gene_tree_node}->tree;
+    }
+    return $self->{_gene_tree_node};
+}
+
+
+=head2 gene_tree
+
+  Arg [1]    : GeneTree $node (optional)
+  Example    : $tree = $homology->gene_tree();
+  Description: getter for the GeneTree this homology refers to
+  Returntype : GeneTree
+  Exceptions : none
+  Caller     : general
+
+=cut
+
+sub gene_tree {
+    my $self = shift;
+
+    $self->gene_tree_node;         # to load the gene tree objects
+    return $self->{_gene_tree};
+}
+
+
+sub _species_tree_node_id {
+    my $self = shift;
+    $self->{_species_tree_node_id} = shift if @_;
+    return $self->{_species_tree_node_id};
+}
+
+
+=head2 species_tree_node
+
+  Example    : $species_tree_node = $homology->species_tree_node();
+  Description: getter for the GeneTree this homology refers to
+  Returntype : GeneTree
+  Exceptions : none
+  Caller     : general
+
+=cut
+
+sub species_tree_node {
+    my $self = shift;
+
+    if ($self->{_species_tree_node_id} and not $self->{_species_tree_node}) {
+        $self->{_species_tree_node} = $self->adaptor->db->get_SpeciesTreeNodeAdaptor->fetch_node_by_node_id($self->{_species_tree_node_id});
+    }
+    return $self->{_species_tree_node};
+}
+
+
+=head2 taxonomy_level
+
+  Example    : $taxonomy_level = $homology->taxonomy_level();
+  Description: getter of string description of homology taxonomy_level.
+               Examples: 'Chordata', 'Euteleostomi', 'Homo sapiens'
+  Returntype : string
+  Exceptions : none
+  Caller     : general
+
+=cut
+
+sub taxonomy_level {
+    my $self = shift;
+    return $self->species_tree_node() ? $self->species_tree_node()->node_name() : undef;
+}
+
+
+
+
+=head2 node_id
+
+  Description: DEPRECATED: Use $self->gene_tree_node()->node_id() instead. node_id() will be removed in e76
+
+=cut
+
+sub node_id {  ## DEPRECATED
+  my $self = shift;
+  deprecate('$self->node_id() is deprecated and will be removed in e76. Use $self->gene_tree_node()->node_id() instead.');
+  $self->{'_gene_tree_node_id'} = shift if(@_);
+  return $self->{'_gene_tree_node_id'};
 }
 
 =head2 ancestor_node_id
 
-  Arg [1]    : int $ancestor_node_id (optional)
-  Example    : $ancestor_node_id = $homology->ancestor_node_id();
-               $homology->subtype($ancestor_node_id);
-  Description: getter/setter of integer that refer to the ancestor_node_id in the protein_tree data.
-  Returntype : int
-  Exceptions : none
-  Caller     : general
+  Description: DEPRECATED: Use $self->gene_tree_node()->node_id() instead. ancestor_tree_node_id() will be removed in e76
 
 =cut
 
-sub ancestor_node_id {
+sub ancestor_node_id { ## DEPRECATED
   my $self = shift;
-
-  $self->{'_ancestor_node_id'} = shift if(@_);
-  $self->{'_ancestor_node_id'} = '' unless($self->{'_ancestor_node_id'});
-  return $self->{'_ancestor_node_id'};
-  
+  deprecate('$self->ancestor_tree_node_id() is deprecated and will be removed in e76. Use $self->gene_tree_node()->node_id() instead.');
+  $self->{'_gene_tree_node_id'} = shift if(@_);
+  return $self->{'_gene_tree_node_id'};
 }
 
 
 =head2 tree_node_id
 
-  Arg [1]    : int $tree_node_id (optional)
-  Example    : $tree_node_id = $homology->tree_node_id();
-               $homology->subtype($tree_node_id);
-  Description: getter/setter of integer that refer to the tree node_id in the protein_tree data.
-  Returntype : int
-  Exceptions : none
-  Caller     : general
+  Description: DEPRECATED: Use $self->gene_tree()->dbID() instead. tree_node_id() will be removed in e76
 
 =cut
 
-sub tree_node_id {
+sub tree_node_id { ## DEPRECATED
   my $self = shift;
+  deprecate('$self->tree_node_id() is deprecated and will be removed in e76. Use $self->gene_tree()->dbID() instead.');
+  return $self->gene_tree()->dbID();
+}
 
-  $self->{'_tree_node_id'} = shift if(@_);
-  $self->{'_tree_node_id'} = '' unless($self->{'_tree_node_id'});
-  return $self->{'_tree_node_id'};
-  
+
+=head2 subtype
+
+  Description:  DEPRECATED . Homology::subtype() is deprecated and will be removed in e76. Use taxonomy_level() instead
+
+=cut
+
+sub subtype {  ## DEPRECATED
+    my $self = shift;
+    deprecate("Homology::subtype() is deprecated and will be removed in e76. Use taxonomy_level() instead.");
+    return $self->taxonomy_level();
+}
+
+
+=head2 taxonomy_alias
+
+  Description:  DEPRECATED . Homology::taxonomy_alias() is deprecated and will be removed in e76. Use species_tree_node()->taxon()->ensembl_alias() instead
+
+=cut
+
+sub taxonomy_alias {  ## DEPRECATED
+    my $self = shift;
+    deprecate("Homology::taxonomy_alias() is deprecated and will be removed in e76. Use species_tree_node()->taxon()->ensembl_alias() instead.");
+    return $self->species_tree_node()->taxon()->ensembl_alias();
 }
 
 

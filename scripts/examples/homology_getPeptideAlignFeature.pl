@@ -1,4 +1,18 @@
 #!/usr/bin/env perl
+# Copyright [1999-2013] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+# 
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+# 
+#      http://www.apache.org/licenses/LICENSE-2.0
+# 
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
 use strict;
 use warnings;
 
@@ -77,9 +91,7 @@ print "QUERY PEP: ";
 $peptide_member->print_member();
 
 my $peptide_align_feature_adaptor = $compara_dba->get_PeptideAlignFeatureAdaptor;
-$peptide_align_feature_adaptor->final_clause("ORDER BY score desc");
 my $peptide_align_features = $peptide_align_feature_adaptor->fetch_all_RH_by_member($peptide_member->dbID);
-$peptide_align_feature_adaptor->final_clause("");
 
 # loop through and print
 foreach my $this_peptide_align_feature (@{$peptide_align_features}) {

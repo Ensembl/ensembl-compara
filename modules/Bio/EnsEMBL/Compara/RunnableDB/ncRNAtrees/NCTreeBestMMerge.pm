@@ -1,6 +1,21 @@
-#
-# You may distribute this module under the same terms as perl itself
-#
+=head1 LICENSE
+
+Copyright [1999-2013] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+     http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+
+=cut
+
 # POD documentation - main docs before the code
 
 =pod 
@@ -55,10 +70,10 @@ Internal methods are usually preceded with a _
 package Bio::EnsEMBL::Compara::RunnableDB::ncRNAtrees::NCTreeBestMMerge;
 
 use strict;
-use Bio::AlignIO;
+
 use Bio::EnsEMBL::Compara::Graph::NewickParser;
 
-use base ('Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::StoreTree', 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::TreeBest');
+use base ('Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::TreeBest', 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::StoreTree');
 
 
 sub param_defaults {
@@ -176,7 +191,13 @@ sub load_input_trees {
   my $self = shift;
   my $tree = $self->param('nc_tree');
 
+  my $lookup = eval($self->compara_dba->get_MethodLinkSpeciesSetAdaptor->fetch_by_dbID($self->param_required('mlss_id'))->get_value_for_tag('gdb2stn'));
+
   for my $other_tree (@{$self->compara_dba->get_GeneTreeAdaptor->fetch_all_linked_trees($tree)}) {
+    # horrible hack: we replace taxon_id with species_tree_node_id
+    foreach my $leaf (@{$other_tree->get_all_leaves}) {
+        $leaf->taxon_id($lookup->{$leaf->genome_db_id});
+    }
     print STDERR $other_tree->newick_format('ryo','%{-m}%{"_"-x}:%{d}') if ($self->debug);
     my $tag = $other_tree->clusterset_id;
     $self->param('inputtrees_unrooted')->{$tag} = $other_tree->newick_format('ryo','%{-m}%{"_"-x}:%{d}');

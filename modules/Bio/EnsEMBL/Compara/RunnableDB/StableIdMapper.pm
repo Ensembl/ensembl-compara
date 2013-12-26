@@ -1,3 +1,21 @@
+=head1 LICENSE
+
+Copyright [1999-2013] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+     http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+
+=cut
+
 =pod 
 
 =head1 NAME
@@ -13,7 +31,7 @@
     time standaloneJob.pl Bio::EnsEMBL::Compara::RunnableDB::StableIdMapper \
         -compara_db "mysql://ensadmin:${ENSADMIN_PSW}@compara3/mm14_compara_homology_64" \
         -master_db "mysql://ensadmin:${ENSADMIN_PSW}@compara1/sf5_ensembl_compara_master" \
-        -prev_rel_db "mysql://ensro@compara1/lg4_ensembl_compara_63" -release 64 -type t
+        -prev_rel_db "mysql://ensro@compara1/lg4_ensembl_compara_63" -type t
 
 =cut
 
@@ -52,15 +70,14 @@ sub fetch_input {
     return;
   }
 
-  $self->param('master_db')                       || die "'master_db' is a required parameter";
-  my $type         = $self->param('type')         || die "'type' is a required parameter, please set it in the input_id hashref to 'f' or 't'";
-  my $curr_release = $self->param('release')      || die "'release' is a required numeric parameter, please set it in the input_id hashref";
-  looks_like_number($curr_release)                || die "'release' is a numeric parameter. Check your input";
-  my $prev_release = $self->param('prev_release') || $curr_release - 1;
-  my $prev_rel_dbc = $prev_rel_db && Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->go_figure_compara_dba($prev_rel_db)->dbc();
+  $self->param_required('master_db');
+  my $type         = $self->param_required('type');     # must be 't' or 'f'
+  my $curr_release = $self->compara_dba->get_MetaContainer->get_schema_version;
+  my $prev_rel_dba = $prev_rel_db && Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->go_figure_compara_dba($prev_rel_db);
+  my $prev_release = $prev_rel_dba->get_MetaContainer->get_schema_version;
 
   my $adaptor   = Bio::EnsEMBL::Compara::StableId::Adaptor->new();
-  my $from_ncs  = $adaptor->fetch_ncs($prev_release, $type, $prev_rel_dbc);
+  my $from_ncs  = $adaptor->fetch_ncs($prev_release, $type, $prev_rel_dba->dbc());
   my $to_ncs    = $adaptor->fetch_ncs($curr_release, $type, $self->compara_dba->dbc());
   my $ncsl      = Bio::EnsEMBL::Compara::StableId::NamedClusterSetLink->new(-FROM => $from_ncs, -TO => $to_ncs);
 
@@ -78,8 +95,6 @@ sub run {
   return if ! $self->param('prev_rel_db'); #bail out early
 
   my $type         = $self->param('type');
-  my $curr_release = $self->param('release');
-  my $prev_release = $self->param('prev_release');
 
   my $ncsl = $self->param('ncsl');
   my $postmap = $ncsl->maximum_name_reuse();

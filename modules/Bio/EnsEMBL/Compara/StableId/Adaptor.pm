@@ -1,3 +1,21 @@
+=head1 LICENSE
+
+Copyright [1999-2013] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+     http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+
+=cut
+
 =pod 
 
 =head1 NAME
@@ -41,9 +59,7 @@ sub new {
 sub treefam_dbh {
     my ($self, $release) = @_;
 
-    my $dbh = DBI->connect("DBI:mysql:mysql_use_result=1;host=db.treefam.org;port=3308;database=treefam_${release}", 'anonymous', '');
-    
-    return $dbh;
+    return DBI->connect("DBI:mysql:mysql_use_result=1;host=mysql-treefam-public.ebi.ac.uk;port=4418;database=treefam_production_${release}", 'treefam_ro', '');
 }
 
 sub dbh_from_dgsuffix_dbname {
@@ -57,9 +73,7 @@ sub dbh_from_dgsuffix_dbname {
 sub guess_dbh {     # only works if you have .my.cnf properly pre-filled with connection parameters
     my ($self, $release, $type) = @_;
 
-    if(($type eq 'c') or ($type eq 'w')) {
-
-        require Treefam::Tree;
+    if($type eq 'tf') {
 
         warn "${type}${release} - going to load the data from 'treefam_${release}'\n";
 
@@ -98,56 +112,13 @@ sub fetch_ncs {
 
     my $ncs = Bio::EnsEMBL::Compara::StableId::NamedClusterSet->new(-TYPE => $type, -RELEASE => $release);
 
-    if( ($type eq 'f') or ($type eq 't') ) {
+    if( ($type eq 'f') or ($type eq 't') or ($type eq 'tf') ) {
         $self->load_compara_ncs($ncs, $dbh);
-    } elsif( ($type eq 'c') or ($type eq 'w') ) {
-        $self->load_treefam_ncs($ncs, $dbh);
     }
 
     return $ncs;
 }
 
-sub load_treefam_ncs {
-    my ($self, $ncs, $dbh) = @_;
-
-    my $step = 30000;
-    my $tree_type = ($ncs->type() eq 'c') ? 'CLEAN' : 'FULL';
-    my $sql = qq{ SELECT TRIM(LEADING 'TF' FROM ac), ac, tree FROM trees WHERE type = ?};
-    my $sth = $dbh->prepare($sql);
-    warn "\t- waiting for the data to start coming\n";
-    $sth->execute($tree_type);
-    warn "\t- done waiting\n";
-    my $counter = 0;
-
-    my $dummy_dbc = {}; # let's see if it works
-
-    while(my($tree_id, $tree_name, $tree_code) = $sth->fetchrow()) {
-        next if (!$tree_code or ($tree_code eq ';') or ($tree_code eq ',_null_;') or ($tree_code eq '_null_;;[&&NHX:O=_null_;;];') );
-
-        eval {
-            my $tree = Treefam::Tree->new($dummy_dbc, $tree_name, $tree_type, $tree_code);
-            foreach my $leaf ($tree->get_leaves()) {
-                if(my $member = $leaf->sequence_id()) {
-                    $member=~s/\.\d+$//;
-
-                    $ncs->mname2clid($member, $tree_id);
-                    $ncs->clid2clname($tree_id, $tree_name);
-
-                    unless(++$counter % $step) {
-                        warn "\t- $counter\n";
-                    }
-                }
-            }
-        };
-        if($@) {
-            warn "Problem with tree '$tree_name' ($@) \n TreeCode = [ $tree_code ]\n";
-        }
-    }
-    $sth->finish();
-    warn "\t- total of $counter members fetched\n";
-
-    return $ncs;
-}
 
 sub load_compara_ncs {
     my ($self, $ncs, $dbh) = @_;
@@ -168,7 +139,7 @@ sub load_compara_ncs {
                     AND   fm.member_id=m.member_id
                     AND   m.source_name <> 'ENSEMBLGENE'
             } ;
-    } else {
+    } elsif ($ncs->type() eq 't') {
         if ($schema_version <= 52) {
             $sql = qq{
                 SELECT ptn.node_id, CONCAT('Node_',ptn.node_id), IF(m.source_name='ENSEMBLPEP', SUBSTRING_INDEX(TRIM(LEADING 'Transcript:' FROM m.description),' ',1), m.stable_id)
@@ -246,6 +217,20 @@ sub load_compara_ncs {
                     LEFT JOIN member m USING (member_id)
                     WHERE (gtn.node_id = gtn.root_id OR m.stable_id IS NOT NULL) AND left_index AND right_index AND gtr.tree_type = 'tree' AND gtr.clusterset_id = 'default'
                     ORDER BY root_id, left_index
+            };
+        }
+
+    } else {
+        if ($schema_version <= 70) {
+            $sql = qq{
+                SELECT gtn.node_id, IFNULL(gtrt.value, CONCAT('Node_',gtn.node_id)), IF(m.description LIKE "Transcript:%", SUBSTRING_INDEX(TRIM(LEADING 'Transcript:' FROM m.description),' ',1), m.stable_id)
+                    FROM gene_tree_node gtn
+                    JOIN gene_tree_root gtr USING (root_id)
+                    JOIN gene_tree_root_tag gtrt ON gtr.root_id=gtrt.root_id AND gtrt.tag = "model_name"
+                    LEFT JOIN gene_tree_member gtm USING (node_id)
+                    LEFT JOIN member m USING (member_id)
+                    WHERE (gtn.node_id = gtn.root_id OR m.member_id IS NOT NULL) AND left_index AND right_index AND gtr.tree_type = 'tree' AND gtr.clusterset_id = 'default'
+                    ORDER BY gtr.root_id, left_index
             };
         }
     }
@@ -403,12 +388,22 @@ sub _get_mapping_session_id {
   my $prefix = $generator->prefix();
   my $prefix_to_remove = { f => 'FM', t => 'GT' }->{$type} || die "Do not know the extension for type '${type}'";
   $prefix =~ s/$prefix_to_remove \Z//xms;
-  
-  my $ms_sth = $master_dbh->prepare( "INSERT INTO mapping_session(type, rel_from, rel_to, when_mapped, prefix) VALUES (?, ?, ?, FROM_UNIXTIME(?), ?)" );
-  $ms_sth->execute($fulltype, $ncsl->from->release(), $ncsl->to->release(), $timestamp, $prefix);
-  my $mapping_session_id = $ms_sth->{'mysql_insertid'};
-  warn "newly generated mapping_session_id = '$mapping_session_id' for prefix '${prefix}'\n";
+
+  my $ms_sth = $master_dbh->prepare( "SELECT mapping_session_id FROM mapping_session WHERE type = ? AND rel_from = ? AND rel_to = ? AND prefix = ?" );
+  $ms_sth->execute($fulltype, $ncsl->from->release(), $ncsl->to->release(), $prefix);
+  my ($mapping_session_id) = $ms_sth->fetchrow_array();
   $ms_sth->finish();
+
+  if (defined $mapping_session_id) {
+    warn "reusing previously generated mapping_session_id = '$mapping_session_id' for prefix '${prefix}'\n";
+
+  } else {
+    $ms_sth = $master_dbh->prepare( "INSERT INTO mapping_session(type, rel_from, rel_to, when_mapped, prefix) VALUES (?, ?, ?, FROM_UNIXTIME(?), ?)" );
+    $ms_sth->execute($fulltype, $ncsl->from->release(), $ncsl->to->release(), $timestamp, $prefix);
+    $mapping_session_id = $ms_sth->{'mysql_insertid'};
+    warn "newly generated mapping_session_id = '$mapping_session_id' for prefix '${prefix}'\n";
+    $ms_sth->finish();
+  }
 
   if($dbh != $master_dbh) {   # replicate it in the release database:
       my $ms_sth2 = $dbh->prepare( "INSERT INTO mapping_session(mapping_session_id, type, rel_from, rel_to, when_mapped, prefix) VALUES (?, ?, ?, ?, FROM_UNIXTIME(?), ?)" );

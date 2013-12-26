@@ -1,12 +1,21 @@
 =head1 LICENSE
 
-  Copyright (c) 1999-2013 The European Bioinformatics Institute and
-  Genome Research Limited.  All rights reserved.
+Copyright [1999-2013] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
-  This software is distributed under a modified Apache license.
-  For license details, please see
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
 
-   http://www.ensembl.org/info/about/code_licence.html
+     http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+
+=cut
+
 
 =head1 CONTACT
 
@@ -83,7 +92,7 @@ sub param_defaults {
 
         # Static list of tables that must be ignored
         'production_tables' => [qw(ktreedist_score recovered_member removed_member cmsearch_hit CAFE_data protein_tree_backup protein_tree_qc split_genes mcl_sparse_matrix statistics constrained_element_production dnafrag_chunk lr_index_offset dnafrag_chunk_set dna_collection)],
-        'hive_tables'       => [qw(analysis_base analysis_data job job_file log_message analysis_stats analysis_stats_monitor analysis_ctrl_rule dataflow_rule worker monitor resource_description resource_class lsf_report analysis job_message)],
+        'hive_tables'       => [qw(hive_meta analysis_base analysis_data job job_file log_message analysis_stats analysis_stats_monitor analysis_ctrl_rule dataflow_rule worker monitor resource_description resource_class lsf_report analysis job_message)],
 
         # How to compare overlapping data. Primary keys are read from the schema unless overriden here
         'primary_keys'      => {
@@ -112,6 +121,18 @@ sub fetch_input {
 
     my $dbconnections = {map {$_ => Bio::EnsEMBL::DBSQL::DBConnection->new(%{$connection_params->{$_}})} keys %{$connection_params}};
     $self->param('dbconnections', $dbconnections);
+
+    # Expand the exclusive tables that have a "%" in their name
+    foreach my $table ( keys %$exclusive_tables ) {
+        if ($table =~ /%/) {
+            my $sql = "SHOW TABLES LIKE '$table'";
+            my $db = delete $exclusive_tables->{$table};
+            my $list = $dbconnections->{$db}->db_handle->selectall_arrayref($sql);
+            foreach my $expanded_arrayref (@$list) {
+                $exclusive_tables->{$expanded_arrayref->[0]} = $db;
+            }
+        }
+    }
 
     # Gets the list of non-empty tables for each db
     my $table_size = {};
@@ -222,7 +243,9 @@ sub run {
     # We decide whether the table needs to be copied or merged (and if the IDs don't overlap)
     foreach my $table (keys %$all_tables) {
 
-        die "The table '$table' exists in ".join("/", @{$all_tables->{$table}})." but not in the target database\n" unless exists $table_size->{$curr_rel_name}->{$table};
+        unless (exists $table_size->{$curr_rel_name}->{$table} or exists $exclusive_tables->{$table}) {
+            die "The table '$table' exists in ".join("/", @{$all_tables->{$table}})." but not in the target database\n";
+        }
 
         if (not $table_size->{$curr_rel_name}->{$table} and scalar(@{$all_tables->{$table}}) == 1) {
 

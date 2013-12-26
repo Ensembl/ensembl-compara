@@ -1,12 +1,21 @@
 =head1 LICENSE
 
-  Copyright (c) 1999-2013 The European Bioinformatics Institute and
-  Genome Research Limited.  All rights reserved.
+Copyright [1999-2013] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
-  This software is distributed under a modified Apache license.
-  For license details, please see
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
 
-    http://www.ensembl.org/info/about/code_licence.html
+     http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+
+=cut
+
 
 =head1 CONTACT
 
@@ -41,20 +50,20 @@ use strict;
 use warnings;
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 use Bio::EnsEMBL::Compara::MethodLinkSpeciesSet;
+use Bio::EnsEMBL::Compara::Utils::CoreDBAdaptor;
+
 use Bio::EnsEMBL::Utils::Exception qw(throw warning verbose);
 use Bio::EnsEMBL::Hive::Utils 'stringify';
 
 my $verbose = 0;
 
-my $suffix_separator = '__cut_here__';
+#my $suffix_separator = '__cut_here__';
 
 sub fetch_input {
     my ($self) = @_;
-
     if (!$self->param('master_db') && !$self->param('core_dbs') && !$self->param('conf_file')) {
 	throw("No master database is provided so you must set the define the location of core databases using a configuration file ('conf_file') or the 'curr_core_dbs_locs' parameter in the init_pipeline configuration file");
     }
-
 
     #Return if no conf file and trying to get the species list or there is no master_db in which case cannot call
     #populate_new_database
@@ -73,11 +82,6 @@ sub fetch_input {
 	load_registry_dbs($self->param('registry_dbs'));
     } elsif ($self->param('reg_conf')) { 	    
       Bio::EnsEMBL::Registry->load_all($self->param('reg_conf'));
-    }
-
-    #Set default reference speices. Should be set by init_pipeline module
-    unless (defined $self->param('ref_species')) {
-	$self->param('ref_species', 'homo_sapiens');
     }
 }
 
@@ -102,6 +106,7 @@ sub run {
 
 sub write_output {
     my ($self) = @_;
+
     #No configuration file or no master_db, so no species list. Flow an empty speciesList
     if ($self->param('get_species_list') && (!$self->param('conf_file') || !$self->param('master_db'))) {
 	my $output_id = "{'speciesList'=>'\"\"'}";
@@ -134,7 +139,6 @@ sub write_output {
         $pair_aligner_collection_names->{$pair_aligner->{'reference_collection_name'}} = 1;
         $pair_aligner_collection_names->{$pair_aligner->{'non_reference_collection_name'}} = 1;
     }
-
 
     #Write method_link and method_link_species_set database entries for pair_aligners
     foreach my $pair_aligner (@{$self->param('pair_aligners')}) {
@@ -169,7 +173,7 @@ sub write_output {
         if ($dna_collections->{$pair_aligner->{'reference_collection_name'}}->{'include_non_reference'}) {
             print "include_non_reference " . $dna_collections->{$pair_aligner->{'reference_collection_name'}}->{'include_non_reference'} . "\n" if ($self->debug);
 	}
-	
+
 	my $mlss = write_mlss_entry($self->compara_dba, $method_link_id, $method_link_type, $ref_genome_db, $non_ref_genome_db);
 	$pair_aligner->{'mlss_id'} = $mlss->dbID;
 
@@ -213,7 +217,6 @@ sub write_output {
 	my ($method_link_id, $method_link_type) = @{$chain_config->{'output_method_link'}};
 	my $ref_genome_db = $dna_collections->{$chain_config->{'reference_collection_name'}}->{'genome_db'};
 	my $non_ref_genome_db = $dna_collections->{$chain_config->{'non_reference_collection_name'}}->{'genome_db'};
-	
 	my $mlss = write_mlss_entry($self->compara_dba, $method_link_id, $method_link_type, $ref_genome_db, $non_ref_genome_db);
 	$chain_config->{'mlss_id'} = $mlss->dbID;
     }
@@ -356,8 +359,7 @@ sub get_species {
 	    next;
 	}
 
-
-	$self->get_locator($genome_db);
+      $genome_db->locator($genome_db->db_adaptor->locator);
     }
 }
 
@@ -580,38 +582,67 @@ sub parse_defaults {
 	$mlss = $mlss_adaptor->fetch_by_dbID($self->param('mlss_id'));
 	$genome_dbs = $mlss->species_set_obj->genome_dbs;
     } 
+    #load genome_dbs from a collection
+    if ($self->param('collection')) {
+        my $collection = $self->param('collection');
+        my $ss_adaptor = $self->compara_dba->get_SpeciesSetAdaptor();
+        my $ss = $ss_adaptor->fetch_all_by_tag_value("name", "collection-$collection");
+        die "Cannot find the collection '$collection'" unless scalar(@$ss);
+        die "There are several collections '$collection'" if scalar(@$ss) > 1;
+        $genome_dbs = $ss->[0]->genome_dbs;
+    }
 
     #Create a collection of pairs from the list of genome_dbs
     my $collection;
     if (@$genome_dbs > 2) {
 
-        #Check that default_chunks->reference is the same as default_chunks->non_reference otherwise there will be
-        #unpredictable consequences ie a dna_collection is not specific to whether the species is ref or non-ref.
-        foreach my $key (keys %{$self->param('default_chunks')->{'reference'}}) {
-            if ($self->param('default_chunks')->{'reference'}{$key} ne $self->param('default_chunks')->{'non_reference'}{$key}) {
-                throw "The default_chunks parameters MUST be the same for reference and non_reference. Please edit your init_pipeline config file. $key: ref=" . $self->param('default_chunks')->{'reference'}{$key} . " non_ref=" . $self->param('default_chunks')->{'non_reference'}{$key} . "\n";
+        if ($self->param('ref_species')) {
+            #ref vs all
+
+            #find reference genome_db
+            my $ref_genome_db;
+            foreach my $genome_db (@$genome_dbs) {
+                if ($genome_db->name eq $self->param('ref_species')) {
+                    $ref_genome_db = $genome_db;
+                    last;
+                }
+            }
+            die "Cannot find reference species " . $self->param('ref_species') . " in collection " . $self->param('collection') unless ($ref_genome_db);
+            foreach my $genome_db (@$genome_dbs) {
+                #skip over ref species
+                next if ($genome_db->name eq $self->param('ref_species'));
+                my $pair;
+                %$pair = ('ref_genome_db'     => $ref_genome_db,
+                          'non_ref_genome_db' => $genome_db);
+                push @$collection, $pair;
+            }
+        } else {
+            #all vs all
+
+            #Check that default_chunks->reference is the same as default_chunks->non_reference otherwise there will be
+            #unpredictable consequences ie a dna_collection is not specific to whether the species is ref or non-ref.
+
+            my @chunk_keys_checks = ( "masking_options_file", "masking_options" );
+            foreach my $key (@chunk_keys_checks) {
+                if ($self->param('default_chunks')->{'reference'}{$key} ne $self->param('default_chunks')->{'non_reference'}{$key}) {
+                    throw "The default_chunks parameters MUST be the same for reference and non_reference. Please edit your init_pipeline config file. $key: ref=" . $self->param('default_chunks')->{'reference'}{$key} . " non_ref=" . $self->param('default_chunks')->{'non_reference'}{$key} . "\n";
+                }
+            }
+
+            #Have a collection. Make triangular matrix, ordered by genome_db_id?
+            
+            #Check the dna_collection is the same for reference and non-reference
+            my @ordered_genome_dbs = sort {$b->dbID <=> $a->dbID} @$genome_dbs;
+            while (@ordered_genome_dbs) {
+                my $ref_genome_db = shift @ordered_genome_dbs;
+                foreach my $genome_db (@ordered_genome_dbs) {
+                    my $pair;
+                    %$pair = ('ref_genome_db'     => $ref_genome_db,
+                              'non_ref_genome_db' => $genome_db);
+                    push @$collection, $pair;
+                }
             }
         }
-
-
-	#Have a collection. Make triangular matrix, ordered by genome_db_id?
-
-        #Check the dna_collection is the same for reference and non-reference
-	my @ordered_genome_dbs = sort {$b->dbID <=> $a->dbID} @$genome_dbs;
-	while (@ordered_genome_dbs) {
-	    my $ref_genome_db = shift @ordered_genome_dbs;
-	    foreach my $genome_db (@ordered_genome_dbs) {
-		print "ref " . $ref_genome_db->dbID . " " . $genome_db->dbID . "\n";
-		my $pair;
-		%$pair = ('ref_genome_db'     => $ref_genome_db,
-			  'non_ref_genome_db' => $genome_db);
-		push @$collection, $pair;
-
-		#Load pairwise mlss from master
-		$self->load_mlss_from_master($ref_genome_db, $genome_db, $self->param('default_net_output')->[1]);
-
-	    }
-	}
     } elsif (@$genome_dbs == 2) {
 	#Normal case of a pair of species
 	my $pair;
@@ -660,21 +691,21 @@ sub parse_defaults {
 	#foreach my $genome_db (@$genome_dbs) {
 	foreach my $genome_db ($pair->{ref_genome_db}, $pair->{non_ref_genome_db}) {
 	    #get and store locator
-	    $self->get_locator($genome_db);
+          $genome_db->locator($genome_db->db_adaptor->locator);
 	    $self->compara_dba->get_GenomeDBAdaptor->store($genome_db);
 	    
 	    push @genome_db_ids, $genome_db->dbID;
 	    
 	}
 	
-	
 	#create pair_aligners
 	$pair_aligner->{'reference_collection_name'} = $pair->{ref_genome_db}->name . " raw";
 	$chain_config->{'reference_collection_name'} = $pair->{ref_genome_db}->name . " for chain";
 	#$net_config->{'reference_collection_name'} = $pair->{ref_genome_db}->name . " for chain";
 
+        #What to do about all vs all which will not have a net_ref_species
         #Check net_ref_species is a member of the pair
-        if ($self->param('net_ref_species') eq $pair->{ref_genome_db}->name) {
+        if ((!$self->param('net_ref_species')) || ($self->param('net_ref_species') eq $pair->{ref_genome_db}->name)) {
             $net_config->{'reference_collection_name'} = $pair->{ref_genome_db}->name . " for chain";
             $net_config->{'non_reference_collection_name'} = $pair->{non_ref_genome_db}->name . " for chain";
         } elsif ($self->param('net_ref_species') eq $pair->{non_ref_genome_db}->name) {
@@ -748,6 +779,22 @@ sub parse_defaults {
 sub write_mlss_entry {
     my ($compara_dba, $method_link_id, $method_link_type, $ref_genome_db, $non_ref_genome_db) = @_;
 
+    my $ref_name;
+    my $name;
+
+    foreach my $species_name ($ref_genome_db->name, $non_ref_genome_db->name) {
+        $species_name =~ s/\b(\w)/\U$1/g;
+        $species_name =~ s/(\S)\S+\_/$1\./;
+        $species_name = substr($species_name, 0, 5);
+        $ref_name = $species_name unless ($ref_name);
+        $name .= $species_name."-";
+    }
+    $name =~ s/\-$//;
+    my $type = lc($method_link_type);
+    $type =~ s/_/\-/g;
+    $name .= " $type (on $ref_name)";
+    my $source = "ensembl";
+
     my $method = Bio::EnsEMBL::Compara::Method->new(
         -type               => $method_link_type,
         -dbID               => $method_link_id,
@@ -763,6 +810,8 @@ sub write_mlss_entry {
     my $mlss = Bio::EnsEMBL::Compara::MethodLinkSpeciesSet->new(
         -method             => $method,
         -species_set_obj    => $species_set_obj,
+        -name               => $name,
+        -source             => $source,
     );
 
     $compara_dba->get_MethodLinkSpeciesSetAdaptor->store($mlss);
@@ -780,13 +829,21 @@ sub write_parameters_to_mlss_tag {
     my $dna_collections = $self->param('dna_collections');
     #Write pair aligner options to mlss_tag table for use with PairAligner jobs (eg lastz)
     my $this_param = $mlss->get_value_for_tag("param");
+
+    my $ensembl_cvs_root_dir = $ENV{'ENSEMBL_CVS_ROOT_DIR'};
+
     if ($this_param) {
-        if ($this_param ne $pair_aligner->{'analysis_template'}->{'parameters'}{'options'}) {
+        my $analysis_params = $pair_aligner->{'analysis_template'}->{'parameters'}{'options'};
+        #Need to convert "Q=" if present
+        if ($ensembl_cvs_root_dir && $pair_aligner->{'analysis_template'}->{'parameters'}{'options'} =~ /(.*Q=)$ensembl_cvs_root_dir(.*)/) {
+            $analysis_params = $1.'$ENSEMBL_CVS_ROOT_DIR'.$2;
+        } 
+
+        if ($this_param ne $analysis_params) {
             throw "Trying to store a different set of options (" . $pair_aligner->{'analysis_template'}->{'parameters'}{'options'} . ") for the same method_link_species_set ($this_param). This is currently not supported";
         }
     } else {
         #Convert expanded $ensembl_cvs_root_dir to the string '$ENSEMBL_CVS_ROOT_DIR' if it is present, else store the param as it is
-        my $ensembl_cvs_root_dir = $ENV{'ENSEMBL_CVS_ROOT_DIR'};
         if ($ensembl_cvs_root_dir && $pair_aligner->{'analysis_template'}->{'parameters'}{'options'} =~ /(.*Q=)$ensembl_cvs_root_dir(.*)/) {
             $mlss->store_tag("param",  $1.'$ENSEMBL_CVS_ROOT_DIR'.$2);
         } else {
@@ -1131,63 +1188,10 @@ sub print_pair_aligner {
     }
 }
 
-#
-#This should probably go elsewhere eventually
-#
-sub get_locator {
-    my ($self, $genome_db) = @_;
-    my $no_alias_check = 1;
-
-    my $this_core_dba = Bio::EnsEMBL::Registry->get_DBAdaptor($genome_db->name, 'core', $no_alias_check);
-    if (!defined $this_core_dba) {
-	die("Unable to find a suitable core database for ". $genome_db->name . " from the registry\n");
-    }
-    my $this_assembly = $this_core_dba->extract_assembly_name();
-    my $this_start_date = $this_core_dba->get_MetaContainer->get_genebuild();
-    
-    my $genebuild = $genome_db->genebuild;
-    my $assembly_name = $genome_db->assembly;
-    
-    $genebuild ||= $this_start_date;
-    $assembly_name ||= $this_assembly;
-    
-    my $core_dba;
-    if($this_assembly eq $assembly_name && $this_start_date eq $genebuild) {
-	$core_dba = $this_core_dba;
-    } else {
-	#The assembly.default and coord_system.version names should be the same
-	throw "Found assembly '$this_assembly' when looking for '$assembly_name' or '$this_start_date' when looking for '$genebuild'";
-    }
-    
-    if (defined $core_dba) {
-	#print "locator " . $core_dba->locator . "\n";
-	$genome_db->locator($core_dba->locator);
-    }
-
-}
 
 #
 #Taken from LoadOneGenomeDB
 #
-sub Bio::EnsEMBL::DBSQL::DBAdaptor::extract_assembly_name {  # with much regret I have to introduce the highly demanded method this way
-    my $self = shift @_;
-
-    my ($cs) = @{$self->get_CoordSystemAdaptor->fetch_all()};
-    my $assembly_name = $cs->version;
-
-    return $assembly_name;
-}
-
-sub Bio::EnsEMBL::DBSQL::DBAdaptor::locator {  # this is another similar hack (to be included or at least offered for inclusion into Core codebase)
-    my $self         = shift @_;
-
-    my $dbc = $self->dbc();
-
-    return sprintf(
-          "%s/host=%s;port=%s;user=%s;pass=%s;dbname=%s;species=%s;species_id=%s;disconnect_when_inactive=%d",
-          ref($self), $dbc->host(), $dbc->port(), $dbc->username(), $dbc->password(), $dbc->dbname(), $self->species, $self->species_id, 1,
-    );
-}
 
 
 sub load_registry_dbs {
@@ -1243,13 +1247,13 @@ sub populate_database_from_core_db {
 							     -port => $port,
 							     -species => $species->{species},
 							     -dbname => $species->{dbname});
-	$genome_db = update_genome_db($species_dba, $self->compara_dba, 0, $species->{genome_db_id});
+	$genome_db = update_genome_db($species_dba, $self->compara_dba, $species->{genome_db_id});
 	update_dnafrags($self->compara_dba, $genome_db, $species_dba);
 
     } elsif ($species->{-dbname}) {
 	#Load form curr_core_dbs_locs in default_options file
 	my $species_dba = new Bio::EnsEMBL::DBSQL::DBAdaptor(%$species);
-	$genome_db = update_genome_db($species_dba, $self->compara_dba, 0);
+	$genome_db = update_genome_db($species_dba, $self->compara_dba);
 	update_dnafrags($self->compara_dba, $genome_db, $species_dba);	
     }
 
@@ -1258,98 +1262,25 @@ sub populate_database_from_core_db {
 
 #Taken from update_genome.pl
 sub update_genome_db {
-    my ($species_dba, $compara_dba, $force, $genome_db_id) = @_;
-    my $species_name;         #if not in core
-    my $taxon_id;             #if not in core
-    my $offset;               #offset to add to Genome DBs.
+    my ($species_dba, $compara_dba, $genome_db_id) = @_;
 
     my $compara = $compara_dba->dbc->dbname;
-
-    my $slice_adaptor = $species_dba->get_adaptor("Slice");
     my $genome_db_adaptor = $compara_dba->get_GenomeDBAdaptor();
-    my $meta_container = $species_dba->get_MetaContainer;
     
-    my $primary_species_binomial_name;
-    if (defined($species_name)) {
-	$primary_species_binomial_name = $species_name;
-    } else {
-	$primary_species_binomial_name = $meta_container->get_production_name();
-	if (!$primary_species_binomial_name) {
-	    throw "Cannot get the species name from the database. Use the --species_name option";
-	}
-    }
-    my ($highest_cs) = @{$slice_adaptor->db->get_CoordSystemAdaptor->fetch_all()};
-    my $primary_species_assembly = $highest_cs->version();
-    my $genome_db = eval {$genome_db_adaptor->fetch_by_name_assembly(
-								     $primary_species_binomial_name,
-								     $primary_species_assembly
-								    )};
-    if ($genome_db and $genome_db->dbID) {
-	return $genome_db if ($force);
-	throw "GenomeDB with this name [$primary_species_binomial_name] and assembly".
-	  " [$primary_species_assembly] is already in the compara DB [$compara]\n".
-	    "You can use the --force option IF YOU REALLY KNOW WHAT YOU ARE DOING!!";
-    } elsif ($force) {
-	print "GenomeDB with this name [$primary_species_binomial_name] and assembly".
-	  " [$primary_species_assembly] is not in the compara DB [$compara]\n".
-	    "You don't need the --force option!!";
-	print "Press [Enter] to continue or Ctrl+C to cancel...";
-	<STDIN>;
-    }
-    
-    my ($assembly) = @{$meta_container->list_value_by_key('assembly.default')};
-    if (!defined($assembly)) {
-	warning "Cannot find assembly.default in meta table for $primary_species_binomial_name";
-	$assembly = $primary_species_assembly;
-    }
-    
-    my $genebuild = $meta_container->get_genebuild();
-    if (! $genebuild) {
-	warning "Cannot find genebuild.version in meta table for $primary_species_binomial_name";
-	$genebuild = '';
-    }
-    
-    print "New assembly and genebuild: ", join(" -- ", $assembly, $genebuild),"\n\n";
-    
-    #Have to define these since they were removed from the above meta queries
-    #and the rest of the code expects them to be defined
-    my $sql;
-    my $sth;
-    
-    $genome_db = eval {
-	$genome_db_adaptor->fetch_by_name_assembly($primary_species_binomial_name,
-						   $assembly)
-    };
-    
-    ## New genebuild!
+    my $genome_db = eval {$genome_db_adaptor->fetch_by_core_DBAdaptor($species_dba)};
+
     if ($genome_db) {
-	$sth = $compara_dba->dbc()->prepare('UPDATE genome_db SET assembly =?, genebuild =? WHERE genome_db_id =?');
-	$sth->execute($assembly, $genebuild, $genome_db->dbID());
-	$sth->finish();
-	
-	$genome_db = $genome_db_adaptor->fetch_by_name_assembly(
-								$primary_species_binomial_name,
-								$assembly
-							     );
-	
+      my $species_production_name = $genome_db->name;
+      my $this_assembly = $genome_db->assembly;
+	throw "GenomeDB with this name [$species_production_name] and assembly".
+	  " [$this_assembly] is already in the compara DB [$compara]\n";
     }
-    ## New genome or new assembly!!
-    else {
-	
-	if (!defined($taxon_id)) {
-	    ($taxon_id) = @{$meta_container->list_value_by_key('species.taxonomy_id')};
-	}
-	if (!defined($taxon_id)) {
-	    throw "Cannot find species.taxonomy_id in meta table for $primary_species_binomial_name.\n".
-	      "   You can use the --taxon_id option";
-	}
-	print "New genome in compara. Taxon #$taxon_id; Name: $primary_species_binomial_name; Assembly $assembly\n\n";
 
 	#Need to remove FOREIGN KEY to ncbi_taxa_node which is not necessary for pairwise alignments
 	#Check if foreign key exists
 	my $sql = "SHOW CREATE TABLE genome_db";
 
-	$sth = $compara_dba->dbc()->prepare($sql);
+	my $sth = $compara_dba->dbc()->prepare($sql);
 	$sth->execute();
 
 	my $foreign_key = 0;
@@ -1364,41 +1295,24 @@ sub update_genome_db {
 	    $compara_dba->dbc()->do('ALTER TABLE genome_db DROP FOREIGN KEY genome_db_ibfk_1');
 	}
 
-	$sth = $compara_dba->dbc()->prepare('UPDATE genome_db SET assembly_default = 0 WHERE name =?');
-	$sth->execute($primary_species_binomial_name);
-	$sth->finish();
-	
-	#New ID search if $offset is true
-	my @args = ($taxon_id, $primary_species_binomial_name, $assembly, $genebuild);
-	if($offset) {
-	    $sql = 'INSERT INTO genome_db (genome_db_id, taxon_id, name, assembly, genebuild) values (?,?,?,?,?)';
-	    $sth = $compara_dba->dbc->prepare('select max(genome_db_id) from genome_db where genome_db_id > ?');
-	    $sth->execute($offset);
-	    my ($max_id) = $sth->fetchrow_array();
-	    $sth->finish();
-	    if(!$max_id) {
-		$max_id = $offset;
-	    }
-	    unshift(@args, $max_id+1);
-	} elsif (defined $genome_db_id) {
-	    $sql = 'INSERT INTO genome_db (genome_db_id, taxon_id, name, assembly, genebuild) values (?,?,?,?,?)';
-	    unshift(@args, $genome_db_id);
-	}
-	else {
-	    $sql = 'INSERT INTO genome_db (taxon_id, name, assembly, genebuild) values (?,?,?,?)';
-	}
-	$sth = $compara_dba->dbc->prepare($sql);
-	$sth->execute(@args);
-	$sth->finish();
+      $genome_db = Bio::EnsEMBL::Compara::GenomeDB->new(
+          -DB_ADAPTOR => $species_dba,
+      );
 
-        # force reload of the cache:
-	$genome_db_adaptor->_build_id_cache();
+      if (not defined $genome_db->name) {
+	    throw "Cannot get the species name from the database ".$species_dba->dbname;
+      } elsif (not defined $genome_db->taxon_id) {
+          my $species_name = $genome_db->name;
+          throw "Cannot find species.taxonomy_id in meta table for $species_name.\n";
+      }
+      print "New GenomeDB for Compara: ", $genome_db->toString, "\n";
 
-	$genome_db = $genome_db_adaptor->fetch_by_name_assembly(
-								$primary_species_binomial_name,
-								$assembly
-							       );
-    }
+	if (defined $genome_db_id) {
+          $genome_db->dbID($genome_db_id);
+	}
+
+      $genome_db_adaptor->store($genome_db);
+
     return $genome_db;
 }
 

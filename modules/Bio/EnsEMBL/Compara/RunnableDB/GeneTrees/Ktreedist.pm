@@ -1,6 +1,21 @@
-#
-# You may distribute this module under the same terms as perl itself
-#
+=head1 LICENSE
+
+Copyright [1999-2013] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+     http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+
+=cut
+
 # POD documentation - main docs before the code
 
 =pod 
@@ -71,6 +86,7 @@ use base ('Bio::EnsEMBL::Compara::RunnableDB::RunCommand', 'Bio::EnsEMBL::Compar
 sub fetch_input {
   my( $self) = @_;
 
+  $self->param('linked_trees', []);
     # Fetch sequences:
   $self->param('gene_tree', $self->compara_dba->get_GeneTreeAdaptor->fetch_by_dbID($self->param('gene_tree_id')) );
   $self->param('gene_tree')->preload();
@@ -87,8 +103,7 @@ sub fetch_input {
     die "No trees with non-0 distances. Nothing to compute";
   }
 
-  my $ktreedist_exe = $self->param('ktreedist_exe')
-      or die "'ktreedist_exe' is an obligatory parameter";
+  my $ktreedist_exe = $self->param_required('ktreedist_exe');
 
   die "Cannot execute '$ktreedist_exe'" unless(-x $ktreedist_exe);
 }
@@ -126,6 +141,20 @@ sub run {
 sub write_output {
   my $self = shift;
   $self->store_ktreedist_score;
+}
+
+sub post_cleanup {
+  my $self = shift;
+
+  if(my $gene_tree = $self->param('gene_tree')) {
+    $gene_tree->release_tree;
+    $self->param('gene_tree', undef);
+  }
+  foreach my $gene_tree (@{$self->param('linked_trees')}) {
+    $gene_tree->release_tree;
+  }
+
+  $self->SUPER::post_cleanup if $self->can("SUPER::post_cleanup");
 }
 
 
@@ -213,6 +242,7 @@ sub load_input_trees {
         print STDERR $other_tree->newick_format('ryo','%{-m}%{"_"-x}:%{d}') if ($self->debug);
         my $tag = $other_tree->clusterset_id;
         $self->param('inputtrees_unrooted')->{$tag} = $other_tree->newick_format('ryo','%{-m}%{"_"-x}:%{d}') if ($self->check_distances_to_parent($other_tree));
+        push @{$self->param('linked_trees')}, $other_tree;
     }
     return 1;
 }
@@ -250,7 +280,7 @@ sub store_ktreedist_score {
     my $tree = $self->param('gene_tree'),
 
     my %other_trees;
-    for my $other_tree (@{$self->compara_dba->get_GeneTreeAdaptor->fetch_all_linked_trees($tree)}) {
+    for my $other_tree (@{$self->param('linked_trees')}) {
         print STDERR "OTHER TREE FOUND: ", $other_tree->root_id, "WITH CLUSTERSET_ID", $other_tree->clusterset_id, "\n" if ($self->debug());
         $other_trees{$other_tree->clusterset_id} = $other_tree;
     }

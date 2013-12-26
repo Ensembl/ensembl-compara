@@ -1,3 +1,21 @@
+=head1 LICENSE
+
+Copyright [1999-2013] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+     http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+
+=cut
+
 
 =pod 
 
@@ -51,13 +69,13 @@ sub default_options {
 #       'ce_mlss_id'            => 523,   # it is very important to check that this value is current (commented out to make it obligatory to specify)
 	#conservation score mlss_id
 #       'cs_mlss_id'            => 50029, # it is very important to check that this value is current (commented out to make it obligatory to specify)
-        'release'               => '71',
+        'release'               => '74',
         'release_suffix'        => '',    # an empty string by default, a letter otherwise
         'ensembl_cvs_root_dir'  => $ENV{'ENSEMBL_CVS_ROOT_DIR'},
-	'dbname'                => $ENV{USER}.'_pecan_20way_'.$self->o('release').$self->o('release_suffix'),
+	'dbname'                => $ENV{USER}.'_pecan_21way_'.$self->o('release').$self->o('release_suffix'),
         'work_dir'              => '/lustre/scratch109/ensembl/' . $ENV{'USER'} . '/scratch/hive/release_' . $self->o('rel_with_suffix') . '/' . $self->o('dbname'),
-	'do_not_reuse_list'     => [ ],     # genome_db_ids of species we don't want to reuse this time. This is normally done automatically, so only need to set this if we think that this will not be picked up automatically.
-#	'do_not_reuse_list'     => [ 87 ],     # names of species we don't want to reuse this time. This is normally done automatically, so only need to set this if we think that this will not be picked up automatically.
+#	'do_not_reuse_list'     => [ ],     # genome_db_ids of species we don't want to reuse this time. This is normally done automatically, so only need to set this if we think that this will not be picked up automatically.
+	'do_not_reuse_list'     => [ 142 ],     # names of species we don't want to reuse this time. This is normally done automatically, so only need to set this if we think that this will not be picked up automatically.
 
         'species_set' => undef, 
 
@@ -68,7 +86,7 @@ sub default_options {
         'mercator_dir'          => $self->o('work_dir') . '/mercator',  
 
     # blast parameters:
-	'blast_params'          => "-num_alignments 20 -seg 'yes' -best_hit_overhang 0.2 -best_hit_score_edge 0.1 -use_sw_tback",
+	'blast_params'          => "-seg 'yes' -best_hit_overhang 0.2 -best_hit_score_edge 0.1 -use_sw_tback",
         'blast_capacity'        => 100,
 
     #location of full species tree, will be pruned
@@ -110,7 +128,7 @@ sub default_options {
     'populate_new_database_exe' => $self->o('ensembl_cvs_root_dir')."/ensembl-compara/scripts/pipeline/populate_new_database.pl", 
     'gerp_exe_dir'              => '/software/ensembl/compara/gerp/GERPv2.1',
     'mercator_exe'              => '/software/ensembl/compara/mercator',
-    'blast_exe_dir'             => '/software/ensembl/compara/ncbi-blast-2.2.27+/bin',
+    'blast_bin_dir'             => '/software/ensembl/compara/ncbi-blast-2.2.27+/bin',
     'exonerate_exe'             => '/software/ensembl/compara/exonerate/exonerate',
 
     'dump_features_exe' => $self->o('ensembl_cvs_root_dir')."/ensembl-compara/scripts/dumps/dump_features.pl",
@@ -123,16 +141,16 @@ sub default_options {
     'bed_dir' => '/lustre/scratch110/ensembl/' . $ENV{USER} . '/pecan/bed_dir/' . 'release_' . $self->o('rel_with_suffix') . '/',
     'output_dir' => '/lustre/scratch110/ensembl/' . $ENV{USER} . '/pecan/feature_dumps/' . 'release_' . $self->o('rel_with_suffix') . '/',
 
-    'memory_suffix' => "", #temporary fix to define the memory requirements in resource_classes
-
     # connection parameters to various databases:
 
+        'host'        => 'compara5',            #separate parameter to use the resources aswell
         'pipeline_db' => {                      # the production database itself (will be created)
-            -host   => 'compara3',
+            -host   => $self->o('host'),
             -port   => 3306,
             -user   => 'ensadmin',
             -pass   => $self->o('password'),                    
-            -dbname => $ENV{'USER'}.'_pecan_20way_'.$self->o('rel_with_suffix'),
+            -dbname => $ENV{'USER'}.'_pecan_21way_'.$self->o('rel_with_suffix'),
+	    -driver => 'mysql',
         },
 
         'master_db' => {                        # the master database for synchronization of various ids
@@ -167,14 +185,13 @@ sub default_options {
         # "production mode"
        'reuse_core_sources_locs'   => [ $self->o('livemirror_loc') ],
        'curr_core_sources_locs'    => [ $self->o('staging_loc1'), $self->o('staging_loc2'), ],
-       'prev_release'              => 0,   # 0 is the default and it means "take current release number and subtract 1"
 
        'reuse_db' => {   # usually previous pecan production database
-           -host   => 'compara2',
+           -host   => 'compara3',
            -port   => 3306,
            -user   => 'ensro',
            -pass   => '',
-           -dbname => 'kb3_pecan_20way_70',
+           -dbname => 'kb3_pecan_20way_71',
 	   -driver => 'mysql',
         },
 
@@ -196,7 +213,6 @@ sub default_options {
         },
 #        'reuse_core_sources_locs'   => [ $self->o('reuse_loc') ],
 #        'curr_core_sources_locs'    => [ $self->o('curr_loc'), ],
-#        'prev_release'              => 61,   # 0 is the default and it means "take current release number and subtract 1"
 #        'reuse_db' => {   # usually previous production database
 #           -host   => 'compara4',
 #           -port   => 3306,
@@ -204,6 +220,15 @@ sub default_options {
 #           -pass   => '',
 #           -dbname => 'kb3_pecan_19way_61',
 #        },
+
+
+     #
+     #Resource requirements
+     #
+     'memory_suffix' => "", #temporary fix to define the memory requirements in resource_classes
+     'dbresource'    => 'my'.$self->o('host'), # will work for compara1..compara4, but will have to be set manually otherwise
+     'aligner_capacity' => 2000,
+
     };
 }
 
@@ -235,11 +260,13 @@ sub resource_classes {
          %{$self->SUPER::resource_classes},  # inherit 'default' from the parent class
 	 '100Mb' =>  { 'LSF' => '-C0 -M100' . $self->o('memory_suffix') .' -R"select[mem>100] rusage[mem=100]"' }, 
 	 '1Gb' =>    { 'LSF' => '-C0 -M1000' . $self->o('memory_suffix') .' -R"select[mem>1000] rusage[mem=1000]"' },  
-	 '1.8Gb' =>  { 'LSF' => '-C0 -M1800' . $self->o('memory_suffix') .' -R"select[mem>1800] rusage[mem=1800]"' },  
+	 '1.8Gb' =>  { 'LSF' => '-C0 -M1800' . $self->o('memory_suffix') .' -R"select[mem>1800 && '. $self->o('dbresource'). '<'.$self->o('aligner_capacity').'] rusage[mem=1800,'.$self->o('dbresource').'=10:duration=3]"' },  
          '3.6Gb' =>  { 'LSF' => '-C0 -M3600' . $self->o('memory_suffix') .' -R"select[mem>3600] rusage[mem=3600]"' },
          '7.5Gb' =>  { 'LSF' => '-C0 -M7500' . $self->o('memory_suffix') .' -R"select[mem>7500] rusage[mem=7500]"' }, 
          '11.4Gb' => { 'LSF' => '-C0 -M11400' . $self->o('memory_suffix') .' -R"select[mem>11400] rusage[mem=11400]"' }, 
          '14Gb' =>   { 'LSF' => '-C0 -M14000' . $self->o('memory_suffix') .' -R"select[mem>14000] rusage[mem=14000]"' }, 
+         'gerp' =>   { 'LSF' => '-C0 -M1000' . $self->o('memory_suffix') .' -R"select[mem>1000 && '.$self->o('dbresource').'<'.$self->o('aligner_capacity').'] rusage[mem=1000,'.$self->o('dbresource').'=10:duration=3]"' },
+         'higerp' =>   { 'LSF' => '-C0 -M1800' . $self->o('memory_suffix') .' -R"select[mem>1800 && '.$self->o('dbresource').'<'.$self->o('aligner_capacity').'] rusage[mem=1800,'.$self->o('dbresource').'=10:duration=3]"' },
     };
 }
 
@@ -284,37 +311,15 @@ sub pipeline_analyses {
 		-parameters => {
 				'mlss_id' => $self->o('mlss_id'),
 				'sql'   => [
-					    'ALTER TABLE genomic_align_block AUTO_INCREMENT=#expr(($mlss_id * 10**10) + 1)expr#',
-					    'ALTER TABLE genomic_align AUTO_INCREMENT=#expr(($mlss_id * 10**10) + 1)expr#',
+					    'ALTER TABLE genomic_align_block AUTO_INCREMENT=#expr((#mlss_id# * 10**10) + 1)expr#',
+					    'ALTER TABLE genomic_align AUTO_INCREMENT=#expr((#mlss_id# * 10**10) + 1)expr#',
 					   ],
 			       },
 		-flow_into => {
-			       '1->A' => { 'create_species_sets' => [
-                        { 'species_set_id_name' => 'reuse_ss_id' },
-                        { 'species_set_id_name' => 'nonreuse_ss_id' },
-                    ], },
-			       'A->1' => [ 'load_genomedb_factory' ],
+                               1 => [ 'load_genomedb_factory' ],
 			      },
 		-rc_name => '100Mb',
 	    },
-
-# ---------------------------------------------[generate two empty species_sets for reuse / non-reuse (to be filled in at a later stage)]---------
-
-        {   -logic_name => 'create_species_sets',
-            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ObjectStore',
-            -parameters => {
-                'object_type'   => 'SpeciesSet',
-                'arglist'       => [
-                    -genome_dbs => [],
-                ],
-            },
-            -flow_into => {
-                2 => {
-                    'mysql:////meta'    => { 'meta_key' => '#species_set_id_name#', 'meta_value' => '#dbID#' },
-                },
-            },
-            -meadow_type    => 'LOCAL',
-        },
 
 # ---------------------------------------------[load GenomeDB entries from master+cores]---------------------------------------------
 
@@ -325,13 +330,13 @@ sub pipeline_analyses {
                 'mlss_id'       => $self->o('mlss_id'),
 
                 'call_list'             => [ 'compara_dba', 'get_MethodLinkSpeciesSetAdaptor', ['fetch_by_dbID', '#mlss_id#'], 'species_set_obj', 'genome_dbs'],
-                'column_names2getters'  => { 'genome_db_id' => 'dbID', 'species_name' => 'name', 'assembly_name' => 'assembly', 'genebuild' => 'genebuild', 'locator' => 'locator' },
+                'column_names2getters'  => { 'genome_db_id' => 'dbID', 'species_name' => 'name', 'assembly_name' => 'assembly', 'genebuild' => 'genebuild', 'locator' => 'locator', 'has_karyotype' => 'has_karyotype', 'is_high_coverage' => 'is_high_coverage' },
 
                 'fan_branch_code'       => 2,
             },
             -flow_into => {
                 '2->A' => [ 'load_genomedb' ],
-		'A->1' => [ 'finish_species_sets' ],
+                'A->1' => [ 'create_mlss_ss' ],
             },
 	    -rc_name => '100Mb',
 	},
@@ -348,8 +353,6 @@ sub pipeline_analyses {
 	    -rc_name => '100Mb',
         },
 
-
-
 # ---------------------------------------------[filter genome_db entries into reusable and non-reusable ones]------------------------
 
         {   -logic_name => 'check_reusability',
@@ -358,18 +361,14 @@ sub pipeline_analyses {
 		'reuse_db'      => $self->o('reuse_db'),
                 'registry_dbs'  => $self->o('reuse_core_sources_locs'),
                 'release'       => $self->o('release'),
-                'prev_release'  => $self->o('prev_release'),
 		'do_not_reuse_list' => $self->o('do_not_reuse_list'),
             },
             -hive_capacity => 10,    # allow for parallel execution
             -flow_into => {
-                2 => { 
-		      'check_reuse_db'        => undef,
-                      'mysql:////species_set' => { 'genome_db_id' => '#genome_db_id#', 'species_set_id' => '#reuse_ss_id#' },
-                },
-                3 => {
-                      'mysql:////species_set' => { 'genome_db_id' => '#genome_db_id#', 'species_set_id' => '#nonreuse_ss_id#' },
-                },
+                2 => {'check_reuse_db'                  => undef, 
+                      ':////accu?reused_gdb_ids=[]'     => { 'reused_gdb_ids' => '#genome_db_id#'} 
+                     },
+                3 => { ':////accu?nonreused_gdb_ids=[]' => { 'nonreused_gdb_ids' => '#genome_db_id#'} },
             },
 	    -rc_name => '1Gb',
         },
@@ -382,19 +381,14 @@ sub pipeline_analyses {
 	    -rc_name => '1Gb',
         },
 
-        {   -logic_name    => 'finish_species_sets',
-            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::SqlCmd',
+        {   -logic_name => 'create_mlss_ss',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::PrepareSpeciesSetsMLSS',
             -parameters => {
-                'sql' => [
-                    # Stores the species sets in CSV format
-                    'INSERT INTO meta (meta_key,meta_value) SELECT "reuse_ss_csv", IFNULL(GROUP_CONCAT(genome_db_id), "-1") FROM species_set WHERE species_set_id=#reuse_ss_id#',
-                    'INSERT INTO meta (meta_key,meta_value) SELECT "nonreuse_ss_csv", IFNULL(GROUP_CONCAT(genome_db_id), "-1") FROM species_set WHERE species_set_id=#nonreuse_ss_id#',
-                ],
+                'mlss_id'   => $self->o('mlss_id'),
+                'master_db' => $self->o('master_db'),
             },
-            -flow_into => {
-                1 => [ 'make_species_tree' ],
-            },
-            -rc_name => '100Mb',
+            -flow_into => [ 'make_species_tree' ],
+            -meadow_type    => 'LOCAL',
         },
 
         {   -logic_name    => 'make_species_tree',
@@ -406,7 +400,6 @@ sub pipeline_analyses {
                               },
             -flow_into => {
                            1 => [ 'genome_reuse_factory' ],
-                           4 => { 'mysql:////method_link_species_set_tag' => { 'method_link_species_set_id' => '#mlss_id#', 'tag' => 'species_tree', 'value' => '#species_tree_string#' } },
                           },
             -rc_name => '100Mb',
         },
@@ -461,7 +454,7 @@ sub pipeline_analyses {
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::MySQLTransfer',
             -parameters => {
                 'src_db_conn'   => $self->o('reuse_db'),
-                'table'         => 'peptide_align_feature_#name#_#genome_db_id#',
+                'table'         => 'peptide_align_feature_#genome_db_id#',
                 'filter_cmd'    => 'sed "s/ENGINE=MyISAM/ENGINE=InnoDB/"',
                 'where'         => 'hgenome_db_id IN (#reuse_ss_csv#)',
             },
@@ -486,10 +479,9 @@ sub pipeline_analyses {
         {   -logic_name => 'paf_create_empty_table',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::SqlCmd',
             -parameters => {
-                  'sql' => [  'CREATE TABLE IF NOT EXISTS peptide_align_feature_#name#_#genome_db_id# LIKE peptide_align_feature',
-                              'ALTER TABLE peptide_align_feature_#name#_#genome_db_id# ADD KEY hmember_hit (hmember_id, hit_rank)',
-                              'ALTER TABLE peptide_align_feature_#name#_#genome_db_id# DISABLE KEYS',
-                              
+                'sql' => [  'CREATE TABLE IF NOT EXISTS peptide_align_feature_#genome_db_id# like peptide_align_feature',
+                            'ALTER TABLE peptide_align_feature_#genome_db_id# ADD KEY hmember_hit (hmember_id, hit_rank)',
+                            'ALTER TABLE peptide_align_feature_#genome_db_id# DISABLE KEYS',
                ],
             },
             -flow_into => {
@@ -518,13 +510,13 @@ sub pipeline_analyses {
             },
             -rc_name       => '100Mb',
             -flow_into  => {
-                '2->A'  => [ 'dump_subset_fasta' ],
+                '2->A'  => [ 'fresh_dump_subset_fasta' ],
                 'A->1'  => [ 'blast_species_factory' ],
             },
         },
 
-        {   -logic_name => 'dump_subset_fasta',
-            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::MercatorPecan::DumpSubsetIntoFasta',
+        {   -logic_name => 'fresh_dump_subset_fasta',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::DumpMembersIntoFasta',
             -parameters => {
                  'fasta_dir'                 => $self->o('blastdb_dir'),
             },
@@ -538,9 +530,9 @@ sub pipeline_analyses {
         {   -logic_name => 'make_blastdb',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
             -parameters => {
-		'fasta_dir'     => $self->o('blastdb_dir'),
-		'blast_bin_dir' => $self->o('blast_exe_dir'),
-                'cmd' => '#blast_bin_dir#/makeblastdb -dbtype prot -parse_seqids -logfile #fasta_dir#/make_blastdb.log -in #fasta_name#',
+                'fasta_dir'     => $self->o('blastdb_dir'),
+                'blast_bin_dir' => $self->o('blast_bin_dir'),
+                'cmd'           => '#blast_bin_dir#/makeblastdb -dbtype prot -parse_seqids -logfile #fasta_dir#/make_blastdb.log -in #fasta_name#',
             },
 	    -rc_name => '100Mb',
         },
@@ -574,7 +566,9 @@ sub pipeline_analyses {
         {   -logic_name    => 'mercator_blast',
             -module        => 'Bio::EnsEMBL::Compara::RunnableDB::MercatorPecan::BlastAndParsePAF',
             -parameters    => {
-                'blast_params' => $self->o('blast_params'),
+                'blast_params'      => $self->o('blast_params'),
+                'blast_bin_dir'     => $self->o('blast_bin_dir'),
+                'do_transactions' => 1,
 		'mlss_id'      => $self->o('mlss_id'),
 		'fasta_dir'    => $self->o('blastdb_dir'),
             },
@@ -653,6 +647,8 @@ sub pipeline_analyses {
                  'java_options'               => $self->o('java_options_mem1'),
                  'mlss_id'                    => $self->o('mlss_id'),
 		 'jar_file'                   => $self->o('jar_file'),
+                 'exonerate'                  => $self->o('exonerate_exe'),
+                 'do_transactions'            => $self->o('do_transactions'),
              },
              -max_retry_count => 1,
              -priority => 1,
@@ -671,6 +667,8 @@ sub pipeline_analyses {
                  'java_options'               => $self->o('java_options_mem2'),
                  'mlss_id'                    => $self->o('mlss_id'),
                  'jar_file'                   => $self->o('jar_file'),
+                 'exonerate'                  => $self->o('exonerate_exe'),
+                 'do_transactions'            => $self->o('do_transactions'),
              },
              -max_retry_count => 1,
              -priority => 1,
@@ -689,6 +687,8 @@ sub pipeline_analyses {
                  'java_options'               => $self->o('java_options_mem3'),
                  'mlss_id'                    => $self->o('mlss_id'),
                  'jar_file'                   => $self->o('jar_file'),
+                 'exonerate'                  => $self->o('exonerate_exe'),
+                 'do_transactions'            => $self->o('do_transactions'),
              },
              -max_retry_count => 1,
              -priority => 1,
@@ -712,9 +712,9 @@ sub pipeline_analyses {
              },
              -hive_capacity => 500,  
              -flow_into => {
-		 2 => [ 'gerp_himem'], #retry with more memory
+		 -1 => [ 'gerp_himem'], #retry with more memory
              },
-	     -rc_name => '1Gb',
+	     -rc_name => 'gerp',
          },
          {   -logic_name    => 'gerp_himem',
              -module        => 'Bio::EnsEMBL::Compara::RunnableDB::GenomicAlignBlock::Gerp',
@@ -723,20 +723,20 @@ sub pipeline_analyses {
                  'window_sizes'    => $self->o('window_sizes'),
 		 'gerp_exe_dir'    => $self->o('gerp_exe_dir'),
                  'mlss_id'         => $self->o('mlss_id'),  #to retrieve species_tree from mlss_tag table
+                 'do_transactions' => $self->o('do_transactions'),
              },
             -hive_capacity => 500,  
-	     -rc_name => '1.8Gb',
+	     -rc_name => 'higerp',
          },
 
  	 {  -logic_name => 'update_max_alignment_length',
 	    -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GenomicAlignBlock::UpdateMaxAlignmentLength',
 	    -parameters => { 
-			    'quick'                      => $self->o('quick'),
 			    'method_link_species_set_id' => $self->o('mlss_id'),
 
 			   },
 	    -flow_into => { 
-			    '2->A' => [ 'conservation_scores_healthcheck', 'conservation_jobs_healthcheck' ],
+			    '1->A' => [ 'conservation_scores_healthcheck', 'conservation_jobs_healthcheck' ],
 			    'A->1' => ['stats_factory'],
 			   },
 

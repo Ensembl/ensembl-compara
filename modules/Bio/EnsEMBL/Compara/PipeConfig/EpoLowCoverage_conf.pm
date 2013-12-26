@@ -1,3 +1,21 @@
+=head1 LICENSE
+
+Copyright [1999-2013] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+     http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+
+=cut
+
 ## Configuration file for the Epo Low Coverage pipeline
 
 package Bio::EnsEMBL::Compara::PipeConfig::EpoLowCoverage_conf;
@@ -13,36 +31,41 @@ sub default_options {
 
         'ensembl_cvs_root_dir' => $ENV{'ENSEMBL_CVS_ROOT_DIR'},
 
-	'release'       => 67,
-	'prev_release'  => 66,
+	'release'       => 74,
+	'prev_release'  => 73,
         'release_suffix'=> '', # set it to '' for the actual release
-        'pipeline_name' => 'LOW35_'.$self->o('release').$self->o('release_suffix'), # name used by the beekeeper to prefix job names on the farm
+        'rel_with_suffix'       => $self->o('release').$self->o('release_suffix'),
+        'pipeline_name' => 'LOW7saurop_'.$self->o('release').$self->o('release_suffix'), # name used by the beekeeper to prefix job names on the farm
 
 	#location of new pairwise mlss if not in the pairwise_default_location eg:
-	'pairwise_exception_location' => { 576 => 'mysql://ensro@compara1/sf5_hsap_stri_lastz_67'},
-	#'pairwise_exception_location' => { },
-
+#	'pairwise_exception_location' => { 656 => 'mysql://ensro@compara4/sf5_hsap_dnov_lastz_74'},
+#	'pairwise_exception_location' => { },
+	'pairwise_exception_location' => { 657 => 'mysql://ensro@compara2/sf5_ggal_psin_lastz_74'},
+	#'pairwise_exception_location' => { 649 => 'mysql://ensro@compara5/kb3_olat_amex_lastz_74', 
+		#			653 => 'mysql://ensro@compara5/kb3_olat_locu_lastz_74',},
+        'host' => 'compara4',
         'pipeline_db' => {
-            -host   => 'compara1',
+            -host   => $self->o('host'),
             -port   => 3306,
             -user   => 'ensadmin',
             -pass   => $self->o('password'),
-            -dbname => $ENV{USER}.'_epo_35way_'.$self->o('release').$self->o('release_suffix'),
+            -dbname => $ENV{USER}.'_epo_7way_sauropsids_'.$self->o('release').$self->o('release_suffix'),
+	    -driver => 'mysql',
         },
 
 	#Location of compara db containing most pairwise mlss ie previous compara
 	'live_compara_db' => {
-            -host   => 'compara3',
+            -host   => 'ens-livemirror',
             -port   => 3306,
             -user   => 'ensro',
             -pass   => '',
-	    -dbname => 'mm14_ensembl_compara_67',
+	    -dbname => 'ensembl_compara_73',
 #	    -dbname => 'ensembl_compara_' . $self->o('prev_release'),
 	    -driver => 'mysql',
         },
 
 	#Location of compara db containing the high coverage alignments
-	'epo_db' => 'mysql://ensro@compara3:3306/sf5_compara_epo_12way_68',
+	'epo_db' => 'mysql://ensro@compara4:3306/sf5_epo_4sauropsids_74',
 
 	master_db => { 
             -host   => 'compara1',
@@ -81,7 +104,9 @@ sub default_options {
 	'ce_mlss_id' => $self->o('ce_mlss_id'),             #mlss_id for low coverage constrained elements
 	'cs_mlss_id' => $self->o('cs_mlss_id'),             #mlss_id for low coverage conservation scores
 	#'master_db_name' => 'sf5_ensembl_compara_master',   
-	'ref_species' => 'homo_sapiens',                    #ref species for pairwise alignments
+	'ref_species' => 'gallus_gallus',                    #ref species for pairwise alignments
+#	'ref_species' => 'oryzias_latipes',
+	#'ref_species' => 'homo_sapiens',
 	'max_block_size'  => 1000000,                       #max size of alignment before splitting 
 	'pairwise_default_location' => $self->dbconn_2_url('live_compara_db'), #default location for pairwise alignments
 
@@ -102,6 +127,8 @@ sub default_options {
 
 	#Location of executables (or paths to executables)
 	'gerp_exe_dir'    => '/software/ensembl/compara/gerp/GERPv2.1',   #gerp program
+        'semphy_exe'      => '/software/ensembl/compara/semphy_latest', #semphy program
+        'treebest_exe'      => '/software/ensembl/compara/treebest.doubletracking', #treebest program
         'dump_features_exe' => $self->o('ensembl_cvs_root_dir')."/ensembl-compara/scripts/dumps/dump_features.pl",
         'compare_beds_exe' => $self->o('ensembl_cvs_root_dir')."/ensembl-compara/scripts/pipeline/compare_beds.pl",
 
@@ -112,7 +139,12 @@ sub default_options {
         'bed_dir' => '/lustre/scratch110/ensembl/' . $ENV{USER} . '/epo_low_coverage/bed_dir/' . 'release_' . $self->o('rel_with_suffix') . '/',
         'output_dir' => '/lustre/scratch110/ensembl/' . $ENV{USER} . '/epo_low_coverage/feature_dumps/' . 'release_' . $self->o('rel_with_suffix') . '/',
 
+        #
+        #Resource requirements
+        #
        'memory_suffix' => "", #temporary fix to define the memory requirements in resource_classes
+       'dbresource'    => 'my'.$self->o('host'), # will work for compara1..compara4, but will have to be set manually otherwise
+       'aligner_capacity' => 2000,
     };
 }
 
@@ -139,7 +171,7 @@ sub resource_classes {
     return {
          %{$self->SUPER::resource_classes},  # inherit 'default' from the parent class
          '100Mb' => { 'LSF' => '-C0 -M100' . $self->o('memory_suffix') .' -R"select[mem>100] rusage[mem=100]"' },
-         '1Gb'   => { 'LSF' => '-C0 -M1000' . $self->o('memory_suffix') .' -R"select[mem>1000] rusage[mem=1000]"' },
+         '1Gb'   => { 'LSF' => '-C0 -M1000' . $self->o('memory_suffix') .' -R"select[mem>1000 && '.$self->o('dbresource').'<'.$self->o('aligner_capacity').'] rusage[mem=1000,'.$self->o('dbresource').'=10:duration=3]"' },
 	 '1.8Gb' => { 'LSF' => '-C0 -M1800' . $self->o('memory_suffix') .' -R"select[mem>1800] rusage[mem=1800]"' },
          '3.6Gb' =>  { 'LSF' => '-C0 -M3600' . $self->o('memory_suffix') .' -R"select[mem>3600] rusage[mem=3600]"' },
     };
@@ -204,7 +236,7 @@ sub pipeline_analyses {
 				'mlss_id'       => $self->o('low_epo_mlss_id'),
 				'call_list'             => [ 'compara_dba', 'get_MethodLinkSpeciesSetAdaptor', ['fetch_by_dbID', '#mlss_id#'], 'species_set_obj', 'genome_dbs'],
 
-				'column_names2getters'  => { 'genome_db_id' => 'dbID', 'species_name' => 'name', 'assembly_name' => 'assembly', 'genebuild' => 'genebuild', 'locator' => 'locator' },
+				'column_names2getters'  => { 'genome_db_id' => 'dbID', 'species_name' => 'name', 'assembly_name' => 'assembly', 'genebuild' => 'genebuild', 'locator' => 'locator', 'has_karyotype' => 'has_karyotype', 'is_high_coverage' => 'is_high_coverage' },
 				
 				'fan_branch_code'       => 2,
 			       },
@@ -230,7 +262,7 @@ sub pipeline_analyses {
                     '1->A' => {
                                'make_species_tree' => [
                                                        {'blength_tree_file' => $self->o('species_tree_file'), 'newick_format' => 'simple' }, #species_tree
-                                                       {'newick_format'     => 'njtree' },                                                   #taxon_tree
+                                             #          {'newick_format'     => 'njtree' },                                                   #taxon_tree
                                                        ],
                                },
 
@@ -244,11 +276,11 @@ sub pipeline_analyses {
 		-parameters    => { 
 				   'mlss_id' => $self->o('low_epo_mlss_id'),
 				  },
-	        -flow_into  => {
-                   3 => { 'mysql:////method_link_species_set_tag' => { 'method_link_species_set_id' => '#mlss_id#', 'tag' => 'taxon_tree', 'value' => '#species_tree_string#' } },
-		   4 => { 'mysql:////method_link_species_set_tag' => { 'method_link_species_set_id' => '#mlss_id#', 'tag' => 'species_tree', 'value' => '#species_tree_string#' } },
+	     #   -flow_into  => {
+            #       3 => { 'mysql:////method_link_species_set_tag' => { 'method_link_species_set_id' => '#mlss_id#', 'tag' => 'taxon_tree', 'value' => '#species_tree_string#' } },
+		   # 4 => { 'mysql:////method_link_species_set_tag' => { 'method_link_species_set_id' => '#mlss_id#', 'tag' => 'species_tree', 'value' => '#species_tree_string#' } },
 
-                },
+              #  },
 		-rc_name => '100Mb',
 	    },
 
@@ -307,6 +339,8 @@ sub pipeline_analyses {
 				'reference_species' => $self->o('ref_species'),
 				'pairwise_exception_location' => $self->o('pairwise_exception_location'),
 				'pairwise_default_location' => $self->o('pairwise_default_location'),
+                                'semphy_exe' => $self->o('semphy_exe'),
+                                'treebest_exe' => $self->o('treebest_exe'),
 			       },
 		-batch_size      => 5,
 		-hive_capacity   => 30,
@@ -326,6 +360,8 @@ sub pipeline_analyses {
 				'reference_species' => $self->o('ref_species'),
 				'pairwise_exception_location' => $self->o('pairwise_exception_location'),
 				'pairwise_default_location' => $self->o('pairwise_default_location'),
+                                'semphy_exe' => $self->o('semphy_exe'),
+                                'treebest_exe' => $self->o('treebest_exe'),
 			       },
 		-batch_size      => 5,
 		-hive_capacity   => 30,
@@ -343,7 +379,7 @@ sub pipeline_analyses {
 				'gerp_exe_dir' => $self->o('gerp_exe_dir'),
 			       },
 		-hive_capacity   => 600,
-		-rc_name => '1Gb',
+		-rc_name => '1.8Gb',
 	    },
 
 # ---------------------------------------------------[Delete high coverage alignment]-----------------------------------------------------
@@ -365,7 +401,7 @@ sub pipeline_analyses {
 	    {  -logic_name => 'update_max_alignment_length',
 	       -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GenomicAlignBlock::UpdateMaxAlignmentLength',
 	        -parameters => {
-			       'quick' => $self->o('quick'),
+#			       'quick' => $self->o('quick'),
 			       'method_link_species_set_id' => $self->o('low_epo_mlss_id'),
 			      },
 	       -flow_into => {

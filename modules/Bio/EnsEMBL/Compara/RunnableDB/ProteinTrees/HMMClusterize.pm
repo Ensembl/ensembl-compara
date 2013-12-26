@@ -1,6 +1,21 @@
-#
-# You may distribute this module under the same terms as perl itself
-#
+=head1 LICENSE
+
+Copyright [1999-2013] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+     http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+
+=cut
+
 # POD documentation - main docs before the code
 
 =pod 
@@ -58,7 +73,7 @@ sub param_defaults {
 sub fetch_input {
     my $self = shift @_;
 
-    $self->throw('cluster_dir is an obligatory parameter') unless (defined $self->param('cluster_dir'));
+    $self->param_required('cluster_dir');
 }
 
 
@@ -102,11 +117,10 @@ sub load_hmmer_classifications {
         if (scalar keys %{$allclusters{$model_name}{members}} == 1) {
             delete $allclusters{$model_name};
         } else {
-            # If it is not a singleton, we add the name of the model to store in the db
             print STDERR Dumper $allclusters{$model_name};
-            my @members = keys %{$allclusters{$model_name}{members}};
-            delete $allclusters{$model_name}{members};
-            @{$allclusters{$model_name}{members}} = @members;
+            # We have to transform the hash into an array-ref
+            $allclusters{$model_name}{members} = [keys %{$allclusters{$model_name}{members}}];
+            # If it is not a singleton, we add the name of the model to store in the db
             $allclusters{$model_name}{model_name} = $model_name;
         }
     }

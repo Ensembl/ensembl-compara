@@ -1,6 +1,21 @@
-#
-# You may distribute this module under the same terms as perl itself
-#
+=head1 LICENSE
+
+Copyright [1999-2013] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+     http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+
+=cut
+
 # POD documentation - main docs before the code
 
 =pod 
@@ -21,15 +36,6 @@ my $repmask = Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::Homology_dNdS->ne
 $repmask->fetch_input(); #reads from DB
 $repmask->run();
 $repmask->write_output(); #writes to DB
-
-=cut
-
-=head1 DESCRIPTION
-
-This object wraps Bio::EnsEMBL::Analysis::Runnable::Blast to add
-functionality to read and write to databases.
-The appropriate Bio::EnsEMBL::Analysis object must be passed for
-extraction of appropriate parameters. 
 
 =cut
 
@@ -59,7 +65,7 @@ use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 sub fetch_input {
     my $self = shift @_;
 
-    my $mlss_id = $self->param('mlss_id') or die "'mlss_id' is an obligatory parameter";
+    my $mlss_id = $self->param_required('mlss_id');
 
     if(my $codeml_parameters_file = $self->param('codeml_parameters_file')) {
         if(-r $codeml_parameters_file) {
@@ -75,7 +81,7 @@ sub fetch_input {
     my $max_homology_id = $self->param('max_homology_id');
 
     my $homology_adaptor  = $self->compara_dba->get_HomologyAdaptor;
-    my $constraint = sprintf('method_link_species_set_id = %d AND homology_id BETWEEN %d AND %d AND description NOT IN ("putative_gene_split", "contiguous_gene_split")', $mlss_id, $min_homology_id, $max_homology_id);
+    my $constraint = sprintf('method_link_species_set_id = %d AND homology_id BETWEEN %d AND %d AND description != "gene_split"', $mlss_id, $min_homology_id, $max_homology_id);
     my $homologies = $homology_adaptor->generic_fetch($constraint);
 
     $self->param('homologies', $homologies);
@@ -86,24 +92,21 @@ sub run {
     my $self = shift @_;
 
     my $homologies        = $self->param('homologies');
-    my $codeml_parameters = $self->param('codeml_parameters') || die "'codeml_parameters' is an obligatory parameter";
+    my $codeml_parameters = $self->param_required('codeml_parameters');
 
     my @updated_homologies = ();
 
     foreach my $homology (@$homologies) {
 
-        next if ($homology->ds);
+        next if ($homology->s or $homology->n);
 
         # Compute ds
         eval { $self->calc_genetic_distance($homology, $codeml_parameters); };
         $self->warning($@) if $@;
-        push @updated_homologies, $homology;
+        push @updated_homologies, $homology if $homology->s or $homology->n;
 
         # To save memory
         $homology->clear;
-        for my $attr (qw(_members_by_source_genome_db _subtype _tree_node_id _members_by_genome_db _adaptor _method_link_species_set_id _description _this_one_first _ancestor_node_id _member_array _members_by_source _members_by_source_taxon)) {
-            delete $homology->{$attr};
-        }
     }
     $self->param('updated_homologies', \@updated_homologies);
     $self->param('homologies', []);
@@ -135,7 +138,7 @@ sub calc_genetic_distance {
   #print("use codeml to get genetic distance of homology\n");
   $homology->print_homology if ($self->debug);
   
-  my $aln = $homology->get_SimpleAlign(-cdna => 1);
+  my $aln = $homology->get_SimpleAlign(-seq_type => 'cds');
 
   $self->compara_dba->dbc->disconnect_when_inactive(1);
   
@@ -190,7 +193,7 @@ sub calc_genetic_distance {
   }
   my $MLmatrix = $result->get_MLmatrix();
 
-  if($MLmatrix->[0]->[1]->{'dS'} eq 'nan') {
+  if($MLmatrix->[0]->[1]->{'dS'} =~ /nan/i) {
       # Can happen for spectacularly bad matches, behave as per
       # Bio::Root::NotImplemented case above.
       warn "dS is NaN. Ignoring as this can be generated from bad alignments";

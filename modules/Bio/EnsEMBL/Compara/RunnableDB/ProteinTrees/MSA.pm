@@ -1,12 +1,21 @@
 =head1 LICENSE
 
-  Copyright (c) 1999-2013 The European Bioinformatics Institute and
-  Genome Research Limited.  All rights reserved.
+Copyright [1999-2013] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
-  This software is distributed under a modified Apache license.
-  For license details, please see
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
 
-   http://www.ensembl.org/info/about/code_licence.html
+     http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+
+=cut
+
 
 =head1 CONTACT
 
@@ -31,14 +40,6 @@ The parameter 'gene_tree_id' is obligatory.
 
 Ensembl Team. Individual contributions can be found in the CVS log.
 
-=head1 MAINTAINER
-
-$Author$
-
-=head VERSION
-
-$Revision$
-
 =head1 APPENDIX
 
 The rest of the documentation details each of the object methods.
@@ -49,11 +50,14 @@ Internal methods are usually preceded with an underscore (_)
 package Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::MSA;
 
 use strict;
+use warnings;
 
 use IO::File;
 use File::Basename;
 use File::Path;
 use Time::HiRes qw(time gettimeofday tv_interval);
+
+use Bio::EnsEMBL::Compara::Utils::Cigars;
 
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
@@ -69,7 +73,7 @@ sub param_defaults {
 
     Title   :   fetch_input
     Usage   :   $self->fetch_input
-    Function:   Fetches input data for mcoffee from the database
+    Function:   Fetches input data from the database
     Returns :   none
     Args    :   none
 
@@ -94,12 +98,10 @@ sub fetch_input {
   # No input specified.
   if (!defined($self->param('protein_tree'))) {
     $self->post_cleanup;
-    $self->throw("MCoffee job no input protein_tree");
+    $self->throw("no input protein_tree");
   }
 
   print "RETRY COUNT: ".$self->input_job->retry_count()."\n";
-
-  print "MCoffee alignment method: ".$self->param('method')."\n";
 
   #
   # A little logic, depending on the input params.
@@ -129,7 +131,7 @@ sub fetch_input {
   # Error writing input Fasta file.
   if (!$self->param('input_fasta')) {
     $self->post_cleanup;
-    $self->throw("MCoffee: error writing input Fasta");
+    $self->throw("error writing input Fasta");
   }
 
   return 1;
@@ -140,7 +142,7 @@ sub fetch_input {
 
     Title   :   run
     Usage   :   $self->run
-    Function:   runs MCOFFEE
+    Function:   runs the alignment
     Returns :   none
     Args    :   none
 
@@ -159,7 +161,7 @@ sub run {
 `
     Title   :   write_output
     Usage   :   $self->write_output
-    Function:   parse mcoffee output and update protein_tree_member tables
+    Function:   parse the alignment and update protein_tree_member tables
     Returns :   none
     Args    :   none
 
@@ -174,19 +176,19 @@ sub write_output {
         my $method = ref($self);
         $method =~ /::([^:]*)$/;
         $self->param('protein_tree')->aln_method($1);
-    }
-    my $aln_ok = $self->parse_and_store_alignment_into_proteintree;
 
-    unless ($aln_ok) {
-        # Probably an ongoing MEMLIMIT
-        # We have 10 seconds to dataflow and exit;
-        my $new_job = $self->dataflow_output_id($self->input_id, $self->param('escape_branch'));
-        if (scalar(@$new_job)) {
-            $self->input_job->incomplete(0);
-            $self->input_job->lethal_for_worker(1);
-            die 'Probably not enough memory. Switching to the _himem analysis.';
-        } else {
-            die 'Error in the alignment but cannot switch to an analysis with more memory.';
+        my $aln_ok = $self->parse_and_store_alignment_into_proteintree;
+        unless ($aln_ok) {
+            # Probably an ongoing MEMLIMIT
+            # We have 10 seconds to dataflow and exit;
+            my $new_job = $self->dataflow_output_id($self->input_id, $self->param('escape_branch'));
+            if (scalar(@$new_job)) {
+                $self->input_job->incomplete(0);
+                $self->input_job->lethal_for_worker(1);
+                die 'Probably not enough memory. Switching to the _himem analysis.';
+            } else {
+                die 'Error in the alignment but cannot switch to an analysis with more memory.';
+            }
         }
     }
 
@@ -270,56 +272,13 @@ sub dumpProteinTreeToWorkdir {
   return $fastafile if (-e $fastafile);
   print("fastafile = '$fastafile'\n") if ($self->debug);
 
-  open(OUTSEQ, ">$fastafile")
-    or $self->throw("Error opening $fastafile for write!");
+  my $num_pep = $tree->print_sequences_to_file(-file => $fastafile, -uniq_seq => 1, -id_type => 'SEQUENCE');
 
-  my $seq_id_hash = {};
-  my $residues = 0;
-  my $member_list = $tree->get_all_Members;
-
-#  $self->param('tag_gene_count', scalar(@{$member_list}) );
-  my $has_canonical_issues = 0;
-  foreach my $member (@{$member_list}) {
-
-    # Double-check we are only using canonical
-    my $gene_member; my $canonical_member = undef;
-    eval {
-      $gene_member = $member->gene_member; 
-      $canonical_member = $gene_member->get_canonical_SeqMember;
-    };
-    if($self->debug() and $@) { print "ERROR IN EVAL (node_id=".$member->node_id.") : $@"; }
-    unless (defined($canonical_member) && ($canonical_member->member_id eq $member->member_id) ) {
-      my $canonical_member2 = $gene_member->get_canonical_SeqMember;
-      my $clustered_stable_id = $member->stable_id;
-      my $canonical_stable_id = $canonical_member->stable_id;
-      $tree->store_tag('canon.'.$clustered_stable_id."_".$canonical_stable_id,1);
-      $has_canonical_issues++;
-    }
-
-      return undef unless ($member->isa("Bio::EnsEMBL::Compara::GeneTreeMember"));
-      next if($seq_id_hash->{$member->sequence_id});
-      $seq_id_hash->{$member->sequence_id} = 1;
-
-      my $seq = '';
-      $seq = $member->sequence;
-      $residues += $member->seq_length;
-      $seq =~ s/\*/X/g;
-      $member->sequence($seq);
-      $seq =~ s/(.{72})/$1\n/g;
-      chomp $seq;
-
-      print OUTSEQ ">". $member->sequence_id. "\n$seq\n";
-  }
-  close OUTSEQ;
-
-  $self->throw("Cluster has canonical transcript issues: [$has_canonical_issues]\n") if (0 < $has_canonical_issues);
-
-  if(scalar keys (%$seq_id_hash) <= 1) {
+  if ($num_pep <= 1) {
     $self->update_single_peptide_tree($tree);
     $self->param('single_peptide_tree', 1);
   }
 
-  $self->param('tag_residue_count', $residues);
   return $fastafile;
 }
 
@@ -371,7 +330,7 @@ sub parse_and_store_alignment_into_proteintree {
       }
     }
     # Call the method to do the actual conversion
-    $align_hash{$id} = $self->_to_cigar_line(uc($alignment_string));
+    $align_hash{$id} = Bio::EnsEMBL::Compara::Utils::Cigars::cigar_from_alignment_string(uc($alignment_string));
     $align_string{$id} = uc($alignment_string);
     #print "The cigar_line of $id is: ", $align_hash{$id}, "\n";
   }
@@ -404,26 +363,6 @@ sub parse_and_store_alignment_into_proteintree {
   return 1;
 }
 
-# Converts the given alignment string to a cigar_line format.
-sub _to_cigar_line {
-    my $self = shift;
-    my $alignment_string = shift;
-
-    $alignment_string =~ s/\-([A-Z])/\- $1/g;
-    $alignment_string =~ s/([A-Z])\-/$1 \-/g;
-    my @cigar_segments = split " ",$alignment_string;
-    my $cigar_line = "";
-    foreach my $segment (@cigar_segments) {
-      my $seglength = length($segment);
-      $seglength = "" if ($seglength == 1);
-      if ($segment =~ /^\-+$/) {
-        $cigar_line .= $seglength . "D";
-      } else {
-        $cigar_line .= $seglength . "M";
-      }
-    }
-    return $cigar_line;
-}
 
 sub _store_aln_tags {
     my $self = shift;

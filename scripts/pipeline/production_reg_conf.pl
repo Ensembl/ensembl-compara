@@ -1,3 +1,17 @@
+# Copyright [1999-2013] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+# 
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+# 
+#      http://www.apache.org/licenses/LICENSE-2.0
+# 
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
 
 # Release Coordinator, please update this file before starting every release
 # and check the changes back into CVS for everyone's benefit.
@@ -14,14 +28,14 @@ use Bio::EnsEMBL::DBSQL::DBAdaptor;
 use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
 
 
+# ------------------------- CORE DATABASES: --------------------------------------
+
 # The majority of core databases live on two staging servers:
+Bio::EnsEMBL::Registry->load_registry_from_url(
+  'mysql://ensro@ens-staging1/75');
 
 Bio::EnsEMBL::Registry->load_registry_from_url(
-  'mysql://ensro@ens-staging1/72');
-
-Bio::EnsEMBL::Registry->load_registry_from_url(
-  'mysql://ensro@ens-staging2/72');
-
+  'mysql://ensro@ens-staging2/75');
 
 # Extra core databases that live on genebuilders' servers:
 
@@ -35,9 +49,40 @@ Bio::EnsEMBL::Registry->load_registry_from_url(
 #);
 
 
-# Compara databases used during the release (master, previous and current compara dbs)
+# ------------------------- COMPARA DATABASES: -----------------------------------
 
-# Master
+# Individual pipeline database for ProteinTrees:
+Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->new(
+    -host => 'compara1',
+    -user => 'ensadmin',
+    -pass => $ENV{'ENSADMIN_PSW'},
+    -port => 3306,
+    -species => 'compara_ptrees',
+    -dbname => 'mm14_protein_trees_75',
+);
+
+# Individual pipeline database for ncRNAtrees:
+Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->new(
+    -host => 'compara4',
+    -user => 'ensadmin',
+    -pass => $ENV{'ENSADMIN_PSW'},
+    -port => 3306,
+    -species => 'compara_nctrees',
+    -dbname => 'mp12_compara_nctrees_74sheep',
+);
+
+# Individual pipeline database for Families:
+Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->new(
+    -host => 'compara2',
+    -user => 'ensadmin',
+    -pass => $ENV{'ENSADMIN_PSW'},
+    -port => 3306,
+    -species => 'compara_families',
+    -dbname => 'lg4_compara_families_74_with_sheep',
+);
+
+
+# Compara Master database:
 Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->new(
     -host => 'compara1',
     -user => 'ensadmin',
@@ -47,42 +92,45 @@ Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->new(
     -dbname => 'sf5_ensembl_compara_master',
 );
 
-# Prev release
+# previous release database on one of Compara servers:
 Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->new(
-    -host => 'compara3',
+    -host => 'compara2',
     -user => 'ensadmin',
     -pass => $ENV{'ENSADMIN_PSW'},
     -port => 3306,
     -species => 'compara_prev',
-    -dbname => 'kb3_ensembl_compara_71',
+    -dbname => 'lg4_ensembl_compara_73',
 );
 
-# Curr
+# current release database on one of Compara servers:
 Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->new(
     -host => 'compara3',
     -user => 'ensadmin',
     -pass => $ENV{'ENSADMIN_PSW'},
     -port => 3306,
     -species => 'compara_curr',
-    -dbname => 'kb3_ensembl_compara_72',
+    -dbname => 'mp12_ensembl_compara_74',
 );
 
-Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->new( ## TO BE FIXED BEFORE HOMOLOGY MERGE
-    -host => 'compara1',
+# ensembl production:
+Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->new(
+    -host => 'ens-staging',
     -user => 'ensadmin',
     -pass => $ENV{'ENSADMIN_PSW'},
     -port => 3306,
-    -species => 'compara_homology_merged',
-    -dbname => 'kb3_compara_homology_merged_72',
+    -species => 'ensembl_production',
+    -dbname => 'ensembl_production',
 );
 
+# final compara on staging:
 Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->new( ## HAS TO BE CREATED (FINAL DB)
     -host => 'ens-staging',
     -user => 'ensadmin',
     -pass => $ENV{'ENSADMIN_PSW'},
     -port => 3306,
     -species => 'compara_staging',
-    -dbname => 'ensembl_compara_72',
+    -dbname => 'ensembl_compara_74',
 );
+
 
 1;

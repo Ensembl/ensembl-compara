@@ -1,12 +1,21 @@
 =head1 LICENSE
 
-  Copyright (c) 1999-2013 The European Bioinformatics Institute and
-  Genome Research Limited.  All rights reserved.
+Copyright [1999-2013] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
-  This software is distributed under a modified Apache license.
-  For license details, please see
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
 
-    http://www.ensembl.org/info/about/code_licence.html
+     http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+
+=cut
+
 
 =head1 CONTACT
 
@@ -129,6 +138,8 @@ sub run
       -multi_fasta_file => $self->param('multi_fasta_file'),
       -tree_string => $self->tree_string,
       -taxon_species_tree => $self->get_taxon_tree,
+      -semphy_exe => $self->param('semphy_exe'),
+      -treebest_exe => $self->param('treebest_exe'),
       );
   $self->param('runnable', $runnable);
 
@@ -1030,7 +1041,10 @@ sub get_taxon_tree {
       my $mlss = $self->compara_dba->get_MethodLinkSpeciesSetAdaptor->fetch_by_dbID($self->param('mlss_id'));
       die "Could not fetch MethodLinkSpeciesSet with the dbID '" . $self->param('mlss_id') . "'" unless defined $mlss;
       
-      $newick_taxon_tree = $mlss->get_value_for_tag('taxon_tree');
+      my $species_tree_adaptor = $self->compara_dba->get_SpeciesTreeAdaptor;
+      my $species_tree = $species_tree_adaptor->fetch_by_method_link_species_set_id_label($self->param('mlss_id'));
+      $newick_taxon_tree = $species_tree->root->newick_format("njtree");
+      #$newick_taxon_tree = $mlss->get_value_for_tag('taxon_tree');
   }
 
   if (!defined($newick_taxon_tree)) {
@@ -1058,7 +1072,6 @@ sub _load_GenomicAligns {
 
   my $gaba = $self->compara_dba->get_GenomicAlignBlockAdaptor;
   my $gab = $gaba->fetch_by_dbID($genomic_align_block_id);
-
   foreach my $ga (@{$gab->get_all_GenomicAligns}) {  
       #check that the genomic_align sequence is not just N's. This causes 
       #complications with treeBest and we end up with very long branch lengths

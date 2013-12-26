@@ -1,12 +1,21 @@
 =head1 LICENSE
 
-  Copyright (c) 1999-2013 The European Bioinformatics Institute and
-  Genome Research Limited.  All rights reserved.
+Copyright [1999-2013] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
-  This software is distributed under a modified Apache license.
-  For license details, please see
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
 
-    http://www.ensembl.org/info/about/code_licence.html
+     http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+
+=cut
+
 
 =head1 CONTACT
 
@@ -60,9 +69,7 @@ use base ('Bio::EnsEMBL::Compara::RunnableDB::RunCommand', 'Bio::EnsEMBL::Compar
 sub fetch_input {
     my $self = shift @_;
 
-    $self->input_job->transient_error(0);
-    my $nc_tree_id = $self->param('gene_tree_id') or $self->throw("A 'gene_tree_id' is mandatory");  # Better to have a nc_tree instead?
-    $self->input_job->transient_error(1);
+    my $nc_tree_id = $self->param_required('gene_tree_id');
 
     my $nc_tree = $self->compara_dba->get_GeneTreeAdaptor->fetch_by_dbID($nc_tree_id) or die "Could not fetch nc_tree with id=$nc_tree_id\n";
     $self->param('gene_tree',$nc_tree);
@@ -89,18 +96,17 @@ sub run {
 
     my ($self) = @_;
 
-    my $model = $self->param('model') or die "A model is mandatory";
+    my $model = $self->param_required('model');
     my $nc_tree = $self->param('gene_tree');
     my $aln_file = $self->param('input_aln');
-    my $struct_file = $self->param('struct_aln') or die "An struct_aln is mandatory";
-    my $bootstrap_num = $self->param('bootstrap_num') or die "A boostrap_num is mandatory";
+    my $struct_file = $self->param_required('struct_aln');
+    my $bootstrap_num = $self->param_required('bootstrap_num');
     my $root_id = $nc_tree->root_id;
 
     my $raxml_tag = $root_id . "." . $self->worker->process_id . ".raxml";
     $self->param('raxml_tag', $raxml_tag);
 
-    my $raxml_exe = $self->param('raxml_exe')
-        or die "'raxml_exe' is an obligatory parameter";
+    my $raxml_exe = $self->param_required('raxml_exe');
 
     die "Cannot execute '$raxml_exe'" unless(-x $raxml_exe);
 
@@ -120,13 +126,15 @@ sub run {
     # /software/ensembl/compara/raxml/RAxML-7.2.2/raxmlHPC-SSE3
     # -m GTRGAMMA -s nctree_20327.aln -S nctree_20327.struct -A S7D -n nctree_20327.raxml
     my $worker_temp_directory = $self->worker_temp_directory;
+    my $cores = $self->param('raxml_number_of_cores');
     my $cmd = $raxml_exe;
-    $cmd .= " -T 2";
+    $cmd .= " -T $cores";
     $cmd .= " -m GTRGAMMA";
     $cmd .= " -s $aln_file";
     $cmd .= " -S $struct_file";
     $cmd .= " -A $model";
     $cmd .= " -n $raxml_tag.$model";
+    $cmd .= " -p12345";
     $cmd .= " -N ".$bootstrap_num if (defined $bootstrap_num);
 
     my $command = $self->run_command("cd $worker_temp_directory; $cmd");
@@ -226,15 +234,11 @@ sub _dumpMultipleAlignmentStructToWorkdir {
     open(OUTSEQ, ">$aln_file")
         or $self->throw("Error opening $aln_file for write");
 
-  # Using append_taxon_id will give nice seqnames_taxonids needed for
-  # njtree species_tree matching
-    my %sa_params = ($self->param('use_genomedb_id')) ?	('-APPEND_GENOMEDB_ID', 1) : ('-APPEND_TAXON_ID', 1);
-
+    $self->prepareTemporaryMemberNames($tree);
     my $sa = $tree->get_SimpleAlign
         (
-         -id_type => 'MEMBER',
+         -id_type => 'TMP',
          -keep_gaps => 1,
-         %sa_params,
         );
     $sa->set_displayname_flat(1);
 

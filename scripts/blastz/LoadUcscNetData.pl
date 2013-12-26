@@ -1,4 +1,18 @@
 #!/usr/local/ensembl/bin/perl -w
+# Copyright [1999-2013] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+# 
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+# 
+#      http://www.apache.org/licenses/LICENSE-2.0
+# 
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
 
 my $description = q{
 ###########################################################################
@@ -8,9 +22,6 @@ my $description = q{
 ## AUTHORS
 ##    Abel Ureta-Vidal (abel@ebi.ac.uk)
 ##    Javier Herrero (jherrero@ebi.ac.uk)
-##
-## COPYRIGHT
-##    This script is part of the Ensembl project http://www.ensembl.org
 ##
 ## DESCRIPTION
 ##    This script read BLASTz alignments from a UCSC database and store
@@ -29,9 +40,6 @@ LoadUcscNetData.pl
  Abel Ureta-Vidal (abel@ebi.ac.uk)
  Javier Herrero (jherrero@ebi.ac.uk)
 
-=head1 COPYRIGHT
-
-This script is part of the Ensembl project http://www.ensembl.org
 
 =head1 DESCRIPTION
 
@@ -884,7 +892,7 @@ sub get_binomial_name {
   if (!defined($meta_container_adaptor)) {
     die("Cannot get the MetaContainerAdaptor for species <$species>\n");
   }
-  $binomial_name = $meta_container_adaptor->get_Species->binomial;
+  $binomial_name = $meta_container_adaptor->get_scientific_name;
   if (!$binomial_name) {
     die("Cannot get the binomial name for species <$species>\n");
   }

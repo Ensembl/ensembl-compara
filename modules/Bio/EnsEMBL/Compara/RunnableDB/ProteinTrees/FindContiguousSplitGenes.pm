@@ -1,12 +1,21 @@
 =head1 LICENSE
 
-  Copyright (c) 1999-2013 The European Bioinformatics Institute and
-  Genome Research Limited.  All rights reserved.
+Copyright [1999-2013] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
-  This software is distributed under a modified Apache license.
-  For license details, please see
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
 
-   http://www.ensembl.org/info/about/code_licence.html
+     http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+
+=cut
+
 
 =head1 CONTACT
 
@@ -38,14 +47,6 @@ standaloneJob.pl Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::FindContiguous
 =head1 AUTHORSHIP
 
 Ensembl Team. Individual contributions can be found in the CVS log.
-
-=head1 MAINTAINER
-
-$Author$
-
-=head VERSION
-
-$Revision$
 
 =head1 APPENDIX
 
@@ -79,7 +80,7 @@ sub param_defaults {
 sub fetch_input {
     my $self = shift @_;
 
-    my $gene_tree_id = $self->param('gene_tree_id') or die "'gene_tree_id' is an obligatory parameter";
+    my $gene_tree_id = $self->param_required('gene_tree_id');
     my $protein_tree = $self->compara_dba->get_GeneTreeAdaptor->fetch_by_dbID($gene_tree_id) or die "Could not fetch protein_tree with gene_tree_id='$gene_tree_id'";
     $protein_tree->print_tree(0.0001) if($self->debug);
     $protein_tree->preload();
@@ -127,7 +128,7 @@ sub check_for_split_genes {
     my $tmp_time = time();
 
     my @all_protein_leaves = @{$protein_tree->get_all_Members};
-    my @good_leaves = grep {defined $_->chr_start and defined $_->chr_end and defined $_->chr_name and defined $_->chr_strand and defined $_->taxon_id} @all_protein_leaves;
+    my @good_leaves = grep {defined $_->dnafrag_start and defined $_->dnafrag_end and defined $_->chr_name and defined $_->dnafrag_strand and defined $_->taxon_id} @all_protein_leaves;
 
     if($self->debug) {
         printf("%1.3f secs to fetch all %d/%dleaves\n", time()-$tmp_time, scalar(@all_protein_leaves), scalar(@good_leaves));
@@ -151,40 +152,44 @@ sub check_for_split_genes {
     my @sorted_genepairlinks = sort { 
         $a->[0]->chr_name <=> $b->[0]->chr_name 
             || $a->[1]->chr_name <=> $b->[1]->chr_name 
-            || abs($a->[0]->chr_start - $a->[1]->chr_start) <=> abs($b->[0]->chr_start - $b->[1]->chr_start) } @genepairlinks;
+            || abs($a->[0]->dnafrag_start - $a->[1]->dnafrag_start) <=> abs($b->[0]->dnafrag_start - $b->[1]->dnafrag_start) } @genepairlinks;
 
     foreach my $genepairlink (@sorted_genepairlinks) {
         my ($protein1, $protein2) = @$genepairlink;
 
         # Compute the sequence overlap
-        my $aln = 0;
-        my $len1 = 0;
-        my @aln1 = split(//, $protein1->alignment_string);
-        my $len2 = 0;
-        my @aln2 = split(//, $protein2->alignment_string);
+        #my $aln = 0;
+        #my $len1 = 0;
+        #my @aln1 = split(//, $protein1->alignment_string);
+        #my $len2 = 0;
+        #my @aln2 = split(//, $protein2->alignment_string);
 
-        for (my $i=0; $i <= $#aln1; $i++) {
-            $len1++ if ($aln1[$i] ne '-');
-            $len2++ if ($aln2[$i] ne '-');
-            $aln++ if ($aln1[$i] ne '-' && $aln2[$i] ne '-');
-        }
+        #for (my $i=0; $i <= $#aln1; $i++) {
+        #    $len1++ if ($aln1[$i] ne '-');
+        #    $len2++ if ($aln2[$i] ne '-');
+        #    $aln++ if ($aln1[$i] ne '-' && $aln2[$i] ne '-');
+        #}
  
+        #printf("Pair: %s-%s: %d out of %d-%d\n", $protein1->stable_id, $protein2->stable_id, $aln, $len1, $len2) if ($self->debug);
         my $pair = new Bio::EnsEMBL::Compara::AlignedMemberSet;
-        $pair->add_Member($protein1);
-        $pair->add_Member($protein2);
+        my $protein1_copy = $protein1->Bio::EnsEMBL::Compara::AlignedMember::copy;
+        my $protein2_copy = $protein2->Bio::EnsEMBL::Compara::AlignedMember::copy;
+        $pair->add_Member($protein1_copy);
+        $pair->add_Member($protein2_copy);
         $pair->update_alignment_stats;
         print "Pair: ", $protein1->stable_id, " - ", $protein2->stable_id, "\n" if ($self->debug);
 
         my $gene_member1 = $protein1->gene_member; my $gene_member2 = $protein2->gene_member;
-        my $start1 = $gene_member1->chr_start; my $start2 = $gene_member2->chr_start; my $starttemp;
-        my $end1 = $gene_member1->chr_end; my $end2 = $gene_member2->chr_end; my $endtemp;
-        my $strand1 = $gene_member1->chr_strand; my $strand2 = $gene_member2->chr_strand;
+        my $start1 = $gene_member1->dnafrag_start; my $start2 = $gene_member2->dnafrag_start; my $starttemp;
+        my $end1 = $gene_member1->dnafrag_end; my $end2 = $gene_member2->dnafrag_end; my $endtemp;
+        my $strand1 = $gene_member1->dnafrag_strand; my $strand2 = $gene_member2->dnafrag_strand;
         my $taxon_id1 = $gene_member1->taxon_id; my $taxon_id2 = $gene_member2->taxon_id;
         my $name1 = $gene_member1->chr_name; my $name2 = $gene_member2->chr_name;
 
+        printf("%%Id: %d/%d, %%Pos: %d/%d\n", $protein1_copy->perc_id, $protein2_copy->perc_id, $protein1_copy->perc_pos, $protein2_copy->perc_pos);
         # Checking for gene_split cases
         #if ($aln == 0)
-        if (0 == $protein1->perc_id && 0 == $protein2->perc_id && 0 == $protein1->perc_pos && 0 == $protein2->perc_pos) {
+        if (0 == $protein1_copy->perc_id && 0 == $protein2_copy->perc_id && 0 == $protein1_copy->perc_pos && 0 == $protein2_copy->perc_pos) {
 
             # Condition A1: If same seq region and less than 1MB distance
             if ($name1 eq $name2 && ($self->param('max_dist_no_overlap') > abs($start1 - $start2)) && $strand1 eq $strand2 ) {
@@ -201,7 +206,7 @@ sub check_for_split_genes {
 
                 if ((2+$self->param('max_nb_genes_no_overlap')) < scalar @genes_in_range) {
                     foreach my $gene (@genes_in_range) {
-                        print STDERR "Too many genes in range: ($start1,$end1,$strand1): ", $gene->stable_id,",", $gene->chr_start,",", $gene->chr_end,"\n" if $self->debug;
+                        print STDERR "Too many genes in range: ($start1,$end1,$strand1): ", $gene->stable_id,",", $gene->dnafrag_start,",", $gene->dnafrag_end,"\n" if $self->debug;
                     }
                     next;
                 }
@@ -222,8 +227,8 @@ sub check_for_split_genes {
         # Condition B1: all 4 percents below 10
         #} elsif (100*$aln < $len1*$self->param('small_overlap_percentage')
         #        && 100*$aln < $len2*$self->param('small_overlap_percentage')) {
-        } elsif ($protein1->perc_id < $self->param('small_overlap_percentage') && $protein2->perc_id < $self->param('small_overlap_percentage')
-              && $protein1->perc_pos < $self->param('small_overlap_percentage') && $protein2->perc_pos < $self->param('small_overlap_percentage')) {
+        } elsif ($protein1_copy->perc_id < $self->param('small_overlap_percentage') && $protein2_copy->perc_id < $self->param('small_overlap_percentage')
+              && $protein1_copy->perc_pos < $self->param('small_overlap_percentage') && $protein2_copy->perc_pos < $self->param('small_overlap_percentage')) {
 
             # Condition B2: If non-overlapping and smaller than 500kb start and 500kb end distance
             if ($name1 eq $name2 
@@ -239,7 +244,7 @@ sub check_for_split_genes {
                 my @genes_in_range = @{$self->param('gene_member_adaptor')->_fetch_all_by_source_taxon_chr_name_start_end_strand_limit('ENSEMBLGENE',$taxon_id1,$name1,$start1,$end1,$strand1,4)};
                 if ((2+$self->param('max_nb_genes_small_overlap')) < scalar @genes_in_range) {
                     foreach my $gene (@genes_in_range) {
-                        print STDERR "Too many genes in range: ($start1,$end1,$strand1): ", $gene->stable_id,",", $gene->chr_start,",", $gene->chr_end,"\n" if $self->debug;
+                        print STDERR "Too many genes in range: ($start1,$end1,$strand1): ", $gene->stable_id,",", $gene->dnafrag_start,",", $gene->dnafrag_end,"\n" if $self->debug;
                     }
                     next;
                 }

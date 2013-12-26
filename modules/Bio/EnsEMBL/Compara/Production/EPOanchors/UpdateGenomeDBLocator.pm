@@ -1,6 +1,21 @@
-#ensembl module for bio::ensembl::compara::production::epoanchors::updategenomedblocator
-# you may distribute this module under the same terms as perl itself
-#
+=head1 LICENSE
+
+Copyright [1999-2013] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+     http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+
+=cut
+
 # POD documentation - main docs before the code
 =head1 NAME
 
@@ -57,7 +72,8 @@ sub fetch_input {
   my $species_dba = Bio::EnsEMBL::DBSQL::DBAdaptor->new( %{ $self->param('ancestral_db') } );
   throw('no ancestral_db found') unless $species_dba;
   Bio::EnsEMBL::Registry->add_DBAdaptor( "$species_name", "core", $species_dba);
- } elsif(my $species_url = $self->param('additional_core_db_urls')->{"$species_name"}) {
+ } elsif(exists($self->param('additional_core_db_urls')->{"$species_name"})){
+   my $species_url = $self->param('additional_core_db_urls')->{"$species_name"};
    $species_url .= "?group=core&species=$species_name";
    if(Bio::EnsEMBL::Registry->get_alias("$species_name")){ # need to remove if species already added from main_core_dbs 
     Bio::EnsEMBL::Registry->remove_DBAdaptor("$species_name", "core");

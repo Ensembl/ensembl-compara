@@ -7,15 +7,14 @@ Compara.{release}.ncrna.allhomologies.orthoxml.xml.gz
   Contains all the orthologies in a single OrthoXML file. Each orthology is
   stored as an orthologGroup containing two genes.
 
+Compara.{release}.ncrna.allhomologies_strict.orthoxml.xml.gz
+  Contains all the "strict" orthologies in a single OrthoXML file. Each
+  orthology is stored as an orthologGroup containing two genes.
+  In this file, all the homologies are fully compliant with the species tree
+
 Compara.{release}.ncrna.alltrees.orthoxml.xml.gz
   Contains all the trees in a single OrthoXML file. All the trees are
   attached to the root 'groups' tag.
-
-Compara.{release}.ncrna.alltrees_possorthol.orthoxml.xml.gz
-  Also contains all the trees in a single OrthoXML file, but the duplication
-  nodes with a confidence score lower than 0.25 are considered as speciations.
-  This makes the gene tree inconsistent with the species tree, but the derived
-  orthologies include the 'possible_orthologs'.
 
 
 The following three files are tar archives containing one file per tree.
@@ -24,10 +23,6 @@ CAUTION: Be aware that untaring any of these files will create in your current
 
 Compara.{release}.ncrna.tree.orthoxml.tar.gz
   Each file will contain one tree, in OrthoXML format.
-
-Compara.{release}.ncrna.tree_possorthol.orthoxml.tar.gz
-  Each file will contain one tree, in OrthoXML format. Here again, duplication
-  nodes with a low confidence score are edited.
 
 Compara.{release}.ncrna.tree.phyloxml.tar.gz
   Each file will contain one tree, in PhyloXML format.

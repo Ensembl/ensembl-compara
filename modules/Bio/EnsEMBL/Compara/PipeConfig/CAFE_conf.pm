@@ -1,3 +1,21 @@
+=head1 LICENSE
+
+Copyright [1999-2013] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+     http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+
+=cut
+
 =pod 
 
 =head1 NAME
@@ -52,6 +70,13 @@ init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::CAFE_conf -password <your_pa
   proteinTrees pipeline:
   init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::CAFE_conf -mlss_id 40090 -work_dir /lustre/scratch110/ensembl/mp12/protein_trees_71_CAFE -analysis_topup -wait_for backbone_fire_dnds -per_family_table 1 -type prot -pipeline_name mp12_compara_homology_72 -host compara3 -cafe_species []
 
+  Release 74:
+  ncRNAtrees_pipeline:
+  init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::CAFE_conf -mlss_id 40094 -work_dir /lustre/scratch109/ensembl/mp12/nc_trees_74 -analysis_topup -wait_for backbone_fire_db_prepare -per_family_table 0 -type nc -pipeline_name mp12_compara_nctrees_74clean2 -host compara2 -cafe_species "['danio.rerio', 'taeniopygia.guttata', 'callithrix.jacchus', 'pan.troglodytes', 'homo.sapiens', 'mus.musculus']"
+
+  proteinTrees pipeline:
+  init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::CAFE_conf -mlss_id 40093 -work_dir /lustre/scratch110/ensembl/mp12/protein_trees_74_CAFE -analysis_topup -wait_for backbone_fire_dnds -per_family_table 1 -type prot -pipeline_name mm14_protein_trees_74_with_sheep -host compara1 -cafe_species []
+
 =head1 CONTACT
 
   Please contact ehive-users@ebi.ac.uk mailing list with questions/suggestions.
@@ -72,13 +97,14 @@ sub default_options {
             # You need to specify -pipeline_name, -host, -work_dir and -password on command line (if they are not already set as an environmental variable)
 
             # Data needed for CAFE
-            'species_tree_meta_key' => 'full_species_tree_string',
-            'cafe_lambdas'          => '',  # For now, we don't supply lambdas
-            'cafe_struct_tree_str'  => '',  # Not set by default
-            'cafe_shell'            => '/software/ensembl/compara/cafe/cafe.2.2/cafe/bin/shell',
-#            'badiRate_exe'          => '/software/ensembl/compara/badirate-1.35/BadiRate.pl',
+            'cafe_lambdas'             => '',  # For now, we don't supply lambdas
+            'cafe_struct_tree_str'     => '',  # Not set by default
+            'cafe_shell'               => '/software/ensembl/compara/cafe/cafe.2.2/cafe/bin/shell',
+            'full_species_tree_label'  => 'full_species_tree',
+#            'badiRate_exe'            => '/software/ensembl/compara/badirate-1.35/BadiRate.pl',
 
             'pipeline_db'   => {
+                                -driver => 'mysql',
                                 -host   => $self->o('host'),
                                 -port   => 3306,
                                 -user   => 'ensadmin',
@@ -103,8 +129,8 @@ sub pipeline_create_commands {
 sub resource_classes {
     my ($self) = @_;
     return {
-            'cafe_default' => { 'LSF' => '-C0 -M1000000 -R"select[mem>1000] rusage[mem=1000]"' },
-            'cafe' => { 'LSF' => '-S 1024 -C0 -M1000000 -R"select[mem>1000] rusage[mem=1000]"' },
+            'cafe_default' => { 'LSF' => '-C0 -M1000 -R"select[mem>1000] rusage[mem=1000]"' },
+            'cafe' => { 'LSF' => '-S 1024 -C0 -M1000 -R"select[mem>1000] rusage[mem=1000]"' },
            };
 }
 
@@ -116,13 +142,13 @@ sub pipeline_analyses {
              -module => 'Bio::EnsEMBL::Compara::RunnableDB::MakeSpeciesTree',
              -input_ids => [{}],
              -parameters => {
-#                             'species_tree_input_file' => $self->o('species_tree_input_file'),   # empty by default, but if nonempty this file will be used instead of tree generation from genome_db
-#                             'species_tree_string' => '',
+                             'mlss_id'  => $self->o('mlss_id'),
+                             'label'    => $self->o('full_species_tree_label'),
                             },
              -hive_capacity => -1,   # to allow for parallelization
              -wait_for => [$self->o('wait_for')],
              -flow_into  => {
-                             3 => { 'mysql:////meta' => { 'meta_key' => $self->o('species_tree_meta_key'), 'meta_value' => '#species_tree_string#' } },
+                             # 3 => { 'mysql:////meta' => { 'meta_key' => $self->o('species_tree_meta_key'), 'meta_value' => '#species_tree_string#' } },
                              1 => ['CAFE_species_tree'],
                             },
             },
@@ -132,8 +158,8 @@ sub pipeline_analyses {
              -module => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::CAFESpeciesTree',
              -parameters => {
                              'cafe_species' => $self->o('cafe_species'),
-                             'species_tree_meta_key' => $self->o('species_tree_meta_key'),
-                             'mlss_id' => $self->o('mlss_id'),
+                             'mlss_id'      => $self->o('mlss_id'),
+                             'label'        => $self->o('full_species_tree_label')
                             },
              -hive_capacity => -1, # to allow for parallelization
              -flow_into => {

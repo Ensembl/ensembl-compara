@@ -1,12 +1,21 @@
 =head1 LICENSE
 
-  Copyright (c) 1999-2013 The European Bioinformatics Institute and
-  Genome Research Limited.  All rights reserved.
+Copyright [1999-2013] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
-  This software is distributed under a modified Apache license.
-  For license details, please see
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
 
-   http://www.ensembl.org/info/about/code_licence.html
+     http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+
+=cut
+
 
 =head1 CONTACT
 
@@ -28,14 +37,6 @@
 
 Ensembl Team. Individual contributions can be found in the CVS log.
 
-=head1 MAINTAINER
-
-$Author$
-
-=head VERSION
-
-$Revision$
-
 =head1 APPENDIX
 
 The rest of the documentation details each of the object methods.
@@ -47,6 +48,8 @@ package Bio::EnsEMBL::Compara::PipeConfig::Example::EnsemblProteinTrees_conf;
 
 use strict;
 use warnings;
+
+
 use base ('Bio::EnsEMBL::Compara::PipeConfig::ProteinTrees_conf');
 
 
@@ -57,19 +60,19 @@ sub default_options {
         %{$self->SUPER::default_options},   # inherit the generic ones
 
     # parameters that are likely to change from execution to another:
-#       'mlss_id'               => 40077,   # it is very important to check that this value is current (commented out to make it obligatory to specify)
-        'release'               => '71',
-        'rel_suffix'            => 'b',    # an empty string by default, a letter otherwise
-        'work_dir'              => '/lustre/scratch109/ensembl/'.$self->o('ENV', 'USER').'/protein_trees_'.$self->o('rel_with_suffix'),
+        'rel_with_suffix'       => $self->o('ensembl_release'), # You can add a letter to distinguish this run from other runs on the same release
+
+    # custom pipeline name, in case you don't like the default one
+        'pipeline_name'         => 'protein_trees_'.$self->o('rel_with_suffix'),   # name the pipeline to differentiate the submitted processes
+        'division'              => 'ensembl',       # Tag attached to every single tree
 
     # dependent parameters: updating 'work_dir' should be enough
-        'rel_with_suffix'       => $self->o('release').$self->o('rel_suffix'),
-        'pipeline_name'         => 'PT_'.$self->o('rel_with_suffix'),   # name the pipeline to differentiate the submitted processes
+        'work_dir'              => '/lustre/scratch109/ensembl/'.$self->o('ENV', 'USER').'/protein_trees_'.$self->o('rel_with_suffix'),
 
     # blast parameters:
 
     # clustering parameters:
-        'outgroups'                     => [127],   # affects 'hcluster_dump_input_per_genome'
+        'outgroups'             => { 'saccharomyces_cerevisiae' => 2 },   # affects 'hcluster_dump_input_per_genome'
 
     # tree building parameters:
 
@@ -79,29 +82,25 @@ sub default_options {
 
     # mapping parameters:
         'do_treefam_xref'           => 1,
-        'wait_for_display_label_update' => 1,
+        'tf_release'                => '9_69',
 
     # executable locations:
-        'wublastp_exe'              => '/usr/local/ensembl/bin/wublastp',
         'hcluster_exe'              => '/software/ensembl/compara/hcluster/hcluster_sg',
         'mcoffee_home'              => '/software/ensembl/compara/tcoffee/Version_9.03.r1318/',
-        'mafft_home'                => '/software/ensembl/compara/mafft-7.017/',
-        'sreformat_exe'             => '/usr/local/ensembl/bin/sreformat',
+        'mafft_home'                => '/software/ensembl/compara/mafft-7.113/',
         'treebest_exe'              => '/software/ensembl/compara/treebest.doubletracking',
         'quicktree_exe'             => '/software/ensembl/compara/quicktree_1.1/bin/quicktree',
-        'buildhmm_exe'              => '/software/ensembl/compara/hmmer3/hmmer-3.0/src/hmmbuild',
-        'codeml_exe'                => '/usr/local/ensembl/bin/codeml',
+        'buildhmm_exe'              => '/software/ensembl/compara/hmmer-3.1b1/binaries/hmmbuild',
+        'codeml_exe'                => '/software/ensembl/compara/paml43/bin/codeml',
         'ktreedist_exe'             => '/software/ensembl/compara/ktreedist/Ktreedist.pl',
+        'blast_bin_dir'             => '/software/ensembl/compara/ncbi-blast-2.2.28+/bin',
 
-    # HMM specific parameters
+    # HMM specific parameters (set to 0 or undef if not in use)
         'hmm_clustering'            => 0, ## by default run blastp clustering
-        'cm_file_or_directory'      => '/lustre/scratch109/sanger/fs9/treefam8_hmms',
-        'hmm_library_basedir'       => '/lustre/scratch109/sanger/fs9/treefam8_hmms',
-        #'cm_file_or_directory'      => '/lustre/scratch110/ensembl/mp12/panther_hmms/PANTHER7.2_ascii', ## Panther DB
-        #'hmm_library_basedir'       => '/lustre/scratch110/ensembl/mp12/Panther_hmms',
-        'blast_path'                => '/software/ensembl/compara/ncbi-blast-2.2.26+/bin/',
-        'pantherScore_path'         => '/software/ensembl/compara/pantherScore1.03',
-        'hmmer_path'                => '/software/ensembl/compara/hmmer-2.3.2/src/',
+        'cm_file_or_directory'      => undef,
+        'hmm_library_basedir'       => undef,
+        'pantherScore_path'         => undef,
+        'hmmer_path'                => undef,
 
     # hive_capacity values for some analyses:
         'reuse_capacity'            =>   4,
@@ -122,27 +121,18 @@ sub default_options {
         'hc_capacity'               =>   4,
         'HMMer_classify_capacity'   => 100,
 
+    # hive priority for non-LOCAL health_check analysis:
+
     # connection parameters to various databases:
 
         # Uncomment and update the database locations
 
         # the production database itself (will be created)
-        'pipeline_db' => {
-            -host   => 'compara1',
-            -port   => 3306,
-            -user   => 'ensadmin',
-            -pass   => $self->o('password'),
-            -dbname => $self->o('ENV', 'USER').'_compara_homology_'.$self->o('rel_with_suffix'),
-        },
+        # it inherits most of the properties from HiveGeneric, we usually only need to redefine the host, but you may want to also redefine 'port'
+        'host' => 'compara1',
 
-        # the master database for synchronization of various ids
-        'master_db' => {
-            -host   => 'compara1',
-            -port   => 3306,
-            -user   => 'ensro',
-            -pass   => '',
-            -dbname => 'sf5_ensembl_compara_master',
-        },
+        # the master database for synchronization of various ids (use undef if you don't have a master database)
+        'master_db' => 'mysql://ensro@compara1:3306/sf5_ensembl_compara_master',
 
         # Ensembl-specific databases
         'staging_loc1' => {                     # general location of half of the current release core databases
@@ -166,6 +156,7 @@ sub default_options {
             -pass   => '',
         },
 
+        # NOTE: The databases referenced in the following arrays have to be hashes (not URLs)
         # Add the database entries for the current core databases and link 'curr_core_sources_locs' to them
         'curr_core_sources_locs'    => [ $self->o('staging_loc1'), $self->o('staging_loc2') ],
         #'curr_core_sources_locs'    => [ $self->o('livemirror_loc') ],
@@ -175,21 +166,16 @@ sub default_options {
         'prev_core_sources_locs'   => [ $self->o('livemirror_loc') ],
         #'prev_core_sources_locs'   => [ $self->o('staging_loc1'), $self->o('staging_loc2') ],
 
-        # Add the database location of the previous Compara release
-        'prev_rel_db' => {
-           -host   => 'compara3',
-           -port   => 3306,
-           -user   => 'ensro',
-           -pass   => '',
-           -dbname => 'sf5_ensembl_compara_70',
-        },
+        # Add the database location of the previous Compara release. Use "undef" if running the pipeline without reuse
+        'prev_rel_db' => 'mysql://ensro@compara3:3306/mp12_ensembl_compara_74'
 
-        # Are we reusing the blastp alignments ?
-        'reuse_from_prev_rel_db'    => 1,
+        # To run without a master database
+        #'master_db'                 => undef,
+        #'do_stable_id_mapping'      => 0,
+        #'mlss_id'                   => undef,
+        #'ncbi_db'                   => $self->o('livemirror_loc'),
 
-        'prev_release'              => 0,   # 0 is the default and it means "take current release number and subtract 1"
-        #'prev_release'            => $self->o('release'),
-
+        # Force a full re-run of blastp
 
     };
 }
@@ -200,16 +186,17 @@ sub resource_classes {
     return {
         %{$self->SUPER::resource_classes},  # inherit 'default' from the parent class
 
-         '250Mb_job'    => {'LSF' => '-C0 -M250000   -R"select[mem>250]   rusage[mem=250]"' },
-         '500Mb_job'    => {'LSF' => '-C0 -M500000   -R"select[mem>500]   rusage[mem=500]"' },
-         '1Gb_job'      => {'LSF' => '-C0 -M1000000  -R"select[mem>1000]  rusage[mem=1000]"' },
-         '2Gb_job'      => {'LSF' => '-C0 -M2000000  -R"select[mem>2000]  rusage[mem=2000]"' },
-         '8Gb_job'      => {'LSF' => '-C0 -M8000000  -R"select[mem>8000]  rusage[mem=8000]"' },
+         '250Mb_job'    => {'LSF' => '-C0 -M250   -R"select[mem>250]   rusage[mem=250]"' },
+         '500Mb_job'    => {'LSF' => '-C0 -M500   -R"select[mem>500]   rusage[mem=500]"' },
+         '1Gb_job'      => {'LSF' => '-C0 -M1000  -R"select[mem>1000]  rusage[mem=1000]"' },
+         '2Gb_job'      => {'LSF' => '-C0 -M2000  -R"select[mem>2000]  rusage[mem=2000]"' },
+         '4Gb_job'      => {'LSF' => '-C0 -M4000  -R"select[mem>4000]  rusage[mem=4000]"' },
+         '8Gb_job'      => {'LSF' => '-C0 -M8000  -R"select[mem>8000]  rusage[mem=8000]"' },
 
-         'msa'          => {'LSF' => '-C0 -M2000000  -R"select[mem>2000]  rusage[mem=2000]"' },
-         'msa_himem'    => {'LSF' => '-C0 -M8000000  -R"select[mem>8000]  rusage[mem=8000]"' },
+         'msa'          => {'LSF' => '-C0 -M2000  -R"select[mem>2000]  rusage[mem=2000]"' },
+         'msa_himem'    => {'LSF' => '-C0 -M8000  -R"select[mem>8000]  rusage[mem=8000]"' },
 
-         'urgent_hcluster'   => {'LSF' => '-C0 -M32000000 -R"select[mem>32000] rusage[mem=32000]" -q yesterday' },
+         'urgent_hcluster'   => {'LSF' => '-C0 -M32000 -R"select[mem>32000] rusage[mem=32000]" -q yesterday' },
     };
 }
 
