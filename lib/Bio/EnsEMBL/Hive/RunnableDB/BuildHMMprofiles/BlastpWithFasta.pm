@@ -2,16 +2,18 @@
 
 =head1 NAME
 
-Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::BlastpWithFasta
+Bio::EnsEMBL::Hive::RunnableDB::BuildHMMprofiles::BlastpWithFasta
+#Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::BlastpWithFasta
 
 =cut
 
 =head1 DESCRIPTION
 
-This module take in a sequence and perform blastp
+This module takes in a sequence and perform blastp
 
 =cut
-package Bio::EnsEMBL::BuildHMMprofiles::RunnableDB::BlastpWithFasta;
+
+package Bio::EnsEMBL::Hive::RunnableDB::BuildHMMprofiles::BlastpWithFasta;
 #package Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::BlastpWithFasta;
 
 use strict;

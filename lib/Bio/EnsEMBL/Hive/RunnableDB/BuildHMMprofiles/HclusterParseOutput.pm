@@ -18,7 +18,8 @@
 
 =head1 NAME
 
-Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::HclusterParseOutput
+Bio::EnsEMBL::Hive::RunnableDB::BuildHMMprofiles::HclusterParseOutput;
+#Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::HclusterParseOutput
 
 =head1 DESCRIPTION
 
@@ -43,11 +44,11 @@ Ensembl Team. Individual contributions can be found in the CVS log.
 
 =head1 MAINTAINER
 
-$Author$
+$Author: mm14 $
 
 =head VERSION
 
-$Revision$
+$Revision: 1.22 $
 
 =head1 APPENDIX
 
@@ -56,7 +57,7 @@ Internal methods are usually preceded with an underscore (_)
 
 =cut
 
-package Bio::EnsEMBL::BuildHMMprofiles::RunnableDB::HclusterParseOutput;
+package Bio::EnsEMBL::Hive::RunnableDB::BuildHMMprofiles::HclusterParseOutput;
 #package Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::HclusterParseOutput;
 
 use strict;
@@ -82,13 +83,6 @@ sub run {
 sub write_output {
     my $self = shift @_;
 
-#    $self->store_clusterset('default', $self->param('allclusters'));
-
-#    if (defined $self->param('additional_clustersets')) {
-#        foreach my $clusterset_id (@{$self->param('additional_clustersets')}) {
-#            $self->create_clusterset($clusterset_id);
-#        }
-#    }
 }
 
 
@@ -103,35 +97,25 @@ sub parse_hclusteroutput {
 
     my $filename            = $self->param('cluster_dir') . '/hcluster.out';
     my $hcluster_parse_file = $self->param('cluster_dir') . '/hcluster_parse.out'; 
-
-#    my %allclusters = (); # Need to store clusters for MSAChooser
-#    $self->param('allclusters', \%allclusters);
     
     open(FILE_2, ">$hcluster_parse_file") or die "Could not open '$hcluster_parse_file' for writing : $!";
-       print FILE_2 "cluster_id\tgenes_count\tcluster_list\n";   
+    print FILE_2 "cluster_id\tgenes_count\tcluster_list\n";   
  
     open(FILE, $filename) or die "Could not open '$filename' for reading : $!";
     while (<FILE>) {
         # 0       0       0       1.000   2       1       697136_68,
         # 1       0       39      1.000   3       5       1213317_31,1135561_22,288182_42,426893_62,941130_38,
         chomp $_;
-
         my ($cluster_id, $dummy1, $dummy2, $dummy3, $dummy4, $cluster_size, $cluster_list) = split("\t",$_);
-
         next if ($cluster_size < 2);
         $cluster_list =~ s/\,$//;
         $cluster_list =~ s/_[0-9]*//g;
         my @cluster_list = split(",", $cluster_list);
 	my $genes_count  = scalar(@cluster_list);
-
 	print FILE_2 "$cluster_id\t$genes_count\t$cluster_list\n";
-        # If it's a singleton, we don't store it as a protein tree
-#        next if (2 > scalar(@cluster_list));
-#        $allclusters{$cluster_id} = { 'members' => \@cluster_list };
     }
     close FILE;
     close FILE_2;
 }
-
 
 1;

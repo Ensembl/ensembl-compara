@@ -2,7 +2,8 @@
 
 =head1 NAME
 
-Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::HmmCalibrate;
+Bio::EnsEMBL::Hive::RunnableDB::BuildHMMprofiles::HmmCalibrate;
+#Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::HmmCalibrate;
 
 =cut
 
@@ -11,8 +12,7 @@ Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::HmmCalibrate;
 This module perform calibration on HMM profile
 
 =cut
-
-package Bio::EnsEMBL::BuildHMMprofiles::RunnableDB::HmmCalibrate;
+package Bio::EnsEMBL::Hive::RunnableDB::BuildHMMprofiles::HmmCalibrate;
 #package Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::HmmCalibrate;
 
 use strict;

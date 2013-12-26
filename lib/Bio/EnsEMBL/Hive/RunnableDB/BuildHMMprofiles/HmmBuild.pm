@@ -2,7 +2,8 @@
 
 =head1 NAME
 
-Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::HmmBuild;
+Bio::EnsEMBL::Hive::RunnableDB::BuildHMMprofiles::HmmBuild;
+#Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::HmmBuild;
 
 =cut
 
@@ -12,12 +13,11 @@ This module reads in a msa alignment file, creating HMM
 profile for each of the alignment.
 
 =cut
-package Bio::EnsEMBL::BuildHMMprofiles::RunnableDB::HmmBuild;
+package Bio::EnsEMBL::Hive::RunnableDB::BuildHMMprofiles::HmmBuild;
 #package Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::HmmBuild;
 
 use strict;
 use warnings;
-
 use Bio::EnsEMBL::Utils::Exception qw(throw warning);
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 

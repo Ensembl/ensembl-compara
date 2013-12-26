@@ -2,7 +2,8 @@
 
 =head1 NAME
 
-Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::PrepareSequence
+Bio::EnsEMBL::Hive::RunnableDB::BuildHMMprofiles::PrepareSequence;
+#Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::PrepareSequence
 
 =cut
 
@@ -13,9 +14,8 @@ sequence create a job in the subsequent blastp analysis, for
 parallelization of the blastp step.
 
 =cut
-package Bio::EnsEMBL::BuildHMMprofiles::RunnableDB::PrepareSequence;
+package Bio::EnsEMBL::Hive::RunnableDB::BuildHMMprofiles::PrepareSequence;
 #package Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::PrepareSequence;
-
 
 use Bio::EnsEMBL::Utils::Exception qw(throw warning);
 use Bio::Perl;
@@ -61,7 +61,6 @@ sub run {
  
     while ( my $seq = $fasta_seq->next_seq() )
     {
-    	#next unless $count < 10;
         $count++;
         my $len     = length($seq->seq);
 	next unless ($len > 2);	   

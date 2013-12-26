@@ -1,4 +1,5 @@
-package Bio::EnsEMBL::BuildHMMprofiles::RunnableDB::BlastDB;
+
+package Bio::EnsEMBL::Hive::RunnableDB::BuildHMMprofiles::BlastDB;
 #package Bio::EnsEMBL::Analysis::Tools::BlastDB;
 
 use strict;
@@ -12,7 +13,6 @@ use Bio::EnsEMBL::Utils::Exception qw(verbose throw warning stack_trace_dump);
 use Bio::EnsEMBL::Utils::Argument qw( rearrange );
 use Bio::EnsEMBL::Analysis::Tools::Logger qw(logger_info);
 use Bio::EnsEMBL::Analysis::Tools::Utilities qw(write_seqfile create_file_name);
-
 
 sub new {
   my ($class,@args) = @_;

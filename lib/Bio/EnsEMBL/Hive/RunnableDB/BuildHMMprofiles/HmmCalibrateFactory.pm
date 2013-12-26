@@ -2,7 +2,8 @@
 
 =head1 NAME
 
-Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::HmmCalibrateFactory
+Bio::EnsEMBL::Hive::RunnableDB::BuildHMMprofiles::HmmCalibrateFactory
+#Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::HmmCalibrateFactory
 
 =cut
 
@@ -11,7 +12,7 @@ Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::HmmCalibrateFactory
  This module create jobs to calibrate hmmprofiles built from HMMer2 
 
 =cut
-package Bio::EnsEMBL::BuildHMMprofiles::RunnableDB::HmmCalibrateFactory;
+package Bio::EnsEMBL::Hive::RunnableDB::BuildHMMprofiles::HmmCalibrateFactory;
 #package Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::HmmCalibrateFactory;
 
 use strict;

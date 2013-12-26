@@ -2,7 +2,8 @@
 
 =head1 NAME
 
-Bio::EnsEMBL::Compara::RunnableDB::CreateBlastDB
+Bio::EnsEMBL::Hive::RunnableDB::BuildHMMprofiles::CreateBlastDB
+#Bio::EnsEMBL::Compara::RunnableDB::CreateBlastDB
 
 =head1 DESCRIPTION
 
@@ -11,20 +12,20 @@ and creates a Blast database from this file.
 
 =head1 MAINTAINER
 
-$Author$
+$Author: ckong $
 
 =head VERSION
 
 =cut
 
-package Bio::EnsEMBL::BuildHMMprofiles::RunnableDB::CreateBlastDB;
+package Bio::EnsEMBL::Hive::RunnableDB::BuildHMMprofiles::CreateBlastDB;
 #package Bio::EnsEMBL::Compara::RunnableDB::CreateBlastDB;
 
+use Bio::DB::Fasta;
 use strict;
 use Data::Dumper;
-
-use Bio::EnsEMBL::Analysis::Tools::BlastDB;
-
+use Bio::EnsEMBL::Hive::RunnableDB::BuildHMMprofiles::BlastDB;
+#use Bio::EnsEMBL::Analysis::Tools::BlastDB;
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
 my $fasta_file;
@@ -65,13 +66,17 @@ sub run {
     $self->check_directory;  	
  
     # configure the fasta file for use as a blast database file:
-    my $blastdb        = Bio::EnsEMBL::Analysis::Tools::BlastDB->new(
+    my $blastdb         = Bio::EnsEMBL::Hive::RunnableDB::BuildHMMprofiles::BlastDB->new(
+    #my $blastdb        = Bio::EnsEMBL::Analysis::Tools::BlastDB->new(
         -sequence_file => $fasta_file,
+#        -mol_type      => 'DNA',
         -mol_type      => 'PROTEIN',
         -xdformat_exe  => $xdformat_exe,
 	-output_dir    => $output_dir,
     );
     $blastdb->create_blastdb;
+
+    my $db = Bio::DB::Fasta->new($fasta_file);
 
 return;
 }

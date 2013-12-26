@@ -1,6 +1,7 @@
 =head1 NAME
 
-  Bio::EnsEMBL::Compara::DBSQL::PeptideAlignFeatureAdaptor
+  Bio::EnsEMBL::Hive::RunnableDB::BuildHMMprofiles::PeptideAlignFeatureAdaptor
+  #Bio::EnsEMBL::Compara::DBSQL::PeptideAlignFeatureAdaptor
 
 =head1 SYNOPSIS
 
@@ -20,7 +21,7 @@
 
 =cut
 
-package Bio::EnsEMBL::BuildHMMprofiles::RunnableDB::PeptideAlignFeatureAdaptor;
+package Bio::EnsEMBL::Hive::RunnableDB::BuildHMMprofiles::PeptideAlignFeatureAdaptor;
 #package Bio::EnsEMBL::Compara::DBSQL::PeptideAlignFeatureAdaptor;
 
 use Bio::EnsEMBL::DBSQL::BaseAdaptor;
@@ -517,7 +518,6 @@ sub store {
       my $pepFeature = $self->_create_PAF_from_ProteinFeature($feature);
       push @pafList, $pepFeature;
     }
-#x   elsif($feature->isa('Bio::EnsEMBL::Compara::PeptideAlignFeature')) {
      else {
       push @pafList, $feature;
     }
@@ -542,62 +542,25 @@ sub _store_PAFS {
   return unless(@out and scalar(@out));
 
   # Query genome db id should always be the same
-=pod
-  my $first_qgenome_db_id = $out[0]->query_genome_db_id;
-
-  my $gdb = $self->db->get_GenomeDBAdaptor->fetch_by_dbID($first_qgenome_db_id);
-  my $species_name = lc($gdb->name);
-  $species_name =~ s/\ /\_/g;
-
-  my $tbl_name = "peptide_align_feature"."_"."$species_name"."_"."$first_qgenome_db_id";
-=cut
   my $tbl_name = "peptide_align_feature";
 
   my $query = "INSERT INTO $tbl_name(".
   		 "qmember_id,hmember_id,qstart,qend,hstart,hend,score,evalue)VALUES ";
- #x              "qmember_id,hmember_id,qgenome_db_id,hgenome_db_id," .
- #x               "qstart,qend,hstart,hend,".
- #x               "score,evalue,align_length," .
- #x               "identical_matches,perc_ident,".
- #x               "positive_matches,perc_pos,hit_rank,cigar_line) VALUES ";
 
   my $addComma=0;
   foreach my $paf (@out) {
     if($paf->isa('Bio::EnsEMBL::Compara::PeptideAlignFeature')) {
-#    if(defined $paf) {
 
-      # print STDERR "== ", $paf->query_member_id, " - ", $paf->hit_member_id, "\n";
-=pod
-      my $qgenome_db_id = $paf->query_genome_db_id;
-      $qgenome_db_id = 0 unless($qgenome_db_id);
-      my $hgenome_db_id = $paf->hit_genome_db_id;
-      $hgenome_db_id = 0 unless($hgenome_db_id);
-#      eval {$paf->query_member->source_name eq 'ENSEMBLPEP';};
-			eval {$paf->query_member->source_name};
-      if ($@) { throw("Not an ENSEMBLPEP\n"); }
-      # Null_cigar option for leaner paf tables
-      $paf->cigar_line('') if (defined $paf->{null_cigar});
-=cut
       $query .= ", " if($addComma);
       $query .= "('".$paf->query_member_id.
                 "','".$paf->hit_member_id.
-                #",".$qgenome_db_id.
-                #",".$hgenome_db_id.
                 "',".$paf->qstart.
                 ",".$paf->qend.
                 ",".$paf->hstart.
                 ",".$paf->hend.
                 ",".$paf->score.
                 ",".$paf->evalue.")";
-                #",".$paf->alignment_length.
-                #",".$paf->identical_matches.
-                #",".$paf->perc_ident.
-                #",".$paf->positive_matches.
-                #",".$paf->perc_pos.
-                #",".$paf->hit_rank.
-                #",'".$paf->cigar_line."')";
       $addComma=1;
-      # $paf->display_short();
     }
   }
 
@@ -619,15 +582,6 @@ sub _create_PAF_from_ProteinFeature {
    $paf->hend($feature->hend);
    $paf->score($feature->score);
    $paf->evalue($feature->p_value);
-   # $paf->cigar_line($feature->cigar_string);
-   # $paf->{null_cigar} = 1 if (defined $feature->{null_cigar});
-  
-   # $paf->alignment_length($feature->alignment_length);
-   # $paf->identical_matches($feature->identical_matches);
-   # $paf->positive_matches($feature->positive_matches);
-  
-   # $paf->perc_ident(int($feature->identical_matches*100/$feature->alignment_length));
-   # $paf->perc_pos(int($feature->positive_matches*100/$feature->alignment_length));
 
 return $paf;
 }
@@ -687,8 +641,6 @@ sub _create_PAF_from_BaseAlignFeature {
   $paf->hstart($feature->hstart);
   $paf->qend($feature->end);
   $paf->hend($feature->hend);
-  #$paf->qlength($qlength);
-  #$paf->hlength($hlength);
   $paf->score($feature->score);
   $paf->evalue($feature->p_value);
 
@@ -706,12 +658,9 @@ sub _create_PAF_from_BaseAlignFeature {
 
 
 sub sort_by_score_evalue_and_pid {
-  $b->score <=> $a->score ||
-    $a->evalue <=> $b->evalue; #x ||
-    #x  $b->perc_ident <=> $a->perc_ident ||
-    #x    $b->perc_pos <=> $a->perc_pos;
+    $b->score <=> $a->score ||
+    $a->evalue <=> $b->evalue; 
 }
-
 
 sub pafs_equal {
   my ($paf1, $paf2) = @_;

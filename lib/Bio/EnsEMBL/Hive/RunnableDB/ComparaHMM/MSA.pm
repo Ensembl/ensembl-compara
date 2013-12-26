@@ -18,7 +18,8 @@
 
 =head1 NAME
 
-Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::MSA
+Bio::EnsEMBL::Hive::RunnableDB::ComparaHMM::MSA;
+#Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::MSA
 
 =head1 DESCRIPTION
 
@@ -33,11 +34,11 @@ Ensembl Team. Individual contributions can be found in the CVS log.
 
 =head1 MAINTAINER
 
-$Author$
+$Author: mm14 $
 
 =head VERSION
 
-$Revision$
+$Revision: 1.13 $
 
 =head1 APPENDIX
 
@@ -46,7 +47,7 @@ Internal methods are usually preceded with an underscore (_)
 
 =cut
 
-package Bio::EnsEMBL::BuildHMMprofiles::RunnableDB::MSA;
+package Bio::EnsEMBL::Hive::RunnableDB::ComparaHMM::MSA;
 #package Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::MSA;
 
 use strict;
@@ -193,7 +194,8 @@ sub write_output {
         }
     }
 
-    $self->compara_dba->get_AlignedMemberAdaptor->store($self->param('protein_tree'));
+    $self->compara_dba->get_GeneAlignAdaptor->store($self->param('protein_tree'));
+    #$self->compara_dba->get_AlignedMemberAdaptor->store($self->param('protein_tree'));
     # Store various alignment tags:
     $self->_store_aln_tags($self->param('protein_tree'));
 

@@ -2,7 +2,8 @@
 
 =head1 NAME
 
-Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::HmmProfileFactory
+Bio::EnsEMBL::Hive::RunnableDB::BuildHMMprofiles::HmmProfileFactory
+#Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::HmmProfileFactory
 
 =cut
 
@@ -11,12 +12,11 @@ Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::HmmProfileFactory
  This module create a hmmbuild job for each multiple alignment output
 
 =cut
-package Bio::EnsEMBL::BuildHMMprofiles::RunnableDB::HmmProfileFactory;
+package Bio::EnsEMBL::Hive::RunnableDB::BuildHMMprofiles::HmmProfileFactory;
 #package Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::HmmProfileFactory;
 
 use strict;
 use warnings;
-
 use Bio::EnsEMBL::Utils::Exception qw(throw warning);
 use Bio::Perl;
 
@@ -64,7 +64,6 @@ sub run {
 
       while ((my $filename = readdir (DIR_2))) {
         my $filesize = -s "$filename";
-	#next unless $filesize > 0; #filter out alignments with file size 0
         next unless $filename =~/^cluster/;
         $filename    = $dir.'/'.$filename;
         $self->dataflow_output_id( { 'msa' => $filename }, 2 ); 
