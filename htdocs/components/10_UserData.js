@@ -23,13 +23,14 @@ Ensembl.Panel.UserData = Ensembl.Panel.extend({
     
     this.base();
     
-    this.el.find('._stt').selectToToggle({}, this.el);
-    
     this.elLk.activeLink      = this.el.parents('.modal_wrapper').siblings('.modal_nav').find('ul.local_context li.active');
     this.elLk.form            = this.el.find('form').validate().off('.UserData').on('submit.UserData', function (e) { e.preventDefault(); panel.formSubmit(); });
     this.elLk.requiredInputs  = this.elLk.form.find(':input.required');
     this.elLk.errorMessage    = this.elLk.form.find('label._userdata_upload_error').addClass('invalid');
     this.elLk.actionInputs    = this.elLk.form.find(':input._action').off('.UserData').on('change.UserData', function () {
+    
+      $(this).selectToToggle('trigger');
+      
       // change the form action according to the dropdown/radio buttons (if <select> is changed, give priority to radio buttons if they are visible)
       var action = this.nodeName === 'SELECT' ? panel.elLk.actionInputs.filter('input:visible:checked')[0] || $(this).find('option:selected')[0] : this;
           action = action ? (action.className.match(/(?:\s+|^)_action_([^\s]+)/) || []).pop() || '' : '';
@@ -66,7 +67,7 @@ Ensembl.Panel.UserData = Ensembl.Panel.extend({
   },
   
   formSubmit: function () {
-    if (!this.elLk.requiredInputs.filter(':visible:not([value=""])').length) {
+    if (!this.elLk.requiredInputs.filter(function() { return this.value && $(this).is(':visible'); }).length) {
       this.elLk.errorMessage.show();
       return false;
     }
