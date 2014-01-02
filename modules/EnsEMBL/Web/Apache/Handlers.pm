@@ -774,5 +774,4 @@ sub _referrer_is_mirror {
       values %$ensembl_mirrors;
 }
 
-
 1;
