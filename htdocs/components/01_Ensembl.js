@@ -258,13 +258,14 @@ Ensembl.extend({
       return url;
     }
     
-    if (window.location[this.locationURL] !== url) {
-      if (this.locationURL === 'hash') {
+    if (this.locationURL === 'hash') {
+      url = url.replace(/^\?/, '');
+      if (window.location.hash !== url) {
         window.location.hash = url;
-      } else {
-        window.history.pushState({}, '', url);
+        return true;
       }
-      
+    } else if (window.location.search !== url) {
+      window.history.pushState({}, '', url);
       return true;
     }
   },
