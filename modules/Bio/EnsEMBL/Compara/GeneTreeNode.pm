@@ -83,9 +83,19 @@ use base ('Bio::EnsEMBL::Compara::NestedSet');
 
 sub species_tree_node {
     my $self = shift;
-    if ($self->get_value_for_tag('species_tree_node_id') and not $self->{_species_tree_node}) {
+
+    # If it is already there, return it
+    if ($self->{_species_tree_node}) {
+        return $self->{_species_tree_node};
+    }
+
+    ## Leaves don't have species_tree_node_id tag, so this value has to be taken from the GeneTreeMember (via its taxon_id);
+    if ($self->isa('Bio::EnsEMBL::Compara::GeneTreeMember')) {
+        $self->{_species_tree_node} =  $self->tree->species_tree->root->find_nodes_by_field('taxon_id', $self->taxon_id)->[0];
+    } elsif ( defined $self->get_value_for_tag('species_tree_node_id')) {
         $self->{_species_tree_node} = $self->adaptor->db->get_SpeciesTreeNodeAdaptor->fetch_node_by_node_id($self->get_value_for_tag('species_tree_node_id'));
     }
+
     return $self->{_species_tree_node};
 }
 
@@ -99,6 +109,10 @@ sub species_tree_node {
 
 sub _species_tree_node_id {
     my $self = shift;
+    if ($self->isa('Bio::EnsEMBL::Compara::GeneTreeMember')) {
+        return $self->tree->species_tree->root->find_nodes_by_field('taxon_id', $self->taxon_id)->[0];
+    }
+
     return $self->get_value_for_tag('species_tree_node_id')
 }
 
