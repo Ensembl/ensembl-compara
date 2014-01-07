@@ -58,7 +58,7 @@ Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->new(
     -pass => $ENV{'ENSADMIN_PSW'},
     -port => 3306,
     -species => 'compara_ptrees',
-    -dbname => 'mm14_compara_homology_74_with_sheep',
+    -dbname => 'mm14_protein_trees_74_with_sheep',
 );
 
 # Individual pipeline database for ncRNAtrees:
