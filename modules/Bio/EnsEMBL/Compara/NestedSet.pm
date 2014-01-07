@@ -909,7 +909,7 @@ sub string_node {
        $str .= 'SIS=0 ';
     }
     if($self->has_tag("bootstrap")) { my $bootstrap_value = $self->bootstrap(); $str .= "B=$bootstrap_value "; }
-    if($self->taxonomy_level) { my $taxon_name_value = $self->taxonomy_level(); $str .="T=$taxon_name_value "; }
+    if($self->can('taxonomy_level') && $self->taxonomy_level) { my $taxon_name_value = $self->taxonomy_level(); $str .="T=$taxon_name_value "; }
     $str .= sprintf("%s %d,%d)", $self->node_id, $self->left_index, $self->right_index);
     $str .= sprintf("%s\n", $self->name || '');
     return $str;
