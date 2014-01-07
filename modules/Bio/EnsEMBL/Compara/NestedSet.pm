@@ -897,7 +897,7 @@ sub string_node {
     my $isdub = ($self->get_tagvalue('node_type', '') eq 'dubious');
 
     if ($isdup) {
-        if ($self->species_tree_node->genome_db_id) {
+        if ((defined $self->species_tree_node) && ($self->species_tree_node->genome_db_id)) {
             $str .= "Dup ";
         } else {
             $str .= "DUP ";
@@ -1419,47 +1419,55 @@ sub scale_max_to {
 #
 ##################################
 
-sub find_node_by_field {
-    my ($self, $field, $value) = @_;
+sub find_nodes_by_field {
+    my ($self, $field, $value, $acc) = @_;
+
+    $acc = [] unless (defined $acc);
 
     unless ($self->can($field)) {
         warning("No method $field available for class $self\n");
         return undef;
     }
 
-    return $self if((defined $self->$field) and ($self->$field eq $value));
+    push @$acc, $self if((defined $self->$field) and ($self->$field eq $value));
+#    return $self if((defined $self->$field) and ($self->$field eq $value));
 
     my $children = $self->children;
     for my $child (@$children) {
-        my $found = $child->find_node_by_field($field, $value);
-        return $found if(defined $found);
+        $child->find_nodes_by_field($field, $value, $acc);
+#        my $found = $child->find_node_by_field($field, $value);
+#        return $found if(defined $found);
     }
-    return undef;
+    return $acc;
+#    return undef;
 }
 
 sub find_node_by_name {
   my $self = shift;
   my $name = shift;
 
-  return $self->find_node_by_field('name', $name);
+  return $self->find_nodes_by_field('name', $name)->[0];
 }
 
 sub find_node_by_node_id {
   my $self = shift;
   my $node_id = shift;
 
-  return $self->find_node_by_field('node_id', $node_id);
+  return $self->find_nodes_by_field('node_id', $node_id)->[0];
 }
 
-sub find_leaf_by_field {
+sub find_leaves_by_field {
     my ($self, $field, $value) = @_;
+
+    my $acc = [];
 
     my $leaves = $self->get_all_leaves;
     for my $leaf (@$leaves) {
-        return $leaf if(($leaf->can($field)) && (defined $leaf->$field) && ($leaf->$field eq $value));
+        push @$acc, $leaf if(($leaf->can($field)) && (defined $leaf->$field) && ($leaf->$field eq $value));
+#        return $leaf if(($leaf->can($field)) && (defined $leaf->$field) && ($leaf->$field eq $value));
     }
 
-    return undef;
+    return $acc;
 }
 
 sub find_leaf_by_name {
@@ -1467,7 +1475,7 @@ sub find_leaf_by_name {
   my $name = shift;
 
   return $self if((defined $self->name) and ($name eq $self->name));
-  return $self->find_leaf_by_field('name', $name);
+  return $self->find_leaves_by_field('name', $name);
 }
 
 sub find_leaf_by_node_id {
@@ -1475,7 +1483,7 @@ sub find_leaf_by_node_id {
   my $node_id = shift;
 
   return $self if($node_id eq $self->node_id);
-  return $self->find_leaf_by_field('node_id', $node_id);
+  return $self->find_leaves_by_field('node_id', $node_id);
 }
 
 
