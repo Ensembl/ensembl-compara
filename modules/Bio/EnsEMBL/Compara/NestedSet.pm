@@ -1475,7 +1475,7 @@ sub find_leaf_by_name {
   my $name = shift;
 
   return $self if((defined $self->name) and ($name eq $self->name));
-  return $self->find_leaves_by_field('name', $name);
+  return $self->find_leaves_by_field('name', $name)->[0];
 }
 
 sub find_leaf_by_node_id {
@@ -1483,7 +1483,7 @@ sub find_leaf_by_node_id {
   my $node_id = shift;
 
   return $self if($node_id eq $self->node_id);
-  return $self->find_leaves_by_field('node_id', $node_id);
+  return $self->find_leaves_by_field('node_id', $node_id)->[0];
 }
 
 
