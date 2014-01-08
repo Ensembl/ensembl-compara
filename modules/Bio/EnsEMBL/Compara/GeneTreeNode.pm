@@ -102,7 +102,7 @@ sub species_tree_node {
 sub _species_tree_node_id {
     my $self = shift;
     if ($self->isa('Bio::EnsEMBL::Compara::GeneTreeMember')) {
-        return $self->tree->species_tree->root->find_nodes_by_field('taxon_id', $self->taxon_id)->[0];
+        return $self->tree->species_tree->root->find_nodes_by_field('taxon_id', $self->taxon_id)->[0]->node_id;
     }
 
     return $self->get_value_for_tag('species_tree_node_id')
