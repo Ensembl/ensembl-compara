@@ -35,10 +35,8 @@ sub process {
   my $session       = $hub->session;
   my $redirect      = $hub->species_path($hub->data_species) . '/UserData/';
   my $url           = $hub->param('url') || $hub->param('url_2');
-  $url              =~ s/^\s+//;
-  $url              =~ s/\s+$//;
+     $url           =~ s/(^\s+|\s+$)//g; # Trim leading and trailing whitespace
   my $filename      = [split '/', $url]->[-1];
-  my $name          = $hub->param('name') || $filename;
   my $chosen_format = $hub->param('format');
   my $formats       = $species_defs->DATA_FILE_FORMATS;
   my @small_formats = $species_defs->UPLOAD_FILE_FORMATS;
@@ -64,20 +62,18 @@ sub process {
   }
 
   if ($url) {
+    my $format_package = 'Bio::EnsEMBL::ExternalData::AttachedFormat::' . uc $format_name;
+    my $trackline      = $self->hub->param('trackline');
     my $format;
-    my $format_package = "Bio::EnsEMBL::ExternalData::AttachedFormat::".uc($format_name);
-    my $trackline = $self->hub->param('trackline');
-    if (!$trackline) {
-      $trackline = $format;
-    }
+    
     if (EnsEMBL::Web::Root::dynamic_use(undef, $format_package)) {
-      $format = $format_package->new($self->hub,$format_name,$url,$trackline);
+      $format = $format_package->new($self->hub, $format_name, $url, $trackline);
     } else {
-      $format = Bio::EnsEMBL::ExternalData::AttachedFormat->new($self->hub,$format_name,$url,$trackline);
+      $format = Bio::EnsEMBL::ExternalData::AttachedFormat->new($self->hub, $format_name, $url, $trackline);
     }
-
-    my ($error,$options) = $format->check_data();
-        
+    
+    my ($error, $options) = $format->check_data;
+    
     if ($error) {
       $redirect .= 'SelectFile';
       
@@ -90,8 +86,11 @@ sub process {
     } else {
       ## This next bit is a hack - we need to implement userdata configuration properly! 
       my $extra_config_page = $format->extra_config_page;
-      $redirect .= $extra_config_page || "RemoteFeedback";
-            
+      my $name              = $hub->param('name') || $options->{'name'} || $filename;
+         $redirect         .= $extra_config_page || 'RemoteFeedback';
+      
+      delete $options->{'name'};
+      
       my $data = $session->add_data(
         type      => 'url',
         code      => join('_', md5_hex($name . $url), $session->session_id),

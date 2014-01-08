@@ -739,29 +739,20 @@ sub load_user_tracks {
 
 sub _add_datahub {
   my ($self, $menu_name, $url) = @_;
-  my $parser   = Bio::EnsEMBL::ExternalData::DataHub::SourceParser->new({ timeout => 10,  proxy => $self->hub->species_defs->ENSEMBL_WWW_PROXY });
+  my $parser   = Bio::EnsEMBL::ExternalData::DataHub::SourceParser->new({ timeout => 10, proxy => $self->hub->species_defs->ENSEMBL_WWW_PROXY });
   my $menu     = $self->tree->append_child($self->create_submenu($menu_name, $menu_name, { external => 1, datahub_menu => 1 }));
-  my $base_url = $url;
-  my $hub_file = 'hub.txt';
-  
-  if ($url =~ /.txt$/) {
-    $base_url =~ s/(.*\/).*/$1/;
-    ($hub_file = $url) =~ s/.*\/(.*)/$1/;
-  }
-
-  ## Do we have data for this species?
-  my $hub_info = $parser->get_hub_info($base_url, $hub_file);
+  my $hub_info = $parser->get_hub_info($url); ## Do we have data for this species?
   
   if ($hub_info->{'error'}) {
     warn "!!! COULD NOT CONTACT DATAHUB $url: $hub_info->{'error'}";
   } else {
     my $golden_path = $self->hub->species_defs->get_config($self->species, 'UCSC_GOLDEN_PATH');
-    my $source_list = $hub_info->{$golden_path} || [];
+    my $source_list = $hub_info->{'genomes'}{$golden_path} || [];
     
     return unless scalar @$source_list;
     
     ## Get tracks from hub
-    my $datahub = $parser->parse($base_url . $golden_path, $source_list);
+    my $datahub = $parser->parse($source_list);
     
     foreach my $node (@{$datahub->child_nodes}) {
       my $data = $node->data;
@@ -809,7 +800,7 @@ sub _add_datahub_tracks {
   my %options = (
     menu_key     => $name,
     menu_name    => $name,
-    submenu_key  => $self->tree->clean_id("${name}_$data->{'track'}"),
+    submenu_key  => $self->tree->clean_id("${name}_$data->{'track'}", '\W'),
     submenu_name => $data->{'shortLabel'},
     datahub      => 1,
   );
@@ -924,7 +915,7 @@ sub _add_datahub_extras_options {
   $args{'options'}{'viewLimits'} = $args{'menu'}{'viewLimits'} || $args{'source'}{'viewLimits'} if exists $args{'menu'}{'viewLimits'} || exists $args{'source'}{'viewLimits'};
   $args{'options'}{'no_titles'}  = $args{'menu'}{'no_titles'}  || $args{'source'}{'no_titles'}  if exists $args{'menu'}{'no_titles'}  || exists $args{'source'}{'no_titles'};
   $args{'options'}{'set'}        = $args{'source'}{'submenu_key'};
-  $args{'options'}{'subset'}     = $self->tree->clean_id($args{'source'}{'submenu_key'}) unless $args{'source'}{'matrix'};
+  $args{'options'}{'subset'}     = $self->tree->clean_id($args{'source'}{'submenu_key'}, '\W') unless $args{'source'}{'matrix'};
   $args{'options'}{$_}           = $args{'source'}{$_} for qw(datahub matrix column_data colour description);
   
   return %args;
