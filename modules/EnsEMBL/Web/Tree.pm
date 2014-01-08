@@ -54,7 +54,6 @@ sub next        { return $_[0]->next_sibling;          }
 sub append      { return $_[0]->append_child($_[1]);   }
 sub prepend     { return $_[0]->prepend_child($_[1]);  }
 sub _flush_tree { $_[0]->{'user_data'} = {};           } # TODO: rename to flush_tree - called on Configuration tree in Document::Element::Configurator
-sub clean_id    { $_[1] =~ s/[^\w-]/_/g; return $_[1]; }
 
 sub get_node {
   my ($self, $id) = @_;
@@ -106,6 +105,12 @@ sub generate_unique_id {
   my $self = shift;
   $self->{'id'}++ while exists $self->tree_ids->{$self->{'id'}};
   return $self->{'id'};
+}
+
+sub clean_id {
+  my $match = $_[2] || '[^\w-]';
+  $_[1] =~ s/$match/_/g;
+  return $_[1];
 }
 
 sub create_node {
