@@ -52,28 +52,22 @@ sub bigwig_open {
 # checking whats in the BigWig file
 sub munge_chr_id {
   my ($self, $chr_id) = @_;
-
-  my $ret_id;
-
   my $bw = $self->bigwig_open;
+  
   warn "Failed to open BigWig file " . $self->url unless $bw;
+  
   return undef unless $bw;
 
-  my $ret_id = $chr_id;
-
-  # Check we get values back for seq region. Maybe need to add 'chr' 
-  my $length = $bw->chromSize("$chr_id");
-
-  if (!$length) {
-    $length = $bw->chromSize("chr$chr_id");
-    if ($length) {
-      $ret_id = "chr$chr_id";
-    } else {
-      warn " *** could not find region $chr_id in BigWig file\n";
-      return undef;
-    }
-  }
-
+  my $list = $bw->chromList;
+  my $head = $list->head;
+  my $ret_id;
+  
+  do {
+    $ret_id = $head->name if $head->name =~ /^(chr)?$chr_id$/ && $head->size; # Check we get values back for seq region. Maybe need to add 'chr' 
+  } while (!$ret_id && ($head = $head->next));
+  
+  warn " *** could not find region $chr_id in BigWig file" unless $ret_id;
+  
   return $ret_id;
 }
 
