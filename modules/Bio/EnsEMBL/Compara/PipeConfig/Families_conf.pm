@@ -75,9 +75,9 @@ sub default_options {
         'email'           => $self->o('ENV', 'USER').'@ebi.ac.uk',    # NB: your EBI address may differ from the Sanger one!
 
             # code directories:
-        'blast_bin_dir'   => '/software/ensembl/compara/ncbi-blast-2.2.27+/bin',
+        'blast_bin_dir'   => '/software/ensembl/compara/ncbi-blast-2.2.28+/bin',
         'mcl_bin_dir'     => '/software/ensembl/compara/mcl-12-135/bin',
-        'mafft_root_dir'  => '/software/ensembl/compara/mafft-7.017',
+        'mafft_root_dir'  => '/software/ensembl/compara/mafft-7.113',
             
             # data directories:
         'work_dir'        => '/lustre/scratch109/ensembl/'.$self->o('ENV', 'USER').'/'.$self->o('pipeline_name'),
@@ -91,13 +91,14 @@ sub default_options {
         'first_n_big_families'  => 2,   # these are known to be big, so no point trying in small memory
 
             # resource requirements:
-        'blast_gigs'      => 2,
+        'blast_gigs'      =>  2,
+        'blast_hm_gigs'   =>  4,
         'mcl_gigs'        => 50,
         'mcl_procs'       =>  4,
         'lomafft_gigs'    =>  4,
         'himafft_gigs'    => 14,
         'dbresource'      => 'my'.$self->o('host'),                 # will work for compara1..compara4, but will have to be set manually otherwise
-        'blast_capacity'  => 1000,                                  # work both as hive_capacity and resource-level throttle
+        'blast_capacity'  => 2000,                                  # work both as hive_capacity and resource-level throttle
         'mafft_capacity'  =>  400,
         'cons_capacity'   =>  400,
         'reservation_sfx' => '',    # set to '000' for farm2, to '' for farm3 and EBI
@@ -107,7 +108,7 @@ sub default_options {
         'protein_trees_db'  => 'mysql://ensro@compara1/mm14_protein_trees_'.$self->o('rel_with_suffix'),
 
             # used by the StableIdMapper as the reference:
-        'prev_rel_db' => 'mysql://ensadmin:'.$self->o('password').'@compara2/lg4_ensembl_compara_73',
+        'prev_rel_db' => 'mysql://ensadmin:'.$self->o('password').'@compara3/mp12_ensembl_compara_74',
 
             # used by the StableIdMapper as the location of the master 'mapping_session' table:
         'master_db' => 'mysql://ensadmin:'.$self->o('password').'@compara1/sf5_ensembl_compara_master',    
@@ -153,20 +154,14 @@ sub resource_classes {
         %{$self->SUPER::resource_classes},  # inherit 'default' from the parent class
 
         'urgent'       => { 'LSF' => '-q yesterday' },
-        'LongBlast'    => { 'LSF' => '-C0 -M'.$self->o('blast_gigs').$self->o('reservation_sfx').'000 -q long -R"select['.$self->o('dbresource').'<'.$self->o('blast_capacity').' && mem>'.$self->o('blast_gigs').'000] rusage['.$self->o('dbresource').'=10:duration=10:decay=1, mem='.$self->o('blast_gigs').'000]"' },
+        'LongBlast'    => { 'LSF' => [ '-C0 -M'.$self->o('blast_gigs').$self->o('reservation_sfx').'000 -q long -R"select['.$self->o('dbresource').'<'.$self->o('blast_capacity').' && mem>'.$self->o('blast_gigs').'000] rusage['.$self->o('dbresource').'=10:duration=10:decay=1, mem='.$self->o('blast_gigs').'000]"', '-lifespan 1440' ]  },
+        'LongBlastHM'  => { 'LSF' => [ '-C0 -M'.$self->o('blast_hm_gigs').$self->o('reservation_sfx').'000 -q long -R"select['.$self->o('dbresource').'<'.$self->o('blast_capacity').' && mem>'.$self->o('blast_hm_gigs').'000] rusage['.$self->o('dbresource').'=10:duration=10:decay=1, mem='.$self->o('blast_hm_gigs').'000]"', '-lifespan 1440' ]  },
         'BigMcxload'   => { 'LSF' => '-C0 -M'.$self->o('mcl_gigs').$self->o('reservation_sfx').'000 -q hugemem -R"select[mem>'.$self->o('mcl_gigs').'000] rusage[mem='.$self->o('mcl_gigs').'000]"' },
         'BigMcl'       => { 'LSF' => '-C0 -M'.$self->o('mcl_gigs').$self->o('reservation_sfx').'000 -n '.$self->o('mcl_procs').' -q hugemem -R"select[ncpus>='.$self->o('mcl_procs').' && mem>'.$self->o('mcl_gigs').'000] rusage[mem='.$self->o('mcl_gigs').'000] span[hosts=1]"' },
-        'BigMafft'     => { 'LSF' => '-C0 -M'.$self->o('himafft_gigs').$self->o('reservation_sfx').'000 -R"select['.$self->o('dbresource').'<'.$self->o('mafft_capacity').' && mem>'.$self->o('himafft_gigs').'000] rusage['.$self->o('dbresource').'=10:duration=10:decay=1, mem='.$self->o('himafft_gigs').'000]"' },
+        'BigMafft'     => { 'LSF' => '-C0 -M'.$self->o('himafft_gigs').$self->o('reservation_sfx').'000 -q long -R"select['.$self->o('dbresource').'<'.$self->o('mafft_capacity').' && mem>'.$self->o('himafft_gigs').'000] rusage['.$self->o('dbresource').'=10:duration=10:decay=1, mem='.$self->o('himafft_gigs').'000]"' },
         '4GigMem'      => { 'LSF' => '-C0 -M'.$self->o('lomafft_gigs').$self->o('reservation_sfx').'000 -R"select['.$self->o('dbresource').'<'.$self->o('mafft_capacity').' && mem>'.$self->o('lomafft_gigs').'000] rusage['.$self->o('dbresource').'=10:duration=10:decay=1, mem='.$self->o('lomafft_gigs').'000]"' },
         '2GigMem'      => { 'LSF' => '-C0 -M2'.$self->o('reservation_sfx').'000 -R"select[mem>2000] rusage[mem=2000]"' },
     };
-}
-
-
-sub beekeeper_extra_cmdline_options {
-    my ($self) = @_;
-
-    return '-lifespan 1440';
 }
 
 
@@ -366,7 +361,7 @@ sub pipeline_analyses {
             -flow_into => {
                 3 => [ ':////mcl_sparse_matrix?insertion_method=REPLACE' ],
             },
-            -rc_name => '4GigMem',
+            -rc_name => 'LongBlastHM',
         },
 
         {   -logic_name => 'snapshot_after_blast',
