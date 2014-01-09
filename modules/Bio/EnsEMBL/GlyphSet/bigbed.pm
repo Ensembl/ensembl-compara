@@ -193,8 +193,10 @@ sub features {
   my $style = $options->{'style'} || $format->style;
 
   if($style eq 'score') {
-    $config->{'useScore'} = 1;
-    $config->{'implicit_colour'} = 1;
+    # sb23 - removing this because unless we set a decent greyscale_max (which we can't know without looking at every line in the file),
+    # or the features actually have scores in the range 0-1000, most features will appear white.
+    #$config->{'useScore'} = 1;
+    #$config->{'implicit_colour'} = 1;
   } elsif($style eq 'colouredscore') {
     $config->{'useScore'} = 2;    
   } elsif($style eq 'colour') {
