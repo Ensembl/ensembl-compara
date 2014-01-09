@@ -1242,22 +1242,27 @@ sub update_from_url {
   my $species = $hub->species;
   
   foreach my $v (@values) {
-    my @split = split /=/, $v;
+    my $format = $hub->param('format');
     my ($key, $renderer);
     
-    if (scalar @split > 1) { 
-      $renderer = pop @split;
-      $key      = join '=', @split;
+    if (uc $format eq 'DATAHUB') {
+      $key = $v;
     } else {
-      $key      = $split[0];
-      $renderer = 'normal';
+      my @split = split /=/, $v;
+      
+      if (scalar @split > 1) {
+        $renderer = pop @split;
+        $key      = join '=', @split;
+      } else {
+        $key      = $split[0];
+        $renderer = 'normal';
+      }
     }
-
+    
     if ($key =~ /^(\w+)[\.:](.*)$/) {
       my ($type, $p) = ($1, $2);
       
       if ($type eq 'url') {
-        my $format      = $hub->param('format');
         my $menu_name   = $hub->param('menu');
         my $all_formats = $hub->species_defs->DATA_FORMAT_INFO;
         
