@@ -24,11 +24,10 @@ no warnings 'uninitialized';
 
 use List::Util qw(min max);
 
-use Data::Dumper;
+use Bio::EnsEMBL::ExternalData::AttachedFormat::BIGBED;
+use Bio::EnsEMBL::ExternalData::BigFile::BigBedAdaptor;
 
 use EnsEMBL::Web::Text::Feature::BED;
-use Bio::EnsEMBL::ExternalData::BigFile::BigBedAdaptor;
-use Bio::EnsEMBL::ExternalData::AttachedFormat::BIGBED;
 
 use base qw(Bio::EnsEMBL::GlyphSet::_alignment Bio::EnsEMBL::GlyphSet_wiggle_and_block);
 
@@ -174,52 +173,55 @@ sub href {
 
 sub features {
   my ($self, $options) = @_;
-
   my %config_in = map { $_ => $self->my_config($_) } qw(colouredscore style);
+  
   $options = { %config_in, %{$options || {}} };
 
-  my $bba = $options->{'adaptor'} || $self->bigbed_adaptor;
-
-  my $format = $self->format;
-
-  my $slice = $self->{'container'};
+  my $bba       = $options->{'adaptor'} || $self->bigbed_adaptor;
+  my $format    = $self->format;
+  my $slice     = $self->{'container'};
+  my $features  = $bba->fetch_features($slice->seq_region_name, $slice->start, $slice->end + 1);
+  my $config    = {};
+  my $max_score = 0;
+  
   $self->{'_default_colour'} = $self->SUPER::my_colour($self->my_config('sub_type'));
-  my $features = $bba->fetch_features($slice->seq_region_name,$slice->start,$slice->end+1);
-  $_->map($slice) for @$features;
-  my $config = {};
-
+  
+  foreach (@$features) {
+    $_->map($slice);
+    $max_score = max($max_score, $_->score);
+  }
+  
   # WORK OUT HOW TO CONFIGURE FEATURES FOR RENDERING
   # Explicit: Check if mode is specified on trackline
   my $style = $options->{'style'} || $format->style;
 
-  if($style eq 'score') {
-    # sb23 - removing this because unless we set a decent greyscale_max (which we can't know without looking at every line in the file),
-    # or the features actually have scores in the range 0-1000, most features will appear white.
-    #$config->{'useScore'} = 1;
-    #$config->{'implicit_colour'} = 1;
-  } elsif($style eq 'colouredscore') {
+  if ($style eq 'score') {
+    $config->{'useScore'}        = 1;
+    $config->{'implicit_colour'} = 1;
+    $config->{'greyscale_max'}   = $max_score;
+  } elsif ($style eq 'colouredscore') {
     $config->{'useScore'} = 2;    
-  } elsif($style eq 'colour') {
+  } elsif ($style eq 'colour') {
     $config->{'useScore'} = 2;
-    my $default_rgb_string = $self->my_config('colour') || '0,0,0';
-    if($options->{'fallbackcolour'}) {
-      my $colour = $options->{'fallbackcolour'};
-      $colour = $self->{'_default_colour'} if($colour eq 'default');
-      my ($r, $g, $b) =  $self->{'config'}->colourmap->rgb_by_name($colour,1);
-      $default_rgb_string = "$r,$g,$b";
+    
+    my $default_rgb_string;
+    
+    if ($options->{'fallbackcolour'}) {
+      $default_rgb_string = join ',', $self->{'config'}->colourmap->rgb_by_name($options->{'fallbackcolour'} eq 'default' ? $self->{'_default_colour'} : $options->{'fallbackcolour'}, 1);
+    } else {
+      $default_rgb_string = $self->my_config('colour') || '0,0,0';
     }
+    
     foreach (@$features) {
-      next if (defined $_->external_data->{'item_colour'} && $_->external_data->{'item_colour'}[0] =~ /^\d+,\d+,\d+$/);
+      next if defined $_->external_data->{'item_colour'} && $_->external_data->{'item_colour'}[0] =~ /^\d+,\d+,\d+$/;
       $_->external_data->{'item_colour'}[0] = $default_rgb_string;
     }
+    
     $config->{'itemRgb'} = 'on';    
   }
-
-  my $trackline = $format->parse_trackline($format->trackline);
-  $config = { %$config, %$trackline };
-
+  
   return( 
-    'url' => [ $features, $config ],
+    'url' => [ $features, { %$config, %{$format->parse_trackline($format->trackline)} } ],
   );
 }
  

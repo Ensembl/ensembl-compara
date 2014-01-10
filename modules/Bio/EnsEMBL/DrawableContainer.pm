@@ -280,7 +280,7 @@ sub new {
       if ($glyphset->label && $show_labels eq 'yes') {
         my $gh = $glyphset->label->height || $config->texthelper->height($glyphset->label->font);
         
-        $glyphset->label->y($gminy);
+        $glyphset->label->y($gminy + $glyphset->{'label_y_offset'});
         $glyphset->label->height($gh);
         $glyphset->push($glyphset->label);
         
@@ -291,7 +291,7 @@ sub new {
             absolutewidth => 1,
             width         => $glyphset->label->width,
             x             => $glyphset->label->x,
-            y             => $gminy + $gh + 1,
+            y             => $gminy + $gh + 1 + $glyphset->{'label_y_offset'},
             colour        => '#336699',
             dotted        => 'small'
           }));

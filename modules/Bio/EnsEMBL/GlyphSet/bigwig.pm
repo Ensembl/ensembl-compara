@@ -20,10 +20,11 @@ package Bio::EnsEMBL::GlyphSet::bigwig;
 
 use strict;
 
-use Bio::EnsEMBL::ExternalData::BigFile::BigWigAdaptor;
-use Data::Dumper;
-use Bio::EnsEMBL::SimpleFeature;
+use List::Util qw(max);
+
 use Bio::EnsEMBL::Analysis;
+use Bio::EnsEMBL::ExternalData::BigFile::BigWigAdaptor;
+use Bio::EnsEMBL::SimpleFeature;
 
 use base qw(Bio::EnsEMBL::GlyphSet::_alignment  Bio::EnsEMBL::GlyphSet_wiggle_and_block);
 
@@ -139,34 +140,32 @@ sub draw_features {
 }
 
 sub features {
-  my $self = shift;
-  my $slice = $self->{'container'};
-
-  my $max_bins = $self->{'config'}->image_width();
-  if ($max_bins > $slice->length) {
-    $max_bins = $slice->length;
-  }
-
-  my $feats =  $self->wiggle_features($max_bins);
-
+  my $self          = shift;
+  my $slice         = $self->{'container'};
+  my $max_bins      = $self->{'config'}->image_width;
+     $max_bins      = $slice->length if $max_bins > $slice->length;
+  my $fake_analysis = Bio::EnsEMBL::Analysis->new(-logic_name => 'fake');
+  my $max_score     = 0;
   my @features;
-
-  my $fake_anal = Bio::EnsEMBL::Analysis->new(-logic_name => 'fake');
-  foreach my $feat (@$feats) {
-    my $f = Bio::EnsEMBL::SimpleFeature->new(-start => $feat->{start}, 
-                                             -end => $feat->{end}, 
-                                             -slice => $slice, 
-                                             -strand => 1, 
-                                             -score => $feat->{score}, 
-                                             -analysis => $fake_anal);
-    push @features,$f;
+  
+  foreach my $feat (@{$self->wiggle_features($max_bins)}) {
+    push @features, Bio::EnsEMBL::SimpleFeature->new(
+      -start    => $feat->{'start'}, 
+      -end      => $feat->{'end'}, 
+      -slice    => $slice, 
+      -strand   => 1, 
+      -score    => $feat->{'score'}, 
+      -analysis => $fake_analysis
+    );
+    
+    $max_score = max($max_score, $feat->{'score'});
   }
 
   my $config = {};
 
   $config->{'useScore'}        = 1;
   $config->{'implicit_colour'} = 1;
-  $config->{'greyscale_max'}   = 100;
+  $config->{'greyscale_max'}   = $max_score;
 
   return(
     'url' => [ \@features, $config ],
