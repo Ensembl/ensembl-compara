@@ -84,36 +84,47 @@ sub new {
 =cut
 
 sub get_hub_info {
-  my ($self, $url, $hub_file) = @_;
-  my $ua       = $self->{'ua'};
+  my ($self, $url) = @_;
+  my $ua        = $self->{'ua'};
+  my @split_url = split '/', $url;
+  my $hub_file;
+  
+  if ($split_url[-1] =~ /[.?]/) {
+    $hub_file = pop @split_url;
+    $url      = join '/', @split_url;
+  } else {
+    $hub_file = 'hub.txt';
+    $url      =~ s|/$||;
+  }
+  
   my $response = $ua->get("$url/$hub_file");
   
   return { error => $response->status_line } unless $response->is_success;
   
-  my $genome_filename;
+  my %hub_details;
   
   ## Get file name for file with genome info
   foreach (split /\n/, $response->content) {
-    if (/^genomesFile/) {
-      ($genome_filename = $_) =~ s/(genomesFile |\r)//g;
-      last;
-    }
+    my @line = split /\s/, $_, 2;
+    $hub_details{$line[0]} = $line[1];
   }
   
-  $response = $ua->get("$url/$genome_filename"); ## Now get genome file and parse
+  return { error => 'No genomesFile found' } unless $hub_details{'genomesFile'};
   
-  return { error => $response->status_line } unless $response->is_success;
+  $response = $ua->get("$url/$hub_details{'genomesFile'}"); ## Now get genomes file and parse
+  
+  return { error => 'genomesFile: ' . $response->status_line } unless $response->is_success;
   
   (my $genome_file = $response->content) =~ s/\r//g;
   my %genome_info  = map { [ split /\s/ ]->[1] || () } split /\n/, $genome_file; ## We only need the values, not the fieldnames
-  my %track_errors;
+  my @track_errors;
   
   ## Parse list of config files
   while (my ($genome, $file) = each %genome_info) {
     $response = $ua->get("$url/$file");
     
     if (!$response->is_success) {
-      $track_errors{$file} = $response->status_line;
+      push @track_errors, "$genome ($url/$file): " . $response->status_line;
       next;
     }
     
@@ -126,27 +137,25 @@ sub get_hub_info {
     foreach (split /\n/, $content) {
       next if /^#/ || !/\w+/ || !/^include/;
       
-      (my $filename = $_) =~ s/^include //;
-      push @track_list, $filename;
+      s/^include //;
+      push @track_list, "$url/$_";
     }
     
     if (scalar @track_list) {
       ## replace trackDb file location with list of track files
       $genome_info{$genome} = \@track_list;
     } else {
-      $file =~ s/.*\///;
-      $genome_info{$genome} = [ $file ];
+      $genome_info{$genome} = [ "$url/$file" ];
     }
   }
   
-  return \%genome_info;
+  return scalar @track_errors ? { error => \@track_errors } : { details => \%hub_details, genomes => \%genome_info };
 }
 
 =head2 parse
 
-  Arg [1]    : URL of datahub
-  Arg [2]    : Arrayref of config file names
-  Example    : $parser->parse();
+  Arg [1]    : Arrayref of config file URLs
+  Example    : $parser->parse($files);
   Description: Contacts the given data hub, fetches each config 
                file and parses the results. Returns an array of 
                track configurations (see _parse_file_content for details)
@@ -158,27 +167,26 @@ sub get_hub_info {
 =cut
 
 sub parse {
-  my ($self, $url, $files) = @_;
+  my ($self, $files) = @_;
   
-  if (!$url) {
+  if (!$files && !scalar @$files) {
     warn 'No datahub URL specified!';
     return;
   }
   
-  my $ua = $self->{'ua'};
+  my $ua   = $self->{'ua'};
   my $tree = EnsEMBL::Web::Tree->new;
   my $response;
   
   ## Get all the text files in the hub directory
   foreach (@$files) {
-    my $config_url = "$url/$_";
-       $response   = $ua->get($config_url);
+    $response = $ua->get($_);
     
-    if (!$response->is_success) {
-      $tree->append($tree->create_node("error_$_", { error => $response->status_line, file => $config_url }));
-    } else {
+    if ($response->is_success) {
       (my $content = $response->content) =~ s/\r//g;
-      $self->parse_file_content($tree, $content, $url, $config_url);
+      $self->parse_file_content($tree, $content, $_);
+    } else {
+      $tree->append($tree->create_node("error_$_", { error => $response->status_line, file => $_ }));
     }
   }
   
@@ -186,8 +194,9 @@ sub parse {
 }
 
 sub parse_file_content {
-  my ($self, $tree, $content, $url, $file) = @_;
+  my ($self, $tree, $content, $file) = @_;
   my %tracks;
+  my $url      = $file =~ s|^(.+)/.+|$1|r; # URL relative to the file (up until the last slash before the file name)
   my @contents = split /track /, $content;
   shift @contents;
   
@@ -313,9 +322,6 @@ sub parse_file_content {
   $self->make_tree($tree, \%tracks);
   $self->fix_tree($tree);
   $self->sort_tree($tree);
-  
-  #Carp::cluck;
-  #warn "\n\n\n";
 }
 
 sub make_tree {

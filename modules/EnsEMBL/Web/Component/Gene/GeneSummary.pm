@@ -38,6 +38,7 @@ sub content {
   my $site_type    = $species_defs->ENSEMBL_SITETYPE;
   my $matches      = $object->get_database_matches;
   my @CCDS         = grep $_->dbname eq 'CCDS', @{$object->Obj->get_all_DBLinks};
+  (my $RefSeqMatch)  = @{$object->gene->get_all_Attributes('refseq_compare')};
   my $db           = $object->get_db;
   my $alt_genes    = $self->_matches('alternative_genes', 'Alternative Genes', 'ALT_GENE', 'show_version'); #gets all xrefs, sorts them and stores them on the object. Returns HTML only for ALT_GENES
 
@@ -96,6 +97,16 @@ sub content {
     my %temp = map { $_->primary_id, 1 } @CCDS;
     @CCDS = sort keys %temp;
     $table->add_row('CCDS', sprintf('<p>This gene is a member of the %s CCDS set: %s</p>', $species_defs->DISPLAY_NAME, join ', ', map $hub->get_ExtURL_link($_, 'CCDS', $_), @CCDS));
+  }
+
+  ## add RefSeq match info where appropriate
+  if ($RefSeqMatch) {
+    $RefSeqMatch =~ /RefSeq Gene ID ([\d]+)/;
+    my $id = $1;
+    my $url = $hub->get_ExtURL('REFSEQ_GENEIMP', $id);
+    warn ">>> URL $url";
+    (my $string = $RefSeqMatch) =~ s/RefSeq Gene ID ([\d]+)/RefSeq Gene ID <a href="$url">$1<\/a>/;
+    $table->add_row('RefSeq', sprintf('<p>%s</p>', $string));
   }
 
   ## LRG info

@@ -54,28 +54,22 @@ sub bigbed_open {
 # checking whats in the BigBed file
 sub munge_chr_id {
   my ($self, $chr_id) = @_;
-
-  my $ret_id;
-
   my $bb = $self->bigbed_open;
+  
   warn "Failed to open BigBed file " . $self->url unless $bb;
+  
   return undef unless $bb;
 
-  my $ret_id = $chr_id;
-
-  # Check we get values back for seq region. Maybe need to add 'chr' 
-  my $length = $bb->chromSize("$chr_id");
-
-  if (!$length) {
-    $length = $bb->chromSize("chr$chr_id");
-    if ($length) {
-      $ret_id = "chr$chr_id";
-    } else {
-      warn " *** could not find region $chr_id in BigBed file\n";
-      return undef;
-    }
-  }
-
+  my $list = $bb->chromList;
+  my $head = $list->head;
+  my $ret_id;
+  
+  do {
+    $ret_id = $head->name if $head->name =~ /^(chr)?$chr_id$/ && $head->size; # Check we get values back for seq region. Maybe need to add 'chr' 
+  } while (!$ret_id && ($head = $head->next));
+  
+  warn " *** could not find region $chr_id in BigBed file" unless $ret_id;
+  
   return $ret_id;
 }
 

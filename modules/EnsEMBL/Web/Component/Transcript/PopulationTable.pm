@@ -91,7 +91,7 @@ sub content {
       $html .= $self->_info('Configuring the display', sprintf($message, join(',', @missing)));
     }
 
-    my $table = $self->new_table($columns, \@rows, { data_table => 1, sorting => [ 'chr asc', 'ID asc' ] })->render;
+    my $table = $self->new_table($columns, \@rows, { data_table => 1, sorting => [ 'chr asc', 'ID asc'], data_table_config => {iDisplayLength => 10} })->render;
     $html .= $table;
   }
   else { 
