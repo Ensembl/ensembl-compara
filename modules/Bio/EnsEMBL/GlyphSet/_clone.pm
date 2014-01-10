@@ -59,13 +59,7 @@ sub get_colours {
 sub colour_key {
   my ($self, $f) = @_;
   (my $state = $f->get_scalar_attribute('state')) =~ s/^\d\d://;
-  
-  return lc $state if $state;
-  
-  my $flag = 'default';
-     $flag = $self->{'flags'}{$f->dbID} ||= $self->{'flag'} = $self->{'flag'} eq 'default' ? 'alt' : 'default' if $self->my_config('set', 'alt');
-  
-  return ($self->my_config('set'), $flag);
+  return $state ? lc $state : $self->my_config('set');
 }
 
 sub feature_label {
