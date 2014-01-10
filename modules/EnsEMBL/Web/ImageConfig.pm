@@ -859,7 +859,7 @@ sub _add_datahub_tracks {
     # Graph range - Track Hub default is 0-127
     if (exists $track->{'viewLimits'}) {
       $source->{'viewLimits'} = $track->{'viewLimits'};
-    } elsif (!exists $track->{'autoscale'} || $track->{'autoscale'} eq 'off') {
+    } elsif ($track->{'autoScale'} eq 'off') {
       $source->{'viewLimits'} = '0:127';
     }
 
