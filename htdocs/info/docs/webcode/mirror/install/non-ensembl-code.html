@@ -1,6 +1,6 @@
 <html>
   <head>
-    <title>Installing non-Ensembl code - Perl/Apache/MysQL/SQLite/Dotter/CVS</title>
+    <title>Installing non-Ensembl code - Perl/Apache/MysQL/SQLite/Dotter/Git</title>
     <meta name="order" content="1">
   </head>
 <body> 
@@ -9,7 +9,7 @@
 
 <p>Ensembl is built on the following applications:</p>
 <ul>
-  <li><a href="#cvs">CVS</a> - versioning system to allow you to download the Ensembl code</li>
+  <li><a href="#git">Git</a> - versioning system to allow you to download the Ensembl code</li>
   <li><a href="#perl">Perl</a> - Open source scripting language</li>
   <li><a href="#apache">Apache and mod_perl</a> - Open source web server</li>
   <li><a href="#mysql">MySQL</a> - Open source database server</li>
@@ -33,28 +33,13 @@ your systems administrator to install this software for you.</p>
 running with pre-installed software (in particular Apache with mod_perl installed from RPMs), we
 recommend simply installing the latest version using the following instructions.</p>
 
-<h2 id="cvs">CVS</h2>
-<p>CVS is a software version control system that we use for storing the source code to Ensembl. You will
-need CVS installed if you want to download the Ensembl source code. It will also help you keep up to
-date with any bug fixes.  We also have a  
-<a href="http://cvs.sanger.ac.uk/cgi-bin/viewvc.cgi/?root=ensembl">Web-based CVS</a> repository.
+<h2 id="git">Git</h2>
+<p>Git is a software version control system that we use for storing the source code to Ensembl. You will
+need Git installed if you want to download the Ensembl source code. It will also help you keep up to
+date with any bug fixes. Our repositories are stored on <a href="https://github.com" rel="external">GitHub</a>.
 </p>
 
-<h3>To install CVS:</h3>
-<ol>
-<li>Download the latest source from <a href="http://ftp.gnu.org/non-gnu/cvs/source/stable/1.11.23/" rel="external">http://ftp.gnu.org/non-gnu/cvs/source/stable/1.11.23/</a> (you may be
-able to download binaries from here instead if you prefer). At the time of writing this is version
-1.11.23 and the file to download is cvs-1.11.23.tar.gz
-</li>
-<li>Unpack the source in a working directory with:
-  <pre class="code">
-  gunzip &lt; cvs-1.11.23.tar.gz | tar xvf -
-  cd cvs-1.11.23
-  ./configure
-  make
-  make install</pre>
-</li>
-</ol>
+<p>Git installation instructions can be found on the <a href="http://git-scm.com/book/en/Getting-Started-Installing-Git" rel="external">Git website</a>.</p>
 
 <h2 id="perl">Perl</h2>
 <p>If you are on a Unix-based OS such as Mac OS X or Linux, you will already have Perl installed. You need Perl5, version 5.8.0 or higher, to run the website - we recommend avoiding 5.10.0 as it contains major bugs.</p>
@@ -85,7 +70,8 @@ choose somewhere that has sufficient space free - at least 600 GB for the comple
 /data/ as an example. Again, when following these instructions, replace /data/ with whatever path
 you choose.</li>
 <li>Move the binary tarball to /data/</li>
-<li>Unpack the tarball with:
+<li>
+<p>Unpack the tarball with:</p>
 <pre class="code">$ gunzip &lt; mysql-WHATEVER.tar.gz | tar xvf -</pre>
 Follow the straightforward setup instructions in the INSTALL-BINARY file that comes with MySQL. It
 should be located in the "mysql-WHATEVER" directory you just unpacked.
@@ -111,8 +97,8 @@ reliably with Apache 2.4 at the moment, so we recommend using the 2.2.x legacy v
 the latest version, currently this is 2.0.3 and the file to download is mod_perl-2.0.3.tar.gz.
 </li>
 <li>
-  Unpack all the sources in a working directory with:
-  <pre class="code">
+<p>Unpack all the sources in a working directory with:</p>
+<pre class="code">
 tar zxf httpd-2.2.25.tar.gz
 tar zxf mod_perl-2.0.3.tar.gz | tar xvf -
 cd httpd-2.2.4
@@ -121,16 +107,16 @@ cd ../mod_perl-2.0.3</pre>
 The default installation directory is in an apache2 subdirectory of your website's server root; if you want to put it elsewhere, you will need to override the $APACHE_DIR dsetting in your <a href="../configure.html">plugin</a>.
 </li>
 <li>
-  Build the perl makefile:
-  <pre class="code">perl Makefile.PL PREFIX=<var>Apache directory</var> MP_APXS=<var>Apache directory</var>/bin/apxs</pre>
+<p>Build the perl makefile:</p>
+<pre class="code">perl Makefile.PL PREFIX=<var>Apache directory</var> MP_APXS=<var>Apache directory</var>/bin/apxs</pre>
 </li>
 <li>
-  Run the 'make' utility:
-  <pre class="code">make</pre>
+<p>Run the 'make' utility:</p>
+<pre class="code">make</pre>
 </li>
 <li>
-  ...and install
-  <pre class="code">make install</pre>
+<p>...and install</p>
+<pre class="code">make install</pre>
 </li>
 </ol>
 
@@ -271,12 +257,13 @@ make install
     <dd>Used extensively to percent-encode and percent-decode unsafe characters</dd>
 
     <dt>XML::Parser</dt>
-    <dd>used by DAS to parse DAS sources
+    <dd><p>used by DAS to parse DAS sources
     <br />Note: module is a wrapper around the expat library, which should be installed
 first:
 <br />Download the expat source from http://sourceforge.net/projects/expat/. Get the
 latest version (currently expat-1.95.8.tar.gz). Run the following commands:
-  <pre class="code">
+</p>
+<pre class="code">
 gunzip &lt; expat-1.95.8.tar.gz | tar xvf -
 cd expat-1.95.8
 ./configure
