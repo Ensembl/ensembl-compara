@@ -14,26 +14,24 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 
-=cut
-
-
 =head1 CONTACT
 
-  Please email comments or questions to the public Ensembl
-  developers list at <http://lists.ensembl.org/mailman/listinfo/dev>.
+Please email comments or questions to the public Ensembl
+developers list at <http://lists.ensembl.org/mailman/listinfo/dev>.
 
-  Questions may also be sent to the Ensembl help desk at
-  <http://www.ensembl.org/Help/Contact>.
+Questions may also be sent to the Ensembl help desk at
+<http://www.ensembl.org/Help/Contact>.
 
 =head1 NAME
 
-Bio::EnsEMBL::Compara::GenomeDB - DESCRIPTION of Object
+Bio::EnsEMBL::Compara::GenomeDB
 
 =head1 SYNOPSIS
-  use Bio::EnsEMBL::Compara::DnaFrag; 
+
+  use Bio::EnsEMBL::Compara::GenomeDB;
   my $genome_db = Bio::EnsEMBL::Compara::GenomeDB->new();
 
-SET VALUES
+  # SET VALUES
   $genome_db->dbID(22);
   $genome_db->dba($dba);
   $genome_db->name("Homo sapiens");
@@ -44,7 +42,7 @@ SET VALUES
   $genome_db->assembly_default(1);
   $genome_db->locator("Bio::EnsEMBL::DBSQL::DBAdaptor/host=???;port=???;user=???;dbname=homo_sapiens_core_51_36m;species=Homo sapiens;disconnect_when_inactive=1");
 
-GET VALUES
+  # GET VALUES
   $dbID = $genome_db->dbID;
   $genome_db_adaptor = $genome_db->adaptor;
   $name = $genome_db->name;
@@ -58,7 +56,7 @@ GET VALUES
 
 =head1 DESCRIPTION
 
-The GenomeDB object stores information about each species including the taxon_id, species name, assembly, genebuild and the location of the core database.
+The GenomeDB object stores information about each species including the taxon id, species name, assembly, genebuild and the location of the core database.
 
 =head1 APPENDIX
 
@@ -130,7 +128,7 @@ sub new {
 
         foreach my $test (@parameters) {
             if (not defined $test->[2]) {
-                warn "'$test->[0]' is not defined in the core database\n";
+                warn "'$test->[0]' cannot be defined from the core database\n";
                 next;
             }
             if (defined ${$test->[1]} and (${$test->[1]} ne $test->[2])) {
