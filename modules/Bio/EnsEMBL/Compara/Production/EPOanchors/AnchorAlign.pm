@@ -39,24 +39,24 @@ use Bio::EnsEMBL::Utils::Argument qw(rearrange);
 use Bio::EnsEMBL::Compara::DnaFrag;
 use Bio::EnsEMBL::Utils::Exception;
 
+use base ('Bio::EnsEMBL::Storable');        # inherit dbID(), adaptor() and new() methods
+
+
 sub new {
     my($class, @args) = @_;
 
-    my $self = {};
-    bless $self,$class;
+    my $self = $class->SUPER::new(@_);       # deal with Storable stuff
 
     ## First lines are for backward compatibility, middle one is for both versions and
     ## last ones are for the new schema
-    my ($adaptor, $dbID, $method_link_species_set, $method_link_species_set_id, $anchor_id,
+    my ($method_link_species_set, $method_link_species_set_id, $anchor_id,
         $dnafrag, $dnafrag_id, $dnafrag_start, $dnafrag_end, $dnafrag_strand,
         $score, $num_of_organisms, $num_of_sequences, $evalue, $anchor_status) =
       rearrange([qw(
-          ADAPTOR DBID METHOD_LINK_SPECIES_SET METHOD_LINK_SPECIES_SET_ID ANCHOR_ID
+          METHOD_LINK_SPECIES_SET METHOD_LINK_SPECIES_SET_ID ANCHOR_ID
           DNAFRAG DNAFRAG_ID DNAFRAG_START DNAFRAG_END DNAFRAG_STRAND
           SCORE NUM_OF_ORGANISMS NUM_OF_SEQUENCES EVALUE ANCHOR_STATUS)], @args);
 
-    $self->adaptor($adaptor) if (defined($adaptor));
-    $self->dbID($dbID) if (defined($dbID));
     $self->method_link_species_set($method_link_species_set) if (defined($method_link_species_set));
     $self->method_link_species_set_id($method_link_species_set_id) if (defined($method_link_species_set_id));
     $self->anchor_id($anchor_id) if (defined($anchor_id));
@@ -71,22 +71,6 @@ sub new {
     $self->evalue($evalue) if (defined($evalue));
     $self->anchor_status($anchor_status) if (defined($anchor_status));
     return $self;
-}
-
-sub adaptor {
-  my $self = shift;
-  if (@_) {
-    $self->{_adaptor} = shift;
-  }
-  return $self->{_adaptor};
-}
-
-sub dbID {
-  my $self = shift;
-  if (@_) {
-    $self->{_dbID} = shift;
-  }
-  return $self->{_dbID};
 }
 
 sub method_link_species_set {
@@ -128,8 +112,8 @@ sub dnafrag {
   my $self = shift;
   if (@_) {
     $self->{_dnafrag} = shift;
-  } elsif (!$self->{_dnafrag} and $self->{_dnafrag_id} and $self->{_adaptor}) {
-    $self->{_dnafrag} = $self->{_adaptor}->db->get_DnaFragAdaptor->fetch_by_dbID($self->{_dnafrag_id});
+  } elsif (!$self->{_dnafrag} and $self->{_dnafrag_id} and $self->{adaptor}) {
+    $self->{_dnafrag} = $self->{adaptor}->db->get_DnaFragAdaptor->fetch_by_dbID($self->{_dnafrag_id});
   }
   return $self->{_dnafrag};
 }
