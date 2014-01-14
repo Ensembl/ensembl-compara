@@ -4,7 +4,7 @@ modules. The test-genome-DBs.zip file contains the set of data that is
 used by the tests.
 
 The test system requires some modules which are in a seperate
-CVS module ensembl-test.  To use the tests you must add the
+GIT repository ensembl-test. To use the tests you must add the
 ensembl-test modules to your PERL5LIB environment variable.
 
 Example:

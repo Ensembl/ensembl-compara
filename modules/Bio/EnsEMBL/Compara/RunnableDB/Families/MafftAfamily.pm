@@ -23,6 +23,16 @@ use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
 
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
+sub param_defaults {
+    return {
+            # --anysymbol helps when Uniprot sequence contains 'U' or other funny aminoacid codes
+            # --thread 1 is supposed to prevent forking
+        'mafft_cmdline_args'    => '--anysymbol --thread 1',
+        'mafft_exec'            => '#mafft_root_dir#/bin/mafft',
+    };
+}
+
+
 sub fetch_input {
     my $self = shift @_;
 
@@ -68,8 +78,8 @@ sub fetch_input {
         return;
 
     } elsif ($pep_counter>=20000) {
-        my $mafft_args = $self->param('mafft_args') || '';
-        $self->param('mafft_args', $mafft_args.' --parttree' );
+        my $mafft_cmdline_args = $self->param('mafft_cmdline_args') || '';
+        $self->param('mafft_cmdline_args', $mafft_cmdline_args.' --parttree' );
     }
 
         # if these two parameters are set, run() will need to actually execute mafft
@@ -84,22 +94,13 @@ sub run {
 
     my $family_id               = $self->param('family_id');
     my $mafft_root_dir          = $self->param_required('mafft_root_dir');
-    my $mafft_executable        = $self->param('mafft_exec')     || ( $mafft_root_dir . '/bin/mafft' );
-    my $mafft_args              = $self->param('mafft_args')     || '';
-
-    my $pep_file                = $self->param('pep_file');
+    my $mafft_executable        = $self->param_required('mafft_exec');
+    my $mafft_cmdline_args      = $self->param('mafft_cmdline_args') || '';
+    my $pep_file                = $self->param('pep_file') or return;   # if we have no more work to do just exit gracefully
     my $mafft_file              = $self->param('mafft_file');
 
-    unless($pep_file) { # if we have no more work to do just exit gracefully
-        return;
-    }
+    my $cmd_line = "$mafft_executable $mafft_cmdline_args $pep_file > $mafft_file";
 
-    # $ENV{MAFFT_BINARIES} = $mafft_root_dir.'/bin'; # not needed (actually, in the way) for newer versions of MAFFT
-
-        # --anysymbol helps when Uniprot sequence contains 'U' or other funny aminoacid codes
-        # --thread 1 is supposed to prevent forking
-    my $cmd_line = "$mafft_executable --anysymbol --thread 1 $mafft_args $pep_file > $mafft_file";
-    # my $cmd_line = "$mafft_executable $mafft_args $pep_file > $mafft_file";
     if($self->debug) {
         warn "About to execute: $cmd_line\n";
     }

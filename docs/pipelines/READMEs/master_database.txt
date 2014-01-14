@@ -29,12 +29,13 @@ species_set_tag          species specific tags
 
 1.1 Code checkout
 
-      cvs -d :ext:cvs.sanger.ac.uk:/nfs/ensembl/cvsroot co -r branch-ensembl-XXXX ensembl
-      cvs -d :ext:cvs.sanger.ac.uk:/nfs/ensembl/cvsroot co -r branch-ensembl-XXXX ensembl-compara
-      cvs -d :ext:cvs.sanger.ac.uk:/nfs/ensembl/cvsroot co -r branch-ensembl-XXXX ensembl-hive
-      cvs -d :ext:cvs.sanger.ac.uk:/nfs/ensembl/cvsroot co -r branch-ensembl-XXXX ensembl-analysis
+      git clone https://github.com/Ensembl/ensembl.git
+      git clone https://github.com/Ensembl/ensembl-compara.git
+      git clone https://github.com/Ensembl/ensembl-hive.git
+      git clone https://github.com/Ensembl/ensembl-analysis.git
 
-In these commands (and in the rest of the document), replace "XXXX" with the API version you are interested in (e.g. 73)
+By default, the latest stable version of the API is checked out.
+Do "git checkout release/XXXX" (where XXXX is the API version you are interested in -e.g. 73- ) in each of the above directories should you need a specific version.
 
 in tcsh
     setenv ENSEMBL_CVS_ROOT_DIR  /some/path/to/base/dir

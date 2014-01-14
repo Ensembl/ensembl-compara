@@ -22,7 +22,7 @@ limitations under the License.
 
 =head1 SYNOPSIS
 
-    #1. Update ensembl-hive, ensembl and ensembl-compara CVS repositories before each new release
+    #1. Update ensembl-hive, ensembl and ensembl-compara GIT repositories before each new release
 
 =head1 CONTACT
 
