@@ -246,8 +246,9 @@ dumped once per duplicated segment.\n";
 
     if ($self->param('format') eq "emf") {
 	print FILE "An emf2maf parser is available with the ensembl compara API, in the
-scripts/dumps directory. Alternatively you can download it using the web CVS
-frontend: http://cvs.sanger.ac.uk/cgi-bin/viewcvs.cgi/*checkout*/ensembl-compara/scripts/dumps/emf2maf.pl\n";
+scripts/dumps directory. Alternatively you can download it using the GitHub frontend:
+https://github.com/Ensembl/ensembl-compara/raw/master/scripts/dumps/emf2maf.pl
+";
     }
 
     print FILE "Please note that MAF format does not support conservation scores.\n";
@@ -335,8 +336,9 @@ not include any $species region.\n";
 
     if ($self->param('format') eq "emf") {
 	print FILE "An emf2maf parser is available with the ensembl compara API, in the scripts/dumps 
-directory. Alternatively you can download it using the web CVS frontend:
-http://cvs.sanger.ac.uk/cgi-bin/viewcvs.cgi/*checkout*/ensembl-compara/scripts/dumps/emf2maf.pl\n";
+directory. Alternatively you can download it using the GitHub frontend:
+https://github.com/Ensembl/ensembl-compara/raw/master/scripts/dumps/emf2maf.pl
+";
     }
 
     close FILE;
@@ -380,8 +382,9 @@ not include any human region.\n";
 
     if ($self->param('format') eq "emf") {
 	print FILE "An emf2maf parser is available with the ensembl compara API, in the scripts/dumps
-directory. Alternatively you can download it using the web CVS frontend:
-http://cvs.sanger.ac.uk/cgi-bin/viewcvs.cgi/*checkout*/ensembl-compara/scripts/dumps/emf2maf.pl\n";
+directory. Alternatively you can download it using the web GitHub frontend:
+https://github.com/Ensembl/ensembl-compara/raw/master/scripts/dumps/emf2maf.pl
+";
     }
 
     print FILE "Please note that MAF format does not support conservation scores.\n";

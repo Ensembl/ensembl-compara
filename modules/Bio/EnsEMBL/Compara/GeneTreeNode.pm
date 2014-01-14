@@ -42,7 +42,7 @@ Phylogenetic tree
 
 =head1 AUTHORSHIP
 
-Ensembl Team. Individual contributions can be found in the CVS log.
+Ensembl Team. Individual contributions can be found in the GIT log.
 
 =head1 APPENDIX
 

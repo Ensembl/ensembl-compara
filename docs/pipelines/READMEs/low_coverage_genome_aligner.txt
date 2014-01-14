@@ -18,10 +18,10 @@ The pipeline involves taking the high coverage EPO alignment and mapping onto th
 2.1 Code checkout
 
       cvs -d :ext:bio.perl.org:/home/repository/bioperl co -r branch-07 bioperl-live
-      cvs -d :ext:cvs.sanger.ac.uk:/nfs/ensembl/cvsroot co ensembl
-      cvs -d :ext:cvs.sanger.ac.uk:/nfs/ensembl/cvsroot co ensembl-compara
-      cvs -d :ext:cvs.sanger.ac.uk:/nfs/ensembl/cvsroot co ensembl-hive
-      cvs -d :ext:cvs.sanger.ac.uk:/nfs/ensembl/cvsroot co ensembl-analysis
+      git clone https://github.com/Ensembl/ensembl.git
+      git clone https://github.com/Ensembl/ensembl-compara.git
+      git clone https://github.com/Ensembl/ensembl-hive.git
+      git clone https://github.com/Ensembl/ensembl-analysis.git
 
 in tcsh
     setenv ENSEMBL_CVS_ROOT_DIR  /some/path/to/modules
@@ -67,7 +67,7 @@ cs_mlss_id                  => mlss_id of the conservation scores
 
 release                     => ensembl release
 prev_release		    => previous ensembl release 
-ensembl_cvs_root_dir        => location of ensembl cvs root directory
+ensembl_cvs_root_dir        => root directory of the ensembl checkouts
 work_dir                    => directory for writing files 
 
 pairwise_exception_location => location of new pairwise alignments which are not in the release compara database ie new for this release

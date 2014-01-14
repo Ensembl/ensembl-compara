@@ -35,7 +35,7 @@ limitations under the License.
 
 =head1 SYNOPSIS
 
-    #1. update ensembl-hive, ensembl and ensembl-compara CVS repositories before each new release
+    #1. update ensembl-hive, ensembl and ensembl-compara GIT repositories before each new release
 
     #2. you may need to update 'schema_version' in meta table to the current release number in ensembl-hive/sql/tables.sql
 
@@ -48,7 +48,7 @@ limitations under the License.
 
 =head1 AUTHORSHIP
 
-Ensembl Team. Individual contributions can be found in the CVS log.
+Ensembl Team. Individual contributions can be found in the GIT log.
 
 =head1 APPENDIX
 

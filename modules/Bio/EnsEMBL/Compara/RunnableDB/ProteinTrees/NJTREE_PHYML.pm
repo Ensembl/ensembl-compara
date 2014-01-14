@@ -40,7 +40,7 @@ input_id/parameters format eg: "{'gene_tree_id'=>1234}"
 
 =head1 AUTHORSHIP
 
-Ensembl Team. Individual contributions can be found in the CVS log.
+Ensembl Team. Individual contributions can be found in the GIT log.
 
 =head1 APPENDIX
 

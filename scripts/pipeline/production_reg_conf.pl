@@ -14,7 +14,7 @@
 
 
 # Release Coordinator, please update this file before starting every release
-# and check the changes back into CVS for everyone's benefit.
+# and check the changes back into GIT for everyone's benefit.
 
 # Things that normally need updating are:
 #
