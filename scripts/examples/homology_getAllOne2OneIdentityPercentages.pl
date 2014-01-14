@@ -53,7 +53,7 @@ foreach my $gene (@$genes) {
     my $first_found = 0;
     foreach my $member (@{$this_homology->get_all_GeneMembers}) {
       my $label = $member->display_label || $member->stable_id;
-      print $member->genome_db->short_name, ",", $label, "\t";
+      print $member->genome_db->get_short_name, ",", $label, "\t";
     }
     my $pairwise_alignment_from_multiple = $this_homology->get_SimpleAlign;
     my $overall_pid = $pairwise_alignment_from_multiple->overall_percentage_identity;

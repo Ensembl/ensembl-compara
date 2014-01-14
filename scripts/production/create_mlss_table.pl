@@ -293,7 +293,7 @@ if (defined $species_tree_file or $species_tree_from_db) {
             $genome_db = $genome_db_adaptor->fetch_by_name_assembly($name);
         };
         unless ($@) {
-            $spp->{short_name} = substr($genome_db->short_name, 0, 1) . "." . substr($genome_db->short_name, 1);
+            $spp->{short_name} = substr($genome_db->get_short_name, 0, 1) . "." . substr($genome_db->get_short_name, 1);
         }
         push @$species, $spp;
     }
@@ -426,7 +426,7 @@ sub findGenomeDBFromShortName {
     my $all_genome_dbs = $genome_db_adaptor->fetch_all;
     $short_name =~ tr/\.//d;
     foreach my $genome_db (@$all_genome_dbs) {
-        if ($genome_db->short_name eq $short_name) {
+        if ($genome_db->get_short_name eq $short_name) {
             return $genome_db;
         }
     }

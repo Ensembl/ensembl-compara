@@ -220,34 +220,6 @@ sub name{
 }
 
 
-=head2 short_name
-
-  Example    : $gdb->short_name;
-  Description: The name of this genome in the Gspe ('G'enera
-               'spe'cies) format. Can also handle 'G'enera 's'pecies
-               's'ub 's'pecies (Gsss)
-  Returntype : string
-  Exceptions : none
-  Caller     : general
-  Status     : Stable
-
-=cut
-
-sub short_name {
-  my $self = shift;
-  my $name = $self->name;
-  $name =~ s/\b(\w)/\U$1/g;
-  $name =~ s/\_/\ /g;
-  unless( $name =~  s/(\S)\S*\s(\S)\S*\s(\S)\S*\s(\S).*/$1$2$3$4/ ){
-    unless( $name =~  s/(\S)\S*\s(\S)\S*\s(\S{2,2}).*/$1$2$3/ ){
-      unless( $name =~  s/(\S)\S*\s(\S{3,3}).*/$1$2/ ){
-        $name = substr( $name, 0, 4 );
-      }
-    }
-  }
-  return $name;
-}
-
 =head2 get_short_name
 
   Example    : $gdb->get_short_name;
@@ -263,7 +235,29 @@ sub short_name {
 
 sub get_short_name {
   my $self = shift;
-  return $self->short_name;
+  my $name = $self->name;
+  $name =~ s/\b(\w)/\U$1/g;
+  $name =~ s/\_/\ /g;
+  unless( $name =~  s/(\S)\S*\s(\S)\S*\s(\S)\S*\s(\S).*/$1$2$3$4/ ){
+    unless( $name =~  s/(\S)\S*\s(\S)\S*\s(\S{2,2}).*/$1$2$3/ ){
+      unless( $name =~  s/(\S)\S*\s(\S{3,3}).*/$1$2/ ){
+        $name = substr( $name, 0, 4 );
+      }
+    }
+  }
+  return $name;
+}
+
+=head2 short_name
+
+  Description: DEPRECATED. GenomeDB::short_name() is deprecated in favour of get_short_name(), and will be removed in e76
+
+=cut
+
+sub short_name {
+  my $self = shift;
+  deprecate('GenomeDB::short_name() is deprecated in favour of get_short_name(), and will be removed in e76');
+  return $self->get_short_name;
 }
 
 
