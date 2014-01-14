@@ -88,7 +88,6 @@ sub new {
   my $self = {};
   bless $self,$class;
   $self->{'_node_id'} = undef;
-  $self->{'_adaptor'} = undef;
   return $self;
 }
 
@@ -159,31 +158,6 @@ sub node_id {
   $self->{'_node_id'} = shift if(@_);
   return $self unless(defined($self->{'_node_id'}));
   return $self->{'_node_id'};
-}
-
-=head2 adaptor
-
-  Arg [1]    : (opt.) subcalss of Bio::EnsEMBL::DBSQL::BaseAdaptor
-  Example    : my $object_adaptor = $object->adaptor();
-  Example    : $object->adaptor($object_adaptor);
-  Description: Getter/Setter for the adaptor this object uses for database
-               interaction.
-  Returntype : subclass of Bio::EnsEMBL::DBSQL::BaseAdaptor
-  Exceptions : none
-  Caller     : general
-
-=cut
-
-sub adaptor {
-  my $self = shift;
-  $self->{'_adaptor'} = shift if(@_);
-  return $self->{'_adaptor'};
-}
-
-sub store {
-  my $self = shift;
-  throw("adaptor must be defined") unless($self->adaptor);
-  $self->adaptor->store($self) if $self->adaptor->can("store");
 }
 
 sub name {
