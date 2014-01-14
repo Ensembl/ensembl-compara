@@ -100,9 +100,10 @@ sub fetch_features {
   my $slice     = $self->{'container'};
   my $colourmap = $config->colourmap;
   my $id        = $self->{'my_config'}->id;
+  my $var_db    = $self->my_config('db') || 'variation';
   
   if (!$self->cache($id)) {
-    my $variation_db_adaptor = $config->hub->database('variation', $self->species);
+    my $variation_db_adaptor = $config->hub->database($var_db, $self->species);
     my $orig_failed_flag     = $variation_db_adaptor->include_failed_variations;
     
     $variation_db_adaptor->include_failed_variations(0); # Disable the display of failed variations by default
@@ -112,11 +113,11 @@ sub fetch_features {
       my @somatic_mutations;
       
       if ($self->my_config('filter')) { 
-        @somatic_mutations = @{$slice->get_all_somatic_VariationFeatures_with_annotation(undef, undef, $self->my_config('filter')) || []};
+        @somatic_mutations = @{$slice->get_all_somatic_VariationFeatures_with_phenotype(undef, undef, $self->my_config('filter'), $var_db) || []};
       } elsif ($self->my_config('source')) {
-        @somatic_mutations = @{$slice->get_all_somatic_VariationFeatures_by_source($self->my_config('source')) || []};
+        @somatic_mutations = @{$slice->get_all_somatic_VariationFeatures_by_source($self->my_config('source'), undef, $var_db) || []};
       } else { 
-        @somatic_mutations = @{$slice->get_all_somatic_VariationFeatures || []};
+        @somatic_mutations = @{$slice->get_all_somatic_VariationFeatures($var_db) || []};
       }
       
       $self->cache($id, \@somatic_mutations);   
@@ -135,12 +136,12 @@ sub fetch_features {
         # Enable the display of failed variations in order to display the failed variation track
         $variation_db_adaptor->include_failed_variations(1) if $track_set =~ /failed/i;
         
-        @vari_features = @{$slice->get_all_VariationFeatures_by_VariationSet($set_object) || []};
+        @vari_features = @{$slice->get_all_VariationFeatures_by_VariationSet($set_object, $var_db) || []};
         
         # Reset the flag for displaying of failed variations to its original state
         $variation_db_adaptor->include_failed_variations($orig_failed_flag);
       } else {
-        my @temp_variations = @{$slice->get_all_VariationFeatures() || []}; 
+        my @temp_variations = @{$slice->get_all_VariationFeatures($var_db) || []}; 
         
         ## Add a filtering step here
         @vari_features =
