@@ -15,35 +15,34 @@
 All data sets in the Ensembl system are stored in relational databases
 (MySQL). For each of the <a href="./index.html">Ensembl databases</a>
 the project provides a specific Perl API. As Ensembl takes also
-advantage of code provided by
-the <a href="http://www.bioperl.org/wiki/Main_Page"
-rel="external">BioPerl</a> project; installation of the BioPerl
-package is included in these instructions.
+advantage of code provided by the <a href="http://www.bioperl.org/wiki/Main_Page" rel="external">BioPerl</a> project; 
+installation of the BioPerl package is included in these instructions.
 </p>
 
 <h2>Video Tutorial</h2>
 
-<p>Ensembl has produced a video tutorial about how to install the API. Its content is based on this document so you can follow both resources when performing an installation. All commands in this video can be found from the following 
-<a href='ftp://ftp.ebi.ac.uk/pub/databases/ensembl/Helpdesk/API_video_script.txt'>document on our FTP site</a>.</p>
+<p>
+Ensembl has produced a video tutorial about how to install the API. 
+Its content is based on this document so you can follow both resources when performing an installation. 
+All commands in this video can be found from the following 
+<a href="ftp://ftp.ebi.ac.uk/pub/databases/ensembl/Helpdesk/API_video_script.txt">document on our FTP site</a>.
+</p>
 
 <p>[[MOVIE::395]]</p>
 
 <h2>Installation Procedure</h2>
 
 <p>
-There are two ways of installing the Perl API. You can
-<a href="/info/docs/api/api_cvs.html">check it out using CVS</a>
-(Concurrent Versioning System) if you have that available, you can download
-      the files in gzipped TAR format from either our <a
-	rel="external" href="ftp://ftp.ensembl.org/pub/ensembl-api.tar.gz">FTP site</a> or our
-      CVS website as detailed below:
+There are two ways of installing the Perl API. You can <a href="/info/docs/api/api_git.html">clone it from GitHub using Git</a> 
+if you have that available, or you can download the files in gzipped TAR format from our 
+<a href="ftp://ftp.ensembl.org/pub/ensembl-api.tar.gz" rel="external">FTP site</a>, or as a zip file from GitHub as detailed below:
 </p>
 
 
 <ol>
 <li>
 <p>
-Create an installation directory
+Create an installation directory:
 </p>
 
 <pre>
@@ -59,10 +58,10 @@ Download the API packages you need:
 </p>
 
 <ul>
-  <li><a href="/cvsdownloads/ensembl-[[SPECIESDEFS::ENSEMBL_VERSION]].tar.gz">ensembl</a></li>
-  <li><a href="/cvsdownloads/ensembl-compara-[[SPECIESDEFS::ENSEMBL_VERSION]].tar.gz">ensembl-compara</a></li>
-  <li><a href="/cvsdownloads/ensembl-variation-[[SPECIESDEFS::ENSEMBL_VERSION]].tar.gz">ensembl-variation</a></li>
-  <li><a href="/cvsdownloads/ensembl-funcgen-[[SPECIESDEFS::ENSEMBL_VERSION]].tar.gz">ensembl-funcgen</a></li>
+  <li><a href="https://github.com/Ensembl/ensembl/archive/release/[[SPECIESDEFS::ENSEMBL_VERSION]].zip">ensembl</a></li>
+  <li><a href="https://github.com/Ensembl/ensembl-compara/archive/release/[[SPECIESDEFS::ENSEMBL_VERSION]].zip">ensembl-compara</a></li>
+  <li><a href="https://github.com/Ensembl/ensembl-variation/archive/release/[[SPECIESDEFS::ENSEMBL_VERSION]].zip">ensembl-variation</a></li>
+  <li><a href="https://github.com/Ensembl/ensembl-funcgen/archive/release/[[SPECIESDEFS::ENSEMBL_VERSION]].zip">ensembl-funcgen</a></li>
 </ul>
 
 <p>

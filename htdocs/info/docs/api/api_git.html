@@ -1,0 +1,156 @@
+<html>
+<head>
+<title>API Installation - Git</title>
+<meta name="order" content="2" />
+</head>
+
+<body>
+
+<h1>Perl API Installation with Git</h1>
+
+
+<h2>Introduction</h2>
+
+<p>
+Ensembl uses <a href="http://git-scm.com" rel="external">Git</a> and <a href="https://github.com" rel="external">GitHub</a> for storing the
+source code and keeping track of source code revisions. This system
+will help you keeping up to date with developments and bug fixes. You
+will need Git installed if you want to download Ensembl code.
+A list of graphical Git clients can be found <a href="http://git-scm.com/downloads/guis" rel="external">here</a>.
+</p>
+
+<p>
+There is also an Ensembl Virtual Machine available for download which comes with the latest API pre-installed. You may download this and get started immediately with the API without having to go through the steps below. Full instructions are <a href="/info/data/virtual_machine.html"> available here </a></p>
+</p>
+
+<h2>Installation Procedure</h2>
+
+<ol>
+
+<li>
+<p>
+Create an installation directory
+</p>
+
+<pre>
+$ cd
+$ mkdir src
+$ cd src
+</pre>
+</li>
+
+<li>
+<p>Take a clone of BioPerl from GitHub</p>
+<pre>
+$ git clone https://github.com/bioperl/bioperl-live.git
+Cloning into 'bioperl-live'...
+remote: Counting objects: 99558, done.
+remote: Compressing objects: 100% (23306/23306), done.
+remote: Total 99558 (delta 76021), reused 99097 (delta 75628)
+Receiving objects: 100% (99558/99558), 140.34 MiB | 5.66 MiB/s, done.
+Resolving deltas: 100% (76021/76021), done.
+</pre>
+</li>
+
+<li>
+<p>
+Switch to <a href="http://www.bioperl.org/wiki/Main_Page" rel="external">BioPerl</a> version 1.2.3. Do not worry about warnings from Git about being in a <em>detatched HEAD</em> state.
+</p>
+
+<pre>
+$ cd bioperl-live
+$ git checkout bioperl-release-1-2-3
+$ cd ..
+</pre>
+
+<p class="notice">Important note: you must install <strong>version 1.2.3</strong>, not a more recent version. Starting with  1.2.4, major changes were made to the BioPerl API which have made it incompatible with Ensembl.</p>
+
+</li>
+
+<li>
+<p>
+Install the <a href="https://github.com/Ensembl/ensembl-git-tools/blob/master/README.md" rel="external">Ensembl git tools</a> to allow easy management of the Ensembl repos.
+</p>
+<pre>
+$ git clone https://github.com/Ensembl/ensembl-git-tools.git
+$ export PATH=$PWD/ensembl-git-tools/bin:$PATH
+</pre>
+</li>
+
+<li>
+<p>
+Install the APIs that you need. You can install all the APIs using the git ensembl command:
+</p>
+<pre>
+$ git ensembl --clone api
+</pre>
+<p>
+Or you can install APIs individually as needed:
+</p>
+<pre>
+$ git clone https://github.com/Ensembl/ensembl.git
+$ git clone https://github.com/Ensembl/ensembl-variation.git
+$ git clone https://github.com/Ensembl/ensembl-funcgen.git
+$ git clone https://github.com/Ensembl/ensembl-compara.git
+</pre>
+<p>
+APIs installed this way will automatically be on the release/[[SPECIESDEFS::ENSEMBL_VERSION]] branch.
+</p>
+</li>
+
+<li>
+<p>
+Set up your environment as described in the <a href="api_installation.html">basic installation instructions</a>.
+</p>
+</li>
+
+</ol>
+
+<p>
+In case you want to update the Perl APIs to a more recent version, keep in mind 
+that the API and database versions must be identical; you can use a simple Git 
+command to achieve this.
+</p>
+
+<ol>
+<li>
+<p>
+Change the working directory to the directory into which you originally
+installed the APIs.
+</p>
+
+<pre>
+$ cd
+$ cd src
+</pre>
+</li>
+
+<li>
+<p>Use the git ensembl command to change branches:</p>
+<pre>
+$ git ensembl --checkout --branch release/[[SPECIESDEFS::ENSEMBL_VERSION]] api
+</pre>
+<p>Or update each repo individually:</p>
+<pre>
+$ cd ensembl
+$ git checkout release/[[SPECIESDEFS::ENSEMBL_VERSION]]
+$ cd ..
+</pre>
+
+<p>
+Git will automatically add, modify or delete files so that your working
+directory will resemble the branch you selected.
+</p>
+
+</li>
+
+</ol>
+
+<h2>Debugging an Installation</h2>
+
+<p>
+Sometimes installations can go wrong. You should follow our <a href='/info/docs/api/debug_installation_guide.html'>debugging installation guide</a> to help diagnose and resolve installation issues.
+</p>
+
+</body>
+</html>

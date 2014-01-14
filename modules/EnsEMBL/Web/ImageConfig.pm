@@ -859,7 +859,7 @@ sub _add_datahub_tracks {
     # Graph range - Track Hub default is 0-127
     if (exists $track->{'viewLimits'}) {
       $source->{'viewLimits'} = $track->{'viewLimits'};
-    } elsif (!exists $track->{'autoscale'} || $track->{'autoscale'} eq 'off') {
+    } elsif ($track->{'autoScale'} eq 'off') {
       $source->{'viewLimits'} = '0:127';
     }
 
@@ -981,10 +981,11 @@ sub load_file_format {
     
     if ($menu) {
       $source = $self->sd_call($source_name);
+      $view = $source->{'view'};
     } else {
       ## Probably an external datahub source
          $source       = $sources->{$source_name};
-         $view         = $source->{'view'},
+         $view         = $source->{'view'};   
       my $menu_key     = $source->{'menu_key'};
       my $menu_name    = $source->{'menu_name'};
       my $submenu_key  = $source->{'submenu_key'};
@@ -1041,8 +1042,9 @@ sub _add_bigbed_track {
     sub_type  => 'url',
     colourset => 'feature',
     style     => $args{'source'}{'style'},
+    
   };
-  
+
   if ($args{'view'} && $args{'view'} =~ /peaks/i) {
     $options->{'join'} = 'off';  
   } else {
@@ -1135,10 +1137,12 @@ sub _add_file_format_track {
   
   my $type    = lc $args{'format'};
   my $article = $args{'format'} =~ /^[aeiou]/ ? 'an' : 'a';
-  my $desc;
+  my ($desc, $url);
   
   if ($args{'internal'}) {
     $desc = "Data served from a $args{'format'} file: $args{'description'}";
+    $url = join '/', $self->hub->species_defs->DATAFILE_BASE_PATH, lc $self->hub->species, $self->hub->species_defs->ASSEMBLY_NAME, $args{'source'}{'dir'}, $args{'source'}{'file'};
+    $args{'options'}{'external'} = undef;
   } else {
     $desc = sprintf(
       'Data retrieved from %s %s file on an external webserver. %s This data is attached to the %s, and comes from URL: %s',
@@ -1159,7 +1163,7 @@ sub _add_file_format_track {
     renderers   => $args{'renderers'},
     name        => $args{'source'}{'source_name'},
     caption     => exists($args{'source'}{'caption'}) ? $args{'source'}{'caption'} : $args{'source'}{'source_name'},
-    url         => $args{'source'}{'source_url'},
+    url         => $url || $args{'source'}{'source_url'},
     description => $desc,
     %{$args{'options'}}
   });
