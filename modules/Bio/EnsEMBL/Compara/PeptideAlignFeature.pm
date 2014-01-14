@@ -70,11 +70,13 @@ use Bio::EnsEMBL::Compara::Utils::Cigars;
 
 #se overload '<=>' => "sort_by_score_evalue_and_pid";   # named method
 
+use base ('Bio::EnsEMBL::Storable');        # inherit dbID(), adaptor() and new() methods
+
+
 sub new {
   my ($class) = @_;
-  my $self = {};
 
-  bless $self,$class;
+  my $self = $class->SUPER::new(@_);       # deal with Storable stuff
 
   $self->query_member(new Bio::EnsEMBL::Compara::Member);
   $self->hit_member(new Bio::EnsEMBL::Compara::Member);
@@ -332,12 +334,6 @@ sub hit_rank {
     $self->{_hit_rank} = $arg;
   }
   return $self->{_hit_rank};
-}
-
-sub dbID {
-  my ( $self, $dbID ) = @_;
-  $self->{'_dbID'} = $dbID if defined $dbID;
-  return $self->{'_dbID'};
 }
 
 sub rhit_dbID {

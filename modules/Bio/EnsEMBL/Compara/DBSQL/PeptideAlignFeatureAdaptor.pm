@@ -588,6 +588,7 @@ sub _objs_from_sth {
     $paf = Bio::EnsEMBL::Compara::PeptideAlignFeature->new();
 
     $paf->dbID($column{'peptide_align_feature_id'});
+    $paf->adaptor($self);
     $paf->qstart($column{'qstart'});
     $paf->qend($column{'qend'});
     $paf->hstart($column{'hstart'});
