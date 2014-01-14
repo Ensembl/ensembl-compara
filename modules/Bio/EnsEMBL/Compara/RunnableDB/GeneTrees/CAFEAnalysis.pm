@@ -175,13 +175,9 @@ sub run_cafe_script {
     chmod 0755, $script_file;
 
     $self->compara_dba->dbc->disconnect_when_inactive(0);
+
     unless ((my $err = system($script_file)) == 4096) {
         print STDERR "CAFE returning error $err\n";
-#         for my $f (glob "$cafe_out_file*") {
-#             system(`head $f >> /lustre/scratch101/ensembl/mp12/kkkk`);
-#         }
-        # It seems that CAFE doesn't exit with error code 0 never (usually 4096?)
-#        $self->throw("problem running script $cafe_out_file: $err\n");
     }
     $self->compara_dba->dbc->disconnect_when_inactive(1);
     return;
