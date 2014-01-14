@@ -544,8 +544,8 @@ sub _objs_from_sth {
   
   while ($sth->fetch()) {
     push @homologies, Bio::EnsEMBL::Compara::Homology->new_fast({
-            '_adaptor'                      => $self,           # field name NOT in sync with Bio::EnsEMBL::Storable
-            '_dbID'                         => $homology_id,    # field name NOT in sync with Bio::EnsEMBL::Storable
+            'adaptor'                       => $self,
+            'dbID'                          => $homology_id,
             '_description'                  => $description,
             '_is_tree_compliant'            => $is_tree_compliant,
             '_method_link_species_set_id'   => $method_link_species_set_id,

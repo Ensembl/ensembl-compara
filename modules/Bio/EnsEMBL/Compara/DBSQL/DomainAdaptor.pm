@@ -165,8 +165,8 @@ sub _objs_from_sth {
   
   while ($sth->fetch()) {
     push @domains, Bio::EnsEMBL::Compara::Domain->new_fast({
-            '_adaptor'      => $self,       # field name NOT in sync with Bio::EnsEMBL::Storable
-            '_dbID'         => $domain_id,  # field name NOT in sync with Bio::EnsEMBL::Storable
+            'adaptor'       => $self,
+            'dbID'          => $domain_id,
             '_stable_id'    => $stable_id,
             '_description'  => $description,
             '_source_id'    => $source_id,

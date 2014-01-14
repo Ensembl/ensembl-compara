@@ -186,8 +186,8 @@ sub _objs_from_sth {
   
   while ($sth->fetch()) {
     push @families, Bio::EnsEMBL::Compara::Family->new_fast({
-            '_adaptor'                      => $self,       # field name NOT in sync with Bio::EnsEMBL::Storable
-            '_dbID'                         => $family_id,  # field name NOT in sync with Bio::EnsEMBL::Storable
+            'adaptor'                       => $self,
+            'dbID'                          => $family_id,
             '_stable_id'                    => $stable_id,
             '_version'                      => $version,
             '_description'                  => $description,

@@ -83,7 +83,8 @@ use Bio::EnsEMBL::Compara::GenomeDB;
 use Bio::EnsEMBL::Compara::SeqMember;
 use Bio::EnsEMBL::Compara::GeneMember;
 
-use base qw(Bio::EnsEMBL::Compara::Locus);
+use base qw(Bio::EnsEMBL::Compara::Locus Bio::EnsEMBL::Storable);
+
 
 =head2 new (CONSTRUCTOR)
 
@@ -253,20 +254,6 @@ sub member_id {
 }
 
 
-=head2 dbID
-
-  Arg [1]    : (opt) integer
-  Description: Getter/Setter for the internal database ID
-
-=cut
-
-sub dbID {
-  my $self = shift;
-  $self->{'_dbID'} = shift if(@_);
-  return $self->{'_dbID'};
-}
-
-
 =head2 stable_id
 
   Arg [1]    : (opt) string
@@ -338,19 +325,6 @@ sub source_name {
   my $self = shift;
   $self->{'_source_name'} = shift if (@_);
   return $self->{'_source_name'};
-}
-
-=head2 adaptor
-
-  Arg [1]    : (opt) instance of an adaptor in Bio::EnsEMBL::Compara::DBSQL
-  Description: Getter/Setter for the database adaptor
-
-=cut
-
-sub adaptor {
-  my $self = shift;
-  $self->{'_adaptor'} = shift if(@_);
-  return $self->{'_adaptor'};
 }
 
 
