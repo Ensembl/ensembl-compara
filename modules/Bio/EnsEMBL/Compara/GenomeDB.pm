@@ -151,27 +151,6 @@ sub new {
 }
 
 
-=head2 new_fast
-
-  Arg [1]    : hash reference $hashref
-  Example    : 
-  Description: This is an ultra fast constructor which requires knowledge of
-               the objects internals to be used.
-  Returntype : Bio::EnsEMBL::Compara::GenomeDB
-  Exceptions : none
-  Caller     : Bio::EnsEMBL::Compara::DBSQL::GenomeDBAdaptor
-  Status     : Stable
-
-=cut
-
-sub new_fast {
-  my $class = shift;
-  my $hashref = shift;
-
-  return bless $hashref, $class;
-}
-
-
 =head2 db_adaptor
 
   Arg [1]    : (optional) Bio::EnsEMBL::DBSQL::DBAdaptor $dba
