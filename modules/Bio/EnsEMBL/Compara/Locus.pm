@@ -134,24 +134,6 @@ sub new {
 }
 
 
-=head2 new_fast
-
-  Arg [1]     : hash reference $hashref
-  Description : This is an ultra fast constructor which requires knowledge of
-                the objects internals to be used.
-  Returntype  : Bio::EnsEMBL::Compara::Locus object (or a derived class)
-  Exceptions  : none
-  Caller      : general
-
-=cut
-
-sub new_fast {
-  my ($class, $hashref) = @_;
-
-  return bless $hashref, $class;
-}
-
-
 =head2 dnafrag
 
   Arg [1]     : (optional) Bio::EnsEMBL::Compara::DnaFrag object

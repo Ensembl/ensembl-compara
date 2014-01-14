@@ -85,7 +85,7 @@ sub fetch_all_by_ProteinTreeId {
                $threshold_on_branch_ds,$type) = $sth->fetchrow_array()) {
 	$sitewise_dnds = Bio::EnsEMBL::Compara::SitewiseOmega->new_fast(
 				       {'adaptor' => $self,
-					'_dbID' => $sitewise_id,
+					'dbID' => $sitewise_id,
 					'aln_position' => $aln_position,
 					'node_id' => $node_id,
 					'tree_node_id' => $tree_node_id,

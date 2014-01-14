@@ -173,7 +173,7 @@ use Bio::EnsEMBL::Compara::BaseGenomicAlignSet;
 use Bio::EnsEMBL::Compara::MethodLinkSpeciesSet;
 use Bio::EnsEMBL::Mapper;
 
-use base qw(Bio::EnsEMBL::Compara::Locus);
+use base qw(Bio::EnsEMBL::Compara::Locus Bio::EnsEMBL::Storable);
 
 =head2 new (CONSTRUCTOR)
 
@@ -291,58 +291,6 @@ sub copy {
   }
 
   return $new_copy;
-}
-
-
-=head2 adaptor
-
-  Arg [1]    : Bio::EnsEMBL::Compara::DBSQL::GenomicAlignAdaptor
-  Example    : $adaptor = $genomic_align->adaptor;
-  Example    : $genomic_align->adaptor($adaptor);
-  Description: Getter/Setter for the adaptor this object uses for database
-               interaction.
-  Returntype : Bio::EnsEMBL::Compara::DBSQL::GenomicAlignAdaptor
-  Exceptions : thrown if $adaptor is not a
-               Bio::EnsEMBL::Compara::DBSQL::GenomicAlignAdaptor object
-  Caller     : object->methodname
-  Status     : Stable
-
-=cut
-
-sub adaptor {
-  my $self = shift;
-
-  if (@_) {
-    $self->{'adaptor'} = shift;
-    throw($self->{'adaptor'}." is not a Bio::EnsEMBL::Compara::DBSQL::GenomicAlignAdaptor object")
-        if ($self->{'adaptor'} and !UNIVERSAL::isa($self->{'adaptor'}, "Bio::EnsEMBL::Compara::DBSQL::GenomicAlignAdaptor"));
-  }
-
-  return $self->{'adaptor'};
-}
-
-
-=head2 dbID
-
-  Arg [1]    : integer $dbID
-  Example    : $dbID = $genomic_align->dbID;
-  Example    : $genomic_align->dbID(12);
-  Description: Getter/Setter for the attribute dbID
-  Returntype : integer
-  Exceptions : none
-  Caller     : object->methodname
-  Status     : Stable
-
-=cut
-
-sub dbID {
-  my ($self, $dbID) = @_;
-
-  if (defined($dbID)) {
-     $self->{'dbID'} = $dbID;
-  }
-
-  return $self->{'dbID'};
 }
 
 

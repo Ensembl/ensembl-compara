@@ -167,7 +167,7 @@ use Bio::EnsEMBL::Compara::GenomicAlignGroup;
 use Bio::EnsEMBL::Compara::Utils::SpeciesTree;
 use Bio::EnsEMBL::Compara::Graph::NewickParser;
 
-our @ISA = qw(Bio::EnsEMBL::Compara::BaseGenomicAlignSet);
+our @ISA = qw(Bio::EnsEMBL::Compara::BaseGenomicAlignSet Bio::EnsEMBL::Storable);
 
 =head2 new (CONSTRUCTOR)
 
@@ -258,78 +258,6 @@ sub new {
   $self->starting_genomic_align_id($starting_genomic_align_id) if (defined($starting_genomic_align_id));
 
   return $self;
-}
-
-=head2 new_fast
-
-  Arg [1]    : hash reference $hashref
-  Example    : none
-  Description: This is an ultra fast constructor which requires knowledge of
-               the objects internals to be used.
-  Returntype :
-  Exceptions : none
-  Caller     :
-  Status     : Stable
-
-=cut
-
-sub new_fast {
-  my $class = shift;
-  my $hashref = shift;
-
-  return bless $hashref, $class;
-}
-
-
-=head2 adaptor
-
-  Arg [1]    : Bio::EnsEMBL::Compara::DBSQL::GenomicAlignBlockAdaptor $adaptor
-  Example    : my $gen_ali_blk_adaptor = $genomic_align_block->adaptor();
-  Example    : $genomic_align_block->adaptor($gen_ali_blk_adaptor);
-  Description: Getter/Setter for the adaptor this object uses for database
-               interaction.
-  Returntype : Bio::EnsEMBL::Compara::DBSQL::GenomicAlignBlockAdaptor object
-  Exceptions : thrown if $adaptor is not a
-               Bio::EnsEMBL::Compara::DBSQL::GenomicAlignBlockAdaptor object
-  Caller     : general
-  Status     : Stable
-
-=cut
-
-sub adaptor {
-  my ($self, $adaptor) = @_;
-
-  if (defined($adaptor)) {
-    throw("$adaptor is not a Bio::EnsEMBL::Compara::DBSQL::GenomicAlignBlockAdaptor object")
-        unless ($adaptor->isa("Bio::EnsEMBL::Compara::DBSQL::GenomicAlignBlockAdaptor"));
-    $self->{'adaptor'} = $adaptor;
-  }
-
-  return $self->{'adaptor'};
-}
-
-
-=head2 dbID
-
-  Arg [1]    : integer $dbID
-  Example    : my $dbID = $genomic_align_block->dbID();
-  Example    : $genomic_align_block->dbID(12);
-  Description: Getter/Setter for the attribute dbID
-  Returntype : integer
-  Exceptions : none
-  Caller     : general
-  Status     : Stable
-
-=cut
-
-sub dbID {
-  my ($self, $dbID) = @_;
-
-  if (defined($dbID)) {
-    $self->{'dbID'} = $dbID;
-  }
-
-  return $self->{'dbID'};
 }
 
 

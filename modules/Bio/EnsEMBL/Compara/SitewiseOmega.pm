@@ -51,23 +51,8 @@ use warnings;
 use Bio::EnsEMBL::Utils::Argument qw(rearrange);
 use Bio::EnsEMBL::Utils::Exception qw(warning deprecate throw);
 
-=head2 new_fast
+use base ('Bio::EnsEMBL::Storable');        # inherit dbID(), adaptor() and new() methods
 
-  Arg [1]    : hash reference $hashref
-  Example    : none
-  Description: This is an ultra fast constructor which requires knowledge of
-               the objects internals to be used.
-  Returntype :
-  Exceptions : none
-  Caller     :
-
-=cut
-
-sub new_fast {
-  my ($class, $hashref) = @_;
-
-  return bless $hashref, $class;
-}
 
 =head2 member_position
 
@@ -108,31 +93,6 @@ sub member_position {
   return undef;
 }
 
-=head2 adaptor
-
-  Arg [1]    : Bio::EnsEMBL::DBSQL::SitewiseOmegaAdaptor $adaptor
-  Example    : $sitewise_omega->adaptor($adaptor);
-  Description: Getter/Setter for the adaptor this object used for database
-               interaction
-  Returntype : Bio::EnsEMBL::DBSQL::SitewiseOmegaAdaptor object
-  Exceptions : thrown if the argument is not a
-               Bio::EnsEMBL::DBSQL::SitewiseOmegaAdaptor object
-  Caller     : general
-  Status     : At risk
-
-=cut
-
-sub adaptor {
-  my ( $self, $adaptor ) = @_;
-
-  if (defined($adaptor)) {
-    throw("$adaptor is not a Bio::EnsEMBL::Compara::DBSQL::SitewiseOmegaAdaptor object")
-        unless ($adaptor->isa("Bio::EnsEMBL::Compara::DBSQL::SitewiseOmegaAdaptor"));
-    $self->{'adaptor'} = $adaptor;
-  }
-
-  return $self->{'adaptor'};
-}
 
 =head2 aln_position
 
@@ -346,20 +306,6 @@ sub tree_node_id {
   $self->{'tree_node_id'}= undef unless(defined($self->{'tree_node_id'}));
   return $self->{'tree_node_id'};
 }
-
-
-sub dbID {
-    my ($self, $dbID) = @_;
-
-    if(defined $dbID) {
-	$self->{'_dbID'} = $dbID;
-    }
-
-  $self->{'_dbID'}= undef unless(defined($self->{'_dbID'}));
-  return $self->{'_dbID'};
-}
-
-
 
 
 1;
