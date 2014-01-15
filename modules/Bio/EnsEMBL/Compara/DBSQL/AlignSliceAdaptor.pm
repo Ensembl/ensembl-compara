@@ -133,7 +133,7 @@ sub fetch_by_Slice_MethodLinkSpeciesSet {
 
   # Use cache whenever possible
   my $solve_overlapping_detail;
-  if ($solve_overlapping eq "restrict") {
+  if ($solve_overlapping && $solve_overlapping eq "restrict") {
     $solve_overlapping_detail = "merge-overlaps";
   } elsif ($solve_overlapping) {
     $solve_overlapping_detail = "all-overlaps";
