@@ -55,8 +55,7 @@ sub make_file {
   foreach (values %pop_params){ 
     my $pop_param   = $hub->param('pop'.$_);
     $pop_param      = $object->get_pop_name($pop_param); 
-    my $zoom        = 20000; # Currently non-configurable
-    my $ld_values   = $object->get_ld_values($pop_param, $params->{'v'}->[0], $zoom);
+    my $ld_values   = $object->get_ld_values($pop_param, $params->{'v'}->[0]);
     my $populations = {};
     
     map { $populations->{$_} = 1 } map { keys %{$ld_values->{$_}} } keys %$ld_values;

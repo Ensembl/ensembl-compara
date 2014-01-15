@@ -1296,11 +1296,11 @@ sub ld_for_slice {
   $Bio::EnsEMBL::Variation::DBSQL::LDFeatureContainerAdaptor::BINARY_FILE = $self->species_defs->ENSEMBL_CALC_GENOTYPES_FILE;
   $Bio::EnsEMBL::Variation::DBSQL::LDFeatureContainerAdaptor::TMP_PATH = $self->species_defs->ENSEMBL_TMP_TMP;
 
-  $width = $self->param('w') || "50000" unless $width;
-  my ($seq_region, $start, $seq_type ) = ($self->seq_region_name, $self->seq_region_start, $self->seq_region_type);
+  my ($seq_region, $start, $end, $seq_type ) = ($self->seq_region_name, $self->seq_region_start, $self->seq_region_end, $self->seq_region_type);
+  $width = $self->param('w') || $end - $start unless $width;
   return [] unless $seq_region;
 
-  my $end   = $start + $width;
+  $end   = $start + $width;
   my $slice = $self->slice_cache($seq_type, $seq_region, $start, $end, 1);
   return {} unless $slice;
 
@@ -1450,14 +1450,14 @@ sub get_all_misc_sets {
 
 sub get_ld_values {
   my $self = shift;
-  my ($populations, $snp, $zoom) = @_;
+  my ($populations, $snp) = @_;
   
   ## set path information for LD calculations
   $Bio::EnsEMBL::Variation::DBSQL::LDFeatureContainerAdaptor::BINARY_FILE = $self->species_defs->ENSEMBL_CALC_GENOTYPES_FILE;
   $Bio::EnsEMBL::Variation::DBSQL::LDFeatureContainerAdaptor::TMP_PATH = $self->species_defs->ENSEMBL_TMP_TMP;
   
   my %ld_values;
-  my $display_zoom = $self->round_bp($zoom);
+  my $display_zoom = $self->round_bp($self->seq_region_end - $self->seq_region_start);
 
   foreach my $pop_name (sort split (/\|/, $populations)) {
     my $pop_obj = $self->pop_obj_from_name($pop_name);
@@ -1465,7 +1465,7 @@ sub get_ld_values {
     next unless $pop_obj;
     
     my $pop_id = $pop_obj->{$pop_name}{'dbID'};
-    my $data = $self->ld_for_slice($pop_obj->{$pop_name}{'PopObject'}, $zoom);
+    my $data = $self->ld_for_slice($pop_obj->{$pop_name}{'PopObject'});
     
     foreach my $ld_type ('r2', 'd_prime') {
       my $display = $ld_type eq 'r2' ? 'r2' : "D'";
