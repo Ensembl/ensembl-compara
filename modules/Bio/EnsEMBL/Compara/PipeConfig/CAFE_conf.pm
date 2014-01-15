@@ -26,7 +26,7 @@ Bio::EnsEMBL::Compara::PipeConfig::CAFE_conf
 
     #0. make sure that ncRNA pipeline (whose gene clusters you want to incorporate) is already past member the RFAMClassify analysis
 
-    #1. update ensembl-hive, ensembl and ensembl-compara CVS repositories before each new release
+    #1. update ensembl-hive, ensembl and ensembl-compara GIT repositories before each new release
 
     #2. you may need to update 'schema_version' in meta table to the current release number in ensembl-hive/sql/tables.sql
 

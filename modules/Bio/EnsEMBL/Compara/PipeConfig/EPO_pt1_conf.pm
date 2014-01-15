@@ -23,7 +23,7 @@ limitations under the License.
 
 =head1 SYNOPSIS
 
-    #1. Update ensembl-hive, ensembl and ensembl-compara CVS repositories before each new release
+    #1. Update ensembl-hive, ensembl and ensembl-compara GIT repositories before each new release
 
     #2. You may need to update 'schema_version' in meta table to the current release number in ensembl-hive/sql/tables.sql
 
@@ -32,7 +32,7 @@ limitations under the License.
         pipeline_db (-host)
         resource_classes 
 
-	'ensembl_cvs_root_dir' - the path to the compara/hive/ensembl cvs checkout - set as an environment variable in your shell
+	'ensembl_cvs_root_dir' - the path to the compara/hive/ensembl checkouts - set as an environment variable in your shell
         'password' - your mysql password
 	'compara_pairwise_db' - I'm assuiming that all of your pairwise alignments are in one compara db
 	'reference_genome_db_id' - the genome_db_id (ie the species) which is in all your pairwise alignments

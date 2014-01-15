@@ -22,7 +22,7 @@ limitations under the License.
 
 =head1 SYNOPSIS
 
-    #1. Update ensembl-hive, ensembl and ensembl-compara CVS repositories before each new release
+    #1. Update ensembl-hive, ensembl and ensembl-compara GIT repositories before each new release
 
     #2. You may need to update 'schema_version' in meta table to the current release number in ensembl-hive/sql/tables.sql
 
@@ -31,7 +31,7 @@ limitations under the License.
         pipeline_db (-host)
         resource_classes 
 
-	'ensembl_cvs_root_dir' - the path to the compara/hive/ensembl cvs checkout - set as an environment variable in your shell
+	'ensembl_cvs_root_dir' - the path to the compara/hive/ensembl GIT checkouts - set as an environment variable in your shell
         'password' - your mysql password
 	'compara_anchor_db' - database containing the anchor sequences (entered in the anchor_sequence table)
 	'compara_master' - location of your master db containing relevant info in the genome_db, dnafrag, species_set, method_link* tables

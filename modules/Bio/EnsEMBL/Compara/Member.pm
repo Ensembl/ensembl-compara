@@ -45,7 +45,7 @@ but the Member object should not be explicitely used.
 
 =head1 AUTHORSHIP
 
-Ensembl Team. Individual contributions can be found in the CVS log.
+Ensembl Team. Individual contributions can be found in the GIT log.
 
 =head1 APPENDIX
 

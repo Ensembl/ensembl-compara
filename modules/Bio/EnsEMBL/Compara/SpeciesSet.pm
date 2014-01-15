@@ -90,7 +90,7 @@ sub genome_dbs {
             my $hash_key = join('--', $gdb->name, $gdb->assembly, $gdb->genebuild );
         
             if($hashed_genome_dbs->{ $hash_key }) {
-                warn("GenomeDB with hash key '$hash_key' appears twice in this Bio::EnsEMBL::Compara::SpeciesSet\n");
+                warn("GenomeDB with hash key '$hash_key' appears twice in this Bio::EnsEMBL::Compara::SpeciesSet(".($self->dbID ? 'dbID='.$self->dbID : 'no dbID').")\n");
             } else {
                 $hashed_genome_dbs->{ $hash_key } = $gdb;
             }

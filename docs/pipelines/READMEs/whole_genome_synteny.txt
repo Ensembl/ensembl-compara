@@ -1,6 +1,6 @@
 This document describes how to set up the synteny pipeline for whole genome alignments only. Currently there is no support for homologues. 
 
-All the scripts are located relative to $ENSEMBL_CVS_ROOT_DIR (location of the cvs checkout)
+All the scripts are located relative to $ENSEMBL_CVS_ROOT_DIR (location of the GIT checkout)
 
 Further details can be in the file $ENSEMBL_CVS_ROOT_DIR/ensembl-compara/scripts/synteny/README
 
@@ -46,14 +46,15 @@ perl $ENSEMBL_CVS_ROOT_DIR/ensembl-compara/scripts/synteny/LoadSyntenyData.pl --
 2- code API needed 
    ~~~~~~~~~~~~~~~
 
+  ensembl
   ensembl-compara
   ensembl-hive
 
 2.1 Code checkout
 
-      cvs -d :ext:cvs.sanger.ac.uk:/nfs/ensembl/cvsroot co ensembl
-      cvs -d :ext:cvs.sanger.ac.uk:/nfs/ensembl/cvsroot co ensembl-compara
-      cvs -d :ext:cvs.sanger.ac.uk:/nfs/ensembl/cvsroot co ensembl-hive
+      git clone https://github.com/Ensembl/ensembl.git
+      git clone https://github.com/Ensembl/ensembl-compara.git
+      git clone https://github.com/Ensembl/ensembl-hive.git
 
 in tcsh
     setenv ENSEMBL_CVS_ROOT_DIR  /some/path/to/modules

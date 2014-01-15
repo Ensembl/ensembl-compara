@@ -27,7 +27,7 @@ Open Dendroscope. Load the file and select the Radial Phylogram (Ctrl+7).
 
 If you want to let Dendroscope load the figures automatically, do:
 cd ~/src/public-plugins/ensembl/htdocs/i/species/48/
-cvs up -dP
+git pull
 mkdir ~/tmp/species_tree_imgs
 ls *.png | while read i; do \
   cp $i ~/tmp/species_tree_imgs/$i; done

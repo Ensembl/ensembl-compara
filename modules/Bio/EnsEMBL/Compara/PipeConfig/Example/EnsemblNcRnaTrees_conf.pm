@@ -40,7 +40,7 @@ limitations under the License.
 
 =head1 AUTHORSHIP
 
-  Ensembl Team. Individual contributions can be found in the CVS log.
+  Ensembl Team. Individual contributions can be found in the GIT log.
 
 =head1 APPENDIX
 
@@ -62,8 +62,8 @@ sub default_options {
             %{$self->SUPER::default_options},
 
             'mlss_id'          => 40094,
-            'release'          => '74',
-            'rel_suffix'       => 'c',
+            'release'          => '75',
+            'rel_suffix'       => '',
             'work_dir'         => '/lustre/scratch110/ensembl/' .
                                $self->o('ENV', 'USER') .
                                '/nc_trees_' .
@@ -92,10 +92,11 @@ sub default_options {
             'raxml_capacity'                  => 300,
             'recover_capacity'                => 250,
             'ss_picts_capacity'               => 200,
-            'hc_capacity'                     => 4,
 
-            # priority for non-LOCAL healthchecks;
+            # Params for healthchecks;
             'hc_priority'                     => 10,
+            'hc_capacity'                     => 40,
+            'hc_batch_size'                   => 10,
 
             # executable locations:
             'cmalign_exe'           => '/software/ensembl/compara/infernal/infernal-1.0.2/src/cmalign',
@@ -112,6 +113,12 @@ sub default_options {
             'treebest_exe'          => '/software/ensembl/compara/treebest.doubletracking',
             'quicktree_exe'         => '/software/ensembl/compara/quicktree_1.1/bin/quicktree',
             'r2r_exe'               => '/software/ensembl/compara/R2R-1.0.3/src/r2r',
+
+            # RFAM parameters
+            'rfam_ftp_url'           => 'ftp://ftp.sanger.ac.uk/pub/databases/Rfam/11.0/',
+            'rfam_remote_file'       => 'Rfam.cm.gz',
+            'rfam_expanded_basename' => 'Rfam.cm',
+            'rfam_expander'          => 'gunzip ',
 
             # Other parameters
             'raxml_number_of_cores' => 2,
@@ -149,11 +156,11 @@ sub default_options {
                            },
 
             'epo_db' => {   # ideally, the current release database with epo pipeline results already loaded
-                         -host   => 'compara2',
+                         -host   => 'compara3',
                          -port   => 3306,
                          -user   => 'ensro',
                          -pass   => '',
-                         -dbname => 'lg4_ensembl_compara_73',
+                         -dbname => 'mp12_ensembl_compara_74',
                         },
 
 

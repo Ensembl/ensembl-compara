@@ -56,6 +56,12 @@ use Bio::EnsEMBL::Compara::CAFEGeneFamily;
 use base ('Bio::EnsEMBL::Compara::DBSQL::SpeciesTreeAdaptor');
 
 
+sub fetch_all {
+    my ($self) = @_;
+
+    return $self->generic_fetch();
+}
+
 sub fetch_by_GeneTree {
     my ($self, $geneTree) = @_;
 

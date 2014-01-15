@@ -40,7 +40,7 @@ limitations under the License.
 
 =head1 AUTHORSHIP
 
-  Ensembl Team. Individual contributions can be found in the CVS log.
+  Ensembl Team. Individual contributions can be found in the GIT log.
 
 =head1 APPENDIX
 
@@ -106,7 +106,12 @@ sub pipeline_analyses {
                      -analysis_capacity => $self->o('hc_capacity'),
                      -priority          => $self->o('hc_priority'),
                      -bacth_size        => $self->o('hc_batch_size'),
+                     -meadow_type       => 'LOCAL',
                     );
+
+    my %backbone_params = (
+                           -meadow_type       => 'LOCAL',
+                          );
 
     return [
 
@@ -121,7 +126,7 @@ sub pipeline_analyses {
                                 '1->A'  => [ 'copy_table_factory' ],
                                 'A->1'  => [ 'backbone_fire_load' ],
                                },
-                -meadow_type => 'LOCAL',
+                %backbone_params,
             },
 
             {   -logic_name => 'backbone_fire_load',
@@ -134,6 +139,7 @@ sub pipeline_analyses {
                                '1->A'   => [ 'load_genomedb_factory' ],
                                'A->1'   => [ 'backbone_fire_tree_building' ],
                               },
+                %backbone_params,
             },
 
             {   -logic_name => 'backbone_fire_tree_building',
@@ -146,11 +152,12 @@ sub pipeline_analyses {
                                 '1->A'  => [ 'rfam_classify' ],
                                 'A->1'  => [ 'backbone_pipeline_finished' ],
                                },
+                %backbone_params,
             },
 
             {   -logic_name => 'backbone_pipeline_finished',
                 -module     => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
-                -meadow_type => 'LOCAL',
+                %backbone_params,
             },
 
 # ---------------------------------------------[copy tables from master and fix the offsets]---------------------------------------------
@@ -268,7 +275,7 @@ sub pipeline_analyses {
                                      ]
                            },
             -flow_into => {
-                           1 => [ 'make_species_tree', 'create_lca_species_set', 'hc_members_globally' ],
+                           1 => ['make_species_tree', 'hc_members_globally', $self->o('skip_epo') ? () : ('create_lca_species_set') ],
             },
         },
 
@@ -399,16 +406,16 @@ sub pipeline_analyses {
               -flow_into        => {
                                     1 => ['hc_global_tree_set', 'hc_global_epo_removed_members'],
                                    },
-              -meadow_type      => 'LOCAL',
+              %hc_params,
             },
 
-        {   -logic_name         => 'hc_global_tree_set',
-            -module             => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::SqlHealthChecks',
-            -parameters         => {
-                mode            => 'global_tree_set',
+            { -logic_name         => 'hc_global_tree_set',
+              -module             => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::SqlHealthChecks',
+              -parameters         => {
+                                      mode            => 'global_tree_set',
+                                     },
+              %hc_params,
             },
-            %hc_params,
-        },
 
             { -logic_name      => 'hc_global_epo_removed_members',
               -module          => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::SqlHealthChecks',
@@ -522,10 +529,9 @@ sub pipeline_analyses {
                 -analysis_capacity  => $self->o('other_paralogs_capacity'),
                 -rc_name            => '1Gb_job',
                 -priority           => 40,
-                -flow_into => {
-                               '2->A' => [ 'genomic_alignment', 'infernal' ],
-                               'A->2' => [ 'treebest_mmerge' ],
-                              },
+                -flow_into     => {
+                                   2 => [ 'tree_backup' ],
+                                  },
             },
 
             {   -logic_name    => 'infernal',
@@ -540,6 +546,19 @@ sub pipeline_analyses {
                                    3 => $self->o('create_ss_pics') ? ['create_ss_picts'] : [],
                                   },
                 -rc_name       => 'default',
+            },
+
+            {   -logic_name    => 'tree_backup',
+                -module        => 'Bio::EnsEMBL::Hive::RunnableDB::SqlCmd',
+                -parameters    => {
+                                   'sql' => 'INSERT INTO gene_tree_backup (member_id, root_id) SELECT member_id, root_id FROM gene_tree_node WHERE member_id IS NOT NULL AND root_id = #gene_tree_id#',
+                                  },
+                -flow_into => {
+                               '1->A' => [ 'genomic_alignment', 'infernal' ],
+                               'A->1' => [ 'treebest_mmerge' ],
+                              },
+                -analysis_capacity => 1,
+                -meadow_type   => 'LOCAL',
             },
 
             $self->o('create_ss_pics') ? (

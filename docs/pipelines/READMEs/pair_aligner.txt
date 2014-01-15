@@ -1,6 +1,6 @@
 This document describes how to set up the lastz or translated blat pairwise alignment system using the init_pipeline configuration system.
 
-All the scripts are located relative to $ENSEMBL_CVS_ROOT_DIR (location of the cvs checkout)
+All the scripts are located relative to $ENSEMBL_CVS_ROOT_DIR (location of the GIT checkout)
 
 This replaces $ENSEMBL_CVS_ROOT_DIR/ensembl-compara/scripts/pipeline/README-pairaligner and the $ENSEMBL_CVS_ROOT_DIR/ensembl-compara/scripts/pipeline/comparaLoadGenomes.pl, $ENSEMBL_CVS_ROOT_DIR/ensembl-compara/scripts/pipeline/loadPairAlignerSystem.pl and $ENSEMBL_CVS_ROOT_DIR/ensembl-compara/scripts/pipeline/loadChainNetSystem.pl scripts. This previous method is no longer supported after ensembl release 65. 
 
@@ -51,10 +51,10 @@ Compiled binaries:
 2.1 Code checkout
 
       cvs -d :ext:bio.perl.org:/home/repository/bioperl co -r branch-07 bioperl-live
-      cvs -d :ext:cvs.sanger.ac.uk:/nfs/ensembl/cvsroot co ensembl
-      cvs -d :ext:cvs.sanger.ac.uk:/nfs/ensembl/cvsroot co ensembl-compara
-      cvs -d :ext:cvs.sanger.ac.uk:/nfs/ensembl/cvsroot co ensembl-hive
-      cvs -d :ext:cvs.sanger.ac.uk:/nfs/ensembl/cvsroot co ensembl-analysis
+      git clone https://github.com/Ensembl/ensembl.git
+      git clone https://github.com/Ensembl/ensembl-compara.git
+      git clone https://github.com/Ensembl/ensembl-hive.git
+      git clone https://github.com/Ensembl/ensembl-analysis.git
 
 in tcsh
     setenv ENSEMBL_CVS_ROOT_DIR  /some/path/to/modules
@@ -116,7 +116,7 @@ dbname                 => it is recommended that this is set on the command line
 		            $ENV{USER} is prepended to dbname so that a dbname of hsap_ptro_lastz will become 
 			    kb3_hsap_ptro_lastz
 release                => ensembl release. Used to create various filenames and default database name
-ensembl_cvs_root_dir   => location of ensembl cvs root directory
+ensembl_cvs_root_dir   => root directory of the ensembl checkouts
 
 faToNib_exe,lavToAxt_exe,axtChain_exe,chainNet_exe => location of Jim Kent's executables.
 

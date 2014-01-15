@@ -191,7 +191,7 @@ Please make sure that 'prev_release' contains the version number of the reuse da
    You can check the content of a species_set_id XXX this way:
    > SELECT name FROM species_set JOIN genome_db USING (genome_db_id) WHERE species_set_id = XXX ORDER BY name;
 
- - release: the API version of your CVS checkout
+ - release: the API version of your Ensembl checkouts
 
  - rel_suffix: any string (defaults to "") to distinguish between several runs on the same API version
 
