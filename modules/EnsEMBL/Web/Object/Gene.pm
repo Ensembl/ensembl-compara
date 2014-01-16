@@ -577,11 +577,6 @@ sub create_family {
   return $family_adaptor->fetch_by_stable_id($id);
 }
 
-sub member_by_source {
-  my ($self, $family, $source) = @_;
-  return $family->get_Member_by_source($source) || [];
-}
-
 sub display_xref {
   my $self = shift; 
   return undef if $self->Obj->isa('Bio::EnsEMBL::Compara::Family');
