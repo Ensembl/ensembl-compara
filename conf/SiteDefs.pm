@@ -229,6 +229,7 @@ our $OBJECT_TO_SCRIPT = {
   Regulation          => 'Page',
   Marker              => 'Page',
   GeneTree            => 'Page',
+  Family              => 'Page',
   LRG                 => 'Page',
   Phenotype           => 'Page',
   Experiment          => 'Page',
