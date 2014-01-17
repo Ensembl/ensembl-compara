@@ -53,20 +53,20 @@ sub get_genome_db {
   }
 }
 
-## Output a list of aligned species
-sub format_list {
-  my ($self, $method, $list) = @_;
+## Output a list of whole-genome alignments for a given method, and their species
+sub format_wga_list {
+  my ($self, $method) = @_;
   my $html;
 
-  if ($list && scalar(@{$list||[]})) {
+  my $list = $self->list_mlss_by_method($method);
     foreach (@$list) {
-      my ($species_order, $info) = $self->mlss_species_info($method, $_->{'name'});
+      my ($species_order, $info) = $self->mlss_species_info($_);
 
       if ($species_order && scalar(@{$species_order||[]})) {
         my $count = scalar(@$species_order);
-        $html .= sprintf '<h3>%s %s %s</h3>
+        $html .= sprintf '<h3>%s</h3>
               <p><b>(method_link_type="%s" : species_set_name="%s")</b></p>',
-              $count, $_->{'label'}, $method, $method, $_->{'name'};
+              $_->name, $method, $_->species_set_obj->get_value_for_tag('name');
 
         my $table = EnsEMBL::Web::Document::Table->new([
           { key => 'species', title => 'Species',         width => '50%', align => 'left' },
