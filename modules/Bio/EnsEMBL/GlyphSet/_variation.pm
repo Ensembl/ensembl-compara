@@ -141,7 +141,7 @@ sub fetch_features {
         # Reset the flag for displaying of failed variations to its original state
         $variation_db_adaptor->include_failed_variations($orig_failed_flag);
       } else {
-        my @temp_variations = @{$slice->get_all_VariationFeatures($var_db) || []}; 
+        my @temp_variations = @{$slice->get_all_VariationFeatures(undef, undef, undef, $var_db) || []}; 
         
         ## Add a filtering step here
         @vari_features =
