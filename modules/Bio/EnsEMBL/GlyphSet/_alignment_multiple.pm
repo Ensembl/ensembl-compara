@@ -33,7 +33,7 @@ sub colour { return $_[0]->{'feature_colour'}, $_[0]->{'label_colour'}, $_[0]->{
 
 sub draw_features {
 
-  ### Called from {{ensembl-draw/modules/Bio/EnsEMBL/GlyphSet_wiggle_and_block.pm}}
+  ### Called from {{Bio::EnsEMBL::GlyphSet_wiggle_and_block.pm}}
   ### Arg 2 : draws wiggle plot if this is true
   ### Returns 0 if all goes well.  
   ### Returns error message to print if there are features missing (string)

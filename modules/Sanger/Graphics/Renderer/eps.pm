@@ -40,7 +40,6 @@ sub init_canvas {
   my $canvas = qq(%!PS-Adobe-3.0 EPSF-3.0
 %%BoundingBox: 0 0 $im_width $im_height
 % Created by Sanger::Graphics::Renderer::eps
-%  ensembl-draw cvs module
 %  Contact http://www.ensembl.org/
 %  Author: js5\@sanger.ac.uk
 %%%%%%%%%

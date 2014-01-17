@@ -37,7 +37,7 @@ Bio::EnsEMBL::ExternalData::DAS::Stylesheet
   $groups = $feature->groups();
   $glyphtype = $ss->find_group_glyph( $groups->[0]->{type_id} );
   
-  # Use with ensembl-draw:
+  # Use with ensembl-webcode:
   $symboltype = $glyphtype->{'symbol'};
   $symbol = Bio::EnsEMBL::Glyph::Symbol::$symboltype->new( $feature,
                                                            $glyphtype );
@@ -191,7 +191,7 @@ sub new {
                is cached for faster subsequent lookups.
   Returntype : A hashref suitable for use with Bio::EnsEMBL::Glyph::Symbol
   Exceptions : none
-  Caller     : ensembl-draw modules
+  Caller     : ensembl-webcode drawning modules
 
 =cut
 
@@ -220,7 +220,7 @@ sub find_feature_glyph {
                subsequent lookups.
   Returntype : A hashref suitable for use with Bio::EnsEMBL::Glyph::Symbol
   Exceptions : none
-  Caller     : ensembl-draw modules
+  Caller     : ensembl-webcode drawing modules
 
 =cut
 

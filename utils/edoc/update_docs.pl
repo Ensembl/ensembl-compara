@@ -36,7 +36,7 @@ use EnsEMBL::Web::Tools::Document;
 my $SERVER_ROOT = $SiteDefs::ENSEMBL_SERVERROOT;
 my $EXPORT      = $SiteDefs::ENSEMBL_WEBROOT.'/utils/edoc/temp/';
 my $SUPPORT     = $SiteDefs::ENSEMBL_WEBROOT.'/utils/edoc/support/';
-my @locations = ( "$SERVER_ROOT/ensembl-draw/modules", map { "$SiteDefs::ENSEMBL_WEBROOT/modules/$_" } @modules );
+my @locations   = map { "$SiteDefs::ENSEMBL_WEBROOT/modules/$_" } @modules;
 
 foreach( @SiteDefs::ENSEMBL_LIB_DIRS ) {
   if( /plugins/ ) { 

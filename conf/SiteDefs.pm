@@ -318,7 +318,6 @@ sub update_conf {
     "$ENSEMBL_SERVERROOT/ensembl-orm/modules",
     "$ENSEMBL_SERVERROOT/ensembl-funcgen/modules",
     "$ENSEMBL_SERVERROOT/ensembl-variation/modules",
-    "$ENSEMBL_SERVERROOT/ensembl-draw/modules",
     "$ENSEMBL_SERVERROOT/ensembl-compara/modules",
     "$ENSEMBL_SERVERROOT/ensembl/modules",
     "${APACHE_DIR}lib/perl5/site_perl/$Config{'version'}/$Config{'archname'}/",
