@@ -27,13 +27,7 @@ use base qw(EnsEMBL::Web::Document::HTML::Compara);
 sub render {
   my $self = shift;
 
-  my $sets = [
-    {'name' => 'mammals', 'label' => 'eutherian mammals'},
-    {'name' => 'sauropsids',  'label' => 'sauropsids'},
-    {'name' => 'fish',      'label' => 'teleost fish'},
-  ];
-
-  return $self->format_list('EPO_LOW_COVERAGE', $sets);
+  return $self->format_wga_list('EPO_LOW_COVERAGE');
 }
 
 1;
