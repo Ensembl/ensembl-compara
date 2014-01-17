@@ -196,12 +196,13 @@ sub db_adaptor {
         $self->{'_db_adaptor'} = ($dba && $dba->isa('Bio::EnsEMBL::DBSQL::DBAdaptor'))
             ? $dba
             : undef;
-        if ($self->{'_db_adaptor'}) {
+        if ($self->{'_db_adaptor'} && $update_other_fields) {
             $self->name( $self->{'_db_adaptor'}->get_MetaContainer->get_production_name );
             $self->assembly( $self->{'_db_adaptor'}->assembly_name );
             $self->taxon_id( $self->{'_db_adaptor'}->get_MetaContainer->get_taxonomy_id );
             $self->genebuild( $self->{'_db_adaptor'}->get_MetaContainer->get_genebuild );
             $self->has_karyotype( $self->{'_db_adaptor'}->has_karyotype );
+	    $self->{'_db_adaptor'}{_dbc}->disconnect_if_idle;
         }
     }
 
