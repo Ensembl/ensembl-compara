@@ -45,7 +45,7 @@ sub init {
     scale          => 150,
   };
   
-  foreach my $name (grep $hash->{$_}{'genetree_display'}, keys %$hash) {
+  foreach my $name (keys %$hash) {
     while (my ($key, $value) = each %{$hash->{$name}}) {
       $key   =~ s/^genetree_//;
       $value = join '_', @$value if ref $value eq 'ARRAY';
@@ -71,10 +71,10 @@ sub form {
     delete $other_clustersets{default};
   }
 
-  # The groups are defined in the compara.ncbi_taxa_* tables. We want those that have
-  # a genetree_display tag. The groups are sorted by size first and then by name.
+  # The groups are defined in the compara.ncbi_taxa_* tables
+  # They are sorted by size first and then by name.
   my $hash     = $self->species_defs->multi_hash->{'DATABASE_COMPARA'}{'SPECIES_SET'} || {};
-  my @groups   = sort { @{$hash->{$b}->{'genome_db_ids'}} <=> @{$hash->{$a}->{'genome_db_ids'}} || $a cmp $b } grep { $hash->{$_}{'genetree_display'} } keys %$hash;
+  my @groups   = sort { @{$hash->{$b}->{'genome_db_ids'}} <=> @{$hash->{$a}->{'genome_db_ids'}} || $a cmp $b } keys %$hash;
   my $function = $self->hub->referer->{'ENSEMBL_FUNCTION'};
   
   if ($function eq 'Align' or $function eq 'Align_pan_compara') {
