@@ -32,8 +32,7 @@ use base qw(EnsEMBL::Web::Document::HTML);
 sub sci_name {
   my ($self, $name) = @_;
   $name = ucfirst($name);
-  $name =~ s/_/ /;
-  return $name;
+  return $self->hub->species_defs->get_config($name, 'SPECIES_SCIENTIFIC_NAME');
 }
 
 sub common_name {
