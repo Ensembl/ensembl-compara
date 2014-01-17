@@ -69,14 +69,20 @@ sub default_options {
         %{$self->SUPER::default_options},
 
 #       'mlss_id'         => 30043,         # it is very important to check that this value is current (commented out to make it obligatory to specify)
-        'host'            => 'compara2',    # where the pipeline database will be created
-        'rel_suffix'      => '',            # an empty string by default, a letter otherwise
+        'host'            => 'compara1',    # where the pipeline database will be created
+        'rel_suffix'      => 'hmm',         # an empty string by default, a letter otherwise
         'rel_with_suffix' => $self->o('ensembl_release').$self->o('rel_suffix'),
         'file_basename'   => 'metazoa_families_'.$self->o('rel_with_suffix'),
 
         'pipeline_name'   => 'compara_families_'.$self->o('rel_with_suffix'),   # also used to differentiate submitted processes
 
         'email'           => $self->o('ENV', 'USER').'@ebi.ac.uk',    # NB: your EBI address may differ from the Sanger one!
+
+            # HMM clustering
+        'hmm_clustering'  => 1,
+        'hmm_library_basedir'       => '/lustre/scratch109/sanger/fs9/treefam8_hmms',
+        'pantherScore_path'         => '/software/ensembl/compara/pantherScore1.03',
+        'hmmer2_home'               => '/software/ensembl/compara/hmmer-2.3.2/src/',
 
             # code directories:
         'blast_bin_dir'   => '/software/ensembl/compara/ncbi-blast-2.2.28+/bin',
@@ -105,11 +111,12 @@ sub default_options {
         'blast_capacity'  => 2000,                                  # work both as hive_capacity and resource-level throttle
         'mafft_capacity'  =>  400,
         'cons_capacity'   =>  400,
+        'HMMer_classify_capacity' => 100,
         'reservation_sfx' => '',    # set to '000' for farm2, to '' for farm3 and EBI
 
             # homology database connection parameters (we inherit half of the members and sequences from there):
 #        'protein_trees_db'  => 'mysql://ensro@compara1/mm14_protein_trees_'.$self->o('ensembl_release'),
-        'protein_trees_db'  => 'mysql://ensro@compara1/mm14_protein_trees_'.$self->o('rel_with_suffix'),
+        'protein_trees_db'  => 'mysql://ensro@compara1/mm14_protein_trees_'.$self->o('ensembl_release'),
 
             # used by the StableIdMapper as the reference:
         'prev_rel_db' => 'mysql://ensadmin:'.$self->o('password').'@compara3/mp12_ensembl_compara_74',
@@ -181,6 +188,8 @@ sub pipeline_analyses {
                                         [ $self->o('protein_trees_db')   => 'sequence' ],
                                         [ $self->o('protein_trees_db')   => 'seq_member' ],
                                         [ $self->o('protein_trees_db')   => 'gene_member' ],
+                                        [ $self->o('protein_trees_db')   => 'hmm_annot' ],
+                                        [ $self->o('protein_trees_db')   => 'hmm_curated_annot' ],
                                         [ $self->o('master_db')     => 'ncbi_taxa_node' ],
                                         [ $self->o('master_db')     => 'ncbi_taxa_name' ],
                                         [ $self->o('master_db')     => 'method_link' ],
@@ -306,7 +315,9 @@ sub pipeline_analyses {
                 'blastdb_name'  => $self->o('blastdb_name'),
             },
             -flow_into => {
-                1 => { 'dump_member_proteins' => { 'fasta_name' => '#blastdb_dir#/#blastdb_name#', 'blastdb_name' => '#blastdb_name#' } },
+                $self->o('hmm_clustering') ? '1->A' : '999->A' => 'HMMer_classifyCurated',
+                $self->o('hmm_clustering') ? '999->A' : '1->A' => { 'dump_member_proteins' => { 'fasta_name' => '#blastdb_dir#/#blastdb_name#', 'blastdb_name' => '#blastdb_name#' } },
+                'A->1'  => [ 'stable_id_map' ],
             },
         },
         
@@ -385,6 +396,64 @@ sub pipeline_analyses {
             },
         },
 
+        {
+            -logic_name     => 'HMMer_classifyCurated',
+            -module         => 'Bio::EnsEMBL::Hive::RunnableDB::SqlCmd',
+            -parameters     => {
+                'sql'   => 'INSERT IGNORE INTO hmm_annot SELECT seq_member_id, model_id, NULL FROM hmm_curated_annot hca JOIN seq_member sm ON sm.stable_id = hca.seq_member_stable_id',
+            },
+            -flow_into      => [ 'HMMer_classifyInterpro' ],
+            -meadow_type    => 'LOCAL',
+        },
+
+        {
+            -logic_name     => 'HMMer_classifyInterpro',
+            -module         => 'Bio::EnsEMBL::Hive::RunnableDB::SqlCmd',
+            -parameters     => {
+                'sql'   => 'INSERT IGNORE INTO hmm_annot SELECT seq_member_id, panther_family_id, evalue FROM panther_annot pa JOIN seq_member sm ON sm.stable_id = pa.ensembl_id',
+            },
+            -flow_into      => [ 'HMMer_classify_factory' ],
+            -meadow_type    => 'LOCAL',
+        },
+
+
+        {   -logic_name => 'HMMer_classify_factory',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ComparaHMM::FactoryUnannotatedMembers',
+            -parameters => {
+                'only_canonical'    => 0,
+            },
+            -rc_name       => '2GigMem',
+            -flow_into => {
+                '2->A'  => [ 'HMMer_classifyPantherScore' ],
+                'A->1'  => [ 'HMM_clusterize' ],
+            },
+        },
+
+
+            {
+             -logic_name => 'HMMer_classifyPantherScore',
+             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ComparaHMM::HMMClassifyPantherScore',
+             -parameters => {
+                             'blast_bin_dir'       => $self->o('blast_bin_dir'),
+                             'pantherScore_path'   => $self->o('pantherScore_path'),
+                             'hmmer_path'          => $self->o('hmmer2_home'),
+                             'hmm_library_basedir' => $self->o('hmm_library_basedir'),
+                             'only_canonical'      => 0,
+                            },
+             -hive_capacity => $self->o('HMMer_classify_capacity'),
+             -rc_name => '4GigMem',
+            },
+
+
+            {
+             -logic_name => 'HMM_clusterize',
+             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::Families::HMMClusterize',
+             -rc_name => '4GigMem',
+             -flow_into  => [ 'fire_family_building' ],
+            },
+
+
+
         {   -logic_name => 'mcxload_matrix',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
             -parameters => {
@@ -402,12 +471,10 @@ sub pipeline_analyses {
             -parameters => {
                 'cmd' => "#mcl_bin_dir#/mcl #work_dir#/#file_basename#.tcx -I 2.1 -t 4 -tf 'gq(50)' -scheme 6 -use-tab #work_dir#/#file_basename#.itab -o #work_dir#/#file_basename#.mcl",
             },
-            -flow_into => {
-                '1->A' => { 'archive_long_files' => { 'input_filenames' => '#work_dir#/#file_basename#.tcx #work_dir#/#file_basename#.itab' },
-                            'parse_mcl'          => { 'mcl_name' => '#work_dir#/#file_basename#.mcl' },
-                },
-                'A->1'  => [ 'stable_id_map' ],
-            },
+            -flow_into => { 1 => {
+                'archive_long_files' => { 'input_filenames' => '#work_dir#/#file_basename#.tcx #work_dir#/#file_basename#.itab' },
+                'parse_mcl'          => { 'mcl_name' => '#work_dir#/#file_basename#.mcl' },
+            } },
             -rc_name => 'BigMcl',
         },
 
@@ -415,12 +482,22 @@ sub pipeline_analyses {
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::Families::ParseMCLintoFamilies',
             -parameters => {
                 'family_prefix'         => 'fam'.$self->o('rel_with_suffix'),
+            },
+            -flow_into  => { 1 => {
+                'fire_family_building' => {},
+                'archive_long_files'    => { 'input_filenames' => '#work_dir#/#file_basename#.mcl' },
+            } },
+            -rc_name => 'urgent',
+        },
+
+        {   -logic_name => 'fire_family_building',
+            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
+            -meadow_type => 'LOCAL',
+            -parameters => {
                 'first_n_big_families'  => $self->o('first_n_big_families'),
             },
-            -hive_capacity => 20, # to enable parallel branches
             -flow_into => {
                 1 => {
-                    'archive_long_files'    => { 'input_filenames' => '#work_dir#/#file_basename#.mcl' },
                     'consensifier_factory'  => [
                         { 'step' => 1,   'inputquery' => 'SELECT family_id FROM family WHERE family_id<=200',},
                         { 'step' => 100, 'inputquery' => 'SELECT family_id FROM family WHERE family_id>200',},
@@ -436,7 +513,6 @@ sub pipeline_analyses {
                     'find_update_singleton_cigars' => { },
                 }
             },
-            -rc_name => 'urgent',
         },
 
 # <Archiving flow-in sub-branch>
