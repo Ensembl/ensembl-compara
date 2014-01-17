@@ -85,28 +85,35 @@ sub format_list {
         $html .= $table->render;
       }
     }
-  }
 
   return $html;
 }
 
 ## Fetch name information about a set of aligned species
 sub mlss_species_info {
-  my ($self, $method, $set_name) = @_;
+  my ($self, $mlss) = @_;
 
   my $compara_db = $self->hub->database('compara');
   return [] unless $compara_db;
 
-  my $mlss_adaptor  = $compara_db->get_adaptor('MethodLinkSpeciesSet');
-  my $mlss          = $mlss_adaptor->fetch_by_method_link_type_species_set_name($method, $set_name);
-
   my $species = [];
-  my $coverage = {};
   foreach my $db (@{$mlss->species_set_obj->genome_dbs||[]}) {
     push @$species, ucfirst($db->name);
   }
   return $self->get_species_info($species, 1, $mlss);
 }
+
+
+sub list_mlss_by_method {
+  my ($self, $method) = @_;
+
+  my $compara_db = $self->hub->database('compara');
+  return unless $compara_db;
+
+  my $mlss_adaptor    = $compara_db->get_adaptor('MethodLinkSpeciesSet');
+  return $mlss_adaptor->fetch_all_by_method_link_type($method);
+}
+
 
 sub mlss_data {
   my ($self, $methods) = @_;
