@@ -71,7 +71,7 @@ sub form {
     delete $other_clustersets{default};
   }
 
-  # The groups are defined in the compara.species_set_tag tables. We want those that have
+  # The groups are defined in the compara.ncbi_taxa_* tables. We want those that have
   # a genetree_display tag. The groups are sorted by size first and then by name.
   my $hash     = $self->species_defs->multi_hash->{'DATABASE_COMPARA'}{'SPECIES_SET'} || {};
   my @groups   = sort { @{$hash->{$b}->{'genome_db_ids'}} <=> @{$hash->{$a}->{'genome_db_ids'}} || $a cmp $b } grep { $hash->{$_}{'genetree_display'} } keys %$hash;
