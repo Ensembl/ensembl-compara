@@ -103,7 +103,6 @@ sub init_sample_transcript {
   my $self = shift;
   
   $self->add_tracks('other',
-    [ 'coverage_top',   '', 'coverage',       { display => 'on',     strand => 'r', menu => 'no', type => 'top', caption => 'Resequence coverage'     }],
     [ 'tsv_variations', '', 'tsv_variations', { display => 'normal', strand => 'r', menu => 'no', colours => $self->species_defs->colour('variation') }],
   );
 }
