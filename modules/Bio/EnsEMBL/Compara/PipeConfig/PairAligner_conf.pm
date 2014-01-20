@@ -154,9 +154,6 @@ sub default_options {
 	#Also the name of the MT chromosome in the db must be the string "MT".    
 	'MT_only' => 0, # if MT_only is set to 1, then include_MT must also be set to 1
 
-        #Get sequences from database in batches of $sequence_batch_size.
-        'sequence_batch_size' => 1000,
-
 	#min length to dump dna as nib file
 	'dump_min_size' => 11500000, 
 
