@@ -1,3 +1,4 @@
+#!/usr/bin/env perl
 # Copyright [1999-2013] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 # 
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -15,33 +16,38 @@
 use strict;
 use warnings;
  
-use Test::Harness;
-use Test;
+use Test::More;
+use Test::Exception;
 
-BEGIN { plan tests => 8 }
-
+use Bio::EnsEMBL::Test::MultiTestDB;
 use Bio::EnsEMBL::Test::TestUtils; 
 use Bio::EnsEMBL::Compara::Homology;
 
-my $homology = new Bio::EnsEMBL::Compara::Homology(
--dbID => 12,
--stable_id => "my_dummy_stable_id",
--description => "dummy gene",
--adaptor => "dummy_adaptor",
--method_link_species_set_id => 6);
+subtest "Test getter/setter Bio::EnsEMBL::Compara::Homology methods", sub {
 
-$homology->method_link_type("ENSEMBL_ORTHOLOGUES");
-$homology->method_link_id(2);
+    my $homology = new Bio::EnsEMBL::Compara::Homology(
+                                                       -dbID => 12,
+                                                       -stable_id => "my_dummy_stable_id",
+                                                       -description => "dummy gene",
+                                                       -adaptor => "dummy_adaptor",
+                                                       -method_link_species_set_id => 6);
 
-ok( $homology );
-ok( test_getter_setter( $homology, "dbID", 202501 ));
-ok( test_getter_setter( $homology, "stable_id", "dummy stable_id" ));
-ok( test_getter_setter( $homology, "description", "my dummy description" ));
-ok( test_getter_setter( $homology, "method_link_species_set_id", 2 ));
-ok( test_getter_setter( $homology, "method_link_id", 2 ));
-ok( test_getter_setter( $homology, "method_link_type", "blablablo" ));
-ok( test_getter_setter( $homology, "adaptor", "dummy_adaptor" ));
+    #$homology->method_link_type("ENSEMBL_ORTHOLOGUES");
+    #$homology->method_link_id(2);
+    
+    isa_ok( $homology, "Bio::EnsEMBL::Compara::Homology", "check object" );
+    ok( test_getter_setter( $homology, "dbID", 202501 ));
+    ok( test_getter_setter( $homology, "stable_id", "dummy stable_id" ));
+    ok( test_getter_setter( $homology, "description", "my dummy description" ));
+    ok( test_getter_setter( $homology, "method_link_species_set_id", 2 ));
+    #ok( test_getter_setter( $homology, "method_link_id", 2 ));
+    #ok( test_getter_setter( $homology, "method_link_type", "blablablo" ));
+    ok( test_getter_setter( $homology, "adaptor", "dummy_adaptor" ));
 
+    done_testing();
+};
+
+done_testing();
 
 
 
