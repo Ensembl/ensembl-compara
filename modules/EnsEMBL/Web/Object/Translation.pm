@@ -30,13 +30,15 @@ package EnsEMBL::Web::Object::Translation;
 
 use strict;
 
+use HTML::Entities  qw(encode_entities);
+
 use base qw(EnsEMBL::Web::Object);
 
 sub translation_object { return $_[0]; }
 sub translation        { return $_[0]->Obj; }
 sub type_name          { return $_[0]->species_defs->translate('Translation'); }
 sub source             { return $_[0]->gene ? $_[0]->gene->source : undef;      }
-sub gene_description   { return $_[0]->gene ? $_[0]->gene->description : undef; }
+sub gene_description   { return $_[0]->gene ? encode_entities($_[0]->gene->description) : undef; }
 sub feature_type       { return $_[0]->Obj->type;       }
 sub version            { return $_[0]->Obj->version;    }
 sub coord_system       { return $_[0]->transcript->slice->coord_system->name; }

@@ -30,6 +30,8 @@ package EnsEMBL::Web::Object;
 
 use strict;
 
+use HTML::Entities  qw(encode_entities);
+
 use EnsEMBL::Web::Text::FeatureParser;
 use EnsEMBL::Web::TmpFile::Text;
 use EnsEMBL::Web::DBSQL::WebsiteAdaptor;
@@ -184,7 +186,8 @@ sub gene_description {
   my %description_by_type = ('bacterial_contaminant' => 'Probable bacterial contaminant');
   
   if ($gene) {
-    return $gene->description || $description_by_type{$gene->biotype} || 'No description';
+    my $desc = $gene->description || $description_by_type{$gene->biotype} || 'No description';
+    return encode_entities($desc);
   } else {
     return 'No description';
   }

@@ -911,7 +911,7 @@ sub transcript_table {
   my $table       = $self->new_twocol;
   my $html        = '';
   my $page_type   = ref($self) =~ /::Gene\b/ ? 'gene' : 'transcript';
-  my $description = encode_entities($object->gene_description);
+  my $description = $object->gene_description;
      $description = '' if $description eq 'No description';
 
   if ($description) {
