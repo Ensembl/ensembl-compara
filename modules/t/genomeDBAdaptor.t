@@ -23,12 +23,25 @@ use Test::Exception;
 use Bio::EnsEMBL::Test::MultiTestDB;
 use Bio::EnsEMBL::Test::TestUtils;
 
+my $species = [
+        "homo_sapiens",
+    ];
 
 #####################################################################
 ## Connect to the test database using the MultiTestDB.conf file
 
 my $multi = Bio::EnsEMBL::Test::MultiTestDB->new( "multi" );
 my $compara_db_adaptor = $multi->get_DBAdaptor( "compara" );
+
+my $species_db;
+my $species_db_adaptor;
+## Connect to core DB specified in the MultiTestDB.conf file
+foreach my $this_species (@$species) {
+  $species_db->{$this_species} = Bio::EnsEMBL::Test::MultiTestDB->new($this_species);
+  die if (!$species_db->{$this_species});
+  $species_db_adaptor->{$this_species} = $species_db->{$this_species}->get_DBAdaptor('core');
+}
+
 my $genome_db_adaptor = $compara_db_adaptor->get_GenomeDBAdaptor();
 
 ##
@@ -41,7 +54,7 @@ my $num_eutheria = 35;
 my ($num_of_genomes) = $compara_db_adaptor->dbc->db_handle->selectrow_array("SELECT count(*) FROM genome_db");
 my ($eutheria_taxon_id) = $compara_db_adaptor->dbc->db_handle->selectrow_array('SELECT taxon_id FROM ncbi_taxa_name where name = "Eutheria"');
 
-my ($genome_db_id, $taxon_id, $name, $assembly, $assembly_default, $genebuild,  $locator, $seq_region) = $compara_db_adaptor->dbc->db_handle->selectrow_array("SELECT genome_db_id, taxon_id, genome_db.name, assembly, assembly_default, genebuild, locator, dnafrag.name FROM genome_db JOIN dnafrag USING (genome_db_id) LIMIT 1");
+my ($genome_db_id, $taxon_id, $name, $assembly, $assembly_default, $genebuild,  $locator, $seq_region) = $compara_db_adaptor->dbc->db_handle->selectrow_array("SELECT genome_db_id, taxon_id, genome_db.name, assembly, assembly_default, genebuild, locator, dnafrag.name FROM genome_db JOIN dnafrag USING (genome_db_id) WHERE genome_db.name = 'homo_sapiens' LIMIT 1");
 
 #Need to add this explicitly 
 Bio::EnsEMBL::Registry->add_alias("homo_sapiens", "human");
@@ -56,7 +69,7 @@ my $slice = $core_dba->get_SliceAdaptor()->fetch_by_region('toplevel', $seq_regi
 my $meta_container = Bio::EnsEMBL::Registry->get_adaptor($name, "core", "MetaContainer");
 
 
-subtest "Test Bio::EnsEMBL::Compara::GenomeDB::fetch_by_dbID", sub {
+subtest "Test Bio::EnsEMBL::Compara::DBSQL::GenomeDBAdaptor::fetch_by_dbID", sub {
 
     my $genome_db = $genome_db_adaptor->fetch_by_dbID($genome_db_id);
     isa_ok($genome_db, "Bio::EnsEMBL::Compara::GenomeDB", "check object");
@@ -68,7 +81,7 @@ subtest "Test Bio::EnsEMBL::Compara::GenomeDB::fetch_by_dbID", sub {
     done_testing();
 };
 
-subtest "Test Bio::EnsEMBL::Compara::GenomeDB::fetch_all", sub {
+subtest "Test Bio::EnsEMBL::Compara::DBSQL::GenomeDBAdaptor::fetch_all", sub {
     $all_genome_dbs = $genome_db_adaptor->fetch_all();
     is(scalar(@$all_genome_dbs), $num_of_genomes, "Checking the total number of genomes");
     done_testing();
@@ -82,7 +95,7 @@ subtest "Test Bio::EnsEMBL::Compara::GenomeDB::fetch_by_dbID", sub {
     is($genome_db->assembly, $assembly, "Checking genome_db assembly");
     is($genome_db->genebuild, $genebuild, "Checking genome_db genebuild");
     is($genome_db->taxon_id, $taxon_id, "Checking genome_db taxon_id");
-    is($genome_db->locator, $locator, "Checking genome_db locator");
+    is($genome_db->locator, '', "Checking genome_db locator");
 
     done_testing();
 };
@@ -137,54 +150,32 @@ subtest "Test Bio::EnsEMBL::Compara::GenomeDB::fetch_by_core_DBAdaptor", sub {
     done_testing();
 };
 
-subtest "Test Bio::EnsEMBL::Compara::GenomeDB::synchronise", sub {
-
-    my $syn_genome_db = Bio::EnsEMBL::Compara::GenomeDB->new(-taxon_id => $taxon_id);
-    throws_ok { $genome_db_adaptor->synchronise($syn_genome_db) } qr/GenomeDB object with a non-zero taxon_id must have a name, assembly and genebuild/, 'ysnchronise throw: No name and assembly and genebuild causes an error';
-    
-    $syn_genome_db = Bio::EnsEMBL::Compara::GenomeDB->new(-name => $name,
-                                                          -taxon_id => $taxon_id);
-    throws_ok { $genome_db_adaptor->synchronise($syn_genome_db) } qr/GenomeDB object with a non-zero taxon_id must have a name, assembly and genebuild/, 'synchronise throw:No assembly and genebuild causes an error';
-    
-    $syn_genome_db = Bio::EnsEMBL::Compara::GenomeDB->new(-name     => $name,
-                                                          -assembly => $assembly,
-                                                          -taxon_id => $taxon_id);
-    throws_ok { $genome_db_adaptor->synchronise($syn_genome_db) } qr/GenomeDB object with a non-zero taxon_id must have a name, assembly and genebuild/, 'synchronise throw: No genebuild causes an error';
-
-
-    my $genome_db = $genome_db_adaptor->fetch_by_dbID($genome_db_id);
-    my $syn_genome_db_id = $genome_db_adaptor->synchronise($genome_db);
-    is ($syn_genome_db_id, $genome_db->dbID, 'synchronise with valid genome_db');
-    
-    $syn_genome_db = Bio::EnsEMBL::Compara::GenomeDB->new();
-    $syn_genome_db_id = $genome_db_adaptor->synchronise($syn_genome_db);
-    is ($syn_genome_db_id, undef, 'empty genome_db');
-
-
-    done_testing();
-};
-
+#Store new genome_db
 subtest "Test Bio::EnsEMBL::Compara::GenomeDB::store", sub {
-
-    my $genome_db = $genome_db_adaptor->fetch_by_dbID($genome_db_id);
+    my $human = Bio::EnsEMBL::Test::MultiTestDB->new("homo_sapiens");
+    my $hs_dba = $human->get_DBAdaptor('core');
 
     $multi->hide('compara', 'genome_db');
 
-    ## List of genomes are cached in the Bio::EnsEMBL::Compara::DBSQL::GenomeDBAdaptor
-    my $all_genome_dbs = $genome_db_adaptor->fetch_all();
-    is(scalar(@$all_genome_dbs), 0, "Checking hide method");
+    #Make sure the cache is empty
+    $genome_db_adaptor->{_id_cache}->clear_cache;
 
+    #store new genome_db
+    my $genome_db = Bio::EnsEMBL::Compara::GenomeDB->new(
+                                                             -dbID => $genome_db_id,
+                                                             -db_adaptor => $hs_dba,
+                                                             -name => $name,
+                                                             -assembly => $assembly,
+                                                             -taxon_id => $taxon_id,
+                                                             -genebuild => $genebuild
+                                                            );
     $genome_db_adaptor->store($genome_db);
+
     ## List of genomes are cached in a couple of globals in the Bio::EnsEMBL::Compara::DBSQL::GenomeDBAdaptor
     $all_genome_dbs = $genome_db_adaptor->fetch_all();
     is(scalar(@$all_genome_dbs), 1, "Checking store method");
-    
-    $multi->restore('compara', 'genome_db');
-    ## List of genomes are cached in a couple of globals in the Bio::EnsEMBL::Compara::DBSQL::GenomeDBAdaptor
-    $all_genome_dbs = $genome_db_adaptor->fetch_all();
-    is(scalar(@$all_genome_dbs), $num_of_genomes, "Checking restore method");
 
-    $genome_db_adaptor->sync_with_registry();
+    $multi->restore('compara', 'genome_db');
 
     done_testing();
 };

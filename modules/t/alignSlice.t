@@ -27,6 +27,12 @@ use Bio::EnsEMBL::Compara::GenomicAlignBlock;
 use Bio::EnsEMBL::Compara::GenomicAlignGroup;
 use Bio::EnsEMBL::Compara::MethodLinkSpeciesSet;
 
+my $species = [
+        "homo_sapiens",
+        "mus_musculus",
+        "pan_troglodytes",
+    ];
+
 #####################################################################
 ## Connect to the test database using the MultiTestDB.conf file
 
@@ -38,14 +44,18 @@ my $ref_species = "homo_sapiens";
 
 ## Connect to core DB specified in the MultiTestDB.conf file
 my $species_db;
-$species_db->{$ref_species} = Bio::EnsEMBL::Test::MultiTestDB->new($ref_species);
+
+## Connect to core DB specified in the MultiTestDB.conf file
+foreach my $this_species (reverse sort @$species) {
+  $species_db->{$this_species} = Bio::EnsEMBL::Test::MultiTestDB->new($this_species);
+  die if (!$species_db->{$this_species});
+}
 
 #Set up adaptors
 my $slice_adaptor = $species_db->{$ref_species}->get_DBAdaptor("core")->get_SliceAdaptor();
 my $align_slice_adaptor = $compara_dba->get_AlignSliceAdaptor();
 my $genomic_align_adaptor = $compara_dba->get_GenomicAlignAdaptor();
 my $genomic_align_block_adaptor = $compara_dba->get_GenomicAlignBlockAdaptor();
-my $genomic_align_tree_adaptor = $compara_dba->get_GenomicAlignTreeAdaptor();
 my $method_link_species_set_adaptor = $compara_dba->get_MethodLinkSpeciesSetAdaptor();
 
 #####################################################################
@@ -62,9 +72,13 @@ my $dnafrag_id = $compara_dba->dbc->db_handle->selectrow_array("
 my $slice_start = 31500000;
 my $slice_end = 32000000;
 
-my $method_type = "EPO_LOW_COVERAGE";
-my $epo_species_set_name = "mammals";
-my $epo_mlss = $method_link_species_set_adaptor->fetch_by_method_link_type_species_set_name($method_type, $epo_species_set_name);
+my $method_type = "LASTZ_NET";
+my $mlss = $method_link_species_set_adaptor->fetch_by_method_link_type_registry_aliases($method_type, ["homo_sapiens", "mus_musculus"]);
+
+my $human_chimp_lastznet_mlss = $method_link_species_set_adaptor->fetch_by_method_link_type_registry_aliases(
+        "LASTZ_NET",
+        [ "homo_sapiens", "pan_troglodytes" ]
+    );
 
 #
 # New(void) method
@@ -101,13 +115,9 @@ subtest "Test Bio::EnsEMBL::Compara::GenomicAlign new(ALL) method", sub {
                                                 $ref_ga->dnafrag_end,
                                                 1
                                                );
-    #EPO_LOW_COVERAGE
-    #my $gab_forward = $genomic_align_block_adaptor->fetch_by_dbID($gab_forward_id);
-    my $gabs = $genomic_align_block_adaptor->fetch_all_by_MethodLinkSpeciesSet_Slice($epo_mlss, $slice, undef, undef, 1);
+    #LASTZ
+    my $gabs = $genomic_align_block_adaptor->fetch_all_by_MethodLinkSpeciesSet_Slice($mlss, $slice, undef, undef, 1);
     
-    #my $gats = $genomic_align_tree_adaptor->fetch_all_by_MethodLinkSpeciesSet_Slice($epo_mlss, $slice, undef, undef, 1);
-
-    my $gats;
     my $expanded = 1;
     my $solve_overlapping = 0;
     my $preserve_blocks = 0;
@@ -116,8 +126,7 @@ subtest "Test Bio::EnsEMBL::Compara::GenomicAlign new(ALL) method", sub {
     my $align_slice = new Bio::EnsEMBL::Compara::AlignSlice(-adaptor => $align_slice_adaptor,
                                                             -reference_slice => $slice,
                                                             -Genomic_Align_Blocks => $gabs, 
-                                                            -Genomic_Align_Trees => $gats,
-                                                            -method_link_species_set => $epo_mlss,
+                                                            -method_link_species_set => $mlss,
                                                             -expanded => $expanded,
                                                             -solve_overlapping => $solve_overlapping,
                                                             -preserve_blocks => $preserve_blocks,
@@ -128,10 +137,203 @@ subtest "Test Bio::EnsEMBL::Compara::GenomicAlign new(ALL) method", sub {
     isa_ok($align_slice, "Bio::EnsEMBL::Compara::AlignSlice", "check object");
     is($align_slice->adaptor, $align_slice_adaptor, "adaptor");
     is($align_slice->reference_Slice, $slice, "reference_slice");
-    is($align_slice->get_MethodLinkSpeciesSet, $epo_mlss, "mlss");
+    is($align_slice->get_MethodLinkSpeciesSet, $mlss, "mlss");
 
-    #compare_gab_as($gabs->[0], $gats->[0], $align_slice);
+    done_testing();
+};
 
+subtest "Test attributes of Bio::EnsEMBL::Compara::AlignSlice::Slice objects... expanded", sub {
+    my $ref_species = "homo_sapiens";
+    my $non_ref_species = "pan_troglodytes";
+    my $mlss = $human_chimp_lastznet_mlss;
+    my $mlss_id = $mlss->{dbID};
+ 
+   my ($slice_start, $slice_end) = $compara_dba->dbc->db_handle->selectrow_array("
+    SELECT ga1.dnafrag_start, ga1.dnafrag_end
+    FROM genomic_align ga1, genomic_align ga2
+    WHERE ga1.genomic_align_block_id = ga2.genomic_align_block_id
+      AND ga1.genomic_align_id != ga2.genomic_align_id
+      AND ga1.method_link_species_set_id = $mlss_id 
+      AND ga1.dnafrag_id = $dnafrag_id 
+      AND ga2.dnafrag_strand = 1 
+      AND (ga1.dnafrag_end - ga1.dnafrag_start) > 1600 ORDER BY ga1.dnafrag_start LIMIT 1");
+
+  ok($slice_start < $slice_end, "start is less than end");
+  my $slice = $slice_adaptor->fetch_by_region(
+                                              $slice_coord_system_name,
+                                              $slice_seq_region_name,
+                                              $slice_start,
+                                              $slice_end,
+                                              1
+                                             );
+  isa_ok($slice, "Bio::EnsEMBL::Slice", "check object");
+  
+  my $align_slice = $align_slice_adaptor->fetch_by_Slice_MethodLinkSpeciesSet($slice, $mlss, "expanded");
+
+  #coord_system->name
+  is($align_slice->reference_Slice->coord_system->name, "chromosome");
+  is($align_slice->get_all_Slices($ref_species)->[0]->coord_system->name, "align_slice");
+  is($align_slice->get_all_Slices($non_ref_species)->[0]->coord_system->name, "align_slice");
+
+  #coord_system_name
+  is($align_slice->reference_Slice->coord_system_name, "chromosome");
+  is($align_slice->get_all_Slices($ref_species)->[0]->coord_system_name, "align_slice");
+  is($align_slice->get_all_Slices($non_ref_species)->[0]->coord_system_name, "align_slice");
+
+  #coord_system->version
+  like($align_slice->reference_Slice->coord_system->version, '/^GRCh\d+$/');
+  like($align_slice->get_all_Slices($ref_species)->[0]->coord_system->version,
+      "/^chromosome_GRCh\\d+_${slice_seq_region_name}_${slice_start}_${slice_end}_1\\+/");
+  like($align_slice->get_all_Slices($ref_species)->[0]->coord_system->version,
+      '/\+LASTZ_NET\(\"homo_sapiens\"\+\"pan_troglodytes\"\)\+/');
+  like($align_slice->get_all_Slices($ref_species)->[0]->coord_system->version,
+      "/\\+expanded/");
+  like($align_slice->get_all_Slices($non_ref_species)->[0]->coord_system->version,
+      "/^chromosome_GRCh\\d+_${slice_seq_region_name}_${slice_start}_${slice_end}_1\\+/");
+  like($align_slice->get_all_Slices($non_ref_species)->[0]->coord_system->version,
+      '/\+LASTZ_NET\(\"homo_sapiens\"\+\"pan_troglodytes\"\)\+/');
+  like($align_slice->get_all_Slices($non_ref_species)->[0]->coord_system->version,
+      "/\\+expanded/");
+
+  #seq_region_name
+  is($align_slice->reference_Slice->seq_region_name, $slice_seq_region_name);
+  is($align_slice->get_all_Slices($ref_species)->[0]->seq_region_name, $ref_species);
+  is($align_slice->get_all_Slices($non_ref_species)->[0]->seq_region_name, $non_ref_species);
+
+  #seq_region_length
+  my $seq = $align_slice->get_all_Slices($ref_species)->[0]->seq;
+  my $gaps = $seq =~ tr/\-/\-/;
+  is($align_slice->get_all_Slices($ref_species)->[0]->seq_region_length, ($slice_end-$slice_start+1+$gaps));
+  is($align_slice->get_all_Slices($non_ref_species)->[0]->seq_region_length, ($slice_end-$slice_start+1+$gaps));
+
+  #start
+  is($align_slice->get_all_Slices($ref_species)->[0]->start, 1);
+  is($align_slice->get_all_Slices($non_ref_species)->[0]->start, 1);
+
+  #end
+  is($align_slice->get_all_Slices($ref_species)->[0]->end, ($slice_end-$slice_start+1+$gaps));
+  is($align_slice->get_all_Slices($non_ref_species)->[0]->end, ($slice_end-$slice_start+1+$gaps));
+
+  #strand
+  is($align_slice->get_all_Slices($ref_species)->[0]->strand, 1);
+  is($align_slice->get_all_Slices($non_ref_species)->[0]->strand, 1);
+
+  #name
+  is($align_slice->get_all_Slices($ref_species)->[0]->name, join(":",
+          $align_slice->get_all_Slices($ref_species)->[0]->coord_system_name,
+          $align_slice->get_all_Slices($ref_species)->[0]->coord_system->version,
+          $align_slice->get_all_Slices($ref_species)->[0]->seq_region_name,
+          $align_slice->get_all_Slices($ref_species)->[0]->start,
+          $align_slice->get_all_Slices($ref_species)->[0]->end,
+          $align_slice->get_all_Slices($ref_species)->[0]->strand)
+      );
+
+  is($align_slice->get_all_Slices($non_ref_species)->[0]->name, join(":",
+          $align_slice->get_all_Slices($non_ref_species)->[0]->coord_system_name,
+          $align_slice->get_all_Slices($non_ref_species)->[0]->coord_system->version,
+          $align_slice->get_all_Slices($non_ref_species)->[0]->seq_region_name,
+          $align_slice->get_all_Slices($non_ref_species)->[0]->start,
+          $align_slice->get_all_Slices($non_ref_species)->[0]->end,
+          $align_slice->get_all_Slices($non_ref_species)->[0]->strand)
+      );
+
+
+    done_testing();
+};
+
+subtest "Test attributes of Bio::EnsEMBL::Compara::AlignSlice::Slice objects... condensed", sub {
+    my $ref_species = "homo_sapiens";
+    my $non_ref_species = "pan_troglodytes";
+    my $mlss = $human_chimp_lastznet_mlss;
+    my $mlss_id = $mlss->{dbID};
+ 
+   my ($slice_start, $slice_end) = $compara_dba->dbc->db_handle->selectrow_array("
+    SELECT ga1.dnafrag_start, ga1.dnafrag_end
+    FROM genomic_align ga1, genomic_align ga2
+    WHERE ga1.genomic_align_block_id = ga2.genomic_align_block_id
+      AND ga1.genomic_align_id != ga2.genomic_align_id
+      AND ga1.method_link_species_set_id = $mlss_id 
+      AND ga1.dnafrag_id = $dnafrag_id 
+      AND ga2.dnafrag_strand = 1 
+      AND (ga1.dnafrag_end - ga1.dnafrag_start) > 1600 ORDER BY ga1.dnafrag_start LIMIT 1");
+
+  ok($slice_start < $slice_end, "start is less than end");
+  my $slice = $slice_adaptor->fetch_by_region(
+                                              $slice_coord_system_name,
+                                              $slice_seq_region_name,
+                                              $slice_start,
+                                              $slice_end,
+                                              1
+                                             );
+  isa_ok($slice, "Bio::EnsEMBL::Slice", "check object");
+  
+  my $align_slice = $align_slice_adaptor->fetch_by_Slice_MethodLinkSpeciesSet($slice, $mlss);
+
+  #coord_system->name
+  is($align_slice->reference_Slice->coord_system->name, "chromosome");
+  is($align_slice->get_all_Slices($ref_species)->[0]->coord_system->name, "align_slice");
+  is($align_slice->get_all_Slices($non_ref_species)->[0]->coord_system->name, "align_slice");
+
+  #coord_system_name
+  is($align_slice->reference_Slice->coord_system_name, "chromosome");
+  is($align_slice->get_all_Slices($ref_species)->[0]->coord_system_name, "align_slice");
+  is($align_slice->get_all_Slices($non_ref_species)->[0]->coord_system_name, "align_slice");
+
+  #coord_system->version
+  like($align_slice->reference_Slice->coord_system->version, '/^GRCh\d+$/');
+  like($align_slice->get_all_Slices($ref_species)->[0]->coord_system->version,
+      "/^chromosome_GRCh\\d+_${slice_seq_region_name}_${slice_start}_${slice_end}_1\\+/");
+  like($align_slice->get_all_Slices($ref_species)->[0]->coord_system->version,
+      '/\+LASTZ_NET\(\"homo_sapiens\"\+\"pan_troglodytes\"\)\+/');
+  like($align_slice->get_all_Slices($ref_species)->[0]->coord_system->version,
+      "/\\+condensed/");
+  like($align_slice->get_all_Slices($non_ref_species)->[0]->coord_system->version,
+      "/^chromosome_GRCh\\d+_${slice_seq_region_name}_${slice_start}_${slice_end}_1\\+/");
+  like($align_slice->get_all_Slices($non_ref_species)->[0]->coord_system->version,
+      '/\+LASTZ_NET\(\"homo_sapiens\"\+\"pan_troglodytes\"\)\+/');
+  like($align_slice->get_all_Slices($non_ref_species)->[0]->coord_system->version,
+      "/\\+condensed/");
+
+  #seq_region_name
+  is($align_slice->reference_Slice->seq_region_name, $slice_seq_region_name);
+  is($align_slice->get_all_Slices($ref_species)->[0]->seq_region_name, $ref_species);
+  is($align_slice->get_all_Slices($non_ref_species)->[0]->seq_region_name, $non_ref_species);
+
+  #seq_region_length
+  my $seq = $align_slice->get_all_Slices($ref_species)->[0]->seq;
+  is($align_slice->get_all_Slices($ref_species)->[0]->seq_region_length, ($slice_end-$slice_start+1));
+  is($align_slice->get_all_Slices($non_ref_species)->[0]->seq_region_length, ($slice_end-$slice_start+1));
+
+  #start
+  is($align_slice->get_all_Slices($ref_species)->[0]->start, 1);
+  is($align_slice->get_all_Slices($non_ref_species)->[0]->start, 1);
+
+  #end
+  is($align_slice->get_all_Slices($ref_species)->[0]->end, ($slice_end-$slice_start+1));
+  is($align_slice->get_all_Slices($non_ref_species)->[0]->end, ($slice_end-$slice_start+1));
+
+  #strand
+  is($align_slice->get_all_Slices($ref_species)->[0]->strand, 1);
+  is($align_slice->get_all_Slices($non_ref_species)->[0]->strand, 1);
+
+  #name
+  is($align_slice->get_all_Slices($ref_species)->[0]->name, join(":",
+          $align_slice->get_all_Slices($ref_species)->[0]->coord_system_name,
+          $align_slice->get_all_Slices($ref_species)->[0]->coord_system->version,
+          $align_slice->get_all_Slices($ref_species)->[0]->seq_region_name,
+          $align_slice->get_all_Slices($ref_species)->[0]->start,
+          $align_slice->get_all_Slices($ref_species)->[0]->end,
+          $align_slice->get_all_Slices($ref_species)->[0]->strand)
+      );
+
+  is($align_slice->get_all_Slices($non_ref_species)->[0]->name, join(":",
+          $align_slice->get_all_Slices($non_ref_species)->[0]->coord_system_name,
+          $align_slice->get_all_Slices($non_ref_species)->[0]->coord_system->version,
+          $align_slice->get_all_Slices($non_ref_species)->[0]->seq_region_name,
+          $align_slice->get_all_Slices($non_ref_species)->[0]->start,
+          $align_slice->get_all_Slices($non_ref_species)->[0]->end,
+          $align_slice->get_all_Slices($non_ref_species)->[0]->strand)
+      );
 
 
     done_testing();
@@ -139,38 +341,3 @@ subtest "Test Bio::EnsEMBL::Compara::GenomicAlign new(ALL) method", sub {
 
 done_testing();
 
-sub compare_gab_as {
-    my ($gab, $gat, $align_slice) = @_;
-
-    print "gab length " . $gab->length . "\n";
-    my $ga_hash;
-    foreach my $genomic_align (@{$gab->get_all_GenomicAligns}) {
-        print substr($genomic_align->aligned_sequence, 0,100) . " " .  $genomic_align->genome_db->name . " " . length($genomic_align->aligned_sequence) . "\n";
-        #$ga_hash->{$genomic_algin->genome_db->name} = $genomic_align;
-    }
-
-
-    my %ga_aligned_seqs;
-    foreach my $this_genomic_align_tree (@{$gat->get_all_sorted_genomic_align_nodes()}) {
-        next if (!$this_genomic_align_tree->genomic_align_group);
-        #push(@{$segments}, $this_genomic_align_tree->genomic_align_group);
-        my $gag = $this_genomic_align_tree->genomic_align_group;
-        my $name = $this_genomic_align_tree->genomic_align_group->genome_db->name;
-        print "NAME $name\n";
-
-        my $aligned_seq = $gag->aligned_sequence;
-
-        $ga_aligned_seqs{$name}{aligned_seq} = $aligned_seq;
-        $ga_aligned_seqs{$name}{num_gas} = @{$gag->genomic_align_array};
-    }
-
-    foreach my $slice (@{$align_slice->get_all_Slices()}) {
-        is (length($slice->seq), $gab->length, "length");
-        
-#       print "NAME " . $slice->genome_db->name . " length " . length($slice->seq) . " " . $slice->seq . "\n";
-        print substr($slice->seq,0,100) . " " . $slice->genome_db->name . " " . length($slice->seq) . "\n";
-        is($slice->seq, $ga_aligned_seqs{$slice->genome_db->name}, "seq");
-
-    }
-
-}

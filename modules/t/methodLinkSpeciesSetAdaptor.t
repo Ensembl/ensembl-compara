@@ -142,9 +142,11 @@ subtest "Test Bio::EnsEMBL::Compara::DBSQL::MethodLinkSpeciesSetAdaptor::fetch_b
 # Test fetch_by_dbID (invalid dbID)
 # 
 subtest "Test Bio::EnsEMBL::Compara::DBSQL::MethodLinkSpeciesSetAdaptor::fetch_by_dbID [2]", sub {
-    throws_ok {$method_link_species_set_adaptor->fetch_by_dbID(0)} qr/dbID must be defined and nonzero/, 'invalid dbID';
 
-    my $method_link_species_set = $method_link_species_set_adaptor->fetch_by_dbID(-1);
+    my $method_link_species_set = $method_link_species_set_adaptor->fetch_by_dbID(0);
+    ok(!$method_link_species_set);
+
+    $method_link_species_set = $method_link_species_set_adaptor->fetch_by_dbID(-1);
     ok(!$method_link_species_set);
 
     done_testing();
@@ -170,7 +172,8 @@ subtest "Test Bio::EnsEMBL::Compara::DBSQL::MethodLinkSpeciesSetAdaptor::fetch_a
 # Test fetch_all_by_method_link_type [2]
 # 
 subtest "Test Bio::EnsEMBL::Compara::DBSQL::MethodLinkSpeciesSetAdaptor::fetch_all_by_method_link_type [2]", sub {
-    my $method_link_species_sets = $method_link_species_set_adaptor->fetch_all_by_method_link_type("NOT_AN_EXISTING_METHOD_LINK");
+    my $method_link_species_sets = $method_link_species_set_adaptor->fetch_all_by_method_link_type("NOT_AN_EXISTING_METHOD_LINK", 1);
+
     ok($method_link_species_sets);
     is(scalar(@{$method_link_species_sets}), 0);
     done_testing();
@@ -181,8 +184,6 @@ subtest "Test Bio::EnsEMBL::Compara::DBSQL::MethodLinkSpeciesSetAdaptor::fetch_a
 # 
 my $species_name = [split(",", [map {$_->{species_set}} values(%$all_mlss)]->[0])]->[0];
 subtest "Test Bio::EnsEMBL::Compara::DBSQL::MethodLinkSpeciesSetAdaptor::fetch_all_by_GenomeDB [1]", sub {
-    print "name $species_name\n";
-
     my $method_link_species_sets = $method_link_species_set_adaptor->fetch_all_by_GenomeDB(
                                                                                            $genome_db_adaptor->fetch_by_name_assembly($species_name)
                                                                                           );
@@ -198,7 +199,7 @@ subtest "Test Bio::EnsEMBL::Compara::DBSQL::MethodLinkSpeciesSetAdaptor::fetch_a
 # 
 subtest "Test Bio::EnsEMBL::Compara::DBSQL::MethodLinkSpeciesSetAdaptor::fetch_all_by_GenomeDB [2]", sub {
 
-    throws_ok {$method_link_species_set_adaptor->fetch_all_by_GenomeDB("THIS IS A WRONG ARGUMENT")} qr/\[.+\] must be a Bio::EnsEMBL::Compara::GenomeDB object/, 'invalid GenomeDB';
+    throws_ok {$method_link_species_set_adaptor->fetch_all_by_GenomeDB("THIS IS A WRONG ARGUMENT")} qr/-------------------- EXCEPTION --------------------/, 'invalid GenomeDB';
 
     my $method_link_species_sets = eval {
         $method_link_species_set_adaptor->fetch_all_by_GenomeDB("THIS IS A WRONG ARGUMENT");
@@ -256,6 +257,21 @@ subtest "Test Bio::EnsEMBL::Compara::DBSQL::MethodLinkSpeciesSetAdaptor::fetch_b
     done_testing();
 };
 
+# 
+# Test fetch_by_method_link_type_registry_aliases Need to spend some time getting this to work.
+# 
+#subtest "Test Bio::EnsEMBL::Compara::DBSQL::MethodLinkSpeciesSetAdaptor::fetch_by_method_link_type_registry_aliases", sub {
+#    my $this_method_link_species_set_id = [keys(%$all_mlss)]->[0];
+
+#    my $method_link_species_set = $method_link_species_set_adaptor->fetch_by_method_link_type_registry_aliases(
+#                                                                                                            $all_mlss->{$this_method_link_species_set_id}->{type}, [$all_mlss->{$this_method_link_species_set_id}->{species_set}]);
+    
+#    my $method_link_species_sets;
+#    push @$method_link_species_sets, $method_link_species_set;
+#    check_mlss($method_link_species_sets);
+#    done_testing();
+#};
+
 
 
 # 
@@ -290,6 +306,9 @@ subtest "Check Bio::EnsEMBL::Compara::MethodLinkSpeciesSet::new method", sub {
 # Check store method with already existing entry
 # 
 subtest "Check Bio::EnsEMBL::Compara::DBSQL::MethodLinkSpeciesSet::store method [1]", sub {
+    #Make sure the cache is empty
+    $method_link_species_set_adaptor->{_id_cache}->clear_cache;
+
     my $this_method_link_species_set_id = [keys(%$all_mlss)]->[0];
 
     my $method = Bio::EnsEMBL::Compara::Method->new(-dbID => $all_mlss->{$this_method_link_species_set_id}->{method_link_id}, 
@@ -321,6 +340,9 @@ subtest "Check Bio::EnsEMBL::Compara::DBSQL::MethodLinkSpeciesSet::store method 
 # 
 subtest "Check Bio::EnsEMBL::Compara::DBSQL::MethodLinkSpeciesSet::store method [2]", sub {
 
+    #Make sure the cache is empty
+    $method_link_species_set_adaptor->{_id_cache}->clear_cache;
+
     my $method = Bio::EnsEMBL::Compara::Method->new(-dbID => $blastz_net_method_link_id,
                                                     -type => "BLASTZ_NET",
                                                     -class => "GenomicAlignBlock.pairwise_alignment");
@@ -344,11 +366,65 @@ subtest "Check Bio::EnsEMBL::Compara::DBSQL::MethodLinkSpeciesSet::store method 
     done_testing();
 };
 
+# 
+# Check store of 2 entries, the first is new, the second already exists. Don't need to edit MLSSAdaptor.pm to build cache because it is built when storing the method
+# 
+subtest "Check Bio::EnsEMBL::Compara::DBSQL::MethodLinkSpeciesSet::store method [3]", sub {
+
+    my $this_method_link_species_set_id = [keys(%$all_mlss)]->[0];
+    my @genome_dbs = map {$genome_db_adaptor->fetch_by_dbID($_)} split(",", $all_mlss->{$this_method_link_species_set_id}->{gdbid_set});
+
+    #Make sure the cache is empty
+    $method_link_species_set_adaptor->{_id_cache}->clear_cache;
+    #save the state
+    $multi->save("compara", "method_link_species_set", "method_link", "species_set", "method_link_species_set_tag");
+
+    my $new_method = Bio::EnsEMBL::Compara::Method->new(-dbID => $blastz_net_method_link_id,
+                                                    -type => "BLASTZ_NET",
+                                                    -class => "GenomicAlignBlock.pairwise_alignment");
+
+    my $new_species_set_obj = Bio::EnsEMBL::Compara::SpeciesSet->new(
+                                                  -genome_dbs => [ $genome_db_adaptor->fetch_by_name_assembly("felis_catus"),
+                                                                 $genome_db_adaptor->fetch_by_name_assembly("mus_musculus")],                                                               );
+    
+    my $new_method_link_species_set = Bio::EnsEMBL::Compara::MethodLinkSpeciesSet->new(
+                                                                                   -method             => $new_method,
+                                                                                   -species_set_obj    => $new_species_set_obj,
+                                                                                   -max_alignment_length => 1000);
+
+    $method_link_species_set_adaptor->store($new_method_link_species_set);
+
+    my $method = Bio::EnsEMBL::Compara::Method->new(-dbID => $all_mlss->{$this_method_link_species_set_id}->{method_link_id}, 
+                                                    -type => $all_mlss->{$this_method_link_species_set_id}->{type},
+                                                    -class => $all_mlss->{$this_method_link_species_set_id}->{class});
+
+    my $species_set_obj = Bio::EnsEMBL::Compara::SpeciesSet->new(
+                                                  -genome_dbs => \@genome_dbs
+#                                                  -genome_dbs => [map {$genome_db_adaptor->fetch_by_dbID($_)} split(",",
+#                                                                  $all_mlss->{$this_method_link_species_set_id}->{gdbid_set})]
+                                                                );
+    
+    my $method_link_species_set = Bio::EnsEMBL::Compara::MethodLinkSpeciesSet->new(
+                                                                -dbID => $this_method_link_species_set_id,
+                                                                -adaptor => $method_link_species_set_adaptor,
+                                                                -method             => $method,
+                                                                -species_set_obj    => $species_set_obj);
+
+    $method_link_species_set_adaptor->store($method_link_species_set);
+    is($method_link_species_set->dbID, $this_method_link_species_set_id);
+    is(scalar(@{$method_link_species_set_adaptor->fetch_all}), values(%$all_mlss)+1);
+
+    $multi->restore("compara", "method_link_species_set", "method_link", "species_set", "method_link_species_set_tag");
+
+    done_testing();
+};
 
 # 
 # Check delete method
 # 
 subtest "Check Bio::EnsEMBL::Compara::DBSQL::MethodLinkSpeciesSet::delete method", sub {
+    #Make sure the cache is empty
+    $method_link_species_set_adaptor->{_id_cache}->clear_cache;
 
     my $method = Bio::EnsEMBL::Compara::Method->new(-dbID => $blastz_net_method_link_id,
                                                     -type => "BLASTZ_NET",

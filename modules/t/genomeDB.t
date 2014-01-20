@@ -43,9 +43,10 @@ ok(1);
 
 my $dbID = 1;
 my $taxon_id = 9606;
-my $name = "Homo sapiens";
-my $assembly = "NCBI36";
-my $genebuild = "0510Ensembl";
+my $name = "homo_sapiens";
+my $taxon_name = "Homo sapiens";
+my $assembly = "GRCh37";
+my $genebuild = "2010-07-Ensembl";
 
 subtest "Test Bio::EnsEMBL::Compara::GenomeDB new(void)", sub {
 
@@ -73,7 +74,7 @@ subtest "Test Bio::EnsEMBL::Compara::GenomeDB new(ALL) method", sub {
     is($genome_db->dbID, $dbID, "Testing dbID set in new method");
     is($genome_db->genebuild, $genebuild, "Testing genebuild set in new method");
 
-    is($genome_db->taxon->name, $name);
+    is($genome_db->taxon->name, $taxon_name);
     done_testing();
 };
 
@@ -97,7 +98,7 @@ subtest "Test Bio::EnsEMBL::Compara::GenomeDB new_fast method", sub {
     is($genome_db->dbID, $dbID, "Testing dbID set in new method");
     is($genome_db->genebuild, $genebuild, "Testing genebuild set in new method");
     
-    is($genome_db->taxon->name, $name);
+    is($genome_db->taxon->name, $taxon_name);
     done_testing();
 };
 

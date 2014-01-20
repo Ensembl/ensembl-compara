@@ -43,6 +43,7 @@ isa_ok($dnafrag_adaptor, 'Bio::EnsEMBL::Compara::DBSQL::DnaFragAdaptor', "Gettin
 ## Values matching entries in the test DB
 
 my $ref_species = "homo_sapiens";
+my $hs_core_db = Bio::EnsEMBL::Test::MultiTestDB->new($ref_species);
 
 my $sth = $multi->get_DBAdaptor( "compara" )->dbc->prepare("SELECT
       DISTINCT(gdb.name)
