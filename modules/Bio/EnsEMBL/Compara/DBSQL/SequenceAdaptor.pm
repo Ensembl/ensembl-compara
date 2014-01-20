@@ -100,7 +100,33 @@ sub fetch_by_dbIDs {
   return $sequences;
 }
 
+=head2 fetch_all_by_chunk_set_id
 
+  Arg [1]    : integer $chunk_set_id
+  Example    : my $sequences = $sequence_adaptor->fetch_all_by_chunk_set_id($chunk_set_id);
+  Description: Fetch sequences from the database by chunk_set. Does not retrieve sequences with a sequence_id of 0.
+  Returntype : hash ref of strings using sequence_id as the key
+  Exceptions : none
+  Caller     :
+  Status     : At risk
+
+=cut
+
+sub fetch_all_by_chunk_set_id {
+  my ($self, $chunk_set_id) = @_;
+  my $sequences;
+
+  my $sql = "SELECT sequence_id, sequence FROM dnafrag_chunk join sequence using (sequence_id) where dnafrag_chunk_set_id=?";
+  my $sth = $self->prepare($sql);
+  $sth->execute($chunk_set_id);
+  my ($sequence_id, $sequence);
+  $sth->bind_columns(\$sequence_id, \$sequence);
+  while ($sth->fetch) {
+      $sequences->{$sequence_id} = $sequence if ($sequence_id);
+  }
+  $sth->finish();
+  return $sequences;
+}
 
 sub fetch_other_sequence_by_member_id_type {
   my ($self, $member_id, $type) = @_;
