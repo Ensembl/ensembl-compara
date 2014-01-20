@@ -32,8 +32,7 @@ use base qw(EnsEMBL::Web::Document::HTML);
 sub sci_name {
   my ($self, $name) = @_;
   $name = ucfirst($name);
-  $name =~ s/_/ /;
-  return $name;
+  return $self->hub->species_defs->get_config($name, 'SPECIES_SCIENTIFIC_NAME');
 }
 
 sub common_name {
@@ -54,20 +53,20 @@ sub get_genome_db {
   }
 }
 
-## Output a list of aligned species
-sub format_list {
-  my ($self, $method, $list) = @_;
+## Output a list of whole-genome alignments for a given method, and their species
+sub format_wga_list {
+  my ($self, $method) = @_;
   my $html;
 
-  if ($list && scalar(@{$list||[]})) {
+  my $list = $self->list_mlss_by_method($method);
     foreach (@$list) {
-      my ($species_order, $info) = $self->mlss_species_info($method, $_->{'name'});
+      my ($species_order, $info) = $self->mlss_species_info($_);
 
       if ($species_order && scalar(@{$species_order||[]})) {
         my $count = scalar(@$species_order);
-        $html .= sprintf '<h3>%s %s %s</h3>
+        $html .= sprintf '<h3>%s</h3>
               <p><b>(method_link_type="%s" : species_set_name="%s")</b></p>',
-              $count, $_->{'label'}, $method, $method, $_->{'name'};
+              $_->name, $method, $_->species_set_obj->get_value_for_tag('name');
 
         my $table = EnsEMBL::Web::Document::Table->new([
           { key => 'species', title => 'Species',         width => '50%', align => 'left' },
@@ -86,28 +85,35 @@ sub format_list {
         $html .= $table->render;
       }
     }
-  }
 
   return $html;
 }
 
 ## Fetch name information about a set of aligned species
 sub mlss_species_info {
-  my ($self, $method, $set_name) = @_;
+  my ($self, $mlss) = @_;
 
   my $compara_db = $self->hub->database('compara');
   return [] unless $compara_db;
 
-  my $mlss_adaptor  = $compara_db->get_adaptor('MethodLinkSpeciesSet');
-  my $mlss          = $mlss_adaptor->fetch_by_method_link_type_species_set_name($method, $set_name);
-
   my $species = [];
-  my $coverage = {};
   foreach my $db (@{$mlss->species_set_obj->genome_dbs||[]}) {
     push @$species, ucfirst($db->name);
   }
   return $self->get_species_info($species, 1, $mlss);
 }
+
+
+sub list_mlss_by_method {
+  my ($self, $method) = @_;
+
+  my $compara_db = $self->hub->database('compara');
+  return unless $compara_db;
+
+  my $mlss_adaptor    = $compara_db->get_adaptor('MethodLinkSpeciesSet');
+  return $mlss_adaptor->fetch_all_by_method_link_type($method);
+}
+
 
 sub mlss_data {
   my ($self, $methods) = @_;

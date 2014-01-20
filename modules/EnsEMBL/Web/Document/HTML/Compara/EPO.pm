@@ -25,14 +25,7 @@ use base qw(EnsEMBL::Web::Document::HTML::Compara);
 sub render { 
   my $self = shift;
 
-  my $sets = [
-    {'name' => 'fish',        'label' => 'teleost fish'},
-    {'name' => 'sauropsids',  'label' => 'sauropsids'},
-    {'name' => 'primates',    'label' => 'primates'},
-    {'name' => 'mammals',     'label' => 'eutherian mammals'},
-  ];
-
-  return $self->format_list('EPO', $sets);
+  return $self->format_wga_list('EPO');
 }
 
 1;
