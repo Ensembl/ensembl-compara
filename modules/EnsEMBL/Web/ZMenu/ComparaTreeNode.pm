@@ -128,6 +128,10 @@ sub content {
 
   # Expand all nodes
   if (grep $_ != $node_id, keys %collapsed_ids) {
+
+    my %subnodes = map {($_->node_id => 1)} @{$node->get_all_nodes};
+    my $collapse = join ',', (grep {not $subnodes{$_}} (keys %collapsed_ids));
+
     $self->add_entry({
       type          => 'Image',
       label         => 'expand all sub-trees',
@@ -137,7 +141,7 @@ sub content {
       link          => $hub->url('Component', {
         type     => $hub->type,
         action   => $action,
-        collapse => 'none' 
+        collapse => $collapse
       })
     });
   }
