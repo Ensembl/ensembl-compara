@@ -246,7 +246,8 @@ sub _init {
             'points' => [ $x, $y,
                           $x + $width, $y - ($height / 2 ),
                           $x + $width, $y + ($height / 2 ) ],
-            'colour' => $collapsed_colour,
+            $f->{_collapsed_cut} ? ('patterncolour' => $collapsed_colour, 'pattern' => ($f->{_collapsed_cut} == 1 ? 'hatch_vert' : 'pin_vert'))
+                                 : ('colour' => $collapsed_colour),
             'href'   => $node_href,
           });
 
@@ -664,8 +665,13 @@ sub features {
     
     $f->{'_collapsed'}          = 1,
     $f->{'_collapsed_count'}    = $leaf_count;
-    $f->{'_collapsed_distance'} = $sum_dist/$leaf_count;
     $f->{'_collapsed_cut'}      = 0;
+    while ($sum_dist > $leaf_count) {
+      $sum_dist /= 10;
+      $f->{'_collapsed_cut'}++;
+    }
+    $f->{'_collapsed_distance'} = $sum_dist/$leaf_count;
+
     $f->{'_height'}             = 12 * log($f->{'_collapsed_count'});
     $f->{'_genome_dbs'}         = \%genome_dbs;
     $f->{'_genes'}              = \%genes;
