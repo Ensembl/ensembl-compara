@@ -961,6 +961,7 @@ sub _load_url_feature {
   });
   $menu->append($track) if $track;
 }
+
 sub load_configured_bam    { shift->load_file_format('bam');    }
 sub load_configured_bigbed { shift->load_file_format('bigbed'); }
 sub load_configured_bigwig { shift->load_file_format('bigwig'); }
@@ -972,7 +973,8 @@ sub load_file_format {
   
   return unless $self->can($function);
   
-  $sources = $self->sd_call(sprintf 'ENSEMBL_INTERNAL_%s_SOURCES', uc $format) || {} unless defined $sources; # get the internal sources from config
+  my $internal = !defined $sources;
+     $sources  = $self->sd_call(sprintf 'ENSEMBL_INTERNAL_%s_SOURCES', uc $format) || {} unless defined $sources; # get the internal sources from config
   
   foreach my $source_name (sort keys %$sources) {
     # get the target menu 
@@ -981,7 +983,7 @@ sub load_file_format {
     
     if ($menu) {
       $source = $self->sd_call($source_name);
-      $view = $source->{'view'};
+      $view   = $source->{'view'};
     } else {
       ## Probably an external datahub source
          $source       = $sources->{$source_name};
@@ -999,7 +1001,7 @@ sub load_file_format {
       }
     }
     
-    $self->$function(key => $source_name, menu => $menu, source => $source, description => $source->{'description'}, internal => 1, view => $view) if $source;
+    $self->$function(key => $source_name, menu => $menu, source => $source, description => $source->{'description'}, internal => $internal, view => $view) if $source;
   }
 }
 
