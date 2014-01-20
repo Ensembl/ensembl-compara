@@ -638,7 +638,7 @@ sub summary_as_hash {
                   $constrained_element->add_alignment_segments;
                  }
  Description   : Add the alignments segments to constrained element objects retrieved by coordinate-based 'fetch_all'
-                 methods such as fetch_all_by_MethodLinkSpeciesSet_Slice and fetch_all_by_MethodLinkSpeciesSet_Dnafrag
+                 methods such as fetch_all_by_MethodLinkSpeciesSet_Slice and fetch_all_by_MethodLinkSpeciesSet_DnaFrag
  Returns       : Nothing
 
 =cut
