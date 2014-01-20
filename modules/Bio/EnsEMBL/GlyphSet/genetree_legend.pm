@@ -111,9 +111,11 @@ sub render_normal {
   if (!$cafe) {
     # Collapsed Nodes vertical group
     $self->add_vgroup_to_legend([    
-      { legend => 'collapsed sub-tree',    colour => 'grey'      },
-      { legend => 'collapsed (this gene)', colour => 'red'       },
-      { legend => 'collapsed (paralog)',   colour => 'royalblue' },
+      { legend => 'collapsed sub-tree',    colour => 'grey'                             },
+      { legend => 'collapsed (this gene)', colour => 'red'                              },
+      { legend => 'collapsed (paralog)',   colour => 'royalblue'                        },
+      { legend => '(x10 branch length)',   colour => 'grey',    pattern => 'hatch_vert' },
+      { legend => '(x100 branch length)',  colour => 'grey',    pattern => 'pin_vert'   },
     ], 'Collapsed nodes', {
       style => 'collapsed'
     });
@@ -161,14 +163,20 @@ sub render_normal {
 sub _icon_collapsed {
   my ($self, $x, $y, $k) = @_;
 
-  $self->push($self->Poly({
+  my $data = {
     colour => $k->{'colour'},
     points => [
       $x, $y + 6,
       $x + 12, $y ,
       $x + 12, $y + 12
     ],
-  }));
+  };
+  if($k->{'pattern'}) {
+    delete $data->{'colour'};
+    $data->{'patterncolour'} = $k->{'colour'};
+    $data->{'pattern'} = $k->{'pattern'};
+  }
+  $self->push($self->Poly($data));
   
   return (12, 12);
 }
