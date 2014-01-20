@@ -978,6 +978,28 @@ sub original_sequence {
   return $self->{'original_sequence'};
 }
 
+=head2 original_dbID
+
+  Args       : none
+  Example    : my $original_dbID = $genomic_align->original_dbID
+  Description: getter/setter of original_dbID attribute. When a GenomicAlign is restricted, this attribute is set to the dbID of the original GenomicAlign object
+  Returntype : none
+  Exceptions : none
+  Caller     : general
+  Status     : At risk
+
+=cut
+
+sub original_dbID {
+  my ($self, $original_dbID) = @_;
+
+  if (defined $original_dbID) {
+    $self->{_original_dbID} = $original_dbID;
+  }
+
+  return $self->{_original_dbID};
+}
+
 =head2 _get_cigar_line_from_aligned_sequence
 
   Arg [1]    : string $aligned_sequence
@@ -1816,7 +1838,7 @@ sub restrict {
   delete($restricted_genomic_align->{aligned_sequence});
   delete($restricted_genomic_align->{cigar_line});
   delete($restricted_genomic_align->{cigar_arrayref});
-  $restricted_genomic_align->{_original_dbID} = $self->{dbID} if ($self->{dbID});
+  $restricted_genomic_align->original_dbID($self->dbID or $self->original_dbID);
 
   # Need to calculate the original aligned sequence length myself
   if (!$aligned_seq_length) {
