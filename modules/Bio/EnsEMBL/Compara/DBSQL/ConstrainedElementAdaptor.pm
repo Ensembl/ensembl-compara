@@ -240,12 +240,12 @@ sub fetch_all_by_MethodLinkSpeciesSet_Slice {
 	return $constrained_elements;
 }
 
-=head2 fetch_all_by_MethodLinkSpeciesSet_Dnafrag
+=head2 fetch_all_by_MethodLinkSpeciesSet_DnaFrag
 
   Arg  1     : Bio::EnsEMBL::Compara::MethodLinkSpeciesSet mlss_obj
   Arg  2     : Bio::EnsEMBL::Compara::DnaFrag dnafrag_obj
   Example    : my $listref_of_constrained_elements = $constrained_element_adaptor->
-  		fetch_all_by_MethodLinkSpeciesSet_Dnafrag($mlss_obj, $dnafrag_obj);
+  		fetch_all_by_MethodLinkSpeciesSet_DnaFrag($mlss_obj, $dnafrag_obj);
   Description: Retrieve the corresponding
                Bio::EnsEMBL::Compara::ConstrainedElement object listref
   Returntype : listref of Bio::EnsEMBL::Compara::ConstrainedElement objects
@@ -255,7 +255,7 @@ sub fetch_all_by_MethodLinkSpeciesSet_Slice {
 
 =cut
 
-sub fetch_all_by_MethodLinkSpeciesSet_Dnafrag {
+sub fetch_all_by_MethodLinkSpeciesSet_DnaFrag {
 	my ($self, $mlss_obj, $dnafrag_obj, $dnafrag_start, $dnafrag_end) = @_;
 	if (defined($mlss_obj)) {
 		throw("$mlss_obj is not a Bio::EnsEMBL::Compara::MethodLinkSpeciesSet object")	
@@ -299,9 +299,25 @@ sub fetch_all_by_MethodLinkSpeciesSet_Dnafrag {
 	return \@constrained_elements;
 }
 
+=head2 fetch_all_by_MethodLinkSpeciesSet_Dnafrag
+
+DEPRECATED: Use fetch_all_by_MethodLinkSpeciesSet_DnaFrag instead
+
+=cut
+
+sub fetch_all_by_MethodLinkSpeciesSet_Dnafrag {
+    my ($self, $mlss_obj, $dnafrag_obj, $dnafrag_start, $dnafrag_end) = @_;
+
+     deprecate('fetch_all_by_MethodLinkSpeciesSet_Dnafrag is deprecated and will be removed in e78. Use fetch_all_by_MethodLinkSpeciesSet_DnaFrag instead.');
+
+    return $self->fetch_all_by_MethodLinkSpeciesSet_DnaFrag($mlss_obj, $dnafrag_obj, $dnafrag_start, $dnafrag_end);
+}
+
 sub _fetch_all_ConstrainedElements {#used when getting constrained elements by slice or dnafrag
 	my ($self) = shift;
 	my ($sql, $constrained_elements, $mlss_id, $dnafrag_id, $start, $end, $lower_bound, $slice, $offset) = @_;
+
+        $offset = 0 unless (defined $offset);
 	$sql = qq{
        		SELECT
        		constrained_element_id,
