@@ -151,7 +151,7 @@ sub supporting_evidence_table {
         $has_phen = 1;
       }
       
-      foreach my $svs (sort {$a->seq_region_start <=> $b->seq_region_start} @{$ssv_obj->get_all_StructuralVariationSamples}) {
+      foreach my $svs (@{$ssv_obj->get_all_StructuralVariationSamples}) {
         
         my $a_indiv  = ($svs->individual) ? $svs->individual->name : undef;
         my $a_strain = ($svs->strain) ? $svs->strain->name : undef;
@@ -160,9 +160,9 @@ sub supporting_evidence_table {
         $strains->{$a_strain} = 1 if ($a_strain); 
       }
       
-      $indiv  = join(';<br />', keys(%$indivs));
-      $strain = join(';<br />', keys(%$strains));
-      $phen   = join(';<br />', keys(%$phens));
+      $indiv  = join(';<br />', sort (keys(%$indivs)));
+      $strain = join(';<br />', sort (keys(%$strains)));
+      $phen   = join(';<br />', sort (keys(%$phens)));
       
       my %row = (
                   ssv      => $name,
