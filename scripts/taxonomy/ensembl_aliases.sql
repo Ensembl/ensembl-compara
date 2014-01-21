@@ -33,11 +33,6 @@ SET @this_value='Fugu';
 SET @this_name_class='ensembl alias name';
 insert into ncbi_taxa_name select @this_taxon_id,@this_value,@this_name_class from ncbi_taxa_name WHERE taxon_id=@this_taxon_id and name_class=@this_name_class having count(*)=0;
 
-SET @this_taxon_id=7165;
-SET @this_value='Anopheles';
-SET @this_name_class='ensembl alias name';
-insert into ncbi_taxa_name select @this_taxon_id,@this_value,@this_name_class from ncbi_taxa_name WHERE taxon_id=@this_taxon_id and name_class=@this_name_class having count(*)=0;
-
 SET @this_taxon_id=6239;
 SET @this_value='C.elegans';
 SET @this_name_class='ensembl alias name';
@@ -100,11 +95,6 @@ insert into ncbi_taxa_name select @this_taxon_id,@this_value,@this_name_class fr
 
 SET @this_taxon_id=13616;
 SET @this_value='Opossum';
-SET @this_name_class='ensembl alias name';
-insert into ncbi_taxa_name select @this_taxon_id,@this_value,@this_name_class from ncbi_taxa_name WHERE taxon_id=@this_taxon_id and name_class=@this_name_class having count(*)=0;
-
-SET @this_taxon_id=7159;
-SET @this_value='Aedes';
 SET @this_name_class='ensembl alias name';
 insert into ncbi_taxa_name select @this_taxon_id,@this_value,@this_name_class from ncbi_taxa_name WHERE taxon_id=@this_taxon_id and name_class=@this_name_class having count(*)=0;
 
