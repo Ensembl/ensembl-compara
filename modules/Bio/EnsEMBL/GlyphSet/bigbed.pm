@@ -140,6 +140,7 @@ sub feature_label { $_[1]->id; }
 
 sub feature_title {
   my ($self,$f,$db_name) = @_;
+  #warn ">>> KEY ".$self->{'track_key'};
 
   my @title = (
     [$self->{'track_key'}, $f->id],
@@ -219,9 +220,10 @@ sub features {
     
     $config->{'itemRgb'} = 'on';    
   }
-  
+
+  my $key = $self->my_config('description') =~ /external webserver/ ? 'url' : 'feature';
   return( 
-    'url' => [ $features, { %$config, %{$format->parse_trackline($format->trackline)} } ],
+    $key => [ $features, { %$config, %{$format->parse_trackline($format->trackline)} } ],
   );
 }
  
