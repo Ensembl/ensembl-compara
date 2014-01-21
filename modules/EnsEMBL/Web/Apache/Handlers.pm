@@ -255,8 +255,14 @@ sub handler {
   my @raw_path = split '/', $file;
   shift @raw_path; # Always empty
 
-  ## Simple redirect to VEP
   my $redirect = 0;
+  ## Redirect to contact form
+  if (scalar(@raw_path) == 1 && $raw_path[0] =~ /^contact$/i) {
+    $r->uri('/Help/Contact');
+    $redirect = 1;
+  }  
+
+  ## Simple redirect to VEP
 
   if ($file =~ /\/info\/docs\/variation\/vep\/vep_script.html/) {
     $r->uri('/info/docs/tools/vep/script/index.html');
