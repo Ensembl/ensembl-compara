@@ -1613,6 +1613,9 @@ sub get_GenomicAlignTree {
         #Replace spaces with _ (necessary for output from create_species_tree)
         $this_leaf_name =~ s/ /_/;
 
+        #Set the leaf name to be all lowercase to be consistent with the genome_db name
+	$this_leaf->name($this_leaf_name);
+
         if ($leaf_names->{$this_leaf_name}) {
             #add GenomicAlignGroup populated with GenomicAlign to leaf
             my $genomic_align_group = new Bio::EnsEMBL::Compara::GenomicAlignGroup();
