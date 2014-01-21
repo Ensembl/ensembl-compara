@@ -1154,7 +1154,7 @@ sub pipeline_analyses {
         },
 
         {   -logic_name => 'per_genome_qc',
-            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::PerGenomeGroupsetQC',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::PerGenomeGroupsetQC',
             -hive_capacity => $self->o('qc_capacity'),
             -failed_job_tolerance => 0,
         },
