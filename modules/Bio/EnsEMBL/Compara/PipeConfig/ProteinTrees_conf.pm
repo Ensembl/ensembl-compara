@@ -1147,7 +1147,7 @@ sub pipeline_analyses {
         },
 
         {   -logic_name => 'overall_qc',
-            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::OverallGroupsetQC',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::OverallGroupsetQC',
             -hive_capacity  => $self->o('qc_capacity'),
             -failed_job_tolerance => 0,
             -rc_name    => '2Gb_job',
