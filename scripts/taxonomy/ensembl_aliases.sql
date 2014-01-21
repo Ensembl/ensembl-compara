@@ -624,6 +624,17 @@ insert into ncbi_taxa_name select @this_taxon_id,@this_value,@this_name_class fr
 
 -- </rel.74>
 
+
+-- <rel.75>
+
+SET @this_taxon_id=1206794;
+SET @this_value='Arthropods and nematodes';
+SET @this_name_class='ensembl alias name';
+insert into ncbi_taxa_name select @this_taxon_id,@this_value,@this_name_class from ncbi_taxa_name WHERE taxon_id=@this_taxon_id and name_class=@this_name_class having count(*)=0;
+
+-- </rel.75>
+
+
 -- -- Use these to ADD new internal node aliases
 
 -- SET @this_taxon_id=;
@@ -890,6 +901,15 @@ SET @this_name_class='ensembl timetree mya';
 insert into ncbi_taxa_name select @this_taxon_id,@this_value,@this_name_class from ncbi_taxa_name WHERE taxon_id=@this_taxon_id and name_class=@this_name_class having count(*)=0;
 
 -- </rel.74>
+
+-- <rel.75>
+
+SET @this_taxon_id=1206794;
+SET @this_value='936.5';
+SET @this_name_class='ensembl timetree mya';
+insert into ncbi_taxa_name select @this_taxon_id,@this_value,@this_name_class from ncbi_taxa_name WHERE taxon_id=@this_taxon_id and name_class=@this_name_class having count(*)=0;
+
+-- </rel.75>
 
 
 -- Web display information
