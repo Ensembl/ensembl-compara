@@ -549,11 +549,7 @@ sub _genomicaligntree_body {
   if ($all_genomic_aligns && @$all_genomic_aligns > 0) {
 
     #Unique name to handle duplications as opposed to scientific name
-    if ($node->is_leaf()) {
-      $w->dataElement('name', $node->name);
-    } else {
-      $w->dataElement('name', $all_genomic_aligns->[0]->dnafrag->name);
-    }
+    $w->dataElement('name', $node->name);
     
     #Get taxon for extant species only (genomic_aligns are for a single species)
     if ($all_genomic_aligns->[0]->genome_db->name ne "ancestral_sequences") {
