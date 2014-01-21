@@ -1040,11 +1040,11 @@ sub _add_bigbed_track {
   ];
 
   my $options = {
-    external  => 'external',
-    sub_type  => 'url',
-    colourset => 'feature',
-    style     => $args{'source'}{'style'},
-    
+    external     => 'external',
+    sub_type     => 'url',
+    colourset    => 'feature',
+    style        => $args{'source'}{'style'},
+    addhiddenbgd => 1,
   };
 
   if ($args{'view'} && $args{'view'} =~ /peaks/i) {
@@ -1072,9 +1072,10 @@ sub _add_bigwig_track {
   ];
  
   my $options = {
-    external => 'external',
-    sub_type => 'bigwig',
-    colour   => $args{'menu'}{'colour'} || $args{'source'}{'colour'} || 'red',
+    external     => 'external',
+    sub_type     => 'bigwig',
+    colour       => $args{'menu'}{'colour'} || $args{'source'}{'colour'} || 'red',
+    addhiddenbgd => 1,
   };
   
   $self->_add_file_format_track(

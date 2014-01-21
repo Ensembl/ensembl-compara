@@ -144,7 +144,7 @@ sub get_attributes {
   foreach (qw(title alt href target class)) {
     my $attr = $glyph->$_;
     
-    if (defined $attr) {
+    if ($attr) {
       if ($_ eq 'alt' || $_ eq 'title') {
         $actions{$_} = encode_entities($attr);
       } else {
@@ -154,8 +154,6 @@ sub get_attributes {
   }
   
   return unless $actions{'title'} || $actions{'href'} || $actions{'class'} =~ /label /;
-  
-  $actions{'alt'} ||= '';
   
   return join '', map qq{ $_="$actions{$_}"}, keys %actions;
 }

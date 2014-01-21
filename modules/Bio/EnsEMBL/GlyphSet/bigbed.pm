@@ -31,7 +31,12 @@ use EnsEMBL::Web::Text::Feature::BED;
 
 use base qw(Bio::EnsEMBL::GlyphSet::_alignment Bio::EnsEMBL::GlyphSet_wiggle_and_block);
 
-sub my_helplink { return "bigbed"; }
+sub my_helplink   { return 'bigbed'; }
+sub feature_group { $_[1]->id;       }
+sub feature_label { $_[1]->id;       }
+sub feature_title { return undef;    }
+sub href          { return undef;    }
+sub href_bgd      { return $_[0]->_url({ action => 'UserData' }); }
 
 sub bigbed_adaptor {
   my ($self,$in) = @_;
@@ -135,43 +140,6 @@ sub _draw_wiggle {
   return (); # No error
 }
 
-sub feature_group { $_[1]->id; }
-sub feature_label { $_[1]->id; }
-
-sub feature_title {
-  my ($self,$f,$db_name) = @_;
-  #warn ">>> KEY ".$self->{'track_key'};
-
-  my @title = (
-    [$self->{'track_key'}, $f->id],
-    ["Start", $f->seq_region_start],
-    ["End", $f->seq_region_end],
-    ["Strand", ("-","Forward","Reverse")[$f->seq_region_strand]], # remember, [-1] = at end
-    ["Hit start", $f->hstart],
-    ["Hit end", $f->hend],
-    ["Hit strand", $f->hstrand],
-    ["Score", $f->score],
-  );
-  my %extra = $f->extra_data && ref($f->extra_data) eq 'HASH' ? %{$f->extra_data} : ();
-  foreach my $k (sort keys %extra) {
-    next if $k eq '_type' or $k eq 'item_colour';  
-    push @title,[$k,join(", ",@{$extra{$k}})];
-  }
-  return join("; ",map { join(': ',@$_) } grep { $_->[1] } @title);
-}
-
-# XXX  WRONG
-sub href {
-  # Links to /Location/Genome
-
-  my ($self,$f) = @_;
-
-  return unless $f;
-  my $href = $self->{'parser'}{'tracks'}{$self->{'track_key'}}{'config'}{'url'};
-  $href =~ s/\$\$/$f->id/e;
-  return $href;
-}
-
 sub features {
   my ($self, $options) = @_;
   my %config_in = map { $_ => $self->my_config($_) } qw(colouredscore style);
@@ -184,6 +152,7 @@ sub features {
   my $features  = $bba->fetch_features($slice->seq_region_name, $slice->start, $slice->end + 1);
   my $config    = {};
   my $max_score = 0;
+  my $key       = $self->my_config('description') =~ /external webserver/ ? 'url' : 'feature';
   
   $self->{'_default_colour'} = $self->SUPER::my_colour($self->my_config('sub_type'));
   
@@ -220,24 +189,21 @@ sub features {
     
     $config->{'itemRgb'} = 'on';    
   }
-
-  my $key = $self->my_config('description') =~ /external webserver/ ? 'url' : 'feature';
-  return( 
-    $key => [ $features, { %$config, %{$format->parse_trackline($format->trackline)} } ],
-  );
+  
+  return ($key => [ $features, { %$config, %{$format->parse_trackline($format->trackline)} } ]);
 }
  
 sub draw_features {
   my ($self,$wiggle) = @_;
-
-
   my @error;
-  if($wiggle) {
+  
+  if ($wiggle) {
     $self->{'height'} = 30;
-    push @error,$self->_draw_wiggle();
+    push @error, $self->_draw_wiggle;
   }
+  
   return 0 unless @error;
-  return join(" or ",@error);
+  return join ' or ', @error;
 }
 
 sub render_normal {

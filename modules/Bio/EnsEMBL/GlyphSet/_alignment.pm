@@ -152,21 +152,21 @@ sub _render_hidden_bgd {
   # Useful to keep zmenus working on blank regions
   # only useful in nobump or strandbump modes
   my %off = ( 0 => 0 );
-  if($self->my_config('strandbump')) {
-    $off{0} =  -1;
+  
+  if ($self->my_config('strandbump')) {
+    $off{0}  = -1;
     $off{$h} = 1;
   }
+  
   foreach my $y (keys %off) { 
-    my $href;
-    $href = $self->href_bgd($off{$y}) if $self->can('href_bgd');
+    # no colour key, ie transparent
     $self->push($self->Rect({
       x         => 0,
       y         => $y,
       width     => $self->{'container'}->length,
       height    => $h,
-      # no colour key, ie transparent
       absolutey => 1,
-      href      => $href,
+      href      => $self->href_bgd($off{$y}),
       class     => 'group',
     }));
   }
@@ -181,7 +181,7 @@ sub render_normal {
   my $h               = @_ ? shift : ($self->my_config('height') || 8);
      $h               = $self->{'extras'}{'height'} if $self->{'extras'} && $self->{'extras'}{'height'};
   my $dep             = @_ ? shift : ($self->my_config('dep') || 6);
-     $dep = 0 if $self->my_config('nobump') or $self->my_config('strandbump');
+     $dep             = 0 if $self->my_config('nobump') or $self->my_config('strandbump');
   my $gap             = $h < 2 ? 1 : 2;   
   my $strand          = $self->strand;
   my $strand_flag     = $self->my_config('strand');
@@ -194,14 +194,13 @@ sub render_normal {
   my @sorted          = $self->sort_features_by_priority(%features);                                    # Sort (user tracks) by priority
      @sorted          = $strand < 0 ? sort keys %features : reverse sort keys %features unless @sorted;
   my $extdbs          = $self->species_defs->databases->{$db}{'tables'}{'external_db'}{'entries'};      # Get details of external_db - currently only retrieved from core since they should be all the same
+  my $join            = $self->{'my_config'}{'data'}{'join'} ne 'off' && !$self->{'renderer_no_join'};
   my $y_offset        = 0;
   my $features_drawn  = 0;
   my $features_bumped = 0;
   my $label_h         = 0;
   my ($fontname, $fontsize);
   
-  $self->_render_hidden_bgd($h) if($self->my_config('addhiddenbgd'));  
-  my $join = ($self->{'my_config'}{'data'}{'join'} ne 'off' && !$self->{'renderer_no_join'});
   if ($self->{'show_labels'}) {
     ($fontname, $fontsize) = $self->get_font_details('outertext');
     $label_h = [ $self->get_text_width(0, 'X', '', ptsize => $fontsize, font => $fontname) ]->[3];
@@ -435,6 +434,8 @@ sub render_normal {
     
     $y_offset -= $strand * ($self->_max_bump_row * ($h + $gap + $label_h) + 6);
   }
+  
+  $self->_render_hidden_bgd($h) if $features_drawn && $self->my_config('addhiddenbgd') && $self->can('href_bgd');
   
   $self->errorTrack(sprintf q{No features from '%s' in this region}, $self->my_config('name')) unless $features_drawn || $self->{'no_empty_track_message'} || $self->{'config'}->get_option('opt_empty_tracks') == 0;
   $self->errorTrack(sprintf(q{%s features from '%s' omitted}, $features_bumped, $self->my_config('name')), undef, $y_offset) if $self->get_parameter('opt_show_bumped') && $features_bumped;

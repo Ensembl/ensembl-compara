@@ -28,7 +28,10 @@ use Bio::EnsEMBL::SimpleFeature;
 
 use base qw(Bio::EnsEMBL::GlyphSet::_alignment  Bio::EnsEMBL::GlyphSet_wiggle_and_block);
 
-sub my_helplink { return "bigwig"; }
+sub my_helplink   { return 'bigwig'; }
+sub feature_title { return undef;    }
+sub href          { return undef;    }
+sub href_bgd      { return $_[0]->_url({ action => 'UserData' }); }
 
 # get a bigwig adaptor
 sub bigwig_adaptor {
@@ -39,7 +42,6 @@ sub bigwig_adaptor {
 
   return $self->{_cache}->{_bigwig_adaptor};
 }
-
 
 # get the alignment features
 sub wiggle_features {
@@ -200,11 +202,6 @@ sub render_compact {
   my $self = shift;
   $self->{'renderer_no_join'} = 1;
   $self->SUPER::render_normal(8, 0);
-}
-
-sub feature_title {
-  my ($self, $f, $db_name) = @_;
-  return undef;
 }
 
 1;
