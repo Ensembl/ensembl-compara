@@ -121,7 +121,7 @@ sub assembly_text {
     <p><a href="%s#assembly" class="nodeco">%sMore information and statistics</a></p>
     %s
     %s
-    <p><a href="%s" class="modal_link nodeco">%sDisplay your data in %s</a></p>',
+    <p><a href="%s" class="modal_link nodeco" rel="modal_user_data">%sDisplay your data in %s</a></p>',
     
     scalar @{$species_defs->ENSEMBL_CHROMOSOMES || []} ? sprintf(
       $self->{'img_link'},
@@ -144,7 +144,7 @@ sub assembly_text {
     ) : '',
     
     $mappings && ref $mappings eq 'ARRAY' ? sprintf(
-      '<p><a href="%s" class="modal_link nodeco">%sConvert your data to %s coordinates</a></p>', ## Link to assembly mapper
+      '<p><a href="%s" class="modal_link nodeco" rel="modal_user_data">%sConvert your data to %s coordinates</a></p>', ## Link to assembly mapper
       $hub->url({ type => 'UserData', action => 'SelectFeatures', __clear => 1 }), sprintf($self->{'icon'}, 'tool'), $assembly
     ) : '',
     
@@ -198,7 +198,7 @@ sub genebuild_text {
     <p><strong>What can I find?</strong> Protein-coding and non-coding genes, splice variants, cDNA and protein sequences, non-coding RNAs.</p>
     <p><a href="%s#genebuild" class="nodeco">%sMore about this genebuild</a></p>
     %s
-    <p><a href="%s" class="modal_link nodeco">%sUpdate your old Ensembl IDs</a></p>
+    <p><a href="%s" class="modal_link nodeco" rel="modal_user_data">%sUpdate your old Ensembl IDs</a></p>
     %s',
     
     sprintf(
@@ -316,7 +316,7 @@ sub variation_text {
   }
   
   $html .= sprintf(
-    qq{<p><a href="%s" class="modal_link nodeco">$self->{'icon'}Variant Effect Predictor<img src="%svep_logo_sm.png" style="vertical-align:top;margin-left:12px" /></a></p>},
+    qq{<p><a href="%s" class="modal_link nodeco" rel="modal_user_data">$self->{'icon'}Variant Effect Predictor<img src="%svep_logo_sm.png" style="vertical-align:top;margin-left:12px" /></a></p>},
     $hub->url({ type => 'UserData', action => 'UploadVariations', __clear => 1 }),
     'tool',
     $self->img_url
