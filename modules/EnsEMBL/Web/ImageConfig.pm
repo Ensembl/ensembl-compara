@@ -987,7 +987,7 @@ sub load_file_format {
     } else {
       ## Probably an external datahub source
          $source       = $sources->{$source_name};
-         $view         = $source->{'view'};   
+         $view         = $source->{'view'};
       my $menu_key     = $source->{'menu_key'};
       my $menu_name    = $source->{'menu_name'};
       my $submenu_key  = $source->{'submenu_key'};
@@ -1306,6 +1306,7 @@ sub update_from_url {
           $n = $p =~ /\/([^\/]+)\/*$/ ? $1 : 'un-named';
         }
         
+        # Don't add if the URL or menu are the same as an existing track
         if ($session->get_data(type => 'url', code => $code)) {
           $session->add_data(
             type     => 'message',

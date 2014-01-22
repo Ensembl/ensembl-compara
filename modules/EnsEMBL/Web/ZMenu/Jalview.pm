@@ -30,16 +30,14 @@ sub content {
   my $url_site = $hub->species_defs->ENSEMBL_BASE_URL;
   my $html     = sprintf(
     '<applet code="jalview.bin.JalviewLite" width="140" height="35" archive="%s/jalview/jalviewApplet.jar">
-
       <param name="file" value="%s" />
       <param name="treeFile" value="%s" />
-
       <param name="sortByTree" value="true" />
       <param name="showFullId" value="false" />
       <param name="defaultColour" value="clustal" />
       <param name="showSequenceLogo" value="true" />
       <param name="showGroupConsensus" value="true" />
-
+      <param name="nojmol" value="true" />
       <param name="application_url" value="http://www.jalview.org/services/launchApp" />
     </applet>', 
     $url_site, 

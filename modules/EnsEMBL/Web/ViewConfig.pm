@@ -334,12 +334,12 @@ sub add_form_element {
   }
   
   $self->add_fieldset('Display options') unless $self->get_form->has_fieldset;
-  
-  if ($element->{'type'} eq 'Hidden') {
-    $self->get_form->add_hidden($element);
-  } else {
-    $self->get_form->add_field($element);
-  }
+  $self->get_form->add_element(%$element);
+#   if ($element->{'type'} eq 'Hidden') {
+#     $self->get_form->add_hidden($element);
+#   } else {
+#     $self->get_form->add_field($element);
+#   }
   
   $self->{'labels'}{$element->{'name'}}       ||= $element->{'label'};
   $self->{'value_labels'}{$element->{'name'}} ||= { map { $_->{'value'} => $_->{'caption'} } @{$element->{'values'}} } if $element->{'values'};

@@ -104,7 +104,6 @@ sub content {
     $RefSeqMatch =~ /RefSeq Gene ID ([\d]+)/;
     my $id = $1;
     my $url = $hub->get_ExtURL('REFSEQ_GENEIMP', $id);
-    warn ">>> URL $url";
     (my $string = $RefSeqMatch) =~ s/RefSeq Gene ID ([\d]+)/RefSeq Gene ID <a href="$url">$1<\/a>/;
     $table->add_row('RefSeq', sprintf('<p>%s</p>', $string));
   }
@@ -199,6 +198,7 @@ sub content {
 
   $table->add_row('Alternative genes', $alt_genes) if $alt_genes; # add alternative gene info
 
+  ## Secondary structure (currently only non-coding RNAs)
   if ($object->{'_availability'}{'can_r2r'}) {
     my $svg_path = $self->draw_structure($display_name, 1);
     my $html;

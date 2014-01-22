@@ -93,7 +93,7 @@ sub _embed_jalview {
       <param name="defaultColour" value="clustal" />
       <param name="showSequenceLogo" value="true" />
       <param name="showGroupConsensus" value="true" />
-
+      <param name="nojmol" value="true" />
       <param name="application_url" value="http://www.jalview.org/services/launchApp" />
 
       <strong>Java must be enabled to view alignments</strong>
