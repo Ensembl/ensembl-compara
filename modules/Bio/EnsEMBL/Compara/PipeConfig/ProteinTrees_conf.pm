@@ -220,14 +220,6 @@ sub pipeline_create_commands {
 }
 
 
-sub pipeline_wide_parameters {
-    my ($self) = @_;
-    return {
-            %{$self->SUPER::pipeline_wide_parameters},
-            'hc_member_type'  => 'ENSEMBLPEP',
-           };
-}
-
 
 sub pipeline_analyses {
     my ($self) = @_;
