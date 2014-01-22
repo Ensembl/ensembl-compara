@@ -38,6 +38,32 @@ GROUP BY node.node_id
 ORDER BY node.left_index;
 
 
+# Same for a species tree
+
+DROP PROCEDURE IF EXISTS print_species_tree;
+CREATE PROCEDURE print_species_tree(IN user_root_id INT)
+READS SQL DATA
+SELECT CONCAT(
+	GROUP_CONCAT( IF(pip.left_index IS NULL,'',CONCAT(IF(parent.left_index-pip.left_index=1, '|', ' '),'     ')) ORDER BY parent.left_index SEPARATOR ''),
+	IF(node.node_id=node.root_id,
+		CONCAT(root.method_link_species_set_id, '/', root.label, ': '),
+		CONCAT(IF(MIN(node.left_index-parent.left_index)=1, '+', '\\'), '----')
+	),
+	'(', node.node_id, ')',	' ',
+	node.node_name,
+	IFNULL(CONCAT(' [taxon_id=', node.taxon_id, ']'), ''),
+	IFNULL(CONCAT(' [genome_db_id=', node.genome_db_id, ']'), '')
+) AS the_species_tree
+FROM species_tree_node AS node
+	LEFT JOIN species_tree_root AS root ON root.root_id=node.node_id
+	LEFT JOIN species_tree_node AS parent ON node.root_id=parent.root_id AND parent.left_index<node.left_index AND node.right_index<parent.right_index
+	LEFT JOIN species_tree_node pip ON pip.node_id=parent.parent_id AND pip.root_id=node.root_id
+WHERE node.root_id = user_root_id
+GROUP BY node.node_id
+ORDER BY node.left_index;
+
+
+
 
 #### gets the last common ancestor of two NCBI taxa #####################################################
 #
