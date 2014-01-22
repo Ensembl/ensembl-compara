@@ -68,17 +68,17 @@ ORDER BY node.left_index;
 #### gets the last common ancestor of two NCBI taxa #####################################################
 #
 # Usage:
-#       SELECT lca(9606, 10090);           # returns the last common ancestor of human and mouse
+#       SELECT ncbi_lca(9606, 10090);           # returns the last common ancestor of human and mouse
 
 
 -- The key improves the query plan
 ALTER TABLE ncbi_taxa_node ADD KEY left_right_index (left_index , right_index );
 
-DROP FUNCTION IF EXISTS lca;
+DROP FUNCTION IF EXISTS ncbi_lca;
 
 DELIMITER $$
 
-CREATE FUNCTION lca(nodeA int, nodeB int)
+CREATE FUNCTION ncbi_lca(nodeA int, nodeB int)
 RETURNS int READS SQL DATA
 BEGIN
   DECLARE lca_id INT;
