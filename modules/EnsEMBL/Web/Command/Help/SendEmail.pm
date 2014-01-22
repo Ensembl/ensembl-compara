@@ -37,7 +37,7 @@ sub process {
     $url = {
       'type'    => 'Help',
       'action'  => 'Contact',
-      map {$_   => $hub->param($_) || ''} qw(name address subject message)
+      map {$_   => $hub->param($_) || ''} qw(name address subject message attachment)
     };
 
   } else {

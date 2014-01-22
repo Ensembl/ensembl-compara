@@ -73,6 +73,7 @@ sub send_help_contact_email {
     $self->report_header([ 'Last Search', $hub->param('string')||'-none-' ]),
     $hub->param('message')
   ;
+  $self->attachment = $hub->param('attachment');
 
   return $self->send;
 }
