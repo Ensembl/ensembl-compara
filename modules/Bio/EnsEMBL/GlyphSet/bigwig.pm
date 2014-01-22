@@ -20,188 +20,166 @@ package Bio::EnsEMBL::GlyphSet::bigwig;
 
 use strict;
 
-use List::Util qw(max);
+use List::Util qw(min max);
 
 use Bio::EnsEMBL::Analysis;
 use Bio::EnsEMBL::ExternalData::BigFile::BigWigAdaptor;
-use Bio::EnsEMBL::SimpleFeature;
 
-use base qw(Bio::EnsEMBL::GlyphSet::_alignment  Bio::EnsEMBL::GlyphSet_wiggle_and_block);
+use base qw(Bio::EnsEMBL::GlyphSet::_alignment Bio::EnsEMBL::GlyphSet_wiggle_and_block);
 
-sub my_helplink   { return 'bigwig'; }
-sub feature_title { return undef;    }
-sub href          { return undef;    }
-sub href_bgd      { return $_[0]->_url({ action => 'UserData' }); }
+sub href_bgd       { return $_[0]->_url({ action => 'UserData' }); }
+sub bigwig_adaptor { return $_[0]{'_cache'}{'_bigwig_adaptor'} ||= Bio::EnsEMBL::ExternalData::BigFile::BigWigAdaptor->new($_[0]->my_config('url')); }
+sub render_compact { $_[0]->render_normal(8, 0); }
 
-# get a bigwig adaptor
-sub bigwig_adaptor {
+sub render_normal {
   my $self = shift;
+  
+  return if $self->strand != 1;
+  return $self->render_text if $self->{'text_export'};
+  
+  my $features        = $self->features;
+  my $h               = @_ ? shift : ($self->my_config('height') || 8);
+     $h               = $self->{'extras'}{'height'} if $self->{'extras'} && $self->{'extras'}{'height'};
+  my $depth           = @_ ? shift : ($self->my_config('dep') || 6);
+     $depth           = 0 if $self->my_config('strandbump') || $self->my_config('nobump'); 
+  my $length          = $self->{'container'}->length;
+  my $name            = $self->my_config('name');
+  my $pix_per_bp      = $self->scalex;
+  my @greyscale       = qw(ffffff d8d8d8 cccccc a8a8a8 999999 787878 666666 484848 333333 181818 000000);
+  my $n_greyscale     = scalar @greyscale;
+  my $greyscale_max   = [ sort { $b <=> $a } map $_->{'score'}, @$features ]->[0];
+  my $greyscale_score = $n_greyscale / ($greyscale_max > 0 ? $greyscale_max : 1000);
+  my $features_drawn  = 0;
+  my $features_bumped = 0;
 
-  my $url = $self->my_config('url');
-  $self->{_cache}->{_bigwig_adaptor} ||= Bio::EnsEMBL::ExternalData::BigFile::BigWigAdaptor->new($url);
-
-  return $self->{_cache}->{_bigwig_adaptor};
-}
-
-# get the alignment features
-sub wiggle_features {
-  my ($self, $bins) = @_;
-
-  my $slice = $self->{'container'};
-  if (!exists($self->{_cache}->{wiggle_features})) {
-    my $summary_e = $self->bigwig_adaptor->fetch_extended_summary_array($slice->seq_region_name, $slice->start, $slice->end, $bins);
-    my $binwidth  = ($slice->length/$bins);
-    my $flip      = $slice->strand == -1 ? $slice->length + 1 : undef;
-    my @features;
+  $self->_init_bump(undef, $depth);
+  
+  foreach (sort { $a->[0] <=> $b->[0] } map [ $_->{'start'}, $_->{'end'}, $_ ], @$features) {
+    my $start = max($_->[0], 1);
+    my $end   = min($_->[1], $length);
+    my $f     = $_->[2];
     
-    for (my $i=0; $i<$bins; $i++) {
-      my $s = $summary_e->[$i];
-      my $mean = $s->{validCount} > 0 ? $s->{sumData}/$s->{validCount} : 0;
-
-      my $feat = {
-        start => $flip ? $flip - (($i+1)*$binwidth) : ($i*$binwidth+1),
-        end   => $flip ? $flip - ($i*$binwidth+1)   : (($i+1)*$binwidth),
-        score => $mean
-      };
-      
-      push @features,$feat;
-    }
-    
-    $self->{_cache}->{wiggle_features} = \@features;
-  }
-
-  return $self->{_cache}->{wiggle_features};
-}
-
-sub draw_features {
-  my ($self, $wiggle)= @_;  
-
-  my $drawn_wiggle_flag = $wiggle ? 0: "wiggle"; 
-
-  my $slice = $self->{'container'};
-
-  my $feature_type = $self->my_config('caption');
-
-  my $colour = $self->my_config('colour');
-
-  # render wiggle if wiggle
-  if ($wiggle) { 
-    my $max_bins = $self->{'config'}->image_width();
-    if ($max_bins > $slice->length) {
-      $max_bins = $slice->length;
-    }
-
-    my $features =  $self->wiggle_features($max_bins);
-    $drawn_wiggle_flag = "wiggle";
-
-    my $min_score;
-    my $max_score;
-
-    my $viewLimits = $self->my_config('viewLimits');
-
-    if (defined($viewLimits)) {
-      ($min_score,$max_score) = split ":",$viewLimits;
-    } else {
-      $min_score = $features->[0]->{score};
-      $max_score = $features->[0]->{score};
-      foreach my $feature (@$features) { 
-        my $fscore = $feature->{score};
-        if ($fscore < $min_score) { $min_score = $fscore };
-        if ($fscore > $max_score) { $max_score = $fscore };
+    if ($depth > 0) {
+      if ($self->bump_row(int($pix_per_bp * $start) - 1, int($pix_per_bp * $end)) > $depth) {
+        $features_bumped++;
+        next;
       }
     }
-
-    my $no_titles = $self->my_config('no_titles');
-
-    my $params = { 'min_score'    => $min_score, 
-                   'max_score'    => $max_score, 
-                   'description'  =>  $self->my_config('caption'),
-                   'score_colour' =>  $colour,
-                 };
-
-    if (defined($no_titles)) {
-      $params->{'no_titles'} = 1;
-    }
-
-    # render wiggle plot        
-    $self->draw_wiggle_plot(
-          $features,                      ## Features array
-          $params
-          #[$colour],
-          #[$feature_type],
-        );
-    $self->draw_space_glyph() if $drawn_wiggle_flag;
+    
+    $self->push($self->Rect({
+      x         => $start - 1,
+      y         => 0,
+      width     => $end - $start + 1,
+      height    => $h,
+      colour    => $greyscale[min($n_greyscale - 1, int($f->{'score'} * $greyscale_score))],
+      absolutey => 1,
+    }));
+    
+    $features_drawn = 1;
   }
+  
+  $self->_render_hidden_bgd($h) if $features_drawn && $self->my_config('addhiddenbgd');
+  
+  $self->errorTrack("No features from '$name' in this region") unless $features_drawn || $self->{'no_empty_track_message'} || $self->{'config'}->get_option('opt_empty_tracks') == 0;
+  $self->errorTrack("$features_bumped features from '$name' omitted", undef, $self->_max_bump_row * ($h + $h < 2 ? 1 : 2) + 6) if $features_bumped && $self->get_parameter('opt_show_bumped');
+}
 
-  if( !$wiggle || $wiggle eq 'both' ) { 
-    warn("bigwig glyphset doesn't draw blocks\n");
-  }
-
-  my $error = $self->draw_error_tracks($drawn_wiggle_flag);
-  return 0;
+sub render_text {
+  my ($self, $wiggle) = @_;
+  warn 'No text render implemented for bigwig';
+  return '';
 }
 
 sub features {
   my $self          = shift;
   my $slice         = $self->{'container'};
-  my $max_bins      = $self->{'config'}->image_width;
-     $max_bins      = $slice->length if $max_bins > $slice->length;
+  my $max_bins      = min($self->{'config'}->image_width, $slice->length);
   my $fake_analysis = Bio::EnsEMBL::Analysis->new(-logic_name => 'fake');
-  my $max_score     = 0;
   my @features;
   
-  foreach my $feat (@{$self->wiggle_features($max_bins)}) {
-    push @features, Bio::EnsEMBL::SimpleFeature->new(
-      -start    => $feat->{'start'}, 
-      -end      => $feat->{'end'}, 
-      -slice    => $slice, 
-      -strand   => 1, 
-      -score    => $feat->{'score'}, 
-      -analysis => $fake_analysis
-    );
+  foreach (@{$self->wiggle_features($max_bins)}) {
+    push @features, {
+      start    => $_->{'start'}, 
+      end      => $_->{'end'}, 
+      score    => $_->{'score'}, 
+      slice    => $slice, 
+      analysis => $fake_analysis,
+      strand   => 1, 
+    };
+  }
+  
+  return \@features;
+}
+
+# get the alignment features
+sub wiggle_features {
+  my ($self, $bins) = @_;
+  
+  if (!$self->{'_cache'}{'wiggle_features'}) {
+    my $slice     = $self->{'container'};
+    my $summary   = $self->bigwig_adaptor->fetch_extended_summary_array($slice->seq_region_name, $slice->start, $slice->end, $bins);
+    my $bin_width = $slice->length / $bins;
+    my $flip      = $slice->strand == -1 ? $slice->length + 1 : undef;
+    my @features;
     
-    $max_score = max($max_score, $feat->{'score'});
+    for (my $i = 0; $i < $bins; $i++) {
+      next unless $summary->[$i]{'validCount'} > 0;
+      
+      push @features, {
+        start => $flip ? $flip - (($i + 1) * $bin_width) : ($i * $bin_width + 1),
+        end   => $flip ? $flip - ($i * $bin_width + 1)   : (($i + 1) * $bin_width),
+        score => $summary->[$i]{'sumData'} / $summary->[$i]{'validCount'},
+      };
+    }
+    
+    $self->{'_cache'}{'wiggle_features'} = \@features;
   }
-
-  my $config = {};
-
-  $config->{'useScore'}        = 1;
-  $config->{'implicit_colour'} = 1;
-  $config->{'greyscale_max'}   = $max_score;
-
-  return(
-    'url' => [ \@features, $config ],
-  );
+  
+  return $self->{'_cache'}{'wiggle_features'};
 }
 
-sub draw_error_tracks {
-  my ($self, $drawn_wiggle) = @_;
-  return 0 if $drawn_wiggle;
-
-  # Error messages ---------------------
-  my $wiggle_name   =  $self->my_config('caption');
-  my $error;
-  if (!$drawn_wiggle) {
-    $error = "$wiggle_name";
-  }
-  return $error;
-}
-
-sub render_text {
+sub draw_features {
   my ($self, $wiggle) = @_;
-  
-  my $container = $self->{'container'};
+  my $slice        = $self->{'container'};
   my $feature_type = $self->my_config('caption');
+  my $colour       = $self->my_config('colour');
 
-  warn("No text render implemented for bigwig\n");
+  # render wiggle if wiggle
+  if ($wiggle) {
+    my $max_bins   = min($self->{'config'}->image_width, $slice->length);
+    my $features   = $self->wiggle_features($max_bins);
+    my $viewLimits = $self->my_config('viewLimits');
+    my $no_titles  = $self->my_config('no_titles');
+    my $min_score;
+    my $max_score;
+    
+    if (defined $viewLimits) {
+      ($min_score, $max_score) = split ':', $viewLimits;
+    } else {
+      $min_score = $features->[0]{'score'};
+      $max_score = $features->[0]{'score'};
+      
+      foreach my $feature (@$features) {
+        $min_score = min($min_score, $feature->{'score'});
+        $max_score = max($max_score, $feature->{'score'});
+      }
+    }
+    
+    # render wiggle plot        
+    $self->draw_wiggle_plot($features, {
+      min_score    => $min_score, 
+      max_score    => $max_score, 
+      description  => $feature_type,
+      score_colour => $colour,
+      no_titles    => defined $no_titles,
+    });
+    
+    $self->draw_space_glyph;
+  }
+
+  warn q{bigwig glyphset doesn't draw blocks} if !$wiggle || $wiggle eq 'both';
   
-  return '';
-}
-
-sub render_compact {
-  my $self = shift;
-  $self->{'renderer_no_join'} = 1;
-  $self->SUPER::render_normal(8, 0);
+  return 0;
 }
 
 1;
