@@ -24,7 +24,7 @@ SELECT CONCAT(
 	IFNULL(IFNULL(CONCAT(m.display_label, '/', m.stable_id), m.stable_id), IFNULL(attr.node_type, '')),
 	IFNULL(CONCAT('/sis=',ROUND(attr.duplication_confidence_score*100,2)), ''),
 	IFNULL(CONCAT(' [', IFNULL(g.name, stn.node_name), ']'), '')
-) AS the_tree
+) AS the_gene_tree
 FROM gene_tree_node AS node
 	LEFT JOIN gene_tree_root AS root ON root.root_id=node.node_id
 	LEFT JOIN gene_tree_node_attr AS attr ON attr.node_id=node.node_id
