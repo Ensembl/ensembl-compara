@@ -80,6 +80,12 @@ sub init {
     $self->{'_data'}{'tree'} = $tree;
   } else {
     $self->{'_data'}{'tree'} = EnsEMBL::Web::Tree->new;
+    $self->create_node('Unknown', 'Not Available',
+            [qw(
+              404  EnsEMBL::Web::Component::404
+            )],
+            { 'availability' => 1, 'no_menu_entry' => 1 }
+    );
     $self->populate_tree; # If no user + session tree found, build one
     $cache->set($cache_key, $self->{'_data'}{'tree'}, undef, 'TREE') if $cache && $cache_key; # Cache default tree
   }
@@ -155,26 +161,22 @@ sub get_valid_action {
   my $tree     = $self->tree;
   my $node_key = join '/', grep $_, $action, $function;
   my $node     = $tree->get_node($node_key);
-  
+
   if (!$node) {
     $node     = $tree->get_node($action);
     $node_key = $action;
   }
-  
-  $self->{'availability'} = $object->availability if $object;
-  
-  return $node->id if $node && $node->get('type') =~ /view/ && $self->is_available($node->get('availability'));
-  
-  foreach ($self->default_action, 'Idhistory', 'Chromosome', 'Genome') {
-    $node = $tree->get_node($_);
-    
-    if ($node && $self->is_available($node->get('availability'))) {
-      $hub->problem('redirect', $hub->url({ action => $_ }));
-      return $node->id;
+
+  if ($node) {
+    $self->{'availability'} = $object->availability if $object;
+    unless ($node->get('type') =~ /view/ && $self->is_available($node->get('availability'))) {
+      $node = $tree->get_node('Unknown');
     }
   }
-  
-  return undef;
+  else {
+    $node = $tree->get_node('Unknown');
+  }
+  return $node->id;
 }
 
 sub get_node { 
