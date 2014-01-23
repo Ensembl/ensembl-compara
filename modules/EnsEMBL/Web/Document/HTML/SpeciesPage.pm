@@ -89,6 +89,7 @@ sub render {
 
   ## Display all the species in data table
   my $html = '<h3>Current Ensembl Species</h3>
+<p>Note: to find out which species were in previous releases, please see the <a href="/info/website/archives/assembly.html">table of assemblies</a></p>
 <div class="js_panel" id="species-table">
       <input type="hidden" class="panel_type" value="Content">';
 
