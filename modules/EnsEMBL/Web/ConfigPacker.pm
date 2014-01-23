@@ -77,9 +77,6 @@ sub munge_config_tree {
   # get data about file formats from corresponding Perl modules
   $self->_munge_file_formats;
 
-  # Internal flatfile data sources
-  #$self->_summarise_datahubs;
-
   # parse the BLAST configuration
   $self->_configure_blast;
 }
@@ -1433,116 +1430,6 @@ sub _summarise_go_db {
 
   $dbh->disconnect();
 }
-
-sub _summarise_datahubs {
-  my $self    = shift;
-  my $datahub = $self->tree->{'ENSEMBL_INTERNAL_DATAHUBS'};
-  
-  return unless $datahub;
-  
-  my $parser = Bio::EnsEMBL::ExternalData::DataHub::SourceParser->new({
-    timeout => 10,
-    proxy   => $self->tree->{'ENSEMBL_WWW_PROXY'},
-  });
-
-  while (my ($key, $val) = each (%$datahub)) {
-    my ($url, $menu) = ref $val eq 'ARRAY' ? @$val : ($val, undef);
-
-    my $base_url = $url;
-    my $hub_file = 'hub.txt';
-
-    if ($url =~ /.txt$/) {
-      $base_url =~ s/(.*\/).*/$1/;
-      ($hub_file = $url) =~ s/.*\/(.*)/$1/;
-    }
-  
-    ## Do we have data for this species?
-    my $hub_info = $parser->get_hub_info($base_url, $hub_file);
-    
-    if ($hub_info->{'error'}) {
-      warn "!!! COULD NOT CONTACT DATAHUB $key: $hub_info->{'error'}";
-    } else {
-      my $source_list = $hub_info->{$self->tree->{'UCSC_GOLDEN_PATH'}};
-      
-      return unless scalar @$source_list;
-
-      ## Get tracks from hub
-      my $datahub_config = $parser->parse($base_url . $self->tree->{'UCSC_GOLDEN_PATH'}, $source_list);
- 
-      ## Create Ensembl-style tracks from the datahub configuration
-      ## TODO - implement track grouping!
-      foreach my $dataset (@$datahub_config) {
-        if ($dataset->{'error'}) {
-          warn "!!! COULD NOT PARSE CONFIG $dataset->{'file'}: $dataset->{'error'}";
-        } else {
-          (my $name = $key) =~ s/_/ /g;
-          my $menu_key = $menu || $key;  
-          if ($dataset->{'config'}{'subsets'}) {
-            foreach (@{$dataset->{'tracks'}}) {
-              $self->_add_datahub_tracks($_, $name, $menu_key, $dataset->{'config'}{'description_url'});
-            }
-          }
-          else {
-            $self->_add_datahub_tracks($dataset, $name, $menu_key);
-          }
-        }
-      }
-    }
-  }
-}
-
-sub _add_datahub_tracks {
-  my ($self, $dataset, $name, $menu_key, $desc_url) = @_;
-
-  my $options = {
-                  menu_key     => $menu_key,
-                  menu_name    => $name,
-                  submenu_key  => $dataset->{'config'}{'track'},
-                  submenu_name => $dataset->{'config'}{'shortLabel'},
-                  desc_url     => $desc_url || $dataset->{'config'}{'description_url'},
-                  view         => $dataset->{'config'}{'view'},
-                };
-
-  foreach my $track (@{$dataset->{'tracks'}}) {
-    my $link = ' <a href="'.$options->{'desc_url'}.'" rel="external">Go to track description on datahub</a>';
-    # Should really be shortLabel, but Encode is much better using longLabel (duplicate names using shortLabel)
-    # The problem is that UCSC browser has a grouped set of tracks with a header above them. This
-    # means the short label can be very non specific, because the header gives context of what type of     # track it is. For Ensembl we need to have all the information in the track name / caption
-    (my $source_name = $track->{'longLabel'}) =~ s/_/ /g;
-    my $source = {
-      'name'          => $track->{'track'},
-      'source_name'   => $source_name,
-#      'caption'       => $track->{'shortLabel'},
-      'description'   => $track->{'longLabel'}.$link,
-      'source_url'    => $track->{'bigDataUrl'},
-      'datahub'       => 1,
-      %$options
-    };
-
-    $source->{'colour'} = $track->{'color'} if (exists($track->{'color'}));
-
-    my $type = ref($track->{'type'}) eq 'HASH' ? uc($track->{'type'}{'format'}) : uc($track->{'type'});
-
-    if (exists($track->{'viewLimits'})) {
-      $source->{'viewLimits'} = $track->{'viewLimits'};
-    } elsif (exists($track->{'autoscale'}) && $track->{'autoscale'} eq 'off') {
-      $source->{'viewLimits'} = '0:127';
-    }
-    if (exists($track->{'maxHeightPixels'})) {
-      $source->{'maxHeightPixels'} = $track->{'maxHeightPixels'};
-    } elsif ($type eq 'BIGWIG' || $type eq 'BIGBED') {
-      $source->{'maxHeightPixels'} = '64:32:16';
-    }
-
-    if ($type eq 'BIGWIG') {
-      # To improve browser speed don't display a zmenu for bigwigs 
-      $source->{'no_titles'} = 1;
-    }
-
-    $self->tree->{'ENSEMBL_INTERNAL_'.$type.'_SOURCES'}{$track->{'track'}} = $source;
-  }
-}
-
 
 sub _summarise_dasregistry {
   my $self = shift;
