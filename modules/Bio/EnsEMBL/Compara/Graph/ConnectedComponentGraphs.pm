@@ -73,8 +73,11 @@ without mixing them up.
 
 =head1 CONTACT
 
-  Contact Abel Ureta-Vidal on module implemetation/design detail: abel@ebi.ac.uk
-  or more generally http://lists.ensembl.org/mailman/listinfo/dev
+Please email comments or questions to the public Ensembl
+developers list at <http://lists.ensembl.org/mailman/listinfo/dev>.
+
+Questions may also be sent to the Ensembl help desk at
+<http://www.ensembl.org/Help/Contact>.
 
 =cut
 

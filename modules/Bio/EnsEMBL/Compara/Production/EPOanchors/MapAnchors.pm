@@ -16,7 +16,6 @@ limitations under the License.
 
 =cut
 
-# POD documentation - main docs before the code
 =head1 NAME
 
 Bio::EnsEMBL::Compara::Production::EPOanchors::MapAnchors
@@ -34,19 +33,18 @@ the anchors against the target genome. The required information (anchor batch si
 target genome file, exonerate parameters are provided by the analysis, analysis_job 
 and analysis_data tables  
 
-=head1 AUTHOR - Stephen Fitzgerald
+=head1 AUTHOR
 
-This modules is part of the Ensembl project http://www.ensembl.org
+Stephen Fitzgerald
 
-Email compara@ebi.ac.uk
 
 =head1 CONTACT
 
-This modules is part of the EnsEMBL project (http://www.ensembl.org)
+Please email comments or questions to the public Ensembl
+developers list at <http://lists.ensembl.org/mailman/listinfo/dev>.
 
-Questions can be posted to the ensembl-dev mailing list:
-http://lists.ensembl.org/mailman/listinfo/dev
-
+Questions may also be sent to the Ensembl help desk at
+<http://www.ensembl.org/Help/Contact>.
 
 =head1 APPENDIX
 
@@ -54,7 +52,7 @@ The rest of the documentation details each of the object methods.
 Internal methods are usually preceded with a _
 
 =cut
-#
+
 package Bio::EnsEMBL::Compara::Production::EPOanchors::MapAnchors;
 
 use strict;

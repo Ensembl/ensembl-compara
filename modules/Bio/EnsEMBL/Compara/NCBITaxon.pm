@@ -21,7 +21,7 @@ limitations under the License.
 NCBITaxon - DESCRIPTION of Object
 
 =head1 DESCRIPTION
-  
+
   An object that hold a node within a taxonomic tree.  Inherits from NestedSet.
 
   From Bio::Species
@@ -40,8 +40,11 @@ NCBITaxon - DESCRIPTION of Object
 
 =head1 CONTACT
 
-  Contact Jessica Severin on implemetation/design detail: jessica@ebi.ac.uk
-  Contact Ewan Birney on EnsEMBL in general: birney@sanger.ac.uk
+Please email comments or questions to the public Ensembl
+developers list at <http://lists.ensembl.org/mailman/listinfo/dev>.
+
+Questions may also be sent to the Ensembl help desk at
+<http://www.ensembl.org/Help/Contact>.
 
 =head1 APPENDIX
 

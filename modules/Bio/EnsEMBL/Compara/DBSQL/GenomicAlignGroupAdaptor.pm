@@ -53,9 +53,15 @@ This class is intended to access data in genomic_align_group table
 
 =head1 AUTHOR
 
-Javier Herrero (jherrero@ebi.ac.uk)
+Javier Herrero
 
-This modules is part of the Ensembl project http://www.ensembl.org
+=head1 CONTACT
+
+Please email comments or questions to the public Ensembl
+developers list at <http://lists.ensembl.org/mailman/listinfo/dev>.
+
+Questions may also be sent to the Ensembl help desk at
+<http://www.ensembl.org/Help/Contact>.
 
 =head1 APPENDIX
 

@@ -23,7 +23,7 @@ my $description = q{
 ## PROGRAM copy_ancestral_core.pl
 ##
 ## AUTHORS
-##    Kathryn Beal (kbeal@ebi.ac.uk)
+##    Kathryn Beal
 ##
 ## DESCRIPTION
 ##    This script copies ancestral data over core DBs. It has been
@@ -40,8 +40,15 @@ copy_data.pl
 
 =head1 AUTHORS
 
- Kathryn Beal (kbeal@ebi.ac.uk)
+ Kathryn Beal
 
+=head1 CONTACT
+
+Please email comments or questions to the public Ensembl
+developers list at <http://lists.ensembl.org/mailman/listinfo/dev>.
+
+Questions may also be sent to the Ensembl help desk at
+<http://www.ensembl.org/Help/Contact>.
 
 =head1 DESCRIPTION
 

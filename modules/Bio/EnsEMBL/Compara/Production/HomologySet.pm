@@ -49,7 +49,7 @@ but has now been formalized into a proper object design.
 General use is like:
   $homology_set1 = new Bio::EnsEMBL::Compara::Production::HomologySet;
   $homology_set1->add(@{$homologyDBA->fetch_all_by_MethodLinkSpeciesSet($mlss1));
-  
+
   $homology_set2 = new Bio::EnsEMBL::Compara::Production::HomologySet;
   $homology_set2->add(@{$homologyDBA->fetch_all_by_MethodLinkSpeciesSet($mlss2));
 
@@ -61,9 +61,11 @@ General use is like:
 
 =head1 CONTACT
 
-  Contact Jessica Severin on module implemetation/design detail: jessica@ebi.ac.uk
-  Contact Abel Ureta-Vidal on EnsEMBL/Compara: abel@ebi.ac.uk
-  Contact Ewan Birney on EnsEMBL in general: birney@sanger.ac.uk
+Please email comments or questions to the public Ensembl
+developers list at <http://lists.ensembl.org/mailman/listinfo/dev>.
+
+Questions may also be sent to the Ensembl help desk at
+<http://www.ensembl.org/Help/Contact>.
 
 =cut
 

@@ -17,32 +17,21 @@ limitations under the License.
 =cut
 
 
-#
-# Ensembl module for Bio::EnsEMBL::Compara::SitewiseOmega
-#
-# Cared for by Albert Vilella <avilella@ebi.ac.uk>
-#
-# POD documentation - main docs before the code
-
 =head1 NAME
 
-Bio::EnsEMBL::Compara::SitewiseOmega - DESCRIPTION of Object
+Bio::EnsEMBL::Compara::SitewiseOmega
 
-=head1 SYNOPSIS
+=head1 AUTHOR
 
-Give standard usage here
+Albert Vilella
 
-=head1 DESCRIPTION
+=head1 CONTACT
 
-Describe the object here
+Please email comments or questions to the public Ensembl
+developers list at <http://lists.ensembl.org/mailman/listinfo/dev>.
 
-=head1 AUTHOR - Albert Vilella
-
-This modules is part of the Ensembl project http://www.ensembl.org
-
-Email avilella@ebi.ac.uk
-
-Describe contact details here
+Questions may also be sent to the Ensembl help desk at
+<http://www.ensembl.org/Help/Contact>.
 
 =head1 APPENDIX
 

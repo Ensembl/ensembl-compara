@@ -16,7 +16,6 @@ limitations under the License.
 
 =cut
 
-# POD documentation - main docs before the code
 =head1 NAME
 
 Bio::EnsEMBL::Compara::Production::EPOanchors::SetGenomeDBLocator
@@ -30,12 +29,6 @@ $exonate_anchors->write_output(); writes to database
 
 module to set the locator field in the genome_db table given a set of species and
 a locator string(s) for the core dbs of those species
-
-=head1 AUTHOR - compara
-
-This modules is part of the Ensembl project http://www.ensembl.org
-
-Email compara@ebi.ac.uk
 
 =head1 CONTACT
 
@@ -51,7 +44,7 @@ The rest of the documentation details each of the object methods.
 Internal methods are usually preceded with a _
 
 =cut
-#
+
 package Bio::EnsEMBL::Compara::Production::EPOanchors::SetGenomeDBLocator;
 
 use strict;

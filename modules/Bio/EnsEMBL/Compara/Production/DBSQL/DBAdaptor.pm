@@ -16,13 +16,6 @@ limitations under the License.
 
 =cut
 
-#
-# BioPerl module for DBSQL::Obj
-#
-# Cared for by Ewan Birney <birney@sanger.ac.uk>
-#
-# POD documentation - main docs before the code
-
 =head1 NAME
 
 Bio::EnsEMBL::Compara::DBSQL::DBAdaptor

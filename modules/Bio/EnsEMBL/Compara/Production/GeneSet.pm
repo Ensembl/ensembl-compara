@@ -50,9 +50,11 @@ but has now been formalized into a proper object design.
 
 =head1 CONTACT
 
-  Contact Jessica Severin on module implemetation/design detail: jessica@ebi.ac.uk
-  Contact Abel Ureta-Vidal on EnsEMBL/Compara: abel@ebi.ac.uk
-  Contact Ewan Birney on EnsEMBL in general: birney@sanger.ac.uk
+Please email comments or questions to the public Ensembl
+developers list at <http://lists.ensembl.org/mailman/listinfo/dev>.
+
+Questions may also be sent to the Ensembl help desk at
+<http://www.ensembl.org/Help/Contact>.
 
 =cut
 

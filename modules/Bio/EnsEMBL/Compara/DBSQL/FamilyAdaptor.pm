@@ -16,17 +16,9 @@ limitations under the License.
 
 =cut
 
-# 
-# BioPerl module for Bio::EnsEMBL::Compara::DBSQL::FamilyAdaptor
-# 
-# Initially cared for by Philip Lijnzaad <lijnzaad@ebi.ac.uk> and Elia Stupka <elia@tll.org.sg>
-# Now cared by Abel Ureta-Vidal <abel@ebi.ac.uk>
-#
-# POD documentation - main docs before the code
-
 =head1 NAME
 
-FamilyAdaptor - DESCRIPTION of Object
+FamilyAdaptor
 
   This object represents a family coming from a database of protein families.
 
@@ -61,7 +53,11 @@ For more info, see ensembl-doc/family.txt
 
 =head1 CONTACT
 
- Able Ureta-Vidal <abel@ebi.ac.uk>
+Please email comments or questions to the public Ensembl
+developers list at <http://lists.ensembl.org/mailman/listinfo/dev>.
+
+Questions may also be sent to the Ensembl help desk at
+<http://www.ensembl.org/Help/Contact>.
 
 =head1 APPENDIX
 

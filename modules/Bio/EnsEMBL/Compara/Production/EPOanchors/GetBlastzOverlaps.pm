@@ -16,7 +16,6 @@ limitations under the License.
 
 =cut
 
-# POD documentation - main docs before the code
 =head1 NAME
 
 Bio::EnsEMBL::Compara::Production::EPOanchors:GetBlastzOverlaps:
@@ -35,8 +34,6 @@ target genome file, exonerate parameters are provided by the analysis, analysis_
 and analysis_data tables  
 
 This modules is part of the Ensembl project http://www.ensembl.org
-
-Email compara@ebi.ac.uk
 
 =head1 CONTACT
 

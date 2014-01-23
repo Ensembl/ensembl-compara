@@ -196,7 +196,7 @@ sub get_msa_command_line {
     open(TCOFFEE_ENV, ">$t_env_filename")
         or $self->throw("Error opening $t_env_filename for write");
     print TCOFFEE_ENV "http_proxy_4_TCOFFEE=\n";
-    print TCOFFEE_ENV "EMAIL_4_TCOFFEE=cedric.notredame\@europe.com\n";
+    print TCOFFEE_ENV "EMAIL_4_TCOFFEE=proteintrees\@compara.ensembl\n";
     close TCOFFEE_ENV;
 
     my $cmd       = '';
