@@ -75,7 +75,7 @@ known and unknown variants via our Variant Effect Predictor (VEP) tool.',
   ## ASSEMBLY CONVERTER
   $table->add_row({
     'name' => '<b>Assembly converter</b>',
-    'desc' => "Map your data to the current assembly's coordinates.",
+    'desc' => "Map (liftover) your data's coordinates to the current assembly.",
     'tool' => sprintf('<a href="/%s/UserData/SelectFeatures" class="modal_link nodeco"><img src="/i/16/tool.png" alt="Tool" title="Go to online tool" /></a>', $sd->ENSEMBL_PRIMARY_SPECIES),
     'code' => sprintf('<a href="https://github.com/Ensembl/ensembl-tools/tree/release/%s/scripts/assembly_converter" rel="external" class="nodeco"><img src="/i/16/download.png" alt="Download" title="Download Perl script" /></a>', $sd->ENSEMBL_VERSION),
     'docs' => '',
