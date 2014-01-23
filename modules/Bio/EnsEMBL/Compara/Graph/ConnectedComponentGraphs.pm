@@ -74,7 +74,7 @@ without mixing them up.
 =head1 CONTACT
 
   Contact Abel Ureta-Vidal on module implemetation/design detail: abel@ebi.ac.uk
-  or more generally dev@ensembl.org
+  or more generally http://lists.ensembl.org/mailman/listinfo/dev
 
 =cut
 

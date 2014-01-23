@@ -31,7 +31,7 @@ Retrieves alignments from a compara database in the form of DnaDnaAlignFeatures
 
 =head1 CONTACT
 
-Post questions to the EnsEMBL developer list: <dev@ensembl.org>
+Post questions to the EnsEMBL developer list: <http://lists.ensembl.org/mailman/listinfo/dev>
 
 =cut
 

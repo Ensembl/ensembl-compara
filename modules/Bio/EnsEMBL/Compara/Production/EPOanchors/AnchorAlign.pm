@@ -24,7 +24,7 @@ limitations under the License.
 
 =head1 CONTACT
 
-Ensembl-dev mailing list <dev@ensembl.org>
+Ensembl-dev mailing list <http://lists.ensembl.org/mailman/listinfo/dev>
 
 =head1 APPENDIX
 

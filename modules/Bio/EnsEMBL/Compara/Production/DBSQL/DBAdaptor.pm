@@ -43,7 +43,7 @@ This object represents the handle for a comparative DNA alignment database
 
 =head1 CONTACT
 
-Post questions the the EnsEMBL developer list: <dev@ensembl.org>
+Post questions the the EnsEMBL developer list: <http://lists.ensembl.org/mailman/listinfo/dev>
 
 =cut
 

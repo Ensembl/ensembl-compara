@@ -58,7 +58,7 @@ Ensembl Team
 This modules is part of the EnsEMBL project (http://www.ensembl.org)
 
 Questions can be posted to the ensembl-dev mailing list:
-dev@ensembl.org
+http://lists.ensembl.org/mailman/listinfo/dev
 
 =head1 INHERITANCE
 
