@@ -22,20 +22,7 @@
 */
 
 TRUNCATE species_tree_node_tag;
-DELETE FROM gene_tree_root_tag WHERE tag = "spec_count";
 
--- Number of different species in a tree
-INSERT INTO gene_tree_root_tag
-SELECT
-	root_id,
-	"spec_count",
-	COUNT(DISTINCT seq_member.genome_db_id) AS nb_spec
-FROM
-	seq_member
-	JOIN gene_tree_node USING (seq_member_id)
-GROUP BY
-	root_id
-;
 
 CREATE TEMPORARY TABLE tmp_ngenes
 SELECT genome_db_id, COUNT(*) FROM gene_member GROUP BY genome_db_id;
