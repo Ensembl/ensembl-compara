@@ -229,11 +229,15 @@ my $from_ce_adaptor = $from_dba->get_ConstrainedElementAdaptor();
 print "\n\n";   # to clear from possible warnings
 
 my %type_to_adaptor = (
-                       'EPO' => $from_ga_adaptor,
-                       'EPO_LOW_COVERAGE' => $from_ga_adaptor,
-                       'PECAN' => $from_ga_adaptor,
-                       'GERP_CONSERVATION_SCORE' => $from_cs_adaptor,
-                       'GERP_CONSTRAINED_ELEMENT' => $from_ce_adaptor,
+                       'LASTZ_NET'              => $from_ga_adaptor,
+                       'BLASTZ_NET'             => $from_ga_adaptor,
+                       'TRANSLATED_BLAT_NET'    => $from_ga_adaptor,
+                       'LASTZ_PATCH'            => $from_ga_adaptor,
+                       'EPO'                    => $from_ga_adaptor,
+                       'EPO_LOW_COVERAGE'       => $from_ga_adaptor,
+                       'PECAN'                  => $from_ga_adaptor,
+                       'GERP_CONSERVATION_SCORE'    => $from_cs_adaptor,
+                       'GERP_CONSTRAINED_ELEMENT'   => $from_ce_adaptor,
 );
 
 my %all_mlss_objects = ();
@@ -480,14 +484,15 @@ sub copy_genomic_align_blocks {
   my $fix_dnafrag = 0;
 
   my $mlss_id = $mlss->dbID;
+  my $gdb_ids = join(', ', map { $_->dbID() } @{ $mlss->species_set_obj->genome_dbs });
 
-  exit(1) if !check_table("genome_db", $from_dba, $to_dba, "genome_db_id, name, assembly, genebuild, assembly_default");
+  exit(1) if !check_table("genome_db", $from_dba, $to_dba, "genome_db_id, name, assembly, genebuild, assembly_default", "genome_db_id IN ($gdb_ids)" );
   #ignore ancestral dnafrags, will add those later
   if (!check_table("dnafrag", $from_dba, $to_dba, undef, "genome_db_id != 63")) {
       $fix_dnafrag = 1;
       if ($fix_dnafrag && !$trust_to) {
-	  print " To fix the dnafrags in the genomic_align table, you can use the trust_to flag\n\n";
-	  exit(1);
+          print " To fix the dnafrags in the genomic_align table, you can use the trust_to flag\n\n";
+          exit(1);
       }
   }
 
@@ -553,49 +558,49 @@ sub copy_genomic_align_blocks {
 
   if (!defined $fix_gab) {
       if ($max_gab < 10**10) {
-	  $fix_gab = $lower_limit;
+          $fix_gab = $lower_limit;
       } elsif ($min_gab >= $lower_limit and $max_gab < $upper_limit) {
-	  $fix_gab = 0;
+          $fix_gab = 0;
       } else {
-	  die " ** ERROR **  Internal IDs are funny: genomic_align_block_ids between $min_gab and $max_gab\n";
+          die " ** ERROR **  Internal IDs are funny: genomic_align_block_ids between $min_gab and $max_gab\n";
       }
   }
 
   if (!defined $fix_ga) {
       if ($max_ga < 10**10) {
-	  $fix_ga = $lower_limit;
+          $fix_ga = $lower_limit;
       } elsif ($min_ga >= $lower_limit and $max_ga < $upper_limit) {
-	  $fix_ga = 0;
+          $fix_ga = 0;
       } else {
-	  die " ** ERROR **  Internal IDs are funny: genomic_align_ids between $min_ga and $max_ga\n";
+          die " ** ERROR **  Internal IDs are funny: genomic_align_ids between $min_ga and $max_ga\n";
       }
   }
 
   if (!defined $fix_gab_gid) {
       if (defined($max_gab_gid)) {
-	  if ($max_gab_gid < 10**10) {
-	      $fix_gab_gid = $lower_limit;
-	  } elsif ($min_gab_gid >= $lower_limit and $max_gab_gid < $upper_limit) {
-	      $fix_gab_gid = 0;
-	  } else {
-	      die " ** ERROR **  Internal IDs are funny: genomic_align_block.group_ids between $min_gab_gid and $max_gab_gid\n";
-	  }
+          if ($max_gab_gid < 10**10) {
+              $fix_gab_gid = $lower_limit;
+          } elsif ($min_gab_gid >= $lower_limit and $max_gab_gid < $upper_limit) {
+              $fix_gab_gid = 0;
+          } else {
+              die " ** ERROR **  Internal IDs are funny: genomic_align_block.group_ids between $min_gab_gid and $max_gab_gid\n";
+          }
       } else {
-	  $fix_gab_gid = 0;
+          $fix_gab_gid = 0;
       }
   }
 
   if (!defined $fix_gat) {
       if (defined($max_gat)) {
-	  if ($max_gat < 10**10) {
-	      $fix_gat = $lower_limit;
-	  } elsif ($min_gat >= $lower_limit and $max_gat < $upper_limit) {
-	      $fix_gat = 0;
-	  } else {
-	      die " ** ERROR **  Internal IDs are funny: genomic_align_tree.node_ids between $min_gat and $max_gat\n";
-	  }
+          if ($max_gat < 10**10) {
+              $fix_gat = $lower_limit;
+          } elsif ($min_gat >= $lower_limit and $max_gat < $upper_limit) {
+              $fix_gat = 0;
+          } else {
+              die " ** ERROR **  Internal IDs are funny: genomic_align_tree.node_ids between $min_gat and $max_gat\n";
+          }
       } else {
-	  $fix_gat = 0;
+          $fix_gat = 0;
       }
   }
   
