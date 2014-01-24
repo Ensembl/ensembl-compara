@@ -22,8 +22,8 @@
 <h2 id="accounts">The main Ensembl website has user accounts - can we enable them on our mirror?</h2>
 <p>
 The 'users' plugin in public-plugins contains user login and user groups functionality.
-This plugin requires ensembl-orm (part of ensembl-website CVS checkout),
-which in turn has a dependency on Rose::DB::Object (<a title="Rose::DB::Object on CPAN" href="http://search.cpan.org/~jsiracusa/Rose-DB-Object/">on CPAN</a>).
+This plugin requires ensembl-orm, which in turn has a dependency on Rose::DB::Object 
+(<a title="Rose::DB::Object on CPAN" href="http://search.cpan.org/~jsiracusa/Rose-DB-Object/">on CPAN</a>).
 Thus for the users plugin to work, Rose must be installed and the plugins file needs to contain this extra declaration above the EnsEMBL::Ensembl declaration.
 </p>
 <pre>

@@ -44,13 +44,13 @@ sites and <a href="http://www.ensembl.org/info/website/archives/assembly.html">p
 <h2>Ensembl Code Versioning</h2>
 
 <p>
-For the APIs and the web code, a CVS branch (essentially a named snapshot of the code) is made 
+For the APIs and the web code, a git branch (essentially a named snapshot of the code) is made 
 for each release and named with the release version number.
 The
 <a href="api_installation.html">Perl API</a> and
 <a href="/info/docs/webcode/mirror/install/ensembl-code.html#cvs_co">web code</a>
-can be checked out of CVS with the tag "branch-ensembl-versionnumber",
-e.g. branch-ensembl-[[SPECIESDEFS::ENSEMBL_VERSION]].
+can be checked out of git with the branch "release/versionnumber",
+e.g. release/[[SPECIESDEFS::ENSEMBL_VERSION]].
 </p>
 
 
@@ -81,10 +81,6 @@ A letter suffix to the data version indicates a change in data without a change 
 
 <p>
 <a href="http://www.ebi.ac.uk/biomart/" rel="external">BioMart</a> will branch less frequently than Ensembl, and the release number bears no relation to that of Ensembl.
-</p>
-
-<p>
-The code can be checked out of CVS - see the <a href="/info/docs/webcode/install/ensembl-code.html#cvs_cobiomart">installation instructions</a> for the CVS tag format.
 </p>
 
 </body>
