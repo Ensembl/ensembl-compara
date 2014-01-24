@@ -247,9 +247,24 @@ sub _create_DnaAlignFeature {
   ### Returns: hashref of API objects
   
   my ($self, $db) = @_;
-  my $daf         = $self->_generic_create('DnaAlignFeature', 'fetch_all_by_hit_name', $db);
-  my $genes       = $self->_generic_create('Gene', 'fetch_all_by_external_name', $db, undef, 'no_errors');
-  my $features    = { DnaAlignFeature => EnsEMBL::Web::Data::Bio::AlignFeature->new($self->hub, @$daf) };
+  my $hub = $self->hub;
+  my $daf = [];
+  if ($hub->param('logic_name')) {
+    my $db_adaptor = $self->database(lc $db);
+    if (!$db_adaptor) {
+      $self->problem('fatal', 'Database Error', "Could not connect to the $db database.");
+      return undef;
+    }
+    else {
+      my $slice = $db_adaptor->get_SliceAdaptor->fetch_by_region('chromosome', $hub->param('id'));
+      $daf = $slice->get_all_DnaAlignFeatures($hub->param('logic_name'));
+    }
+  }
+  else {
+    $daf = $self->_generic_create('DnaAlignFeature', 'fetch_all_by_hit_name', $db);
+  }
+  my $genes = $self->_generic_create('Gene', 'fetch_all_by_external_name', $db, undef, 'no_errors');
+  my $features    = { DnaAlignFeature => EnsEMBL::Web::Data::Bio::AlignFeature->new($hub, @$daf) };
   
   $features->{'Gene'} = EnsEMBL::Web::Data::Bio::Gene->new($self->hub, @$genes) if $genes;
   

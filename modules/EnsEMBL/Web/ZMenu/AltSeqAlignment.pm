@@ -58,21 +58,19 @@ sub content {
       __clear => 1
     })
   });  
-=cut
+
   $self->add_entry({
     label => 'View all hits',
     link  => $hub->url({
-      type    => 'Location',
-      action  => 'Genome',
-      ftype   => 'PatchAlignFeature',
-      filter      => $ref_seq_name,
-      id  => $feature->slice->seq_region_name,
-      exdb  => $hit_db_name,
-      db      => $db,
-      __clear => 1
+      type        => 'Location',
+      action      => 'Genome',
+      ftype       => 'DnaAlignFeature',
+      logic_name  => 'alt_seq_mapping',
+      id          => $feature->slice->seq_region_name,
+      __clear     => 1
     })
   });
-=cut
+
 }
 
 1;
