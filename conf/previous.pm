@@ -23,7 +23,15 @@ package previous;
 ### a previous plugin) from  inside a plugin that is overrdding
 ### the method/sub-routine.
 ###
+### Working depends on the way plugins are loaded, see LoadPlugins
+###
 ### Usage:
+### package EnsEMBL::Web::SomeClass; # core webcode
+### use strict;
+### sub new {
+###   return bless {}, shift;
+### }
+### 1;
 ###
 ### package EnsEMBL::Web::SomeClass; # inside plugins
 ### use strict;
@@ -44,12 +52,9 @@ package previous;
 ### use strict;
 ### use previous qw(my_sub);
 ### sub my_sub {
-###   PREV::my_sub();
+###   my $result = PREV::my_sub(); # use the core webcode function
 ###   // do something else
-###   return $self;
-### }
-### sub my_sub {
-###   // override the old some_sub here
+###   return $result;
 ### }
 ###
 ### The call to the method gets transfered to a method with the
