@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2013] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2014] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -38,7 +38,7 @@ Andy Yates (ayatesatebiacuk)
 
 This modules is part of the EnsEMBL project (http://www.ensembl.org)
 
-Questions can be posted to the dev mailing list: dev@ensembl.org
+Questions can be posted to the dev mailing list: http://lists.ensembl.org/mailman/listinfo/dev
 
 =cut
 

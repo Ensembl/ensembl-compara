@@ -1,4 +1,4 @@
-# Copyright [1999-2013] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+# Copyright [1999-2014] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 # 
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -110,6 +110,26 @@ Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->new(
     -port => 3306,
     -species => 'compara_curr',
     -dbname => 'lg4_ensembl_compara_75',
+);
+
+# previous ancestral database on one of Compara servers:
+Bio::EnsEMBL::DBSQL::DBAdaptor->new(
+    -host => 'compara3',
+    -user => 'ensadmin',
+    -pass => $ENV{'ENSADMIN_PSW'},
+    -port => 3306,
+    -species => 'ancestral_prev',
+    -dbname => 'mp12_ensembl_ancestral_74',
+);
+
+# current ancestral database on one of Compara servers:
+Bio::EnsEMBL::DBSQL::DBAdaptor->new(
+    -host => 'compara5',
+    -user => 'ensadmin',
+    -pass => $ENV{'ENSADMIN_PSW'},
+    -port => 3306,
+    -species => 'ancestral_curr',
+    -dbname => 'lg4_ensembl_ancestral_75',
 );
 
 # ensembl production:

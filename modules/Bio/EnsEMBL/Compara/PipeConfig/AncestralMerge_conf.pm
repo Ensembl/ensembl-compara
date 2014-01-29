@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2013] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2014] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -37,7 +37,11 @@ limitations under the License.
 
 =head1 CONTACT
 
-  Please contact ehive-users@ebi.ac.uk mailing list with questions/suggestions.
+Please email comments or questions to the public Ensembl
+developers list at <http://lists.ensembl.org/mailman/listinfo/dev>.
+
+Questions may also be sent to the Ensembl help desk at
+<http://www.ensembl.org/Help/Contact>.
 
 =cut
 
@@ -54,32 +58,16 @@ sub default_options {
     return {
          %{$self->SUPER::default_options},
 
-        'rel'               => 71,                                                  # current release number
         'rel_suffix'        => '',                                                  # empty string by default
-        'rel_with_suffix'   => $self->o('rel').$self->o('rel_suffix'),              # for convenience
+        'rel_with_suffix'   => $self->o('ensembl_release').$self->o('rel_suffix'),  # for convenience
 
         'pipeline_name' => 'ensembl_ancestral_'.$self->o('rel_with_suffix'),        # name used by the beekeeper to prefix job names on the farm
 
         'merge_script'  => $self->o('ensembl_cvs_root_dir').'/ensembl-compara/scripts/pipeline/copy_ancestral_core.pl',
 
-        'pipeline_db' => {
-            -host   => 'compara3',
-            -port   => 3306,
-            -user   => 'ensadmin',
-            -pass   => $self->o('password'),
-            -dbname => $ENV{'USER'}.'_'.$self->o('pipeline_name'),
-        },
+        'prev_ancestral_db' => 'mysql://ensadmin:' . $self->o('password') . '@compara3/mp12_ensembl_ancestral_74',
 
-            'prev_ancestral_db' => 'mysql://ensadmin:' . $self->o('password') . '@compara3/sf5_ensembl_ancestral_70',
-#         'prev_ancestral_db' => {
-#             -driver => 'mysql',
-#             -host   => 'compara1',
-#             -port   => 3306,
-#             -user   => 'ensadmin',
-#             -pass   => $self->o('password'),
-#             -dbname => 'lg4_ensembl_ancestral_64',
-#         },
-
+        'reservation_sfx' => '',    # set to '000' for farm2, to '' for farm3 and EBI
     };
 }
 
@@ -97,8 +85,9 @@ sub pipeline_create_commands {
 sub resource_classes {
     my ($self) = @_;
     return {
+        %{ $self->SUPER::resource_classes() },
          'urgent'   => {  'LSF' => '-q yesterday' },
-         'more_mem' => {  'LSF' => '-M5000000 -R "select[mem>5000] rusage[mem=5000]"' },
+         'more_mem' => {  'LSF' => '-M5000'.$self->o('reservation_sfx').' -R "select[mem>5000] rusage[mem=5000]"' },
     };
 }
 
@@ -125,14 +114,14 @@ sub pipeline_analyses {
             -parameters => {
                 'inputlist'         => [        # this table needs to be edited prior to running the pipeline:
                         # copying from previous release:
-#                                        [ '505' => $self->o('prev_ancestral_db'), ],     # 3-way birds
-                                        [ '528' => $self->o('prev_ancestral_db'), ],     # 5-way fish
-#                                        [ '548' => $self->o('prev_ancestral_db'), ],     # 6-way primates
-                                        [ '619' => $self->o('prev_ancestral_db'), ],     # 13 eutherian mammals
+                                        [ '528' => $self->o('prev_ancestral_db'), ],     # 5 teleost fish
+                                        [ '548' => $self->o('prev_ancestral_db'), ],     # 6 primates
+                                        [ '647' => $self->o('prev_ancestral_db'), ],     # 4 sauropsids
+                                        [ '654' => $self->o('prev_ancestral_db'), ],     # 15 eutherian mammals
 
                         # copying from new sources:
-                     [ '548' => 'mysql://ensadmin:'.$self->o('password').'@compara4/sf5_ancestral_sequences_core_71' ],   # 6-way primates
-                     [ '641' => 'mysql://ensadmin:'.$self->o('password').'@compara3/sf5_3birds_ancestral_sequences_core_71' ],  # 3-way birds
+#                     [ '548' => 'mysql://ensadmin:'.$self->o('password').'@compara4/sf5_ancestral_sequences_core_71' ],   # 6-way primates
+#                     [ '641' => 'mysql://ensadmin:'.$self->o('password').'@compara3/sf5_3birds_ancestral_sequences_core_71' ],  # 3-way birds
                 ],
             },
             -flow_into => {

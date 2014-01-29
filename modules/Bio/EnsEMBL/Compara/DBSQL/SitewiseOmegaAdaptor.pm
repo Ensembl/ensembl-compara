@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2013] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2014] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -16,32 +16,21 @@ limitations under the License.
 
 =cut
 
-#
-# Ensembl module for Bio::EnsEMBL::Compara::DBSQL::SitewiseOmegaAdaptor
-#
-# Cared for by Albert Vilella <avilella@ebi.ac.uk>
-#
-# POD documentation - main docs before the code
-
 =head1 NAME
 
-Bio::EnsEMBL::Compara::DBSQL::SitewiseOmegaAdaptor - DESCRIPTION of Object
+Bio::EnsEMBL::Compara::DBSQL::SitewiseOmegaAdaptor
 
-=head1 SYNOPSIS
+=head1 AUTHOR
 
-Give standard usage here
+Albert Vilella
 
-=head1 DESCRIPTION
+=head1 CONTACT
 
-Describe the object here
+Please email comments or questions to the public Ensembl
+developers list at <http://lists.ensembl.org/mailman/listinfo/dev>.
 
-=head1 AUTHOR - Albert Vilella
-
-This modules is part of the Ensembl project http://www.ensembl.org
-
-Email aVilella@ebi.ac.uk
-
-Describe contact details here
+Questions may also be sent to the Ensembl help desk at
+<http://www.ensembl.org/Help/Contact>.
 
 =head1 APPENDIX
 

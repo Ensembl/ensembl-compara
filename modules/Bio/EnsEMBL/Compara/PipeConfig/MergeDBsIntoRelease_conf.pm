@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2013] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2014] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -53,7 +53,7 @@ sub default_options {
     return {
         %{$self->SUPER::default_options},
 
-        'host'            => 'compara4',    # where the pipeline database will be created
+        'host'            => 'compara5',    # where the pipeline database will be created
         'rel_suffix'      => '',            # an empty string by default, a letter otherwise
 
         'rel_with_suffix' => $self->o('ensembl_release').$self->o('rel_suffix'),
@@ -69,15 +69,15 @@ sub default_options {
 
         'urls'              => {
             'master_db'     => 'mysql://ensro@compara1/sf5_ensembl_compara_master',
-            'prev_rel_db'   => 'mysql://ensro@ens-livemirror/ensembl_compara_72',   # <----- make sure this refers to the previous release!
+            'prev_rel_db'   => 'mysql://ensro@ens-livemirror/ensembl_compara_74',   # <----- make sure this refers to the previous release!
 
                                         # make sure that for the rest of the databases you have servers' and owners' names right:
-            'curr_rel_db'   => 'mysql://ensadmin:'.$self->o('password').'@compara2/'.$self->o('ENV','USER').'_ensembl_compara_'.$self->o('ensembl_release'),
+            'curr_rel_db'   => 'mysql://ensadmin:'.$self->o('password').'@compara5/'.$self->o('ENV','USER').'_ensembl_compara_'.$self->o('ensembl_release'),
 
-            'protein_db'    => 'mysql://ensro@compara1/mm14_compara_homology_'.$self->o('ensembl_release'),
-            'ncrna_db'      => 'mysql://ensro@compara3/mp12_compara_nctrees_'.$self->o('ensembl_release'),
+            'protein_db'    => 'mysql://ensro@compara1/mm14_protein_trees_'.$self->o('ensembl_release'),
+            'ncrna_db'      => 'mysql://ensro@compara4/mp12_compara_nctrees_'.$self->o('ensembl_release'),
             'family_db'     => 'mysql://ensro@compara2/lg4_compara_families_'.$self->o('ensembl_release'),
-            'projection_db' => 'mysql://ensro@compara3/mm14_homology_projections_'.$self->o('ensembl_release'),
+            'projection_db' => 'mysql://ensro@compara1/mm14_homology_projections_'.$self->o('ensembl_release'),
         },
 
         'only_tables'       => {

@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2013] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2014] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -36,14 +36,14 @@ Module to set up the production database for generating multiple alignments usng
 
 This modules is part of the Ensembl project http://www.ensembl.org
 
-Email dev@ensembl.org
+Email http://lists.ensembl.org/mailman/listinfo/dev
 
 =head1 CONTACT
 
 This modules is part of the EnsEMBL project (http://www.ensembl.org)
 
 Questions can be posted to the ensembl-dev mailing list:
-dev@ensembl.org
+http://lists.ensembl.org/mailman/listinfo/dev
 
 
 =head1 APPENDIX

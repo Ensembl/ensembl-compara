@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2013] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2014] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -15,13 +15,6 @@ See the License for the specific language governing permissions and
 limitations under the License.
 
 =cut
-
-#
-# Ensembl module for Bio::EnsEMBL::Compara::AlignSlice::Exon
-#
-# Original author: Javier Herrero <jherrero@ebi.ac.uk>
-#
-# pod documentation - main docs before the code
 
 =head1 NAME
 
@@ -74,7 +67,7 @@ The end_phase is set to -1 by default.
 
 =head1 AUTHORS
 
-Javier Herrero (jherrero@ebi.ac.uk)
+Javier Herrero
 
 
 =head1 CONTACT
@@ -82,7 +75,7 @@ Javier Herrero (jherrero@ebi.ac.uk)
 This modules is part of the EnsEMBL project (http://www.ensembl.org)
 
 Questions can be posted to the ensembl-dev mailing list:
-dev@ensembl.org
+http://lists.ensembl.org/mailman/listinfo/dev
 
 =head1 APPENDIX
 

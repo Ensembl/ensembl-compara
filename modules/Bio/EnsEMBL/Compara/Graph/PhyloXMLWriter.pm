@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2013] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2014] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -90,10 +90,10 @@ See inline
 =head1 CONTACT
 
  Please email comments or questions to the public Ensembl
- developers list at <dev@ensembl.org>.
+ developers list at <http://lists.ensembl.org/mailman/listinfo/dev>.
 
  Questions may also be sent to the Ensembl help desk at
- <helpdesk@ensembl.org>.
+ <http://www.ensembl.org/Help/Contact>.
 
 =cut
 
@@ -549,11 +549,7 @@ sub _genomicaligntree_body {
   if ($all_genomic_aligns && @$all_genomic_aligns > 0) {
 
     #Unique name to handle duplications as opposed to scientific name
-    if ($node->is_leaf()) {
-      $w->dataElement('name', $node->name);
-    } else {
-      $w->dataElement('name', $all_genomic_aligns->[0]->dnafrag->name);
-    }
+    $w->dataElement('name', $node->name);
     
     #Get taxon for extant species only (genomic_aligns are for a single species)
     if ($all_genomic_aligns->[0]->genome_db->name ne "ancestral_sequences") {

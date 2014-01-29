@@ -1,5 +1,5 @@
 #!/usr/bin/env perl
-# Copyright [1999-2013] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+# Copyright [1999-2014] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 # 
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -23,7 +23,7 @@ my $description = q{
 ## PROGRAM create_mlss.pl
 ##
 ## AUTHORS
-##    Javier Herrero (jherrero@ebi.ac.uk)
+##    Javier Herrero
 ##
 ## DESCRIPTION
 ##    This script creates a new MethodLinkSpeciesSet based on the
@@ -40,8 +40,15 @@ create_mlss.pl
 
 =head1 AUTHORS
 
- Javier Herrero (jherrero@ebi.ac.uk)
+ Javier Herrero
 
+=head1 CONTACT
+
+Please email comments or questions to the public Ensembl
+developers list at <http://lists.ensembl.org/mailman/listinfo/dev>.
+
+Questions may also be sent to the Ensembl help desk at
+<http://www.ensembl.org/Help/Contact>.
 
 =head1 DESCRIPTION
 

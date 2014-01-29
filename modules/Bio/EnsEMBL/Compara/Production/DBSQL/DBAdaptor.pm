@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2013] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2014] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -15,13 +15,6 @@ See the License for the specific language governing permissions and
 limitations under the License.
 
 =cut
-
-#
-# BioPerl module for DBSQL::Obj
-#
-# Cared for by Ewan Birney <birney@sanger.ac.uk>
-#
-# POD documentation - main docs before the code
 
 =head1 NAME
 
@@ -43,7 +36,7 @@ This object represents the handle for a comparative DNA alignment database
 
 =head1 CONTACT
 
-Post questions the the EnsEMBL developer list: <dev@ensembl.org>
+Post questions the the EnsEMBL developer list: <http://lists.ensembl.org/mailman/listinfo/dev>
 
 =cut
 
