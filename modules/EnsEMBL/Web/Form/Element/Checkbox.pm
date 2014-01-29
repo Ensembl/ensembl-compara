@@ -35,10 +35,10 @@ sub configure {
   ## @overrides
   my ($self, $params) = @_;
 
+  $params->{'checked'} //= $params->{'selected'};
   $params->{'values'} = [{'value' => $params->{'value'}}];
   delete $params->{'value'} unless $params->{'checked'};
   $self->{'__shortnote'} = $params->{'shortnote'} if exists $params->{'shortnote'};
-
   $self->SUPER::configure($params);
 }
 
