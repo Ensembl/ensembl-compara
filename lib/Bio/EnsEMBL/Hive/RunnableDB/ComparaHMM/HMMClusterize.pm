@@ -8,7 +8,6 @@
 =head1 NAME
 
 Bio::EnsEMBL::Hive::RunnableDB::ComparaHMM::HMMClusterize;
-#Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::HMMClusterize
 
 =cut
 
@@ -40,21 +39,17 @@ Internal methods are usually preceded with a _
 =cut
 
 package Bio::EnsEMBL::Hive::RunnableDB::ComparaHMM::HMMClusterize;
-#package Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::HMMClusterize;
 
 use strict;
 use Time::HiRes qw(time gettimeofday tv_interval);
 use Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::StoreClusters;
 use Data::Dumper;
-
 use base ('Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::StoreClusters');
 
 sub fetch_input {
     my $self = shift @_;
 
-    $self->throw('cluster_dir is an obligatory parameter') unless (defined $self->param('cluster_dir'));
 }
-
 
 sub run {
     my $self = shift @_;
@@ -67,21 +62,18 @@ sub write_output {
     my $self = shift @_;
     
     $self->store_clusterset('default', $self->param('allclusters'));
-
-    #$self->store_and_dataflow_clusterset('default', $self->param('allclusters'));
-    # CK: Add additional parameter to tag the tree using methods generated
     #$self->store_clusterset('default', $self->param('allclusters'),'ExtHMM');
 }
 
-##########################################
-#
+########################
 # internal methods
-#
-##########################################
+########################
 sub load_hmmer_classifications {
     my ($self) = @_;
 
     my $cluster_dir = $self->param('cluster_dir');
+    $self->throw('cluster_dir is an obligatory parameter') unless (defined $self->param('cluster_dir'));
+
     my %allclusters = ();
     $self->param('allclusters', \%allclusters);
    
@@ -89,15 +81,13 @@ sub load_hmmer_classifications {
     my @cluster_subdir = readdir DIR;
 
     foreach my $cluster_subdir (@cluster_subdir){
-    	
 	next unless $cluster_subdir =~/^cluster/;
       	my $dir = $cluster_dir.'/'.$cluster_subdir;
       	
 	opendir(DIR_2, $dir) or die "Error openining dir '$dir' : $!";
 
       	while ((my $hmmer_clas_file = readdir (DIR_2))) {
-
-        	next unless $hmmer_clas_file =~/hmmres$/;
+         	next unless $hmmer_clas_file =~/hmmres$/;
         	print STDERR "Reading classifications from $hmmer_clas_file\n" if($self->debug);
 		$hmmer_clas_file = $dir.'/'.$hmmer_clas_file;
 
@@ -106,7 +96,6 @@ sub load_hmmer_classifications {
         	while (<$hmmer_clas_fh>) {
             		chomp;
             		my ($member_id, $hmm_id, $eval) = split /\t/;
-			#push @{$allclusters{$hmm_id}{members}}, $member_id;
             		$allclusters{$hmm_id}{members}{$member_id} = 1; 
        	 	}	
     	}
@@ -115,9 +104,8 @@ sub load_hmmer_classifications {
    close DIR;
 
     for my $model_name (keys %allclusters) {
-        ## we filter out clusters singleton clusters
+        ## filter out clusters singleton clusters
         if (scalar keys %{$allclusters{$model_name}{members}} == 1) {
-         #if (scalar @{$allclusters{$model_name}{members}} == 1) {
             delete $allclusters{$model_name};
         } else {
 	    print STDERR "MODEL NAME is:$model_name\n";	
@@ -126,7 +114,6 @@ sub load_hmmer_classifications {
             my @members = keys %{$allclusters{$model_name}{members}};
             delete $allclusters{$model_name}{members};
             @{$allclusters{$model_name}{members}} = @members;
-#            $allclusters{$model_name}{model_name} = $model_name;
         }
    }
 }

@@ -1,11 +1,6 @@
-=pod 
-
 =head1 NAME
 
 Bio::EnsEMBL::Hive::RunnableDB::BuildHMMprofiles::PrepareSequence;
-#Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::PrepareSequence
-
-=cut
 
 =head1 DESCRIPTION
 
@@ -13,15 +8,17 @@ This module reads in a fasta protein sequence file, for each
 sequence create a job in the subsequent blastp analysis, for
 parallelization of the blastp step.
 
+=head1 MAINTAINER
+
+$Author: ckong $
+
 =cut
 package Bio::EnsEMBL::Hive::RunnableDB::BuildHMMprofiles::PrepareSequence;
-#package Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::PrepareSequence;
 
 use Bio::EnsEMBL::Utils::Exception qw(throw warning);
 use Bio::Perl;
 use Bio::Seq; 
 use Bio::SeqIO; 
-
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
 =head2 fetch_input
@@ -33,14 +30,9 @@ use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
     Args    :   none
 
 =cut
-my $fasta_file;
-my $output_dir;
-
 sub fetch_input {
     my $self = shift @_;
     
-    $fasta_file = $self->param('fasta_file');
-
 return;
 }
 
@@ -56,12 +48,12 @@ return;
 sub run {
     my $self = shift @_;
 
+    my $fasta_file = $self->param('fasta_file');
+    $self->throw('fasta_file is an obligatory parameter') unless (defined $self->param('fasta_file'));
     my $fasta_seq   = Bio::SeqIO->new(-file => $fasta_file,-format => 'fasta');
-    my $count       = 0;
  
     while ( my $seq = $fasta_seq->next_seq() )
     {
-        $count++;
         my $len     = length($seq->seq);
 	next unless ($len > 2);	   
         $self->dataflow_output_id( { 'seq' => $seq }, 2 );

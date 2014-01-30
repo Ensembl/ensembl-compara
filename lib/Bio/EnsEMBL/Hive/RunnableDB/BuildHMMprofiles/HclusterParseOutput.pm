@@ -1,54 +1,14 @@
-=head1 LICENSE
-
-  Copyright (c) 1999-2012 The European Bioinformatics Institute and
-  Genome Research Limited.  All rights reserved.
-
-  This software is distributed under a modified Apache license.
-  For license details, please see
-
-   http://www.ensembl.org/info/about/code_licence.html
-
-=head1 CONTACT
-
-  Please email comments or questions to the public Ensembl
-  developers list at <dev@ensembl.org>.
-
-  Questions may also be sent to the Ensembl help desk at
-  <helpdesk@ensembl.org>.
-
 =head1 NAME
 
 Bio::EnsEMBL::Hive::RunnableDB::BuildHMMprofiles::HclusterParseOutput;
-#Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::HclusterParseOutput
 
 =head1 DESCRIPTION
 
-This is the RunnableDB that parses the output of Hcluster, stores the
-clusters as trees without internal structure (each tree will have one
-root and several leaves) and dataflows the cluster_ids down branch #2.
-
-=head1 SYNOPSIS
-
-my $aa = $sdba->get_AnalysisAdaptor;
-my $analysis = $aa->fetch_by_logic_name('HclusterParseOutput');
-my $rdb = new Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::HclusterParseOutput(
-                         -input_id   => "{'mlss_id'=>40069}",
-                         -analysis   => $analysis);
-
-$rdb->fetch_input
-$rdb->run;
-
-=head1 AUTHORSHIP
-
-Ensembl Team. Individual contributions can be found in the CVS log.
+RunnableDB that parses the output of Hcluster
 
 =head1 MAINTAINER
 
-$Author: mm14 $
-
-=head VERSION
-
-$Revision: 1.22 $
+$Author: ckong $
 
 =head1 APPENDIX
 
@@ -56,12 +16,9 @@ The rest of the documentation details each of the object methods.
 Internal methods are usually preceded with an underscore (_)
 
 =cut
-
 package Bio::EnsEMBL::Hive::RunnableDB::BuildHMMprofiles::HclusterParseOutput;
-#package Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::HclusterParseOutput;
 
 use strict;
-
 use base ('Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::StoreClusters');
 
 sub param_defaults {
@@ -72,29 +29,23 @@ sub param_defaults {
     };
 }
 
-
 sub run {
     my $self = shift @_;
-
+    
     $self->parse_hclusteroutput;
 }
 
-
 sub write_output {
     my $self = shift @_;
-
 }
 
-
-##########################################
-#
+####################
 # internal methods
-#
-##########################################
-
+####################
 sub parse_hclusteroutput {
     my $self = shift;
 
+    $self->throw('cluster_dir is an obligatory parameter') unless (defined $self->param('cluster_dir'));
     my $filename            = $self->param('cluster_dir') . '/hcluster.out';
     my $hcluster_parse_file = $self->param('cluster_dir') . '/hcluster_parse.out'; 
     

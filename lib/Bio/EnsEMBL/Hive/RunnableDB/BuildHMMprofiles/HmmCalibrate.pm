@@ -3,7 +3,6 @@
 =head1 NAME
 
 Bio::EnsEMBL::Hive::RunnableDB::BuildHMMprofiles::HmmCalibrate;
-#Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::HmmCalibrate;
 
 =cut
 
@@ -13,13 +12,10 @@ This module perform calibration on HMM profile
 
 =cut
 package Bio::EnsEMBL::Hive::RunnableDB::BuildHMMprofiles::HmmCalibrate;
-#package Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::HmmCalibrate;
 
 use strict;
 use warnings;
-
 use Bio::EnsEMBL::Utils::Exception qw(throw warning);
-
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
 =head2 fetch_input
@@ -31,21 +27,9 @@ use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
     Args    :   none
 
 =cut
-my $hmmprofile;my $hmmcalibrate;my $hmmLib_dir;
-my $hmmLib_subdir;
-
 sub fetch_input {
     my $self = shift @_;
     
-     $hmmcalibrate = $self->param('hmmcalibrate'); 
-     $hmmprofile   = $self->param('hmmprofile');
-     $hmmLib_dir   = $self->param('hmmLib_dir');
-     
-     if($hmmprofile =~/(.*cluster.*)\_output/){
-      	 $hmmLib_subdir = $1;
-         $hmmLib_dir    = $hmmLib_dir.'/'.$hmmLib_subdir;   
-     }
-
 return;
 }
 
@@ -53,7 +37,7 @@ return;
 
   Arg[1]     : -none-
   Example    : $self->run;
-XX  Function   : Retrieve msa alignment and for each create a single hmmbuild job
+  Function   : 
   Returns    : 1 on successful completion
   Exceptions : dies if runnable throws an unexpected error
 
@@ -64,13 +48,24 @@ sub run {
     $self->compara_dba->dbc->disconnect_when_inactive(1);
     $self->compara_dba->dbc->disconnect_if_idle() if $self->compara_dba->dbc->connected();
 
+    my $hmmLib_dir   = $self->param('hmmLib_dir');
+    my $hmmcalibrate = $self->param('hmmcalibrate');
+    my $hmmprofile   = $self->param('hmmprofile');
+
+    $self->throw('hmmLib_dir is an obligatory parameter') unless (defined $self->param('hmmLib_dir'));
+    $self->throw('hmmcalibrate is an obligatory parameter') unless (defined $self->param('hmmcalibrate'));
+    $self->throw('hmmprofile is an obligatory parameter') unless (defined $self->param('hmmprofile'));
+
+    if($hmmprofile =~/(.*cluster.*)\_output/){
+        my $hmmLib_subdir = $1;
+        $hmmLib_dir    = $hmmLib_dir.'/'.$hmmLib_subdir;
+    }
+
     if($hmmprofile =~/hmm$/){
 	my $hmmprofile  = $hmmLib_dir.'/'.$hmmprofile;
 	my $command     = "hmmcalibrate $hmmprofile"; 
     	my $result      = system($command);
     }
-    #$self->compara_dba->dbc->disconnect_when_inactive(0);
-    #$self->compara_dba->dbc->reconnect_when_lost(1);  
  
 return;
 }

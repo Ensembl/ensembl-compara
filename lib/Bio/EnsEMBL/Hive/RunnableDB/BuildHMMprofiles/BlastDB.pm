@@ -1,10 +1,7 @@
-
 package Bio::EnsEMBL::Hive::RunnableDB::BuildHMMprofiles::BlastDB;
-#package Bio::EnsEMBL::Analysis::Tools::BlastDB;
 
 use strict;
 no warnings;
-
 use vars qw (@ISA);
 
 @ISA = qw();

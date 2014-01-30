@@ -1,20 +1,18 @@
-=pod 
-
 =head1 NAME
 
 Bio::EnsEMBL::Hive::RunnableDB::BuildHMMprofiles::HmmBuild;
-#Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::HmmBuild;
-
-=cut
 
 =head1 DESCRIPTION
 
 This module reads in a msa alignment file, creating HMM
 profile for each of the alignment.
 
+=head1 MAINTAINER
+
+$Author: ckong $
+
 =cut
 package Bio::EnsEMBL::Hive::RunnableDB::BuildHMMprofiles::HmmBuild;
-#package Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::HmmBuild;
 
 use strict;
 use warnings;
@@ -30,24 +28,9 @@ use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
     Args    :   none
 
 =cut
-my $hmmLib_dir;my $msa;my $hmmbuild_exe;
-my $msa_dir;my $division;
-
 sub fetch_input {
     my $self = shift @_;
     
-     $hmmbuild_exe = $self->param('hmmbuild_exe'); 
-     $hmmLib_dir   = $self->param('hmmLib_dir');
-     $msa_dir      = $self->param('msa_dir');
-     $msa          = $self->param('msa');
-     $division     = $self->param('division');
-
-     unless (-e $hmmLib_dir) { ## Make sure the directory exists
-      print STDERR "$hmmLib_dir doesn't exists. I will try to create it\n" if ($self->debug());
-      print STDERR "mkdir $hmmLib_dir (0755)\n" if ($self->debug());
-      die "Impossible create directory $hmmLib_dir\n" unless (mkdir($hmmLib_dir, 0755));
-     }  
-
 return;
 }
 
@@ -62,35 +45,59 @@ return;
 =cut
 sub run {
     my $self = shift @_;
+
+    my $hmmbuild_exe = $self->param('hmmbuild_exe');
+    my $hmmLib_dir   = $self->param('hmmLib_dir');
+    my $msa_dir      = $self->param('msa_dir');
+    my $msa          = $self->param('msa');
+
+    $self->throw('hmmbuild_exe is an obligatory parameter') unless (defined $self->param('hmmbuild_exe'));
+    $self->throw('hmmLib_dir is an obligatory parameter') unless (defined $self->param('hmmLib_dir'));
+    $self->throw('msa_dir is an obligatory parameter') unless (defined $self->param('msa_dir'));
+    $self->throw('msa is an obligatory parameter') unless (defined $self->param('msa'));
+
+    $self->check_directory($hmmLib_dir);
   
     my $input_file  = $msa;
     my $dir         = $1 if ($msa =~/(cluster.+)\_(output.msa)/);
-    $dir  	    = $division.'_'.$dir;
     my $hmm_dir     = $hmmLib_dir.'/'.$dir;
  
-    unless (-e $hmm_dir) { ## Make sure the directory exists
-       print STDERR "$hmm_dir doesn't exists. I will try to create it\n" if ($self->debug());
-       print STDERR "mkdir $hmm_dir (0755)\n" if ($self->debug());
-       die "Impossible create directory $hmm_dir\n" unless (mkdir($hmm_dir, 0755));
-    }
-
-    my $hmmLib_file = $hmm_dir.'/'.$dir.'.hmm'; 
+    $self->check_directory($hmm_dir);
+    
+    my $hmmLib_file = $hmm_dir.'/hmmer.hmm'; 
     $self->compara_dba->dbc->disconnect_when_inactive(1);
     $self->compara_dba->dbc->disconnect_if_idle() if $self->compara_dba->dbc->connected();
     my $command     = "$hmmbuild_exe $hmmLib_file $input_file"; 
     #my $command     = "$hmmbuild_exe --informat afa $hmmLib_file $input_file"; 
     system($command);
-    #my $result      = system($command) or die $!;
-    #$self->compara_dba->dbc->disconnect_when_inactive(0);
-    #$self->compara_dba->dbc->reconnect_when_lost(1);
-    #unlink $input_file if (defined $result);
-
+    
 return;
 }
 
 
 sub write_output {
     my $self = shift @_;
+
+return;
+}
+
+=head2 check_directory
+
+  Arg[1]     : -none-
+  Example    : $self->check_directory;
+  Function   : Check if the directory exists, if not create it
+  Returns    : None
+  Exceptions : dies if fail when creating directory 
+
+=cut
+sub check_directory {
+    my ($self,$dir) = @_;
+
+    unless (-e $dir) {
+        print STDERR "$dir doesn't exists. I will try to create it\n" if ($self->debug());
+        print STDERR "mkdir $dir (0755)\n" if ($self->debug());
+        die "Impossible create directory $dir\n" unless (mkdir $dir, 0755 );
+    }
 
 return;
 }

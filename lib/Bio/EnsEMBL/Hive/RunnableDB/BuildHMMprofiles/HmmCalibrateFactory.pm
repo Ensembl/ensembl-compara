@@ -1,9 +1,6 @@
-=pod 
-
 =head1 NAME
 
 Bio::EnsEMBL::Hive::RunnableDB::BuildHMMprofiles::HmmCalibrateFactory
-#Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::HmmCalibrateFactory
 
 =cut
 
@@ -11,16 +8,17 @@ Bio::EnsEMBL::Hive::RunnableDB::BuildHMMprofiles::HmmCalibrateFactory
 
  This module create jobs to calibrate hmmprofiles built from HMMer2 
 
+=head1 MAINTAINER
+
+$Author: ckong $
+
 =cut
 package Bio::EnsEMBL::Hive::RunnableDB::BuildHMMprofiles::HmmCalibrateFactory;
-#package Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::HmmCalibrateFactory;
 
 use strict;
 use warnings;
-
 use Bio::EnsEMBL::Utils::Exception qw(throw warning);
 use Bio::Perl;
-
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
 =head2 fetch_input
@@ -32,13 +30,9 @@ use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
     Args    :   none
 
 =cut
-my $hmmLib_dir;
-
 sub fetch_input {
     my $self = shift @_;
     
-    $hmmLib_dir     = $self->param('hmmLib_dir');
-
 return;
 }
 
@@ -56,27 +50,26 @@ return;
 sub run {
     my $self = shift @_;
 
+    my $hmmLib_dir     = $self->param('hmmLib_dir');
+    $self->throw('hmmLib_dir is an obligatory parameter') unless (defined $self->param('hmmLib_dir'));
+
     opendir(DIR, $hmmLib_dir) or die "Error openining dir '$hmmLib_dir' : $!";
    
     while(my $sub_dir= readdir(DIR)){
-       
-     if($sub_dir =~/cluster/){
-          my $dir = $hmmLib_dir.'/'.$sub_dir;
-          opendir(SUB_DIR, $dir) or die "Error openining dir '$dir' : $!";
+    	if($sub_dir =~/cluster/){
+           my $dir = $hmmLib_dir.'/'.$sub_dir;
+           opendir(SUB_DIR, $dir) or die "Error openining dir '$dir' : $!";
 	  
-	  while(my $hmmfile = readdir (SUB_DIR)){
-
-	    if($hmmfile =~/cluster/){
-	       
-	       my $full_path = $dir.'/'.$hmmfile;
-	       $self->dataflow_output_id( { 'hmmprofile' => $hmmfile }, 2 );	    
-	
-	    }
-	 }
-         close SUB_DIR; 
-      } 
+           while(my $hmmfile = readdir (SUB_DIR)){
+	   	if($hmmfile =~/^hmmer/){
+	       	   $hmmfile = $dir.'/'.$hmmfile;
+                   $self->dataflow_output_id( { 'hmmprofile' => $hmmfile }, 2 );	    
+	        }
+	   }
+           close SUB_DIR; 
+       }  
     }
-    closedir DIR;
+   closedir DIR;
 
 return;
 }

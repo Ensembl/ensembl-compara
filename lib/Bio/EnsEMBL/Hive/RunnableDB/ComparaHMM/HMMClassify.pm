@@ -19,7 +19,6 @@
 =head1 NAME
 
 Bio::EnsEMBL::Hive::RunnableDB::ComparaHMM::HMMClassify
-#Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::HMMClassify
 
 =head1 DESCRIPTION
 
@@ -45,24 +44,15 @@ The rest of the documentation details each of the object methods.
 Internal methods are usually preceded with an underscore (_)
 
 =cut
-
 package Bio::EnsEMBL::Hive::RunnableDB::ComparaHMM::HMMClassify;
-#package Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::HMMClassify;
 
 use strict;
 use warnings;
-
 use Time::HiRes qw/time gettimeofday tv_interval/;
 use Data::Dumper;
-
-# To be deprecated:
 use DBI;
 use Bio::EnsEMBL::Compara::MemberSet;
-
 use Bio::EnsEMBL::Registry;
-#use Bio::EnsEMBL::DBSQL::DBAdaptor;
-#use EGHmm::Utils::GeneGrammar;
-
 
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
@@ -72,38 +62,29 @@ sub param_defaults {
            };
 }
 
-my $non_annot_member;
 my $genome_db_id;
-my $blast_tmp_dir;
+my $non_annot_member;
 my $cluster_dir_count;
 
 sub fetch_input {
     my ($self) = @_;
 
+    $genome_db_id      = $self->param('genomeDB_id');
+    $non_annot_member  = $self->param('non_annot_member');
+    $cluster_dir_count = $self->param('cluster_dir_count');
+
+    $self->throw('genomeDB_id is an obligatory parameter') unless (defined $self->param('genomeDB_id'));
+    $self->throw('non_annot_member is an obligatory parameter') unless (defined $self->param('non_annot_member'));
+    $self->throw('cluster_dir_count is an obligatory parameter') unless (defined $self->param('cluster_dir_count'));
+    
     my $pantherScore_path = $self->param('pantherScore_path');
     $self->throw('pantherScore_path is an obligatory parameter') unless (defined $pantherScore_path);
-
+    
     push @INC, "$pantherScore_path/lib";
     require FamLibBuilder;
 #   import FamLibBuilder;
 
-    $genome_db_id      = $self->param('genomeDB_id');#pass from HMMClassifyInterpro
-    $non_annot_member  = $self->param('non_annot_member');#pass from HMMClassifyInterpro
-    $cluster_dir_count = $self->param('cluster_dir_count');#pass from HMMClassifyInterpro
- 
-    $self->throw('cluster_dir is an obligatory parameter') unless (defined $self->param('cluster_dir'));
-    $self->throw('blast_path is an obligatory parameter') unless (defined $self->param('blast_bin_dir'));
     $self->throw('hmm_library_basedir is an obligatory parameter') unless (defined $self->param('hmm_library_basedir'));
-   
-    $blast_tmp_dir   = $self->param('blast_tmp_dir');
-
-
-    unless (-e $blast_tmp_dir) { ## Make sure the directory exists
-            print STDERR "$blast_tmp_dir doesn't exists. I will try to create it\n" if ($self->debug());
-            print STDERR "mkdir $blast_tmp_dir (0755)\n" if ($self->debug());
-            die "Impossible create directory $blast_tmp_dir\n" unless (mkdir $blast_tmp_dir, 0755);
-    }
-    
     my $hmmLibrary   = FamLibBuilder->new($self->param('hmm_library_basedir'), 'prod');
     $hmmLibrary->create();
 	
@@ -127,30 +108,40 @@ sub run {
 
     $self->dump_sequences_to_workdir;
     $self->run_HMM_search;
+
+return;
 }
 
 sub write_output {
     my ($self) = @_;
-}
 
-##########################################
+    my $store_unclassify = $self->param('store_unclassify');
+    $self->throw('store_unclassify is an obligatory parameter') unless (defined $self->param('store_unclassify'));
+    $self->store_unclassify_member if($store_unclassify==1); 
+
+return;
+}
+###################
 # internal methods
-##########################################
+###################
 sub dump_sequences_to_workdir {
     my ($self) = @_;
 
-    print STDERR "Dumping members from $genome_db_id\n" if ($self->debug);
+    my $blast_tmp_dir     = $self->param('blast_tmp_dir');
+    $self->throw('blast_tmp_dir is an obligatory parameter') unless (defined $self->param('blast_tmp_dir'));
+
+    print STDERR "Dumping member $non_annot_member from $genome_db_id\n" if ($self->debug);
 
     my $fasta_filename = $genome_db_id.'_'.$non_annot_member; 
     my $fastafile      = $blast_tmp_dir."/${fasta_filename}.fasta"; ## Include pipeline name to avoid clashing??
-    #my $fastafile      = $self->worker_temp_directory . "${fasta_filename}.fasta"; ## Include pipeline name to avoid clashing??
+
     print STDERR "fastafile: $fastafile\n" if ($self->debug);
 
     open my $fastafh, ">", $fastafile or $self->throw("I can't open sequence file $fastafile for writing\n");
 
     my $count          = 0;
-    my $memberAdaptor  = $self->compara_dba->get_MemberAdaptor;
     my $undefMembers   = 0;
+    my $memberAdaptor  = $self->compara_dba->get_MemberAdaptor;
     my $member         = $memberAdaptor->fetch_by_dbID($non_annot_member);
         
     if (!defined $member) {
@@ -163,7 +154,6 @@ sub dump_sequences_to_workdir {
     chomp $seq;
     print $fastafh ">" . $member->member_id . "\n$seq\n";
     close ($fastafh);
-
     $self->param('fastafile', $fastafile);
 
 return;
@@ -182,28 +172,11 @@ sub run_HMM_search {
     my $library_path      = $hmmLibrary->libDir();
     my $fasta_filename    = $genome_db_id.'_'.$non_annot_member; 
     my $cluster_dir       = $self->param('cluster_dir');
+  
+    $self->throw('cluster_dir is an obligatory parameter') unless (defined $self->param('cluster_dir'));
     $cluster_dir          = $cluster_dir.$cluster_dir_count;
-=pod
-    # Ensuring there is no more than 1000 files in a folder
-    chdir $cluster_dir;
-    #my $files_count  = `find ./ -type f -name '*.hmmres' | wc -l`;
-    my $files_count  = `ls -R | grep .hmmres | wc -l`;
-
-    if ($files_count < 1000){
-       $cluster_dir      = $cluster_dir.'/cluster_0';
-    }
-    else {
-       my $remainder = $files_count % 1000;
-       my $quotient  = ($files_count - $remainder)/1000;
-       $cluster_dir  = $cluster_dir.'/cluster_'.$quotient;
-    }
-=cut
-
-    unless (-e $cluster_dir) { ## Make sure the directory exists
-        print STDERR "$cluster_dir doesn't exists. I will try to create it\n" if ($self->debug());
-        print STDERR "mkdir $cluster_dir (0755)\n" if ($self->debug());
-        die "Impossible create directory $cluster_dir\n" unless (mkdir($cluster_dir, 0755));
-    }
+   
+    $self->check_directory($cluster_dir); 
 
     print STDERR "Results are going to be stored in $cluster_dir/${fasta_filename}.hmmres\n" if ($self->debug());
     open my $hmm_res, ">", "$cluster_dir/${fasta_filename}.hmmres" or die $!;
@@ -216,7 +189,6 @@ sub run_HMM_search {
 
     while (<$pipe>) {
         chomp;
-        
 	my ($seq_id, $hmm_id, $eval) = split /\s+/, $_, 4;
         print STDERR "Writting [$seq_id, $hmm_id, $eval] to file $cluster_dir/${fasta_filename}.hmmres\n" if ($self->debug());
         print $hmm_res join "\t", ($seq_id, $hmm_id, $eval);
@@ -227,10 +199,45 @@ sub run_HMM_search {
     close($pipe);
 
     $self->compara_dba->dbc->disconnect_if_idle() if $self->compara_dba->dbc->connected();   
-    #$self->compara_dba->dbc->reconnect_when_lost(1);
-    #$self->compara_dba->dbc->disconnect_when_inactive(0);
+    my $hmmres = "$cluster_dir/${fasta_filename}.hmmres";
+    $self->param('hmmres',$hmmres);
+ 
+    unlink $fastafile;
+return;
+}
 
-unlink $fastafile;
+sub store_unclassify_member {
+   my ($self) = @_;
+
+   my $hmmres = $self->param('hmmres');
+   my $sql    = "INSERT INTO sequence_unclassify(member_id,genome_db_id,cluster_dir_id)VALUES(?,?,?)";
+   my $sth    = $self->compara_dba->dbc->prepare($sql);
+
+   if(-z $hmmres){
+         $sth->execute($non_annot_member,$genome_db_id,$cluster_dir_count);
+   };
+  
+return;
+}
+
+=head2 check_directory
+
+  Arg[1]     : -none-
+  Example    : $self->check_directory;
+  Function   : Check if the directory exists, if not create it
+  Returns    : None
+  Exceptions : dies if fail when creating directory 
+
+=cut
+sub check_directory {
+    my ($self,$dir) = @_;
+
+    unless (-e $dir) {
+        print STDERR "$dir doesn't exists. I will try to create it\n" if ($self->debug());
+        print STDERR "mkdir $dir (0755)\n" if ($self->debug());
+        die "Impossible create directory $dir\n" unless (mkdir $dir, 0755 );
+    }
+
 return;
 }
 
