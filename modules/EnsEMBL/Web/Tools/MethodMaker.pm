@@ -71,7 +71,7 @@ sub copy_method {
     my ($old_method, $new_method) = splice @_, 0, 2;
 
     no strict qw(refs);
-    *{"${class}::${new_method}"} = \&{"${old_class}::${old_method}"};
+    *{"${class}::${new_method}"} = \&{"${class}::${old_method}"};
   }
 }
 
