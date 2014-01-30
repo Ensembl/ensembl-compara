@@ -289,9 +289,11 @@ sub draw_wiggle_plot {
   # Draw max and min score
   if ($parameters->{'axis_label'} ne 'off') {
     my $height        = [ $self->get_text_width(0, 1, '', %font) ]->[3];
-       $bottom_offset = max($bottom_offset, $top_offset + $self->label->height + (2 * $height));
-       $pix_per_score = $bottom_offset / (($max_score - ($min_score < 0 ? $min_score : 0)) || 1);
-       $zero_offset   = $max_score * $pix_per_score;
+    my $label_height  = 0;
+    $label_height = $self->label->height if($self->label);
+    $bottom_offset = max($bottom_offset, $top_offset + $label_height + (2 * $height));
+    $pix_per_score = $bottom_offset / (($max_score - ($min_score < 0 ? $min_score : 0)) || 1);
+    $zero_offset   = $max_score * $pix_per_score;
     
     foreach ([ $max_score, $top_offset ], [ $min_score, $bottom_offset ]) {
       my $text  = sprintf '%.2f', $_->[0];
