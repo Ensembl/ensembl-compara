@@ -200,6 +200,7 @@ sub draw_wiggle_plot {
   my $textheight    = [ $self->get_text_width(0, $label, '', %font) ]->[3];  
   my $pix_per_score = $max_score == $min_score ? $self->label->height : $row_height / max($max_score - $min_score, 1);
   my $top_offset    = 0;
+  my $initial_offset= $self->_offset;
   my $bottom_offset = $max_score == $min_score ? 0 : (($max_score - ($min_score < 0 ? $min_score : 0)) || 1) * $pix_per_score;
   my $zero_offset   = $max_score * $pix_per_score;
   
@@ -306,7 +307,7 @@ sub draw_wiggle_plot {
         textwidth     => $width,
         halign        => 'right',
         colour        => $axis_colour,
-        y             => $_->[1] - $height / 2,
+        y             => $_->[1] + $initial_offset - $height / 2,
         x             => -10 - $width,
         absolutey     => 1,
         absolutex     => 1,
@@ -316,7 +317,7 @@ sub draw_wiggle_plot {
         height        => 0,
         width         => 5,
         colour        => $axis_colour,
-        y             => $_->[1],
+        y             => $_->[1] + $initial_offset,
         x             => -8,
         absolutey     => 1,
         absolutex     => 1,
@@ -331,7 +332,7 @@ sub draw_wiggle_plot {
   if (!$parameters->{'no_axis'}) {
     $self->push($self->Line({ # horizontal line
       x         => 0,
-      y         => $top_offset + $zero_offset,
+      y         => $top_offset + $zero_offset + $initial_offset,
       width     => $slice->length,
       height    => 0,
       absolutey => 1,
@@ -339,7 +340,7 @@ sub draw_wiggle_plot {
       dotted    => $axis_style,
     }), $self->Line({ # vertical line
       x         => 0,
-      y         => $top_offset,
+      y         => $top_offset + $initial_offset,
       width     => 0,
       height    => $row_height,
       absolutey => 1,
@@ -356,7 +357,7 @@ sub draw_wiggle_plot {
       $colour = shift @$colours;
       
       if ($parameters->{'graph_type'} eq 'line') {
-        $self->draw_wiggle_points_as_line($feature_set, $slice, $parameters, $top_offset, $pix_per_score, $colour, $zero_offset);
+        $self->draw_wiggle_points_as_line($feature_set, $slice, $parameters, $initial_offset + $top_offset, $pix_per_score, $colour, $zero_offset);
       } else {
         $self->draw_wiggle_points($feature_set, $slice, $parameters, $top_offset, $pix_per_score, $colour, $zero_offset);
       }
