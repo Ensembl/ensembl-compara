@@ -296,7 +296,7 @@ sub draw_wiggle_plot {
     $pix_per_score = $bottom_offset / (($max_score - ($min_score < 0 ? $min_score : 0)) || 1);
     $zero_offset   = $max_score * $pix_per_score;
     
-    foreach ([ $max_score, $top_offset ], [ $min_score, $bottom_offset ]) {
+    foreach ([ $max_score, $top_offset ], [ $min_score, $top_offset+$zero_offset ]) {
       my $text  = sprintf '%.2f', $_->[0];
       my $width = [ $self->get_text_width(0, $text, '', %font) ]->[2];
       
@@ -325,7 +325,7 @@ sub draw_wiggle_plot {
       }));
     }
     
-    $self->{'label_y_offset'} = ($top_offset + $bottom_offset - $height) / 2;
+    $self->{'label_y_offset'} = ($zero_offset - $height)/2;
   }
   
   # Draw the axis
