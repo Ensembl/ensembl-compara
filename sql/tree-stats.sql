@@ -1,4 +1,4 @@
--- Copyright [1999-2013] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+-- Copyright [1999-2014] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 -- 
 -- Licensed under the Apache License, Version 2.0 (the "License");
 -- you may not use this file except in compliance with the License.
@@ -74,7 +74,9 @@ SELECT
 FROM
 	tmp_ngenes
 	JOIN tmp_ntrees USING (genome_db_id)
-	LEFT JOIN species_tree_node USING (genome_db_id)
+	LEFT JOIN (
+		species_tree_node JOIN species_tree_root ON (species_tree_node.root_id = species_tree_root.root_id AND label = 'default')
+	) USING (genome_db_id)
 ORDER BY
 	IF(left_index, left_index, 1e7);
 

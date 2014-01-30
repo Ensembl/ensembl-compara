@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2013] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2014] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -20,10 +20,10 @@ limitations under the License.
 =head1 CONTACT
 
   Please email comments or questions to the public Ensembl
-  developers list at <dev@ensembl.org>.
+  developers list at <http://lists.ensembl.org/mailman/listinfo/dev>.
 
   Questions may also be sent to the Ensembl help desk at
-  <helpdesk@ensembl.org>.
+  <http://www.ensembl.org/Help/Contact>.
 
 =head1 NAME
 
@@ -978,6 +978,28 @@ sub original_sequence {
   return $self->{'original_sequence'};
 }
 
+=head2 original_dbID
+
+  Args       : none
+  Example    : my $original_dbID = $genomic_align->original_dbID
+  Description: getter/setter of original_dbID attribute. When a GenomicAlign is restricted, this attribute is set to the dbID of the original GenomicAlign object
+  Returntype : none
+  Exceptions : none
+  Caller     : general
+  Status     : At risk
+
+=cut
+
+sub original_dbID {
+  my ($self, $original_dbID) = @_;
+
+  if (defined $original_dbID) {
+    $self->{_original_dbID} = $original_dbID;
+  }
+
+  return $self->{_original_dbID};
+}
+
 =head2 _get_cigar_line_from_aligned_sequence
 
   Arg [1]    : string $aligned_sequence
@@ -1816,7 +1838,7 @@ sub restrict {
   delete($restricted_genomic_align->{aligned_sequence});
   delete($restricted_genomic_align->{cigar_line});
   delete($restricted_genomic_align->{cigar_arrayref});
-  $restricted_genomic_align->{_original_dbID} = $self->{dbID} if ($self->{dbID});
+  $restricted_genomic_align->original_dbID($self->dbID or $self->original_dbID);
 
   # Need to calculate the original aligned sequence length myself
   if (!$aligned_seq_length) {

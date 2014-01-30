@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2013] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2014] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -20,10 +20,10 @@ limitations under the License.
 =head1 CONTACT
 
   Please email comments or questions to the public Ensembl
-  developers list at <dev@ensembl.org>.
+  developers list at <http://lists.ensembl.org/mailman/listinfo/dev>.
 
   Questions may also be sent to the Ensembl help desk at
-  <helpdesk@ensembl.org>.
+  <http://www.ensembl.org/Help/Contact>.
 
 =head1 NAME
 
@@ -63,6 +63,9 @@ Bio::EnsEMBL::DBSQL::Compara::GenomicAlignBlockAdaptor
 
   $genomic_align_blocks = $genomic_align_block_adaptor->fetch_all_by_MethodLinkSpeciesSet_DnaFrag_DnaFrag(
       $method_link_species_set, $human_dnafrag, $mouse_dnafrag);
+
+  $genomic_align_block_ids = $genomic_align_block_adaptor->fetch_all_dbIDs_by_MethodLinkSpeciesSet_Dnafrag(
+     $method_link_species_set, $human_dnafrag);
 
 =head2 Other methods
 
@@ -356,6 +359,65 @@ sub fetch_by_dbID {
   return $genomic_align_block;
 }
 
+
+=head2 fetch_all_dbIDs_by_MethodLinkSpeciesSet_Dnafrag
+
+  Arg  1     : Bio::EnsEMBL::Compara::MethodLinkSpeciesSet $method_link_species_set
+  Arg  2     : Bio::EnsEMBL::Compara::DnaFrag $dnafrag
+  Example    : my $genomic_align_blocks_IDs =
+                  $genomic_align_block_adaptor->fetch_all_dbIDs_by_MethodLinkSpeciesSet_Dnafrag(
+                      $method_link_species_set, $dnafrag);
+  Description: Retrieve the corresponding dbIDs as a listref of strings.
+  Returntype : ref. to an array of genomic_align_block IDs (strings)
+  Exceptions : Returns ref. to an empty array if no matching IDs can be found
+  Caller     : $object->method_name
+  Status     : Stable
+
+=cut
+
+sub fetch_all_dbIDs_by_MethodLinkSpeciesSet_Dnafrag {
+  my ($self, $method_link_species_set, $dnafrag) = @_;
+
+  my $genomic_align_block_ids = []; # returned object
+
+  throw("[$method_link_species_set] is not a Bio::EnsEMBL::Compara::MethodLinkSpeciesSet object")
+      unless ($method_link_species_set and ref $method_link_species_set and
+          $method_link_species_set->isa("Bio::EnsEMBL::Compara::MethodLinkSpeciesSet"));
+  my $method_link_species_set_id = $method_link_species_set->dbID;
+  throw("[$method_link_species_set_id] has no dbID") if (!$method_link_species_set_id);
+
+  ## Check the dnafrag obj
+  unless($dnafrag && ref $dnafrag && 
+         $dnafrag->isa('Bio::EnsEMBL::Compara::DnaFrag')) {
+    throw("[$dnafrag] should be a Bio::EnsEMBL::Compara::DnaFrag object\n");
+  }
+
+  my $dnafrag_id = $dnafrag->dbID;
+
+  my $sql = qq{
+          SELECT
+              ga.genomic_align_block_id
+          FROM
+              genomic_align ga
+          WHERE 
+              ga.method_link_species_set_id = $method_link_species_set_id
+          AND
+              ga.dnafrag_id = $dnafrag_id 
+      };
+
+  my $sth = $self->prepare($sql);
+  $sth->execute();
+  my $genomic_align_block_id;
+  $sth->bind_columns(\$genomic_align_block_id);
+  
+  while ($sth->fetch) {
+    push(@$genomic_align_block_ids, $genomic_align_block_id);
+  }
+  
+  $sth->finish();
+  
+  return $genomic_align_block_ids;
+}
 
 =head2 fetch_all_by_MethodLinkSpeciesSet
 

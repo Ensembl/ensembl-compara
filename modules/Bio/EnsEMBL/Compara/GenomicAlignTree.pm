@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2013] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2014] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -20,10 +20,10 @@ limitations under the License.
 =head1 CONTACT
 
   Please email comments or questions to the public Ensembl
-  developers list at <dev@ensembl.org>.
+  developers list at <http://lists.ensembl.org/mailman/listinfo/dev>.
 
   Questions may also be sent to the Ensembl help desk at
-  <helpdesk@ensembl.org>.
+  <http://www.ensembl.org/Help/Contact>.
 
 =head1 NAME
 
@@ -516,15 +516,7 @@ sub name {
       ## Bio::EnsEMBL::Compara::GenomicAlignTree in the Ortheus pipeline
       $self->{_name} = $self->SUPER::name();
     } elsif ($self->is_leaf) {
-    	my $gdb_name;
-      if($genomic_align_group->genome_db->name =~ /(.)[^ ]+_(.{3})/) {
-      	$gdb_name = "${1}${2}";
-      }
-      else {
-      	$gdb_name = $genomic_align_group->genome_db->name();
-      	$gdb_name =~ tr/_//;
-      }
-      $gdb_name = ucfirst($gdb_name);
+      my $gdb_name = $genomic_align_group->genome_db->name();
       $self->{_name} = $gdb_name.'_'.$genomic_align_group->dnafrag->name."_".
           $genomic_align_group->dnafrag_start."_".$genomic_align_group->dnafrag_end."[".
           (($genomic_align_group->dnafrag_strand eq "-1")?"-":"+")."]";
@@ -1222,17 +1214,18 @@ sub summary_as_hash {
       my $genomic_align_group = $this_node->genomic_align_group;
       next if (!$genomic_align_group);
       if  ($compact_alignments) {
-	push(@{$all_genomic_aligns}, $genomic_align_group);
+	push(@{$all_genomic_aligns}, [$this_node, $genomic_align_group]);
       } else {
 	foreach my $this_genomic_align (@{$genomic_align_group->get_all_GenomicAligns}) {
-	  push @$all_genomic_aligns, $this_genomic_align;
-	}	
+	  push @$all_genomic_aligns, [$this_node, $this_genomic_align];
+	}
       }
     }
-
+    
     my $genome_db_name_counter;
     my $alignment_summary;
-    foreach my $genomic_align (@$all_genomic_aligns) {
+    foreach my $this_node_and_genomic_align (@$all_genomic_aligns) {
+      my ($this_node, $genomic_align) = @$this_node_and_genomic_align;
       my ($dnafrag_name, $dnafrag_start, $dnafrag_end, $dnafrag_length, $dnafrag_strand);
       my $seq;
       if ($aligned) {
@@ -1245,8 +1238,11 @@ sub summary_as_hash {
       #next if($alignSeq=~/^[\.\-]+$/);
       
       my $species_name = $genomic_align->genome_db->name;
-      $species_name =~ s/(.)\w* (...)\w*/$1$2/;
-      
+      #Use node name for ancestral sequences
+      if ($species_name =~ /ancestral/) {
+        $species_name = $this_node->name;
+      }
+
       my $description = "";
       #Need to sort out composite genomic_aligns too (get_coordinates)
       if ($genomic_align->can("get_all_GenomicAligns") and @{$genomic_align->get_all_GenomicAligns} > 1) {

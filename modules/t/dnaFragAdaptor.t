@@ -1,5 +1,5 @@
 #!/usr/bin/env perl
-# Copyright [1999-2013] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+# Copyright [1999-2014] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 # 
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -43,6 +43,7 @@ isa_ok($dnafrag_adaptor, 'Bio::EnsEMBL::Compara::DBSQL::DnaFragAdaptor', "Gettin
 ## Values matching entries in the test DB
 
 my $ref_species = "homo_sapiens";
+my $hs_core_db = Bio::EnsEMBL::Test::MultiTestDB->new($ref_species);
 
 my $sth = $multi->get_DBAdaptor( "compara" )->dbc->prepare("SELECT
       DISTINCT(gdb.name)

@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2013] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2014] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -20,10 +20,10 @@ limitations under the License.
 =head1 CONTACT
 
   Please email comments or questions to the public Ensembl
-  developers list at <dev@ensembl.org>.
+  developers list at <http://lists.ensembl.org/mailman/listinfo/dev>.
 
   Questions may also be sent to the Ensembl help desk at
-  <helpdesk@ensembl.org>.
+  <http://www.ensembl.org/Help/Contact>.
 
 =head1 NAME
 
@@ -638,7 +638,7 @@ sub summary_as_hash {
                   $constrained_element->add_alignment_segments;
                  }
  Description   : Add the alignments segments to constrained element objects retrieved by coordinate-based 'fetch_all'
-                 methods such as fetch_all_by_MethodLinkSpeciesSet_Slice and fetch_all_by_MethodLinkSpeciesSet_Dnafrag
+                 methods such as fetch_all_by_MethodLinkSpeciesSet_Slice and fetch_all_by_MethodLinkSpeciesSet_DnaFrag
  Returns       : Nothing
 
 =cut

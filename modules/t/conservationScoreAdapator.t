@@ -1,5 +1,5 @@
 #!/usr/bin/env perl
-# Copyright [1999-2013] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+# Copyright [1999-2014] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 # 
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -37,6 +37,9 @@ my $genomic_align_block_adaptor = $compara_dba->get_GenomicAlignBlockAdaptor;
 my $genomic_align_adaptor = $compara_dba->get_GenomicAlignAdaptor;
 my $genomic_align_tree_adaptor = $compara_dba->get_GenomicAlignTreeAdaptor;
 
+my $homo_sapiens = Bio::EnsEMBL::Test::MultiTestDB->new("homo_sapiens");
+my $mus_musculus = Bio::EnsEMBL::Test::MultiTestDB->new("mus_musculus");
+
 my $epo_method_type = "EPO_LOW_COVERAGE";
 my $pecan_method_type = "PECAN";
 my $cs_method_type = "GERP_CONSERVATION_SCORE";
@@ -56,11 +59,11 @@ my $cs_mlss_pecan = $method_link_species_set_adaptor->fetch_by_method_link_type_
 
 my $genome_db_id = 90; #human
 my $genome_db = $genome_db_adaptor->fetch_by_dbID($genome_db_id);
-my $hs_core_dba = $genome_db->db_adaptor;
+my $hs_core_dba = $homo_sapiens->get_DBAdaptor('core');
 
 my $mm_genome_db_id = 134; #mouse
 my $mm_genome_db = $genome_db_adaptor->fetch_by_dbID($mm_genome_db_id);
-my $mm_core_dba = $mm_genome_db->db_adaptor;
+my $mm_core_dba = $mus_musculus->get_DBAdaptor('core');
 
 
 my $hs_seq_region = "6";

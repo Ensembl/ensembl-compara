@@ -1,5 +1,5 @@
 #!/usr/bin/env perl
-# Copyright [1999-2013] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+# Copyright [1999-2014] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 # 
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -26,6 +26,12 @@ use Bio::EnsEMBL::Utils::Exception qw(verbose);
 use Bio::EnsEMBL::Compara::DnaFrag;
 use Bio::EnsEMBL::Compara::GenomeDB;
 
+my $species = [
+        "homo_sapiens",
+        "felis_catus",
+        "rattus_norvegicus",
+    ];
+
 #####################################################################
 ## Connect to the test database using the MultiTestDB.conf file
 
@@ -33,6 +39,13 @@ my $multi = Bio::EnsEMBL::Test::MultiTestDB->new( "multi" );
 my $compara_dba = $multi->get_DBAdaptor( "compara" );
 my $dnafrag_adaptor = $compara_dba->get_DnaFragAdaptor();
 my $genome_db_adaptor = $compara_dba->get_GenomeDBAdaptor();
+
+my $species_db;
+## Connect to core DB specified in the MultiTestDB.conf file
+foreach my $this_species (@$species) {
+  $species_db->{$this_species} = Bio::EnsEMBL::Test::MultiTestDB->new($this_species);
+  die if (!$species_db->{$this_species});
+}
 
 ##
 #####################################################################

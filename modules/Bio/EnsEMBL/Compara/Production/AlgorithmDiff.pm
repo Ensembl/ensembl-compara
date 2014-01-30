@@ -1,6 +1,6 @@
 # This is an adapted  version of Algorithm::Diff. 
 # The original is committed at Algorithm::DiffOld.
-# Adaptations by Anton Enright, @ ebi.ac.uk
+# Adaptations by Anton Enright (EMBL-EBI)
 #
 
 package Bio::EnsEMBL::Compara::Production::AlgorithmDiff;
@@ -15,8 +15,8 @@ require Exporter;
 $VERSION = '2001-11-27';
 
 # McIlroy-Hunt diff algorithm
-# Adapted from the Smalltalk code of Mario I. Wolczko, <mario@wolczko.com>
-# by Ned Konz, perl@bike-nomad.com
+# Adapted from the Smalltalk code of Mario I. Wolczko, <mario {near} wolczko {plus} com>
+# by Ned Konz, perl {near} bike-nomad {plus} com
 
 =head1 NAME
 
@@ -312,19 +312,19 @@ if you wish.
 
 =head1 AUTHOR
 
-This version by Ned Konz, perl@bike-nomad.com
+This version by Ned Konz, perl {near} bike-nomad {plus} com
 
 =head1 CREDITS
 
 Versions through 0.59 (and much of this documentation) were written by:
 
-Mark-Jason Dominus, mjd-perl-diff@plover.com
+Mark-Jason Dominus, mjd-perl-diff {near} plover {plus} com
 
 This version borrows the documentation and names of the routines
 from Mark-Jason's, but has all new code in Diff.pm.
 
 This code was adapted from the Smalltalk code of
-Mario Wolczko <mario@wolczko.com>, which is available at
+Mario Wolczko <mario {near} wolczko {plus} com>, which is available at
 ftp://st.cs.uiuc.edu/pub/Smalltalk/MANCHESTER/manchester/4.0/diff.st
 
 The algorithm is that described in 

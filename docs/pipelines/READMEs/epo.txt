@@ -18,7 +18,7 @@ This README describes all three parts of the pipeline (see above)
 
 ###########################
 
-All the scripts are located relative to $ENSEMBL_CVS_ROOT_DIR (location of the cvs checkout)
+All the scripts are located relative to $ENSEMBL_CVS_ROOT_DIR (location of the GIT checkout)
 
 You will need the following software components for all 3 parts of the pipeline:
 

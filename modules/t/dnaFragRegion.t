@@ -1,5 +1,5 @@
 #!/usr/bin/env perl
-# Copyright [1999-2013] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+# Copyright [1999-2014] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 # 
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -31,7 +31,10 @@ my $compara_db_adaptor = $multi->get_DBAdaptor( "compara" );
 my $dnafrag_region_adaptor = $compara_db_adaptor->get_DnaFragRegionAdaptor();
 my $dnafrag_adaptor = $compara_db_adaptor->get_DnaFragAdaptor();
 
+my $homo_sapiens = Bio::EnsEMBL::Test::MultiTestDB->new( "homo_sapiens" );
+
 my $sth = $compara_db_adaptor->dbc->prepare("SELECT synteny_region_id, genome_db.name, dnafrag_id, dnafrag_start, dnafrag_end, dnafrag_strand FROM dnafrag_region JOIN dnafrag USING (dnafrag_id) JOIN genome_db USING (genome_db_id) LIMIT 1");
+
 $sth->execute();
 my ($synteny_region_id, $genome_db_name, $dnafrag_id, $dnafrag_start, $dnafrag_end, $dnafrag_strand) = $sth->fetchrow_array();
 $sth->finish();
@@ -54,9 +57,8 @@ subtest "Test Bio::EnsEMBL::Compara::DnaFragRegion new(ALL) method", sub {
                                                                 -dnafrag_end       => $dnafrag_end,
                                                                 -dnafrag_strand    => $dnafrag_strand);
 
-
   isa_ok($dnafrag_region, "Bio::EnsEMBL::Compara::DnaFragRegion", "check object");
-  
+
   is($dnafrag_region->adaptor, $dnafrag_region_adaptor, "adaptor"); 
   is($dnafrag_region->synteny_region_id, $synteny_region_id, "synteny_region_id"); 
   is($dnafrag_region->dnafrag_id, $dnafrag_id, "dnafrag_id"); 
@@ -68,7 +70,13 @@ subtest "Test Bio::EnsEMBL::Compara::DnaFragRegion new(ALL) method", sub {
 };
 
 subtest "Test getter/setter Bio::EnsEMBL::Compara::DnaFragRegion methods", sub {
-    my $dnafrag_region = new Bio::EnsEMBL::Compara::DnaFragRegion();
+    my $dnafrag_region = new Bio::EnsEMBL::Compara::DnaFragRegion(-adaptor => $dnafrag_region_adaptor,
+                                                                  -synteny_region_id => $synteny_region_id,
+                                                                  -dnafrag_id        => $dnafrag_id,
+                                                                  -dnafrag_start     => $dnafrag_start,
+                                                                  -dnafrag_end       => $dnafrag_end,
+                                                                  -dnafrag_strand    => $dnafrag_strand);
+
     ok(test_getter_setter($dnafrag_region, "adaptor", $dnafrag_region_adaptor));
     ok(test_getter_setter($dnafrag_region, "synteny_region_id", $synteny_region_id));
     ok(test_getter_setter($dnafrag_region, "dnafrag_id", $dnafrag_id));
@@ -90,13 +98,14 @@ subtest "Test Bio::EnsEMBL::Compara::DnaFragRegion::dnafrag method", sub {
 
 subtest "Test Bio::EnsEMBL::Compara::DnaFragRegion::slice method", sub {
     my $dnafrag_region = new Bio::EnsEMBL::Compara::DnaFragRegion(-adaptor => $dnafrag_region_adaptor,
-                                                                  -dnafrag_id        => $dnafrag_id);
+                                                                  -dnafrag_id        => $dnafrag_id,
+                                                                  -dnafrag_start     => $dnafrag_start,
+                                                                  -dnafrag_end       => $dnafrag_end,
+                                                                  -dnafrag_strand    => $dnafrag_strand);
 
     my $slice = $dnafrag_region->slice;
-print STDERR $slice, "\n";
-print STDERR $slice->name, "\n";
     isa_ok($slice, "Bio::EnsEMBL::Slice", "check object");
-    is($slice->length, $dnafrag_region->dnafrag->length, "length");
+    is($slice->length, ($dnafrag_end-$dnafrag_start+1), "length");
     is($slice->seq_region_name, $dnafrag_region->dnafrag->name, "name");
     is($slice->coord_system->name, $dnafrag_region->dnafrag->coord_system_name, "coord_system");
 

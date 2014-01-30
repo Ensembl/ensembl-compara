@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2013] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2014] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -20,10 +20,10 @@ limitations under the License.
 =head1 CONTACT
 
   Please email comments or questions to the public Ensembl
-  developers list at <dev@ensembl.org>.
+  developers list at <http://lists.ensembl.org/mailman/listinfo/dev>.
 
   Questions may also be sent to the Ensembl help desk at
-  <helpdesk@ensembl.org>.
+  <http://www.ensembl.org/Help/Contact>.
 
 =cut
 
@@ -175,13 +175,9 @@ sub run_cafe_script {
     chmod 0755, $script_file;
 
     $self->compara_dba->dbc->disconnect_when_inactive(0);
+
     unless ((my $err = system($script_file)) == 4096) {
         print STDERR "CAFE returning error $err\n";
-#         for my $f (glob "$cafe_out_file*") {
-#             system(`head $f >> /lustre/scratch101/ensembl/mp12/kkkk`);
-#         }
-        # It seems that CAFE doesn't exit with error code 0 never (usually 4096?)
-#        $self->throw("problem running script $cafe_out_file: $err\n");
     }
     $self->compara_dba->dbc->disconnect_when_inactive(1);
     return;

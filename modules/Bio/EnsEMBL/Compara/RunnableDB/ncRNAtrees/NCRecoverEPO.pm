@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2013] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2014] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -50,10 +50,10 @@ $nc_recover_epo->write_output(); #writes to DB
 =head1 CONTACT
 
   Please email comments or questions to the public Ensembl 
-  developers list at <dev@ensembl.org>.
+  developers list at <http://lists.ensembl.org/mailman/listinfo/dev>.
 
   Questions may also be sent to the Ensembl help desk at
-  <helpdesk@ensembl.org>
+  <http://www.ensembl.org/Help/Contact>
 
 =cut
 
@@ -69,6 +69,7 @@ Internal methods are usually preceded with a _
 package Bio::EnsEMBL::Compara::RunnableDB::ncRNAtrees::NCRecoverEPO;
 
 use strict;
+use Data::Dumper;
 
 use Bio::EnsEMBL::Registry;
 
@@ -104,8 +105,6 @@ sub fetch_input {
 
   my $species_set_adaptor = $self->compara_dba->get_SpeciesSetAdaptor;
 
-# Do we need two pass in and support two identical sets (epo_gdb and low_cov_gdbs)?
-# Aren't they supposed to be different?
 
   my ($epo_ss) = @{ $species_set_adaptor->fetch_all_by_tag_value('name', 'low-coverage-assembly') };
   unless($epo_ss) {
@@ -113,20 +112,20 @@ sub fetch_input {
   }
   $self->param('epo_gdb', {});
   foreach my $epo_gdb (@{$epo_ss->genome_dbs}) {
-      $self->param('epo_gdb')->{$epo_gdb} = 1;
+      $self->param('epo_gdb')->{$epo_gdb->dbID} = 1;
   }
 
-  my ($low_cov_ss) = @{ $species_set_adaptor->fetch_all_by_tag_value('name', 'low-coverage-assembly') };
-  unless($low_cov_ss) {
-    ($low_cov_ss) = @{ $species_set_adaptor->fetch_all_by_tag_value('name', 'low-coverage') };
-  }
-  unless($low_cov_ss) {
-    die "A SpeciesSet named either 'low-coverage-assembly' or 'low-coverage' must be present in the database to run this analysis\n";
-  }
-  $self->param('low_cov_gdbs', {});
-  foreach my $gdb (@{$low_cov_ss->genome_dbs}) {
-    $self->param('low_cov_gdbs')->{$gdb->dbID} = 1;
-  }
+  # my ($low_cov_ss) = @{ $species_set_adaptor->fetch_all_by_tag_value('name', 'low-coverage-assembly') };
+  # unless($low_cov_ss) {
+  #   ($low_cov_ss) = @{ $species_set_adaptor->fetch_all_by_tag_value('name', 'low-coverage') };
+  # }
+  # unless($low_cov_ss) {
+  #   die "A SpeciesSet named either 'low-coverage-assembly' or 'low-coverage' must be present in the database to run this analysis\n";
+  # }
+  # $self->param('low_cov_gdbs', {});
+  # foreach my $gdb (@{$low_cov_ss->genome_dbs}) {
+  #   $self->param('low_cov_gdbs')->{$gdb->dbID} = 1;
+  # }
 
 }
 
@@ -349,7 +348,7 @@ sub run_low_coverage_best_in_alignment {
   # First round to get the candidate GenomicAlignTrees
   foreach my $leaf (@{$self->param('nc_tree')->get_all_leaves}) {
     my $gdb_name = $leaf->genome_db->name;
-    next if (defined($self->param('low_cov_gdbs')->{$leaf->genome_db_id}));
+    next if (defined($self->param('epo_gdb')->{$leaf->genome_db_id}));
 
     next unless (defined($self->param('epo_low_cov_gdbs')->{$leaf->genome_db_id}));
     my $slice = $leaf->genome_db->db_adaptor->get_SliceAdaptor->fetch_by_transcript_stable_id($leaf->stable_id);
@@ -396,6 +395,8 @@ sub run_low_coverage_best_in_alignment {
       $epo_low_mlss = $gab->method_link_species_set();
   }
 
+  print STDERR "MAX_MLSS: ", $epo_low_mlss->dbID, "\n" if ($self->debug);
+
   my %low_cov_leaves_pmember_id_slice_to_check_coord_system = ();
   my %low_cov_slice_seqs = ();
   $self->param('low_cov_leaves_to_delete_pmember_id', {});
@@ -403,8 +404,9 @@ sub run_low_coverage_best_in_alignment {
   # Second round to get the low-covs on the max_gabID
   foreach my $leaf (@{$self->param('nc_tree')->get_all_leaves}) {
     my $gdb_name = $leaf->genome_db->name;
-    next unless (defined($self->param('low_cov_gdbs')->{$leaf->genome_db_id}));
+    next unless (defined($self->param('epo_gdb')->{$leaf->genome_db_id}));
     next unless (defined($self->param('epo_low_cov_gdbs')->{$leaf->genome_db_id}));
+    print STDERR "HERE?\n";
     if (! defined $epo_low_mlss) {
         ## We delete this leaf because it is a low_cov slice that is not in the epo_low_cov
         $self->param('low_cov_leaves_to_delete_pmember_id')->{$leaf->member_id} = $leaf->gene_member->stable_id;

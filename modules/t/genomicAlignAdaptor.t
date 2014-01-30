@@ -1,5 +1,5 @@
 #!/usr/bin/env perl
-# Copyright [1999-2013] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+# Copyright [1999-2014] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 # 
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -45,7 +45,7 @@ my ($ga_id1, $gab_id1, $mlss_id1, $df_id1, $dfs1, $dfe1, $dfst1, $cg1, $node_id1
     $sth = $compara_db->dbc->prepare("SELECT
       genomic_align_id, genomic_align_block_id, method_link_species_set_id, dnafrag_id,
       dnafrag_start, dnafrag_end, visible, node_id, cigar_line
-    FROM genomic_align WHERE dnafrag_strand = 1 LIMIT 1");
+    FROM genomic_align WHERE dnafrag_strand = 1 AND node_id is not NULL LIMIT 1");
     $sth->execute();
     ($ga_id, $gab_id, $mlss_id, $df_id, $dfs, $dfe, $visible, $node_id, $cg) = $sth->fetchrow_array();
     $sth->finish();
@@ -74,10 +74,10 @@ subtest "Test Bio::EnsEMBL::Compara::DBSQL::GenomicAlignAdaptor fetch_by_dbID($g
 subtest "Test  Bio::EnsEMBL::Compara::DBSQL::GenomicAlignAdaptor::fetch_by_dbID reverse strand", sub {
     $sth = $compara_db->dbc->prepare("SELECT
       genomic_align_id, genomic_align_block_id, method_link_species_set_id, dnafrag_id,
-      dnafrag_start, dnafrag_end, cigar_line
-    FROM genomic_align WHERE dnafrag_strand = -1 LIMIT 1");
+      dnafrag_start, dnafrag_end, visible, node_id, cigar_line
+    FROM genomic_align WHERE dnafrag_strand = -1 AND node_id is not NULL LIMIT 1");
     $sth->execute();
-    ($ga_id, $gab_id, $mlss_id, $df_id, $dfs, $dfe, $cg) = $sth->fetchrow_array();
+    ($ga_id, $gab_id, $mlss_id, $df_id, $dfs, $dfe, $visible, $node_id,$cg) = $sth->fetchrow_array();
     $sth->finish();
     
     $genomic_align = $genomic_align_adaptor->fetch_by_dbID($ga_id);

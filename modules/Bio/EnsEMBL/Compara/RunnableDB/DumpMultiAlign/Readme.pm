@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-  Copyright (c) 1999-2013 The European Bioinformatics Institute and
+  Copyright (c) 1999-2014 The European Bioinformatics Institute and
   Genome Research Limited.  All rights reserved.
 
   This software is distributed under a modified Apache license.
@@ -11,10 +11,10 @@
 =head1 CONTACT
 
   Please email comments or questions to the public Ensembl
-  developers list at <dev@ensembl.org>.
+  developers list at <http://lists.ensembl.org/mailman/listinfo/dev>.
 
   Questions may also be sent to the Ensembl help desk at
-  <helpdesk@ensembl.org>.
+  <http://www.ensembl.org/Help/Contact>.
 
 =head1 NAME
 
@@ -246,8 +246,9 @@ dumped once per duplicated segment.\n";
 
     if ($self->param('format') eq "emf") {
 	print FILE "An emf2maf parser is available with the ensembl compara API, in the
-scripts/dumps directory. Alternatively you can download it using the web CVS
-frontend: http://cvs.sanger.ac.uk/cgi-bin/viewcvs.cgi/*checkout*/ensembl-compara/scripts/dumps/emf2maf.pl\n";
+scripts/dumps directory. Alternatively you can download it using the GitHub frontend:
+https://github.com/Ensembl/ensembl-compara/raw/master/scripts/dumps/emf2maf.pl
+";
     }
 
     print FILE "Please note that MAF format does not support conservation scores.\n";
@@ -335,8 +336,9 @@ not include any $species region.\n";
 
     if ($self->param('format') eq "emf") {
 	print FILE "An emf2maf parser is available with the ensembl compara API, in the scripts/dumps 
-directory. Alternatively you can download it using the web CVS frontend:
-http://cvs.sanger.ac.uk/cgi-bin/viewcvs.cgi/*checkout*/ensembl-compara/scripts/dumps/emf2maf.pl\n";
+directory. Alternatively you can download it using the GitHub frontend:
+https://github.com/Ensembl/ensembl-compara/raw/master/scripts/dumps/emf2maf.pl
+";
     }
 
     close FILE;
@@ -380,8 +382,9 @@ not include any human region.\n";
 
     if ($self->param('format') eq "emf") {
 	print FILE "An emf2maf parser is available with the ensembl compara API, in the scripts/dumps
-directory. Alternatively you can download it using the web CVS frontend:
-http://cvs.sanger.ac.uk/cgi-bin/viewcvs.cgi/*checkout*/ensembl-compara/scripts/dumps/emf2maf.pl\n";
+directory. Alternatively you can download it using the web GitHub frontend:
+https://github.com/Ensembl/ensembl-compara/raw/master/scripts/dumps/emf2maf.pl
+";
     }
 
     print FILE "Please note that MAF format does not support conservation scores.\n";

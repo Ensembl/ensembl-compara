@@ -1,5 +1,5 @@
 #!/usr/bin/env perl
-# Copyright [1999-2013] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+# Copyright [1999-2014] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 # 
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -24,12 +24,28 @@ use Bio::EnsEMBL::Utils::Exception qw (warning verbose);
 use Bio::EnsEMBL::Test::MultiTestDB;
 use Bio::EnsEMBL::Test::TestUtils;
 
+my $species = [
+        "homo_sapiens",
+        "felis_catus",
+    ];
+
+
 #####################################################################
 ## Connect to the test database using the MultiTestDB.conf file
 
 my $multi = Bio::EnsEMBL::Test::MultiTestDB->new( "multi" );
 my $compara_db_adaptor = $multi->get_DBAdaptor( "compara" );
 my $genome_db_adaptor = $compara_db_adaptor->get_GenomeDBAdaptor();
+
+
+my $species_db;
+my $species_db_adaptor;
+## Connect to core DB specified in the MultiTestDB.conf file
+foreach my $this_species (@$species) {
+  $species_db->{$this_species} = Bio::EnsEMBL::Test::MultiTestDB->new($this_species);
+  die if (!$species_db->{$this_species});
+  $species_db_adaptor->{$this_species} = $species_db->{$this_species}->get_DBAdaptor('core');
+}
 
 ##
 #####################################################################
@@ -72,8 +88,8 @@ my $genomic_align_1 = $genomic_align_adaptor->fetch_by_dbID($genomic_align_1_dbI
 my $genomic_align_2 = $genomic_align_adaptor->fetch_by_dbID($genomic_align_2_dbID);
 my $genomic_align_array = [$genomic_align_1, $genomic_align_2];
 
-my $core_dba = $genomic_align_1->dnafrag->genome_db->db_adaptor;
-my $slice_adaptor = $core_dba->get_SliceAdaptor();
+my $slice_adaptor = $species_db_adaptor->{$genomic_align_1->dnafrag->genome_db->name}->get_SliceAdaptor();
+
 my $slice_coord_system_name = $genomic_align_1->dnafrag->coord_system_name;
 my $slice_seq_region_name = $genomic_align_1->dnafrag->name;
 my $slice_start = $genomic_align_1->dnafrag_start;

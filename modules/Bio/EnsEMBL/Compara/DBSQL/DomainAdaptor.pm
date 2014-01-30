@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2013] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2014] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -15,13 +15,6 @@ See the License for the specific language governing permissions and
 limitations under the License.
 
 =cut
-
-#
-# BioPerl module for Bio::EnsEMBL::Compara::DBSQL::DomainAdaptor
-# 
-# Cared by Abel Ureta-Vidal <abel@ebi.ac.uk>
-#
-# POD documentation - main docs before the code
 
 =head1 NAME
 
@@ -57,7 +50,11 @@ The objects can be read from and write to a compara database.
 
 =head1 CONTACT
 
- Abel Ureta-Vidal <abel@ebi.ac.uk>
+Please email comments or questions to the public Ensembl
+developers list at <http://lists.ensembl.org/mailman/listinfo/dev>.
+
+Questions may also be sent to the Ensembl help desk at
+<http://www.ensembl.org/Help/Contact>.
 
 =head1 APPENDIX
 

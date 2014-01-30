@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2013] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2014] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -20,10 +20,10 @@ limitations under the License.
 =head1 CONTACT
 
   Please email comments or questions to the public Ensembl
-  developers list at <dev@ensembl.org>.
+  developers list at <http://lists.ensembl.org/mailman/listinfo/dev>.
 
   Questions may also be sent to the Ensembl help desk at
-  <helpdesk@ensembl.org>.
+  <http://www.ensembl.org/Help/Contact>.
 
 =cut
 
@@ -320,7 +320,10 @@ sub _binarize {
         $newNode->taxon_id($child->taxon_id);
         $taxon_ids->{$child->parent->taxon_id}++;
         $newNode->genome_db_id($child->genome_db_id);
-        $newNode->name($child->name() || $child->taxon_id); 
+        # We make sure that we don't have spaces in the names of internal nodes (for example Testudines + Archosauria group)
+        my $name = $child->name() || $child->taxon_id;
+        $name =~ s/\ /./g;
+        $newNode->name($name);
         $newNode->node_id($child->node_id());
         $newNode->distance_to_parent($child->distance_to_parent()); # no parent!!
         $newNode->node_name($child->name);

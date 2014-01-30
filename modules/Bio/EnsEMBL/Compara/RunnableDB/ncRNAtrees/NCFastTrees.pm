@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2013] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2014] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -20,10 +20,10 @@ limitations under the License.
 =head1 CONTACT
 
   Please email comments or questions to the public Ensembl
-  developers list at <dev@ensembl.org>.
+  developers list at <http://lists.ensembl.org/mailman/listinfo/dev>.
 
   Questions may also be sent to the Ensembl help desk at
-  <helpdesk@ensembl.org>.
+  <http://www.ensembl.org/Help/Contact>.
 
 =cut
 
@@ -269,7 +269,7 @@ sub _dumpMultipleAlignmentStructToWorkdir {
   $sa->set_displayname_flat(1);
 
     # Aln in fasta format (if needed)
-    if ($sa->length() >= 5000) {
+    if ($sa->length() >= 4000) {
         # For FastTree it is better to give the alignment in fasta format
         my $aln_fasta = $file_root . ".fa";
         open my $aln_fasta_fh, ">" , $aln_fasta or $self->throw("Error opening $aln_fasta for writing");
@@ -284,9 +284,9 @@ sub _dumpMultipleAlignmentStructToWorkdir {
 
 
   # Phylip header
-  print OUTSEQ $sa->no_sequences, " ", $sa->length, "\n";
+  print OUTSEQ $sa->num_sequences, " ", $sa->length, "\n";
 
-  $self->param('tag_residue_count', $sa->no_sequences * $sa->length);
+  $self->param('tag_residue_count', $sa->num_sequences * $sa->length);
   # Phylip body
   my $count = 0;
   foreach my $aln_seq ($sa->each_seq) {

@@ -24,7 +24,7 @@ SELECT CONCAT(
 	IFNULL(IFNULL(CONCAT(m.display_label, '/', m.stable_id), m.stable_id), IFNULL(attr.node_type, '')),
 	IFNULL(CONCAT('/sis=',ROUND(attr.duplication_confidence_score*100,2)), ''),
 	IFNULL(CONCAT(' [', IFNULL(g.name, stn.node_name), ']'), '')
-) AS the_tree
+) AS the_gene_tree
 FROM gene_tree_node AS node
 	LEFT JOIN gene_tree_root AS root ON root.root_id=node.node_id
 	LEFT JOIN gene_tree_node_attr AS attr ON attr.node_id=node.node_id
@@ -38,21 +38,47 @@ GROUP BY node.node_id
 ORDER BY node.left_index;
 
 
+# Same for a species tree
+
+DROP PROCEDURE IF EXISTS print_species_tree;
+CREATE PROCEDURE print_species_tree(IN user_root_id INT)
+READS SQL DATA
+SELECT CONCAT(
+	GROUP_CONCAT( IF(pip.left_index IS NULL,'',CONCAT(IF(parent.left_index-pip.left_index=1, '|', ' '),'     ')) ORDER BY parent.left_index SEPARATOR ''),
+	IF(node.node_id=node.root_id,
+		CONCAT(root.method_link_species_set_id, '/', root.label, ': '),
+		CONCAT(IF(MIN(node.left_index-parent.left_index)=1, '+', '\\'), '----')
+	),
+	'(', node.node_id, ')',	' ',
+	node.node_name,
+	IFNULL(CONCAT(' [taxon_id=', node.taxon_id, ']'), ''),
+	IFNULL(CONCAT(' [genome_db_id=', node.genome_db_id, ']'), '')
+) AS the_species_tree
+FROM species_tree_node AS node
+	LEFT JOIN species_tree_root AS root ON root.root_id=node.node_id
+	LEFT JOIN species_tree_node AS parent ON node.root_id=parent.root_id AND parent.left_index<node.left_index AND node.right_index<parent.right_index
+	LEFT JOIN species_tree_node pip ON pip.node_id=parent.parent_id AND pip.root_id=node.root_id
+WHERE node.root_id = user_root_id
+GROUP BY node.node_id
+ORDER BY node.left_index;
+
+
+
 
 #### gets the last common ancestor of two NCBI taxa #####################################################
 #
 # Usage:
-#       SELECT lca(9606, 10090);           # returns the last common ancestor of human and mouse
+#       SELECT ncbi_lca(9606, 10090);           # returns the last common ancestor of human and mouse
 
 
 -- The key improves the query plan
 ALTER TABLE ncbi_taxa_node ADD KEY left_right_index (left_index , right_index );
 
-DROP FUNCTION IF EXISTS lca;
+DROP FUNCTION IF EXISTS ncbi_lca;
 
 DELIMITER $$
 
-CREATE FUNCTION lca(nodeA int, nodeB int)
+CREATE FUNCTION ncbi_lca(nodeA int, nodeB int)
 RETURNS int READS SQL DATA
 BEGIN
   DECLARE lca_id INT;

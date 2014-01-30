@@ -1,4 +1,4 @@
--- Copyright [1999-2013] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+-- Copyright [1999-2014] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 -- 
 -- Licensed under the Apache License, Version 2.0 (the "License");
 -- you may not use this file except in compliance with the License.
@@ -25,10 +25,21 @@ ALTER TABLE subset_member
 DROP KEY subset_member_id, 
 ADD PRIMARY KEY subset_member_id (subset_id, member_id);
 
+-- If the following ALTER TABLE fails, you have several entries for a given member_id
+-- That should not happen, and hopefully, the sequences are identical:
+--   SELECT member_id FROM sequence_exon_bounded GROUP BY member_id HAVING COUNT(*) > 1 AND COUNT(DISTINCT sequence_exon_bounded) > 1
+-- If it is empty, you're fine and you can do:
+--   DELETE seb FROM sequence_exon_bounded seb LEFT JOIN (SELECT sequence_exon_bounded_id FROM sequence_exon_bounded GROUP BY member_id) seb_d USING (sequence_exon_bounded_id) WHERE seb_d.sequence_exon_bounded IS NULL
+-- Otherwise, that's pretty unexpected, please contact the dev mailing list: http://lists.ensembl.org/mailman/listinfo/dev
+
 ALTER TABLE sequence_exon_bounded 
 DROP PRIMARY KEY, DROP KEY member_id, 
 DROP COLUMN sequence_exon_bounded_id, 
 ADD PRIMARY KEY (member_id);
+
+
+-- sequence_cds is susceptible to raise the same issue as sequence_exon_bounded
+-- The same procedure would then apply
 
 ALTER TABLE sequence_cds
 DROP PRIMARY KEY,

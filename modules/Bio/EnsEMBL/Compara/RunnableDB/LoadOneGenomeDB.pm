@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2013] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2014] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -94,6 +94,8 @@ use Bio::EnsEMBL::DBLoader;
 use Bio::EnsEMBL::Compara::GenomeDB;
 use Bio::EnsEMBL::Compara::GenomeMF;
 
+use Bio::EnsEMBL::Hive::Utils ('go_figure_dbc');
+
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
 my $suffix_separator = '__cut_here__';
@@ -110,7 +112,7 @@ sub fetch_input {
         };
 
         unless($core_dba) {     # assume this is a hive-type locator and try more tricks:
-            my $dbc = $self->go_figure_dbc( $locator, 'core' )
+            my $dbc = go_figure_dbc( $locator, 'core' )
                 or die "Could not connect to '$locator' as DBC";
 
             $core_dba = Bio::EnsEMBL::DBSQL::DBAdaptor->new( -DBCONN => $dbc );
