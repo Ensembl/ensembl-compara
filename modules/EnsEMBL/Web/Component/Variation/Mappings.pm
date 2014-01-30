@@ -106,12 +106,12 @@ sub content {
     { key => 'codon',     title => 'Codons',                           sort => 'string'                      },
   );
   
-  if ($hub->species eq 'Homo_sapiens') {
-    push @columns, (
-      { key => 'sift',      title => 'SIFT',     sort => 'position_html', align => 'center' },
-      { key => 'polyphen',  title => 'PolyPhen', sort => 'position_html', align => 'center' },
-    );
-  }
+
+  push @columns, ({ key => 'sift',      title => 'SIFT',     sort => 'position_html', align => 'center' },) 
+      if defined $hub->species_defs->databases->{'DATABASE_VARIATION'}->{'SIFT'} ;
+
+  push @columns, ({ key => 'polyphen',  title => 'PolyPhen', sort => 'position_html', align => 'center' },) 
+      if $hub->species eq 'Homo_sapiens';
   
   push @columns, { key => 'detail', title => 'Detail', sort => 'string' };
   
