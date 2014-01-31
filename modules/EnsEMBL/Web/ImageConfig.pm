@@ -3166,8 +3166,11 @@ sub add_recombination {
 
 sub add_somatic_mutations {
   my ($self, $key, $hashref) = @_;
-  my $menu = $self->get_node('somatic');
   
+  # check we have any sources with somatic data
+  return unless $hashref->{'source'}{'somatic'} && grep {$_} values %{$hashref->{'source'}{'somatic'}};
+  
+  my $menu = $self->get_node('somatic');
   return unless $menu;
   
   my $somatic = $self->create_submenu('somatic_mutation', 'Somatic variants');
