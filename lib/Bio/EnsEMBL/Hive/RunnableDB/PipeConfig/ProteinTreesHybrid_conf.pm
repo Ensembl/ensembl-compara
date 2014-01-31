@@ -78,7 +78,7 @@ sub default_options {
        'ensembl_release'       => '74',   # it defaults to Bio::EnsEMBL::ApiVersion::software_version(): you're unlikely to change the value
        'do_not_reuse_list'     => [ ],    # names of species we don't want to reuse this time
        'method_link_dump_file' => $self->o('ensembl_cvs_root_dir').'/ensembl-compara/sql/method_link.txt',
-       'pipeline_name' 		   => 'compara_homology_HybridPanther_Protists_NEW_'.$self->o('ensembl_release'),
+       'pipeline_name' 		   => 'compara_homology_HybridPanther_Protists_NEW3_'.$self->o('ensembl_release'),
        'division'			   => '',
        'exe_dir'               =>  '/nfs/panda/ensemblgenomes/production/compara/binaries',
 	   'base_dir'              =>  '/nfs/nobackup2/ensemblgenomes/ckong/workspace/'.$self->o('ENV', 'USER').'/hive',
@@ -87,12 +87,13 @@ sub default_options {
        'cluster_dir'           => $self->o('work_dir'). '/cluster',
        'dump_dir'              => $self->o('work_dir'). '/dumps',
 	 # For building new profiles
+       'hmm_buildhmmprofiles'  => 0, ## by default do not create new profiles
 	   'buildprofiles_dir'	   => $self->o('work_dir').'/buildHMMprofiles', 
 	   'fasta_file' 		   => $self->o('buildprofiles_dir').'/unclassify_sequence.fa',
        'msa_dir'    		   => $self->o('buildprofiles_dir').'/msa',    
        'hmmLib_dir'    		   => $self->o('buildprofiles_dir').'/hmmLib',
        'hmm_profiles_type1'    => 'panther9.0', # to tag profiles stored hmm_profile table
-       'hmm_profiles_type2'    => 'new_profiles',
+       'hmm_profiles_type2'    => 'new_profiles', # 'new_profiles' is hardcode in PantherLoadModels.pm 
      # blast parameters:
         'blast_params'          => '-seg no -max_hsps_per_subject 1 -use_sw_tback -num_threads 1',
         'blast_options'  		=> '-filter none -span1 -postsw -V=20 -B=20 -sort_by_highscore -warnings -cpus 1', # used for BuildHMMprofiles::BlastpWithFasta
@@ -132,9 +133,13 @@ sub default_options {
   	    'hmmbuild_exe'    =>  $self->o('exe_dir').'/hmmbuild_2', # for HMMer2 to use with PantherScore.pl  else hmmbuild => HMMer3
 	    'hmmcalibrate'    =>  $self->o('exe_dir').'/hmmcalibrate',
     # HMM specific parameters (set to 0 or undef if not in use)
-        'hmm_clustering'       => 1, ## by default run blastp clustering
-        'cm_file_or_directory' => '/nfs/nobackup2/ensemblgenomes/ckong/workspace/buildhmmprofiles/PANTHER9.0', 
-        'hmm_library_basedir'  => '/nfs/nobackup2/ensemblgenomes/ckong/workspace/buildhmmprofiles/PANTHER9.0', 
+        'hmm_clustering'       => 1, ## by default run hmm clustering
+         ## This should point to PANTHER9.0+TreeFAM profiles if you are building new profiles OR
+         ##             point to PanHMM profiles if you are NOT building new profiles
+        'cm_file_or_directory' => '/nfs/nobackup2/ensemblgenomes/ckong/workspace/ckong/hive/88105/protein_trees_compara_homology_HybridPanther_Protists_NEW2_74/buildHMMprofiles/hmmLib', 
+        'hmm_library_basedir'  => '/nfs/nobackup2/ensemblgenomes/ckong/workspace/ckong/hive/88105/protein_trees_compara_homology_HybridPanther_Protists_NEW2_74/buildHMMprofiles/hmmLib', 
+        #'cm_file_or_directory' => '/nfs/nobackup2/ensemblgenomes/ckong/workspace/buildhmmprofiles/PANTHER9.0', 
+        #'hmm_library_basedir'  => '/nfs/nobackup2/ensemblgenomes/ckong/workspace/buildhmmprofiles/PANTHER9.0', 
         'pantherScore_path'    => '/nfs/panda/ensemblgenomes/data/pantherScore1.03',
         'hmmer_path'           => '/nfs/panda/ensemblgenomes/external/hmmer-2/binaries',
     # hive_capacity values for some analyses:
@@ -712,11 +717,10 @@ sub pipeline_analyses {
              -logic_name => 'load_models',
              -module     => 'Bio::EnsEMBL::Hive::RunnableDB::ComparaHMM::PantherLoadModels',
              -parameters => {
-                             'cm_file_or_directory' => $self->o('cm_file_or_directory'),
-                             'hmmer_path'           => $self->o('hmmer_path'), # For hmmemit (in case it is necessary to get the consensus for each model to create the blast db)
                              'pantherScore_path'    => $self->o('pantherScore_path'),
-                             'hmmemit_exe'	   	    => $self->o('hmmemit_exe'),
                              'type'					=> $self->o('hmm_profiles_type1'),
+                             'cm_file_or_directory' => $self->o('cm_file_or_directory'),
+                             'hmmemit_exe'	   	    => $self->o('hmmemit_exe'),
                             },
              -flow_into  => {
                              '1->A' => [ 'dump_models' ],
@@ -728,9 +732,9 @@ sub pipeline_analyses {
              -logic_name => 'dump_models',
              -module     => 'Bio::EnsEMBL::Hive::RunnableDB::ComparaHMM::DumpModels',
              -parameters => {
-                             'hmm_library_basedir' => $self->o('hmm_library_basedir'),
-                             'blast_bin_dir'       => $self->o('blast_bin_dir'),  ## For creating the blastdb (formatdb or mkblastdb)
                              'pantherScore_path'   => $self->o('pantherScore_path'),
+                             'hmm_library_basedir' => $self->o('hmm_library_basedir'),
+                             'blast_bin_dir'       => $self->o('blast_bin_dir'), 
                             },
              },
 
@@ -760,7 +764,8 @@ sub pipeline_analyses {
                             },
             -flow_into  => {
                              '2->A' => [ 'HMMer_classify' ],
-							 'A->1' => [ 'prepare_buildhmmprofiles_sequence' ],
+#							 'A->1' => [ 'prepare_buildhmmprofiles_sequence' ],
+							 'A->1' => [ $self->o('hmm_buildhmmprofiles') ? 'prepare_buildhmmprofiles_sequence' :'HMM_clusterize'],					 
                            }, 
              -hive_capacity => $self->o('HMMer_classify_capacity'),
              -rc_name => '8Gb_job',
@@ -770,12 +775,12 @@ sub pipeline_analyses {
              -logic_name => 'HMMer_classify',
              -module     => 'Bio::EnsEMBL::Hive::RunnableDB::ComparaHMM::HMMClassify',
              -parameters => {
-                             'blast_bin_dir'       => $self->o('blast_bin_dir'),
                              'pantherScore_path'   => $self->o('pantherScore_path'),
-                             'hmmer_path'          => $self->o('hmmer_path'),
                              'hmm_library_basedir' => $self->o('hmm_library_basedir'),
-                             'cluster_dir'         => $self->o('cluster_dir'),
                              'blast_tmp_dir'	   => $self->o('blast_tmp_dir'), 
+                             'blast_bin_dir'       => $self->o('blast_bin_dir'),
+                             'hmmer_path'          => $self->o('hmmer_path'),
+                             'cluster_dir'         => $self->o('cluster_dir'),
                              'store_unclassify'	   => '1',
                             },
              -hive_capacity => $self->o('HMMer_classify_capacity'),
@@ -790,7 +795,6 @@ sub pipeline_analyses {
                              'cluster_dir'  => $self->o('cluster_dir'),
                              'mlss_id'  	=> $self->o('mlss_id'),
                              'member_type'  => 'protein',
-
                             },
              -rc_name => '8Gb_job',
              -flow_into => [ 'run_qc_tests' ],
@@ -799,6 +803,7 @@ sub pipeline_analyses {
         ) : (), # do not show the hmm analysis if the option is off
 
 # -------------------------------------------------[BuildHMMprofiles pipeline]-------------------------------------------------------
+   	  $self->o('hmm_buildhmmprofiles') ? (
    	    { 
     	       -logic_name   => 'prepare_buildhmmprofiles_sequence',
         	   -module       => 'Bio::EnsEMBL::Hive::RunnableDB::ComparaHMM::CreateSequence',
@@ -838,28 +843,11 @@ sub pipeline_analyses {
      { -logic_name => 'paf_create_table',
        -module     => 'Bio::EnsEMBL::Hive::RunnableDB::SqlCmd',
        -parameters => {
-        	'sql' => [  'CREATE TABLE IF NOT EXISTS `peptide_align_feature` 
-        				 (`peptide_align_feature_id` int(10) unsigned NOT NULL AUTO_INCREMENT,
-        				  `qmember_id` mediumtext NOT NULL,
-						  `hmember_id` mediumtext NOT NULL,
-						  `qgenome_db_id` int(10) unsigned NOT NULL,
-						  `hgenome_db_id` int(10) unsigned NOT NULL,
-						  `qstart` int(10) NOT NULL DEFAULT \'0\',
-						  `qend` int(10) NOT NULL DEFAULT \'0\',
-						  `hstart` int(11) NOT NULL DEFAULT \'0\',
-						  `hend` int(11) NOT NULL DEFAULT \'0\',
-						  `score` int(5) NOT NULL DEFAULT \'0\',
-						  `evalue` double DEFAULT NULL,
-						  `align_length` int(10) DEFAULT NULL,
-						  `identical_matches` int(10) DEFAULT NULL,
-						  `perc_ident` int(10) DEFAULT NULL,
-						  `positive_matches` int(10) DEFAULT NULL,
-						  `perc_pos` int(10) DEFAULT NULL,
-						  `hit_rank` int(10) DEFAULT NULL,
-						  `cigar_line` mediumtext,
-        	              PRIMARY KEY (`peptide_align_feature_id`) 
-        	 			  )',
+        	'sql' => [  'ALTER TABLE `peptide_align_feature` 
+        				 MODIFY COLUMN `score` int(5) NOT NULL DEFAULT \'0\' ',
+        				 'ALTER TABLE `peptide_align_feature` DROP PRIMARY KEY',
         	         ],     
+
        },
        -batch_size     =>  100,  # they can be really, really short
        -hive_capacity  => -1,
@@ -869,8 +857,8 @@ sub pipeline_analyses {
 	 {   -logic_name => 'BlastpWithFasta',
          -module     => 'Bio::EnsEMBL::Hive::RunnableDB::BuildHMMprofiles::BlastpWithFasta',
          -parameters => {
-	        'wublastp_exe'	    => $self->o('wublastp_exe'),
 	        'buildprofiles_dir' => $self->o('buildprofiles_dir'), # point to BLASTDB directory
+	        'wublastp_exe'	    => $self->o('wublastp_exe'),
 	        'blast_options'	    => $self->o('blast_options'),
 	        'blast_tmp_dir'	    => $self->o('blast_tmp_dir'),
      	},
@@ -974,11 +962,11 @@ sub pipeline_analyses {
     {   -logic_name => 'Mafft_BuildHMMprofiles',
         -module     => 'Bio::EnsEMBL::Hive::RunnableDB::BuildHMMprofiles::Mafft',
         -parameters => {
-            'mafft_home'      => $self->o('mafft_home'),
-            'fasta_file' 	  => $self->o('fasta_file'),
             'hcluster_parse'  => $self->o('buildprofiles_dir').'/hcluster_parse.out',
+            'fasta_file' 	  => $self->o('fasta_file'),
             'blast_tmp_dir'   => $self->o('blast_tmp_dir'), # To store fasta file of clusters to perform MSA on
             'msa_dir'		  => $self->o('msa_dir'), 
+            'mafft_home'      => $self->o('mafft_home'),
         },
         -hive_capacity => $self->o('mcoffee_capacity'),
         -rc_name       => 'msa',
@@ -992,11 +980,11 @@ sub pipeline_analyses {
     {   -logic_name => 'Mafft_himem_BuildHMMprofiles',
         -module     => 'Bio::EnsEMBL::Hive::RunnableDB::BuildHMMprofiles::Mafft',
         -parameters => {
-            'mafft_home'     => $self->o('mafft_home'),
-            'fasta_file' 	 => $self->o('fasta_file'),
-            'hcluster_parse' => $self->o('buildprofiles_dir').'/hcluster_parse.out',
-            'blast_tmp_dir'  => $self->o('blast_tmp_dir'), # To store fasta file of clusters to perform MSA on
-            'msa_dir'		 => $self->o('msa_dir'), 
+            'hcluster_parse'  => $self->o('buildprofiles_dir').'/hcluster_parse.out',
+            'fasta_file' 	  => $self->o('fasta_file'),
+            'blast_tmp_dir'   => $self->o('blast_tmp_dir'), # To store fasta file of clusters to perform MSA on
+            'msa_dir'		  => $self->o('msa_dir'), 
+            'mafft_home'      => $self->o('mafft_home'),
 	   },
         -hive_capacity => $self->o('mcoffee_capacity'),
 		-rc_name       => 'msa_himem',
@@ -1024,9 +1012,8 @@ sub pipeline_analyses {
         -module     => 'Bio::EnsEMBL::Hive::RunnableDB::BuildHMMprofiles::HmmBuild',
         -parameters  => {
               'hmmbuild_exe' => $self->o('hmmbuild_exe'),
-              'msa_dir'      => $self->o('msa_dir'),
               'hmmLib_dir'   => $self->o('hmmLib_dir'),
-#             'division'     => $self->o('division'),
+              'msa_dir'      => $self->o('msa_dir'),
          },
         -hive_capacity => $self->o('hmmbuild_capacity'),
         -rc_name       => 'msa_himem',
@@ -1042,7 +1029,6 @@ sub pipeline_analyses {
          'fan_branch_code' => 2,
          -flow_into => {
                 '2->A'	 => ['HmmCalibrate'],
-# 		  		'A->1' 	 => ['HMMer_classify_factory'],
  		  		'A->1' 	 => ['load_models_BuildHMMprofiles'],
          },
          -wait_for => [ 'HmmBuild' ],
@@ -1057,9 +1043,6 @@ sub pipeline_analyses {
            },
         -hive_capacity => $self->o('hmmcalibrate_capacity'),
         -batch_size    => 50,
-        -flow_into  => {
-#                          '1' => [ 'load_models_BuildHMMprofiles' ],
-                       },
     },
 
     {
@@ -1075,7 +1058,6 @@ sub pipeline_analyses {
         -flow_into  => {
                           '1' => [ 'dump_models_BuildHMMprofiles' ],
                        },
-
     },
 
     {
@@ -1084,24 +1066,22 @@ sub pipeline_analyses {
         -parameters => {
                           'hmm_library_basedir' => $self->o('hmmLib_dir'),
                           'blast_bin_dir'       => $self->o('blast_bin_dir'),  ## For creating the blastdb (formatdb or mkblastdb)
-                          'pantherScore_path'    => $self->o('pantherScore_path'),
+                          'pantherScore_path'   => $self->o('pantherScore_path'),
                        },
         -flow_into  => {
                           '1' => [ 'HMMer_classify_factory' ],
                        },
     },
 
-   	{ 
+   { 
         -logic_name   => 'HMMer_classify_factory',
     	-module       => 'Bio::EnsEMBL::Hive::RunnableDB::ComparaHMM::HMMClassifyFactory',
-        -parameters   => {
-        },
-        		-hive_capacity => -1,
-        		-flow_into 	   => {
-                    '2->A' => [ 'HMMer_classify_BuildHMMprofiles' ],
-        			'A->1' => [ 'HMM_clusterize' ],
-          		},
-   	},
+    	-hive_capacity => -1,
+        -flow_into 	   => {
+        	    	        '2->A' => [ 'HMMer_classify_BuildHMMprofiles' ],
+        					'A->1' => [ 'HMM_clusterize' ],
+          				 },
+   },
 
    {
              -logic_name => 'HMMer_classify_BuildHMMprofiles',
@@ -1119,7 +1099,7 @@ sub pipeline_analyses {
              -rc_name => 'hmmclassify_job',
              -batch_size => 50,
     },
-
+  ) : (), # do not show the buildhmmprofile pipeline if the option is off
 # ---------------------------------------------[create and populate blast analyses]--------------------------------------------------
 
         {   -logic_name => 'blastdb_factory',
