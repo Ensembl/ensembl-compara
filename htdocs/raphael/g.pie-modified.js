@@ -20,7 +20,7 @@ Raphael.fn.g.piechart = function (cx, cy, r, values, opts) {
         total = 0,
         others = 0,
         cut = 9,
-        defcut = true;
+        defcut = false;
     chart.covers = covers;
     if (len == 1) {
     	  // The following line has been modified from the original version 0.4.1
