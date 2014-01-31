@@ -746,7 +746,6 @@ sub pipeline_analyses {
         					 	(`member_id` varchar(20) DEFAULT NULL,
         					 	 `genome_db_id` varchar(20) DEFAULT NULL,
          					 	 `cluster_dir_id` varchar(20) DEFAULT NULL,
-	        	               	PRIMARY KEY (`member_id`) 
         	 			  	 	)',
         	         ],     
        			},
@@ -845,7 +844,6 @@ sub pipeline_analyses {
        -parameters => {
         	'sql' => [  'ALTER TABLE `peptide_align_feature` 
         				 MODIFY COLUMN `score` int(5) NOT NULL DEFAULT \'0\' ',
-        				 'ALTER TABLE `peptide_align_feature` DROP PRIMARY KEY',
         	         ],     
 
        },
