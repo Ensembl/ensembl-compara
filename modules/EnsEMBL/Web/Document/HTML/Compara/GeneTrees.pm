@@ -23,6 +23,7 @@ package EnsEMBL::Web::Document::HTML::Compara::GeneTrees;
 
 use strict;
 
+use List::Util qw(min max sum);
 use List::MoreUtils qw(uniq);
 
 use EnsEMBL::Web::Document::Table;
@@ -103,7 +104,6 @@ sub format_gene_tree_stats {
   # Reads the species set that are defined in the database (if any)
   my $ordered_species = $self->order_species_by_clade($species_tree->root->get_all_leaves);
 
-  my $piechart_radius = 14;
   my $counter_raphael_holders = 0;
 
   my $html = q{
@@ -115,17 +115,19 @@ Below are a few tables that summarize the:
 </ul>
 };
   $html .= q{<div class="js_panel">};
+  $html .= q{<h2 id="gt_overview">Overview of the various statistics</h2>};
+  $html .= $self->get_html_for_tree_stats_overview($species_tree->root, \$counter_raphael_holders);
   $html .= q{<h2 id="gt_coverage">Gene-tree coverage (per species)</h2>};
   foreach my $set (@$ordered_species) {
     $html .= sprintf('<h3>%s</h3>', ucfirst $set->[0] || 'Others') if scalar(@$ordered_species) > 1;
-    $html .= $self->get_html_for_gene_tree_coverage($set->[0], $set->[1], $method, $piechart_radius, \$counter_raphael_holders);
-    $html .= q{<div style="text-align: right"><a href='#main'>Top&uarr;</a></div>};
+    $html .= $self->get_html_for_gene_tree_coverage($set->[0], $set->[1], $method, \$counter_raphael_holders);
+#$html .= q{<div style="text-align: right"><a href='#main'>Top&uarr;</a></div>};
   }
   $html .= q{<h2 id="gt_sizes">Size of the trees (per root node)</h2>};
-  $html .= $self->get_html_for_tree_size_statistics($species_tree->root);
+  #$html .= $self->get_html_for_tree_size_statistics($species_tree->root);
   $html .= q{<div style="text-align: right"><a href='#main'>Top&uarr;</a></div>};
   $html .= q{<h2 id="gt_nodes">Statistics about the gene-tree nodes</h2>};
-  $html .= $self->get_html_for_node_statistics($species_tree->root, $piechart_radius, \$counter_raphael_holders);
+  #$html .= $self->get_html_for_node_statistics($species_tree->root, \$counter_raphael_holders);
   $html .= q{<div style="text-align: right"><a href='#main'>Top&uarr;</a></div>};
   $html .= q{</div>};
 
@@ -133,12 +135,15 @@ Below are a few tables that summarize the:
 }
 
 sub piechart_gene_coverage {
-  my ($self, $values, $piechart_radius, $ref_index_piechart) = @_;
+  my ($self, $values, $ref_index_piechart, $title) = @_;
 
   my $index = $$ref_index_piechart;
   $$ref_index_piechart++;
+
   my @ccolors = qw(#fc0 #909 #69f #8a2 #a22 #25a);
-  return sprintf(q{<div>
+  my $piechart_radius = 14;
+
+  return sprintf(q{<div style="display: none;">
       <input class="panel_type" type="hidden" value="Piechart" />
       <input class="graph_config" type="hidden" name="stroke" value="'#999'" />
       <input class="graph_config" type="hidden" name="legend" value="false" />
@@ -146,19 +151,20 @@ sub piechart_gene_coverage {
       <input class="graph_config" type="hidden" name="colors" value="[%s]" />
       <input class="graph_data" type="hidden" value="[%s]" />
     </div>
-    <div style="align: center">
+    <div style="align: center" %s>
       <div id="graphHolder%d" style="width: %dpx; height: %dpx; margin: auto;"></div>
     </div>
     },
     $piechart_radius, $piechart_radius, $piechart_radius-1,
     join(',', map {sprintf(q{'%s'}, $_)} @ccolors),
     join(',', map {sprintf('[%s]', $values->[$_] || 0.01)} 0..((scalar @ccolors)-1)),
+    $title ? sprintf(q{title="%s"}, $title) : '',
     $index, $piechart_radius*2, $piechart_radius*2,
   );
 }
 
 sub get_html_for_gene_tree_coverage {
-  my ($self, $name, $species, $method, $piechart_radius, $counter_raphael_holders) = @_;
+  my ($self, $name, $species, $method, $counter_raphael_holders) = @_;
 
   $name =~ s/ /_/g;
   my $table = EnsEMBL::Web::Document::Table->new([
@@ -182,24 +188,39 @@ sub get_html_for_gene_tree_coverage {
   my $common_names = $self->hub->species_defs->multi_hash->{'DATABASE_COMPARA'}{'TAXON_NAME'};
 
   foreach my $sp (@$species) {
-
-    my $v1 = $sp->get_value_for_tag('nb_orphan_genes');
-    my $v2 = $sp->get_value_for_tag('nb_genes_in_tree_single_species');
-    my $v3 = $sp->get_value_for_tag('nb_genes_in_tree_multi_species');
-    my $v4 = $sp->get_value_for_tag('nb_genes');
-    my $v5 = $sp->get_value_for_tag('nb_gene_splits');
-    my $v6 = $sp->get_value_for_tag('nb_dup_nodes');
-    my $piechart = $self->piechart_gene_coverage([$v1, $v2, $v3], $piechart_radius, $counter_raphael_holders);
-    my $piechart2 = $self->piechart_gene_coverage([0, 0, 0, $v4-$v5-$v6, $v6, $v5], $piechart_radius, $counter_raphael_holders);
-
+    my $piecharts = $self->get_piecharts_for_species($sp, $counter_raphael_holders);
     $table->add_row({
         'species' => $common_names->{$sp->taxon_id} ? sprintf('%s (<i>%s</i>)', $common_names->{$sp->taxon_id}, $sp->node_name) : $sp->node_name,
-        'piechart1' => $piechart,
-        'piechart2' => $sp->get_value_for_tag('nb_genes_in_tree') ? $piechart2 : '',
+        'piechart1' => $piecharts->[0],
+        'piechart2' => $sp->get_value_for_tag('nb_genes_in_tree') ? $piecharts->[1] : '',
         map {($_ => $sp->get_value_for_tag($_) || 0)} (qw(nb_genes nb_seq nb_orphan_genes nb_genes_in_tree nb_genes_in_tree_single_species nb_genes_in_tree_multi_species nb_gene_splits nb_dup_nodes)),
       });
   }
   return $table->render;
+}
+
+sub get_piecharts_for_species {
+  my ($self, $node, $counter_raphael_holders) = @_;
+  my $v1 = $node->get_value_for_tag('nb_orphan_genes');
+  my $v2 = $node->get_value_for_tag('nb_genes_in_tree_single_species');
+  my $v3 = $node->get_value_for_tag('nb_genes_in_tree_multi_species');
+  my $v4 = $node->get_value_for_tag('nb_genes');
+  my $v5 = $node->get_value_for_tag('nb_gene_splits');
+  my $v6 = $node->get_value_for_tag('nb_dup_nodes');
+  my $piechart = $self->piechart_gene_coverage([$v1, $v2, $v3], $counter_raphael_holders, sprintf("Gene coverage (%s)", $node->node_name));
+  my $piechart2 = $self->piechart_gene_coverage([0, 0, 0, $v4-$v5-$v6, $v6, $v5], $counter_raphael_holders, sprintf("Gene events (%s)", $node->node_name));
+
+  return [$piechart, $piechart2];
+}
+
+sub get_piecharts_for_internal_node {
+  my ($self, $node, $counter_raphael_holders) = @_;
+  my $v1 = $node->get_value_for_tag('nb_spec_nodes');
+  my $v2 = $node->get_value_for_tag('nb_dup_nodes');
+  my $v3 = $node->get_value_for_tag('nb_dubious_nodes');
+  my $piechart = $self->piechart_gene_coverage([$v1, $v2, $v3], $counter_raphael_holders, sprintf("Node types (%s)", $node->node_name));
+
+  return [$piechart];
 }
 
 sub get_html_for_tree_size_statistics {
@@ -232,7 +253,7 @@ sub get_html_for_tree_size_statistics {
 }
 
 sub get_html_for_node_statistics {
-  my ($self, $species_tree_root, $piechart_radius, $counter_raphael_holders) = @_;
+  my ($self, $species_tree_root, $counter_raphael_holders) = @_;
 
   my $table = EnsEMBL::Web::Document::Table->new([
       { key => 'species',               width => '18%', align => 'left',   sort => 'string',  title => 'Species', },
@@ -249,14 +270,11 @@ sub get_html_for_node_statistics {
   foreach my $node (@{$species_tree_root->get_all_nodes}) {
     next if $node->is_leaf;
     next unless $node->get_value_for_tag('nb_nodes');
-    my $v1 = $node->get_value_for_tag('nb_spec_nodes');
-    my $v2 = $node->get_value_for_tag('nb_dup_nodes');
-    my $v3 = $node->get_value_for_tag('nb_dubious_nodes');
-    my $piechart = $self->piechart_gene_coverage([$v1, $v2, $v3], $piechart_radius, $counter_raphael_holders);
+    my $piecharts = $self->get_piecharts_for_internal_node($node, $counter_raphael_holders);
 
     $table->add_row({
         'species' => $common_names->{$node->taxon_id} ? sprintf('%s (<i>%s</i>)', $common_names->{$node->taxon_id}, $node->node_name) : $node->node_name,
-        'piechart' => $piechart,
+        'piechart' => $piecharts->[0],
         (map {$_ => $node->get_value_for_tag($_)} qw(nb_nodes nb_spec_nodes nb_dup_nodes nb_dubious_nodes)),
         (map {$_ => sprintf('%.1f&nbsp;%%', 100*$node->get_value_for_tag($_))} qw(avg_dupscore avg_dupscore_nondub)),
       });
@@ -264,5 +282,84 @@ sub get_html_for_node_statistics {
 
   return $table->render;
 }
+
+sub get_html_for_tree_stats_overview {
+  my ($self, $species_tree_root, $counter_raphael_holders) = @_;
+
+  my $width = $species_tree_root->max_depth * 2 + 4;
+  my $height = scalar(@{$species_tree_root->get_all_leaves});
+  my @matrix = map {[(undef) x $width]} 1..$height;
+  my $y_pos - 0;
+  my $internal_counter = 0;
+  $self->draw_tree(\@matrix, $species_tree_root, \$y_pos, \$internal_counter);
+
+# -ii-ii-tt
+#
+#   +----s3
+# -oo  +-s2
+#   +-oo
+#      +-s1
+  my $html = q{<table style="padding: 0px; text-align: center;">};
+  foreach my $row (@matrix) {
+    foreach my $i (0..($width-1)) {
+      if ($row->[$i] and ($row->[$i] =~ /graphHolder/)) {
+        $row->[$i] =~ s/graphHolder[0-9]*/graphHolder$$counter_raphael_holders/;
+        $$counter_raphael_holders++;
+      }
+    }
+    $html .= '<tr>'.join('', map {sprintf(q{<td style="padding: 0px">%s</td>}, $_ || '')} @{$row}).'</tr>';
+  }
+  $html .= '</table>';
+  return $html;
+}
+
+
+sub draw_tree {
+  my ($self, $matrix, $node, $next_y, $counter_raphael_holders) = @_;
+  my $nchildren = scalar(@{$node->children});
+
+  my $common_names  = $self->hub->species_defs->multi_hash->{'DATABASE_COMPARA'}{'TAXON_NAME'};
+
+  my $horiz_branch  = q{<img style="width: 28px; height: 28px;" alt="---" src="ct_hor.png" />};
+  my $vert_branch   = q{<img style="width: 28px; height: 28px;" alt="---" src="ct_ver.png" />};
+  my $top_branch    = q{<img style="width: 28px; height: 28px;" alt="---" src="ct_top.png" />};
+  my $bottom_branch = q{<img style="width: 28px; height: 28px;" alt="---" src="ct_bot.png" />};
+  my $middle_branch = q{<img style="width: 28px; height: 28px;" alt="---" src="ct_mid.png" />};
+  my $half_horiz_branch  = q{<img style="width: 14px; height: 28px;" alt="-" src="ct_half_hor.png" />};
+
+  if ($nchildren) {
+    my @subtrees = map {$self->draw_tree($matrix, $_, $next_y, $counter_raphael_holders)} @{$node->sorted_children};
+    my $anchor_x_pos = min(map {$_->[0]} @subtrees)-1;
+    my $min_y = min(map {$_->[1]} @subtrees);
+    my $max_y = max(map {$_->[1]} @subtrees);
+    my $anchor_y_pos = int(($min_y+$max_y)/2);
+    foreach my $coord (@subtrees) {
+      $matrix->[$coord->[1]]->[$_] = ($_ % 2 ? $horiz_branch : $half_horiz_branch) for ($anchor_x_pos+1)..($coord->[0]-1);
+    }
+    my $piecharts = $self->get_piecharts_for_internal_node($node, $counter_raphael_holders);
+    $matrix->[$_]->[$anchor_x_pos] = $vert_branch for ($min_y+1)..($max_y-1);
+    $matrix->[$_->[1]]->[$anchor_x_pos] = $middle_branch for @subtrees;
+    $matrix->[$min_y]->[$anchor_x_pos] = $top_branch;
+    $matrix->[$max_y]->[$anchor_x_pos] = $bottom_branch;
+    $matrix->[$anchor_y_pos]->[$anchor_x_pos] = $piecharts->[0];
+    $matrix->[$anchor_y_pos]->[$anchor_x_pos-1] = $half_horiz_branch;
+
+    return [$anchor_x_pos-1, $anchor_y_pos];
+
+  } else {
+    my $y = $$next_y;
+    $$next_y++;
+    my $width = scalar(@{$matrix->[$y]});
+    my $piecharts = $self->get_piecharts_for_species($node, $counter_raphael_holders);
+    $matrix->[$y]->[$width-1] = $common_names->{$node->taxon_id} || $node->node_name;
+    $matrix->[$y]->[$width-2] = $piecharts->[1];
+    $matrix->[$y]->[$width-3] = $piecharts->[0];
+    $matrix->[$y]->[$width-4] = $half_horiz_branch;
+    return [$width-4, $y];
+  }
+
+}
+
+
 
 1;
