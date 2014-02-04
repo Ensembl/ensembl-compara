@@ -46,7 +46,8 @@ sub OBJECT_PARAMS {
     [ 'Experiment'          => 'ex'  ],
     [ 'Marker'              => 'm'   ],
     [ 'LRG'                 => 'lrg' ],
-    [ 'GeneTree'            => 'gt'  ]
+    [ 'GeneTree'            => 'gt'  ],
+    [ 'Family'              => 'fm'  ],
   ];
 }
 

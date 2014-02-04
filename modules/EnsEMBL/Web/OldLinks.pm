@@ -127,6 +127,7 @@ our %mapping = (
                               { 'type' => 'Phenotype',           'action' => 'All',                          'initial_release' => 69 },
                               { 'type' => 'Marker',              'action' => 'Details',                      'initial_release' => 59 },
                               { 'type' => 'GeneTree',            'action' => 'Image',                        'initial_release' => 60 },
+                              { 'type' => 'Family',              'action' => 'Details',                      'initial_release' => 75 },
                               { 'type' => 'Experiment',          'action' => 'Sources',                      'initial_release' => 65 },
                               { 'type' => 'Search',              'action' => 'New',                          'initial_release' => 63 }],       
   # internal views

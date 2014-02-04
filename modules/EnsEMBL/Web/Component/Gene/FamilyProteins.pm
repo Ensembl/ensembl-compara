@@ -50,7 +50,7 @@ sub content_other {
   my $html;
 
   foreach my $key (sort keys %sources) {
-    my @peptides = map { $_->stable_id } @{$object->member_by_source($family, $sources{$key}{'key'})};
+    my @peptides = map { $_->stable_id } @{$family->get_Member_by_source($sources{$key}{'key'})};
     my $row_count;
     
     if (@peptides) {
