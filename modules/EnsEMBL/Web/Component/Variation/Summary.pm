@@ -618,9 +618,14 @@ sub sets{
 
   foreach my $vs (@variation_sets){
     next unless $vs =~/Affy|Illumina/;  ## only showing genotyping chip sets
-    push @genotyping_sets_list,  $vs;
+    if($vs =~/Genotyping chip variants/){  ## tidy up display for human
+	$vs =~ s/Genotyping chip variants \(|\)//g;
+	@genotyping_sets_list = split/\,/,  $vs;
+    }
+    else{
+	push @genotyping_sets_list,  $vs;
+    }
   }
-
   my $count = scalar @genotyping_sets_list;  
   
   if ($count > 3) {
