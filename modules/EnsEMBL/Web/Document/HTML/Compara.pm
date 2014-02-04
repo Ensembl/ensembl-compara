@@ -269,7 +269,7 @@ sub draw_stepped_table {
           $content = '<b>YES</b>';
         }
         else {
-          my $url = '/info/genome/compara/mlss.html?method='.$method.';mlss='.$mlss_id;
+          my $url = '/info/genome/compara/mlss.html?mlss='.$mlss_id;
           $content = sprintf('<a href="%s">YES</a>', $url);
         }
       }
