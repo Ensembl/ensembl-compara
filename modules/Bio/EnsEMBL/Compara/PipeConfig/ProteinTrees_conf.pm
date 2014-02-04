@@ -88,6 +88,9 @@ sub default_options {
         'cluster_dir'           => $self->o('work_dir') . '/cluster',
         'dump_dir'              => $self->o('work_dir') . '/dumps',
 
+    # "Member" parameters:
+        'allow_pyrrolysine'         => 0,
+
     # blast parameters:
         'blast_params'              => '-seg no -max_hsps_per_subject 1 -use_sw_tback -num_threads 1',
 
@@ -596,7 +599,7 @@ sub pipeline_analyses {
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::LoadMembers',
             -parameters => {
                 'store_related_pep_sequences' => 1,
-                'allow_pyrrolysine'             => 0,
+                'allow_pyrrolysine'             => $self->o('allow_pyrrolysine'),
                 'find_canonical_translations_for_polymorphic_pseudogene' => 1,
             },
             -rc_name => '2Gb_job',
