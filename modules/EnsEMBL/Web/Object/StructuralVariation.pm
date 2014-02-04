@@ -201,6 +201,7 @@ sub get_class_colour {
   my %colour = (
     'copy_number_variation'         => '#000000',
     'insertion'                     => '#FFCC00',
+    'novel_sequence_insertion'      => '#FFCC00',
     'copy_number_gain'              => '#0000CC', 
     'copy_number_loss'              => '#CC0000',
     'inversion'                     => '#9933FF', 
