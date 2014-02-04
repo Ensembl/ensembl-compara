@@ -92,6 +92,7 @@ sub format_gene_tree_stats {
   my $hub  = $self->hub;
 
   my $compara_db = $self->hub->database('compara');
+  my $page       = $self->hub->param('page');
   return unless $compara_db;
 
   my $mlss_adaptor    = $compara_db->get_adaptor('MethodLinkSpeciesSet');
@@ -107,40 +108,85 @@ sub format_gene_tree_stats {
   my $counter_raphael_holders = 0;
 
   my $html = q{
-Below are a few tables that summarize the:
+List of available views:
 <ul>
-  <li><a href='#gt_coverage'>Gene-tree coverage</a> for each species</li>
-  <li><a href='#gt_sizes'>Size of the gene trees</a> (split by their root taxon)</li>
-  <li><a href='#gt_nodes'>Gene-tree nodes</a>, and the inference of speciation / duplication events</li>
+  <li><a href='?'>Overview</a></li>
+  <li><a href='?page=coverage'>Gene-tree coverage</a> for each species</li>
+  <li><a href='?page=sizes'>Size of the gene trees</a> (split by their root taxon)</li>
+  <li><a href='?page=nodes'>Gene-tree nodes</a>, and the inference of speciation / duplication events</li>
 </ul>
+<div class="js_panel">
 };
-  $html .= q{<div class="js_panel">};
-  $html .= q{<h2 id="gt_overview">Overview of the various statistics</h2>};
-  $html .= $self->get_html_for_tree_stats_overview($species_tree->root, \$counter_raphael_holders);
-  $html .= q{<h2 id="gt_coverage">Gene-tree coverage (per species)</h2>};
-  foreach my $set (@$ordered_species) {
-    $html .= sprintf('<h3>%s</h3>', ucfirst $set->[0] || 'Others') if scalar(@$ordered_species) > 1;
-    $html .= $self->get_html_for_gene_tree_coverage($set->[0], $set->[1], $method, \$counter_raphael_holders);
-#$html .= q{<div style="text-align: right"><a href='#main'>Top&uarr;</a></div>};
-  }
-  $html .= q{<h2 id="gt_sizes">Size of the trees (per root node)</h2>};
-  #$html .= $self->get_html_for_tree_size_statistics($species_tree->root);
-  $html .= q{<div style="text-align: right"><a href='#main'>Top&uarr;</a></div>};
-  $html .= q{<h2 id="gt_nodes">Statistics about the gene-tree nodes</h2>};
-  #$html .= $self->get_html_for_node_statistics($species_tree->root, \$counter_raphael_holders);
-  $html .= q{<div style="text-align: right"><a href='#main'>Top&uarr;</a></div>};
-  $html .= q{</div>};
 
+  if (not $page) {
+
+    $html .= q{<p>This is an overview of the various statistics.
+    The phylogenetic tree summarizes all the piecharts found in the other views.
+    </p>};
+    $html .= $self->piechart_header([qw(#fc0 #909 #69f #a22 #25a #8a2)]);
+    my $cell_style = q{width="16%" style="border-bottom: solid 1px #ccc; vertical-align: middle;"};
+    $html .= sprintf(qq{<table class="ss">
+    <tr>
+      <th colspan="6" style="text-align: center">Legend</th>
+    </tr>
+    <tr>
+      <td $cell_style>Internal nodes (ancestral taxa)</td>
+      <td $cell_style>Node types</td>
+      <td $cell_style><span style="color: #fc0">Speciations</span></td>
+      <td $cell_style><span style="color: #909">Duplications</span></td>
+      <td $cell_style><span style="color: #69f">Dubious nodes</span></td>
+      <td $cell_style>%s</td>
+    </tr>
+    <tr>
+      <td $cell_style rowspan="2">Leaves (extant species)</td>
+      <td $cell_style>Gene events</td>
+      <td $cell_style><span style="color: #fc0">Default genes</span></td>
+      <td $cell_style><span style="color: #909">Species-specific duplications</span></td>
+      <td $cell_style><span style="color: #69f">Gene splits</span></td>
+      <td $cell_style>%s</td>
+    </tr>
+    <tr>
+      <td $cell_style>Gene-tree coverage</td>
+      <td $cell_style><span style="color: #8a2">Genes in multi-species trees</span></td>
+      <td $cell_style><span style="color: #a22">Orphaned genes</span></td>
+      <td $cell_style><span style="color: #25a">Genes in single-species trees</span></td>
+      <td $cell_style>%s</td>
+    </tr>
+    </table>
+    }, $self->piechart_data([1,1,1], \$counter_raphael_holders),
+       $self->piechart_data([1,1,1], \$counter_raphael_holders),
+       $self->piechart_data([0,0,0,1,1,1], \$counter_raphael_holders),
+   );
+   $html .= $self->get_html_for_tree_stats_overview($species_tree->root, \$counter_raphael_holders);
+
+} elsif ($page eq 'coverage')  {
+
+    $html .= q{<h2>Gene-tree coverage (per species)</h2>};
+    $html .= $self->piechart_header([qw(#fc0 #909 #69f #a22 #25a #8a2)]);
+    foreach my $set (@$ordered_species) {
+      $html .= sprintf('<h3>%s</h3>', ucfirst $set->[0] || 'Others') if scalar(@$ordered_species) > 1;
+      $html .= $self->get_html_for_gene_tree_coverage($set->[0], $set->[1], $method, \$counter_raphael_holders);
+    }
+
+  } elsif ($page eq 'sizes') {
+    $html .= q{<h2>Size of the trees (per root node)</h2>};
+    $html .= $self->piechart_header([qw(#89C #fff)]);
+    $html .= $self->get_html_for_tree_size_statistics($species_tree->root, \$counter_raphael_holders);
+
+  } elsif ($page eq 'nodes') {
+    $html .= q{<h2>Statistics about the gene-tree nodes</h2>};
+    $html .= $self->piechart_header([qw(#fc0 #909 #69f)]);
+    $html .= $self->get_html_for_node_statistics($species_tree->root, \$counter_raphael_holders);
+  };
+
+  $html .= q{</div>};
   return $html;
 }
 
-sub piechart_gene_coverage {
-  my ($self, $values, $ref_index_piechart, $title) = @_;
 
-  my $index = $$ref_index_piechart;
-  $$ref_index_piechart++;
+sub piechart_header {
+  my ($self, $colors) = @_;
 
-  my @ccolors = qw(#fc0 #909 #69f #8a2 #a22 #25a);
   my $piechart_radius = 14;
 
   return sprintf(q{<div style="display: none;">
@@ -149,19 +195,34 @@ sub piechart_gene_coverage {
       <input class="graph_config" type="hidden" name="legend" value="false" />
       <input class="graph_dimensions" type="hidden" value="[%d,%d,%d]" />
       <input class="graph_config" type="hidden" name="colors" value="[%s]" />
-      <input class="graph_data" type="hidden" value="[%s]" />
-    </div>
-    <div style="align: center" %s>
-      <div id="graphHolder%d" style="width: %dpx; height: %dpx; margin: auto;"></div>
     </div>
     },
     $piechart_radius, $piechart_radius, $piechart_radius-1,
-    join(',', map {sprintf(q{'%s'}, $_)} @ccolors),
-    join(',', map {sprintf('[%s]', $values->[$_] || 0.01)} 0..((scalar @ccolors)-1)),
+    join(',', map {sprintf(q{'%s'}, $_)} @$colors),
+  );
+}
+
+
+sub piechart_data {
+  my ($self, $values, $ref_index_piechart, $title) = @_;
+
+  my $index = $$ref_index_piechart;
+  $$ref_index_piechart++;
+
+  my $piechart_radius = 14;
+
+  return sprintf(q{
+    <div style="display: none;">
+      <input class="graph_data" type="hidden" value="[%s]" />
+    </div>
+    <div %s id="graphHolder%d" style="width: %dpx; height: %dpx; margin: auto;"></div>
+    },
+    join(',', map {sprintf('[%s]', $_ || 0.01)} @$values),
     $title ? sprintf(q{title="%s"}, $title) : '',
     $index, $piechart_radius*2, $piechart_radius*2,
   );
 }
+
 
 sub get_html_for_gene_tree_coverage {
   my ($self, $name, $species, $method, $counter_raphael_holders) = @_;
@@ -169,20 +230,20 @@ sub get_html_for_gene_tree_coverage {
   $name =~ s/ /_/g;
   my $table = EnsEMBL::Web::Document::Table->new([
       { key => 'species',                         width => '18%', align => 'left',   sort => 'string',  title => 'Species', },
-      { key => 'nb_genes',                        width => '6%',  align => 'center', sort => 'integer', style => 'color: #8a2', title => '# Genes', },
-      { key => 'nb_seq',                          width => '9%',  align => 'center', sort => 'integer', title => '# Sequences', },
-      { key => 'nb_genes_in_tree',                width => '10%', align => 'center', sort => 'integer', title => '# Genes in a tree', },
-      { key => 'nb_orphan_genes',                 width => '9%', align => 'center', sort => 'integer', style => 'color: #ca4', title => '# Orphaned genes', },
-      { key => 'nb_genes_in_tree_single_species', width => '10%', align => 'center', sort => 'integer', style => 'color: #909', title => "# Genes in a single-species tree", },
-      { key => 'nb_genes_in_tree_multi_species',  width => '10%', align => 'center', sort => 'integer', style => 'color: #69f', title => '# Genes in a multi-species tree', },
-      { key => 'piechart1',                       width => '4%',  align => 'center', sort => 'none',    title => 'Coverage', },
-      { key => 'nb_dup_nodes',                    width => '10%', align => 'center', sort => 'integer', style => 'color:#a22', title => '# species-specific duplications', },
+      { key => 'nb_genes',                        width => '6%',  align => 'center', sort => 'numeric', style => 'color: #ca4', title => '# Genes', },
+      { key => 'nb_seq',                          width => '9%',  align => 'center', sort => 'numeric', title => '# Sequences', },
+      { key => 'nb_genes_in_tree',                width => '10%', align => 'center', sort => 'numeric', title => '# Genes in a tree', },
+      { key => 'nb_orphan_genes',                 width => '9%',  align => 'center', sort => 'numeric', style => 'color: #a22', title => '# Orphaned genes', },
+      { key => 'nb_genes_in_tree_single_species', width => '10%', align => 'center', sort => 'numeric', style => 'color: #25a', title => "# Genes in a single-species tree", },
+      { key => 'nb_genes_in_tree_multi_species',  width => '10%', align => 'center', sort => 'numeric', style => 'color: #8a2', title => '# Genes in a multi-species tree', },
+      { key => 'piechart_cov',                    width => '4%',  align => 'center', sort => 'none',    title => 'Coverage', },
+      { key => 'nb_dup_nodes',                    width => '10%', align => 'center', sort => 'numeric', style => 'color:#909', title => '# species-specific duplications', },
     ], [], {data_table => 1, id => sprintf('gene_tree_coverage_%s', $name), sorting => ['species asc']});
   $table->add_columns(
-    { key => 'nb_gene_splits',                  width => '9%', align => 'center', sort => 'integer', style => 'color:#25a', title => '# Gene splits', },
+    { key => 'nb_gene_splits',                  width => '9%', align => 'center', sort => 'numeric', style => 'color:#69f', title => '# Gene splits', },
   ) if $method eq 'PROTEIN_TREES';
   $table->add_columns(
-    { key => 'piechart2',                       width => '5%',  align => 'center', sort => 'none',    title => 'Gene events', },
+    { key => 'piechart_dup',                      width => '5%',  align => 'center', sort => 'none',    title => 'Gene events', },
   );
 
   my $common_names = $self->hub->species_defs->multi_hash->{'DATABASE_COMPARA'}{'TAXON_NAME'};
@@ -191,8 +252,8 @@ sub get_html_for_gene_tree_coverage {
     my $piecharts = $self->get_piecharts_for_species($sp, $counter_raphael_holders);
     $table->add_row({
         'species' => $common_names->{$sp->taxon_id} ? sprintf('%s (<i>%s</i>)', $common_names->{$sp->taxon_id}, $sp->node_name) : $sp->node_name,
-        'piechart1' => $piecharts->[0],
-        'piechart2' => $sp->get_value_for_tag('nb_genes_in_tree') ? $piecharts->[1] : '',
+        'piechart_cov' => $piecharts->[1],
+        'piechart_dup' => $sp->get_value_for_tag('nb_genes_in_tree') ? $piecharts->[0] : '',
         map {($_ => $sp->get_value_for_tag($_) || 0)} (qw(nb_genes nb_seq nb_orphan_genes nb_genes_in_tree nb_genes_in_tree_single_species nb_genes_in_tree_multi_species nb_gene_splits nb_dup_nodes)),
       });
   }
@@ -207,8 +268,8 @@ sub get_piecharts_for_species {
   my $v4 = $node->get_value_for_tag('nb_genes');
   my $v5 = $node->get_value_for_tag('nb_gene_splits');
   my $v6 = $node->get_value_for_tag('nb_dup_nodes');
-  my $piechart = $self->piechart_gene_coverage([$v1, $v2, $v3], $counter_raphael_holders, sprintf("Gene coverage (%s)", $node->node_name));
-  my $piechart2 = $self->piechart_gene_coverage([0, 0, 0, $v4-$v5-$v6, $v6, $v5], $counter_raphael_holders, sprintf("Gene events (%s)", $node->node_name));
+  my $piechart2 = $self->piechart_data([0, 0, 0, $v1, $v2, $v3], $counter_raphael_holders, sprintf("Gene coverage (%s)", $node->node_name));
+  my $piechart = $self->piechart_data([$v4-$v5-$v6, $v6, $v5], $counter_raphael_holders, sprintf("Gene events (%s)", $node->node_name));
 
   return [$piechart, $piechart2];
 }
@@ -218,32 +279,42 @@ sub get_piecharts_for_internal_node {
   my $v1 = $node->get_value_for_tag('nb_spec_nodes');
   my $v2 = $node->get_value_for_tag('nb_dup_nodes');
   my $v3 = $node->get_value_for_tag('nb_dubious_nodes');
-  my $piechart = $self->piechart_gene_coverage([$v1, $v2, $v3], $counter_raphael_holders, sprintf("Node types (%s)", $node->node_name));
+  my $piechart = $self->piechart_data([$v1, $v2, $v3], $counter_raphael_holders, sprintf("Node types (%s)", $node->node_name));
 
   return [$piechart];
 }
 
 sub get_html_for_tree_size_statistics {
-  my ($self, $species_tree_root) = @_;
+  my ($self, $species_tree_root, $counter_raphael_holders) = @_;
 
   my $table = EnsEMBL::Web::Document::Table->new([
-      { key => 'species',                   width => '18%', align => 'left',   sort => 'string',  title => 'Species', },
-      { key => 'root_nb_trees',             width => '6%',  align => 'center', sort => 'integer', title => '# Trees', },
-      { key => 'root_nb_genes',             width => '7%',  align => 'center', sort => 'integer', title => '# Genes', },
-      { key => 'root_min_gene',             width => '9%',  align => 'center', sort => 'integer', title => 'Min # genes', },
-      { key => 'root_max_gene',             width => '9%',  align => 'center', sort => 'integer', title => 'Max # genes', },
+      { key => 'species',                   width => '15%', align => 'left',   sort => 'string',  title => 'Species', },
+      { key => 'root_nb_trees',             width => '6%',  align => 'center', sort => 'numeric', title => '# Trees', },
+      { key => 'root_perc_trees',           width => '5%',  align => 'center', sort => 'numeric', title => '% Trees', },
+      { key => 'root_nb_genes',             width => '7%',  align => 'center', sort => 'numeric', title => '# Genes', },
+      { key => 'root_perc_genes',           width => '5%',  align => 'center', sort => 'numeric', title => '% Genes', },
+      { key => 'root_min_gene',             width => '8%',  align => 'center', sort => 'numeric', title => 'Min # genes', },
+      { key => 'root_max_gene',             width => '8%',  align => 'center', sort => 'numeric', title => 'Max # genes', },
       { key => 'root_avg_gene',             width => '11%',  align => 'center', sort => 'numeric', title => 'Average # genes', },
-      { key => 'root_min_spec',             width => '9%',  align => 'center', sort => 'integer', title => 'Min # species', },
-      { key => 'root_max_spec',             width => '9%',  align => 'center', sort => 'integer', title => 'Max # species', },
+      { key => 'root_min_spec',             width => '9%',  align => 'center', sort => 'numeric', title => 'Min # species', },
+      { key => 'root_max_spec',             width => '9%',  align => 'center', sort => 'numeric', title => 'Max # species', },
       { key => 'root_avg_spec',             width => '11%',  align => 'center', sort => 'numeric', title => 'Average # species', },
       { key => 'root_avg_gene_per_spec',    width => '11%',  align => 'center', sort => 'numeric', title => 'Average # genes per species', },
     ], [], {data_table => 1, sorting => ['species asc']} );
 
   my $common_names = $self->hub->species_defs->multi_hash->{'DATABASE_COMPARA'}{'TAXON_NAME'};
+  my $tot_ntrees = sum(map {$_->get_value_for_tag('root_nb_trees') || 0} @{$species_tree_root->get_all_nodes});
+  my $tot_ngenes = sum(map {$_->get_value_for_tag('root_nb_genes') || 0} @{$species_tree_root->get_all_nodes});
+
   foreach my $node (@{$species_tree_root->get_all_nodes}) {
-    next unless $node->get_value_for_tag('root_nb_trees');
+    my $ntrees = $node->get_value_for_tag('root_nb_trees');
+    my $ngenes = $node->get_value_for_tag('root_nb_genes');
+    next unless $ntrees;
+
     $table->add_row({
         'species' => $common_names->{$node->taxon_id} ? sprintf('%s (<i>%s</i>)', $common_names->{$node->taxon_id}, $node->node_name) : $node->node_name,
+        'root_perc_trees' => $self->piechart_data([$ntrees, $tot_ntrees-$ntrees], $counter_raphael_holders),
+        'root_perc_genes' => $self->piechart_data([$ngenes, $tot_ngenes-$ngenes], $counter_raphael_holders),
         (map {$_ => $node->get_value_for_tag($_)} qw(root_nb_trees root_nb_genes root_min_gene root_max_gene root_min_spec root_max_spec)),
         (map {$_ => sprintf('%.1f', 0+$node->get_value_for_tag($_))} qw(root_avg_gene root_avg_spec root_avg_gene_per_spec)),
       });
@@ -257,13 +328,13 @@ sub get_html_for_node_statistics {
 
   my $table = EnsEMBL::Web::Document::Table->new([
       { key => 'species',               width => '18%', align => 'left',   sort => 'string',  title => 'Species', },
-      { key => 'nb_nodes',              width => '7%',  align => 'center', sort => 'integer', title => '# Nodes', },
-      { key => 'nb_spec_nodes',         width => '12%', align => 'center', sort => 'integer', style => 'color: #909', title => '# speciation nodes', },
-      { key => 'nb_dup_nodes',          width => '12%', align => 'center', sort => 'integer', style => 'color: #ca4', title => '# duplication nodes', },
-      { key => 'nb_dubious_nodes',      width => '11%', align => 'center', sort => 'integer', style => 'color: #69f', title => '# dubious nodes', },
+      { key => 'nb_nodes',              width => '7%',  align => 'center', sort => 'numeric', title => '# Nodes', },
+      { key => 'nb_spec_nodes',         width => '12%', align => 'center', sort => 'numeric', style => 'color: #ca4', title => '# speciation nodes', },
+      { key => 'nb_dup_nodes',          width => '12%', align => 'center', sort => 'numeric', style => 'color: #909', title => '# duplication nodes', },
+      { key => 'nb_dubious_nodes',      width => '11%', align => 'center', sort => 'numeric', style => 'color: #69f', title => '# dubious nodes', },
+      { key => 'piechart',              width => '7%', align => 'center', sort => 'none',    title => 'Node types', },
       { key => 'avg_dupscore',          width => '12%', align => 'center', sort => 'numeric', title => 'Average duplication confidence score', },
       { key => 'avg_dupscore_nondub',   width => '12%', align => 'center', sort => 'numeric', title => 'Average duplication confidence score (non-dubious nodes)', },
-      { key => 'piechart',              width => '7%', align => 'center', sort => 'none',    title => 'Node types', },
     ], [], {data_table => 1, sorting => ['species asc']} );
 
   my $common_names = $self->hub->species_defs->multi_hash->{'DATABASE_COMPARA'}{'TAXON_NAME'};
@@ -299,7 +370,7 @@ sub get_html_for_tree_stats_overview {
 # -oo  +-s2
 #   +-oo
 #      +-s1
-  my $html = q{<table style="padding: 0px; text-align: center;">};
+  my $html = q{<table style="padding: 0px; text-align: center; margin: auto">};
   foreach my $row (@matrix) {
     foreach my $i (0..($width-1)) {
       if ($row->[$i] and ($row->[$i] =~ /graphHolder/)) {
@@ -351,6 +422,7 @@ sub draw_tree {
     $$next_y++;
     my $width = scalar(@{$matrix->[$y]});
     my $piecharts = $self->get_piecharts_for_species($node, $counter_raphael_holders);
+    $matrix->[$y]->[$width-1] = $common_names->{$node->taxon_id} || $node->node_name;
     $matrix->[$y]->[$width-1] = $common_names->{$node->taxon_id} || $node->node_name;
     $matrix->[$y]->[$width-2] = $piecharts->[1];
     $matrix->[$y]->[$width-3] = $piecharts->[0];
