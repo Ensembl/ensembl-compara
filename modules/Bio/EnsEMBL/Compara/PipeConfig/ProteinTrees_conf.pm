@@ -89,6 +89,7 @@ sub default_options {
         'dump_dir'              => $self->o('work_dir') . '/dumps',
 
     # "Member" parameters:
+        'allow_ambiguity_codes'     => 0,
         'allow_pyrrolysine'         => 0,
 
     # blast parameters:
@@ -562,6 +563,7 @@ sub pipeline_analyses {
             -parameters         => {
                 mode            => 'members_per_genome',
                 hc_member_type  => 'ENSEMBLPEP',
+                allow_ambiguity_codes => $self->o('allow_ambiguity_codes'),
             },
             %hc_analysis_params,
         },

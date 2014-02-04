@@ -87,6 +87,7 @@ sub default_options {
         'exe_dir'               =>  '/nfs/panda/ensemblgenomes/production/compara/binaries',
 
     # "Member" parameters:
+        'allow_ambiguity_codes'     => 1,
         'allow_pyrrolysine'         => $self->o('division') eq 'pan' ? 1 : 0,
 
     # blast parameters:
