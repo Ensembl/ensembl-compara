@@ -107,11 +107,11 @@ sub stats_table {
 
   my @orderlist = (
     'Length (bps)',
-    'Protein coding gene count',
-    'Short non coding gene count',
-    'Long non coding gene count',
-    'Pseudogene count',
-    'SNP Count',
+    'Coding genes',
+    'Short non coding genes',
+    'Long non coding genes',
+    'Pseudogenes',
+    'Short Variants',
     'Number of fingerprint contigs',
     'Number of clones selected for sequencing',
     'Number of clones sent for sequencing',
@@ -123,11 +123,15 @@ sub stats_table {
   
   my $table = EnsEMBL::Web::Document::Table->new([{ key => 'header'}, { key => 'value'}], [], { header => 'no', exportable => 0, 'class' => 'tint' });
 
-  my ($stats, %chr_stats);
+  my ($stats, %chr_stats, %code_hash, %readt_hash);
   my $chr = $object->Obj->{'slice'};
   foreach my $attrib (@{$chr->get_all_Attributes}) {
     if ($attrib->value =~ /^\d+$/) {
       $chr_stats{$attrib->name} += $attrib->value;
+      $code_hash{$attrib->name} = $attrib->code;
+    }
+    if ($attrib->code =~ /(\w+)\_ra?cnt/) {
+      $readt_hash{$attrib->code} += $attrib->value;
     }
   }
   $chr_stats{'Length (bps)'} = $chr->seq_region_length ;
@@ -135,6 +139,12 @@ sub stats_table {
   for my $stat (@orderlist) {
     my $value = $object->thousandify( $chr_stats{$stat} );
     next if !$value;
+    my $code = $code_hash{$stat};
+    $code =~ s/_cnt/_rcnt/;
+    $code =~ s/_acnt/_racnt/;
+    if ($readt_hash{$code}) {
+      $value .= " (incl. " . $readt_hash{$code} . " readthrough)";
+    }
     $stat = 'Estimated length (bps)' if $stat eq 'Length (bps)' && $object->species_defs->NO_SEQUENCE;
     # Is this really the best way to do this? -- ds23
     $stat =~ s/Raw p/P/;
