@@ -58,7 +58,7 @@ span.aa  { color: [[SEQ_AMINOACID]] }                   /* Amino acid */
 
 pre.text_sequence   { margin: 0 0 16px; float: left; }
 pre.exon_sequence   { margin: 0; }
-pre a.sequence_info { text-decoration: none; color: [[PAGE_TEXT]]; }
+pre a.seq_info      { text-decoration: none; color: [[PAGE_TEXT]]; }
 div.sequence_key    { margin: 0 0 16px; }
 div.sequence_key ul { margin-top: 16px; }
 

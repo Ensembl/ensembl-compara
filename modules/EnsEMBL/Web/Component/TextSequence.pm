@@ -753,9 +753,9 @@ sub build_sequence {
       my $style;
       
       $previous{$_}     = $current{$_} for keys %current;
-      $current{'title'} = $seq->{'title'}  ? qq{title="$seq->{'title'}"} : '';
-      $current{'href'}  = $seq->{'href'}   ? qq{href="$seq->{'href'}"}   : '';;
-      $current{'tag'}   = $current{'href'} ? 'a class="sequence_info"'   : 'span';
+      $current{'title'} = $seq->{'title'}  ? qq(title="$seq->{'title'}") : '';
+      $current{'href'}  = $seq->{'href'}   ? qq(href="$seq->{'href'}")   : '';
+      $current{'tag'}   = $current{'href'} ? 'a class="seq_info _seq"'   : 'span class="_seq"';
       
       if ($seq->{'class'}) {
         $current{'class'} = $seq->{'class'};
