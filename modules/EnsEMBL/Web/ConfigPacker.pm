@@ -1568,6 +1568,7 @@ sub _munge_meta {
     species.strain                SPECIES_STRAIN
     species.sql_name              SYSTEM_NAME
     genome.assembly_type          GENOME_ASSEMBLY_TYPE
+    gencode.version               GENCODE_VERSION
   );
   
   my @months    = qw(blank Jan Feb Mar Apr May Jun Jul Aug Sep Oct Nov Dec);
