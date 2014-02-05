@@ -197,23 +197,9 @@ sub validation_status  {
 sub get_class_colour {
   my $self  = shift;
   my $class = shift;
-  
-  my %colour = (
-    'copy_number_variation'         => '#000000',
-    'insertion'                     => '#FFCC00',
-    'novel_sequence_insertion'      => '#FFCC00',
-    'copy_number_gain'              => '#0000CC', 
-    'copy_number_loss'              => '#CC0000',
-    'inversion'                     => '#9933FF', 
-    'complex_structural_alteration' => '#99CCFF',
-    'tandem_duplication'            => '#732E00',
-    'mobile_element_insertion'      => '#FFCC00',
-    'translocation'                 => '#C3A4FF',
-    'deletion'                      => '#CC0000',
-    'duplication'                   => '#000000',
-  );
-  
-  my $c = $colour{$class};
+
+  my $colour = $self->hub->species_defs->colour('structural_variant');
+  my $c = $colour->{$class}{'default'};
   $c = '#B2B2B2' if (!$c);
   return $c;
 }
