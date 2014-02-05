@@ -252,8 +252,6 @@ if (Apache2::ServerUtil::restart_count == 1) { # Only parse the config on first 
   $conf->ENSEMBL_BASE_URL, $conf->ENSEMBL_JSCSS_TYPE, $conf->ENSEMBL_CSS_NAME,
   $conf->ENSEMBL_BASE_URL, $conf->ENSEMBL_JSCSS_TYPE, $conf->ENSEMBL_JS_NAME,
   join("\n                     ", grep(/::/, @{$conf->ENSEMBL_PLUGINS || []}), $extra);
-  
-  require EnsEMBL::Web::BlastView::MetaDataBlast;
 }
 
 1;

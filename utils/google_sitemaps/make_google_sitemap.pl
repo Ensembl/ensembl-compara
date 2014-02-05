@@ -13,6 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+# TODO - change this according to new Blast code
 
 use strict;
 use FindBin qw($Bin);
