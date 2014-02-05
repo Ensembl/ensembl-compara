@@ -348,9 +348,9 @@ sub handler {
       } elsif ($object_type eq 'Translation') {
         $uri .= "Transcript/ProteinSummary?t=$stable_id";
       } elsif ($object_type eq 'GeneTree') {
-        $uri = "/Multi/GeneTree?gt=$stable_id";
+        $uri = "/Multi/GeneTree/Image?gt=$stable_id";
       } elsif ($object_type eq 'Family') {
-        $uri = "/Multi/Family?fm=$stable_id";
+        $uri = "/Multi/Family/Details?fm=$stable_id";
       } else {
         $uri .= "psychic?q=$stable_id";
       }
