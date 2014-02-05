@@ -192,10 +192,13 @@ sub _stats_tables {
       'name' => '<b>Genebuild last updated/patched</b>', 
       'stat' => $sd->GENEBUILD_LATEST 
   });
-  $summary->add_row({
+  my $gencode = $sd->GENCODE_VERSION;
+  if ($gencode) {
+    $summary->add_row({
       'name' => '<b>Gencode version</b>', 
-      'stat' => $sd->GENCODE_VERSION
-  });
+      'stat' => $gencode,
+    });
+  }
 
   $html .= $summary->render;   
 
