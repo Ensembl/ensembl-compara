@@ -337,7 +337,7 @@ sub alleles {
   my $freq       = sprintf '%.2f', $variation->minor_allele_frequency;
      $freq       = '&lt; 0.01' if $freq eq '0.00'; # Frequency lower than 1%
   my $maf        = $variation->minor_allele;
-     $maf        = " | MAF: <strong>$freq</strong> ($maf)" if $maf;
+     $maf        = qq{ | <span class="_ht conhelp" title="Minor Allele Frequency">MAF</span>: <strong>$freq</strong> ($maf)} if $maf;
   my $html;   
   my $alleles_strand = ($feature_slice) ? ($feature_slice->strand == 1 ? q{ (Forward strand)} : q{ (Reverse strand)}) : ''; 
    
