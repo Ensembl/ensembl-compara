@@ -38,11 +38,12 @@ sub content {
     type   => 'Name',
     label  => $display_label,
   });
-  
+
   if ($external_link =~ /http/) {
+    my $label = $feature->analysis->logic_name =~ /TarBase/i ? 'Tarbase miRNA target' : $feature_name;
     $self->add_entry ({
       type       => 'FeatureType',
-      label_html => $feature_name,
+      label_html => $label,
       link       => $external_link,
     });
   } else {
@@ -80,7 +81,7 @@ sub get_external_link {
   my $type       = $f->feature_type->name;
   my $logic_name = $f->analysis->logic_name;
   my $external_link;
-  
+
   if ($logic_name =~ /cisred/i) {
     $ext_id        =~ s/\D*//g;
     $external_link = $hub->get_ExtURL_link($f->display_label, uc $logic_name, $ext_id);
@@ -94,6 +95,8 @@ sub get_external_link {
   } elsif ($logic_name =~ /VISTA/i) {
     $ext_id        =~ s/LBNL-//;
     $external_link = $hub->get_ExtURL_link($f->display_label, uc($logic_name) . 'EXT', $ext_id );
+  } elsif ($logic_name =~ /TarBase/i) {
+    $external_link = $hub->get_ExtURL_link('Tarbase miRNA target', 'TARBASE', $ext_id );
   }
   
   if ($external_link =~ /href/) { 
