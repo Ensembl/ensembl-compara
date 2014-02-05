@@ -206,11 +206,8 @@ sub content {
       my $fullsize = $self->hub->url({'action' => 'SecondaryStructure'});
       $html = qq(<object data="$svg_path" type="image/svg+xml"></object>
 <br /><a href="$fullsize">[click to enlarge]</a>);
+      $table->add_row('Secondary structure', $html);
     }
-    else {
-      $html .= 'Sorry, no secondary structure is available for this gene';
-    }
-    $table->add_row('Secondary structure', $html);
   }
 
   return $table->render;
