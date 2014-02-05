@@ -163,11 +163,11 @@ sub _stats_tables {
   });
   $summary->add_row({
       'name' => '<b>Base Pairs</b>', 
-      'stat' => $genome_container->get_total_length()
+      'stat' => $self->thousandify($genome_container->get_total_length()),
   });
   $summary->add_row({
       'name' => '<b>Golden Path Length</b>', 
-      'stat' => $genome_container->get_ref_length()
+      'stat' => $self->thousandify($genome_container->get_ref_length())
   });
   $summary->add_row({
       'name' => '<b>Genebuild by</b>', 
@@ -213,9 +213,17 @@ sub _stats_tables {
     my $title = $genome_container->get_attrib($name)->name();
     my $term = $glossary_lookup{$_};
     my $header = $term ? qq(<span class="glossary_mouseover">$title<span class="floating_popup">$glossary{$term}</span></span>) : $title;
+    my $stat = $self->thousandify($genome_container->$method);
+    unless ($_ eq 'transcript') {
+      my $rmethod = 'get_r'.$_.'_count';
+      my $readthrough = $genome_container->$rmethod;
+      if ($readthrough) {
+        $stat .= ' (inc '.$self->thousandify($readthrough).' readthrough)'; 
+      }
+    }
     $counts->add_row({
       'name' => "<b>$header</b>",
-      'stat' => $genome_container->$method,
+      'stat' => $stat,
     });
   }
 
@@ -231,9 +239,17 @@ sub _stats_tables {
       my $title = $genome_container->get_attrib($name)->name();
       my $term = $glossary_lookup{$_};
       my $header = $term ? qq(<span class="glossary_mouseover">$title<span class="floating_popup">$glossary{$term}</span></span>) : $title;
+      my $stat = $self->thousandify($genome_container->$method);
+      unless ($_ eq 'transcript') {
+        my $rmethod = 'get_r'.$_.'_count';
+        my $readthrough = $genome_container->$rmethod;
+        if ($readthrough) {
+          $stat .= ' (inc '.$self->thousandify($readthrough).' readthrough)'; 
+        }
+      }
       $alt_counts->add_row({
         'name' => "<b>$header</b>",
-        'stat' => $genome_container->$method,
+        'stat' => $stat,
       });
     }
     $html .= $alt_counts->render;
@@ -251,7 +267,7 @@ sub _stats_tables {
     my $name = $attribute_adaptor->fetch_by_code($logic_name)->[2];
     push @$rows, {
       'name' => "<b>$name</b>",
-      'stat' => $stat,
+      'stat' => $self->thousandify($stat),
     };
   }
   ## Variants
@@ -263,7 +279,7 @@ sub _stats_tables {
     my $method = $_->{'method'};
     push @$rows, {
       'name' => '<b>'.$genome_container->get_attrib($_->{'name'})->name().'</b>',
-      'stat' => $genome_container->$method,
+      'stat' => $self->thousandify($genome_container->$method),
     };
   }
   if (scalar(@$rows)) {
