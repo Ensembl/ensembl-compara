@@ -69,17 +69,28 @@ sub format_wga_list {
               $_->name, $method, $_->species_set_obj->get_value_for_tag('name');
 
         my $table = EnsEMBL::Web::Document::Table->new([
-          { key => 'species', title => 'Species',         width => '50%', align => 'left' },
-          { key => 'gc',      title => 'Genome coverage', width => '25%', align => 'center' },
-          { key => 'ec',      title => 'Coding exon coverage', width => '25%', align => 'center' },
-        ]);
+          { key => 'species', title => 'Species',         width => '22%', align => 'left', sort => 'string' },
+          { key => 'gl',      title => 'Genome length (bp)', width => '13%', align => 'center', sort => 'string' },
+          { key => 'gc',      title => 'Genome coverage (bp)', width => '13%', align => 'center', sort => 'string' },
+          { key => 'gcp',     title => 'Genome coverage (%)', width => '13%', align => 'center', sort => 'numeric' },
+          { key => 'el',      title => 'Coding exon length (bp)', width => '13%', align => 'center', sort => 'string' },
+          { key => 'ec',      title => 'Coding exon coverage (bp)', width => '13%', align => 'center', sort => 'string' },
+          { key => 'ecp',     title => 'Coding exon coverage (%)', width => '13%', align => 'center', sort => 'numeric' },
+        ], [], {data_table => 1, exportable => 1, id => sprintf('%s_%s', $method, $_->species_set_obj->get_value_for_tag('name')), sorting => ['species asc']});
+        my @colors = qw(#402 #a22 #fc0 #8a2);
         foreach my $sp (@$species_order) {
           my $gc = sprintf('%.2f', $info->{$sp}{'genome_coverage'} / $info->{$sp}{'genome_length'} * 100);
           my $ec = sprintf('%.2f', $info->{$sp}{'coding_exon_coverage'} / $info->{$sp}{'coding_exon_length'} * 100);
+          my $cgc = $colors[int($gc/25)];
+          my $cec = $colors[int($ec/25)];
           $table->add_row({
             'species' => sprintf('%s (%s)', $info->{$sp}{'common_name'}, $info->{$sp}{'long_name'}),
-            'gc'      => $gc.'%',
-            'ec'      => $ec.'%',
+            'gl'      => $self->thousandify($info->{$sp}{'genome_length'}),
+            'gc'      => $self->thousandify($info->{$sp}{'genome_coverage'}),
+            'gcp'     => sprintf(q{<span style="color: %s">%s</span}, $cgc, $gc),
+            'el'      => $self->thousandify($info->{$sp}{'coding_exon_length'}),
+            'ec'      => $self->thousandify($info->{$sp}{'coding_exon_coverage'}),
+            'ecp'     => sprintf(q{<span style="color: %s">%s</span}, $cec, $ec),
           });
         }
         $html .= $table->render;
@@ -269,7 +280,7 @@ sub draw_stepped_table {
           $content = '<b>YES</b>';
         }
         else {
-          my $url = '/info/genome/compara/mlss.html?method='.$method.';mlss='.$mlss_id;
+          my $url = '/info/genome/compara/mlss.html?mlss='.$mlss_id;
           $content = sprintf('<a href="%s">YES</a>', $url);
         }
       }

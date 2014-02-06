@@ -44,9 +44,8 @@ sub render {
       my $values = $data->{$sp}{$other};
       next unless $values;  
         
-      my $method  = $values->[0];
       my $mlss_id = $values->[1];
-      my $url = '/info/genome/compara/mlss.html?method='.$method.';mlss='.$mlss_id;
+      my $url = '/info/genome/compara/mlss.html?mlss='.$mlss_id;
       $html .= sprintf '<li><a href="%s">%s (%s)</a></li>', 
                           $url, $info->{$other}{'common_name'}, $info->{$other}{'long_name'};
     } 
