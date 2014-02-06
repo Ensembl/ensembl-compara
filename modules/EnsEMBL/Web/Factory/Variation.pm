@@ -90,7 +90,7 @@ sub _help {
   my ($self, $string, $help_extra) = @_;
   my %sample    = %{$self->species_defs->SAMPLE_DATA || {}};
   my $help_text = $string ? sprintf '<p>%s</p>', encode_entities($string) : '';
-  my $url       = $self->hub->url({ __clear => 1, action => 'Summary', v => $sample{'VARIATION_PARAM'} });
+  my $url       = $self->hub->url({ __clear => 1, action => 'Explore', v => $sample{'VARIATION_PARAM'} });
   $help_text .= "$help_extra" if $help_extra;
   $help_text .= sprintf('
     <p>

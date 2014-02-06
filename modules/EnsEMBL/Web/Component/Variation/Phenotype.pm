@@ -409,7 +409,7 @@ sub allele_link {
 
 sub variation_link {
   my ($self, $v) = @_;
-  my $url = $self->hub->url({ type => 'Variation', action => 'Summary', v => $v });
+  my $url = $self->hub->url({ type => 'Variation', action => 'Explore', v => $v });
   return qq{<a href="$url">$v</a>};
 }
 

@@ -75,7 +75,7 @@ sub _help {
 
   my %sample    = %{$self->species_defs->SAMPLE_DATA || {}};
   my $help_text = $string ? sprintf '<p>%s</p>', encode_entities($string) : '';
-  my $url       = $self->hub->url({ __clear => 1, action => 'Summary', sv => $sample{'STRUCTURAL_VARIATION_PARAM'} });
+  my $url       = $self->hub->url({ __clear => 1, action => 'Explore', sv => $sample{'STRUCTURAL_VARIATION_PARAM'} });
 
   $help_text .= sprintf('
     <p>
