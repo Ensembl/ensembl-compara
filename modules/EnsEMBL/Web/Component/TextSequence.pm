@@ -284,7 +284,7 @@ sub set_variations {
     my $url = $hub->url({
       species => $config->{'ref_slice_name'} ? $config->{'species'} : $name,
       type    => 'Variation',
-      action  => 'Summary',
+      action  => 'Explore',
       v       => $variation_name,
       vf      => $dbID,
       vdb     => 'variation'

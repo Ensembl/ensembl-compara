@@ -370,7 +370,7 @@ sub linked_var_table {
       # build URLs
       my $var_url = $hub->url({
         type   => 'Variation',
-        action => 'Summary',
+        action => 'Explore',
         vdb    => 'variation',
         v      => $variation_name,
         vf     => $ld_vf_dbID,
@@ -439,7 +439,7 @@ sub tag_data {
     
     my $tmp_vf_url = $hub->url({
       type   => 'Variation',
-      action => 'Summary',
+      action => 'Explore',
       vdb    => 'variation',
       v      => $tvf->variation_name,
       vf     => $tvf->dbID,
@@ -449,7 +449,7 @@ sub tag_data {
       '<a href="%s">%s</a>',
       $hub->url({
         type   => 'Variation',
-        action => 'Summary',
+        action => 'Explore',
         vdb    => 'variation',
         v      => $tvf->variation_name,
         vf     => $tvf->dbID,
@@ -480,7 +480,7 @@ sub tag_data {
     
     my $tmp_vf_url = $hub->url({
       type   => 'Variation',
-      action => 'Summary',
+      action => 'Explore',
       vdb    => 'variation',
       v      => $tvf->variation_name,
       vf     => $tvf->dbID,
@@ -490,7 +490,7 @@ sub tag_data {
       '<a href="%s">%s</a>',
       $hub->url({
         type   => 'Variation',
-        action => 'Summary',
+        action => 'Explore',
         vdb    => 'variation',
         v      => $tvf->variation_name,
         vf     => $tvf->dbID,

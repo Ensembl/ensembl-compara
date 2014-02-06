@@ -194,7 +194,7 @@ sub search_SNP {
       'subtype' => "$_->[0] SNP",
       'ID'      => $_->[1],
 #      'URL'     => "$species_path/snpview?source=$_->[0];snp=$_->[1]",
-      'URL'     => "$species_path/Variation/Summary?source=$_->[0];v=$_->[1]", # v58 link format
+      'URL'     => "$species_path/Variation/Explore?source=$_->[0];v=$_->[1]", # v58 link format
       'desc'    => '',
       'species' => $species
     };

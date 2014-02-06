@@ -1245,7 +1245,7 @@ sub structural_variation_table {
       
     my $sv_link = $hub->url({
       type   => 'StructuralVariation',
-      action => 'Summary',
+      action => 'Explore',
       sv     => $name
     });      
 

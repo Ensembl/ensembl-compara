@@ -84,7 +84,7 @@ sub content {
     label_html => 'Variation properties',
     link       => $hub->url({
       type   => 'Variation', 
-      action => 'Summary',
+      action => 'Explore',
       v      => $feature->variation_name,
       vf     => $feature->dbID,
       source => $feature->source

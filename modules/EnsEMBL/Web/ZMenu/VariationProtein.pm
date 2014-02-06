@@ -70,7 +70,7 @@ sub content {
     label_html => $feature->variation_name,
     link       => $hub->url({
       type   => 'Variation', 
-      action => 'Summary',
+      action => 'Explore',
       v      => $feature->variation_name,
       vf     => $feature->dbID,
       source => $feature->source
