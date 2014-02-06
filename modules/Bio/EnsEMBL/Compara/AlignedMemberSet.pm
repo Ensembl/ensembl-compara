@@ -368,7 +368,7 @@ sub get_SimpleAlign {
         next if $member->source_name =~ m/^Uniprot/i and $seq_type;
 
         # The correct codon table
-        if ($member->chr_name =~ /mt/i) {
+        if ($member->chr_name and $member->chr_name =~ /mt/i) {
             # codeml icodes
             # 0:universal code (default)
             my $class;
