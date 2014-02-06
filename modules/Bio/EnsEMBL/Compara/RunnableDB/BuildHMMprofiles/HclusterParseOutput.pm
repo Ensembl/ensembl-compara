@@ -1,6 +1,6 @@
 =head1 NAME
 
-Bio::EnsEMBL::Hive::RunnableDB::BuildHMMprofiles::HclusterParseOutput;
+Bio::EnsEMBL::Compara::RunnableDB::BuildHMMprofiles::HclusterParseOutput;
 
 =head1 DESCRIPTION
 
@@ -16,7 +16,7 @@ The rest of the documentation details each of the object methods.
 Internal methods are usually preceded with an underscore (_)
 
 =cut
-package Bio::EnsEMBL::Hive::RunnableDB::BuildHMMprofiles::HclusterParseOutput;
+package Bio::EnsEMBL::Compara::RunnableDB::BuildHMMprofiles::HclusterParseOutput;
 
 use strict;
 use base ('Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::StoreClusters');

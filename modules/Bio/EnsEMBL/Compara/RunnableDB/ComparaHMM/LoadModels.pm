@@ -55,7 +55,7 @@ Internal methods are usually preceded with a _
 
 =cut
 
-package Bio::EnsEMBL::Hive::RunnableDB::ComparaHMM::LoadModels;
+package Bio::EnsEMBL::Compara::RunnableDB::ComparaHMM::LoadModels;
 
 use strict;
 use IO::File; ## ??

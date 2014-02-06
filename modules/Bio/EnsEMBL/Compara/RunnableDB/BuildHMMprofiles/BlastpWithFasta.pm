@@ -1,6 +1,6 @@
 =head1 NAME
 
-Bio::EnsEMBL::Hive::RunnableDB::BuildHMMprofiles::BlastpWithFasta
+Bio::EnsEMBL::Compara::RunnableDB::BuildHMMprofiles::BlastpWithFasta
 
 =head1 DESCRIPTION
 
@@ -12,7 +12,7 @@ $Author: ckong $
 
 
 =cut
-package Bio::EnsEMBL::Hive::RunnableDB::BuildHMMprofiles::BlastpWithFasta;
+package Bio::EnsEMBL::Compara::RunnableDB::BuildHMMprofiles::BlastpWithFasta;
 
 use strict;
 use warnings;

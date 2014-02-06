@@ -56,7 +56,7 @@ Internal methods are usually preceded with an underscore (_)
 
 =cut
 
-package Bio::EnsEMBL::Hive::RunnableDB::ComparaHMM::StoreClusters;
+package Bio::EnsEMBL::Compara::RunnableDB::ComparaHMM::StoreClusters;
 
 use strict;
 

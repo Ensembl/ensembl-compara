@@ -1,6 +1,6 @@
 =head1 NAME
 
-Bio::EnsEMBL::Hive::RunnableDB::ComparaHMM::HMMClassifyInterpro
+Bio::EnsEMBL::Compara::RunnableDB::ComparaHMM::HMMClassifyInterpro
 
 =head1 DESCRIPTION
 
@@ -13,7 +13,7 @@ by interpro
 $Author: ckong $
 
 =cut
-package Bio::EnsEMBL::Hive::RunnableDB::ComparaHMM::HMMClassifyInterpro;
+package Bio::EnsEMBL::Compara::RunnableDB::ComparaHMM::HMMClassifyInterpro;
 
 use strict;
 use warnings;
@@ -22,7 +22,7 @@ use DBI;
 use Bio::EnsEMBL::Registry;
 use Bio::EnsEMBL::DBSQL::DBAdaptor;
 
-use base ('Bio::EnsEMBL::Hive::RunnableDB::ComparaHMM::StoreClusters');
+use base ('Bio::EnsEMBL::Compara::RunnableDB::ComparaHMM::StoreClusters');
 
 sub param_defaults {
     return {

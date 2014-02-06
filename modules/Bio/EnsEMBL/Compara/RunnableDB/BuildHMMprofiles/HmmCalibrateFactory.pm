@@ -1,6 +1,6 @@
 =head1 NAME
 
-Bio::EnsEMBL::Hive::RunnableDB::BuildHMMprofiles::HmmCalibrateFactory
+Bio::EnsEMBL::Compara::RunnableDB::BuildHMMprofiles::HmmCalibrateFactory
 
 =cut
 
@@ -13,7 +13,7 @@ Bio::EnsEMBL::Hive::RunnableDB::BuildHMMprofiles::HmmCalibrateFactory
 $Author: ckong $
 
 =cut
-package Bio::EnsEMBL::Hive::RunnableDB::BuildHMMprofiles::HmmCalibrateFactory;
+package Bio::EnsEMBL::Compara::RunnableDB::BuildHMMprofiles::HmmCalibrateFactory;
 
 use strict;
 use warnings;

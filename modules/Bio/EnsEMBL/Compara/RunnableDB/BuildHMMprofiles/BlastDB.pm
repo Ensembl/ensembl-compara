@@ -1,4 +1,4 @@
-package Bio::EnsEMBL::Hive::RunnableDB::BuildHMMprofiles::BlastDB;
+package Bio::EnsEMBL::Compara::RunnableDB::BuildHMMprofiles::BlastDB;
 
 use strict;
 no warnings;

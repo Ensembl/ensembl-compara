@@ -7,7 +7,7 @@
 
 =head1 NAME
 
-Bio::EnsEMBL::Hive::RunnableDB::ComparaHMM::HMMClusterize;
+Bio::EnsEMBL::Compara::RunnableDB::ComparaHMM::HMMClusterize;
 
 =cut
 
@@ -38,7 +38,7 @@ Internal methods are usually preceded with a _
 
 =cut
 
-package Bio::EnsEMBL::Hive::RunnableDB::ComparaHMM::HMMClusterize;
+package Bio::EnsEMBL::Compara::RunnableDB::ComparaHMM::HMMClusterize;
 
 use strict;
 use Time::HiRes qw(time gettimeofday tv_interval);

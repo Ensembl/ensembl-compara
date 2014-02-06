@@ -18,8 +18,7 @@
 
 =head1 NAME
 
-Bio::EnsEMBL::Hive::RunnableDB::ComparaHMM::MSA;
-#Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::MSA
+Bio::EnsEMBL::Compara::RunnableDB::BuildHMMprofiles::MSA 
 
 =head1 DESCRIPTION
 
@@ -34,7 +33,7 @@ Ensembl Team. Individual contributions can be found in the CVS log.
 
 =head1 MAINTAINER
 
-$Author: mm14 $
+$Author: ckong $
 
 =head VERSION
 
@@ -46,19 +45,18 @@ The rest of the documentation details each of the object methods.
 Internal methods are usually preceded with an underscore (_)
 
 =cut
-
-package Bio::EnsEMBL::Hive::RunnableDB::ComparaHMM::MSA;
-#package Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::MSA;
+package Bio::EnsEMBL::Compara::RunnableDB::BuildHMMprofiles::MSA;
 
 use strict;
-
 use IO::File;
 use File::Basename;
 use File::Path;
 use Time::HiRes qw(time gettimeofday tv_interval);
-
+use Bio::SearchIO;
+use Bio::DB::Fasta;
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
+my $db;
 
 sub param_defaults {
     return {
@@ -67,6 +65,66 @@ sub param_defaults {
     };
 }
 
+sub load_allclusters{
+    my $self = shift @_;
+
+    my $hcluster_parse_out = $self->param('hcluster_parse');
+    $self->throw('hcluster_parse is an obligatory parameter') unless (defined $self->param('hcluster_parse'));
+
+    my %allclusters;
+    $self->param('allclusters', \%allclusters);
+
+    open(FILE, $hcluster_parse_out) or die "Could not open '$hcluster_parse_out' for reading : $!";
+    while (<FILE>) {
+      # 330   3       UPI00015FF1FD,UPI000000093E,UPI0001C22EF4
+      chomp $_;
+      my ($cluster_id,$cluster_size,$cluster_list) = split("\t",$_);
+      # If it's a singleton, we don't store it as a protein tree
+      next if ($cluster_size < 2); 
+      $cluster_list    		=~ s/\,$//;
+      $cluster_list 		=~ s/_[0-9]*//g;
+      my @cluster_list 		= split(",", $cluster_list);
+      $allclusters{$cluster_id} = { 'members' => \@cluster_list };
+    }
+
+return;
+}
+
+sub create_fasta_db {
+    my $self =shift @_;
+
+    my $fasta_file = $self->param('fasta_file');
+    $self->throw('fasta_file is an obligatory parameter') unless (defined $self->param('fasta_file'));
+    $db            = Bio::DB::Fasta->new($fasta_file);
+
+return;
+}
+
+sub prepare_input_fasta {
+    my $self =shift @_;
+
+    my $blast_tmp_dir = $self->param('blast_tmp_dir');    
+    my $cluster_id    = $self->param('cluster_id');
+    my $allclusters   = $self->param('allclusters');
+
+    $self->throw('blast_tmp_dir is an obligatory parameter') unless (defined $self->param('blast_tmp_dir'));
+  
+    my @genes         = @{$allclusters->{$cluster_id}->{'members'}};
+    my $cluster_fasta = $blast_tmp_dir.'/cluster_'.$cluster_id.'.fasta'; 
+
+    open(FILE, ">$cluster_fasta") or die "Could not open '$cluster_fasta' for writing : $!";
+
+    foreach my $gene (@genes){
+	my $seq = $db->seq($gene);
+	print FILE ">".$gene."\n";
+	print FILE $seq."\n";
+    }
+    close FILE;
+
+    $self->param('input_fasta',$cluster_fasta); 	
+
+return;
+}
 
 =head2 fetch_input
 
@@ -77,9 +135,12 @@ sub param_defaults {
     Args    :   none
 
 =cut
-
 sub fetch_input {
   my( $self) = @_;
+
+    $self->load_allclusters;
+    $self->create_fasta_db;
+    $self->prepare_input_fasta;    
 
     if (defined $self->param('escape_branch') and $self->input_job->retry_count >= 3) {
         my $jobs = $self->dataflow_output_id($self->input_id, $self->param('escape_branch'));
@@ -88,48 +149,11 @@ sub fetch_input {
             die "The MSA failed 3 times. Trying another method.\n";
         }
     }
-
-
-    $self->param('tree_adaptor', $self->compara_dba->get_GeneTreeAdaptor);
-    #$self->param('protein_tree', $self->param('tree_adaptor')->fetch_by_dbID($self->param('protein_tree_id')));
-    $self->param('protein_tree', $self->param('tree_adaptor')->fetch_by_dbID($self->param('gene_tree_id')));
-    $self->param('protein_tree')->preload();
-
-  # No input specified.
-  if (!defined($self->param('protein_tree'))) {
-    $self->post_cleanup;
-    $self->throw("MCoffee job no input protein_tree");
-  }
-
   print "RETRY COUNT: ".$self->input_job->retry_count()."\n";
-
   print "MCoffee alignment method: ".$self->param('method')."\n";
-
-  #
-  # A little logic, depending on the input params.
-  #
-  # Protein Tree input.
-    #$self->param('protein_tree')->flatten_tree; # This makes retries safer
-    # The extra option at the end adds the exon markers
-    $self->param('input_fasta', $self->dumpProteinTreeToWorkdir($self->param('protein_tree'), $self->param('use_exon_boundaries')) );
-
-#  if ($self->param('redo')) {
-#    # Redo - take previously existing alignment - post-process it
-#    my $other_trees = $self->param('tree_adaptor')->fetch_all_linked_trees($self->param('protein_tree'));
-#    my ($other_tree) = grep {$_->clusterset_id eq $self->param('redo')} @$other_trees;
-#    if ($other_tree) {
-#        my $redo_sa = $other_tree->get_SimpleAlign(-id_type => 'MEMBER');
-#        $redo_sa->set_displayname_flat(1);
-#        $self->param('redo_alnname', $self->worker_temp_directory . $self->param('gene_tree_id').'.fasta' );
-#        my $alignout = Bio::AlignIO->new(-file => ">".$self->param('redo_alnname'), -format => "fasta");
-#        $alignout->write_aln( $redo_sa );
-#    }
-#  }
-
   #
   # Ways to fail the job before running.
   #
-
   # Error writing input Fasta file.
   if (!$self->param('input_fasta')) {
     $self->post_cleanup;
@@ -149,7 +173,6 @@ sub fetch_input {
     Args    :   none
 
 =cut
-
 sub run {
     my $self = shift;
 
@@ -158,9 +181,8 @@ sub run {
     $self->run_msa;
 }
 
-
 =head2 write_output
-`
+
     Title   :   write_output
     Usage   :   $self->write_output
     Function:   parse mcoffee output and update protein_tree_member tables
@@ -172,32 +194,7 @@ sub run {
 sub write_output {
     my $self = shift @_;
 
-    if ($self->param('single_peptide_tree')) {
-        $self->param('protein_tree')->aln_method('identical_seq');
-    } else {
-        my $method = ref($self);
-        $method =~ /::([^:]*)$/;
-        $self->param('protein_tree')->aln_method($1);
-    }
-    my $aln_ok = $self->parse_and_store_alignment_into_proteintree;
-
-    unless ($aln_ok) {
-        # Probably an ongoing MEMLIMIT
-        # We have 10 seconds to dataflow and exit;
-        my $new_job = $self->dataflow_output_id($self->input_id, $self->param('escape_branch'));
-        if (scalar(@$new_job)) {
-            $self->input_job->incomplete(0);
-            $self->input_job->lethal_for_worker(1);
-            die 'Probably not enough memory. Switching to the _himem analysis.';
-        } else {
-            die 'Error in the alignment but cannot switch to an analysis with more memory.';
-        }
-    }
-
-    $self->compara_dba->get_GeneAlignAdaptor->store($self->param('protein_tree'));
-    #$self->compara_dba->get_AlignedMemberAdaptor->store($self->param('protein_tree'));
-    # Store various alignment tags:
-    $self->_store_aln_tags($self->param('protein_tree'));
+    unlink $self->param('input_fasta');
 
 }
 
@@ -212,40 +209,48 @@ sub post_cleanup {
     $self->SUPER::post_cleanup if $self->can("SUPER::post_cleanup");
 }
 
-##########################################
-#
+####################
 # internal methods
-#
-##########################################
-
-
+###################
 sub run_msa {
     my $self = shift;
-    my $input_fasta = $self->param('input_fasta');
 
-    # Make a temp dir.
-    my $tempdir = $self->worker_temp_directory;
-    print "TEMP DIR: $tempdir\n" if ($self->debug);
+    my $msa_dir     = $self->param('msa_dir');
+    $self->throw('msa_dir is an obligatory parameter') unless (defined $self->param('msa_dir'));
+    chdir $msa_dir;
+    my $files_count  = `ls -R | grep .msa | wc -l`;
 
-    my $msa_output = $tempdir . 'output.mfa';
-    $msa_output =~ s/\/\//\//g;
+    if ($files_count < 1000){
+       $msa_dir      = $msa_dir.'/msa_0';
+    }
+    else {
+       my $remainder = $files_count % 1000;
+       my $quotient  = ($files_count - $remainder)/1000;
+       $msa_dir      = $msa_dir.'/msa_'.$quotient; 
+    }
+    
+    unless (-e $msa_dir) { ## Make sure the directory exists
+        print STDERR "$msa_dir doesn't exists. I will try to create it\n" if ($self->debug());
+        print STDERR "mkdir $msa_dir (0755)\n" if ($self->debug());
+        die "Impossible create directory $msa_dir\n" unless (mkdir($msa_dir, 0755));
+    }
+
+    my $msa_output  = $msa_dir.'/cluster_'.$self->param('cluster_id').'_output.msa';
     $self->param('msa_output', $msa_output);
-
     my $cmd = $self->get_msa_command_line;
 
     $self->compara_dba->dbc->disconnect_when_inactive(1);
+    $self->compara_dba->dbc->disconnect_if_idle() if $self->compara_dba->dbc->connected();
 
     print STDERR "Running:\n\t$cmd\n" if ($self->debug);
-    my $ret = system("cd $tempdir; $cmd");
+    my $ret = system("cd $msa_dir; $cmd");
+ 
     print STDERR "Exit status: $ret\n" if $self->debug;
-    if($ret) {
-        my $system_error = $!;
-
-        $self->post_cleanup;
-        die "Failed to execute [$cmd]: $system_error ";
-    }
-
-    #$self->compara_dba->dbc->disconnect_when_inactive(0);
+	if($ret) {
+         my $system_error = $!;         
+         $self->post_cleanup;
+         die "Failed to execute [$cmd]: $system_error ";
+        }
 }
 
 ########################################################

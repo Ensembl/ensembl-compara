@@ -1,6 +1,6 @@
 =head1 NAME
 
-Bio::EnsEMBL::Hive::RunnableDB::BuildHMMprofiles::CreateBlastDB
+Bio::EnsEMBL::Compara::RunnableDB::BuildHMMprofiles::CreateBlastDB
 
 =head1 DESCRIPTION
 
@@ -12,12 +12,12 @@ and creates a Blast database from this file.
 $Author: ckong $
 
 =cut
-package Bio::EnsEMBL::Hive::RunnableDB::BuildHMMprofiles::CreateBlastDB;
+package Bio::EnsEMBL::Compara::RunnableDB::BuildHMMprofiles::CreateBlastDB;
 
 use strict;
 use Bio::DB::Fasta;
 use Data::Dumper;
-use Bio::EnsEMBL::Hive::RunnableDB::BuildHMMprofiles::BlastDB;
+use Bio::EnsEMBL::Compara::RunnableDB::BuildHMMprofiles::BlastDB;
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 =head2 fetch_input
 
@@ -56,7 +56,7 @@ sub run {
  
     $self->check_directory($buildprofiles_dir);  	
     # configure the fasta file for use as a blast database file:
-    my $blastdb         = Bio::EnsEMBL::Hive::RunnableDB::BuildHMMprofiles::BlastDB->new(
+    my $blastdb         = Bio::EnsEMBL::Compara::RunnableDB::BuildHMMprofiles::BlastDB->new(
         -sequence_file => $fasta_file,
         -mol_type      => 'PROTEIN',
         -xdformat_exe  => $xdformat_exe,

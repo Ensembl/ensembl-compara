@@ -3,7 +3,6 @@ package Bio::EnsEMBL::Compara::PipeConfig::BuildHMMprofiles_conf;
 use strict;
 use warnings;
 
-use base ('Bio::EnsEMBL::Hive::PipeConfig::HiveGeneric_conf');
 use base ('Bio::EnsEMBL::Compara::PipeConfig::ComparaGeneric_conf');
 
 use Bio::EnsEMBL::ApiVersion qw/software_version/;
@@ -83,7 +82,7 @@ sub pipeline_analyses {
       
       # Creating blastp jobs for each sequence
 	  {  -logic_name => 'PrepareSequence',
-         -module     => 'Bio::EnsEMBL::Hive::RunnableDB::BuildHMMprofiles::PrepareSequence',
+         -module     => 'Bio::EnsEMBL::Compara::RunnableDB::BuildHMMprofiles::PrepareSequence',
          #-module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::PrepareSequence',
          -parameters => {
 	        'fasta_file'        => $self->o('fasta_file'),
@@ -96,7 +95,7 @@ sub pipeline_analyses {
       },
 
       { -logic_name => 'CreateBlastDB',
-        -module     => 'Bio::EnsEMBL::Hive::RunnableDB::BuildHMMprofiles::CreateBlastDB',
+        -module     => 'Bio::EnsEMBL::Compara::RunnableDB::BuildHMMprofiles::CreateBlastDB',
 	    #-module     => 'Bio::EnsEMBL::Compara::RunnableDB::CreateBlastDB',
         -parameters => {
           'fasta_file'    => $self->o('fasta_file'),
@@ -141,7 +140,7 @@ sub pipeline_analyses {
 
      # Perform blastp of each sequence against blastDB
 	 {   -logic_name => 'BlastpWithFasta',
-         -module     => 'Bio::EnsEMBL::Hive::RunnableDB::BuildHMMprofiles::BlastpWithFasta',
+         -module     => 'Bio::EnsEMBL::Compara::RunnableDB::BuildHMMprofiles::BlastpWithFasta',
          #-module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::BlastpWithFasta',
          -parameters => {
 	        'wublastp_exe'	=> $self->o('wublastp_exe'),
@@ -199,7 +198,7 @@ sub pipeline_analyses {
     # Parsing hcluster.out file, output file => hcluster_parse.out
     # line 120 next if ($cluster_size < 3) HclusterParseOutput.pm <=> MSA.pm line 84  next if ($cluster_size < 3);
     {   -logic_name  => 'HclusterParseOutput',
-        -module     => 'Bio::EnsEMBL::Hive::RunnableDB::BuildHMMprofiles::HclusterParseOutput',
+        -module     => 'Bio::EnsEMBL::Compara::RunnableDB::BuildHMMprofiles::HclusterParseOutput',
         #-module      => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::HclusterParseOutput',
         -parameters  => {
             'cluster_dir'               => $self->o('output_dir'),
@@ -294,7 +293,7 @@ sub pipeline_analyses {
     
     # Creating jobs for each multiple alignment file
 	 {   -logic_name => 'HmmProfileFactory',
-         -module     => 'Bio::EnsEMBL::Hive::RunnableDB::BuildHMMprofiles::HmmProfileFactory',
+         -module     => 'Bio::EnsEMBL::Compara::RunnableDB::BuildHMMprofiles::HmmProfileFactory',
          #-module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::HmmProfileFactory',
          -parameters => {
 	        'msa_dir'       => $self->o('msa_dir'),               
@@ -309,7 +308,7 @@ sub pipeline_analyses {
 
     # Run hmmbuild to create HMMer Profile
     {   -logic_name  => 'HmmBuild',
-        -module     => 'Bio::EnsEMBL::Hive::RunnableDB::BuildHMMprofiles::HmmBuild',
+        -module     => 'Bio::EnsEMBL::Compara::RunnableDB::BuildHMMprofiles::HmmBuild',
         #-module      => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::HmmBuild',
         -parameters  => {
               'hmmbuild_exe' => $self->o('hmmbuild_exe'),
@@ -324,7 +323,7 @@ sub pipeline_analyses {
 
     # Creating jobs for  calibration  HMMer Profile
 	 {   -logic_name => 'HmmCalibrateFactory',
-         -module     => 'Bio::EnsEMBL::Hive::RunnableDB::BuildHMMprofiles::HmmCalibrateFactory',
+         -module     => 'Bio::EnsEMBL::Compara::RunnableDB::BuildHMMprofiles::HmmCalibrateFactory',
          #-module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::HmmCalibrateFactory',
          -parameters => {
 	        'hmmLib_dir'  => $self->o('hmmLib_dir'),               
@@ -339,7 +338,7 @@ sub pipeline_analyses {
 
     # Run hmmcalibrate to calibrate created HMMer Profile
     {   -logic_name  => 'HmmCalibrate',
-        -module     => 'Bio::EnsEMBL::Hive::RunnableDB::BuildHMMprofiles::HmmCalibrate',
+        -module     => 'Bio::EnsEMBL::Compara::RunnableDB::BuildHMMprofiles::HmmCalibrate',
         #-module      => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::HmmCalibrate',
         -parameters  => {
 	          'hmmLib_dir'    => $self->o('hmmLib_dir'),     
@@ -351,7 +350,7 @@ sub pipeline_analyses {
 
     ####### NOTIFICATION
     {	-logic_name => 'NotifyUser',
-        -module     => 'Bio::EnsEMBL::Hive::RunnableDB::BuildHMMprofiles::NotifyUser',
+        -module     => 'Bio::EnsEMBL::Compara::RunnableDB::BuildHMMprofiles::NotifyUser',
         #-module     => 'Bio::EnsEMBL::Hive::RunnableDB::NotifyUser',
         -parameters => {
          	'email'       => $self->o('email'),

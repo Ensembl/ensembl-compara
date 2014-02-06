@@ -2,7 +2,7 @@
 
 =head1 NAME
 
-Bio::EnsEMBL::Hive::RunnableDB::BuildHMMprofiles::HmmCalibrate;
+Bio::EnsEMBL::Compara::RunnableDB::BuildHMMprofiles::HmmCalibrate;
 
 =cut
 
@@ -11,7 +11,7 @@ Bio::EnsEMBL::Hive::RunnableDB::BuildHMMprofiles::HmmCalibrate;
 This module perform calibration on HMM profile
 
 =cut
-package Bio::EnsEMBL::Hive::RunnableDB::BuildHMMprofiles::HmmCalibrate;
+package Bio::EnsEMBL::Compara::RunnableDB::BuildHMMprofiles::HmmCalibrate;
 
 use strict;
 use warnings;

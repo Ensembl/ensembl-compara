@@ -50,14 +50,14 @@ The rest of the documentation details each of the object methods.
 Internal methods are usually preceded with a _
 
 =cut
-package Bio::EnsEMBL::Hive::RunnableDB::ComparaHMM::PantherLoadModels;
+package Bio::EnsEMBL::Compara::RunnableDB::ComparaHMM::PantherLoadModels;
 
 use strict;
 use IO::File; # ??
 use File::Basename;
 use Data::Dumper;
 use vars qw/@INC/;
-use base ('Bio::EnsEMBL::Hive::RunnableDB::ComparaHMM::LoadModels');
+use base ('Bio::EnsEMBL::Compara::RunnableDB::ComparaHMM::LoadModels');
 
 sub param_defaults {
     return {

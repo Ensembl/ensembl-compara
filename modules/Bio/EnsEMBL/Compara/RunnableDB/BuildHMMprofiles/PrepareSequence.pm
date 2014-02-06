@@ -1,6 +1,6 @@
 =head1 NAME
 
-Bio::EnsEMBL::Hive::RunnableDB::BuildHMMprofiles::PrepareSequence;
+Bio::EnsEMBL::Compara::RunnableDB::BuildHMMprofiles::PrepareSequence;
 
 =head1 DESCRIPTION
 
@@ -13,7 +13,7 @@ parallelization of the blastp step.
 $Author: ckong $
 
 =cut
-package Bio::EnsEMBL::Hive::RunnableDB::BuildHMMprofiles::PrepareSequence;
+package Bio::EnsEMBL::Compara::RunnableDB::BuildHMMprofiles::PrepareSequence;
 
 use Bio::EnsEMBL::Utils::Exception qw(throw warning);
 use Bio::Perl;

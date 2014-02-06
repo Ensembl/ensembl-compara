@@ -27,11 +27,11 @@ limitations under the License.
 
 =head1 NAME
 
-Bio::EnsEMBL::Hive::RunnableDB::BuildHMMprofiles::Mafft
+Bio::EnsEMBL::Compara::RunnableDB::BuildHMMprofiles::Mafft
 
 =head1 DESCRIPTION
 
-This RunnableDB implements Bio::EnsEMBL::Hive::RunnableDB::BuildHMMprofiles::MSA
+This RunnableDB implements Bio::EnsEMBL::Compara::RunnableDB::BuildHMMprofiles::MSA
 by calling Mafft. It only needs the 'mafft_home' pararameters
 
 =head1 AUTHORSHIP
@@ -52,10 +52,10 @@ The rest of the documentation details each of the object methods.
 Internal methods are usually preceded with an underscore (_)
 
 =cut
-package Bio::EnsEMBL::Hive::RunnableDB::BuildHMMprofiles::Mafft;
+package Bio::EnsEMBL::Compara::RunnableDB::BuildHMMprofiles::Mafft;
 
 use strict;
-use base ('Bio::EnsEMBL::Hive::RunnableDB::BuildHMMprofiles::MSA');
+use base ('Bio::EnsEMBL::Compara::RunnableDB::BuildHMMprofiles::MSA');
 
 sub param_defaults {
     my $self = shift;

@@ -1,4 +1,4 @@
-package Bio::EnsEMBL::Hive::RunnableDB::BuildHMMprofiles::NotifyUser;
+package Bio::EnsEMBL::Compara::RunnableDB::BuildHMMprofiles::NotifyUser;
 #package Bio::EnsEMBL::Hive::RunnableDB::NotifyUser;
 
 use strict;

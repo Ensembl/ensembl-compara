@@ -1,6 +1,6 @@
 =head1 NAME
 
-Bio::EnsEMBL::Hive::RunnableDB::ComparaHMM::HMMClassifyFactory
+Bio::EnsEMBL::Compara::RunnableDB::ComparaHMM::HMMClassifyFactory
 
 =head1 DESCRIPTION
 
@@ -10,7 +10,7 @@ Bio::EnsEMBL::Hive::RunnableDB::ComparaHMM::HMMClassifyFactory
 $Author: ckong $
 
 =cut
-package Bio::EnsEMBL::Hive::RunnableDB::ComparaHMM::HMMClassifyFactory;
+package Bio::EnsEMBL::Compara::RunnableDB::ComparaHMM::HMMClassifyFactory;
 
 use Bio::EnsEMBL::Utils::Exception qw(throw warning);
 use Bio::Perl;

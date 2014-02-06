@@ -18,7 +18,7 @@
 
 =head1 NAME
 
-Bio::EnsEMBL::Hive::RunnableDB::ComparaHMM::HMMClassify
+Bio::EnsEMBL::Compara::RunnableDB::ComparaHMM::HMMClassify
 
 =head1 DESCRIPTION
 
@@ -44,7 +44,7 @@ The rest of the documentation details each of the object methods.
 Internal methods are usually preceded with an underscore (_)
 
 =cut
-package Bio::EnsEMBL::Hive::RunnableDB::ComparaHMM::HMMClassify;
+package Bio::EnsEMBL::Compara::RunnableDB::ComparaHMM::HMMClassify;
 
 use strict;
 use warnings;

@@ -1,6 +1,6 @@
 =head1 NAME
 
-Bio::EnsEMBL::Hive::RunnableDB::BuildHMMprofiles::HmmBuild;
+Bio::EnsEMBL::Compara::RunnableDB::BuildHMMprofiles::HmmBuild;
 
 =head1 DESCRIPTION
 
@@ -12,7 +12,7 @@ profile for each of the alignment.
 $Author: ckong $
 
 =cut
-package Bio::EnsEMBL::Hive::RunnableDB::BuildHMMprofiles::HmmBuild;
+package Bio::EnsEMBL::Compara::RunnableDB::BuildHMMprofiles::HmmBuild;
 
 use strict;
 use warnings;

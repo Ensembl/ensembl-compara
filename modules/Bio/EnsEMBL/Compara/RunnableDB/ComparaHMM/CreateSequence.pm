@@ -1,6 +1,6 @@
 =head1 NAME
 
-Bio::EnsEMBL::Hive::RunnableDB::ComparaHMM::CreateSequence
+Bio::EnsEMBL::Compara::RunnableDB::ComparaHMM::CreateSequence
 
 =head1 DESCRIPTION
 
@@ -13,7 +13,7 @@ HMM profiles
 $Author: ckong $
 
 =cut
-package Bio::EnsEMBL::Hive::RunnableDB::ComparaHMM::CreateSequence;
+package Bio::EnsEMBL::Compara::RunnableDB::ComparaHMM::CreateSequence;
 
 use Bio::EnsEMBL::Utils::Exception qw(throw warning);
 use Bio::Perl;
