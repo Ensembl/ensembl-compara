@@ -29,45 +29,78 @@ sub content {
   my $object_type = $hub->param('ftype');
   my $align       = $hub->param('align');
   my $caption     = $hub->species_defs->multi_hash->{'DATABASE_COMPARA'}{'ALIGNMENTS'}{$align}{'name'};
-  
+  my $region      = $hub->param('r');  #Current location of region
+  my $block       = $hub->param('n0'); #Location of the block on 'this' species
+  my $sp          = $hub->species;     #Name of 'this' species
+
   my $url = $hub->url({
     type   => 'Location',
     action => 'Compara_Alignments',
-    align  => $align
+    align  => "$align--$sp"
   });
 
-  my ($chr, $start, $end) = split /[:-]/, $hub->param('r');
+  my ($block_chr, $block_start, $block_end) = split /[:-]/, $block;
+  my ($chr, $start, $end) = split /[:-]/, $region;
   
+  
+  my ($p_value, $score);
+
   # if there's a score than show it and also change the name of the track (hacky)
-  if ($object_type && $id) {
+  if ($object_type && $id &&$object_type eq 'ConstrainedElement' ) {
     my $db_adaptor   = $hub->database('compara');
     my $adaptor_name = "get_${object_type}Adaptor";
     my $feat_adap    = $db_adaptor->$adaptor_name;
     my $feature      = $feat_adap->fetch_by_dbID($id);
     
-    if ($object_type eq 'ConstrainedElement') {
-      if ($feature->p_value) {
-        $self->add_entry({
-          type  => 'p-value',
-          label => sprintf('%.2e', $feature->p_value)
-        });
-      }
+    $p_value = $feature->p_value if ($feature->p_value);
       
+    $score = $feature->score if ($feature->score);
+      
+    $caption = "Constrained el. $1 way" if $caption =~ /^(\d+)/;
+    $self->create_subheader_menu($caption, $start, $end, $url, $p_value, $score);
+  }
+
+  #Add "This region" subheader for GenomicAlignBlocks (not Constrained Elements) if the region
+  #is not the same as the block
+  if ($object_type eq 'GenomicAlignBlock' && $start != $block_start || $end != $block_end) {
+      $self->add_subheader("This region:");
+      $self->caption($caption);
+      $self->create_subheader_menu($caption, $start, $end, $url);
+  } 
+
+  if ($object_type eq 'GenomicAlignBlock') {
+      $self->add_subheader("This block:");
+      $self->caption($caption);
+
+      my $url = $hub->url({
+                           type   => 'Location',
+                           action => 'Compara_Alignments',
+                           align  => "$align--$sp",
+                           r      => $block
+                          });
+
+      $self->create_subheader_menu($caption, $block_start, $block_end, $url);
+  }
+}
+
+sub create_subheader_menu {
+  my ($self, $caption, $start, $end, $url, $p_value, $score) = @_;
+
+  $self->caption($caption);
+
+  if ($p_value) {
+      $self->add_entry({
+        type  => 'p-value',
+        label => sprintf('%.2e', $p_value)
+      });
+  }
+  if ($score) {
       $self->add_entry({
         type  => 'Score',
-        label => sprintf('%.2f', $feature->score)
+        label => sprintf('%.2f', $score)
       });
-      
-      $caption = "Constrained el. $1 way" if $caption =~ /^(\d+)/;
-    } elsif ($object_type eq 'GenomicAlignBlock' && $hub->param('ref_id')) {
-      $feature->{'reference_genomic_align_id'} = $hub->param('ref_id');
-      $start = $feature->reference_genomic_align->dnafrag_start;
-      $end = $feature->{'reference_genomic_align'}->dnafrag_end;
-    }
   }
-  
-  $self->caption($caption);
-  
+
   $self->add_entry({
     type  => 'start',
     label => $start

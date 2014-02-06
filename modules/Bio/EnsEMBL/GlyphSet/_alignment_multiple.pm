@@ -27,6 +27,7 @@ use Sanger::Graphics::Bump;
 use Bio::EnsEMBL::DnaDnaAlignFeature;
 
 use base qw(Bio::EnsEMBL::GlyphSet_wiggle_and_block);
+use List::Util qw(min max);
 
 sub colour { return $_[0]->{'feature_colour'}, $_[0]->{'label_colour'}, $_[0]->{'part_to_colour'}; }
 
@@ -59,15 +60,52 @@ sub draw_features {
   my $jump_to_alignslice  = $self->my_config('jump_to_alignslice');
   my $class               = $self->my_config('class');
   my $x                   = -1e8;
-  my $zmenu               = {
-    type   => 'Location',
-    action => 'MultipleAlignment',
-    align  => $method_id,
-  };
-  
+  my $species = $self->{'container'}->{'web_species'};
+
+  #colours to distinguish alternating features for GenomicAlignBlock objects only 
+  my @block_colours;
+  if ($constrained_element) {
+      push @block_colours, $feature_colour;
+  } else {
+      @block_colours =($feature_colour, $self->{'config'}->colourmap->mix($feature_colour,'white',0.5));
+
+  }
+
   if ($wiggle ne 'wiggle') {
-    foreach (sort { $a->[0] <=> $b->[0] } map { ($strand_flag ne 'b' || $strand == $_->{'strand'}) && $_->{'start'} <= $length && $_->{'end'} >= 1 ? [ $_->{'start'}, $_ ] : () } @{$self->element_features}) {
-      my ($start, $f) = @$_;
+
+      #Get features and group and sort them
+      my $features = $self->element_features();
+      my $sorted_features = $self->build_features_into_sorted_groups($features);
+
+      unless ($constrained_element) {
+        #draw containing box around groups
+        foreach my $ga_s (@$sorted_features) {
+            next unless @$ga_s;
+            my $net_composite = $self->draw_containing_box($ga_s, $feature_colour);
+            $self->push($net_composite);
+        }
+    }
+  
+    my $i = 0;
+    foreach my $feat (@{$sorted_features}) {
+
+      #Start and end of a block
+      my $block_start = $feat->[0]->{start} + $chr_start - 1;
+      my $block_end = $feat->[-1]->{end} + $chr_start - 1;
+
+      #Assign alternating colours to block
+      $feature_colour = $block_colours[$i];
+      $i = $i ? 0 : 1;
+
+      #want a new zmenu for each block (do not define higher up because some elements are undefined (eg ref_id) and therefore don't overwrite the previous entry)
+      my $zmenu  = {
+                    type   => 'Location',
+                    action => 'MultipleAlignment',
+                    align  => $method_id,
+                   };
+
+     foreach my $f (@$feat) {
+      my $start       = $f->{'start'};
       my $end         = $f->{'end'};
       my ($rs, $re)   = ($f->{'hstart'}, $f->{'hend'});
       ($start, $end)  = ($end, $start) if $end < $start; # Flip start end YUK!
@@ -81,11 +119,6 @@ sub draw_features {
 
       # Don't link to AlignSliceView from constrained elements! - doesn't work in 51
       $zmenu->{'align'} = $method_id if $jump_to_alignslice;
-
-      my $block_start = $rs;
-      my $block_end   = $re;
-      my $id          = 10; 
-      my $max_contig  = 250000;
       
       # use 'score' param to identify constrained elements track - 
       # in which case we show coordinates just for the block
@@ -96,13 +129,14 @@ sub draw_features {
 
         $block_start = $start + $chr_start - 1;
         $block_end   = $end   + $chr_start - 1;
+        $zmenu->{'r'} = "$chr:$block_start-$block_end"; #set ConstrainedElement start and end
       } else {
         $zmenu->{'ftype'}  = 'GenomicAlignBlock';
         $zmenu->{'id'}     = $f->{'dbID'};
-        $zmenu->{'ref_id'} = $f->{'ref_id'} if $f->{'ref_id'};
+        $zmenu->{'r'} = "$chr:$rs-$re"; #only set region start and end for GenomicAlignBlocks
       }
       
-      $zmenu->{'r'} = "$chr:$block_start-$block_end";
+      $zmenu->{'n0'} = "$chr:$block_start-$block_end"; #set block start and end
       
       if ($draw_cigar) {
         my $to_push = $self->Composite({
@@ -135,6 +169,7 @@ sub draw_features {
           href      => $self->_url($zmenu),
         }));
       }
+     }
     }
     
     $self->_offset($h);
@@ -168,33 +203,51 @@ sub element_features {
   
   if ($slice->isa('Bio::EnsEMBL::Compara::AlignSlice::Slice')) {
     return $slice->{'_align_slice'}->get_all_ConstrainedElements;
-  } else {
-    my $db                  = $self->dbadaptor('multi', $self->my_config('db'));
-    my $constrained_element = $self->my_config('constrained_element');
-    my $adaptor             = $db->get_adaptor($constrained_element ? 'ConstrainedElement' :  'GenomicAlignBlock');
-    my $id                  = $constrained_element || $self->my_config('method_link_species_set_id');
-    my $restrict            = 1;
-    $features = $adaptor->fetch_all_by_MethodLinkSpeciesSet_Slice($db->get_adaptor('MethodLinkSpeciesSet')->fetch_by_dbID($id), $slice, undef, undef, $restrict) || [];
   }
+
+  my  $db                  = $self->dbadaptor('multi', $self->my_config('db'));
+  my $constrained_element = $self->my_config('constrained_element');
+  my $adaptor             = $db->get_adaptor($constrained_element ? 'ConstrainedElement' :  'GenomicAlignBlock');
+  my $id                  = $constrained_element || $self->my_config('method_link_species_set_id');
+  my $restrict            = 1;
+
+  $features = $adaptor->fetch_all_by_MethodLinkSpeciesSet_Slice($db->get_adaptor('MethodLinkSpeciesSet')->fetch_by_dbID($id), $slice, undef, undef, $restrict) || [];
   
   foreach my $feature (@$features) {
     my ($rtype, $gpath, $rname, $rstart, $rend, $rstrand) = split ':', $feature->slice->name;
+    my $group_id = 0;
+    $group_id = $feature->group_id unless ($constrained_element);
+    my $cigar_line = $feature->reference_genomic_align->cigar_line unless ($constrained_element);
+
+    #Establish if the species is low coverage. Need to look at the whole GenomicAlign cigar line.
+    #Should be a better way of doing this eg comparing the high and low coverage species sets
+    my $is_low_coverage_species = 0;
+    unless ($constrained_element) {
+        my $ga_adaptor = $db->get_adaptor('GenomicAlign');
+        my $ref_ga = $ga_adaptor->fetch_by_dbID($feature->reference_genomic_align->{_original_dbID});
+        my $whole_cigar_line = $ref_ga->cigar_line;
+        $is_low_coverage_species = 1 if ($whole_cigar_line =~ /X/);
+    }
+
     
     push @rtn, Bio::EnsEMBL::DnaDnaAlignFeature->new_fast({
-      dbID      => $feature->{'dbID'},
+      dbID      => $feature->{'dbID'} || $feature->{'_original_dbID'},
       ref_id    => $feature->{'reference_genomic_align_id'},
       seqname   => $feature->slice->name,
       start     => $feature->start,
       end       => $feature->end,
+      cigar_string => $cigar_line,
       strand    => 0,
       hseqname  => $rname,
       hstart    => $rstart,
       hend      => $rend,
       hstrand   => $rstrand,
       score     => $feature->score,
+      group_id  => $group_id,
+      extra_data => $is_low_coverage_species, #store whether this is a low_coverage species in extra_data field
     });
   }
-  
+
   return \@rtn;
 }
 
@@ -240,6 +293,89 @@ sub wiggle_plot {
   $self->draw_wiggle_plot($features, { min_score => $min_score, max_score => $max_score });
   
   return 1;
+}
+
+
+# Features are grouped and rendered together
+sub build_features_into_sorted_groups {
+    my ($self,$feats) = @_;
+  
+    my $container   = $self->{'container'};
+    my $strand      = $self->strand;
+    my $strand_flag = $self->my_config('strand'); 
+    my $length      = $container->length;
+    my $method_link_species_set_id = $self->my_config('method_link_species_set_id');
+    my $species = $self->my_config('name');
+    my $part = ($strand == 1) || 0;
+    my %out;
+    my $k = 0;
+
+    #Group features on group_id or the block dbID for low coverage species. Otherwise do not group
+    foreach my $feat (@{$feats||[]}) {
+        my $start = $feat->{start};
+        my $end = $feat->{end};
+        next if $end < 1 || $start > $length;
+        #    next if $strand_flag eq 'b'; 
+
+        #Set whether this is a low coverage species
+        my $is_low_coverage_species = $feat->{extra_data};
+
+        #Only group togther on dbID if low coverage species
+        my $key;
+        if ($is_low_coverage_species) {
+            $key = ($feat->{group_id} || $feat->{dbID}); 
+        } else {
+            $key = ($feat->{group_id} || $k++);
+        }
+
+        push @{$out{$key}{'feats'}},[$start,$feat];
+    }
+
+    # sort contents of groups by start
+    foreach my $g (values %out) {
+        my @f = map {$_->[1]} sort { $a->[0] <=> $b->[0] } @{$g->{'feats'}};
+        $g->{'len'} = max(map { $_->{end}   } @f) - min(map { $_->{start} } @f);
+        $g->{'start'} = min(map { $_->{start} } @f);
+        $g->{'feats'} = \@f;
+    }
+    
+    #order by start
+    return
+      [ map { $_->{'feats'} } sort { $a->{'start'} <=> $b->{'start'} } values %out ];
+}
+
+# Draws out box of groups (hollow box)
+sub draw_containing_box {
+  my ($self,$feats, $feature_colour) = @_;
+
+  my $ga_first = $feats->[0];
+  my $ga_last = $feats->[-1];
+
+  my $feature_key    = lc $self->my_config('type');
+  my $h              = $self->get_parameter('opt_halfheight') ? 4 : 8;
+  my $feature_colour = $feature_colour;
+  my $container      = $self->{'container'};
+  my $length         = $container->length;
+  my $ga_first_start = $ga_first->{start};
+  my $ga_last_end    = $ga_last->{end};
+  my $width = $ga_last_end;
+  if ($width > $length) {
+    $width = $length;
+  }
+  if ($ga_first_start > 0) {
+      $width -= $ga_first_start - 1;
+  }
+
+  my $net_composite = $self->Composite({
+                                        x     => $ga_first_start > 1 ? $ga_first_start - 1 : 0,
+                                        y     => 0,
+                                        width => $width,
+                                        height => $h,
+                                        bordercolour => $feature_colour,
+                                        absolutey => 1,
+                                       });
+  return $net_composite;
+
 }
 
 1;

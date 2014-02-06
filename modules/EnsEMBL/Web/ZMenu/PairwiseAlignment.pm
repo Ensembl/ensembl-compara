@@ -60,8 +60,7 @@ sub content {
   ## Display the location of the net and all the links
   if ($n1 and (!$r1 or $r1 ne $n1)) {
     my $type = $self->method_type($align);
-    my $name = "alignment";
-    $name = "net" if $type =~ /_net$/i;
+    my $name = "region maps to";
     $self->add_subheader("This $name: $n1 $orient");
 
     # Link from the net to the other species
@@ -84,7 +83,7 @@ sub content {
         type    => 'Location',
         action  => 'Compara_Alignments/Image',
         r       => $n0,
-        align   => $align,
+        align   => ($n1 ? "$align--$sp1--$n1" : $align),
       });
 
       $self->add_entry({
@@ -97,7 +96,7 @@ sub content {
         type    => 'Location',
         action  => 'Compara_Alignments',
         r       => $n0,
-        align   => $align,
+        align   => ($n1 ?  "$align--$sp1--$n1" : $align),
       });
 
       $self->add_entry({
@@ -125,7 +124,7 @@ sub content {
 
   ## Display the location of the block (with a link)
   if ($r1) {
-    $self->add_subheader("This block: $r1 $orient");
+    $self->add_subheader("This block maps to: $r1 $orient");
 
     # Link from the block to the other species
     $url = $hub->url({
@@ -147,7 +146,7 @@ sub content {
         type    => 'Location',
         action  => 'Compara_Alignments/Image',
         r       => $r,
-        align   => $align,
+        align   => ($r1 ?  "$align--$sp1--$r1" : $align),
       });
 
       $self->add_entry({
@@ -160,7 +159,7 @@ sub content {
         type    => 'Location',
         action  => 'Compara_Alignments',
         r       => $r,
-        align   => $align,
+        align   => ($r1 ?  "$align--$sp1--$r1" : $align),
       });
 
       $self->add_entry({
@@ -190,11 +189,6 @@ sub content {
       s1     => $sp1,
       r1     => $r1,
       method => $disp_method
-    });
-
-    $self->add_entry({
-      label => 'View alignment',
-      link  => $url
     });
   }
   
