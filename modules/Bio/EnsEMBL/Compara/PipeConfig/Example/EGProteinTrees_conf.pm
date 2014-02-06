@@ -86,6 +86,10 @@ sub default_options {
         'base_dir'              =>  '/nfs/nobackup2/ensemblgenomes/'.$self->o('ENV', 'USER').'/compara',
         'exe_dir'               =>  '/nfs/panda/ensemblgenomes/production/compara/binaries',
 
+    # "Member" parameters:
+        'allow_ambiguity_codes'     => 1,
+        'allow_pyrrolysine'         => $self->o('division') eq 'pan' ? 1 : 0,
+
     # blast parameters:
 
     # clustering parameters:

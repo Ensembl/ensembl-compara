@@ -179,7 +179,7 @@ sub _newick_dup_code {
 
 =head2 lost_taxa
 
-  Description: Returns the list of the taxon ID (cf the NCBI database) of the taxa
+  Description: Returns the list of the species-tree nodes of the taxa
                that have lost that gene on the branch leading to the current node
 
 =cut

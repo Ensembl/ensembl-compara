@@ -81,7 +81,7 @@ sub param_defaults {
 
             # only in 'ProteinTree' mode:
         'store_genes'                   => 1,   # whether the genes are also stored as members
-        'allow_pyrrolysine'             => 1,
+        'allow_pyrrolysine'             => 0,
         'store_related_pep_sequences'   => 0,
         'pseudo_stableID_prefix'        => undef,
         'force_unique_canonical'        => undef,

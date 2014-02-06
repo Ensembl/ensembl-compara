@@ -74,11 +74,11 @@ SELECT
 	SUM(gtrt1.value+0) AS tot_nb_genes,
 	MIN(gtrt1.value+0) AS min_nb_genes,
 	MAX(gtrt1.value+0) AS max_nb_genes,
-	ROUND(AVG(gtrt1.value+0),2) AS avg_nb_genes,
-	ROUND(AVG(gtrt2.value+0),2) AS avg_nb_spec,
+	AVG(gtrt1.value+0) AS avg_nb_genes,
+	AVG(gtrt2.value+0) AS avg_nb_spec,
 	MIN(gtrt2.value+0) AS min_nb_spec,
 	MAX(gtrt2.value+0) AS max_nb_spec,
-	ROUND(AVG((gtrt1.value+0)/(gtrt2.value+0)),2) AS avg_nb_genes_per_spec
+	AVG((gtrt1.value+0)/(gtrt2.value+0)) AS avg_nb_genes_per_spec
 FROM
 	gene_tree_root
 	JOIN gene_tree_root_tag gtrt1 USING (root_id)
@@ -114,8 +114,8 @@ SELECT
   SUM(node_type="gene_split") AS nb_gene_splits,
   SUM(node_type="speciation") AS nb_spec_nodes,
   SUM(node_type="dubious") AS nb_dubious_nodes,
-  ROUND(AVG(duplication_confidence_score),2) AS avg_dupscore,
-  ROUND(AVG(IF(node_type="duplication",duplication_confidence_score,NULL)),2) AS avg_dupscore_nondub
+  AVG(duplication_confidence_score) AS avg_dupscore,
+  AVG(IF(node_type="duplication",duplication_confidence_score,NULL)) AS avg_dupscore_nondub
 FROM
   gene_tree_node_attr
   JOIN gene_tree_node USING (node_id)
