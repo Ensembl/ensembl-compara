@@ -33,7 +33,7 @@ sub init {
   };
      
   #getting the clade colour for each species type (tree background colour based on the species type)
-  foreach my $name (grep $hash->{$_}{'genetree_display'}, keys %$hash) {
+  foreach my $name (keys %$hash) {
     while (my ($key, $value) = each %{$hash->{$name}}) {
       $key   =~ s/^genetree_//;
       $value = join '_', @$value if ref $value eq 'ARRAY';
