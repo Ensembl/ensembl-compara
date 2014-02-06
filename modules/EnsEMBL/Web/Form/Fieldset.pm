@@ -148,6 +148,7 @@ sub add_field {
   ## @params HashRef with following keys. (or ArrayRef of similar HashRefs in case of multiple fields)
   ##  - field_class       Extra CSS className for the field div
   ##  - label             innerHTML for <label>
+  ##  - helptip           helptip for label element
   ##  - notes             innerHTML for foot notes
   ##  - head_notes        innerHTML for head notes
   ##  - inline            Flag to tell whether all elements are to be displayed in a horizontal line
@@ -162,7 +163,7 @@ sub add_field {
     return $return;
   }
 
-  my $field_params  = { map {exists $params->{$_} ? ($_, delete $params->{$_}) : ()} qw(field_class label head_notes notes inline) };
+  my $field_params  = { map {exists $params->{$_} ? ($_, delete $params->{$_}) : ()} qw(field_class label helptip head_notes notes inline) };
   my $elements      = exists $params->{'elements'} ? ref($params->{'elements'}) eq 'HASH' ? [ $params->{'elements'} ] : $params->{'elements'} : $params->{'type'} ? [ $params ] : [];
   my $is_honeypot   = 0;
 
