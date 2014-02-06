@@ -113,10 +113,27 @@ sub feature_content {
       label_html => "$sv_id properties",
       link       => $hub->url({
         type     => 'StructuralVariation',
-        action   => 'Summary',
+        action   => 'Explore',
         sv       => $sv_id,
       })
     });
+  }
+  else {
+    my $source = $feature->source;
+    if ($source eq 'LOVD') {
+      # http://varcache.lovd.nl/redirect/hg19.chr###ID### , e.g. for ID: 1:808922_808922(FAM41C:n.1101+570C>T)
+      my $tmp_end = ($start>$end) ? $start+1 : $end;
+      my $external_url = $hub->get_ExtURL_link("View in $source", 'LOVD', { ID => "$seq_region:$start\_$tmp_end($sv_id)" });
+      $self->add_entry({
+        label_html => $external_url
+      });
+    }
+    else {
+      my $external_url = $hub->get_ExtURL_link("View in $source", uc($source));
+      $self->add_entry({
+        label_html => $external_url
+      });
+    }
   }
 
   if ($is_breakpoint) {
