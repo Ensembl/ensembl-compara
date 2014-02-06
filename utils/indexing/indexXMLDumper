@@ -76,14 +76,17 @@ my $website_url = $sitetype eq 'Vega' ? 'http://vega.sanger.ac.uk/'
 
 # used to boost certain records
 my $boosts = {
-  'GeneTrans' => {
-    'core'    => '40',
-    'is_ref' => '10',
-  },
-  'Family' => {
-    'All' => '50',
-  },
-};
+	      'GeneTrans' => {
+			      'core'    => '40',
+			      'is_ref' => '10',
+			     },
+	      'Family' => {
+			   'All' => '50',
+			  },
+	      'GeneTree' => {
+			     'All' => '50',
+			    },
+	     };
 
 # redirect STDOUT and STDERR to a file if not in debug mode
 if ($debug) {
@@ -1372,15 +1375,15 @@ sub dumpGeneTree {
   if (! $gt_present) {
     print LOG "  Error - can't find any gene trees to dump".&date_and_mem()."\n";
   }
-  my $multi_species;
   my $dbspecies = $conf->{'species'};
-  my ($counter,$start_time,$fh);
+  my ($multi_species,$counter,$start_time,$fh);
   my $compara_dbname = $conf->{'dbs'}->{'DATABASE_COMPARA'};
   my $compara_file = $conf->{'directory'}."/${compara_dbname}_GeneTree.xml";
   unless (-e $compara_file) {
     $multi_species = 1;
     $counter   = make_counter(0);
     $start_time = time;
+    $dbspecies = 'CrossSpecies';
     $fh;
     open( $fh, ">$compara_file" ) or die "Can't open $compara_file: $!";
     print LOG "  Dumping $compara_dbname to $compara_file ... ".&date_and_mem()."\n";
@@ -1388,11 +1391,12 @@ sub dumpGeneTree {
     my $sth = $conf->{'dbh_compara'}->prepare(qq(SELECT stable_id FROM gene_tree_root WHERE stable_id IS NOT NULL));
     $sth->execute();
     while( my( $gt_id) = $sth->fetchrow_array()) {
-      &p( GeneTreeLine($gt_id,$counter,'',$multi_species), $fh);
+      &p( GeneTreeLine($dbspecies,$gt_id,$counter,$multi_species), $fh);
     }
     my $c = footer( $counter->(), $fh);
   }
   $multi_species = 0;
+  $dbspecies = $conf->{'species'};
   $counter   = make_counter(0);
   $start_time = time;
   my $dbname = $conf->{'dbs'}->{'DATABASE_CORE'};
@@ -1416,21 +1420,23 @@ sub dumpGeneTree {
   while (my ($gt_id, $gid) = $sth->fetchrow_array() ) {
     next unless $gt_id;
     my $name = $gene_names->{$gid};
-    &p( GeneTreeLine($gt_id,$counter,$dbspecies,$multi_species,$gid,$name), $fh);
+    &p( GeneTreeLine($dbspecies,$gt_id,$counter,$multi_species,$gid,$name), $fh);
   }
   return footer( $counter->(), $fh);
 }
 
 sub GeneTreeLine {
-  my($gt_id,$counter,$dbspecies,$ms,$gid,$name) = @_;
+  my($species,$gt_id,$counter,$ms,$gid,$name) = @_;
   my ($url,$xml,$desc);
   $xml = qq(
 <doc>
   <field name="id">$gt_id</field>);
   if ($ms) {
+    $desc = "GeneTree $gt_id contains genes from multiple species";
     $xml .= qq(
-  <field name="name">$gt_id</field>);
-    $xml .= &common_fields('','GeneTree','compara');
+  <field name="name">$gt_id</field>
+  <field name="description">$desc</field>);
+    $xml .= &common_fields($species,'GeneTree','compara');
     $url = sprintf(qq(Multi/GeneTree?gt=%s),$gt_id);
     $xml .= qq(
   <field name="domain_url">$url</field>);
@@ -1439,18 +1445,20 @@ sub GeneTreeLine {
     if ($name && ($name ne $gid)) {
       $desc = "Gene $name ($gid) is a member of GeneTree $gt_id";
       $xml .= qq(
-  <field name="name">$name</field>
+  <field name="name">$gt_id</field>
   <field name="assoc_gene">$gid</field>
+  <field name="assoc_gene">$name</field>
   <field name="description">$desc</field>);
     }
     else {
       $desc = "Gene $gid is a member of GeneTree $gt_id";
       $xml .= qq(
-  <field name="name">$gid</field>
+  <field name="name">$gt_id</field>
+  <field name="assoc_gene">$gid</field>
   <field name="description">$desc</field>);
     }
-    $xml .= &common_fields($dbspecies,'GeneTree','core');
-    $url = sprintf(qq($dbspecies/Gene/Compara_Tree?g=%s),$gid);
+    $xml .= &common_fields($species,'GeneTree','core');
+    $url = sprintf(qq($species/Gene/Compara_Tree?g=%s),$gid);
     $xml .= qq(
   <field name="domain_url">$url</field>);
   }
@@ -1464,20 +1472,40 @@ sub GeneTreeLine {
 
 sub dumpFamily {
   my $conf   = shift;
-  my $FAMDB  = $conf->{'dbs'}->{'DATABASE_COMPARA'};
+  my ($multi_species,$counter,$start_time,$fh);
+  my $compara_dbname = $conf->{'dbs'}->{'DATABASE_COMPARA'};
   my $dbname = $conf->{'dbs'}->{'DATABASE_CORE'};
+  my $dbspecies;
+  my ($family_present) = $conf->{'dbh_compara'}->selectrow_array(qq(SELECT count(*) from family));
+  return unless $family_present;
+  my $compara_file = $conf->{'directory'}."/${compara_dbname}_Family.xml";
+  unless (-e $compara_file) {
+    $multi_species = 1;
+    $counter   = make_counter(0);
+    $start_time = time;
+    $dbspecies = 'CrossSpecies';
+    $fh;
+    open( $fh, ">$compara_file" ) or die "Can't open $compara_file: $!";
+    print LOG "  Dumping $compara_dbname to $compara_file ... ".&date_and_mem()."\n";
+    header($fh);
+    my $sth = $conf->{'dbh_compara'}->prepare(qq(SELECT stable_id, description FROM family));
+    $sth->execute();
+    
+    while( my( $fid,$desc) = $sth->fetchrow_array()) {
+      &p( FamilyLine($dbspecies,$fid,$desc,$multi_species,'','','',$counter ), $fh);
+    }
+    my $c = footer( $counter->(), $fh);
+  }
+  $multi_species = 0;
   my $t_sth  = $conf->{'dbh'}->prepare("select meta_value from $dbname.meta where meta_key='species.taxonomy_id'");
   $t_sth->execute;
   my $taxon_id = ($t_sth->fetchrow);
   return unless $taxon_id;
 
-  my ($family_present) = $conf->{'dbh_compara'}->selectrow_array(qq(SELECT count(*) from family));
-  return unless $family_present;
-
-  my $counter   = make_counter(0);
+  $counter   = make_counter(0);
+  $start_time = time;
   my $dbspecies = $conf->{'species'};
   my $file = $conf->{'directory'}."/${dbname}_Family.xml";
-  my $start_time = time;
   my $db = 'core';
   my $fh;
   open( $fh, ">$file" ) or die "Can't open $file: $!";
@@ -1555,47 +1583,63 @@ sub dumpFamily {
       my $genes   = $ensembl_genes_species == 1 ? 'gene' : 'genes';
       my $peptide = $ensembl_peptides_species == 1 ? 'protein' : 'proteins';
       my $full_desc = qq($X protein family $fid [$desc]: $ensembl_genes_species $genes / $ensembl_peptides_species $peptide in $species);
-      &p( FamilyLine($dbspecies,$fid,$full_desc,\@genes,\@proteins,\@uniprots,$counter ), $fh);
+      &p( FamilyLine($dbspecies,$fid,$full_desc,$multi_species,\@genes,\@proteins,\@uniprots,$counter ), $fh);
     }
   }
   return footer( $counter->(), $fh);
 }
 
 sub FamilyLine {
-  my($species,$fid,$desc,$genes,$proteins,$uniprots,$counter) = @_;
-  my $sample_g = $genes->[0]{'stable_id'};
-  my $url = sprintf(qq(%s/Gene/Family?family=%s;g=%s),
-                    $species,
-                    $fid,
-                    $sample_g,
-                  );
-  $species =~ s/_/ /;
-  $desc = &clean($desc,'desc');
+  my($species,$fid,$desc,$ms,$genes,$proteins,$uniprots,$counter) = @_;
+  my ($url,$xml);
   my $boost = $boosts->{'Family'}{'All'};
   my $doc = $boost ? qq(doc boost="$boost") : 'doc';
-  my $xml = qq(
+  $desc = &clean($desc,'desc');
+  $xml = qq(
 <$doc>
   <field name="id">$fid</field>
-  <field name="description">$desc</field>);
-  foreach my $g (@$genes){
-    my $id   = $g->{'stable_id'};
-    my $name = $g->{'display_label'};
+  <field name="name">$fid</field>);
+  if ($ms) {
+    my $full_desc = "Gene family $fid ($desc) contains genes from multiple species";
     $xml .= qq(
+  <field name="description">$full_desc</field>);
+    $url = sprintf(qq(Multi/Family/Details?fm=%s),$fid);
+    $xml .= &common_fields($species,'Protein Family','compara');
+    $xml .= qq(
+  <field name="domain_url">$url</field>);
+  }
+  else {
+#    my $full_desc = "Gene family $fid ($desc) contains genes from multiple species";
+    $xml .= qq(
+  <field name="description">$desc</field>);
+    my $sample_g = $genes->[0]{'stable_id'};
+    $url = sprintf(qq(%s/Gene/Family?family=%s;g=%s),
+		   $species,
+		   $fid,
+		   $sample_g,
+		  );
+    $species =~ s/_/ /;
+    foreach my $g (@$genes){
+      my $id   = $g->{'stable_id'};
+      my $name = $g->{'display_label'};
+      $xml .= qq(
   <field name="assoc_gene">$id</field>
   <field name="assoc_gene_name">$name</field>);
-  }
-  foreach my $p (@$proteins){
-    my $id   = $p->{'stable_id'};
-    $xml .= qq(
+    }
+    foreach my $p (@$proteins){
+      my $id   = $p->{'stable_id'};
+      $xml .= qq(
   <field name="assoc_protein">$id</field>);
-  }
-  foreach my $up (@$uniprots){
-    $xml .= qq(
+    }
+    foreach my $up (@$uniprots){
+      $xml .= qq(
   <field name="assoc_protein">$up</field>);
+    }
+    $xml .= &common_fields($species,'Protein Family','core');
+    $xml .= qq(
+  <field name="domain_url">$url</field>);
   }
-  $xml .= &common_fields($species,'Protein Family','core');
   $xml .= qq(
-  <field name="domain_url">$url</field>
 </doc>);
   $counter->();
   return $xml;
@@ -2944,7 +2988,7 @@ sub footer {
 
 sub common_fields {
   my ($species,$feature_type,$db) = @_;
-  my $species_name = $conf->{'species_common_name'};
+  my $species_name = $species eq 'CrossSpecies' ? 'Multi' : $conf->{'species_common_name'};
   my $xml = qq(
   <field name="website">$website_url</field>
   <field name="feature_type">$feature_type</field>);
