@@ -355,9 +355,9 @@ sub identify_removed_columns {
 
     foreach my $i (0..($ini_length-1)) {
         unless ($next_filt_column) {
-            $next_filt_column = join('', map {substr($filtered_strings->{$_}, $j, 1)} @seq_keys);
+            $next_filt_column = uc join('', map {substr($filtered_strings->{$_}, $j, 1)} @seq_keys);
         }
-        my $next_ini_column = join('', map {substr($initial_strings->{$_}, $i, 1)} @seq_keys);
+        my $next_ini_column = uc join('', map {substr($initial_strings->{$_}, $i, 1)} @seq_keys);
         #print STDERR "Comparing ini=$i:$next_ini_column to fil=$j:$next_filt_column\n";
 
         # Treebest also replaces segments with Ns
