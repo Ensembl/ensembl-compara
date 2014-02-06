@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2013] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2014] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -348,7 +348,9 @@ sub handler {
       } elsif ($object_type eq 'Translation') {
         $uri .= "Transcript/ProteinSummary?t=$stable_id";
       } elsif ($object_type eq 'GeneTree') {
-        $uri = "/Multi/GeneTree?gt=$stable_id";
+        $uri = "/Multi/GeneTree/Image?gt=$stable_id";
+      } elsif ($object_type eq 'Family') {
+        $uri = "/Multi/Family/Details?fm=$stable_id";
       } else {
         $uri .= "psychic?q=$stable_id";
       }

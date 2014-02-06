@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2013] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2014] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -64,12 +64,12 @@ sub content {
     $row->{'transcripts'} .= '</ul>';
 
     my $fam_obj         = $object->create_family($family_id, $cdb);
-    my $ensembl_members = $object->member_by_source($fam_obj, 'ENSEMBLPEP');
+    my $ensembl_members = $fam_obj->get_Member_by_source('ENSEMBLPEP');
     
     my @all_pep_members;
     push @all_pep_members, @$ensembl_members;
-    push @all_pep_members, @{$object->member_by_source($fam_obj, 'Uniprot/SPTREMBL')};
-    push @all_pep_members, @{$object->member_by_source($fam_obj, 'Uniprot/SWISSPROT')};
+    push @all_pep_members, @{$fam_obj->get_Member_by_source('Uniprot/SPTREMBL')};
+    push @all_pep_members, @{$fam_obj->get_Member_by_source('Uniprot/SWISSPROT')};
 
     $row->{'jalview'} = $self->jalview_link($family_id, 'Ensembl', $ensembl_members, $cdb) . $self->jalview_link($family_id, '', \@all_pep_members, $cdb) || 'No alignment has been produced for this family.';
 

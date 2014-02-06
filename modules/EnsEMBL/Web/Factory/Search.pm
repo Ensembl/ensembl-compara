@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2013] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2014] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -194,7 +194,7 @@ sub search_SNP {
       'subtype' => "$_->[0] SNP",
       'ID'      => $_->[1],
 #      'URL'     => "$species_path/snpview?source=$_->[0];snp=$_->[1]",
-      'URL'     => "$species_path/Variation/Summary?source=$_->[0];v=$_->[1]", # v58 link format
+      'URL'     => "$species_path/Variation/Explore?source=$_->[0];v=$_->[1]", # v58 link format
       'desc'    => '',
       'species' => $species
     };

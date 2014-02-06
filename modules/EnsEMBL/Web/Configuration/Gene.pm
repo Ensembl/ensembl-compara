@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2013] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2014] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -66,12 +66,16 @@ sub populate_tree {
     { 'availability' => 'gene', 'concise' => 'Marked-up sequence' }
   );
 
-  $seq_menu->append($self->create_node('SecondaryStructure', 'Secondary Structure',
-    [qw(
-      secondary EnsEMBL::Web::Component::Gene::RnaSecondaryStructure
-    )],
-  { 'availability' => 'gene has_2ndary can_r2r'}
-  ));
+  ## Only show this subnode for appropriate genes, to avoid confusing users
+  if ($self->{'_availability'}{'gene'} && $self->{'_availability'}{'can_r2r'} 
+      && $self->{'_availability'}{'has_2ndary'}) {
+    $seq_menu->append($self->create_node('SecondaryStructure', 'Secondary Structure',
+      [qw(
+        secondary EnsEMBL::Web::Component::Gene::RnaSecondaryStructure
+      )],
+    { 'availability' => 1}
+    ));
+  }
 
   $self->create_node('Matches', 'External references',
     [qw( matches EnsEMBL::Web::Component::Gene::SimilarityMatches )],

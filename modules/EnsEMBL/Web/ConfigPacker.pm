@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2013] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2014] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -76,9 +76,6 @@ sub munge_config_tree {
 
   # get data about file formats from corresponding Perl modules
   $self->_munge_file_formats;
-
-  # Internal flatfile data sources
-  #$self->_summarise_datahubs;
 
   # parse the BLAST configuration
   $self->_configure_blast;
@@ -1122,35 +1119,38 @@ sub _summarise_compara_db {
   ## Section for colouring and colapsing/hidding genes per species in the GeneTree View
   # 1. Only use the species_sets that have a genetree_display tag
   
-  $res_aref = $dbh->selectall_arrayref(q{SELECT species_set_id FROM species_set_tag WHERE tag = 'genetree_display'});
+  $res_aref = $dbh->selectall_arrayref(q{SELECT taxon_id, name FROM ncbi_taxa_name WHERE name_class = 'ensembl web display'});
   
   foreach my $row (@$res_aref) {
     # 2.1 For each set, get all the tags
-    my ($species_set_id) = @$row;
-    my $res_aref2 = $dbh->selectall_arrayref("SELECT tag, value FROM species_set_tag WHERE species_set_id = $species_set_id");
-    my $res;
-    
+    my ($taxon_id, $name) = @$row;
+    next unless $name; # Requires a name for the species_set
+    my %ss = (taxon_id => $taxon_id);
+
+    my $res_aref2 = $dbh->selectall_arrayref("SELECT name_class, name FROM ncbi_taxa_name WHERE taxon_id = $taxon_id AND name_class LIKE 'genetree\_%'");
     foreach my $row2 (@$res_aref2) {
       my ($tag, $value) = @$row2;
-      $res->{$tag} = $value;
+      $ss{$tag} = $value;
     }
-    
-    my $name = $res->{'name'}; # 2.2 Get the name for this set (required)
-    
-    next unless $name; # Requires a name for the species_set
-    
-    # 2.3 Store the values
-    while (my ($key, $value) = each %$res) {
-      next if $key eq 'name';
-      $self->db_tree->{$db_name}{'SPECIES_SET'}{$name}{$key} = $value;
-    }
+    next unless $ss{'genetree_display'};
 
     # 3. Get the genome_db_ids for each set
-    $res_aref2 = $dbh->selectall_arrayref("SELECT genome_db_id FROM species_set WHERE species_set_id = $species_set_id");
+    # This query is a copy of DBSQL::GenomeDBAdaptor
+    $res_aref2 = $dbh->selectall_arrayref("SELECT genome_db_id FROM ncbi_taxa_node ntn1, ncbi_taxa_node ntn2, genome_db gdb WHERE ntn1.taxon_id = $taxon_id AND ntn1.left_index < ntn2.left_index AND ntn1.right_index > ntn2.left_index AND ntn2.taxon_id = gdb.taxon_id");
     
-    push @{$self->db_tree->{$db_name}{'SPECIES_SET'}{$name}{'genome_db_ids'}}, $_->[0] for @$res_aref2;
+    $ss{'genome_db_ids'} = [map {$_->[0]} @$res_aref2];
+    $self->db_tree->{$db_name}{'SPECIES_SET'}{$name} = \%ss;
   }
   
+  # We need to add the "special" set of low-coverage species
+  {
+    my $res_aref2 = $dbh->selectall_arrayref(q{SELECT genome_db_id FROM genome_db WHERE is_high_coverage = 0});
+    $self->db_tree->{$db_name}{'SPECIES_SET'}{'low-coverage'} = {
+      genome_db_ids     => [map {$_->[0]} @$res_aref2],
+      genetree_display  => 'default',
+    };
+  }
+
   ## End section about colouring and colapsing/hidding gene in the GeneTree View
   ###################################################################
 
@@ -1171,21 +1171,16 @@ sub _summarise_compara_db {
   ###################################################################
   ## Section for storing the taxa properties
   
-  # Default name is the scientific name
-  $res_aref = $dbh->selectall_arrayref(qq(SELECT DISTINCT taxon_id, name FROM ncbi_taxa_name JOIN gene_tree_node_tag ON taxon_id=value WHERE tag='lost_taxon_id' AND name_class='scientific name'));
-  foreach my $row (@$res_aref) {
-    my ($taxon_id, $taxon_name) = @$row;
-    $self->db_tree->{$db_name}{'TAXON_NAME'}{$taxon_id} = $taxon_name;
-  }
+  # Default name is the name stored in species_tree_node: the glyphset will use it by default
 
-  # Better name is the ensembl alias
+  # But a better name is the ensembl alias
   $res_aref = $dbh->selectall_arrayref(qq(SELECT taxon_id, name FROM ncbi_taxa_name WHERE name_class='ensembl alias name'));
   foreach my $row (@$res_aref) {
     my ($taxon_id, $taxon_name) = @$row;
     $self->db_tree->{$db_name}{'TAXON_NAME'}{$taxon_id} = $taxon_name;
   }
 
-  # And the age of each ancestor
+  # And we need the age of each ancestor
   $res_aref = $dbh->selectall_arrayref(qq(SELECT taxon_id, name FROM ncbi_taxa_name WHERE name_class='ensembl timetree mya'));
   foreach my $row (@$res_aref) {
     my ($taxon_id, $taxon_mya) = @$row;
@@ -1434,116 +1429,6 @@ sub _summarise_go_db {
   $dbh->disconnect();
 }
 
-sub _summarise_datahubs {
-  my $self    = shift;
-  my $datahub = $self->tree->{'ENSEMBL_INTERNAL_DATAHUBS'};
-  
-  return unless $datahub;
-  
-  my $parser = Bio::EnsEMBL::ExternalData::DataHub::SourceParser->new({
-    timeout => 10,
-    proxy   => $self->tree->{'ENSEMBL_WWW_PROXY'},
-  });
-
-  while (my ($key, $val) = each (%$datahub)) {
-    my ($url, $menu) = ref $val eq 'ARRAY' ? @$val : ($val, undef);
-
-    my $base_url = $url;
-    my $hub_file = 'hub.txt';
-
-    if ($url =~ /.txt$/) {
-      $base_url =~ s/(.*\/).*/$1/;
-      ($hub_file = $url) =~ s/.*\/(.*)/$1/;
-    }
-  
-    ## Do we have data for this species?
-    my $hub_info = $parser->get_hub_info($base_url, $hub_file);
-    
-    if ($hub_info->{'error'}) {
-      warn "!!! COULD NOT CONTACT DATAHUB $key: $hub_info->{'error'}";
-    } else {
-      my $source_list = $hub_info->{$self->tree->{'UCSC_GOLDEN_PATH'}};
-      
-      return unless scalar @$source_list;
-
-      ## Get tracks from hub
-      my $datahub_config = $parser->parse($base_url . $self->tree->{'UCSC_GOLDEN_PATH'}, $source_list);
- 
-      ## Create Ensembl-style tracks from the datahub configuration
-      ## TODO - implement track grouping!
-      foreach my $dataset (@$datahub_config) {
-        if ($dataset->{'error'}) {
-          warn "!!! COULD NOT PARSE CONFIG $dataset->{'file'}: $dataset->{'error'}";
-        } else {
-          (my $name = $key) =~ s/_/ /g;
-          my $menu_key = $menu || $key;  
-          if ($dataset->{'config'}{'subsets'}) {
-            foreach (@{$dataset->{'tracks'}}) {
-              $self->_add_datahub_tracks($_, $name, $menu_key, $dataset->{'config'}{'description_url'});
-            }
-          }
-          else {
-            $self->_add_datahub_tracks($dataset, $name, $menu_key);
-          }
-        }
-      }
-    }
-  }
-}
-
-sub _add_datahub_tracks {
-  my ($self, $dataset, $name, $menu_key, $desc_url) = @_;
-
-  my $options = {
-                  menu_key     => $menu_key,
-                  menu_name    => $name,
-                  submenu_key  => $dataset->{'config'}{'track'},
-                  submenu_name => $dataset->{'config'}{'shortLabel'},
-                  desc_url     => $desc_url || $dataset->{'config'}{'description_url'},
-                  view         => $dataset->{'config'}{'view'},
-                };
-
-  foreach my $track (@{$dataset->{'tracks'}}) {
-    my $link = ' <a href="'.$options->{'desc_url'}.'" rel="external">Go to track description on datahub</a>';
-    # Should really be shortLabel, but Encode is much better using longLabel (duplicate names using shortLabel)
-    # The problem is that UCSC browser has a grouped set of tracks with a header above them. This
-    # means the short label can be very non specific, because the header gives context of what type of     # track it is. For Ensembl we need to have all the information in the track name / caption
-    (my $source_name = $track->{'longLabel'}) =~ s/_/ /g;
-    my $source = {
-      'name'          => $track->{'track'},
-      'source_name'   => $source_name,
-#      'caption'       => $track->{'shortLabel'},
-      'description'   => $track->{'longLabel'}.$link,
-      'source_url'    => $track->{'bigDataUrl'},
-      'datahub'       => 1,
-      %$options
-    };
-
-    $source->{'colour'} = $track->{'color'} if (exists($track->{'color'}));
-
-    my $type = ref($track->{'type'}) eq 'HASH' ? uc($track->{'type'}{'format'}) : uc($track->{'type'});
-
-    if (exists($track->{'viewLimits'})) {
-      $source->{'viewLimits'} = $track->{'viewLimits'};
-    } elsif (exists($track->{'autoscale'}) && $track->{'autoscale'} eq 'off') {
-      $source->{'viewLimits'} = '0:127';
-    }
-    if (exists($track->{'maxHeightPixels'})) {
-      $source->{'maxHeightPixels'} = $track->{'maxHeightPixels'};
-    } elsif ($type eq 'BIGWIG' || $type eq 'BIGBED') {
-      $source->{'maxHeightPixels'} = '64:32:16';
-    }
-
-    if ($type eq 'BIGWIG') {
-      # To improve browser speed don't display a zmenu for bigwigs 
-      $source->{'no_titles'} = 1;
-    }
-
-    $self->tree->{'ENSEMBL_INTERNAL_'.$type.'_SOURCES'}{$track->{'track'}} = $source;
-  }
-}
-
-
 sub _summarise_dasregistry {
   my $self = shift;
   
@@ -1681,6 +1566,7 @@ sub _munge_meta {
     species.strain                SPECIES_STRAIN
     species.sql_name              SYSTEM_NAME
     genome.assembly_type          GENOME_ASSEMBLY_TYPE
+    gencode.version               GENCODE_VERSION
   );
   
   my @months    = qw(blank Jan Feb Mar Apr May Jun Jul Aug Sep Oct Nov Dec);

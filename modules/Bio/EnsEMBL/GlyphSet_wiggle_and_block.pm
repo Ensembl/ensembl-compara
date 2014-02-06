@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2013] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2014] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -200,6 +200,7 @@ sub draw_wiggle_plot {
   my $textheight    = [ $self->get_text_width(0, $label, '', %font) ]->[3];  
   my $pix_per_score = $max_score == $min_score ? $self->label->height : $row_height / max($max_score - $min_score, 1);
   my $top_offset    = 0;
+  my $initial_offset= $self->_offset;
   my $bottom_offset = $max_score == $min_score ? 0 : (($max_score - ($min_score < 0 ? $min_score : 0)) || 1) * $pix_per_score;
   my $zero_offset   = $max_score * $pix_per_score;
   
@@ -289,11 +290,13 @@ sub draw_wiggle_plot {
   # Draw max and min score
   if ($parameters->{'axis_label'} ne 'off') {
     my $height        = [ $self->get_text_width(0, 1, '', %font) ]->[3];
-       $bottom_offset = max($bottom_offset, $top_offset + $self->label->height + (2 * $height));
-       $pix_per_score = $bottom_offset / (($max_score - ($min_score < 0 ? $min_score : 0)) || 1);
-       $zero_offset   = $max_score * $pix_per_score;
+    my $label_height  = 0;
+    $label_height = $self->label->height if($self->label);
+    $bottom_offset = max($bottom_offset, $top_offset + $label_height + (2 * $height));
+    $pix_per_score = $bottom_offset / (($max_score - ($min_score < 0 ? $min_score : 0)) || 1);
+    $zero_offset   = $max_score * $pix_per_score;
     
-    foreach ([ $max_score, $top_offset ], [ $min_score, $bottom_offset ]) {
+    foreach ([ $max_score, $top_offset ], [ $min_score, $top_offset+$zero_offset ]) {
       my $text  = sprintf '%.2f', $_->[0];
       my $width = [ $self->get_text_width(0, $text, '', %font) ]->[2];
       
@@ -304,7 +307,7 @@ sub draw_wiggle_plot {
         textwidth     => $width,
         halign        => 'right',
         colour        => $axis_colour,
-        y             => $_->[1] - $height / 2,
+        y             => $_->[1] + $initial_offset - $height / 2,
         x             => -10 - $width,
         absolutey     => 1,
         absolutex     => 1,
@@ -314,7 +317,7 @@ sub draw_wiggle_plot {
         height        => 0,
         width         => 5,
         colour        => $axis_colour,
-        y             => $_->[1],
+        y             => $_->[1] + $initial_offset,
         x             => -8,
         absolutey     => 1,
         absolutex     => 1,
@@ -322,14 +325,14 @@ sub draw_wiggle_plot {
       }));
     }
     
-    $self->{'label_y_offset'} = ($top_offset + $bottom_offset - $height) / 2;
+    $self->{'label_y_offset'} = ($zero_offset - $height)/2;
   }
   
   # Draw the axis
   if (!$parameters->{'no_axis'}) {
     $self->push($self->Line({ # horizontal line
       x         => 0,
-      y         => $top_offset + $zero_offset,
+      y         => $top_offset + $zero_offset + $initial_offset,
       width     => $slice->length,
       height    => 0,
       absolutey => 1,
@@ -337,7 +340,7 @@ sub draw_wiggle_plot {
       dotted    => $axis_style,
     }), $self->Line({ # vertical line
       x         => 0,
-      y         => $top_offset,
+      y         => $top_offset + $initial_offset,
       width     => 0,
       height    => $row_height,
       absolutey => 1,
@@ -354,7 +357,7 @@ sub draw_wiggle_plot {
       $colour = shift @$colours;
       
       if ($parameters->{'graph_type'} eq 'line') {
-        $self->draw_wiggle_points_as_line($feature_set, $slice, $parameters, $top_offset, $pix_per_score, $colour, $zero_offset);
+        $self->draw_wiggle_points_as_line($feature_set, $slice, $parameters, $initial_offset + $top_offset, $pix_per_score, $colour, $zero_offset);
       } else {
         $self->draw_wiggle_points($feature_set, $slice, $parameters, $top_offset, $pix_per_score, $colour, $zero_offset);
       }

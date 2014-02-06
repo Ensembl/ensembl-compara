@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2013] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2014] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -26,20 +26,19 @@ sub squish { return 1; }
 
 sub get_feature_sets {
   my ($self, $fg_db) = @_;
-  my @fsets;
-  my $feature_set_adaptor = $fg_db->get_FeatureSetAdaptor;
-  my $logic_name = $self->my_config('logic_name') || $self->my_config('description'); 
 
-  if ($logic_name =~/Nested/){$logic_name = 'BioTIFFIN';} 
-  my @sources = @{$self->{'config'}->species_defs->databases->{'DATABASE_FUNCGEN'}->{'FEATURE_SETS'}};
-  foreach my $name ( @sources){ 
-    next if  $name =~ /cisRED\s+search\s+regions/;
-    if ($name =~/$logic_name/ || $logic_name =~/$name/ ) {
-      push @fsets, $feature_set_adaptor->fetch_by_name($name);
-    }
-  }
-  
-  return \@fsets;
+  my $logic_name = $self->my_config('logic_name')
+                   || $self->my_config('description');
+  my $fg_a_a =  $fg_db->get_AnalysisAdaptor;
+  my $fg_fs_a = $fg_db->get_FeatureSetAdaptor;
+  my $analysis = $fg_a_a->fetch_by_logic_name($logic_name);
+  return [grep {
+    $_->name !~ /cisRED\s+search\s+regions/i
+  } @{$fg_fs_a->fetch_all_by_feature_class('external',undef,{
+    constraints => {
+      analyses => [$analysis],
+    },
+  })}];
 }
 
 sub features {

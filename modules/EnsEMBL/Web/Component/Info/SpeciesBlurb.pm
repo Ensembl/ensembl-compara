@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2013] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2014] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -21,6 +21,7 @@ package EnsEMBL::Web::Component::Info::SpeciesBlurb;
 use strict;
 
 use EnsEMBL::Web::Controller::SSI;
+use EnsEMBL::Web::Document::Table;
 
 use base qw(EnsEMBL::Web::Component);
 
@@ -84,7 +85,7 @@ sub content {
   ## ASSEMBLY STATS 
   my $file = '/ssi/species/stats_' . $self->hub->species . '.html';
   $html .= '<h2>Statistics</h2>';
-  $html .= EnsEMBL::Web::Controller::SSI::template_INCLUDE($self, $file);
+  $html .= $self->_stats_tables;
 
   my $interpro = $self->hub->url({'action' => 'IPtop500'});
   $html .= qq(<h3>InterPro Hits</h3>
@@ -111,5 +112,187 @@ sub _wikipedia_link {
 
   return $html;
 }
+
+sub _stats_tables {
+  my $self = shift;
+  my $sd = $self->hub->species_defs;
+  my $html = '<h3>Summary</h3>';
+
+  my $db_adaptor = $self->hub->database('core');
+  my $meta_container = $db_adaptor->get_MetaContainer();
+  my $genome_container = $db_adaptor->get_GenomeContainer();
+
+  my %glossary          = $sd->multiX('ENSEMBL_GLOSSARY');
+  my %glossary_lookup   = (
+      'coding'              => 'Protein coding',
+      'shortnoncoding'      => 'Short non coding gene',
+      'longnoncoding'       => 'Long non coding gene',
+      'pseudogene'          => 'Pseudogene',
+      'transcript'          => 'Transcript',
+    );
+
+
+  my $cols = [
+    { key => 'name', title => '', width => '30%', align => 'left' },
+    { key => 'stat', title => '', width => '70%', align => 'left' },
+  ];
+  my $options = {'header' => 'no', 'rows' => ['bg3', 'bg1']};
+
+  ## SUMMARY STATS
+  my $summary = EnsEMBL::Web::Document::Table->new($cols, [], $options);
+
+  my( $a_id ) = ( @{$meta_container->list_value_by_key('assembly.name')},
+                    @{$meta_container->list_value_by_key('assembly.default')});
+  if ($a_id) {
+    # look for long name and accession num
+    if (my ($long) = @{$meta_container->list_value_by_key('assembly.long_name')}) {
+      $a_id .= " ($long)";
+    }
+    if (my ($acc) = @{$meta_container->list_value_by_key('assembly.accession')}) {
+      $acc = sprintf('INSDC Assembly <a href="http://www.ebi.ac.uk/ena/data/view/%s">%s</a>', $acc, $acc);
+      $a_id .= ", $acc";
+    }
+  }
+  $summary->add_row({
+      'name' => '<b>Assembly</b>', 
+      'stat' => $a_id.', '.$sd->ASSEMBLY_DATE
+  });
+  $summary->add_row({
+      'name' => '<b>Database version</b>', 
+      'stat' => $sd->ENSEMBL_VERSION.'.'.$sd->SPECIES_RELEASE_VERSION 
+  });
+  $summary->add_row({
+      'name' => '<b>Base Pairs</b>', 
+      'stat' => $self->thousandify($genome_container->get_total_length()),
+  });
+  $summary->add_row({
+      'name' => '<b>Golden Path Length</b>', 
+      'stat' => $self->thousandify($genome_container->get_ref_length())
+  });
+  $summary->add_row({
+      'name' => '<b>Genebuild by</b>', 
+      'stat' => $sd->GENEBUILD_BY 
+  });
+  my @A         = @{$meta_container->list_value_by_key('genebuild.method')};
+  my $method  = ucfirst($A[0]) || '';
+  $method     =~ s/_/ /g;
+  $summary->add_row({
+      'name' => '<b>Genebuild method</b>', 
+      'stat' => $method
+  });
+  $summary->add_row({
+      'name' => '<b>Genebuild started</b>', 
+      'stat' => $sd->GENEBUILD_START
+  });
+  $summary->add_row({
+      'name' => '<b>Genebuild released</b>', 
+      'stat' => $sd->GENEBUILD_RELEASE
+  });
+  $summary->add_row({
+      'name' => '<b>Genebuild last updated/patched</b>', 
+      'stat' => $sd->GENEBUILD_LATEST 
+  });
+  my $gencode = $sd->GENCODE_VERSION;
+  if ($gencode) {
+    $summary->add_row({
+      'name' => '<b>Gencode version</b>', 
+      'stat' => $gencode,
+    });
+  }
+
+  $html .= $summary->render;   
+
+  ## GENE COUNTS (FOR PRIMARY ASSEMBLY)
+  my $counts = EnsEMBL::Web::Document::Table->new($cols, [], $options);
+  my @stats = qw(coding snoncoding lnoncoding pseudogene transcript);
+  my $has_alt = $genome_container->get_alt_coding_count();
+
+  my $primary = $has_alt ? ' (Primary assembly)' : '';
+  $html .= "<h3>Gene counts$primary</h3>";
+
+  foreach (@stats) {
+    my $name = $_.'_cnt';
+    my $method = 'get_'.$_.'_count';
+    my $title = $genome_container->get_attrib($name)->name();
+    my $term = $glossary_lookup{$_};
+    my $header = $term ? qq(<span class="glossary_mouseover">$title<span class="floating_popup">$glossary{$term}</span></span>) : $title;
+    my $stat = $self->thousandify($genome_container->$method);
+    unless ($_ eq 'transcript') {
+      my $rmethod = 'get_r'.$_.'_count';
+      my $readthrough = $genome_container->$rmethod;
+      if ($readthrough) {
+        $stat .= ' (inc '.$self->thousandify($readthrough).' readthrough)'; 
+      }
+    }
+    $counts->add_row({
+      'name' => "<b>$header</b>",
+      'stat' => $stat,
+    });
+  }
+
+  $html .= $counts->render;   
+
+  ## GENE COUNTS FOR ALTERNATE ASSEMBLY
+  if ($has_alt) {
+    $html .= "<h3>Gene counts (Alternate sequence)</h3>";
+    my $alt_counts = EnsEMBL::Web::Document::Table->new($cols, [], $options);
+    foreach (@stats) {
+      my $name = $_.'_acnt';
+      my $method = 'get_alt_'.$_.'_count';
+      my $title = $genome_container->get_attrib($name)->name();
+      my $term = $glossary_lookup{$_};
+      my $header = $term ? qq(<span class="glossary_mouseover">$title<span class="floating_popup">$glossary{$term}</span></span>) : $title;
+      my $stat = $self->thousandify($genome_container->$method);
+      unless ($_ eq 'transcript') {
+        my $rmethod = 'get_r'.$_.'_count';
+        my $readthrough = $genome_container->$rmethod;
+        if ($readthrough) {
+          $stat .= ' (inc '.$self->thousandify($readthrough).' readthrough)'; 
+        }
+      }
+      $alt_counts->add_row({
+        'name' => "<b>$header</b>",
+        'stat' => $stat,
+      });
+    }
+    $html .= $alt_counts->render;
+  }
+
+  ## OTHER STATS
+  my $rows = [];
+  ## Prediction transcripts
+  my $analysis_adaptor = $db_adaptor->get_AnalysisAdaptor();
+  my $attribute_adaptor = $db_adaptor->get_AttributeAdaptor();
+  my @analyses = @{ $analysis_adaptor->fetch_all_by_feature_class('PredictionTranscript') };
+  foreach my $analysis (@analyses) {
+    my $logic_name = $analysis->logic_name;
+    my $stat = $genome_container->get_prediction_count($logic_name);
+    my $name = $attribute_adaptor->fetch_by_code($logic_name)->[2];
+    push @$rows, {
+      'name' => "<b>$name</b>",
+      'stat' => $self->thousandify($stat),
+    };
+  }
+  ## Variants
+  my @other_stats = (
+    {'name' => 'SNPCount', 'method' => 'get_short_variation_count'},
+    {'name' => 'struct_var', 'method' => 'get_structural_variation_count'}
+  );
+  foreach (@other_stats) {
+    my $method = $_->{'method'};
+    push @$rows, {
+      'name' => '<b>'.$genome_container->get_attrib($_->{'name'})->name().'</b>',
+      'stat' => $self->thousandify($genome_container->$method),
+    };
+  }
+  if (scalar(@$rows)) {
+    $html .= '<h3>Other</h3>';
+    my $other = EnsEMBL::Web::Document::Table->new($cols, $rows, $options);
+    $html .= $other->render;
+  }
+
+  return $html;
+}
+
 
 1;

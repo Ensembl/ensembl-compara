@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2013] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2014] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -44,11 +44,11 @@ sub content {
   my $html;
 
   my $fam_obj = $object->create_family($object->param('family'), $cdb);
-  my $ensembl_members   = $object->member_by_source($fam_obj, 'ENSEMBLPEP');
+  my $ensembl_members   = $fam_obj->get_Member_by_source('ENSEMBLPEP');
   my @all_pep_members;
   push @all_pep_members, @$ensembl_members;
-  push @all_pep_members, @{$object->member_by_source($fam_obj, 'Uniprot/SPTREMBL')};
-  push @all_pep_members, @{$object->member_by_source($fam_obj, 'Uniprot/SWISSPROT')};
+  push @all_pep_members, @{$fam_obj->get_Member_by_source('Uniprot/SPTREMBL')};
+  push @all_pep_members, @{$fam_obj->get_Member_by_source('Uniprot/SWISSPROT')};
 
   $html .= $self->_embed_jalview('Ensembl', $ensembl_members);
   $html .= $self->_embed_jalview('', \@all_pep_members);
@@ -93,7 +93,7 @@ sub _embed_jalview {
       <param name="defaultColour" value="clustal" />
       <param name="showSequenceLogo" value="true" />
       <param name="showGroupConsensus" value="true" />
-
+      <param name="nojmol" value="true" />
       <param name="application_url" value="http://www.jalview.org/services/launchApp" />
 
       <strong>Java must be enabled to view alignments</strong>

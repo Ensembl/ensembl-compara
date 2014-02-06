@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2013] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2014] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -88,7 +88,7 @@ sub variation_content {
   
   $allele = substr($allele, 0, 10) . '...' if length $allele > 10; # truncate very long allele strings
   
-  $self->caption(sprintf('%s: <a href="%s">%s</a>', $feature->variation->is_somatic ? 'Somatic mutation' : 'Variation', $hub->url({ action => 'Summary', %url_params }), $v), 1);
+  $self->caption(sprintf('%s: <a href="%s">%s</a>', $feature->variation->is_somatic ? 'Somatic mutation' : 'Variation', $hub->url({ action => 'Explore', %url_params }), $v), 1);
   
   my @entries = ({ type => 'Position', label => $position });
   
@@ -117,7 +117,7 @@ sub variation_content {
   
   push @entries, (
     { type  => 'Types',   label_html => sprintf '<ul>%s</ul>', join '', map "<li>$_</li>", sort { $types{$a} <=> $types{$b} } keys %types },
-    { link  => $hub->url({ action => 'Summary', %url_params}), label => 'Explore this variation'},
+    { link  => $hub->url({ action => 'Explore', %url_params}), label => 'Explore this variation'},
     { link  => $hub->url({ action => 'Mappings', %url_params }), label => 'Gene/Transcript Locations' }
   );
   

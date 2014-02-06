@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2013] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2014] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -58,21 +58,19 @@ sub content {
       __clear => 1
     })
   });  
-=cut
+
   $self->add_entry({
     label => 'View all hits',
     link  => $hub->url({
-      type    => 'Location',
-      action  => 'Genome',
-      ftype   => 'PatchAlignFeature',
-      filter      => $ref_seq_name,
-      id  => $feature->slice->seq_region_name,
-      exdb  => $hit_db_name,
-      db      => $db,
-      __clear => 1
+      type        => 'Location',
+      action      => 'Genome',
+      ftype       => 'DnaAlignFeature',
+      logic_name  => 'alt_seq_mapping',
+      id          => $feature->slice->seq_region_name,
+      __clear     => 1
     })
   });
-=cut
+
 }
 
 1;

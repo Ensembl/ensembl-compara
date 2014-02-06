@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2013] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2014] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -148,6 +148,7 @@ sub add_field {
   ## @params HashRef with following keys. (or ArrayRef of similar HashRefs in case of multiple fields)
   ##  - field_class       Extra CSS className for the field div
   ##  - label             innerHTML for <label>
+  ##  - helptip           helptip for label element
   ##  - notes             innerHTML for foot notes
   ##  - head_notes        innerHTML for head notes
   ##  - inline            Flag to tell whether all elements are to be displayed in a horizontal line
@@ -162,7 +163,7 @@ sub add_field {
     return $return;
   }
 
-  my $field_params  = { map {exists $params->{$_} ? ($_, delete $params->{$_}) : ()} qw(field_class label head_notes notes inline) };
+  my $field_params  = { map {exists $params->{$_} ? ($_, delete $params->{$_}) : ()} qw(field_class label helptip head_notes notes inline) };
   my $elements      = exists $params->{'elements'} ? ref($params->{'elements'}) eq 'HASH' ? [ $params->{'elements'} ] : $params->{'elements'} : $params->{'type'} ? [ $params ] : [];
   my $is_honeypot   = 0;
 
@@ -329,7 +330,7 @@ sub add_element {
   ## Call new add_element method if argument is HashRef or ArrayRef
   return $self->_add_element($_[0]) if ref($_[0]) =~ /^(HASH|ARRAY)$/;
   
-  warn "Method add_element is deprecated. Please use an appropriate method at $caller[1] line $caller[2].\n";
+#  warn "Method add_element is deprecated. Please use an appropriate method at $caller[1] line $caller[2].\n";
 
   my %params = @_;
 

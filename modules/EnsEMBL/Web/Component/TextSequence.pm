@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2013] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2014] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -284,7 +284,7 @@ sub set_variations {
     my $url = $hub->url({
       species => $config->{'ref_slice_name'} ? $config->{'species'} : $name,
       type    => 'Variation',
-      action  => 'Summary',
+      action  => 'Explore',
       v       => $variation_name,
       vf      => $dbID,
       vdb     => 'variation'

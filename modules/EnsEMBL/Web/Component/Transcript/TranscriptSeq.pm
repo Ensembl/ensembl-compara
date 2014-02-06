@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2013] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2014] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -164,7 +164,7 @@ sub get_sequence_data {
         $mk->{'variations'}{$_}{'url_params'} = { v => $variation_name, vf => $dbID, vdb => 'variation' };
         $mk->{'variations'}{$_}{'transcript'} = 1;
         
-        my $url = $mk->{'variations'}{$_}{'url_params'} ? $hub->url({ type => 'Variation', action => 'Summary', %{$mk->{'variations'}{$_}{'url_params'}} }) : '';
+        my $url = $mk->{'variations'}{$_}{'url_params'} ? $hub->url({ type => 'Variation', action => 'Explore', %{$mk->{'variations'}{$_}{'url_params'}} }) : '';
         
         $mk->{'variations'}{$_}{'type'} = $type;
         

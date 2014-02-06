@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2013] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2014] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -334,12 +334,12 @@ sub add_form_element {
   }
   
   $self->add_fieldset('Display options') unless $self->get_form->has_fieldset;
-  
-  if ($element->{'type'} eq 'Hidden') {
-    $self->get_form->add_hidden($element);
-  } else {
-    $self->get_form->add_field($element);
-  }
+  $self->get_form->add_element(%$element);
+#   if ($element->{'type'} eq 'Hidden') {
+#     $self->get_form->add_hidden($element);
+#   } else {
+#     $self->get_form->add_field($element);
+#   }
   
   $self->{'labels'}{$element->{'name'}}       ||= $element->{'label'};
   $self->{'value_labels'}{$element->{'name'}} ||= { map { $_->{'value'} => $_->{'caption'} } @{$element->{'values'}} } if $element->{'values'};

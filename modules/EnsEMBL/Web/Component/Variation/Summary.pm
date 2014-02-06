@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2013] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2014] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -337,7 +337,7 @@ sub alleles {
   my $freq       = sprintf '%.2f', $variation->minor_allele_frequency;
      $freq       = '&lt; 0.01' if $freq eq '0.00'; # Frequency lower than 1%
   my $maf        = $variation->minor_allele;
-     $maf        = " | MAF: <strong>$freq</strong> ($maf)" if $maf;
+     $maf        = qq{ | <span class="_ht conhelp" title="Minor Allele Frequency">MAF</span>: <strong>$freq</strong> ($maf)} if $maf;
   my $html;   
   my $alleles_strand = ($feature_slice) ? ($feature_slice->strand == 1 ? q{ (Forward strand)} : q{ (Reverse strand)}) : ''; 
    
@@ -618,9 +618,14 @@ sub sets{
 
   foreach my $vs (@variation_sets){
     next unless $vs =~/Affy|Illumina/;  ## only showing genotyping chip sets
-    push @genotyping_sets_list,  $vs;
+    if($vs =~/Genotyping chip variants/){  ## tidy up display for human
+	$vs =~ s/Genotyping chip variants \(|\)//g;
+	@genotyping_sets_list = split/\,/,  $vs;
+    }
+    else{
+	push @genotyping_sets_list,  $vs;
+    }
   }
-
   my $count = scalar @genotyping_sets_list;  
   
   if ($count > 3) {

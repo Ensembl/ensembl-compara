@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2013] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2014] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -33,7 +33,7 @@ sub init {
   };
      
   #getting the clade colour for each species type (tree background colour based on the species type)
-  foreach my $name (grep $hash->{$_}{'genetree_display'}, keys %$hash) {
+  foreach my $name (keys %$hash) {
     while (my ($key, $value) = each %{$hash->{$name}}) {
       $key   =~ s/^genetree_//;
       $value = join '_', @$value if ref $value eq 'ARRAY';

@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2013] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2014] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -61,6 +61,13 @@ sub availability {
       $availability->{'history'}              = !!$rows;
       $availability->{'gene'}                 = 1;
       $availability->{'core'}                 = $self->get_db eq 'core';
+      $availability->{'has_gene_tree'}        = $member ? $member->has_GeneTree : 0;
+      $availability->{'can_r2r'}              = $self->hub->species_defs->R2R_BIN;
+      if ($availability->{'can_r2r'}) {
+        my $tree = $self->database('compara') ? $self->database('compara')->get_GeneTreeAdaptor->fetch_default_for_Member($member) : undef;
+        $availability->{'has_2ndary'}         = $tree && $tree->get_tagvalue('ss_cons') ? 1 : 0;
+      }
+
       $availability->{'alt_allele'}           = $self->table_info($self->get_db, 'alt_allele')->{'rows'};
       $availability->{'regulation'}           = !!$funcgen_res; 
       $availability->{'has_species_tree'}     = $member ? $member->has_GeneGainLossTree : 0;
@@ -575,11 +582,6 @@ sub create_family {
   eval{ $family_adaptor = $databases->get_FamilyAdaptor };
   if ($@){ warn($@); return {} }
   return $family_adaptor->fetch_by_stable_id($id);
-}
-
-sub member_by_source {
-  my ($self, $family, $source) = @_;
-  return $family->get_Member_by_source($source) || [];
 }
 
 sub display_xref {

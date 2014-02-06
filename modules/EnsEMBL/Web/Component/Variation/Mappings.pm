@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2013] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2014] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -106,12 +106,12 @@ sub content {
     { key => 'codon',     title => 'Codons',                           sort => 'string'                      },
   );
   
-  if ($hub->species eq 'Homo_sapiens') {
-    push @columns, (
-      { key => 'sift',      title => 'SIFT',     sort => 'position_html', align => 'center' },
-      { key => 'polyphen',  title => 'PolyPhen', sort => 'position_html', align => 'center' },
-    );
-  }
+
+  push @columns, ({ key => 'sift',      title => 'SIFT',     sort => 'position_html', align => 'center' },) 
+      if defined $hub->species_defs->databases->{'DATABASE_VARIATION'}->{'SIFT'} ;
+
+  push @columns, ({ key => 'polyphen',  title => 'PolyPhen', sort => 'position_html', align => 'center' },) 
+      if $hub->species eq 'Homo_sapiens';
   
   push @columns, { key => 'detail', title => 'Detail', sort => 'string' };
   
@@ -557,7 +557,7 @@ sub detail_panel {
           next unless overlap($other_tv->translation_start, $other_tv->translation_end, $tv->translation_start, $tv->translation_end);
           my $vf_url = $hub->url({
             type       => 'Variation',
-            action     => 'Summary',
+            action     => 'Explore',
             vf         => $other_vf->dbID,
             v          => $other_vf->variation_name
           });

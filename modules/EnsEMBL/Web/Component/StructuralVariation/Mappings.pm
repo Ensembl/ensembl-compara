@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2013] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2014] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -149,11 +149,7 @@ sub gene_transcript_table {
       }
       
       foreach my $tsva(@{$tsv->get_all_StructuralVariationOverlapAlleles}) {
-        
-        my $type = join ', ',
-          map { $hub->get_ExtURL_link($_->label, 'SEQUENCE_ONTOLOGY', $_->SO_accession) }
-          sort {$a->rank <=> $b->rank}
-          @{$tsva->get_all_OverlapConsequences};
+        my $type = $self->render_consequence_type($tsva);
         
         my %row = (
           gene      => qq{<a href="$gene_url">$gene_name</a><br/><span class="small" style="white-space:nowrap;">$gene_hgnc</span>},
@@ -210,11 +206,8 @@ sub regfeat_table {
       });
       
       foreach my $rsva(@{$rsv->get_all_StructuralVariationOverlapAlleles}) {
-        my $type  = join ', ',
-          map { $hub->get_ExtURL_link($_->label, 'SEQUENCE_ONTOLOGY', $_->SO_accession) }
-          sort {$a->rank <=> $b->rank}
-          @{$rsva->get_all_OverlapConsequences};
-        
+        my $type = $self->render_consequence_type($rsva);
+
         my %row = (
           rf       => sprintf('<a href="%s">%s</a>', $url, $rf),
           ftype    => $ftype,
@@ -261,10 +254,7 @@ sub regfeat_table {
       );
       
       foreach my $msva(@{$msv->get_all_StructuralVariationOverlapAlleles}) {
-        my $type  = join ', ',
-          map { $hub->get_ExtURL_link($_->label, 'SEQUENCE_ONTOLOGY', $_->SO_accession) }
-          sort {$a->rank <=> $b->rank}
-          @{$msva->get_all_OverlapConsequences};
+        my $type = $self->render_consequence_type($msva);
         
         my %row = (
           rf       => sprintf('%s<br/><span class="small" style="white-space:nowrap;"><a href="%s">%s</a></span>', $mf->binding_matrix->name, $url, $rf->stable_id),
