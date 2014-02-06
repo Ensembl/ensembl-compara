@@ -104,13 +104,12 @@ sub content {
     order => 4
   }) unless $is_root || $is_leaf || $is_supertree;
 
-  if (defined $tagvalues->{'lost_taxon_id'}) {
-    my $lost_taxa = $tagvalues->{'lost_taxon_id'};
-       $lost_taxa = [ $lost_taxa ] if ref $lost_taxa ne 'ARRAY';
+  if (defined $tagvalues->{'lost_species_tree_node_id'}) {
+    my $lost_taxa = $node->lost_taxa;
        
     $self->add_entry({
       type  => 'Lost taxa',
-      label => join(', ', map { $hub->species_defs->multi_hash->{'DATABASE_COMPARA'}{'TAXON_NAME'}->{$_} || "taxon_id: $_" }  @$lost_taxa ),
+      label => join(', ', map { $hub->species_defs->multi_hash->{'DATABASE_COMPARA'}{'TAXON_NAME'}->{$_->taxon_id} || $_->node_name }  @$lost_taxa ),
       order => 5.6
     });
   }
