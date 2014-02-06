@@ -1018,7 +1018,7 @@ sub consequence_table {
           my $snp_url =  $hub->url({
             species => $species,
             type    => 'Variation',
-            action  => 'Summary',
+            action  => 'Explore',
             v       =>  $s,
           });
           

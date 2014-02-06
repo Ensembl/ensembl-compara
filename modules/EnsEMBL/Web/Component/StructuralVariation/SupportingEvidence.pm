@@ -130,7 +130,7 @@ sub supporting_evidence_table {
       if ($ssv_obj->is_evidence == 0) {
         my $sv_link = $hub->url({
                         type   => 'StructuralVariation',
-                        action => 'Summary',
+                        action => 'Explore',
                         sv     => $name,
                       });
         $name = qq{<a href="$sv_link">$name</a>};

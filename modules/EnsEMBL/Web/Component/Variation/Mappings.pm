@@ -557,7 +557,7 @@ sub detail_panel {
           next unless overlap($other_tv->translation_start, $other_tv->translation_end, $tv->translation_start, $tv->translation_end);
           my $vf_url = $hub->url({
             type       => 'Variation',
-            action     => 'Summary',
+            action     => 'Explore',
             vf         => $other_vf->dbID,
             v          => $other_vf->variation_name
           });

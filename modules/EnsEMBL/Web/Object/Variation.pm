@@ -1550,7 +1550,7 @@ sub hgvs_url {
   return undef unless $refseq && $description;
 
   my $p = {
-    action => 'Summary',
+    action => 'Explore',
     db     => 'core',
     source => $obj->source,
     v      => $obj->name,
