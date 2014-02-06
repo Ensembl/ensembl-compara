@@ -170,11 +170,7 @@ my $name_cb = sub {
 my $distance_to_parent_cb = sub {
   my ($self) = @_;
   my $dtp = $self->{tree}->distance_to_parent();
-  if ($dtp =~ /^\d+\.\d+$/) {
-    return sprintf ("%1.4f", $self->{tree}->distance_to_parent);
-  } else {
-    return sprintf ("%d", $self->{tree}->distance_to_parent);
-  }
+  return "$dtp";
 };
 
 # T(genbank common name)
