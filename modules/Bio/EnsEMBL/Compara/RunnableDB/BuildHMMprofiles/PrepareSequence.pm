@@ -8,10 +8,6 @@ This module reads in a fasta protein sequence file, for each
 sequence create a job in the subsequent blastp analysis, for
 parallelization of the blastp step.
 
-=head1 MAINTAINER
-
-$Author: ckong $
-
 =cut
 package Bio::EnsEMBL::Compara::RunnableDB::BuildHMMprofiles::PrepareSequence;
 

@@ -7,9 +7,6 @@ Bio::EnsEMBL::Compara::RunnableDB::BuildHMMprofiles::CreateBlastDB
 This module takes in a sequence file in Fasta format 
 and creates a Blast database from this file.
 
-=head1 MAINTAINER
-
-$Author: ckong $
 
 =cut
 package Bio::EnsEMBL::Compara::RunnableDB::BuildHMMprofiles::CreateBlastDB;

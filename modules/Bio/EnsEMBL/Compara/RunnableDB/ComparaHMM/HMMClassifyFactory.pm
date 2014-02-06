@@ -2,12 +2,6 @@
 
 Bio::EnsEMBL::Compara::RunnableDB::ComparaHMM::HMMClassifyFactory
 
-=head1 DESCRIPTION
-
-
-=head1 MAINTAINER
-
-$Author: ckong $
 
 =cut
 package Bio::EnsEMBL::Compara::RunnableDB::ComparaHMM::HMMClassifyFactory;

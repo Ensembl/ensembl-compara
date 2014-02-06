@@ -8,10 +8,6 @@ This module create a fasta file using 'member_id's from
 the table sequence_unclassify. To be used to build new 
 HMM profiles
 
-=head1 MAINTAINER
-
-$Author: ckong $
-
 =cut
 package Bio::EnsEMBL::Compara::RunnableDB::ComparaHMM::CreateSequence;
 

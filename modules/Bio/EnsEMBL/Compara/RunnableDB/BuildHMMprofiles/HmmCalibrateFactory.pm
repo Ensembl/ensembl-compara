@@ -8,10 +8,6 @@ Bio::EnsEMBL::Compara::RunnableDB::BuildHMMprofiles::HmmCalibrateFactory
 
  This module create jobs to calibrate hmmprofiles built from HMMer2 
 
-=head1 MAINTAINER
-
-$Author: ckong $
-
 =cut
 package Bio::EnsEMBL::Compara::RunnableDB::BuildHMMprofiles::HmmCalibrateFactory;
 

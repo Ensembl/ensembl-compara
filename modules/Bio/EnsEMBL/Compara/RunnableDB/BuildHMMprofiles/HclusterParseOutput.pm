@@ -6,10 +6,6 @@ Bio::EnsEMBL::Compara::RunnableDB::BuildHMMprofiles::HclusterParseOutput;
 
 RunnableDB that parses the output of Hcluster
 
-=head1 MAINTAINER
-
-$Author: ckong $
-
 =head1 APPENDIX
 
 The rest of the documentation details each of the object methods.

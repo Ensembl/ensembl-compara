@@ -6,10 +6,6 @@ Bio::EnsEMBL::Compara::RunnableDB::BuildHMMprofiles::BlastpWithFasta
 
 This module takes in a sequence and perform blastp
 
-=head1 MAINTAINER
-
-$Author: ckong $
-
 
 =cut
 package Bio::EnsEMBL::Compara::RunnableDB::BuildHMMprofiles::BlastpWithFasta;

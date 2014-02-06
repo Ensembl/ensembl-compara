@@ -7,10 +7,6 @@ Bio::EnsEMBL::Compara::RunnableDB::BuildHMMprofiles::HmmBuild;
 This module reads in a msa alignment file, creating HMM
 profile for each of the alignment.
 
-=head1 MAINTAINER
-
-$Author: ckong $
-
 =cut
 package Bio::EnsEMBL::Compara::RunnableDB::BuildHMMprofiles::HmmBuild;
 

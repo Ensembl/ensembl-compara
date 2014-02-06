@@ -39,15 +39,7 @@ This would create the c;usterset and create the subsequent jobs.
 
 =head1 AUTHORSHIP
 
-Ensembl Team. Individual contributions can be found in the CVS log.
-
-=head1 MAINTAINER
-
-$Author$
-
-=head VERSION
-
-$Revision$
+Ensembl Team. Individual contributions can be found in the GIT log.
 
 =head1 APPENDIX
 

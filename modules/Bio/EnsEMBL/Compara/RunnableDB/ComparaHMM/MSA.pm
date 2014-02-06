@@ -30,15 +30,7 @@ The parameter 'gene_tree_id' is obligatory.
 
 =head1 AUTHORSHIP
 
-Ensembl Team. Individual contributions can be found in the CVS log.
-
-=head1 MAINTAINER
-
-$Author: mm14 $
-
-=head VERSION
-
-$Revision: 1.13 $
+Ensembl Team. Individual contributions can be found in the GIT log.
 
 =head1 APPENDIX
 

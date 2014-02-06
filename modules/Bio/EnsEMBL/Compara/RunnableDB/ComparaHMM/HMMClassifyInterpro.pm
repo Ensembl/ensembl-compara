@@ -8,10 +8,6 @@ This module lookup the interpro classification of peptides
 , creating HMMer_classify job for each peptide unclassify
 by interpro
 
-=head1 MAINTAINER
-
-$Author: ckong $
-
 =cut
 package Bio::EnsEMBL::Compara::RunnableDB::ComparaHMM::HMMClassifyInterpro;
 

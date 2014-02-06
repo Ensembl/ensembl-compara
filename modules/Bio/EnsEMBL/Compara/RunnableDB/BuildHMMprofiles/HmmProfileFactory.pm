@@ -6,10 +6,6 @@ Bio::EnsEMBL::Compara::RunnableDB::BuildHMMprofiles::HmmProfileFactory
 
  This module create a hmmbuild job for each multiple alignment output
 
-=head1 MAINTAINER
-
-$Author: ckong $
-
 =cut
 package Bio::EnsEMBL::Compara::RunnableDB::BuildHMMprofiles::HmmProfileFactory;
 
