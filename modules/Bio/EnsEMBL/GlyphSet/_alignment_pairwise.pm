@@ -316,21 +316,26 @@ sub make_net_urls {
    
   my $ga_first = $gabs->[0];
   my $ga_first_nonref = $ga_first->get_all_non_reference_genomic_aligns->[0];
-  # Determine extent of net on target
+  # Determine extent of net on target and reference
   my ($hs_net,$he_net);
+  my ($ref_s_net,$ref_e_net);
   foreach my $gab (@$gabs) {
+    my $ref = $gab->reference_genomic_align;
+    my $ref_start = $ref->dnafrag_start;
+    my $ref_end = $ref->dnafrag_end;
+
+    $ref_s_net = $ref_start if (!defined $ref_s_net) or $ref_start < $ref_s_net;
+    $ref_e_net = $ref_end   if (!defined $ref_e_net) or $ref_end   > $ref_e_net;
+
     my $nonref = $gab->get_all_non_reference_genomic_aligns->[0];
-    my $hstart = $nonref->dnafrag->start + $nonref->dnafrag_start - 1;
-    my $hend = $nonref->dnafrag->start + $nonref->dnafrag_end-1;
+    my $hstart = $nonref->dnafrag_start;
+    my $hend = $nonref->dnafrag_end;
     $hs_net = $hstart if (!defined $hs_net) or $hstart < $hs_net;
     $he_net = $hend   if (!defined $he_net) or $hend   > $he_net;
   } 
+
   my $seqname = $ga_first->reference_genomic_align->dnafrag->name;
-  my $start = $ga_first->reference_slice_start;
-  my $end = $ga_first->reference_slice_end;
-  my $abs_start = $ga_first->reference_slice->start + $start - 1;
-  my $abs_end = $ga_first->reference_slice->start   + $end -1;
-  my $n0 = "$seqname:$abs_start-$abs_end";
+  my $n0 = "$seqname:$ref_s_net-$ref_e_net";
   my $n1 = $ga_first_nonref->dnafrag->name. ":$hs_net-$he_net";
 
   return ($n0,$n1);
@@ -422,9 +427,11 @@ sub draw_boxes {
 
   foreach my $gab (@$ga_s) {
     my @tag = (
-      $gab->reference_genomic_align->dbID(),
-      $gab->get_all_non_reference_genomic_aligns->[0]->dbID()
+      #Need to use original_dbID if GenomicAlign has been restricted
+      $gab->reference_genomic_align->dbID() || $gab->reference_genomic_align->original_dbID,
+      $gab->get_all_non_reference_genomic_aligns->[0]->dbID() || $gab->get_all_non_reference_genomic_aligns->[0]->original_dbID
     );
+
     @tag = reverse @tag if $self->strand == 1; # Flip on bottom of link
     my $args = {
       drawx => $self->should_draw_cross($gab),
@@ -464,7 +471,7 @@ sub prepare_zmenus {
     n1      => $n1,
     s1      => $other_species,
     method  => $self->my_config('type'),
-    align   => $mlss_id,
+    align   => $mlss_id, #use only the mlss_id here and create the rest of the link in the ZMenu/PairwiseAlignment module because the region and net values need to be set differently
   };
 }
 
@@ -544,7 +551,9 @@ sub features {
   my $mlss = $mlss_a->fetch_by_dbID($mlss_id);
   my $gab_a = $compara->get_GenomicAlignBlockAdaptor;
   my $cont = $self->{'container'};
-  my $gab_s = $gab_a->fetch_all_by_MethodLinkSpeciesSet_Slice($mlss,$cont);
+
+  #Get restricted blocks
+  my $gab_s = $gab_a->fetch_all_by_MethodLinkSpeciesSet_Slice($mlss,$cont, undef, undef, 'restrict');
   # Filter to target non-refs, if specified
   my $target = $self->my_config('target');
   if($target) {

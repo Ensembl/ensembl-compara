@@ -632,7 +632,8 @@ sub draw_cigar_feature {
     } elsif ($type eq 'D') { # If a deletion temp store it so that we can draw after all matches
       ($s, $e) = ($e, $s) if $s < $e;
       
-      next if $e < 1 || $s > $length || $params->{'scalex'} < 1 ;  # Skip if all outside box
+#      next if $e < 1 || $s > $length || $params->{'scalex'} < 1 ;  # Skip if all outside box
+      next if $e < 1 || $s > $length;  # Skip if all outside box
       
       push @delete, $e;
     }
