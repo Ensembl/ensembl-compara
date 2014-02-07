@@ -312,13 +312,8 @@ sub fetch_all_by_genome_pair {
 =cut
 
 sub fetch_all_in_paralogues_from_Member_NCBITaxon {
-    my ($self, $member, $boundary_species) = @_;
-
-    assert_ref($member, 'Bio::EnsEMBL::Compara::Member');
-    assert_ref($boundary_species, 'Bio::EnsEMBL::Compara::NCBITaxon');
-
-    my $all_paras = $self->fetch_all_by_Member($member, -METHOD_LINK_SPECIES_SET => $self->db->get_MethodLinkSpeciesSetAdaptor->fetch_by_method_link_type_GenomeDBs('ENSEMBL_PARALOGUES', [$member->genome_db]));
-    return $self->_filter_paralogues_by_ancestral_species($all_paras, $member->genome_db, $boundary_species, 1);
+    my $self = shift;
+    return $self->_fetch_in_out_paralogues_with_NCBITaxon(1, @_);
 }
 
 
@@ -336,13 +331,8 @@ sub fetch_all_in_paralogues_from_Member_NCBITaxon {
 =cut
 
 sub fetch_all_out_paralogues_from_Member_NCBITaxon {
-    my ($self, $member, $boundary_species) = @_;
-
-    assert_ref($member, 'Bio::EnsEMBL::Compara::Member');
-    assert_ref($boundary_species, 'Bio::EnsEMBL::Compara::NCBITaxon');
-
-    my $all_paras = $self->fetch_all_by_Member($member, -METHOD_LINK_SPECIES_SET => $self->db->get_MethodLinkSpeciesSetAdaptor->fetch_by_method_link_type_GenomeDBs('ENSEMBL_PARALOGUES', [$member->genome_db]));
-    return $self->_filter_paralogues_by_ancestral_species($all_paras, $member->genome_db, $boundary_species, 0);
+    my $self = shift;
+    return $self->_fetch_in_out_paralogues_with_NCBITaxon(0, @_);
 }
 
 
@@ -350,26 +340,21 @@ sub fetch_all_out_paralogues_from_Member_NCBITaxon {
 
   Arg [1]    : species (Bio::EnsEMBL::Compara::GenomeDB)
   Arg [2]    : boundary_species (Bio::EnsEMBL::Compara::NCBITaxon)
+  Arg [3]    : member_type ('protein' or 'ncrna') (optional)
   Example    : $homologies = $HomologyAdaptor->fetch_all_in_paralogues_from_GenomeDB_NCBITaxon
                     $human_genomedb, $chicken_genomdb->taxon);
   Description: fetch all the same species paralog of this species, that are more recent than
                 the speciation even refered to by the boundary_species argument
+               WARNING: Some combinations may lead to a large number of rows (several millions)
+               The time to download the data may be very long. We advise to use Biomart in those cases.
   Returntype : an array reference of Bio::EnsEMBL::Compara::Homology objects
   Caller     :
 
 =cut
 
 sub fetch_all_in_paralogues_from_GenomeDB_NCBITaxon {
-    my ($self, $species, $boundary_species) = @_;
-
-    assert_ref($species, 'Bio::EnsEMBL::Compara::GenomeDB');
-    assert_ref($boundary_species, 'Bio::EnsEMBL::Compara::NCBITaxon');
-
-    my $all_paras = $self->fetch_all_by_MethodLinkSpeciesSet(
-        $self->db->get_MethodLinkSpeciesSetAdaptor->fetch_by_method_link_type_GenomeDBs('ENSEMBL_PARALOGUES', [$species]),
-    );
-
-    return $self->_filter_paralogues_by_ancestral_species($all_paras, $species, $boundary_species, 1);
+    my $self = shift;
+    return $self->_fetch_in_out_paralogues_with_NCBITaxon(1, @_);
 }
 
 
@@ -377,26 +362,79 @@ sub fetch_all_in_paralogues_from_GenomeDB_NCBITaxon {
 
   Arg [1]    : species (Bio::EnsEMBL::Compara::GenomeDB)
   Arg [2]    : boundary_species (Bio::EnsEMBL::Compara::NCBITaxon)
+  Arg [3]    : member_type ('protein' or 'ncrna') (optional)
   Example    : $homologies = $HomologyAdaptor->fetch_all_out_paralogues_from_GenomeDB_NCBITaxon
                     $human_genomedb, $chicken_genomdb->taxon);
   Description: fetch all the same species paralog of this species, that are older than
                 the speciation even refered to by the boundary_species argument
+               WARNING: Some combinations may lead to a large number of rows (several millions)
+               The time to download the data may be very long. We advise to use Biomart in those cases.
   Returntype : an array reference of Bio::EnsEMBL::Compara::Homology objects
   Caller     :
 
 =cut
 
 sub fetch_all_out_paralogues_from_GenomeDB_NCBITaxon {
-    my ($self, $species, $boundary_species) = @_;
+    my $self = shift;
+    return $self->_fetch_in_out_paralogues_with_NCBITaxon(0, @_);
+}
 
-    assert_ref($species, 'Bio::EnsEMBL::Compara::GenomeDB');
+
+sub _fetch_in_out_paralogues_with_NCBITaxon {
+    my ($self, $in, $ref, $boundary_species, $member_type) = @_;
+
+    my $species;
+    my $mlss;
+
+    if (check_ref($ref, 'Bio::EnsEMBL::Compara::GenomeDB')) {
+        $species = $ref;
+        $mlss = $self->db->get_MethodLinkSpeciesSetAdaptor->fetch_by_method_link_type_GenomeDBs('ENSEMBL_PARALOGUES', [$species]);
+    } else {
+        assert_ref($ref, 'Bio::EnsEMBL::Compara::Member');
+        $species = $ref->genome_db;
+    }
+
     assert_ref($boundary_species, 'Bio::EnsEMBL::Compara::NCBITaxon');
+    # The last common ancestor of $species1 and $species2 defines the boundary
+    my $lca = $self->db->get_NCBITaxonAdaptor->fetch_first_shared_ancestor_indexed($species->taxon, $boundary_species);
 
-    my $all_paras = $self->fetch_all_by_MethodLinkSpeciesSet(
-        $self->db->get_MethodLinkSpeciesSetAdaptor->fetch_by_method_link_type_GenomeDBs('ENSEMBL_PARALOGUES', [$species]),
+    my @good_node_ids = ();
+    if ($member_type) {
+        push @good_node_ids, @{$self->_get_suitable_species_tree_node_ids($in, $lca, $member_type)};
+    } else {
+        push @good_node_ids, @{$self->_get_suitable_species_tree_node_ids($in, $lca, 'protein')};
+        push @good_node_ids, @{$self->_get_suitable_species_tree_node_ids($in, $lca, 'ncrna')};
+    }
+
+    if ($mlss) {
+        return $self->fetch_all_by_MethodLinkSpeciesSet($mlss, -SPECIES_TREE_NODE_IDS => \@good_node_ids);
+    } else {
+        return $self->fetch_all_by_Member($ref, -SPECIES_TREE_NODE_IDS => \@good_node_ids);
+    }
+}
+
+
+sub _get_suitable_species_tree_node_ids {
+    my ($self, $in, $lca, $member_type) = @_;
+
+    my $mlss = $self->db->get_MethodLinkSpeciesSetAdaptor->fetch_all_by_method_link_type($member_type eq 'protein' ? 'PROTEIN_TREES' : 'NC_TREES')->[0];
+    my $species_tree = $self->db->get_SpeciesTreeAdaptor->fetch_by_method_link_species_set_id_label($mlss->dbID, 'default');
+
+    my $sql = sprintf(q{SELECT DISTINCT stn.node_id FROM
+        ncbi_taxa_node ntn1 JOIN ncbi_taxa_node ntn2 ON ntn1.left_index %s ntn2.left_index AND ntn1.right_index > ntn2.left_index
+        LEFT JOIN species_tree_node stn ON ntn2.taxon_id = stn.taxon_id
+        LEFT JOIN genome_db gdb ON ntn2.taxon_id = gdb.taxon_id AND stn.genome_db_id = gdb.genome_db_id
+    WHERE
+        ntn1.taxon_id = ?
+        AND stn.root_id = ?
+        },
+        $in ? '<' : '>',
+        $in ? '>' : '<',
     );
-
-    return $self->_filter_paralogues_by_ancestral_species($all_paras, $species, $boundary_species, 0);
+    my $sth = $self->prepare($sql);
+    $sth->execute($lca->node_id, $species_tree->root_id);
+    my $res = $sth->fetchall_arrayref;
+    return [map {$_->[0]} @$res];
 }
 
 
