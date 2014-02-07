@@ -125,8 +125,8 @@ sub _stats_tables {
   my %glossary          = $sd->multiX('ENSEMBL_GLOSSARY');
   my %glossary_lookup   = (
       'coding'              => 'Protein coding',
-      'shortnoncoding'      => 'Short non coding gene',
-      'longnoncoding'       => 'Long non coding gene',
+      'snoncoding'          => 'Short non coding gene',
+      'lnoncoding'          => 'Long non coding gene',
       'pseudogene'          => 'Pseudogene',
       'transcript'          => 'Transcript',
     );
@@ -221,7 +221,7 @@ sub _stats_tables {
       my $rmethod = 'get_r'.$_.'_count';
       my $readthrough = $genome_container->$rmethod;
       if ($readthrough) {
-        $stat .= ' (inc '.$self->thousandify($readthrough).' readthrough)'; 
+        $stat .= ' (incl. '.$self->thousandify($readthrough).' <span class="glossary_mouseover">readthrough<span class="floating_popup">'.$glossary{'Readthrough'}.'</span></span>)'; 
       }
     }
     $counts->add_row({
