@@ -392,7 +392,7 @@ sub get_tagvalue {
     my $default = shift;
 
     if (($tag eq 'taxon_id') or ($tag eq 'taxon_name')) {
-        deprecate("The $tag tag has been deprecated. Please use species_tree_node() from the gene-tree node to get taxon information");
+        deprecate("The $tag tag has been deprecated, support will end with e78. Please use species_tree_node() from the gene-tree node to get taxon information");
         if (not $self->has_tag($tag) and $self->has_tag('species_tree_node_id')) {
             $self->add_tag('taxon_id', $self->species_tree_node->taxon_id);
             $self->add_tag('taxon_name', $self->species_tree_node->node_name);
