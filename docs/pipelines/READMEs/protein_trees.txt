@@ -383,12 +383,47 @@ It is not mandatory, but split genes won't be detected for these species, and th
 
 If you don't mind the risks, just forgive the job. Otherwise, have a look at the gene_coord_gff file.
 
+
     5.7  GarbageCollector: The worker died because of MEMLIMIT
 
 This is the error message in the msg table when the farm job memory limit is exceeded.
 
 This can be corrected in guiHive by changing the resource class of the corresponding analysis
 
+
+    5.8 "Could not find species_name='ascaris_suum', assembly_name='v3' on the servers provided, please investigate"
+
+Check that the list of registry parameters passed to the job are correct.
+You can also check that the locator field in genome_db is set to a MySQL NULL and not the string "NULL"
+
+
+    5.9 "The protein sequences should not be only ACGTN"
+
+This HC fails if, for instance, there is a stop codon ("*") in the sequence.
+By repeating the SQL query, you'll get the offending member_ids. Then:
+
+ > SELECT sequence_id FROM member WHERE member_id = XXXX;
+ > SELECT sequence FROM sequence WHERE sequence_id = YYYY;
+ > UPDATE sequence SET sequence = "...", length = ... WHERE sequence_id = YYYY;
+
+
+   5.10 "Members should have chromosome coordinates"
+
+That usually happens for species loaded from a FASTA file with no GFF file.
+You have to be aware that the detection of split genes is not possible for such species, but you can still run the pipeline.
+If it is the only failed HC for this species, and if you are happy with the pipeline running without coordinates, you can forgive the job.
+
+
+   5.11 "Peptides should have CDS sequences (which are made of only ACGTN)"
+
+Some CDS sequences are either missing, or not canonical. If they contain some ambiguity bases (like R, Y, etc), you can turn the option "allow_ambiguity_codes" on and restart the HC.
+The pipeline should run fine with such characters, but they'll probably be interpreted as gaps by most of the programs.
+
+
+   5.12 "this algorithm is less useful if only 0 species are matched"
+
+This error message from njtree_phyml (aka treebest) means that the species tree do not match your set of genome_dbs.
+Make sure that your species tree contains all the species.
 
 
 6. Looking at the results
