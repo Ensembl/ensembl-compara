@@ -84,7 +84,7 @@ our @ISA = qw(Bio::EnsEMBL::DBSQL::BaseAdaptor);
 
 =head2 fetch_by_synteny_region_id
 
-  DEPRECATED. Please use fetch_all_by_synteny_region_id() instead
+  DEPRECATED. fetch_by_synteny_region_id will be removed in e76. Please use fetch_all_by_synteny_region_id() instead
 
 =cut
 
@@ -92,6 +92,7 @@ our @ISA = qw(Bio::EnsEMBL::DBSQL::BaseAdaptor);
 sub fetch_by_synteny_region_id {
   my ($self, $synteny_region_id) = @_;
 
+  deprecate('fetch_by_synteny_region_id() is deprecated and will be removed in e76. Please use fetch_all_by_synteny_region_id() instead');
   return $self->fetch_all_by_synteny_region_id($synteny_region_id);
 }
 
