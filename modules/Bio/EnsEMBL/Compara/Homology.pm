@@ -284,7 +284,7 @@ sub dnds_ratio {
 sub print_homology {
   my $self = shift;
   
-  printf("Homology %d,%s,%s : ", $self->dbID, $self->description, $self->subtype);
+  printf("Homology %d,%s,%s : ", $self->dbID, $self->description, $self->taxonomy_level);
   foreach my $member (@{$self->gene_list}) {
     printf("%s(%d)\t", $member->stable_id, $member->dbID);
   }
