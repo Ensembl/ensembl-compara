@@ -52,7 +52,7 @@ use strict;
 use warnings;
 
 use Bio::EnsEMBL::DBSQL::DBConnection;
-use Bio::EnsEMBL::Utils::Exception qw(throw warning deprecate);
+use Bio::EnsEMBL::Utils::Exception qw(throw warning);
 use Bio::EnsEMBL::Utils::SqlHelper;
 use Bio::EnsEMBL::Utils::Scalar qw(:assert);
 

@@ -55,7 +55,7 @@ package Bio::EnsEMBL::Compara::DBSQL::GeneTreeNodeAdaptor;
 use strict;
 use warnings;
 
-use Bio::EnsEMBL::Utils::Exception qw(throw warning deprecate);
+use Bio::EnsEMBL::Utils::Exception qw(throw warning);
 use Bio::EnsEMBL::Utils::Argument qw(rearrange);
 use Bio::EnsEMBL::Utils::Scalar qw(:assert);
 
