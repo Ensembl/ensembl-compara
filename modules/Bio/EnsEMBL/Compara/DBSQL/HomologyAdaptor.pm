@@ -154,19 +154,6 @@ sub fetch_all_by_Member_paired_species {
 }
 
 
-=head2 fetch_all_by_Member_method_link_type
-
-  DEPRECATED: Use fetch_all_by_Member($member, -METHOD_LINK_TYPE => $method_link_type) instead.
-
-=cut
-
-sub fetch_all_by_Member_method_link_type {  # DEPRECATED
-  my ($self, $member, $method_link_type) = @_;
-  deprecate('fetch_all_by_Member_method_link_type() is deprecated and will be removed in e74. Use fetch_all_by_Member($member, -METHOD_LINK_TYPE => $method_link_type) instead.');
-  return $self->fetch_all_by_Member($member, -METHOD_LINK_TYPE => $method_link_type);
-}
-
-
 =head2 fetch_by_Member_Member
 
   Arg [1]    : Bio::EnsEMBL::Compara::Member $member
