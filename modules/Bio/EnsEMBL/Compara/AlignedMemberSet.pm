@@ -262,20 +262,6 @@ sub load_cigars_from_file {
 }
 
 
-=head2 load_cigars_from_fasta
-
-    Description: DEPRECATED: load_cigars_from_fasta() is deprecated. Please use $self->load_cigars_from_file($file, -format => 'fasta') instead (possibly with a -import_seq argument.
-
-=cut
-
-sub load_cigars_from_fasta { # DEPRECATED
-    my ($self, $file, $import_seq) = @_;
-
-    deprecate('load_cigars_from_fasta() is deprecated. Please use $self->load_cigars_from_file($file, -format => \'fasta\') instead (possibly with a -import_seq argument');
-    return $self->load_cigars_from_file($file, -format => 'fasta', -import_seq => $import_seq);
-}
-
-
 =head2 get_SimpleAlign
 
     Arg [-UNIQ_SEQ] : (opt) boolean (default: false)

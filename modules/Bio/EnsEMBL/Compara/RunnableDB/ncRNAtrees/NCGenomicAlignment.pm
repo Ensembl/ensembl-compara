@@ -353,7 +353,7 @@ sub store_fasta_alignment {
     bless $aln, 'Bio::EnsEMBL::Compara::AlignedMemberSet';
     $aln->seq_type($aln_seq_type);
     $aln->aln_method('prank');
-    $aln->load_cigars_from_fasta($aln_file, 1);
+    $aln->load_cigars_from_file($aln_file, -format => 'fasta', -import_seq => 1);
 
     my $sequence_adaptor = $self->compara_dba->get_SequenceAdaptor;
     foreach my $member (@{$aln->get_all_Members}) {
