@@ -165,15 +165,7 @@ sub populate_tree {
     [qw( genes EnsEMBL::Web::Component::Gene::FamilyGenes )],
     { 'availability'  => 'family', 'no_menu_entry' => 1 }
   ));
-  
-  $fam_node->append($self->create_subnode('Family/Proteins', 'Proteins in this family',
-    [qw(
-      ensembl EnsEMBL::Web::Component::Gene::FamilyProteins/ensembl
-      other   EnsEMBL::Web::Component::Gene::FamilyProteins/other
-    )],
-    { 'availability'  => 'family database:compara core', 'no_menu_entry' => 1 }
-  ));
-  
+
   $fam_node->append($self->create_subnode('Family/Alignments', 'Multiple alignments in this family',
     [qw( jalview EnsEMBL::Web::Component::Gene::FamilyAlignments )],
     { 'availability'  => 'family database:compara core', 'no_menu_entry' => 1 }
