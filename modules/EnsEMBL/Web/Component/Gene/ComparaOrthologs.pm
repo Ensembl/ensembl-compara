@@ -186,7 +186,7 @@ sub content {
           type   => 'Gene',
           action => 'Compara_Tree' . ($cdb =~ /pan/ ? '/pan_compara' : ''),
           g1     => $stable_id,
-          anc    => $orthologue->{'ancestor_node_id'},
+          anc    => $orthologue->{'gene_tree_node_id'},
           r      => undef
         })
       );
