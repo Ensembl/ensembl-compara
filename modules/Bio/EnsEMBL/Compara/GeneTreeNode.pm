@@ -144,20 +144,6 @@ sub taxonomy_level {
 }
 
 
-=head2 taxon
-
-  Description: DEPRECATED: GeneTreeNode::taxon is deprecated and will be removed in e76, Please use GeneTreeNode::species_tree_node()->taxon() instead
-
-=cut
-
-sub taxon {  ## DEPRECATED
-    my $self = shift;
-    deprecate('GeneTreeNode::taxon is deprecated and will be removed in e76, Please use GeneTreeNode::species_tree_node()->taxon() instead');
-    return undef unless $self->species_tree_node();
-    return $self->species_tree_node()->taxon;
-}
-
-
 =head2 node_type
 
   Description: Getter for the node_type attribute. It shows the event that took place
