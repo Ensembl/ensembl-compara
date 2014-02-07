@@ -132,8 +132,13 @@ sub content_ensembl {
 
   my $member_skipped_count = 0;
   my @member_skipped_species;
-  
-  $html .= "<h3>$sitename proteins in this family</h3>";
+
+  my $table     = $self->new_twocol;
+  my $stable_id = $family->stable_id;
+  my $desc      = $family->description;
+  $table->add_row("$sitename Family ID",   $stable_id);
+  $table->add_row('Description'        , $desc);
+  $html .= $table->render;
   
   if ($count > 0) {
     my $ens_table = $self->new_table([], [], { margin  => '1em 0px' });
