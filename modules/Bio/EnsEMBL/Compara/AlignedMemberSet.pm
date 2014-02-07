@@ -315,11 +315,11 @@ sub get_SimpleAlign {
             rearrange([qw(UNIQ_SEQ CDNA ID_TYPE STOP2X APPEND_TAXON_ID APPEND_SP_SHORT_NAME APPEND_GENOMEDB_ID EXON_CASED KEEP_GAPS SEQ_TYPE)], @args);
     }
 
-    warn "-CDNA => 1 in AlignedMemberSet::get_SimpleAlign is deprecated. Please use -SEQ_TYPE => 'cds' instead" if $cdna;
+    warn "-CDNA => 1 in AlignedMemberSet::get_SimpleAlign is deprecated and will be removed in e76. Please use -SEQ_TYPE => 'cds' instead" if $cdna;
     die "-CDNA and -SEQ_TYPE cannot be both defined in AlignedMemberSet::get_SimpleAlign" if $cdna and $seq_type;
     $seq_type = 'cds' if $cdna;
 
-    warn "-EXON_CASED => 1 in AlignedMemberSet::get_SimpleAlign is deprecated. Please use -SEQ_TYPE => 'exon_cased' instead" if $exon_cased;
+    warn "-EXON_CASED => 1 in AlignedMemberSet::get_SimpleAlign is deprecated and will be removed in e76. Please use -SEQ_TYPE => 'exon_cased' instead" if $exon_cased;
     die "-EXON_CASED and -SEQ_TYPE cannot be both defined in AlignedMemberSet::get_SimpleAlign" if $exon_cased and $seq_type;
     $seq_type = 'exon_cased' if $exon_cased;
 
