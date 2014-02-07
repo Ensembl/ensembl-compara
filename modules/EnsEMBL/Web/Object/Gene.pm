@@ -701,7 +701,7 @@ sub get_homology_matches {
       my $order = 0;
       
       foreach my $homology (@{$homologues->{$display_spp}}) { 
-        my ($homologue, $homology_desc, $homology_subtype, $query_perc_id, $target_perc_id, $dnds_ratio, $ancestor_node_id) = @$homology;
+        my ($homologue, $homology_desc, $homology_subtype, $query_perc_id, $target_perc_id, $dnds_ratio, $gene_tree_node_id) = @$homology;
         
         next unless $homology_desc =~ /$homology_description/;
         next if $disallowed_homology && $homology_desc =~ /$disallowed_homology/;
@@ -718,7 +718,7 @@ sub get_homology_matches {
           query_perc_id       => $query_perc_id,
           target_perc_id      => $target_perc_id,
           homology_dnds_ratio => $dnds_ratio,
-          ancestor_node_id    => $ancestor_node_id,
+          gene_tree_node_id   => $gene_tree_node_id,
           order               => $order,
           location            => sprintf('%s:%s-%s:%s', map $homologue->$_, qw(chr_name chr_start chr_end chr_strand))
         };
@@ -800,7 +800,7 @@ sub fetch_homology_species_hash {
     
     # FIXME: ucfirst $genome_db_name is a hack to get species names right for the links in the orthologue/paralogue tables.
     # There should be a way of retrieving this name correctly instead.
-    push @{$homologues{ucfirst $genome_db_name}}, [ $target_member, $homology->description, $homology->subtype, $query_perc_id, $target_perc_id, $dnds_ratio, $homology->ancestor_node_id];
+    push @{$homologues{ucfirst $genome_db_name}}, [ $target_member, $homology->description, $homology->taxonomy_level, $query_perc_id, $target_perc_id, $dnds_ratio, $homology->{_gene_tree_node_id}];
   }
   
   $self->timer_push('homologies hacked', 6);
