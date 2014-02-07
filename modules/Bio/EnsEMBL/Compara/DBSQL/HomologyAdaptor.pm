@@ -47,7 +47,8 @@ our @ISA = qw(Bio::EnsEMBL::Compara::DBSQL::BaseRelationAdaptor);
 sub fetch_all_by_Member {
   my ($self, $member, @args) = @_;
 
-  my ($method_link_type, $method_link_species_set) = rearrange([qw(METHOD_LINK_TYPE METHOD_LINK_SPECIES_SET)], @args);
+  my ($method_link_type, $method_link_species_set, $species_tree_node_ids) =
+    rearrange([qw(METHOD_LINK_TYPE METHOD_LINK_SPECIES_SET SPECIES_TREE_NODE_IDS)], @args);
 
   if (defined $method_link_species_set) {
     check_ref($method_link_species_set, 'Bio::EnsEMBL::Compara::MethodLinkSpeciesSet') || assert_integer($method_link_species_set)
@@ -63,6 +64,10 @@ sub fetch_all_by_Member {
   if (defined $method_link_species_set) {
     $constraint .= ' AND h.method_link_species_set_id = ?';
     $self->bind_param_generic_fetch(ref($method_link_species_set) ? $method_link_species_set->dbID : $method_link_species_set, SQL_INTEGER);
+  }
+
+  if (defined $species_tree_node_ids) {
+    $constraint = sprintf(' %s AND h.species_tree_node_id IN (%s)', $constraint, join(',', -1, @$species_tree_node_ids));
   }
 
   # This internal variable is used by add_Member method 
@@ -213,8 +218,8 @@ sub fetch_all_by_MethodLinkSpeciesSet {
 
     throw("method_link_species_set arg is required\n") unless ($mlss);
 
-    my ($orthology_type, $is_tree_compliant) =
-        rearrange([qw(ORTHOLOGY_TYPE IS_TREE_COMPLIANT)], @args);
+    my ($orthology_type, $is_tree_compliant, $species_tree_node_ids) =
+        rearrange([qw(ORTHOLOGY_TYPE IS_TREE_COMPLIANT SPECIES_TREE_NODE_IDS)], @args);
 
     my $mlss_id = (ref($mlss) ? $mlss->dbID : $mlss);
     my $constraint = ' h.method_link_species_set_id = ?';
@@ -228,6 +233,10 @@ sub fetch_all_by_MethodLinkSpeciesSet {
     if (defined $is_tree_compliant) {
         $constraint .= ' AND h.is_tree_compliant = ?';
         $self->bind_param_generic_fetch($is_tree_compliant, SQL_INTEGER);
+    }
+
+    if (defined $species_tree_node_ids) {
+        $constraint = sprintf(' %s AND h.species_tree_node_id IN (%s)', $constraint, join(',', -1, @$species_tree_node_ids));
     }
 
     return $self->generic_fetch($constraint);
