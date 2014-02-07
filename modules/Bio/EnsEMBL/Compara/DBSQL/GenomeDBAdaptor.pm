@@ -410,7 +410,7 @@ sub _find_missing_DBAdaptors {
         # Get the production name and assembly to compare to our GenomeDBs
         my $mc = $db_adaptor->get_MetaContainer();
         my $that_species = $mc->get_production_name();
-        my $that_assembly = $db_adaptor->assembly();
+        my $that_assembly = $db_adaptor->assembly_name();
         $db_adaptor->dbc->disconnect_if_idle();
 
         eval {
