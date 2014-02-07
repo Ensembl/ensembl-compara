@@ -195,6 +195,8 @@ sub fetch_by_Member_Member {
   Arg [1]    : Bio::EnsEMBL::Compara::MethodLinkSpeciesSet $mlss or its dbID
   Arg [-ORTHOLOGY_TYPE] (opt)
              : string: the type of homology that have to be fetched
+  Arg [-IS_TREE_COMPLIANT] (opt)
+             : boolean: the filter on the confidence level
   Example    : $homologies = $HomologyAdaptor->fetch_all_by_MethodLinkSpeciesSet($mlss);
   Description: fetch all the homology relationships for the given MethodLinkSpeciesSet
                Since the homology analysis of each species pair is given a unique 
@@ -211,7 +213,8 @@ sub fetch_all_by_MethodLinkSpeciesSet {
 
     throw("method_link_species_set arg is required\n") unless ($mlss);
 
-    my ($orthology_type) = rearrange([qw(ORTHOLOGY_TYPE)], @args);
+    my ($orthology_type, $is_tree_compliant) =
+        rearrange([qw(ORTHOLOGY_TYPE IS_TREE_COMPLIANT)], @args);
 
     my $mlss_id = (ref($mlss) ? $mlss->dbID : $mlss);
     my $constraint = ' h.method_link_species_set_id = ?';
@@ -221,6 +224,12 @@ sub fetch_all_by_MethodLinkSpeciesSet {
         $constraint .= ' AND h.description = ?';
         $self->bind_param_generic_fetch($orthology_type, SQL_VARCHAR);
     }
+
+    if (defined $is_tree_compliant) {
+        $constraint .= ' AND h.is_tree_compliant = ?';
+        $self->bind_param_generic_fetch($is_tree_compliant, SQL_INTEGER);
+    }
+
     return $self->generic_fetch($constraint);
 }
 
