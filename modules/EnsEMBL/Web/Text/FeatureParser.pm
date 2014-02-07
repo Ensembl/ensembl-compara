@@ -216,7 +216,7 @@ sub parse {
         }
         if ($columns && scalar(@$columns)) {   
           my ($chr, $start, $end) = $empty->coords($columns); 
-          $chr =~ s/chr//;
+          $chr =~ s/[cC]hr//;
 
           ## We currently only do this on initial upload (by passing current location)  
           $self->{'_find_nearest'}{'done'} = $self->_find_nearest(
