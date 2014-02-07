@@ -148,14 +148,14 @@ sub new_fast {
 
 =head2 stable_id
 
-DEPRECATED: SyntenyRegions don't have any stable id.
+DEPRECATED: stable_id() will be removed in e76. SyntenyRegions don't have any stable id.
 
 =cut
 
 sub stable_id {
   my $obj = shift;
 
-  deprecate("SyntenyRegions don't have any stable id.");
+  deprecate("SyntenyRegions don't have any stable id. stable_id() will be removed in e76");
 
   if( @_ ) {
     my $value = shift;
