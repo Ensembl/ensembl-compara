@@ -426,7 +426,7 @@ sub fetch_protein_tree {
   $tree->print_tree($self->{'scale'});
   warn("%d proteins\n", scalar(@{$tree->get_all_leaves}));
   
-  my $newick = $tree->newick_simple_format;
+  my $newick = $tree->newick_format('simple');
   warn("$newick\n");
 
 }
@@ -593,7 +593,7 @@ sub dumpTreeAsNewick
   
   warn("missing tree\n") unless($tree);
 
-  my $newick = $tree->newick_simple_format;
+  my $newick = $tree->newick_format('simple');
 
   if($self->{'dump'}) {
     my $aln_file = "proteintree_". $tree->node_id;
@@ -620,7 +620,6 @@ sub dumpTreeAsNHX
   
   warn("missing tree\n") unless($tree);
 
-  # newick_simple_format is a synonymous of newick_format method
   my $nhx;
   if ($self->{'nhx_gene_id'}) {
     $nhx = $tree->nhx_format("gene_id");
