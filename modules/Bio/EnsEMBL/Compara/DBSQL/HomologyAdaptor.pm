@@ -272,7 +272,7 @@ sub fetch_all_by_tree_node_id {
   throw("tree_node_id arg is required\n")
     unless ($tree_node_id);
 
-  my $constraint = ' h.tree_node_id = ?';
+  my $constraint = ' h.gene_tree_root_id = ?';
   $self->bind_param_generic_fetch($tree_node_id, SQL_INTEGER);
 
   return $self->generic_fetch($constraint);
