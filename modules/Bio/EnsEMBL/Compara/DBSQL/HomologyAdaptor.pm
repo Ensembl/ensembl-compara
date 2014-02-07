@@ -35,12 +35,21 @@ our @ISA = qw(Bio::EnsEMBL::Compara::DBSQL::BaseRelationAdaptor);
 
 =head2 fetch_all_by_Member
 
- Arg [1]    : Bio::EnsEMBL::Compara::Member $member
- Example    : $homologies = $HomologyAdaptor->fetch_all_by_Member($member);
- Description: fetch the homology relationships where the given member is implicated
- Returntype : an array reference of Bio::EnsEMBL::Compara::Homology objects
- Exceptions : none
- Caller     : general
+  Arg [1]    : Bio::EnsEMBL::Compara::Member $member
+  Arg [-METHOD_LINK_TYPE] (opt)
+             : string: the method_link_type of the homologies
+               probably ENSEMBL_ORTHOLOGUES or ENSEMBL_PARALOGUES
+  Arg [-METHOD_LINK_SPECIES_SET] (opt)
+             : Bio::EnsEMBL::Compara::MethodLinkSpeciesSet
+               Describes the kind of homology and the set of species
+  Arg [-SPECIES_TREE_NODE_IDS] (opt)
+             : Array of integers: the node_ids of the SpeciesTreeNodes
+               we want to keep in the results. Used to get in/out-paralogues
+  Example    : $homologies = $HomologyAdaptor->fetch_all_by_Member($member);
+  Description: fetch the homology relationships where the given member is implicated
+  Returntype : an array reference of Bio::EnsEMBL::Compara::Homology objects
+  Exceptions : none
+  Caller     : general
 
 =cut
 
@@ -202,6 +211,9 @@ sub fetch_by_Member_Member {
              : string: the type of homology that have to be fetched
   Arg [-IS_TREE_COMPLIANT] (opt)
              : boolean: the filter on the confidence level
+  Arg [-SPECIES_TREE_NODE_IDS] (opt)
+             : Array of integers: the node_ids of the SpeciesTreeNodes
+               we want to keep in the results. Used to get in/out-paralogues
   Example    : $homologies = $HomologyAdaptor->fetch_all_by_MethodLinkSpeciesSet($mlss);
   Description: fetch all the homology relationships for the given MethodLinkSpeciesSet
                Since the homology analysis of each species pair is given a unique 
