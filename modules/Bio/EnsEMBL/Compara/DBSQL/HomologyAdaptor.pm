@@ -450,32 +450,6 @@ sub _get_suitable_species_tree_node_ids {
 }
 
 
-# Convenience method to filter a list of homologies
-sub _filter_paralogues_by_ancestral_species {
-    my ($self, $all_paras, $species1, $species2, $in_out) = @_;
-
-    assert_ref($species1, 'Bio::EnsEMBL::Compara::GenomeDB');
-    assert_ref($species2, 'Bio::EnsEMBL::Compara::NCBITaxon');
-
-    my $ncbi_a = $self->db->get_NCBITaxonAdaptor;
-
-    # The last common ancestor of $species1 and $species2 defines the boundary
-    my $lca = $ncbi_a->fetch_first_shared_ancestor_indexed($species1->taxon, $species2);
-
-    my @good_paralogues;
-    foreach my $hom (@$all_paras) {
-
-        # The taxon where the homology "appeared"
-        my $ancspec = $ncbi_a->fetch_node_by_name($hom->subtype);
-    
-        # Compares the homology taxon to the boundary
-        push @good_paralogues, $hom if $in_out xor ($ancspec eq $ncbi_a->fetch_first_shared_ancestor_indexed($lca, $ancspec));
-    }
-
-    return \@good_paralogues;
-}
-
-
 =head2 fetch_orthocluster_with_Member
 
   Arg [1]    : Bio::EnsEMBL::Compara::Member $member
