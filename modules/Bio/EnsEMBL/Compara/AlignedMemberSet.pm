@@ -262,21 +262,6 @@ sub load_cigars_from_file {
 }
 
 
-=head2 read_clustalw
-
-    Description : DEPRECATED. read_clustalw() is deprecated. Please use $self->load_cigars_from_file($file, -format => 'clustalw') instead.
-
-=cut
-
-sub read_clustalw {  # DEPRECATED
-    my $self = shift;
-    my $file = shift;
-
-    deprecate('read_clustalw() is deprecated. Please use $self->load_cigars_from_file($file, -format => \'clustalw\') instead');
-    return $self->load_cigars_from_file($file, -format => 'clustalw');
-}
-
-
 =head2 load_cigars_from_fasta
 
     Description: DEPRECATED: load_cigars_from_fasta() is deprecated. Please use $self->load_cigars_from_file($file, -format => 'fasta') instead (possibly with a -import_seq argument.
