@@ -135,7 +135,6 @@ if($self->{'stats'}) {
 switch($state) {
   case 1 { fetch_protein_tree($self, $self->{'tree_id'}); }
   case 2 { create_taxon_tree($self); }
-  case 3 { fetch_primate_ncbi_taxa($self); }
   case 4 { fetch_compara_ncbi_taxa($self); }
   case 5 { fetch_protein_tree_with_gene($self, $self->{'gene_stable_id'}); }
   case 6 { parse_newick($self); }
@@ -177,29 +176,6 @@ sub usage {
   exit(1);  
 }
 
-
-sub fetch_primate_ncbi_taxa {
-  my $self = shift;
-
-  my $taxonDBA = $self->{'comparaDBA'}->get_NCBITaxonAdaptor;
-
-  my $marmoset = $taxonDBA->fetch_node_by_taxon_id(9483);
-  my $root = $marmoset->root;
-  $root->merge_node_via_shared_ancestor($taxonDBA->fetch_node_by_taxon_id(9544));
-  $root->merge_node_via_shared_ancestor($taxonDBA->fetch_node_by_taxon_id(9490));
-  $root->merge_node_via_shared_ancestor($taxonDBA->fetch_node_by_taxon_id(9516));
-  $root->merge_node_via_shared_ancestor($taxonDBA->fetch_node_by_taxon_id(9500));
-  $root->merge_node_via_shared_ancestor($taxonDBA->fetch_node_by_taxon_id(9511));
-  $root->merge_node_via_shared_ancestor($taxonDBA->fetch_node_by_taxon_id(9606));
-  $root->merge_node_via_shared_ancestor($taxonDBA->fetch_node_by_taxon_id(9598));
-  $root->merge_node_via_shared_ancestor($taxonDBA->fetch_node_by_taxon_id(9600));
-  $root->merge_node_via_shared_ancestor($taxonDBA->fetch_node_by_taxon_id(9581));
-  $root->print_tree($self->{'scale'});
-
-  $root->flatten_tree->print_tree($self->{'scale'});
-
-  $self->{'root'} = $root;
-}
 
 
 sub fetch_compara_ncbi_taxa {
