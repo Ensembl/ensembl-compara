@@ -496,6 +496,15 @@ sub pipeline_analyses {
                                'species_tree_input_file' => $self->o('species_tree_input_file'),   # empty by default, but if nonempty this file will be used instead of tree generation from genome_db
                                'for_gene_trees' => 1,
             },
+            -flow_into     => [ 'hc_species_tree' ],
+        },
+
+        {   -logic_name         => 'hc_species_tree',
+            -module             => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::SqlHealthChecks',
+            -parameters         => {
+                mode            => 'species_tree',
+            },
+            %hc_analysis_params,
         },
 
 # ---------------------------------------------[reuse members]-----------------------------------------------------------------------
