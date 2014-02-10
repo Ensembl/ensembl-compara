@@ -205,6 +205,7 @@ sub resource_classes {
          '1Gb_job'      => {'LSF' => '-q production-rh6 -M1000  -R"select[mem>1000]  rusage[mem=1000]"' },
          '4Gb_job'      => {'LSF' => '-q production-rh6 -M4000  -R"select[mem>4000]  rusage[mem=4000]"' },
          '2Gb_job'      => {'LSF' => '-q production-rh6 -M2000  -R"select[mem>2000]  rusage[mem=2000]"' },
+         '2.5Gb_job'    => {'LSF' => '-q production-rh6 -M2500  -R"select[mem>2500]  rusage[mem=2500]"' },
          '8Gb_job'      => {'LSF' => '-q production-rh6 -M8000  -R"select[mem>8000]  rusage[mem=8000]"' },
          'urgent_hcluster'     => {'LSF' => '-q production-rh6 -M32000 -R"select[mem>32000] rusage[mem=32000]"' },
          'msa'      => {'LSF' => '-q production-rh6 -W 24:00' },
@@ -225,6 +226,7 @@ sub pipeline_analyses {
         $analyses_by_name{'dump_canonical_members'}->{'-rc_name'} = '500Mb_job';
         $analyses_by_name{'members_against_allspecies_factory'}->{'-rc_name'} = '500Mb_job';
         $analyses_by_name{'blastp'}->{'-rc_name'} = '500Mb_job';
+        $analyses_by_name{'ktreedist'}->{'-rc_name'} = '2.5Gb_job';
     }
 
     return $all_analyses;
