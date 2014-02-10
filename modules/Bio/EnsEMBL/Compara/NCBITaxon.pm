@@ -437,18 +437,19 @@ sub ensembl_alias {
 }
 
 
-=head2 short_name
+=head2 get_short_name
 
-  Example    : $ncbi->short_name;
+  Example    : $ncbi->get_short_name;
   Description: The name of this genome in the Gspe ('G'enera
-               'spe'cies) format.
+               'spe'cies) format. Further names are just added
+               at the end (Gen Spec Subname -> GSpeSubname)
   Returntype : string
   Exceptions : none
   Caller     : general
 
 =cut
 
-sub short_name {
+sub get_short_name {
   my $self = shift;
   my $name = $self->name;
   $name =~  s/(\S)\S+\s(\S{3})\S+/$1$2/;
@@ -456,9 +457,10 @@ sub short_name {
   return $name;
 }
 
-sub get_short_name {
+sub short_name {
   my $self = shift;
-  return $self->short_name;
+  deprecate('NCBITaxon::short_name() is deprecated in favour of get_short_name(), and will be removed in e76');
+  return $self->get_short_name;
 }
 
 

@@ -506,23 +506,164 @@ sub release_tree {
 # Misc #
 ########
 
-# Dynamic definition of functions to allow NestedSet methods work with GeneTrees
-{
-    no strict 'refs';
-    foreach my $func_name (qw(get_all_nodes get_all_leaves get_all_sorted_leaves
-                              find_leaf_by_node_id find_leaf_by_name find_node_by_node_id
-                              find_node_by_name remove_nodes build_leftright_indexing flatten_tree
-                              newick_format nhx_format string_tree print_tree
-                            )) {
-        my $full_name = "Bio::EnsEMBL::Compara::GeneTree::$func_name";
-        *$full_name = sub {
-            my $self = shift;
-            my $ret = $self->root->$func_name(@_);
-            return $ret;
-        };
-        #    print STDERR "REDEFINE $func_name\n";
-    }
+# These methods used to be automatically created, but were missing from the Doxygen doc
+
+=head2 get_all_nodes
+
+  Example     : my $all_nodes = $root->get_all_nodes();
+  Description : Returns this and all underlying sub nodes
+  ReturnType  : listref of Bio::EnsEMBL::Compara::GeneTreeNode objects
+  Exceptions  : none
+  Caller      : general
+  Status      : Stable
+
+=cut
+
+sub get_all_nodes {
+    my $self = shift;
+    return $self->root->get_all_nodes;
 }
+
+
+=head2 get_all_leaves
+
+ Description : creates the list of all the leaves in the tree
+ Example     : my @leaves = @{$tree->get_all_leaves};
+ ReturnType  : reference to list of GeneTreeNode/GeneTreeMember objects (all leaves)
+
+=cut
+
+sub get_all_leaves {
+    my $self = shift;
+    return $self->root->get_all_leaves;
+}
+
+
+=head2 get_all_sorted_leaves
+
+  Arg [1]     : Bio::EnsEMBL::Compara::GeneTreeNode $top_leaf
+  Arg [...]   : (optional) Bio::EnsEMBL::Compara::GeneTreeNode $secondary_priority_leaf
+  Example     : my $sorted_leaves = $object->get_all_sorted_leaves($human_leaf);
+  Example     : my $sorted_leaves = $object->get_all_sorted_leaves($human_leaf, $mouse_leaf);
+  Description : Sorts the tree such as $top_leaf is the first leave and returns
+                all the other leaves in the order defined by the tree.
+                It is possible to define as many secondary top leaves as you require
+                to sort other branches of the tree. The priority to sort the trees
+                is defined by the order in which you specify the leaves.
+  Returntype  : listref of Bio::EnsEMBL::Compara::GeneTreeNode (all sorted leaves)
+  Exceptions  : none
+  Caller      : general
+  Status      : Stable
+
+=cut
+
+sub get_all_sorted_leaves {
+    my $self = shift;
+    return $self->root->get_all_sorted_leaves(@_);
+}
+
+
+sub find_leaf_by_node_id {
+    my $self = shift;
+    return $self->root->find_leaf_by_node_id;
+}
+
+
+sub find_leaf_by_name {
+    my $self = shift;
+    return $self->root->find_leaf_by_name;
+}
+
+
+sub find_node_by_node_id {
+    my $self = shift;
+    return $self->root->find_node_by_node_id;
+}
+
+sub find_node_by_name {
+    my $self = shift;
+    return $self->root->find_node_by_name;
+}
+
+
+=head2 newick_format
+
+  Arg [1]     : string $format_mode
+  Example     : $gene_tree->newick_format("full");
+  Description : Prints this tree in Newick format. Several modes are
+                available: full, display_label_composite, simple, species,
+                species_short_name, ncbi_taxon, ncbi_name, njtree and phylip
+  Returntype  : string
+  Exceptions  :
+  Caller      : general
+  Status      : Stable
+
+=cut
+
+sub newick_format {
+    my $self = shift;
+    return $self->root->newick_format;
+}
+
+
+=head2 nhx_format
+
+  Arg [1]     : string $format_mode
+  Example     : $gene_tree->nhx_format("full");
+  Description : Prints this tree in NHX format. Several modes are
+                member_id_taxon_id, protein_id, transcript_id, gene_id,
+                full, full_web, display_label, display_label_composite,
+                treebest_ortho, simple, phylip
+  Returntype  : string
+  Exceptions  :
+  Caller      : general
+  Status      : Stable
+
+=cut
+
+sub nhx_format {
+    my $self = shift;
+    return $self->root->nhx_format;
+}
+
+
+=head2 string_tree
+
+  Arg [1]     : int $scale
+  Example     : my $str = $gene_tree->string_tree(100);
+  Description : Returns a string representing this tree in ASCII format.
+                The scale is used to define the width of the tree in the output
+  Returntype  : undef
+  Exceptions  :
+  Caller      : general
+  Status      : At risk (as the output might change)
+
+=cut
+
+sub string_tree {
+    my $self = shift;
+    return $self->root->string_tree;
+}
+
+
+=head2 print_tree
+
+  Arg [1]     : int $scale
+  Example     : $gene_tree->print_tree(100);
+  Description : Prints this tree in ASCII format. The scale is used to define
+                the width of the tree in the output
+  Returntype  : undef
+  Exceptions  :
+  Caller      : general
+  Status      : At risk (as the output might change)
+
+=cut
+
+sub print_tree {
+    my $self = shift;
+    return $self->root->print_tree(@_);
+}
+
 
 1;
 

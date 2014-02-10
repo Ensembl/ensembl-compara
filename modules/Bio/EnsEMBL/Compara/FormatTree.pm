@@ -231,7 +231,7 @@ my $sp_short_name_cb = sub {
   if (!defined $self->{tree}->genome_db) {
     return;
   }
-  return $self->{tree}->genome_db->short_name;
+  return $self->{tree}->genome_db->get_short_name;
 };
 
 my $transcriptid_cb = sub {
@@ -464,7 +464,7 @@ sub _internal_format_newick {
 # %{d} --> gdb_id ($self->adaptor->db->get_GenomeDBAdaptor->fetch_by_taxon_id($self->taxon_id)->dbID)
 # %{t} --> timetree ($self->get_tagvalue('ensembl timetree mya')
 # %{l} --> display_label ($self->gene_member->display_label)
-# %{h} --> genome short name ($self->genome_db->short_name)
+# %{h} --> genome short name ($self->genome_db->get_short_name)
 # %{s} --> stable_id ($self->gene_member->stable_id)
 # %{p} --> peptide Member ($self->get_canonical_SeqMember->stable_id)
 # %{t} --> taxon_id ($self->taxon_id)
