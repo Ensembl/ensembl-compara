@@ -166,7 +166,7 @@ sub default_options {
             -host   => 'mysql-eg-devel-2.ebi.ac.uk',
 		    -port   => 4207,
 			-user   => 'ensrw',
-		    -pass   => 'scr1b3d2',
+		    -pass   => $self->o('password'),
 		    -dbname => 'ensembl_compara_master',
         },
         #'master_db' => undef,

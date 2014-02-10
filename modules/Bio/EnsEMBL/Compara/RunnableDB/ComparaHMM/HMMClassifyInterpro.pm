@@ -91,7 +91,7 @@ sub get_clusters {
     my $host             = "mysql-eg-devel-2.ebi.ac.uk";
     my $port             = "4207";
     my $user             = "ensrw";
-    my $pw               = "scr1b3d2";
+    my $pw               = $self->param('password');
     my $dsn              = "dbi:$platform:$database:$host:$port";
     my $pantherDB        = DBI->connect($dsn,$user,$pw);
     my $pantherSql       = "SELECT panther_family_id FROM panther_annot_8_1_EG20_EG_HUMAN_SF WHERE ensembl_id = ?";
