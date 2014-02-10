@@ -156,7 +156,7 @@ sub run {
 sub write_output {
     my $self = shift @_;
 
-    $self->delete_old_homologies;
+    $self->delete_old_homologies unless $self->param('_readonly');
     $self->store_homologies;
 }
 
@@ -583,7 +583,7 @@ sub store_gene_link_as_homology {
     }
   }
   
-  $self->param('homologyDBA')->store($homology);
+  $self->param('homologyDBA')->store($homology) unless $self->param('_readonly');
 
   return $homology;
 }
