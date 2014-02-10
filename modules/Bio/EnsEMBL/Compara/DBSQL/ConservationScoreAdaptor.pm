@@ -84,7 +84,7 @@ use POSIX qw(floor);
 
 use Bio::EnsEMBL::DBSQL::BaseAdaptor;
 use Bio::EnsEMBL::Compara::ConservationScore;
-use Bio::EnsEMBL::Utils::Exception qw(throw warning info deprecate);
+use Bio::EnsEMBL::Utils::Exception qw(throw warning info);
 use Config;
 
 #global variables

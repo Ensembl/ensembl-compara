@@ -86,7 +86,7 @@ use strict;
 use warnings;
 
 use Bio::EnsEMBL::Utils::Argument qw(rearrange);
-use Bio::EnsEMBL::Utils::Exception qw(warning deprecate throw);
+use Bio::EnsEMBL::Utils::Exception qw(warning throw);
 
 #store as 4 byte float
 my $pack_size = 4;

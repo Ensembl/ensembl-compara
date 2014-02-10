@@ -1045,13 +1045,13 @@ sub _internal_newick_format_ryo {
 
 =head2 newick_simple_format
 
-    DEPRECATED. Use newick_format("simple") instead
+    DEPRECATED. Use newick_format("simple") instead. newick_simple_format() will be removed in e76
 
 =cut
 
 sub newick_simple_format {
   my $self = shift;
-  deprecate('Use newick_format("simple") instead.');
+  deprecate('Use newick_format("simple") instead. newick_simple_format() will be removed in e76');
   return $self->newick_format('simple'); 
 }
 

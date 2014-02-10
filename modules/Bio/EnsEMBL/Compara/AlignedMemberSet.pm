@@ -262,35 +262,6 @@ sub load_cigars_from_file {
 }
 
 
-=head2 read_clustalw
-
-    Description : DEPRECATED. read_clustalw() is deprecated. Please use $self->load_cigars_from_file($file, -format => 'clustalw') instead.
-
-=cut
-
-sub read_clustalw {  # DEPRECATED
-    my $self = shift;
-    my $file = shift;
-
-    deprecate('read_clustalw() is deprecated. Please use $self->load_cigars_from_file($file, -format => \'clustalw\') instead');
-    return $self->load_cigars_from_file($file, -format => 'clustalw');
-}
-
-
-=head2 load_cigars_from_fasta
-
-    Description: DEPRECATED: load_cigars_from_fasta() is deprecated. Please use $self->load_cigars_from_file($file, -format => 'fasta') instead (possibly with a -import_seq argument.
-
-=cut
-
-sub load_cigars_from_fasta { # DEPRECATED
-    my ($self, $file, $import_seq) = @_;
-
-    deprecate('load_cigars_from_fasta() is deprecated. Please use $self->load_cigars_from_file($file, -format => \'fasta\') instead (possibly with a -import_seq argument');
-    return $self->load_cigars_from_file($file, -format => 'fasta', -import_seq => $import_seq);
-}
-
-
 =head2 get_SimpleAlign
 
     Arg [-UNIQ_SEQ] : (opt) boolean (default: false)
@@ -344,11 +315,11 @@ sub get_SimpleAlign {
             rearrange([qw(UNIQ_SEQ CDNA ID_TYPE STOP2X APPEND_TAXON_ID APPEND_SP_SHORT_NAME APPEND_GENOMEDB_ID EXON_CASED KEEP_GAPS SEQ_TYPE)], @args);
     }
 
-    warn "-CDNA => 1 in AlignedMemberSet::get_SimpleAlign is deprecated. Please use -SEQ_TYPE => 'cds' instead" if $cdna;
+    warn "-CDNA => 1 in AlignedMemberSet::get_SimpleAlign is deprecated and will be removed in e76. Please use -SEQ_TYPE => 'cds' instead" if $cdna;
     die "-CDNA and -SEQ_TYPE cannot be both defined in AlignedMemberSet::get_SimpleAlign" if $cdna and $seq_type;
     $seq_type = 'cds' if $cdna;
 
-    warn "-EXON_CASED => 1 in AlignedMemberSet::get_SimpleAlign is deprecated. Please use -SEQ_TYPE => 'exon_cased' instead" if $exon_cased;
+    warn "-EXON_CASED => 1 in AlignedMemberSet::get_SimpleAlign is deprecated and will be removed in e76. Please use -SEQ_TYPE => 'exon_cased' instead" if $exon_cased;
     die "-EXON_CASED and -SEQ_TYPE cannot be both defined in AlignedMemberSet::get_SimpleAlign" if $exon_cased and $seq_type;
     $seq_type = 'exon_cased' if $exon_cased;
 

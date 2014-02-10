@@ -41,7 +41,7 @@ use Data::Dumper;
 
 use Bio::EnsEMBL::Compara::HMMProfile;
 
-use Bio::EnsEMBL::Utils::Exception qw(throw warning deprecate); ## All needed?
+use Bio::EnsEMBL::Utils::Exception qw(throw warning); ## All needed?
 
 use Bio::EnsEMBL::Utils::IO qw/:slurp/;
 

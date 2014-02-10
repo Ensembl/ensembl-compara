@@ -44,7 +44,7 @@ use strict;
 use warnings;
 
 use Bio::EnsEMBL::Utils::Scalar qw(:assert);
-use Bio::EnsEMBL::Utils::Exception qw(throw warning deprecate);
+use Bio::EnsEMBL::Utils::Exception qw(throw warning);
 use Bio::EnsEMBL::Compara::NCBITaxon;
 
 use Bio::EnsEMBL::DBSQL::Support::LruIdCache;

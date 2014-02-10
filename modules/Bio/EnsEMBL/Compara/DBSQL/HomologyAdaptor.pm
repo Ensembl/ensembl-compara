@@ -24,7 +24,7 @@ use warnings;
 use Bio::EnsEMBL::Compara::Homology;
 use Bio::EnsEMBL::Compara::DBSQL::BaseRelationAdaptor;
 
-use Bio::EnsEMBL::Utils::Exception qw(deprecate throw);
+use Bio::EnsEMBL::Utils::Exception qw(throw);
 use Bio::EnsEMBL::Utils::Argument qw(rearrange);
 use Bio::EnsEMBL::Utils::Scalar qw(:assert :check);
 
@@ -151,19 +151,6 @@ sub fetch_all_by_Member_paired_species {
     }
   }
   return $all_homologies;
-}
-
-
-=head2 fetch_all_by_Member_method_link_type
-
-  DEPRECATED: Use fetch_all_by_Member($member, -METHOD_LINK_TYPE => $method_link_type) instead.
-
-=cut
-
-sub fetch_all_by_Member_method_link_type {  # DEPRECATED
-  my ($self, $member, $method_link_type) = @_;
-  deprecate('fetch_all_by_Member_method_link_type() is deprecated and will be removed in e74. Use fetch_all_by_Member($member, -METHOD_LINK_TYPE => $method_link_type) instead.');
-  return $self->fetch_all_by_Member($member, -METHOD_LINK_TYPE => $method_link_type);
 }
 
 

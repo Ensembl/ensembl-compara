@@ -187,7 +187,15 @@ my $ensembl_timetree_mya_cb = sub {
 
 my $gdb_id_cb = sub {
   my ($self) = @_;
-  return $self->{tree}->adaptor->db->get_GenomeDBAdaptor->fetch_by_taxon_id($self->{tree}->taxon_id)->dbID;
+  if ($self->{tree}->isa('Bio::EnsEMBL::Compara::GeneTreeNode')) {
+    return $self->{tree}->species_tree_node->genome_db_id;
+
+  } elsif ($self->{tree}->isa('Bio::EnsEMBL::Compara::SpeciesTreeNode')) {
+    return $self->{tree}->genome_db_id;
+
+  } elsif ($self->{tree}->isa('Bio::EnsEMBL::Compara::NCBITaxon')) {
+    return $self->{tree}->adaptor->db->get_GenomeDBAdaptor->fetch_by_taxon_id($self->{tree}->taxon_id)->dbID;
+  }
 };
 
 # C(node_id)
@@ -256,6 +264,9 @@ my $member_id_cb = sub {
 # C(taxon_id)
 my $taxon_id_cb = sub {
   my ($self) = @_;
+  if ($self->{tree}->isa('Bio::EnsEMBL::Compara::GeneTreeNode')) {
+    return $self->{tree}->species_tree_node->taxon_id;
+  }
   return $self->{tree}->taxon_id;
 };
 

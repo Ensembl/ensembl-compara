@@ -123,33 +123,6 @@ sub fetch_by_Member_source_stable_id {
   return $self->generic_fetch($constraint, $join);
 }
 
-# maybe a useful method in case more than one kind of family data is stored in the db.
-
-
-sub fetch_all_by_Member_method_link_type {
-  my ($self, $member, $method_link_type) = @_;
-
-  assert_ref($member, 'Bio::EnsEMBL::Compara::Member');
-
-  $self->throw("method_link_type arg is required\n")
-    unless ($method_link_type);
-  
-  my $mlssa = $self->db->get_MethodLinkSpeciesSetAdaptor;
-  my $mlss_arrayref = $mlssa->fetch_all_by_method_link_type_GenomeDB($method_link_type,$member->genome_db);
-  
-  unless (scalar @{$mlss_arrayref}) {
-    warning("There is no $method_link_type data stored in the database for " . $member->genome_db->name . "\n");
-    return [];
-  }
-  
-  my $join = [[['family_member', 'fm'], 'f.family_id = fm.family_id']];
-  
-  my $constraint =  " f.method_link_species_set_id in (". join (",", (map {$_->dbID} @{$mlss_arrayref})) . ")";
-
-  $constraint .= " AND fm.member_id = " . $member->dbID;
-
-  return $self->generic_fetch($constraint, $join);
-}
 
 =head2 fetch_by_description_with_wildcards
 
