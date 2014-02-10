@@ -373,11 +373,11 @@ sub get_SimpleAlign {
         $seqID .= "_" . $member->taxon_id if($append_taxon_id);
         $seqID .= "_" . $member->genome_db_id if ($append_genomedb_id);
 
-        ## Append $seqID with Speciae short name, if required
-        if ($append_sp_short_name) {
+        ## Append $seqID with species short name, if required
+        if ($append_sp_short_name and $member->genome_db_id) {
             my $species = $member->genome_db->get_short_name;
             $species =~ s/\s/_/g;
-            $seqID .= "_" . $species . "_";
+            $seqID .= "_" . $species;
         }
 
         # Sequence length
