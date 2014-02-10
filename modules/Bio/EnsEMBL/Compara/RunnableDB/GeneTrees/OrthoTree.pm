@@ -89,6 +89,7 @@ sub param_defaults {
             'tree_scale'            => 1,
             'store_homologies'      => 1,
             'no_between'            => 0.25, # dont store all possible_orthologs
+            'homoeologous_genome_dbs'  => [],
     };
 }
 
@@ -121,6 +122,21 @@ sub fetch_input {
         $self->throw("undefined GeneTree as input\n");
     }
 
+    my %homoeologous_groups = ();
+    foreach my $i (1..(scalar(@{$self->param('homoeologous_genome_dbs')}))) {
+        my $group = $self->param('homoeologous_genome_dbs')->[$i-1];
+        foreach my $gdb (@{$group}) {
+            if (looks_like_number($gdb)) {
+                $homoeologous_groups{$gdb} = $i;
+            } elsif (ref $gdb) {
+                $homoeologous_groups{$gdb->dbID} = $i;
+            } else {
+                $gdb = $self->compara_dba->get_GenomeDBAdaptor->fetch_by_name_assembly($gdb);
+                $homoeologous_groups{$gdb->dbID} = $i;
+            }
+        }
+    }
+    $self->param('homoeologous_groups', \%homoeologous_groups);
 }
 
 
@@ -547,8 +563,22 @@ sub store_gene_link_as_homology {
   my ($gene1, $gene2) = $genepairlink->get_nodes;
 
   # get the mlss from the database
-  my $mlss_type = ($type =~ /^ortholog/ ? 'ENSEMBL_ORTHOLOGUES' : 'ENSEMBL_PARALOGUES');
-  $mlss_type = 'ENSEMBL_PROJECTIONS' if $type eq 'alt_allele';
+  my $mlss_type;
+  if ($type =~ /^ortholog/) {
+      my $gdb1 = $gene1->genome_db_id;
+      my $gdb2 = $gene2->genome_db_id;
+      if (($self->param('homoeologous_groups')->{$gdb1} || -1) == ($self->param('homoeologous_groups')->{$gdb2} || -2)) {
+          $mlss_type = 'ENSEMBL_HOMOEOLOGUES';
+      } else {
+          $mlss_type = 'ENSEMBL_ORTHOLOGUES';
+      }
+
+  } elsif ($type eq 'alt_allele') {
+      $mlss_type = 'ENSEMBL_PROJECTIONS';
+  } else {
+      $mlss_type = 'ENSEMBL_PARALOGUES';
+  }
+
   my $gdbs;
   if ($gene1->genome_db->dbID == $gene2->genome_db->dbID) {
       $gdbs = [$gene1->genome_db];
