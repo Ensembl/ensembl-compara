@@ -19,28 +19,27 @@ limitations under the License.
 
 =head1 CONTACT
 
-  Please email comments or questions to the public Ensembl
-  developers list at <http://lists.ensembl.org/mailman/listinfo/dev>.
+Please email comments or questions to the public Ensembl
+developers list at <http://lists.ensembl.org/mailman/listinfo/dev>.
 
-  Questions may also be sent to the Ensembl help desk at
-  <http://www.ensembl.org/Help/Contact>.
+Questions may also be sent to the Ensembl help desk at
+<http://www.ensembl.org/Help/Contact>.
 
 =head1 AUTHORSHIP
 
 Ensembl Team. Individual contributions can be found in the GIT log.
 
-=cut
-
 =head1 NAME
 
-MemberSet - A superclass for pairwise or multiple relationships, base of
-Bio::EnsEMBL::Compara::Family, Bio::EnsEMBL::Compara::Homology and
-Bio::EnsEMBL::Compara::Domain.
+MemberSet - A superclass for pairwise or multiple gene relationships
 
 =head1 DESCRIPTION
 
-A superclass for pairwise and multiple relationships
+A superclass for pairwise and multiple gene relationships
 
+MemberSet is the deepest base class of Bio::EnsEMBL::Compara::Family, Bio::EnsEMBL::Compara::Homology and Bio::EnsEMBL::Compara::GeneTree
+
+It holds the methods to construct / use a set of Bio::EnsEMBL::Compara::Member
 Currently the Member objects are used in the GeneTree structure
 to represent the leaves of the trees. Each leaf contains an aligned
 sequence, which is represented as an Member object.
@@ -48,6 +47,30 @@ sequence, which is represented as an Member object.
 =head1 INHERITANCE TREE
 
   Bio::EnsEMBL::Compara::MemberSet
+
+=head1 SYNOPSIS
+
+Global properties of the set:
+ - stable_id() and version()
+ - description()
+ - method_link_species_set()
+
+Be aware that not all of the above methods are implemented in all the derived objects (for instance, Homologies do not have stable_id)
+
+The set of members can be accessed / edited with:
+ - add_Member()
+ - get_all_Members()
+ - get_all_GeneMembers()
+ - clear()
+ - get_Member_by_*() and Member_count_by_*()
+
+I/O:
+ - print_sequences_to_file()
+
+Methods about the set of species refered to by the members:
+ - get_all_taxa_by_member_source_name()
+ - get_all_GenomeDBs_by_member_source_name()
+ - has_species_by_name()
 
 =head1 METHODS
 
@@ -448,7 +471,7 @@ sub clear {
 } 
 
 
-=head2 get_all_GeneMember
+=head2 get_all_GeneMembers
 
   Arg [1]    : None
   Example    : 

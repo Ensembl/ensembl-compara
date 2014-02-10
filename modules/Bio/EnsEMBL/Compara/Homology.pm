@@ -16,6 +16,56 @@ limitations under the License.
 
 =cut
 
+=head1 NAME
+
+Bio::EnsEMBL::Compara::Homology - Homology between two proteins
+
+=head1 DESCRIPTION
+
+Homology is the object that stores orthology and paralogy data.
+It inherits from AlignedMemberSet, and extends it on two aspects.
+Firstly, each homology is reconciled with the gene tree and the
+species tree. Secondly, we compute dN and dS values on some of the
+homologies.
+
+Please note that 1-to-many relations are stored as multiple pairs.
+For instance, "hum" <-> ("rat1", "rat2") is stored as "hum" <-> "rat1"
+and "hum" <-> "rat2".
+
+=head1 INHERITANCE TREE
+
+  Bio::EnsEMBL::Compara::Homology
+  `- Bio::EnsEMBL::Compara::AlignedMemberSet
+
+=head1 SYNOPSIS
+
+Implemented methods:
+ - description()
+
+dN/dS values:
+ - n()
+ - s()
+ - lnl()
+ - threshold_on_ds()
+ - dn()
+ - ds()
+ _ dnds_ratio()
+
+Reconciliation with the gene tree:
+ - is_tree_compliant()
+ - gene_tree_node()
+ - gene_tree()
+ - species_tree_node()
+ - taxonomy_level() (alias to species_tree_node()->node_name())
+
+=head1 APPENDIX
+
+The rest of the documentation details each of the object methods. Internal methods are usually preceded with a _
+
+=head1 METHODS
+
+=cut
+
 package Bio::EnsEMBL::Compara::Homology;
 
 use strict;
@@ -24,51 +74,6 @@ use warnings;
 use Bio::EnsEMBL::Utils::Exception qw( deprecate throw warning );
 
 use base ('Bio::EnsEMBL::Compara::AlignedMemberSet');
-
-=head1 NAME
-
-Bio::EnsEMBL::Compara::Homology - Homology between two proteins
-
-=head1 SYNOPSIS
-
-  use Bio::EnsEMBL::Registry;
-
-  my $homology_adaptor = $reg->get_adaptor("Multi", "compara", "Homology");
-
-  ## Please, refer to Bio::EnsEMBL::Compara::DBSQL::MemberAdaptor
-  ## to see how to get a Member from the database. Also, you can
-  ## find alternative ways to fetch homologies in the POD for the
-  ## Bio::EnsEMBL::Compara::DBSQL::HomologyAdaptor module.
-
-  my $homologies = $homology_adaptor->fetch_all_by_Member($member);
-
-  foreach my $this_homology (@$homologies) {
-    my $homologue_genes = $this_homology->gene_list();
-    print join(" and ", @$homologue_genes), " are ",
-        $this_homology->description, "\n";
-  }
-
-=head1 AUTHOR
-
-Ensembl Team
-
-
-=head1 CONTACT
-
-This modules is part of the EnsEMBL project (http://www.ensembl.org)
-
-Questions can be posted to the ensembl-dev mailing list:
-http://lists.ensembl.org/mailman/listinfo/dev
-
-=head1 INHERITANCE
-
-This class inherits all the methods and attributes from Bio::EnsEMBL::DBSQL::BaseAdaptor
-
-=head1 APPENDIX
-
-The rest of the documentation details each of the object methods. Internal methods are usually preceded with a _
-
-=cut
 
 
 =head2 is_tree_compliant

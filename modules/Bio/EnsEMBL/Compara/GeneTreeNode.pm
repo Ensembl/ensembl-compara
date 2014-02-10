@@ -19,11 +19,11 @@ limitations under the License.
 
 =head1 CONTACT
 
-  Please email comments or questions to the public Ensembl
-  developers list at <http://lists.ensembl.org/mailman/listinfo/dev>.
+Please email comments or questions to the public Ensembl
+developers list at <http://lists.ensembl.org/mailman/listinfo/dev>.
 
-  Questions may also be sent to the Ensembl help desk at
-  <http://www.ensembl.org/Help/Contact>.
+Questions may also be sent to the Ensembl help desk at
+<http://www.ensembl.org/Help/Contact>.
 
 =head1 NAME
 
@@ -40,6 +40,24 @@ Phylogenetic tree
   Bio::EnsEMBL::Compara::GeneTreeNode
   `- Bio::EnsEMBL::Compara::NestedSet
 
+=head1 SYNOPSIS
+
+The properties of a GeneTreeNode are:
+ - species_tree_node()
+ - taxonomy_level() (alias to species_tree_node()->node_name())
+ - node_type()
+ - lost_taxa()
+ - duplication_confidence_score()
+ - bootstrap()
+
+Links within the GeneTree/GeneTreeNode structure:
+ - tree()
+ - root()
+ - get_leaf_by_Member()
+
+Extract properties of a sub-tree:
+ - get_AlignedMemberSet()
+
 =head1 AUTHORSHIP
 
 Ensembl Team. Individual contributions can be found in the GIT log.
@@ -48,6 +66,8 @@ Ensembl Team. Individual contributions can be found in the GIT log.
 
 The rest of the documentation details each of the object methods.
 Internal methods are usually preceded with an underscore (_)
+
+=head1 METHODS
 
 =cut
 

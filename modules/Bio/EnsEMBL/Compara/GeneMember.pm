@@ -19,11 +19,11 @@ limitations under the License.
 
 =head1 CONTACT
 
-  Please email comments or questions to the public Ensembl
-  developers list at <http://lists.ensembl.org/mailman/listinfo/dev>.
+Please email comments or questions to the public Ensembl
+developers list at <http://lists.ensembl.org/mailman/listinfo/dev>.
 
-  Questions may also be sent to the Ensembl help desk at
-  <http://www.ensembl.org/Help/Contact>.
+Questions may also be sent to the Ensembl help desk at
+<http://www.ensembl.org/Help/Contact>.
 
 =head1 NAME
 
@@ -34,10 +34,24 @@ Bio::EnsEMBL::Compara::GeneMember
 Class to represent a member that is a gene.
 Genes do not have any sequences attached (see SeqMember for that purpose).
 
+For each gene, we define a "canonical" or "representative" SeqMember, that
+will be used in the gene-tree pipelines and the homologies.
+This definition is purely internal and is not related to the biological importance
+of that gene product.
+
 =head1 INHERITANCE TREE
 
   Bio::EnsEMBL::Compara::GeneMember
-  +- Bio::EnsEMBL::Compara::Member
+  `- Bio::EnsEMBL::Compara::Member
+
+=head1 SYNOPSIS
+
+Links with the Ensembl Core objects:
+ - get_Gene()
+
+Links with other Ensembl Compara Member objects:
+ - get_canonical_SeqMember() and canonical_member_id()
+ - get_all_SeqMembers()
 
 =head1 AUTHORSHIP
 

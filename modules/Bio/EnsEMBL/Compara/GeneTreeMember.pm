@@ -19,11 +19,11 @@ limitations under the License.
 
 =head1 CONTACT
 
-  Please email comments or questions to the public Ensembl
-  developers list at <http://lists.ensembl.org/mailman/listinfo/dev>.
+Please email comments or questions to the public Ensembl
+developers list at <http://lists.ensembl.org/mailman/listinfo/dev>.
 
-  Questions may also be sent to the Ensembl help desk at
-  <http://www.ensembl.org/Help/Contact>.
+Questions may also be sent to the Ensembl help desk at
+<http://www.ensembl.org/Help/Contact>.
 
 =head1 NAME
 
@@ -36,6 +36,8 @@ the gene trees (whether they contain proteins or non-coding RNas).
 
 Each GeneTreeMember object is simultaneously a tree node (inherits from
 GeneTreeNode) and an aligned member (inherits from AlignedMember).
+
+The object only overrides a few methods from its parents, and does not have additional functionality.
 
 =head1 INHERITANCE TREE
 
@@ -51,6 +53,8 @@ Ensembl Team. Individual contributions can be found in the GIT log.
 
 The rest of the documentation details each of the object methods.
 Internal methods are usually preceded with an underscore (_)
+
+=head1 METHODS
 
 =cut
 

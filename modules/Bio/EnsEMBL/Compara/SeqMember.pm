@@ -19,11 +19,11 @@ limitations under the License.
 
 =head1 CONTACT
 
-  Please email comments or questions to the public Ensembl
-  developers list at <http://lists.ensembl.org/mailman/listinfo/dev>.
+Please email comments or questions to the public Ensembl
+developers list at <http://lists.ensembl.org/mailman/listinfo/dev>.
 
-  Questions may also be sent to the Ensembl help desk at
-  <http://www.ensembl.org/Help/Contact>.
+Questions may also be sent to the Ensembl help desk at
+<http://www.ensembl.org/Help/Contact>.
 
 =head1 NAME
 
@@ -37,7 +37,22 @@ It is currently used for proteins and RNAs.
 =head1 INHERITANCE TREE
 
   Bio::EnsEMBL::Compara::SeqMember
-  +- Bio::EnsEMBL::Compara::Member
+  `- Bio::EnsEMBL::Compara::Member
+
+=head1 SYNOPSIS
+
+Accessors to the sequence (s):
+ - sequence() and sequence_id()
+ - seq_length()
+ - other_sequence()
+ - bioseq()
+
+Links with the Ensembl Core objects:
+ - get_Transcript()
+ - get_Translation()
+
+Links with other Ensembl Compara Member objects:
+ - gene_member() and gene_member_id()
 
 =head1 AUTHORSHIP
 
@@ -47,6 +62,8 @@ Ensembl Team. Individual contributions can be found in the GIT log.
 
 The rest of the documentation details each of the object methods.
 Internal methods are usually preceded with an underscore (_)
+
+=head1 METHODS
 
 =cut
 

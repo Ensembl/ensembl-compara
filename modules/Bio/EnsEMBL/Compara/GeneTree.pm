@@ -31,15 +31,84 @@ Bio::EnsEMBL::Compara::GeneTree
 
 =head1 DESCRIPTION
 
-Class to represent a gene tree object. Contains a link to
-the root of the tree, as long as general tree properties.
+Class to represent a gene tree object.
 It implements the AlignedMemberSet interface (via the leaves).
+
+A GeneTree object is merely a wrapper aroung the root node (GeneTreeNode), with a few additional general tree properties.
+
+A gene tree is defined on a set of genes (members) of the same type ('protein' or 'ncrna').
+It is reconciled with a species tree that guides their structure (speciations, duplications, gene losses)
+
+The final / default gene trees are a mixture of various methods / phylogenetic models. Each set of tree is part of a "clusterset", the default being "default".
+The tree are themselves organized as a giant tree structure of types 'supertree' and 'clusterset'.
+Super-trees link trees of the same gene family that were too large to build a tree on in a single pass (e.g. the U6 snRNA, the HOX family)
+This results in the following hierarchy of GeneTree tree_type/member_type:
+
+ clusterset/protein
+ +- supertree/protein
+ |  +- tree/protein
+ |  `- tree/protein
+ +- supertree/protein
+ |  ...
+ +- tree/protein
+ +- tree/protein
+ |  ...
+ `- tree/protein
+
+ clusterset/ncrna
+ +- supertree/ncrna
+ |  +- tree/ncrna
+ |  `- tree/ncrna
+ +- supertree/ncrna
+ |  ...
+ +- tree/ncrna
+ +- tree/ncrna
+ |  ...
+ `- tree/ncrna
 
 =head1 INHERITANCE TREE
 
   Bio::EnsEMBL::Compara::GeneTree
   +- Bio::EnsEMBL::Compara::AlignedMemberSet
   `- Bio::EnsEMBL::Compara::Taggable
+
+=head1 SYNOPSIS
+
+The additionnal getter / setters are:
+ - root()
+ - member_type()
+ - tree_type()
+ - clusterset_id()
+ - species_tree()
+
+As dbID() can be misleading for composite objects, please refer to:
+ - root_id() (for the tree itself)
+ - gene_align_id() (for the underlying sequence alignment)
+ - ref_root_id() (root_id of the default tree, when this one is not in the default clusterset)
+
+A few methods affect the structure of the nodes:
+ - preload()
+ - attach_alignment()
+ - expand_subtrees()
+
+And finally, GeneTree aliases a few GeneTreeNode methods that actually apply on the root node:
+ - get_all_nodes()
+ - get_all_leaves()
+ - get_all_sorted_leaves()
+ - find_leaf_by_node_id()
+ - find_leaf_by_name()
+ - find_node_by_node_id()
+ - find_node_by_name()
+ - newick_format()
+ - nhx_format()
+
+WARNING - Memory leak
+Our current object model uses a cyclic graph of Perl references.
+As a consequence, the usual garbage-collector is not able to release the
+memory used by a gene tree when you lose its reference (unlike most of the
+Ensembl objects). This means that you will have to call release_tree() on
+each tree after using it.
+
 
 =head1 AUTHORSHIP
 
@@ -49,6 +118,8 @@ Ensembl Team. Individual contributions can be found in the GIT log.
 
 The rest of the documentation details each of the object methods.
 Internal methods are usually preceded with an underscore (_)
+
+=head1 METHODS
 
 =cut
 

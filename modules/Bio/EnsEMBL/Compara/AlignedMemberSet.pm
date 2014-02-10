@@ -19,17 +19,15 @@ limitations under the License.
 
 =head1 CONTACT
 
-  Please email comments or questions to the public Ensembl
-  developers list at <http://lists.ensembl.org/mailman/listinfo/dev>.
+Please email comments or questions to the public Ensembl
+developers list at <http://lists.ensembl.org/mailman/listinfo/dev>.
 
-  Questions may also be sent to the Ensembl help desk at
-  <http://www.ensembl.org/Help/Contact>.
+Questions may also be sent to the Ensembl help desk at
+<http://www.ensembl.org/Help/Contact>.
 
 =head1 AUTHORSHIP
 
 Ensembl Team. Individual contributions can be found in the GIT log.
-
-=cut
 
 =head1 NAME
 
@@ -37,13 +35,37 @@ Bio::EnsEMBL::Compara::AlignedMemberSet
 
 =head1 DESCRIPTION
 
-A superclass for pairwise or multiple sequence alignments of genes,
-base of Family, Homology and GeneTree.
+AlignedMemberSet is a specialized version of MemberSet for members
+that have a sequence and that are aligned (i.e. AlignedMember).
+
+It is the actual base class for Family, Homology and GeneTree.
+It only adds methods to deal with the alignment.
+
+Since SeqMember can hold several sequences per member (seq_type),
+AlignedMemberSet can also do so. An AlignedMemberSet defaults on a
+given seq_type, but can also be mapped to another one. For instance,
+the alignments of protein sequences can be transformed into alignments
+of the initial CDS sequences.
 
 =head1 INHERITANCE TREE
 
   Bio::EnsEMBL::Compara::AlignedMemberSet
-  +- Bio::EnsEMBL::Compara::MemberSet
+  `- Bio::EnsEMBL::Compara::MemberSet
+
+=head1 SYNOPSIS
+
+Global properties of the alignment:
+ - seq_type()
+ - aln_length()
+ - aln_method()
+ - consensus_cigar_line()
+
+I/O:
+ - load_cigars_from_file()
+ - get_SimpleAlign()
+ - get_4D_SimpleAlign()
+
+=head1 METHODS
 
 =cut
 
