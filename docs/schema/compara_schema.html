@@ -103,7 +103,9 @@ The complete compara schema diagram can be found <a target="_blank" href="./diag
         <li><a href="#species_tree_node"><b>species_tree_node</b></a></li>
         <li><a href="#species_tree_root"><b>species_tree_root</b></a></li>
         <li><a href="#species_tree_node_tag"><b>species_tree_node_tag</b></a></li>
-      </ul>  </div>
+
+      </ul>
+    </div>
 
   <div style="background-color:#F2F2F2;border-radius:5px;margin-bottom:15px;float:left;margin-right:20px;width:200px">
     <div style="padding:2px 5px;background-color:#336;border-top-left-radius:5px;border-top-right-radius:5px">
@@ -119,13 +121,16 @@ The complete compara schema diagram can be found <a target="_blank" href="./diag
         <li><a href="#genomic_align"><b>genomic_align</b></a></li>
         <li><a href="#conservation_score"><b>conservation_score</b></a></li>
         <li><a href="#constrained_element"><b>constrained_element</b></a></li>
-      </ul>  </div>
+
+      </ul>
+    </div>
 
   <div style="background-color:#F2F2F2;border-radius:5px;margin-bottom:15px;float:left;margin-right:20px">
     <div style="padding:2px 5px;background-color:#336;border-top-left-radius:5px;border-top-right-radius:5px">
       <div style="background-color:#1E90FF;border:1px solid #FFF;padding:0px 8px;display:inline;vertical-align:middle"></div>
       <h2 style="margin-left:8px;display:inline;color:#FFF;vertical-align:middle">Gene trees and homologies tables</h2>
     </div>
+      <div style="float:left">
       <ul style="padding:0px 4px 0px 22px;margin-bottom:2px">
         <li><a href="#sequence"><b>sequence</b></a></li>
         <li><a href="#member"><b>member</b></a></li>
@@ -142,6 +147,11 @@ The complete compara schema diagram can be found <a target="_blank" href="./diag
         <li><a href="#gene_tree_root"><b>gene_tree_root</b></a></li>
         <li><a href="#gene_tree_node_tag"><b>gene_tree_node_tag</b></a></li>
         <li><a href="#gene_tree_root_tag"><b>gene_tree_root_tag</b></a></li>
+
+      </ul>
+      </div>
+      <div style="float:left">
+      <ul style="padding:0px 4px 0px 22px;margin-bottom:2px">
         <li><a href="#gene_tree_node_attr"><b>gene_tree_node_attr</b></a></li>
         <li><a href="#hmm_profile"><b>hmm_profile</b></a></li>
         <li><a href="#homology"><b>homology</b></a></li>
@@ -151,11 +161,11 @@ The complete compara schema diagram can be found <a target="_blank" href="./diag
         <li><a href="#sitewise_aln"><b>sitewise_aln</b></a></li>
         <li><a href="#CAFE_gene_family"><b>CAFE_gene_family</b></a></li>
         <li><a href="#CAFE_species_gene"><b>CAFE_species_gene</b></a></li>
-      </ul>  </div>
-  <div style="clear:both" />
-</div>
 
-<div>
+      </ul>
+      </div>
+    </div>
+
   <div style="clear:both" />
 </div>
   <input type="button" onclick="show_hide_all()" class="fbutton" value="Show/hide all"/>
@@ -174,8 +184,8 @@ The complete compara schema diagram can be found <a target="_blank" href="./diag
         <img src="/i/16/plus-button.png" style="width:12px;height:12px;vertical-align:middle" alt="show"/>
         <span style="vertical-align:middle">Show columns</span>
       </a> 
-			<b> | </b> <a href="#top">[Back to top]</a>
-		</div>
+      <b> | </b> <a href="#top">[Back to top]</a>
+    </div>
   </div>
   <p style="padding:5px 0px;margin-bottom:0px;width:800px">This table stores meta information about the compara database</p>
 
@@ -192,7 +202,7 @@ The complete compara schema diagram can be found <a target="_blank" href="./diag
 
   <div id="ex_meta" style="display:none;">
     <table class="ss" style="width:50%;margin-top:20px;margin-left:10px;border-spacing:2px">
-      <tr><th>meta_id</th><th>species_id</th><th>meta_key</th><th>meta_value</th></tr>      <tr><td>1</td><td></td><td>schema_version</td><td>74</td></tr>    </table>
+      <tr><th>meta_id</th><th>species_id</th><th>meta_key</th><th>meta_value</th></tr>      <tr><td>1</td><td></td><td>schema_version</td><td>75</td></tr>    </table>
   </div></div>
   <div id="ncbi_taxa_node" style="width:820px;height:20px;border: 2px groove #CCC;background-color:#FAFAFF;padding:2px;margin-top:35px;margin-bottom:2px">
         <div style="float:left;padding:0px;height:20px;width:10px;background-color:#3CB371;margin-right:10px"></div>
@@ -202,8 +212,8 @@ The complete compara schema diagram can be found <a target="_blank" href="./diag
         <img src="/i/16/plus-button.png" style="width:12px;height:12px;vertical-align:middle" alt="show"/>
         <span style="vertical-align:middle">Show columns</span>
       </a> 
-			<b> | </b> <a href="#top">[Back to top]</a>
-		</div>
+      <b> | </b> <a href="#top">[Back to top]</a>
+    </div>
   </div>
   <p style="padding:5px 0px;margin-bottom:0px;width:800px">This table contains all taxa used in this database, which mirror the data and tree structure from NCBI Taxonomy database (for more details see ensembl-compara/script/taxonomy/README-taxonomy which explain our import process)</p>
 
@@ -211,11 +221,11 @@ The complete compara schema diagram can be found <a target="_blank" href="./diag
     <table style="border:1px solid #667aa6;padding:0px;min-width:1000px;max-width:1200px">
       <tr class="center" style="color:#FFFFFF;background-color:#667aa6"><th style="color:#FFF;padding:2px">Column</th><th style="color:#FFF;padding:2px">Type</th><th style="color:#FFF;padding:2px;min-width:80px">Default value</th><th style="color:#FFF;padding:2px;min-width:500px">Description</th><th style="color:#FFF;padding:2px;min-width:100px">Index</th></tr>
       <tr class="bg1"><td><b>taxon_id</b></td><td>int(10)</td><td></td><td>The NCBI Taxonomy ID</td><td>primary key</td></tr>
-      <tr class="bg2"><td><b>parent_id</b></td><td>int(10)</td><td></td><td>The parent taxonomy ID for this node (refers to ncbi_taxa_node.taxon_id)</td><td>key: </td></tr>
-      <tr class="bg1"><td><b>rank</b></td><td>char(32)</td><td>''</td><td>E.g. kingdom, family, genus, etc.</td><td>key: </td></tr>
+      <tr class="bg2"><td><b>parent_id</b></td><td>int(10)</td><td></td><td>The parent taxonomy ID for this node (refers to ncbi_taxa_node.taxon_id)</td><td>key: parent_id</td></tr>
+      <tr class="bg1"><td><b>rank</b></td><td>char(32)</td><td>''</td><td>E.g. kingdom, family, genus, etc.</td><td>key: rank</td></tr>
       <tr class="bg2"><td><b>genbank_hidden_flag</b></td><td>tinyint(1)</td><td>0</td><td>Boolean value which defines whether this rank is used or not in the abbreviated lineage</td><td></td></tr>
-      <tr class="bg1"><td><b>left_index</b></td><td>int(10)</td><td>0</td><td>Sub-set left index. All sub-nodes have left_index and right_index values larger than this left_index</td><td>key: </td></tr>
-      <tr class="bg2"><td><b>right_index</b></td><td>int(10)</td><td>0</td><td>Sub-set right index. All sub-nodes have left_index and right_index values smaller than this right_index</td><td>key: </td></tr>
+      <tr class="bg1"><td><b>left_index</b></td><td>int(10)</td><td>0</td><td>Sub-set left index. All sub-nodes have left_index and right_index values larger than this left_index</td><td>key: left_index</td></tr>
+      <tr class="bg2"><td><b>right_index</b></td><td>int(10)</td><td>0</td><td>Sub-set right index. All sub-nodes have left_index and right_index values smaller than this right_index</td><td>key: right_index</td></tr>
       <tr class="bg1"><td><b>root_id</b></td><td>int(10)</td><td>1</td><td>The root taxonomy ID for this node (refers to ncbi_taxa_node.taxon_id)</td><td></td></tr>
     </table>
   </div>
@@ -223,7 +233,7 @@ The complete compara schema diagram can be found <a target="_blank" href="./diag
 
   <div id="ex_ncbi_taxa_node" style="display:none;">
     <table class="ss" style="width:50%;margin-top:20px;margin-left:10px;border-spacing:2px">
-      <tr><th>taxon_id</th><th>parent_id</th><th>rank</th><th>genbank_hidden_flag</th><th>left_index</th><th>right_index</th><th>root_id</th></tr>      <tr><td>1</td><td>0</td><td>no rank</td><td>0</td><td>1</td><td>2158204</td><td>1</td></tr>      <tr class="bg2"><td>131567</td><td>1</td><td>no rank</td><td>1</td><td>2</td><td>1914281</td><td>1</td></tr>      <tr><td>2759</td><td>131567</td><td>superkingdom</td><td>0</td><td>15371</td><td>1294236</td><td>1</td></tr>      <tr class="bg2"><td>33154</td><td>2759</td><td>no rank</td><td>1</td><td>312148</td><td>1231263</td><td>1</td></tr>      <tr><td>33208</td><td>33154</td><td>kingdom</td><td>0</td><td>312399</td><td>1035046</td><td>1</td></tr>      <tr class="bg2"><td>6072</td><td>33208</td><td>no rank</td><td>1</td><td>312634</td><td>1029943</td><td>1</td></tr>      <tr><td>33213</td><td>6072</td><td>no rank</td><td>1</td><td>312833</td><td>1018200</td><td>1</td></tr>      <tr class="bg2"><td>33317</td><td>33213</td><td>no rank</td><td>1</td><td>312936</td><td>864907</td><td>1</td></tr>      <tr><td>1206794</td><td>33317</td><td>no rank</td><td>0</td><td>312941</td><td>811012</td><td>1</td></tr>      <tr class="bg2"><td>88770</td><td>1206794</td><td>no rank</td><td>1</td><td>313238</td><td>797493</td><td>1</td></tr>      <tr><td>6656</td><td>88770</td><td>phylum</td><td>0</td><td>314555</td><td>797492</td><td>1</td></tr>      <tr class="bg2"><td>197563</td><td>6656</td><td>no rank</td><td>1</td><td>314560</td><td>765819</td><td>1</td></tr>      <tr><td>197562</td><td>197563</td><td>no rank</td><td>1</td><td>314561</td><td>763052</td><td>1</td></tr>      <tr class="bg2"><td>6960</td><td>197562</td><td>superclass</td><td>0</td><td>314562</td><td>731733</td><td>1</td></tr>      <tr><td>50557</td><td>6960</td><td>class</td><td>0</td><td>318879</td><td>731588</td><td>1</td></tr>      <tr class="bg2"><td>85512</td><td>50557</td><td>no rank</td><td>1</td><td>319054</td><td>731567</td><td>1</td></tr>      <tr><td>7496</td><td>85512</td><td>no rank</td><td>0</td><td>319055</td><td>731406</td><td>1</td></tr>      <tr class="bg2"><td>33340</td><td>7496</td><td>subclass</td><td>0</td><td>326754</td><td>731405</td><td>1</td></tr>      <tr><td>33342</td><td>33340</td><td>infraclass</td><td>0</td><td>326785</td><td>353934</td><td>1</td></tr>      <tr class="bg2"><td>7524</td><td>33342</td><td>order</td><td>0</td><td>327958</td><td>351025</td><td>1</td></tr>      <tr><td>35567</td><td>7524</td><td>no rank</td><td>0</td><td>327959</td><td>342070</td><td>1</td></tr>      <tr class="bg2"><td>33365</td><td>35567</td><td>no rank</td><td>1</td><td>337602</td><td>342069</td><td>1</td></tr>      <tr><td>33368</td><td>33365</td><td>superfamily</td><td>0</td><td>338401</td><td>341442</td><td>1</td></tr>      <tr class="bg2"><td>30102</td><td>33368</td><td>family</td><td>0</td><td>338448</td><td>340803</td><td>1</td></tr>      <tr><td>33372</td><td>30102</td><td>subfamily</td><td>0</td><td>339507</td><td>340800</td><td>1</td></tr>    </table>
+      <tr><th>taxon_id</th><th>parent_id</th><th>rank</th><th>genbank_hidden_flag</th><th>left_index</th><th>right_index</th><th>root_id</th></tr>      <tr><td>1</td><td>0</td><td>no rank</td><td>0</td><td>1</td><td>2204426</td><td>1</td></tr>      <tr class="bg2"><td>131567</td><td>1</td><td>no rank</td><td>1</td><td>2</td><td>1954885</td><td>1</td></tr>      <tr><td>2759</td><td>131567</td><td>superkingdom</td><td>0</td><td>15647</td><td>1313498</td><td>1</td></tr>      <tr class="bg2"><td>33154</td><td>2759</td><td>no rank</td><td>1</td><td>316256</td><td>1249359</td><td>1</td></tr>      <tr><td>33208</td><td>33154</td><td>kingdom</td><td>0</td><td>316509</td><td>1049492</td><td>1</td></tr>      <tr class="bg2"><td>6072</td><td>33208</td><td>no rank</td><td>1</td><td>316744</td><td>1044327</td><td>1</td></tr>      <tr><td>33213</td><td>6072</td><td>no rank</td><td>1</td><td>316943</td><td>1032120</td><td>1</td></tr>      <tr class="bg2"><td>33317</td><td>33213</td><td>no rank</td><td>1</td><td>317048</td><td>877239</td><td>1</td></tr>      <tr><td>1206794</td><td>33317</td><td>no rank</td><td>0</td><td>317053</td><td>822120</td><td>1</td></tr>      <tr class="bg2"><td>88770</td><td>1206794</td><td>no rank</td><td>1</td><td>317386</td><td>808301</td><td>1</td></tr>      <tr><td>6656</td><td>88770</td><td>phylum</td><td>0</td><td>318711</td><td>808300</td><td>1</td></tr>      <tr class="bg2"><td>197563</td><td>6656</td><td>no rank</td><td>1</td><td>318716</td><td>776407</td><td>1</td></tr>      <tr><td>197562</td><td>197563</td><td>no rank</td><td>1</td><td>318717</td><td>773424</td><td>1</td></tr>      <tr class="bg2"><td>6960</td><td>197562</td><td>superclass</td><td>0</td><td>318718</td><td>741789</td><td>1</td></tr>      <tr><td>50557</td><td>6960</td><td>class</td><td>0</td><td>323449</td><td>741788</td><td>1</td></tr>      <tr class="bg2"><td>85512</td><td>50557</td><td>no rank</td><td>1</td><td>323624</td><td>741767</td><td>1</td></tr>      <tr><td>7496</td><td>85512</td><td>no rank</td><td>0</td><td>323625</td><td>741608</td><td>1</td></tr>      <tr class="bg2"><td>33340</td><td>7496</td><td>subclass</td><td>0</td><td>332154</td><td>741607</td><td>1</td></tr>      <tr><td>33342</td><td>33340</td><td>infraclass</td><td>0</td><td>332185</td><td>359604</td><td>1</td></tr>      <tr class="bg2"><td>7524</td><td>33342</td><td>order</td><td>0</td><td>333360</td><td>356687</td><td>1</td></tr>      <tr><td>35567</td><td>7524</td><td>no rank</td><td>0</td><td>333361</td><td>347504</td><td>1</td></tr>      <tr class="bg2"><td>35568</td><td>35567</td><td>no rank</td><td>1</td><td>333362</td><td>343045</td><td>1</td></tr>      <tr><td>33343</td><td>35568</td><td>no rank</td><td>1</td><td>335301</td><td>343044</td><td>1</td></tr>      <tr class="bg2"><td>33345</td><td>33343</td><td>no rank</td><td>0</td><td>335356</td><td>343043</td><td>1</td></tr>      <tr><td>33347</td><td>33345</td><td>no rank</td><td>1</td><td>335393</td><td>343042</td><td>1</td></tr>      <tr class="bg2"><td>33349</td><td>33347</td><td>no rank</td><td>1</td><td>335394</td><td>343013</td><td>1</td></tr>      <tr><td>33351</td><td>33349</td><td>no rank</td><td>0</td><td>336031</td><td>343012</td><td>1</td></tr>      <tr class="bg2"><td>33354</td><td>33351</td><td>no rank</td><td>0</td><td>336032</td><td>340371</td><td>1</td></tr>      <tr><td>33355</td><td>33354</td><td>superfamily</td><td>1</td><td>337789</td><td>340370</td><td>1</td></tr>      <tr class="bg2"><td>30083</td><td>33355</td><td>family</td><td>0</td><td>338256</td><td>340285</td><td>1</td></tr>      <tr><td>236635</td><td>30083</td><td>subfamily</td><td>1</td><td>339497</td><td>340260</td><td>1</td></tr>      <tr class="bg2"><td>236655</td><td>236635</td><td>tribe</td><td>0</td><td>339672</td><td>339767</td><td>1</td></tr>    </table>
   </div></div>  <p style="margin-top:10px"><b>See also:</b></p>
   <ul>
     <li><a href="#ncbi_taxa_name">ncbi_taxa_name</a></li>
@@ -238,17 +248,17 @@ The complete compara schema diagram can be found <a target="_blank" href="./diag
         <img src="/i/16/plus-button.png" style="width:12px;height:12px;vertical-align:middle" alt="show"/>
         <span style="vertical-align:middle">Show columns</span>
       </a> 
-			<b> | </b> <a href="#top">[Back to top]</a>
-		</div>
+      <b> | </b> <a href="#top">[Back to top]</a>
+    </div>
   </div>
   <p style="padding:5px 0px;margin-bottom:0px;width:800px">This table contains different names, aliases and meta data for the taxa used in Ensembl.</p>
 
   <div id="div_ncbi_taxa_name" style="display:none">
     <table style="border:1px solid #667aa6;padding:0px;min-width:1000px;max-width:1200px">
       <tr class="center" style="color:#FFFFFF;background-color:#667aa6"><th style="color:#FFF;padding:2px">Column</th><th style="color:#FFF;padding:2px">Type</th><th style="color:#FFF;padding:2px;min-width:80px">Default value</th><th style="color:#FFF;padding:2px;min-width:500px">Description</th><th style="color:#FFF;padding:2px;min-width:100px">Index</th></tr>
-      <tr class="bg1"><td><b>taxon_id</b></td><td>int(10)</td><td></td><td>External reference to taxon_id in <a href="#ncbi_taxa_node">ncbi_taxa_node</a></td><td>key: </td></tr>
-      <tr class="bg2"><td><b>name</b></td><td>varchar(255)</td><td></td><td>Information assigned to this taxon_id</td><td>key: </td></tr>
-      <tr class="bg1"><td><b>name_class</b></td><td>varchar(50)</td><td></td><td>Type of information. e.g. common name, genbank_synonym, scientif name, etc.</td><td>key: </td></tr>
+      <tr class="bg1"><td><b>taxon_id</b></td><td>int(10)</td><td></td><td>External reference to taxon_id in <a href="#ncbi_taxa_node">ncbi_taxa_node</a></td><td>key: taxon_id</td></tr>
+      <tr class="bg2"><td><b>name</b></td><td>varchar(255)</td><td></td><td>Information assigned to this taxon_id</td><td>key: name</td></tr>
+      <tr class="bg1"><td><b>name_class</b></td><td>varchar(50)</td><td></td><td>Type of information. e.g. common name, genbank_synonym, scientif name, etc.</td><td>key: name_class</td></tr>
     </table>
   </div>
 <div style="margin: 10px 5px"><p style="font-weight:bold">Example:</p><p style="padding-left:10px">Here is an example on how to get the taxonomic ID for a species: </p><pre style="display:inline;border:1px solid #555;padding:2px;margin-right:15px;margin-left:10px">SELECT * FROM ncbi_taxa_name WHERE name_class = "scientific name" AND name = "Homo sapiens";</pre> <a id="e_ncbi_taxa_name" style="cursor:pointer;text-decoration:none" onclick="show_hide('ncbi_taxa_name','example')"><img src="/i/16/plus-button.png" style="width:12px;height:12px;vertical-align:middle" alt="show"/><span style="vertical-align:middle"> Show query results</span></a>
@@ -270,8 +280,8 @@ The complete compara schema diagram can be found <a target="_blank" href="./diag
         <img src="/i/16/plus-button.png" style="width:12px;height:12px;vertical-align:middle" alt="show"/>
         <span style="vertical-align:middle">Show columns</span>
       </a> 
-			<b> | </b> <a href="#top">[Back to top]</a>
-		</div>
+      <b> | </b> <a href="#top">[Back to top]</a>
+    </div>
   </div>
   <p style="padding:5px 0px;margin-bottom:0px;width:800px">This table contains information about the version of the genome assemblies used in this database</p>
 
@@ -284,6 +294,8 @@ The complete compara schema diagram can be found <a target="_blank" href="./diag
       <tr class="bg2"><td><b>assembly</b></td><td>varchar(100)</td><td>''</td><td>Assembly version of the genome</td><td>unique: name</td></tr>
       <tr class="bg1"><td><b>assembly_default</b></td><td>tinyint(1)</td><td>tinyint(1)</td><td>Boolean value describing if this assembly is the default one or not, so that we can handle more than one assembly version for a given species.</td><td></td></tr>
       <tr class="bg2"><td><b>genebuild</b></td><td>varchar(100)</td><td>''</td><td>Version of the genebuild</td><td>unique: name</td></tr>
+      <tr class="bg1"><td><b>has_karyotype</b></td><td>tinyint(1)</td><td>0</td><td>Whether the genome has a karyotype</td><td></td></tr>
+      <tr class="bg2"><td><b>is_high_coverage</b></td><td>tinyint(1)</td><td>0</td><td>Whether the assembly coverage depth is high enough</td><td></td></tr>
       <tr class="bg1"><td><b>locator</b></td><td>varchar(400)</td><td></td><td>Used for production purposes or for user configuration in in-house installation.</td><td></td></tr>
     </table>
   </div>
@@ -291,7 +303,7 @@ The complete compara schema diagram can be found <a target="_blank" href="./diag
 
   <div id="ex_genome_db" style="display:none;">
     <table class="ss" style="width:50%;margin-top:20px;margin-left:10px;border-spacing:2px">
-      <tr><th>genome_db_id</th><th>taxon_id</th><th>name</th><th>assembly</th><th>assembly_default</th><th>genebuild</th><th>locator</th></tr>      <tr><td>142</td><td>9031</td><td>gallus_gallus</td><td>Galgal4</td><td>1</td><td>2011-12-Ensembl</td><td></td></tr>      <tr class="bg2"><td>90</td><td>9606</td><td>homo_sapiens</td><td>GRCh37</td><td>1</td><td>2010-07-Ensembl</td><td></td></tr>    </table>
+      <tr><th>genome_db_id</th><th>taxon_id</th><th>name</th><th>assembly</th><th>assembly_default</th><th>genebuild</th><th>has_karyotype</th><th>is_high_coverage</th><th>locator</th></tr>      <tr><td>142</td><td>9031</td><td>gallus_gallus</td><td>Galgal4</td><td>1</td><td>2011-12-Ensembl</td><td>1</td><td>1</td><td></td></tr>      <tr class="bg2"><td>90</td><td>9606</td><td>homo_sapiens</td><td>GRCh37</td><td>1</td><td>2010-07-Ensembl</td><td>1</td><td>1</td><td></td></tr>    </table>
   </div></div>  <p style="margin-top:10px"><b>See also:</b></p>
   <ul>
     <li><a href="#ncbi_taxa_node">ncbi_taxa_node</a></li>
@@ -306,8 +318,8 @@ The complete compara schema diagram can be found <a target="_blank" href="./diag
         <img src="/i/16/plus-button.png" style="width:12px;height:12px;vertical-align:middle" alt="show"/>
         <span style="vertical-align:middle">Show columns</span>
       </a> 
-			<b> | </b> <a href="#top">[Back to top]</a>
-		</div>
+      <b> | </b> <a href="#top">[Back to top]</a>
+    </div>
   </div>
   <p style="padding:5px 0px;margin-bottom:0px;width:800px">Contains groups or sets of species which are used in the <a href="#method_link_species_set">method_link_species_set</a> table. Each species_set is a set of <a href="#genome_db">genome_db</a> objects</p>
 
@@ -322,7 +334,7 @@ The complete compara schema diagram can be found <a target="_blank" href="./diag
 
   <div id="ex_species_set" style="display:none;">
     <table class="ss" style="width:50%;margin-top:20px;margin-left:10px;border-spacing:2px">
-      <tr><th>species_set_id</th><th>GROUP_CONCAT(name)ASspecies</th></tr>      <tr><td>32268</td><td>sorex_araneus,homo_sapiens</td></tr>      <tr class="bg2"><td>32270</td><td>ornithorhynchus_anatinus,homo_sapiens</td></tr>      <tr><td>32271</td><td>monodelphis_domestica,homo_sapiens</td></tr>      <tr class="bg2"><td>32275</td><td>procavia_capensis,homo_sapiens</td></tr>      <tr><td>32277</td><td>cavia_porcellus,homo_sapiens</td></tr>      <tr class="bg2"><td>32280</td><td>pongo_abelii,homo_sapiens</td></tr>      <tr><td>32281</td><td>erinaceus_europaeus,homo_sapiens</td></tr>      <tr class="bg2"><td>32282</td><td>tursiops_truncatus,homo_sapiens</td></tr>      <tr><td>32283</td><td>dipodomys_ordii,homo_sapiens</td></tr>      <tr class="bg2"><td>32286</td><td>echinops_telfairi,homo_sapiens</td></tr>    </table>
+      <tr><th>species_set_id</th><th>species</th></tr>      <tr><td>32268</td><td>sorex_araneus,homo_sapiens</td></tr>      <tr class="bg2"><td>32270</td><td>ornithorhynchus_anatinus,homo_sapiens</td></tr>      <tr><td>32271</td><td>monodelphis_domestica,homo_sapiens</td></tr>      <tr class="bg2"><td>32275</td><td>procavia_capensis,homo_sapiens</td></tr>      <tr><td>32277</td><td>cavia_porcellus,homo_sapiens</td></tr>      <tr class="bg2"><td>32280</td><td>pongo_abelii,homo_sapiens</td></tr>      <tr><td>32281</td><td>erinaceus_europaeus,homo_sapiens</td></tr>      <tr class="bg2"><td>32282</td><td>tursiops_truncatus,homo_sapiens</td></tr>      <tr><td>32283</td><td>dipodomys_ordii,homo_sapiens</td></tr>      <tr class="bg2"><td>32286</td><td>echinops_telfairi,homo_sapiens</td></tr>    </table>
   </div></div>  <p style="margin-top:10px"><b>See also:</b></p>
   <ul>
     <li><a href="#method_link_species_set">method_link_species_set</a></li>
@@ -338,8 +350,8 @@ The complete compara schema diagram can be found <a target="_blank" href="./diag
         <img src="/i/16/plus-button.png" style="width:12px;height:12px;vertical-align:middle" alt="show"/>
         <span style="vertical-align:middle">Show columns</span>
       </a> 
-			<b> | </b> <a href="#top">[Back to top]</a>
-		</div>
+      <b> | </b> <a href="#top">[Back to top]</a>
+    </div>
   </div>
   <p style="padding:5px 0px;margin-bottom:0px;width:800px">This table contains descriptive tags for the species_set_ids in the species_set table. It is used to store options on clades and group of species. It has been initially developed for the gene tree view.</p>
 
@@ -371,8 +383,8 @@ The complete compara schema diagram can be found <a target="_blank" href="./diag
         <img src="/i/16/plus-button.png" style="width:12px;height:12px;vertical-align:middle" alt="show"/>
         <span style="vertical-align:middle">Show columns</span>
       </a> 
-			<b> | </b> <a href="#top">[Back to top]</a>
-		</div>
+      <b> | </b> <a href="#top">[Back to top]</a>
+    </div>
   </div>
   <p style="padding:5px 0px;margin-bottom:0px;width:800px">This table specifies which kind of link can exist between entities in compara (dna/dna alignment, synteny regions, homologous gene pairs, etc...)<br/>NOTE: We use method_link_ids between 1 and 100 for DNA-DNA alignments, between 101 and 200 for genomic syntenies, between 201 and 300 for protein homologies, between 301 and 400 for protein families and between 401 and 500 for protein and ncRNA trees. Each category corresponds to data stored in different tables.</p>
 
@@ -388,7 +400,7 @@ The complete compara schema diagram can be found <a target="_blank" href="./diag
 
   <div id="ex_method_link" style="display:none;">
     <table class="ss" style="width:50%;margin-top:20px;margin-left:10px;border-spacing:2px">
-      <tr><th>method_link_id</th><th>type</th><th>class</th></tr>      <tr><td>1</td><td>BLASTZ_NET</td><td>GenomicAlignBlock.pairwise_alignment</td></tr>      <tr class="bg2"><td>7</td><td>TRANSLATED_BLAT_NET</td><td>GenomicAlignBlock.pairwise_alignment</td></tr>      <tr><td>10</td><td>PECAN</td><td>GenomicAlignBlock.multiple_alignment</td></tr>      <tr class="bg2"><td>11</td><td>GERP_CONSTRAINED_ELEMENT</td><td>ConstrainedElement.constrained_element</td></tr>      <tr><td>13</td><td>EPO</td><td>GenomicAlignTree.ancestral_alignment</td></tr>      <tr class="bg2"><td>14</td><td>EPO_LOW_COVERAGE</td><td>GenomicAlignTree.tree_alignment</td></tr>      <tr><td>16</td><td>LASTZ_NET</td><td>GenomicAlignBlock.pairwise_alignment</td></tr>      <tr class="bg2"><td>19</td><td>LASTZ_PATCH</td><td>GenomicAlignBlock.pairwise_alignment</td></tr>      <tr><td>101</td><td>SYNTENY</td><td>SyntenyRegion.synteny</td></tr>      <tr class="bg2"><td>201</td><td>ENSEMBL_ORTHOLOGUES</td><td>Homology.homology</td></tr>      <tr><td>202</td><td>ENSEMBL_PARALOGUES</td><td>Homology.homology</td></tr>      <tr class="bg2"><td>205</td><td>ENSEMBL_PROJECTIONS</td><td>Homology.homology</td></tr>      <tr><td>301</td><td>FAMILY</td><td>Family.family</td></tr>      <tr class="bg2"><td>401</td><td>PROTEIN_TREES</td><td>ProteinTree.protein_tree_node</td></tr>      <tr><td>402</td><td>NC_TREES</td><td>NCTree.nc_tree_node</td></tr>      <tr class="bg2"><td>501</td><td>GERP_CONSERVATION_SCORE</td><td>ConservationScore.conservation_score</td></tr>    </table>
+      <tr><th>method_link_id</th><th>type</th><th>class</th></tr>      <tr><td>1</td><td>BLASTZ_NET</td><td>GenomicAlignBlock.pairwise_alignment</td></tr>      <tr class="bg2"><td>7</td><td>TRANSLATED_BLAT_NET</td><td>GenomicAlignBlock.pairwise_alignment</td></tr>      <tr><td>10</td><td>PECAN</td><td>GenomicAlignBlock.multiple_alignment</td></tr>      <tr class="bg2"><td>11</td><td>GERP_CONSTRAINED_ELEMENT</td><td>ConstrainedElement.constrained_element</td></tr>      <tr><td>13</td><td>EPO</td><td>GenomicAlignTree.ancestral_alignment</td></tr>      <tr class="bg2"><td>14</td><td>EPO_LOW_COVERAGE</td><td>GenomicAlignTree.tree_alignment</td></tr>      <tr><td>16</td><td>LASTZ_NET</td><td>GenomicAlignBlock.pairwise_alignment</td></tr>      <tr class="bg2"><td>101</td><td>SYNTENY</td><td>SyntenyRegion.synteny</td></tr>      <tr><td>201</td><td>ENSEMBL_ORTHOLOGUES</td><td>Homology.homology</td></tr>      <tr class="bg2"><td>202</td><td>ENSEMBL_PARALOGUES</td><td>Homology.homology</td></tr>      <tr><td>205</td><td>ENSEMBL_PROJECTIONS</td><td>Homology.homology</td></tr>      <tr class="bg2"><td>301</td><td>FAMILY</td><td>Family.family</td></tr>      <tr><td>401</td><td>PROTEIN_TREES</td><td>ProteinTree.protein_tree_node</td></tr>      <tr class="bg2"><td>402</td><td>NC_TREES</td><td>NCTree.nc_tree_node</td></tr>      <tr><td>501</td><td>GERP_CONSERVATION_SCORE</td><td>ConservationScore.conservation_score</td></tr>      <tr class="bg2"><td>19</td><td>LASTZ_PATCH</td><td>GenomicAlignBlock.pairwise_alignment</td></tr>    </table>
   </div></div>  <p style="margin-top:10px"><b>See also:</b></p>
   <ul>
     <li><a href="#method_link_species_set">method_link_species_set</a></li>
@@ -404,8 +416,8 @@ The complete compara schema diagram can be found <a target="_blank" href="./diag
         <img src="/i/16/plus-button.png" style="width:12px;height:12px;vertical-align:middle" alt="show"/>
         <span style="vertical-align:middle">Show columns</span>
       </a> 
-			<b> | </b> <a href="#top">[Back to top]</a>
-		</div>
+      <b> | </b> <a href="#top">[Back to top]</a>
+    </div>
   </div>
   <p style="padding:5px 0px;margin-bottom:0px;width:800px">This table contains information about the comparisons stored in the database. A given method_link_species_set_id exist for each comparison made and relates a method_link_id in <a href="#method_link">method_link</a> with a set of species (species_set_id) in the <a href="#species_set">species_set</a> table.</p>
 
@@ -440,8 +452,8 @@ The complete compara schema diagram can be found <a target="_blank" href="./diag
         <img src="/i/16/plus-button.png" style="width:12px;height:12px;vertical-align:middle" alt="show"/>
         <span style="vertical-align:middle">Show columns</span>
       </a> 
-			<b> | </b> <a href="#top">[Back to top]</a>
-		</div>
+      <b> | </b> <a href="#top">[Back to top]</a>
+    </div>
   </div>
   <p style="padding:5px 0px;margin-bottom:0px;width:800px">Contains serveral tag/value data associated with method_link_species_set entries</p>
 
@@ -467,8 +479,8 @@ The complete compara schema diagram can be found <a target="_blank" href="./diag
         <img src="/i/16/plus-button.png" style="width:12px;height:12px;vertical-align:middle" alt="show"/>
         <span style="vertical-align:middle">Show columns</span>
       </a> 
-			<b> | </b> <a href="#top">[Back to top]</a>
-		</div>
+      <b> | </b> <a href="#top">[Back to top]</a>
+    </div>
   </div>
   <p style="padding:5px 0px;margin-bottom:0px;width:800px">This table contains the nodes of the species tree used in the gene gain/loss analysis</p>
 
@@ -503,8 +515,8 @@ The complete compara schema diagram can be found <a target="_blank" href="./diag
         <img src="/i/16/plus-button.png" style="width:12px;height:12px;vertical-align:middle" alt="show"/>
         <span style="vertical-align:middle">Show columns</span>
       </a> 
-			<b> | </b> <a href="#top">[Back to top]</a>
-		</div>
+      <b> | </b> <a href="#top">[Back to top]</a>
+    </div>
   </div>
   <p style="padding:5px 0px;margin-bottom:0px;width:800px">This table stores species trees used in compara. Each tree is made of species_tree_node's</p>
 
@@ -521,7 +533,7 @@ The complete compara schema diagram can be found <a target="_blank" href="./diag
 
   <div id="ex_species_tree_root" style="display:none;">
     <table class="ss" style="width:50%;margin-top:20px;margin-left:10px;border-spacing:2px">
-      <tr><th>root_id</th><th>method_link_species_set_id</th><th>label</th><th>species_tree</th></tr>      <tr><td>654000</td><td>654</td><td>default</td><td>((((Mus_musculus:0.0845,Rattus_norvegicus:0.0916):0.2567,Oryctolagus_cuniculus:0.2157):0.0153,(((((Pan_troglodytes:0.0067,Homo_sapiens:0.0067):0.0022,Gorilla_gorilla:0.0088):0.0097,Pongo_abelii:0.0183):0.0143,Macaca_mulatta:0.0375):0.0220,Callithrix_jacchus:0.0661):0.0891):0.0206,(((Felis_catus:0.0986,Canis_familiaris:0.1025):0.0498,Equus_caballus:0.1094):0.0107,((Ovis_aries:0.0618,Bos_taurus:0.0618):0.0869,Sus_scrofa:0.1073):0.0403):0.0329):0;</td></tr>      <tr class="bg2"><td>660000</td><td>660</td><td>default</td><td>((((Loxodonta_africana:0.0822,Procavia_capensis:0.1554):0.0270,Echinops_telfairi:0.2459):0.0497,(Choloepus_hoffmanni:0.0964,Dasypus_novemcinctus:0.1167):0.0531):0.0067,(((((((((((Pan_troglodytes:0.0067,Homo_sapiens:0.0067):0.0022,Gorilla_gorilla:0.0088):0.0097,Pongo_abelii:0.0183):0.0072,Nomascus_leucogenys:0.0255):0.0072,Macaca_mulatta:0.0375):0.0220,Callithrix_jacchus:0.0661):0.0576,Tarsius_syrichta:0.1378):0.0111,(Microcebus_murinus:0.0927,Otolemur_garnettii:0.1297):0.0355):0.0155,Tupaia_belangeri:0.1862):0.0049,(((((Mus_musculus:0.0845,Rattus_norvegicus:0.0916):0.1978,Dipodomys_ordii:0.2116):0.0230,Ictidomys_tridecemlineatus:0.2256):0.0101,Cavia_porcellus:0.1485):0.0257,(Oryctolagus_cuniculus:0.1142,Ochotona_princeps:0.2011):0.1015):0.0153):0.0206,(((((((Mustela_putorius_furo:0.0256,Ailuropoda_melanoleuca:0.0256):0.0256,Canis_familiaris:0.0512):0.0512,Felis_catus:0.0986):0.0498,Equus_caballus:0.1094):0.0062,(Pteropus_vampyrus:0.1134,Myotis_lucifugus:0.1425):0.0337):0.0045,((((Ovis_aries:0.0618,Bos_taurus:0.0618):0.0618,Tursiops_truncatus:0.0647):0.0252,Sus_scrofa:0.1073):0.0202,Vicugna_pacos:0.0790):0.0202):0.0117,(Erinaceus_europaeus:0.2218,Sorex_araneus:0.2696):0.0564):0.0212):0.0237);</td></tr>      <tr><td>651041</td><td>651</td><td>default</td><td>(((((((Mus_musculus:0.0845,Rattus_norvegicus:0.0916):0.2567,Oryctolagus_cuniculus:0.2157):0.0153,(((((Pan_troglodytes:0.0067,Homo_sapiens:0.0067):0.0022,Gorilla_gorilla:0.0088):0.0097,Pongo_abelii:0.0183):0.0143,Macaca_mulatta:0.0375):0.0220,Callithrix_jacchus:0.0661):0.0891):0.0206,(((Felis_catus:0.0986,Canis_familiaris:0.1025):0.0498,Equus_caballus:0.1094):0.0107,((Ovis_aries:0.0618,Bos_taurus:0.0618):0.0869,Sus_scrofa:0.1073):0.0403):0.0329):0.2584,Monodelphis_domestica:0.3408):0.0717,Ornithorhynchus_anatinus:0.4566):0.1095,(((Gallus_gallus:0.0414,Meleagris_gallopavo:0.0414):0.1242,Taeniopygia_guttata:0.1715):0.3044,Anolis_carolinensis:0.4989):0.1700):0;</td></tr>      <tr class="bg2"><td>667000</td><td>667</td><td>default</td><td>(((((((Xiphophorus_maculatus:0.1205,Oryzias_latipes:0.2410):0.2410,Gasterosteus_aculeatus:0.3164):0.0592,Oreochromis_niloticus:0.4500):0.0814,(Takifugu_rubripes:0.2038,Tetraodon_nigroviridis:0.2242):1.0407):0.0814,Gadus_morhua:0.1628):0.1628,(Astyanax_mexicanus:0.3654,Danio_rerio:0.3654):0.3654):0.2715,Lepisosteus_oculatus:0.2715);</td></tr>      <tr><td>647000</td><td>647</td><td>default</td><td>(((Gallus_gallus:0.0414,Meleagris_gallopavo:0.0414):0.1242,Taeniopygia_guttata:0.1715):0.3044,Anolis_carolinensis:0.4989):0;</td></tr>      <tr class="bg2"><td>664000</td><td>664</td><td>default</td><td>(((((Gallus_gallus:0.0414,Meleagris_gallopavo:0.0414):0.0414,Anas_platyrhynchos:0.0828):0.0828,(Taeniopygia_guttata:0.0858,Ficedula_albicollis:0.0858):0.0858):0.1992,Pelodiscus_sinensis:0.4892):0.1051,Anolis_carolinensis:0.4989):0;</td></tr>      <tr><td>100000001</td><td>40094</td><td>default</td><td>(((((((((((9315*,9305*,13616*)9263,(9544*,42254*,9615*,9365*,37347*,9986*,9595*,10116*,9601*,9483*,9978*,10090*,9913*,9739*,9478*,10020*,61853*,10141*,9940*,9598*,132908*,9669*,30538*,9361*,9606*,9685*,30608*,9646*,9785*,43179*,30611*,9371*,9358*,9796*,9823*,9813*,59463*)9347)32525,9258*)40674,(59729*,59894*,13735*,8839*,9031*,9103*,28377*)32561)32524,8364*)32523,7897*)8287,((69293*,8128*,7994*,31033*,99883*,8083*,7955*,8090*,8049*)186625,7918*)41665)117571,7757*)7742,(7719*,51511*)7718)7711,(6239*,7227*)1206794)33213,4932*)33154;</td></tr>      <tr class="bg2"><td>100000084</td><td>40094</td><td>full_species_tree</td><td>(((6239*,7227*)1206794,(((((((((9305*,9315*,13616*)9263,((9361*,9358*)9348,(9813*,9785*,9371*)311790,((((((((9606*,9598*,9595*)207598,9601*)9604,61853*)314295,9544*)9526,9483*)314293,9478*)376913,(30608*,30611*)376911)9443,((((10116*,10090*)39107,10020*,43179*)33553,10141*)9989,(9978*,9986*)9975)314147,37347*)314146,(((9646*,9615*,9669*)379584,9685*)33554,(59463*,132908*)9397,(42254*,9365*)9362,((9940*,9913*)9895,30538*,9823*,9739*)91561,9796*)314145)9347)32525,9258*)40674,((((59894*,59729*)9126,(9103*,9031*)9005,8839*)8825,13735*)1329799,28377*)32561)32524,8364*)32523,7897*)8287,(((7955*,7994*)186626,((((8083*,8090*)32456,69293*)129949,(31033*,99883*)31031,8128*)32485,8049*)123370)186625,7918*)41665)117571,7757*)7742,(51511*,7719*)7718)7711)33213,4932*)33154;</td></tr>      <tr><td>100000288</td><td>40094</td><td>cafe</td><td>(((((pan.troglodytes:9,homo.sapiens:9)207598:34,callithrix.jacchus:43)314293:52,mus.musculus:95)314146:213,taeniopygia.guttata:308)32524:106,danio.rerio:414)117571:135;</td></tr>      <tr class="bg2"><td>40093000</td><td>40093</td><td>default</td><td>(((6239*,7227*)1206794,(((((((((9305*,9315*,13616*)9263,((9361*,9358*)9348,(((30608*,30611*)376911,((((((9598*,9606*,9595*)207598,9601*)9604,61853*)314295,9544*)9526,9483*)314293,9478*)376913)9443,((((10116*,10090*)39107,10020*,43179*)33553,10141*)9989,(9978*,9986*)9975)314147,37347*)314146,(9371*,9785*,9813*)311790,((59463*,132908*)9397,(42254*,9365*)9362,((9646*,9615*,9669*)379584,9685*)33554,((9913*,9940*)9895,9823*,30538*,9739*)91561,9796*)314145)9347)32525,9258*)40674,((((59894*,59729*)9126,(9103*,9031*)9005,8839*)8825,13735*)1329799,28377*)32561)32524,8364*)32523,7897*)8287,(((7955*,7994*)186626,((((8090*,8083*)32456,69293*)129949,(99883*,31033*)31031,8128*)32485,8049*)123370)186625,7918*)41665)117571,7757*)7742,(51511*,7719*)7718)7711)33213,4932*)33154;</td></tr>      <tr><td>40093116</td><td>40093</td><td>full_species_tree</td><td>(((((((((((9305*,9315*,13616*)9263,((9361*,9358*)9348,(((30611*,30608*)376911,((((((9606*,9598*,9595*)207598,9601*)9604,61853*)314295,9544*)9526,9483*)314293,9478*)376913)9443,((((10116*,10090*)39107,10020*,43179*)33553,10141*)9989,(9978*,9986*)9975)314147,37347*)314146,(9371*,9813*,9785*)311790,((42254*,9365*)9362,(59463*,132908*)9397,((9646*,9615*,9669*)379584,9685*)33554,((9940*,9913*)9895,9823*,30538*,9739*)91561,9796*)314145)9347)32525,9258*)40674,((((59894*,59729*)9126,(9103*,9031*)9005,8839*)8825,13735*)1329799,28377*)32561)32524,8364*)32523,7897*)8287,(((7955*,7994*)186626,((((8090*,8083*)32456,69293*)129949,(99883*,31033*)31031,8128*)32485,8049*)123370)186625,7918*)41665)117571,7757*)7742,(7719*,51511*)7718)7711,(6239*,7227*)1206794)33213,4932*)33154;</td></tr>      <tr class="bg2"><td>40093363</td><td>40093</td><td>cafe</td><td>(((((((((((((meleagris.gallopavo:44,gallus.gallus:44)9005:60,anas.platyrhynchos:104)8825.dup3:1,(ficedula.albicollis:39,taeniopygia.guttata:39)9126:66)8825:140,pelodiscus.sinensis:245)1329799:32,anolis.carolinensis:277)32561:32,((((((((((pteropus.vampyrus:60,myotis.lucifugus:60)9397:32,(((canis.familiaris:45,mustela.putorius.furo:45)379584.dup3:1,ailuropoda.melanoleuca:46)379584:10,felis.catus:56)33554:36)314145.dup3:1,(sorex.araneus:65,erinaceus.europaeus:65)9362:28)314145.dup4:1,equus.caballus:94)314145.dup5:2,((((bos.taurus:30,ovis.aries:30)9895:33,sus.scrofa:63)91561.dup3:1,vicugna.pacos:64)91561.dup4:1,tursiops.truncatus:65)91561:31)314145:13,(dasypus.novemcinctus:64,choloepus.hoffmanni:64)9348:45)9347.dup3:2,((procavia.capensis:81,loxodonta.africana:81)311790.dup3:1,echinops.telfairi:82)311790:29)9347.dup4:4,(((((((mus.musculus:25,rattus.norvegicus:25)39107:52,dipodomys.ordii:77)33553.dup3:1,ictidomys.tridecemlineatus:78)33553:1,cavia.porcellus:79)9989:9,(oryctolagus.cuniculus:51,ochotona.princeps:51)9975:37)314147:6,tupaia.belangeri:94)314146.dup3:1,((((((((pan.troglodytes:8,homo.sapiens:8)207598.dup3:1,gorilla.gorilla:9)207598:7,pongo.abelii:16)9604:5,nomascus.leucogenys:21)314295:9,macaca.mulatta:30)9526:13,callithrix.jacchus:43)314293:23,tarsius.syrichta:66)376913:9,(microcebus.murinus:57,otolemur.garnettii:57)376911:18)9443:20)314146:20)9347:59,((macropus.eugenii:86,monodelphis.domestica:86)9263.dup3:1,sarcophilus.harrisii:87)9263:87)32525:5,ornithorhynchus.anatinus:179)40674:130)32524:75,xenopus.tropicalis:384)32523:29,latimeria.chalumnae:413)8287:2,(((((((xiphophorus.maculatus:120,oryzias.latipes:120)32456:5,gasterosteus.aculeatus:125)129949:1,oreochromis.niloticus:126)32485.dup3:1,(takifugu.rubripes:69,tetraodon.nigroviridis:69)31031:58)32485:40,gadus.morhua:167)123370:100,(astyanax.mexicanus:152,danio.rerio:152)186626:115)186625:68,lepisosteus.oculatus:335)41665:80)117571:135,petromyzon.marinus:550)7742:187,(ciona.savignyi:100,ciona.intestinalis:100)7718:637)7711:216,(drosophila.melanogaster:1,caenorhabditis.elegans:1)1206794:952)33213:1,saccharomyces.cerevisiae:954)root:0;</td></tr>    </table>
+      <tr><th>root_id</th><th>method_link_species_set_id</th><th>label</th><th>species_tree</th></tr>      <tr><td>40094000</td><td>40094</td><td>default</td><td>(((6239*,7227*)1206794,(((((((((9315*,9305*,13616*)9263,(9669*,9544*,9739*,42254*,9646*,9365*,9796*,9685*,9986*,9823*,10116*,9371*,9478*,132908*,30538*,10090*,43179*,9785*,9913*,9358*,9615*,59463*,10020*,9978*,61853*,9595*,9598*,9361*,30608*,9940*,37347*,9606*,9483*,9601*,9813*,10141*,30611*)9347)32525,9258*)40674,(9103*,59894*,13735*,8839*,59729*,9031*,28377*)32561)32524,8364*)32523,7897*)8287,((7955*,69293*,99883*,8090*,8128*,31033*,8049*,7994*,8083*)186625,7918*)41665)117571,7757*)7742,(7719*,51511*)7718)7711)33213,4932*)33154;</td></tr>      <tr class="bg2"><td>40094083</td><td>40094</td><td>full_species_tree</td><td>(((((((((((9305*,9315*,13616*)9263,((9361*,9358*)9348,(9785*,9813*,9371*)311790,((((((((9606*,9598*,9595*)207598,9601*)9604,61853*)314295,9544*)9526,9483*)314293,9478*)376913,(30611*,30608*)376911)9443,((((10116*,10090*)39107,10020*,43179*)33553,10141*)9989,(9986*,9978*)9975)314147,37347*)314146,(((9646*,9615*,9669*)379584,9685*)33554,(59463*,132908*)9397,(9365*,42254*)9362,((9913*,9940*)9895,30538*,9823*,9739*)91561,9796*)314145)9347)32525,9258*)40674,((((59894*,59729*)9126,(9103*,9031*)9005,8839*)8825,13735*)1329799,28377*)32561)32524,8364*)32523,7897*)8287,(((7955*,7994*)186626,((((8090*,8083*)32456,69293*)129949,(99883*,31033*)31031,8128*)32485,8049*)123370)186625,7918*)41665)117571,7757*)7742,(51511*,7719*)7718)7711,(6239*,7227*)1206794)33213,4932*)33154;</td></tr>      <tr><td>40094199</td><td>40094</td><td>cafe</td><td>(((((homo.sapiens:8,pan.troglodytes:8)Homininae.dup3:35,callithrix.jacchus:43)Simiiformes:52,mus.musculus:95)Euarchontoglires.dup3:215,taeniopygia.guttata:310)Amniota:106,danio.rerio:416)Euteleostomi:135;</td></tr>      <tr class="bg2"><td>40093000</td><td>40093</td><td>default</td><td>(((6239*,7227*)1206794,(((((((((9315*,9305*,13616*)9263,((9361*,9358*)9348,(9813*,9785*,9371*)311790,(((30611*,30608*)376911,((((((9606*,9598*,9595*)207598,9601*)9604,61853*)314295,9544*)9526,9483*)314293,9478*)376913)9443,((9978*,9986*)9975,(((10116*,10090*)39107,10020*,43179*)33553,10141*)9989)314147,37347*)314146,((42254*,9365*)9362,(59463*,132908*)9397,((9646*,9615*,9669*)379584,9685*)33554,((9940*,9913*)9895,30538*,9823*,9739*)91561,9796*)314145)9347)32525,9258*)40674,((((59894*,59729*)9126,(9031*,9103*)9005,8839*)8825,13735*)1329799,28377*)32561)32524,8364*)32523,7897*)8287,(((7955*,7994*)186626,((((8090*,8083*)32456,69293*)129949,(99883*,31033*)31031,8128*)32485,8049*)123370)186625,7918*)41665)117571,7757*)7742,(51511*,7719*)7718)7711)33213,4932*)33154;</td></tr>      <tr><td>40093116</td><td>40093</td><td>full_species_tree</td><td>(((((((((((9315*,9305*,13616*)9263,((9361*,9358*)9348,(9785*,9813*,9371*)311790,(((9978*,9986*)9975,(((10116*,10090*)39107,10020*,43179*)33553,10141*)9989)314147,((30608*,30611*)376911,((((((9606*,9598*,9595*)207598,9601*)9604,61853*)314295,9544*)9526,9483*)314293,9478*)376913)9443,37347*)314146,((9365*,42254*)9362,((9646*,9615*,9669*)379584,9685*)33554,(59463*,132908*)9397,((9913*,9940*)9895,9823*,30538*,9739*)91561,9796*)314145)9347)32525,9258*)40674,((((59894*,59729*)9126,(9031*,9103*)9005,8839*)8825,13735*)1329799,28377*)32561)32524,8364*)32523,7897*)8287,(((7955*,7994*)186626,((((8083*,8090*)32456,69293*)129949,(99883*,31033*)31031,8128*)32485,8049*)123370)186625,7918*)41665)117571,7757*)7742,(51511*,7719*)7718)7711,(6239*,7227*)1206794)33213,4932*)33154;</td></tr>      <tr class="bg2"><td>40093232</td><td>40093</td><td>cafe</td><td>(((((((((((((taeniopygia.guttata:39,ficedula.albicollis:39)Passeriformes:65,anas.platyrhynchos:104)Neognathae.dup3:1,(gallus.gallus:44,meleagris.gallopavo:44)Phasianidae:61)Neognathae:140,pelodiscus.sinensis:245)Testudines + Archosauria group:32,anolis.carolinensis:277)Sauria:34,((((((((((((rattus.norvegicus:25,mus.musculus:25)Murinae:52,dipodomys.ordii:77)Sciurognathi.dup3:1,ictidomys.tridecemlineatus:78)Sciurognathi:1,cavia.porcellus:79)Rodentia:9,(ochotona.princeps:51,oryctolagus.cuniculus:51)Lagomorpha:37)Glires:6,tupaia.belangeri:94)Euarchontoglires.dup3:2,((((((((homo.sapiens:8,pan.troglodytes:8)Homininae.dup3:1,gorilla.gorilla:9)Homininae:7,pongo.abelii:16)Hominidae:5,nomascus.leucogenys:21)Hominoidea:9,macaca.mulatta:30)Catarrhini:13,callithrix.jacchus:43)Simiiformes:23,tarsius.syrichta:66)Haplorrhini:9,(otolemur.garnettii:57,microcebus.murinus:57)Strepsirrhini:18)Primates:21)Euarchontoglires:13,((procavia.capensis:81,echinops.telfairi:81)Afrotheria.dup3:1,loxodonta.africana:82)Afrotheria:27)Eutheria.dup3:1,(choloepus.hoffmanni:64,dasypus.novemcinctus:64)Xenarthra:46)Eutheria.dup4:7,(((((sorex.araneus:65,erinaceus.europaeus:65)Insectivora:26,(myotis.lucifugus:60,pteropus.vampyrus:60)Chiroptera:31)Laurasiatheria.dup3:1,equus.caballus:92)Laurasiatheria.dup4:2,(((canis.familiaris:45,mustela.putorius.furo:45)Caniformia.dup3:1,ailuropoda.melanoleuca:46)Caniformia:10,felis.catus:56)Carnivora:38)Laurasiatheria.dup5:3,((((bos.taurus:30,ovis.aries:30)Bovidae:33,sus.scrofa:63)Cetartiodactyla.dup3:1,vicugna.pacos:64)Cetartiodactyla.dup4:1,tursiops.truncatus:65)Cetartiodactyla:32)Laurasiatheria:20)Eutheria:59,((sarcophilus.harrisii:86,monodelphis.domestica:86)Marsupialia.dup3:1,macropus.eugenii:87)Marsupialia:89)Theria:5,ornithorhynchus.anatinus:181)Mammalia:130)Amniota:75,xenopus.tropicalis:386)Tetrapoda:29,latimeria.chalumnae:415)Sarcopterygii:3,(((((((oryzias.latipes:120,xiphophorus.maculatus:120)Atherinomorpha:5,gasterosteus.aculeatus:125)Smegmamorpha:1,(takifugu.rubripes:69,tetraodon.nigroviridis:69)Tetraodontidae:57)Percomorpha.dup3:1,oreochromis.niloticus:127)Percomorpha:40,gadus.morhua:167)Holacanthopterygii:100,(danio.rerio:152,astyanax.mexicanus:152)Otophysi:115)Clupeocephala:68,lepisosteus.oculatus:335)Neopterygii:83)Euteleostomi:135,petromyzon.marinus:553)Vertebrata:187,(ciona.intestinalis:100,ciona.savignyi:100)Ciona:640)Chordata:216,(caenorhabditis.elegans:1,drosophila.melanogaster:1)Ecdysozoa:955)Bilateria:1,saccharomyces.cerevisiae:957)root:0;</td></tr>      <tr><td>647000</td><td>647</td><td>default</td><td>(((Gallus_gallus:0.0414,Meleagris_gallopavo:0.0414):0.1242,Taeniopygia_guttata:0.1715):0.3044,Anolis_carolinensis:0.4989):0;</td></tr>      <tr class="bg2"><td>651041</td><td>651</td><td>default</td><td>(((((((Mus_musculus:0.0845,Rattus_norvegicus:0.0916):0.2567,Oryctolagus_cuniculus:0.2157):0.0153,(((((Pan_troglodytes:0.0067,Homo_sapiens:0.0067):0.0022,Gorilla_gorilla:0.0088):0.0097,Pongo_abelii:0.0183):0.0143,Macaca_mulatta:0.0375):0.0220,Callithrix_jacchus:0.0661):0.0891):0.0206,(((Felis_catus:0.0986,Canis_familiaris:0.1025):0.0498,Equus_caballus:0.1094):0.0107,((Ovis_aries:0.0618,Bos_taurus:0.0618):0.0869,Sus_scrofa:0.1073):0.0403):0.0329):0.2584,Monodelphis_domestica:0.3408):0.0717,Ornithorhynchus_anatinus:0.4566):0.1095,(((Gallus_gallus:0.0414,Meleagris_gallopavo:0.0414):0.1242,Taeniopygia_guttata:0.1715):0.3044,Anolis_carolinensis:0.4989):0.1700):0;</td></tr>      <tr><td>654000</td><td>654</td><td>default</td><td>((((Mus_musculus:0.0845,Rattus_norvegicus:0.0916):0.2567,Oryctolagus_cuniculus:0.2157):0.0153,(((((Pan_troglodytes:0.0067,Homo_sapiens:0.0067):0.0022,Gorilla_gorilla:0.0088):0.0097,Pongo_abelii:0.0183):0.0143,Macaca_mulatta:0.0375):0.0220,Callithrix_jacchus:0.0661):0.0891):0.0206,(((Felis_catus:0.0986,Canis_familiaris:0.1025):0.0498,Equus_caballus:0.1094):0.0107,((Ovis_aries:0.0618,Bos_taurus:0.0618):0.0869,Sus_scrofa:0.1073):0.0403):0.0329):0;</td></tr>      <tr class="bg2"><td>660000</td><td>660</td><td>default</td><td>((((Loxodonta_africana:0.0822,Procavia_capensis:0.1554):0.0270,Echinops_telfairi:0.2459):0.0497,(Choloepus_hoffmanni:0.0964,Dasypus_novemcinctus:0.1167):0.0531):0.0067,(((((((((((Pan_troglodytes:0.0067,Homo_sapiens:0.0067):0.0022,Gorilla_gorilla:0.0088):0.0097,Pongo_abelii:0.0183):0.0072,Nomascus_leucogenys:0.0255):0.0072,Macaca_mulatta:0.0375):0.0220,Callithrix_jacchus:0.0661):0.0576,Tarsius_syrichta:0.1378):0.0111,(Microcebus_murinus:0.0927,Otolemur_garnettii:0.1297):0.0355):0.0155,Tupaia_belangeri:0.1862):0.0049,(((((Mus_musculus:0.0845,Rattus_norvegicus:0.0916):0.1978,Dipodomys_ordii:0.2116):0.0230,Ictidomys_tridecemlineatus:0.2256):0.0101,Cavia_porcellus:0.1485):0.0257,(Oryctolagus_cuniculus:0.1142,Ochotona_princeps:0.2011):0.1015):0.0153):0.0206,(((((((Mustela_putorius_furo:0.0256,Ailuropoda_melanoleuca:0.0256):0.0256,Canis_familiaris:0.0512):0.0512,Felis_catus:0.0986):0.0498,Equus_caballus:0.1094):0.0062,(Pteropus_vampyrus:0.1134,Myotis_lucifugus:0.1425):0.0337):0.0045,((((Ovis_aries:0.0618,Bos_taurus:0.0618):0.0618,Tursiops_truncatus:0.0647):0.0252,Sus_scrofa:0.1073):0.0202,Vicugna_pacos:0.0790):0.0202):0.0117,(Erinaceus_europaeus:0.2218,Sorex_araneus:0.2696):0.0564):0.0212):0.0237);</td></tr>      <tr><td>664000</td><td>664</td><td>default</td><td>(((((Gallus_gallus:0.0414,Meleagris_gallopavo:0.0414):0.0414,Anas_platyrhynchos:0.0828):0.0828,(Taeniopygia_guttata:0.0858,Ficedula_albicollis:0.0858):0.0858):0.1992,Pelodiscus_sinensis:0.4892):0.1051,Anolis_carolinensis:0.4989):0;</td></tr>      <tr class="bg2"><td>667000</td><td>667</td><td>default</td><td>(((((((Xiphophorus_maculatus:0.1205,Oryzias_latipes:0.2410):0.2410,Gasterosteus_aculeatus:0.3164):0.0592,Oreochromis_niloticus:0.4500):0.0814,(Takifugu_rubripes:0.2038,Tetraodon_nigroviridis:0.2242):1.0407):0.0814,Gadus_morhua:0.1628):0.1628,(Astyanax_mexicanus:0.3654,Danio_rerio:0.3654):0.3654):0.2715,Lepisosteus_oculatus:0.2715);</td></tr>    </table>
   </div></div>  <p style="margin-top:10px"><b>See also:</b></p>
   <ul>
     <li><a href="#species_tree_node">species_tree_node</a></li>
@@ -537,8 +549,8 @@ The complete compara schema diagram can be found <a target="_blank" href="./diag
         <img src="/i/16/plus-button.png" style="width:12px;height:12px;vertical-align:middle" alt="show"/>
         <span style="vertical-align:middle">Show columns</span>
       </a> 
-			<b> | </b> <a href="#top">[Back to top]</a>
-		</div>
+      <b> | </b> <a href="#top">[Back to top]</a>
+    </div>
   </div>
   <p style="padding:5px 0px;margin-bottom:0px;width:800px">This table contains tag/value data for species_tree_nodes</p>
 
@@ -570,8 +582,8 @@ The complete compara schema diagram can be found <a target="_blank" href="./diag
         <img src="/i/16/plus-button.png" style="width:12px;height:12px;vertical-align:middle" alt="show"/>
         <span style="vertical-align:middle">Show columns</span>
       </a> 
-			<b> | </b> <a href="#top">[Back to top]</a>
-		</div>
+      <b> | </b> <a href="#top">[Back to top]</a>
+    </div>
   </div>
   <p style="padding:5px 0px;margin-bottom:0px;width:800px">Contains all the syntenic relationships found and the relative orientation of both syntenic regions.</p>
 
@@ -579,7 +591,7 @@ The complete compara schema diagram can be found <a target="_blank" href="./diag
     <table style="border:1px solid #667aa6;padding:0px;min-width:1000px;max-width:1200px">
       <tr class="center" style="color:#FFFFFF;background-color:#667aa6"><th style="color:#FFF;padding:2px">Column</th><th style="color:#FFF;padding:2px">Type</th><th style="color:#FFF;padding:2px;min-width:80px">Default value</th><th style="color:#FFF;padding:2px;min-width:500px">Description</th><th style="color:#FFF;padding:2px;min-width:100px">Index</th></tr>
       <tr class="bg1"><td><b>synteny_region_id</b></td><td>int(10)</td><td></td><td>Internal unique ID</td><td>primary key</td></tr>
-      <tr class="bg2"><td><b>method_link_species_set_id</b></td><td>int(10)</td><td></td><td>External reference to method_link_species_set_id in the <a href="#method_link_species_set">method_link_species_set</a> table</td><td>key: </td></tr>
+      <tr class="bg2"><td><b>method_link_species_set_id</b></td><td>int(10)</td><td></td><td>External reference to method_link_species_set_id in the <a href="#method_link_species_set">method_link_species_set</a> table</td><td>key: method_link_species_set_id</td></tr>
     </table>
   </div>
 <div style="margin: 10px 5px"><p style="font-weight:bold">Example 1:</p><p style="padding-left:10px">This query shows that the syntenic region 34965 corresponds to a synteny relationship between the Human and Opossum genomes </p><pre style="display:inline;border:1px solid #555;padding:2px;margin-right:15px;margin-left:10px">SELECT * FROM synteny_region WHERE synteny_region_id = 34965;</pre> <a id="e_synteny_region1" style="cursor:pointer;text-decoration:none" onclick="show_hide('synteny_region1','example')"><img src="/i/16/plus-button.png" style="width:12px;height:12px;vertical-align:middle" alt="show"/><span style="vertical-align:middle"> Show query results</span></a>
@@ -587,7 +599,7 @@ The complete compara schema diagram can be found <a target="_blank" href="./diag
   <div id="ex_synteny_region1" style="display:none;">
     <table class="ss" style="width:50%;margin-top:20px;margin-left:10px;border-spacing:2px">
       <tr><th>synteny_region_id</th><th>method_link_species_set_id</th></tr>      <tr><td>34965</td><td>10026</td></tr>    </table>
-  </div></div><div style="margin: 10px 5px"><p style="font-weight:bold">Example 2:</p><p style="padding-left:10px">Linking with the <a href="#method_link_species_set">method_link_species_set</a> table we get the names: </p><pre style="display:inline;border:1px solid #555;padding:2px;margin-right:15px;margin-left:10px">SELECT synteny_region_id, name FROM synteny_region join method_link_species_set USING(method_link_species_set_id) WHERE synteny_region_id = 34965;</pre> <a id="e_synteny_region2" style="cursor:pointer;text-decoration:none" onclick="show_hide('synteny_region2','example')"><img src="/i/16/plus-button.png" style="width:12px;height:12px;vertical-align:middle" alt="show"/><span style="vertical-align:middle"> Show query results</span></a>
+  </div></div><div style="margin: 10px 5px"><p style="font-weight:bold">Example 2:</p><p style="padding-left:10px">Linking with the <a href="#method_link_species_set">method_link_species_set</a> table we get the names: </p><pre style="display:inline;border:1px solid #555;padding:2px;margin-right:15px;margin-left:10px">SELECT synteny_region_id, name FROM synteny_region JOIN method_link_species_set USING(method_link_species_set_id) WHERE synteny_region_id = 34965;</pre> <a id="e_synteny_region2" style="cursor:pointer;text-decoration:none" onclick="show_hide('synteny_region2','example')"><img src="/i/16/plus-button.png" style="width:12px;height:12px;vertical-align:middle" alt="show"/><span style="vertical-align:middle"> Show query results</span></a>
 
   <div id="ex_synteny_region2" style="display:none;">
     <table class="ss" style="width:50%;margin-top:20px;margin-left:10px;border-spacing:2px">
@@ -606,8 +618,8 @@ The complete compara schema diagram can be found <a target="_blank" href="./diag
         <img src="/i/16/plus-button.png" style="width:12px;height:12px;vertical-align:middle" alt="show"/>
         <span style="vertical-align:middle">Show columns</span>
       </a> 
-			<b> | </b> <a href="#top">[Back to top]</a>
-		</div>
+      <b> | </b> <a href="#top">[Back to top]</a>
+    </div>
   </div>
   <p style="padding:5px 0px;margin-bottom:0px;width:800px">This table defines the genomic sequences used in the comparative genomics analyisis. It is used by the <a href="#genomic_align_block">genomic_align_block</a> table to define aligned sequences. It is also used by the <a href="#dnafrag_region">dnafrag_region</a> table to define syntenic regions.<br />NOTE: Index <name> has genome_db_id in the first place because unless fetching all dnafrags or fetching by dnafrag_id, genome_db_id appears always in the WHERE clause. Unique key <name> is used to ensure that Bio::EnsEMBL::Compara::DBSQL::DnaFragAdaptor->fetch_by_GenomeDB_and_name will always fetch a single row. This can be used in the EnsEMBL Compara DB because we store top-level dnafrags only.</p>
 
@@ -626,7 +638,7 @@ The complete compara schema diagram can be found <a target="_blank" href="./diag
 
   <div id="ex_dnafrag" style="display:none;">
     <table class="ss" style="width:50%;margin-top:20px;margin-left:10px;border-spacing:2px">
-      <tr><th>dnafrag.*</th></tr>      <tr><td>12179421</td><td>107349540</td><td>14</td><td>90</td><td>chromosome</td><td>1</td></tr>    </table>
+      <tr><th>dnafrag_id</th><th>length</th><th>name</th><th>genome_db_id</th><th>coord_system_name</th><th>is_reference</th></tr>      <tr><td>12179421</td><td>107349540</td><td>14</td><td>90</td><td>chromosome</td><td>1</td></tr>    </table>
   </div></div>  <p style="margin-top:10px"><b>See also:</b></p>
   <ul>
     <li><a href="#genomic_align_block">genomic_align_block</a></li>
@@ -643,8 +655,8 @@ The complete compara schema diagram can be found <a target="_blank" href="./diag
         <img src="/i/16/plus-button.png" style="width:12px;height:12px;vertical-align:middle" alt="show"/>
         <span style="vertical-align:middle">Show columns</span>
       </a> 
-			<b> | </b> <a href="#top">[Back to top]</a>
-		</div>
+      <b> | </b> <a href="#top">[Back to top]</a>
+    </div>
   </div>
   <p style="padding:5px 0px;margin-bottom:0px;width:800px">This table contains the genomic regions corresponding to every synteny relationship found. There are two genomic regions for every synteny relationship.</p>
 
@@ -684,8 +696,8 @@ The complete compara schema diagram can be found <a target="_blank" href="./diag
         <img src="/i/16/plus-button.png" style="width:12px;height:12px;vertical-align:middle" alt="show"/>
         <span style="vertical-align:middle">Show columns</span>
       </a> 
-			<b> | </b> <a href="#top">[Back to top]</a>
-		</div>
+      <b> | </b> <a href="#top">[Back to top]</a>
+    </div>
   </div>
   <p style="padding:5px 0px;margin-bottom:0px;width:800px">This table is the key table for the genomic alignments. The software used to align the genomic blocks is refered as an external key to the <a href="#method_link">method_link</a> table. Nevertheless, actual aligned sequences are defined in the <a href="#genomic_align">genomic_align</a> table.<br />Tree alignments (EPO alignments) are best accessed through the <a href="#genomic_align_tree">genomic_align_tree</a> table although the alignments are also indexed in this table. This allows the user to also access the tree alignments as normal multiple alignments.<br />NOTE: All queries in the API uses the primary key as rows are always fetched using the genomic_align_block_id. The key 'method_link_species_set_id' is used by MART when fetching all the genomic_align_blocks corresponding to a given method_link_species_set_id</p>
 
@@ -723,8 +735,8 @@ The complete compara schema diagram can be found <a target="_blank" href="./diag
         <img src="/i/16/plus-button.png" style="width:12px;height:12px;vertical-align:middle" alt="show"/>
         <span style="vertical-align:middle">Show columns</span>
       </a> 
-			<b> | </b> <a href="#top">[Back to top]</a>
-		</div>
+      <b> | </b> <a href="#top">[Back to top]</a>
+    </div>
   </div>
   <p style="padding:5px 0px;margin-bottom:0px;width:800px">This table is used to index tree alignments, e.g. EPO alignments. These alignments include inferred ancestral sequences. The tree required to index these sequences is stored in this table. This table stores the structure of the tree. Each node links to an entry in the <a href="#genomic_align_group">genomic_align_group</a> table, which links to one or several entries in the <a href="#genomic_align">genomic_align</a> table.<br />NOTE: Left_index and right_index are used to speed up fetching trees from the database. Any given node has its left_index larger than the left_index of its parent node and its right index smaller than the right_index of its parent node. In other words, all descendent nodes of a given node can be obtained by fetching all the node with a left_index (or right_index or both) between the left_index and the right_index of that node.</p>
 
@@ -766,8 +778,8 @@ The complete compara schema diagram can be found <a target="_blank" href="./diag
         <img src="/i/16/plus-button.png" style="width:12px;height:12px;vertical-align:middle" alt="show"/>
         <span style="vertical-align:middle">Show columns</span>
       </a> 
-			<b> | </b> <a href="#top">[Back to top]</a>
-		</div>
+      <b> | </b> <a href="#top">[Back to top]</a>
+    </div>
   </div>
   <p style="padding:5px 0px;margin-bottom:0px;width:800px">This table contains the coordinates and all the information needed to rebuild genomic alignments. Every entry corresponds to one of the aligned sequences. It also contains an external key to the <a href="#method_link_species_set">method_link_species_set</a> which refers to the software and set of species used for getting the corresponding alignment. The aligned sequence is defined by an external reference to the <a href="#dnafrag">dnafrag</a> table, the starting and ending position within this dnafrag, the strand and a cigar_line.<br /> The original aligned sequence is not stored but it can be retrieved using the <b>cigar_line</b> field and the original sequence. The cigar line defines the sequence of matches/mismatches and deletions (or gaps). For example, this cigar line <b>2MD3M2D2M</b> will mean that the alignment contains 2 matches/mismatches, 1 deletion (number 1 is omitted in order to save some space), 3 matches/mismatches, 2 deletions and 2 matches/mismatches. If the original sequence is:<br /> <ul><li>Original sequence: AACGCTT</li></ul> The aligned sequence will be:<br /> <table> <caption>cigar line: 2MD3M2D2M</caption> <thead><tr> <th>M</th> <th>M</th> <th>D</th> <th>M</th> <th>M</th> <th>M</th> <th>D</th> <th>D</th> <th>M</th> <th>M</th> </tr> </thead> <tbody> <tr> <td>A</td> <td>A</td> <td>-</td> <td>C</td> <td>G</td> <td>C</td> <td>-</td> <td>-</td> <td>T</td> <td>T</td> </tr> </tbody> </table></p>
 
@@ -814,16 +826,16 @@ The complete compara schema diagram can be found <a target="_blank" href="./diag
         <img src="/i/16/plus-button.png" style="width:12px;height:12px;vertical-align:middle" alt="show"/>
         <span style="vertical-align:middle">Show columns</span>
       </a> 
-			<b> | </b> <a href="#top">[Back to top]</a>
-		</div>
+      <b> | </b> <a href="#top">[Back to top]</a>
+    </div>
   </div>
   <p style="padding:5px 0px;margin-bottom:0px;width:800px">This table contains conservation scores calculated from the whole-genome multiple alignments stored in the <a href="#genomic_align_block">genomic_align_block</a> table. Several scores are stored per row. expected_score and diff_score are binary columns and you need to use the Perl API to access these data.</p>
 
   <div id="div_conservation_score" style="display:none">
     <table style="border:1px solid #667aa6;padding:0px;min-width:1000px;max-width:1200px">
       <tr class="center" style="color:#FFFFFF;background-color:#667aa6"><th style="color:#FFF;padding:2px">Column</th><th style="color:#FFF;padding:2px">Type</th><th style="color:#FFF;padding:2px;min-width:80px">Default value</th><th style="color:#FFF;padding:2px;min-width:500px">Description</th><th style="color:#FFF;padding:2px;min-width:100px">Index</th></tr>
-      <tr class="bg1"><td><b>genomic_align_block_id</b></td><td>bigint</td><td></td><td>External reference to genomic_align_block_id in the <a href="#genomic_align_block">genomic_align_block</a> table</td><td>key: </td></tr>
-      <tr class="bg2"><td><b>window_size</b></td><td>smallint</td><td></td><td>The scores are stored at different resolution levels. This column defines the window size used to calculate the average score</td><td>key: </td></tr>
+      <tr class="bg1"><td><b>genomic_align_block_id</b></td><td>bigint</td><td></td><td>External reference to genomic_align_block_id in the <a href="#genomic_align_block">genomic_align_block</a> table</td><td>key: genomic_align_block_id, window_size</td></tr>
+      <tr class="bg2"><td><b>window_size</b></td><td>smallint</td><td></td><td>The scores are stored at different resolution levels. This column defines the window size used to calculate the average score</td><td>key: genomic_align_block_id, window_size</td></tr>
       <tr class="bg1"><td><b>position</b></td><td>int</td><td></td><td>Position of the first score (in alignment coordinates)</td><td></td></tr>
       <tr class="bg2"><td><b>expected_score</b></td><td>blob</td><td></td><td>Expected score. The observed score can be determined using the diff_score and the expected_score</td><td></td></tr>
       <tr class="bg1"><td><b>diff_score</b></td><td>blob</td><td></td><td>The difference between the expected and observed variation, i.e. the conservation score</td><td></td></tr>
@@ -843,8 +855,8 @@ The complete compara schema diagram can be found <a target="_blank" href="./diag
         <img src="/i/16/plus-button.png" style="width:12px;height:12px;vertical-align:middle" alt="show"/>
         <span style="vertical-align:middle">Show columns</span>
       </a> 
-			<b> | </b> <a href="#top">[Back to top]</a>
-		</div>
+      <b> | </b> <a href="#top">[Back to top]</a>
+    </div>
   </div>
   <p style="padding:5px 0px;margin-bottom:0px;width:800px">This table contains constrained elements calculated from the whole-genome multiple alignments stored in the <a href="#genomic_align_block">genomic_align_block</a> table</p>
 
@@ -892,8 +904,8 @@ The complete compara schema diagram can be found <a target="_blank" href="./diag
         <img src="/i/16/plus-button.png" style="width:12px;height:12px;vertical-align:middle" alt="show"/>
         <span style="vertical-align:middle">Show columns</span>
       </a> 
-			<b> | </b> <a href="#top">[Back to top]</a>
-		</div>
+      <b> | </b> <a href="#top">[Back to top]</a>
+    </div>
   </div>
   <p style="padding:5px 0px;margin-bottom:0px;width:800px">This table contains the protein sequences present in the member table used in the protein alignment part of the EnsEMBL Compara DB.</p>
 
@@ -914,8 +926,8 @@ The complete compara schema diagram can be found <a target="_blank" href="./diag
         <img src="/i/16/plus-button.png" style="width:12px;height:12px;vertical-align:middle" alt="show"/>
         <span style="vertical-align:middle">Show columns</span>
       </a> 
-			<b> | </b> <a href="#top">[Back to top]</a>
-		</div>
+      <b> | </b> <a href="#top">[Back to top]</a>
+    </div>
   </div>
   <p style="padding:5px 0px;margin-bottom:0px;width:800px">This table links sequences to the EnsEMBL core DB or to external DBs.</p>
 
@@ -923,14 +935,14 @@ The complete compara schema diagram can be found <a target="_blank" href="./diag
     <table style="border:1px solid #667aa6;padding:0px;min-width:1000px;max-width:1200px">
       <tr class="center" style="color:#FFFFFF;background-color:#667aa6"><th style="color:#FFF;padding:2px">Column</th><th style="color:#FFF;padding:2px">Type</th><th style="color:#FFF;padding:2px;min-width:80px">Default value</th><th style="color:#FFF;padding:2px;min-width:500px">Description</th><th style="color:#FFF;padding:2px;min-width:100px">Index</th></tr>
       <tr class="bg1"><td><b>member_id</b></td><td>int(10)</td><td></td><td>Internal unique ID</td><td>primary key</td></tr>
-      <tr class="bg2"><td><b>stable_id</b></td><td>varchar(128)</td><td></td><td>EnsEMBL stable ID or external ID (for Uniprot/SWISSPROT and Uniprot/SPTREMBL)</td><td>unique: source_stable_id<br />key: </td></tr>
+      <tr class="bg2"><td><b>stable_id</b></td><td>varchar(128)</td><td></td><td>EnsEMBL stable ID or external ID (for Uniprot/SWISSPROT and Uniprot/SPTREMBL)</td><td>unique: source_stable_id<br />key: stable_id</td></tr>
       <tr class="bg1"><td><b>version</b></td><td>int(10)</td><td>0</td><td>Version of the stable ID (see EnsEMBL core DB)</td><td></td></tr>
-      <tr class="bg2"><td><b>source_name</b></td><td>ENUM('ENSEMBLGENE','ENSEMBLPEP','Uniprot/SPTREMBL','Uniprot/SWISSPROT','ENSEMBLTRANS','EXTERNALCDS')</td><td></td><td>The source of the member</td><td>unique: source_stable_id<br />key: </td></tr>
+      <tr class="bg2"><td><b>source_name</b></td><td>ENUM('ENSEMBLGENE','ENSEMBLPEP','Uniprot/SPTREMBL','Uniprot/SWISSPROT','ENSEMBLTRANS','EXTERNALCDS')</td><td></td><td>The source of the member</td><td>unique: source_stable_id<br />key: source_name</td></tr>
       <tr class="bg1"><td><b>taxon_id</b></td><td>int(10)</td><td></td><td>External reference to taxon_id in the <a href="#ncbi_taxa_node">ncbi_taxa_node</a> table</td><td></td></tr>
       <tr class="bg2"><td><b>genome_db_id</b></td><td>int(10)</td><td></td><td>External reference to genome_db_id in the <a href="#genome_db">genome_db</a> table</td><td>key: gdb_name_start_end</td></tr>
-      <tr class="bg1"><td><b>sequence_id</b></td><td>int(10)</td><td></td><td>External reference to sequence_id in the <a href="#sequence">sequence</a> table. May be 0 when the sequence is not available in the <a href="#sequence">sequence</a> table, e.g. for a gene instance</td><td>key: </td></tr>
-      <tr class="bg2"><td><b>gene_member_id</b></td><td>int(10)</td><td></td><td>External reference to member_id in the <a href="#member">member</a> to allow linkage from peptides and transcripts to genes</td><td>key: </td></tr>
-      <tr class="bg1"><td><b>canonical_member_id</b></td><td>int(10)</td><td></td><td>External reference to member_id in the <a href="#member">member</a> table to allow linkage from a gene to its canonical peptide</td><td>key: </td></tr>
+      <tr class="bg1"><td><b>sequence_id</b></td><td>int(10)</td><td></td><td>External reference to sequence_id in the <a href="#sequence">sequence</a> table. May be 0 when the sequence is not available in the <a href="#sequence">sequence</a> table, e.g. for a gene instance</td><td>key: sequence_id</td></tr>
+      <tr class="bg2"><td><b>gene_member_id</b></td><td>int(10)</td><td></td><td>External reference to member_id in the <a href="#member">member</a> to allow linkage from peptides and transcripts to genes</td><td>key: gene_member_id</td></tr>
+      <tr class="bg1"><td><b>canonical_member_id</b></td><td>int(10)</td><td></td><td>External reference to member_id in the <a href="#member">member</a> table to allow linkage from a gene to its canonical peptide</td><td>key: canonical_member_id</td></tr>
       <tr class="bg2"><td><b>description</b></td><td>text</td><td>NULL</td><td>The description of the gene/protein as described in the core database or from the Uniprot entry</td><td></td></tr>
       <tr class="bg1"><td><b>chr_name</b></td><td>char(40)</td><td></td><td>Chromosome where this sequence is located</td><td>key: gdb_name_start_end</td></tr>
       <tr class="bg2"><td><b>chr_start</b></td><td>int(10)</td><td></td><td>First nucleotide of this chromosome which corresponds to this member</td><td>key: gdb_name_start_end</td></tr>
@@ -961,8 +973,8 @@ The complete compara schema diagram can be found <a target="_blank" href="./diag
         <img src="/i/16/plus-button.png" style="width:12px;height:12px;vertical-align:middle" alt="show"/>
         <span style="vertical-align:middle">Show columns</span>
       </a> 
-			<b> | </b> <a href="#top">[Back to top]</a>
-		</div>
+      <b> | </b> <a href="#top">[Back to top]</a>
+    </div>
   </div>
   <p style="padding:5px 0px;margin-bottom:0px;width:800px">This table includes information about members for web fast-lookups</p>
 
@@ -996,8 +1008,8 @@ The complete compara schema diagram can be found <a target="_blank" href="./diag
         <img src="/i/16/plus-button.png" style="width:12px;height:12px;vertical-align:middle" alt="show"/>
         <span style="vertical-align:middle">Show columns</span>
       </a> 
-			<b> | </b> <a href="#top">[Back to top]</a>
-		</div>
+      <b> | </b> <a href="#top">[Back to top]</a>
+    </div>
   </div>
   <p style="padding:5px 0px;margin-bottom:0px;width:800px">This table stores data about the external databases in which the objects described in the <a href="#member_xref">member_xref</a> table are stored.</p>
 
@@ -1030,8 +1042,8 @@ The complete compara schema diagram can be found <a target="_blank" href="./diag
         <img src="/i/16/plus-button.png" style="width:12px;height:12px;vertical-align:middle" alt="show"/>
         <span style="vertical-align:middle">Show columns</span>
       </a> 
-			<b> | </b> <a href="#top">[Back to top]</a>
-		</div>
+      <b> | </b> <a href="#top">[Back to top]</a>
+    </div>
   </div>
   <p style="padding:5px 0px;margin-bottom:0px;width:800px">This table stores cross-references for member sequences derived from the core databases. It is used by Bio::EnsEMBL::Compara::DBSQL::XrefMemberAdaptor and provides the data used in highlighting gene trees by GO and InterPro annotation" </p>
 
@@ -1058,8 +1070,8 @@ The complete compara schema diagram can be found <a target="_blank" href="./diag
         <img src="/i/16/plus-button.png" style="width:12px;height:12px;vertical-align:middle" alt="show"/>
         <span style="vertical-align:middle">Show columns</span>
       </a> 
-			<b> | </b> <a href="#top">[Back to top]</a>
-		</div>
+      <b> | </b> <a href="#top">[Back to top]</a>
+    </div>
   </div>
   <p style="padding:5px 0px;margin-bottom:0px;width:800px">This table includes alternative sequences for Member, like sequences with flanking regions</p>
 
@@ -1075,7 +1087,7 @@ The complete compara schema diagram can be found <a target="_blank" href="./diag
   <p style="margin-top:10px"><b>See also:</b></p>
   <ul>
     <li><a href="#member">member</a></li>
-    <li><a href="#sequence ">sequence </a></li>
+    <li><a href="#sequence">sequence</a></li>
   </ul>
 
 
@@ -1087,8 +1099,8 @@ The complete compara schema diagram can be found <a target="_blank" href="./diag
         <img src="/i/16/plus-button.png" style="width:12px;height:12px;vertical-align:middle" alt="show"/>
         <span style="vertical-align:middle">Show columns</span>
       </a> 
-			<b> | </b> <a href="#top">[Back to top]</a>
-		</div>
+      <b> | </b> <a href="#top">[Back to top]</a>
+    </div>
   </div>
   <p style="padding:5px 0px;margin-bottom:0px;width:800px">: This table stores the raw local alignment results of peptide to peptide alignments returned by a BLAST run. The hits are actually stored in species-specific tables rather than in a single table. For example, human has the genome_db_id 90, and all the hits that have a human gene as a query are stored in peptide_align_feature_90</p>
 
@@ -1124,7 +1136,7 @@ The complete compara schema diagram can be found <a target="_blank" href="./diag
 
   <div id="ex_peptide_align_feature2" style="display:none;">
     <table class="ss" style="width:50%;margin-top:20px;margin-left:10px;border-spacing:2px">
-      <tr><th>g1.nameasqgenome</th><th>m1.stable_idasqstable_id</th><th>g2.nameashgenome</th><th>m2.stable_idashstable_id</th><th>score</th><th>evalue</th></tr>      <tr><td>homo_sapiens</td><td>ENSP00000371394</td><td>ciona_savignyi</td><td>ENSCSAVP00000006255</td><td>311.0000</td><td>1e-33</td></tr>    </table>
+      <tr><th>qgenome</th><th>qstable_id</th><th>hgenome</th><th>hstable_id</th><th>score</th><th>evalue</th></tr>      <tr><td>homo_sapiens</td><td>ENSP00000371394</td><td>ciona_savignyi</td><td>ENSCSAVP00000006255</td><td>311.0000</td><td>1e-33</td></tr>    </table>
   </div></div>  <p style="margin-top:10px"><b>See also:</b></p>
   <ul>
     <li><a href="#member">member</a></li>
@@ -1140,8 +1152,8 @@ The complete compara schema diagram can be found <a target="_blank" href="./diag
         <img src="/i/16/plus-button.png" style="width:12px;height:12px;vertical-align:middle" alt="show"/>
         <span style="vertical-align:middle">Show columns</span>
       </a> 
-			<b> | </b> <a href="#top">[Back to top]</a>
-		</div>
+      <b> | </b> <a href="#top">[Back to top]</a>
+    </div>
   </div>
   <p style="padding:5px 0px;margin-bottom:0px;width:800px">This table contains all the group homologies found. There are several family_member entries for each family entry.</p>
 
@@ -1149,18 +1161,18 @@ The complete compara schema diagram can be found <a target="_blank" href="./diag
     <table style="border:1px solid #667aa6;padding:0px;min-width:1000px;max-width:1200px">
       <tr class="center" style="color:#FFFFFF;background-color:#667aa6"><th style="color:#FFF;padding:2px">Column</th><th style="color:#FFF;padding:2px">Type</th><th style="color:#FFF;padding:2px;min-width:80px">Default value</th><th style="color:#FFF;padding:2px;min-width:500px">Description</th><th style="color:#FFF;padding:2px;min-width:100px">Index</th></tr>
       <tr class="bg1"><td><b>family_id</b></td><td>int(10)</td><td></td><td>Internal unique ID</td><td>primary key</td></tr>
-      <tr class="bg2"><td><b>stable_id</b></td><td>varchar(40)</td><td></td><td>Stable family ID. NOTE: stable_id are currently not stable. We are working in getting IDs stable between releases.</td><td>unique</td></tr>
+      <tr class="bg2"><td><b>stable_id</b></td><td>varchar(40)</td><td></td><td>Stable family ID. NOTE: stable_id are currently not stable. We are working in getting IDs stable between releases.</td><td>unique: stable_id</td></tr>
       <tr class="bg1"><td><b>version</b></td><td>INT</td><td></td><td>Version of the stable_id (may only change when members migrate between this family and another one; stays the same otherwise)</td><td></td></tr>
-      <tr class="bg2"><td><b>method_link_species_set_id</b></td><td>int(10)</td><td></td><td>External reference to method_link_species_set_id in the method_link_species_set table</td><td>key: </td></tr>
-      <tr class="bg1"><td><b>description</b></td><td>varchar(255)</td><td></td><td>Description of the family as found using the Longest Common String (LCS) of the descriptions of the member proteins.</td><td>key: </td></tr>
+      <tr class="bg2"><td><b>method_link_species_set_id</b></td><td>int(10)</td><td></td><td>External reference to method_link_species_set_id in the method_link_species_set table</td><td>key: method_link_species_set_id</td></tr>
+      <tr class="bg1"><td><b>description</b></td><td>varchar(255)</td><td></td><td>Description of the family as found using the Longest Common String (LCS) of the descriptions of the member proteins.</td><td>key: description</td></tr>
       <tr class="bg2"><td><b>description_score</b></td><td>double</td><td></td><td>Scores the accuracy of the annotation (max. 100)</td><td></td></tr>
     </table>
   </div>
-<div style="margin: 10px 5px"><p style="font-weight:bold">Example:</p><p style="padding-left:10px">The following query retrieves families with "CATHELICIDIN" description and description_score of 100 </p><pre style="display:inline;border:1px solid #555;padding:2px;margin-right:15px;margin-left:10px">SELECT * FROM family WHERE DESCription like '%CATHELICIDIN%' AND description_score = 100;</pre> <a id="e_family" style="cursor:pointer;text-decoration:none" onclick="show_hide('family','example')"><img src="/i/16/plus-button.png" style="width:12px;height:12px;vertical-align:middle" alt="show"/><span style="vertical-align:middle"> Show query results</span></a>
+<div style="margin: 10px 5px"><p style="font-weight:bold">Example:</p><p style="padding-left:10px">The following query retrieves families with "CATHELICIDIN" description and description_score of 100 </p><pre style="display:inline;border:1px solid #555;padding:2px;margin-right:15px;margin-left:10px">SELECT * FROM family WHERE description like '%CATHELICIDIN%' AND description_score = 100;</pre> <a id="e_family" style="cursor:pointer;text-decoration:none" onclick="show_hide('family','example')"><img src="/i/16/plus-button.png" style="width:12px;height:12px;vertical-align:middle" alt="show"/><span style="vertical-align:middle"> Show query results</span></a>
 
   <div id="ex_family" style="display:none;">
     <table class="ss" style="width:50%;margin-top:20px;margin-left:10px;border-spacing:2px">
-      <tr><th>family_id</th><th>stable_id</th><th>version</th><th>method_link_species_set_id</th><th>description</th><th>description_score</th></tr>      <tr><td>29914</td><td>ENSFM00350000109081</td><td>2</td><td>30043</td><td>CATHELICIDIN</td><td>100</td></tr>      <tr class="bg2"><td>32124</td><td>ENSFM00710001442147</td><td>1</td><td>30043</td><td>CATHELICIDIN PRECURSOR CATH FOWLICIDIN</td><td>100</td></tr>      <tr><td>69298</td><td>ENSFM00500000451410</td><td>4</td><td>30043</td><td>CATHELICIDIN FRAGMENT</td><td>100</td></tr>      <tr class="bg2"><td>69300</td><td>ENSFM00500000314317</td><td>1</td><td>30043</td><td>CATHELICIDIN ANTIMICROBIAL PEPTIDE</td><td>100</td></tr>      <tr><td>83067</td><td>ENSFM00640001106201</td><td>2</td><td>30043</td><td>CATHELICIDIN 3 FRAGMENT</td><td>100</td></tr>      <tr class="bg2"><td>103470</td><td>ENSFM00540000722157</td><td>1</td><td>30043</td><td>CATHELICIDIN ANTIMICROBIAL PEPTIDE PRECURSOR CATHELICIDIN RELATED</td><td>100</td></tr>      <tr><td>103472</td><td>ENSFM00500000376284</td><td>1</td><td>30043</td><td>CATHELICIDIN 3 FRAGMENT</td><td>100</td></tr>      <tr class="bg2"><td>103473</td><td>ENSFM00550000766356</td><td>1</td><td>30043</td><td>CATHELICIDIN</td><td>100</td></tr>      <tr><td>104005</td><td>ENSFM00310000089953</td><td>1</td><td>30043</td><td>CATHELICIDIN B1 PRECURSOR CATH B1</td><td>100</td></tr>      <tr class="bg2"><td>143723</td><td>ENSFM00730001529592</td><td>1</td><td>30043</td><td>CATHELICIDIN ANTIMICROBIAL PEPTIDE FRAGMENT</td><td>100</td></tr>      <tr><td>143725</td><td>ENSFM00700001402163</td><td>1</td><td>30043</td><td>CATHELICIDIN 2 FRAGMENT</td><td>100</td></tr>      <tr class="bg2"><td>150671</td><td>ENSFM00520000549325</td><td>1</td><td>30043</td><td>CATHELICIDIN 1</td><td>100</td></tr>      <tr><td>298225</td><td>ENSFM00660001176414</td><td>1</td><td>30043</td><td>CATHELICIDIN ANTIMICROBIAL PEPTIDE</td><td>100</td></tr>      <tr class="bg2"><td>300573</td><td>ENSFM00720001501210</td><td>1</td><td>30043</td><td>CATHELICIDIN ANTIMICROBIAL PEPTIDE</td><td>100</td></tr>      <tr><td>326657</td><td>ENSFM00690001368966</td><td>1</td><td>30043</td><td>CATHELICIDIN AL</td><td>100</td></tr>      <tr class="bg2"><td>348909</td><td>ENSFM00660001186067</td><td>1</td><td>30043</td><td>CATHELICIDIN</td><td>100</td></tr>      <tr><td>348910</td><td>ENSFM00700001405472</td><td>1</td><td>30043</td><td>CATHELICIDIN 1 FRAGMENT</td><td>100</td></tr>    </table>
+      <tr><th>family_id</th><th>stable_id</th><th>version</th><th>method_link_species_set_id</th><th>description</th><th>description_score</th></tr>      <tr><td>30685</td><td>ENSFM00350000109081</td><td>2</td><td>30043</td><td>CATHELICIDIN</td><td>100</td></tr>      <tr class="bg2"><td>33255</td><td>ENSFM00710001442147</td><td>1</td><td>30043</td><td>CATHELICIDIN PRECURSOR CATH FOWLICIDIN</td><td>100</td></tr>      <tr><td>62557</td><td>ENSFM00500000314317</td><td>1</td><td>30043</td><td>CATHELICIDIN ANTIMICROBIAL PEPTIDE</td><td>100</td></tr>      <tr class="bg2"><td>71992</td><td>ENSFM00500000451410</td><td>4</td><td>30043</td><td>CATHELICIDIN FRAGMENT</td><td>100</td></tr>      <tr><td>86886</td><td>ENSFM00640001106201</td><td>2</td><td>30043</td><td>CATHELICIDIN 3 FRAGMENT</td><td>100</td></tr>      <tr class="bg2"><td>108956</td><td>ENSFM00540000722157</td><td>1</td><td>30043</td><td>CATHELICIDIN ANTIMICROBIAL PEPTIDE PRECURSOR CATHELICIDIN RELATED</td><td>100</td></tr>      <tr><td>108958</td><td>ENSFM00500000376284</td><td>1</td><td>30043</td><td>CATHELICIDIN 3 FRAGMENT</td><td>100</td></tr>      <tr class="bg2"><td>108959</td><td>ENSFM00550000766356</td><td>1</td><td>30043</td><td>CATHELICIDIN</td><td>100</td></tr>      <tr><td>109529</td><td>ENSFM00310000089953</td><td>1</td><td>30043</td><td>CATHELICIDIN B1 PRECURSOR CATH B1</td><td>100</td></tr>      <tr class="bg2"><td>152027</td><td>ENSFM00730001529592</td><td>1</td><td>30043</td><td>CATHELICIDIN ANTIMICROBIAL PEPTIDE FRAGMENT</td><td>100</td></tr>      <tr><td>152029</td><td>ENSFM00700001402163</td><td>1</td><td>30043</td><td>CATHELICIDIN 2 FRAGMENT</td><td>100</td></tr>      <tr class="bg2"><td>156046</td><td>ENSFM00520000549325</td><td>1</td><td>30043</td><td>CATHELICIDIN 1</td><td>100</td></tr>      <tr><td>317760</td><td>ENSFM00660001176414</td><td>1</td><td>30043</td><td>CATHELICIDIN ANTIMICROBIAL PEPTIDE</td><td>100</td></tr>      <tr class="bg2"><td>320197</td><td>ENSFM00720001501210</td><td>1</td><td>30043</td><td>CATHELICIDIN ANTIMICROBIAL PEPTIDE</td><td>100</td></tr>      <tr><td>322324</td><td>ENSFM00750001650204</td><td>1</td><td>30043</td><td>CATHELICIDIN PY1</td><td>100</td></tr>      <tr class="bg2"><td>345094</td><td>ENSFM00690001368966</td><td>1</td><td>30043</td><td>CATHELICIDIN AL</td><td>100</td></tr>      <tr><td>354002</td><td>ENSFM00700001405472</td><td>1</td><td>30043</td><td>CATHELICIDIN 1 FRAGMENT</td><td>100</td></tr>      <tr class="bg2"><td>354003</td><td>ENSFM00660001186067</td><td>1</td><td>30043</td><td>CATHELICIDIN</td><td>100</td></tr>    </table>
   </div></div>  <p style="margin-top:10px"><b>See also:</b></p>
   <ul>
     <li><a href="#method_link_species_set">method_link_species_set</a></li>
@@ -1175,16 +1187,16 @@ The complete compara schema diagram can be found <a target="_blank" href="./diag
         <img src="/i/16/plus-button.png" style="width:12px;height:12px;vertical-align:middle" alt="show"/>
         <span style="vertical-align:middle">Show columns</span>
       </a> 
-			<b> | </b> <a href="#top">[Back to top]</a>
-		</div>
+      <b> | </b> <a href="#top">[Back to top]</a>
+    </div>
   </div>
   <p style="padding:5px 0px;margin-bottom:0px;width:800px">This table contains the proteins corresponding to protein family relationship found. There are several family_member entries for each family entry</p>
 
   <div id="div_family_member" style="display:none">
     <table style="border:1px solid #667aa6;padding:0px;min-width:1000px;max-width:1200px">
       <tr class="center" style="color:#FFFFFF;background-color:#667aa6"><th style="color:#FFF;padding:2px">Column</th><th style="color:#FFF;padding:2px">Type</th><th style="color:#FFF;padding:2px;min-width:80px">Default value</th><th style="color:#FFF;padding:2px;min-width:500px">Description</th><th style="color:#FFF;padding:2px;min-width:100px">Index</th></tr>
-      <tr class="bg1"><td><b>family_id</b></td><td>int(10)</td><td></td><td>External reference to family_id in the <a href="#family">family</a> table</td><td>primary key<br />key: </td></tr>
-      <tr class="bg2"><td><b>member_id</b></td><td>int(10)</td><td></td><td>External reference to the member_id in the <a href="#member">member</a> table</td><td>primary key<br />key: </td></tr>
+      <tr class="bg1"><td><b>family_id</b></td><td>int(10)</td><td></td><td>External reference to family_id in the <a href="#family">family</a> table</td><td>primary key<br />key: family_id</td></tr>
+      <tr class="bg2"><td><b>member_id</b></td><td>int(10)</td><td></td><td>External reference to the member_id in the <a href="#member">member</a> table</td><td>primary key<br />key: member_id</td></tr>
       <tr class="bg1"><td><b>cigar_line</b></td><td>mediumtext</td><td></td><td>Internal description of the multiple alignment (see the description in the <a href="#homology_member">homology_member</a> table)</td><td></td></tr>
     </table>
   </div>
@@ -1192,7 +1204,7 @@ The complete compara schema diagram can be found <a target="_blank" href="./diag
 
   <div id="ex_family_member" style="display:none;">
     <table class="ss" style="width:50%;margin-top:20px;margin-left:10px;border-spacing:2px">
-      <tr><th>family_id</th><th>member_id</th><th>cigar_line</th></tr>      <tr><td>29739</td><td>201925956</td><td>85M14D13M33D24M10D25M13D7MD100MD138M2D7M5D34M2D36M3D5MD26M21D45M51D</td></tr>      <tr class="bg2"><td>29739</td><td>201990646</td><td>90M9D13M33D24M2D33M4D2M2D12MD2M2D2MD198M2D32M2D7M2D37M2D12M6D10M4D4MD7MD2M8D16M21D14M25D5M52D</td></tr>      <tr><td>29739</td><td>202216201</td><td>85M14D13M33D59M13D7MD100MD138M2D7M2D10MD26MD13M6D12M2D4MD7MD109M34D</td></tr>      <tr class="bg2"><td>29739</td><td>202805150</td><td>97M48D18M23D12M14D12MD5M2D93MD84M3D51M3D6M2D37M2D16M2D11M3D4MD7MD25M118D</td></tr>      <tr><td>29739</td><td>202877294</td><td>149D14M16D45MD100MD103M3D80M2D15M3D8M6D4MD11M83D7M50D</td></tr>      <tr class="bg2"><td>29739</td><td>202878547</td><td>77MD8M3DM9D13M33D18M26D15M4D16MD100MD103M3D32M2D7M2D37M2D13M7D16MD7MD26M21D30M6D15MD5M39D</td></tr>      <tr><td>29739</td><td>203142490</td><td>77MD8M3DM9D13M33D18M26D15M4D16MD100MD103M3D32M2D7M2D37M2D13M7D16MD7MD26M21D30M6D15MD5M39D</td></tr>      <tr class="bg2"><td>29739</td><td>203284538</td><td>388D41M3D41MD38M2D12M10D22MD25M22D71M25D</td></tr>      <tr><td>29739</td><td>203488278</td><td>149D14M16D25M4D16MD100MD103M3D80M2D15M3D8M6D4MD11M83D7M50D</td></tr>      <tr class="bg2"><td>29739</td><td>203653204</td><td>84M15D13M33D48M8D3M4D109M2D6MD138M2D7M6D11M2D20M2D12M10D14MD7MD26M50D17M50D</td></tr>      <tr><td>29739</td><td>203723840</td><td>85M14D13M33D24M10D25M13D7MD100MD138M2D7M5D34M2D36M3D5MD26M21D45M51D</td></tr>      <tr class="bg2"><td>29739</td><td>203763858</td><td>77MD8M3DM9D13M33D18M26D15M4D16MD100MD103M3D32M2D7M2D37M2D13M7D16MD7MD26M21D30M6D15MD5M39D</td></tr>      <tr><td>29739</td><td>203899608</td><td>78M5D29M33D24M2DM4D3M4D4M8D9M4D2M2DM2D9MD6MD93MD138M2D7M2D9M4D38M6D10M4D12MD2M141D</td></tr>      <tr class="bg2"><td>29739</td><td>203960715</td><td>104M42D17M26D15M5D116MD138M2D7M8D31M2D14M4D9M10D7MD26M21D14M2D80M</td></tr>      <tr><td>29739</td><td>204162108</td><td>90M9D13M33D18M26D15M4D2M2D12MD100MD103M3D32M2D7M2D37M2D24M8D4MD7MD26M21D21M5D4M6D21M39D</td></tr>      <tr class="bg2"><td>29739</td><td>204213265</td><td>169M10D17M7D21MD70M407D</td></tr>      <tr><td>29739</td><td>204229819</td><td>83M18D11M33D18M26D15M4D16MD100MD103M3D32M2D7M2D37M2D17MD6M8D4MD7MD26M21D21M15D10M3D8M39D</td></tr>    </table>
+      <tr><th>family_id</th><th>member_id</th><th>cigar_line</th></tr>      <tr><td>29739</td><td>6433971</td><td></td></tr>      <tr class="bg2"><td>29739</td><td>6433972</td><td>123D5M117D8M38DMD4MD16M2D5M5D19M50D8M8D5M2D27M66D8M10D7MD36M2D4M2D57M2D19MD29MD21MD8MD36MD15MD3MD36M2D33MD11M22D</td></tr>      <tr><td>29739</td><td>201246334</td><td>124D4M117D8M38DMD4MD16M2D5M5D19M50D8M8D5M2D27M66D8M10D44M2D4M2D57M2D19MD29MD21MD8MD36MD15MD3MD36M2D33MD11M22D</td></tr>      <tr class="bg2"><td>29739</td><td>201461475</td><td>124D4M117D8M38DMD4MD16M2D5M5D9M5D5M50D8M8D20M86D2M10D44M2D4M2D57M2D19MD29MD21MD8MD36MD15MD3MD36M2D33MD11M22D</td></tr>      <tr><td>29739</td><td>201567430</td><td>124D4M117D8M38D6MD23M5D9M4D5M52D8M7D5M11D14M2D2M66D8M11D43M2D4M2D57M2D19MD29MD21MD8MD52MD3MD36M2D33MD11M22D</td></tr>      <tr class="bg2"><td>29739</td><td>201613994</td><td>244D10M37DM34D11M2D6M116D4M83D90MD3MD16MD14MD82MD15MD3MD71M2D16M2D13MD</td></tr>      <tr><td>29739</td><td>201616285</td><td>124D4M117D8M38D6MD23M5D9M4DM58D6M7D5M11D13M71D8M11D43M2D4M2D57M2D19MD29MD21MD8MD52MD3MD36M2D33MD11M22D</td></tr>      <tr class="bg2"><td>29739</td><td>201641660</td><td>123D5M117D8M38DMD4MD16M2D5M5D19M50D8M8D5M2D27M66D8M10D7MD36M2D4M2D57M2D19MD29MD21MD8MD36MD15MD3MD36M2D33MD11M22D</td></tr>      <tr><td>29739</td><td>201759054</td><td>243D11M37DM34D11M2D6M116D4M83D85M2D22MDMD14MD36M14D3M4D25MD15MD3M2D70M2D10M22D</td></tr>      <tr class="bg2"><td>29739</td><td>201855892</td><td>124D4M117D8M38DMD4MD16M2D5M5D19M50D8M8D5M2D27M66D8M10D7MD36M2D4M2D57M2D19MD29MD21MD8MD36MD15MD3MD36M2D33MD11M22D</td></tr>      <tr><td>29739</td><td>201876106</td><td>124D4M117D8M38DMD4MD16M2D5M5D9M5D5M50D8M8D34M66D8M10D44M2D4M2D57M2D19MD29MD21MD8MD36MD15MD3MD36M2D33MD11M22D</td></tr>      <tr class="bg2"><td>29739</td><td>202000871</td><td>334D3M103D19M35D12M5D61M3D63M2D33MD15MD21MD45MD15MD40M2D46M21D</td></tr>      <tr><td>29739</td><td>202134894</td><td>123D5M117D8M38DMD4MD16M2D5M5D19M50D8M8D5M2D27M66D8M10D7MD36M2D4M2D57M2D19MD29MD21MD8MD36MD15MD3MD36M2D33MD11M22D</td></tr>      <tr class="bg2"><td>29739</td><td>202366110</td><td>298D16M2D5MD16MD30M24D23M2D32MD8M127D4M67D2M81D13M130D</td></tr>      <tr><td>29739</td><td>202644423</td><td>124D4M117D8M38DMD4MD16M2D5M5D19M50D3MD4M8D5M2D27M66D8M10D7MD36M2D4M2D57M2D19MD29MD21MD8MD36MD15MD3MD36M2D33MD11M22D</td></tr>      <tr class="bg2"><td>29739</td><td>202760990</td><td>124D5M115D9M38D30M5D9M5D5M50DM16D4M12D17M66D9M9D44M2D4M2D57M2D19MD29MD21MD8MD36MD15MD3MD36M2D33MD11M22D</td></tr>      <tr><td>29739</td><td>203226214</td><td>244D10M37DM34DMD9M2D5M119D2M83D26MD84MD14MD82MD15MD3MD37MD33M2D32M</td></tr>      <tr class="bg2"><td>29739</td><td>203399847</td><td>297MD16M2D22MD71MD5M2D155M2D63M2D71MD45MD19M4D33M2D51M16D</td></tr>      <tr><td>29739</td><td>203500879</td><td>124D4M117D9M36D7MD23M5D9M4D6M50D9M7D5M11D13M71D8M11D43M2D4M2D57M2D19MD29MD21MD8MD36MD15MD3MD36M2D33MD11M22D</td></tr>      <tr class="bg2"><td>29739</td><td>203507605</td><td>123D5M117D8M38DMD4MD16M2D5M5D19M50D8M8D5M2D27M66D8M10D7MD36M2D4M2D57M2D19MD29MD21MD8MD36MD15MD3MD36M2D33MD11M22D</td></tr>    </table>
   </div></div>  <p style="margin-top:10px"><b>See also:</b></p>
   <ul>
     <li><a href="#family">family</a></li>
@@ -1209,8 +1221,8 @@ The complete compara schema diagram can be found <a target="_blank" href="./diag
         <img src="/i/16/plus-button.png" style="width:12px;height:12px;vertical-align:middle" alt="show"/>
         <span style="vertical-align:middle">Show columns</span>
       </a> 
-			<b> | </b> <a href="#top">[Back to top]</a>
-		</div>
+      <b> | </b> <a href="#top">[Back to top]</a>
+    </div>
   </div>
   <p style="padding:5px 0px;margin-bottom:0px;width:800px">This table stores information about alignments for members</p>
 
@@ -1238,8 +1250,8 @@ The complete compara schema diagram can be found <a target="_blank" href="./diag
         <img src="/i/16/plus-button.png" style="width:12px;height:12px;vertical-align:middle" alt="show"/>
         <span style="vertical-align:middle">Show columns</span>
       </a> 
-			<b> | </b> <a href="#top">[Back to top]</a>
-		</div>
+      <b> | </b> <a href="#top">[Back to top]</a>
+    </div>
   </div>
   <p style="padding:5px 0px;margin-bottom:0px;width:800px">This table allows certain nodes (leaves) to have aligned protein member_scores attached to them</p>
 
@@ -1266,8 +1278,8 @@ The complete compara schema diagram can be found <a target="_blank" href="./diag
         <img src="/i/16/plus-button.png" style="width:12px;height:12px;vertical-align:middle" alt="show"/>
         <span style="vertical-align:middle">Show columns</span>
       </a> 
-			<b> | </b> <a href="#top">[Back to top]</a>
-		</div>
+      <b> | </b> <a href="#top">[Back to top]</a>
+    </div>
   </div>
   <p style="padding:5px 0px;margin-bottom:0px;width:800px">This table holds the gene tree data structure, such as root, relation between parent and child, leaves, etc... In our data structure, all the trees of a given clusterset are arbitrarily connected to the same root. This eases to store and query in the same database the data from independant tree building analysis. Hence the "biological roots" of the trees are the children nodes of the main clusterset root. See the examples below.</p>
 
@@ -1287,7 +1299,7 @@ The complete compara schema diagram can be found <a target="_blank" href="./diag
 
   <div id="ex_gene_tree_node" style="display:none;">
     <table class="ss" style="width:50%;margin-top:20px;margin-left:10px;border-spacing:2px">
-      <tr><th>gtn.node_id</th></tr>      <tr><td>2</td></tr>      <tr class="bg2"><td>1397</td></tr>      <tr><td>2757</td></tr>      <tr class="bg2"><td>4098</td></tr>      <tr><td>5360</td></tr>      <tr class="bg2"><td>6569</td></tr>      <tr><td>7731</td></tr>      <tr class="bg2"><td>8892</td></tr>      <tr><td>10050</td></tr>      <tr class="bg2"><td>11164</td></tr>    </table>
+      <tr><th>gtn.node_id</th></tr>      <tr><td>2</td></tr>      <tr class="bg2"><td>1399</td></tr>      <tr><td>2767</td></tr>      <tr class="bg2"><td>4024</td></tr>      <tr><td>5274</td></tr>      <tr class="bg2"><td>6502</td></tr>      <tr><td>7681</td></tr>      <tr class="bg2"><td>8843</td></tr>      <tr><td>10002</td></tr>      <tr class="bg2"><td>11127</td></tr>    </table>
   </div></div>  <p style="margin-top:10px"><b>See also:</b></p>
   <ul>
     <li><a href="#gene_tree_root">gene_tree_root</a></li>
@@ -1305,8 +1317,8 @@ The complete compara schema diagram can be found <a target="_blank" href="./diag
         <img src="/i/16/plus-button.png" style="width:12px;height:12px;vertical-align:middle" alt="show"/>
         <span style="vertical-align:middle">Show columns</span>
       </a> 
-			<b> | </b> <a href="#top">[Back to top]</a>
-		</div>
+      <b> | </b> <a href="#top">[Back to top]</a>
+    </div>
   </div>
   <p style="padding:5px 0px;margin-bottom:0px;width:800px">Header table for gene_trees. The database is able to contain several sets of trees computed on the same genes. We call these analysis "clustersets" and they can be distinguished with the clusterset_id field. Traditionally, the compara databases have contained only one clusterset (clusterset_id=1), but currently (starting on release 66) we have at least 2 (one for protein trees and one for ncRNA trees). See the examples below.</p>
 
@@ -1315,7 +1327,7 @@ The complete compara schema diagram can be found <a target="_blank" href="./diag
       <tr class="center" style="color:#FFFFFF;background-color:#667aa6"><th style="color:#FFF;padding:2px">Column</th><th style="color:#FFF;padding:2px">Type</th><th style="color:#FFF;padding:2px;min-width:80px">Default value</th><th style="color:#FFF;padding:2px;min-width:500px">Description</th><th style="color:#FFF;padding:2px;min-width:100px">Index</th></tr>
       <tr class="bg1"><td><b>root_id</b></td><td>INT(10)</td><td></td><td>Internal unique ID</td><td>primary key</td></tr>
       <tr class="bg2"><td><b>member_type</b></td><td>ENUM('protein', 'ncrna')</td><td></td><td>The type of members used in the tree</td><td></td></tr>
-      <tr class="bg1"><td><b>tree_type</b></td><td>ENUM('clusterset', 'supertree', 'tree')</td><td></td><td>The type of the tree</td><td>key: </td></tr>
+      <tr class="bg1"><td><b>tree_type</b></td><td>ENUM('clusterset', 'supertree', 'tree')</td><td></td><td>The type of the tree</td><td>key: tree_type</td></tr>
       <tr class="bg2"><td><b>clusterset_id</b></td><td>VARCHAR(20)</td><td>'default'</td><td>Name for the set of clusters/trees</td><td></td></tr>
       <tr class="bg1"><td><b>method_link_species_set_id</b></td><td>INT(10)</td><td></td><td>External reference to method_link_species_set_id in the method_link_species_set table</td><td></td></tr>
       <tr class="bg2"><td><b>gene_align_id</b></td><td>INT(10)</td><td></td><td>External reference to gene_align_id in the <a href="#gene_align">gene_align</a> table</td><td></td></tr>
@@ -1328,12 +1340,12 @@ The complete compara schema diagram can be found <a target="_blank" href="./diag
 
   <div id="ex_gene_tree_root1" style="display:none;">
     <table class="ss" style="width:50%;margin-top:20px;margin-left:10px;border-spacing:2px">
-      <tr><th>root_id</th><th>member_type</th><th>tree_type</th><th>clusterset_id</th><th>method_link_species_set_id</th><th>gene_align_id</th><th>ref_root_id</th><th>stable_id</th><th>version</th></tr>      <tr><td>100000001</td><td>ncrna</td><td>clusterset</td><td>default</td><td>40094</td><td></td><td></td><td></td><td></td></tr>      <tr class="bg2"><td>100189666</td><td>ncrna</td><td>clusterset</td><td>pg_it_nj</td><td>40094</td><td></td><td></td><td></td><td></td></tr>      <tr><td>100189667</td><td>ncrna</td><td>clusterset</td><td>ml_it_10</td><td>40094</td><td></td><td></td><td></td><td></td></tr>      <tr class="bg2"><td>100189668</td><td>ncrna</td><td>clusterset</td><td>pg_it_phyml</td><td>40094</td><td></td><td></td><td></td><td></td></tr>      <tr><td>100189669</td><td>ncrna</td><td>clusterset</td><td>ss_it_s16</td><td>40094</td><td></td><td></td><td></td><td></td></tr>      <tr class="bg2"><td>100189670</td><td>ncrna</td><td>clusterset</td><td>ss_it_s6a</td><td>40094</td><td></td><td></td><td></td><td></td></tr>      <tr><td>100189671</td><td>ncrna</td><td>clusterset</td><td>ss_it_s16a</td><td>40094</td><td></td><td></td><td></td><td></td></tr>      <tr class="bg2"><td>100189672</td><td>ncrna</td><td>clusterset</td><td>ss_it_s6b</td><td>40094</td><td></td><td></td><td></td><td></td></tr>      <tr><td>100189673</td><td>ncrna</td><td>clusterset</td><td>ss_it_s16b</td><td>40094</td><td></td><td></td><td></td><td></td></tr>      <tr class="bg2"><td>100189674</td><td>ncrna</td><td>clusterset</td><td>ss_it_s6c</td><td>40094</td><td></td><td></td><td></td><td></td></tr>      <tr><td>100189675</td><td>ncrna</td><td>clusterset</td><td>ss_it_s6d</td><td>40094</td><td></td><td></td><td></td><td></td></tr>      <tr class="bg2"><td>100189676</td><td>ncrna</td><td>clusterset</td><td>ss_it_s6e</td><td>40094</td><td></td><td></td><td></td><td></td></tr>      <tr><td>100189677</td><td>ncrna</td><td>clusterset</td><td>ss_it_s7a</td><td>40094</td><td></td><td></td><td></td><td></td></tr>      <tr class="bg2"><td>100189678</td><td>ncrna</td><td>clusterset</td><td>ss_it_s7b</td><td>40094</td><td></td><td></td><td></td><td></td></tr>      <tr><td>100189679</td><td>ncrna</td><td>clusterset</td><td>ss_it_s7c</td><td>40094</td><td></td><td></td><td></td><td></td></tr>      <tr class="bg2"><td>100189680</td><td>ncrna</td><td>clusterset</td><td>ss_it_s7d</td><td>40094</td><td></td><td></td><td></td><td></td></tr>      <tr><td>100189681</td><td>ncrna</td><td>clusterset</td><td>ss_it_s7e</td><td>40094</td><td></td><td></td><td></td><td></td></tr>      <tr class="bg2"><td>100189682</td><td>ncrna</td><td>clusterset</td><td>ss_it_s7f</td><td>40094</td><td></td><td></td><td></td><td></td></tr>      <tr><td>100189683</td><td>ncrna</td><td>clusterset</td><td>ft_it_ml</td><td>40094</td><td></td><td></td><td></td><td></td></tr>      <tr class="bg2"><td>100189684</td><td>ncrna</td><td>clusterset</td><td>ft_it_nj</td><td>40094</td><td></td><td></td><td></td><td></td></tr>      <tr><td>100189685</td><td>ncrna</td><td>clusterset</td><td>ftga_it_ml</td><td>40094</td><td></td><td></td><td></td><td></td></tr>      <tr class="bg2"><td>100189686</td><td>ncrna</td><td>clusterset</td><td>ftga_it_nj</td><td>40094</td><td></td><td></td><td></td><td></td></tr>      <tr><td>1</td><td>protein</td><td>clusterset</td><td>default</td><td>40093</td><td></td><td></td><td></td><td></td></tr>      <tr class="bg2"><td>1201970</td><td>protein</td><td>clusterset</td><td>phyml-aa</td><td>40093</td><td></td><td></td><td></td><td></td></tr>      <tr><td>1201971</td><td>protein</td><td>clusterset</td><td>phyml-nt</td><td>40093</td><td></td><td></td><td></td><td></td></tr>      <tr class="bg2"><td>1201972</td><td>protein</td><td>clusterset</td><td>nj-dn</td><td>40093</td><td></td><td></td><td></td><td></td></tr>      <tr><td>1201973</td><td>protein</td><td>clusterset</td><td>nj-ds</td><td>40093</td><td></td><td></td><td></td><td></td></tr>      <tr class="bg2"><td>1201974</td><td>protein</td><td>clusterset</td><td>nj-mm</td><td>40093</td><td></td><td></td><td></td><td></td></tr>    </table>
+      <tr><th>root_id</th><th>member_type</th><th>tree_type</th><th>clusterset_id</th><th>method_link_species_set_id</th><th>gene_align_id</th><th>ref_root_id</th><th>stable_id</th><th>version</th></tr>      <tr><td>100000001</td><td>ncrna</td><td>clusterset</td><td>default</td><td>40094</td><td></td><td></td><td></td><td></td></tr>      <tr class="bg2"><td>100189667</td><td>ncrna</td><td>clusterset</td><td>pg_it_nj</td><td>40094</td><td></td><td></td><td></td><td></td></tr>      <tr><td>100189668</td><td>ncrna</td><td>clusterset</td><td>ml_it_10</td><td>40094</td><td></td><td></td><td></td><td></td></tr>      <tr class="bg2"><td>100189669</td><td>ncrna</td><td>clusterset</td><td>pg_it_phyml</td><td>40094</td><td></td><td></td><td></td><td></td></tr>      <tr><td>100189670</td><td>ncrna</td><td>clusterset</td><td>ss_it_s16</td><td>40094</td><td></td><td></td><td></td><td></td></tr>      <tr class="bg2"><td>100189671</td><td>ncrna</td><td>clusterset</td><td>ss_it_s6a</td><td>40094</td><td></td><td></td><td></td><td></td></tr>      <tr><td>100189672</td><td>ncrna</td><td>clusterset</td><td>ss_it_s16a</td><td>40094</td><td></td><td></td><td></td><td></td></tr>      <tr class="bg2"><td>100189673</td><td>ncrna</td><td>clusterset</td><td>ss_it_s6b</td><td>40094</td><td></td><td></td><td></td><td></td></tr>      <tr><td>100189674</td><td>ncrna</td><td>clusterset</td><td>ss_it_s16b</td><td>40094</td><td></td><td></td><td></td><td></td></tr>      <tr class="bg2"><td>100189675</td><td>ncrna</td><td>clusterset</td><td>ss_it_s6c</td><td>40094</td><td></td><td></td><td></td><td></td></tr>      <tr><td>100189676</td><td>ncrna</td><td>clusterset</td><td>ss_it_s6d</td><td>40094</td><td></td><td></td><td></td><td></td></tr>      <tr class="bg2"><td>100189677</td><td>ncrna</td><td>clusterset</td><td>ss_it_s6e</td><td>40094</td><td></td><td></td><td></td><td></td></tr>      <tr><td>100189678</td><td>ncrna</td><td>clusterset</td><td>ss_it_s7a</td><td>40094</td><td></td><td></td><td></td><td></td></tr>      <tr class="bg2"><td>100189679</td><td>ncrna</td><td>clusterset</td><td>ss_it_s7b</td><td>40094</td><td></td><td></td><td></td><td></td></tr>      <tr><td>100189680</td><td>ncrna</td><td>clusterset</td><td>ss_it_s7c</td><td>40094</td><td></td><td></td><td></td><td></td></tr>      <tr class="bg2"><td>100189681</td><td>ncrna</td><td>clusterset</td><td>ss_it_s7d</td><td>40094</td><td></td><td></td><td></td><td></td></tr>      <tr><td>100189682</td><td>ncrna</td><td>clusterset</td><td>ss_it_s7e</td><td>40094</td><td></td><td></td><td></td><td></td></tr>      <tr class="bg2"><td>100189683</td><td>ncrna</td><td>clusterset</td><td>ss_it_s7f</td><td>40094</td><td></td><td></td><td></td><td></td></tr>      <tr><td>100189684</td><td>ncrna</td><td>clusterset</td><td>ft_it_ml</td><td>40094</td><td></td><td></td><td></td><td></td></tr>      <tr class="bg2"><td>100189685</td><td>ncrna</td><td>clusterset</td><td>ft_it_nj</td><td>40094</td><td></td><td></td><td></td><td></td></tr>      <tr><td>100189686</td><td>ncrna</td><td>clusterset</td><td>ftga_it_ml</td><td>40094</td><td></td><td></td><td></td><td></td></tr>      <tr class="bg2"><td>100189687</td><td>ncrna</td><td>clusterset</td><td>ftga_it_nj</td><td>40094</td><td></td><td></td><td></td><td></td></tr>      <tr><td>1</td><td>protein</td><td>clusterset</td><td>default</td><td>40093</td><td></td><td></td><td></td><td></td></tr>      <tr class="bg2"><td>1202194</td><td>protein</td><td>clusterset</td><td>phyml-aa</td><td>40093</td><td></td><td></td><td></td><td></td></tr>      <tr><td>1202195</td><td>protein</td><td>clusterset</td><td>phyml-nt</td><td>40093</td><td></td><td></td><td></td><td></td></tr>      <tr class="bg2"><td>1202196</td><td>protein</td><td>clusterset</td><td>nj-dn</td><td>40093</td><td></td><td></td><td></td><td></td></tr>      <tr><td>1202197</td><td>protein</td><td>clusterset</td><td>nj-ds</td><td>40093</td><td></td><td></td><td></td><td></td></tr>      <tr class="bg2"><td>1202198</td><td>protein</td><td>clusterset</td><td>nj-mm</td><td>40093</td><td></td><td></td><td></td><td></td></tr>    </table>
   </div></div><div style="margin: 10px 5px"><p style="font-weight:bold">Example 2:</p><p style="padding-left:10px">To get the number of trees of each type </p><pre style="display:inline;border:1px solid #555;padding:2px;margin-right:15px;margin-left:10px">SELECT member_type, tree_type, COUNT(*) FROM gene_tree_root GROUP BY member_type, tree_type;</pre> <a id="e_gene_tree_root2" style="cursor:pointer;text-decoration:none" onclick="show_hide('gene_tree_root2','example')"><img src="/i/16/plus-button.png" style="width:12px;height:12px;vertical-align:middle" alt="show"/><span style="vertical-align:middle"> Show query results</span></a>
 
   <div id="ex_gene_tree_root2" style="display:none;">
     <table class="ss" style="width:50%;margin-top:20px;margin-left:10px;border-spacing:2px">
-      <tr><th>member_type</th><th>tree_type</th><th>COUNT(*)</th></tr>      <tr><td>protein</td><td>clusterset</td><td>6</td></tr>      <tr class="bg2"><td>protein</td><td>supertree</td><td>483</td></tr>      <tr><td>protein</td><td>tree</td><td>95347</td></tr>      <tr class="bg2"><td>ncrna</td><td>clusterset</td><td>22</td></tr>      <tr><td>ncrna</td><td>supertree</td><td>24</td></tr>      <tr class="bg2"><td>ncrna</td><td>tree</td><td>14884</td></tr>    </table>
+      <tr><th>member_type</th><th>tree_type</th><th>COUNT(*)</th></tr>      <tr><td>protein</td><td>clusterset</td><td>6</td></tr>      <tr class="bg2"><td>protein</td><td>supertree</td><td>491</td></tr>      <tr><td>protein</td><td>tree</td><td>95618</td></tr>      <tr class="bg2"><td>ncrna</td><td>clusterset</td><td>22</td></tr>      <tr><td>ncrna</td><td>supertree</td><td>25</td></tr>      <tr class="bg2"><td>ncrna</td><td>tree</td><td>15227</td></tr>    </table>
   </div></div>  <p style="margin-top:10px"><b>See also:</b></p>
   <ul>
     <li><a href="#gene_tree_node">gene_tree_node</a></li>
@@ -1352,15 +1364,15 @@ The complete compara schema diagram can be found <a target="_blank" href="./diag
         <img src="/i/16/plus-button.png" style="width:12px;height:12px;vertical-align:middle" alt="show"/>
         <span style="vertical-align:middle">Show columns</span>
       </a> 
-			<b> | </b> <a href="#top">[Back to top]</a>
-		</div>
+      <b> | </b> <a href="#top">[Back to top]</a>
+    </div>
   </div>
   <p style="padding:5px 0px;margin-bottom:0px;width:800px">This table contains several tag/value data attached to node_ids</p>
 
   <div id="div_gene_tree_node_tag" style="display:none">
     <table style="border:1px solid #667aa6;padding:0px;min-width:1000px;max-width:1200px">
       <tr class="center" style="color:#FFFFFF;background-color:#667aa6"><th style="color:#FFF;padding:2px">Column</th><th style="color:#FFF;padding:2px">Type</th><th style="color:#FFF;padding:2px;min-width:80px">Default value</th><th style="color:#FFF;padding:2px;min-width:500px">Description</th><th style="color:#FFF;padding:2px;min-width:100px">Index</th></tr>
-      <tr class="bg1"><td><b>node_id</b></td><td>int(10)</td><td></td><td>External reference to node_id in the <a href="#gene_tree_node">gene_tree_node</a> table</td><td>key: node_id_tag<br />key: </td></tr>
+      <tr class="bg1"><td><b>node_id</b></td><td>int(10)</td><td></td><td>External reference to node_id in the <a href="#gene_tree_node">gene_tree_node</a> table</td><td>key: node_id_tag<br />key: node_id</td></tr>
       <tr class="bg2"><td><b>tag</b></td><td>varchar(50)</td><td></td><td>Tag name for the tag/value pair</td><td>key: node_id_tag</td></tr>
       <tr class="bg1"><td><b>value</b></td><td>mediumtext</td><td></td><td>Value for the tag/value pair</td><td></td></tr>
     </table>
@@ -1380,15 +1392,15 @@ The complete compara schema diagram can be found <a target="_blank" href="./diag
         <img src="/i/16/plus-button.png" style="width:12px;height:12px;vertical-align:middle" alt="show"/>
         <span style="vertical-align:middle">Show columns</span>
       </a> 
-			<b> | </b> <a href="#top">[Back to top]</a>
-		</div>
+      <b> | </b> <a href="#top">[Back to top]</a>
+    </div>
   </div>
   <p style="padding:5px 0px;margin-bottom:0px;width:800px">This table contains several tag/value data for gene_tree_roots</p>
 
   <div id="div_gene_tree_root_tag" style="display:none">
     <table style="border:1px solid #667aa6;padding:0px;min-width:1000px;max-width:1200px">
       <tr class="center" style="color:#FFFFFF;background-color:#667aa6"><th style="color:#FFF;padding:2px">Column</th><th style="color:#FFF;padding:2px">Type</th><th style="color:#FFF;padding:2px;min-width:80px">Default value</th><th style="color:#FFF;padding:2px;min-width:500px">Description</th><th style="color:#FFF;padding:2px;min-width:100px">Index</th></tr>
-      <tr class="bg1"><td><b>root_id</b></td><td>int(10)</td><td></td><td>External reference to root_id in the <a href="#gene_tree_root">gene_tree_root</a> table</td><td>key: root_id_tag<br />key: </td></tr>
+      <tr class="bg1"><td><b>root_id</b></td><td>int(10)</td><td></td><td>External reference to root_id in the <a href="#gene_tree_root">gene_tree_root</a> table</td><td>key: root_id_tag<br />key: root_id</td></tr>
       <tr class="bg2"><td><b>tag</b></td><td>varchar(50)</td><td></td><td>Tag name for the tag/value pair</td><td>key: root_id_tag</td></tr>
       <tr class="bg1"><td><b>value</b></td><td>mediumtext</td><td></td><td>Value for the tag/value pair</td><td></td></tr>
     </table>
@@ -1407,8 +1419,8 @@ The complete compara schema diagram can be found <a target="_blank" href="./diag
         <img src="/i/16/plus-button.png" style="width:12px;height:12px;vertical-align:middle" alt="show"/>
         <span style="vertical-align:middle">Show columns</span>
       </a> 
-			<b> | </b> <a href="#top">[Back to top]</a>
-		</div>
+      <b> | </b> <a href="#top">[Back to top]</a>
+    </div>
   </div>
   <p style="padding:5px 0px;margin-bottom:0px;width:800px">This table contains several gene tree attributes data attached to node_ids</p>
 
@@ -1437,8 +1449,8 @@ The complete compara schema diagram can be found <a target="_blank" href="./diag
         <img src="/i/16/plus-button.png" style="width:12px;height:12px;vertical-align:middle" alt="show"/>
         <span style="vertical-align:middle">Show columns</span>
       </a> 
-			<b> | </b> <a href="#top">[Back to top]</a>
-		</div>
+      <b> | </b> <a href="#top">[Back to top]</a>
+    </div>
   </div>
   <p style="padding:5px 0px;margin-bottom:0px;width:800px">This table stores different HMM-based profiles used and produced by gene trees</p>
 
@@ -1461,8 +1473,8 @@ The complete compara schema diagram can be found <a target="_blank" href="./diag
         <img src="/i/16/plus-button.png" style="width:12px;height:12px;vertical-align:middle" alt="show"/>
         <span style="vertical-align:middle">Show columns</span>
       </a> 
-			<b> | </b> <a href="#top">[Back to top]</a>
-		</div>
+      <b> | </b> <a href="#top">[Back to top]</a>
+    </div>
   </div>
   <p style="padding:5px 0px;margin-bottom:0px;width:800px">This table contains all the genomic homologies. There are two homology_member entries for each homology entry for now, but both the schema and the API can handle more than just pairwise relationships. <br />dN, dS, N, S and lnL are statistical values given by the codeml program of the <a href="http://abacus.gene.ucl.ac.uk/software/paml.html">Phylogenetic Analysis by Maximum Likelihood (PAML)</a> package.</p>
 
@@ -1470,7 +1482,7 @@ The complete compara schema diagram can be found <a target="_blank" href="./diag
     <table style="border:1px solid #667aa6;padding:0px;min-width:1000px;max-width:1200px">
       <tr class="center" style="color:#FFFFFF;background-color:#667aa6"><th style="color:#FFF;padding:2px">Column</th><th style="color:#FFF;padding:2px">Type</th><th style="color:#FFF;padding:2px;min-width:80px">Default value</th><th style="color:#FFF;padding:2px;min-width:500px">Description</th><th style="color:#FFF;padding:2px;min-width:100px">Index</th></tr>
       <tr class="bg1"><td><b>homology_id</b></td><td>int(10)</td><td></td><td>Unique internal ID</td><td>primary key</td></tr>
-      <tr class="bg2"><td><b>method_link_species_set_id</b></td><td>int(10)</td><td></td><td>External reference to method_link_species_set_id in the <a href="#method_link_species_set">method_link_species_set</a> table</td><td>key: </td></tr>
+      <tr class="bg2"><td><b>method_link_species_set_id</b></td><td>int(10)</td><td></td><td>External reference to method_link_species_set_id in the <a href="#method_link_species_set">method_link_species_set</a> table</td><td>key: method_link_species_set_id</td></tr>
       <tr class="bg1"><td><b>description</b></td><td>ENUM('ortholog_one2one','ortholog_one2many','ortholog_many2many','within_species_paralog','other_paralog','gene_split','between_species_paralog','alt_allele')</td><td></td><td>A normalized, short description of the homology relationship</td><td></td></tr>
       <tr class="bg2"><td><b>is_tree_compliant</b></td><td>tinyint(1)</td><td>0</td><td>Whether the homology is fully compliant with the tree and the definition of orthology / paralogy</td><td></td></tr>
       <tr class="bg1"><td><b>dn</b></td><td>float(10,5)</td><td></td><td>The dn score</td><td></td></tr>
@@ -1478,21 +1490,21 @@ The complete compara schema diagram can be found <a target="_blank" href="./diag
       <tr class="bg1"><td><b>column</b></td><td></td><td></td><td>s</td><td></td></tr>
       <tr class="bg2"><td><b>column</b></td><td></td><td></td><td>lnl</td><td></td></tr>
       <tr class="bg1"><td><b>column</b></td><td></td><td></td><td>species_tree_node_id           The node_id of the species-tree node to which the homology is attached</td><td></td></tr>
-      <tr class="bg2"><td><b>species_tree_node_id</b></td><td>int(10)</td><td></td><td>The node_id of the species-tree node to which the homology is attached</td><td>key: </td></tr>
-      <tr class="bg1"><td><b>gene_tree_node_id</b></td><td>int(10)</td><td></td><td>The node_id of the gene-tree node from which the homology is derived</td><td>key: </td></tr>
-      <tr class="bg2"><td><b>gene_tree_root_id</b></td><td>int(10)</td><td></td><td>The root_id of the gene tree from which the homology is derived</td><td>key: </td></tr>
+      <tr class="bg2"><td><b>species_tree_node_id</b></td><td>int(10)</td><td></td><td>The node_id of the species-tree node to which the homology is attached</td><td>key: species_tree_node_id</td></tr>
+      <tr class="bg1"><td><b>gene_tree_node_id</b></td><td>int(10)</td><td></td><td>The node_id of the gene-tree node from which the homology is derived</td><td>key: gene_tree_node_id</td></tr>
+      <tr class="bg2"><td><b>gene_tree_root_id</b></td><td>int(10)</td><td></td><td>The root_id of the gene tree from which the homology is derived</td><td>key: gene_tree_root_id</td></tr>
     </table>
   </div>
-<div style="margin: 10px 5px"><p style="font-weight:bold">Example 1:</p><p style="padding-left:10px">The following query defines a pair of paralogous xenopous genes. See <a href="#homology_member">homology_member</a> for more details </p><pre style="display:inline;border:1px solid #555;padding:2px;margin-right:15px;margin-left:10px">SELECT * FROM homology WHERE homology_id = 39273663;</pre> <a id="e_homology1" style="cursor:pointer;text-decoration:none" onclick="show_hide('homology1','example')"><img src="/i/16/plus-button.png" style="width:12px;height:12px;vertical-align:middle" alt="show"/><span style="vertical-align:middle"> Show query results</span></a>
+<div style="margin: 10px 5px"><p style="font-weight:bold">Example 1:</p><p style="padding-left:10px">The following query defines a pair of paralogous xenopous genes. See <a href="#homology_member">homology_member</a> for more details </p><pre style="display:inline;border:1px solid #555;padding:2px;margin-right:15px;margin-left:10px">SELECT homology.* FROM homology JOIN method_link_species_set USING (method_link_species_set_id) WHERE name="X.tro paralogues" LIMIT 1;</pre> <a id="e_homology1" style="cursor:pointer;text-decoration:none" onclick="show_hide('homology1','example')"><img src="/i/16/plus-button.png" style="width:12px;height:12px;vertical-align:middle" alt="show"/><span style="vertical-align:middle"> Show query results</span></a>
 
   <div id="ex_homology1" style="display:none;">
     <table class="ss" style="width:50%;margin-top:20px;margin-left:10px;border-spacing:2px">
-      <tr><th>homology_id</th><th>method_link_species_set_id</th><th>description</th><th>is_tree_compliant</th><th>dn</th><th>ds</th><th>n</th><th>s</th><th>lnl</th><th>species_tree_node_id</th><th>gene_tree_node_id</th><th>gene_tree_root_id</th></tr>      <tr><td>39273663</td><td>25647</td><td>other_paralog</td><td>1</td><td>0.36150</td><td>4.07820</td><td>677.6</td><td>252.4</td><td>-2149.407</td><td>40093034</td><td>57600</td><td>57600</td></tr>    </table>
-  </div></div><div style="margin: 10px 5px"><p style="font-weight:bold">Example 2:</p><p style="padding-left:10px">See species_names that participate in this particular homology entry </p><pre style="display:inline;border:1px solid #555;padding:2px;margin-right:15px;margin-left:10px">SELECT homology_id, DESCription, GROUP_CONCAT(genome_db.name) AS species FROM homology LEFT JOIN method_link_species_set USING (method_link_species_set_id) LEFT JOIN species_set USING (species_set_id) LEFT JOIN genome_db USING(genome_db_id) WHERE homology_id = 38845580 GROUP BY homology_id;</pre> <a id="e_homology2" style="cursor:pointer;text-decoration:none" onclick="show_hide('homology2','example')"><img src="/i/16/plus-button.png" style="width:12px;height:12px;vertical-align:middle" alt="show"/><span style="vertical-align:middle"> Show query results</span></a>
+      <tr><th>homology_id</th><th>method_link_species_set_id</th><th>description</th><th>is_tree_compliant</th><th>dn</th><th>ds</th><th>n</th><th>s</th><th>lnl</th><th>species_tree_node_id</th><th>gene_tree_node_id</th><th>gene_tree_root_id</th></tr>      <tr><td>100330566</td><td>27763</td><td>other_paralog</td><td>1</td><td></td><td></td><td></td><td></td><td></td><td>40094005</td><td>100140061</td><td>100140061</td></tr>    </table>
+  </div></div><div style="margin: 10px 5px"><p style="font-weight:bold">Example 2:</p><p style="padding-left:10px">See species_names that participate in this particular homology entry </p><pre style="display:inline;border:1px solid #555;padding:2px;margin-right:15px;margin-left:10px">SELECT homology_id, description, GROUP_CONCAT(genome_db.name) AS species FROM homology JOIN method_link_species_set USING (method_link_species_set_id) JOIN species_set USING (species_set_id) JOIN genome_db USING(genome_db_id) WHERE method_link_id=201 AND homology_id<5000000  GROUP BY homology_id LIMIT 4;</pre> <a id="e_homology2" style="cursor:pointer;text-decoration:none" onclick="show_hide('homology2','example')"><img src="/i/16/plus-button.png" style="width:12px;height:12px;vertical-align:middle" alt="show"/><span style="vertical-align:middle"> Show query results</span></a>
 
   <div id="ex_homology2" style="display:none;">
     <table class="ss" style="width:50%;margin-top:20px;margin-left:10px;border-spacing:2px">
-      <tr><th>homology_id</th><th>description</th><th>GROUP_CONCAT(genome_db.name)ASspecies</th></tr>      <tr><td>38845580</td><td>other_paralog</td><td>homo_sapiens</td></tr>    </table>
+      <tr><th>homology_id</th><th>description</th><th>species</th></tr>      <tr><td>1426929</td><td>ortholog_one2one</td><td>gallus_gallus,anas_platyrhynchos</td></tr>      <tr class="bg2"><td>1426930</td><td>ortholog_one2one</td><td>taeniopygia_guttata,ficedula_albicollis</td></tr>      <tr><td>1426931</td><td>ortholog_one2one</td><td>taeniopygia_guttata,anas_platyrhynchos</td></tr>      <tr class="bg2"><td>1426932</td><td>ortholog_one2one</td><td>taeniopygia_guttata,gallus_gallus</td></tr>    </table>
   </div></div>  <p style="margin-top:10px"><b>See also:</b></p>
   <ul>
     <li><a href="#homology_member">homology_member</a></li>
@@ -1508,28 +1520,28 @@ The complete compara schema diagram can be found <a target="_blank" href="./diag
         <img src="/i/16/plus-button.png" style="width:12px;height:12px;vertical-align:middle" alt="show"/>
         <span style="vertical-align:middle">Show columns</span>
       </a> 
-			<b> | </b> <a href="#top">[Back to top]</a>
-		</div>
+      <b> | </b> <a href="#top">[Back to top]</a>
+    </div>
   </div>
   <p style="padding:5px 0px;margin-bottom:0px;width:800px">This table contains the sequences corresponding to every genomic homology relationship found. There are two homology_member entries for each pairwise homology entry. As written in the homology table section, both schema and API can deal with more than pairwise relationships.<br /> The original alignment is not stored but it can be retrieved using the cigar_line field and the original sequences. The cigar line defines the sequence of matches or mismatches and deletions in the alignment. <ul> <li><b>First peptide sequence</b>: SERCQVVVISIGPISVLSMILDFY</li> <li><b>Second peptide sequence</b>: SDRCQVLVISILSMIGLDFY</li> <li><b>First corresponding cigar line</b>: 20MD4M</li> <li><b>Second corresponding cigar line</b>: 11M5D9M</li> </ul> The alignment will be:<br /> <table class="spreadsheet"> <caption>Example of alignment reconstruction</caption> <tbody> <tr> <th>First peptide cigar line</th> <td>M</td> <td>M</td> <td>M</td> <td>M</td> <td>M</td> <td>M</td> <td>M</td> <td>M</td> <td>M</td> <td>M</td> <td>M</td> <td>M</td> <td>M</td> <td>M</td> <td>M</td> <td>M</td> <td>M</td> <td>M</td> <td>M</td> <td>M</td> <td>D</td> <td>M</td> <td>M</td> <td>M</td> <td>M</td> </tr> <tr> <th>First aligned peptide</th> <td>S</td> <td>E</td> <td>R</td> <td>C</td> <td>Q</td> <td>V</td> <td>V</td> <td>V</td> <td>I</td> <td>S</td> <td>I</td> <td>G</td> <td>P</td> <td>I</td> <td>S</td> <td>V</td> <td>L</td> <td>S</td> <td>M</td> <td>I</td> <td>-</td> <td>L</td> <td>D</td> <td>F</td> <td>Y</td> </tr> <tr> <th>Second aligned peptide</th> <td>S</td> <td>D</td> <td>R</td> <td>C</td> <td>Q</td> <td>V</td> <td>L</td> <td>V</td> <td>I</td> <td>S</td> <td>I</td> <td>-</td> <td>-</td> <td>-</td> <td>-</td> <td>-</td> <td>L</td> <td>S</td> <td>M</td> <td>I</td> <td>G</td> <td>L</td> <td>D</td> <td>F</td> <td>Y</td> </tr> <tr> <th>Second peptide cigar line</th> <td>M</td> <td>M</td> <td>M</td> <td>M</td> <td>M</td> <td>M</td> <td>M</td> <td>M</td> <td>M</td> <td>M</td> <td>M</td> <td>D</td> <td>D</td> <td>D</td> <td>D</td> <td>D</td> <td>M</td> <td>M</td> <td>M</td> <td>M</td> <td>M</td> <td>M</td> <td>M</td> <td>M</td> <td>M</td> </tr> </tbody> </table></p>
 
   <div id="div_homology_member" style="display:none">
     <table style="border:1px solid #667aa6;padding:0px;min-width:1000px;max-width:1200px">
       <tr class="center" style="color:#FFFFFF;background-color:#667aa6"><th style="color:#FFF;padding:2px">Column</th><th style="color:#FFF;padding:2px">Type</th><th style="color:#FFF;padding:2px;min-width:80px">Default value</th><th style="color:#FFF;padding:2px;min-width:500px">Description</th><th style="color:#FFF;padding:2px;min-width:100px">Index</th></tr>
-      <tr class="bg1"><td><b>homology_id</b></td><td>int(10)</td><td></td><td>External reference to homology_id in the <a href="#homology">homology</a> table</td><td>primary key<br />key: </td></tr>
-      <tr class="bg2"><td><b>member_id</b></td><td>int(10)</td><td></td><td>External reference to member_id in the <a href="#member">member</a> table. Refers to the corresponding "ENSMBLGENE" entry</td><td>primary key<br />key: </td></tr>
-      <tr class="bg1"><td><b>peptide_member_id</b></td><td>int(10)</td><td></td><td>External reference to member_id in the <a href="#member">member</a> table. Refers to the corresponding "ENSEMBLPEP" entry</td><td>key: </td></tr>
+      <tr class="bg1"><td><b>homology_id</b></td><td>int(10)</td><td></td><td>External reference to homology_id in the <a href="#homology">homology</a> table</td><td>primary key<br />key: homology_id</td></tr>
+      <tr class="bg2"><td><b>member_id</b></td><td>int(10)</td><td></td><td>External reference to member_id in the <a href="#member">member</a> table. Refers to the corresponding "ENSMBLGENE" entry</td><td>primary key<br />key: member_id</td></tr>
+      <tr class="bg1"><td><b>peptide_member_id</b></td><td>int(10)</td><td></td><td>External reference to member_id in the <a href="#member">member</a> table. Refers to the corresponding "ENSEMBLPEP" entry</td><td>key: peptide_member_id</td></tr>
       <tr class="bg2"><td><b>cigar_line</b></td><td>mediumtext</td><td></td><td>An internal description of the alignment. It contains mathces/mismatches (M) and delations (D) and refers to the corresponding peptide_member_id sequence</td><td></td></tr>
       <tr class="bg1"><td><b>perc_cov</b></td><td>tinyint</td><td>0</td><td>Defines the percentage of the peptide which has been aligned</td><td></td></tr>
       <tr class="bg2"><td><b>perc_id</b></td><td>tinyint</td><td>0</td><td>Defines the percentage of identity between both homologues</td><td></td></tr>
       <tr class="bg1"><td><b>perc_pos</b></td><td>tinyint</td><td>0</td><td>Defines the percentage of positivity (similarity) between both homologues</td><td></td></tr>
     </table>
   </div>
-<div style="margin: 10px 5px"><p style="font-weight:bold">Example:</p><p style="padding-left:10px">The following query refers to the two homologue sequences defined by the homology.homology_id 38845580. Gene and peptide sequence of the second homologue can retrieved in the same way. </p><pre style="display:inline;border:1px solid #555;padding:2px;margin-right:15px;margin-left:10px">SELECT * FROM homology_member WHERE homology_id = 38845580;</pre> <a id="e_homology_member" style="cursor:pointer;text-decoration:none" onclick="show_hide('homology_member','example')"><img src="/i/16/plus-button.png" style="width:12px;height:12px;vertical-align:middle" alt="show"/><span style="vertical-align:middle"> Show query results</span></a>
+<div style="margin: 10px 5px"><p style="font-weight:bold">Example:</p><p style="padding-left:10px">The following query refers to the two homologue sequences from the first xenopus' paralogy object. Gene and peptide sequence of the second homologue can retrieved in the same way. </p><pre style="display:inline;border:1px solid #555;padding:2px;margin-right:15px;margin-left:10px">SELECT homology_member.* FROM homology_member JOIN homology USING (homology_id) JOIN method_link_species_set USING (method_link_species_set_id) WHERE name="X.tro paralogues" LIMIT 2;</pre> <a id="e_homology_member" style="cursor:pointer;text-decoration:none" onclick="show_hide('homology_member','example')"><img src="/i/16/plus-button.png" style="width:12px;height:12px;vertical-align:middle" alt="show"/><span style="vertical-align:middle"> Show query results</span></a>
 
   <div id="ex_homology_member" style="display:none;">
     <table class="ss" style="width:50%;margin-top:20px;margin-left:10px;border-spacing:2px">
-      <tr><th>homology_id</th><th>member_id</th><th>peptide_member_id</th><th>cigar_line</th><th>perc_cov</th><th>perc_id</th><th>perc_pos</th></tr>      <tr><td>38845580</td><td>8271345</td><td>8271346</td><td>15D3M7DM6D3M4D21M11D7M20D4M3D5MD9MD11M2D12MD2M2D2M14D17MD21MD7MD2M4D2M40D5M24D9M30D2M8D8M3D9M2D6MD23MD4M2D17MD12M3D2MD23MD2M2D4M2DM2D4M5D4M4D60MD66M2D7M3D18MD6M2D10M</td><td>57</td><td>19</td><td>24</td></tr>      <tr class="bg2"><td>38845580</td><td>8351043</td><td>8351044</td><td>34MD6M3D9M7D38MD6M5DM2DM2D9M4D6M11D21M2D2M2D10MD7M6DM8D5M3D7MD41M2D27M3D36MD11MD8M5D2M2D2M6D2MD5M5D3M8D10MDM4D3M5D8MD13M4D3M9D3MDM2D8MD11M4D4MD2M25D33MD54M5D8MD9M14D5M6D4M8D</td><td>51</td><td>17</td><td>21</td></tr>    </table>
+      <tr><th>homology_id</th><th>member_id</th><th>peptide_member_id</th><th>cigar_line</th><th>perc_cov</th><th>perc_id</th><th>perc_pos</th></tr>      <tr><td>100330566</td><td>100073830</td><td>100073831</td><td>D40M4D7M5D47M3D</td><td>85</td><td>48</td><td>48</td></tr>      <tr class="bg2"><td>100330566</td><td>100077543</td><td>100077544</td><td>8M5D27MD4M4D42M4D12M</td><td>86</td><td>48</td><td>48</td></tr>    </table>
   </div></div>  <p style="margin-top:10px"><b>See also:</b></p>
   <ul>
     <li><a href="#member">member</a></li>
@@ -1545,8 +1557,8 @@ The complete compara schema diagram can be found <a target="_blank" href="./diag
         <img src="/i/16/plus-button.png" style="width:12px;height:12px;vertical-align:middle" alt="show"/>
         <span style="vertical-align:middle">Show columns</span>
       </a> 
-			<b> | </b> <a href="#top">[Back to top]</a>
-		</div>
+      <b> | </b> <a href="#top">[Back to top]</a>
+    </div>
   </div>
   <p style="padding:5px 0px;margin-bottom:0px;width:800px">This table contains one entry per stable_id mapping session (either for Families or for Protein Trees), which contains the type, the date of the mapping, and which releases were linked together. A single mapping_session is the event when mapping between two given releases for a particular class type ('family' or 'tree') is loaded. The whole event is thought to happen momentarily at 'when_mapped' (used for sorting in historical order).</p>
 
@@ -1570,8 +1582,8 @@ The complete compara schema diagram can be found <a target="_blank" href="./diag
         <img src="/i/16/plus-button.png" style="width:12px;height:12px;vertical-align:middle" alt="show"/>
         <span style="vertical-align:middle">Show columns</span>
       </a> 
-			<b> | </b> <a href="#top">[Back to top]</a>
-		</div>
+      <b> | </b> <a href="#top">[Back to top]</a>
+    </div>
   </div>
   <p style="padding:5px 0px;margin-bottom:0px;width:800px">This table keeps the history of stable_id changes from one release to another. The primary key 'object' describes a set of members migrating from stable_id_from to stable_id_to. Their volume (related to the 'shared_size' of the new class) is reflected by the fractional 'contribution' field. Since both stable_ids are listed in the primary key, they are not allowed to be NULLs. We shall treat empty strings as NULLs. If stable_id_from is empty, it means these members are newcomers into the new release. If stable_id_to is empty, it means these previously known members are disappearing in the new release. If both neither stable_id_from nor stable_id_to is empty, these members are truly migrating.</p>
 
@@ -1589,8 +1601,8 @@ The complete compara schema diagram can be found <a target="_blank" href="./diag
         <img src="/i/16/plus-button.png" style="width:12px;height:12px;vertical-align:middle" alt="show"/>
         <span style="vertical-align:middle">Show columns</span>
       </a> 
-			<b> | </b> <a href="#top">[Back to top]</a>
-		</div>
+      <b> | </b> <a href="#top">[Back to top]</a>
+    </div>
   </div>
   <p style="padding:5px 0px;margin-bottom:0px;width:800px">This table contains site-wise omega values found in the multiple alignments underlining the protein trees. </p>
 
@@ -1599,8 +1611,8 @@ The complete compara schema diagram can be found <a target="_blank" href="./diag
       <tr class="center" style="color:#FFFFFF;background-color:#667aa6"><th style="color:#FFF;padding:2px">Column</th><th style="color:#FFF;padding:2px">Type</th><th style="color:#FFF;padding:2px;min-width:80px">Default value</th><th style="color:#FFF;padding:2px;min-width:500px">Description</th><th style="color:#FFF;padding:2px;min-width:100px">Index</th></tr>
       <tr class="bg1"><td><b>sitewise_id</b></td><td>int(10)</td><td></td><td>Internal unique ID</td><td>primary key</td></tr>
       <tr class="bg2"><td><b>aln_position</b></td><td>int(10)</td><td></td><td>The position in the whole GeneTree alignment, even if it is all_gaps in the subtree</td><td>unique: aln_position_node_id_ds</td></tr>
-      <tr class="bg1"><td><b>node_id</b></td><td>int(10)</td><td></td><td>The root of the subtree for which the sitewise is calculated</td><td>unique: aln_position_node_id_ds<br />key: </td></tr>
-      <tr class="bg2"><td><b>tree_node_id</b></td><td>int(10)</td><td></td><td>The root of the tree. it will be equal to node_id if we are calculating sitewise for the whole tree</td><td>key: </td></tr>
+      <tr class="bg1"><td><b>node_id</b></td><td>int(10)</td><td></td><td>The root of the subtree for which the sitewise is calculated</td><td>unique: aln_position_node_id_ds<br />key: node_id</td></tr>
+      <tr class="bg2"><td><b>tree_node_id</b></td><td>int(10)</td><td></td><td>The root of the tree. it will be equal to node_id if we are calculating sitewise for the whole tree</td><td>key: tree_node_id</td></tr>
       <tr class="bg1"><td><b>omega</b></td><td>float(10,5)</td><td></td><td>The estimated omega value at the position</td><td></td></tr>
       <tr class="bg2"><td><b>omega_lower</b></td><td>float(10,5)</td><td></td><td>The lower bound of the confidence interval</td><td></td></tr>
       <tr class="bg1"><td><b>omega_upper</b></td><td>float(10,5)</td><td></td><td>The upper bound of the confidence interval</td><td></td></tr>
@@ -1619,8 +1631,8 @@ The complete compara schema diagram can be found <a target="_blank" href="./diag
         <img src="/i/16/plus-button.png" style="width:12px;height:12px;vertical-align:middle" alt="show"/>
         <span style="vertical-align:middle">Show columns</span>
       </a> 
-			<b> | </b> <a href="#top">[Back to top]</a>
-		</div>
+      <b> | </b> <a href="#top">[Back to top]</a>
+    </div>
   </div>
   <p style="padding:5px 0px;margin-bottom:0px;width:800px">This table holds information about each CAFE gene family</p>
 
@@ -1652,8 +1664,8 @@ The complete compara schema diagram can be found <a target="_blank" href="./diag
         <img src="/i/16/plus-button.png" style="width:12px;height:12px;vertical-align:middle" alt="show"/>
         <span style="vertical-align:middle">Show columns</span>
       </a> 
-			<b> | </b> <a href="#top">[Back to top]</a>
-		</div>
+      <b> | </b> <a href="#top">[Back to top]</a>
+    </div>
   </div>
   <p style="padding:5px 0px;margin-bottom:0px;width:800px">This table stores per <a href="#species_tree_node">species_tree_node</a> information about expansions/contractions of each <a href="#CAFE_gene_family">CAFE_gene_family</a></p>
 
