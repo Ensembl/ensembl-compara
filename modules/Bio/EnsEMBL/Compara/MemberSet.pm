@@ -469,6 +469,8 @@ sub get_all_GeneMembers {
 
     return $members;
 }
+
+
 =head2 gene_list
 
   Example    : my $pair = $homology->gene_list
@@ -478,17 +480,50 @@ sub get_all_GeneMembers {
 
 =cut
 
-
-sub gene_list {  # DEPRECATED
+sub gene_list {  # DEPRECATED ?
     my $self = shift;
     return $self->get_all_GeneMembers
 }
 
 
+=head2 print_sequences_to_fasta
+
+  Description: DEPRECATED. Will be removed in e76. Use print_sequences_to_file(-file => $pep_file, -format => "fasta", -id_type => "MEMBER") instead
+
+=cut
+
 sub print_sequences_to_fasta {
     my ($self, $pep_file) = @_;
+    deprecate('print_sequences_to_fasta() is deprecated and will be removed in e76. Please use print_sequences_to_file(-file => $pep_file, -format => "fasta", -id_type => "MEMBER") instead');
     return $self->print_sequences_to_file(-file => $pep_file, -format => 'fasta', -id_type => 'MEMBER');
 }
+
+
+=head2 print_sequences_to_file
+
+  Arg [-FILE]  :
+        string - name of the output file
+  Arg [-FH]:
+        file handle - file handle for the output
+  Arg [-FORMAT] :
+        string - format of the output (cf BioPerl capabilities)
+                 example: 'fasta'
+  Arg [-UNIQ_SEQ] :
+        boolean - whether only 1 copy of each sequence should be printed
+                  (when multiple proteins share the same sequence)
+  Arg [-SEQ_TYPE] :
+        string - the type of the sequence that should be printed
+                 undef is the default sequence. Other types are 'cds', 'exon_bounded'
+  Arg [-ID_TYPE]:
+        string - how to label the sequences. See SeqMember::bioseq()
+  Example    : $family->print_sequences_to_file(-file => 'output.fa', -format => 'fasta', -id_type => 'MEMBER');
+  Description: Prints the sequences of the members into a file
+  Returntype : none
+  Exceptions : none
+  Caller     : general
+  Status     : Stable
+
+=cut
 
 sub print_sequences_to_file {
     my $self = shift;

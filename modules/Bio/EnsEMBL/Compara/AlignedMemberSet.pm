@@ -406,9 +406,16 @@ sub get_SimpleAlign {
 }
 
 
+=head2 consensus_cigar_line
 
-# Takes a protein tree and creates a consensus cigar line from the
-# constituent leaf nodes.
+  Example    : my $consensus_cigar = $gene_tree->consensus_cigar_line();
+  Description: Creates a consensus cigar line for all the members of the
+               set. See Bio::EnsEMBL::Compara::AlignedMemberSet
+  Returntype : string
+  Caller     : general
+
+=cut
+
 sub consensus_cigar_line {
 
     my $self = shift;
@@ -518,6 +525,7 @@ my %CODONS =   ("ATG" => "Met",
   Example    : $4d_align = $homology->get_4D_SimpleAlign();
   Description: get 4 times degenerate positions pairwise simple alignment
   Returntype : Bio::SimpleAlign
+  Caller     : general
 
 =cut
 
@@ -676,6 +684,15 @@ X  0 -1 -1 -1 -2 -1 -1 -1 -1 -1 -1 -1 -1 -1 -2  0  0 -2 -1 -1 -1 -1 -1 -4
   }
 }
 
+
+=head2 update_alignment_stats
+
+  Example    : my $consensus_cigar = $gene_tree->consensus_cigar_line();
+  Description: Update the AlignedMemberSet properties (% identity, % coverage, etc)
+  Returntype : string
+  Caller     : internal
+
+=cut
 
 sub update_alignment_stats {
     my $self = shift;
