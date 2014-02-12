@@ -22,7 +22,8 @@
  * Author: Dan Shepaprd (ds23)
  */
 
-/* This file is divided into three sections identified by comments:
+/* This file is divided into sections identified by comments:
+ * UTILS -- misc helpers used by other sections.
  * PROCESSOR -- processes words.
  * LEXER -- reads the file and breaks it into words and states.
  * CONTROLLER -- handles system interaction, logging, yadda-yadda.
@@ -46,6 +47,32 @@ int max_index_size = 100000; /* Overridden by option */
 
 /* Fields to exclude from autocomplete altogether (with 0 on end of list) */
 char * bad_fields[] = {"domain_url",0};
+
+/************************************************************************
+ * UTILS -- misc helpers used by other sections.                        *
+ ************************************************************************/
+
+struct pool {
+  char **a;
+  int n;
+};
+
+char * pmem(struct pool *p,int amt) {
+  p->a = realloc(p->a,(p->n+1)*sizeof(char *));
+  p->a[p->n] = malloc(amt);
+  return p->a[p->n];
+}
+
+void pfree(struct pool *p) {
+  int i;
+
+  if(!p->a) return;
+  for(i=0;i<p->n;i++)
+    free(p->a[i]);
+  free(p->a);
+  p->a = 0;
+  p->n = 0;
+}
 
 /************************************************************************
  * PROCESSOR -- processes words.                                        *
@@ -537,6 +564,9 @@ void lex(char *data) {
  * CONTROLLER -- handles system interaction, logging, yadda-yadda. *
  *******************************************************************/
 
+/* Used by string returning functions: remember to free it! */
+struct pool smem = {0,0};
+
 /* Abbreviated filename for log messages */
 char * short_name(char *in) {
   char *out,*c,*d,*e;
@@ -558,35 +588,13 @@ char * short_name(char *in) {
   return out;
 }
 
-/* Alloc pool for string manipulation. Used by size, time_str.
- * Free with fsize().
- */
-char **sz = 0;
-int sz_n = 0;
-char * _sz(int amt) {
-  sz = realloc(sz,(sz_n+1)*sizeof(char *));
-  sz[sz_n] = malloc(amt);
-  return sz[sz_n];
-}
-
-void fsize() {
-  int i;
-
-  if(!sz) return;
-  for(i=0;i<sz_n;i++)
-    free(sz[i]);
-  free(sz);
-  sz = 0;
-  sz_n = 0;
-}
-
 /* Display a number of bytes with appropriate multiplier eg 1024 -> 1k */
 char *mult = " kMGTPE";
 char * size(off_t amt) {
   char *out;
   int i,n;
 
-  out = _sz(10);
+  out = pmem(&smem,10);
   for(i=0;mult[i];i++) {
     if(amt<1024) {
       sprintf(out,"%ld%c",amt,mult[i]);
@@ -606,7 +614,7 @@ char * time_str(time_t when) {
 
   if(!localtime_r(&when,&tm))
     return "";
-  out = _sz(MAXTIME);
+  out = pmem(&smem,MAXTIME);
   strftime(out,MAXTIME-1,"%H:%M:%S",&tm);
   return out; 
 }
@@ -637,7 +645,7 @@ void process_file(char *fn) {
   time_t eta;
 
   fprintf(stderr,"File: %-15s %10s\n",short_name(fn),size(file_size(fn)));
-  fsize();
+  pfree(&smem);
   fd = open(fn,O_RDONLY);
   if(fd==-1) {
     fprintf(stderr,"Cannot open '%s': %s\n",fn,strerror(errno));
@@ -676,7 +684,7 @@ void process_file(char *fn) {
       fprintf(stderr,"ETA : read/all = %s/%s (%ld%%) at %s\n",
              size(stat_read),size(stat_all),stat_read*100/stat_all,
              time_str(eta));
-      fsize();
+      pfree(&smem);
       block_start = block_end;
       repmeg=meg;
     }
