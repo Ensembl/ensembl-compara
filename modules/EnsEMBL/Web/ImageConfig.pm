@@ -1986,7 +1986,7 @@ sub add_ditag_features {
 # * gsv_transcript          # transcripts in collapsed gene co-ords
 # depending on which menus are configured
 sub add_genes {
-  my ($self, $key, $hashref) = @_;
+  my ($self, $key, $hashref, $species) = @_;
 
   # Gene features end up in each of these menus
   return unless grep $self->get_node($_), @{$self->{'transcript_types'}};
@@ -1995,6 +1995,19 @@ sub add_genes {
   my $colours       = $self->species_defs->colour('gene');
   my $flag          = 0;
 
+  my $renderers = [
+          'off',                     'Off',
+          'gene_nolabel',            'No exon structure without labels',
+          'gene_label',              'No exon structure with labels',
+          'transcript_nolabel',      'Expanded without labels',
+          'transcript_label',        'Expanded with labels',
+          'collapsed_nolabel',       'Collapsed without labels',
+          'collapsed_label',         'Collapsed with labels',
+          'transcript_label_coding', 'Coding transcripts only (in coding genes)',          
+        ];
+        
+  push($renderers, 'transcript_gencode_basic','GENCODE basic') if($species eq "Homo_sapiens" || $species eq "Mus_musculus");  #only human and mouse have this renderer enable for now
+     
   foreach my $type (@{$self->{'transcript_types'}}) {  
     my $menu = $self->get_node($type);
     next unless $menu;
@@ -2016,17 +2029,7 @@ sub add_genes {
         glyphset  => ($t =~ /_/ ? '' : '_') . $type, # QUICK HACK
         colours   => $colours,
         strand    => $t eq 'gene' ? 'r' : 'b',
-        renderers => $t eq 'transcript' ? [
-          'off',                     'Off',
-          'gene_nolabel',            'No exon structure without labels',
-          'gene_label',              'No exon structure with labels',
-          'transcript_nolabel',      'Expanded without labels',
-          'transcript_label',        'Expanded with labels',
-          'collapsed_nolabel',       'Collapsed without labels',
-          'collapsed_label',         'Collapsed with labels',
-          'transcript_label_coding', 'Coding transcripts only (in coding genes)',
-          'transcript_gencode_basic','GENCODE basic',
-        ] : $t eq 'rnaseq' ? [
+        renderers => $t eq 'transcript' ? $renderers : $t eq 'rnaseq' ? [
          'off',                'Off',
          'transcript_nolabel', 'Expanded without labels',
          'transcript_label',   'Expanded with labels',
