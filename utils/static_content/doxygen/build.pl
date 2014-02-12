@@ -32,8 +32,8 @@ my $flag = GetOptions(
 
 my $filter_dir = "$root/ensembl/misc-scripts/doxygen_filter/";
 
-my $dir   = "$root/utils/static_content/doxygen";
-my $html  = "$root/htdocs/info/docs/Doxygen";
+my $dir   = "$root/ensembl-webcode/utils/static_content/doxygen";
+my $html  = "$root/public-plugins/docs/htdocs/info/docs/Doxygen";
 my $edocs = $apis[0] eq 'edocs' || !scalar @apis;
 
 @apis = split /,/, join ',', @apis;
