@@ -95,12 +95,14 @@ And finally, GeneTree aliases a few GeneTreeNode methods that actually apply on 
  - get_all_nodes()
  - get_all_leaves()
  - get_all_sorted_leaves()
+ - get_leaf_by_Member()
  - find_leaf_by_node_id()
  - find_leaf_by_name()
  - find_node_by_node_id()
  - find_node_by_name()
  - newick_format()
  - nhx_format()
+ - print_tree()
 
 WARNING - Memory leak
 Our current object model uses a cyclic graph of Perl references.
@@ -631,6 +633,24 @@ sub get_all_leaves {
 sub get_all_sorted_leaves {
     my $self = shift;
     return $self->root->get_all_sorted_leaves(@_);
+}
+
+
+=head2 get_leaf_by_Member
+
+  Arg [1]     : Member: the member to search in the tree
+  Example     : my $leaf = $brca2_tree->get_leaf_by_Member($brca2_peptide)
+  Description : Returns the leaf that corresponds to the member given as argument
+  Returntype  : Bio::EnsEMBL::Compara::GeneTreeMember object
+  Exceptions  :
+  Caller      : general
+  Status      : stable
+
+=cut
+
+sub get_leaf_by_Member {
+    my ($self, $member) = @_;
+    return $self->root->get_leaf_by_Member($member);
 }
 
 
