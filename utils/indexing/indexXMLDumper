@@ -218,13 +218,13 @@ my $start_time = time;
 my $total_c;
 my $elevate;
 foreach my $index (@indexes) {
-  my $loc = "$dir/".$shards{$index}."_$release/";
+  my $loc = "$dir/".$shards{$index}."/";
   my $start = time;
   $conf->{'directory'} = $loc . lc($sitetype)."_$index";
   system( "mkdir -p $conf->{'directory'}") unless -e $conf->{'directory'};
 
   if ($index eq 'Variation') {
-    $conf->{'directory_somatic_mutations'} = "$dir/".$shards{'SomaticMutation'}."_$release/".lc($sitetype).'_SomaticMutation';
+    $conf->{'directory_somatic_mutations'} = "$dir/".$shards{'SomaticMutation'}."/".lc($sitetype).'_SomaticMutation';
     system("mkdir -p $conf->{'directory_somatic_mutations'}") unless -e  $conf->{'directory_somatic_mutations'};
   }
   foreach my $species ( @species ) {
