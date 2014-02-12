@@ -54,14 +54,19 @@ sub features {
     $exons{$_->stable_id} = [ map @{$_->get_all_Exons}, @{$_->get_all_Transcripts} ] for @genes;
   } elsif ($display =~ /transcript/) {
     my $coding_only = $display =~ /coding/;
+    my $gencode_basic = $display =~ /basic/;
     
-    foreach my $gene (@genes) {
+    foreach my $gene (@genes) {    
       my $gene_id         = $gene->stable_id;
       my $is_coding_check = $coding_only ? $self->is_coding_gene($gene) : 0;
       my @trans           = @{$gene->get_all_Transcripts};
-         @trans           = grep $_->translation, @trans if $is_coding_check;
-      
-      foreach (@trans) {
+         @trans           = grep $_->translation, @trans if $is_coding_check;         
+    
+      foreach (@trans) {      
+        if($gencode_basic) {          
+          next if (!@{$_->get_all_Attributes('gencode_basic')});
+        }
+        
         my $transcript_id           = $_->stable_id;
         my $transcript_coding_start = defined $_->coding_region_start ? $_->coding_region_start : -1e6;
         my $transcript_coding_end   = defined $_->coding_region_end   ? $_->coding_region_end   : -1e6;
@@ -88,8 +93,7 @@ sub features {
       
       $transcripts{$gene_id} = \@trans;
     }
-  }
-  
+  }  
   return (\@genes, \%highlights, \%transcripts, \%exons);
 }
 

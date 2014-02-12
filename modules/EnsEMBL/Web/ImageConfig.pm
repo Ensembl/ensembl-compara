@@ -1574,7 +1574,7 @@ sub load_tracks {
     
     foreach my $db (grep exists $check->{$_}, @{$databases || []}) {
       my $key = lc substr $db, 9;
-      $self->$_($key, $check->{$db}{'tables'} || $check->{$db}, $species) for @{$data_types{$type}}; # Look through tables in databases and add data from each one
+      $self->$_($key, $check->{$db}{'tables'} || $check->{$db}, $species) for @{$data_types{$type}}; # Look through tables in databases and add data from each one      
     }
   }
   
@@ -1995,7 +1995,7 @@ sub add_genes {
   my $colours       = $self->species_defs->colour('gene');
   my $flag          = 0;
 
-  foreach my $type (@{$self->{'transcript_types'}}) {
+  foreach my $type (@{$self->{'transcript_types'}}) {  
     my $menu = $self->get_node($type);
     next unless $menu;
 
@@ -2012,7 +2012,6 @@ sub add_genes {
       my $menu = $self->get_node($t);
       
       next unless $menu;
-      
       $self->generic_add($menu, $key, "${t}_${key}_$key2", $data->{$key2}, {
         glyphset  => ($t =~ /_/ ? '' : '_') . $type, # QUICK HACK
         colours   => $colours,
@@ -2026,6 +2025,7 @@ sub add_genes {
           'collapsed_nolabel',       'Collapsed without labels',
           'collapsed_label',         'Collapsed with labels',
           'transcript_label_coding', 'Coding transcripts only (in coding genes)',
+          'transcript_gencode_basic','GENCODE basic',
         ] : $t eq 'rnaseq' ? [
          'off',                'Off',
          'transcript_nolabel', 'Expanded without labels',
