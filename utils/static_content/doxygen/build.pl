@@ -32,14 +32,14 @@ my $flag = GetOptions(
 
 my $filter_dir = "$root/ensembl/misc-scripts/doxygen_filter/";
 
-my $dir   = "$root/utils/static_content/doxygen";
-my $html  = "$root/htdocs/info/docs/Doxygen";
+my $dir   = "$root/ensembl-webcode/utils/static_content/doxygen";
+my $html  = "$root/public-plugins/docs/htdocs/info/docs/Doxygen";
 my $edocs = $apis[0] eq 'edocs' || !scalar @apis;
 
 @apis = split /,/, join ',', @apis;
 @apis = qw(core hive compara analysis external functgenomics pipeline variation) unless scalar @apis; # core and hive must always be first in order to generate links
 
-unshift @INC, "$root/conf", $root;
+unshift @INC, "$root/ensembl-webcode/conf", $root;
 require SiteDefs;
 
 if ($apis[0] ne 'edocs') {
