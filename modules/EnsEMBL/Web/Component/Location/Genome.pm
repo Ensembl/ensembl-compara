@@ -337,7 +337,7 @@ sub _render_features {
   }
 
   unless (keys %$features || keys %$user_features) {
-    $html .= EnsEMBL::Web::Controller::SSI::template_INCLUDE($self, "/ssi/species/stats_$species.html");
+    $html .= $self->species_stats; 
   }
 
   ## Done!
