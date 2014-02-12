@@ -92,7 +92,7 @@ sub new {
   
   my $species_defs  = $hub->species_defs;
   
-  $CGI::POST_MAX    = $species_defs->CGI_POST_MAX; # Set max upload size
+  $CGI::POST_MAX    = $self->upload_size_limit; # Set max upload size
   
   if ($self->cache && $self->request ne 'modal') {
     # Add parameters useful for caching functions
@@ -107,6 +107,10 @@ sub new {
   $self->init;
   
   return $self;
+}
+
+sub upload_size_limit {
+  return shift->hub->species_defs->CGI_POST_MAX;
 }
 
 sub init {}
