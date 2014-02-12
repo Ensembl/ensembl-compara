@@ -258,6 +258,11 @@ int inc_counter(struct prefix_counter *pc,char *prefix,char *word) {
  * easy, and everything else isn't. "English" is approximated by looking
  * for an approximately alternating pattern of vowels and consonants.
  *
+ * The second kind of annoyingness handled here is that it's most annoying
+ * to have to type in longer words as shorter words can be entered easily
+ * without its aid. Therefore we penalise short words by dividing by
+ * overall length.
+ *
  * We use annoyngness as a post-filter on our terms (unlike effort, which
  * is applied during parsing). We remember the annoyingness of each term
  * and consider the number of terms which a user requested in determining
@@ -269,8 +274,8 @@ int inc_counter(struct prefix_counter *pc,char *prefix,char *word) {
  * English.
  */
 int freq[] = {
-  25,42,36,31,21,37,38,28,26,68,49,32,36,
-  26,25,40,67,28,27,23,35,45,38,63,38,72
+  109,182,156,136, 92,163,169,122,113,298,216,140,158,
+  115,111,174,294,122,120,104,154,195,167,276,167,315
 };
 
 int annoyingness(char *data) {
@@ -292,14 +297,18 @@ int annoyingness(char *data) {
       letlen++;
     }
   }
-  if(letlen) f/= letlen; else f = 100;
-  if(f>30)
-    n += (f-30)*5; /* unusual letters */
+  if(len) n/=len;
+  if(letlen) f/= letlen; else f = 500;
+  if(f>150)
+    n += (f-150); /* unusual letters */
+  else
+    n += f/20; /* Mainly to avoid ties */
   if(!v)
     n += 30; /* no vowels */
 
   if(!len) return 0;
-  return n/len;
+  n = (n*20)/len; /* Reward long matches, painful to type */
+  return n;
 }
 
 #define MAX_ANNOYINGNESS 200
