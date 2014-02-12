@@ -22,6 +22,12 @@
  * Author: Dan Shepaprd (ds23)
  */
 
+/* This file is divided into three sections identified by comments:
+ * PROCESSOR -- processes words.
+ * LEXER -- reads the file and breaks it into words and states.
+ * CONTROLLER -- handles system interaction, logging, yadda-yadda.
+ */
+
 #include <stdio.h>
 #include <unistd.h>
 #include <stdlib.h>
@@ -36,16 +42,20 @@
 #include <stddef.h>
 
 #define READBUFFER 65536
+int max_index_size = 100000; /* Overridden by option */
 
 /* Fields to exclude from autocomplete altogether (with 0 on end of list) */
 char * bad_fields[] = {"domain_url",0};
 
-/* Checks for membership of list of strings. If present reaturns 0, else
- * returns new length. Compact representation is \0 terminated strings,
- * followed by extra \0. NULL is acceptable as zero-length list. Cannot
- * store empty string.
- */
+/************************************************************************
+ * PROCESSOR -- processes words.                                        *
+ ************************************************************************/
 
+/* Checks for membership of list of strings. If present returns 0, else
+ * returns new length with string added. Compact representation is \0
+ * terminated strings, * followed by extra \0. NULL is acceptable as
+ * zero-length list. Cannot store empty string.
+ */
 int strl_member(char **str,char *data,int max) {
   char *c,*d;
   int len,n=0;
@@ -80,18 +90,7 @@ int strl_member(char **str,char *data,int max) {
   return n;
 }
 
-int max_index_size = 100000;
-
-int in_good_field = 0;
-int good_field(char *name) {
-  char **b;
-
-  for(b=bad_fields;*b;b++)
-    if(!strcmp(name,*b))
-      return 0;
-  return 1;
-}
-
+/* Simple hash function converts string into number at most mod */
 int quick_hash(char *str,int seed,int mod) {
   unsigned int hash = 0;
 
@@ -100,57 +99,34 @@ int quick_hash(char *str,int seed,int mod) {
   return hash % mod;
 }
 
-void process_tag(char *data) {
-  char * field,*f;
-  int idx;
-
-  if(!strncmp(data,"field ",6)) {
-    /* FIELD */
-    if((field = strstr(data,"name=\""))) {
-      f = index(field+6,'"');
-      if(f)
-        *f = '\0';
-      if(good_field(field+6))
-        in_good_field = 1;
-    }
-  } else if(!strcmp(data,"/field")) {
-    in_good_field = 0;
-  }
-}
-
+/* "Effort" is a heuristic, supposed to correlate with the difficulty of
+ * remembering (and so likelihood of entering) a term. For example, it
+ * is more likely a user will enter KINASE1 than Q792Z.3X, all other things
+ * being equal, in part because it's easier to remember. At the moment we
+ * simply count digits as four and everything else as one, but this may
+ * change.
+ *
+ * This method returns a prefix of its input upto the effortlimit. All
+ * strings which begin with this prefix are considered muddleable-up,
+ * and so are placed in the same bin. If many different words end up in
+ * the same bin, then that is considered an unlikely term to memorise
+ * and enter, so these are discarded.
+ *
+ * eg Q792Z.3X -> prefix Q792 (eff=13) -+--> two in this bin
+ *    Q792G.7R -> prefix Q792 (eff=13) -'
+ *    BRCA1    -> prefix BRCA1 (eff=8) ----> one in this bin
+ *    BRCA2    -> prefix BRCA2 (eff=8) ----> one in this bin
+ *
+ * "Effort" is the primary method by which we choose which terms to add to
+ * the autocomplete. (The other is "annoyingness").
+ */
 #define EFFORTLIMIT 12
-#define MINTAIL 4
-
-#define MAXMULT 4
-
-char * make_raw_effort(char *data) {
-  char *effort,*c,*d;
-  int i,num;
-
-  effort = malloc(strlen(data)*MAXMULT+1);
-  for(c=effort,d=data;*d;d++) {
-    num = 1;
-    if(isdigit(*d))
-      num = 4;
-    for(i=0;i<num;i++)
-      *(c++) = *d;
-  }
-  *c = '\0';
-  return effort;
-}
-
 char * make_effort(char *data) {
   char *effort,*c,*d;
   int limit,i,num=0,len,off;
 
   limit = EFFORTLIMIT;
   len = strlen(data);
-  /*
-  if(limit > len)
-    limit = len - MINTAIL;
-  if(limit < 0)
-    limit = 0;
-  */
   off = len;
   for(i=0;i<len;i++) {
     if(isdigit(data[i]))
@@ -169,82 +145,19 @@ char * make_effort(char *data) {
   return effort;
 }
 
-int freq[] = {
-  25,42,36,31,21,37,38,28,26,68,49,32,36,
-  26,25,40,67,28,27,23,35,45,38,63,38,72
-};
+/* A prefix counter is the central datastructure in implementing the
+ * bins required for finding clashing prefixes in our effort calculations.
+ * It is a hash table, keyed by a hash of the prefix. Each value is the
+ * prefix and a list of words. Each entry in the table is a linked list.
+ *
+ * The hash table grows by callnig boost_prefix_counter which actually
+ * simply creates a replacement table (delegated to make_prefix_counter)
+ * and then refiles the entries.
+ *
+ * inc_counter handles adding a word to the prefix counter and requesting
+ * the table grow, when needed.
+ */
 
-int annoyingness(char *data) {
-  int n=0,len=0,v=0,f=0,letlen=0;
-  char *c;
-
-  for(c=data;*c;c++) {
-    len++;
-    if(!isalpha(*c))
-      n+=100;
-    if(strspn(c,"aeiou") > 2)
-      n+=50; /* Too many vowels in a row */
-    if(strcspn(c,"aeiou") > 3)
-      n+=10; /* Too many consonants in a row */
-    if(strspn(c,"aeiou"))
-      v=1;
-    if(*c>='a' && *c<='z') {
-      f += freq[*c-'a'];
-      letlen++;
-    }
-  }
-  if(letlen) f/= letlen; else f = 100;
-  if(f>30)
-    n += (f-30)*5; /* unusual letters */
-  if(!v)
-    n += 30; /* no vowels */
-
-  if(!len) return 0;
-  return n/len;
-}
-
-#define MAX_ANNOYINGNESS 200
-
-int annoyingness_size[MAX_ANNOYINGNESS];
-
-void reset_annoyingness() {
-  int i;
-
-  for(i=0;i<MAX_ANNOYINGNESS;i++)
-    annoyingness_size[i] = 0;
-}
-
-void register_annoyingness(int ann) {
-  int i;
-
-  for(i=ann;i<MAX_ANNOYINGNESS;i++)
-    annoyingness_size[i]++;
-}
-
-int last_val = -1;
-int annoyingness_threshold(int num) {
-  int i;
-
-  /* This method is on the critical path, so use a cache */
-  if(last_val>=0) {
-    if(last_val == MAX_ANNOYINGNESS-1 && annoyingness_size[MAX_ANNOYINGNESS-1]<num)
-      return MAX_ANNOYINGNESS-1;
-    if(annoyingness_size[last_val]<=num && annoyingness_size[last_val+1]>num)
-      return last_val;
-  }
-
-  for(i=1;i<MAX_ANNOYINGNESS;i++) {
-    if(annoyingness_size[i]>num) {
-      last_val = i-1;
-      return i-1;
-    }
-  }
-  last_val = MAX_ANNOYINGNESS-1;
-  return MAX_ANNOYINGNESS-1;
-}
-
-#define NUMEL 4
-#define NUMFP 4 
 struct counter {
   char * prefix;
   char *words;
@@ -333,8 +246,105 @@ int inc_counter(struct prefix_counter *pc,char *prefix,char *word) {
   return 1;
 }
 
-double stat_chlen = 0.0;
+/* "annoyingness" is an heuristic supposed to correlate with the difficulty
+ * in speaking or typing a search term. We assume that if a term is a
+ * pain to type then we will not use it if an easier term is
+ * available. For example, if a gene is known as CHEESE3, GDTDRF7 and
+ * Q450163 then even if all three of these are well known and disitinctive,
+ * (such that the "effort" heuristic accepts them) all other things
+ * being equal, a user is more likely to enter or communicate "CHEESE3".
+ *
+ * The heuristic assumes that English words are easy, letters are quite
+ * easy, and everything else isn't. "English" is approximated by looking
+ * for an approximately alternating pattern of vowels and consonants.
+ *
+ * We use annoyngness as a post-filter on our terms (unlike effort, which
+ * is applied during parsing). We remember the annoyingness of each term
+ * and consider the number of terms which a user requested in determining
+ * the correct threshold.
+ */
 
+/* -100*log(letter_frequency in english). Add scores and divide by length
+ * to get an accurate score for unlikeliness of a letter sequence in
+ * English.
+ */
+int freq[] = {
+  25,42,36,31,21,37,38,28,26,68,49,32,36,
+  26,25,40,67,28,27,23,35,45,38,63,38,72
+};
+
+int annoyingness(char *data) {
+  int n=0,len=0,v=0,f=0,letlen=0;
+  char *c;
+
+  for(c=data;*c;c++) {
+    len++;
+    if(!isalpha(*c))
+      n+=100;
+    if(strspn(c,"aeiou") > 2)
+      n+=50; /* Too many vowels in a row */
+    if(strcspn(c,"aeiou") > 3)
+      n+=10; /* Too many consonants in a row */
+    if(strspn(c,"aeiou"))
+      v=1;
+    if(*c>='a' && *c<='z') {
+      f += freq[*c-'a'];
+      letlen++;
+    }
+  }
+  if(letlen) f/= letlen; else f = 100;
+  if(f>30)
+    n += (f-30)*5; /* unusual letters */
+  if(!v)
+    n += 30; /* no vowels */
+
+  if(!len) return 0;
+  return n/len;
+}
+
+#define MAX_ANNOYINGNESS 200
+
+int annoyingness_size[MAX_ANNOYINGNESS];
+
+void reset_annoyingness() {
+  int i;
+
+  for(i=0;i<MAX_ANNOYINGNESS;i++)
+    annoyingness_size[i] = 0;
+}
+
+void register_annoyingness(int ann) {
+  int i;
+
+  for(i=ann;i<MAX_ANNOYINGNESS;i++)
+    annoyingness_size[i]++;
+}
+
+int last_val = -1;
+int annoyingness_threshold(int num) {
+  int i;
+
+  /* This method is on the critical path, so use a cache */
+  if(last_val>=0) {
+    if(last_val == MAX_ANNOYINGNESS-1 && annoyingness_size[MAX_ANNOYINGNESS-1]<num)
+      return MAX_ANNOYINGNESS-1;
+    if(annoyingness_size[last_val]<=num && annoyingness_size[last_val+1]>num)
+      return last_val;
+  }
+
+  for(i=1;i<MAX_ANNOYINGNESS;i++) {
+    if(annoyingness_size[i]>num) {
+      last_val = i-1;
+      return i-1;
+    }
+  }
+  last_val = MAX_ANNOYINGNESS-1;
+  return MAX_ANNOYINGNESS-1;
+}
+
+/* Dump the appropriate number of words (by calculating the correct
+ * annoyingness threshold).
+ */
 void dump_words(struct prefix_counter *pc) {
   struct counter *c;
   int i,thresh,ann;
@@ -365,6 +375,7 @@ void dump_words(struct prefix_counter *pc) {
     }
 }
 
+/* What we do to each word */
 void process_word(char *data) {
   char *effort;
   int thresh,ann;
@@ -383,10 +394,52 @@ void process_word(char *data) {
   free(effort);
 }
 
+
+/***************************************************************
+ * LEXER - reads the file and breaks it into words and states. *
+ ***************************************************************/
+
+/* A good field is a field which should not be ignored for the purposes
+ * of autocomplete. It uses a fixed array.
+ */
+int in_good_field = 0;
+int good_field(char *name) {
+  char **b;
+
+  for(b=bad_fields;*b;b++)
+    if(!strcmp(name,*b))
+      return 0;
+  return 1;
+}
+
+/* Here's a tag. Set whether or not we are in a good field. This is a
+ * one-bit state which determines whether any textual content in the XML
+ * should be added to the autocomplete index.
+ */
+void process_tag(char *data) {
+  char * field,*f;
+  int idx;
+
+  if(!strncmp(data,"field ",6)) {
+    /* FIELD */
+    if((field = strstr(data,"name=\""))) {
+      f = index(field+6,'"');
+      if(f)
+        *f = '\0';
+      if(good_field(field+6))
+        in_good_field = 1;
+    }
+  } else if(!strcmp(data,"/field")) {
+    in_good_field = 0;
+  }
+}
+
+/* Punctuation which tends to separate words */
 int isseparator(char c) {
   return c == '/' || c == ':' || c == ';' || c == '-' || c == '_' || c == '(' || c == ')';
 }
 
+/* Split some XML text into words and call process_word on each */
 void process_text(char *data) {
   int i;
   char *c,*d;
@@ -417,6 +470,13 @@ void process_text(char *data) {
 int tag_mode=0;
 char *tagstr = 0;
 
+/* Process this text which is either the contents of <...> or else some
+ * text between such.
+ *
+ * eg <a>hello <b>world</b></a> =>
+ * lex_part("a",1); lex_part("hello ",0); lex_part("b",1);
+ * lex_part("world",0); lex_part("/b",1); lex_part("/a",1);
+ */
 void lex_part(char *part,int tag) {
   struct strings *s;
 
@@ -441,6 +501,9 @@ void lex_part(char *part,int tag) {
   }
 }
 
+/* Take a string and call lext_part the right number of times, with the
+ * right fragments.
+ */
 int in_tag = 0;
 /* at top level we just extract tag / non-tag and pass it down */
 void lex(char *data) {
@@ -461,6 +524,11 @@ void lex(char *data) {
   }
 }
 
+/*******************************************************************
+ * CONTROLLER -- handles system interaction, logging, yadda-yadda. *
+ *******************************************************************/
+
+/* Abbreviated filename for log messages */
 char * short_name(char *in) {
   char *out,*c,*d,*e;
 
@@ -481,16 +549,30 @@ char * short_name(char *in) {
   return out;
 }
 
-char *mult = " kMGTEP";
+/* Alloc pool for string manipulation. Used by size, time_str.
+ * Free with fsize().
+ */
 char **sz = 0;
 int sz_n = 0;
-
 char * _sz(int amt) {
   sz = realloc(sz,(sz_n+1)*sizeof(char *));
   sz[sz_n] = malloc(amt);
   return sz[sz_n];
 }
 
+void fsize() {
+  int i;
+
+  if(!sz) return;
+  for(i=0;i<sz_n;i++)
+    free(sz[i]);
+  free(sz);
+  sz = 0;
+  sz_n = 0;
+}
+
+/* Display a number of bytes with appropriate multiplier eg 1024 -> 1k */
+char *mult = " kMGTPE";
 char * size(off_t amt) {
   char *out;
   int i,n;
@@ -507,6 +589,7 @@ char * size(off_t amt) {
   return out;
 }
 
+/* Display a time in H:M:S */
 #define MAXTIME 256
 char * time_str(time_t when) {
   struct tm tm;
@@ -519,20 +602,7 @@ char * time_str(time_t when) {
   return out; 
 }
 
-void fsize() {
-  int i;
-
-  if(!sz) return;
-  for(i=0;i<sz_n;i++)
-    free(sz[i]);
-  free(sz);
-  sz = 0;
-  sz_n = 0;
-}
-
-int meg=0,bytes=0,repmeg=0;
-time_t all_start,block_start,block_end;
-
+/* Get file size */
 off_t file_size(char *fn) {
   struct stat sb;
   off_t size;
@@ -545,6 +615,9 @@ off_t file_size(char *fn) {
   return size;
 }
 
+/* Read and call lex on a file */
+int meg=0,bytes=0,repmeg=0;
+time_t all_start,block_start,block_end;
 off_t stat_all=0;
 off_t stat_read = 0;
 #define MEG (1024*1024)
@@ -580,8 +653,8 @@ void process_file(char *fn) {
     }
     if(!(meg%100) && repmeg != meg) {
       block_end = time(0);
-      //dump_prefix_counter(prefixes);
-      //dump_word_counter(words);
+      /*dump_prefix_counter(prefixes);*/
+      /*dump_word_counter(words);*/
       total = (stat_naughty+stat_good+1);
       fprintf(stderr,"Run : %dMb in %lds (%lds).\nMem : "
              "n/g(%%)=%s/%s (%lld) p/s=%s/%s. a=%d.\n",
@@ -603,6 +676,7 @@ void process_file(char *fn) {
   close(fd);
 }
 
+/* List of files we need to process */
 char **files=0;
 int files_num=0,files_size=0;
 void add_file(char *fn) {
@@ -612,6 +686,8 @@ void add_file(char *fn) {
   }
   files[files_num++] = fn;
 }
+
+/* Handle options, read in list of files and submit one-by-one */
 
 /* max bytes of filename on stdin */
 #define MAXLINE 16384
