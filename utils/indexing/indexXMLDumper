@@ -1383,7 +1383,7 @@ sub dumpGeneTree {
     $multi_species = 1;
     $counter   = make_counter(0);
     $start_time = time;
-    $dbspecies = 'CrossSpecies';
+    $dbspecies = 'Multi';
     $fh;
     open( $fh, ">$compara_file" ) or die "Can't open $compara_file: $!";
     print LOG "  Dumping $compara_dbname to $compara_file ... ".&date_and_mem()."\n";
@@ -1447,7 +1447,7 @@ sub GeneTreeLine {
       $xml .= qq(
   <field name="name">$gt_id</field>
   <field name="assoc_gene">$gid</field>
-  <field name="assoc_gene">$name</field>
+  <field name="assoc_gene_name">$name</field>
   <field name="description">$desc</field>);
     }
     else {
@@ -1483,16 +1483,33 @@ sub dumpFamily {
     $multi_species = 1;
     $counter   = make_counter(0);
     $start_time = time;
-    $dbspecies = 'CrossSpecies';
+    $dbspecies = 'Multi';
     $fh;
     open( $fh, ">$compara_file" ) or die "Can't open $compara_file: $!";
     print LOG "  Dumping $compara_dbname to $compara_file ... ".&date_and_mem()."\n";
     header($fh);
+
+    # uniprot records linked to families do not have a species to filter on so link them to the cross species view
+    my $uniprot_members;
+    my $sth = $conf->{'dbh_compara'}->prepare(qq(
+        SELECT f.stable_id as family_id, m.stable_id as uniprot_id
+          FROM family f, family_member fm, member m
+         WHERE f.family_id = fm.family_id
+           AND fm.member_id = m.member_id
+           AND m.source_name like 'Uniprot%'));
+    $sth->execute;
+    while( my( $fid, $uniprot_id ) = $sth->fetchrow_array()) {
+      push @{$uniprot_members->{$fid}}, $uniprot_id;
+    }
+
     my $sth = $conf->{'dbh_compara'}->prepare(qq(SELECT stable_id, description FROM family));
     $sth->execute();
-    
     while( my( $fid,$desc) = $sth->fetchrow_array()) {
-      &p( FamilyLine($dbspecies,$fid,$desc,$multi_species,'','','',$counter ), $fh);
+      my @uniprots;
+      foreach my $uniprot_id (@{$uniprot_members->{$fid}}) {
+        push @uniprots,$uniprot_id;
+      }
+      &p( FamilyLine($dbspecies,$fid,$desc,$multi_species,'','','',\@uniprots,$counter ), $fh);
     }
     my $c = footer( $counter->(), $fh);
   }
@@ -1518,7 +1535,11 @@ sub dumpFamily {
   my $gene_names = { map { @$_ } @{$conf->{'dbh'}->selectall_arrayref(qq(
         SELECT g.stable_id, x.display_label
           FROM gene g, xref x
-         WHERE g.display_xref_id = x.xref_id))} };
+         WHERE g.display_xref_id = x.xref_id))}};
+  my $transl = $conf->{'dbh'}->selectall_hashref(qq(
+        SELECT tl.stable_id as transl, t.stable_id as trans
+          FROM translation tl, transcript t
+         WHERE tl.transcript_id = t.transcript_id),'transl');
   my $gene_members = $conf->{'dbh_compara'}->selectall_hashref(qq(
         SELECT m.member_id, m.stable_id
           FROM member m, genome_db gdb
@@ -1531,20 +1552,6 @@ sub dumpFamily {
          WHERE m.genome_db_id = gdb.genome_db_id
            AND m.source_name = 'ENSEMBLPEP'
            AND gdb.name = '$dbspecies'),'member_id');
-
-  # uniprot records linked to families do not have a species to filter on
-  my $uniprot_members;
-  my $sth = $conf->{'dbh_compara'}->prepare(qq(
-        SELECT f.stable_id as family_id, m.stable_id as uniprot_id
-          FROM family f, family_member fm, member m
-         WHERE f.family_id = fm.family_id
-           AND fm.member_id = m.member_id
-           AND m.source_name like 'Uniprot%'));
-  $sth->execute;
-  while( my( $fid, $uniprot_id ) = $sth->fetchrow_array()) {
-    push @{$uniprot_members->{$fid}}, $uniprot_id;
-  }
-
   #get all families
   my $sth = $conf->{'dbh_compara'}->prepare(qq(
     select f.stable_id,
@@ -1559,7 +1566,7 @@ sub dumpFamily {
   my $X = $conf->{'authority'} || 'Ensembl';
   while( my( $fid, $desc, $member_ids ) = $sth->fetchrow_array()) {
     $desc =~ s/(\S+)\/(\S+)/$1 \/ $2/g;
-    my (@genes,@proteins,@uniprots);
+    my (@genes,%proteins,%transcripts);
     foreach my $id (split ',', $member_ids) {
       if ($gene_members->{$id}) {
 	my $stable_id = $gene_members->{$id}{'stable_id'};
@@ -1568,29 +1575,26 @@ sub dumpFamily {
 	$dets->{'display_label'}   = $display_label if $display_label;
         push @genes, $dets;
       }
-      elsif ($protein_members->{$id}) {
-        push @proteins, {
-          stable_id     => $protein_members->{$id}{'stable_id'},
-        };
+      elsif (my $tl_id = $protein_members->{$id}{'stable_id'}) {
+        $proteins{$tl_id}++;
+	my $t_id = $transl->{$tl_id}{'trans'};
+	$transcripts{$t_id}++;
       }
     }
     if (@genes) {
-      foreach my $uniprot_id (@{$uniprot_members->{$fid}}) {
-        push @uniprots,$uniprot_id;
-      }
       my $ensembl_genes_species    = scalar @genes;
-      my $ensembl_peptides_species = scalar @proteins;
+      my $ensembl_peptides_species = scalar (keys %proteins);
       my $genes   = $ensembl_genes_species == 1 ? 'gene' : 'genes';
       my $peptide = $ensembl_peptides_species == 1 ? 'protein' : 'proteins';
       my $full_desc = qq($X protein family $fid [$desc]: $ensembl_genes_species $genes / $ensembl_peptides_species $peptide in $species);
-      &p( FamilyLine($dbspecies,$fid,$full_desc,$multi_species,\@genes,\@proteins,\@uniprots,$counter ), $fh);
+      &p( FamilyLine($dbspecies,$fid,$full_desc,$multi_species,\@genes,\%proteins,\%transcripts,'',$counter ), $fh);
     }
   }
   return footer( $counter->(), $fh);
 }
 
 sub FamilyLine {
-  my($species,$fid,$desc,$ms,$genes,$proteins,$uniprots,$counter) = @_;
+  my($species,$fid,$desc,$ms,$genes,$proteins,$transcripts,$uniprots,$counter) = @_;
   my ($url,$xml);
   my $boost = $boosts->{'Family'}{'All'};
   my $doc = $boost ? qq(doc boost="$boost") : 'doc';
@@ -1603,13 +1607,16 @@ sub FamilyLine {
     my $full_desc = "Gene family $fid ($desc) contains genes from multiple species";
     $xml .= qq(
   <field name="description">$full_desc</field>);
+    foreach my $up (@$uniprots){
+      $xml .= qq(
+  <field name="assoc_protein">$up</field>);
+    }
     $url = sprintf(qq(Multi/Family/Details?fm=%s),$fid);
     $xml .= &common_fields($species,'Protein Family','compara');
     $xml .= qq(
   <field name="domain_url">$url</field>);
   }
   else {
-#    my $full_desc = "Gene family $fid ($desc) contains genes from multiple species";
     $xml .= qq(
   <field name="description">$desc</field>);
     my $sample_g = $genes->[0]{'stable_id'};
@@ -1619,21 +1626,25 @@ sub FamilyLine {
 		   $sample_g,
 		  );
     $species =~ s/_/ /;
+    my %seengenes;
     foreach my $g (@$genes){
       my $id   = $g->{'stable_id'};
-      my $name = $g->{'display_label'};
       $xml .= qq(
-  <field name="assoc_gene">$id</field>
+  <field name="assoc_gene">$id</field>);
+      my $name = $g->{'display_label'};
+      unless ($seengenes{'names'}{$name}) {
+	$seengenes{'names'}{$name}++;
+	$xml .= qq(
   <field name="assoc_gene_name">$name</field>);
+      }
     }
-    foreach my $p (@$proteins){
-      my $id   = $p->{'stable_id'};
+    foreach my $id (keys %$proteins){
       $xml .= qq(
   <field name="assoc_protein">$id</field>);
     }
-    foreach my $up (@$uniprots){
+    foreach my $id (keys %$transcripts){
       $xml .= qq(
-  <field name="assoc_protein">$up</field>);
+  <field name="assoc_transcript">$id</field>);
     }
     $xml .= &common_fields($species,'Protein Family','core');
     $xml .= qq(
@@ -2988,7 +2999,7 @@ sub footer {
 
 sub common_fields {
   my ($species,$feature_type,$db) = @_;
-  my $species_name = $species eq 'CrossSpecies' ? 'Multi' : $conf->{'species_common_name'};
+  my $species_name = $species eq 'Multi' ? 'CrossSpecies' : $conf->{'species_common_name'};
   my $xml = qq(
   <field name="website">$website_url</field>
   <field name="feature_type">$feature_type</field>);
