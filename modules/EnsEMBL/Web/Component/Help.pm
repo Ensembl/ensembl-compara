@@ -20,6 +20,8 @@ package EnsEMBL::Web::Component::Help;
 
 use strict;
 
+use List::Util qw(first);
+use EnsEMBL::Web::Tools::FileHandler qw(file_get_contents);
 use EnsEMBL::Web::Document::HTML::Movie;
 
 use base qw( EnsEMBL::Web::Component);
@@ -40,16 +42,20 @@ sub parse_help_html {
 
   my $sd      = $self->hub->species_defs;
   my $img_url = $sd->ENSEMBL_STATIC_SERVER.$sd->ENSEMBL_HELP_IMAGE_ROOT;
+  my @htdocs  = map "$_/htdocs", grep(!m/\:\:/, @{$sd->ENSEMBL_PLUGINS}), $sd->ENSEMBL_WEBROOT;
   my $html;
 
   foreach my $line (split '\n', $content) {
 
-    if ($line =~ /\[\[MOVIE::(\d+)/i) {
-      $line = $self->embed_movie(@{$adaptor->fetch_help_by_ids([$1]) || []});
-    }
-
     while ($line =~ /\[\[IMAGE::([^\s]+)\s*([^\]]+)?\s*\]\]/ig) {
       substr $line, $-[0], $+[0] - $-[0], qq(<img src="$img_url$1" alt="" $2 \/>); # replace square bracket tag with actual image
+    }
+
+    if ($line =~ /\[\[MOVIE::(\d+)/i) {
+      $line = $self->embed_movie(@{$adaptor->fetch_help_by_ids([$1]) || []});
+    } elsif ($line =~ /\[\[HTML::(.+)\]\]/) {
+      my $html_file = first { -e $_ } map "$_/$1", @htdocs;
+      $line = $html_file ? join '', file_get_contents($html_file) : "<p><i>Error: File $1 not found.</i>";
     }
 
     $html .= $line;
