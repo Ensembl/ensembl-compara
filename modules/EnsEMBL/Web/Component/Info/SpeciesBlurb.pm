@@ -244,10 +244,10 @@ sub _stats_tables {
       my $header = $term ? qq(<span class="glossary_mouseover">$title<span class="floating_popup">$glossary{$term}</span></span>) : $title;
       my $stat = $self->thousandify($genome_container->$method);
       unless ($_ eq 'transcript') {
-        my $rmethod = 'get_r'.$_.'_count';
+        my $rmethod = 'get_alt_r'.$_.'_count';
         my $readthrough = $genome_container->$rmethod;
         if ($readthrough) {
-          $stat .= ' (inc '.$self->thousandify($readthrough).' readthrough)'; 
+          $stat .= ' (incl. '.$self->thousandify($readthrough).' <span class="glossary_mouseover">readthrough<span class="floating_popup">'.$glossary{'Readthrough'}.'</span></span>)'; 
         }
       }
       $alt_counts->add_row({
