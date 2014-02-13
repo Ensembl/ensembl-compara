@@ -801,8 +801,9 @@ void add_file_spec(char *spec) {
   at = index(in,'@');
   if(at) *at = '\0';
   add_file(in);
-  for(s=ss;*s;s++)
-    add_file_section(*s);
+  if(ss)
+    for(s=ss;*s;s++)
+      add_file_section(*s);
   while(at) {
     at2 = index(at+1,'@');
     if(at2) *at2 = '\0';
