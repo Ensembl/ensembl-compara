@@ -29,7 +29,9 @@ use base qw(EnsEMBL::Web::Document::HTML);
 
 sub render {
   my ($self, $movie) = @_;
-  
+
+  return unless $movie;
+
   my $hub = $self->hub;
 
   if (!ref $movie) {
