@@ -168,7 +168,7 @@ int quick_hash(char *str,int seed,int mod) {
  */
 #define EFFORTLIMIT 12
 char * make_effort(char *data) {
-  char *effort,*c,*d;
+  char *effort;
   int limit,i,num=0,len,off;
 
   limit = EFFORTLIMIT;
@@ -258,7 +258,7 @@ long long int stat_naughty=0,stat_good=0,stat_words=0;
 #define NAUGHTY_THRESHOLD 12
 /* 0 = new, 1 = old, 2 = naughty */
 int inc_counter(struct word_table *pc,char *prefix,char *word) {
-  int hash,whash,i,myloc,j,any,num;
+  int hash,num;
   struct counter *c,*rec=0;
 
   if(pc->num >= pc->size/3)
@@ -295,7 +295,7 @@ int inc_counter(struct word_table *pc,char *prefix,char *word) {
   return 0;
 }
 
-int add_section(struct word_table *ss,char *word,char *section) {
+void add_section(struct word_table *ss,char *word,char *section) {
   int hash;
   struct counter *c,*rec=0;
 
@@ -320,9 +320,8 @@ int add_section(struct word_table *ss,char *word,char *section) {
 }
 
 char ** get_sections(struct word_table *ss,char *word) {
-  char **out=0,*d;
   struct counter *c,*rec=0;
-  int len,hash,i;
+  int hash;
  
   if(!ss->size)
     return 0; 
@@ -531,7 +530,6 @@ int good_field(char *name) {
  */
 void process_tag(char *data) {
   char * field,*f;
-  int idx;
 
   if(!strncmp(data,"field ",6)) {
     /* FIELD */
@@ -554,7 +552,6 @@ int isseparator(char c) {
 
 /* Split some XML text into words and call process_word on each */
 void process_text(char **ss,char *data) {
-  int i;
   char *c,*d;
 
   if(!in_good_field)
@@ -591,8 +588,6 @@ char *tagstr = 0;
  * lex_part("world",0); lex_part("/b",1); lex_part("/a",1);
  */
 void lex_part(char **ss,char *part,int tag) {
-  struct strings *s;
-
   if(tag_mode != tag) {
     /* Do stuff */
     if(tag_mode) {
@@ -620,8 +615,7 @@ void lex_part(char **ss,char *part,int tag) {
 int in_tag = 0;
 /* at top level we just extract tag / non-tag and pass it down */
 void lex(char **ss,char *data) {
-  int more,i;
-  char match,*hit;
+  char *hit;
 
   while(*data) {
     hit = index(data,in_tag?'>':'<');
@@ -669,7 +663,7 @@ char * short_name(char *in) {
 char *mult = " kMGTPE";
 char * size(off_t amt) {
   char *out;
-  int i,n;
+  int i;
 
   out = pmem(&smem,10);
   for(i=0;mult[i];i++) {
@@ -824,8 +818,8 @@ void add_file_spec(char *spec) {
 /* max bytes of filename on stdin */
 #define MAXLINE 16384
 int main(int argc,char *argv[]) {
-  int i,r,idx,c,from_stdin=0;
-  char buf[READBUFFER],*fn,*p,**ss,**s,*at,*in,*at2;
+  int idx,c,from_stdin=0;
+  char *fn,*p,**ss;
   struct file *f;
 
   all_start = block_start = time(0);
