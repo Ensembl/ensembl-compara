@@ -91,7 +91,7 @@ int strl_member(char **str,char *data,int max) {
   len = strlen(data);
   if(!len)
     return 0;
-  if(!*str && max>0) { /* Initial malloc of zero-length list */
+  if(!*str && max) { /* Initial malloc of zero-length list */
     *str = malloc(1);
     **str = '\0';
   }
@@ -106,7 +106,7 @@ int strl_member(char **str,char *data,int max) {
     c++;
     n++;
   }
-  if(n<max) {
+  if(max==-1 || n<max) {
     p = c-*str; /* Remap c after realloc, also = length of alloc-1 */
     *str = realloc(*str,p+len+2);
     c = *str+p;
@@ -115,6 +115,25 @@ int strl_member(char **str,char *data,int max) {
     n++;
   }
   return n;
+}
+
+/* Converts to more standard string array */
+char **strl_strings(char *strl) {
+  int len,i;
+  char **out,*d;
+
+  if(!strl)
+    return 0;
+  len = 1;
+  for(d=strl;*d || *(d+1);d++) {
+    if(!*d)
+      len++;
+  }
+  out = malloc(sizeof(char *)*(len+1));
+  for(d=strl,i=0; *d; i++,d+=strlen(d)+1)
+    out[i] = d;
+  out[i] = 0;
+  return out;
 }
 
 /* Simple hash function converts string into number at most mod */
@@ -177,12 +196,15 @@ char * make_effort(char *data) {
  * It is a hash table, keyed by a hash of the prefix. Each value is the
  * prefix and a list of words. Each entry in the table is a linked list.
  *
- * The hash table grows by callnig boost_prefix_counter which actually
- * simply creates a replacement table (delegated to make_prefix_counter)
+ * The hash table grows by calling boost_table which actually
+ * simply creates a replacement table (delegated to make_table)
  * and then refiles the entries.
  *
  * inc_counter handles adding a word to the prefix counter and requesting
  * the table grow, when needed.
+ *
+ * We also use a separate instance of this structure to record sections
+ * in which each word appears for later dumping.
  */
 
 struct counter {
@@ -191,18 +213,18 @@ struct counter {
   struct counter * next;
 };
 
-struct prefix_counter {
+struct word_table {
   int size,num;
   struct counter ** counter;
 };
 
-struct prefix_counter *prefixes,*words;
+struct word_table *prefixes,*sections;
 
-struct prefix_counter * make_prefix_counter(int size) {
-  struct prefix_counter *out;
+struct word_table * make_table(int size) {
+  struct word_table *out;
   int i;
 
-  out = malloc(sizeof(struct prefix_counter));
+  out = malloc(sizeof(struct word_table));
   if(size) {
     out->size = size;
     out->num = 0;
@@ -210,17 +232,17 @@ struct prefix_counter * make_prefix_counter(int size) {
     for(i=0;i<size;i++)
       out->counter[i] = 0; 
   } else {
-    *out = (struct prefix_counter){0,0,0};
+    *out = (struct word_table){0,0,0};
   }
   return out;
 }
 
-void boost_prefix_counter(struct prefix_counter *in) {
-  struct prefix_counter *out;
+void boost_table(struct word_table *in) {
+  struct word_table *out;
   struct counter *c,*d;
   int i,hash;
 
-  out = make_prefix_counter(in->size*3/2+16);
+  out = make_table(in->size*3/2+16);
   for(i=0;i<in->size;i++)
     for(c=in->counter[i];c;c=d) {
       d = c->next;
@@ -234,13 +256,13 @@ void boost_prefix_counter(struct prefix_counter *in) {
 
 long long int stat_naughty=0,stat_good=0,stat_words=0;
 #define NAUGHTY_THRESHOLD 12
-/* 1 = new, 0 = old/naughty */
-int inc_counter(struct prefix_counter *pc,char *prefix,char *word) {
+/* 0 = new, 1 = old, 2 = naughty */
+int inc_counter(struct word_table *pc,char *prefix,char *word) {
   int hash,whash,i,myloc,j,any,num;
   struct counter *c,*rec=0;
 
   if(pc->num >= pc->size/3)
-    boost_prefix_counter(pc);
+    boost_table(pc);
   hash = quick_hash(prefix,0,pc->size);
   for(c=pc->counter[hash];c;c=c->next) {
     if(!strcmp(c->prefix,prefix))
@@ -257,20 +279,62 @@ int inc_counter(struct prefix_counter *pc,char *prefix,char *word) {
     rec = c;
   } else if(!rec->words) {
     stat_naughty++;
-    return 0;
+    return 2;
   }
   num = strl_member(&(rec->words),word,NAUGHTY_THRESHOLD);
   if(num>=NAUGHTY_THRESHOLD) {
     free(rec->words);
     rec->words = 0;
     stat_naughty++;
-    return 0;
+    return 2;
   }
   stat_good++;
   if(num==0) {
-    return 0;
+    return 1;
   }
-  return 1;
+  return 0;
+}
+
+int add_section(struct word_table *ss,char *word,char *section) {
+  int hash;
+  struct counter *c,*rec=0;
+
+  if(ss->num >= ss->size/3)
+    boost_table(ss);
+  hash = quick_hash(word,0,ss->size);
+  for(c=ss->counter[hash];c;c=c->next) {
+    if(!strcmp(c->prefix,word))
+      rec = c;
+  }
+  if(!rec) {
+    c = malloc(sizeof(struct counter));
+    c->prefix = malloc(strlen(word)+1);
+    strcpy(c->prefix,word);
+    c->words = 0;
+    c->next = ss->counter[hash];
+    ss->counter[hash] = c;
+    ss->num++;
+    rec = c;
+  }
+  strl_member(&(rec->words),section,-1);
+}
+
+char ** get_sections(struct word_table *ss,char *word) {
+  char **out=0,*d;
+  struct counter *c,*rec=0;
+  int len,hash,i;
+ 
+  if(!ss->size)
+    return 0; 
+  hash = quick_hash(word,0,ss->size);
+  for(c=ss->counter[hash];c;c=c->next) {
+    if(!strcmp(c->prefix,word))
+      rec = c;
+  }
+  if(rec && rec->words) {
+    return strl_strings(rec->words);
+  }
+  return 0;
 }
 
 /* "annoyingness" is an heuristic supposed to correlate with the difficulty
@@ -381,11 +445,11 @@ int annoyingness_threshold(int num) {
 /* Dump the appropriate number of words (by calculating the correct
  * annoyingness threshold).
  */
-void dump_words(struct prefix_counter *pc) {
+void dump_words(struct word_table *pc) {
   struct counter *c;
   int i,thresh,ann;
   double value; 
-  char *d;
+  char *d,**ss,**s;
 
   thresh = annoyingness_threshold(max_index_size);
   for(i=0;i<pc->size;i++)
@@ -403,7 +467,14 @@ void dump_words(struct prefix_counter *pc) {
             }
             if(strlen(d)>6)
               value -= 0.1 * (strlen(d)-6);
-            printf("%s\t%1.1f\n",d,value);
+            ss = get_sections(sections,d);
+            if(ss) {
+              for(s=ss;*s;s++)
+                printf("%s%s\t%1.1f\n",*s,d,value);
+              free(ss);
+            } else {
+              printf("%s\t%1.1f\n",d,value);
+            }
           }
           d += strlen(d)+1;
         }
@@ -412,15 +483,21 @@ void dump_words(struct prefix_counter *pc) {
 }
 
 /* What we do to each word */
-void process_word(char *data) {
-  char *effort;
-  int thresh,ann;
+void process_word(char **ss,char *data) {
+  char *effort,**s;
+  int thresh,ann,i;
 
   if(!*data)
     return;
   stat_words++;
   effort = make_effort(data);
-  if(inc_counter(prefixes,effort,data)) {
+  i = inc_counter(prefixes,effort,data);
+  if(i==0 || i==1) {
+    if(ss)
+      for(s=ss;*s;s++)
+        add_section(sections,data,*s);
+  }
+  if(!i) {
     thresh = annoyingness_threshold(max_index_size);
     ann = annoyingness(data);
     if(ann<thresh) {
@@ -476,7 +553,7 @@ int isseparator(char c) {
 }
 
 /* Split some XML text into words and call process_word on each */
-void process_text(char *data) {
+void process_text(char **ss,char *data) {
   int i;
   char *c,*d;
 
@@ -494,13 +571,13 @@ void process_text(char *data) {
     if(isspace(*c)) {
       *c = '\0';
       if(*d)
-        process_word(d);
+        process_word(ss,d);
       d = c+1;
     } else {
       *c = tolower(*c);
     }
   }
-  process_word(d);
+  process_word(ss,d);
 }
 
 int tag_mode=0;
@@ -513,7 +590,7 @@ char *tagstr = 0;
  * lex_part("a",1); lex_part("hello ",0); lex_part("b",1);
  * lex_part("world",0); lex_part("/b",1); lex_part("/a",1);
  */
-void lex_part(char *part,int tag) {
+void lex_part(char **ss,char *part,int tag) {
   struct strings *s;
 
   if(tag_mode != tag) {
@@ -521,7 +598,7 @@ void lex_part(char *part,int tag) {
     if(tag_mode) {
       process_tag(tagstr);
     } else {
-      process_text(tagstr);
+      process_text(ss,tagstr);
     }
     free(tagstr);
     tagstr = 0;
@@ -542,7 +619,7 @@ void lex_part(char *part,int tag) {
  */
 int in_tag = 0;
 /* at top level we just extract tag / non-tag and pass it down */
-void lex(char *data) {
+void lex(char **ss,char *data) {
   int more,i;
   char match,*hit;
 
@@ -550,7 +627,7 @@ void lex(char *data) {
     hit = index(data,in_tag?'>':'<');
     if(hit)
       *hit = '\0';
-    lex_part(data,in_tag);
+    lex_part(ss,data,in_tag);
     if(hit) {
       in_tag = !in_tag;
       data = hit+1;
@@ -638,7 +715,7 @@ time_t all_start,block_start,block_end;
 off_t stat_all=0;
 off_t stat_read = 0;
 #define MEG (1024*1024)
-void process_file(char *fn) {
+void process_file(char **ss,char *fn) {
   int r,fd;
   char buf[READBUFFER];
   long long int total;
@@ -656,7 +733,7 @@ void process_file(char *fn) {
     if(r>0) {
       stat_read += r;
       buf[r] = '\0';
-      lex(buf);
+      lex(ss,buf);
       bytes += r;
       if(bytes > MEG) {
         meg += bytes/MEG;
@@ -670,8 +747,6 @@ void process_file(char *fn) {
     }
     if(!(meg%100) && repmeg != meg) {
       block_end = time(0);
-      /*dump_prefix_counter(prefixes);*/
-      /*dump_word_counter(words);*/
       total = (stat_naughty+stat_good+1);
       fprintf(stderr,"Run : %dMb in %lds (%lds).\nMem : "
              "n/g(%%)=%s/%s (%lld) p/s=%s/%s. a=%d.\n",
@@ -689,19 +764,59 @@ void process_file(char *fn) {
       repmeg=meg;
     }
   }
-  lex_part("",0);
+  lex_part(ss,"",0);
   close(fd);
 }
 
 /* List of files we need to process */
-char **files=0;
-int files_num=0,files_size=0;
+
+struct file {
+  char *filename;
+  char *sections;
+  struct file *next;
+};
+
+char * global_sections = 0;
+struct file *files = 0;
 void add_file(char *fn) {
-  if(files_num==files_size) {
-    files_size = files_size*2+8;
-    files = realloc(files,files_size*sizeof(char *));
+  struct file *f;
+  char *fn2;
+
+  fn2 = malloc(strlen(fn)+1);
+  strcpy(fn2,fn);
+  f = malloc(sizeof(struct file));
+  f->filename = fn2;
+  f->sections = 0;
+  f->next = files;
+  files = f;
+}
+
+void add_file_section(char *section) {
+  if(files)
+    strl_member(&(files->sections),section,-1);
+  else
+    strl_member(&global_sections,section,-1);
+}
+
+void add_file_spec(char *spec) {
+  char *at,*at2,**ss,**s,*in;
+
+  in = malloc(strlen(spec)+1);
+  strcpy(in,spec);
+  ss = strl_strings(global_sections);
+  at = index(in,'@');
+  if(at) *at = '\0';
+  add_file(in);
+  for(s=ss;*s;s++)
+    add_file_section(*s);
+  while(at) {
+    at2 = index(at+1,'@');
+    if(at2) *at2 = '\0';
+    add_file_section(at+1);
+    at = at2;
   }
-  files[files_num++] = fn;
+  free(in);
+  free(ss);
 }
 
 /* Handle options, read in list of files and submit one-by-one */
@@ -709,11 +824,12 @@ void add_file(char *fn) {
 /* max bytes of filename on stdin */
 #define MAXLINE 16384
 int main(int argc,char *argv[]) {
-  int i,r,index,c,from_stdin=0;
-  char buf[READBUFFER],*fn,*p;
+  int i,r,idx,c,from_stdin=0;
+  char buf[READBUFFER],*fn,*p,**ss,**s,*at,*in,*at2;
+  struct file *f;
 
   all_start = block_start = time(0);
-  while((c = getopt(argc,argv,"cn:")) != -1) {
+  while((c = getopt(argc,argv,"cn:s:")) != -1) {
     switch (c) {
       case 'n':
         max_index_size = atoi(optarg);
@@ -725,6 +841,9 @@ int main(int argc,char *argv[]) {
       case 'c':
         from_stdin = 1;
         break;
+      case 's':
+        add_file_section(optarg);
+        break;
       case '?':
         fprintf(stderr,"Bad command line options\n");
         return 1;
@@ -733,8 +852,8 @@ int main(int argc,char *argv[]) {
     }
   }
   reset_annoyingness();
-  prefixes = make_prefix_counter(0);
-  words = make_prefix_counter(0);
+  prefixes = make_table(0);
+  sections = make_table(0);
 
   if(from_stdin) {
     while(1) {
@@ -750,16 +869,20 @@ int main(int argc,char *argv[]) {
       for(p=fn;*p && !isspace(*p);p++)
         ;
       *p = '\0';
-      add_file(fn);
+      add_file_spec(fn);
     }
   } else {
-    for (index=optind;index<argc;index++)
-      add_file(argv[index]);
+    for (idx=optind;idx<argc;idx++) {
+      add_file_spec(argv[idx]);
+    }
   }
-  for(i=0;i<files_num;i++)
-    stat_all += file_size(files[i]);
-  for(i=0;i<files_num;i++)
-    process_file(files[i]);
+  for(f=files;f;f=f->next)
+    stat_all += file_size(f->filename);
+  for(f=files;f;f=f->next) {
+    ss = strl_strings(f->sections);
+    process_file(ss,f->filename);
+    free(ss);
+  }
   dump_words(prefixes);
 
   fprintf(stderr,"Success.\n");
