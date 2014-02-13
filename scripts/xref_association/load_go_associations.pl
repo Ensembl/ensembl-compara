@@ -98,9 +98,16 @@ sub get_go_parents {
   return $go_parents->{term};
 }
 
+
 for my $genome_db (@genome_dbs) {
   my $dba = $genome_db->db_adaptor();
   print "Processing " . $dba->species() . "\n";
+$compara->dbc()->sql_helper()->execute_update(
+-SQL=>q/delete mx.* from member_xref mx 
+join external_db e using (external_db_id) 
+join member m using (member_id) 
+join genome_db g using (genome_db_id) where e.db_name=? and g.name=?/,
+-PARAMS=>[$db_name, $dba->species()]);
   $adaptor->store_member_associations(
 	$dba, $db_name,
 	sub {
@@ -120,5 +127,6 @@ for my $genome_db (@genome_dbs) {
 		-PARAMS => [$core->species_id(), $core->species_id()]);
 	  return $member_acc_hash;
 	});
+  print "Completed processing " . $dba->species() . "\n";
 } ## end for my $genome_db (@genome_dbs)
 
