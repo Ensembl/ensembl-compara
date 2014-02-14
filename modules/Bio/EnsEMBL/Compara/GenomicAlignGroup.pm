@@ -505,28 +505,136 @@ sub aligned_sequence {
   Status      : At risk
 
 =cut
-
 sub original_sequence {
   my $self = shift;
 
   my $original_sequence;
+  foreach my $this_genomic_align (@{$self->get_all_sorted_GenomicAligns}) {
+    $original_sequence .= $this_genomic_align->original_sequence;
+  }
+  return $original_sequence;
+}
+
+=head2 get_all_sorted_GenomicAligns
+
+  Arg [1]     : -none-
+  Example     : $sorted_genomic_aligns = $object->get_all_sorted_GenomicAligns
+  Description: returns the set of sorted Bio::EnsEMBL::Compara::GenomicAlign objects
+  Returntype : array reference containing Bio::EnsEMBL::Compara::GenomicAlign objects
+  Exceptions  : none
+  Caller      : general
+  Status      : At risk
+
+=cut
+
+sub get_all_sorted_GenomicAligns {
+  my ($self) = @_;
+
+  my $sorted_genomic_aligns;
+  my @list_of_genomic_aligns;
+
   foreach my $this_genomic_align (@{$self->get_all_GenomicAligns}) {
-    if (!$original_sequence) {
-      $original_sequence = $this_genomic_align->original_sequence;
+    #Get the first element of the cigar line
+    my ($first_elem) = $this_genomic_align->cigar_line =~ /(\d*[GMDXI])/;
+    
+    #The first element may not have X if it has been restricted
+    if ($first_elem =~ /X/) {
+      push @list_of_genomic_aligns, $this_genomic_align;
     } else {
-      my $pos = 0;
-      foreach my $substr (grep {$_} split(/(\.+)/, $this_genomic_align->original_sequence)) {
-        if ($substr =~ /^\.+$/) {
-          $pos += length($substr);
-        } else {
-          substr($original_sequence, $pos, length($substr), $substr);
-        }
+      push @$sorted_genomic_aligns, $this_genomic_align;
+    }
+  }
+  #Sort remaining GenomicAligns base on the X offset of the first element in the cigar line
+  foreach my $this_genomic_align (sort _sort_by_cigar @list_of_genomic_aligns) {
+     push @$sorted_genomic_aligns, $this_genomic_align;
+  }
+  return $sorted_genomic_aligns;
+}
+
+#Sort by the length of the first X element.
+sub _sort_by_cigar {
+  my ($a_first_elem) = $a->cigar_line =~ /(\d*)X/;
+  my ($b_first_elem) = $b->cigar_line =~ /(\d*)X/;
+
+  return $a_first_elem <=> $b_first_elem;
+}
+
+=head2 cigar_line
+
+  Arg [1]     : -none-
+  Example     : $cigar_line = $object->cigar_line();
+  Description: Get the cigar_line for this group. When the group
+                contains one single sequence, returns its cigar_line.
+                For composite segments, returns the combined cigar_line.
+  Returntype : String
+  Exceptions  : none
+  Caller      : general
+  Status      : At risk
+
+=cut
+
+sub cigar_line {
+  my ($self) = @_;
+
+  my $prev_seq_length = 0;
+  my $final_cigar_line;
+  my $last_cigar_elem;
+  my @all_cig;
+
+  foreach my $this_genomic_align (@{$self->get_all_sorted_GenomicAligns}) {
+    my $cigar_line = $this_genomic_align->cigar_line;
+    my @cig = ( $cigar_line =~ /(\d*[GMDXI])/g );
+
+    my ($firstCigCount) = $cig[0] =~/(\d*)X/;
+
+    #May need extra padding between genomic_aligns
+    if ($firstCigCount && $prev_seq_length < $firstCigCount) {
+      push @all_cig, ($firstCigCount-$prev_seq_length) . "X";
+    } 
+
+    #initialise seq_length 
+    $prev_seq_length = $firstCigCount;
+
+    for my $cigElem ( @cig ) {
+      my $cigType = substr( $cigElem, -1, 1 );
+      my $cigCount = substr( $cigElem, 0 ,-1 );
+      $cigCount = 1 unless ($cigCount =~ /^\d+$/);
+
+      #Keep count of the sequence length to see if we need padding to the next genomic_align 
+      if ($cigType =~ /[MD]/) {
+        $prev_seq_length += $cigCount;
+      } 
+      #Append all elements apart from X
+      unless ($cigType eq "X") {
+        push @all_cig, $cigElem;
       }
     }
   }
 
-  return $original_sequence;
-}
+  #Merge neighbouring elements of the same type
+  my ($lastCigType, $lastCigCount, $lastCigElem);
+  while (@all_cig) {
+    my $cigElem = shift @all_cig;
+    my $cigType = substr( $cigElem, -1, 1 );
+    my $cigCount = substr( $cigElem, 0 ,-1 );
+    $cigCount = 1 unless ($cigCount =~ /^\d+$/);
+    if ($lastCigType) {
+      if ($lastCigType eq $cigType) {
+        $cigElem = ($cigCount+$lastCigCount) . $cigType;
+        $lastCigCount = ($cigCount+$lastCigCount);
+      } else {
+        $final_cigar_line .= $lastCigElem;
+        $lastCigCount = $cigCount;
+      }
+    } else {
+        $lastCigCount = $cigCount;
+    }
+    $lastCigElem = $cigElem;
+    $lastCigType = $cigType;
+  }
+  $final_cigar_line .= $lastCigElem;
 
+  return $final_cigar_line;
+}
 
 1;
