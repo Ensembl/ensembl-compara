@@ -9,19 +9,34 @@ die "Please specify path to xml files" unless $ARGV[0];
 
 system("cd $Bin; rm -f autocomplete ; gcc -Ofast -flto -march=native -Wall autocomplete.c -o autocomplete -lm") && die "Cannot compile: $!";
 
-my $files = qx(find $ARGV[0] -name \\*.xml);
+my $files = qx(find $ARGV[0] -name \\*_Gene.xml);
 
-my $args = "-n 1000000 -c -s all_";
-
-print "$Bin/autocomplete $args\n";
+my $args = "-n 1000000 -c -s all__";
 
 open(AC,"| $Bin/autocomplete $args >$Bin/dict.txt") || die "Cannot run autocomplete";
 foreach my $file (split("\n",$files)) {
   chomp $file;
-  my @parts = split(m!/!,$file);
-  my @sec = split(m!_!,$parts[-1]);
-  my $prefix = join('_',@sec[0..1],'');
-  print AC "$file\@$prefix\n";
+  unless(open(FILE,$file)) {
+    print STDERR "No such file '$file'\n";
+    next;
+  }
+  my $species = undef;
+  my $any = 0;
+  while(<FILE>) {
+    $any = 1 if /<field/;
+    next unless /<field name="species_name">(.*?)<\/field>/;
+    $species = lc($1);
+    $species =~ s/ /_/g;
+    last;
+  }
+  close FILE;
+  unless($any) {
+    print STDERR "Skipping empty file '$file'\n";
+    next;
+  }
+  print AC $file;
+  print AC "\@${species}__" if $species;
+  print AC "\n";
 }
 close AC;
 open(DICT,"$Bin/dict.txt") || die "Cannot read dict.txt";
