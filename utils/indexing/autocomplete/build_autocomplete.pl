@@ -28,7 +28,7 @@ open(DICT,"$Bin/dict.txt") || die "Cannot read dict.txt";
 open(DICT2,">","$Bin/dict2.txt") || die "Cannot write dict2.txt";
 while(<DICT>) {
   my @x = split("\t");
-  print DICT2 $x[0];
+  print DICT2 "$x[0]\n";
 }
 close DICT;
 close DICT2;
