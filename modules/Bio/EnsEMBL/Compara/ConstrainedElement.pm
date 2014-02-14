@@ -591,7 +591,7 @@ sub get_SimpleAlign {
 		($self->slice->start + $self->end - 1),
 		$reference_genomic_align,
 		$skip_empty_GenomicAligns);
-	print "dbID: ", $this_genomic_align_block->dbID, ". "; 
+#        print "dbID: ", $this_genomic_align_block->dbID, ". ";
 	foreach my $genomic_align( @{ $restricted_gab->get_all_GenomicAligns } ) {
 		my $alignSeq = $genomic_align->aligned_sequence;
 		my $loc_seq = Bio::LocatableSeq->new(
