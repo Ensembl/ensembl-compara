@@ -749,7 +749,7 @@ void process_file(char **ss,char *fn) {
              stat_good*100/total,
              size(prefixes->num),size(stat_words),
              annoyingness_threshold(max_index_size));
-      eta = block_end+(block_end-all_start)*stat_all/stat_read;
+      eta = all_start+(block_end-all_start)*stat_all/stat_read;
       fprintf(stderr,"ETA : read/all = %s/%s (%ld%%) at %s\n",
              size(stat_read),size(stat_all),stat_read*100/stat_all,
              time_str(eta));
