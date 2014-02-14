@@ -9,7 +9,7 @@ die "Please specify path to xml files" unless $ARGV[0];
 
 system("cd $Bin; rm -f autocomplete ; gcc -Ofast -flto -march=native -Wall autocomplete.c -o autocomplete -lm") && die "Cannot compile: $!";
 
-my $files = qx(find $ARGV[0] -name \\*_Gene.xml);
+my $files = qx(find $ARGV[0] -name \\*.xml);
 
 my $args = "-n 1000000 -c -s all__";
 
