@@ -1606,6 +1606,9 @@ sub get_GenomicAlignTree {
     #Convert the newick format tree into a GenomicAlignTree object
     $genomic_align_tree = Bio::EnsEMBL::Compara::Graph::NewickParser::parse_newick_into_tree($species_tree_string, "Bio::EnsEMBL::Compara::GenomicAlignTree");
 
+    my $ref_genomic_align = $self->reference_genomic_align;
+    my $ref_genomic_align_node;
+
     #Prune the tree to just contain the species in this GenomicAlignBlock and add GenomicAlignGroup objects on the leaves
     my $all_leaves = $genomic_align_tree->get_all_leaves;
     foreach my $this_leaf (@$all_leaves) {        
@@ -1618,15 +1621,26 @@ sub get_GenomicAlignTree {
 
         if ($leaf_names->{$this_leaf_name}) {
             #add GenomicAlignGroup populated with GenomicAlign to leaf
+	    my $this_genomic_align = $leaf_names->{$this_leaf_name};
             my $genomic_align_group = new Bio::EnsEMBL::Compara::GenomicAlignGroup();
             $genomic_align_group->add_GenomicAlign($leaf_names->{$this_leaf_name});
             $this_leaf->genomic_align_group($genomic_align_group);
+	    if ($this_genomic_align->genome_db->name eq $ref_genomic_align->genome_db->name and
+		$this_genomic_align->dnafrag->name eq $ref_genomic_align->dnafrag->name and
+		$this_genomic_align->dnafrag_start eq $ref_genomic_align->dnafrag_start and
+		$this_genomic_align->dnafrag_end eq $ref_genomic_align->dnafrag_end) {
+	      $genomic_align_tree->reference_genomic_align_node($this_leaf);
+	      $genomic_align_tree->reference_genomic_align($this_genomic_align);
+	      $ref_genomic_align_node = $this_leaf;
+	    }
         } else {
             #remove this leaf
             $this_leaf->disavow_parent;
             $genomic_align_tree = $genomic_align_tree->minimize_tree;
         }
     }
+    $genomic_align_tree->root->reference_genomic_align($ref_genomic_align);
+    $genomic_align_tree->root->reference_genomic_align_node($ref_genomic_align_node);
 
     return $genomic_align_tree;
 }
