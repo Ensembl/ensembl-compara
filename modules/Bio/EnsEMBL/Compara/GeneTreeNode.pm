@@ -19,11 +19,11 @@ limitations under the License.
 
 =head1 CONTACT
 
-  Please email comments or questions to the public Ensembl
-  developers list at <dev@ensembl.org>.
+Please email comments or questions to the public Ensembl
+developers list at <http://lists.ensembl.org/mailman/listinfo/dev>.
 
-  Questions may also be sent to the Ensembl help desk at
-  <helpdesk@ensembl.org>.
+Questions may also be sent to the Ensembl help desk at
+<http://www.ensembl.org/Help/Contact>.
 
 =head1 NAME
 
@@ -40,6 +40,24 @@ Phylogenetic tree
   Bio::EnsEMBL::Compara::GeneTreeNode
   `- Bio::EnsEMBL::Compara::NestedSet
 
+=head1 SYNOPSIS
+
+The properties of a GeneTreeNode are:
+ - species_tree_node()
+ - taxonomy_level() (alias to species_tree_node()->node_name())
+ - node_type()
+ - lost_taxa()
+ - duplication_confidence_score()
+ - bootstrap()
+
+Links within the GeneTree/GeneTreeNode structure:
+ - tree()
+ - root()
+ - get_leaf_by_Member()
+
+Extract properties of a sub-tree:
+ - get_AlignedMemberSet()
+
 =head1 AUTHORSHIP
 
 Ensembl Team. Individual contributions can be found in the GIT log.
@@ -48,6 +66,8 @@ Ensembl Team. Individual contributions can be found in the GIT log.
 
 The rest of the documentation details each of the object methods.
 Internal methods are usually preceded with an underscore (_)
+
+=head1 METHODS
 
 =cut
 
@@ -81,12 +101,7 @@ sub species_tree_node {
         return $self->{_species_tree_node};
     }
 
-    ## Leaves don't have species_tree_node_id tag, so this value has to be taken from the GeneTreeMember (via its taxon_id);
-    if ($self->isa('Bio::EnsEMBL::Compara::GeneTreeMember')) {
-        $self->{_species_tree_node} =  $self->tree->species_tree->root->find_nodes_by_field('taxon_id', $self->taxon_id)->[0];
-    } elsif ( defined $self->get_value_for_tag('species_tree_node_id')) {
-        $self->{_species_tree_node} = $self->adaptor->db->get_SpeciesTreeNodeAdaptor->fetch_node_by_node_id($self->get_value_for_tag('species_tree_node_id'));
-    }
+    $self->{_species_tree_node} = $self->adaptor->db->get_SpeciesTreeNodeAdaptor->fetch_node_by_node_id($self->_species_tree_node_id());
 
     return $self->{_species_tree_node};
 }
@@ -101,8 +116,10 @@ sub species_tree_node {
 
 sub _species_tree_node_id {
     my $self = shift;
-    if ($self->isa('Bio::EnsEMBL::Compara::GeneTreeMember')) {
-        return $self->tree->species_tree->root->find_nodes_by_field('taxon_id', $self->taxon_id)->[0]->node_id;
+
+    ## Leaves don't have species_tree_node_id tag, so this value has to be taken from the GeneTreeMember (via its genome_db_id);
+    if (not $self->has_tag('species_tree_node_id') and $self->isa('Bio::EnsEMBL::Compara::GeneTreeMember')) {
+        $self->add_tag('species_tree_node_id', $self->tree->species_tree->root->find_nodes_by_field('genome_db_id', $self->genome_db_id)->[0]->node_id);
     }
 
     return $self->get_value_for_tag('species_tree_node_id')
@@ -179,7 +196,7 @@ sub _newick_dup_code {
 
 =head2 lost_taxa
 
-  Description: Returns the list of the taxon ID (cf the NCBI database) of the taxa
+  Description: Returns the list of the species-tree nodes of the taxa
                that have lost that gene on the branch leading to the current node
 
 =cut
@@ -222,8 +239,18 @@ sub bootstrap {
 }
 
 
+=head2 tree
 
+  Arg [1]     : GeneTree
+  Example     : my $tree = $tree_node->tree();
+  Description : Returns the GeneTree this node belongs to
+                Can also work as a setter
+  Returntype  : Bio::EnsEMBL::Compara::GeneTree object
+  Exceptions  :
+  Caller      : general
+  Status      : stable
 
+=cut
 
 sub tree {
     my $self = shift;
@@ -236,7 +263,19 @@ sub tree {
 }
 
 
-# tweaked to take into account the GeneTree object
+=head2 root
+
+  Example     : my $root = $node->root();
+  Description : Returns the root of the tree by taking advantage of the
+                GeneTree object if possible. Otherwise, defaults to the
+                normal tree traversal
+  Returntype  : Bio::EnsEMBL::Compara::GeneTreeNode object
+  Exceptions  :
+  Caller      : general
+  Status      : stable
+
+=cut
+
 sub root {
     my $self = shift;
     if (defined $self->tree) {
@@ -249,7 +288,7 @@ sub root {
 
 =head2 release_tree
 
-  Overview   : Removes the to/from GeneTree reference to
+  Description: Removes the to/from GeneTree reference to
                allow freeing memory 
   Example    : $self->release_tree;
   Returntype : undef
@@ -281,6 +320,19 @@ sub release_tree {
 #    return $str;
 #}
 
+
+=head2 get_leaf_by_Member
+
+  Arg [1]     : Member: the member to search in the tree
+  Example     : my $leaf = $brca2_tree->get_leaf_by_Member($brca2_peptide)
+  Description : Returns the leaf that corresponds to the member given as argument
+  Returntype  : Bio::EnsEMBL::Compara::GeneTreeMember object
+  Exceptions  :
+  Caller      : general
+  Status      : stable
+
+=cut
+
 sub get_leaf_by_Member {
   my $self = shift;
   my $member = shift;
@@ -296,6 +348,19 @@ sub get_leaf_by_Member {
   }
 }
 
+
+=head2 get_AlignedMemberSet
+
+  Example     : my $member_set = $tree->get_AlignedMemberSet
+  Description : Returns a new AlignedMemberSet object for this sub-tree
+                This is the prefered method of getting an alignment for a sub-tree
+  Returntype  : Bio::EnsEMBL::Compara::AlignedMemberSet object
+  Exceptions  :
+  Caller      : general
+  Status      : stable
+
+=cut
+
 sub get_AlignedMemberSet {
     my $self = shift;
     my $set = Bio::EnsEMBL::Compara::AlignedMemberSet->new(
@@ -310,13 +375,35 @@ sub get_AlignedMemberSet {
     return $set;
 }
 
+
+=head2 get_SimpleAlign
+
+  Example     : $tree->get_SimpleAlign(-SEQ_TYPE => 'cds');
+  Description : Returns the tree with removed nodes in taxon_id list.
+  Returntype  : Bio::EnsEMBL::Compara::GeneTreeNode object
+  Exceptions  :
+  Caller      : general
+  Status      : At risk (may become deprecated soon)
+
+=cut
+
 sub get_SimpleAlign {
     my $self = shift;
     return $self->get_AlignedMemberSet->get_SimpleAlign(@_);
 }
 
-# Takes a protein tree and creates a consensus cigar line from the
-# constituent leaf nodes.
+
+=head2 consensus_cigar_line
+
+  Example    : my $consensus_cigar = $gene_tree->consensus_cigar_line();
+  Description: Creates a consensus cigar line for all the leaves of the
+               sub-tree. See Bio::EnsEMBL::Compara::AlignedMemberSet
+  Returntype : string
+  Caller     : general
+  Status     : At risk (may become deprecated soon)
+
+=cut
+
 sub consensus_cigar_line {
     my $self = shift;
     return $self->get_AlignedMemberSet->consensus_cigar_line(@_);
@@ -368,7 +455,6 @@ sub remove_nodes_by_taxon_ids {
 
 =cut
 
-
 sub keep_nodes_by_taxon_ids {
   my $self = shift;
   my $species_arrayref = shift;
@@ -389,13 +475,28 @@ sub keep_nodes_by_taxon_ids {
 }
 
 
+# Legacy
+
+=head2 get_tagvalue
+
+  Description: returns the value(s) of the tag, or $default (undef
+               if not provided) if the tag doesn't exist.
+  Arg [1]    : <string> tag
+  Arg [2]    : (optional) <scalar> default
+  Example    : $ns_node->get_tagvalue('scientific name');
+  Returntype : Scalar or ArrayRef
+  Exceptions : none
+  Caller     : general
+
+=cut
+
 sub get_tagvalue {
     my $self = shift;
     my $tag = shift;
     my $default = shift;
 
     if (($tag eq 'taxon_id') or ($tag eq 'taxon_name')) {
-        deprecate("The $tag tag has been deprecated. Please use species_tree_node() from the gene-tree node to get taxon information");
+        deprecate("The $tag tag has been deprecated, support will end with e78. Please use species_tree_node() from the gene-tree node to get taxon information");
         if (not $self->has_tag($tag) and $self->has_tag('species_tree_node_id')) {
             $self->add_tag('taxon_id', $self->species_tree_node->taxon_id);
             $self->add_tag('taxon_name', $self->species_tree_node->node_name);

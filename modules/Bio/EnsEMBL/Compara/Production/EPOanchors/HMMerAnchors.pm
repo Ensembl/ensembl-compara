@@ -34,18 +34,16 @@ the anchors against the target genome. The required information (anchor batch si
 target genome file, exonerate parameters are provided by the analysis, analysis_job 
 and analysis_data tables  
 
-=head1 AUTHOR - Stephen Fitzgerald
+=head1 AUTHOR
 
-This modules is part of the Ensembl project http://www.ensembl.org
-
-Email compara@ebi.ac.uk
+Stephen Fitzgerald
 
 =head1 CONTACT
 
 This modules is part of the EnsEMBL project (http://www.ensembl.org)
 
 Questions can be posted to the ensembl-dev mailing list:
-dev@ensembl.org
+http://lists.ensembl.org/mailman/listinfo/dev
 
 
 =head1 APPENDIX

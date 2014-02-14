@@ -20,10 +20,10 @@ limitations under the License.
 =head1 CONTACT
 
   Please email comments or questions to the public Ensembl
-  developers list at <dev@ensembl.org>.
+  developers list at <http://lists.ensembl.org/mailman/listinfo/dev>.
 
   Questions may also be sent to the Ensembl help desk at
-  <helpdesk@ensembl.org>.
+  <http://www.ensembl.org/Help/Contact>.
 
 =head1 NAME
 
@@ -85,6 +85,10 @@ sub default_options {
         'work_dir'              =>  $self->o('base_dir').'/ensembl_compara_'.$self->o('pipeline_name'),
         'base_dir'              =>  '/nfs/nobackup2/ensemblgenomes/'.$self->o('ENV', 'USER').'/compara',
         'exe_dir'               =>  '/nfs/panda/ensemblgenomes/production/compara/binaries',
+
+    # "Member" parameters:
+        'allow_ambiguity_codes'     => 1,
+        'allow_pyrrolysine'         => $self->o('division') eq 'pan' ? 1 : 0,
 
     # blast parameters:
 

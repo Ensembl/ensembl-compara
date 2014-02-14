@@ -20,10 +20,10 @@ limitations under the License.
 =head1 CONTACT
 
   Please email comments or questions to the public Ensembl
-  developers list at <dev@ensembl.org>.
+  developers list at <http://lists.ensembl.org/mailman/listinfo/dev>.
 
   Questions may also be sent to the Ensembl help desk at
-  <helpdesk@ensembl.org>.
+  <http://www.ensembl.org/Help/Contact>.
 
 =head1 NAME
 
@@ -410,7 +410,7 @@ sub _find_missing_DBAdaptors {
         # Get the production name and assembly to compare to our GenomeDBs
         my $mc = $db_adaptor->get_MetaContainer();
         my $that_species = $mc->get_production_name();
-        my $that_assembly = $db_adaptor->assembly();
+        my $that_assembly = $db_adaptor->assembly_name();
         $db_adaptor->dbc->disconnect_if_idle();
 
         eval {

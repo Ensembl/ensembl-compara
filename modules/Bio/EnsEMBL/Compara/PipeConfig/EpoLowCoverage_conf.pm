@@ -31,16 +31,16 @@ sub default_options {
 
         'ensembl_cvs_root_dir' => $ENV{'ENSEMBL_CVS_ROOT_DIR'},
 
-	'release'       => 74,
-	'prev_release'  => 73,
+	'release'       => 76,
+	'prev_release'  => 75,
         'release_suffix'=> '', # set it to '' for the actual release
         'rel_with_suffix'       => $self->o('release').$self->o('release_suffix'),
-        'pipeline_name' => 'LOW7saurop_'.$self->o('release').$self->o('release_suffix'), # name used by the beekeeper to prefix job names on the farm
+        'pipeline_name' => 'LOW7saurop_GT'.$self->o('release').$self->o('release_suffix'), # name used by the beekeeper to prefix job names on the farm
 
 	#location of new pairwise mlss if not in the pairwise_default_location eg:
 #	'pairwise_exception_location' => { 656 => 'mysql://ensro@compara4/sf5_hsap_dnov_lastz_74'},
 #	'pairwise_exception_location' => { },
-	'pairwise_exception_location' => { 657 => 'mysql://ensro@compara2/sf5_ggal_psin_lastz_74'},
+#	'pairwise_exception_location' => { 657 => 'mysql://ensro@compara2/sf5_ggal_psin_lastz_74'},
 	#'pairwise_exception_location' => { 649 => 'mysql://ensro@compara5/kb3_olat_amex_lastz_74', 
 		#			653 => 'mysql://ensro@compara5/kb3_olat_locu_lastz_74',},
         'host' => 'compara4',
@@ -49,7 +49,7 @@ sub default_options {
             -port   => 3306,
             -user   => 'ensadmin',
             -pass   => $self->o('password'),
-            -dbname => $ENV{USER}.'_epo_7way_sauropsids_'.$self->o('release').$self->o('release_suffix'),
+            -dbname => $ENV{USER}.'_GERP_TEST_epo_7way_sauropsids_'.$self->o('release').$self->o('release_suffix'),
 	    -driver => 'mysql',
         },
 
@@ -59,7 +59,7 @@ sub default_options {
             -port   => 3306,
             -user   => 'ensro',
             -pass   => '',
-	    -dbname => 'ensembl_compara_73',
+	    -dbname => 'ensembl_compara_74',
 #	    -dbname => 'ensembl_compara_' . $self->o('prev_release'),
 	    -driver => 'mysql',
         },
@@ -136,8 +136,8 @@ sub default_options {
         #Default statistics
         #
         'skip_multiplealigner_stats' => 0, #skip this module if set to 1
-        'bed_dir' => '/lustre/scratch110/ensembl/' . $ENV{USER} . '/epo_low_coverage/bed_dir/' . 'release_' . $self->o('rel_with_suffix') . '/',
-        'output_dir' => '/lustre/scratch110/ensembl/' . $ENV{USER} . '/epo_low_coverage/feature_dumps/' . 'release_' . $self->o('rel_with_suffix') . '/',
+        'bed_dir' => '/lustre/scratch109/ensembl/' . $ENV{USER} . '/gt_sauropsids_epo_low_coverage/bed_dir/' . 'release_' . $self->o('rel_with_suffix') . '/',
+        'output_dir' => '/lustre/scratch109/ensembl/' . $ENV{USER} . '/gt_sauropsids_epo_low_coverage/feature_dumps/' . 'release_' . $self->o('rel_with_suffix') . '/',
 
         #
         #Resource requirements
@@ -337,7 +337,7 @@ sub pipeline_analyses {
 				'max_block_size' => $self->o('max_block_size'),
 				'mlss_id' => $self->o('low_epo_mlss_id'),
 				'reference_species' => $self->o('ref_species'),
-				'pairwise_exception_location' => $self->o('pairwise_exception_location'),
+		#		'pairwise_exception_location' => $self->o('pairwise_exception_location'),
 				'pairwise_default_location' => $self->o('pairwise_default_location'),
                                 'semphy_exe' => $self->o('semphy_exe'),
                                 'treebest_exe' => $self->o('treebest_exe'),
@@ -358,7 +358,7 @@ sub pipeline_analyses {
 				'max_block_size' => $self->o('max_block_size'),
 				'mlss_id' => $self->o('low_epo_mlss_id'),
 				'reference_species' => $self->o('ref_species'),
-				'pairwise_exception_location' => $self->o('pairwise_exception_location'),
+		#		'pairwise_exception_location' => $self->o('pairwise_exception_location'),
 				'pairwise_default_location' => $self->o('pairwise_default_location'),
                                 'semphy_exe' => $self->o('semphy_exe'),
                                 'treebest_exe' => $self->o('treebest_exe'),

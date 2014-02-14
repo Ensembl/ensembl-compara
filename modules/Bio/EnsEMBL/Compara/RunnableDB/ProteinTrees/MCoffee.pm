@@ -20,10 +20,10 @@ limitations under the License.
 =head1 CONTACT
 
   Please email comments or questions to the public Ensembl
-  developers list at <dev@ensembl.org>.
+  developers list at <http://lists.ensembl.org/mailman/listinfo/dev>.
 
   Questions may also be sent to the Ensembl help desk at
-  <helpdesk@ensembl.org>.
+  <http://www.ensembl.org/Help/Contact>.
 
 =head1 NAME
 
@@ -196,7 +196,7 @@ sub get_msa_command_line {
     open(TCOFFEE_ENV, ">$t_env_filename")
         or $self->throw("Error opening $t_env_filename for write");
     print TCOFFEE_ENV "http_proxy_4_TCOFFEE=\n";
-    print TCOFFEE_ENV "EMAIL_4_TCOFFEE=cedric.notredame\@europe.com\n";
+    print TCOFFEE_ENV "EMAIL_4_TCOFFEE=proteintrees\@compara.ensembl\n";
     close TCOFFEE_ENV;
 
     my $cmd       = '';

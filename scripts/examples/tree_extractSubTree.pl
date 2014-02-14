@@ -65,7 +65,7 @@ foreach my $gene (@$genes) {
   }
 
   # Compute the new tree
-  my $ret_tree = $genetree->remove_nodes(\@discarded_nodes);
+  my $ret_tree = $genetree->root->remove_nodes(\@discarded_nodes);
 
   # Print it
   $ret_tree->print_tree(10);

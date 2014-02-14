@@ -20,10 +20,10 @@ limitations under the License.
 =head1 CONTACT
 
   Please email comments or questions to the public Ensembl
-  developers list at <dev@ensembl.org>.
+  developers list at <http://lists.ensembl.org/mailman/listinfo/dev>.
 
   Questions may also be sent to the Ensembl help desk at
-  <helpdesk@ensembl.org>.
+  <http://www.ensembl.org/Help/Contact>.
 
 =head1 NAME
 
@@ -87,6 +87,10 @@ sub default_options {
         'fasta_dir'             => $self->o('work_dir') . '/blast_db',  # affects 'dump_subset_create_blastdb' and 'blastp'
         'cluster_dir'           => $self->o('work_dir') . '/cluster',
         'dump_dir'              => $self->o('work_dir') . '/dumps',
+
+    # "Member" parameters:
+        'allow_ambiguity_codes'     => 0,
+        'allow_pyrrolysine'         => 0,
 
     # blast parameters:
         'blast_params'              => '-seg no -max_hsps_per_subject 1 -use_sw_tback -num_threads 1',
@@ -219,14 +223,6 @@ sub pipeline_create_commands {
     ];
 }
 
-
-sub pipeline_wide_parameters {
-    my ($self) = @_;
-    return {
-            %{$self->SUPER::pipeline_wide_parameters},
-            'hc_member_type'  => 'ENSEMBLPEP',
-           };
-}
 
 
 sub pipeline_analyses {
@@ -500,6 +496,15 @@ sub pipeline_analyses {
                                'species_tree_input_file' => $self->o('species_tree_input_file'),   # empty by default, but if nonempty this file will be used instead of tree generation from genome_db
                                'for_gene_trees' => 1,
             },
+            -flow_into     => [ 'hc_species_tree' ],
+        },
+
+        {   -logic_name         => 'hc_species_tree',
+            -module             => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::SqlHealthChecks',
+            -parameters         => {
+                mode            => 'species_tree',
+            },
+            %hc_analysis_params,
         },
 
 # ---------------------------------------------[reuse members]-----------------------------------------------------------------------
@@ -567,6 +572,7 @@ sub pipeline_analyses {
             -parameters         => {
                 mode            => 'members_per_genome',
                 hc_member_type  => 'ENSEMBLPEP',
+                allow_ambiguity_codes => $self->o('allow_ambiguity_codes'),
             },
             %hc_analysis_params,
         },
@@ -604,7 +610,7 @@ sub pipeline_analyses {
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::LoadMembers',
             -parameters => {
                 'store_related_pep_sequences' => 1,
-                'allow_pyrrolysine'             => 0,
+                'allow_pyrrolysine'             => $self->o('allow_pyrrolysine'),
                 'find_canonical_translations_for_polymorphic_pseudogene' => 1,
             },
             -rc_name => '2Gb_job',

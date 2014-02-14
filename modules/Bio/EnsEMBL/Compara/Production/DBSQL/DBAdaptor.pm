@@ -16,13 +16,6 @@ limitations under the License.
 
 =cut
 
-#
-# BioPerl module for DBSQL::Obj
-#
-# Cared for by Ewan Birney <birney@sanger.ac.uk>
-#
-# POD documentation - main docs before the code
-
 =head1 NAME
 
 Bio::EnsEMBL::Compara::DBSQL::DBAdaptor
@@ -43,7 +36,7 @@ This object represents the handle for a comparative DNA alignment database
 
 =head1 CONTACT
 
-Post questions the the EnsEMBL developer list: <dev@ensembl.org>
+Post questions the the EnsEMBL developer list: <http://lists.ensembl.org/mailman/listinfo/dev>
 
 =cut
 

@@ -40,7 +40,11 @@ limitations under the License.
 
 =head1 CONTACT
 
-  Please contact ehive-users@ebi.ac.uk mailing list with questions/suggestions.
+Please email comments or questions to the public Ensembl
+developers list at <http://lists.ensembl.org/mailman/listinfo/dev>.
+
+Questions may also be sent to the Ensembl help desk at
+<http://www.ensembl.org/Help/Contact>.
 
 =cut
 
@@ -163,7 +167,7 @@ sub pipeline_analyses {
                 |, $self->o('member_type'), 'default'
             },
             -input_ids => [
-                {'cmd' => 'echo "#query# | db_cmd.pl -url #db_conn# -extra "-N -q" > #target_dir#/#file_name#',},
+                {'cmd' => 'echo "#query#" | db_cmd.pl -url #db_conn# -extra "-N -q" > #target_dir#/#file_name#',},
             ],
             -flow_into => {
                 1 => { 'archive_long_files' => { 'full_name' => '#target_dir#/#file_name#' } },

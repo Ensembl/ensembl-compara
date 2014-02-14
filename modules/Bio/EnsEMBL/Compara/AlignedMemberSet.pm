@@ -19,17 +19,15 @@ limitations under the License.
 
 =head1 CONTACT
 
-  Please email comments or questions to the public Ensembl
-  developers list at <dev@ensembl.org>.
+Please email comments or questions to the public Ensembl
+developers list at <http://lists.ensembl.org/mailman/listinfo/dev>.
 
-  Questions may also be sent to the Ensembl help desk at
-  <helpdesk@ensembl.org>.
+Questions may also be sent to the Ensembl help desk at
+<http://www.ensembl.org/Help/Contact>.
 
 =head1 AUTHORSHIP
 
 Ensembl Team. Individual contributions can be found in the GIT log.
-
-=cut
 
 =head1 NAME
 
@@ -37,13 +35,37 @@ Bio::EnsEMBL::Compara::AlignedMemberSet
 
 =head1 DESCRIPTION
 
-A superclass for pairwise or multiple sequence alignments of genes,
-base of Family, Homology and GeneTree.
+AlignedMemberSet is a specialized version of MemberSet for members
+that have a sequence and that are aligned (i.e. AlignedMember).
+
+It is the actual base class for Family, Homology and GeneTree.
+It only adds methods to deal with the alignment.
+
+Since SeqMember can hold several sequences per member (seq_type),
+AlignedMemberSet can also do so. An AlignedMemberSet defaults on a
+given seq_type, but can also be mapped to another one. For instance,
+the alignments of protein sequences can be transformed into alignments
+of the initial CDS sequences.
 
 =head1 INHERITANCE TREE
 
   Bio::EnsEMBL::Compara::AlignedMemberSet
-  +- Bio::EnsEMBL::Compara::MemberSet
+  `- Bio::EnsEMBL::Compara::MemberSet
+
+=head1 SYNOPSIS
+
+Global properties of the alignment:
+ - seq_type()
+ - aln_length()
+ - aln_method()
+ - consensus_cigar_line()
+
+I/O:
+ - load_cigars_from_file()
+ - get_SimpleAlign()
+ - get_4D_SimpleAlign()
+
+=head1 METHODS
 
 =cut
 
@@ -262,35 +284,6 @@ sub load_cigars_from_file {
 }
 
 
-=head2 read_clustalw
-
-    Description : DEPRECATED. read_clustalw() is deprecated. Please use $self->load_cigars_from_file($file, -format => 'clustalw') instead.
-
-=cut
-
-sub read_clustalw {  # DEPRECATED
-    my $self = shift;
-    my $file = shift;
-
-    deprecate('read_clustalw() is deprecated. Please use $self->load_cigars_from_file($file, -format => \'clustalw\') instead');
-    return $self->load_cigars_from_file($file, -format => 'clustalw');
-}
-
-
-=head2 load_cigars_from_fasta
-
-    Description: DEPRECATED: load_cigars_from_fasta() is deprecated. Please use $self->load_cigars_from_file($file, -format => 'fasta') instead (possibly with a -import_seq argument.
-
-=cut
-
-sub load_cigars_from_fasta { # DEPRECATED
-    my ($self, $file, $import_seq) = @_;
-
-    deprecate('load_cigars_from_fasta() is deprecated. Please use $self->load_cigars_from_file($file, -format => \'fasta\') instead (possibly with a -import_seq argument');
-    return $self->load_cigars_from_file($file, -format => 'fasta', -import_seq => $import_seq);
-}
-
-
 =head2 get_SimpleAlign
 
     Arg [-UNIQ_SEQ] : (opt) boolean (default: false)
@@ -344,11 +337,11 @@ sub get_SimpleAlign {
             rearrange([qw(UNIQ_SEQ CDNA ID_TYPE STOP2X APPEND_TAXON_ID APPEND_SP_SHORT_NAME APPEND_GENOMEDB_ID EXON_CASED KEEP_GAPS SEQ_TYPE)], @args);
     }
 
-    warn "-CDNA => 1 in AlignedMemberSet::get_SimpleAlign is deprecated. Please use -SEQ_TYPE => 'cds' instead" if $cdna;
+    warn "-CDNA => 1 in AlignedMemberSet::get_SimpleAlign is deprecated and will be removed in e76. Please use -SEQ_TYPE => 'cds' instead" if $cdna;
     die "-CDNA and -SEQ_TYPE cannot be both defined in AlignedMemberSet::get_SimpleAlign" if $cdna and $seq_type;
     $seq_type = 'cds' if $cdna;
 
-    warn "-EXON_CASED => 1 in AlignedMemberSet::get_SimpleAlign is deprecated. Please use -SEQ_TYPE => 'exon_cased' instead" if $exon_cased;
+    warn "-EXON_CASED => 1 in AlignedMemberSet::get_SimpleAlign is deprecated and will be removed in e76. Please use -SEQ_TYPE => 'exon_cased' instead" if $exon_cased;
     die "-EXON_CASED and -SEQ_TYPE cannot be both defined in AlignedMemberSet::get_SimpleAlign" if $exon_cased and $seq_type;
     $seq_type = 'exon_cased' if $exon_cased;
 
@@ -368,7 +361,7 @@ sub get_SimpleAlign {
         next if $member->source_name =~ m/^Uniprot/i and $seq_type;
 
         # The correct codon table
-        if ($member->chr_name =~ /mt/i) {
+        if ($member->chr_name and $member->chr_name =~ /mt/i) {
             # codeml icodes
             # 0:universal code (default)
             my $class;
@@ -402,11 +395,11 @@ sub get_SimpleAlign {
         $seqID .= "_" . $member->taxon_id if($append_taxon_id);
         $seqID .= "_" . $member->genome_db_id if ($append_genomedb_id);
 
-        ## Append $seqID with Speciae short name, if required
-        if ($append_sp_short_name) {
-            my $species = $member->genome_db->short_name;
+        ## Append $seqID with species short name, if required
+        if ($append_sp_short_name and $member->genome_db_id) {
+            my $species = $member->genome_db->get_short_name;
             $species =~ s/\s/_/g;
-            $seqID .= "_" . $species . "_";
+            $seqID .= "_" . $species;
         }
 
         # Sequence length
@@ -435,9 +428,16 @@ sub get_SimpleAlign {
 }
 
 
+=head2 consensus_cigar_line
 
-# Takes a protein tree and creates a consensus cigar line from the
-# constituent leaf nodes.
+  Example    : my $consensus_cigar = $gene_tree->consensus_cigar_line();
+  Description: Creates a consensus cigar line for all the members of the
+               set. See Bio::EnsEMBL::Compara::AlignedMemberSet
+  Returntype : string
+  Caller     : general
+
+=cut
+
 sub consensus_cigar_line {
 
     my $self = shift;
@@ -547,6 +547,7 @@ my %CODONS =   ("ATG" => "Met",
   Example    : $4d_align = $homology->get_4D_SimpleAlign();
   Description: get 4 times degenerate positions pairwise simple alignment
   Returntype : Bio::SimpleAlign
+  Caller     : general
 
 =cut
 
@@ -705,6 +706,15 @@ X  0 -1 -1 -1 -2 -1 -1 -1 -1 -1 -1 -1 -1 -1 -2  0  0 -2 -1 -1 -1 -1 -1 -4
   }
 }
 
+
+=head2 update_alignment_stats
+
+  Example    : my $consensus_cigar = $gene_tree->consensus_cigar_line();
+  Description: Update the AlignedMemberSet properties (% identity, % coverage, etc)
+  Returntype : string
+  Caller     : internal
+
+=cut
 
 sub update_alignment_stats {
     my $self = shift;

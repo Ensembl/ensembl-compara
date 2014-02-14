@@ -16,17 +16,9 @@ limitations under the License.
 
 =cut
 
-# 
-# BioPerl module for Bio::EnsEMBL::Compara::DBSQL::FamilyAdaptor
-# 
-# Initially cared for by Philip Lijnzaad <lijnzaad@ebi.ac.uk> and Elia Stupka <elia@tll.org.sg>
-# Now cared by Abel Ureta-Vidal <abel@ebi.ac.uk>
-#
-# POD documentation - main docs before the code
-
 =head1 NAME
 
-FamilyAdaptor - DESCRIPTION of Object
+FamilyAdaptor
 
   This object represents a family coming from a database of protein families.
 
@@ -61,7 +53,11 @@ For more info, see ensembl-doc/family.txt
 
 =head1 CONTACT
 
- Able Ureta-Vidal <abel@ebi.ac.uk>
+Please email comments or questions to the public Ensembl
+developers list at <http://lists.ensembl.org/mailman/listinfo/dev>.
+
+Questions may also be sent to the Ensembl help desk at
+<http://www.ensembl.org/Help/Contact>.
 
 =head1 APPENDIX
 
@@ -127,33 +123,6 @@ sub fetch_by_Member_source_stable_id {
   return $self->generic_fetch($constraint, $join);
 }
 
-# maybe a useful method in case more than one kind of family data is stored in the db.
-
-
-sub fetch_all_by_Member_method_link_type {
-  my ($self, $member, $method_link_type) = @_;
-
-  assert_ref($member, 'Bio::EnsEMBL::Compara::Member');
-
-  $self->throw("method_link_type arg is required\n")
-    unless ($method_link_type);
-  
-  my $mlssa = $self->db->get_MethodLinkSpeciesSetAdaptor;
-  my $mlss_arrayref = $mlssa->fetch_all_by_method_link_type_GenomeDB($method_link_type,$member->genome_db);
-  
-  unless (scalar @{$mlss_arrayref}) {
-    warning("There is no $method_link_type data stored in the database for " . $member->genome_db->name . "\n");
-    return [];
-  }
-  
-  my $join = [[['family_member', 'fm'], 'f.family_id = fm.family_id']];
-  
-  my $constraint =  " f.method_link_species_set_id in (". join (",", (map {$_->dbID} @{$mlss_arrayref})) . ")";
-
-  $constraint .= " AND fm.member_id = " . $member->dbID;
-
-  return $self->generic_fetch($constraint, $join);
-}
 
 =head2 fetch_by_description_with_wildcards
 

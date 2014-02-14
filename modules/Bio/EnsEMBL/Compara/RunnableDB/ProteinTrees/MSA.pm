@@ -20,10 +20,10 @@ limitations under the License.
 =head1 CONTACT
 
   Please email comments or questions to the public Ensembl
-  developers list at <dev@ensembl.org>.
+  developers list at <http://lists.ensembl.org/mailman/listinfo/dev>.
 
   Questions may also be sent to the Ensembl help desk at
-  <helpdesk@ensembl.org>.
+  <http://www.ensembl.org/Help/Contact>.
 
 =head1 NAME
 
@@ -103,26 +103,7 @@ sub fetch_input {
 
   print "RETRY COUNT: ".$self->input_job->retry_count()."\n";
 
-  #
-  # A little logic, depending on the input params.
-  #
-  # Protein Tree input.
-    #$self->param('protein_tree')->flatten_tree; # This makes retries safer
-    # The extra option at the end adds the exon markers
     $self->param('input_fasta', $self->dumpProteinTreeToWorkdir($self->param('protein_tree')) );
-
-#  if ($self->param('redo')) {
-#    # Redo - take previously existing alignment - post-process it
-#    my $other_trees = $self->param('tree_adaptor')->fetch_all_linked_trees($self->param('protein_tree'));
-#    my ($other_tree) = grep {$_->clusterset_id eq $self->param('redo')} @$other_trees;
-#    if ($other_tree) {
-#        my $redo_sa = $other_tree->get_SimpleAlign(-id_type => 'MEMBER');
-#        $redo_sa->set_displayname_flat(1);
-#        $self->param('redo_alnname', $self->worker_temp_directory . $self->param('gene_tree_id').'.fasta' );
-#        my $alignout = Bio::AlignIO->new(-file => ">".$self->param('redo_alnname'), -format => "fasta");
-#        $alignout->write_aln( $redo_sa );
-#    }
-#  }
 
   #
   # Ways to fail the job before running.

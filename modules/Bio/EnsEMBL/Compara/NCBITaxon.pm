@@ -21,7 +21,7 @@ limitations under the License.
 NCBITaxon - DESCRIPTION of Object
 
 =head1 DESCRIPTION
-  
+
   An object that hold a node within a taxonomic tree.  Inherits from NestedSet.
 
   From Bio::Species
@@ -40,8 +40,11 @@ NCBITaxon - DESCRIPTION of Object
 
 =head1 CONTACT
 
-  Contact Jessica Severin on implemetation/design detail: jessica@ebi.ac.uk
-  Contact Ewan Birney on EnsEMBL in general: birney@sanger.ac.uk
+Please email comments or questions to the public Ensembl
+developers list at <http://lists.ensembl.org/mailman/listinfo/dev>.
+
+Questions may also be sent to the Ensembl help desk at
+<http://www.ensembl.org/Help/Contact>.
 
 =head1 APPENDIX
 
@@ -434,18 +437,19 @@ sub ensembl_alias {
 }
 
 
-=head2 short_name
+=head2 get_short_name
 
-  Example    : $ncbi->short_name;
+  Example    : $ncbi->get_short_name;
   Description: The name of this genome in the Gspe ('G'enera
-               'spe'cies) format.
+               'spe'cies) format. Further names are just added
+               at the end (Gen Spec Subname -> GSpeSubname)
   Returntype : string
   Exceptions : none
   Caller     : general
 
 =cut
 
-sub short_name {
+sub get_short_name {
   my $self = shift;
   my $name = $self->name;
   $name =~  s/(\S)\S+\s(\S{3})\S+/$1$2/;
@@ -453,9 +457,10 @@ sub short_name {
   return $name;
 }
 
-sub get_short_name {
+sub short_name {
   my $self = shift;
-  return $self->short_name;
+  deprecate('NCBITaxon::short_name() is deprecated in favour of get_short_name(), and will be removed in e76');
+  return $self->get_short_name;
 }
 
 

@@ -36,14 +36,14 @@ an anchor_batch_size is specified in the pipe-config file.
 
 This modules is part of the Ensembl project http://www.ensembl.org
 
-Email dev@ensembl.org
+Email http://lists.ensembl.org/mailman/listinfo/dev
 
 =head1 CONTACT
 
 This modules is part of the EnsEMBL project (http://www.ensembl.org)
 
 Questions can be posted to the ensembl-dev mailing list:
-dev@ensembl.org
+http://lists.ensembl.org/mailman/listinfo/dev
 
 
 =head1 APPENDIX

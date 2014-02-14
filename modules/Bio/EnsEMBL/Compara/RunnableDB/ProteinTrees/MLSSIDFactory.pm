@@ -49,7 +49,11 @@ analysis_job table.
 
 =head1 CONTACT
 
-abel@ebi.ac.uk, jessica@ebi.ac.uk
+Please email comments or questions to the public Ensembl
+developers list at <http://lists.ensembl.org/mailman/listinfo/dev>.
+
+Questions may also be sent to the Ensembl help desk at
+<http://www.ensembl.org/Help/Contact>.
 
 =cut
 

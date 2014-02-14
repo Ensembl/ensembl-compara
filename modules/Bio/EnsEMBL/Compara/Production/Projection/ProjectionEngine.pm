@@ -80,7 +80,7 @@ Andy Yates (ayatesatebiacuk)
 
 This modules is part of the EnsEMBL project (http://www.ensembl.org)
 
-Questions can be posted to the dev mailing list: dev@ensembl.org
+Questions can be posted to the dev mailing list: http://lists.ensembl.org/mailman/listinfo/dev
 
 =cut
 

@@ -1,23 +1,26 @@
 
 This document describes how to run ensembl-compara ProteinTrees pipeline.
 
-1. Necessary software components:
+1. Dependencies
+
+   1.1 Necessary software components:
 
 	* MySQL 5.1          (or higher)
-	* Perl 5.14          (or higher)
+	* Perl 5.10          (or higher)
 	* Perl DBI API 1.6   (or higher)
 
 EnsEMBL and BioPerl software:
 	* bioperl-live (version 1.6.9)               - Base of the BioPerl distribution. Mainly needed to provide I/O for alignments
 	* bioperl-run (version 1.6.9)                - Needed for the CodeML runnable/parser
-	* ensembl ("branch-ensembl-74" tag)          - Core API on which the rest of ensembl APIs are based
-	* ensembl-compara ("branch-ensembl-74" tag)  - Compara API (data objects, db adaptors, pipeline runnables, pipeline configuration)
+	* ensembl ("release/75" branch)              - Core API on which the rest of ensembl APIs are based
+	* ensembl-compara ("release/75" branch)      - Compara API (data objects, db adaptors, pipeline runnables, pipeline configuration)
 	* ensembl-hive ("stable" tag)                - The system to run pipelines
-!! Please ensure that your PERL5LIB includes all of these modules
 
 Refer to the following pages for tips about installation and setting up the environment:
 	http://www.ensembl.org/info/docs/api/api_installation.html
 	http://www.ensembl.org/info/docs/eHive/installation.html
+
+!! Please ensure that your PERL5LIB includes all of these modules and $ENSEMBL_CVS_ROOT_DIR points to the location of the checkouts !!
 
 Perl libraries:
 
@@ -34,7 +37,7 @@ Perl libraries:
 Any compiled binaries mentioned in ensembl-compara/modules/Bio/EnsEMBL/Compara/PipeConfig/Example/EnsemblProteinTrees_conf.pm
 Here is the list of the versions that we used for the e74 production:
 
-	* NCBI-blast 2.2.2+   - ftp://ftp.ncbi.nlm.nih.gov/blast/executables/blast+/LATEST/
+	* NCBI-blast 2.2.28+   - ftp://ftp.ncbi.nlm.nih.gov/blast/executables/blast+/LATEST/
 	* mcoffee 9.03.r1318   - http://www.tcoffee.org/Projects/mcoffee/
 	* MAFFT 7.113          - http://mafft.cbrc.jp/alignment/software/
 	* hcluster_sg          - http://treesoft.svn.sourceforge.net/viewvc/treesoft/branches/lh3/hcluster/
@@ -45,11 +48,15 @@ Here is the list of the versions that we used for the e74 production:
 	* Ktreedist 1.0        - http://molevol.cmima.csic.es/castresana/Ktreedist.html
 
 
-The pipeline can connect to a "master" database to initialize. Please refer to the file "README-master_database" to correctly
-set it up. You will have to import all the genome_dbs (the species on which you want to run the pipeline) with:
- - ensembl-compara/scripts/pipeline/update_genome.pl for the Ensembl / Ensembl Genomes species
- - a manual SQL INSERT. Currently, the species that are defined in the JSON file have to be also defined in the master database manually
- - INSERT INTO genome_db (taxon_id, name, assembly, assembly_default, genebuild) VALUES ( ... /the same values as in the JSON file/ ...);
+   1.2 Data prerequisites
+
+All the Ensembl "core" databases must have canonical transcripts defined (if not, refer to ensembl/misc-scripts/canonical_transcripts/set_canonical_transcripts.pl)
+
+All NCBI taxon_ids must be public and in the NCBI tables (ncbi_taxa_node) in the master database. Although Ensembl updates the tables several times a year, the taxon_id of your favorite species may still be missing.
+If it is the case, you can probably use the taxon_id of a species that has the same position in the taxonomy *relatively to the other species*.
+If the NCBI taxonomy cannot be used (too many unresolved nodes), you can skip the taxon_id definition of that species. You'll also have to use a custom species-tree to guide the reconstruction.
+
+If you define some genomes with Fasta files of protein and transcript entries, make sure they are using one-column headers, the same identifier in each, and no splice variants.
 
 
 2. General structure of the pipeline
@@ -108,8 +115,6 @@ with the QuickTree program (using a Mafft alignment)
 
 At this step, the pipeline will compute dN/dS values on all the homologies (this can be parameterized)
 
-   2.8 namemapping
-
 
 3. Pipeline configuration
 
@@ -121,9 +126,11 @@ They mainly include custom:
  - more general parameters (pipeline-related)
  - beekeeper parameters
 
-To configure the pipeline, you can:
- - either edit PipeConfig/ProteinTrees_conf.pm (uncomment and update the commented parameters)
- - or copy and update one of the example configuration files
+To configure the pipeline:
+ - make a copy of PipeConfig/Example/EnsemblProteinTrees_conf.pm into PipeConfig/Example/
+ - update the package name
+ - update the parameters in the default_options() section
+ - check that your grid engine is parameterized in resource_classes(): by default, only LSF is.
 
 Here follows a description of each category of parameters
 
@@ -135,12 +142,96 @@ All the *_exe parameters must point to their correct locations
 
    3.2 Database connections
 
+       3.2.1 "Master" database
+
+The pipeline can connect to a "master" database to initialize. This is needed if you intend to:
+ - run the pipeline multiple times (and reuse the list of blastp hits to speed up the consecutive runs)
+ - run the pipeline on a selection of species
+
+Refer to the file "ensembl-compara/docs/pipelines/READMEs/master_database.txt" to correctly set it up should you need one.
+You will have to import all the species on which you want to run the pipeline with:
+ - ensembl-compara/scripts/pipeline/update_genome.pl for species with an Ensembl core database
+ - or a manual SQL INSERT, otherwise
+
+		3.2.1.1 Species with an Ensembl core database
+
+Be aware that the Ensembl Registry relies on a specific nomenclature to automatically discover the databases on a server.
+For instance, core databases must be named ${SPECIES_NAME}_core_${ENSEMBL_VERSION}_${ASSEMBLY_VERSION}.
+If you have built databases your own core databases using a different nomenclature, you'll have to (for each of them):
+ - add a Registry entry in $ENSEMBL_CVS_ROOT_DIR/ensembl-compara/scripts/pipeline/production_reg_conf.pl with
+     Bio::EnsEMBL::Registry->load_registry_from_url("mysql://${USER}@${HOST}:${PORT}/${DATABASE_NAME}?group=core&species=${SPECIES_PRODUCTION_NAME}");
+ - run update_genome.pl
+ - define a "locator" for their corresponding genome_db. The locator is a string like "Bio::EnsEMBL::DBSQL::DBAdaptor/host=${HOST};port=${PORT};user=${USER};pass=${PASSWORD};dbname=${DATABASE_NAME};species=${SPECIES_PRODUCTION_NAME};species_id=${INTERNAL_SPECIES_ID};disconnect_when_inactive=1" that can be updated with:
+     UPDATE genome_db SET locator = (...) WHERE genome_db_id = (...);
+
+		3.2.1.2 Species without an Ensembl core datbase
+
+To configure them, you first have to gather all of their information in a JSON file, which contains
+meta data for each species and should have the following format:
+
+[
+{
+	"production_name"	: "nomascus_leucogenys",
+	"taxonomy_id"    	: "61853",
+	"assembly"       	: "Nleu2.0",
+	"genebuild"      	: "2011-05",
+	"prot_fasta"     	: "proteins.fasta",
+	"cds_fasta"      	: "transcripts.fasta",
+	"gene_coord_gff" 	: "annotation.gff",
+},
+{
+	...
+}
+]
+
+All the parameters are mandatory, except "gene_coord_gff".
+The SQL INSERT will then look like:
+   INSERT INTO genome_db (taxon_id, name, assembly, assembly_default, genebuild) VALUES (61853, "nomascus_leucogenys", "Nleu2.0", 1, "2011-05");
+Make sure that you are using the same values as in the JSON file
+
+		3.2.1.2 SpeciesSet and MethodLinkSpeciesSet
+
+Finally, once all the genome_dbs are loaded in the master database, we can move on to populating all the SpeciesSet and MethodLinkSpeciesSet entries needed for the pipeline (they are used to index the homologies).
+
+First, generate the list of all the genome_db_ids you want to run the pipeline on. For instance:
+  SELECT GROUP_CONCAT(genome_db_id ORDER BY genome_db_id) FROM genome_db;
+
+Export this in a new environment variable $ALL_GENOMEDB_IDS
+$ export ALL_GENOMEDB_IDS="..."
+$ echo $ALL_GENOMEDB_IDS
+
+Edit the "compara_master" section in $ENSEMBL_CVS_ROOT_DIR/ensembl-compara/scripts/pipeline/production_reg_conf.pl and run the following commands:
+
+# orthologues
+$ echo -e "201\n" | perl $ENSEMBL_CVS_ROOT_DIR/ensembl-compara/scripts/pipeline/create_mlss.pl --f \
+--reg_conf $ENSEMBL_CVS_ROOT_DIR/ensembl-compara/scripts/pipeline/production_reg_conf.pl \
+--pw --genome_db_id "$ALL_GENOMEDB_IDS" 1> create_mlss.ENSEMBL_ORTHOLOGUES.201.out 2> create_mlss.ENSEMBL_ORTHOLOGUES.201.err
+
+# paralogues
+$ echo -e "202\n" | perl $ENSEMBL_CVS_ROOT_DIR/ensembl-compara/scripts/pipeline/create_mlss.pl --f \
+--reg_conf $ENSEMBL_CVS_ROOT_DIR/ensembl-compara/scripts/pipeline/production_reg_conf.pl \
+--sg --genome_db_id "$ALL_GENOMEDB_IDS" 1> create_mlss.ENSEMBL_PARALOGUES.wth.202.out 2> create_mlss.ENSEMBL_PARALOGUES.wth.202.err
+
+# protein trees
+$ echo -e "401\n" | perl $ENSEMBL_CVS_ROOT_DIR/ensembl-compara/scripts/pipeline/create_mlss.pl --f \
+--reg_conf $ENSEMBL_CVS_ROOT_DIR/ensembl-compara/scripts/pipeline/production_reg_conf.pl \
+--name "protein trees" --genome_db_id "$ALL_GENOMEDB_IDS" 1> create_mlss.PROTEIN_TREES.401.out 2> create_mlss.PROTEIN_TREES.401.err
+
+Quickly inspect the .err files. They may contain warnings, but they shouldn't have any errors :)
+
+Check on the database: n*(n-1)/2 MLSS entries for orthologies (pairwise only), n for paralogies (within-species only) and 1 for the protein trees
+
+  SELECT COUNT(*) FROM method_link_species_set WHERE method_link_id = 201;
+  SELECT COUNT(*) FROM method_link_species_set WHERE method_link_id = 202;
+  SELECT COUNT(*) FROM method_link_species_set WHERE method_link_id = 401;
+
+
+       3.2.2 Other databases
+
 The configuration file must define 'pipeline_db': the database to hold the data.
 
 If you are running the pipeline with a master database, define its connection parameters in 'master_db', and set the 'use_master_db' flag to 1
 Otherwise, define the 'ncbi_db' database and set the 'use_master_db' flag to 0
-
-When using a master database, make sure that that all the SpeciesSet and MethodLinkSpeciesSet entries have been populated for the species you want to run the pipeline on.
 
 The pipeline relies on some Ensembl core (species) databases to provide the species-specific data. This can be configured with the 'curr_core_sources_locs'
 parameter, which is a list of database connections. It should contain the same server list as you have used when running scripts/pipeline/update_genome.pl
@@ -155,21 +246,9 @@ If you are going to use Ensembl data, you may want to add the following database
 'curr_core_sources_locs' => [ $self->o('ensembl_srv') ],
 
 If you are going to run the pipeline on species that are not in Ensembl, you have to define the "curr_file_sources_locs" parameter with a JSON formatted file.
-The JSON file needs to contain meta data for each species and should have the following format:
 
-[
-{
-        "production_name" : "nomascus_leucogenys",
-        "taxonomy_id"     : "61853",
-        "assembly"        : "Nleu2.0",
-        "genebuild"       : "2011-05",
-        "prot_fasta"      : "proteins.fasta",
-        "cds_fasta"       : "transcripts.fasta",
-        "gene_coord_gff"  : "annotation.gff",
-}
-]
 
-If you want to use a Compara database as a reference (for example, to reuse the results of the all-vs-all blastp), you have to set the 'reuse_from_prev_rel_db' flag on, and configure the 'reuse_db' parameter: 
+If you want to use a Compara database as a reference (for example, to reuse the results of the all-vs-all blastp), you have to set the 'reuse_from_prev_rel_db' flag on, and configure the 'reuse_db' parameter:
 'prev_rel_db' => {
 	-host   => 'ensembldb.ensembl.org',
 	-port   => 5306,
@@ -178,8 +257,7 @@ If you want to use a Compara database as a reference (for example, to reuse the 
 	-dbname => 'ensembl_compara_XXXX',
 },
 Then, you will have to update the 'prev_core_sources_locs' parameter. It is equivalent to 'curr_core_sources_locs', but refers to the core databases
-linked to 'reuse_db'. Again, on Ensembl data, you can define: 'prev_core_sources_locs' => [ $self->o('ensembl_srv') ] 
-Please make sure that 'prev_release' contains the version number of the reuse database.
+linked to 'reuse_db'. Again, on Ensembl data, you can define: 'prev_core_sources_locs' => [ $self->o('ensembl_srv') ]
 
    3.3. More general parameters (pipeline-related)
 
@@ -224,4 +302,136 @@ The pipeline is now ready to be run.
 You can switch to the file "README-beekeeper", which explains how to run beekeeper :)
 
 
+5. Interpreting the errors
+
+Many errors (increase memlimit on a job, reset failed jobs, etc) can be corrected by editing the parameters via the analysis pop-up box in the guiHive, or directly in the database.
+Please note that below are examples of errors: the names, paths, etc may be different in your output.
+
+Often, you can re-run the offending job to look at its log: runWorker.pl -url ${EHIVE_URL} -job_id xxxx -debug 9 -force 1
+
+
+    5.1 Cannot execute '/bin/mafft' in '/software/ensembl/compara/mafft-7.017/'
+
+Executable won't run: wrong location, no permission ? Find the executable that will run and edit the configuration file for your compara run.
+You can also fix the current run by editing the parameters of the failed analysis with guiHive.
+
+    5.2 Missing parameter
+
+The parameter should be added to the relevant analysis. However, some parameters are supposed to be global and shared across all the analysis (like "mlss_id").
+You can define them on a live database by adding an entry to the "meta" table:
+
+   INSERT INTO meta (meta_key, meta_value) VALUES ("sreformat_exe", "/software/ensembl/compara/sreformat");
+
+    5.3 The required assembly_name ('ASM23792v1') is different from the one found in the database ('5.2')
+
+This is a quite common error at the start of the run. Fortunately, the computation hasn't really started yet, and we're not wasting too much time :)
+The error often comes from a misleading entry in the the core database: the "assembly.default" meta key *is not* used to define the assembly.
+The assembly is "the version of the highest coordinate system": SELECT version FROM coord_system WHERE rank = 1;
+
+Make sure you are using the same version in your master database:
+  UPDATE genome_db SET assembly = "5.2" WHERE genome_db_id = 40
+
+    5.4 Analysis "hc_genome_has_members"
+
+Error: At least 0 rows, different than 2 at $ENSEMBL_CVS_ROOT_DIR/ensembl-hive/modules/Bio/EnsEMBL/Hive/RunnableDB/SqlHealthcheck.pm line 72
+
+No genes / proteins have been loaded for this species; a few things may have gone wrong:
+
+ * Check that canonical transcripts have been defined for the genome_db shown in the error. If not, give a go to $ENSEMBL_CVS_ROOT_DIR/ensembl/misc-scripts/canonical_transcripts/set_canonical_transcripts.pl
+ * Identify the load_fresh_members job for the problematic genome_id and rerun the job
+    > SELECT * FROM job WHERE analysis_id = XXX AND input_id LIKE "%${GDB_ID}%";
+    $ runWorker.pl -url ${EHIVE_URL} -job_id ${JOB_ID} -debug 9 -force 1
+ * Check whether the members are loaded, and the SQL query has output
+    > SELECT COUNT(*) FROM member WHERE genome_db_id = 40;
+    > SELECT source_name FROM member WHERE genome_db_id = 40 AND source_name IN ("ENSEMBLPEP", "ENSEMBLGENE") GROUP BY source_name HAVING COUNT(*) > 0;
+
+    5.5 Analysis "hc_peptides_have_cds_sequences"
+
+Error: At least 1 rows, different than 0 at $ENSEMBL_CVS_ROOT_DIR/ensembl-hive/modules/Bio/EnsEMBL/Hive/RunnableDB/SqlHealthcheck.pm line 72.
+
+The error usually comes on species loaded from Fasta files. Make sure that the IDs used in in the "cds_fasta" and in the "prot_fasta" files are the same.
+
+  # Identify the problematic members
+  > SELECT mp.member_id FROM member mp LEFT JOIN other_member_sequence oms ON mp.member_id = oms.member_id AND oms.seq_type = "cds" WHERE genome_db_id = 68 AND source_name = "ENSEMBLPEP" AND (sequence IS NULL OR LENGTH(sequence) = 0);
+
+  # Query the member table for the offending member_ids
+  > SELECT * FROM member WHERE member_id IN (...)
+
+  # If only a few members are in error, you can edit the database
+  > INSERT INTO other_member_sequence VALUES (534756, "cds", 32, "ATGTAGCTGTGACTCGAGAGAATATTTTAATG");
+
+  # If more than a few entries, you need to rerun the load_fresh_members_fromfile job, identify the relevant job
+    > DELETE other_member_sequence FROM member JOIN other_member_sequence USING (member_id) WHERE genome_db_id = ${GDB_ID};
+    > DELETE FROM member WHERE genome_db_id = ${GDB_ID} AND source_name = "ENSEMBLPEP";
+    > DELETE FROM member WHERE genome_db_id = ${GDB_ID};
+    > SELECT * FROM job WHERE analysis_id = XXX AND input_id LIKE "%${GDB_ID}%";
+    $ runWorker.pl -url ${EHIVE_URL} -job_id ${JOB_ID} -debug 9 -force 1
+
+  # Check that the problem has been fixed
+
+
+    5.6 Analysis "hc_members_have_chrom_coordinates"
+
+Error: At least 1 rows, different than 0 at $ENSEMBL_CVS_ROOT_DIR/ensembl-hive/modules/Bio/EnsEMBL/Hive/RunnableDB/SqlHealthcheck.pm line 72.
+
+ - If they correspond to species that come from an Ensembl (Genomes) database, this should not happen.
+ - If they come from your core databases, there may be an issue there.
+ - If they are configured in the JSON file, something is wrong with the gene_coord_gff GFF file. There might be missing entries there, different IDs, or no GFF file at all (you can gorgive the failed job, then).
+
+The coordinates are used when the pipeline tries to detect partial gene models that should be "merged" to produce a full gene model ("split genes").
+It is not mandatory, but split genes won't be detected for these species, and that their partial genes may be in weird positions in the final protein trees.
+
+If you don't mind the risks, just forgive the job. Otherwise, have a look at the gene_coord_gff file.
+
+
+    5.7  GarbageCollector: The worker died because of MEMLIMIT
+
+This is the error message in the msg table when the farm job memory limit is exceeded.
+
+This can be corrected in guiHive by changing the resource class of the corresponding analysis
+
+
+    5.8 "Could not find species_name='ascaris_suum', assembly_name='v3' on the servers provided, please investigate"
+
+Check that the list of registry parameters passed to the job are correct.
+You can also check that the locator field in genome_db is set to a MySQL NULL and not the string "NULL"
+
+
+    5.9 "The protein sequences should not be only ACGTN"
+
+This HC fails if, for instance, there is a stop codon ("*") in the sequence.
+By repeating the SQL query, you'll get the offending member_ids. Then:
+
+ > SELECT sequence_id FROM member WHERE member_id = XXXX;
+ > SELECT sequence FROM sequence WHERE sequence_id = YYYY;
+ > UPDATE sequence SET sequence = "...", length = ... WHERE sequence_id = YYYY;
+
+
+   5.10 "Members should have chromosome coordinates"
+
+That usually happens for species loaded from a FASTA file with no GFF file.
+You have to be aware that the detection of split genes is not possible for such species, but you can still run the pipeline.
+If it is the only failed HC for this species, and if you are happy with the pipeline running without coordinates, you can forgive the job.
+
+
+   5.11 "Peptides should have CDS sequences (which are made of only ACGTN)"
+
+Some CDS sequences are either missing, or not canonical. If they contain some ambiguity bases (like R, Y, etc), you can turn the option "allow_ambiguity_codes" on and restart the HC.
+The pipeline should run fine with such characters, but they'll probably be interpreted as gaps by most of the programs.
+
+
+   5.12 "this algorithm is less useful if only 0 species are matched"
+
+This error message from njtree_phyml (aka treebest) means that the species tree do not match your set of genome_dbs.
+Make sure that your species tree contains all the species.
+
+
+6. Looking at the results
+
+
+You'll need to use either the PERL API or a REST server to connect to the database
+
+There is a script to generate tables of statistics about the gene trees:
+
+cat $ENSEMBL_CVS_ROOT_DIR/ensembl-compara/sql/tree-stats.sql | $ENSEMBL_CVS_ROOT_DIR/ensembl-hive/scripts/db_cmd.pl -url ${EHIVE_URL} -extra='--html' | sed 's/\/TABLE>/\/TABLE>\n/g' | grep -v optimize | bash $ENSEMBL_CVS_ROOT_DIR/ensembl-compara/scripts/pipeline/get_stats_trees.sh pt > protein_trees.html
 

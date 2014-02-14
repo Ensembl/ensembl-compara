@@ -20,10 +20,10 @@ limitations under the License.
 =head1 CONTACT
 
   Please email comments or questions to the public Ensembl
-  developers list at <dev@ensembl.org>.
+  developers list at <http://lists.ensembl.org/mailman/listinfo/dev>.
 
   Questions may also be sent to the Ensembl help desk at
-  <helpdesk@ensembl.org>.
+  <http://www.ensembl.org/Help/Contact>.
 
 =head1 NAME
 
@@ -56,11 +56,31 @@ use base ('Bio::EnsEMBL::Hive::RunnableDB::SqlHealthcheck');
 
 my $config = {
 
+    ### Species Tree
+    #################
+
+    species_tree => {
+        tests => [
+            {
+                description => 'genome_db_id can only be populated on leaves',
+                query => 'SELECT stn.*, COUNT(*) AS n_children FROM species_tree_node stn JOIN species_tree_node stnc ON stnc.parent_id = stn.node_id WHERE stn.genome_db_id IS NOT NULL GROUP BY stn.node_id'
+            },
+            {
+                description => 'All the leaves of the species tree should have a genome_db',
+                query => 'SELECT stn.* FROM species_tree_node stn LEFT JOIN species_tree_node stnc ON stnc.parent_id = stn.node_id WHERE stnc.node_id IS NULL AND stn.genome_db_id IS NULL'
+            },
+            {
+                description => 'All the genome_dbs should be in the species tree',
+                query => 'SELECT gdb.* FROM genome_db gdb LEFT JOIN species_tree_node stn USING (genome_db_id) WHERE stn.node_id IS NULL',
+            }
+        ],
+    },
+
     ### Members
     #############
 
     members_per_genome => {
-        params => [ 'genome_db_id', 'hc_member_type' ],
+        params => [ 'genome_db_id', 'hc_member_type', 'allow_ambiguity_codes' ],
         tests => [
             {
                 description => 'Each genome should have some members of the two types: ENSEMBLGENE and #hc_member_type#',
@@ -84,8 +104,8 @@ my $config = {
                 query => 'SELECT member_id FROM member LEFT JOIN sequence USING (sequence_id) WHERE genome_db_id = #genome_db_id# AND source_name = "#hc_member_type#" AND (sequence IS NULL OR LENGTH(sequence) = 0)',
             },
             {
-                description => 'Peptides should have CDS sequences (which are made of only ACGTN)',
-                query => 'SELECT mp.member_id FROM member mp LEFT JOIN other_member_sequence oms ON mp.member_id = oms.member_id AND oms.seq_type = "cds" WHERE genome_db_id = #genome_db_id# AND source_name = "ENSEMBLPEP" AND (sequence IS NULL OR LENGTH(sequence) = 0 OR sequence REGEXP "[^ACGTN]")',
+                description => 'Peptides should have CDS sequences (which are made of only ACGTN). Ambiguity codes have to be explicitely switched on.',
+                query => 'SELECT mp.member_id FROM member mp LEFT JOIN other_member_sequence oms ON mp.member_id = oms.member_id AND oms.seq_type = "cds" WHERE genome_db_id = #genome_db_id# AND source_name = "ENSEMBLPEP" AND (sequence IS NULL OR LENGTH(sequence) = 0 OR (sequence REGEXP "[^ACGTN]" AND NOT #allow_ambiguity_codes#) OR (sequence REGEXP "[^ACGTNKMRSWY]"))',
             },
             {
                 description => 'The protein sequences should not be only ACGTN (unless 5aa-long, for an immunoglobulin gene)',

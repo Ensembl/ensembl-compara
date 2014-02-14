@@ -19,7 +19,7 @@ my $description = q{
 ##
 ##  PROGRAM store_multiz_alignment.pl
 ##
-##  AUTHOR Javier Herrero (jherrero@ebi.ac.uk)
+##  AUTHOR Javier Herrero
 ##
 ##    This software is part of the EnsEMBL project.
 ##
@@ -36,7 +36,15 @@ store_multiz_alignment.pl
 
 =head1 AUTHOR
 
-Javier Herrero (jherrero@ebi.ac.uk)
+Javier Herrero
+
+=head1 CONTACT
+
+Please email comments or questions to the public Ensembl
+developers list at <http://lists.ensembl.org/mailman/listinfo/dev>.
+
+Questions may also be sent to the Ensembl help desk at
+<http://www.ensembl.org/Help/Contact>.
 
 This software is part of the EnsEMBL project.
 

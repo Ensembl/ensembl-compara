@@ -20,10 +20,10 @@ limitations under the License.
 =head1 CONTACT
 
   Please email comments or questions to the public Ensembl
-  developers list at <dev@ensembl.org>.
+  developers list at <http://lists.ensembl.org/mailman/listinfo/dev>.
 
   Questions may also be sent to the Ensembl help desk at
-  <helpdesk@ensembl.org>.
+  <http://www.ensembl.org/Help/Contact>.
 
 =head1 NAME
 
@@ -60,6 +60,8 @@ sub default_options {
         'pipeline_name'         => 'HC',   # name the pipeline to differentiate the submitted processes
 
         'hc_capacity'           =>   4,
+
+        'hc_member_type'        => 'ENSEMBLPEP',
 
         # connection parameters to various databases:
 
@@ -145,7 +147,7 @@ sub pipeline_analyses {
             -module             => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::SqlHealthChecks',
             -parameters         => {
                 mode            => 'members_per_genome',
-                hc_member_type  => 'ENSEMBLPEP',
+                hc_member_type  => $self->o('hc_member_type'),
             },
             -analysis_capacity  => $self->o('hc_capacity'),
             -priority           => $self->o('hc_priority'),

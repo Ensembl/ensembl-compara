@@ -16,6 +16,45 @@ limitations under the License.
 
 =cut
 
+=head1 CONTACT
+
+Please email comments or questions to the public Ensembl
+developers list at <http://lists.ensembl.org/mailman/listinfo/dev>.
+
+Questions may also be sent to the Ensembl help desk at
+<http://www.ensembl.org/Help/Contact>.
+
+=head1 AUTHORSHIP
+
+Ensembl Team. Individual contributions can be found in the GIT log.
+
+=head1 NAME
+
+Bio::EnsEMBL::Compara::Family
+
+=head1 DESCRIPTION
+
+Family is the object to store the Ensembl Families, and is an implementation
+of AlignedMemberSet.
+
+=head1 INHERITANCE TREE
+
+  Bio::EnsEMBL::Compara::Family
+  `- Bio::EnsEMBL::Compara::AlignedMemberSet
+
+=head1 SYNOPSIS
+
+Implemented methods:
+ - stable_id()
+ - version()
+ - description()
+ - description_score() (links to description())
+
+=head1 METHODS
+
+=cut
+
+
 package Bio::EnsEMBL::Compara::Family;
 
 use strict;
@@ -55,12 +94,8 @@ sub new {
 
 =head2 description_score
 
-  Arg [1]    : 
-  Example    : 
-  Description: 
-  Returntype : 
-  Exceptions : 
-  Caller     : 
+  Description: The quality of the prediction of the description string.
+               description_score() is an integer between 0 and 100
 
 =cut
 

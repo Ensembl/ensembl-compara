@@ -20,10 +20,10 @@ limitations under the License.
 =head1 CONTACT
 
   Please email comments or questions to the public Ensembl
-  developers list at <dev@ensembl.org>.
+  developers list at <http://lists.ensembl.org/mailman/listinfo/dev>.
 
   Questions may also be sent to the Ensembl help desk at
-  <helpdesk@ensembl.org>.
+  <http://www.ensembl.org/Help/Contact>.
 
 =cut
 
@@ -170,11 +170,7 @@ my $name_cb = sub {
 my $distance_to_parent_cb = sub {
   my ($self) = @_;
   my $dtp = $self->{tree}->distance_to_parent();
-  if ($dtp =~ /^\d+\.\d+$/) {
-    return sprintf ("%1.4f", $self->{tree}->distance_to_parent);
-  } else {
-    return sprintf ("%d", $self->{tree}->distance_to_parent);
-  }
+  return "$dtp";
 };
 
 # T(genbank common name)
@@ -191,7 +187,15 @@ my $ensembl_timetree_mya_cb = sub {
 
 my $gdb_id_cb = sub {
   my ($self) = @_;
-  return $self->{tree}->adaptor->db->get_GenomeDBAdaptor->fetch_by_taxon_id($self->{tree}->taxon_id)->dbID;
+  if ($self->{tree}->isa('Bio::EnsEMBL::Compara::GeneTreeNode')) {
+    return $self->{tree}->species_tree_node->genome_db_id;
+
+  } elsif ($self->{tree}->isa('Bio::EnsEMBL::Compara::SpeciesTreeNode')) {
+    return $self->{tree}->genome_db_id;
+
+  } elsif ($self->{tree}->isa('Bio::EnsEMBL::Compara::NCBITaxon')) {
+    return $self->{tree}->adaptor->db->get_GenomeDBAdaptor->fetch_by_taxon_id($self->{tree}->taxon_id)->dbID;
+  }
 };
 
 # C(node_id)
@@ -227,7 +231,7 @@ my $sp_short_name_cb = sub {
   if (!defined $self->{tree}->genome_db) {
     return;
   }
-  return $self->{tree}->genome_db->short_name;
+  return $self->{tree}->genome_db->get_short_name;
 };
 
 my $transcriptid_cb = sub {
@@ -260,6 +264,9 @@ my $member_id_cb = sub {
 # C(taxon_id)
 my $taxon_id_cb = sub {
   my ($self) = @_;
+  if ($self->{tree}->isa('Bio::EnsEMBL::Compara::GeneTreeNode')) {
+    return $self->{tree}->species_tree_node->taxon_id;
+  }
   return $self->{tree}->taxon_id;
 };
 
@@ -457,7 +464,7 @@ sub _internal_format_newick {
 # %{d} --> gdb_id ($self->adaptor->db->get_GenomeDBAdaptor->fetch_by_taxon_id($self->taxon_id)->dbID)
 # %{t} --> timetree ($self->get_tagvalue('ensembl timetree mya')
 # %{l} --> display_label ($self->gene_member->display_label)
-# %{h} --> genome short name ($self->genome_db->short_name)
+# %{h} --> genome short name ($self->genome_db->get_short_name)
 # %{s} --> stable_id ($self->gene_member->stable_id)
 # %{p} --> peptide Member ($self->get_canonical_SeqMember->stable_id)
 # %{t} --> taxon_id ($self->taxon_id)

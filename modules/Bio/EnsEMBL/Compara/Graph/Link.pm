@@ -46,11 +46,14 @@ And to 'disconnect' nodes, one just breaks a link;
 Convenience methods to simplify this process
   $node1->create_link_to_node($node2, $distance_between);
   $node2->unlink_neighbor($node1);
-  
+
 =head1 CONTACT
 
-  Contact Jessica Severin on implemetation/design detail: jessica@ebi.ac.uk
-  Contact Ewan Birney on EnsEMBL in general: birney@sanger.ac.uk
+Please email comments or questions to the public Ensembl
+developers list at <http://lists.ensembl.org/mailman/listinfo/dev>.
+
+Questions may also be sent to the Ensembl help desk at
+<http://www.ensembl.org/Help/Contact>.
 
 =head1 APPENDIX
 

@@ -20,10 +20,10 @@ limitations under the License.
 =head1 CONTACT
 
   Please email comments or questions to the public Ensembl
-  developers list at <dev@ensembl.org>.
+  developers list at <http://lists.ensembl.org/mailman/listinfo/dev>.
 
   Questions may also be sent to the Ensembl help desk at
-  <helpdesk@ensembl.org>.
+  <http://www.ensembl.org/Help/Contact>.
 
 =head1 NAME
 
@@ -62,7 +62,7 @@ Please refer to the Bio::EnsEMBL::Compara::DBSQL::SyntenyRegionAdaptor for furth
 
 =head1 CONTACT
 
-Ensembl - dev@ensembl.org
+Ensembl - http://lists.ensembl.org/mailman/listinfo/dev
 
 =head1 APPENDIX
 
@@ -84,7 +84,7 @@ our @ISA = qw(Bio::EnsEMBL::DBSQL::BaseAdaptor);
 
 =head2 fetch_by_synteny_region_id
 
-  DEPRECATED. Please use fetch_all_by_synteny_region_id() instead
+  DEPRECATED. fetch_by_synteny_region_id will be removed in e76. Please use fetch_all_by_synteny_region_id() instead
 
 =cut
 
@@ -92,6 +92,7 @@ our @ISA = qw(Bio::EnsEMBL::DBSQL::BaseAdaptor);
 sub fetch_by_synteny_region_id {
   my ($self, $synteny_region_id) = @_;
 
+  deprecate('fetch_by_synteny_region_id() is deprecated and will be removed in e76. Please use fetch_all_by_synteny_region_id() instead');
   return $self->fetch_all_by_synteny_region_id($synteny_region_id);
 }
 

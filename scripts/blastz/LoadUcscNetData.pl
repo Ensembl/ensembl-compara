@@ -20,8 +20,8 @@ my $description = q{
 ## PROGRAM LoadUcscNetData.pl
 ##
 ## AUTHORS
-##    Abel Ureta-Vidal (abel@ebi.ac.uk)
-##    Javier Herrero (jherrero@ebi.ac.uk)
+##    Abel Ureta-Vidal
+##    Javier Herrero
 ##
 ## DESCRIPTION
 ##    This script read BLASTz alignments from a UCSC database and store
@@ -35,10 +35,18 @@ my $description = q{
 
 LoadUcscNetData.pl
 
+=head1 CONTACT
+
+Please email comments or questions to the public Ensembl
+developers list at <http://lists.ensembl.org/mailman/listinfo/dev>.
+
+Questions may also be sent to the Ensembl help desk at
+<http://www.ensembl.org/Help/Contact>.
+
 =head1 AUTHORS
 
- Abel Ureta-Vidal (abel@ebi.ac.uk)
- Javier Herrero (jherrero@ebi.ac.uk)
+ Abel Ureta-Vidal
+ Javier Herrero
 
 
 =head1 DESCRIPTION

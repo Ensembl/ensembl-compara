@@ -45,7 +45,7 @@ Finds a good splitting point within the anchors. Leave the anchors as a 2bp long
 
 =head1 CONTACT
 
-dev@ensembl.org
+http://lists.ensembl.org/mailman/listinfo/dev
 
 =cut
 

@@ -20,10 +20,10 @@ limitations under the License.
 =head1 CONTACT
 
   Please email comments or questions to the public Ensembl
-  developers list at <dev@ensembl.org>.
+  developers list at <http://lists.ensembl.org/mailman/listinfo/dev>.
 
   Questions may also be sent to the Ensembl help desk at
-  <helpdesk@ensembl.org>.
+  <http://www.ensembl.org/Help/Contact>.
 
 =head1 NAME
 
@@ -148,14 +148,14 @@ sub new_fast {
 
 =head2 stable_id
 
-DEPRECATED: SyntenyRegions don't have any stable id.
+DEPRECATED: stable_id() will be removed in e76. SyntenyRegions don't have any stable id.
 
 =cut
 
 sub stable_id {
   my $obj = shift;
 
-  deprecate("SyntenyRegions don't have any stable id.");
+  deprecate("SyntenyRegions don't have any stable id. stable_id() will be removed in e76");
 
   if( @_ ) {
     my $value = shift;
