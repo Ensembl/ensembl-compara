@@ -496,7 +496,15 @@ sub _fetch_by_genomic_align_block {
   my $genomic_align_tree = $genomic_align_trees->[0];
 
   if ($genomic_align_block->reference_genomic_align) {
-    my $ref_genomic_align = $genomic_align_block->reference_genomic_align;
+    my $ref_genomic_align;
+    if ($genomic_align_block->reference_genomic_align->dbID) {
+      $ref_genomic_align = $genomic_align_block->reference_genomic_align;
+    } else {
+      #May have been restricted. Get original GenomicAlign
+      my $genomic_align_adaptor = $self->db->get_GenomicAlignAdaptor();
+      my $this_genomic_align_id = $genomic_align_block->reference_genomic_align->original_dbID;
+      $ref_genomic_align = $genomic_align_adaptor->fetch_by_dbID($this_genomic_align_id);
+    }
     LEAF: foreach my $this_leaf (@{$genomic_align_tree->get_all_leaves}) {
       foreach my $this_genomic_align (@{$this_leaf->get_all_genomic_aligns_for_node}) {
         if ($this_genomic_align->genome_db->name eq $ref_genomic_align->genome_db->name and
