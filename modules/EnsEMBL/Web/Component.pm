@@ -1392,10 +1392,8 @@ sub render_sift_polyphen {
   }
   else {
     $rank = $ranks{$pred};
-    $rank_str = ' ';
+    $rank_str = $pred;
   }
-  
-  my $width = defined($score) ? 50 : 15;
   
   return qq{
     <span class="hidden">$rank</span><span class="hidden export">$pred(</span>
