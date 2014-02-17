@@ -100,16 +100,18 @@ sub label {
   $label->set_attribute('class', $self->CSS_CLASS_LABEL);
   if (@_) {
     my $inner_HTML = shift;
-    $inner_HTML .= ':' if $inner_HTML !~ /:$/;
-    $label->inner_HTML($inner_HTML);
     if (@_ && $_[0]) {
-      $label->append_HTML(
-        $self->dom->create_element('span', {
-          'inner_text'  => '[?]',
-          'class'       => '_ht',
-          'title'       => $_[0]
-        })->outer_HTML
-      );
+      $label->append_children({
+        'node_name'   => 'span',
+        'class'       => '_ht ht',
+        'title'       => $_[0],
+        'inner_HTML'  => $inner_HTML =~ s/:$//r
+      }, {
+        'node_name'   => 'text',
+        'text'        => ':'
+      });
+    } else {
+      $label->inner_HTML($inner_HTML =~ s/:?$/:/r);
     }
   }
   return $label;
