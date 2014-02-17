@@ -22,14 +22,16 @@ foreach my $file (split("\n",$files)) {
     elsif(/<field name="feature_type">(.*?)<\/field>/) { $doc{'type'} = $1; }
     elsif(/<field name="species_name">(.*?)<\/field>/) { $doc{'species'} = $1; }
     elsif(/<field name="name">(.*?)<\/field>/) { $doc{'name'} = $1; }
+    elsif(/<field name="id">(.*?)<\/field>/) { $doc{'id'} = $1; }
     elsif(/<field name="domain_url">(.*?)<\/field>/) { $doc{'url'} = $1; }
     elsif(/<\/doc/) {
       next unless $doc{'type'} eq 'Gene' or $doc{'type'} eq 'Phenotype';
       next unless $doc{'name'} and $doc{'species'} and $doc{'url'};
       $doc{'species'} = lc($doc{'species'});
+      $doc{'lcname'} = lc($doc{'name'});
       $doc{'species'} =~ s/\s/_/g;
       $doc{'name'} =~ s/\s/_/g;
-      print "$doc{'species'}__$doc{'name'}__$doc{'url'}\n";
+      print join('__',map { $doc{$_} } qw(species lcname type id name url))."\n";
     }
   }
   close FILE;
