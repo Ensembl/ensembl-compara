@@ -29,9 +29,8 @@ foreach my $file (split("\n",$files)) {
       next unless $doc{'name'} and $doc{'species'} and $doc{'url'};
       $doc{'species'} = lc($doc{'species'});
       $doc{'lcname'} = lc($doc{'name'});
-      $doc{'species'} =~ s/\s/_/g;
-      $doc{'name'} =~ s/\s/_/g;
-      print join('__',map { $doc{$_} } qw(species lcname type id name url))."\n";
+      my @out = map { $doc{$_} } qw(species lcname type id name url);
+      print join('__',map { s/_/_+/g; s/\s+/_-/g; $_; } @out)."\n";
     }
   }
   close FILE;
