@@ -29,7 +29,13 @@ foreach my $file (split("\n",$files)) {
       next unless $doc{'name'} and $doc{'species'} and $doc{'url'};
       $doc{'species'} = lc($doc{'species'});
       $doc{'lcname'} = lc($doc{'name'});
-      my @out = map { $doc{$_} } qw(species lcname type id name url);
+      if($doc{'type'} eq 'Gene') {
+        $doc{'url'} =~ s/^.*&amp;db=/db=/;
+        $doc{'rest'} = $doc{'url'};
+      } else {
+        $doc{'rest'} = '';
+      }
+      my @out = map { $doc{$_} } qw(species lcname type id name rest);
       print join('__',map { s/_/_+/g; s/\s+/_-/g; $_; } @out)."\n";
     }
   }
