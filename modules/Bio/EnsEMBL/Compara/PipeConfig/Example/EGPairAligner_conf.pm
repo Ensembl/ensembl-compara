@@ -238,7 +238,7 @@ sub default_options {
 	#
         #Default set_internal_ids
         #
-	'skip_set_internal_ids' => 1,  #skip this module if set to 1
+	'skip_set_internal_ids' => 0,  #skip this module if set to 1
 
         #
         #Default net 
