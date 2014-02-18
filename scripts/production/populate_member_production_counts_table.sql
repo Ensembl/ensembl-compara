@@ -84,3 +84,16 @@ INSERT INTO temp_member_paralogues_counts(stable_id, paralogues) SELECT stable_i
 SELECT "Populating the paralogues column in member_production_counts" AS "";
 UPDATE member_production_counts mpc JOIN temp_member_paralogues_counts USING(stable_id) SET mpc.paralogues = temp_member_paralogues_counts.paralogues;
 
+/* HOMOEOLOGUES COUNTS */
+SELECT "Creating temporary temp_member_homoeologues_counts table" AS "";
+CREATE TEMPORARY TABLE temp_member_homoeologues_counts (
+       stable_id varchar(128) NOT NULL,
+       homoeologues INT(10) UNSIGNED DEFAULT 0
+);
+
+
+SELECT "Populating the temporary temp_member_homoeologues_counts table" AS "";
+INSERT INTO temp_member_homoeologues_counts(stable_id, homoeologues) SELECT stable_id, count(*) FROM member JOIN homology_member USING(member_id) JOIN homology USING(homology_id) WHERE homology.description LIKE '%homoeolog%' GROUP BY member_id;
+
+SELECT "Populating the homoeologues column in member_production_counts" AS "";
+UPDATE member_production_counts mpc JOIN temp_member_homoeologues_counts USING(stable_id) SET mpc.homoeologues = temp_member_homoeologues_counts.homoeologues;
