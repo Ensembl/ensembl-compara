@@ -122,25 +122,6 @@ sub new {
 }
 
 
-=head2 stable_id
-
-DEPRECATED: stable_id() will be removed in e76. SyntenyRegions don't have any stable id.
-
-=cut
-
-sub stable_id {
-  my $obj = shift;
-
-  deprecate("SyntenyRegions don't have any stable id. stable_id() will be removed in e76");
-
-  if( @_ ) {
-    my $value = shift;
-    $obj->{'stable_id'} = $value;
-  }
-
-  return $obj->{'stable_id'};
-}
-
 
 =head2 method_link_species_set_id
 

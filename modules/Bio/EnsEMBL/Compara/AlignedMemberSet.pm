@@ -288,9 +288,6 @@ sub load_cigars_from_file {
 
     Arg [-UNIQ_SEQ] : (opt) boolean (default: false)
         : whether redundant sequences should be discarded
-    Arg [-CDNA] : (opt) boolean (default: false)
-        : whether the CDS sequence should be used instead of the default sequence
-        : This option is deprec-ated in favour of -SEQ_TYPE => 'cds'
     Arg [-ID_TYPE] (opt) string (one of 'STABLE'*, 'SEQ', 'MEMBER')
         : which identifier should be used as sequence names: the stable_id, the sequence_id, or the member_id
     Arg [-STOP2X] (opt) boolean (default: false)
@@ -301,9 +298,6 @@ sub load_cigars_from_file {
         : whether the species (in short name format) should be added to the sequence names
     Arg [-APPEND_GENOMEDB_ID] (opt) boolean (default: false)
         : whether the genome_db_id should be added to the sequence names
-    Arg [-EXON_CASED] (opt) boolean (default: false)
-        : whether the case of the sequence should change at each exon
-        : This option is deprec-ated in favour of -SEQ_TYPE => 'exon_cased'
     Arg [-KEEP_GAPS] (opt) boolean (default: false)
         : whether columns that only contain gaps should be kept in the alignment
     Arg [-SEQ_TYPE] (opt) string
@@ -324,26 +318,16 @@ sub get_SimpleAlign {
 
     my $id_type = 0;
     my $unique_seqs = 0;
-    my $cdna = 0;
     my $stop2x = 0;
     my $append_taxon_id = 0;
     my $append_sp_short_name = 0;
     my $append_genomedb_id = 0;
-    my $exon_cased = 0;
     my $keep_gaps = 0;
     my $seq_type = undef;
     if (scalar @args) {
-        ($unique_seqs, $cdna, $id_type, $stop2x, $append_taxon_id, $append_sp_short_name, $append_genomedb_id, $exon_cased, $keep_gaps, $seq_type) =
-            rearrange([qw(UNIQ_SEQ CDNA ID_TYPE STOP2X APPEND_TAXON_ID APPEND_SP_SHORT_NAME APPEND_GENOMEDB_ID EXON_CASED KEEP_GAPS SEQ_TYPE)], @args);
+        ($unique_seqs,  $id_type, $stop2x, $append_taxon_id, $append_sp_short_name, $append_genomedb_id, $keep_gaps, $seq_type) =
+            rearrange([qw(UNIQ_SEQ ID_TYPE STOP2X APPEND_TAXON_ID APPEND_SP_SHORT_NAME APPEND_GENOMEDB_ID KEEP_GAPS SEQ_TYPE)], @args);
     }
-
-    warn "-CDNA => 1 in AlignedMemberSet::get_SimpleAlign is deprecated and will be removed in e76. Please use -SEQ_TYPE => 'cds' instead" if $cdna;
-    die "-CDNA and -SEQ_TYPE cannot be both defined in AlignedMemberSet::get_SimpleAlign" if $cdna and $seq_type;
-    $seq_type = 'cds' if $cdna;
-
-    warn "-EXON_CASED => 1 in AlignedMemberSet::get_SimpleAlign is deprecated and will be removed in e76. Please use -SEQ_TYPE => 'exon_cased' instead" if $exon_cased;
-    die "-EXON_CASED and -SEQ_TYPE cannot be both defined in AlignedMemberSet::get_SimpleAlign" if $exon_cased and $seq_type;
-    $seq_type = 'exon_cased' if $exon_cased;
 
     die "-SEQ_TYPE cannot be specified if \$self->seq_type is already defined" if $seq_type and $self->seq_type;
     $seq_type = $self->seq_type unless $seq_type;

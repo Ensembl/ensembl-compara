@@ -53,6 +53,8 @@ use warnings;
 
 use Bio::EnsEMBL::Utils::Exception;
 use Bio::EnsEMBL::Utils::Argument;
+
+use Bio::EnsEMBL::Utils::Exception qw(throw warning);
 use Bio::EnsEMBL::Utils::Scalar qw(:assert);
 
 use Bio::EnsEMBL::Storable;
@@ -1066,17 +1068,6 @@ sub _internal_newick_format_ryo {
     return "$newick_str;";
 }
 
-=head2 newick_simple_format
-
-    DEPRECATED. Use newick_format("simple") instead. newick_simple_format() will be removed in e76
-
-=cut
-
-sub newick_simple_format {
-  my $self = shift;
-  deprecate('Use newick_format("simple") instead. newick_simple_format() will be removed in e76');
-  return $self->newick_format('simple'); 
-}
 
 
 ##################################
