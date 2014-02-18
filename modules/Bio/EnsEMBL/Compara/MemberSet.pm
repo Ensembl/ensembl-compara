@@ -90,6 +90,9 @@ use Bio::EnsEMBL::Utils::Scalar qw(:all);
 use Bio::EnsEMBL::Utils::Exception;
 use Bio::EnsEMBL::Compara::Member;
 
+use base ('Bio::EnsEMBL::Storable');        # inherit dbID(), adaptor() and new() methods
+
+
 
 ####################################
 #                                  #
@@ -124,19 +127,17 @@ use Bio::EnsEMBL::Compara::Member;
 sub new {
     my ($class, @args) = @_;
 
-    my $self = bless {}, $class;
+    my $self = $class->SUPER::new(@_);       # deal with Storable stuff
 
     if (scalar @args) {
         #do this explicitly.
-        my ($dbid, $stable_id, $version, $method_link_species_set_id, $description, $adaptor, $members)
-            = rearrange([qw(DBID STABLE_ID VERSION METHOD_LINK_SPECIES_SET_ID DESCRIPTION ADAPTOR MEMBERS)], @args);
+        my ($stable_id, $version, $method_link_species_set_id, $description, $members)
+            = rearrange([qw(STABLE_ID VERSION METHOD_LINK_SPECIES_SET_ID DESCRIPTION MEMBERS)], @args);
 
-        $dbid && $self->dbID($dbid);
         $stable_id && $self->stable_id($stable_id);
         $version && $self->version($version);
         $description && $self->description($description);
         $method_link_species_set_id && $self->method_link_species_set_id($method_link_species_set_id);
-        $adaptor && $self->adaptor($adaptor);
         if ($members) {
             $self->clear;
             foreach my $member (@$members) {
@@ -146,43 +147,6 @@ sub new {
     }
 
     return $self;
-}
-
-=head2 new_fast
-
-  Arg [1]    : hash reference $hashref
-  Example    : none
-  Description: This is an ultra fast constructor which requires knowledge of
-               the objects internals to be used.
-  Returntype : 
-  Exceptions : none
-  Caller     : 
-  Status     : Stable
-
-=cut
-
-sub new_fast {
-    my ($class, $hashref) = @_;
-
-    return bless $hashref, $class;
-}
-
-=head2 dbID
-
-  Arg [1]    : int $dbID (optional)
-  Example    : 
-  Description: Getter/setter for the internal ID of this relation
-  Returntype : int
-  Exceptions : none
-  Caller     : general
-  Status     : Stable
-
-=cut
-
-sub dbID {
-    my $self = shift;
-    $self->{'_dbID'} = shift if(@_);
-    return $self->{'_dbID'};
 }
 
 =head2 stable_id
@@ -296,28 +260,6 @@ sub method_link_species_set_id {
 }
 
 
-=head2 adaptor
-
-  Arg [1]    : string $adaptor (optional)
-               corresponding to a perl module
-  Example    : 
-  Description: getter/setter method for the adaptor for this relation. Usually
-               this will be either GeneTreeAdaptor, FamilyAdaptor, or
-               HomologyAdaptor
-  Returntype : Bio::EnsEMBL::Compara::DBSQL::BaseAdaptor object
-  Exceptions : none
-  Caller     : general
-  Status     : Stable
-
-=cut
-
-sub adaptor {
-    my $self = shift;
-    $self->{'_adaptor'} = shift if(@_);
-    return $self->{'_adaptor'};
-}
-
-
 
 ###########################
 #                         #
@@ -348,7 +290,7 @@ sub member_class {
 =cut
 
 sub _attr_to_copy_list {
-    return qw(_dbID _adaptor _version _stable_id _description _method_link_species_set_id);
+    return qw(dbID adaptor _version _stable_id _description _method_link_species_set_id);
 }
 
 =head2 deep_copy

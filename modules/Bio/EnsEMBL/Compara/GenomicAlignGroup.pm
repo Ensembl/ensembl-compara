@@ -91,6 +91,8 @@ use Bio::EnsEMBL::Utils::Argument qw(rearrange);
 use Bio::EnsEMBL::Utils::Exception qw(throw warning);
 use Scalar::Util qw(weaken);
 
+use base ('Bio::EnsEMBL::Storable');        # inherit dbID(), adaptor() and new() methods
+
 
 =head2 new (CONSTRUCTOR)
 
@@ -118,39 +120,17 @@ use Scalar::Util qw(weaken);
 sub new {
   my($class, @args) = @_;
   
-  my $self = {};
-  bless $self,$class;
+  my $self = $class->SUPER::new(@_);       # deal with Storable stuff
     
-  my ($adaptor, $dbID, $genomic_align_array) = 
+  my ($genomic_align_array) =
     rearrange([qw(
-        ADAPTOR DBID GENOMIC_ALIGN_ARRAY)], @args);
+        GENOMIC_ALIGN_ARRAY)], @args);
 
-  $self->adaptor($adaptor) if (defined ($adaptor));
-  $self->dbID($dbID) if (defined ($dbID));
   $self->genomic_align_array($genomic_align_array) if (defined($genomic_align_array));
 
   return $self;
 }
 
-=head2 new_fast
-
-  Arg [1]    : hash reference $hashref
-  Example    : none
-  Description: This is an ultra fast constructor which requires knowledge of
-               the objects internals to be used.
-  Returntype :
-  Exceptions : none
-  Caller     :
-  Status     : Stable
-
-=cut
-
-sub new_fast {
-  my $class = shift;
-  my $hashref = shift;
-
-  return bless $hashref, $class;
-}
 
 =head2 copy
 
@@ -183,57 +163,6 @@ sub copy {
   return bless $copy, ref($self);
 }
 
-
-=head2 adaptor
-
-  Arg [1]    : Bio::EnsEMBL::Compara::DBSQL::GenomicAlignGroupAdaptor $adaptor
-  Example    : my $gen_ali_grp_adaptor = $genomic_align_block->adaptor();
-  Example    : $genomic_align_block->adaptor($gen_ali_grp_adaptor);
-  Description: Getter/Setter for the adaptor this object uses for database
-               interaction.
-  Returntype : Bio::EnsEMBL::Compara::DBSQL::GenomicAlignGroupAdaptor object
-  Exceptions : thrown if $adaptor is not a
-               Bio::EnsEMBL::Compara::DBSQL::GenomicAlignGroupAdaptor object
-  Caller     : general
-  Status     : Stable
-
-=cut
-
-sub adaptor {
-  my ($self, $adaptor) = @_;
-
-  if (defined($adaptor)) {
-    throw("$adaptor is not a Bio::EnsEMBL::Compara::DBSQL::GenomicAlignGroupAdaptor object")
-        unless ($adaptor->isa("Bio::EnsEMBL::Compara::DBSQL::GenomicAlignGroupAdaptor"));
-    $self->{'adaptor'} = $adaptor;
-  }
-
-  return $self->{'adaptor'};
-}
-
-
-=head2 dbID
-
-  Arg [1]    : integer $dbID
-  Example    : my $dbID = $genomic_align_group->dbID();
-  Example    : $genomic_align_group->dbID(12);
-  Description: Getter/Setter for the attribute dbID
-  Returntype : integer
-  Exceptions : none
-  Caller     : general
-  Status     : Stable
-
-=cut
-
-sub dbID {
-  my ($self, $dbID) = @_;
-
-  if (defined($dbID)) {
-    $self->{'dbID'} = $dbID;
-  }
-
-  return $self->{'dbID'};
-}
 
 =head2 genomic_align_array
 

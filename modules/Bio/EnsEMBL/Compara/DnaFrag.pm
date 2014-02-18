@@ -115,6 +115,9 @@ use warnings;
 use Bio::EnsEMBL::Utils::Exception qw(deprecate throw);
 use Bio::EnsEMBL::Utils::Argument;
 
+use base ('Bio::EnsEMBL::Storable');        # inherit dbID(), adaptor() and new() methods
+
+
 =head2 new
 
   Arg [-DBID] : (opt.) int $dbID (the database internal ID for this object)
@@ -154,9 +157,7 @@ use Bio::EnsEMBL::Utils::Argument;
 sub new {
   my($class,@args) = @_;
 
-  my $self = {};
-
-  bless $self,$class;
+  my $self = $class->SUPER::new(@_);       # deal with Storable stuff
 
 #   my ($name,$contig,$genomedb,$type,$adaptor,$dbID) =
 #     rearrange([qw(NAME CONTIG GENOMEDB TYPE ADAPTOR DBID)],@args);
@@ -164,15 +165,13 @@ sub new {
 #      $self->contig($contig);
 #    }
 
-  my ($dbID, $adaptor, $length, $name, $genome_db, $genome_db_id, $coord_system_name, $is_reference,
+  my ($length, $name, $genome_db, $genome_db_id, $coord_system_name, $is_reference,
           $start, $end, $genomedb, $type
       ) =
-    rearrange([qw(DBID ADAPTOR LENGTH NAME GENOME_DB GENOME_DB_ID COORD_SYSTEM_NAME IS_REFERENCE
+    rearrange([qw(LENGTH NAME GENOME_DB GENOME_DB_ID COORD_SYSTEM_NAME IS_REFERENCE
             START END
         )],@args);
 
-  $self->dbID($dbID) if (defined($dbID));
-  $self->adaptor($adaptor) if (defined($adaptor));
   $self->length($length) if (defined($length));
   $self->name($name) if (defined($name));
   $self->genome_db($genome_db) if (defined($genome_db));
@@ -188,76 +187,6 @@ sub new {
   ###################################################################
 
   return $self;
-}
-
-=head2 new_fast
-
-  Arg [1]    : hash reference $hashref
-  Example    : none
-  Description: This is an ultra fast constructor which requires knowledge of
-               the objects internals to be used.
-  Returntype :
-  Exceptions : none
-  Caller     :
-  Status     : Stable
-
-=cut
-
-sub new_fast {
-  my $class = shift;
-  my $hashref = shift;
-
-  return bless $hashref, $class;
-}
-
-=head2 dbID
-
- Arg [1]   : int $dbID
- Example   : $dbID = $dnafrag->dbID()
- Example   : $dnafrag->dbID(1)
- Function  : get/set dbID attribute.
- Returns   : integer
- Exeption  : none
- Caller    : $object->dbID
- Status    : Stable
-
-=cut
-
-sub dbID {
-  my ($self, $dbID) = @_;
-   
-  if (defined($dbID)) {
-    $self->{'dbID'} = $dbID;
-  }
-
-  return $self->{'dbID'};
-}
-
-
-=head2 adaptor
-
- Arg [1]   : Bio::EnsEMBL::Compara::DBSQL::DnaFragAdaptor $dnafrag_adaptor
- Example   : $dnafrag_adaptor = $dnafrag->adaptor()
- Example   : $dnafrag->adaptor($dnafrag_adaptor)
- Function  : get/set adaptor attribute.
- Returns   : Bio::EnsEMBL::Compara::DBSQL::DnaFragAdaptor object
- Exeption  : thrown if argument is not a Bio::EnsEMBL::Compara::DBSQL::DnaFragAdaptor
-             object
- Caller    : $object->adaptor
- Status    : Stable
-
-=cut
-
-sub adaptor {
-  my ($self, $adaptor) = @_;
-   
-  if (defined($adaptor)) {
-    throw("[$adaptor] must be a Bio::EnsEMBL::Compara::DBSQL::DnaFragAdaptor object")
-      unless ($adaptor->isa("Bio::EnsEMBL::Compara::DBSQL::DnaFragAdaptor"));
-    $self->{'adaptor'} = $adaptor;
-  }
-
-  return $self->{'adaptor'};
 }
 
 

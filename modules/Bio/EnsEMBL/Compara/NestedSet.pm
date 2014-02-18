@@ -53,13 +53,15 @@ use warnings;
 
 use Bio::EnsEMBL::Utils::Exception;
 use Bio::EnsEMBL::Utils::Argument;
-
-use Bio::EnsEMBL::Utils::Exception qw(deprecate throw warning);
 use Bio::EnsEMBL::Utils::Scalar qw(:assert);
 
+use Bio::EnsEMBL::Storable;
+
 use Bio::TreeIO;
+
 use Bio::EnsEMBL::Compara::Graph::Node;
-our @ISA = qw(Bio::EnsEMBL::Compara::Graph::Node);
+
+our @ISA = qw(Bio::EnsEMBL::Compara::Graph::Node Bio::EnsEMBL::Storable);
 
 #################################################
 # Factory methods
@@ -147,6 +149,11 @@ sub release_tree {
   $self->disavow_parent;
   $self->cascade_unlink if($child_count);
   return undef;
+}
+
+
+sub dbID {
+    throw("NestedSet objects do not implement dbID()");
 }
 
 #################################################

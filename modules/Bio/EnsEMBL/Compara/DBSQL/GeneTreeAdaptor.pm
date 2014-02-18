@@ -464,8 +464,8 @@ sub _objs_from_sth {
   while(my $rowhash = $sth->fetchrow_hashref) {
     #my $tree = new Bio::EnsEMBL::Compara::GeneTree(-adaptor => $self, %$rowhash);
     my $tree = Bio::EnsEMBL::Compara::GeneTree->new_fast({
-        _adaptor                    => $self,                   # field name NOT in sync with Bio::EnsEMBL::Storable
-        _root_id                    => $rowhash->{root_id},     # field name NOT in sync with Bio::EnsEMBL::Storable
+        adaptor                     => $self,
+        _root_id                    => $rowhash->{root_id},
         _tree_type                  => $rowhash->{tree_type},
         _member_type                => $rowhash->{member_type},
         _clusterset_id              => $rowhash->{clusterset_id},

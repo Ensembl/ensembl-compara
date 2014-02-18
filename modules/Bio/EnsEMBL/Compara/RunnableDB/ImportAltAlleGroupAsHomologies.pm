@@ -130,7 +130,7 @@ sub run {
     map {bless $_, 'Bio::EnsEMBL::Compara::AlignedMember'} @seq_members;
     if ($self->param('dry_run')) {
         foreach my $i (1..scalar(@seq_members)) {
-            $seq_members[$i-1]->{_dbID} = $i;
+            $seq_members[$i-1]->dbID($i);
         }
     }
 

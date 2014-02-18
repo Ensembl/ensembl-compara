@@ -88,6 +88,9 @@ use warnings;
 use Bio::EnsEMBL::Utils::Argument qw(rearrange);
 use Bio::EnsEMBL::Utils::Exception qw(warning throw);
 
+use base ('Bio::EnsEMBL::Storable');        # inherit dbID(), adaptor() and new() methods
+
+
 #store as 4 byte float
 my $pack_size = 4;
 my $pack_type = "f";
@@ -148,20 +151,18 @@ sub new {
 
     my($class, @args) = @_;
   
-    my $self = {};
-    bless $self,$class;
+    my $self = $class->SUPER::new(@_);       # deal with Storable stuff
     
-    my ($adaptor, $genomic_align_block, $genomic_align_block_id,
+    my ($genomic_align_block, $genomic_align_block_id,
 	$window_size, $position, $seq_region_pos, 
 	$expected_score, $diff_score, $packed, $y_axis_min, $y_axis_max) = 
 	    rearrange([qw(
-			  ADAPTOR GENOMIC_ALIGN_BLOCK GENOMIC_ALIGN_BLOCK_ID
+			  GENOMIC_ALIGN_BLOCK GENOMIC_ALIGN_BLOCK_ID
 			  WINDOW_SIZE POSITION SEQ_REGION_POS 
 			  EXPECTED_SCORE DIFF_SCORE PACKED Y_AXIS_MIN 
 			  Y_AXIS_MAX)],
 		      @args);
 
-    $self->adaptor($adaptor) if (defined($adaptor));
     $self->genomic_align_block($genomic_align_block) if (defined($genomic_align_block));
     $self->genomic_align_block_id($genomic_align_block_id) if (defined($genomic_align_block_id));
     $self->window_size($window_size) if (defined($window_size));
@@ -182,49 +183,9 @@ sub new {
     return $self;
 }
 
-=head2 new_fast
 
-  Arg [1]    : hash reference $hashref
-  Example    : none
-  Description: This is an ultra fast constructor which requires knowledge of
-               the objects internals to be used.
-  Returntype :
-  Exceptions : none
-  Caller     :
-  Status     : At risk
-
-=cut
-
-sub new_fast {
-  my ($class, $hashref) = @_;
-
-  return bless $hashref, $class;
-}
-
-=head2 adaptor
-
-  Arg [1]    : Bio::EnsEMBL::DBSQL::ConservationScoreAdaptor $adaptor
-  Example    : $conservation_score->adaptor($adaptor);
-  Description: Getter/Setter for the adaptor this object used for database
-               interaction
-  Returntype : Bio::EnsEMBL::DBSQL::ConservationScoreAdaptor object
-  Exceptions : thrown if the argument is not a
-               Bio::EnsEMBL::DBSQL::ConservationScoreAdaptor object
-  Caller     : general
-  Status     : At risk
-
-=cut
-
-sub adaptor {
-  my ( $self, $adaptor ) = @_;
-
-  if (defined($adaptor)) {
-    throw("$adaptor is not a Bio::EnsEMBL::Compara::DBSQL::ConservationScoreAdaptor object")
-        unless ($adaptor->isa("Bio::EnsEMBL::Compara::DBSQL::ConservationScoreAdaptor"));
-    $self->{'adaptor'} = $adaptor;
-  }
-
-  return $self->{'adaptor'};
+sub dbID {
+    throw("ConservationScore objects do not implement dbID()");
 }
 
 

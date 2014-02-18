@@ -87,8 +87,8 @@ sub _objs_from_sth {
   
   while ($sth->fetch()) {
     push @alignments, Bio::EnsEMBL::Compara::AlignedMemberSet->new_fast({
-            '_adaptor'          => $self,       # field name NOT in sync with Bio::EnsEMBL::Storable
-            '_dbID'             => $gene_align_id,
+            'adaptor'           => $self,
+            'dbID'              => $gene_align_id,
             '_aln_method'       => $aln_method,
             '_aln_length'       => $aln_length,
             '_seq_type'         => $seq_type,
