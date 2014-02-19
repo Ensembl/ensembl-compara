@@ -19,7 +19,7 @@
  *
  * link with libm (math) ie -lm
  *
- * Author: Dan Shepaprd (ds23)
+ * Author: Dan Sheppard (ds23)
  */
 
 /* This file is divided into sections identified by comments:
@@ -444,7 +444,7 @@ int annoyingness_threshold(int num) {
 /* Dump the appropriate number of words (by calculating the correct
  * annoyingness threshold).
  */
-void dump_words(struct word_table *pc) {
+void dump_words(struct word_table *pc,int threshold) {
   struct counter *c;
   int i,thresh,ann;
   double value; 
@@ -466,13 +466,15 @@ void dump_words(struct word_table *pc) {
             }
             if(strlen(d)>6)
               value -= 0.1 * (strlen(d)-6);
-            ss = get_sections(sections,d);
-            if(ss) {
-              for(s=ss;*s;s++)
-                printf("%s%s\t%1.1f\n",*s,d,value);
-              free(ss);
-            } else {
-              printf("%s\t%1.1f\n",d,value);
+            if(value >= threshold) {
+              ss = get_sections(sections,d);
+              if(ss) {
+                for(s=ss;*s;s++)
+                  printf("%s%s\t%1.1f\n",*s,d,value);
+                free(ss);
+              } else {
+                printf("%s\t%1.1f\n",d,value);
+              }
             }
           }
           d += strlen(d)+1;
@@ -819,12 +821,12 @@ void add_file_spec(char *spec) {
 /* max bytes of filename on stdin */
 #define MAXLINE 16384
 int main(int argc,char *argv[]) {
-  int idx,c,from_stdin=0;
+  int idx,c,from_stdin=0,threshold=6;
   char *fn,*p,**ss;
   struct file *f;
 
   all_start = block_start = time(0);
-  while((c = getopt(argc,argv,"cn:s:")) != -1) {
+  while((c = getopt(argc,argv,"cn:s:t:")) != -1) {
     switch (c) {
       case 'n':
         max_index_size = atoi(optarg);
@@ -838,6 +840,13 @@ int main(int argc,char *argv[]) {
         break;
       case 's':
         add_file_section(optarg);
+        break;
+      case 't':
+        threshold = atoi(optarg);
+        if(threshold<1) {
+          fprintf(stderr,"Bad threshold '%s'\n",optarg);
+          return 1;
+        }
         break;
       case '?':
         fprintf(stderr,"Bad command line options\n");
@@ -878,7 +887,7 @@ int main(int argc,char *argv[]) {
     process_file(ss,f->filename);
     free(ss);
   }
-  dump_words(prefixes);
+  dump_words(prefixes,threshold);
 
   fprintf(stderr,"Success.\n");
   return 0;
