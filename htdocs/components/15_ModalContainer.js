@@ -167,9 +167,9 @@ Ensembl.Panel.ModalContainer = Ensembl.Panel.Overlay.extend({
     var hash;
     
     if (id && id.match('-')) {
-      id   = id.split('-');
-      hash = id[1];
-      id   = id[0];
+      hash = id.split('-');
+      id   = hash.shift();
+      hash = hash.join('-');
     } else {
       hash = (url.match(/#(.+)$/) || [])[1];
     }
