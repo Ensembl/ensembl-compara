@@ -157,7 +157,7 @@ use base ('Bio::EnsEMBL::Storable');        # inherit dbID(), adaptor() and new(
 sub new {
   my($class,@args) = @_;
 
-  my $self = $class->SUPER::new(@_);       # deal with Storable stuff
+  my $self = $class->SUPER::new(@args);       # deal with Storable stuff
 
 #   my ($name,$contig,$genomedb,$type,$adaptor,$dbID) =
 #     rearrange([qw(NAME CONTIG GENOMEDB TYPE ADAPTOR DBID)],@args);

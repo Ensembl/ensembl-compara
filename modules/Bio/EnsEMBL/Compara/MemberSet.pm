@@ -127,7 +127,7 @@ use base ('Bio::EnsEMBL::Storable');        # inherit dbID(), adaptor() and new(
 sub new {
     my ($class, @args) = @_;
 
-    my $self = $class->SUPER::new(@_);       # deal with Storable stuff
+    my $self = $class->SUPER::new(@args);       # deal with Storable stuff
 
     if (scalar @args) {
         #do this explicitly.

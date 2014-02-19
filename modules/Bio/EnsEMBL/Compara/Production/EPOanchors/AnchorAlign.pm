@@ -45,7 +45,7 @@ use base ('Bio::EnsEMBL::Storable');        # inherit dbID(), adaptor() and new(
 sub new {
     my($class, @args) = @_;
 
-    my $self = $class->SUPER::new(@_);       # deal with Storable stuff
+    my $self = $class->SUPER::new(@args);       # deal with Storable stuff
 
     ## First lines are for backward compatibility, middle one is for both versions and
     ## last ones are for the new schema

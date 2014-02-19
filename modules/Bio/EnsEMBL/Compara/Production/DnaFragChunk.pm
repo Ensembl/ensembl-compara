@@ -55,7 +55,8 @@ use base ('Bio::EnsEMBL::Storable');        # inherit dbID(), adaptor() and new(
 sub new {
   my ($class, $dnafrag, $start, $end, $dnafrag_chunk_set_id) = @_;
 
-  my $self = $class->SUPER::new(@_);       # deal with Storable stuff
+  my $self = {};
+  bless $self, $class;
 
   $self->dnafrag($dnafrag)                     if($dnafrag);
   $self->seq_start($start)                     if($start);

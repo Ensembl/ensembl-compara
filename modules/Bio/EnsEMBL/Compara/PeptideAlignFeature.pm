@@ -74,9 +74,9 @@ use base ('Bio::EnsEMBL::Storable');        # inherit dbID(), adaptor() and new(
 
 
 sub new {
-  my ($class) = @_;
+  my ($class, @args) = @_;
 
-  my $self = $class->SUPER::new(@_);       # deal with Storable stuff
+  my $self = $class->SUPER::new(@args);       # deal with Storable stuff
 
   $self->query_member(new Bio::EnsEMBL::Compara::Member);
   $self->hit_member(new Bio::EnsEMBL::Compara::Member);

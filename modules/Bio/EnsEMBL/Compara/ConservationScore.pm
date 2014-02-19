@@ -151,7 +151,7 @@ sub new {
 
     my($class, @args) = @_;
   
-    my $self = $class->SUPER::new(@_);       # deal with Storable stuff
+    my $self = $class->SUPER::new(@args);       # deal with Storable stuff
     
     my ($genomic_align_block, $genomic_align_block_id,
 	$window_size, $position, $seq_region_pos, 
