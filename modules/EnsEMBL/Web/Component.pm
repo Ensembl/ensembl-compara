@@ -1051,11 +1051,19 @@ sub transcript_table {
     my %biotype_rows;
 
     my $trans_attribs = {};
+    my $trans_gencode = {};
+    my $gencode_html;
+
     foreach my $trans (@$transcripts) {
-      foreach my $attrib_type (qw(CDS_start_NF CDS_end_NF)) {
+      foreach my $attrib_type (qw(CDS_start_NF CDS_end_NF gencode_basic)) {
         (my $attrib) = @{$trans->get_all_Attributes($attrib_type)};
-        if ($attrib && $attrib->value) {
-          $trans_attribs->{$trans->stable_id}{$attrib_type} = $attrib->value;
+        if($attrib_type eq 'gencode_basic') {
+            if ($attrib && $attrib->value) {
+              $trans_gencode->{$trans->stable_id}{$attrib_type} = $attrib->value;
+              $gencode_html = "This transcript is a member of the Gencode basic gene set.<br /><br/>" if($trans->stable_id eq $transcript);
+            }
+        } else {
+          $trans_attribs->{$trans->stable_id}{$attrib_type} = $attrib->value if ($attrib && $attrib->value);
         }
       }
     }
@@ -1078,8 +1086,7 @@ sub transcript_table {
         action => 'Summary',
         g      => $gene_id
       });
-    
-      $gene_html = qq{This transcript is a product of gene <a href="$gene_url">$gene_id</a><br /><br />$gene_html};
+      $gene_html = qq{This transcript is a product of gene <a href="$gene_url">$gene_id</a><br /><br />$gencode_html$gene_html};
     }
     
     my $show    = $hub->get_cookie_value('toggle_transcripts_table') eq 'open';
@@ -1092,8 +1099,9 @@ sub transcript_table {
        { key => 'biotype',    sort => 'html',    title => 'Biotype'       },
     );
 
-    push @columns, { key => 'cds_tag', sort => 'html', title => 'CDS incomplete' } if %$trans_attribs; 
+    push @columns, { key => 'cds_tag', sort => 'html', title => 'CDS incomplete' } if %$trans_attribs;
     push @columns, { key => 'ccds', sort => 'html', title => 'CCDS' } if $species =~ /^Homo|Mus/;
+    push @columns, { key => 'gencode_set', sort => 'html', title => 'GENCODE basic' } if %$trans_gencode;
     
     my @rows;
     
@@ -1104,6 +1112,7 @@ sub transcript_table {
       my $protein_length    = '-';
       my $ccds              = '-';
       my $cds_tag           = '-';
+      my $gencode_set       = '-';
       my $url               = $hub->url({ %url_params, t => $tsi });
       
       if ($_->translation) {
@@ -1136,7 +1145,14 @@ sub transcript_table {
         }
         elsif ($trans_attribs->{$tsi}{'CDS_end_NF'}) {
          $cds_tag = "3'";
-       }
+        }
+      }
+
+      if ($trans_gencode->{$tsi}) {
+         if ($trans_gencode->{$tsi}{'gencode_basic'}) {
+          my $gencode_html = qq{This transcript is a member of the Gencode Basic Gene Set<br/><br/>};
+          $gencode_set = "Y";
+        }
       }
       
       (my $biotype = $_->biotype) =~ s/_/ /g;
@@ -1151,6 +1167,7 @@ sub transcript_table {
         ccds       => $ccds,
         has_ccds   => $ccds eq '-' ? 0 : 1,
         cds_tag    => $cds_tag,
+        gencode_set=> $gencode_set,
         options    => { class => $count == 1 || $tsi eq $transcript ? 'active' : '' }
       };
       
