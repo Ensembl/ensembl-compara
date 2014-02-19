@@ -107,7 +107,7 @@ img.helptip-icon                                   { vertical-align: middle; }
 div.ui-tooltip                                     { position: absolute; z-index: 999999; }
 div.ui-tooltip div.ui-tooltip-content              { position: relative; background-color: [[PAGE_TEXT]]; color: [[PAGE_BG]]; padding: 8px; margin: 6px; line-height: 16px; border-radius: 4px; max-width: 300px; }
 div.ui-tooltip div.ui-tooltip-content p:last-child { margin-bottom: 0; }
-div.ui-tooltip div.ui-tooltip-content a { color:[[TINT_BORDER]]; }
+div.ui-tooltip div.ui-tooltip-content a            { color: inherit; text-decoration: none; }
 
 /* IE is stupid and can't cope with :before and :after on different classnames, so have to use .helptip-top/.helptip-bottom instead of .ui-tooltip */
 div.helptip-top    div.ui-tooltip-content:before,
