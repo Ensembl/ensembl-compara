@@ -176,6 +176,10 @@ sub content {
     }
     $table->add_row('Annotation Attributes', $text) if $text;;
   }
+
+  ## add gencode basic info
+  $table->add_row('GENCODE basic gene', "This transcript is a member of the Gencode basic gene set.") if(@{$transcript->get_all_Attributes('gencode_basic')});
+
   return $table->render;
 }
 
