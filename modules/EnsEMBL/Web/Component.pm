@@ -1052,7 +1052,6 @@ sub transcript_table {
 
     my $trans_attribs = {};
     my $trans_gencode = {};
-    my $gencode_html;
 
     foreach my $trans (@$transcripts) {
       foreach my $attrib_type (qw(CDS_start_NF CDS_end_NF gencode_basic)) {
@@ -1060,7 +1059,6 @@ sub transcript_table {
         if($attrib_type eq 'gencode_basic') {
             if ($attrib && $attrib->value) {
               $trans_gencode->{$trans->stable_id}{$attrib_type} = $attrib->value;
-              $gencode_html = "This transcript is a member of the Gencode basic gene set.<br /><br/>" if($trans->stable_id eq $transcript);
             }
         } else {
           $trans_attribs->{$trans->stable_id}{$attrib_type} = $attrib->value if ($attrib && $attrib->value);
@@ -1086,7 +1084,7 @@ sub transcript_table {
         action => 'Summary',
         g      => $gene_id
       });
-      $gene_html = qq{This transcript is a product of gene <a href="$gene_url">$gene_id</a><br /><br />$gencode_html$gene_html};
+      $gene_html = qq{This transcript is a product of gene <a href="$gene_url">$gene_id</a><br /><br />$gene_html};
     }
     
     my $show    = $hub->get_cookie_value('toggle_transcripts_table') eq 'open';
@@ -1150,7 +1148,6 @@ sub transcript_table {
 
       if ($trans_gencode->{$tsi}) {
          if ($trans_gencode->{$tsi}{'gencode_basic'}) {
-          my $gencode_html = qq{This transcript is a member of the Gencode Basic Gene Set<br/><br/>};
           $gencode_set = "Y";
         }
       }

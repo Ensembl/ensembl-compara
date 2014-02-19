@@ -167,6 +167,10 @@ sub content {
   my $alt_trans = $self->_matches('alternative_transcripts', 'Alternative transcripts', 'ALT_TRANS', 'show_version');
   $table->add_row('Alternative transcripts', $alt_trans) if $alt_trans;
 
+
+  ## add gencode basic info
+  $table->add_row('GENCODE basic gene', "This transcript is a member of the Gencode basic gene set.") if(@{$transcript->get_all_Attributes('gencode_basic')});
+
   return $table->render;
 }
 
