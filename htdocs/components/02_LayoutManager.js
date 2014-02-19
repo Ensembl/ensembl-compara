@@ -230,9 +230,11 @@ Ensembl.LayoutManager.extend({
     document.title = document.title.replace(/(Chromosome ).+/, '$1' + text);
   },
   
-  toggleContent: function (rel) {
+  toggleContent: function (rel, delay) {
     if (rel) {
-      $('a.toggle[rel="' + rel + '"]').toggleClass('open closed');
+      window.setTimeout(function() {
+        $('a.toggle[rel="' + rel + '"]').toggleClass('open closed');
+      }, delay && $('a.toggle[rel="' + rel + '"]').hasClass('open') ? delay : 0);
     }
   },
   
