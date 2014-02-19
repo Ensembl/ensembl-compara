@@ -37,7 +37,7 @@ my $html  = "$root/public-plugins/docs/htdocs/info/docs/Doxygen";
 my $edocs = $apis[0] eq 'edocs' || !scalar @apis;
 
 @apis = split /,/, join ',', @apis;
-@apis = qw(core hive compara analysis external functgenomics pipeline variation) unless scalar @apis; # core and hive must always be first in order to generate links
+@apis = qw(core hive compara analysis external functgenomics pipeline variation production) unless scalar @apis; # core and hive must always be first in order to generate links
 
 unshift @INC, "$root/ensembl-webcode/conf", $root;
 require SiteDefs;
@@ -61,6 +61,11 @@ if ($apis[0] ne 'edocs') {
       PROJECT_BRIEF    => '"EnsEMBL FuncGen API reference"',
       OUTPUT_DIRECTORY => "$html/funcgen-api",
       STRIP_FROM_PATH  => "$root/ensembl-funcgen/modules/Bio/",
+    },
+    production => {
+      PROJECT_NAME     => '"Ensembl Production"',
+      PROJECT_BRIEF    => '"EnsEMBL Production API reference"',
+      TAFILES          => "ensembl.tag=../core-api/ \\ \n hive.tag=../hive-api/",
     },
     ensemblgenomes => {
       PROJECT_NAME     => '"Ensembl Genomes"',
