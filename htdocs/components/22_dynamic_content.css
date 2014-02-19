@@ -29,6 +29,7 @@ div#content div.panel { background-color:[[PANEL_BG]]; }
 */
 
 a.help-header                       { color: [[PAGE_HEADER]]; text-decoration: none; position: relative; }
+a.help-header:hover                 { color: [[BUTTON_BG]]; }
 a.help-header span                  { margin-right: 6px; display: inline-block; }
 a.help-header span.sprite           { float: none; background-position: 0 0; position: relative; top: 1px; }
 a.help-header:hover span.sprite     { background-position: 0 -18px; }
