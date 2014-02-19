@@ -47,7 +47,7 @@ sub get_genome_db {
   my $all_genome_dbs = $adaptor->fetch_all;
   $short_name =~ tr/\.//d;
   foreach my $genome_db (@$all_genome_dbs) {
-    if ($genome_db->short_name eq $short_name) {
+    if ($genome_db->get_short_name eq $short_name) {
       return $genome_db;
     }
   }
