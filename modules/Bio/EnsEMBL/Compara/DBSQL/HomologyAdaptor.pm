@@ -143,6 +143,8 @@ sub fetch_all_by_Member_paired_species {
       next if ($ml eq 'ENSEMBL_ORTHOLOGUES');
       $mlss = $mlssa->fetch_by_method_link_type_GenomeDBs($ml, [$gdb1], "no_warning");
     } else {
+      next if ($ml eq 'ENSEMBL_PARALOGUES');
+      next if ($ml eq 'ENSEMBL_PROJECTIONS');
       $mlss = $mlssa->fetch_by_method_link_type_GenomeDBs($ml, [$gdb1, $gdb2], "no_warning");
     }
     if (defined $mlss) {
