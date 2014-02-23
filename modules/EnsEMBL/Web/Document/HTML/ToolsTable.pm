@@ -27,9 +27,10 @@ use EnsEMBL::Web::Document::Table;
 use base qw(EnsEMBL::Web::Document::HTML);
 
 sub render { 
-  my $self           = shift;
-  my $hub            = EnsEMBL::Web::Hub->new;
-  my $sd             = $hub->species_defs;
+  my $self    = shift;
+  my $hub     = EnsEMBL::Web::Hub->new;
+  my $sd      = $hub->species_defs;
+  my $img_url = $sd->img_url;
 
   my $table = EnsEMBL::Web::Document::Table->new([
       { key => 'name', title => 'Name', width => '20%', align => 'left' },
@@ -41,13 +42,13 @@ sub render {
   );
 
   ## VEP
+  my $vep_link = $hub->url({'species' => $sd->ENSEMBL_PRIMARY_SPECIES, 'type' => 'Tools', 'action' => 'VEP'});
   $table->add_row({
-    'name' => sprintf('<a href="/%s/UserData/UploadVariations" class="modal_link nodeco"><b>Variant Effect Predictor</b><br /><img src="/i/vep_logo_sm.png" alt="[logo]"/></a>', $sd->ENSEMBL_PRIMARY_SPECIES),
-    'desc' => 'Analyse your own variants and predict the functional consequences of
-known and unknown variants via our Variant Effect Predictor (VEP) tool.',
-    'tool' => sprintf('<a href="/%s/UserData/UploadVariations" class="modal_link nodeco"><img src="/i/16/tool.png" alt="Tool" title="Go to online tool" /></a>', $sd->ENSEMBL_PRIMARY_SPECIES),
-    'code' => sprintf('<a href="https://github.com/Ensembl/ensembl-tools/tree/release/%s/scripts/variant_effect_predictor" rel="external" class="nodeco"><img src="/i/16/download.png" alt="Download" title="Download Perl script" /></a>', $sd->ENSEMBL_VERSION),
-    'docs' => '<a href="/info/docs/tools/vep/index.html"><img src="/i/16/info.png" alt="Documentation" /></a>',
+    'name' => sprintf('<a href="%s" class="nodeco"><b>Variant Effect Predictor</b><br /><img src="%svep_logo_sm.png" alt="[logo]" /></a>', $vep_link, $img_url),
+    'desc' => 'Analyse your own variants and predict the functional consequences of known and unknown variants via our Variant Effect Predictor (VEP) tool.',
+    'tool' => sprintf('<a href="%s" class="nodeco"><img src="%s16/tool.png" alt="Tool" title="Go to online tool" /></a>', $vep_link, $img_url),
+    'code' => sprintf('<a href="https://github.com/Ensembl/ensembl-tools/tree/release/%s/scripts/variant_effect_predictor" rel="external" class="nodeco"><img src="%s16/download.png" alt="Download" title="Download Perl script" /></a>', $sd->ENSEMBL_VERSION, $img_url),
+    'docs' => sprintf('<a href="/info/docs/tools/vep/index.html"><img src="%s16/info.png" alt="Documentation" /></a>', $img_url)
   });
 
   ## BLAST
@@ -55,9 +56,9 @@ known and unknown variants via our Variant Effect Predictor (VEP) tool.',
     $table->add_row({
       'name' => '<b><a href="/Multi/blastview">BLAST/BLAT</a></b>',
       'desc' => 'Search our genomes for your DNA or protein sequence.',
-      'tool' => '<a href="/Multi/blastview" class="nodeco"><img src="/i/16/tool.png" alt="Tool" title="Go to online tool" /></a>',
+      'tool' => sprintf('<a href="/Multi/blastview" class="nodeco"><img src="%s16/tool.png" alt="Tool" title="Go to online tool" /></a>', $img_url),
       'code' => '',
-      'docs' => '<a href="/Help/View?id=196" class="popup"><img src="/i/16/info.png" alt="Documentation" /></a>',
+      'docs' => sprintf('<a href="%s" class="popup"><img src="%s16/info.png" alt="Documentation" /></a>', $hub->url({'species' => '', 'type' => 'Help', 'action' => 'View', 'id' => { $sd->multiX('ENSEMBL_HELP') }->{'Multi/blastview'}}), $img_url)
     });
   }
 
@@ -66,9 +67,9 @@ known and unknown variants via our Variant Effect Predictor (VEP) tool.',
     $table->add_row({
       'name' => '<b><a href="/biomart/martview">BioMart</a></b>',
       'desc' => 'Use this data-mining tool to export custom datasets from Ensembl.',
-      'tool' => '<a href="/biomart/martview" class="nodeco"><img src="/i/16/tool.png" alt="Tool" title="Go to online tool" /></a>',
-      'code' => '<a href="http://biomart.org" rel="external" class="nodeco"><img src="/i/16/download.png" alt="Download" title="Download code from biomart.org" /></a>',
-      'docs' => '<a href="http://www.biomart.org/biomart/mview/help.html" class="popup"><img src="/i/16/info.png" alt="Documentation" /></a>',
+      'tool' => sprintf('<a href="/biomart/martview" class="nodeco"><img src="%s16/tool.png" alt="Tool" title="Go to online tool" /></a>', $img_url),
+      'code' => sprintf('<a href="http://biomart.org" rel="external" class="nodeco"><img src="%s16/download.png" alt="Download" title="Download code from biomart.org" /></a>', $img_url),
+      'docs' => sprintf('<a href="http://www.biomart.org/biomart/mview/help.html" class="popup"><img src="%s16/info.png" alt="Documentation" /></a>', $img_url)
     });
   }
 
@@ -76,8 +77,8 @@ known and unknown variants via our Variant Effect Predictor (VEP) tool.',
   $table->add_row({
     'name' => '<b>Assembly converter</b>',
     'desc' => "Map (liftover) your data's coordinates to the current assembly.",
-    'tool' => sprintf('<a href="/%s/UserData/SelectFeatures" class="modal_link nodeco"><img src="/i/16/tool.png" alt="Tool" title="Go to online tool" /></a>', $sd->ENSEMBL_PRIMARY_SPECIES),
-    'code' => sprintf('<a href="https://github.com/Ensembl/ensembl-tools/tree/release/%s/scripts/assembly_converter" rel="external" class="nodeco"><img src="/i/16/download.png" alt="Download" title="Download Perl script" /></a>', $sd->ENSEMBL_VERSION),
+    'tool' => sprintf('<a href="%s" class="modal_link nodeco"><img src="%s16/tool.png" alt="Tool" title="Go to online tool" /></a>', $hub->url({'species' => $sd->ENSEMBL_PRIMARY_SPECIES, 'type' => 'UserData', 'action' => 'SelectFeatures'}), $img_url),
+    'code' => sprintf('<a href="https://github.com/Ensembl/ensembl-tools/tree/release/%s/scripts/assembly_converter" rel="external" class="nodeco"><img src="%s16/download.png" alt="Download" title="Download Perl script" /></a>', $sd->ENSEMBL_VERSION, $img_url),
     'docs' => '',
   });
 
@@ -85,8 +86,8 @@ known and unknown variants via our Variant Effect Predictor (VEP) tool.',
   $table->add_row({
     'name' => '<b>ID History converter</b>',
     'desc' => 'Convert a set of Ensembl IDs from a previous release into their current equivalents.',
-    'tool' => sprintf('<a href="/%s/UserData/UploadStableIDs" class="modal_link nodeco"><img src="/i/16/tool.png" alt="Tool" title="Go to online tool" /></a>', $sd->ENSEMBL_PRIMARY_SPECIES),
-    'code' => sprintf('<a href="https://github.com/Ensembl/ensembl-tools/tree/release/%s/scripts/id_history_converter" rel="external" class="nodeco"><img src="/i/16/download.png" alt="Download" title="Download Perl script" /></a>', $sd->ENSEMBL_VERSION),
+    'tool' => sprintf('<a href="%s" class="modal_link nodeco"><img src="%s16/tool.png" alt="Tool" title="Go to online tool" /></a>', $hub->url({'species' => $sd->ENSEMBL_PRIMARY_SPECIES, 'type' => 'UserData', 'action' => 'UploadStableIDs'}), $img_url),
+    'code' => sprintf('<a href="https://github.com/Ensembl/ensembl-tools/tree/release/%s/scripts/id_history_converter" rel="external" class="nodeco"><img src="%s16/download.png" alt="Download" title="Download Perl script" /></a>', $sd->ENSEMBL_VERSION, $img_url),
     'docs' => '',
   });
 
@@ -95,8 +96,8 @@ known and unknown variants via our Variant Effect Predictor (VEP) tool.',
     'name' => '<b>Ensembl Virtual Machine</b>',
     'desc' => 'VirtualBox virtual Machine with Ubuntu desktop and pre-configured with the latest Ensembl API plus Variant Effect Predictor (VEP). <b>NB: download is >1 GB</b>',
     'tool' => '-',
-    'code' => '<a href="ftp://ftp.ensembl.org/pub/current_virtual_machine" rel="external" class="nodeco"><img src="/i/16/download.png" alt="Download" title="Download Virtual Machine" /></a>',
-    'docs' => '<a href="/info/data/virtual_machine.html"><img src="/i/16/info.png" alt="Documentation" /></a>',
+    'code' => sprintf('<a href="ftp://ftp.ensembl.org/pub/current_virtual_machine" rel="external" class="nodeco"><img src="%s16/download.png" alt="Download" title="Download Virtual Machine" /></a>', $img_url),
+    'docs' => sprintf('<a href="/info/data/virtual_machine.html"><img src="%s16/info.png" alt="Documentation" /></a>', $img_url)
   });
 
   return $table->render;
