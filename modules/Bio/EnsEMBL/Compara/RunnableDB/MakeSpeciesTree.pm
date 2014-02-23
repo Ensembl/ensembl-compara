@@ -116,6 +116,7 @@ sub fetch_input {
 
 
     }
+    $species_tree_root->build_leftright_indexing();
     $self->param('species_tree_root', $species_tree_root);
 }
 

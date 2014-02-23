@@ -68,7 +68,7 @@ use strict;
 use warnings;
 
 use Bio::EnsEMBL::DBLoader;
-use Bio::EnsEMBL::Utils::Exception qw(warning throw);
+use Bio::EnsEMBL::Utils::Exception qw(deprecate warning throw);
 use Bio::EnsEMBL::Utils::Argument qw(rearrange);
 
 use Bio::EnsEMBL::Compara::Utils::CoreDBAdaptor;
