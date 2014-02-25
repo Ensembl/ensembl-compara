@@ -90,6 +90,7 @@ sub param_defaults {
             'store_homologies'      => 1,
             'no_between'            => 0.25, # dont store all possible_orthologs
             'homoeologous_genome_dbs'  => [],
+            '_readonly'             => 0,
     };
 }
 
@@ -247,7 +248,7 @@ sub run_analysis {
       my $genepairlink = new Bio::EnsEMBL::Compara::Graph::Link($gene1, $gene2);
       $genepairlink->add_tag("ancestor", $ancestor);
       push @{$genepairlinks{$ancestor->get_tagvalue('node_type')}}, $genepairlink;
-      print STDERR "build graph $graphcount\n" if ($graphcount++ % 100 == 0);
+      print STDERR "build graph $graphcount\n" if ($graphcount++ % 1000 == 0);
      }
     }
   }
@@ -260,12 +261,17 @@ sub run_analysis {
   foreach my $genepairlink (@{$genepairlinks{speciation}}) {
     $self->tag_genepairlink($genepairlink, $self->tag_orthologues($genepairlink), 1);
   }
+  printf("%d homologies found so far\n", scalar(@{$self->param('homology_links')}));
+
   foreach my $genepairlink (@{$genepairlinks{dubious}}) {
     $self->tag_genepairlink($genepairlink, $self->tag_orthologues($genepairlink), 0);
   }
+  printf("%d homologies found so far\n", scalar(@{$self->param('homology_links')}));
+
   foreach my $genepairlink (@{$genepairlinks{gene_split}}) {
     $self->tag_genepairlink($genepairlink, 'gene_split', 1);
   }
+  printf("%d homologies found so far\n", scalar(@{$self->param('homology_links')}));
 
   my @todo4 = ();
   foreach my $genepairlink (@{$genepairlinks{duplication}}) {
@@ -278,6 +284,7 @@ sub run_analysis {
           push @todo4, $genepairlink;
       }
   }
+  printf("%d homologies found so far\n", scalar(@{$self->param('homology_links')}));
 
   foreach my $genepairlink (@todo4) {
       my $other = $self->is_level4_orthologues($genepairlink);
@@ -288,6 +295,7 @@ sub run_analysis {
           }
       }
   }
+  printf("%d homologies found so far\n", scalar(@{$self->param('homology_links')}));
 
   #display summary stats of analysis 
   if($self->debug) {
