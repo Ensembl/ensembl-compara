@@ -122,7 +122,7 @@ foreach my $method (sort keys %indexXMLDumper::) {
 
 if ($do_private) {
    print LOG "Dumping just private data\n";
-  @indexes = qw(Variation StructuralVariation);
+  @indexes = qw(StructuralVariation Variation );
 }
 elsif ($indexes_list eq 'ALL'){
   @indexes = ();
@@ -228,9 +228,8 @@ foreach my $index (@indexes) {
   $conf->{'directory'} = $loc . lc($sitetype)."_$index";
   system( "mkdir -p $conf->{'directory'}") unless -e $conf->{'directory'};
 
-  if ($index eq 'Variation') {
-    my $somloc = $do_private ? "$dir/ensembl_private/".lc($sitetype).'_SomaticMutation' : "$dir/".$shards{'SomaticMutation'}."/".lc($sitetype).'_SomaticMutation';
-    $conf->{'directory_somatic_mutations'} =  $somloc;
+  if ($index eq 'Variation' && ! $do_private) {
+    $conf->{'directory_somatic_mutations'} = "$dir/".$shards{'SomaticMutation'}."/".lc($sitetype).'_SomaticMutation';
     system("mkdir -p $conf->{'directory_somatic_mutations'}") unless -e  $conf->{'directory_somatic_mutations'};
   }
   foreach my $species ( @species ) {
@@ -578,7 +577,7 @@ sub dumpVariation {
   header($fh);
   my ($counter2,$file2,$fh2);
   my $somatic = { map { @$_ } @{$conf->{'variation_dbh'}->selectall_arrayref( "select source_id, somatic_status from source" )} };
-  my $somatic_present = ( grep { $somatic->{$_} } keys %$somatic ) ? 1 : 0;
+  my $somatic_present =  $do_private ? 0 : ( grep { $somatic->{$_} } keys %$somatic ) ? 1 : 0;
   if ($somatic_present) {
     $counter2 = make_counter(0);
     $file2 = $conf->{'directory_somatic_mutations'}."/${VariationDB}_SomaticMutation.xml";
@@ -644,7 +643,7 @@ sub dumpVariation {
     # only needed for private data
     print LOG "    Preparing to get SNP location info ", &date_and_mem, "\n";
     my $query = qq(
-     SELECT vf.variation_id, concat(sr.name, ':', vf.seq_region_start, '-',  vf.seq_region_end, ':', vf.seq_region_strand ) as location
+     SELECT vf.variation_id, concat(sr.name, ':', vf.seq_region_start-50, '-',  vf.seq_region_end+50, ':', vf.seq_region_strand ) as location
      FROM variation_feature vf, seq_region sr
      WHERE vf.seq_region_id = sr.seq_region_id);
     $sth = $conf->{'variation_dbh'}->prepare($query);
@@ -1018,6 +1017,10 @@ sub StrucVarLine {
                     $species,
                     $id);
   if ($do_private) {
+    my ($chr,$coords) = split ':', $location;
+    my ($start,$stop) = split '-', $coords;
+#    my $view = ($stop-$start+1 > 1e6) ? 'Overview' : 'View'; #use this when we have Structural Variations on Genoverse
+    my $view = 'View';
     $url = sprintf(qq(%s/Location/View?r=%s),
                     $species,
                     $location);
