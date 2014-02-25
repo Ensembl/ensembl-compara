@@ -899,7 +899,7 @@ sub string_node {
     my $isdub = ($self->get_tagvalue('node_type', '') eq 'dubious');
 
     if ($isdup) {
-        if ((defined $self->species_tree_node) && ($self->species_tree_node->genome_db_id)) {
+        if ($self->isa('Bio::EnsEMBL::Compara::GeneTreeNode') and (defined $self->species_tree_node) && ($self->species_tree_node->genome_db_id)) {
             $str .= "Dup ";
         } else {
             $str .= "DUP ";
