@@ -82,10 +82,22 @@ sub feature_content {
   my $start  = $feature->{'start'} + $self->hub->param('click_start') - 1;
   my $end    = $feature->{'end'} + $self->hub->param('click_start') - 1;
   my $single = $start == $end;
+  my $type;
+  my $click_data = $self->click_data;
+  my $type = $click_data->{'my_config'}->data->{'glyphset'} if $click_data;
   
   $self->new_feature;
-  
-  $self->caption(ref $feature eq 'HASH' ? $single ? $start : "$start-$end" : $feature->id || ($single ? $start : ''));
+
+  my $caption = '';
+  if(ref($feature) eq 'HASH' or $type eq 'bigbed') {
+    if($single) { $caption = $start; } else { $caption = "$start-$end"; }
+  } else {
+    $caption = $feature->id;
+  }
+  if(!$caption and $single) { # last attempt!
+    $caption = $start;
+  }
+  $self->caption($caption);
   
   my @entries = (
     $single ? (
