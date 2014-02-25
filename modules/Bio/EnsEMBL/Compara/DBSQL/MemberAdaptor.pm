@@ -553,7 +553,7 @@ sub init_instance_from_rowhash {
   $member->source_name($rowhash->{'source_name'});
   $member->display_label($rowhash->{'display_label'});
   $member->canonical_member_id($rowhash->{canonical_member_id}) if $member->can('canonical_member_id');
-  $member->adaptor($self);
+  $member->adaptor($self) if ref $self;
 
   return $member;
 }
