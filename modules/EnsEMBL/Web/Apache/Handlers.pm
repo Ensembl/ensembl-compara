@@ -262,6 +262,14 @@ sub handler {
     $redirect = 1;
   }  
 
+  ## Fix URL for V/SV Explore pages
+  if ($raw_path[1] =~ /Variation/ && $raw_path[2] eq 'Summary') {
+    $file =~ s/Summary/Explore/;
+    $file .= '?'.$querystring if $querystring;
+    $r->uri($file);
+    $redirect = 1;
+  }  
+
   ## Simple redirect to VEP
 
   if ($file =~ /\/info\/docs\/variation\/vep\/vep_script.html/) {
