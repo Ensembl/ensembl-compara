@@ -66,16 +66,12 @@ sub populate_tree {
     { 'availability' => 'gene', 'concise' => 'Marked-up sequence' }
   );
 
-  ## Only show this subnode for appropriate genes, to avoid confusing users
-  if ($self->{'_availability'}{'gene'} && $self->{'_availability'}{'can_r2r'} 
-      && $self->{'_availability'}{'has_2ndary'}) {
-    $seq_menu->append($self->create_node('SecondaryStructure', 'Secondary Structure',
-      [qw(
-        secondary EnsEMBL::Web::Component::Gene::RnaSecondaryStructure
-      )],
-    { 'availability' => 1}
-    ));
-  }
+  $seq_menu->append($self->create_node('SecondaryStructure', 'Secondary Structure',
+    [qw(
+      secondary EnsEMBL::Web::Component::Gene::RnaSecondaryStructure
+    )],
+   { 'availability' => 'gene can_r2r has_2ndary'}
+  ));
 
   $self->create_node('Matches', 'External references',
     [qw( matches EnsEMBL::Web::Component::Gene::SimilarityMatches )],
