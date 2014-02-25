@@ -111,7 +111,6 @@ sub populate_tree {
   $config_menu->append($self->create_node('ModifyConfig', '', [], { command => 'EnsEMBL::Web::Command::UserData::ModifyConfig' }));
   
   ## Data conversion
-  $tools_menu->append($self->create_node('UploadVariations',  'Variant Effect Predictor', [qw(upload_snps       EnsEMBL::Web::Component::UserData::UploadVariations)]));
   $tools_menu->append($self->create_node('SelectFeatures',    'Assembly Converter',       [qw(select_features   EnsEMBL::Web::Component::UserData::SelectFeatures)]));
   $tools_menu->append($self->create_node('UploadStableIDs',   'ID History Converter',     [qw(upload_stable_ids EnsEMBL::Web::Component::UserData::UploadStableIDs)]));
   $tools_menu->append($self->create_node('PreviewConvert',    '',                         [qw(conversion_done   EnsEMBL::Web::Component::UserData::PreviewConvert)]));
