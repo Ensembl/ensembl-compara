@@ -656,24 +656,24 @@ sub get_leaf_by_Member {
 
 sub find_leaf_by_node_id {
     my $self = shift;
-    return $self->root->find_leaf_by_node_id;
+    return $self->root->find_leaf_by_node_id(@_);
 }
 
 
 sub find_leaf_by_name {
     my $self = shift;
-    return $self->root->find_leaf_by_name;
+    return $self->root->find_leaf_by_name(@_);
 }
 
 
 sub find_node_by_node_id {
     my $self = shift;
-    return $self->root->find_node_by_node_id;
+    return $self->root->find_node_by_node_id(@_);
 }
 
 sub find_node_by_name {
     my $self = shift;
-    return $self->root->find_node_by_name;
+    return $self->root->find_node_by_name(@_);
 }
 
 
@@ -693,7 +693,7 @@ sub find_node_by_name {
 
 sub newick_format {
     my $self = shift;
-    return $self->root->newick_format;
+    return $self->root->newick_format(@_);
 }
 
 
@@ -714,7 +714,7 @@ sub newick_format {
 
 sub nhx_format {
     my $self = shift;
-    return $self->root->nhx_format;
+    return $self->root->nhx_format(@_);
 }
 
 
@@ -733,7 +733,7 @@ sub nhx_format {
 
 sub string_tree {
     my $self = shift;
-    return $self->root->string_tree;
+    return $self->root->string_tree(@_);
 }
 
 
