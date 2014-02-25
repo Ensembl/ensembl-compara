@@ -1041,6 +1041,8 @@ sub transcript_table {
 
   my $gene = $object->gene;
   
+  my $gencode_desc = "The GENCODE basic set is a subset of the GENCODE genes.  Only full-length transcripts are displayed for each locus, unless there are none available, in which case a partial transcript (with the largest CDS in the case of protein-coding genes) will be shown";
+
   if ($gene) {
     my $transcript  = $page_type eq 'transcript' ? $object->stable_id : $hub->param('t');
     my $transcripts = $gene->get_all_Transcripts;
@@ -1148,12 +1150,11 @@ sub transcript_table {
 
       if ($trans_gencode->{$tsi}) {
          if ($trans_gencode->{$tsi}{'gencode_basic'}) {
-          $gencode_set = "Y";
+          $gencode_set = qq(<span class="glossary_mouseover">Y<span class="floating_popup">$gencode_desc</span></span>);
         }
-      }
-      
+       }
       (my $biotype = $_->biotype) =~ s/_/ /g;
-      
+
       my $row = {
         name       => { value => $_->display_xref ? $_->display_xref->display_id : 'Novel', class => 'bold' },
         transcript => sprintf('<a href="%s">%s</a>', $url, $tsi),
