@@ -79,8 +79,8 @@ sub sorted_extra_keys {
 sub feature_content {
   my ($self, $feature, $i) = @_;
   my %extra  = ref $feature ne 'HASH' && $feature->can('extra_data') && ref $feature->extra_data eq 'HASH' ? %{$feature->extra_data} : ();
-  my $start  = $feature->{'start'};
-  my $end    = $feature->{'end'};
+  my $start  = $feature->{'start'} + $self->hub->param('click_start') - 1;
+  my $end    = $feature->{'end'} + $self->hub->param('click_start') - 1;
   my $single = $start == $end;
   
   $self->new_feature;
