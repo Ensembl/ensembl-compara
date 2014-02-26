@@ -274,14 +274,33 @@ sub run_analysis {
   printf("%d homologies found so far\n", scalar(@{$self->param('homology_links')}));
 
   my @todo4 = ();
+
+  my @duplication_nodes = ();
+  my $last_node_id = undef;
   foreach my $genepairlink (@{$genepairlinks{duplication}}) {
-      my ($pep1, $pep2) = $genepairlink->get_nodes;
-      if ($pep1->genome_db_id == $pep2->genome_db_id) {
-          $self->tag_genepairlink($genepairlink, 'within_species_paralog', 1);
-      } elsif ($self->is_level3_orthologues($genepairlink)) {
-          $self->tag_genepairlink($genepairlink, $self->tag_orthologues($genepairlink), 0);
-      } else {
-          push @todo4, $genepairlink;
+      my $this_node_id = $genepairlink->get_value_for_tag('ancestor')->node_id;
+      if ((not $last_node_id) or ($last_node_id != $this_node_id)) {
+          push @duplication_nodes, [];
+      }
+      $last_node_id = $this_node_id;
+      push @{$duplication_nodes[-1]}, $genepairlink;
+  }
+  printf("%d homologies found so far\n", scalar(@{$self->param('homology_links')}));
+
+  foreach my $pair_group (@duplication_nodes) {
+      my @good_ones = ();
+      foreach my $genepairlink (@$pair_group) {
+          my ($pep1, $pep2) = $genepairlink->get_nodes;
+          if ($pep1->genome_db_id == $pep2->genome_db_id) {
+              push @good_ones, [$genepairlink, 'within_species_paralog', 1];
+          } elsif ($self->is_level3_orthologues($genepairlink)) {
+              push @good_ones, [$genepairlink, $self->tag_orthologues($genepairlink), 0];
+          } else {
+              push @todo4, $genepairlink;
+          }
+      }
+      foreach my $par (@good_ones) {
+          $self->tag_genepairlink(@$par);
       }
   }
   printf("%d homologies found so far\n", scalar(@{$self->param('homology_links')}));
