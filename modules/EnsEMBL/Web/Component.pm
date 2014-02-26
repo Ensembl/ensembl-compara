@@ -1041,7 +1041,7 @@ sub transcript_table {
 
   my $gene = $object->gene;
   
-  my $gencode_desc = "The GENCODE basic set is a subset of the GENCODE genes.  Only full-length transcripts are displayed for each locus, unless there are none available, in which case a partial transcript (with the largest CDS in the case of protein-coding genes) will be shown";
+  my $gencode_desc = "The GENCODE Basic set includes all genes in the GENCODE gene set but only a subset of the transcripts.";
 
   if ($gene) {
     my $transcript  = $page_type eq 'transcript' ? $object->stable_id : $hub->param('t');
