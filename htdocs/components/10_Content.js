@@ -195,6 +195,8 @@ Ensembl.Panel.Content = Ensembl.Panel.extend({
     
     $('a.toggle, .ajax_add', this.el).on('click', function (e) {
       
+      e.preventDefault();
+      
       var duration = !!e.which && $(this).hasClass('_slide_toggle') ? parseInt((this.className.match(/_slide_toggle_(\d+)/) || [300]).pop()) : undefined;
       
       if ($(this).hasClass('ajax_add')) {
