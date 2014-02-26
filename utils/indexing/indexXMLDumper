@@ -3015,7 +3015,7 @@ sub LRGLine {
   <field name="id">$gsi</field>
   <field name="description">$description</field>);
   $xml .= qq(
-  <field name="xref">$dbkey</field>);
+  <field name="xrefs">$dbkey</field>);
   foreach my $tsi (@$tsids) {
     $xml .= qq(
   <field name="transcript">$tsi</field>);
