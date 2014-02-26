@@ -132,7 +132,7 @@ sub fetch_all_by_Member_paired_species {
   }
 
   unless (defined $method_link_types) {
-    $method_link_types = ['ENSEMBL_ORTHOLOGUES','ENSEMBL_PARALOGUES'];
+    $method_link_types = ['ENSEMBL_ORTHOLOGUES','ENSEMBL_PARALOGUES','ENSEMBL_HOMOEOLOGUES'];
   }
   my $mlssa = $self->db->get_MethodLinkSpeciesSetAdaptor;
 
@@ -145,6 +145,7 @@ sub fetch_all_by_Member_paired_species {
     } else {
       next if ($ml eq 'ENSEMBL_PARALOGUES');
       next if ($ml eq 'ENSEMBL_PROJECTIONS');
+      next if ($ml eq 'ENSEMBL_HOMOEOLOGUES');
       $mlss = $mlssa->fetch_by_method_link_type_GenomeDBs($ml, [$gdb1, $gdb2], "no_warning");
     }
     if (defined $mlss) {
@@ -289,6 +290,7 @@ sub fetch_all_by_genome_pair {
     my @all_mlss;
     if ($genome_db_id1 == $genome_db_id2) {
         push @all_mlss, $mlssa->fetch_by_method_link_type_GenomeDBs('ENSEMBL_PARALOGUES', [$genome_db_id1]);
+        push @all_mlss, $mlssa->fetch_by_method_link_type_GenomeDBs('ENSEMBL_HOMOEOLOGUES', [$genome_db_id1]);
     } else {
         push @all_mlss, $mlssa->fetch_by_method_link_type_GenomeDBs('ENSEMBL_ORTHOLOGUES', [$genome_db_id1, $genome_db_id2]);
         push @all_mlss, $mlssa->fetch_by_method_link_type_GenomeDBs('ENSEMBL_PARALOGUES', [$genome_db_id1, $genome_db_id2]);
