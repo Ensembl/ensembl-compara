@@ -18,11 +18,15 @@
 
 $.extend($.fn.dataTableExt.oSort, {
   'numeric-asc': function (a, b) {
+    a = parseFloat(a);
+    b = parseFloat(b);
     var x = isNaN(a) || a === ' ' || a === '' ? 1e100 : a;
     var y = isNaN(b) || b === ' ' || b === '' ? 1e100 : b;
     return x - y;
   },
   'numeric-desc': function (a, b) {
+    a = parseFloat(a);
+    b = parseFloat(b);
     var x = isNaN(a) || a === ' ' || a === '' ? -1e100 : a;
     var y = isNaN(b) || b === ' ' || b === '' ? -1e100 : b;
     return y - x;
