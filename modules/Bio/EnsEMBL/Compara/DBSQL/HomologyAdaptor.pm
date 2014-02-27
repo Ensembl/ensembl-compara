@@ -32,13 +32,14 @@ use DBI qw(:sql_types);
 
 our @ISA = qw(Bio::EnsEMBL::Compara::DBSQL::BaseRelationAdaptor);
 
+our %single_species_ml = ('ENSEMBL_PARALOGUES' => 1, 'ENSEMBL_HOMOEOLOGUES' => 1, 'ENSEMBL_ORTHOLOGUES' => 0, 'ENSEMBL_PROJECTIONS' => 0);
 
 =head2 fetch_all_by_Member
 
   Arg [1]    : Bio::EnsEMBL::Compara::Member $member
   Arg [-METHOD_LINK_TYPE] (opt)
              : string: the method_link_type of the homologies
-               probably ENSEMBL_ORTHOLOGUES or ENSEMBL_PARALOGUES
+               usually ENSEMBL_ORTHOLOGUES or ENSEMBL_PARALOGUES
   Arg [-METHOD_LINK_SPECIES_SET] (opt)
              : Bio::EnsEMBL::Compara::MethodLinkSpeciesSet
                Describes the kind of homology and the set of species
@@ -132,7 +133,7 @@ sub fetch_all_by_Member_paired_species {
   }
 
   unless (defined $method_link_types) {
-    $method_link_types = ['ENSEMBL_ORTHOLOGUES','ENSEMBL_PARALOGUES','ENSEMBL_HOMOEOLOGUES'];
+    $method_link_types = [keys %single_species_ml];
   }
   my $mlssa = $self->db->get_MethodLinkSpeciesSetAdaptor;
 
@@ -140,12 +141,10 @@ sub fetch_all_by_Member_paired_species {
   foreach my $ml (@{$method_link_types}) {
     my $mlss;
     if ($gdb1->dbID == $gdb2->dbID) {
-      next if ($ml eq 'ENSEMBL_ORTHOLOGUES');
+      next unless $single_species_ml{$ml};
       $mlss = $mlssa->fetch_by_method_link_type_GenomeDBs($ml, [$gdb1], "no_warning");
     } else {
-      next if ($ml eq 'ENSEMBL_PARALOGUES');
-      next if ($ml eq 'ENSEMBL_PROJECTIONS');
-      next if ($ml eq 'ENSEMBL_HOMOEOLOGUES');
+      next if $single_species_ml{$ml};
       $mlss = $mlssa->fetch_by_method_link_type_GenomeDBs($ml, [$gdb1, $gdb2], "no_warning");
     }
     if (defined $mlss) {
