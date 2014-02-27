@@ -144,7 +144,7 @@ sub store_node {
 
     if (not($node->adaptor and $node->adaptor->isa('Bio::EnsEMBL::Compara::DBSQL::SpeciesTreeNodeAdaptor') and $node->adaptor eq $self)) {
 
-        my ($count_current_rows) = @{$self->dbc->db_handle->selectall_arrayref("SELECT COUNT(*) FROM species_tree_node")};
+        my $count_current_rows = $self->dbc->db_handle->selectall_arrayref("SELECT COUNT(*) FROM species_tree_node")->[0]->[0];
 
         my $node_id;
         if ($count_current_rows) {
