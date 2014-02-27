@@ -77,7 +77,7 @@ sub fetch_all_by_Member {
   }
 
   if (defined $species_tree_node_ids) {
-    $constraint = sprintf(' %s AND h.species_tree_node_id IN (%s)', $constraint, join(',', -1, @$species_tree_node_ids));
+    $constraint .= sprintf(' AND h.species_tree_node_id IN (%s)', join(',', -1, @$species_tree_node_ids));
   }
 
   # This internal variable is used by add_Member method 
@@ -237,7 +237,7 @@ sub fetch_all_by_MethodLinkSpeciesSet {
     }
 
     if (defined $species_tree_node_ids) {
-        $constraint = sprintf(' %s AND h.species_tree_node_id IN (%s)', $constraint, join(',', -1, @$species_tree_node_ids));
+        $constraint .= sprintf(' AND h.species_tree_node_id IN (%s)', join(',', -1, @$species_tree_node_ids));
     }
 
     return $self->generic_fetch($constraint);
