@@ -143,23 +143,25 @@ sub store_node {
     assert_ref($node, 'Bio::EnsEMBL::Compara::SpeciesTreeNode');
 
     if (not($node->adaptor and $node->adaptor->isa('Bio::EnsEMBL::Compara::DBSQL::SpeciesTreeNodeAdaptor') and $node->adaptor eq $self)) {
-        my $sth1 = $self->prepare("INSERT INTO species_tree_node VALUES ()");
-        $sth1->execute();
-        my $node_id = $sth1->{'mysql_insertid'};
-        $sth1->finish();
-        ## $node_id is 1 if table is empty then $node_id should be mlss_id * 1000
-        if ($node_id == 1) {
+
+        my ($count_current_rows) = @{$self->dbc->db_handle->selectall_arrayref("SELECT COUNT(*) FROM species_tree_node")};
+
+        my $node_id;
+        if ($count_current_rows) {
+            my $sth1 = $self->prepare("INSERT INTO species_tree_node VALUES ()");
+            $sth1->execute();
+            $node_id = $sth1->{'mysql_insertid'};
+            $sth1->finish();
+
+        } else {
+            ## if table is empty then $node_id should be mlss_id * 1000
             $node_id = $mlss_id * 1000;
-            my $sth2 = $self->prepare("TRUNCATE species_tree_node");
-            $sth2->execute();
-            $sth2->finish();
             my $sth3 = $self->prepare("INSERT INTO species_tree_node (node_id) VALUES (?)");
             $sth3->execute($node_id);
             $sth3->finish();
         }
 
         $node->node_id( $node_id );
-        $sth1->finish();
     }
 
     my $parent_id = $node->parent->node_id if($node->parent);
