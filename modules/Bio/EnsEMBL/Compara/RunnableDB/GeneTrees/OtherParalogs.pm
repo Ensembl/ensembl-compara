@@ -74,6 +74,7 @@ sub param_defaults {
     return {
             'tag_split_genes'       => 0,
             'store_homologies'      => 1,
+            'homoeologous_genome_dbs'  => [],
     };
 }
 
