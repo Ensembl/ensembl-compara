@@ -208,6 +208,14 @@ sub species_tree {
 }
 
 
+sub attach_to_genome_dbs {
+    my ($self) = @_;
+    foreach my $leaf (@{$self->root->get_all_leaves}) {
+        next unless $leaf->genome_db_id;
+        my $genome_db = $self->adaptor->db->get_GenomeDBAdaptor->fetch_by_dbID($leaf->genome_db_id);
+        $genome_db->species_tree_node_id($leaf->node_id);
+    }
+}
 
 1;
 

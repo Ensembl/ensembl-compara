@@ -298,6 +298,8 @@ sub load_cigars_from_file {
         : whether the species (in short name format) should be added to the sequence names
     Arg [-APPEND_GENOMEDB_ID] (opt) boolean (default: false)
         : whether the genome_db_id should be added to the sequence names
+    Arg [-APPEND_SPECIES_TREE_NODE_ID] (opt) boolean (default: false)
+        : whether the reference species_tree_node_id should be added to the sequence names
     Arg [-KEEP_GAPS] (opt) boolean (default: false)
         : whether columns that only contain gaps should be kept in the alignment
     Arg [-SEQ_TYPE] (opt) string
@@ -322,11 +324,12 @@ sub get_SimpleAlign {
     my $append_taxon_id = 0;
     my $append_sp_short_name = 0;
     my $append_genomedb_id = 0;
+    my $append_stn_id = 0;
     my $keep_gaps = 0;
     my $seq_type = undef;
     if (scalar @args) {
-        ($unique_seqs,  $id_type, $stop2x, $append_taxon_id, $append_sp_short_name, $append_genomedb_id, $keep_gaps, $seq_type) =
-            rearrange([qw(UNIQ_SEQ ID_TYPE STOP2X APPEND_TAXON_ID APPEND_SP_SHORT_NAME APPEND_GENOMEDB_ID KEEP_GAPS SEQ_TYPE)], @args);
+        ($unique_seqs,  $id_type, $stop2x, $append_taxon_id, $append_sp_short_name, $append_genomedb_id, $append_stn_id, $keep_gaps, $seq_type) =
+            rearrange([qw(UNIQ_SEQ ID_TYPE STOP2X APPEND_TAXON_ID APPEND_SP_SHORT_NAME APPEND_GENOMEDB_ID APPEND_SPECIES_TREE_NODE_ID KEEP_GAPS SEQ_TYPE)], @args);
     }
 
     die "-SEQ_TYPE cannot be specified if \$self->seq_type is already defined" if $seq_type and $self->seq_type;
@@ -375,9 +378,9 @@ sub get_SimpleAlign {
         my $seqID = $member->stable_id;
         $seqID = $member->sequence_id if $id_type and $id_type eq 'SEQ';
         $seqID = $member->member_id if $id_type and $id_type eq 'MEMBER';
-        $seqID = $member->{_tmp_name} if $id_type and $id_type eq 'TMP';
         $seqID .= "_" . $member->taxon_id if($append_taxon_id);
         $seqID .= "_" . $member->genome_db_id if ($append_genomedb_id);
+        $seqID .= "_" . $member->genome_db->species_tree_node_id if ($append_stn_id);
 
         ## Append $seqID with species short name, if required
         if ($append_sp_short_name and $member->genome_db_id) {

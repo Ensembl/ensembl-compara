@@ -273,8 +273,7 @@ sub _dumpMultipleAlignmentStructToWorkdir {
     open(OUTSEQ, ">$aln_file")
         or $self->throw("Error opening $aln_file for write");
 
-    $self->prepareTemporaryMemberNames($tree);
-    my $sa = $tree->get_SimpleAlign(-id_type => 'TMP');
+    my $sa = $tree->get_SimpleAlign(-APPEND_SPECIES_TREE_NODE_ID => 1);
     $sa->set_displayname_flat(1);
 
     # Phylip header

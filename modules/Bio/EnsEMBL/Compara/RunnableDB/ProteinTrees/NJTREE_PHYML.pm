@@ -159,11 +159,14 @@ sub run_njtree_phyml {
 
     my $starttime = time()*1000;
     
+    my $lookup = eval($self->compara_dba->get_MethodLinkSpeciesSetAdaptor->fetch_by_dbID($self->param_required('mlss_id'))->get_value_for_tag('gdb2stn'));
+    foreach my $member (@{$gene_tree->get_all_Members}) {
+        $member->{_tmp_name} = sprintf('%d_%d', $member->member_id, $lookup->{$member->genome_db_id});
+    }
 
     if (scalar(@{$gene_tree->get_all_Members}) == 2) {
 
         warn "Number of elements: 2 leaves, N/A split genes\n";
-        $self->prepareTemporaryMemberNames($gene_tree);
         my @goodgenes = map {$_->{_tmp_name}} @{$gene_tree->get_all_Members};
         $newick = $self->run_treebest_sdi_genepair(@goodgenes);
     

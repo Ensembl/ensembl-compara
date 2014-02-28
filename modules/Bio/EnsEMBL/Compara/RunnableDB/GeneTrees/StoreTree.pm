@@ -33,16 +33,6 @@ use Bio::EnsEMBL::Compara::Graph::NewickParser;
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
 
-sub prepareTemporaryMemberNames {
-    my $self = shift;
-    my $gene_tree = shift;
-
-    my $lookup = eval($self->compara_dba->get_MethodLinkSpeciesSetAdaptor->fetch_by_dbID($self->param_required('mlss_id'))->get_value_for_tag('gdb2stn'));
-    foreach my $member (@{$gene_tree->get_all_Members}) {
-        $member->{_tmp_name} = sprintf('%d_%d', $member->member_id, $lookup->{$member->genome_db_id});
-    }
-}
-
 sub dumpTreeMultipleAlignmentToWorkdir {
   my $self = shift;
   my $gene_tree = shift;
@@ -60,7 +50,6 @@ sub dumpTreeMultipleAlignmentToWorkdir {
   }
 
   print STDERR "fetching alignment\n" if ($self->debug);
-  $self->prepareTemporaryMemberNames($gene_tree);
 
   ########################################
   # Gene split mirroring code
@@ -117,7 +106,8 @@ sub dumpTreeMultipleAlignmentToWorkdir {
  
   # Getting the multiple alignment
   my $sa = $gene_tree->get_SimpleAlign(
-     -id_type => 'TMP',
+     -id_type => 'MEMBER',
+     -APPEND_SPECIES_TREE_NODE_ID => 1,
      -stop2x => 1,
      $self->param('cdna') ? (-seq_type => 'cds') : (),
   );
