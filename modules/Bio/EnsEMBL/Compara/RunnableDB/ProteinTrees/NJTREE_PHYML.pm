@@ -86,7 +86,7 @@ sub fetch_input {
     $gene_tree->print_tree(10) if($self->debug);
 
     $self->param('gene_tree', $gene_tree);
-
+    $self->_load_species_tree_string_from_db();
 }
 
 
@@ -159,9 +159,8 @@ sub run_njtree_phyml {
 
     my $starttime = time()*1000;
     
-    my $lookup = eval($self->compara_dba->get_MethodLinkSpeciesSetAdaptor->fetch_by_dbID($self->param_required('mlss_id'))->get_value_for_tag('gdb2stn'));
     foreach my $member (@{$gene_tree->get_all_Members}) {
-        $member->{_tmp_name} = sprintf('%d_%d', $member->member_id, $lookup->{$member->genome_db_id});
+        $member->{_tmp_name} = sprintf('%d_%d', $member->member_id, $member->genome_db->species_tree_node_id);
     }
 
     if (scalar(@{$gene_tree->get_all_Members}) == 2) {

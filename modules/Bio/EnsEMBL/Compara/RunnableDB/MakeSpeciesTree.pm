@@ -151,12 +151,6 @@ sub write_output {
     } else {
         $speciesTree_adaptor->store($species_tree);
     }
-
-    if ($self->param('for_gene_trees')) {
-        # We need to create a fast lookup: genome_db_id => species_tree_node_id
-        my $str = '{'.join(', ', map {sprintf('%d=>%d', $_->genome_db_id, $_->node_id)} @{$species_tree_root->get_all_leaves} ).'}';
-        $self->compara_dba->get_MethodLinkSpeciesSetAdaptor->fetch_by_dbID($self->param('mlss_id'))->store_tag('gdb2stn', $str);
-    }
 }
 
 

@@ -297,7 +297,6 @@ sub pipeline_analyses {
                 'multifurcation_deletes_node'           => [ 129949, 314146 ], # 33316 has been removed from NCBI taxonomy
                 'multifurcation_deletes_all_subnodes'   => [  9347, 186625,  32561 ],
                 'mlss_id'                               => $self->o('mlss_id'),
-                'for_gene_trees'                        => 1,
             },
         },
 

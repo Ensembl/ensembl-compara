@@ -194,12 +194,10 @@ sub load_input_trees {
   my $self = shift;
   my $tree = $self->param('gene_tree');
 
-  my $lookup = eval($self->compara_dba->get_MethodLinkSpeciesSetAdaptor->fetch_by_dbID($self->param_required('mlss_id'))->get_value_for_tag('gdb2stn'));
-
   for my $other_tree (@{$self->compara_dba->get_GeneTreeAdaptor->fetch_all_linked_trees($tree)}) {
     # horrible hack: we replace taxon_id with species_tree_node_id
     foreach my $leaf (@{$other_tree->get_all_leaves}) {
-        $leaf->taxon_id($lookup->{$leaf->genome_db_id});
+        $leaf->taxon_id($leaf->genome_db->species_tree_node_id);
     }
     print STDERR $other_tree->newick_format('ryo','%{-m}%{"_"-x}:%{d}') if ($self->debug);
     my $tag = $other_tree->clusterset_id;
