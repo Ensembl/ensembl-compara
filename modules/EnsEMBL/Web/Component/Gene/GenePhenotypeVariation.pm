@@ -111,7 +111,7 @@ sub stats_table {
   }
   push @$columns,  { key => 'source',  title => 'Source(s)',  sort => 'string', width => '11%'};
   
-  foreach my $pf (@{$pf_adaptor->fetch_all_by_associated_gene($gene_name)}) {
+  foreach my $pf ($gene_name ? @{$pf_adaptor->fetch_all_by_associated_gene($gene_name)} : ()) {
     my $var_name   = $pf->object->name;  
     my $phe        = $pf->phenotype->description;
     my $phe_source = $pf->source;
