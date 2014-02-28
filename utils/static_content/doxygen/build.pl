@@ -37,7 +37,7 @@ my $html  = "$root/public-plugins/docs/htdocs/info/docs/Doxygen";
 my $edocs = $apis[0] eq 'edocs' || !scalar @apis;
 
 @apis = split /,/, join ',', @apis;
-@apis = qw(core hive compara analysis external functgenomics pipeline variation production) unless scalar @apis; # core and hive must always be first in order to generate links
+@apis = qw(core hive compara analysis funcgen pipeline variation production) unless scalar @apis; # core and hive must always be first in order to generate links
 
 unshift @INC, "$root/ensembl-webcode/conf", $root;
 require SiteDefs;
