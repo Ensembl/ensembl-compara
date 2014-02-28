@@ -221,8 +221,8 @@ sub store_node_tags
         } else {
             $node_type = 'speciation';
         }
-        $node->store_tag('node_type', $node_type);
         print "node_type: $node_type\n" if ($self->debug);
+        $node->store_tag('node_type', $node_type);
     }
 
     $node->delete_tag('lost_species_tree_node_id');
@@ -258,8 +258,8 @@ sub store_node_tags
         my $db_tag = $mapped_tags{$tag};
         if ($node->has_tag($tag)) {
             my $value = $node->get_tagvalue($tag);
-            $node->store_tag($db_tag, $value);
             print "$tag as $db_tag: $value\n" if ($self->debug);
+            $node->store_tag($db_tag, $value);
         } else {
             $node->delete_tag($db_tag);
         }
