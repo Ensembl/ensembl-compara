@@ -264,7 +264,7 @@ my $member_id_cb = sub {
 # C(taxon_id)
 my $taxon_id_cb = sub {
   my ($self) = @_;
-  if ($self->{tree}->isa('Bio::EnsEMBL::Compara::GeneTreeNode')) {
+  if (not $self->{tree}->can('taxon_id') and $self->{tree}->isa('Bio::EnsEMBL::Compara::GeneTreeNode')) {
     return $self->{tree}->species_tree_node->taxon_id;
   }
   return $self->{tree}->taxon_id;
