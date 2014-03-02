@@ -103,6 +103,7 @@ sub write_output {
 
     my @ref_support = qw(phyml_nt nj_ds phyml_aa nj_dn nj_mm);
     $self->store_genetree($self->param('gene_tree'), \@ref_support);
+    $self->param('gene_tree')->store_tag('treebest_runtime_msec', $self->param('treebest_runtime'));
 
     my @dataflow = ();
     if ($self->param('store_intermediate_trees')) {
@@ -201,7 +202,7 @@ sub run_njtree_phyml {
         $self->throw('The filtered alignment is empty. Cannot build a tree');
     }
 
-    $gene_tree->store_tag('NJTREE_PHYML_runtime_msec', time()*1000-$starttime);
+    $self->param('treebest_runtime', time()*1000-$starttime);
 }
 
 
