@@ -81,8 +81,8 @@ sub fetch_input {
     while (my $genome_db_id1 = shift @{$species_set}) {
         push @mlss_ids, $mlss_adaptor->fetch_by_method_link_type_genome_db_ids('ENSEMBL_PARALOGUES', [$genome_db_id1])->dbID;
 
-        my $mlss = $mlss_adaptor->fetch_by_method_link_type_genome_db_ids('ENSEMBL_HOMOEOLOGUES', [$genome_db_id1])->dbID;
-        push @mlss_ids, $mlss if defined $mlss;
+        my $mlss = $mlss_adaptor->fetch_by_method_link_type_genome_db_ids('ENSEMBL_HOMOEOLOGUES', [$genome_db_id1]);
+        push @mlss_ids, $mlss->dbID if defined $mlss;
         
         foreach my $genome_db_id2 (@{$species_set}) {
             push @mlss_ids, $mlss_adaptor->fetch_by_method_link_type_genome_db_ids('ENSEMBL_ORTHOLOGUES', [$genome_db_id1, $genome_db_id2])->dbID;
