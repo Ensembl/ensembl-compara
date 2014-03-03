@@ -130,8 +130,11 @@ sub write_output {
     }
 
     if ($self->param('store_filtered_align')) {
-        my $filename = sprintf('%s/filtalign.fa', $self->worker_temp_directory);
-        $self->store_filtered_align($filename) if (-e $filename);
+        my $alnfile_filtered = sprintf('%s/filtalign.fa', $self->worker_temp_directory);
+        if (-e $alnfile_filtered) {
+            my $removed_columns = $self->store_filtered_align($self->param('input_aln'), $alnfile_filtered);
+            $self->param('gene_tree')->store_tag('removed_columns', $removed_columns);
+        }
     }
 
     if (defined $self->param('output_dir')) {
@@ -214,41 +217,6 @@ sub run_njtree_phyml {
     }
 
     $self->param('treebest_runtime', time()*1000-$starttime);
-}
-
-
-sub store_filtered_align {
-    my ($self, $filename) = @_;
-    print STDERR "Found filtered alignment: $filename\n";
-
-    # Loads the filtered alignment strings
-    my %hash_filtered_strings = ();
-    {
-        my $alignio = Bio::AlignIO->new(-file => $filename, -format => 'fasta');
-        my $aln = $alignio->next_aln;
-        
-        unless ($aln) {
-            $self->warning("Cannot store the filtered alignment for this tree\n");
-            return;
-        }
-
-        foreach my $seq ($aln->each_seq) {
-            $hash_filtered_strings{$seq->display_id()} = $seq->seq();
-        }
-    }
-
-    my %hash_initial_strings = ();
-    {
-        my $alignio = Bio::AlignIO->new(-file => $self->param('input_aln'), -format => 'fasta');
-        my $aln = $alignio->next_aln or die "The input alignment was lost in the process";
-
-        foreach my $seq ($aln->each_seq) {
-            $hash_initial_strings{$seq->display_id()} = $seq->seq();
-        }
-    }
-
-    my $removed_columns = Bio::EnsEMBL::Compara::Utils::Cigars::identify_removed_columns(\%hash_initial_strings, \%hash_filtered_strings);
-    $self->param('gene_tree')->store_tag('removed_columns', $removed_columns);
 }
 
 

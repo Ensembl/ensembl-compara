@@ -470,6 +470,38 @@ sub store_alternative_tree {
     return $newtree;
 }
 
+sub store_filtered_align {
+    my ($self, $alnfile_ini, $alnfile_filtered) = @_;
+
+    # Loads the filtered alignment strings
+    my %hash_filtered_strings = ();
+    {
+        my $alignio = Bio::AlignIO->new(-file => $alnfile_filtered, -format => 'fasta');
+        my $aln = $alignio->next_aln;
+
+        unless ($aln) {
+            $self->warning("Cannot read the filtered alignment '$alnfile_filtered'\n");
+            return;
+        }
+
+        foreach my $seq ($aln->each_seq) {
+            $hash_filtered_strings{$seq->display_id()} = $seq->seq();
+        }
+    }
+
+    my %hash_initial_strings = ();
+    {
+        my $alignio = Bio::AlignIO->new(-file => $alnfile_ini, -format => 'fasta');
+        my $aln = $alignio->next_aln or die "The input alignment '$alnfile_ini' cannot be read";
+
+        foreach my $seq ($aln->each_seq) {
+            $hash_initial_strings{$seq->display_id()} = $seq->seq();
+        }
+    }
+
+    return Bio::EnsEMBL::Compara::Utils::Cigars::identify_removed_columns(\%hash_initial_strings, \%hash_filtered_strings);
+}
+
 
 
 1;
