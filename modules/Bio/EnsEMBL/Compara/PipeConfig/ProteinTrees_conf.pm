@@ -896,7 +896,6 @@ sub pipeline_analyses {
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::HclusterParseOutput',
             -parameters => {
                 'cluster_dir'               => $self->o('cluster_dir'),
-                'additional_clustersets'    => [qw(phyml-aa phyml-nt nj-dn nj-ds nj-mm)],
                 'division'                  => $self->o('division'),
             },
             -rc_name => '250Mb_job',
@@ -908,9 +907,19 @@ sub pipeline_analyses {
             -parameters         => {
                 mode            => 'global_tree_set',
             },
-            -flow_into          => [ 'run_qc_tests' ],
+            -flow_into          => [ 'create_additional_clustersets' ],
             %hc_analysis_params,
         },
+
+        {   -logic_name         => 'create_additional_clustersets',
+            -module             => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::CreateClustersets',
+            -parameters         => {
+                member_type     => 'protein',
+                'additional_clustersets'    => [qw(phyml-aa phyml-nt nj-dn nj-ds nj-mm)],
+            },
+            -flow_into          => [ 'run_qc_tests' ],
+        },
+
 
 # ---------------------------------------------[Pluggable QC step]----------------------------------------------------------
 

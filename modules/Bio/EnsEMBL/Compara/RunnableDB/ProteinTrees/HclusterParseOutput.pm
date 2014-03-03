@@ -83,12 +83,6 @@ sub write_output {
 
     $self->clear_gene_tree_tables;
     $self->store_clusterset('default', $self->param('allclusters'));
-
-    if (defined $self->param('additional_clustersets')) {
-        foreach my $clusterset_id (@{$self->param('additional_clustersets')}) {
-            $self->create_clusterset($clusterset_id);
-        }
-    }
 }
 
 
