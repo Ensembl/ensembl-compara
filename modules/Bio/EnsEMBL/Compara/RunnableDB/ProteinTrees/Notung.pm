@@ -39,33 +39,23 @@ use Time::HiRes qw(time gettimeofday tv_interval);
 use Data::Dumper;
 use File::Glob;
 
-use base ('Bio::EnsEMBL::Compara::RunnableDB::RunCommand', 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::StoreTree');
+use base ('Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::GenericRunnable');
 
 
 sub param_defaults {
+    my $self = shift;
     return {
         'check_split_genes' => 1,
+        'read_tags'         => 0,
         'do_transactions'   => 1,
         'cmd_notung'        => 'java -Xmx1550M -jar #notung_jar# #gene_tree_file# -s #species_tree_file# --rearrange --treeoutput newick --speciestag postfix --edgeweights length --threshold 0.9 --silent --nolosses',
         'cmd_treebest'      => '#treebest_exe# sdi -s #species_tree_file# #gene_tree_file#.rearrange.0 > #gene_tree_file#.sdi',
+        'ryo_species_tree'  => '%{o}',
+        'command_tag_runtime'   => 'notung_runtime',
     };
 }
 
 
-sub fetch_input {
-    my $self = shift @_;
-
-    $self->param('tree_adaptor', $self->compara_dba->get_GeneTreeAdaptor);
-
-    my $gene_tree_id     = $self->param_required('gene_tree_id');
-    my $gene_tree        = $self->param('tree_adaptor')->fetch_by_dbID( $gene_tree_id ) or die "Could not fetch gene_tree with gene_tree_id='$gene_tree_id'";
-
-    $self->param('gene_tree', $gene_tree);
-
-    $gene_tree->preload();
-    $gene_tree->print_tree(10) if($self->debug);
-
-}
 
 
 sub run {
@@ -75,24 +65,6 @@ sub run {
 }
 
 
-sub write_output {
-    my $self = shift;
-
-    $self->store_genetree($self->param('gene_tree'), []);
-    $self->param('gene_tree')->store_tag('notung_runtime', $self->param('runtime_msec'));
-}
-
-
-sub post_cleanup {
-  my $self = shift;
-
-  if(my $gene_tree = $self->param('gene_tree')) {
-    $gene_tree->release_tree;
-    $self->param('gene_tree', undef);
-  }
-
-  $self->SUPER::post_cleanup if $self->can("SUPER::post_cleanup");
-}
 
 
 ##########################################
@@ -132,31 +104,12 @@ sub run_generic_command {
         die if scalar(@{$node->children}) != 2;
     }
 
+    $self->param('command_run', 1);
     $self->param('runtime_msec', time()*1000-$starttime);
 }
 
 
-sub get_gene_tree_file {
-    my ($self, $gene_tree) = @_;
 
-    # horrible hack: we replace taxon_id with species_tree_node_id
-    foreach my $leaf (@{$gene_tree->root->get_all_leaves}) {
-        $leaf->taxon_id($leaf->genome_db->species_tree_node_id);
-    }
-    my $gene_tree_file = sprintf('%s/gene_tree_%d.nhx', $self->worker_temp_directory, $gene_tree->root_id);
-    open( my $speciestree, '>', $gene_tree_file) or die "Could not open '$gene_tree_file' for writing : $!";
-    print $speciestree $gene_tree->newick_format('ryo','%{-m}%{"_"-x}:%{d}');;
-    close $speciestree;
-
-    return $gene_tree_file;
-}
-
-sub _load_species_tree_string_from_db {
-    my ($self) = @_;
-    my $species_tree = $self->param('gene_tree')->species_tree;
-    $species_tree->attach_to_genome_dbs();
-    $self->param('species_tree_string', $species_tree->root->newick_format('ryo', '%{o}'));
-}
 
 
 
