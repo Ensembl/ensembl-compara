@@ -697,11 +697,7 @@ sub pipeline_analyses {
                              'hmmer_path'           => $self->o('hmmer_path'), # For hmmemit (in case it is necessary to get the consensus for each model to create the blast db)
                              'pantherScore_path'    => $self->o('pantherScore_path'),
                             },
-             -flow_into  => {
-                             '1->A' => [ 'dump_models' ],
-                             'A->1' => [ 'HMMer_factory' ],
-                            },
-
+             -flow_into  => [ 'dump_models' ],
             },
 
             {
@@ -712,6 +708,7 @@ sub pipeline_analyses {
                              'blast_bin_dir'       => $self->o('blast_bin_dir'),  ## For creating the blastdb (formatdb or mkblastdb)
                              'pantherScore_path'    => $self->o('pantherScore_path'),
                             },
+             -flow_into  => [ 'HMMer_factory' ],
             },
 
             {
