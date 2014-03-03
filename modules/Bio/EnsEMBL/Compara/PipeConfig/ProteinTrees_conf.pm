@@ -105,7 +105,7 @@ sub default_options {
         'treebreak_gene_count'      => 400,     # affects msa_chooser
         'mafft_gene_count'          => 200,     # affects msa_chooser
         'mafft_runtime'             => 7200,    # affects msa_chooser
-        'species_tree_input_file'   => '',      # you can define your own species_tree for 'njtree_phyml' and 'ortho_tree'
+        'species_tree_input_file'   => '',      # you can define your own species_tree for 'treebest' and 'ortho_tree'
 
     # homology_dnds parameters:
         'codeml_parameters_file'    => $self->o('ensembl_cvs_root_dir').'/ensembl-compara/scripts/pipeline/protein_trees.codeml.ctl.hash',      # used by 'homology_dNdS'
@@ -143,7 +143,7 @@ sub default_options {
         #'blastp_capacity'           => 900,
         #'mcoffee_capacity'          => 600,
         #'split_genes_capacity'      => 600,
-        #'njtree_phyml_capacity'     => 400,
+        #'treebest_capacity'         => 400,
         #'ortho_tree_capacity'       => 200,
         #'ortho_tree_annot_capacity' => 300,
         #'quick_tree_break_capacity' => 100,
@@ -997,7 +997,7 @@ sub pipeline_analyses {
             -module             => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::CreateClustersets',
             -parameters         => {
                 member_type     => 'protein',
-                'additional_clustersets'    => [qw(phyml-aa phyml-nt nj-dn nj-ds nj-mm)],
+                'additional_clustersets'    => [qw(treebest phyml-aa phyml-nt nj-dn nj-ds nj-mm)],
             },
             -flow_into          => [ 'run_qc_tests' ],
         },
@@ -1188,10 +1188,10 @@ sub pipeline_analyses {
             -hive_capacity  => $self->o('split_genes_capacity'),
             -rc_name        => '500Mb_job',
             -batch_size     => 20,
-            -flow_into      => [ 'njtree_phyml', 'build_HMM_aa', 'build_HMM_cds' ],
+            -flow_into      => [ 'treebest', 'build_HMM_aa', 'build_HMM_cds' ],
         },
 
-        {   -logic_name => 'njtree_phyml',
+        {   -logic_name => 'treebest',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::NJTREE_PHYML',
             -parameters => {
                 'cdna'                      => 1,
@@ -1200,7 +1200,7 @@ sub pipeline_analyses {
                 'store_filtered_align'      => 1,
                 'treebest_exe'              => $self->o('treebest_exe'),
             },
-            -hive_capacity        => $self->o('njtree_phyml_capacity'),
+            -hive_capacity        => $self->o('treebest_capacity'),
             -rc_name => '4Gb_job',
             -flow_into => {
                 '1->A' => [ 'hc_tree_structure' ],
@@ -1209,12 +1209,23 @@ sub pipeline_analyses {
             }
         },
 
+        {   -logic_name => 'notung',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::Notung',
+            -parameters => {
+                'notung_jar'                => $self->o('notung_jar'),
+                'treebest_exe'              => $self->o('treebest_exe'),
+            },
+            -hive_capacity        => $self->o('treebest_capacity'),
+            -rc_name => '2Gb_job',
+            -flow_into => [ 'ortho_tree' ],
+        },
+
         {   -logic_name         => 'hc_alignment_post_tree',
             -module             => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::SqlHealthChecks',
             -parameters         => {
                 mode            => 'alignment',
             },
-            -flow_into          => [ 'ortho_tree' ],
+            -flow_into          => [ 'notung' ],
             %hc_analysis_params,
         },
 

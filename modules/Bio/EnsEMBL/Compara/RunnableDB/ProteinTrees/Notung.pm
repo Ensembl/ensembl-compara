@@ -84,7 +84,10 @@ sub run_generic_command {
 
     # The order is important to have the stn_ids tags attached to the gene-tree leaves
     $self->param('species_tree_file', $self->get_species_tree_file());
-    $self->param('gene_tree_file', $self->get_gene_tree_file($self->param('gene_tree')));
+
+    my $other_trees = $self->param('tree_adaptor')->fetch_all_linked_trees($self->param('gene_tree'));
+    my ($treebest_tree) = grep {$_->clusterset_id eq 'treebest'} @$other_trees;
+    $self->param('gene_tree_file', $self->get_gene_tree_file($treebest_tree));
 
     foreach my $cmd_param (qw(cmd_notung cmd_treebest)) {
         my $cmd = sprintf('cd %s; %s', $self->worker_temp_directory, $self->param_required($cmd_param));

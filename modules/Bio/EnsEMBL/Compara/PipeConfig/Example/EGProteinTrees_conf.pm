@@ -133,7 +133,7 @@ sub default_options {
         'blastp_capacity'           => 200,
         'mcoffee_capacity'          => 200,
         'split_genes_capacity'      => 200,
-        'njtree_phyml_capacity'     => 200,
+        'treebest_capacity'         => 200,
         'ortho_tree_capacity'       => 200,
         'ortho_tree_annot_capacity' => 300,
         'quick_tree_break_capacity' => 100,

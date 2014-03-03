@@ -422,7 +422,7 @@ The pipeline should run fine with such characters, but they'll probably be inter
 
    5.12 "this algorithm is less useful if only 0 species are matched"
 
-This error message from njtree_phyml (aka treebest) means that the species tree do not match your set of genome_dbs.
+This error message from treebest means that the species tree do not match your set of genome_dbs.
 Make sure that your species tree contains all the species.
 
 

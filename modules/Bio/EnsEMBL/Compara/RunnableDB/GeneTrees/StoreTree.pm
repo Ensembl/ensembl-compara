@@ -457,15 +457,15 @@ sub fetch_or_create_other_tree {
 }
 
 sub store_alternative_tree {
-    my ($self, $newick, $clusterset_id, $ref_tree) = @_;
+    my ($self, $newick, $clusterset_id, $ref_tree, $ref_support) = @_;
     my $clusterset = $self->compara_dba->get_GeneTreeAdaptor->fetch_all(-tree_type => 'clusterset', -clusterset_id => $clusterset_id)->[0];
     if (not defined $clusterset) {
         $self->throw("The clusterset_id '$clusterset_id' is not defined. Cannot store the alternative tree");
         return;
     }
     my $newtree = $self->fetch_or_create_other_tree($clusterset, $ref_tree);
-    $self->parse_newick_into_tree($newick, $newtree);
-    $self->store_genetree($newtree);
+    return undef unless $self->parse_newick_into_tree($newick, $newtree);
+    $self->store_genetree($newtree, $ref_support);
     $newtree->release_tree;
     return $newtree;
 }
