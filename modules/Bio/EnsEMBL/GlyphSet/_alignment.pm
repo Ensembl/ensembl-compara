@@ -291,20 +291,20 @@ sub render_normal {
       }
       
       if ($config) {
-        my $score = $feat[0][2]->score || 0;
-        
-        # implicit_colour means that a colour has been arbitrarily assigned
-        # during parsing and some stronger indication, such as the presence 
-        # of scores, should override those assignments. -- ds23
-        if ($config->{'useScore'} == 1 && $config->{'implicit_colour'}) {
-          $feature_colour = $greyscale[min($ngreyscale - 1, int(($score * $ngreyscale) / $greyscale_max))];
-          $label_colour   = '#333333';
-        } elsif ($config->{'useScore'} == 2) {
-          $score          = min(max($score, $min_score), $max_score);
-          $feature_colour = $colour_gradient[$score >= $max_score ? $cg_grades - 1 : int(($score - $min_score) / $score_per_grade)];
+        if ($feat[0][2]->can('score')) {
+          my $score = $feat[0][2]->score || 0;
+          # implicit_colour means that a colour has been arbitrarily assigned
+          # during parsing and some stronger indication, such as the presence 
+          # of scores, should override those assignments. -- ds23
+          if ($config->{'useScore'} == 1 && $config->{'implicit_colour'}) {
+            $feature_colour = $greyscale[min($ngreyscale - 1, int(($score * $ngreyscale) / $greyscale_max))];
+            $label_colour   = '#333333';
+          } elsif ($config->{'useScore'} == 2) {
+            $score          = min(max($score, $min_score), $max_score);
+            $feature_colour = $colour_gradient[$score >= $max_score ? $cg_grades - 1 : int(($score - $min_score) / $score_per_grade)];
+          }
         }
       }
-      
       # +1 below cos we render eg a rectangle from (100, 100) of height
       # and width 10 as (100,100)-(110,110), ie actually 11x11. -- ds23
       $y_pos = $y_offset - $row * int($h + 1 + $gap * $label_h) * $strand;
