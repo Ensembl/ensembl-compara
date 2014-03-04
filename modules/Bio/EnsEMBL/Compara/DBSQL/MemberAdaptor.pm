@@ -349,31 +349,11 @@ sub get_source_taxon_count {
 }
 
 
-=head2 fetch_all_by_Domain
-
-  Arg [1]    : Bio::EnsEMBL::Compara::Domain $domain
-  Status     : Experimental
-
-=cut
-
-sub fetch_all_by_Domain {
-    my ($self, $domain) = @_;
-    $self->_warning_member_adaptor();
-    assert_ref($domain, 'Bio::EnsEMBL::Compara::Domain');
-
-    my $domain_id = $domain->dbID;
-    my $constraint = "dm.domain_id = $domain_id";
-    my $extra_columns = [qw(dm.domain_id dm.member_start dm.member_end)];
-    my $join = [[['domain_member', 'dm'], 'm.member_id = dm.member_id', $extra_columns]];
-
-    return $self->generic_fetch($constraint, $join);
-}
-
 
 =head2 fetch_all_by_MemberSet
 
-  Arg[1]     : MemberSet $set: Currently: Domain, Family, Homology and GeneTree
-                are supported
+  Arg[1]     : MemberSet $set
+               Currently supported: Family, Homology and GeneTree
   Example    : $family_members = $m_adaptor->fetch_all_by_MemberSet($family);
   Description: Fetches from the database all the members attached to this set
   Returntype : arrayref of Bio::EnsEMBL::Compara::Member
@@ -388,8 +368,6 @@ sub fetch_all_by_MemberSet {
     assert_ref($set, 'Bio::EnsEMBL::Compara::MemberSet');
     if (UNIVERSAL::isa($set, 'Bio::EnsEMBL::Compara::AlignedMemberSet')) {
         return $self->db->get_AlignedMemberAdaptor->fetch_all_by_AlignedMemberSet($set);
-    } elsif (UNIVERSAL::isa($set, 'Bio::EnsEMBL::Compara::Domain')) {
-        return $self->fetch_all_by_Domain($set);
     } else {
         throw("$self is not a recognized MemberSet object\n");
     }
@@ -565,15 +543,6 @@ sub _objs_from_sth {
 
   while(my $rowhash = $sth->fetchrow_hashref) {
     my $member = $self->create_instance_from_rowhash($rowhash);
-    
-    my @_columns = $self->_columns;
-    if (scalar keys %{$rowhash} > scalar @_columns) {
-      if (exists $rowhash->{domain_id}) {
-        bless $member, 'Bio::EnsEMBL::Compara::MemberDomain';
-        $member->member_start($rowhash->{member_start});
-        $member->member_end($rowhash->{member_end});
-      }
-    }
     push @members, $member;
   }
   $sth->finish;

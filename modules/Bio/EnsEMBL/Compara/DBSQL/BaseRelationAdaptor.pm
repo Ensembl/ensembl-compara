@@ -32,7 +32,7 @@ Bio::EnsEMBL::Compara::DBSQL::BaseRelationAdaptor
 =head1 DESCRIPTION
 
 Base class for the adaptors that deal with sets of members, like
-FamilyAdaptor, DomainAdaptor, HomologyAdaptor
+FamilyAdaptor or HomologyAdaptor
 
 
 =head1 INHERITANCE TREE

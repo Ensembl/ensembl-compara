@@ -1077,36 +1077,6 @@ CREATE TABLE family_member (
 
 
 
-CREATE TABLE domain (
-  domain_id                   int(10) unsigned NOT NULL AUTO_INCREMENT, # unique internal id
-  stable_id                   varchar(40) NOT NULL,
-  method_link_species_set_id  int(10) unsigned NOT NULL, # FK method_link_species_set.method_link_species_set_id
-  description                 varchar(255),
-
-  FOREIGN KEY (method_link_species_set_id) REFERENCES method_link_species_set(method_link_species_set_id),
-
-  PRIMARY KEY (domain_id),
-  UNIQUE (stable_id, method_link_species_set_id)
-
-) COLLATE=latin1_swedish_ci ENGINE=MyISAM;
-
-
-
-CREATE TABLE domain_member (
-  domain_id                   int(10) unsigned NOT NULL, # FK domain.domain_id
-  member_id                   int(10) unsigned NOT NULL, # FK member.member_id
-  member_start                int(10),
-  member_end                  int(10),
-
-  FOREIGN KEY (domain_id) REFERENCES domain(domain_id),
-  FOREIGN KEY (member_id) REFERENCES member(member_id),
-
-  UNIQUE (domain_id,member_id,member_start,member_end),
-  UNIQUE (member_id,domain_id,member_start,member_end)
-
-) COLLATE=latin1_swedish_ci ENGINE=MyISAM;
-
-
 /**
 @table gene_align
 @desc  This table stores information about alignments for members

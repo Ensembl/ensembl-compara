@@ -124,25 +124,6 @@ CREATE TABLE `dnafrag_region` (
   KEY `synteny_reversed` (`dnafrag_id`,`synteny_region_id`)
 ) ENGINE=MyISAM DEFAULT CHARSET=latin1;
 
-CREATE TABLE `domain` (
-  `domain_id` int(10) unsigned NOT NULL AUTO_INCREMENT,
-  `stable_id` varchar(40) NOT NULL,
-  `method_link_species_set_id` int(10) unsigned NOT NULL,
-  `description` varchar(255) DEFAULT NULL,
-  PRIMARY KEY (`domain_id`),
-  UNIQUE KEY `stable_id` (`stable_id`,`method_link_species_set_id`),
-  KEY `method_link_species_set_id` (`method_link_species_set_id`)
-) ENGINE=MyISAM DEFAULT CHARSET=latin1;
-
-CREATE TABLE `domain_member` (
-  `domain_id` int(10) unsigned NOT NULL,
-  `member_id` int(10) unsigned NOT NULL,
-  `member_start` int(10) DEFAULT NULL,
-  `member_end` int(10) DEFAULT NULL,
-  UNIQUE KEY `domain_id` (`domain_id`,`member_id`,`member_start`,`member_end`),
-  UNIQUE KEY `member_id` (`member_id`,`domain_id`,`member_start`,`member_end`)
-) ENGINE=MyISAM DEFAULT CHARSET=latin1;
-
 CREATE TABLE `external_db` (
   `external_db_id` int(10) unsigned NOT NULL AUTO_INCREMENT,
   `db_name` varchar(100) NOT NULL,

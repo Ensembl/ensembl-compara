@@ -186,7 +186,6 @@ sub get_available_adaptors {
         'CAFEGeneFamilyNode'    => 'Bio::EnsEMBL::Compara::DBSQL::CAFEGeneFamilyNodeAdaptor',
 
             # obsolete:
-        'Domain'                => 'Bio::EnsEMBL::Compara::DBSQL::DomainAdaptor',
         'SitewiseOmega'         => 'Bio::EnsEMBL::Compara::DBSQL::SitewiseOmegaAdaptor',
     );
 
