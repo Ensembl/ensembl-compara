@@ -837,6 +837,7 @@ CREATE TABLE member (
 @column gene_gain_loss_trees  If the member has a gene gain/loss tree in the @link CAFE_gene_family table
 @column orthologues           Number of orthologues in the @link homology and @link homology_member tables for this member
 @column paralogues            Number of paralogues in the @link homology and @link homology_member tables for this member
+@column homoeologues          Number of homoeologues in the @link homology and @link homology_member tables for this member
 
 @see family
 @see gene_tree_root
@@ -852,6 +853,7 @@ CREATE TABLE `member_production_counts` (
   `gene_gain_loss_trees`     tinyint(1) unsigned default 0,
   `orthologues`              int(10) unsigned default 0,
   `paralogues`               int(10) unsigned default 0,
+  `homoeologues`             int(10) unsigned default 0,
 
   FOREIGN KEY (stable_id) REFERENCES member(stable_id)
 )COLLATE=latin1_swedish_ci ENGINE=MyISAM;
@@ -1383,7 +1385,7 @@ CREATE TABLE hmm_profile (
 CREATE TABLE homology (
   homology_id                 int(10) unsigned NOT NULL AUTO_INCREMENT, # unique internal id
   method_link_species_set_id  int(10) unsigned NOT NULL, # FK method_link_species_set.method_link_species_set_id
-  description                 ENUM('ortholog_one2one','ortholog_one2many','ortholog_many2many','within_species_paralog','other_paralog','gene_split','between_species_paralog','alt_allele'),
+  description                 ENUM('ortholog_one2one','ortholog_one2many','ortholog_many2many','within_species_paralog','other_paralog','gene_split','between_species_paralog','alt_allele','homoeolog_one2one','homoeolog_one2many','homoeolog_many2many'),
   is_tree_compliant           tinyint(1) NOT NULL DEFAULT 0,
   dn                          float(10,5),
   ds                          float(10,5),
