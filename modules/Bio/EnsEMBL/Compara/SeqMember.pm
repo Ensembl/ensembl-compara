@@ -275,66 +275,6 @@ sub sequence {
 }
 
 
-=head2 sequence_exon_cased
-
-  Description: DEPRECATED. Will be removed in e76. Use SeqMember::other_sequence('exon_cased', $sequence) instead
-
-=cut
-
-sub sequence_exon_cased {  ## DEPRECATED
-    my $self = shift;
-    my $sequence = shift;
-
-    deprecate('SeqMember::sequence_exon_cased($sequence) is deprecated and will be removed in e76. Use SeqMember::other_sequence("exon_cased", $sequence) instead');
-    return $self->other_sequence('exon_cased', $sequence);
-}
-
-
-=head2 sequence_exon_bounded
-
-  Description: DEPRECATED. Will be removed in e76. Use SeqMember::other_sequence('exon_bounded', $sequence) instead
-
-=cut
-
-sub sequence_exon_bounded { ## DEPRECATED
-    my $self = shift;
-    my $sequence = shift;
-
-    deprecate('SeqMember::sequence_exon_bounded($sequence) is deprecated and will be removed in e76. Use SeqMember::other_sequence("exon_bounded", $sequence) instead');
-    return $self->other_sequence('exon_bounded', $sequence);
-}
-
-
-=head2 sequence_cds
-
-  Description: DEPRECATED. Will be removed in e76. Use SeqMember::other_sequence('cds', $sequence) instead
-
-=cut
-
-sub sequence_cds {  ## DEPRECATED
-    my $self = shift;
-    my $sequence = shift;
-
-    deprecate('SeqMember::sequence_cds($sequence) is deprecated and will be removed in e76. Use SeqMember::other_sequence("cds", $sequence) instead');
-    return $self->other_sequence('cds', $sequence);
-}
-
-
-=head2 get_other_sequence
-
-  Description: DEPRECATED. Will be removed in e76. Use SeqMember::other_sequence($seq_type) instead
-
-=cut
-
-sub get_other_sequence {  ## DEPRECATED
-    my $self = shift;
-    my $seq_type = shift;
-
-    deprecate('SeqMember::get_other_sequence($seq_type) is deprecated and will be removed in e76. Use SeqMember::other_sequence($seq_type) instead');
-    return $self->other_sequence($seq_type);
-}
-
-
 =head2 other_sequence
 
   Arg [1]    : string $seq_type
