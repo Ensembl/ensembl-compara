@@ -224,6 +224,23 @@ sub pipeline_create_commands {
 }
 
 
+sub pipeline_wide_parameters {  # these parameter values are visible to all analyses, can be overridden by parameters{} and input_id{}
+    my ($self) = @_;
+    return {
+        %{$self->SUPER::pipeline_wide_parameters},          # here we inherit anything from the base class
+
+        'master_db'     => $self->o('master_db'),
+        'ncbi_db'       => $self->o('ncbi_db'),
+        'reuse_db'      => $self->o('prev_rel_db'),
+
+        'cluster_dir'   => $self->o('cluster_dir'),
+        'fasta_dir'     => $self->o('fasta_dir'),
+        'dump_dir'      => $self->o('dump_dir'),
+
+        'reuse_level'   => $self->o('reuse_level'),
+    };
+}
+
 
 sub pipeline_analyses {
     my ($self) = @_;
@@ -241,7 +258,7 @@ sub pipeline_analyses {
         {   -logic_name => 'backbone_fire_db_prepare',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
             -input_ids  => [ {
-                'output_file'   => $self->o('dump_dir').'/#filename#.gz',
+                'output_file'   => '#dump_dir#/#filename#.gz',
             } ],
             -flow_into  => {
                 '1->A'  => [ 'copy_ncbi_tables_factory' ],
@@ -363,7 +380,7 @@ sub pipeline_analyses {
         {   -logic_name    => 'copy_ncbi_table',
             -module        => 'Bio::EnsEMBL::Hive::RunnableDB::MySQLTransfer',
             -parameters    => {
-                'src_db_conn'   => $self->o('ncbi_db'),
+                'src_db_conn'   => '#ncbi_db#',
                 'mode'          => 'overwrite',
                 'filter_cmd'    => 'sed "s/ENGINE=MyISAM/ENGINE=InnoDB/"',
             },
@@ -383,7 +400,7 @@ sub pipeline_analyses {
         {   -logic_name    => 'populate_method_links_from_db',
             -module        => 'Bio::EnsEMBL::Hive::RunnableDB::MySQLTransfer',
             -parameters    => {
-                'src_db_conn'   => $self->o('master_db'),
+                'src_db_conn'   => '#master_db#',
                 'mode'          => 'overwrite',
                 'filter_cmd'    => 'sed "s/ENGINE=MyISAM/ENGINE=InnoDB/"',
                 'table'         => 'method_link',
@@ -398,7 +415,7 @@ sub pipeline_analyses {
         {   -logic_name => 'load_genomedb_factory',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ObjectFactory',
             -parameters => {
-                'compara_db'            => $self->o('master_db'),   # that's where genome_db_ids come from
+                'compara_db'            => '#master_db#',   # that's where genome_db_ids come from
 
                 'call_list'             => [ 'compara_dba', 'get_MethodLinkSpeciesSetAdaptor', ['fetch_by_dbID', $self->o('mlss_id')], 'species_set_obj', 'genome_dbs'],
                 'column_names2getters'  => { 'genome_db_id' => 'dbID', 'species_name' => 'name', 'assembly_name' => 'assembly', 'genebuild' => 'genebuild', 'locator' => 'locator', 'has_karyotype' => 'has_karyotype', 'is_high_coverage' => 'is_high_coverage' },
@@ -453,7 +470,6 @@ sub pipeline_analyses {
         {   -logic_name => 'check_reusability',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::CheckGenomedbReusability',
             -parameters => {
-                'reuse_db'          => $self->o('prev_rel_db'),
                 'registry_dbs'      => $self->o('prev_core_sources_locs'),
                 'do_not_reuse_list' => $self->o('do_not_reuse_list'),
             },
@@ -469,7 +485,6 @@ sub pipeline_analyses {
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::PrepareSpeciesSetsMLSS',
             -parameters => {
                 'mlss_id'   => $self->o('mlss_id'),
-                'master_db' => $self->o('master_db'),
             },
             -flow_into => [ 'make_species_tree', 'extra_sql_prepare' ],
             -meadow_type    => 'LOCAL',
@@ -526,7 +541,7 @@ sub pipeline_analyses {
         {   -logic_name => 'sequence_table_reuse',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
             -parameters => {
-                            'db_conn'    => $self->o('prev_rel_db'),
+                            'db_conn'    => '#reuse_db#',
                             'inputquery' => 'SELECT s.* FROM sequence s JOIN member USING (sequence_id) WHERE sequence_id<='.$self->o('protein_members_range').' AND genome_db_id = #genome_db_id#',
                             'fan_branch_code' => 2,
             },
@@ -541,7 +556,7 @@ sub pipeline_analyses {
         {   -logic_name => 'member_table_reuse',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::MySQLTransfer',
             -parameters => {
-                'src_db_conn'   => $self->o('prev_rel_db'),
+                'src_db_conn'   => '#reuse_db#',
                 'table'         => 'member',
                 'where'         => 'member_id<='.$self->o('protein_members_range').' AND genome_db_id = #genome_db_id#',
                 'mode'          => 'insertignore',
@@ -555,7 +570,7 @@ sub pipeline_analyses {
         {   -logic_name => 'other_sequence_table_reuse',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
             -parameters => {
-                            'db_conn'    => $self->o('prev_rel_db'),
+                            'db_conn'    => '#reuse_db#',
                             'inputquery' => 'SELECT s.member_id, s.seq_type, s.length, s.sequence FROM other_member_sequence s JOIN member USING (member_id) WHERE genome_db_id = #genome_db_id# AND seq_type IN ("cds", "exon_bounded") AND member_id <= '.$self->o('protein_members_range'),
                             'fan_branch_code' => 2,
             },
@@ -666,7 +681,7 @@ sub pipeline_analyses {
         {   -logic_name => 'paf_table_reuse',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::MySQLTransfer',
             -parameters => {
-                'src_db_conn'   => $self->o('prev_rel_db'),
+                'src_db_conn'   => '#reuse_db#',
                 'table'         => 'peptide_align_feature_#genome_db_id#',
                 'filter_cmd'    => 'sed "s/ENGINE=MyISAM/ENGINE=InnoDB/"',
                 'where'         => 'hgenome_db_id IN (#reuse_ss_csv#)',
@@ -733,7 +748,6 @@ sub pipeline_analyses {
                              'pantherScore_path'   => $self->o('pantherScore_path'),
                              'hmmer_path'          => $self->o('hmmer_path'),
                              'hmm_library_basedir' => $self->o('hmm_library_basedir'),
-                             'cluster_dir'         => $self->o('cluster_dir'),
                             },
              -hive_capacity => $self->o('HMMer_classify_capacity'),
              -rc_name => '8Gb_job',
@@ -742,9 +756,6 @@ sub pipeline_analyses {
             {
              -logic_name => 'HMM_clusterize',
              -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::HMMClusterize',
-             -parameters => {
-                             'cluster_dir'        => $self->o('cluster_dir'),
-                            },
              -rc_name => '8Gb_job',
              -flow_into => [ 'run_qc_tests' ],
             },
@@ -772,7 +783,6 @@ sub pipeline_analyses {
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::DumpMembersIntoFasta',
             -parameters => {
                 'only_canonical'            => 1,
-                'fasta_dir'                 => $self->o('fasta_dir'),
             },
             -rc_name       => '250Mb_job',
             -hive_capacity => $self->o('reuse_capacity'),
@@ -782,7 +792,6 @@ sub pipeline_analyses {
         {   -logic_name => 'make_blastdb',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
             -parameters => {
-                'fasta_dir'     => $self->o('fasta_dir'),
                 'blast_bin_dir' => $self->o('blast_bin_dir'),
                 'cmd' => '#blast_bin_dir#/makeblastdb -dbtype prot -parse_seqids -logfile #fasta_name#.blastdb_log -in #fasta_name#',
             },
@@ -815,7 +824,6 @@ sub pipeline_analyses {
             -module             => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::BlastpWithReuse',
             -parameters         => {
                 'blast_params'              => $self->o('blast_params'),
-                'fasta_dir'                 => $self->o('fasta_dir'),
                 'blast_bin_dir'             => $self->o('blast_bin_dir'),
                 'evalue_limit'              => 1e-10,
                 'allow_same_species_hits'   => 1,
@@ -854,7 +862,6 @@ sub pipeline_analyses {
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::HclusterPrepare',
             -parameters => {
                 'outgroups'     => $self->o('outgroups'),
-                'cluster_dir'   => $self->o('cluster_dir'),
             },
             -hive_capacity => $self->o('reuse_capacity'),
         },
@@ -873,7 +880,6 @@ sub pipeline_analyses {
         {   -logic_name    => 'hcluster_merge_inputs',
             -module        => 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
             -parameters    => {
-                'cluster_dir'   => $self->o('cluster_dir'),
                 'cmd'           => 'cat #cluster_dir#/*.hcluster.#ext# > #cluster_dir#/hcluster.#ext#',
             },
         },
@@ -882,7 +888,6 @@ sub pipeline_analyses {
             -module        => 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
             -parameters    => {
                 'clustering_max_gene_halfcount' => $self->o('clustering_max_gene_halfcount'),
-                'cluster_dir'                   => $self->o('cluster_dir'),
                 'hcluster_exe'                  => $self->o('hcluster_exe'),
                 'cmd'                           => '#hcluster_exe# -m #clustering_max_gene_halfcount# -w 0 -s 0.34 -O -C #cluster_dir#/hcluster.cat -o #cluster_dir#/hcluster.out #cluster_dir#/hcluster.txt',
             },
@@ -895,7 +900,6 @@ sub pipeline_analyses {
         {   -logic_name => 'hcluster_parse_output',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::HclusterParseOutput',
             -parameters => {
-                'cluster_dir'               => $self->o('cluster_dir'),
                 'division'                  => $self->o('division'),
             },
             -rc_name => '250Mb_job',
@@ -940,10 +944,6 @@ sub pipeline_analyses {
 
         {   -logic_name => 'overall_qc',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::OverallGroupsetQC',
-            -parameters => {
-                'reuse_db'                  => $self->o('prev_rel_db'),
-                'cluster_dir'               => $self->o('cluster_dir'),
-            },
             -hive_capacity  => $self->o('qc_capacity'),
             -failed_job_tolerance => 0,
             -rc_name    => '2Gb_job',
@@ -951,9 +951,6 @@ sub pipeline_analyses {
 
         {   -logic_name => 'per_genome_qc',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::PerGenomeGroupsetQC',
-            -parameters => {
-                'reuse_db'                  => $self->o('prev_rel_db'),
-            },
             -hive_capacity => $self->o('qc_capacity'),
             -failed_job_tolerance => 0,
         },
@@ -1270,8 +1267,7 @@ sub pipeline_analyses {
             -logic_name => 'stable_id_mapping',
             -module => 'Bio::EnsEMBL::Compara::RunnableDB::StableIdMapper',
             -parameters => {
-                'master_db'     => $self->o('master_db'),
-                'prev_rel_db'   => $self->o('prev_rel_db'),
+                'prev_rel_db'   => '#reuse_db#',
                 'type'          => 't',
             },
             -rc_name => '1Gb_job',
