@@ -317,10 +317,11 @@ sub render_normal {
         height => $h,
       };
       
-      my $composite;
+      my ($composite,$y_sub);
       
       if (scalar @feat == 1 and $config->{'simpleblock_optimise'}) {
         $composite = $self;
+        $y_sub = $y_pos;
       } else {
         $composite = $self->Composite({
           %$position,
@@ -328,7 +329,7 @@ sub render_normal {
           title => $self->feature_title($feat[0][2], $db_name),
           class => 'group',
         });
-        
+        $y_sub = 0;
         $position = $composite;
       }
       
@@ -353,7 +354,7 @@ sub render_normal {
         if ($draw_cigar || $cigar =~ /$regexp/) {
           $composite->push($self->Space({
             x         => $start - 1,
-            y         => 0,
+            y         => $y_sub,
             width     => $end - $start + 1,
             height    => $h,
             absolutey => 1,
@@ -367,12 +368,12 @@ sub render_normal {
             label_colour   => $label_colour,
             delete_colour  => 'black', 
             scalex         => $pix_per_bp,
-            y              => $strand_y,
+            y              => $strand_y + $y_sub,
           });
         } else {
           $composite->push($self->Rect({
             x            => $start - 1,
-            y            => $strand_y,
+            y            => $strand_y + $y_sub,
             width        => $end - $start + 1,
             height       => $h,
             colour       => $feature_colour,
@@ -413,7 +414,7 @@ sub render_normal {
           halign    => 'left',
           valign    => 'center',
           x         => $position->{'x'},
-          y         => $position->{'y'} + $h + 2,
+          y         => $position->{'y'} + $y_sub + $h + 2,
           width     => $position->{'x'} + ($bump_end - $bump_start) / $pix_per_bp,
           height    => $label_h,
           absolutey => 1,
