@@ -185,8 +185,14 @@ sub default_options {
         # Add the database location of the previous Compara release. Use "undef" if running the pipeline without reuse
         #'prev_rel_db' => 'mysql://ensro@compara3:3306/mm14_compara_homology_67'
 
-        # Force a full re-run of blastp
-        'force_blast_run'           => 0,
+        # How much the pipeline will try to reuse from "prev_rel_db"
+        # Possible values: 'clusters' (default), 'blastp', 'members'
+        #   clusters means that the members, the blastp hits and the clusters are copied over. In this case, the blastp hits are actually not copied over if "skip_blast_copy_if_possible" is set
+        #   blastp means that only the members and the blastp hits are copied over
+        #   members means that only the members are copied over
+        'reuse_level'               => 'clusters',
+        # If all the species can be reused, and if the reuse_level is "clusters", do we really want to copy all the peptide_align_feature tables ?
+        'skip_blast_copy_if_possible'   => 1,
 
     };
 }
@@ -238,6 +244,7 @@ sub pipeline_wide_parameters {  # these parameter values are visible to all anal
         'dump_dir'      => $self->o('dump_dir'),
 
         'reuse_level'   => $self->o('reuse_level'),
+        'hmm_clustering'    => $self->o('hmm_clustering'),
     };
 }
 
@@ -275,35 +282,22 @@ sub pipeline_analyses {
             },
             -flow_into  => {
                 '1->A'  => [ 'genome_reuse_factory' ],
-                'A->1'  => [ $self->o('hmm_clustering') ? 'backbone_fire_hmmClassify' : 'backbone_fire_allvsallblast' ],
+                'A->1'  => [ 'should_blast_be_skipped' ],
             },
         },
 
-       $self->o('hmm_clustering') ? (
-            {
-             -logic_name => 'backbone_fire_hmmClassify',
-             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::DatabaseDumper',
-             -parameters => {
-                             'table_list' => '',
-                             'filename'       => 'snapshot_2_before_hmmClassify',
-                            },
-            -flow_into  => {
-                            '1->A' => [ 'load_models' ],
-                            'A->1' => [ 'backbone_fire_tree_building' ],
-                           },
+        {   -logic_name => 'should_blast_be_skipped',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ConditionalDataFlow',
+            -parameters    => {
+                'skip_blast_copy_if_possible'   => $self->o('skip_blast_copy_if_possible'),
+                'condition'     => '(#are_all_species_reused# and #skip_blast_copy_if_possible#) or #hmm_clustering#',
             },
-        ) : (), # do not show the hmm analysis if the option is off
-
-### For hmmalign instead of mcoffee
-#             {
-#              -logic_name => 'backbone_fire_hmmAlign',
-#              -module     => 'Bio::EnsEMBL::Hive::RunnableDB::DatabaseDumper',
-#              -parameters => {
-#                              'updated_tables' => 'gene_tree_root gene_tree_root_tag gene_tree_node gene_tree_node_tag gene_tree_node_attr',
-#                              'filename'       => 'snapshot_before_hmmalign.sql',
-#                              'output_file'    => $self->o('dump_dir') . '/#filename#',
-#                             }
-#             },
+            -flow_into => {
+                2 => [ 'backbone_fire_clustering' ],
+                3 => [ 'backbone_fire_allvsallblast' ],
+            },
+            -meadow_type    => 'LOCAL',
+        },
 
         {   -logic_name => 'backbone_fire_allvsallblast',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::DatabaseDumper',
@@ -313,18 +307,18 @@ sub pipeline_analyses {
             },
             -flow_into  => {
                 '1->A'  => [ 'blastdb_factory' ],
-                'A->1'  => [ 'backbone_fire_hcluster' ],
+                'A->1'  => [ 'backbone_fire_clustering' ],
             },
         },
 
-        {   -logic_name => 'backbone_fire_hcluster',
+        {   -logic_name => 'backbone_fire_clustering',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::DatabaseDumper',
             -parameters => {
                 'table_list'    => '',
-                'filename'      => 'snapshot_3_before_hcluster',
+                'filename'      => 'snapshot_3_before_clustering',
             },
             -flow_into  => {
-                '1->A'  => [ 'hcluster_dump_factory' ],
+                '1->A'  => [ 'go_for_hmm_clustering' ],
                 'A->1'  => [ 'backbone_fire_tree_building' ],
             },
         },
@@ -337,7 +331,7 @@ sub pipeline_analyses {
                 'filename'      => 'snapshot_4_before_tree_building',
             },
             -flow_into  => {
-                '1->A'  => [ 'large_cluster_factory' ],
+                '1->A'  => [ 'cluster_factory' ],
                 'A->1'  => [ 'backbone_fire_dnds' ],
             },
         },
@@ -388,10 +382,13 @@ sub pipeline_analyses {
         },
 
         {   -logic_name => 'select_method_links_source',
-            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ConditionalDataFlow',
+            -parameters    => {
+                'condition'     => '$self->param_is_defined("master_db")',
+            },
             -flow_into => {
-                ($self->o('master_db') ? 1 : 999) => [ 'populate_method_links_from_db' ],
-                ($self->o('master_db') ? 999 : 1) => [ 'populate_method_links_from_file' ],
+                2 => [ 'populate_method_links_from_db' ],
+                3 => [ 'populate_method_links_from_file' ],
             },
             -meadow_type    => 'LOCAL',
         },
@@ -498,6 +495,8 @@ sub pipeline_analyses {
                     'ALTER TABLE member ADD KEY gene_list_index (source_name, taxon_id, chr_name, chr_strand, chr_start)',
                     # Counts the number of species
                     'INSERT INTO meta (meta_key,meta_value) SELECT "species_count", COUNT(*) FROM genome_db',
+                    # Whether all the species are reused
+                    'INSERT INTO meta (meta_key,meta_value) SELECT "are_all_species_reused", IF(meta_value = "-1", 1, 0) FROM meta WHERE meta_key = "nonreuse_ss_csv"',
                 ],
             },
             -meadow_type    => 'LOCAL',
@@ -532,7 +531,7 @@ sub pipeline_analyses {
             },
             -flow_into => {
                 '2->A' => [ 'sequence_table_reuse' ],
-                'A->1' => [ 'load_fresh_members_from_db_factory' ],
+                'A->1' => [ 'load_fresh_members_factory' ],
             },
             -meadow_type    => 'LOCAL',
         },
@@ -595,28 +594,27 @@ sub pipeline_analyses {
 
 # ---------------------------------------------[load the rest of members]------------------------------------------------------------
 
-        {   -logic_name => 'load_fresh_members_from_db_factory',
+        {   -logic_name => 'load_fresh_members_factory',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
             -parameters => {
-                'inputquery'        => 'SELECT genome_db_id, name FROM species_set JOIN genome_db USING (genome_db_id) WHERE species_set_id = #nonreuse_ss_id# AND locator LIKE "Bio::EnsEMBL::DBSQL::DBAdaptor/%"',
+                'inputquery'        => 'SELECT genome_db_id, name, locator FROM species_set JOIN genome_db USING (genome_db_id) WHERE species_set_id = #nonreuse_ss_id#',
                 'fan_branch_code'   => 2,
             },
             -flow_into => {
-                '2->A' => [ 'load_fresh_members_from_db' ],
-                '1->A' => [ 'load_fresh_members_from_file_factory' ],
+                '2->A' => [ 'is_genome_in_db' ],
                 'A->1' => [ 'hc_members_globally' ],
             },
             -meadow_type    => 'LOCAL',
         },
 
-        {   -logic_name => 'load_fresh_members_from_file_factory',
-            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
-            -parameters => {
-                'inputquery'        => 'SELECT genome_db_id, name FROM species_set JOIN genome_db USING (genome_db_id) WHERE species_set_id = #nonreuse_ss_id# AND locator NOT LIKE "Bio::EnsEMBL::DBSQL::DBAdaptor/%"',
-                'fan_branch_code'   => 2,
+        {   -logic_name => 'is_genome_in_db',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ConditionalDataFlow',
+            -parameters    => {
+                'condition'     => '#locator# =~ /^Bio::EnsEMBL::DBSQL::DBAdaptor/',
             },
             -flow_into => {
-                2 => [ 'load_fresh_members_from_file' ],
+                2 => [ 'load_fresh_members_from_db' ],
+                3 => [ 'load_fresh_members_from_file' ],
             },
             -meadow_type    => 'LOCAL',
         },
@@ -654,8 +652,8 @@ sub pipeline_analyses {
         {   -logic_name => 'reusedspecies_factory',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
             -parameters => {
-                'force_blast_run'   => $self->o('force_blast_run'),
-                'inputquery'        => 'SELECT genome_db_id, name FROM species_set JOIN genome_db USING (genome_db_id) WHERE species_set_id = #reuse_ss_id# AND NOT #force_blast_run#',
+                '_force_blast_run'   => '#expr(#reuse_level# eq "members" ? 1 : 0)expr#',
+                'inputquery'        => 'SELECT genome_db_id, name FROM species_set JOIN genome_db USING (genome_db_id) WHERE species_set_id = #reuse_ss_id# AND NOT #_force_blast_run#',
                 'fan_branch_code'   => 2,
             },
             -flow_into => {
@@ -668,8 +666,8 @@ sub pipeline_analyses {
         {   -logic_name => 'nonreusedspecies_factory',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
             -parameters => {
-                'force_blast_run'   => $self->o('force_blast_run'),
-                'inputquery'        => 'SELECT genome_db_id, name FROM species_set JOIN genome_db USING (genome_db_id) WHERE species_set_id = #nonreuse_ss_id# OR #force_blast_run#',
+                '_force_blast_run'   => '#expr(#reuse_level# eq "members" ? 1 : 0)expr#',
+                'inputquery'        => 'SELECT genome_db_id, name FROM species_set JOIN genome_db USING (genome_db_id) WHERE species_set_id = #nonreuse_ss_id# OR #_force_blast_run#',
                 'fan_branch_code'   => 2,
             },
             -flow_into => {
@@ -703,7 +701,6 @@ sub pipeline_analyses {
         },
 
 #----------------------------------------------[classify canonical members based on HMM searches]-----------------------------------
-       $self->o('hmm_clustering') ? (
             {
             -logic_name => 'load_models',
              -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::PantherLoadModels',
@@ -757,10 +754,8 @@ sub pipeline_analyses {
              -logic_name => 'HMM_clusterize',
              -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::HMMClusterize',
              -rc_name => '8Gb_job',
-             -flow_into => [ 'run_qc_tests' ],
             },
 
-        ) : (), # do not show the hmm analysis if the option is off
 
 # ---------------------------------------------[create and populate blast analyses]--------------------------------------------------
 
@@ -843,6 +838,31 @@ sub pipeline_analyses {
 
 # ---------------------------------------------[clustering step]---------------------------------------------------------------------
 
+        {   -logic_name => 'go_for_hmm_clustering',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ConditionalDataFlow',
+            -parameters    => {
+                'condition'     => '#hmm_clustering#',
+            },
+            -flow_into => {
+                '2->A' => 'load_models',
+                '3->A' => 'check_whether_can_copy_clusters',
+                'A->1' => 'hc_clusters',
+            },
+            -meadow_type    => 'LOCAL',
+        },
+
+        {   -logic_name => 'check_whether_can_copy_clusters',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ConditionalDataFlow',
+            -parameters    => {
+                'condition'     => '#are_all_species_reused# and ("#reuse_level#" eq "clusters")',
+            },
+            -flow_into => {
+                2 => [ 'copy_clusters' ],
+                3 => [ 'hcluster_dump_factory' ],
+            },
+            -meadow_type    => 'LOCAL',
+        },
+
         {   -logic_name => 'hcluster_dump_factory',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ObjectFactory',
             -parameters => {
@@ -903,8 +923,16 @@ sub pipeline_analyses {
                 'division'                  => $self->o('division'),
             },
             -rc_name => '250Mb_job',
-            -flow_into => [ 'hc_clusters' ],
         },
+
+        {   -logic_name => 'copy_clusters',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::CopyClusters',
+            -parameters => {
+                'tags_to_copy'              => [ 'division' ],
+            },
+            -rc_name => '250Mb_job',
+        },
+
 
         {   -logic_name         => 'hc_clusters',
             -module             => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::SqlHealthChecks',
@@ -967,30 +995,30 @@ sub pipeline_analyses {
 
 # ---------------------------------------------[main tree fan]-------------------------------------------------------------
 
-        {   -logic_name => 'large_cluster_factory',
+        {   -logic_name => 'cluster_factory',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
             -parameters => {
-                'treebreak_gene_count'  => $self->o('treebreak_gene_count'),
-                'inputquery'        => 'SELECT root_id AS gene_tree_id FROM gene_tree_root JOIN gene_tree_node USING (root_id) WHERE tree_type = "tree" GROUP BY root_id HAVING COUNT(member_id) >= #treebreak_gene_count#',
+                'inputquery'        => 'SELECT root_id AS gene_tree_id FROM gene_tree_root WHERE tree_type = "tree"',
                 'fan_branch_code'   => 2,
             },
             -flow_into  => {
-                 '2->A' => [ 'launch_large_cluster_break' ],
-                 '1->A' => [ 'cluster_factory' ],
+                 '2->A' => [ 'very_large_clusters_go_to_qtb' ],
                  'A->1' => [ 'hc_global_tree_set' ],
             },
             -meadow_type    => 'LOCAL',
         },
 
-        {   -logic_name => 'cluster_factory',
-            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
+        {   -logic_name => 'very_large_clusters_go_to_qtb',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ConditionalDataFlow',
             -parameters => {
+                'condition'             => '$self->compara_dba->get_GeneTreeAdaptor->fetch_by_dbID(#gene_tree_id#)->get_value_for_tag("gene_count") > #treebreak_gene_count#',
                 'treebreak_gene_count'  => $self->o('treebreak_gene_count'),
-                'inputquery'        => 'SELECT root_id AS gene_tree_id FROM gene_tree_root JOIN gene_tree_node USING (root_id) WHERE tree_type = "tree" GROUP BY root_id HAVING COUNT(member_id) < #treebreak_gene_count# ORDER BY COUNT(*) DESC, root_id ASC',
-                'fan_branch_code'   => 2,
             },
             -flow_into  => {
-                2 => [ 'msa_chooser' ],
+                '2->A'  => [ 'mafft' ],
+                'A->2'  => [ 'quick_tree_break' ],
+                '3->B'  => [ 'large_clusters_go_to_mafft' ],
+                'B->3'  => [ 'split_genes' ],
             },
             -meadow_type    => 'LOCAL',
         },
@@ -1007,29 +1035,33 @@ sub pipeline_analyses {
             %hc_analysis_params,
         },
 
-        {   -logic_name => 'msa_chooser',
-            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::MSAChooser',
+        {   -logic_name => 'large_clusters_go_to_mafft',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ConditionalDataFlow',
             -parameters => {
+                'condition'             => '$self->compara_dba->get_GeneTreeAdaptor->fetch_by_dbID(#gene_tree_id#)->get_value_for_tag("gene_count") > #mafft_gene_count#',
                 'mafft_gene_count'      => $self->o('mafft_gene_count'),
-                'mafft_runtime'         => $self->o('mafft_runtime'),
             },
-            -batch_size => 10,
-            -hive_capacity => 100,
-            -flow_into => {
-                '2->A' => [ 'mcoffee' ],
-                '3->A' => [ 'mafft' ],
-                'A->1' => [ 'hc_alignment_pre_tree' ],
-            },
-        },
-
-        {   -logic_name => 'launch_large_cluster_break',
-            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
-            -flow_into => {
-                '1->A' => [ 'mafft' ],
-                'A->1' => [ 'hc_alignment_pre_tree_break' ],
+            -flow_into  => {
+                2 => [ 'mafft' ],
+                 3 => 'long_running_clusters_go_to_mafft',
             },
             -meadow_type    => 'LOCAL',
         },
+
+        {   -logic_name => 'long_running_clusters_go_to_mafft',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ConditionalDataFlow',
+            -parameters => {
+                'condition'             => '$self->compara_dba->get_GeneTreeAdaptor->fetch_by_dbID(#gene_tree_id#)->get_value_for_tag("reuse_aln_runtime", 0)/1000 > #mafft_runtime#',
+                'mafft_runtime'         => $self->o('mafft_runtime'),
+            },
+            -flow_into  => {
+                2 => [ 'mafft' ],
+                3 => [ 'mcoffee' ],
+            },
+            -meadow_type    => 'LOCAL',
+        },
+
+
 
 # ---------------------------------------------[Pluggable MSA steps]----------------------------------------------------------
 
@@ -1043,6 +1075,7 @@ sub pipeline_analyses {
             -hive_capacity        => $self->o('mcoffee_capacity'),
             -rc_name => 'msa',
             -flow_into => {
+                1 => [ 'hc_alignment' ],
                -1 => [ 'mcoffee_himem' ],  # MEMLIMIT
                -2 => [ 'mafft' ],
             },
@@ -1056,6 +1089,7 @@ sub pipeline_analyses {
             -hive_capacity        => $self->o('mcoffee_capacity'),
             -rc_name => 'msa',
             -flow_into => {
+                1 => [ 'hc_alignment' ],
                -1 => [ 'mafft_himem' ],  # MEMLIMIT
             },
         },
@@ -1071,6 +1105,7 @@ sub pipeline_analyses {
             -hive_capacity        => $self->o('mcoffee_capacity'),
             -rc_name => 'msa_himem',
             -flow_into => {
+                1 => [ 'hc_alignment' ],
                -2 => [ 'mafft_himem' ],
             },
         },
@@ -1082,18 +1117,21 @@ sub pipeline_analyses {
             },
             -hive_capacity        => $self->o('mcoffee_capacity'),
             -rc_name => 'msa_himem',
+            -flow_into => {
+                1 => [ 'hc_alignment' ],
+            },
         },
 
-# ---------------------------------------------[main tree creation loop]-------------------------------------------------------------
-
-        {   -logic_name         => 'hc_alignment_pre_tree',
+        {   -logic_name         => 'hc_alignment',
             -module             => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::SqlHealthChecks',
             -parameters         => {
                 mode            => 'alignment',
             },
-            -flow_into          => [ 'split_genes' ],
             %hc_analysis_params,
         },
+
+
+# ---------------------------------------------[main tree creation loop]-------------------------------------------------------------
 
         {   -logic_name     => 'split_genes',
             -module         => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::FindContiguousSplitGenes',
@@ -1115,11 +1153,9 @@ sub pipeline_analyses {
             -hive_capacity        => $self->o('njtree_phyml_capacity'),
             -rc_name => '4Gb_job',
             -flow_into => {
-                '1->A' => [ 'hc_alignment_post_tree', 'hc_tree_structure' ],
-                'A->1' => [ 'ortho_tree' ],
-                 1     => [ 'ktreedist' ],
-                '2->B' => [ 'hc_tree_structure' ],
-                'B->2' => [ 'ortho_tree_annot' ],
+                '1->A' => [ 'hc_tree_structure' ],
+                '2->A' => [ 'hc_other_tree_structure' ],
+                'A->1' => [ 'ktreedist' ],
             }
         },
 
@@ -1128,6 +1164,7 @@ sub pipeline_analyses {
             -parameters         => {
                 mode            => 'alignment',
             },
+            -flow_into          => [ 'ortho_tree' ],
             %hc_analysis_params,
         },
 
@@ -1136,6 +1173,16 @@ sub pipeline_analyses {
             -parameters         => {
                 mode            => 'tree_structure',
             },
+            -flow_into          => [ 'hc_alignment_post_tree' ],
+            %hc_analysis_params,
+        },
+
+        {   -logic_name         => 'hc_other_tree_structure',
+            -module             => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::SqlHealthChecks',
+            -parameters         => {
+                mode            => 'tree_structure',
+            },
+            -flow_into          => [ 'ortho_tree_annot' ],
             %hc_analysis_params,
         },
 
@@ -1213,15 +1260,6 @@ sub pipeline_analyses {
 
 # ---------------------------------------------[Quick tree break steps]-----------------------------------------------------------------------
 
-        {   -logic_name         => 'hc_alignment_pre_tree_break',
-            -module             => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::SqlHealthChecks',
-            -parameters         => {
-                mode            => 'alignment',
-            },
-            -flow_into          => [ 'quick_tree_break' ],
-            %hc_analysis_params,
-        },
-
         {   -logic_name => 'quick_tree_break',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::QuickTreeBreak',
             -parameters => {
@@ -1255,7 +1293,7 @@ sub pipeline_analyses {
             #-flow_into      => [ 'mafft' ],
             -flow_into => {
                 '1->A' => [ 'mafft' ],
-                'A->1' => [ 'hc_alignment_pre_tree' ],
+                'A->1' => [ 'split_genes' ],
             },
         },
 
