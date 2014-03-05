@@ -1595,7 +1595,7 @@ sub species_stats {
     $counts->add_row({
       'name' => "<b>$header</b>",
       'stat' => $stat,
-    });
+    }) if $stat;
   }
 
   $html .= $counts->render;
@@ -1621,7 +1621,7 @@ sub species_stats {
       $alt_counts->add_row({
         'name' => "<b>$header</b>",
         'stat' => $stat,
-      });
+      }) if $stat;
     }
     $html .= $alt_counts->render;
   }
@@ -1638,19 +1638,22 @@ sub species_stats {
     push @$rows, {
       'name' => "<b>$name</b>",
       'stat' => $self->thousandify($stat),
-    };
+    } if $stat;
   }
   ## Variants
-  my @other_stats = (
-    {'name' => 'SNPCount', 'method' => 'get_short_variation_count'},
-    {'name' => 'struct_var', 'method' => 'get_structural_variation_count'}
-  );
-  foreach (@other_stats) {
-    my $method = $_->{'method'};
-    push @$rows, {
-      'name' => '<b>'.$genome_container->get_attrib($_->{'name'})->name().'</b>',
-      'stat' => $self->thousandify($genome_container->$method),
-    };
+  if ($self->hub->database('variation')) {
+    my @other_stats = (
+      {'name' => 'SNPCount', 'method' => 'get_short_variation_count'},
+      {'name' => 'struct_var', 'method' => 'get_structural_variation_count'}
+    );
+    foreach (@other_stats) {
+      my $method = $_->{'method'};
+      my $stat = $self->thousandify($genome_container->$method);
+      push @$rows, {
+        'name' => '<b>'.$genome_container->get_attrib($_->{'name'})->name().'</b>',
+        'stat' => $stat,
+      } if $stat;
+    }
   }
   if (scalar(@$rows)) {
     $html .= '<h3>Other</h3>';
