@@ -528,6 +528,7 @@ sub _expand_database_templates {
 
 sub _merge_db_tree {
   my ($self, $tree, $db_tree, $key) = @_;
+  return unless defined $db_tree;
   Hash::Merge::set_behavior('RIGHT_PRECEDENT');
   my $t = merge($tree->{$key}, $db_tree->{$key});
   $tree->{$key} = $t;
