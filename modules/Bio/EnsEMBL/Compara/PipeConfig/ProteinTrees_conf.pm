@@ -258,7 +258,7 @@ sub pipeline_analyses {
         {   -logic_name => 'backbone_fire_db_prepare',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
             -input_ids  => [ {
-                'output_file'   => '#dump_dir#/#filename#.gz',
+                'output_file'   => '#dump_dir#/#filename#.sql.gz',
             } ],
             -flow_into  => {
                 '1->A'  => [ 'copy_ncbi_tables_factory' ],
@@ -271,7 +271,7 @@ sub pipeline_analyses {
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::DatabaseDumper',
             -parameters => {
                 'table_list'        => '',
-                'filename'          => 'snapshot_1_before_genome_load.sql',
+                'filename'          => 'snapshot_1_before_genome_load',
             },
             -flow_into  => {
                 '1->A'  => [ 'genome_reuse_factory' ],
@@ -285,7 +285,7 @@ sub pipeline_analyses {
              -module     => 'Bio::EnsEMBL::Hive::RunnableDB::DatabaseDumper',
              -parameters => {
                              'table_list' => '',
-                             'filename'       => 'snapshot_2_before_hmmClassify.sql',
+                             'filename'       => 'snapshot_2_before_hmmClassify',
                             },
             -flow_into  => {
                             '1->A' => [ 'load_models' ],
@@ -309,7 +309,7 @@ sub pipeline_analyses {
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::DatabaseDumper',
             -parameters => {
                 'table_list'    => '',
-                'filename'      => 'snapshot_2_before_allvsallblast.sql',
+                'filename'      => 'snapshot_2_before_allvsallblast',
             },
             -flow_into  => {
                 '1->A'  => [ 'blastdb_factory' ],
@@ -321,7 +321,7 @@ sub pipeline_analyses {
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::DatabaseDumper',
             -parameters => {
                 'table_list'    => '',
-                'filename'      => 'snapshot_3_before_hcluster.sql',
+                'filename'      => 'snapshot_3_before_hcluster',
             },
             -flow_into  => {
                 '1->A'  => [ 'hcluster_dump_factory' ],
@@ -334,7 +334,7 @@ sub pipeline_analyses {
             -parameters => {
                 'table_list'    => 'peptide_align_feature_%',
                 'exclude_list'  => 1,
-                'filename'      => 'snapshot_4_before_tree_building.sql',
+                'filename'      => 'snapshot_4_before_tree_building',
             },
             -flow_into  => {
                 '1->A'  => [ 'large_cluster_factory' ],
@@ -347,7 +347,7 @@ sub pipeline_analyses {
             -parameters => {
                 'table_list'    => 'peptide_align_feature_%',
                 'exclude_list'  => 1,
-                'filename'      => 'snapshot_5_before_dnds.sql',
+                'filename'      => 'snapshot_5_before_dnds',
             },
             -flow_into  => {
                 '1->A'  => [ 'group_genomes_under_taxa' ],
