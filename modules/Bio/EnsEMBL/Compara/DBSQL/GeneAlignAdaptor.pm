@@ -38,7 +38,6 @@ our @ISA = qw(Bio::EnsEMBL::Compara::DBSQL::BaseRelationAdaptor);
  Example    : $alignments = $GeneAlignAdaptor->fetch_all_by_SeqMember($member);
  Description: find the alignments to which the given member belongs to
  Returntype : an array reference of Bio::EnsEMBL::Compara::GeneAlign objects
-              (could be empty or contain more than one GeneAlign in the case of ENSEMBLGENE only)
  Exceptions : when missing arguments
  Caller     : general
 

@@ -366,9 +366,7 @@ sub _store_PAFS {
       $qgenome_db_id = 0 unless($qgenome_db_id);
       my $hgenome_db_id = $paf->hit_genome_db_id;
       $hgenome_db_id = 0 unless($hgenome_db_id);
-#      eval {$paf->query_member->source_name eq 'ENSEMBLPEP';};
-			eval {$paf->query_member->source_name};
-      if ($@) { throw("Not an ENSEMBLPEP\n"); }
+      if (not $paf->query_member) { throw("PAF query member undefined\n"); }
       # Null_cigar option for leaner paf tables
       $paf->cigar_line('') if (defined $paf->{null_cigar});
 
@@ -414,17 +412,13 @@ sub _create_PAF_from_BaseAlignFeature {
 
   if ($feature->seqname =~ /IDs\:(\d+)\:(\d+)/) {
     my $query_member = $memberDBA->fetch_by_dbID($2);
-#    eval {$query_member->source_name eq 'ENSEMBLPEP'};
-		eval {$query_member->source_name};
-    if ($@) { throw("$1 is not an ENSEMBLPEP\n"); }
+    if (not $query_member) { throw("$1 is not an seq_member\n"); }
     $paf->query_genome_db_id($1);
     $paf->query_member_id($2);
   } elsif($feature->seqname =~ /member_id_(\d+)/) {
     #printf("qseq: seq_member_id = %d\n", $1);
     my $query_member = $memberDBA->fetch_by_dbID($1);
-#    eval {$query_member->source_name eq 'ENSEMBLPEP'};
-		eval {$query_member->source_name};
-    if ($@) { throw("$1 is not an ENSEMBLPEP\n"); }
+    if (not $query_member) { throw("$1 is not an seq_member\n"); }
     $paf->query_member($query_member);
   } else {
     my ($source_name, @stable_id_array) = split(/:/, $feature->seqname);

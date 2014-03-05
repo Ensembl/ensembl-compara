@@ -487,7 +487,6 @@ sub print_sequences_to_file {
 
     my %seq_hash = ();
     foreach my $member (@{$self->get_all_Members}) {
-        next if $member->source_name eq 'ENSEMBLGENE';
         next unless $member->isa('Bio::EnsEMBL::Compara::SeqMember');
 
         my $bioseq = $member->bioseq(-SEQ_TYPE => $seq_type, -ID_TYPE => $id_type);

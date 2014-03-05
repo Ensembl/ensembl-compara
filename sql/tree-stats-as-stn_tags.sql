@@ -37,14 +37,18 @@ GROUP BY
 	root_id
 ;
 
+CREATE TEMPORARY TABLE tmp_ngenes
+SELECT genome_db_id, COUNT(*) FROM gene_member GROUP BY genome_db_id;
+CREATE TEMPORARY TABLE tmp_nseq
+SELECT genome_db_id, COUNT(*) FROM seq_member GROUP BY genome_db_id;
 
 -- Stats per genome
 CREATE TEMPORARY TABLE tmp_stats_per_genome
 SELECT
 	stn.node_id,
-	SUM(mg.source_name = "ENSEMBLGENE") AS nb_genes,
-	SUM(mg.source_name != "ENSEMBLGENE") AS nb_seq,
-	SUM(mg.source_name = "ENSEMBLGENE" AND gtn.node_id IS NULL) AS nb_orphan_genes,
+	COUNT(DISTINCT mg.gene_member_id) AS nb_genes,
+	COUNT(DISTINCT mp.seq_member_id AS nb_seq,
+	SUM(gtn.node_id IS NULL) AS nb_orphan_genes,
 	SUM(gtn.node_id IS NOT NULL) AS nb_genes_in_tree,
 	SUM(gtn.node_id IS NOT NULL AND gstn.genome_db_id IS NULL) AS nb_genes_in_tree_multi_species,
 	SUM(gtn.node_id IS NOT NULL AND gstn.genome_db_id IS NOT NULL) AS nb_genes_in_tree_single_species
@@ -52,12 +56,13 @@ FROM
 	species_tree_node stn
 	JOIN species_tree_root str USING (root_id)
 	JOIN gene_member mg USING (genome_db_id)
+	JOIN seq_member mp USING (gene_member_id)
 	LEFT JOIN (
 		gene_tree_node gtn
 		JOIN gene_tree_root gtr ON gtn.root_id = gtr.root_id AND clusterset_id = "default"
 		JOIN gene_tree_node_attr gtna ON (gtn.root_id = gtna.node_id)
 		JOIN species_tree_node gstn ON gstn.node_id = gtna.species_tree_node_id
-	) ON mg.canonical_member_id = gtn.seq_member_id
+	) USING (seq_member_id)
 WHERE
 	label = "default"
 GROUP BY

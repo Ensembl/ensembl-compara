@@ -215,8 +215,7 @@ sub fetch_by_node_id {
              : string: the name of the clusterset (default is "default")
   Example    : $all_trees = $genetree_adaptor->fetch_all_by_Member($member);
   Description: Fetches from the database all the gene trees that contains this member
-               If the member is not an ENSEMBLGENE, it has to be canoncal, otherwise,
-                 the function would return undef
+               If the member is a non-canonical SeqMember, returns an empty list
   Returntype : arrayref of Bio::EnsEMBL::Compara::GeneTree
   Exceptions : none
   Caller     : general
@@ -256,8 +255,7 @@ sub fetch_all_by_Member {
   Arg[1]     : Member or member_id
   Example    : $trees = $genetree_adaptor->fetch_default_for_Member($member);
   Description: Fetches from the database the default gene tree that contains this member
-               If the member is not an ENSEMBLGENE, it has to be canoncal, otherwise,
-                 the function would return undef
+               If the member is a non-canonical SeqMember, returns undef
   Returntype : Bio::EnsEMBL::Compara::GeneTree
   Exceptions : none
   Caller     : general

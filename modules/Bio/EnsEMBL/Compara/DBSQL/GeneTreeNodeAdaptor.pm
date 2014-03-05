@@ -83,9 +83,8 @@ use base ('Bio::EnsEMBL::Compara::DBSQL::NestedSetAdaptor', 'Bio::EnsEMBL::Compa
                NB: The definition of this argument is unstable and might change
                    in the future
   Example    : $all_members = $genetree_adaptor->fetch_all_AlignedMember_by_Member($member);
-  Description: Transforms the member into an AlignedMember. If the member is
-               not an ENSEMBLGENE, it has to be canoncal, otherwise, the
-               function would return an empty array
+  Description: Transforms the member into an AlignedMember.
+               If the member is a non-canonical SeqMember, returns []
   Returntype : arrayref of Bio::EnsEMBL::Compara::AlignedMember
   Exceptions : none
   Caller     : general
@@ -129,9 +128,8 @@ sub fetch_all_AlignedMember_by_Member {
 
   Arg[1]     : Member or member_id
   Example    : $align_member = $genetreenode_adaptor->fetch_adefault_AlignedMember_for_Member($member);
-  Description: Transforms the member into an AlignedMember. If the member is
-               not an ENSEMBLGENE, it has to be canoncal, otherwise, the
-               function would return undef
+  Description: Transforms the member into an AlignedMember.
+               If the member is a non-canonical SeqMember, returns undef
   Returntype : Bio::EnsEMBL::Compara::AlignedMember
   Exceptions : none
   Caller     : general

@@ -67,7 +67,7 @@ sub fetch_input {
     } elsif ($pep_counter == 1) {
 
         unlink $pep_file;
-        my $member = (grep {$_->source_name ne 'ENSEMBLGENE'} @{$family->get_all_Members})[0];
+        my $member = $family->get_all_Members()->[0];
         my $cigar_line = length($member->sequence).'M';
         eval {$member->cigar_line($cigar_line) };
         if($@) {

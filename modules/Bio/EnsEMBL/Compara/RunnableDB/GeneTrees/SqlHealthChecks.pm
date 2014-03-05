@@ -98,11 +98,11 @@ my $config = {
             },
             {
                 description => 'Each gene should have a canonical peptide / transcript',
-                query => 'SELECT mg.gene_member_id FROM gene_member mg LEFT JOIN seq_member mp ON mg.canonical_member_id = mp.seq_member_id WHERE mg.genome_db_id = #genome_db_id# AND mg.source_name = "ENSEMBLGENE" AND mp.seq_member_id IS NULL',
+                query => 'SELECT mg.gene_member_id FROM gene_member mg LEFT JOIN seq_member mp ON mg.canonical_member_id = mp.seq_member_id WHERE mg.genome_db_id = #genome_db_id# AND mp.seq_member_id IS NULL',
             },
             {
                 description => 'Canonical members should belong to their genes (circular references)',
-                query => 'SELECT mg.gene_member_id, mg.canonical_member_id, mp.gene_member_id FROM gene_member mg JOIN seq_member mp ON mg.canonical_member_id = mp.seq_member_id WHERE mg.genome_db_id = #genome_db_id# AND mg.source_name = "ENSEMBLGENE" AND mp.gene_member_id != mg.gene_member_id',
+                query => 'SELECT mg.gene_member_id, mg.canonical_member_id, mp.gene_member_id FROM gene_member mg JOIN seq_member mp ON mg.canonical_member_id = mp.seq_member_id WHERE mg.genome_db_id = #genome_db_id# AND mp.gene_member_id != mg.gene_member_id',
             },
             {
                 description => 'Peptides and transcripts should have sequences',
@@ -110,11 +110,11 @@ my $config = {
             },
             {
                 description => 'Peptides should have CDS sequences (which are made of only ACGTN). Ambiguity codes have to be explicitely switched on.',
-                query => 'SELECT mp.seq_member_id FROM seq_member mp LEFT JOIN other_member_sequence oms ON mp.seq_member_id = oms.seq_member_id AND oms.seq_type = "cds" WHERE genome_db_id = #genome_db_id# AND source_name = "ENSEMBLPEP" AND (sequence IS NULL OR LENGTH(sequence) = 0 OR (sequence REGEXP "[^ACGTN]" AND NOT #allow_ambiguity_codes#) OR (sequence REGEXP "[^ACGTNKMRSWY]"))',
+                query => 'SELECT mp.seq_member_id FROM seq_member mp LEFT JOIN other_member_sequence oms ON mp.seq_member_id = oms.seq_member_id AND oms.seq_type = "cds" WHERE genome_db_id = #genome_db_id# AND (sequence IS NULL OR LENGTH(sequence) = 0 OR (sequence REGEXP "[^ACGTN]" AND NOT #allow_ambiguity_codes#) OR (sequence REGEXP "[^ACGTNKMRSWY]"))',
             },
             {
                 description => 'The protein sequences should not be only ACGTN (unless 5aa-long, for an immunoglobulin gene)',
-                query => 'SELECT seq_member_id FROM seq_member LEFT JOIN sequence USING (sequence_id) WHERE genome_db_id = #genome_db_id# AND source_name = "ENSEMBLPEP" AND sequence REGEXP "^[ACGTN]*$" AND LENGTH(sequence) > 5',
+                query => 'SELECT seq_member_id FROM seq_member LEFT JOIN sequence USING (sequence_id) WHERE genome_db_id = #genome_db_id# AND sequence REGEXP "^[ACGTN]*$" AND LENGTH(sequence) > 5',
             },
             {
                 description => 'GeneMembers should have chromosome coordinates',

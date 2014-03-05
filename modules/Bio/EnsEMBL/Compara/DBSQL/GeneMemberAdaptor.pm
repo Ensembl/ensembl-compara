@@ -83,8 +83,7 @@ sub fetch_all_homology_orphans_by_GenomeDB {
 
   assert_ref($gdb, 'Bio::EnsEMBL::Compara::GenomeDB');
 
-  my $constraint = 'm.source_name = "ENSEMBLGENE"';
-  $constraint .= ' AND m.genome_db_id = ?';
+  my $constraint = 'm.genome_db_id = ?';
   $self->bind_param_generic_fetch($gdb->dbID, SQL_INTEGER);
 
   # The LEFT JOIN condition is actually below and therefore shared by all the fetch methods

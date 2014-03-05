@@ -344,7 +344,6 @@ sub get_SimpleAlign {
     my $seq_hash = {};
     foreach my $member (@{$self->get_all_Members}) {
 
-        next if $member->source_name eq 'ENSEMBLGENE';
         next if $member->source_name =~ m/^Uniprot/i and $seq_type;
 
         # The correct codon table
@@ -552,6 +551,7 @@ sub get_4D_SimpleAlign {
 
     my %member_seqstr;
     foreach my $member (@{$self->get_all_Members}) {
+        # UniProt members don't have CDS sequences
         next if $member->source_name ne 'ENSEMBLPEP';
         my $seqstr = $member->alignment_string('cds');
         next if(!$seqstr);

@@ -362,8 +362,8 @@ The error usually comes on species loaded from Fasta files. Make sure that the I
 
   # If more than a few entries, you need to rerun the load_fresh_members_fromfile job, identify the relevant job
     > DELETE other_member_sequence FROM seq_member JOIN other_member_sequence USING (seq_member_id) WHERE genome_db_id = ${GDB_ID};
-    > DELETE FROM seq_member WHERE genome_db_id = ${GDB_ID} AND source_name = "ENSEMBLPEP";
     > DELETE FROM seq_member WHERE genome_db_id = ${GDB_ID};
+    > DELETE FROM gene_member WHERE genome_db_id = ${GDB_ID};
     > SELECT * FROM job WHERE analysis_id = XXX AND input_id LIKE "%${GDB_ID}%";
     $ runWorker.pl -url ${EHIVE_URL} -job_id ${JOB_ID} -debug 9 -force 1
 

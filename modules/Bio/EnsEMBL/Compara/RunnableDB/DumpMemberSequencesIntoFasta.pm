@@ -24,7 +24,7 @@ limitations under the License.
 
 Bio::EnsEMBL::Compara::RunnableDB::DumpMemberSequencesIntoFasta
 
-This runnable dumps all members from given source_names into one big FASTA file.
+This runnable dumps all members into one big FASTA file.
 
 =cut
 
@@ -39,7 +39,6 @@ sub param_defaults {
         'fasta_name'  => 'metazoa.pep', # you should definitely change it
         'split_width' => 72,            # split sequence lines into readable format (set to 0 to disable)
         'idprefixed'  => 1,             # introduce sequence_id as a part of the name (for faster mapping)
-        'source_names'=> [ 'ENSEMBLPEP','Uniprot/SWISSPROT','Uniprot/SPTREMBL', 'EXTERNALPEP' ],
     };
 }
 
@@ -50,12 +49,10 @@ sub run {
     my $split_width = $self->param('split_width');
     my $idprefixed  = $self->param('idprefixed');
 
-    my $source_names = join(', ', map { "'$_'" } @{ $self->param('source_names') } );
 
     my $sql = "SELECT m.sequence_id, m.stable_id, m.description, s.sequence " .
                 " FROM seq_member m, sequence s " .
-                " WHERE m.source_name in ( $source_names ) ".
-                " AND m.sequence_id=s.sequence_id ".
+                " WHERE m.sequence_id=s.sequence_id ".
                 " GROUP BY m.sequence_id ".
                 " ORDER BY m.sequence_id, m.stable_id";
 

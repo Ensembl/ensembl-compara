@@ -170,33 +170,6 @@ sub copy {
 }
 
 
-=head2 new_fast
-
-  Arg [1]    : hash reference $hashref
-  Example    : none
-  Description: This is an ultra fast constructor which requires knowledge of
-               the objects internals to be used.
-  Returntype :
-  Exceptions : none
-
-=cut
-
-sub new_fast {
-  my ($class, $hashref) = @_;
-  if ($hashref->{'_source_name'}) {
-    if ($hashref->{'_source_name'} eq 'ENSEMBLGENE') {
-        bless $hashref, 'Bio::EnsEMBL::Compara::GeneMember';
-    } else {
-        bless $hashref, 'Bio::EnsEMBL::Compara::SeqMember';
-    }
-  } else {
-    bless $hashref, $class;
-  }
-
-  return $hashref;
-}
-
-
 
 #
 # Global methods
