@@ -64,6 +64,8 @@ package Bio::EnsEMBL::Compara::RunnableDB::LoadMembers;
 use strict;
 use warnings;
 
+use Bio::EnsEMBL::Compara::SeqMember;
+use Bio::EnsEMBL::Compara::GeneMember;
 
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
@@ -300,10 +302,10 @@ sub store_gene_and_all_transcripts {
          -translate=>'yes',
          -description=>$description);
 
-    print(" => member " . $pep_member->stable_id) if($self->param('verbose'));
+    print(" => pep_member " . $pep_member->stable_id) if($self->param('verbose'));
 
     unless($pep_member->sequence) {
-      print "  => NO SEQUENCE for member " . $pep_member->stable_id;
+      print "  => NO SEQUENCE for pep_member " . $pep_member->stable_id;
       next;
     }
     print(" len=",$pep_member->seq_length ) if($self->param('verbose'));
@@ -316,7 +318,7 @@ sub store_gene_and_all_transcripts {
       $gene_member = Bio::EnsEMBL::Compara::GeneMember->new_from_gene(
                                                                   -gene=>$gene,
                                                                   -genome_db=>$self->param('genome_db'));
-      print(" => member " . $gene_member->stable_id) if($self->param('verbose'));
+      print(" => gene_member " . $gene_member->stable_id) if($self->param('verbose'));
 
       $gene_member_adaptor->store($gene_member);
       print(" : stored") if($self->param('verbose'));
@@ -408,7 +410,7 @@ sub store_all_coding_exons {
         $exon_member->version($exon->version);
 
 	#Not sure what this should be but need to set it to something or else the members do not get added
-	#to the member table in the store method of MemberAdaptor
+	#to the exon_member table in the store method of MemberAdaptor
 	$exon_member->display_label("NULL");
         
         my $seq_string = $exon->peptide($transcript)->seq;
@@ -421,7 +423,7 @@ sub store_all_coding_exons {
           $exon_member->sequence($seq_string);
         }
 
-        print(" => member " . $exon_member->stable_id) if($self->param('verbose'));
+        print(" => exon_member " . $exon_member->stable_id) if($self->param('verbose'));
 
         unless($exon_member->sequence) {
           print("  => NO SEQUENCE!\n") if($self->param('verbose'));
@@ -448,7 +450,7 @@ sub store_all_coding_exons {
     push @exon_members_stored, $exon_member;
 
     eval {
-	    #print "New member\n";
+	    #print "New seq_member\n";
 	    $seq_member_adaptor->store($exon_member);
 	    print(" : stored\n") if($self->param('verbose'));
     };

@@ -44,9 +44,9 @@ sub attach {
                the arrayref $join should contain arrayrefs of this form
                [['family_member', 'fm'],
                 # the table to join with synonym (mandatory) as an arrayref
-                'm.member_id = fm.member_id',
+                'm.seq_member_id = fm.seq_member_id',
                 # the join condition (mandatory)
-                [qw(fm.family_id fm.member_id fm.cigar_line)]]
+                [qw(fm.family_id fm.seq_member_id fm.cigar_line)]]
                 # any additional columns that the join could imply (optional)
                 # as an arrayref 
   Arg [3]    : (optional) string $final_clause

@@ -58,7 +58,7 @@ my $r2r_exe = "/software/ensembl/compara/R2R-1.0.3/src/r2r";
 my $registry_file;
 my $url;
 my $compara_url;
-my $member_id;
+my $stable_id;
 my $thumbnail;
 my $help;
 
@@ -67,12 +67,12 @@ GetOptions(
            "url=s"           => \$url,
            "compara_url=s"   => \$compara_url,
            "conf|registry=s" => \$registry_file,
-           "id|member_id:s"  => \$member_id,
+           "id|stable_id:s"  => \$stable_id,
            "thumbnail"       => \$thumbnail,
            "help"            => \$help,
           );
 
-if (! defined $member_id || $help) {
+if (! defined $stable_id || $help) {
       print <<'EOH';
 GenerateSSPict.pl -- Generate secondary structure of Ensembl ncRNA trees
 ./GenerateSSPict.pl -compara_url <compara_url> -id <gene_member_stable_id>
@@ -81,7 +81,7 @@ Options:
     --url                 [Optional] URL for Ensembl databases
     --compara_url         [Optional] URL for Ensembl Compara database
     --conf | --registry   [Optional] Path to a configuration file
-    --id   | --member_id             Ensembl gene member stable id
+    --id   | --stable_id             Ensembl gene stable id
     --r2r_exe                        Path to the r2r executable
                                      [Defaults to /software/ensembl/compara/R2R-1.0.3/src/r2r]
     --thumbnail           [Optional] If present, only a thumbnail of the family is created
@@ -113,16 +113,16 @@ my $geneMemberAdaptor = $compara_dba->get_GeneMemberAdaptor();
 my $seqMemberAdaptor  = $compara_dba->get_SeqMemberAdaptor();
 my $geneTreeAdaptor   = $compara_dba->get_GeneTreeAdaptor();
 
-my $member = $geneMemberAdaptor->fetch_by_source_stable_id('ENSEMBLGENE', $member_id);
-check($member, "member", $member_id);
-my $transc = $seqMemberAdaptor->fetch_canonical_for_gene_member_id($member->member_id);
-check($transc, "transcript", $member_id);
-my $geneTree = $geneTreeAdaptor->fetch_default_for_Member($member);
-check($geneTree, "GeneTree", $member_id);
+my $gene_member = $geneMemberAdaptor->fetch_by_source_stable_id('ENSEMBLGENE', $stable_id);
+check($gene_member, "gene", $stable_id);
+my $transc = $seqMemberAdaptor->fetch_canonical_for_gene_member_id($gene_member->gene_member_id);
+check($transc, "transcript", $stable_id);
+my $geneTree = $geneTreeAdaptor->fetch_default_for_Member($gene_member);
+check($geneTree, "GeneTree", $stable_id);
 my $model_name = $geneTree->get_tagvalue('model_name');
-check($model_name, "model_name", $member_id);
+check($model_name, "model_name", $stable_id);
 my $ss_cons = $geneTree->get_tagvalue('ss_cons');
-check($ss_cons, "ss_cons", $member_id);
+check($ss_cons, "ss_cons", $stable_id);
 my $input_aln = $geneTree->get_SimpleAlign( -id => 'MEMBER' );
 my $aln_filename = dumpMultipleAlignment($input_aln, $model_name, $ss_cons);
 
@@ -189,14 +189,14 @@ sub thumbnail {
 
 
 sub member_pic {
-    my ($member_id, $aln_file, $out_aln_file) = @_;
+    my ($stable_id, $aln_file, $out_aln_file) = @_;
 
     my $meta_file = $aln_file . ".meta";
     open my $meta_fh, ">", $meta_file or die $!;
     print $meta_fh "$out_aln_file\n";
-    print $meta_fh "$aln_file\toneseq\t$member_id\n";
+    print $meta_fh "$aln_file\toneseq\t$stable_id\n";
     close ($meta_fh);
-    my $svg_pic_filename = "${out_aln_file}-${member_id}.svg";
+    my $svg_pic_filename = "${out_aln_file}-${stable_id}.svg";
     run_r2r_and_check("", $meta_file, $svg_pic_filename, "");
     return;
 }
@@ -217,9 +217,9 @@ sub run_r2r_and_check {
 
 
 sub check {
-    my ($val, $type, $member_id) = @_;
+    my ($val, $type, $stable_id) = @_;
     unless (defined $val) {
-        print STDERR "No $type found for $member_id in the database\n";
+        print STDERR "No $type found for $stable_id in the database\n";
         exit(1);
     }
 }

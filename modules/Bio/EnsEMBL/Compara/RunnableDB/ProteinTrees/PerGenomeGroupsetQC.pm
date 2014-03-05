@@ -125,7 +125,7 @@ sub fetch_gdb_orphan_genes {
 
     my %orphan_stable_id_hash = ();
 
-    my $sql = 'SELECT mg.stable_id FROM member mg LEFT JOIN gene_tree_node gtn ON (mg.canonical_member_id = gtn.member_id) WHERE gtn.member_id IS NULL AND mg.genome_db_id = ? AND mg.source_name = "ENSEMBLGENE"';
+    my $sql = 'SELECT mg.stable_id FROM gene_member mg LEFT JOIN gene_tree_node gtn ON (mg.canonical_member_id = gtn.seq_member_id) WHERE gtn.seq_member_id IS NULL AND mg.genome_db_id = ?';
 
     my $sth = $given_compara_dba->dbc->prepare($sql);
     $sth->execute($genome_db_id);

@@ -65,11 +65,11 @@ sub fetch_all_by_Member {
   }
   assert_ref($member, 'Bio::EnsEMBL::Compara::Member');
 
-  my $peptide_member_id = $member->isa('Bio::EnsEMBL::Compara::GeneMember') ? $member->canonical_member_id : $member->dbID;
+  my $seq_member_id = $member->isa('Bio::EnsEMBL::Compara::GeneMember') ? $member->canonical_member_id : $member->dbID;
 
   my $join = [[['homology_member', 'hm'], 'h.homology_id = hm.homology_id']];
   my $constraint = 'hm.seq_member_id = ?';
-  $self->bind_param_generic_fetch($peptide_member_id, SQL_INTEGER);
+  $self->bind_param_generic_fetch($seq_member_id, SQL_INTEGER);
 
   if (defined $method_link_species_set) {
     $constraint .= ' AND h.method_link_species_set_id = ?';
@@ -84,7 +84,7 @@ sub fetch_all_by_Member {
   # in Bio::EnsEMBL::Compara::MemberSet to make sure that the first element
   # of the member array is the one that has been used by the user to fetch the
   # homology object
-  $self->{'_this_one_first'} = $peptide_member_id;
+  $self->{'_this_one_first'} = $seq_member_id;
 
   my $homologies = $self->generic_fetch($constraint, $join);
 
@@ -612,7 +612,7 @@ sub store {
     $hom->dbID($sth->{'mysql_insertid'});
   }
 
-  my $sql = 'INSERT IGNORE INTO homology_member (homology_id, member_id, seq_member_id, cigar_line, perc_id, perc_pos, perc_cov) VALUES (?,?,?,?,?,?,?)';
+  my $sql = 'INSERT IGNORE INTO homology_member (homology_id, gene_member_id, seq_member_id, cigar_line, perc_id, perc_pos, perc_cov) VALUES (?,?,?,?,?,?,?)';
   my $sth = $self->prepare($sql);
   foreach my $member(@{$hom->get_all_Members}) {
     # Stores the member if not yet stored

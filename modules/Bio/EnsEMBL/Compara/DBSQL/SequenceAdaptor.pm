@@ -129,11 +129,11 @@ sub fetch_all_by_chunk_set_id {
 }
 
 sub fetch_other_sequence_by_member_id_type {
-  my ($self, $member_id, $type) = @_;
+  my ($self, $seq_member_id, $type) = @_;
 
-  my $sql = "SELECT sequence FROM other_member_sequence WHERE member_id = ? AND seq_type = ?";
+  my $sql = "SELECT sequence FROM other_member_sequence WHERE seq_member_id = ? AND seq_type = ?";
   my $sth = $self->prepare($sql);
-  $sth->execute($member_id, $type);
+  $sth->execute($seq_member_id, $type);
 
   my ($seq) = $sth->fetchrow_array();
   $sth->finish();
@@ -184,7 +184,7 @@ sub store {
 
 sub store_other_sequence {
     my ($self, $member, $seq, $type) = @_;
-    my $sth = $self->prepare("REPLACE INTO other_member_sequence (member_id, seq_type, length, sequence) VALUES (?,?,?,?)");
+    my $sth = $self->prepare("REPLACE INTO other_member_sequence (seq_member_id, seq_type, length, sequence) VALUES (?,?,?,?)");
     return $sth->execute($member->dbID, $type, length($seq), $seq);
 }
 

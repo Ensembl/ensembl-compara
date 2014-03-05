@@ -78,11 +78,11 @@ sub run {
   
     foreach my $id (@$ids) {
         my $stable_id = ($id =~ /^(\S+)\.\d+$/) ? $1 : $id;     # drop the version number if it's there
-        my $member = $self->compara_dba()->get_SeqMemberAdaptor->fetch_by_source_stable_id($source_name, $stable_id);
-        my $member_id;
+        my $seq_member = $self->compara_dba()->get_SeqMemberAdaptor->fetch_by_source_stable_id($source_name, $stable_id);
+        my $seq_member_id;
 
-        if($member and $member_id = $member->sequence_id) {
-            print "Member '$stable_id' already stored (member_id=$member_id), skipping\n";
+        if($seq_member and $seq_member_id = $seq_member->seq_member_id) {
+            print "Member '$stable_id' already stored (seq_member_id=$seq_member_id), skipping\n";
         } else {    # skip the ones that have been already stored
             push @not_yet_stored_ids, $id;
         }
@@ -153,9 +153,9 @@ sub fetch_and_store_a_chunk {
     #
     ########################################################################################################
 
-    if(my $member_id = $self->store_bioseq($seq, $source_name, $ncbi_taxon_id)) {
-        print STDERR "Member '$member_name' stored under member_id=$member_id\n";
-        push @member_ids, $member_id;
+    if(my $seq_member_id = $self->store_bioseq($seq, $source_name, $ncbi_taxon_id)) {
+        print STDERR "Member '$member_name' stored under seq_member_id=$seq_member_id\n";
+        push @member_ids, $seq_member_id;
         $loaded_in_this_batch++;
     } else {
         print STDERR "Member '$member_name' not stored.\n";

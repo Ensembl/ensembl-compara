@@ -261,7 +261,7 @@ sub load_cigars_from_file {
     foreach my $member (@{$self->get_all_Members}) {
         $member->cigar_line(undef);
         $member->sequence(undef) if $import_seq;
-        $member_hash{$member->member_id} = $member;
+        $member_hash{$member->seq_member_id} = $member;
     }
 
     #assign cigar_line to each of the member attribute
@@ -289,7 +289,7 @@ sub load_cigars_from_file {
     Arg [-UNIQ_SEQ] : (opt) boolean (default: false)
         : whether redundant sequences should be discarded
     Arg [-ID_TYPE] (opt) string (one of 'STABLE'*, 'SEQ', 'MEMBER')
-        : which identifier should be used as sequence names: the stable_id, the sequence_id, or the member_id
+        : which identifier should be used as sequence names: the stable_id, the sequence_id, or the seq_member_id
     Arg [-STOP2X] (opt) boolean (default: false)
         : whether the stop codons (character '*') should be replaced with gaps (character 'X')
     Arg [-APPEND_TAXON_ID] (opt) boolean (default: false)
@@ -377,7 +377,7 @@ sub get_SimpleAlign {
         # Sequence name
         my $seqID = $member->stable_id;
         $seqID = $member->sequence_id if $id_type and $id_type eq 'SEQ';
-        $seqID = $member->member_id if $id_type and $id_type eq 'MEMBER';
+        $seqID = $member->seq_member_id if $id_type and $id_type eq 'MEMBER';
         $seqID .= "_" . $member->taxon_id if($append_taxon_id);
         $seqID .= "_" . $member->genome_db_id if ($append_genomedb_id);
         $seqID .= "_" . $member->genome_db->species_tree_node_id if ($append_stn_id);

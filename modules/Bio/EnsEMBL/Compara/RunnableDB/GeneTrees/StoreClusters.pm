@@ -34,7 +34,7 @@ Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::StoreClusters
 This is a base RunnableDB to stores a set of clusters in the database.
 ProteinTrees::HclusterParseOutput and ncRNAtrees::RFAMClassify both
 inherit from it. The easiest way to use this class is by creating an
-array of arrays of member_id, and give it to store_clusterset.
+array of arrays of seq_member_id, and give it to store_clusterset.
 This would create the c;usterset and create the subsequent jobs.
 
 =head1 AUTHORSHIP
@@ -174,9 +174,9 @@ sub add_cluster {
     $clusterset_leaf->add_child($cluster_root);
 
     # The cluster leaves
-    foreach my $member_id (@$gene_list) {
+    foreach my $seq_member_id (@$gene_list) {
         my $leaf = new Bio::EnsEMBL::Compara::GeneTreeMember;
-        $leaf->member_id($member_id);
+        $leaf->seq_member_id($seq_member_id);
         $cluster_root->add_child($leaf);
     }
 

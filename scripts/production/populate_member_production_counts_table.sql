@@ -14,7 +14,7 @@
 
 /* POPULATE ALL THE MEMBER'S STABLE IDS */
 SELECT "Populating stable_id column in the member_production_counts table" AS "";
-INSERT INTO member_production_counts (stable_id) SELECT stable_id FROM member WHERE source_name = "ENSEMBLGENE";
+INSERT INTO member_production_counts (stable_id) SELECT stable_id FROM gene_member;
 
 
 /******************/
@@ -28,7 +28,7 @@ CREATE TEMPORARY TABLE temp_member_family_counts (
 );
 
 SELECT "Populating the temporary temp_member_family_counts table" AS "";
-INSERT INTO temp_member_family_counts(stable_id, families) SELECT stable_id, COUNT(*) FROM family_member JOIN member USING (member_id) GROUP BY member_id;
+INSERT INTO temp_member_family_counts(stable_id, families) SELECT stable_id, COUNT(*) FROM family_member JOIN seq_member USING (seq_member_id) GROUP BY seq_member_id;
 
 SELECT "Populating the families column in member_production_counts" AS "";
 UPDATE member_production_counts mpc JOIN temp_member_family_counts t USING(stable_id) SET mpc.families = t.families;
@@ -45,7 +45,7 @@ CREATE TEMPORARY TABLE temp_member_tree_counts (
 );
 
 SELECT "Populating the temporary temp_member_tree_counts table" AS "";
-INSERT INTO temp_member_tree_counts (stable_id, default_gene_tree_root) SELECT member.stable_id, gene_tree_root.root_id FROM member JOIN gene_tree_node ON(member.canonical_member_id = gene_tree_node.member_id) JOIN gene_tree_root USING(root_id) WHERE member.source_name = 'ENSEMBLGENE' AND clusterset_id = 'default' AND tree_type = 'tree';
+INSERT INTO temp_member_tree_counts (stable_id, default_gene_tree_root) SELECT gene_member.stable_id, gene_tree_root.root_id FROM gene_member JOIN gene_tree_node ON(gene_member.canonical_member_id = gene_tree_node.seq_member_id) JOIN gene_tree_root USING(root_id) WHERE clusterset_id = 'default' AND tree_type = 'tree';
 
 SELECT "Populating the gene_trees column in member_production_counts" AS "";
 UPDATE member_production_counts JOIN temp_member_tree_counts USING(stable_id) SET gene_trees = default_gene_tree_root IS NOT NULL;
@@ -66,7 +66,7 @@ CREATE TEMPORARY TABLE temp_member_orthologues_counts (
 
 
 SELECT "Populating the temporary temp_member_orthologues_counts table" AS "";
-INSERT INTO temp_member_orthologues_counts(stable_id, orthologues) SELECT stable_id, count(*) FROM member JOIN homology_member USING(member_id) JOIN homology USING(homology_id) WHERE homology.description LIKE '%ortholog%' GROUP BY member_id;
+INSERT INTO temp_member_orthologues_counts(stable_id, orthologues) SELECT stable_id, count(*) FROM gene_member JOIN homology_member USING(gene_member_id) JOIN homology USING(homology_id) WHERE homology.description LIKE '%ortholog%' GROUP BY gene_member_id;
 
 SELECT "Populating the orthologues column in member_production_counts" AS "";
 UPDATE member_production_counts mpc JOIN temp_member_orthologues_counts USING(stable_id) SET mpc.orthologues = temp_member_orthologues_counts.orthologues;
@@ -79,7 +79,7 @@ CREATE TEMPORARY TABLE temp_member_paralogues_counts (
 );
 
 SELECT "Populating the temporary temp_member_paralogues_counts table" AS "";
-INSERT INTO temp_member_paralogues_counts(stable_id, paralogues) SELECT stable_id, count(*) FROM member JOIN homology_member USING(member_id) JOIN homology USING(homology_id) WHERE homology.description LIKE '%paralog%' GROUP BY member_id;
+INSERT INTO temp_member_paralogues_counts(stable_id, paralogues) SELECT stable_id, count(*) FROM gene_member JOIN homology_member USING(gene_member_id) JOIN homology USING(homology_id) WHERE homology.description LIKE '%paralog%' GROUP BY gene_member_id;
 
 SELECT "Populating the paralogues column in member_production_counts" AS "";
 UPDATE member_production_counts mpc JOIN temp_member_paralogues_counts USING(stable_id) SET mpc.paralogues = temp_member_paralogues_counts.paralogues;
@@ -93,7 +93,7 @@ CREATE TEMPORARY TABLE temp_member_homoeologues_counts (
 
 
 SELECT "Populating the temporary temp_member_homoeologues_counts table" AS "";
-INSERT INTO temp_member_homoeologues_counts(stable_id, homoeologues) SELECT stable_id, count(*) FROM member JOIN homology_member USING(member_id) JOIN homology USING(homology_id) WHERE homology.description LIKE '%homoeolog%' GROUP BY member_id;
+INSERT INTO temp_member_homoeologues_counts(stable_id, homoeologues) SELECT stable_id, count(*) FROM gene_member JOIN homology_member USING(gene_member_id) JOIN homology USING(homology_id) WHERE homology.description LIKE '%homoeolog%' GROUP BY gene_member_id;
 
 SELECT "Populating the homoeologues column in member_production_counts" AS "";
 UPDATE member_production_counts mpc JOIN temp_member_homoeologues_counts USING(stable_id) SET mpc.homoeologues = temp_member_homoeologues_counts.homoeologues;

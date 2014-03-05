@@ -176,7 +176,7 @@ sub run_njtree_phyml {
     my $starttime = time()*1000;
     
     foreach my $member (@{$gene_tree->get_all_Members}) {
-        $member->{_tmp_name} = sprintf('%d_%d', $member->member_id, $member->genome_db->species_tree_node_id);
+        $member->{_tmp_name} = sprintf('%d_%d', $member->seq_member_id, $member->genome_db->species_tree_node_id);
     }
 
     if (scalar(@{$gene_tree->get_all_Members}) == 2) {

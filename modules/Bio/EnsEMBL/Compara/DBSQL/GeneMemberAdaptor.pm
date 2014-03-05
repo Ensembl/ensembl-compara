@@ -56,6 +56,8 @@ package Bio::EnsEMBL::Compara::DBSQL::GeneMemberAdaptor;
 use strict; 
 use warnings;
 
+use Bio::EnsEMBL::Compara::GeneMember;
+
 use Bio::EnsEMBL::Utils::Scalar qw(:all);
 use Bio::EnsEMBL::Utils::Argument qw(rearrange);
 use Bio::EnsEMBL::Utils::Exception qw(throw warning stack_trace_dump);
@@ -91,6 +93,54 @@ sub fetch_all_homology_orphans_by_GenomeDB {
 
   return $self->generic_fetch($constraint, $join);
 }
+
+
+
+#
+# RAW SQLs FOR WEBCODE
+#
+########################
+
+sub families_for_member {
+  my ($self, $stable_id) = @_;
+
+  my $sql = 'SELECT families FROM member_production_counts WHERE stable_id = ?';
+  my ($res) = $self->dbc->db_handle()->selectrow_array($sql, {}, $stable_id);
+  return $res;
+}
+
+sub member_has_GeneTree {
+  my ($self, $stable_id) = @_;
+
+  my $sql = "SELECT gene_trees FROM member_production_counts WHERE stable_id = ?";
+  my ($res) = $self->dbc->db_handle()->selectrow_array($sql, {}, $stable_id);
+  return $res;
+}
+
+sub member_has_GeneGainLossTree {
+  my ($self, $stable_id) = @_;
+
+  my $sql = "SELECT gene_gain_loss_trees FROM member_production_counts WHERE stable_id = ?";
+  my ($res) = $self->dbc->db_handle()->selectrow_array($sql, {}, $stable_id);
+  return $res;
+}
+
+sub orthologues_for_member {
+  my ($self, $stable_id) = @_;
+
+  my $sql = "SELECT orthologues FROM member_production_counts WHERE stable_id = ?";
+  my ($res) = $self->dbc->db_handle()->selectrow_array($sql, {}, $stable_id);
+  return $res;
+}
+
+sub paralogues_for_member {
+  my ($self, $stable_id) = @_;
+
+  my $sql = "SELECT paralogues FROM member_production_counts WHERE stable_id = ?";
+  my ($res) = $self->dbc->db_handle()->selectrow_array($sql, {}, $stable_id);
+  return $res;
+}
+
 
 
 #
@@ -210,7 +260,7 @@ sub store {
     $sth->finish;
     #UNIQUE(source_name,stable_id) prevented insert since member was already inserted
     #so get gene_member_id with select
-    my $sth2 = $self->prepare("SELECT gene_member_id FROM member WHERE source_name=? and stable_id=?");
+    my $sth2 = $self->prepare("SELECT gene_member_id FROM gene_member WHERE source_name=? and stable_id=?");
     $sth2->execute($member->source_name, $member->stable_id);
     my($id) = $sth2->fetchrow_array();
     warn("MemberAdaptor: insert failed, but gene_member_id select failed too") unless($id);

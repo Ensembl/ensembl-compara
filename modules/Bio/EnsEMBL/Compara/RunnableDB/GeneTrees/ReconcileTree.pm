@@ -140,10 +140,10 @@ sub _do_map {
     my $hash = shift;
     my $name;
     if ($node->is_leaf) {
-        # Get the member_id
+        # Get the seq_member_id
         if ($node->isa('Bio::EnsEMBL::Compara::GeneTreeMember')) {
             # DB tree
-            $name = $node->member_id;
+            $name = $node->seq_member_id;
         } else {
             # Treebest tree
             $node->name =~ /^([0-9]*)_/;

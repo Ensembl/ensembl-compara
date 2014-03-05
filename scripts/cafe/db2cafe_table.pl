@@ -125,7 +125,7 @@ my @species_names = map {(split /_/, $_->name)[0]} @sps_set;
 
 # Get the number of members per family
 my $all_trees = $tree_adaptor->fetch_all(-tree_type => 'tree', -method_link_species_set_id => $mlss, -clusterset_id => 'default');
-my $sth = $tree_adaptor->prepare('SELECT genome_db_id FROM gene_tree_node JOIN member USING (member_id) WHERE root_id = ?');
+my $sth = $tree_adaptor->prepare('SELECT genome_db_id FROM gene_tree_node JOIN seq_member USING (seq_member_id) WHERE root_id = ?');
 print "FAMILYDESC\tFAMILY\t", join("\t", @species_names), "\n";
 for my $tree (@$all_trees) {
   my $root_id = $tree->root_id();

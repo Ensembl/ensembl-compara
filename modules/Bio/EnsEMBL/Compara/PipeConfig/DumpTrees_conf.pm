@@ -154,13 +154,13 @@ sub pipeline_analyses {
                         gtr.stable_id AS GeneTreeStableID, 
                         pm.stable_id AS EnsPeptideStableID,
                         gm.stable_id AS EnsGeneStableID,
-                        IF(m.member_id = pm.member_id, 'Y', 'N') as Canonical
+                        IF(m.seq_member_id = pm.seq_member_id, 'Y', 'N') as Canonical
                     FROM
                         gene_tree_root gtr
                         JOIN gene_tree_node gtn ON (gtn.root_id = gtr.root_id)
-                        JOIN member m on (gtn.member_id = m.member_id)
-                        JOIN member gm on (m.gene_member_id = gm.member_id)
-                        JOIN member pm on (gm.member_id = pm.gene_member_id)
+                        JOIN seq_member m on (gtn.seq_member_id = m.seq_member_id)
+                        JOIN gene_member gm on (m.gene_member_id = gm.gene_member_id)
+                        JOIN seq_member pm on (gm.gene_member_id = pm.gene_member_id)
                     WHERE
                         gtr.member_type = '%s'
                         AND gtr.clusterset_id = '%s'

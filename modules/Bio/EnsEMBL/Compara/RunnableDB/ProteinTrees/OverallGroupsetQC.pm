@@ -173,7 +173,7 @@ sub fetch_groupset {        # see Bio::EnsEMBL::Compara::StableId::Adaptor::load
   my $default_noname = 'NoName';
   my $dataset;
 
-  my $sql = "SELECT gtn.root_id, m2.stable_id FROM gene_tree_node gtn, member m1, member m2 WHERE gtn.member_id=m1.member_id AND m1.gene_member_id=m2.member_id";
+  my $sql = "SELECT gtn.root_id, m2.stable_id FROM gene_tree_node gtn JOIN seq_member m1 USING (seq_member_id) JOIN gene_member m2 USING (gene_member_id)";
 
   my $sth = $given_compara_dba->dbc->prepare($sql);
   $sth->execute();
@@ -182,8 +182,8 @@ sub fetch_groupset {        # see Bio::EnsEMBL::Compara::StableId::Adaptor::load
 
   my $counter = 0;
 
-  while(my($cluster_id, $member)=$sth->fetchrow()) {
-    # print STDERR "ID=$cluster_id NAME=$cluster_name MEM=$member\n" if ($self->debug);
+  while(my($cluster_id, $member_stable_id)=$sth->fetchrow()) {
+    # print STDERR "ID=$cluster_id NAME=$cluster_name MEM=$member_stable_id\n" if ($self->debug);
     my $cluster_name;
     if (defined($cluster_id)) {
       $cluster_name = 'Node_' . $cluster_id;
@@ -191,11 +191,11 @@ sub fetch_groupset {        # see Bio::EnsEMBL::Compara::StableId::Adaptor::load
       $cluster_name = $default_noname; # we need some name here however bogus (for formatting purposes)
     }
 
-    if ($member) {
-      $dataset->{membership}{$member} = $cluster_id;
+    if ($member_stable_id) {
+      $dataset->{membership}{$member_stable_id} = $cluster_id;
       $dataset->{clustername}{$cluster_id} = $cluster_name;
     } else {
-      $self->throw("Missing member for $cluster_id\n");
+      $self->throw("Missing stable_id for $cluster_id\n");
     }
 
     if ($self->debug && ($counter++ % 50000 == 0)) { printf("%10d loaded\n", $counter); }

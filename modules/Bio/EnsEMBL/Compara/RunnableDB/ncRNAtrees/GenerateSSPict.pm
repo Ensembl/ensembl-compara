@@ -156,12 +156,12 @@ sub get_plot {
     my $meta_file = $aln_file . ".meta";
     ## One svg pic per member
     for my $member (@{$tree->get_all_Members}) {
-        my $member_id = $member->name();
+        my $seq_member_id = $member->name();
         open my $meta_fh, ">", $meta_file or die $!;
         print $meta_fh "$out_aln_file\n";
-        print $meta_fh "$aln_file\toneseq\t$member_id\n";
+        print $meta_fh "$aln_file\toneseq\t$seq_member_id\n";
         close($meta_fh);
-        my $svg_pic_filename = "${out_aln_file}-${member_id}.svg";
+        my $svg_pic_filename = "${out_aln_file}-${seq_member_id}.svg";
         $self->run_r2r_and_check("", $meta_file, $svg_pic_filename, "");
     }
     return;

@@ -1572,7 +1572,7 @@ The alignment will be:<br />
 @column homology_id        External reference to homology_id in the @link homology table
 @column gene_member_id     External reference to gene_member_id in the @link gene_member table. Refers to the corresponding "ENSMBLGENE" entry
 @column seq_member_id      External reference to seq_member_id in the @link seq_member table. Refers to the corresponding "ENSEMBLPEP" entry
-@column cigar_line         An internal description of the alignment. It contains mathces/mismatches (M) and delations (D) and refers to the corresponding peptide_member_id sequence
+@column cigar_line         An internal description of the alignment. It contains mathces/mismatches (M) and delations (D) and refers to the corresponding seq_member_id sequence
 @column perc_cov           Defines the percentage of the peptide which has been aligned
 @column perc_id            Defines the percentage of identity between both homologues
 @column perc_pos           Defines the percentage of positivity (similarity) between both homologues

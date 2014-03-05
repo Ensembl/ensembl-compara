@@ -56,6 +56,8 @@ package Bio::EnsEMBL::Compara::DBSQL::SeqMemberAdaptor;
 use strict; 
 use warnings;
 
+use Bio::EnsEMBL::Compara::SeqMember;
+
 use Bio::EnsEMBL::Utils::Scalar qw(:all);
 use Bio::EnsEMBL::Utils::Argument qw(rearrange);
 use Bio::EnsEMBL::Utils::Exception qw(throw warning stack_trace_dump);
@@ -257,7 +259,6 @@ sub init_instance_from_rowhash {
 sub store {
     my ($self, $member) = @_;
    
-    $self->_warning_member_adaptor();
     assert_ref($member, 'Bio::EnsEMBL::Compara::SeqMember');
 
 
@@ -287,7 +288,7 @@ sub store {
     $sth->finish;
     #UNIQUE(source_name,stable_id) prevented insert since member was already inserted
     #so get seq_member_id with select
-    my $sth2 = $self->prepare("SELECT seq_member_id, sequence_id FROM member WHERE source_name=? and stable_id=?");
+    my $sth2 = $self->prepare("SELECT seq_member_id, sequence_id FROM seq_member WHERE source_name=? and stable_id=?");
     $sth2->execute($member->source_name, $member->stable_id);
     my($id, $sequence_id) = $sth2->fetchrow_array();
     warn("MemberAdaptor: insert failed, but seq_member_id select failed too") unless($id);
@@ -333,7 +334,7 @@ sub update_sequence {
   } else {
     $member->sequence_id($self->db->get_SequenceAdaptor->store($member->sequence,1)); # Last parameter induces a check for redundancy
 
-    my $sth3 = $self->prepare("UPDATE member SET sequence_id=? WHERE seq_member_id=?");
+    my $sth3 = $self->prepare("UPDATE seq_member SET sequence_id=? WHERE seq_member_id=?");
     $sth3->execute($member->sequence_id, $member->dbID);
     $sth3->finish;
   }

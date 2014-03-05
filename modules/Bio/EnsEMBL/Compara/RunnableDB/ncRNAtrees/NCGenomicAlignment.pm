@@ -135,7 +135,7 @@ sub dump_sequences_to_workdir {
     my $count = 0;
     foreach my $member (@{$member_list}) {
         my $gene_member = $member->gene_member;
-        $self->throw("Error fetching gene member") unless (defined $gene_member) ;
+        $self->throw("Error fetching gene_member") unless (defined $gene_member) ;
         my $gene = $gene_member -> get_Gene;
         $self->throw("Error fetching gene") unless (defined $gene);
         my $slice = $gene->slice->adaptor->fetch_by_Feature($gene, '500%');
@@ -150,7 +150,7 @@ sub dump_sequences_to_workdir {
         chomp $seq;
         $count++;
         print STDERR $member->stable_id. "\n" if ($self->debug);
-        print OUTSEQ ">" . $member->member_id . "\n$seq\n";
+        print OUTSEQ ">" . $member->seq_member_id . "\n$seq\n";
         print STDERR "sequences $count\n" if ($count % 50 == 0);
     }
     close OUTSEQ;

@@ -31,7 +31,7 @@ sub load_fasta_sequences_from_db {
 
     my $sql = qq {
         SELECT s.sequence_id, m.stable_id, s.sequence
-          FROM member m, sequence s
+          FROM seq_member m, sequence s
          WHERE s.sequence_id BETWEEN ? AND ?
            AND m.sequence_id=s.sequence_id
       GROUP BY s.sequence_id
@@ -64,7 +64,7 @@ sub load_name2index_mapping_from_db {
 
     my $sql = qq {
         SELECT sequence_id, stable_id
-          FROM member
+          FROM seq_member
          WHERE sequence_id
       GROUP BY sequence_id
     };

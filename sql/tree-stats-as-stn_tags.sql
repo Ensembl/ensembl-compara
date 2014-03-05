@@ -29,10 +29,10 @@ INSERT INTO gene_tree_root_tag
 SELECT
 	root_id,
 	"spec_count",
-	COUNT(DISTINCT member.genome_db_id) AS nb_spec
+	COUNT(DISTINCT seq_member.genome_db_id) AS nb_spec
 FROM
-	member
-	JOIN gene_tree_node USING (member_id)
+	seq_member
+	JOIN gene_tree_node USING (seq_member_id)
 GROUP BY
 	root_id
 ;
@@ -51,13 +51,13 @@ SELECT
 FROM
 	species_tree_node stn
 	JOIN species_tree_root str USING (root_id)
-	JOIN member mg USING (genome_db_id)
+	JOIN gene_member mg USING (genome_db_id)
 	LEFT JOIN (
 		gene_tree_node gtn
 		JOIN gene_tree_root gtr ON gtn.root_id = gtr.root_id AND clusterset_id = "default"
 		JOIN gene_tree_node_attr gtna ON (gtn.root_id = gtna.node_id)
 		JOIN species_tree_node gstn ON gstn.node_id = gtna.species_tree_node_id
-	) ON mg.canonical_member_id = gtn.member_id
+	) ON mg.canonical_member_id = gtn.seq_member_id
 WHERE
 	label = "default"
 GROUP BY

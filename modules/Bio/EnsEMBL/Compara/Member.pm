@@ -77,8 +77,6 @@ use warnings;
 use Bio::EnsEMBL::Utils::Argument;
 use Bio::EnsEMBL::Utils::Exception;
 use Bio::EnsEMBL::Utils::Scalar qw(:assert);
-use Bio::EnsEMBL::Gene;
-use Bio::EnsEMBL::Compara::GenomeDB;
 
 use base qw(Bio::EnsEMBL::Compara::Locus Bio::EnsEMBL::Storable);
 

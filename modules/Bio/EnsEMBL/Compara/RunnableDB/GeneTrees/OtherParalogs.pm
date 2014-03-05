@@ -88,7 +88,7 @@ sub fetch_input {
     my %super_align;
     foreach my $member (@{$aln->get_all_Members}) {
         bless $member, 'Bio::EnsEMBL::Compara::GeneTreeMember';
-        $super_align{$member->member_id} = $member;
+        $super_align{$member->seq_member_id} = $member;
     }
     $self->param('super_align', \%super_align);
     $self->param('homology_consistency', {});
@@ -224,7 +224,7 @@ sub get_ancestor_species_hash
             $leaf->print_member if ($self->debug);
             $species_hash->{$leaf->genome_db_id} = 1 + ($species_hash->{$leaf->genome_db_id} || 0);
             push @sub_taxa, $self->param('gdb_id2stn')->{$leaf->genome_db_id};
-            push @{$gene_hash->{$leaf->genome_db_id}}, $self->param('super_align')->{$leaf->member_id};
+            push @{$gene_hash->{$leaf->genome_db_id}}, $self->param('super_align')->{$leaf->seq_member_id};
         }
    
     } else {

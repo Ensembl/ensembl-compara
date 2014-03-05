@@ -222,12 +222,12 @@ sub store_node {
 
     my $root_id = $node->root->node_id;
     #print "inserting parent_id=$parent_id, root_id=$root_id\n";
-    my $member_id = undef;
-    $member_id = $node->member_id if $node->isa('Bio::EnsEMBL::Compara::GeneTreeMember');
+    my $seq_member_id = undef;
+    $seq_member_id = $node->seq_member_id if $node->isa('Bio::EnsEMBL::Compara::GeneTreeMember');
 
     my $sth = $self->prepare("UPDATE gene_tree_node SET parent_id=?, root_id=?, left_index=?, right_index=?, distance_to_parent=?, seq_member_id=?  WHERE node_id=?");
     #print "UPDATE gene_tree_node  (", $parent_id, ",", $root_id, ",", $node->left_index, ",", $node->right_index, ",", $node->distance_to_parent, ") for ", $node->node_id, "\n";
-    $sth->execute($parent_id, $root_id, $node->left_index, $node->right_index, $node->distance_to_parent, $member_id, $node->node_id);
+    $sth->execute($parent_id, $root_id, $node->left_index, $node->right_index, $node->distance_to_parent, $seq_member_id, $node->node_id);
     $sth->finish;
 
     $node->adaptor($self);
@@ -355,7 +355,7 @@ sub create_instance_from_rowhash {
   my $rowhash = shift;
 
   my $node;
-  if($rowhash->{'member_id'}) {
+  if($rowhash->{'seq_member_id'}) {
     $node = new Bio::EnsEMBL::Compara::GeneTreeMember;
   } else {
     $node = new Bio::EnsEMBL::Compara::GeneTreeNode;

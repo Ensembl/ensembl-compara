@@ -201,7 +201,7 @@ sub store_ncrna_gene {
         print STDERR "    ... ", $ncrna_member->description, "\n";
         print STDERR "    ... ", $ncrna_member->display_label, "\n";
 
-        print STDERR  " => member " . $ncrna_member->stable_id if ($self->debug);
+        print STDERR  " => ncrna_member " . $ncrna_member->stable_id if ($self->debug);
         my $transcript_spliced_seq = $transcript->spliced_seq;
 
         # store gene_member here only if at least one ncRNA is to be loaded for the gene
@@ -212,11 +212,11 @@ sub store_ncrna_gene {
                                                                             -gene => $gene,
                                                                             -genome_db => $self->param('genome_db'),
                                                                            );
-            print STDERR " => member " . $gene_member->stable_id if ($self->debug);
+            print STDERR " => gene_member " . $gene_member->stable_id if ($self->debug);
 
             eval {
                 $gene_member_adaptor->store($gene_member);
-                print STDERR " : stored gene member\n" if ($self->debug);
+                print STDERR " : stored gene gene_member\n" if ($self->debug);
             };
 
             print STDERR "\n" if ($self->debug);
@@ -224,7 +224,7 @@ sub store_ncrna_gene {
         }
         $ncrna_member->gene_member_id($gene_member->dbID);
         $seq_member_adaptor->store($ncrna_member);
-        print STDERR " : stored seq member\n" if ($self->debug);
+        print STDERR " : stored seq gene_member\n" if ($self->debug);
 
         ## Probably we will include here the hack to avoid merged lincRNAs and short ncRNAs
         if (length($transcript_spliced_seq) > $max_ncrna_length) {

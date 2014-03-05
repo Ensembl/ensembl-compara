@@ -190,7 +190,8 @@ sub pipeline_analyses {
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::SqlCmd',
             -parameters => {
                 'sql'   => [
-                    'ALTER TABLE member            AUTO_INCREMENT=100000001',
+                    'ALTER TABLE gene_member       AUTO_INCREMENT=100000001',
+                    'ALTER TABLE seq_member        AUTO_INCREMENT=100000001',
                     'ALTER TABLE sequence          AUTO_INCREMENT=100000001',
                     'ALTER TABLE homology          AUTO_INCREMENT=100000001',
                     'ALTER TABLE gene_align        AUTO_INCREMENT=100000001',
@@ -259,7 +260,6 @@ sub pipeline_analyses {
             -module             => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::SqlHealthChecks',
             -parameters         => {
                 mode            => 'members_per_genome',
-                hc_member_type  => 'ENSEMBLTRANS',
             },
             %hc_params,
         },
@@ -460,7 +460,7 @@ sub pipeline_analyses {
             {   -logic_name    => 'clusterset_backup',
                 -module        => 'Bio::EnsEMBL::Hive::RunnableDB::SqlCmd',
                 -parameters    => {
-                                   'sql'         => 'INSERT INTO gene_tree_backup (member_id, root_id) SELECT member_id, root_id FROM gene_tree_node WHERE member_id IS NOT NULL AND root_id = #gene_tree_id#',
+                                   'sql'         => 'INSERT INTO gene_tree_backup (seq_member_id, root_id) SELECT seq_member_id, root_id FROM gene_tree_node WHERE seq_member_id IS NOT NULL AND root_id = #gene_tree_id#',
                                   },
                 -analysis_capacity => 1,
                 -meadow_type    => 'LOCAL',
@@ -550,7 +550,7 @@ sub pipeline_analyses {
             {   -logic_name    => 'tree_backup',
                 -module        => 'Bio::EnsEMBL::Hive::RunnableDB::SqlCmd',
                 -parameters    => {
-                                   'sql' => 'INSERT INTO gene_tree_backup (member_id, root_id) SELECT member_id, root_id FROM gene_tree_node WHERE member_id IS NOT NULL AND root_id = #gene_tree_id#',
+                                   'sql' => 'INSERT INTO gene_tree_backup (seq_member_id, root_id) SELECT seq_member_id, root_id FROM gene_tree_node WHERE seq_member_id IS NOT NULL AND root_id = #gene_tree_id#',
                                   },
                 -flow_into => {
                                '1->A' => [ 'genomic_alignment', 'infernal' ],

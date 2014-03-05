@@ -58,7 +58,6 @@ package Bio::EnsEMBL::Compara::DBSQL::MemberAdaptor;
 use strict; 
 use warnings;
 
-use Bio::EnsEMBL::Compara::Member;
 
 use Bio::EnsEMBL::Utils::Scalar qw(:all);
 use Bio::EnsEMBL::Utils::Argument qw(rearrange);
@@ -207,7 +206,7 @@ sub fetch_all_Iterator {
 sub fetch_all_by_source_Iterator {
     my ($self, $source_name, $cache_size) = @_;
     throw("source_name arg is required\n") unless ($source_name);
-    return $self->generic_fetch_Iterator($cache_size, "member.source_name = '$source_name'");
+    return $self->generic_fetch_Iterator($cache_size, "m.source_name = '$source_name'");
 }
 
 
@@ -322,8 +321,9 @@ sub get_source_taxon_count {
   throw("source_name and taxon_id args are required") 
     unless($source_name && $taxon_id);
 
+    my @tabs = $self->_tables;
   my $sth = $self->prepare
-    ("SELECT COUNT(*) FROM member WHERE source_name=? AND taxon_id=?");
+    ("SELECT COUNT(*) FROM $tabs[0][0] WHERE source_name=? AND taxon_id=?");
   $sth->execute($source_name, $taxon_id);
   my ($count) = $sth->fetchrow_array();
   $sth->finish;
@@ -377,105 +377,6 @@ sub _objs_from_sth {
 }
 
 
-
-
-#
-# RAW SQLs FOR WEBCODE
-#
-########################
-
-sub families_for_member {
-  my ($self, $stable_id) = @_;
-
-  my $sql = 'SELECT families FROM member_production_counts WHERE stable_id = ?';
-  my ($res) = $self->dbc->db_handle()->selectrow_array($sql, {}, $stable_id);
-  return $res;
-}
-
-sub member_has_GeneTree {
-  my ($self, $stable_id) = @_;
-
-  my $sql = "SELECT gene_trees FROM member_production_counts WHERE stable_id = ?";
-  my ($res) = $self->dbc->db_handle()->selectrow_array($sql, {}, $stable_id);
-  return $res;
-}
-
-sub member_has_GeneGainLossTree {
-  my ($self, $stable_id) = @_;
-
-  my $sql = "SELECT gene_gain_loss_trees FROM member_production_counts WHERE stable_id = ?";
-  my ($res) = $self->dbc->db_handle()->selectrow_array($sql, {}, $stable_id);
-  return $res;
-}
-
-sub orthologues_for_member {
-  my ($self, $stable_id) = @_;
-
-  my $sql = "SELECT orthologues FROM member_production_counts WHERE stable_id = ?";
-  my ($res) = $self->dbc->db_handle()->selectrow_array($sql, {}, $stable_id);
-  return $res;
-}
-
-sub paralogues_for_member {
-  my ($self, $stable_id) = @_;
-
-  my $sql = "SELECT paralogues FROM member_production_counts WHERE stable_id = ?";
-  my ($res) = $self->dbc->db_handle()->selectrow_array($sql, {}, $stable_id);
-  return $res;
-}
-
-sub homoeologues_for_member {
-  my ($self, $stable_id) = @_;
-
-  my $sql = "SELECT homoeologues FROM member_production_counts WHERE stable_id = ?";
-  my ($res) = $self->dbc->db_handle()->selectrow_array($sql, {}, $stable_id);
-  return $res;
-}
-
-
-# sub member_has_family {
-#     my ($self, $stable_id) = @_;
-
-#     my $sql = 'select count(*) from family_member fm, member as m where fm.member_id=m.member_id and stable_id=? and source_name =?';
-#     my ($res) = $self->dbc->db_handle()->selectrow_array($sql, {}, $stable_id, 'ENSEMBLGENE');
-#     return $res;
-# }
-#
-#
-# sub homologies_for_member {
-#     my ($self, $stable_id) = @_;
-
-#     my $sql = "SELECT ml.type, h.description, count(*) AS N FROM member AS m, homology_member AS hm, homology AS h, method_link AS ml, method_link_species_set AS mlss WHERE m.stable_id = ? AND hm.member_id = m.member_id AND h.homology_id = hm.homology_id AND mlss.method_link_species_set_id = h.method_link_species_set_id AND ml.method_link_id = mlss.method_link_id GROUP BY description";
-#     my $res = $self->dbc->db_handle()->selectall_arrayref($sql, {}, $stable_id);
-
-#     my $counts = {};
-#     foreach (@$res) {
-#         if ($_->[0] eq 'ENSEMBL_PARALOGUES' && $_->[1] ne 'possible_ortholog') {
-#             $counts->{'paralogs'} += $_->[2];
-#         } elsif ($_->[1] !~ /^UBRH|BRH|MBRH|RHS$/) {
-#             $counts->{'orthologs'} += $_->[2];
-#         }
-#     }
-
-#     return $counts;
-# }
-
-# sub member_has_geneTree {
-#     my ($self, $stable_id) = @_;
-
-#     my $sql = 'SELECT COUNT(*) FROM gene_tree_node JOIN member mp USING (member_id) JOIN member mg ON mp.member_id = mg.canonical_member_id WHERE mg.stable_id = ? AND mg.source_name = ?';
-
-#     my ($res) = $self->dbc->db_handle()->selectrow_array($sql, {}, $stable_id, 'ENSEMBLGENE');
-#     return $res;
-# }
-
-# sub member_has_geneGainLossTree {
-#     my ($self, $stable_id) = @_;
-
-#     my $sql = 'SELECT count(*) FROM CAFE_gene_family cgf JOIN gene_tree_root gtr ON(cgf.gene_tree_root_id = gtr.root_id) JOIN gene_tree_node gtn ON(gtr.root_id = gtn.root_id) JOIN member mp USING (member_id) JOIN member mg ON (mp.member_id = mg.canonical_member_id) WHERE mg.stable_id = ? AND mg.source_name = ?';
-
-#     my ($res) = $self->dbc->db_handle()->selectrow_array($sql, {}, $stable_id, 'ENSEMBLGENE');
-# }
 
 
 1;

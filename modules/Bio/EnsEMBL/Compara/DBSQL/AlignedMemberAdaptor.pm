@@ -113,7 +113,7 @@ sub fetch_all_by_Homology {
     assert_ref($homology, 'Bio::EnsEMBL::Compara::Homology');
 
     my $extra_columns = ['hm.cigar_line', 'hm.perc_cov', 'hm.perc_id', 'hm.perc_pos'];
-    my $join = [[['homology_member', 'hm'], 'm.member_id = hm.peptide_member_id', $extra_columns]];
+    my $join = [[['homology_member', 'hm'], 'm.seq_member_id = hm.seq_member_id', $extra_columns]];
     my $constraint = 'hm.homology_id = ?';
 
     $self->bind_param_generic_fetch($homology->dbID, SQL_INTEGER);
@@ -136,7 +136,7 @@ sub fetch_all_by_Family {
     assert_ref($family, 'Bio::EnsEMBL::Compara::Family');
 
     my $extra_columns = ['fm.cigar_line'];
-    my $join = [[['family_member', 'fm'], 'm.member_id = fm.member_id', $extra_columns]];
+    my $join = [[['family_member', 'fm'], 'm.seq_member_id = fm.seq_member_id', $extra_columns]];
     my $constraint = 'fm.family_id = ?';
     my $final_clause = 'ORDER BY m.source_name';
 
@@ -180,7 +180,7 @@ sub fetch_all_by_gene_align_id {
     my ($self, $id) = @_;
 
     my $extra_columns = ['gam.cigar_line'];
-    my $join = [[['gene_align_member', 'gam'], 'm.member_id = gam.member_id', $extra_columns]];
+    my $join = [[['gene_align_member', 'gam'], 'm.seq_member_id = gam.seq_member_id', $extra_columns]];
     my $constraint = 'gam.gene_align_id = ?';
 
     $self->bind_param_generic_fetch($id, SQL_INTEGER);
@@ -193,11 +193,11 @@ sub fetch_all_by_gene_align_id {
 ################################
 
 sub _tables {
-    return Bio::EnsEMBL::Compara::DBSQL::MemberAdaptor::_tables();
+    return Bio::EnsEMBL::Compara::DBSQL::SeqMemberAdaptor::_tables();
 }
 
 sub _columns {
-    return Bio::EnsEMBL::Compara::DBSQL::MemberAdaptor::_columns();
+    return Bio::EnsEMBL::Compara::DBSQL::SeqMemberAdaptor::_columns();
 }
 
 sub _objs_from_sth {
@@ -207,7 +207,7 @@ sub _objs_from_sth {
 
     while(my $rowhash = $sth->fetchrow_hashref) {
         my $member = Bio::EnsEMBL::Compara::AlignedMember->new;
-        $member = Bio::EnsEMBL::Compara::DBSQL::MemberAdaptor::init_instance_from_rowhash($self, $member, $rowhash);
+        $member = Bio::EnsEMBL::Compara::DBSQL::SeqMemberAdaptor::init_instance_from_rowhash($self, $member, $rowhash);
         foreach my $attr (qw(cigar_line cigar_start cigar_end perc_cov perc_id perc_pos)) {
             $member->$attr($rowhash->{$attr}) if defined $rowhash->{$attr};
         }

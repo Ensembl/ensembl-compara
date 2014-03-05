@@ -269,25 +269,25 @@ sub store_split_genes {
     my $connected_split_genes = $self->param('connected_split_genes');
     my $holding_node = $connected_split_genes->holding_node;
 
-    my $sth0 = $self->compara_dba->dbc->prepare('DELETE split_genes FROM split_genes JOIN gene_tree_node USING (member_id) WHERE root_id = ?');
+    my $sth0 = $self->compara_dba->dbc->prepare('DELETE split_genes FROM split_genes JOIN gene_tree_node USING (seq_member_id) WHERE root_id = ?');
     $sth0->execute($self->param('gene_tree_id'));
     $sth0->finish;
 
-    my $sth1 = $self->compara_dba->dbc->prepare('INSERT INTO split_genes (member_id) VALUES (?)');
-    my $sth2 = $self->compara_dba->dbc->prepare('INSERT INTO split_genes (member_id, gene_split_id) VALUES (?, ?)');
+    my $sth1 = $self->compara_dba->dbc->prepare('INSERT INTO split_genes (seq_member_id) VALUES (?)');
+    my $sth2 = $self->compara_dba->dbc->prepare('INSERT INTO split_genes (seq_member_id, gene_split_id) VALUES (?, ?)');
 
     foreach my $link (@{$holding_node->links}) {
         my $node1 = $link->get_neighbor($holding_node);
         my $protein1 = $protein_tree->find_leaf_by_node_id($node1->node_id);
         print STDERR "node1 $node1 $protein1\n" if $self->debug;
-        $sth1->execute($protein1->member_id);
+        $sth1->execute($protein1->seq_member_id);
         my $split_gene_id = $sth1->{'mysql_insertid'};
 
         foreach my $node2 (@{$node1->all_nodes_in_graph}) {
             my $protein2 = $protein_tree->find_leaf_by_node_id($node2->node_id);
             print STDERR "node2 $node2 $protein2\n" if $self->debug;
             next if $node2->node_id eq $node1->node_id;
-            $sth2->execute($protein2->member_id, $split_gene_id);
+            $sth2->execute($protein2->seq_member_id, $split_gene_id);
         }
     }
     $sth1->finish;

@@ -302,22 +302,22 @@ CREATE TABLE protein_tree_qc (
 
 
 CREATE TABLE split_genes (
-	member_id   	int(10) unsigned UNIQUE NOT NULL,
+	seq_member_id   	int(10) unsigned UNIQUE NOT NULL,
 	gene_split_id	int(10) unsigned NOT NULL AUTO_INCREMENT,
 
-	PRIMARY KEY (member_id),
+	PRIMARY KEY (seq_member_id),
 	KEY gene_split_id (gene_split_id),
 
-	FOREIGN KEY member_id (member_id) REFERENCES member (member_id)
+	FOREIGN KEY seq_member_id (seq_member_id) REFERENCES seq_member (seq_member_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 
 
 CREATE TABLE gene_tree_backup (
-	member_id	int(10) unsigned NOT NULL,
+	seq_member_id	int(10) unsigned NOT NULL,
 	root_id	int(10) unsigned NOT NULL,
 
-	PRIMARY KEY (root_id, member_id),
-	KEY (member_id)
+	PRIMARY KEY (root_id, seq_member_id),
+	KEY (seq_member_id)
 
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 

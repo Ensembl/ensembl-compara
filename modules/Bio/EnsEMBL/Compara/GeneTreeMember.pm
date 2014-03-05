@@ -97,7 +97,7 @@ sub copy {
                 left and right indexes are printed, then the species name. If the
                 gene member can be determined, the methods prints the stable_id,
                 the display label and location of the gene member, otherwise the
-                member_id and stable_id of the object are printed.
+                seq_member_id and stable_id of the object are printed.
   Returntype  : none
   Exceptions  : none
   Caller      : general

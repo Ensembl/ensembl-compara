@@ -53,7 +53,7 @@ sub run {
     my $source_names = join(', ', map { "'$_'" } @{ $self->param('source_names') } );
 
     my $sql = "SELECT m.sequence_id, m.stable_id, m.description, s.sequence " .
-                " FROM member m, sequence s " .
+                " FROM seq_member m, sequence s " .
                 " WHERE m.source_name in ( $source_names ) ".
                 " AND m.sequence_id=s.sequence_id ".
                 " GROUP BY m.sequence_id ".

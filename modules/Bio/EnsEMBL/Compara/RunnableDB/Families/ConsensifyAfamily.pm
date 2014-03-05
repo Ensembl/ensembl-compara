@@ -37,9 +37,9 @@ sub fetch_input {
         # get all Uniprot members that would belong to the given family if redundant elements were added:
     my $sql = qq {
         SELECT fm.family_id, m2.source_name, m2.description
-          FROM family_member fm, member m1, member m2
+          FROM family_member fm, seq_member m1, seq_member m2
          WHERE fm.family_id BETWEEN ? AND ?
-           AND fm.member_id=m1.member_id
+           AND fm.seq_member_id=m1.seq_member_id
            AND m1.sequence_id=m2.sequence_id
            AND m2.source_name IN ('Uniprot/SWISSPROT', 'Uniprot/SPTREMBL')
     };
