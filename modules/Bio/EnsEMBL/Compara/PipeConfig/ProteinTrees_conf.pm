@@ -930,7 +930,7 @@ sub pipeline_analyses {
             -parameters => {
                 'tags_to_copy'              => [ 'division' ],
             },
-            -rc_name => '250Mb_job',
+            -rc_name => '500Mb_job',
         },
 
 
