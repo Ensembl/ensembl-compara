@@ -318,7 +318,7 @@ sub pipeline_analyses {
                 'filename'      => 'snapshot_3_before_clustering',
             },
             -flow_into  => {
-                '1->A'  => [ 'go_for_hmm_clustering' ],
+                '1->A'  => [ 'check_whether_can_copy_clusters' ],
                 'A->1'  => [ 'backbone_fire_tree_building' ],
             },
         },
@@ -844,9 +844,8 @@ sub pipeline_analyses {
                 'condition'     => '#hmm_clustering#',
             },
             -flow_into => {
-                '2->A' => 'load_models',
-                '3->A' => 'check_whether_can_copy_clusters',
-                'A->1' => 'hc_clusters',
+                2 => 'load_models',
+                3 => 'hcluster_dump_factory',
             },
             -meadow_type    => 'LOCAL',
         },
@@ -857,8 +856,9 @@ sub pipeline_analyses {
                 'condition'     => '#are_all_species_reused# and ("#reuse_level#" eq "clusters")',
             },
             -flow_into => {
-                2 => [ 'copy_clusters' ],
-                3 => [ 'hcluster_dump_factory' ],
+                '2->A' => [ 'copy_clusters' ],
+                '3->A' => [ 'go_for_hmm_clustering' ],
+                'A->1' => [ 'hc_clusters' ],
             },
             -meadow_type    => 'LOCAL',
         },
