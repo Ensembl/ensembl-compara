@@ -81,7 +81,7 @@ sub fetch_input {
     if (not ref($condition)) {
         $condition = eval($condition);
         $self->throw("Cannot evaluate 'condition' because of: $@") if $@;
-        print STDERR "eval() returned $condition\n";
+        print STDERR "eval() returned $condition\n" if $self->debug;
     }
 
     my $result = $condition ? 1 : 0;
