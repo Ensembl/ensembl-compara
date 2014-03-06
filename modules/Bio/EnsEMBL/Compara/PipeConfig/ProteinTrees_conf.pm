@@ -1203,9 +1203,9 @@ sub pipeline_analyses {
             -hive_capacity        => $self->o('treebest_capacity'),
             -rc_name => '4Gb_job',
             -flow_into => {
-                '1->A' => [ 'hc_alignment_post_tree' ],
-                '2->A' => [ 'hc_other_tree_structure' ],
-                'A->1' => [ 'ktreedist' ],
+                '1->A' => [ 'notung' ],
+                '2->A' => [ 'hc_tree_structure' ],
+                'A->1' => [ 'other_tree_factory' ],
             }
         },
 
@@ -1217,7 +1217,7 @@ sub pipeline_analyses {
             },
             -hive_capacity        => $self->o('treebest_capacity'),
             -rc_name => '2Gb_job',
-            -flow_into => [ 'hc_tree_structure' ],
+            -flow_into  => [ 'hc_alignment_post_tree' ],
         },
 
         {   -logic_name         => 'hc_alignment_post_tree',
@@ -1225,7 +1225,7 @@ sub pipeline_analyses {
             -parameters         => {
                 mode            => 'alignment',
             },
-            -flow_into          => [ 'notung' ],
+            -flow_into          => [ 'hc_tree_structure' ],
             %hc_analysis_params,
         },
 
@@ -1234,18 +1234,22 @@ sub pipeline_analyses {
             -parameters         => {
                 mode            => 'tree_structure',
             },
-            -flow_into          => [ 'ortho_tree' ],
             %hc_analysis_params,
         },
 
-        {   -logic_name         => 'hc_other_tree_structure',
-            -module             => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::SqlHealthChecks',
-            -parameters         => {
-                mode            => 'tree_structure',
+        {   -logic_name => 'other_tree_factory',
+            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
+            -parameters => {
+                'inputquery'        => 'SELECT root_id AS gene_tree_id FROM gene_tree_root WHERE ref_root_id = #gene_tree_id#',
+                'fan_branch_code'   => 2,
             },
-            -flow_into          => [ 'ortho_tree_annot' ],
-            %hc_analysis_params,
+            -flow_into  => {
+                 2 => [ 'ortho_tree_annot' ],
+                 1 => [ 'ortho_tree', 'ktreedist' ],
+            },
+            -meadow_type    => 'LOCAL',
         },
+
 
         {   -logic_name => 'ortho_tree',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::OrthoTree',
