@@ -157,6 +157,7 @@ sub run {
 
 sub write_output {
     my ($self) = @_;
+    $self->dataflow_output_id( {'species_tree_root_id' => $self->param('full_species_tree')->root_id}, 2);
 }
 
 
