@@ -1849,24 +1849,6 @@ CREATE TABLE `sequence` (
   KEY `sequence` (`sequence`(18))
 ) ENGINE=MyISAM DEFAULT CHARSET=latin1 MAX_ROWS=10000000 AVG_ROW_LENGTH=19000;
 
-CREATE TABLE `sitewise_aln` (
-  `sitewise_id` int(10) unsigned NOT NULL AUTO_INCREMENT,
-  `aln_position` int(10) unsigned NOT NULL,
-  `node_id` int(10) unsigned NOT NULL,
-  `tree_node_id` int(10) unsigned NOT NULL,
-  `omega` float(10,5) DEFAULT NULL,
-  `omega_lower` float(10,5) DEFAULT NULL,
-  `omega_upper` float(10,5) DEFAULT NULL,
-  `optimal` float(10,5) DEFAULT NULL,
-  `ncod` int(10) DEFAULT NULL,
-  `threshold_on_branch_ds` float(10,5) DEFAULT NULL,
-  `type` enum('single_character','random','all_gaps','constant','default','negative1','negative2','negative3','negative4','positive1','positive2','positive3','positive4','synonymous') NOT NULL,
-  PRIMARY KEY (`sitewise_id`),
-  UNIQUE KEY `aln_position_node_id_ds` (`aln_position`,`node_id`,`threshold_on_branch_ds`),
-  KEY `tree_node_id` (`tree_node_id`),
-  KEY `node_id` (`node_id`)
-) ENGINE=MyISAM DEFAULT CHARSET=latin1;
-
 CREATE TABLE `species_set` (
   `species_set_id` int(10) unsigned NOT NULL AUTO_INCREMENT,
   `genome_db_id` int(10) unsigned DEFAULT NULL,

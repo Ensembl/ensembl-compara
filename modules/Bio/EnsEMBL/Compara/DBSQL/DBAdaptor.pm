@@ -185,8 +185,6 @@ sub get_available_adaptors {
         'SpeciesTreeNode'       => 'Bio::EnsEMBL::Compara::DBSQL::SpeciesTreeNodeAdaptor',
         'CAFEGeneFamilyNode'    => 'Bio::EnsEMBL::Compara::DBSQL::CAFEGeneFamilyNodeAdaptor',
 
-            # obsolete:
-        'SitewiseOmega'         => 'Bio::EnsEMBL::Compara::DBSQL::SitewiseOmegaAdaptor',
     );
 
     return (\%pairs);
