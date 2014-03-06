@@ -93,14 +93,14 @@ sub read_clusters_from_previous_db {
     my $sql_trees      = q{SELECT root_id, member_id FROM gene_tree_node JOIN gene_tree_root USING (root_id) WHERE clusterset_id = ? AND member_type = ? AND tree_type = "tree" AND member_id IS NOT NULL};
     my $sql_supertrees = q{SELECT gtn1.root_id, gtn2.root_id FROM gene_tree_root gtr1 JOIN gene_tree_node gtn1 USING (root_id) JOIN gene_tree_node gtn2 ON gtn2.parent_id = gtn1.node_id AND gtn2.root_id != gtn1.root_id WHERE gtr1.tree_type = "supertree" AND gtr1.clusterset_id = ?};
 
-    my $sth = $self->compara_dba->dbc->prepare($sql_trees);
+    my $sth = $reuse_compara_dba->dbc->prepare($sql_trees);
     $sth->execute($self->param('source_clusterset_id'), $self->param('member_type'));
     my $all_trees = $sth->fetchall_arrayref();
     $sth->finish;
 
     my %supertree_mapping = ();
     if ($self->param('rejoin_supertrees')) {
-        $sth = $self->compara_dba->dbc->prepare($sql_supertrees);
+        $sth = $reuse_compara_dba->dbc->prepare($sql_supertrees);
         $sth->execute($self->param('source_clusterset_id'));
         my $all_supertrees = $sth->fetchall_arrayref();
         foreach my $super_row (@$all_supertrees) {
@@ -121,7 +121,7 @@ sub read_clusters_from_previous_db {
 
     if (defined $self->param('tags_to_copy')) {
         my $sql_tags = q{SELECT root_id, value FROM gene_tree_root JOIN gene_tree_root_tag USING (root_id) WHERE clusterset_id = ? AND tag = ?};
-        $sth = $self->compara_dba->dbc->prepare($sql_tags);
+        $sth = $reuse_compara_dba->dbc->prepare($sql_tags);
         foreach my $tag (@{$self->param('tags_to_copy')}) {
             $sth->execute($self->param('source_clusterset_id'), $tag);
             my $tag_values = $sth->fetchall_arrayref();
