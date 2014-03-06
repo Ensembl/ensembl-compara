@@ -105,7 +105,9 @@ sub default_options {
         'treebreak_gene_count'      => 400,     # affects msa_chooser
         'mafft_gene_count'          => 200,     # affects msa_chooser
         'mafft_runtime'             => 7200,    # affects msa_chooser
-        'species_tree_input_file'   => '',      # you can define your own species_tree for 'treebest' and 'ortho_tree'
+        'species_tree_input_file'   => '',      # you can define your own species_tree for 'treebest'
+        # you can define your own species_tree for 'notung'. It *has* to be binary
+        'binary_species_tree_input_file'   => $self->o('ensembl_cvs_root_dir').'/ensembl-compara/scripts/pipeline/species_tree.eukaryotes.topology.nw',
 
     # homology_dnds parameters:
         'codeml_parameters_file'    => $self->o('ensembl_cvs_root_dir').'/ensembl-compara/scripts/pipeline/protein_trees.codeml.ctl.hash',      # used by 'homology_dNdS'
@@ -483,7 +485,7 @@ sub pipeline_analyses {
             -parameters => {
                 'mlss_id'   => $self->o('mlss_id'),
             },
-            -flow_into => [ 'make_species_tree', 'extra_sql_prepare' ],
+            -flow_into => [ 'make_treebest_species_tree', 'has_user_provided_binary_species_tree', 'extra_sql_prepare' ],
             -meadow_type    => 'LOCAL',
         },
 
@@ -502,22 +504,71 @@ sub pipeline_analyses {
 
 # ---------------------------------------------[load species tree]-------------------------------------------------------------------
 
-        {   -logic_name    => 'make_species_tree',
+        {   -logic_name    => 'make_treebest_species_tree',
             -module        => 'Bio::EnsEMBL::Compara::RunnableDB::MakeSpeciesTree',
             -parameters    => {
+                               'label' => 'treebest',
                                'species_tree_input_file' => $self->o('species_tree_input_file'),   # empty by default, but if nonempty this file will be used instead of tree generation from genome_db
                                'do_transactions' => 1,
             },
-            -flow_into     => [ 'hc_species_tree' ],
+            -flow_into     => {
+                2 => [ 'hc_species_tree' ],
+            }
         },
 
         {   -logic_name         => 'hc_species_tree',
             -module             => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::SqlHealthChecks',
             -parameters         => {
                 mode            => 'species_tree',
+                binary          => 0,
             },
             %hc_analysis_params,
         },
+
+        {   -logic_name => 'has_user_provided_binary_species_tree',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ConditionalDataFlow',
+            -parameters    => {
+                'condition'     => $self->o('binary_species_tree_input_file') ? 1 : 0,
+            },
+            -flow_into => {
+                2 => [ 'load_binary_species_tree' ],
+                3 => [ 'make_binary_species_tree' ],
+            },
+            -meadow_type    => 'LOCAL',
+        },
+
+         {   -logic_name    => 'load_binary_species_tree',
+            -module        => 'Bio::EnsEMBL::Compara::RunnableDB::MakeSpeciesTree',
+            -parameters    => {
+                               'label' => 'binary',
+                               'species_tree_input_file' => $self->o('binary_species_tree_input_file'),
+                               'do_transactions' => 1,
+            },
+            -flow_into     => {
+                2 => [ 'hc_binary_species_tree' ],
+            }
+        },
+
+        {   -logic_name    => 'make_binary_species_tree',
+            -module        => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::CAFESpeciesTree',
+            -parameters    => {
+                'label'         => 'treebest',
+                'new_label'     => 'binary',
+            },
+            -flow_into     => {
+                2 => [ 'hc_binary_species_tree' ],
+            }
+        },
+
+        {   -logic_name         => 'hc_binary_species_tree',
+            -module             => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::SqlHealthChecks',
+            -parameters         => {
+                mode            => 'species_tree',
+                binary          => 1,
+            },
+            %hc_analysis_params,
+        },
+
 
 # ---------------------------------------------[reuse members]-----------------------------------------------------------------------
 
@@ -1214,6 +1265,7 @@ sub pipeline_analyses {
             -parameters => {
                 'notung_jar'                => $self->o('notung_jar'),
                 'treebest_exe'              => $self->o('treebest_exe'),
+                'label'                     => 'binary',
             },
             -hive_capacity        => $self->o('treebest_capacity'),
             -rc_name => '2Gb_job',

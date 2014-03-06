@@ -219,7 +219,7 @@ sub get_gene_tree_file {
 
 sub _load_species_tree_string_from_db {
     my ($self) = @_;
-    my $species_tree = $self->param('gene_tree')->species_tree;
+    my $species_tree = $self->param('gene_tree')->species_tree($self->param('label') || 'default');
     $species_tree->attach_to_genome_dbs();
     $self->param('species_tree_string', $species_tree->root->newick_format('ryo', $self->param('ryo_species_tree')))
 }

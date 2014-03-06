@@ -52,6 +52,7 @@ sub param_defaults {
         'cmd_treebest'      => '#treebest_exe# sdi -s #species_tree_file# #gene_tree_file#.rearrange.0 > #gene_tree_file#.sdi',
         'ryo_species_tree'  => '%{o}',
         'command_tag_runtime'   => 'notung_runtime',
+        'label'             => 'binary',
     };
 }
 
