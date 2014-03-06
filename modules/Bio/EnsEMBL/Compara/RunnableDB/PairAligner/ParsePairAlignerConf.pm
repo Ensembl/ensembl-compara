@@ -1066,6 +1066,7 @@ sub create_net_dataflows {
     my $chain_configs = $self->param('chain_configs');
     my $net_configs = $self->param('net_configs');
     my $all_configs = $self->param('all_configs');
+    my $bidirectional = $self->param('bidirectional');
 
     foreach my $net_config (@$net_configs) {
 
@@ -1104,6 +1105,37 @@ sub create_net_dataflows {
 			 'output_mlss_id' => $net_config->{'mlss_id'},
 			);
 	$self->dataflow_output_id($output_hash,6);
+
+	if ($bidirectional) {
+
+           # Let's do it bidirectional by swapping the reference and non-reference species
+          
+           $output_hash = {};
+           %$output_hash = ('query_collection_name' => $net_config->{'non_reference_collection_name'},
+                            'target_collection_name' => $net_config->{'reference_collection_name'},
+                            'input_mlss_id' => $chain_config->{'mlss_id'},
+                            'output_mlss_id' => $net_config->{'mlss_id'},
+               );
+           $self->dataflow_output_id($output_hash,6);
+
+           #
+           #dataflow to create_filter_duplicates_net_jobs
+           #
+           my $ref_output_hash = {};
+           %$ref_output_hash = ('method_link_species_set_id'=>$net_config->{'mlss_id'},
+                                'collection_name'=> $net_config->{'reference_collection_name'},
+                                'chunk_size' => $dna_collections->{$net_config->{'reference_collection_name'}}->{'chunk_size'},
+                                'overlap' => $dna_collections->{$net_config->{'reference_collection_name'}}->{'overlap'});
+
+           my $non_ref_output_hash = {};
+           %$non_ref_output_hash = ('method_link_species_set_id'=>$net_config->{'mlss_id'},
+                                    'collection_name'=>$net_config->{'non_reference_collection_name'},
+                                    'chunk_size' => $dna_collections->{$net_config->{'non_reference_collection_name'}}->{'chunk_size'},
+                                    'overlap' => $dna_collections->{$net_config->{'non_reference_collection_name'}}->{'overlap'});
+
+           $self->dataflow_output_id($ref_output_hash,10);
+           $self->dataflow_output_id($non_ref_output_hash,10);
+       }
 
 	#Dataflow to healthcheck
 
