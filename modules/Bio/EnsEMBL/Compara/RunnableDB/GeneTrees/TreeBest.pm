@@ -60,7 +60,8 @@ use base ('Bio::EnsEMBL::Compara::RunnableDB::RunCommand');
 
 sub _load_species_tree_string_from_db {
     my ($self) = @_;
-    my $species_tree = $self->param('gene_tree')->species_tree;
+    my $species_tree = $self->param('gene_tree')->species_tree('treebest');
+    $species_tree = $self->param('gene_tree')->species_tree() unless $species_tree;
     $species_tree->attach_to_genome_dbs();
     $self->param('species_tree_string', $species_tree->root->newick_format('ryo', '%{o}%{-E"*"}'))
 }
