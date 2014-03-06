@@ -169,15 +169,14 @@ sub default_options {
         #'prev_core_sources_locs'   => [ $self->o('staging_loc1'), $self->o('staging_loc2') ],
 
         # Add the database location of the previous Compara release. Use "undef" if running the pipeline without reuse
-        'prev_rel_db' => 'mysql://ensro@compara3:3306/mp12_ensembl_compara_74'
+        'prev_rel_db' => 'mysql://ensro@compara3:3306/mp12_ensembl_compara_74',
 
         # To run without a master database
         #'master_db'                 => undef,
         #'do_stable_id_mapping'      => 0,
         #'mlss_id'                   => undef,
-        #'ncbi_db'                   => $self->o('livemirror_loc'),
-
-        # Force a full re-run of blastp
+        #'ncbi_db'                   => 'mysql://ensro@ens-livemirror:3306/ncbi_taxonomy',
+        #'prev_rel_db'               => undef,
 
     };
 }
