@@ -1002,37 +1002,10 @@ sub pipeline_analyses {
                 'fan_branch_code'   => 2,
             },
             -flow_into  => {
-                 '2->A' => [ 'very_large_clusters_go_to_qtb' ],
+                 '2->A' => [ 'large_clusters_go_to_mafft' ],
                  'A->1' => [ 'hc_global_tree_set' ],
             },
             -meadow_type    => 'LOCAL',
-        },
-
-        {   -logic_name => 'very_large_clusters_go_to_qtb',
-            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ConditionalDataFlow',
-            -parameters => {
-                'condition'             => '$self->compara_dba->get_GeneTreeAdaptor->fetch_by_dbID(#gene_tree_id#)->get_value_for_tag("gene_count") > #treebreak_gene_count#',
-                'treebreak_gene_count'  => $self->o('treebreak_gene_count'),
-            },
-            -flow_into  => {
-                '2->A'  => [ 'mafft' ],
-                'A->2'  => [ 'quick_tree_break' ],
-                '3->B'  => [ 'large_clusters_go_to_mafft' ],
-                'B->3'  => [ 'split_genes' ],
-            },
-            -meadow_type    => 'LOCAL',
-        },
-
-        {   -logic_name         => 'hc_global_tree_set',
-            -module             => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::SqlHealthChecks',
-            -parameters         => {
-                mode            => 'global_tree_set',
-            },
-            -flow_into  => [
-                $self->o('do_stable_id_mapping') ? 'stable_id_mapping' : (),
-                $self->o('do_treefam_xref') ? 'treefam_xref_idmap' : (),
-            ],
-            %hc_analysis_params,
         },
 
         {   -logic_name => 'large_clusters_go_to_mafft',
@@ -1043,7 +1016,7 @@ sub pipeline_analyses {
             },
             -flow_into  => {
                 2 => [ 'mafft' ],
-                 3 => 'long_running_clusters_go_to_mafft',
+                3 => [ 'long_running_clusters_go_to_mafft' ],
             },
             -meadow_type    => 'LOCAL',
         },
@@ -1061,6 +1034,31 @@ sub pipeline_analyses {
             -meadow_type    => 'LOCAL',
         },
 
+
+        {   -logic_name => 'very_large_clusters_go_to_qtb',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ConditionalDataFlow',
+            -parameters => {
+                'condition'             => '$self->compara_dba->get_GeneTreeAdaptor->fetch_by_dbID(#gene_tree_id#)->get_value_for_tag("gene_count") > #treebreak_gene_count#',
+                'treebreak_gene_count'  => $self->o('treebreak_gene_count'),
+            },
+            -flow_into  => {
+                2  => [ 'quick_tree_break' ],
+                3  => [ 'split_genes' ],
+            },
+            -meadow_type    => 'LOCAL',
+        },
+
+        {   -logic_name         => 'hc_global_tree_set',
+            -module             => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::SqlHealthChecks',
+            -parameters         => {
+                mode            => 'global_tree_set',
+            },
+            -flow_into  => [
+                $self->o('do_stable_id_mapping') ? 'stable_id_mapping' : (),
+                $self->o('do_treefam_xref') ? 'treefam_xref_idmap' : (),
+            ],
+            %hc_analysis_params,
+        },
 
 
 # ---------------------------------------------[Pluggable MSA steps]----------------------------------------------------------
@@ -1127,6 +1125,7 @@ sub pipeline_analyses {
             -parameters         => {
                 mode            => 'alignment',
             },
+            -flow_into => [ 'very_large_clusters_go_to_qtb' ],
             %hc_analysis_params,
         },
 
@@ -1290,11 +1289,7 @@ sub pipeline_analyses {
             },
             -analysis_capacity => 1,
             -meadow_type    => 'LOCAL',
-            #-flow_into      => [ 'mafft' ],
-            -flow_into => {
-                '1->A' => [ 'mafft' ],
-                'A->1' => [ 'split_genes' ],
-            },
+            -flow_into      => [ 'mafft' ],
         },
 
 
