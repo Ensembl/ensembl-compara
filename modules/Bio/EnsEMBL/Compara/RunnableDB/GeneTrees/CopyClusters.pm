@@ -59,6 +59,7 @@ sub param_defaults {
             'target_clusterset_id'  => 'default',
             'rejoin_supertrees'     => 1,
             'tags_to_copy'          => [],
+            'immediate_dataflow'    => 0,
     };
 }
 
