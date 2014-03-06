@@ -221,7 +221,9 @@ sub parse_file_content {
     
     my $id = shift @track;
     
-    next unless $id;
+    next unless defined $id;
+    
+    $id = 'Unnamed' if $id eq '';
     
     foreach (@track) {
       my ($key, $value) = split /\s+/, $_, 2;
