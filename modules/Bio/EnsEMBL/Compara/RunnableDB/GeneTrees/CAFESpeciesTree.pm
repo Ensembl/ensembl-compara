@@ -62,6 +62,7 @@ sub param_defaults {
             'tree_fmt'   => '%{n}%{":"d}',
             'pvalue_lim' => 0.01,
             'label'      => 'full_species_tree',
+            'new_label'  => 'cafe',
            };
 }
 
@@ -150,7 +151,7 @@ sub run {
 
 
     $species_tree->species_tree($cafe_tree_str);
-    $species_tree->label('cafe');
+    $species_tree->label($self->param_required('new_label'));
     $speciesTree_Adaptor->store($species_tree);
 
 }
