@@ -1203,7 +1203,7 @@ sub pipeline_analyses {
             -hive_capacity        => $self->o('treebest_capacity'),
             -rc_name => '4Gb_job',
             -flow_into => {
-                '1->A' => [ 'hc_tree_structure' ],
+                '1->A' => [ 'hc_alignment_post_tree' ],
                 '2->A' => [ 'hc_other_tree_structure' ],
                 'A->1' => [ 'ktreedist' ],
             }
@@ -1217,7 +1217,7 @@ sub pipeline_analyses {
             },
             -hive_capacity        => $self->o('treebest_capacity'),
             -rc_name => '2Gb_job',
-            -flow_into => [ 'ortho_tree' ],
+            -flow_into => [ 'hc_tree_structure' ],
         },
 
         {   -logic_name         => 'hc_alignment_post_tree',
@@ -1234,7 +1234,7 @@ sub pipeline_analyses {
             -parameters         => {
                 mode            => 'tree_structure',
             },
-            -flow_into          => [ 'hc_alignment_post_tree' ],
+            -flow_into          => [ 'ortho_tree' ],
             %hc_analysis_params,
         },
 
