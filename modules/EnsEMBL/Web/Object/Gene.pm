@@ -171,7 +171,7 @@ sub counts {
     }    
 
     ## Add counts from plugins
-    $counts = {%$counts, %{$self->_counts}};
+    $counts = {%$counts, %{$self->_counts($member, $pan_member)}};
 
     $MEMD->set($key, $counts, undef, 'COUNTS') if $MEMD;
     $self->{'_counts'} = $counts;
