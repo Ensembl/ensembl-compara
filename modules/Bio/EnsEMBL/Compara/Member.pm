@@ -1027,4 +1027,10 @@ sub number_of_paralogues {
   return $self->adaptor->paralogues_for_member($self->stable_id);
 }
 
+sub number_of_homoeologues {
+  my ($self) = @_;
+
+  return $self->adaptor->homoeologues_for_member($self->stable_id);
+}
+
 1;
