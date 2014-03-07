@@ -753,6 +753,14 @@ sub paralogues_for_member {
   return $res;
 }
 
+sub homoeologues_for_member {
+  my ($self, $stable_id) = @_;
+
+  my $sql = "SELECT homoeologues FROM member_production_counts WHERE stable_id = ?";
+  my ($res) = $self->dbc->db_handle()->selectrow_array($sql, {}, $stable_id);
+  return $res;
+}
+
 
 # sub member_has_family {
 #     my ($self, $stable_id) = @_;
