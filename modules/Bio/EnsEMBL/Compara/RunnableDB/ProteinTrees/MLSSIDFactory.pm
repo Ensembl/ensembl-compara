@@ -86,6 +86,9 @@ sub fetch_input {
         
         foreach my $genome_db_id2 (@{$species_set}) {
             push @mlss_ids, $mlss_adaptor->fetch_by_method_link_type_genome_db_ids('ENSEMBL_ORTHOLOGUES', [$genome_db_id1, $genome_db_id2])->dbID;
+
+            $mlss = $mlss_adaptor->fetch_by_method_link_type_genome_db_ids('ENSEMBL_HOMOEOLOGUES', [$genome_db_id1, $genome_db_id2]);
+            push @mlss_ids, $mlss->dbID if defined $mlss;
         }
     }
 
