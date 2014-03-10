@@ -128,6 +128,14 @@ sub feature_content {
         label_html => $external_url
       });
     }
+    elsif ($source =~ /DECIPHER/i) {
+      my $sv_samples = $variation->get_all_StructuralVariationSamples; 
+      my $individual = (scalar(@$sv_samples)) ? $sv_samples->[0]->individual->name : '';
+      my $external_url = $hub->get_ExtURL_link("View in $source", 'DECIPHER', { ID => $individual });
+      $self->add_entry({
+        label_html => $external_url
+      });
+    }
     else {
       my $external_url = $hub->get_ExtURL_link("View in $source", uc($source));
       $self->add_entry({
