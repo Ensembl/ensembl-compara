@@ -190,6 +190,32 @@ sub new {
 }
 
 
+=head2 new_from_Slice
+
+  Arg [1]    : Bio::EnsEMBL::Slice $slice
+  Arg [2]    : Bio::EnsEMBL::Compara::GenomeDB $genome_db
+  Description: Creates a new DnaFrag object using $slice (its underlying SeqRegion object)
+               Note that the DnaFrag's GenomeDB is set with $genome_db
+  Returntype : Bio::EnsEMBL::Compara::DnaFrag
+  Exceptions : none
+  Caller     : general
+  Status     : Stable
+
+=cut
+
+sub new_from_Slice {
+    my ($class, $slice, $genome_db) = @_;
+
+    return $class->new(
+        -NAME => $slice->seq_region_name(),
+        -LENGTH => $slice->seq_region_length(),
+        -COORD_SYSTEM_NAME => $slice->coord_system_name(),
+        -IS_REFERENCE => $slice->is_reference(),
+        -GENOME_DB => $genome_db,
+    );
+}
+
+
 =head2 length
 
  Arg [1]   : int $length
