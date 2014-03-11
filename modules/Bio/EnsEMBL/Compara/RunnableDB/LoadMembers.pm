@@ -78,6 +78,7 @@ sub param_defaults {
         'include_reference'             => 1,
         'include_nonreference'          => 0,
         'include_patches'               => 0,
+        'store_missing_dnafrags'        => 0,
 
         'coding_exons'                  => 0,   # switch between 'ProteinTree' mode and 'Mercator' mode
 
@@ -179,15 +180,23 @@ sub loadMembersFromCoreSlices {
 
   my @genes;
 
-  SLICE: foreach my $slice (@$slices) {
+  foreach my $slice (@$slices) {
     $self->param('sliceCount', $self->param('sliceCount')+1 );
     #print("slice " . $slice->name . "\n");
     my $dnafrag = $self->compara_dba->get_DnaFragAdaptor->fetch_by_GenomeDB_and_name($self->param('genome_db'), $slice->seq_region_name);
+    unless ($dnafrag) {
+        if ($self->param('store_missing_dnafrags')) {
+            $dnafrag = Bio::EnsEMBL::Compara::DnaFrag->new_from_Slice($slice, $self->param('genome_db'));
+            $self->compara_dba->get_DnaFragAdaptor->store($dnafrag);
+        } else {
+            $self->throw(sprintf('Cannot find / create a DnaFrag with name "%s" for "%s"', $slice->seq_region_name, $self->param('genome_db')->name));
+        }
+    }
 
     @genes = ();
     my $current_end;
 
-    foreach my $gene (sort {$a->start <=> $b->start} @{$slice->get_all_Genes}) {
+    foreach my $gene (sort {$a->start <=> $b->start} @{$slice->get_all_Genes(undef, undef, 1)}) {
       $self->param('geneCount', $self->param('geneCount')+1 );
       # LV and C are for the Ig/TcR family, which rearranges
       # somatically so is considered as a different biotype in EnsEMBL

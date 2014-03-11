@@ -548,6 +548,20 @@ sub pipeline_analyses {
             -rc_name => '500Mb_job',
             -flow_into => {
                 2 => [ ':////sequence' ],
+                1 => [ 'dnafrag_table_reuse' ],
+            },
+        },
+
+        {   -logic_name => 'dnafrag_table_reuse',
+            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::MySQLTransfer',
+            -parameters => {
+                'src_db_conn'   => '#reuse_db#',
+                'table'         => 'dnafrag',
+                'where'         => 'genome_db_id = #genome_db_id#',
+                'mode'          => 'insertignore',
+            },
+            -hive_capacity => $self->o('reuse_capacity'),
+            -flow_into => {
                 1 => [ 'seq_member_table_reuse' ],
             },
         },
@@ -626,10 +640,34 @@ sub pipeline_analyses {
                 'condition'     => '#locator# =~ /^Bio::EnsEMBL::DBSQL::DBAdaptor/',
             },
             -flow_into => {
-                2 => [ 'load_fresh_members_from_db' ],
+                2 => [ 'is_there_master_db' ],
                 3 => [ 'load_fresh_members_from_file' ],
             },
             -meadow_type    => 'LOCAL',
+        },
+
+        {   -logic_name => 'is_there_master_db',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ConditionalDataFlow',
+            -parameters    => {
+                'condition'     => '$self->param_is_defined("master_db")',
+            },
+            -flow_into => {
+                2 => [ 'copy_dnafrags_from_master' ],
+                3 => { 'load_fresh_members_from_db' => { 'genome_db_id' => '#genome_db_id#', 'store_missing_dnafrags' => 1} },
+            },
+            -meadow_type    => 'LOCAL',
+        },
+
+        {   -logic_name => 'copy_dnafrags_from_master',
+            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::MySQLTransfer',
+            -parameters => {
+                'src_db_conn'   => '#master_db#',
+                'table'         => 'dnafrag',
+                'where'         => 'genome_db_id = #genome_db_id#',
+                'mode'          => 'insertignore',
+            },
+            -hive_capacity => $self->o('reuse_capacity'),
+            -flow_into => [ 'load_fresh_members_from_db' ],
         },
 
         {   -logic_name => 'load_fresh_members_from_db',
@@ -638,6 +676,7 @@ sub pipeline_analyses {
                 'store_related_pep_sequences' => 1,
                 'allow_pyrrolysine'             => $self->o('allow_pyrrolysine'),
                 'find_canonical_translations_for_polymorphic_pseudogene' => 1,
+		    'store_missing_dnafrags'		=> 0,
             },
             -rc_name => '2Gb_job',
             -flow_into => [ 'hc_members_per_genome' ],
