@@ -144,8 +144,7 @@ sub copy {
 
   Arg [-TRANSCRIPT] : Bio::EnsEMBL::Transcript
   Arg [-GENOME_DB] : Bio::EnsEMBL::Compara::GenomeDB
-  Arg [-TRANSLATE] : string
-      'translate' or 'yes' for peptides, 'ncrna' for RNAs
+  Arg [-TRANSLATE] : boolean: whether the transcript should be translated
   Arg [-DESCRIPTION] : string
   Example    : $member = Bio::EnsEMBL::Compara::SeqMember->new_from_transcript(
                   $transcript, $genome_db, 'translate');
@@ -179,7 +178,7 @@ sub new_from_transcript {
   $self->dnafrag_strand($transcript->seq_region_strand);
   $self->display_label($transcript->display_xref->display_id) if $transcript->display_xref;
 
-  if(($translate eq 'translate') or ($translate eq 'yes')) {
+  if ($translate) {
       # coordinates
     $self->dnafrag_start($transcript->coding_region_start);
     $self->dnafrag_end($transcript->coding_region_end);
@@ -215,7 +214,7 @@ sub new_from_transcript {
     else {
       $self->sequence($seq_string);
     }
-  } elsif ($translate eq 'ncrna') {
+  } else {
     # Coordinates
     $self->dnafrag_start($transcript->seq_region_start);
     $self->dnafrag_end($transcript->seq_region_end);

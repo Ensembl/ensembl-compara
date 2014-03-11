@@ -311,7 +311,7 @@ sub store_gene_and_all_transcripts {
          -transcript=>$transcript,
          -genome_db=>$self->param('genome_db'),
          -dnafrag=>$dnafrag,
-         -translate=>'yes',
+         -translate=>1,
          -description=>$description);
 
     print(" => pep_member " . $pep_member->stable_id) if($self->param('verbose'));

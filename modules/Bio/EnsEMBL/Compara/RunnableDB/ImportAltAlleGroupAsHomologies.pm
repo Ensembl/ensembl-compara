@@ -124,7 +124,7 @@ sub run {
     die if scalar(@refs) > 1;
     my @canon_transcripts = map {$_->canonical_transcript} @genes;
 
-    my $translate = scalar(grep {not defined $_->translation} @canon_transcripts) ? 'ncrna' : 'yes';
+    my $translate = scalar(grep {not defined $_->translation} @canon_transcripts) ? 0 : 1;
 
     my @seq_members = map {$self->fetch_or_store_gene($_, $translate)} @genes;
     map {bless $_, 'Bio::EnsEMBL::Compara::AlignedMember'} @seq_members;
