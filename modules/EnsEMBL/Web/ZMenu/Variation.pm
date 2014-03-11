@@ -34,7 +34,7 @@ sub content {
   my @features;
   
   if ($click_data) {
-    @features = @{Bio::EnsEMBL::GlyphSet::_variation->new($click_data)->features};
+    @features = @{EnsEMBL::Draw::GlyphSet::_variation->new($click_data)->features};
     @features = () unless grep $_->dbID eq $vf, @features;
   } elsif (!$vf) {
     my $adaptor         = $hub->database($db)->get_VariationAdaptor;
