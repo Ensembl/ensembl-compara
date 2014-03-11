@@ -56,7 +56,7 @@ sub new {
   foreach my $chr ( @chromosomes ) {
     for my $row (@subsections) {
       ########## create a new glyphset for this row
-      my $classname = qq(Bio::EnsEMBL::GlyphSet::).( $Config->get($row, 'manager')||$row );
+      my $classname = qq(EnsEMBL::Draw::GlyphSet::).( $Config->get($row, 'manager')||$row );
 
       next unless $self->dynamic_use( $classname );
 
@@ -170,7 +170,7 @@ sub render {
   my ($self, $type) = @_;
   
   ########## build the name/type of render object we want
-  my $renderer_type = qq(Bio::EnsEMBL::VRenderer::$type);
+  my $renderer_type = qq(EnsEMBL::Draw::VRenderer::$type);
   ########## dynamic require of the right type of renderer
   return unless $self->dynamic_use( $renderer_type );
 
