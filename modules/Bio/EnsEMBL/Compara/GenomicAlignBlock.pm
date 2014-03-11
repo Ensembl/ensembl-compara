@@ -1509,11 +1509,11 @@ sub get_GenomicAlignTree {
     my $species_tree_string;
     #For a pairwise GenomicAlignBlock, create a tree from scratch.
     if ($self->method_link_species_set->method->class eq "GenomicAlignBlock.pairwise_alignment") {
-        my $species_set_id = $self->method_link_species_set->species_set_obj->dbID;
+        my $species_set = $self->method_link_species_set->species_set_obj;
         
         #Create species_tree in newick format. Do not get the branch lengths.
         $species_tree_string = Bio::EnsEMBL::Compara::Utils::SpeciesTree->create_species_tree(-compara_dba => $self->adaptor->db,
-                                                                                              -species_set_id => $species_set_id)->newick_format('ncbi_name');
+                                                                                              -species_set => $species_set)->newick_format('ncbi_name');
     } else {
         #Multiple alignment 
         #Get SpeciesTree from database.
