@@ -637,7 +637,7 @@ sub pipeline_analyses {
         {   -logic_name => 'is_genome_in_db',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ConditionalDataFlow',
             -parameters    => {
-                'condition'     => '#locator# =~ /^Bio::EnsEMBL::DBSQL::DBAdaptor/',
+                'condition'     => '"#locator#" =~ /^Bio::EnsEMBL::DBSQL::DBAdaptor/',
             },
             -flow_into => {
                 2 => [ 'is_there_master_db' ],
