@@ -104,11 +104,13 @@ sub new {
   my ($class, @args) = @_;
 
   my $self = $class->SUPER::new(@args);
+  bless $self, 'Bio::EnsEMBL::Compara::SeqMember';
   
   if (scalar @args) {
-    my ($sequence_id) = rearrange([qw(SEQUENCE_ID)], @args);
+    my ($sequence_id, $sequence) = rearrange([qw(SEQUENCE_ID SEQUENCE)], @args);
 
     $sequence_id && $self->sequence_id($sequence_id);
+    $sequence && $self->sequence($sequence);
   }
 
   return $self;
@@ -145,7 +147,6 @@ sub copy {
   Arg [-TRANSCRIPT] : Bio::EnsEMBL::Transcript
   Arg [-GENOME_DB] : Bio::EnsEMBL::Compara::GenomeDB
   Arg [-TRANSLATE] : boolean: whether the transcript should be translated
-  Arg [-DESCRIPTION] : string
   Example    : $member = Bio::EnsEMBL::Compara::SeqMember->new_from_transcript(
                   $transcript, $genome_db, 'translate');
   Description: contructor method which takes an Ensembl::Gene object
@@ -157,88 +158,61 @@ sub copy {
 =cut
 
 sub new_from_transcript {
-  my ($class, @args) = @_;
-  my $self = $class->new(@args);
-  my $seq_string;
+    my ($class, @args) = @_;
 
-  my ($transcript, $genome_db, $translate, $dnafrag) = rearrange([qw(TRANSCRIPT GENOME_DB TRANSLATE DNAFRAG)], @args);
+    my ($transcript, $genome_db, $translate) = rearrange([qw(TRANSCRIPT GENOME_DB TRANSLATE)], @args);
 
-  assert_ref($transcript, 'Bio::EnsEMBL::Transcript');
-  assert_ref($genome_db, 'Bio::EnsEMBL::Compara::GenomeDB');
+    assert_ref($transcript, 'Bio::EnsEMBL::Transcript');
 
-  $self->taxon_id($genome_db->taxon_id);
-  $self->genome_db_id($genome_db->dbID);
-  if ($dnafrag) {
-    $self->dnafrag($dnafrag);
-  } else {
-    $self->dnafrag($genome_db->adaptor->db->get_DnaFragAdaptor->fetch_by_GenomeDB_and_name($genome_db, $transcript->seq_region_name));
-  };
-  $self->dnafrag_start($transcript->coding_region_start);
-  $self->dnafrag_end($transcript->coding_region_end);
-  $self->dnafrag_strand($transcript->seq_region_strand);
-  $self->display_label($transcript->display_xref->display_id) if $transcript->display_xref;
-
-  if ($translate) {
-      # coordinates
-    $self->dnafrag_start($transcript->coding_region_start);
-    $self->dnafrag_end($transcript->coding_region_end);
-
-    if(not defined($transcript->translation)) {
-      throw("request to translate a transcript without a defined translation",
-            $transcript->stable_id);
-    }
-    unless (defined $transcript->translation->stable_id) {
-      throw("COREDB error: does not contain translation stable id for translation_id ".$transcript->translation->dbID."\n");
-    }
-    
-    $self->stable_id($transcript->translation->stable_id);
-    $self->source_name("ENSEMBLPEP");
-    
-    my $peptideBioSeq;
-    unless ($peptideBioSeq = $transcript->translate) {
-      throw("COREDB error: unable to get a BioSeq translation from ". $transcript->stable_id);
-    }
-    eval {
-      $seq_string = $peptideBioSeq->seq;
-    };
-    throw "COREDB error: can't get seq from peptideBioSeq" if $@;
-    # OR
-    #$seq_string = $transcript->translation->seq;
-    
-    if ($seq_string =~ /^X+$/) {
-      warn("X+ in sequence from translation " . $transcript->translation->stable_id."\n");
-    }
-    elsif (length($seq_string) == 0) {
-      warn("zero length sequence from translation " . $transcript->translation->stable_id."\n");
-    }
-    else {
-      $self->sequence($seq_string);
-    }
-  } else {
-    # Coordinates
-    $self->dnafrag_start($transcript->seq_region_start);
-    $self->dnafrag_end($transcript->seq_region_end);
-    unless (defined $transcript->stable_id) {
+    my $seq_string;
+    my ($start, $end) = ($transcript->seq_region_start, $transcript->seq_region_end);
+    my $stable_id = $transcript->stable_id ||
       throw("COREDB error: does not contain transcript stable id for transcript_id ".$transcript->dbID."\n");
-    }
-    $self->stable_id($transcript->stable_id);
-    $self->source_name("ENSEMBLTRANS");
 
-    unless ($seq_string = $transcript->spliced_seq) {
-      throw("COREDB error: unable to get a BioSeq spliced_seq from ". $transcript->stable_id);
+    if ($translate) {
+        my ($start, $end) = ($transcript->coding_region_start, $transcript->coding_region_end);
+
+        if(not defined($transcript->translation)) {
+            throw("request to translate a transcript without a defined translation", $transcript->stable_id);
+        }
+
+        $stable_id = $transcript->translation->stable_id ||
+            throw("COREDB error: does not contain translation stable id for translation_id ".$transcript->translation->dbID."\n");
+
+        $seq_string = $transcript->translation->seq;
+
+        if ($seq_string =~ /^X+$/) {
+            warn("X+ in sequence from translation " . $transcript->translation->stable_id."\n");
+        } elsif (length($seq_string) == 0) {
+            warn("zero length sequence from translation " . $transcript->translation->stable_id."\n");
+        }
+
+    } else {
+        unless ($seq_string = $transcript->spliced_seq) {
+            throw("COREDB error: unable to get a BioSeq spliced_seq from ". $transcript->stable_id);
+        }
+        if (length($seq_string) == 0) {
+            warn("zero length sequence from transcript " . $transcript->stable_id."\n");
+        }
     }
-    if (length($seq_string) == 0) {
-      warn("zero length sequence from transcript " . $transcript->stable_id."\n");
-    }
-    $self->sequence($seq_string);
-  }
-  
-  #print("Member->new_from_transcript\n");
-  #print("  source_name = '" . $self->source_name . "'\n");
-  #print("  stable_id = '" . $self->stable_id . "'\n");
-  #print("  taxon_id = '" . $self->taxon_id . "'\n");
-  #print("  chr_name = '" . $self->dnafrag->name . "'\n");
-  return $self;
+
+    my $seq_member = Bio::EnsEMBL::Compara::SeqMember->new(
+        -STABLE_ID => $stable_id,
+        -DISPLAY_LABEL => ($transcript->display_xref ? $transcript->display_xref->display_id : undef),
+        -DNAFRAG_START => $start,
+        -DNAFRAG_END => $end,
+        -DNAFRAG_STRAND => $transcript->seq_region_strand,
+
+        -DNAFRAG => $genome_db->adaptor->db->get_DnaFragAdaptor->fetch_by_GenomeDB_and_name($genome_db, $transcript->seq_region_name),
+        -GENOME_DB_ID => $genome_db->dbID,
+        -TAXON_ID => $genome_db->taxon_id,
+
+        -SOURCE_NAME => ($translate ? 'ENSEMBLPEP' : 'ENSEMBLTRANS'),
+        -SEQUENCE => $seq_string,
+        -DESCRIPTION => $transcript->description,
+    );
+    $seq_member->{core_transcript} = $transcript;
+    return $seq_member;
 }
 
 

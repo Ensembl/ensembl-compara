@@ -110,27 +110,23 @@ use base qw(Bio::EnsEMBL::Compara::Locus Bio::EnsEMBL::Storable);
 sub new {
   my ($class, @args) = @_;
 
-  my $self = bless {}, $class;
+  my $self = $class->SUPER::new(@args);       # deal with Storable stuff
   
   if (scalar @args) {
     #do this explicitly.
-    my ($dbid, $stable_id, $description, $source_name, $adaptor, $taxon_id, $genome_db_id)
-        = rearrange([qw(DBID STABLE_ID DESCRIPTION SOURCE_NAME ADAPTOR TAXON_ID GENOME_DB_ID)], @args);
+    my ($dbid, $stable_id, $source_name, $adaptor, $taxon_id, $genome_db_id, $genome_db, $display_label, $description)
+        = rearrange([qw(DBID STABLE_ID SOURCE_NAME ADAPTOR TAXON_ID GENOME_DB_ID GENOME_DB DISPLAY_LABEL DESCRIPTION)], @args);
 
-    if ($source_name) {
-      if ($source_name eq 'ENSEMBLGENE') {
-          bless $self, 'Bio::EnsEMBL::Compara::GeneMember';
-      } else {
-          bless $self, 'Bio::EnsEMBL::Compara::SeqMember';
-      }
-    }
     $dbid && $self->dbID($dbid);
     $stable_id && $self->stable_id($stable_id);
-    $description && $self->description($description);
     $source_name && $self->source_name($source_name);
     $adaptor && $self->adaptor($adaptor);
     $taxon_id && $self->taxon_id($taxon_id);
     $genome_db_id && $self->genome_db_id($genome_db_id);
+    $genome_db && $self->genome_db_id($genome_db->dbID);
+    $genome_db && $self->taxon_id($genome_db->taxon_id);
+    $display_label && $self->display_label($display_label);
+    $description && $self->description($description);
   }
 
   return $self;
