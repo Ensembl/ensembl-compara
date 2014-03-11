@@ -2056,6 +2056,9 @@ sub sanger_project_names {
   while( my ($proj, $acc) = $sth->fetchrow() ) {
     $clones->{$acc}{$proj}=1;
   }
+  unless (%$clones) {
+    print LOG "WARNING: No records retrieved from submissions database for $sanger_species_name\n", DBI::errstr();
+  }
   return $clones;
 }
 
