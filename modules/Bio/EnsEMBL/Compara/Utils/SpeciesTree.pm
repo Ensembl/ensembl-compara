@@ -66,6 +66,7 @@ sub create_species_tree {
 
     my $taxon_adaptor = $compara_dba->get_NCBITaxonAdaptor;
     my $root;
+    my @taxa_for_tree = ();
 
         # loading the initial set of taxa from genome_db:
     if(!$no_previous or $species_set) {
@@ -75,37 +76,29 @@ sub create_species_tree {
         foreach my $gdb (@$gdb_list) {
             my $taxon_name = $gdb->name;
             next if ($taxon_name =~ /ncestral/);
-            my $taxon_id = $gdb->taxon_id;
-            my $taxon = $taxon_adaptor->fetch_node_by_taxon_id($taxon_id);
-            $taxon->release_children;
-
-            $root = $taxon->root unless($root);
-            $root->merge_node_via_shared_ancestor($taxon);
+            push @taxa_for_tree, $gdb->taxon;
         }
     }
 
         # loading from extrataxon_sequenced:
     foreach my $extra_taxon (@$extrataxon_sequenced) {
         my $taxon = $taxon_adaptor->fetch_node_by_taxon_id($extra_taxon);
-        next unless defined($taxon);
-        my $taxon_name = $taxon->name;
-        my $taxon_id = $taxon->taxon_id;
-        $taxon->release_children;
-
-        $root = $taxon->root unless($root);
-        $root->merge_node_via_shared_ancestor($taxon);
+        push @taxa_for_tree, $taxon if defined $taxon;
     }
+
 
         # loading from extrataxon_incomplete:
     foreach my $extra_taxon (@$extrataxon_incomplete) {
         my $taxon = $taxon_adaptor->fetch_node_by_taxon_id($extra_taxon);
-        my $taxon_name = $taxon->name;
-        my $taxon_id = $taxon->taxon_id;
-        $taxon->release_children;
+        $taxon->add_tag('is_incomplete', '1');
+        push @taxa_for_tree, $taxon;
+    }
 
+    # build the tree
+    foreach my $taxon (@taxa_for_tree) {
+        $taxon->release_children;
         $root = $taxon->root unless($root);
         $root->merge_node_via_shared_ancestor($taxon);
-        $taxon->add_tag('is_incomplete', '1');
     }
 
     $root = $root->minimize_tree if (defined($root));
