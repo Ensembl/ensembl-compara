@@ -20,7 +20,7 @@ package EnsEMBL::Web::ZMenu::Variation;
 
 use strict;
 
-use Bio::EnsEMBL::GlyphSet::_variation;
+use EnsEMBL::Draw::GlyphSet::_variation;
 
 use base qw(EnsEMBL::Web::ZMenu);
 

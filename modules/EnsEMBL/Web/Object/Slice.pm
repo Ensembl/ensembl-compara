@@ -42,8 +42,8 @@ sub consequence_types { return $_[0]->{'consequence_types'} ||= { map { $_->disp
 sub valids {
   ### Gets all the user's selected parameters from $self->params()
   ### Returns        Hashref of options with keys as valid options, value = 1 if they are on
-  ### Needed for:     Bio::EnsEMBL::GlyphSet::variation.pm,     
-  ###                Bio::EnsEMBL::GlyphSet::genotyped_variation.pm
+  ### Needed for:    EnsEMBL::Draw::GlyphSet::variation.pm,     
+  ###                EnsEMBL::Draw::GlyphSet::genotyped_variation.pm
   ###                TranscriptSNPView
   ###                GeneSNPView
   ### Called from:   self

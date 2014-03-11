@@ -31,8 +31,8 @@ use HTML::Entities  qw(encode_entities);
 use Text::Wrap      qw(wrap);
 use List::MoreUtils qw(uniq);
 
-use Bio::EnsEMBL::DrawableContainer;
-use Bio::EnsEMBL::VDrawableContainer;
+use EnsEMBL::Draw::DrawableContainer;
+use EnsEMBL::Draw::VDrawableContainer;
 
 use EnsEMBL::Web::Document::Image;
 use EnsEMBL::Web::Document::Table;
@@ -550,7 +550,7 @@ sub new_image {
   $_->set_parameter('component', $id) for grep $_->{'type'} eq $config_type, @image_configs;
  
   my $image = EnsEMBL::Web::Document::Image->new($hub, $self->id, \@image_configs);
-  $image->drawable_container = Bio::EnsEMBL::DrawableContainer->new(@_) if $self->html_format;
+  $image->drawable_container = EnsEMBL::Draw::DrawableContainer->new(@_) if $self->html_format;
   
   return $image;
 }
@@ -560,7 +560,7 @@ sub new_vimage {
   my @image_config = $_[1];
   
   my $image = EnsEMBL::Web::Document::Image->new($self->hub, $self->id, \@image_config);
-  $image->drawable_container = Bio::EnsEMBL::VDrawableContainer->new(@_) if $self->html_format;
+  $image->drawable_container = EnsEMBL::Draw::VDrawableContainer->new(@_) if $self->html_format;
   
   return $image;
 }

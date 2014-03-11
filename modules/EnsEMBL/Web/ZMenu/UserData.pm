@@ -32,7 +32,7 @@ sub content {
   return unless $click_data;
   
   my $type     = $click_data->{'my_config'}->data->{'glyphset'};
-  my $glyphset = "Bio::EnsEMBL::GlyphSet::$type";
+  my $glyphset = "EnsEMBL::Draw::GlyphSet::$type";
   
   return unless $self->dynamic_use($glyphset);
   
