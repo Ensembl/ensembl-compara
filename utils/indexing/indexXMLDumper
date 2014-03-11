@@ -249,6 +249,10 @@ foreach my $index (@indexes) {
       $conf->{'variation_details'} = $variation;
       $conf->{'variation_dbname'}  = $variation->{'NAME'};
     }
+    else {
+      $conf->{'variation_details'} = undef;
+      $conf->{'variation_dbname'}  = undef;
+    }
 
     if ($index eq 'Help') {
       $single_species = 1;
