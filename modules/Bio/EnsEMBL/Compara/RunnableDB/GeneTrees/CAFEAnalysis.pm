@@ -310,13 +310,19 @@ sub parse_cafe_output {
             my $n = $node->name();
             $n =~ s/\./_/g;
             $n =~ s/_\d+$//;
+            $n =~ s/_dup\d+//;
             print STDERR "Storing node name $n\n" if ($self->debug);
 
             my $n_members = $info_by_nodes{$n}{n_members};
             my $pvalue = $info_by_nodes{$n}{pvalue};
 
+            if ($n eq 'Testudines+Archosauriagroup') {
+                $n = 'Testudines + Archosauria group';
+            }
+
             print STDERR "Storing N_MEMBERS: $n_members, PVALUE: $pvalue\n" if ($self->debug);
-            my $cafe_nodes = $cafeGeneFamily->root->find_nodes_by_taxon_id_or_species_name($n, $node->is_leaf);
+#            my $cafe_nodes = $cafeGeneFamily->root->find_nodes_by_taxon_id_or_species_name($n, $node->is_leaf);
+            my $cafe_nodes = $cafeGeneFamily->root->find_nodes_by_name($n, $node->is_leaf);
 
             for my $cafe_node (@$cafe_nodes) {
                 $cafe_node->n_members($n_members);
