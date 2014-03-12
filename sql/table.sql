@@ -807,6 +807,14 @@ CREATE TABLE gene_member (
   dnafrag_strand              tinyint(4),
   display_label               varchar(128) default NULL,
 
+  `families`                 tinyint(1) unsigned default 0,
+  `gene_trees`               tinyint(1) unsigned default 0,
+  `gene_gain_loss_trees`     tinyint(1) unsigned default 0,
+  `orthologues`              int(10) unsigned default 0,
+  `paralogues`               int(10) unsigned default 0,
+  `homoeologues`             int(10) unsigned default 0,
+
+
   FOREIGN KEY (taxon_id) REFERENCES ncbi_taxa_node(taxon_id),
   FOREIGN KEY (genome_db_id) REFERENCES genome_db(genome_db_id),
   FOREIGN KEY (dnafrag_id) REFERENCES dnafrag(dnafrag_id),
@@ -877,38 +885,6 @@ CREATE TABLE seq_member (
   KEY gdb_name_start_end (genome_db_id,dnafrag_id,dnafrag_start,dnafrag_end)
 ) MAX_ROWS = 100000000 COLLATE=latin1_swedish_ci ENGINE=MyISAM;
 
-
-/**
-@table member_production_counts
-@desc  This table includes information about gene members for web fast-lookups
-@colour   #1E90FF
-
-@column stable_id             External reference to stable_id in the @link gene_member table.
-@column families              If the member is part of a @link family
-@column gene_trees            If the member has a default gene tree in the @link gene_tree_root table
-@column gene_gain_loss_trees  If the member has a gene gain/loss tree in the @link CAFE_gene_family table
-@column orthologues           Number of orthologues in the @link homology and @link homology_member tables for this member
-@column paralogues            Number of paralogues in the @link homology and @link homology_member tables for this member
-@column homoeologues          Number of homoeologues in the @link homology and @link homology_member tables for this member
-
-@see family
-@see gene_tree_root
-@see CAFE_gene_family
-@see homology
-@see homology_member
-*/
-
-CREATE TABLE `member_production_counts` (
-  `stable_id`                varchar(128) NOT NULL,
-  `families`                 tinyint(1) unsigned default 0,
-  `gene_trees`               tinyint(1) unsigned default 0,
-  `gene_gain_loss_trees`     tinyint(1) unsigned default 0,
-  `orthologues`              int(10) unsigned default 0,
-  `paralogues`               int(10) unsigned default 0,
-  `homoeologues`             int(10) unsigned default 0,
-
-  FOREIGN KEY (stable_id) REFERENCES gene_member(stable_id)
-)COLLATE=latin1_swedish_ci ENGINE=MyISAM;
 
 
 /**

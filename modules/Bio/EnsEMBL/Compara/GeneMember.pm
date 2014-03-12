@@ -265,46 +265,41 @@ sub get_all_SeqMembers {
     return $able_adaptor->fetch_all_by_gene_member_id($self->dbID);
 }
 
-##
-##
-## These methods calls the raw SQL methods in member adaptor
-##
-#########
 
 sub number_of_families {
-  my ($self) = @_;
-
-  return $self->adaptor->families_for_member($self->stable_id);
+  my ($self, $num_families) = @_;
+  $self->{'_num_families'} = shift if(@_);
+  return $self->{'_num_families'};
 }
 
 sub has_GeneTree {
-  my ($self) = @_;
-
-  return $self->adaptor->member_has_GeneTree($self->stable_id);
+  my ($self, $has_genetree) = @_;
+  $self->{'_has_genetree'} = shift if(@_);
+  return $self->{'_has_genetree'};
 }
 
 sub has_GeneGainLossTree {
-  my ($self) = @_;
-
-  return $self->adaptor->member_has_GeneGainLossTree($self->stable_id);
+  my ($self, $has_genegainlosstree) = @_;
+  $self->{'_has_genegainlosstree'} = shift if(@_);
+  return $self->{'_has_genegainlosstree'};
 }
 
 sub number_of_orthologues {
-  my ($self) = @_;
-
-  return $self->adaptor->orthologues_for_member($self->stable_id);
+  my ($self, $num_orthologues) = @_;
+  $self->{'_num_orthologues'} = shift if(@_);
+  return $self->{'_num_orthologues'};
 }
 
 sub number_of_paralogues {
-  my ($self) = @_;
-
-  return $self->adaptor->paralogues_for_member($self->stable_id);
+  my ($self, $num_paralogues) = @_;
+  $self->{'_num_paralogues'} = shift if(@_);
+  return $self->{'_num_paralogues'};
 }
 
 sub number_of_homoeologues {
-  my ($self) = @_;
-
-  return $self->adaptor->homoeologues_for_member($self->stable_id);
+  my ($self, $num_homoeologues) = @_;
+  $self->{'_num_homoeologues'} = shift if(@_);
+  return $self->{'_num_homoeologues'};
 }
 
 

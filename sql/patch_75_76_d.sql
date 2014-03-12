@@ -37,6 +37,13 @@ CREATE TABLE gene_member (
   dnafrag_strand              tinyint(4),
   display_label               varchar(128) default NULL,
 
+  `families`                 tinyint(1) unsigned default 0,
+  `gene_trees`               tinyint(1) unsigned default 0,
+  `gene_gain_loss_trees`     tinyint(1) unsigned default 0,
+  `orthologues`              int(10) unsigned default 0,
+  `paralogues`               int(10) unsigned default 0,
+  `homoeologues`             int(10) unsigned default 0,
+
 /*  FOREIGN KEY (taxon_id) REFERENCES ncbi_taxa_node(taxon_id),
   FOREIGN KEY (genome_db_id) REFERENCES genome_db(genome_db_id),
   FOREIGN KEY (dnafrag_id) REFERENCES dnafrag(dnafrag_id), */
@@ -62,8 +69,14 @@ AS SELECT
 	chr_start AS dnafrag_start,
 	chr_end AS dnafrag_end,
 	chr_strand AS dnafrag_strand,
-	display_label
-FROM member LEFT JOIN dnafrag ON member.genome_db_id = dnafrag.genome_db_id AND member.chr_name = dnafrag.name
+	display_label,
+	IFNULL(families, 0) AS families,
+	IFNULL(gene_trees, 0) AS gene_trees,
+	IFNULL(gene_gain_loss_trees, 0) AS gene_gain_loss_trees,
+	IFNULL(orthologues, 0) AS orthologues,
+	IFNULL(paralogues, 0) AS paralogues,
+	IFNULL(homoeologues, 0) AS homoeologues
+FROM member LEFT JOIN dnafrag ON member.genome_db_id = dnafrag.genome_db_id AND member.chr_name = dnafrag.name LEFT JOIN member_production_counts USING (stable_id)
 WHERE source_name = "ENSEMBLGENE";
 
 
@@ -120,7 +133,7 @@ WHERE source_name != "ENSEMBLGENE";
 
 
 DROP TABLE member;
-
+DROP TABLE member_production_counts;
 
 ALTER TABLE family_member CHANGE COLUMN member_id seq_member_id int(10) unsigned not null;
 ALTER TABLE gene_align_member CHANGE COLUMN member_id seq_member_id int(10) unsigned not null;

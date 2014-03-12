@@ -96,53 +96,6 @@ sub fetch_all_homology_orphans_by_GenomeDB {
 
 
 #
-# RAW SQLs FOR WEBCODE
-#
-########################
-
-sub families_for_member {
-  my ($self, $stable_id) = @_;
-
-  my $sql = 'SELECT families FROM member_production_counts WHERE stable_id = ?';
-  my ($res) = $self->dbc->db_handle()->selectrow_array($sql, {}, $stable_id);
-  return $res;
-}
-
-sub member_has_GeneTree {
-  my ($self, $stable_id) = @_;
-
-  my $sql = "SELECT gene_trees FROM member_production_counts WHERE stable_id = ?";
-  my ($res) = $self->dbc->db_handle()->selectrow_array($sql, {}, $stable_id);
-  return $res;
-}
-
-sub member_has_GeneGainLossTree {
-  my ($self, $stable_id) = @_;
-
-  my $sql = "SELECT gene_gain_loss_trees FROM member_production_counts WHERE stable_id = ?";
-  my ($res) = $self->dbc->db_handle()->selectrow_array($sql, {}, $stable_id);
-  return $res;
-}
-
-sub orthologues_for_member {
-  my ($self, $stable_id) = @_;
-
-  my $sql = "SELECT orthologues FROM member_production_counts WHERE stable_id = ?";
-  my ($res) = $self->dbc->db_handle()->selectrow_array($sql, {}, $stable_id);
-  return $res;
-}
-
-sub paralogues_for_member {
-  my ($self, $stable_id) = @_;
-
-  my $sql = "SELECT paralogues FROM member_production_counts WHERE stable_id = ?";
-  my ($res) = $self->dbc->db_handle()->selectrow_array($sql, {}, $stable_id);
-  return $res;
-}
-
-
-
-#
 # INTERNAL METHODS
 #
 ###################
@@ -171,7 +124,13 @@ sub _columns {
           'm.dnafrag_end',
           'm.dnafrag_strand',
           'm.canonical_member_id',
-          'm.display_label'
+          'm.display_label',
+          'm.families',
+          'm.gene_trees',
+          'm.gene_gain_loss_trees',
+          'm.orthologues',
+          'm.paralogues',
+          'm.homoeologues',
           );
 }
 
@@ -193,6 +152,12 @@ sub create_instance_from_rowhash {
 		_source_name    => $rowhash->{source_name},
 		_display_label  => $rowhash->{display_label},
             _canonical_member_id => $rowhash->{canonical_member_id},
+            _families       => $rowhash->{families},
+            _gene_trees     => $rowhash->{gene_trees},
+            _gene_gain_loss_trees      => $rowhash->{gene_gain_loss_trees},
+            _orthologues    => $rowhash->{orthologues},
+            _paralogues     => $rowhash->{paralogues},
+            _homoeologues   => $rowhash->{homoeologues},
 	});
 }
 
@@ -213,7 +178,13 @@ sub init_instance_from_rowhash {
   $member->dnafrag_strand($rowhash->{'dnafrag_strand'});
   $member->source_name($rowhash->{'source_name'});
   $member->display_label($rowhash->{'display_label'});
-  $member->canonical_member_id($rowhash->{canonical_member_id}) if $member->can('canonical_member_id');
+  $member->canonical_member_id($rowhash->{canonical_member_id});
+  $member->number_of_families($rowhash->{families});
+  $member->number_of_orthologues($rowhash->{orthologues});
+  $member->number_of_paralogues($rowhash->{paralogues});
+  $member->number_of_homoeologues($rowhash->{homoeologues});
+  $member->has_GeneTree($rowhash->{gene_trees});
+  $member->has_GeneGainLossTree($rowhash->{gene_gain_loss_trees});
   $member->adaptor($self) if ref $self;
 
   return $member;
