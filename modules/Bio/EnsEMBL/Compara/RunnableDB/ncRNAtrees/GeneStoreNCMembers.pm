@@ -163,8 +163,8 @@ sub store_ncrna_gene {
         my $ncrna_member = Bio::EnsEMBL::Compara::SeqMember->new_from_transcript(
             -transcript  => $transcript,
             -genome_db   => $self->param('genome_db'),
-            -description => $fasta_description,
         );
+        $ncrna_member->description($fasta_description);
 
         print(" => ncrna_member " . $ncrna_member->stable_id) if($self->debug);
 

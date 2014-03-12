@@ -100,7 +100,6 @@ sub fetch_or_store_gene {
         $trans_member = Bio::EnsEMBL::Compara::SeqMember->new_from_transcript(
                 -transcript     => $transcript,
                 -genome_db      => $self->param('genome_db'),
-                -description    => Bio::EnsEMBL::Compara::RunnableDB::LoadMembers::fasta_description(undef, $gene, $transcript),
                 -translate      => $translate,
                 );
         $trans_member->gene_member_id($gene_member->dbID);
