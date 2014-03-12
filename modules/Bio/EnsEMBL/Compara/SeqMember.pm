@@ -353,10 +353,11 @@ sub _prepare_exon_sequences {
     # If there is the exon_bounded sequence, it is only a matter of splitting it and alternating the case
     my $exon_bounded_seq = $self->{_sequence_exon_bounded};
     $exon_bounded_seq = $self->adaptor->db->get_SequenceAdaptor->fetch_other_sequence_by_member_id_type($self->seq_member_id, 'exon_bounded') unless $exon_bounded_seq;
-    my @exon_sequences = ();
+
     if ($exon_bounded_seq) {
         $self->{_sequence_exon_bounded} = $exon_bounded_seq;
-        @exon_sequences = split( /[boj]/, $exon_bounded_seq);
+        my $i = 0;
+        $self->{_sequence_exon_cased} = join('', map {$i++%2 ? lc($_) : $_} split( /[boj]/, $exon_bounded_seq));
 
     } else {
 
@@ -370,48 +371,24 @@ sub _prepare_exon_sequences {
         }
 
         # Otherwise, we have to parse the exons
-        my %splice_site;
-        my $pep_len = 0;
-        my $overlap_len = 0;
-        while (my $exon = shift @exons) {
-            my $exon_len = $exon->length;
-            my $pep_seq = $exon->peptide($trans)->length;
-            # remove the first char of seq if overlap ($exon->peptide()) return full overlapping exon seq
-            $pep_seq -= 1 if ($overlap_len);
-            $pep_len += $pep_seq;
-            if ($overlap_len = (($exon_len + $overlap_len ) %3)){          # if there is an overlap
-                $splice_site{$pep_len-1}{'overlap'} = $pep_len -1;         # stores overlapping aa-exon boundary
-            } else {
-                $overlap_len = 0;
-            }
-            $splice_site{$pep_len}{'phase'} = $overlap_len;                 # positions of exon boundary
-        }
-
-        my $seqsplice = '';
         my %boundary_chars = (0 => 'o', 1 => 'b', 2 => 'j');
-        foreach my $pep_len (sort {$b<=>$a} keys %splice_site) { # We start from the end
-            next if (defined($splice_site{$pep_len}{'overlap'}));
-            next if ($pep_len > length($sequence)); # Get rid of 1 codon STOP exons in the protein
-                my $length = $pep_len;
-            $length-- if (defined($splice_site{$pep_len}{'phase'}) && 1 == $splice_site{$pep_len}{'phase'});
-            my $peptide;
-            $peptide = substr($sequence,$length,length($sequence),'');
-            unshift(@exon_sequences, $peptide);
-            $seqsplice = $boundary_chars{$splice_site{$pep_len}{'phase'}}. $peptide. $seqsplice;
+        my $left_over = $exons[0]->phase > 0 ? -$exons[0]->phase : 0;
+        my @this_seq = ();
+        my @exon_sequences = ();
+        foreach my $exon (@exons) {
+            my $exon_pep_len = POSIX::ceil(($exon->length - $left_over) / 3);
+            my $exon_seq = substr($sequence, 0, $exon_pep_len, '');
+            $left_over += 3*$exon_pep_len - $exon->length;
+            push @this_seq, $exon_seq;
+            push @this_seq, $boundary_chars{$left_over};
+            push @exon_sequences, scalar(@exon_sequences)%2 ? $exon_seq : lc($exon_seq);
+            die sprintf('Invalid phase: %s', $left_over) unless exists $boundary_chars{$left_over}
         }
-        unshift(@exon_sequences, $sequence); # First exon AS IS (last piece of sequence left)
-            $seqsplice = $sequence . $seqsplice; # First exon AS IS
-            $self->{_sequence_exon_bounded} = $seqsplice;
+        die sprintf('%d characters left in the sequence', length($sequence)) if $sequence;
+        pop @this_seq;
+        $self->{_sequence_exon_bounded} = join('', @this_seq);
+        $self->{_sequence_exon_cased} = join('', @exon_sequences);
     }
-
-    my $splice = 1;
-    foreach my $exon_sequence (@exon_sequences) {
-        if ($splice % 2 == 0) {
-            $exon_sequence = lc($exon_sequence);
-        }
-        $splice++;
-    }
-    $self->{_sequence_exon_cased} = join('', @exon_sequences);
 }
 
 
