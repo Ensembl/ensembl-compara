@@ -799,11 +799,11 @@ sub _summarise_funcgen_db {
       join analysis_description a using (analysis_id)
       join cell_type c using (cell_type_id)
       join result_set_input using (result_set_id)
-      join input_set on input_set_id = table_id
+      join input_subset on input_subset_id = table_id
       join experiment using (experiment_id) 
       join experimental_group g using (experimental_group_id) 
      where feature_class = 'dna_methylation' 
-       and table_name = 'input_set'
+       and table_name = 'input_subset'
   group by rs.result_set_id;
   ))}) {
     my ($id,$a_name,$a_desc,$c_desc,$group) = @$row;

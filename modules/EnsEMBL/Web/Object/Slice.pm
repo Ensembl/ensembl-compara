@@ -119,7 +119,7 @@ sub getFakeMungedVariationFeatures {
   }
   my $all_snps = $self->Obj->get_all_VariationFeatures($so_terms);
   my $ngot =  scalar(@$all_snps);
-  push @$all_snps, @{$self->Obj->get_all_somatic_VariationFeatures($so_terms)};
+  push @$all_snps, @{$self->Obj->get_all_somatic_VariationFeatures()};
 
   my @on_slice_snps = 
     map  { $_->[1] ? [ $_->[0]->start + $_->[1], $_->[0]->end + $_->[1], $_->[0] ] : () } # [ fake_s, fake_e, SNP ] Filter out any SNPs not on munged slice

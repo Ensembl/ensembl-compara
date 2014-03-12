@@ -2903,8 +2903,14 @@ sub add_sequence_variations_default {
   my ($self, $key, $hashref, $options) = @_;
   my $menu               = $self->get_node('variation');
   my $sequence_variation = $self->create_submenu('sequence_variations', 'Sequence variants');
-  
-  $sequence_variation->append($self->create_track("variation_feature_$key", 'Sequence variants (all sources)', {
+
+  # XXX: This is a hack until Laurent gets meta information into the
+  #        private variation database. It should be there for e76, at
+  #        which point this code should never by called in that context.
+  my $title = 'Sequence variants (all sources)';
+  $title = 'Sequence variants (DECIPHER/LOVD)' if $key eq 'variation_private';
+
+  $sequence_variation->append($self->create_track("variation_feature_$key", $title, {
     %$options,
     sources     => undef,
     description => 'Sequence variants from all sources',

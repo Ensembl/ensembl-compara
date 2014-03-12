@@ -291,20 +291,20 @@ sub render_normal {
       }
       
       if ($config) {
-        my $score = $feat[0][2]->score || 0;
-        
-        # implicit_colour means that a colour has been arbitrarily assigned
-        # during parsing and some stronger indication, such as the presence 
-        # of scores, should override those assignments. -- ds23
-        if ($config->{'useScore'} == 1 && $config->{'implicit_colour'}) {
-          $feature_colour = $greyscale[min($ngreyscale - 1, int(($score * $ngreyscale) / $greyscale_max))];
-          $label_colour   = '#333333';
-        } elsif ($config->{'useScore'} == 2) {
-          $score          = min(max($score, $min_score), $max_score);
-          $feature_colour = $colour_gradient[$score >= $max_score ? $cg_grades - 1 : int(($score - $min_score) / $score_per_grade)];
+        if ($feat[0][2]->can('score')) {
+          my $score = $feat[0][2]->score || 0;
+          # implicit_colour means that a colour has been arbitrarily assigned
+          # during parsing and some stronger indication, such as the presence 
+          # of scores, should override those assignments. -- ds23
+          if ($config->{'useScore'} == 1 && $config->{'implicit_colour'}) {
+            $feature_colour = $greyscale[min($ngreyscale - 1, int(($score * $ngreyscale) / $greyscale_max))];
+            $label_colour   = '#333333';
+          } elsif ($config->{'useScore'} == 2) {
+            $score          = min(max($score, $min_score), $max_score);
+            $feature_colour = $colour_gradient[$score >= $max_score ? $cg_grades - 1 : int(($score - $min_score) / $score_per_grade)];
+          }
         }
       }
-      
       # +1 below cos we render eg a rectangle from (100, 100) of height
       # and width 10 as (100,100)-(110,110), ie actually 11x11. -- ds23
       $y_pos = $y_offset - $row * int($h + 1 + $gap * $label_h) * $strand;
@@ -317,10 +317,11 @@ sub render_normal {
         height => $h,
       };
       
-      my $composite;
+      my ($composite,$y_sub);
       
-      if (scalar @feat == 1) {
+      if (scalar @feat == 1 and $config->{'simpleblock_optimise'}) {
         $composite = $self;
+        $y_sub = $y_pos;
       } else {
         $composite = $self->Composite({
           %$position,
@@ -328,7 +329,7 @@ sub render_normal {
           title => $self->feature_title($feat[0][2], $db_name),
           class => 'group',
         });
-        
+        $y_sub = 0;
         $position = $composite;
       }
       
@@ -353,7 +354,7 @@ sub render_normal {
         if ($draw_cigar || $cigar =~ /$regexp/) {
           $composite->push($self->Space({
             x         => $start - 1,
-            y         => 0,
+            y         => $y_sub,
             width     => $end - $start + 1,
             height    => $h,
             absolutey => 1,
@@ -367,12 +368,12 @@ sub render_normal {
             label_colour   => $label_colour,
             delete_colour  => 'black', 
             scalex         => $pix_per_bp,
-            y              => $strand_y,
+            y              => $strand_y + $y_sub,
           });
         } else {
           $composite->push($self->Rect({
             x            => $start - 1,
-            y            => $strand_y,
+            y            => $strand_y + $y_sub,
             width        => $end - $start + 1,
             height       => $h,
             colour       => $feature_colour,
@@ -413,7 +414,7 @@ sub render_normal {
           halign    => 'left',
           valign    => 'center',
           x         => $position->{'x'},
-          y         => $position->{'y'} + $h + 2,
+          y         => $position->{'y'} + $y_sub + $h + 2,
           width     => $position->{'x'} + ($bump_end - $bump_start) / $pix_per_bp,
           height    => $label_h,
           absolutey => 1,

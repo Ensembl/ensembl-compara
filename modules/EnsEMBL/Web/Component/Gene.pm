@@ -54,7 +54,7 @@ sub draw_structure {
       return unless $ss_cons;
       my $input_aln   = $gene_tree->get_SimpleAlign( -id => 'MEMBER' );
       my $aln_file    = $self->_dump_multiple_alignment($input_aln, $model_name, $ss_cons);
-      my ($thumbnail, $plot) = $self->_draw_structure($aln_file, $gene_tree, $peptide->stable_id);
+      my ($thumbnail, $plot) = $self->_draw_structure($aln_file, $gene_tree, $peptide->stable_id,$filename);
       $filename = $is_thumbnail ? $thumbnail : $plot;
       $svg_path = $r2r_path.'/'.$filename;
     }
@@ -71,7 +71,6 @@ sub _dump_multiple_alignment {
 
     my $aln_file  = EnsEMBL::Web::TmpFile::Text->new(
                         prefix   => 'r2r/'.$self->hub->species,
-                        filename => "${model_name}",
                     );
 
     my $content = "# STOCKHOLM 1.0\n";
@@ -97,32 +96,31 @@ sub _get_aln_file {
 }
 
 sub _draw_structure {
-    my ($self, $aln_file, $tree, $peptide_id) = @_;
+    my ($self, $aln_file, $tree, $peptide_id, $svg_path) = @_;
 
     my $output_path = $self->_get_aln_file($aln_file);
     my $r2r_path    = $self->hub->species_defs->ENSEMBL_TMP_DIR_IMG.'/r2r/';
 
     my $th_meta = EnsEMBL::Web::TmpFile::Text->new(
                         prefix   => 'r2r/'.$self->hub->species,
-                        filename => $aln_file->filename . "-thumbnail.meta",
+                        extension => ".meta",
                     );
     my $th_content = "$output_path\tskeleton-with-pairbonds\n";
     $th_meta->print($th_content);
-    my $thumbnail = $aln_file->filename.'-'.$self->hub->param('g').'-thumbnail.svg';
+    my $thumbnail = $svg_path;
     $self->_run_r2r_and_check("", $th_meta->{'full_path'}, $r2r_path.$thumbnail, "");
 
     my $meta_file  = EnsEMBL::Web::TmpFile::Text->new(
                         prefix   => 'r2r/'.$self->hub->species,
-                        filename => $aln_file->filename . ".meta",
+                        extension => ".meta",
                     );
     my $content = "$output_path\n";
     $content .= $aln_file->{'full_path'}."\toneseq\t$peptide_id\n";
     $meta_file->print($content);
 
-    my $plot_file = $aln_file->filename.'-'.$self->hub->param('g').'.svg';
-    $self->_run_r2r_and_check("", $meta_file->{'full_path'}, $r2r_path.$plot_file, "");
+    $self->_run_r2r_and_check("", $meta_file->{'full_path'}, $r2r_path.$svg_path, "");
 
-    return ($thumbnail, $plot_file);
+    return ($thumbnail, $svg_path);
 }
 
 sub _run_r2r_and_check {
