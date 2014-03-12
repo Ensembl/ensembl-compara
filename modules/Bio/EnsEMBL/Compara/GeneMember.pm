@@ -81,11 +81,11 @@ use base ('Bio::EnsEMBL::Compara::Member');
 
 
 
-=head2 new_from_gene
+=head2 new_from_Gene
 
   Arg [-GENE] : Bio::Ensembl:Gene
   Arg [-GENOME_DB] : Bio::Ensembl:Compara:GenomeDB 
-  Example    : $member = Bio::EnsEMBL::Compara::GeneMember->new_from_gene(
+  Example    : $member = Bio::EnsEMBL::Compara::GeneMember->new_from_Gene(
                 -gene   => $gene,
                 -genome_db => $genome_db);
   Description: contructor method which takes an Ensembl::Gene object
@@ -97,7 +97,7 @@ use base ('Bio::EnsEMBL::Compara::Member');
 
 =cut
 
-sub new_from_gene {
+sub new_from_Gene {
     my ($class, @args) = @_;
 
     my ($gene, $genome_db) = rearrange([qw(GENE GENOME_DB)], @args);

@@ -312,7 +312,7 @@ sub store_gene_and_all_transcripts {
         # the gene.
         if ($self->param('store_genes')) {
             unless ($gene_member) {
-                $gene_member = Bio::EnsEMBL::Compara::GeneMember->new_from_gene(
+                $gene_member = Bio::EnsEMBL::Compara::GeneMember->new_from_Gene(
                     -GENE       => $gene,
                     -DNAFRAG    => $dnafrag,
                     -GENOME_DB  => $self->param('genome_db'),

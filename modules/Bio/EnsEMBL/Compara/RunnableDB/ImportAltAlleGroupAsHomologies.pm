@@ -86,7 +86,7 @@ sub fetch_or_store_gene {
     if (defined $gene_member) {
         if ($self->debug) {print "REUSE: $gene_member "; $gene_member->print_member();}
     } else {
-        $gene_member = Bio::EnsEMBL::Compara::GeneMember->new_from_gene(-gene=>$gene, -genome_db=>$self->param('genome_db'));
+        $gene_member = Bio::EnsEMBL::Compara::GeneMember->new_from_Gene(-gene=>$gene, -genome_db=>$self->param('genome_db'));
         $self->param('gene_member_adaptor')->store($gene_member) unless $self->param('dry_run');
         if ($self->debug) {print "NEW: $gene_member "; $gene_member->print_member();}
     }

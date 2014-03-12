@@ -186,7 +186,7 @@ sub store_ncrna_gene {
         if ($self->param('store_genes') and (! $gene_member_stored)) {
             print STDERR "    gene    " . $gene->stable_id if ($self->debug);
 
-            $gene_member = Bio::EnsEMBL::Compara::GeneMember->new_from_gene(
+            $gene_member = Bio::EnsEMBL::Compara::GeneMember->new_from_Gene(
                                                                             -gene => $gene,
                                                                             -genome_db => $self->param('genome_db'),
                                                                            );
