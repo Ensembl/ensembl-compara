@@ -142,12 +142,12 @@ sub copy {
 
 
 
-=head2 new_from_transcript
+=head2 new_from_Transcript
 
   Arg [-TRANSCRIPT] : Bio::EnsEMBL::Transcript
   Arg [-GENOME_DB] : Bio::EnsEMBL::Compara::GenomeDB
   Arg [-TRANSLATE] : boolean: whether the transcript should be translated
-  Example    : $member = Bio::EnsEMBL::Compara::SeqMember->new_from_transcript(
+  Example    : $member = Bio::EnsEMBL::Compara::SeqMember->new_from_Transcript(
                   $transcript, $genome_db, 'translate');
   Description: contructor method which takes an Ensembl::Gene object
                and Compara:GenomeDB object and creates a new SeqMember object
@@ -157,7 +157,7 @@ sub copy {
 
 =cut
 
-sub new_from_transcript {
+sub new_from_Transcript {
     my ($class, @args) = @_;
 
     my ($transcript, $genome_db, $translate) = rearrange([qw(TRANSCRIPT GENOME_DB TRANSLATE)], @args);

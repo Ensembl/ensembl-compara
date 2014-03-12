@@ -293,7 +293,7 @@ sub store_gene_and_all_transcripts {
             die "CoreDB error: does not contain translation stable id for translation_id ". $translation->dbID;
         }
 
-        my $pep_member = Bio::EnsEMBL::Compara::SeqMember->new_from_transcript(
+        my $pep_member = Bio::EnsEMBL::Compara::SeqMember->new_from_Transcript(
             -TRANSCRIPT => $transcript,
             -GENOME_DB  => $self->param('genome_db'),
             -DNAFRAG    => $dnafrag,

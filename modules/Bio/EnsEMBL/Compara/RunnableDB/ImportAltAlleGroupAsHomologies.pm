@@ -97,7 +97,7 @@ sub fetch_or_store_gene {
         if ($self->debug) {print "REUSE: $trans_member"; $trans_member->print_member();}
     } else {
         my $transcript = $gene->canonical_transcript;
-        $trans_member = Bio::EnsEMBL::Compara::SeqMember->new_from_transcript(
+        $trans_member = Bio::EnsEMBL::Compara::SeqMember->new_from_Transcript(
                 -transcript     => $transcript,
                 -genome_db      => $self->param('genome_db'),
                 -translate      => $translate,

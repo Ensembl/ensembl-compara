@@ -174,7 +174,7 @@ sub store_ncrna_gene {
         my $fasta_description = $self->fasta_description($gene, $transcript);
         next unless (defined $fasta_description);
 
-        my $ncrna_member = Bio::EnsEMBL::Compara::SeqMember->new_from_script(
+        my $ncrna_member = Bio::EnsEMBL::Compara::SeqMember->new_from_Transcript(
                                                                              -transcript => $transcript,
                                                                              -genome_db => $self->param('genome_db'),
                                                                             );
