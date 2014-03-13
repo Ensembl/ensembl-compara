@@ -364,7 +364,10 @@ sub _prepare_exon_sequences {
         my $sequence = $self->sequence;
         my $trans = $self->get_Transcript;
         my @exons = @{$trans->get_all_translateable_Exons};
-        if ((scalar @exons) == 1) {
+        # @exons probably doesn't match the protein if there are such edits
+        my @seq_edits = @{$trans->get_all_SeqEdits('amino_acid_sub')};
+
+        if (((scalar @exons) == 1) or (scalar(@seq_edits) > 0)) {
             $self->{_sequence_exon_cased} = $sequence;
             $self->{_sequence_exon_bounded} = $sequence;
             return;
@@ -379,12 +382,13 @@ sub _prepare_exon_sequences {
             my $exon_pep_len = POSIX::ceil(($exon->length - $left_over) / 3);
             my $exon_seq = substr($sequence, 0, $exon_pep_len, '');
             $left_over += 3*$exon_pep_len - $exon->length;
+            #printf("%s: exon of len %d -> phase %d: %s\n", $trans->stable_id, $exon_pep_len, $left_over, $exon_seq);
             push @this_seq, $exon_seq;
             push @this_seq, $boundary_chars{$left_over};
             push @exon_sequences, scalar(@exon_sequences)%2 ? $exon_seq : lc($exon_seq);
             die sprintf('Invalid phase: %s', $left_over) unless exists $boundary_chars{$left_over}
         }
-        die sprintf('%d characters left in the sequence', length($sequence)) if $sequence;
+        die sprintf('%d characters left in the sequence of %s', length($sequence), $trans->stable_id) if $sequence;
         pop @this_seq;
         $self->{_sequence_exon_bounded} = join('', @this_seq);
         $self->{_sequence_exon_cased} = join('', @exon_sequences);
