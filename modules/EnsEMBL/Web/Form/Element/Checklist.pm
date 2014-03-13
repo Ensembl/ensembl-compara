@@ -83,6 +83,7 @@ sub add_option {
   ##  - label       Text string (or hashref set of attributes including inner_HTML or inner_text) for <label>, appearing right side of the checkbox/radiobutton
   ##  - caption     Same as label (label takes precedence if both provided)
   ##  - checked     flag to tell whether option is selected or not
+  ##  - helptip     Helptip text for the label
   ##  - group       Subheading caption - option will be added under this subheading, but if this subheading does not exist, a new one's created before adding the option
   ##  - class       Only needed to override the default class attribute for all options
   ##  - name        Only needed to override the default name attribute for all options
@@ -109,7 +110,8 @@ sub add_option {
   my @children = ($input, exists $params->{'caption'} ? {
     'node_name' => 'label',
     'for'       => $input->id,
-    'class'     => $self->CSS_CLASS_INNER_LABEL,
+    'class'     => [ $self->CSS_CLASS_INNER_LABEL, $params->{'helptip'} ? ('ht', '_ht') : () ], $params->{'helptip'} ? (
+    'title'     => $params->{'helptip'} ) : (),
     ref $params->{'caption'} eq 'HASH' ? %{$params->{'caption'}} : 'inner_text' => $params->{'caption'}
   } : ());
   $wrapper->append_children($params->{'label_first'} ? reverse @children : @children);
