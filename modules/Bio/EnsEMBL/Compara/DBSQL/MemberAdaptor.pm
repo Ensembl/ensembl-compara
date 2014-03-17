@@ -206,7 +206,7 @@ sub fetch_all_Iterator {
 sub fetch_all_by_source_Iterator {
     my ($self, $source_name, $cache_size) = @_;
     throw("source_name arg is required\n") unless ($source_name);
-    return $self->generic_fetch_Iterator($cache_size, "m.source_name = '$source_name'");
+    return $self->generic_fetch_Iterator($cache_size, "source_name = '$source_name'");
 }
 
 
