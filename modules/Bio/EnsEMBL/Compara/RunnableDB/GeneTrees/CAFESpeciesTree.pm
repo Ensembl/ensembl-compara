@@ -139,6 +139,7 @@ sub run {
     if ($self->debug) {
         $self->check_tree($cafe_tree_root);
     }
+    $cafe_tree_root->build_leftright_indexing();
 
     ## The modified tree is put back in the species tree object
     $species_tree->root($cafe_tree_root);
