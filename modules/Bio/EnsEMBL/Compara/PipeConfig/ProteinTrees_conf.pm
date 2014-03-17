@@ -138,7 +138,7 @@ sub default_options {
         #'hmmer_path'                => '/software/ensembl/compara/hmmer-2.3.2/src/',
 
     # hive_capacity values for some analyses:
-        #'reuse_capacity'            =>   4,
+        #'reuse_capacity'            =>   3,
         #'blast_factory_capacity'    =>  50,
         #'blastp_capacity'           => 900,
         #'mcoffee_capacity'          => 600,
