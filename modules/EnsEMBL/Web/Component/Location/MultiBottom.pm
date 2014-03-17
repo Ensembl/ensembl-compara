@@ -72,6 +72,7 @@ sub content {
       image_width     => $image_width,
       slice_number    => "$i|3",
       multi           => 1,
+      more_slices     => 1,
       compara         => $i == 1 ? 'primary' : $_->{'species'} eq $primary_species ? 'paralogue' : 'secondary',
       base_url        => $base_url,
       join_types      => $gene_join_types
@@ -110,6 +111,7 @@ sub content {
             image_width     => $image_width,
             slice_number    => '1|3',
             multi           => 1,
+            more_slices     => 1,
             compara         => 'primary',
             base_url        => $base_url,
             join_types      => $gene_join_types
@@ -129,6 +131,7 @@ sub content {
     
     $i++;
   }
+  $images[-1]->set_parameters({ more_slices => 0 });
   
   if ($hub->param('export')) {
     $_->set_parameter('export', 1) for grep $_->isa('EnsEMBL::Web::ImageConfig'), @images;
