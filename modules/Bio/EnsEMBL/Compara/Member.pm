@@ -154,10 +154,10 @@ sub copy {
   $mycopy->description($self->description);
   $mycopy->source_name($self->source_name);
   #$mycopy->adaptor($self->adaptor);
-  $mycopy->dnafrag_id($self->dnafrag_id);
-  $mycopy->dnafrag_start($self->dnafrag_start);
-  $mycopy->dnafrag_end($self->dnafrag_end);
-  $mycopy->dnafrag_strand($self->dnafrag_strand);
+  $mycopy->dnafrag_id($self->dnafrag_id) if $self->{dnafrag_id};
+  $mycopy->dnafrag_start($self->dnafrag_start) if $self->{dnafrag_start};
+  $mycopy->dnafrag_end($self->dnafrag_end) if $self->{dnafrag_end};
+  $mycopy->dnafrag_strand($self->dnafrag_strand) if $self->{dnafrag_strand};
   $mycopy->taxon_id($self->taxon_id);
   $mycopy->genome_db_id($self->genome_db_id);
   $mycopy->display_label($self->display_label);
