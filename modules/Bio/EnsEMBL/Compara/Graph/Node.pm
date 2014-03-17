@@ -94,7 +94,10 @@ sub new {
 sub copy {
   my $self = shift;
   
-  my $mycopy = new Bio::EnsEMBL::Compara::Graph::Node;
+  my $mycopy = @_ ? shift : {};
+  bless $mycopy, ref($self);
+
+  $mycopy->{'_node_id'} = undef;
 
   if($self->{'_tags'}) {
     %{$mycopy->{'_tags'}} = %{$self->{'_tags'}};

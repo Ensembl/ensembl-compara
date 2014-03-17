@@ -73,7 +73,6 @@ sub copy {
   my $self = shift;
   
   my $mycopy = $self->SUPER::copy;
-  bless $mycopy, "Bio::EnsEMBL::Compara::NCBITaxon";
   
   $mycopy->ncbi_taxid($self->ncbi_taxid);
   $mycopy->rank($self->rank);

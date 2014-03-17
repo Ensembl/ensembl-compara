@@ -104,7 +104,6 @@ sub new {
   my ($class, @args) = @_;
 
   my $self = $class->SUPER::new(@args);
-  bless $self, 'Bio::EnsEMBL::Compara::SeqMember';
   
   if (scalar @args) {
     my ($sequence_id, $sequence) = rearrange([qw(SEQUENCE_ID SEQUENCE)], @args);
@@ -131,7 +130,6 @@ sub copy {
   my $self = shift;
   
   my $mycopy = $self->SUPER::copy(@_);
-  bless $mycopy, 'Bio::EnsEMBL::Compara::SeqMember';
   
   $mycopy->sequence($self->sequence);
   $mycopy->sequence_id($self->sequence_id);

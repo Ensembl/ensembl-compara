@@ -83,7 +83,6 @@ sub copy {
   
   my $mycopy = $self->Bio::EnsEMBL::Compara::GeneTreeNode::copy;
                $self->Bio::EnsEMBL::Compara::AlignedMember::copy($mycopy);     # we could rename this method into topup() as it is not needed by 'AlignedMember' class itself
-  bless $mycopy, 'Bio::EnsEMBL::Compara::GeneTreeMember';
   
   return $mycopy;
 }
