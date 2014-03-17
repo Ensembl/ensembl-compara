@@ -73,7 +73,8 @@ sub content {
       container_width => $_->{'slice'}->length,
       image_width     => $image_width || 800, # hack at the moment
       slice_number    => "$i|3",
-      compara         => $i == 1 ? 'primary' : 'secondary'
+      compara         => $i == 1 ? 'primary' : 'secondary',
+      more_slices     => $i != @$slices,
     });
     
     my ($species_name, $slice_name) = split ':', $_->{'name'};

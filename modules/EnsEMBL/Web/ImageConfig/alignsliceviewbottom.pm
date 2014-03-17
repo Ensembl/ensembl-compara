@@ -47,12 +47,14 @@ sub init {
   }
   
   $self->add_track('sequence', 'contig', 'Contigs', 'contig', { display => 'normal', strand => 'r', description => 'Track showing underlying assembly contigs' });
-  
+ 
   $self->add_tracks('information', 
     [ 'alignscalebar',     '',                  'alignscalebar',     { display => 'normal', strand => 'b', menu => 'no' }],
     [ 'ruler',             '',                  'ruler',             { display => 'normal', strand => 'f', menu => 'no' }],
     [ 'draggable',         '',                  'draggable',         { display => 'normal', strand => 'b', menu => 'no' }], # TODO: get this working
-    [ 'alignslice_legend', 'AlignSlice Legend', 'alignslice_legend', { display => 'normal', strand => 'r' }]
+    [ 'gene_legend', 'Gene Legend','gene_legend', {  display => 'normal', strand => 'r', accumulate => 'yes' }],
+    [ 'variation_legend', 'Variation Legend','variation_legend', {  display => 'normal', strand => 'r', accumulate => 'yes' }],
+    [ 'alignslice_legend', 'AlignSlice Legend', 'alignslice_legend', { display => 'normal', strand => 'r', accumulate => 'yes' }]
   );
   
   $self->modify_configs(
@@ -69,6 +71,23 @@ sub init {
   $self->modify_configs(
     [ 'conservation' ],
     { menu => 'no' }
+  );
+
+  # Move last gene_legend to after alignslice_legend
+
+  my $dest;
+  foreach my $track ($self->get_tracks) {
+    if($track->id eq 'alignslice_legend') {
+      $self->modify_configs(['gene_legend'],{track_after => $track });
+    }
+ }
+  $self->modify_configs(
+    [ 'gene_legend' ],
+    { accumulate => 'yes' }
+  );
+  $self->modify_configs(
+    [ 'variation_legend' ],
+    { accumulate => 'yes' }
   );
 }
 
