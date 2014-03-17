@@ -221,7 +221,7 @@ sub generic_fetch_Iterator {
 
     my ($name, $syn) = @{($self->_tables)[0]};
     # Fetch all the dbIDs
-    my $sql = "SELECT ${name}.${name}_id FROM ${name}";
+    my $sql = "SELECT ${name}_id FROM ${name}";
     if ($constraint) {
         $sql .= " WHERE $constraint";
     }
