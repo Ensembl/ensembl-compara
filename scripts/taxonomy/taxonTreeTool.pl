@@ -230,6 +230,10 @@ sub fetch_compara_ncbi_taxa {
   foreach my $gdb (@$gdb_list) {
     next unless $gdb->taxon_id;
     my $taxon = $taxonDBA->fetch_node_by_taxon_id($gdb->taxon_id);
+    if (not $taxon) {
+        warn sprintf('Cannot fetch taxon_id=%d (%s)', $gdb->taxon_id, $gdb->name);
+        next;
+    }
     $taxon->no_autoload_children;
 
     $root = $taxon->root unless($root);
