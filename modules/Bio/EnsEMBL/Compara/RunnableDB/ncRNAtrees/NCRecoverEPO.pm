@@ -406,7 +406,6 @@ sub run_low_coverage_best_in_alignment {
     my $gdb_name = $leaf->genome_db->name;
     next unless (defined($self->param('epo_gdb')->{$leaf->genome_db_id}));
     next unless (defined($self->param('epo_low_cov_gdbs')->{$leaf->genome_db_id}));
-    print STDERR "HERE?\n";
     if (! defined $epo_low_mlss) {
         ## We delete this leaf because it is a low_cov slice that is not in the epo_low_cov
         $self->param('low_cov_leaves_to_delete_pmember_id')->{$leaf->member_id} = $leaf->gene_member->stable_id;
