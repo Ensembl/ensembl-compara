@@ -30,8 +30,8 @@ use GD;
 use Digest::MD5;
 
 ## Ensembl modules.....
-use Bio::EnsEMBL::VDrawableContainer;
-use Bio::EnsEMBL::DrawableContainer;
+use EnsEMBL::Draw::VDrawableContainer;
+use EnsEMBL::Draw::DrawableContainer;
 #use EnsEMBL::Web::UserConfigAdaptor;
 use EnsEMBL::Web::Container::HSPContainer;
 
@@ -1849,7 +1849,7 @@ sub populate_karyotype {
     'container_width' => $chr_maxln,
     'slice_number'    => '0|1'
   });
-  my $karyo_dc = Bio::EnsEMBL::VDrawableContainer->new(
+  my $karyo_dc = EnsEMBL::Draw::VDrawableContainer->new(
     { 'web_species' => $sp, ka=>$ka, sa=>$sa, 'chr' => 'ALL' }, $web_config, [ \%highlights, \%highlights2 ] 
   );
   
@@ -1895,7 +1895,7 @@ sub draw_hsp_vs_query{
   $web_config->set_parameter( 'container_width', $bucket->length );
   $web_config->set_parameter( 'image_width',     640 );
 
-  my $hsp_dc = Bio::EnsEMBL::DrawableContainer->new( $bucket,$web_config);
+  my $hsp_dc = EnsEMBL::Draw::DrawableContainer->new( $bucket,$web_config);
 
   my $fi = new EnsEMBL::Web::Document::Image( $SPECIES_DEFS );
      $fi->drawable_container = $hsp_dc;
