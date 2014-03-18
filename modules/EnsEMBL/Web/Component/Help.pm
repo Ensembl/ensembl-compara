@@ -44,7 +44,7 @@ sub parse_help_html {
 
   my $sd      = $self->hub->species_defs;
   my $img_url = $sd->ENSEMBL_STATIC_SERVER.$sd->ENSEMBL_HELP_IMAGE_ROOT;
-  my $html;
+  my @html;
 
   foreach my $line (split '\n', $content) {
 
@@ -58,10 +58,10 @@ sub parse_help_html {
       $line = $self->embed_html_file($1, $adaptor);
     }
 
-    $html .= $line;
+    push @html, $line;
   }
 
-  return $html;
+  return join "\n", @html;
 }
 
 sub help_feedback {
@@ -101,7 +101,7 @@ sub embed_html_file {
 
   return "<p><i>Error: File $file_name not found.</i></p>" unless $file_path;
 
-  my $file  = $self->parse_help_html(join(' ', file_get_contents($file_path)), $adaptor); # this will parse any tags in the html doc itself
+  my $file  = $self->parse_help_html(join('', file_get_contents($file_path)) =~ s/^(.+)<\s*body\s*>//sr =~ s/<\s*\/\s*body\s*>(.+)$//sr, $adaptor); # this will parse any tags in the html doc itself
   my $div   = $self->dom->create_element('div');
 
   my @replacements;
