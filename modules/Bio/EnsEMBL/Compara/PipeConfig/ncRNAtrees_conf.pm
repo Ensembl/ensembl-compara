@@ -431,10 +431,7 @@ sub pipeline_analyses {
                                    'epo_db'         => $self->o('epo_db'),
                                   },
                 -analysis_capacity => $self->o('recover_capacity'),
-                -flow_into => {
-                               '1->A' => [ 'hc_epo_removed_members' ],
-                               'A->1' => [ 'pre_clusterset_backup' ],
-                              },
+                -flow_into => [ 'hc_epo_removed_members' ],
                 -rc_name => 'default',
             },
 
@@ -443,19 +440,9 @@ sub pipeline_analyses {
                -parameters        => {
                                       mode => 'epo_removed_members',
                                      },
+               -flow_into         => [ 'clusterset_backup' ],
                %hc_params,
             },
-
-
-            {   -logic_name => 'pre_clusterset_backup',
-                -module     => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
-                -flow_into => {
-                               '1->A' => [ 'clusterset_backup' ],
-                               'A->1' => [ 'msa_chooser' ],
-                              },
-                -meadow_type    => 'LOCAL',
-            },
-
 
             {   -logic_name    => 'clusterset_backup',
                 -module        => 'Bio::EnsEMBL::Hive::RunnableDB::SqlCmd',
@@ -463,6 +450,7 @@ sub pipeline_analyses {
                                    'sql'         => 'INSERT INTO gene_tree_backup (seq_member_id, root_id) SELECT seq_member_id, root_id FROM gene_tree_node WHERE seq_member_id IS NOT NULL AND root_id = #gene_tree_id#',
                                   },
                 -analysis_capacity => 1,
+                -flow_into     => [ 'msa_chooser' ],
                 -meadow_type    => 'LOCAL',
             },
 
