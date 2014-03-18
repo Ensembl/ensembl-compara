@@ -167,13 +167,13 @@ sub features {
 
   $config->{'simpleblock_optimise'} = 1; # No joins, etc, no need for composite.
 
-  if ($style eq 'score') {
+  if ($style eq 'score' && !$self->my_config('colour')) {
     $config->{'useScore'}        = 1;
     $config->{'implicit_colour'} = 1;
     $config->{'greyscale_max'}   = $max_score;
   } elsif ($style eq 'colouredscore') {
     $config->{'useScore'} = 2;    
-  } elsif ($style eq 'colour') {
+  } else {
     $config->{'useScore'} = 2;
     
     my $default_rgb_string;
