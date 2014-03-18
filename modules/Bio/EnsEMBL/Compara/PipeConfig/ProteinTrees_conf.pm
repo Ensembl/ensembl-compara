@@ -507,7 +507,6 @@ sub pipeline_analyses {
         {   -logic_name    => 'make_treebest_species_tree',
             -module        => 'Bio::EnsEMBL::Compara::RunnableDB::MakeSpeciesTree',
             -parameters    => {
-                               'label' => 'treebest',
                                'species_tree_input_file' => $self->o('species_tree_input_file'),   # empty by default, but if nonempty this file will be used instead of tree generation from genome_db
                                'do_transactions' => 1,
             },
@@ -552,7 +551,7 @@ sub pipeline_analyses {
         {   -logic_name    => 'make_binary_species_tree',
             -module        => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::CAFESpeciesTree',
             -parameters    => {
-                'label'         => 'treebest',
+                'label'         => 'default',
                 'new_label'     => 'binary',
             },
             -flow_into     => {
