@@ -40,6 +40,7 @@ sub node_type {
 
 sub render {
   ## Outputs the element html
+  ## Call this only in the end to get the actual HTML for the node as it destroys the node afterwards (use outer_HTML for other uses)
   ## @overrides
   ## @return HTML
   my $self = shift;
@@ -47,9 +48,14 @@ sub render {
   my $tag         = $self->node_name;
   my $attributes  = join '', map {sprintf(' %s="%s"', $_, $self->get_attribute($_))} keys %{$self->{'_attributes'}};
 
-  return $self->can_have_child
+  my $html        = $self->can_have_child
     ? sprintf('<%s%s>%s</%1$s>', $tag, $attributes, $self->{'_text'} ne '' ? $self->{'_text'} : join('', map {$_->render} @{$self->{'_child_nodes'}}))
     : qq(<$tag$attributes />);
+
+  # Clear unwanted references (this will make sure circular references are removed allowing object to DESTROY afterwards)
+   $self->remove_children;
+
+  return $html;
 }
 
 sub render_text {
