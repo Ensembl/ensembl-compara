@@ -170,7 +170,7 @@ sub store_member_associations {
 	while(my ($sid,$accs) = each %$member_acc_hash) {
 		my ($member_id) = @{$self->dbc()->sql_helper()->execute_simple(-SQL=>$get_member_id_sql, -PARAMS=>[$sid])};	
 		if(defined $member_id) {	
-			my @pars = map {"($member_id,\"$_\",$external_db_id)"} @$accs;	
+			my @pars = map {"($member_id,\"$_\",$external_db_id)"} uniq(@$accs);	
 			my $sql = $insert_member_base_sql . 'values' . join(',',@pars);
 			$self->dbc()->sql_helper()->execute_update(-SQL=>$sql, -PARAMS=>[]);
 		}
@@ -178,6 +178,9 @@ sub store_member_associations {
 	return;
 }
 
+sub uniq {
+    return keys %{{ map { $_ => 1 } @_ }};
+}
 
 =head2 get_associated_xrefs_for_tree
 
