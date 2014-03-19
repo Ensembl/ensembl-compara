@@ -311,7 +311,6 @@ sub pipeline_analyses {
         {   -logic_name => 'dump_member_proteins',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::DumpMemberSequencesIntoFasta',
             -parameters => {
-                'source_names' => [ 'ENSEMBLPEP','Uniprot/SWISSPROT','Uniprot/SPTREMBL' ],
                 'idprefixed'   => 1,
             },
             -flow_into => {
