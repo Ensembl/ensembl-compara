@@ -60,7 +60,7 @@ use EnsEMBL::Web::Tree;
 sub new {
   my ($class, $settings) = @_;
 
-  my $ua = new LWP::UserAgent;
+  my $ua = LWP::UserAgent->new;
   $ua->timeout($settings->{'timeout'});
   $ua->proxy('http', $settings->{'proxy'}) if $settings->{'proxy'};
 
@@ -183,8 +183,7 @@ sub parse {
     $response = $ua->get($_);
     
     if ($response->is_success) {
-      (my $content = $response->content) =~ s/\r//g;
-      $self->parse_file_content($tree, $content, $_);
+      $self->parse_file_content($tree, $response->content =~ s/\r//gr, $_);
     } else {
       $tree->append($tree->create_node("error_$_", { error => $response->status_line, file => $_ }));
     }
@@ -266,7 +265,7 @@ sub parse_file_content {
         # Short and long labels may contain =, but in these cases the value is just a single string
         if ($value =~ /=/ && $key !~ /^(short|long)Label$/) {
           my ($k, $v);
-          my @pairs = split /\s(\w+)=/, " $value";
+          my @pairs = split /\s([^=]+)=/, " $value";
           shift @pairs;
           
           for (my $i = 0; $i < $#pairs; $i += 2) {
