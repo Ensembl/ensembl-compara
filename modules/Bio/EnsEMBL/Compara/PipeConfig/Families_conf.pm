@@ -186,6 +186,7 @@ sub pipeline_analyses {
                                         [ $self->o('master_db')     => 'method_link' ],
                                         [ $self->o('master_db')     => 'species_set' ],
                                         [ $self->o('master_db')     => 'method_link_species_set' ],
+                                        [ $self->o('master_db')     => 'dnafrag' ],
                                     ],
                 'column_names'  => [ 'src_db_conn', 'table' ],
             },
@@ -216,6 +217,7 @@ sub pipeline_analyses {
                     'ALTER TABLE ncbi_taxa_name             ENGINE=InnoDB',
                     'ALTER TABLE species_set                ENGINE=InnoDB',
                     'ALTER TABLE method_link_species_set    ENGINE=InnoDB',
+                    'ALTER TABLE dnafrag                    ENGINE=InnoDB',
                 ],
             },
             -flow_into => {
