@@ -165,8 +165,13 @@ sub new {
     foreach my $glyphset (@glyphsets) {
       next unless defined $glyphset->label;
       
+      my $img = $glyphset->label_img;
+      my $img_width = 0;
+      my $img_pad = 4;
+      $img_width = $img->width+$img_pad if $img;
+
       my $text = $glyphset->label->{'text'};
-      my @res  = $glyphset->get_text_width($label_width, $text, '', 'ellipsis' => 1, 'font' => $glyphset->label->{'font'}, 'ptsize' => $glyphset->label->{'ptsize'});
+      my @res  = $glyphset->get_text_width($label_width - $img_width, $text, '', 'ellipsis' => 1, 'font' => $glyphset->label->{'font'}, 'ptsize' => $glyphset->label->{'ptsize'});
       
       if ($res[1] eq 'truncated') {
         my $label_class = join('_', $glyphset->species, $glyphset->type) =~ s/\W/_/rg;
@@ -195,7 +200,8 @@ sub new {
       $glyphset->label->{'text'}          = $res[0];
       $glyphset->label->{'width'}         = $res[2];
       
-      $glyphset->label->x(-$label_width - $margin);
+      $glyphset->label->x(-$label_width - $margin + $img_width);
+      $glyphset->label_img->x(-$label_width - $margin + $img_pad/2) if $img;
     }
     
     ## pull out alternating background colours for this script
@@ -283,7 +289,13 @@ sub new {
         $glyphset->label->y($gminy + $glyphset->{'label_y_offset'});
         $glyphset->label->height($gh);
         $glyphset->push($glyphset->label);
-        
+        if($glyphset->label_img) {
+          my ($miny,$maxy) = ($glyphset->miny,$glyphset->maxy);
+          $glyphset->push($glyphset->label_img);
+          $glyphset->miny($miny);
+          $glyphset->maxy($maxy);
+        }
+
         if ($glyphset->label->{'hover'}) {
           $glyphset->push($glyphset->Line({
             absolutex     => 1,

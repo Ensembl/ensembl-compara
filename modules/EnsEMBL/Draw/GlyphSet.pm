@@ -213,6 +213,10 @@ sub init_label {
   
   my $text = $self->my_config('caption');
   
+  my $img = $self->my_config('caption_img');
+  if($img and $img =~ s/^r:// and $self->{'strand'} ==  1) { $img = undef; }
+  if($img and $img =~ s/^f:// and $self->{'strand'} == -1) { $img = undef; }
+
   return $self->label(undef) unless $text;
   
   my $config    = $self->{'config'};
@@ -260,7 +264,7 @@ sub init_label {
       subset    => $subset ? [ $subset, $hub->url('Config', { species => $config->species, action => $component, function => undef, __clear => 1 }), lc "modal_config_$component" ] : '',
     };
   }
-  
+ 
   $self->label($self->Text({
     text      => $text,
     font      => $font,
@@ -270,8 +274,27 @@ sub init_label {
     height    => $res[3],
     class     => "label $class",
     alt       => $name,
-    hover     => $hover
+    hover     => $hover,
   }));
+  if($img) {
+    $img =~ s/^([\d@-]+)://; my $size = $1 || 16;
+    my $offset = 0;
+    $offset = $1 if $size =~ s/@(-?\d+)$//;
+    $self->label_img($self->Sprite({
+        z             => 1000,
+        x             => 0,
+        y             => $offset,
+        sprite        => $img,
+        spritelib     => 'species',
+        width         => $size,
+        height         => $size,
+        absolutex     => 1,
+        absolutey     => 1,
+        absolutewidth => 1,
+        pixperbp      => 1,
+        alt           => '',
+    }));
+  }
 }
 
 sub get_text_simple {

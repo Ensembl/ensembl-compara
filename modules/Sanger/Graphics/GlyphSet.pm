@@ -240,6 +240,12 @@ sub label {
   return $self->{'label'};
 }
 
+sub label_img {
+  my ($self, $val) = @_;
+  $self->{'label_img'} = $val if(defined $val);
+  return $self->{'label_img'};
+}
+
 sub bumped {
   my ($self, $val) = @_;
   $self->{'bumped'} = $val if(defined $val);
