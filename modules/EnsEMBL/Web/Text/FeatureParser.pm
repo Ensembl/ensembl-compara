@@ -379,11 +379,7 @@ sub check_format {
       next if $row =~ /^#/;
       next if $row =~ /^browser/; 
       last if $format; 
-      if ($row =~ /^reference/i) {
-        $format = 'GBROWSE';
-        last;
-      }
-      elsif ($row =~ /^track\s+/i) {
+      if ($row =~ /^track\s+/i) {
         if ($row =~ /type=wiggle0/) {
           $format = 'WIG';
           last;
