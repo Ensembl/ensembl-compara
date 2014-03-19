@@ -65,6 +65,7 @@ sub content {
   my $i               = 1;
   my (@images, $html);
   
+  my ($caption_height,$caption_img_offset) = (0,-24);
   foreach (@$slices) {
     my $species      = $_->{'name'} eq 'Ancestral_sequences' ? 'Multi' : $_->{'name'}; # Cheating: set species to Multi to stop errors due to invalid species.
     my $image_config = $hub->get_imageconfig('alignsliceviewbottom', "alignsliceviewbottom_$i", $species);
@@ -82,8 +83,14 @@ sub content {
     my $panel_caption = $species_defs->get_config($species_name, 'SPECIES_COMMON_NAME') || 'Ancestral sequences';
     $panel_caption   .= " $slice_name" if $slice_name;
 
-    $image_config->get_node('alignscalebar')->set('caption', $panel_caption);
-    
+    my $asb = $image_config->get_node('alignscalebar');
+    $asb->set('caption', $panel_caption);
+    $asb->set('caption_position', 'bottom');
+    $asb->set('caption_img',"f:24\@$caption_img_offset:".$_->{'name'});
+    $asb->set('caption_height',$caption_height);
+    $caption_img_offset = -20;
+    $caption_height = 28;
+
     foreach (grep $options{$_}, keys %options) {
       my $node = $image_config->get_node("alignment_compara_$align_details->{'id'}_$_");
       $node->set('display', $options{$_}) if $node;

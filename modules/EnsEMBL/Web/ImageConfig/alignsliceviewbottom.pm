@@ -30,6 +30,13 @@ sub init {
     sortable_tracks => 1, # allow the user to reorder tracks
   });
 
+  my $sp_img_48 = $self->species_defs->ENSEMBL_WEBROOT . '/../public-plugins/ensembl/htdocs/i/species/48'; # XXX make configurable
+  if(-e $sp_img_48) {
+    $self->set_parameters({ spritelib => {
+      %{$self->get_parameter('spritelib')||{}},
+      species => $sp_img_48,
+    }});
+  }
   $self->create_menus(qw(
     sequence
     transcript

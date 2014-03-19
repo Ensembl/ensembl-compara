@@ -265,13 +265,14 @@ sub init_label {
     };
   }
  
+  my $ch = $self->my_config('caption_height') || 0;
   $self->label($self->Text({
     text      => $text,
     font      => $font,
     ptsize    => $fsze,
     colour    => $self->{'label_colour'} || 'black',
     absolutey => 1,
-    height    => $res[3],
+    height    => $ch || $res[3],
     class     => "label $class",
     alt       => $name,
     hover     => $hover,
