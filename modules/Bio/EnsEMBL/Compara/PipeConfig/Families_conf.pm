@@ -218,6 +218,7 @@ sub pipeline_analyses {
                     'ALTER TABLE species_set                ENGINE=InnoDB',
                     'ALTER TABLE method_link_species_set    ENGINE=InnoDB',
                     'ALTER TABLE dnafrag                    ENGINE=InnoDB',
+                    'ALTER TABLE dnafrag                    AUTO_INCREMENT=200000000000001',
                 ],
             },
             -flow_into => {
@@ -244,6 +245,7 @@ sub pipeline_analyses {
                 'include_nonreference'  => 1,
                 'include_patches'       => 1,
                 'include_reference'     => 0,
+                'store_missing_dnafrags'=> 1,
             },
             -rc_name => '2GigMem',
         },
