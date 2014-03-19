@@ -45,6 +45,31 @@ sub render_as_transcript_nolabel   { $_[0]->render_alignslice_transcript(0); }
 sub render_as_collapsed_label      { $_[0]->render_alignslice_collapsed(1);  }
 sub render_as_collapsed_nolabel    { $_[0]->render_alignslice_collapsed(0);  }
 
+sub use_legend {
+  my ($self,$used_colours,$colour_key) = @_;
+
+  my $colour = 'orange';
+  my $label = 'Other';
+  my $section = 'none';
+  if($colour_key) {
+    $colour     = $self->my_colour($colour_key);
+    $label      = $self->my_colour($colour_key, 'text');
+    $section    = $self->my_colour($colour_key,'section') || 'none';
+  }
+  my $section_name = $self->my_colour("section_$section",'text') ||
+                      $self->my_colour("section_none",'text');
+  my $section_prio = $self->my_colour("section_$section",'prio') ||
+                      $self->my_colour("section_none",'prio');
+  if($section) {
+    $section = {
+      key => $section,
+      name => $section_name,
+      priority => $section_prio,
+    };
+  }
+  $used_colours->{$label} = [$colour,$section];
+}
+
 sub render_collapsed {
   my ($self, $labels) = @_;
 
@@ -88,9 +113,7 @@ sub render_collapsed {
     my @exons      = map { $_->start > $length || $_->end < 1 ? () : $_ } @{$exons->{$gene_stable_id}}; # Get all the exons which overlap the region for this gene
     my $colour_key = $self->colour_key($gene);
     my $colour     = $self->my_colour($colour_key);
-    my $label      = $self->my_colour($colour_key, 'text');
-
-    $used_colours{$label} = $colour;
+    $self->use_legend(\%used_colours,$colour_key);
     
     my $composite = $self->Composite({
       y      => $y,
@@ -323,8 +346,7 @@ sub render_transcripts {
       my $colour     = $self->my_colour($colour_key);
       my $label      = $self->my_colour($colour_key, 'text');
 
-      ($colour, $label) = ('orange', 'Other') unless $colour;
-      $used_colours{$label} = $colour;
+      $self->use_legend(\%used_colours,$colour?$colour_key:undef);
       
       my $composite2 = $self->Composite({ y => $y, height => $h });
             
@@ -517,10 +539,9 @@ sub render_alignslice_transcript {
       my $colour_key = $self->colour_key($gene, $transcript);    
       my $colour     = $self->my_colour($colour_key);
       my $label      = $self->my_colour($colour_key, 'text');
-      
-      ($colour, $label) = ('orange', 'Other') unless $colour;
-      $used_colours{$label} = $colour; 
-      
+
+      $self->use_legend(\%used_colours,$colour?$colour_key:undef);
+
       my $coding_start = defined $transcript->coding_region_start ? $transcript->coding_region_start :  -1e6;
       my $coding_end   = defined $transcript->coding_region_end   ? $transcript->coding_region_end   :  -1e6;
 
@@ -752,9 +773,7 @@ sub render_alignslice_collapsed {
     my $colour     = $self->my_colour($colour_key);
     my $label      = $self->my_colour($colour_key, 'text');
     
-    ($colour, $label) = ('orange', 'Other') unless $colour;
-    
-    $used_colours{$label} = $colour;
+    $self->use_legend(\%used_colours,$colour?$colour_key:undef);
     
     my @exons;
     
@@ -924,6 +943,7 @@ sub render_genes {
       title     => $rect->{'title'},
       gene      => $gene,
       col       => $gene_col,
+      colkey    => $colour_key,
       highlight => $config->get_option('opt_highlight_feature') != 0 ? $highlights->{$gene_stable_id} : undef,
       type      => $gene_type
     };
@@ -1068,8 +1088,10 @@ sub render_genes {
         }
       }
     }
-    
-    my %used_colours = map { $_->{'type'} => $_->{'col'} } @genes_to_label;
+
+    my %used_colours;
+    $self->use_legend(\%used_colours,$_->{'colkey'}) for @genes_to_label;
+
     my @legend = %used_colours;
     
     $self->{'legend'}{'gene_legend'}{$self->type} = {

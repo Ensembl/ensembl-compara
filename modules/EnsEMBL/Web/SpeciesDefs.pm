@@ -687,6 +687,7 @@ sub _munge_colours {
         text => $n, 
         map { /:/ ? (split /:/, $_, 2) : ('default', $_) } split /;/, $c
       };
+      $out->{$set}{$key}{'section'} ||= '';
     }
   }
   
