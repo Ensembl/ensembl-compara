@@ -1730,7 +1730,6 @@ sub _munge_file_formats {
   my %formats = (
     'bed'       => {'ext' => 'bed', 'label' => 'BED',       'display' => 'feature'},
     'bedgraph'  => {'ext' => 'bed', 'label' => 'bedGraph',  'display' => 'graph'},
-    'gbrowse'   => {'ext' => 'txt', 'label' => 'GBrowse',   'display' => 'feature'},
     'gff'       => {'ext' => 'gff', 'label' => 'GFF',       'display' => 'feature'},
     'gtf'       => {'ext' => 'gtf', 'label' => 'GTF',       'display' => 'feature'},
     'psl'       => {'ext' => 'psl', 'label' => 'PSL',       'display' => 'feature'},
