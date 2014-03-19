@@ -123,6 +123,11 @@ sub cacheable {
   return $self->{'cacheable'};
 }
 
+sub mcacheable {
+  # temporary method in e75 only - will be replaced in 76 (hr5)
+  return 1;
+}
+
 sub ajaxable {
   my $self = shift;
   $self->{'ajaxable'} = shift if @_;
@@ -143,7 +148,7 @@ sub has_image {
 
 sub get_content {
   my ($self, $function) = @_;
-  my $cache = $self->ajaxable && !$self->renderer->{'_modal_dialog_'} ? $self->hub->cache : undef;
+  my $cache = $self->mcacheable && $self->ajaxable && !$self->renderer->{'_modal_dialog_'} ? $self->hub->cache : undef;
   my $content;
   
   if ($cache) {
