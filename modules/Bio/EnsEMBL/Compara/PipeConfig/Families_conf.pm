@@ -177,12 +177,12 @@ sub pipeline_analyses {
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
             -parameters => {
                 'inputlist'     => [
-                                        [ $self->o('protein_trees_db')   => 'ncbi_taxa_node' ],
-                                        [ $self->o('protein_trees_db')   => 'ncbi_taxa_name' ],
                                         [ $self->o('protein_trees_db')   => 'genome_db' ],       # we need them in "located" state
                                         [ $self->o('protein_trees_db')   => 'sequence' ],
                                         [ $self->o('protein_trees_db')   => 'seq_member' ],
                                         [ $self->o('protein_trees_db')   => 'gene_member' ],
+                                        [ $self->o('master_db')     => 'ncbi_taxa_node' ],
+                                        [ $self->o('master_db')     => 'ncbi_taxa_name' ],
                                         [ $self->o('master_db')     => 'method_link' ],
                                         [ $self->o('master_db')     => 'species_set' ],
                                         [ $self->o('master_db')     => 'method_link_species_set' ],
@@ -212,6 +212,8 @@ sub pipeline_analyses {
                     'ALTER TABLE gene_member                AUTO_INCREMENT=200000001',
                     'ALTER TABLE seq_member                 AUTO_INCREMENT=200000001',
                     'ALTER TABLE method_link                ENGINE=InnoDB',
+                    'ALTER TABLE ncbi_taxa_node             ENGINE=InnoDB',
+                    'ALTER TABLE ncbi_taxa_name             ENGINE=InnoDB',
                     'ALTER TABLE species_set                ENGINE=InnoDB',
                     'ALTER TABLE method_link_species_set    ENGINE=InnoDB',
                 ],
