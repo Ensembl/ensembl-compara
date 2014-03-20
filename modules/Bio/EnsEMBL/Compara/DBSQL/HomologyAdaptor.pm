@@ -23,6 +23,7 @@ use warnings;
 
 use Bio::EnsEMBL::Compara::Homology;
 use Bio::EnsEMBL::Compara::DBSQL::BaseRelationAdaptor;
+use Bio::EnsEMBL::Compara::Utils::Scalar;
 
 use Bio::EnsEMBL::Utils::Exception qw(throw);
 use Bio::EnsEMBL::Utils::Argument qw(rearrange);
@@ -60,9 +61,7 @@ sub fetch_all_by_Member {
   my ($method_link_type, $method_link_species_set, $species_tree_node_ids) =
     rearrange([qw(METHOD_LINK_TYPE METHOD_LINK_SPECIES_SET SPECIES_TREE_NODE_IDS)], @args);
 
-  if (defined $method_link_species_set) {
-    check_ref($method_link_species_set, 'Bio::EnsEMBL::Compara::MethodLinkSpeciesSet') || assert_integer($method_link_species_set)
-  }
+  assert_ref_or_dbID($method_link_species_set, 'Bio::EnsEMBL::Compara::MethodLinkSpeciesSet', '-METHOD_LINK_SPECIES_SET');
   assert_ref($member, 'Bio::EnsEMBL::Compara::Member');
 
   my $seq_member_id = $member->isa('Bio::EnsEMBL::Compara::GeneMember') ? $member->canonical_member_id : $member->dbID;

@@ -59,6 +59,8 @@ use Bio::EnsEMBL::Utils::Exception qw(throw warning);
 use Bio::EnsEMBL::Utils::Argument qw(rearrange);
 use Bio::EnsEMBL::Utils::Scalar qw(:assert);
 
+use Bio::EnsEMBL::Compara::Utils::Scalar;
+
 use Bio::EnsEMBL::Compara::GeneTree;
 use Bio::EnsEMBL::Compara::GeneTreeNode;
 use Bio::EnsEMBL::Compara::GeneTreeMember;
@@ -95,13 +97,15 @@ sub fetch_all_AlignedMember_by_Member {
     my ($self, $member, @args) = @_;
     my ($clusterset_id, $mlss) = rearrange([qw(CLUSTERSET_ID METHOD_LINK_SPECIES_SET)], @args);
 
+    assert_ref_or_dbID($member, 'Bio::EnsEMBL::Compara::Member', 'member');
     my $member_id = (ref($member) ? $member->dbID : $member);
     my $constraint = '((m.seq_member_id = ?) OR (m.gene_member_id = ?))';
     $self->bind_param_generic_fetch($member_id, SQL_INTEGER);
     $self->bind_param_generic_fetch($member_id, SQL_INTEGER);
 
-    my $mlss_id = (ref($mlss) ? $mlss->dbID : $mlss);
-    if (defined $mlss_id) {
+    if (defined $mlss) {
+        assert_ref_or_dbID($mlss, 'Bio::EnsEMBL::Compara::MethodLinkSpeciesSet', 'mlss');
+        my $mlss_id = (ref($mlss) ? $mlss->dbID : $mlss);
         $constraint .= ' AND (tr.method_link_species_set_id = ?)';
         $self->bind_param_generic_fetch($mlss_id, SQL_INTEGER);
     }
@@ -136,6 +140,7 @@ sub fetch_all_AlignedMember_by_Member {
 sub fetch_default_AlignedMember_for_Member {
     my ($self, $member) = @_;
 
+    assert_ref_or_dbID($member, 'Bio::EnsEMBL::Compara::Member', 'member');
     my $member_id = (ref($member) ? $member->dbID : $member);
     my $constraint = '((m.seq_member_id = ?) OR (m.gene_member_id = ?))';
     $self->bind_param_generic_fetch($member_id, SQL_INTEGER);

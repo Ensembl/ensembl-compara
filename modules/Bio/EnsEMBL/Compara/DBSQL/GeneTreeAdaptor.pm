@@ -61,6 +61,8 @@ use Data::Dumper;
 use Bio::EnsEMBL::Utils::Argument qw(rearrange);
 use Bio::EnsEMBL::Utils::Scalar qw(:assert);
 
+use Bio::EnsEMBL::Compara::Utils::Scalar;
+
 use Bio::EnsEMBL::Compara::GeneTree;
 use DBI qw(:sql_types);
 
@@ -111,8 +113,9 @@ sub fetch_all {
         $self->bind_param_generic_fetch($member_type, SQL_VARCHAR);
     }
 
-    my $mlss_id = (ref($mlss) ? $mlss->dbID : $mlss);
-    if (defined $mlss_id) {
+    if (defined $mlss) {
+        assert_ref_or_dbID($mlss, 'Bio::EnsEMBL::Compara::MethodLinkSpeciesSet', 'mlss');
+        my $mlss_id = (ref($mlss) ? $mlss->dbID : $mlss);
         push @constraint, '(gtr.method_link_species_set_id = ?)';
         $self->bind_param_generic_fetch($mlss_id, SQL_INTEGER);
     }
@@ -226,8 +229,7 @@ sub fetch_all_by_Member {
     my ($self, $member, @args) = @_;
     my ($clusterset_id, $mlss) = rearrange([qw(CLUSTERSET_ID METHOD_LINK_SPECIES_SET)], @args);
 
-    # Discard the UNIPROT members
-    return [] if (ref($member) and not ($member->source_name =~ 'ENSEMBL'));
+    assert_ref_or_dbID($member, 'Bio::EnsEMBL::Compara::Member', 'member');
 
     my $join = [[['gene_tree_node', 'gtn'], 'gtn.root_id = gtr.root_id'], [['seq_member', 'm'], 'gtn.seq_member_id = m.seq_member_id']];
     my $constraint = '((m.seq_member_id = ?) OR (m.gene_member_id = ?))';
@@ -236,8 +238,9 @@ sub fetch_all_by_Member {
     $self->bind_param_generic_fetch($member_id, SQL_INTEGER);
     $self->bind_param_generic_fetch($member_id, SQL_INTEGER);
     
-    my $mlss_id = (ref($mlss) ? $mlss->dbID : $mlss);
-    if (defined $mlss_id) {
+    if (defined $mlss) {
+        assert_ref_or_dbID($mlss, 'Bio::EnsEMBL::Compara::MethodLinkSpeciesSet', 'mlss');
+        my $mlss_id = (ref($mlss) ? $mlss->dbID : $mlss);
         $constraint .= ' AND (gtr.method_link_species_set_id = ?)';
         $self->bind_param_generic_fetch($mlss_id, SQL_INTEGER);
     }
@@ -265,10 +268,7 @@ sub fetch_all_by_Member {
 sub fetch_default_for_Member {
     my ($self, $member) = @_;
 
-    # Discard the UNIPROT members
-    return undef if (ref($member) and not ($member->source_name =~ 'ENSEMBL'));
-    # Returns if $member is not defined or 0
-    return undef unless $member;
+    assert_ref_or_dbID($member, 'Bio::EnsEMBL::Compara::Member', 'member');
 
     my $join = [[['gene_tree_node', 'gtn'], 'gtn.root_id = gtr.root_id'], [['seq_member', 'm'], 'gtn.seq_member_id = m.seq_member_id']];
     my $constraint = '((m.seq_member_id = ?) OR (m.gene_member_id = ?)) AND (gtr.clusterset_id = "default")';
@@ -295,6 +295,7 @@ sub fetch_default_for_Member {
 sub fetch_parent_tree {
     my ($self, $tree) = @_;
 
+    assert_ref_or_dbID($tree, 'Bio::EnsEMBL::Compara::GeneTree', 'tree');
     my $tree_id = (ref($tree) ? $tree->root_id : $tree);
 
     my $join = [[['gene_tree_node', 'gtn1'], 'gtn1.root_id = gtr.root_id'], [['gene_tree_node', 'gtn2'], 'gtn1.node_id = gtn2.parent_id']];
@@ -319,6 +320,7 @@ sub fetch_parent_tree {
 sub fetch_subtrees {
     my ($self, $tree) = @_;
 
+    assert_ref_or_dbID($tree, 'Bio::EnsEMBL::Compara::GeneTree', 'tree');
     my $tree_id = (ref($tree) ? $tree->root_id : $tree);
 
     my $join = [[['gene_tree_node', 'gtn2'], 'gtn2.node_id = gtr.root_id', ['gtn2.parent_id']], [['gene_tree_node', 'gtn1'], 'gtn1.node_id = gtn2.parent_id']];

@@ -27,6 +27,8 @@ use Bio::EnsEMBL::Compara::DBSQL::BaseRelationAdaptor;
 
 use Bio::EnsEMBL::Utils::Scalar qw(:assert);
 
+use Bio::EnsEMBL::Compara::Utils::Scalar;
+
 use DBI qw(:sql_types);
 
 our @ISA = qw(Bio::EnsEMBL::Compara::DBSQL::BaseRelationAdaptor);
@@ -166,6 +168,7 @@ sub store {
 sub delete {
     my ($self, $aln) = @_;
 
+    assert_ref_or_dbID($aln, 'Bio::EnsEMBL::Compara::AlignedMemberSet', 'aln');
     my $dbID = ref($aln) ? $aln->dbID : $aln;
     $self->dbc->do("DELETE FROM gene_align_member WHERE gene_align_id = $dbID");
     $self->dbc->do("DELETE FROM gene_align        WHERE gene_align_id = $dbID");
