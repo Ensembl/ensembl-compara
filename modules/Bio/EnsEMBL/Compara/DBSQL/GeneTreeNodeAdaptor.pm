@@ -95,9 +95,6 @@ sub fetch_all_AlignedMember_by_Member {
     my ($self, $member, @args) = @_;
     my ($clusterset_id, $mlss) = rearrange([qw(CLUSTERSET_ID METHOD_LINK_SPECIES_SET)], @args);
 
-    # Discard the UNIPROT members
-    return [] if (ref($member) and not ($member->source_name =~ 'ENSEMBL'));
-
     my $member_id = (ref($member) ? $member->dbID : $member);
     my $constraint = '((m.seq_member_id = ?) OR (m.gene_member_id = ?))';
     $self->bind_param_generic_fetch($member_id, SQL_INTEGER);
@@ -138,9 +135,6 @@ sub fetch_all_AlignedMember_by_Member {
 
 sub fetch_default_AlignedMember_for_Member {
     my ($self, $member) = @_;
-
-    # Discard the UNIPROT members
-    return undef if (ref($member) and not ($member->source_name =~ 'ENSEMBL'));
 
     my $member_id = (ref($member) ? $member->dbID : $member);
     my $constraint = '((m.seq_member_id = ?) OR (m.gene_member_id = ?))';

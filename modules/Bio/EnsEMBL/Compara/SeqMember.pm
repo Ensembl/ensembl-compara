@@ -332,7 +332,7 @@ sub other_sequence {
 sub _prepare_cds_sequence {
     my $self = shift;
 
-    die "ncRNA transcripts don't have CDS sequences. Their nucleotide sequence is directly accessible with SeqMember::sequence().\n" if $self->source_name eq 'ENSEMBLTRANS';
+    die "ncRNA transcripts don't have CDS sequences. Their nucleotide sequence is directly accessible with SeqMember::sequence().\n" if $self->source_name =~ /TRANS$/;
     die "Uniprot entries don't have CDS sequences. They are only defined at the protein level.\n" if $self->source_name =~ m/^Uniprot/;
 
     if ($self->source_name eq 'ENSEMBLPEP') {
@@ -475,7 +475,7 @@ sub bioseq {
     my $sequence = $self->other_sequence($seq_type);
     throw("No sequence for member " . $self->stable_id()) unless defined($sequence);
 
-    my $alphabet = $self->source_name eq 'ENSEMBLTRANS' ? 'dna' : 'protein';
+    my $alphabet = $self->source_name =~ /TRANS$/ ? 'dna' : 'protein';
     $alphabet = 'dna' if $seq_type and ($seq_type eq 'cds');
 
     my $seqname = $self->seq_member_id;
@@ -514,7 +514,7 @@ sub gene_member {
     assert_ref($gene_member, 'Bio::EnsEMBL::Compara::GeneMember');
     $self->{'_gene_member'} = $gene_member;
   }
-  return undef if ($self->source_name ne 'ENSEMBLPEP' and $self->source_name ne 'ENSEMBLTRANS');
+  return undef unless $self->source_name =~ /^ENSEMBL/;
   if(!defined($self->{'_gene_member'}) and
      defined($self->adaptor) and $self->dbID)
   {
@@ -548,7 +548,7 @@ sub gene_member {
 sub get_Transcript {
   my $self = shift;
   
-  return undef unless($self->source_name eq 'ENSEMBLPEP' or $self->source_name eq 'ENSEMBLTRANS');
+  return undef unless $self->source_name =~ /^ENSEMBL/;
   return $self->{'core_transcript'} if($self->{'core_transcript'});
 
   unless($self->genome_db and 

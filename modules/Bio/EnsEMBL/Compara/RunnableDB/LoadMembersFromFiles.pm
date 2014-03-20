@@ -103,7 +103,7 @@ sub write_output {
 
 		my $gene_member = Bio::EnsEMBL::Compara::GeneMember->new(
                 -stable_id      => $gene_name,
-                -source_name    => 'ENSEMBLGENE',
+                -source_name    => 'EXTERNALGENE',
                 -taxon_id       => $taxon_id,
                 -description    => $sequence->desc,
                 -genome_db_id   => $genome_db_id,
@@ -125,7 +125,7 @@ sub write_output {
 
 		my $pep_member = Bio::EnsEMBL::Compara::SeqMember->new(
                 -stable_id      => $gene_name,
-                -source_name    => 'ENSEMBLPEP',
+                -source_name    => 'EXTERNALPEP',
                 -taxon_id       => $taxon_id,
                 -description    => $sequence->desc,
                 -genome_db_id   => $genome_db_id,

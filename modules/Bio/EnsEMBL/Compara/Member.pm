@@ -235,9 +235,9 @@ sub description {
 
   Arg [1]    : (opt) string
   Description: Getter/Setter for the source of the member
-               Genes should have ENSEMBLGENE
-               ncRNAs should have ENSEMBLTRANS
-               Peptides / Proteins should have ENSEMBLPEP or Uniprot/SPTREMBL or Uniprot/SWISSPROT
+               Genes should have ENSEMBLGENE or EXTERNALGENE
+               ncRNAs should have ENSEMBLTRANS or EXTERNALTRANS
+               Peptides / Proteins should have ENSEMBLPEP or Uniprot/SPTREMBL or Uniprot/SWISSPROT or EXTERNALPEP
 
 =cut
 

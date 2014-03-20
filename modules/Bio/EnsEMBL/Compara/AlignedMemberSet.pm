@@ -370,7 +370,7 @@ sub get_SimpleAlign {
         next if $unique_seqs and $seq_hash->{$seqstr};
         $seq_hash->{$seqstr} = 1;
 
-        my $alphabet = $member->source_name eq 'ENSEMBLTRANS' ? 'dna' : 'protein';
+        my $alphabet = $member->source_name =~ /TRANS$/ ? 'dna' : 'protein';
         $alphabet = 'dna' if $seq_type and ($seq_type eq 'cds');
 
         # Sequence name
@@ -551,8 +551,8 @@ sub get_4D_SimpleAlign {
 
     my %member_seqstr;
     foreach my $member (@{$self->get_all_Members}) {
-        # UniProt members don't have CDS sequences
-        next if $member->source_name ne 'ENSEMBLPEP';
+        # Only peptides can have a CDS sequence
+        next unless $member->source_name =~ /PEP$/;
         my $seqstr = $member->alignment_string('cds');
         next if(!$seqstr);
         #print STDERR $seqstr,"\n";

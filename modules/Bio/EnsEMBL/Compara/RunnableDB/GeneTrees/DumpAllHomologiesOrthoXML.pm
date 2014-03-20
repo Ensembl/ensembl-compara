@@ -105,7 +105,7 @@ sub run {
             $last = ${$rowhash}{taxon_id};
             print $HANDLE "<species name=\"", ${$rowhash}{name}, "\" NCBITaxId=\"", $last, "\"><database name=\"Unknown\" version=\"", ${$rowhash}{assembly}, "/", ${$rowhash}{genebuild}, "\"><genes>\n";
         }
-        print $HANDLE "\t<gene id=\"", ${$rowhash}{seq_member_id}, "\" ".(${$rowhash}{source_name} eq 'ENSEMBLPEP' ? "protId" : "transcriptId")."=\"", ${$rowhash}{stable_id}, "\"/>\n";
+        print $HANDLE "\t<gene id=\"", ${$rowhash}{seq_member_id}, "\" ".(${$rowhash}{source_name} =~ /PEP$/ ? "protId" : "transcriptId")."=\"", ${$rowhash}{stable_id}, "\"/>\n";
     }
     print $HANDLE "</genes></database></species>\n" if defined $last;
     print $HANDLE "<groups>\n";

@@ -274,7 +274,7 @@ sub write_data {
     $w->startTag("genes");
 
     foreach my $member (@$all_members) {
-	$w->emptyTag("gene", "id" => $member->seq_member_id, "geneId" => $member->gene_member->stable_id, ($member->source_name eq "ENSEMBLPEP" ? "protId" : "transcriptId") => $member->stable_id);
+	$w->emptyTag("gene", "id" => $member->seq_member_id, "geneId" => $member->gene_member->stable_id, ($member->source_name =~ /PEP$/ ? "protId" : "transcriptId") => $member->stable_id);
     }
 
     $w->endTag("genes");
