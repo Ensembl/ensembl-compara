@@ -18,9 +18,10 @@ limitations under the License.
 
 package EnsEMBL::eDoc::Module;
 
-
 use strict;
 use warnings;
+
+use EnsEMBL::eDoc::Method;
 
 sub new {
   my ($class, %params) = @_;
@@ -47,6 +48,34 @@ sub get_methods {
   my $self = shift;
   return $self->{'methods'};
 }
+
+sub methods_of_type {
+  ### Returns all methods of a particular type. Useful when used with
+  ### types. Includes methods inherited from superclasses.
+  my ($self, $type) = @_;
+  my @methods = ();
+  foreach my $method (@{ $self->get_methods }) {
+    if ($method->get_type eq $type) {
+      push @methods, $method;
+    }
+  }
+  return \@methods;
+}
+
+sub get_types {
+  ### Returns an array of all types of methods.
+  my $self = shift;
+  my @types = ();
+  my %type_count = ();
+  foreach my $method (@{ $self->get_methods }) {
+    if (! $type_count{$method->get_type}++ ) {
+      push @types, $method->get_type;
+    }
+  }
+  @types = sort @types;
+  return \@types;
+}
+
 
 sub get_name {
   my $self = shift;
@@ -81,6 +110,11 @@ sub set_lines {
 sub get_overview {
   my $self = shift;
   return $self->{'overview'};
+}
+
+sub set_overview {
+  my $self = shift;
+  $self->{'overview'} = shift;
 }
 
 sub get_identifier {
@@ -118,7 +152,7 @@ sub find_methods {
                        documentation  => $documentation{methods}{$method}->{comment},
                        type           => $documentation{methods}{$method}->{type},
                        result         => $documentation{methods}{$method}->{return},
-                       class          => $self
+                       module         => $self
                      ));
     if ($documentation{table}{$method}) {
       $new_method->set_table($documentation{table}{$method});
@@ -136,6 +170,44 @@ sub find_methods {
      $self->set_overview($documentation{overview});
   }
 
+}
+
+sub add_method {
+  ### Adds a method name to the method array.
+  my ($self, $method) = @_;
+  push @{ $self->get_methods }, $method;
+}
+
+sub coverage {
+  ### Calculates and returns the documentation coverage for all callable methods in a module. 
+  my $self = shift;
+  my $count = 0;
+  my $total = 0;
+  my $coverage;
+  foreach my $method (@{ $self->get_methods }) {
+    $total++;
+    if ($method->get_type ne 'unknown') {
+      $count++;
+    }
+  }
+  if ($total == 0 ) {
+    $coverage = 0;
+  } else {
+    $coverage = ($count / $total) * 100;
+  }
+  return $coverage;
+}
+
+sub convert_keyword {
+  ### Accepts a single abbreviation and returns its long form. This method is called on all lines that contain a single word, and replaces shorcuts with longer descriptions. For example, 'a' is elongates to 'accessor'. Keywords can be specified using {keyword}. 
+  my ($self, $comment) = @_;
+  my %keywords = split / /, $self->get_keywords;
+  my $return_keyword = $comment;
+  if ($keywords{$comment}) {
+    $return_keyword = $keywords{$comment};
+    #warn $return_keyword;
+  }
+  return $return_keyword;
 }
 
 sub _parse_package_file {

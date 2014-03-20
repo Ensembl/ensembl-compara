@@ -57,6 +57,11 @@ sub get_table {
   return $self->{'table'};
 }
 
+sub set_table {
+  my $self = shift;
+  $self->{'table'} = shift;
+}
+
 sub get_type {
   my $self = shift;
   return $self->{'type'};

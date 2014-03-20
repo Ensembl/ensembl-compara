@@ -23,7 +23,6 @@ package EnsEMBL::eDoc::Generator;
 use strict;
 use warnings;
 use EnsEMBL::eDoc::Module;
-#use EnsEMBL::eDoc::Method;
 use EnsEMBL::eDoc::Writer;
 use File::Find;
 
@@ -34,8 +33,9 @@ sub new {
     'directories' => $params{'directories'} || [],
     'module_info' => $params{'module_info'} || {},
     'identifier'  => $params{'identifier'}  || '##',
-    'keywords'    => $params{'keywords'}    || [],
+    'keywords'    => $params{'keywords'}    || '',
     'serverroot'  => $params{'serverroot'}  || '',
+    'version'     => $params{'version'}     || 'master',
     'writer'      => $writer,
   };
   bless $self, $class;
@@ -65,6 +65,16 @@ sub get_modules {
   return values %{$self->{'modules'}};
 }
 
+sub get_all_modules {
+  my $self = shift;
+  my $modules = [];
+  my @values = values %{$self->{'modules'}};
+  foreach (@values) {
+    push @$modules, @$_;
+  }
+  return $modules;
+}
+
 sub get_modules_by_name {
   my ($self, $name) = @_;
   return $self->{'modules'}{$name};
@@ -85,6 +95,11 @@ sub get_serverroot {
   return $self->{'serverroot'};
 }
 
+sub get_version {
+  my $self = shift;
+  return $self->{'version'};
+}
+
 sub writer {
   my $self = shift;
   return $self->{'writer'};
@@ -103,32 +118,33 @@ sub find_modules {
   }
   return;
 
-=pod
- # foreach my $module (@{ $self->get_modules }) {
-    if ($module->inheritance) {
-      my @class_cache = ();
-      foreach my $classname (@{ $module->get_inheritance }) {
-        push @class_cache, $classname;
-      }
+  foreach my $arrayref ($self->get_modules) {
+    foreach my $module (@$arrayref) {
+  
+      if ($module->inheritance) {
+        my @class_cache = ();
+        foreach my $classname (@{ $module->get_inheritance }) {
+          push @class_cache, $classname;
+        }
 
-      $module->set_inheritance([]);
+        $module->set_inheritance([]);
 
-      foreach my $classname (@class_cache) {
-        my $superclass = $self->module_by_name($classname);
-        if ($superclass) {
-          $module->add_superclass($superclass);
-          if (!$subclasses{$superclass->name}) {
-            $subclasses{$module->get_inheritance} = [];
+        foreach my $classname (@class_cache) {
+          my $superclass = $self->get_module_by_name($classname);
+          if ($superclass) {
+            $module->add_superclass($superclass);
+            if (!$subclasses{$superclass->name}) {
+              $subclasses{$module->get_inheritance} = [];
+            }
+            push @{ $subclasses{$superclass->get_name} }, $module;
           }
-          push @{ $subclasses{$superclass->name} }, $module;
         }
       }
-
     }
   }
 
   foreach my $module_name (keys %subclasses) {
-    my $module = $self->module_by_name($module_name);
+    my $module = $self->get_module_by_name($module_name);
     if ($module) {
       my @subclasses = @{ $subclasses{$module_name} };
       if (@subclasses) {
@@ -140,7 +156,6 @@ sub find_modules {
   }
 
   return $self->get_modules;
-=cut
 }
 
 sub wanted {
@@ -153,6 +168,37 @@ sub wanted {
     my $class = $self->_package_name($File::Find::name);
     $self->_add_module($class, $File::Find::name);
   }
+}
+
+sub generate_html {
+  my ($self, $location, $base, $support) = @_;
+
+  my $writer = $self->writer;
+  $writer->set_location($location);
+  $writer->set_support($support);
+  $writer->set_base($base);
+
+  $writer->write_info_page($self->get_all_modules);
+  $writer->write_package_frame($self->get_all_modules);
+  $writer->write_method_frame($self->get_all_methods);
+  $writer->write_base_frame($self->get_all_modules);
+  $writer->write_module_pages($self->get_all_modules, $self->get_version);
+  $writer->write_frameset;
+
+  #$writer->copy_support_files;
+}
+
+sub get_all_methods {
+  ### Returns all method objects for all found modules
+  my $self = shift;
+  my @methods = ();
+  foreach my $module (@{$self->get_all_modules}) {
+    foreach my $method (@{ $module->get_methods }) {
+      #warn $method;
+      push @methods, $method;
+    }
+  }
+  return \@methods;
 }
 
 sub _package_name {

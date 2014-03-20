@@ -32,6 +32,7 @@ BEGIN{
 
 use EnsEMBL::eDoc::Generator;
 
+my $VERSION     = $SiteDefs::ENSEMBL_VERSION;
 my $SERVER_ROOT = $SiteDefs::ENSEMBL_SERVERROOT;
 my $EXPORT      = $SiteDefs::ENSEMBL_SERVERROOT.'/public-plugins/docs/htdocs/info/docs/webcode/edoc';
 my $SUPPORT     = $SiteDefs::ENSEMBL_WEBROOT.'/utils/edoc/support/';
@@ -52,13 +53,12 @@ my $start = time();
 my $generator = EnsEMBL::eDoc::Generator->new( (
   directories => \@locations,
   identifier  => "###",
-  serverroot  => $SERVER_ROOT
+  serverroot  => $SERVER_ROOT,
+  version     => $VERSION,
 ) );
 
 my $point_1 = time();
 $generator->find_modules;
-
-die;
 
 my $point_2 = time();
 $generator->generate_html( $EXPORT, '/info/docs/webcode/edoc', $SUPPORT );
