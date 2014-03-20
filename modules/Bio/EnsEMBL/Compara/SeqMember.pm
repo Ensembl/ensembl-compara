@@ -730,7 +730,11 @@ sub get_Transcript {
     throw("unable to connect to core ensembl database: missing registry and genome_db.locator");
   }
   my $coreDBA = $self->genome_db->db_adaptor;
-  $self->{'core_transcript'} = $coreDBA->get_TranscriptAdaptor->fetch_by_translation_stable_id($self->stable_id);
+  if ($self->source_name eq 'ENSEMBLPEP') {
+      $self->{'core_transcript'} = $coreDBA->get_TranscriptAdaptor->fetch_by_translation_stable_id($self->stable_id);
+  } else {
+      $self->{'core_transcript'} = $coreDBA->get_TranscriptAdaptor->fetch_by_stable_id($self->stable_id);
+  }
   return $self->{'core_transcript'};
 }
 
