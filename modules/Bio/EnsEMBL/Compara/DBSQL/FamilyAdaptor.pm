@@ -84,7 +84,7 @@ our @ISA = qw(Bio::EnsEMBL::Compara::DBSQL::BaseRelationAdaptor);
 
 =head2 fetch_all_by_Member
 
- Description: DEPRECATED (will be removed in e79). Please use fetch_all_by_GeneMember() or fetch_all_by_SeqMember() instead
+ Description: DEPRECATED (will be removed in e79). Please use fetch_all_by_GeneMember() or fetch_by_SeqMember() instead
 
 =cut
 
@@ -92,9 +92,9 @@ sub fetch_all_by_Member { ## DEPRECATED
   my ($self, $member) = @_;
 
   assert_ref($member, 'Bio::EnsEMBL::Compara::Member');
-  deprecate('FamilyAdaptor::fetch_all_by_Member() is deprecated and will be removed in e79. Please use fetch_all_by_GeneMember() or fetch_all_by_SeqMember() instead');
+  deprecate('FamilyAdaptor::fetch_all_by_Member() is deprecated and will be removed in e79. Please use fetch_all_by_GeneMember() or fetch_by_SeqMember() instead');
   if (check_ref($member, 'Bio::EnsEMBL::Compara::SeqMember')) {
-      my $f = $self->fetch_all_by_SeqMember($member);
+      my $f = $self->fetch_by_SeqMember($member);
       return $f ? [$f] : [];
   }
   return $self->fetch_all_by_GeneMember($member);
@@ -152,12 +152,12 @@ sub fetch_by_SeqMember {
 sub fetch_by_Member_source_stable_id { ## DEPRECATED
   my ($self, $source_name, $member_stable_id) = @_;
 
-  deprecate('FamilyAdaptor::fetch_by_Member_source_stable_id() is deprecated and will be removed in e79. Please use fetch_all_by_GeneMember() or fetch_all_by_SeqMember() instead');
+  deprecate('FamilyAdaptor::fetch_by_Member_source_stable_id() is deprecated and will be removed in e79. Please use fetch_all_by_GeneMember() or fetch_by_SeqMember() instead');
   my $m = $self->db->get_GeneMemberAdaptor->fetch_by_source_stable_id($source_name, $member_stable_id);
   return $self->fetch_all_by_GeneMember($m) if $m;
 
   $m = $self->db->get_SeqMemberAdaptor->fetch_by_source_stable_id($source_name, $member_stable_id);
-  my $f = $self->fetch_all_by_SeqMember($m);
+  my $f = $self->fetch_by_SeqMember($m);
   return $f ? [$f] : [];
 }
 
