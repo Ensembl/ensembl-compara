@@ -170,7 +170,7 @@ sub store_member_associations {
 	while(my ($sid,$accs) = each %$member_acc_hash) {
 		my ($gene_member_id) = @{$self->dbc()->sql_helper()->execute_simple(-SQL=>$get_member_id_sql, -PARAMS=>[$sid])};	
 		if(defined $gene_member_id) {	
-			my @pars = map {"($gene_member_id,\"$_\",$external_db_id)"} @$accs;	
+			my @pars = map {"($gene_member_id,\"$_\",$external_db_id)"} uniq(@$accs);
 			my $sql = $insert_member_base_sql . 'values' . join(',',@pars);
 			$self->dbc()->sql_helper()->execute_update(-SQL=>$sql, -PARAMS=>[]);
 		}
@@ -178,6 +178,9 @@ sub store_member_associations {
 	return;
 }
 
+sub uniq {
+    return keys %{{ map { $_ => 1 } @_ }};
+}
 
 =head2 get_associated_xrefs_for_tree
 
@@ -222,17 +225,17 @@ sub get_members_for_xref {
 	if ( check_ref( $gene_tree, 'Bio::EnsEMBL::Compara::GeneTree' ) ) {
 		$gene_tree = $gene_tree->root_id();
 	}
-	my $member_ids = 
+	my $gene_member_ids = 
 		$self->dbc()->sql_helper()->execute_simple(
 							 -SQL    => $get_members_for_xref,
 							 -PARAMS => [ $dbprimary_acc, $db_name, $gene_tree ]
 		);
 
-	my $members = [];
-	if ( scalar(@$member_ids) > 0 ) {
-		$members = $self->_member_adaptor()->fetch_all_by_dbID_list($member_ids);
+	my $gene_members = [];
+	if ( scalar(@$gene_member_ids) > 0 ) {
+		$gene_members = $self->_gene_member_adaptor()->fetch_all_by_dbID_list($gene_member_ids);
 	}
-	return $members;
+	return $gene_members;
 }
 
 =head2 get_all_member_associations
@@ -242,8 +245,8 @@ sub get_members_for_xref {
   Arg[3]     : External database name
   Example    : $adaptor->get_associated_xrefs_for_tree_from_summary($tree,'GO:123456','GO');
 
-  Description : Retrieve members and xref associations for the supplied tree, primary acc and database. 
-  Returntype : Hashref containing database accessions as keys and arrayrefs of members as keys 
+  Description : Retrieve gene_members and xref associations for the supplied tree, primary acc and database. 
+  Returntype : Hashref containing database accessions as keys and arrayrefs of gene_members as keys 
   Exceptions :
   Caller     :
 
@@ -263,17 +266,17 @@ sub get_all_member_associations {
 			return;
 		} );
 	while ( my ( $x, $ms ) = each %$assocs ) {
-		$assocs->{$x} = $self->_member_adaptor()->fetch_all_by_dbID_list($ms);
+		$assocs->{$x} = $self->_gene_member_adaptor()->fetch_all_by_dbID_list($ms);
 	}
 	return $assocs;
 }
 
-sub _member_adaptor {
+sub _gene_member_adaptor {
 	my ($self) = @_;
-	if ( !defined $self->{_member_adaptor} ) {
-		$self->{_member_adaptor} = $self->db->get_MemberAdaptor();
+	if ( !defined $self->{_gene_member_adaptor} ) {
+		$self->{_gene_member_adaptor} = $self->db->get_GeneMemberAdaptor();
 	}
-	return $self->{_member_adaptor};
+	return $self->{_gene_member_adaptor};
 }
 
 1;
