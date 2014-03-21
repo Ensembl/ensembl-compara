@@ -186,17 +186,13 @@ sub write_hierarchy {
     $html .= '<div class="hier">';
     $html .= "<h3>Subclasses:</h3>\n";
     $html .= "<ul>\n";
-   # foreach my $subclass (sort { $a->name cmp $b->name } @{ $module->subclasses }) {
-   #   $html .= '<li><a href="' . $self->link_for_package($subclass->name) . '">' . $subclass->name. "</a></li>\n";
-   # }
+    foreach my $subclass (sort { $a->name cmp $b->name } @{ $module->subclasses }) {
+      $html .= '<li><a href="' . $self->link_for_package($subclass->name) . '">' . $subclass->name. "</a></li>\n";
+    }
     $html .= "</ul>\n";
     $html .= "</div>";
   } else {
     $html .= '<div class="hier">No subclasses</div>';
-  }
-
-  if ($html ne "") {
-    $html .= '<br style="clear:all" />';
   }
 
   return $html;
@@ -224,15 +220,19 @@ sub write_module_page {
     <div class="overview">
       <h2>Overview</h2>',
       $overview,
-    '</div>
-    <div class="wrapper">',
-      $self->write_hierarchy($module),'.
+      '<p>Documentation coverage: ', sprintf("%.0f", $module->coverage), ' %</p>
+    </div>
+    <div class="wrapper">
+      <div class="twocol">',
+        $self->toc_html($module),'
+      </div>
+      <div class="twocol">',
+        $self->write_hierarchy($module),'
+      </div>
     </div>
     <div class="definitions">',
-      $self->toc_html($module),
       $self->methods_html($module, $version),'
     </div>
-    <p style="text-align:right">Documentation coverage: ', sprintf("%.0f", $module->coverage), ' %</p>
 
   </div>
   <div class="footer">&larr; 

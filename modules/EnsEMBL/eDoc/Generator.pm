@@ -180,8 +180,6 @@ sub generate_html {
   $writer->write_base_frame($self->modules);
   $writer->write_module_pages($self->modules, $self->version);
   $writer->write_frameset;
-
-  #$writer->copy_support_files;
 }
 
 sub methods {

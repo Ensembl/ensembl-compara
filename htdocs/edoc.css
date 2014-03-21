@@ -21,16 +21,17 @@ body.list a:visited{color:#000066}
 body.list a:hover{background:#bbccff}
 body.list ul{padding:4px;margin:3px;list-style:circle inside}
 div.heading{background:#7b8baf;color:#fff;padding:5px;font-weight:bold}
-div.title{background:#7b8baf;border-bottom:2px solid #333366;color:#000000;padding:8px;font-size:12px;font-weight:bold}
+div.title{background:#7b8baf;color:#000000;padding:8px;font-size:12px;font-weight:bold}
 div.title h1{padding:0;margin:0;font-size:26px} 
 div.title a,div.title a:link,div.title a:visited{color:#ffffff;text-decoration:none} 
-div.footer{background:#ffffdd;border-top:2px solid #ffee99;color:#333333;padding:4px}
+div.footer{background:#eaeeff;border-top:2px solid #bbccff;color:#333333;padding:4px}
 div.footer a {color:#3366bb}
 div.title a:hover,div.footer a:hover{color:#cc0000;text-decoration:underline} 
 div.content{margin:5px;padding:10px} 
 div.wrapper {overflow: hidden; position:relative;}
+div.twocol {width:48%;float:left}
+div.hier{border:1px solid #bbccff;background:#eaeeff;padding:10px;margin-bottom:20px}
 div.hier h3{padding:0;margin:0}
-div.hier{width:45%;float:left;border:1px solid #ffee99;padding:5px;margin:10px;background:#ffffdd}
 div.content a,div.content a:link{text-decoration:none;color:#3366bb} 
 div.content a:visited{color:#000066} 
 div.content a:hover{color:#cc0000;text-decoration:underline}
