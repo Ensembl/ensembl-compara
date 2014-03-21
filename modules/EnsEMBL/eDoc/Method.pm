@@ -37,37 +37,33 @@ sub new {
   return $self;
 }
 
-sub get_name {
+sub name {
   my $self = shift;
   return $self->{'name'};
 }
 
-sub get_module {
+sub module {
   my $self = shift;
   return $self->{'module'};
 }
 
-sub get_documentation {
+sub documentation {
   my $self = shift;
   return $self->{'documentation'};
 }
 
-sub get_table {
-  my $self = shift;
+sub table {
+  my ($self, $table) = @_;
+  $self->{'table'} = $table if $table;
   return $self->{'table'};
 }
 
-sub set_table {
-  my $self = shift;
-  $self->{'table'} = shift;
-}
-
-sub get_type {
+sub type {
   my $self = shift;
   return $self->{'type'};
 }
 
-sub get_result {
+sub result {
   my $self = shift;
   return $self->{'result'};
 }

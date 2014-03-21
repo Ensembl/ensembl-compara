@@ -36,50 +36,34 @@ sub new {
   return $self;
 }
 
-sub get_location {
-  my $self = shift;
+sub location {
+  my ($self, $loc) = @_;
+  $self->{'location'} = $loc if $loc;
   return $self->{'location'};
 }
 
-sub set_location {
-  my $self = shift;
-  $self->{'location'} = shift;
-}
-
-sub get_base {
-  my $self = shift;
+sub base {
+  my ($self, $base) = @_;
+  $self->{'base'} = $base if $base;
   return $self->{'base'};
 }
 
-sub set_base {
-  my $self = shift;
-  $self->{'base'} = shift;
-}
-
-sub get_serverroot {
-  my $self = shift;
+sub serverroot {
+  my ($self, $root) = @_;
+  $self->{'serverroot'} = $root if $root;
   return $self->{'serverroot'};
 }
 
-sub set_serverroot {
-  my $self = shift;
-  $self->{'serverroot'} = shift;
-}
-
-sub get_support {
-  my $self = shift;
+sub support {
+  my ($self, $support) = @_;
+  $self->{'support'} = $support if $support;
   return $self->{'support'};
-}
-
-sub set_support {
-  my $self = shift;
-  $self->{'support'} = shift;
 }
 
 sub write_info_page {
   ### Writes information page for the documentation.
   my ($self, $packages) = @_;
-  open (my $fh, ">", $self->get_location . "/info.html") or die "$!: " . $self->get_location;
+  open (my $fh, ">", $self->location . "/info.html") or die "$!: " . $self->location;
   print $fh $self->html_header();
   print $fh '
 <div class="front">
@@ -95,7 +79,7 @@ sub write_info_page {
   my %total;
   my %average;
   foreach my $module (@{ $packages }) {
-    my @elements = split /::/, $module->get_name;
+    my @elements = split /::/, $module->name;
     my $final = pop @elements;
     my $family = "";
     foreach my $element (@elements) {
@@ -111,7 +95,7 @@ sub write_info_page {
       if (!$total{$family}) {
         $total{$family} = 0;
       }
-      if ($module->get_name =~ /^$family/) {
+      if ($module->name =~ /^$family/) {
         $total{$family} += $module->coverage;
       }
     }
@@ -146,12 +130,12 @@ sub write_info_page {
 sub write_package_frame {
   ### Writes the HTML package listing.
   my ($self, $packages) = @_;
-  open (my $fh, ">", $self->get_location . "/package.html") or die "$!: " . $self->get_location;
+  open (my $fh, ">", $self->location . "/package.html") or die "$!: " . $self->location;
   print $fh $self->html_header( (class => "list" ));
   print $fh qq(<div class="heading">Packages</div>);
   print $fh qq(<ul>);
-  foreach my $package (sort {$a->get_name cmp $b->get_name} @{ $packages }) {
-    print $fh '<li><a href="', $self->link_for_package($package->get_name), '" target="base">', $package->get_name, "</a></li>\n";
+  foreach my $package (sort {$a->name cmp $b->name} @{ $packages }) {
+    print $fh '<li><a href="', $self->link_for_package($package->name), '" target="base">', $package->name, "</a></li>\n";
   }
   print $fh qq(</ul>);
   print $fh $self->html_footer;
@@ -160,20 +144,20 @@ sub write_package_frame {
 sub write_method_frame {
   ### Writes a complete list of methods from all modules to an HTML file.
   my ($self, $methods) = @_;
-  open (my $fh, ">", $self->get_location . "/methods.html") or die "$!: " . $self->get_location;
+  open (my $fh, ">", $self->location . "/methods.html") or die "$!: " . $self->location;
   print $fh $self->html_header( (class => "list" ));
-  print $fh qq(<div class="heading">Methods</div>);
+  print $fh qq(<div class="heading">All Methods</div>);
   print $fh qq(<ul>);
   my %exists = ();
   foreach my $method (@{ $methods }) {
-    $exists{$method->get_name}++;
+    $exists{$method->name}++;
   }
-  foreach my $method (sort { $a->get_name cmp $b->get_name } @{ $methods }) {
+  foreach my $method (sort { $a->name cmp $b->name } @{ $methods }) {
     my $module_suffix = "";
-    if ($exists{$method->get_name} > 1) {
-      $module_suffix = " (" . $method->get_module->get_name . ")";
+    if ($exists{$method->name} > 1) {
+      $module_suffix = " (" . $method->module->name . ")";
     }
-    if ($method->get_name ne "") {
+    if ($method->name ne "") {
       print $fh "<li>" . $self->link_for_method($method) . $module_suffix . "</li>\n";
     }
   }
@@ -185,12 +169,12 @@ sub write_hierarchy {
   ### Returns a formatted list of inheritance and subclass information for a given module.
   my ($self, $module) = @_;
   my $html = "";
-  if (@{ $module->get_inheritance }) {
+  if (@{ $module->inheritance }) {
     $html .= '<div class="hier">';
     $html .= "<h3>Inherits from:</h3>\n";
     $html .= "<ul>\n";
-    foreach my $class (@{ $module->get_inheritance }) {
-      $html .= '<li><a href="' . $self->link_for_package($class) . '">' . $class . "</a></li>\n";
+    foreach my $module (@{ $module->inheritance }) {
+      $html .= '<li><a href="' . $self->link_for_package($module->name) . '">' . $module->name . "</a></li>\n";
     }
     $html .= "</ul>\n";
     $html .= "</div>";
@@ -198,12 +182,12 @@ sub write_hierarchy {
     $html .= '<div class="hier">No superclasses</div>';
   }
 
-  if (@{ $module->get_subclasses } > 0) {
+  if (@{ $module->subclasses } > 0) {
     $html .= '<div class="hier">';
     $html .= "<h3>Subclasses:</h3>\n";
     $html .= "<ul>\n";
-   # foreach my $subclass (sort { $a->get_name cmp $b->get_name } @{ $module->get_subclasses }) {
-   #   $html .= '<li><a href="' . $self->link_for_package($subclass->get_name) . '">' . $subclass->get_name. "</a></li>\n";
+   # foreach my $subclass (sort { $a->name cmp $b->name } @{ $module->subclasses }) {
+   #   $html .= '<li><a href="' . $self->link_for_package($subclass->name) . '">' . $subclass->name. "</a></li>\n";
    # }
     $html .= "</ul>\n";
     $html .= "</div>";
@@ -221,35 +205,39 @@ sub write_hierarchy {
 sub write_module_page {
   ### Writes the complete HTML documentation page for a module. 
   my ($self, $module, $version) = @_;
-  open (my $fh, ">", $self->_html_path_from_package($module->get_name));
-  my $location = $module->get_location;
-  my $root = $self->get_serverroot;
+  open (my $fh, ">", $self->_html_path_from_package($module->name));
+  my $location = $module->location;
+  my $root = $self->serverroot;
   $location =~ s/$root//g;
   my $repo = 'ensembl-webcode';
-
-  print $fh $self->html_header( (package => $module->get_name) ),'
+  my $overview = $module->overview ? $self->markup_documentation($module->overview)
+                                    : '<p>No overview present</p>';
+  print $fh $self->html_header( (package => $module->name) ),'
   <div class="title">
-    <h1>' . $module->get_name . '</h1>
+    <h1>' . $module->name . '</h1>
     Location: ', $location, '<br />
-    <a href="', $self->source_code_link($version, $repo, $module->get_name) , '" rel="external">View source code on github</a> &middot;
-    <a href="', $self->link_for_package($module->get_name), '">Permalink</a>
+    <a href="', $self->source_code_link($version, $repo, $module->name) , '" rel="external">View source code on github</a> &middot;
+    <a href="', $self->link_for_package($module->name), '">Permalink</a>
   </div>
   <div class="content">
-    <div class="classy">',
-    $self->write_hierarchy($module),'
-      <div class="methods">',
-    $self->toc_html($module),'
-        <br /><br />
-        <div class="definitions">',
-    $self->methods_html($module, $version),'
-        </div>
-        <br clear="all">
-      </div>
+
+    <div class="overview">
+      <h2>Overview</h2>',
+      $overview,
+    '</div>
+    <div class="wrapper">',
+      $self->write_hierarchy($module),'.
     </div>
+    <div class="definitions">',
+      $self->toc_html($module),
+      $self->methods_html($module, $version),'
+    </div>
+    <p style="text-align:right">Documentation coverage: ', sprintf("%.0f", $module->coverage), ' %</p>
+
   </div>
   <div class="footer">&larr; 
-    <a href="', "../" x element_count_from_package($module->get_name),'base.html">Home</a> &middot;
-    <a href="', $self->source_code_link($version, $repo, $module->get_name),'" rel="external">View source code on github</a>
+    <a href="', "../" x element_count_from_package($module->name),'base.html">eDocs home</a> &middot;
+    <a href="', $self->source_code_link($version, $repo, $module->name),'" rel="external">View source code on github</a>
   </div>',
     $self->html_footer;
 }
@@ -273,23 +261,23 @@ sub toc_html {
   ### Returns the table of contents for the module methods.
   my ($self, $module) = @_;
   my $html = "";
-  $html .= qq(<h3>Overview</h3>\n);
-  $html .= $self->markup_documentation($module->get_overview);
-  foreach my $type (@{ $module->get_types }) {
-    $html .= "<h4>" . ucfirst($type) . "</h4>\n";
+
+  $html .= '<h2>Methods by Type</h2>';
+  foreach my $type (@{ $module->types }) {
+    $html .= "<h3>" . ucfirst($type) . "</h3>\n";
     $html .= "<ul>";
-    foreach my $method (sort {$a->get_name cmp $b->get_name} @{ $module->methods_of_type($type) }) {
-      if ($method->get_type !~ /unknown/) {
-        $html .= '<li><a href="#' . $method->get_name . '">' . $method->get_name . '</a>';
-        if ($method->get_module->get_name ne $module->get_name) {
-          $html .= " (" . $method->get_module->get_name . ")";
+    foreach my $method (sort {$a->name cmp $b->name} @{ $module->methods_of_type($type) }) {
+      if ($method->type !~ /unknown/) {
+        $html .= '<li><a href="#' . $method->name . '">' . $method->name . '</a>';
+        if ($method->module->name ne $module->name) {
+          $html .= " (" . $method->module->name . ")";
         }
         $html .= "</li>\n";
       } else {
-        $html .= "<li>" . $method->get_name;
+        $html .= "<li>" . $method->name;
 
-        if ($method->get_module->get_name ne $module->get_name) {
-          $html .= " (" . $method->get_module->get_name . ")";
+        if ($method->module->name ne $module->name) {
+          $html .= " (" . $method->module->name . ")";
         }
 
         $html .= "</li>\n";
@@ -297,7 +285,6 @@ sub toc_html {
     }
     $html .= "</ul>";
   }
-  $html .= "Documentation coverage: " . sprintf("%.0f", $module->coverage) . " %";
   return $html;
 }
 
@@ -344,23 +331,23 @@ sub methods_html {
   ### Returns a formatted list of method names and documentation.
   my ($self, $module, $version) = @_;
   my $html = "";
-  $html .= qq(<h3>Methods</h3>);
+  $html .= qq(<h2>Method Documentation</h2>);
   $html .= qq(<ul>);
   my $count = 0;
-  foreach my $method (sort { $a->get_name cmp $b->get_name } @{ $module->get_methods }) {
-    if ($method->get_type !~ /unknown/) {
-      my $complete = $module->get_name . "::" . $method->get_name;
+  foreach my $method (sort { $a->name cmp $b->name } @{ $module->methods }) {
+    if ($method->type !~ /unknown/) {
+      my $complete = $module->name . "::" . $method->name;
       $count++;
-      $html .= qq(<b><a name=") . $method->get_name . qq("></a>) . $method->get_name . qq(</b><br />\n);
-      $html .= $self->markup_documentation($method->get_documentation);
-      $html .= $self->markup_method_table($method->get_table);
-      if ($method->get_result) {
-        $html .= qq(<i>) . $self->markup_links($method->get_result) . qq(</i>\n);
+      $html .= qq(<b><a name=") . $method->name . qq("></a>) . $method->name . qq(</b><br />\n);
+      $html .= $self->markup_documentation($method->documentation);
+      $html .= $self->markup_method_table($method->table);
+      if ($method->result) {
+        $html .= qq(<i>) . $self->markup_links($method->result) . qq(</i>\n);
       }
       $html .= qq(<br />\n);
-      if ($method->get_module->get_name ne $module->get_name) {
-        $complete = $method->get_module->get_name . "::" . $method->get_name;
-        $html .= qq(Inherited from <a href=") . $self->link_for_package($method->get_module->get_name) . qq(">) . $method->get_module->get_name . "</a><br />";
+      if ($method->module->name ne $module->name) {
+        $complete = $method->module->name . "::" . $method->name;
+        $html .= qq(Inherited from <a href=") . $self->link_for_package($method->module->name) . qq(">) . $method->module->name . "</a><br />";
       }
       #$html .= sprintf '<a href="%s" rel="external">View source on github</a>', $self->source_code_link($version, 'ensembl-webcode', $complete);
       $html .= "<div id='" . $complete . "' style='display: none;'>" . $complete . "</div>";
@@ -431,7 +418,7 @@ sub markup_links {
 sub write_base_frame {
   ### Writes the home page for the e! doc.
   my ($self, $modules) = @_;
-  open (my $fh, ">", $self->get_location . "/base.html");
+  open (my $fh, ">", $self->location . "/base.html");
   my $total = 0;
   my $count = 0;
   my $methods = 0;
@@ -439,8 +426,8 @@ sub write_base_frame {
   foreach my $module (@{ $modules }) {
     $count++;
     $total += $module->coverage;
-    $methods += @{ $module->get_methods };
-    $lines += $module->get_lines;
+    $methods += @{ $module->methods };
+    $lines += $module->lines;
   }
   my $coverage = 0;
   if ($count == 0) {
@@ -468,7 +455,7 @@ sub write_frameset {
   ### Writes the frameset for the e! doc collection.
   my $self = shift;
 
-  open FH, '>', $self->get_location . '/iframe.html';
+  open FH, '>', $self->location . '/iframe.html';
   print FH '
     <!--#set var="decor" value="none"-->
     <html>
@@ -492,7 +479,7 @@ sub write_frameset {
 
   close FH;
 
-  open FH, '>', $self->get_location . '/index.html';
+  open FH, '>', $self->location . '/index.html';
   print FH '
     <html>
     <head>
@@ -513,16 +500,16 @@ sub link_for_method {
   ### Returns the HTML formatted link to a method page in a module page.
   my ($self, $method) = @_;
   return sprintf '<a href="%s#%s" target="base">%s</a>', 
-                  $self->link_for_package($method->get_module->get_name), 
-                  $method->get_name, $method->get_name;
+                  $self->link_for_package($method->module->name), 
+                  $method->name, $method->name;
 }
 
 sub copy_support_files {
   ### Copies support files (stylesheets etc) to the export location (set by {{support}}.
   my $self = shift;
   return;
-  my $source = $self->get_support;
-  my $destination = $self->get_location;
+  my $source = $self->support;
+  my $destination = $self->location;
   if ($source) {
     my $cp = `cp $source/* $destination/`;
   }
@@ -546,8 +533,6 @@ sub html_header {
 <html>
   <head>
     <title>e! doc</title>
-    <script type="text/javascript" src="/components/00_jquery.js"></script>
-    <script type="text/javascript" src="/edoc.js"></script>
     <link href="/edoc.css" rel="stylesheet" type="text/css" media="all" />
   </head>
   <body $class>);
@@ -586,14 +571,14 @@ sub html_footer {
 sub _html_path_from_package {
   ### Returns an export location from a package name
   my ($self, $package) = @_;
-  my $path = $self->get_location . "/" . $self->path_from_package($package) . ".html";
+  my $path = $self->location . "/" . $self->path_from_package($package) . ".html";
   return $path;
 }
 
 sub link_for_package {
   ### Returns the HTML location of a package, excluding &lt;A HREF&gt; markup.
-  my ($self, $package) = @_;
-  my $path = $self->get_base . "/" . $self->path_from_package($package) . ".html";
+  my ($self, $class) = @_;
+  my $path = $self->base . "/" . $self->path_from_package($class) . ".html";
   return $path;
 }
 
@@ -602,7 +587,7 @@ sub path_from_package {
   my ($self, $package) = @_;
   my @elements = split(/::/, $package);
   my $file = pop @elements;
-  my $path = $self->get_location;
+  my $path = $self->location;
 
   foreach my $element (@elements) {
     $path = $path . "/" . $element;

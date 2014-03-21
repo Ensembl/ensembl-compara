@@ -40,32 +40,32 @@ sub new {
   };
   bless $self, $class;
   if ($self->{'serverroot'}) {
-    $writer->set_serverroot($self->{'serverroot'});
+    $writer->serverroot($self->{'serverroot'});
   }
   return $self;
 }
 
-sub get_directories {
+sub directories {
   my $self = shift;
   return $self->{'directories'};
 }
 
-sub get_module_info {
+sub module_info {
   my $self = shift;
   return $self->{'module_info'};
 }
 
-sub get_module_names {
+sub module_names {
   my $self = shift;
   return keys %{$self->{'modules'}};
 }
 
-sub get_modules {
-  my $self = shift;
-  return values %{$self->{'modules'}};
-}
+#sub modules {
+#  my $self = shift;
+#  return values %{$self->{'modules'}};
+#}
 
-sub get_all_modules {
+sub modules {
   my $self = shift;
   my $modules = [];
   my @values = values %{$self->{'modules'}};
@@ -75,27 +75,27 @@ sub get_all_modules {
   return $modules;
 }
 
-sub get_modules_by_name {
+sub modules_by_name {
   my ($self, $name) = @_;
   return $self->{'modules'}{$name};
 }
 
-sub get_identifier {
+sub identifier {
   my $self = shift;
   return $self->{'identifier'};
 }
 
-sub get_keywords {
+sub keywords {
   my $self = shift;
   return $self->{'keywords'};
 }
 
-sub get_serverroot {
+sub serverroot {
   my $self = shift;
   return $self->{'serverroot'};
 }
 
-sub get_version {
+sub version {
   my $self = shift;
   return $self->{'version'};
 }
@@ -109,42 +109,39 @@ sub find_modules {
   ### Recursively finds modules located in the directory parameter.
   my $self = shift;
   my $code_ref = sub { $self->wanted(@_) };
-  find($code_ref, @{$self->get_directories});
+  find($code_ref, @{$self->directories});
 
   # map inheritance (super and sub classes), and replace module
   # names with module objects.
   my %subclasses = ();
-  while (my ($class, $modules) = each(%{$self->get_module_info})) {
-  }
 
-  foreach my $arrayref ($self->get_modules) {
-    foreach my $module (@$arrayref) {
-  
-      if ($module->get_inheritance) {
-        my @class_cache = ();
-        foreach my $classname (@{ $module->get_inheritance }) {
-          push @class_cache, $classname;
-        }
+  foreach my $module (@{$self->modules}) {
+    if ($module->inheritance) {
+      my @class_cache = ();
+      foreach my $classname (@{ $module->inheritance }) {
+        push @class_cache, $classname;
+      }
 
-        #$module->set_inheritance([]);
+      $module->inheritance([]);
 
-        foreach my $classname (@class_cache) {
-          my $superclass = $self->get_modules_by_name($classname)->[0];
-          if ($superclass) {
-            $module->add_superclass($superclass);
-            if (!$subclasses{$superclass->get_name}) {
-              $subclasses{$module->get_name} = [];
-            }
-            push @{ $subclasses{$superclass->get_name} }, $module;
+      foreach my $classname (@class_cache) {
+        my $superclass_array = $self->modules_by_name($classname);
+        next unless $superclass_array;
+        my $superclass = $superclass_array->[0];
+        if ($superclass) {
+          $module->add_superclass($superclass);
+          if (!$subclasses{$superclass->name}) {
+            $subclasses{$module->name} = [];
           }
+          push @{ $subclasses{$superclass->name} }, $module;
         }
       }
     }
   }
 
   foreach my $module_name (keys %subclasses) {
-    my $module = $self->get_module_by_name($module_name);
-    if ($module) {
+    my @modules = @{$self->modules_by_name($module_name)};
+    foreach my $module (@modules) {
       my @subclasses = @{ $subclasses{$module_name} };
       if (@subclasses) {
         foreach my $subclass (@subclasses) {
@@ -154,7 +151,7 @@ sub find_modules {
     }
   }
 
-  return $self->get_modules;
+  return $self->modules;
 }
 
 sub wanted {
@@ -173,26 +170,26 @@ sub generate_html {
   my ($self, $location, $base, $support) = @_;
 
   my $writer = $self->writer;
-  $writer->set_location($location);
-  $writer->set_support($support);
-  $writer->set_base($base);
+  $writer->location($location);
+  $writer->support($support);
+  $writer->base($base);
 
-  $writer->write_info_page($self->get_all_modules);
-  $writer->write_package_frame($self->get_all_modules);
-  $writer->write_method_frame($self->get_all_methods);
-  $writer->write_base_frame($self->get_all_modules);
-  $writer->write_module_pages($self->get_all_modules, $self->get_version);
+  $writer->write_info_page($self->modules);
+  $writer->write_package_frame($self->modules);
+  $writer->write_method_frame($self->methods);
+  $writer->write_base_frame($self->modules);
+  $writer->write_module_pages($self->modules, $self->version);
   $writer->write_frameset;
 
   #$writer->copy_support_files;
 }
 
-sub get_all_methods {
+sub methods {
   ### Returns all method objects for all found modules
   my $self = shift;
   my @methods = ();
-  foreach my $module (@{$self->get_all_modules}) {
-    foreach my $method (@{ $module->get_methods }) {
+  foreach my $module (@{$self->modules}) {
+    foreach my $method (@{ $module->methods }) {
       #warn $method;
       push @methods, $method;
     }
@@ -224,15 +221,15 @@ sub _add_module {
   ### The new module will find methods within that package on
   ### instantiation.
   my ($self, $class, $location) = @_;
-  #print "ADDING: $class\n";
   my $module = EnsEMBL::eDoc::Module->new(
                      name         => $class,
                      location     => $location,
-                     identifier   => $self->get_identifier,
-                     keywords     => $self->get_keywords,
+                     identifier   => $self->identifier,
+                     keywords     => $self->keywords,
                      find_methods => 1,
                    );
-  my $arrayref = $self->get_modules_by_name($class);
+  #print "ADDING: $class $module\n";
+  my $arrayref = $self->modules_by_name($class);
   if ($arrayref) {
     push @$arrayref, $module;
   }

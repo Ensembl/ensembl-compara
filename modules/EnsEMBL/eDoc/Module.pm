@@ -44,7 +44,7 @@ sub new {
   return $self;
 }
 
-sub get_methods {
+sub methods {
   my $self = shift;
   return $self->{'methods'};
 }
@@ -54,22 +54,22 @@ sub methods_of_type {
   ### types. Includes methods inherited from superclasses.
   my ($self, $type) = @_;
   my @methods = ();
-  foreach my $method (@{ $self->get_methods }) {
-    if ($method->get_type eq $type) {
+  foreach my $method (@{ $self->methods }) {
+    if ($method->type eq $type) {
       push @methods, $method;
     }
   }
   return \@methods;
 }
 
-sub get_types {
+sub types {
   ### Returns an array of all types of methods.
   my $self = shift;
   my @types = ();
   my %type_count = ();
-  foreach my $method (@{ $self->get_methods }) {
-    if (! $type_count{$method->get_type}++ ) {
-      push @types, $method->get_type;
+  foreach my $method (@{ $self->methods }) {
+    if (! $type_count{$method->type}++ ) {
+      push @types, $method->type;
     }
   }
   @types = sort @types;
@@ -77,57 +77,45 @@ sub get_types {
 }
 
 
-sub get_name {
+sub name {
   my $self = shift;
   return $self->{'name'};
 }
 
-sub get_inheritance {
-  my $self = shift;
+sub inheritance {
+  my ($self, $inheritance) = @_;
+  $self->{'inheritance'} = $inheritance if $inheritance;
   return $self->{'inheritance'};
 }
 
-sub set_inheritance {
-  my $self = shift;
-  $self->{'inheritance'} = shift;
-}
-
-sub get_subclasses {
+sub subclasses {
   my $self = shift;
   return $self->{'subclasses'};
 }
 
-sub get_location {
+sub location {
   my $self = shift;
   return $self->{'location'};
 }
 
-sub get_lines {
-  my $self = shift;
+sub lines {
+  my ($self, $lines) = @_;
+  $self->{'lines'} = $lines if $lines;
   return $self->{'lines'};
 }
 
-sub set_lines {
-  my $self = shift;
-  $self->{'lines'} = shift;
-}
-
-sub get_overview {
-  my $self = shift;
+sub overview {
+  my ($self, $overview) = @_;
+  $self->{'overview'} = $overview if $overview;
   return $self->{'overview'};
 }
 
-sub set_overview {
-  my $self = shift;
-  $self->{'overview'} = shift;
-}
-
-sub get_identifier {
+sub identifier {
   my $self = shift;
   return $self->{'identifier'};
 }
 
-sub get_keywords {
+sub keywords {
   my $self = shift;
   return $self->{'keywords'};
 }
@@ -135,13 +123,13 @@ sub get_keywords {
 sub add_subclass {
   ### Adds a subclass to the subclass array.
   my ($self, $subclass) = @_;
-  push @{$self->get_subclasses}, $subclass;
+  push @{$self->subclasses}, $subclass;
 }
 
 sub add_superclass {
   ### Adds a superclass to the inheritance array.
   my ($self, $superclass) = @_;
-  push @{$self->get_inheritance}, $superclass;
+  push @{$self->inheritance}, $superclass;
 }
 
 sub find_methods {
@@ -160,19 +148,19 @@ sub find_methods {
                        module         => $self
                      ));
     if ($documentation{table}{$method}) {
-      $new_method->set_table($documentation{table}{$method});
+      $new_method->table($documentation{table}{$method});
     }
     $self->add_method($new_method);
   }
   if ($documentation{isa}) {
-    my @superclasses = split /\s+/, $documentation{isa};
+    my @superclasses = @{$documentation{isa}};
     foreach my $class (@superclasses) {
       $self->add_superclass($class);
     }
   }
 
   if ($documentation{overview}) {
-     $self->set_overview($documentation{overview});
+     $self->overview($documentation{overview});
   }
 
 }
@@ -180,7 +168,7 @@ sub find_methods {
 sub add_method {
   ### Adds a method name to the method array.
   my ($self, $method) = @_;
-  push @{ $self->get_methods }, $method;
+  push @{ $self->methods }, $method;
 }
 
 sub coverage {
@@ -189,9 +177,9 @@ sub coverage {
   my $count = 0;
   my $total = 0;
   my $coverage;
-  foreach my $method (@{ $self->get_methods }) {
+  foreach my $method (@{ $self->methods }) {
     $total++;
-    if ($method->get_type ne 'unknown') {
+    if ($method->type ne 'unknown') {
       $count++;
     }
   }
@@ -206,7 +194,7 @@ sub coverage {
 sub convert_keyword {
   ### Accepts a single abbreviation and returns its long form. This method is called on all lines that contain a single word, and replaces shorcuts with longer descriptions. For example, 'a' is elongates to 'accessor'. Keywords can be specified using {keyword}. 
   my ($self, $comment) = @_;
-  my %keywords = split / /, $self->get_keywords;
+  my %keywords = split / /, $self->keywords;
   my $return_keyword = $comment;
   if ($keywords{$comment}) {
     $return_keyword = $keywords{$comment};
@@ -220,11 +208,11 @@ sub _parse_package_file {
   ### in e! doc format.
   my $self = shift;
   my %docs = ();
-  open (my $fh, $self->get_location);
+  open (my $fh, $self->location);
   my $sub = "";
   my $package = "";
   my $lines = "";
-  my $comment_code = $self->get_identifier;
+  my $comment_code = $self->identifier;
   my $table = 0;
   my $block_table = 0;
   while (<$fh>) {
@@ -332,7 +320,7 @@ sub _parse_package_file {
       }
     }
   }
-  $self->set_lines($lines);
+  $self->lines($lines);
   return \%docs;
 }
 
