@@ -824,7 +824,8 @@ CREATE TABLE gene_member (
   KEY (stable_id),
   KEY (source_name),
   KEY (canonical_member_id),
-  KEY gdb_name_start_end (genome_db_id,dnafrag_id,dnafrag_start,dnafrag_end)
+  KEY dnafrag_id_start (dnafrag_id,dnafrag_start),
+  KEY dnafrag_id_end (dnafrag_id,dnafrag_end)
 ) MAX_ROWS = 100000000 COLLATE=latin1_swedish_ci ENGINE=MyISAM;
 
 
@@ -882,7 +883,8 @@ CREATE TABLE seq_member (
   KEY (source_name),
   KEY (sequence_id),
   KEY (gene_member_id),
-  KEY gdb_name_start_end (genome_db_id,dnafrag_id,dnafrag_start,dnafrag_end)
+  KEY dnafrag_id_start (dnafrag_id,dnafrag_start),
+  KEY dnafrag_id_end (dnafrag_id,dnafrag_end)
 ) MAX_ROWS = 100000000 COLLATE=latin1_swedish_ci ENGINE=MyISAM;
 
 

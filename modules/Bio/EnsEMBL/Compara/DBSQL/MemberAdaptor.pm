@@ -309,15 +309,15 @@ sub fetch_all_by_GenomeDB {
 }
 
 
-sub _fetch_all_by_source_genomedb_dnafrag_id_start_end_strand_limit {
-  my ($self,$source_name,$genome_db_id,$dnafrag_id,$dnafrag_start,$dnafrag_end,$dnafrag_strand,$limit) = @_;
+sub _fetch_all_by_dnafrag_id_start_end_strand_limit {
+  my ($self,$dnafrag_id,$dnafrag_start,$dnafrag_end,$dnafrag_strand,$limit) = @_;
 
-  $self->throw("all args are required") 
-      unless($source_name && $genome_db_id && $dnafrag_start && $dnafrag_end && $dnafrag_strand && defined ($dnafrag_id));
+  $self->throw("all args are required")
+      unless($dnafrag_start && $dnafrag_end && $dnafrag_strand && defined ($dnafrag_id));
 
-  my $constraint = "m.source_name = '$source_name' and m.genome_db_id = $genome_db_id
-                    and m.dnafrag_id = '$dnafrag_id'
-                    and m.dnafrag_start >= $dnafrag_start and m.dnafrag_start <= $dnafrag_end and m.dnafrag_end <= $dnafrag_end
+  my $constraint = "m.dnafrag_id = '$dnafrag_id'
+                    and m.dnafrag_start >= $dnafrag_start and m.dnafrag_start <= $dnafrag_end
+                    and m.dnafrag_end   >= $dnafrag_start and m.dnafrag_end   <= $dnafrag_end
                     and m.dnafrag_strand = $dnafrag_strand";
 
   return $self->generic_fetch($constraint, undef, defined $limit ? "LIMIT $limit" : "");
