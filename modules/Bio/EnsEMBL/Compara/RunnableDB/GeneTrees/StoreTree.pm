@@ -59,11 +59,11 @@ sub dumpTreeMultipleAlignmentToWorkdir {
   #
   if ($self->param('check_split_genes')) {
     my %split_genes;
-    my $sth = $self->compara_dba->dbc->prepare('SELECT DISTINCT gene_split_id FROM split_genes JOIN gene_tree_node USING (member_id) WHERE root_id = ?');
+    my $sth = $self->compara_dba->dbc->prepare('SELECT DISTINCT gene_split_id FROM split_genes JOIN gene_tree_node USING (seq_member_id) WHERE root_id = ?');
     $sth->execute($self->param('gene_tree_id'));
     my $gene_splits = $sth->fetchall_arrayref();
     $sth->finish;
-    $sth = $self->compara_dba->dbc->prepare('SELECT node_id FROM split_genes JOIN gene_tree_node USING (member_id) WHERE root_id = ? AND gene_split_id = ? ORDER BY member_id');
+    $sth = $self->compara_dba->dbc->prepare('SELECT node_id FROM split_genes JOIN gene_tree_node USING (seq_member_id) WHERE root_id = ? AND gene_split_id = ? ORDER BY seq_member_id');
     foreach my $gene_split (@$gene_splits) {
       $sth->execute($self->param('gene_tree_id'), $gene_split->[0]);
       my $partial_genes = $sth->fetchall_arrayref;
@@ -280,7 +280,7 @@ sub parse_newick_into_tree {
   #  flatten and reduce to only GeneTreeMember leaves
   my %leaves;
   foreach my $node (@{$tree->get_all_Members}) {
-    $leaves{$node->member_id} = $node;
+    $leaves{$node->seq_member_id} = $node;
   }
 
   my $newroot = Bio::EnsEMBL::Compara::Graph::NewickParser::parse_newick_into_tree($newick, "Bio::EnsEMBL::Compara::GeneTreeNode");
@@ -315,21 +315,21 @@ sub parse_newick_into_tree {
   foreach my $leaf (@{$newroot->get_all_leaves}) {
     my $njtree_phyml_name = $leaf->get_tagvalue('name');
     $njtree_phyml_name =~ /(\d+)\_\d+/;
-    my $member_id = $1;
-    my $old_leaf = $leaves{$member_id};
+    my $seq_member_id = $1;
+    my $old_leaf = $leaves{$seq_member_id};
     if (not $old_leaf) {
       $leaf->print_node;
-      die "unable to find member '$member_id' (in '$njtree_phyml_name', from newick '$newick')";
+      die "unable to find seq_member '$seq_member_id' (in '$njtree_phyml_name', from newick '$newick')";
     }
     bless $leaf, 'Bio::EnsEMBL::Compara::GeneTreeMember';
-    $leaf->member_id($member_id);
+    $leaf->seq_member_id($seq_member_id);
     $leaf->gene_member_id($old_leaf->gene_member_id);
     $leaf->cigar_line($old_leaf->cigar_line);
     $leaf->node_id($old_leaf->node_id);
     $leaf->taxon_id($old_leaf->taxon_id);
     $leaf->stable_id($old_leaf->stable_id);
     $leaf->adaptor($old_leaf->adaptor);
-    $leaf->add_tag('name', $member_id);
+    $leaf->add_tag('name', $seq_member_id);
     $leaf->{'_children_loaded'} = 1;
   }
   print  "Tree with GeneTreeNode objects:\n";

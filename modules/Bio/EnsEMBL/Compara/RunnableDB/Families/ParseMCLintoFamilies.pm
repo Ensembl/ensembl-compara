@@ -50,7 +50,7 @@ sub write_output {
     $compara_dba->get_MethodLinkSpeciesSetAdaptor->store($mlss);
 
     my $fa            = $compara_dba->get_FamilyAdaptor();
-    my $ma            = $compara_dba->get_SeqMemberAdaptor();
+    my $sma           = $compara_dba->get_SeqMemberAdaptor();
     my $cluster_index = 1;
 
     open (MCL, $mcl_name) || die "could not open '$mcl_name' for reading: $!";
@@ -78,14 +78,14 @@ sub write_output {
 
         foreach my $tab_idx (@cluster_members) {
 
-            if( my $member = $ma->fetch_all_by_sequence_id($tab_idx)->[0] ) {
+            if( my $seq_member = $sma->fetch_all_by_sequence_id($tab_idx)->[0] ) {
                 # A funny way to add members to a family.
                 # You cannot do it without introducing a fake AlignedMember, it seems?
                 #
-                bless $member, 'Bio::EnsEMBL::Compara::AlignedMember';
-                $family->add_Member($member);
+                bless $seq_member, 'Bio::EnsEMBL::Compara::AlignedMember';
+                $family->add_Member($seq_member);
             } else {
-                warn "Could not fetch member by sequence_id=$tab_idx";
+                warn "Could not fetch seq_member by sequence_id=$tab_idx";
             }
         }
 

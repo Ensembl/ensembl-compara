@@ -491,7 +491,7 @@ sub _genetreemember_body {
   $w->characters($protein->stable_id());
   $w->endTag();
   $w->dataElement('name', $protein->display_label()) if $protein->display_label();
-  my $location = sprintf('%s:%d-%d',$gene->chr_name(), $gene->dnafrag_start(), $gene->dnafrag_end());
+  my $location = sprintf('%s:%d-%d',$gene->dnafrag()->name(), $gene->dnafrag_start(), $gene->dnafrag_end());
   $w->dataElement('location', $location);
   
   if(!$self->no_sequences()) {

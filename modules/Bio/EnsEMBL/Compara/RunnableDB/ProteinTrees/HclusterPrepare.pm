@@ -190,10 +190,10 @@ sub fetch_categories {
 
   my $filename = $self->param('cluster_dir') . '/' . "$table_name.hcluster.cat";
   open(FILE, ">$filename") or die "Could not open '$filename' for writing : $!";
-  my $member_id;
-  $sth->bind_columns(\$member_id);
+  my $seq_member_id;
+  $sth->bind_columns(\$seq_member_id);
   while ($sth->fetch) {
-    print FILE "${member_id}_${genome_db_id}\t${outgroup_category}\n";
+    print FILE "${seq_member_id}_${genome_db_id}\t${outgroup_category}\n";
   }
   close FILE;
   printf("%1.3f secs to fetch/process\n", (time()-$starttime));

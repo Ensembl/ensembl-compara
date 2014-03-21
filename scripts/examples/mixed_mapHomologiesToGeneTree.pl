@@ -46,12 +46,11 @@ my $genes = $human_gene_adaptor->fetch_all_by_external_name('BRCA2');
 
 my $verbose = 0;
 foreach my $gene (@$genes) {
-  my $member = $gene_member_adaptor->
-    fetch_by_source_stable_id("ENSEMBLGENE",$gene->stable_id);
+  my $member = $gene_member_adaptor->fetch_by_stable_id($gene->stable_id);
   die "no members" unless (defined $member);
   my $all_homologies = $homology_adaptor->fetch_all_by_Member($member);
   foreach my $homology (@$all_homologies) {
-    my @two_ids = map { $_->get_canonical_SeqMember->member_id } @{$homology->gene_list};
+    my @two_ids = map { $_->seq_member_id } @{$homology->get_all_Members};
     my $tree_node = $homology->gene_tree_node;
     my $node_a = $genetreenode_adaptor->fetch_default_AlignedMember_for_Member($two_ids[0]);
     my $node_b = $genetreenode_adaptor->fetch_default_AlignedMember_for_Member($two_ids[1]);

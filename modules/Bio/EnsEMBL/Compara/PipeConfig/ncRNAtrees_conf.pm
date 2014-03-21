@@ -166,7 +166,7 @@ sub pipeline_analyses {
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
             -parameters => {
                 'db_conn'   => $self->o('master_db'),
-                'inputlist' => [ 'method_link', 'species_set', 'method_link_species_set', 'ncbi_taxa_name', 'ncbi_taxa_node' ],
+                'inputlist' => [ 'method_link', 'species_set', 'method_link_species_set', 'ncbi_taxa_name', 'ncbi_taxa_node', 'dnafrag' ],
                 'column_names' => [ 'table' ],
             },
 
@@ -190,7 +190,8 @@ sub pipeline_analyses {
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::SqlCmd',
             -parameters => {
                 'sql'   => [
-                    'ALTER TABLE member            AUTO_INCREMENT=100000001',
+                    'ALTER TABLE gene_member       AUTO_INCREMENT=100000001',
+                    'ALTER TABLE seq_member        AUTO_INCREMENT=100000001',
                     'ALTER TABLE sequence          AUTO_INCREMENT=100000001',
                     'ALTER TABLE homology          AUTO_INCREMENT=100000001',
                     'ALTER TABLE gene_align        AUTO_INCREMENT=100000001',
@@ -259,7 +260,6 @@ sub pipeline_analyses {
             -module             => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::SqlHealthChecks',
             -parameters         => {
                 mode            => 'members_per_genome',
-                hc_member_type  => 'ENSEMBLTRANS',
             },
             %hc_params,
         },
@@ -431,10 +431,7 @@ sub pipeline_analyses {
                                    'epo_db'         => $self->o('epo_db'),
                                   },
                 -analysis_capacity => $self->o('recover_capacity'),
-                -flow_into => {
-                               '1->A' => [ 'hc_epo_removed_members' ],
-                               'A->1' => [ 'pre_clusterset_backup' ],
-                              },
+                -flow_into => [ 'hc_epo_removed_members' ],
                 -rc_name => 'default',
             },
 
@@ -443,26 +440,17 @@ sub pipeline_analyses {
                -parameters        => {
                                       mode => 'epo_removed_members',
                                      },
+               -flow_into         => [ 'clusterset_backup' ],
                %hc_params,
             },
-
-
-            {   -logic_name => 'pre_clusterset_backup',
-                -module     => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
-                -flow_into => {
-                               '1->A' => [ 'clusterset_backup' ],
-                               'A->1' => [ 'msa_chooser' ],
-                              },
-                -meadow_type    => 'LOCAL',
-            },
-
 
             {   -logic_name    => 'clusterset_backup',
                 -module        => 'Bio::EnsEMBL::Hive::RunnableDB::SqlCmd',
                 -parameters    => {
-                                   'sql'         => 'INSERT INTO gene_tree_backup (member_id, root_id) SELECT member_id, root_id FROM gene_tree_node WHERE member_id IS NOT NULL AND root_id = #gene_tree_id#',
+                                   'sql'         => 'INSERT INTO gene_tree_backup (seq_member_id, root_id) SELECT seq_member_id, root_id FROM gene_tree_node WHERE seq_member_id IS NOT NULL AND root_id = #gene_tree_id#',
                                   },
                 -analysis_capacity => 1,
+                -flow_into     => [ 'msa_chooser' ],
                 -meadow_type    => 'LOCAL',
             },
 
@@ -550,7 +538,7 @@ sub pipeline_analyses {
             {   -logic_name    => 'tree_backup',
                 -module        => 'Bio::EnsEMBL::Hive::RunnableDB::SqlCmd',
                 -parameters    => {
-                                   'sql' => 'INSERT INTO gene_tree_backup (member_id, root_id) SELECT member_id, root_id FROM gene_tree_node WHERE member_id IS NOT NULL AND root_id = #gene_tree_id#',
+                                   'sql' => 'INSERT INTO gene_tree_backup (seq_member_id, root_id) SELECT seq_member_id, root_id FROM gene_tree_node WHERE seq_member_id IS NOT NULL AND root_id = #gene_tree_id#',
                                   },
                 -flow_into => {
                                '1->A' => [ 'genomic_alignment', 'infernal' ],

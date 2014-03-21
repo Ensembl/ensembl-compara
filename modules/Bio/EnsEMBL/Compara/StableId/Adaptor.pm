@@ -131,12 +131,13 @@ sub load_compara_ncs {
     my $step = ($ncs->type() eq 'f') ? 100000 : 30000;
     my $sql;
     if ($ncs->type() eq 'f') {
+        my $member_name = $schema_version < 76 ? 'member' : 'seq_member';
         $sql = qq{
             SELECT f.family_id, }.(($schema_version<53)?"f.stable_id":"CONCAT(f.stable_id,'.',f.version)").qq{,
                 IF(m.source_name='ENSEMBLPEP', SUBSTRING_INDEX(TRIM(LEADING 'Transcript:' FROM m.description),' ',1), m.stable_id)
-                    FROM family f, family_member fm, member m
+                    FROM family f, family_member fm, $member_name m
                     WHERE f.family_id=fm.family_id
-                    AND   fm.member_id=m.member_id
+                    AND   fm.${member_name}_id=m.${member_name}_id
                     AND   m.source_name <> 'ENSEMBLGENE'
             } ;
     } elsif ($ncs->type() eq 't') {
@@ -209,7 +210,7 @@ sub load_compara_ncs {
                     WHERE (gtn.node_id = gtn.root_id OR m.stable_id IS NOT NULL) AND left_index AND right_index AND gtr.tree_type = 'tree' AND gtr.clusterset_id = 'default'
                     ORDER BY root_id, left_index
             };
-        } else {
+        } elsif ($schema_version < 76) {
             $sql = qq{
                 SELECT gtn.node_id, IFNULL(CONCAT(gtr.stable_id,'.',gtr.version), CONCAT('Node_',gtn.node_id)), IF(m.source_name='ENSEMBLPEP', SUBSTRING_INDEX(TRIM(LEADING 'Transcript:' FROM m.description),' ',1), m.stable_id)
                     FROM gene_tree_node gtn
@@ -218,9 +219,19 @@ sub load_compara_ncs {
                     WHERE (gtn.node_id = gtn.root_id OR m.stable_id IS NOT NULL) AND left_index AND right_index AND gtr.tree_type = 'tree' AND gtr.clusterset_id = 'default'
                     ORDER BY root_id, left_index
             };
+        } else {
+            $sql = qq{
+                SELECT gtn.node_id, IFNULL(CONCAT(gtr.stable_id,'.',gtr.version), CONCAT('Node_',gtn.node_id)), IF(m.source_name='ENSEMBLPEP', SUBSTRING_INDEX(TRIM(LEADING 'Transcript:' FROM m.description),' ',1), m.stable_id)
+                    FROM gene_tree_node gtn
+                    JOIN gene_tree_root gtr USING (root_id)
+                    LEFT JOIN seq_member m USING (seq_member_id)
+                    WHERE (gtn.node_id = gtn.root_id OR m.stable_id IS NOT NULL) AND left_index AND right_index AND gtr.tree_type = 'tree' AND gtr.clusterset_id = 'default'
+                    ORDER BY root_id, left_index
+            };
         }
 
     } else {
+        # TreeFam
         if ($schema_version <= 70) {
             $sql = qq{
                 SELECT gtn.node_id, IFNULL(gtrt.value, CONCAT('Node_',gtn.node_id)), IF(m.description LIKE "Transcript:%", SUBSTRING_INDEX(TRIM(LEADING 'Transcript:' FROM m.description),' ',1), m.stable_id)

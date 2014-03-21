@@ -56,100 +56,17 @@ package Bio::EnsEMBL::Compara::DBSQL::SeqMemberAdaptor;
 use strict; 
 use warnings;
 
+use Bio::EnsEMBL::Compara::SeqMember;
+
 use Bio::EnsEMBL::Utils::Scalar qw(:all);
 use Bio::EnsEMBL::Utils::Argument qw(rearrange);
-use Bio::EnsEMBL::Utils::Exception qw(throw warning stack_trace_dump);
+use Bio::EnsEMBL::Utils::Exception qw(throw warning stack_trace_dump deprecate);
+
+use Bio::EnsEMBL::Compara::Utils::Scalar;
+
 use DBI qw(:sql_types);
 
 use base qw(Bio::EnsEMBL::Compara::DBSQL::MemberAdaptor);
-
-
-
-
-
-
-
-
-#
-# GLOBAL METHODS
-#
-#####################
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 
@@ -181,25 +98,38 @@ sub fetch_all_by_sequence_id {
 
 
 
+=head2 fetch_all_by_GeneMember
 
-=head2 fetch_all_by_gene_member_id
-
-  Arg [1]    : int member_id of a gene member
-  Example    : @pepMembers = @{$SeqMemberAdaptor->fetch_all_by_gene_member_id($gene_member_id)};
-  Description: given a member_id of a gene member, fetches all sequence members for this gene
+  Arg [1]    : Bio::EnsEMBL::Compara::GeneMember
+  Example    : @pepMembers = @{$SeqMemberAdaptor->fetch_all_by_GeneMember($gene_member)};
+  Description: fetches all sequence members for this gene
   Returntype : array ref of Bio::EnsEMBL::Compara::SeqMember objects
-  Exceptions : $gene_member_id not defined
+  Exceptions : $gene_member not defined
   Caller     : general
 
 =cut
 
-sub fetch_all_by_gene_member_id {
-  my ($self, $gene_member_id) = @_;
+sub fetch_all_by_GeneMember {
+    my ($self, $gene_member) = @_;
 
-  throw() unless (defined $gene_member_id);
+    assert_ref_or_dbID($gene_member, 'Bio::EnsEMBL::Compara::GeneMember', 'gene_member');
 
-    $self->bind_param_generic_fetch($gene_member_id, SQL_INTEGER);
+    $self->bind_param_generic_fetch(ref($gene_member) ? $gene_member->dbID : $gene_member, SQL_INTEGER);
     return $self->generic_fetch('m.gene_member_id = ?');
+}
+
+
+
+=head2 fetch_all_by_gene_member_id
+
+  Description: DEPRECATED: fetch_all_by_gene_member_id() is deprecated and will be removed in e79. Please use fetch_all_by_GeneMember() instead
+
+=cut
+
+sub fetch_all_by_gene_member_id {  ## DEPRECATED
+    my ($self, $gene_member_id) = @_;
+    deprecate('fetch_all_by_gene_member_id() is deprecated and will be removed in e79. Please use fetch_all_by_GeneMember() instead');
+    return $self->fetch_all_by_GeneMember($gene_member_id);
 }
 
 
@@ -207,39 +137,55 @@ sub fetch_all_by_gene_member_id {
 
 =head2 fetch_all_canonical_by_source_genome_db_id
 
-  Arg [1]    : string source_name
-  Arg [1]    : int genome_db_id of a a species
-  Example    : @canMembers = @{$SeqMemberAdaptor->fetch_all_canonical_by_source_genome_db_id('ENSEMBLPEP', 90)};
-  Description: fetches all the canonical members of given source_name and species
+  Description: DEPRECATED: fetch_all_canonical_by_source_genome_db_id() is deprecated and will be removed in e79. Please use fetch_all_canonical_by_GenomeDB() instead
+
+=cut
+
+sub fetch_all_canonical_by_source_genome_db_id {  ## DEPRECATED
+    my ($self, $source_name, $genome_db_id) = @_;
+
+    deprecate('fetch_all_canonical_by_source_genome_db_id() is deprecated and will be removed in e79. Please use fetch_all_canonical_by_GenomeDB() instead');
+    return $self->fetch_all_canonical_by_GenomeDB($genome_db_id, $source_name);
+}
+
+
+=head2 fetch_all_canonical_by_GenomeDB
+
+  Arg [1]    : Bio::EnsEMBL::Compara::GenomeDB or its dbID
+  Arg [2]    : String: $source_name
+  Example    : @canMembers = @{$SeqMemberAdaptor->fetch_all_canonical_by_GenomeDB($human_gdb)};
+  Description: fetches all the canonical members of a given species (can be refined by $source_name)
   Returntype : array ref of Bio::EnsEMBL::Compara::SeqMember objects
   Exceptions : arguments not defined
   Caller     : general
 
 =cut
 
-sub fetch_all_canonical_by_source_genome_db_id {
-  my ($self,$source_name,$genome_db_id) = @_;
+sub fetch_all_canonical_by_GenomeDB {
+    my ($self, $genome_db, $source_name) = @_;
 
-  throw("source_name and genome_db_id args are required") 
-    unless($source_name && $genome_db_id);
+    assert_ref_or_dbID($genome_db, 'Bio::EnsEMBL::Compara::GenomeDB', 'genome_db');
 
-    my $join = [[['member', 'mg'], 'mg.canonical_member_id = m.member_id']];
+    my $join = [[['gene_member', 'mg'], 'mg.canonical_member_id = m.seq_member_id']];
+    my $constraint = 'mg.genome_db_id = ?';
+    $self->bind_param_generic_fetch(ref($genome_db) ? $genome_db->dbID : $genome_db);
 
-    $self->bind_param_generic_fetch($source_name, SQL_VARCHAR);
-    $self->bind_param_generic_fetch($genome_db_id, SQL_INTEGER);
-    return $self->generic_fetch('m.source_name = ? AND mg.genome_db_id = ?', $join);
+    if ($source_name) {
+        $constraint .= ' AND m.source_name = ?';
+        $self->bind_param_generic_fetch($source_name, SQL_VARCHAR);
+    }
+
+    return $self->generic_fetch($constraint, $join);
 }
-
-
 
 
 
 
 =head2 fetch_canonical_for_gene_member_id
 
-  Arg [1]    : int member_id of a gene member
+  Arg [1]    : int gene_member_id of a gene member
   Example    : $members = $memberAdaptor->fetch_canonical_for_gene_member_id($gene_member_id);
-  Description: given a member_id of a gene member,
+  Description: given a gene_member_id of a gene member,
                fetches the canonical peptide / transcript member for this gene
   Returntype : Bio::EnsEMBL::Compara::SeqMember object
   Exceptions :
@@ -252,27 +198,12 @@ sub fetch_canonical_for_gene_member_id {
 
     throw() unless (defined $gene_member_id);
 
-    my $constraint = 'mg.member_id = ?';
-    my $join = [[['member', 'mg'], 'm.member_id = mg.canonical_member_id']];
+    my $constraint = 'mg.gene_member_id = ?';
+    my $join = [[['gene_member', 'mg'], 'm.seq_member_id = mg.canonical_member_id']];
 
     $self->bind_param_generic_fetch($gene_member_id, SQL_INTEGER);
     return $self->generic_fetch_one($constraint, $join);
 }
-
-
-
-
-
-
-
-#
-# GeneMember only methods
-############################
-
-
-
-
-
 
 
 
@@ -283,17 +214,73 @@ sub fetch_canonical_for_gene_member_id {
 ###################
 
 
+sub _tables {
+  return (['seq_member', 'm']);
+}
+
+sub _columns {
+  return ('m.seq_member_id',
+          'm.source_name',
+          'm.stable_id',
+          'm.version',
+          'm.taxon_id',
+          'm.genome_db_id',
+          'm.description',
+          'm.dnafrag_id',
+          'm.dnafrag_start',
+          'm.dnafrag_end',
+          'm.dnafrag_strand',
+          'm.sequence_id',
+          'm.gene_member_id',
+          'm.display_label'
+          );
+}
 
 sub create_instance_from_rowhash {
 	my ($self, $rowhash) = @_;
 	
-	my $obj = $self->SUPER::create_instance_from_rowhash($rowhash);
-	bless $obj, 'Bio::EnsEMBL::Compara::SeqMember';
-	return $obj;
+	return Bio::EnsEMBL::Compara::SeqMember->new_fast({
+		adaptor         => $self,
+		dbID            => $rowhash->{seq_member_id},
+		_stable_id      => $rowhash->{stable_id},
+		_version        => $rowhash->{version},
+		_taxon_id       => $rowhash->{taxon_id},
+		_genome_db_id   => $rowhash->{genome_db_id},
+		_description    => $rowhash->{description},
+		dnafrag_id      => $rowhash->{dnafrag_id},
+		dnafrag_start   => $rowhash->{dnafrag_start},
+		dnafrag_end     => $rowhash->{dnafrag_end},
+		dnafrag_strand  => $rowhash->{dnafrag_strand},
+		_sequence_id    => $rowhash->{sequence_id} || 0,
+		_source_name    => $rowhash->{source_name},
+		_display_label  => $rowhash->{display_label},
+		_gene_member_id => $rowhash->{gene_member_id},
+	});
 }
 
+sub init_instance_from_rowhash {
+  my $self = shift;
+  my $member = shift;
+  my $rowhash = shift;
 
+  $member->seq_member_id($rowhash->{'seq_member_id'});
+  $member->stable_id($rowhash->{'stable_id'});
+  $member->version($rowhash->{'version'});
+  $member->taxon_id($rowhash->{'taxon_id'});
+  $member->genome_db_id($rowhash->{'genome_db_id'});
+  $member->description($rowhash->{'description'});
+  $member->dnafrag_id($rowhash->{'dnafrag_id'});
+  $member->dnafrag_start($rowhash->{'dnafrag_start'});
+  $member->dnafrag_end($rowhash->{'dnafrag_end'});
+  $member->dnafrag_strand($rowhash->{'dnafrag_strand'});
+  $member->sequence_id($rowhash->{'sequence_id'});
+  $member->gene_member_id($rowhash->{'gene_member_id'});
+  $member->source_name($rowhash->{'source_name'});
+  $member->display_label($rowhash->{'display_label'});
+  $member->adaptor($self) if ref $self;
 
+  return $member;
+}
 
 
 
@@ -308,12 +295,57 @@ sub store {
     my ($self, $member) = @_;
    
     assert_ref($member, 'Bio::EnsEMBL::Compara::SeqMember');
-    return $self->SUPER::store($member);
+
+
+  my $sth = $self->prepare("INSERT ignore INTO seq_member (stable_id,version, source_name,
+                              gene_member_id,
+                              taxon_id, genome_db_id, description,
+                              dnafrag_id, dnafrag_start, dnafrag_end, dnafrag_strand, display_label)
+                            VALUES (?,?,?,?,?,?,?,?,?,?,?,?)");
+
+  my $insertCount = $sth->execute($member->stable_id,
+                  $member->version,
+                  $member->source_name,
+                  $member->gene_member_id,
+                  $member->taxon_id,
+                  $member->genome_db_id,
+                  $member->description,
+                  $member->dnafrag_id,
+                  $member->dnafrag_start,
+                  $member->dnafrag_end,
+                  $member->dnafrag_strand,
+                  $member->display_label);
+  if($insertCount>0) {
+    #sucessful insert
+    $member->dbID( $sth->{'mysql_insertid'} );
+    $sth->finish;
+  } else {
+    $sth->finish;
+    #UNIQUE(stable_id) prevented insert since member was already inserted
+    #so get seq_member_id with select
+    my $sth2 = $self->prepare("SELECT seq_member_id, sequence_id FROM seq_member WHERE stable_id=?");
+    $sth2->execute($member->stable_id);
+    my($id, $sequence_id) = $sth2->fetchrow_array();
+    warn("MemberAdaptor: insert failed, but seq_member_id select failed too") unless($id);
+    $member->dbID($id);
+    $member->sequence_id($sequence_id) if ($sequence_id);
+    $sth2->finish;
+  }
+
+  $member->adaptor($self);
+
+  # insert in sequence table to generate new
+  # sequence_id to insert into member table;
+  if(defined($member->sequence) and $member->sequence_id == 0) {
+    $member->sequence_id($self->db->get_SequenceAdaptor->store($member->sequence,1)); # Last parameter induces a check for redundancy
+
+    my $sth3 = $self->prepare("UPDATE seq_member SET sequence_id=? WHERE seq_member_id=?");
+    $sth3->execute($member->sequence_id, $member->dbID);
+    $sth3->finish;
+  }
+
+  return $member->dbID;
 }
-
-
-
-
 
 
 
@@ -337,7 +369,7 @@ sub update_sequence {
   } else {
     $member->sequence_id($self->db->get_SequenceAdaptor->store($member->sequence,1)); # Last parameter induces a check for redundancy
 
-    my $sth3 = $self->prepare("UPDATE member SET sequence_id=? WHERE member_id=?");
+    my $sth3 = $self->prepare("UPDATE seq_member SET sequence_id=? WHERE seq_member_id=?");
     $sth3->execute($member->sequence_id, $member->dbID);
     $sth3->finish;
   }
@@ -346,47 +378,15 @@ sub update_sequence {
 
 
 
-
-
-
-
-
-
 sub _set_member_as_canonical {
     my ($self, $member) = @_;
 
     assert_ref($member, 'Bio::EnsEMBL::Compara::SeqMember');
 
-    my $sth = $self->prepare('UPDATE member SET canonical_member_id = ? WHERE member_id = ?');
-    $sth->execute($member->member_id, $member->gene_member_id);
+    my $sth = $self->prepare('UPDATE gene_member SET canonical_member_id = ? WHERE gene_member_id = ?');
+    $sth->execute($member->seq_member_id, $member->gene_member_id);
     $sth->finish;
 }
-
-
-
-
-
-
-
-
-
-
-
-
-### SECTION 9 ###
-#
-# WRAPPERS
-###########
-
-
-
-
-
-
-
-
-
-
 
 
 

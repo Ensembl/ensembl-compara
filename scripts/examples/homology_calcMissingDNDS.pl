@@ -54,7 +54,7 @@ my $result = undef;
 
 print "spa,labela,spb,labelb,dn,ds\n";
 foreach my $gene_id (split(':',$input)) {
-  my $member = $gene_member_adaptor->fetch_by_source_stable_id("ENSEMBLGENE",$gene_id);
+  my $member = $gene_member_adaptor->fetch_by_stable_id($gene_id);
   next unless (defined($member));
   my $all_homologies;
   $all_homologies = $homology_adaptor->fetch_all_by_Member($member) unless (defined $species2);

@@ -95,7 +95,7 @@ sub run {
     print $HANDLE "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n";
     print $HANDLE "<orthoXML xmlns=\"http://orthoXML.org/2011/\" origin=\"Ensembl Compara\" version=\"0.3\" originVersion=\"$version\">\n";
 
-    my $sql = 'SELECT member.taxon_id, name, member_id, member.stable_id, assembly, genebuild,source_name FROM gene_tree_root JOIN gene_tree_node USING (root_id) JOIN member USING (member_id) JOIN genome_db USING (genome_db_id) WHERE clusterset_id = "default" GROUP BY taxon_id, member_id';
+    my $sql = 'SELECT seq_member.taxon_id, name, seq_member_id, seq_member.stable_id, assembly, genebuild,source_name FROM gene_tree_root JOIN gene_tree_node USING (root_id) JOIN seq_member USING (seq_member_id) JOIN genome_db USING (genome_db_id) WHERE clusterset_id = "default" GROUP BY taxon_id, seq_member_id';
     my $sth = $self->compara_dba->dbc->prepare($sql, {mysql_use_result=>1});
     $sth->execute;
     my $last;
@@ -105,12 +105,12 @@ sub run {
             $last = ${$rowhash}{taxon_id};
             print $HANDLE "<species name=\"", ${$rowhash}{name}, "\" NCBITaxId=\"", $last, "\"><database name=\"Unknown\" version=\"", ${$rowhash}{assembly}, "/", ${$rowhash}{genebuild}, "\"><genes>\n";
         }
-        print $HANDLE "\t<gene id=\"", ${$rowhash}{member_id}, "\" ".(${$rowhash}{source_name} eq 'ENSEMBLPEP' ? "protId" : "transcriptId")."=\"", ${$rowhash}{stable_id}, "\"/>\n";
+        print $HANDLE "\t<gene id=\"", ${$rowhash}{seq_member_id}, "\" ".(${$rowhash}{source_name} =~ /PEP$/ ? "protId" : "transcriptId")."=\"", ${$rowhash}{stable_id}, "\"/>\n";
     }
     print $HANDLE "</genes></database></species>\n" if defined $last;
     print $HANDLE "<groups>\n";
 
-    $sql = "SELECT homology_id, peptide_member_id, homology.description FROM homology_member JOIN homology USING (homology_id) JOIN method_link_species_set USING (method_link_species_set_id) WHERE method_link_id=".$self->param('ortholog_method_link_id');
+    $sql = "SELECT homology_id, seq_member_id, homology.description FROM homology_member JOIN homology USING (homology_id) JOIN method_link_species_set USING (method_link_species_set_id) WHERE method_link_id=".$self->param('ortholog_method_link_id');
     if (defined $self->param('id_range')) {
         my $range = $self->param('id_range');
         $range =~ s/-/ AND /;
@@ -125,10 +125,10 @@ sub run {
     my %seen;
     while(my $rowhash = $sth->fetchrow_hashref) {
         if (exists $seen{${$rowhash}{homology_id}}) {
-            print $HANDLE "<orthologGroup id=\"", ${$rowhash}{homology_id}, "\"><property name=\"homology_description\" value=\"", ${$rowhash}{description}, "\" /><geneRef id=\"", ${$rowhash}{peptide_member_id}, "\" /><geneRef id=\"", $seen{${$rowhash}{homology_id}}, "\" /></orthologGroup>\n";
+            print $HANDLE "<orthologGroup id=\"", ${$rowhash}{homology_id}, "\"><property name=\"homology_description\" value=\"", ${$rowhash}{description}, "\" /><geneRef id=\"", ${$rowhash}{seq_member_id}, "\" /><geneRef id=\"", $seen{${$rowhash}{homology_id}}, "\" /></orthologGroup>\n";
             delete $seen{${$rowhash}{homology_id}};
         } else {
-            $seen{${$rowhash}{homology_id}} = ${$rowhash}{peptide_member_id};
+            $seen{${$rowhash}{homology_id}} = ${$rowhash}{seq_member_id};
         }
     }
     

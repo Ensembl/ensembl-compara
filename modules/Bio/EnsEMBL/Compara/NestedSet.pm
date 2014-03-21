@@ -119,8 +119,7 @@ sub cast {
 sub copy {
   my $self = shift;
 
-  my $mycopy = $self->SUPER::copy; 
-  bless $mycopy, ref $self;
+  my $mycopy = $self->SUPER::copy(@_);
 
   $mycopy->distance_to_parent($self->distance_to_parent);
   $mycopy->left_index($self->left_index);

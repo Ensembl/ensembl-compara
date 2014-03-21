@@ -61,15 +61,15 @@ use Data::Dumper;
 
 use base ('Bio::EnsEMBL::Compara::DBSQL::BaseAdaptor');
 
-my $insert_member_base_sql = q/insert into member_xref(member_id,dbprimary_acc,external_db_id)/;
+my $insert_member_base_sql = q/insert into member_xref(gene_member_id,dbprimary_acc,external_db_id)/;
 
-my $insert_member_sql = $insert_member_base_sql. q/ select member_id,?,? from member where stable_id=? and source_name='ENSEMBLGENE'/;
+my $insert_member_sql = $insert_member_base_sql. q/ select gene_member_id,?,? from gene_member where stable_id=? and source_name='ENSEMBLGENE'/;
  
-my $get_member_id_sql = q/select member_id from member where stable_id=? and source_name='ENSEMBLGENE'/;
+my $get_member_id_sql = q/select gene_member_id from gene_member where stable_id=? and source_name='ENSEMBLGENE'/;
 
-my $delete_member_sql = q/delete mx.* from member_xref mx, member m, genome_db g
+my $delete_member_sql = q/delete mx.* from member_xref mx, gene_member m, genome_db g
 where g.name=? and mx.external_db_id=?
-and g.genome_db_id=m.genome_db_id and m.member_id=mx.member_id/;
+and g.genome_db_id=m.genome_db_id and m.gene_member_id=mx.gene_member_id/;
 
 my $base_get_sql = q/
 select distinct g.stable_id,x.dbprimary_acc
@@ -93,29 +93,29 @@ q/join CORE.gene g on (g.gene_id=ox.ensembl_id and ox.ensembl_object_type='Gene'
 my $get_associations_direct = q/
 select dbprimary_acc,count(*) as cnt from gene_tree_root r  
 join gene_tree_node n using (root_id)  
-join member m using (member_id)  
-join member_xref mg on (m.gene_member_id=mg.member_id)
+join seq_member m using (seq_member_id)  
+join member_xref mg on (m.gene_member_id=mg.gene_member_id)
 join external_db e using (external_db_id)  
 where r.root_id=? and e.db_name=?
 group by dbprimary_acc,db_name order by cnt desc, dbprimary_acc asc
 /;
 
 my $get_members_for_xref = q/
-select m.member_id from member_xref mg 
-join member m  on (m.member_id=mg.member_id) 
-join member mp on (mp.gene_member_id=m.member_id) 
-join gene_tree_node gn on (gn.member_id=mp.member_id) 
+select m.gene_member_id from member_xref mg 
+join gene_member m  on (m.gene_member_id=mg.gene_member_id) 
+join seq_member mp on (mp.gene_member_id=m.gene_member_id) 
+join gene_tree_node gn on (gn.seq_member_id=mp.seq_member_id) 
 join gene_tree_root r using (root_id) 
 join external_db e using (external_db_id)
 where mg.dbprimary_acc=? and e.db_name=? and r.root_id=?;
 /;
 
 my $get_member_xrefs_for_tree = q/
-select mg.dbprimary_acc as acc, mg.member_id 
+select mg.dbprimary_acc as acc, mg.gene_member_id 
 from gene_tree_root r 
 join gene_tree_node n using (root_id) 
-join member m on (m.member_id=n.member_id) 
-join member_xref mg on (m.gene_member_id=mg.member_id) 
+join seq_member m on (m.seq_member_id=n.seq_member_id) 
+join member_xref mg on (m.gene_member_id=mg.gene_member_id) 
 join external_db e using (external_db_id)
 where r.root_id=? and e.db_name=? order by acc
 /;
@@ -168,9 +168,9 @@ sub store_member_associations {
 	$self->dbc()->sql_helper()->execute_update(-SQL=>$delete_member_sql, -PARAMS=>[$dba->species(),$external_db_id]);
 	
 	while(my ($sid,$accs) = each %$member_acc_hash) {
-		my ($member_id) = @{$self->dbc()->sql_helper()->execute_simple(-SQL=>$get_member_id_sql, -PARAMS=>[$sid])};	
-		if(defined $member_id) {	
-			my @pars = map {"($member_id,\"$_\",$external_db_id)"} @$accs;	
+		my ($gene_member_id) = @{$self->dbc()->sql_helper()->execute_simple(-SQL=>$get_member_id_sql, -PARAMS=>[$sid])};	
+		if(defined $gene_member_id) {	
+			my @pars = map {"($gene_member_id,\"$_\",$external_db_id)"} @$accs;	
 			my $sql = $insert_member_base_sql . 'values' . join(',',@pars);
 			$self->dbc()->sql_helper()->execute_update(-SQL=>$sql, -PARAMS=>[]);
 		}

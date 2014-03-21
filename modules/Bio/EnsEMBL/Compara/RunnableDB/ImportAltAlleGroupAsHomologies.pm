@@ -82,11 +82,11 @@ sub fetch_or_store_gene {
     my $translate = shift;
 
     # Gene Member
-    my $gene_member = $self->param('gene_member_adaptor')->fetch_by_source_stable_id('ENSEMBLGENE', $gene->stable_id);
+    my $gene_member = $self->param('gene_member_adaptor')->fetch_by_stable_id($gene->stable_id);
     if (defined $gene_member) {
         if ($self->debug) {print "REUSE: $gene_member "; $gene_member->print_member();}
     } else {
-        $gene_member = Bio::EnsEMBL::Compara::GeneMember->new_from_gene(-gene=>$gene, -genome_db=>$self->param('genome_db'));
+        $gene_member = Bio::EnsEMBL::Compara::GeneMember->new_from_Gene(-gene=>$gene, -genome_db=>$self->param('genome_db'));
         $self->param('gene_member_adaptor')->store($gene_member) unless $self->param('dry_run');
         if ($self->debug) {print "NEW: $gene_member "; $gene_member->print_member();}
     }
@@ -97,10 +97,9 @@ sub fetch_or_store_gene {
         if ($self->debug) {print "REUSE: $trans_member"; $trans_member->print_member();}
     } else {
         my $transcript = $gene->canonical_transcript;
-        $trans_member = Bio::EnsEMBL::Compara::SeqMember->new_from_transcript(
+        $trans_member = Bio::EnsEMBL::Compara::SeqMember->new_from_Transcript(
                 -transcript     => $transcript,
                 -genome_db      => $self->param('genome_db'),
-                -description    => Bio::EnsEMBL::Compara::RunnableDB::LoadMembers::fasta_description(undef, $gene, $transcript),
                 -translate      => $translate,
                 );
         $trans_member->gene_member_id($gene_member->dbID);
@@ -124,7 +123,7 @@ sub run {
     die if scalar(@refs) > 1;
     my @canon_transcripts = map {$_->canonical_transcript} @genes;
 
-    my $translate = scalar(grep {not defined $_->translation} @canon_transcripts) ? 'ncrna' : 'yes';
+    my $translate = scalar(grep {not defined $_->translation} @canon_transcripts) ? 0 : 1;
 
     my @seq_members = map {$self->fetch_or_store_gene($_, $translate)} @genes;
     map {bless $_, 'Bio::EnsEMBL::Compara::AlignedMember'} @seq_members;

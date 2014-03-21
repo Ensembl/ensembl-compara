@@ -61,7 +61,7 @@ s --> genome short name ($tree->genome_db->get_short_name)
 i --> stable_id ($tree->gene_member->stable_id)
 p --> peptide Member ($tree->get_canonical_SeqMember->stable_id)
 x --> taxon_id ($tree->taxon_id)
-m --> member_id ($tree->member_id)
+m --> member_id ($tree->seq_member_id)
 o --> node_id ($self->node_id)
 S --> species_name ($tree->genome_db->name)
 

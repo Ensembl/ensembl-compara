@@ -106,12 +106,12 @@ foreach my $ortho_type (@A_ortholog_types) {
         $Q_chr_start = $member->dnafrag_start();
         $Q_chr_end = $member->dnafrag_end();
         $Q_chr_std = $member->dnafrag_strand();
-        $Q_chr_name = $member->chr_name();
+        $Q_chr_name = $member->dnafrag->name();
       } elsif ($genom eq $tg_species) {
         $T_chr_start = $member->dnafrag_start();
         $T_chr_end = $member->dnafrag_end();
         $T_chr_std = $member->dnafrag_strand();
-        $T_chr_name = $member->chr_name();
+        $T_chr_name = $member->dnafrag->name();
       } else {
         print STDERR "WARNING!! This genome is neither QUERY nor SPECIES!\n" ;
       }

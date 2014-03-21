@@ -749,7 +749,7 @@ CREATE TABLE constrained_element (
 
 /**
 @table sequence
-@desc  This table contains the protein sequences present in the member table used in the protein alignment part of the EnsEMBL Compara DB.
+@desc  This table contains the sequences of the seq_member entries
 @colour   #1E90FF
 
 @column sequence_id     Internal unique ID
@@ -768,86 +768,45 @@ CREATE TABLE sequence (
 
 
 /**
-@table member
+@table gene_member
 @desc  This table links sequences to the EnsEMBL core DB or to external DBs.
 @colour   #1E90FF
 
-@example   The following query refers to the human (ncbi_taxa_node.taxon_id = 9606 or genome_db_id = 90) peptide ENSP00000309431
-      @sql                          SELECT * FROM member WHERE stable_id = "ENSP00000309431";
+@example   The following query refers to the human (ncbi_taxa_node.taxon_id = 9606 or genome_db_id = 90) gene ENSG00000173213
+      @sql                          SELECT * FROM gene_member WHERE stable_id = "ENSG00000173213";
 
-@column member_id             Internal unique ID
-@column stable_id             EnsEMBL stable ID or external ID (for Uniprot/SWISSPROT and Uniprot/SPTREMBL)
+@column gene_member_id             Internal unique ID
+@column stable_id             EnsEMBL stable ID
 @column version               Version of the stable ID (see EnsEMBL core DB)
 @column source_name           The source of the member
 @column taxon_id              External reference to taxon_id in the @link ncbi_taxa_node table
 @column genome_db_id          External reference to genome_db_id in the @link genome_db table
-@column sequence_id           External reference to sequence_id in the @link sequence table. May be 0 when the sequence is not available in the @link sequence table, e.g. for a gene instance
-@column gene_member_id        External reference to member_id in the @link member to allow linkage from peptides and transcripts to genes
-@column canonical_member_id   External reference to member_id in the @link member table to allow linkage from a gene to its canonical peptide
+@column canonical_member_id   External reference to seq_member_id in the @link seq_member table to allow linkage from a gene to its canonical peptide
 @column description           The description of the gene/protein as described in the core database or from the Uniprot entry
-@column chr_name              Chromosome where this sequence is located
-@column chr_start             First nucleotide of this chromosome which corresponds to this member
-@column chr_end               Last nucleotide of this chromosome which corresponds to this member
-@column chr_strand                Strand of the chromosome in which the member is
-@column display_label         ???????????????
+@column dnafrag_id            External reference to dnafrag_id in the @link dnafrag table. It shows the dnafrag the member is on.
+@column dnafrag_start         Starting position within the dnafrag defined by dnafrag_id
+@column dnafrag_end           Ending position within the dnafrag defined by dnafrag_id
+@column dnafrag_strand        Strand in the dnafrag defined by dnafrag_id
+@column display_label         Display name (imported from the core database)
 
 @see sequence
 */
 
-CREATE TABLE member (
-  member_id                   int(10) unsigned NOT NULL AUTO_INCREMENT, # unique internal id
+CREATE TABLE gene_member (
+  gene_member_id              int(10) unsigned NOT NULL AUTO_INCREMENT, # unique internal id
   stable_id                   varchar(128) NOT NULL, # e.g. ENSP000001234 or P31946
   version                     int(10) DEFAULT 0,
-  source_name                 ENUM('ENSEMBLGENE','ENSEMBLPEP','Uniprot/SPTREMBL','Uniprot/SWISSPROT','ENSEMBLTRANS','EXTERNALCDS') NOT NULL,
+  source_name                 ENUM('ENSEMBLGENE', 'EXTERNALGENE') NOT NULL,
   taxon_id                    int(10) unsigned NOT NULL, # FK taxon.taxon_id
   genome_db_id                int(10) unsigned, # FK genome_db.genome_db_id
-  sequence_id                 int(10) unsigned, # FK sequence.sequence_id
-  gene_member_id              int(10) unsigned, # FK member.member_id
-  canonical_member_id         int(10) unsigned, # FK member.member_id
+  canonical_member_id         int(10) unsigned, # FK seq_member.seq_member_id
   description                 text DEFAULT NULL,
-  chr_name                    char(40),
-  chr_start                   int(10),
-  chr_end                     int(10),
-  chr_strand                  tinyint(1) NOT NULL,
+  dnafrag_id                  bigint unsigned, # FK dnafrag.dnafrag_id
+  dnafrag_start               int(10) unsigned,
+  dnafrag_end                 int(10) unsigned,
+  dnafrag_strand              tinyint(4),
   display_label               varchar(128) default NULL,
 
-  FOREIGN KEY (taxon_id) REFERENCES ncbi_taxa_node(taxon_id),
-  FOREIGN KEY (genome_db_id) REFERENCES genome_db(genome_db_id),
-  FOREIGN KEY (sequence_id) REFERENCES sequence(sequence_id),
-  FOREIGN KEY (gene_member_id) REFERENCES member(member_id),
-
-  PRIMARY KEY (member_id),
-  UNIQUE source_stable_id (stable_id, source_name),
-  KEY (stable_id),
-  KEY (source_name),
-  KEY (sequence_id),
-  KEY (gene_member_id),
-  KEY (canonical_member_id),
-  KEY gdb_name_start_end (genome_db_id,chr_name,chr_start,chr_end)
-) MAX_ROWS = 100000000 COLLATE=latin1_swedish_ci ENGINE=MyISAM;
-
-/**
-@table member_production_counts
-@desc  This table includes information about members for web fast-lookups
-@colour   #1E90FF
-
-@column stable_id             External reference to stable_id in the @link member table.
-@column families              If the member is part of a @link family
-@column gene_trees            If the member has a default gene tree in the @link gene_tree_root table
-@column gene_gain_loss_trees  If the member has a gene gain/loss tree in the @link CAFE_gene_family table
-@column orthologues           Number of orthologues in the @link homology and @link homology_member tables for this member
-@column paralogues            Number of paralogues in the @link homology and @link homology_member tables for this member
-@column homoeologues          Number of homoeologues in the @link homology and @link homology_member tables for this member
-
-@see family
-@see gene_tree_root
-@see CAFE_gene_family
-@see homology
-@see homology_member
-*/
-
-CREATE TABLE `member_production_counts` (
-  `stable_id`                varchar(128) NOT NULL,
   `families`                 tinyint(1) unsigned default 0,
   `gene_trees`               tinyint(1) unsigned default 0,
   `gene_gain_loss_trees`     tinyint(1) unsigned default 0,
@@ -855,8 +814,77 @@ CREATE TABLE `member_production_counts` (
   `paralogues`               int(10) unsigned default 0,
   `homoeologues`             int(10) unsigned default 0,
 
-  FOREIGN KEY (stable_id) REFERENCES member(stable_id)
-)COLLATE=latin1_swedish_ci ENGINE=MyISAM;
+
+  FOREIGN KEY (taxon_id) REFERENCES ncbi_taxa_node(taxon_id),
+  FOREIGN KEY (genome_db_id) REFERENCES genome_db(genome_db_id),
+  FOREIGN KEY (dnafrag_id) REFERENCES dnafrag(dnafrag_id),
+
+  PRIMARY KEY (gene_member_id),
+  UNIQUE (stable_id),
+  KEY (source_name),
+  KEY (canonical_member_id),
+  KEY dnafrag_id_start (dnafrag_id,dnafrag_start),
+  KEY dnafrag_id_end (dnafrag_id,dnafrag_end)
+) MAX_ROWS = 100000000 COLLATE=latin1_swedish_ci ENGINE=MyISAM;
+
+
+/**
+@table seq_member
+@desc  This table links sequences to the EnsEMBL core DB or to external DBs.
+@colour   #1E90FF
+
+@example   The following query refers to the human (ncbi_taxa_node.taxon_id = 9606 or genome_db_id = 90) peptide ENSP00000309431
+      @sql                          SELECT * FROM seq_member WHERE stable_id = "ENSP00000309431";
+
+@column seq_member_id             Internal unique ID
+@column stable_id             EnsEMBL stable ID or external ID (for Uniprot/SWISSPROT and Uniprot/SPTREMBL)
+@column version               Version of the stable ID (see EnsEMBL core DB)
+@column source_name           The source of the member
+@column taxon_id              External reference to taxon_id in the @link ncbi_taxa_node table
+@column genome_db_id          External reference to genome_db_id in the @link genome_db table
+@column sequence_id           External reference to sequence_id in the @link sequence table. May be 0 when the sequence is not available in the @link sequence table, e.g. for a gene instance
+@column gene_member_id        External reference to gene_member_id in the @link gene_member table to allow linkage from peptides and transcripts to genes
+@column description           The description of the gene/protein as described in the core database or from the Uniprot entry
+@column dnafrag_id            External reference to dnafrag_id in the @link dnafrag table. It shows the dnafrag the member is on.
+@column dnafrag_start         Starting position within the dnafrag defined by dnafrag_id
+@column dnafrag_end           Ending position within the dnafrag defined by dnafrag_id
+@column dnafrag_strand        Strand in the dnafrag defined by dnafrag_id
+@column display_label         Display name (imported from the core database)
+
+@see sequence
+*/
+
+CREATE TABLE seq_member (
+  seq_member_id               int(10) unsigned NOT NULL AUTO_INCREMENT, # unique internal id
+  stable_id                   varchar(128) NOT NULL, # e.g. ENSP000001234 or P31946
+  version                     int(10) DEFAULT 0,
+  source_name                 ENUM('ENSEMBLPEP','ENSEMBLTRANS','Uniprot/SPTREMBL','Uniprot/SWISSPROT','EXTERNALPEP','EXTERNALTRANS','EXTERNALCDS') NOT NULL,
+  taxon_id                    int(10) unsigned NOT NULL, # FK taxon.taxon_id
+  genome_db_id                int(10) unsigned, # FK genome_db.genome_db_id
+  sequence_id                 int(10) unsigned, # FK sequence.sequence_id
+  gene_member_id              int(10) unsigned, # FK gene_member.gene_member_id
+  description                 text DEFAULT NULL,
+  dnafrag_id                  bigint unsigned, # FK dnafrag.dnafrag_id
+  dnafrag_start               int(10) unsigned,
+  dnafrag_end                 int(10) unsigned,
+  dnafrag_strand              tinyint(4),
+  display_label               varchar(128) default NULL,
+
+  FOREIGN KEY (taxon_id) REFERENCES ncbi_taxa_node(taxon_id),
+  FOREIGN KEY (genome_db_id) REFERENCES genome_db(genome_db_id),
+  FOREIGN KEY (sequence_id) REFERENCES sequence(sequence_id),
+  FOREIGN KEY (gene_member_id) REFERENCES gene_member(gene_member_id),
+  FOREIGN KEY (dnafrag_id) REFERENCES dnafrag(dnafrag_id),
+
+  PRIMARY KEY (seq_member_id),
+  UNIQUE (stable_id),
+  KEY (source_name),
+  KEY (sequence_id),
+  KEY (gene_member_id),
+  KEY dnafrag_id_start (dnafrag_id,dnafrag_start),
+  KEY dnafrag_id_end (dnafrag_id,dnafrag_end)
+) MAX_ROWS = 100000000 COLLATE=latin1_swedish_ci ENGINE=MyISAM;
+
 
 
 /**
@@ -878,6 +906,12 @@ CREATE TABLE `member_production_counts` (
 @see member_xref
 */
 
+#
+
+#
+# Table structure for table 'external_db'
+#
+
 CREATE TABLE `external_db` (
   `external_db_id` int(10) unsigned NOT NULL AUTO_INCREMENT,
   `db_name` varchar(100) NOT NULL,
@@ -895,10 +929,10 @@ CREATE TABLE `external_db` (
 
 /**
 @table member_xref
-@desc  This table stores cross-references for member sequences derived from the core databases. It is used by Bio::EnsEMBL::Compara::DBSQL::XrefMemberAdaptor and provides the data used in highlighting gene trees by GO and InterPro annotation" 
+@desc  This table stores cross-references for gene members derived from the core databases. It is used by Bio::EnsEMBL::Compara::DBSQL::XrefMemberAdaptor and provides the data used in highlighting gene trees by GO and InterPro annotation" 
 @colour   #1E90FF
 
-@column member_id        External reference to member_id in the @link member table. Indicates the member to which the xref applies.
+@column gene_member_id   External reference to gene_member_id in the @link gene_member table. Indicates the gene to which the xref applies.
 @column dbprimary_acc    Accession of xref (e.g. GO term, InterPro accession)
 @column external_db_id   External reference to external_db_id in the @link external_db table. Indicates to which external database the xref belongs.
 
@@ -906,11 +940,11 @@ CREATE TABLE `external_db` (
 */
 
 CREATE TABLE `member_xref` (
-  `member_id` int(10) unsigned NOT NULL,
+  `gene_member_id` int(10) unsigned NOT NULL,
   `dbprimary_acc` varchar(10) NOT NULL,
   `external_db_id` int(10) unsigned NOT NULL,
-  PRIMARY KEY (`member_id`,`dbprimary_acc`,`external_db_id`),
-  FOREIGN KEY (member_id) REFERENCES member(member_id),
+  PRIMARY KEY (`gene_member_id`,`dbprimary_acc`,`external_db_id`),
+  FOREIGN KEY (gene_member_id) REFERENCES gene_member(gene_member_id),
   FOREIGN KEY (external_db_id) REFERENCES external_db(external_db_id)
 ) COLLATE=latin1_swedish_ci ENGINE=MyISAM;
 
@@ -920,24 +954,24 @@ CREATE TABLE `member_xref` (
 @desc  This table includes alternative sequences for Member, like sequences with flanking regions
 @colour   #1E90FF
 
-@column member_id               External reference to member_id in the @link member table
+@column seq_member_id           External reference to seq_member_id in the @link seq_member table
 @column seq_type                A short description of this alternative sequence
 @column length                  The length of this sequence
 @column sequence                The actual sequence
 
-@see member
+@see seq_member
 @see sequence 
 */
 
 CREATE TABLE other_member_sequence (
-  member_id                   int(10) unsigned NOT NULL, # unique internal id
+  seq_member_id                   int(10) unsigned NOT NULL, # unique internal id
   seq_type                    VARCHAR(40) NOT NULL,
   length                      int(10) NOT NULL,
   sequence                    mediumtext NOT NULL,
 
-  FOREIGN KEY (member_id) REFERENCES member(member_id),
+  FOREIGN KEY (seq_member_id) REFERENCES seq_member(seq_member_id),
 
-  PRIMARY KEY (member_id, seq_type)
+  PRIMARY KEY (seq_member_id, seq_type)
 
 ) MAX_ROWS = 10000000 AVG_ROW_LENGTH = 60000 COLLATE=latin1_swedish_ci ENGINE=MyISAM;
 
@@ -949,12 +983,12 @@ CREATE TABLE other_member_sequence (
 @example    Example of peptide_align_feature entry:
      @sql                              SELECT * FROM peptide_align_feature_90 WHERE peptide_align_feature_id = 9000000001;
 @example    The following query corresponds to a particular hit found between a Homo sapiens protein and a Anolis carolinensis protein:
-     @sql                              SELECT g1.name as qgenome, m1.stable_id as qstable_id, g2.name as hgenome, m2.stable_id as hstable_id, score, evalue FROM peptide_align_feature_90 LEFT JOIN member m1 ON (qmember_id = m1.member_id) LEFT JOIN member m2 ON (hmember_id = m2.member_id) LEFT JOIN genome_db g1 ON (qgenome_db_id = g1.genome_db_id) LEFT JOIN genome_db g2 ON (hgenome_db_id = g2.genome_db_id) WHERE peptide_align_feature_id = 9000000001;
+     @sql                              SELECT g1.name as qgenome, m1.stable_id as qstable_id, g2.name as hgenome, m2.stable_id as hstable_id, score, evalue FROM peptide_align_feature_90 LEFT JOIN seq_member m1 ON (qmember_id = m1.seq_member_id) LEFT JOIN seq_member m2 ON (hmember_id = m2.seq_member_id) LEFT JOIN genome_db g1 ON (qgenome_db_id = g1.genome_db_id) LEFT JOIN genome_db g2 ON (hgenome_db_id = g2.genome_db_id) WHERE peptide_align_feature_id = 9000000001;
 
 
 @column peptide_align_feature_id  Internal unique ID
-@column qmember_id                External reference to member_id in the @link member table for the query peptide
-@column hmember_id                External reference to member_id in the @link member table for the hit peptide
+@column qmember_id                External reference to seq_member_id in the @link seq_member table for the query peptide
+@column hmember_id                External reference to seq_member_id in the @link seq_member table for the hit peptide
 @column qgenome_db_id             External reference to genome_db_id in the @link genome_db table for the query peptide (for query optimization)
 @column hgenome_db_id             External reference to genome_db_id in the @link genome_db table for the hit peptide (for query optimization)
 @column qstart                    Starting position in the query peptide sequence
@@ -971,15 +1005,15 @@ CREATE TABLE other_member_sequence (
 @column hit_rank                  Rank in blast result
 @column cigar_line                Cigar string coding the actual alignment
 
-@see member
+@see seq_member
 @see genome_db
 */
 
 CREATE TABLE peptide_align_feature (
 
   peptide_align_feature_id    bigint  unsigned NOT NULL AUTO_INCREMENT, # unique internal id
-  qmember_id                  int(10) unsigned NOT NULL, # FK member.member_id
-  hmember_id                  int(10) unsigned NOT NULL, # FK member.member_id
+  qmember_id                  int(10) unsigned NOT NULL, # FK seq_member.seq_member_id
+  hmember_id                  int(10) unsigned NOT NULL, # FK seq_member.seq_member_id
   qgenome_db_id               int(10) unsigned NOT NULL, # FK genome.genome_id
   hgenome_db_id               int(10) unsigned NOT NULL, # FK genome.genome_id
   qstart                      int(10) DEFAULT 0 NOT NULL,
@@ -996,8 +1030,8 @@ CREATE TABLE peptide_align_feature (
   hit_rank                    int(10),
   cigar_line                  mediumtext,
 
-#  FOREIGN KEY (qmember_id) REFERENCES member(member_id),
-#  FOREIGN KEY (hmember_id) REFERENCES member(member_id),
+#  FOREIGN KEY (qmember_id) REFERENCES seq_member(seq_member_id),
+#  FOREIGN KEY (hmember_id) REFERENCES seq_member(seq_member_id),
 #  FOREIGN KEY (qgenome_db_id) REFERENCES genome_db(genome_db_id),
 #  FOREIGN KEY (hgenome_db_id) REFERENCES genome_db(genome_db_id),
 
@@ -1054,24 +1088,24 @@ CREATE TABLE family (
     @sql                   SELECT * FROM family_member WHERE family_id = 29739;
 
 @column family_id      External reference to family_id in the @link family table
-@column member_id      External reference to the member_id in the @link member table
+@column seq_member_id  External reference to the seq_member_id in the @link seq_member table
 @column cigar_line     Internal description of the multiple alignment (see the description in the @link homology_member table)
 
 @see family
-@see member
+@see seq_member
 */
 
 CREATE TABLE family_member (
   family_id                   int(10) unsigned NOT NULL, # FK family.family_id
-  member_id                   int(10) unsigned NOT NULL, # FK member.memeber_id
+  seq_member_id               int(10) unsigned NOT NULL, # FK seq_member.seq_member_id
   cigar_line                  mediumtext,
 
   FOREIGN KEY (family_id) REFERENCES family(family_id),
-  FOREIGN KEY (member_id) REFERENCES member(member_id),
+  FOREIGN KEY (seq_member_id) REFERENCES seq_member(seq_member_id),
 
-  PRIMARY KEY family_member_id (family_id,member_id),
+  PRIMARY KEY family_seq_member_id (family_id,seq_member_id),
   KEY (family_id),
-  KEY (member_id)
+  KEY (seq_member_id)
 
 ) COLLATE=latin1_swedish_ci ENGINE=MyISAM;
 
@@ -1087,7 +1121,7 @@ CREATE TABLE family_member (
 @column aln_method             The alignment method used
 @column aln_length             The total length of the alignment
 
-@see member
+@see seq_member
 @see gene_align_member
 */
 CREATE TABLE gene_align (
@@ -1107,22 +1141,22 @@ CREATE TABLE gene_align (
 @colour   #1E90FF
 
 @column gene_align_id      External reference to gene_align_id in the @link gene_align table
-@column member_id          External reference to member_id in the @link member table in many-to-1 relation (single member per node)
+@column seq_member_id          External reference to seq_member_id in the @link seq_member table in many-to-1 relation (single member per node)
 @column cigar_line         String with the alignment score values
 
-@see member
+@see seq_member
 @see gene_align
 */
 CREATE TABLE gene_align_member (
        gene_align_id         int(10) unsigned NOT NULL,
-       member_id             int(10) unsigned NOT NULL,
+       seq_member_id         int(10) unsigned NOT NULL,
        cigar_line            mediumtext,
 
   FOREIGN KEY (gene_align_id) REFERENCES gene_align(gene_align_id),
-  FOREIGN KEY (member_id) REFERENCES member(member_id),
+  FOREIGN KEY (seq_member_id) REFERENCES seq_member(seq_member_id),
 
-  PRIMARY KEY (gene_align_id,member_id),
-  KEY member_id (member_id)
+  PRIMARY KEY (gene_align_id,seq_member_id),
+  KEY seq_member_id (seq_member_id)
 
 ) COLLATE=latin1_swedish_ci ENGINE=MyISAM;
 
@@ -1141,9 +1175,9 @@ CREATE TABLE gene_align_member (
 @column left_index             Internal index. See above
 @column right_index            Internal index. See above
 @column distance_to_parent     Phylogenetic distance between this node and its parent
-@column member_id              External reference to member_id in the @link member table to allow linkage from trees to peptides/transcripts.
+@column seq_member_id          External reference to seq_member_id in the @link seq_member table to allow linkage from trees to peptides/transcripts.
 @see gene_tree_root
-@see member
+@see seq_member
 @see gene_tree_node_attr
 @see gene_tree_node_tag
 */
@@ -1155,15 +1189,15 @@ CREATE TABLE gene_tree_node (
   left_index                      int(10) NOT NULL DEFAULT 0,
   right_index                     int(10) NOT NULL DEFAULT 0,
   distance_to_parent              double default 1.0 NOT NULL,
-  member_id                       int(10) unsigned,
+  seq_member_id                   int(10) unsigned,
 
   FOREIGN KEY (root_id) REFERENCES gene_tree_node(node_id),
   FOREIGN KEY (parent_id) REFERENCES gene_tree_node(node_id),
-  FOREIGN KEY (member_id) REFERENCES member(member_id),
+  FOREIGN KEY (seq_member_id) REFERENCES seq_member(seq_member_id),
 
   PRIMARY KEY (node_id),
   KEY parent_id (parent_id),
-  KEY member_id (member_id),
+  KEY seq_member_id (seq_member_id),
   KEY root_id (root_id),
   KEY root_id_left_index (root_id,left_index)
 
@@ -1192,7 +1226,7 @@ CREATE TABLE gene_tree_node (
 
 @see gene_tree_node
 @see gene_tree_root_tag
-@see member
+@see seq_member
 @see method_link_species_set
 @see gene_align
 */
@@ -1514,34 +1548,35 @@ The alignment will be:<br />
     @sql    SELECT homology_member.* FROM homology_member JOIN homology USING (homology_id) JOIN method_link_species_set USING (method_link_species_set_id) WHERE name="X.tro paralogues" LIMIT 2;
 
 @column homology_id        External reference to homology_id in the @link homology table
-@column member_id          External reference to member_id in the @link member table. Refers to the corresponding "ENSMBLGENE" entry
-@column peptide_member_id  External reference to member_id in the @link member table. Refers to the corresponding "ENSEMBLPEP" entry
-@column cigar_line         An internal description of the alignment. It contains mathces/mismatches (M) and delations (D) and refers to the corresponding peptide_member_id sequence
+@column gene_member_id     External reference to gene_member_id in the @link gene_member table. Refers to the corresponding "ENSMBLGENE" entry
+@column seq_member_id      External reference to seq_member_id in the @link seq_member table. Refers to the corresponding "ENSEMBLPEP" entry
+@column cigar_line         An internal description of the alignment. It contains mathces/mismatches (M) and delations (D) and refers to the corresponding seq_member_id sequence
 @column perc_cov           Defines the percentage of the peptide which has been aligned
 @column perc_id            Defines the percentage of identity between both homologues
 @column perc_pos           Defines the percentage of positivity (similarity) between both homologues
 
-@see member
+@see gene_member
+@see seq_member
 @see homology
 */
 
 CREATE TABLE homology_member (
   homology_id                 int(10) unsigned NOT NULL, # FK homology.homology_id
-  member_id                   int(10) unsigned NOT NULL, # FK member.member_id
-  peptide_member_id           int(10) unsigned, # FK member.member_id
+  gene_member_id              int(10) unsigned NOT NULL, # FK gene_member.gene_member_id
+  seq_member_id               int(10) unsigned, # FK seq_member.seq_member_id
   cigar_line                  mediumtext,
   perc_cov                    tinyint unsigned default 0,
   perc_id                     tinyint unsigned default 0,
   perc_pos                    tinyint unsigned default 0,
 
   FOREIGN KEY (homology_id) REFERENCES homology(homology_id),
-  FOREIGN KEY (member_id) REFERENCES member(member_id),
-  FOREIGN KEY (peptide_member_id) REFERENCES member(member_id),
+  FOREIGN KEY (gene_member_id) REFERENCES gene_member(gene_member_id),
+  FOREIGN KEY (seq_member_id) REFERENCES seq_member(seq_member_id),
 
-  PRIMARY KEY homology_member_id (homology_id,member_id),
+  PRIMARY KEY homology_member_id (homology_id,gene_member_id),
   KEY (homology_id),
-  KEY (member_id),
-  KEY (peptide_member_id)
+  KEY (gene_member_id),
+  KEY (seq_member_id)
 ) MAX_ROWS = 300000000 COLLATE=latin1_swedish_ci ENGINE=MyISAM;
 
 /**
@@ -1664,4 +1699,6 @@ INSERT INTO meta (species_id, meta_key, meta_value)
   VALUES (NULL, 'patch', 'patch_75_76_b.sql|drop_domain_sitewise');
 INSERT INTO meta (species_id, meta_key, meta_value)
   VALUES (NULL, 'patch', 'patch_75_76_c.sql|homoeologues');
+INSERT INTO meta (species_id, meta_key, meta_value)
+  VALUES (NULL, 'patch', 'patch_75_76_d.sql|gene_member_seq_member');
 

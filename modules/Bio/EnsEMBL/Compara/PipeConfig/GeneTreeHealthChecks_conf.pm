@@ -61,8 +61,6 @@ sub default_options {
 
         'hc_capacity'           =>   4,
 
-        'hc_member_type'        => 'ENSEMBLPEP',
-
         # connection parameters to various databases:
 
         'pipeline_db' => {                      # the production database itself (will be created)
@@ -147,7 +145,6 @@ sub pipeline_analyses {
             -module             => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::SqlHealthChecks',
             -parameters         => {
                 mode            => 'members_per_genome',
-                hc_member_type  => $self->o('hc_member_type'),
             },
             -analysis_capacity  => $self->o('hc_capacity'),
             -priority           => $self->o('hc_priority'),

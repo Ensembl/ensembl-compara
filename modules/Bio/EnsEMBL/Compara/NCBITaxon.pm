@@ -65,12 +65,7 @@ our @ISA = qw(Bio::EnsEMBL::Compara::NestedSet);
 
 =head2 copy
 
-  Arg [1]    : int $member_id (optional)
-  Example    :
   Description: returns copy of object, calling superclass copy method
-  Returntype :
-  Exceptions :
-  Caller     :
 
 =cut
 
@@ -78,7 +73,6 @@ sub copy {
   my $self = shift;
   
   my $mycopy = $self->SUPER::copy;
-  bless $mycopy, "Bio::EnsEMBL::Compara::NCBITaxon";
   
   $mycopy->ncbi_taxid($self->ncbi_taxid);
   $mycopy->rank($self->rank);

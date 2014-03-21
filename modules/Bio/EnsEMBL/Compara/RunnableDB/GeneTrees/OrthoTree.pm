@@ -335,8 +335,8 @@ sub display_link_analysis
   my ($gene1, $gene2) = $genepairlink->get_nodes;
   my $ancestor = $genepairlink->get_tagvalue('ancestor');
   printf("%21s(%7d) - %21s(%7d) : %10.3f dist : ",
-    $gene1->gene_member->stable_id, $gene1->gene_member->member_id,
-    $gene2->gene_member->stable_id, $gene2->gene_member->member_id,
+    $gene1->gene_member->stable_id, $gene1->gene_member_id,
+    $gene2->gene_member->stable_id, $gene2->gene_member_id,
     $genepairlink->distance_between);
 
   printf("%5s ", "");
@@ -482,8 +482,8 @@ sub tag_genepairlink
     if ($orthotree_type =~ /ortholog/) {
         my ($pep1, $pep2) = $genepairlink->get_nodes;
         my $has_match = $self->param('has_match');
-        $has_match->{$pep1->member_id}->{$pep2->genome_db_id} = $genepairlink;
-        $has_match->{$pep2->member_id}->{$pep1->genome_db_id} = $genepairlink;
+        $has_match->{$pep1->seq_member_id}->{$pep2->genome_db_id} = $genepairlink;
+        $has_match->{$pep2->seq_member_id}->{$pep1->genome_db_id} = $genepairlink;
     }
 
     $self->param('orthotree_homology_counts')->{$orthotree_type}++;
@@ -523,7 +523,7 @@ sub is_level3_orthologues
     my $has_match = $self->param('has_match');
     my ($pep1, $pep2) = $genepairlink->get_nodes;
 
-    return (not $has_match->{$pep1->member_id}->{$pep2->genome_db_id} and not $has_match->{$pep2->member_id}->{$pep1->genome_db_id});
+    return (not $has_match->{$pep1->seq_member_id}->{$pep2->genome_db_id} and not $has_match->{$pep2->seq_member_id}->{$pep1->genome_db_id});
 }
 
 sub is_level4_orthologues
@@ -534,11 +534,11 @@ sub is_level4_orthologues
     my $has_match = $self->param('has_match');
     my ($pep1, $pep2) = $genepairlink->get_nodes;
 
-    return undef if $has_match->{$pep1->member_id}->{$pep2->genome_db_id} and $has_match->{$pep2->member_id}->{$pep1->genome_db_id};
+    return undef if $has_match->{$pep1->seq_member_id}->{$pep2->genome_db_id} and $has_match->{$pep2->seq_member_id}->{$pep1->genome_db_id};
     
     my $dcs = $genepairlink->get_tagvalue('ancestor')->get_tagvalue('duplication_confidence_score');
     return undef unless $dcs < $self->param('no_between');
-    return $has_match->{$pep1->member_id}->{$pep2->genome_db_id} || $has_match->{$pep2->member_id}->{$pep1->genome_db_id};
+    return $has_match->{$pep1->seq_member_id}->{$pep2->genome_db_id} || $has_match->{$pep2->seq_member_id}->{$pep1->genome_db_id};
 }
 
 
@@ -658,8 +658,8 @@ sub check_homology_consistency {
         next if $count == 1;
         next if $count == 2 and exists $self->param('homology_consistency')->{$mlss_member_id}->{gene_split} and exists $self->param('homology_consistency')->{$mlss_member_id}->{within_species_paralog};
 
-        my ($mlss, $member_id) = split("_", $mlss_member_id);
-        $bad_key = "mlss member_id : $mlss $member_id";
+        my ($mlss, $seq_member_id) = split("_", $mlss_member_id);
+        $bad_key = "mlss seq_member_id : $mlss $seq_member_id";
         print "$bad_key\n" if ($self->debug);
     }
     $self->throw("Inconsistent homologies: $bad_key") if defined $bad_key;

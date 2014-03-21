@@ -138,7 +138,7 @@ sub default_options {
         #'hmmer_path'                => '/software/ensembl/compara/hmmer-2.3.2/src/',
 
     # hive_capacity values for some analyses:
-        #'reuse_capacity'            =>   4,
+        #'reuse_capacity'            =>   3,
         #'blast_factory_capacity'    =>  50,
         #'blastp_capacity'           => 900,
         #'mcoffee_capacity'          => 600,
@@ -491,8 +491,6 @@ sub pipeline_analyses {
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::SqlCmd',
             -parameters => {
                 'sql' => [
-                    # Non species-set related query. Speeds up the split-genes search
-                    'ALTER TABLE member ADD KEY gene_list_index (source_name, taxon_id, chr_name, chr_strand, chr_start)',
                     # Counts the number of species
                     'INSERT INTO meta (meta_key,meta_value) SELECT "species_count", COUNT(*) FROM genome_db',
                     # Whether all the species are reused
@@ -541,24 +539,52 @@ sub pipeline_analyses {
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
             -parameters => {
                             'db_conn'    => '#reuse_db#',
-                            'inputquery' => 'SELECT s.* FROM sequence s JOIN member USING (sequence_id) WHERE sequence_id<='.$self->o('protein_members_range').' AND genome_db_id = #genome_db_id#',
+                            'inputquery' => 'SELECT s.* FROM sequence s JOIN seq_member USING (sequence_id) WHERE sequence_id<='.$self->o('protein_members_range').' AND genome_db_id = #genome_db_id#',
                             'fan_branch_code' => 2,
             },
             -hive_capacity => $self->o('reuse_capacity'),
             -rc_name => '500Mb_job',
             -flow_into => {
                 2 => [ ':////sequence' ],
-                1 => [ 'member_table_reuse' ],
+                1 => [ 'dnafrag_table_reuse' ],
             },
         },
 
-        {   -logic_name => 'member_table_reuse',
+        {   -logic_name => 'dnafrag_table_reuse',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::MySQLTransfer',
             -parameters => {
                 'src_db_conn'   => '#reuse_db#',
-                'table'         => 'member',
-                'where'         => 'member_id<='.$self->o('protein_members_range').' AND genome_db_id = #genome_db_id#',
-                'mode'          => 'insertignore',
+                'table'         => 'dnafrag',
+                'where'         => 'genome_db_id = #genome_db_id#',
+                'mode'          => 'topup',
+            },
+            -hive_capacity => $self->o('reuse_capacity'),
+            -flow_into => {
+                1 => [ 'seq_member_table_reuse' ],
+            },
+        },
+
+        {   -logic_name => 'seq_member_table_reuse',
+            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::MySQLTransfer',
+            -parameters => {
+                'src_db_conn'   => '#reuse_db#',
+                'table'         => 'seq_member',
+                'where'         => 'seq_member_id<='.$self->o('protein_members_range').' AND genome_db_id = #genome_db_id#',
+                'mode'          => 'topup',
+            },
+            -hive_capacity => $self->o('reuse_capacity'),
+            -flow_into => {
+                1 => [ 'gene_member_table_reuse' ],
+            },
+        },
+
+        {   -logic_name => 'gene_member_table_reuse',
+            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::MySQLTransfer',
+            -parameters => {
+                'src_db_conn'   => '#reuse_db#',
+                'table'         => 'gene_member',
+                'where'         => 'gene_member_id<='.$self->o('protein_members_range').' AND genome_db_id = #genome_db_id#',
+                'mode'          => 'topup',
             },
             -hive_capacity => $self->o('reuse_capacity'),
             -flow_into => {
@@ -570,7 +596,7 @@ sub pipeline_analyses {
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
             -parameters => {
                             'db_conn'    => '#reuse_db#',
-                            'inputquery' => 'SELECT s.member_id, s.seq_type, s.length, s.sequence FROM other_member_sequence s JOIN member USING (member_id) WHERE genome_db_id = #genome_db_id# AND seq_type IN ("cds", "exon_bounded") AND member_id <= '.$self->o('protein_members_range'),
+                            'inputquery' => 'SELECT s.seq_member_id, s.seq_type, s.length, s.sequence FROM other_member_sequence s JOIN seq_member USING (seq_member_id) WHERE genome_db_id = #genome_db_id# AND seq_type IN ("cds", "exon_bounded") AND seq_member_id <= '.$self->o('protein_members_range'),
                             'fan_branch_code' => 2,
             },
             -hive_capacity => $self->o('reuse_capacity'),
@@ -585,7 +611,6 @@ sub pipeline_analyses {
             -module             => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::SqlHealthChecks',
             -parameters         => {
                 mode            => 'members_per_genome',
-                hc_member_type  => 'ENSEMBLPEP',
                 allow_ambiguity_codes => $self->o('allow_ambiguity_codes'),
             },
             %hc_analysis_params,
@@ -610,13 +635,37 @@ sub pipeline_analyses {
         {   -logic_name => 'is_genome_in_db',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ConditionalDataFlow',
             -parameters    => {
-                'condition'     => '#locator# =~ /^Bio::EnsEMBL::DBSQL::DBAdaptor/',
+                'condition'     => '"#locator#" =~ /^Bio::EnsEMBL::DBSQL::DBAdaptor/',
             },
             -flow_into => {
-                2 => [ 'load_fresh_members_from_db' ],
+                2 => [ 'is_there_master_db' ],
                 3 => [ 'load_fresh_members_from_file' ],
             },
             -meadow_type    => 'LOCAL',
+        },
+
+        {   -logic_name => 'is_there_master_db',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ConditionalDataFlow',
+            -parameters    => {
+                'condition'     => '$self->param_is_defined("master_db")',
+            },
+            -flow_into => {
+                2 => [ 'copy_dnafrags_from_master' ],
+                3 => { 'load_fresh_members_from_db' => { 'genome_db_id' => '#genome_db_id#', 'store_missing_dnafrags' => 1} },
+            },
+            -meadow_type    => 'LOCAL',
+        },
+
+        {   -logic_name => 'copy_dnafrags_from_master',
+            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::MySQLTransfer',
+            -parameters => {
+                'src_db_conn'   => '#master_db#',
+                'table'         => 'dnafrag',
+                'where'         => 'genome_db_id = #genome_db_id#',
+                'mode'          => 'topup',
+            },
+            -hive_capacity => $self->o('reuse_capacity'),
+            -flow_into => [ 'load_fresh_members_from_db' ],
         },
 
         {   -logic_name => 'load_fresh_members_from_db',
@@ -625,6 +674,7 @@ sub pipeline_analyses {
                 'store_related_pep_sequences' => 1,
                 'allow_pyrrolysine'             => $self->o('allow_pyrrolysine'),
                 'find_canonical_translations_for_polymorphic_pseudogene' => 1,
+		    'store_missing_dnafrags'		=> 0,
             },
             -rc_name => '2Gb_job',
             -flow_into => [ 'hc_members_per_genome' ],
@@ -986,7 +1036,7 @@ sub pipeline_analyses {
         {   -logic_name    => 'clusterset_backup',
             -module        => 'Bio::EnsEMBL::Hive::RunnableDB::SqlCmd',
             -parameters    => {
-                'sql'         => 'INSERT INTO gene_tree_backup (member_id, root_id) SELECT member_id, root_id FROM gene_tree_node WHERE member_id IS NOT NULL',
+                'sql'         => 'INSERT INTO gene_tree_backup (seq_member_id, root_id) SELECT seq_member_id, root_id FROM gene_tree_node WHERE seq_member_id IS NOT NULL',
             },
             -analysis_capacity => 1,
             -meadow_type    => 'LOCAL',
@@ -1286,7 +1336,7 @@ sub pipeline_analyses {
         {   -logic_name    => 'tree_backup',
             -module        => 'Bio::EnsEMBL::Hive::RunnableDB::SqlCmd',
             -parameters    => {
-                'sql'         => 'INSERT INTO gene_tree_backup (member_id, root_id) SELECT member_id, root_id FROM gene_tree_node WHERE member_id IS NOT NULL AND root_id = #gene_tree_id#',
+                'sql'         => 'INSERT INTO gene_tree_backup (seq_member_id, root_id) SELECT seq_member_id, root_id FROM gene_tree_node WHERE seq_member_id IS NOT NULL AND root_id = #gene_tree_id#',
             },
             -analysis_capacity => 1,
             -meadow_type    => 'LOCAL',

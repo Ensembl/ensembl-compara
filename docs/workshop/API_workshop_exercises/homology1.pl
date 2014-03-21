@@ -28,7 +28,7 @@ my $gene_member_adaptor = $reg->get_adaptor("Multi", "compara", "GeneMember");
 my $homology_adaptor = $reg->get_adaptor("Multi", "compara", "Homology");
 
 ## Get the compara member
-my $gene_member = $gene_member_adaptor->fetch_by_source_stable_id("ENSEMBLGENE", "ENSG00000229314");
+my $gene_member = $gene_member_adaptor->fetch_by_stable_id("ENSG00000229314");
 
 ## Get all the homologues in mouse
 my $all_homologies = $homology_adaptor->fetch_all_by_Member($gene_member);

@@ -364,9 +364,9 @@ sub get_description {
   while(length($header)<17) { $header .= ' '; }
 
   my $qmem = sprintf("%s(%d,%d)(%s:%d)",
-        $qm->stable_id, $self->qstart, $self->qend, $qm->chr_name, $qm->dnafrag_start);
+        $qm->stable_id, $self->qstart, $self->qend, $qm->dnafrag->name, $qm->dnafrag_start);
   my $hmem = sprintf("%s(%d,%d)(%s:%d)",
-        $hm->stable_id, $self->hstart, $self->hend, $hm->chr_name, $hm->dnafrag_start);
+        $hm->stable_id, $self->hstart, $self->hend, $hm->dnafrag->name, $hm->dnafrag_start);
   while(length($qmem)<50) { $qmem .= ' '; }
   while(length($hmem)<50) { $hmem .= ' '; }
 

@@ -72,19 +72,19 @@ sub write_output {
 
 
     #Fetch members for genome_db_id
-    my $sql = 'SELECT member_id FROM member WHERE genome_db_id = ? ORDER BY member_id';
+    my $sql = 'SELECT seq_member_id FROM seq_member WHERE genome_db_id = ? ORDER BY seq_member_id';
     my $sth = $self->compara_dba->dbc->prepare( $sql );
     $sth->execute($self->param('genome_db_id'));
     
-    my $member_id_list;
-    while( my ($member_id) = $sth->fetchrow() ) {
-	push @$member_id_list, $member_id;
+    my $seq_member_id_list;
+    while( my ($seq_member_id) = $sth->fetchrow() ) {
+	push @$seq_member_id_list, $seq_member_id;
     }
 
     my $step = $self->param('step');
 
-    while (@$member_id_list) {
-        my @job_array = splice(@$member_id_list, 0, $step);
+    while (@$seq_member_id_list) {
+        my @job_array = splice(@$seq_member_id_list, 0, $step);
         my $output_id = {'genome_db_id' => $self->param('genome_db_id'), 'start_member_id' => $job_array[0], 'end_member_id' => $job_array[-1] };
         $self->dataflow_output_id($output_id, 2);
     }

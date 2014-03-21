@@ -261,7 +261,7 @@ sub load_cigars_from_file {
     foreach my $member (@{$self->get_all_Members}) {
         $member->cigar_line(undef);
         $member->sequence(undef) if $import_seq;
-        $member_hash{$member->member_id} = $member;
+        $member_hash{$member->seq_member_id} = $member;
     }
 
     #assign cigar_line to each of the member attribute
@@ -289,7 +289,7 @@ sub load_cigars_from_file {
     Arg [-UNIQ_SEQ] : (opt) boolean (default: false)
         : whether redundant sequences should be discarded
     Arg [-ID_TYPE] (opt) string (one of 'STABLE'*, 'SEQ', 'MEMBER')
-        : which identifier should be used as sequence names: the stable_id, the sequence_id, or the member_id
+        : which identifier should be used as sequence names: the stable_id, the sequence_id, or the seq_member_id
     Arg [-STOP2X] (opt) boolean (default: false)
         : whether the stop codons (character '*') should be replaced with gaps (character 'X')
     Arg [-APPEND_TAXON_ID] (opt) boolean (default: false)
@@ -344,11 +344,10 @@ sub get_SimpleAlign {
     my $seq_hash = {};
     foreach my $member (@{$self->get_all_Members}) {
 
-        next if $member->source_name eq 'ENSEMBLGENE';
         next if $member->source_name =~ m/^Uniprot/i and $seq_type;
 
         # The correct codon table
-        if ($member->chr_name and $member->chr_name =~ /mt/i) {
+        if ($member->dnafrag and $member->dnafrag->isMT) {
             # codeml icodes
             # 0:universal code (default)
             my $class;
@@ -371,13 +370,13 @@ sub get_SimpleAlign {
         next if $unique_seqs and $seq_hash->{$seqstr};
         $seq_hash->{$seqstr} = 1;
 
-        my $alphabet = $member->source_name eq 'ENSEMBLTRANS' ? 'dna' : 'protein';
+        my $alphabet = $member->source_name =~ /TRANS$/ ? 'dna' : 'protein';
         $alphabet = 'dna' if $seq_type and ($seq_type eq 'cds');
 
         # Sequence name
         my $seqID = $member->stable_id;
         $seqID = $member->sequence_id if $id_type and $id_type eq 'SEQ';
-        $seqID = $member->member_id if $id_type and $id_type eq 'MEMBER';
+        $seqID = $member->seq_member_id if $id_type and $id_type eq 'MEMBER';
         $seqID .= "_" . $member->taxon_id if($append_taxon_id);
         $seqID .= "_" . $member->genome_db_id if ($append_genomedb_id);
         $seqID .= "_" . $member->genome_db->species_tree_node_id if ($append_stn_id);
@@ -552,7 +551,8 @@ sub get_4D_SimpleAlign {
 
     my %member_seqstr;
     foreach my $member (@{$self->get_all_Members}) {
-        next if $member->source_name ne 'ENSEMBLPEP';
+        # Only peptides can have a CDS sequence
+        next unless $member->source_name =~ /PEP$/;
         my $seqstr = $member->alignment_string('cds');
         next if(!$seqstr);
         #print STDERR $seqstr,"\n";

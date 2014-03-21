@@ -99,9 +99,7 @@ use base ('Bio::EnsEMBL::Compara::SeqMember');
 sub copy {
   my $self = shift;
   
-  my $mycopy = @_ ? shift : {};     # extending or from scratch?
-               $self->SUPER::copy($mycopy);
-  bless $mycopy, 'Bio::EnsEMBL::Compara::AlignedMember';
+  my $mycopy = $self->SUPER::copy(@_);
 
   # The following does not Work if the initial object is only a Member
   if (UNIVERSAL::isa($self, 'Bio::EnsEMBL::Compara::AlignedMember')) {
