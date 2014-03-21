@@ -37,7 +37,7 @@ my $gene_tree_adaptor = Bio::EnsEMBL::Registry->get_adaptor("Multi", "compara", 
 my $genes = $human_gene_adaptor->fetch_all_by_external_name('ENPP1');
 
 foreach my $gene (@$genes) {
-  my $member = $gene_member_adaptor->fetch_by_source_stable_id("ENSEMBLGENE",$gene->stable_id);
+  my $member = $gene_member_adaptor->fetch_by_stable_id($gene->stable_id);
   die "no members" unless (defined $member);
   # Fetch the gene tree
   my $tree =  $gene_tree_adaptor->fetch_default_for_Member($member);

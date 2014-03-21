@@ -78,7 +78,7 @@ sub run {
   
     foreach my $id (@$ids) {
         my $stable_id = ($id =~ /^(\S+)\.\d+$/) ? $1 : $id;     # drop the version number if it's there
-        my $seq_member = $self->compara_dba()->get_SeqMemberAdaptor->fetch_by_source_stable_id($source_name, $stable_id);
+        my $seq_member = $self->compara_dba()->get_SeqMemberAdaptor->fetch_by_stable_id($stable_id);
         my $seq_member_id;
 
         if($seq_member and $seq_member_id = $seq_member->seq_member_id) {

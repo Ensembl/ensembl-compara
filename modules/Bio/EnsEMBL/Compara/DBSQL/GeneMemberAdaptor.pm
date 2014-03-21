@@ -228,10 +228,10 @@ sub store {
     $sth->finish;
   } else {
     $sth->finish;
-    #UNIQUE(source_name,stable_id) prevented insert since member was already inserted
+    #UNIQUE(stable_id) prevented insert since member was already inserted
     #so get gene_member_id with select
-    my $sth2 = $self->prepare("SELECT gene_member_id FROM gene_member WHERE source_name=? and stable_id=?");
-    $sth2->execute($member->source_name, $member->stable_id);
+    my $sth2 = $self->prepare("SELECT gene_member_id FROM gene_member WHERE stable_id=?");
+    $sth2->execute($member->stable_id);
     my($id) = $sth2->fetchrow_array();
     warn("MemberAdaptor: insert failed, but gene_member_id select failed too") unless($id);
     $member->dbID($id);

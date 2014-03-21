@@ -40,7 +40,7 @@ my $gene_member_adaptor = $reg->get_adaptor ("Multi", "compara", "GeneMember");
 my $gene_tree_adaptor   = $reg->get_adaptor ("Multi", "compara", "GeneTree");
 my $cafe_tree_adaptor   = $reg->get_adaptor ("Multi", "compara", "CAFEGeneFamily");
 
-my $member = $gene_member_adaptor->fetch_by_source_stable_id(undef, $gene_stable_id);
+my $member = $gene_member_adaptor->fetch_by_stable_id($gene_stable_id);
 my $gene_tree = $gene_tree_adaptor->fetch_default_for_Member($member);
 my $cafe_tree = $cafe_tree_adaptor->fetch_by_GeneTree($gene_tree);
 

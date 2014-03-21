@@ -34,11 +34,10 @@ FamilyAdaptor
   my $fam = $fa->fetch_by_stable_id('ENSF000013034');
 
   my $ma = $db->get_SeqMemberAdaptor;
-  my $member = $ma->fetch_by_source_stable_id('Uniprot/SWISSPROT', 'YSV4_CAEEL')};
-  my @fam = @{$fa->fetch_all_by_Member($member)};
+  my $member = $ma->fetch_by_stable_id('YSV4_CAEEL')};   # This is UniProt accession symbol
+  my $fam = $fa->fetch_by_SeqMember($member);
 
   @fam = @{$fa->fetch_by_description_with_wildcards('interleukin',1)};
-  @fam = @{$fa->fetch_all};
 
 =head1 DESCRIPTION
 

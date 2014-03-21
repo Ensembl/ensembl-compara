@@ -491,8 +491,6 @@ sub pipeline_analyses {
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::SqlCmd',
             -parameters => {
                 'sql' => [
-                    # Non species-set related query. Speeds up the split-genes search
-                    'ALTER TABLE gene_member ADD KEY gene_list_index (source_name, taxon_id, dnafrag_id, dnafrag_strand, dnafrag_start)',
                     # Counts the number of species
                     'INSERT INTO meta (meta_key,meta_value) SELECT "species_count", COUNT(*) FROM genome_db',
                     # Whether all the species are reused

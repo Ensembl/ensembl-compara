@@ -78,70 +78,78 @@ use base qw(Bio::EnsEMBL::Compara::DBSQL::BaseAdaptor);
 #####################
 
 
-=head2 fetch_by_source_stable_id
+=head2 fetch_by_stable_id
 
-  Arg [1]    : (optional) string $source_name
-  Arg [2]    : string $stable_id
-  Example    : my $member = $ma->fetch_by_source_stable_id(
-                   "Uniprot/SWISSPROT", "O93279");
-  Example    : my $member = $ma->fetch_by_source_stable_id(
-                   undef, "O93279");
+  Arg [1]    : string $stable_id
+  Example    : my $member = $ma->fetch_by_stable_id("O93279");
   Description: Fetches the member corresponding to this $stable_id.
-               Although two members from different sources might
-               have the same stable_id, this never happens in a normal
-               compara DB. You can set the first argument to undef
-               like in the second example.
   Returntype : Bio::EnsEMBL::Compara::Member object
   Exceptions : throws if $stable_id is undef
   Caller     : 
 
 =cut
 
-sub fetch_by_source_stable_id {
-  my ($self,$source_name, $stable_id) = @_;
+sub fetch_by_stable_id {
+    my ($self, $stable_id) = @_;
 
-  unless(defined $stable_id) {
-    throw("fetch_by_source_stable_id must have an stable_id");
-  }
+    throw("MemberAdaptor::fetch_by_stable_id() must have an stable_id") unless $stable_id;
 
-  #construct a constraint like 't1.table1_id = 1'
-  my $constraint = '';
-  if ($source_name) {
-    $constraint = 'm.source_name = ? AND ';
-    $self->bind_param_generic_fetch($source_name, SQL_VARCHAR);
-  }
-  $constraint .= 'm.stable_id = ?';
-  $self->bind_param_generic_fetch($stable_id, SQL_VARCHAR);
-
-  return $self->generic_fetch_one($constraint);
+    my $constraint = 'm.stable_id = ?';
+    $self->bind_param_generic_fetch($stable_id, SQL_VARCHAR);
+    return $self->generic_fetch_one($constraint);
 }
 
 
-=head2 fetch_all_by_source_stable_ids
+=head2 fetch_by_source_stable_id
 
-  Arg [1]    : (optional) string $source_name
-  Arg [2]    : arrayref of string $stable_id
-  Example    : my $members = $ma->fetch_by_source_stable_id(
-                   "Uniprot/SWISSPROT", ["O93279", "O62806"]);
+  Description: DEPRECATED: fetch_by_source_stable_id() is deprecated and will be removed in e79. Use fetch_by_stable_id() instead
+
+=cut
+
+sub fetch_by_source_stable_id {  ## DEPRECATED
+    my ($self, $source_name, $stable_id) = @_;
+    deprecate('MemberAdaptor::fetch_by_source_stable_id() is deprecated and will be removed in e79. Use fetch_by_stable_id() instead');
+    my $member = $self->fetch_by_stable_id($stable_id);
+    die "The member '$stable_id' has a different source_name than '$source_name': ".$member->source_name if $source_name and $source_name ne $member->source_name;
+    return $member;
+}
+
+
+=head2 fetch_all_by_stable_id_list
+
+  Arg [1]    : arrayref of string $stable_id
+  Example    : my $members = $ma->fetch_all_by_stable_id_list(["O93279", "O62806"]);
   Description: Fetches the members corresponding to all the $stable_id.
   Returntype : arrayref Bio::EnsEMBL::Compara::Member object
   Caller     : 
 
 =cut
 
-sub fetch_all_by_source_stable_ids {
-  my ($self,$source_name, $stable_ids) = @_;
-  return [] if (!$stable_ids or !@$stable_ids);
+sub fetch_all_by_stable_id_list {
+    my ($self, $stable_ids) = @_;
 
-  #construct a constraint like 't1.table1_id = 1'
-  my $constraint = "";
-  $constraint = "m.source_name = '$source_name' AND " if ($source_name);
-  $constraint .= "m.stable_id IN ('".join("','", @$stable_ids). "')";
+    throw('MemberAdaptor::fetch_all_by_stable_id_list() must have a list of stable_ids') if (not ref $stable_ids) or (ref $stable_ids ne 'ARRAY');
 
-  #return first element of generic_fetch list
-  my $obj = $self->generic_fetch($constraint);
-  return $obj;
+    return [] if (!$stable_ids or !@$stable_ids);
+    my $constraint = sprintf('m.stable_id IN ("%s")', join(q{","}, @$stable_ids));
+    return $self->generic_fetch($constraint);
 }
+
+
+=head2 fetch_all_by_source_stable_ids
+
+  Description: DEPRECATED: fetch_all_by_source_stable_ids() is deprecated and will be removed in e79. Use fetch_all_by_stable_id_list() instead
+
+=cut
+
+sub fetch_all_by_source_stable_ids {  ## DEPRECATED
+    my ($self, $source_name, $stable_ids) = @_;
+    deprecate('MemberAdaptor::fetch_all_by_source_stable_ids() is deprecated and will be removed in e79. Use fetch_all_by_stable_id_list() instead');
+    my $members = $self->fetch_all_by_stable_id_list($stable_ids);
+    die "In fetch_all_by_source_stable_ids(), some of the members do not have the required source_name" if $source_name and grep {$_->source_name ne $source_name} @$stable_ids;
+    return $members;
+}
+
 
 
 =head2 fetch_all

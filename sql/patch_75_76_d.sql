@@ -49,10 +49,9 @@ CREATE TABLE gene_member (
   FOREIGN KEY (dnafrag_id) REFERENCES dnafrag(dnafrag_id), */
 
   PRIMARY KEY (gene_member_id),
-  UNIQUE source_stable_id (stable_id, source_name),
+  UNIQUE KEY (stable_id),
   KEY (taxon_id),
   KEY (dnafrag_id),
-  KEY (stable_id),
   KEY (source_name),
   KEY (canonical_member_id),
   KEY dnafrag_id_start (dnafrag_id,dnafrag_start),
@@ -108,10 +107,9 @@ CREATE TABLE seq_member (
   FOREIGN KEY (dnafrag_id) REFERENCES dnafrag(dnafrag_id), */
 
   PRIMARY KEY (seq_member_id),
-  UNIQUE source_stable_id (stable_id, source_name),
+  UNIQUE KEY (stable_id),
   KEY (taxon_id),
   KEY (dnafrag_id),
-  KEY (stable_id),
   KEY (source_name),
   KEY (sequence_id),
   KEY (gene_member_id),

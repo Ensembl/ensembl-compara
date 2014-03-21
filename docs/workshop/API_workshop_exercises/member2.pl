@@ -36,7 +36,7 @@ foreach my $this_gene (@{$these_genes}) {
   print "Found ", $this_gene->stable_id(), ": ", $this_gene->description(), "\n";
 
   ## Get the compara member
-  my $gene_member = $gene_member_adaptor->fetch_by_source_stable_id("ENSEMBLGENE", $this_gene->stable_id());
+  my $gene_member = $gene_member_adaptor->fetch_by_stable_id($this_gene->stable_id());
 
   ## Print some info for this member
   print "The member ", $gene_member->stable_id(), " is from the ", $gene_member->source_name(), " source.\n";

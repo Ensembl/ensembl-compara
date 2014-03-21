@@ -278,7 +278,7 @@ sub run_ncrecoverepo {
                             $other_genome_db_id);
               $sth->finish;
               # See if we can match the RFAM name or RFAM id
-              my $gene_member = $self->param('gene_member_adaptor')->fetch_by_source_stable_id('ENSEMBLGENE',$found_gene_stable_id);
+              my $gene_member = $self->param('gene_member_adaptor')->fetch_by_stable_id($found_gene_stable_id);
               next unless (defined($gene_member));
               # FIXME: this code cannot work because nctree_adaptor is not defined !
               my $other_tree = $self->param('nctree_adaptor')->fetch_by_Member_root_id($gene_member);
@@ -520,7 +520,7 @@ sub add_matching_predictions {
 
   # Insert the members that are found new and have matching Acc
   foreach my $gene_stable_id_to_add (keys %{$self->param('predictions_to_add')}) {
-    my $gene_member = $self->param('gene_member_adaptor')->fetch_by_source_stable_id('ENSEMBLGENE',$gene_stable_id_to_add);
+    my $gene_member = $self->param('gene_member_adaptor')->fetch_by_stable_id($gene_stable_id_to_add);
     # Incorporate the canonical seq_member into the cluster
     my $node = new Bio::EnsEMBL::Compara::GeneTreeMember;
     $node->seq_member_id($gene_member->get_canonical_SeqMember->seq_member_id);

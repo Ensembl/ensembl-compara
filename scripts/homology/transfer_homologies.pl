@@ -82,7 +82,7 @@ foreach my $mlss (@{$mlss_aref}) {
     my $store = 1;
     foreach my $member (@{$homology->get_all_Members}) {
 
-      my $destination_member = $destination_ma->fetch_by_source_stable_id($member->source_name,$member->stable_id);
+      my $destination_member = $destination_ma->fetch_by_stable_id($member->stable_id);
       if (defined $destination_member->dbID) {
         $member->dbID($destination_member->dbID);
       } else {

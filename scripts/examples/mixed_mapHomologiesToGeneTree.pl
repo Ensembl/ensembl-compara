@@ -46,8 +46,7 @@ my $genes = $human_gene_adaptor->fetch_all_by_external_name('BRCA2');
 
 my $verbose = 0;
 foreach my $gene (@$genes) {
-  my $member = $gene_member_adaptor->
-    fetch_by_source_stable_id("ENSEMBLGENE",$gene->stable_id);
+  my $member = $gene_member_adaptor->fetch_by_stable_id($gene->stable_id);
   die "no members" unless (defined $member);
   my $all_homologies = $homology_adaptor->fetch_all_by_Member($member);
   foreach my $homology (@$all_homologies) {

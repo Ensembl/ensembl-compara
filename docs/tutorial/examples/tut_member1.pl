@@ -13,13 +13,10 @@
 # limitations under the License.
 
 # get the MemberAdaptor
-my $genemember_adaptor = Bio::EnsEMBL::Registry->get_adaptor(
-    'Multi','compara','GeneMember');
+my $genemember_adaptor = Bio::EnsEMBL::Registry->get_adaptor('Multi','compara','GeneMember');
 
 # fetch a Member
-my $member = $genemember_adaptor->fetch_by_source_stable_id(
-    'ENSEMBLGENE','ENSG00000004059');
+my $member = $genemember_adaptor->fetch_by_stable_id('ENSG00000004059');
 
 # print out some information about the Member
-print $member->dnafrag->name, " ( ", $member->dnafrag_start, " - ", $member->dnafrag_end,
-    " ): ", $member->description, "\n";
+print $member->source_name, ": ", $member->dnafrag->name, " ( ", $member->dnafrag_start, " - ", $member->dnafrag_end, " ): ", $member->description, "\n";

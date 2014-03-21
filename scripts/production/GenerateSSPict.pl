@@ -113,7 +113,7 @@ my $geneMemberAdaptor = $compara_dba->get_GeneMemberAdaptor();
 my $seqMemberAdaptor  = $compara_dba->get_SeqMemberAdaptor();
 my $geneTreeAdaptor   = $compara_dba->get_GeneTreeAdaptor();
 
-my $gene_member = $geneMemberAdaptor->fetch_by_source_stable_id('ENSEMBLGENE', $stable_id);
+my $gene_member = $geneMemberAdaptor->fetch_by_stable_id($stable_id);
 check($gene_member, "gene", $stable_id);
 my $transc = $seqMemberAdaptor->fetch_canonical_for_gene_member_id($gene_member->gene_member_id);
 check($transc, "transcript", $stable_id);

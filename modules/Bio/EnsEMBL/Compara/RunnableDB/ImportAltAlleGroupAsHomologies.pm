@@ -82,7 +82,7 @@ sub fetch_or_store_gene {
     my $translate = shift;
 
     # Gene Member
-    my $gene_member = $self->param('gene_member_adaptor')->fetch_by_source_stable_id('ENSEMBLGENE', $gene->stable_id);
+    my $gene_member = $self->param('gene_member_adaptor')->fetch_by_stable_id($gene->stable_id);
     if (defined $gene_member) {
         if ($self->debug) {print "REUSE: $gene_member "; $gene_member->print_member();}
     } else {
