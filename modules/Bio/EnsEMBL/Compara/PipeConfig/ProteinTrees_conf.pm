@@ -1104,6 +1104,7 @@ sub pipeline_analyses {
             -rc_name => 'msa_himem',
             -flow_into => {
                 1 => [ 'hc_alignment' ],
+               -1 => [ 'mafft_himem' ],
                -2 => [ 'mafft_himem' ],
             },
         },
