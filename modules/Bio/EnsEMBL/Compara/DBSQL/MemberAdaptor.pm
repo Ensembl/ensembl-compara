@@ -62,6 +62,9 @@ use warnings;
 use Bio::EnsEMBL::Utils::Scalar qw(:all);
 use Bio::EnsEMBL::Utils::Argument qw(rearrange);
 use Bio::EnsEMBL::Utils::Exception qw(throw warning stack_trace_dump deprecate);
+
+use Bio::EnsEMBL::Compara::Utils::Scalar;
+
 use DBI qw(:sql_types);
 
 use base qw(Bio::EnsEMBL::Compara::DBSQL::BaseAdaptor);
@@ -266,26 +269,43 @@ sub fetch_all_by_source_taxon {
 
 =head2 fetch_all_by_source_genome_db_id
 
-  Arg [1]    : string $source_name
-  Arg [2]    : int $genome_db_id
-  Example    : my $members = $ma->fetch_all_by_source_genome_db_id(
-                   "Uniprot/SWISSPROT", 90);
-  Description: Fetches the member corresponding to a source_name and a genome_db_id.
+  Description: DEPRECATED: fetch_all_by_source_genome_db_id() is deprecated and will be removed in e79. Use fetch_all_by_GenomeDB() instead
+
+=cut
+
+sub fetch_all_by_source_genome_db_id {  ## DEPRECATED
+    my ($self, $source_name, $genome_db_id) = @_;
+    deprecate('fetch_all_by_source_genome_db_id() is deprecated and will be removed in e79. Use fetch_all_by_GenomeDB() instead');
+    return $self->fetch_all_by_GenomeDB($genome_db_id, $source_name);
+}
+
+
+=head2 fetch_all_by_GenomeDB
+
+  Arg [1]    : Bio::EnsEMBL::Compara::GenomeDB $genome_db
+  Arg [2]    : string $source_name (optional)
+  Example    : my $members = $ma->fetch_all_by_GenomeDB($genome_db);
+  Description: Fetches the member corresponding to a GenomeDB (and possibly a source_name)
   Returntype : listref of Bio::EnsEMBL::Compara::Member objects
-  Exceptions : throws if $source_name or $genome_db_id is undef
+  Exceptions : throws if $genome_db has an incorrect type
   Caller     : 
 
 =cut
 
-sub fetch_all_by_source_genome_db_id {
-  my ($self,$source_name,$genome_db_id) = @_;
+sub fetch_all_by_GenomeDB {
+    my ($self, $genome_db, $source_name) = @_;
 
-  throw("source_name and genome_db_id args are required") 
-    unless($source_name && $genome_db_id);
+    assert_ref_or_dbID($genome_db, 'Bio::EnsEMBL::Compara::GenomeDB', 'genome_db');
 
-    $self->bind_param_generic_fetch($source_name, SQL_VARCHAR);
-    $self->bind_param_generic_fetch($genome_db_id, SQL_INTEGER);
-    return $self->generic_fetch('m.source_name = ? AND m.genome_db_id = ?');
+    my $constraint = 'm.genome_db_id = ?';
+    $self->bind_param_generic_fetch(ref($genome_db) ? $genome_db->dbID : $genome_db, SQL_INTEGER);
+
+    if ($source_name) {
+        $constraint .= ' AND m.source_name = ?';
+        $self->bind_param_generic_fetch($source_name, SQL_VARCHAR);
+    }
+
+    return $self->generic_fetch($constraint);
 }
 
 
