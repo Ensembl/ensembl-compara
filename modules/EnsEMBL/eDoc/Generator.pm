@@ -40,7 +40,7 @@ sub new {
   };
   bless $self, $class;
   if ($self->{'serverroot'}) {
-    $writer->set_serverroot($self->{'server_root'});
+    $writer->set_serverroot($self->{'serverroot'});
   }
   return $self;
 }
@@ -116,25 +116,24 @@ sub find_modules {
   my %subclasses = ();
   while (my ($class, $modules) = each(%{$self->get_module_info})) {
   }
-  return;
 
   foreach my $arrayref ($self->get_modules) {
     foreach my $module (@$arrayref) {
   
-      if ($module->inheritance) {
+      if ($module->get_inheritance) {
         my @class_cache = ();
         foreach my $classname (@{ $module->get_inheritance }) {
           push @class_cache, $classname;
         }
 
-        $module->set_inheritance([]);
+        #$module->set_inheritance([]);
 
         foreach my $classname (@class_cache) {
-          my $superclass = $self->get_module_by_name($classname);
+          my $superclass = $self->get_modules_by_name($classname)->[0];
           if ($superclass) {
             $module->add_superclass($superclass);
-            if (!$subclasses{$superclass->name}) {
-              $subclasses{$module->get_inheritance} = [];
+            if (!$subclasses{$superclass->get_name}) {
+              $subclasses{$module->get_name} = [];
             }
             push @{ $subclasses{$superclass->get_name} }, $module;
           }

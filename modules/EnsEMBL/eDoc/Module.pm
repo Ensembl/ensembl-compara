@@ -87,6 +87,11 @@ sub get_inheritance {
   return $self->{'inheritance'};
 }
 
+sub set_inheritance {
+  my $self = shift;
+  $self->{'inheritance'} = shift;
+}
+
 sub get_subclasses {
   my $self = shift;
   return $self->{'subclasses'};

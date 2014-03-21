@@ -189,9 +189,9 @@ sub write_hierarchy {
     $html .= '<div class="hier">';
     $html .= "<h3>Inherits from:</h3>\n";
     $html .= "<ul>\n";
-    #foreach my $class (@{ $module->get_inheritance }) {
-    #  $html .= '<li><a href="' . $self->link_for_package($class->get_name) . '">' . $class->get_name . "</a></li>\n";
-    #}
+    foreach my $class (@{ $module->get_inheritance }) {
+      $html .= '<li><a href="' . $self->link_for_package($class) . '">' . $class . "</a></li>\n";
+    }
     $html .= "</ul>\n";
     $html .= "</div>";
   } else {
@@ -224,7 +224,7 @@ sub write_module_page {
   open (my $fh, ">", $self->_html_path_from_package($module->get_name));
   my $location = $module->get_location;
   my $root = $self->get_serverroot;
-  $location =~ s/$root//g if $root;
+  $location =~ s/$root//g;
   my $repo = 'ensembl-webcode';
 
   print $fh $self->html_header( (package => $module->get_name) ),'

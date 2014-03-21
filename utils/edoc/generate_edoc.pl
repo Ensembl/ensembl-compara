@@ -34,14 +34,16 @@ use EnsEMBL::eDoc::Generator;
 
 my $VERSION     = $SiteDefs::ENSEMBL_VERSION;
 my $SERVER_ROOT = $SiteDefs::ENSEMBL_SERVERROOT;
-my $EXPORT      = $SiteDefs::ENSEMBL_SERVERROOT.'/public-plugins/docs/htdocs/info/docs/webcode/edoc';
-my $SUPPORT     = $SiteDefs::ENSEMBL_WEBROOT.'/utils/edoc/support/';
-my @locations   = map { "$SiteDefs::ENSEMBL_WEBROOT/modules/$_" } @modules;
+my $WEB_ROOT    = $SiteDefs::ENSEMBL_WEBROOT;
+
+my $EXPORT      = $SERVER_ROOT.'/public-plugins/docs/htdocs/info/docs/webcode/edoc';
+my $SUPPORT     = $WEB_ROOT.'/utils/edoc/support/';
+my @locations   = map { "$WEB_ROOT/modules/$_" } @modules;
 
 my @public_plugins = qw(ensembl orm users);
 
 foreach my $plugin (@public_plugins) {
-  push @locations, map { "$SiteDefs::ENSEMBL_SERVERROOT/public-plugins/$plugin/modules/$_" } @modules;
+  push @locations, map { "$SERVER_ROOT/public-plugins/$plugin/modules/$_" } @modules;
 }
 
 foreach( @locations ) {
