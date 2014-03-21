@@ -305,7 +305,7 @@ sub outer_HTML {
 
   my $tag         = $self->node_name;
   my $attributes  = join '', map {sprintf(' %s="%s"', $_, $self->get_attribute($_))} keys %{$self->{'_attributes'}};
-  return $self->can_have_child ? sprintf(qq(<$tag$attributes>%s</$tag>), $self->inner_HTML) : qq(<$tag$attributes />);
+  return $self->can_have_child ? sprintf(q(<%s%s>%s</%1$s>), $tag, $attributes, $self->inner_HTML) : qq(<$tag$attributes />);
 }
 
 sub append_HTML {
