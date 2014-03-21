@@ -242,7 +242,7 @@ sub _process {
   my $replace = $self->param('replace');
   
   my $member_a = ($source_name eq 'ENSEMBLGENE') ? $self->compara_dba()->get_GeneMemberAdaptor() : $self->compara_dba()->get_SeqMemberAdaptor();
-  my $members = $member_a->fetch_all_by_source_genome_db_id($source_name, $genome_db->dbID());
+  my $members = $member_a->fetch_all_by_GenomeDB($genome_db, $source_name);
   
   if (scalar(@{$members})) {
     my $core_values = $self->_get_field_lookup($genome_db, $source_name);
