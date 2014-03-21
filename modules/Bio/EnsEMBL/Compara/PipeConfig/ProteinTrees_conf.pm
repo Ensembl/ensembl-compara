@@ -1068,6 +1068,7 @@ sub pipeline_analyses {
             -hive_capacity        => $self->o('mcoffee_capacity'),
             -rc_name => 'msa_himem',
             -flow_into => {
+               -1 => [ 'mafft_himem' ],
                -2 => [ 'mafft_himem' ],
             },
         },
