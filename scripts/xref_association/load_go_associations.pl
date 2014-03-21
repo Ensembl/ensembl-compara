@@ -91,11 +91,11 @@ my $go_parents = {};
 
 sub get_go_parents {
   my ($term) = @_;
-  if (!defined $go_parents->{term}) {
-	$go_parents->{term} = $onto_dba->dbc()->sql_helper()
+  if (!defined $go_parents->{$term}) {
+	$go_parents->{$term} = $onto_dba->dbc()->sql_helper()
 	  ->execute_simple(-SQL => $go_parent_sql, -PARAMS => [$term]);
   }
-  return $go_parents->{term};
+  return $go_parents->{$term};
 }
 
 
