@@ -99,9 +99,7 @@ use base ('Bio::EnsEMBL::Compara::SeqMember');
 sub copy {
   my $self = shift;
   
-  my $mycopy = @_ ? shift : {};     # extending or from scratch?
-               $self->SUPER::copy($mycopy);
-  bless $mycopy, 'Bio::EnsEMBL::Compara::AlignedMember';
+  my $mycopy = $self->SUPER::copy(@_);
 
   # The following does not Work if the initial object is only a Member
   if (UNIVERSAL::isa($self, 'Bio::EnsEMBL::Compara::AlignedMember')) {
@@ -372,33 +370,6 @@ sub alignment_string {
     }
 
     return $self->{$key};
-}
-
-
-
-=head2 alignment_string_bounded
-
-  Description : DEPRECATED: Use alignment_string('exon_bounded') instead. alignment_string_bounded() will be removed in e76
-
-=cut
-
-sub alignment_string_bounded {  ## DEPRECATED
-    my $self = shift;
-    deprecate('AlignedMember::alignment_string_bounded() is deprecated and will be removed in e76. Please use SeqMember::alignment_string("exon_bounded") instead');
-    return $self->alignment_string('exon_bounded');
-}
-
-
-=head2 cdna_alignment_string
-
-  Description : DEPRECATED: Use alignment_string('cds') instead. cdna_alignment_string() will be removed in e76
-
-=cut
-
-sub cdna_alignment_string { ## DEPRECATED
-    my $self = shift;
-    deprecate('AlignedMember::cdna_alignment_string() is deprecated and will be removed in e76. Please use SeqMember::alignment_string("cds") instead');
-    return $self->alignment_string('cds');
 }
 
 

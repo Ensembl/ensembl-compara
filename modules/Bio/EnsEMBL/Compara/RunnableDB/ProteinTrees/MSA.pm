@@ -321,18 +321,18 @@ sub parse_and_store_alignment_into_proteintree {
   # Align cigar_lines to members and store
   #
   foreach my $member (@{$tree->get_all_Members}) {
-      # Redo alignment is member_id based, new alignment is sequence_id based
-      if ($align_hash{$member->sequence_id} eq "" && $align_hash{$member->member_id} eq "") {
+      # Redo alignment is seq_member_id based, new alignment is sequence_id based
+      if ($align_hash{$member->sequence_id} eq "" && $align_hash{$member->seq_member_id} eq "") {
         #$self->throw("empty cigar_line for ".$member->stable_id."\n");
         $self->warning("empty cigar_line for ".$member->stable_id."\n");
         return 0;
       }
-      # Redo alignment is member_id based, new alignment is sequence_id based
-      $member->cigar_line($align_hash{$member->sequence_id} || $align_hash{$member->member_id});
+      # Redo alignment is seq_member_id based, new alignment is sequence_id based
+      $member->cigar_line($align_hash{$member->sequence_id} || $align_hash{$member->seq_member_id});
 
       ## Check that the cigar length (Ms) matches the sequence length
       # Take the M lengths into an array
-      my @cigar_match_lengths = map { if ($_ eq '') {$_ = 1} else {$_ = $_;} } map { $_ =~ /^(\d*)/ } ( $member->cigar_line =~ /(\d*[M])/g );
+      my @cigar_match_lengths = map { $_ eq '' ? 1 : $_ } map { $_ =~ /^(\d*)/ } ( $member->cigar_line =~ /(\d*[M])/g );
       # Sum up the M lengths
       my $seq_cigar_length; map { $seq_cigar_length += $_ } @cigar_match_lengths;
       my $member_sequence = $member->sequence;

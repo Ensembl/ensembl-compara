@@ -427,32 +427,44 @@ sub pipeline_analyses {
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
             -parameters => {
                 'db_conn'    => $self->o('reuse_db'),
-                'inputquery' => 'SELECT s.* FROM sequence s JOIN member USING (sequence_id) WHERE genome_db_id = #genome_db_id#',
+                'inputquery' => 'SELECT s.* FROM sequence s JOIN seq_member USING (sequence_id) WHERE genome_db_id = #genome_db_id#',
 			    'fan_branch_code' => 2,
             },
             -hive_capacity => 4,
             -flow_into => {
-		 1 => [ 'member_table_reuse' ],    # n_reused_species
+		 1 => [ 'seq_member_table_reuse' ],    # n_reused_species
 		 2 => [ 'mysql:////sequence' ],
             },
 	    -rc_name => '1Gb',
         },
 
-        {   -logic_name => 'member_table_reuse',
+        {   -logic_name => 'seq_member_table_reuse',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::MySQLTransfer',
             -parameters => {
-		'src_db_conn'   => $self->o('reuse_db'),
-                'table'         => 'member',
+                'src_db_conn'   => $self->o('reuse_db'),
+                'table'         => 'seq_member',
                 'where'         => 'genome_db_id = #genome_db_id#',
-		'mode'          => 'insertignore',
+                'mode'          => 'insertignore',
             },
-            -hive_capacity => 4,
+            -hive_capacity => $self->o('reuse_capacity'),
             -flow_into => {
-                 1 => [ 'paf_table_reuse' ],
+                1 => [ 'gene_member_table_reuse' ],
             },
-	    -rc_name => '100Mb',
         },
 
+        {   -logic_name => 'gene_member_table_reuse',
+            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::MySQLTransfer',
+            -parameters => {
+                'src_db_conn'   => $self->o('reuse_db'),
+                'table'         => 'gene_member',
+                'where'         => 'genome_db_id = #genome_db_id#',
+                'mode'          => 'insertignore',
+            },
+            -hive_capacity => $self->o('reuse_capacity'),
+            -flow_into => {
+                1 => [ 'paf_table_reuse' ],
+            },
+        },
 
         {   -logic_name => 'paf_table_reuse',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::MySQLTransfer',

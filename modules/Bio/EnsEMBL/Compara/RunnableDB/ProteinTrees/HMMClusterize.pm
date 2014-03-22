@@ -106,8 +106,8 @@ sub load_hmmer_classifications {
         open my $hmmer_clas_fh, "<", $hmmer_clas_file or die $!;
         while (<$hmmer_clas_fh>) {
             chomp;
-            my ($member_id, $hmm_id, $eval) = split /\t/;
-            $allclusters{$hmm_id}{members}{$member_id} = 1; ## Avoid duplicates
+            my ($seq_member_id, $hmm_id, $eval) = split /\t/;
+            $allclusters{$hmm_id}{members}{$seq_member_id} = 1; ## Avoid duplicates
 #            push @{$allclusters{$hmm_id}{members}}, $seq_id;
         }
     }

@@ -59,13 +59,13 @@ SELECT
     gtr.stable_id AS GeneTreeStableID,
     gm.stable_id AS EnsGeneStableID,
     pm.stable_id AS EnsPeptideStableID,
-    CASE m.member_id WHEN pm.member_id THEN 'Y' ELSE 'N' END AS Canonical
+    CASE m.seq_member_id WHEN pm.seq_member_id THEN 'Y' ELSE 'N' END AS Canonical
 FROM
     gene_tree_root gtr
     JOIN gene_tree_node gtn ON (gtr.root_id=gtn.root_id)
-    JOIN member m ON (gtn.member_id=m.member_id)
-    JOIN member gm ON (m.gene_member_id=gm.member_id)
-    JOIN member pm ON (gm.member_id=pm.gene_member_id) 
+    JOIN seq_member m ON (gtn.seq_member_id=m.seq_member_id)
+    JOIN gene_member gm ON (m.gene_member_id=gm.gene_member_id)
+    JOIN seq_member pm ON (gm.gene_member_id=pm.gene_member_id) 
 SQL
 
   my $helper = Bio::EnsEMBL::Utils::SqlHelper->new(-DB_CONNECTION => $DBA->dbc());

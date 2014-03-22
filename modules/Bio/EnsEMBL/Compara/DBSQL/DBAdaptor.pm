@@ -170,7 +170,6 @@ sub get_available_adaptors {
 
             # gene-product:
         'Sequence'              => 'Bio::EnsEMBL::Compara::DBSQL::SequenceAdaptor',
-        'Member'                => 'Bio::EnsEMBL::Compara::DBSQL::MemberAdaptor',
         'GeneMember'            => 'Bio::EnsEMBL::Compara::DBSQL::GeneMemberAdaptor',
         'SeqMember'             => 'Bio::EnsEMBL::Compara::DBSQL::SeqMemberAdaptor',
         'GeneAlign'             => 'Bio::EnsEMBL::Compara::DBSQL::GeneAlignAdaptor',
@@ -185,9 +184,6 @@ sub get_available_adaptors {
         'SpeciesTreeNode'       => 'Bio::EnsEMBL::Compara::DBSQL::SpeciesTreeNodeAdaptor',
         'CAFEGeneFamilyNode'    => 'Bio::EnsEMBL::Compara::DBSQL::CAFEGeneFamilyNodeAdaptor',
 
-            # obsolete:
-        'Domain'                => 'Bio::EnsEMBL::Compara::DBSQL::DomainAdaptor',
-        'SitewiseOmega'         => 'Bio::EnsEMBL::Compara::DBSQL::SitewiseOmegaAdaptor',
     );
 
     return (\%pairs);

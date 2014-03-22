@@ -128,7 +128,7 @@ sub check_for_split_genes {
     my $tmp_time = time();
 
     my @all_protein_leaves = @{$protein_tree->get_all_Members};
-    my @good_leaves = grep {defined $_->dnafrag_start and defined $_->dnafrag_end and defined $_->chr_name and defined $_->dnafrag_strand and defined $_->taxon_id} @all_protein_leaves;
+    my @good_leaves = grep {defined $_->dnafrag_start and defined $_->dnafrag_end and defined $_->dnafrag_id and defined $_->dnafrag_strand and defined $_->genome_db_id} @all_protein_leaves;
 
     if($self->debug) {
         printf("%1.3f secs to fetch all %d/%dleaves\n", time()-$tmp_time, scalar(@all_protein_leaves), scalar(@good_leaves));
@@ -149,9 +149,9 @@ sub check_for_split_genes {
     # the start of link_node pairs.
     # This is to try to do the joining up of cdnas in the best order in
     # cases of e.g. 2 cases of 3-way split genes in same species.
-    my @sorted_genepairlinks = sort { 
-        $a->[0]->chr_name <=> $b->[0]->chr_name 
-            || $a->[1]->chr_name <=> $b->[1]->chr_name 
+    my @sorted_genepairlinks = sort {
+        $a->[0]->dnafrag_id <=> $b->[0]->dnafrag_id
+            || $a->[1]->dnafrag_id <=> $b->[1]->dnafrag_id
             || abs($a->[0]->dnafrag_start - $a->[1]->dnafrag_start) <=> abs($b->[0]->dnafrag_start - $b->[1]->dnafrag_start) } @genepairlinks;
 
     foreach my $genepairlink (@sorted_genepairlinks) {
@@ -183,8 +183,8 @@ sub check_for_split_genes {
         my $start1 = $gene_member1->dnafrag_start; my $start2 = $gene_member2->dnafrag_start; my $starttemp;
         my $end1 = $gene_member1->dnafrag_end; my $end2 = $gene_member2->dnafrag_end; my $endtemp;
         my $strand1 = $gene_member1->dnafrag_strand; my $strand2 = $gene_member2->dnafrag_strand;
-        my $taxon_id1 = $gene_member1->taxon_id; my $taxon_id2 = $gene_member2->taxon_id;
-        my $name1 = $gene_member1->chr_name; my $name2 = $gene_member2->chr_name;
+        my $gdb_id1 = $gene_member1->genome_db_id; my $gdb_id2 = $gene_member2->genome_db_id;
+        my $dnafrag_id1 = $gene_member1->dnafrag_id; my $dnafrag_id2 = $gene_member2->dnafrag_id;
 
         printf("%%Id: %d/%d, %%Pos: %d/%d\n", $protein1_copy->perc_id, $protein2_copy->perc_id, $protein1_copy->perc_pos, $protein2_copy->perc_pos);
         # Checking for gene_split cases
@@ -192,7 +192,7 @@ sub check_for_split_genes {
         if (0 == $protein1_copy->perc_id && 0 == $protein2_copy->perc_id && 0 == $protein1_copy->perc_pos && 0 == $protein2_copy->perc_pos) {
 
             # Condition A1: If same seq region and less than 1MB distance
-            if ($name1 eq $name2 && ($self->param('max_dist_no_overlap') > abs($start1 - $start2)) && $strand1 eq $strand2 ) {
+            if ($dnafrag_id1 == $dnafrag_id2 && ($self->param('max_dist_no_overlap') > abs($start1 - $start2)) && $strand1 eq $strand2 ) {
 
                 # Condition A2: there have to be the only 2 or 3 protein coding
                 # genes in the range defined by the gene pair. This should
@@ -202,7 +202,7 @@ sub check_for_split_genes {
                 if ($start1 > $start2) { $starttemp = $start1; $start1 = $start2; $start2 = $starttemp; }
                 if ($end1   <   $end2) {   $endtemp = $end1;     $end1 = $end2;     $end2 = $endtemp; }
                 print "Checking split genes overlap\n" if $self->debug;
-                my @genes_in_range = @{$self->param('gene_member_adaptor')->_fetch_all_by_source_taxon_chr_name_start_end_strand_limit('ENSEMBLGENE',$taxon_id1,$name1,$start1,$end1,$strand1,4)};
+                my @genes_in_range = @{$self->param('gene_member_adaptor')->_fetch_all_by_dnafrag_id_start_end_strand_limit($dnafrag_id1, $start1, $end1, $strand1, 4)};
 
                 if ((2+$self->param('max_nb_genes_no_overlap')) < scalar @genes_in_range) {
                     foreach my $gene (@genes_in_range) {
@@ -231,7 +231,7 @@ sub check_for_split_genes {
               && $protein1_copy->perc_pos < $self->param('small_overlap_percentage') && $protein2_copy->perc_pos < $self->param('small_overlap_percentage')) {
 
             # Condition B2: If non-overlapping and smaller than 500kb start and 500kb end distance
-            if ($name1 eq $name2 
+            if ($dnafrag_id1 == $dnafrag_id2
                     && ($self->param('max_dist_small_overlap') > abs($start1 - $start2)) 
                     && ($self->param('max_dist_small_overlap') > abs($end1 - $end2)) 
                     && (($start1 - $start2)*($end1 - $end2)) > 1
@@ -241,7 +241,7 @@ sub check_for_split_genes {
                 if ($start1 > $start2) { $starttemp = $start1; $start1 = $start2; $start2 = $starttemp; }
                 if ($end1   <   $end2) {   $endtemp = $end1;     $end1 = $end2;     $end2 = $endtemp; }
 
-                my @genes_in_range = @{$self->param('gene_member_adaptor')->_fetch_all_by_source_taxon_chr_name_start_end_strand_limit('ENSEMBLGENE',$taxon_id1,$name1,$start1,$end1,$strand1,4)};
+                my @genes_in_range = @{$self->param('gene_member_adaptor')->_fetch_all_by_dnafrag_id_start_end_strand_limit($dnafrag_id1, $start1, $end1, $strand1, 4)};
                 if ((2+$self->param('max_nb_genes_small_overlap')) < scalar @genes_in_range) {
                     foreach my $gene (@genes_in_range) {
                         print STDERR "Too many genes in range: ($start1,$end1,$strand1): ", $gene->stable_id,",", $gene->dnafrag_start,",", $gene->dnafrag_end,"\n" if $self->debug;
@@ -269,25 +269,25 @@ sub store_split_genes {
     my $connected_split_genes = $self->param('connected_split_genes');
     my $holding_node = $connected_split_genes->holding_node;
 
-    my $sth0 = $self->compara_dba->dbc->prepare('DELETE split_genes FROM split_genes JOIN gene_tree_node USING (member_id) WHERE root_id = ?');
+    my $sth0 = $self->compara_dba->dbc->prepare('DELETE split_genes FROM split_genes JOIN gene_tree_node USING (seq_member_id) WHERE root_id = ?');
     $sth0->execute($self->param('gene_tree_id'));
     $sth0->finish;
 
-    my $sth1 = $self->compara_dba->dbc->prepare('INSERT INTO split_genes (member_id) VALUES (?)');
-    my $sth2 = $self->compara_dba->dbc->prepare('INSERT INTO split_genes (member_id, gene_split_id) VALUES (?, ?)');
+    my $sth1 = $self->compara_dba->dbc->prepare('INSERT INTO split_genes (seq_member_id) VALUES (?)');
+    my $sth2 = $self->compara_dba->dbc->prepare('INSERT INTO split_genes (seq_member_id, gene_split_id) VALUES (?, ?)');
 
     foreach my $link (@{$holding_node->links}) {
         my $node1 = $link->get_neighbor($holding_node);
         my $protein1 = $protein_tree->find_leaf_by_node_id($node1->node_id);
         print STDERR "node1 $node1 $protein1\n" if $self->debug;
-        $sth1->execute($protein1->member_id);
+        $sth1->execute($protein1->seq_member_id);
         my $split_gene_id = $sth1->{'mysql_insertid'};
 
         foreach my $node2 (@{$node1->all_nodes_in_graph}) {
             my $protein2 = $protein_tree->find_leaf_by_node_id($node2->node_id);
             print STDERR "node2 $node2 $protein2\n" if $self->debug;
             next if $node2->node_id eq $node1->node_id;
-            $sth2->execute($protein2->member_id, $split_gene_id);
+            $sth2->execute($protein2->seq_member_id, $split_gene_id);
         }
     }
     $sth1->finish;

@@ -72,7 +72,7 @@ foreach my $homology (@{$homology_list}) {
     $mouse_gene->print_member;
     $human_gene->print_member;
 
-    my $dnafrag = $comparaDBA->get_DnaFragAdaptor->fetch_by_GenomeDB_and_name($mouseGDB, $mouse_gene->chr_name);
+    my $dnafrag = $mouse_gene->dnafrag;
     unless($dnafrag) { print("oops no dnafrag\n"); next; }
 
 # get the alignments on a piece of the DnaFrag
@@ -82,8 +82,8 @@ foreach my $homology (@{$homology_list}) {
         my $all_genomic_aligns = $gab->get_all_GenomicAligns();
         my $valid = 1;
         foreach my $ga (@$all_genomic_aligns) {
-            $valid = 0 if (($ga->dnafrag->genome_db->dbID == $human_gdb_id) and ($ga->dnafrag->name ne $human_gene->chr_name));
-            $valid = 0 if (($ga->dnafrag->genome_db->dbID == $mouse_gdb_id) and ($ga->dnafrag->name ne $mouse_gene->chr_name));
+            $valid = 0 if (($ga->dnafrag->genome_db->dbID == $human_gdb_id) and ($ga->dnafrag->name ne $human_gene->dnafrag->name));
+            $valid = 0 if (($ga->dnafrag->genome_db->dbID == $mouse_gdb_id) and ($ga->dnafrag->name ne $mouse_gene->dnafrag->name));
         }
         next unless ($valid);
 

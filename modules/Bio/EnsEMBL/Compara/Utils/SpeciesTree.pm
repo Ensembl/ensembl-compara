@@ -27,7 +27,7 @@ limitations under the License.
 
     my $species_tree = Bio::EnsEMBL::Compara::Utils::SpeciesTree->create_species_tree();                                          # include all available species from genome_db by default
 
-    my $species_tree = Bio::EnsEMBL::Compara::Utils::SpeciesTree->create_species_tree( -species_set_id => 12345 );                # only use the species from given species_set
+    my $species_tree = Bio::EnsEMBL::Compara::Utils::SpeciesTree->create_species_tree( -species_set => $ss );                     # only use the species from given species_set
 
     my $species_tree = Bio::EnsEMBL::Compara::Utils::SpeciesTree->create_species_tree ( -param1 => value1, -param2 => value2 );   # more complex scenarios
 
@@ -61,53 +61,44 @@ use Bio::EnsEMBL::Compara::SpeciesTreeNode;
 sub create_species_tree {
     my ($self, @args) = @_;
 
-    my ($compara_dba, $no_previous, $species_set_id, $extrataxon_sequenced, $extrataxon_incomplete, $multifurcation_deletes_node, $multifurcation_deletes_all_subnodes) =
-        rearrange([qw(COMPARA_DBA NO_PREVIOUS SPECIES_SET_ID EXTRATAXON_SEQUENCED EXTRATAXON_INCOMPLETE MULTIFURCATION_DELETES_NODE MULTIFURCATION_DELETES_ALL_SUBNODES)], @args);
+    my ($compara_dba, $no_previous, $species_set, $extrataxon_sequenced, $extrataxon_incomplete, $multifurcation_deletes_node, $multifurcation_deletes_all_subnodes) =
+        rearrange([qw(COMPARA_DBA NO_PREVIOUS SPECIES_SET EXTRATAXON_SEQUENCED EXTRATAXON_INCOMPLETE MULTIFURCATION_DELETES_NODE MULTIFURCATION_DELETES_ALL_SUBNODES)], @args);
 
     my $taxon_adaptor = $compara_dba->get_NCBITaxonAdaptor;
     my $root;
+    my @taxa_for_tree = ();
 
         # loading the initial set of taxa from genome_db:
-    if(!$no_previous or $species_set_id) {
+    if(!$no_previous or $species_set) {
 
-        my $gdb_list = $species_set_id
-            ? $compara_dba->get_SpeciesSetAdaptor->fetch_by_dbID($species_set_id)->genome_dbs()
-            : $compara_dba->get_GenomeDBAdaptor->fetch_all;
+        my $gdb_list = $species_set ? $species_set->genome_dbs() : $compara_dba->get_GenomeDBAdaptor->fetch_all();
 
         foreach my $gdb (@$gdb_list) {
             my $taxon_name = $gdb->name;
             next if ($taxon_name =~ /ncestral/);
-            my $taxon_id = $gdb->taxon_id;
-            my $taxon = $taxon_adaptor->fetch_node_by_taxon_id($taxon_id);
-            $taxon->release_children;
-
-            $root = $taxon->root unless($root);
-            $root->merge_node_via_shared_ancestor($taxon);
+            push @taxa_for_tree, $gdb->taxon;
         }
     }
 
         # loading from extrataxon_sequenced:
     foreach my $extra_taxon (@$extrataxon_sequenced) {
         my $taxon = $taxon_adaptor->fetch_node_by_taxon_id($extra_taxon);
-        next unless defined($taxon);
-        my $taxon_name = $taxon->name;
-        my $taxon_id = $taxon->taxon_id;
-        $taxon->release_children;
-
-        $root = $taxon->root unless($root);
-        $root->merge_node_via_shared_ancestor($taxon);
+        push @taxa_for_tree, $taxon if defined $taxon;
     }
+
 
         # loading from extrataxon_incomplete:
     foreach my $extra_taxon (@$extrataxon_incomplete) {
         my $taxon = $taxon_adaptor->fetch_node_by_taxon_id($extra_taxon);
-        my $taxon_name = $taxon->name;
-        my $taxon_id = $taxon->taxon_id;
-        $taxon->release_children;
+        $taxon->add_tag('is_incomplete', '1');
+        push @taxa_for_tree, $taxon;
+    }
 
+    # build the tree
+    foreach my $taxon (@taxa_for_tree) {
+        $taxon->release_children;
         $root = $taxon->root unless($root);
         $root->merge_node_via_shared_ancestor($taxon);
-        $taxon->add_tag('is_incomplete', '1');
     }
 
     $root = $root->minimize_tree if (defined($root));

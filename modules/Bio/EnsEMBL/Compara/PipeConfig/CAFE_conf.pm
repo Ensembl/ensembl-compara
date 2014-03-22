@@ -214,13 +214,6 @@ sub pipeline_analyses {
                             },
              -rc_name => 'cafe',
              -hive_capacity => -1,
-             -flow_into => {
-                            3 => {
-                                  'mysql:////meta' => { 'meta_key' => 'cafe_lambda', 'meta_value' => '#cafe_lambda#' },
-                                  'mysql:////meta' => { 'meta_key' => 'cafe_table_file', 'meta_value' => '#cafe_table_file#' },
-                                  'mysql:////meta' => { 'meta_key' => 'CAFE_tree_string', 'meta_value' => '#cafe_tree_string#' },
-                                 },
-                           },
              -priority => 10,
             },
            ]

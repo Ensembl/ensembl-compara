@@ -101,7 +101,10 @@ sub species_tree_node {
         return $self->{_species_tree_node};
     }
 
-    $self->{_species_tree_node} = $self->adaptor->db->get_SpeciesTreeNodeAdaptor->fetch_node_by_node_id($self->_species_tree_node_id());
+    my $stn_id = $self->_species_tree_node_id();
+    if ($stn_id) {
+        $self->{_species_tree_node} = $self->adaptor->db->get_SpeciesTreeNodeAdaptor->fetch_node_by_node_id($stn_id);
+    }
 
     return $self->{_species_tree_node};
 }
@@ -141,34 +144,6 @@ sub taxonomy_level {
     my $self = shift;
     return undef unless $self->species_tree_node();
     return $self->species_tree_node()->node_name();
-}
-
-
-=head2 taxon_id
-
-  Description: DEPRECATED: GeneTreeNode::taxon_id is deprecated and will be removed in e76. Please use GeneTreeNode::species_tree_node()->taxon_id() instead
-
-=cut
-
-sub taxon_id {  ## DEPRECATED
-    my $self = shift;
-    deprecate('GeneTreeNode::taxon_id is deprecated and will be removed in e76, Please use GeneTreeNode::species_tree_node()->taxon_id() instead');
-    return undef unless $self->species_tree_node();
-    return $self->species_tree_node()->taxon_id;
-}
-
-
-=head2 taxon
-
-  Description: DEPRECATED: GeneTreeNode::taxon is deprecated and will be removed in e76, Please use GeneTreeNode::species_tree_node()->taxon() instead
-
-=cut
-
-sub taxon {  ## DEPRECATED
-    my $self = shift;
-    deprecate('GeneTreeNode::taxon is deprecated and will be removed in e76, Please use GeneTreeNode::species_tree_node()->taxon() instead');
-    return undef unless $self->species_tree_node();
-    return $self->species_tree_node()->taxon;
 }
 
 

@@ -68,7 +68,7 @@ use strict;
 use warnings;
 
 use Bio::EnsEMBL::DBLoader;
-use Bio::EnsEMBL::Utils::Exception qw(warning throw);
+use Bio::EnsEMBL::Utils::Exception qw(deprecate warning throw);
 use Bio::EnsEMBL::Utils::Argument qw(rearrange);
 
 use Bio::EnsEMBL::Compara::Utils::CoreDBAdaptor;
@@ -362,6 +362,29 @@ sub taxon {
   my $ncbi_taxon_adaptor = $self->adaptor->db->get_NCBITaxonAdaptor;
   $self->{'_taxon'} = $ncbi_taxon_adaptor->fetch_node_by_taxon_id($self->{'taxon_id'});
   return $self->{'_taxon'};
+}
+
+
+=head2 species_tree_node_id
+
+  Arg [1]    : (optional) int
+  Example    : $gdb->species_tree_node_id(9606);
+  Description: Getter/Setter for the ID in the "reference" species-tree of this genome_db
+  Returntype : int
+  Exceptions : none
+  Caller     : general
+  Status     : Stable
+
+=cut
+
+sub species_tree_node_id {
+  my $self = shift;
+  my $species_tree_node_id = shift;
+
+  if(defined $species_tree_node_id) {
+    $self->{'species_tree_node_id'} = $species_tree_node_id;
+  }
+  return $self->{'species_tree_node_id'};
 }
 
 

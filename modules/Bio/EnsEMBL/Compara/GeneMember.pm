@@ -46,6 +46,9 @@ of that gene product.
 
 =head1 SYNOPSIS
 
+Member properties:
+ - gene_member_id() is an alias for dbID()
+
 Links with the Ensembl Core objects:
  - get_Gene()
 
@@ -78,11 +81,11 @@ use base ('Bio::EnsEMBL::Compara::Member');
 
 
 
-=head2 new_from_gene
+=head2 new_from_Gene
 
   Arg [-GENE] : Bio::Ensembl:Gene
   Arg [-GENOME_DB] : Bio::Ensembl:Compara:GenomeDB 
-  Example    : $member = Bio::EnsEMBL::Compara::GeneMember->new_from_gene(
+  Example    : $member = Bio::EnsEMBL::Compara::GeneMember->new_from_Gene(
                 -gene   => $gene,
                 -genome_db => $genome_db);
   Description: contructor method which takes an Ensembl::Gene object
@@ -94,11 +97,8 @@ use base ('Bio::EnsEMBL::Compara::Member');
 
 =cut
 
-sub new_from_gene {
-  my ($class, @args) = @_;
-  my $self = $class->new(@args);
-
-  if (scalar @args) {
+sub new_from_Gene {
+    my ($class, @args) = @_;
 
     my ($gene, $genome_db) = rearrange([qw(GENE GENOME_DB)], @args);
 
@@ -108,116 +108,49 @@ sub new_from_gene {
       throw("COREDB error: does not contain gene_stable_id for gene_id ". $gene->dbID."\n");
     }
 
-    $self->stable_id($gene->stable_id);
-    $self->taxon_id($genome_db->taxon_id);
-    $self->description($gene->description);
-    $self->genome_db_id($genome_db->dbID);
-    $self->chr_name($gene->seq_region_name);
-    $self->dnafrag_start($gene->seq_region_start);
-    $self->dnafrag_end($gene->seq_region_end);
-    $self->dnafrag_strand($gene->seq_region_strand);
-    $self->source_name("ENSEMBLGENE");
-    $self->display_label($gene->display_xref->display_id) if $gene->display_xref;
-  }
-  return $self;
+    my $gene_member = Bio::EnsEMBL::Compara::GeneMember->new(
+        -STABLE_ID => $gene->stable_id,
+        -DISPLAY_LABEL => ($gene->display_xref ? $gene->display_xref->display_id : undef),
+        -DNAFRAG_START => $gene->seq_region_start,
+        -DNAFRAG_END => $gene->seq_region_end,
+        -DNAFRAG_STRAND => $gene->seq_region_strand,
+
+        -DNAFRAG => $genome_db->adaptor->db->get_DnaFragAdaptor->fetch_by_GenomeDB_and_name($genome_db, $gene->seq_region_name),
+        -GENOME_DB_ID => $genome_db->dbID,
+        -TAXON_ID => $genome_db->taxon_id,
+
+        -SOURCE_NAME => 'ENSEMBLGENE',
+        -DESCRIPTION => $gene->description,
+    );
+    $gene_member->{core_gene} = $gene;
+    return $gene_member;
+}
+
+
+sub member_id { ## DEPRECATED
+  my $self = shift;
+  deprecate('GeneMember::member_id() is deprecated and will be removed in e79. Please use gene_member_id() instead');
+  return $self->dbID(@_);
 }
 
 
 
-### SECTION 3 ###
-#
-# Global methods
-###################
+=head2 gene_member_id
 
+  Arg [1]    : (opt) integer
+  Description: alias for dbID()
 
+=cut
 
+sub gene_member_id {
+  my $self = shift;
+  return $self->dbID(@_);
+}
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-### SECTION 4 ###
-#
-# Sequence methods
-#####################
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-### SECTION 5 ###
-#
-# print a member
-##################
-
-
-
-
-
-
-
-
-### SECTION 6 ###
 #
 # connection to core
 #####################
-
-
-
 
 
 =head2 get_Gene
@@ -257,13 +190,6 @@ sub get_Gene {
 
 
 
-
-
-
-
-
-
-### SECTION 7 ###
 #
 # canonical transcripts
 ########################
@@ -310,12 +236,9 @@ sub canonical_member_id {
 
 
 
-### SECTION 8 ###
 #
 # sequence links
 ####################
-
-
 
 
 =head2 get_all_SeqMembers
@@ -334,26 +257,50 @@ sub get_all_SeqMembers {
 
     throw("adaptor undefined, cannot access database") unless($self->adaptor);
 
-    my $able_adaptor = UNIVERSAL::can($self->adaptor, 'fetch_all_by_gene_member_id')
+    my $able_adaptor = UNIVERSAL::can($self->adaptor, 'fetch_all_by_GeneMember')
         ? $self->adaptor    # a MemberAdaptor or derivative
         : $self->adaptor->db->get_SeqMemberAdaptor;
 
 
-    return $able_adaptor->fetch_all_by_gene_member_id($self->dbID);
+    return $able_adaptor->fetch_all_by_GeneMember($self);
 }
 
 
+sub number_of_families {
+  my ($self, $num_families) = @_;
+  $self->{'_num_families'} = shift if(@_);
+  return $self->{'_num_families'};
+}
 
+sub has_GeneTree {
+  my ($self, $has_genetree) = @_;
+  $self->{'_has_genetree'} = shift if(@_);
+  return $self->{'_has_genetree'};
+}
 
+sub has_GeneGainLossTree {
+  my ($self, $has_genegainlosstree) = @_;
+  $self->{'_has_genegainlosstree'} = shift if(@_);
+  return $self->{'_has_genegainlosstree'};
+}
 
-### SECTION 9 ###
-#
-# WRAPPERS
-###########
+sub number_of_orthologues {
+  my ($self, $num_orthologues) = @_;
+  $self->{'_num_orthologues'} = shift if(@_);
+  return $self->{'_num_orthologues'};
+}
 
+sub number_of_paralogues {
+  my ($self, $num_paralogues) = @_;
+  $self->{'_num_paralogues'} = shift if(@_);
+  return $self->{'_num_paralogues'};
+}
 
-
-
+sub number_of_homoeologues {
+  my ($self, $num_homoeologues) = @_;
+  $self->{'_num_homoeologues'} = shift if(@_);
+  return $self->{'_num_homoeologues'};
+}
 
 
 

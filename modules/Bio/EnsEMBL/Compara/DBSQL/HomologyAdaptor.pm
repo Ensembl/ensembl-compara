@@ -23,6 +23,7 @@ use warnings;
 
 use Bio::EnsEMBL::Compara::Homology;
 use Bio::EnsEMBL::Compara::DBSQL::BaseRelationAdaptor;
+use Bio::EnsEMBL::Compara::Utils::Scalar;
 
 use Bio::EnsEMBL::Utils::Exception qw(throw);
 use Bio::EnsEMBL::Utils::Argument qw(rearrange);
@@ -32,13 +33,14 @@ use DBI qw(:sql_types);
 
 our @ISA = qw(Bio::EnsEMBL::Compara::DBSQL::BaseRelationAdaptor);
 
+our %single_species_ml = ('ENSEMBL_PARALOGUES' => 1, 'ENSEMBL_HOMOEOLOGUES' => 1, 'ENSEMBL_ORTHOLOGUES' => 0, 'ENSEMBL_PROJECTIONS' => 0);
 
 =head2 fetch_all_by_Member
 
   Arg [1]    : Bio::EnsEMBL::Compara::Member $member
   Arg [-METHOD_LINK_TYPE] (opt)
              : string: the method_link_type of the homologies
-               probably ENSEMBL_ORTHOLOGUES or ENSEMBL_PARALOGUES
+               usually ENSEMBL_ORTHOLOGUES or ENSEMBL_PARALOGUES
   Arg [-METHOD_LINK_SPECIES_SET] (opt)
              : Bio::EnsEMBL::Compara::MethodLinkSpeciesSet
                Describes the kind of homology and the set of species
@@ -59,16 +61,14 @@ sub fetch_all_by_Member {
   my ($method_link_type, $method_link_species_set, $species_tree_node_ids) =
     rearrange([qw(METHOD_LINK_TYPE METHOD_LINK_SPECIES_SET SPECIES_TREE_NODE_IDS)], @args);
 
-  if (defined $method_link_species_set) {
-    check_ref($method_link_species_set, 'Bio::EnsEMBL::Compara::MethodLinkSpeciesSet') || assert_integer($method_link_species_set)
-  }
+  assert_ref_or_dbID($method_link_species_set, 'Bio::EnsEMBL::Compara::MethodLinkSpeciesSet', '-METHOD_LINK_SPECIES_SET');
   assert_ref($member, 'Bio::EnsEMBL::Compara::Member');
 
-  my $peptide_member_id = $member->isa('Bio::EnsEMBL::Compara::GeneMember') ? $member->canonical_member_id : $member->dbID;
+  my $seq_member_id = $member->isa('Bio::EnsEMBL::Compara::GeneMember') ? $member->canonical_member_id : $member->dbID;
 
   my $join = [[['homology_member', 'hm'], 'h.homology_id = hm.homology_id']];
-  my $constraint = 'hm.peptide_member_id = ?';
-  $self->bind_param_generic_fetch($peptide_member_id, SQL_INTEGER);
+  my $constraint = 'hm.seq_member_id = ?';
+  $self->bind_param_generic_fetch($seq_member_id, SQL_INTEGER);
 
   if (defined $method_link_species_set) {
     $constraint .= ' AND h.method_link_species_set_id = ?';
@@ -76,14 +76,14 @@ sub fetch_all_by_Member {
   }
 
   if (defined $species_tree_node_ids) {
-    $constraint = sprintf(' %s AND h.species_tree_node_id IN (%s)', $constraint, join(',', -1, @$species_tree_node_ids));
+    $constraint .= sprintf(' AND h.species_tree_node_id IN (%s)', join(',', -1, @$species_tree_node_ids));
   }
 
   # This internal variable is used by add_Member method 
   # in Bio::EnsEMBL::Compara::MemberSet to make sure that the first element
   # of the member array is the one that has been used by the user to fetch the
   # homology object
-  $self->{'_this_one_first'} = $peptide_member_id;
+  $self->{'_this_one_first'} = $seq_member_id;
 
   my $homologies = $self->generic_fetch($constraint, $join);
 
@@ -132,7 +132,7 @@ sub fetch_all_by_Member_paired_species {
   }
 
   unless (defined $method_link_types) {
-    $method_link_types = ['ENSEMBL_ORTHOLOGUES','ENSEMBL_PARALOGUES'];
+    $method_link_types = [keys %single_species_ml];
   }
   my $mlssa = $self->db->get_MethodLinkSpeciesSetAdaptor;
 
@@ -140,9 +140,10 @@ sub fetch_all_by_Member_paired_species {
   foreach my $ml (@{$method_link_types}) {
     my $mlss;
     if ($gdb1->dbID == $gdb2->dbID) {
-      next if ($ml eq 'ENSEMBL_ORTHOLOGUES');
+      next unless $single_species_ml{$ml};
       $mlss = $mlssa->fetch_by_method_link_type_GenomeDBs($ml, [$gdb1], "no_warning");
     } else {
+      next if $single_species_ml{$ml};
       $mlss = $mlssa->fetch_by_method_link_type_GenomeDBs($ml, [$gdb1, $gdb2], "no_warning");
     }
     if (defined $mlss) {
@@ -179,9 +180,9 @@ sub fetch_by_Member_Member {
 
   my $join = [[['homology_member', 'hm1'], 'h.homology_id = hm1.homology_id'],[['homology_member', 'hm2'], 'h.homology_id = hm2.homology_id']];
 
-  my $constraint .= ' hm1.peptide_member_id = ?';
+  my $constraint .= ' hm1.seq_member_id = ?';
   $self->bind_param_generic_fetch($pid1, SQL_INTEGER);
-  $constraint .= ' AND hm2.peptide_member_id = ?';
+  $constraint .= ' AND hm2.seq_member_id = ?';
   $self->bind_param_generic_fetch($pid2, SQL_INTEGER);
 
   $self->{'_this_one_first'} = $pid1;
@@ -235,7 +236,7 @@ sub fetch_all_by_MethodLinkSpeciesSet {
     }
 
     if (defined $species_tree_node_ids) {
-        $constraint = sprintf(' %s AND h.species_tree_node_id IN (%s)', $constraint, join(',', -1, @$species_tree_node_ids));
+        $constraint .= sprintf(' AND h.species_tree_node_id IN (%s)', join(',', -1, @$species_tree_node_ids));
     }
 
     return $self->generic_fetch($constraint);
@@ -287,6 +288,7 @@ sub fetch_all_by_genome_pair {
     my @all_mlss;
     if ($genome_db_id1 == $genome_db_id2) {
         push @all_mlss, $mlssa->fetch_by_method_link_type_GenomeDBs('ENSEMBL_PARALOGUES', [$genome_db_id1]);
+        push @all_mlss, $mlssa->fetch_by_method_link_type_GenomeDBs('ENSEMBL_HOMOEOLOGUES', [$genome_db_id1]);
     } else {
         push @all_mlss, $mlssa->fetch_by_method_link_type_GenomeDBs('ENSEMBL_ORTHOLOGUES', [$genome_db_id1, $genome_db_id2]);
         push @all_mlss, $mlssa->fetch_by_method_link_type_GenomeDBs('ENSEMBL_PARALOGUES', [$genome_db_id1, $genome_db_id2]);
@@ -383,15 +385,14 @@ sub _fetch_in_out_paralogues_with_NCBITaxon {
     my ($self, $in, $ref, $boundary_species, $member_type) = @_;
 
     my $species;
-    my $mlss;
 
     if (check_ref($ref, 'Bio::EnsEMBL::Compara::GenomeDB')) {
         $species = $ref;
-        $mlss = $self->db->get_MethodLinkSpeciesSetAdaptor->fetch_by_method_link_type_GenomeDBs('ENSEMBL_PARALOGUES', [$species]);
     } else {
         assert_ref($ref, 'Bio::EnsEMBL::Compara::Member');
         $species = $ref->genome_db;
     }
+    my $mlss = $self->db->get_MethodLinkSpeciesSetAdaptor->fetch_by_method_link_type_GenomeDBs('ENSEMBL_PARALOGUES', [$species]);
 
     assert_ref($boundary_species, 'Bio::EnsEMBL::Compara::NCBITaxon');
     # The last common ancestor of $species1 and $species2 defines the boundary
@@ -399,6 +400,7 @@ sub _fetch_in_out_paralogues_with_NCBITaxon {
 
     my @good_node_ids = ();
     if ($member_type) {
+        throw("Valid member_types are 'protein' and 'ncrna' (not $member_type)\n") if ($member_type ne 'protein') and ($member_type ne 'ncrna');
         push @good_node_ids, @{$self->_get_suitable_species_tree_node_ids($in, $lca, $member_type)};
     } else {
         push @good_node_ids, @{$self->_get_suitable_species_tree_node_ids($in, $lca, 'protein')};
@@ -408,7 +410,7 @@ sub _fetch_in_out_paralogues_with_NCBITaxon {
     if ($mlss) {
         return $self->fetch_all_by_MethodLinkSpeciesSet($mlss, -SPECIES_TREE_NODE_IDS => \@good_node_ids);
     } else {
-        return $self->fetch_all_by_Member($ref, -SPECIES_TREE_NODE_IDS => \@good_node_ids);
+        return $self->fetch_all_by_Member($ref, -METHOD_LINK_SPECIES_SET => $mlss, -SPECIES_TREE_NODE_IDS => \@good_node_ids);
     }
 }
 
@@ -419,21 +421,28 @@ sub _get_suitable_species_tree_node_ids {
     my $mlss = $self->db->get_MethodLinkSpeciesSetAdaptor->fetch_all_by_method_link_type($member_type eq 'protein' ? 'PROTEIN_TREES' : 'NC_TREES')->[0];
     my $species_tree = $self->db->get_SpeciesTreeAdaptor->fetch_by_method_link_species_set_id_label($mlss->dbID, 'default');
 
-    my $sql = sprintf(q{SELECT DISTINCT stn.node_id FROM
-        ncbi_taxa_node ntn1 JOIN ncbi_taxa_node ntn2 ON ntn1.left_index %s ntn2.left_index AND ntn1.right_index > ntn2.left_index
-        LEFT JOIN species_tree_node stn ON ntn2.taxon_id = stn.taxon_id
-        LEFT JOIN genome_db gdb ON ntn2.taxon_id = gdb.taxon_id AND stn.genome_db_id = gdb.genome_db_id
-    WHERE
-        ntn1.taxon_id = ?
-        AND stn.root_id = ?
-        },
-        $in ? '<' : '>',
-        $in ? '>' : '<',
-    );
-    my $sth = $self->prepare($sql);
-    $sth->execute($lca->node_id, $species_tree->root_id);
-    my $res = $sth->fetchall_arrayref;
-    return [map {$_->[0]} @$res];
+    my $sth;
+
+    if (not $lca) {
+        my $sql = sprintf(q{SELECT node_id FROM species_tree_node WHERE root_id = ?});
+        $sth = $self->prepare($sql);
+        $sth->execute($species_tree->root_id);
+
+    } else {
+        my $sql = sprintf(q{SELECT DISTINCT stn.node_id FROM
+            ncbi_taxa_node ntn1 JOIN ncbi_taxa_node ntn2 ON ntn1.left_index %s ntn2.left_index AND ntn1.right_index %s ntn2.right_index
+            JOIN species_tree_node stn ON ntn2.taxon_id = stn.taxon_id
+            WHERE
+            ntn1.taxon_id = ?
+            AND stn.root_id = ?
+            },
+            $in ? '<' : '>=',
+            $in ? '>' : '<=',
+        );
+        $sth = $self->prepare($sql);
+        $sth->execute($lca->node_id, $species_tree->root_id);
+    }
+    return [map {$_->[0]} @{$sth->fetchall_arrayref}];
 }
 
 
@@ -544,8 +553,8 @@ sub _objs_from_sth {
   
   while ($sth->fetch()) {
     push @homologies, Bio::EnsEMBL::Compara::Homology->new_fast({
-            '_adaptor'                      => $self,           # field name NOT in sync with Bio::EnsEMBL::Storable
-            '_dbID'                         => $homology_id,    # field name NOT in sync with Bio::EnsEMBL::Storable
+            'adaptor'                       => $self,
+            'dbID'                          => $homology_id,
             '_description'                  => $description,
             '_is_tree_compliant'            => $is_tree_compliant,
             '_method_link_species_set_id'   => $method_link_species_set_id,
@@ -602,7 +611,7 @@ sub store {
     $hom->dbID($sth->{'mysql_insertid'});
   }
 
-  my $sql = 'INSERT IGNORE INTO homology_member (homology_id, member_id, peptide_member_id, cigar_line, perc_id, perc_pos, perc_cov) VALUES (?,?,?,?,?,?,?)';
+  my $sql = 'INSERT IGNORE INTO homology_member (homology_id, gene_member_id, seq_member_id, cigar_line, perc_id, perc_pos, perc_cov) VALUES (?,?,?,?,?,?,?)';
   my $sth = $self->prepare($sql);
   foreach my $member(@{$hom->get_all_Members}) {
     # Stores the member if not yet stored

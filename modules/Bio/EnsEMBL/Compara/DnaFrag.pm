@@ -115,6 +115,9 @@ use warnings;
 use Bio::EnsEMBL::Utils::Exception qw(deprecate throw);
 use Bio::EnsEMBL::Utils::Argument;
 
+use base ('Bio::EnsEMBL::Storable');        # inherit dbID(), adaptor() and new() methods
+
+
 =head2 new
 
   Arg [-DBID] : (opt.) int $dbID (the database internal ID for this object)
@@ -154,25 +157,13 @@ use Bio::EnsEMBL::Utils::Argument;
 sub new {
   my($class,@args) = @_;
 
-  my $self = {};
+  my $self = $class->SUPER::new(@args);       # deal with Storable stuff
 
-  bless $self,$class;
-
-#   my ($name,$contig,$genomedb,$type,$adaptor,$dbID) =
-#     rearrange([qw(NAME CONTIG GENOMEDB TYPE ADAPTOR DBID)],@args);
-#    if ( defined $contig) {
-#      $self->contig($contig);
-#    }
-
-  my ($dbID, $adaptor, $length, $name, $genome_db, $genome_db_id, $coord_system_name, $is_reference,
-          $start, $end, $genomedb, $type
+  my ($length, $name, $genome_db, $genome_db_id, $coord_system_name, $is_reference,
       ) =
-    rearrange([qw(DBID ADAPTOR LENGTH NAME GENOME_DB GENOME_DB_ID COORD_SYSTEM_NAME IS_REFERENCE
-            START END
+    rearrange([qw(LENGTH NAME GENOME_DB GENOME_DB_ID COORD_SYSTEM_NAME IS_REFERENCE
         )],@args);
 
-  $self->dbID($dbID) if (defined($dbID));
-  $self->adaptor($adaptor) if (defined($adaptor));
   $self->length($length) if (defined($length));
   $self->name($name) if (defined($name));
   $self->genome_db($genome_db) if (defined($genome_db));
@@ -180,84 +171,33 @@ sub new {
   $self->coord_system_name($coord_system_name) if (defined($coord_system_name));
   $self->is_reference($is_reference) if (defined($is_reference));
 
-  ###################################################################
-  ## Support for backwards compatibility
-  $self->start($start) if (defined($start));
-  $self->end($end) if (defined($end));
-  ##
-  ###################################################################
-
   return $self;
 }
 
-=head2 new_fast
 
-  Arg [1]    : hash reference $hashref
-  Example    : none
-  Description: This is an ultra fast constructor which requires knowledge of
-               the objects internals to be used.
-  Returntype :
+=head2 new_from_Slice
+
+  Arg [1]    : Bio::EnsEMBL::Slice $slice
+  Arg [2]    : Bio::EnsEMBL::Compara::GenomeDB $genome_db
+  Description: Creates a new DnaFrag object using $slice (its underlying SeqRegion object)
+               Note that the DnaFrag's GenomeDB is set with $genome_db
+  Returntype : Bio::EnsEMBL::Compara::DnaFrag
   Exceptions : none
-  Caller     :
+  Caller     : general
   Status     : Stable
 
 =cut
 
-sub new_fast {
-  my $class = shift;
-  my $hashref = shift;
+sub new_from_Slice {
+    my ($class, $slice, $genome_db) = @_;
 
-  return bless $hashref, $class;
-}
-
-=head2 dbID
-
- Arg [1]   : int $dbID
- Example   : $dbID = $dnafrag->dbID()
- Example   : $dnafrag->dbID(1)
- Function  : get/set dbID attribute.
- Returns   : integer
- Exeption  : none
- Caller    : $object->dbID
- Status    : Stable
-
-=cut
-
-sub dbID {
-  my ($self, $dbID) = @_;
-   
-  if (defined($dbID)) {
-    $self->{'dbID'} = $dbID;
-  }
-
-  return $self->{'dbID'};
-}
-
-
-=head2 adaptor
-
- Arg [1]   : Bio::EnsEMBL::Compara::DBSQL::DnaFragAdaptor $dnafrag_adaptor
- Example   : $dnafrag_adaptor = $dnafrag->adaptor()
- Example   : $dnafrag->adaptor($dnafrag_adaptor)
- Function  : get/set adaptor attribute.
- Returns   : Bio::EnsEMBL::Compara::DBSQL::DnaFragAdaptor object
- Exeption  : thrown if argument is not a Bio::EnsEMBL::Compara::DBSQL::DnaFragAdaptor
-             object
- Caller    : $object->adaptor
- Status    : Stable
-
-=cut
-
-sub adaptor {
-  my ($self, $adaptor) = @_;
-   
-  if (defined($adaptor)) {
-    throw("[$adaptor] must be a Bio::EnsEMBL::Compara::DBSQL::DnaFragAdaptor object")
-      unless ($adaptor->isa("Bio::EnsEMBL::Compara::DBSQL::DnaFragAdaptor"));
-    $self->{'adaptor'} = $adaptor;
-  }
-
-  return $self->{'adaptor'};
+    return $class->new(
+        -NAME => $slice->seq_region_name(),
+        -LENGTH => $slice->seq_region_length(),
+        -COORD_SYSTEM_NAME => $slice->coord_system_name(),
+        -IS_REFERENCE => $slice->is_reference(),
+        -GENOME_DB => $genome_db,
+    );
 }
 
 
@@ -543,78 +483,6 @@ sub isMT {
         }
     }
     return 0;
-}
-
-
-#####################################################################
-#####################################################################
-
-=head1 DEPRECATED METHODS
-
-Bio::EnsEMBL::Compara::DnaFrag::start and Bio::EnsEMBL::Compara::DnaFrag::end
-methods are no longer used. All Bio::EnsEMBL::Compara::DnaFrag objects start
-in 1. Start and end coordinates have been replaced by length attribute. Please,
-use Bio::EnsEMBL::Compara::DnaFrag::length method to access it.
-
-Bio::EnsEMBL::Compara::DnaFrag::genomedb has been renamed
-Bio::EnsEMBL::Compara::DnaFrag::genome_db.
-
-Bio::EnsEMBL::Compara::DnaFrag::type has been renamed
-Bio::EnsEMBL::Compara::DnaFrag::coord_system_name.
-
-=cut
-
-#####################################################################
-#####################################################################
-
-
-
-
-=head2 start [DEPRECATED]
- 
-  DEPRECATED! All Bio::EnsEMBL::Compara::DnaFrag objects start in 1
-  
-  Arg [1]    : int
-  Example    : $dnafrag->start(1);
-  Description: Getter/Setter for the start attribute
-  Returntype : int
-  Exceptions : thrown when trying to set a starting position different from 1
-  Caller     : general
-
-=cut
- 
-sub start {
-  my ($self,$value) = @_;
-
-  deprecate("All Bio::EnsEMBL::Compara::DnaFrag objects start in 1");
-  if (defined($value) and ($value != 1)) {
-    throw("Trying to set a start value different from 1!\n".
-        "All Bio::EnsEMBL::Compara::DnaFrag objects start in 1");
-  }
-
-  return 1;
-}
-
-
-
-=head2 end [DEPRECATED]
- 
-  DEPRECATED! Use Bio::EnsEMBL::Compara::DnaFrag->length() method instead
-
-  Arg [1]    : int $end
-  Example    : $dnafrag->end(42);
-  Description: Getter/Setter for the start attribute
-  Returntype : int
-  Exceptions : none
-  Caller     : general
- 
-=cut
-
-sub end {
-  my ($self, $end) = @_;
-  deprecate("Use Bio::EnsEMBL::Compara::DnaFrag->length() method instead");
-
-  return $self->length($end);
 }
 
 1;

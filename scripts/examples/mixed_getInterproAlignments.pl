@@ -49,8 +49,7 @@ my $human_genes = $human_gene_adaptor->fetch_all_by_domain($interpro_domain);
 foreach my $this_human_gene (@$human_genes) {
   print "GENE: ", $this_human_gene->stable_id, " - ", $this_human_gene->external_name, "\n";
   ## Get the gene member for this human gene
-  my $gene_member = $gene_member_adaptor->fetch_by_source_stable_id(
-      "ENSEMBLGENE", $this_human_gene->stable_id);
+  my $gene_member = $gene_member_adaptor->fetch_by_stable_id($this_human_gene->stable_id);
   ## Get the canonical peptide Member, i.e. the one used for building the trees
   my $peptide_member = $gene_member->get_canonical_SeqMember;
 

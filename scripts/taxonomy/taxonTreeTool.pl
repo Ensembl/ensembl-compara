@@ -77,7 +77,7 @@ unless(defined($self->{'comparaDBA'})) {
 
 # Used to get the average branch lengths from the trees
 my $sql_dist_1 = 'SELECT distance_to_parent FROM gene_tree_root JOIN gene_tree_node gtn USING (root_id) JOIN gene_tree_node_attr gtna USING (node_id) JOIN gene_tree_node_attr gtnap ON gtnap.node_id = parent_id WHERE clusterset_id = "default" AND gtna.node_type = "speciation" AND gtnap.node_type = "speciation" AND gtnap.taxon_id = ? AND gtna.taxon_id = ?';
-my $sql_dist_2 = 'SELECT distance_to_parent FROM gene_tree_root JOIN gene_tree_node gtn USING (root_id) JOIN member USING (member_id) JOIN gene_tree_node_attr gtnap ON gtnap.node_id = parent_id WHERE clusterset_id = "default" AND gtnap.node_type = "speciation" AND gtnap.taxon_id = ? AND member.taxon_id = ?';
+my $sql_dist_2 = 'SELECT distance_to_parent FROM gene_tree_root JOIN gene_tree_node gtn USING (root_id) JOIN seq_member USING (seq_member_id) JOIN gene_tree_node_attr gtnap ON gtnap.node_id = parent_id WHERE clusterset_id = "default" AND gtnap.node_type = "speciation" AND gtnap.taxon_id = ? AND seq_member.taxon_id = ?';
 my $sth_dist_1 = $self->{'comparaDBA'}->dbc->prepare($sql_dist_1);
 my $sth_dist_2 = $self->{'comparaDBA'}->dbc->prepare($sql_dist_2);
 
@@ -230,6 +230,10 @@ sub fetch_compara_ncbi_taxa {
   foreach my $gdb (@$gdb_list) {
     next unless $gdb->taxon_id;
     my $taxon = $taxonDBA->fetch_node_by_taxon_id($gdb->taxon_id);
+    if (not $taxon) {
+        warn sprintf('Cannot fetch taxon_id=%d (%s)', $gdb->taxon_id, $gdb->name);
+        next;
+    }
     $taxon->no_autoload_children;
 
     $root = $taxon->root unless($root);

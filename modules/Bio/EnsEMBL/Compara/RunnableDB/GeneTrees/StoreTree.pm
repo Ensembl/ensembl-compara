@@ -33,16 +33,6 @@ use Bio::EnsEMBL::Compara::Graph::NewickParser;
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
 
-sub prepareTemporaryMemberNames {
-    my $self = shift;
-    my $gene_tree = shift;
-
-    my $lookup = eval($self->compara_dba->get_MethodLinkSpeciesSetAdaptor->fetch_by_dbID($self->param_required('mlss_id'))->get_value_for_tag('gdb2stn'));
-    foreach my $member (@{$gene_tree->get_all_Members}) {
-        $member->{_tmp_name} = sprintf('%d_%d', $member->member_id, $lookup->{$member->genome_db_id});
-    }
-}
-
 sub dumpTreeMultipleAlignmentToWorkdir {
   my $self = shift;
   my $gene_tree = shift;
@@ -60,7 +50,6 @@ sub dumpTreeMultipleAlignmentToWorkdir {
   }
 
   print STDERR "fetching alignment\n" if ($self->debug);
-  $self->prepareTemporaryMemberNames($gene_tree);
 
   ########################################
   # Gene split mirroring code
@@ -70,11 +59,11 @@ sub dumpTreeMultipleAlignmentToWorkdir {
   #
   if ($self->param('check_split_genes')) {
     my %split_genes;
-    my $sth = $self->compara_dba->dbc->prepare('SELECT DISTINCT gene_split_id FROM split_genes JOIN gene_tree_node USING (member_id) WHERE root_id = ?');
+    my $sth = $self->compara_dba->dbc->prepare('SELECT DISTINCT gene_split_id FROM split_genes JOIN gene_tree_node USING (seq_member_id) WHERE root_id = ?');
     $sth->execute($self->param('gene_tree_id'));
     my $gene_splits = $sth->fetchall_arrayref();
     $sth->finish;
-    $sth = $self->compara_dba->dbc->prepare('SELECT node_id FROM split_genes JOIN gene_tree_node USING (member_id) WHERE root_id = ? AND gene_split_id = ? ORDER BY member_id');
+    $sth = $self->compara_dba->dbc->prepare('SELECT node_id FROM split_genes JOIN gene_tree_node USING (seq_member_id) WHERE root_id = ? AND gene_split_id = ? ORDER BY seq_member_id');
     foreach my $gene_split (@$gene_splits) {
       $sth->execute($self->param('gene_tree_id'), $gene_split->[0]);
       my $partial_genes = $sth->fetchall_arrayref;
@@ -117,7 +106,8 @@ sub dumpTreeMultipleAlignmentToWorkdir {
  
   # Getting the multiple alignment
   my $sa = $gene_tree->get_SimpleAlign(
-     -id_type => 'TMP',
+     -id_type => 'MEMBER',
+     -APPEND_SPECIES_TREE_NODE_ID => 1,
      -stop2x => 1,
      $self->param('cdna') ? (-seq_type => 'cds') : (),
   );
@@ -231,8 +221,8 @@ sub store_node_tags
         } else {
             $node_type = 'speciation';
         }
-        $node->store_tag('node_type', $node_type);
         print "node_type: $node_type\n" if ($self->debug);
+        $node->store_tag('node_type', $node_type);
     }
 
     $node->delete_tag('lost_species_tree_node_id');
@@ -268,8 +258,8 @@ sub store_node_tags
         my $db_tag = $mapped_tags{$tag};
         if ($node->has_tag($tag)) {
             my $value = $node->get_tagvalue($tag);
-            $node->store_tag($db_tag, $value);
             print "$tag as $db_tag: $value\n" if ($self->debug);
+            $node->store_tag($db_tag, $value);
         } else {
             $node->delete_tag($db_tag);
         }
@@ -290,7 +280,7 @@ sub parse_newick_into_tree {
   #  flatten and reduce to only GeneTreeMember leaves
   my %leaves;
   foreach my $node (@{$tree->get_all_Members}) {
-    $leaves{$node->member_id} = $node;
+    $leaves{$node->seq_member_id} = $node;
   }
 
   my $newroot = Bio::EnsEMBL::Compara::Graph::NewickParser::parse_newick_into_tree($newick, "Bio::EnsEMBL::Compara::GeneTreeNode");
@@ -325,21 +315,21 @@ sub parse_newick_into_tree {
   foreach my $leaf (@{$newroot->get_all_leaves}) {
     my $njtree_phyml_name = $leaf->get_tagvalue('name');
     $njtree_phyml_name =~ /(\d+)\_\d+/;
-    my $member_id = $1;
-    my $old_leaf = $leaves{$member_id};
+    my $seq_member_id = $1;
+    my $old_leaf = $leaves{$seq_member_id};
     if (not $old_leaf) {
       $leaf->print_node;
-      die "unable to find member '$member_id' (in '$njtree_phyml_name', from newick '$newick')";
+      die "unable to find seq_member '$seq_member_id' (in '$njtree_phyml_name', from newick '$newick')";
     }
     bless $leaf, 'Bio::EnsEMBL::Compara::GeneTreeMember';
-    $leaf->member_id($member_id);
+    $leaf->seq_member_id($seq_member_id);
     $leaf->gene_member_id($old_leaf->gene_member_id);
     $leaf->cigar_line($old_leaf->cigar_line);
     $leaf->node_id($old_leaf->node_id);
     $leaf->taxon_id($old_leaf->taxon_id);
     $leaf->stable_id($old_leaf->stable_id);
     $leaf->adaptor($old_leaf->adaptor);
-    $leaf->add_tag('name', $member_id);
+    $leaf->add_tag('name', $seq_member_id);
     $leaf->{'_children_loaded'} = 1;
   }
   print  "Tree with GeneTreeNode objects:\n";
@@ -478,6 +468,38 @@ sub store_alternative_tree {
     $self->store_genetree($newtree);
     $newtree->release_tree;
     return $newtree;
+}
+
+sub store_filtered_align {
+    my ($self, $alnfile_ini, $alnfile_filtered) = @_;
+
+    # Loads the filtered alignment strings
+    my %hash_filtered_strings = ();
+    {
+        my $alignio = Bio::AlignIO->new(-file => $alnfile_filtered, -format => 'fasta');
+        my $aln = $alignio->next_aln;
+
+        unless ($aln) {
+            $self->warning("Cannot read the filtered alignment '$alnfile_filtered'\n");
+            return;
+        }
+
+        foreach my $seq ($aln->each_seq) {
+            $hash_filtered_strings{$seq->display_id()} = $seq->seq();
+        }
+    }
+
+    my %hash_initial_strings = ();
+    {
+        my $alignio = Bio::AlignIO->new(-file => $alnfile_ini, -format => 'fasta');
+        my $aln = $alignio->next_aln or die "The input alignment '$alnfile_ini' cannot be read";
+
+        foreach my $seq ($aln->each_seq) {
+            $hash_initial_strings{$seq->display_id()} = $seq->seq();
+        }
+    }
+
+    return Bio::EnsEMBL::Compara::Utils::Cigars::identify_removed_columns(\%hash_initial_strings, \%hash_filtered_strings);
 }
 
 

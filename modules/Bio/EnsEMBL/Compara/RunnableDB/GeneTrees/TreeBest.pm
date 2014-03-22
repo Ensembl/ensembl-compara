@@ -61,6 +61,7 @@ use base ('Bio::EnsEMBL::Compara::RunnableDB::RunCommand');
 sub _load_species_tree_string_from_db {
     my ($self) = @_;
     my $species_tree = $self->param('gene_tree')->species_tree;
+    $species_tree->attach_to_genome_dbs();
     $self->param('species_tree_string', $species_tree->root->newick_format('ryo', '%{o}%{-E"*"}'))
 }
 
@@ -80,7 +81,7 @@ sub _load_species_tree_string_from_db {
 =cut
 
 sub run_treebest_best {
-    my ($self, $input_aln) = @_;
+    my ($self, $input_aln, $lk_scale) = @_;
 
     my $species_tree_file = $self->get_species_tree_file();
     my $max_diff_lk;
@@ -94,9 +95,12 @@ sub run_treebest_best {
         $args .= sprintf(' -p %s', $self->param('intermediate_prefix')) if $self->param('intermediate_prefix');
         $args .= sprintf(' %s', $self->param('extra_args')) if $self->param('extra_args');
         $args .= sprintf(' -Z %f', $max_diff_lk) if $max_diff_lk;
+        $args .= sprintf(' -X %f', $lk_scale) if $lk_scale;
+        $args .= ' -D';
 
         my $cmd = $self->_get_alignment_filtering_cmd($args, $input_aln);
         my $run_cmd = $self->run_command($cmd);
+        $self->param('treebest_stderr', $run_cmd->err);
         return $run_cmd->out unless ($run_cmd->exit_code);
 
         my $full_cmd = $run_cmd->cmd;

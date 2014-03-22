@@ -47,6 +47,7 @@ limitations under the License.
 package Bio::EnsEMBL::Compara::RunnableDB::MakeSpeciesTree;
 
 use strict;
+use Bio::EnsEMBL::Utils::SqlHelper;
 use Bio::EnsEMBL::Compara::Graph::NewickParser;
 use Bio::EnsEMBL::Compara::Utils::SpeciesTree;
 use Bio::EnsEMBL::Compara::SpeciesTree;
@@ -56,6 +57,7 @@ use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 sub param_defaults {
     return {
             'newick_format'         => 'njtree',    # the desired output format
+            'do_transactions'       => 0,
     };
 }
 
@@ -116,6 +118,7 @@ sub fetch_input {
 
 
     }
+    $species_tree_root->build_leftright_indexing();
     $self->param('species_tree_root', $species_tree_root);
 }
 
@@ -136,12 +139,17 @@ sub write_output {
     $species_tree->label($label);
 
     my $speciesTree_adaptor = $self->compara_dba->get_SpeciesTreeAdaptor();
-    $speciesTree_adaptor->store($species_tree);
 
-    if ($self->param('for_gene_trees')) {
-        # We need to create a fast lookup: genome_db_id => species_tree_node_id
-        my $str = '{'.join(', ', map {sprintf('%d=>%d', $_->genome_db_id, $_->node_id)} @{$species_tree_root->get_all_leaves} ).'}';
-        $self->compara_dba->get_MethodLinkSpeciesSetAdaptor->fetch_by_dbID($self->param('mlss_id'))->store_tag('gdb2stn', $str);
+    # To make sure we don't leave the database with a half-stored tree
+    if ($self->param('do_transactions')) {
+        my $helper = Bio::EnsEMBL::Utils::SqlHelper->new(-DB_CONNECTION => $self->compara_dba->dbc);
+        $helper->transaction(
+            -CALLBACK => sub {
+                $speciesTree_adaptor->store($species_tree);
+            }
+        );
+    } else {
+        $speciesTree_adaptor->store($species_tree);
     }
 }
 

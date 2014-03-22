@@ -55,7 +55,7 @@ for my $genome_db (@genome_dbs) {
 	$compara->dbc()->sql_helper()->execute_update(
 	  -SQL => q/delete mx.* from member_xref mx 
 join external_db e using (external_db_id) 
-join member m using (member_id) 
+join gene_member m using (gene_member_id) 
 join genome_db g using (genome_db_id) where e.db_name=? and g.name=?/,
 	  -PARAMS => [$db_name, $dba->species()]);
 	$adaptor->store_member_associations($dba, $db_name);

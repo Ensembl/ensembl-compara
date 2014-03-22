@@ -38,15 +38,8 @@ package Bio::EnsEMBL::Compara::HMMProfile;
 use strict;
 use warnings;
 
-use Data::Dumper;
 
-sub new {
-    my ($class) = @_;
-
-    my $self = bless {}, $class;
-
-    return $self;
-}
+use base qw(Bio::EnsEMBL::Storable);
 
 
 

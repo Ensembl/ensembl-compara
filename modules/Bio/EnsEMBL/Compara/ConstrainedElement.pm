@@ -138,6 +138,8 @@ use Bio::EnsEMBL::Compara::DnaFrag;
 use Bio::SimpleAlign;
 use Data::Dumper;
 
+use base ('Bio::EnsEMBL::Storable');        # inherit dbID(), adaptor() and new() methods
+
 
 =head2 new (CONSTRUCTOR)
 
@@ -192,22 +194,18 @@ use Data::Dumper;
 sub new {
   my($class, @args) = @_;
   
-  my $self = {};
-  bless $self,$class;
+  my $self = $class->SUPER::new(@args);       # deal with Storable stuff
     
-  my ($adaptor, $dbID, $alignment_segments, 
+  my ($alignment_segments,
 	$method_link_species_set_id, $score, $p_value, 
 	$slice, $start, $end, $strand, $reference_dnafrag_id) = 
     rearrange([qw(
-        ADAPTOR DBID ALIGNMENT_SEGMENTS 
+        ALIGNMENT_SEGMENTS
   METHOD_LINK_SPECIES_SET_ID SCORE P_VALUE 
   SLICE START END STRAND REFERENCE_DNAFRAG_ID 
 	)],
             @args);
 
-  $self->adaptor($adaptor) if (defined ($adaptor));
-  $self->dbID($dbID) 
-	if (defined ($dbID));
   $self->method_link_species_set_id($method_link_species_set_id)
       if (defined ($method_link_species_set_id));
   $self->alignment_segments($alignment_segments) 
@@ -221,61 +219,6 @@ sub new {
   $self->reference_dnafrag_id($reference_dnafrag_id)
       if (defined($reference_dnafrag_id));
   return $self;
-}
-
-sub new_fast {
-  my $class = shift;
-  my $hashref = shift;
-
-  return bless $hashref, $class;
-}
-
-=head2 adaptor
-
-  Arg [1]    : Bio::EnsEMBL::Compara::DBSQL::ConstrainedElementAdaptor
-  Example    : my $cons_ele_adaptor = $constrained_element->adaptor();
-  Example    : $cons_ele_adaptor->adaptor($cons_ele_adaptor);
-  Description: Getter/Setter for the adaptor this object uses for database
-               interaction.
-  Returntype : Bio::EnsEMBL::Compara::DBSQL::ConstrainedElementAdaptor object
-  Exceptions : thrown if $adaptor is not a
-               Bio::EnsEMBL::Compara::DBSQL::ConstrainedElementAdaptor object
-  Caller     : general
-
-=cut
-
-sub adaptor {
-  my ($self, $adaptor) = @_;
-
-  if (defined($adaptor)) {
-    throw("$adaptor is not a Bio::EnsEMBL::Compara::DBSQL::ConstrainedElementAdaptor object")
-        unless ($adaptor->isa("Bio::EnsEMBL::Compara::DBSQL::ConstrainedElementAdaptor"));
-    $self->{'adaptor'} = $adaptor;
-  }
-
-  return $self->{'adaptor'};
-}
-
-=head2 dbID
-
-  Arg [1]    : integer $dbID
-  Example    : my $dbID = $constrained_element->dbID();
-  Example    : $constrained_element->dbID(2);
-  Description: Getter/Setter for the attribute dbID 
-  Returntype : integer
-  Exceptions : returns undef if no ref.dbID
-  Caller     : general
-
-=cut
-
-sub dbID {
-  my ($self, $dbID) = @_;
-
-  if (defined($dbID)) {
-    $self->{'dbID'} = $dbID;
-  }
-
-  return $self->{'dbID'};
 }
 
 
@@ -591,7 +534,7 @@ sub get_SimpleAlign {
 		($self->slice->start + $self->end - 1),
 		$reference_genomic_align,
 		$skip_empty_GenomicAligns);
-	print "dbID: ", $this_genomic_align_block->dbID, ". "; 
+#        print "dbID: ", $this_genomic_align_block->dbID, ". ";
 	foreach my $genomic_align( @{ $restricted_gab->get_all_GenomicAligns } ) {
 		my $alignSeq = $genomic_align->aligned_sequence;
 		my $loc_seq = Bio::LocatableSeq->new(

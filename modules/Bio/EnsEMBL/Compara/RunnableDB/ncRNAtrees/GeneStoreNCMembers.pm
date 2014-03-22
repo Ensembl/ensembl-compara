@@ -160,14 +160,13 @@ sub store_ncrna_gene {
 
         my $fasta_description = $self->fasta_description($gene, $transcript) or next TRANSCRIPT;
 
-        my $ncrna_member = Bio::EnsEMBL::Compara::SeqMember->new_from_transcript(
+        my $ncrna_member = Bio::EnsEMBL::Compara::SeqMember->new_from_Transcript(
             -transcript  => $transcript,
             -genome_db   => $self->param('genome_db'),
-            -translate   => 'ncrna',
-            -description => $fasta_description,
         );
+        $ncrna_member->description($fasta_description);
 
-        print(" => member " . $ncrna_member->stable_id) if($self->debug);
+        print(" => ncrna_member " . $ncrna_member->stable_id) if($self->debug);
 
         my $transcript_spliced_seq = $transcript->spliced_seq;
 
@@ -175,11 +174,11 @@ sub store_ncrna_gene {
         if($self->param('store_genes') and $gene_member_not_stored) {
             print("     gene       " . $gene->stable_id ) if($self->debug);
 
-            $gene_member = Bio::EnsEMBL::Compara::GeneMember->new_from_gene(
+            $gene_member = Bio::EnsEMBL::Compara::GeneMember->new_from_Gene(
                 -gene      => $gene,
                 -genome_db => $self->param('genome_db'),
             );
-            print(" => member " . $gene_member->stable_id) if($self->debug);
+            print(" => gene_member " . $gene_member->stable_id) if($self->debug);
 
             eval {
                 $gene_member_adaptor->store($gene_member);

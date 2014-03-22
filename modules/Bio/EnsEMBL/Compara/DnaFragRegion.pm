@@ -96,7 +96,7 @@ use warnings;
 use Bio::EnsEMBL::Utils::Argument;
 use Bio::EnsEMBL::Utils::Exception;
 
-use base qw(Bio::EnsEMBL::Compara::Locus);
+use base qw(Bio::EnsEMBL::Compara::Locus Bio::EnsEMBL::Storable);
 
 
 =head2 new
@@ -127,6 +127,10 @@ sub new {
   return $self;
 }
 
+sub dbID {
+    throw("DnaFragRegion objects do not implement dbID()");
+}
+
 
 =head2 synteny_region_id
 
@@ -150,29 +154,6 @@ sub synteny_region_id {
   return $obj->{'synteny_region_id'};
 }
 
-
-=head2 adaptor
-
-  Arg 1       : (optional) Bio::EnsEMBL::Compara::DBSQL::DnaFragRegioAdaptor $adaptor
-  Example     : my $adaptor = $dnafrag->adaptor;
-  Description : Getter/setter for the corresponding
-                Bio::EnsEMBL::Compara::DBSQL::DnaFragRegioAdaptor object
-  Returntype  : Bio::EnsEMBL::Compara::DBSQL::DnaFragRegioAdaptor object
-  Exceptions  : none
-  Caller      : general
-
-=cut
-
-sub adaptor {
-  my $obj = shift;
-
-  if (@_) {
-    my $value = shift;
-    $obj->{'adaptor'} = $value;
-  }
-
-  return $obj->{'adaptor'};
-}
 
 =head2 slice
 

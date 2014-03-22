@@ -30,7 +30,7 @@ my $family_adaptor = $reg->get_adaptor("Multi", "compara", "Family");
 
 
 ## Get the compara member
-my $gene_member = $gene_member_adaptor->fetch_by_source_stable_id("ENSEMBLGENE", "ENSG00000139618");
+my $gene_member = $gene_member_adaptor->fetch_by_stable_id("ENSG00000139618");
 
 ## Get all the families
 my $all_families = $family_adaptor->fetch_all_by_Member($gene_member);

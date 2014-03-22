@@ -25,7 +25,7 @@ $reg->load_registry_from_url('mysql://anonymous@ensembldb.ensembl.org');
 my $seq_member_adaptor = $reg->get_adaptor("Multi", "compara", "SeqMember");
 
 ## Get the member for SwissProt entry O93279
-my $seq_member = $seq_member_adaptor->fetch_by_source_stable_id("Uniprot/SWISSPROT", "O93279");
+my $seq_member = $seq_member_adaptor->fetch_by_stable_id("O93279");
 
 ## Print the stable ID and the sequence
 print ">", $seq_member->stable_id(), "\n";

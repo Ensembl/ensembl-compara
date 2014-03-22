@@ -250,7 +250,7 @@ sub hash_all_exons_from_dbc {
 sub hash_all_sequences_from_db {
     my $genome_db = shift;
 
-    my $sql = 'SELECT stable_id, MD5(sequence) FROM member JOIN sequence USING (sequence_id) WHERE genome_db_id = ?';
+    my $sql = 'SELECT stable_id, MD5(sequence) FROM seq_member JOIN sequence USING (sequence_id) WHERE genome_db_id = ?';
     my $sth = $genome_db->adaptor->dbc->prepare($sql);
     $sth->execute($genome_db->dbID);
 

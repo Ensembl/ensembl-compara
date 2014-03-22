@@ -83,7 +83,6 @@ sub copy {
   
   my $mycopy = $self->Bio::EnsEMBL::Compara::GeneTreeNode::copy;
                $self->Bio::EnsEMBL::Compara::AlignedMember::copy($mycopy);     # we could rename this method into topup() as it is not needed by 'AlignedMember' class itself
-  bless $mycopy, 'Bio::EnsEMBL::Compara::GeneTreeMember';
   
   return $mycopy;
 }
@@ -97,7 +96,7 @@ sub copy {
                 left and right indexes are printed, then the species name. If the
                 gene member can be determined, the methods prints the stable_id,
                 the display label and location of the gene member, otherwise the
-                member_id and stable_id of the object are printed.
+                seq_member_id and stable_id of the object are printed.
   Returntype  : none
   Exceptions  : none
   Caller      : general
@@ -113,10 +112,10 @@ sub string_node {
     }
   if($self->gene_member) {
     $str .= sprintf(" %s %s %s:%d-%d",
-      $self->gene_member->stable_id, $self->gene_member->display_label || '', $self->gene_member->chr_name || '',
+      $self->gene_member->stable_id, $self->gene_member->display_label || '', $self->gene_member->dnafrag() ? $self->gene_member->dnafrag()->name : '',
       $self->gene_member->dnafrag_start || 0, $self->gene_member->dnafrag_end || 0);
   } elsif($self->stable_id) {
-    $str .= sprintf(" (%d) %s", $self->member_id, $self->stable_id);
+    $str .= sprintf(" (%d) %s", $self->seq_member_id, $self->stable_id);
   }
   $str .= "\n";
 }

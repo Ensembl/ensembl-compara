@@ -28,7 +28,7 @@ my $gene_member_adaptor = $reg->get_adaptor("Multi", "compara", "GeneMember");
 my $gene_tree_adaptor = $reg->get_adaptor("Multi", "compara", "GeneTree");
 
 ## Get the compara member
-my $gene_member = $gene_member_adaptor->fetch_by_source_stable_id("ENSEMBLGENE", "ENSDARG00000003399");
+my $gene_member = $gene_member_adaptor->fetch_by_stable_id("ENSDARG00000003399");
 
 ## Get the tree for this member
 my $tree = $gene_tree_adaptor->fetch_default_for_Member($gene_member);

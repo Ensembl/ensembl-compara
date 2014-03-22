@@ -70,11 +70,13 @@ use Bio::EnsEMBL::Compara::Utils::Cigars;
 
 #se overload '<=>' => "sort_by_score_evalue_and_pid";   # named method
 
-sub new {
-  my ($class) = @_;
-  my $self = {};
+use base ('Bio::EnsEMBL::Storable');        # inherit dbID(), adaptor() and new() methods
 
-  bless $self,$class;
+
+sub new {
+  my ($class, @args) = @_;
+
+  my $self = $class->SUPER::new(@args);       # deal with Storable stuff
 
   $self->query_member(new Bio::EnsEMBL::Compara::Member);
   $self->hit_member(new Bio::EnsEMBL::Compara::Member);
@@ -334,12 +336,6 @@ sub hit_rank {
   return $self->{_hit_rank};
 }
 
-sub dbID {
-  my ( $self, $dbID ) = @_;
-  $self->{'_dbID'} = $dbID if defined $dbID;
-  return $self->{'_dbID'};
-}
-
 sub rhit_dbID {
   my ( $self, $dbID ) = @_;
   $self->{'_rhit_dbID'} = $dbID if defined $dbID;
@@ -368,9 +364,9 @@ sub get_description {
   while(length($header)<17) { $header .= ' '; }
 
   my $qmem = sprintf("%s(%d,%d)(%s:%d)",
-        $qm->stable_id, $self->qstart, $self->qend, $qm->chr_name, $qm->dnafrag_start);
+        $qm->stable_id, $self->qstart, $self->qend, $qm->dnafrag->name, $qm->dnafrag_start);
   my $hmem = sprintf("%s(%d,%d)(%s:%d)",
-        $hm->stable_id, $self->hstart, $self->hend, $hm->chr_name, $hm->dnafrag_start);
+        $hm->stable_id, $self->hstart, $self->hend, $hm->dnafrag->name, $hm->dnafrag_start);
   while(length($qmem)<50) { $qmem .= ' '; }
   while(length($hmem)<50) { $hmem .= ' '; }
 

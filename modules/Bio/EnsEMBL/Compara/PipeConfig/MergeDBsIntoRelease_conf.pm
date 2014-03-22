@@ -87,7 +87,8 @@ sub default_options {
 
         'exclusive_tables'  => {
             'mapping_session'   => 'master_db',
-            'member'            => 'projection_db',
+            'gene_member'       => 'projection_db',
+            'seq_member'        => 'projection_db',
             'sequence'          => 'projection_db',
             'peptide_align_feature_%' => 'protein_db',
         },
@@ -245,7 +246,8 @@ If we have projection_db:
 
         'exclusive_tables'  => {
             'mapping_session'   => 'master_db',
-            'member'            => 'projection_db',
+            'gene_member'       => 'projection_db',
+            'seq_member'        => 'projection_db',
             'sequence'          => 'projection_db',
         },
 
@@ -279,7 +281,7 @@ If we don't have projection_db:
         },
 
         'ignored_tables'    => {
-            'protein_db'    => [qw(member sequence)],
+            'protein_db'    => [qw(gene_member seq_member sequence)],
         },
 
 =cut
@@ -343,7 +345,7 @@ If we have genomic alignments:
         },
 
         'ignored_tables'    => {
-            'kb3_pecan_20way_71'    => [qw(peptide_align_feature_% member sequence)],
+            'kb3_pecan_20way_71'    => [qw(peptide_align_feature_% gene_member seq_member sequence)],
         },
 
 =cut

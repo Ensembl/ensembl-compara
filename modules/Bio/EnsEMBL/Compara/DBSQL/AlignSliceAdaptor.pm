@@ -186,7 +186,15 @@ sub fetch_by_Slice_MethodLinkSpeciesSet {
 
   my $genomic_align_trees = ();
   my $species_order;
-  if ($method_link_species_set->method->class =~ /GenomicAlignTree/ and @$genomic_align_blocks) {
+
+  #Get the species tree for PECAN alignments
+  if ($method_link_species_set->method->class =~ /GenomicAlignBlock.multiple_alignment/ and  @$genomic_align_blocks) {
+    my $first_genomic_align_block = $genomic_align_blocks->[0];
+    my $genomic_align_tree = $first_genomic_align_block->get_GenomicAlignTree;
+    
+    #want to create species_order
+    $species_order = _get_species_order($genomic_align_tree);
+  } elsif ($method_link_species_set->method->class =~ /GenomicAlignTree/ and @$genomic_align_blocks) {
     my $genomic_align_tree_adaptor = $self->db->get_GenomicAlignTreeAdaptor;
     foreach my $this_genomic_align_block (@$genomic_align_blocks) {
 #       print $this_genomic_align_block->reference_genomic_align, "\n";
@@ -210,24 +218,8 @@ sub fetch_by_Slice_MethodLinkSpeciesSet {
     }
 
     ## First tree. Build the species order using the first tree only
-    foreach my $this_genomic_align_node (@{$genomic_align_trees->[0]->get_all_sorted_genomic_align_nodes}) {
-      next if (!@{$this_genomic_align_node->get_all_genomic_aligns_for_node});
-      my $this_genomic_align = $this_genomic_align_node->get_all_genomic_aligns_for_node->[0];
-      my $genome_db = $this_genomic_align->genome_db;
-      my $this_node_id = $this_genomic_align_node->node_id;
-      my $right_node_id = _get_right_node_id($this_genomic_align_node);
-      my $genomic_align_ids = [];
-      foreach my $each_genomic_align (@{$this_genomic_align_node->get_all_genomic_aligns_for_node}) {
-        push (@$genomic_align_ids, $each_genomic_align->dbID);
-      }
-      push(@$species_order,
-            {
-            genome_db => $genome_db,
-            right_node_id => $right_node_id,
-            genomic_align_ids => $genomic_align_ids,
-            # #               last_node => $this_genomic_align_node,
-            });
-  }
+    $species_order = _get_species_order($genomic_align_trees->[0]);
+
     $| = 1;
     ## Combine the first tree with the second, the resulting order with the third and so on
     foreach my $this_genomic_align_tree (@$genomic_align_trees) {
@@ -346,6 +338,40 @@ sub flush_cache {
   undef $self->{'_cache'};
 }
 
+=head2 _get_species_order
+  Arg[1]     : Bio::EnsEMBL::Compara::GenomicAlignTree $genomic_align_tree
+  Example    :
+  Description: This method returns a sorted array of species to be used when creating a new Bio::EnsEMBL::Compara::AlignSlice object
+  Returntype : array of hashes
+  Exceptions : none
+  Caller     : $object->methodname
+
+=cut
+
+sub _get_species_order {
+  my ($genomic_align_tree) = @_;
+  
+  my $species_order;
+  foreach my $this_genomic_align_node (@{$genomic_align_tree->get_all_sorted_genomic_align_nodes}) {
+    next if (!@{$this_genomic_align_node->get_all_genomic_aligns_for_node});
+    my $this_genomic_align = $this_genomic_align_node->get_all_genomic_aligns_for_node->[0];
+    my $genome_db = $this_genomic_align->genome_db;
+    my $this_node_id = $this_genomic_align_node->node_id;
+    my $right_node_id = _get_right_node_id($this_genomic_align_node);
+    my $genomic_align_ids = [];
+    foreach my $each_genomic_align (@{$this_genomic_align_node->get_all_genomic_aligns_for_node}) {
+      push (@$genomic_align_ids, $each_genomic_align->dbID);
+    }
+
+    push(@$species_order,
+	 {
+	  genome_db => $genome_db,
+	  right_node_id => $right_node_id,
+	  genomic_align_ids => $genomic_align_ids,
+	 });
+  }
+  return $species_order;
+}
 
 =head2 _combine_genomic_align_trees
 

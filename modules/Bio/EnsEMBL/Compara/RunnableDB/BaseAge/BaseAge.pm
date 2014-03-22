@@ -266,7 +266,9 @@ sub base_age {
                 my $normalised_age = int((($node_distance/$root_distance)*1000)+0.5);
                 my $rgb;
                 my $shade = int($normalised_age*256/1000);
-
+                #Ensure the BED score is larger than 0 for display purposes
+                $normalised_age = 1 if ($normalised_age < 1);
+                
                 #Any base on a snp has an age of -1
                 if ($snp_list->{$base}) {
                     $age = -1;
