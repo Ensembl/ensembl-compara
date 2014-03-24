@@ -550,7 +550,7 @@ sub delete_alignments {
     my $sql_ga_to_exec1 = $sql_ga . "(" . join(",", @ga1_ids) . ")";
     my $sql_ga_to_exec2 = $sql_ga . "(" . join(",", @ga2_ids) . ")";
 
-    foreach my $sql ($sql_gab_to_exec,$sql_ga_to_exec1,$sql_ga_to_exec2) {
+    foreach my $sql ($sql_ga_to_exec1,$sql_ga_to_exec2,$sql_gab_to_exec) {
       my $sth = $dbc->prepare($sql);
       $sth->execute;
       $sth->finish;
