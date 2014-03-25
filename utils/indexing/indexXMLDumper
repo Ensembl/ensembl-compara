@@ -594,17 +594,24 @@ sub dumpVariation {
 
   my $sth;
   print LOG "    Preparing to get HGVS data ".&date_and_mem()."\n";
-  my $all_hgvs_names = { map { @$_ } @{$conf->{'variation_dbh'}->selectall_arrayref(
-    "SELECT variation_id,
-            group_concat(hgvs_name SEPARATOR ';') AS names
-       FROM variation_hgvs
-      GROUP by variation_id" )} };
+  my $all_hgvs_names;
+  $sth = $conf->{'variation_dbh'}->prepare(qq(
+    SELECT variation_id, hgvs_name
+       FROM variation_hgvs));
+  $sth->execute;
+  while ( my ($variation_id,$hgvs_name) = $sth->fetchrow_array ) {
+    $all_hgvs_names->{$variation_id}{$hgvs_name}++;
+  }
 
-  my $all_hgnc_names = { map { @$_ } @{$conf->{'variation_dbh'}->selectall_arrayref(
-    "SELECT variation_id,
-            group_concat(gene_name SEPARATOR ';') AS names
-       FROM variation_genename
-      GROUP by variation_id" )} };
+  print LOG "    Preparing to get HGNC data ".&date_and_mem()."\n";
+  my $all_hgnc_names;
+  $sth = $conf->{'variation_dbh'}->prepare(qq(
+     SELECT variation_id, gene_name
+       FROM variation_genename));
+  $sth->execute;
+  while ( my ($variation_id,$hgnc_name) = $sth->fetchrow_array ) {
+    $all_hgnc_names->{$variation_id}{$hgnc_name}++;
+  }
 
   print LOG "    Preparing to get extra SNP info (phenotypes etc) ".&date_and_mem()."\n";
   my %snp_extra = map { ($_->[0] => $_) }
@@ -786,12 +793,14 @@ sub dumpVariation {
       }
 
       my $hgvs_names;
-      if ($hgvs_names = $all_hgvs_names->{$variation_id}) {
-        push @hgvs_names, split ';', $hgvs_names;
+      if ($all_hgvs_names->{$variation_id}) {
+        foreach my $hgvs_name (keys %{$all_hgvs_names->{$variation_id}}) {
+          push @hgvs_names, $hgvs_name;
+        }
       }
-      if ($hgvs_names = $all_hgnc_names->{$variation_id}) {
-        foreach (split ';', $hgvs_names) {
-          $genes{$_}++;
+      if ($all_hgnc_names->{$variation_id}) {
+        foreach my $hgnc_name (keys %{$all_hgnc_names->{$variation_id}}) {
+          $genes{$hgnc_name}++;
         }
       }
       my $loc = $locations->{$variation_id}[0];
