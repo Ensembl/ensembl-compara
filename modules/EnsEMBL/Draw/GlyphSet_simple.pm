@@ -66,7 +66,12 @@ sub _init {
   my $features = $self->features || [];
   
   ## No features show "empty track line" if option set
-  return $self->no_features unless scalar @$features; 
+  if ($features eq 'too_many') {
+    return $self->too_many_features;
+  }
+  elsif (!scalar(@$features)) {
+    return $self->no_features;
+  }  
   
   my ($font, $fontsize) = $self->get_font_details($self->my_config('font') || 'innertext');
   my $label_overlay     = $self->label_overlay;

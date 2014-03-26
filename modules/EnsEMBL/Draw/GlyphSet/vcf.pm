@@ -154,7 +154,11 @@ sub features {
     my $species     = $slice->adaptor->db->species;
     my @features;
 
-    # If we have a variation db attached we can try and find a known SNP mapped at the same position
+    # Can we actually draw this many features?
+    unless ($calc_type) {
+      return 'too_many';
+    } 
+
     # But at the moment we do not display this info so we might as well just use the faster method 
     #     my $vfa = $slice->_get_VariationFeatureAdaptor()->{list}->[0];
     
