@@ -122,8 +122,8 @@ sub store_hmmprofile {
             my $hmm_profile = Bio::EnsEMBL::Compara::HMMProfile->new();
             $hmm_profile->model_id($model_id);
             $hmm_profile->name($name);
-            $hmm_profile->type($type);
-            #$hmm_profile->type($self->param('type'));
+            #$hmm_profile->type($type);
+            $hmm_profile->type($self->param('type'));
             $hmm_profile->profile($profile_content);
             $hmm_profile->consensus($consensus);
 
