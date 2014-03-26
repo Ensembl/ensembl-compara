@@ -485,7 +485,7 @@ sub pipeline_analyses {
             -parameters => {
                 'mlss_id'   => $self->o('mlss_id'),
             },
-            -flow_into => [ 'make_treebest_species_tree', 'has_user_provided_binary_species_tree', 'extra_sql_prepare' ],
+            -flow_into => [ 'make_treebest_species_tree', 'extra_sql_prepare' ],
             -meadow_type    => 'LOCAL',
         },
 
@@ -521,6 +521,7 @@ sub pipeline_analyses {
                 mode            => 'species_tree',
                 binary          => 0,
             },
+            -flow_into  => [ 'has_user_provided_binary_species_tree' ],
             %hc_analysis_params,
         },
 
