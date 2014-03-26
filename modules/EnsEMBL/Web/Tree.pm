@@ -239,6 +239,7 @@ sub _debug_part {
   foreach my $k (keys %$data) {
     my $val = Dumper($data->{$k});
     $val =~ s/^\$VAR\d+\s*=\s+//;
+    $val =~ s/^(.{40}).+$/$1.../;
     $out .= ('  ' x $depth)."$key $k = $val\n";
   }
   return $out;
