@@ -147,7 +147,7 @@ sub get_available_adaptors {
         'MethodLinkSpeciesSet'  => 'Bio::EnsEMBL::Compara::DBSQL::MethodLinkSpeciesSetAdaptor',
         'NCBITaxon'             => 'Bio::EnsEMBL::Compara::DBSQL::NCBITaxonAdaptor',
         'HMMProfile'            => 'Bio::EnsEMBL::Compara::DBSQL::HMMProfileAdaptor',
-
+        'PantherAnnot'          => 'Bio::EnsEMBL::Compara::RunnableDB::ComparaHMM::PantherAnnotAdaptor',
             # genomic:
         'DnaFrag'               => 'Bio::EnsEMBL::Compara::DBSQL::DnaFragAdaptor',
         'SyntenyRegion'         => 'Bio::EnsEMBL::Compara::DBSQL::SyntenyRegionAdaptor',

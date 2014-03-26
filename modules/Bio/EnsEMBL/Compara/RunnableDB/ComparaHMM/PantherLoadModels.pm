@@ -59,28 +59,29 @@ use vars qw/@INC/;
 use base ('Bio::EnsEMBL::Compara::RunnableDB::ComparaHMM::LoadModels');
 
 sub param_defaults {
+
     return {
-            #'type' => 'treefam',
+            'type' => 'panther9.0_treefam',
             'url'  => 'ftp://ftp.pantherdb.org/panther_library/current_release',
             'remote_file' => 'PANTHER9.0_ascii.tgz',
             'expanded_basename' => 'PANTHER9.0',
             'expander' => 'tar -xzf ',
            }
 }
-
 my $type;
+
 sub fetch_input {
     my ($self) = @_;
 
     my $pantherScore_path = $self->param('pantherScore_path');
     $self->throw('pantherScore_path is an obligatory parameter') unless (defined $self->param('pantherScore_path'));
-
-    $type         = $self->param('type');
+    my $type              = $self->param('type');
     $self->throw('type is an obligatory parameter') unless (defined $self->param('type'));
 
     push @INC, "$pantherScore_path/lib";
     require FastaFile;
     import FastaFile;
+
 }
 
 =head2 run
@@ -157,7 +158,7 @@ sub get_profiles {
 	## For subfamilies
         while (my $subfamPath  = <$famPath/*>) {
             my $subfamBasename = basename($subfamPath);
-            next if ($subfamBasename eq 'hmmer.hmm');
+            next if ($subfamBasename eq 'hmmer.hmm' || $subfamBasename eq 'tree.tree' || $subfamBasename eq 'cluster.pir');
             my $subfam = $subfamBasename =~ /hmmer\.hmm/ ? $fam : "$fam." . $subfamBasename;
             print STDERR "Storing $subfam HMM\n";
             $self->store_hmmprofile("$subfamPath/hmmer.hmm", $subfam,$type);

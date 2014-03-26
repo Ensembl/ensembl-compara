@@ -194,6 +194,8 @@ sub run_HMM_search {
         print STDERR "Writting [$seq_id, $hmm_id, $eval] to file $cluster_dir/${fasta_filename}.hmmres\n" if ($self->debug());
         print $hmm_res join "\t", ($seq_id, $hmm_id, $eval);
         print $hmm_res "\n";
+        # Store $hmm_res into table 'hmm_annot'  
+        $self->compara_dba->get_PantherAnnotAdaptor()->store_hmmclassify_result($seq_id, $hmm_id, $eval);
     }
 
     close($hmm_res);

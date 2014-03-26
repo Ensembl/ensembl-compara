@@ -76,6 +76,35 @@ sub write_output {
 sub load_hmmer_classifications {
     my ($self) = @_;
 
+    my %allclusters = ();
+    $self->param('allclusters', \%allclusters);
+
+    # Get statement handler to query all hmm classifications from 'hmm_annot' table
+    my $sth  = $self->compara_dba->get_PantherAnnotAdaptor->fetch_all_hmm_annot();
+    $sth->execute();
+
+    while (my $res = $sth->fetchrow_arrayref){
+        $allclusters{$res->[1]}{members}{$res->[0]} = 1;
+    }
+
+    for my $model_name (keys %allclusters) {
+        # filter out clusters singleton clusters
+        if (scalar keys %{$allclusters{$model_name}{members}} == 1) {
+            delete $allclusters{$model_name};
+        } else {
+            print STDERR "MODEL NAME is:$model_name\n";
+            # If it is not a singleton, we add the name of the model to store in the db
+            print STDERR Dumper $allclusters{$model_name} if ($self->debug);
+            my @members = keys %{$allclusters{$model_name}{members}};
+            delete $allclusters{$model_name}{members};
+            @{$allclusters{$model_name}{members}} = @members;
+        }
+    }
+}
+
+sub load_hmmer_classifications_2 {
+    my ($self) = @_;
+
     my $cluster_dir = $self->param('cluster_dir');
     $self->throw('cluster_dir is an obligatory parameter') unless (defined $self->param('cluster_dir'));
 

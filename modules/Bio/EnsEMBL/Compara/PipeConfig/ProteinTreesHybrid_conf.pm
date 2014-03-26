@@ -18,11 +18,11 @@ limitations under the License.
 
 =head1 CONTACT
 
-Please email comments or questions to the public Ensembl
-developers list at <http://lists.ensembl.org/mailman/listinfo/dev>.
+  Please email comments or questions to the public Ensembl
+  developers list at <http://lists.ensembl.org/mailman/listinfo/dev>.
 
-Questions may also be sent to the Ensembl help desk at
-<http://www.ensembl.org/Help/Contact>.
+  Questions may also be sent to the Ensembl help desk at
+  <http://www.ensembl.org/Help/Contact>.
 
 =head1 NAME
 
@@ -49,6 +49,14 @@ Questions may also be sent to the Ensembl help desk at
 
 Ensembl Team. Individual contributions can be found in the GIT log.
 
+=head1 MAINTAINER
+
+$Author$
+
+=head VERSION
+
+$Revision$
+
 =head1 APPENDIX
 
 The rest of the documentation details each of the object methods.
@@ -66,11 +74,17 @@ sub default_options {
 
     return {
       %{$self->SUPER::default_options},   # inherit the generic ones
-       'mlss_id'               => 88105,  # protists eg19 & eg20,  it is very important to check that this value is current (commented out to make it obligatory to specify)
-       'ensembl_release'       => '74',   # it defaults to Bio::EnsEMBL::ApiVersion::software_version(): you're unlikely to change the value
+       'mlss_id'               => 90984, 
+       # 131133 eg21 from all divisions e! & eg! except bacteria, to build panHMM profiles
+       # 131134 eg21 from all divisions e! & eg! WITH bacteria, to build panHMM profiles
+       # 94443 eg22, 90984 eg21 protists
+       # 91325 eg21 fungi
+       # 93630 eg22, 92367 eg21 metazoa
+       # 93131 eg22, 92429 eg21 plants
+       'ensembl_release'       => '75',   # it defaults to Bio::EnsEMBL::ApiVersion::software_version(): you're unlikely to change the value
        'do_not_reuse_list'     => [ ],    # names of species we don't want to reuse this time
        'method_link_dump_file' => $self->o('ensembl_cvs_root_dir').'/ensembl-compara/sql/method_link.txt',
-       'pipeline_name' 		   => 'compara_homology_HybridPanther_Protists_NEW3_'.$self->o('ensembl_release'),
+       'pipeline_name' 		   => 'protein_trees_compara_homology_HybridPanther_Protists1_'.$self->o('ensembl_release'),
        'division'			   => '',
        'exe_dir'               =>  '/nfs/panda/ensemblgenomes/production/compara/binaries',
 	   'base_dir'              =>  '/nfs/nobackup2/ensemblgenomes/ckong/workspace/'.$self->o('ENV', 'USER').'/hive',
@@ -79,132 +93,141 @@ sub default_options {
        'cluster_dir'           => $self->o('work_dir'). '/cluster',
        'dump_dir'              => $self->o('work_dir'). '/dumps',
 	 # For building new profiles
-       'hmm_buildhmmprofiles'  => 0, ## by default do not create new profiles
 	   'buildprofiles_dir'	   => $self->o('work_dir').'/buildHMMprofiles', 
 	   'fasta_file' 		   => $self->o('buildprofiles_dir').'/unclassify_sequence.fa',
        'msa_dir'    		   => $self->o('buildprofiles_dir').'/msa',    
        'hmmLib_dir'    		   => $self->o('buildprofiles_dir').'/hmmLib',
-       'hmm_profiles_type1'    => 'panther9.0', # to tag profiles stored hmm_profile table
-       'hmm_profiles_type2'    => 'new_profiles', # 'new_profiles' is hardcode in PantherLoadModels.pm 
+       'hmm_profiles_type1'    => 'panther9.0_treefam', # to tag profiles stored hmm_profile table
+       'hmm_profiles_type2'    => 'new_profiles',       # 'new_profiles' is hardcode in PantherLoadModels.pm 
+     # "Member" parameters:
+       'allow_ambiguity_codes' => 0,
+       'allow_pyrrolysine'     => 0,
      # blast parameters:
-        'blast_params'          => '-seg no -max_hsps_per_subject 1 -use_sw_tback -num_threads 1',
-        'blast_options'  		=> '-filter none -span1 -postsw -V=20 -B=20 -sort_by_highscore -warnings -cpus 1', # used for BuildHMMprofiles::BlastpWithFasta
-        'blast_tmp_dir'         => '/tmp',  # if empty, will use Blast Analysis' default
-        'protein_members_range' => 100000000, # highest member_id for a protein member
+       'blast_params'          => '-seg no -max_hsps_per_subject 1 -use_sw_tback -num_threads 1',
+       'blast_options'  	   => '-filter none -span1 -postsw -V=20 -B=20 -sort_by_highscore -warnings -cpus 1', # used for BuildHMMprofiles::BlastpWithFasta
+       'blast_tmp_dir'         => '/tmp',  # if empty, will use Blast Analysis' default
+       'protein_members_range' => 100000000, # highest member_id for a protein member
      # clustering parameters:
-        'outgroups'                     => {127},      # affects 'hcluster_dump_input_per_genome'
-        'clustering_max_gene_halfcount' => 750,     # (half of the previously used 'clutering_max_gene_count=1500) affects 'hcluster_run'
+       'outgroups'                     => {127},      # affects 'hcluster_dump_input_per_genome'
+       'clustering_max_gene_halfcount' => 750,     # (half of the previously used 'clutering_max_gene_count=1500) affects 'hcluster_run'
      # tree building parameters:
-        'treebreak_gene_count'      => 400,     # affects msa_chooser
-        'mafft_gene_count'          => 200,     # affects msa_chooser
-        'mafft_runtime'             => 7200,    # affects msa_chooser
-        'species_tree_input_file'   => '',      # you can define your own species_tree for 'njtree_phyml' and 'ortho_tree'
+       'treebreak_gene_count'      => 400,     # affects msa_chooser
+       'mafft_gene_count'          => 200,     # affects msa_chooser
+       'mafft_runtime'             => 7200,    # affects msa_chooser
+       'species_tree_input_file'   => '',      # you can define your own species_tree for 'njtree_phyml' and 'ortho_tree'
      # homology_dnds parameters:
-        'codeml_parameters_file'    => $self->o('ensembl_cvs_root_dir').'/ensembl-compara/scripts/pipeline/protein_trees.codeml.ctl.hash',      # used by 'homology_dNdS'
-        'taxlevels'                 => [],
-        'filter_high_coverage'      => 0,   # affects 'group_genomes_under_taxa'
+       'codeml_parameters_file'    => $self->o('ensembl_cvs_root_dir').'/ensembl-compara/scripts/pipeline/protein_trees.codeml.ctl.hash',      # used by 'homology_dNdS'
+       'taxlevels'                 => [],
+       'filter_high_coverage'      => 0,   # affects 'group_genomes_under_taxa'
      # mapping parameters:
-        'do_stable_id_mapping'      => 1,
-        'do_treefam_xref'           => 0,
-        'tf_release'                => '9_69',     # The TreeFam release to map to
+       'do_stable_id_mapping'      => 1,
+       'do_treefam_xref'           => 0,
+       'tf_release'                => '9_69',     # The TreeFam release to map to
      # executable locations:
-	    'hcluster_exe'    =>  $self->o('exe_dir').'/hcluster_sg',
-	    'mcoffee_home'	  =>  '/nfs/panda/ensemblgenomes/external/t-coffee',
-	    'mafft_home'      =>  $self->o('exe_dir').'/mafft-distro',
-	    'sreformat_exe'   =>  $self->o('exe_dir').'/sreformat',
-	    'treebest_exe'    =>  $self->o('exe_dir').'/treebest',
-    	'quicktree_exe'   =>  $self->o('exe_dir').'/quicktree',
-    	'buildhmm_exe'    =>  $self->o('exe_dir').'/hmmbuild',
-    	'hmmemit_exe'     =>  $self->o('exe_dir').'/hmmemit',
-    	'codeml_exe'      =>  $self->o('exe_dir').'/codeml',
-    	'ktreedist_exe'   =>  $self->o('exe_dir').'/ktreedist',
-    	'blast_bin_dir'   => '/nfs/panda/ensemblgenomes/external/ncbi-blast-2.2.27+/bin',
-	    'wublastp_exe'	  =>  $self->o('exe_dir').'/wublast/blastp',
-	    'xdformat_exe'	  =>  $self->o('exe_dir').'/wublast/xdformat',
-		## For building new profiles	    
-  	    'hmmbuild_exe'    =>  $self->o('exe_dir').'/hmmbuild_2', # for HMMer2 to use with PantherScore.pl  else hmmbuild => HMMer3
-	    'hmmcalibrate'    =>  $self->o('exe_dir').'/hmmcalibrate',
+	   'hcluster_exe'    =>  $self->o('exe_dir').'/hcluster_sg',
+	   'mcoffee_home'	 =>  '/nfs/panda/ensemblgenomes/external/t-coffee',
+	   'mafft_home'      =>  $self->o('exe_dir').'/mafft-distro',
+	   'sreformat_exe'   =>  $self->o('exe_dir').'/sreformat',
+	   'treebest_exe'    =>  $self->o('exe_dir').'/treebest',
+       'quicktree_exe'   =>  $self->o('exe_dir').'/quicktree',
+       'buildhmm_exe'    =>  $self->o('exe_dir').'/hmmbuild',
+       'hmmemit_exe'     =>  $self->o('exe_dir').'/hmmemit',
+       'codeml_exe'      =>  $self->o('exe_dir').'/codeml',
+       'ktreedist_exe'   =>  $self->o('exe_dir').'/ktreedist',
+       'blast_bin_dir'   => '/nfs/panda/ensemblgenomes/external/ncbi-blast-2.2.27+/bin',
+	   'wublastp_exe'	 =>  $self->o('exe_dir').'/wublast/blastp',
+	   'xdformat_exe'	 =>  $self->o('exe_dir').'/wublast/xdformat',
+	   ## For building new profiles	    
+  	   'hmmbuild_exe'    =>  $self->o('exe_dir').'/hmmbuild_2', # for HMMer2 to use with PantherScore.pl  else hmmbuild => HMMer3
+	   'hmmcalibrate'    =>  $self->o('exe_dir').'/hmmcalibrate',
     # HMM specific parameters (set to 0 or undef if not in use)
-        'hmm_clustering'       => 1, ## by default run hmm clustering
-         ## This should point to PANTHER9.0+TreeFAM profiles if you are building new profiles OR
-         ##             point to PanHMM profiles if you are NOT building new profiles
-        'cm_file_or_directory' => '/nfs/nobackup2/ensemblgenomes/ckong/workspace/ckong/hive/88105/protein_trees_compara_homology_HybridPanther_Protists_NEW2_74/buildHMMprofiles/hmmLib', 
-        'hmm_library_basedir'  => '/nfs/nobackup2/ensemblgenomes/ckong/workspace/ckong/hive/88105/protein_trees_compara_homology_HybridPanther_Protists_NEW2_74/buildHMMprofiles/hmmLib', 
-        #'cm_file_or_directory' => '/nfs/nobackup2/ensemblgenomes/ckong/workspace/buildhmmprofiles/PANTHER9.0', 
-        #'hmm_library_basedir'  => '/nfs/nobackup2/ensemblgenomes/ckong/workspace/buildhmmprofiles/PANTHER9.0', 
-        'pantherScore_path'    => '/nfs/panda/ensemblgenomes/data/pantherScore1.03',
-        'hmmer_path'           => '/nfs/panda/ensemblgenomes/external/hmmer-2/binaries',
+       'hmm_clustering'       => 1, ## by default run hmm clustering
+       'hmm_buildhmmprofiles' => 0, ## by default do not create new profiles
+       ## This should point to PANTHER9.0+TreeFAM profiles if you are building new profiles OR
+       ##             point to PanHMM profiles (PANTHER9.0+TreeFAM+New promoted profiles) if you are NOT building new profiles
+       #'cm_file_or_directory' => '/nfs/nobackup2/ensemblgenomes/ckong/workspace/buildhmmprofiles/PROTISTS_HMM2_EG20_8_1_PTHR_SF/hmmLib/', 
+       #'hmm_library_basedir'  => '/nfs/nobackup2/ensemblgenomes/ckong/workspace/buildhmmprofiles/PROTISTS_HMM2_EG20_8_1_PTHR_SF/hmmLib/', 
+       'cm_file_or_directory' => '/nfs/nobackup2/xfam/treefam/datasets/panhmms/panhmm9', 
+       'hmm_library_basedir'  => '/nfs/nobackup2/xfam/treefam/datasets/panhmms/panhmm9', 
+       'pantherScore_path'    => '/nfs/panda/ensemblgenomes/data/pantherScore1.03',
+       'hmmer_path'           => '/nfs/panda/ensemblgenomes/external/hmmer-2/binaries',
+	   ## Point to dummy file 'panther_Interpro_annot_v8_1/loose_dummy.txt' in case there is NO interpro annotation available
+       'panther_annotation_PTHR' => '/nfs/nobackup2/ensemblgenomes/ckong/workspace/buildhmmprofiles/panther_Interpro_annot_v8_1/loose_dummy.txt',
+       'panther_annotation_SF'   => '/nfs/nobackup2/ensemblgenomes/ckong/workspace/buildhmmprofiles/panther_Interpro_annot_v8_1/loose_dummy.txt',
+       #'panther_annotation_PTHR' => '/nfs/nobackup2/ensemblgenomes/ckong/workspace/buildhmmprofiles/panther_Interpro_annot_v8_1/loose_EG_HUMAN_PTHR.txt',
+       #'panther_annotation_SF'   => '/nfs/nobackup2/ensemblgenomes/ckong/workspace/buildhmmprofiles/panther_Interpro_annot_v8_1/loose_EG_HUMAN_SF.txt',
     # hive_capacity values for some analyses:
-        'reuse_capacity'            =>   4,
-        'blast_factory_capacity'    =>  50,
-        'mcoffee_capacity'          => 600,
-        'split_genes_capacity'      => 600,
-        'njtree_phyml_capacity'     => 400,
-        'ortho_tree_capacity'       => 200,
-        'ortho_tree_annot_capacity' => 300,
-        'quick_tree_break_capacity' => 100,
-        'build_hmm_capacity'        => 200,
-        'ktreedist_capacity'        =>  50,
-        'merge_supertrees_capacity' => 100,
-        'other_paralogs_capacity'   => 100,
-        'homology_dNdS_capacity'    => 200,
-        'qc_capacity'               =>   4,
-        'HMMer_classify_capacity'   => 400,
-        'hc_capacity'   			=>   4,
-		 ## For building new profiles
-        'blastp_capacity'           => 400,        
-        'hmmbuild_capacity'	   		=> 100,
-        'hmmcalibrate_capacity' 	=> 100,
+       'reuse_capacity'            =>   4,
+       'blast_factory_capacity'    =>  50,
+       'mcoffee_capacity'          => 600,
+       'split_genes_capacity'      => 600,
+       'njtree_phyml_capacity'     => 400,
+       'ortho_tree_capacity'       => 200,
+       'ortho_tree_annot_capacity' => 300,
+       'quick_tree_break_capacity' => 100,
+       'build_hmm_capacity'        => 200,
+       'ktreedist_capacity'        =>  50,
+       'merge_supertrees_capacity' => 100,
+       'other_paralogs_capacity'   => 100,
+       'homology_dNdS_capacity'    => 200,
+       'qc_capacity'               =>   4,
+       'HMMer_classify_capacity'   => 400,
+       'hc_capacity'   			=>   4,
+		## For building new profiles
+       'blastp_capacity'           => 400,        
+       'hmmbuild_capacity'	   		=> 100,
+       'hmmcalibrate_capacity' 	=> 100,
     # hive priority for non-LOCAL health_check analysis:
-        'hc_priority'               => -10,
+       'hc_priority'               => -10,
     # connection parameters to various databases:
         # the production database itself (will be created)
         # it inherits most of the properties from HiveGeneric, we usually only need to redefine the host, but you may want to also redefine 'port'
         #'host' => 'compara1',
         # the master database for synchronization of various ids (use undef if you don't have a master database)
-        'master_db' => {     # the master database for synchronization of various ids
+       'master_db' => {     # the master database for synchronization of various ids
             -host   => 'mysql-eg-devel-2.ebi.ac.uk',
 		    -port   => 4207,
 			-user   => 'ensrw',
-		    -pass   => $self->o('password'),
+		    -pass   => 'scr1b3d2',
 		    -dbname => 'ensembl_compara_master',
-        },
-        #'master_db' => undef,
-        'ncbi_db'   => $self->o('master_db'),
+       },
+       #'master_db' => undef,
+       'ncbi_db'   => $self->o('master_db'),
 
-        'livemirror_loc' => {                   # general location of the previous release core databases (for checking their reusability)
+       'livemirror_loc' => {                   # general location of the previous release core databases (for checking their reusability)
 				-host => 'mysql-eg-mirror.ebi.ac.uk',
 				-port => 4205,
 				-user => 'ensrw',
 		    	-pass => 'writ3r',
-        },
+       },
 
-        'livemirror_loc_2' => {                   # general location of the previous release core databases (for checking their reusability)
+       'livemirror_loc_2' => {                   # general location of the previous release core databases (for checking their reusability)
 				-host => 'ensembldb.ensembl.org',
 				-port => 5306,
 				-user => 'anonymous',
-        },
-        # NOTE: The databases referenced in the following arrays have to be hashes (not URLs)
-        # Add the database entries for the current core databases and link 'curr_core_sources_locs' to them
-        'curr_core_sources_locs'    => [ $self->o('livemirror_loc'),$self->o('livemirror_loc_2') ],
- 	    #'curr_core_registry'        => "registry.conf",
-        'curr_core_registry'        => undef,
-        'curr_file_sources_locs'    => [  ],    # It can be a list of JSON files defining an additionnal set of species
+       },
+       # NOTE: The databases referenced in the following arrays have to be hashes (not URLs)
+       # Add the database entries for the current core databases and link 'curr_core_sources_locs' to them
+       'curr_core_sources_locs'    => [ $self->o('livemirror_loc'),$self->o('livemirror_loc_2') ],
+	   'curr_core_registry'        => '/homes/ckong/work/tasks/EG-174_ComparaHMM/registry.mysql-eg-mirror.ebi.ac.uk.pm',
+#       'curr_core_registry'        => undef,
+       'curr_file_sources_locs'    => [  ],    # It can be a list of JSON files defining an additionnal set of species
 
-        # Add the database entries for the core databases of the previous release
-        'prev_core_sources_locs'	=> [ $self->o('livemirror_loc') ],
+       # Add the database entries for the core databases of the previous release
+       'prev_core_sources_locs'	=> [ $self->o('livemirror_loc') ],
         
-        # Add the database location of the previous Compara release. Use "undef" if running the pipeline without reuse
-        'prev_rel_db' 				 	=> {   # usually previous release database on compara1
+       # Add the database location of the previous Compara release. Use "undef" if running the pipeline without reuse
+       'prev_rel_db' 				 	=> #undef,
+       {   # usually previous release database on compara1
 				-host => 'mysql-eg-mirror.ebi.ac.uk',
 				-port => 4205,
 				-user => 'ensrw',
 		    	-pass => 'writ3r',
-            	-dbname => 'ensembl_compara_protists_19_72',
-        },
+             	-dbname => 'ensembl_compara_protists_20_73',
+       },
 
         # Force a full re-run of blastp
-        'force_blast_run'           => 0,
+       'force_blast_run'           => 0,
     };
 }
 
@@ -423,7 +446,6 @@ sub pipeline_analyses {
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ObjectFactory',
             -parameters => {
                 'compara_db'            => $self->o('master_db'),   # that's where genome_db_ids come from
-
                 'call_list'             => [ 'compara_dba', 'get_MethodLinkSpeciesSetAdaptor', ['fetch_by_dbID', $self->o('mlss_id')], 'species_set_obj', 'genome_dbs'],
                 'column_names2getters'  => { 'genome_db_id' => 'dbID', 'species_name' => 'name', 'assembly_name' => 'assembly', 'genebuild' => 'genebuild', 'locator' => 'locator' },
 
@@ -440,9 +462,9 @@ sub pipeline_analyses {
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::LoadOneGenomeDB',
             -parameters => {
                 'registry_conf_file'  => $self->o('curr_core_registry'),
-                'registry_dbs'  => $self->o('curr_core_sources_locs'),
-                'db_version'    => $self->o('ensembl_release'),
-                'registry_files'    => $self->o('curr_file_sources_locs'),
+                'registry_dbs'        => $self->o('curr_core_sources_locs'),
+                'db_version'          => $self->o('ensembl_release'),
+                'registry_files'      => $self->o('curr_file_sources_locs'),
             },
             -flow_into  => [ 'check_reusability' ],
             -analysis_capacity => 1,
@@ -588,8 +610,9 @@ sub pipeline_analyses {
         {   -logic_name         => 'hc_members_per_genome',
             -module             => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::SqlHealthChecks',
             -parameters         => {
-                mode            => 'members_per_genome',
-                hc_member_type  => 'ENSEMBLPEP',
+                mode                  => 'members_per_genome',
+                hc_member_type        => 'ENSEMBLPEP',
+                allow_ambiguity_codes => $self->o('allow_ambiguity_codes'),
             },
             %hc_analysis_params,
         },
@@ -626,7 +649,7 @@ sub pipeline_analyses {
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::LoadMembers',
             -parameters => {
                 'store_related_pep_sequences' => 1,
-                'allow_pyrrolysine'             => 0,
+                'allow_pyrrolysine'             => $self->o('allow_pyrrolysine'),
                 'find_canonical_translations_for_polymorphic_pseudogene' => 1,
             },
             -rc_name => '2Gb_job',
@@ -710,13 +733,13 @@ sub pipeline_analyses {
              -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ComparaHMM::PantherLoadModels',
              -parameters => {
                              'pantherScore_path'    => $self->o('pantherScore_path'),
-                             'type'					=> $self->o('hmm_profiles_type1'),
+#                             'type'					=> $self->o('hmm_profiles_type1'),
                              'cm_file_or_directory' => $self->o('cm_file_or_directory'),
                              'hmmemit_exe'	   	    => $self->o('hmmemit_exe'),
                             },
              -flow_into  => {
                              '1->A' => [ 'dump_models' ],
-                             'A->1' => [ 'buildhmmprofiles_sequence_create_table' ],
+                             'A->1' => [ 'buildhmmprofiles_create_tables' ],
                             },
             },
 
@@ -727,24 +750,36 @@ sub pipeline_analyses {
                              'pantherScore_path'   => $self->o('pantherScore_path'),
                              'hmm_library_basedir' => $self->o('hmm_library_basedir'),
                              'blast_bin_dir'       => $self->o('blast_bin_dir'), 
+#                             'type'				   => $self->o('hmm_profiles_type1'),
                             },
              },
 
             {
-             -logic_name => 'buildhmmprofiles_sequence_create_table',
+             -logic_name => 'buildhmmprofiles_create_tables',
              -module     => 'Bio::EnsEMBL::Hive::RunnableDB::SqlCmd',
        		 -parameters => {
-        			'sql' => [  'CREATE TABLE IF NOT EXISTS `sequence_unclassify` 
-        					 	(`member_id` varchar(20) DEFAULT NULL,
-        					 	 `genome_db_id` varchar(20) DEFAULT NULL,
-         					 	 `cluster_dir_id` varchar(20) DEFAULT NULL,
-        	 			  	 	)',
-        	         ],     
+        			'sql' => [  'CREATE TABLE IF NOT EXISTS sequence_unclassify ( member_id varchar(20) DEFAULT NULL, genome_db_id varchar(20) DEFAULT NULL, cluster_dir_id varchar(20) DEFAULT NULL)',   
+        			      	 	'CREATE TABLE IF NOT EXISTS panther_annot_PTHR  ( upi char(13) NOT NULL, ensembl_id char(50) NOT NULL, ensembl_div char(15) NOT NULL, panther_family_id char(15) NOT NULL, start int(11) NOT NULL, end int(11) NOT NULL,  score int(11) NOT NULL, evalue char(25) NOT NULL, PRIMARY KEY (ensembl_id))',        	 			  	 	
+        			      	 	'CREATE TABLE IF NOT EXISTS panther_annot_SF    ( upi char(13) NOT NULL, ensembl_id char(50) NOT NULL, ensembl_div char(15) NOT NULL, panther_family_id char(15) NOT NULL, start int(11) NOT NULL, end int(11) NOT NULL,  score int(11) NOT NULL, evalue char(25) NOT NULL, PRIMARY KEY (ensembl_id))',
+	        			      	'CREATE TABLE IF NOT EXISTS hmm_annot           ( member_id varchar(20) NOT NULL, model_id char(70) NOT NULL, evalue char(25) NOT NULL)',
+        	                  ],     
        			},
              -flow_into  => {
-                             '1' => [ 'HMMer_classifyInterpro' ],
+#                             '1' => [ 'HMMer_classifyInterpro' ],
+                              '2->A' => [ 'load_PantherAnnotation' ],
+							  'A->1' => [ 'HMMer_classifyInterpro'],					 
                            }, 
            },
+
+           {
+            -logic_name => 'load_PantherAnnotation',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ComparaHMM::LoadAnnotation',
+            -parameters => {
+                             'panther_annotation_PTHR'  => $self->o('panther_annotation_PTHR'),
+                             'panther_annotation_SF'    => $self->o('panther_annotation_SF'),
+                           },
+             -rc_name => 'default',
+            },
 
            {
             -logic_name => 'HMMer_classifyInterpro',
@@ -755,11 +790,10 @@ sub pipeline_analyses {
                             },
             -flow_into  => {
                              '2->A' => [ 'HMMer_classify' ],
-#							 'A->1' => [ 'prepare_buildhmmprofiles_sequence' ],
 							 'A->1' => [ $self->o('hmm_buildhmmprofiles') ? 'prepare_buildhmmprofiles_sequence' :'HMM_clusterize'],					 
                            }, 
              -hive_capacity => $self->o('HMMer_classify_capacity'),
-             -rc_name => '8Gb_job',
+             -rc_name => 'msa_himem',
             },
 
             {
@@ -1021,12 +1055,12 @@ sub pipeline_analyses {
                 '2->A'	 => ['HmmCalibrate'],
  		  		'A->1' 	 => ['load_models_BuildHMMprofiles'],
          },
-         -wait_for => [ 'HmmBuild' ],
+         -wait_for  => [ 'HmmBuild' ],
      },
 
     # Run hmmcalibrate to calibrate created HMMer Profile
     {   -logic_name  => 'HmmCalibrate',
-        -module     => 'Bio::EnsEMBL::Compara::RunnableDB::BuildHMMprofiles::HmmCalibrate',
+        -module      => 'Bio::EnsEMBL::Compara::RunnableDB::BuildHMMprofiles::HmmCalibrate',
         -parameters  => {
 	          'hmmLib_dir'    => $self->o('hmmLib_dir'),     
     	      'hmmcalibrate'  => $self->o('hmmcalibrate'),
@@ -1043,7 +1077,7 @@ sub pipeline_analyses {
                           'hmmer_path'           => $self->o('hmmer_path'), # For hmmemit (in case it is necessary to get the consensus for each model to create the blast db)
                           'pantherScore_path'    => $self->o('pantherScore_path'),
                           'hmmemit_exe'	   	     => $self->o('hmmemit_exe'),
-                          'type'				 => $self->o('hmm_profiles_type2'),
+#                          'type'				 => $self->o('hmm_profiles_type2'),
                        },
         -flow_into  => {
                           '1' => [ 'dump_models_BuildHMMprofiles' ],
@@ -1052,11 +1086,13 @@ sub pipeline_analyses {
 
     {
         -logic_name => 'dump_models_BuildHMMprofiles',
+        # Should dump only the newly built profiles
         -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ComparaHMM::DumpModels',
         -parameters => {
                           'hmm_library_basedir' => $self->o('hmmLib_dir'),
                           'blast_bin_dir'       => $self->o('blast_bin_dir'),  ## For creating the blastdb (formatdb or mkblastdb)
                           'pantherScore_path'   => $self->o('pantherScore_path'),
+#                          'type'				=> $self->o('hmm_profiles_type2'),
                        },
         -flow_into  => {
                           '1' => [ 'HMMer_classify_factory' ],
@@ -1064,8 +1100,8 @@ sub pipeline_analyses {
     },
 
    { 
-        -logic_name   => 'HMMer_classify_factory',
-    	-module       => 'Bio::EnsEMBL::Compara::RunnableDB::ComparaHMM::HMMClassifyFactory',
+        -logic_name    => 'HMMer_classify_factory',
+    	-module        => 'Bio::EnsEMBL::Compara::RunnableDB::ComparaHMM::HMMClassifyFactory',
     	-hive_capacity => -1,
         -flow_into 	   => {
         	    	        '2->A' => [ 'HMMer_classify_BuildHMMprofiles' ],
@@ -1080,14 +1116,14 @@ sub pipeline_analyses {
                              'blast_bin_dir'       => $self->o('blast_bin_dir'),
                              'pantherScore_path'   => $self->o('pantherScore_path'),
                              'hmmer_path'          => $self->o('hmmer_path'),
-                             'hmm_library_basedir' => $self->o('hmm_library_basedir'),
+                             'hmm_library_basedir' => $self->o('hmmLib_dir'),
                              'cluster_dir'         => $self->o('cluster_dir'),
                              'blast_tmp_dir'	   => $self->o('blast_tmp_dir'),
                              'store_unclassify'	   => '0',
                             },
              -hive_capacity => $self->o('HMMer_classify_capacity'),
-             -rc_name => 'hmmclassify_job',
-             -batch_size => 50,
+             -rc_name       => 'hmmclassify_job',
+             -batch_size    => 50,
     },
   ) : (), # do not show the buildhmmprofile pipeline if the option is off
 # ---------------------------------------------[create and populate blast analyses]--------------------------------------------------
@@ -1291,7 +1327,7 @@ sub pipeline_analyses {
         {   -logic_name    => 'clusterset_backup',
             -module        => 'Bio::EnsEMBL::Hive::RunnableDB::SqlCmd',
             -parameters    => {
-                'sql'         => 'INSERT INTO protein_tree_backup (member_id, root_id) SELECT member_id, root_id FROM gene_tree_node WHERE member_id IS NOT NULL',
+                'sql'         => 'INSERT INTO gene_tree_backup (member_id, root_id) SELECT member_id, root_id FROM gene_tree_node WHERE member_id IS NOT NULL',
             },
             -analysis_capacity => 1,
             -meadow_type    => 'LOCAL',
@@ -1581,7 +1617,7 @@ sub pipeline_analyses {
         {   -logic_name    => 'tree_backup',
             -module        => 'Bio::EnsEMBL::Hive::RunnableDB::SqlCmd',
             -parameters    => {
-                'sql'         => 'INSERT INTO protein_tree_backup (member_id, root_id) SELECT member_id, root_id FROM gene_tree_node WHERE member_id IS NOT NULL AND root_id = #gene_tree_id#',
+                'sql'         => 'INSERT INTO gene_tree_backup (member_id, root_id) SELECT member_id, root_id FROM gene_tree_node WHERE member_id IS NOT NULL AND root_id = #gene_tree_id#',
             },
             -analysis_capacity => 1,
             -meadow_type    => 'LOCAL',
