@@ -67,6 +67,14 @@ sub content {
     my $config = $key.'_rnaseq_'.$track->logic_name.'=default';
     ## Clean up tissue name, as it's not currently stored independently of track type
     $tissue =~ s/ (alignments|intron-spanning reads|introns|species proteins)//;
+    # Add option_key for regulation matrix cell
+    my $webdata = $track->web_data();
+    if($webdata and $webdata->{'matrix'}) {
+      my $m = $webdata->{'matrix'};
+      my $cell = "$m->{'menu'}_$m->{'column'}_$m->{'row'}";
+      $config .= ",$cell=on";
+    }
+
     $track_info->{$tissue}{$key} = [$config, $track->description];
 
     if ($tissue ne $previous) {
