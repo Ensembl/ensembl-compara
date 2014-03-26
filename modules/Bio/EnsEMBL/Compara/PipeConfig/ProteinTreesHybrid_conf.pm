@@ -188,7 +188,7 @@ sub default_options {
             -host   => 'mysql-eg-devel-2.ebi.ac.uk',
 		    -port   => 4207,
 			-user   => 'ensrw',
-		    -pass   => 'scr1b3d2',
+		    -pass   => $self->o('secret_password1'),
 		    -dbname => 'ensembl_compara_master',
        },
        #'master_db' => undef,
@@ -198,7 +198,7 @@ sub default_options {
 				-host => 'mysql-eg-mirror.ebi.ac.uk',
 				-port => 4205,
 				-user => 'ensrw',
-		    	-pass => 'writ3r',
+		    	-pass => $self->o('secret_password2'),
        },
 
        'livemirror_loc_2' => {                   # general location of the previous release core databases (for checking their reusability)
@@ -222,7 +222,7 @@ sub default_options {
 				-host => 'mysql-eg-mirror.ebi.ac.uk',
 				-port => 4205,
 				-user => 'ensrw',
-		    	-pass => 'writ3r',
+		    	-pass => $self->o('secret_password3'),
              	-dbname => 'ensembl_compara_protists_20_73',
        },
 
