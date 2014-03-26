@@ -35,6 +35,7 @@ use Data::Dumper;
 use DBI;
 use Bio::EnsEMBL::Registry;
 use Bio::EnsEMBL::DBSQL::DBAdaptor;
+use Bio::EnsEMBL::Compara::RunnableDB::ComparaHMM::PantherAnnotAdaptor;
 
 use base ('Bio::EnsEMBL::Compara::RunnableDB::ComparaHMM::StoreClusters');
 
@@ -68,7 +69,6 @@ sub write_output {
     my ($self) = @_;
     
     $self->store_clusterset('default', $self->param('allclusters'));
-
 return;
 }
 
@@ -86,19 +86,6 @@ sub get_clusters {
     my $knownByPantherSF   = 0;
     my $allMembers         = 0;
 
-    my $platform         = "mysql";
-    my $database         = "ckong_panther";
-    my $host             = "mysql-eg-devel-2.ebi.ac.uk";
-    my $port             = "4207";
-    my $user             = "ensrw";
-    my $pw               = $self->param('password');
-    my $dsn              = "dbi:$platform:$database:$host:$port";
-    my $pantherDB        = DBI->connect($dsn,$user,$pw);
-    my $pantherSql       = "SELECT panther_family_id FROM panther_annot_8_1_EG20_EG_HUMAN_SF WHERE ensembl_id = ?";
-    my $pantherSth       = $pantherDB->prepare($pantherSql);
-    my $pantherSql2      = "SELECT panther_family_id FROM panther_annot_8_1_EG20_EG_HUMAN_PTHR WHERE ensembl_id = ?";
-    my $pantherSth2      = $pantherDB->prepare($pantherSql2);
-
     my $mlss_id          = $self->param('mlss_id');
     $self->throw('mlss_id is an obligatory parameter') unless (defined $self->param('mlss_id'));
     my $SeqMemberAdaptor = $self->compara_dba->get_SeqMemberAdaptor;
@@ -106,22 +93,19 @@ sub get_clusters {
     my $mlss             = $mlssAdaptor->fetch_by_dbID($mlss_id);
     my $genomeDBs        = $mlss->species_set_obj->genome_dbs();
 
-    my $genomeDB_id;my $genomeDB_name;   
-    my $transcript_adaptor;my $translation_adaptor;
+    my $genomeDB_id;
     my $job_count        = 0;
     
     for my $genomeDB (@$genomeDBs) {
-        $genomeDB_id         = $genomeDB->dbID;
-	my $members          = $SeqMemberAdaptor->fetch_all_canonical_by_source_genome_db_id('ENSEMBLPEP',$genomeDB_id);
+        $genomeDB_id      = $genomeDB->dbID;
+	my $members       = $SeqMemberAdaptor->fetch_all_canonical_by_source_genome_db_id('ENSEMBLPEP',$genomeDB_id);
 
         for my $mem (@$members) {
-            my $member_id   = $mem->member_id;  
- 	    my $member      = $SeqMemberAdaptor->fetch_by_dbID($member_id);
-            my $stable_id   = $member->stable_id; 
-            $pantherSth->execute($member->stable_id);
-            $pantherSth2->execute($member->stable_id);
-            my $res         = $pantherSth->fetchrow_arrayref;## SF
-            my $res2        = $pantherSth2->fetchrow_arrayref;## PTHR
+            my $member_id = $mem->member_id;  
+ 	    my $member    = $SeqMemberAdaptor->fetch_by_dbID($member_id);
+            my $stable_id = $member->stable_id; 
+	    my $res       = $self->compara_dba->get_PantherAnnotAdaptor->fetch_by_ensembl_id_SF($stable_id);
+	    my $res2      = $self->compara_dba->get_PantherAnnotAdaptor->fetch_by_ensembl_id_PTHR($stable_id);
             $allMembers++;           	
 
 	    if (defined $res->[0]) {
