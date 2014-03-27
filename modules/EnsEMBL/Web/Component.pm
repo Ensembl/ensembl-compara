@@ -859,7 +859,7 @@ sub _sort_similarity_links {
       $text .= qq{  [<a href="$k_url">view all locations</a>]} unless $xref_type =~ /^ALT/;
     }
 
-    $text .= '</div>' if $join_links;
+    $text .= '</div>';
 
     my $label = $type->db_display_name || $externalDB;
     $label    = 'LRG' if $externalDB eq 'ENS_LRG_gene'; ## FIXME Yet another LRG hack!
