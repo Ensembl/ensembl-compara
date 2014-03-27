@@ -56,7 +56,7 @@ use IO::File; # ??
 use File::Basename;
 use Data::Dumper;
 use vars qw/@INC/;
-use base ('Bio::EnsEMBL::Compara::RunnableDB::ComparaHMM::LoadModels');
+use base ('Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::LoadModels');
 
 sub param_defaults {
 
