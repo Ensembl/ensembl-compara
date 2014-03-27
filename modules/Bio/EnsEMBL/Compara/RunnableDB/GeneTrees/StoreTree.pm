@@ -117,7 +117,8 @@ sub dumpTreeMultipleAlignmentToWorkdir {
     }
   }
 
-  if ($self->param('remove_columns') and $gene_tree->has_tag('removed_columns')) {
+  if ($self->param('remove_columns')) {
+    die "The 'removed_columns' tag is missing" unless $gene_tree->has_tag('removed_columns');
     my @removed_columns = eval($gene_tree->get_value_for_tag('removed_columns'));
     print Dumper \@removed_columns if ( $self->debug() );
     $sa = $sa->remove_columns(@removed_columns) if scalar(@removed_columns);
