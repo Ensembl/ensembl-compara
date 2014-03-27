@@ -32,9 +32,11 @@ limitations under the License.
 
 =head1 CONTACT
 
-  Contact Jessica Severin on implementation/design detail: jessica@ebi.ac.uk
-  Contact Albert Vilella on implementation/design detail: avilella@ebi.ac.uk
-  Contact Ewan Birney on EnsEMBL in general: birney@sanger.ac.uk
+Please email comments or questions to the public Ensembl
+developers list at <http://lists.ensembl.org/mailman/listinfo/dev>.
+
+Questions may also be sent to the Ensembl help desk at
+<http://www.ensembl.org/Help/Contact>.
 
 =cut
 
