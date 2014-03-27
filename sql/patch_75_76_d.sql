@@ -155,8 +155,9 @@ FROM member JOIN dnafrag ON member.genome_db_id = dnafrag.genome_db_id AND membe
 WHERE source_name != "ENSEMBLGENE";
 
 
-DROP TABLE member;
-DROP TABLE member_production_counts;
+-- -- Let's not delete them at the moment
+-- DROP TABLE member;
+-- DROP TABLE member_production_counts;
 
 ALTER TABLE family_member CHANGE COLUMN member_id seq_member_id int(10) unsigned not null;
 ALTER TABLE gene_align_member CHANGE COLUMN member_id seq_member_id int(10) unsigned not null;
