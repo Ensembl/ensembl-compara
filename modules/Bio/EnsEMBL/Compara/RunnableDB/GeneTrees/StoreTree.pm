@@ -116,6 +116,13 @@ sub dumpTreeMultipleAlignmentToWorkdir {
       $sa->remove_seq($sa->each_seq_with_id($gene_to_remove));
     }
   }
+
+  if ($self->param('remove_columns') and $gene_tree->has_tag('removed_columns')) {
+    my @removed_columns = eval($gene_tree->get_value_for_tag('removed_columns'));
+    print Dumper \@removed_columns if ( $self->debug() );
+    $sa = $sa->remove_columns(@removed_columns) if scalar(@removed_columns);
+  }
+
   $sa->set_displayname_flat(1);
   # Now outputing the alignment
   open(OUTSEQ, ">$aln_file") or die "Could not open '$aln_file' for writing : $!";
