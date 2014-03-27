@@ -37,12 +37,12 @@ use Bio::EnsEMBL::Registry;
 use Bio::EnsEMBL::DBSQL::DBAdaptor;
 use Bio::EnsEMBL::Compara::RunnableDB::ComparaHMM::PantherAnnotAdaptor;
 
-use base ('Bio::EnsEMBL::Compara::RunnableDB::ComparaHMM::StoreClusters');
+use base ('Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::StoreClusters');
 
 sub param_defaults {
     return {
             'sort_clusters'       => 1,
-            'immediate_dataflow'  => 1,
+            'immediate_dataflow'  => 0,
             'member_type'         => 'protein',
             'input_id_prefix'     => 'protein',
            };
