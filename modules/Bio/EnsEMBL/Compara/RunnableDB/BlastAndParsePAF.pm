@@ -290,41 +290,8 @@ sub write_output {
 
 sub _write_output {
     my $self = shift @_;
-
     my $cross_pafs = $self->param('cross_pafs');
-    #foreach my $genome_db_id (keys %$cross_pafs) {
-    #    $self->compara_dba->get_PeptideAlignFeatureAdaptor->store(@{$cross_pafs->{$genome_db_id}});
-    #}
-    print "numbers pafs " . scalar(@$cross_pafs) . "\n";
-    foreach my $feature (@$cross_pafs) {
-        my $peptide_table = 'peptide_align_feature_'.($feature->{qgenome_db_id});
-
-        #AWFUL HACK to insert into the peptide_align_feature table but without going through the API. Only fill in
-        #some the of fields
-        my $sql = "INSERT INTO $peptide_table (qmember_id, hmember_id, qgenome_db_id, hgenome_db_id, qstart, qend, hstart, hend, score, evalue, hit_rank,identical_matches, perc_ident,align_length,positive_matches, perc_pos, cigar_line) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?, ?,?,?)";
-        my $sth = $self->compara_dba->dbc->prepare( $sql );
-
-        #print "INSERT INTO $peptide_table (qmember_id, hmember_id, qgenome_db_id, hgenome_db_id, qstart, qend, hstart, hend, score, evalue, hit_rank,identical_matches, perc_ident,align_length,positive_matches, perc_pos) VALUES ('" . $feature->{qmember_id} , "','" . $feature->{hmember_id} . "'," . $feature->{qgenome_db_id} . "," . $feature->{hgenome_db_id} . "," . $feature->{qstart} . "," . $feature->{qend} . "," . $feature->{hstart} . "," . $feature->{hend} . "," . $feature->{score} . "," . $feature->{evalue} . "," . $feature->{hit_rank} . "," . $feature->{identical_matches} . "," . $feature->{perc_ident} . "," . $feature->{length} . "," . $feature->{positive} . "," . $feature->{perc_pos} . "\n";
-
-        $sth->execute($feature->{qmember_id},
-                $feature->{hmember_id},
-                $feature->{qgenome_db_id},
-                $feature->{hgenome_db_id},
-                $feature->{qstart},
-                $feature->{qend},
-                $feature->{hstart},
-                $feature->{hend},
-                $feature->{score},
-                $feature->{evalue},
-                $feature->{hit_rank},
-                $feature->{identical_matches},
-                $feature->{perc_ident},
-                $feature->{length},
-                $feature->{positive},
-                $feature->{perc_pos},
-                $feature->{cigar_line},
-                );
-    }
+    $self->compara_dba->get_PeptideAlignFeatureAdaptor->_store_PAFS($cross_pafs);
 }
 
 

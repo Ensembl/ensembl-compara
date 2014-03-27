@@ -321,8 +321,15 @@ sub store {
       #$pepFeature->display_short();
       push @pafList, $pepFeature;
     }
+    elsif($feature->isa('Bio::EnsEMBL::ProteinFeature')){
+      my $pepFeature = $self->_create_PAF_from_ProteinFeature($feature);
+      push @pafList, $pepFeature;
+    }
     elsif($feature->isa('Bio::EnsEMBL::Compara::PeptideAlignFeature')) {
       push @pafList, $feature;
+    }
+    else {
+      warn sprintf("$feature (%s) is not recognized and cannot be stored by PeptideAlignFeatureAdaptor", ref($feature));
     }
   }
 
@@ -340,64 +347,57 @@ sub store {
 
 
 sub _store_PAFS {
-  my ($self, @out)  = @_;
+    my ($self, $cross_pafs) = @_;
 
-  return unless(@out and scalar(@out));
+    print "numbers pafs " . scalar(@$cross_pafs) . "\n";
+    foreach my $feature (@$cross_pafs) {
+        my $peptide_table = $feature->{qgenome_db_id} ? 'peptide_align_feature_'.($feature->{qgenome_db_id}) : 'peptide_align_feature';
 
-  # Query genome db id should always be the same
-  my $first_qgenome_db_id = $out[0]->query_genome_db_id;
+        my $sql = "INSERT INTO $peptide_table (qmember_id, hmember_id, qgenome_db_id, hgenome_db_id, qstart, qend, hstart, hend, score, evalue, hit_rank,identical_matches, perc_ident,align_length,positive_matches, perc_pos, cigar_line) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?, ?,?,?)";
+        my $sth = $self->prepare( $sql );
 
-  my $gdb = $self->db->get_GenomeDBAdaptor->fetch_by_dbID($first_qgenome_db_id);
-  my $tbl_name = 'peptide_align_feature_'.$first_qgenome_db_id;
+        #print "INSERT INTO $peptide_table (qmember_id, hmember_id, qgenome_db_id, hgenome_db_id, qstart, qend, hstart, hend, score, evalue, hit_rank,identical_matches, perc_ident,align_length,positive_matches, perc_pos) VALUES ('" . $feature->{qmember_id} , "','" . $feature->{hmember_id} . "'," . $feature->{qgenome_db_id} . "," . $feature->{hgenome_db_id} . "," . $feature->{qstart} . "," . $feature->{qend} . "," . $feature->{hstart} . "," . $feature->{hend} . "," . $feature->{score} . "," . $feature->{evalue} . "," . $feature->{hit_rank} . "," . $feature->{identical_matches} . "," . $feature->{perc_ident} . "," . $feature->{length} . "," . $feature->{positive} . "," . $feature->{perc_pos} . "\n";
 
-  my $query = "INSERT INTO $tbl_name(".
-                "qmember_id,hmember_id,qgenome_db_id,hgenome_db_id," .
-                "qstart,qend,hstart,hend,".
-                "score,evalue,align_length," .
-                "identical_matches,perc_ident,".
-                "positive_matches,perc_pos,hit_rank,cigar_line) VALUES ";
-
-  my $addComma=0;
-  foreach my $paf (@out) {
-    if($paf->isa('Bio::EnsEMBL::Compara::PeptideAlignFeature')) {
-
-      # print STDERR "== ", $paf->query_member_id, " - ", $paf->hit_member_id, "\n";
-      my $qgenome_db_id = $paf->query_genome_db_id;
-      $qgenome_db_id = 0 unless($qgenome_db_id);
-      my $hgenome_db_id = $paf->hit_genome_db_id;
-      $hgenome_db_id = 0 unless($hgenome_db_id);
-#      eval {$paf->query_member->source_name eq 'ENSEMBLPEP';};
-			eval {$paf->query_member->source_name};
-      if ($@) { throw("Not an ENSEMBLPEP\n"); }
-      # Null_cigar option for leaner paf tables
-      $paf->cigar_line('') if (defined $paf->{null_cigar});
-
-      $query .= ", " if($addComma);
-      $query .= "(".$paf->query_member_id.
-                ",".$paf->hit_member_id.
-                ",".$qgenome_db_id.
-                ",".$hgenome_db_id.
-                ",".$paf->qstart.
-                ",".$paf->qend.
-                ",".$paf->hstart.
-                ",".$paf->hend.
-                ",".$paf->score.
-                ",".$paf->evalue.
-                ",".$paf->alignment_length.
-                ",".$paf->identical_matches.
-                ",".$paf->perc_ident.
-                ",".$paf->positive_matches.
-                ",".$paf->perc_pos.
-                ",".$paf->hit_rank.
-                ",'".$paf->cigar_line."')";
-      $addComma=1;
-      # $paf->display_short();
+        $sth->execute($feature->{qmember_id},
+                $feature->{hmember_id},
+                $feature->{qgenome_db_id},
+                $feature->{hgenome_db_id},
+                $feature->{qstart},
+                $feature->{qend},
+                $feature->{hstart},
+                $feature->{hend},
+                $feature->{score},
+                $feature->{evalue},
+                $feature->{hit_rank},
+                $feature->{identical_matches},
+                $feature->{perc_ident},
+                $feature->{length},
+                $feature->{positive},
+                $feature->{perc_pos},
+                $feature->{cigar_line},
+                );
     }
-  }
-  #print("$query\n");
-  my $sth = $self->prepare($query);
-  $sth->execute();
-  $sth->finish();
+}
+
+
+
+sub _create_PAF_from_ProteinFeature {
+    my ($self, $feature) = @_;
+
+    my $paf = new Bio::EnsEMBL::Compara::PeptideAlignFeature;
+
+    $paf->query_member_id($feature->seqname);
+    $paf->hit_member_id($feature->hseqname);
+    $paf->qstart($feature->start);
+    $paf->hstart($feature->hstart);
+    $paf->qend($feature->end);
+    $paf->hend($feature->hend);
+    $paf->score($feature->score);
+    $paf->evalue($feature->p_value);
+    $paf->perc_ident(0);
+    $paf->perc_pos(0);
+
+    return $paf;
 }
 
 
