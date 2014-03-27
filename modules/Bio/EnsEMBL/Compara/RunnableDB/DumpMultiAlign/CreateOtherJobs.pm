@@ -84,6 +84,8 @@ sub write_output {
     my $tag = "other";
 
     my $output_file = $self->param('filename') . "." . $tag . "." . $self->param('format');
+    $output_file=~s/[\(\)]+//g;
+    $output_file=~s/-/_/g;
 
     #Convert eg human to Homo sapiens
     #my $species_name = $reg->get_adaptor($self->param('species'), "core", "MetaContainer")->get_production_name;

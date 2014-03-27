@@ -96,6 +96,8 @@ sub write_output {
     my $tag = $self->param('coord_system_name');
     #my $output_file = $self->param('output_dir') ."/" . $self->param('filename') . "." . $tag . "." . $self->param('format');
     my $output_file = $self->param('filename') . "." . $tag . "." . $self->param('format');
+    $output_file=~s/[\(\)]+//g;
+    $output_file=~s/-/_/g;
     
     my $format = $self->param('format');
     my $coord_system_name = $self->param('coord_system_name');
