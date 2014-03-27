@@ -368,12 +368,12 @@ sub pipeline_analyses {
 
     ####### NOTIFICATION
     {	-logic_name => 'NotifyUser',
-        -module     => 'Bio::EnsEMBL::Compara::RunnableDB::BuildHMMprofiles::NotifyUser',
-        #-module     => 'Bio::EnsEMBL::Hive::RunnableDB::NotifyUser',
+        -module     => 'Bio::EnsEMBL::Hive::RunnableDB::NotifyByEmail',
         -parameters => {
          	'email'       => $self->o('email'),
          	'subject'     => $self->o('pipeline_name').' has finished',
          	'hmmLib_dir'  => $self->o('hmmLib_dir'),
+                'text'        => $self->o('pipeline_name')." HMM libraries is available at #hmmLib_dir#.\n"
         },
         -wait_for => [ 'HMMCalibrate' ],
     }
