@@ -62,6 +62,7 @@ use strict;
 use IO::File; ## ??
 use File::Path qw/remove_tree/;
 use Time::HiRes qw(time gettimeofday tv_interval);
+use File::Which;
 use LWP::Simple;
 
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
@@ -75,13 +76,12 @@ sub param_defaults {
 sub fetch_input {
     my ($self) = @_;
 
-    die "blast_bin_dir has to be set\n" if (!defined $self->param('blast_bin_dir'));
-
+    $self->param_required('blast_bin_dir');
     my $pantherScore_path = $self->param_required('pantherScore_path');
 
     push @INC, "$pantherScore_path/lib";
     require FamLibBuilder;
-#    import FamLibBuilder;
+    #import FamLibBuilder;
 
 
     my $basedir = $self->param_required('hmm_library_basedir');
@@ -98,6 +98,7 @@ sub fetch_input {
     if ($code == 1) {
         print STDERR "OK creating the library\n" if ($self->debug());
 
+      if (which('lfs')) {
         my $book_stripe_cmd = "lfs setstripe " . $hmmLibrary->bookDir() . " -c -1";
         my $global_stripe_cmd = "lfs setstripe " . $hmmLibrary->globalsDir() . " -c -1";
 
@@ -108,6 +109,7 @@ sub fetch_input {
                 $self->throw("Impossible to set stripe on $dir");
             }
         }
+      }
     }
 
     $self->param('hmmLibrary', $hmmLibrary);
@@ -142,7 +144,6 @@ sub dump_models {
         mkdir "$bookDir/$model_id" or die $!;
         open my $fh, ">", "$bookDir/$model_id/hmmer.hmm" or die $!;
         my $hmm_object = $self->compara_dba->get_HMMProfileAdaptor->fetch_all_by_model_id_type($model_id, $self->param('type'))->[0];
-#        my $hmm_object = $self->compara_dba->get_HMMProfileAdaptor->fetch_all_by_model_id_type($model_id);
         print $fh $hmm_object->profile;
         close($fh);
     }

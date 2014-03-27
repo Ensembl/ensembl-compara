@@ -745,7 +745,7 @@ sub pipeline_analyses {
 
             {
              -logic_name => 'dump_models',
-             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ComparaHMM::DumpModels',
+             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::DumpModels',
              -parameters => {
                              'pantherScore_path'   => $self->o('pantherScore_path'),
                              'hmm_library_basedir' => $self->o('hmm_library_basedir'),
@@ -1087,7 +1087,7 @@ sub pipeline_analyses {
     {
         -logic_name => 'dump_models_BuildHMMprofiles',
         # Should dump only the newly built profiles
-        -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ComparaHMM::DumpModels',
+        -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::DumpModels',
         -parameters => {
                           'hmm_library_basedir' => $self->o('hmmLib_dir'),
                           'blast_bin_dir'       => $self->o('blast_bin_dir'),  ## For creating the blastdb (formatdb or mkblastdb)
