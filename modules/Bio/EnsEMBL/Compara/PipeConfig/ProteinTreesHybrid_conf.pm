@@ -730,7 +730,7 @@ sub pipeline_analyses {
        $self->o('hmm_clustering') ? (
             {
              -logic_name => 'load_models',
-             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ComparaHMM::PantherLoadModels',
+             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::PantherLoadModels',
              -parameters => {
                              'pantherScore_path'    => $self->o('pantherScore_path'),
 #                             'type'					=> $self->o('hmm_profiles_type1'),
@@ -1071,7 +1071,7 @@ sub pipeline_analyses {
 
     {
         -logic_name => 'load_models_BuildHMMprofiles',
-        -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ComparaHMM::PantherLoadModels',
+        -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ComparaHMM::LoadNewModels',
         -parameters => {
                           'cm_file_or_directory' => $self->o('hmmLib_dir'), 
                           'hmmer_path'           => $self->o('hmmer_path'), # For hmmemit (in case it is necessary to get the consensus for each model to create the blast db)

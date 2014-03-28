@@ -68,18 +68,18 @@ use base ('Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::LoadModels');
 
 sub param_defaults {
     return {
-            'type' => 'panther',
+            'type' => 'panther9.0_treefam',
             'url' => 'ftp://ftp.pantherdb.org/panther_library/current_release',
-            'remote_file' => 'PANTHER7.2_ascii.tgz',
-            'expanded_basename' => 'PANTHER7.2',
+            'remote_file' => 'PANTHER9.0_ascii.tgz',
+            'expanded_basename' => 'PANTHER9.0',
             'expander' => 'tar -xzf ',
            }
 }
 
 sub fetch_input {
     my ($self) = @_;
-    my $pantherScore_path = $self->param('pantherScore_path');
-    die "$pantherScore_path has to be defined" unless (defined $pantherScore_path);
+    my $pantherScore_path = $self->param_required('pantherScore_path');
+    my $type              = $self->param_required('type');
 
     push @INC, "$pantherScore_path/lib";
     require FastaFile;
@@ -125,7 +125,7 @@ sub write_output {
 
     return if $self->param('profiles_already_there');
     $self->get_profiles();
-#    $self->clean_directory();
+    #$self->clean_directory();
 }
 
 ##########################################
@@ -138,7 +138,7 @@ sub write_output {
 sub get_profiles {
     my ($self) = @_;
 
-    my $cm_directory = $self->param('cm_file_or_directory');
+    my $cm_directory = $self->param_required('cm_file_or_directory');
     print STDERR "CM_DIRECTORY = " . $cm_directory . "\n";
     my $consensus_fasta = $cm_directory . "/globals/con.Fasta";
     open my $consensus_fh, "<", $consensus_fasta or die "$!: $consensus_fasta";
@@ -155,10 +155,10 @@ sub get_profiles {
         print STDERR "Storing family $famPath($fam) => $famPath/hmmer.hmm\n" if ($self->debug());
         $self->store_hmmprofile("$famPath/hmmer.hmm", $fam, $seq);
 
-## Subfamilies
+	## For subfamilies
         while (my $subfamPath = <$famPath/*>) {
             my $subfamBasename = basename($subfamPath);
-            next if ($subfamBasename eq 'hmmer.hmm');
+            next if ($subfamBasename eq 'hmmer.hmm' || $subfamBasename eq 'tree.tree' || $subfamBasename eq 'cluster.pir');
             my $subfam = $subfamBasename =~ /hmmer\.hmm/ ? $fam : "$fam." . $subfamBasename;
             print STDERR "Storing $subfam HMM\n";
             $self->store_hmmprofile("$subfamPath/hmmer.hmm", $subfam);

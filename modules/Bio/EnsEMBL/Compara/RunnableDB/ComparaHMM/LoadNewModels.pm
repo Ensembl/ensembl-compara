@@ -22,7 +22,7 @@ limitations under the License.
 
 =head1 NAME
 
-Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::PantherLoadModels
+Bio::EnsEMBL::Compara::RunnableDB::ComparaHMM::LoadNewModels
 
 
 =head1 SYNOPSIS
@@ -49,7 +49,7 @@ The rest of the documentation details each of the object methods.
 Internal methods are usually preceded with a _
 
 =cut
-package Bio::EnsEMBL::Compara::RunnableDB::ComparaHMM::PantherLoadModels;
+package Bio::EnsEMBL::Compara::RunnableDB::ComparaHMM::LoadNewModels;
 
 use strict;
 use IO::File; # ??
@@ -68,41 +68,17 @@ sub param_defaults {
             'expander' => 'tar -xzf ',
            }
 }
-my $type;
 
 sub fetch_input {
     my ($self) = @_;
-
-    my $pantherScore_path = $self->param('pantherScore_path');
-    $self->throw('pantherScore_path is an obligatory parameter') unless (defined $self->param('pantherScore_path'));
-    my $type              = $self->param('type');
-    $self->throw('type is an obligatory parameter') unless (defined $self->param('type'));
+    my $pantherScore_path = $self->param_required('pantherScore_path');
+    my $type              = $self->param_required('type');
+    my $hmmemit_exe       = $self->param_required('hmmemit_exe');
+    my $cm_directory      = $self->param_required('cm_file_or_directory');
 
     push @INC, "$pantherScore_path/lib";
     require FastaFile;
     import FastaFile;
-
-}
-
-=head2 run
-
-    Title   :   run
-    Usage   :   $self->run
-    Function:   Downloads and processes
-    Returns :   none
-    Args    :   none
-
-=cut
-sub run {
-    my $self = shift @_;
-
-    ### If you don't want to download the models, define the parameter cm_file_or_directory to point to the panther path
-    if ($self->param('cm_file_or_directory')) {
-        $self->param('profiles_already_there', 1);
-        return;
-    }
-
-    $self->download_models;
 }
 
 =head2 write_output
@@ -117,61 +93,17 @@ sub run {
 sub write_output {
     my $self = shift @_;
 
-    #return if $self->param('profiles_already_there');
-    if($type!~/^new/){
-      $self->get_profiles();
-    }
-    else
-    {
-      $self->get_profiles_2();
-    }
-    #$self->clean_directory();
+    $self->get_profiles();
 }
 
 ######################
 # internal methods
 #####################
+
 sub get_profiles {
     my ($self) = @_;
 
     my $cm_directory = $self->param('cm_file_or_directory');
-    $self->throw('cm_file_or_directory is an obligatory parameter') unless (defined $self->param('cm_file_or_directory'));
-    print STDERR "CM_DIRECTORY = " . $cm_directory . "\n";
-    
-    my $consensus_fasta = $cm_directory . "/globals/con.Fasta";
-    open my $consensus_fh, "<", $consensus_fasta or die "$!: $consensus_fasta";
-    my $index           = FastaFile::indexFasta($consensus_fh);
-    
-    $cm_directory .= "/books";
-    
-    while (my $famPath = <$cm_directory/*>) {
-        my $fam        = basename($famPath);
-        my $cons_seq   = FastaFile::getSeq($consensus_fh, $index, $fam);
-        if (! defined $cons_seq) {
-            print STDERR "No consensus sequence found for fam $fam" unless(defined $cons_seq);
-            next; ## If we don't have consensus seq we don't store the hmm_profile
-        }
-        my (undef, $seq) = split /\n/, $cons_seq, 2;
-        print STDERR "Storing family $famPath($fam) => $famPath/hmmer.hmm\n" if ($self->debug());
-        $self->store_hmmprofile("$famPath/hmmer.hmm", $fam, $seq,$type);
-
-	## For subfamilies
-        while (my $subfamPath  = <$famPath/*>) {
-            my $subfamBasename = basename($subfamPath);
-            next if ($subfamBasename eq 'hmmer.hmm' || $subfamBasename eq 'tree.tree' || $subfamBasename eq 'cluster.pir');
-            my $subfam = $subfamBasename =~ /hmmer\.hmm/ ? $fam : "$fam." . $subfamBasename;
-            print STDERR "Storing $subfam HMM\n";
-            $self->store_hmmprofile("$subfamPath/hmmer.hmm", $subfam,$type);
-        }
-    }
-}
-
-sub get_profiles_2 {
-    my ($self) = @_;
-
-    my $cm_directory = $self->param('cm_file_or_directory');
-    $self->throw('cm_file_or_directory is an obligatory parameter') unless (defined $self->param('cm_file_or_directory'));
- 
     print STDERR "CM_DIRECTORY = " . $cm_directory . "\n";
 
     while (my $famPath = <$cm_directory/*>) {
@@ -179,10 +111,9 @@ sub get_profiles_2 {
         print STDERR "Storing family $famPath($fam) => $famPath/hmmer.hmm\n" if ($self->debug());
 
         my $hmmfile   = "$famPath/hmmer.hmm"; 
-        $self->param('hmmfile',$hmmfile);
         next unless (-e $hmmfile);
 
-        my $consensus = $self->get_consensus_from_HMMs();
+        my $consensus = $self->compute_consensus_for_HMM($hmmfile);
         my $name;
 
         open my $fh, "<", $hmmfile or die $!;
@@ -193,17 +124,14 @@ sub get_profiles_2 {
           }
         close($fh);
 
-        $self->store_hmmprofile("$famPath/hmmer.hmm", $fam, $consensus->{$name},$type);
+        $self->store_hmmprofile("$famPath/hmmer.hmm", $fam, $consensus->{$name});
    }
 }
 
-sub get_consensus_from_HMMs {
-    my ($self) = @_;
+sub compute_consensus_for_HMM {
+    my ($self, $hmmfile) = @_;
 
     my $hmmemit_exe = $self->param('hmmemit_exe');
-    $self->throw('hmmemit_exe is an obligatory parameter') unless (defined $self->param('hmmemit_exe'));
-
-    my $hmmfile      = $self->param('hmmfile');
 
     open my $pipe, "-|", "$hmmemit_exe -c $hmmfile" or die $!;
 
@@ -227,7 +155,7 @@ sub get_consensus_from_HMMs {
     $consensus{$header} = $seq;
     close($pipe);
 
-return \%consensus;
+    return \%consensus;
 }
 
 
