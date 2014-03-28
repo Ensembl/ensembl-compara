@@ -835,7 +835,6 @@ sub pipeline_analyses {
         	   -parameters   => {
             		'buildprofiles_dir' => $self->o('buildprofiles_dir'),
            		},
-        		-hive_capacity => -1,
         		-flow_into 	   => {
 		           	'1->A' => ['CreateBlastDB','paf_create_table'],
             		'A->1' => ['PrepareSequence'],
@@ -874,7 +873,6 @@ sub pipeline_analyses {
 
        },
        -batch_size     =>  100,  # they can be really, really short
-       -hive_capacity  => -1,
      },
 
      # Perform blastp of each sequence against blastDB
@@ -894,7 +892,6 @@ sub pipeline_analyses {
 # ------------------------------------------------[BuildHMMprofiles-> clustering step]----------------------------------------------------
     {   -logic_name    => 'hcluster_factory',
         -module        => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
-        -hive_capacity => -1,
         -flow_into 	   => {
            	'1->A' => { 
                    		'hcluster_prepare_input' => [{'ext' => 'txt'}],
@@ -912,7 +909,6 @@ sub pipeline_analyses {
 			'pipeline_name' => $self->o('pipeline_name'),
 			'cmd'			=> 'mysql '.$self->dbconn_2_mysql('pipeline_db',0).' '.$self->o('pipeline_db','-dbname').' -e "SELECT qmember_id,hmember_id,score FROM peptide_align_feature" | grep  -v qmember_id > #cluster_dir#/hcluster.#ext#',
         },
-        -hive_capacity  => -1,
     },
 
     # Running hcluster: output file => hcluster.out 
@@ -924,7 +920,6 @@ sub pipeline_analyses {
               'hcluster_exe'                  => $self->o('hcluster_exe'),
               'cmd'                           => '#hcluster_exe# -m #clustering_max_gene_halfcount# -w 0 -s 0.34 -O -o #cluster_dir#/hcluster.out #cluster_dir#/hcluster.txt',
          },
-        -hive_capacity => -1,
         -flow_into => {
             '1->A'	 => ['HclusterParseOutput'],
   	  		'A->1' 	 => ['cluster_factory_BuildHMMprofiles'],
@@ -939,7 +934,6 @@ sub pipeline_analyses {
             'cluster_dir'               => $self->o('buildprofiles_dir'),
             'cmd'           => "(echo 'cluster_id\tgenes_count\tcluster_list'; awk '\$6>=2' #cluster_dir#/hcluster.out | cut -f1,6,7 | sed 's/,\$//' ) > #cluster_dir#/hcluster_parse.out",
         },
-        -hive_capacity  => -1,
         -rc_name 		=> '2Gb_job',
         -flow_into 		=> {
             '1'  => {'prepare_cluster_factory_input_ids' => [{'ext' => 'txt'}] },
@@ -954,7 +948,6 @@ sub pipeline_analyses {
             'cluster_dir'   => $self->o('buildprofiles_dir'),
             'cmd'			=> 'cut -f1 #cluster_dir#/hcluster_parse.out | grep -v cluster_id > #cluster_dir#/cluster_factory_input_ids.#ext#',
          },
-        -hive_capacity => -1,
         -flow_into 	   => {
             '1'  => {'create_msa_directory'},
         },
@@ -1107,7 +1100,6 @@ sub pipeline_analyses {
                 'inputquery'        => 'SELECT member_id AS non_annot_member, genome_db_id AS genomeDB_id, cluster_dir_id AS cluster_dir_count FROM sequence_unclassify',
                 'fan_branch_code'   => 2,
             },
-    	-hive_capacity => -1,
         -flow_into 	   => {
         	    	        '2->A' => [ 'HMMer_classify_BuildHMMprofiles' ],
         					'A->1' => [ 'HMM_clusterize' ],
