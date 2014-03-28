@@ -214,16 +214,13 @@ sub pipeline_analyses {
     },
 
     # Parsing hcluster.out file, output file => hcluster_parse.out
-    # line 120 next if ($cluster_size < 3) HclusterParseOutput.pm <=> MSA.pm line 84  next if ($cluster_size < 3);
     {   -logic_name  => 'HclusterParseOutput',
-        -module     => 'Bio::EnsEMBL::Compara::RunnableDB::BuildHMMprofiles::HclusterParseOutput',
-        #-module      => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::HclusterParseOutput',
+        -module       => 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
         -parameters  => {
             'cluster_dir'               => $self->o('output_dir'),
-          # 'additional_clustersets'    => [qw(super-align filtered-align phyml-aa phyml-nt nj-dn nj-ds nj-mm)],
+            'cmd'           => "(echo 'cluster_id\tgenes_count\tcluster_list'; awk '\$6>=2' #cluster_dir#/hcluster.out | cut -f1,6,7 | sed 's/,\$//' ) > #cluster_dir#/hcluster_parse.out",
         },
         -hive_capacity  => -1,
-        -rc_name 		=> '2Gb_job',
         -flow_into 		=> {
             '1'  => {'prepare_cluster_factory_input_ids' => [{'ext' => 'txt'}] },
 			#'run_qc_tests' => {'groupset_tag' => 'Clusterset' },
