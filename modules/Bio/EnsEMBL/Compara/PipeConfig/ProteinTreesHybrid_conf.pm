@@ -1101,7 +1101,12 @@ sub pipeline_analyses {
 
    { 
         -logic_name    => 'HMMer_classify_factory',
-    	-module        => 'Bio::EnsEMBL::Compara::RunnableDB::ComparaHMM::HMMClassifyFactory',
+
+        -module        => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
+        -parameters => {
+                'inputquery'        => 'SELECT member_id AS non_annot_member, genome_db_id AS genomeDB_id, cluster_dir_id AS cluster_dir_count FROM sequence_unclassify',
+                'fan_branch_code'   => 2,
+            },
     	-hive_capacity => -1,
         -flow_into 	   => {
         	    	        '2->A' => [ 'HMMer_classify_BuildHMMprofiles' ],
