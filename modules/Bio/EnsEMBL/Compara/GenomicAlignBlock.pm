@@ -167,7 +167,7 @@ use Bio::EnsEMBL::Compara::GenomicAlignGroup;
 use Bio::EnsEMBL::Compara::Utils::SpeciesTree;
 use Bio::EnsEMBL::Compara::Graph::NewickParser;
 
-our @ISA = qw(Bio::EnsEMBL::Compara::BaseGenomicAlignSet);
+our @ISA = qw(Bio::EnsEMBL::Compara::BaseGenomicAlignSet Bio::EnsEMBL::Storable);
 
 =head2 new (CONSTRUCTOR)
 
@@ -258,78 +258,6 @@ sub new {
   $self->starting_genomic_align_id($starting_genomic_align_id) if (defined($starting_genomic_align_id));
 
   return $self;
-}
-
-=head2 new_fast
-
-  Arg [1]    : hash reference $hashref
-  Example    : none
-  Description: This is an ultra fast constructor which requires knowledge of
-               the objects internals to be used.
-  Returntype :
-  Exceptions : none
-  Caller     :
-  Status     : Stable
-
-=cut
-
-sub new_fast {
-  my $class = shift;
-  my $hashref = shift;
-
-  return bless $hashref, $class;
-}
-
-
-=head2 adaptor
-
-  Arg [1]    : Bio::EnsEMBL::Compara::DBSQL::GenomicAlignBlockAdaptor $adaptor
-  Example    : my $gen_ali_blk_adaptor = $genomic_align_block->adaptor();
-  Example    : $genomic_align_block->adaptor($gen_ali_blk_adaptor);
-  Description: Getter/Setter for the adaptor this object uses for database
-               interaction.
-  Returntype : Bio::EnsEMBL::Compara::DBSQL::GenomicAlignBlockAdaptor object
-  Exceptions : thrown if $adaptor is not a
-               Bio::EnsEMBL::Compara::DBSQL::GenomicAlignBlockAdaptor object
-  Caller     : general
-  Status     : Stable
-
-=cut
-
-sub adaptor {
-  my ($self, $adaptor) = @_;
-
-  if (defined($adaptor)) {
-    throw("$adaptor is not a Bio::EnsEMBL::Compara::DBSQL::GenomicAlignBlockAdaptor object")
-        unless ($adaptor->isa("Bio::EnsEMBL::Compara::DBSQL::GenomicAlignBlockAdaptor"));
-    $self->{'adaptor'} = $adaptor;
-  }
-
-  return $self->{'adaptor'};
-}
-
-
-=head2 dbID
-
-  Arg [1]    : integer $dbID
-  Example    : my $dbID = $genomic_align_block->dbID();
-  Example    : $genomic_align_block->dbID(12);
-  Description: Getter/Setter for the attribute dbID
-  Returntype : integer
-  Exceptions : none
-  Caller     : general
-  Status     : Stable
-
-=cut
-
-sub dbID {
-  my ($self, $dbID) = @_;
-
-  if (defined($dbID)) {
-    $self->{'dbID'} = $dbID;
-  }
-
-  return $self->{'dbID'};
 }
 
 
@@ -1581,11 +1509,11 @@ sub get_GenomicAlignTree {
     my $species_tree_string;
     #For a pairwise GenomicAlignBlock, create a tree from scratch.
     if ($self->method_link_species_set->method->class eq "GenomicAlignBlock.pairwise_alignment") {
-        my $species_set_id = $self->method_link_species_set->species_set_obj->dbID;
+        my $species_set = $self->method_link_species_set->species_set_obj;
         
         #Create species_tree in newick format. Do not get the branch lengths.
         $species_tree_string = Bio::EnsEMBL::Compara::Utils::SpeciesTree->create_species_tree(-compara_dba => $self->adaptor->db,
-                                                                                              -species_set_id => $species_set_id)->newick_format('ncbi_name');
+                                                                                              -species_set => $species_set)->newick_format('ncbi_name');
     } else {
         #Multiple alignment 
         #Get SpeciesTree from database.
@@ -1606,6 +1534,9 @@ sub get_GenomicAlignTree {
     #Convert the newick format tree into a GenomicAlignTree object
     $genomic_align_tree = Bio::EnsEMBL::Compara::Graph::NewickParser::parse_newick_into_tree($species_tree_string, "Bio::EnsEMBL::Compara::GenomicAlignTree");
 
+    my $ref_genomic_align = $self->reference_genomic_align;
+    my $ref_genomic_align_node;
+
     #Prune the tree to just contain the species in this GenomicAlignBlock and add GenomicAlignGroup objects on the leaves
     my $all_leaves = $genomic_align_tree->get_all_leaves;
     foreach my $this_leaf (@$all_leaves) {        
@@ -1618,15 +1549,26 @@ sub get_GenomicAlignTree {
 
         if ($leaf_names->{$this_leaf_name}) {
             #add GenomicAlignGroup populated with GenomicAlign to leaf
+	    my $this_genomic_align = $leaf_names->{$this_leaf_name};
             my $genomic_align_group = new Bio::EnsEMBL::Compara::GenomicAlignGroup();
             $genomic_align_group->add_GenomicAlign($leaf_names->{$this_leaf_name});
             $this_leaf->genomic_align_group($genomic_align_group);
+	    if ($this_genomic_align->genome_db->name eq $ref_genomic_align->genome_db->name and
+		$this_genomic_align->dnafrag->name eq $ref_genomic_align->dnafrag->name and
+		$this_genomic_align->dnafrag_start eq $ref_genomic_align->dnafrag_start and
+		$this_genomic_align->dnafrag_end eq $ref_genomic_align->dnafrag_end) {
+	      $genomic_align_tree->reference_genomic_align_node($this_leaf);
+	      $genomic_align_tree->reference_genomic_align($this_genomic_align);
+	      $ref_genomic_align_node = $this_leaf;
+	    }
         } else {
             #remove this leaf
             $this_leaf->disavow_parent;
             $genomic_align_tree = $genomic_align_tree->minimize_tree;
         }
     }
+    $genomic_align_tree->root->reference_genomic_align($ref_genomic_align);
+    $genomic_align_tree->root->reference_genomic_align_node($ref_genomic_align_node);
 
     return $genomic_align_tree;
 }

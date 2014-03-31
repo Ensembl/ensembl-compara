@@ -365,6 +365,29 @@ sub taxon {
 }
 
 
+=head2 species_tree_node_id
+
+  Arg [1]    : (optional) int
+  Example    : $gdb->species_tree_node_id(9606);
+  Description: Getter/Setter for the ID in the "reference" species-tree of this genome_db
+  Returntype : int
+  Exceptions : none
+  Caller     : general
+  Status     : Stable
+
+=cut
+
+sub species_tree_node_id {
+  my $self = shift;
+  my $species_tree_node_id = shift;
+
+  if(defined $species_tree_node_id) {
+    $self->{'species_tree_node_id'} = $species_tree_node_id;
+  }
+  return $self->{'species_tree_node_id'};
+}
+
+
 =head2 locator
 
   Arg [1]    : string

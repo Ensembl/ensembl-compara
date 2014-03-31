@@ -229,30 +229,8 @@ is stored in the human core database.
 </p>
 
 <p>
-The fetch_by_source_stable_id method of the corresponding *MemberAdaptor takes two arguments. The first one is the
-source of the member and can be:
-</p>
-
-<dl>
-<dt>for GeneMember</dt>
-<dd>
-	<ul>
-	<li>ENSEMBLGENE, derived from an EnsEMBL gene</li>
-	</ul>
-</dd>
-<dt>for SeqMember</dt>
-<dd>
-	<ul>
-	<li>ENSEMBLPEP, derived from an EnsEMBL translation</li>
-	<li>ENSEMBLTRANS, derived from an EnsEMBL transcript</li>
-	<li>Uniprot/SWISSPROT, derived from a Uniprot/Swissprot entry</li>
-	<li>Uniprot/SPTREMBL, derived from a Uniprot/SP-TrEMBL entry</li>
-	</ul>
-</dd>
-</dl>
-
-<p>
-The second argument is the identifier for the member. Here is a simple example:
+The fetch_by_stable_id method of the corresponding *MemberAdaptor returns Members by their stable_id.
+Here is a simple example:
 </p>
 
 <pre class="code">
@@ -271,7 +249,36 @@ are only available for ENSEMBLGENE and ENSEMBLPEP.</li>
 for more details).</li>
 <li><code>taxon</code> returns a Bio::EnsEMBL::Compara::NCBITaxon object.
 From this object you can get additional information about the species.</li>
+<li><code>source_name</code> is a string describing where the Member comes from.</li>
 </ul>
+
+<p>
+Here is the possible list of source names:
+</p>
+
+<dl>
+<dt>for GeneMember</dt>
+<dd>
+	<ul>
+	<li>ENSEMBLGENE, derived from an EnsEMBL gene</li>
+	<li>EXTERNALGENE, loaded from an external source (currently unused in the live databases)</li>
+	</ul>
+</dd>
+<dt>for SeqMember</dt>
+<dd>
+	<ul>
+	<li>ENSEMBLPEP, derived from an EnsEMBL translation</li>
+	<li>ENSEMBLTRANS, derived from an EnsEMBL transcript</li>
+	<li>Uniprot/SWISSPROT, derived from a Uniprot/Swissprot entry</li>
+	<li>Uniprot/SPTREMBL, derived from a Uniprot/SP-TrEMBL entry</li>
+	<li>EXTERNALPEP, loaded from an external source (currently unused in the live databases)</li>
+	<li>EXTERNALLTRANS, loaded from an external source (currently unused in the live databases)</li>
+	</ul>
+</dd>
+</dl>
+
+
+
 
 <pre class="code">
 [[INCLUDE::/info/docs/api/compara/tut_member2.inc]]

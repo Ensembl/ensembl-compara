@@ -103,7 +103,7 @@ sub run {
         $constraint .= ' AND gtr.tree_type = "tree"';
         $constraint .= ' AND gtr.clusterset_id = "default"';
         $constraint .= ' AND gtr.member_type = "'.($self->param('member_type')).'"' if defined $self->param('member_type');
-        my $join = [[['gene_tree_node', 'gtn'], 'm.member_id = gtn.member_id', undef], [['gene_tree_root', 'gtr'], 'gtn.root_id = gtr.root_id', undef]];
+        my $join = [[['gene_tree_node', 'gtn'], 'm.seq_member_id = gtn.seq_member_id', undef], [['gene_tree_root', 'gtr'], 'gtn.root_id = gtr.root_id', undef]];
         return $seq_member_adaptor->generic_fetch($constraint, $join);
     };
 

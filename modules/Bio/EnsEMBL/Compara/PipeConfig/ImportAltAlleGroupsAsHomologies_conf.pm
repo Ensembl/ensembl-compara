@@ -52,7 +52,7 @@ sub default_options {
 
         # Tables to copy and merge
         'tables_from_master'    => [ 'method_link', 'species_set', 'method_link_species_set', 'ncbi_taxa_node', 'ncbi_taxa_name' ],
-        'tables_to_merge'       => [ 'member', 'sequence' ],
+        'tables_to_merge'       => [ 'seq_member', 'gene_member', 'sequence' ],
         'tables_to_copy'        => [ 'genome_db' ],
     };
 }
@@ -155,7 +155,8 @@ sub pipeline_analyses {
             -parameters => {
                 'sql'   => [
                     'ALTER TABLE sequence       AUTO_INCREMENT=300000001',
-                    'ALTER TABLE member         AUTO_INCREMENT=300000001',
+                    'ALTER TABLE gene_member    AUTO_INCREMENT=300000001',
+                    'ALTER TABLE seq_member     AUTO_INCREMENT=300000001',
                     'ALTER TABLE homology       AUTO_INCREMENT=300000001',
                 ],
             },

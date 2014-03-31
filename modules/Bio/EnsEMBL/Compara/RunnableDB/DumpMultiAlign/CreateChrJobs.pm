@@ -128,6 +128,9 @@ sub write_output {
 
     while (my $row = $sth->fetchrow_arrayref) {
 	my $output_file = $self->param('filename') . "." . $tag . $name . "." . $self->param('format');
+        $output_file=~s/[\(\)]+//g;
+        $output_file=~s/-/_/g;
+
 
 	my $num_chunks = ceil($total_blocks/$self->param('split_size'));
 

@@ -23,6 +23,7 @@ use warnings;
 
 use Bio::EnsEMBL::Compara::Homology;
 use Bio::EnsEMBL::Compara::DBSQL::BaseRelationAdaptor;
+use Bio::EnsEMBL::Compara::Utils::Scalar;
 
 use Bio::EnsEMBL::Utils::Exception qw(throw);
 use Bio::EnsEMBL::Utils::Argument qw(rearrange);
@@ -60,16 +61,14 @@ sub fetch_all_by_Member {
   my ($method_link_type, $method_link_species_set, $species_tree_node_ids) =
     rearrange([qw(METHOD_LINK_TYPE METHOD_LINK_SPECIES_SET SPECIES_TREE_NODE_IDS)], @args);
 
-  if (defined $method_link_species_set) {
-    check_ref($method_link_species_set, 'Bio::EnsEMBL::Compara::MethodLinkSpeciesSet') || assert_integer($method_link_species_set)
-  }
+  assert_ref_or_dbID($method_link_species_set, 'Bio::EnsEMBL::Compara::MethodLinkSpeciesSet', '-METHOD_LINK_SPECIES_SET');
   assert_ref($member, 'Bio::EnsEMBL::Compara::Member');
 
-  my $peptide_member_id = $member->isa('Bio::EnsEMBL::Compara::GeneMember') ? $member->canonical_member_id : $member->dbID;
+  my $seq_member_id = $member->isa('Bio::EnsEMBL::Compara::GeneMember') ? $member->canonical_member_id : $member->dbID;
 
   my $join = [[['homology_member', 'hm'], 'h.homology_id = hm.homology_id']];
-  my $constraint = 'hm.peptide_member_id = ?';
-  $self->bind_param_generic_fetch($peptide_member_id, SQL_INTEGER);
+  my $constraint = 'hm.seq_member_id = ?';
+  $self->bind_param_generic_fetch($seq_member_id, SQL_INTEGER);
 
   if (defined $method_link_species_set) {
     $constraint .= ' AND h.method_link_species_set_id = ?';
@@ -84,7 +83,7 @@ sub fetch_all_by_Member {
   # in Bio::EnsEMBL::Compara::MemberSet to make sure that the first element
   # of the member array is the one that has been used by the user to fetch the
   # homology object
-  $self->{'_this_one_first'} = $peptide_member_id;
+  $self->{'_this_one_first'} = $seq_member_id;
 
   my $homologies = $self->generic_fetch($constraint, $join);
 
@@ -181,9 +180,9 @@ sub fetch_by_Member_Member {
 
   my $join = [[['homology_member', 'hm1'], 'h.homology_id = hm1.homology_id'],[['homology_member', 'hm2'], 'h.homology_id = hm2.homology_id']];
 
-  my $constraint .= ' hm1.peptide_member_id = ?';
+  my $constraint .= ' hm1.seq_member_id = ?';
   $self->bind_param_generic_fetch($pid1, SQL_INTEGER);
-  $constraint .= ' AND hm2.peptide_member_id = ?';
+  $constraint .= ' AND hm2.seq_member_id = ?';
   $self->bind_param_generic_fetch($pid2, SQL_INTEGER);
 
   $self->{'_this_one_first'} = $pid1;
@@ -554,8 +553,8 @@ sub _objs_from_sth {
   
   while ($sth->fetch()) {
     push @homologies, Bio::EnsEMBL::Compara::Homology->new_fast({
-            '_adaptor'                      => $self,           # field name NOT in sync with Bio::EnsEMBL::Storable
-            '_dbID'                         => $homology_id,    # field name NOT in sync with Bio::EnsEMBL::Storable
+            'adaptor'                       => $self,
+            'dbID'                          => $homology_id,
             '_description'                  => $description,
             '_is_tree_compliant'            => $is_tree_compliant,
             '_method_link_species_set_id'   => $method_link_species_set_id,
@@ -612,7 +611,7 @@ sub store {
     $hom->dbID($sth->{'mysql_insertid'});
   }
 
-  my $sql = 'INSERT IGNORE INTO homology_member (homology_id, member_id, peptide_member_id, cigar_line, perc_id, perc_pos, perc_cov) VALUES (?,?,?,?,?,?,?)';
+  my $sql = 'INSERT IGNORE INTO homology_member (homology_id, gene_member_id, seq_member_id, cigar_line, perc_id, perc_pos, perc_cov) VALUES (?,?,?,?,?,?,?)';
   my $sth = $self->prepare($sql);
   foreach my $member(@{$hom->get_all_Members}) {
     # Stores the member if not yet stored

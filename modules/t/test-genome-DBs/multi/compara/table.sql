@@ -124,25 +124,6 @@ CREATE TABLE `dnafrag_region` (
   KEY `synteny_reversed` (`dnafrag_id`,`synteny_region_id`)
 ) ENGINE=MyISAM DEFAULT CHARSET=latin1;
 
-CREATE TABLE `domain` (
-  `domain_id` int(10) unsigned NOT NULL AUTO_INCREMENT,
-  `stable_id` varchar(40) NOT NULL,
-  `method_link_species_set_id` int(10) unsigned NOT NULL,
-  `description` varchar(255) DEFAULT NULL,
-  PRIMARY KEY (`domain_id`),
-  UNIQUE KEY `stable_id` (`stable_id`,`method_link_species_set_id`),
-  KEY `method_link_species_set_id` (`method_link_species_set_id`)
-) ENGINE=MyISAM DEFAULT CHARSET=latin1;
-
-CREATE TABLE `domain_member` (
-  `domain_id` int(10) unsigned NOT NULL,
-  `member_id` int(10) unsigned NOT NULL,
-  `member_start` int(10) DEFAULT NULL,
-  `member_end` int(10) DEFAULT NULL,
-  UNIQUE KEY `domain_id` (`domain_id`,`member_id`,`member_start`,`member_end`),
-  UNIQUE KEY `member_id` (`member_id`,`domain_id`,`member_start`,`member_end`)
-) ENGINE=MyISAM DEFAULT CHARSET=latin1;
-
 CREATE TABLE `external_db` (
   `external_db_id` int(10) unsigned NOT NULL AUTO_INCREMENT,
   `db_name` varchar(100) NOT NULL,
@@ -1867,24 +1848,6 @@ CREATE TABLE `sequence` (
   PRIMARY KEY (`sequence_id`),
   KEY `sequence` (`sequence`(18))
 ) ENGINE=MyISAM DEFAULT CHARSET=latin1 MAX_ROWS=10000000 AVG_ROW_LENGTH=19000;
-
-CREATE TABLE `sitewise_aln` (
-  `sitewise_id` int(10) unsigned NOT NULL AUTO_INCREMENT,
-  `aln_position` int(10) unsigned NOT NULL,
-  `node_id` int(10) unsigned NOT NULL,
-  `tree_node_id` int(10) unsigned NOT NULL,
-  `omega` float(10,5) DEFAULT NULL,
-  `omega_lower` float(10,5) DEFAULT NULL,
-  `omega_upper` float(10,5) DEFAULT NULL,
-  `optimal` float(10,5) DEFAULT NULL,
-  `ncod` int(10) DEFAULT NULL,
-  `threshold_on_branch_ds` float(10,5) DEFAULT NULL,
-  `type` enum('single_character','random','all_gaps','constant','default','negative1','negative2','negative3','negative4','positive1','positive2','positive3','positive4','synonymous') NOT NULL,
-  PRIMARY KEY (`sitewise_id`),
-  UNIQUE KEY `aln_position_node_id_ds` (`aln_position`,`node_id`,`threshold_on_branch_ds`),
-  KEY `tree_node_id` (`tree_node_id`),
-  KEY `node_id` (`node_id`)
-) ENGINE=MyISAM DEFAULT CHARSET=latin1;
 
 CREATE TABLE `species_set` (
   `species_set_id` int(10) unsigned NOT NULL AUTO_INCREMENT,

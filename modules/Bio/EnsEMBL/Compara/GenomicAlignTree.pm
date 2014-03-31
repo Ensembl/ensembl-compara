@@ -909,6 +909,25 @@ sub get_all_leaves {
 }
 
 
+=head2 sort_children
+
+  Arg         : none
+  Example     : sort_children @$children
+  Description : sort the nodes of a Bio::EnsEMBL::Compara::GenomicAlignTree object
+  Returntype  : int (-1,0,1)
+  Exceptions  : none
+  Caller      : general
+  Status      : At risk
+
+=cut
+
+sub sort_children {
+  my ($self) = @_;
+
+  my @sortedkids = sort _sort_children @{$self->children};
+  return \@sortedkids;
+}
+
 =head2 _sort_children
 
   Arg         : none

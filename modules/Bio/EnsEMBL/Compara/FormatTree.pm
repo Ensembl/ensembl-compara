@@ -252,19 +252,19 @@ my $prot_id_cb = sub {
   return $self->{tree}->is_leaf ? $self->{tree}->stable_id : undef;
 };
 
-# C(member_id)
-my $member_id_cb = sub {
+# C(seq_member_id)
+my $seq_member_id_cb = sub {
   my ($self) = @_;
-  unless ($self->{tree}->can('member_id')) {
+  unless ($self->{tree}->can('seq_member_id')) {
       return;
   }
-  return $self->{tree}->member_id;
+  return $self->{tree}->seq_member_id;
 };
 
 # C(taxon_id)
 my $taxon_id_cb = sub {
   my ($self) = @_;
-  if ($self->{tree}->isa('Bio::EnsEMBL::Compara::GeneTreeNode')) {
+  if (not $self->{tree}->can('taxon_id') and $self->{tree}->isa('Bio::EnsEMBL::Compara::GeneTreeNode')) {
     return $self->{tree}->species_tree_node->taxon_id;
   }
   return $self->{tree}->taxon_id;
@@ -350,7 +350,7 @@ my %callbacks = (
         'i' => $stable_id_cb,
         'r' => $transcriptid_cb,
         'p' => $prot_id_cb,
-        'm' => $member_id_cb,
+        'm' => $seq_member_id_cb,
         'x' => $taxon_id_cb,
         'S' => $sp_name_cb,
         'N' => $n_members_cb, # Used in cafe trees (number of members)
@@ -468,7 +468,7 @@ sub _internal_format_newick {
 # %{s} --> stable_id ($self->gene_member->stable_id)
 # %{p} --> peptide Member ($self->get_canonical_SeqMember->stable_id)
 # %{t} --> taxon_id ($self->taxon_id)
-# %{m} --> member_id ($self->member_id)
+# %{m} --> seq_member_id ($self->seq_member_id)
 # %{g} --> genome_db name ($self->genome_db->name)
 # %{i} --> node_id ($self->node_id)
 # %{e} --> nothing (useful to include only regular characters, see below)

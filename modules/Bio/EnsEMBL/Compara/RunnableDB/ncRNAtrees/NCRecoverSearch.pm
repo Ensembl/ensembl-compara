@@ -275,7 +275,7 @@ sub fetch_recovered_member_entries {
     "FROM recovered_member rcm ".
     "WHERE rcm.node_id=\"$root_id\" AND ".
     "rcm.stable_id not in ".
-    "(SELECT stable_id FROM member WHERE source_name='ENSEMBLGENE' AND genome_db_id=rcm.genome_db_id)";
+    "(SELECT stable_id FROM gene_member WHERE source_name='ENSEMBLGENE' AND genome_db_id=rcm.genome_db_id)";
   my $sth = $self->compara_dba->dbc->prepare($sql);
   $sth->execute();
   while ( my $ref  = $sth->fetchrow_arrayref() ) {

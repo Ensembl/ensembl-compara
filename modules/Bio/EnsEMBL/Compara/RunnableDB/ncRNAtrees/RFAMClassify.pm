@@ -49,7 +49,7 @@ $rfamclassify->write_output(); #writes to DB
 =head1 DESCRIPTION
 
 This Analysis/RunnableDB is designed to take the descriptions of each
-ncrna member and classify them into the respective cluster according
+ncrna and classify them into the respective cluster according
 to their RFAM id. It also takes into account information from mirBase.
 
 =cut
@@ -180,9 +180,9 @@ sub build_hash_models {
 
   while (my $gene = $all_genes_Iterator->next) {
       my $transc = $gene->get_canonical_SeqMember;
-      my $gene_member_id = $gene->member_id;
+      my $gene_member_id = $gene->gene_member_id;
       my $gene_description = $gene->description;
-      my $transcript_member_id = $transc->member_id;
+      my $transcript_member_id = $transc->seq_member_id;
       my $transcript_description = $transc->description;
 
     $transcript_description =~ /Acc:(\w+)/;

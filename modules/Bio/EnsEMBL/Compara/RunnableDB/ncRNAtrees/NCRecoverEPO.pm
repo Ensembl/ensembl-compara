@@ -278,7 +278,7 @@ sub run_ncrecoverepo {
                             $other_genome_db_id);
               $sth->finish;
               # See if we can match the RFAM name or RFAM id
-              my $gene_member = $self->param('gene_member_adaptor')->fetch_by_source_stable_id('ENSEMBLGENE',$found_gene_stable_id);
+              my $gene_member = $self->param('gene_member_adaptor')->fetch_by_stable_id($found_gene_stable_id);
               next unless (defined($gene_member));
               # FIXME: this code cannot work because nctree_adaptor is not defined !
               my $other_tree = $self->param('nctree_adaptor')->fetch_by_Member_root_id($gene_member);
@@ -406,19 +406,18 @@ sub run_low_coverage_best_in_alignment {
     my $gdb_name = $leaf->genome_db->name;
     next unless (defined($self->param('epo_gdb')->{$leaf->genome_db_id}));
     next unless (defined($self->param('epo_low_cov_gdbs')->{$leaf->genome_db_id}));
-    print STDERR "HERE?\n";
     if (! defined $epo_low_mlss) {
         ## We delete this leaf because it is a low_cov slice that is not in the epo_low_cov
-        $self->param('low_cov_leaves_to_delete_pmember_id')->{$leaf->member_id} = $leaf->gene_member->stable_id;
+        $self->param('low_cov_leaves_to_delete_pmember_id')->{$leaf->seq_member_id} = $leaf->gene_member->stable_id;
         next;
     }
     my $slice = $leaf->genome_db->db_adaptor->get_SliceAdaptor->fetch_by_transcript_stable_id($leaf->stable_id);
     $self->throw("Unable to fetch slice for this genome_db leaf: $gdb_name") unless (defined($slice));
-    $low_cov_slice_seqs{$leaf->genome_db_id}{$leaf->member_id} = $slice;
+    $low_cov_slice_seqs{$leaf->genome_db_id}{$leaf->seq_member_id} = $slice;
     my $low_cov_genomic_align_blocks = $self->param('epo_gab_adaptor')->fetch_all_by_MethodLinkSpeciesSet_Slice($epo_low_mlss,$slice);
     unless (0 < scalar(@$low_cov_genomic_align_blocks)) {
       # $DB::single=1;1;
-      $self->param('low_cov_leaves_to_delete_pmember_id')->{$leaf->member_id} = $leaf->gene_member->stable_id;
+      $self->param('low_cov_leaves_to_delete_pmember_id')->{$leaf->seq_member_id} = $leaf->gene_member->stable_id;
       next;
     }
     print STDERR "# EPO_LOW_COVERAGE $gdb_name\n" if ($self->debug);
@@ -426,9 +425,9 @@ sub run_low_coverage_best_in_alignment {
       if ($low_cov_genomic_align_block->original_dbID != $max_gabID) {
         # We delete this leaf because it's a low_cov slice that is not in the epo_low_cov, so it's the best in alignment
         # $DB::single=1;1;
-        $self->param('low_cov_leaves_to_delete_pmember_id')->{$leaf->member_id} = $leaf->gene_member->stable_id;
+        $self->param('low_cov_leaves_to_delete_pmember_id')->{$leaf->seq_member_id} = $leaf->gene_member->stable_id;
       } else {
-        $low_cov_leaves_pmember_id_slice_to_check_coord_system{$leaf->member_id} = $leaf->gene_member->stable_id;
+        $low_cov_leaves_pmember_id_slice_to_check_coord_system{$leaf->seq_member_id} = $leaf->gene_member->stable_id;
       }
     }
   }
@@ -480,7 +479,7 @@ sub remove_low_cov_predictions {
 
   # Remove low cov members that are not best in alignment
   foreach my $leaf (@{$nc_tree->get_all_leaves}) {
-    if(my $removed_stable_id = $self->param('low_cov_leaves_to_delete_pmember_id')->{$leaf->member_id}) {
+    if(my $removed_stable_id = $self->param('low_cov_leaves_to_delete_pmember_id')->{$leaf->seq_member_id}) {
       print STDERR "removing low_cov prediction $removed_stable_id\n" if($self->debug);
       my $removed_genome_db_id = $leaf->genome_db_id;
       $leaf->disavow_parent;
@@ -521,14 +520,14 @@ sub add_matching_predictions {
 
   # Insert the members that are found new and have matching Acc
   foreach my $gene_stable_id_to_add (keys %{$self->param('predictions_to_add')}) {
-    my $gene_member = $self->param('gene_member_adaptor')->fetch_by_source_stable_id('ENSEMBLGENE',$gene_stable_id_to_add);
-    # Incorporate this member into the cluster
+    my $gene_member = $self->param('gene_member_adaptor')->fetch_by_stable_id($gene_stable_id_to_add);
+    # Incorporate the canonical seq_member into the cluster
     my $node = new Bio::EnsEMBL::Compara::GeneTreeMember;
-    $node->member_id($gene_member->get_canonical_SeqMember->member_id);
+    $node->seq_member_id($gene_member->get_canonical_SeqMember->seq_member_id);
     $self->param('nc_tree')->root->add_child($node);
 
-    #the building method uses member_id's to reference unique nodes
-    #which are stored in the node_id value, copy to member_id
+    #the building method uses seq_member_id's to reference unique nodes
+    #which are stored in the node_id value, copy to seq_member_id
     # We won't do the store until the end, otherwise it will affect the main loop
     print STDERR "adding matching prediction $gene_stable_id_to_add\n" if($self->debug);
     $self->param('treenode_adaptor')->store($node);

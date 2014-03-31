@@ -138,13 +138,13 @@ sub run {
 
     my %cigars;
     foreach my $member (@{$self->param('cigar_lines')}) {
-        $cigars{$member->member_id} = $member->cigar_line;
+        $cigars{$member->seq_member_id} = $member->cigar_line;
     }
     print STDERR scalar(keys %cigars), " cigars loaded\n" if $self->debug;
 
     foreach my $member (@{$supertree->get_all_Members}) {
         $tree->add_Member($member);
-        $member->cigar_line($cigars{$member->member_id});
+        $member->cigar_line($cigars{$member->seq_member_id});
     }
     print STDERR scalar(@{$supertree->get_all_Members}), " members found in the super-tree\n" if $self->debug;
 
@@ -374,7 +374,7 @@ sub generate_subtrees {
     }
 
     foreach my $leaf (@{$members}) {
-        if (defined $in_cluster1{$leaf->member_id}) {
+        if (defined $in_cluster1{$leaf->seq_member_id}) {
             $cluster1->add_Member($leaf);
         } else {
             $cluster2->add_Member($leaf);

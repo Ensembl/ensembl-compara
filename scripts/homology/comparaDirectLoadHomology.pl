@@ -88,8 +88,8 @@ sub load_orthos {
     $fileCount++;
     my ($stable_id1, $stable_id2) = split;
     #print("$stable_id1 <=> $stable_id2\n");
-    my $gene1 = $geneMemberDBA->fetch_by_source_stable_id('ENSEMBLGENE', $stable_id1);
-    my $gene2 = $geneMemberDBA->fetch_by_source_stable_id('ENSEMBLGENE', $stable_id2);
+    my $gene1 = $geneMemberDBA->fetch_by_stable_id($stable_id1);
+    my $gene2 = $geneMemberDBA->fetch_by_stable_id($stable_id2);
     if(!defined($gene1)) {
       warn("WARNING couldn't find member for stable_id = $stable_id1\n");
       next;

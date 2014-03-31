@@ -85,8 +85,8 @@ use warnings;
 use Bio::EnsEMBL::Utils::Argument;
 use Bio::EnsEMBL::Utils::Exception;
 
-#use Bio::EnsEMBL::Compara::NestedSet;
-#our @ISA = qw(Bio::EnsEMBL::Compara::NestedSet);
+use base ('Bio::EnsEMBL::Storable');        # inherit dbID(), adaptor() and new() methods
+
 
 =head2 new_fast
 
@@ -107,63 +107,20 @@ use Bio::EnsEMBL::Utils::Exception;
 sub new {
   my ($class, @args) = @_;
 
-#  my $self = $class->SUPER::new(@args);
-
-  my $self = bless {}, $class;
+  my $self = $class->SUPER::new(@args);       # deal with Storable stuff
 
   if (scalar @args) {
     #do this explicitly.
-    my ($dbid, $method_link_species_set_id, $adaptor, $regions) =
-        rearrange([qw(DBID METHOD_LINK_SPECIES_SET_ID ADAPTOR REGIONS)], @args);
+    my ($method_link_species_set_id, $regions) =
+        rearrange([qw(METHOD_LINK_SPECIES_SET_ID REGIONS)], @args);
 
-    $dbid && $self->dbID($dbid);
     $regions && $self->regions($regions);
     $method_link_species_set_id && $self->method_link_species_set_id($method_link_species_set_id);
-    $adaptor && $self->adaptor($adaptor);
   }
 
   return $self;
 }
 
-
-=head2 new_fast
-
-  Arg [1]     : hash reference $hashref
-  Example     : none
-  Description : This is an ultra fast constructor which requires knowledge of
-                the objects internals to be used.
-  Returntype  : Bio::EnsEMBL::Compara::SyntenyRegion object
-  Exceptions  : none
-  Caller      :
-  Status      : Stable
-
-=cut
-
-sub new_fast {
-  my ($class, $hashref) = @_;
-
-  return bless $hashref, $class;
-}
-
-
-=head2 stable_id
-
-DEPRECATED: stable_id() will be removed in e76. SyntenyRegions don't have any stable id.
-
-=cut
-
-sub stable_id {
-  my $obj = shift;
-
-  deprecate("SyntenyRegions don't have any stable id. stable_id() will be removed in e76");
-
-  if( @_ ) {
-    my $value = shift;
-    $obj->{'stable_id'} = $value;
-  }
-
-  return $obj->{'stable_id'};
-}
 
 
 =head2 method_link_species_set_id
@@ -187,63 +144,12 @@ sub method_link_species_set_id {
   return $obj->{'method_link_species_set_id'};
 }
 
-
-=head2 dbID
-
-  Arg [1]     : (optional) integer $dbID
-  Example     : none
-  Description : Getter/setter for the dbID value. This corresponds to
-                synteny_region.synteny_region_id
-  Returntype  : integer
-  Exceptions  : none
-  Caller      : general
-  Status      : Stable
-
-=cut
-
-sub dbID {
-  my $obj = shift;
-
-  if (@_) {
-    my $value = shift;
-    $obj->{'dbID'} = $value;
-  }
-
-  return $obj->{'dbID'};
-}
-
-
-=head2 adaptor
-
-  Arg [1]     : (optional) Bio::EnsEMBL::Compara::DBSQL::SyntenyRegionAdaptor $adaptor
-  Example     : none
-  Description : Getter/setter for the adaptor
-  Returntype  : Bio::EnsEMBL::Compara::DBSQL::SyntenyRegionAdaptor object
-  Exceptions  : none
-  Caller      : general
-  Status      : Stable
-
-=cut
-
-sub adaptor {
-  my $obj = shift;
-
-  if (@_) {
-    my $value = shift;
-    $obj->{'adaptor'} = $value;
-  }
-
-  return $obj->{'adaptor'};
-}
-
-
 =head2 get_all_DnaFragRegions
 
  Arg  1     : -none-
  Example    : my $all_dnafrag_regions = $obj->get_all_DnaFragRegions();
  Description: returns all the DnaFragRegion objects for this syntenic
-              region. This method is an alias for children(), see
-              Bio::EnsEMBL::Compara::NestedSet for more details.
+              region. This method is an alias for regions()
  Returntype : a ref. to an array of Bio::EnsEMBL::Compara::DnaFragRegion
               objects
  Exception  :
@@ -256,7 +162,6 @@ sub get_all_DnaFragRegions {
   my $obj = shift;
 
   return $obj->regions();
-#  return $obj->children();
 }
 
 sub regions {

@@ -149,7 +149,6 @@ sub pipeline_analyses {
                              'mlss_id'  => $self->o('mlss_id'),
                              'label'    => $self->o('full_species_tree_label'),
                             },
-             -hive_capacity => -1,   # to allow for parallelization
              -wait_for => [$self->o('wait_for')],
              -flow_into  => {
                              # 3 => { 'mysql:////meta' => { 'meta_key' => $self->o('species_tree_meta_key'), 'meta_value' => '#species_tree_string#' } },
@@ -165,7 +164,6 @@ sub pipeline_analyses {
                              'mlss_id'      => $self->o('mlss_id'),
                              'label'        => $self->o('full_species_tree_label')
                             },
-             -hive_capacity => -1, # to allow for parallelization
              -flow_into => {
 #                            '1->A' => ['BadiRate'],
                             1 => ['CAFE_table'],
@@ -194,7 +192,6 @@ sub pipeline_analyses {
                              'mlss_id'      => $self->o('mlss_id'),
                              'cafe_shell'   => $self->o('cafe_shell'),
                             },
-             -hive_capacity => -1,
              -rc_name => 'cafe_default',
              -flow_into => {
                             2 => ['CAFE_analysis'],
@@ -213,14 +210,6 @@ sub pipeline_analyses {
                              'cafe_shell'           => $self->o('cafe_shell'),
                             },
              -rc_name => 'cafe',
-             -hive_capacity => -1,
-             -flow_into => {
-                            3 => {
-                                  'mysql:////meta' => { 'meta_key' => 'cafe_lambda', 'meta_value' => '#cafe_lambda#' },
-                                  'mysql:////meta' => { 'meta_key' => 'cafe_table_file', 'meta_value' => '#cafe_table_file#' },
-                                  'mysql:////meta' => { 'meta_key' => 'CAFE_tree_string', 'meta_value' => '#cafe_tree_string#' },
-                                 },
-                           },
              -priority => 10,
             },
            ]

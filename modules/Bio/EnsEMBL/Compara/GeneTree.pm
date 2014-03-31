@@ -412,14 +412,14 @@ sub attach_alignment {
     # Gets the alignment
     my %cigars;
     foreach my $leaf (@{$other_gene_align->get_all_Members}) {
-        $cigars{$leaf->member_id} = $leaf->cigar_line;
+        $cigars{$leaf->seq_member_id} = $leaf->cigar_line;
     }
 
     die "The other alignment has a different size\n" if scalar(keys %cigars) != scalar(@{$self->get_all_Members});
 
     # Assigns it
     foreach my $leaf (@{$self->get_all_Members}) {
-        $leaf->cigar_line($cigars{$leaf->member_id});
+        $leaf->cigar_line($cigars{$leaf->seq_member_id});
     }
 }
 

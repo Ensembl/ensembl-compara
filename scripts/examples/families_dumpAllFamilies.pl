@@ -63,7 +63,7 @@ while (my $f = shift @$families) {
     }
 
     if ($f->Member_count_by_source('ENSEMBLPEP') >= $min_fam_size) {
-        my $n = $f->print_sequences_to_file(-file => $file_name, id_type => 'VERSION', source_name => 'ENSEMBLPEP');
+        my $n = $f->print_sequences_to_file(-file => $file_name, id_type => 'VERSION');
         warn "$file_name ($n members)\n";
     }
 }

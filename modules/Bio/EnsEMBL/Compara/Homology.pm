@@ -71,7 +71,7 @@ package Bio::EnsEMBL::Compara::Homology;
 use strict;
 use warnings;
 
-use Bio::EnsEMBL::Utils::Exception qw( deprecate throw warning );
+use Bio::EnsEMBL::Utils::Exception qw(throw warning);
 
 use base ('Bio::EnsEMBL::Compara::AlignedMemberSet');
 
@@ -410,74 +410,6 @@ sub species_tree_node {
 sub taxonomy_level {
     my $self = shift;
     return $self->species_tree_node() ? $self->species_tree_node()->node_name() : undef;
-}
-
-
-
-
-=head2 node_id
-
-  Description: DEPRECATED: Use $self->gene_tree_node()->node_id() instead. node_id() will be removed in e76
-
-=cut
-
-sub node_id {  ## DEPRECATED
-  my $self = shift;
-  deprecate('$self->node_id() is deprecated and will be removed in e76. Use $self->gene_tree_node()->node_id() instead.');
-  $self->{'_gene_tree_node_id'} = shift if(@_);
-  return $self->{'_gene_tree_node_id'};
-}
-
-=head2 ancestor_node_id
-
-  Description: DEPRECATED: Use $self->gene_tree_node()->node_id() instead. ancestor_tree_node_id() will be removed in e76
-
-=cut
-
-sub ancestor_node_id { ## DEPRECATED
-  my $self = shift;
-  deprecate('$self->ancestor_tree_node_id() is deprecated and will be removed in e76. Use $self->gene_tree_node()->node_id() instead.');
-  $self->{'_gene_tree_node_id'} = shift if(@_);
-  return $self->{'_gene_tree_node_id'};
-}
-
-
-=head2 tree_node_id
-
-  Description: DEPRECATED: Use $self->gene_tree()->dbID() instead. tree_node_id() will be removed in e76
-
-=cut
-
-sub tree_node_id { ## DEPRECATED
-  my $self = shift;
-  deprecate('$self->tree_node_id() is deprecated and will be removed in e76. Use $self->gene_tree()->dbID() instead.');
-  return $self->gene_tree()->dbID();
-}
-
-
-=head2 subtype
-
-  Description:  DEPRECATED . Homology::subtype() is deprecated and will be removed in e76. Use taxonomy_level() instead
-
-=cut
-
-sub subtype {  ## DEPRECATED
-    my $self = shift;
-    deprecate("Homology::subtype() is deprecated and will be removed in e76. Use taxonomy_level() instead.");
-    return $self->taxonomy_level();
-}
-
-
-=head2 taxonomy_alias
-
-  Description:  DEPRECATED . Homology::taxonomy_alias() is deprecated and will be removed in e76. Use species_tree_node()->taxon()->ensembl_alias() instead
-
-=cut
-
-sub taxonomy_alias {  ## DEPRECATED
-    my $self = shift;
-    deprecate("Homology::taxonomy_alias() is deprecated and will be removed in e76. Use species_tree_node()->taxon()->ensembl_alias() instead.");
-    return $self->species_tree_node()->taxon()->ensembl_alias();
 }
 
 

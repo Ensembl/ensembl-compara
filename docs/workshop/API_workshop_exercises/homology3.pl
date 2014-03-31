@@ -35,7 +35,7 @@ my $alignIO = Bio::AlignIO->newFh(-format => "clustalw");
 foreach my $mouse_stable_id (qw(ENSMUSG00000004843 ENSMUSG00000025746)) {
 
   ## Get the compara member
-  my $gene_member = $gene_member_adaptor->fetch_by_source_stable_id("ENSEMBLGENE", $mouse_stable_id);
+  my $gene_member = $gene_member_adaptor->fetch_by_stable_id($mouse_stable_id);
 
   ## Get all the orthologues in human
   my $all_homologies = $homology_adaptor->fetch_all_by_Member_paired_species($gene_member, 'homo_sapiens', ['ENSEMBL_ORTHOLOGUES']);

@@ -238,7 +238,7 @@ sub default_options {
 	#
         #Default set_internal_ids
         #
-	'skip_set_internal_ids' => 1,  #skip this module if set to 1
+	'skip_set_internal_ids' => 0,  #skip this module if set to 1
 
         #
         #Default net 
@@ -249,6 +249,7 @@ sub default_options {
   	'net_parameters' => {'max_gap'=>'50', 'chainNet'=>$self->o('chainNet_exe')},
   	'net_batch_size' => 1,
   	'net_hive_capacity' => 20,
+  	'bidirectional' => 0,
 
 	#
 	#Default healthcheck
@@ -396,6 +397,7 @@ sub pipeline_analyses {
 				  'master_db' => $self->o('master_db'),
 				  'do_pairwise_gabs' => $self->o('do_pairwise_gabs'), #healthcheck options
 				  'do_compare_to_previous_db' => $self->o('do_compare_to_previous_db'), #healthcheck options
+  				  'bidirectional' => $self->o('bidirectional'),
   				  }, 
 		-flow_into => {
 			       1 => [ 'create_pair_aligner_jobs'],
@@ -404,6 +406,7 @@ sub pipeline_analyses {
 			       4 => [ 'no_chunk_and_group_dna' ],
 			       5 => [ 'create_alignment_chains_jobs' ],
 			       6 => [ 'create_alignment_nets_jobs' ],
+			       10 => [ 'create_filter_duplicates_net_jobs' ],
 			       7 => [ 'pairaligner_stats' ],
 			       8 => [ 'healthcheck' ],
 			       9 => [ 'dump_dna_factory' ],
@@ -693,13 +696,46 @@ sub pipeline_analyses {
 	       -can_be_empty  => 1, 
 	       -rc_name => '3.6Gb',
  	    },
+ 	    {  -logic_name => 'create_filter_duplicates_net_jobs', #factory
+               -module     => 'Bio::EnsEMBL::Compara::RunnableDB::PairAligner::CreateFilterDuplicatesJobs',
+               -parameters => { },
+               -wait_for =>  [ 'remove_inconsistencies_after_net' ],
+               -flow_into => {
+                              2 => [ 'filter_duplicates_net' ], 
+                            },
+               -can_be_empty  => 1,
+               -rc_name => '1.8Gb',
+            },
+            { -logic_name   => 'filter_duplicates_net',
+              -module        => 'Bio::EnsEMBL::Compara::RunnableDB::PairAligner::FilterDuplicates',
+              -parameters    => { 
+                                 'window_size' => $self->o('window_size') 
+                                },
+              -hive_capacity => 50,
+              -batch_size    => 3,
+              -flow_into => {
+                              -1 => [ 'filter_duplicates_net_himem' ], # MEMLIMIT
+                            },
+              -can_be_empty  => 1, 
+              -rc_name => $self->o('filter_duplicates_rc_name'),
+           },
+           {  -logic_name   => 'filter_duplicates_net_himem',
+              -module        => 'Bio::EnsEMBL::Compara::RunnableDB::PairAligner::FilterDuplicates',
+              -parameters    => { 
+                                 'window_size' => $self->o('window_size') 
+                                },
+              -hive_capacity => 50,
+              -batch_size    => 3,
+              -can_be_empty  => 1,
+              -rc_name => $self->o('filter_duplicates_himem_rc_name'),
+           },
 	    {
 	     -logic_name => 'remove_inconsistencies_after_net',
 	     -module     => 'Bio::EnsEMBL::Compara::RunnableDB::PairAligner::RemoveAlignmentDataInconsistencies',
 	     -flow_into => {
 			       1 => [ 'update_max_alignment_length_after_net' ],
 			   },
- 	       -wait_for =>  [ 'alignment_nets', 'alignment_nets_himem' ],
+ 	       -wait_for =>  [ 'alignment_nets', 'alignment_nets_himem', 'filter_duplicates_net', 'filter_duplicates_net_himem' ],
 	       -rc_name => '100Mb',
 	    },
  	    {  -logic_name => 'update_max_alignment_length_after_net',

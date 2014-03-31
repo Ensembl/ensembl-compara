@@ -64,6 +64,8 @@ package Bio::EnsEMBL::Compara::RunnableDB::LoadMembers;
 use strict;
 use warnings;
 
+use Bio::EnsEMBL::Compara::SeqMember;
+use Bio::EnsEMBL::Compara::GeneMember;
 
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
@@ -76,6 +78,7 @@ sub param_defaults {
         'include_reference'             => 1,
         'include_nonreference'          => 0,
         'include_patches'               => 0,
+        'store_missing_dnafrags'        => 0,
 
         'coding_exons'                  => 0,   # switch between 'ProteinTree' mode and 'Mercator' mode
 
@@ -177,14 +180,23 @@ sub loadMembersFromCoreSlices {
 
   my @genes;
 
-  SLICE: foreach my $slice (@$slices) {
+  foreach my $slice (@$slices) {
     $self->param('sliceCount', $self->param('sliceCount')+1 );
     #print("slice " . $slice->name . "\n");
+    my $dnafrag = $self->compara_dba->get_DnaFragAdaptor->fetch_by_GenomeDB_and_name($self->param('genome_db'), $slice->seq_region_name);
+    unless ($dnafrag) {
+        if ($self->param('store_missing_dnafrags')) {
+            $dnafrag = Bio::EnsEMBL::Compara::DnaFrag->new_from_Slice($slice, $self->param('genome_db'));
+            $self->compara_dba->get_DnaFragAdaptor->store($dnafrag);
+        } else {
+            $self->throw(sprintf('Cannot find / create a DnaFrag with name "%s" for "%s"', $slice->seq_region_name, $self->param('genome_db')->name));
+        }
+    }
 
     @genes = ();
     my $current_end;
 
-    foreach my $gene (sort {$a->start <=> $b->start} @{$slice->get_all_Genes}) {
+    foreach my $gene (sort {$a->start <=> $b->start} @{$slice->get_all_Genes(undef, undef, 1)}) {
       $self->param('geneCount', $self->param('geneCount')+1 );
       # LV and C are for the Ig/TcR family, which rearranges
       # somatically so is considered as a different biotype in EnsEMBL
@@ -198,7 +210,7 @@ sub loadMembersFromCoreSlices {
                   push @genes, $gene;
                   $current_end = $gene->end if ($gene->end > $current_end);
               } else {
-                  $self->store_all_coding_exons(\@genes);
+                  $self->store_all_coding_exons(\@genes, $dnafrag);
                   @genes = ();
                   $current_end = $gene->end;
                   push @genes, $gene;
@@ -213,7 +225,7 @@ sub loadMembersFromCoreSlices {
              ) {
               $self->param('realGeneCount', $self->param('realGeneCount')+1 );
               
-              $self->store_gene_and_all_transcripts($gene);
+              $self->store_gene_and_all_transcripts($gene, $dnafrag);
               
               print STDERR $self->param('realGeneCount') , " genes stored\n" if ($self->debug && (0 == ($self->param('realGeneCount') % 100)));
           }
@@ -221,7 +233,7 @@ sub loadMembersFromCoreSlices {
     } # foreach
 
     if ($self->param('coding_exons')) {
-        $self->store_all_coding_exons(\@genes);
+        $self->store_all_coding_exons(\@genes, $dnafrag);
     }
   }
 
@@ -233,138 +245,125 @@ sub loadMembersFromCoreSlices {
 
 
 sub store_gene_and_all_transcripts {
-  my $self = shift;
-  my $gene = shift;
+    my $self = shift;
+    my $gene = shift;
+    my $dnafrag = shift;
 
-  my $gene_member_adaptor = $self->compara_dba->get_GeneMemberAdaptor();
-  my $seq_member_adaptor = $self->compara_dba->get_SeqMemberAdaptor();
-  my $sequence_adaptor = $self->compara_dba->get_SequenceAdaptor();
-  
-  my $canonicalPeptideMember;
-  my $gene_member;
-  my $gene_member_not_stored = 1;
+    my $gene_member_adaptor = $self->compara_dba->get_GeneMemberAdaptor();
+    my $seq_member_adaptor = $self->compara_dba->get_SeqMemberAdaptor();
+    my $sequence_adaptor = $self->compara_dba->get_SequenceAdaptor();
 
-  if(defined($self->param('pseudo_stableID_prefix'))) {
-    $gene->stable_id($self->param('pseudo_stableID_prefix') ."G_". $gene->dbID);
-  }
-
-  my $canonical_transcript; my $canonical_transcript_stable_id;
-  eval {
-    $canonical_transcript = $gene->canonical_transcript;
-    $canonical_transcript_stable_id = $canonical_transcript->stable_id;
-  };
-  if (!defined($canonical_transcript) && !defined($self->param('force_unique_canonical'))) {
-    die $gene->stable_id." has no canonical transcript\n";
-  }
-  my $longestTranslation = undef;
-
-    if (!defined($self->param('force_unique_canonical'))) {
-      if ($canonical_transcript->biotype ne $gene->biotype) {
-        # This can happen when the only transcripts are, e.g., NMDs
-        $self->warning($canonical_transcript->stable_id." biotype ".$canonical_transcript->biotype." is canonical");
-      }
-    }
-
-  foreach my $transcript (@{$gene->get_all_Transcripts}) {
-    my $translation = $transcript->translation;
-    next unless (defined $translation);
-
-#    This test might be useful to put here, thus avoiding to go further in trying to get a peptide
-#    my $next = 0;
-#    try {
-#      $transcript->translate;
-#    } catch {
-#      warn("COREDB error: transcript does not translate", $transcript->stable_id, "(dbID=",$transcript->dbID.")\n");
-#      $next = 1;
-#    };
-#    next if ($next);
+    my $canonicalPeptideMember;
+    my $gene_member;
 
     if(defined($self->param('pseudo_stableID_prefix'))) {
-      $transcript->stable_id($self->param('pseudo_stableID_prefix') ."T_". $transcript->dbID);
-      $translation->stable_id($self->param('pseudo_stableID_prefix') ."P_". $translation->dbID);
+        $gene->stable_id($self->param('pseudo_stableID_prefix') ."G_". $gene->dbID);
     }
 
-    $self->param('transcriptCount', $self->param('transcriptCount')+1 );
-    #print("gene " . $gene->stable_id . "\n");
-    print("     transcript " . $transcript->stable_id ) if($self->param('verbose'));
+    my $canonical_transcript; my $canonical_transcript_stable_id;
+    eval {
+        $canonical_transcript = $gene->canonical_transcript;
+        $canonical_transcript_stable_id = $canonical_transcript->stable_id;
+    };
+    if (!defined($canonical_transcript) && !defined($self->param('force_unique_canonical'))) {
+        die $gene->stable_id." has no canonical transcript\n";
+    }
+    my $longestTranslation = undef;
 
-    unless (defined $translation->stable_id) {
-      die "CoreDB error: does not contain translation stable id for translation_id ". $translation->dbID;
+    if (!defined($self->param('force_unique_canonical'))) {
+        if ($canonical_transcript->biotype ne $gene->biotype) {
+            # This can happen when the only transcripts are, e.g., NMDs
+            $self->warning($canonical_transcript->stable_id." biotype ".$canonical_transcript->biotype." is canonical (gene is ".$gene->biotype.")");
+        }
     }
 
-    my $description = $self->fasta_description($gene, $transcript);
+    foreach my $transcript (@{$gene->get_all_Transcripts}) {
+        my $translation = $transcript->translation;
+        next unless (defined $translation);
 
-    my $pep_member = Bio::EnsEMBL::Compara::SeqMember->new_from_transcript(
-         -transcript=>$transcript,
-         -genome_db=>$self->param('genome_db'),
-         -translate=>'yes',
-         -description=>$description);
+        if(defined($self->param('pseudo_stableID_prefix'))) {
+            $transcript->stable_id($self->param('pseudo_stableID_prefix') ."T_". $transcript->dbID);
+            $translation->stable_id($self->param('pseudo_stableID_prefix') ."P_". $translation->dbID);
+        }
 
-    print(" => member " . $pep_member->stable_id) if($self->param('verbose'));
+        $self->param('transcriptCount', $self->param('transcriptCount')+1 );
+        print("     transcript " . $transcript->stable_id ) if($self->param('verbose'));
 
-    unless($pep_member->sequence) {
-      print "  => NO SEQUENCE for member " . $pep_member->stable_id;
-      next;
+        unless (defined $translation->stable_id) {
+            die "CoreDB error: does not contain translation stable id for translation_id ". $translation->dbID;
+        }
+
+        my $pep_member = Bio::EnsEMBL::Compara::SeqMember->new_from_Transcript(
+            -TRANSCRIPT => $transcript,
+            -GENOME_DB  => $self->param('genome_db'),
+            -DNAFRAG    => $dnafrag,
+            -TRANSLATE  => 1);
+
+        print(" => pep_member " . $pep_member->stable_id) if($self->param('verbose'));
+
+        unless($pep_member->sequence) {
+            print "  => NO SEQUENCE for pep_member " . $pep_member->stable_id."\n";
+            next;
+        }
+        print(" len=",$pep_member->seq_length ) if($self->param('verbose'));
+        $longestTranslation = $pep_member if not defined $longestTranslation or $pep_member->seq_length > $longestTranslation->seq_length;
+
+        # store gene_member here only if at least one peptide is to be loaded for
+        # the gene.
+        if ($self->param('store_genes')) {
+            unless ($gene_member) {
+                $gene_member = Bio::EnsEMBL::Compara::GeneMember->new_from_Gene(
+                    -GENE       => $gene,
+                    -DNAFRAG    => $dnafrag,
+                    -GENOME_DB  => $self->param('genome_db'),
+                );
+                print(" => gene_member " . $gene_member->stable_id) if($self->param('verbose'));
+                $gene_member_adaptor->store($gene_member);
+                print(" : stored\n") if($self->param('verbose'));
+            }
+
+            print("     gene       " . $gene->stable_id ) if($self->param('verbose'));
+            $pep_member->gene_member_id($gene_member->dbID);
+        }
+
+        if ($pep_member->sequence =~ /O/ and not $self->param('allow_pyrrolysine')) {
+            my $seq = $pep_member->sequence;
+            $seq =~ s/O/X/g;
+            $pep_member->sequence($seq);
+        }
+        $seq_member_adaptor->store($pep_member);
+        if ($self->param('store_related_pep_sequences')) {
+            $pep_member->_prepare_cds_sequence;
+            $sequence_adaptor->store_other_sequence($pep_member, $pep_member->other_sequence('cds'), 'cds');
+            $pep_member->_prepare_exon_sequences;
+            $sequence_adaptor->store_other_sequence($pep_member, $pep_member->other_sequence('exon_bounded'), 'exon_bounded');
+        }
+
+        print(" : stored\n") if($self->param('verbose'));
+
+        if(($transcript->stable_id eq $canonical_transcript_stable_id) || defined($self->param('force_unique_canonical'))) {
+            $canonicalPeptideMember = $pep_member;
+        }
+
     }
-    print(" len=",$pep_member->seq_length ) if($self->param('verbose'));
-    $longestTranslation = $pep_member if not defined $longestTranslation or $pep_member->seq_length > $longestTranslation->seq_length;
 
-    # store gene_member here only if at least one peptide is to be loaded for
-    # the gene.
-    if($self->param('store_genes') && $gene_member_not_stored) {
-      print("     gene       " . $gene->stable_id ) if($self->param('verbose'));
-      $gene_member = Bio::EnsEMBL::Compara::GeneMember->new_from_gene(
-                                                                  -gene=>$gene,
-                                                                  -genome_db=>$self->param('genome_db'));
-      print(" => member " . $gene_member->stable_id) if($self->param('verbose'));
-
-      $gene_member_adaptor->store($gene_member);
-      print(" : stored") if($self->param('verbose'));
-
-      print("\n") if($self->param('verbose'));
-      $gene_member_not_stored = 0;
+    # Some of the "polymorphic_pseudogene" have a non-translatable canonical peptide. This is a hack to get the longest translation
+    if (not defined $canonicalPeptideMember and $self->param('find_canonical_translations_for_polymorphic_pseudogene') and $gene->biotype eq 'polymorphic_pseudogene') {
+        $self->warning($gene->stable_id."'s canonical transcript does not have a translation. Will use the longest peptide instead: ".$longestTranslation->stable_id);
+        $canonicalPeptideMember = $longestTranslation;
     }
 
-    $pep_member->gene_member_id($gene_member->dbID);
-    if ($pep_member->sequence =~ /O/ and not $self->param('allow_pyrrolysine')) {
-        my $seq = $pep_member->sequence;
-        $seq =~ s/O/X/g;
-        $pep_member->sequence($seq);
-    }
-    $seq_member_adaptor->store($pep_member);
-    if ($self->param('store_related_pep_sequences')) {
-        $pep_member->_prepare_cds_sequence;
-        $sequence_adaptor->store_other_sequence($pep_member, $pep_member->other_sequence('cds'), 'cds');
-        $pep_member->_prepare_exon_sequences;
-        $sequence_adaptor->store_other_sequence($pep_member, $pep_member->other_sequence('exon_bounded'), 'exon_bounded');
+    if($canonicalPeptideMember) {
+        $seq_member_adaptor->_set_member_as_canonical($canonicalPeptideMember);
+        # print("     LONGEST " . $canonicalPeptideMember->stable_id . "\n");
     }
 
-    print(" : stored\n") if($self->param('verbose'));
-
-    if(($transcript->stable_id eq $canonical_transcript_stable_id) || defined($self->param('force_unique_canonical'))) {
-      $canonicalPeptideMember = $pep_member;
-    }
-
-  }
-
-  # Some of the "polymorphic_pseudogene" have a non-translatable canonical peptide. This is a hack to get the longest translation
-  if (not defined $canonicalPeptideMember and $self->param('find_canonical_translations_for_polymorphic_pseudogene') and $gene->biotype eq 'polymorphic_pseudogene') {
-      $self->warning($gene->stable_id."'s canonical transcript does not have a translation. Will use the longest peptide instead: ".$longestTranslation->stable_id);
-      $canonicalPeptideMember = $longestTranslation;
-  }
-
-  if($canonicalPeptideMember) {
-    $seq_member_adaptor->_set_member_as_canonical($canonicalPeptideMember);
-    # print("     LONGEST " . $canonicalPeptideMember->stable_id . "\n");
-  }
-
-  $self->warning($gene->stable_id." is not stored") if $gene_member_not_stored;
-  return 1;
+    return 1;
 }
 
 
 sub store_all_coding_exons {
-  my ($self, $genes) = @_;
+  my ($self, $genes, $dnafrag) = @_;
 
   return 1 if (scalar @$genes == 0);
 
@@ -401,14 +400,14 @@ sub store_all_coding_exons {
         } else {
           $exon_member->description("NULL");
         }
-        $exon_member->chr_name($exon->seq_region_name);
+        $exon_member->dnafrag($dnafrag);
         $exon_member->dnafrag_start($exon->seq_region_start);
         $exon_member->dnafrag_end($exon->seq_region_end);
         $exon_member->dnafrag_strand($exon->seq_region_strand);
         $exon_member->version($exon->version);
 
 	#Not sure what this should be but need to set it to something or else the members do not get added
-	#to the member table in the store method of MemberAdaptor
+	#to the exon_member table in the store method of MemberAdaptor
 	$exon_member->display_label("NULL");
         
         my $seq_string = $exon->peptide($transcript)->seq;
@@ -421,7 +420,7 @@ sub store_all_coding_exons {
           $exon_member->sequence($seq_string);
         }
 
-        print(" => member " . $exon_member->stable_id) if($self->param('verbose'));
+        print(" => exon_member " . $exon_member->stable_id) if($self->param('verbose'));
 
         unless($exon_member->sequence) {
           print("  => NO SEQUENCE!\n") if($self->param('verbose'));
@@ -448,7 +447,7 @@ sub store_all_coding_exons {
     push @exon_members_stored, $exon_member;
 
     eval {
-	    #print "New member\n";
+	    #print "New seq_member\n";
 	    $seq_member_adaptor->store($exon_member);
 	    print(" : stored\n") if($self->param('verbose'));
     };

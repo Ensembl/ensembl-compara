@@ -90,24 +90,24 @@ while (<>) {
       $gene_stable_id2, $translation_stable_id2, $cigar_line2,
       $cigar_start2, $cigar_end2, $perc_cov2, $perc_id2, $perc_pos2) = split /\t/;
 
-  my $gene_member1 = $ma->fetch_by_source_stable_id("ENSEMBLGENE",$gene_stable_id1);
+  my $gene_member1 = $ma->fetch_by_stable_id($gene_stable_id1);
   unless (defined  $gene_member1) {
     print STDERR "$gene_stable_id1 not in db\n";
     next;
   }
-  my $peptide_member1 = $pa->fetch_by_source_stable_id("ENSEMBLPEP",$translation_stable_id1);
+  my $peptide_member1 = $pa->fetch_by_stable_id($translation_stable_id1);
   unless (defined  $peptide_member1) {
     print STDERR "$translation_stable_id1 not in db\n";
     next;
   }
   make_alignedmember($peptide_member1, $cigar_line1,$perc_cov1,$perc_id1,$perc_pos1);
 
-  my $gene_member2 = $ma->fetch_by_source_stable_id("ENSEMBLGENE",$gene_stable_id2);
+  my $gene_member2 = $ma->fetch_by_stable_id($gene_stable_id2);
   unless (defined  $gene_member2) {
     print STDERR "$gene_stable_id2 not in db\n";
     next;
   }
-  my $peptide_member2 = $pa->fetch_by_source_stable_id("ENSEMBLPEP",$translation_stable_id2);
+  my $peptide_member2 = $pa->fetch_by_stable_id($translation_stable_id2);
   unless (defined  $peptide_member2) {
     print STDERR "$translation_stable_id2 not in db\n";
     next;

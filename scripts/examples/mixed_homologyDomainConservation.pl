@@ -37,7 +37,7 @@ my $gene_tree_adaptor = Bio::EnsEMBL::Registry->get_adaptor("Multi", "compara", 
 my $genes = $human_gene_adaptor->fetch_all_by_external_name('ENPP1');
 
 foreach my $gene (@$genes) {
-  my $member = $gene_member_adaptor->fetch_by_source_stable_id("ENSEMBLGENE",$gene->stable_id);
+  my $member = $gene_member_adaptor->fetch_by_stable_id($gene->stable_id);
   die "no members" unless (defined $member);
   # Fetch the gene tree
   my $tree =  $gene_tree_adaptor->fetch_default_for_Member($member);
@@ -48,7 +48,7 @@ foreach my $gene (@$genes) {
   my $domain_coverage;
   my $representative_member = '';
   while (my $member = shift @leaves) {
-    my $member_id = $member->dbID;
+    my $seq_member_id = $member->dbID;
     my $member_stable_id = $member->stable_id;
     print STDERR "[$member_stable_id]\n";
     unless ($representative_member ne '') {
@@ -78,13 +78,13 @@ foreach my $gene (@$genes) {
       my $start = $domain->start;
       my $end = $domain->end;
       my $pfamid = $domain->hseqname;
-      # We first add up a $member_domain->{$pfamid}{$member_id}
+      # We first add up a $member_domain->{$pfamid}{$seq_member_id}
       $member_domain_counter->{$pfamid}++;
       # Then we get it to start on the right index
       my $copy = $member_domain_counter->{$pfamid};
-      $member_domain->{$pfamid}{$member_id}{$copy}{start} = $start;
-      $member_domain->{$pfamid}{$member_id}{$copy}{end} = $end;
-      $member_domain->{$pfamid}{$member_id}{$copy}{id} = $member->stable_id;
+      $member_domain->{$pfamid}{$seq_member_id}{$copy}{start} = $start;
+      $member_domain->{$pfamid}{$seq_member_id}{$copy}{end} = $end;
+      $member_domain->{$pfamid}{$seq_member_id}{$copy}{id} = $member->stable_id;
       $count++;
 
     }
@@ -110,18 +110,18 @@ foreach my $gene (@$genes) {
   foreach my $pfamid (keys %$member_domain) {
     my $aln_domain_range = Bio::EnsEMBL::Mapper::RangeRegistry->new();
     $ranges->{$pfamid} = $aln_domain_range;
-    foreach my $member_id (keys %{$member_domain->{$pfamid}}) {
-      foreach my $copy (keys %{$member_domain->{$pfamid}{$member_id}}) {
-        my $start = $member_domain->{$pfamid}{$member_id}{$copy}{start};
-        my $end = $member_domain->{$pfamid}{$member_id}{$copy}{end};
-        my $start_loc = $aln->column_from_residue_number($member_id, $start);
-        my $end_loc   = $aln->column_from_residue_number($member_id, $end);
+    foreach my $seq_member_id (keys %{$member_domain->{$pfamid}}) {
+      foreach my $copy (keys %{$member_domain->{$pfamid}{$seq_member_id}}) {
+        my $start = $member_domain->{$pfamid}{$seq_member_id}{$copy}{start};
+        my $end = $member_domain->{$pfamid}{$seq_member_id}{$copy}{end};
+        my $start_loc = $aln->column_from_residue_number($seq_member_id, $start);
+        my $end_loc   = $aln->column_from_residue_number($seq_member_id, $end);
         $domain_boundaries->{$pfamid}{aln_start}{$start_loc}++;
         $domain_boundaries->{$pfamid}{aln_end}{$end_loc}++;
-        $domain_boundaries->{$pfamid}{aln_start_id}{$start_loc}{$member_domain->{$pfamid}{$member_id}{$copy}{id}} = 1;
-        $domain_boundaries->{$pfamid}{aln_end_id}{$start_loc}{$member_domain->{$pfamid}{$member_id}{$copy}{id}} = 1;
-        $member_domain->{$pfamid}{$member_id}{$copy}{aln_start}{$start_loc}++;
-        $member_domain->{$pfamid}{$member_id}{$copy}{aln_end}{$end_loc}++;
+        $domain_boundaries->{$pfamid}{aln_start_id}{$start_loc}{$member_domain->{$pfamid}{$seq_member_id}{$copy}{id}} = 1;
+        $domain_boundaries->{$pfamid}{aln_end_id}{$start_loc}{$member_domain->{$pfamid}{$seq_member_id}{$copy}{id}} = 1;
+        $member_domain->{$pfamid}{$seq_member_id}{$copy}{aln_start}{$start_loc}++;
+        $member_domain->{$pfamid}{$seq_member_id}{$copy}{aln_end}{$end_loc}++;
         my $coord_pair = $start_loc . "_" . $end_loc;
         $aln_domains_hash->{$coord_pair} = 1;
         $aln_domain_range->check_and_register( $pfamid, $start_loc, $end_loc, undef, undef, 1);

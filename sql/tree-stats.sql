@@ -30,31 +30,43 @@
 CREATE TEMPORARY TABLE tmp_ngenes
 	SELECT
 		genome_db_id,
-		SUM(source_name='ENSEMBLGENE') AS nb_genes,
-		SUM(source_name='ENSEMBLPEP') AS nb_pep
+		COUNT(*) AS nb_genes
 	FROM
-		member
+		gene_member
 	GROUP BY
 		genome_db_id
 	WITH ROLLUP;
 ALTER TABLE tmp_ngenes ADD KEY(genome_db_id);
 OPTIMIZE TABLE tmp_ngenes;
 
+CREATE TEMPORARY TABLE tmp_npep
+	SELECT
+		genome_db_id,
+		COUNT(*) AS nb_pep
+	FROM
+		seq_member
+	GROUP BY
+		genome_db_id
+	WITH ROLLUP;
+ALTER TABLE tmp_npep ADD KEY(genome_db_id);
+OPTIMIZE TABLE tmp_npep;
+
+
 CREATE TEMPORARY TABLE tmp_ntrees
 	SELECT
-		member.genome_db_id,
+		seq_member.genome_db_id,
 		COUNT(species_tree_node.genome_db_id) AS nb_pep_spectree,
 		SUM(species_tree_node.genome_db_id IS NULL) AS nb_pep_anctree
 	FROM
-		member
-		JOIN gene_tree_node USING (member_id)
+		seq_member
+		JOIN gene_tree_node USING (seq_member_id)
 		JOIN gene_tree_root USING (root_id)
 		JOIN gene_tree_node_attr ON (gene_tree_node.root_id = gene_tree_node_attr.node_id)
 		JOIN species_tree_node ON (species_tree_node.node_id = gene_tree_node_attr.species_tree_node_id)
 	WHERE
 		clusterset_id = 'default'
 	GROUP BY
-		member.genome_db_id
+		seq_member.genome_db_id
 	WITH ROLLUP;
 ALTER TABLE tmp_ntrees ADD KEY(genome_db_id);
 OPTIMIZE TABLE tmp_ntrees;
@@ -73,6 +85,7 @@ SELECT
 
 FROM
 	tmp_ngenes
+	JOIN tmp_npep USING (genome_db_id)
 	JOIN tmp_ntrees USING (genome_db_id)
 	LEFT JOIN (
 		species_tree_node JOIN species_tree_root ON (species_tree_node.root_id = species_tree_root.root_id AND label = 'default')
@@ -92,11 +105,11 @@ CREATE TEMPORARY TABLE tmp_root_properties
 	SELECT
 		gene_tree_node_attr.node_id,
 		gene_tree_node_attr.species_tree_node_id,
-		COUNT(member_id) AS nb_pep,
-		COUNT(DISTINCT member.genome_db_id) AS nb_spec
+		COUNT(seq_member_id) AS nb_pep,
+		COUNT(DISTINCT seq_member.genome_db_id) AS nb_spec
 	FROM
-		member
-		JOIN gene_tree_node USING (member_id)
+		seq_member
+		JOIN gene_tree_node USING (seq_member_id)
 		JOIN gene_tree_root USING (root_id)
 		JOIN gene_tree_node_attr ON gene_tree_node_attr.node_id=gene_tree_node.root_id
 	WHERE

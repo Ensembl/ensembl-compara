@@ -48,7 +48,9 @@ my $tg_species;
 my $level = 1;
 my $reg_conf;
 my $force = 0; #use slice even if it has no karyotype
-my $output_dir = ""; 
+my $output_dir = "";
+my $ref_coord_system_name = 'chromosome';
+my $non_ref_coord_system_name = 'chromosome';
 
 GetOptions('help' => \$help,
 	   'dbname=s' => \$dbname,
@@ -60,6 +62,8 @@ GetOptions('help' => \$help,
            'level=s' => \$level,
            'reg_conf=s' => \$reg_conf,
            'force' => \$force,
+           'ref_coord_system_name:s' => \$ref_coord_system_name,
+           'non_ref_coord_system_name:s' => \$non_ref_coord_system_name,
            'output_dir=s' => \$output_dir);
 
 $|=1;
@@ -115,7 +119,7 @@ if ($mlss_id) {
 
 my $qy_dnafrags;
 unless (defined $seq_region) {
-  $qy_dnafrags = $dfa->fetch_all_by_GenomeDB_region($qy_gdb, 'chromosome');
+  $qy_dnafrags = $dfa->fetch_all_by_GenomeDB_region($qy_gdb, $ref_coord_system_name);
 } else {
   $qy_dnafrags = [ $dfa->fetch_by_GenomeDB_and_name($qy_gdb, $seq_region) ];
 }
@@ -129,7 +133,7 @@ foreach my $qy_dnafrag (@{$qy_dnafrags}) {
   my $seq_region_name = $qy_dnafrag->name;
   open SYN,">$output_dir" . "$seq_region_name.syten.gff";
 
-  foreach my $tg_dnafrag (@{$dfa->fetch_all_by_GenomeDB_region($tg_gdb, 'chromosome')}) {
+  foreach my $tg_dnafrag (@{$dfa->fetch_all_by_GenomeDB_region($tg_gdb, $non_ref_coord_system_name)}) {
     #Check if the dnafrag is part of the karyotype to decide whether to calculate the synteny
     my $tg_slice = $tg_dnafrag->slice;
     next unless ($tg_slice->has_karyotype || $force);

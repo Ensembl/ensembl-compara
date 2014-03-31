@@ -56,6 +56,7 @@ package Bio::EnsEMBL::Compara::RunnableDB::PairAligner::PairAlignerCodingExonSta
 
 use strict;
 use Bio::EnsEMBL::Hive::Utils 'stringify';  # import 'stringify()'
+use Bio::EnsEMBL::Utils::Exception;
 
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 

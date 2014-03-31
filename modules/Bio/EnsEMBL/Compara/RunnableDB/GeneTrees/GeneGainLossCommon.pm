@@ -83,14 +83,14 @@ sub load_split_genes {
     my ($self) = @_;
     my $member_id_to_gene_split_id;
     my $gene_split_id_to_member_ids;
-    my $sql = "SELECT member_id, gene_split_id FROM split_genes";
+    my $sql = "SELECT seq_member_id, gene_split_id FROM split_genes";
     my $sth = $self->compara_dba->dbc->prepare($sql);
     $sth->execute();
     my $n_split_genes = 0;
-    while (my ($member_id, $gene_split_id) = $sth->fetchrow_array()) {
+    while (my ($seq_member_id, $gene_split_id) = $sth->fetchrow_array()) {
         $n_split_genes++;
-        $member_id_to_gene_split_id->{$member_id} = $gene_split_id;
-        push @{$gene_split_id_to_member_ids->{$gene_split_id}}, $member_id;
+        $member_id_to_gene_split_id->{$seq_member_id} = $gene_split_id;
+        push @{$gene_split_id_to_member_ids->{$gene_split_id}}, $seq_member_id;
     }
     if ($n_split_genes == 0) {
         $self->param('no_split_genes', 1);
@@ -110,15 +110,15 @@ sub filter_split_genes {
 
     my @filtered_members;
     for my $member (@$all_members) {
-        my $member_id = $member->dbID;
-        if ($members_to_delete{$member_id}) {
-            delete $members_to_delete{$member_id};
-            print STDERR "$member_id has been removed because of split_genes filtering\n" if ($self->debug());
+        my $seq_member_id = $member->dbID;
+        if ($members_to_delete{$seq_member_id}) {
+            delete $members_to_delete{$seq_member_id};
+            print STDERR "$seq_member_id has been removed because of split_genes filtering\n" if ($self->debug());
             next;
         }
-        if (exists $member_id_to_gene_split_id->{$member_id}) {
-            my $gene_split_id = $member_id_to_gene_split_id->{$member_id};
-            my @member_ids_to_delete = grep {$_ ne $member_id} @{$gene_split_id_to_member_ids->{$gene_split_id}};
+        if (exists $member_id_to_gene_split_id->{$seq_member_id}) {
+            my $gene_split_id = $member_id_to_gene_split_id->{$seq_member_id};
+            my @member_ids_to_delete = grep {$_ ne $seq_member_id} @{$gene_split_id_to_member_ids->{$gene_split_id}};
             for my $new_member_to_delete (@member_ids_to_delete) {
                 $members_to_delete{$new_member_to_delete} = 1;
             }

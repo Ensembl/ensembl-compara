@@ -70,6 +70,8 @@ sub param_defaults {
             'store_tree_support'    => 1,
             'intermediate_prefix'   => 'interm',
             'do_transactions'   => 1,
+            'extra_lk_scale'    => undef,
+            'treebest_stderr'   => undef,
     };
 }
 
@@ -86,7 +88,7 @@ sub fetch_input {
     $gene_tree->print_tree(10) if($self->debug);
 
     $self->param('gene_tree', $gene_tree);
-
+    $self->_load_species_tree_string_from_db();
 }
 
 
@@ -102,6 +104,17 @@ sub write_output {
 
     my @ref_support = qw(phyml_nt nj_ds phyml_aa nj_dn nj_mm);
     $self->store_genetree($self->param('gene_tree'), \@ref_support);
+    $self->param('gene_tree')->store_tag('treebest_runtime_msec', $self->param('treebest_runtime'));
+
+    if ($self->param('treebest_stderr')) {
+        foreach my $stderr_line (split /\n/, $self->param('treebest_stderr')) {
+            if ($stderr_line =~ / ([\w-]*) \(Loglk,LoglkSpec\) = \((.*),(.*)\)$/) {
+                $self->param('gene_tree')->store_tag(sprintf('treebest_%s_lk', $1), $2);
+                $self->param('gene_tree')->store_tag(sprintf('treebest_%s_lk_spec', $1), $3);
+                $self->param('gene_tree')->store_tag(sprintf('treebest_%s_lk_seq', $1), $2-$3);
+            }
+        }
+    }
 
     my @dataflow = ();
     if ($self->param('store_intermediate_trees')) {
@@ -117,8 +130,11 @@ sub write_output {
     }
 
     if ($self->param('store_filtered_align')) {
-        my $filename = sprintf('%s/filtalign.fa', $self->worker_temp_directory);
-        $self->store_filtered_align($filename) if (-e $filename);
+        my $alnfile_filtered = sprintf('%s/filtalign.fa', $self->worker_temp_directory);
+        if (-e $alnfile_filtered) {
+            my $removed_columns = $self->store_filtered_align($self->param('input_aln'), $alnfile_filtered);
+            $self->param('gene_tree')->store_tag('removed_columns', $removed_columns);
+        }
     }
 
     if (defined $self->param('output_dir')) {
@@ -159,11 +175,13 @@ sub run_njtree_phyml {
 
     my $starttime = time()*1000;
     
+    foreach my $member (@{$gene_tree->get_all_Members}) {
+        $member->{_tmp_name} = sprintf('%d_%d', $member->seq_member_id, $member->genome_db->species_tree_node_id);
+    }
 
     if (scalar(@{$gene_tree->get_all_Members}) == 2) {
 
         warn "Number of elements: 2 leaves, N/A split genes\n";
-        $self->prepareTemporaryMemberNames($gene_tree);
         my @goodgenes = map {$_->{_tmp_name}} @{$gene_tree->get_all_Members};
         $newick = $self->run_treebest_sdi_genepair(@goodgenes);
     
@@ -184,7 +202,11 @@ sub run_njtree_phyml {
 
         } else {
 
-            $newick = $self->run_treebest_best($input_aln);
+            my $extra_lk_scale = $self->param('extra_lk_scale');
+            if ((defined $extra_lk_scale) and ($extra_lk_scale < 0)) {
+                $extra_lk_scale = -$extra_lk_scale * $gene_tree->get_value_for_tag('aln_num_residues') / $gene_tree->get_value_for_tag('gene_count');
+            }
+            $newick = $self->run_treebest_best($input_aln, $extra_lk_scale);
         }
     }
 
@@ -194,42 +216,7 @@ sub run_njtree_phyml {
         $self->throw('The filtered alignment is empty. Cannot build a tree');
     }
 
-    $gene_tree->store_tag('NJTREE_PHYML_runtime_msec', time()*1000-$starttime);
-}
-
-
-sub store_filtered_align {
-    my ($self, $filename) = @_;
-    print STDERR "Found filtered alignment: $filename\n";
-
-    # Loads the filtered alignment strings
-    my %hash_filtered_strings = ();
-    {
-        my $alignio = Bio::AlignIO->new(-file => $filename, -format => 'fasta');
-        my $aln = $alignio->next_aln;
-        
-        unless ($aln) {
-            $self->warning("Cannot store the filtered alignment for this tree\n");
-            return;
-        }
-
-        foreach my $seq ($aln->each_seq) {
-            $hash_filtered_strings{$seq->display_id()} = $seq->seq();
-        }
-    }
-
-    my %hash_initial_strings = ();
-    {
-        my $alignio = Bio::AlignIO->new(-file => $self->param('input_aln'), -format => 'fasta');
-        my $aln = $alignio->next_aln or die "The input alignment was lost in the process";
-
-        foreach my $seq ($aln->each_seq) {
-            $hash_initial_strings{$seq->display_id()} = $seq->seq();
-        }
-    }
-
-    my $removed_columns = Bio::EnsEMBL::Compara::Utils::Cigars::identify_removed_columns(\%hash_initial_strings, \%hash_filtered_strings);
-    $self->param('gene_tree')->store_tag('removed_columns', $removed_columns);
+    $self->param('treebest_runtime', time()*1000-$starttime);
 }
 
 

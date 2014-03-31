@@ -53,11 +53,13 @@ use Bio::EnsEMBL::Utils::Exception;
 use Bio::EnsEMBL::Utils::Argument;
 use Time::HiRes qw(time gettimeofday tv_interval);
 
+use base ('Bio::EnsEMBL::Storable');        # inherit dbID(), adaptor() and new() methods
+
+
 sub new {
   my ($class, @args) = @_;
 
-  my $self = {};
-  bless $self,$class;
+  my $self = $class->SUPER::new(@args);       # deal with Storable stuff
 
   $self->{'_object_list'} = [];
   $self->{'_dnafrag_id_list'} = [];
@@ -65,51 +67,14 @@ sub new {
 
   if (scalar @args) {
     #do this explicitly.
-    my ($dbid, $description, $adaptor, $dump_loc, $masking_options) = rearrange([qw(DBID DESCRIPTION ADAPTOR DUMP_LOC MASKING_OPTIONS)], @args);
+    my ($description, $dump_loc, $masking_options) = rearrange([qw(DESCRIPTION DUMP_LOC MASKING_OPTIONS)], @args);
 
-    $self->dbID($dbid)                       if($dbid);
     $self->description($description)         if($description);
-    $self->adaptor($adaptor)                 if($adaptor);
     $self->dump_loc($dump_loc)               if($dump_loc);
     $self->masking_options($masking_options) if($masking_options);
   }
 
   return $self;
-}
-
-=head2 adaptor
-
- Title   : adaptor
- Usage   :
- Function: getter/setter of the adaptor for this object
- Example :
- Returns :
- Args    :
-
-=cut
-
-sub adaptor {
-  my $self = shift;
-  $self->{'_adaptor'} = shift if(@_);
-  return $self->{'_adaptor'};
-}
-
-
-=head2 dbID
-
-  Arg [1]    : int $dbID (optional)
-  Example    :
-  Description:
-  Returntype :
-  Exceptions :
-  Caller     :
-
-=cut
-
-sub dbID {
-  my $self = shift;
-  $self->{'_dbID'} = shift if(@_);
-  return $self->{'_dbID'};
 }
 
 =head2 description

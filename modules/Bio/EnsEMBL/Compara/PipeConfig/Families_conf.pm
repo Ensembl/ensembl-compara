@@ -177,14 +177,16 @@ sub pipeline_analyses {
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
             -parameters => {
                 'inputlist'     => [
-                                        [ $self->o('protein_trees_db')   => 'ncbi_taxa_node' ],
-                                        [ $self->o('protein_trees_db')   => 'ncbi_taxa_name' ],
                                         [ $self->o('protein_trees_db')   => 'genome_db' ],       # we need them in "located" state
                                         [ $self->o('protein_trees_db')   => 'sequence' ],
-                                        [ $self->o('protein_trees_db')   => 'member' ],
+                                        [ $self->o('protein_trees_db')   => 'seq_member' ],
+                                        [ $self->o('protein_trees_db')   => 'gene_member' ],
+                                        [ $self->o('master_db')     => 'ncbi_taxa_node' ],
+                                        [ $self->o('master_db')     => 'ncbi_taxa_name' ],
                                         [ $self->o('master_db')     => 'method_link' ],
                                         [ $self->o('master_db')     => 'species_set' ],
                                         [ $self->o('master_db')     => 'method_link_species_set' ],
+                                        [ $self->o('master_db')     => 'dnafrag' ],
                                     ],
                 'column_names'  => [ 'src_db_conn', 'table' ],
             },
@@ -208,10 +210,15 @@ sub pipeline_analyses {
             -parameters => {
                 'sql'   => [
                     'ALTER TABLE sequence                   AUTO_INCREMENT=200000001',
-                    'ALTER TABLE member                     AUTO_INCREMENT=200000001',
+                    'ALTER TABLE gene_member                AUTO_INCREMENT=200000001',
+                    'ALTER TABLE seq_member                 AUTO_INCREMENT=200000001',
                     'ALTER TABLE method_link                ENGINE=InnoDB',
+                    'ALTER TABLE ncbi_taxa_node             ENGINE=InnoDB',
+                    'ALTER TABLE ncbi_taxa_name             ENGINE=InnoDB',
                     'ALTER TABLE species_set                ENGINE=InnoDB',
                     'ALTER TABLE method_link_species_set    ENGINE=InnoDB',
+                    'ALTER TABLE dnafrag                    ENGINE=InnoDB',
+                    'ALTER TABLE dnafrag                    AUTO_INCREMENT=200000000000001',
                 ],
             },
             -flow_into => {
@@ -238,6 +245,7 @@ sub pipeline_analyses {
                 'include_nonreference'  => 1,
                 'include_patches'       => 1,
                 'include_reference'     => 0,
+                'store_missing_dnafrags'=> 1,
             },
             -rc_name => '2GigMem',
         },
@@ -305,7 +313,6 @@ sub pipeline_analyses {
         {   -logic_name => 'dump_member_proteins',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::DumpMemberSequencesIntoFasta',
             -parameters => {
-                'source_names' => [ 'ENSEMBLPEP','Uniprot/SWISSPROT','Uniprot/SPTREMBL' ],
                 'idprefixed'   => 1,
             },
             -flow_into => {
@@ -328,7 +335,7 @@ sub pipeline_analyses {
         {   -logic_name => 'blast_factory',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
             -parameters => {
-                'inputquery'      => 'SELECT DISTINCT s.sequence_id seqid FROM member m, sequence s WHERE m.sequence_id=s.sequence_id AND m.source_name IN ("Uniprot/SPTREMBL", "Uniprot/SWISSPROT", "ENSEMBLPEP") ',
+                'inputquery'      => 'SELECT DISTINCT m.sequence_id seqid FROM seq_member m',
                 'step'            => 100,
             },
             -flow_into => {
@@ -480,9 +487,9 @@ sub pipeline_analyses {
             -parameters => {
                 'sql'   => [
                         # find cigars:
-                    "CREATE TEMPORARY TABLE singletons SELECT family_id, length(s.sequence) len, count(*) cnt FROM family_member fm, member m, sequence s WHERE fm.member_id=m.member_id AND m.sequence_id=s.sequence_id GROUP BY family_id HAVING cnt=1",
+                    "CREATE TEMPORARY TABLE singletons SELECT family_id, length(s.sequence) len, count(*) cnt FROM family_member fm, seq_member m, sequence s WHERE fm.seq_member_id=m.seq_member_id AND m.sequence_id=s.sequence_id GROUP BY family_id HAVING cnt=1",
                         # update them:
-                    "UPDATE family_member fm, member m, singletons st SET fm.cigar_line=concat(st.len, 'M') WHERE fm.family_id=st.family_id AND m.member_id=fm.member_id AND m.source_name<>'ENSEMBLGENE'",
+                    "UPDATE family_member fm, seq_member m, singletons st SET fm.cigar_line=concat(st.len, 'M') WHERE fm.family_id=st.family_id AND m.seq_member_id=fm.seq_member_id",
                 ],
             },
             -hive_capacity => 20, # to enable parallel branches
@@ -495,23 +502,12 @@ sub pipeline_analyses {
         {   -logic_name => 'insert_redundant_peptides',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::SqlCmd',
             -parameters => {
-                'sql' => "INSERT INTO family_member SELECT family_id, m2.member_id, cigar_line FROM family_member fm, member m1, member m2 WHERE fm.member_id=m1.member_id AND m1.sequence_id=m2.sequence_id AND m1.member_id<>m2.member_id",
+                'sql' => "INSERT INTO family_member SELECT family_id, m2.seq_member_id, cigar_line FROM family_member fm, seq_member m1, seq_member m2 WHERE fm.seq_member_id=m1.seq_member_id AND m1.sequence_id=m2.sequence_id AND m1.seq_member_id<>m2.seq_member_id",
             },
             -hive_capacity => 20, # to enable parallel branches
-            -flow_into => {
-                1 => [ 'insert_ensembl_genes' ],
-            },
             -rc_name => 'urgent',
         },
 
-        {   -logic_name => 'insert_ensembl_genes',
-            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::SqlCmd',
-            -parameters => {
-                'sql' => "INSERT INTO family_member SELECT fm.family_id, m.gene_member_id, NULL FROM member m, family_member fm WHERE m.member_id=fm.member_id AND m.source_name='ENSEMBLPEP' GROUP BY family_id, gene_member_id",
-            },
-            -hive_capacity => 20, # to enable parallel branches
-            -rc_name => 'urgent',
-        },
 # </Mafft sub-branch>
 
 # <Consensifier sub-branch>

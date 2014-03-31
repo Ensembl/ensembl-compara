@@ -48,8 +48,7 @@ foreach my $id (@list) {
 }
 
 foreach my $gene (@$genes) {
-  my $member = $gene_member_adaptor->
-    fetch_by_source_stable_id("ENSEMBLGENE",$gene->stable_id);
+  my $member = $gene_member_adaptor->fetch_by_stable_id($gene->stable_id);
   die "no members" unless (defined $member);
 
   # Fetch the gene tree

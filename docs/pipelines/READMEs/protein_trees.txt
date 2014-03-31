@@ -342,8 +342,8 @@ No genes / proteins have been loaded for this species; a few things may have gon
     > SELECT * FROM job WHERE analysis_id = XXX AND input_id LIKE "%${GDB_ID}%";
     $ runWorker.pl -url ${EHIVE_URL} -job_id ${JOB_ID} -debug 9 -force 1
  * Check whether the members are loaded, and the SQL query has output
-    > SELECT COUNT(*) FROM member WHERE genome_db_id = 40;
-    > SELECT source_name FROM member WHERE genome_db_id = 40 AND source_name IN ("ENSEMBLPEP", "ENSEMBLGENE") GROUP BY source_name HAVING COUNT(*) > 0;
+    > SELECT source_name, COUNT(*) FROM gene_member WHERE genome_db_id = 40 GROUP BY source_name;
+    > SELECT source_name, COUNT(*) FROM seq_member WHERE genome_db_id = 40 GROUP BY source_name;
 
     5.5 Analysis "hc_peptides_have_cds_sequences"
 
@@ -352,18 +352,18 @@ Error: At least 1 rows, different than 0 at $ENSEMBL_CVS_ROOT_DIR/ensembl-hive/m
 The error usually comes on species loaded from Fasta files. Make sure that the IDs used in in the "cds_fasta" and in the "prot_fasta" files are the same.
 
   # Identify the problematic members
-  > SELECT mp.member_id FROM member mp LEFT JOIN other_member_sequence oms ON mp.member_id = oms.member_id AND oms.seq_type = "cds" WHERE genome_db_id = 68 AND source_name = "ENSEMBLPEP" AND (sequence IS NULL OR LENGTH(sequence) = 0);
+  > SELECT mp.seq_member_id FROM seq_member mp LEFT JOIN other_member_sequence oms ON mp.seq_member_id = oms.seq_member_id AND oms.seq_type = "cds" WHERE genome_db_id = 68 AND (sequence IS NULL OR LENGTH(sequence) = 0);
 
-  # Query the member table for the offending member_ids
-  > SELECT * FROM member WHERE member_id IN (...)
+  # Query the seq_member table for the offending member_ids
+  > SELECT * FROM seq_member WHERE seq_member_id IN (...)
 
   # If only a few members are in error, you can edit the database
   > INSERT INTO other_member_sequence VALUES (534756, "cds", 32, "ATGTAGCTGTGACTCGAGAGAATATTTTAATG");
 
   # If more than a few entries, you need to rerun the load_fresh_members_fromfile job, identify the relevant job
-    > DELETE other_member_sequence FROM member JOIN other_member_sequence USING (member_id) WHERE genome_db_id = ${GDB_ID};
-    > DELETE FROM member WHERE genome_db_id = ${GDB_ID} AND source_name = "ENSEMBLPEP";
-    > DELETE FROM member WHERE genome_db_id = ${GDB_ID};
+    > DELETE other_member_sequence FROM seq_member JOIN other_member_sequence USING (seq_member_id) WHERE genome_db_id = ${GDB_ID};
+    > DELETE FROM seq_member WHERE genome_db_id = ${GDB_ID};
+    > DELETE FROM gene_member WHERE genome_db_id = ${GDB_ID};
     > SELECT * FROM job WHERE analysis_id = XXX AND input_id LIKE "%${GDB_ID}%";
     $ runWorker.pl -url ${EHIVE_URL} -job_id ${JOB_ID} -debug 9 -force 1
 
@@ -402,7 +402,7 @@ You can also check that the locator field in genome_db is set to a MySQL NULL an
 This HC fails if, for instance, there is a stop codon ("*") in the sequence.
 By repeating the SQL query, you'll get the offending member_ids. Then:
 
- > SELECT sequence_id FROM member WHERE member_id = XXXX;
+ > SELECT sequence_id FROM seq_member WHERE seq_member_id = XXXX;
  > SELECT sequence FROM sequence WHERE sequence_id = YYYY;
  > UPDATE sequence SET sequence = "...", length = ... WHERE sequence_id = YYYY;
 

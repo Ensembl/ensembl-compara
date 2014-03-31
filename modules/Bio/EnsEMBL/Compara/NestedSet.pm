@@ -54,12 +54,16 @@ use warnings;
 use Bio::EnsEMBL::Utils::Exception;
 use Bio::EnsEMBL::Utils::Argument;
 
-use Bio::EnsEMBL::Utils::Exception qw(deprecate throw warning);
+use Bio::EnsEMBL::Utils::Exception qw(throw warning);
 use Bio::EnsEMBL::Utils::Scalar qw(:assert);
 
+use Bio::EnsEMBL::Storable;
+
 use Bio::TreeIO;
+
 use Bio::EnsEMBL::Compara::Graph::Node;
-our @ISA = qw(Bio::EnsEMBL::Compara::Graph::Node);
+
+our @ISA = qw(Bio::EnsEMBL::Compara::Graph::Node Bio::EnsEMBL::Storable);
 
 #################################################
 # Factory methods
@@ -115,8 +119,7 @@ sub cast {
 sub copy {
   my $self = shift;
 
-  my $mycopy = $self->SUPER::copy; 
-  bless $mycopy, ref $self;
+  my $mycopy = $self->SUPER::copy(@_);
 
   $mycopy->distance_to_parent($self->distance_to_parent);
   $mycopy->left_index($self->left_index);
@@ -147,6 +150,11 @@ sub release_tree {
   $self->disavow_parent;
   $self->cascade_unlink if($child_count);
   return undef;
+}
+
+
+sub dbID {
+    throw("NestedSet objects do not implement dbID()");
 }
 
 #################################################
@@ -1059,17 +1067,6 @@ sub _internal_newick_format_ryo {
     return "$newick_str;";
 }
 
-=head2 newick_simple_format
-
-    DEPRECATED. Use newick_format("simple") instead. newick_simple_format() will be removed in e76
-
-=cut
-
-sub newick_simple_format {
-  my $self = shift;
-  deprecate('Use newick_format("simple") instead. newick_simple_format() will be removed in e76');
-  return $self->newick_format('simple'); 
-}
 
 
 ##################################

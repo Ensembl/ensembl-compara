@@ -72,6 +72,7 @@ sub fetch_input {
     my $nc_tree_id = $self->param_required('gene_tree_id');
 
     my $nc_tree = $self->compara_dba->get_GeneTreeAdaptor->fetch_by_dbID($nc_tree_id) or die "Could not fetch nc_tree with id=$nc_tree_id\n";
+    $nc_tree->species_tree->attach_to_genome_dbs();
     $self->param('gene_tree',$nc_tree);
 
     my $alignment_id = $self->param('alignment_id');
@@ -234,10 +235,10 @@ sub _dumpMultipleAlignmentStructToWorkdir {
     open(OUTSEQ, ">$aln_file")
         or $self->throw("Error opening $aln_file for write");
 
-    $self->prepareTemporaryMemberNames($tree);
     my $sa = $tree->get_SimpleAlign
         (
-         -id_type => 'TMP',
+         -ID_TYPE => 'MEMBER',
+         -APPEND_SPECIES_TREE_NODE_ID => 1,
          -keep_gaps => 1,
         );
     $sa->set_displayname_flat(1);

@@ -59,6 +59,8 @@ use Bio::EnsEMBL::Utils::Exception qw(throw warning);
 use Bio::EnsEMBL::Utils::Argument qw(rearrange);
 use Bio::EnsEMBL::Utils::Scalar qw(:assert);
 
+use Bio::EnsEMBL::Compara::Utils::Scalar;
+
 use Bio::EnsEMBL::Compara::GeneTree;
 use Bio::EnsEMBL::Compara::GeneTreeNode;
 use Bio::EnsEMBL::Compara::GeneTreeMember;
@@ -83,9 +85,8 @@ use base ('Bio::EnsEMBL::Compara::DBSQL::NestedSetAdaptor', 'Bio::EnsEMBL::Compa
                NB: The definition of this argument is unstable and might change
                    in the future
   Example    : $all_members = $genetree_adaptor->fetch_all_AlignedMember_by_Member($member);
-  Description: Transforms the member into an AlignedMember. If the member is
-               not an ENSEMBLGENE, it has to be canoncal, otherwise, the
-               function would return an empty array
+  Description: Transforms the member into an AlignedMember.
+               If the member is a non-canonical SeqMember, returns []
   Returntype : arrayref of Bio::EnsEMBL::Compara::AlignedMember
   Exceptions : none
   Caller     : general
@@ -96,16 +97,15 @@ sub fetch_all_AlignedMember_by_Member {
     my ($self, $member, @args) = @_;
     my ($clusterset_id, $mlss) = rearrange([qw(CLUSTERSET_ID METHOD_LINK_SPECIES_SET)], @args);
 
-    # Discard the UNIPROT members
-    return [] if (ref($member) and not ($member->source_name =~ 'ENSEMBL'));
-
+    assert_ref_or_dbID($member, 'Bio::EnsEMBL::Compara::Member', 'member');
     my $member_id = (ref($member) ? $member->dbID : $member);
-    my $constraint = '((m.member_id = ?) OR (m.gene_member_id = ?))';
+    my $constraint = '((m.seq_member_id = ?) OR (m.gene_member_id = ?))';
     $self->bind_param_generic_fetch($member_id, SQL_INTEGER);
     $self->bind_param_generic_fetch($member_id, SQL_INTEGER);
 
-    my $mlss_id = (ref($mlss) ? $mlss->dbID : $mlss);
-    if (defined $mlss_id) {
+    if (defined $mlss) {
+        assert_ref_or_dbID($mlss, 'Bio::EnsEMBL::Compara::MethodLinkSpeciesSet', 'mlss');
+        my $mlss_id = (ref($mlss) ? $mlss->dbID : $mlss);
         $constraint .= ' AND (tr.method_link_species_set_id = ?)';
         $self->bind_param_generic_fetch($mlss_id, SQL_INTEGER);
     }
@@ -129,9 +129,8 @@ sub fetch_all_AlignedMember_by_Member {
 
   Arg[1]     : Member or member_id
   Example    : $align_member = $genetreenode_adaptor->fetch_adefault_AlignedMember_for_Member($member);
-  Description: Transforms the member into an AlignedMember. If the member is
-               not an ENSEMBLGENE, it has to be canoncal, otherwise, the
-               function would return undef
+  Description: Transforms the member into an AlignedMember.
+               If the member is a non-canonical SeqMember, returns undef
   Returntype : Bio::EnsEMBL::Compara::AlignedMember
   Exceptions : none
   Caller     : general
@@ -141,11 +140,9 @@ sub fetch_all_AlignedMember_by_Member {
 sub fetch_default_AlignedMember_for_Member {
     my ($self, $member) = @_;
 
-    # Discard the UNIPROT members
-    return undef if (ref($member) and not ($member->source_name =~ 'ENSEMBL'));
-
+    assert_ref_or_dbID($member, 'Bio::EnsEMBL::Compara::Member', 'member');
     my $member_id = (ref($member) ? $member->dbID : $member);
-    my $constraint = '((m.member_id = ?) OR (m.gene_member_id = ?))';
+    my $constraint = '((m.seq_member_id = ?) OR (m.gene_member_id = ?))';
     $self->bind_param_generic_fetch($member_id, SQL_INTEGER);
     $self->bind_param_generic_fetch($member_id, SQL_INTEGER);
 
@@ -172,7 +169,7 @@ sub fetch_default_AlignedMember_for_Member {
 sub fetch_all_AlignedMember_by_root_id {
   my ($self, $root_id) = @_;
 
-  my $constraint = '(t.member_id IS NOT NULL) AND (t.root_id = ?)';
+  my $constraint = '(t.seq_member_id IS NOT NULL) AND (t.root_id = ?)';
   $self->bind_param_generic_fetch($root_id, SQL_INTEGER);
   return $self->generic_fetch($constraint);
 
@@ -222,12 +219,12 @@ sub store_node {
 
     my $root_id = $node->root->node_id;
     #print "inserting parent_id=$parent_id, root_id=$root_id\n";
-    my $member_id = undef;
-    $member_id = $node->member_id if $node->isa('Bio::EnsEMBL::Compara::GeneTreeMember');
+    my $seq_member_id = undef;
+    $seq_member_id = $node->seq_member_id if $node->isa('Bio::EnsEMBL::Compara::GeneTreeMember');
 
-    my $sth = $self->prepare("UPDATE gene_tree_node SET parent_id=?, root_id=?, left_index=?, right_index=?, distance_to_parent=?, member_id=?  WHERE node_id=?");
+    my $sth = $self->prepare("UPDATE gene_tree_node SET parent_id=?, root_id=?, left_index=?, right_index=?, distance_to_parent=?, seq_member_id=?  WHERE node_id=?");
     #print "UPDATE gene_tree_node  (", $parent_id, ",", $root_id, ",", $node->left_index, ",", $node->right_index, ",", $node->distance_to_parent, ") for ", $node->node_id, "\n";
-    $sth->execute($parent_id, $root_id, $node->left_index, $node->right_index, $node->distance_to_parent, $member_id, $node->node_id);
+    $sth->execute($parent_id, $root_id, $node->left_index, $node->right_index, $node->distance_to_parent, $seq_member_id, $node->node_id);
     $sth->finish;
 
     $node->adaptor($self);
@@ -335,7 +332,7 @@ sub _columns {
 }
 
 sub _tables {
-  return (['gene_tree_node', 't'], ['gene_tree_root', 'tr'], ['gene_align_member', 'gam'], ['member', 'm']);
+  return (['gene_tree_node', 't'], ['gene_tree_root', 'tr'], ['gene_align_member', 'gam'], ['seq_member', 'm']);
 }
 
 sub _default_where_clause {
@@ -344,8 +341,8 @@ sub _default_where_clause {
 
 sub _left_join {
     return (
-        ['gene_align_member', 'gam.member_id = t.member_id AND gam.gene_align_id = tr.gene_align_id'],
-        ['member', 't.member_id = m.member_id'],
+        ['gene_align_member', 'gam.seq_member_id = t.seq_member_id AND gam.gene_align_id = tr.gene_align_id'],
+        ['seq_member', 't.seq_member_id = m.seq_member_id'],
     );
 }
 
@@ -355,7 +352,7 @@ sub create_instance_from_rowhash {
   my $rowhash = shift;
 
   my $node;
-  if($rowhash->{'member_id'}) {
+  if($rowhash->{'seq_member_id'}) {
     $node = new Bio::EnsEMBL::Compara::GeneTreeMember;
   } else {
     $node = new Bio::EnsEMBL::Compara::GeneTreeNode;

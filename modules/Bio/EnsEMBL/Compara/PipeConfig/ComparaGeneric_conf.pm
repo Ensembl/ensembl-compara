@@ -22,7 +22,7 @@ package Bio::EnsEMBL::Compara::PipeConfig::ComparaGeneric_conf;
 
 use strict;
 use warnings;
-use base ('Bio::EnsEMBL::Hive::PipeConfig::HiveGeneric_conf');
+use base ('Bio::EnsEMBL::Hive::PipeConfig::EnsemblGeneric_conf');
 
 
 sub default_options {

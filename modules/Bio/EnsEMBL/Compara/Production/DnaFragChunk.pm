@@ -46,13 +46,17 @@ use Bio::EnsEMBL::Utils::Exception;
 use Bio::Seq;
 use Bio::SeqIO;
 
-
 use Time::HiRes qw(time gettimeofday tv_interval);
+
+
+use base ('Bio::EnsEMBL::Storable');        # inherit dbID(), adaptor() and new() methods
+
 
 sub new {
   my ($class, $dnafrag, $start, $end, $dnafrag_chunk_set_id) = @_;
+
   my $self = {};
-  bless $self,$class;
+  bless $self, $class;
 
   $self->dnafrag($dnafrag)                     if($dnafrag);
   $self->seq_start($start)                     if($start);
@@ -250,18 +254,6 @@ sub bioseq {
 # getter/setter methods of data which is stored in database
 #
 ##########################
-
-sub adaptor {
-  my $self = shift;
-  $self->{'_adaptor'} = shift if(@_);
-  return $self->{'_adaptor'};
-}
-
-sub dbID {
-  my $self = shift;
-  $self->{'_dbID'} = shift if(@_);
-  return $self->{'_dbID'};
-}
 
 sub dnafrag {
   my ($self,$dnafrag) = @_;
