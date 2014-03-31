@@ -102,6 +102,8 @@ sub write_output {
     my $inputlist  = $self->param('inputlist');
     my $group_size = $self->param('group_size');
 
+    $self->input_job->autoflow(0) if scalar(@$inputlist) == 0;
+
     while (@$inputlist) {
         my @job_array = splice(@$inputlist, 0, $group_size);
         $self->dataflow_output_id( { 'mlss_id' => $self->param('mlss_id'), 'min_homology_id' => $job_array[0], 'max_homology_id' => $job_array[-1] }, 2);

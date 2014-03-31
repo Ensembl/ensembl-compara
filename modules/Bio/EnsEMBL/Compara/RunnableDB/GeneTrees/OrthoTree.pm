@@ -89,6 +89,8 @@ sub param_defaults {
             'tree_scale'            => 1,
             'store_homologies'      => 1,
             'no_between'            => 0.25, # dont store all possible_orthologs
+            'homoeologous_genome_dbs'  => [],
+            '_readonly'             => 0,
     };
 }
 
@@ -121,6 +123,21 @@ sub fetch_input {
         $self->throw("undefined GeneTree as input\n");
     }
 
+    my %homoeologous_groups = ();
+    foreach my $i (1..(scalar(@{$self->param('homoeologous_genome_dbs')}))) {
+        my $group = $self->param('homoeologous_genome_dbs')->[$i-1];
+        foreach my $gdb (@{$group}) {
+            if (looks_like_number($gdb)) {
+                $homoeologous_groups{$gdb} = $i;
+            } elsif (ref $gdb) {
+                $homoeologous_groups{$gdb->dbID} = $i;
+            } else {
+                $gdb = $self->compara_dba->get_GenomeDBAdaptor->fetch_by_name_assembly($gdb);
+                $homoeologous_groups{$gdb->dbID} = $i;
+            }
+        }
+    }
+    $self->param('homoeologous_groups', \%homoeologous_groups);
 }
 
 
@@ -156,7 +173,7 @@ sub run {
 sub write_output {
     my $self = shift @_;
 
-    $self->delete_old_homologies;
+    $self->delete_old_homologies unless $self->param('_readonly');
     $self->store_homologies;
 }
 
@@ -231,7 +248,7 @@ sub run_analysis {
       my $genepairlink = new Bio::EnsEMBL::Compara::Graph::Link($gene1, $gene2);
       $genepairlink->add_tag("ancestor", $ancestor);
       push @{$genepairlinks{$ancestor->get_tagvalue('node_type')}}, $genepairlink;
-      print STDERR "build graph $graphcount\n" if ($graphcount++ % 100 == 0);
+      print STDERR "build graph $graphcount\n" if ($graphcount++ % 1000 == 0);
      }
     }
   }
@@ -244,24 +261,49 @@ sub run_analysis {
   foreach my $genepairlink (@{$genepairlinks{speciation}}) {
     $self->tag_genepairlink($genepairlink, $self->tag_orthologues($genepairlink), 1);
   }
+  printf("%d homologies found so far\n", scalar(@{$self->param('homology_links')}));
+
   foreach my $genepairlink (@{$genepairlinks{dubious}}) {
     $self->tag_genepairlink($genepairlink, $self->tag_orthologues($genepairlink), 0);
   }
+  printf("%d homologies found so far\n", scalar(@{$self->param('homology_links')}));
+
   foreach my $genepairlink (@{$genepairlinks{gene_split}}) {
     $self->tag_genepairlink($genepairlink, 'gene_split', 1);
   }
+  printf("%d homologies found so far\n", scalar(@{$self->param('homology_links')}));
 
   my @todo4 = ();
+
+  my @duplication_nodes = ();
+  my $last_node_id = undef;
   foreach my $genepairlink (@{$genepairlinks{duplication}}) {
-      my ($pep1, $pep2) = $genepairlink->get_nodes;
-      if ($pep1->genome_db_id == $pep2->genome_db_id) {
-          $self->tag_genepairlink($genepairlink, 'within_species_paralog', 1);
-      } elsif ($self->is_level3_orthologues($genepairlink)) {
-          $self->tag_genepairlink($genepairlink, $self->tag_orthologues($genepairlink), 0);
-      } else {
-          push @todo4, $genepairlink;
+      my $this_node_id = $genepairlink->get_value_for_tag('ancestor')->node_id;
+      if ((not $last_node_id) or ($last_node_id != $this_node_id)) {
+          push @duplication_nodes, [];
+      }
+      $last_node_id = $this_node_id;
+      push @{$duplication_nodes[-1]}, $genepairlink;
+  }
+  printf("%d homologies found so far\n", scalar(@{$self->param('homology_links')}));
+
+  foreach my $pair_group (@duplication_nodes) {
+      my @good_ones = ();
+      foreach my $genepairlink (@$pair_group) {
+          my ($pep1, $pep2) = $genepairlink->get_nodes;
+          if ($pep1->genome_db_id == $pep2->genome_db_id) {
+              push @good_ones, [$genepairlink, 'within_species_paralog', 1];
+          } elsif ($self->is_level3_orthologues($genepairlink)) {
+              push @good_ones, [$genepairlink, $self->tag_orthologues($genepairlink), 0];
+          } else {
+              push @todo4, $genepairlink;
+          }
+      }
+      foreach my $par (@good_ones) {
+          $self->tag_genepairlink(@$par);
       }
   }
+  printf("%d homologies found so far\n", scalar(@{$self->param('homology_links')}));
 
   foreach my $genepairlink (@todo4) {
       my $other = $self->is_level4_orthologues($genepairlink);
@@ -272,6 +314,7 @@ sub run_analysis {
           }
       }
   }
+  printf("%d homologies found so far\n", scalar(@{$self->param('homology_links')}));
 
   #display summary stats of analysis 
   if($self->debug) {
@@ -547,8 +590,22 @@ sub store_gene_link_as_homology {
   my ($gene1, $gene2) = $genepairlink->get_nodes;
 
   # get the mlss from the database
-  my $mlss_type = ($type =~ /^ortholog/ ? 'ENSEMBL_ORTHOLOGUES' : 'ENSEMBL_PARALOGUES');
-  $mlss_type = 'ENSEMBL_PROJECTIONS' if $type eq 'alt_allele';
+  my $mlss_type;
+  if ($type =~ /^ortholog/) {
+      my $gdb1 = $gene1->genome_db_id;
+      my $gdb2 = $gene2->genome_db_id;
+      if (($self->param('homoeologous_groups')->{$gdb1} || -1) == ($self->param('homoeologous_groups')->{$gdb2} || -2)) {
+          $mlss_type = 'ENSEMBL_HOMOEOLOGUES';
+      } else {
+          $mlss_type = 'ENSEMBL_ORTHOLOGUES';
+      }
+
+  } elsif ($type eq 'alt_allele') {
+      $mlss_type = 'ENSEMBL_PROJECTIONS';
+  } else {
+      $mlss_type = 'ENSEMBL_PARALOGUES';
+  }
+
   my $gdbs;
   if ($gene1->genome_db->dbID == $gene2->genome_db->dbID) {
       $gdbs = [$gene1->genome_db];
@@ -583,7 +640,7 @@ sub store_gene_link_as_homology {
     }
   }
   
-  $self->param('homologyDBA')->store($homology);
+  $self->param('homologyDBA')->store($homology) unless $self->param('_readonly');
 
   return $homology;
 }

@@ -1358,7 +1358,7 @@ CREATE TABLE hmm_profile (
 @colour   #1E90FF
 
 @example    The following query defines a pair of paralogous xenopous genes. See @link homology_member for more details
-     @sql                                  SELECT * FROM homology WHERE homology_id = 39273663;
+    @sql    SELECT homology.* FROM homology JOIN method_link_species_set USING (method_link_species_set_id) WHERE name="X.tro paralogues" LIMIT 1;
 
 @column homology_id                    Unique internal ID
 @column method_link_species_set_id     External reference to method_link_species_set_id in the @link method_link_species_set table
@@ -1374,7 +1374,7 @@ CREATE TABLE hmm_profile (
 @column gene_tree_root_id              The root_id of the gene tree from which the homology is derived
 
 @example    See species_names that participate in this particular homology entry
-    @sql SELECT homology_id, description, GROUP_CONCAT(genome_db.name) AS species FROM homology LEFT JOIN method_link_species_set USING (method_link_species_set_id) LEFT JOIN species_set USING (species_set_id) LEFT JOIN genome_db USING(genome_db_id) WHERE homology_id = 38845580 GROUP BY homology_id;
+    @sql    SELECT homology_id, description, GROUP_CONCAT(genome_db.name) AS species FROM homology JOIN method_link_species_set USING (method_link_species_set_id) JOIN species_set USING (species_set_id) JOIN genome_db USING(genome_db_id) WHERE method_link_id=201 AND homology_id<5000000  GROUP BY homology_id LIMIT 4;
 
 @see homology_member
 @see method_link_species_set
@@ -1538,8 +1538,8 @@ The alignment will be:<br />
 </table>
 @colour   #1E90FF
 
-@example    The following query refers to the two homologue sequences defined by the homology.homology_id 38845580. Gene and peptide sequence of the second homologue can retrieved in the same way.
-   @sql                       SELECT * FROM homology_member WHERE homology_id = 38845580;
+@example    The following query refers to the two homologue sequences from the first xenopus' paralogy object. Gene and peptide sequence of the second homologue can retrieved in the same way.
+    @sql    SELECT homology_member.* FROM homology_member JOIN homology USING (homology_id) JOIN method_link_species_set USING (method_link_species_set_id) WHERE name="X.tro paralogues" LIMIT 2;
 
 @column homology_id        External reference to homology_id in the @link homology table
 @column member_id          External reference to member_id in the @link member table. Refers to the corresponding "ENSMBLGENE" entry
@@ -1731,4 +1731,6 @@ INSERT INTO meta (species_id, meta_key, meta_value)
   VALUES (NULL, 'patch', 'patch_74_75_a.sql|schema_version');
 INSERT INTO meta (species_id, meta_key, meta_value)
   VALUES (NULL, 'patch', 'patch_74_75_b.sql|genome_db_haskaryo_highcov');
+INSERT INTO meta (species_id, meta_key, meta_value)
+  VALUES (NULL, 'patch', 'patch_74_75_c.sql|species_tree_root_256');
 

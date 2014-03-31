@@ -52,8 +52,7 @@ foreach my $gene (@$genes) {
   my $all_homologies = $homology_adaptor->fetch_all_by_Member($member);
   foreach my $homology (@$all_homologies) {
     my @two_ids = map { $_->get_canonical_SeqMember->member_id } @{$homology->gene_list};
-    my $leaf_node_id = $homology->node_id;
-    my $tree = $genetreenode_adaptor->fetch_node_by_node_id($leaf_node_id);
+    my $tree_node = $homology->gene_tree_node;
     my $node_a = $genetreenode_adaptor->fetch_default_AlignedMember_for_Member($two_ids[0]);
     my $node_b = $genetreenode_adaptor->fetch_default_AlignedMember_for_Member($two_ids[1]);
     $node_a->root->merge_node_via_shared_ancestor($node_b);
@@ -65,7 +64,7 @@ foreach my $gene (@$genes) {
           $node_b->stable_id, ",",
           $ancestor->get_tagvalue("taxon_name"), ",",
           $ncbitaxon_adaptor->fetch_by_dbID($ancestor->get_tagvalue('taxon_id'))->get_tagvalue('ensembl timetree mya'), ",",
-          $tree->get_tagvalue("taxon_name"), ",",
+          $tree_node->taxonomy_level, ",",
           $distance_a, ",",
           $distance_b, "\n";
   }

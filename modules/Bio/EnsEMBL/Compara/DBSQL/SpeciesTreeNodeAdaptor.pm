@@ -150,7 +150,7 @@ sub store_node {
         ## $node_id is 1 if table is empty then $node_id should be mlss_id * 1000
         if ($node_id == 1) {
             $node_id = $mlss_id * 1000;
-            my $sth2 = $self->prepare("TRUNCATE species_tree_node");
+            my $sth2 = $self->prepare("DELETE FROM species_tree_node");
             $sth2->execute();
             $sth2->finish();
             my $sth3 = $self->prepare("INSERT INTO species_tree_node (node_id) VALUES (?)");

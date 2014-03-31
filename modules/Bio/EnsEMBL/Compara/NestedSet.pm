@@ -899,7 +899,7 @@ sub string_node {
     my $isdub = ($self->get_tagvalue('node_type', '') eq 'dubious');
 
     if ($isdup) {
-        if ((defined $self->species_tree_node) && ($self->species_tree_node->genome_db_id)) {
+        if ($self->isa('Bio::EnsEMBL::Compara::GeneTreeNode') and (defined $self->species_tree_node) && ($self->species_tree_node->genome_db_id)) {
             $str .= "Dup ";
         } else {
             $str .= "DUP ";
@@ -1004,6 +1004,22 @@ sub newick_format {
     return $self->_internal_newick_format_ryo($ryo_string);
 }
 
+
+=head2 nhx_format
+
+  Arg [1]     : string $format_mode
+  Example     : $this_node->nhx_format("full");
+  Description : Prints this tree in NHX format. Several modes are:
+                member_id_taxon_id, protein_id, transcript_id, gene_id,
+                full, full_web, display_label, display_label_composite,
+                treebest_ortho, simple, phylip
+  Returntype  : string
+  Exceptions  :
+  Caller      : general
+  Status      : Stable
+
+=cut
+
 sub nhx_format {
     my ($self, $format_mode) = @_;
     my $ryo_string1;
@@ -1045,13 +1061,13 @@ sub _internal_newick_format_ryo {
 
 =head2 newick_simple_format
 
-    DEPRECATED. Use newick_format("simple") instead
+    DEPRECATED. Use newick_format("simple") instead. newick_simple_format() will be removed in e76
 
 =cut
 
 sub newick_simple_format {
   my $self = shift;
-  deprecate('Use newick_format("simple") instead.');
+  deprecate('Use newick_format("simple") instead. newick_simple_format() will be removed in e76');
   return $self->newick_format('simple'); 
 }
 

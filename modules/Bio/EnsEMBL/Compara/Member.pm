@@ -19,11 +19,11 @@ limitations under the License.
 
 =head1 CONTACT
 
-  Please email comments or questions to the public Ensembl
-  developers list at <http://lists.ensembl.org/mailman/listinfo/dev>.
+Please email comments or questions to the public Ensembl
+developers list at <http://lists.ensembl.org/mailman/listinfo/dev>.
 
-  Questions may also be sent to the Ensembl help desk at
-  <http://www.ensembl.org/Help/Contact>.
+Questions may also be sent to the Ensembl help desk at
+<http://www.ensembl.org/Help/Contact>.
 
 =head1 NAME
 
@@ -34,14 +34,29 @@ Bio::EnsEMBL::Compara::Member
 Abstract class to represent a biological (gene-related) object used
 as part of other Compara structures (gene trees, gene families, homologies).
 The (inherited) objects actually used are SeqMember and GeneMember, and Member
-should not be directly used.
+should not be directly used. Some methods are still available for compatibility
+until release 75 (included).
 
-The methods are still available for compatibility until release 74 (included),
-but the Member object should not be explicitely used.
+A Member is a specialized Locus that deals with genes / gene products.
 
 =head1 INHERITANCE TREE
 
   Bio::EnsEMBL::Compara::Member
+  `- Bio::EnsEMBL::Compara::Locus
+
+=head1 SYNOPSIS
+
+Member properties:
+ - dbID() or member_id()
+ - stable_id()
+ - version()
+ - display_label()
+ - description()
+ - source_name()
+ - genome_db_id() and genome_db()
+ - taxon_id() and taxon()
+
+You can print the summary of a Member with print_member()
 
 =head1 AUTHORSHIP
 
@@ -1010,6 +1025,12 @@ sub number_of_paralogues {
   my ($self) = @_;
 
   return $self->adaptor->paralogues_for_member($self->stable_id);
+}
+
+sub number_of_homoeologues {
+  my ($self) = @_;
+
+  return $self->adaptor->homoeologues_for_member($self->stable_id);
 }
 
 1;

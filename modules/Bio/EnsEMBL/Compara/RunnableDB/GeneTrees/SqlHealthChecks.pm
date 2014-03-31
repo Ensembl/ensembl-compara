@@ -56,6 +56,26 @@ use base ('Bio::EnsEMBL::Hive::RunnableDB::SqlHealthcheck');
 
 my $config = {
 
+    ### Species Tree
+    #################
+
+    species_tree => {
+        tests => [
+            {
+                description => 'genome_db_id can only be populated on leaves',
+                query => 'SELECT stn.*, COUNT(*) AS n_children FROM species_tree_node stn JOIN species_tree_node stnc ON stnc.parent_id = stn.node_id WHERE stn.genome_db_id IS NOT NULL GROUP BY stn.node_id'
+            },
+            {
+                description => 'All the leaves of the species tree should have a genome_db',
+                query => 'SELECT stn.* FROM species_tree_node stn LEFT JOIN species_tree_node stnc ON stnc.parent_id = stn.node_id WHERE stnc.node_id IS NULL AND stn.genome_db_id IS NULL'
+            },
+            {
+                description => 'All the genome_dbs should be in the species tree',
+                query => 'SELECT gdb.* FROM genome_db gdb LEFT JOIN species_tree_node stn USING (genome_db_id) WHERE stn.node_id IS NULL',
+            }
+        ],
+    },
+
     ### Members
     #############
 

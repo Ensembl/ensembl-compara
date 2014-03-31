@@ -19,28 +19,27 @@ limitations under the License.
 
 =head1 CONTACT
 
-  Please email comments or questions to the public Ensembl
-  developers list at <http://lists.ensembl.org/mailman/listinfo/dev>.
+Please email comments or questions to the public Ensembl
+developers list at <http://lists.ensembl.org/mailman/listinfo/dev>.
 
-  Questions may also be sent to the Ensembl help desk at
-  <http://www.ensembl.org/Help/Contact>.
+Questions may also be sent to the Ensembl help desk at
+<http://www.ensembl.org/Help/Contact>.
 
 =head1 AUTHORSHIP
 
 Ensembl Team. Individual contributions can be found in the GIT log.
 
-=cut
-
 =head1 NAME
 
-MemberSet - A superclass for pairwise or multiple relationships, base of
-Bio::EnsEMBL::Compara::Family, Bio::EnsEMBL::Compara::Homology and
-Bio::EnsEMBL::Compara::Domain.
+MemberSet - A superclass for pairwise or multiple gene relationships
 
 =head1 DESCRIPTION
 
-A superclass for pairwise and multiple relationships
+A superclass for pairwise and multiple gene relationships
 
+MemberSet is the deepest base class of Bio::EnsEMBL::Compara::Family, Bio::EnsEMBL::Compara::Homology and Bio::EnsEMBL::Compara::GeneTree
+
+It holds the methods to construct / use a set of Bio::EnsEMBL::Compara::Member
 Currently the Member objects are used in the GeneTree structure
 to represent the leaves of the trees. Each leaf contains an aligned
 sequence, which is represented as an Member object.
@@ -48,6 +47,30 @@ sequence, which is represented as an Member object.
 =head1 INHERITANCE TREE
 
   Bio::EnsEMBL::Compara::MemberSet
+
+=head1 SYNOPSIS
+
+Global properties of the set:
+ - stable_id() and version()
+ - description()
+ - method_link_species_set()
+
+Be aware that not all of the above methods are implemented in all the derived objects (for instance, Homologies do not have stable_id)
+
+The set of members can be accessed / edited with:
+ - add_Member()
+ - get_all_Members()
+ - get_all_GeneMembers()
+ - clear()
+ - get_Member_by_*() and Member_count_by_*()
+
+I/O:
+ - print_sequences_to_file()
+
+Methods about the set of species refered to by the members:
+ - get_all_taxa_by_member_source_name()
+ - get_all_GenomeDBs_by_member_source_name()
+ - has_species_by_name()
 
 =head1 METHODS
 
@@ -448,7 +471,7 @@ sub clear {
 } 
 
 
-=head2 get_all_GeneMember
+=head2 get_all_GeneMembers
 
   Arg [1]    : None
   Example    : 
@@ -469,6 +492,8 @@ sub get_all_GeneMembers {
 
     return $members;
 }
+
+
 =head2 gene_list
 
   Example    : my $pair = $homology->gene_list
@@ -478,17 +503,50 @@ sub get_all_GeneMembers {
 
 =cut
 
-
-sub gene_list {  # DEPRECATED
+sub gene_list {  # DEPRECATED ?
     my $self = shift;
     return $self->get_all_GeneMembers
 }
 
 
+=head2 print_sequences_to_fasta
+
+  Description: DEPRECATED. Will be removed in e76. Use print_sequences_to_file(-file => $pep_file, -format => "fasta", -id_type => "MEMBER") instead
+
+=cut
+
 sub print_sequences_to_fasta {
     my ($self, $pep_file) = @_;
+    deprecate('print_sequences_to_fasta() is deprecated and will be removed in e76. Please use print_sequences_to_file(-file => $pep_file, -format => "fasta", -id_type => "MEMBER") instead');
     return $self->print_sequences_to_file(-file => $pep_file, -format => 'fasta', -id_type => 'MEMBER');
 }
+
+
+=head2 print_sequences_to_file
+
+  Arg [-FILE]  :
+        string - name of the output file
+  Arg [-FH]:
+        file handle - file handle for the output
+  Arg [-FORMAT] :
+        string - format of the output (cf BioPerl capabilities)
+                 example: 'fasta'
+  Arg [-UNIQ_SEQ] :
+        boolean - whether only 1 copy of each sequence should be printed
+                  (when multiple proteins share the same sequence)
+  Arg [-SEQ_TYPE] :
+        string - the type of the sequence that should be printed
+                 undef is the default sequence. Other types are 'cds', 'exon_bounded'
+  Arg [-ID_TYPE]:
+        string - how to label the sequences. See SeqMember::bioseq()
+  Example    : $family->print_sequences_to_file(-file => 'output.fa', -format => 'fasta', -id_type => 'MEMBER');
+  Description: Prints the sequences of the members into a file
+  Returntype : none
+  Exceptions : none
+  Caller     : general
+  Status     : Stable
+
+=cut
 
 sub print_sequences_to_file {
     my $self = shift;

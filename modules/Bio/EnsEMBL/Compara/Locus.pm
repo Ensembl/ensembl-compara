@@ -14,16 +14,13 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 
-=cut
-
-
 =head1 CONTACT
 
-  Please email comments or questions to the public Ensembl
-  developers list at <http://lists.ensembl.org/mailman/listinfo/dev>.
+Please email comments or questions to the public Ensembl
+developers list at <http://lists.ensembl.org/mailman/listinfo/dev>.
 
-  Questions may also be sent to the Ensembl help desk at
-  <http://www.ensembl.org/Help/Contact>.
+Questions may also be sent to the Ensembl help desk at
+<http://www.ensembl.org/Help/Contact>.
 
 =head1 NAME
 
@@ -32,6 +29,21 @@ Bio::EnsEMBL::Compara::Locus
 =head1 DESCRIPTION
 
 Locus is a base object that represents a segment of a DnaFrag.
+
+=head1 SYNOPSIS
+
+Locus is not supposed to be instantiated directly, but should
+only be used as a base class.
+Adaptor / object methods that require coordinates will usually
+ask for a Locus parameter.
+
+Locus can still be created on the fly this way:
+
+ my $locus = Bio::EnsEMBL::Compara::Locus->new(
+    -dnafrag_id => 1234,
+    -dnafrag_start => 56,
+    -dnafrag_end => 78,
+ );
 
 =head1 OBJECT ATTRIBUTES
 
@@ -64,6 +76,8 @@ The strand of the Locus, on the DnaFrag.
 The rest of the documentation details each of the object methods.
 Internal methods are usually preceded with a _
 
+=head1 METHODS
+
 =cut
 
 
@@ -74,25 +88,26 @@ use warnings;
 
 use Bio::EnsEMBL::Utils::Argument;
 use Bio::EnsEMBL::Utils::Exception;
+use Bio::EnsEMBL::Utils::Scalar qw(:all);
 
 
 =head2 new
 
   Arg [-DNAFRAG]
-              : (opt.) Bio::EnsEMBL::Compara::DnaFrag $dnafrag (the genomic
-                sequence object to which this object refers to)
+              : (opt.) Bio::EnsEMBL::Compara::DnaFrag $dnafrag
+                the genomic sequence object to which this object refers to
   Arg [-DNAFRAG_ID]
-              : (opt.) int $dnafrag_id (the database internal ID for the $dnafrag)
+              : (opt.) int $dnafrag_id
+                the database internal ID for the $dnafrag
   Arg [-DNAFRAG_START]
-              : (opt.) int $dnafrag_start (the starting position of this
-                Bio::EnsEMBL::Compara::Locus within its corresponding $dnafrag)
+              : (opt.) int $dnafrag_start
+                the starting position of this Locus within its corresponding $dnafrag
   Arg [-DNAFRAG_END]
-              : (opt.) int $dnafrag_end (the ending position of this
-                Bio::EnsEMBL::Compara::Locus within its corresponding $dnafrag)
+              : (opt.) int $dnafrag_end
+                the ending position of this Locus within its corresponding $dnafrag
   Arg [-DNAFRAG_STRAND]
-              : (opt.) int $dnafrag_strand (1 or -1; defines in which strand of its
-                corresponding $dnafrag this Bio::EnsEMBL::Compara::Locus is)
-  Example     : none
+              : (opt.) int $dnafrag_strand (only 1 or -1)
+                defines in which strand of its corresponding $dnafrag this Locus is
   Description : Object constructor.
   Returntype  : Bio::EnsEMBL::Compara::Locus object
   Exceptions  : none
@@ -121,11 +136,10 @@ sub new {
 
 =head2 new_fast
 
-  Arg 1       : hash reference $hashref
-  Example     : none
+  Arg [1]     : hash reference $hashref
   Description : This is an ultra fast constructor which requires knowledge of
                 the objects internals to be used.
-  Returntype  : Bio::EnsEMBL::Compara::Locus object
+  Returntype  : Bio::EnsEMBL::Compara::Locus object (or a derived class)
   Exceptions  : none
   Caller      : general
 
@@ -140,14 +154,13 @@ sub new_fast {
 
 =head2 dnafrag
 
-  Arg 1       : (optional) Bio::EnsEMBL::Compara::DnaFrag object
+  Arg [1]     : (optional) Bio::EnsEMBL::Compara::DnaFrag object
   Example     : $dnafrag = $locus->dnafrag;
   Description : Getter/setter for the Bio::EnsEMBL::Compara::DnaFrag object
                 corresponding to this Bio::EnsEMBL::Compara::Locus object.
                 If no argument is given, the dnafrag is not defined but
                 both the dnafrag_id and the adaptor are, it tries
                 to fetch the data using the dnafrag_id
-
   Returntype  : Bio::EnsEMBL::Compara::Dnafrag object
   Exceptions  : thrown if $dnafrag is not a Bio::EnsEMBL::Compara::DnaFrag
                 object or if $dnafrag does not match a previously defined
@@ -161,8 +174,7 @@ sub dnafrag {
   my ($self, $dnafrag) = @_;
 
   if (defined($dnafrag)) {
-    throw("$dnafrag is not a Bio::EnsEMBL::Compara::DnaFrag object")
-        if (!$dnafrag->isa("Bio::EnsEMBL::Compara::DnaFrag"));
+    assert_ref($dnafrag, 'Bio::EnsEMBL::Compara::DnaFrag', );
     $self->{'dnafrag'} = $dnafrag;
     if ($self->{'dnafrag_id'}) {
       if (!$self->{'dnafrag'}->dbID) {
@@ -217,6 +229,7 @@ sub dnafrag_id {
   my ($self, $dnafrag_id) = @_;
 
   if (defined($dnafrag_id)) {
+    assert_integer($dnafrag_id);
     $self->{'dnafrag_id'} = $dnafrag_id;
     if (defined($self->{'dnafrag'}) and $self->{'dnafrag_id'}) {
 #       warning("Defining both dnafrag_id and dnafrag");
@@ -238,14 +251,14 @@ sub dnafrag_id {
 }
 
 
-=head2
+=head2 _lazy_getter_setter
 
   Arg [1]    : string $field
   Arg [2]    : scalar $val
   Description: Generic getter/Setter for the attribute $field. In $val is not given, the
                attribute $field is not defined, but both the dbID and the adaptor are, it tries
                to fetch and set all the direct attributes from the database using the dbID
-  Returntype : integer
+  Returntype : scalar
   Exceptions : none
   Warning    : warns if getting data from other sources fails.
   Caller     : internal
@@ -292,6 +305,7 @@ sub _lazy_getter_setter {
 sub dnafrag_start {
   my $obj = shift;
 
+  assert_integer($_[0]) if @_;
   return $obj->_lazy_getter_setter('dnafrag_start', @_);
 }
 
@@ -315,6 +329,7 @@ sub dnafrag_start {
 sub dnafrag_end {
   my $obj = shift;
 
+  assert_integer($_[0]) if @_;
   return $obj->_lazy_getter_setter('dnafrag_end', @_);
 }
 
@@ -338,13 +353,13 @@ sub dnafrag_end {
 sub dnafrag_strand {
   my $obj = shift;
 
+  assert_strand($_[0]) if @_;
   return $obj->_lazy_getter_setter('dnafrag_strand', @_);
 }
 
 
 =head2 get_Slice
 
-  Arg[1]     : -none-
   Example    : $slice = $genomic_align->get_Slice();
   Description: creates and returns a Bio::EnsEMBL::Slice which corresponds to
                this Bio::EnsEMBL::Compara::GenomicAlign
@@ -392,13 +407,12 @@ sub genome_db {
   my ($self, $genome_db) = @_;
 
   if (defined($genome_db)) {
-    throw("$genome_db is not a Bio::EnsEMBL::Compara::GenomeDB object")
-        if (!UNIVERSAL::isa($genome_db, "Bio::EnsEMBL::Compara::GenomeDB"));
+    assert_ref($genome_db, 'Bio::EnsEMBL::Compara::GenomeDB object');
     my $dnafrag = $self->dnafrag();
     if (!$dnafrag) {
       throw("Cannot set genome_db if dnafrag does not exist");
     } else {
-      $self->dnafrag->genome_db($genome_db);
+      $dnafrag->genome_db($genome_db);
     }
   }
 

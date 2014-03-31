@@ -19,11 +19,11 @@ limitations under the License.
 
 =head1 CONTACT
 
-  Please email comments or questions to the public Ensembl
-  developers list at <http://lists.ensembl.org/mailman/listinfo/dev>.
+Please email comments or questions to the public Ensembl
+developers list at <http://lists.ensembl.org/mailman/listinfo/dev>.
 
-  Questions may also be sent to the Ensembl help desk at
-  <http://www.ensembl.org/Help/Contact>.
+Questions may also be sent to the Ensembl help desk at
+<http://www.ensembl.org/Help/Contact>.
 
 =head1 AUTHORSHIP
 
@@ -33,18 +33,35 @@ Ensembl Team. Individual contributions can be found in the GIT log.
 
 =head1 NAME
 
-AlignedMember - DESCRIPTION of Object
+AlignedMember
 
 =head1 DESCRIPTION
 
 A subclass of SeqMember which extends it to allow it to be aligned with other AlignedMember objects.
 General enough to allow for global, local, pair-wise and multiple alignments.
-At the moment used primarily in NestedSet Tree data-structure, but there are plans to extend its usage.
 
 =head1 INHERITANCE TREE
 
   Bio::EnsEMBL::Compara::AlignedMember
-  +- Bio::EnsEMBL::Compara::SeqMember
+  `- Bio::EnsEMBL::Compara::SeqMember
+
+=head1 SYNOPSIS
+
+The alignment of this SeqMember:
+ - alignment_string()
+ - cigar_line()
+ - cigar_start()
+ - cigar_end()
+
+Statistics about the alignment of this SeqMember:
+ - perc_cov()
+ - perc_id()
+ - perc_pos()
+
+Links to the AlignedMemberSet:
+ - set()
+ - method_link_species_set_id()
+
 
 =head1 METHODS
 
@@ -335,7 +352,7 @@ sub alignment_string {
     if ($seq_type) {
         if ("$seq_type" eq '1') {
             $seq_type = 'exon_cased';
-            deprecate('AlignedMember::alignment_string(1) is deprecated. Please use AlignedMember::alignment_string("exon_cased") instead');
+            deprecate('AlignedMember::alignment_string(1) is deprecated, its support will end with e77. Please use AlignedMember::alignment_string("exon_cased") instead');
         }
         $key .= "_$seq_type";
 

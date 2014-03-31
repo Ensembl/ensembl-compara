@@ -55,7 +55,7 @@ package Bio::EnsEMBL::Compara::DBSQL::AlignedMemberAdaptor;
 use strict; 
 use warnings;
 
-use Bio::EnsEMBL::Utils::Exception qw(throw deprecate);
+use Bio::EnsEMBL::Utils::Exception qw(throw);
 use Bio::EnsEMBL::Utils::Scalar qw(:assert);
 
 use Bio::EnsEMBL::Compara::AlignedMember;

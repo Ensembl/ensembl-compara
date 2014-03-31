@@ -14,55 +14,47 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 
-=cut
-
-
 =head1 CONTACT
 
-  Please email comments or questions to the public Ensembl
-  developers list at <http://lists.ensembl.org/mailman/listinfo/dev>.
+Please email comments or questions to the public Ensembl
+developers list at <http://lists.ensembl.org/mailman/listinfo/dev>.
 
-  Questions may also be sent to the Ensembl help desk at
-  <http://www.ensembl.org/Help/Contact>.
+Questions may also be sent to the Ensembl help desk at
+<http://www.ensembl.org/Help/Contact>.
 
 =head1 NAME
 
-Bio::EnsEMBL::Compara::GenomeDB - DESCRIPTION of Object
-
-=head1 SYNOPSIS
-  use Bio::EnsEMBL::Compara::DnaFrag; 
-  my $genome_db = Bio::EnsEMBL::Compara::GenomeDB->new();
-
-SET VALUES
-  $genome_db->dbID(22);
-  $genome_db->dba($dba);
-  $genome_db->name("Homo sapiens");
-  $genome_db->assembly("NCBI36");
-  $genome_db->taxon_id(9606);
-  $genome_db->taxon($taxon);
-  $genome_db->genebuild("2006-12-Ensembl");
-  $genome_db->assembly_default(1);
-  $genome_db->locator("Bio::EnsEMBL::DBSQL::DBAdaptor/host=???;port=???;user=???;dbname=homo_sapiens_core_51_36m;species=Homo sapiens;disconnect_when_inactive=1");
-
-GET VALUES
-  $dbID = $genome_db->dbID;
-  $genome_db_adaptor = $genome_db->adaptor;
-  $name = $genome_db->name;
-  $assembly = $genome_db->assembly;
-  $taxon_id = $genome_db->taxon_id;
-  $taxon = $genome_db->taxon;
-  $genebuild = $genome_db->genebuild;
-  $assembly_default = $genome_db->assembly_default;
-  $locator = $genome_db->locator;
-
+Bio::EnsEMBL::Compara::GenomeDB
 
 =head1 DESCRIPTION
 
-The GenomeDB object stores information about each species including the taxon_id, species name, assembly, genebuild and the location of the core database.
+The GenomeDB object stores information about each species including the taxon id, species name, assembly, genebuild and the location of the core database.
+
+=head1 SYNOPSIS
+
+The end-user is probably only interested in the following methods:
+ - dBID() # this value is also called genome_db_id
+ - name() and get_short_name()
+ - assembly()
+ - taxon_id() and taxon()
+ - genebuild()
+ - has_karyotype()
+ - is_high_coverage()
+ - db_adaptor() (returns a Bio::EnsEMBL::DBSQL::DBAdaptor for this species)
+ - toString()
+
+More advanced use-cases include:
+ - assembly_default() (when there are multiple versions of the same species in the same database)
+ - locator() (when the species is on a different server
+ - sync_with_registry() (if you gradually build your Registry and the GenomeDB objects. Very unlikely !!)
+
+The constructor is able to confront the asked parameters (taxon_id, assembly, etc) to the ones that are actually stored in the core database if the db_adaptor parameter is given.
 
 =head1 APPENDIX
 
 The rest of the documentation details each of the object methods. Internal methods are usually preceded with a _
+
+=head1 METHODS
 
 =cut
 
@@ -76,7 +68,7 @@ use strict;
 use warnings;
 
 use Bio::EnsEMBL::DBLoader;
-use Bio::EnsEMBL::Utils::Exception qw(warning deprecate throw);
+use Bio::EnsEMBL::Utils::Exception qw(deprecate warning throw);
 use Bio::EnsEMBL::Utils::Argument qw(rearrange);
 
 use Bio::EnsEMBL::Compara::Utils::CoreDBAdaptor;
@@ -87,14 +79,14 @@ use base ('Bio::EnsEMBL::Storable');        # inherit dbID(), adaptor() and new(
 =head2 new
 
   Example :
-    my $genome_db = Bio::EnsEMBL::Compara::GenomeDB->new();
-    $genome_db->dba($dba);
-    $genome_db->name("Homo sapiens");
-    $genome_db->assembly("NCBI36");
-    $genome_db->taxon_id(9606);
-    $genome_db->dbID(22);
-    $genome_db->genebuild("2006-12-Ensembl");
-
+    my $genome_db = Bio::EnsEMBL::Compara::GenomeDB->new(
+        -db_adaptor => $dba,
+        -name       => 'Homo sapiens',
+        -assembly   => 'GRCh38',
+        -taxon_id   => 9606,
+        -dbID       => 180,
+        -genebuild  => '2006-12-Ensembl',
+    );
   Description: Creates a new GenomeDB object
   Returntype : Bio::EnsEMBL::Compara::GenomeDB
   Exceptions : none
@@ -130,7 +122,7 @@ sub new {
 
         foreach my $test (@parameters) {
             if (not defined $test->[2]) {
-                warn "'$test->[0]' is not defined in the core database\n";
+                warn "'$test->[0]' cannot be defined from the core database\n";
                 next;
             }
             if (defined ${$test->[1]} and (${$test->[1]} ne $test->[2])) {
@@ -148,27 +140,6 @@ sub new {
     defined $is_high_coverage   && $self->is_high_coverage($is_high_coverage);
 
     return $self;
-}
-
-
-=head2 new_fast
-
-  Arg [1]    : hash reference $hashref
-  Example    : 
-  Description: This is an ultra fast constructor which requires knowledge of
-               the objects internals to be used.
-  Returntype : Bio::EnsEMBL::Compara::GenomeDB
-  Exceptions : none
-  Caller     : Bio::EnsEMBL::Compara::DBSQL::GenomeDBAdaptor
-  Status     : Stable
-
-=cut
-
-sub new_fast {
-  my $class = shift;
-  my $hashref = shift;
-
-  return bless $hashref, $class;
 }
 
 
@@ -243,34 +214,6 @@ sub name{
 }
 
 
-=head2 short_name
-
-  Example    : $gdb->short_name;
-  Description: The name of this genome in the Gspe ('G'enera
-               'spe'cies) format. Can also handle 'G'enera 's'pecies
-               's'ub 's'pecies (Gsss)
-  Returntype : string
-  Exceptions : none
-  Caller     : general
-  Status     : Stable
-
-=cut
-
-sub short_name {
-  my $self = shift;
-  my $name = $self->name;
-  $name =~ s/\b(\w)/\U$1/g;
-  $name =~ s/\_/\ /g;
-  unless( $name =~  s/(\S)\S*\s(\S)\S*\s(\S)\S*\s(\S).*/$1$2$3$4/ ){
-    unless( $name =~  s/(\S)\S*\s(\S)\S*\s(\S{2,2}).*/$1$2$3/ ){
-      unless( $name =~  s/(\S)\S*\s(\S{3,3}).*/$1$2/ ){
-        $name = substr( $name, 0, 4 );
-      }
-    }
-  }
-  return $name;
-}
-
 =head2 get_short_name
 
   Example    : $gdb->get_short_name;
@@ -286,7 +229,29 @@ sub short_name {
 
 sub get_short_name {
   my $self = shift;
-  return $self->short_name;
+  my $name = $self->name;
+  $name =~ s/\b(\w)/\U$1/g;
+  $name =~ s/\_/\ /g;
+  unless( $name =~  s/(\S)\S*\s(\S)\S*\s(\S)\S*\s(\S).*/$1$2$3$4/ ){
+    unless( $name =~  s/(\S)\S*\s(\S)\S*\s(\S{2,2}).*/$1$2$3/ ){
+      unless( $name =~  s/(\S)\S*\s(\S{3,3}).*/$1$2/ ){
+        $name = substr( $name, 0, 4 );
+      }
+    }
+  }
+  return $name;
+}
+
+=head2 short_name
+
+  Description: DEPRECATED. GenomeDB::short_name() is deprecated in favour of get_short_name(), and will be removed in e76
+
+=cut
+
+sub short_name {
+  my $self = shift;
+  deprecate('GenomeDB::short_name() is deprecated in favour of get_short_name(), and will be removed in e76');
+  return $self->get_short_name;
 }
 
 
@@ -460,10 +425,12 @@ sub is_high_coverage {
 
 =head2 toString
 
-  Args       : (none)
   Example    : print $dbID->toString()."\n";
-  Description: returns a stringified representation of the object
+  Description: returns a stringified representation of the object (basically, the concatenation of all the fields)
+                Bio::EnsEMBL::Compara::GenomeDB: dbID=129, name='latimeria_chalumnae', assembly='LatCha1', genebuild='2011-09-Ensembl', default='1', taxon_id='7897', karyotype='0', high_coverage='1', locator=''
   Returntype : string
+  Exceptions : none
+  Status     : At risk (the format of the string would change if we add more fields to GenomeDB)
 
 =cut
 
@@ -482,9 +449,9 @@ sub toString {
         ."'";
 }
 
+
 =head2 sync_with_registry
 
-  Example    :
   Description: Synchronize all the cached genome_db objects
                db_adaptor (connections to core databases)
                with those set in Bio::EnsEMBL::Registry.
