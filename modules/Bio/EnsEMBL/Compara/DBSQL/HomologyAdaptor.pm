@@ -272,7 +272,7 @@ sub fetch_all_by_tree_node_id {
   throw("tree_node_id arg is required\n")
     unless ($tree_node_id);
 
-  my $constraint = ' h.tree_node_id = ?';
+  my $constraint = ' h.gene_tree_root_id = ?';
   $self->bind_param_generic_fetch($tree_node_id, SQL_INTEGER);
 
   return $self->generic_fetch($constraint);
@@ -396,15 +396,14 @@ sub _fetch_in_out_paralogues_with_NCBITaxon {
     my ($self, $in, $ref, $boundary_species, $member_type) = @_;
 
     my $species;
-    my $mlss;
 
     if (check_ref($ref, 'Bio::EnsEMBL::Compara::GenomeDB')) {
         $species = $ref;
-        $mlss = $self->db->get_MethodLinkSpeciesSetAdaptor->fetch_by_method_link_type_GenomeDBs('ENSEMBL_PARALOGUES', [$species]);
     } else {
         assert_ref($ref, 'Bio::EnsEMBL::Compara::Member');
         $species = $ref->genome_db;
     }
+    my $mlss = $self->db->get_MethodLinkSpeciesSetAdaptor->fetch_by_method_link_type_GenomeDBs('ENSEMBL_PARALOGUES', [$species]);
 
     assert_ref($boundary_species, 'Bio::EnsEMBL::Compara::NCBITaxon');
     # The last common ancestor of $species1 and $species2 defines the boundary
@@ -412,6 +411,7 @@ sub _fetch_in_out_paralogues_with_NCBITaxon {
 
     my @good_node_ids = ();
     if ($member_type) {
+        throw("Valid member_types are 'protein' and 'ncrna' (not $member_type)\n") if ($member_type ne 'protein') and ($member_type ne 'ncrna');
         push @good_node_ids, @{$self->_get_suitable_species_tree_node_ids($in, $lca, $member_type)};
     } else {
         push @good_node_ids, @{$self->_get_suitable_species_tree_node_ids($in, $lca, 'protein')};
@@ -421,7 +421,7 @@ sub _fetch_in_out_paralogues_with_NCBITaxon {
     if ($mlss) {
         return $self->fetch_all_by_MethodLinkSpeciesSet($mlss, -SPECIES_TREE_NODE_IDS => \@good_node_ids);
     } else {
-        return $self->fetch_all_by_Member($ref, -SPECIES_TREE_NODE_IDS => \@good_node_ids);
+        return $self->fetch_all_by_Member($ref, -METHOD_LINK_SPECIES_SET => $mlss, -SPECIES_TREE_NODE_IDS => \@good_node_ids);
     }
 }
 
