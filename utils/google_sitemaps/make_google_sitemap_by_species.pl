@@ -1,5 +1,5 @@
 #!/usr/local/bin/perl
-# Copyright [1999-2013] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+# Copyright [1999-2014] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 # 
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -120,9 +120,9 @@ foreach (@sitemaps) {
 $index->write("${ouput_dir}/sitemap-index.xml");
 
 if($domain eq "http://www.ensembl.org") {
-  print ("Moving sitemaps to /ensemblweb/www/www_$this_release/htdocs/ \n");
-  system("rm -r /ensemblweb/www/www_$this_release/htdocs/sitemaps") if(-d "/ensemblweb/www/www_$this_release/htdocs/sitemaps");
-  system("mv sitemaps /ensemblweb/www/www_$this_release/htdocs/");
+  print ("Moving sitemaps to /ensemblweb/www/www_$this_release/ensembl-webcode/htdocs/ \n");
+  system("rm -r /ensemblweb/www/www_$this_release/ensembl-webcode/htdocs/sitemaps") if(-d "/ensemblweb/www/www_$this_release/ensembl-webcode/htdocs/sitemaps");
+  system("mv sitemaps /ensemblweb/www/www_$this_release/ensembl-webcode/htdocs/");
 }
 exit;
 

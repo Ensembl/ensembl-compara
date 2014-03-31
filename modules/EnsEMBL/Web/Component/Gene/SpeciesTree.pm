@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2013] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2014] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -110,7 +110,7 @@ sub content {
 #     }
 # 
 #     # Sort the clades by the number of genome_db_ids. First the largest clades,
-#     # so they can be overwritten later (see ensembl-draw/modules/Bio/EnsEMBL/GlyphSet/genetree.pm)
+#     # so they can be overwritten later (see ensembl-webcode/modules/EnsEMBL/Draw/GlyphSet/genetree.pm)
 #     foreach my $clade_name (sort { scalar @{$genome_db_ids_by_clade->{$b}} <=> scalar @{$genome_db_ids_by_clade->{$a}} } keys %$genome_db_ids_by_clade) {
 #       my $genome_db_ids = $genome_db_ids_by_clade->{$clade_name};
 #       my $colour        = $hub->param("group_${clade_name}_${mode}colour") || 'magenta';          

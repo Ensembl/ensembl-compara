@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2013] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2014] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -60,7 +60,7 @@ sub focus {
     my $name      = $snp->name; 
     my $source    = $snp->source;
     my $link_name = $hub->get_ExtURL_link($name, 'DBSNP', $name) if $source eq 'dbSNP'; 
-    my $url       = $hub->url({ type => 'Variation', action => 'Summary', v => $v, vf => $hub->param('vf') });
+    my $url       = $hub->url({ type => 'Variation', action => 'Explore', v => $v, vf => $hub->param('vf') });
     
     $info = sprintf 'Variant %s (%s %s) <a href="%s">[View variation]</a>', $link_name, $source, $snp->Obj->adaptor->get_source_version($source), $url;
   } elsif ($r) {

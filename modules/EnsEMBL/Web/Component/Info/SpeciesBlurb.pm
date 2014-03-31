@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2013] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2014] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -21,6 +21,7 @@ package EnsEMBL::Web::Component::Info::SpeciesBlurb;
 use strict;
 
 use EnsEMBL::Web::Controller::SSI;
+use EnsEMBL::Web::Document::Table;
 
 use base qw(EnsEMBL::Web::Component);
 
@@ -84,7 +85,7 @@ sub content {
   ## ASSEMBLY STATS 
   my $file = '/ssi/species/stats_' . $self->hub->species . '.html';
   $html .= '<h2>Statistics</h2>';
-  $html .= EnsEMBL::Web::Controller::SSI::template_INCLUDE($self, $file);
+  $html .= $self->species_stats;
 
   my $interpro = $self->hub->url({'action' => 'IPtop500'});
   $html .= qq(<h3>InterPro Hits</h3>

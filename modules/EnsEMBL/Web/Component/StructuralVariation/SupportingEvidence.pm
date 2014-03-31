@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2013] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2014] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -130,7 +130,7 @@ sub supporting_evidence_table {
       if ($ssv_obj->is_evidence == 0) {
         my $sv_link = $hub->url({
                         type   => 'StructuralVariation',
-                        action => 'Summary',
+                        action => 'Explore',
                         sv     => $name,
                       });
         $name = qq{<a href="$sv_link">$name</a>};
@@ -151,7 +151,7 @@ sub supporting_evidence_table {
         $has_phen = 1;
       }
       
-      foreach my $svs (sort {$a->seq_region_start <=> $b->seq_region_start} @{$ssv_obj->get_all_StructuralVariationSamples}) {
+      foreach my $svs (@{$ssv_obj->get_all_StructuralVariationSamples}) {
         
         my $a_indiv  = ($svs->individual) ? $svs->individual->name : undef;
         my $a_strain = ($svs->strain) ? $svs->strain->name : undef;
@@ -160,9 +160,9 @@ sub supporting_evidence_table {
         $strains->{$a_strain} = 1 if ($a_strain); 
       }
       
-      $indiv  = join(';<br />', keys(%$indivs));
-      $strain = join(';<br />', keys(%$strains));
-      $phen   = join(';<br />', keys(%$phens));
+      $indiv  = join(';<br />', sort (keys(%$indivs)));
+      $strain = join(';<br />', sort (keys(%$strains)));
+      $phen   = join(';<br />', sort (keys(%$phens)));
       
       my %row = (
                   ssv      => $name,

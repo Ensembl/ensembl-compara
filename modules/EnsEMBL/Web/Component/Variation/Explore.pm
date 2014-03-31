@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2013] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2014] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -107,6 +107,7 @@ sub content {
   $html .= '</div>';
 
   ## Variation documentation links
+  my $vep_link = $hub->url({'species' => $species, 'type' => 'Tools', 'action' => 'VEP', '__clear' => 1});
   $html .= qq(
     <div class="column-wrapper">
       <div class="column-two column-first">
@@ -119,7 +120,7 @@ sub content {
             <li>Exercise: <a href="/info/website/tutorials/malaria_basic_genetics_exercises_Ensembl.pdf">Genomes and SNPs in Malaria</a></li>
           </ul>
           <h2>Analysing your data</h2>
-            <p><a href="/$species/UserData/UploadVariations?db=core"><img src="/i/vep_logo_sm.png" alt="[logo]" style="vertical-align:middle" /></a> Test your own variants with the <a href="/$species/UserData/UploadVariations?db=core" class="modal_link">Variant Effect Predictor</a></p>
+            <p><a href="$vep_link" alt="[logo]" style="vertical-align:middle" /></a> Test your own variants with the <a href="$vep_link">Variant Effect Predictor</a></p>
         </div>
       </div>
       <div class="column-two column-next">

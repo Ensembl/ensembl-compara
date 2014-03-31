@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2013] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2014] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -70,7 +70,7 @@ sub populate_tree {
     [qw(
       secondary EnsEMBL::Web::Component::Gene::RnaSecondaryStructure
     )],
-  { 'availability' => 'gene has_2ndary can_r2r'}
+   { 'availability' => 'gene can_r2r has_2ndary'}
   ));
 
   $self->create_node('Matches', 'External references',
@@ -161,15 +161,7 @@ sub populate_tree {
     [qw( genes EnsEMBL::Web::Component::Gene::FamilyGenes )],
     { 'availability'  => 'family', 'no_menu_entry' => 1 }
   ));
-  
-  $fam_node->append($self->create_subnode('Family/Proteins', 'Proteins in this family',
-    [qw(
-      ensembl EnsEMBL::Web::Component::Gene::FamilyProteins/ensembl
-      other   EnsEMBL::Web::Component::Gene::FamilyProteins/other
-    )],
-    { 'availability'  => 'family database:compara core', 'no_menu_entry' => 1 }
-  ));
-  
+
   $fam_node->append($self->create_subnode('Family/Alignments', 'Multiple alignments in this family',
     [qw( jalview EnsEMBL::Web::Component::Gene::FamilyAlignments )],
     { 'availability'  => 'family database:compara core', 'no_menu_entry' => 1 }

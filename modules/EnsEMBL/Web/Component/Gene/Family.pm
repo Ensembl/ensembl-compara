@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2013] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2014] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -38,6 +38,8 @@ sub content {
   my $sp             = $hub->species_defs->DISPLAY_NAME || $hub->species_defs->species_label($object->species);
   my $families       = $object->get_all_families($cdb);
   my $gene_stable_id = $object->stable_id;
+  my ($gene_name)    = $object->display_xref;
+  my $gene_label = $gene_name || $gene_stable_id;
 
   my $ckey = $cdb eq 'compara_pan_ensembl' ? '_pan_compara' : '';
 
@@ -46,30 +48,36 @@ sub content {
   $table->add_columns(
     { key => 'id',          title => 'Family ID',                            width => '20%', align => 'left', sort => 'html'   },
     { key => 'annot',       title => 'Consensus annotation',                 width => '30%', align => 'left', sort => 'string' },
-    { key => 'transcripts', title => "Other $sp transcripts in this family", width => '30%', align => 'left', sort => 'html'   },
+    { key => 'transcripts', title => "Other $gene_label transcripts in this family", width => '30%', align => 'left', sort => 'html'   },
     { key => 'jalview',     title => 'Multiple alignments',                  width => '20%', align => 'left', sort => 'none'   }
   );
-  
+
   foreach my $family_id (sort keys %$families) {
     my $family     = $families->{$family_id};
-    my $row        = { id => "$family_id<br /><br />" };
+    my $row        = { id => sprintf qq(<a href="%s">$family_id</a><br />), $hub->url({ species => 'Multi', type => "Family$ckey", action => 'Details', fm => $family_id, __clear => 1 })};
     my $genes      = $families->{$family_id}{'info'}{'genes'};
     my $url_params = { function => "Genes$ckey", family => $family_id, g => $gene_stable_id, cdb => $cdb };
-    
-    $row->{'id'}          .= scalar @$genes > 1 ? sprintf('(<a href="%s">%s genes</a>)', $hub->url($url_params), scalar @$genes) : '(1 gene)';
-    $row->{'id'}          .= sprintf '<br />(<a href="%s">all proteins in family</a>)',  $hub->url({ function => "Proteins$ckey", family => $family_id });
+    my $label      =  scalar @$genes > 1 ? 'genes' : 'gene';
+
+    $row->{'id'}  .= sprintf('(<a href="%s">%s %s</a>)', $hub->url($url_params), scalar @$genes, $label);
     $row->{'annot'}        = $families->{$family_id}{'info'}{'description'};
+
     $row->{'transcripts'}  = '<ul class="compact">';
-    $row->{'transcripts'} .= sprintf '<li><a href="%s">%s</a> (%s)</li>', $hub->url($url_params), $_->stable_id, $_->display_xref for @{$family->{'transcripts'}}; 
+    foreach my $t ( @{$family->{'transcripts'}}) {
+      (my $name) = $t->display_xref;
+      $label = $name ? ' ('.$name.')' : '';
+      my $url = $hub->url({type => 'Transcript', action => 'Summary', t => $t->stable_id });
+      $row->{'transcripts'} .= sprintf '<li><a href="%s">%s</a>%s</li>', $url, $t->stable_id, $label;
+    }
     $row->{'transcripts'} .= '</ul>';
 
     my $fam_obj         = $object->create_family($family_id, $cdb);
-    my $ensembl_members = $object->member_by_source($fam_obj, 'ENSEMBLPEP');
-    
+    my $ensembl_members = $fam_obj->get_Member_by_source('ENSEMBLPEP');
+
     my @all_pep_members;
     push @all_pep_members, @$ensembl_members;
-    push @all_pep_members, @{$object->member_by_source($fam_obj, 'Uniprot/SPTREMBL')};
-    push @all_pep_members, @{$object->member_by_source($fam_obj, 'Uniprot/SWISSPROT')};
+    push @all_pep_members, @{$fam_obj->get_Member_by_source('Uniprot/SPTREMBL')};
+    push @all_pep_members, @{$fam_obj->get_Member_by_source('Uniprot/SWISSPROT')};
 
     $row->{'jalview'} = $self->jalview_link($family_id, 'Ensembl', $ensembl_members, $cdb) . $self->jalview_link($family_id, '', \@all_pep_members, $cdb) || 'No alignment has been produced for this family.';
 

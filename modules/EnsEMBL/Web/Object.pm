@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2013] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2014] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -30,10 +30,13 @@ package EnsEMBL::Web::Object;
 
 use strict;
 
+use HTML::Entities  qw(encode_entities);
+
 use EnsEMBL::Web::Text::FeatureParser;
 use EnsEMBL::Web::TmpFile::Text;
 use EnsEMBL::Web::DBSQL::WebsiteAdaptor;
 use EnsEMBL::Web::Tools::Misc qw(get_url_content);
+use HTML::Entities  qw(encode_entities);
 
 use base qw(EnsEMBL::Web::Root);
 
@@ -184,7 +187,8 @@ sub gene_description {
   my %description_by_type = ('bacterial_contaminant' => 'Probable bacterial contaminant');
   
   if ($gene) {
-    return $gene->description || $description_by_type{$gene->biotype} || 'No description';
+    my $desc = $gene->description || $description_by_type{$gene->biotype} || 'No description';
+    return encode_entities($desc);
   } else {
     return 'No description';
   }

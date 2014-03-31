@@ -1,5 +1,5 @@
 #!/usr/local/bin/perl
-# Copyright [1999-2013] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+# Copyright [1999-2014] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 # 
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -36,7 +36,7 @@ use EnsEMBL::Web::Tools::Document;
 my $SERVER_ROOT = $SiteDefs::ENSEMBL_SERVERROOT;
 my $EXPORT      = $SiteDefs::ENSEMBL_WEBROOT.'/utils/edoc/temp/';
 my $SUPPORT     = $SiteDefs::ENSEMBL_WEBROOT.'/utils/edoc/support/';
-my @locations = ( "$SERVER_ROOT/ensembl-draw/modules", map { "$SiteDefs::ENSEMBL_WEBROOT/modules/$_" } @modules );
+my @locations   = map { "$SiteDefs::ENSEMBL_WEBROOT/modules/$_" } @modules;
 
 foreach( @SiteDefs::ENSEMBL_LIB_DIRS ) {
   if( /plugins/ ) { 

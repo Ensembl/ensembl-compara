@@ -1,5 +1,5 @@
 /*
- * Copyright [1999-2013] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+ * Copyright [1999-2014] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -87,6 +87,12 @@ label.ff-label {
 }
 div.ff-right {
   padding-left: 50%;
+}
+div.form-field-scroll div.ff-right  {
+  border: 1px solid [[PANEL_BORDER]];
+  max-height: 400px;
+  overflow: auto;
+  padding: 8px;
 }
 div.ff-multi div.ff-right {
   padding-bottom: 8px;

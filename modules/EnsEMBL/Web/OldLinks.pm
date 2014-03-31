@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2013] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2014] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -127,6 +127,7 @@ our %mapping = (
                               { 'type' => 'Phenotype',           'action' => 'All',                          'initial_release' => 69 },
                               { 'type' => 'Marker',              'action' => 'Details',                      'initial_release' => 59 },
                               { 'type' => 'GeneTree',            'action' => 'Image',                        'initial_release' => 60 },
+                              { 'type' => 'Family',              'action' => 'Details',                      'initial_release' => 75 },
                               { 'type' => 'Experiment',          'action' => 'Sources',                      'initial_release' => 65 },
                               { 'type' => 'Search',              'action' => 'New',                          'initial_release' => 63 }],       
   # internal views

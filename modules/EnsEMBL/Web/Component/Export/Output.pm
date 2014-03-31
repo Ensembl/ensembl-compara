@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2013] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2014] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -53,9 +53,8 @@ sub ld_dump {
   foreach (values %pop_params) { 
     my $pop_param       = $hub->param("pop$_");
     $pop_param          = $object->get_pop_name($pop_param);
-    my $zoom            = 20000; # Currently non-configurable
     my @colour_gradient = ('ffffff', $hub->colourmap->build_linear_gradient(41, 'mistyrose', 'pink', 'indianred2', 'red'));
-    my $ld_values       = $object->get_ld_values($pop_param, $v, $zoom);
+    my $ld_values       = $object->get_ld_values($pop_param, $v);
     
     my %populations     = map { $_ => 1 } map { keys %$_ } values %$ld_values;
   

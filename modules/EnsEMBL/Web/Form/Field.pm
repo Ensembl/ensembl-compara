@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2013] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2014] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -73,13 +73,15 @@ sub configure {
   ## @params HashRef with following keys. (or ArrayRef of similar HashRefs in case of multiple fields)
   ##  - field_class   Extra CSS className for the field div
   ##  - label         innerHTML for <label>
+  ##  - helptip       helptip for the label element
   ##  - notes         innerHTML for foot notes
   ##  - head_notes    innerHTML for head notes
   ##  - elements      ArrayRef of hashRefs with keys as accepted by Form::Element::configure()
+  ##  - inline        Flag if on, tries to add the elements in horizontal fashion (if possible)
   my ($self, $params) = @_;
 
   $self->set_attribute('class', $params->{'field_class'}) if exists $params->{'field_class'};
-  $self->label($params->{'label'})                        if exists $params->{'label'};
+  $self->label($params->{'label'}, $params->{'helptip'})  if exists $params->{'label'};
   $self->head_notes($params->{'head_notes'})              if exists $params->{'head_notes'};
   $self->foot_notes($params->{'notes'})                   if exists $params->{'notes'};
   $self->add_element($_, $params->{'inline'} || 0)        for @{$params->{'elements'} || []};
@@ -89,7 +91,8 @@ sub configure {
 
 sub label {
   ## Gets, modifies or adds new label to field
-  ## @params String innerHTML for label
+  ## @param String innerHTML for label
+  ## @param Helptip text
   ## @return DOM::Node::Element::Label object
   my $self = shift;
   my $label = $self->first_child && $self->first_child->node_name eq 'label'
@@ -98,8 +101,19 @@ sub label {
   $label->set_attribute('class', $self->CSS_CLASS_LABEL);
   if (@_) {
     my $inner_HTML = shift;
-    $inner_HTML .= ':' if $inner_HTML !~ /:$/;
-    $label->inner_HTML($inner_HTML);
+    if (@_ && $_[0]) {
+      $label->append_children({
+        'node_name'   => 'span',
+        'class'       => '_ht ht',
+        'title'       => $_[0],
+        'inner_HTML'  => $inner_HTML =~ s/:$//r
+      }, {
+        'node_name'   => 'text',
+        'text'        => ':'
+      });
+    } else {
+      $label->inner_HTML($inner_HTML =~ s/:?$/:/r);
+    }
   }
   return $label;
 }
@@ -165,7 +179,7 @@ sub add_element {
   else {
     $div->append_child($element);
   }
-  $div->set_attribute('class', [ $self->CSS_CLASS_ELEMENT_DIV, $params->{'element_class'} || () ]);
+  $div->set_attribute('class', [ $self->CSS_CLASS_ELEMENT_DIV, ref $params->{'element_class'} ? @{$params->{'element_class'}} : $params->{'element_class'} || () ]);
   $div->set_flag($self->_FLAG_ELEMENT);
   return $div;
 }

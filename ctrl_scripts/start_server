@@ -19,7 +19,7 @@ Run 'ctrl_script/start_server --help' for usage details.
 
 =head1 LICENSE
 
-Copyright [1999-2013] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2014] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -200,3 +200,4 @@ if ($SiteDefs::ENSEMBL_CTRLLOG && open(LOG, ">>$SiteDefs::ENSEMBL_CTRLLOG")) {
   print LOG sprintf "%s [002] server started (manual invocation)\n", strftime("%Y-%m-%d %H:%M:%S", localtime);
   close LOG; 
 }
+

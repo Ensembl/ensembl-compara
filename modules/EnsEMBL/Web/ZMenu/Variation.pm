@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2013] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2014] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -20,7 +20,7 @@ package EnsEMBL::Web::ZMenu::Variation;
 
 use strict;
 
-use Bio::EnsEMBL::GlyphSet::_variation;
+use EnsEMBL::Draw::GlyphSet::_variation;
 
 use base qw(EnsEMBL::Web::ZMenu);
 
@@ -34,7 +34,7 @@ sub content {
   my @features;
   
   if ($click_data) {
-    @features = @{Bio::EnsEMBL::GlyphSet::_variation->new($click_data)->features};
+    @features = @{EnsEMBL::Draw::GlyphSet::_variation->new($click_data)->features};
     @features = () unless grep $_->dbID eq $vf, @features;
   } elsif (!$vf) {
     my $adaptor         = $hub->database($db)->get_VariationAdaptor;
@@ -131,17 +131,35 @@ sub feature_content {
   }
   
   $self->caption(sprintf '%s: %s', $feature->variation->is_somatic ? 'Somatic mutation' : 'Variation', $name);
-  
-  $self->add_entry({
-    label_html => "$name properties",
-    link       => $hub->url({
-      type   => 'Variation', 
-      action => 'Summary',
-      v      => $name,
-      vf     => $dbID,
-      source => $source
-    })
-  });
+
+  if ($db eq 'variation') {
+    $self->add_entry({
+      label_html => "$name properties",
+      link       => $hub->url({
+        type   => 'Variation',
+        action => 'Explore',
+        v      => $name,
+        vf     => $dbID,
+        source => $source
+      })
+    });
+
+  } else {
+    if ($source eq 'LOVD') {
+      # http://varcache.lovd.nl/redirect/hg19.chr###ID### , e.g. for ID: 1:808922_808922(FAM41C:n.1101+570C>T)
+      my $tmp_chr_end = ($chr_start>$chr_end) ? $chr_start+1 : $chr_end;
+      my $external_url = $hub->get_ExtURL_link("View in $source", 'LOVD', { ID => "$chr:$chr_start\_$tmp_chr_end($name)" });
+      $self->add_entry({
+        label_html => $external_url
+      });
+    }
+    else {
+      my $external_url = $hub->get_ExtURL_link("View in $source", uc($source));
+      $self->add_entry({
+         label_html => $external_url
+      });
+    }
+  }
   
   $self->add_entry({ type => $_->[0], label => $_->[1] }) for grep $_->[1], @entries;
   $self->add_entry({ label_html => $codon_change }) if $codon_change;

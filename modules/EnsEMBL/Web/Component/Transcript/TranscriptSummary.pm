@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2013] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2014] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -166,6 +166,19 @@ sub content {
   ## add alternative transcript info
   my $alt_trans = $self->_matches('alternative_transcripts', 'Alternative transcripts', 'ALT_TRANS', 'show_version');
   $table->add_row('Alternative transcripts', $alt_trans) if $alt_trans;
+
+  my $cv_terms = $object->get_cv_terms;
+  if (@$cv_terms) {
+    my $first = shift @$cv_terms;
+    my $text = qq(<p>$first [<a href="/info/about/annotation_attributes.html">Definitions</a>]</p>);
+    foreach my $next (@$cv_terms) {
+      $text .= "<p>$next</p>";
+    }
+    $table->add_row('Annotation Attributes', $text) if $text;;
+  }
+
+  ## add gencode basic info
+  $table->add_row('GENCODE basic gene', "This transcript is a member of the Gencode basic gene set.") if(@{$transcript->get_all_Attributes('gencode_basic')});
 
   return $table->render;
 }

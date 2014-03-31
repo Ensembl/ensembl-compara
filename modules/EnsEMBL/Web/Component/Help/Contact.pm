@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2013] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2014] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -35,7 +35,7 @@ sub content {
   my $self  = shift;
   my $hub   = $self->hub;
 
-  my $form      = $self->new_form({'id' => 'contact', 'action' => "/Help/Preview", 'method' => 'post'});
+  my $form      = $self->new_form({'id' => 'contact', 'action' => "/Help/SendEmail", 'method' => 'post', 'enctype'=>'multipart/form-data'});
   my $fieldset  = $form->add_fieldset;
 
   if ($hub->param('strong')) {
@@ -71,6 +71,11 @@ sub content {
     'name'    => 'message',
     'label'   => 'Message',
     'value'   => $hub->param('message') || '',
+  }, {
+    'type'    => 'File',
+    'name'    => 'attachment',
+    'label'   => 'Include a file or screenshot (optional)',
+    'value'   => '',
   }]);
   
   $fieldset->add_hidden({
@@ -81,7 +86,7 @@ sub content {
   $fieldset->add_button({
     'type'    => 'Submit',
     'name'    => 'submit',
-    'value'   => 'Preview',
+    'value'   => 'Send',
   });
 
   return $form->render;

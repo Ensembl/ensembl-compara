@@ -1,5 +1,5 @@
 /*
- * Copyright [1999-2013] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+ * Copyright [1999-2014] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -167,9 +167,9 @@ Ensembl.Panel.ModalContainer = Ensembl.Panel.Overlay.extend({
     var hash;
     
     if (id && id.match('-')) {
-      id   = id.split('-');
-      hash = id[1];
-      id   = id[0];
+      hash = id.split('-');
+      id   = hash.shift();
+      hash = hash.join('-');
     } else {
       hash = (url.match(/#(.+)$/) || [])[1];
     }

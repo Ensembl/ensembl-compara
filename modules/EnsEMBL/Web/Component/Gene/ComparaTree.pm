@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2013] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2014] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -124,7 +124,7 @@ sub content {
   my @collapsed_clades     = grep { $_ =~ /^group_/ && $hub->param($_) eq 'collapse' } $hub->param;
   my @highlights           = $gene && $member ? ($gene->stable_id, $member->genome_db->dbID) : (undef, undef);
   my $hidden_genes_counter = 0;
-  my $link                 = $hub->type eq 'GeneTree' ? '' : sprintf ' <a href="%s">%s</a>', $hub->url({ species => 'Multi', type => 'GeneTree', action => undef, gt => $tree_stable_id, __clear => 1 }), $tree_stable_id;
+  my $link                 = $hub->type eq 'GeneTree' ? '' : sprintf ' <a href="%s">%s</a>', $hub->url({ species => 'Multi', type => 'GeneTree', action => 'Image', gt => $tree_stable_id, __clear => 1 }), $tree_stable_id;
   my ($hidden_genome_db_ids, $highlight_species, $highlight_genome_db_id);
 
   my $html                 = sprintf '<h3>GeneTree%s</h3>%s', $link, $self->new_twocol(
@@ -279,7 +279,7 @@ sub content {
     }
 
     # Sort the clades by the number of genome_db_ids. First the largest clades,
-    # so they can be overwritten later (see ensembl-draw/modules/Bio/EnsEMBL/GlyphSet/genetree.pm)
+    # so they can be overwritten later (see ensembl-webcode/modules/EnsEMBL/Draw/GlyphSet/genetree.pm)
     foreach my $clade_name (sort { scalar @{$genome_db_ids_by_clade->{$b}} <=> scalar @{$genome_db_ids_by_clade->{$a}} } keys %$genome_db_ids_by_clade) {
       my $genome_db_ids = $genome_db_ids_by_clade->{$clade_name};
       my $colour        = $hub->param("group_${clade_name}_${mode}colour") || 'magenta';

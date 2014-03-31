@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2013] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2014] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -34,7 +34,7 @@ use Carp;
 use CGI;
 use URI::Escape qw(uri_escape uri_unescape);
 
-use Bio::EnsEMBL::ColourMap;
+use EnsEMBL::Draw::ColourMap;
 
 use EnsEMBL::Web::Cache;
 use EnsEMBL::Web::Cookie;
@@ -127,7 +127,7 @@ sub config_adaptor { return $_[0]{'_config_adaptor'} ||= EnsEMBL::Web::DBSQL::Co
 
 sub timer_push        { return ref $_[0]->timer eq 'EnsEMBL::Web::Timer' ? shift->timer->push(@_) : undef;    }
 sub referer           { return $_[0]{'referer'}   ||= $_[0]->parse_referer;                                  }
-sub colourmap         { return $_[0]{'colourmap'} ||= Bio::EnsEMBL::ColourMap->new($_[0]->species_defs);      }
+sub colourmap         { return $_[0]{'colourmap'} ||= EnsEMBL::Draw::ColourMap->new($_[0]->species_defs);      }
 sub is_ajax_request   { return $_[0]{'is_ajax'}   //= $_[0]{'_apache_handle'}->headers_in->{'X-Requested-With'} eq 'XMLHttpRequest'; }
 
 sub species_path      { return shift->species_defs->species_path(@_);       }
@@ -460,7 +460,7 @@ sub parse_referer {
   
   unshift @path, 'common' unless $path[0] =~ /(Multi|common)/ || $species_defs->valid_species($path[0]);
 
-  if ($ENV{'HTTP_REFERER'} !~ /$servername/i && $ENV{'HTTP_REFERER'} !~ /$server/) {
+  if ($ENV{'HTTP_REFERER'} !~ /$servername/i && $ENV{'HTTP_REFERER'} !~ /$server/ && $ENV{'HTTP_REFERER'} !~ m!/Tools/!) {
     $info->{'external'} = 1;
   } else {
     $info->{'external'} = 0;

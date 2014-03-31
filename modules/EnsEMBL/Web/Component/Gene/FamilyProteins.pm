@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2013] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2014] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -50,7 +50,7 @@ sub content_other {
   my $html;
 
   foreach my $key (sort keys %sources) {
-    my @peptides = map { $_->stable_id } @{$object->member_by_source($family, $sources{$key}{'key'})};
+    my @peptides = map { $_->stable_id } @{$family->get_Member_by_source($sources{$key}{'key'})};
     my $row_count;
     
     if (@peptides) {
@@ -132,8 +132,13 @@ sub content_ensembl {
 
   my $member_skipped_count = 0;
   my @member_skipped_species;
-  
-  $html .= "<h3>$sitename proteins in this family</h3>";
+
+  my $table     = $self->new_twocol;
+  my $stable_id = $family->stable_id;
+  my $desc      = $family->description;
+  $table->add_row("$sitename Family ID",   $stable_id);
+  $table->add_row('Description'        , $desc);
+  $html .= $table->render;
   
   if ($count > 0) {
     my $ens_table = $self->new_table([], [], { margin  => '1em 0px' });

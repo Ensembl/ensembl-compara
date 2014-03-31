@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2013] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2014] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -20,7 +20,7 @@ package EnsEMBL::Web::ZMenu::StructuralVariation;
 
 use strict;
 
-use Bio::EnsEMBL::GlyphSet::structural_variation;
+use EnsEMBL::Draw::GlyphSet::structural_variation;
 
 use base qw(EnsEMBL::Web::ZMenu);
 
@@ -33,7 +33,7 @@ sub content {
   my @features;
   
   if ($click_data) {
-    @features = @{Bio::EnsEMBL::GlyphSet::structural_variation->new($click_data)->features};
+    @features = @{EnsEMBL::Draw::GlyphSet::structural_variation->new($click_data)->features};
     @features = () if $svf && !(grep $_->dbID eq $svf, @features);
   }
   
@@ -113,10 +113,35 @@ sub feature_content {
       label_html => "$sv_id properties",
       link       => $hub->url({
         type     => 'StructuralVariation',
-        action   => 'Summary',
+        action   => 'Explore',
         sv       => $sv_id,
       })
     });
+  }
+  else {
+    my $source = $feature->source;
+    if ($source eq 'LOVD') {
+      # http://varcache.lovd.nl/redirect/hg19.chr###ID### , e.g. for ID: 1:808922_808922(FAM41C:n.1101+570C>T)
+      my $tmp_end = ($start>$end) ? $start+1 : $end;
+      my $external_url = $hub->get_ExtURL_link("View in $source", 'LOVD', { ID => "$seq_region:$start\_$tmp_end($sv_id)" });
+      $self->add_entry({
+        label_html => $external_url
+      });
+    }
+    elsif ($source =~ /DECIPHER/i) {
+      my $sv_samples = $variation->get_all_StructuralVariationSamples; 
+      my $individual = (scalar(@$sv_samples)) ? $sv_samples->[0]->individual->name : '';
+      my $external_url = $hub->get_ExtURL_link("View in $source", 'DECIPHER', { ID => $individual });
+      $self->add_entry({
+        label_html => $external_url
+      });
+    }
+    else {
+      my $external_url = $hub->get_ExtURL_link("View in $source", uc($source));
+      $self->add_entry({
+        label_html => $external_url
+      });
+    }
   }
 
   if ($is_breakpoint) {

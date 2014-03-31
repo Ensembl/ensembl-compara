@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2013] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2014] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -640,11 +640,6 @@ sub create_family {
   return $family_adaptor->fetch_by_stable_id($id);
 }
 
-sub member_by_source {
-  my ($self, $family, $source) = @_;
-  return $family->get_Member_by_source($source) || [];
-}
-
 sub chromosome {
   my $self = shift;
   return undef if lc($self->coord_system) ne 'chromosome';
@@ -768,7 +763,7 @@ sub get_homology_matches {
       my $order = 0;
       
       foreach my $homology (@{$homologues->{$display_spp}}){ 
-        my ($homologue, $homology_desc, $homology_subtype, $query_perc_id, $target_perc_id, $dnds_ratio, $ancestor_node_id) = @$homology;
+        my ($homologue, $homology_desc, $homology_subtype, $query_perc_id, $target_perc_id, $dnds_ratio, $gene_tree_node_id) = @$homology;
   
         next unless $homology_desc =~ /$homology_description/;
         next if $disallowed_homology && $homology_desc =~ /$disallowed_homology/;
@@ -785,7 +780,7 @@ sub get_homology_matches {
         $homology_list{$display_spp}{$homologue_id}{'target_perc_id'}      = $target_perc_id;
         $homology_list{$display_spp}{$homologue_id}{'homology_dnds_ratio'} = $dnds_ratio; 
         $homology_list{$display_spp}{$homologue_id}{'display_id'}          = $homologue->display_label || 'Novel Ensembl prediction';
-        $homology_list{$display_spp}{$homologue_id}{'ancestor_node_id'}    = $ancestor_node_id;
+        $homology_list{$display_spp}{$homologue_id}{'gene_tree_node_id'}   = $gene_tree_node_id;
         
         $order++;
       }
@@ -855,7 +850,7 @@ sub fetch_homology_species_hash {
         $dnds_ratio     = $homology->dnds_ratio; 
       }
     }  
-    push (@{$homologues{$genome_db_name}}, [ $target_member, $homology->description, $homology->subtype, $query_perc_id, $target_perc_id, $dnds_ratio, $homology->ancestor_node_id]);
+    push (@{$homologues{$genome_db_name}}, [ $target_member, $homology->description, $homology->taxonomy_level, $query_perc_id, $target_perc_id, $dnds_ratio, $homology->{_gene_tree_node_id}]);
   }
 
   $self->timer_push( 'homologies hacked', 6 );

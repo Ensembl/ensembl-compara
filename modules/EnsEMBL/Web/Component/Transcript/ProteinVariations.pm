@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2013] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2014] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -104,7 +104,7 @@ sub content {
   ];
  
   # add SIFT for supported species
-  if ($hub->species =~ /homo_sapiens|bos_taurus|canis_familiaris|danio_rerio|gallus_gallus|mus_musculus|rattus_norvegicus|sus_scrofa/i) {
+  if ( $hub->species_defs->databases->{'DATABASE_VARIATION'}->{'SIFT'}){
     push @$columns, ({ key => 'sift', title => 'SIFT', width => '8%', align => 'center', sort => 'position_html', $self->strip_HTML($glossary->{'SIFT'}) });
   }
   if ($hub->species =~ /homo_sapiens/i) {

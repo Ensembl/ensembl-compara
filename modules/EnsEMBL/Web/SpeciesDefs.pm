@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2013] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2014] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -528,6 +528,7 @@ sub _expand_database_templates {
 
 sub _merge_db_tree {
   my ($self, $tree, $db_tree, $key) = @_;
+  return unless defined $db_tree;
   Hash::Merge::set_behavior('RIGHT_PRECEDENT');
   my $t = merge($tree->{$key}, $db_tree->{$key});
   $tree->{$key} = $t;

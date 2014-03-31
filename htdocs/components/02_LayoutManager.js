@@ -1,5 +1,5 @@
 /*
- * Copyright [1999-2013] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+ * Copyright [1999-2014] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -230,9 +230,11 @@ Ensembl.LayoutManager.extend({
     document.title = document.title.replace(/(Chromosome ).+/, '$1' + text);
   },
   
-  toggleContent: function (rel) {
+  toggleContent: function (rel, delay) {
     if (rel) {
-      $('a.toggle[rel="' + rel + '"]').toggleClass('open closed');
+      window.setTimeout(function() {
+        $('a.toggle[rel="' + rel + '"]').toggleClass('open closed');
+      }, delay && $('a.toggle[rel="' + rel + '"]').hasClass('open') ? delay : 0);
     }
   },
   

@@ -1,5 +1,5 @@
 /*
- * Copyright [1999-2013] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+ * Copyright [1999-2014] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,11 +18,15 @@
 
 $.extend($.fn.dataTableExt.oSort, {
   'numeric-asc': function (a, b) {
+    a = parseFloat(a);
+    b = parseFloat(b);
     var x = isNaN(a) || a === ' ' || a === '' ? 1e100 : a;
     var y = isNaN(b) || b === ' ' || b === '' ? 1e100 : b;
     return x - y;
   },
   'numeric-desc': function (a, b) {
+    a = parseFloat(a);
+    b = parseFloat(b);
     var x = isNaN(a) || a === ' ' || a === '' ? -1e100 : a;
     var y = isNaN(b) || b === ' ' || b === '' ? -1e100 : b;
     return y - x;

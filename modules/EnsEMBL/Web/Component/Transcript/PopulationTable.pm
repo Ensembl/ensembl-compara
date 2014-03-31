@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2013] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2014] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -141,8 +141,6 @@ sub get_page_data {
     
     next unless @$consequences && @$allele_info;
     
-    my ($coverage_level, $raw_coverage_obj) = $object->read_coverage($sample, $sample_slice);
-    my @coverage_obj = @{$raw_coverage_obj||[]} ? sort { $a->start <=> $b->start } @$raw_coverage_obj : ();
     my $index        = 0;
     
     foreach my $allele_ref (@$allele_info) {
@@ -189,25 +187,10 @@ sub get_page_data {
         $codons =~ tr/acgt/ACGT/;
       }
       
-      # read coverage in mouse?
-      if (grep $_ eq 'Sanger', @{$allele->get_all_sources || []}) {
-        my $allele_start = $allele->start;
-        my $coverage;
-        
-        foreach (@coverage_obj) {
-          next if $allele_start > $_->end;
-          last if $allele_start < $_->start;
-          $coverage = $_->level if $_->level > $coverage;
-        }
-        
-        $coverage = '>' . ($coverage - 1) if $coverage == $coverage_level->[-1];
-        $status   = "resequencing coverage $coverage";
-      } else {
-        my $tmp        = $allele->variation;
-        my @validation = $tmp ? @{$tmp->get_all_validation_states || []} : ();
-        $status        = join ', ',  @validation;
-        $status        =~ s/freq/frequency/;
-      }
+      my $tmp        = $allele->variation;
+      my @validation = $tmp ? @{$tmp->get_all_validation_states || []} : ();
+      $status        = join ', ',  @validation;
+      $status        =~ s/freq/frequency/;
       
       # url
       my $vid = $allele->variation_name;

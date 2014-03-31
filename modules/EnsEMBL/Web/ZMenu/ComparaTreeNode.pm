@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2013] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2014] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -69,8 +69,7 @@ sub content {
   my $speciesTreeNode      = $tree->adaptor->db->get_SpeciesTreeNodeAdaptor->fetch_node_by_node_id($species_tree_node_id);
   my $taxon_id             = $speciesTreeNode->taxon_id;
      $taxon_id        = $node->genome_db->taxon_id if !$taxon_id && $is_leaf && not $is_supertree;
-  my $NCBITaxon            = $tree->adaptor->db->get_NCBITaxonAdaptor->fetch_node_by_node_id($taxon_id);
-  my $taxon_name           = $NCBITaxon->scientific_name();
+  my $taxon_name           = $speciesTreeNode->node_name;
      $taxon_name      = $node->genome_db->taxon->name if !$taxon_name && $is_leaf && not $is_supertree;
 
   my $taxon_mya       = $hub->species_defs->multi_hash->{'DATABASE_COMPARA'}{'TAXON_MYA'}->{$taxon_id};
@@ -104,13 +103,12 @@ sub content {
     order => 4
   }) unless $is_root || $is_leaf || $is_supertree;
 
-  if (defined $tagvalues->{'lost_taxon_id'}) {
-    my $lost_taxa = $tagvalues->{'lost_taxon_id'};
-       $lost_taxa = [ $lost_taxa ] if ref $lost_taxa ne 'ARRAY';
+  if (defined $tagvalues->{'lost_species_tree_node_id'}) {
+    my $lost_taxa = $node->lost_taxa;
        
     $self->add_entry({
       type  => 'Lost taxa',
-      label => join(', ', map { $hub->species_defs->multi_hash->{'DATABASE_COMPARA'}{'TAXON_NAME'}->{$_} || "taxon_id: $_" }  @$lost_taxa ),
+      label => join(', ', map { $hub->species_defs->multi_hash->{'DATABASE_COMPARA'}{'TAXON_NAME'}->{$_->taxon_id} || $_->node_name }  @$lost_taxa ),
       order => 5.6
     });
   }
@@ -128,6 +126,10 @@ sub content {
 
   # Expand all nodes
   if (grep $_ != $node_id, keys %collapsed_ids) {
+
+    my %subnodes = map {($_->node_id => 1)} @{$node->get_all_nodes};
+    my $collapse = join ',', (grep {not $subnodes{$_}} (keys %collapsed_ids));
+
     $self->add_entry({
       type          => 'Image',
       label         => 'expand all sub-trees',
@@ -137,7 +139,7 @@ sub content {
       link          => $hub->url('Component', {
         type     => $hub->type,
         action   => $action,
-        collapse => 'none' 
+        collapse => $collapse
       })
     });
   }

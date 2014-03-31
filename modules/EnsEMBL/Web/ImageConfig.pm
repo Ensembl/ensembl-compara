@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2013] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2014] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -793,7 +793,7 @@ sub _add_datahub_tracks {
   my $hub    = $self->hub;
   my $data   = $parent->data;
   my $matrix = $config->{'dimensions'}{'x'} && $config->{'dimensions'}{'y'};
-  my $link   = $config->{'description_url'} ? qq{<br /><a href="$config->{'description_url'}" rel="external">Go to track description on datahub</a>} : '';
+  my $link   = $config->{'description_url'} ? qq(<br /><a href="$config->{'description_url'}" rel="external">Go to track description on datahub</a>) : '';
   my $info   = $config->{'longLabel'} . $link;
   my %tracks;
   
@@ -961,6 +961,7 @@ sub _load_url_feature {
   });
   $menu->append($track) if $track;
 }
+
 sub load_configured_bam    { shift->load_file_format('bam');    }
 sub load_configured_bigbed { shift->load_file_format('bigbed'); }
 sub load_configured_bigwig { shift->load_file_format('bigwig'); }
@@ -972,7 +973,8 @@ sub load_file_format {
   
   return unless $self->can($function);
   
-  $sources = $self->sd_call(sprintf 'ENSEMBL_INTERNAL_%s_SOURCES', uc $format) || {} unless defined $sources; # get the internal sources from config
+  my $internal = !defined $sources;
+     $sources  = $self->sd_call(sprintf 'ENSEMBL_INTERNAL_%s_SOURCES', uc $format) || {} unless defined $sources; # get the internal sources from config
   
   foreach my $source_name (sort keys %$sources) {
     # get the target menu 
@@ -981,11 +983,11 @@ sub load_file_format {
     
     if ($menu) {
       $source = $self->sd_call($source_name);
-      $view = $source->{'view'};
+      $view   = $source->{'view'};
     } else {
       ## Probably an external datahub source
          $source       = $sources->{$source_name};
-         $view         = $source->{'view'};   
+         $view         = $source->{'view'};
       my $menu_key     = $source->{'menu_key'};
       my $menu_name    = $source->{'menu_name'};
       my $submenu_key  = $source->{'submenu_key'};
@@ -999,7 +1001,7 @@ sub load_file_format {
       }
     }
     
-    $self->$function(key => $source_name, menu => $menu, source => $source, description => $source->{'description'}, internal => 1, view => $view) if $source;
+    $self->$function(key => $source_name, menu => $menu, source => $source, description => $source->{'description'}, internal => $internal, view => $view) if $source;
   }
 }
 
@@ -1038,11 +1040,11 @@ sub _add_bigbed_track {
   ];
 
   my $options = {
-    external  => 'external',
-    sub_type  => 'url',
-    colourset => 'feature',
-    style     => $args{'source'}{'style'},
-    
+    external     => 'external',
+    sub_type     => 'url',
+    colourset    => 'feature',
+    style        => $args{'source'}{'style'},
+    addhiddenbgd => 1,
   };
 
   if ($args{'view'} && $args{'view'} =~ /peaks/i) {
@@ -1070,9 +1072,10 @@ sub _add_bigwig_track {
   ];
  
   my $options = {
-    external => 'external',
-    sub_type => 'bigwig',
-    colour   => $args{'menu'}{'colour'} || $args{'source'}{'colour'} || 'red',
+    external     => 'external',
+    sub_type     => 'bigwig',
+    colour       => $args{'menu'}{'colour'} || $args{'source'}{'colour'} || 'red',
+    addhiddenbgd => 1,
   };
   
   $self->_add_file_format_track(
@@ -1303,6 +1306,7 @@ sub update_from_url {
           $n = $p =~ /\/([^\/]+)\/*$/ ? $1 : 'un-named';
         }
         
+        # Don't add if the URL or menu are the same as an existing track
         if ($session->get_data(type => 'url', code => $code)) {
           $session->add_data(
             type     => 'message',
@@ -1570,7 +1574,7 @@ sub load_tracks {
     
     foreach my $db (grep exists $check->{$_}, @{$databases || []}) {
       my $key = lc substr $db, 9;
-      $self->$_($key, $check->{$db}{'tables'} || $check->{$db}, $species) for @{$data_types{$type}}; # Look through tables in databases and add data from each one
+      $self->$_($key, $check->{$db}{'tables'} || $check->{$db}, $species) for @{$data_types{$type}}; # Look through tables in databases and add data from each one      
     }
   }
   
@@ -1982,7 +1986,7 @@ sub add_ditag_features {
 # * gsv_transcript          # transcripts in collapsed gene co-ords
 # depending on which menus are configured
 sub add_genes {
-  my ($self, $key, $hashref) = @_;
+  my ($self, $key, $hashref, $species) = @_;
 
   # Gene features end up in each of these menus
   return unless grep $self->get_node($_), @{$self->{'transcript_types'}};
@@ -1991,7 +1995,20 @@ sub add_genes {
   my $colours       = $self->species_defs->colour('gene');
   my $flag          = 0;
 
-  foreach my $type (@{$self->{'transcript_types'}}) {
+  my $renderers = [
+          'off',                     'Off',
+          'gene_nolabel',            'No exon structure without labels',
+          'gene_label',              'No exon structure with labels',
+          'transcript_nolabel',      'Expanded without labels',
+          'transcript_label',        'Expanded with labels',
+          'collapsed_nolabel',       'Collapsed without labels',
+          'collapsed_label',         'Collapsed with labels',
+          'transcript_label_coding', 'Coding transcripts only (in coding genes)',          
+        ];
+        
+  push($renderers, 'transcript_gencode_basic','GENCODE basic'); # if($species eq "Homo_sapiens" || $species eq "Mus_musculus");  #only human and mouse have this renderer enable for now
+     
+  foreach my $type (@{$self->{'transcript_types'}}) {  
     my $menu = $self->get_node($type);
     next unless $menu;
 
@@ -2008,21 +2025,11 @@ sub add_genes {
       my $menu = $self->get_node($t);
       
       next unless $menu;
-      
       $self->generic_add($menu, $key, "${t}_${key}_$key2", $data->{$key2}, {
         glyphset  => ($t =~ /_/ ? '' : '_') . $type, # QUICK HACK
         colours   => $colours,
         strand    => $t eq 'gene' ? 'r' : 'b',
-        renderers => $t eq 'transcript' ? [
-          'off',                     'Off',
-          'gene_nolabel',            'No exon structure without labels',
-          'gene_label',              'No exon structure with labels',
-          'transcript_nolabel',      'Expanded without labels',
-          'transcript_label',        'Expanded with labels',
-          'collapsed_nolabel',       'Collapsed without labels',
-          'collapsed_label',         'Collapsed with labels',
-          'transcript_label_coding', 'Coding transcripts only (in coding genes)',
-        ] : $t eq 'rnaseq' ? [
+        renderers => $t eq 'transcript' ? $renderers : $t eq 'rnaseq' ? [
          'off',                'Off',
          'transcript_nolabel', 'Expanded without labels',
          'transcript_label',   'Expanded with labels',
@@ -2896,8 +2903,14 @@ sub add_sequence_variations_default {
   my ($self, $key, $hashref, $options) = @_;
   my $menu               = $self->get_node('variation');
   my $sequence_variation = $self->create_submenu('sequence_variations', 'Sequence variants');
-  
-  $sequence_variation->append($self->create_track("variation_feature_$key", 'Sequence variants (all sources)', {
+
+  # XXX: This is a hack until Laurent gets meta information into the
+  #        private variation database. It should be there for e76, at
+  #        which point this code should never by called in that context.
+  my $title = 'Sequence variants (all sources)';
+  $title = 'Sequence variants (DECIPHER/LOVD)' if $key eq 'variation_private';
+
+  $sequence_variation->append($self->create_track("variation_feature_$key", $title, {
     %$options,
     sources     => undef,
     description => 'Sequence variants from all sources',
@@ -3162,8 +3175,11 @@ sub add_recombination {
 
 sub add_somatic_mutations {
   my ($self, $key, $hashref) = @_;
-  my $menu = $self->get_node('somatic');
   
+  # check we have any sources with somatic data
+  return unless $hashref->{'source'}{'somatic'} && grep {$_} values %{$hashref->{'source'}{'somatic'}};
+  
+  my $menu = $self->get_node('somatic');
   return unless $menu;
   
   my $somatic = $self->create_submenu('somatic_mutation', 'Somatic variants');

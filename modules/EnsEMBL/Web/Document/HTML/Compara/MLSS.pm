@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2013] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2014] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -80,8 +80,6 @@ sub render {
   my $self    = shift;
   my $hub     = $self->hub;
   my $mlss_id = $hub->param('mlss');
-  my $method  = $hub->param('method');
-  my $type    = $pretty_method{$method};
   my $site    = $hub->species_defs->ENSEMBL_SITETYPE;
   my $html;
 
@@ -94,10 +92,11 @@ sub render {
   my $nonref_common   = $non_ref_dna_collection_config->{'common_name'};
   my $nonref_assembly = $non_ref_results->{'assembly'};
   my $release         = $pair_aligner_config->{'ensembl_release'};
+  my $type            = $pretty_method{$pair_aligner_config->{'method_link_type'}};
 
   ## HEADER AND INTRO
   $html .= sprintf('<h1>%s vs %s %s alignments</h1>',
-                        $ref_common, $nonref_common, $pretty_method{$method},
+                        $ref_common, $nonref_common, $type,
             );
 
   if ($pair_aligner_config->{'download_url'}) {

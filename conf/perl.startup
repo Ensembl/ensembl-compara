@@ -2,7 +2,7 @@
 
 =head1 LICENSE
 
-Copyright [1999-2013] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2014] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -234,7 +234,7 @@ if (Apache2::ServerUtil::restart_count == 1) { # Only parse the config on first 
 
   $conf->DATABASE_HOST,
 
-  (keys %$orm_connections ? join("\n                     ", map { sprintf '%s: %s on %s', $_, $orm_connections->{$_}->database, $orm_connections->{$_}->host } keys %$orm_connections) : 'None'),
+  (keys %$orm_connections ? join("\n                     ", map { sprintf '%-15s %s on %s', "$_:", $orm_connections->{$_}->database, $orm_connections->{$_}->host } keys %$orm_connections) : 'None'),
 
   $conf->ENSEMBL_BASE_URL,
   $conf->ENSEMBL_PROTOCOL, $conf->ENSEMBL_SERVER,     $conf->ENSEMBL_PORT,

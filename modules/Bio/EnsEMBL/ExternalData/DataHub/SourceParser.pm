@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2013] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2014] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -60,7 +60,7 @@ use EnsEMBL::Web::Tree;
 sub new {
   my ($class, $settings) = @_;
 
-  my $ua = new LWP::UserAgent;
+  my $ua = LWP::UserAgent->new;
   $ua->timeout($settings->{'timeout'});
   $ua->proxy('http', $settings->{'proxy'}) if $settings->{'proxy'};
 
@@ -158,7 +158,7 @@ sub get_hub_info {
   Example    : $parser->parse($files);
   Description: Contacts the given data hub, fetches each config 
                file and parses the results. Returns an array of 
-               track configurations (see _parse_file_content for details)
+               track configurations (see parse_file_content for details)
   Returntype : arrayref
   Exceptions : 
   Caller     : EnsEMBL::Web::ConfigPacker
@@ -183,8 +183,7 @@ sub parse {
     $response = $ua->get($_);
     
     if ($response->is_success) {
-      (my $content = $response->content) =~ s/\r//g;
-      $self->parse_file_content($tree, $content, $_);
+      $self->parse_file_content($tree, $response->content =~ s/\r//gr, $_);
     } else {
       $tree->append($tree->create_node("error_$_", { error => $response->status_line, file => $_ }));
     }
@@ -221,7 +220,9 @@ sub parse_file_content {
     
     my $id = shift @track;
     
-    next unless $id;
+    next unless defined $id;
+    
+    $id = 'Unnamed' if $id eq '';
     
     foreach (@track) {
       my ($key, $value) = split /\s+/, $_, 2;
@@ -264,7 +265,7 @@ sub parse_file_content {
         # Short and long labels may contain =, but in these cases the value is just a single string
         if ($value =~ /=/ && $key !~ /^(short|long)Label$/) {
           my ($k, $v);
-          my @pairs = split /\s(\w+)=/, " $value";
+          my @pairs = split /\s([^=]+)=/, " $value";
           shift @pairs;
           
           for (my $i = 0; $i < $#pairs; $i += 2) {
@@ -403,133 +404,6 @@ sub sort_tree {
   }
   
   $self->sort_tree($_) for @children;
-}
-
-=head2 _parse_file_content
-
-  Arg [1]    : content of a config file, as a string 
-  Example    : 
-  Description: Parses the contents of a config file into a configuration 
-               hash and an array of tracks 
-               {'config' => {}, 'tracks' => []}
-  Returntype : hashref
-  Exceptions : none
-  Caller     : &parse
-  Status     : Under development
-
-=cut
-
-sub _parse_file_content {
-  my ($self, $content, $urlpath) = @_;
-  my $block;
-  my $i = 0;
-  
-  ## First, parse the whole file into track blocks
-  foreach my $line (split /\n/, $content) {
-    my ($key, $info) = ($line =~ /^\s*(\w+)\s+(.+)/);
-    
-    next unless $key;
-    
-    $i++ if $key eq 'track';
-    
-    ## Preserve full value on labels and URLs, and make relative URL file locations absolute
-    if ($key =~ /label/i) {
-      $block->{$i}{$key} = $info;
-    } elsif ($key eq 'bigDataUrl') {
-      $block->{$i}{$key} = $info =~ /^(ftp|https?):\/\// ? $info : "$urlpath/$info";
-    } else {
-      my @values = split /\s+/, $info;
-      
-      if ($key eq 'type') {
-        ## Not clear what additional values in this field are for, since
-        ## they're not mentioned in UCSC spec - throwing them away for now!
-        $block->{$i}{$key} = $values[0];
-      } else {
-        my %data;
-        
-        if ($key =~ /^subGroup[0-9]+/) {
-          $data{'name'}  = shift @values;
-          $data{'label'} = shift @values;
-        }
-        
-        foreach (@values) {
-          my ($k, $v) = split /=/;
-          
-          if ($k && $v) {
-            $data{$k} = $v;
-          } elsif ($k && /=/) {
-            $data{$k} = 1;
-          }
-        }
-        
-        $block->{$i}{$key} = scalar keys %data ? \%data : $info;
-      }
-    }
-  }
-
-  ## Now assemble the blocks into a hierarchical structure
-  my @track_sets;
-
-  ## May be no set structure at all
-  my $current_set = {};
-  push @track_sets, $current_set;
-
-  my $has_subsets = 0;
-  my $first_set   = 1;
-  my ($level, $track_name, $subtracks, $has_data);
-  
-  # This loop needs to be made more generic to handle the heirachy better 
-  # I'm not sure file is guarenteed to have all components of a set directly after it. - IT'S NOT, THIS DOENS'T WORK FOR http://smithlab.usc.edu/trackdata/methylation/hg19/trackDb.txt
-  foreach my $j (sort { $a <=> $b } keys %$block) {
-    my $track_info = $block->{$j};
-       $track_name = $track_info->{'track'};
-    
-    next unless $track_name;
-
-    ## Identify what level of hierarchy we're at
-    if ($track_info->{'bigDataUrl'}) {
-      $level    = 'data';
-      $has_data = 1;
-    } else {
-      if ($track_info->{'parent'}) {
-        $level       = 'subset';
-        $has_subsets = 1;
-      } else {
-        $level = 'set';
-      }
-    }
-    
-    ## Now assign this block a slot in the datastructure
-    if ($level eq 'set') {
-      if (!$first_set) {
-        pop @track_sets unless $has_data;
-        $current_set = {};
-        push @track_sets, $current_set;
-      }
-      
-      $first_set   = 0;
-      $has_data    = 0;
-      $has_subsets = 0;
-      
-      $current_set->{'config'} = $track_info;
-      $current_set->{'tracks'} = [];
-    } elsif ($level eq 'subset') {
-      my $track_array = [];
-      $current_set->{'config'}{'subsets'}++;
-      push @{$current_set->{'tracks'}}, { config => $track_info, tracks => $track_array };
-      $subtracks = $track_array;
-    } else {
-      if ($has_subsets) {
-        push @$subtracks, $track_info;
-      } else {
-        push @{$current_set->{'tracks'}}, $track_info;
-      }
-    } 
-  }
-  
-  pop @track_sets if $current_set && !$has_data;
-  
-  return \@track_sets;
 }
 
 1;

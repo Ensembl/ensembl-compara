@@ -1,5 +1,5 @@
 /*
- * Copyright [1999-2013] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+ * Copyright [1999-2014] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -129,6 +129,7 @@ div.config_wrapper .config_menu .misalign                { background-image: url
 div.config_wrapper .config_menu .off                     { background-image: url(/i/render/off.gif); }
 div.config_wrapper .config_menu .stack                   { background-image: url(/i/render/stack.gif); }
 div.config_wrapper .config_menu .transcript_label_coding { background-image: url(/i/render/transcript_label_coding.gif); }
+div.config_wrapper .config_menu .transcript_gencode_basic{  background-image: url(/i/render/transcript_gencode_basic.gif); }
 div.config_wrapper .config_menu .unlimited               { background-image: url(/i/render/unlimited.gif); }
 div.config_wrapper .config_menu .all_on,
 div.config_wrapper .config_menu .normal                  { background-image: url(/i/render/normal.gif); }

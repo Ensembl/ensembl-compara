@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2013] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2014] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -38,9 +38,9 @@ sub content {
   my $site_type    = $species_defs->ENSEMBL_SITETYPE;
   my $matches      = $object->get_database_matches;
   my @CCDS         = grep $_->dbname eq 'CCDS', @{$object->Obj->get_all_DBLinks};
-  (my $RefSeqMatch)  = @{$object->gene->get_all_Attributes('refseq_compare')};
   my $db           = $object->get_db;
   my $alt_genes    = $self->_matches('alternative_genes', 'Alternative Genes', 'ALT_GENE', 'show_version'); #gets all xrefs, sorts them and stores them on the object. Returns HTML only for ALT_GENES
+  my @RefSeqMatches  = @{$object->gene->get_all_Attributes('refseq_compare')};
 
   my $disp_syn     = 0;
 
@@ -100,13 +100,17 @@ sub content {
   }
 
   ## add RefSeq match info where appropriate
-  if ($RefSeqMatch) {
-    $RefSeqMatch =~ /RefSeq Gene ID ([\d]+)/;
-    my $id = $1;
-    my $url = $hub->get_ExtURL('REFSEQ_GENEIMP', $id);
-    warn ">>> URL $url";
-    (my $string = $RefSeqMatch) =~ s/RefSeq Gene ID ([\d]+)/RefSeq Gene ID <a href="$url">$1<\/a>/;
-    $table->add_row('RefSeq', sprintf('<p>%s</p>', $string));
+  if (scalar @RefSeqMatches) {
+    my $string;
+    foreach my $match (@RefSeqMatches) {
+      my $v = $match->value;
+      $v =~ /RefSeq Gene ID ([\d]+)/;
+      my $id = $1;
+      my $url = $hub->get_ExtURL('REFSEQ_GENEIMP', $id);
+      (my $link = $v) =~ s/RefSeq Gene ID ([\d]+)/RefSeq Gene ID <a href="$url" rel="external">$1<\/a>/;
+      $string .= sprintf('<p>%s</p>', $link);
+    }
+    $table->add_row('RefSeq', $string);
   }
 
   ## LRG info
@@ -199,18 +203,26 @@ sub content {
 
   $table->add_row('Alternative genes', $alt_genes) if $alt_genes; # add alternative gene info
 
-  if ($object->{'_availability'}{'can_r2r'}) {
+  my $cv_terms = $object->get_cv_terms;
+  if (@$cv_terms) {
+    my $first = shift @$cv_terms;
+    my $text = qq(<p>$first [<a href="http://vega.sanger.ac.uk/info/about/annotation_attributes.html">Definitions</a>]</p>);
+    foreach my $next (@$cv_terms) {
+      $text .= "<p>$next</p>";
+    }
+    $table->add_row('Annotation Attributes', $text) if $text;;
+  }
+
+  ## Secondary structure (currently only non-coding RNAs)
+  if ($self->hub->database('compara') && $object->{'_availability'}{'can_r2r'}) {
     my $svg_path = $self->draw_structure($display_name, 1);
     my $html;
     if ($svg_path) {
       my $fullsize = $self->hub->url({'action' => 'SecondaryStructure'});
       $html = qq(<object data="$svg_path" type="image/svg+xml"></object>
 <br /><a href="$fullsize">[click to enlarge]</a>);
+      $table->add_row('Secondary structure', $html);
     }
-    else {
-      $html .= 'Sorry, no secondary structure is available for this gene';
-    }
-    $table->add_row('Secondary structure', $html);
   }
 
   return $table->render;

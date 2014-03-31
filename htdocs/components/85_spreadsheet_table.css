@@ -1,5 +1,5 @@
 /*
- * Copyright [1999-2013] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+ * Copyright [1999-2014] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,7 +25,8 @@ table.ss   th,
 table.ss   td           { padding: 4px; }
 table.ss   tr.bg1       { background-color: [[PANEL_BG]];   }
 table.ss   tr.bg2       { background-color: [[NEUTRAL_BG]]; } 
-table.tint tr.bg2       { background-color: [[TINT_BG]];    }
+table.tint tr.bg2,
+table.ss   tr.bg3       { background-color: [[TINT_BG]];    }
 table.ss   tr.highlight { background-color: [[HIGHLIGHT2]];   }
 
 table.fixed            { table-layout: fixed; }

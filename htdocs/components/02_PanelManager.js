@@ -1,5 +1,5 @@
 /*
- * Copyright [1999-2013] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+ * Copyright [1999-2014] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -130,6 +130,10 @@ Ensembl.PanelManager.extend({
    * Creates the panels in the Ensembl object, adds to the panels registry and initializes it
    */
   createPanel: function (id, type, params) {
+    if (this.panels[id]) {
+      this.destroyPanel(id, 'cleanup');
+    }
+    
     if (type) {
       this.panels[id] = new Ensembl.Panel[type](id, params);
     } else {

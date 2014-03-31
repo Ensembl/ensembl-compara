@@ -1,5 +1,5 @@
 /*
- * Copyright [1999-2013] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+ * Copyright [1999-2014] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -193,23 +193,28 @@ Ensembl.Panel.Content = Ensembl.Panel.extend({
     var panel     = this;
     var toTrigger = {};
     
-    $('a.toggle, .ajax_add', this.el).on('click', function () {
-      Ensembl.EventManager.trigger('toggleContent', this.rel);
+    $('a.toggle, .ajax_add', this.el).on('click', function (e) {
+      
+      e.preventDefault();
+      
+      var duration = !!e.which && $(this).hasClass('_slide_toggle') ? parseInt((this.className.match(/_slide_toggle_(\d+)/) || [300]).pop()) : undefined;
       
       if ($(this).hasClass('ajax_add')) {
         var url = $('input.url', this).val();
         
         if (url) {
           if (panel.elLk[this.rel]) {
-            panel.toggleContent($(this));
+            panel.toggleContent($(this), duration);
             window.location.hash = panel.elLk[this.rel][0].id;
           } else {
             panel.elLk[this.rel] = panel.addContent(url, this.rel);
           }
         }
       } else {
-        panel.toggleContent($(this));
+        panel.toggleContent($(this), duration);
       }
+      
+      Ensembl.EventManager.trigger('toggleContent', this.rel, duration); // this toggles any other toggle switches used to toggle the same html block
       
       return false;
     }).filter('[rel]').each(function () {
@@ -230,26 +235,27 @@ Ensembl.Panel.Content = Ensembl.Panel.extend({
     $.each(toTrigger, function () { $(this).trigger('click'); });
   },
   
-  toggleContent: function (el) {
-    var rel = el.attr('rel');
+  toggleContent: function (el, duration) {
+    var rel     = el.attr('rel');
+    var toggle  = duration ? 'slideToggle' : 'toggle';
     
     if (!rel) {
-      el.toggleClass('open closed').siblings('.toggleable').toggle();
+      el.toggleClass('open closed').siblings('.toggleable')[toggle](duration);
     } else {
       if (this.id === rel + 'Panel') {
-        $('.toggleable', this.el).toggle();
+        this.el.find('.toggleable')[toggle](duration);
       } else {
         if (!this.elLk[rel]) {
           this.elLk[rel] = $('.' + rel, this.el);
         }
         
-        if (!this.elLk[rel].find('.toggleable:first').addBack('.toggleable').toggle().length) {
-          el.siblings('.toggleable').toggle();
+        if (!this.elLk[rel].find('.toggleable:first').addBack('.toggleable')[toggle](duration).length) {
+          el.siblings('.toggleable')[toggle](duration);
         }
       }
       
       if (el.hasClass('set_cookie')) {
-        Ensembl.cookie.set('toggle_' + rel, el.hasClass('open') ? 'open' : 'closed');
+        Ensembl.cookie.set('toggle_' + rel, el.hasClass('open') ? 'closed' : 'open');
       }
     }
     

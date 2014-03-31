@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2013] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2014] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -61,8 +61,10 @@ sub import {
     my @inc;
 
     # We don't want to plugin any of the packages that don't start
-    # with EnsEMBL::Web:: or Bio::
-    return unless substr($filename, 0, 12) eq 'EnsEMBL/Web/' || substr($filename, 0, 4) eq 'Bio/';
+    # with EnsEMBL::Web::, EnsEMBL::Draw or Bio::
+    return unless substr($filename, 0, 12) eq 'EnsEMBL/Web/'
+                    || substr($filename, 0, 13) eq 'EnsEMBL/Draw/'
+                    || substr($filename, 0, 4) eq 'Bio/';
 
     # If the file being plugged in (file A) has circular dependency with
     # another file (B) in the core code or any of the plugins, then while

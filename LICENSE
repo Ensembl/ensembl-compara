@@ -186,7 +186,7 @@
       same "printed page" as the copyright notice for easier
       identification within third-party archives.
 
-   Copyright [1999-2013] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+   Copyright [1999-2014] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
    Licensed under the Apache License, Version 2.0 (the "License");
    you may not use this file except in compliance with the License.
@@ -262,7 +262,7 @@ Base.js            Copyright 2006-2007, Dean Edwards
 jQuery             Copyright 2005, 2012 jQuery Foundation, Inc.
 jQuery UI          Copyright 2013 jQuery Foundation and other contributors
 jQuery hoverIntent Copyright 2007, 2013 Brian Cherne
-Raphaël JS         Copyright 2010 Dmitry Baranovskiy
+Rapha?l JS         Copyright 2010 Dmitry Baranovskiy
 
 COMPONENT: htdocs/components/00_jquery_hashchange.js
 

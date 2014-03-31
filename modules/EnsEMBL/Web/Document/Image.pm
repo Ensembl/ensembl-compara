@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2013] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2014] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -22,7 +22,7 @@ use strict;
 
 use POSIX qw(ceil);
 
-use Bio::EnsEMBL::VDrawableContainer;
+use EnsEMBL::Draw::VDrawableContainer;
 
 use EnsEMBL::Web::TmpFile::Image;
 
@@ -250,7 +250,7 @@ sub karyotype {
   return $@ if $@;
 
   # create the container object and add it to the image
-  $self->drawable_container = Bio::EnsEMBL::VDrawableContainer->new({
+  $self->drawable_container = EnsEMBL::Draw::VDrawableContainer->new({
     web_species => $species,
     sa          => $sa,
     ka          => $ka,
@@ -325,7 +325,7 @@ sub set_button {
 # Having a usemap causes drag selecting to become a real pain, so disabled
 sub extra_html {
   my $self  = shift;
-  my $class =  'imagemap' . ($self->drawable_container->isa('Bio::EnsEMBL::VDrawableContainer') ? ' vertical' : '');
+  my $class =  'imagemap' . ($self->drawable_container->isa('EnsEMBL::Draw::VDrawableContainer') ? ' vertical' : '');
   my $extra = qq{class="$class"};
 
 #  if ($self->imagemap eq 'yes') {

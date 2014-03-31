@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2013] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2014] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -20,7 +20,7 @@ package EnsEMBL::Web::ZMenu::Marker;
 
 use strict;
 
-use Bio::EnsEMBL::GlyphSet::_marker;
+use EnsEMBL::Draw::GlyphSet::_marker;
 
 use base qw(EnsEMBL::Web::ZMenu);
 
@@ -32,7 +32,7 @@ sub content {
   my @features;
   
   if ($click_data) {
-    my $glyphset = Bio::EnsEMBL::GlyphSet::_marker->new($click_data);
+    my $glyphset = EnsEMBL::Draw::GlyphSet::_marker->new($click_data);
     $glyphset->{'text_export'} = 1;
     @features = @{$glyphset->features};
     @features = () unless grep $_->{'drawing_id'} eq $m, @features;

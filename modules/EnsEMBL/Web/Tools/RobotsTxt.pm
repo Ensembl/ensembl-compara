@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2013] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2014] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -46,7 +46,7 @@ sub create {
   #check if directory for creating robots.txt exist
   make_path($root) unless(-e $root);
    
-  warn _box("Placing .cvsignore and robots.txt into $root");
+  warn _box("Placing robots.txt into $root");
 
   my $server_root = $sd->ENSEMBL_WEBROOT;
   unless(open FH, ">$root/robots.txt") {

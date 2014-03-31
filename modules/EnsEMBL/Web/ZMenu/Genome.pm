@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2013] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2014] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -15,6 +15,8 @@ See the License for the specific language governing permissions and
 limitations under the License.
 
 =cut
+
+# $Id: Genome.pm,v 1.9 2013-11-28 10:53:34 sb23 Exp $
 
 package EnsEMBL::Web::ZMenu::Genome;
 
@@ -45,7 +47,7 @@ sub content {
   
   
   my $logic_name     = $features->[0] ? $features->[0]->analysis->logic_name : undef;
-  
+ 
   $hit_db_name = 'TRACE' if $logic_name =~ /sheep_bac_ends|BACends/; # hack to link sheep bac ends to trace archive;
 
   $self->caption("$id ($hit_db_name)");
@@ -87,6 +89,17 @@ sub content {
       __clear => 1
     })
   });
+
+  # Eagle change, add in extra_data if available ( dna_align_feature.external_data )
+  my %extra_data = $features->[0]->extra_data && ref $features->[0]->extra_data eq 'HASH' ? %{$features->[0]->extra_data} : ();
+
+  foreach my $type ( sort keys %extra_data ) {
+      $self->add_entry({
+	  type => $type, 
+	  label => $extra_data{$type}
+		       });
+  }
+ 
   
 }
 

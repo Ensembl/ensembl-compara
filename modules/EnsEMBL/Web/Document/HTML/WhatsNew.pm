@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2013] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2014] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -28,7 +28,7 @@ use Encode          qw(encode_utf8 decode_utf8);
 use HTML::Entities  qw(encode_entities);
 
 use EnsEMBL::Web::Controller::SSI;
-use EnsEMBL::Web::DBSQL::WebsiteAdaptor;
+use EnsEMBL::Web::DBSQL::ArchiveAdaptor;
 use EnsEMBL::Web::DBSQL::ProductionAdaptor;
 use EnsEMBL::Web::Cache;
 
@@ -48,7 +48,7 @@ sub render {
   my $release_id = $hub->param('id') || $hub->param('release_id') || $hub->species_defs->ENSEMBL_VERSION;
   return unless $release_id;
 
-  my $adaptor = EnsEMBL::Web::DBSQL::WebsiteAdaptor->new($hub);
+  my $adaptor = EnsEMBL::Web::DBSQL::ArchiveAdaptor->new($hub);
   my $release      = $adaptor->fetch_release($release_id);
   my $release_date = $release->{'date'};
   my $html = qq{<h2 class="box-header">What's New in Release $release_id ($release_date)</h2>};

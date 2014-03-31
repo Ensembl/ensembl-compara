@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2013] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2014] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -74,7 +74,6 @@ sub render {
     { key => 'genbank', title => 'Annotated sequence (GenBank)', align => 'center', width => '10%', sort => 'none' },
     { key => 'genes',   title => 'Gene sets',                    align => 'center', width => '10%', sort => 'none' },
     { key => 'mysql',   title => 'Whole databases',              align => 'center', width => '10%', sort => 'none' },
-    { key => 'var1',    title => 'Variation (EMF)',              align => 'center', width => '10%', sort => 'html' },
     { key => 'var2',    title => 'Variation (GVF)',              align => 'center', width => '10%', sort => 'html' },
     { key => 'var4',    title => 'Variation (VCF)',              align => 'center', width => '10%', sort => 'html' },
     { key => 'var3',    title => 'Variation (VEP)',              align => 'center', width => '10%', sort => 'html' },
@@ -124,7 +123,6 @@ sub render {
       genbank => sprintf('<a rel="external" title="%s" href="ftp://ftp.ensembl.org/pub/%s/genbank/%s/">GenBank</a>',   $title{'genbank'}, $rel, $sp_dir),
       genes   => sprintf('<a rel="external" title="%s" href="ftp://ftp.ensembl.org/pub/%s/gtf/%s">GTF</a>',            $title{'gtf'},     $rel, $sp_dir),
       mysql   => sprintf('<a rel="external" title="%s" href="ftp://ftp.ensembl.org/pub/%s/mysql/">MySQL</a>',          $title{'mysql'},   $rel),
-      var1    => $required_lookup->{'var1'}{$sp_dir}    ? sprintf('<a rel="external" title="%s" href="ftp://ftp.ensembl.org/pub/%s/emf/%s/">EMF</a>',                          $title{'emf'},     $rel, $sp_var) : '-',
       var2    => $required_lookup->{'var2'}{$sp_dir}    ? sprintf('<a rel="external" title="%s" href="ftp://ftp.ensembl.org/pub/%s/variation/gvf/%s/">GVF</a>',                $title{'gvf'},     $rel, $sp_dir) : '-',
       var4    => $required_lookup->{'var4'}{$sp_dir}    ? sprintf('<a rel="external" title="%s" href="ftp://ftp.ensembl.org/pub/%s/variation/vcf/%s/">VCF</a>',                $title{'vcf'},     $rel, $sp_dir) : '-',
       var3    => sprintf('<a rel="external" title="%s" href="ftp://ftp.ensembl.org/pub/%s/variation/VEP/">VEP</a>',    $title{'vep'},     $rel),
@@ -188,11 +186,6 @@ sub required_types_for_species {
   my $self = shift;
   my %required_lookup;
   
-  # EMF
-  $required_lookup{'var1'} = { map { $_ => 1 } qw(
-    homo_sapiens mus_musculus rattus_norvegicus
-  )};
-  
   # GVF
   $required_lookup{'var2'} = { map { $_ => 1 } qw(
     bos_taurus canis_familiaris danio_rerio drosophila_melanogaster 
@@ -200,7 +193,7 @@ sub required_types_for_species {
     saccharomyces_cerevisiae monodelphis_domestica mus_musculus 
     nomascus_leucogenys ornithorhynchus_anatinus ovis_aries pan_troglodytes pongo_pygmaeus 
     rattus_norvegicus sus_scrofa taeniopygia_guttata tetraodon_nigroviridis 
-    pongo_abelii macaca_mulatta
+    pongo_abelii macaca_mulatta meleagris_gallopavo
   )};
 
   # VCF
@@ -210,7 +203,7 @@ sub required_types_for_species {
     saccharomyces_cerevisiae monodelphis_domestica mus_musculus nomascus_leucogenys
     ornithorhynchus_anatinus ovis_aries pan_troglodytes pongo_pygmaeus 
     rattus_norvegicus sus_scrofa taeniopygia_guttata tetraodon_nigroviridis 
-    pongo_abelii macaca_mulatta
+    pongo_abelii macaca_mulatta meleagris_gallopavo
   )};
   
   # Funcgen
@@ -227,7 +220,7 @@ sub required_types_for_species {
   $required_lookup{'bam'} = { map { $_ => 1 } qw(
     anolis_carolinensis astyanax_mexicanus canis_familiaris danio_rerio dasypus_novemcinctus ficedula_albicollis gallus_gallus lepisosteus_oculatus monodelphis_domestica mustela_putorius_furo
     oreochromis_niloticus ornithorhynchus_anatinus oryctolagus_cuniculus ovis_aries pan_troglodytes pelodiscus_sinensis
-    pongo_abelii sarcophilus_harrisii sus_scrofa xiphophorus_maculatus homo_sapiens felis_catus
+    pongo_abelii sarcophilus_harrisii sus_scrofa xiphophorus_maculatus homo_sapiens felis_catus mus_musculus
   )};
   
   return \%required_lookup;

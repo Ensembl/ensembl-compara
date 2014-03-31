@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2013] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2014] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -20,7 +20,7 @@ package EnsEMBL::Web::ZMenu::Repeat;
 
 use strict;
 
-use Bio::EnsEMBL::GlyphSet::_repeat;
+use EnsEMBL::Draw::GlyphSet::_repeat;
 
 use base qw(EnsEMBL::Web::ZMenu);
 
@@ -32,7 +32,7 @@ sub content {
   my @features;
   
   if ($click_data) {
-    @features = @{Bio::EnsEMBL::GlyphSet::_repeat->new($click_data)->features};
+    @features = @{EnsEMBL::Draw::GlyphSet::_repeat->new($click_data)->features};
     @features = () unless grep $_->dbID eq $id, @features;
   }
   

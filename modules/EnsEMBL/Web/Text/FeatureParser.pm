@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2013] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2014] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -216,7 +216,7 @@ sub parse {
         }
         if ($columns && scalar(@$columns)) {   
           my ($chr, $start, $end) = $empty->coords($columns); 
-          $chr =~ s/chr//;
+          $chr =~ s/[cC]hr//;
 
           ## We currently only do this on initial upload (by passing current location)  
           $self->{'_find_nearest'}{'done'} = $self->_find_nearest(
@@ -379,11 +379,7 @@ sub check_format {
       next if $row =~ /^#/;
       next if $row =~ /^browser/; 
       last if $format; 
-      if ($row =~ /^reference/i) {
-        $format = 'GBROWSE';
-        last;
-      }
-      elsif ($row =~ /^track\s+/i) {
+      if ($row =~ /^track\s+/i) {
         if ($row =~ /type=wiggle0/) {
           $format = 'WIG';
           last;

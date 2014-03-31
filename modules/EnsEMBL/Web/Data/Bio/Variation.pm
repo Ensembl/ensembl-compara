@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2013] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2014] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -245,10 +245,13 @@ sub _pf_source_link {
   #    $name = $ext_ref_id;
   #  }     
   } else {
-    $name = $obj_name;
+    $name = $ext_id || $obj_name;
   }
   
   $url =~ s/###ID###/$name/;
+  
+  my $tax = $self->hub->species_defs->TAXONOMY_ID;
+  $url =~ s/###TAX###/$tax/;
   
   return $source if $url eq "";
   

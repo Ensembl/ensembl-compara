@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2013] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2014] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -61,6 +61,13 @@ sub availability {
       $availability->{'history'}              = !!$rows;
       $availability->{'gene'}                 = 1;
       $availability->{'core'}                 = $self->get_db eq 'core';
+      $availability->{'has_gene_tree'}        = $member ? $member->has_GeneTree : 0;
+      $availability->{'can_r2r'}              = $self->hub->species_defs->R2R_BIN;
+      if ($availability->{'can_r2r'}) {
+        my $tree = $self->database('compara') ? $self->database('compara')->get_GeneTreeAdaptor->fetch_default_for_Member($member) : undef;
+        $availability->{'has_2ndary'}         = $tree && $tree->get_tagvalue('ss_cons') ? 1 : 0;
+      }
+
       $availability->{'alt_allele'}           = $self->table_info($self->get_db, 'alt_allele')->{'rows'};
       $availability->{'regulation'}           = !!$funcgen_res; 
       $availability->{'has_species_tree'}     = $member ? $member->has_GeneGainLossTree : 0;
@@ -164,7 +171,7 @@ sub counts {
     }    
 
     ## Add counts from plugins
-    $counts = {%$counts, %{$self->_counts}};
+    $counts = {%$counts, %{$self->_counts($member, $pan_member)}};
 
     $MEMD->set($key, $counts, undef, 'COUNTS') if $MEMD;
     $self->{'_counts'} = $counts;
@@ -577,11 +584,6 @@ sub create_family {
   return $family_adaptor->fetch_by_stable_id($id);
 }
 
-sub member_by_source {
-  my ($self, $family, $source) = @_;
-  return $family->get_Member_by_source($source) || [];
-}
-
 sub display_xref {
   my $self = shift; 
   return undef if $self->Obj->isa('Bio::EnsEMBL::Compara::Family');
@@ -699,7 +701,7 @@ sub get_homology_matches {
       my $order = 0;
       
       foreach my $homology (@{$homologues->{$display_spp}}) { 
-        my ($homologue, $homology_desc, $homology_subtype, $query_perc_id, $target_perc_id, $dnds_ratio, $ancestor_node_id) = @$homology;
+        my ($homologue, $homology_desc, $homology_subtype, $query_perc_id, $target_perc_id, $dnds_ratio, $gene_tree_node_id) = @$homology;
         
         next unless $homology_desc =~ /$homology_description/;
         next if $disallowed_homology && $homology_desc =~ /$disallowed_homology/;
@@ -716,7 +718,7 @@ sub get_homology_matches {
           query_perc_id       => $query_perc_id,
           target_perc_id      => $target_perc_id,
           homology_dnds_ratio => $dnds_ratio,
-          ancestor_node_id    => $ancestor_node_id,
+          gene_tree_node_id   => $gene_tree_node_id,
           order               => $order,
           location            => sprintf('%s:%s-%s:%s', map $homologue->$_, qw(chr_name chr_start chr_end chr_strand))
         };
@@ -798,7 +800,7 @@ sub fetch_homology_species_hash {
     
     # FIXME: ucfirst $genome_db_name is a hack to get species names right for the links in the orthologue/paralogue tables.
     # There should be a way of retrieving this name correctly instead.
-    push @{$homologues{ucfirst $genome_db_name}}, [ $target_member, $homology->description, $homology->subtype, $query_perc_id, $target_perc_id, $dnds_ratio, $homology->ancestor_node_id];
+    push @{$homologues{ucfirst $genome_db_name}}, [ $target_member, $homology->description, $homology->taxonomy_level, $query_perc_id, $target_perc_id, $dnds_ratio, $homology->{_gene_tree_node_id}];
   }
   
   $self->timer_push('homologies hacked', 6);

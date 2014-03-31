@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2013] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2014] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -40,6 +40,7 @@ sub node_type {
 
 sub render {
   ## Outputs the element html
+  ## Call this only in the end to get the actual HTML for the node as it destroys the node afterwards (use outer_HTML for other uses)
   ## @overrides
   ## @return HTML
   my $self = shift;
@@ -47,9 +48,14 @@ sub render {
   my $tag         = $self->node_name;
   my $attributes  = join '', map {sprintf(' %s="%s"', $_, $self->get_attribute($_))} keys %{$self->{'_attributes'}};
 
-  return $self->can_have_child
+  my $html        = $self->can_have_child
     ? sprintf('<%s%s>%s</%1$s>', $tag, $attributes, $self->{'_text'} ne '' ? $self->{'_text'} : join('', map {$_->render} @{$self->{'_child_nodes'}}))
     : qq(<$tag$attributes />);
+
+  # Clear unwanted references (this will make sure circular references are removed allowing object to DESTROY afterwards)
+   $self->remove_children;
+
+  return $html;
 }
 
 sub render_text {
@@ -299,7 +305,7 @@ sub outer_HTML {
 
   my $tag         = $self->node_name;
   my $attributes  = join '', map {sprintf(' %s="%s"', $_, $self->get_attribute($_))} keys %{$self->{'_attributes'}};
-  return $self->can_have_child ? sprintf(qq(<$tag$attributes>%s</$tag>), $self->inner_HTML) : qq(<$tag$attributes />);
+  return $self->can_have_child ? sprintf(q(<%s%s>%s</%1$s>), $tag, $attributes, $self->inner_HTML) : qq(<$tag$attributes />);
 }
 
 sub append_HTML {
