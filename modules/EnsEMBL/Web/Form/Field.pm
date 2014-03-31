@@ -77,6 +77,7 @@ sub configure {
   ##  - notes         innerHTML for foot notes
   ##  - head_notes    innerHTML for head notes
   ##  - elements      ArrayRef of hashRefs with keys as accepted by Form::Element::configure()
+  ##  - inline        Flag if on, tries to add the elements in horizontal fashion (if possible)
   my ($self, $params) = @_;
 
   $self->set_attribute('class', $params->{'field_class'}) if exists $params->{'field_class'};
@@ -178,7 +179,7 @@ sub add_element {
   else {
     $div->append_child($element);
   }
-  $div->set_attribute('class', [ $self->CSS_CLASS_ELEMENT_DIV, $params->{'element_class'} || () ]);
+  $div->set_attribute('class', [ $self->CSS_CLASS_ELEMENT_DIV, ref $params->{'element_class'} ? @{$params->{'element_class'}} : $params->{'element_class'} || () ]);
   $div->set_flag($self->_FLAG_ELEMENT);
   return $div;
 }

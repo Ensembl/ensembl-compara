@@ -20,7 +20,7 @@ package EnsEMBL::Web::ZMenu::StructuralVariation;
 
 use strict;
 
-use Bio::EnsEMBL::GlyphSet::structural_variation;
+use EnsEMBL::Draw::GlyphSet::structural_variation;
 
 use base qw(EnsEMBL::Web::ZMenu);
 
@@ -33,7 +33,7 @@ sub content {
   my @features;
   
   if ($click_data) {
-    @features = @{Bio::EnsEMBL::GlyphSet::structural_variation->new($click_data)->features};
+    @features = @{EnsEMBL::Draw::GlyphSet::structural_variation->new($click_data)->features};
     @features = () if $svf && !(grep $_->dbID eq $svf, @features);
   }
   
@@ -124,6 +124,14 @@ sub feature_content {
       # http://varcache.lovd.nl/redirect/hg19.chr###ID### , e.g. for ID: 1:808922_808922(FAM41C:n.1101+570C>T)
       my $tmp_end = ($start>$end) ? $start+1 : $end;
       my $external_url = $hub->get_ExtURL_link("View in $source", 'LOVD', { ID => "$seq_region:$start\_$tmp_end($sv_id)" });
+      $self->add_entry({
+        label_html => $external_url
+      });
+    }
+    elsif ($source =~ /DECIPHER/i) {
+      my $sv_samples = $variation->get_all_StructuralVariationSamples; 
+      my $individual = (scalar(@$sv_samples)) ? $sv_samples->[0]->individual->name : '';
+      my $external_url = $hub->get_ExtURL_link("View in $source", 'DECIPHER', { ID => $individual });
       $self->add_entry({
         label_html => $external_url
       });

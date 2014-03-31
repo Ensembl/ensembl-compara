@@ -34,6 +34,8 @@ sub content {
   my @xref        = $object->display_xref;
   my @click       = $self->click_location;
   
+  $translation = undef if $transcript->isa('Bio::EnsEMBL::PredictionTranscript'); 
+
   $self->caption($xref[0] ? "$xref[3]: $xref[0]" : !$object->gene ? $stable_id : 'Novel transcript');
   
   if (scalar @click) {

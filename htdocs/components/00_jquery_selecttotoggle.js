@@ -21,64 +21,82 @@
  * Note: Be careful if there are more than one selectToToggle elements on a page with one or more options having same values (use className on the option tags in those cases)
  **/
 (function ($) {
-  $.selectToToggle = function (el, options, wrapper) {
+  $.selectToToggle = function (el) {
     var toggle = function () {
-      for (var val in options) {
+      var data      = $(this).data('selectToToggle');
+      var wrapper   = data.wrapper;
+      var toggleMap = data.toggleMap;
+      for (var val in toggleMap) {
         if (val != this.value) {
-          wrapper.find(options[val]).hide().removeAttr('selected checked').filter('option').each(function() { // if hiding an option element, also disable it to make it work in webkit
+          wrapper.find(toggleMap[val]).hide().removeAttr('checked').filter('option').each(function() { // if hiding an option element, also disable it to make it work in webkit
             var option = $(this);
-            
-            if (typeof option.data('_stt_disabled') === 'undefined') {
-              option.data('_stt_disabled', !!this.disabled); // remember original disabled attribute
+
+            if (typeof option.data('sttDisabled') === 'undefined') {
+              option.data('sttDisabled', !!this.disabled); // remember original disabled attribute
             }
           }).prop('disabled', true);
         }
       }
 
-      wrapper.find(options[this.value]).show().filter('option').prop('disabled', function() {
-        return $(this).data('_stt_disabled');
+      wrapper.find(toggleMap[this.value]).show().filter('option').prop('disabled', function() {
+        return $(this).data('sttDisabled');
       }).filter('select option').parent().each(function() { //show the requried html block
         var dropdown = $(this);
         if (!dropdown.find('option:selected:enabled').length) { //in case any selected option gets hidden in this, select the first visible option
           dropdown.find('option:enabled').first().prop('selected', true);
+          if (dropdown.data('selectToToggle')) {
+            dropdown.trigger('change.selectToToggle');
+          }
         }
       });
     };
 
-    if (options === 'trigger') {
-      el.trigger('change.selectToToggle');
-    } else {
-      el.off('.selectToToggle').on('change.selectToToggle', toggle);
-      
-      if (el[0].nodeName == 'SELECT' || el[0].checked) {
-        toggle.apply(el[0]);
-      }
-    }
+    el.off('.selectToToggle').on('change.selectToToggle', toggle);
+
+    toggle.apply(el.filter('select, input:checked')[0]);
+
   };
 
   $.fn.selectToToggle = function (
-    options,    // string 'trigger' to trigger toggling for an existing element, or map of select element's option value to corresponding jquery selectors strings (as accepted by find() method) (Optional - defaults to '._stt_[className]' if class name uses prefix _stt__, or '._stt_[value]' otherwise)
+    toggleMap,  // map of select element's option value to corresponding jquery selectors strings (as accepted by find() method) (Optional - defaults to '._stt_[className]' if class name uses prefix _stt__, or '._stt_[value]' otherwise)
+                // string 'trigger' to trigger toggling for an existing element (this is useful is option is selected by JS)
+                // string 'destroy' to remove all selectToToggle data and events from the element
     wrapper     // wrapper element to call method 'find(selectors)' on - defaults to $(document.body)
   ) {
     
     return this.each(function () {
-      var input = $(this);
-      
-      if (options === 'trigger') {
-        $.selectToToggle(input, 'trigger', wrapper);
+      var el        = $(this);
+      var data      = el.data('selectToToggle');
+
+      var getAllEls = function(el, wrapper) {
+        return el[0].nodeName === 'INPUT' ? wrapper.find('input[name=' + el[0].name + ']') : el;
+      };
+
+      if (data) {
+        if (toggleMap === 'trigger') {
+          el.trigger('change.selectToToggle');
+        } else if (toggleMap === 'destroy') {
+          getAllEls(el, data.wrapper).off('.selectToToggle').removeData('selectToToggle');
+        }
+
       } else {
-        var tMap  = $.extend({}, options);
+        var tMap  = $.extend({}, toggleMap);
         wrapper   = wrapper || $(document.body);
-        
+        el        = getAllEls(el, wrapper);
+
         if ($.isEmptyObject(tMap)) {
-          (this.nodeName == 'SELECT' ? input.find('option') : wrapper.find('input[name=' + this.name + ']')).each(function() {
+          (this.nodeName == 'SELECT' ? el.find('option') : el).each(function() {
             if (this.value) {
-              tMap[this.value] = '._stt_' + ((this.className.match(/(?:\s+|^)_stt__([^\s]+)/) || []).pop() || this.value);
+              var filters = $.map(this.className.match(/(\s+|^)_stt__([^\s]+)/g) || [], function(str) { return str.replace('_stt__', '._stt_') });
+                  filters.push('._stt_' + this.value);
+              tMap[this.value] = this.className.match(/(\s+|^)_sttmulti($|\s+)/) ? filters.join(',') : filters[0];
             }
           });
         }
-        
-        $.selectToToggle(input, tMap, wrapper);
+
+        el.data('selectToToggle', {'wrapper' : wrapper, 'toggleMap': tMap});
+
+        $.selectToToggle(el);
       }
     });
   };

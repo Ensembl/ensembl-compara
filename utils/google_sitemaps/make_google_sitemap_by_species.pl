@@ -120,9 +120,9 @@ foreach (@sitemaps) {
 $index->write("${ouput_dir}/sitemap-index.xml");
 
 if($domain eq "http://www.ensembl.org") {
-  print ("Moving sitemaps to /ensemblweb/www/www_$this_release/htdocs/ \n");
-  system("rm -r /ensemblweb/www/www_$this_release/htdocs/sitemaps") if(-d "/ensemblweb/www/www_$this_release/htdocs/sitemaps");
-  system("mv sitemaps /ensemblweb/www/www_$this_release/htdocs/");
+  print ("Moving sitemaps to /ensemblweb/www/www_$this_release/ensembl-webcode/htdocs/ \n");
+  system("rm -r /ensemblweb/www/www_$this_release/ensembl-webcode/htdocs/sitemaps") if(-d "/ensemblweb/www/www_$this_release/ensembl-webcode/htdocs/sitemaps");
+  system("mv sitemaps /ensemblweb/www/www_$this_release/ensembl-webcode/htdocs/");
 }
 exit;
 

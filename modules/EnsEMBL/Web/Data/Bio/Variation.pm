@@ -245,10 +245,13 @@ sub _pf_source_link {
   #    $name = $ext_ref_id;
   #  }     
   } else {
-    $name = $obj_name;
+    $name = $ext_id || $obj_name;
   }
   
   $url =~ s/###ID###/$name/;
+  
+  my $tax = $self->hub->species_defs->TAXONOMY_ID;
+  $url =~ s/###TAX###/$tax/;
   
   return $source if $url eq "";
   

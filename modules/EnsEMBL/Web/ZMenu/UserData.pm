@@ -32,7 +32,7 @@ sub content {
   return unless $click_data;
   
   my $type     = $click_data->{'my_config'}->data->{'glyphset'};
-  my $glyphset = "Bio::EnsEMBL::GlyphSet::$type";
+  my $glyphset = "EnsEMBL::Draw::GlyphSet::$type";
   
   return unless $self->dynamic_use($glyphset);
   
@@ -60,16 +60,44 @@ sub content {
   }
 }
 
+# This is a hack, we really need an order to be supplied by the glyphset
+sub sorted_extra_keys {
+  my ($self,$extra) = @_;
+
+  my %sort;
+  foreach my $k (keys %$extra) {
+    next if $k =~ /^_type/ or $k =~ /^item_colour/;
+    my $v = $k;
+    $v = "A $v" if /start$/;
+    $v = "B $v" if /end$/;
+    $sort{$k} = $v;
+  }
+
+  return sort { $sort{$a} <=> $sort{$b} } keys %sort;
+}
+
 sub feature_content {
   my ($self, $feature, $i) = @_;
   my %extra  = ref $feature ne 'HASH' && $feature->can('extra_data') && ref $feature->extra_data eq 'HASH' ? %{$feature->extra_data} : ();
-  my $start  = $feature->{'start'};
-  my $end    = $feature->{'end'};
+  my $start  = $feature->{'start'} + $self->hub->param('click_start') - 1;
+  my $end    = $feature->{'end'} + $self->hub->param('click_start') - 1;
   my $single = $start == $end;
+  my $type;
+  my $click_data = $self->click_data;
+  my $type = $click_data->{'my_config'}->data->{'glyphset'} if $click_data;
   
   $self->new_feature;
-  
-  $self->caption(ref $feature eq 'HASH' ? $single ? $start : "$start-$end" : $feature->id || ($single ? $start : ''));
+
+  my $caption = '';
+  if(ref($feature) eq 'HASH' or $type eq 'bigbed') {
+    if($single) { $caption = $start; } else { $caption = "$start-$end"; }
+  } else {
+    $caption = $feature->id;
+  }
+  if(!$caption and $single) { # last attempt!
+    $caption = $start;
+  }
+  $self->caption($caption);
   
   my @entries = (
     $single ? (
@@ -85,7 +113,7 @@ sub feature_content {
     { type => 'Score',      label => $feature->{'score'}   },
   );
   
-  push @entries, { type => $self->format_type($_), label => join(', ', @{$extra{$_}}) } for sort grep !/^(_type|item_colour)$/, keys %extra;
+  push @entries, { type => $self->format_type($_), label => join(', ', @{$extra{$_}}) } for $self->sorted_extra_keys(\%extra);
   
   $self->add_entry($_) for grep $_->{'label'}, @entries;
 }

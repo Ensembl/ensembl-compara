@@ -23,7 +23,7 @@ use LWP::UserAgent;
 
 BEGIN {
   $SERVERROOT = "$Bin/../..";
-  unshift @INC,"$SERVERROOT/public-plugins/selenium/modules";  
+  unshift @INC,"$SERVERROOT/../public-plugins/selenium/modules";  
   unshift @INC, "$SERVERROOT/conf";
   eval{ require SiteDefs };
   if ($@){ die "Can't use SiteDefs.pm - $@\n"; }

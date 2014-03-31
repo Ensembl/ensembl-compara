@@ -46,7 +46,7 @@ sub create {
   #check if directory for creating robots.txt exist
   make_path($root) unless(-e $root);
    
-  warn _box("Placing .cvsignore and robots.txt into $root");
+  warn _box("Placing robots.txt into $root");
 
   my $server_root = $sd->ENSEMBL_WEBROOT;
   unless(open FH, ">$root/robots.txt") {

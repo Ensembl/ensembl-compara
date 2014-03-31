@@ -7,6 +7,8 @@
 !/htdocs/das/das.xsl
 /htdocs/minified/*
 /htdocs/robots.txt
+/htdocs/sitemaps
+/utils/static_content/doxygen/*
 opensearch
 blib/
 .build/

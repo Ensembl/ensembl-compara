@@ -203,8 +203,18 @@ sub content {
 
   $table->add_row('Alternative genes', $alt_genes) if $alt_genes; # add alternative gene info
 
+  my $cv_terms = $object->get_cv_terms;
+  if (@$cv_terms) {
+    my $first = shift @$cv_terms;
+    my $text = qq(<p>$first [<a href="http://vega.sanger.ac.uk/info/about/annotation_attributes.html">Definitions</a>]</p>);
+    foreach my $next (@$cv_terms) {
+      $text .= "<p>$next</p>";
+    }
+    $table->add_row('Annotation Attributes', $text) if $text;;
+  }
+
   ## Secondary structure (currently only non-coding RNAs)
-  if ($object->{'_availability'}{'can_r2r'}) {
+  if ($self->hub->database('compara') && $object->{'_availability'}{'can_r2r'}) {
     my $svg_path = $self->draw_structure($display_name, 1);
     my $html;
     if ($svg_path) {

@@ -542,7 +542,7 @@ sub build_imageconfig_form {
   
   if ($extra_menus->{'favourite_tracks'}) {
     $form->prepend_child('h1', { class => 'favourite_tracks',        inner_HTML => 'Favourite tracks' });
-    $form->append_child('div', { class => 'config favourite_tracks', inner_HTML => qq{You have no favourite tracks. Use the <img src="${img_url}grey_star.png" alt="star" /> icon to add tracks to your favourites} });
+    $form->append_child('div', { class => 'config favourite_tracks', inner_HTML => qq(You have no favourite tracks. Use the <img src="${img_url}grey_star.png" alt="star" /> icon to add tracks to your favourites) });
   }
   
   $form->append_child('div', { class => 'config track_order', inner_HTML => '<h1 class="track_order">Track order</h1><ul class="config_menu"></ul>' }) if $self->{'json'}{'order'};
@@ -614,7 +614,7 @@ sub build_imageconfig_menus {
     my $subset      = $data->{'subset'};
     my $name        = encode_entities($data->{'name'});
     my @classes     = ('track', $external ? 'external' : '', lc $external);
-    my $menu_header = scalar @states > 4 ? qq{<li class="header">Change track style<img class="close" src="${img_url}close.png" title="Close" alt="Close" /></li>} : '';
+    my $menu_header = scalar @states > 4 ? qq(<li class="header">Change track style<img class="close" src="${img_url}close.png" title="Close" alt="Close" /></li>) : '';
     my ($selected, $menu, $help);
     
     while (my ($renderer, $label) = splice @states, 0, 2) {
@@ -740,13 +740,13 @@ sub add_select_all {
     
     $menu->before('div', {
       class      => 'select_all config_menu',
-      inner_HTML => qq{
+      inner_HTML => qq(
         <ul class="popup_menu">
           <li class="header">Change track style<img class="close" src="${img_url}close.png" title="Close" alt="Close" /></li>
           $popup
         </ul>
         <strong>$caption</strong>
-      }
+      )
     });
   } elsif ($caption && !$external) {
     $menu->before('h3', { inner_HTML => $caption });

@@ -185,6 +185,13 @@ sub set_user {
   return 0; # Return false - not updated
 }
 
+sub clear_references {
+  my $self = shift;
+  delete $self->{'tree_ids'}{$_} for keys %{$self->{'tree_ids'}};
+  $_->clear_references for @{$self->child_nodes};
+  $self->remove_children;
+}
+
 sub dump {
   ### Dumps the contents of the tree to standard out
   ### Takes two parameters - "$title" - displayed in the error log
@@ -232,6 +239,7 @@ sub _debug_part {
   foreach my $k (keys %$data) {
     my $val = Dumper($data->{$k});
     $val =~ s/^\$VAR\d+\s*=\s+//;
+    $val =~ s/^(.{40}).+$/$1.../;
     $out .= ('  ' x $depth)."$key $k = $val\n";
   }
   return $out;

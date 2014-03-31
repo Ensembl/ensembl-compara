@@ -45,6 +45,8 @@ sub content {
   my $key = $wuc->get_track_key( 'transcript', $object );
   $wuc->modify_configs( [$key], {qw(display transcript)} );
 
+  $wuc->{'data_by_cell_line'} = $self->new_object('Slice', $extended_slice, $object->__data)->get_cell_line_data($wuc) if keys %{$self->hub->species_defs->databases->{'DATABASE_FUNCGEN'}{'tables'}{'cell_type'}{'ids'}};
+
   my $image    = $self->new_image( $extended_slice, $wuc, [] );
   $image->imagemap           = 'yes';
   $image->set_button( 'drag', 'title' => 'Drag to select region' );

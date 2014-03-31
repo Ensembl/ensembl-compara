@@ -106,7 +106,7 @@ sub content {
   my @nodes  = grep { $_->can('data') && !$_->data->{'no_menu_entry'} && $_->data->{'caption'} } @{$tree->child_nodes};
   my $menu;
   
-  if ($tree->get_node($active) || $nodes[0]) {
+  if ($tree->get_node($active) || scalar @nodes) {
     my $hub        = $self->{'hub'};
     my $modal      = $self->renderer->{'_modal_dialog_'};
     my $config     = $hub->session->get_data(type => 'nav', code => $hub->type) || {};
@@ -116,11 +116,13 @@ sub content {
     
     foreach (@nodes) {
       $_->data->{'top_level'} = 1;
-      $self->build_menu($_, $hub, $config, $img_url, $modal, $counts, $all_params, $active, $nodes[-1]);
+      $self->build_menu($_, $hub, $config, $img_url, $modal, $counts, $all_params, $active, $nodes[-1] eq $_);
     }
     
     $menu .= $_->render for @nodes;
   }
+  
+  $tree->clear_references;
   
   return sprintf('
     %s
@@ -133,7 +135,7 @@ sub content {
 }
 
 sub build_menu {
-  my ($self, $node, $hub, $config, $img_url, $modal, $counts, $all_params, $active, $last_child) = @_;
+  my ($self, $node, $hub, $config, $img_url, $modal, $counts, $all_params, $active, $is_last) = @_;
   
   my $data = $node->data;
   
@@ -184,7 +186,7 @@ sub build_menu {
     my $ul = $node->dom->create_element('ul');
     
     foreach (@children) {
-      $self->build_menu($_, $hub, $config, $img_url, $modal, $counts, $all_params, $active, $children[-1]);
+      $self->build_menu($_, $hub, $config, $img_url, $modal, $counts, $all_params, $active, $children[-1] eq $_);
       $ul->append_child($_);
     }
     
@@ -194,7 +196,7 @@ sub build_menu {
   
   push @classes, 'active'         if $node->id eq $active;
   push @classes, 'top_level'      if $data->{'top_level'};
-  push @classes, 'last'           if $node eq $last_child;
+  push @classes, 'last'           if $is_last;
   push @classes, 'closed'         if $toggle eq 'closed';
   push @classes, 'default_closed' if $data->{'closed'};
   

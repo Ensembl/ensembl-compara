@@ -200,3 +200,4 @@ if ($SiteDefs::ENSEMBL_CTRLLOG && open(LOG, ">>$SiteDefs::ENSEMBL_CTRLLOG")) {
   print LOG sprintf "%s [002] server started (manual invocation)\n", strftime("%Y-%m-%d %H:%M:%S", localtime);
   close LOG; 
 }
+

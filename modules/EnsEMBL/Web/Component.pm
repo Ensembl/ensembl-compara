@@ -31,8 +31,8 @@ use HTML::Entities  qw(encode_entities);
 use Text::Wrap      qw(wrap);
 use List::MoreUtils qw(uniq);
 
-use Bio::EnsEMBL::DrawableContainer;
-use Bio::EnsEMBL::VDrawableContainer;
+use EnsEMBL::Draw::DrawableContainer;
+use EnsEMBL::Draw::VDrawableContainer;
 
 use EnsEMBL::Web::Document::Image;
 use EnsEMBL::Web::Document::Table;
@@ -123,6 +123,11 @@ sub cacheable {
   return $self->{'cacheable'};
 }
 
+sub mcacheable {
+  # temporary method in e75 only - will be replaced in 76 (hr5)
+  return 1;
+}
+
 sub ajaxable {
   my $self = shift;
   $self->{'ajaxable'} = shift if @_;
@@ -143,7 +148,7 @@ sub has_image {
 
 sub get_content {
   my ($self, $function) = @_;
-  my $cache = $self->ajaxable && !$self->renderer->{'_modal_dialog_'} ? $self->hub->cache : undef;
+  my $cache = $self->mcacheable && $self->ajaxable && !$self->renderer->{'_modal_dialog_'} ? $self->hub->cache : undef;
   my $content;
   
   if ($cache) {
@@ -550,7 +555,7 @@ sub new_image {
   $_->set_parameter('component', $id) for grep $_->{'type'} eq $config_type, @image_configs;
  
   my $image = EnsEMBL::Web::Document::Image->new($hub, $self->id, \@image_configs);
-  $image->drawable_container = Bio::EnsEMBL::DrawableContainer->new(@_) if $self->html_format;
+  $image->drawable_container = EnsEMBL::Draw::DrawableContainer->new(@_) if $self->html_format;
   
   return $image;
 }
@@ -560,7 +565,7 @@ sub new_vimage {
   my @image_config = $_[1];
   
   my $image = EnsEMBL::Web::Document::Image->new($self->hub, $self->id, \@image_config);
-  $image->drawable_container = Bio::EnsEMBL::VDrawableContainer->new(@_) if $self->html_format;
+  $image->drawable_container = EnsEMBL::Draw::VDrawableContainer->new(@_) if $self->html_format;
   
   return $image;
 }
@@ -854,7 +859,7 @@ sub _sort_similarity_links {
       $text .= qq{  [<a href="$k_url">view all locations</a>]} unless $xref_type =~ /^ALT/;
     }
 
-    $text .= '</div>' if $join_links;
+    $text .= '</div>';
 
     my $label = $type->db_display_name || $externalDB;
     $label    = 'LRG' if $externalDB eq 'ENS_LRG_gene'; ## FIXME Yet another LRG hack!
@@ -1041,6 +1046,8 @@ sub transcript_table {
 
   my $gene = $object->gene;
   
+  my $gencode_desc = "The GENCODE Basic set includes all genes in the GENCODE gene set but only a subset of the transcripts.";
+
   if ($gene) {
     my $transcript  = $page_type eq 'transcript' ? $object->stable_id : $hub->param('t');
     my $transcripts = $gene->get_all_Transcripts;
@@ -1051,11 +1058,17 @@ sub transcript_table {
     my %biotype_rows;
 
     my $trans_attribs = {};
+    my $trans_gencode = {};
+
     foreach my $trans (@$transcripts) {
-      foreach my $attrib_type (qw(CDS_start_NF CDS_end_NF)) {
+      foreach my $attrib_type (qw(CDS_start_NF CDS_end_NF gencode_basic)) {
         (my $attrib) = @{$trans->get_all_Attributes($attrib_type)};
-        if ($attrib && $attrib->value) {
-          $trans_attribs->{$trans->stable_id}{$attrib_type} = $attrib->value;
+        if($attrib_type eq 'gencode_basic') {
+            if ($attrib && $attrib->value) {
+              $trans_gencode->{$trans->stable_id}{$attrib_type} = $attrib->value;
+            }
+        } else {
+          $trans_attribs->{$trans->stable_id}{$attrib_type} = $attrib->value if ($attrib && $attrib->value);
         }
       }
     }
@@ -1078,7 +1091,6 @@ sub transcript_table {
         action => 'Summary',
         g      => $gene_id
       });
-    
       $gene_html = qq{This transcript is a product of gene <a href="$gene_url">$gene_id</a><br /><br />$gene_html};
     }
     
@@ -1092,8 +1104,9 @@ sub transcript_table {
        { key => 'biotype',    sort => 'html',    title => 'Biotype'       },
     );
 
-    push @columns, { key => 'cds_tag', sort => 'html', title => 'CDS incomplete' } if %$trans_attribs; 
+    push @columns, { key => 'cds_tag', sort => 'html', title => 'CDS incomplete' } if %$trans_attribs;
     push @columns, { key => 'ccds', sort => 'html', title => 'CCDS' } if $species =~ /^Homo|Mus/;
+    push @columns, { key => 'gencode_set', sort => 'html', title => 'GENCODE basic' } if %$trans_gencode;
     
     my @rows;
     
@@ -1104,6 +1117,7 @@ sub transcript_table {
       my $protein_length    = '-';
       my $ccds              = '-';
       my $cds_tag           = '-';
+      my $gencode_set       = '-';
       my $url               = $hub->url({ %url_params, t => $tsi });
       
       if ($_->translation) {
@@ -1136,11 +1150,16 @@ sub transcript_table {
         }
         elsif ($trans_attribs->{$tsi}{'CDS_end_NF'}) {
          $cds_tag = "3'";
-       }
+        }
       }
-      
+
+      if ($trans_gencode->{$tsi}) {
+        if ($trans_gencode->{$tsi}{'gencode_basic'}) {
+          $gencode_set = qq(<span class="glossary_mouseover">Y<span class="floating_popup">$gencode_desc</span></span>);
+        }
+      }
       (my $biotype = $_->biotype) =~ s/_/ /g;
-      
+
       my $row = {
         name       => { value => $_->display_xref ? $_->display_xref->display_id : 'Novel', class => 'bold' },
         transcript => sprintf('<a href="%s">%s</a>', $url, $tsi),
@@ -1151,6 +1170,7 @@ sub transcript_table {
         ccds       => $ccds,
         has_ccds   => $ccds eq '-' ? 0 : 1,
         cds_tag    => $cds_tag,
+        gencode_set=> $gencode_set,
         options    => { class => $count == 1 || $tsi eq $transcript ? 'active' : '' }
       };
       
@@ -1392,10 +1412,8 @@ sub render_sift_polyphen {
   }
   else {
     $rank = $ranks{$pred};
-    $rank_str = ' ';
+    $rank_str = $pred;
   }
-  
-  my $width = defined($score) ? 50 : 15;
   
   return qq{
     <span class="hidden">$rank</span><span class="hidden export">$pred(</span>
@@ -1583,7 +1601,7 @@ sub species_stats {
     $counts->add_row({
       'name' => "<b>$header</b>",
       'stat' => $stat,
-    });
+    }) if $stat;
   }
 
   $html .= $counts->render;
@@ -1609,7 +1627,7 @@ sub species_stats {
       $alt_counts->add_row({
         'name' => "<b>$header</b>",
         'stat' => $stat,
-      });
+      }) if $stat;
     }
     $html .= $alt_counts->render;
   }
@@ -1626,19 +1644,22 @@ sub species_stats {
     push @$rows, {
       'name' => "<b>$name</b>",
       'stat' => $self->thousandify($stat),
-    };
+    } if $stat;
   }
   ## Variants
-  my @other_stats = (
-    {'name' => 'SNPCount', 'method' => 'get_short_variation_count'},
-    {'name' => 'struct_var', 'method' => 'get_structural_variation_count'}
-  );
-  foreach (@other_stats) {
-    my $method = $_->{'method'};
-    push @$rows, {
-      'name' => '<b>'.$genome_container->get_attrib($_->{'name'})->name().'</b>',
-      'stat' => $self->thousandify($genome_container->$method),
-    };
+  if ($self->hub->database('variation')) {
+    my @other_stats = (
+      {'name' => 'SNPCount', 'method' => 'get_short_variation_count'},
+      {'name' => 'struct_var', 'method' => 'get_structural_variation_count'}
+    );
+    foreach (@other_stats) {
+      my $method = $_->{'method'};
+      my $stat = $self->thousandify($genome_container->$method);
+      push @$rows, {
+        'name' => '<b>'.$genome_container->get_attrib($_->{'name'})->name().'</b>',
+        'stat' => $stat,
+      } if $stat;
+    }
   }
   if (scalar(@$rows)) {
     $html .= '<h3>Other</h3>';

@@ -20,7 +20,7 @@ limitations under the License.
 # Author: rmp@sanger.ac.uk
 # Maintainer: webmaster@sanger.ac.uk
 # Created: 2001
-# Sangerised Bio::EnsEMBL::GlyphSet::scalebar
+# Sangerised EnsEMBL::Draw::GlyphSet::scalebar
 #
 package Sanger::Graphics::GlyphSet::scalebar;
 
@@ -31,7 +31,7 @@ use Sanger::Graphics::Glyph::Text;
 use Sanger::Graphics::Glyph::Composite;
 use Sanger::Graphics::Bump;
 
-use base qw(Bio::EnsEMBL::GlyphSet);
+use base qw(EnsEMBL::Draw::GlyphSet);
 
 sub _init {
     my ($self) = @_;

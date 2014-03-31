@@ -76,6 +76,7 @@ sub content {
   $html .= '</div>';
 
    ## Structural variation documentation links
+  my $vep_link = $hub->url({'species' => $species, 'type' => 'Tools', 'action' => 'VEP', '__clear' => 1});
   $html .= qq(
     <div class="column-wrapper">
       <div class="column-two column-first">
@@ -86,7 +87,7 @@ sub content {
             <li>Video: <a href="/Help/Movie?id=316">Demo: Structural variation for a region</a></li>
           </ul>
           <h2>Analysing your data</h2>
-            <p><a href="/$species/UserData/UploadVariations?db=core"><img src="/i/vep_logo_sm.png" alt="[logo]" style="vertical-align:middle" /></a> Test your own structural variants with the <a href="/$species/UserData/UploadVariations?db=core" class="modal_link">Variant Effect Predictor</a></p>
+            <p><a href="$vep_link"><img src="/i/vep_logo_sm.png" alt="[logo]" style="vertical-align:middle" /></a> Test your own structural variants with the <a href="$vep_link">Variant Effect Predictor</a></p>
         </div>
       </div>
       <div class="column-two column-next">

@@ -42,8 +42,8 @@ sub consequence_types { return $_[0]->{'consequence_types'} ||= { map { $_->disp
 sub valids {
   ### Gets all the user's selected parameters from $self->params()
   ### Returns        Hashref of options with keys as valid options, value = 1 if they are on
-  ### Needed for:     Bio::EnsEMBL::GlyphSet::variation.pm,     
-  ###                Bio::EnsEMBL::GlyphSet::genotyped_variation.pm
+  ### Needed for:    EnsEMBL::Draw::GlyphSet::variation.pm,     
+  ###                EnsEMBL::Draw::GlyphSet::genotyped_variation.pm
   ###                TranscriptSNPView
   ###                GeneSNPView
   ### Called from:   self
@@ -119,7 +119,7 @@ sub getFakeMungedVariationFeatures {
   }
   my $all_snps = $self->Obj->get_all_VariationFeatures($so_terms);
   my $ngot =  scalar(@$all_snps);
-  push @$all_snps, @{$self->Obj->get_all_somatic_VariationFeatures($so_terms)};
+  push @$all_snps, @{$self->Obj->get_all_somatic_VariationFeatures()};
 
   my @on_slice_snps = 
     map  { $_->[1] ? [ $_->[0]->start + $_->[1], $_->[0]->end + $_->[1], $_->[0] ] : () } # [ fake_s, fake_e, SNP ] Filter out any SNPs not on munged slice
