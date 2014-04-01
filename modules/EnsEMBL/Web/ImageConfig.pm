@@ -3017,11 +3017,12 @@ sub add_phenotypes {
   }));
   
   foreach my $type(keys %{$hashref->{'phenotypes'}{'types'}}) {
+    my $pf_sources = $hashref->{'phenotypes'}{'types'}{$type}{'sources'};
     $pf_menu->append($self->create_track('phenotype_'.lc($type), 'Phenotype annotations ('.$type.'s)', {
       %options,
       caption => 'Phenotypes ('.$type.'s)',
       type => $type,
-      description => 'Phenotype annotations on '.$type.'s',
+      description => 'Phenotype annotations on '.$type.'s (from '.$pf_sources.')',
     }));
   }
   
