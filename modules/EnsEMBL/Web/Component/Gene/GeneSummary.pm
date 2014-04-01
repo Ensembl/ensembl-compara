@@ -119,7 +119,7 @@ sub content {
   my $lrg_html;
   my %xref_lrgs;    # this hash will store LRGs we don't need to re-print
 
-  if(scalar @lrg_matches) {
+  if(scalar @lrg_matches && $hub->species_defs->HAS_LRG) {
     my $lrg_link;
     for my $i(0..$#lrg_matches) {
       my $lrg = $lrg_matches[$i];
