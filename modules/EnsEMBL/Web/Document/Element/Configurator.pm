@@ -233,7 +233,7 @@ sub save_as {
         $existing
         $save_to
         <p><label>Name:</label><input class="name" type="text" name="name" maxlength="255" /></p>
-        <p><label>Description:</label><textarea class="desc" name="description" rows="5"/></p>
+        <p><label>Description:</label><textarea class="desc" name="description" rows="5"></textarea></p>
         <input class="fbutton disabled" type="button" value="Save" />
       </form>
     </div>
