@@ -94,6 +94,17 @@ sub fetch_all_hmm_curated_annot {
     return $sth;
 }
 
+
+sub fetch_all_genes_missing_annot_by_genome_db_id {
+    my ($self, $genome_db_id) = @_;
+
+    my $sql = "SELECT canonical_member_id FROM gene_member LEFT JOIN hmm_annot ON canonical_member_id = seq_member_id WHERE seq_member_id IS NULL AND genome_db_id = ?";
+    my $sth = $self->prepare($sql);
+    $sth->execute($genome_db_id);
+
+    return $sth;
+}
+
 sub store_hmmclassify_result {
     my ($self, $member_id, $model_id, $evalue) = @_;
 
