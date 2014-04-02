@@ -85,6 +85,15 @@ sub fetch_all_hmm_annot {
 return $sth;
 }
 
+sub fetch_all_hmm_curated_annot {
+    my ($self) = @_;
+
+    my $sql = "SELECT * FROM hmm_curated_annot";
+    my $sth = $self->prepare($sql);
+    $sth->execute();
+    return $sth;
+}
+
 sub store_hmmclassify_result {
     my ($self, $member_id, $model_id, $evalue) = @_;
 

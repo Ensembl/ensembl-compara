@@ -1396,6 +1396,19 @@ CREATE TABLE hmm_annot (
 ) COLLATE=latin1_swedish_ci ENGINE=MyISAM;
 
 
+CREATE TABLE hmm_curated_annot (
+  seq_member_stable_id       varchar(40) NOT NULL,
+  model_id                   varchar(40) DEFAULT NULL,
+  library_version            varchar(40) NOT NULL,
+  annot_date                 TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  reason                     MEDIUMTEXT,
+
+  PRIMARY KEY (seq_member_stable_id),
+  KEY (model_id)
+
+) COLLATE=latin1_swedish_ci ENGINE=MyISAM;
+
+
 /**
 @table homology
 @desc  This table contains all the genomic homologies. There are two homology_member entries for each homology entry for now, but both the schema and the API can handle more than just pairwise relationships. <br />dN, dS, N, S and lnL are statistical values given by the codeml program of the <a href="http://abacus.gene.ucl.ac.uk/software/paml.html">Phylogenetic Analysis by Maximum Likelihood (PAML)</a> package.
