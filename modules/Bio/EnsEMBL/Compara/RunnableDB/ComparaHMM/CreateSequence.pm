@@ -62,8 +62,7 @@ return;
 sub run {
     my $self = shift @_;
 
-    $sequence_dir          = $self->param('buildprofiles_dir');
-    $self->throw('buildprofiles_dir is an obligatory parameter') unless (defined $self->param('buildprofiles_dir'));
+    $sequence_dir          = $self->param_required('buildprofiles_dir');
 
     my $sql                = "SELECT member_id FROM sequence_unclassify";
     my $sth                = $self->compara_dba->dbc->prepare($sql);

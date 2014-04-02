@@ -46,10 +46,8 @@ my ($panther_annot_PTHR,$panther_annot_SF);
 sub fetch_input {
     my ($self) = @_;
 
-    $panther_annot_PTHR = $self->param('panther_annotation_PTHR');
-    $panther_annot_SF   = $self->param('panther_annotation_SF');
-    $self->throw('panther_annotation_PTHR is an obligatory parameter') unless (defined $self->param('panther_annotation_PTHR'));
-    $self->throw('panther_annotation_SF is an obligatory parameter') unless (defined $self->param('panther_annotation_SF'));
+    $panther_annot_PTHR = $self->param_required('panther_annotation_PTHR');
+    $panther_annot_SF   = $self->param_required('panther_annotation_SF');
 
 return;
 }

@@ -61,8 +61,7 @@ return;
 sub run {
     my $self = shift @_;
 
-    my $msa_dir     = $self->param('msa_dir');
-    $self->throw('msa_dir is an obligatory parameter') unless (defined $self->param('msa_dir'));
+    my $msa_dir     = $self->param_required('msa_dir');
 
     opendir(DIR, $msa_dir) or die "Error openining dir '$msa_dir' : $!";
     my @msa_subdir = readdir DIR;

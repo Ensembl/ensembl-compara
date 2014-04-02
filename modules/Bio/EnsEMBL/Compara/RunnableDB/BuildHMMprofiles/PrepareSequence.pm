@@ -62,8 +62,7 @@ return;
 sub run {
     my $self = shift @_;
 
-    my $fasta_file = $self->param('fasta_file');
-    $self->throw('fasta_file is an obligatory parameter') unless (defined $self->param('fasta_file'));
+    my $fasta_file = $self->param_required('fasta_file');
     my $fasta_seq   = Bio::SeqIO->new(-file => $fasta_file,-format => 'fasta');
  
     while ( my $seq = $fasta_seq->next_seq() )

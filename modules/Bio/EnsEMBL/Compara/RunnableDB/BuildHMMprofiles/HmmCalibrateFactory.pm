@@ -64,8 +64,7 @@ return;
 sub run {
     my $self = shift @_;
 
-    my $hmmLib_dir     = $self->param('hmmLib_dir');
-    $self->throw('hmmLib_dir is an obligatory parameter') unless (defined $self->param('hmmLib_dir'));
+    my $hmmLib_dir     = $self->param_required('hmmLib_dir');
 
     opendir(DIR, $hmmLib_dir) or die "Error openining dir '$hmmLib_dir' : $!";
    

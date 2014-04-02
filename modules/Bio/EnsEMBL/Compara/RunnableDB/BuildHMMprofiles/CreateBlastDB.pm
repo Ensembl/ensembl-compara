@@ -61,13 +61,9 @@ return;
 sub run {
     my $self = shift @_;
 
-    my $fasta_file        = $self->param('fasta_file');
-    my $xdformat_exe      = $self->param('xdformat_exe');
-    my $buildprofiles_dir = $self->param('buildprofiles_dir');
-
-    $self->throw('fasta_file is an obligatory parameter') unless (defined $self->param('fasta_file'));
-    $self->throw('xdformat_exe is an obligatory parameter') unless (defined $self->param('xdformat_exe'));
-    $self->throw('buildprofiles_dir is an obligatory parameter') unless (defined $self->param('buildprofiles_dir'));
+    my $fasta_file        = $self->param_required('fasta_file');
+    my $xdformat_exe      = $self->param_required('xdformat_exe');
+    my $buildprofiles_dir = $self->param_required('buildprofiles_dir');
  
     $self->check_directory($buildprofiles_dir);  	
     # configure the fasta file for use as a blast database file:

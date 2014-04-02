@@ -66,13 +66,9 @@ sub run {
     $self->compara_dba->dbc->disconnect_when_inactive(1);
     $self->compara_dba->dbc->disconnect_if_idle() if $self->compara_dba->dbc->connected();
 
-    my $hmmLib_dir   = $self->param('hmmLib_dir');
-    my $hmmcalibrate = $self->param('hmmcalibrate');
-    my $hmmprofile   = $self->param('hmmprofile');
-
-    $self->throw('hmmLib_dir is an obligatory parameter') unless (defined $self->param('hmmLib_dir'));
-    $self->throw('hmmcalibrate is an obligatory parameter') unless (defined $self->param('hmmcalibrate'));
-    $self->throw('hmmprofile is an obligatory parameter') unless (defined $self->param('hmmprofile'));
+    my $hmmLib_dir   = $self->param_required('hmmLib_dir');
+    my $hmmcalibrate = $self->param_required('hmmcalibrate');
+    my $hmmprofile   = $self->param_required('hmmprofile');
 
     if($hmmprofile =~/(.*cluster.*)\_output/){
         my $hmmLib_subdir = $1;

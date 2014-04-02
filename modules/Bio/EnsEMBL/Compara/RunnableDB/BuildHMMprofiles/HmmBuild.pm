@@ -60,15 +60,10 @@ return;
 sub run {
     my $self = shift @_;
 
-    my $hmmbuild_exe = $self->param('hmmbuild_exe');
-    my $hmmLib_dir   = $self->param('hmmLib_dir');
-    my $msa_dir      = $self->param('msa_dir');
-    my $msa          = $self->param('msa');
-
-    $self->throw('hmmbuild_exe is an obligatory parameter') unless (defined $self->param('hmmbuild_exe'));
-    $self->throw('hmmLib_dir is an obligatory parameter') unless (defined $self->param('hmmLib_dir'));
-    $self->throw('msa_dir is an obligatory parameter') unless (defined $self->param('msa_dir'));
-    $self->throw('msa is an obligatory parameter') unless (defined $self->param('msa'));
+    my $hmmbuild_exe = $self->param_required('hmmbuild_exe');
+    my $hmmLib_dir   = $self->param_required('hmmLib_dir');
+    my $msa_dir      = $self->param_required('msa_dir');
+    my $msa          = $self->param_required('msa');
 
     $self->check_directory($hmmLib_dir);
   

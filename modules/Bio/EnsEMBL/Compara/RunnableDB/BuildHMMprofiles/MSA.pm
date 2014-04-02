@@ -69,8 +69,7 @@ sub param_defaults {
 sub load_allclusters{
     my $self = shift @_;
 
-    my $hcluster_parse_out = $self->param('hcluster_parse');
-    $self->throw('hcluster_parse is an obligatory parameter') unless (defined $self->param('hcluster_parse'));
+    my $hcluster_parse_out = $self->param_required('hcluster_parse');
 
     my %allclusters;
     $self->param('allclusters', \%allclusters);
@@ -94,8 +93,7 @@ return;
 sub create_fasta_db {
     my $self =shift @_;
 
-    my $fasta_file = $self->param('fasta_file');
-    $self->throw('fasta_file is an obligatory parameter') unless (defined $self->param('fasta_file'));
+    my $fasta_file = $self->param_required('fasta_file');
     $db            = Bio::DB::Fasta->new($fasta_file);
 
 return;
@@ -104,12 +102,10 @@ return;
 sub prepare_input_fasta {
     my $self =shift @_;
 
-    my $blast_tmp_dir = $self->param('blast_tmp_dir');    
+    my $blast_tmp_dir = $self->param_required('blast_tmp_dir');
     my $cluster_id    = $self->param('cluster_id');
     my $allclusters   = $self->param('allclusters');
 
-    $self->throw('blast_tmp_dir is an obligatory parameter') unless (defined $self->param('blast_tmp_dir'));
-  
     my @genes         = @{$allclusters->{$cluster_id}->{'members'}};
     my $cluster_fasta = $blast_tmp_dir.'/cluster_'.$cluster_id.'.fasta'; 
 
@@ -216,8 +212,7 @@ sub post_cleanup {
 sub run_msa {
     my $self = shift;
 
-    my $msa_dir     = $self->param('msa_dir');
-    $self->throw('msa_dir is an obligatory parameter') unless (defined $self->param('msa_dir'));
+    my $msa_dir     = $self->param_required('msa_dir');
     chdir $msa_dir;
     my $files_count  = `ls -R | grep .msa | wc -l`;
 

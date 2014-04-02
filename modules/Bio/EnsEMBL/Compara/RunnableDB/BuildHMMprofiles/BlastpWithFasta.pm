@@ -66,19 +66,13 @@ my @cross_pafs;
 sub fetch_input {
     my $self = shift @_;
    
-    $seq               = $self->param('seq'); 
-    $buildprofiles_dir = $self->param('buildprofiles_dir');
-    $wublastp_exe      = $self->param('wublastp_exe');
+    $seq               = $self->param_required('seq');
+    $buildprofiles_dir = $self->param_required('buildprofiles_dir');
+    $wublastp_exe      = $self->param_required('wublastp_exe');
     die "Cannot execute '$wublastp_exe'" unless(-x $wublastp_exe);
-    $blast_options     = $self->param('blast_options');        
-    $blast_tmp_dir     = $self->param('blast_tmp_dir');
+    $blast_options     = $self->param_required('blast_options');
+    $blast_tmp_dir     = $self->param_required('blast_tmp_dir');
     $blastDB           = $buildprofiles_dir."/BLASTDB";
-
-    $self->throw('seq is an obligatory parameter') unless (defined $self->param('seq'));
-    $self->throw('wublastp_exe is an obligatory parameter') unless (defined $self->param('wublastp_exe'));
-    $self->throw('buildprofiles_dir is an obligatory parameter') unless (defined $self->param('buildprofiles_dir'));
-    $self->throw('blast_options is an obligatory parameter') unless (defined $self->param('blast_options'));
-    $self->throw('blast_tmp_dir is an obligatory parameter') unless (defined $self->param('blast_tmp_dir'));
 
     $self->check_directory($blast_tmp_dir);
     # Define BLAST Parser Filter Object parameters
