@@ -93,7 +93,7 @@ sub default_options {
         'mafft_home'                => '/software/ensembl/compara/mafft-7.113/',
         'treebest_exe'              => '/software/ensembl/compara/treebest.doubletracking',
         'quicktree_exe'             => '/software/ensembl/compara/quicktree_1.1/bin/quicktree',
-        'buildhmm_exe'              => '/software/ensembl/compara/hmmer-3.1b1/binaries/hmmbuild',
+        'hmmer2_home'               => '/software/ensembl/compara/hmmer-2.3.2/src/',
         'codeml_exe'                => '/software/ensembl/compara/paml43/bin/codeml',
         'ktreedist_exe'             => '/software/ensembl/compara/ktreedist/Ktreedist.pl',
         'blast_bin_dir'             => '/software/ensembl/compara/ncbi-blast-2.2.28+/bin',
@@ -103,7 +103,6 @@ sub default_options {
         'cm_file_or_directory'      => undef,
         'hmm_library_basedir'       => undef,
         'pantherScore_path'         => undef,
-        'hmmer_path'                => undef,
 
     # hive_capacity values for some analyses:
         'reuse_capacity'            =>   3,

@@ -233,7 +233,7 @@ sub post_cleanup {
 sub do_quicktree_loop {
     my $self = shift;
     my $supertree_root = shift;
-    my $input_aln = $self->dumpAlignedMemberSetAsStockholm($supertree_root->children->[0]);
+    my $input_aln = $self->dumpAlignedMemberSet($supertree_root->children->[0], 'stockholm');
     my $quicktree_newick_string = $self->run_quicktreebreak($input_aln);
     my $newtree = Bio::EnsEMBL::Compara::Graph::NewickParser::parse_newick_into_tree($quicktree_newick_string);
     my @todo = ();

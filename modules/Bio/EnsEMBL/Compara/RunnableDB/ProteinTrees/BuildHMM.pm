@@ -38,19 +38,6 @@ as input create a HMMER HMM profile
 input_id/parameters format eg: "{'gene_tree_id'=>1234}"
     gene_tree_id : use 'id' to fetch a cluster from the ProteinTree
 
-=head1 SYNOPSIS
-
-my $db           = Bio::EnsEMBL::Compara::DBAdaptor->new($locator);
-my $buildhmm = Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::BuildHMM->new
-  (
-   -db         => $db,
-   -input_id   => $input_id,
-   -analysis   => $analysis
-  );
-$buildhmm->fetch_input(); #reads from DB
-$buildhmm->run();
-$buildhmm->write_output(); #writes to DB
-
 =head1 AUTHORSHIP
 
 Ensembl Team. Individual contributions can be found in the GIT log.
@@ -73,13 +60,20 @@ use base ('Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::StoreTree', 'Bio::EnsEM
 
 sub param_defaults {
     return {
-            'cdna'                  => 0,
+        'cdna'              => 0,
+        'calibrate'         => 1,
+        'hmmer_version'     => 2,       # 2 or 3
+        'hmmbuild_exe'      => '#hmmer_home#/hmmbuild',
+        'hmmcalibrate_exe'  => '#hmmer_home#/hmmcalibrate',
     };
 }
 
 
+
 sub fetch_input {
     my $self = shift @_;
+
+    die "HMMER v3 does not need a calibration" if $self->param('calibrate') and $self->param_required('hmmer_version') eq '3';
 
     my $protein_tree_id     = $self->param_required('gene_tree_id');
     my $protein_tree        = $self->compara_dba->get_GeneTreeAdaptor->fetch_by_dbID( $protein_tree_id )
@@ -124,10 +118,9 @@ sub fetch_input {
 
     $self->param('protein_align', Bio::EnsEMBL::Compara::AlignedMemberSet->new(-dbid => $self->param('gene_tree_id'), -members => $members));
 
-    my $buildhmm_exe = $self->param_required('buildhmm_exe');
-    die "Cannot execute '$buildhmm_exe'" unless(-x $buildhmm_exe);
+    $self->require_executable('hmmbuild_exe');
+    $self->require_executable('hmmcalibrate_exe') if $self->param('calibrate');
 
-    return
 }
 
 
@@ -166,18 +159,6 @@ sub write_output {
 }
 
 
-sub post_cleanup {
-  my $self = shift;
-
-  if($self->param('protein_tree')) {
-    printf("BuildHMM::post_cleanup  releasing tree\n") if($self->debug);
-    $self->param('protein_tree')->release_tree;
-    $self->param('protein_tree', undef);
-  }
-
-  $self->SUPER::post_cleanup if $self->can("SUPER::post_cleanup");
-}
-
 
 ##########################################
 #
@@ -189,19 +170,26 @@ sub post_cleanup {
 sub run_buildhmm {
     my $self = shift;
 
-    my $stk_file = $self->dumpAlignedMemberSetAsStockholm($self->param('protein_align'));
-    my $hmm_file = $self->param('hmm_file', $stk_file . '_hmmbuild.hmm');
+    my $aln_file = $self->dumpAlignedMemberSet($self->param('protein_align'), $self->param('hmmer_version') == 2 ? 'fasta' : 'stockholm');
+    my $hmm_file = $self->param('hmm_file', $aln_file . '_hmmbuild.hmm');
 
     ## as in treefam
     # $hmmbuild --amino -g -F $file.hmm $file >/dev/null
     my $cmd = join(' ',
-            $self->param('buildhmm_exe'),
+            $self->param('hmmbuild_exe'),
             ($self->param('cdna') ? '--dna' : '--amino'),
             $hmm_file,
-            $stk_file
+            $aln_file
     );
     my $cmd_out = $self->run_command($cmd);
-    die 'Could not run $buildhmm_exe: ', $cmd_out->out if ($cmd_out->exit_code);
+    die "Could not run hmmbuild: ", $cmd_out->out if ($cmd_out->exit_code);
+
+    if ($self->param('calibrate')) {
+        $cmd = sprintf('%s %s', $self->param('hmmcalibrate_exe'), $hmm_file);
+        my $cmd_out2 = $self->run_command($cmd);
+        die "Could not run hmmcalibrate: ", $cmd_out2->out if ($cmd_out2->exit_code);
+        $cmd_out->runtime_msec += $cmd_out2->runtime_msec
+    }
 
     $self->param('protein_tree')->store_tag('BuildHMM_runtime_msec', $cmd_out->runtime_msec);
 }

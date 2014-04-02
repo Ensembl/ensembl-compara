@@ -131,10 +131,11 @@ sub dumpTreeMultipleAlignmentToWorkdir {
 }
 
 
-sub dumpAlignedMemberSetAsStockholm {
+sub dumpAlignedMemberSet {
 
     my $self = shift;
     my $gene_tree = shift;
+    my $format = shift;
 
     my $file_root = $self->worker_temp_directory.'/align';
     $file_root =~ s/\/\//\//g;  # converts any // in path to /
@@ -151,12 +152,12 @@ sub dumpAlignedMemberSetAsStockholm {
     $sa->set_displayname_flat(1);
 
     # Now outputing the alignment
-    my $stk_file = $file_root . '.stk';
-    open(OUTSEQ, ">$stk_file") or die "Could not open '$stk_file' for writing : $!";
-    my $alignIO = Bio::AlignIO->newFh( -fh => \*OUTSEQ, -format => "stockholm");
+    my $aln_file = sprintf('%s.%s', $file_root, $format);
+    open(OUTSEQ, ">$aln_file") or die "Could not open '$aln_file' for writing : $!";
+    my $alignIO = Bio::AlignIO->newFh( -fh => \*OUTSEQ, -format => $format);
     print $alignIO $sa;
     close OUTSEQ;
-    return $stk_file;
+    return $aln_file;
 }
 
 

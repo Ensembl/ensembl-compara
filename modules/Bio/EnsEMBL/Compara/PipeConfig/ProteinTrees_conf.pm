@@ -131,13 +131,10 @@ sub default_options {
         #'mafft_home'                => '/software/ensembl/compara/mafft-7.113/',
         #'treebest_exe'              => '/software/ensembl/compara/treebest.doubletracking',
         #'quicktree_exe'             => '/software/ensembl/compara/quicktree_1.1/bin/quicktree',
-        #'buildhmm_exe'              => '/software/ensembl/compara/hmmer-3.1b1/binaries/hmmbuild',
-       'hmmemit_exe'     =>  $self->o('exe_dir').'/hmmemit',
+        #'hmmer2_home'               => '/software/ensembl/compara/hmmer-2.3.2/src/',
         #'codeml_exe'                => '/software/ensembl/compara/paml43/bin/codeml',
         #'ktreedist_exe'             => '/software/ensembl/compara/ktreedist/Ktreedist.pl',
         #'blast_bin_dir'             => '/software/ensembl/compara/ncbi-blast-2.2.28+/bin',
-  	   'hmmbuild_exe'    =>  $self->o('exe_dir').'/hmmbuild_2', # for HMMer2 to use with PantherScore.pl  else hmmbuild => HMMer3
-	   'hmmcalibrate'    =>  $self->o('exe_dir').'/hmmcalibrate',
 
     # HMM specific parameters (set to 0 or undef if not in use)
         #'hmm_clustering'            => 0, ## by default run blastp clustering
@@ -147,7 +144,6 @@ sub default_options {
         ##'cm_file_or_directory'      => '/lustre/scratch110/ensembl/mp12/panther_hmms/PANTHER7.2_ascii', ## Panther DB
         ##'hmm_library_basedir'       => '/lustre/scratch110/ensembl/mp12/Panther_hmms',
         #'pantherScore_path'         => '/software/ensembl/compara/pantherScore1.03',
-        #'hmmer_path'                => '/software/ensembl/compara/hmmer-2.3.2/src/',
        'panther_annotation_PTHR' => '/nfs/nobackup2/ensemblgenomes/ckong/workspace/buildhmmprofiles/panther_Interpro_annot_v8_1/loose_dummy.txt',
        'panther_annotation_SF'   => '/nfs/nobackup2/ensemblgenomes/ckong/workspace/buildhmmprofiles/panther_Interpro_annot_v8_1/loose_dummy.txt',
 
@@ -836,7 +832,7 @@ sub pipeline_analyses {
              -parameters => {
                              'blast_bin_dir'       => $self->o('blast_bin_dir'),
                              'pantherScore_path'   => $self->o('pantherScore_path'),
-                             'hmmer_path'          => $self->o('hmmer_path'),
+                             'hmmer_path'          => $self->o('hmmer2_home'),
                              'hmm_library_basedir' => $self->o('hmm_library_basedir'),
                             },
              -hive_capacity => $self->o('HMMer_classify_capacity'),
@@ -1056,7 +1052,7 @@ sub pipeline_analyses {
     {   -logic_name  => 'HmmBuild',
         -module     => 'Bio::EnsEMBL::Compara::RunnableDB::BuildHMMprofiles::HmmBuild',
         -parameters  => {
-              'hmmbuild_exe' => $self->o('hmmbuild_exe'),
+              'hmmbuild_exe' => $self->o('hmmer2_home').'/hmmbuild',
               'hmmLib_dir'   => $self->o('hmmLib_dir'),
               'msa_dir'      => $self->o('msa_dir'),
          },
@@ -1084,7 +1080,7 @@ sub pipeline_analyses {
         -module      => 'Bio::EnsEMBL::Compara::RunnableDB::BuildHMMprofiles::HmmCalibrate',
         -parameters  => {
 	          'hmmLib_dir'    => $self->o('hmmLib_dir'),     
-    	      'hmmcalibrate'  => $self->o('hmmcalibrate'),
+                  'hmmcalibrate'  => $self->o('hmmer2_home').'/hmmcalibrate',
            },
         -hive_capacity => $self->o('hmmcalibrate_capacity'),
         -batch_size    => 50,
@@ -1095,9 +1091,8 @@ sub pipeline_analyses {
         -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ComparaHMM::LoadNewModels',
         -parameters => {
                           'cm_file_or_directory' => $self->o('hmmLib_dir'), 
-                          'hmmer_path'           => $self->o('hmmer_path'), # For hmmemit (in case it is necessary to get the consensus for each model to create the blast db)
                           'pantherScore_path'    => $self->o('pantherScore_path'),
-                          'hmmemit_exe'	   	     => $self->o('hmmemit_exe'),
+                          'hmmemit_exe'	         => $self->o('hmmer2_home').'/hmmemit',
 #                          'type'				 => $self->o('hmm_profiles_type2'),
                        },
         -flow_into  => {
@@ -1140,7 +1135,7 @@ sub pipeline_analyses {
              -parameters => {
                              'blast_bin_dir'       => $self->o('blast_bin_dir'),
                              'pantherScore_path'   => $self->o('pantherScore_path'),
-                             'hmmer_path'          => $self->o('hmmer_path'),
+                             'hmmer_path'          => $self->o('hmmer2_home'),
                              'hmm_library_basedir' => $self->o('hmmLib_dir'),
                              'cluster_dir'         => $self->o('cluster_dir'),
                              'blast_tmp_dir'	   => $self->o('blast_tmp_dir'),
@@ -1636,7 +1631,8 @@ sub pipeline_analyses {
         {   -logic_name => 'build_HMM_aa',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::BuildHMM',
             -parameters => {
-                'buildhmm_exe'      => $self->o('buildhmm_exe'),
+                'hmmer_home'        => $self->o('hmmer2_home'),
+                'hmmer_version'     => 2,
             },
             -hive_capacity        => $self->o('build_hmm_capacity'),
             -batch_size           => 5,
@@ -1648,7 +1644,8 @@ sub pipeline_analyses {
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::BuildHMM',
             -parameters => {
                 'cdna'              => 1,
-                'buildhmm_exe'      => $self->o('buildhmm_exe'),
+                'hmmer_home'        => $self->o('hmmer2_home'),
+                'hmmer_version'     => 2,
             },
             -hive_capacity        => $self->o('build_hmm_capacity'),
             -batch_size           => 5,
