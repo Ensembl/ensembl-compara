@@ -198,7 +198,7 @@ sub render_collapsed {
       legend   => \@legend
     };
   } elsif ($config->get_option('opt_empty_tracks') != 0) {
-    $self->errorTrack(sprintf 'No %s in this region', $self->error_track_name);
+    $self->error_no_track_on_strand($self->error_track_name, $strand);
   }
 }
 
@@ -442,7 +442,7 @@ sub render_transcripts {
       $self->push($composite);
     }
   }
-  
+  warn "Strand $strand";
   if ($transcript_drawn) {
     my $type = $self->type;
     my %legend_old = @{$self->{'legend'}{'gene_legend'}{$type}{'legend'}||[]};
@@ -453,7 +453,7 @@ sub render_transcripts {
       legend   => \@legend
     };
   } elsif ($config->get_option('opt_empty_tracks') != 0) {
-    $self->errorTrack(sprintf 'No %s in this region', $self->error_track_name);
+    $self->error_no_track_on_strand($self->error_track_name, $strand);
   }
 }
 
@@ -708,7 +708,7 @@ sub render_alignslice_transcript {
       legend   => \@legend
     };
   } elsif ($config->get_option('opt_empty_tracks') != 0) {
-    $self->errorTrack(sprintf 'No %s in this region', $self->error_track_name);
+    $self->error_no_track_on_strand($self->error_track_name, $strand);
   }
 }
 
@@ -838,7 +838,7 @@ sub render_alignslice_collapsed {
       legend   => \@legend
     };
   } elsif ($config->get_option('opt_empty_tracks') != 0) {
-    $self->errorTrack(sprintf 'No %s in this region', $self->error_track_name);
+    $self->error_no_track_on_strand($self->error_track_name, $strand);
   }
 }
 
@@ -1078,7 +1078,7 @@ sub render_genes {
       legend   => \@legend
     }
   } elsif ($config->get_option('opt_empty_tracks') != 0) {
-    $self->errorTrack(sprintf 'No %s in this region', $self->error_track_name);
+    $self->error_no_track_on_strand($self->error_track_name, $strand);
   }
 }
 
@@ -1431,6 +1431,11 @@ sub colour_key {
   $pattern =~ s/\[(\w+)\]/$1 eq 'logic_name' ? $transcript->analysis->$1 : $transcript->$1/eg;
   
   return lc $pattern;
+}
+
+sub error_no_track_on_strand {
+  my ($self, $label, $strand) = @_;
+  return $self->errorTrack(sprintf 'No %s on %s strand in this region', $label, $strand == 1 ? 'forward' : 'reverse');
 }
 
 1;
