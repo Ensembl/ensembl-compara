@@ -166,6 +166,16 @@ sub _slurp {
 }
 
 
+=head2 require_executable
 
+Checks that the parameter is defined, and that the file is executable
+
+=cut
+
+sub require_executable {
+    my ($self, $param_name) = @_;
+    my $exe = $self->param_required($param_name);
+    die "Cannot execute $param_name: '$exe'" unless(-x $exe);
+}
 
 1;
