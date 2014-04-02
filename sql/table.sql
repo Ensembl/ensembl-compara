@@ -1341,11 +1341,17 @@ CREATE TABLE gene_tree_node_attr (
 
 @column model_id              Model ID of the profile. Can be the external ID in case of imported models
 @column name                  Name of the model
-@column type                  Short description of the profile
+@column type                  Short description of the origin of the profile
 @column compressed_profile    The HMM profile, compressed with zlib. It can be decompressed with the MySQL function UNCOMPRESS()
 @column consensus             The consensus sequence derived from the profile
 
 */
+
+-- Later
+-- @column hmm_id                The internal numeric ID that uniquely identifies the model in the database
+--  hmm_id                      int(10) unsigned NOT NULL AUTO_INCREMENT, # unique internal id
+--  PRIMARY KEY (hmm_id),
+--  UNIQUE KEY (model_id,type)
 
 CREATE TABLE hmm_profile (
   model_id                    varchar(40) NOT NULL,
@@ -1357,6 +1363,38 @@ CREATE TABLE hmm_profile (
   PRIMARY KEY (model_id,type)
 
 ) COLLATE=latin1_swedish_ci ENGINE=MyISAM;
+
+
+/**
+@table hmm_annot
+@desc  This table stores the HMM annotation of the seq_members
+@colour   #1E90FF
+
+@column seq_member_id         External reference to a seq_member_id in the @link seq_member table
+@column model_id              External reference to the internal numeric ID of a HMM profile in @link hmm_profile
+@column evalue                The e-value of the hit
+
+*/
+
+
+-- Later
+--  @column hmm_id                External reference to the internal numeric ID of a HMM profile in @link hmm_profile
+--   hmm_id                     int(10) unsigned NOT NULL, # FK hmm_profile.hmm_id
+--  FOREIGN KEY (hmm_id)        REFERENCES hmm_profile (hmm_id),
+--   KEY (hmm_id)
+
+CREATE TABLE hmm_annot (
+  seq_member_id              int(10) unsigned NOT NULL, # FK homology.homology_id
+  model_id                   varchar(40) DEFAULT NULL,
+  evalue                     float,
+
+  FOREIGN KEY (seq_member_id) REFERENCES seq_member  (seq_member_id),
+
+  PRIMARY KEY (seq_member_id),
+  KEY (model_id)
+
+) COLLATE=latin1_swedish_ci ENGINE=MyISAM;
+
 
 /**
 @table homology

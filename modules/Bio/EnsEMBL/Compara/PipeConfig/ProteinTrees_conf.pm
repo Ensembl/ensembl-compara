@@ -791,7 +791,6 @@ sub pipeline_analyses {
         			'sql' => [  'CREATE TABLE IF NOT EXISTS sequence_unclassify ( member_id varchar(20) DEFAULT NULL, genome_db_id varchar(20) DEFAULT NULL, cluster_dir_id varchar(20) DEFAULT NULL)',   
         			      	 	'CREATE TABLE IF NOT EXISTS panther_annot_PTHR  ( upi char(13) NOT NULL, ensembl_id char(50) NOT NULL, ensembl_div char(15) NOT NULL, panther_family_id char(15) NOT NULL, start int(11) NOT NULL, end int(11) NOT NULL,  score int(11) NOT NULL, evalue char(25) NOT NULL, PRIMARY KEY (ensembl_id))',        	 			  	 	
         			      	 	'CREATE TABLE IF NOT EXISTS panther_annot_SF    ( upi char(13) NOT NULL, ensembl_id char(50) NOT NULL, ensembl_div char(15) NOT NULL, panther_family_id char(15) NOT NULL, start int(11) NOT NULL, end int(11) NOT NULL,  score int(11) NOT NULL, evalue char(25) NOT NULL, PRIMARY KEY (ensembl_id))',
-	        			      	'CREATE TABLE IF NOT EXISTS hmm_annot           ( member_id varchar(20) NOT NULL, model_id char(70) NOT NULL, evalue char(25) NOT NULL)',
         	                  ],     
        			},
              -flow_into  => {
