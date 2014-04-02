@@ -27,7 +27,7 @@ limitations under the License.
 
 =head1 NAME
 
-Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::HMMClassify
+Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::HMMClassifyPantherScore
 
 =head1 DESCRIPTION
 
@@ -46,7 +46,7 @@ Internal methods are usually preceded with an underscore (_)
 
 =cut
 
-package Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::HMMClassify;
+package Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::HMMClassifyPantherScore;
 
 use strict;
 use warnings;
