@@ -195,7 +195,7 @@ sub run_HMM_search {
         print $hmm_res join "\t", ($seq_id, $hmm_id, $eval);
         print $hmm_res "\n";
         # Store $hmm_res into table 'hmm_annot'  
-        $self->compara_dba->get_PantherAnnotAdaptor()->store_hmmclassify_result($seq_id, $hmm_id, $eval);
+        $self->compara_dba->get_HMMAnnotAdaptor()->store_hmmclassify_result($seq_id, $hmm_id, $eval);
     }
 
     close($hmm_res);

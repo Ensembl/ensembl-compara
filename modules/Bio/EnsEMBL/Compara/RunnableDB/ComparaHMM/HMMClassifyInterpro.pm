@@ -35,7 +35,7 @@ use Data::Dumper;
 use DBI;
 use Bio::EnsEMBL::Registry;
 use Bio::EnsEMBL::DBSQL::DBAdaptor;
-use Bio::EnsEMBL::Compara::RunnableDB::ComparaHMM::PantherAnnotAdaptor;
+use Bio::EnsEMBL::Compara::RunnableDB::ComparaHMM::HMMAnnotAdaptor;
 
 use base ('Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::StoreClusters');
 
@@ -104,8 +104,8 @@ sub get_clusters {
             my $member_id = $mem->member_id;  
  	    my $member    = $SeqMemberAdaptor->fetch_by_dbID($member_id);
             my $stable_id = $member->stable_id; 
-	    my $res       = $self->compara_dba->get_PantherAnnotAdaptor->fetch_by_ensembl_id_SF($stable_id);
-	    my $res2      = $self->compara_dba->get_PantherAnnotAdaptor->fetch_by_ensembl_id_PTHR($stable_id);
+	    my $res       = $self->compara_dba->get_HMMAnnotAdaptor->fetch_by_ensembl_id_SF($stable_id);
+	    my $res2      = $self->compara_dba->get_HMMAnnotAdaptor->fetch_by_ensembl_id_PTHR($stable_id);
             $allMembers++;           	
 
 	    if (defined $res->[0]) {

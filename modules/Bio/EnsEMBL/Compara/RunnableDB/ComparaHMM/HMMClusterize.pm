@@ -80,7 +80,7 @@ sub load_hmmer_classifications {
     $self->param('allclusters', \%allclusters);
 
     # Get statement handler to query all hmm classifications from 'hmm_annot' table
-    my $sth  = $self->compara_dba->get_PantherAnnotAdaptor->fetch_all_hmm_annot();
+    my $sth  = $self->compara_dba->get_HMMAnnotAdaptor->fetch_all_hmm_annot();
     $sth->execute();
 
     while (my $res = $sth->fetchrow_arrayref){

@@ -18,7 +18,7 @@ limitations under the License.
 
 =head1 NAME
 
-PantherAnnotAdaptor
+HMMAnnotAdaptor
 
 =head1 SYNOPSIS
 
@@ -35,15 +35,13 @@ ChuangKee Ong
 The rest of the documentation details each of the object methods. Internal methods are usually preceded by a _.
 
 =cut
-package Bio::EnsEMBL::Compara::RunnableDB::ComparaHMM::PantherAnnotAdaptor;
+package Bio::EnsEMBL::Compara::DBSQL::HMMAnnotAdaptor;
 
 use strict;
 use warnings;
 use Data::Dumper;
-use Bio::EnsEMBL::Compara::RunnableDB::ComparaHMM::PantherAnnot;
 use Bio::EnsEMBL::Utils::Exception qw(throw warning deprecate); ## All needed?
-use Bio::EnsEMBL::Utils::IO qw/:slurp/;
-use Compress::Zlib;
+
 use DBI qw(:sql_types);
 use base ('Bio::EnsEMBL::Compara::DBSQL::BaseAdaptor');
 
