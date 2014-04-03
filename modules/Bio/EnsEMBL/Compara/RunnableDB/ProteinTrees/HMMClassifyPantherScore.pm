@@ -19,15 +19,15 @@ limitations under the License.
 
 =head1 CONTACT
 
-  Please email comments or questions to the public Ensembl
-  developers list at <http://lists.ensembl.org/mailman/listinfo/dev>.
+Please email comments or questions to the public Ensembl
+developers list at <http://lists.ensembl.org/mailman/listinfo/dev>.
 
-  Questions may also be sent to the Ensembl help desk at
-  <http://www.ensembl.org/Help/Contact>.
+Questions may also be sent to the Ensembl help desk at
+<http://www.ensembl.org/Help/Contact>.
 
 =head1 NAME
 
-Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::HMMClassifyPantherScore
+Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::HMMClassify
 
 =head1 DESCRIPTION
 
@@ -54,10 +54,9 @@ use warnings;
 use Time::HiRes qw/time gettimeofday tv_interval/;
 use Data::Dumper;
 
-# To be deprecated:
-use DBI;
+use Bio::EnsEMBL::Compara::MemberSet;
 
-use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
+use base ('Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::HMMClassify');
 
 sub param_defaults {
     return {
@@ -68,24 +67,22 @@ sub param_defaults {
 sub fetch_input {
     my ($self) = @_;
 
+    $self->SUPER::fetch_input();
+
     my $pantherScore_path = $self->param_required('pantherScore_path');
 
     push @INC, "$pantherScore_path/lib";
     require FamLibBuilder;
-#    import FamLibBuilder;
+#   import FamLibBuilder;
 
-    my $genome_db_id = $self->param_required('genome_db_id');
-    my $genome_db = $self->compara_dba->get_GenomeDBAdaptor->fetch_by_dbID($genome_db_id);
-    $self->param('genome_db', $genome_db);
-
-    $self->param_required('cluster_dir');
     $self->param_required('blast_bin_dir');
     $self->param_required('hmm_library_basedir');
     my $hmmLibrary = FamLibBuilder->new($self->param('hmm_library_basedir'), 'prod');
+    $hmmLibrary->create();
+
     $self->throw('No valid HMM library found at ' . $self->param('library_path')) unless ($hmmLibrary->exists());
     $self->param('hmmLibrary', $hmmLibrary);
 
-    return;
 }
 
 =head2 run
@@ -105,10 +102,6 @@ sub run {
     $self->run_HMM_search;
 }
 
-sub write_output {
-    my ($self) = @_;
-}
-
 
 ##########################################
 #
@@ -120,16 +113,11 @@ sub write_output {
 sub dump_sequences_to_workdir {
     my ($self) = @_;
 
-    my $genome_db = $self->param('genome_db');
     my $genome_db_id = $self->param('genome_db_id');
-
-    print STDERR "Dumping members from $genome_db_id\n" if ($self->debug);
-
     my $fastafile = $self->worker_temp_directory . "${genome_db_id}.fasta"; ## Include pipeline name to avoid clashing??
-    print STDERR "fastafile: $fastafile\n" if ($self->debug);
+    print STDERR "Dumping unannotated members from $genome_db_id in $fastafile\n" if ($self->debug);
 
-    my $members = $self->compara_dba->get_SeqMemberAdaptor->fetch_all_canonical_by_GenomeDB($genome_db);
-    Bio::EnsEMBL::Compara::MemberSet->new(-members => $members)->print_sequences_to_file($fastafile);
+    Bio::EnsEMBL::Compara::MemberSet->new(-members => $self->param('unannotated_members'))->print_sequences_to_file($fastafile);
     $self->param('fastafile', $fastafile);
 
 }
@@ -137,21 +125,14 @@ sub dump_sequences_to_workdir {
 sub run_HMM_search {
     my ($self) = @_;
 
-    my $fastafile = $self->param('fastafile');
+    my $fastafile         = $self->param('fastafile');
     my $pantherScore_path = $self->param('pantherScore_path');
-    my $pantherScore_exe = "$pantherScore_path/pantherScore.pl";
-    my $hmmLibrary = $self->param('hmmLibrary');
-    my $blast_bin_dir = $self->param('blast_bin_dir');
-    my $hmmer_path = $self->param('hmmer_path');
-    my $hmmer_cutoff = $self->param('hmmer_cutoff'); ## Not used for now!!
-    my $library_path = $hmmLibrary->libDir();
-
-    my $genome_db_id = $self->param('genome_db_id');
-    my $cluster_dir  = $self->param('cluster_dir');
-
-    print STDERR "Results are going to be stored in $cluster_dir/${genome_db_id}.hmmres\n" if ($self->debug());
-    open my $hmm_res, ">", "$cluster_dir/${genome_db_id}.hmmres" or die $!;
-
+    my $pantherScore_exe  = "$pantherScore_path/pantherScore.pl";
+    my $hmmLibrary        = $self->param('hmmLibrary');
+    my $blast_bin_dir     = $self->param('blast_bin_dir');
+    my $hmmer_path        = $self->param('hmmer_path');
+    my $hmmer_cutoff      = $self->param('hmmer_cutoff'); ## Not used for now!!
+    my $library_path      = $hmmLibrary->libDir();
 
     my $cmd = "PATH=\$PATH:$blast_bin_dir:$hmmer_path; PERL5LIB=\$PERL5LIB:$pantherScore_path/lib; $pantherScore_exe -l $library_path -i $fastafile -D I -b $blast_bin_dir 2>/dev/null";
     print STDERR "$cmd\n" if ($self->debug());
@@ -161,15 +142,11 @@ sub run_HMM_search {
     while (<$pipe>) {
         chomp;
         my ($seq_id, $hmm_id, $eval) = split /\s+/, $_, 4;
-        print STDERR "Writting [$seq_id, $hmm_id, $eval] to file $cluster_dir/${genome_db_id}.hmmres\n" if ($self->debug());
-        print $hmm_res join "\t", ($seq_id, $hmm_id, $eval);
-        print $hmm_res "\n";
+        $self->add_hmm_annot($seq_id, $hmm_id, $eval);
     }
-    close($hmm_res);
     close($pipe);
-    $self->compara_dba->dbc->disconnect_when_inactive(0);
 
-    return;
+    $self->compara_dba->dbc->disconnect_when_inactive(0);
 }
 
 1;
