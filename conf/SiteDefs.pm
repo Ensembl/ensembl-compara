@@ -51,7 +51,7 @@ our ($UDC_CACHEDIR, $HTTP_PROXY);
 our $ENSEMBL_MIN_SPARE_SERVERS =  5;
 our $ENSEMBL_MAX_SPARE_SERVERS = 20;
 our $ENSEMBL_START_SERVERS     =  7;
-our $CGI_POST_MAX              = 5242880; # 5MB max upload
+our $CGI_POST_MAX              = 20 * 1024 * 1024; # 20MB max upload
 
 our $ENSEMBL_SERVER            = Sys::Hostname::Long::hostname_long;  # Local machine name
 our $ENSEMBL_PORT              = 80;

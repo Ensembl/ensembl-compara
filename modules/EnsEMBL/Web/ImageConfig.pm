@@ -1091,7 +1091,7 @@ sub _add_vcf_track {
     format    => 'VCF', 
     renderers => [
       'off',       'Off',
-      'histogram', 'Normal',
+      'histogram', 'Histogram',
       'compact',   'Compact'
     ], 
     options => {
@@ -1656,7 +1656,7 @@ sub load_configured_das {
       
       $menu = $self->get_node($_);
       
-      next unless $menu;
+      next unless $menu && $external;
       
       $external->after(ref $menus->{$_} ? $self->get_node($menus->{$_}[1]) : $menu) unless $parent;
     }
@@ -1897,7 +1897,7 @@ sub add_dna_align_features {
   
   foreach my $key_2 (@$keys) {
     my $k    = $data->{$key_2}{'type'} || 'other';
-    my $menu = ($k =~ /rnaseq|simple/) ? $self->tree->get_node($k) : $self->tree->get_node("dna_align_$k");
+    my $menu = ($k =~ /rnaseq|simple|transcript/) ? $self->tree->get_node($k) : $self->tree->get_node("dna_align_$k");
     
     if ($menu) {
       my $alignment_renderers = ['off','Off'];

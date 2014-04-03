@@ -144,6 +144,7 @@ sub _summarise_core_tables {
   $self->_summarise_generic( $db_name, $dbh );
 
 ## Get chromosomes in order (replacement for array in ini files)
+## and also check for presence of LRGs
 ## Only need to do this once!
   if ($db_name eq 'DATABASE_CORE') {
     my $s_aref = $dbh->selectall_arrayref(
@@ -158,7 +159,13 @@ sub _summarise_core_tables {
     foreach my $row (@$s_aref) {
       push @$chrs, $row->[0];
     }
-   $self->db_tree->{'ENSEMBL_CHROMOSOMES'} = $chrs;
+    $self->db_tree->{'ENSEMBL_CHROMOSOMES'} = $chrs;
+    $s_aref = $dbh->selectall_arrayref(
+        'select count(*) from seq_region where name like "LRG%"'
+    );
+    if ($s_aref->[0][0] > 0) {
+      $self->db_tree->{'HAS_LRG'} = 1;
+    }
   }
 
 ##
