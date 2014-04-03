@@ -788,16 +788,12 @@ sub pipeline_analyses {
              -logic_name => 'buildhmmprofiles_create_tables',
              -module     => 'Bio::EnsEMBL::Hive::RunnableDB::SqlCmd',
        		 -parameters => {
-        			'sql' => [  'CREATE TABLE IF NOT EXISTS sequence_unclassify ( member_id varchar(20) DEFAULT NULL, genome_db_id varchar(20) DEFAULT NULL, cluster_dir_id varchar(20) DEFAULT NULL)',   
+                     'sql' => [
         			      	 	'CREATE TABLE IF NOT EXISTS panther_annot_PTHR  ( upi char(13) NOT NULL, ensembl_id char(50) NOT NULL, ensembl_div char(15) NOT NULL, panther_family_id char(15) NOT NULL, start int(11) NOT NULL, end int(11) NOT NULL,  score int(11) NOT NULL, evalue char(25) NOT NULL, PRIMARY KEY (ensembl_id))',        	 			  	 	
         			      	 	'CREATE TABLE IF NOT EXISTS panther_annot_SF    ( upi char(13) NOT NULL, ensembl_id char(50) NOT NULL, ensembl_div char(15) NOT NULL, panther_family_id char(15) NOT NULL, start int(11) NOT NULL, end int(11) NOT NULL,  score int(11) NOT NULL, evalue char(25) NOT NULL, PRIMARY KEY (ensembl_id))',
         	                  ],     
        			},
-             -flow_into  => {
-#                             '1' => [ 'HMMer_classifyInterpro' ],
-                              '2->A' => [ 'load_PantherAnnotation' ],
-							  'A->1' => [ 'HMMer_classifyInterpro'],					 
-                           }, 
+                        -flow_into => [ 'load_PantherAnnotation' ],
            },
 
            {
@@ -808,26 +804,38 @@ sub pipeline_analyses {
                              'panther_annotation_SF'    => $self->o('panther_annotation_SF'),
                            },
              -rc_name => 'default',
+             -flow_into => [ 'HMMer_classify_factory' ],
             },
+
+        {   -logic_name => 'HMMer_classify_factory',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ObjectFactory',
+            -parameters => {
+                'call_list'             => [ 'compara_dba', 'get_GenomeDBAdaptor', 'fetch_all'],
+                'column_names2getters'  => { 'genome_db_id' => 'dbID' },
+
+                'fan_branch_code'       => 2,
+            },
+            -flow_into  => {
+                '2->A'  => [ 'HMMer_classifyInterpro' ],
+                'A->1'  => [ $self->o('hmm_buildhmmprofiles') ? 'prepare_buildhmmprofiles_sequence' :'HMM_clusterize'],
+            },
+            -meadow_type    => 'LOCAL',
+        },
 
            {
             -logic_name => 'HMMer_classifyInterpro',
-            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ComparaHMM::HMMClassifyInterpro',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::HMMClassifyInterpro',
             -parameters => {
                              'mlss_id'       => $self->o('mlss_id'),
-                             'registry_dbs'  => $self->o('curr_core_sources_locs'),
                             },
-            -flow_into  => {
-                             '2->A' => [ 'HMMer_classify' ],
-							 'A->1' => [ $self->o('hmm_buildhmmprofiles') ? 'prepare_buildhmmprofiles_sequence' :'HMM_clusterize'],					 
-                           }, 
+            -flow_into  => [ 'HMMer_classifyPantherScore' ],
              -hive_capacity => $self->o('HMMer_classify_capacity'),
              -rc_name => 'msa_himem',
             },
 
             {
-             -logic_name => 'HMMer_classify',
-             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ComparaHMM::HMMClassify',
+             -logic_name => 'HMMer_classifyPantherScore',
+             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::HMMClassifyPantherScore',
              -parameters => {
                              'blast_bin_dir'       => $self->o('blast_bin_dir'),
                              'pantherScore_path'   => $self->o('pantherScore_path'),
@@ -835,15 +843,12 @@ sub pipeline_analyses {
                              'hmm_library_basedir' => $self->o('hmm_library_basedir'),
                             },
              -hive_capacity => $self->o('HMMer_classify_capacity'),
-             -rc_name => 'hmmclassify_job',
+             -rc_name => '4Gb_job',
             },
 
             {
              -logic_name => 'HMM_clusterize',
-             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ComparaHMM::HMMClusterize',
-             -parameters => {
-                             'cluster_dir'        => $self->o('cluster_dir'),
-                            },
+             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::HMMClusterize',
              -rc_name => '8Gb_job',
             },
 
@@ -1130,14 +1135,12 @@ sub pipeline_analyses {
 
    {
              -logic_name => 'HMMer_classify_BuildHMMprofiles',
-             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ComparaHMM::HMMClassify',
+             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::HMMClassify',
              -parameters => {
                              'blast_bin_dir'       => $self->o('blast_bin_dir'),
                              'pantherScore_path'   => $self->o('pantherScore_path'),
                              'hmmer_path'          => $self->o('hmmer2_home'),
                              'hmm_library_basedir' => $self->o('hmmLib_dir'),
-                             'cluster_dir'         => $self->o('cluster_dir'),
-                             'blast_tmp_dir'	   => $self->o('blast_tmp_dir'),
                              'store_unclassify'	   => '0',
                             },
              -hive_capacity => $self->o('HMMer_classify_capacity'),
