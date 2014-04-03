@@ -73,21 +73,29 @@ sub fetch_input {
     my @unannotated_members = grep {exists $unannotated_member_ids{$_->dbID}} @$members;
     $self->param('unannotated_members', \@unannotated_members);
 
-    $self->param('all_hmm_annots', []);
+    $self->param('all_hmm_annots', {});
 }
 
 sub add_hmm_annot {
     my ($self, $seq_id, $hmm_id, $eval) = @_;
     print STDERR "Found [$seq_id, $hmm_id, $eval]\n" if ($self->debug());
-    push @{$self->param('all_hmm_annots')}, [$seq_id, $hmm_id, $eval];
+    if (exists $self->param('all_hmm_annots')->{$seq_id}) {
+        if ($self->param('all_hmm_annots')->{$seq_id}->[1] < $eval) {
+            print STDERR "Not registering it because the evalue is higher than the currently stored one: ", $self->param('all_hmm_annots')->{$seq_id}->[1], "\n" if $self->debug();
+        }
+    }
+    $self->param('all_hmm_annots')->{$seq_id} = [$hmm_id, $eval];
 }
 
 
 sub write_output {
     my ($self) = @_;
     my $adaptor = $self->compara_dba->get_HMMAnnotAdaptor();
+    my $all_hmm_annots = $self->param('all_hmm_annots');
         # Store into table 'hmm_annot'
-    $adaptor->store_hmmclassify_result(@$_) for @{$self->param('all_hmm_annots')};
+    foreach my $seq_id (keys %$all_hmm_annots) {
+        $adaptor->store_hmmclassify_result($seq_id, @{$all_hmm_annots->{$seq_id}});
+    }
 }
 
 
