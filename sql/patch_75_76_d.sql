@@ -159,6 +159,8 @@ WHERE source_name != "ENSEMBLGENE";
 -- DROP TABLE member;
 -- DROP TABLE member_production_counts;
 
+DELETE family_member FROM family_member JOIN member USING (member_id) WHERE source_name = "ENSEMBLGENE";
+
 ALTER TABLE family_member CHANGE COLUMN member_id seq_member_id int(10) unsigned not null;
 ALTER TABLE gene_align_member CHANGE COLUMN member_id seq_member_id int(10) unsigned not null;
 ALTER TABLE gene_tree_node CHANGE COLUMN member_id seq_member_id int(10) unsigned;
