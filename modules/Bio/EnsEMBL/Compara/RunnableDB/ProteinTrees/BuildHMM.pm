@@ -62,9 +62,12 @@ sub param_defaults {
     return {
         'cdna'              => 0,
         'calibrate'         => 1,
+        'emit_consensus'    => 1,
+
         'hmmer_version'     => 2,       # 2 or 3
         'hmmbuild_exe'      => '#hmmer_home#/hmmbuild',
         'hmmcalibrate_exe'  => '#hmmer_home#/hmmcalibrate',
+        'hmmemit_exe'       => '#hmmer_home#/hmmemit',
     };
 }
 
@@ -120,6 +123,7 @@ sub fetch_input {
 
     $self->require_executable('hmmbuild_exe');
     $self->require_executable('hmmcalibrate_exe') if $self->param('calibrate');
+    $self->require_executable('hmmemit_exe') if $self->param('emit_consensus');
 
 }
 
@@ -191,6 +195,12 @@ sub run_buildhmm {
         $cmd_out->runtime_msec += $cmd_out2->runtime_msec
     }
 
+    if ($self->param('emit_consensus')) {
+        my $consensus_seqs = $self->compute_consensus_for_HMM($hmm_file);
+        die "There should be 1 sequence in: ".Dumper($consensus_seqs) if scalar(keys %$consensus_seqs) != 1;
+        $self->param('consensus', (values %$consensus_seqs)[0]);
+    }
+
     $self->param('protein_tree')->store_tag('BuildHMM_runtime_msec', $cmd_out->runtime_msec);
 }
 
@@ -218,9 +228,41 @@ sub store_hmmprofile {
   $hmmProfile->name($model_id);
   $hmmProfile->type($type);
   $hmmProfile->profile($hmm_text);
+  $hmmProfile->consensus($self->param('consensus')) if $self->param('emit_consensus');
 
   $self->compara_dba->get_HMMProfileAdaptor()->store($hmmProfile);
 
 }
+
+sub compute_consensus_for_HMM {
+    my ($self, $hmmfile) = @_;
+
+    my $hmmemit_exe = $self->param('hmmemit_exe');
+
+    open my $pipe, "-|", "$hmmemit_exe -c $hmmfile" or die $!;
+
+    my %consensus;
+    my $header;
+    my $count = 0;
+    my $seq;
+
+    while (<$pipe>) {
+        chomp;
+        if (/^>/) {
+            $consensus{$header} = $seq if (defined $header);
+            ($header)           = $_ =~ /^>(.+?)\s/;
+            $count++;
+            $seq = "";
+            next;
+        }
+        $seq .= $_ if (defined $header);
+    }
+
+    $consensus{$header} = $seq;
+    close($pipe);
+
+    return \%consensus;
+}
+
 
 1;
