@@ -214,6 +214,7 @@ sub init_label {
   my $text = $self->my_config('caption');
   
   my $img = $self->my_config('caption_img');
+  $img = undef if $SiteDefs::ENSEMBL_NO_LEGEND_IMAGES;
   if($img and $img =~ s/^r:// and $self->{'strand'} ==  1) { $img = undef; }
   if($img and $img =~ s/^f:// and $self->{'strand'} == -1) { $img = undef; }
 
