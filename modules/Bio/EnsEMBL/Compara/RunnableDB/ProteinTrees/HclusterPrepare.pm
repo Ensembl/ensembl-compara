@@ -68,6 +68,11 @@ use Time::HiRes qw(time gettimeofday tv_interval);
 
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
+sub param_defaults {
+    return {
+        'single_table'  => 0,
+    };
+}
 
 sub fetch_input {
     my $self = shift @_;
@@ -77,7 +82,7 @@ sub fetch_input {
     my $genome_db_id = $self->param_required('genome_db_id');
     my $genome_db    = $self->compara_dba->get_GenomeDBAdaptor->fetch_by_dbID($genome_db_id) or die "no genome_db for id='$genome_db_id'";
 
-    my $table_name  = 'peptide_align_feature_' . $genome_db_id;
+    my $table_name  = $self->param('single_table') ? 'peptide_align_feature_' . $genome_db_id : 'peptide_align_feature';
     $self->param('table_name', $table_name);
 
     unless(defined($self->param('outgroup_category'))) {    # it can either be passed in or computed

@@ -897,7 +897,8 @@ sub pipeline_analyses {
             -rc_name       => '250Mb_job',
             -hive_capacity => $self->o('blast_factory_capacity'),
             -flow_into => {
-                2 => [ 'blastp_unannotated' ],
+                '2->A' => [ 'blastp_unannotated' ],
+                'A->1' => [ 'hcluster_dump_input_all_genomes' ]
             },
         },
 
@@ -913,8 +914,18 @@ sub pipeline_analyses {
             -hive_capacity => $self->o('blastp_capacity'),
         },
 
+        {   -logic_name => 'hcluster_dump_input_all_genomes',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::HclusterPrepare',
+            -parameters => {
+                'outgroups'     => $self->o('outgroups'),
+                'single_table'  => 1,
+            },
+            -hive_capacity => $self->o('reuse_capacity'),
+        },
 
-  ) : (), # do not show the buildhmmprofile pipeline if the option is off
+
+
+  ) : (), # do not show the hmm_buildhmmprofiles pipeline if the option is off
 
 
 
@@ -1045,6 +1056,7 @@ sub pipeline_analyses {
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::HclusterPrepare',
             -parameters => {
                 'outgroups'     => $self->o('outgroups'),
+                'single_table'  => $self->o('hmm_buildhmmprofiles'),
             },
             -hive_capacity => $self->o('reuse_capacity'),
         },
