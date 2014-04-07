@@ -857,7 +857,62 @@ sub pipeline_analyses {
 
 # -------------------------------------------------[BuildHMMprofiles pipeline]-------------------------------------------------------
    	  $self->o('hmm_buildhmmprofiles') ? (
+
+        {   -logic_name    => 'entry_point',
+            -module         => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
+            -flow_into => {
+                '1->A' => [ 'dump_unannotated_members' ],
+                'A->1' => [ 'allspecies_factory' ],
             },
+            -meadow_type    => 'LOCAL',
+        },
+
+
+        {   -logic_name => 'dump_unannotated_members',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::DumpMembersIntoFasta',
+            -parameters => {
+                'only_unannotated'            => 1,
+            },
+            -rc_name       => '250Mb_job',
+            -hive_capacity => $self->o('reuse_capacity'),
+            -flow_into => [ 'make_blastdb' ],
+        },
+
+        {   -logic_name => 'allspecies_factory',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ObjectFactory',
+            -parameters => {
+                'call_list'             => [ 'compara_dba', 'get_GenomeDBAdaptor', 'fetch_all'],
+                'column_names2getters'  => { 'genome_db_id' => 'dbID' },
+
+                'fan_branch_code'       => 2,
+            },
+            -flow_into  => {
+                2  => [ 'unannotated_members_vs_all' ],
+            },
+            -meadow_type    => 'LOCAL',
+        },
+
+        {   -logic_name => 'unannotated_members_vs_all',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ComparaHMM::BlastFactoryUnannotated',
+            -rc_name       => '250Mb_job',
+            -hive_capacity => $self->o('blast_factory_capacity'),
+            -flow_into => {
+                2 => [ 'blastp_unannotated' ],
+            },
+        },
+
+        {   -logic_name         => 'blastp_unannotated',
+            -module             => 'Bio::EnsEMBL::Compara::RunnableDB::ComparaHMM::BlastpUnannotated',
+            -parameters         => {
+                'blast_params'              => $self->o('blast_params'),
+                'blast_bin_dir'             => $self->o('blast_bin_dir'),
+                'evalue_limit'              => 1e-10,
+            },
+            -batch_size    => 10,
+            -rc_name       => '250Mb_job',
+            -hive_capacity => $self->o('blastp_capacity'),
+        },
+
 
   ) : (), # do not show the buildhmmprofile pipeline if the option is off
 
@@ -877,6 +932,7 @@ sub pipeline_analyses {
             -flow_into  => {
                 '2->A'  => [ 'dump_canonical_members' ],
                 'A->1'  => [ 'reusedspecies_factory' ],
+                1 => [ 'entry_point' ],
             },
             -meadow_type    => 'LOCAL',
         },
