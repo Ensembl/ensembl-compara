@@ -37,9 +37,6 @@ Bio::EnsEMBL::Compara::RunnableDB::ComparaHMM::BlastFactoryUnannotated
 Fetch sorted list of member_ids and create jobs for BlastAndParsePAF. 
 Supported keys:
 
-   'genome_db_id' => <number>
-       Genome_db id. Obligatory
-
    'step' => <number>
        How many sequences to write into the blast query file. Default 100
 
@@ -50,7 +47,7 @@ package Bio::EnsEMBL::Compara::RunnableDB::ComparaHMM::BlastFactoryUnannotated;
 use strict;
 use warnings;
 
-use base ('Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::HMMClassify');
+use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
 
 sub param_defaults {
@@ -59,17 +56,27 @@ sub param_defaults {
     };
 }
 
+sub fetch_input {
+    my ($self) = @_;
+
+    my $sth = $self->compara_dba->get_HMMAnnotAdaptor->fetch_all_genes_missing_annot();
+    my @unannotated_member_ids = sort {$a <=> $b} (map {$_->[0]} @{$sth->fetchall_arrayref});
+    $sth->finish;
+    $self->param('unannotated_member_ids', \@unannotated_member_ids);
+
+}
+
 
 
 sub write_output {
     my $self = shift @_;
 
     my $step = $self->param('step');
-    my @member_id_list = sort {$a <=> $b} (map {$_->dbID} @{$self->param('unannotated_members')});
+    my @member_id_list = @{$self->param('unannotated_member_ids')};
 
     while (@member_id_list) {
         my @job_array = splice(@member_id_list, 0, $step);
-        my $output_id = {'genome_db_id' => $self->param('genome_db_id'), 'start_member_id' => $job_array[0], 'end_member_id' => $job_array[-1]};
+        my $output_id = {'start_member_id' => $job_array[0], 'end_member_id' => $job_array[-1]};
         $self->dataflow_output_id($output_id, 2);
     }
 }

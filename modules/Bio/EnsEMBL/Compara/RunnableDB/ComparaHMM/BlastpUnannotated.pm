@@ -54,10 +54,9 @@ sub get_queries {
 
     my $start_member_id = $self->param_required('start_member_id');
     my $end_member_id   = $self->param_required('end_member_id');
-    my $genome_db_id    = $self->param_required('genome_db_id');
 
     #Get list of members and sequences
-    my $member_ids = $self->compara_dba->get_HMMAnnotAdaptor->fetch_all_genes_missing_annot_by_genome_db_id_range($genome_db_id, $start_member_id, $end_member_id);
+    my $member_ids = $self->compara_dba->get_HMMAnnotAdaptor->fetch_all_genes_missing_annot_by_range($start_member_id, $end_member_id);
     return $self->compara_dba->get_SeqMemberAdaptor->fetch_all_by_dbID_list($member_ids);
 }
 

@@ -875,24 +875,19 @@ sub pipeline_analyses {
             },
             -rc_name       => '250Mb_job',
             -hive_capacity => $self->o('reuse_capacity'),
-            -flow_into => [ 'make_blastdb' ],
+            -flow_into => [ 'make_blastdb_unannotated' ],
         },
 
-        {   -logic_name => 'allspecies_factory',
-            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ObjectFactory',
+        {   -logic_name => 'make_blastdb_unannotated',
+            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
             -parameters => {
-                'call_list'             => [ 'compara_dba', 'get_GenomeDBAdaptor', 'fetch_all'],
-                'column_names2getters'  => { 'genome_db_id' => 'dbID' },
-
-                'fan_branch_code'       => 2,
+                'blast_bin_dir' => $self->o('blast_bin_dir'),
+                'cmd' => '#blast_bin_dir#/makeblastdb -dbtype prot -parse_seqids -logfile #fasta_name#.blastdb_log -in #fasta_name#',
             },
-            -flow_into  => {
-                2  => [ 'unannotated_members_vs_all' ],
-            },
-            -meadow_type    => 'LOCAL',
+            -flow_into  => [ 'unannotated_all_vs_all_factory' ],
         },
 
-        {   -logic_name => 'unannotated_members_vs_all',
+        {   -logic_name => 'unannotated_all_vs_all_factory',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ComparaHMM::BlastFactoryUnannotated',
             -rc_name       => '250Mb_job',
             -hive_capacity => $self->o('blast_factory_capacity'),
