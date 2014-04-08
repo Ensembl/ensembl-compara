@@ -267,7 +267,7 @@ sub _parse_package_file {
           my $comment = $1;
           if ($comment =~ /^\@param/) {
             $params++;
-            $comment =~ s/\@param/Arg[$params]:/;
+            $comment =~ s/\@param/<b>Arg[$params]<\/b>:/;
           }
           elsif ($comment =~ /^\@(accessor|constructor)/) {
             $subs->{$sub_name}{type} = $1;
@@ -277,7 +277,7 @@ sub _parse_package_file {
           }
           elsif ($comment =~ /^\@([a-zA-Z]+)/) {
             my $doc = ucfirst($1);
-            $comment =~ s/\@$1/$doc/;
+            $comment =~ s/\@$1/<b>$doc:<\/b>/;
           }
           elsif ($comment =~ / - /) {
             $comment = '&nbsp;&nbsp;&nbsp;&nbsp;'.$comment;

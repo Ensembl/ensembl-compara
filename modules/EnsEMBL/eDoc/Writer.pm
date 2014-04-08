@@ -332,31 +332,30 @@ sub methods_html {
   my ($self, $module, $version) = @_;
   my $html = "";
   $html .= qq(<h2>Method Documentation</h2>);
-  $html .= qq(<ul>);
+  $html .= qq(<dl>);
   my $count = 0;
   foreach my $method (@{ $module->methods }) {
     if ($method->type !~ /undocumented/) {
       my $complete = $module->name . "::" . $method->name;
       $count++;
-      $html .= qq(<b><a name=") . $method->name . qq("></a>) . $method->name . qq(</b><br />\n);
+      $html .= qq(<dt><a name=") . $method->name . qq("></a>) . $method->name . qq(</dt>\n<dd>);
       $html .= $self->markup_documentation($method->documentation);
-      $html .= $self->markup_method_table($method->table);
       if ($method->result) {
         $html .= qq(<i>) . $self->markup_links($method->result) . qq(</i>\n);
       }
-      $html .= qq(<br />\n);
       if ($method->module->name ne $module->name) {
         $complete = $method->module->name . "::" . $method->name;
-        $html .= qq(Inherited from <a href=") . $self->link_for_package($method->module->name) . qq(">) . $method->module->name . "</a><br />";
+        $html .= qq(Inherited from <a href=") . $self->link_for_package($method->module->name) . qq(">) . $method->module->name . "</a>";
       }
+      $html .= '</dd>';
       #$html .= sprintf '<a href="%s" rel="external">View source on github</a>', $self->source_code_link($version, 'ensembl-webcode', $complete);
-      $html .= "<div id='" . $complete . "' style='display: none;'>" . $complete . "</div>";
+     # $html .= "<div id='" . $complete . "' style='display: none;'>" . $complete . "</div>";
     }
   }
   if (!$count) {
     $html .= qq(No documented methods.);
   }
-  $html .= qq(</ul>);
+  $html .= qq(</dl>);
   return $html;
 }
 

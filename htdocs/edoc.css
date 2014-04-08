@@ -47,3 +47,5 @@ div.methods td.filled{border:1px solid #d0d0d0;background:#fff}
 div.definitions td{border:1px solid #efefef} 
 div.definitions td.filled{border:1px solid #efefef;background:#eeeeff}
 div.indent{margin:0;padding:10px}
+dt {font-weight:bold;font-size:110%;}
+dd {margin-bottom:1em;}
