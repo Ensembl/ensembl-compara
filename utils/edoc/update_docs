@@ -14,6 +14,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-perl ./update_docs.pl
-rm -r ../../public-plugins/docs/htdocs/info/webcode/edoc
-cp -r `pwd`/temp ../../public-plugins/docs/htdocs/info/webcode/edoc
+perl ./generate_edoc.pl
+rm -r ../../../public-plugins/docs/htdocs/info/docs/webcode/edoc
+cp -r `pwd`/temp ../../../public-plugins/docs/htdocs/info/docs/webcode/edoc

@@ -36,7 +36,7 @@ my $VERSION     = $SiteDefs::ENSEMBL_VERSION;
 my $SERVER_ROOT = $SiteDefs::ENSEMBL_SERVERROOT;
 my $WEB_ROOT    = $SiteDefs::ENSEMBL_WEBROOT;
 
-my $EXPORT      = $SERVER_ROOT.'/public-plugins/docs/htdocs/info/docs/webcode/edoc';
+my $EXPORT      = $WEB_ROOT.'/utils/edoc/temp';
 my $SUPPORT     = $WEB_ROOT.'/utils/edoc/support/';
 my @locations   = map { "$WEB_ROOT/modules/$_" } @modules;
 
