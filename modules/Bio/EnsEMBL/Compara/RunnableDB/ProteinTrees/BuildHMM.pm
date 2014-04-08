@@ -54,15 +54,12 @@ package Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::BuildHMM;
 use strict;
 
 use Bio::EnsEMBL::Compara::AlignedMemberSet;
-use Bio::EnsEMBL::Compara::HMMProfile;
 
-use base ('Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::StoreTree', 'Bio::EnsEMBL::Compara::RunnableDB::RunCommand');
+use base ('Bio::EnsEMBL::Compara::RunnableDB::ComparaHMM::MultiHMMLoadModels', 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::StoreTree', 'Bio::EnsEMBL::Compara::RunnableDB::RunCommand');
 
 sub param_defaults {
     return {
         'cdna'              => 0,
-        'calibrate'         => 1,
-        'emit_consensus'    => 1,
 
         'hmmer_version'     => 2,       # 2 or 3
         'hmmbuild_exe'      => '#hmmer_home#/hmmbuild',
@@ -76,14 +73,13 @@ sub param_defaults {
 sub fetch_input {
     my $self = shift @_;
 
-    die "HMMER v3 does not need a calibration" if $self->param('calibrate') and $self->param_required('hmmer_version') eq '3';
-
     my $protein_tree_id     = $self->param_required('gene_tree_id');
     my $protein_tree        = $self->compara_dba->get_GeneTreeAdaptor->fetch_by_dbID( $protein_tree_id )
                                         or die "Could not fetch protein_tree with gene_tree_id='$protein_tree_id'";
     $self->param('protein_tree', $protein_tree);
 
-    my $hmm_type = $self->param('cdna') ? 'dna' : 'aa';
+    my $hmm_type = 'tree_hmm_';
+    $hmm_type .= $self->param('cdna') ? 'dna' : 'aa';
 
     if ($self->param('notaxon')) {
         $hmm_type .= "_notaxon" . "_" . $self->param('notaxon');
@@ -91,7 +87,7 @@ sub fetch_input {
     if ($self->param('taxon_ids')) {
         $hmm_type .= "_" . join(':', @{$self->param('taxon_ids')});
     }
-    $self->param('hmm_type', $hmm_type);
+    $self->param('type', $hmm_type);
 
     my $members = $self->compara_dba->get_AlignedMemberAdaptor->fetch_all_by_GeneTree($protein_tree);
     if ($self->param('notaxon')) {
@@ -122,8 +118,8 @@ sub fetch_input {
     $self->param('protein_align', Bio::EnsEMBL::Compara::AlignedMemberSet->new(-dbid => $self->param('gene_tree_id'), -members => $members));
 
     $self->require_executable('hmmbuild_exe');
-    $self->require_executable('hmmcalibrate_exe') if $self->param('calibrate');
-    $self->require_executable('hmmemit_exe') if $self->param('emit_consensus');
+    $self->require_executable('hmmcalibrate_exe') if $self->param_required('hmmer_version') eq '2';
+    $self->require_executable('hmmemit_exe');
 
 }
 
@@ -159,7 +155,7 @@ sub run {
 sub write_output {
     my $self = shift @_;
 
-    $self->store_hmmprofile;
+    $self->store_hmmprofile($self->param('hmm_file'), $self->param('gene_tree_id'));
 }
 
 
@@ -188,80 +184,14 @@ sub run_buildhmm {
     my $cmd_out = $self->run_command($cmd);
     die "Could not run hmmbuild: ", $cmd_out->out if ($cmd_out->exit_code);
 
-    if ($self->param('calibrate')) {
+    if ($self->param_required('hmmer_version') eq '2') {
         $cmd = sprintf('%s %s', $self->param('hmmcalibrate_exe'), $hmm_file);
         my $cmd_out2 = $self->run_command($cmd);
         die "Could not run hmmcalibrate: ", $cmd_out2->out if ($cmd_out2->exit_code);
         $cmd_out->runtime_msec += $cmd_out2->runtime_msec
     }
 
-    if ($self->param('emit_consensus')) {
-        my $consensus_seqs = $self->compute_consensus_for_HMM($hmm_file);
-        die "There should be 1 sequence in: ".Dumper($consensus_seqs) if scalar(keys %$consensus_seqs) != 1;
-        $self->param('consensus', (values %$consensus_seqs)[0]);
-    }
-
     $self->param('protein_tree')->store_tag('BuildHMM_runtime_msec', $cmd_out->runtime_msec);
-}
-
-
-########################################################
-#
-# ProteinTree input/output section
-#
-########################################################
-
-sub store_hmmprofile {
-  my $self = shift;
-  my $hmm_file =  $self->param('hmm_file');
-
-  #parse hmmer file
-  print("load from file $hmm_file\n") if($self->debug);
-  my $hmm_text = $self->_slurp($hmm_file);
-
-#  my $model_id = sprintf('%d_%s', $self->param('gene_tree_id'), $self->param('hmm_type'));
-  my $model_id = $self->param('gene_tree_id');
-  my $type = "tree_hmm_" . $self->param('hmm_type');
-
-  my $hmmProfile = Bio::EnsEMBL::Compara::HMMProfile->new();
-  $hmmProfile->model_id($model_id);
-  $hmmProfile->name($model_id);
-  $hmmProfile->type($type);
-  $hmmProfile->profile($hmm_text);
-  $hmmProfile->consensus($self->param('consensus')) if $self->param('emit_consensus');
-
-  $self->compara_dba->get_HMMProfileAdaptor()->store($hmmProfile);
-
-}
-
-sub compute_consensus_for_HMM {
-    my ($self, $hmmfile) = @_;
-
-    my $hmmemit_exe = $self->param('hmmemit_exe');
-
-    open my $pipe, "-|", "$hmmemit_exe -c $hmmfile" or die $!;
-
-    my %consensus;
-    my $header;
-    my $count = 0;
-    my $seq;
-
-    while (<$pipe>) {
-        chomp;
-        if (/^>/) {
-            $consensus{$header} = $seq if (defined $header);
-            ($header)           = $_ =~ /^>(.+?)\s/;
-            $count++;
-            $seq = "";
-            next;
-        }
-        $seq .= $_ if (defined $header);
-    }
-
-    $consensus{$header} = $seq;
-    close($pipe);
-
-    return \%consensus;
 }
 
 

@@ -178,7 +178,7 @@ sub store_hmmprofile {
 =head2 get_consensus_from_HMMs
 
     Parameters:
-        hmmemit_path : path to hmmemit
+        hmmemit_exe : path to hmmemit
 
     Description:
         Runs hmmemit on a HMM and returns its consensus sequences
@@ -188,9 +188,9 @@ sub store_hmmprofile {
 sub get_consensus_from_HMMs {
     my ($self, $hmm_file) = @_;
 
-    my $hmmemit_path = $self->param_required('hmmemit_path');
+    my $hmmemit_exe = $self->param_required('hmmemit_exe');
 
-    open my $pipe, "-|", "$hmmemit_path -c $hmm_file" or die $!;
+    open my $pipe, "-|", "$hmmemit_exe -c $hmm_file" or die $!;
 
     my %consensus;
     my $header;
