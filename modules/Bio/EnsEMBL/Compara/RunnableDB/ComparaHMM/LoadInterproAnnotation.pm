@@ -25,47 +25,22 @@ Bio::EnsEMBL::Compara::RunnableDB::ComparaHMM::LoadInterproAnnotation
 ChuangKee Ong
 
 =cut
+
 package Bio::EnsEMBL::Compara::RunnableDB::ComparaHMM::LoadInterproAnnotation;
 
 use strict;
 use warnings;
-use Data::Dumper;
-use DBI;
-use Bio::EnsEMBL::Registry;
-use Bio::EnsEMBL::DBSQL::DBAdaptor;
+
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
-sub param_defaults {
-    return {
-
-           };
-}
-
-my ($panther_annot_PTHR,$panther_annot_SF);
-
-sub fetch_input {
-    my ($self) = @_;
-
-    $panther_annot_PTHR = $self->param_required('panther_annotation_PTHR');
-    $panther_annot_SF   = $self->param_required('panther_annotation_SF');
-
-return;
-}
 
 sub run {
     my ($self) = @_;
 
-    $self->store_annotation($panther_annot_PTHR);
-    $self->store_annotation($panther_annot_SF);
-
-return;
+    $self->store_annotation($self->param('panther_annot_PTHR')) if $self->param('panther_annot_PTHR');
+    $self->store_annotation($self->param('panther_annot_SF')) if $self->param('panther_annot_SF');
 }
 
-sub write_output {
-    my ($self) = @_;
-    
-return;
-}
 
 ######################
 # internal methods
@@ -95,8 +70,6 @@ sub store_annotation {
    my $sth    = $self->compara_dba->dbc->prepare($sql);
    $sth->execute($file);
    $sth->finish();
-
-return 0;
 }
 
 
