@@ -34,7 +34,7 @@ sub new {
     'location'    => $params{'location'}    || '',
     'lines'       => $params{'lines'}       || '',
     'overview'    => $params{'overview'}    || '',
-    'identifier'  => $params{'identifier'}  || '###',
+    'identifier'  => '#{2,3}',
     'keywords'    => $params{'keywords'}    || $default_keywords,
   };
   bless $self, $class;
@@ -261,56 +261,32 @@ sub _parse_package_file {
       $docs{table}{$sub} = {};
     }
     if ($sub && /$comment_code/) {
-      my ($trash, $comment) = split /$comment_code/;
-      $comment =~ s/^\s+|\s+$//g;
-      chomp $comment;
-      if ($comment eq "") {
-        $comment .= "<br /><br />";
-        $table = "";
-      }
-
-      if ($comment eq "___") {
-         if ($block_table) {
-           $block_table = 0;
-         } else {
-           $block_table = 1;
-         }
-      }
-
-      if ($comment =~ /[A-Z].*\s*:\s+\w+/) {
-        if (!$block_table) {
-          ($table, $trash) = split(/:/, $comment);
+      (my $comment = $_) =~ s/^$comment_code//;
+      if ($comment) {
+        $comment =~ s/^\s+|\s+$//g;
+        chomp $comment;
+        if ($comment eq "") {
+          $comment .= "<br /><br />";
         }
-      }
-      if ($table) {
-        if ($comment !~ /^.eturns:/) {
-          my $table_content = $comment;
-          $table_content =~ s/$table\s*://;
-          if (!$docs{table}{$sub}->{$table}) {
-            $docs{table}{$sub}->{$table} = "";
+
+        my @elements = split /\s+/, $comment;
+        if (!$docs{methods}{$sub}{type}) {
+          $docs{methods}{$sub}{type} = "miscellaneous";
+        }
+        if ($#elements == 0 and $comment ne '___') {
+          $comment = ucfirst($self->convert_keyword($comment));
+          $docs{methods}{$sub}{type} = lc($comment);
+          $comment .= ". ";
+        } else {
+          if ($elements[0] && $elements[0] =~ /^.eturns/) {
+            $docs{methods}{$sub}{return} = "@elements";
+            $table = "";
+            $block = 1;
           }
-          $docs{table}{$sub}->{$table} .= $table_content . " ";
-          $block = 1;
         }
+        $docs{methods}{$sub}{comment} .= " " . $comment if !$block;
+        $block = 0;
       }
-
-      my @elements = split /\s+/, $comment;
-      if (!$docs{methods}{$sub}{type}) {
-        $docs{methods}{$sub}{type} = "miscellaneous";
-      }
-      if ($#elements == 0 and $comment ne '___') {
-        $comment = ucfirst($self->convert_keyword($comment));
-        $docs{methods}{$sub}{type} = lc($comment);
-        $comment .= ". ";
-      } else {
-        if ($elements[0] =~ /^.eturns/) {
-          $docs{methods}{$sub}{return} = "@elements";
-          $table = "";
-          $block = 1;
-        }
-      }
-      $docs{methods}{$sub}{comment} .= " " . $comment if !$block;
-      $block = 0;
     }
     if (/SUPER::/) {
       if (/->(.*)::(.*)\(/) {
