@@ -39,6 +39,9 @@ Perl strings.
 - The parameter treebest_exe must be set.
 - An alignment filtering method can be defined via the parameter filt_cmdline
 
+PS:
+Until e75, RunnableDB/GeneTrees/ReconcileTree.pm was able to reconcile a tree *in place*
+
 =head1 AUTHORSHIP
 
 Ensembl Team. Individual contributions can be found in the GIT log.
