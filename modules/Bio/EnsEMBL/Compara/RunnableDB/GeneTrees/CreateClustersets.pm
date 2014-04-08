@@ -51,7 +51,9 @@ use base ('Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::StoreClusters');
 sub run {
     my ($self) = @_;
 
-    $self->create_additional_clustersets();
+    foreach my $clusterset_id (@{$self->param_required('additional_clustersets')}) {
+        $self->create_clusterset($clusterset_id);
+    }
 }
 
 1;

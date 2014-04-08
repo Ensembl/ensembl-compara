@@ -101,7 +101,6 @@ sub store_clusterset {
     }
     $self->finish_store_clusterset($clusterset);
     return ($clusterset, [@allcluster_ids]);
-#    $self->dataflow_clusters($clusterset, \@allcluster_ids);
 }
 
 
@@ -227,41 +226,6 @@ sub finish_store_clusterset {
     my $leafcount = scalar(@{$clusterset->root->get_all_leaves});
     print STDERR "clusterset ", $clusterset->root_id, " / ", $clusterset->clusterset_id, " with $leafcount leaves\n" if $self->debug;
     $clusterset->root->print_tree if $self->debug;
-}
-
-
-=head2 dataflow_clusters
-
-  Description: Creates one job per cluster into branch 2.
-               Flows into branch 1 with the clusterset_id of the new clusterset
-  Parameters : (none)
-  Arg [1]    : clusterset
-  Arg [2]    : array reference of root_id
-  Returntype : none
-  Exceptions : none
-  Caller     : general
-
-=cut
-
-sub dataflow_clusters {
-    my $self = shift;
-    my $clusterset = shift;
-    my $root_ids = shift;
-
-    # Loop on all the clusters that haven't been dataflown yet
-    foreach my $tree_id (@$root_ids) {
-        $self->dataflow_output_id({ 'gene_tree_id' => $tree_id, }, 2);
-    }
-    $self->dataflow_output_id({ 'clusterset_id' => $clusterset->clusterset_id }, 1);
-}
-
-sub create_additional_clustersets {
-    my ($self) =  @_;
-    if (defined $self->param('additional_clustersets')) {
-        foreach my $clusterset_id (@{$self->param('additional_clustersets')}) {
-            $self->create_clusterset($clusterset_id);
-        }
-    }
 }
 
 
