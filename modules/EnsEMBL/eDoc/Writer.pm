@@ -360,29 +360,6 @@ sub methods_html {
   return $html;
 }
 
-sub markup_method_table {
-  ### Returns tabulated documentation.
-  my ($self, $table) = @_;
-  my $html = "";
-  if (keys %{ $table }) {
-    $html = "<div class='indent'>\n";
-    $html .= "<table width='65%' cellpadding='4' cellspacing='0'>\n";
-    my %table = %{ $table };
-    my $row_count = 0;
-    my $classname = "";
-    foreach my $key (sort keys %table) {
-      $row_count++;
-      $classname = "";
-      if ($row_count % 2) {
-        $classname = "class='filled'";
-      }
-      $html .= "<tr><td $classname valign='top'>$key</td><td $classname>" . $self->markup_links($table{$key}) . "</td></tr>\n";
-    }
-    $html .= "</table></div>\n";
-  }
-  return $html;
-}
-
 sub markup_links {
   ### Parses documentation for special e! doc markup. Links to other modules and methods can be included between double braces. For example: { { EnsEMBL::Web::Tools::Document::Module::new } } is parsed to {{EnsEMBL::Web::Tools::Document::Module::new}}. Simple method and module names can also be used. {{markup_links}} does not perform any error checking on the names of modules and methods. 
   my ($self, $documentation) = @_;
