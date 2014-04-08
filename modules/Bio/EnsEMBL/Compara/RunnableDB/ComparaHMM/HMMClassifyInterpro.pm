@@ -18,7 +18,7 @@ limitations under the License.
 
 =head1 NAME
 
-Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::HMMClassifyInterpro
+Bio::EnsEMBL::Compara::RunnableDB::ComparaHMM::HMMClassifyInterpro
 
 =head1 DESCRIPTION
 
@@ -27,7 +27,7 @@ This module lookup the interpro classification of peptides
 by interpro
 
 =cut
-package Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::HMMClassifyInterpro;
+package Bio::EnsEMBL::Compara::RunnableDB::ComparaHMM::HMMClassifyInterpro;
 
 use strict;
 use warnings;
@@ -36,7 +36,7 @@ use DBI;
 use Bio::EnsEMBL::Registry;
 use Bio::EnsEMBL::DBSQL::DBAdaptor;
 
-use base ('Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::HMMClassify');
+use base ('Bio::EnsEMBL::Compara::RunnableDB::ComparaHMM::HMMClassify');
 
 
 

@@ -22,7 +22,7 @@ limitations under the License.
 
 =head1 NAME
 
-Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::DumpModels
+Bio::EnsEMBL::Compara::RunnableDB::ComparaHMM::DumpModels
 
 
 =head1 SYNOPSIS
@@ -56,7 +56,7 @@ Internal methods are usually preceded with a _
 =cut
 
 
-package Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::DumpModels;
+package Bio::EnsEMBL::Compara::RunnableDB::ComparaHMM::DumpModels;
 
 use strict;
 use IO::File; ## ??

@@ -22,7 +22,7 @@ limitations under the License.
 
 =head1 NAME
 
-Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::MultiHMMLoadModels
+Bio::EnsEMBL::Compara::RunnableDB::ComparaHMM::MultiHMMLoadModels
 
 
 =head1 SYNOPSIS
@@ -64,12 +64,12 @@ Internal methods are usually preceded with a _
 =cut
 
 
-package Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::MultiHMMLoadModels;
+package Bio::EnsEMBL::Compara::RunnableDB::ComparaHMM::MultiHMMLoadModels;
 
 use strict;
 use warnings;
 
-use base ('Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::LoadModels');
+use base ('Bio::EnsEMBL::Compara::RunnableDB::ComparaHMM::LoadModels');
 
 =head2 run
 

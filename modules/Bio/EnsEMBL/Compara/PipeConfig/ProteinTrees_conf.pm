@@ -801,7 +801,7 @@ sub pipeline_analyses {
 
         {
             -logic_name => 'load_panther_database_models',
-            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::PantherLoadModels',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ComparaHMM::PantherLoadModels',
             -parameters => {
                 'pantherScore_path'    => $self->o('pantherScore_path'),
             },
@@ -809,14 +809,14 @@ sub pipeline_analyses {
 
         {
             -logic_name => 'load_multihmm_models',
-            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::MultiHMMLoadModels',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ComparaHMM::MultiHMMLoadModels',
             -parameters => {
             },
          },
 
             {
              -logic_name => 'dump_models',
-             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::DumpModels',
+             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ComparaHMM::DumpModels',
              -parameters => {
                              'hmm_library_basedir' => '#hmmlib_dir#',
                              'blast_bin_dir'       => $self->o('blast_bin_dir'),  ## For creating the blastdb (formatdb or mkblastdb)
@@ -827,7 +827,7 @@ sub pipeline_analyses {
 
            {
             -logic_name => 'load_InterproAnnotation',
-            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ComparaHMM::LoadAnnotation',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ComparaHMM::LoadInterproAnnotation',
             -parameters => {
                              'panther_annotation_PTHR'  => $self->o('panther_annotation_PTHR'),
                              'panther_annotation_SF'    => $self->o('panther_annotation_SF'),
@@ -853,7 +853,7 @@ sub pipeline_analyses {
 
            {
             -logic_name => 'HMMer_classifyCurated',
-            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::HMMClassifyCurated',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ComparaHMM::HMMClassifyCurated',
             -flow_into  => [ 'HMMer_classifyInterpro' ],
              -hive_capacity => $self->o('HMMer_classify_capacity'),
              -rc_name => 'msa_himem',
@@ -862,7 +862,7 @@ sub pipeline_analyses {
 
            {
             -logic_name => 'HMMer_classifyInterpro',
-            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::HMMClassifyInterpro',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ComparaHMM::HMMClassifyInterpro',
             -flow_into  => [ 'HMMer_classifyPantherScore' ],
              -hive_capacity => $self->o('HMMer_classify_capacity'),
              -rc_name => 'msa_himem',
@@ -870,7 +870,7 @@ sub pipeline_analyses {
 
             {
              -logic_name => 'HMMer_classifyPantherScore',
-             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::HMMClassifyPantherScore',
+             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ComparaHMM::HMMClassifyPantherScore',
              -parameters => {
                              'blast_bin_dir'       => $self->o('blast_bin_dir'),
                              'pantherScore_path'   => $self->o('pantherScore_path'),
@@ -883,7 +883,7 @@ sub pipeline_analyses {
 
             {
              -logic_name => 'HMM_clusterize',
-             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::HMMClusterize',
+             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ComparaHMM::HMMClusterize',
              -rc_name => '8Gb_job',
             },
 

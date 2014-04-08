@@ -27,7 +27,7 @@ Questions may also be sent to the Ensembl help desk at
 
 =head1 NAME
 
-Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::HMMClassify
+Bio::EnsEMBL::Compara::RunnableDB::ComparaHMM::HMMClassify
 
 =head1 DESCRIPTION
 
@@ -46,7 +46,7 @@ Internal methods are usually preceded with an underscore (_)
 
 =cut
 
-package Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::HMMClassify;
+package Bio::EnsEMBL::Compara::RunnableDB::ComparaHMM::HMMClassify;
 
 use strict;
 use warnings;

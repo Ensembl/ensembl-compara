@@ -22,7 +22,7 @@ limitations under the License.
 
 =head1 NAME
 
-Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::PantherLoadModels
+Bio::EnsEMBL::Compara::RunnableDB::ComparaHMM::PantherLoadModels
 
 
 =head1 SYNOPSIS
@@ -62,7 +62,7 @@ Internal methods are usually preceded with a _
 =cut
 
 
-package Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::PantherLoadModels;
+package Bio::EnsEMBL::Compara::RunnableDB::ComparaHMM::PantherLoadModels;
 
 use strict;
 use warnings;
@@ -71,7 +71,7 @@ use File::Basename;
 
 use vars qw/@INC/;
 
-use base ('Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::LoadModels');
+use base ('Bio::EnsEMBL::Compara::RunnableDB::ComparaHMM::LoadModels');
 
 
 sub param_defaults {

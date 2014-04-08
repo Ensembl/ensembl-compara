@@ -22,7 +22,7 @@ limitations under the License.
 
 =head1 NAME
 
-Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::HMMClusterize
+Bio::EnsEMBL::Compara::RunnableDB::ComparaHMM::HMMClusterize
 
 =cut
 
@@ -43,7 +43,7 @@ Internal methods are usually preceded with a _
 
 =cut
 
-package Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::HMMClusterize;
+package Bio::EnsEMBL::Compara::RunnableDB::ComparaHMM::HMMClusterize;
 
 use strict;
 use warnings;

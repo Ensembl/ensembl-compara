@@ -27,7 +27,7 @@ Questions may also be sent to the Ensembl help desk at
 
 =head1 NAME
 
-Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::HMMClassify
+Bio::EnsEMBL::Compara::RunnableDB::ComparaHMM::HMMClassify
 
 =head1 DESCRIPTION
 
@@ -46,7 +46,7 @@ Internal methods are usually preceded with an underscore (_)
 
 =cut
 
-package Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::HMMClassifyPantherScore;
+package Bio::EnsEMBL::Compara::RunnableDB::ComparaHMM::HMMClassifyPantherScore;
 
 use strict;
 use warnings;
@@ -56,7 +56,7 @@ use Data::Dumper;
 
 use Bio::EnsEMBL::Compara::MemberSet;
 
-use base ('Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::HMMClassify');
+use base ('Bio::EnsEMBL::Compara::RunnableDB::ComparaHMM::HMMClassify');
 
 sub param_defaults {
     return {

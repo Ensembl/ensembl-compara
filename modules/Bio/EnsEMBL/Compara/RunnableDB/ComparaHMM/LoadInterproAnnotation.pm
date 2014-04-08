@@ -16,7 +16,7 @@ limitations under the License.
 
 =head1 NAME
 
-Bio::EnsEMBL::Compara::RunnableDB::ComparaHMM::LoadAnnotation
+Bio::EnsEMBL::Compara::RunnableDB::ComparaHMM::LoadInterproAnnotation
 
 =head1 DESCRIPTION
 
@@ -25,7 +25,7 @@ Bio::EnsEMBL::Compara::RunnableDB::ComparaHMM::LoadAnnotation
 ChuangKee Ong
 
 =cut
-package Bio::EnsEMBL::Compara::RunnableDB::ComparaHMM::LoadAnnotation;
+package Bio::EnsEMBL::Compara::RunnableDB::ComparaHMM::LoadInterproAnnotation;
 
 use strict;
 use warnings;
