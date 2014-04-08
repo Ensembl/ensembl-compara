@@ -203,7 +203,8 @@ sub _parse_package_file {
 
   my $lines = 0;
   my $subs = {};
-  my $sub_name;
+  my $sub_name = '';
+  my $sub_line = 0;
   my $header = 0;
   my @order = ();
   my $params = 0;
@@ -241,14 +242,18 @@ sub _parse_package_file {
     ## Get method documentation
     if (/^sub (\w+) {/) {
       $sub_name = $1;
+      $sub_line = $1;
       $header = 1;
       $params = 0;
       $subs->{$sub_name} = {'name' => $sub_name, 'type' => 'undocumented'};
       push @order, $sub_name;
     }
-    elsif (/^}/) {
-      $sub_name = '';
-      $header = 0;
+    else {
+      $sub_line = 0;
+      if (/^}/) {
+        $sub_name = '';
+        $header = 0;
+      }
     }
 
     ## N.B. Only include comments at start of method!
@@ -259,19 +264,32 @@ sub _parse_package_file {
         }
         ## "Normal" inline documentation
         elsif (/^\s+## (.+)/) {
-          $subs->{$sub_name}{type} = 'miscellaneous';
           my $comment = $1;
           if ($comment =~ /^\@param/) {
             $params++;
             $comment =~ s/\@param/Arg[$params]:/;
           }
+          elsif ($comment =~ /^\@(accessor|constructor)/) {
+            $subs->{$sub_name}{type} = $1;
+          }
+          elsif ($comment =~ /^\@(private|protected)/) {
+            $subs->{$sub_name}{status} = $1;
+          }
+          elsif ($comment =~ /^\@([a-zA-Z]+)/) {
+            my $doc = ucfirst($1);
+            $comment =~ s/\@$1/$doc/;
+          }
           elsif ($comment =~ / - /) {
             $comment = '&nbsp;&nbsp;&nbsp;&nbsp;'.$comment;
           }
+          else {
+            $subs->{$sub_name}{type} = 'miscellaneous';
+          }
+
           $subs->{$sub_name}{comment} .= "$comment<br />";
         }
         ## End of header comments
-        else {
+        elsif (!$sub_line) {
           $header = 0;
         }
       }
