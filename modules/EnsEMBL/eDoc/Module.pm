@@ -25,7 +25,13 @@ use EnsEMBL::eDoc::Method;
 
 sub new {
   my ($class, %params) = @_;
-  my $default_keywords = "a accessor c constructor d destructor x deprecated i initialiser";
+  my $keywords = {'a' => 'accessor',
+                  'c' => 'constructor',
+                  'd' => 'destructor',
+                  'h' => 'html',
+                  'x' => 'deprecated',
+                  'i' => 'initialiser',
+                  };
   my $self = {
     'methods'     => $params{'methods'}     || [],
     'name'        => $params{'name'}        || '',
@@ -35,7 +41,7 @@ sub new {
     'lines'       => $params{'lines'}       || '',
     'overview'    => $params{'overview'}    || '',
     'identifier'  => '#{2,3}',
-    'keywords'    => $params{'keywords'}    || $default_keywords,
+    'keywords'    => $params{'keywords'}    || $keywords,
   };
   bless $self, $class;
   if ($params{'find_methods'}) {
@@ -139,17 +145,14 @@ sub find_methods {
   my $self = shift;
   my %documentation = %{ $self->_parse_package_file };
   
-  foreach my $method (keys %{ $documentation{methods} }) {
+  foreach my $method (@{$documentation{methods}}) {
     my $new_method = EnsEMBL::eDoc::Method->new((
-                       name           => $method,
-                       documentation  => $documentation{methods}{$method}->{comment},
-                       type           => $documentation{methods}{$method}->{type},
-                       result         => $documentation{methods}{$method}->{return},
+                       name           => $method->{name},
+                       documentation  => $method->{comment},
+                       type           => $method->{type},
+                       result         => $method->{return},
                        module         => $self
                      ));
-    if ($documentation{table}{$method}) {
-      $new_method->table($documentation{table}{$method});
-    }
     $self->add_method($new_method);
   }
   if ($documentation{isa}) {
@@ -191,111 +194,93 @@ sub coverage {
   return $coverage;
 }
 
-sub convert_keyword {
-  ### Accepts a single abbreviation and returns its long form. This method is called on all lines that contain a single word, and replaces shorcuts with longer descriptions. For example, 'a' is elongates to 'accessor'. Keywords can be specified using {keyword}. 
-  my ($self, $comment) = @_;
-  my %keywords = split / /, $self->keywords;
-  my $return_keyword = $comment;
-  if ($keywords{$comment}) {
-    $return_keyword = $keywords{$comment};
-    #warn $return_keyword;
-  }
-  return $return_keyword;
-}
-
 sub _parse_package_file {
   ### Opens and parses Perl package files for methods and comments
   ### in e! doc format.
   my $self = shift;
-  my %docs = ();
+  my %docs = ('methods' => []);
   open (my $fh, $self->location);
-  my $sub = "";
-  my $package = "";
-  my $lines = "";
-  my $comment_code = $self->identifier;
-  my $table = 0;
-  my $block_table = 0;
+
+  my $lines = 0;
+  my $subs = {};
+  my $sub_name;
+  my @order = ();
+  my $params = 0;
+
   while (<$fh>) {
-    my $block = 0;
     $lines++;
+    next unless $_;
 
     ## Get parent(s)
-    if (/\@ISA/) {
-      my ($nothing, $isa) = split /=/;
-      if ($isa) {
-        $isa =~ s/qw|\(|\)|;//g;
-        chomp $isa;
-        $isa =~ s/\s+//g;
-        $docs{isa} = [$isa];
+    if (/\@ISA/ || /^use [base|parent] qw\(([a-zA-Z:\s]+)\);/) {
+      if (/\@ISA/) {
+        my ($nothing, $isa) = split /=/;
+        if ($isa) {
+          $isa =~ s/qw|\(|\)|;//g;
+          chomp $isa;
+          $isa =~ s/\s+//g;
+          $docs{isa} = [$isa];
+        }
       }
-    }
-    elsif (/^use [base|parent] qw\(([a-zA-Z:\s]+)\);/) {
-      my @isa = split(/\s+/, $1);
-      $docs{isa} = \@isa;
-    }
-
-    ## Get package name and introductory documentation
-    if (/^package/) {
-      $package = $_;
-      $docs{overview} = "";
+      else {
+        my @isa = split(/\s+/, $1);
+        $docs{isa} = \@isa;
+      }
+      next;
     }
 
-    if ($package && $sub eq "" && /^$comment_code /) {
-      my $temp = $_;
-      $temp =~ s/$comment_code//g;
-      $docs{overview} .= $temp;
+    ## Get overview
+    unless (keys %$subs) {  
+      if (/^#{2,3} /) {
+        (my $line = $_) =~ s/^##(#)? //;
+        $docs{overview} .= "$line<br />";
+      }
     }
 
     ## Get method documentation
-    if (/^sub /) {
-      $package = "";
-      $sub = $_;
-      $sub =~ s/^sub |{.*//g;
-      $sub =~ s/:lvalue//; ## REALLY NEED TO SET A FLAG HERE FOR LVALUE FUNCTIONS....
-      $sub =~ s/\W+//g;
-      if (!$docs{methods}) {
-        $docs{methods} = {};
-      }
-      $table = "";
-      $docs{methods}{$sub} = {};
-      $docs{table}{$sub} = {};
+    if (/^sub (\w+) {/) {
+      $sub_name = $1;
+      $params = 0;
+      $subs->{$sub_name} = {'name' => $sub_name, 'type' => 'undocumented'};
+      push @order, $sub_name;
     }
-    if ($sub && /$comment_code/) {
-      (my $comment = $_) =~ s/^$comment_code//;
-      if ($comment) {
-        $comment =~ s/^\s+|\s+$//g;
-        chomp $comment;
-        if ($comment eq "") {
-          $comment .= "<br /><br />";
-        }
+    elsif (/^}/) {
+      $sub_name = '';
+    }
 
-        my @elements = split /\s+/, $comment;
-        if (!$docs{methods}{$sub}{type}) {
-          $docs{methods}{$sub}{type} = "miscellaneous";
-        }
-        if ($#elements == 0 and $comment ne '___') {
-          $comment = ucfirst($self->convert_keyword($comment));
-          $docs{methods}{$sub}{type} = lc($comment);
-          $comment .= ". ";
-        } else {
-          if ($elements[0] && $elements[0] =~ /^.eturns/) {
-            $docs{methods}{$sub}{return} = "@elements";
-            $table = "";
-            $block = 1;
-          }
-        }
-        $docs{methods}{$sub}{comment} .= " " . $comment if !$block;
-        $block = 0;
+    if ($sub_name) {
+      ### Keyword type
+      if (/###([a-z]) /) {
+        $subs->{$sub_name}{type} = $self->keywords->{$1};
       }
-    }
-    if (/SUPER::/) {
-      if (/->(.*)::(.*)\(/) {
-        $docs{methods}{$sub}{super} = $2;
-      } elsif (/->(.*)::(.*)\s+;/) {
-        $docs{methods}{$sub}{super} = $2;
+      ## "Normal" inline documentation
+      elsif (/^\s+## (.+)/) {
+        $subs->{$sub_name}{type} = 'miscellaneous';
+        my $comment = $1;
+        if ($comment =~ /^\@param/) {
+          $params++;
+          $comment =~ s/\@param/Arg[$params]:/;
+        }
+        elsif ($comment =~ / - /) {
+          $comment = '&nbsp;&nbsp;&nbsp;&nbsp;'.$comment;
+        }
+        $subs->{$sub_name}{comment} .= "$comment<br />";
+      }
+      elsif (/SUPER::/) {
+        if (/->(.*)::(.*)\(/) {
+          $subs->{$sub_name}{super} = $2;
+        } elsif (/->(.*)::(.*)\s+;/) {
+          $subs->{$sub_name}{super} = $2;
+        }
       }
     }
   }
+  
+  ## Now add the methods in the same order as the document (we can always sort by name later)
+  foreach (@order) {
+    push @{$docs{methods}}, $subs->{$_};
+  }
+
   $self->lines($lines);
   return \%docs;
 }

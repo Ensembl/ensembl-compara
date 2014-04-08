@@ -334,7 +334,7 @@ sub methods_html {
   $html .= qq(<h2>Method Documentation</h2>);
   $html .= qq(<ul>);
   my $count = 0;
-  foreach my $method (sort { $a->name cmp $b->name } @{ $module->methods }) {
+  foreach my $method (@{ $module->methods }) {
     if ($method->type !~ /undocumented/) {
       my $complete = $module->name . "::" . $method->name;
       $count++;
@@ -351,7 +351,6 @@ sub methods_html {
       }
       #$html .= sprintf '<a href="%s" rel="external">View source on github</a>', $self->source_code_link($version, 'ensembl-webcode', $complete);
       $html .= "<div id='" . $complete . "' style='display: none;'>" . $complete . "</div>";
-      $html .= qq(<br /><br />\n);
     }
   }
   if (!$count) {
