@@ -27,24 +27,30 @@ Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::PantherLoadModels
 
 =head1 SYNOPSIS
 
+To load RFAM models from the FTP, use these parameters:
+ url: ftp://ftp.pantherdb.org/panther_library/current_release
+ remote_file: PANTHER9.0_ascii.tgz
+ expander: tar -xzf
+ expanded_basename: PANTHER9.0
+To load the models from a file, do something like:
+ cm_file_or_directory: /lustre/scratch110/ensembl/mp12/panther_hmms/PANTHER7.2_ascii
 
 
 =head1 DESCRIPTION
 
-This Analysis/RunnableDB is designed to fetch the HMM models from
-the Panther ftp site and load them into the database to be used in the
+This Analysis/RunnableDB is designed to download an archive that contains all
+the HMM models in a Panther-like format, and load them into the database to be used in the
 alignment process.
-
+It can also directly process the directory if "cm_file_or_directory" is defined.
 
 
 =head1 CONTACT
 
-  Please email comments or questions to the public Ensembl
-  developers list at <http://lists.ensembl.org/mailman/listinfo/dev>.
+Please email comments or questions to the public Ensembl
+developers list at <http://lists.ensembl.org/mailman/listinfo/dev>.
 
-  Questions may also be sent to the Ensembl help desk at
-  <http://www.ensembl.org/Help/Contact>.
-
+Questions may also be sent to the Ensembl help desk at
+<http://www.ensembl.org/Help/Contact>.
 
 
 =head1 APPENDIX
@@ -59,22 +65,30 @@ Internal methods are usually preceded with a _
 package Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::PantherLoadModels;
 
 use strict;
-use IO::File; # ??
+use warnings;
+
 use File::Basename;
-use Data::Dumper;
+
 use vars qw/@INC/;
 
 use base ('Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::LoadModels');
 
+
 sub param_defaults {
     return {
-            'type' => 'panther9.0_treefam',
-            'url' => 'ftp://ftp.pantherdb.org/panther_library/current_release',
-            'remote_file' => 'PANTHER9.0_ascii.tgz',
-            'expanded_basename' => 'PANTHER9.0',
-            'expander' => 'tar -xzf ',
-           }
+        include_subfamilies => 0,
+    }
 }
+
+=head2 fetch_input
+
+    Title   :   run
+    Usage   :   $self->fetch_input
+    Function:   Checks that PantherScore is available
+    Returns :   none
+    Args    :   none
+
+=cut
 
 sub fetch_input {
     my ($self) = @_;
@@ -86,6 +100,7 @@ sub fetch_input {
     import FastaFile;
 }
 
+
 =head2 run
 
     Title   :   run
@@ -96,18 +111,12 @@ sub fetch_input {
 
 =cut
 
-
 sub run {
     my $self = shift @_;
 
-    ### If you don't want to download the models, define the parameter cm_file_or_directory to point to the panther path
-    if ($self->param('cm_file_or_directory')) {
-        $self->param('profiles_already_there', 1);
-        return;
-    }
-
-    $self->download_models;
+    $self->download_models() unless (defined $self->param('cm_file_or_directory'));
 }
+
 
 =head2 write_output
 
@@ -119,14 +128,13 @@ sub run {
 
 =cut
 
-
 sub write_output {
     my $self = shift @_;
 
-    return if $self->param('profiles_already_there');
     $self->get_profiles();
-    #$self->clean_directory();
+    $self->clean_directory();
 }
+
 
 ##########################################
 #
@@ -134,34 +142,49 @@ sub write_output {
 #
 ##########################################
 
+sub initialize_fasta_index {
+    my ($self) = @_;
+
+    my $cm_directory = $self->param_required('cm_file_or_directory');
+    my $consensus_fasta = $cm_directory . "/globals/con.Fasta";
+    open my $consensus_fh, "<", $consensus_fasta or die "$!: $consensus_fasta";
+    $self->param('consensus_fh', $consensus_fh);
+    $self->param('index', FastaFile::indexFasta($consensus_fh));
+}
+
+sub get_consensus_from_index {
+    my ($self, $fam_name) = @_;
+    my $consensus_fh = $self->param('consensus_fh');
+    my $index = $self->param('index');
+    my $cons_seq = FastaFile::getSeq($consensus_fh, $index, $fam_name);
+    die "No consensus sequence found for fam $fam_name" unless (defined $cons_seq);
+    my (undef, $seq) = split /\n/, $cons_seq, 2;
+    return $seq;
+}
 
 sub get_profiles {
     my ($self) = @_;
 
     my $cm_directory = $self->param_required('cm_file_or_directory');
     print STDERR "CM_DIRECTORY = " . $cm_directory . "\n";
-    my $consensus_fasta = $cm_directory . "/globals/con.Fasta";
-    open my $consensus_fh, "<", $consensus_fasta or die "$!: $consensus_fasta";
-    my $index = FastaFile::indexFasta($consensus_fh);
-    $cm_directory .= "/books";
-    while (my $famPath = <$cm_directory/*>) {
+    $self->initialize_fasta_index;
+    while (my $famPath = <$cm_directory/books/*>) {
         my $fam = basename($famPath);
-        my $cons_seq = FastaFile::getSeq($consensus_fh, $index, $fam);
-        if (! defined $cons_seq) {
-            print STDERR "No consensus sequence found for fam $fam" unless(defined $cons_seq);
-            next; ## If we don't have consensus seq we don't store the hmm_profile
-        }
-        my (undef, $seq) = split /\n/, $cons_seq, 2;
+        my $cons_seq = $self->get_consensus_from_index($fam);
         print STDERR "Storing family $famPath($fam) => $famPath/hmmer.hmm\n" if ($self->debug());
-        $self->store_hmmprofile("$famPath/hmmer.hmm", $fam, $seq);
+        $self->store_hmmprofile("$famPath/hmmer.hmm", $fam, {$fam => $cons_seq});
+
+        next unless $self->param('include_subfamilies');
 
 	## For subfamilies
         while (my $subfamPath = <$famPath/*>) {
             my $subfamBasename = basename($subfamPath);
+            print $subfamPath, "\n";
             next if ($subfamBasename eq 'hmmer.hmm' || $subfamBasename eq 'tree.tree' || $subfamBasename eq 'cluster.pir');
-            my $subfam = $subfamBasename =~ /hmmer\.hmm/ ? $fam : "$fam." . $subfamBasename;
+            my $subfam = "$fam:" . $subfamBasename;
+            $cons_seq = $self->get_consensus_from_index($subfam);
             print STDERR "Storing $subfam HMM\n";
-            $self->store_hmmprofile("$subfamPath/hmmer.hmm", $subfam);
+            $self->store_hmmprofile("$subfamPath/hmmer.hmm", $subfam, {$subfam => $cons_seq});
         }
     }
 }

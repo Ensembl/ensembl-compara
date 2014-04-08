@@ -22,29 +22,37 @@ limitations under the License.
 
 =head1 NAME
 
-Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::PantherLoadModels
+Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::MultiHMMLoadModels
 
 
 =head1 SYNOPSIS
 
+To load RFAM models from the FTP, use these parameters:
+ url: ftp://ftp.sanger.ac.uk/pub/databases/Rfam/11.0/
+ remote_file: Rfam.cm.gz
+ expander: gunzip
+ expanded_basename: Rfam.cm
+To load the models from a file, do something like:
+ cm_file_or_directory: /lustre/scratch110/ensembl/mp12/pfamA_HMM_fs.txt
+or
+ cm_file_or_directory: /lustre/scratch109/sanger/fs9/treefam8_hmms
 
 
 =head1 DESCRIPTION
 
-This Analysis/RunnableDB is designed to fetch the HMM models from
-the Panther ftp site and load them into the database to be used in the
+This Analysis/RunnableDB is designed to download a file that contains all
+the HMM models, and load them into the database to be used in the
 alignment process.
-
+It can also directly process the file if "cm_file_or_directory" is defined.
 
 
 =head1 CONTACT
 
-  Please email comments or questions to the public Ensembl
-  developers list at <http://lists.ensembl.org/mailman/listinfo/dev>.
+Please email comments or questions to the public Ensembl
+developers list at <http://lists.ensembl.org/mailman/listinfo/dev>.
 
-  Questions may also be sent to the Ensembl help desk at
-  <http://www.ensembl.org/Help/Contact>.
-
+Questions may also be sent to the Ensembl help desk at
+<http://www.ensembl.org/Help/Contact>.
 
 
 =head1 APPENDIX
@@ -59,20 +67,9 @@ Internal methods are usually preceded with a _
 package Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::MultiHMMLoadModels;
 
 use strict;
-use IO::File; # ??
-use File::Basename;
+use warnings;
 
 use base ('Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::LoadModels');
-
-sub param_defaults {
-    return {
-            'type' => 'MultiHMM',
-            'hmmemit_path' => "/software/ensembl/compara/hmmer-2.3.2/src/hmmemit",
-            'expanded_basename' => 'PANTHER7.2',
-            'expander' => 'tar -xzf ',
-            'cm_file_or_directory' => '/lustre/scratch110/ensembl/mp12/pfamA_HMM_fs.txt',
-           }
-}
 
 =head2 run
 
@@ -84,12 +81,12 @@ sub param_defaults {
 
 =cut
 
-
 sub run {
     my $self = shift @_;
 
-    $self->download_models unless (defined $self->param('cm_file_or_directory'));
+    $self->download_models() unless (defined $self->param('cm_file_or_directory'));
 }
+
 
 =head2 write_output
 
@@ -101,93 +98,13 @@ sub run {
 
 =cut
 
-
 sub write_output {
     my $self = shift @_;
 
-    $self->get_profiles();
-#    $self->clean_directory();
+    $self->store_hmmprofile();
+    $self->clean_directory();
 }
 
-##########################################
-#
-# internal methods
-#
-##########################################
 
-
-sub get_profiles {
-    my ($self) = @_;
-
-    my $hmmfile = $self->param('cm_file_or_directory');
-
-    my $consensus = $self->get_consensus_from_HMMs();
-
-    open my $fh, "<", $hmmfile or die $!;
-    my $hmm;
-    my $acc;
-    my $name;
-    while (<$fh>) {
-        if (/^\/\//) {
-            $hmm .= $_;
-            $self->load_hmmprofile($hmm, $acc, $name, $consensus->{$name});
-            $hmm = undef;
-            next;
-        }
-        if (/^HMMER2\.0/) {
-            $hmm = $_;
-            next;
-        }
-        if (/^ACC/) {
-            $acc = (split /\s+/, $_)[1];
-        }
-        if (/^NAME/) {
-            $name = (split /\s+/, $_)[1];
-        }
-        $hmm .= $_ if (defined $hmm);
-    }
-    $self->load_hmmprofile($hmm, $acc, $name, $consensus->{$name});
-    close($fh);
-}
-
-sub load_hmm_profile {
-    my ($self, $hmm, $acc, $name, $consensus) = @_;
-    my $hmm_profile = Bio::EnsEMBL::Compara::HMMProfile->new();
-    $hmm_profile->model_id($acc);
-    $hmm_profile->name($name);
-    $hmm_profile->type($self->param('type')); ##
-    $hmm_profile->profile($hmm);
-    $hmm_profile->consensus($consensus);
-    $self->compara_dba->get_HMMProfileAdaptor()->store($hmm_profile);
-    return;
-}
-
-sub get_consensus_from_HMMs {
-    my ($self) = @_;
-
-    my $hmmemit_path = $self->param('hmmemit_path');
-    my $hmmfile = $self->param('cm_file_or_directory');
-
-    open my $pipe, "-|", "$hmmemit_path -c $hmmfile" or die $!;
-
-    my %consensus;
-    my $header;
-    my $count = 0;
-    my $seq;
-    while (<$pipe>) {
-        chomp;
-        if (/^>/) {
-            $consensus{$header} = $seq if (defined $header);
-            ($header) = $_ =~ /^>(.+?)\s/;
-            $count++;
-            $seq = "";
-            next;
-        }
-        $seq .= $_ if (defined $header);
-    }
-    $consensus{$header} = $seq;
-    close($pipe);
-    return \%consensus;
-}
 
 1;
