@@ -103,7 +103,9 @@ sub write_output {
     my $self = shift;
 
     my @ref_support = qw(phyml_nt nj_ds phyml_aa nj_dn nj_mm);
-    $self->store_genetree($self->param('gene_tree'), \@ref_support);
+    $self->call_within_transaction(sub {
+        $self->store_genetree($self->param('gene_tree'), \@ref_support);
+    });
     $self->param('gene_tree')->store_tag('treebest_runtime_msec', $self->param('treebest_runtime'));
 
     if ($self->param('treebest_stderr')) {

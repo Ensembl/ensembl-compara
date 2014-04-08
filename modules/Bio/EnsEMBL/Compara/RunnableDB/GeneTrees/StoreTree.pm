@@ -26,7 +26,6 @@ use Data::Dumper;
 use Bio::AlignIO;
 
 use Bio::EnsEMBL::Utils::Scalar qw(:assert);
-use Bio::EnsEMBL::Utils::SqlHelper;
 use Bio::EnsEMBL::Compara::AlignedMember;
 use Bio::EnsEMBL::Compara::Graph::NewickParser;
 
@@ -171,22 +170,8 @@ sub store_genetree
     printf("PHYML::store_genetree\n") if($self->debug);
 
     $tree->root->build_leftright_indexing(1);
-
-    # Make sure the same commands are inside and outside of the transaction
-    if ($self->param('do_transactions')) {
-        my $helper = Bio::EnsEMBL::Utils::SqlHelper->new(-DB_CONNECTION => $self->compara_dba->dbc);
-        $helper->transaction(
-            -RETRY => 3, -PAUSE => 5,
-            -CALLBACK => sub {
-                $self->compara_dba->get_GeneTreeAdaptor->store($tree);
-                $self->compara_dba->get_GeneTreeNodeAdaptor->delete_nodes_not_in_tree($tree->root);
-            }
-        );
-    } else {
-        $self->compara_dba->get_GeneTreeAdaptor->store($tree);
-        $self->compara_dba->get_GeneTreeNodeAdaptor->delete_nodes_not_in_tree($tree->root);
-    }
-
+    $self->compara_dba->get_GeneTreeAdaptor->store($tree);
+    $self->compara_dba->get_GeneTreeNodeAdaptor->delete_nodes_not_in_tree($tree->root);
 
     if($self->debug >1) {
         print("done storing - now print\n");
@@ -412,21 +397,9 @@ sub store_tree_into_clusterset {
     $clusterset_leaf->add_child($newtree->root);
     $newtree->clusterset_id($clusterset->clusterset_id);
 
-    # Make sure the same commands are inside and outside of the transaction
-    if ($self->param('do_transactions')) {
-        my $helper = Bio::EnsEMBL::Utils::SqlHelper->new(-DB_CONNECTION => $self->compara_dba->dbc);
-        $helper->transaction(
-            -RETRY => 3, -PAUSE => 5,
-            -CALLBACK => sub {
-                $clusterset->adaptor->db->get_GeneTreeNodeAdaptor->store_nodes_rec($clusterset_leaf);
-            }
-        );
-    } else {
+    $self->call_within_transaction(sub {
         $clusterset->adaptor->db->get_GeneTreeNodeAdaptor->store_nodes_rec($clusterset_leaf);
-    }
-
-
-
+    });
 }
 
 sub fetch_or_create_other_tree {
@@ -466,7 +439,9 @@ sub store_alternative_tree {
     }
     my $newtree = $self->fetch_or_create_other_tree($clusterset, $ref_tree);
     $self->parse_newick_into_tree($newick, $newtree);
-    $self->store_genetree($newtree);
+    $self->call_within_transaction(sub {
+        $self->store_genetree($newtree);
+    });
     $newtree->release_tree;
     return $newtree;
 }

@@ -141,16 +141,9 @@ sub write_output {
     my $speciesTree_adaptor = $self->compara_dba->get_SpeciesTreeAdaptor();
 
     # To make sure we don't leave the database with a half-stored tree
-    if ($self->param('do_transactions')) {
-        my $helper = Bio::EnsEMBL::Utils::SqlHelper->new(-DB_CONNECTION => $self->compara_dba->dbc);
-        $helper->transaction(
-            -CALLBACK => sub {
-                $speciesTree_adaptor->store($species_tree);
-            }
-        );
-    } else {
+    $self->call_within_transaction(sub {
         $speciesTree_adaptor->store($species_tree);
-    }
+    });
 }
 
 

@@ -273,25 +273,11 @@ sub run {
 
 sub write_output {
     my ($self) = @_;
-
-    if ($self->param('do_transactions')) {
-        my $compara_conn = $self->compara_dba->dbc;
-
-        my $compara_helper = Bio::EnsEMBL::Utils::SqlHelper->new(-DB_CONNECTION => $compara_conn);
-        $compara_helper->transaction(-CALLBACK => sub {
-                $self->_write_output;
-                });
-    } else {
-        $self->_write_output;
-    }
-
-}
-
-
-sub _write_output {
-    my $self = shift @_;
     my $cross_pafs = $self->param('cross_pafs');
-    $self->compara_dba->get_PeptideAlignFeatureAdaptor->_store_PAFS($cross_pafs);
+
+    $self->call_within_transaction(sub {
+        $self->compara_dba->get_PeptideAlignFeatureAdaptor->_store_PAFS($cross_pafs);
+    });
 }
 
 

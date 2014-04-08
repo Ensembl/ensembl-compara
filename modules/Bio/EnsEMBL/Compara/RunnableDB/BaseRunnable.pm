@@ -178,4 +178,29 @@ sub require_executable {
     die "Cannot execute $param_name: '$exe'" unless(-x $exe);
 }
 
+
+=head2 call_within_transaction {
+
+Calls a method within a transaction (if "do_transactions" is set).
+Otherwise, calls it directly.
+
+=cut
+
+sub call_within_transaction {
+    my ($self, $callback) = @_;
+
+    # Make sure the same commands are inside and outside of the transaction
+    if ($self->param('do_transactions')) {
+        my $helper = Bio::EnsEMBL::Utils::SqlHelper->new(-DB_CONNECTION => $self->compara_dba->dbc);
+        return $helper->transaction(
+            -RETRY => 3,
+            -PAUSE => 5,
+            -CALLBACK => $callback,
+        );
+    } else {
+        return $callback->();
+    }
+}
+
+
 1;
