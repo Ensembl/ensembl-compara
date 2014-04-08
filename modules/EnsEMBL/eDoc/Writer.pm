@@ -267,7 +267,7 @@ sub toc_html {
     $html .= "<h3>" . ucfirst($type) . "</h3>\n";
     $html .= "<ul>";
     foreach my $method (sort {$a->name cmp $b->name} @{ $module->methods_of_type($type) }) {
-      if ($method->type !~ /unknown/) {
+      if ($method->type !~ /undocumented/) {
         $html .= '<li><a href="#' . $method->name . '">' . $method->name . '</a>';
         if ($method->module->name ne $module->name) {
           $html .= " (" . $method->module->name . ")";
@@ -335,7 +335,7 @@ sub methods_html {
   $html .= qq(<ul>);
   my $count = 0;
   foreach my $method (sort { $a->name cmp $b->name } @{ $module->methods }) {
-    if ($method->type !~ /unknown/) {
+    if ($method->type !~ /undocumented/) {
       my $complete = $module->name . "::" . $method->name;
       $count++;
       $html .= qq(<b><a name=") . $method->name . qq("></a>) . $method->name . qq(</b><br />\n);

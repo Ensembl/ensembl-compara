@@ -179,7 +179,7 @@ sub coverage {
   my $coverage;
   foreach my $method (@{ $self->methods }) {
     $total++;
-    if ($method->type ne 'unknown') {
+    if ($method->type ne 'undocumented') {
       $count++;
     }
   }
@@ -229,7 +229,7 @@ sub _parse_package_file {
         $docs{isa} = [$isa];
       }
     }
-    elsif (/^use base qw\(([a-zA-Z:\s]+)\);/) {
+    elsif (/^use [base|parent] qw\(([a-zA-Z:\s]+)\);/) {
       my @isa = split(/\s+/, $1);
       $docs{isa} = \@isa;
     }
@@ -296,7 +296,7 @@ sub _parse_package_file {
 
       my @elements = split /\s+/, $comment;
       if (!$docs{methods}{$sub}{type}) {
-        $docs{methods}{$sub}{type} = "method";
+        $docs{methods}{$sub}{type} = "miscellaneous";
       }
       if ($#elements == 0 and $comment ne '___') {
         $comment = ucfirst($self->convert_keyword($comment));

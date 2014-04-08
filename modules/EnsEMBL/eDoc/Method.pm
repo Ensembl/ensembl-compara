@@ -30,7 +30,7 @@ sub new {
     'module'        => $params{'module'} || '',
     'documentation' => $params{'documentation'} || '',
     'table'         => $params{'table'} || {},
-    'type'          => $params{'type'} || 'unknown',
+    'type'          => $params{'type'} || 'undocumented',
     'result'        => $params{'result'} || '',
   };
   bless $self, $class;
