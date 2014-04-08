@@ -321,3 +321,27 @@ CREATE TABLE gene_tree_backup (
 
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 
+
+
+-- ----------------------------------------------------------------------------------
+--
+-- Table structure for tables 'panther_annot_PTHR' and 'panther_annot_SF'
+--
+-- overview: These tables contain the InterPro classification of the Ensembl proteins
+
+CREATE TABLE IF NOT EXISTS panther_annot_PTHR (
+	upi char(13) NOT NULL,
+	ensembl_id char(50) NOT NULL,
+	ensembl_div char(15) NOT NULL,
+	panther_family_id char(15) NOT NULL,
+	start int(11) NOT NULL,
+	end int(11) NOT NULL,
+	score int(11) NOT NULL,
+	evalue char(25) NOT NULL,
+
+	PRIMARY KEY (ensembl_id)
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+
+CREATE TABLE IF NOT EXISTS panther_annot_SF LIKE panther_annot_PTHR;
+
+

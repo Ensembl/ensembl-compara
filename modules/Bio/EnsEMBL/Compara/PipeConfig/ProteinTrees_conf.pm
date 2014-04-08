@@ -781,20 +781,8 @@ sub pipeline_analyses {
                              'blast_bin_dir'       => $self->o('blast_bin_dir'),  ## For creating the blastdb (formatdb or mkblastdb)
                              'pantherScore_path'    => $self->o('pantherScore_path'),
                             },
-             -flow_into  => [ 'buildhmmprofiles_create_tables' ],
+             -flow_into  => [ 'load_PantherAnnotation' ],
             },
-
-            {
-             -logic_name => 'buildhmmprofiles_create_tables',
-             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::SqlCmd',
-       		 -parameters => {
-                     'sql' => [
-        			      	 	'CREATE TABLE IF NOT EXISTS panther_annot_PTHR  ( upi char(13) NOT NULL, ensembl_id char(50) NOT NULL, ensembl_div char(15) NOT NULL, panther_family_id char(15) NOT NULL, start int(11) NOT NULL, end int(11) NOT NULL,  score int(11) NOT NULL, evalue char(25) NOT NULL, PRIMARY KEY (ensembl_id))',        	 			  	 	
-        			      	 	'CREATE TABLE IF NOT EXISTS panther_annot_SF    ( upi char(13) NOT NULL, ensembl_id char(50) NOT NULL, ensembl_div char(15) NOT NULL, panther_family_id char(15) NOT NULL, start int(11) NOT NULL, end int(11) NOT NULL,  score int(11) NOT NULL, evalue char(25) NOT NULL, PRIMARY KEY (ensembl_id))',
-        	                  ],     
-       			},
-                        -flow_into => [ 'load_PantherAnnotation' ],
-           },
 
            {
             -logic_name => 'load_PantherAnnotation',
