@@ -87,14 +87,7 @@ sub default_options {
         'fasta_dir'             => $self->o('work_dir') . '/blast_db',  # affects 'dump_subset_create_blastdb' and 'blastp'
         'cluster_dir'           => $self->o('work_dir') . '/cluster',
         'dump_dir'              => $self->o('work_dir') . '/dumps',
-        # For building new profiles
-        'buildprofiles_dir'    => $self->o('work_dir').'/buildHMMprofiles', 
-        'msa_dir'              => $self->o('buildprofiles_dir').'/msa',    
-        'hmmLib_dir'           => $self->o('buildprofiles_dir').'/hmmLib',
-        'fasta_file'           => $self->o('fasta_dir').'/unclassify_sequence.fa',
-
-       'hmm_profiles_type1'    => 'panther9.0_treefam', # to tag profiles stored hmm_profile table
-       'hmm_profiles_type2'    => 'new_profiles',       # 'new_profiles' is hardcode in PantherLoadModels.pm 
+        'hmmlib_dir'            => $self->o('work_dir') . '/hmmlib',
 
     # "Member" parameters:
         'allow_ambiguity_codes'     => 0,
@@ -135,15 +128,18 @@ sub default_options {
         #'codeml_exe'                => '/software/ensembl/compara/paml43/bin/codeml',
         #'ktreedist_exe'             => '/software/ensembl/compara/ktreedist/Ktreedist.pl',
         #'blast_bin_dir'             => '/software/ensembl/compara/ncbi-blast-2.2.28+/bin',
+        #'pantherScore_path'         => '/software/ensembl/compara/pantherScore1.03',
 
     # HMM specific parameters (set to 0 or undef if not in use)
-        #'hmm_clustering'            => 0, ## by default run blastp clustering
-       'hmm_buildhmmprofiles' => 0, ## by default do not create new profiles
-        #'cm_file_or_directory'      => '/lustre/scratch109/sanger/fs9/treefam8_hmms',
-        #'hmm_library_basedir'       => '/lustre/scratch109/sanger/fs9/treefam8_hmms',
-        ##'cm_file_or_directory'      => '/lustre/scratch110/ensembl/mp12/panther_hmms/PANTHER7.2_ascii', ## Panther DB
-        ##'hmm_library_basedir'       => '/lustre/scratch110/ensembl/mp12/Panther_hmms',
-        #'pantherScore_path'         => '/software/ensembl/compara/pantherScore1.03',
+       # List of directories that contain Panther-like databases (with books/ and globals/)
+       # It requires two more arguments for each file: the name of the library, and whether subfamilies should be loaded
+       'panther_like_databases'  => [],
+       #'panther_like_databases'  => [ ["/lustre/scratch110/ensembl/mp12/panther_hmms/PANTHER7.2_ascii", "PANTHER7.2", 1] ],
+
+       # List of MultiHMM files to load (and their names)
+       #'multihmm_files'          => [ ["/lustre/scratch110/ensembl/mp12/pfamA_HMM_fs.txt", "PFAM"] ],
+       'multihmm_files'          => [],
+
        'panther_annotation_PTHR' => '/nfs/nobackup2/ensemblgenomes/ckong/workspace/buildhmmprofiles/panther_Interpro_annot_v8_1/loose_dummy.txt',
        'panther_annotation_SF'   => '/nfs/nobackup2/ensemblgenomes/ckong/workspace/buildhmmprofiles/panther_Interpro_annot_v8_1/loose_dummy.txt',
 
@@ -195,13 +191,20 @@ sub default_options {
         # Add the database location of the previous Compara release. Use "undef" if running the pipeline without reuse
         #'prev_rel_db' => 'mysql://ensro@compara3:3306/mm14_compara_homology_67'
 
+        # How will the pipeline create clusters (families) ?
+        # Possible values: 'blastp' (default), 'hmm', 'hybrid'
+        #   blastp means that the pipeline will run a all-vs-all blastp comparison of the proteins and run hcluster to create clusters. This can take a *lot* of compute
+        #   hmm means that the pipeline will run an HMM classification
+        #   hybrid is like "hmm" except that the unclustered proteins go to a all-vs-all blastp + hcluster stage
+        'clustering_mode'           => 'blastp',
+
         # How much the pipeline will try to reuse from "prev_rel_db"
         # Possible values: 'clusters' (default), 'blastp', 'members'
         #   clusters means that the members, the blastp hits and the clusters are copied over. In this case, the blastp hits are actually not copied over if "skip_blast_copy_if_possible" is set
         #   blastp means that only the members and the blastp hits are copied over
         #   members means that only the members are copied over
         'reuse_level'               => 'clusters',
-        # If all the species can be reused, and if the reuse_level is "clusters", do we really want to copy all the peptide_align_feature tables ?
+        # If all the species can be reused, and if the reuse_level is "clusters", do we really want to copy all the peptide_align_feature tables ? They can take a lot of space and are not used in the pipeline
         'skip_blast_copy_if_possible'   => 1,
 
     };
@@ -227,14 +230,18 @@ sub pipeline_create_commands {
     # Without a master database, we must provide other parameters
     die if not $self->o('master_db') and not $self->o('ncbi_db');
 
+    my %reuse_modes = (clusters => 1, blastp => 1, members => 1);
+    die "'reuse_level' must be set to one of: clusters, blastp, members" if not $self->o('reuse_level') or (not $reuse_modes{$self->o('reuse_level')} and not $self->o('reuse_level') =~ /^#:subst/);
+    my %clustering_modes = (blastp => 1, hmm => 1, hybrid => 1);
+    die "'clustering_mode' must be set to one of: blastp, hmm, hybrid" if not $self->o('clustering_mode') or (not $clustering_modes{$self->o('clustering_mode')} and not $self->o('clustering_mode') =~ /^#:subst/);
+
     return [
         @{$self->SUPER::pipeline_create_commands},  # here we inherit creation of database, hive tables and compara tables
 
         'mkdir -p '.$self->o('cluster_dir'),
         'mkdir -p '.$self->o('dump_dir'),
         'mkdir -p '.$self->o('fasta_dir'),
-        'mkdir -p '.$self->o('buildprofiles_dir'),
-        'mkdir -p '.$self->o('hmmLib_dir'),
+        'mkdir -p '.$self->o('hmmlib_dir'),
 
             # perform "lfs setstripe" only if lfs is runnable and the directory is on lustre:
         'which lfs && lfs getstripe '.$self->o('fasta_dir').' >/dev/null 2>/dev/null && lfs setstripe '.$self->o('fasta_dir').' -c -1 || echo "Striping is not available on this system" ',
@@ -254,9 +261,10 @@ sub pipeline_wide_parameters {  # these parameter values are visible to all anal
         'cluster_dir'   => $self->o('cluster_dir'),
         'fasta_dir'     => $self->o('fasta_dir'),
         'dump_dir'      => $self->o('dump_dir'),
+        'hmmlib_dir'    => $self->o('hmmlib_dir'),
 
         'reuse_level'   => $self->o('reuse_level'),
-        'hmm_clustering'    => $self->o('hmm_clustering'),
+        'clustering_mode'   => $self->o('clustering_mode'),
     };
 }
 
@@ -294,15 +302,15 @@ sub pipeline_analyses {
             },
             -flow_into  => {
                 '1->A'  => [ 'genome_reuse_factory' ],
-                'A->1'  => [ 'should_blast_be_skipped' ],
+                'A->1'  => [ 'test_should_blast_be_skipped' ],
             },
         },
 
-        {   -logic_name => 'should_blast_be_skipped',
+        {   -logic_name => 'test_should_blast_be_skipped',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ConditionalDataFlow',
             -parameters    => {
                 'skip_blast_copy_if_possible'   => $self->o('skip_blast_copy_if_possible'),
-                'condition'     => '(#are_all_species_reused# and #skip_blast_copy_if_possible#) or #hmm_clustering#',
+                'condition'     => '(#are_all_species_reused# and #skip_blast_copy_if_possible#) or ("#clustering_mode#" ne "blastp")',
             },
             -flow_into => {
                 2 => [ 'backbone_fire_clustering' ],
@@ -763,29 +771,62 @@ sub pipeline_analyses {
         },
 
 #----------------------------------------------[classify canonical members based on HMM searches]-----------------------------------
-            {
-            -logic_name => 'load_models',
-             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::PantherLoadModels',
-             -parameters => {
-                             'cm_file_or_directory' => $self->o('cm_file_or_directory'),
-                             'pantherScore_path'    => $self->o('pantherScore_path'),
-                            },
-             -flow_into  => [ 'dump_models' ],
+        {   -logic_name => 'panther_databases_factory',
+            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
+            -parameters => {
+                'inputlist'    => $self->o('panther_like_databases'),
+                'column_names' => [ 'cm_file_or_directory', 'type', 'include_subfamilies' ],
+                'fan_branch_code' => 2,
             },
+            -flow_into => {
+                '2->A' => [ 'load_panther_database_models'  ],
+                'A->1' => [ 'multihmm_files_factory' ],
+            },
+            -meadow_type    => 'LOCAL',
+        },
+
+        {   -logic_name => 'multihmm_files_factory',
+            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
+            -parameters => {
+                'inputlist'    => $self->o('multihmm_files'),
+                'column_names' => [ 'cm_file_or_directory', 'type' ],
+                'fan_branch_code' => 2,
+            },
+            -flow_into => {
+                '2->A' => [ 'load_multihmm_models'  ],
+                'A->1' => [ 'dump_models' ],
+            },
+            -meadow_type    => 'LOCAL',
+        },
+
+        {
+            -logic_name => 'load_panther_database_models',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::PantherLoadModels',
+            -parameters => {
+                'pantherScore_path'    => $self->o('pantherScore_path'),
+            },
+        },
+
+        {
+            -logic_name => 'load_multihmm_models',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::MultiHMMLoadModels',
+            -parameters => {
+            },
+         },
 
             {
              -logic_name => 'dump_models',
              -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::DumpModels',
              -parameters => {
-                             'hmm_library_basedir' => $self->o('hmm_library_basedir'),
+                             'hmm_library_basedir' => '#hmmlib_dir#',
                              'blast_bin_dir'       => $self->o('blast_bin_dir'),  ## For creating the blastdb (formatdb or mkblastdb)
                              'pantherScore_path'    => $self->o('pantherScore_path'),
                             },
-             -flow_into  => [ 'load_PantherAnnotation' ],
+             -flow_into  => [ 'load_InterproAnnotation' ],
             },
 
            {
-            -logic_name => 'load_PantherAnnotation',
+            -logic_name => 'load_InterproAnnotation',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ComparaHMM::LoadAnnotation',
             -parameters => {
                              'panther_annotation_PTHR'  => $self->o('panther_annotation_PTHR'),
@@ -804,18 +845,24 @@ sub pipeline_analyses {
                 'fan_branch_code'       => 2,
             },
             -flow_into  => {
-                '2->A'  => [ 'HMMer_classifyInterpro' ],
+                '2->A'  => [ 'HMMer_classifyCurated' ],
                 'A->1'  => [ 'HMM_clusterize' ],
             },
             -meadow_type    => 'LOCAL',
         },
 
            {
+            -logic_name => 'HMMer_classifyCurated',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::HMMClassifyCurated',
+            -flow_into  => [ 'HMMer_classifyInterpro' ],
+             -hive_capacity => $self->o('HMMer_classify_capacity'),
+             -rc_name => 'msa_himem',
+            },
+
+
+           {
             -logic_name => 'HMMer_classifyInterpro',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::HMMClassifyInterpro',
-            -parameters => {
-                             'mlss_id'       => $self->o('mlss_id'),
-                            },
             -flow_into  => [ 'HMMer_classifyPantherScore' ],
              -hive_capacity => $self->o('HMMer_classify_capacity'),
              -rc_name => 'msa_himem',
@@ -828,7 +875,7 @@ sub pipeline_analyses {
                              'blast_bin_dir'       => $self->o('blast_bin_dir'),
                              'pantherScore_path'   => $self->o('pantherScore_path'),
                              'hmmer_path'          => $self->o('hmmer2_home'),
-                             'hmm_library_basedir' => $self->o('hmm_library_basedir'),
+                             'hmm_library_basedir' => '#hmmlib_dir#',
                             },
              -hive_capacity => $self->o('HMMer_classify_capacity'),
              -rc_name => '4Gb_job',
@@ -844,17 +891,6 @@ sub pipeline_analyses {
 
 
 # -------------------------------------------------[BuildHMMprofiles pipeline]-------------------------------------------------------
-   	  $self->o('hmm_buildhmmprofiles') ? (
-
-        {   -logic_name    => 'entry_point',
-            -module         => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
-            -flow_into => {
-                '1->A' => [ 'dump_unannotated_members' ],
-                'A->1' => [ 'allspecies_factory' ],
-            },
-            -meadow_type    => 'LOCAL',
-        },
-
 
         {   -logic_name => 'dump_unannotated_members',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::DumpMembersIntoFasta',
@@ -881,7 +917,7 @@ sub pipeline_analyses {
             -hive_capacity => $self->o('blast_factory_capacity'),
             -flow_into => {
                 '2->A' => [ 'blastp_unannotated' ],
-                'A->1' => [ 'hcluster_dump_input_all_genomes' ]
+                'A->1' => [ 'hcluster_dump_factory' ]
             },
         },
 
@@ -896,19 +932,6 @@ sub pipeline_analyses {
             -rc_name       => '250Mb_job',
             -hive_capacity => $self->o('blastp_capacity'),
         },
-
-        {   -logic_name => 'hcluster_dump_input_all_genomes',
-            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::HclusterPrepare',
-            -parameters => {
-                'outgroups'     => $self->o('outgroups'),
-                'single_table'  => 1,
-            },
-            -hive_capacity => $self->o('reuse_capacity'),
-        },
-
-
-
-  ) : (), # do not show the hmm_buildhmmprofiles pipeline if the option is off
 
 
 
@@ -926,7 +949,6 @@ sub pipeline_analyses {
             -flow_into  => {
                 '2->A'  => [ 'dump_canonical_members' ],
                 'A->1'  => [ 'reusedspecies_factory' ],
-                1 => [ 'entry_point' ],
             },
             -meadow_type    => 'LOCAL',
         },
@@ -934,6 +956,7 @@ sub pipeline_analyses {
         {   -logic_name => 'dump_canonical_members',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::DumpMembersIntoFasta',
             -parameters => {
+                # Gets fasta_dir from pipeline_wide_parameters
                 'only_canonical'            => 1,
             },
             -rc_name       => '250Mb_job',
@@ -998,14 +1021,28 @@ sub pipeline_analyses {
         {   -logic_name => 'go_for_hmm_clustering',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ConditionalDataFlow',
             -parameters    => {
-                'condition'     => '#hmm_clustering#',
+                'condition'     => '"#clustering_mode#" ne "blastp"',
             },
             -flow_into => {
-                2 => 'load_models',
+                2 => 'test_hybrid_clustering',
                 3 => 'hcluster_dump_factory',
             },
             -meadow_type    => 'LOCAL',
         },
+
+        {   -logic_name => 'test_hybrid_clustering',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ConditionalDataFlow',
+            -parameters    => {
+                'condition'     => '"#clustering_mode#" eq "hybrid"',
+            },
+            -flow_into => {
+                '2->A' => 'panther_databases_factory',
+                'A->2' => 'dump_unannotated_members',
+                3 => 'panther_databases_factory',
+            },
+            -meadow_type    => 'LOCAL',
+        },
+
 
         {   -logic_name => 'check_whether_can_copy_clusters',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ConditionalDataFlow',
@@ -1039,7 +1076,7 @@ sub pipeline_analyses {
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::HclusterPrepare',
             -parameters => {
                 'outgroups'     => $self->o('outgroups'),
-                'single_table'  => $self->o('hmm_buildhmmprofiles'),
+                'single_table'  => $self->o('clustering_mode') eq 'hybrid',
             },
             -hive_capacity => $self->o('reuse_capacity'),
         },
