@@ -607,14 +607,16 @@ sub _summarise_variation_db {
   
 #--------- Add in phenotype information
   my $pf_aref = $dbh->selectall_arrayref(qq{
-    SELECT type, count(*)
-    FROM phenotype_feature
-    GROUP BY type
+    SELECT pf.type, GROUP_CONCAT(DISTINCT s.name), count(pf.phenotype_feature_id)
+    FROM phenotype_feature pf, source s
+    WHERE pf.source_id=s.source_id AND pf.is_significant=1 AND pf.type!='SupportingStructuralVariation'
+    GROUP BY pf.type
   });
   
   for(@$pf_aref) {
-    $self->db_details($db_name)->{'tables'}{'phenotypes'}{'rows'} += $_->[1];
-    $self->db_details($db_name)->{'tables'}{'phenotypes'}{'types'}{$_->[0]} = $_->[1];
+    $self->db_details($db_name)->{'tables'}{'phenotypes'}{'rows'} += $_->[2];
+    $self->db_details($db_name)->{'tables'}{'phenotypes'}{'types'}{$_->[0]}{'count'} = $_->[2];
+    $self->db_details($db_name)->{'tables'}{'phenotypes'}{'types'}{$_->[0]}{'sources'} = $_->[1];
   }
 
 #--------- Add in somatic mutation information
