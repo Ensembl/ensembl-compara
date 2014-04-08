@@ -15,5 +15,5 @@
 # limitations under the License.
 
 perl ./update_docs.pl
-rm -r ../../public-plugins/ensembl/htdocs/info/webcode/docs
-cp -r `pwd`/temp ../../public-plugins/ensembl/htdocs/info/webcode/docs
+rm -r ../../public-plugins/docs/htdocs/info/webcode/edoc
+cp -r `pwd`/temp ../../public-plugins/docs/htdocs/info/webcode/edoc
