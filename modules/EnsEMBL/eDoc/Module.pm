@@ -204,6 +204,7 @@ sub _parse_package_file {
   my $lines = 0;
   my $subs = {};
   my $sub_name;
+  my $header = 0;
   my @order = ();
   my $params = 0;
 
@@ -240,37 +241,48 @@ sub _parse_package_file {
     ## Get method documentation
     if (/^sub (\w+) {/) {
       $sub_name = $1;
+      $header = 1;
       $params = 0;
       $subs->{$sub_name} = {'name' => $sub_name, 'type' => 'undocumented'};
       push @order, $sub_name;
     }
     elsif (/^}/) {
       $sub_name = '';
+      $header = 0;
     }
 
+    ## N.B. Only include comments at start of method!
     if ($sub_name) {
-      ### Keyword type
-      if (/###([a-z]) /) {
-        $subs->{$sub_name}{type} = $self->keywords->{$1};
-      }
-      ## "Normal" inline documentation
-      elsif (/^\s+## (.+)/) {
-        $subs->{$sub_name}{type} = 'miscellaneous';
-        my $comment = $1;
-        if ($comment =~ /^\@param/) {
-          $params++;
-          $comment =~ s/\@param/Arg[$params]:/;
+      if ($header) {
+        if (/###([a-z]) /) {
+          $subs->{$sub_name}{type} = $self->keywords->{$1};
         }
-        elsif ($comment =~ / - /) {
-          $comment = '&nbsp;&nbsp;&nbsp;&nbsp;'.$comment;
+        ## "Normal" inline documentation
+        elsif (/^\s+## (.+)/) {
+          $subs->{$sub_name}{type} = 'miscellaneous';
+          my $comment = $1;
+          if ($comment =~ /^\@param/) {
+            $params++;
+            $comment =~ s/\@param/Arg[$params]:/;
+          }
+          elsif ($comment =~ / - /) {
+            $comment = '&nbsp;&nbsp;&nbsp;&nbsp;'.$comment;
+          }
+          $subs->{$sub_name}{comment} .= "$comment<br />";
         }
-        $subs->{$sub_name}{comment} .= "$comment<br />";
+        ## End of header comments
+        else {
+          $header = 0;
+        }
       }
-      elsif (/SUPER::/) {
-        if (/->(.*)::(.*)\(/) {
-          $subs->{$sub_name}{super} = $2;
-        } elsif (/->(.*)::(.*)\s+;/) {
-          $subs->{$sub_name}{super} = $2;
+      ## Grab other useful stuff from method
+      else {
+        if (/SUPER::/) {
+          if (/->(.*)::(.*)\(/) {
+            $subs->{$sub_name}{super} = $2;
+          } elsif (/->(.*)::(.*)\s+;/) {
+            $subs->{$sub_name}{super} = $2;
+          }
         }
       }
     }
