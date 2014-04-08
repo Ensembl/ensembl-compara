@@ -52,7 +52,7 @@ sub run {
     my ($self) = @_;
 
     foreach my $clusterset_id (@{$self->param_required('additional_clustersets')}) {
-        $self->create_clusterset($clusterset_id);
+        $self->fetch_or_create_clusterset($clusterset_id);
     }
 }
 

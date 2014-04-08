@@ -77,7 +77,7 @@ sub store_clusterset {
     my $clusterset_id = shift;
     my $allclusters = shift;
 
-    my $clusterset = $self->create_clusterset($clusterset_id);
+    my $clusterset = $self->fetch_or_create_clusterset($clusterset_id);
     print STDERR "STORING AND DATAFLOWING THE CLUSTERSET\n" if ($self->debug());
     for my $cluster_name (keys %$allclusters) {
         print STDERR "$cluster_name has ", scalar @{$allclusters->{$cluster_name}{members}} , " members (leaves)\n";
@@ -104,9 +104,12 @@ sub store_clusterset {
 }
 
 
-=head2 create_clusterset
+=head2 fetch_or_create_clusterset
 
-  Description: Create an empty clusterset and store it in the database.
+  Description: Fetch a clusterset from the database, or create (and store it)
+               otherwise.
+               NB: Do not call this method in parallel if you expect to create
+               a clusterset: it may end up creating several ones
   Parameters : mlss_id, member_type
   Arg [1]    : clusterset_id of the new clusterset
   Returntype : GeneTree: the created clusterset
@@ -115,19 +118,32 @@ sub store_clusterset {
 
 =cut
 
-sub create_clusterset {
+sub fetch_or_create_clusterset {
     my $self = shift;
     my $clusterset_id = shift;
 
     my $mlss_id = $self->param_required('mlss_id');
 
-    # Create the clusterset and associate mlss
-    my $clusterset = new Bio::EnsEMBL::Compara::GeneTree(
+    my %args = (
         -member_type => $self->param('member_type'),
         -tree_type => 'clusterset',
         -method_link_species_set_id => $mlss_id,
         -clusterset_id => $clusterset_id,
     );
+
+    # Checks whether there is already a clusterset in the database
+    my $all_matching_clustersets = $self->compara_dba->get_GeneTreeAdaptor->fetch_all(%args);
+    if (scalar(@$all_matching_clustersets) >= 2) {
+        die sprintf('Found %d "%s" clustersets in the database: which one to use ?', scalar(@$all_matching_clustersets), $clusterset_id);
+    } elsif (scalar(@$all_matching_clustersets) == 1) {
+        my $clusterset = $all_matching_clustersets->[0];
+        $clusterset->preload();
+        print STDERR "Found clusterset '$clusterset_id' with root_id=", $clusterset->root_id, "\n" if $self->debug;
+        return $clusterset;
+    }
+
+    # Create the clusterset and associate mlss
+    my $clusterset = new Bio::EnsEMBL::Compara::GeneTree(%args);
 
     # Assumes a root node will be automatically created
     $self->compara_dba->get_GeneTreeAdaptor->store($clusterset);
