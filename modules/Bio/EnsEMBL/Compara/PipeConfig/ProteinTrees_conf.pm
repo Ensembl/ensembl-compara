@@ -338,7 +338,7 @@ sub pipeline_analyses {
                 'filename'      => 'snapshot_3_before_clustering',
             },
             -flow_into  => {
-                '1->A'  => [ 'check_whether_can_copy_clusters' ],
+                '1->A'  => [ 'test_whether_can_copy_clusters' ],
                 'A->1'  => [ 'backbone_fire_tree_building' ],
             },
         },
@@ -386,7 +386,7 @@ sub pipeline_analyses {
             },
             -flow_into => {
                 '2->A' => [ 'copy_ncbi_table'  ],
-                'A->1' => [ 'select_method_links_source' ],
+                'A->1' => [ 'test_can_use_master_db'],
             },
             -meadow_type    => 'LOCAL',
         },
@@ -401,7 +401,7 @@ sub pipeline_analyses {
             -meadow_type    => 'LOCAL',
         },
 
-        {   -logic_name => 'select_method_links_source',
+        {   -logic_name => 'test_can_use_master_db',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ConditionalDataFlow',
             -parameters    => {
                 'condition'     => '$self->param_is_defined("master_db")',
@@ -646,25 +646,25 @@ sub pipeline_analyses {
                 'fan_branch_code'   => 2,
             },
             -flow_into => {
-                '2->A' => [ 'is_genome_in_db' ],
+                '2->A' => [ 'test_is_genome_in_core_db' ],
                 'A->1' => [ 'hc_members_globally' ],
             },
             -meadow_type    => 'LOCAL',
         },
 
-        {   -logic_name => 'is_genome_in_db',
+        {   -logic_name => 'test_is_genome_in_core_db',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ConditionalDataFlow',
             -parameters    => {
                 'condition'     => '"#locator#" =~ /^Bio::EnsEMBL::DBSQL::DBAdaptor/',
             },
             -flow_into => {
-                2 => [ 'is_there_master_db' ],
+                2 => [ 'test_is_there_master_db' ],
                 3 => [ 'load_fresh_members_from_file' ],
             },
             -meadow_type    => 'LOCAL',
         },
 
-        {   -logic_name => 'is_there_master_db',
+        {   -logic_name => 'test_is_there_master_db',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ConditionalDataFlow',
             -parameters    => {
                 'condition'     => '$self->param_is_defined("master_db")',
@@ -1018,7 +1018,7 @@ sub pipeline_analyses {
 
 # ---------------------------------------------[clustering step]---------------------------------------------------------------------
 
-        {   -logic_name => 'go_for_hmm_clustering',
+        {   -logic_name => 'test_hmm_clustering',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ConditionalDataFlow',
             -parameters    => {
                 'condition'     => '"#clustering_mode#" ne "blastp"',
@@ -1044,14 +1044,14 @@ sub pipeline_analyses {
         },
 
 
-        {   -logic_name => 'check_whether_can_copy_clusters',
+        {   -logic_name => 'test_whether_can_copy_clusters',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ConditionalDataFlow',
             -parameters    => {
                 'condition'     => '#are_all_species_reused# and ("#reuse_level#" eq "clusters")',
             },
             -flow_into => {
                 '2->A' => [ 'copy_clusters' ],
-                '3->A' => [ 'go_for_hmm_clustering' ],
+                '3->A' => [ 'test_hmm_clustering' ],
                 'A->1' => [ 'hc_clusters' ],
             },
             -meadow_type    => 'LOCAL',
@@ -1197,13 +1197,13 @@ sub pipeline_analyses {
                 'fan_branch_code'   => 2,
             },
             -flow_into  => {
-                 '2->A' => [ 'large_clusters_go_to_mafft' ],
+                 '2->A' => [ 'test_test_long_running_clusters_go_to_mafft' ],
                  'A->1' => [ 'hc_global_tree_set' ],
             },
             -meadow_type    => 'LOCAL',
         },
 
-        {   -logic_name => 'large_clusters_go_to_mafft',
+        {   -logic_name => 'test_test_long_running_clusters_go_to_mafft',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ConditionalDataFlow',
             -parameters => {
                 'condition'             => '$self->compara_dba->get_GeneTreeAdaptor->fetch_by_dbID(#gene_tree_id#)->get_value_for_tag("gene_count") > #mafft_gene_count#',
@@ -1211,12 +1211,12 @@ sub pipeline_analyses {
             },
             -flow_into  => {
                 2 => [ 'mafft' ],
-                3 => [ 'long_running_clusters_go_to_mafft' ],
+                3 => [ 'test_previous_runtime' ],
             },
             -meadow_type    => 'LOCAL',
         },
 
-        {   -logic_name => 'long_running_clusters_go_to_mafft',
+        {   -logic_name => 'test_previous_runtime',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ConditionalDataFlow',
             -parameters => {
                 'condition'             => '$self->compara_dba->get_GeneTreeAdaptor->fetch_by_dbID(#gene_tree_id#)->get_value_for_tag("reuse_aln_runtime", 0)/1000 > #mafft_runtime#',
@@ -1230,7 +1230,7 @@ sub pipeline_analyses {
         },
 
 
-        {   -logic_name => 'very_large_clusters_go_to_qtb',
+        {   -logic_name => 'test_very_large_clusters_go_to_qtb',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ConditionalDataFlow',
             -parameters => {
                 'condition'             => '$self->compara_dba->get_GeneTreeAdaptor->fetch_by_dbID(#gene_tree_id#)->get_value_for_tag("gene_count") > #treebreak_gene_count#',
@@ -1321,7 +1321,7 @@ sub pipeline_analyses {
             -parameters         => {
                 mode            => 'alignment',
             },
-            -flow_into => [ 'very_large_clusters_go_to_qtb' ],
+            -flow_into => [ 'test_very_large_clusters_go_to_qtb' ],
             %hc_analysis_params,
         },
 
