@@ -18,96 +18,138 @@ limitations under the License.
 
 package EnsEMBL::Web::ExtIndex::ENSEMBL_RETRIEVE;
 
+### Class to retrieve sequences for given Ensembl ids
+
 use strict;
-use Data::Dumper;
-sub new { my $class = shift; my $self = {}; bless $self, $class; return $self; }
+use warnings;
 
-sub get_seq_by_id {
-  my ($self, $arghashref)=@_;
-  my $reg = "Bio::EnsEMBL::Registry";
-  my $ID = $arghashref->{'ID'};
+use Bio::EnsEMBL::Registry;
+use EnsEMBL::Web::Exceptions;
 
-  #get species name etc from stable ID
-  my ($species, $type, $dbt) = $reg->get_species_and_object_type($ID);
-  if(!$species){ return []; }
+use parent qw(EnsEMBL::Web::ExtIndex);
 
-  my $seq;
-  my $id;
-  my $obj_seq = '';
+sub get_sequence {
+  ## @param Hashref with following keys:
+  ##  - id          Id of the object
+  ##  - translation Flag if on, will only return the linked translation sequences
+  ##  - multi       Flag if on, will return all possible sequences (defaults to returning the longest sequence only)
+  ## @exception If id is invalid or sequence could not be found.
+  my ($self, $params) = @_;
 
-  #try and retrieve translation of Ensembl object
-  my $adaptor = $reg->get_adaptor($species, $dbt, $type);
-  if (my $obj = $adaptor->fetch_by_stable_id($ID)) {
-    if (ref($obj) eq 'Bio::EnsEMBL::Gene') {
-      #get longest translation from a gene
-      foreach my $trans (@{$obj->get_all_Transcripts()}) {
-	if (my $trl = $trans->translation) {
-	  if ( length($trl->seq) > length($obj_seq) ) {
-	    $obj_seq =  $trl->seq;
-	    $id = $trl->stable_id;
-	  }
-	}
+  # invalid id
+  throw exception('WebException', "$params->{'id'} is not a valid Ensembl ID.") unless $params->{'id'} && $params->{'id'} =~ /^[a-z]+[0-9]+$/i;
+
+  my $hub         = $self->hub;
+  my $sd          = $hub->species_defs;
+  my $sitetype    = $sd->ENSEMBL_SITETYPE;
+  my $registry    = 'Bio::EnsEMBL::Registry';
+  my $stable_id   = sprintf '%s%011d', split(/(?=[0-9])/, $params->{'id'}, 2); # prefix '0's before the number part if it's less than 11 digits
+  my $trans_only  = $params->{'translation'};
+
+  # get species name etc from stable id
+  my ($species, $object_type, $db_type) = $registry->get_species_and_object_type($stable_id);
+
+  my @seqs;
+
+  if ($species) { # current release stable id
+
+    if (my $object = $registry->get_adaptor($species, $db_type, $object_type)->fetch_by_stable_id($stable_id)) {
+
+      my @trans;
+
+      if ($object->isa('Bio::EnsEMBL::Gene')) {
+
+        if ($trans_only) {
+          @trans = map { $_->translation || () } @{$object->get_all_Transcripts};
+        } else {
+          @seqs = {
+            'id'          => $object->stable_id,
+            'sequence'    => $object->seq,
+            'description' => sprintf('%s %s Gene %s', $object->display_id, $sitetype, $object->seqname),
+            'length'      => $object->length
+          };
+        }
+
+      } elsif ($object->isa('Bio::EnsEMBL::Transcript')) {
+
+        if ($trans_only) {
+          @trans = $object->translation || ();
+        } else {
+          @seqs = {
+            'id'          => $object->stable_id,
+            'sequence'    => $object->seq->seq,
+            'description' => sprintf('%s %s Transcript %s', $object->display_id, $sitetype, $object->seqname),
+            'length'      => $object->length
+          };
+        }
+
+      } elsif ($object->isa('Bio::EnsEMBL::Translation')) {
+        @trans = $object;
       }
-    }
-    if (ref($obj) eq 'Bio::EnsEMBL::Transcript') {
-      if (my $trl = $obj->translation) {
-	$obj_seq  = $trl->seq;
-	$id = $trl->stable_id;
-      }
-      else {
-        $obj_seq = $obj->seq->seq;
-        $id = $obj->stable_id;
-      }
-    }
-    if (ref($obj) eq 'Bio::EnsEMBL::Translation') {
-      $obj_seq = $obj->seq;
-      $id = $obj->stable_id;
+
+      @seqs = map {
+        'id'          => $_->stable_id,
+        'sequence'    => $_->seq,
+        'description' => sprintf('%s %s Translation', $_->display_id, $sitetype),
+        'length'      => $_->length
+      }, @trans if $trans_only;
+
     }
 
-    if (! $obj_seq) {
-      #don't think this works
-      my $archStableIdAdap = $reg->get_adaptor($species, $dbt, 'ArchiveStableId');
-      if (my $obj = $archStableIdAdap->fetch_by_stable_id($ID,lc($type))) {
-	($seq, $obj_seq) = $self->transl_of_archive_stable_id($obj);
+    # throw error if no sequence found for the given stable id
+    throw exception('WebException', sprintf 'No sequence found for %s with stable id %s', lc $object_type, $stable_id) unless @seqs;
+
+  } else { # not a current release stable id? try for archive stable id for each species
+
+    my %checked_species;
+
+    for ($hub->species, @{$hub->get_favourite_species}, $sd->ENSEMBL_PRIMARY_SPECIES || (), $sd->ENSEMBL_SECONDARY_SPECIES || (), $sd->valid_species) { # try important species first
+
+      if (!$checked_species{$_} && (my $object = $registry->get_adaptor($_, 'Core', 'ArchiveStableId')->fetch_by_stable_id($stable_id))) {
+
+        # get translations from recent release
+        my $recent_release = 0;
+        for (@{$object->get_all_translation_archive_ids}) {
+          my $release = $_->release;
+          if ($release >= $recent_release) {
+            if ($release > $recent_release) {
+              $recent_release = $release;
+              @seqs = ();
+            }
+            my $seq = $_->get_peptide;
+            my $id  = $_->stable_id;
+            push @seqs, {
+              'id'          => $id,
+              'sequence'    => $seq,
+              'length'      => length($seq),
+              'description' => sprintf('%s %s Archive Translation', $id, $sitetype),
+            };
+          }
+        }
+
+        # if no seq found for this valid archive stable id
+        throw exception('WebException', sprintf 'No sequence found for %s with archive stable id %s', lc $object->type, $stable_id) unless @seqs;
+
+        last;
       }
-    }
-    else {
-      $seq = [ ">$id\n" ];
+      $checked_species{$_} = 1;
     }
   }
-  else {
-    #don't think this works
-    my $archStableIdAdap = $reg->get_adaptor($species, $dbt, 'ArchiveStableId');
-    if (my $obj = $archStableIdAdap->fetch_by_stable_id($ID,lc($type))) {
-      ($seq, $obj_seq) = $self->transl_of_archive_stable_id($obj);
-    }
+
+  # throw error if no sequence retrieved
+  throw exception('WebException', sprintf 'Could not find any sequence corresponding to id %s', $params->{'id'}) unless @seqs;
+
+  @seqs = sort { $b->length <=> $a->length } @seqs;
+  @seqs = ($seqs[0]) unless $params->{'mutli'};
+
+  # create fasta format sequence
+  for (@seqs) {
+    my $fasta = [ sprintf '>%s', delete $_->{'description'} ];
+    push @$fasta, $1 while $_->{'sequence'} =~ m/(.{1,60})/g;
+    $_->{'sequence'} = join "\n", @$fasta;
   }
 
-  return [] if (! $obj_seq);
-
-  #generate arrayref of header and sequence ready for using by WISE2/Matcher
-  my $pos = 0;
-  while ( $pos < length($obj_seq) ) {
-    my $substr = substr($obj_seq,$pos,60);
-    $substr .= "\n";
-    push @{$seq}, $substr;
-    $pos += 60;
-  }
-  return $seq ;
+  return wantarray ? @seqs : $seqs[0];
 }
-
-sub transl_of_archive_stable_id {
-  my ($self, $obj, $adap) = @_;
-  return ();
-  #enable the following when we know how to do it correctly
-  my $translations = $obj->get_all_translation_archive_ids();
-  my @sorted_translations = sort { $a->release <=> $b->release || length($a->get_peptide) <=> length($a->get_peptide) } @$translations;
-  my $pep_seq = $sorted_translations[0]->get_peptide();
-  my $id      = $sorted_translations[0]->stable_id();
-#  warn "id of longest latest translation is $id";
-  return ( [ ">$id\n" ], $pep_seq );
-
-}
-
 
 1;
