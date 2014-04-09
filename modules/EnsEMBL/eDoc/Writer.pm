@@ -26,11 +26,13 @@ use warnings;
 
 sub new {
   my ($class, %params) = @_;
+  my $type_order = [qw(constructor accessor miscellaneous undocumented)];
   my $self = {
     'location'    => $params{'location'}    || '',
     'base'        => $params{'base'}        || '',
     'serverroot'  => $params{'serverroot'}  || '',
     'support'     => $params{'support'}     || '',
+    'type_order'  => $type_order,
   };
   bless $self, $class;
   return $self;
@@ -58,6 +60,12 @@ sub support {
   my ($self, $support) = @_;
   $self->{'support'} = $support if $support;
   return $self->{'support'};
+}
+
+sub type_order {
+  my ($self, $order) = @_;
+  $self->{'type_order'} = $order if $order;
+  return $self->{'type_order'};
 }
 
 sub write_info_page {
@@ -272,7 +280,7 @@ sub toc_html {
   my $html = "";
 
   $html .= '<h2>Methods by Type</h2>';
-  foreach my $type (@{ $module->types }) {
+  foreach my $type (@{ $self->type_order }) {
     $html .= "<h3>" . ucfirst($type) . "</h3>\n";
     $html .= "<ul>";
     foreach my $method (sort {$a->name cmp $b->name} @{ $module->methods_of_type($type) }) {

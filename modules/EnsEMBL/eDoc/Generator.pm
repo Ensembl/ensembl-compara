@@ -18,7 +18,8 @@ limitations under the License.
 
 package EnsEMBL::eDoc::Generator;
 
-## Module to automatically generate documentation in e!doc format
+### A module to automatically generate documentation in e!doc format
+### Usually called from ensembl-webcode/utils/edoc/generate_edoc.pl
 
 use strict;
 use warnings;
@@ -27,6 +28,7 @@ use EnsEMBL::eDoc::Writer;
 use File::Find;
 
 sub new {
+  ## @constructor
   my ($class, %params) = @_;
   my $writer = new EnsEMBL::eDoc::Writer;
   my $self = {
@@ -45,21 +47,29 @@ sub new {
 }
 
 sub directories {
+  ## @accessor
+  ## @return Arrayref
   my $self = shift;
   return $self->{'directories'};
 }
 
 sub module_info {
+  ## @accessor
+  ## @return Hashref
   my $self = shift;
   return $self->{'module_info'};
 }
 
 sub module_names {
+  ## @accessor
+  ## @return Array of strings
   my $self = shift;
   return keys %{$self->{'modules'}};
 }
 
 sub modules {
+  ## @accessor
+  ## @return Arrayref of EnsEMBL::eDoc::Module objects
   my $self = shift;
   my $modules = [];
   my @values = values %{$self->{'modules'}};
@@ -70,32 +80,42 @@ sub modules {
 }
 
 sub modules_by_name {
+  ## @accessor
+  ## @return EnsEMBL::eDoc::Module 
   my ($self, $name) = @_;
   return $self->{'modules'}{$name};
 }
 
 sub keywords {
+  ## @accessor
+  ## @return Hashref
   my $self = shift;
   return $self->{'keywords'};
 }
 
 sub serverroot {
+  ## @accessor
+  ## @return String
   my $self = shift;
   return $self->{'serverroot'};
 }
 
 sub version {
+  ## @accessor
+  ## @return Integer (Ensembl version)
   my $self = shift;
   return $self->{'version'};
 }
 
 sub writer {
+  ## @accessor
+  ## @return EnsEMBL::eDoc::Writer
   my $self = shift;
   return $self->{'writer'};
 }
 
 sub find_modules {
-  ### Recursively finds modules located in the directory parameter.
+  ### Recursively finds modules located in all directories
   my ($self, $server_root) = @_;
   my $code_ref = sub { $self->wanted($server_root) };
   find($code_ref, @{$self->directories});
@@ -158,6 +178,7 @@ sub wanted {
 }
 
 sub generate_html {
+  ## Call all the methods used to generate the eDoc HTML pages
   my ($self, $location, $base, $support) = @_;
 
   my $writer = $self->writer;
@@ -174,7 +195,8 @@ sub generate_html {
 }
 
 sub methods {
-  ### Returns all method objects for all found modules
+  ### Collects a list of all methods in all found modules
+  ### @return Arrayref of EnsEMBL::eDoc::Method objects
   my $self = shift;
   my @methods = ();
   foreach my $module (@{$self->modules}) {
@@ -187,8 +209,8 @@ sub methods {
 }
 
 sub _package_name {
-  ### (filename) Reads package name from .pm file
-  ### Returns $package
+  ### Reads package name from .pm file
+  ### @return String
   my ($self, $filename) = @_;
   open (my $fh, $filename) or die "$!: $filename";
   my $package = '';
@@ -206,9 +228,10 @@ sub _package_name {
 
 
 sub _add_module {
-  ### Adds a new module object to the array of found modules.
-  ### The new module will find methods within that package on
-  ### instantiation.
+  ## Adds a new module object to the array of found modules.
+  ## The new module will find methods within that package on
+  ## instantiation.
+  ## @return Void
   my ($self, $class, $location, $plugin) = @_;
   my $module = EnsEMBL::eDoc::Module->new(
                      name         => $class,

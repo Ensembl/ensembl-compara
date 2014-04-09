@@ -263,8 +263,8 @@ sub _parse_package_file {
           $subs->{$sub_name}{type} = $self->keywords->{$1};
         }
         ## "Normal" inline documentation
-        elsif (/^\s+## (.+)/) {
-          my $comment = $1;
+        elsif (/^\s+##(#)? (.+)/) {
+          my $comment = $2;
           if ($comment =~ /^\@param/) {
             $params++;
             $comment =~ s/\@param/<b>Arg[$params]<\/b>:/;
