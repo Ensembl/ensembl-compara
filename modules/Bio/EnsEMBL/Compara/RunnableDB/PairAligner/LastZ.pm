@@ -99,10 +99,7 @@ sub configure_runnable {
             "and creating a runnable for each one");
   }
 
-  my $program = $self->param('pair_aligner_exe');
-  throw($program . " is not executable")
-    unless ($program && -x $program);
-
+  my $program = $self->require_executable('pair_aligner_exe');
   my $mlss = $self->param('method_link_species_set');
   my $options = $mlss->get_value_for_tag("param");
 

@@ -106,9 +106,7 @@ sub fetch_input {
     die "No trees with non-0 distances. Nothing to compute";
   }
 
-  my $ktreedist_exe = $self->param_required('ktreedist_exe');
-
-  die "Cannot execute '$ktreedist_exe'" unless(-x $ktreedist_exe);
+  $self->require_executable('ktreedist_exe');
 }
 
 

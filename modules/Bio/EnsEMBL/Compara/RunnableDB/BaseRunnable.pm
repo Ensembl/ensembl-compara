@@ -176,6 +176,7 @@ sub require_executable {
     my ($self, $param_name) = @_;
     my $exe = $self->param_required($param_name);
     die "Cannot execute $param_name: '$exe'" unless(-x $exe);
+    return $exe;
 }
 
 

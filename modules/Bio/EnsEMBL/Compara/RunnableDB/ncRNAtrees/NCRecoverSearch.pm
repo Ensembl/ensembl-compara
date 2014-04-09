@@ -153,9 +153,7 @@ sub run_ncrecoversearch {
 
   next unless(keys %{$self->param('recovered_members')});
 
-  my $cmsearch_exe = $self->param_required('cmsearch_exe');
-
-  die "Cannot execute '$cmsearch_exe'" unless(-x $cmsearch_exe);
+  my $cmsearch_exe = $self->require_executable('cmsearch_exe');
 
   my $worker_temp_directory = $self->worker_temp_directory;
   my $root_id = $self->param('gene_tree_id');

@@ -186,10 +186,7 @@ sub run_mafft {
     my $mafft_output = $self->worker_temp_directory . "/mafft_".$nc_tree_id . ".msa";
     $self->param('mafft_output',$mafft_output);
 
-    my $mafft_exe      = $self->param_required('mafft_exe');
-
-    die "Cannot execute '$mafft_exe'" unless(-x $mafft_exe);
-
+    my $mafft_exe      = $self->require_executable('mafft_exe');
     my $mafft_binaries = $self->param_required('mafft_binaries');
 
     $ENV{MAFFT_BINARIES} = $mafft_binaries;
@@ -217,9 +214,7 @@ sub run_RAxML {
 
     $self->param('raxml_output',"$raxml_outdir/RAxML_bestTree.$raxml_outfile");
 
-    my $raxml_exe = $self->param_required('raxml_exe');
-
-    die "Cannot execute '$raxml_exe'" unless(-x $raxml_exe);
+    my $raxml_exe = $self->require_executable('raxml_exe');
 
     my $bootstrap_num = 10;  ## Should be soft-coded?
     my $raxml_number_of_cores = $self->param('raxml_number_of_cores');
@@ -283,9 +278,7 @@ sub run_prank {
     # For now, we will be using #1
     my $prank_output = $self->worker_temp_directory . "/prank_${nc_tree_id}.prank";
 
-    my $prank_exe = $self->param_required('prank_exe');
-
-    die "Cannot execute '$prank_exe'" unless(-x $prank_exe);
+    my $prank_exe = $self->require_executable('prank_exe');
 
     my $cmd = $prank_exe;
     # /software/ensembl/compara/prank/090707/src/prank -noxml -notree -f=Fasta -o=/tmp/worker.904/cluster_17438.mfa -d=/tmp/worker.904/cluster_17438.fast -t=/tmp/worker.904/cluster17438/RAxML.tree

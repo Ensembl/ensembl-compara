@@ -240,15 +240,9 @@ sub run_infernal {
   my $stk_output = $self->worker_temp_directory . "output.stk";
   my $nc_tree_id = $self->param('gene_tree_id');
 
-  my $cmalign_exe = $self->param_required('cmalign_exe');
+  my $cmalign_exe = $self->require_executable('cmalign_exe');
 
-  die "Cannot execute '$cmalign_exe'" unless(-x $cmalign_exe);
-
-
-  my $model_id;
-
-  $model_id = $self->param('gene_tree')->get_tagvalue('clustering_id') or $self->throw("'clustering_id' tag for this tree is not defined");
-
+  my $model_id = $self->param('gene_tree')->get_tagvalue('clustering_id') or $self->throw("'clustering_id' tag for this tree is not defined");
   $self->param('model_id', $model_id );
 
   print STDERR "Model_id : $model_id\n" if ($self->debug);
@@ -296,9 +290,7 @@ sub run_infernal {
   my $refined_stk_output = $stk_output . ".refined";
   my $refined_profile = $self->param('profile_file') . ".refined";
 
-  my $cmbuild_exe = $self->param_required('cmbuild_exe');
-
-  die "Cannot execute '$cmbuild_exe'" unless(-x $cmbuild_exe);
+  my $cmbuild_exe = $self->require_executable('cmbuild_exe');
 
   $cmd = $cmbuild_exe;
   $cmd .= " --refine $refined_stk_output";

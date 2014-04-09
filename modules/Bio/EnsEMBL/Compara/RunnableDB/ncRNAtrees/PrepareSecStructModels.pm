@@ -191,9 +191,7 @@ sub _run_bootstrap_raxml {
 
     my $raxml_tag = $self->param('gene_tree')->root_id . "." . $self->worker->process_id . ".raxml";
 
-    my $raxml_exe = $self->param_required('raxml_exe');
-
-    die "Cannot execute '$raxml_exe'" unless(-x $raxml_exe);
+    my $raxml_exe = $self->require_executable('raxml_exe');
 
     my $bootstrap_num = 10;
     my $tag = 'ml_it_' . $bootstrap_num;

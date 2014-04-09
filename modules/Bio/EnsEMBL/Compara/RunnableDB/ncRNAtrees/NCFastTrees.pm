@@ -157,9 +157,7 @@ sub _run_fasttree {
     my $root_id = $self->param('nc_tree')->root_id;
     my $fasttree_tag = $root_id . ".". $self->worker->process_id . ".fasttree";
 
-    my $fasttree_exe = $self->param_required('fasttree_exe');
-
-    die "Cannot execute '$fasttree_exe'" unless(-x $fasttree_exe);
+    my $fasttree_exe = $self->require_executable('fasttree_exe');
 
     my $fasttree_output = $self->worker_temp_directory . "FastTree.$fasttree_tag";
     my $tag = defined $self->param('fastTreeTag') ? $self->param('fastTreeTag') : 'ft_it_nj';
@@ -189,9 +187,7 @@ sub _run_parsimonator {
     my $root_id = $self->param('nc_tree')->root_id;
     my $parsimonator_tag = $root_id . "." . $self->worker->process_id . ".parsimonator";
 
-    my $parsimonator_exe = $self->param_required('parsimonator_exe');
-
-    die "Cannot execute '$parsimonator_exe'" unless(-x $parsimonator_exe);
+    my $parsimonator_exe = $self->require_executable('parsimonator_exe');
 
     my $cmd = $parsimonator_exe;
     $cmd .= " -s $aln_file";
@@ -218,10 +214,8 @@ sub _run_raxml_light {
 
     my $raxmlight_tag = $root_id . "." . $self->worker->process_id . ".raxmlight";
 
-    my $raxmlLight_exe = $self->param_required('raxmlLight_exe');
+    my $raxmlLight_exe = $self->require_executable('raxmlLight_exe');
     my $raxml_number_of_cores = $self->param('raxml_number_of_cores');
-
-    die "Cannot execute '$raxmlLight_exe'" unless(-x $raxmlLight_exe);
 
     my $tag = defined $self->param('raxmlLightTag') ? $self->param('raxmlLightTag') : 'ft_it_ml';
 #    my $tag = 'ft_it_ml';

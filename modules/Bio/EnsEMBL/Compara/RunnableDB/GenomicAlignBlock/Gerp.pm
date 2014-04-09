@@ -373,10 +373,7 @@ sub run_gerp {
     #change directory to where the temporary mfa and tree file are written
     chdir $self->worker_temp_directory;
 
-    throw($self->param('gerp_exe') . " is not executable Gerp::run ")
-	unless ($self->param('gerp_exe') && -x $self->param('gerp_exe'));
-
-    my $command = $self->param('gerp_exe');
+    my $command = $self->require_executable('gerp_exe');
 
     if ($self->param('param_file')) {
 	$command .= " " . $self->param('param_file_tmp');

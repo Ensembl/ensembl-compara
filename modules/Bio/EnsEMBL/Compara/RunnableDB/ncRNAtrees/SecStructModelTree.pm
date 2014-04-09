@@ -107,9 +107,7 @@ sub run {
     my $raxml_tag = $root_id . "." . $self->worker->process_id . ".raxml";
     $self->param('raxml_tag', $raxml_tag);
 
-    my $raxml_exe = $self->param_required('raxml_exe');
-
-    die "Cannot execute '$raxml_exe'" unless(-x $raxml_exe);
+    my $raxml_exe = $self->require_executable('raxml_exe');
 
     my $tag = 'ss_it_' . $model;
     if ($self->param('gene_tree')->has_tag($tag)) {

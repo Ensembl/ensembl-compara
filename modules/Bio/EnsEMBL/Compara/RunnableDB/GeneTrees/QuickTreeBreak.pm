@@ -105,8 +105,7 @@ sub fetch_input {
     # We reload the cigar lines in case the subtrees are partially written
     $self->param('cigar_lines', $self->compara_dba->get_AlignedMemberAdaptor->fetch_all_by_gene_align_id($gene_tree->gene_align_id));
 
-    my $exe = $self->param_required('quicktree_exe');
-    die "Cannot execute '$exe'" unless (-x $exe);
+    $self->require_executable('quicktree_exe');
 
     ## 'tags_to_copy' can also be set
 }
