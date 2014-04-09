@@ -321,7 +321,7 @@ sub methods_html {
     if ($method->type !~ /undocumented/) {
       my $complete = $module->name . "::" . $method->name;
       $count++;
-      $html .= qq(<dt><a name=") . $method->name . qq("></a>) . $method->name . qq(</dt>\n<dd>);
+      $html .= qq(<dt><a id=") . $method->name . qq("></a>) . $method->name . qq(</dt>\n<dd>);
       $html .= $self->markup_documentation($method->documentation);
       if ($method->result) {
         $html .= qq(<i>) . $self->markup_links($method->result) . qq(</i>\n);
@@ -458,7 +458,7 @@ sub link_for_method {
   ### Returns the HTML formatted link to a method page in a module page.
   my ($self, $method) = @_;
   return sprintf '<a href="%s#%s" target="base">%s</a>', 
-                  $self->link_for_class($method->module->name), 
+                  $self->link_for_module($method->module), 
                   $method->name, $method->name;
 }
 
