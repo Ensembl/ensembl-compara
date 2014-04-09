@@ -25,6 +25,7 @@ use strict;
 use HTML::Entities qw(encode_entities);
 
 use EnsEMBL::Web::Controller::SSI;
+use EnsEMBL::Web::Exceptions;
 
 use base qw(EnsEMBL::Web::Component::Location::Genome);
 
@@ -35,19 +36,25 @@ sub _init {
 }
 
 sub content {
-  my $self = shift;
-  my @id   = $self->hub->param('ph');
-  my $features = {};
+  my $self      = shift;
+  my $object    = $self->object;
+  my $ph_id     = $self->hub->param('ph');
+  my $features  = {};
+  my $error;
 
   ## Get features to draw
-  if (@id) {
-    my $object = $self->object;
-    if ($object && $object->can('convert_to_drawing_parameters')) {
-      $features = $object->convert_to_drawing_parameters;
+  try {
+    $features = $object->convert_to_drawing_parameters if $ph_id && $object && $object->can('convert_to_drawing_parameters');
+  } catch {
+    if ($_->type eq 'TooManyFeatures') {
+      $error = $self->_warning("Too many to display", $_->message(1));
+    } else {
+      throw $_;
     }
-  }
-  my $html = $self->_render_features(\@id, $features);
-  return $html;
+  };
+
+  return $error if $error;
+  return $self->_render_features([ $ph_id ], $features);
 }
 
 sub _configure_Gene_table {

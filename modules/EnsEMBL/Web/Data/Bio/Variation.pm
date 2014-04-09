@@ -30,6 +30,8 @@ package EnsEMBL::Web::Data::Bio::Variation;
 
 use strict;
 
+use EnsEMBL::Web::Exceptions;
+
 use base qw(EnsEMBL::Web::Data::Bio);
 
 sub convert_to_drawing_parameters {
@@ -42,7 +44,15 @@ sub convert_to_drawing_parameters {
   my @phen_ids = $hub->param('ph');
   my $ga       = $hub->database('core')->get_adaptor('Gene');
   my (@results, %associated_genes, %p_value_logs, %p_values, %phenotypes_sources, %phenotypes_studies,%gene_ids);
-  
+
+  # Threshold to display the variations on the karyotype view. Use BioMart instead.
+  my $max_features    = 1000;
+  my $count_features  = scalar(@$data);
+
+  if ($count_features > $max_features) {
+    throw exception('TooManyFeatures', qq(There are <b>$count_features</b> genomic locations associated with this phenotype. Please, use <a href="/biomart/martview/">BioMart</a> to retrieve a table of all the variants associated with this phenotype instead as there are too many to display on a karyotype.));
+  }
+
   # getting associated phenotypes and associated genes
   foreach my $pf (@{$data || []}) {
     my $object_id   = $pf->object_id;
