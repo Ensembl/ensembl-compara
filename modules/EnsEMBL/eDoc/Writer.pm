@@ -62,7 +62,7 @@ sub support {
 
 sub write_info_page {
   ### Writes information page for the documentation.
-  my ($self, $packages) = @_;
+  my ($self, $modules) = @_;
   open (my $fh, ">", $self->location . "/info.html") or die "$!: " . $self->location;
   print $fh $self->html_header();
   print $fh '
@@ -78,7 +78,7 @@ sub write_info_page {
   my %count;
   my %total;
   my %average;
-  foreach my $module (@{ $packages }) {
+  foreach my $module (@{ $modules }) {
     my @elements = split /::/, $module->name;
     my $final = pop @elements;
     my $family = "";
@@ -90,7 +90,7 @@ sub write_info_page {
       $count{$family}++;
     }
   }
-  foreach my $module (@{ $packages }) {
+  foreach my $module (@{ $modules }) {
     foreach my $family (keys %count) {
       if (!$total{$family}) {
         $total{$family} = 0;
@@ -129,13 +129,13 @@ sub write_info_page {
 
 sub write_package_frame {
   ### Writes the HTML package listing.
-  my ($self, $packages) = @_;
+  my ($self, $modules) = @_;
   open (my $fh, ">", $self->location . "/package.html") or die "$!: " . $self->location;
   print $fh $self->html_header( (class => "list" ));
   print $fh qq(<div class="heading">Packages</div>);
   print $fh qq(<ul>);
-  foreach my $package (sort {$a->name cmp $b->name} @{ $packages }) {
-    print $fh '<li><a href="', $self->link_for_package($package->name), '" target="base">', $package->name, "</a></li>\n";
+  foreach my $module (sort {$a->name cmp $b->name} @{ $modules }) {
+    print $fh '<li><a href="', $self->link_for_module($module), '" target="base">', $module->name, "</a></li>\n";
   }
   print $fh qq(</ul>);
   print $fh $self->html_footer;
@@ -174,7 +174,7 @@ sub write_hierarchy {
     $html .= "<h3>Inherits from:</h3>\n";
     $html .= "<ul>\n";
     foreach my $module (@{ $module->inheritance }) {
-      $html .= '<li><a href="' . $self->link_for_package($module->name) . '">' . $module->name . "</a></li>\n";
+      $html .= '<li><a href="' . $self->link_for_module($module) . '">' . $module->name . "</a></li>\n";
     }
     $html .= "</ul>\n";
     $html .= "</div>";
@@ -187,7 +187,7 @@ sub write_hierarchy {
     $html .= "<h3>Subclasses:</h3>\n";
     $html .= "<ul>\n";
     foreach my $subclass (sort { $a->name cmp $b->name } @{ $module->subclasses }) {
-      $html .= '<li><a href="' . $self->link_for_package($subclass->name) . '">' . $subclass->name. "</a></li>\n";
+      $html .= '<li><a href="' . $self->link_for_module($subclass) . '">' . $subclass->name. "</a></li>\n";
     }
     $html .= "</ul>\n";
     $html .= "</div>";
@@ -201,19 +201,19 @@ sub write_hierarchy {
 sub write_module_page {
   ### Writes the complete HTML documentation page for a module. 
   my ($self, $module, $version) = @_;
-  open (my $fh, ">", $self->_html_path_from_package($module->name));
+  open (my $fh, ">", $self->_html_path_from_module($module));
   my $location = $module->location;
   my $root = $self->serverroot;
   $location =~ s/$root//g;
   my $repo = 'ensembl-webcode';
   my $overview = $module->overview ? $self->markup_documentation($module->overview)
                                     : '<p>No overview present</p>';
-  print $fh $self->html_header( (package => $module->name) ),'
+  print $fh $self->html_header( (class => $module->name) ),'
   <div class="title">
     <h1>' . $module->name . '</h1>
     Location: ', $location, '<br />
-    <a href="', $self->source_code_link($version, $repo, $module->name) , '" rel="external">View source code on github</a> &middot;
-    <a href="', $self->link_for_package($module->name), '">Permalink</a>
+    <a href="', $self->source_code_link($version, $repo, $module) , '" rel="external">View source code on github</a> &middot;
+    <a href="', $self->link_for_module($module), '">Permalink</a>
   </div>
   <div class="content">
 
@@ -236,17 +236,17 @@ sub write_module_page {
 
   </div>
   <div class="footer">&larr; 
-    <a href="', "../" x element_count_from_package($module->name),'base.html">eDocs home</a> &middot;
-    <a href="', $self->source_code_link($version, $repo, $module->name),'" rel="external">View source code on github</a>
+    <a href="', "../" x element_count_from_class($module->name),'base.html">eDocs home</a> &middot;
+    <a href="', $self->source_code_link($version, $repo, $module),'" rel="external">View source code on github</a>
   </div>',
     $self->html_footer;
 }
 
 sub source_code_link {
-  my ($self, $version, $repo, $package) = @_;
-  $package =~ s/::/\//g;
+  my ($self, $version, $repo, $module) = @_;
+  (my $class = $module->name) =~ s/::/\//g;
   my $branch = $version eq 'master' ? 'master' : "release/$version";
-  return sprintf 'https://github.com/Ensembl/%s/blob/%s/modules/%s.pm', $repo, $branch, $package;
+  return sprintf 'https://github.com/Ensembl/%s/blob/%s/modules/%s.pm', $repo, $branch, $module->name;
 }
 
 sub write_module_pages {
@@ -310,23 +310,6 @@ sub markup_documentation {
   return $self->markup_links($html);
 }
 
-sub markup_embedded_table {
-  ### Marks up key value pairs when embedded in documentation. An embedded table should be delineated with a starting and ending triple underscore. 
-  my ($self, $table) = @_;
-  my $html = "";
-  my @rows = split(/\n/, $table);
-  my $count = 0;
-  my %content = ();
-  foreach my $row (@rows) {
-    $count++;
-    my ($key, $value) = split(/:/, $row);
-    if ($key && $value) {
-      $content{$key} = $value;
-    }
-  }
-  return $self->markup_method_table(\%content);
-}
-
 sub methods_html {
   ### Returns a formatted list of method names and documentation.
   my ($self, $module, $version) = @_;
@@ -345,7 +328,7 @@ sub methods_html {
       }
       if ($method->module->name ne $module->name) {
         $complete = $method->module->name . "::" . $method->name;
-        $html .= qq(Inherited from <a href=") . $self->link_for_package($method->module->name) . qq(">) . $method->module->name . "</a>";
+        $html .= qq(Inherited from <a href=") . $self->link_for_module($method->module) . qq(">) . $method->module->name . "</a>";
       }
       $html .= '</dd>';
       #$html .= sprintf '<a href="%s" rel="external">View source on github</a>', $self->source_code_link($version, 'ensembl-webcode', $complete);
@@ -369,17 +352,17 @@ sub markup_links {
     if ($name =~ /\:\:/) {
       my @elements = split /\:\:/, $name;
       if ($elements[$#elements] =~ /^[a-z]/) {
-        my $package = "";
+        my $class = "";
         my $path = "";
         my $method = $elements[$#elements];
         for (my $n = 0; $n < $#elements; $n++) {
-          $package .= $elements[$n] . "::";
+          $class .= $elements[$n] . "::";
         }
-        $package =~ s/\:\:$//;
-        my $link = "<a href='" . $self->link_for_package($package) . "#$method'>" . $package . "::" . $method . "</a>";
+        $class =~ s/\:\:$//;
+        my $link = "<a href='" . $self->link_for_class($class) . "#$method'>" . $class . "::" . $method . "</a>";
         $markup =~ s/{{$name}}/$link/;
       } else {
-        my $link = "<a href='" . $self->link_for_package($name) . "'>" . $name . "</a>";
+        my $link = "<a href='" . $self->link_for_class($name) . "'>" . $name . "</a>";
         $markup =~ s/{{$name}}/$link/;
       }
     } else {
@@ -475,7 +458,7 @@ sub link_for_method {
   ### Returns the HTML formatted link to a method page in a module page.
   my ($self, $method) = @_;
   return sprintf '<a href="%s#%s" target="base">%s</a>', 
-                  $self->link_for_package($method->module->name), 
+                  $self->link_for_class($method->module->name), 
                   $method->name, $method->name;
 }
 
@@ -491,11 +474,8 @@ sub copy_support_files {
 }
 
 sub html_header {
-  ### ($package, $class) Returns an HTML header. When supplied, $package
-  ### is used to determine relative links and $class determins the class
-  ### of the HTML body.
+  ### Returns an HTML header. 
   my ($self, %params) = @_;
-  my $package = $params{package};
   my $class = $params{class};
   my $title = $params{title} ? $params{title} : "e! doc";
   if ($class) {
@@ -527,10 +507,10 @@ sub include_javascript {
 sub package_prefix {
   ### Returns the relative path prefix for a particular 
   ### package name.
-  my ($self, $package) = @_;
+  my ($self, $class) = @_;
   my $html = "";
-  if (element_count_from_package($package)) {
-     $html .= ("../" x element_count_from_package($package));
+  if (element_count_from_class($class)) {
+     $html .= ("../" x element_count_from_class($class));
   }
   return $html;
 }
@@ -543,27 +523,42 @@ sub html_footer {
   );
 }
 
-sub _html_path_from_package {
-  ### Returns an export location from a package name
-  my ($self, $package) = @_;
-  my $path = $self->location . "/" . $self->path_from_package($package) . ".html";
+sub _html_path_from_module {
+  ### Returns an export location from a package
+  my ($self, $module) = @_;
+  my $path = $self->location . "/";
+  $path .= $self->path_from_module($module) . ".html";
   return $path;
 }
 
-sub link_for_package {
-  ### Returns the HTML location of a package, excluding &lt;A HREF&gt; markup.
+sub link_for_module {
+  ### Returns the HTML location of a module, excluding &lt;A HREF&gt; markup.
+  my ($self, $module) = @_;
+  my $path = $self->base . "/";
+  $path .= $self->path_from_module($module) . ".html";
+  return $path;
+}
+
+sub link_for_class {
+  ### Returns the HTML location of a base class, excluding &lt;A HREF&gt; markup.
+  ### Only needed by link markup, which lacks a module object
   my ($self, $class) = @_;
-  my $path = $self->base . "/" . $self->path_from_package($class) . ".html";
+  my $path = $self->base . "/";
+  $path .= $self->path_from_class($class) . ".html";
   return $path;
 }
 
-sub path_from_package {
-  ### Returns file system path to package
-  my ($self, $package) = @_;
-  my @elements = split(/::/, $package);
+sub path_from_module {
+  ### Creates directory into which file can be written
+  ### and returns URL path to module
+  my ($self, $module) = @_;
+  my $class = $module->name;
+  my @elements = split(/::/, $class);
   my $file = pop @elements;
-  my $path = $self->location;
+  unshift @elements, $module->plugin if $module->plugin;
 
+  ## Create file path
+  my $path = $self->location;
   foreach my $element (@elements) {
     $path = $path . "/" . $element;
     if (!-e $path) {
@@ -572,15 +567,25 @@ sub path_from_package {
     }
   }
 
-  $package =~ s/::/\//g;
-  return $package;
+  ## Return file URL
+  my $url = '';
+  $url .= join('/', @elements);
+  $url .= '/'.$file;
+  return $url;
 }
 
-sub element_count_from_package {
+sub path_from_class {
+  ### returns URL path to module
+  my ($self, $class) = @_;
+  $class =~ s/::/\//g;
+  return $class;
+}
+
+sub element_count_from_class {
   ### Returns the number of elements in a package name.
-  my $package = shift;
-  if ($package) {
-    my @elements = split(/::/, $package);
+  my $class = shift;
+  if ($class) {
+    my @elements = split(/::/, $class);
     return $#elements;
   }
   return 0;

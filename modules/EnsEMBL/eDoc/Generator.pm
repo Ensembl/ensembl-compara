@@ -32,7 +32,6 @@ sub new {
   my $self = {
     'directories' => $params{'directories'} || [],
     'module_info' => $params{'module_info'} || {},
-    'identifier'  => $params{'identifier'}  || '##',
     'keywords'    => $params{'keywords'}    || '',
     'serverroot'  => $params{'serverroot'}  || '',
     'version'     => $params{'version'}     || 'master',
@@ -60,11 +59,6 @@ sub module_names {
   return keys %{$self->{'modules'}};
 }
 
-#sub modules {
-#  my $self = shift;
-#  return values %{$self->{'modules'}};
-#}
-
 sub modules {
   my $self = shift;
   my $modules = [];
@@ -78,11 +72,6 @@ sub modules {
 sub modules_by_name {
   my ($self, $name) = @_;
   return $self->{'modules'}{$name};
-}
-
-sub identifier {
-  my $self = shift;
-  return $self->{'identifier'};
 }
 
 sub keywords {
@@ -107,8 +96,8 @@ sub writer {
 
 sub find_modules {
   ### Recursively finds modules located in the directory parameter.
-  my $self = shift;
-  my $code_ref = sub { $self->wanted(@_) };
+  my ($self, $server_root) = @_;
+  my $code_ref = sub { $self->wanted($server_root) };
   find($code_ref, @{$self->directories});
 
   # map inheritance (super and sub classes), and replace module
@@ -157,12 +146,14 @@ sub find_modules {
 sub wanted {
   ### Callback method used to find packages in the directory of
   ### interest.
-  my $self = shift;
+  my ($self, $server_root) = @_;
   if ($File::Find::name =~ /pm$/) {
     #print "Indexing " . $_ . "\n";
     #warn "CHECKING: " . $File::Find::name;
     my $class = $self->_package_name($File::Find::name);
-    $self->_add_module($class, $File::Find::name);
+    (my $path = $File::Find::name) =~ s/$server_root//;
+    $path =~ /\/public-plugins\/([a-zA-Z]+)\/modules/;
+    $self->_add_module($class, $File::Find::name, $1);
   }
 }
 
@@ -218,11 +209,11 @@ sub _add_module {
   ### Adds a new module object to the array of found modules.
   ### The new module will find methods within that package on
   ### instantiation.
-  my ($self, $class, $location) = @_;
+  my ($self, $class, $location, $plugin) = @_;
   my $module = EnsEMBL::eDoc::Module->new(
                      name         => $class,
                      location     => $location,
-                     identifier   => $self->identifier,
+                     plugin       => $plugin,
                      keywords     => $self->keywords,
                      find_methods => 1,
                    );

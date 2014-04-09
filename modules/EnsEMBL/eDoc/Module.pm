@@ -38,9 +38,9 @@ sub new {
     'inheritance' => $params{'inheritance'} || [],
     'subclasses'  => $params{'subclasses'}  || [],
     'location'    => $params{'location'}    || '',
-    'lines'       => $params{'lines'}       || '',
+    'plugin'      => $params{'plugin'}      || '',
+    'lines'       => $params{'lines'}       || 0,
     'overview'    => $params{'overview'}    || '',
-    'identifier'  => '#{2,3}',
     'keywords'    => $params{'keywords'}    || $keywords,
   };
   bless $self, $class;
@@ -104,6 +104,11 @@ sub location {
   return $self->{'location'};
 }
 
+sub plugin {
+  my $self = shift;
+  return $self->{'plugin'};
+}
+
 sub lines {
   my ($self, $lines) = @_;
   $self->{'lines'} = $lines if $lines;
@@ -114,11 +119,6 @@ sub overview {
   my ($self, $overview) = @_;
   $self->{'overview'} = $overview if $overview;
   return $self->{'overview'};
-}
-
-sub identifier {
-  my $self = shift;
-  return $self->{'identifier'};
 }
 
 sub keywords {

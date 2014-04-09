@@ -60,7 +60,7 @@ my $generator = EnsEMBL::eDoc::Generator->new( (
 ) );
 
 my $point_1 = time();
-$generator->find_modules;
+$generator->find_modules($SERVER_ROOT);
 
 my $point_2 = time();
 $generator->generate_html( $EXPORT, '/info/docs/webcode/edoc', $SUPPORT );
