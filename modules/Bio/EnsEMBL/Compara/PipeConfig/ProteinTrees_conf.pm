@@ -157,6 +157,7 @@ sub default_options {
         #'qc_capacity'               =>   4,
         #'hc_capacity'               =>   4,
         #'HMMer_classify_capacity'   => 100,
+        #'loadmembers_capacity'      =>  30,
 
     # hive priority for non-LOCAL health_check analysis:
         'hc_priority'               => -10,
@@ -727,6 +728,7 @@ sub pipeline_analyses {
                 'find_canonical_translations_for_polymorphic_pseudogene' => 1,
 		    'store_missing_dnafrags'		=> 0,
             },
+            -hive_capacity => $self->o('loadmembers_capacity'),
             -rc_name => '2Gb_job',
             -flow_into => [ 'hc_members_per_genome' ],
         },
@@ -736,6 +738,7 @@ sub pipeline_analyses {
             -parameters => {
                 -need_cds_seq   => 1,
             },
+            -hive_capacity => $self->o('loadmembers_capacity'),
             -rc_name => '2Gb_job',
             -flow_into => [ 'hc_members_per_genome' ],
         },
