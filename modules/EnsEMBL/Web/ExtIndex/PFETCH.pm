@@ -19,59 +19,36 @@ limitations under the License.
 package EnsEMBL::Web::ExtIndex::PFETCH;
 
 use strict;
-use IO::Socket;
+use warnings;
+
 use Sys::Hostname;
 
-sub new { my $class = shift; my $self = {}; bless $self, $class; return $self; }
+use parent qw(EnsEMBL::Web::ExtIndex);
 
-sub get_seq_by_acc { my $self = shift; $self->get_seq_by_id( @_ ); }
-
-sub get_seq_by_id {
-  my ($self, $arghashref)=@_;
+sub get_sequence {
+  my ($self, $params) = @_;
 
   # Get the ID to pfetch
-  my $str = $arghashref->{ID} || return [];
+  my $str = $params->{'id'} or return [];
 
   # Additional options
-  if( $arghashref->{OPTIONS} eq 'desc'       ) { $str .= " -D" }
-  if( $arghashref->{OPTIONS} =~ /(-d\s+\w+)/ ) { $str .= " $1" }
-  if( $arghashref->{DB} eq 'PUBLIC'          ) { $str .= " -d public" }
-  if( $arghashref->{DB} =~ /UNIPROT/         ) { $str = " -a $str" }
+  $str .= " -D"         if ($params->{'options'} || '') eq 'desc';
+  $str .= " $1"         if ($params->{'options'} || '') =~ /(-d\s+\w+)/;
+  $str .= " -d public"  if $params->{'db'} eq 'PUBLIC';
+  $str  = " -a $str"    if $params->{'db'} =~ /UNIPROT/;
+  $str .= " -r"         if $params->{'strand_mismatch'};
 
   # Get the pfetch server
-  my $server = $self->fetch_pfetch_server(
-    $arghashref->{'species_defs'}->ENSEMBL_PFETCH_SERVER,
-    $arghashref->{'species_defs'}->ENSEMBL_PFETCH_PORT
-  );
+  my $sd      = $self->hub->species_defs;
+  my $server  = $self->get_server($sd->ENSEMBL_PFETCH_SERVER, $sd->ENSEMBL_PFETCH_PORT);
 
-  my $hostname = &Sys::Hostname::hostname();
-  my $output;
-  if ($arghashref->{'strand_mismatch'}) {
-    print $server "--client $hostname $str -r \n";
-    push @$output, $_ while(<$server>);
-  }
-  else {
-    print $server "--client $hostname $str  \n";
-    push @$output, $_ while(<$server>);
-  }
+  print $server sprintf("--client %s %s \n", hostname, $str);
 
-  return $output;
-}
+  my @output  = $server->getlines;
 
-sub fetch_pfetch_server {
-  my $self   = shift;
-  my $server = shift;
-  my $port   = shift;
-  if( ! $server ){ die "No ENSEMBL_PFETCH_SERVER found in config" }
-  
-  my $s = IO::Socket::INET->new( PeerAddr => $server,
-    PeerPort => $port, Proto    => 'tcp', Type     => SOCK_STREAM, Timeout  => 10,
-  );
-  if ($s){
-    $s->autoflush(1);
-    return( $s );
-  } 
-  die "Cannot connect to the Trace server - please try again later.";
+  $server->close;
+
+  return $self->output_to_fasta($params->{'id'}, \@output);
 }
 
 1;
