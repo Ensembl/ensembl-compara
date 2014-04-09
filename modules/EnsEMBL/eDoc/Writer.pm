@@ -280,11 +280,11 @@ sub toc_html {
   my $html = "";
 
   $html .= '<h2>Methods by Type</h2>';
-  foreach my $type (@{ $self->type_order }) {
-    $html .= "<h3>" . ucfirst($type) . "</h3>\n";
+  foreach my $section (@{ $self->type_order }) {
+    $html .= "<h3>" . ucfirst($section) . "</h3>\n";
     $html .= "<ul>";
-    foreach my $method (sort {$a->name cmp $b->name} @{ $module->methods_of_type($type) }) {
-      if ($method->type !~ /undocumented/) {
+    foreach my $method (sort {$a->name cmp $b->name} @{ $module->methods_for_section($section) }) {
+      if ($method->section !~ /undocumented/) {
         $html .= '<li><a href="#' . $method->name . '">' . $method->name . '</a>';
         if ($method->module->name ne $module->name) {
           $html .= " (" . $method->module->name . ")";
@@ -335,10 +335,13 @@ sub methods_html {
   $html .= qq(<dl>);
   my $count = 0;
   foreach my $method (@{ $module->methods }) {
-    if ($method->type !~ /undocumented/) {
+    if ($method->section !~ /undocumented/) {
       my $complete = $module->name . "::" . $method->name;
       $count++;
       $html .= qq(<dt><a id=") . $method->name . qq("></a>) . $method->name . qq(</dt>\n<dd>);
+      if (scalar(@{$method->type||[]})) {
+        $html .= '<b>Type</b>: '.join(' ', @{$method->type}).'<br />';
+      }
       $html .= $self->markup_documentation($method->documentation);
       if ($method->result) {
         $html .= qq(<i>) . $self->markup_links($method->result) . qq(</i>\n);

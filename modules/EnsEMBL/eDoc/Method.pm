@@ -30,7 +30,8 @@ sub new {
     'module'        => $params{'module'} || '',
     'documentation' => $params{'documentation'} || '',
     'table'         => $params{'table'} || {},
-    'type'          => $params{'type'} || 'undocumented',
+    'type'          => $params{'type'} || [],
+    'section'       => $params{'section'} || 'undocumented',
     'result'        => $params{'result'} || '',
   };
   bless $self, $class;
@@ -61,6 +62,11 @@ sub table {
 sub type {
   my $self = shift;
   return $self->{'type'};
+}
+
+sub section {
+  my $self = shift;
+  return $self->{'section'};
 }
 
 sub result {

@@ -55,13 +55,13 @@ sub methods {
   return $self->{'methods'};
 }
 
-sub methods_of_type {
-  ### Returns all methods of a particular type. Useful when used with
-  ### types. Includes methods inherited from superclasses.
-  my ($self, $type) = @_;
+sub methods_for_section {
+  ### Returns all methods that we want to list in a particular section
+  ### of the table of contents
+  my ($self, $section) = @_;
   my @methods = ();
   foreach my $method (@{ $self->methods }) {
-    if ($method->type eq $type) {
+    if ($method->section eq $section) {
       push @methods, $method;
     }
   }
@@ -74,8 +74,11 @@ sub types {
   my @types = ();
   my %type_count = ();
   foreach my $method (@{ $self->methods }) {
-    if (! $type_count{$method->type}++ ) {
-      push @types, $method->type;
+    foreach my $type (@{$method->type}) {
+      unless ($type_count{$type}) {
+        push @types, $method->type;
+        $type_count{$type}++;
+      }
     }
   }
   @types = sort @types;
@@ -150,6 +153,7 @@ sub find_methods {
                        name           => $method->{name},
                        documentation  => $method->{comment},
                        type           => $method->{type},
+                       section        => $method->{section},
                        result         => $method->{return},
                        module         => $self
                      ));
@@ -182,7 +186,7 @@ sub coverage {
   my $coverage;
   foreach my $method (@{ $self->methods }) {
     $total++;
-    if ($method->type ne 'undocumented') {
+    if ($method->section ne 'undocumented') {
       $count++;
     }
   }
@@ -245,7 +249,7 @@ sub _parse_package_file {
       $sub_line = $1;
       $header = 1;
       $params = 0;
-      $subs->{$sub_name} = {'name' => $sub_name, 'type' => 'undocumented'};
+      $subs->{$sub_name} = {'name' => $sub_name, 'section' => 'undocumented'};
       push @order, $sub_name;
     }
     else {
@@ -258,9 +262,14 @@ sub _parse_package_file {
 
     ## N.B. Only include comments at start of method!
     if ($sub_name) {
+      if ($sub_name eq 'new') {
+        $self->_add_type_to_method($subs->{$sub_name}, 'constructor');
+      }
       if ($header) {
+        ## One-letter code
         if (/###([a-z]) /) {
-          $subs->{$sub_name}{type} = $self->keywords->{$1};
+          my $type = $self->keywords->{$1};
+          $self->_add_type_to_method($subs->{$sub_name}, $type);
         }
         ## "Normal" inline documentation
         elsif (/^\s+##(#)? (.+)/) {
@@ -269,11 +278,10 @@ sub _parse_package_file {
             $params++;
             $comment =~ s/\@param/<b>Arg[$params]<\/b>:/;
           }
-          elsif ($comment =~ /^\@(accessor|constructor)/) {
-            $subs->{$sub_name}{type} = $1;
-          }
-          elsif ($comment =~ /^\@(private|protected)/) {
-            $subs->{$sub_name}{status} = $1;
+          elsif ($comment =~ /^\@(accessor|constructor|private|protected)/) {
+            my $type = $1;
+            $comment = '';
+            $self->_add_type_to_method($subs->{$sub_name}, $type);
           }
           elsif ($comment =~ /^\@([a-zA-Z]+)/) {
             my $doc = ucfirst($1);
@@ -283,7 +291,7 @@ sub _parse_package_file {
             $comment = '&nbsp;&nbsp;&nbsp;&nbsp;'.$comment;
           }
           else {
-            $subs->{$sub_name}{type} = 'miscellaneous';
+            $subs->{$sub_name}{section} = 'miscellaneous';
           }
 
           $subs->{$sub_name}{comment} .= "$comment<br />";
@@ -313,6 +321,24 @@ sub _parse_package_file {
 
   $self->lines($lines);
   return \%docs;
+}
+
+sub _add_type_to_method {
+  my ($self, $sub_info, $type) = @_;
+  if ($sub_info->{type}) {
+    my $match = grep $type, @{$sub_info->{type}};
+    push @{$sub_info->{type}}, ucfirst($type) unless $match;
+  }
+  else {
+    $sub_info->{type} = [ucfirst($type)];
+  }
+  ## Some mutually exclusive method types are used in TOC
+  if ($type =~ /accessor|constructor/) {
+    $sub_info->{section} = $type;
+  }
+  else {
+    $sub_info->{section} = 'miscellaneous';
+  }
 }
 
 1;
