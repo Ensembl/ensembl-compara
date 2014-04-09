@@ -17,98 +17,79 @@ limitations under the License.
 
 =cut
 
-
 package EnsEMBL::Web::ExtIndex;
-use EnsEMBL::Web::Root;
 
-our @ISA = qw(EnsEMBL::Web::Root);
+### Parent class for all external indexers
 
 use strict;
-use Data::Dumper;
+use warnings;
+
+use IO::Socket::INET;
+
+use EnsEMBL::Web::Exceptions;
+
+use parent qw(EnsEMBL::Web::Root);
+
+sub hub { return shift->{'_hub'}; }
 
 sub new {
-  my( $class, $species_defs ) = @_;
-  my $self = { 'species_defs' => $species_defs, 'databases' => {}, 'indexers' => {} };
-  return bless $self, $class;
+  ## @constructor
+  my ($class, $hub) = @_;
+  return bless {'_hub' => $hub}, $class;
 }
 
-sub get_indexer {
-  my( $self, $db ) = @_;
-
-  unless( $self->{'databases'}{$db} ) {
-    my ($indexer,$exe);
-
-    #get data from e! databases
-    if ($db =~ /^ENS_/) {
-      $indexer = 'ENSEMBL_RETRIEVE';
-      $exe     = 1;
-    }
-    else {
-      $indexer = $self->{'species_defs'}->ENSEMBL_EXTERNAL_DATABASES->{ $db }
-         || $self->{'species_defs'}->ENSEMBL_EXTERNAL_DATABASES->{ 'DEFAULT'  }
-         || 'PFETCH' ;
-      $exe     = $self->{'species_defs'}->ENSEMBL_EXTERNAL_INDEXERS->{ $indexer };
-    }
-    if( $exe ) {
-      my $classname = "EnsEMBL::Web::ExtIndex::$indexer";
-      unless( exists $self->{'indexers'}{$classname} ) {
-	if( $self->dynamic_use( $classname ) ) {
-	  $self->{'indexers'}{$classname} = $classname->new();
-	} else {
-	  $self->{'indexers'}{$classname} = undef;
-	}
-	$self->{'databases'}{$db} = { 'module' => $self->{'indexers'}{$classname}, 'exe' => $exe };
-      }
-    } else {
-      $self->{'databases'}{$db} = { 'module' => undef };
-    }
-  }
-  return $self->{'databases'}{$db}{'module'};
+sub get_sequence {
+  ## @abstract
+  ## @return Hashref (or list of similar hashrefs for multiple sequences if applicable) with keys:
+  ##  - sequence    Fasta format sequence
+  ##  - id          ID of the sequence
+  ##  - length      Length of the sequence
+  throw exception('AbstractMethodNotImplemented');
 }
 
-sub get_seq_by_id{
-  my ($self, $args)=@_;
-  return $self->_get_seq( 'ID', $args );
+sub get_server {
+  ## @protected
+  ## Gets the server instance for PFETCH, MFETCH etc
+  ## @param Server name
+  ## @param Server port
+  my ($self, $server_name, $server_port) = @_;
+
+  throw exception('WebException', 'Server not configured') unless $server_name && $server_port;
+
+  my $server = IO::Socket::INET->new(
+    PeerAddr  => $server_name,
+    PeerPort  => $server_port,
+    Proto     => 'tcp',
+    Type      => SOCK_STREAM,
+    Timeout   => 10
+  );
+
+  throw exception('WebException', 'Cannot connect to the external db server') unless $server;
+
+  $server->autoflush(1);
+
+  return $server;
 }
 
-sub get_seq_by_acc{
-  my ($self, $args)=@_;
-  return $self->_get_seq( 'ACC', $args );
+sub output_to_fasta {
+  ## @protected
+  ## Converts output (list of lines) returned by PFETCH, MFETCH etc to hashref as returned by get_sequence
+  my ($self, $id, $lines) = @_;
+
+  @$lines = map { s/^s+|\s+$//gr || () } @$lines;
+
+  return if !@$lines || grep {m/no match/i} @$lines;
+
+  my $fasta = $lines->[0] =~ /^>/ ? [ shift @$lines ] : [ ">$id" ];
+  my $seq   = join '', @$lines;
+
+  push @$fasta, $1 while $seq =~ m/(.{1,60})/g;
+
+  return {
+    'id'        => $id,
+    'length'    => length($seq),
+    'sequence'  => join("\n", @$fasta)
+  };
 }
-
-sub _get_seq{
-  my ($self,$type,$args)=@_;
-    
-  ###############################################
-  # Check for valid options and fix if necessary
-  ###############################################
-  my %options = ( 'id' => undef, 'acc' => undef, 'seq' => undef, 'desc' => undef, 'mismatch' => undef, 'all' => undef );
-  $args->{'OPTIONS'} = 'all' unless exists $args->{'OPTIONS'} && exists $options{ $args->{'OPTIONS'} };
-    
-  ############################################
-  # retrieve the indexer and executable names
-  ############################################
-  my $db = $args->{'DB'} || 'DEFAULT';
-
-  my $indexer = $self->get_indexer( $db );
-
-  if( $indexer && defined $args->{$type} ) {
-    my $function='get_seq_by_'.lc($type);
-    if(! $indexer->can($function)){return [];}
-    $self->{'indexers'}{$db}{'module'} || new
-    return $indexer->$function( {
-      'EXE'          => $self->{'databases'}{$db}{'exe'},
-      'DB'           => $db,
-      'species_defs' => $self->{'species_defs'},
-      'ID'           => $args->{$type},
-      'FORMAT'       => $args->{'FORMAT'},
-      'OPTIONS'      => $args->{'OPTIONS'},
-      'strand_mismatch' => $args->{'strand_mismatch'} 
-    } );
-  } else {
-    warn "No indexer for DB of type $db";
-    return [];
-  }
-}   
 
 1;

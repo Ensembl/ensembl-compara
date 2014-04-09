@@ -699,6 +699,7 @@ sub _matches { ## TODO - tidy this
   }
 
   my $table;
+  @rows = sort { $a->{'dbtype'} cmp $b->{'dbtype'} } @rows;
 
   if ($output_as_twocol) {
     $table = $self->new_twocol;

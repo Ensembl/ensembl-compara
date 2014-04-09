@@ -20,7 +20,7 @@ package EnsEMBL::Web::Component::Transcript::SupportingEvidenceAlignment;
 
 use strict;
 
-use base qw(EnsEMBL::Web::Component::Transcript);
+use parent qw(EnsEMBL::Web::Component::Transcript);
 
 sub _init {
   my $self = shift;
@@ -65,17 +65,12 @@ sub content {
     if (my $hit_object = $object->get_hit($id)) {
       my $hit_strand = $hit_object->strand * $hit_object->hstrand ;
       $strand_mismatch = $hit_strand != $transcript->strand ? 1 : 0;
-      my $rec = $hub->get_ext_seq($id, uc $query_db, $strand_mismatch);
+      my $rec = $hub->get_ext_seq(uc $query_db, {'id' => $id, 'strand_mismatch' => $strand_mismatch, 'translation' => 1});
 
-      if ($rec->[0]) {
-        if ($rec->[0] =~ /^>/) {
-          $ext_seq        = $rec->[0];
-          $ext_seq_length = $rec->[1];
-        }
-      }
-
-      if ($ext_seq) {
-        $hit_id = $id;
+      if ($rec->{'sequence'}) {
+        $ext_seq        = $rec->{'sequence'};
+        $ext_seq_length = $rec->{'length'};
+        $hit_id         = $id;
         last;
       }
     }
@@ -86,8 +81,7 @@ sub content {
       $ext_seq =~ s/\|.+//m;
     }
 
-    $ext_seq =~ s/ .+$//m if $hit_db_name =~ /Uniprot/i;
-    $ext_seq =~ s /^ //mg; # remove white space from the beginning of each line of sequence
+    $ext_seq =~ s/ .+$//m; # remove anything after a space in description
   }
 
   # working with DNA or PEP?

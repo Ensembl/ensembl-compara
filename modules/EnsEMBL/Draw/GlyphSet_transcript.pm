@@ -442,7 +442,6 @@ sub render_transcripts {
       $self->push($composite);
     }
   }
-  warn "Strand $strand";
   if ($transcript_drawn) {
     my $type = $self->type;
     my %legend_old = @{$self->{'legend'}{'gene_legend'}{$type}{'legend'}||[]};
