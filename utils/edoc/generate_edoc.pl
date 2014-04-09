@@ -21,45 +21,49 @@ use Data::Dumper;
 use warnings;
 use Time::HiRes qw(time);
 
-my @modules = qw( EnsEMBL ExaLead.pm ExaLead Acme );
+my @modules = qw( EnsEMBL );
 
 BEGIN{
   unshift @INC, "$Bin/../../conf";
   unshift @INC, "$Bin/../../modules";
   eval{ require SiteDefs };
   if ($@){ die "Can't use SiteDefs.pm - $@\n"; }
-  map{ unshift @INC, $_ } @SiteDefs::ENSEMBL_LIB_DIRS;
 }
 
-use EnsEMBL::Web::Tools::Document;
+use EnsEMBL::eDoc::Generator;
 
+my $VERSION     = $SiteDefs::ENSEMBL_VERSION;
 my $SERVER_ROOT = $SiteDefs::ENSEMBL_SERVERROOT;
-my $EXPORT      = $SiteDefs::ENSEMBL_WEBROOT.'/utils/edoc/temp/';
-my $SUPPORT     = $SiteDefs::ENSEMBL_WEBROOT.'/utils/edoc/support/';
-my @locations   = map { "$SiteDefs::ENSEMBL_WEBROOT/modules/$_" } @modules;
+my $WEB_ROOT    = $SiteDefs::ENSEMBL_WEBROOT;
 
-foreach( @SiteDefs::ENSEMBL_LIB_DIRS ) {
-  if( /plugins/ ) { 
-    push @locations, $_;
-  }
+my $EXPORT      = $WEB_ROOT.'/utils/edoc/temp';
+my $SUPPORT     = $WEB_ROOT.'/utils/edoc/support/';
+my @locations   = map { "$WEB_ROOT/modules/$_" } @modules;
+
+my @public_plugins = qw(ensembl orm users);
+
+foreach my $plugin (@public_plugins) {
+  push @locations, map { "$SERVER_ROOT/public-plugins/$plugin/modules/$_" } @modules;
 }
+
 foreach( @locations ) {
   print "$_\n";
 }
 
 mkdir $EXPORT, 0755 unless -e $EXPORT;
 my $start = time();
-my $document = EnsEMBL::Web::Tools::Document->new( (
-  directory => \@locations,
-  identifier => "###",
-  server_root => $SERVER_ROOT
+my $generator = EnsEMBL::eDoc::Generator->new( (
+  directories => \@locations,
+  identifier  => "###",
+  serverroot  => $SERVER_ROOT,
+  version     => $VERSION,
 ) );
 
 my $point_1 = time();
-$document->find_modules;
+$generator->find_modules($SERVER_ROOT);
 
 my $point_2 = time();
-$document->generate_html( $EXPORT, '/info/docs/webcode/edoc', $SUPPORT );
+$generator->generate_html( $EXPORT, '/info/docs/webcode/edoc', $SUPPORT );
 my $end = time();
 
 print "Directories documented:\n";
