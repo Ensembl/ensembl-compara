@@ -133,9 +133,18 @@ sub write_package_frame {
   open (my $fh, ">", $self->location . "/package.html") or die "$!: " . $self->location;
   print $fh $self->html_header( (class => "list" ));
   print $fh qq(<div class="heading">Packages</div>);
+  print $fh qq(<p><b>&nbsp;ensembl-webcode</b></p>);
   print $fh qq(<ul>);
-  foreach my $module (sort {$a->name cmp $b->name} @{ $modules }) {
-    print $fh '<li><a href="', $self->link_for_module($module), '" target="base">', $module->name, "</a></li>\n";
+  my $previous = '';
+  foreach my $module (sort {$a->plugin cmp $b->plugin || $a->name cmp $b->name} @{ $modules }) {
+    if ($module->plugin && $module->plugin ne $previous) {
+      print $fh qq(</ul>);
+      print $fh '<p><b>&nbsp;public-plugins/'.$module->plugin.'</b></p>';
+      print $fh qq(<ul>);
+    }
+    my $module_link = sprintf('<a href="%s" target="base">%s</a>', $self->link_for_module($module), $module->name);
+    print $fh "<li>$module_link</li>\n";
+    $previous = $module->plugin;
   }
   print $fh qq(</ul>);
   print $fh $self->html_footer;
