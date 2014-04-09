@@ -239,7 +239,7 @@ sub store_node_tags
         }
     }
 
-    my %mapped_tags = ('B' => 'bootstrap', 'SIS' => 'species_intersection_score', 'S' => 'species_tree_node_id');
+    my %mapped_tags = ('B' => 'bootstrap', 'SIS' => 'duplication_confidence_score', 'S' => 'species_tree_node_id');
     foreach my $tag (keys %mapped_tags) {
         my $db_tag = $mapped_tags{$tag};
         if ($node->has_tag($tag)) {

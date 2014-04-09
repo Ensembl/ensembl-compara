@@ -216,16 +216,6 @@ sub run_analysis {
     printf("%d genes in tree\n", scalar(@all_gene_leaves));
   }
 
-  # duplication confidence scores
-  foreach my $node (@{$gene_tree->get_all_nodes}) {
-      next unless scalar(@{$node->children});
-      if ($node->get_tagvalue('node_type') ne 'speciation') {
-          $self->duplication_confidence_score($node);
-      } else {
-          $node->delete_tag('duplication_confidence_score');
-      }
-  }
-
   #compare every gene in the tree with every other each gene/gene
   #pairing is a potential ortholog/paralog and thus we need to analyze
   #every possibility
@@ -399,46 +389,6 @@ sub get_ancestor_species_hash
 }
 
 
-sub duplication_confidence_score {
-  my $self = shift;
-  my $ancestor = shift;
-
-  # This assumes bifurcation!!! No multifurcations allowed
-  my ($child_a, $child_b, $dummy) = @{$ancestor->children};
-  $self->throw("tree is multifurcated in duplication_confidence_score\n") if (defined($dummy));
-  my @child_a_gdbs = keys %{$self->get_ancestor_species_hash($child_a)};
-  my @child_b_gdbs = keys %{$self->get_ancestor_species_hash($child_b)};
-  my %seen = ();  my @gdb_a = grep { ! $seen{$_} ++ } @child_a_gdbs;
-     %seen = ();  my @gdb_b = grep { ! $seen{$_} ++ } @child_b_gdbs;
-  my @isect = my @diff = my @union = (); my %count;
-  foreach my $e (@gdb_a, @gdb_b) { $count{$e}++ }
-  foreach my $e (keys %count) {
-    push(@union, $e); push @{ $count{$e} == 2 ? \@isect : \@diff }, $e; 
-  }
-
-  my $duplication_confidence_score = 0;
-  my $scalar_isect = scalar(@isect);
-  my $scalar_union = scalar(@union);
-  $duplication_confidence_score = (($scalar_isect)/$scalar_union) unless (0 == $scalar_isect);
-
-  $ancestor->store_tag("duplication_confidence_score", $duplication_confidence_score) unless ($self->param('_readonly'));
-
-  my $rounded_duplication_confidence_score = (int((100.0 * $scalar_isect / $scalar_union + 0.5)));
-  my $species_intersection_score = $ancestor->get_tagvalue("species_intersection_score");
-  unless (defined($species_intersection_score)) {
-    my $ancestor_node_id = $ancestor->node_id;
-    warn("Difference in the GeneTree: duplication_confidence_score [$duplication_confidence_score] whereas species_intersection_score [$species_intersection_score] is undefined in njtree - ancestor $ancestor_node_id\n");
-    return;
-  }
-  if ($species_intersection_score ne $rounded_duplication_confidence_score && !defined($self->param('_readonly'))) {
-    my $ancestor_node_id = $ancestor->node_id;
-    $self->throw("Inconsistency in the GeneTree: duplication_confidence_score [$duplication_confidence_score] != species_intersection_score [$species_intersection_score] -  $ancestor_node_id\n");
-  } else {
-    $ancestor->delete_tag('species_intersection_score');
-  }
-}
-
-
 sub delete_old_homologies {
     my $self = shift;
 
@@ -541,15 +491,6 @@ sub is_level4_orthologues
     return $has_match->{$pep1->seq_member_id}->{$pep2->genome_db_id} || $has_match->{$pep2->seq_member_id}->{$pep1->genome_db_id};
 }
 
-
-sub complain
-{
-    my $self = shift;
-    my $genepairlink = shift;
-
-    my ($pep1, $pep2) = $genepairlink->get_nodes;
-    printf ( "OOPS!!!! %s - %s\n", $pep1->gene_member->stable_id, $pep2->gene_member->stable_id);
-}
 
 
 ########################################################

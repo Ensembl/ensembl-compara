@@ -913,7 +913,7 @@ sub string_node {
             $str .= "DUP ";
         }
        my $sis = $self->get_tagvalue('duplication_confidence_score', 0) * 100;
-       $str .= sprintf('SIS=%d ', $sis);
+       $str .= sprintf('SIS=%.2f ', $sis);
     } elsif ($isdub) {
         $str .= "DD  ";
        $str .= 'SIS=0 ';
