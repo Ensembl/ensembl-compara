@@ -20,13 +20,8 @@ package EnsEMBL::Web::Component::Transcript::ExternalRecordAlignment;
 
 use strict;
 use warnings;
-no warnings "uninitialized";
-use base qw(EnsEMBL::Web::Component::Transcript);
-use POSIX;
 
-
-#use Data::Dumper;
-#$Data::Dumper::Maxdepth = 3;
+use parent qw(EnsEMBL::Web::Component::Transcript);
 
 sub _init {
   my $self = shift;
@@ -39,39 +34,26 @@ sub caption {
 }
 
 sub content {
-  my $self = shift;
-  my $object = $self->object;
-  my $trans = $object->Obj;
-  my $tsi = $object->stable_id;
-  my $hit_id = $object->param('sequence');
-  my $ext_db = $object->param('extdb');
+  my $self      = shift;
+  my $object    = $self->object;
+  my $trans     = $object->Obj;
+  my $tsi       = $object->stable_id;
+  my $hit_id    = $object->param('sequence');
+  my $ext_db    = $object->param('extdb');
 
   #get external sequence and type (DNA or PEP)
-  my ($ext_seq, $len) = @{$self->hub->get_ext_seq( $hit_id, $ext_db) || []};
-  $ext_seq = '' unless ($ext_seq =~ /^>/);
+  my $ext_seq   = $self->hub->get_ext_seq($ext_db, {'id' => $hit_id, 'translation' => 1});
 
-  $ext_seq =~ s /^ //mg; #remove white space from the beginning of each line of sequence
-  my $seq_type = $object->determine_sequence_type( $ext_seq );
+  return qq(<p>Unable to retrieve sequence for $hit_id from external service $ext_db.\n$ext_seq->{'error'}.</p>) unless $ext_seq->{'sequence'};
 
-  #get transcript sequence
-  my $trans_sequence = $object->get_int_seq($trans,$seq_type)->[0];
+  my $seq_type  = $object->determine_sequence_type($ext_seq->{'sequence'});
+  my $trans_seq = $object->get_int_seq($trans, $seq_type)->[0];
+  my $alignment = $object->get_alignment($ext_seq->{'sequence'}, $trans_seq, $seq_type) || '';
 
-  #get transcript alignment
-  my $html;
-  if ($ext_seq) {
-    my $trans_alignment = $object->get_alignment( $ext_seq, $trans_sequence, $seq_type );
-    if ($seq_type eq 'PEP') {
-      $html =  qq(<p>Alignment between external feature $hit_id and translation of transcript $tsi</p><p><pre>$trans_alignment</pre></p>);
-    }
-    else {
-      $html = qq(<p>Alignment between external feature $hit_id and transcript $tsi</p><p><pre>$trans_alignment</pre></p>);
-    }
-  }
-  else {
-    $html = qq(<p>Unable to retrieve sequence for $hit_id from external service $ext_db. Please try again later.</p>);
-  }
-  return $html;
-}		
+  return $seq_type eq 'PEP'
+    ? qq(<p>Alignment between external feature $hit_id and translation of transcript $tsi</p><p><pre>$alignment</pre></p>)
+    : qq(<p>Alignment between external feature $hit_id and transcript $tsi</p><p><pre>$alignment</pre></p>)
+  ;
+}
 
 1;
-
