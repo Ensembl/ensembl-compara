@@ -139,7 +139,7 @@ sub get_sequence {
   # throw error if no sequence retrieved
   throw exception('WebException', sprintf 'Could not find any sequence corresponding to id %s', $params->{'id'}) unless @seqs;
 
-  @seqs = sort { $b->length <=> $a->length } @seqs;
+  @seqs = sort { $b->{'length'} <=> $a->{'length'} } @seqs;
   @seqs = ($seqs[0]) unless $params->{'mutli'};
 
   # create fasta format sequence
