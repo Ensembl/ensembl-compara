@@ -166,14 +166,10 @@ sub write_output {
 
 
 sub post_cleanup {
-  my $self = shift;
+    my $self = shift;
 
-  if(my $gene_tree = $self->param('gene_tree')) {
-    $gene_tree->release_tree;
-    $self->param('gene_tree', undef);
-  }
-
-  $self->SUPER::post_cleanup if $self->can("SUPER::post_cleanup");
+    $self->param('gene_tree')->release_tree() if $self->param('gene_tree');
+    $self->SUPER::post_cleanup if $self->can("SUPER::post_cleanup");
 }
 
 
