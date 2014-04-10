@@ -26,16 +26,16 @@
 ALTER TABLE dnafrag AUTO_INCREMENT=200000000000001;
 
 INSERT INTO dnafrag (length, name, genome_db_id, coord_system_name, is_reference)
-SELECT MAX(chr_end), chr_name, genome_db_id, "lrg", 0
+SELECT MAX(chr_end), chr_name, member.genome_db_id, "lrg", 0
 FROM member LEFT JOIN dnafrag ON member.genome_db_id = dnafrag.genome_db_id AND member.chr_name = dnafrag.name
 WHERE chr_name LIKE "LRG%" and dnafrag.name IS NULL
-GROUP BY (chr_name, genome_db_id);
+GROUP BY chr_name, member.genome_db_id;
 
 INSERT INTO dnafrag (length, name, genome_db_id, coord_system_name, is_reference)
-SELECT MAX(chr_end), chr_name, genome_db_id, "unknown", 0
+SELECT MAX(chr_end), chr_name, member.genome_db_id, "unknown", 0
 FROM member LEFT JOIN dnafrag ON member.genome_db_id = dnafrag.genome_db_id AND member.chr_name = dnafrag.name
 WHERE dnafrag.name IS NULL
-GROUP BY (chr_name, genome_db_id);
+GROUP BY chr_name, member.genome_db_id;
 
 
 -- At this stage, all the chr_name are registered in dnafrag
