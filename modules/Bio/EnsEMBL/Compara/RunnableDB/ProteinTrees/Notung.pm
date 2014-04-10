@@ -43,7 +43,6 @@ sub param_defaults {
         'runtime_tree_tag'  => 'notung_runtime',
         'output_file'       => '#gene_tree_file#.rearrange.0',
         'run_treebest_sdi'  => 1,
-        'input_clusterset_id'       => 'treebest',
         'input_species_tree_label'  => 'binary',
     };
 }

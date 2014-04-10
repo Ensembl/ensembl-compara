@@ -102,6 +102,7 @@ sub default_options {
         'clustering_max_gene_halfcount' => 750,     # (half of the previously used 'clutering_max_gene_count=1500) affects 'hcluster_run'
 
     # tree building parameters:
+        'use_raxml'                 => 0,
         'treebreak_gene_count'      => 400,     # affects msa_chooser
         'mafft_gene_count'          => 200,     # affects msa_chooser
         'mafft_runtime'             => 7200,    # affects msa_chooser
@@ -553,8 +554,8 @@ sub pipeline_analyses {
         {   -logic_name    => 'make_binary_species_tree',
             -module        => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::CAFESpeciesTree',
             -parameters    => {
-                'label'         => 'default',
                 'new_label'     => 'binary',
+                'tree_fmt'      => '%{-x"*"}:%{d}',
             },
             -flow_into     => {
                 2 => [ 'hc_binary_species_tree' ],
@@ -726,7 +727,7 @@ sub pipeline_analyses {
                 'store_related_pep_sequences' => 1,
                 'allow_pyrrolysine'             => $self->o('allow_pyrrolysine'),
                 'find_canonical_translations_for_polymorphic_pseudogene' => 1,
-		    'store_missing_dnafrags'		=> 0,
+                'store_missing_dnafrags'        => 0,
             },
             -hive_capacity => $self->o('loadmembers_capacity'),
             -rc_name => '2Gb_job',
@@ -1051,7 +1052,7 @@ sub pipeline_analyses {
             -module             => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::CreateClustersets',
             -parameters         => {
                 member_type     => 'protein',
-                'additional_clustersets'    => [qw(treebest phyml-aa phyml-nt nj-dn nj-ds nj-mm)],
+                'additional_clustersets'    => [qw(treebest phyml-aa phyml-nt nj-dn nj-ds nj-mm raxml)],
             },
             -flow_into          => [ 'run_qc_tests' ],
         },
@@ -1242,7 +1243,23 @@ sub pipeline_analyses {
             -hive_capacity  => $self->o('split_genes_capacity'),
             -rc_name        => '500Mb_job',
             -batch_size     => 20,
-            -flow_into      => [ 'treebest', 'build_HMM_aa', 'build_HMM_cds' ],
+            -flow_into      => {
+                1   => [ 'build_HMM_aa', 'build_HMM_cds' ],
+                '1->A'   => [ $self->o('use_raxml') ? 'trimal' : 'treebest' ],
+                '999->A' => [ $self->o('use_raxml') ? 'treebest' : 'trimal' ],
+                'A->1'   => 'notung'
+            }
+        },
+
+        {   -logic_name     => 'trimal',
+            -module         => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::TrimAl',
+            -parameters => {
+                'trimal_exe'    => $self->o('trimal_exe'),
+            },
+            -hive_capacity  => $self->o('raxml_capacity'),
+            -rc_name        => '500Mb_job',
+            -batch_size     => 5,
+            -flow_into      => [ 'raxml' ],
         },
 
         {   -logic_name => 'treebest',
@@ -1257,10 +1274,18 @@ sub pipeline_analyses {
             -hive_capacity        => $self->o('treebest_capacity'),
             -rc_name => '4Gb_job',
             -flow_into => {
-                '1->A' => [ 'notung' ],
-                '2->A' => [ 'hc_tree_structure' ],
-                'A->1' => [ 'other_tree_factory' ],
+                2 => [ 'hc_tree_structure' ],
             }
+        },
+
+        {   -logic_name => 'raxml',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::RAxML',
+            -parameters => {
+                #'cdna'                      => 1,
+                'raxml_exe'              => $self->o('raxml_exe'),
+            },
+            -hive_capacity        => $self->o('raxml_capacity'),
+            -rc_name => '8Gb_job',
         },
 
         {   -logic_name => 'notung',
@@ -1269,10 +1294,14 @@ sub pipeline_analyses {
                 'notung_jar'                => $self->o('notung_jar'),
                 'treebest_exe'              => $self->o('treebest_exe'),
                 'label'                     => 'binary',
+                'input_clusterset_id'       => $self->o('use_raxml') ? 'raxml' : 'treebest',
             },
             -hive_capacity        => $self->o('treebest_capacity'),
             -rc_name => '2Gb_job',
-            -flow_into  => [ 'hc_alignment_post_tree' ],
+            -flow_into  => {
+                '1->A' => [ 'hc_alignment_post_tree' ],
+                'A->1' => [ 'other_tree_factory' ],
+            },
         },
 
         {   -logic_name         => 'hc_alignment_post_tree',
