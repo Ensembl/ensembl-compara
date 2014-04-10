@@ -27,18 +27,49 @@ use base qw(EnsEMBL::Web::Root);
 
 sub new {
   my ($class, $data) = @_;
-  my $self = {%$data};
+  warn "ERROR - contructor expects a hashref!" unless ref($data) eq 'HASH';
+  my $self = $data;
   bless $self, $class;
   return $self;
 }
 
-sub object :lvalue { $_[0]->{'object'}; }
-sub hub    :lvalue { $_[0]->{'hub'};    }
-sub page   :lvalue { $_[0]->{'page'};   }
-sub node   :lvalue { $_[0]->{'node'};   }
-sub r              { return $_[0]->page->renderer->r; }
+sub object { 
+  ## @getter
+  ## @return EnsEMBL::Web::Object::<type>
+  my $self = shift;
+  return $self->{'object'};
+}
+
+sub hub { 
+  ## @getter
+  ## @return EnsEMBL::Web::Hub
+  my $self = shift;
+  return $self->{'hub'};
+}
+
+sub page { 
+  ## @getter
+  ## @return EnsEMBL::Web::Document::Page::<type>
+  my $self = shift;
+  return $self->{'page'};
+}
+ 
+sub node { 
+  ## @getter
+  ## @return EnsEMBL::Web::DOM::Node
+  my $self = shift;
+  return $self->{'node'};
+}
+
+sub r { 
+  ## @getter
+  ## @return Apache2::RequestRec
+  my $self = shift;
+  return $self->{'page'}->renderer->r;
+}
 
 sub script_name {
+  ## Builds a valid URL for a given page
   my $self = shift;
   my $object = $self->object;
   my $path = $object->species_path . '/' if $object->species =~ /_/;
@@ -46,6 +77,7 @@ sub script_name {
 }
 
 sub ajax_redirect {
+  ## Wrapper around Page::ajax_redirect method
   my ($self, $url, $param, $anchor, $redirect_type, $modal_tab) = @_;
   $self->page->ajax_redirect($self->url($url, $param, $anchor), $redirect_type, $modal_tab);
 }
