@@ -1132,6 +1132,8 @@ sub production_name {
     return $nospaces;
 }
 
-sub DESTROY {}
+sub DESTROY {
+  ## Deliberately empty method - prevents call to AUTOLOAD when object is destroyed
+}
 
 1;

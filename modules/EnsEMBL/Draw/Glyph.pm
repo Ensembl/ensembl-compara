@@ -135,4 +135,8 @@ sub end {
     return $this->{'x'} + $this->{'width'};
 }
 
+sub DESTROY {
+  ## Deliberately empty method - prevents call to AUTOLOAD when object is destroyed
+}
+
 1;
