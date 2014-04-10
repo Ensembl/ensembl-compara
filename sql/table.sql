@@ -146,7 +146,7 @@ CREATE TABLE ncbi_taxa_name (
 CREATE TABLE genome_db (
   genome_db_id                int(10) unsigned NOT NULL AUTO_INCREMENT, # unique internal id
   taxon_id                    int(10) unsigned DEFAULT NULL, # KF taxon.taxon_id
-  name                        varchar(40) DEFAULT '' NOT NULL,
+  name                        varchar(128) DEFAULT '' NOT NULL,
   assembly                    varchar(100) DEFAULT '' NOT NULL,
   assembly_default            tinyint(1) DEFAULT 1,
   genebuild                   varchar(100) DEFAULT '' NOT NULL,
@@ -1701,4 +1701,6 @@ INSERT INTO meta (species_id, meta_key, meta_value)
   VALUES (NULL, 'patch', 'patch_75_76_c.sql|homoeologues');
 INSERT INTO meta (species_id, meta_key, meta_value)
   VALUES (NULL, 'patch', 'patch_75_76_d.sql|gene_member_seq_member');
+INSERT INTO meta (species_id, meta_key, meta_value)
+  VALUES (NULL, 'patch', 'patch_75_76_e.sql|genome_db.name');
 
