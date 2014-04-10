@@ -612,19 +612,12 @@ sub sets{
   my $hub            = $self->hub;
   my $object         = $self->object;
   my $status         = $object->status;
-  my @variation_sets = sort @{$object->get_variation_set_string};
+  my @variation_sets = sort @{$object->get_variation_sub_sets('Genotyping chip variants')};
 
   my @genotyping_sets_list;
 
   foreach my $vs (@variation_sets){
-    next unless $vs =~/Affy|Illumina/;  ## only showing genotyping chip sets
-    if($vs =~/Genotyping chip variants/){  ## tidy up display for human
-	$vs =~ s/Genotyping chip variants \(|\)//g;
-	@genotyping_sets_list = split/\,/,  $vs;
-    }
-    else{
-	push @genotyping_sets_list,  $vs;
-    }
+      push @genotyping_sets_list,  $vs->name();    
   }
   my $count = scalar @genotyping_sets_list;  
   
