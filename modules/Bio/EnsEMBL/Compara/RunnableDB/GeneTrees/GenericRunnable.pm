@@ -107,7 +107,15 @@ sub fetch_input {
     my $gene_tree_id     = $self->param_required('gene_tree_id');
     my $gene_tree        = $self->param('tree_adaptor')->fetch_by_dbID( $gene_tree_id ) or die "Could not fetch gene_tree with gene_tree_id='$gene_tree_id'";
 
+
+    if ($self->param('input_clusterset_id')) {
+        my $other_trees = $self->param('tree_adaptor')->fetch_all_linked_trees($gene_tree);
+        my ($selected_tree) = grep {$_->clusterset_id eq $self->param('input_clusterset_id')} @$other_trees;
+        die sprintf('Cannot find a "%s" tree for tree_id=%d', $self->param('input_clusterset_id'), $self->param('gene_tree_id')) unless $selected_tree;
+        $gene_tree = $selected_tree;
+    }
     $self->param('gene_tree', $gene_tree);
+
     $self->param('mlss_id',   $gene_tree->method_link_species_set_id);
 
     $gene_tree->preload();
@@ -189,14 +197,7 @@ sub run_generic_command {
         $member->{_tmp_name} = sprintf('%d_%d', $member->seq_member_id, $member->genome_db->species_tree_node_id);
     }
 
-    my $dumped_gene_tree = $gene_tree;
-    if ($self->param('input_clusterset_id')) {
-        my $other_trees = $self->param('tree_adaptor')->fetch_all_linked_trees($gene_tree);
-        my ($selected_tree) = grep {$_->clusterset_id eq $self->param('input_clusterset_id')} @$other_trees;
-        die sprintf('Cannot find a "%s" tree for tree_id=%d', $self->param('input_clusterset_id'), $self->param('gene_tree_id')) unless $selected_tree;
-        $dumped_gene_tree = $selected_tree;
-    }
-    $self->param('gene_tree_file', $self->get_gene_tree_file($dumped_gene_tree));
+    $self->param('gene_tree_file', $self->get_gene_tree_file($gene_tree));
 
     my $input_aln = $self->dumpTreeMultipleAlignmentToWorkdir($gene_tree) || die "Could not fetch alignment for ($gene_tree)";
     $self->param('alignment_file', $input_aln);
