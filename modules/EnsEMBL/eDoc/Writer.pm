@@ -199,6 +199,16 @@ sub write_hierarchy {
     $html .= '<div class="hier">No superclasses</div>';
   }
 
+  if ($module->plugin) {
+    my $path = $self->base."/".$self->path_from_class($module->name).'.html';
+    $html .= '<div class="hier">';
+    $html .= "<h3>Extends:</h3>\n";
+    $html .= "<ul>\n";
+    $html .= '<li>ensembl-webcode: <a href="' . $path . '">' . $module->name . "</a></li>\n";
+    $html .= "</ul>\n";
+    $html .= "</div>";
+  }
+
   if (@{ $module->subclasses } > 0) {
     $html .= '<div class="hier">';
     $html .= "<h3>Subclasses:</h3>\n";
