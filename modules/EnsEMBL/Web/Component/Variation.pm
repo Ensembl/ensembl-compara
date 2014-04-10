@@ -20,7 +20,7 @@ package EnsEMBL::Web::Component::Variation;
 
 use strict;
 
-use base qw(EnsEMBL::Web::Component);
+use base qw(EnsEMBL::Web::Component::Shared);
 
 sub trim_large_allele_string {
   my $self        = shift;

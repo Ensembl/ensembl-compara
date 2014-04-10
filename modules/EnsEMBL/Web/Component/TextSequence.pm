@@ -25,7 +25,7 @@ use RTF::Writer;
 use EnsEMBL::Web::Fake;
 use EnsEMBL::Web::TmpFile::Text;
 
-use base qw(EnsEMBL::Web::Component);
+use base qw(EnsEMBL::Web::Component::Shared);
 
 sub new {
   my $class = shift;
