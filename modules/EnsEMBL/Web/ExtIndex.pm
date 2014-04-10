@@ -1,4 +1,3 @@
-#!/usr/local/bin/perl -w
 =head1 LICENSE
 
 Copyright [1999-2014] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
@@ -25,6 +24,8 @@ use strict;
 use warnings;
 
 use IO::Socket::INET;
+use LWP::UserAgent;
+use HTTP::Request;
 
 use EnsEMBL::Web::Exceptions;
 
@@ -64,11 +65,29 @@ sub get_server {
     Timeout   => 10
   );
 
-  throw exception('WebException', 'Cannot connect to the external db server') unless $server;
+  throw exception('WebException', 'Could not connect to the external db server') unless $server;
 
   $server->autoflush(1);
 
   return $server;
+}
+
+sub do_http_request {
+  ## Make an http requst to the given url
+  ## @param Method type (GET or POST)
+  ## @param URL to make request to
+  my ($self, $method, $service_url) = @_;
+
+  if (!$self->{'_ua'}) {
+    $self->{'_ua'} = LWP::UserAgent->new;
+    $self->{'_ua'}->proxy([qw(http https)], $_) for $self->hub->species_defs->ENSEMBL_WWW_PROXY || ();
+  }
+
+  my $response = $self->{'_ua'}->request(HTTP::Request->new($method, $service_url));
+
+  throw exception('WebException', sprintf 'Failed %s request to %s: %s', $method, $service_url, $response->message) if $response->is_error;
+
+  return $response->content;
 }
 
 sub output_to_fasta {

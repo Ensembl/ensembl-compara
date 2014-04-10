@@ -17,6 +17,8 @@ limitations under the License.
 =cut
 
 package EnsEMBL::Web::Apache::Error;
+
+### Serves standard Apache error messages within an Ensembl static page
        
 use strict;
 

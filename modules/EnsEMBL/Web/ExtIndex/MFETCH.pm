@@ -26,7 +26,7 @@ use parent qw(EnsEMBL::Web::ExtIndex);
 sub get_sequence {
   my ($self, $params) = @_;
 
-  my $id  = $params->{'id'} or return [];
+  my $id  = $params->{'id'} or return;
   my $db  = $params->{'db'};
   my $sd  = $self->hub->species_defs;
   my $str = $id;

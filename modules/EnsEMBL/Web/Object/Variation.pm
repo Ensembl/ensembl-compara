@@ -1141,6 +1141,20 @@ sub get_variation_sets {
   return $sets;
 }
 
+sub get_variation_sub_sets {
+
+  my $self          = shift;
+  my $superset_name = shift;
+
+  my $vari_set_adaptor = $self->hub->database('variation')->get_VariationSetAdaptor;
+
+  my $superset_obj = $vari_set_adaptor->fetch_by_name($superset_name);
+
+  my $sets = $vari_set_adaptor->fetch_all_by_Variation_super_VariationSet($self->vari, $superset_obj); 
+  return $sets;
+}
+
+
 # Variation mapping ###########################################################
 
 

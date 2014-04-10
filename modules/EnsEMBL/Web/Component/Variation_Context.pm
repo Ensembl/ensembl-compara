@@ -20,7 +20,7 @@ package EnsEMBL::Web::Component::Variation_Context;
 
 use strict;
 
-use base qw(EnsEMBL::Web::Component);
+use base qw(EnsEMBL::Web::Component::Shared);
 
 sub _init {
   my $self = shift;

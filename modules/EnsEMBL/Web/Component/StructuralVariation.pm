@@ -21,7 +21,7 @@ package EnsEMBL::Web::Component::StructuralVariation;
 
 use strict;
 
-use base qw(EnsEMBL::Web::Component);
+use base qw(EnsEMBL::Web::Component::Shared);
 
 1;
 

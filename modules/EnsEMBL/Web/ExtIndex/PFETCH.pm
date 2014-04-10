@@ -29,7 +29,7 @@ sub get_sequence {
   my ($self, $params) = @_;
 
   # Get the ID to pfetch
-  my $str = $params->{'id'} or return [];
+  my $str = $params->{'id'} or return;
 
   # Additional options
   $str .= " -D"         if ($params->{'options'} || '') eq 'desc';

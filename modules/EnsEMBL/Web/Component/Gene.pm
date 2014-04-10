@@ -23,7 +23,7 @@ use strict;
 use EnsEMBL::Web::TmpFile::Text;
 use EnsEMBL::Web::TmpFile::Image;
 
-use base qw(EnsEMBL::Web::Component);
+use base qw(EnsEMBL::Web::Component::Shared);
 
 sub draw_structure {
   my ($self, $display_name, $is_thumbnail) = @_;
