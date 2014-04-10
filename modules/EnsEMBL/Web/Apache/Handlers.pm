@@ -18,6 +18,10 @@ limitations under the License.
 
 package EnsEMBL::Web::Apache::Handlers;
 
+### Uses mod_perl to replace the normal Apache server functionality,
+### initialising and cleaning up child processes
+### Handles URL routing, cookies, errors, mirror redirects 
+
 use strict;
 
 use Apache2::Const qw(:common :http :methods);
@@ -61,9 +65,9 @@ BEGIN {
 # Perl apache handlers in order they get executed                      #
 #======================================================================#
 
-# Child Init Handler
-# Sets up the web registry object - and initializes the timer
 sub childInitHandler {
+## Initiates an Apache child process, sets up the web registry object,
+## and initializes the timer
   my $r = shift;
   
   my @X             = localtime;
@@ -88,7 +92,8 @@ sub childInitHandler {
 
 
 sub redirect_to_nearest_mirror {
-  ## This does not do an actual HTTP redirect, but sets a cookie that tells the JavaScript to perform a client side redirect after specified time interval
+## Redirects requests based on IP address - only used if the ENSEMBL_MIRRORS site parameter is configured
+## This does not do an actual HTTP redirect, but sets a cookie that tells the JavaScript to perform a client side redirect after specified time interval
   my $r           = shift;
   my $server_name = $species_defs->ENSEMBL_SERVERNAME;
 
