@@ -62,6 +62,7 @@ Other parameters:
  - ryo_species_tree: Roll-Your-Own format string for the species-tree
  - input_clusterset_id: alternative clusterset_id for the input gene tree
  - run_treebest_sdi: do we have to pass the output tree through "treebest sdi"
+ - output_clusterset_id: alternative clusterset_id to store the result gene tree
 
 =head1 APPENDIX
 
@@ -91,6 +92,7 @@ sub param_defaults {
 
         'input_clusterset_id'       => undef,
         'input_species_tree_label'  => undef,
+        'output_clusterset_id'      => undef,
 
         'run_treebest_sdi'  => 0,
     };
@@ -133,7 +135,21 @@ sub write_output {
         if ($self->param('read_tags')) {
             $self->store_tags($self->param('gene_tree'), $self->param('tags'));
         } else {
-            $self->store_genetree($self->param('gene_tree'), []);
+            my $in_tree = $self->param('gene_tree');
+            my $newick_output = $self->param('newick_output');
+            my $out_tree = $in_tree;
+            if ($self->param('output_clusterset_id') and $self->param('output_clusterset_id') ne 'default') {
+                $out_tree = $self->store_alternative_tree($newick_output, $self->param('output_clusterset_id'), $in_tree);
+            } else {
+                $self->parse_newick_into_tree($newick_output, $in_tree);
+                $self->store_genetree($in_tree, []);
+            }
+
+            # check that the tree is binary
+            foreach my $node (@{$out_tree->get_all_nodes}) {
+                next if $node->is_leaf;
+                die if scalar(@{$node->children}) != 2;
+            }
         }
         $self->param('gene_tree')->store_tag($self->param('runtime_tree_tag'), $self->param('runtime_msec')) if $self->input_job->param_exists('runtime_tree_tag');
     }
@@ -214,15 +230,7 @@ sub run_generic_command {
         if ($self->param('run_treebest_sdi')) {
             $output = $self->run_treebest_sdi($output, 0);
         }
-
-        #parse the tree into the data structure:
-        $self->parse_newick_into_tree($output, $gene_tree);
-
-        # check that the tree is binary
-        foreach my $node (@{$gene_tree->get_all_nodes}) {
-            next if $node->is_leaf;
-            die if scalar(@{$node->children}) != 2;
-        }
+        $self->param('newick_output', $output);
 
     }
 
