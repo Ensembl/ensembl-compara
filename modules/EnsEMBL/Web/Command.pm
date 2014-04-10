@@ -35,7 +35,7 @@ sub new {
 
 sub object { 
   ## @getter
-  ## @return EnsEMBL::Web::Object::<type>
+  ## @return EnsEMBL::Web::Object::[type]
   my $self = shift;
   return $self->{'object'};
 }
@@ -49,7 +49,7 @@ sub hub {
 
 sub page { 
   ## @getter
-  ## @return EnsEMBL::Web::Document::Page::<type>
+  ## @return EnsEMBL::Web::Document::Page::[type]
   my $self = shift;
   return $self->{'page'};
 }
