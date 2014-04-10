@@ -18,6 +18,9 @@ limitations under the License.
 
 package EnsEMBL::Web::Registry;
 
+### Simple object to give EnsEMBL::Web::Apache::Handlers and other 
+### non-component modules access to SpeciesDefs and Timer functionality 
+
 use strict;
 
 use EnsEMBL::Web::SpeciesDefs;
@@ -35,8 +38,21 @@ sub new {
   return $self;
 }
 
-sub species_defs { return $_[0]{'species_defs'} ||= EnsEMBL::Web::SpeciesDefs->new; }
-sub timer        { return $_[0]{'timer'}        ||= EnsEMBL::Web::Timer->new;       }
-sub timer_push   { shift->timer->push(@_); }
+sub species_defs { 
+  ## @accessor
+  ## @return EnsEMBL::Web::SpeciesDefs
+  return $_[0]{'species_defs'} ||= EnsEMBL::Web::SpeciesDefs->new; 
+}
+
+sub timer        { 
+  ## @accessor
+  ## @return EnsEMBL::Web::Timer
+  return $_[0]{'timer'}        ||= EnsEMBL::Web::Timer->new;       
+}
+
+sub timer_push   { 
+  ## Wrapper around EnsEMBL::Web::Timer::push method
+  shift->timer->push(@_); 
+}
 
 1;
