@@ -20,9 +20,10 @@ package EnsEMBL::Web::Component;
 
 ### Parent module for page components that output HTML content
 ###
-### Contains a good deal of functionality that is shared
-### between objects of different types (some of which needs
-### factoring out!)
+### Note: should only contain functionality that is generic enough to be used 
+### in any component. If you have an output method that needs to be shared
+### between components descended from different object types, put it into 
+### EnsEMBL::Web::Component::Shared, which has been set up for this usage
 
 use strict;
 

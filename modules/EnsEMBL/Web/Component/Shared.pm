@@ -19,7 +19,7 @@ limitations under the License.
 package EnsEMBL::Web::Component::Shared;
 
 ### Parent module for page components that share methods across object types 
-### e.g. a table that needs to appear on both Gene and Transcript pages
+### e.g. a table of transcripts that needs to appear on both Gene and Transcript pages
 
 use strict;
 
