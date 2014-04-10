@@ -159,8 +159,9 @@ sub find_methods {
                      ));
     $self->add_method($new_method);
   }
+  my @isa = @{$documentation{isa}||[]};
   if ($documentation{isa}) {
-    my @superclasses = @{$documentation{isa}};
+    my @superclasses = @{$documentation{isa}||[]};
     foreach my $class (@superclasses) {
       $self->add_superclass($class);
     }
@@ -218,21 +219,19 @@ sub _parse_package_file {
     next unless $_;
 
     ## Get parent(s)
-    if (/\@ISA/ || /^use [base|parent] qw\(([a-zA-Z:\s]+)\);/) {
-      if (/\@ISA/) {
-        my ($nothing, $isa) = split /=/;
-        if ($isa) {
-          $isa =~ s/qw|\(|\)|;//g;
-          chomp $isa;
-          $isa =~ s/\s+//g;
-          $docs{isa} = [$isa];
-        }
+    if (/\@ISA/) {
+      my ($nothing, $isa) = split /=/;
+      if ($isa) {
+        $isa =~ s/qw|\(|\)|;//g;
+        chomp $isa;
+        $isa =~ s/\s+//g;
+        $docs{isa} = [$isa];
       }
-      else {
-        my @isa = split(/\s+/, $1);
-        $docs{isa} = \@isa;
-      }
-      next;
+    }
+    #elsif (/^use [base|parent] qw\(([a-zA-Z:\s]+)\);/) {
+    elsif (/^use (base|parent) qw\(([a-zA-Z:\s]+)\);/) {
+      my @isa = split(/\s+/, $2);
+      $docs{isa} = \@isa;
     }
 
     ## Get overview
