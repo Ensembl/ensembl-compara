@@ -18,6 +18,12 @@ limitations under the License.
 
 package EnsEMBL::Web::Component;
 
+### Parent module for page components that output HTML content
+###
+### Contains a good deal of functionality that is shared
+### between objects of different types (some of which needs
+### factoring out!)
+
 use strict;
 
 use base qw(EnsEMBL::Web::Root Exporter);
@@ -50,10 +56,17 @@ sub new {
   my $id    = [split /::/, $class]->[-1];
   
   my $self = {
-    hub      => $hub,
-    builder  => shift,
-    renderer => shift,
-    id       => $id
+    hub           => $hub,
+    builder       => shift,
+    renderer      => shift,
+    id            => $id,
+    object        => undef,
+    cacheable     => 0,
+    ajaxable      => 0,
+    configurable  => 0,
+    has_image     => 0,
+    format        => undef,
+    html_format   => undef,
   };
   
   if ($hub) { 
@@ -68,17 +81,118 @@ sub new {
   return $self;
 }
 
+#################### ACCESSORS ###############################
+
 sub id {
+  ## @accessor
+  ## @return String (last element of package namespace)
   my $self = shift;
   $self->{'id'} = shift if @_;
   return $self->{'id'};
 }
 
-sub builder     { return $_[0]->{'builder'};     }
-sub hub         { return $_[0]->{'hub'};         }
-sub renderer    { return $_[0]->{'renderer'};    }
-sub view_config { return $_[0]->{'view_config'}; }
-sub dom         { return $_[0]->{'dom'} ||= EnsEMBL::Web::DOM->new; }
+sub builder {
+  ## @getter
+  ## @return EnsEMBL::Web::Builder
+  my $self = shift;
+  return $self->{'builder'};
+}
+
+sub hub {
+  ## @getter
+  ## @return EnsEMBL::Web::Hub
+  my $self = shift;
+  return $self->{'hub'};
+}
+
+sub renderer {
+  ## @getter
+  ## @return EnsEMBL::Web::Renderer
+  my $self = shift;
+  return $self->{'renderer'};
+}
+
+sub view_config { 
+  ## @getter
+  ## @return EnsEMBL::Web::ViewConfig::[type]
+  my $self = shift;
+  return $self->{'view_config'};
+}
+
+sub dom { 
+  ## @getter
+  ## @return EnsEMBL::Web::DOM
+  my $self = shift;
+  unless ($self->{'dom'}) {
+    $self->{'dom'} = EnsEMBL::Web::DOM->new;
+  }
+  return $self->{'dom'}; 
+}
+
+sub object {
+  ## @accessor
+  ## Included for backwards compatibility
+  ## @return EnsEMBL::Web::Object::[type]
+  my $self = shift;
+  $self->{'object'} = shift if @_;
+  return $self->builder ? $self->builder->object : $self->{'object'};
+}
+
+sub cacheable {
+  ## @accessor
+  ## @return Boolean
+  my $self = shift;
+  $self->{'cacheable'} = shift if @_;
+  return $self->{'cacheable'};
+}
+
+sub mcacheable {
+  # temporary method in e75 only - will be replaced in 76 (hr5)
+  return 1;
+}
+
+sub ajaxable {
+  ## @accessor
+  ## @return Boolean
+  my $self = shift;
+  $self->{'ajaxable'} = shift if @_;
+  return $self->{'ajaxable'};
+}
+
+sub configurable {
+  ## @accessor
+  ## @return Boolean
+  my $self = shift;
+  $self->{'configurable'} = shift if @_;
+  return $self->{'configurable'};
+}
+
+sub has_image {
+  ## @accessor
+  ## @return Boolean
+  my $self = shift;
+  $self->{'has_image'} = shift if @_;
+  return $self->{'has_image'};
+}
+
+sub format {
+  ## @accessor
+  ## @return String (output file format)
+  my $self = shift;
+  ## TODO Shouldn't hub param override an already set value?
+  $self->{'format'} ||= $self->hub->param('_format') || 'HTML';
+  $self->{'html_format'} = 1 if $self->{'format'} eq 'HTML';
+  return $self->{'format'};
+}
+
+sub html_format {
+  ## @accessor
+  ## @return Boolean
+  my $self = shift;
+  return $self->{'html_format'} ||= $self->format eq 'HTML';
+}
+
+########### END OF ACCESSORS ###################
 
 sub content_pan_compara {
   my $self = shift;
@@ -110,41 +224,6 @@ sub content_other_pan_compara {
   return $self->content_other('compara_pan_ensembl');
 }
 
-sub object {
-  ## Tries to be backwards compatible
-  my $self = shift;
-  $self->{'object'} = shift if @_;
-  return $self->builder ? $self->builder->object : $self->{'object'};
-}
-
-sub cacheable {
-  my $self = shift;
-  $self->{'cacheable'} = shift if @_;
-  return $self->{'cacheable'};
-}
-
-sub mcacheable {
-  # temporary method in e75 only - will be replaced in 76 (hr5)
-  return 1;
-}
-
-sub ajaxable {
-  my $self = shift;
-  $self->{'ajaxable'} = shift if @_;
-  return $self->{'ajaxable'};
-}
-
-sub configurable {
-  my $self = shift;
-  $self->{'configurable'} = shift if @_;
-  return $self->{'configurable'};
-}
-
-sub has_image {
-  my $self = shift;
-  $self->{'has_image'} = shift if @_;
-  return $self->{'has_image'} || 0;
-}
 
 sub get_content {
   my ($self, $function) = @_;
@@ -229,16 +308,6 @@ sub set_cache_key {
 sub cache_print {
   my ($cache, $string_ref) = @_;
   $cache->print($$string_ref) if $string_ref;
-}
-
-sub format {
-  my $self = shift;
-  return $self->{'format'} ||= $self->hub->param('_format') || 'HTML';
-}
-
-sub html_format {
-  my $self = shift;
-  return $self->{'html_format'} ||= $self->format eq 'HTML';
 }
 
 sub html_encode {
