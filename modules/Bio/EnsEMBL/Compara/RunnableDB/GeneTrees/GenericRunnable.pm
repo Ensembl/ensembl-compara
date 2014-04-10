@@ -221,7 +221,7 @@ sub run_generic_command {
         $self->throw(sprintf('"%s" resulted in an error code=%d. stderr is: %s', $run_cmd->cmd, $run_cmd->exit_code, $run_cmd->err));
     }
 
-    my $output = $self->param('output_file') ? $self->_slurp($self->param('output_file')) : $run_cmd->out;
+    my $output = $self->param('output_file') ? $self->_slurp($self->worker_temp_directory.'/'.$self->param('output_file')) : $run_cmd->out;
 
     if ($self->param('read_tags')) {
         $self->param('tags', $self->get_tags($output));
@@ -247,8 +247,8 @@ sub get_gene_tree_file {
     foreach my $leaf (@{$gene_tree->root->get_all_leaves}) {
         $leaf->taxon_id($leaf->genome_db->species_tree_node_id);
     }
-    my $gene_tree_file = sprintf('%s/gene_tree_%d.nhx', $self->worker_temp_directory, $gene_tree->root_id);
-    open( my $genetree, '>', $gene_tree_file) or die "Could not open '$gene_tree_file' for writing : $!";
+    my $gene_tree_file = sprintf('gene_tree_%d.nhx', $gene_tree->root_id);
+    open( my $genetree, '>', $self->worker_temp_directory."/".$gene_tree_file) or die "Could not open '$gene_tree_file' for writing : $!";
     print $genetree $gene_tree->newick_format('ryo','%{-m}%{"_"-x}:%{d}');
     close $genetree;
 
