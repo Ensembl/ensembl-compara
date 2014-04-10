@@ -126,7 +126,7 @@ sub fetch_input {
     $self->param('minimum_genes', 0   ) unless $self->input_job->param_exists('minimum_genes');
     $self->param('maximum_genes', 1e9 ) unless $self->input_job->param_exists('maximum_genes');
     $self->param('split_genes',   {}  );
-    $self->param('command_run',   0   );
+    $self->param('cmd_output',  undef );
 }
 
 
@@ -140,28 +140,30 @@ sub run {
 sub write_output {
     my $self = shift;
 
-    if ($self->param('command_run')) {
-        if ($self->param('read_tags')) {
-            $self->store_tags($self->param('gene_tree'), $self->param('tags'));
-        } else {
-            my $in_tree = $self->param('gene_tree');
-            my $newick_output = $self->param('newick_output');
-            my $out_tree = $in_tree;
-            if ($self->param('output_clusterset_id') and $self->param('output_clusterset_id') ne 'default') {
-                $out_tree = $self->store_alternative_tree($newick_output, $self->param('output_clusterset_id'), $in_tree);
-            } else {
-                $self->parse_newick_into_tree($newick_output, $in_tree);
-                $self->store_genetree($in_tree, []);
-            }
+    my $cmd_output = $self->param('cmd_output');
+    return unless $cmd_output;
 
-            # check that the tree is binary
-            foreach my $node (@{$out_tree->get_all_nodes}) {
-                next if $node->is_leaf;
-                die if scalar(@{$node->children}) != 2;
-            }
+    my $target_tree = $self->param('gene_tree');
+
+    if ($self->param('read_tags')) {
+        $self->store_tags($target_tree, $self->get_tags($cmd_output));
+
+    } else {
+        if ($self->param('output_clusterset_id') and $self->param('output_clusterset_id') ne 'default') {
+            $target_tree = $self->store_alternative_tree($cmd_output, $self->param('output_clusterset_id'), $target_tree);
+        } else {
+            $self->parse_newick_into_tree($cmd_output, $target_tree);
+            $self->store_genetree($target_tree, []);
         }
-        $self->param('gene_tree')->store_tag($self->param('runtime_tree_tag'), $self->param('runtime_msec')) if $self->input_job->param_exists('runtime_tree_tag');
+
+        # check that the tree is binary
+        foreach my $node (@{$target_tree->get_all_nodes}) {
+            next if $node->is_leaf;
+            die if scalar(@{$node->children}) != 2;
+        }
     }
+    $target_tree->store_tag($self->param('runtime_tree_tag'), $self->param('runtime_msec')) if $self->input_job->param_exists('runtime_tree_tag');
+    $target_tree->release_tree();
 }
 
 
@@ -189,7 +191,7 @@ sub run_generic_command {
     # The order is important to have the stn_ids tags attached to the gene-tree leaves
     $self->param('species_tree_file', $self->get_species_tree_file());
 
-    # This is needed for check_split_genes
+    # This is needed for check_split_genes and parse_filtered_align
     foreach my $member (@{$gene_tree->get_all_Members}) {
         $member->{_tmp_name} = sprintf('%d_%d', $member->seq_member_id, $member->genome_db->species_tree_node_id);
     }
@@ -217,23 +219,12 @@ sub run_generic_command {
     if ($run_cmd->exit_code) {
         $self->throw(sprintf('"%s" resulted in an error code=%d. stderr is: %s', $run_cmd->cmd, $run_cmd->exit_code, $run_cmd->err));
     }
-
-    my $output = $self->param('output_file') ? $self->_slurp($self->worker_temp_directory.'/'.$self->param('output_file')) : $run_cmd->out;
-
-    if ($self->param('read_tags')) {
-        $self->param('tags', $self->get_tags($output));
-
-    } else {
-
-        if ($self->param('run_treebest_sdi')) {
-            $output = $self->run_treebest_sdi($output, 0);
-        }
-        $self->param('newick_output', $output);
-
-    }
-
-    $self->param('command_run', 1);
     $self->param('runtime_msec', $run_cmd->runtime_msec);
+
+    $self->param('output_file', $self->worker_temp_directory.'/'.$self->param('output_file')) if $self->param('output_file');
+    my $output = $self->param('output_file') ? $self->_slurp($self->param('output_file')) : $run_cmd->out;
+    $output = $self->run_treebest_sdi($output, 0) if $self->param('run_treebest_sdi');
+    $self->param('cmd_output', $output);
 }
 
 
