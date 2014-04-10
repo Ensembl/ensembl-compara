@@ -244,9 +244,9 @@ sub _parse_package_file {
     }
 
     ## Get method documentation
-    if (/^sub (\w+) {/) {
+    if (/^sub ([a-zA-Z|_]+)\s+(\:lvalue )?{/) {
       $sub_name = $1;
-      $sub_line = $1;
+      $sub_line = 1;
       $header = 1;
       $params = 0;
       $subs->{$sub_name} = {'name' => $sub_name, 'section' => 'undocumented'};
@@ -267,7 +267,7 @@ sub _parse_package_file {
       }
       if ($header) {
         ## One-letter code
-        if (/###([a-z]) /) {
+        if (/###([a-z]) / || /###([a-z])$/) {
           my $type = $self->keywords->{$1};
           $self->_add_type_to_method($subs->{$sub_name}, $type);
         }
@@ -278,7 +278,7 @@ sub _parse_package_file {
             $params++;
             $comment =~ s/\@param/<b>Arg[$params]<\/b>:/;
           }
-          elsif ($comment =~ /^\@(accessor|constructor|private|protected)/) {
+          elsif ($comment =~ /^\@(accessor|getter|setter|constructor|private|protected)/) {
             my $type = $1;
             $comment = '';
             $self->_add_type_to_method($subs->{$sub_name}, $type);
@@ -335,6 +335,9 @@ sub _add_type_to_method {
   ## Some mutually exclusive method types are used in TOC
   if ($type =~ /accessor|constructor/) {
     $sub_info->{section} = $type;
+  }
+  elsif ($type =~ /getter|setter/) {
+    $sub_info->{section} = 'accessor';
   }
   else {
     $sub_info->{section} = 'miscellaneous';
