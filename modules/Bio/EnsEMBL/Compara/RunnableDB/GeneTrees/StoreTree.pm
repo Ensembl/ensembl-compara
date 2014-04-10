@@ -478,8 +478,8 @@ sub store_alternative_tree {
     return $newtree;
 }
 
-sub store_filtered_align {
-    my ($self, $alnfile_ini, $alnfile_filtered) = @_;
+sub parse_filtered_align {
+    my ($self, $alnfile_ini, $alnfile_filtered, $allow_missing_members) = @_;
 
     # Loads the filtered alignment strings
     my %hash_filtered_strings = ();
@@ -504,6 +504,25 @@ sub store_filtered_align {
 
         foreach my $seq ($aln->each_seq) {
             $hash_initial_strings{$seq->display_id()} = $seq->seq();
+        }
+    }
+
+    if ($allow_missing_members) {
+        my $treenode_adaptor = $self->compara_dba->get_GeneTreeNodeAdaptor;
+
+        foreach my $leaf (@{$self->param('gene_tree')->get_all_leaves()}) {
+            next if exists $hash_filtered_strings{$leaf->{_tmp_name}};
+
+            print "removing ".$leaf->stable_id." keys: ".keys(%hash_initial_strings)."\n";
+            delete($hash_initial_strings{$leaf->{_tmp_name}});
+            print "after keys: ".keys(%hash_initial_strings)."\n";
+
+            $leaf->disavow_parent;
+            $treenode_adaptor->delete_flattened_leaf( $leaf );
+            my $sth = $self->compara_dba->dbc->prepare('INSERT IGNORE INTO removed_member (node_id, stable_id, genome_db_id) VALUES (?,?,?)');
+            print $self->param('gene_tree_id').", $leaf->stable_id, $leaf->genome_db_id, \n" ;
+            $sth->execute($leaf->node_id, $leaf->stable_id, $leaf->genome_db_id );
+            $sth->finish;
         }
     }
 
