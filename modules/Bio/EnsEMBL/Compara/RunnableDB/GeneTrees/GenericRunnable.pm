@@ -177,7 +177,8 @@ sub run_generic_command {
     }
     $self->param('gene_tree_file', $self->get_gene_tree_file($dumped_gene_tree));
 
-    $self->param('alignment_file', $self->dumpTreeMultipleAlignmentToWorkdir($gene_tree));
+    my $input_aln = $self->dumpTreeMultipleAlignmentToWorkdir($gene_tree) || die "Could not fetch alignment for ($gene_tree)";
+    $self->param('alignment_file', $input_aln);
 
     warn sprintf("Number of elements: %d leaves, %d split genes\n", scalar(@{$gene_tree->get_all_Members}), scalar(keys %{$self->param('split_genes')}));
 
