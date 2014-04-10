@@ -168,6 +168,11 @@ sub run_generic_command {
     # The order is important to have the stn_ids tags attached to the gene-tree leaves
     $self->param('species_tree_file', $self->get_species_tree_file());
 
+    # This is needed for check_split_genes
+    foreach my $member (@{$gene_tree->get_all_Members}) {
+        $member->{_tmp_name} = sprintf('%d_%d', $member->seq_member_id, $member->genome_db->species_tree_node_id);
+    }
+
     my $dumped_gene_tree = $gene_tree;
     if ($self->param('input_clusterset_id')) {
         my $other_trees = $self->param('tree_adaptor')->fetch_all_linked_trees($gene_tree);
