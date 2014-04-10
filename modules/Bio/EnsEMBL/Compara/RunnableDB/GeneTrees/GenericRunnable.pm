@@ -196,7 +196,7 @@ sub run_generic_command {
     my $cmd = sprintf('cd %s; %s', $self->worker_temp_directory, $self->param_required('cmd'));
     my $run_cmd = $self->run_command($cmd);
     if ($run_cmd->exit_code) {
-        $self->throw(sprintf('"$full_cmd" resulted in an error code="%d. stderr is:"', $run_cmd->cmd, $run_cmd->exit_code, $run_cmd->err));
+        $self->throw(sprintf('"%s" resulted in an error code=%d. stderr is: %s', $run_cmd->cmd, $run_cmd->exit_code, $run_cmd->err));
     }
 
     my $output = $self->param('output_file') ? $self->_slurp($self->param('output_file')) : $run_cmd->out;
@@ -234,9 +234,9 @@ sub get_gene_tree_file {
         $leaf->taxon_id($leaf->genome_db->species_tree_node_id);
     }
     my $gene_tree_file = sprintf('%s/gene_tree_%d.nhx', $self->worker_temp_directory, $gene_tree->root_id);
-    open( my $speciestree, '>', $gene_tree_file) or die "Could not open '$gene_tree_file' for writing : $!";
-    print $speciestree $gene_tree->newick_format('ryo','%{-m}%{"_"-x}:%{d}');;
-    close $speciestree;
+    open( my $genetree, '>', $gene_tree_file) or die "Could not open '$gene_tree_file' for writing : $!";
+    print $genetree $gene_tree->newick_format('ryo','%{-m}%{"_"-x}:%{d}');
+    close $genetree;
 
     return $gene_tree_file;
 }
@@ -245,7 +245,7 @@ sub _load_species_tree_string_from_db {
     my ($self) = @_;
     my $species_tree = $self->param('gene_tree')->species_tree($self->param('input_species_tree_label') || 'default');
     $species_tree->attach_to_genome_dbs();
-    $self->param('species_tree_string', $species_tree->root->newick_format('ryo', $self->param('ryo_species_tree')))
+    $self->param('species_tree_string', $species_tree->root->newick_format('ryo', $self->param('ryo_species_tree')));
 }
 
 
