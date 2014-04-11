@@ -188,7 +188,11 @@ sub run_generic_command {
     my $gene_tree = $self->param('gene_tree');
     my $newick;
 
-    # The order is important to have the stn_ids tags attached to the gene-tree leaves
+    # The order is very important !
+    # First, we need to load the species tree to attach the stn_ids tags to the genome_dbs / the gene-tree leaves
+    # Then, we have to dump the alignment (that does the detection of split genes)
+    # And finally, we're good to dump the tree
+
     $self->param('species_tree_file', $self->get_species_tree_file());
 
     # This is needed for check_split_genes and parse_filtered_align
@@ -196,10 +200,10 @@ sub run_generic_command {
         $member->{_tmp_name} = sprintf('%d_%d', $member->seq_member_id, $member->genome_db->species_tree_node_id);
     }
 
-    $self->param('gene_tree_file', $self->get_gene_tree_file($gene_tree));
-
     my $input_aln = $self->dumpTreeMultipleAlignmentToWorkdir($gene_tree) || die "Could not fetch alignment for ($gene_tree)";
     $self->param('alignment_file', $input_aln);
+
+    $self->param('gene_tree_file', $self->get_gene_tree_file($gene_tree));
 
     warn sprintf("Number of elements: %d leaves, %d split genes\n", scalar(@{$gene_tree->get_all_Members}), scalar(keys %{$self->param('split_genes')}));
 
@@ -231,10 +235,24 @@ sub run_generic_command {
 sub get_gene_tree_file {
     my ($self, $gene_tree) = @_;
 
+    my $split_genes = $self->param('split_genes');
     # horrible hack: we replace taxon_id with species_tree_node_id
     foreach my $leaf (@{$gene_tree->root->get_all_leaves}) {
         $leaf->taxon_id($leaf->genome_db->species_tree_node_id);
+
+        if (exists $split_genes->{$leaf->{_tmp_name}}) {
+            # Remove the split genes and all the parents that are left without members
+            my $node = $leaf->parent;
+            $leaf->disavow_parent();
+            while ($node->get_child_count() == 0) {
+                my $parent = $node->parent;
+                $node->disavow_parent();
+                $node = $parent;
+            }
+        }
     }
+    $gene_tree->{'_root'} = $gene_tree->root->minimize_tree if keys %$split_genes;
+
     my $gene_tree_file = sprintf('gene_tree_%d.nhx', $gene_tree->root_id);
     open( my $genetree, '>', $self->worker_temp_directory."/".$gene_tree_file) or die "Could not open '$gene_tree_file' for writing : $!";
     print $genetree $gene_tree->newick_format('ryo','%{-m}%{"_"-x}:%{d}');
