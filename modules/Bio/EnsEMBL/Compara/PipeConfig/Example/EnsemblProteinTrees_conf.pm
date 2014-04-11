@@ -92,6 +92,7 @@ sub default_options {
         'mcoffee_home'              => '/software/ensembl/compara/tcoffee/Version_9.03.r1318/',
         'mafft_home'                => '/software/ensembl/compara/mafft-7.113/',
         'treebest_exe'              => '/software/ensembl/compara/treebest.doubletracking',
+        'notung_jar'                => '/nfs/users/nfs_m/mm14/src/Notung-2.6/Notung-2.6.jar',
         'quicktree_exe'             => '/software/ensembl/compara/quicktree_1.1/bin/quicktree',
         'buildhmm_exe'              => '/software/ensembl/compara/hmmer-3.1b1/binaries/hmmbuild',
         'codeml_exe'                => '/software/ensembl/compara/paml43/bin/codeml',
@@ -111,7 +112,7 @@ sub default_options {
         'blastp_capacity'           => 900,
         'mcoffee_capacity'          => 600,
         'split_genes_capacity'      => 600,
-        'njtree_phyml_capacity'     => 400,
+        'treebest_capacity'         => 400,
         'ortho_tree_capacity'       => 200,
         'ortho_tree_annot_capacity' => 300,
         'quick_tree_break_capacity' => 100,
@@ -123,6 +124,7 @@ sub default_options {
         'qc_capacity'               =>   4,
         'hc_capacity'               =>   4,
         'HMMer_classify_capacity'   => 100,
+        'loadmembers_capacity'      =>  30,
 
     # hive priority for non-LOCAL health_check analysis:
 

@@ -347,7 +347,7 @@ sub get_SimpleAlign {
         next if $member->source_name =~ m/^Uniprot/i and $seq_type;
 
         # The correct codon table
-        if ($member->dnafrag and $member->dnafrag->isMT) {
+        if ($member->dnafrag and $member->dnafrag->name =~ /MT/i) {
             # codeml icodes
             # 0:universal code (default)
             my $class;

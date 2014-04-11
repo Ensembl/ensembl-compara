@@ -151,6 +151,8 @@ sub write_output {
     } else {
         $speciesTree_adaptor->store($species_tree);
     }
+
+    $self->dataflow_output_id( {'species_tree_root_id' => $species_tree->root_id}, 2);
 }
 
 

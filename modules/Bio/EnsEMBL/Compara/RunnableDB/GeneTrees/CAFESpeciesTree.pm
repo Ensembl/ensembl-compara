@@ -62,6 +62,7 @@ sub param_defaults {
             'tree_fmt'   => '%{n}%{":"d}',
             'pvalue_lim' => 0.01,
             'label'      => 'full_species_tree',
+            'new_label'  => 'cafe',
            };
 }
 
@@ -138,6 +139,7 @@ sub run {
     if ($self->debug) {
         $self->check_tree($cafe_tree_root);
     }
+    $cafe_tree_root->build_leftright_indexing();
 
     ## The modified tree is put back in the species tree object
     $species_tree->root($cafe_tree_root);
@@ -150,13 +152,14 @@ sub run {
 
 
     $species_tree->species_tree($cafe_tree_str);
-    $species_tree->label('cafe');
+    $species_tree->label($self->param_required('new_label'));
     $speciesTree_Adaptor->store($species_tree);
 
 }
 
 sub write_output {
     my ($self) = @_;
+    $self->dataflow_output_id( {'species_tree_root_id' => $self->param('full_species_tree')->root_id}, 2);
 }
 
 

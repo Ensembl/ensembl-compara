@@ -333,11 +333,7 @@ sub genebuild {
 
 sub taxon_id {
   my $self = shift;
-  my $taxon_id = shift;
-
-  if(defined $taxon_id) {
-    $self->{'taxon_id'} = $taxon_id;
-  }
+  $self->{'taxon_id'} = shift if (@_);
   return $self->{'taxon_id'};
 }
 
@@ -379,11 +375,7 @@ sub taxon {
 
 sub species_tree_node_id {
   my $self = shift;
-  my $species_tree_node_id = shift;
-
-  if(defined $species_tree_node_id) {
-    $self->{'species_tree_node_id'} = $species_tree_node_id;
-  }
+  $self->{'species_tree_node_id'} = shift if (@_);
   return $self->{'species_tree_node_id'};
 }
 
