@@ -97,7 +97,7 @@ sub is_high_coverage {
     } elsif ($coverage_depth =~ /^([0-9]+)x$/) {
         return $1<6 ? 0 : 1;
     } else {
-        warn "Cannot interpret '$coverage_depth' as 'assembly.coverage_depth' for '".($core_dba->dbname)."'. Assuming the species is low-coverage.\n";
+        warn "Cannot interpret '$coverage_depth' as 'assembly.coverage_depth' for '".($core_dba->dbc->dbname)."'. Assuming the species is low-coverage.\n";
         return 0;
     }
 }
