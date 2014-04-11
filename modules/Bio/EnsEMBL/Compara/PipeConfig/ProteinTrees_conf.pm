@@ -103,10 +103,13 @@ sub default_options {
         'clustering_max_gene_halfcount' => 750,     # (half of the previously used 'clutering_max_gene_count=1500) affects 'hcluster_run'
 
     # tree building parameters:
+        'use_raxml'                 => 0,
         'treebreak_gene_count'      => 400,     # affects msa_chooser
         'mafft_gene_count'          => 200,     # affects msa_chooser
         'mafft_runtime'             => 7200,    # affects msa_chooser
-        'species_tree_input_file'   => '',      # you can define your own species_tree for 'njtree_phyml' and 'ortho_tree'
+        'species_tree_input_file'   => '',      # you can define your own species_tree for 'treebest'
+        # you can define your own species_tree for 'notung'. It *has* to be binary
+        'binary_species_tree_input_file'   => $self->o('ensembl_cvs_root_dir').'/ensembl-compara/scripts/pipeline/species_tree.eukaryotes.topology.nw',
 
     # homology_dnds parameters:
         'codeml_parameters_file'    => $self->o('ensembl_cvs_root_dir').'/ensembl-compara/scripts/pipeline/protein_trees.codeml.ctl.hash',      # used by 'homology_dNdS'
@@ -149,7 +152,7 @@ sub default_options {
         #'blastp_capacity'           => 900,
         #'mcoffee_capacity'          => 600,
         #'split_genes_capacity'      => 600,
-        #'njtree_phyml_capacity'     => 400,
+        #'treebest_capacity'         => 400,
         #'ortho_tree_capacity'       => 200,
         #'ortho_tree_annot_capacity' => 300,
         #'quick_tree_break_capacity' => 100,
@@ -161,6 +164,7 @@ sub default_options {
         #'qc_capacity'               =>   4,
         #'hc_capacity'               =>   4,
         #'HMMer_classify_capacity'   => 100,
+        #'loadmembers_capacity'      =>  30,
 
     # hive priority for non-LOCAL health_check analysis:
         'hc_priority'               => -10,
@@ -503,7 +507,7 @@ sub pipeline_analyses {
             -parameters => {
                 'mlss_id'   => $self->o('mlss_id'),
             },
-            -flow_into => [ 'make_species_tree', 'extra_sql_prepare' ],
+            -flow_into => [ 'make_treebest_species_tree', 'extra_sql_prepare' ],
             -meadow_type    => 'LOCAL',
         },
 
@@ -522,22 +526,71 @@ sub pipeline_analyses {
 
 # ---------------------------------------------[load species tree]-------------------------------------------------------------------
 
-        {   -logic_name    => 'make_species_tree',
+        {   -logic_name    => 'make_treebest_species_tree',
             -module        => 'Bio::EnsEMBL::Compara::RunnableDB::MakeSpeciesTree',
             -parameters    => {
                                'species_tree_input_file' => $self->o('species_tree_input_file'),   # empty by default, but if nonempty this file will be used instead of tree generation from genome_db
                                'do_transactions' => 1,
             },
-            -flow_into     => [ 'hc_species_tree' ],
+            -flow_into     => {
+                2 => [ 'hc_species_tree' ],
+            }
         },
 
         {   -logic_name         => 'hc_species_tree',
             -module             => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::SqlHealthChecks',
             -parameters         => {
                 mode            => 'species_tree',
+                binary          => 0,
+            },
+            -flow_into  => [ 'has_user_provided_binary_species_tree' ],
+            %hc_analysis_params,
+        },
+
+        {   -logic_name => 'has_user_provided_binary_species_tree',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ConditionalDataFlow',
+            -parameters    => {
+                'condition'     => $self->o('binary_species_tree_input_file') ? 1 : 0,
+            },
+            -flow_into => {
+                2 => [ 'load_binary_species_tree' ],
+                3 => [ 'make_binary_species_tree' ],
+            },
+            -meadow_type    => 'LOCAL',
+        },
+
+         {   -logic_name    => 'load_binary_species_tree',
+            -module        => 'Bio::EnsEMBL::Compara::RunnableDB::MakeSpeciesTree',
+            -parameters    => {
+                               'label' => 'binary',
+                               'species_tree_input_file' => $self->o('binary_species_tree_input_file'),
+                               'do_transactions' => 1,
+            },
+            -flow_into     => {
+                2 => [ 'hc_binary_species_tree' ],
+            }
+        },
+
+        {   -logic_name    => 'make_binary_species_tree',
+            -module        => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::CAFESpeciesTree',
+            -parameters    => {
+                'new_label'     => 'binary',
+                'tree_fmt'      => '%{-x"*"}:%{d}',
+            },
+            -flow_into     => {
+                2 => [ 'hc_binary_species_tree' ],
+            }
+        },
+
+        {   -logic_name         => 'hc_binary_species_tree',
+            -module             => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::SqlHealthChecks',
+            -parameters         => {
+                mode            => 'species_tree',
+                binary          => 1,
             },
             %hc_analysis_params,
         },
+
 
 # ---------------------------------------------[reuse members]-----------------------------------------------------------------------
 
@@ -694,8 +747,9 @@ sub pipeline_analyses {
                 'store_related_pep_sequences' => 1,
                 'allow_pyrrolysine'             => $self->o('allow_pyrrolysine'),
                 'find_canonical_translations_for_polymorphic_pseudogene' => 1,
-		    'store_missing_dnafrags'		=> 0,
+                'store_missing_dnafrags'        => 0,
             },
+            -hive_capacity => $self->o('loadmembers_capacity'),
             -rc_name => '2Gb_job',
             -flow_into => [ 'hc_members_per_genome' ],
         },
@@ -705,6 +759,7 @@ sub pipeline_analyses {
             -parameters => {
                 -need_cds_seq   => 1,
             },
+            -hive_capacity => $self->o('loadmembers_capacity'),
             -rc_name => '2Gb_job',
             -flow_into => [ 'hc_members_per_genome' ],
         },
@@ -1142,7 +1197,7 @@ sub pipeline_analyses {
             -module             => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::CreateClustersets',
             -parameters         => {
                 member_type     => 'protein',
-                'additional_clustersets'    => [qw(phyml-aa phyml-nt nj-dn nj-ds nj-mm)],
+                'additional_clustersets'    => [qw(treebest phyml-aa phyml-nt nj-dn nj-ds nj-mm raxml)],
             },
             -flow_into          => [ 'run_qc_tests' ],
         },
@@ -1333,10 +1388,26 @@ sub pipeline_analyses {
             -hive_capacity  => $self->o('split_genes_capacity'),
             -rc_name        => '500Mb_job',
             -batch_size     => 20,
-            -flow_into      => [ 'njtree_phyml', 'build_HMM_aa', 'build_HMM_cds' ],
+            -flow_into      => {
+                1   => [ 'build_HMM_aa', 'build_HMM_cds' ],
+                '1->A'   => [ $self->o('use_raxml') ? 'trimal' : 'treebest' ],
+                '999->A' => [ $self->o('use_raxml') ? 'treebest' : 'trimal' ],
+                'A->1'   => 'notung'
+            }
         },
 
-        {   -logic_name => 'njtree_phyml',
+        {   -logic_name     => 'trimal',
+            -module         => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::TrimAl',
+            -parameters => {
+                'trimal_exe'    => $self->o('trimal_exe'),
+            },
+            -hive_capacity  => $self->o('raxml_capacity'),
+            -rc_name        => '500Mb_job',
+            -batch_size     => 5,
+            -flow_into      => [ 'raxml' ],
+        },
+
+        {   -logic_name => 'treebest',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::NJTREE_PHYML',
             -parameters => {
                 'cdna'                      => 1,
@@ -1345,13 +1416,37 @@ sub pipeline_analyses {
                 'store_filtered_align'      => 1,
                 'treebest_exe'              => $self->o('treebest_exe'),
             },
-            -hive_capacity        => $self->o('njtree_phyml_capacity'),
+            -hive_capacity        => $self->o('treebest_capacity'),
             -rc_name => '4Gb_job',
             -flow_into => {
-                '1->A' => [ 'hc_tree_structure' ],
-                '2->A' => [ 'hc_other_tree_structure' ],
-                'A->1' => [ 'ktreedist' ],
+                2 => [ 'hc_tree_structure' ],
             }
+        },
+
+        {   -logic_name => 'raxml',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::RAxML',
+            -parameters => {
+                #'cdna'                      => 1,
+                'raxml_exe'              => $self->o('raxml_exe'),
+            },
+            -hive_capacity        => $self->o('raxml_capacity'),
+            -rc_name => '8Gb_job',
+        },
+
+        {   -logic_name => 'notung',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::Notung',
+            -parameters => {
+                'notung_jar'                => $self->o('notung_jar'),
+                'treebest_exe'              => $self->o('treebest_exe'),
+                'label'                     => 'binary',
+                'input_clusterset_id'       => $self->o('use_raxml') ? 'raxml' : 'treebest',
+            },
+            -hive_capacity        => $self->o('treebest_capacity'),
+            -rc_name => '2Gb_job',
+            -flow_into  => {
+                '1->A' => [ 'hc_alignment_post_tree' ],
+                'A->1' => [ 'other_tree_factory' ],
+            },
         },
 
         {   -logic_name         => 'hc_alignment_post_tree',
@@ -1359,7 +1454,7 @@ sub pipeline_analyses {
             -parameters         => {
                 mode            => 'alignment',
             },
-            -flow_into          => [ 'ortho_tree' ],
+            -flow_into          => [ 'hc_tree_structure' ],
             %hc_analysis_params,
         },
 
@@ -1368,18 +1463,22 @@ sub pipeline_analyses {
             -parameters         => {
                 mode            => 'tree_structure',
             },
-            -flow_into          => [ 'hc_alignment_post_tree' ],
             %hc_analysis_params,
         },
 
-        {   -logic_name         => 'hc_other_tree_structure',
-            -module             => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::SqlHealthChecks',
-            -parameters         => {
-                mode            => 'tree_structure',
+        {   -logic_name => 'other_tree_factory',
+            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
+            -parameters => {
+                'inputquery'        => 'SELECT root_id AS gene_tree_id FROM gene_tree_root WHERE ref_root_id = #gene_tree_id#',
+                'fan_branch_code'   => 2,
             },
-            -flow_into          => [ 'ortho_tree_annot' ],
-            %hc_analysis_params,
+            -flow_into  => {
+                 2 => [ 'ortho_tree_annot' ],
+                 1 => [ 'ortho_tree', 'ktreedist' ],
+            },
+            -meadow_type    => 'LOCAL',
         },
+
 
         {   -logic_name => 'ortho_tree',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::OrthoTree',

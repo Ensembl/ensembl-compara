@@ -102,10 +102,18 @@ sub run {
 sub write_output {
     my $self = shift;
 
+    my @dataflow = ();
+
     my @ref_support = qw(phyml_nt nj_ds phyml_aa nj_dn nj_mm);
-    $self->call_within_transaction(sub {
-        $self->store_genetree($self->param('gene_tree'), \@ref_support);
-    });
+    my $treebest_stored_tree = $self->store_alternative_tree($self->param('treebest_stdout'), 'treebest', $self->param('gene_tree'), \@ref_support);
+
+    if (not $treebest_stored_tree) {
+        $self->input_job->transient_error(0);
+        $self->throw('The filtered alignment is empty. Cannot build a tree');
+    } else {
+        push @dataflow, $treebest_stored_tree->root_id;
+    }
+
     $self->param('gene_tree')->store_tag('treebest_runtime_msec', $self->param('treebest_runtime'));
 
     if ($self->param('treebest_stderr')) {
@@ -118,7 +126,6 @@ sub write_output {
         }
     }
 
-    my @dataflow = ();
     if ($self->param('store_intermediate_trees')) {
         foreach my $filename (glob(sprintf('%s/%s.*.nhx', $self->worker_temp_directory, $self->param('intermediate_prefix')) )) {
             $filename =~ /\.([^\.]*)\.nhx$/;
@@ -134,7 +141,14 @@ sub write_output {
     if ($self->param('store_filtered_align')) {
         my $alnfile_filtered = sprintf('%s/filtalign.fa', $self->worker_temp_directory);
         if (-e $alnfile_filtered) {
-            my $removed_columns = $self->store_filtered_align($self->param('input_aln'), $alnfile_filtered);
+            my $removed_columns = $self->parse_filtered_align($self->param('input_aln'), $alnfile_filtered);
+
+            # the coordinates are for the CDNA alignments
+            foreach my $x (@$removed_columns) {
+                $x->[0] /= 3;
+                $x->[1] = ($x->[1]+1)/3;
+            }
+            print Dumper $removed_columns if ( $self->debug() );
             $self->param('gene_tree')->store_tag('removed_columns', $removed_columns);
         }
     }
@@ -212,12 +226,7 @@ sub run_njtree_phyml {
         }
     }
 
-    #parse the tree into the datastucture:
-    unless ($self->parse_newick_into_tree( $newick, $self->param('gene_tree') )) {
-        $self->input_job->transient_error(0);
-        $self->throw('The filtered alignment is empty. Cannot build a tree');
-    }
-
+    $self->param('treebest_stdout', $newick);
     $self->param('treebest_runtime', time()*1000-$starttime);
 }
 

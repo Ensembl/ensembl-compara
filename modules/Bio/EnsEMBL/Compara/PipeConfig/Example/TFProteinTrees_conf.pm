@@ -27,7 +27,7 @@ limitations under the License.
 
 =head1 NAME
 
-  Bio::EnsEMBL::Compara::PipeConfig::Example::EGProteinTrees_conf
+  Bio::EnsEMBL::Compara::PipeConfig::Example::TFProteinTrees_conf
 
 =head1 SYNOPSIS
 
@@ -38,27 +38,23 @@ limitations under the License.
     #3. make sure that all default_options are set correctly
 
     #4. Run init_pipeline.pl script:
-        init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::Example::EGProteinTrees_conf \
-        -password <your_password> -mlss_id <your_current_PT_mlss_id> \
-        -division <eg_division> -eg_release <egrelease>
+        init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::Example::TFProteinTrees_conf \
+        -password <your_password> -mlss_id <your_current_PT_mlss_id>
 
     #5. Sync and loop the beekeeper.pl as shown in init_pipeline.pl's output
 
 
 =head1 DESCRIPTION
 
-    The PipeConfig example file for Ensembl Genomes group's version of
-    ProteinTrees pipeline. This file is inherited from & customised further
-    within the Ensembl Genomes infrastructure but this file serves as
-    an example of the type of configuration we perform.
+    The PipeConfig example file for Treefam's version of ProteinTrees pipeline.
 
 =head1 CONTACT
 
-  Please contact Compara or Ensembl Genomes with questions/suggestions
+  Please contact Compara or TreeFam with questions/suggestions
 
 =cut
 
-package Bio::EnsEMBL::Compara::PipeConfig::Example::EGProteinTrees_conf;
+package Bio::EnsEMBL::Compara::PipeConfig::Example::TFProteinTrees_conf;
 
 use strict;
 use warnings;
@@ -76,14 +72,18 @@ sub default_options {
     # parameters that are likely to change from execution to another:
         #mlss_id => 40043,
         #'do_not_reuse_list' => ['guillardia_theta'], # set this to empty or to the genome db names we should ignore
+        'release'       => 10,
+	    'prev_release'  => 75,
+        'release_suffix'=> '', # set it to '' for the actual release
+        'rel_with_suffix'       => $self->o('release').$self->o('release_suffix'),
 
     # custom pipeline name, in case you don't like the default one
-        dbowner => 'ensembl_compara',       # Used to prefix the database name (in HiveGeneric_conf)
+        dbowner => 'treefam',       # Used to prefix the database name (in HiveGeneric_conf)
         pipeline_name => $self->o('division').'_hom_'.$self->o('eg_release').'_'.$self->o('ensembl_release'),
 
     # dependent parameters: updating 'work_dir' should be enough
         'work_dir'              =>  $self->o('base_dir').'/ensembl_compara_'.$self->o('pipeline_name'),
-        'base_dir'              =>  '/nfs/nobackup2/ensemblgenomes/'.$self->o('ENV', 'USER').'/compara',
+        'base_dir'              =>  '/nfs/nobackup2/xfam/treefam/ensembl/'.$self->o('ENV', 'USER').'/compara',
         'exe_dir'               =>  '/nfs/panda/ensemblgenomes/production/compara/binaries',
 
     # "Member" parameters:
@@ -97,34 +97,38 @@ sub default_options {
 
     # tree building parameters:
         'tree_dir'                  =>  $self->o('ensembl_cvs_root_dir').'/ensembl_genomes/EGCompara/config/prod/trees/Version'.$self->o('eg_release').'Trees',
-        'species_tree_input_file'   =>  $self->o('tree_dir').'/'.$self->o('division').'.peptide.nh',
+        #'species_tree_input_file'   =>  $self->o('tree_dir').'/'.$self->o('division').'.peptide.nh',
+        'species_tree_input_file'   =>  $self->o('ensembl_cvs_root_dir').'/ensembl-compara/scripts/pipeline/species_tree.eukaryotes.topology.nw',
 
     # homology_dnds parameters:
         'codeml_parameters_file'    => $self->o('ensembl_cvs_root_dir').'/ensembl-compara/scripts/homology/codeml.ctl.hash',
-        'taxlevels'                 => ['cellular organisms'],
+        #'taxlevels'                 => ['cellular organisms'],
+        'taxlevels'                 => [],
         'filter_high_coverage'      => 0,   # affects 'group_genomes_under_taxa'
 
     # mapping parameters:
         'tf_release'                => '9_69',
-
+        'use_raxml' => 1,
     # executable locations:
         hcluster_exe    =>  $self->o('exe_dir').'/hcluster_sg',
         mcoffee_home    => '/nfs/panda/ensemblgenomes/external/t-coffee',
         mafft_home      =>  '/nfs/panda/ensemblgenomes/external/mafft',
         treebest_exe    =>  $self->o('exe_dir').'/treebest',
+        trimal_exe    =>  '/nfs/production/xfam/treefam/software/trimal/source/trimal',
+        raxml_exe    =>  '/nfs/production/xfam/treefam/software/RAxML/raxmlHPC-SSE3',
         quicktree_exe   =>  $self->o('exe_dir').'/quicktree',
         buildhmm_exe    =>  $self->o('exe_dir').'/hmmbuild',
+        notung_jar    =>  '/nfs/production/xfam/treefam/software/Notung/Notung-2.6/Notung-2.6.jar',
         codeml_exe      =>  $self->o('exe_dir').'/codeml',
         ktreedist_exe   =>  $self->o('exe_dir').'/ktreedist',
         'blast_bin_dir'  => '/nfs/panda/ensemblgenomes/external/ncbi-blast-2+/bin/',
 
     # HMM specific parameters (set to 0 or undef if not in use)
-        'hmm_clustering'            => 0, ## by default run blastp clustering
-        'cm_file_or_directory'      => undef,
-        'hmm_library_basedir'       => undef,
-        'pantherScore_path'         => undef,
-        'hmmer_path'                => undef,
-
+        'hmm_clustering'            => 1, ## by default run blastp clustering
+        'cm_file_or_directory'      => '/nfs/nobackup2/xfam/treefam/datasets/panhmms/current_release/',
+        'hmm_library_basedir'       => '/nfs/nobackup2/xfam/treefam/datasets/panhmms/current_release/',
+        'pantherScore_path'         => '/nfs/production/xfam/treefam/software/pantherScore1.03/',
+        'hmmer_path'                => '/nfs/production/xfam/treefam/software/hmmer-2.3.2/bin/',
 
 
     # hive_capacity values for some analyses:
@@ -133,7 +137,9 @@ sub default_options {
         'blastp_capacity'           => 200,
         'mcoffee_capacity'          => 200,
         'split_genes_capacity'      => 200,
+        'filtering_capacity'         => 100,
         'treebest_capacity'         => 200,
+        'raxml_capacity'         => 200,
         'ortho_tree_capacity'       => 200,
         'ortho_tree_annot_capacity' => 300,
         'quick_tree_break_capacity' => 100,
@@ -157,40 +163,91 @@ sub default_options {
         # it inherits most of the properties from HiveGeneric, we usually only need to redefine the host, but you may want to also redefine 'port'
 
         # the master database for synchronization of various ids (use undef if you don't have a master database)
-        'master_db' => 'mysql://ensro@mysql-eg-pan-1.ebi.ac.uk:4276/ensembl_compara_master',
+        #'master_db' => 'mysql://ensro@mysql-eg-pan-1.ebi.ac.uk:4276/ensembl_compara_master',
+		#'master_db' => 'mysql://admin:00ABuSzd@mysql-treefam-prod:4401/treefam_master10',
 
     ######## THESE ARE PASSED INTO LOAD_REGISTRY_FROM_DB SO PASS IN DB_VERSION
     ######## ALSO RAISE THE POINT ABOUT LOAD_FROM_MULTIPLE_DBs
 
-    prod_1 => {
-      -host   => 'mysql-eg-prod-1.ebi.ac.uk',
-      -port   => 4238,
-      -user   => 'ensro',
-      -db_version => $self->o('ensembl_release')
+    pipeline_db => {
+      -host   => 'mysql-treefam-prod',
+      -port   => 4401,
+      -user   => 'admin',
+      -pass   => $self->o('password'),
+      -dbname => 'TreeFam'.$self->o('release').$self->o('release_suffix'),
+	  -driver => 'mysql',
+      #-db_version => $self->o('ensembl_release')
+    },
+    eg_mirror => {       
+            -host => 'mysql-eg-mirror.ebi.ac.uk',
+            -port => 4205,
+            -user => 'ensro',
+            #-verbose => 1,
+            -db_version => 75, 
+   },
+    ensembl_mirror => {
+            -host => 'mysql-ensembl-mirror.ebi.ac.uk',
+            -user => 'anonymous',
+            -port => '4240',
+            #-verbose => 1,
+            -db_version => 75
+    },
+    master_db=> {
+            -host => 'mysql-treefam-prod',
+            -user => 'admin',
+            -port => '4401',
+			-pass => $self->o('password'),
+            #-verbose => 1,
+      		-dbname => 'treefam_master10',
+	  		-driver => 'mysql',
+			#-db_version => 75
     },
 
-    staging_1 => {
-      -host   => 'mysql-eg-staging-1.ebi.ac.uk',
-      -port   => 4160,
-      -user   => 'ensro',
-      -db_version => $self->o('ensembl_release')
-    },
+	#Used to fetch:
+		#triticum_aestivum_a
+		#triticum_aestivum_b
+		#triticum_aestivum_d
+	eg_prod=> {
+            -host => 'mysql-eg-prod-1.ebi.ac.uk',
+            -port => 4238,
+            -user => 'ensro',
+            -verbose => 1,
+            -db_version => 75,
+   },
 
-    staging_2 => {
-      -host   => 'mysql-eg-staging-2.ebi.ac.uk',
-      -port   => 4275,
-      -user   => 'ensro',
-      -db_version => $self->o('ensembl_release')
-    },
+    #ncbi_eg=> {
+            #-host => 'mysql-eg-mirror.ebi.ac.uk',
+            #-user => 'anonymous',
+            #-port => '4157',
+            #-verbose => 1,
+      		#-dbname => 'ensembl_compara_plants_22_75',
+	  		#-driver => 'mysql',
+			#-db_version => 75
+    #},
+
+    #staging_1 => {
+    #  -host   => 'mysql-eg-staging-1.ebi.ac.uk',
+    #  -port   => 4160,
+    #  -user   => 'ensro',
+    #  -db_version => $self->o('ensembl_release')
+    #},
+
+    #staging_2 => {
+    #  -host   => 'mysql-eg-staging-2.ebi.ac.uk',
+    #  -port   => 4275,
+    #  -user   => 'ensro',
+    #  -db_version => $self->o('ensembl_release')
+    #},
 
         # NOTE: The databases referenced in the following arrays have to be hashes (not URLs)
         # Add the database entries for the current core databases and link 'curr_core_sources_locs' to them
-        'curr_core_sources_locs' => [ $self->o('prod_1') ],
+        'curr_core_sources_locs' => [ $self->o('master_db'), $self->o('eg_mirror'), $self->o('ensembl_mirror'), $self->o('eg_prod') ],
         # Add the database entries for the core databases of the previous release
-        'prev_core_sources_locs'   => [ $self->o('staging_1') ],
+        'prev_core_sources_locs'   => [ $self->o('master_db'), $self->o('eg_mirror'), $self->o('ensembl_mirror'), $self->o('eg_prod') ],
 
         # Add the database location of the previous Compara release. Use "undef" if running the pipeline without reuse
-        'prev_rel_db' => 'mysql://ensro@mysql-eg-staging-1.ebi.ac.uk:4160/ensembl_compara_fungi_19_72',
+        #'prev_rel_db' => 'mysql://ensro@mysql-eg-staging-1.ebi.ac.uk:4160/ensembl_compara_fungi_19_72',
+        'prev_rel_db' => 'mysql://treefam_ro:treefam_ro@mysql-treefam-prod:4401/treefam_production_9_69',
 
     };
 }
@@ -214,24 +271,6 @@ sub resource_classes {
   };
 }
 
-sub pipeline_analyses {
-    my $self = shift;
-    my $all_analyses = $self->SUPER::pipeline_analyses(@_);
-    my %analyses_by_name = map {$_->{'-logic_name'} => $_} @$all_analyses;
-
-    ## Extend this section to redefine the resource names of some analysis
-    $analyses_by_name{'hcluster_parse_output'}->{'-rc_name'} = '500Mb_job';
-
-    # Some parameters can be division-specific
-    if ($self->o('division') eq 'plants') {
-        $analyses_by_name{'dump_canonical_members'}->{'-rc_name'} = '500Mb_job';
-        $analyses_by_name{'members_against_allspecies_factory'}->{'-rc_name'} = '500Mb_job';
-        $analyses_by_name{'blastp'}->{'-rc_name'} = '500Mb_job';
-        $analyses_by_name{'ktreedist'}->{'-rc_name'} = '2.5Gb_job';
-    }
-
-    return $all_analyses;
-}
 
 
 1;

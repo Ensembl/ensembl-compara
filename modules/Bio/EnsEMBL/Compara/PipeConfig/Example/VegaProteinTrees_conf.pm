@@ -107,7 +107,7 @@ sub default_options {
     'store_sequences_capacity'  => 50,
     'blastp_capacity'           => 450,
     'mcoffee_capacity'          => 100,
-    'njtree_phyml_capacity'     => 70,
+    'treebest_capacity'         => 70,
     'ortho_tree_capacity'       => 50,
     'build_hmm_capacity'        => 50,
     'other_paralogs_capacity'   => 50,

@@ -60,19 +60,24 @@ my $config = {
     #################
 
     species_tree => {
+        params => [ 'species_tree_root_id', 'binary' ],
         tests => [
             {
                 description => 'genome_db_id can only be populated on leaves',
-                query => 'SELECT stn.*, COUNT(*) AS n_children FROM species_tree_node stn JOIN species_tree_node stnc ON stnc.parent_id = stn.node_id WHERE stn.genome_db_id IS NOT NULL GROUP BY stn.node_id'
+                query => 'SELECT stn.*, COUNT(*) AS n_children FROM species_tree_node stn JOIN species_tree_node stnc ON stnc.parent_id = stn.node_id WHERE stn.root_id = #species_tree_root_id# AND stn.genome_db_id IS NOT NULL GROUP BY stn.node_id'
             },
             {
                 description => 'All the leaves of the species tree should have a genome_db',
-                query => 'SELECT stn.* FROM species_tree_node stn LEFT JOIN species_tree_node stnc ON stnc.parent_id = stn.node_id WHERE stnc.node_id IS NULL AND stn.genome_db_id IS NULL'
+                query => 'SELECT stn.* FROM species_tree_node stn LEFT JOIN species_tree_node stnc ON stnc.parent_id = stn.node_id WHERE stn.root_id = #species_tree_root_id# AND stnc.node_id IS NULL AND stn.genome_db_id IS NULL'
             },
             {
                 description => 'All the genome_dbs should be in the species tree',
-                query => 'SELECT gdb.* FROM genome_db gdb LEFT JOIN species_tree_node stn USING (genome_db_id) WHERE stn.node_id IS NULL',
-            }
+                query => 'SELECT gdb.* FROM genome_db gdb LEFT JOIN species_tree_node stn ON gdb.genome_db_id = stn.genome_db_id AND stn.root_id = #species_tree_root_id# WHERE stn.node_id IS NULL',
+            },
+            {
+                description => 'Checks that the species tree is binary',
+                query => 'SELECT stn1.node_id FROM species_tree_node stn1 JOIN species_tree_node stn2 ON stn1.node_id = stn2.parent_id WHERE stn1.root_id = #species_tree_root_id# GROUP BY stn1.node_id HAVING COUNT(*) NOT IN (0,2) AND #binary#',
+            },
         ],
     },
 

@@ -49,6 +49,7 @@ sub dumpTreeMultipleAlignmentToWorkdir {
   }
 
   print STDERR "fetching alignment\n" if ($self->debug);
+  my $seq_type = $self->param('cdna') ? 'cds' : undef;
 
   ########################################
   # Gene split mirroring code
@@ -69,7 +70,7 @@ sub dumpTreeMultipleAlignmentToWorkdir {
       my $node1 = shift @$partial_genes;
       my $protein1 = $gene_tree->root->find_leaf_by_node_id($node1->[0]);
       #print STDERR "node1 ", $node1, " ", $protein1, "\n";
-      my $cdna = $protein1->alignment_string('cds');
+      my $cdna = $protein1->alignment_string($seq_type);
       print STDERR "cnda $cdna\n" if $self->debug;
         # We start with the original cdna alignment string of the first gene, and
         # add the position in the other cdna for every gap position, and iterate
@@ -88,14 +89,14 @@ sub dumpTreeMultipleAlignmentToWorkdir {
         $split_genes{$protein2->{_tmp_name}} = $protein1->{_tmp_name};
         #print STDERR Dumper(%split_genes);
         print STDERR "Joining in ", $protein1->stable_id, " and ", $protein2->stable_id, " in input cdna alignment\n" if ($self->debug);
-        my $other_cdna = $protein2->alignment_string('cds');
+        my $other_cdna = $protein2->alignment_string($seq_type);
         print STDERR "cnda2 $other_cdna\n" if $self->debug;
         $cdna =~ s/-/substr($other_cdna, pos($cdna), 1)/eg;
         print STDERR "cnda $cdna\n" if $self->debug;
       }
         # We then directly override the cached alignment_string_cds
         # entry in the hash, which will be used next time it is called
-      $protein1->{'alignment_string_cds'} = $cdna;
+      $protein1->{$self->param('cdna') ? 'alignment_string_cds' : 'alignment_string'} = $cdna;
     }
 
     # Removing duplicate sequences of split genes
@@ -108,13 +109,21 @@ sub dumpTreeMultipleAlignmentToWorkdir {
      -id_type => 'MEMBER',
      -APPEND_SPECIES_TREE_NODE_ID => 1,
      -stop2x => 1,
-     $self->param('cdna') ? (-seq_type => 'cds') : (),
+     -SEQ_TYPE => $seq_type,
   );
   if ($self->param('check_split_genes')) {
     foreach my $gene_to_remove (keys %{$self->param('split_genes')}) {
       $sa->remove_seq($sa->each_seq_with_id($gene_to_remove));
     }
   }
+
+  if ($self->param('remove_columns')) {
+    die "The 'removed_columns' tag is missing" unless $gene_tree->has_tag('removed_columns');
+    my @removed_columns = eval($gene_tree->get_value_for_tag('removed_columns'));
+    print Dumper \@removed_columns if ( $self->debug() );
+    $sa = $sa->remove_columns(@removed_columns) if scalar(@removed_columns);
+  }
+
   $sa->set_displayname_flat(1);
   # Now outputing the alignment
   open(OUTSEQ, ">$aln_file") or die "Could not open '$aln_file' for writing : $!";
@@ -431,23 +440,23 @@ sub fetch_or_create_other_tree {
 }
 
 sub store_alternative_tree {
-    my ($self, $newick, $clusterset_id, $ref_tree) = @_;
+    my ($self, $newick, $clusterset_id, $ref_tree, $ref_support) = @_;
     my $clusterset = $self->compara_dba->get_GeneTreeAdaptor->fetch_all(-tree_type => 'clusterset', -clusterset_id => $clusterset_id)->[0];
     if (not defined $clusterset) {
         $self->throw("The clusterset_id '$clusterset_id' is not defined. Cannot store the alternative tree");
         return;
     }
     my $newtree = $self->fetch_or_create_other_tree($clusterset, $ref_tree);
-    $self->parse_newick_into_tree($newick, $newtree);
+    return undef unless $self->parse_newick_into_tree($newick, $newtree);
     $self->call_within_transaction(sub {
-        $self->store_genetree($newtree);
+        $self->store_genetree($newtree, $ref_support);
     });
     $newtree->release_tree;
     return $newtree;
 }
 
-sub store_filtered_align {
-    my ($self, $alnfile_ini, $alnfile_filtered) = @_;
+sub parse_filtered_align {
+    my ($self, $alnfile_ini, $alnfile_filtered, $allow_missing_members) = @_;
 
     # Loads the filtered alignment strings
     my %hash_filtered_strings = ();
@@ -472,6 +481,25 @@ sub store_filtered_align {
 
         foreach my $seq ($aln->each_seq) {
             $hash_initial_strings{$seq->display_id()} = $seq->seq();
+        }
+    }
+
+    if ($allow_missing_members) {
+        my $treenode_adaptor = $self->compara_dba->get_GeneTreeNodeAdaptor;
+
+        foreach my $leaf (@{$self->param('gene_tree')->get_all_leaves()}) {
+            next if exists $hash_filtered_strings{$leaf->{_tmp_name}};
+
+            print "removing ".$leaf->stable_id." keys: ".keys(%hash_initial_strings)."\n";
+            delete($hash_initial_strings{$leaf->{_tmp_name}});
+            print "after keys: ".keys(%hash_initial_strings)."\n";
+
+            $leaf->disavow_parent;
+            $treenode_adaptor->delete_flattened_leaf( $leaf );
+            my $sth = $self->compara_dba->dbc->prepare('INSERT IGNORE INTO removed_member (node_id, stable_id, genome_db_id) VALUES (?,?,?)');
+            print $self->param('gene_tree_id').", $leaf->stable_id, $leaf->genome_db_id, \n" ;
+            $sth->execute($leaf->node_id, $leaf->stable_id, $leaf->genome_db_id );
+            $sth->finish;
         }
     }
 
