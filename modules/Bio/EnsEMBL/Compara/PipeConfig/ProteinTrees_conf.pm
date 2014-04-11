@@ -556,6 +556,7 @@ sub pipeline_analyses {
             -parameters    => {
                 'new_label'     => 'binary',
                 'tree_fmt'      => '%{-x"*"}:%{d}',
+                'label'         => 'default',
             },
             -flow_into     => {
                 2 => [ 'hc_binary_species_tree' ],
