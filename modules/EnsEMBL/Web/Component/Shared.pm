@@ -42,8 +42,35 @@ use EnsEMBL::Web::Form::ModalForm;
 use EnsEMBL::Web::RegObj;
 use EnsEMBL::Web::TmpFile::Text;
 
+######### USED ON VARIOUS PAGES ###########
+
+sub coltab {
+  my ($self,$text,$colour,$title) = @_;
+
+  $title ||= '';
+  return sprintf(
+    qq(
+      <div class="coltab">
+        <span class="colour coltab_tab" style="background-color:%s;">&nbsp;</span>
+        <div class="_ht conhelp coltab_text" title="%s">%s</div>
+      </div>),
+    $colour,$title,$text
+  );
+}
+
 
 ########### GENES AND TRANSCRIPTS ###################
+
+sub colour_biotype {
+  my ($self,$html,$transcript,$title) = @_;
+
+  my $colours       = $self->hub->species_defs->colour('gene');
+  my $key = $transcript->biotype;
+  $key = 'merged' if $transcript->analysis->logic_name =~ /ensembl_havana/;
+  my $colour = ($colours->{$key}||{})->{'default'};
+  my $hex = $self->hub->colourmap->hex_by_name($colour);
+  return $self->coltab($html,$hex,$title);
+}
 
 sub transcript_table {
   my $self        = shift;
@@ -216,86 +243,114 @@ sub transcript_table {
     my @columns = (
        { key => 'name',       sort => 'string',  title => 'Name'          },
        { key => 'transcript', sort => 'html',    title => 'Transcript ID' },
-       { key => 'bp_length',  sort => 'numeric', title => 'Length (bp)'   },
-       { key => 'protein',    sort => 'html',    title => 'Protein ID'    },
-       { key => 'aa_length',  sort => 'numeric', title => 'Length (aa)'   },
+       { key => 'bp_length',  sort => 'numeric', title => 'Length'   },
+       { key => 'protein',    sort => 'html',    title => 'Protein'    },
        { key => 'biotype',    sort => 'html',    title => 'Biotype'       },
     );
 
-    push @columns, { key => 'cds_tag', sort => 'html', title => 'CDS incomplete' } if %$trans_attribs;
     push @columns, { key => 'ccds', sort => 'html', title => 'CCDS' } if $species =~ /^Homo|Mus/;
-    push @columns, { key => 'gencode_set', sort => 'html', title => 'GENCODE basic' } if %$trans_gencode;
     
     my @rows;
-    
+   
+    my %extra_links = (
+      uniprot => { match => "^UniProt", name => "UniProt", order => 0, hidden => 1 },
+      refseq => { match => "^RefSeq", name => "RefSeq", order => 1 },
+    );
+    my %any_extras;
+ 
     foreach (map { $_->[2] } sort { $a->[0] cmp $b->[0] || $a->[1] cmp $b->[1] } map { [ $_->external_name, $_->stable_id, $_ ] } @$transcripts) {
       my $transcript_length = $_->length;
       my $tsi               = $_->stable_id;
       my $protein           = 'No protein product';
       my $protein_length    = '-';
       my $ccds              = '-';
+      my %extras;
       my $cds_tag           = '-';
       my $gencode_set       = '-';
       my $url               = $hub->url({ %url_params, t => $tsi });
+      my @flags;
       
       if ($_->translation) {
         $protein = sprintf(
-          '<a href="%s">%s</a>',
+          '(<a href="%s">%s</a>)',
           $hub->url({
             type   => 'Transcript',
             action => 'ProteinSummary',
             t      => $tsi
           }),
-          $_->translation->stable_id
+          'view'
         );
         
         $protein_length = $_->translation->length;
       }
-      
-      if (my @CCDS = grep { $_->dbname eq 'CCDS' } @{$_->get_all_DBLinks}) {
+
+      my $dblinks = $_->get_all_DBLinks;
+      if (my @CCDS = grep { $_->dbname eq 'CCDS' } @$dblinks) { 
         my %T = map { $_->primary_id => 1 } @CCDS;
         @CCDS = sort keys %T;
         $ccds = join ', ', map $hub->get_ExtURL_link($_, 'CCDS', $_), @CCDS;
       }
+      foreach my $k (keys %extra_links) {
+        if(my @links = grep { $_->dbname =~ /$extra_links{$k}->{'match'}/i } @$dblinks) {
+          my %T = map { $_->primary_id => $_->dbname } @links;
+          my $cell = '';
+          my $i = 0;
+          foreach my $u (map $hub->get_ExtURL_link($_,$T{$_},$_), sort keys %T) {
+            $cell .= "$u ";
+            if($i++==2 || $k ne 'uniprot') { $cell .= "<br/>"; $i = 0; }
+          }
+          $any_extras{$k} = 1;
+          $extras{$k} = $cell;
+        }
+      }
       if ($trans_attribs->{$tsi}) {
         if ($trans_attribs->{$tsi}{'CDS_start_NF'}) {
           if ($trans_attribs->{$tsi}{'CDS_end_NF'}) {
-            $cds_tag = "5' and 3'";
+            push @flags,"CDS 5' and 3' incomplete";
           }
           else {
-            $cds_tag = "5'";
+            push @flags, "CDS 5' incomplete";
           }
         }
         elsif ($trans_attribs->{$tsi}{'CDS_end_NF'}) {
-         $cds_tag = "3'";
+         push @flags,"CDS 3' incomplete";
         }
       }
 
       if ($trans_gencode->{$tsi}) {
         if ($trans_gencode->{$tsi}{'gencode_basic'}) {
-          $gencode_set = qq(<span class="glossary_mouseover">Y<span class="floating_popup">$gencode_desc</span></span>);
+          push @flags,qq(<span class="glossary_mouseover">GENCODE basic<span class="floating_popup">$gencode_desc</span></span>);
         }
       }
-      (my $biotype = $_->biotype) =~ s/_/ /g;
-
+      (my $biotype_text = $_->biotype) =~ s/_/ /g;
+      my $merged = '';
+      $merged .= " Merged Ensembl/Havana gene." if $_->analysis->logic_name =~ /ensembl_havana/;
+      $extras{$_} ||= '-' for(keys %extra_links);
       my $row = {
         name       => { value => $_->display_xref ? $_->display_xref->display_id : 'Novel', class => 'bold' },
         transcript => sprintf('<a href="%s">%s</a>', $url, $tsi),
         bp_length  => $transcript_length,
-        protein    => $protein,
-        aa_length  => $protein_length,
-        biotype    => $self->glossary_mouseover(ucfirst $biotype),
+        protein    => (($protein_length ne '-')?"$protein_length aa ":' ').$protein,
+        biotype    => $self->colour_biotype($self->glossary_mouseover(ucfirst $biotype_text,undef,$merged),$_),
         ccds       => $ccds,
+        %extras,
         has_ccds   => $ccds eq '-' ? 0 : 1,
         cds_tag    => $cds_tag,
         gencode_set=> $gencode_set,
-        options    => { class => $count == 1 || $tsi eq $transcript ? 'active' : '' }
+        options    => { class => $count == 1 || $tsi eq $transcript ? 'active' : '' },
+        flags => join('',map { "<span class='ts_flag'>$_</span>" } @flags),
       };
       
-      $biotype = '.' if $biotype eq 'protein coding';
-      $biotype_rows{$biotype} = [] unless exists $biotype_rows{$biotype};
-      push @{$biotype_rows{$biotype}}, $row;
+      $biotype_text = '.' if $biotype_text eq 'protein coding';
+      $biotype_rows{$biotype_text} = [] unless exists $biotype_rows{$biotype_text};
+      push @{$biotype_rows{$biotype_text}}, $row;
     }
+    foreach my $k (sort { $extra_links{$a}->{'order'} cmp
+                          $extra_links{$b}->{'order'} } keys %any_extras) {
+      my $x = $extra_links{$k};
+      push @columns, { key => $k, sort => 'html', title => $x->{'name'}};
+    }
+    push @columns, { key => 'flags', sort => 'html', title => 'Flags' };
 
     ## Additionally, sort by CCDS status and length
     while (my ($k,$v) = each (%biotype_rows)) {
@@ -306,6 +361,10 @@ sub transcript_table {
 
     # Add rows to transcript table
     push @rows, @{$biotype_rows{$_}} for sort keys %biotype_rows; 
+    # Add suffixes to lengths (kept numeric till now to aid sorting)
+    for (@rows) { 
+      $_->{'bp_length'} .= ' bp' if $_->{'bp_length'} =~ /\d/;
+    }
 
     $table->add_row(
       $page_type eq 'gene' ? 'Transcripts' : 'Gene',
@@ -317,13 +376,24 @@ sub transcript_table {
       )
     );
 
+    my @hidecols;
+    foreach my $id (keys %extra_links) {
+      foreach my $i (0..$#columns) {
+        if($columns[$i]->{'key'} eq $id and $extra_links{$id}->{'hidden'}) {
+          push @hidecols,$i;
+          last;
+        }
+      }
+    }
+
     my $table_2 = $self->new_table(\@columns, \@rows, {
       data_table        => 1,
       data_table_config => { asStripClasses => [ '', '' ], oSearch => { sSearch => '', bRegex => 'false', bSmart => 'false' } },
       toggleable        => 1,
       class             => 'fixed_width' . ($show ? '' : ' hide'),
       id                => 'transcripts_table',
-      exportable        => 0
+      exportable        => 0,
+      hidden_columns    => \@hidecols,
     });
 
     $html = $table->render.$table_2->render;
@@ -1067,7 +1137,6 @@ sub render_sift_polyphen {
 }
 
 sub render_consequence_type {
-  ## render consequence type(s) with colour(s) a hidden span with a rank for sorting
   my $self        = shift;
   my $tva         = shift;
   my $most_severe = shift;
@@ -1081,12 +1150,10 @@ sub render_consequence_type {
 
   my $type = join ' ',
     map {
-      sprintf(
-        '<nobr><span class="colour" style="background-color:%s">&nbsp;</span> '.
-        '<span class="_ht conhelp" title="%s">%s</span></nobr>',
+      $self->coltab(
+        $_->label,
         $var_styles->{lc $_->SO_term} ? $colourmap->hex_by_name($var_styles->{lc $_->SO_term}->{'default'}) : $colourmap->hex_by_name($var_styles->{'default'}->{'default'}),
         $_->description,
-        $_->label
       )
     }
     @consequences;
