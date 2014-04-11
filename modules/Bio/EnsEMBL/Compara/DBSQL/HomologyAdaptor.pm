@@ -23,7 +23,7 @@ use warnings;
 
 use Bio::EnsEMBL::Compara::Homology;
 use Bio::EnsEMBL::Compara::DBSQL::BaseRelationAdaptor;
-use Bio::EnsEMBL::Compara::Utils::Scalar;
+use Bio::EnsEMBL::Compara::Utils::Scalar qw(:assert);
 
 use Bio::EnsEMBL::Utils::Exception qw(throw);
 use Bio::EnsEMBL::Utils::Argument qw(rearrange);
