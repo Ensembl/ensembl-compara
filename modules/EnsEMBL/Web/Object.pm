@@ -78,14 +78,6 @@ sub data_species      { return shift->hub->data_species(@_);      }
 sub get_imageconfig   { return shift->hub->get_imageconfig(@_);   }
 sub get_db            { return shift->hub->get_db(@_);            }
 
-sub DEPRECATED {
-  my @caller = caller(1);
-  my $warn   = "$caller[3] is deprecated and will be removed in release 62. ";
-  my $func   = shift || [split '::', $caller[3]]->[-1];
-  $warn     .= "Use EnsEMBL::Web::Hub::$func instead - $caller[1] line $caller[2]\n";
-  warn $warn;
-}
-
 sub count_alignments {
   my $self       = shift;
   my $cdb        = shift || 'DATABASE_COMPARA';
@@ -243,6 +235,14 @@ sub rose_manager {
   $type   = $type ? "::$type" : '';
 
   return $self->{'_rose_managers'}{$db}{$type} ||= $self->dynamic_use_fallback($db ? "ORM::EnsEMBL::DB::${db}::Manager${type}" : (), 'ORM::EnsEMBL::Rose::Manager');
+}
+
+sub DEPRECATED {
+  my @caller = caller(1);
+  my $warn   = "$caller[3] is deprecated and will be removed in release 62. ";
+  my $func   = shift || [split '::', $caller[3]]->[-1];
+  $warn     .= "Use EnsEMBL::Web::Hub::$func instead - $caller[1] line $caller[2]\n";
+  warn $warn;
 }
 
 1;
