@@ -619,97 +619,24 @@ sub content_other_pan_compara {
   return $self->content_other('compara_pan_ensembl');
 }
 
-## TODO These data checks really belong in an Object!
-sub check_for_align_in_database {
-    ## Check if alignment exists in the database
-    my ($self, $align, $species, $cdb) = @_;
+sub check_for_align_problems {
+  ## Compile possible error messages for a given alignment
+  ## @return HTML
+  my ($self, $args) = @_;
+  my $html;
 
-    return (undef, $self->_info('No alignment specified', '<p>Select the alignment you wish to display from the box above.</p>')) unless $align;
-  
-    my $hub           = $self->hub;
-    my $species_defs  = $hub->species_defs;
-    my $db_key        = $cdb =~ /pan_ensembl/ ? 'DATABASE_COMPARA_PAN_ENSEMBL' : 'DATABASE_COMPARA';
-    my $align_details = $species_defs->multi_hash->{$db_key}->{'ALIGNMENTS'}->{$align};
-    
-    return $self->_error('Unknown alignment', '<p>The alignment you have selected does not exist in the current database.</p>') unless $align_details;
-    
-    if (!exists $align_details->{'species'}->{$species}) {
-        return $self->_error('Unknown alignment', sprintf(
-                                                          '<p>%s is not part of the %s alignment in the database.</p>',
-                                                          $species_defs->species_label($species),
-                                                          encode_entities($align_details->{'name'})
-                                                         ));
-    }
-}
-
-sub check_for_missing_species {
-    ## Check what species are not present in the alignment
-    my ($self, $align, $species, $cdb) = @_;
-    
-    my (@skipped, @missing, $title, $warnings, %aligned_species);
+  my ($error, $warnings) = $self->object->check_for_align_in_database($args->{align}, $args->{species}, $args->{cdb});
+  push @$warnings, $self->object->check_for_missing_species($args);
  
-    my $hub           = $self->hub;
-    my $species_defs  = $hub->species_defs;
-    my $db_key        = $cdb =~ /pan_ensembl/ ? 'DATABASE_COMPARA_PAN_ENSEMBL' : 'DATABASE_COMPARA';
-    my $align_details = $species_defs->multi_hash->{$db_key}->{'ALIGNMENTS'}->{$align};
+  if ($error) {
+    $html .= $self->error_panel($error->{title}, $error->{message});
+  }
+  foreach (@$warnings) {
+    next unless $_->{message};
+    $html .= $self->warning_panel($_->{title}, $_->{message});
+  }
 
-    my $align_params    = $hub->param('align');
-    my $slice           = $self->object->slice;
-    $slice = undef if $slice == 1; # weirdly, we get 1 if feature_Slice is missing
-
-    if(defined $slice) { 
-        my ($slices)     = $self->get_slices($slice, $align, $species);
-        %aligned_species = map { $_->{'name'} => 1 } @$slices;
-    }
-
-    foreach (keys %{$align_details->{'species'}}) {
-        next if $_ eq $species;
-        
-        if ($align_details->{'class'} !~ /pairwise/ 
-            && ($hub->param(sprintf 'species_%d_%s', $align, lc) || 'off') eq 'off') {
-            push @skipped, $_;
-        } 
-        elsif (defined $slice and !$aligned_species{$_} and $_ ne 'ancestral_sequences') {
-            push @missing, $_;
-        }
-    }
-    
-    if (scalar @skipped) {  
-        $title = 'hidden';
-        $warnings .= sprintf(
-                             '<p>The following %d species in the alignment are not shown in the image. Use the "<strong>Configure this page</strong>" on the left to show them.<ul><li>%s</li></ul></p>', 
-                             scalar @skipped, 
-                             join "</li>\n<li>", sort map $species_defs->species_label($_), @skipped
-                            );
-    }
-    
-    if (scalar @skipped && scalar @missing) {
-        $title .= ' and ';
-    }
-    
-    if (scalar @missing) {
-        $title .= ' species';
-        if ($align_details->{'class'} =~ /pairwise/) {
-            $warnings .= sprintf '<p>%s has no alignment in this region</p>', $species_defs->species_label($missing[0]);
-        } else {
-            $warnings .= sprintf(
-                                 '<p>The following %d species have no alignment in this region:<ul><li>%s</li></ul></p>', 
-                                 scalar @missing, 
-                                 join "</li>\n<li>", sort map $species_defs->species_label($_), @missing
-                                );
-        }
-    }
-    return ($self->_info(ucfirst($title), $warnings)) if $warnings;
-}
-
-sub check_for_align_errors {
-  my $self = shift;
-  my ($align, $species, $cdb) = @_;
-
-  my ($error, $warnings) = $self->check_for_align_in_database(@_);
-  $warnings .= $self->check_for_missing_species(@_);
-
-  return ($error, $warnings);
+  return $html;
 }
 
 
