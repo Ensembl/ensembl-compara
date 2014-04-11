@@ -113,17 +113,17 @@ sub _availability {
   return $hash;
 }
 
-# Command object attached to proxy object
 sub command {
+  ## Command object attached to data object
   my $self = shift;
   $self->{'command'} = shift if (@_);
   return $self->{'command'};
 }
 
-# The highlights array is passed between web-requests to highlight selected items (e.g. Gene around
-# which contigview had been rendered. If any data is passed this is stored in the highlights array
-# and an arrayref of (unique) elements is returned.
 sub highlights {
+  ## The highlights array is passed between web-requests to highlight selected items (e.g. Gene around
+  ## which contigview had been rendered). If any data is passed this is stored in the highlights array
+  ## @return Arrayref of (unique) elements
   my $self = shift;
   
   if (!exists( $self->{'data'}{'_highlights'})) {
@@ -141,22 +141,16 @@ sub highlights {
   return $self->{'data'}{'_highlights'};
 }
 
-sub highlights_string { return join '|', @{$_[0]->highlights}; } # Returns the highlights area as a | separated list for passing in URLs.
+sub highlights_string { 
+  ## Returns the highlights area as a | separated list for passing in URLs.
+  ## @return Array
+  return join '|', @{$_[0]->highlights}; 
+} 
 
-# Returns the type of seq_region in "human readable form" (in this case just first letter captialised)
-sub seq_region_type_human_readable {
-  my $self = shift;
-  
-  if (!$self->can('seq_region_type')) {
-    $self->{'data'}->{'_drop_through_'} = 1;
-    return;
-  }
-  
-  return ucfirst $self->seq_region_type;
-}
-
-# Returns the type/name of seq_region in human readable form - if the coord system type is part of the name this is dropped.
 sub seq_region_type_and_name {
+  ## Returns the type/name of seq_region in human readable form (first letter capitalised).
+  ## If the coord system type is part of the name this is dropped.
+  ## @return String or Undef
   my $self = shift;
   
   if (!$self->can('seq_region_name')) {
@@ -164,7 +158,7 @@ sub seq_region_type_and_name {
     return;
   }
   
-  my $coord = $self->seq_region_type_human_readable;
+  my $coord = ucfirst($self->seq_region_type);
   my $name  = $self->seq_region_name;
   
   if ($name =~ /^$coord/i) {
@@ -194,11 +188,11 @@ sub gene_description {
   }
 }
 
-# There may be occassions when a script needs to work with features of
-# more than one type. in this case we create a new {{EnsEMBL::Web::Proxy::Factory}}
-# object for the alternative data type and retrieves the data (based on the standard URL
-# parameters for the new factory) attach it to the universal datahash {{__data}}
 sub alternative_object_from_factory {
+  ## There may be occassions when a script needs to work with features of
+  ## more than one type. in this case we create a new {{EnsEMBL::Web::Proxy::Factory}}
+  ## object for the alternative data type and retrieves the data (based on the standard URL
+  ## parameters for the new factory) attach it to the universal datahash {{__data}}
   my ($self, $type) = @_;
   
   my $t_fact = $self->new_factory($type, $self->__data);
@@ -227,9 +221,8 @@ sub long_caption {
   return $self->stable_id . $label;
 }
 
-# method required for ID history views, applies to several web objects
-
 sub get_earliest_archive { 
+  ## Method required for ID history views, applies to several web objects
   my $self = shift;
   
   my $adaptor = EnsEMBL::Web::DBSQL::WebsiteAdaptor->new($self->hub);
