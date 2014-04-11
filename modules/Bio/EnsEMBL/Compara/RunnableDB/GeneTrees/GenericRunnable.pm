@@ -60,6 +60,7 @@ Other parameters:
  - cdna: 1 if the alignment file contains the CDS sequences (otherwise: the protein sequences)
  - remove_columns: 1 if the alignment has to be filtered (assumes that there is a "removed_columns" tag)
  - ryo_species_tree: Roll-Your-Own format string for the species-tree
+ - species_tree_label: the label od the species-tree that should be used for this command
  - input_clusterset_id: alternative clusterset_id for the input gene tree
  - run_treebest_sdi: do we have to pass the output tree through "treebest sdi"
  - output_clusterset_id: alternative clusterset_id to store the result gene tree
@@ -90,8 +91,8 @@ sub param_defaults {
         'do_transactions'   => 1,
         'ryo_species_tree'  => '%{o}',
 
+        'species_tree_label'        => undef,
         'input_clusterset_id'       => undef,
-        'input_species_tree_label'  => undef,
         'output_clusterset_id'      => undef,
 
         'run_treebest_sdi'  => 0,
@@ -263,7 +264,7 @@ sub get_gene_tree_file {
 
 sub _load_species_tree_string_from_db {
     my ($self) = @_;
-    my $species_tree = $self->param('gene_tree')->species_tree($self->param('input_species_tree_label') || 'default');
+    my $species_tree = $self->param('gene_tree')->species_tree($self->param('species_tree_label') || 'default');
     $species_tree->attach_to_genome_dbs();
     $self->param('species_tree_string', $species_tree->root->newick_format('ryo', $self->param('ryo_species_tree')));
 }
