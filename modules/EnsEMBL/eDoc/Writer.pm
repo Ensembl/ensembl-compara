@@ -424,7 +424,7 @@ sub write_base_frame {
   if ($count == 0) {
     warn "No modules indexed!";
   } else {
-    $coverage = $total / $methods;
+    $coverage = $total / $count;
     $overview_coverage = $overview_total / $count;
   }
   print $fh $self->html_header;
@@ -432,7 +432,7 @@ sub write_base_frame {
   print $fh "<h1><i><span style='color: #3366bb'>e</span><span style='color: #880000'>!</span></i> web code documentation</h1>";
   print $fh qq(<div class='coverage'>);
   print $fh qq(Overview coverage: ) . sprintf("%.1f", $overview_coverage) . qq( %<br />);
-  print $fh qq(Method coverage: ) . sprintf("%.1f", $coverage) . qq( %);
+  print $fh qq(Method coverage: ) . sprintf("%.0f", $coverage) . qq( %);
   print $fh qq(</div>);
   print $fh "<div class='date'>" . $count . " modules<br />\n";
   print $fh "" . $methods . " methods<br />\n";
