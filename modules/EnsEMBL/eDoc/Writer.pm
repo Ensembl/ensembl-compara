@@ -409,25 +409,30 @@ sub write_base_frame {
   open (my $fh, ">", $self->location . "/base.html");
   my $total = 0;
   my $count = 0;
+  my $overview_total = 0;
   my $methods = 0;
   my $lines = 0;
   foreach my $module (@{ $modules }) {
     $count++;
     $total += $module->coverage;
+    $overview_total++ if $module->overview;
     $methods += @{ $module->methods };
     $lines += $module->lines;
   }
   my $coverage = 0;
+  my $overview_coverage = 0;
   if ($count == 0) {
     warn "No modules indexed!";
   } else {
-    $coverage = $total / $count;
+    $coverage = $total / $methods;
+    $overview_coverage = $overview_total / $count;
   }
   print $fh $self->html_header;
   print $fh "<div class='front'>";
   print $fh "<h1><i><span style='color: #3366bb'>e</span><span style='color: #880000'>!</span></i> web code documentation</h1>";
   print $fh qq(<div class='coverage'>);
-  print $fh qq(Documentation coverage: ) . sprintf("%.0f", $coverage) . qq( %);
+  print $fh qq(Overview coverage: ) . sprintf("%.1f", $overview_coverage) . qq( %<br />);
+  print $fh qq(Method coverage: ) . sprintf("%.1f", $coverage) . qq( %);
   print $fh qq(</div>);
   print $fh "<div class='date'>" . $count . " modules<br />\n";
   print $fh "" . $methods . " methods<br />\n";
