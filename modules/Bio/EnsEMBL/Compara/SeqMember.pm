@@ -225,6 +225,7 @@ sub new_from_transcript {
     $self->sequence($seq_string);
   }
   
+    $self->{core_transcript} = $transcript;
   #print("Member->new_from_transcript\n");
   #print("  source_name = '" . $self->source_name . "'\n");
   #print("  stable_id = '" . $self->stable_id . "'\n");
