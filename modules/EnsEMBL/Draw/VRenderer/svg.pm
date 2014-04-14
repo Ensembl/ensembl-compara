@@ -16,12 +16,15 @@ limitations under the License.
 
 =cut
 
-#########
-# Author: js5@sanger.ac.uk
-# Maintainer: webmaster@sanger.ac.uk
-# Created: 2001
-#
 package EnsEMBL::Draw::VRenderer::svg;
+
+### Renders vertical ideograms in SVG format
+### Modeled on Sanger::Graphics::Renderer::svg
+### Note that owing to the way the rounded ends of chromosomes are 
+### currently drawn for bitmaps (i.e. as a series of rectangles),
+### this module has major shortcomings in its ability to render images
+### in an attractive manner!
+
 use strict;
 
 

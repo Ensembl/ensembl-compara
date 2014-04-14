@@ -17,6 +17,12 @@ limitations under the License.
 =cut
 
 package EnsEMBL::Draw::ColourMap;
+
+### Creates a hash whose values are Unix named colours
+### It takes as its base the standard Sanger::Graphics
+### colour map and adds in colours for contigs and also
+### the STYLE hash from the web settings file DEFAULTS.ini
+
 use strict;
 use base qw(Sanger::Graphics::ColourMap);
 

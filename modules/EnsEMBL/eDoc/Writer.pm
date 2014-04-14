@@ -291,6 +291,7 @@ sub toc_html {
 
   $html .= '<h2>Methods by Type</h2>';
   foreach my $section (@{ $self->type_order }) {
+    next unless scalar(@{ $module->methods_for_section($section) });
     $html .= "<h3>" . ucfirst($section) . "</h3>\n";
     $html .= "<ul>";
     foreach my $method (sort {$a->name cmp $b->name} @{ $module->methods_for_section($section) }) {
@@ -327,7 +328,7 @@ sub markup_documentation {
       $html .= $content;
     }
     if ($count == 2) {
-      $html .= $self->markup_embedded_table($content);
+      #$html .= $self->markup_embedded_table($content);
     }
     if ($count == 3) {
       $html .= $content;

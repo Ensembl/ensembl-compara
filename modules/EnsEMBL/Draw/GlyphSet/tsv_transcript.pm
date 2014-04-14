@@ -18,11 +18,18 @@ limitations under the License.
 
 package EnsEMBL::Draw::GlyphSet::tsv_transcript;
 
+### Module for drawing transcripts on Transcript/Variation_Transcript/Image 
+### (formerly known as TranscriptSNPView)
+### See EnsEMBL::Web::Component::VariationImage for implementation
+
+
 use strict;
 
 use base qw(EnsEMBL::Draw::GlyphSet_transcript);
 
 sub render_normal {
+## Default (and currently only) rendering style for this track: as exon blocks
+## joined by angled lines, with no labels
   my $self = shift;
   my $type = $self->type;
   

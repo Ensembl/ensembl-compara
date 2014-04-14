@@ -18,6 +18,9 @@ limitations under the License.
 
 package EnsEMBL::Draw::GlyphSet::_alignment;
 
+### Parent class used by various tracks that show features as simple
+### coloured blocks (including histograms)
+
 use strict;
 
 use List::Util qw(min max);
@@ -25,9 +28,9 @@ use List::Util qw(min max);
 use base qw(EnsEMBL::Draw::GlyphSet_wiggle_and_block EnsEMBL::Draw::GlyphSet::_difference);
 
 #==============================================================================
-# The following functions can be over-riden if the class does require
-# something diffirent - main one to be over-riden is probably the
-# features call - as it will need to take different parameters...
+# The following functions can be overridden if the class does require
+# something different - main one to be overridden is probably the
+# features call, as it will need to take different parameters...
 #==============================================================================
 
 sub feature_group {

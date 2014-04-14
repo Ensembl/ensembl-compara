@@ -16,13 +16,13 @@ limitations under the License.
 
 =cut
 
-#########
-# Author: rmp@sanger.ac.uk
-# Maintainer: webmaster@sanger.ac.uk
-# Created: 2001
-#
 
 package EnsEMBL::Draw::DrawableContainer;
+
+### Base class for Ensembl genomic images in "horizontal" configuration
+### i.e. with sequence and features running horizontally across the image
+### Collects the individual glyphsets required for the image (e.g. tracks)
+### and manages the overall image settings
 
 use strict;
 

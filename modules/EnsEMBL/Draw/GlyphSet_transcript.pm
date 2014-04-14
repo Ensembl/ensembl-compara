@@ -18,6 +18,9 @@ limitations under the License.
 
 package EnsEMBL::Draw::GlyphSet_transcript;
 
+### Parent module for various glyphsets that draw transcripts
+### (styles include exons as blocks, joined by angled lines across introns)
+
 use strict;
 
 use List::Util qw(min max);

@@ -18,6 +18,9 @@ limitations under the License.
 
 package EnsEMBL::Draw::GlyphSet_wiggle_and_block;
 
+### Module to draw a set of Ensembl features as either 
+### a 'wiggle' (line graph) or a series of blocks
+
 use strict;
 
 use List::Util qw(min max);

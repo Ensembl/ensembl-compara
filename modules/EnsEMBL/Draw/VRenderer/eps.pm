@@ -16,12 +16,11 @@ limitations under the License.
 
 =cut
 
-#########
-# Author: js5@sanger.ac.uk
-# Maintainer: helpdesk@ensembl.org
-# Created: 2001
-#
 package EnsEMBL::Draw::VRenderer::eps;
+
+### Renders vertical ideograms in EPS format
+### Modeled on Sanger::Graphics::Renderer::eps
+
 use strict;
 
 

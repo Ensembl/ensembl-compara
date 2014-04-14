@@ -18,6 +18,10 @@ limitations under the License.
 
 package EnsEMBL::Draw::GlyphSet;
 
+### Base package for drawing a discreet section of a genomic image,
+### such as a section of assembly, feature track, scalebar or track legend
+### Uses GD and the Sanger::Graphics::Glyph codebase
+
 use strict;
 
 use GD;
