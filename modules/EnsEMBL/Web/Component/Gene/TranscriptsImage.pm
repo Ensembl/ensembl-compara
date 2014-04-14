@@ -55,7 +55,7 @@ sub content {
   
   $node->set('display', 'transcript_label') if $node && $node->get('display') eq 'off';
 
-  $image_config->{'data_by_cell_line'} = $self->new_object('Slice', $gene_slice, $object->__data)->get_cell_line_data($image_config) if keys %{$self->hub->species_defs->databases->{'DATABASE_FUNCGEN'}{'tables'}{'cell_type'}{'ids'}};
+#  $image_config->{'data_by_cell_line'} = $self->new_object('Slice', $gene_slice, $object->__data)->get_cell_line_data($image_config) if keys %{$self->hub->species_defs->databases->{'DATABASE_FUNCGEN'}{'tables'}{'cell_type'}{'ids'}};
 
   my $image = $self->new_image($gene_slice, $image_config, [ $gene->stable_id ]);
   
