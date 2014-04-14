@@ -184,7 +184,7 @@ sub loadMembersFromCoreSlices {
     @genes = ();
     my $current_end;
 
-    foreach my $gene (sort {$a->start <=> $b->start} @{$slice->get_all_Genes}) {
+    foreach my $gene (sort {$a->start <=> $b->start} @{$slice->get_all_Genes(undef, undef, 1)}) {
       $self->param('geneCount', $self->param('geneCount')+1 );
       # LV and C are for the Ig/TcR family, which rearranges
       # somatically so is considered as a different biotype in EnsEMBL
