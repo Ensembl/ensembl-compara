@@ -18,6 +18,9 @@ limitations under the License.
 
 package EnsEMBL::Draw::GlyphSet::_blast;
 
+### Draw track showing alignment of BLAST hits (from the old 
+### BLAST ticketed system)
+
 use strict;
 use warnings;
 no warnings 'uninitialized';

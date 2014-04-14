@@ -18,6 +18,9 @@ limitations under the License.
 
 package EnsEMBL::Draw::GlyphSet::missing;
 
+### Displays a message at the bottom of configurable images, showing
+### the number of tracks that are currently turned off
+
 use strict;
 use warnings;
 

@@ -18,6 +18,9 @@ limitations under the License.
 
 package EnsEMBL::Draw::GlyphSet::navigation;
 
+### Navigation "sprites" for Region Comparison image
+### See EnsEMBL::Web::ImageConfig::MultiBottom
+
 use strict;
 
 use base qw(EnsEMBL::Draw::GlyphSet);

@@ -18,6 +18,9 @@ limitations under the License.
 
 package EnsEMBL::Draw::GlyphSet::HSP_scalebar;
 
+### Draw track showing scalebar for BLAST HSP hits (from the old 
+### BLAST ticketed system)
+
 use strict;
 
 use Sanger::Graphics::Bump;

@@ -18,29 +18,24 @@ limitations under the License.
 
 package EnsEMBL::Draw::GlyphSet::_synteny;
 
+### Module to display a synteny track as a simple block of colour
+### aligned to the focus genome
+
 use strict;
 
 use Bio::EnsEMBL::Feature;
 
 use base qw(EnsEMBL::Draw::GlyphSet_simple);
 
-## All Glyphset simple codes should be written with functions in
-## the following order:
-##  * sub features
-##  * sub colour
-##  * sub feature_label
-##  * sub title
-##  * sub href
-##  * sub tag
-
-## How do we retrieve the features from the database. in this case
-## we do a get_all_compara_Syntenies
-## NOTE THAT THIS IS NOT MULTI COMPARA SAFE... NEEDS TO REALLY
-## KNOW ABOUT THE COMPARA DATABASE... WHICH THE WEBCODE WILL PASS IN!!
-
 sub features {
   my $self      = shift;
   my $species   = $self->species_defs->get_config($self->my_config('species'), 'SPECIES_PRODUCTION_NAME');
+
+  ## How do we retrieve the features from the database. in this case
+  ## we do a get_all_compara_Syntenies
+  ## NOTE THAT THIS IS NOT MULTI COMPARA SAFE... NEEDS TO REALLY
+  ## KNOW ABOUT THE COMPARA DATABASE... WHICH THE WEBCODE WILL PASS IN!!
+
   my $syntenies = $self->{'container'}->get_all_compara_Syntenies($species, 'SYNTENY', $self->dbadaptor('multi', $self->my_config('db')));
   my $offset    = $self->{'container'}->start - 1;
   my @features;
@@ -80,9 +75,9 @@ sub features {
   return \@features;
 }
 
+sub get_colours {
 ## Colour is "nasty" we have a pool of colours we allocate in a loop!
 ## Colour is cached on the main config by chromosome name.
-sub get_colours {
   my ($self, $f) = @_;
   my $config = $self->{'config'};
   my $name   = $config->{'_synteny_colours'}{$f->{'hit_chr_name'}};
@@ -116,9 +111,9 @@ sub feature_label {
   );
 }
 
+sub title {
 ## To be displayed when mousing over region...
 ## and to use as the initial pop-up menu.
-sub title {
   my ($self, $f) = @_;
   return sprintf '%s: %s:%s-%s; %s: %s:%s-%s; Orientation: %s',
     $self->species_defs->get_config($self->species, 'SPECIES_SCIENTIFIC_NAME'),
@@ -132,9 +127,9 @@ sub title {
     $f->{'rel_ori'} < 0 ? 'reverse' : 'same';
 }
 
+sub href { 
 ## To be used for the default link...
 ## In this case jump to cytoview on the other species...
-sub href { 
   my ($self, $f) = @_;
   my $ori = $f->{'rel_ori'} < 0 ? 'reverse' : 'same';
   

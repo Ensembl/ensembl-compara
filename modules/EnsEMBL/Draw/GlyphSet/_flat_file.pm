@@ -18,6 +18,9 @@ limitations under the License.
 
 package EnsEMBL::Draw::GlyphSet::_flat_file;
 
+### Module for drawing features parsed from a non-indexed text file (such as 
+### user-uploaded data)
+
 use strict;
 
 use List::Util qw(reduce);

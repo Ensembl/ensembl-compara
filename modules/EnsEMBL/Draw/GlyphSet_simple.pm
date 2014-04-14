@@ -18,6 +18,8 @@ limitations under the License.
 
 package EnsEMBL::Draw::GlyphSet_simple;
 
+### Parent class of many Ensembl tracks that draw features as simple coloured blocks
+
 use strict;
 
 use Sanger::Graphics::Bump;

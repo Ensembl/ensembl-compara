@@ -18,6 +18,9 @@ limitations under the License.
 
 package EnsEMBL::Draw::GlyphSet::spacer;
 
+### Used in a number of complex images to create spaces between sections
+### See various modules under EnsEMBL::Web::ImageConfig
+
 use strict;
 
 use base qw(EnsEMBL::Draw::GlyphSet);

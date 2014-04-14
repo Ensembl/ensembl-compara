@@ -18,6 +18,9 @@ limitations under the License.
 
 package EnsEMBL::Draw::GlyphSet::Vsynteny;
 
+### Module for drawing synteny using vertical ideograms
+### See EnsEMBL::Web::Component::Location::SyntenyImage
+
 use strict;
 
 use base qw(EnsEMBL::Draw::GlyphSet);

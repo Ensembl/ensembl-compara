@@ -18,6 +18,9 @@ limitations under the License.
 
 package EnsEMBL::Draw::GlyphSet::_user_data;
 
+### Module for drawing user-uploaded data that has been saved in a
+### *_userdata database
+
 use strict;
 use warnings;
 no warnings 'uninitialized';
