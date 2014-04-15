@@ -18,6 +18,8 @@ limitations under the License.
 
 package EnsEMBL::Draw::GlyphSet::idhistorytree;
 
+### Draws tree for ID History View
+
 use strict;
 
 use vars qw($SCORE_COLOURS $COLOURS);

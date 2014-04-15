@@ -25,6 +25,7 @@ use base qw(EnsEMBL::Draw::GlyphSet);
 use Bio::EnsEMBL::LRGSlice;
 
 sub features {
+  warn ">>> LRG FEATURES";
   my ($self) = @_;
   my $slice = $self->{'container'};
 

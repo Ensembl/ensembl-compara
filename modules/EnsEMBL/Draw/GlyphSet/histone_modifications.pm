@@ -18,6 +18,8 @@ limitations under the License.
 
 package EnsEMBL::Draw::GlyphSet::histone_modifications;
 
+### STATUS: Unknown - maybe not in use any more?
+
 use strict;
 
 use base qw(EnsEMBL::Draw::GlyphSet_wiggle_and_block);
@@ -46,7 +48,6 @@ sub get_block_features {
 
 
 sub draw_features {
-
   ### Description: gets features for block features and passes to draw_block_features
   ### Draws wiggles if wiggle flag is 1
   ### Returns 1 if draws blocks. Returns 0 if no blocks drawn

@@ -18,6 +18,8 @@ limitations under the License.
 
 package EnsEMBL::Draw::GlyphSet::gene_legend;
 
+### Legend for gene colours
+
 use strict;
 
 use base qw(EnsEMBL::Draw::GlyphSet::legend);

@@ -18,6 +18,8 @@ limitations under the License.
 
 package EnsEMBL::Draw::GlyphSet::genetree_legend;
 
+### Legend for Gene/Compara_Tree and Gene/SpeciesTree images
+
 use strict;
 
 use base qw(EnsEMBL::Draw::GlyphSet::legend);
