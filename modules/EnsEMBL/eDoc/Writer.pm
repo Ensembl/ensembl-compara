@@ -426,13 +426,13 @@ sub write_base_frame {
     warn "No modules indexed!";
   } else {
     $coverage = $total / $count;
-    $overview_coverage = $overview_total / $count;
+    $overview_coverage = $overview_total / $count * 100;
   }
   print $fh $self->html_header;
   print $fh "<div class='front'>";
   print $fh "<h1><i><span style='color: #3366bb'>e</span><span style='color: #880000'>!</span></i> web code documentation</h1>";
   print $fh qq(<div class='coverage'>);
-  print $fh qq(Overview coverage: ) . sprintf("%.1f", $overview_coverage) . qq( %<br />);
+  print $fh qq(Overview coverage: ) . sprintf("%.0f", $overview_coverage) . qq( %<br />);
   print $fh qq(Method coverage: ) . sprintf("%.0f", $coverage) . qq( %);
   print $fh qq(</div>);
   print $fh "<div class='date'>" . $count . " modules<br />\n";
