@@ -18,6 +18,10 @@ limitations under the License.
 
 package EnsEMBL::Draw::GlyphSet::alignscalebar;
 
+### Draws scalebar for Location/Compara_Alignments/Image - standard
+### black'n'white scalebar, with aligned slice beneath shown as
+### coloured blocks in shades of pink
+
 use strict;
 
 use base qw(EnsEMBL::Draw::GlyphSet::scalebar);

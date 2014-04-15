@@ -18,6 +18,8 @@ limitations under the License.
 
 package EnsEMBL::Draw::GlyphSet::comparafake;
 
+### Draws error track when the current species is not in an alignment (?)
+
 use strict;
 
 use base qw(EnsEMBL::Draw::GlyphSet);

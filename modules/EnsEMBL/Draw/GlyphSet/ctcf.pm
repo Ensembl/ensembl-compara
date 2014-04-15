@@ -18,6 +18,9 @@ limitations under the License.
 
 package EnsEMBL::Draw::GlyphSet::ctcf;
 
+### Draw CTCF regulatory features track
+### (See matrices for TFBS - transcription factor binding sites)
+
 use strict;
 
 use base qw(EnsEMBL::Draw::GlyphSet_wiggle_and_block);
@@ -43,7 +46,6 @@ sub get_block_features {
 
 
 sub draw_features {
-
   ### Description: gets features for block features and passes to render_block_features
   ### Draws wiggles if wiggle flag is 1
   ### Returns 1 if draws blocks. Returns 0 if no blocks drawn
@@ -140,7 +142,6 @@ sub draw_error_tracks {
 }
 
 sub block_features_zmenu {
-
   ### Predicted features
   ### Creates zmenu for predicted features track
   ### Arg1: arrayref of Feature objects
@@ -200,4 +201,3 @@ sub render_text {
 
 
 1;
-### Contact: Bethan Pritchard bp1@sanger.ac.uk

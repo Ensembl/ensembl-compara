@@ -18,13 +18,13 @@ limitations under the License.
 
 package EnsEMBL::Draw::GlyphSet::_clone;
 
+### Retrieve all BAC map clones - these are the clones in the
+### subset "bac_map" - if we are looking at a long segment then we only
+### retrieve accessioned clones ("acc_bac_map")
+
 use strict;
 
 use base qw(EnsEMBL::Draw::GlyphSet_simple);
-
-## Retrieve all BAC map clones - these are the clones in the
-## subset "bac_map" - if we are looking at a long segment then we only
-## retrieve accessioned clones ("acc_bac_map")
 
 sub label_overlay { return 1; }
 

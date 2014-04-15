@@ -18,6 +18,8 @@ limitations under the License.
 
 package EnsEMBL::Draw::GlyphSet::draggable;
 
+### "Invisible" glyph used to define drag'n'select capability of image
+
 use strict;
 
 use base qw(EnsEMBL::Draw::GlyphSet);

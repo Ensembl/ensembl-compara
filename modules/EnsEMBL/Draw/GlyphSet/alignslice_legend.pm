@@ -18,6 +18,8 @@ limitations under the License.
 
 package EnsEMBL::Draw::GlyphSet::alignslice_legend;
 
+### Legend for Location/Compara_Alignments/Image
+
 use strict;
 
 use base qw(EnsEMBL::Draw::GlyphSet::legend);
