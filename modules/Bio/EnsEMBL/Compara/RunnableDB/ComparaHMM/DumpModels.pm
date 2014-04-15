@@ -92,10 +92,9 @@ sub fetch_input {
         $self->throw("Error creating the library!\n");
     }
     if ($code == -1) {
-        $self->input_job->incomplete(0);
-        die "The library already exists. I will reuse it (but have you set the stripe on it?)\n";
-    }
-    if ($code == 1) {
+    #    $self->input_job->incomplete(0);
+        $self->warning("The library already exists. I will reuse it (but have you set the stripe on it?)\n");
+    } elsif ($code == 1) {
         print STDERR "OK creating the library\n" if ($self->debug());
 
       if (which('lfs')) {
@@ -110,21 +109,17 @@ sub fetch_input {
             }
         }
       }
+      $self->param('hmmLibrary', $hmmLibrary);
     }
-
-    $self->param('hmmLibrary', $hmmLibrary);
-    return;
 }
 
 sub run {
     my ($self) = @_;
+    return unless $self->param('hmmLibrary');  # if the library already exists
     $self->dump_models();
     $self->create_blast_db();
 }
 
-sub write_output {
-    my ($self) = @_;
-}
 
 ################################
 ## Internal methods ############
