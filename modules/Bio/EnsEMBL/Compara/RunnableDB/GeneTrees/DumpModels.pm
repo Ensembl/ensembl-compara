@@ -93,6 +93,7 @@ sub fetch_input {
     }
     if ($code == -1) {
         $self->input_job->incomplete(0);
+        $self->dataflow_output_id($self->input_job->input_id, 1);
         die "The library already exists. I will reuse it (but have you set the stripe on it?)\n";
     }
     if ($code == 1) {
