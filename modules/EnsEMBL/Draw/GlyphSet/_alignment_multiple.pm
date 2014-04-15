@@ -18,6 +18,9 @@ limitations under the License.
 
 package EnsEMBL::Draw::GlyphSet::_alignment_multiple;
 
+### Draws compara multiple alignments - see EnsEMBL::Web::ImageConfig
+### for usage
+
 use strict;
 
 use Time::HiRes qw(time);
@@ -33,7 +36,6 @@ sub colour { return $_[0]->{'feature_colour'}, $_[0]->{'label_colour'}, $_[0]->{
 
 
 sub draw_features {
-
   ### Called from {{EnsEMBL::Draw::GlyphSet_wiggle_and_block.pm}}
   ### Arg 2 : draws wiggle plot if this is true
   ### Returns 0 if all goes well.  

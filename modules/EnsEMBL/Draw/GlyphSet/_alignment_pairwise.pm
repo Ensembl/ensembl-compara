@@ -18,6 +18,9 @@ limitations under the License.
 
 package EnsEMBL::Draw::GlyphSet::_alignment_pairwise;
 
+### Draws compara pairwise alignments - see EnsEMBL::Web::ImageConfig
+### and E::W::ImageConfig::MultiBottom for usage
+
 use strict;
 
 use base qw(EnsEMBL::Draw::GlyphSet);

@@ -60,7 +60,11 @@ sub content {
   
   my $image_width     = $self->image_width;
   my $slice           = $object->slice;
-  my ($slices)        = $self->get_slices($slice, $align_params, $primary_species);
+  my ($slices)        = $self->object->get_slices({
+                                              'slice' => $slice, 
+                                              'align' => $align_params, 
+                                              'species' => $primary_species
+                        });
   my %aligned_species = map { $_->{'name'} => 1 } @$slices;
   my $i               = 1;
   my (@images, $html);
@@ -110,11 +114,10 @@ sub content {
   
   $html .= $image->render;
 
-  my $alert_box = $self->check_for_align_errors({
+  my $alert_box = $self->check_for_align_problems({
                                 'align'   => $align, 
                                 'species' => $primary_species, 
                                 'cdb'     => $hub->param('cdb') || 'compara',
-                                'problem_types' => {'warnings' => 1},
                                 });
   $html .=  $alert_box;
   

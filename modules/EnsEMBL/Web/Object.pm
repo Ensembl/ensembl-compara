@@ -295,6 +295,7 @@ sub check_for_missing_species {
   $slice = undef if $slice == 1; # weirdly, we get 1 if feature_Slice is missing
 
   if(defined $slice) {
+    $args->{slice}   = $slice;
     my ($slices)     = $self->get_slices($args);
     %aligned_species = map { $_->{'name'} => 1 } @$slices;
   }
