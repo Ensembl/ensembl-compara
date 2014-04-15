@@ -18,6 +18,8 @@ limitations under the License.
 
 package EnsEMBL::Draw::GlyphSet::fg_methylation_legend;
 
+### Legend showing yellow-blue gradient used in methylation heatmaps
+
 use strict;
 
 use base qw(EnsEMBL::Draw::GlyphSet::legend);

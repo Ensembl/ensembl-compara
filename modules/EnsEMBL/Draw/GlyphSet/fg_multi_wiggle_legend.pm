@@ -18,6 +18,8 @@ limitations under the License.
 
 package EnsEMBL::Draw::GlyphSet::fg_multi_wiggle_legend;
 
+### Legend for regulatory build tracks
+
 use strict;
 
 use base qw(EnsEMBL::Draw::GlyphSet::legend);

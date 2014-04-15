@@ -18,6 +18,8 @@ limitations under the License.
 
 package EnsEMBL::Draw::GlyphSet::fg_segmentation_features_legend;
 
+### Legend for segmentation features track
+
 use strict;
 
 use base qw(EnsEMBL::Draw::GlyphSet::legend);

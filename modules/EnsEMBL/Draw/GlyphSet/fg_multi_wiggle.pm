@@ -18,6 +18,9 @@ limitations under the License.
 
 package EnsEMBL::Draw::GlyphSet::fg_multi_wiggle;
 
+### Draws peak and/or wiggle tracks for regulatory build data
+### e.g. histone modifications
+
 use strict;
 
 use base qw(EnsEMBL::Draw::GlyphSet_wiggle_and_block);
