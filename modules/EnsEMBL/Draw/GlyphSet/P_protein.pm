@@ -18,6 +18,9 @@ limitations under the License.
 
 package EnsEMBL::Draw::GlyphSet::P_protein;
 
+### Draws protein track on Transcript/ProteinSummary
+### (alternate blocks of light and dark purple)
+
 use strict;
 
 use base qw(EnsEMBL::Draw::GlyphSet);

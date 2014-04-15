@@ -18,6 +18,8 @@ limitations under the License.
 
 package EnsEMBL::Draw::GlyphSet::non_can_intron;
 
+### Draws non-canonical splicings on Transcript/SupportingEvidence
+
 use strict;
 
 use base qw(EnsEMBL::Draw::GlyphSet);
