@@ -157,7 +157,8 @@ sub set_variations {
   my $hub    = $self->hub;
   my $name   = $slice_data->{'name'};
   my $slice  = $slice_data->{'slice'};
-  return unless $hub->database('variation', ucfirst($slice->genome_db->name));
+  my $species = $slice->can('genome_db') ? ucfirst($slice->genome_db->name) : $hub->species;
+  return unless $hub->database('variation', $species);
   my $strand = $slice->strand;
   my $focus  = $name eq $config->{'species'} ? $config->{'focus_variant'} : undef;
   my $snps   = [];
