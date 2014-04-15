@@ -18,6 +18,8 @@ limitations under the License.
 
 package EnsEMBL::Draw::GlyphSet::_oligo;
 
+### Draws oligoprobe tracks
+
 use strict;
 use warnings;
 no warnings 'uninitialized';

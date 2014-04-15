@@ -18,6 +18,8 @@ limitations under the License.
 
 package EnsEMBL::Draw::GlyphSet::ld;
 
+### Draw LD "triangle" track on Region in Detail
+
 use strict;
 
 use POSIX;

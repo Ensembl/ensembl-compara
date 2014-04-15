@@ -18,6 +18,8 @@ limitations under the License.
 
 package EnsEMBL::Draw::GlyphSet::contig;
 
+### Draw contig track (normally alternating blocks of light and dark blue)
+
 use strict;
 
 use base qw(EnsEMBL::Draw::GlyphSet);

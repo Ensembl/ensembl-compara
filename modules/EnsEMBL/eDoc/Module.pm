@@ -271,7 +271,7 @@ sub _parse_package_file {
           $self->_add_type_to_method($subs->{$sub_name}, $type);
         }
         ## "Normal" inline documentation
-        elsif (/^\s+##(#)? (.+)/) {
+        elsif (/^\s*##(#)? (.+)/) {
           my $comment = $2;
           if ($comment =~ /^\@param/) {
             $params++;

@@ -17,6 +17,12 @@ limitations under the License.
 =cut
 
 package EnsEMBL::Draw::VRenderer;
+
+### Base class for creating a canvas for a VDrawableContainer
+### and its glyphsets
+### Modeled on Sanger::Graphics::Renderer, adapted for vertical
+### ideograms
+
 use strict;
 use warnings;
 no warnings 'uninitialized';

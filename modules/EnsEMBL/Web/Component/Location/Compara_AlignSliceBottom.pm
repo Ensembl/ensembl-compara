@@ -60,11 +60,16 @@ sub content {
   
   my $image_width     = $self->image_width;
   my $slice           = $object->slice;
-  my ($slices)        = $self->get_slices($slice, $align_params, $primary_species);
+  my ($slices)        = $self->object->get_slices({
+                                              'slice' => $slice, 
+                                              'align' => $align_params, 
+                                              'species' => $primary_species
+                        });
   my %aligned_species = map { $_->{'name'} => 1 } @$slices;
   my $i               = 1;
   my (@images, $html);
   
+  my ($caption_height,$caption_img_offset) = (0,-24);
   foreach (@$slices) {
     my $species      = $_->{'name'} eq 'Ancestral_sequences' ? 'Multi' : $_->{'name'}; # Cheating: set species to Multi to stop errors due to invalid species.
     my $image_config = $hub->get_imageconfig('alignsliceviewbottom', "alignsliceviewbottom_$i", $species);
@@ -73,7 +78,8 @@ sub content {
       container_width => $_->{'slice'}->length,
       image_width     => $image_width || 800, # hack at the moment
       slice_number    => "$i|3",
-      compara         => $i == 1 ? 'primary' : 'secondary'
+      compara         => $i == 1 ? 'primary' : 'secondary',
+      more_slices     => $i != @$slices,
     });
     
     my ($species_name, $slice_name) = split ':', $_->{'name'};
@@ -81,8 +87,14 @@ sub content {
     my $panel_caption = $species_defs->get_config($species_name, 'SPECIES_COMMON_NAME') || 'Ancestral sequences';
     $panel_caption   .= " $slice_name" if $slice_name;
 
-    $image_config->get_node('alignscalebar')->set('caption', $panel_caption);
-    
+    my $asb = $image_config->get_node('alignscalebar');
+    $asb->set('caption', $panel_caption);
+    $asb->set('caption_position', 'bottom');
+    $asb->set('caption_img',"f:24\@$caption_img_offset:".$_->{'name'});
+    $asb->set('caption_height',$caption_height);
+    $caption_img_offset = -20;
+    $caption_height = 28;
+
     foreach (grep $options{$_}, keys %options) {
       my $node = $image_config->get_node("alignment_compara_$align_details->{'id'}_$_");
       $node->set('display', $options{$_}) if $node;
@@ -102,9 +114,12 @@ sub content {
   
   $html .= $image->render;
 
-  my $cdb                 = $hub->param('cdb') || 'compara';
-  my ($errors, $warnings) = $self->check_for_align_errors($align, $primary_species, $cdb);
-  $html .=  $warnings;
+  my $alert_box = $self->check_for_align_problems({
+                                'align'   => $align, 
+                                'species' => $primary_species, 
+                                'cdb'     => $hub->param('cdb') || 'compara',
+                                });
+  $html .=  $alert_box;
   
   return $html;
 }

@@ -687,6 +687,7 @@ sub _munge_colours {
         text => $n, 
         map { /:/ ? (split /:/, $_, 2) : ('default', $_) } split /;/, $c
       };
+      $out->{$set}{$key}{'section'} ||= '';
     }
   }
   
@@ -1132,6 +1133,8 @@ sub production_name {
     return $nospaces;
 }
 
-sub DESTROY {}
+sub DESTROY {
+  ## Deliberately empty method - prevents call to AUTOLOAD when object is destroyed
+}
 
 1;

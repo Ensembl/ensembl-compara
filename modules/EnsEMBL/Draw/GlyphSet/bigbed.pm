@@ -18,6 +18,9 @@ limitations under the License.
 
 package EnsEMBL::Draw::GlyphSet::bigbed;
 
+### Module for drawing data in BigBED format (either user-attached, or
+### internally configured via an ini file or database record
+
 use strict;
 use warnings;
 no warnings 'uninitialized';

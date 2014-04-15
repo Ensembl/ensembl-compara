@@ -18,11 +18,17 @@ limitations under the License.
 
 package EnsEMBL::Draw::GlyphSet::TSE_transcript;
 
+### Module for Transcript Supporting Evidence tracks - see
+### EnsEMBL::Web::Component::Transcript::SupportingEvidence 
+
 use strict;
 
 use base qw(EnsEMBL::Draw::GlyphSet_transcript);
 
 sub render_normal {
+## Default (and currently only) rendering style for this track, which takes
+## the form of exon blocks joined by horizontal lines
+
   my $self              = shift;
   my $config            = $self->{'config'};
   my $h                 = 8; # Increasing this increases glyph height

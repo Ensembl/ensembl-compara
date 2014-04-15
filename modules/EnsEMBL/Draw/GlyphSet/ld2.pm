@@ -18,6 +18,8 @@ limitations under the License.
 
 package EnsEMBL::Draw::GlyphSet::ld2;
 
+### STATUS: Unknown - not clear that it's used anywhere
+
 use strict;
 
 use POSIX;

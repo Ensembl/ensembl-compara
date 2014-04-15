@@ -18,6 +18,9 @@ limitations under the License.
 
 package EnsEMBL::Draw::GlyphSet::info;
 
+### Writes the species, assembly version and coordinate information 
+### at bottom of Region in Detail
+
 use strict;
 
 use base qw(EnsEMBL::Draw::GlyphSet);

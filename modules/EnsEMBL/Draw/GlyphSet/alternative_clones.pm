@@ -18,7 +18,7 @@ limitations under the License.
 
 package EnsEMBL::Draw::GlyphSet::alternative_clones;
 
-#retrieve clones from e! or Vega using DAS and compare with those used
+### Retrieve clones from e! or Vega using DAS and compare with those used
 
 use strict;
 

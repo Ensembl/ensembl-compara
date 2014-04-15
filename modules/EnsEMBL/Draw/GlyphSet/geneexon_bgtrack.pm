@@ -18,6 +18,9 @@ limitations under the License.
 
 package EnsEMBL::Draw::GlyphSet::geneexon_bgtrack;
 
+### Draws background "tent" stripes on images that zoom in on a
+### single gene, e.g. Gene/Splice, Gene/Variation/Image
+
 use strict;
 
 use base qw(EnsEMBL::Draw::GlyphSet);

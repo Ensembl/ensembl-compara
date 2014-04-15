@@ -18,6 +18,8 @@ limitations under the License.
 
 package EnsEMBL::Draw::GlyphSet::ideogram;
 
+### Draws horizontal chromosome on EnsEMBL::Web::Location::Summary
+
 use strict;
 
 use base qw(EnsEMBL::Draw::GlyphSet);

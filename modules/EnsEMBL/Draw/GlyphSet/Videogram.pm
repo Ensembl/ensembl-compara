@@ -18,6 +18,9 @@ limitations under the License.
 
 package EnsEMBL::Draw::GlyphSet::Videogram;
 
+### Module for drawing vertical ideograms on location views - whole
+### karyotypes, single chromosomes and synteny
+
 use strict;
 
 use Carp;

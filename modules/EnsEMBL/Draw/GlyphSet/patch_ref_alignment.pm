@@ -18,6 +18,8 @@ limitations under the License.
 
 package EnsEMBL::Draw::GlyphSet::patch_ref_alignment;
 
+### Draws alternate sequence alignment track on Region in Detail
+
 use strict;
 
 use base qw(EnsEMBL::Draw::GlyphSet);

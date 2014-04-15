@@ -199,6 +199,16 @@ sub write_hierarchy {
     $html .= '<div class="hier">No superclasses</div>';
   }
 
+  if ($module->plugin) {
+    my $path = $self->base."/".$self->path_from_class($module->name).'.html';
+    $html .= '<div class="hier">';
+    $html .= "<h3>Extends:</h3>\n";
+    $html .= "<ul>\n";
+    $html .= '<li>ensembl-webcode: <a href="' . $path . '">' . $module->name . "</a></li>\n";
+    $html .= "</ul>\n";
+    $html .= "</div>";
+  }
+
   if (@{ $module->subclasses } > 0) {
     $html .= '<div class="hier">';
     $html .= "<h3>Subclasses:</h3>\n";
@@ -281,6 +291,7 @@ sub toc_html {
 
   $html .= '<h2>Methods by Type</h2>';
   foreach my $section (@{ $self->type_order }) {
+    next unless scalar(@{ $module->methods_for_section($section) });
     $html .= "<h3>" . ucfirst($section) . "</h3>\n";
     $html .= "<ul>";
     foreach my $method (sort {$a->name cmp $b->name} @{ $module->methods_for_section($section) }) {
@@ -317,7 +328,7 @@ sub markup_documentation {
       $html .= $content;
     }
     if ($count == 2) {
-      $html .= $self->markup_embedded_table($content);
+      #$html .= $self->markup_embedded_table($content);
     }
     if ($count == 3) {
       $html .= $content;
@@ -399,25 +410,30 @@ sub write_base_frame {
   open (my $fh, ">", $self->location . "/base.html");
   my $total = 0;
   my $count = 0;
+  my $overview_total = 0;
   my $methods = 0;
   my $lines = 0;
   foreach my $module (@{ $modules }) {
     $count++;
     $total += $module->coverage;
+    $overview_total++ if $module->overview;
     $methods += @{ $module->methods };
     $lines += $module->lines;
   }
   my $coverage = 0;
+  my $overview_coverage = 0;
   if ($count == 0) {
     warn "No modules indexed!";
   } else {
     $coverage = $total / $count;
+    $overview_coverage = $overview_total / $count * 100;
   }
   print $fh $self->html_header;
   print $fh "<div class='front'>";
   print $fh "<h1><i><span style='color: #3366bb'>e</span><span style='color: #880000'>!</span></i> web code documentation</h1>";
   print $fh qq(<div class='coverage'>);
-  print $fh qq(Documentation coverage: ) . sprintf("%.0f", $coverage) . qq( %);
+  print $fh qq(Overview coverage: ) . sprintf("%.0f", $overview_coverage) . qq( %<br />);
+  print $fh qq(Method coverage: ) . sprintf("%.0f", $coverage) . qq( %);
   print $fh qq(</div>);
   print $fh "<div class='date'>" . $count . " modules<br />\n";
   print $fh "" . $methods . " methods<br />\n";

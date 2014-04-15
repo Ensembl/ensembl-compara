@@ -18,6 +18,9 @@ limitations under the License.
 
 package EnsEMBL::Draw::GlyphSet::coverage;
 
+### Resequencing read coverage
+### STATUS: REMOVE? Read coverage has been removed from the variation db
+
 use strict;
 
 use Sanger::Graphics::Bump;

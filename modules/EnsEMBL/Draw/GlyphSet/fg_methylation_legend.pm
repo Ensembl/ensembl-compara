@@ -18,6 +18,8 @@ limitations under the License.
 
 package EnsEMBL::Draw::GlyphSet::fg_methylation_legend;
 
+### Legend showing yellow-blue gradient used in methylation heatmaps
+
 use strict;
 
 use base qw(EnsEMBL::Draw::GlyphSet::legend);
@@ -25,6 +27,12 @@ use base qw(EnsEMBL::Draw::GlyphSet::legend);
 sub _init {
   my $self = shift;
 
+  # Let them accumulate in structure if accumulating and not last
+  my $Config         = $self->{'config'};
+  return if ($self->my_config('accumulate') eq 'yes' &&
+             $Config->get_parameter('more_slices'));
+  # Clear features (for next legend)
+  $self->{'legend'}{[split '::', ref $self]->[-1]} = {};
   return unless $self->{'legend'}{[split '::', ref $self]->[-1]};
   
   $self->init_legend(2);

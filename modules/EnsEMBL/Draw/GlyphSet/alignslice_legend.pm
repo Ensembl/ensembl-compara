@@ -18,6 +18,8 @@ limitations under the License.
 
 package EnsEMBL::Draw::GlyphSet::alignslice_legend;
 
+### Legend for Location/Compara_Alignments/Image
+
 use strict;
 
 use base qw(EnsEMBL::Draw::GlyphSet::legend);
@@ -27,6 +29,12 @@ sub _init {
   
   my $config   = $self->{'config'};
   my $features = $config->{'alignslice_legend'};
+
+  # Let them accumulate in structure if accumulating and not last
+  return if ($self->my_config('accumulate') eq 'yes' &&
+             $config->get_parameter('more_slices'));
+  # Clear features (for next legend)
+  $self->{'legend'}{[split '::', ref $self]->[-1]} = {};
   
   return unless $features;
 

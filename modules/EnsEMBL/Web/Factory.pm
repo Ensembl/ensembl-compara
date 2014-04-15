@@ -18,6 +18,9 @@ limitations under the License.
 
 package EnsEMBL::Web::Factory;
 
+### Base class for Factories that create data objects, i.e.
+### EnsEMBL::Web::Object::[type] objects
+
 use strict;
 
 use HTML::Entities qw(encode_entities);

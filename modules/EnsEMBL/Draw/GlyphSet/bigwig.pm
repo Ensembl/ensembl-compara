@@ -18,6 +18,9 @@ limitations under the License.
 
 package EnsEMBL::Draw::GlyphSet::bigwig;
 
+### Module for drawing data in BigWIG format (either user-attached, or
+### internally configured via an ini file or database record
+
 use strict;
 
 use List::Util qw(min max);

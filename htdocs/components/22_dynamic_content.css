@@ -72,6 +72,10 @@ html .hyphenated { word-wrap: normal; text-align: left; }
 body.ie .dataTables_wrapper { zoom: 1; }
 body.ie .open .cell_detail { display: block; }
 
+.ts_flag { background: none repeat scroll 0 0 #CBD7EB; border-radius: 4px; display: inline-block; margin: 1px; padding: 1px 6px; text-decoration: none; font-size: 95%; }
+.ts_biotype { background: none repeat scroll 0 0 #CBD7EB; border-radius: 4px; display: inline-block; margin: 1px; padding: 1px 6px; text-decoration: none; font-size: 95%; }
+.ts_flag .glossary_mouseover { border-bottom: 1px dotted #000099; }
+
 /************************************
              other stuff
 *************************************/
@@ -155,6 +159,12 @@ ul.variation_consequence_tree li img      { margin-bottom: -2px; }
 ul.variation_consequence_tree li a.toggle { margin-left: 0!important; }
 ul.variation_consequence_tree li a.leaf   { margin-left: -10px!important; }
 
+/************************************
+   misc conventions
+ ************************************/
+div.coltab { line-height: 110%; text-align: left; }
+span.coltab_tab { float: left; }
+div.coltab_text { margin: 0 0 4px 8px; }
 
 /* 'redirecting to mirror' message*/
 div.redirect-message-padding  { height: 40px; }

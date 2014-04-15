@@ -18,6 +18,8 @@ limitations under the License.
 
 package EnsEMBL::Draw::GlyphSet::chr_band;
 
+### Draws chromosome band track on horizontal Location images
+
 use strict;
 use warnings;
 no warnings 'uninitialized';

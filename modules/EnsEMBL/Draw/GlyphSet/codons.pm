@@ -18,6 +18,8 @@ limitations under the License.
 
 package EnsEMBL::Draw::GlyphSet::codons;
 
+### Draws start and stop codons on regions less than 50kb
+
 use strict;
 
 use Bio::EnsEMBL::Feature;

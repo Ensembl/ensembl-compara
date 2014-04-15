@@ -18,6 +18,9 @@ limitations under the License.
 
 package EnsEMBL::Draw::GlyphSet::P_protdas;
 
+### Displays protein DAS sources on Transcript/ProteinSummary?
+### Appears to convert between protein and genomic coordinates
+
 use strict;
 
 use Sanger::Graphics::ColourMap;

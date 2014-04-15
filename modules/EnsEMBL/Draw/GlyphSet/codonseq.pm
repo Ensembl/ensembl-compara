@@ -18,6 +18,10 @@ limitations under the License.
 
 package EnsEMBL::Draw::GlyphSet::codonseq;
 
+### Draws the "translated sequence" track on Region in Detail
+### It is based on the sequence drawing as the only code that
+### is different is the code which gets the features
+
 use strict;
 
 use Bio::EnsEMBL::Feature;
@@ -25,11 +29,6 @@ use Bio::Seq;
 
 use base qw(EnsEMBL::Draw::GlyphSet::sequence);
 
-# We base this on the sequence drawing as the only
-# code which is different is the code that gets
-# the features
-
-# We have to create fake features in the features call
 sub features {
   my $self        = shift;
   my $seq         = $self->{'container'}->subseq(-2, $self->{'container'}->length + 4);
@@ -37,6 +36,7 @@ sub features {
   my $codon_table = ($self->{'container'}->get_all_Attributes('codon_table')->[0] || {})->{'value'};
   my @features;
   
+  # We have to create fake features in the features call
   foreach my $phase (0..2) {
     my $string = substr $seq, $phase, 3 * int((length($seq) - $phase)/3);
     

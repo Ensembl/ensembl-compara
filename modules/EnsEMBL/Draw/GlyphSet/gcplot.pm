@@ -18,6 +18,8 @@ limitations under the License.
 
 package EnsEMBL::Draw::GlyphSet::gcplot;
 
+### Draws the %GC plot on Region in Detail
+
 use strict;
 
 use base qw(EnsEMBL::Draw::GlyphSet);

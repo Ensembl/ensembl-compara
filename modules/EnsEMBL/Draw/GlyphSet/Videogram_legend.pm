@@ -18,6 +18,12 @@ limitations under the License.
 
 package EnsEMBL::Draw::GlyphSet::Videogram_legend;
 
+### Module for drawing "highlights" (aka pointers) on
+### vertical ideogram images, including user data
+###
+### (Note that despite its name, this module is not currently
+### used to draw a legend for vertical ideogram tracks)
+
 use strict;
 
 use Sanger::Graphics::Bump;

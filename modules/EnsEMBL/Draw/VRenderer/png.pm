@@ -17,6 +17,10 @@ limitations under the License.
 =cut
 
 package EnsEMBL::Draw::VRenderer::png;
+
+### Renders vertical ideograms in PNG format using GD::Image
+### Modeled on Sanger::Graphics::Renderer::png
+
 use strict;
 use base qw(EnsEMBL::Draw::VRenderer::gif);
 

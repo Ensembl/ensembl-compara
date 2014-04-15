@@ -18,6 +18,8 @@ limitations under the License.
 
 package EnsEMBL::Draw::GlyphSet::_tmp_user_data;
 
+### STATUS: Unknown - doesn't seem to be used by anything 
+
 use strict;
 
 use EnsEMBL::Web::File::Text;

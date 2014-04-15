@@ -18,6 +18,8 @@ limitations under the License.
 
 package EnsEMBL::Draw::GlyphSet::cnv_probes;
 
+### Draw copy number variant probe track (structural variations)
+
 use strict;
 
 use base qw(EnsEMBL::Draw::GlyphSet_simple);

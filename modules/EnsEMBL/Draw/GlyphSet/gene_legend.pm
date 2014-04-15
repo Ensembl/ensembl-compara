@@ -18,6 +18,8 @@ limitations under the License.
 
 package EnsEMBL::Draw::GlyphSet::gene_legend;
 
+### Legend for gene colours
+
 use strict;
 
 use base qw(EnsEMBL::Draw::GlyphSet::legend);
@@ -25,10 +27,17 @@ use base qw(EnsEMBL::Draw::GlyphSet::legend);
 sub _init {
   my $self     = shift;
   my $features = $self->{'legend'}{[split '::', ref $self]->[-1]};
-  
+  # Let them accumulate in structure if accumulating and not last
+  my $Config         = $self->{'config'};
+  return if ($self->my_config('accumulate') eq 'yes' &&
+             $Config->get_parameter('more_slices'));
+  # Clear features (for next legend)
+  $self->{'legend'}{[split '::', ref $self]->[-1]} = {};
   return unless $features;
 
-  $self->init_legend(2);
+
+  $self->init_legend(3);
+  my (%sections,%headings,%priorities);
   
   foreach my $type (sort { $features->{$a}{'priority'} <=> $features->{$b}{'priority'} } keys %$features) {
     my $join    = $type eq 'joins';
@@ -37,12 +46,24 @@ sub _init {
     $self->newline(1);
     
     while (my ($legend, $colour) = splice @colours, 0, 2) {
-      $self->add_to_legend({
+      my $section = undef;
+      if(ref($colour) eq 'ARRAY') {
+        $section = $colour->[1];
+        $colour = $colour->[0];
+      } else {
+        $section = { name => 'Other', key => '_missing' };
+      }
+      push @{$sections{$section->{'key'}}||=[]},{
         legend => $legend,
         colour => $colour,
         style  => $type eq 'joins' ? 'line' : 'box',
-      });
+      };
+      $headings{$section->{'key'}} = $section->{'name'};
+      $priorities{$section->{'key'}} = $section->{'priority'};
     }
+  }
+  foreach my $key (sort { $priorities{$b} <=> $priorities{$a} } keys %sections) {
+    $self->add_vgroup_to_legend($sections{$key},$headings{$key});
   }
 }
 

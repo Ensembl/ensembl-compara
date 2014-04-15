@@ -18,21 +18,34 @@ limitations under the License.
 
 package EnsEMBL::Draw::GlyphSet::fg_multi_wiggle;
 
+### Draws peak and/or wiggle tracks for regulatory build data
+### e.g. histone modifications
+
 use strict;
 
 use base qw(EnsEMBL::Draw::GlyphSet_wiggle_and_block);
 
 sub label { return undef; }
 
+# Lazy evaluation
+sub data_by_cell_line {
+  my ($self,$config) = @_;
+
+  my $data = $config->{'data_by_cell_line'};
+  $data = $data->() if ref($data) eq 'CODE';
+  return $data;
+}
+
 sub draw_features {
   my ($self, $wiggle) = @_;
+
   my $config           = $self->{'config'};
   my $display          = $self->{'display'};  
   my $cell_line        = $self->my_config('cell_line'); 
   my $set              = $self->my_config('set');
   my $label            = $self->my_config('label');
   my $reg_view         = $config->hub->type eq 'Regulation';
-  my $data             = $config->{'data_by_cell_line'}{$cell_line}; 
+  my $data             = $self->data_by_cell_line($config)->{$cell_line};
   my $colours          = $config->{'fg_multi_wiggle_colours'} ||= $self->get_colours;
   my ($peaks, $wiggle) = $display eq 'tiling_feature' ? (1, 1) : $display eq 'compact' ? (1, 0) : (0, 1);
   
@@ -104,7 +117,7 @@ sub process_wiggle_data {
   
   foreach my $evidence_type (keys %$wiggle_data) {
     my $result_set = $wiggle_data->{$evidence_type}; 
-    my @features   = @{$config->{'data_by_cell_line'}{'wiggle_data'}{$evidence_type}};   
+    my @features   = @{$self->data_by_cell_line($config)->{'wiggle_data'}{$evidence_type}};
     
     next unless scalar @features > 0;
     
@@ -201,7 +214,7 @@ sub get_colours {
   }
   
   # Assign each feature set a colour, and set the intensity based on methalation state
-  foreach my $name (sort keys %{$config->{'data_by_cell_line'}{'colours'}}) { 
+  foreach my $name (sort keys %{$self->data_by_cell_line($config)->{'colours'}}) {
     my $histone_pattern = $name;
     
     if (!exists $feature_colours{$name}) {
@@ -240,7 +253,7 @@ sub display_error_message {
   return unless $config->get_option('opt_empty_tracks') == 1; 
   
   $self->draw_track_name(join(' ', $config->hub->get_adaptor('get_FeatureTypeAdaptor', 'funcgen')->get_regulatory_evidence_info($set)->{'label'}, $cell_line), 'black', -118,  2, 1);
-  $self->display_no_data_error(sprintf '%s/%s available feature sets turned on', map scalar keys %{$config->{'data_by_cell_line'}{$cell_line}{$set}{$_} || {}}, qw(on available));
+  $self->display_no_data_error(sprintf '%s/%s available feature sets turned on', map scalar keys %{$self->data_by_cell_line($config)->{$cell_line}{$set}{$_} || {}}, qw(on available));
   
   return 1;
 }

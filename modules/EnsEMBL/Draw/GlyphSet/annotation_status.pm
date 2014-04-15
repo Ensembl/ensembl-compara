@@ -18,11 +18,11 @@ limitations under the License.
 
 package EnsEMBL::Draw::GlyphSet::annotation_status;
 
+### Annotation status display for vega
+
 use strict;
 
 use base qw(EnsEMBL::Draw::GlyphSet_simple);
-
-#annotation status display for vega
 
 sub features {
   my $self     = shift;

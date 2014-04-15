@@ -18,6 +18,9 @@ limitations under the License.
 
 package EnsEMBL::Draw::GlyphSet::_transcript;
 
+### Default module for drawing Ensembl transcripts (i.e. where rendering
+### does not need to be tweaked to fit a particular display)
+
 use strict;
 
 use List::Util qw(min max);

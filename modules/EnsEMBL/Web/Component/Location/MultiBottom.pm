@@ -72,6 +72,7 @@ sub content {
       image_width     => $image_width,
       slice_number    => "$i|3",
       multi           => 1,
+      more_slices     => 1,
       compara         => $i == 1 ? 'primary' : $_->{'species'} eq $primary_species ? 'paralogue' : 'secondary',
       base_url        => $base_url,
       join_types      => $gene_join_types
@@ -84,6 +85,7 @@ sub content {
          });
     }
     $image_config->get_node('scalebar')->set('caption', $_->{'short_name'});
+    $image_config->get_node('scalebar')->set('caption_img',"f:24\@-11:".$_->{'species'});
     $_->{'slice'}->adaptor->db->set_adaptor('compara', $compara_db) if $compara_db;
     
     if ($i == 1) {
@@ -110,6 +112,7 @@ sub content {
             image_width     => $image_width,
             slice_number    => '1|3',
             multi           => 1,
+            more_slices     => 1,
             compara         => 'primary',
             base_url        => $base_url,
             join_types      => $gene_join_types
@@ -118,6 +121,7 @@ sub content {
         
         if ($join_alignments) {
           $primary_image_config->get_node('scalebar')->set('caption', $short_name);
+          $primary_image_config->get_node('scalebar')->set('caption_img',"f:24\@-11:".$slices->[0]->{'species'});
           $primary_image_config->multi($methods, $seq_region_name, 1, $max, map $slices->[$_], $i - 1, $i);
         }
         
@@ -129,6 +133,7 @@ sub content {
     
     $i++;
   }
+  $images[-1]->set_parameters({ more_slices => 0 });
   
   if ($hub->param('export')) {
     $_->set_parameter('export', 1) for grep $_->isa('EnsEMBL::Web::ImageConfig'), @images;

@@ -18,6 +18,10 @@ limitations under the License.
 
 package EnsEMBL::Draw::GlyphSet::alignscalebar;
 
+### Draws scalebar for Location/Compara_Alignments/Image - standard
+### black'n'white scalebar, with aligned slice beneath shown as
+### coloured blocks in shades of pink
+
 use strict;
 
 use base qw(EnsEMBL::Draw::GlyphSet::scalebar);
@@ -37,13 +41,13 @@ sub render {
   
   $self->render_align_gap($global_start, $global_end);
   $self->render_align_bar($global_start, $global_end, 5);
-  $self->SUPER::render($strand > 0 ? 0 : 20) if ($compara eq 'primary' && $strand > 0) || ($compara ne 'primary' && $strand < 0);
+  $self->SUPER::render($strand > 0 ? 0 : 20) if $strand > 0;
   
   # Draw the species separator line
   if ($strand > 0 && $compara ne 'primary') {
     $self->push($self->Line({
       x             => -120,
-      y             => -3,
+      y             => -24,
       colour        => 'black',
       width         => 20000,
       height        => 0,

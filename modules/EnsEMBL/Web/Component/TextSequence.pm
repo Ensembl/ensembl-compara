@@ -156,7 +156,10 @@ sub set_variations {
   my ($self, $config, $slice_data, $markup, $sequence, $focus_snp_only) = @_;
   my $hub    = $self->hub;
   my $name   = $slice_data->{'name'};
-  my $strand = $slice_data->{'slice'}->strand;
+  my $slice  = $slice_data->{'slice'};
+  my $species = $slice->can('genome_db') ? ucfirst($slice->genome_db->name) : $hub->species;
+  return unless $hub->database('variation', $species);
+  my $strand = $slice->strand;
   my $focus  = $name eq $config->{'species'} ? $config->{'focus_variant'} : undef;
   my $snps   = [];
   my $u_snps = {};
@@ -739,7 +742,7 @@ sub build_sequence {
   my ($self, $sequence, $config) = @_;
   my $line_numbers   = $config->{'line_numbers'};
   my %class_to_style = %{$self->class_to_style}; # Firefox doesn't copy/paste anything but inline styles, so convert classes to styles
-  my $single_line    = scalar @{$sequence->[0]} <= $config->{'display_width'}; # Only one line of sequence to display
+  my $single_line    = scalar @{$sequence->[0]||[]} <= $config->{'display_width'}; # Only one line of sequence to display
   my $s              = 0;
   my ($html, @output);
   

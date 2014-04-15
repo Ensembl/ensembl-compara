@@ -28,6 +28,12 @@ sub _init {
   my $self     = shift;
   my $features = $self->{'legend'}{[split '::', ref $self]->[-1]};
   
+  # Let them accumulate in structure if accumulating and not last
+  my $Config         = $self->{'config'};
+  return if ($self->my_config('accumulate') eq 'yes' &&
+             $Config->get_parameter('more_slices'));
+  # Clear features (for next legend)
+  $self->{'legend'}{[split '::', ref $self]->[-1]} = {};
   return unless $features;
   
   my %labels = %Bio::EnsEMBL::Variation::Utils::Constants::VARIATION_CLASSES;

@@ -18,6 +18,9 @@ limitations under the License.
 
 package EnsEMBL::Draw::GlyphSet::genetree;
 
+### Draws Gene/Compara_Tree (tree + alignments) and 
+### Gene/SpeciesTree (tree only) images
+
 use strict;
 
 use base qw(EnsEMBL::Draw::GlyphSet);

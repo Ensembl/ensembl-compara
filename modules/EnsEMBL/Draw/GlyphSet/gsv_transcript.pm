@@ -18,11 +18,16 @@ limitations under the License.
 
 package EnsEMBL::Draw::GlyphSet::gsv_transcript;
 
+### Module for drawing transcripts on Gene/Variation_Gene/Image (formerly known as GeneSNPView)
+### See EnsEMBL::Web::Component::VariationImage for implementation
+
 use strict;
 
 use base qw(EnsEMBL::Draw::GlyphSet_transcript);
 
 sub render_normal {
+## Default (and currently only) rendering style for this track: as exon blocks
+## joined by angled lines, with no labels
   my $self = shift; 
   my $type = $self->type; 
   

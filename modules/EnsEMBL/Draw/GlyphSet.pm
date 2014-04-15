@@ -18,6 +18,10 @@ limitations under the License.
 
 package EnsEMBL::Draw::GlyphSet;
 
+### Base package for drawing a discreet section of a genomic image,
+### such as a section of assembly, feature track, scalebar or track legend
+### Uses GD and the Sanger::Graphics::Glyph codebase
+
 use strict;
 
 use GD;
@@ -213,6 +217,11 @@ sub init_label {
   
   my $text = $self->my_config('caption');
   
+  my $img = $self->my_config('caption_img');
+  $img = undef if $SiteDefs::ENSEMBL_NO_LEGEND_IMAGES;
+  if($img and $img =~ s/^r:// and $self->{'strand'} ==  1) { $img = undef; }
+  if($img and $img =~ s/^f:// and $self->{'strand'} == -1) { $img = undef; }
+
   return $self->label(undef) unless $text;
   
   my $config    = $self->{'config'};
@@ -260,18 +269,38 @@ sub init_label {
       subset    => $subset ? [ $subset, $hub->url('Config', { species => $config->species, action => $component, function => undef, __clear => 1 }), lc "modal_config_$component" ] : '',
     };
   }
-  
+ 
+  my $ch = $self->my_config('caption_height') || 0;
   $self->label($self->Text({
     text      => $text,
     font      => $font,
     ptsize    => $fsze,
     colour    => $self->{'label_colour'} || 'black',
     absolutey => 1,
-    height    => $res[3],
+    height    => $ch || $res[3],
     class     => "label $class",
     alt       => $name,
-    hover     => $hover
+    hover     => $hover,
   }));
+  if($img) {
+    $img =~ s/^([\d@-]+)://; my $size = $1 || 16;
+    my $offset = 0;
+    $offset = $1 if $size =~ s/@(-?\d+)$//;
+    $self->label_img($self->Sprite({
+        z             => 1000,
+        x             => 0,
+        y             => $offset,
+        sprite        => $img,
+        spritelib     => 'species',
+        width         => $size,
+        height         => $size,
+        absolutex     => 1,
+        absolutey     => 1,
+        absolutewidth => 1,
+        pixperbp      => 1,
+        alt           => '',
+    }));
+  }
 }
 
 sub get_text_simple {

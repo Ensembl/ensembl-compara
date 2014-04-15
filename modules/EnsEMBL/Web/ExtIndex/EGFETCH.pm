@@ -27,7 +27,7 @@ use EnsEMBL::Web::Exceptions;
 
 use parent qw(EnsEMBL::Web::ExtIndex);
 
-use constant DBFETCH_URL => 'http://www.ebi.ac.uk/Tools/dbfetch/dbfetch/%dbname%/%id%/%format%';
+use constant DBFETCH_URL => 'http://www.ebi.ac.uk/Tools/dbfetch/dbfetch/%dbname%/%id%/fasta';
 
 my $DB_NAMES = {
   'DEFAULT'             => 'embl',
@@ -49,19 +49,17 @@ sub get_sequence {
   ## @param Hashref with keys:
   ##  - id      Id of the object to retrieve sequence for
   ##  - db      Db name for the id provided
-  ##  - format  Required format for the id, defaults to fasta
   my ($self, $params) = @_;
 
   my $id      = $params->{'id'} or throw exception('WebException', 'Id not provided');
   my $dbname  = $params->{'db'} or throw exception('WebException', 'DB name not provided');
-  my $format  = $params->{'format'} || 'fasta';
 
   my $seq;
 
   if ($dbname eq 'PUBLIC') {
-    $seq = $self->_get_sequence($id, $_, $format) and last for qw(uniprot refseq embl);
+    $seq = $self->_get_sequence($id, $_) and last for qw(uniprot refseq embl);
   } else {
-    $seq = $self->_get_sequence($id, $dbname, $format);
+    $seq = $self->_get_sequence($id, $dbname);
   }
 
   return $self->output_to_fasta($id, [ split "\n", $seq || '' ]);
@@ -69,12 +67,12 @@ sub get_sequence {
 
 sub _get_sequence {
   ## @private
-  my ($self, $id, $dbname, $format) = @_;
+  my ($self, $id, $dbname) = @_;
 
   $dbname = $DB_NAMES->{lc $dbname =~ s/_predicted$//ir} || $DB_NAMES->{'DEFAULT'};
   $id     =~ s/\..+$// if grep { $dbname eq $_ } qw(embl emblcds refseq);
 
-  my $seq = $self->do_http_request('GET', DBFETCH_URL =~ s/%dbname%/$dbname/r =~ s/%id%/$id/r =~ s/%format%/$format/r);
+  my $seq = $self->do_http_request('GET', DBFETCH_URL =~ s/%dbname%/$dbname/r =~ s/%id%/$id/r);
 
   return if !$seq || $seq =~ m/no entries/i;
 

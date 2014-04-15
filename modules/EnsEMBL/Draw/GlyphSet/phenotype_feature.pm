@@ -18,6 +18,8 @@ limitations under the License.
 
 package EnsEMBL::Draw::GlyphSet::phenotype_feature;
 
+### Draws phenotype feature track on Variation/Context
+
 use strict;
 
 use base qw(EnsEMBL::Draw::GlyphSet_simple);

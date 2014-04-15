@@ -333,6 +333,16 @@ sub get_individuals {
 }
 
 # Cell line Data retrieval  ---------------------------------------------------
+
+# Because it can be slow and isn't always needed in the end
+sub get_cell_line_data_closure {
+  my ($self,$image_config) = @_;
+
+  return sub {
+    $self->get_cell_line_data($image_config);
+  };
+}
+
 sub get_cell_line_data {
   my ($self, $image_config) = @_;
   

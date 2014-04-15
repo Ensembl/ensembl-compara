@@ -94,7 +94,7 @@ sub get_sequence {
         'sequence'    => $_->seq,
         'description' => sprintf('%s %s Translation', $_->display_id, $sitetype),
         'length'      => $_->length
-      }, @trans if $trans_only;
+      }, @trans if @trans;
 
     }
 

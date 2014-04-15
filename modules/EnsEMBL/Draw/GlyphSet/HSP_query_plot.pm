@@ -18,6 +18,9 @@ limitations under the License.
 
 package EnsEMBL::Draw::GlyphSet::HSP_query_plot;
 
+### Draw track showing a plot of BLAST HSP queries (from the old 
+### BLAST ticketed system)
+
 use strict;
 
 use base qw(EnsEMBL::Draw::GlyphSet::HSP_plot);

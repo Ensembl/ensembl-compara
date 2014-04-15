@@ -18,6 +18,9 @@ limitations under the License.
 
 package EnsEMBL::Draw::GlyphSet::lrg_scalebar;
 
+### Scalebar on LRG/Summary - shows coordinates relative to LRG slice,
+### rather than normal chromosomal coordinates
+
 use strict;
 
 use POSIX qw(floor);
