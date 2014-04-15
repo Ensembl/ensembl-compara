@@ -262,6 +262,9 @@ sub cigar_from_two_alignment_strings {
     my @chunks1;
     my @chunks2;
 
+    $seq1 =~ s/\*/X/g;
+    $seq2 =~ s/\*/X/g;
+
     while($seq1=~/(?:\b|^)(.)(.*?)(?:\b|$)/g) {
         push @chunks1, [($1 eq '-'), ($2 ? length($2)+1 : 1)];
     }
@@ -279,6 +282,15 @@ sub cigar_from_two_alignment_strings {
         ($gap1, $len1) = @{shift @chunks1} unless $len1;
         ($gap2, $len2) = @{shift @chunks2} unless $len2;
         die "Double gaps are not allowed in '$seq1' / '$seq2'" if $gap1 and $gap2;
+        #if ($gap1 and $gap2) {
+        #    if ($gap1 < $gap2) {
+        #        $gap2 -= $gap1;
+        #        $gap1 = 0;
+        #    } else {
+        #        $gap1 -= $gap2;
+        #        $gap2 = 0;
+        #    }
+        #}
 
         my $minlen = $len1 <= $len2 ? $len1 : $len2;
         $cigar_line .= ($minlen > 1 ? $minlen : '').($gap1 ? 'D' : ($gap2 ? 'I' : 'M'));
