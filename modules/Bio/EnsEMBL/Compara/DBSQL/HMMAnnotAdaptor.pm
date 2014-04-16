@@ -128,12 +128,12 @@ sub fetch_all_genes_missing_annot_by_range {
 }
 
 sub store_hmmclassify_result {
-    my ($self, $member_id, $model_id, $evalue) = @_;
+    my ($self, $seq_member_id, $model_id, $evalue) = @_;
 
-    my $sql = "INSERT INTO hmm_annot(member_id, model_id, evalue) VALUES (?,?,?)";
+    my $sql = "INSERT INTO hmm_annot(seq_member_id, model_id, evalue) VALUES (?,?,?)";
     my $sth = $self->prepare($sql);
 
-    $sth->execute($member_id, $model_id, $evalue);
+    $sth->execute($seq_member_id, $model_id, $evalue);
 
 return;
 }
