@@ -44,9 +44,23 @@ use strict;
 use warnings;
 
 use Bio::EnsEMBL::Utils::Exception qw(throw);
-use Bio::EnsEMBL::Utils::Scalar qw(:all);
+use Bio::EnsEMBL::Utils::Scalar;
 
-use Scalar::Util qw(blessed looks_like_number openhandle);
+use Scalar::Util qw(blessed looks_like_number);
+
+use base qw(Exporter);
+
+our %EXPORT_TAGS;
+our @EXPORT_OK;
+
+@EXPORT_OK = qw(
+    assert_ref_or_dbID
+);
+%EXPORT_TAGS = (
+  assert  => [qw(assert_ref_or_dbID)],
+  all     => [@EXPORT_OK]
+);
+
 
 
 =head2 assert_ref_or_dbID

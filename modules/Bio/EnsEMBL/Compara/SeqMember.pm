@@ -364,8 +364,9 @@ sub _prepare_exon_sequences {
         my @exons = @{$transcript->get_all_translateable_Exons};
         # @exons probably doesn't match the protein if there are such edits
         my @seq_edits = @{$transcript->translation->get_all_SeqEdits('amino_acid_sub')};
+        push @seq_edits, @{$transcript->get_all_SeqEdits('_rna_edit')};
 
-        if (((scalar @exons) == 1) or (scalar(@seq_edits) > 0)) {
+        if (((scalar @exons) <= 1) or (scalar(@seq_edits) > 0)) {
             $self->{_sequence_exon_cased} = $sequence;
             $self->{_sequence_exon_bounded} = $sequence;
             return;

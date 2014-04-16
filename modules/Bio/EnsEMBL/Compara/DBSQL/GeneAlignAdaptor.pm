@@ -27,7 +27,7 @@ use Bio::EnsEMBL::Compara::DBSQL::BaseRelationAdaptor;
 
 use Bio::EnsEMBL::Utils::Scalar qw(:assert);
 
-use Bio::EnsEMBL::Compara::Utils::Scalar;
+use Bio::EnsEMBL::Compara::Utils::Scalar qw(:assert);
 
 use DBI qw(:sql_types);
 

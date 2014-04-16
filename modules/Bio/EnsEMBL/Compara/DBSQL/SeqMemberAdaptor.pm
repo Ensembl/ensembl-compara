@@ -62,7 +62,7 @@ use Bio::EnsEMBL::Utils::Scalar qw(:all);
 use Bio::EnsEMBL::Utils::Argument qw(rearrange);
 use Bio::EnsEMBL::Utils::Exception qw(throw warning stack_trace_dump deprecate);
 
-use Bio::EnsEMBL::Compara::Utils::Scalar;
+use Bio::EnsEMBL::Compara::Utils::Scalar qw(:assert);
 
 use DBI qw(:sql_types);
 
@@ -168,7 +168,7 @@ sub fetch_all_canonical_by_GenomeDB {
 
     my $join = [[['gene_member', 'mg'], 'mg.canonical_member_id = m.seq_member_id']];
     my $constraint = 'mg.genome_db_id = ?';
-    $self->bind_param_generic_fetch(ref($genome_db) ? $genome_db->dbID : $genome_db);
+    $self->bind_param_generic_fetch(ref($genome_db) ? $genome_db->dbID : $genome_db, SQL_INTEGER);
 
     if ($source_name) {
         $constraint .= ' AND m.source_name = ?';
@@ -323,12 +323,13 @@ sub store {
     $sth->finish;
     #UNIQUE(stable_id) prevented insert since member was already inserted
     #so get seq_member_id with select
-    my $sth2 = $self->prepare("SELECT seq_member_id, sequence_id FROM seq_member WHERE stable_id=?");
-    $sth2->execute($member->stable_id);
-    my($id, $sequence_id) = $sth2->fetchrow_array();
-    warn("MemberAdaptor: insert failed, but seq_member_id select failed too") unless($id);
+    my $sth2 = $self->prepare("SELECT member_id, sequence_id, genome_db_id FROM member WHERE source_name=? and stable_id=?");
+    $sth2->execute($member->source_name, $member->stable_id);
+    my($id, $sequence_id, $genome_db_id) = $sth2->fetchrow_array();
+    warn("MemberAdaptor: insert failed, but member_id select failed too") unless($id);
+    throw(sprintf('%s already exists and belongs to a different species (%s) ! Stable IDs must be unique across the whole set of species', $member->stable_id, $self->db->get_GenomeDBADaptor->fetch_by_dbID($genome_db_id)->name )) if $genome_db_id and $member->genome_db_id and $genome_db_id != $member->genome_db_id;
     $member->dbID($id);
-    $member->sequence_id($sequence_id) if ($sequence_id);
+    $member->sequence_id($sequence_id) if ($sequence_id) and $member->isa('Bio::EnsEMBL::Compara::SeqMember');
     $sth2->finish;
   }
 
