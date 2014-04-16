@@ -96,19 +96,20 @@ sub default_options {
         'outgroups'                     => {},      # affects 'hcluster_dump_input_per_genome'
 
     # tree building parameters:
-        'tree_dir'                  =>  $self->o('ensembl_cvs_root_dir').'/ensembl_genomes/EGCompara/config/prod/trees/Version'.$self->o('eg_release').'Trees',
-        #'species_tree_input_file'   =>  $self->o('tree_dir').'/'.$self->o('division').'.peptide.nh',
-        'species_tree_input_file'   =>  $self->o('ensembl_cvs_root_dir').'/ensembl-compara/scripts/pipeline/species_tree.eukaryotes.topology.nw',
+        'use_raxml'                 => 1,
+
+    # species tree reconciliation
+        # you can define your own species_tree for 'treebest'. It can contain multifurcations
+        'species_tree_input_file'   => $self->o('ensembl_cvs_root_dir').'/ensembl-compara/scripts/pipeline/tf10_347_species',
+        # you can define your own species_tree for 'notung'. It *has* to be binary
 
     # homology_dnds parameters:
         'codeml_parameters_file'    => $self->o('ensembl_cvs_root_dir').'/ensembl-compara/scripts/homology/codeml.ctl.hash',
-        #'taxlevels'                 => ['cellular organisms'],
         'taxlevels'                 => [],
         'filter_high_coverage'      => 0,   # affects 'group_genomes_under_taxa'
 
     # mapping parameters:
-        'tf_release'                => '9_69',
-        'use_raxml' => 1,
+
     # executable locations:
         hcluster_exe    =>  $self->o('exe_dir').'/hcluster_sg',
         mcoffee_home    => '/nfs/panda/ensemblgenomes/external/t-coffee',

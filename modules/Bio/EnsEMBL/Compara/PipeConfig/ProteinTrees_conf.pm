@@ -106,9 +106,12 @@ sub default_options {
         'treebreak_gene_count'      => 400,     # affects msa_chooser
         'mafft_gene_count'          => 200,     # affects msa_chooser
         'mafft_runtime'             => 7200,    # affects msa_chooser
-        'species_tree_input_file'   => '',      # you can define your own species_tree for 'treebest'
+
+    # species tree reconciliation
+        # you can define your own species_tree for 'treebest'. It can contain multifurcations
+        'species_tree_input_file'   => undef,
         # you can define your own species_tree for 'notung'. It *has* to be binary
-        'binary_species_tree_input_file'   => $self->o('ensembl_cvs_root_dir').'/ensembl-compara/scripts/pipeline/species_tree.eukaryotes.topology.nw',
+        'binary_species_tree_input_file'   => undef,
 
     # homology_dnds parameters:
         'codeml_parameters_file'    => $self->o('ensembl_cvs_root_dir').'/ensembl-compara/scripts/pipeline/protein_trees.codeml.ctl.hash',      # used by 'homology_dNdS'

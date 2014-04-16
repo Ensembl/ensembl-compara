@@ -79,6 +79,11 @@ sub default_options {
 
     # tree building parameters:
 
+    # species tree reconciliation
+        # you can define your own species_tree for 'treebest'. It can contain multifurcations
+        # you can define your own species_tree for 'notung'. It *has* to be binary
+        'binary_species_tree_input_file'   => $self->o('ensembl_cvs_root_dir').'/ensembl-compara/scripts/pipeline/species_tree.eukaryotes.topology.nw',
+
     # homology_dnds parameters:
         'taxlevels'                 => ['Theria', 'Sauria', 'Tetraodontiformes'],
         'filter_high_coverage'      => 1,   # affects 'group_genomes_under_taxa'
