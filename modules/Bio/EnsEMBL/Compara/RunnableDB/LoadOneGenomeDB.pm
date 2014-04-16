@@ -222,7 +222,7 @@ sub iterate_through_registered_species {
     }
 
     for(my $r_ind=0; $r_ind<scalar(@$registry_dbs); $r_ind++) {
-        Bio::EnsEMBL::Registry->load_registry_from_db( %{ $registry_dbs->[$r_ind] }, -species_suffix => $suffix_separator.$r_ind, -db_version => $self->param('db_version') );
+        Bio::EnsEMBL::Registry->load_registry_from_db( %{ $registry_dbs->[$r_ind] }, -species_suffix => $suffix_separator.$r_ind, -db_version => $self->param('db_version'), -verbose => $self->debug );
 
         my $no_alias_check = 1;
         my $this_core_dba = Bio::EnsEMBL::Registry->get_DBAdaptor($self->param('species_name').$suffix_separator.$r_ind, 'core', $no_alias_check) || next;
