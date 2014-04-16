@@ -168,7 +168,7 @@ sub fetch_all_canonical_by_GenomeDB {
 
     my $join = [[['gene_member', 'mg'], 'mg.canonical_member_id = m.seq_member_id']];
     my $constraint = 'mg.genome_db_id = ?';
-    $self->bind_param_generic_fetch(ref($genome_db) ? $genome_db->dbID : $genome_db);
+    $self->bind_param_generic_fetch(ref($genome_db) ? $genome_db->dbID : $genome_db, SQL_INTEGER);
 
     if ($source_name) {
         $constraint .= ' AND m.source_name = ?';
