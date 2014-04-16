@@ -66,7 +66,7 @@ sub fetch_input {
 
     my %unannotated_member_ids = ();
     my $sth = $self->compara_dba->get_HMMAnnotAdaptor->fetch_all_genes_missing_annot_by_genome_db_id($genome_db_id);
-    $unannotated_member_ids{$_->[0]} = 1 for $sth->fetchall_arrayref;
+    $unannotated_member_ids{$_->[0]} = 1 for @{$sth->fetchall_arrayref};
     $sth->finish;
     $self->param('unannotated_member_ids', \%unannotated_member_ids);
 
