@@ -56,6 +56,7 @@ use Data::Dumper;
 
 # To be deprecated:
 use DBI;
+use Bio::EnsEMBL::Compara::MemberSet;
 
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
