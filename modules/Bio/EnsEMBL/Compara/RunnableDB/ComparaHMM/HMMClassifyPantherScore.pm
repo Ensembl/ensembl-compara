@@ -134,7 +134,8 @@ sub run_HMM_search {
     my $hmmer_cutoff      = $self->param('hmmer_cutoff'); ## Not used for now!!
     my $library_path      = $hmmLibrary->libDir();
 
-    my $cmd = "PATH=\$PATH:$blast_bin_dir:$hmmer_path; PERL5LIB=\$PERL5LIB:$pantherScore_path/lib; $pantherScore_exe -l $library_path -i $fastafile -D I -b $blast_bin_dir 2>/dev/null";
+    my $worker_temp_directory = $self->worker_temp_directory;
+    my $cmd = "PATH=\$PATH:$blast_bin_dir:$hmmer_path; PERL5LIB=\$PERL5LIB:$pantherScore_path/lib; $pantherScore_exe -l $library_path -i $fastafile -D I -b $blast_bin_dir -T $worker_temp_directory 2>/dev/null";
     print STDERR "$cmd\n" if ($self->debug());
 
     $self->compara_dba->dbc->disconnect_when_inactive(1);
