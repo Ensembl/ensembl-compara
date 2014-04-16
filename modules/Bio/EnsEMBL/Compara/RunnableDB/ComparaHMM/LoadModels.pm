@@ -165,7 +165,7 @@ sub store_hmmprofile {
             $hmm_profile->consensus($consensus->{$name});
 
             warn "Storing a new model: $model_id / $name".($hmm_profile->consensus ? " with a consensus sequence\n" : "\n");
-            #$self->compara_dba->get_HMMProfileAdaptor()->store($hmm_profile);
+            $self->compara_dba->get_HMMProfileAdaptor()->store($hmm_profile);
 
             $model_id = undef;
             $profile_content = undef;
