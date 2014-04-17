@@ -186,13 +186,11 @@ sub redirect_to_nearest_mirror {
   return DECLINED;
 }
 
+sub request_start_hook {}
 sub postReadRequestHandler {
   my $r = shift; # Get the connection handler
 
-  foreach my $h (@SiteDefs::REQUEST_START_HOOK) {
-    no strict;
-    $h->($r);
-  }
+  request_start_hook($r);
 
   # Nullify tags
   $ENV{'CACHE_TAGS'} = {};
@@ -560,13 +558,11 @@ sub logHandler {
   return DECLINED;
 }
 
+sub request_end_hook {}
 sub cleanupHandler {
   my $r = shift;  # Get the connection handler
   
-  foreach my $h (@SiteDefs::REQUEST_END_HOOK) {
-    no strict;
-    $h->($r);
-  }
+  request_end_hook($r);
   return if $r->subprocess_env->{'ENSEMBL_ENDTIME'};
   
   my $end_time   = time;
