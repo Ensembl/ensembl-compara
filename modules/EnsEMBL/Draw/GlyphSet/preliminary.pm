@@ -18,6 +18,10 @@ limitations under the License.
 
 package EnsEMBL::Draw::GlyphSet::preliminary;
 
+### Prints the text from ENSEMBL_PRELIM parameter
+### STATUS: Unknown - appears to have been written for the 
+### pre site, but doesn't seem to be in use
+
 use strict;
 
 use base qw(EnsEMBL::Draw::GlyphSet);

@@ -18,6 +18,8 @@ limitations under the License.
 
 package EnsEMBL::Draw::GlyphSet::_simple;
 
+### Standard rendering of data from simple_feature table (or similar)
+
 use strict;
 
 use base qw(EnsEMBL::Draw::GlyphSet_simple);

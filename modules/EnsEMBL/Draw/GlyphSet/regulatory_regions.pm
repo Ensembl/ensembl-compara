@@ -18,6 +18,8 @@ limitations under the License.
 
 package EnsEMBL::Draw::GlyphSet::regulatory_regions;
 
+### Draws miscellaneous regulatory regions (e.g. cisRED)
+
 use strict;
 
 use base qw(EnsEMBL::Draw::GlyphSet_simple);
