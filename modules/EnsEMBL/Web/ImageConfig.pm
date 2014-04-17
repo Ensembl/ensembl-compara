@@ -2319,6 +2319,7 @@ sub add_simple_features {
   return unless $menu;
   
   my ($keys, $data) = $self->_merge($hashref->{'simple_feature'});
+  use Data::Dumper;
   
   foreach (grep !$data->{$_}{'transcript_associated'}, @$keys) {  
     # Allow override of default glyphset, menu etc.
@@ -2331,6 +2332,7 @@ sub add_simple_features {
       glyphset  => $glyphset,
       colourset => 'simple',
       strand    => 'r',
+      renderers => ['off', 'Off', 'normal', 'On', 'labels', 'With labels'],
     );
 
     foreach my $opt ('renderers', 'height') {

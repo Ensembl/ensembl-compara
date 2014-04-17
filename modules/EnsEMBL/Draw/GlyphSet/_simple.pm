@@ -34,6 +34,10 @@ sub features {
 sub colour_key { return lc $_[1]->analysis->logic_name; }
 sub _das_type  { return 'simple'; }
 
+sub feature_label { my ($self, $f) = @_; return $f->id; }
+sub render_normal {$_[0]->SUPER::render_normal(1);}
+sub render_labels {$_[0]->SUPER::render_normal();}
+
 sub title {
   my ($self, $f)    = @_;
   my ($start, $end) = $self->slice2sr($f->start, $f->end);
