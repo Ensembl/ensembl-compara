@@ -18,6 +18,10 @@ limitations under the License.
 
 package EnsEMBL::Draw::GlyphSet::snp_fake;
 
+### Draws "zoomed out" SNPs on Transcript/Population/Image
+### (Called "fake" because blocks are shown equidistant, regardless
+### of SNP coordinates)
+
 use strict;
 
 use base qw(EnsEMBL::Draw::GlyphSet);
