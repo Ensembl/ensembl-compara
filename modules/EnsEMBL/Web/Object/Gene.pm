@@ -508,8 +508,9 @@ sub get_all_associated_archived { return $_[0]->Obj->get_all_associated_archived
 
 sub get_database_matches {
   my $self = shift;
+  my $dbpat = shift;
   my @DBLINKS;
-  eval { @DBLINKS = @{$self->Obj->get_all_DBLinks};};
+  eval { @DBLINKS = @{$self->Obj->get_all_DBLinks($dbpat)};};
   return \@DBLINKS  || [];
 }
 

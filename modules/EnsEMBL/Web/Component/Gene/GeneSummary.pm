@@ -28,6 +28,9 @@ sub _init {
   $self->ajaxable(1);
 }
 
+# Uses SQL wildcards
+my @SYNONYM_PATTERNS = qw(%HGNC% %ZFIN%);
+
 sub content {
   my $self         = shift;
   my $hub          = $self->hub;
@@ -36,8 +39,9 @@ sub content {
   my $table        = $self->new_twocol;
   my $location     = $hub->param('r') || sprintf '%s:%s-%s', $object->seq_region_name, $object->seq_region_start, $object->seq_region_end;
   my $site_type    = $species_defs->ENSEMBL_SITETYPE;
-  my $matches      = $object->get_database_matches;
-  my @CCDS         = grep $_->dbname eq 'CCDS', @{$object->Obj->get_all_DBLinks};
+  my @syn_matches;
+  push @syn_matches,@{$object->get_database_matches($_)} for @SYNONYM_PATTERNS;
+  my @CCDS         = grep $_->dbname eq 'CCDS', @{$object->Obj->get_all_DBLinks('CCDS')};
   my $db           = $object->get_db;
   my $alt_genes    = $self->_matches('alternative_genes', 'Alternative Genes', 'ALT_GENE', 'show_version'); #gets all xrefs, sorts them and stores them on the object. Returns HTML only for ALT_GENES
   my @RefSeqMatches  = @{$object->gene->get_all_Attributes('refseq_compare')};
@@ -63,7 +67,7 @@ sub content {
   foreach my $link (@{$object->__data->{'links'}{'PRIMARY_DB_SYNONYM'}||[]}) {
     my ($key, $text) = @$link;
     my $id           = [split /\<|\>/, $text]->[4];
-    my $synonyms     = $self->get_synonyms($id, @$matches);
+    my $synonyms     = $self->get_synonyms($id, @syn_matches);
 
     $text =~ s/\<div\s*class="multicol"\>|\<\/div\>//g;
     $text =~ s/<br \/>.*$//gism;
@@ -115,7 +119,7 @@ sub content {
 
   ## LRG info
   # first link to direct xrefs (i.e. this gene has an LRG)
-  my @lrg_matches = grep {$_->dbname eq 'ENS_LRG_gene'} @$matches;
+  my @lrg_matches = @{$object->get_database_matches('ENS_LRG_gene')};
   my $lrg_html;
   my %xref_lrgs;    # this hash will store LRGs we don't need to re-print
 
