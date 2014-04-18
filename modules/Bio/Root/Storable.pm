@@ -491,9 +491,9 @@ sub retrieve{
     eval{ $stored_obj = $self->_thaw( $serialised_obj ) };
     unless( $@ ){ $success=1; last }
     my $package;
-    if( $@ =~ /Cannot restore overloading/i ) {
+    if( $@ =~ /Cannot restore overloading(.*)/i ) {
       warn( $@ );
-      my $postmatch = $';
+      my $postmatch = $1;
       $package = $1 if $postmatch =~ /\(package +([\w\:]+)\)/;
     }
     if( $package ){
