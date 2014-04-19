@@ -2682,6 +2682,16 @@ sub add_regulation_builds {
     @renderers = qw(off Off normal On);
   }
   
+  my %all_types;
+  foreach my $set (qw(core non_core)) {
+    $all_types{$set} = [];
+    foreach (@{$evidence_info->{$set}{'classes'}}) {
+      foreach (@{$adaptor->fetch_all_by_class($_)}) {
+        push @{$all_types{$set}},$_;
+      }
+    }
+  }
+
   foreach my $cell_line (@cell_lines) { 
     ### Add tracks for cell_line peaks and wiggles only if we have data to display
     my $ftypes     = $db_tables->{'regbuild_string'}{'feature_type_ids'}{$cell_line}      || {};
@@ -2703,10 +2713,8 @@ sub add_regulation_builds {
         }
       }];
       
-      foreach (@{$evidence_info->{$set}{'classes'}}) {
-        foreach (@{$adaptor->fetch_all_by_class($_)}) {
-          $matrix_rows{$cell_line}{$set}{$_->name} ||= { row => $_->name, group => $_->class, group_order => $_->class =~ /^(Polymerase|Open Chromatin)$/ ? 1 : 2, on => $default_evidence_types{$_->name} } if $ftypes->{$_->dbID};
-        }
+      foreach (@{$all_types{$set}||[]}) {
+        $matrix_rows{$cell_line}{$set}{$_->name} ||= { row => $_->name, group => $_->class, group_order => $_->class =~ /^(Polymerase|Open Chromatin)$/ ? 1 : 2, on => $default_evidence_types{$_->name} } if $ftypes->{$_->dbID};
       }
     }
   }
