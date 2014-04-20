@@ -27,6 +27,19 @@ use List::Util qw(min max);
 
 use base qw(EnsEMBL::Draw::GlyphSet_transcript);
 
+sub _get_all_genes {
+  my ($self,$slice,$analysis,$alias) = @_;
+
+  my $hub = $self->{'config'}->hub;
+  my $species = $self->species;
+  my $key = join('::',$self->species,$slice->name,$analysis,$alias);
+  my $out = $hub->req_cache_get($key);
+  return $out if defined $out;
+  $out = $slice->get_all_Genes($analysis,$alias,1);
+  $hub->req_cache_set($key,$out);
+  return $out;
+}
+
 sub features {
   my $self           = shift;
   my @genes          = @_;
@@ -44,7 +57,7 @@ sub features {
     if ($slice->isa('Bio::EnsEMBL::LRGSlice') && $analyses->[0] ne 'LRG_import') {
       @genes = map @{$slice->feature_Slice->get_all_Genes($_, $db_alias) || []}, @$analyses;
     } else {
-      @genes = map @{$slice->get_all_Genes($_, $db_alias, 1) || []}, @$analyses;
+      @genes = map @{$self->_get_all_genes($slice,$_,$db_alias) || []}, @$analyses;
     }
   }
   

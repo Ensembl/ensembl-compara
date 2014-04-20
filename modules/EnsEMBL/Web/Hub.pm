@@ -89,6 +89,7 @@ sub new {
     _core_params   => {},
     _species_info  => {},
     _components    => [],
+    _req_cache     => {},
   };
 
   bless $self, $class;
@@ -764,6 +765,24 @@ sub get_favourite_species {
   my @favourites   = @{$species_defs->DEFAULT_FAVOURITES || []};
      @favourites   = ($species_defs->ENSEMBL_PRIMARY_SPECIES, $species_defs->ENSEMBL_SECONDARY_SPECIES) unless scalar @favourites;
   return \@favourites;
+}
+
+# The request cache explicitly and deliberately has the lifetime of a
+# request. You can therefore use keys which are only guraranteed unique
+# for a request. This cache is designed for communicating data which we
+# are pretty sure will be useful later but which is at a very different
+# part of the call tree. For example, features on stranded pairs of tracks.
+
+sub req_cache_set {
+  my ($self,$key,$value) = @_;
+
+  $self->{'_req_cache'}{$key} = $value;
+}
+
+sub req_cache_get {
+  my ($self,$key) = @_;
+
+  return $self->{'_req_cache'}{$key};
 }
 
 1;
