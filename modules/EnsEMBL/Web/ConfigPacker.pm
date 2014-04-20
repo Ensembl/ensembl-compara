@@ -1011,6 +1011,27 @@ sub _build_compara_default_aligns {
   $dest->{'COMPARA_DEFAULT_ALIGNMENT_IDS'} = \@defaults;
 }
 
+sub _build_compara_mlss {
+  my ($self,$dbh,$dest) = @_;
+
+  my $sth = $dbh->prepare(qq(
+    select mlss.method_link_species_set_id,
+           ss.species_set_id,
+           ml.method_link_id
+      from method_link_species_set as mlss
+      join species_set as ss
+        on mlss.species_set_id = ss.species_set_id
+      join method_link as ml
+        on mlss.method_link_id = ml.method_link_id
+  ));
+  $sth->execute;
+  my %mlss;
+  while(my ($mlss_id,$ss_id,$ml_id) = $sth->fetchrow_array) {
+    $mlss{$mlss_id} = { SPECIES_SET => $ss_id, METHOD_LINK => $ml_id };
+  }
+  $dest->{'MLSS_IDS'} = \%mlss;
+}
+
 sub _summarise_compara_db {
   my ($self, $code, $db_name) = @_;
   
@@ -1198,6 +1219,7 @@ sub _summarise_compara_db {
   ## Cache MLSS for quick lookup in ImageConfig
 
   $self->_build_compara_default_aligns($dbh,$self->db_tree->{$db_name});
+  $self->_build_compara_mlss($dbh,$self->db_tree->{$db_name});
 
   ##
   ###################################################################

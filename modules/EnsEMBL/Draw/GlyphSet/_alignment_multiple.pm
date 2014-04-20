@@ -213,7 +213,21 @@ sub element_features {
   my $id                  = $constrained_element || $self->my_config('method_link_species_set_id');
   my $restrict            = 1;
 
-  $features = $adaptor->fetch_all_by_MethodLinkSpeciesSet_Slice($db->get_adaptor('MethodLinkSpeciesSet')->fetch_by_dbID($id), $slice, undef, undef, $restrict) || [];
+  # Avoid Building MLSS cache. Saves almost a second on region in detail.
+  # We should ask Compara to help us out with a cache-free _objs_to_sth.
+  #  --dps
+  my $mlss_ids = $self->species_defs->multi_hash->{'DATABASE_COMPARA'}->{'MLSS_IDS'};
+  my $mlss_conf = $mlss_ids->{$id};
+  my $ss = $db->get_adaptor('SpeciesSet')->_uncached_fetch_by_dbID($mlss_conf->{'SPECIES_SET'});
+  my $ml = $db->get_adaptor('Method')->_uncached_fetch_by_dbID($mlss_conf->{'METHOD_LINK'});
+  my $mlss = Bio::EnsEMBL::Compara::MethodLinkSpeciesSet->new(
+    -DBID => $id,
+    -ADAPTOR => $adaptor,
+    -METHOD => $ml,
+    -SPECIES_SET_OBJ => $ss
+  );
+
+  $features = $adaptor->fetch_all_by_MethodLinkSpeciesSet_Slice($mlss, $slice, undef, undef, $restrict) || [];
   
   foreach my $feature (@$features) {
     my ($rtype, $gpath, $rname, $rstart, $rend, $rstrand) = split ':', $feature->slice->name;
