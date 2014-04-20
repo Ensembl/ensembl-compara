@@ -980,6 +980,37 @@ sub _summarise_archive_db {
   $dbh->disconnect();
 }
 
+sub _build_compara_default_aligns {
+  my ($self,$dbh,$dest) = @_;
+
+  my $sth = $dbh->prepare(qq(
+    select mlss.method_link_species_set_id
+      from method_link_species_set as mlss
+      join species_set as ss
+        on mlss.species_set_id = ss.species_set_id
+      join method_link as ml
+        on mlss.method_link_id = ml.method_link_id
+      join species_set_tag as sst
+        on ss.species_set_id = sst.species_set_id
+      where sst.tag = 'name'
+        and ml.type = ?
+        and sst.value = ?
+  ));
+  my @defaults;
+  my $cda_conf = $self->full_tree->{'MULTI'}{'COMPARA_DEFAULT_ALIGNMENTS'};
+  foreach my $species (keys %$cda_conf) {
+    my $method = $cda_conf->{$species};
+    $sth->bind_param(1,$method);
+    $sth->bind_param(2,$species);
+    $sth->execute;
+    my ($mlss_id)= $sth->fetchrow_array;
+    push @defaults,[$mlss_id,$species,$method];
+    $sth->execute;
+    $sth->finish;
+  }
+  $dest->{'COMPARA_DEFAULT_ALIGNMENT_IDS'} = \@defaults;
+}
+
 sub _summarise_compara_db {
   my ($self, $code, $db_name) = @_;
   
@@ -1161,6 +1192,14 @@ sub _summarise_compara_db {
   }
 
   ## End section about colouring and colapsing/hidding gene in the GeneTree View
+  ###################################################################
+
+  ###################################################################
+  ## Cache MLSS for quick lookup in ImageConfig
+
+  $self->_build_compara_default_aligns($dbh,$self->db_tree->{$db_name});
+
+  ##
   ###################################################################
 
   ###################################################################
