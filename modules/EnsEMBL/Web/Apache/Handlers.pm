@@ -65,11 +65,15 @@ BEGIN {
 # Perl apache handlers in order they get executed                      #
 #======================================================================#
 
+sub child_init_hook {}
+
 sub childInitHandler {
 ## Initiates an Apache child process, sets up the web registry object,
 ## and initializes the timer
   my $r = shift;
-  
+ 
+  child_init_hook($r);
+ 
   my @X             = localtime;
   my $temp_hostname = hostname;
   my $temp_proc_id  = '' . reverse $$;
