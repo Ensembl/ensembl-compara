@@ -32,7 +32,7 @@ sub _get_all_genes {
 
   my $hub = $self->{'config'}->hub;
   my $species = $self->species;
-  my $load_transcripts = ($self->{'display'} =~ /transcriot/);
+  my $load_transcripts = ($self->{'display'} =~ /transcript/);
   my $key = join('::',$self->species,$slice->name,$analysis,$alias,$load_transcripts);
   my $out = $hub->req_cache_get($key);
   return $out if defined $out;
