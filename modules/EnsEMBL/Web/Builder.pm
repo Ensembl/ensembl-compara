@@ -168,7 +168,13 @@ sub create_factory {
   my $factory = $self->new_factory($type, $data);
   
   if ($factory) {
-    $factory->createObjects;
+    if($hub->script eq 'Component') {
+      unless(defined $factory->createObjectsInternal) {
+        $factory->createObjects;
+      }
+    } else {
+      $factory->createObjects;
+    }
     
     if ($hub->get_problem_type('fatal')) {
       $hub->delete_param($param);

@@ -26,6 +26,21 @@ use HTML::Entities qw(encode_entities);
 
 use base qw(EnsEMBL::Web::Factory);
 
+sub createObjectsInternal {
+  my $self = shift;
+
+  return undef if $self->param('family');
+  my $db = $self->param('db') || 'core';
+     $db = 'otherfeatures' if $db eq 'est';
+  my $db_adaptor = $self->database($db);
+  return undef unless $db_adaptor;
+  my $adaptor = $db_adaptor->get_GeneAdaptor;
+  my $gene = $adaptor->fetch_by_stable_id($self->param('g'));
+  return undef unless $gene;
+  $self->DataObjects($self->new_object('Gene', $gene, $self->__data));
+  return $gene;
+}
+
 sub createObjects { 
   my $self = shift;
   my $gene = shift;

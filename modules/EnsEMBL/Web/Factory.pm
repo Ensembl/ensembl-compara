@@ -51,6 +51,16 @@ sub param {
   return wantarray ? @params : $params[0];
 }
 
+# When we expect params etc to be correct, eg in component calls, we need
+# not spend the considerable time spent in factories to extract params
+# and add missing ones. In this case we can call createObjectsInternal
+# rather than createObjects. For factories without a different
+# implementation, they fallback to createObjects.
+sub createObjectsInternal {
+  my $self = shift;
+  return $self->createObjects(@_);
+}
+
 sub generate_object {
   ### Used to create an object of a different type to the current factory
   ### For example, a Gene object will generate a Location object when the top tabs are created

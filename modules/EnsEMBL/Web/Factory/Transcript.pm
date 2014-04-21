@@ -28,6 +28,19 @@ use EnsEMBL::Web::Fake;
 
 use base qw(EnsEMBL::Web::Factory);
 
+sub createObjectsInternal {
+  my $self = shift;
+  my $db = $self->param('db') || 'core';
+  $db = 'otherfeatures' if $db eq 'est';
+  my $db_adaptor = $self->database($db);
+  return undef unless $db_adaptor;
+  my $adaptor = $db_adaptor->get_TranscriptAdaptor;
+  return undef unless $adaptor;
+  my $transcript = $adaptor->fetch_by_stable_id($self->param('t'));
+  $self->DataObjects($self->new_object('Transcript', $transcript, $self->__data));
+  return $transcript;
+}
+
 sub createObjects {   
   my $self       = shift;
   my $transcript = shift;

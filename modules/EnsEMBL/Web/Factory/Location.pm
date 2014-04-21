@@ -120,6 +120,22 @@ sub __set_species {
   $self->__level ||= $level;
 }
 
+sub createObjectsInternal {
+  my $self = shift;
+
+  return undef if $self->param('a') or $self->param('align');
+  my $db_adaptor = $self->database('core');
+  return undef unless $db_adaptor;
+  my $r = $self->param('r');
+  return undef unless $r =~ /^([^:]+):(\d+)-(\d+)$/;
+  my ($seq_region,$start,$end) = ($1,$2,$3);
+  my $slice = $self->get_slice($seq_region, $start, $end);
+  return undef unless $slice;
+  my $location = $self->new_location($slice);
+  $self->DataObjects($location);
+  return $location;
+}
+
 sub createObjects {
   my $self  = shift;
   my $slice = shift;
@@ -142,8 +158,6 @@ sub createObjects {
     
     $location = $self->new_location($slice);
   } else {
-    $self->hub->get_databases($self->__gene_databases, 'compara', 'blast');
-    
     my ($seq_region, $start, $end, $strand);
     
     # Get seq_region, start, end, strand. These are obtained by either
