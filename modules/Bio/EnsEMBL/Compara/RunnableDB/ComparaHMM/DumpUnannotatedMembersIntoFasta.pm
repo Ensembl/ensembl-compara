@@ -57,9 +57,6 @@ use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 sub fetch_input {
     my $self = shift @_;
 
-    my $fasta_file = $self->param('fasta_dir') . '/unannotated.fasta';
-    $self->param('fasta_file', $fasta_file);
-
     my @members;
     my $mlss = $self->compara_dba->get_MethodLinkSpeciesSetAdaptor->fetch_by_dbID($self->param_required('mlss_id'));
     foreach my $genome_db (@{$mlss->species_set_obj->genome_dbs}) {
@@ -70,7 +67,7 @@ sub fetch_input {
     }
 
     # write fasta file:
-    Bio::EnsEMBL::Compara::MemberSet->new(-members => \@members)->print_sequences_to_file($fasta_file);
+    Bio::EnsEMBL::Compara::MemberSet->new(-members => \@members)->print_sequences_to_file($self->param('fasta_file'));
 }
 
 sub write_output {

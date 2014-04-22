@@ -952,9 +952,9 @@ sub pipeline_analyses {
 # -------------------------------------------------[BuildHMMprofiles pipeline]-------------------------------------------------------
 
         {   -logic_name => 'dump_unannotated_members',
-            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::DumpMembersIntoFasta',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ComparaHMM::DumpUnannotatedMembersIntoFasta',
             -parameters => {
-                'only_unannotated'            => 1,
+                'fasta_file'    => '#fasta_dir#/unannotated.fasta',
             },
             -rc_name       => '250Mb_job',
             -hive_capacity => $self->o('reuse_capacity'),
