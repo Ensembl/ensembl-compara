@@ -188,14 +188,14 @@ Otherwise, calls it directly.
 =cut
 
 sub call_within_transaction {
-    my ($self, $callback) = @_;
+    my ($self, $callback, $retry, $pause) = @_;
 
     # Make sure the same commands are inside and outside of the transaction
     if ($self->param('do_transactions')) {
         my $helper = Bio::EnsEMBL::Utils::SqlHelper->new(-DB_CONNECTION => $self->compara_dba->dbc);
         return $helper->transaction(
-            -RETRY => 3,
-            -PAUSE => 5,
+            -RETRY => $retry,
+            -PAUSE => $pause,
             -CALLBACK => $callback,
         );
     } else {
