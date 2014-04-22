@@ -120,7 +120,7 @@ sub fetch_all_genes_missing_annot {
 sub fetch_all_genes_missing_annot_by_range {
     my ($self, $start_member_id, $end_member_id) = @_;
 
-    my $sql = "SELECT canonical_member_id FROM gene_member LEFT JOIN hmm_annot ON canonical_member_id = seq_member_id WHERE seq_member_id IS NULL AMD canonical_member_id BETWEEN ? AND ?";
+    my $sql = "SELECT canonical_member_id FROM gene_member LEFT JOIN hmm_annot ON canonical_member_id = seq_member_id WHERE seq_member_id IS NULL AND canonical_member_id BETWEEN ? AND ?";
     my $sth = $self->prepare($sql);
     $sth->execute($start_member_id, $end_member_id);
 
