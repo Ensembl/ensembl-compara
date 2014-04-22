@@ -380,7 +380,7 @@ sub get_data {
   my $hub                  = $self->hub;
   my $dataset_adaptor      = $hub->get_adaptor('get_DataSetAdaptor', 'funcgen');
   my $associated_data_only = $hub->param('opt_associated_data_only') eq 'yes' ? 1 : undef; # If on regulation page do we show all data or just used to build reg feature?
-  my $reg_object           = $associated_data_only ? $hub->core_objects->{'regulation'} : undef;
+  my $reg_object           = $associated_data_only ? $hub->core_object('regulation') : undef;
   my $count                = 0;
   my @result_sets;
   my %feature_sets_on;

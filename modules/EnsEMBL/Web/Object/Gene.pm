@@ -1011,7 +1011,7 @@ sub store_TransformedSNPS {
   
   my @transcripts = @{$self->get_all_transcripts};
   if ($self->hub->type eq 'Transcript'){
-    @transcripts = ($self->hub->core_objects->{'transcript'});
+    @transcripts = ($self->hub->core_object('transcript'));
   }
 
   my $included_so;
@@ -1083,7 +1083,7 @@ sub store_ConsequenceCounts {
   
   my @transcripts = @{$self->get_all_transcripts};
   if ($self->hub->type eq 'Transcript'){
-    @transcripts = ($self->hub->core_objects->{'transcript'});
+    @transcripts = ($self->hub->core_object('transcript'));
   }
 
   my $included_so;

@@ -145,7 +145,7 @@ sub create_objects {
     }
   }
   
-  $hub->core_objects($self->all_objects);
+  $hub->set_core_objects($self->all_objects);
 }
 
 sub create_factory {

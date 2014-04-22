@@ -221,13 +221,20 @@ sub get_db {
   return $db eq 'est' ? 'otherfeatures' : $db;
 }
 
-sub core_objects {
+sub set_core_objects {
   my $self = shift;
   my $core_objects = shift;
   $self->{'_core_objects'}->{lc $_}        = $core_objects->{$_} for keys %{$core_objects || {}};
   $self->{'_core_objects'}->{'parameters'} = $self->core_params if $core_objects;
   $self->{'_core_objects'}->{'parameters'}->{'db'} ||= 'core';
   return $self->{'_core_objects'};
+}
+
+sub core_object {
+  my $self = shift;
+  my $name = shift;
+
+  return $self->{'_core_objects'}{$name};
 }
 
 sub core_param { 

@@ -105,7 +105,7 @@ sub content {
 
   my $centre_content = 'Navigate homology';
   if ($hub->param('g')) {
-    my $gene = $hub->{'_core_objects'}{'gene'};
+    my $gene = $hub->core_object('gene');
     my $padding = 1000000;
     my $start = $gene->seq_region_start - $padding > 0 ? $gene->seq_region_start - $padding : 0;
     my $end   = $gene->seq_region_end   + $padding < $chromosome_end 

@@ -171,7 +171,7 @@ sub block_features_zmenu {
 
   my $href = $self->_url({
     action => 'FeatureEvidence',
-    rf     => $self->{'config'}->core_objects->{'regulation'}->stable_id,
+    rf     => $self->{'config'}->core_object('regulation')->stable_id,
     fdb    => 'funcgen',
     pos    => $pos,
     fs     => $feature_set,

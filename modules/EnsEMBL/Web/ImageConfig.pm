@@ -233,7 +233,7 @@ sub altered      :lvalue { $_[0]{'altered'};                     } # Set to 1 if
 
 sub hub                 { return $_[0]->{'hub'};                                               }
 sub code                { return $_[0]->{'code'};                                              }
-sub core_objects        { return $_[0]->hub->core_objects;                                     }
+sub core_object        { return $_[0]->hub->core_object($_[1]);                                }
 sub colourmap           { return $_[0]->hub->colourmap;                                        }
 sub species_defs        { return $_[0]->hub->species_defs;                                     }
 sub sd_call             { return $_[0]->species_defs->get_config($_[0]->{'species'}, $_[1]);   }

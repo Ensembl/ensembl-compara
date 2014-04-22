@@ -573,7 +573,7 @@ sub configure {
     $gene_object = $factory->object;
   } else {
     $transcript_object = $object;
-    $gene_object       = $self->hub->core_objects->{'gene'};
+    $gene_object       = $self->hub->core_object('gene');
   }
   
   $gene_object->get_gene_slices(
