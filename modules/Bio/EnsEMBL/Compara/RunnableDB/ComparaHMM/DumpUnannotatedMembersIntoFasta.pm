@@ -63,8 +63,9 @@ sub fetch_input {
     my @members;
     my $mlss = $self->compara_dba->get_MethodLinkSpeciesSetAdaptor->fetch_by_dbID($self->param_required('mlss_id'));
     foreach my $genome_db (@{$mlss->species_set_obj->genome_dbs}) {
-        my $member_ids = $self->compara_dba->get_HMMAnnotAdaptor->fetch_all_genes_missing_annot_by_genome_db_id($genome_db->dbID);
-        my $unnanotated_members = $self->compara_dbs->get_SeqMemberAdaptor->fetch_all_by_dbID_list($member_ids);
+        my $sth = $self->compara_dba->get_HMMAnnotAdaptor->fetch_all_genes_missing_annot_by_genome_db_id($genome_db->dbID);
+        my $member_ids = [map {$_->[0]} @{$sth->fetchall_arrayref}];
+        my $unnanotated_members = $self->compara_dba->get_SeqMemberAdaptor->fetch_all_by_dbID_list($member_ids);
         push @members, @$unnanotated_members;
     }
 
