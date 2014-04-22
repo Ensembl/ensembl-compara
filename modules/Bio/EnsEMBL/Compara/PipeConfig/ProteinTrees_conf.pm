@@ -983,6 +983,7 @@ sub pipeline_analyses {
         {   -logic_name         => 'blastp_unannotated',
             -module             => 'Bio::EnsEMBL::Compara::RunnableDB::ComparaHMM::BlastpUnannotated',
             -parameters         => {
+                'blast_db'                  => '#fasta_dir#/unannotated.fasta',
                 'blast_params'              => $self->o('blast_params'),
                 'blast_bin_dir'             => $self->o('blast_bin_dir'),
                 'evalue_limit'              => 1e-10,
