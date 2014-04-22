@@ -57,6 +57,7 @@ sub param_defaults {
             'sort_clusters'         => 1,
             'immediate_dataflow'    => 1,
             'member_type'           => 'protein',
+            'do_transactions'       => 1,
     };
 }
 
