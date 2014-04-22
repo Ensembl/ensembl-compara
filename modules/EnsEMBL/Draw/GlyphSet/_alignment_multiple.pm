@@ -28,6 +28,7 @@ use Time::HiRes qw(time);
 use Sanger::Graphics::Bump;
 
 use Bio::EnsEMBL::DnaDnaAlignFeature;
+use Bio::EnsEMBL::Compara::MethodLinkSpeciesSet;
 
 use base qw(EnsEMBL::Draw::GlyphSet_wiggle_and_block);
 use List::Util qw(min max);
