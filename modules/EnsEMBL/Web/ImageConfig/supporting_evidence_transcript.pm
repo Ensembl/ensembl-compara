@@ -35,8 +35,8 @@ sub init {
   $self->load_tracks;
 
   my $logic_name = '';;
-  if ($self->hub->core_objects->{'transcript'}) {
-    $logic_name = $self->hub->core_objects->{'transcript'}->Obj->analysis->logic_name;
+  if ($self->hub->core_object('transcript')) {
+    $logic_name = $self->hub->core_object('transcript')->Obj->analysis->logic_name;
   }
   my $is_vega_gene   = $self->hub->get_db eq 'vega'   ? 1 : $self->species_defs->ENSEMBL_SITETYPE eq 'Vega' ? 1 : 0;
   my $is_rnaseq_gene = $self->hub->get_db eq 'rnaseq' ? 1 : 0;

@@ -28,7 +28,7 @@ sub _init {
   my $self              = shift;
   my $config            = $self->{'config'};
   my $slice             = $self->{'container'}; 
-  my $target_feature_id = $self->{'config'}->core_objects->{'regulation'}->stable_id;  
+  my $target_feature_id = $self->{'config'}->core_object('regulation')->stable_id;  
   my $strand            = $self->strand; 
   my $colour            = 'lightcoral';
   my $x                 = 0;

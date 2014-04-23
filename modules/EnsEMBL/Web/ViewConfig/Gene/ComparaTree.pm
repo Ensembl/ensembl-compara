@@ -63,8 +63,8 @@ sub form {
   my $self = shift;
   
   my %other_clustersets;
-  if ($self->hub->core_objects->{'gene'}) {
-    my $tree = $self->hub->core_objects->{'gene'}->get_GeneTree;
+  if ($self->hub->core_object('gene')) {
+    my $tree = $self->hub->core_object('gene')->get_GeneTree;
     my $adaptor = $self->hub->database('compara')->get_adaptor('GeneTree');
     %other_clustersets = map {$_->clusterset_id => 1} @{$adaptor->fetch_all_linked_trees($tree->tree)};
     $other_clustersets{$tree->tree->clusterset_id} = 1;

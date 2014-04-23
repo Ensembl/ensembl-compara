@@ -80,7 +80,7 @@ sub _add_object_track {
   my $extra;
   
   # Add track for gene if not on by default
-  if (my $gene = $hub->core_objects->{'gene'}) {
+  if (my $gene = $hub->core_object('gene')) {
     my $key  = $image_config->get_track_key('transcript', $gene);
     my $node = $image_config->get_node(lc $key);
  

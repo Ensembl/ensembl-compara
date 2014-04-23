@@ -26,6 +26,8 @@ use Bio::EnsEMBL::Registry;
 
 use base qw(EnsEMBL::Web::Factory::Location);
 
+sub canLazy { return 0; }
+
 sub createObjects {
   my $self = shift;
   

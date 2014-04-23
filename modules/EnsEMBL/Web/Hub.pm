@@ -85,7 +85,8 @@ sub new {
     _databases     => EnsEMBL::Web::DBSQL::DBConnection->new($species, $species_defs),
     _cookies       => $cookies,
     _ext_indexers  => {},
-    _core_objects  => {},
+    _builder       => undef,
+    _core_params   => {},
     _core_params   => {},
     _species_info  => {},
     _components    => [],
@@ -221,13 +222,22 @@ sub get_db {
   return $db eq 'est' ? 'otherfeatures' : $db;
 }
 
-sub core_objects {
+sub set_builder {
+  my ($self,$builder) = @_;
+
+  $self->{'_builder'} = $builder;
+  $self->{'_core_params'} = $self->core_params;
+  $self->{'_core_params'}{'db'} ||= 'core';
+}
+
+sub core_object {
   my $self = shift;
-  my $core_objects = shift;
-  $self->{'_core_objects'}->{lc $_}        = $core_objects->{$_} for keys %{$core_objects || {}};
-  $self->{'_core_objects'}->{'parameters'} = $self->core_params if $core_objects;
-  $self->{'_core_objects'}->{'parameters'}->{'db'} ||= 'core';
-  return $self->{'_core_objects'};
+  my $name = shift;
+
+  if($name eq 'parameters') {
+    return $self->{'_core_params'};
+  }  
+  return $self->{'_builder'}->object(lc $name);
 }
 
 sub core_param { 

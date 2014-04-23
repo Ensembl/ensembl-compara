@@ -163,22 +163,6 @@ sub gene_description {
   }
 }
 
-sub alternative_object_from_factory {
-  ## There may be occassions when a script needs to work with features of
-  ## more than one type. in this case we create a new {{EnsEMBL::Web::Proxy::Factory}}
-  ## object for the alternative data type and retrieves the data (based on the standard URL
-  ## parameters for the new factory) attach it to the universal datahash {{__data}}
-  my ($self, $type) = @_;
-  
-  my $t_fact = $self->new_factory($type, $self->__data);
-  
-  if ($t_fact->can('createObjects')) {
-    $t_fact->createObjects;
-    $self->__data->{lc $type}  = $t_fact->DataObjects;
-    $self->__data->{'objects'} = $t_fact->__data->{'objects'};
-  }
-}
-
 sub slice {
   my $self = shift;
   return 1 unless $self->Obj->can('feature_Slice');

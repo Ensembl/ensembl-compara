@@ -35,6 +35,8 @@ use strict;
 
 use base qw(EnsEMBL::Web::Root);
 
+use EnsEMBL::Web::Lazy;
+
 sub new {
   my ($class, $args) = @_;
   
@@ -145,7 +147,7 @@ sub create_objects {
     }
   }
   
-  $hub->core_objects($self->all_objects);
+  $hub->set_builder($self);
 }
 
 sub create_factory {
@@ -168,10 +170,17 @@ sub create_factory {
   my $factory = $self->new_factory($type, $data);
   
   if ($factory) {
-    if($hub->script eq 'Component') {
-      unless(defined $factory->createObjectsInternal) {
-        $factory->createObjects;
-      }
+    my $obj;
+    if($hub->script eq 'Component' and $factory->canLazy) {
+      $factory->SetTypedDataObject($type,EnsEMBL::Web::Lazy->new(sub {
+        $obj = $factory->createObjectsInternal;
+        if($obj) {
+          $factory->SetTypedDataObject($type,$obj);
+          return $obj;
+        } else {
+          return $factory->createObjects;
+        }
+      }));
     } else {
       $factory->createObjects;
     }
@@ -180,8 +189,10 @@ sub create_factory {
       $hub->delete_param($param);
       $hub->clear_problem_type('fatal') if $type ne $hub->type; # If this isn't the critical factory for the page, ignore the problem. Deleting the parameter will cause a redirect to a working URL.
     } else {
-      $self->object($_->__objecttype, $_) for @{$factory->DataObjects};
-      
+      my $objs = $factory->DataObjects;
+      foreach my $type (keys %$objs) {
+        $self->object($type,$_) for @{$objs->{$type}};
+      } 
       return $factory;
     }
   }

@@ -80,8 +80,11 @@ sub DataObjects {
   # Set the r parameter if a Location has been successfully created and
   # 1) There is no current r parameter OR
   # 2) The r parameter has a : (in other words, it's not a whole chromosome)
-  $self->param('r', sprintf '%s:%s-%s', map $objects->[0]->$_, qw(seq_region_name seq_region_start seq_region_end)) if $objects->[0] && (!$self->param('r') || $self->param('r') =~ /:/);
-  
+
+  if($self->hub->script ne 'Component') {
+    my $loc = $objects->{'Location'}[0];
+    $self->param('r', sprintf '%s:%s-%s', map $loc->$_, qw(seq_region_name seq_region_start seq_region_end)) if $loc && (!$self->param('r') || $self->param('r') =~ /:/);
+  } 
   return $objects;
 }
 
@@ -120,6 +123,7 @@ sub __set_species {
   $self->__level ||= $level;
 }
 
+sub canLazy { return 1; }
 sub createObjectsInternal {
   my $self = shift;
 
@@ -131,9 +135,7 @@ sub createObjectsInternal {
   my ($seq_region,$start,$end) = ($1,$2,$3);
   my $slice = $self->get_slice($seq_region, $start, $end);
   return undef unless $slice;
-  my $location = $self->new_location($slice);
-  $self->DataObjects($location);
-  return $location;
+  return $self->new_location($slice);
 }
 
 sub createObjects {
@@ -308,6 +310,7 @@ sub createObjects {
   }
   
   $self->DataObjects($location) if $location;
+  return $location;
 }
 
 sub get_slice {
