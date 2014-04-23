@@ -802,6 +802,9 @@ sub pop_info {
   $data{Description}        = $self->pop_description($pop_obj);
   $data{"Super-Population"} = $self->extra_pop($pop_obj,"super");
   $data{"Sub-Population"}   = $self->extra_pop($pop_obj,"sub");
+  $data{PopGroup}           = $self->pop_display_group_name($pop_obj) ||undef;
+  $data{GroupPriority}      = $self->pop_display_group_priority($pop_obj) ||undef;
+ 
 
   return \%data;
 }
@@ -904,6 +907,21 @@ sub extra_pop {
   }
   return \%extra_pop;
 }
+
+sub pop_display_group_priority{
+
+  my ($self, $pop_obj)  = @_;
+  #return 1 if  $pop_obj->name() eq 'Mouse_Genomes_Project';
+  return $pop_obj->display_group_priority();
+}
+sub pop_display_group_name{
+
+  my ($self, $pop_obj)  = @_;
+  #return 'Mouse_Genomes_Project' if  $pop_obj->name()  eq 'Mouse_Genomes_Project';
+  return $pop_obj->display_group_name();
+}
+
+ 
 
 
 # Individual table -----------------------------------------------------
@@ -1149,6 +1167,7 @@ sub get_variation_sub_sets {
   my $vari_set_adaptor = $self->hub->database('variation')->get_VariationSetAdaptor;
 
   my $superset_obj = $vari_set_adaptor->fetch_by_name($superset_name);
+  return unless defined $superset_obj;
 
   my $sets = $vari_set_adaptor->fetch_all_by_Variation_super_VariationSet($self->vari, $superset_obj); 
   return $sets;
@@ -1420,6 +1439,8 @@ sub get_default_pop_name {
   return unless $pop;
   return [ $self->pop_name($pop) ];
 }
+
+
 
 sub location { return $_[0]; }
 
