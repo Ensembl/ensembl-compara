@@ -237,7 +237,7 @@ sub core_object {
   if($name eq 'parameters') {
     return $self->{'_core_params'};
   }  
-  return $self->{'_builder'}->object(lc $name);
+  return $self->{'_builder'}->object(ucfirst $name);
 }
 
 sub core_param { 
