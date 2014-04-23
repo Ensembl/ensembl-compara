@@ -153,6 +153,7 @@ sub default_options {
         #'reuse_capacity'            =>   3,
         #'blast_factory_capacity'    =>  50,
         #'blastp_capacity'           => 900,
+        #'blastpu_capacity'          => 300,
         #'mcoffee_capacity'          => 600,
         #'split_genes_capacity'      => 600,
         #'treebest_capacity'         => 400,
@@ -988,9 +989,8 @@ sub pipeline_analyses {
                 'blast_bin_dir'             => $self->o('blast_bin_dir'),
                 'evalue_limit'              => 1e-10,
             },
-            -batch_size    => 10,
             -rc_name       => '250Mb_job',
-            -hive_capacity => $self->o('blastp_capacity'),
+            -hive_capacity => $self->o('blastpu_capacity'),
         },
 
 
