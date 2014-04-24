@@ -910,14 +910,25 @@ sub extra_pop {
 
 sub pop_display_group_priority{
 
+  ### frequencies_table
+  ### Args      : Bio::EnsEMBL::Variation::Population object
+  ### Example    : $group_priority = $object->pop_display_group_priority($pop);
+  ### Description: gets priority level for the display group the population is in
+  ### Returns String
+
   my ($self, $pop_obj)  = @_;
-  #return 1 if  $pop_obj->name() eq 'Mouse_Genomes_Project';
   return $pop_obj->display_group_priority();
 }
 sub pop_display_group_name{
 
+  ### frequencies_table
+  ### Args      : Bio::EnsEMBL::Variation::Population object
+  ### Example    : $group_priority = $object->pop_display_group_name($pop);
+  ### Description: gets name for the display group the population is in
+  ### Returns String
+
+
   my ($self, $pop_obj)  = @_;
-  #return 'Mouse_Genomes_Project' if  $pop_obj->name()  eq 'Mouse_Genomes_Project';
   return $pop_obj->display_group_name();
 }
 
