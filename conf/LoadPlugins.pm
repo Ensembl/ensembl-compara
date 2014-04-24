@@ -64,7 +64,8 @@ sub import {
     # with EnsEMBL::Web::, EnsEMBL::Draw or Bio::
     return unless substr($filename, 0, 12) eq 'EnsEMBL/Web/'
                     || substr($filename, 0, 13) eq 'EnsEMBL/Draw/'
-                    || substr($filename, 0, 4) eq 'Bio/';
+                    || substr($filename, 0, 4) eq 'Bio/'
+                    || substr($filename,0, 15) eq 'Sanger/Graphics';
 
     # If the file being plugged in (file A) has circular dependency with
     # another file (B) in the core code or any of the plugins, then while
