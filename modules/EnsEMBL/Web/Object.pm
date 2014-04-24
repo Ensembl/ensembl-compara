@@ -37,6 +37,7 @@ use EnsEMBL::Web::TmpFile::Text;
 use EnsEMBL::Web::DBSQL::WebsiteAdaptor;
 use EnsEMBL::Web::Tools::Misc qw(get_url_content);
 use HTML::Entities  qw(encode_entities);
+use List::Util qw(min max);
 
 use base qw(EnsEMBL::Web::Root);
 
@@ -409,115 +410,115 @@ sub get_align_blocks {
 
 sub get_groups {
   ## Group together the alignment blocks with the same group_id or dbID
-    my ($self, $align_blocks, $is_low_coverage_species) = @_;
+  my ($self, $align_blocks, $is_low_coverage_species) = @_;
 
-    my $groups;
-    my $k = 0;
-    foreach my $gab (@{$align_blocks||[]}) {
-        my $start = $gab->reference_slice_start;
-        my $end = $gab->reference_slice_end;
-        #next if $end < 1 || $start > $length;
+  my $groups;
+  my $k = 0;
+  foreach my $gab (@$align_blocks) {
+    my $start = $gab->reference_slice_start;
+    my $end = $gab->reference_slice_end;
+    #next if $end < 1 || $start > $length;
 
-        #Set dbID or original_dbID if block has been restricted
-        my $dbID = $gab->dbID || $gab->original_dbID;
+    #Set dbID or original_dbID if block has been restricted
+    my $dbID = $gab->dbID || $gab->original_dbID;
 
-        #If low coverage species, group by group_id or block id ie group together the
-        #fragmented genomic aligns of low coverage species in the EPO_LOW_COVEREAGE alignment
-        #else group by group_id only.
-        my $key;
-        if ($is_low_coverage_species) {
-            $key = ($gab->{group_id} || $dbID);
-        } else {
-            $key = ($gab->{group_id} || $k++);
-        }
-        push @{$groups->{$key}{'gabs'}},[$start,$gab];
+    #If low coverage species, group by group_id or block id ie group together the
+    #fragmented genomic aligns of low coverage species in the EPO_LOW_COVEREAGE alignment
+    #else group by group_id only.
+    my $key;
+    if ($is_low_coverage_species) {
+      $key = ($gab->{group_id} || $dbID);
+    } else {
+      $key = ($gab->{group_id} || $k++);
     }
-    return $groups;
+    push @{$groups->{$key}{'gabs'}},[$start,$gab];
+  }
+  return $groups;
 }
 
 sub find_is_overlapping {
   ## Find if any of the blocks overlap one another.
-    my ($self, $align_blocks) = @_;
+  my ($self, $align_blocks) = @_;
 
-    my $found_overlap = 0;
-    my $prev_end = 0;
-    #order on dnafrag_start
-    foreach my $gab (sort {$a->reference_genomic_align->dnafrag_start <=> $b->reference_genomic_align->dnafrag_start} @$align_blocks) {
-        my $ga = $gab->reference_genomic_align;
-        my $ga_start = $ga->dnafrag_start;
-        my $ga_end = $ga->dnafrag_end;
-        if ($ga_start < $prev_end) {
-            return 1;
-        }
-        $prev_end = $ga_end;
+  my $found_overlap = 0;
+  my $prev_end = 0;
+  #order on dnafrag_start
+  foreach my $gab (sort {$a->reference_genomic_align->dnafrag_start <=> $b->reference_genomic_align->dnafrag_start} @$align_blocks) {
+    my $ga = $gab->reference_genomic_align;
+    my $ga_start = $ga->dnafrag_start;
+    my $ga_end = $ga->dnafrag_end;
+    if ($ga_start < $prev_end) {
+      return 1;
     }
-    return 0;
+    $prev_end = $ga_end;
+  }
+  return 0;
 }
 
 sub get_start_end_of_slice {
   ## Get start and end of target slice for low_coverage species or non_ref slice for pairwise alignments
   ## Also returns the number of unique non-reference species
-    my ($gabs, $target_species) = @_;
+  my ($self, $gabs, $target_species) = @_;
 
-    my ($ref_s_slice, $ref_e_slice, $non_ref_s_slice, $non_ref_e_slice);
-    my $non_ref_species;
-    my $non_ref_seq_region;
-    my $non_ref_ga;
-    my $num_species = 0;
+  my ($ref_s_slice, $ref_e_slice, $non_ref_s_slice, $non_ref_e_slice);
+  my $non_ref_species;
+  my $non_ref_seq_region;
+  my $non_ref_ga;
+  my $num_species = 0;
 
-    my %unique_species;
+  my %unique_species;
 
-    foreach my $gab (@$gabs) {
-        my $ref = $gab->reference_genomic_align;
-        my $ref_start = $ref->dnafrag_start;
-        my $ref_end = $ref->dnafrag_end;
+  foreach my $gab (@$gabs) {
+    my $ref = $gab->reference_genomic_align;
+    my $ref_start = $ref->dnafrag_start;
+    my $ref_end = $ref->dnafrag_end;
 
-        #find limits of start and end of reference slice
-        $ref_s_slice = $ref_start if (!defined $ref_s_slice) or $ref_start < $ref_s_slice;
-        $ref_e_slice = $ref_end   if (!defined $ref_e_slice) or $ref_end   > $ref_e_slice;
+    #find limits of start and end of reference slice
+    $ref_s_slice = $ref_start if (!defined $ref_s_slice) or $ref_start < $ref_s_slice;
+    $ref_e_slice = $ref_end   if (!defined $ref_e_slice) or $ref_end   > $ref_e_slice;
 
-        #Find non-reference genomic_align and hash of unique species
-        if ($target_species) {
-            my $all_non_refs = $gab->get_all_non_reference_genomic_aligns;
-            my $nonrefs = [ grep {$target_species eq $_->genome_db->name } @$all_non_refs ];
-            $non_ref_ga = $nonrefs->[0]; #just take the first match
-            foreach my $ga (@$all_non_refs) {
-                my $species = $ga->genome_db->name;
-                $unique_species{$species} = 1 if ($species ne $target_species);
-            }
-        } else {
-            $non_ref_ga = $gab->get_all_non_reference_genomic_aligns->[0];
-        }
-
-        #find limits of start and end of non-reference slice
-        if ($non_ref_ga) {
-            my $non_ref_start = $non_ref_ga->dnafrag_start;
-            my $non_ref_end = $non_ref_ga->dnafrag_end;
-
-            $non_ref_s_slice = $non_ref_start if (!defined $non_ref_s_slice) or $non_ref_start < $non_ref_s_slice;
-            $non_ref_e_slice = $non_ref_end   if (!defined $non_ref_e_slice) or $non_ref_end   > $non_ref_e_slice;
-        }
+    #Find non-reference genomic_align and hash of unique species
+    if ($target_species) {
+      my $all_non_refs = $gab->get_all_non_reference_genomic_aligns;
+      my $nonrefs = [ grep {$target_species eq $_->genome_db->name } @$all_non_refs ];
+      $non_ref_ga = $nonrefs->[0]; #just take the first match
+      foreach my $ga (@$all_non_refs) {
+        my $species = $ga->genome_db->name;
+        $unique_species{$species} = 1 if ($species ne $target_species);
+      }
+    } else {
+      $non_ref_ga = $gab->get_all_non_reference_genomic_aligns->[0];
     }
 
-    $num_species = keys %unique_species;
-    return ($ref_s_slice, $ref_e_slice, $non_ref_s_slice, $non_ref_e_slice, $non_ref_ga, $num_species);
+    #find limits of start and end of non-reference slice
+    if ($non_ref_ga) {
+      my $non_ref_start = $non_ref_ga->dnafrag_start;
+      my $non_ref_end = $non_ref_ga->dnafrag_end;
+
+      $non_ref_s_slice = $non_ref_start if (!defined $non_ref_s_slice) or $non_ref_start < $non_ref_s_slice;
+      $non_ref_e_slice = $non_ref_end   if (!defined $non_ref_e_slice) or $non_ref_end   > $non_ref_e_slice;
+    }
+  }
+
+  $num_species = keys %unique_species;
+  return ($ref_s_slice, $ref_e_slice, $non_ref_s_slice, $non_ref_e_slice, $non_ref_ga, $num_species);
 }
 
 sub build_features_into_sorted_groups {
   ## Features are grouped and rendered together
-    my ($groups) = @_;
+  my ($self, $groups) = @_;
 
-    # sort contents of groups by start
-    foreach my $g (values %$groups) {
-        my @f = map {$_->[1]} sort { $a->[0] <=> $b->[0] } @{$g->{'gabs'}};
+  # sort contents of groups by start
+  foreach my $g (values %$groups) {
+    my @f = map {$_->[1]} sort { $a->[0] <=> $b->[0] } @{$g->{'gabs'}||[]};
 
-        #slice length
-        $g->{'len'} = max(map { $_->reference_slice_end   } @f) - min(map { $_->reference_slice_start } @f);
-        $g->{'gabs'} = \@f;
-    }
+    #slice length
+    $g->{'len'} = max(map { $_->reference_slice_end   } @f) - min(map { $_->reference_slice_start } @f);
+    $g->{'gabs'} = \@f;
+  }
 
-    # Sort by length
-    return [ map { $_->{'gabs'} } sort { $b->{'len'} <=> $a->{'len'} } values %$groups ];
+  # Sort by length
+  return [ map { $_->{'gabs'} } sort { $b->{'len'} <=> $a->{'len'} } values %$groups ];
 }
 
 
