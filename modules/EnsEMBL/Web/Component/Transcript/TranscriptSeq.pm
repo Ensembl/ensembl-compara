@@ -182,7 +182,6 @@ sub get_sequence_data {
           factorytype => 'Location'
         };
         
-        push @{$mk->{'variations'}{$_}{'href'}{'v'}},  $variation_name;
         push @{$mk->{'variations'}{$_}{'href'}{'vf'}}, $dbID;
         
         $variation_seq->{'seq'}[$_]{'letter'} = $url ? qq{<a href="$url" title="$variation_name">$ambigcode</a>} : $ambigcode;
