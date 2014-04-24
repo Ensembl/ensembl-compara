@@ -184,8 +184,11 @@ sub get_sequence_data {
         
         push @{$mk->{'variations'}{$_}{'href'}{'vf'}}, $dbID;
         
-        $variation_seq->{'seq'}[$_]{'letter'} = $url ? qq{<a href="$url" title="$variation_name">$ambigcode</a>} : $ambigcode;
-        $variation_seq->{'seq'}[$_]{'url'}    = $url;
+        $variation_seq->{'seq'}[$_]{'letter'} = $ambigcode;
+        $variation_seq->{'seq'}[$_]{'href'} = $url;
+        $variation_seq->{'seq'}[$_]{'title'} = $variation_name;
+        $variation_seq->{'seq'}[$_]{'tag'} = 'a';
+        $variation_seq->{'seq'}[$_]{'class'} = '';
       }
     }
   }
