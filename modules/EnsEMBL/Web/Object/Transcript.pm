@@ -1626,8 +1626,27 @@ sub get_genetic_variations {
 }
 
 sub get_transcript_variations {
-  my $self = shift;
+  my ($self,$vf_cache) = @_;
+
+  # Most VFs will be in slice for transcript, so cache them.
+  if($vf_cache and !$self->__data->{'vf_cache'}) {
+    my $vfa = $self->get_adaptor('get_VariationFeatureAdaptor','variation');
+    $self->__data->{'vf_cache'} = {};
+    my $vfs = $vfa->fetch_all_by_Slice_constraint($self->Obj->feature_Slice);
+    $self->__data->{'vf_cache'}{$_->dbID} = $_ for(@$vfs);
+    $vfs = $vfa->fetch_all_somatic_by_Slice_constraint($self->Obj->feature_Slice);
+    $self->__data->{'vf_cache'}{$_->dbID} = $_ for(@$vfs);
+  }
 	return $self->get_adaptor('get_TranscriptVariationAdaptor', 'variation')->fetch_all_by_Transcripts_with_constraint([ $self->Obj ]);
+}
+
+sub transcript_variation_to_variation_feature {
+  my ($self,$tv) = @_;
+
+  my $vfid = $tv->_variation_feature_id;
+  my $val = ($self->__data->{'vf_cache'}||{})->{$vfid};
+  return $val if defined $val;
+  return $tv->variation_feature;
 }
 
 sub variation_data {
@@ -1660,14 +1679,14 @@ sub variation_data {
   #  }
   #}
   
-  foreach my $tv (@{$self->get_transcript_variations}) {
+  foreach my $tv (@{$self->get_transcript_variations(1)}) {
     my $pos = $tv->translation_start;
     
     next if !$include_utr && !$pos;
     next unless $tv->cdna_start && $tv->cdna_end;
     next if scalar keys %consequence_filter && !grep $consequence_filter{$_}, @{$tv->consequence_type};
     
-    my $vf    = $tv->variation_feature;
+    my $vf    = $self->transcript_variation_to_variation_feature($tv);
     my $vdbid = $vf->dbID;
     
     #next if scalar keys %population_filter && !$population_filter{$vdbid};
