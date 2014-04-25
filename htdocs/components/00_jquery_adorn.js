@@ -65,13 +65,21 @@
 
   $.fn.adorn = function() {
     this.each(function(i,outer) {
-      var data = $.parseJSON($('.adornment-data',outer).text());
-      $.each(data.seq,function(key,values) {
-        var el = $('.adorn-'+key,outer);
-        if(el.length) {
-          adorn_span(el,data.ref,values,key);
-        }
-      });
+      var $outer = $(outer);
+      if(!$outer.hasClass('adornment-done')) {
+        var wrapper = $outer.wrap("<div></div>").parent();
+        $outer.detach(); 
+        var data = $.parseJSON($('.adornment-data',outer).text());
+        $.each(data.seq,function(key,values) {
+          var el = $('.adorn-'+key,outer);
+          if(el.length) {
+            adorn_span(el,data.ref,values,key);
+          }
+        });
+        $outer.addClass('adormnent-done');
+        $('.adornment-data',outer).remove();
+        $outer.appendTo(wrapper);
+      }
     });
     return this;
   }; 
