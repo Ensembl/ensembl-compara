@@ -35,7 +35,7 @@ use strict;
 
 use base qw(EnsEMBL::Web::Root);
 
-use EnsEMBL::Web::Lazy;
+use EnsEMBL::Web::Lazy::Object;
 
 sub new {
   my ($class, $args) = @_;
@@ -172,7 +172,7 @@ sub create_factory {
   if ($factory) {
     my $obj;
     if($hub->script eq 'Component' and $factory->canLazy) {
-      $factory->SetTypedDataObject($type,EnsEMBL::Web::Lazy->new(sub {
+      $factory->SetTypedDataObject($type,EnsEMBL::Web::Lazy::Object->new(sub {
         $obj = $factory->createObjectsInternal;
         if($obj) {
           $factory->SetTypedDataObject($type,$obj);

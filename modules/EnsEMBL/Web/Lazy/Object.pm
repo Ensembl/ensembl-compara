@@ -1,9 +1,7 @@
-package EnsEMBL::Web::Lazy;
+package EnsEMBL::Web::Lazy::Object;
 
 use strict;
 use warnings;
-
-#use Carp qw(cluck);
 
 sub new {
   my ($proto,$reify) = @_;
@@ -21,14 +19,12 @@ sub __force {
 
   my $real = $self->{'reify'}->();
   %$self = %$real;
-  #warn cluck("Looking for $AUTOLOAD: It's a ".ref($real)."!\n");
   bless $self,ref($real);
 }
 
 sub isa {
   my $self = shift;
 
-  warn "ISA FORCE\n";
   $self->__force;
   return $self->isa(@_);
 }
