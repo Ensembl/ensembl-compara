@@ -204,7 +204,10 @@ sub configure {
   my $self          = shift;
   my $hub           = $self->hub;
   my $configuration = $self->configuration;
-  my $node          = $configuration->get_node($configuration->get_valid_action($self->action, $self->function));
+
+  my $assume_valid = 0;
+  $assume_valid = 1 if $hub->script eq 'Component';
+  my $node          = $configuration->get_node($configuration->get_valid_action($self->action, $self->function,$assume_valid));
   
   if ($node) {
     $self->node    = $node;
