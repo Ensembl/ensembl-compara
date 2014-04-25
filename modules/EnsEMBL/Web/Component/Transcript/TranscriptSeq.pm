@@ -161,7 +161,7 @@ sub get_sequence_data {
       
       foreach ($start..$end) {
         $mk->{'variations'}{$_}{'alleles'}   .= ($mk->{'variations'}{$_}{'alleles'} ? ', ' : '') . $alleles;
-        $mk->{'variations'}{$_}{'url_params'} = { v => $variation_name, vf => $dbID, vdb => 'variation' };
+        $mk->{'variations'}{$_}{'url_params'} = { vf => $dbID, vdb => 'variation' };
         $mk->{'variations'}{$_}{'transcript'} = 1;
         
         my $url = $mk->{'variations'}{$_}{'url_params'} ? $hub->url({ type => 'Variation', action => 'Explore', %{$mk->{'variations'}{$_}{'url_params'}} }) : '';
