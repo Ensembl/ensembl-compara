@@ -60,18 +60,13 @@ package Bio::EnsEMBL::Compara::RunnableDB::ComparaHMM::DumpModels;
 
 use strict;
 use IO::File; ## ??
-use File::Path qw/remove_tree/;
+use File::Path qw/remove_tree make_path/;
 use Time::HiRes qw(time gettimeofday tv_interval);
 use File::Which;
 use LWP::Simple;
 
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
-
-sub param_defaults {
-    return {
-           }
-}
 
 sub fetch_input {
     my ($self) = @_;
@@ -136,8 +131,10 @@ sub dump_models {
     $sth->execute();
     while (my ($model_id) = $sth->fetchrow) {
         print STDERR "Dumping model_id $model_id into $bookDir/$model_id\n";
-        mkdir "$bookDir/$model_id" or die $!;
-        open my $fh, ">", "$bookDir/$model_id/hmmer.hmm" or die $!;
+        my $path = "$bookDir/$model_id";
+        $path =~ s/:/\//;
+        make_path($path);
+        open my $fh, ">", "$path/hmmer.hmm" or die $!;
         my $hmm_object = $self->compara_dba->get_HMMProfileAdaptor->fetch_all_by_model_id_type($model_id, $self->param('type'))->[0];
         print $fh $hmm_object->profile;
         close($fh);

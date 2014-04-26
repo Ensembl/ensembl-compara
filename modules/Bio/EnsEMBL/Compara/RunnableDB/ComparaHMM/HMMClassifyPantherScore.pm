@@ -143,6 +143,8 @@ sub run_HMM_search {
     while (<$pipe>) {
         chomp;
         my ($seq_id, $hmm_id, $eval) = split /\s+/, $_, 4;
+        # Hits to a sub-family are also reported to its family
+        next if $hmm_id =~ /:/;
         $self->add_hmm_annot($seq_id, $hmm_id, $eval);
     }
     close($pipe);
