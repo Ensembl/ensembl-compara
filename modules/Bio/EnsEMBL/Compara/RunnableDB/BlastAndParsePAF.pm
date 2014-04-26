@@ -59,6 +59,8 @@ package Bio::EnsEMBL::Compara::RunnableDB::BlastAndParsePAF;
 use strict;
 use warnings;
 
+use File::Basename;
+
 use FileHandle;
 
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
@@ -100,6 +102,10 @@ sub fetch_input {
 
         # Target species are all mixed
         print STDERR "Using the blast database provided: ", $self->param('blast_db'), "\n" if $self->debug;
+        # Loads the files into memory
+        system sprintf('cat %s*', $self->param('blast_db'));
+        #my $tmp_blast_db = $self->worker_temp_directory.(basename $self->param('blast_db'));
+        #system sprintf('cp -a %s* %s', $self->param('blast_db'), $self->worker_temp_directory);
         $self->param('all_blast_db')->{$self->param('blast_db')} = undef;
 
     } elsif ($self->param('target_genome_db_id')) {
