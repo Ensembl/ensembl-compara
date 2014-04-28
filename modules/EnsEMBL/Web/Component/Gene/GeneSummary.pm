@@ -119,7 +119,7 @@ sub content {
   my $lrg_html;
   my %xref_lrgs;    # this hash will store LRGs we don't need to re-print
 
-  if(scalar @lrg_matches) {
+  if(scalar @lrg_matches && $hub->species_defs->HAS_LRG) {
     my $lrg_link;
     for my $i(0..$#lrg_matches) {
       my $lrg = $lrg_matches[$i];
@@ -214,7 +214,7 @@ sub content {
   }
 
   ## Secondary structure (currently only non-coding RNAs)
-  if ($object->{'_availability'}{'can_r2r'}) {
+  if ($self->hub->database('compara') && $object->{'_availability'}{'can_r2r'}) {
     my $svg_path = $self->draw_structure($display_name, 1);
     my $html;
     if ($svg_path) {

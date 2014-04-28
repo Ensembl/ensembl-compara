@@ -85,8 +85,9 @@ sub content {
     $image_configs->{'gene'}->{'filtered_fake_snps'} = \@fake_filtered_snps unless $no_snps;
   }   
 
-  my @domain_logic_names = qw(Pfam scanprosite Prints pfscan PrositePatterns PrositeProfiles Tigrfam Superfamily Smart PIRSF);
-  
+  #my @domain_logic_names = qw(Pfam scanprosite Prints pfscan PrositePatterns PrositeProfiles Tigrfam Superfamily Smart PIRSF);
+  my @domain_logic_names = @{$self->hub->species_defs->DOMAIN_LOGIC_NAMES||[]};  
+
   # Make fake transcripts
   $gene_object->store_TransformedTranscripts;                            # Stores in $transcript_object->__data->{'transformed'}{'exons'|'coding_start'|'coding_end'}
   $gene_object->store_TransformedDomains($_) for @domain_logic_names;    # Stores in $transcript_object->__data->{'transformed'}{'Pfam_hits'}

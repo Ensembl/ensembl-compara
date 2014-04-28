@@ -24,6 +24,7 @@ use HTML::Entities qw(encode_entities);
 
 use Bio::EnsEMBL::ExternalData::VCF::VCFAdaptor;
 use Bio::EnsEMBL::Variation::DBSQL::VariationFeatureAdaptor;
+use Bio::EnsEMBL::Variation::Utils::Constants;
 
 use base qw(Bio::EnsEMBL::GlyphSet::_variation);
 
@@ -154,6 +155,11 @@ sub features {
     my $species     = $slice->adaptor->db->species;
     my @features;
 
+    ## Can we actually draw this many features?
+    unless ($calc_type) {
+      return 'too_many';
+    }
+
     # If we have a variation db attached we can try and find a known SNP mapped at the same position
     # But at the moment we do not display this info so we might as well just use the faster method 
     #     my $vfa = $slice->_get_VariationFeatureAdaptor()->{list}->[0];
@@ -214,8 +220,22 @@ sub features {
 
       bless $snp, 'Bio::EnsEMBL::Variation::VariationFeature';
       
-      $snp->get_all_TranscriptVariations if $calc_type && $unknown_type; # Force TVs top be loaded
-      
+      # if user has defined consequence in VE field of VCF
+      # no need to look up via DB
+
+      if(defined($a->{'INFO'}->{'VE'})) {
+        my $con = (split /\|/, $a->{'INFO'}->{'VE'})[0];
+
+        if(defined($Bio::EnsEMBL::Variation::Utils::Constants::OVERLAP_CONSEQUENCES{$con})) {
+          $snp->{consequence_type} = [$con];
+          $snp->{overlap_consequences} = [$Bio::EnsEMBL::Variation::Utils::Constants::OVERLAP_CONSEQUENCES{$con}];
+          $calc_type = 0;
+        }
+      }
+
+      # otherwise look up via DB
+      $snp->get_all_TranscriptVariations if $calc_type && $unknown_type;     
+ 
       push @features, $snp;
       
       $self->{'legend'}{'variation_legend'}{$snp->display_consequence} ||= $self->get_colour($snp);

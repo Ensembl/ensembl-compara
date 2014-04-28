@@ -169,7 +169,7 @@ sub menus {
     gene_transcript     => 'Genes and transcripts',
     transcript          => [ 'Genes',                  'gene_transcript' ],
     prediction          => [ 'Prediction transcripts', 'gene_transcript' ],
-    lrg                 => [ 'LRG transcripts',        'gene_transcript' ],
+    Lrg                 => [ 'LRG transcripts',        'gene_transcript' ],
     rnaseq              => [ 'RNASeq models',          'gene_transcript' ],
     
     # Supporting evidence
@@ -1091,7 +1091,7 @@ sub _add_vcf_track {
     format    => 'VCF', 
     renderers => [
       'off',       'Off',
-      'histogram', 'Normal',
+      'histogram', 'Histogram',
       'compact',   'Compact'
     ], 
     options => {
@@ -1656,7 +1656,7 @@ sub load_configured_das {
       
       $menu = $self->get_node($_);
       
-      next unless $menu;
+      next unless $menu && $external;
       
       $external->after(ref $menus->{$_} ? $self->get_node($menus->{$_}[1]) : $menu) unless $parent;
     }
@@ -1886,7 +1886,7 @@ sub add_das_tracks {
 # add_dna_align_features
 # loop through all core databases - and attach the dna align
 # features from the dna_align_feature tables...
-# these are added to one of four menus: cdna/mrna, est, rna, other
+# these are added to one of five menus: transcript, cdna/mrna, est, rna, other
 # depending whats in the web_data column in the database
 sub add_dna_align_features {
   my ($self, $key, $hashref) = @_;
@@ -1897,7 +1897,7 @@ sub add_dna_align_features {
   
   foreach my $key_2 (@$keys) {
     my $k    = $data->{$key_2}{'type'} || 'other';
-    my $menu = ($k =~ /rnaseq|simple/) ? $self->tree->get_node($k) : $self->tree->get_node("dna_align_$k");
+    my $menu = ($k =~ /rnaseq|simple|transcript/) ? $self->tree->get_node($k) : $self->tree->get_node("dna_align_$k");
     
     if ($menu) {
       my $alignment_renderers = ['off','Off'];
@@ -2006,7 +2006,7 @@ sub add_genes {
           'transcript_label_coding', 'Coding transcripts only (in coding genes)',          
         ];
         
-  push($renderers, 'transcript_gencode_basic','GENCODE basic'); # if($species eq "Homo_sapiens" || $species eq "Mus_musculus");  #only human and mouse have this renderer enable for now
+  #push($renderers, 'transcript_gencode_basic','GENCODE basic'); # if($species eq "Homo_sapiens" || $species eq "Mus_musculus");  #only human and mouse have this renderer enable for now
      
   foreach my $type (@{$self->{'transcript_types'}}) {  
     my $menu = $self->get_node($type);

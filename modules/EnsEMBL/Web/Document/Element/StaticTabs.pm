@@ -29,7 +29,7 @@ use base qw(EnsEMBL::Web::Document::Element::Tabs);
 
 sub _tabs {
   return {
-    tab_order => [qw(website genome data docs about)],
+    tab_order => [qw(website data docs about)],
     tab_info  => {
       about     => {
                     title => 'About us',
@@ -39,9 +39,6 @@ sub _tabs {
                     },
       docs      => {
                     title => 'API & software',
-                    },
-      genome    => {
-                    title => 'Annotation & prediction',
                     },
       website   => {
                     title => 'Using this website',
