@@ -18,6 +18,8 @@ limitations under the License.
 
 package EnsEMBL::Draw::GlyphSet::_simple;
 
+### Standard rendering of data from simple_feature table (or similar)
+
 use strict;
 
 use base qw(EnsEMBL::Draw::GlyphSet_simple);
@@ -33,6 +35,10 @@ sub features {
 
 sub colour_key { return lc $_[1]->analysis->logic_name; }
 sub _das_type  { return 'simple'; }
+
+sub feature_label { my ($self, $f) = @_; return $f->id; }
+sub render_normal {$_[0]->SUPER::render_normal(1);}
+sub render_labels {$_[0]->SUPER::render_normal();}
 
 sub title {
   my ($self, $f)    = @_;

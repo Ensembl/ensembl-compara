@@ -18,6 +18,8 @@ limitations under the License.
 
 package EnsEMBL::Draw::GlyphSet::P_variation_legend;
 
+### Legend for P_variation.pm
+
 use strict;
 
 use Bio::EnsEMBL::Variation::Utils::Constants;

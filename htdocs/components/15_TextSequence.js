@@ -65,6 +65,7 @@ Ensembl.Panel.TextSequence = Ensembl.Panel.Content.extend({
   },
   
   sequenceKey: function () {
+    $('.adornment',this.el).adorn();
     if (!$('.sequence_key', this.el).length) {
       var key = Ensembl.EventManager.trigger('getSequenceKey');
       

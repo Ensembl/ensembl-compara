@@ -745,7 +745,13 @@ sub build_sequence {
   my $single_line    = scalar @{$sequence->[0]||[]} <= $config->{'display_width'}; # Only one line of sequence to display
   my $s              = 0;
   my ($html, @output);
-  
+ 
+  my $adid = 0;
+  my $adoff = 0;
+  my %addata;
+  my %adlookup;
+  my %adlookid;
+
   foreach my $lines (@$sequence) {
     my %current  = ( tag => 'span', class => '', title => '', href => '' );
     my %previous = ( tag => 'span', class => '', title => '', href => '' );
@@ -755,10 +761,11 @@ sub build_sequence {
     foreach my $seq (@$lines) {
       my $style;
       
+      my $adorn = (($addata{$adid}||=[])->[$adoff] = {});
       $previous{$_}     = $current{$_} for keys %current;
       $current{'title'} = $seq->{'title'}  ? qq(title="$seq->{'title'}") : '';
-      $current{'href'}  = $seq->{'href'}   ? qq(href="$seq->{'href'}")   : '';
-      $current{'tag'}   = $current{'href'} ? 'a class="seq_info _seq"'   : 'span class="_seq"';
+      $current{'href'}  = $seq->{'href'}   ? qq(href="$seq->{'href'}")   : '';;
+      $current{'tag'}   = $current{'href'} ? 'a class="sequence_info"'   : 'span';
       
       if ($seq->{'class'}) {
         $current{'class'} = $seq->{'class'};
@@ -767,6 +774,8 @@ sub build_sequence {
         if ($config->{'maintain_colour'} && $previous{'class'} =~ /\b(e\w)\b/ && $current{'class'} !~ /\b(e\w)\b/) {
           $current{'class'} .= " $1";
         }
+      } elsif($seq->{'tag'}) {
+        $current{'class'} = $seq->{'class'};
       } elsif ($config->{'maintain_colour'} && $previous{'class'} =~ /\b(e\w)\b/) {
         $current{'class'} = $1;
       } else {
@@ -785,30 +794,33 @@ sub build_sequence {
         
         $style = sprintf 'style="%s"', join ';', map "$_:$style_hash{$_}", keys %style_hash;
       }
-      
-      if ($i == 0) {
-        $row .= "<$current{'tag'} $style $current{'title'} $current{'href'}>";
-      } elsif ($current{'href'}) {
-        $row .= "</$previous{'tag'}><$current{'tag'} $style $current{'title'} $current{'href'}>" if $current{'href'} ne $previous{'href'};
-      } elsif ($current{'class'} ne $previous{'class'} || $current{'title'} ne $previous{'title'}) {
-        $row .= "</$previous{'tag'}><$current{'tag'} $style $current{'title'}>";
+    
+      foreach my $k (qw(style title href tag)) {
+        my $v = $current{$k};
+        $v = $style if $k eq 'style';
+        $v = $seq->{'tag'} if $k eq 'tag';
+        next unless $v;
+        $adlookup{$k} ||= {};
+        $adlookid{$k} ||= 1;
+        my $id = $adlookup{$k}{$v};
+        unless(defined $id) {
+          $id = $adlookid{$k}++;
+          $adlookup{$k}{$v} = $id;
+        }
+        $adorn->{$k} = $id;
       }
-      
+ 
       $row .= $seq->{'letter'};
+      $adoff++;
       
       $count++;
       $i++;
       
-      (my $close_tag = $current{'tag'}) =~ s/(\w+).*/$1/;
-      
       if ($count == $config->{'display_width'} || $i == scalar @$lines) {
         if ($i == $config->{'display_width'} || $single_line) {
-          $row = "$row</$close_tag>";
         } else {
-          my $new_line_style;
           
           if ($new_line{'class'} eq $current{'class'}) {
-            $new_line_style = $style;
           } elsif ($new_line{'class'}) {
             my %style_hash;
             
@@ -817,10 +829,7 @@ sub build_sequence {
               map $style_hash{$_} = $st->{$_}, keys %$st;
             }
             
-            $new_line_style = sprintf 'style="%s"', join ';', map "$_:$style_hash{$_}", keys %style_hash;
           }
-          
-          $row = "<$new_line{'tag'} $new_line_style $new_line{'title'} $new_line{'href'}>$row</$close_tag>";
         }
         
         if ($config->{'comparison'}) {
@@ -833,11 +842,13 @@ sub build_sequence {
           $pre .= '  ';
         }
         
-        push @{$output[$s]}, { line => $row, length => $count, pre => $pre, post => $post };
+        push @{$output[$s]}, { line => $row, length => $count, pre => $pre, post => $post, adid => $adid };
+        $adid++;
         
         $new_line{$_} = $current{$_} for keys %current;
         $count        = 0;
         $row          = '';
+        $adoff        = 0;
         $pre          = '';
         $post         = '';
       }
@@ -846,6 +857,34 @@ sub build_sequence {
     $s++;
   }
 
+  my %adref;
+  foreach my $k (keys %adlookup) {
+    $adref{$k} = [""];
+    $adref{$k}->[$adlookup{$k}->{$_}] = $_ for keys $adlookup{$k};
+  }
+
+  my %adseq;
+  foreach my $ad (keys %addata) {
+    $adseq{$ad} = {};
+    foreach my $k (keys %adref) {
+      $adseq{$ad}->{$k} = [];
+      foreach (0..@{$addata{$ad}}-1) {
+        $adseq{$ad}->{$k}[$_] = $addata{$ad}->[$_]{$k}//undef;
+      }
+    }
+  }
+
+  # We can fix this above and remove this hack when we've got the
+  # adorn system finished
+  foreach my $k (keys %adref) {
+    $adref{$k} = [ map { s/^\w+="(.*)"$/$1/s; $_; } @{$adref{$k}} ];
+  }
+
+  my $adornment = $self->jsonify({
+    seq => \%adseq,
+    ref => \%adref,
+  });
+
   my $length = $output[0] ? scalar @{$output[0]} - 1 : 0;
   
   for my $x (0..$length) {
@@ -853,6 +892,10 @@ sub build_sequence {
     
     foreach (@output) {
       my $line = $_->[$x]{'line'};
+      my $adid = $_->[$x]{'adid'};
+      $line =~ s/".*?"//sg;
+      $line =~ s/<.*?>//sg;
+      $line = qq(<span class="adorn adorn-$adid">$line</span>);
       my $num  = shift @{$line_numbers->{$y}};
       
       if ($config->{'number'}) {
@@ -895,7 +938,16 @@ sub build_sequence {
     
     $config->{'html_template'} .= sprintf '<div class="sequence_key_json hidden">%s</div>', $self->jsonify($partial_key) if $partial_key;
   }
-  
+
+  $config->{'html_template'} = qq(
+    <div class="adornment">
+      <span class="adornment-data" style="display:none;">
+        $adornment
+      </span>
+      $config->{'html_template'}
+    </div>
+  );
+ 
   return $config->{'html_template'} . sprintf '<input type="hidden" class="panel_type" value="TextSequence" name="panel_type_%s" />', $self->id;
 }
 

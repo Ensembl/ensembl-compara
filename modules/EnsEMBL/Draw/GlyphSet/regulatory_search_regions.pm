@@ -18,6 +18,8 @@ limitations under the License.
 
 package EnsEMBL::Draw::GlyphSet::regulatory_search_regions;
 
+### GlyphSet specifically for the cisRED search regions track
+
 use strict;
 
 use base qw(EnsEMBL::Draw::GlyphSet_simple);

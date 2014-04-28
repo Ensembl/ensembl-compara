@@ -18,6 +18,8 @@ limitations under the License.
 
 package EnsEMBL::Draw::GlyphSet::structural_variation_legend;
 
+### Draws legend for structural_variation.pm
+
 use strict;
 
 use Bio::EnsEMBL::Variation::Utils::Constants;

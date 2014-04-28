@@ -18,6 +18,9 @@ limitations under the License.
 
 package EnsEMBL::Draw::GlyphSet::P_variation;
 
+### Draws sequence variants on Transcript/ProteinSummary
+### as coloured squares
+
 use strict;
 
 use base qw(EnsEMBL::Draw::GlyphSet);

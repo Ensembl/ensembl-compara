@@ -85,10 +85,12 @@ sub new {
     _databases     => EnsEMBL::Web::DBSQL::DBConnection->new($species, $species_defs),
     _cookies       => $cookies,
     _ext_indexers  => {},
-    _core_objects  => {},
+    _builder       => undef,
+    _core_params   => {},
     _core_params   => {},
     _species_info  => {},
     _components    => [],
+    _req_cache     => {},
   };
 
   bless $self, $class;
@@ -220,13 +222,22 @@ sub get_db {
   return $db eq 'est' ? 'otherfeatures' : $db;
 }
 
-sub core_objects {
+sub set_builder {
+  my ($self,$builder) = @_;
+
+  $self->{'_builder'} = $builder;
+  $self->{'_core_params'} = $self->core_params;
+  $self->{'_core_params'}{'db'} ||= 'core';
+}
+
+sub core_object {
   my $self = shift;
-  my $core_objects = shift;
-  $self->{'_core_objects'}->{lc $_}        = $core_objects->{$_} for keys %{$core_objects || {}};
-  $self->{'_core_objects'}->{'parameters'} = $self->core_params if $core_objects;
-  $self->{'_core_objects'}->{'parameters'}->{'db'} ||= 'core';
-  return $self->{'_core_objects'};
+  my $name = shift;
+
+  if($name eq 'parameters') {
+    return $self->{'_core_params'};
+  }  
+  return $self->{'_builder'}->object(ucfirst $name);
 }
 
 sub core_param { 
@@ -764,6 +775,24 @@ sub get_favourite_species {
   my @favourites   = @{$species_defs->DEFAULT_FAVOURITES || []};
      @favourites   = ($species_defs->ENSEMBL_PRIMARY_SPECIES, $species_defs->ENSEMBL_SECONDARY_SPECIES) unless scalar @favourites;
   return \@favourites;
+}
+
+# The request cache explicitly and deliberately has the lifetime of a
+# request. You can therefore use keys which are only guraranteed unique
+# for a request. This cache is designed for communicating data which we
+# are pretty sure will be useful later but which is at a very different
+# part of the call tree. For example, features on stranded pairs of tracks.
+
+sub req_cache_set {
+  my ($self,$key,$value) = @_;
+
+  $self->{'_req_cache'}{$key} = $value;
+}
+
+sub req_cache_get {
+  my ($self,$key) = @_;
+
+  return $self->{'_req_cache'}{$key};
 }
 
 1;

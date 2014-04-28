@@ -18,6 +18,9 @@ limitations under the License.
 
 package EnsEMBL::Draw::GlyphSet::restrict;
 
+### Draws restriction enzymes
+### STATUS : Unknown - doesn't seem to be in use
+
 use strict;
 
 use base qw(EnsEMBL::Draw::GlyphSet);

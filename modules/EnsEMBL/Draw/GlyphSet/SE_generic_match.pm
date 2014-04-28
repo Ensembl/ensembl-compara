@@ -18,6 +18,8 @@ limitations under the License.
 
 package EnsEMBL::Draw::GlyphSet::SE_generic_match;
 
+### Draws exon supporting evidence tracks on Transcript/SupportingEvidence
+
 use strict;
 
 use base qw(EnsEMBL::Draw::GlyphSet::TSE_generic_match);

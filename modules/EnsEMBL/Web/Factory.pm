@@ -51,47 +51,57 @@ sub param {
   return wantarray ? @params : $params[0];
 }
 
+# When we expect params etc to be correct, eg in component calls, we need
+# not spend the considerable time spent in factories to extract params
+# and add missing ones. In this case we can call createObjectsInternal
+# rather than createObjects. For factories without a different
+# implementation, they fallback to createObjects.
+sub canLazy { return 0; }
+
 sub generate_object {
   ### Used to create an object of a different type to the current factory
   ### For example, a Gene object will generate a Location object when the top tabs are created
   
   my $self = shift;
   my $type = shift;
-  
-  return 0 if $self->DataObjectTypes->{$type};
+ 
+  return 0 if @{$self->__data->{'_dataObjects'}{$type}||[]};
   
   my $new_factory = $self->new_factory($type, $self->__data);
   $new_factory->createObjects(@_);
-  $self->DataObjects(@{$new_factory->DataObjects});
-  
+  foreach my $type (keys %{$new_factory->DataObjects}) {
+    push @{$self->__data->{'_dataObjects'}{$type}||=[]},@{$new_factory->DataObjects->{$type}};
+  }
   return 1;
+}
+
+
+sub SetTypedDataObject {
+  my ($self,$type,$obj) = @_;
+
+  push @{$self->__data->{'_dataObjects'}{$type}||=[]},$obj;
 }
 
 sub DataObjects {
   my $self = shift;
   
   if (@_) {
-    push @{$self->__data->{'_dataObjects'}}, @_;
-    $self->DataObjectTypes(@_);
+    foreach (@_) {
+      push @{$self->__data->{'_dataObjects'}{$_->__objecttype}||=[]},$_;
+    }
+    $self->__data->{'_dataObjectFirst'} ||= $_[0];
   }
-  
   return $self->__data->{'_dataObjects'};
-}
-
-sub DataObjectTypes {
-  my $self = shift;
-  map $self->__data->{'_dataObjectTypes'}{$_->__objecttype} = 1, @_ if @_;
-  return $self->__data->{'_dataObjectTypes'} || {};
 }
 
 sub object {
   my $self = shift;
-  return $self->__data->{'_dataObjects'} ? $self->__data->{'_dataObjects'}[0] : undef;
+  return $self->__data->{'_dataObjectFirst'};
 }
 
 sub clearDataObjects {
   my $self = shift;
-  $self->__data->{'_dataObjects'} = [];
+  $self->__data->{'_dataObjects'} = {};
 }
 
 sub featureIds {

@@ -58,7 +58,8 @@ sub content {
   #target_species and target_slice_name_range may not be defined so split separately
   #target_species but not target_slice_name_range is defined for pairwise compact alignments. 
   my ($align, $target_species, $target_slice_name_range) = split '--', $align_param;
-  my ($target_slice_name, $target_slice_start, $target_slice_end) = $target_slice_name_range =~ /(\w+):(\d+)-(\d+)/;
+  my ($target_slice_name, $target_slice_start, $target_slice_end) = $target_slice_name_range ?
+    $target_slice_name_range =~ /(\w+):(\d+)-(\d+)/ : (undef, undef, undef);
 
   #Define target_slice
   my $target_slice;
@@ -133,8 +134,8 @@ sub content {
   
   #When we can directly show the text ie do not need a table of results
   unless ($need_target_slice_table) {
-      # Get all slices for the gene
-      ($slices, $slice_length) = $self->object->get_slices({
+    # Get all slices for the gene
+    ($slices, $slice_length) = $self->object->get_slices({
           'slice'   => $slice, 
           'align'   => $align_param, 
           'species' => $species, 
@@ -143,54 +144,61 @@ sub content {
           'db'      => $cdb, 
           'target'  => $target_slice,
           'image'   => $self->has_image
-      });
+    });
       
-      if (scalar @$slices == 1) {
-          $warnings = $self->_info(
-                                   'No alignment in this region',
-                                   'There is no alignment between the selected species in this region'
-                                  ) . $warnings;
-      }
-      $num_slices = @$slices;
+    if (scalar @$slices == 1) {
+      unshift @$warnings = {'title' => 'No alignment in this region',
+                            'message' => 'There is no alignment between the selected species in this region'}
+    }
+    $num_slices = @$slices;
   }
 
   #If the slice_length is long, split the sequence into chunks to speed up the process
-  #Note that slice_length is not set if need to display a target_slice_table
-  if ($align && $slice_length >= $self->{'subslice_length'}) {
+  #Note that slice_length is not set if need to display a target_slice_eable
+  if ($align && $slice_length && $slice_length >= $self->{'subslice_length'}) {
 
     my ($table, $padding) = $self->get_slice_table($slices, 1);
 
     #Check for missing species
-    $warnings .= $self->check_for_missing_species({
-                                'align'   => $align, 
-                                'species' => $species, 
-                                'cdb'     => $cdb, 
-                                'image'   => $self->has_image
-                  });
-    $html .= '<div class="sequence_key"></div>' . $table . $self->chunked_content($slice_length, $self->{'subslice_length'}, { padding => $padding, length => $slice_length }) . $warnings;
+    ($warnings) .= $self->check_for_missing_species({
+                                                    'align'   => $align, 
+                                                    'species' => $species, 
+                                                    'cdb'     => $cdb, 
+                                                    'image'   => $self->has_image
+                                                  });
+    $html .= '<div class="sequence_key"></div>' . $table . $self->chunked_content($slice_length, $self->{'subslice_length'}, { padding => $padding, length => $slice_length }) . $self->show_warnings($warnings);
 
   } else {
-      my ($table, $padding);
+    my ($table, $padding);
 
-      #Draw target_slice_table for overlapping alignments
-      if ($need_target_slice_table) {
-
-          $table = $self->_get_target_slice_table($slice, $align, $align_blocks, $groups, $method_class, $method_type, $is_low_coverage_species, $cdb);
-          $html .= '<div class="sequence_key"></div>' . $table . $warnings;
-      } else {
-          #Write out sequence if length is short enough
-          #Check for missing species 
-          ($warnings) .= $self->check_for_missing_species({
-                                'align'   => $align, 
-                                'species' => $species, 
-                                'cdb'     => $cdb, 
-                                'image'   => $self->has_image
-                         }); 
-          $html .= $self->content_sub_slice($slice, $slices, $warnings, undef, $cdb); # Direct call if the sequence length is short enough
-      }
+    #Draw target_slice_table for overlapping alignments
+    if ($need_target_slice_table) {
+      $table = $self->_get_target_slice_table($slice, $align, $align_blocks, $groups, $method_class, $method_type, $is_low_coverage_species, $cdb);
+      $html .= '<div class="sequence_key"></div>' . $table . $self->show_warnings($warnings);
+    } else {
+      #Write out sequence if length is short enough
+      #Check for missing species 
+      ($warnings) .= $self->check_for_missing_species({
+                                                      'align'   => $align, 
+                                                      'species' => $species, 
+                                                      'cdb'     => $cdb, 
+                                                      'image'   => $self->has_image
+                                                      }); 
+      $html .= $self->content_sub_slice($slice, $slices, $warnings, undef, $cdb); # Direct call if the sequence length is short enough
+    }
   }
  
   return $html;
+
+}
+
+sub show_warnings {
+  my ($self, $warnings) = @_;
+  my $alert;
+  foreach (@$warnings) {
+    $alert .= $self->warning_panel(%$_);
+  }
+  return $alert;
 }
 
 sub check_for_missing_species {
@@ -360,18 +368,18 @@ sub _get_target_slice_table {
   #Find the mapping reference species for EPO_LOW_COVERAGE alignments to distinguish the overlapping blocks
   if ($type =~ /EPO_LOW_COVERAGE/ && $is_low_coverage_species) {
       #HACK - have a guess based on the mlss name. Better to have this in the mlss_tag table in the database
-      if ($method_link_species_set->name =~ /mammals/) {
-          $other_species = "homo_sapiens";
-      } elsif ($method_link_species_set->name =~ /fish/) {
-          $other_species = "oryzias_latipes";
-      } else {
-          #sauropsids
-          $other_species = "gallus_gallus";
-      }
+    if ($method_link_species_set->name =~ /mammals/) {
+      $other_species = "homo_sapiens";
+    } elsif ($method_link_species_set->name =~ /fish/) {
+      $other_species = "oryzias_latipes";
+    } else {
+      #sauropsids
+      $other_species = "gallus_gallus";
+    }
   } elsif ($class =~ /pairwise/) {
-      #Find the non-reference species for pairwise alignments
-      #get the non_ref name from the first block
-      $other_species = $gabs->[0]->get_all_non_reference_genomic_aligns->[0]->genome_db->name;
+    #Find the non-reference species for pairwise alignments
+    #get the non_ref name from the first block
+    $other_species = $gabs->[0]->get_all_non_reference_genomic_aligns->[0]->genome_db->name;
   }
 
   my $merged_blocks = $self->object->build_features_into_sorted_groups($groups);
@@ -391,76 +399,77 @@ sub _get_target_slice_table {
 
   #Add blocks to the table
   foreach my $gab_group (@$merged_blocks) {
-      my $min_start;
-      my $max_end;
-      my ($min_gab, $max_gab);
-      my $gab_length;
-      my $non_ref_species;
-      my $non_ref_region;
-      my $non_ref_ga;
-      my $num_species = 0;
+    next unless $gab_group; 
+    my $min_start;
+    my $max_end;
+    my ($min_gab, $max_gab);
+    my $gab_length;
+    my $non_ref_species;
+    my $non_ref_region;
+    my $non_ref_ga;
+    my $num_species = 0;
 
-      #Find min and max start and end for ref and non-ref
-      #Will not have $non_ref_ga for multiple alignments which are not low coverage
-      my ($ref_start, $ref_end, $non_ref_start, $non_ref_end);
-      if ($class =~ /pairwise/) { 
-          ($ref_start, $ref_end, $non_ref_start, $non_ref_end, $non_ref_ga) = $self->object->get_start_end_of_slice($gab_group);
-      } elsif ($type =~ /EPO_LOW_COVERAGE/ && $is_low_coverage_species) {
-          ($ref_start, $ref_end, $non_ref_start, $non_ref_end, $non_ref_ga, $num_species) = $self->object->get_start_end_of_slice($gab_group, $other_species);
-      } else {
-          #want num_species but not non_ref details
-          ($ref_start, $ref_end, $non_ref_start, $non_ref_end, undef, $num_species) = $self->object->get_start_end_of_slice($gab_group, $ref_species);
-      }
+    #Find min and max start and end for ref and non-ref
+    #Will not have $non_ref_ga for multiple alignments which are not low coverage
+    my ($ref_start, $ref_end, $non_ref_start, $non_ref_end);
+    if ($class =~ /pairwise/) { 
+      ($ref_start, $ref_end, $non_ref_start, $non_ref_end, $non_ref_ga) = $self->object->get_start_end_of_slice($gab_group);
+    } elsif ($type =~ /EPO_LOW_COVERAGE/ && $is_low_coverage_species) {
+      ($ref_start, $ref_end, $non_ref_start, $non_ref_end, $non_ref_ga, $num_species) = $self->object->get_start_end_of_slice($gab_group, $other_species);
+    } else {
+      #want num_species but not non_ref details
+      ($ref_start, $ref_end, $non_ref_start, $non_ref_end, undef, $num_species) = $self->object->get_start_end_of_slice($gab_group, $ref_species);
+    }
 
-      $gab_num++;
+    $gab_num++;
 
-      my $slice_length = ($ref_end-$ref_start+1);
+    my $slice_length = ($ref_end-$ref_start+1);
 
-      my $align_params = "$align";
-      $align_params .= "--" . $non_ref_ga->genome_db->name . "--" . $non_ref_ga->dnafrag->name . ":$non_ref_start-$non_ref_end" if ($non_ref_ga);
+    my $align_params = "$align";
+    $align_params .= "--" . $non_ref_ga->genome_db->name . "--" . $non_ref_ga->dnafrag->name . ":$non_ref_start-$non_ref_end" if ($non_ref_ga);
 
-     my %url_params = (
-                       species => $ref_species,
-                       type    => 'Location',
-                       action  => 'Compara_Alignments'
-                      );
+    my %url_params = (
+                     species => $ref_species,
+                     type    => 'Location',
+                     action  => 'Compara_Alignments'
+                    );
 
-      my $block_link = $hub->url({
-                                  species => $ref_species,
-                                  type    => 'Location',
-                                  action  => 'Compara_Alignments',
-                                  align   => $align_params,
-                                  r       => "$ref_region:$ref_start-$ref_end"
-                                 });
-
-      my $ref_string = "$ref_region:$ref_start-$ref_end";
-      my $ref_link = $hub->url({
-                                species => $ref_species,
-                                type   => 'Location',
-                                action => 'View',
-                                r      => $ref_string,
+    my $block_link = $hub->url({
+                               species => $ref_species,
+                               type    => 'Location',
+                               action  => 'Compara_Alignments',
+                               align   => $align_params,
+                               r       => "$ref_region:$ref_start-$ref_end"
                                });
 
-      #Other species - ref species used for mapping (EPO_LOW_COVERAGE) or non_ref species (pairwise)
-      my ($other_string, $other_link);
-      if ($other_species) {
-          $other_string = $non_ref_ga->dnafrag->name.":".$non_ref_start."-".$non_ref_end;
-          $other_link = $hub->url({
+    my $ref_string = "$ref_region:$ref_start-$ref_end";
+    my $ref_link = $hub->url({
+                             species => $ref_species,
+                             type   => 'Location',
+                             action => 'View',
+                             r      => $ref_string,
+                            });
+
+    #Other species - ref species used for mapping (EPO_LOW_COVERAGE) or non_ref species (pairwise)
+    my ($other_string, $other_link);
+    if ($other_species) {
+      $other_string = $non_ref_ga->dnafrag->name.":".$non_ref_start."-".$non_ref_end;
+      $other_link = $hub->url({
                                    species => $non_ref_ga->genome_db->name,
                                    type   => 'Location',
                                    action => 'View',
                                    r      => $other_string,
                                   });
-      }
+    }
 
-      my $this_row = {
+    my $this_row = {
                       block => { value => qq{<a href="$block_link">Block $gab_num</a>}, class => 'bold' },
                       length => $slice_length,
                       ref_species => qq{<a href="$ref_link">$ref_string</a>},
                       additional_species => $num_species
                      };
-      $this_row->{'other_species'} = qq{<a href="$other_link">$other_string</a>} if ($other_species);
-      push @rows, $this_row;
+    $this_row->{'other_species'} = qq{<a href="$other_link">$other_string</a>} if ($other_species);
+    push @rows, $this_row;
   }
 
   my $table = $self->new_table(\@columns, \@rows, {

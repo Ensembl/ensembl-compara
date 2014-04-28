@@ -46,7 +46,7 @@ sub content {
     $config_type = 'gene_variation';
   } else {
     $transcript_object = $object;
-    $gene_object = $self->hub->core_objects->{'gene'};
+    $gene_object = $self->hub->core_object('gene');
     $config_type = $ic_type;
   }
  

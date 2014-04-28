@@ -18,6 +18,8 @@ limitations under the License.
 
 package EnsEMBL::Draw::GlyphSet::_repeat;
 
+### Draws repeat feature tracks as simple (grey) blocks
+
 use strict;
 
 use base qw(EnsEMBL::Draw::GlyphSet_simple);

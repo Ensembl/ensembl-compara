@@ -28,7 +28,6 @@ sub content {
   my $self    = shift;
   my $hub     = $self->hub;
   my $object  = $self->object;
-  my @v       = $hub->param('v');
   my @vf      = $hub->param('vf');
   my $lrg     = $hub->param('lrg');
   my $adaptor = $hub->get_adaptor('get_VariationAdaptor', 'variation');
@@ -38,19 +37,21 @@ sub content {
   } elsif ($hub->referer->{'ENSEMBL_TYPE'} eq 'Transcript' || $hub->param('_transcript')) {
     $self->{'transcript'} = $hub->get_adaptor('get_TranscriptAdaptor')->fetch_by_stable_id($hub->param('_transcript') || $hub->param('t'));
   }
-  
-  for (0..$#v) {
-    my $variation_object = $self->new_object('Variation', $adaptor->fetch_by_name($v[$_]), $object->__data);
-    $self->variation_content($variation_object, $v[$_], $vf[$_]);
+ 
+  my $vfa = $hub->get_adaptor('get_VariationFeatureAdaptor','variation'); 
+  foreach (@vf) {
+    my $feature = $vfa->fetch_by_dbID($_);
+    my $variation = $feature->variation();
+    my $variation_object = $self->new_object('Variation', $variation, $object->__data);
+    $self->variation_content($variation_object, $feature);
     $self->new_feature;
   }
 }
 
 sub variation_content {
-  my ($self, $object, $v, $vf) = @_;
+  my ($self, $object, $feature) = @_;
   my $hub        = $self->hub;
   my $variation  = $object->Obj;  
-  my $feature    = $variation->get_VariationFeature_by_dbID($vf);
   my $seq_region = $feature->seq_region_name . ':';  
   my $chr_start  = $feature->start;
   my $chr_end    = $feature->end;
@@ -58,11 +59,12 @@ sub variation_content {
   my @failed     = @{$feature->variation->get_all_failed_descriptions};
   my $position   = "$seq_region$chr_start";
   my ($lrg_position, %population_data, %population_allele);
-  
+ 
+  my $v = $feature->variation()->name(); 
   my %url_params = (
     type   => 'Variation',
     v      => $v,
-    vf     => $vf,
+    vf     => $feature->dbID(),
     source => $feature->source
   );
   

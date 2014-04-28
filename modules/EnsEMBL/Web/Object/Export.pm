@@ -44,8 +44,8 @@ use Bio::EnsEMBL::Compara::Graph::OrthoXMLWriter;
 use base qw(EnsEMBL::Web::Object);
 
 sub caption                { return 'Export Data';                                                      }
-sub get_location_object    { return $_[0]->{'_location'} ||= $_[0]->hub->core_objects->{'location'};    }
-sub get_all_transcripts    { return $_[0]->hub->core_objects->{'gene'}->Obj->get_all_Transcripts || []; }
+sub get_location_object    { return $_[0]->{'_location'} ||= $_[0]->hub->core_object('location');       }
+sub get_all_transcripts    { return $_[0]->hub->core_object('gene')->Obj->get_all_Transcripts || []; }
 sub check_slice            { return shift->get_location_object->check_slice(@_);                        }
 sub get_ld_values          { return shift->get_location_object->get_ld_values(@_);                      }
 sub get_pop_name           { return shift->get_location_object->pop_name_from_id(@_);                   }
@@ -291,15 +291,15 @@ sub get_object {
   my $hub   = $self->hub;
   
   if($hub->function eq 'Transcript') {
-    return $self->hub->core_objects->{'transcript'} ;
+    return $self->hub->core_object('transcript');
   }elsif ($hub->function eq 'Gene') {
-    return $self->hub->core_objects->{'gene'};
+    return $self->hub->core_object('gene');
   }elsif ($hub->function eq 'LRG') {
-    return $self->hub->core_objects->{'lrg'};
+    return $self->hub->core_object('lrg');
   }elsif ($hub->function eq 'Variation') {
-    return $self->hub->core_objects->{'variation'};
+    return $self->hub->core_object('variation');
   }else {
-    return $self->hub->core_objects->{'location'};
+    return $self->hub->core_object('location');
   }
 }
 

@@ -508,8 +508,9 @@ sub get_all_associated_archived { return $_[0]->Obj->get_all_associated_archived
 
 sub get_database_matches {
   my $self = shift;
+  my $dbpat = shift;
   my @DBLINKS;
-  eval { @DBLINKS = @{$self->Obj->get_all_DBLinks};};
+  eval { @DBLINKS = @{$self->Obj->get_all_DBLinks($dbpat)};};
   return \@DBLINKS  || [];
 }
 
@@ -1010,7 +1011,7 @@ sub store_TransformedSNPS {
   
   my @transcripts = @{$self->get_all_transcripts};
   if ($self->hub->type eq 'Transcript'){
-    @transcripts = ($self->hub->core_objects->{'transcript'});
+    @transcripts = ($self->hub->core_object('transcript'));
   }
 
   my $included_so;
@@ -1082,7 +1083,7 @@ sub store_ConsequenceCounts {
   
   my @transcripts = @{$self->get_all_transcripts};
   if ($self->hub->type eq 'Transcript'){
-    @transcripts = ($self->hub->core_objects->{'transcript'});
+    @transcripts = ($self->hub->core_object('transcript'));
   }
 
   my $included_so;

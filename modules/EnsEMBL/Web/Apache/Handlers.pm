@@ -65,11 +65,15 @@ BEGIN {
 # Perl apache handlers in order they get executed                      #
 #======================================================================#
 
+sub child_init_hook {}
+
 sub childInitHandler {
 ## Initiates an Apache child process, sets up the web registry object,
 ## and initializes the timer
   my $r = shift;
-  
+ 
+  child_init_hook($r);
+ 
   my @X             = localtime;
   my $temp_hostname = hostname;
   my $temp_proc_id  = '' . reverse $$;
@@ -186,13 +190,11 @@ sub redirect_to_nearest_mirror {
   return DECLINED;
 }
 
+sub request_start_hook {}
 sub postReadRequestHandler {
   my $r = shift; # Get the connection handler
 
-  foreach my $h (@SiteDefs::REQUEST_START_HOOK) {
-    no strict;
-    $h->($r);
-  }
+  request_start_hook($r);
 
   # Nullify tags
   $ENV{'CACHE_TAGS'} = {};
@@ -560,13 +562,11 @@ sub logHandler {
   return DECLINED;
 }
 
+sub request_end_hook {}
 sub cleanupHandler {
   my $r = shift;  # Get the connection handler
   
-  foreach my $h (@SiteDefs::REQUEST_END_HOOK) {
-    no strict;
-    $h->($r);
-  }
+  request_end_hook($r);
   return if $r->subprocess_env->{'ENSEMBL_ENDTIME'};
   
   my $end_time   = time;

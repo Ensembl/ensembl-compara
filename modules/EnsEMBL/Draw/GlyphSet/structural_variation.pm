@@ -18,6 +18,8 @@ limitations under the License.
 
 package EnsEMBL::Draw::GlyphSet::structural_variation;
 
+### Draws structural variation tracks on e.g. Region in Detail
+
 use strict;
 
 use List::Util qw(min max);

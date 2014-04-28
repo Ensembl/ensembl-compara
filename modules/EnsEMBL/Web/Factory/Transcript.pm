@@ -28,6 +28,19 @@ use EnsEMBL::Web::Fake;
 
 use base qw(EnsEMBL::Web::Factory);
 
+sub canLazy { return 1; }
+sub createObjectsInternal {
+  my $self = shift;
+  my $db = $self->param('db') || 'core';
+  $db = 'otherfeatures' if $db eq 'est';
+  my $db_adaptor = $self->database($db);
+  return undef unless $db_adaptor;
+  my $adaptor = $db_adaptor->get_TranscriptAdaptor;
+  return undef unless $adaptor;
+  my $transcript = $adaptor->fetch_by_stable_id($self->param('t'));
+  return $self->new_object('Transcript', $transcript, $self->__data);
+}
+
 sub createObjects {   
   my $self       = shift;
   my $transcript = shift;
@@ -106,9 +119,11 @@ sub createObjects {
     
     $transcript ||= $self->_known_feature('Transcript', $param, 't'); # Last check to see if a feature can be found for the parameters supplied
   }
-  
+
+  my $out;  
   if ($transcript) {
-    $self->DataObjects($self->new_object('Transcript', $transcript, $self->__data));
+    $out = $self->new_object('Transcript', $transcript, $self->__data);
+    $self->DataObjects($out);
     
     if ($new_factory_type) {
       $self->generate_object('Location', $transcript->feature_Slice); # Generate a location from the transcript
@@ -123,6 +138,7 @@ sub createObjects {
     $self->param('t', $transcript->stable_id) unless $transcript->isa('Bio::EnsEMBL::PredictionTranscript');
     $self->delete_param($_) for qw(transcript peptide protein);
   }
+  return $out;
 }
 
 sub _help {

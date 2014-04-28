@@ -26,6 +26,21 @@ use HTML::Entities qw(encode_entities);
 
 use base qw(EnsEMBL::Web::Factory);
 
+sub canLazy { return 1; }
+sub createObjectsInternal {
+  my $self = shift;
+
+  return undef if $self->param('family');
+  my $db = $self->param('db') || 'core';
+     $db = 'otherfeatures' if $db eq 'est';
+  my $db_adaptor = $self->database($db);
+  return undef unless $db_adaptor;
+  my $adaptor = $db_adaptor->get_GeneAdaptor;
+  my $gene = $adaptor->fetch_by_stable_id($self->param('g'));
+  return undef unless $gene;
+  return $self->new_object('Gene', $gene, $self->__data);
+}
+
 sub createObjects { 
   my $self = shift;
   my $gene = shift;
@@ -95,9 +110,11 @@ sub createObjects {
     $gene ||= $self->_archive($param);                    # Check if this is an ArchiveStableId
     $gene ||= $self->_known_feature('Gene', $param, 'g'); # Last check to see if a feature can be found for the parameters supplied
   }
-  
+ 
+  my $out; 
   if ($gene) {
-    $self->DataObjects($self->new_object('Gene', $gene, $self->__data));
+    $out = $self->new_object('Gene', $gene, $self->__data);
+    $self->DataObjects($out);
     $self->generate_object('Location', $gene->feature_Slice) if $gene->can('feature_Slice'); # Generate a location from the gene. Won't be called if $gene is an ArchiveStableId object
     
     my $transcript;
@@ -152,6 +169,7 @@ sub createObjects {
     $self->param('g', $gene->stable_id) unless $param eq 'family';
     $self->delete_param('gene');
   }
+  return $out;
 }
 
 sub _help {

@@ -161,7 +161,7 @@ sub get_sequence_data {
       
       foreach ($start..$end) {
         $mk->{'variations'}{$_}{'alleles'}   .= ($mk->{'variations'}{$_}{'alleles'} ? ', ' : '') . $alleles;
-        $mk->{'variations'}{$_}{'url_params'} = { v => $variation_name, vf => $dbID, vdb => 'variation' };
+        $mk->{'variations'}{$_}{'url_params'} = { vf => $dbID, vdb => 'variation' };
         $mk->{'variations'}{$_}{'transcript'} = 1;
         
         my $url = $mk->{'variations'}{$_}{'url_params'} ? $hub->url({ type => 'Variation', action => 'Explore', %{$mk->{'variations'}{$_}{'url_params'}} }) : '';
@@ -182,11 +182,13 @@ sub get_sequence_data {
           factorytype => 'Location'
         };
         
-        push @{$mk->{'variations'}{$_}{'href'}{'v'}},  $variation_name;
         push @{$mk->{'variations'}{$_}{'href'}{'vf'}}, $dbID;
         
-        $variation_seq->{'seq'}[$_]{'letter'} = $url ? qq{<a href="$url" title="$variation_name">$ambigcode</a>} : $ambigcode;
-        $variation_seq->{'seq'}[$_]{'url'}    = $url;
+        $variation_seq->{'seq'}[$_]{'letter'} = $ambigcode;
+        $variation_seq->{'seq'}[$_]{'href'} = $url;
+        $variation_seq->{'seq'}[$_]{'title'} = $variation_name;
+        $variation_seq->{'seq'}[$_]{'tag'} = 'a';
+        $variation_seq->{'seq'}[$_]{'class'} = '';
       }
     }
   }

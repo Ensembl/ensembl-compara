@@ -18,6 +18,8 @@ limitations under the License.
 
 package EnsEMBL::Draw::GlyphSet::_prediction_transcript;
 
+### Draws prediction transcripts, e.g. Genscan
+
 use strict;
 
 use Bio::EnsEMBL::Gene;
