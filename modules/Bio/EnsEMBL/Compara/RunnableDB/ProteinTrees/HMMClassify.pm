@@ -58,7 +58,7 @@ use Data::Dumper;
 use DBI;
 use Bio::EnsEMBL::Compara::MemberSet;
 
-use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
+use base ('Bio::EnsEMBL::Compara::RunnableDB::RunCommand');
 
 sub param_defaults {
     return {
@@ -147,30 +147,39 @@ sub run_HMM_search {
     my $hmmer_cutoff = $self->param('hmmer_cutoff'); ## Not used for now!!
     my $library_path = $hmmLibrary->libDir();
 
+    my $cmd = "PATH=\$PATH:$blast_bin_dir:$hmmer_path; PERL5LIB=\$PERL5LIB:$pantherScore_path/lib; $pantherScore_exe -l $library_path -i $fastafile -D I -b $blast_bin_dir -V";
+    my $cmd_out = $self->run_command($cmd);
+
+    # Detection of failures
+    if ($cmd_out->exit_code) {
+        $self->throw(sprintf("error running pantherScore [%s]: %d\n%s", $cmd_out->cmd, $cmd_out->exit_code, $cmd_out->err));
+    }
+    if ($cmd_out->err =~ /^Problem with blast on (.*)$/) {
+        $self->throw(sprintf("pantherScore detected an error with blast on the member %s. Full log is:\n%s", $1, $cmd_out->err));
+    }
+    if ($cmd_out->err =~ /^Missing sequence for (.*)$/) {
+        $self->throw(sprintf("pantherScore detected a missing sequence for the member %s. Full log is:\n%s", $1, $cmd_out->err));
+    }
+
     my $genome_db_id = $self->param('genome_db_id');
     my $cluster_dir  = $self->param('cluster_dir');
+    my $res_file = "$cluster_dir/${genome_db_id}.hmmres";
+    print STDERR "Results are going to be stored in $res_file\n" if ($self->debug());
+    open my $hmm_res, ">", $res_file or die $!;
 
-    print STDERR "Results are going to be stored in $cluster_dir/${genome_db_id}.hmmres\n" if ($self->debug());
-    open my $hmm_res, ">", "$cluster_dir/${genome_db_id}.hmmres" or die $!;
-
-
-    my $cmd = "PATH=\$PATH:$blast_bin_dir:$hmmer_path; PERL5LIB=\$PERL5LIB:$pantherScore_path/lib; $pantherScore_exe -l $library_path -i $fastafile -D I -b $blast_bin_dir 2>/dev/null";
-    print STDERR "$cmd\n" if ($self->debug());
-
-    $self->compara_dba->dbc->disconnect_when_inactive(1);
-    open my $pipe, "-|", $cmd or die $!;
-    while (<$pipe>) {
+    my $has_hits = 0;
+    for (split /^/, $cmd_out->out) {
         chomp;
         my ($seq_id, $hmm_id, $eval) = split /\s+/, $_, 4;
-        print STDERR "Writting [$seq_id, $hmm_id, $eval] to file $cluster_dir/${genome_db_id}.hmmres\n" if ($self->debug());
-        print $hmm_res join "\t", ($seq_id, $hmm_id, $eval);
-        print $hmm_res "\n";
+        print STDERR "Writting [$seq_id, $hmm_id, $eval] to file $res_file\n" if ($self->debug());
+        print $hmm_res join("\t", ($seq_id, $hmm_id, $eval)), "\n";
+        $has_hits = 1;
     }
     close($hmm_res);
-    close($pipe);
-    $self->compara_dba->dbc->disconnect_when_inactive(0);
 
-    return;
+    unless ($has_hits) {
+        $self->throw("pantherScore did not return any hits. Is it normal ?");
+    }
 }
 
 1;
