@@ -109,10 +109,12 @@ sub fetch_input {
 
     my $gene_tree_id     = $self->param_required('gene_tree_id');
     my $gene_tree        = $self->param('tree_adaptor')->fetch_by_dbID( $gene_tree_id ) or die "Could not fetch gene_tree with gene_tree_id='$gene_tree_id'";
+    $self->param('default_gene_tree', $gene_tree);
 
     die "Cannot read tags from TreeBest's output: set run_treebest_sdi or read_tags to 0" if $self->param('run_treebest_sdi') and $self->param('read_tags');
 
     if ($self->param('input_clusterset_id')) {
+        print STDERR "getting the tree '".$self->param('input_clusterset_id')."'\n";
         my $other_trees = $self->param('tree_adaptor')->fetch_all_linked_trees($gene_tree);
         my ($selected_tree) = grep {$_->clusterset_id eq $self->param('input_clusterset_id')} @$other_trees;
         die sprintf('Cannot find a "%s" tree for tree_id=%d', $self->param('input_clusterset_id'), $self->param('gene_tree_id')) unless $selected_tree;
@@ -155,6 +157,7 @@ sub write_output {
         if ($self->param('output_clusterset_id') and $self->param('output_clusterset_id') ne 'default') {
             $target_tree = $self->store_alternative_tree($cmd_output, $self->param('output_clusterset_id'), $target_tree);
         } else {
+            $target_tree = $self->param('default_gene_tree');
             $self->parse_newick_into_tree($cmd_output, $target_tree);
             $self->store_genetree($target_tree, []);
         }
@@ -230,6 +233,7 @@ sub run_generic_command {
 
     $self->param('output_file', $self->worker_temp_directory.'/'.$self->param('output_file')) if $self->param('output_file');
     my $output = $self->param('output_file') ? $self->_slurp($self->param('output_file')) : $run_cmd->out;
+    print "Re-root with sdi=".$self->param('reroot_with_sdi')."\n" if($self->debug);
     $output = $self->run_treebest_sdi($output, $self->param('reroot_with_sdi')) if $self->param('run_treebest_sdi');
     $self->param('cmd_output', $output);
 }

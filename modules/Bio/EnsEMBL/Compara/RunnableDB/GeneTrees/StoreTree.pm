@@ -60,16 +60,16 @@ sub dumpTreeMultipleAlignmentToWorkdir {
   if ($self->param('check_split_genes')) {
     my %split_genes;
     my $sth = $self->compara_dba->dbc->prepare('SELECT DISTINCT gene_split_id FROM split_genes JOIN gene_tree_node USING (seq_member_id) WHERE root_id = ?');
-    $sth->execute($self->param('gene_tree_id'));
+    $sth->execute($gene_tree->root_id());
     my $gene_splits = $sth->fetchall_arrayref();
     $sth->finish;
     $sth = $self->compara_dba->dbc->prepare('SELECT node_id FROM split_genes JOIN gene_tree_node USING (seq_member_id) WHERE root_id = ? AND gene_split_id = ? ORDER BY seq_member_id');
     foreach my $gene_split (@$gene_splits) {
-      $sth->execute($self->param('gene_tree_id'), $gene_split->[0]);
+      $sth->execute($gene_tree->root_id(), $gene_split->[0]);
       my $partial_genes = $sth->fetchall_arrayref;
       my $node1 = shift @$partial_genes;
       my $protein1 = $gene_tree->root->find_leaf_by_node_id($node1->[0]);
-      #print STDERR "node1 ", $node1, " ", $protein1, "\n";
+      #print STDERR "node1 ", $node1->[0], " ", $protein1, "\n";
       my $cdna = $protein1->alignment_string($seq_type);
       print STDERR "cnda $cdna\n" if $self->debug;
         # We start with the original cdna alignment string of the first gene, and

@@ -122,7 +122,7 @@ sub default_options {
     # mapping parameters:
         'do_stable_id_mapping'      => 1,
         'do_treefam_xref'           => 0,
-        #'tf_release'                => '9_69',     # The TreeFam release to map to
+        'tf_release'                => undef,       # The TreeFam release to map to
 
     # executable locations:
         #'hcluster_exe'              => '/software/ensembl/compara/hcluster/hcluster_sg',
@@ -1433,6 +1433,7 @@ sub pipeline_analyses {
             -parameters => {
                 #'cdna'                      => 1,
                 'raxml_exe'              => $self->o('raxml_exe'),
+                'treebest_exe'              => $self->o('treebest_exe'),
             },
             -hive_capacity        => $self->o('raxml_capacity'),
             -rc_name => '8Gb_job',

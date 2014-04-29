@@ -72,23 +72,21 @@ sub default_options {
     # parameters that are likely to change from execution to another:
         #mlss_id => 40043,
         #'do_not_reuse_list' => ['guillardia_theta'], # set this to empty or to the genome db names we should ignore
-        'release'       => 10,
-	    'prev_release'  => 75,
-        'release_suffix'=> '', # set it to '' for the actual release
+        'release'               => 10,
+        'release_suffix'        => '', # set it to '' for the actual release
         'rel_with_suffix'       => $self->o('release').$self->o('release_suffix'),
 
     # custom pipeline name, in case you don't like the default one
-        dbowner => 'treefam',       # Used to prefix the database name (in HiveGeneric_conf)
-        pipeline_name => $self->o('division').'_hom_'.$self->o('eg_release').'_'.$self->o('ensembl_release'),
+        'division'               => 'treefam',
+        'pipeline_name'          => $self->o('division').$self->o('rel_with_suffix').'_hom_eg'.$self->o('eg_release').'_e'.$self->o('ensembl_release'),
 
     # dependent parameters: updating 'work_dir' should be enough
-        'work_dir'              =>  $self->o('base_dir').'/ensembl_compara_'.$self->o('pipeline_name'),
-        'base_dir'              =>  '/nfs/nobackup2/xfam/treefam/ensembl/'.$self->o('ENV', 'USER').'/compara',
+        'work_dir'              =>  '/nfs/nobackup2/xfam/treefam/ensembl/'.$self->o('ENV', 'USER').'/compara/'.$self->o('pipeline_name'),
         'exe_dir'               =>  '/nfs/panda/ensemblgenomes/production/compara/binaries',
 
     # "Member" parameters:
         'allow_ambiguity_codes'     => 1,
-        'allow_pyrrolysine'         => $self->o('division') eq 'pan' ? 1 : 0,
+        'allow_pyrrolysine'         => 1,
 
     # blast parameters:
 
@@ -97,6 +95,9 @@ sub default_options {
 
     # tree building parameters:
         'use_raxml'                 => 1,
+        'treebreak_gene_count'      => 100000,     # affects msa_chooser
+        'mafft_gene_count'          => 200,     # affects msa_chooser
+        'mafft_runtime'             => 172800,    # affects msa_chooser
 
     # species tree reconciliation
         # you can define your own species_tree for 'treebest'. It can contain multifurcations
@@ -137,7 +138,7 @@ sub default_options {
         'blast_factory_capacity'    =>  50,
         'blastp_capacity'           => 200,
         'mcoffee_capacity'          => 200,
-        'split_genes_capacity'      => 200,
+        'split_genes_capacity'      => 150,
         'filtering_capacity'         => 100,
         'treebest_capacity'         => 200,
         'raxml_capacity'         => 200,
@@ -151,7 +152,7 @@ sub default_options {
         'homology_dNdS_capacity'    => 200,
         'qc_capacity'               =>   4,
         'hc_capacity'               =>   4,
-        'HMMer_classify_capacity'   => 100,
+        'HMMer_classify_capacity'   => 400,
         'loadmembers_capacity'      =>  30,
 
     # hive priority for non-LOCAL health_check analysis:
@@ -266,12 +267,64 @@ sub resource_classes {
          '2Gb_job'      => {'LSF' => '-q production-rh6 -M2000  -R"select[mem>2000]  rusage[mem=2000]"' },
          '2.5Gb_job'    => {'LSF' => '-q production-rh6 -M2500  -R"select[mem>2500]  rusage[mem=2500]"' },
          '8Gb_job'      => {'LSF' => '-q production-rh6 -M8000  -R"select[mem>8000]  rusage[mem=8000]"' },
+         '16Gb_job'     => {'LSF' => '-q production-rh6 -M16000 -R"select[mem>16000] rusage[mem=16000]"' },
+         '32Gb_job'     => {'LSF' => '-q production-rh6 -M32000 -R"select[mem>32000] rusage[mem=32000]"' },
          'urgent_hcluster'     => {'LSF' => '-q production-rh6 -M32000 -R"select[mem>32000] rusage[mem=32000]"' },
-         'msa'      => {'LSF' => '-q production-rh6 -W 24:00' },
-         'msa_himem'    => {'LSF' => '-q production-rh6 -M 32768 -R"select[mem>32768] rusage[mem=32768]" -W 24:00' },
+         'msa'      => {'LSF' => '-q production-rh6' },
+         'msa_himem'    => {'LSF' => '-q production-rh6 -M 32768 -R"select[mem>32768] rusage[mem=32768]"' },
   };
 }
 
+sub pipeline_analyses {
+    my $self = shift;
+    my $all_analyses = $self->SUPER::pipeline_analyses(@_);
+    my %analyses_by_name = map {$_->{'-logic_name'} => $_} @$all_analyses;
+
+    ## Extend this section to redefine the resource names of some analysis
+    $analyses_by_name{'split_genes'}->{'-rc_name'} = '4Gb_job';
+    $analyses_by_name{'trimal'}->{'-rc_name'} = '4Gb_job';
+
+    ## We add some more analyses
+    push @$all_analyses, @{$self->extra_analyses(@_)};
+
+    ## And stich them to the previous ones
+    $analyses_by_name{'build_HMM_aa'}->{'-flow_into'} = {
+        -1 => [ 'build_HMM_aa_himem' ],  # MEMLIMIT
+    };
+    $analyses_by_name{'build_HMM_cds'}->{'-flow_into'} = {
+        -1 => [ 'build_HMM_cds_himem' ],  # MEMLIMIT
+    };
+
+    return $all_analyses;
+}
+
+sub extra_analyses {
+    my $self = shift;
+    return [
+        {   -logic_name     => 'build_HMM_aa_himem',
+            -module         => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::BuildHMM',
+            -parameters     => {
+                'buildhmm_exe'  => $self->o('buildhmm_exe'),
+            },
+            -hive_capacity  => $self->o('build_hmm_capacity'),
+            -batch_size     => 5,
+            -priority       => -10,
+            -rc_name        => '16Gb_job',
+        },
+
+        {   -logic_name     => 'build_HMM_cds_himem',
+            -module         => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::BuildHMM',
+            -parameters     => {
+                'cdna'          => 1,
+                'buildhmm_exe'  => $self->o('buildhmm_exe'),
+            },
+            -hive_capacity  => $self->o('build_hmm_capacity'),
+            -batch_size     => 5,
+            -priority       => -10,
+            -rc_name        => '32Gb_job',
+        },
+    ];
+}
 
 
 1;

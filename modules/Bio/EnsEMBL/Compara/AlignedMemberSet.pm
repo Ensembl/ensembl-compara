@@ -292,6 +292,7 @@ sub load_cigars_from_file {
         : which identifier should be used as sequence names: the stable_id, the sequence_id, or the seq_member_id
     Arg [-STOP2X] (opt) boolean (default: false)
         : whether the stop codons (character '*') should be replaced with gaps (character 'X')
+          other unusual aminoacids (U and O) are also replaced by their closest match (C and K)
     Arg [-APPEND_TAXON_ID] (opt) boolean (default: false)
         : whether the taxon_ids should be added to the sequence names
     Arg [-APPEND_SP_SHORT_NAME] (opt) boolean (default: false)
@@ -393,7 +394,14 @@ sub get_SimpleAlign {
         $true_seq =~ s/-//g;
         my $aln_end = length($true_seq);
 
-        $seqstr =~ s/\*/X/g if ($stop2x);
+        if ($stop2x) {
+            $seqstr =~ s/\*/X/g;
+            if ($alphabet eq 'protein') {
+                $seqstr =~ s/U/C/g;
+                $seqstr =~ s/O/K/g;
+            }
+        }
+
         my $seq = Bio::LocatableSeq->new(
                 -SEQ        => $seqstr,
                 -ALPHABET   => $alphabet,
