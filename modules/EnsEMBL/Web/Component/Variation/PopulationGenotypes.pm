@@ -42,19 +42,11 @@ sub content {
   if (scalar @$table_array == 1) {
     $html .= $table_array->[0]->[1]->render; # only one table to render (non-human or if no 1KG data)
   } else {
-    my %table_order = (
-      1000         => 1,
-      HapMap       => 2,
-      ESP          => 3,
-      Mouse        => 4,
-      Other        => 5,
-      Inconsistent => 6,
-      Observed     => 7,
-    );
+   
     
     my $species = $self->hub->species;
     my $main_tables_not_empty = 0;
-    foreach (sort {$table_order{(split /\s+/, $a->[0])[0]} <=> $table_order{(split /\s+/, $b->[0])[0]}} @$table_array) {
+    foreach ( @$table_array) {
       my ($title, $table) = @$_;
       my $id;
 
@@ -76,71 +68,115 @@ sub content {
   return $html;
 }
 
+## divide frequency data into different types & create tables
 sub format_frequencies {
-  my ($self, $freq_data, $tg_flag) = @_;
-  my $hub        = $self->hub;
 
-  my $is_somatic = $self->object->Obj->has_somatic_source;
+  my ($self, $freq_data) = @_;
 
-  my (%columns, @rows, @table_array);
-  
-  my $table = $self->new_table([], [], { data_table => 1, sorting => [ 'pop asc', 'submitter asc' ] });
-  
-  my $al_colours = $self->object->get_allele_genotype_colours;
 
-  # split off 1000 genomes, HapMap and failed if present
-  if (!$tg_flag) {
-    my ($tg_data, $hm_data, $fv_data, $no_pop_data, $mgp_data, $esp_data);
-    
+  my $priority_data;  ###  priority data 
+  my $fv_data;        ###  inconsistent data 
+  my $standard_data;  ###  non-priority frequency data
+  my $no_pop_data;    ###  observations without pops
+
+  my %group_name;     ###  display name for priority population group
+ 
+  ########################################################
+  ## divide into project/ type specific hashes
+  ########################################################
+
     foreach my $pop_id (keys %$freq_data) {
+
       if ($pop_id eq 'no_pop') {
-        $no_pop_data = delete $freq_data->{$pop_id};
-        next;
+	  ### variation observation without population or frequency data
+	  $no_pop_data = delete $freq_data->{$pop_id};
+	  next;
       }
-      
+
+      ### format population name      
       my $name = $freq_data->{$pop_id}{'pop_info'}{'Name'};
       if ($name =~ /^.+\:.+$/) {
         $freq_data->{$pop_id}{'pop_info'}{'Name'} =~ s/\:/\:<b>/;
         $freq_data->{$pop_id}{'pop_info'}{'Name'} .= '</b>';
       }
+
+      ### loop through frequency data for this population putting it in the destination array for display purposes
       foreach my $ssid (keys %{$freq_data->{$pop_id}{'ssid'}}) {
 
-        if ($freq_data->{$pop_id}{'ssid'}{$ssid}{'failed_desc'}) {
-          $fv_data->{$pop_id}{'ssid'}{$ssid} = delete $freq_data->{$pop_id}{'ssid'}{$ssid};
-          $fv_data->{$pop_id}{'pop_info'}    = $freq_data->{$pop_id}{'pop_info'};
-          $fv_data->{$pop_id}{'ssid'}{$ssid}{'failed_desc'} =~ s/Variation submission/Variation submission $ssid/;
-        } elsif ($name =~ /^1000genomes\:phase.*/i) {
-          $tg_data->{$pop_id}{'ssid'}{$ssid} = delete $freq_data->{$pop_id}{'ssid'}{$ssid};
-          $tg_data->{$pop_id}{'pop_info'}  = $freq_data->{$pop_id}{'pop_info'};
-        } elsif ($name =~ /^cshl\-hapmap/i) {
-          $hm_data->{$pop_id}{'ssid'}{$ssid} = delete $freq_data->{$pop_id}{'ssid'}{$ssid};
-          $hm_data->{$pop_id}{'pop_info'}  = $freq_data->{$pop_id}{'pop_info'};
-        } elsif ($name =~ /^Mouse_Genomes_project/i) {
-          $mgp_data->{$pop_id}{'ssid'}{$ssid} = delete $freq_data->{$pop_id}{'ssid'}{$ssid};
-          $mgp_data->{$pop_id}{'pop_info'}  = $freq_data->{$pop_id}{'pop_info'};
-        } elsif ($name =~ /^ESP/i) {
-          $esp_data->{$pop_id}{'ssid'}{$ssid} = delete $freq_data->{$pop_id}{'ssid'}{$ssid};
-          $esp_data->{$pop_id}{'pop_info'}  = $freq_data->{$pop_id}{'pop_info'};
-        }
+	  ## is it a priority project 
+	  my $priority_level =  $freq_data->{$pop_id}{'pop_info'}{'GroupPriority'};
+	  
+	  if( defined $priority_level){
+
+	      ### store frequency data
+	      $priority_data->{$priority_level}->{$pop_id}{'ssid'}{$ssid} = delete $freq_data->{$pop_id}{'ssid'}{$ssid};
+	      $priority_data->{$priority_level}->{$pop_id}{'pop_info'}    = $freq_data->{$pop_id}{'pop_info'};
+	      ### pull out group display name for the group with this priority to use later
+	      $group_name{$priority_level} = $freq_data->{$pop_id}{'pop_info'}{'PopGroup'} unless defined $group_name{$priority_level};  
+	  }
+	  
+	  
+	  elsif ($freq_data->{$pop_id}{'ssid'}{$ssid}{'failed_desc'}) {
+
+	      ### hold failed data separately to display separately
+	      $fv_data->{$pop_id}{'ssid'}{$ssid} = delete $freq_data->{$pop_id}{'ssid'}{$ssid};
+	      $fv_data->{$pop_id}{'pop_info'}    = $freq_data->{$pop_id}{'pop_info'};
+	      $fv_data->{$pop_id}{'ssid'}{$ssid}{'failed_desc'} =~ s/Variation submission/Variation submission $ssid/;
+        } 
+	  else{
+	      $standard_data->{$pop_id}{'ssid'}{$ssid} = delete $freq_data->{$pop_id}{'ssid'}{$ssid};
+	      $standard_data->{$pop_id}{'pop_info'}    = $freq_data->{$pop_id}{'pop_info'};
+	  }
       }
     }
     
-    # recurse this method with just the tg_data and a flag to indicate it
-    push @table_array,  @{$self->format_frequencies($tg_data,  '1000 Genomes')}          if $tg_data;
-    push @table_array,  @{$self->format_frequencies($hm_data,  'HapMap')}                if $hm_data;
-    push @table_array,  @{$self->format_frequencies($fv_data,  'Inconsistent data')}     if $fv_data;
-    push @table_array,  @{$self->format_frequencies($mgp_data, 'Mouse Genomes Project')} if $mgp_data;
-    push @table_array,  @{$self->format_frequencies($esp_data, 'ESP')}                   if $esp_data;
+  ##########################################################
+  # format the tables storing them in display priority order
+  ##########################################################
 
-    # special method for data with no pop/freq data
-    if ($no_pop_data) {
+  my @table_array;  ## holds formatted tables
+
+  my $name_for_standard_data = 'Frequency data'; ## Call the standard stuff 'other' only if there are priority projects
+
+  ## store priority tables first
+  foreach my $priority_level (sort(keys %{$priority_data})){    
+      push @table_array,  $self->format_table($priority_data->{$priority_level},  $group_name{$priority_level} );
+      $name_for_standard_data = 'Other frequency data';
+  }
+
+  ## non-priority project frequency data
+  push @table_array,  $self->format_table($standard_data,  $name_for_standard_data )  if $standard_data;
+  
+  ## inconsistent data
+  push @table_array,  $self->format_table($fv_data,  'Inconsistent data')        if $fv_data;
+    
+
+  # special method for data with no pop/freq data
+  if ($no_pop_data) {
       my $no_pop_table = $self->no_pop_data($no_pop_data);
       my $count_no_pop_data = scalar(@{$no_pop_table->{'rows'}});
-      push @table_array,  ["Observed variant(s) without frequency or population ($count_no_pop_data)", $no_pop_table]  if $no_pop_data;
-    }
+      push @table_array,  ["Observed variant(s) without frequency or population information ($count_no_pop_data)", $no_pop_table]  if $no_pop_data;
   }
+
+  return \@table_array;
+
+}
     
-  # Other projects/populations
+
+sub format_table{
+
+
+    my ($self, $freq_data, $table_header) = @_;
+
+    my $hub        = $self->hub;
+    my $is_somatic = $self->object->Obj->has_somatic_source;
+    my $al_colours = $self->object->get_allele_genotype_colours;
+
+
+    my %columns;
+    my @rows;
+
+  ## group by population 
   foreach my $pop_id (keys %$freq_data) {
     my $pop_info = $freq_data->{$pop_id}{'pop_info'};
     
@@ -169,6 +205,7 @@ sub format_frequencies {
       
       $pop_row{'Allele count'} = join ' , ', sort {(split /\(|\)/, $a)[1] cmp (split /\(|\)/, $b)[1]} values %{$pop_row{'Allele count'}} if $pop_row{'Allele count'};
 
+
       # Freqs genotypes
       my @genotype_freq = @{$data->{'GenotypeFrequency'} || []};
       
@@ -182,7 +219,7 @@ sub format_frequencies {
       $pop_row{'Genotype count'}   = join ' , ', sort {(split /\(|\)/, $a)[1] cmp (split /\(|\)/, $b)[1]} values %{$pop_row{'Genotype count'}} if $pop_row{'Genotype count'};
       $pop_row{'pop'}              = $self->pop_url($pop_info->{'Name'}, $pop_info->{'PopLink'});
       $pop_row{'Description'}      = $pop_info->{'Description'} if $is_somatic;
-      $pop_row{'failed'}           = $data->{'failed_desc'} if $tg_flag =~ /Inconsistent/i;
+      $pop_row{'failed'}           = $data->{'failed_desc'} if $table_header =~ /Inconsistent/i;
       $pop_row{'Super-Population'} = $self->sort_extra_pops($pop_info->{'Super-Population'});
       $pop_row{'Sub-Population'}   = $self->sort_extra_pops($pop_info->{'Sub-Population'});
       $pop_row{'detail'}           = $self->ajax_add($self->ajax_url(undef, { function => 'IndividualGenotypes', pop => $pop_id, update_panel => 1 }), $pop_id) if ($pop_info->{Size});;
@@ -257,14 +294,18 @@ sub format_frequencies {
   push    @header_row, { key => 'Genotype count', align => 'left', label => 'Genotype count',                        sort => 'none'   } if exists $columns{'Genotype count'};
   push    @header_row, { key => 'detail',         align => 'left', label => 'Genotype detail',                       sort => 'none'   } if $self->object->counts->{'individuals'};
   push    @header_row, { key => 'failed',         align => 'left', label => 'Comment', width => '25%',               sort => 'string' } if $columns{'failed'};
-  
+
+
+
+    my $table = $self->new_table([], [], { data_table => 1, sorting => [ 'pop asc', 'submitter asc' ] });
   $table->add_columns(@header_row);
   $table->add_rows(@rows);
-  
-  push @table_array, [ sprintf('%s (%s)', $tg_flag || 'Other data', scalar @rows), $table ];
+ 
 
-  return \@table_array;
+    return [sprintf('%s (%s)', $table_header, scalar @rows), $table];
+
 }
+
 
 sub format_number {
   ### Population_genotype_alleles
