@@ -275,6 +275,33 @@ sub resource_classes {
   };
 }
 
+sub pipeline_analyses {
+    my $self = shift;
+    my $all_analyses = $self->SUPER::pipeline_analyses(@_);
+    my %analyses_by_name = map {$_->{'-logic_name'} => $_} @$all_analyses;
+
+    ## Extend this section to redefine the resource names of some analysis
+    # For instance:
+    #$analyses_by_name{'hcluster_parse_output'}->{'-rc_name'} = '500Mb_job';
+
+    ## We add some more analyses
+    push @$all_analyses, @{$self->extra_analyses(@_)};
+
+    ## And stich them to the previous ones
+    # For instance:
+    #$analyses_by_name{'build_HMM_aa'}->{'-flow_into'} = {
+    #    -1 => [ 'build_HMM_aa_himem' ],  # MEMLIMIT
+    #};
+
+    return $all_analyses;
+}
+
+sub extra_analyses {
+    my $self = shift;
+    return [
+        # This can be a list of analyses, just like in pipeline_analyses()
+    ];
+}
 
 
 1;
