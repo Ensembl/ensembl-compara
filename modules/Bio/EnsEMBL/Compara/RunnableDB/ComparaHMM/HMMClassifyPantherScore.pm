@@ -56,7 +56,7 @@ use Data::Dumper;
 
 use Bio::EnsEMBL::Compara::MemberSet;
 
-use base ('Bio::EnsEMBL::Compara::RunnableDB::ComparaHMM::HMMClassify');
+use base ('Bio::EnsEMBL::Compara::RunnableDB::ComparaHMM::HMMClassify', 'Bio::EnsEMBL::Compara::RunnableDB::RunCommand');
 
 sub param_defaults {
     return {
@@ -135,21 +135,33 @@ sub run_HMM_search {
     my $library_path      = $hmmLibrary->libDir();
 
     my $worker_temp_directory = $self->worker_temp_directory;
-    my $cmd = "PATH=\$PATH:$blast_bin_dir:$hmmer_path; PERL5LIB=\$PERL5LIB:$pantherScore_path/lib; $pantherScore_exe -l $library_path -i $fastafile -D I -b $blast_bin_dir -T $worker_temp_directory 2>/dev/null";
-    print STDERR "$cmd\n" if ($self->debug());
+    my $cmd = "PATH=\$PATH:$blast_bin_dir:$hmmer_path; PERL5LIB=\$PERL5LIB:$pantherScore_path/lib; $pantherScore_exe -l $library_path -i $fastafile -D I -b $blast_bin_dir -T $worker_temp_directory -V";
+    my $cmd_out = $self->run_command($cmd);
 
-    $self->compara_dba->dbc->disconnect_when_inactive(1);
-    open my $pipe, "-|", $cmd or die $!;
-    while (<$pipe>) {
+    # Detection of failures
+    if ($cmd_out->exit_code) {
+        $self->throw(sprintf("error running pantherScore [%s]: %d\n%s", $cmd_out->cmd, $cmd_out->exit_code, $cmd_out->err));
+    }
+    if ($cmd_out->err =~ /^Problem with blast on (.*)$/) {
+        $self->throw(sprintf("pantherScore detected an error with blast on the member %s. Full log is:\n%s", $1, $cmd_out->err));
+    }
+    if ($cmd_out->err =~ /^Missing sequence for (.*)$/) {
+        $self->throw(sprintf("pantherScore detected a missing sequence for the member %s. Full log is:\n%s", $1, $cmd_out->err));
+    }
+
+    my $has_hits = 0;
+    for (split /^/, $cmd_out->out) {
         chomp;
         my ($seq_id, $hmm_id, $eval) = split /\s+/, $_, 4;
         # Hits to a sub-family are also reported to its family
         next if $hmm_id =~ /:/;
         $self->add_hmm_annot($seq_id, $hmm_id, $eval);
+        $has_hits = 1;
     }
-    close($pipe);
 
-    $self->compara_dba->dbc->disconnect_when_inactive(0);
+    unless ($has_hits) {
+        $self->throw("pantherScore did not return any hits. Is it normal ?");
+    }
 }
 
 1;

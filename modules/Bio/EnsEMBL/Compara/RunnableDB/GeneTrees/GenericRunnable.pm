@@ -63,6 +63,7 @@ Other parameters:
  - species_tree_label: the label od the species-tree that should be used for this command
  - input_clusterset_id: alternative clusterset_id for the input gene tree
  - run_treebest_sdi: do we have to pass the output tree through "treebest sdi"
+ - reroot_with_sdi: should "treebest sdi" also reroot the tree
  - output_clusterset_id: alternative clusterset_id to store the result gene tree
 
 =head1 APPENDIX
@@ -96,6 +97,7 @@ sub param_defaults {
         'output_clusterset_id'      => undef,
 
         'run_treebest_sdi'  => 0,
+        'reroot_with_sdi'   => 0,
     };
 }
 
@@ -228,7 +230,7 @@ sub run_generic_command {
 
     $self->param('output_file', $self->worker_temp_directory.'/'.$self->param('output_file')) if $self->param('output_file');
     my $output = $self->param('output_file') ? $self->_slurp($self->param('output_file')) : $run_cmd->out;
-    $output = $self->run_treebest_sdi($output, 0) if $self->param('run_treebest_sdi');
+    $output = $self->run_treebest_sdi($output, $self->param('reroot_with_sdi')) if $self->param('run_treebest_sdi');
     $self->param('cmd_output', $output);
 }
 
