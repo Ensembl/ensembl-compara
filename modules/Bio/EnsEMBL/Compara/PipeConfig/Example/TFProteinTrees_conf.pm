@@ -72,18 +72,16 @@ sub default_options {
     # parameters that are likely to change from execution to another:
         #mlss_id => 40043,
         #'do_not_reuse_list' => ['guillardia_theta'], # set this to empty or to the genome db names we should ignore
-        'release'       => 10,
-	    'prev_release'  => 75,
-        'release_suffix'=> '', # set it to '' for the actual release
+        'release'               => 10,
+        'release_suffix'        => '', # set it to '' for the actual release
         'rel_with_suffix'       => $self->o('release').$self->o('release_suffix'),
 
     # custom pipeline name, in case you don't like the default one
-        dbowner => 'treefam',       # Used to prefix the database name (in HiveGeneric_conf)
-        pipeline_name => $self->o('division').'_hom_'.$self->o('eg_release').'_'.$self->o('ensembl_release'),
+        'division'               => 'treefam',
+        'pipeline_name'          => $self->o('division').$self->o('rel_with_suffix').'_hom_eg'.$self->o('eg_release').'_e'.$self->o('ensembl_release'),
 
     # dependent parameters: updating 'work_dir' should be enough
-        'work_dir'              =>  $self->o('base_dir').'/ensembl_compara_'.$self->o('pipeline_name'),
-        'base_dir'              =>  '/nfs/nobackup2/xfam/treefam/ensembl/'.$self->o('ENV', 'USER').'/compara',
+        'work_dir'              =>  '/nfs/nobackup2/xfam/treefam/ensembl/'.$self->o('ENV', 'USER').'/compara/'.$self->o('pipeline_name'),
         'exe_dir'               =>  '/nfs/panda/ensemblgenomes/production/compara/binaries',
 
     # "Member" parameters:
