@@ -78,6 +78,7 @@ sub set_raxml_model {
 
     if ( $raxml_bestfit_model !~ /^(DAYHOFF|DCMUT|JTT|MTREV|WAG|RTREV|CPREV|VT|BLOSUM62|MTMAM)$/ ) {
         $raxml_bestfit_model = "WAG";
+        $raxml_model = "PROTGAMMA" . $raxml_bestfit_model;
     }
     elsif ( $raxml_bestfit_model_parameters eq "" ) {
         $raxml_model = "PROTGAMMA" . $raxml_bestfit_model;
