@@ -88,7 +88,7 @@ sub default_options {
 
     # "Member" parameters:
         'allow_ambiguity_codes'     => 1,
-        'allow_pyrrolysine'         => $self->o('division') eq 'pan' ? 1 : 0,
+        'allow_pyrrolysine'         => 1,
 
     # blast parameters:
 
@@ -97,6 +97,9 @@ sub default_options {
 
     # tree building parameters:
         'use_raxml'                 => 1,
+        'treebreak_gene_count'      => 100000,     # affects msa_chooser
+        'mafft_gene_count'          => 200,     # affects msa_chooser
+        'mafft_runtime'             => 172800,    # affects msa_chooser
 
     # species tree reconciliation
         # you can define your own species_tree for 'treebest'. It can contain multifurcations
@@ -137,7 +140,7 @@ sub default_options {
         'blast_factory_capacity'    =>  50,
         'blastp_capacity'           => 200,
         'mcoffee_capacity'          => 200,
-        'split_genes_capacity'      => 200,
+        'split_genes_capacity'      => 150,
         'filtering_capacity'         => 100,
         'treebest_capacity'         => 200,
         'raxml_capacity'         => 200,
@@ -151,7 +154,7 @@ sub default_options {
         'homology_dNdS_capacity'    => 200,
         'qc_capacity'               =>   4,
         'hc_capacity'               =>   4,
-        'HMMer_classify_capacity'   => 100,
+        'HMMer_classify_capacity'   => 400,
         'loadmembers_capacity'      =>  30,
 
     # hive priority for non-LOCAL health_check analysis:
@@ -266,9 +269,11 @@ sub resource_classes {
          '2Gb_job'      => {'LSF' => '-q production-rh6 -M2000  -R"select[mem>2000]  rusage[mem=2000]"' },
          '2.5Gb_job'    => {'LSF' => '-q production-rh6 -M2500  -R"select[mem>2500]  rusage[mem=2500]"' },
          '8Gb_job'      => {'LSF' => '-q production-rh6 -M8000  -R"select[mem>8000]  rusage[mem=8000]"' },
+         '16Gb_job'     => {'LSF' => '-q production-rh6 -M16000 -R"select[mem>16000] rusage[mem=16000]"' },
+         '32Gb_job'     => {'LSF' => '-q production-rh6 -M32000 -R"select[mem>32000] rusage[mem=32000]"' },
          'urgent_hcluster'     => {'LSF' => '-q production-rh6 -M32000 -R"select[mem>32000] rusage[mem=32000]"' },
-         'msa'      => {'LSF' => '-q production-rh6 -W 24:00' },
-         'msa_himem'    => {'LSF' => '-q production-rh6 -M 32768 -R"select[mem>32768] rusage[mem=32768]" -W 24:00' },
+         'msa'      => {'LSF' => '-q production-rh6' },
+         'msa_himem'    => {'LSF' => '-q production-rh6 -M 32768 -R"select[mem>32768] rusage[mem=32768]"' },
   };
 }
 
