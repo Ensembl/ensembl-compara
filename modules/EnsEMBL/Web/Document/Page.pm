@@ -501,12 +501,14 @@ sub html_template {
   my $nav;
   
   if ($self->include_navigation) {
-    $nav = qq(<div id="page_nav" class="$nav_class print_hide js_panel">
+    $nav = qq(<div id="page_nav_wrapper">
+        <div id="page_nav" class="$nav_class print_hide js_panel">
           $elements->{'navigation'}
           $elements->{'tool_buttons'}
           $elements->{'acknowledgements'}
           <p class="invisible">.</p>
         </div>
+      </div>
     );
     
     $footer_id = 'footer';
