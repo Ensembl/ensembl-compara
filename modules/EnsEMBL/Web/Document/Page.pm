@@ -502,7 +502,7 @@ sub html_template {
   
   if ($self->include_navigation) {
     $nav = qq(<div id="page_nav_wrapper">
-        <div id="page_nav" class="$nav_class print_hide js_panel">
+        <div id="page_nav" class="$nav_class print_hide js_panel slide-nav floating">
           $elements->{'navigation'}
           $elements->{'tool_buttons'}
           $elements->{'acknowledgements'}
