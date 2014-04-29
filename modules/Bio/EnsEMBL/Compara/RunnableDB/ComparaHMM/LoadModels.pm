@@ -123,7 +123,6 @@ sub download_models {
 
     Parameters:
         cm_file_or_directory : HMM file
-        emit_consensus (boolean) : whether we should compute consensus sequence with hmmemit
         type : value of the "type" field in the hmm_profile table
 
     Description:
@@ -140,7 +139,7 @@ sub store_hmmprofile {
     my ($name, $model_id) = ($hmm_name)x2;
     my $profile_content;
 
-    if ($self->param('emit_consensus') and not $consensus) {
+    if (not $consensus) {
         $consensus = $self->get_consensus_from_HMMs($multicm_file);
     }
 
