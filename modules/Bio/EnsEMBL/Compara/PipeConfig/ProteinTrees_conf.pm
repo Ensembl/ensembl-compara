@@ -1287,6 +1287,7 @@ sub pipeline_analyses {
             -parameters => {
                 #'cdna'                      => 1,
                 'raxml_exe'              => $self->o('raxml_exe'),
+                'treebest_exe'              => $self->o('treebest_exe'),
             },
             -hive_capacity        => $self->o('raxml_capacity'),
             -rc_name => '8Gb_job',
