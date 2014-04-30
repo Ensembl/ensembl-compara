@@ -349,7 +349,7 @@ unless($self->{'no_print_tree'}) {
         close T;
     }
 
-  my $njtree_tree = $root->newick_format('njtree');
+  my $njtree_tree = $root->newick_format('ncbi_taxon');
   warn "==== Your njtree file njtree.$outname.nh ====\n";
   warn "$njtree_tree\n\n";
 

@@ -262,7 +262,6 @@ sub pipeline_analyses {
                     '1->A' => {
                                'make_species_tree' => [
                                                        {'blength_tree_file' => $self->o('species_tree_file'), 'newick_format' => 'simple' }, #species_tree
-                                             #          {'newick_format'     => 'njtree' },                                                   #taxon_tree
                                                        ],
                                },
 

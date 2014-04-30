@@ -194,8 +194,6 @@ print "All examples run successfully\n\n";
 #my $newick_tree = $tree->newick_format("ncbi_name");
 #my $newick_tree = $tree->newick_format("ryo",'%{^n}');
 
-#my $newick_tree = $tree->newick_format("njtree");
-
 #my $newick_tree = $tree->newick_format("phylip");
 
 #print "$newick_tree\n";

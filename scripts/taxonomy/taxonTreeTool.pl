@@ -247,7 +247,7 @@ sub fetch_compara_ncbi_taxa {
   my $newick = $root->newick_format;
   print("$newick\n");
 
-  print $root->newick_format('njtree'), "\n";
+  print $root->newick_format('ncbi_taxon'), "\n";
 
   $self->{'root'} = $root;
 #  drawPStree($self);

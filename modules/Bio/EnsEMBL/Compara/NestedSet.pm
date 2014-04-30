@@ -932,7 +932,7 @@ sub string_node {
   Example     : $this_node->newick_format("full");
   Description : Prints this tree in Newick format. Several modes are
                 available: full, display_label_composite, simple, species,
-                species_short_name, ncbi_taxon, ncbi_name, njtree and phylip
+                species_short_name, ncbi_taxon, ncbi_name, phylip
   Returntype  : string
   Exceptions  :
   Caller      : general
@@ -957,7 +957,6 @@ my %ryo_modes = (
     'int_node_id' => '%{-n}%{o-}:%{d}',
     'full_web' => '%{n-}%{-n|p}%{"_"-s"_"}%{":"d}',
     'phylip' => '%21{n,}:%{d}',
-    'njtree' => '%{o}',
 );
 
 my $nhx0 = '%{n-_|C(taxonomy_level)}:%{d}';

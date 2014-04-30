@@ -683,7 +683,7 @@ sub find_node_by_name {
   Example     : $gene_tree->newick_format("full");
   Description : Prints this tree in Newick format. Several modes are
                 available: full, display_label_composite, simple, species,
-                species_short_name, ncbi_taxon, ncbi_name, njtree and phylip
+                species_short_name, ncbi_taxon, ncbi_name and phylip
   Returntype  : string
   Exceptions  :
   Caller      : general

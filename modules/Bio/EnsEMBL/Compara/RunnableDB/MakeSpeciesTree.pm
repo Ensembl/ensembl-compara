@@ -56,7 +56,7 @@ use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
 sub param_defaults {
     return {
-            'newick_format'         => 'njtree',    # the desired output format
+            'newick_format'         => 'ncbi_taxon',    # the desired output format
             'do_transactions'       => 0,
     };
 }
