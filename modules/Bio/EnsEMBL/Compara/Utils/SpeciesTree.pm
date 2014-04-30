@@ -67,6 +67,7 @@ sub create_species_tree {
     my $taxon_adaptor = $compara_dba->get_NCBITaxonAdaptor;
     my $root;
     my @taxa_for_tree = ();
+    my %gdbs_by_taxon_id = ();
 
         # loading the initial set of taxa from genome_db:
     if(!$no_previous or $species_set) {
@@ -77,6 +78,7 @@ sub create_species_tree {
             my $taxon_name = $gdb->name;
             next if ($taxon_name =~ /ncestral/);
             push @taxa_for_tree, $gdb->taxon;
+            push @{$gdbs_by_taxon_id{$gdb->taxon_id}}, $gdb;
         }
     }
 
@@ -129,7 +131,29 @@ sub create_species_tree {
         }
     }
 
-    return $root->adaptor->db->get_SpeciesTreeNodeAdaptor->new_from_NestedSet($root);
+    my $stn_root = $root->adaptor->db->get_SpeciesTreeNodeAdaptor->new_from_NestedSet($root);
+
+    # We need to duplicate all the taxa that are supposed in several copies (several genome_dbs sharing the same taxon_id)
+    foreach my $taxon_id (keys %gdbs_by_taxon_id) {
+        next if scalar(@{$gdbs_by_taxon_id{$taxon_id}}) == 1;
+        my $current_nodes = $stn_root->find_nodes_by_field_value('taxon_id', $taxon_id);
+        next if scalar(@$current_nodes) == 0;
+        my %seen_gdb_ids = map {$_->genome_db_id => 1} @$current_nodes;
+        foreach my $genome_db (@{$gdbs_by_taxon_id{$taxon_id}}) {
+            next if $seen_gdb_ids{$genome_db->dbID};
+            my $current_leaf = $current_nodes->[0];
+            my $new_leaf = $current_leaf->copy();
+            $new_leaf->_complete_cast_node($current_leaf);
+            $new_leaf->genome_db_id($genome_db->dbID);
+            my $new_node = $current_leaf->copy();
+            $new_node->_complete_cast_node($current_leaf);
+            $current_leaf->parent->add_child($new_node);
+            $new_node->add_child($new_leaf);
+            $new_node->add_child($current_leaf);
+        }
+    }
+
+    return $stn_root;
 }
 
 
