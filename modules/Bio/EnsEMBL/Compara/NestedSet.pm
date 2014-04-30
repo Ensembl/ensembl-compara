@@ -1056,8 +1056,8 @@ sub _internal_newick_format_ryo {
     my ($self, $ryo_string) = @_;
     my $newick_str;
     eval {
-        use Bio::EnsEMBL::Compara::FormatTree;
-        my $ryo_formatter = Bio::EnsEMBL::Compara::FormatTree->new($ryo_string);
+        use Bio::EnsEMBL::Compara::Utils::FormatTree;
+        my $ryo_formatter = Bio::EnsEMBL::Compara::Utils::FormatTree->new($ryo_string);
         $newick_str = $ryo_formatter->format_newick($self);
     };
     if ($@) {
