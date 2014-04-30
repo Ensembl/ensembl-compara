@@ -957,7 +957,7 @@ my %ryo_modes = (
     'int_node_id' => '%{-n}%{o-}:%{d}',
     'full_web' => '%{n-}%{-n|p}%{"_"-s"_"}%{":"d}',
     'phylip' => '%21{n,}:%{d}',
-    'njtree' => '%{o}%{-T(is_incomplete)|E"*"}%{-T(is_incomplete,0,*)}',
+    'njtree' => '%{o}',
 );
 
 my $nhx0 = '%{n-_|C(taxonomy_level)}:%{d}';

@@ -38,7 +38,6 @@ $self->{'cdna'} = 0;
 $self->{'scale'} = 10;
 $self->{'drawtree'} = 0;
 $self->{'extrataxon_sequenced'} = undef;
-$self->{'extrataxon_incomplete'} = undef;
 $self->{'multifurcation_deletes_node'} = undef;
 $self->{'multifurcation_deletes_all_subnodes'} = undef;
 $self->{'njtree_output_filename'} = undef;
@@ -65,7 +64,6 @@ GetOptions('help'        => \$help,
 
            'create_species_tree'     => \$self->{'create_species_tree'},
            'extrataxon_sequenced=s'  => \$self->{'extrataxon_sequenced'},
-           'extrataxon_incomplete=s' => \$self->{'extrataxon_incomplete'},
            'multifurcation_deletes_node=s' => \$self->{'multifurcation_deletes_node'},
            'multifurcation_deletes_all_subnodes=s' => \$self->{'multifurcation_deletes_all_subnodes'},
            'njtree_output_filename=s'   => \$self->{'njtree_output_filename'},  # we need to be able to feed the filename from outside to make some automation possible
@@ -211,11 +209,6 @@ sub create_species_tree {
     my $temp = $self->{'extrataxon_sequenced'};
     @extrataxon_sequenced = split ('_',$temp);
   }
-  my @extrataxon_incomplete;
-  if($self->{'extrataxon_incomplete'}) { 
-    my $temp = $self->{'extrataxon_incomplete'};
-    @extrataxon_incomplete = split ('_',$temp);
-  }
   my @multifurcation_deletes_node;
   if($self->{'multifurcation_deletes_node'}) { 
     my $temp = $self->{'multifurcation_deletes_node'};
@@ -257,18 +250,6 @@ sub create_species_tree {
 
     $root = $taxon->root unless($root);
     $root->merge_node_via_shared_ancestor($taxon);
-  }
-  warn "Loading taxa from extrataxon_incomplete...\n" if (0 != scalar(@extrataxon_incomplete));
-  foreach my $extra_taxon (@extrataxon_incomplete) {
-    my $taxon = $taxonDBA->fetch_node_by_taxon_id($extra_taxon);
-    my $taxon_name = $taxon->name;
-    my $taxon_id = $taxon->taxon_id;
-    warn "  $taxon_name [$taxon_id]\n";
-    $taxon->release_children;
-
-    $root = $taxon->root unless($root);
-    $root->merge_node_via_shared_ancestor($taxon);
-    $taxon->add_tag("is_incomplete", '1');
   }
 
   #$root = $root->minimize_tree if($self->{'minimize_tree'});

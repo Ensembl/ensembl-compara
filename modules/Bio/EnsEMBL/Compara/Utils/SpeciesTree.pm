@@ -61,8 +61,8 @@ use Bio::EnsEMBL::Compara::SpeciesTreeNode;
 sub create_species_tree {
     my ($self, @args) = @_;
 
-    my ($compara_dba, $no_previous, $species_set, $extrataxon_sequenced, $extrataxon_incomplete, $multifurcation_deletes_node, $multifurcation_deletes_all_subnodes) =
-        rearrange([qw(COMPARA_DBA NO_PREVIOUS SPECIES_SET EXTRATAXON_SEQUENCED EXTRATAXON_INCOMPLETE MULTIFURCATION_DELETES_NODE MULTIFURCATION_DELETES_ALL_SUBNODES)], @args);
+    my ($compara_dba, $no_previous, $species_set, $extrataxon_sequenced, $multifurcation_deletes_node, $multifurcation_deletes_all_subnodes) =
+        rearrange([qw(COMPARA_DBA NO_PREVIOUS SPECIES_SET EXTRATAXON_SEQUENCED MULTIFURCATION_DELETES_NODE MULTIFURCATION_DELETES_ALL_SUBNODES)], @args);
 
     my $taxon_adaptor = $compara_dba->get_NCBITaxonAdaptor;
     my $root;
@@ -86,13 +86,6 @@ sub create_species_tree {
         push @taxa_for_tree, $taxon if defined $taxon;
     }
 
-
-        # loading from extrataxon_incomplete:
-    foreach my $extra_taxon (@$extrataxon_incomplete) {
-        my $taxon = $taxon_adaptor->fetch_node_by_taxon_id($extra_taxon);
-        $taxon->add_tag('is_incomplete', '1');
-        push @taxa_for_tree, $taxon;
-    }
 
     # build the tree
     foreach my $taxon (@taxa_for_tree) {
