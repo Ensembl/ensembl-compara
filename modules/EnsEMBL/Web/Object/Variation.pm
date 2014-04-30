@@ -917,7 +917,8 @@ sub pop_display_group_priority{
   ### Returns String
 
   my ($self, $pop_obj)  = @_;
-  return $pop_obj->display_group_priority();
+  ## FIXME - temporary defensive coding until we have 76 handover! 
+  return $pop_obj->display_group_priority() if $self->species_defs->ENSEMBL_VERSION > 75;
 }
 sub pop_display_group_name{
 
@@ -929,7 +930,8 @@ sub pop_display_group_name{
 
 
   my ($self, $pop_obj)  = @_;
-  return $pop_obj->display_group_name();
+  ## FIXME - temporary defensive coding until we have 76 handover! 
+  return $pop_obj->display_group_name() if $self->species_defs->ENSEMBL_VERSION > 75;
 }
 
  
@@ -1180,7 +1182,8 @@ sub get_variation_sub_sets {
   my $superset_obj = $vari_set_adaptor->fetch_by_name($superset_name);
   return unless defined $superset_obj;
 
-  my $sets = $vari_set_adaptor->fetch_all_by_Variation_super_VariationSet($self->vari, $superset_obj); 
+  ## FIXME - temporary defensive coding until we have 76 handover! 
+  my $sets = $self->species_defs->ENSEMBL_VERSION > 75 ? $vari_set_adaptor->fetch_all_by_Variation_super_VariationSet($self->vari, $superset_obj) : []; 
   return $sets;
 }
 
