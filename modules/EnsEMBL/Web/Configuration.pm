@@ -168,14 +168,13 @@ sub get_valid_action {
     $node     = $tree->get_node($action);
     $node_key = $action;
   }
-
   if ($node && !$assume_valid) {
     $self->{'availability'} = $object->availability if $object;
     unless ($node->get('type') =~ /view/ && $self->is_available($node->get('availability'))) {
       $node = $tree->get_node('Unknown');
     }
   }
-  else {
+  elsif (!$node) {
     $node = $tree->get_node('Unknown');
   }
   return $node->id;
