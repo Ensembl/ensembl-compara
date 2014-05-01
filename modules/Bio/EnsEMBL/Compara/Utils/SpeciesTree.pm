@@ -48,7 +48,11 @@ package Bio::EnsEMBL::Compara::Utils::SpeciesTree;
 use strict;
 use warnings;
 
+use LWP::Simple;
+use URI::Escape;
+
 use Bio::EnsEMBL::Utils::Argument;
+use Bio::EnsEMBL::Utils::Scalar qw(:assert);
 use Bio::EnsEMBL::Compara::NestedSet;
 use Bio::EnsEMBL::Compara::SpeciesTreeNode;
 
@@ -181,6 +185,43 @@ sub prune_tree {
     }
 
     return $input_tree;
+}
+
+
+=head2 get_timetree_estimate
+
+    Web scraping of the divergence of two taxa from the timetree.org resource.
+    Currently used to get the divergence of a new Ensembl species (see place_species.pl)
+    Do not use this method for large-scale data-mining
+
+=cut
+
+sub get_timetree_estimate {
+    my ($self, $node) = @_;
+
+    assert_ref($node, 'Bio::EnsEMBL::Compara::SpeciesTreeNode');
+    return if $node->is_leaf();
+    my @children = @{$node->children};
+    if (scalar(@children) == 1) {
+        warn sprintf("'%s' has a single child. Cannot estimate the divergence time of a *single* species.\n", $node->name);
+        return;
+    }
+
+    my $url_template = 'http://www.timetree.org/index.php?taxon_a=%s&taxon_b=%s&submit=Search';
+    my $last_page;
+
+    # For multifurcations, if a comparison fails, we can still try the other ones
+    while (my $child1 = shift @children) {
+        foreach my $child2 (@children) {
+            my $url = sprintf($url_template, uri_escape($child1->get_all_leaves()->[0]->node_name), uri_escape($child2->get_all_leaves()->[0]->node_name));
+            my $timetree_page = get($url);
+            $timetree_page =~ /<h1 style="margin-bottom: 0px;">(.*)<\/h1> Million Years Ago/;
+            return $1 if $1;
+            $last_page = $url;
+        }
+    }
+    warn sprintf("Could not get a valid answer from timetree.org for '%s' (see %s).\n", $node->name, $last_page);
+    return;
 }
 
 1;
