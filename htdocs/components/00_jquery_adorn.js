@@ -76,7 +76,7 @@
             adorn_span(el,data.ref,values,key);
           }
         });
-        $outer.addClass('adormnent-done');
+        $outer.addClass('adornment-done');
         $('.adornment-data',outer).remove();
         $outer.appendTo(wrapper);
       }
