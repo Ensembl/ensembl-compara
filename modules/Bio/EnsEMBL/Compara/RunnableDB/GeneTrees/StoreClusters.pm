@@ -175,7 +175,10 @@ sub add_cluster {
 
     # Assumes that the *same* cluster may have been stored in a previous attempt
     my $existing_tree = $self->compara_dba->get_GeneTreeAdaptor->fetch_all_by_Member($gene_list->[0], -CLUSTERSET_ID => $clusterset->clusterset_id, -METHOD_LINK_SPECIES_SET => $clusterset->method_link_species_set_id);
-    return $existing_tree->[0] if scalar(@$existing_tree);
+    if (scalar(@$existing_tree)) {
+        $self->warning(sprintf("There is already a tree with seq_member_id=%d: root_id=%s. not writing a new tree", $gene_list->[0], $existing_tree->[0]->root_id));
+        return
+    }
 
     # Every cluster maps to a leaf of the clusterset
     my $clusterset_leaf = new Bio::EnsEMBL::Compara::GeneTreeNode;
