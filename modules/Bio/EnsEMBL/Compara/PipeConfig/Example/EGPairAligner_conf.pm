@@ -249,7 +249,7 @@ sub default_options {
   	'net_parameters' => {'max_gap'=>'50', 'chainNet'=>$self->o('chainNet_exe')},
   	'net_batch_size' => 1,
   	'net_hive_capacity' => 20,
-  	'bidirectional' => 0,
+  	'bidirectional' => 1,
 
 	#
 	#Default healthcheck
