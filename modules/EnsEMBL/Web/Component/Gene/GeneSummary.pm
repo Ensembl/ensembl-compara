@@ -165,6 +165,49 @@ sub content {
 
   $table->add_row('Ensembl version', $object->stable_id.'.'.$object->version);
 
+  ## TEMPORARY CONTENT - Link back to GRCh37 site
+  if ($hub->species eq 'Homo_sapiens') {
+    my ($old_assembly, $new_assembly) = qw(NCBI36 GRCh37); # qw(GRCh37 GRCh38);
+    my $url = 'http://'.lc($old_assembly).'.ensembl.org/';
+    my $txt;
+    my $old_version; # = $object->any_ensembl_matches($object->stable_id);
+    # get coordinates of other assemblies
+    if (my @mappings = @{$hub->species_defs->get_config($hub->species, 'ASSEMBLY_MAPPINGS')||[]}) {
+      foreach my $mapping (@mappings) {
+        warn ">>> ALT ASSEMBLY $mapping";
+        next unless $mapping eq sprintf ('chromosome:%s#chromosome:%s', $new_assembly, $old_assembly);
+        my $segments = $object->get_Slice->project('chromosome', $old_assembly);
+        warn ">>> NEW SLICES @$segments";
+        # link if there is an ungapped mapping of whole gene
+        if (scalar(@$segments) == 1) {
+          my $new_slice = $segments->[0]->to_Slice;
+          $txt .= "<p>This gene maps to ";
+          $txt .= sprintf(qq(<a href="${url}%s/Location/View?r=%s:%s-%s" target="external">%s-%s</a>),
+                          ucfirst($hub->species),
+                          $new_slice->seq_region_name,
+                          $new_slice->start,
+                          $new_slice->end,
+                          $self->thousandify($new_slice->start),
+                          $self->thousandify($new_slice->end));
+          $txt .= qq( in $old_assembly coordinates.</p>);
+        }
+        else {
+          $txt .= qq(<p>There is no ungapped mapping of this gene onto the $old_assembly assembly.</p>);
+        }
+
+        # direct link to feature in Ensembl
+        if ($old_version) {
+          $txt .= sprintf(qq(<p><a href="%s" target="external">Jump to this stable ID</a> in the GRCh37 archive</p>),
+                          $url.$hub->species."/Gene/Summary?g=".$object->stable_id);
+        }
+        else {
+          $txt .= qq(Stable ID not present in $old_assembly);
+        }
+      }
+      $table->add_row('Previous assembly', $txt);
+    } 
+  }
+
   # add some Vega info
   if ($db eq 'vega') {
     my $type    = $object->gene_type;
