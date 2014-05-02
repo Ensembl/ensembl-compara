@@ -61,8 +61,10 @@ sub content {
     );
     
     push @columns, ({ key => 'actions', title => 'Actions', width => '120px', align => 'center', sort => 'none' });
-    
+   
+    my $old_assemblies = 0; 
     foreach my $file (@data) {
+    $old_assemblies++ if (!$file->{'assembly'} || $file->{'assembly'} ne $hub->species_defs->get_config($file->{'species'}, 'ASSEMBLY_NAME'));
       my $user_record = ref($file) =~ /Record/;
       my $sharers     = $file->{'code'} =~ /_$session_id$/ ? EnsEMBL::Web::Data::Session->count(code => $file->{'code'}, type => $file->{'type'}) : 0;
          $sharers-- if $sharers && !$file->{'user_id'}; # Take one off for the original user
@@ -89,8 +91,10 @@ sub content {
       
       push @rows, $row;
     }
-    
     $html = $self->new_table(\@columns, \@rows, { data_table => 'no_col_toggle', exportable => 0, class => 'fixed editable' })->render;
+    if ($old_assemblies) {
+      $html .= $self->warning_panel('Possible mapping issue', "$old_assemblies of your files contains data on an old or unknown assembly. You may want to convert your data and re-upload.");
+    }
   }
   
   $html  .= $self->group_shared_data;
@@ -224,8 +228,6 @@ sub table_row {
   
   my $share_html  = sprintf $share,  $hub->url({ action => 'SelectShare', %url_params });
   my $delete_html = sprintf $delete, $hub->url({ action => 'ModifyData', function => $file->{'url'} ? 'delete_remote' : 'delete_upload', %url_params });
-  my @A = keys %$file;
-  warn ">>> KEYS @A";
   
   return {
     type    => $file->{'url'} ? 'URL' : 'Upload',
