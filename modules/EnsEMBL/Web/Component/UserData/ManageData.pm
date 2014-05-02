@@ -56,6 +56,7 @@ sub content {
       { key => 'type',    title => 'Type',         width => '10%', align => 'left'                                  },
       { key => 'name',    title => 'Source',       width => '40%', align => 'left', sort => 'html', class => 'wrap' },
       { key => 'species', title => 'Species',      width => '20%', align => 'left', sort => 'html'                  },
+      { key => 'assembly', title => 'Assembly',      width => '20%', align => 'left', sort => 'html'                  },
       { key => 'date',    title => 'Last updated', width => '20%', align => 'left', sort => 'numeric_hidden'        },
     );
     
@@ -223,11 +224,14 @@ sub table_row {
   
   my $share_html  = sprintf $share,  $hub->url({ action => 'SelectShare', %url_params });
   my $delete_html = sprintf $delete, $hub->url({ action => 'ModifyData', function => $file->{'url'} ? 'delete_remote' : 'delete_upload', %url_params });
+  my @A = keys %$file;
+  warn ">>> KEYS @A";
   
   return {
     type    => $file->{'url'} ? 'URL' : 'Upload',
     name    => { value => $name, class => 'wrap editable' },
     species => sprintf('<em>%s</em>', $hub->species_defs->get_config($file->{'species'}, 'SPECIES_SCIENTIFIC_NAME')),
+    assembly => $file->{'assembly'} || 'Unknown',
     date    => sprintf('<span class="hidden">%s</span>%s', $file->{'timestamp'} || '-', $self->pretty_date($file->{'timestamp'}, 'simple_datetime')),
     actions => "$download$save$share_html$delete_html",
   };
