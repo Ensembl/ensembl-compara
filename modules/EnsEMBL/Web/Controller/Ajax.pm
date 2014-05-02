@@ -153,10 +153,11 @@ sub table_export {
     $str =~ s/<br.*?>/ /g;
     $str =~ s/\xC2\xAD//g;     # Layout codepoint (shy hyphen)
     $str =~ s/\xE2\x80\x8B//g; # Layout codepoint (zero-width space)
-    $str = $self->strip_HTML(decode_entities($str));
-    $str =~ s/"/""/g; 
+    $str =~ s/\R//g;
     $str =~ s/^\s+//;
     $str =~ s/\s+$//g;
+    $str = $self->strip_HTML(decode_entities($str));
+    $str =~ s/"/""/g; 
     $str =~ s/\0/","/g;
     return $str;
   };
