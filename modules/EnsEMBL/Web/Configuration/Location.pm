@@ -173,9 +173,6 @@ sub add_external_browsers {
   my $object       = $self->object;
   my $species_defs = $hub->species_defs;
 
-  ## Link to previous/next assembly if available  
-  $self->add_archive_link if $hub->species_defs->SWITCH_ASSEMBLY;
-
   # Links to external browsers - UCSC, NCBI, etc
   my %browsers = %{$species_defs->EXTERNAL_GENOME_BROWSERS || {}};
   $browsers{'UCSC_DB'} = $species_defs->UCSC_GOLDEN_PATH;
@@ -232,6 +229,8 @@ sub add_external_browsers {
   }
 
   $self->add_vega_link;
+  ## Link to previous/next assembly if available  
+  $self->add_archive_link if $hub->species_defs->SWITCH_ASSEMBLY;
   
   foreach (sort keys %browsers) {
     next unless $browsers{$_};
@@ -254,24 +253,34 @@ sub add_archive_link {
   
   if ($alt_release < $hub->species_defs->ENSEMBL_VERSION) {
   ## get coordinates on other assembly if available
-    if (my @mappings = @{$hub->species_defs->get_config($hub->species, 'ASSEMBLY_MAPPINGS')||[]}) {
-      foreach my $mapping (@mappings) {
-        next unless $mapping eq sprintf ('chromosome:%s#chromosome:%s', $current_assembly, $alt_assembly);
-        my $segments = $self->object->slice->project('chromosome', $alt_assembly);
-        ## link if there is an ungapped mapping of whole gene
-        if (scalar(@$segments) == 1) {
-          my $new_slice = $segments->[0]->to_Slice;
-          $link = sprintf('%s%s/Location/View?r=%s:%s-%s',
+    if ($hub->object->slice) {
+      if (my @mappings = @{$hub->species_defs->get_config($hub->species, 'ASSEMBLY_MAPPINGS')||[]}) {
+        foreach my $mapping (@mappings) {
+          next unless $mapping eq sprintf ('chromosome:%s#chromosome:%s', $current_assembly, $alt_assembly);
+          my $segments = $self->object->slice->project('chromosome', $alt_assembly);
+          ## link if there is an ungapped mapping of whole gene
+          if (scalar(@$segments) == 1) {
+            my $new_slice = $segments->[0]->to_Slice;
+            $link = sprintf('%s%s/Location/%s?r=%s:%s-%s',
                           $url,
                           $hub->species_path,
+                          $hub->action,
                           $new_slice->seq_region_name,
                           $new_slice->start,
                           $new_slice->end,
                   );
-          last;  
+            last;  
+          }
         }
       }
-    $title = "$alt_assembly archive";
+      else {
+        $link = sprintf('%s%s/Location/%s',
+                          $url,
+                          $hub->species_path,
+                          $hub->action,
+                );
+      }
+      $title = "$alt_assembly archive";
     }
   }
   else {
