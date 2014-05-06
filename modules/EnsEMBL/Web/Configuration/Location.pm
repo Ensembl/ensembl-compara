@@ -253,7 +253,7 @@ sub add_archive_link {
   
   if ($alt_release < $hub->species_defs->ENSEMBL_VERSION) {
   ## get coordinates on other assembly if available
-    if ($self->object->slice) {
+    if ($self->object && $self->object->slice) {
       if (my @mappings = @{$hub->species_defs->get_config($hub->species, 'ASSEMBLY_MAPPINGS')||[]}) {
         foreach my $mapping (@mappings) {
           next unless $mapping eq sprintf ('chromosome:%s#chromosome:%s', $current_assembly, $alt_assembly);
