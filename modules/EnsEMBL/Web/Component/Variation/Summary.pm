@@ -612,11 +612,15 @@ sub sets{
   my $hub            = $self->hub;
   my $object         = $self->object;
   my $status         = $object->status;
-  my @variation_sets = sort @{$object->get_variation_sub_sets('Genotyping chip variants')};
+
+
+  my $variation_sets = $object->get_variation_sub_sets('Genotyping chip variants');
+
+  return unless defined $variation_sets ;
 
   my @genotyping_sets_list;
 
-  foreach my $vs (@variation_sets){
+  foreach my $vs (@{$variation_sets}){
       push @genotyping_sets_list,  $vs->name();    
   }
   my $count = scalar @genotyping_sets_list;  

@@ -109,7 +109,7 @@ sub upload {
         my $code    = join '_', $file->md5, $session->session_id;
         my $format  = $hub->param('format');
            $format  = 'BED' if $format =~ /bedgraph/i;
-        my %inputs  = map $_->[1] ? @$_ : (), map [ $_, $hub->param($_) ], qw(filetype ftype style assembly nonpositional);
+        my %inputs  = map $_->[1] ? @$_ : (), map [ $_, $hub->param($_) ], qw(filetype ftype style assembly nonpositional assembly);
         
         $inputs{'format'}    = $format if $format;
         $params->{'species'} = $hub->param('species') || $hub->species;
@@ -125,6 +125,7 @@ sub upload {
           species   => $params->{'species'},
           format    => $format,
           timestamp => time,
+          assembly  => $hub->species_defs->get_config($params->{'species'}, 'ASSEMBLY_NAME'),
           %inputs
         );
         

@@ -77,7 +77,7 @@ sub transcript_table {
   my $hub         = $self->hub;
   my $object      = $self->object;
   my $species     = $hub->species;
-  my $table       = $self->new_twocol;
+  my $table       = $self->new_twocol; 
   my $html        = '';
   my $page_type   = ref($self) =~ /::Gene\b/ ? 'gene' : 'transcript';
   my $description = $object->gene_description;
@@ -392,7 +392,7 @@ sub transcript_table {
       toggleable        => 1,
       class             => 'fixed_width' . ($show ? '' : ' hide'),
       id                => 'transcripts_table',
-      exportable        => 0,
+      exportable        => 1,
       hidden_columns    => \@hidecols,
     });
 
@@ -1057,9 +1057,7 @@ sub render_sift_polyphen {
   }
   
   return qq(
-    <span class="hidden">$rank</span><span class="hidden export">$pred(</span>
-    <div align="center"><div title="$pred" class="_ht score score_$classes{$pred}">$rank_str</div></div>
-    <span class="hidden export">)</span>
+    <span class="hidden">$rank</span><span class="hidden export">$pred(</span><div align="center"><div title="$pred" class="_ht score score_$classes{$pred}">$rank_str</div></div><span class="hidden export">)</span>
   );
 }
 
@@ -1077,10 +1075,12 @@ sub render_consequence_type {
 
   my $type = join ' ',
     map {
-      $self->coltab(
-        $_->label,
+      sprintf(
+        '<nobr><span class="colour" style="background-color:%s">&nbsp;</span> '.
+        '<span class="_ht conhelp" title="%s">%s</span></nobr>',
         $var_styles->{lc $_->SO_term} ? $colourmap->hex_by_name($var_styles->{lc $_->SO_term}->{'default'}) : $colourmap->hex_by_name($var_styles->{'default'}->{'default'}),
         $_->description,
+        $_->label
       )
     }
     @consequences;

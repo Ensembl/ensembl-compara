@@ -123,7 +123,7 @@ sub __set_species {
   $self->__level ||= $level;
 }
 
-sub canLazy { return 1; }
+sub canLazy { return defined $_[0]->param('r'); }
 sub createObjectsInternal {
   my $self = shift;
 

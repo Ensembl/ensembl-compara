@@ -802,6 +802,9 @@ sub pop_info {
   $data{Description}        = $self->pop_description($pop_obj);
   $data{"Super-Population"} = $self->extra_pop($pop_obj,"super");
   $data{"Sub-Population"}   = $self->extra_pop($pop_obj,"sub");
+  $data{PopGroup}           = $self->pop_display_group_name($pop_obj) ||undef;
+  $data{GroupPriority}      = $self->pop_display_group_priority($pop_obj) ||undef;
+ 
 
   return \%data;
 }
@@ -904,6 +907,34 @@ sub extra_pop {
   }
   return \%extra_pop;
 }
+
+sub pop_display_group_priority{
+
+  ### frequencies_table
+  ### Args      : Bio::EnsEMBL::Variation::Population object
+  ### Example    : $group_priority = $object->pop_display_group_priority($pop);
+  ### Description: gets priority level for the display group the population is in
+  ### Returns String
+
+  my ($self, $pop_obj)  = @_;
+  ## FIXME - temporary defensive coding until we have 76 handover! 
+  return $pop_obj->display_group_priority() if $self->species_defs->ENSEMBL_VERSION > 75;
+}
+sub pop_display_group_name{
+
+  ### frequencies_table
+  ### Args      : Bio::EnsEMBL::Variation::Population object
+  ### Example    : $group_priority = $object->pop_display_group_name($pop);
+  ### Description: gets name for the display group the population is in
+  ### Returns String
+
+
+  my ($self, $pop_obj)  = @_;
+  ## FIXME - temporary defensive coding until we have 76 handover! 
+  return $pop_obj->display_group_name() if $self->species_defs->ENSEMBL_VERSION > 75;
+}
+
+ 
 
 
 # Individual table -----------------------------------------------------
@@ -1149,8 +1180,10 @@ sub get_variation_sub_sets {
   my $vari_set_adaptor = $self->hub->database('variation')->get_VariationSetAdaptor;
 
   my $superset_obj = $vari_set_adaptor->fetch_by_name($superset_name);
+  return unless defined $superset_obj;
 
-  my $sets = $vari_set_adaptor->fetch_all_by_Variation_super_VariationSet($self->vari, $superset_obj); 
+  ## FIXME - temporary defensive coding until we have 76 handover! 
+  my $sets = $self->species_defs->ENSEMBL_VERSION > 75 ? $vari_set_adaptor->fetch_all_by_Variation_super_VariationSet($self->vari, $superset_obj) : []; 
   return $sets;
 }
 
@@ -1420,6 +1453,8 @@ sub get_default_pop_name {
   return unless $pop;
   return [ $self->pop_name($pop) ];
 }
+
+
 
 sub location { return $_[0]; }
 
