@@ -18,6 +18,8 @@ limitations under the License.
 
 package EnsEMBL::Draw::GlyphSet::text_seq_legend;
 
+### Legend for text sequence views that use Component::TextSequence
+
 use strict;
 
 use base qw(EnsEMBL::Draw::GlyphSet);

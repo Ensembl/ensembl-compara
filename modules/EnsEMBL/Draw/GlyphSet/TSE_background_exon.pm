@@ -22,7 +22,7 @@ use strict;
 
 use base qw(EnsEMBL::Draw::GlyphSet);
 
-#needed for drawing vertical lines on supporting evidence view
+### Needed for drawing vertical lines on supporting evidence view
 
 sub _init {
   my ($self) = @_;

@@ -18,6 +18,8 @@ limitations under the License.
 
 package EnsEMBL::Draw::GlyphSet::TSE_legend;
 
+### Legend for Transcript/SupportingEvidence
+
 use strict;
 
 use base qw(EnsEMBL::Draw::GlyphSet::legend);

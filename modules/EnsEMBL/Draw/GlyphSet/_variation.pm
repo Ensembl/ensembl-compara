@@ -18,6 +18,8 @@ limitations under the License.
 
 package EnsEMBL::Draw::GlyphSet::_variation;
 
+### Draws a SNP track
+
 use strict;
 
 use List::Util qw(min);

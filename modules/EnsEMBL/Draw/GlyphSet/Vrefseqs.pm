@@ -18,6 +18,8 @@ limitations under the License.
 
 package EnsEMBL::Draw::GlyphSet::Vrefseqs;
 
+### Draws vertical density track on single chromosome - no longer used?
+
 use strict;
 
 use base qw(EnsEMBL::Draw::GlyphSet);

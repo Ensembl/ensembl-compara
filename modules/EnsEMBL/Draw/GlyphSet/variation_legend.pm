@@ -18,6 +18,8 @@ limitations under the License.
 
 package EnsEMBL::Draw::GlyphSet::variation_legend;
 
+### Standard legend for variation tracks (e.g. SNP consequences)
+
 use strict;
 
 use Bio::EnsEMBL::Variation::Utils::Constants;

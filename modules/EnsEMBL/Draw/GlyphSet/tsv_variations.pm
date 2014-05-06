@@ -18,6 +18,8 @@ limitations under the License.
 
 package EnsEMBL::Draw::GlyphSet::tsv_variations;
 
+### Track to draw variations at top of Transcript/Population/Image
+
 use strict;
 
 use Sanger::Graphics::Bump;

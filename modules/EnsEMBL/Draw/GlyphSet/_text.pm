@@ -18,6 +18,8 @@ limitations under the License.
 
 package EnsEMBL::Draw::GlyphSet::_text;
 
+### Generic text module - not clear if/where it's used
+
 use strict;
 
 use base qw(EnsEMBL::Draw::GlyphSet);

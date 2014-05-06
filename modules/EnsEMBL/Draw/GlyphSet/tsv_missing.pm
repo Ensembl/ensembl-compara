@@ -18,6 +18,8 @@ limitations under the License.
 
 package EnsEMBL::Draw::GlyphSet::tsv_missing;
 
+### Error track for Transcript/Population/Image
+
 use strict;
 
 use base qw(EnsEMBL::Draw::GlyphSet);

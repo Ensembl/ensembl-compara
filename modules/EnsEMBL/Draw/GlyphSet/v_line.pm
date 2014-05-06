@@ -18,6 +18,9 @@ limitations under the License.
 
 package EnsEMBL::Draw::GlyphSet::v_line;
 
+### Used in Variation/Context to draw a vertical red line down the whole
+### image, as a visual guide to the centre of the feature
+
 use strict;
 
 use base qw(EnsEMBL::Draw::GlyphSet);

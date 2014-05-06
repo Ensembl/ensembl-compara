@@ -18,8 +18,9 @@ limitations under the License.
 
 package EnsEMBL::Draw::GlyphSet::TSE_intron_sf;
 
-use Data::Dumper;
+### Draws intron supporting evidence on Transcript/SupportingEvidence
 
+use Data::Dumper;
 
 use strict;
 
