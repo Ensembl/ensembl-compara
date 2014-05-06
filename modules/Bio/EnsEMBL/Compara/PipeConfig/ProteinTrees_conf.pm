@@ -977,7 +977,7 @@ sub pipeline_analyses {
             -hive_capacity => $self->o('blast_factory_capacity'),
             -flow_into => {
                 '2->A' => [ 'blastp_unannotated' ],
-                'A->1' => [ 'hcluster_dump_factory' ]
+                'A->1' => [ 'hcluster_dump_input_all_pafs' ]
             },
         },
 
@@ -991,6 +991,15 @@ sub pipeline_analyses {
             },
             -rc_name       => '250Mb_job',
             -hive_capacity => $self->o('blastpu_capacity'),
+        },
+
+        {   -logic_name => 'hcluster_dump_input_all_pafs',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::HclusterPrepareSingleTable',
+            -parameters => {
+                'outgroups'     => $self->o('outgroups'),
+            },
+            -hive_capacity => $self->o('reuse_capacity'),
+            -flow_into  => [ 'hcluster_run' ],
         },
 
 
@@ -1136,7 +1145,6 @@ sub pipeline_analyses {
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::HclusterPrepare',
             -parameters => {
                 'outgroups'     => $self->o('outgroups'),
-                'single_table'  => $self->o('clustering_mode') eq 'hybrid',
             },
             -hive_capacity => $self->o('reuse_capacity'),
         },
