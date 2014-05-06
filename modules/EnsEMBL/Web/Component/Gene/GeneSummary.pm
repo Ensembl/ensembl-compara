@@ -165,52 +165,59 @@ sub content {
 
   $table->add_row('Ensembl version', $object->stable_id.'.'.$object->version);
 
-  ## TEMPORARY CONTENT - Link back to GRCh37 site
-  if ($hub->species eq 'Homo_sapiens') {
-    my ($old_assembly, $new_assembly, $old_release) = qw(NCBI36 GRCh37 54); # qw(GRCh37 GRCh38 75);
-    my $url = 'http://'.lc($old_assembly).'.ensembl.org/';
+  ## Link to another assembly, e.g. previous archive
+  my $current_assembly = $hub->species_defs->ASSEMBLY_NAME;
+  my $alt_assembly = $hub->species_defs->SWITCH_ASSEMBLY;
+  if ($alt_assembly) {
+    my $alt_release = $hub->species_defs->SWITCH_VERSION;
+    my $url = 'http://'.$hub->species_defs->SWITCH_ARCHIVE_URL;
     my $txt;
-    ## Get history for relevant release
-    my $old_id;
-    my $history = $object->history;
-    foreach my $a ( @{ $history->get_all_ArchiveStableIds } ) {
-      next unless $a->release <= $old_release;
-      $old_id = $a->stable_id;
-      last;
-    }
-    
-    # get coordinates of other assemblies
-    if (my @mappings = @{$hub->species_defs->get_config($hub->species, 'ASSEMBLY_MAPPINGS')||[]}) {
-      foreach my $mapping (@mappings) {
-        next unless $mapping eq sprintf ('chromosome:%s#chromosome:%s', $new_assembly, $old_assembly);
-        my $segments = $object->get_Slice->project('chromosome', $old_assembly);
-        # link if there is an ungapped mapping of whole gene
-        if (scalar(@$segments) == 1) {
-          my $new_slice = $segments->[0]->to_Slice;
-          $txt .= "<p>This gene maps to ";
-          $txt .= sprintf(qq(<a href="${url}%s/Location/View?r=%s:%s-%s" target="external">%s-%s</a>),
-                          ucfirst($hub->species),
+    ## Are we jumping backwards or forwards?
+    if ($alt_release < $hub->species_defs->ENSEMBL_VERSION) {
+      ## get coordinates on other assembly if available
+      if (my @mappings = @{$hub->species_defs->get_config($hub->species, 'ASSEMBLY_MAPPINGS')||[]}) {
+        foreach my $mapping (@mappings) {
+          next unless $mapping eq sprintf ('chromosome:%s#chromosome:%s', $current_assembly, $alt_assembly);
+          my $segments = $object->get_Slice->project('chromosome', $alt_assembly);
+          ## link if there is an ungapped mapping of whole gene
+          if (scalar(@$segments) == 1) {
+            my $new_slice = $segments->[0]->to_Slice;
+            $txt .= "<p>This gene maps to ";
+            $txt .= sprintf(qq(<a href="${url}%s/Location/View?r=%s:%s-%s" target="external">%s-%s</a>),
+                          $hub->species_path,
                           $new_slice->seq_region_name,
                           $new_slice->start,
                           $new_slice->end,
                           $self->thousandify($new_slice->start),
                           $self->thousandify($new_slice->end));
-          $txt .= qq( in $old_assembly coordinates.</p>);
-        }
-        else {
-          $txt .= qq(<p>There is no ungapped mapping of this gene onto the $old_assembly assembly.</p>);
-        }
-
-        # direct link to feature in Ensembl
-        if ($old_id) {
-          $txt .= sprintf(qq(<p><a href="%s" target="external">Jump to this stable ID</a> in the GRCh37 archive</p>),
-                          $url.$hub->species."/Gene/Summary?g=".$old_id);
-        }
-        else {
-          $txt .= qq(Stable ID not present in $old_assembly);
+            $txt .= qq( in $alt_assembly coordinates.</p>);
+          }
+          else {
+            $txt .= qq(<p>There is no ungapped mapping of this gene onto the $alt_assembly assembly.</p>);
+          } 
         }
       }
+      ## Plus direct link to feature in Ensembl
+      my $old_id;
+      my $history = $object->history;
+      foreach my $a ( @{ $history->get_all_ArchiveStableIds } ) {
+        next unless $a->release <= $alt_release;
+        $old_id = $a->stable_id;
+        last;
+      }
+      if ($old_id) {
+        $txt .= sprintf(qq(<p><a href="%s" rel="external">Jump to this stable ID</a> in the $alt_assembly archive.</p>),
+                      $url.$hub->species_path."/Gene/Summary?g=".$old_id);
+      }
+      else {
+        $txt .= 'Stable ID '.$hub->param('g')." not present in $alt_assembly.";
+      }
       $table->add_row('Previous assembly', $txt);
+    }
+    else {
+      ## Jumping forwards is less accurate as we probably don't have mappings - do our best here!
+      $txt .= sprintf('<p><a href="%s/%s/Search/Results?q=%s" rel="external">Search for this gene</a> on assembly %s.</p>', $url, $hub->species_path, $hub->param('g'), $alt_assembly);
+      $table->add_row('Latest assembly', $txt);
     } 
   }
 
