@@ -77,7 +77,7 @@ sub transcript_table {
   my $hub         = $self->hub;
   my $object      = $self->object;
   my $species     = $hub->species;
-  my $table       = $self->new_twocol;
+  my $table       = $self->new_twocol; 
   my $html        = '';
   my $page_type   = ref($self) =~ /::Gene\b/ ? 'gene' : 'transcript';
   my $description = $object->gene_description;
@@ -392,7 +392,7 @@ sub transcript_table {
       toggleable        => 1,
       class             => 'fixed_width' . ($show ? '' : ' hide'),
       id                => 'transcripts_table',
-      exportable        => 0,
+      exportable        => 1,
       hidden_columns    => \@hidecols,
     });
 
