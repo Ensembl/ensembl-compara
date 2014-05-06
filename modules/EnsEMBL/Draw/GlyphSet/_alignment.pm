@@ -217,7 +217,7 @@ sub render_normal {
     $join    = 1; # The no-join thing gets completely mad with labels on.
   }
   
-  my ($total_count, $overflow, $track_height);
+  my ($total_count, $cumul_count, $overflow, $track_height);
 
   foreach my $feature_key (@sorted) {
     ## Fix for userdata with per-track config
@@ -240,6 +240,7 @@ sub render_normal {
 
     $self->_init_bump(undef, $depth);
     $total_count = scalar(@features);
+    $cumul_count += $total_count;
     $overflow += ($total_count - $depth);
 
     my $nojoin_id = 1;
@@ -446,7 +447,7 @@ sub render_normal {
     }
     $y_offset -= $strand * ($self->_max_bump_row * ($h + $gap + $label_h) + 6);
   }
-  if ($overflow) {
+  if ($cumul_count && $overflow) {
     my $default = $depth == $default_depth ? 'by default' : '';
     my $text = "This track is $depth features deep $default - click to show up to $overflow more";
     my $y = $track_height + $fontsize * 2 + 10;
