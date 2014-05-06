@@ -18,8 +18,9 @@ limitations under the License.
 
 package EnsEMBL::Draw::GlyphSet::TSE_generic_match;
 
-use Data::Dumper;
+### Draws main features (e.g. protein & cDNA evidence) on Transcript/SupportingEvidence
 
+use Data::Dumper;
 
 use strict;
 

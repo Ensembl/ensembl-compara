@@ -18,7 +18,7 @@ limitations under the License.
 
 package EnsEMBL::Draw::GlyphSet::vcf;
 
-### Module for drawing data in BigBED format (either user-attached, or
+### Module for drawing data in VCF format (either user-attached, or
 ### internally configured via an ini file or database record
 
 use strict;

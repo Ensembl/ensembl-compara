@@ -18,6 +18,8 @@ limitations under the License.
 
 package EnsEMBL::Draw::GlyphSet::transcriptexon_bgtrack;
 
+### Draws background triangles between angled lines (upper row) on Transcript/Population/Image
+
 use strict;
 
 use base qw(EnsEMBL::Draw::GlyphSet);

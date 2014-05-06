@@ -18,6 +18,8 @@ limitations under the License.
 
 package EnsEMBL::Draw::GlyphSet::Vannotation_status;
 
+### Vega annotation status on vertical ideograms
+
 use strict;
 
 use base qw(EnsEMBL::Draw::GlyphSet);
