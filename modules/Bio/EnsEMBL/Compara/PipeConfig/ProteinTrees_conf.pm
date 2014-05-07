@@ -1265,13 +1265,13 @@ sub pipeline_analyses {
                 'fan_branch_code'   => 2,
             },
             -flow_into  => {
-                 '2->A' => [ 'test_test_long_running_clusters_go_to_mafft' ],
+                 '2->A' => [ 'test_large_clusters_go_to_mafft' ],
                  'A->1' => [ 'hc_global_tree_set' ],
             },
             -meadow_type    => 'LOCAL',
         },
 
-        {   -logic_name => 'test_test_long_running_clusters_go_to_mafft',
+        {   -logic_name => 'test_large_clusters_go_to_mafft',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ConditionalDataFlow',
             -parameters => {
                 'condition'             => '$self->compara_dba->get_GeneTreeAdaptor->fetch_by_dbID(#gene_tree_id#)->get_value_for_tag("gene_count") > #mafft_gene_count#',
