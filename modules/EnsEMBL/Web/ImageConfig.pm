@@ -57,7 +57,7 @@ sub new {
     code             => $code,
     type             => $type,
     species          => $species,
-    altered          => 0,
+    altered          => [],
     _tree            => EnsEMBL::Web::Tree->new,
     transcript_types => [qw(transcript alignslice_transcript tsv_transcript gsv_transcript TSE_transcript)],
     _parameters      => { # Default parameters
@@ -229,7 +229,7 @@ sub modify {} # For plugins
 sub storable     :lvalue { $_[0]{'_parameters'}{'storable'};     } # Set to 1 if configuration can be altered
 sub image_resize :lvalue { $_[0]{'_parameters'}{'image_resize'}; } # Set to 1 if there is image resize function
 sub has_das      :lvalue { $_[0]{'_parameters'}{'has_das'};      } # Set to 1 if there are DAS tracks
-sub altered      :lvalue { $_[0]{'altered'};                     } # Set to 1 if the configuration has been updated
+sub altered      :lvalue { $_[0]{'altered'};                     } 
 
 sub hub                 { return $_[0]->{'hub'};                                               }
 sub code                { return $_[0]->{'code'};                                              }
@@ -1215,7 +1215,7 @@ sub update_from_input {
     $diff = from_json($diff);
     $self->update_track_renderer($_, $diff->{$_}->{'renderer'}) for grep exists $diff->{$_}->{'renderer'}, keys %$diff;
     
-    $reload        = $self->altered;
+    $reload        = scalar(@{$self->altered}) > 0 ? 1 : 0;
     $track_reorder = $self->update_track_order($diff) if $diff->{'track_order'};
     $reload      ||= $track_reorder;
     $self->update_favourite_tracks($diff);
@@ -1232,7 +1232,7 @@ sub update_from_input {
       }
     }
     
-    $reload = $self->altered;
+    $reload = scalar(@{$self->altered}) > 0 ? 1 : 0;
     
     $self->update_favourite_tracks(\%favourites) if scalar keys %favourites;
   }
@@ -1376,12 +1376,13 @@ sub update_from_url {
     }
   }
   
-  if ($self->altered) {
+  if (scalar(@{$self->altered}) > 0) {
+    my $tracks = join(', ', @{$self->altered});
     $session->add_data(
       type     => 'message',
       function => '_info',
       code     => 'image_config',
-      message  => 'The link you followed has made changes to the tracks displayed on this page.',
+      message  => "The link you followed has made changes to these tracks: $tracks.",
     );
   }
 }
@@ -1404,8 +1405,9 @@ sub update_track_renderer {
 
   # if $on_off == 1, only allow track enabling/disabling. Don't allow enabled tracks' renderer to be changed.
   $flag += $node->set_user('display', $renderer) if (!$on_off || $renderer eq 'off' || $node->get('display') eq 'off');
+  my $text = $node->data->{'name'} || $node->data->{'coption'};
 
-  $self->altered = 1 if $flag;
+  push @{$self->altered}, $text if $flag;
 }
 
 sub update_favourite_tracks {
@@ -1441,8 +1443,11 @@ sub update_track_order {
   my ($self, $diff) = @_;
   my $species    = $self->species;
   my $node       = $self->get_node('track_order');
-  $self->altered = $node->set_user($species, { %{$node->get($species) || {}}, %{$diff->{'track_order'}} });
-  return $self->altered if $self->get_parameter('sortable_tracks') ne 'drag';
+  if ($node->set_user($species, { %{$node->get($species) || {}}, %{$diff->{'track_order'}} })) {
+    my $text = $node->data->{'name'} || $node->data->{'coption'};
+    push @{$self->altered}, $text;
+  }
+  return scalar(@{$self->altered}) if $self->get_parameter('sortable_tracks') ne 'drag';
 }
 
 sub reset {
@@ -1457,7 +1462,8 @@ sub reset {
       my $user_data = $node->{'user_data'};
       
       foreach (keys %$user_data) {
-        $self->altered = 1 if $user_data->{$_}{'display'};
+        my $text = $user_data->{$_}{'name'} || $user_data->{$_}{'coption'};
+        push @{$self->altered}, $text if $user_data->{$_}{'display'};
         delete $user_data->{$_}{'display'};
         delete $user_data->{$_} unless scalar keys %{$user_data->{$_}};
       }
@@ -1469,7 +1475,7 @@ sub reset {
     my $species = $self->species;
     
     if ($node->{'user_data'}{'track_order'}{$species}) {
-      $self->altered = 1;
+      #$self->altered = 1;
       delete $node->{'user_data'}{'track_order'}{$species};
       delete $node->{'user_data'}{'track_order'} unless scalar keys %{$node->{'user_data'}{'track_order'}};
     }
