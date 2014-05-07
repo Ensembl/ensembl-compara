@@ -788,11 +788,4 @@ sub _load_command_linux {
   return $VAL + 0;
 }
 
-sub _referrer_is_mirror {
-## Mirror hash is now multi-dimensional, so we have to recurse into it
-    my ( $ensembl_mirrors, $referrer ) = @_;
-    map { ref $_ eq 'HASH' ? _referrer_is_mirror( $_, $referrer ) : $referrer eq $_ ? return 'true' : undef }
-      values %$ensembl_mirrors;
-}
-
 1;
