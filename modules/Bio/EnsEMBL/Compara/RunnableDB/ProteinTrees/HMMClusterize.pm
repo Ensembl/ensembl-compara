@@ -107,6 +107,7 @@ sub load_hmmer_classifications {
         while (<$hmmer_clas_fh>) {
             chomp;
             my ($seq_member_id, $hmm_id, $eval) = split /\t/;
+            next if ($hmm_id =~ /\:SF/); ## Avoid panther sub-families e.g. PTHR11353:SF75
             $allclusters{$hmm_id}{members}{$seq_member_id} = 1; ## Avoid duplicates
 #            push @{$allclusters{$hmm_id}{members}}, $seq_id;
         }
