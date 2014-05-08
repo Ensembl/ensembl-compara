@@ -295,6 +295,17 @@ sub delete_nodes_not_in_tree
 }
 
 
+sub remove_seq_member {
+    my $self = shift;
+    my $leaf = shift;
+    $leaf->disavow_parent;
+    $self->delete_flattened_leaf( $leaf );
+    my $sth = $self->prepare('INSERT IGNORE INTO removed_member (seq_member_id, root_id) VALUES (?,?)');
+    $sth->execute($leaf->seq_member_id, $leaf->root->node_id);
+    $sth->finish;
+}
+
+
 ###################################
 #
 # tagging

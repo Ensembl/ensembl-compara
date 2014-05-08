@@ -167,7 +167,7 @@ my $config = {
                              tests => [
                                        {
                                         description => 'All the removed members should not be in the clusters anymore',
-                                        query       => 'SELECT gtn.node_id FROM removed_member JOIN gene_member gene USING(stable_id) JOIN seq_member transc ON(gene.canonical_member_id = transc.seq_member_id) JOIN gene_tree_node gtn ON(transc.seq_member_id=gtn.seq_member_id) WHERE gtn.root_id = #gene_tree_id#;',
+                                        query       => 'SELECT gtn.node_id, gtn.root_id, gtn.seq_member_id, rm.seq_member_id, rm.root_id FROM removed_member rm JOIN gene_tree_node gtn USING (seq_member_id) WHERE gtn.root_id = #gene_tree_id#;',
                                        },
                                       ],
                             },
@@ -177,7 +177,7 @@ my $config = {
                              tests => [
                                        {
                                         description => 'We should have removed members on all the low-coverage-assembly species',
-                                        query       => 'SELECT name FROM species_set JOIN genome_db USING(genome_db_id) JOIN species_set_tag USING(species_set_id) WHERE value="low-coverage-assembly" AND name NOT IN(SELECT DISTINCT(name) FROM removed_member JOIN genome_db USING(genome_db_id));',
+                                        query       => 'SELECT name FROM species_set JOIN genome_db USING(genome_db_id) JOIN species_set_tag USING(species_set_id) WHERE value="low-coverage-assembly" AND genome_db_id NOT IN(SELECT DISTINCT(genome_db_id) FROM removed_member JOIN seq_member USING (seq_member_id));',
                                        },
                                       ],
                             },
@@ -206,7 +206,7 @@ my $config = {
         tests => [
             {
                 description => 'Checks that the tree has not lost any genes since the backup',
-                query => 'SELECT gene_tree_backup.seq_member_id FROM gene_tree_backup LEFT JOIN gene_tree_node USING (root_id, seq_member_id) WHERE root_id = #gene_tree_id# AND gene_tree_node.seq_member_id IS NULL',
+                query => 'SELECT gtb.seq_member_id FROM gene_tree_backup gtb LEFT JOIN gene_tree_node gtn USING (root_id, seq_member_id) LEFT JOIN removed_member rm ON gtb.root_id = rm.root_id AND gtb.seq_member_id = rm.seq_member_id  WHERE gtb.root_id = #gene_tree_id# AND gtn.seq_member_id IS NULL AND rm.seq_member_id IS NULL',
             },
             {
                 description => 'Checks that the tree has not gained any genes since the backup',
@@ -251,7 +251,7 @@ my $config = {
 
             {
                 description => 'Checks that the "gene_count" tags agree with the actual number of members in the tree',
-                query => 'SELECT root_id, COUNT(seq_member_id) AS count, value FROM gene_tree_node JOIN gene_tree_root_tag USING (root_id) WHERE root_id = #gene_tree_id# AND tag = "gene_count" GROUP BY root_id HAVING count != value',
+                query => 'SELECT root_id, COUNT(seq_member_id) AS count, value FROM (    SELECT root_id, gene_tree_backup.seq_member_id FROM gene_tree_backup JOIN removed_member USING (root_id,seq_member_id) WHERE root_id = #gene_tree_id#      UNION       SELECT root_id, gene_tree_node.seq_member_id FROM gene_tree_node WHERE root_id = #gene_tree_id# AND seq_member_id IS NOT NULL           ) tmp_table JOIN gene_tree_root_tag USING (root_id) WHERE tag = "gene_count" GROUP BY root_id HAVING count != value'
             },
         ],
     },

@@ -493,13 +493,7 @@ sub parse_filtered_align {
             print "removing ".$leaf->stable_id." keys: ".keys(%hash_initial_strings)."\n";
             delete($hash_initial_strings{$leaf->{_tmp_name}});
             print "after keys: ".keys(%hash_initial_strings)."\n";
-
-            $leaf->disavow_parent;
-            $treenode_adaptor->delete_flattened_leaf( $leaf );
-            my $sth = $self->compara_dba->dbc->prepare('INSERT IGNORE INTO removed_member (node_id, stable_id, genome_db_id) VALUES (?,?,?)');
-            print $self->param('gene_tree_id').", $leaf->stable_id, $leaf->genome_db_id, \n" ;
-            $sth->execute($leaf->node_id, $leaf->stable_id, $leaf->genome_db_id );
-            $sth->finish;
+            $treenode_adaptor->remove_seq_member($leaf);
         }
     }
 

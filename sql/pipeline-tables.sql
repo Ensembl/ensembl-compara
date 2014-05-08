@@ -237,12 +237,10 @@ CREATE TABLE recovered_member (
 
 DROP TABLE IF EXISTS removed_member; 
 CREATE TABLE removed_member (
-  removed_id  int(10) unsigned NOT NULL AUTO_INCREMENT,
-  node_id int(10) unsigned NOT NULL,
-  stable_id varchar(128) NOT NULL,
-  genome_db_id int(10) unsigned DEFAULT NULL,
-  PRIMARY KEY (removed_id),
-  UNIQUE KEY (stable_id)
+	seq_member_id	int(10) unsigned NOT NULL,
+	root_id	int(10) unsigned NOT NULL,
+  PRIMARY KEY (seq_member_id),
+  KEY (root_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 
 DROP TABLE IF EXISTS cmsearch_hit; 

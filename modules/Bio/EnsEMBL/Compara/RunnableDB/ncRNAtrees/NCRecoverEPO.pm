@@ -481,18 +481,7 @@ sub remove_low_cov_predictions {
   foreach my $leaf (@{$nc_tree->get_all_leaves}) {
     if(my $removed_stable_id = $self->param('low_cov_leaves_to_delete_pmember_id')->{$leaf->seq_member_id}) {
       print STDERR "removing low_cov prediction $removed_stable_id\n" if($self->debug);
-      my $removed_genome_db_id = $leaf->genome_db_id;
-      $leaf->disavow_parent;
-      $self->param('treenode_adaptor')->delete_flattened_leaf($leaf);
-      my $sth = $self->compara_dba->dbc->prepare
-        ("INSERT IGNORE INTO removed_member 
-                           (node_id,
-                            stable_id,
-                            genome_db_id) VALUES (?,?,?)");
-      $sth->execute($root_id,
-                    $removed_stable_id,
-                    $removed_genome_db_id);
-      $sth->finish;
+      $self->param('treenode_adaptor')->remove_seq_member($leaf);
     }
   }
   #calc residue count total
