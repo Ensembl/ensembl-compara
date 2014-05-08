@@ -206,7 +206,7 @@ my $config = {
         tests => [
             {
                 description => 'Checks that the tree has not lost any genes since the backup',
-                query => 'SELECT gene_tree_backup.seq_member_id FROM gene_tree_backup LEFT JOIN gene_tree_node USING (root_id, seq_member_id) WHERE root_id = #gene_tree_id# AND gene_tree_node.seq_member_id IS NULL',
+                query => 'SELECT gene_tree_backup.seq_member_id FROM gene_tree_backup JOIN seq_member USING (seq_member_id) LEFT JOIN gene_tree_node USING (root_id, seq_member_id) LEFT JOIN removed_member USING (stable_id) WHERE root_id = #gene_tree_id# AND gene_tree_node.seq_member_id IS NULL AND removed_member.stable_id IS NULL',
             },
             {
                 description => 'Checks that the tree has not gained any genes since the backup',
@@ -251,7 +251,7 @@ my $config = {
 
             {
                 description => 'Checks that the "gene_count" tags agree with the actual number of members in the tree',
-                query => 'SELECT root_id, COUNT(seq_member_id) AS count, value FROM gene_tree_node JOIN gene_tree_root_tag USING (root_id) WHERE root_id = #gene_tree_id# AND tag = "gene_count" GROUP BY root_id HAVING count != value',
+                query => 'SELECT root_id, COUNT(seq_member_id) AS count, value FROM (    SELECT root_id, gene_tree_backup.seq_member_id FROM gene_tree_backup JOIN seq_member USING (seq_member_id) JOIN removed_member USING (stable_id) WHERE root_id = #gene_tree_id#      UNION       SELECT root_id, gene_tree_node.seq_member_id FROM gene_tree_node WHERE root_id = #gene_tree_id# AND seq_member_id IS NOT NULL           ) tmp_table JOIN gene_tree_root_tag USING (root_id) WHERE tag = "gene_count" GROUP BY root_id HAVING count != value',
             },
         ],
     },
