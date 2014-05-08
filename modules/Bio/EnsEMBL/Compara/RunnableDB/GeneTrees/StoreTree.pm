@@ -494,6 +494,9 @@ sub parse_filtered_align {
         }
 
         foreach my $seq ($aln->each_seq) {
+            # Delete empty sequences => Sequences with only gaps and 'X's
+            # for instance: ---------XXXXX---X---XXXX
+            next if $seq->seq() =~ /^[Xx\-]*$/;
             $hash_filtered_strings{$seq->display_id()} = $seq->seq();
         }
     }
