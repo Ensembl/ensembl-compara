@@ -185,14 +185,15 @@ sub run_buildhmm {
     my $cmd_out = $self->run_command($cmd);
     die sprintf("Could not run hmmbuild:\nSTDOUT %s\nSTDERR %s\n", $cmd_out->out, $cmd_out->err) if ($cmd_out->exit_code);
 
+    my $runtime_msec = $cmd_out->runtime_msec;
     if ($self->param_required('hmmer_version') eq '2') {
         $cmd = sprintf('%s %s', $self->param('hmmcalibrate_exe'), $hmm_file);
         my $cmd_out2 = $self->run_command($cmd);
         die "Could not run hmmcalibrate: ", $cmd_out2->out if ($cmd_out2->exit_code);
-        $cmd_out->runtime_msec += $cmd_out2->runtime_msec
+        $runtime_msec += $cmd_out2->runtime_msec
     }
 
-    $self->param('protein_tree')->store_tag('BuildHMM_runtime_msec', $cmd_out->runtime_msec);
+    $self->param('protein_tree')->store_tag('BuildHMM_runtime_msec', $runtime_msec);
 }
 
 
