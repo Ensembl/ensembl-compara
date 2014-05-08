@@ -66,6 +66,11 @@ Other parameters:
  - reroot_with_sdi: should "treebest sdi" also reroot the tree
  - output_clusterset_id: alternative clusterset_id to store the result gene tree
 
+Branch events:
+ - #1: autoflow on success
+ - #2: cluster too small
+ - #3: cluster too large
+
 =head1 APPENDIX
 
 The rest of the documentation details each of the object methods.
@@ -215,9 +220,15 @@ sub run_generic_command {
 
     my $number_actual_genes = scalar(@{$gene_tree->get_all_Members}) - scalar(keys %{$self->param('split_genes')});
 
-    if (($number_actual_genes < $self->param('minimum_genes')) or ($number_actual_genes > $self->param('maximum_genes'))) {
-        $self->warning("There are $number_actual_genes genes in this tree. Not running the command");
-        return;
+    if ($number_actual_genes < $self->param('minimum_genes')) {
+        $self->dataflow_output_id($self->input_id, 2);
+        $self->input_job->incomplete(0);
+        die "There are only $number_actual_genes genes in this tree. Not running the command.\n";
+    }
+    if ($number_actual_genes > $self->param('maximum_genes')) {
+        $self->dataflow_output_id($self->input_id, 3);
+        $self->input_job->incomplete(0);
+        die "There are too many genes ($number_actual_genes) in this tree. Not running the command.\n";
     }
 
     foreach my $tag ($gene_tree->get_all_tags()) {
