@@ -179,8 +179,10 @@ sub store_genetree
     printf("PHYML::store_genetree\n") if($self->debug);
 
     $tree->root->build_leftright_indexing(1);
-    $self->compara_dba->get_GeneTreeAdaptor->store($tree);
-    $self->compara_dba->get_GeneTreeNodeAdaptor->delete_nodes_not_in_tree($tree->root);
+    $self->call_within_transaction(sub {
+        $self->compara_dba->get_GeneTreeAdaptor->store($tree);
+        $self->compara_dba->get_GeneTreeNodeAdaptor->delete_nodes_not_in_tree($tree->root);
+    });
 
     if($self->debug >1) {
         print("done storing - now print\n");
@@ -448,9 +450,7 @@ sub store_alternative_tree {
     }
     my $newtree = $self->fetch_or_create_other_tree($clusterset, $ref_tree);
     return undef unless $self->parse_newick_into_tree($newick, $newtree);
-    $self->call_within_transaction(sub {
-        $self->store_genetree($newtree, $ref_support);
-    });
+    $self->store_genetree($newtree, $ref_support);
     $newtree->release_tree;
     return $newtree;
 }

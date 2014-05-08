@@ -153,9 +153,7 @@ sub run {
 sub write_output {
     my ($self) = @_;
 
-    $self->call_within_transaction(sub {
-        $self->store_genetree($self->param('gene_tree'), $self->param('ref_support'));
-    }) if defined $self->param('inputtrees_unrooted');
+    $self->store_genetree($self->param('gene_tree'), $self->param('ref_support')) if defined $self->param('inputtrees_unrooted');
 }
 
 sub post_cleanup {
