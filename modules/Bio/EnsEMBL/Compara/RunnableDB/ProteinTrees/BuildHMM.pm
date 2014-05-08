@@ -178,6 +178,7 @@ sub run_buildhmm {
     my $cmd = join(' ',
             $self->param('hmmbuild_exe'),
             ($self->param('cdna') ? '--dna' : '--amino'),
+            '-F',
             $hmm_file,
             $aln_file
     );
