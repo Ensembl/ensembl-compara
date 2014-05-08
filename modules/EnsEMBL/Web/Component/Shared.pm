@@ -523,9 +523,9 @@ sub species_stats {
 
   $html .= $counts->render;
 
-  ## GENE COUNTS FOR ALTERNATE ASSEMBLY
+  ## GENE COUNTS FOR ALTERNATIVE ASSEMBLY
   if ($has_alt) {
-    $html .= "<h3>Gene counts (Alternate sequence)</h3>";
+    $html .= "<h3>Gene counts (Alternative sequence)</h3>";
     my $alt_counts = EnsEMBL::Web::Document::Table->new($cols, [], $options);
     foreach (@stats) {
       my $name = $_.'_acnt';
