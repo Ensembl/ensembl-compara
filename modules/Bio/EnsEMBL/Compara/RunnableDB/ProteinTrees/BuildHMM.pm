@@ -183,7 +183,7 @@ sub run_buildhmm {
             $aln_file
     );
     my $cmd_out = $self->run_command($cmd);
-    die "Could not run hmmbuild: ", $cmd_out->out if ($cmd_out->exit_code);
+    die sprintf("Could not run hmmbuild:\nSTDOUT %s\nSTDERR %s\n", $cmd_out->out, $cmd_out->err) if ($cmd_out->exit_code);
 
     if ($self->param_required('hmmer_version') eq '2') {
         $cmd = sprintf('%s %s', $self->param('hmmcalibrate_exe'), $hmm_file);
