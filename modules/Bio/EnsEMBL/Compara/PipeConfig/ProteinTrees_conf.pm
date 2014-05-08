@@ -1444,7 +1444,10 @@ sub pipeline_analyses {
                 'treebest_exe'              => $self->o('treebest_exe'),
             },
             -hive_capacity        => $self->o('raxml_capacity'),
-            -rc_name => '8Gb_job',
+            -rc_name    => '8Gb_job',
+            -flow_into  => {
+                2 => { 'treebest' => { 'output_clusterset_id' => 'raxml', 'gene_tree_id' => '#gene_tree_id#' } },
+            }
         },
 
         {   -logic_name => 'notung',

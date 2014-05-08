@@ -66,7 +66,8 @@ use base ('Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::TreeBest', 'Bio::EnsEMB
 sub param_defaults {
     return {
             'cdna'              => 1,   # always use cdna for njtree_phyml
-		'check_split_genes' => 1,
+            'check_split_genes' => 1,
+            'output_clusterset_id'  => 'treebest',
             'store_tree_support'    => 1,
             'intermediate_prefix'   => 'interm',
             'do_transactions'   => 1,
@@ -105,7 +106,7 @@ sub write_output {
     my @dataflow = ();
 
     my @ref_support = qw(phyml_nt nj_ds phyml_aa nj_dn nj_mm);
-    my $treebest_stored_tree = $self->store_alternative_tree($self->param('treebest_stdout'), 'treebest', $self->param('gene_tree'), \@ref_support);
+    my $treebest_stored_tree = $self->store_alternative_tree($self->param('treebest_stdout'), $self->param('output_clusterset_id'), $self->param('gene_tree'), \@ref_support);
 
     if (not $treebest_stored_tree) {
         $self->input_job->transient_error(0);

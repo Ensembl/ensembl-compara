@@ -269,6 +269,7 @@ sub resource_classes {
          '8Gb_job'      => {'LSF' => '-q production-rh6 -M8000  -R"select[mem>8000]  rusage[mem=8000]"' },
          '16Gb_job'     => {'LSF' => '-q production-rh6 -M16000 -R"select[mem>16000] rusage[mem=16000]"' },
          '32Gb_job'     => {'LSF' => '-q production-rh6 -M32000 -R"select[mem>32000] rusage[mem=32000]"' },
+         '64Gb_job'     => {'LSF' => '-q production-rh6 -M64000 -R"select[mem>64000] rusage[mem=64000]"' },
          'urgent_hcluster'     => {'LSF' => '-q production-rh6 -M32000 -R"select[mem>32000] rusage[mem=32000]"' },
          'msa'      => {'LSF' => '-q production-rh6' },
          'msa_himem'    => {'LSF' => '-q production-rh6 -M 32768 -R"select[mem>32768] rusage[mem=32768]"' },
@@ -281,13 +282,15 @@ sub pipeline_analyses {
     my %analyses_by_name = map {$_->{'-logic_name'} => $_} @$all_analyses;
 
     ## Extend this section to redefine the resource names of some analysis
-    $analyses_by_name{'split_genes'}->{'-rc_name'} = '4Gb_job';
+    $analyses_by_name{'split_genes'}->{'-rc_name'} = '8Gb_job';
     $analyses_by_name{'trimal'}->{'-rc_name'} = '4Gb_job';
+    $analyses_by_name{'notung'}->{'-rc_name'} = '8Gb_job';
 
     ## We add some more analyses
     push @$all_analyses, @{$self->extra_analyses(@_)};
 
     ## And stich them to the previous ones
+    $analyses_by_name{'split_genes'}->{'-flow_into'}->{-1} = [ 'split_genes_himem' ];
     $analyses_by_name{'build_HMM_aa'}->{'-flow_into'} = {
         -1 => [ 'build_HMM_aa_himem' ],  # MEMLIMIT
     };
@@ -301,6 +304,19 @@ sub pipeline_analyses {
 sub extra_analyses {
     my $self = shift;
     return [
+
+        {   -logic_name     => 'split_genes_himem',
+            -module         => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::FindContiguousSplitGenes',
+            -hive_capacity  => $self->o('split_genes_capacity'),
+            -rc_name        => '32Gb_job',
+            -flow_into      => {
+                1   => [ 'build_HMM_aa_himem', 'build_HMM_cds_himem' ],
+                '1->A'   => [ $self->o('use_raxml') ? 'trimal' : 'treebest' ],
+                '999->A' => [ $self->o('use_raxml') ? 'treebest' : 'trimal' ],
+                'A->1'   => 'notung'
+            }
+        },
+
         {   -logic_name     => 'build_HMM_aa_himem',
             -module         => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::BuildHMM',
             -parameters     => {
