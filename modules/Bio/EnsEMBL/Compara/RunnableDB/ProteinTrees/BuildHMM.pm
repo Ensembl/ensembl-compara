@@ -177,8 +177,8 @@ sub run_buildhmm {
     # $hmmbuild --amino -g -F $file.hmm $file >/dev/null
     my $cmd = join(' ',
             $self->param('hmmbuild_exe'),
-            ($self->param('cdna') ? '--dna' : '--amino'),
-            '-F',
+            ($self->param('cdna') ? ($self->param_required('hmmer_version') eq '2' ? '--nucleic' : '--dna') : '--amino'),
+            $self->param_required('hmmer_version') eq '2' ? '-F' : '',
             $hmm_file,
             $aln_file
     );
