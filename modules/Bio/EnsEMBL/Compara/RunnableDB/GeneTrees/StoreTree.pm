@@ -211,6 +211,7 @@ sub store_node_tags
     } else {
         if ($node->has_tag('gene_split')) {
             $node_type = 'gene_split';
+            $node->store_tag('duplication_confidence_score', 1);
         } elsif ($node->get_tagvalue("DD", 0)) {
             $node_type = 'dubious';
         } elsif ($node->get_tagvalue('Duplication', '') eq '1') {
