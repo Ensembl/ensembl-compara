@@ -291,7 +291,10 @@ sub pipeline_analyses {
     push @$all_analyses, @{$self->extra_analyses(@_)};
 
     ## And stich them to the previous ones
-    $analyses_by_name{'split_genes'}->{'-flow_into'}->{-1} = [ 'split_genes_himem' ];
+    $analyses_by_name{'split_genes'}->{'-flow_into'} = {
+        1  => [ $self->o('use_raxml') ? 'trimal' : 'treebest' ],
+        -1 => [ 'split_genes_himem' ],
+    };
     $analyses_by_name{'build_HMM_aa'}->{'-flow_into'} = {
         -1 => [ 'build_HMM_aa_himem' ],  # MEMLIMIT
     };
@@ -310,11 +313,7 @@ sub extra_analyses {
             -module         => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::FindContiguousSplitGenes',
             -hive_capacity  => $self->o('split_genes_capacity'),
             -rc_name        => '32Gb_job',
-            -flow_into      => {
-                1   => [ 'build_HMM_aa_himem', 'build_HMM_cds_himem' ],
-                '1->A'   => [ $self->o('use_raxml') ? 'trimal' : 'treebest' ],
-                'A->1'   => [ 'hc_alignment_post_tree' ],
-            }
+            -flow_into      => [ $self->o('use_raxml') ? 'trimal' : 'treebest' ],
         },
 
         {   -logic_name     => 'build_HMM_aa_himem',
