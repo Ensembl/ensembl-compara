@@ -95,6 +95,7 @@ sub default_options {
 
     # tree building parameters:
         'use_raxml'                 => 1,
+        'use_notung'                => 1,
         'treebreak_gene_count'      => 100000,     # affects msa_chooser
         'mafft_gene_count'          => 200,     # affects msa_chooser
         'mafft_runtime'             => 172800,    # affects msa_chooser
@@ -312,8 +313,7 @@ sub extra_analyses {
             -flow_into      => {
                 1   => [ 'build_HMM_aa_himem', 'build_HMM_cds_himem' ],
                 '1->A'   => [ $self->o('use_raxml') ? 'trimal' : 'treebest' ],
-                '999->A' => [ $self->o('use_raxml') ? 'treebest' : 'trimal' ],
-                'A->1'   => 'notung'
+                'A->1'   => [ 'hc_alignment_post_tree' ],
             }
         },
 
