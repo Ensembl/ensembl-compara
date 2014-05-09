@@ -1162,7 +1162,7 @@ sub pipeline_analyses {
             },
             -flow_into  => {
                 2  => [ 'quick_tree_break' ],
-                3  => [ 'split_genes' ],
+                3  => [ 'tree_entry_point', 'build_HMM_aa', 'build_HMM_cds' ],
             },
             -meadow_type    => 'LOCAL',
         },
@@ -1251,16 +1251,14 @@ sub pipeline_analyses {
             -hive_capacity  => $self->o('split_genes_capacity'),
             -rc_name        => '500Mb_job',
             -batch_size     => 20,
-            -flow_into      => {
-                1   => [ 'build_HMM_aa', 'build_HMM_cds', 'tree_entry_point' ],
-            }
+            -flow_into      => [ $self->o('use_raxml') ? 'trimal' : 'treebest' ],
         },
 
         {   -logic_name => 'tree_entry_point',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
             -meadow_type    => 'LOCAL',
             -flow_into  => {
-                '1->A'   => [ $self->o('use_raxml') ? 'trimal' : 'treebest' ],
+                '1->A'   => [ 'split_genes' ],
                 'A->1'   => [ 'hc_alignment_post_tree' ],
             },
         },
