@@ -104,7 +104,7 @@ sub fetch_input {
 
 sub write_output {
     my $self = shift @_;
-
+    $self->run_analysis;
 }
 
 
@@ -119,12 +119,8 @@ sub run_analysis {
     my $starttime = time()*1000;
     my $gene_tree = $self->param('gene_tree');
 
-    print "Calculating ancestor species hash\n" if ($self->debug);
-    $self->get_ancestor_species_hash($gene_tree);
-
     my $tmp_time = time();
     print "build paralogs graph\n" if ($self->debug);
-    $gene_tree->print_tree if $self->debug;
     my $ngenepairlinks = $self->rec_add_paralogs($gene_tree);
     print "$ngenepairlinks pairings\n" if ($self->debug);
 
