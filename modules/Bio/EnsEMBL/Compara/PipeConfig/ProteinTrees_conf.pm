@@ -73,14 +73,20 @@ sub default_options {
         %{$self->SUPER::default_options},   # inherit the generic ones
 
     # parameters that are likely to change from execution to another:
-        #'mlss_id'               => 40077,   # it is very important to check that this value is current (commented out to make it obligatory to specify)
-        #'ensembl_release'       => 68,      # it defaults to Bio::EnsEMBL::ApiVersion::software_version(): you're unlikely to change the value
-        'do_not_reuse_list'     => [ ],     # names of species we don't want to reuse this time
+        # It is very important to check that this value is current (commented out to make it obligatory to specify)
+        #'mlss_id'               => 40077,
+        # It defaults to Bio::EnsEMBL::ApiVersion::software_version(): you're unlikely to change the value
+        #'ensembl_release'       => 68,
+        # You can add a letter to distinguish this run from other runs on the same release
+        'rel_with_suffix'       => $self->o('ensembl_release')."",
+        # names of species we don't want to reuse this time
+        'do_not_reuse_list'     => [ ],
         'method_link_dump_file' => $self->o('ensembl_cvs_root_dir').'/ensembl-compara/sql/method_link.txt',
 
     # custom pipeline name, in case you don't like the default one
-        #'pipeline_name'         => 'compara_homology_'.$self->o('ensembl_release'),
-        'division'              => undef,       # Tag attached to every single tree
+        #'pipeline_name'        => 'protein_trees_'.$self->o('rel_with_suffix'),
+        # Tag attached to every single tree
+        'division'              => undef,
 
     # dependent parameters: updating 'work_dir' should be enough
         #'work_dir'              => '/lustre/scratch101/ensembl/'.$self->o('ENV', 'USER').'/protein_trees_'.$self->o('rel_with_suffix'),
@@ -92,15 +98,17 @@ sub default_options {
     # "Member" parameters:
         'allow_ambiguity_codes'     => 0,
         'allow_pyrrolysine'         => 0,
+        # highest member_id for a protein member
+        'protein_members_range'     => 100000000,
 
     # blast parameters:
         'blast_params'              => '-seg no -max_hsps_per_subject 1 -use_sw_tback -num_threads 1',
 
-        'protein_members_range'     => 100000000, # highest member_id for a protein member
-
     # clustering parameters:
-        'outgroups'                     => {},      # affects 'hcluster_dump_input_per_genome'
-        'clustering_max_gene_halfcount' => 750,     # (half of the previously used 'clutering_max_gene_count=1500) affects 'hcluster_run'
+        # affects 'hcluster_dump_input_per_genome'
+        'outgroups'                     => {},
+        # (half of the previously used 'clutering_max_gene_count=1500) affects 'hcluster_run'
+        'clustering_max_gene_halfcount' => 750,
 
     # tree building parameters:
         'use_raxml'                 => 0,
@@ -116,26 +124,32 @@ sub default_options {
         'binary_species_tree_input_file'   => undef,
 
     # homology_dnds parameters:
-        'codeml_parameters_file'    => $self->o('ensembl_cvs_root_dir').'/ensembl-compara/scripts/pipeline/protein_trees.codeml.ctl.hash',      # used by 'homology_dNdS'
+        # used by 'homology_dNdS'
+        'codeml_parameters_file'    => $self->o('ensembl_cvs_root_dir').'/ensembl-compara/scripts/pipeline/protein_trees.codeml.ctl.hash',
         'taxlevels'                 => [],
-        'filter_high_coverage'      => 0,   # affects 'group_genomes_under_taxa'
+        # affects 'group_genomes_under_taxa'
+        'filter_high_coverage'      => 0,
 
     # mapping parameters:
-        'do_stable_id_mapping'      => 1,
+        'do_stable_id_mapping'      => 0,
         'do_treefam_xref'           => 0,
-        'tf_release'                => undef,       # The TreeFam release to map to
+        # The TreeFam release to map to
+        'tf_release'                => undef,
 
     # executable locations:
         #'hcluster_exe'              => '/software/ensembl/compara/hcluster/hcluster_sg',
         #'mcoffee_home'              => '/software/ensembl/compara/tcoffee/Version_9.03.r1318/',
         #'mafft_home'                => '/software/ensembl/compara/mafft-7.113/',
         #'treebest_exe'              => '/software/ensembl/compara/treebest.doubletracking',
+        #'notung_jar'                => '/software/ensembl/compara/Notung-2.6/Notung-2.6.jar',
         #'quicktree_exe'             => '/software/ensembl/compara/quicktree_1.1/bin/quicktree',
         #'hmmer2_home'               => '/software/ensembl/compara/hmmer-2.3.2/src/',
         #'codeml_exe'                => '/software/ensembl/compara/paml43/bin/codeml',
         #'ktreedist_exe'             => '/software/ensembl/compara/ktreedist/Ktreedist.pl',
         #'blast_bin_dir'             => '/software/ensembl/compara/ncbi-blast-2.2.28+/bin',
         #'pantherScore_path'         => '/software/ensembl/compara/pantherScore1.03',
+        #'trimal_exe'                => '/software/ensembl/compara/src/trimAl/source/trimal',
+        #'raxml_exe'                 => '/software/ensembl/compara/raxml/standard-RAxML-8.0.19/raxmlHPC-SSE3',
 
     # HMM specific parameters (set to 0 or undef if not in use)
        # List of directories that contain Panther-like databases (with books/ and globals/)
@@ -147,17 +161,22 @@ sub default_options {
        #'multihmm_files'          => [ ["/lustre/scratch110/ensembl/mp12/pfamA_HMM_fs.txt", "PFAM"] ],
        'multihmm_files'          => [],
 
-       'panther_annotation_PTHR' => '/nfs/nobackup2/ensemblgenomes/ckong/workspace/buildhmmprofiles/panther_Interpro_annot_v8_1/loose_dummy.txt',
-       'panther_annotation_SF'   => '/nfs/nobackup2/ensemblgenomes/ckong/workspace/buildhmmprofiles/panther_Interpro_annot_v8_1/loose_dummy.txt',
+       # Dumps coming from InterPro
+       'panther_annotation_PTHR'    => undef,
+       'panther_annotation_SF'      => undef,
+       #'panther_annotation_PTHR' => '/nfs/nobackup2/ensemblgenomes/ckong/workspace/buildhmmprofiles/panther_Interpro_annot_v8_1/loose_dummy.txt',
+       #'panther_annotation_SF'   => '/nfs/nobackup2/ensemblgenomes/ckong/workspace/buildhmmprofiles/panther_Interpro_annot_v8_1/loose_dummy.txt',
 
     # hive_capacity values for some analyses:
         #'reuse_capacity'            =>   3,
         #'blast_factory_capacity'    =>  50,
         #'blastp_capacity'           => 900,
-        #'blastpu_capacity'          => 300,
+        #'blastpu_capacity'          => 150,
         #'mcoffee_capacity'          => 600,
         #'split_genes_capacity'      => 600,
+        #'trimal_capacity'           => 100,
         #'treebest_capacity'         => 400,
+        #'raxml_capacity'            => 400,
         #'ortho_tree_capacity'       => 200,
         #'ortho_tree_annot_capacity' => 300,
         #'quick_tree_break_capacity' => 100,
@@ -168,7 +187,7 @@ sub default_options {
         #'homology_dNdS_capacity'    => 200,
         #'qc_capacity'               =>   4,
         #'hc_capacity'               =>   4,
-        #'HMMer_classify_capacity'   => 100,
+        #'HMMer_classify_capacity'   => 400,
         #'loadmembers_capacity'      =>  30,
 
     # hive priority for non-LOCAL health_check analysis:
@@ -218,6 +237,32 @@ sub default_options {
 
     };
 }
+
+
+=head2
+# This section has to be filled in any derived class
+sub resource_classes {
+    my ($self) = @_;
+    return {
+        %{$self->SUPER::resource_classes},  # inherit 'default' from the parent class
+
+         '250Mb_job'    => {'LSF' => '-C0 -M250   -R"select[mem>250]   rusage[mem=250]"' },
+         '500Mb_job'    => {'LSF' => '-C0 -M500   -R"select[mem>500]   rusage[mem=500]"' },
+         '1Gb_job'      => {'LSF' => '-C0 -M1000  -R"select[mem>1000]  rusage[mem=1000]"' },
+         '2Gb_job'      => {'LSF' => '-C0 -M2000  -R"select[mem>2000]  rusage[mem=2000]"' },
+         '4Gb_job'      => {'LSF' => '-C0 -M4000  -R"select[mem>4000]  rusage[mem=4000]"' },
+         '8Gb_job'      => {'LSF' => '-C0 -M8000  -R"select[mem>8000]  rusage[mem=8000]"' },
+         '16Gb_job'     => {'LSF' => '-C0 -M16000 -R"select[mem>16000] rusage[mem=16000]"' },
+         '32Gb_job'     => {'LSF' => '-C0 -M32000 -R"select[mem>32000] rusage[mem=32000]"' },
+         '64Gb_job'     => {'LSF' => '-C0 -M64000 -R"select[mem>64000] rusage[mem=64000]"' },
+
+         'msa'          => {'LSF' => '-C0 -M2000  -R"select[mem>2000]  rusage[mem=2000]"' },
+         'msa_himem'    => {'LSF' => '-C0 -M8000  -R"select[mem>8000]  rusage[mem=8000]"' },
+
+         'urgent_hcluster'      => {'LSF' => '-C0 -M32000 -R"select[mem>32000] rusage[mem=32000]"' },
+    };
+}
+=cut
 
 
 sub pipeline_create_commands {
@@ -278,7 +323,7 @@ sub pipeline_wide_parameters {  # these parameter values are visible to all anal
 }
 
 
-sub pipeline_analyses {
+sub core_pipeline_analyses {
     my ($self) = @_;
 
     my %hc_analysis_params = (
@@ -1422,7 +1467,7 @@ sub pipeline_analyses {
             -parameters => {
                 'trimal_exe'    => $self->o('trimal_exe'),
             },
-            -hive_capacity  => $self->o('raxml_capacity'),
+            -hive_capacity  => $self->o('trimal_capacity'),
             -rc_name        => '500Mb_job',
             -batch_size     => 5,
             -flow_into      => [ 'raxml' ],
@@ -1702,6 +1747,33 @@ sub pipeline_analyses {
         },
 
     ];
+}
+
+sub pipeline_analyses {
+    my $self = shift;
+
+    ## The analysis defined in this file
+    my $all_analyses = $self->core_pipeline_analyses(@_);
+    ## We add some more analyses
+    push @$all_analyses, @{$self->extra_analyses(@_)};
+
+    my %analyses_by_name = map {$_->{'-logic_name'} => $_} @$all_analyses;
+    $self->tweak_analyses(\%analyses_by_name);
+
+    return $all_analyses;
+}
+
+
+## The following methods can be redefined to add more analysis and change the parameters of some core ones
+sub extra_analyses {
+    my $self = shift;
+    return [
+    ];
+}
+
+sub tweak_analyses {
+    my $self = shift;
+    my $analyses_by_name = shift;
 }
 
 1;
