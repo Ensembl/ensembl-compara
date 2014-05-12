@@ -27,22 +27,22 @@ limitations under the License.
 
 =head1 NAME
 
-Bio::EnsEMBL::Compara::RunnableDB::ComparaHMM::BlastFactoryUnannotated
+Bio::EnsEMBL::Compara::RunnableDB::ComparaHMM::FactoryUnannotatedMembers
 
 =head1 SYNOPSIS
 
 
 =head1 DESCRIPTION
 
-Fetch sorted list of member_ids and create jobs for BlastAndParsePAF. 
+Fetch sorted list of member_ids and create jobs for the next analysis
 Supported keys:
 
    'step' => <number>
-       How many sequences to write into the blast query file. Default 100
+       How many sequences to write into each job. Default 100
 
 =cut
 
-package Bio::EnsEMBL::Compara::RunnableDB::ComparaHMM::BlastFactoryUnannotated;
+package Bio::EnsEMBL::Compara::RunnableDB::ComparaHMM::FactoryUnannotatedMembers;
 
 use strict;
 use warnings;
