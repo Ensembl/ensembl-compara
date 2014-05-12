@@ -71,6 +71,7 @@ sub new {
     label      => undef,
     label2     => undef,
     bumped     => undef,
+    error      => undef,
     highlights => $data->{'highlights'},
     strand     => $data->{'strand'},
     container  => $data->{'container'},
@@ -96,6 +97,7 @@ sub scalex             { return $_[0]->{'config'}->transform->{'scalex'};       
 sub image_width        { return $_[0]->{'config'}->get_parameter('panel_width') || $_[0]->{'config'}->image_width;                                               }
 sub timer_push         { return shift->{'config'}->species_defs->timer->push(shift, shift || 3, shift || 'draw');                                                }
 sub dbadaptor          { shift; return Bio::EnsEMBL::Registry->get_DBAdaptor(@_);                                                                                }
+sub error              { my $self = shift; $self->{'error'} = @_ if @_; return $self->{'error'};                                                                 }
 sub error_track_name   { return $_[0]->my_config('caption');                                                                                                     }
 sub my_label           { return $_[0]->my_config('caption');                                                                                                     }
 sub depth              { return $_[0]->my_config('depth');                                                                                                       }
@@ -713,6 +715,8 @@ sub too_many_features {
 
 sub errorTrack {
   my ($self, $message, $x, $y) = @_;
+  return if $self->error; ## Don't try to output more than one!
+  $self->error(1);
   my %font   = $self->get_font_details('text', 1);
   my $length = $self->{'config'}->image_width;
   my @res    = $self->get_text_width(0, $message, '', %font);
