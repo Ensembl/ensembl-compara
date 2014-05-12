@@ -1735,19 +1735,19 @@ sub _munge_file_formats {
 
   ## Get info on all formats
   my %formats = (
-    'bed'       => {'ext' => 'bed', 'label' => 'BED',       'display' => 'feature'},
-    'bedgraph'  => {'ext' => 'bed', 'label' => 'bedGraph',  'display' => 'graph'},
-    'gbrowse'   => {'ext' => 'txt', 'label' => 'GBrowse',   'display' => 'feature'},
-    'gff'       => {'ext' => 'gff', 'label' => 'GFF',       'display' => 'feature'},
-    'gtf'       => {'ext' => 'gtf', 'label' => 'GTF',       'display' => 'feature'},
-    'psl'       => {'ext' => 'psl', 'label' => 'PSL',       'display' => 'feature'},
-    'vep_input' => {'ext' => 'txt', 'label' => 'VEP',       'display' => 'feature'},
-    'wig'       => {'ext' => 'wig', 'label' => 'WIG',       'display' => 'graph'},
-    'bam'       => {'ext' => 'bam', 'label' => 'BAM',       'display' => 'graph', 'indexed' => 1},
-    'bigwig'    => {'ext' => 'bw',  'label' => 'BigWig',    'display' => 'graph', 'indexed' => 1},
-    'bigbed'    => {'ext' => 'bb',  'label' => 'BigBed',    'display' => 'graph', 'indexed' => 1},
-    'vcf'       => {'ext' => 'vcf', 'label' => 'VCF',       'display' => 'graph', 'indexed' => 1},
-    'datahub'   => {'ext' => 'txt', 'label' => 'TrackHub',  'display' => 'graph', 'indexed' => 1},
+    'bed'         => {'ext' => 'bed', 'label' => 'BED',       'display' => 'feature'},
+    'bedgraph'    => {'ext' => 'bed', 'label' => 'bedGraph',  'display' => 'graph'},
+    'gbrowse'     => {'ext' => 'txt', 'label' => 'GBrowse',   'display' => 'feature'},
+    'gff'         => {'ext' => 'gff', 'label' => 'GFF',       'display' => 'feature'},
+    'gtf'         => {'ext' => 'gtf', 'label' => 'GTF',       'display' => 'feature'},
+    'psl'         => {'ext' => 'psl', 'label' => 'PSL',       'display' => 'feature'},
+    'vep_output'  => {'ext' => 'txt', 'label' => 'VEP',       'display' => 'feature'},
+    'wig'         => {'ext' => 'wig', 'label' => 'WIG',       'display' => 'graph'},
+    'bam'         => {'ext' => 'bam', 'label' => 'BAM',       'display' => 'graph', 'indexed' => 1},
+    'bigwig'      => {'ext' => 'bw',  'label' => 'BigWig',    'display' => 'graph', 'indexed' => 1},
+    'bigbed'      => {'ext' => 'bb',  'label' => 'BigBed',    'display' => 'graph', 'indexed' => 1},
+    'vcf'         => {'ext' => 'vcf', 'label' => 'VCF',       'display' => 'graph', 'indexed' => 1},
+    'datahub'     => {'ext' => 'txt', 'label' => 'TrackHub',  'display' => 'graph', 'indexed' => 1},
   );
 
   ## Munge into something useful to this website
