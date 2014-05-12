@@ -250,19 +250,26 @@ sub default_options {
 
         # How will the pipeline create clusters (families) ?
         # Possible values: 'blastp' (default), 'hmm', 'hybrid'
-        #   blastp means that the pipeline will run a all-vs-all blastp comparison of the proteins and run hcluster to create clusters. This can take a *lot* of compute
-        #   hmm means that the pipeline will run an HMM classification
-        #   hybrid is like "hmm" except that the unclustered proteins go to a all-vs-all blastp + hcluster stage
+        #   'blastp' means that the pipeline will run a all-vs-all blastp comparison of the proteins and run hcluster to create clusters. This can take a *lot* of compute
+        #   'hmm' means that the pipeline will run an HMM classification
+        #   'hybrid' is like "hmm" except that the unclustered proteins go to a all-vs-all blastp + hcluster stage
+        #   'topup' means that the HMM classification is reused from prev_rel_db, and topped-up with the updated / new species  >> UNIMPLEMENTED <<
         'clustering_mode'           => 'blastp',
 
         # How much the pipeline will try to reuse from "prev_rel_db"
         # Possible values: 'clusters' (default), 'blastp', 'members'
-        #   clusters means that the members, the blastp hits and the clusters are copied over. In this case, the blastp hits are actually not copied over if "skip_blast_copy_if_possible" is set
-        #   blastp means that only the members and the blastp hits are copied over
-        #   members means that only the members are copied over
+        #   'members' means that only the members are copied over, and the rest will be re-computed
+        #   'hmms' is like 'members', but also copies the HMM profiles. It requires that the clustering mode is not 'blastp'  >> UNIMPLEMENTED <<
+        #   'hmm_hits' is like 'hmms', but also copies the HMM hits  >> UNIMPLEMENTED <<
+        #   'blastp' is like 'members', but also copies the blastp hits. It requires that the clustering mode is 'blastp'
+        #   'clusters' is like 'hmm_hits' or 'blastp' (depending on the clustering mode), but also copies the clusters
+        #   'alignments' is like 'clusters', but also copies the alignments  >> UNIMPLEMENTED <<
+        #   'trees' is like 'alignments', but also copies the trees  >> UNIMPLEMENTED <<
+        #   'homologies is like 'trees', but also copies the homologies  >> UNIMPLEMENTED <<
         'reuse_level'               => 'clusters',
-        # If all the species can be reused, and if the reuse_level is "clusters", do we really want to copy all the peptide_align_feature tables ? They can take a lot of space and are not used in the pipeline
-        'skip_blast_copy_if_possible'   => 1,
+
+        # If all the species can be reused, and if the reuse_level is "clusters" or above, do we really want to copy all the peptide_align_feature / hmm_profile tables ? They can take a lot of space and are not used in the pipeline
+        'quick_reuse'   => 1,
 
     };
 }
@@ -395,8 +402,8 @@ sub core_pipeline_analyses {
         {   -logic_name => 'test_should_blast_be_skipped',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ConditionalDataFlow',
             -parameters    => {
-                'skip_blast_copy_if_possible'   => $self->o('skip_blast_copy_if_possible'),
-                'condition'     => '(#are_all_species_reused# and #skip_blast_copy_if_possible#) or ("#clustering_mode#" ne "blastp")',
+                'quick_reuse'   => $self->o('quick_reuse'),
+                'condition'     => '(#are_all_species_reused# and #quick_reuse#) or ("#clustering_mode#" ne "blastp")',
             },
             -flow_into => {
                 2 => [ 'backbone_fire_clustering' ],
