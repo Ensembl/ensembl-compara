@@ -85,15 +85,6 @@ sub fetch_all_hmm_annot {
 return $sth;
 }
 
-sub fetch_all_hmm_curated_annot {
-    my ($self) = @_;
-
-    my $sql = "SELECT * FROM hmm_curated_annot";
-    my $sth = $self->prepare($sql);
-    $sth->execute();
-    return $sth;
-}
-
 
 sub fetch_all_genes_missing_annot_by_genome_db_id {
     my ($self, $genome_db_id) = @_;

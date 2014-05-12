@@ -939,7 +939,7 @@ sub core_pipeline_analyses {
                              'panther_annotation_SF'    => $self->o('panther_annotation_SF'),
                            },
              -rc_name => 'default',
-             -flow_into => [ 'HMMer_classify_factory' ],
+             -flow_into => [ 'HMMer_classifyCurated' ],
             },
 
         {   -logic_name => 'HMMer_classify_factory',
@@ -951,20 +951,21 @@ sub core_pipeline_analyses {
                 'fan_branch_code'       => 2,
             },
             -flow_into  => {
-                '2->A'  => [ 'HMMer_classifyCurated' ],
+                '2->A'  => [ 'HMMer_classifyInterpro' ],
                 'A->1'  => [ 'HMM_clusterize' ],
             },
             -meadow_type    => 'LOCAL',
         },
 
-           {
-            -logic_name => 'HMMer_classifyCurated',
-            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ComparaHMM::HMMClassifyCurated',
-            -flow_into  => [ 'HMMer_classifyInterpro' ],
-             -hive_capacity => $self->o('HMMer_classify_capacity'),
-             -rc_name => 'msa_himem',
+        {
+            -logic_name     => 'HMMer_classifyCurated',
+            -module         => 'Bio::EnsEMBL::Hive::RunnableDB::SqlCmd',
+            -parameters     => {
+                'sql'   => 'INSERT INTO hmm_annot (seq_member_id, model_id) SELECT seq_member_id, model_id FROM hmm_curated_annot hca JOIN seq_member sm ON sm.stable_id = hca.seq_member_stable_id',
             },
-
+            -flow_into      => [ 'HMMer_classify_factory' ],
+            -meadow_type    => 'LOCAL',
+        },
 
            {
             -logic_name => 'HMMer_classifyInterpro',
