@@ -965,6 +965,9 @@ sub core_pipeline_analyses {
 
         {   -logic_name => 'HMMer_classify_factory',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ComparaHMM::FactoryUnannotatedMembers',
+            -parameters => {
+                'only_canonical'    => 1,
+            },
             -rc_name       => '250Mb_job',
             -hive_capacity => $self->o('blast_factory_capacity'),
             -flow_into => {
@@ -982,6 +985,7 @@ sub core_pipeline_analyses {
                              'pantherScore_path'   => $self->o('pantherScore_path'),
                              'hmmer_path'          => $self->o('hmmer2_home'),
                              'hmm_library_basedir' => '#hmmlib_dir#',
+                             'only_canonical'      => 1,
                             },
              -hive_capacity => $self->o('HMMer_classify_capacity'),
              -rc_name => '4Gb_job',

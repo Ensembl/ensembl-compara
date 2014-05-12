@@ -53,13 +53,16 @@ use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 sub param_defaults {
     return {
             'step'  => 100,
+            'only_canonical'    => 1,
     };
 }
 
 sub fetch_input {
     my ($self) = @_;
 
-    my $sth = $self->compara_dba->get_HMMAnnotAdaptor->fetch_all_genes_missing_annot();
+    my $sth = $self->param_required('only_canonical')
+        ? $self->compara_dba->get_HMMAnnotAdaptor->fetch_all_genes_missing_annot()
+        : $self->compara_dba->get_HMMAnnotAdaptor->fetch_all_seqs_missing_annot();
     my @unannotated_member_ids = sort {$a <=> $b} (map {$_->[0]} @{$sth->fetchall_arrayref});
     $sth->finish;
     $self->param('unannotated_member_ids', \@unannotated_member_ids);

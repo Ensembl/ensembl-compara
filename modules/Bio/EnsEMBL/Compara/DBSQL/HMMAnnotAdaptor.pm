@@ -77,6 +77,28 @@ sub fetch_all_genes_missing_annot_by_range {
     return $sth;
 }
 
+sub fetch_all_seqs_missing_annot {
+    my ($self) = @_;
+
+    my $sql = "SELECT seq_member_id FROM seq_member LEFT JOIN hmm_annot USING (seq_member_id) WHERE hmm_annot.seq_member_id IS NULL";
+    my $sth = $self->prepare($sql);
+    $sth->execute();
+
+    return $sth;
+}
+
+
+sub fetch_all_seqs_missing_annot_by_range {
+    my ($self, $start_member_id, $end_member_id) = @_;
+
+    my $sql = "SELECT seq_member_id FROM seq_member LEFT JOIN hmm_annot USING (seq_member_id) WHERE hmm_annot.seq_member_id IS NULL AND seq_member.seq_member_id BETWEEN ? AND ?";
+    my $sth = $self->prepare($sql);
+    $sth->execute($start_member_id, $end_member_id);
+
+    return $sth;
+}
+
+
 sub store_hmmclassify_result {
     my ($self, $seq_member_id, $model_id, $evalue) = @_;
 
