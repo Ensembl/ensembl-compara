@@ -162,10 +162,8 @@ sub default_options {
        'multihmm_files'          => [],
 
        # Dumps coming from InterPro
-       'panther_annotation_PTHR'    => undef,
-       'panther_annotation_SF'      => undef,
-       #'panther_annotation_PTHR' => '/nfs/nobackup2/ensemblgenomes/ckong/workspace/buildhmmprofiles/panther_Interpro_annot_v8_1/loose_dummy.txt',
-       #'panther_annotation_SF'   => '/nfs/nobackup2/ensemblgenomes/ckong/workspace/buildhmmprofiles/panther_Interpro_annot_v8_1/loose_dummy.txt',
+       'panther_annotation_file'    => '/dev/null',
+       #'panther_annotation_file' => '/nfs/nobackup2/ensemblgenomes/ckong/workspace/buildhmmprofiles/panther_Interpro_annot_v8_1/loose_dummy.txt',
 
     # hive_capacity values for some analyses:
         #'reuse_capacity'            =>   3,
@@ -876,7 +874,7 @@ sub core_pipeline_analyses {
             -meadow_type    => 'LOCAL',
         },
 
-#----------------------------------------------[classify canonical members based on HMM searches]-----------------------------------
+#--------------------------------------------------------[load the HMM profiles]----------------------------------------------------
         {   -logic_name => 'panther_databases_factory',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
             -parameters => {
@@ -931,16 +929,19 @@ sub core_pipeline_analyses {
              -flow_into  => [ 'load_InterproAnnotation' ],
             },
 
-           {
-            -logic_name => 'load_InterproAnnotation',
-            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ComparaHMM::LoadInterproAnnotation',
-            -parameters => {
-                             'panther_annotation_PTHR'  => $self->o('panther_annotation_PTHR'),
-                             'panther_annotation_SF'    => $self->o('panther_annotation_SF'),
-                           },
-             -rc_name => 'default',
-             -flow_into => [ 'HMMer_classifyCurated' ],
+#----------------------------------------------[classify canonical members based on HMM searches]-----------------------------------
+        {
+            -logic_name     => 'load_InterproAnnotation',
+            -module         => 'Bio::EnsEMBL::Hive::RunnableDB::SqlCmd',
+            -parameters     => {
+                'panther_annotation_file'   => $self->o('panther_annotation_file'),
+                'sql'                       => "LOAD DATA LOCAL INFILE '#panther_annotation_file#' INTO TABLE panther_annot
+                                                FIELDS TERMINATED BY '\\t' LINES TERMINATED BY '\\n'
+                                                (upi, ensembl_id, ensembl_div, panther_family_id, start, end, score, evalue)",
             },
+            -flow_into      => [ 'HMMer_classifyCurated' ],
+            -meadow_type    => 'LOCAL',
+        },
 
         {   -logic_name => 'HMMer_classify_factory',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ObjectFactory',
@@ -951,7 +952,7 @@ sub core_pipeline_analyses {
                 'fan_branch_code'       => 2,
             },
             -flow_into  => {
-                '2->A'  => [ 'HMMer_classifyInterpro' ],
+                '2->A'  => [ 'HMMer_classifyPantherScore' ],
                 'A->1'  => [ 'HMM_clusterize' ],
             },
             -meadow_type    => 'LOCAL',
@@ -961,19 +962,21 @@ sub core_pipeline_analyses {
             -logic_name     => 'HMMer_classifyCurated',
             -module         => 'Bio::EnsEMBL::Hive::RunnableDB::SqlCmd',
             -parameters     => {
-                'sql'   => 'INSERT INTO hmm_annot (seq_member_id, model_id) SELECT seq_member_id, model_id FROM hmm_curated_annot hca JOIN seq_member sm ON sm.stable_id = hca.seq_member_stable_id',
+                'sql'   => 'INSERT INTO hmm_annot SELECT seq_member_id, model_id, NULL FROM hmm_curated_annot hca JOIN seq_member sm ON sm.stable_id = hca.seq_member_stable_id',
+            },
+            -flow_into      => [ 'HMMer_classifyInterpro' ],
+            -meadow_type    => 'LOCAL',
+        },
+
+        {
+            -logic_name     => 'HMMer_classifyInterpro',
+            -module         => 'Bio::EnsEMBL::Hive::RunnableDB::SqlCmd',
+            -parameters     => {
+                'sql'   => 'INSERT IGNORE INTO hmm_annot SELECT seq_member_id, panther_family_id, evalue FROM panther_annot pa JOIN seq_member sm ON sm.stable_id = pa.ensembl_id',
             },
             -flow_into      => [ 'HMMer_classify_factory' ],
             -meadow_type    => 'LOCAL',
         },
-
-           {
-            -logic_name => 'HMMer_classifyInterpro',
-            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ComparaHMM::HMMClassifyInterpro',
-            -flow_into  => [ 'HMMer_classifyPantherScore' ],
-             -hive_capacity => $self->o('HMMer_classify_capacity'),
-             -rc_name => 'msa_himem',
-            },
 
             {
              -logic_name => 'HMMer_classifyPantherScore',

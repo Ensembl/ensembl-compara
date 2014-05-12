@@ -45,36 +45,6 @@ use Bio::EnsEMBL::Utils::Exception qw(throw warning deprecate); ## All needed?
 use DBI qw(:sql_types);
 use base ('Bio::EnsEMBL::Compara::DBSQL::BaseAdaptor');
 
-=head2 fetch_by_ensembl_id
-
-=cut 
-sub fetch_by_ensembl_id_PTHR {
-    my ($self, $ensembl_id) = @_;
-
-    throw ("ensembl_id is undefined") unless (defined $ensembl_id);
-
-    my $sql = "SELECT panther_family_id FROM panther_annot_PTHR WHERE ensembl_id=?";
-    my $sth = $self->prepare($sql);
-
-    $sth->execute($ensembl_id);
-    my $res = $sth->fetchrow_arrayref;
-
-return $res;
-}
-
-sub fetch_by_ensembl_id_SF {
-    my ($self, $ensembl_id) = @_;
-
-    throw ("ensembl_id is undefined") unless (defined $ensembl_id);
-   
-    my $sql = "SELECT panther_family_id FROM panther_annot_SF WHERE ensembl_id=?"; 
-    my $sth = $self->prepare($sql);
-
-    $sth->execute($ensembl_id);
-    my $res = $sth->fetchrow_arrayref;
-
-return $res;
-}
 
 sub fetch_all_hmm_annot {
     my ($self) = @_;
