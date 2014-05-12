@@ -205,8 +205,9 @@ Ensembl.Panel.ZMenu = Ensembl.Panel.extend({
   },
   
   buildMenuAjax: function (json, status, jqXHR) {
-    var length = json.length;
-    var cols   = Math.min(length, 5);
+    var features  = json.features;
+    var length    = features.length;
+    var cols      = Math.min(length, 5);
     var div, feature, i, j, body, subheader, row;
     
     if (jqXHR.timeout !== this.timeout) {
@@ -218,7 +219,7 @@ Ensembl.Panel.ZMenu = Ensembl.Panel.extend({
     this.populated = true;
     
     for (var i = 0; i < length; i++) {
-      feature = json[i];
+      feature = features[i];
       
       if (i === 0 || div.children().length === cols) {
         div = $('<div></div>').appendTo(this.elLk.container);
@@ -253,7 +254,7 @@ Ensembl.Panel.ZMenu = Ensembl.Panel.extend({
     }
     
     if (length > 1) {
-      this.elLk.header = $('<div class="header">' + length + ' features</div>').insertBefore(this.elLk.container.addClass('row' + (length > cols ? ' grid' : '')));
+      this.elLk.header = $('<div class="header">' + (json.header ? json.header : length + ' features') + '</div>').insertBefore(this.elLk.container.addClass('row' + (length > cols ? ' grid' : '')));
     }
     
     this.show();

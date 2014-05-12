@@ -56,6 +56,12 @@ sub object {
   return $self->{'object'};
 }
 
+sub header {
+  my $self = shift;
+  $self->{'header'} = shift if @_;
+  return $self->{'header'};
+}
+
 sub caption {
   my $self = shift;
   $self->{'feature'}{'caption'}      = shift if @_;
@@ -195,7 +201,7 @@ sub render {
             '<a href="%s"%s%s>%s%s%s</a>',
             encode_entities(decode_entities($entry->{'link'})), # Decode links before encoding them stops double encoding when the link is created by EnsEMBL::Web::ExtURL->get_url
             $entry->{'external'} ? ' rel="external"' : '',
-            $entry->{'link_class'} ? qq{ class="$entry->{'link_class'}"} : '',
+            $entry->{'link_class'} ? qq( class="$entry->{'link_class'}") : '',
             encode_entities($entry->{'label'}),
             $entry->{'label_html'},
             $entry->{'update_params'},
@@ -217,7 +223,7 @@ sub render {
     }
   }
   
-  print $self->jsonify(\@features);
+  print $self->jsonify({'header' => $self->header, 'features' => \@features});
 }
 
 1;
