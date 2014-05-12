@@ -943,21 +943,6 @@ sub core_pipeline_analyses {
             -meadow_type    => 'LOCAL',
         },
 
-        {   -logic_name => 'HMMer_classify_factory',
-            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ObjectFactory',
-            -parameters => {
-                'call_list'             => [ 'compara_dba', 'get_GenomeDBAdaptor', 'fetch_all'],
-                'column_names2getters'  => { 'genome_db_id' => 'dbID' },
-
-                'fan_branch_code'       => 2,
-            },
-            -flow_into  => {
-                '2->A'  => [ 'HMMer_classifyPantherScore' ],
-                'A->1'  => [ 'HMM_clusterize' ],
-            },
-            -meadow_type    => 'LOCAL',
-        },
-
         {
             -logic_name     => 'HMMer_classifyCurated',
             -module         => 'Bio::EnsEMBL::Hive::RunnableDB::SqlCmd',
@@ -977,6 +962,17 @@ sub core_pipeline_analyses {
             -flow_into      => [ 'HMMer_classify_factory' ],
             -meadow_type    => 'LOCAL',
         },
+
+        {   -logic_name => 'HMMer_classify_factory',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ComparaHMM::FactoryUnannotatedMembers',
+            -rc_name       => '250Mb_job',
+            -hive_capacity => $self->o('blast_factory_capacity'),
+            -flow_into => {
+                '2->A'  => [ 'HMMer_classifyPantherScore' ],
+                'A->1'  => [ 'HMM_clusterize' ],
+            },
+        },
+
 
             {
              -logic_name => 'HMMer_classifyPantherScore',

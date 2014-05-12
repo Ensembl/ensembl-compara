@@ -56,7 +56,7 @@ use Data::Dumper;
 
 use Bio::EnsEMBL::Compara::MemberSet;
 
-use base ('Bio::EnsEMBL::Compara::RunnableDB::ComparaHMM::HMMClassify', 'Bio::EnsEMBL::Compara::RunnableDB::RunCommand');
+use base ('Bio::EnsEMBL::Compara::RunnableDB::RunCommand');
 
 sub param_defaults {
     return {
@@ -66,8 +66,6 @@ sub param_defaults {
 
 sub fetch_input {
     my ($self) = @_;
-
-    $self->SUPER::fetch_input();
 
     my $pantherScore_path = $self->param_required('pantherScore_path');
 
@@ -83,6 +81,8 @@ sub fetch_input {
     $self->throw('No valid HMM library found at ' . $self->param('library_path')) unless ($hmmLibrary->exists());
     $self->param('hmmLibrary', $hmmLibrary);
 
+    $self->param('query_set', Bio::EnsEMBL::Compara::MemberSet->new(-members => $self->get_queries));
+    $self->param('all_hmm_annots', {});
 }
 
 =head2 run
@@ -103,21 +103,44 @@ sub run {
 }
 
 
+sub write_output {
+    my ($self) = @_;
+    my $adaptor = $self->compara_dba->get_HMMAnnotAdaptor();
+    my $all_hmm_annots = $self->param('all_hmm_annots');
+        # Store into table 'hmm_annot'
+    foreach my $seq_id (keys %$all_hmm_annots) {
+        $adaptor->store_hmmclassify_result($seq_id, @{$all_hmm_annots->{$seq_id}});
+    }
+}
+
+
 ##########################################
 #
 # internal methods
 #
 ##########################################
 
+sub get_queries {
+    my $self = shift @_;
+
+    my $start_member_id = $self->param_required('start_member_id');
+    my $end_member_id   = $self->param_required('end_member_id');
+
+    #Get list of members and sequences
+    my $sth = $self->compara_dba->get_HMMAnnotAdaptor->fetch_all_genes_missing_annot_by_range($start_member_id, $end_member_id);
+    my $member_ids = [map {$_->[0]} @{$sth->fetchall_arrayref}];
+    return $self->compara_dba->get_SeqMemberAdaptor->fetch_all_by_dbID_list($member_ids);
+}
+
+
 
 sub dump_sequences_to_workdir {
     my ($self) = @_;
 
-    my $genome_db_id = $self->param('genome_db_id');
-    my $fastafile = $self->worker_temp_directory . "${genome_db_id}.fasta"; ## Include pipeline name to avoid clashing??
-    print STDERR "Dumping unannotated members from $genome_db_id in $fastafile\n" if ($self->debug);
+    my $fastafile = $self->worker_temp_directory . "unannotated.fasta"; ## Include pipeline name to avoid clashing??
+    print STDERR "Dumping unannotated members in $fastafile\n" if ($self->debug);
 
-    Bio::EnsEMBL::Compara::MemberSet->new(-members => $self->param('unannotated_members'))->print_sequences_to_file($fastafile);
+    $self->param('query_set')->print_sequences_to_file($fastafile);
     $self->param('fastafile', $fastafile);
 
 }
@@ -163,5 +186,17 @@ sub run_HMM_search {
         $self->throw("pantherScore did not return any hits. Is it normal ?");
     }
 }
+
+sub add_hmm_annot {
+    my ($self, $seq_id, $hmm_id, $eval) = @_;
+    print STDERR "Found [$seq_id, $hmm_id, $eval]\n" if ($self->debug());
+    if (exists $self->param('all_hmm_annots')->{$seq_id}) {
+        if ($self->param('all_hmm_annots')->{$seq_id}->[1] < $eval) {
+            print STDERR "Not registering it because the evalue is higher than the currently stored one: ", $self->param('all_hmm_annots')->{$seq_id}->[1], "\n" if $self->debug();
+        }
+    }
+    $self->param('all_hmm_annots')->{$seq_id} = [$hmm_id, $eval];
+}
+
 
 1;

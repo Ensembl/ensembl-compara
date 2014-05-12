@@ -57,17 +57,12 @@ use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 sub fetch_input {
     my $self = shift @_;
 
-    my @members;
-    my $mlss = $self->compara_dba->get_MethodLinkSpeciesSetAdaptor->fetch_by_dbID($self->param_required('mlss_id'));
-    foreach my $genome_db (@{$mlss->species_set_obj->genome_dbs}) {
-        my $sth = $self->compara_dba->get_HMMAnnotAdaptor->fetch_all_genes_missing_annot_by_genome_db_id($genome_db->dbID);
-        my $member_ids = [map {$_->[0]} @{$sth->fetchall_arrayref}];
-        my $unnanotated_members = $self->compara_dba->get_SeqMemberAdaptor->fetch_all_by_dbID_list($member_ids);
-        push @members, @$unnanotated_members;
-    }
+    my $sth = $self->compara_dba->get_HMMAnnotAdaptor->fetch_all_genes_missing_annot();
+    my $member_ids = [map {$_->[0]} @{$sth->fetchall_arrayref}];
+    my $unannotated_members = $self->compara_dba->get_SeqMemberAdaptor->fetch_all_by_dbID_list($member_ids);
 
     # write fasta file:
-    Bio::EnsEMBL::Compara::MemberSet->new(-members => \@members)->print_sequences_to_file($self->param('fasta_file'));
+    Bio::EnsEMBL::Compara::MemberSet->new(-members => $unannotated_members)->print_sequences_to_file($self->param('fasta_file'));
 }
 
 sub write_output {
