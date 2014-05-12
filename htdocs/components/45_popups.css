@@ -18,7 +18,7 @@
   position: absolute !important;
   display: none;
   background-color: [[TINT_BG]];
-  border: 1px outset [[TINT_BORDER]];
+  border: 1px solid [[TINT_BG]];
   z-index: 200;
   font-weight: bold;
   padding: 2px;
@@ -26,6 +26,7 @@
   text-align: left;
   width: 200px;
   white-space: normal;
+  box-shadow: 5px 5px 15px #666;
 }
 
 .floating_popup .spinner               { height: 66px !important; margin: 0; }
@@ -34,8 +35,8 @@ body.ie6 .floating_popup .spinner      { background-color: [[TINT_BG]]; border: 
 .info_popup                            { width: auto; padding: 0; }
 .info_popup th,
 .info_popup td                         { padding: 2px 3px; white-space: nowrap; }
-.info_popup tr.header                  { background-color: [[BUTTON_BG]]; }
-.info_popup tr.header th               { border-bottom: 1px solid black; color: #FFFFFF; }
+.info_popup tr.header                  { background-color: [[BUTTON_BG]]; cursor: default; }
+.info_popup tr.header th,
 .info_popup tr.header a                { color: #FFFFFF; }
 .info_popup span.close                 { position: absolute; top: -8px; right: -12px; cursor: pointer; height: 20px; width: 20px; background: url(/i/close.png) no-repeat; }
 .info_popup td.closed                  { background: url(/i/closed2.gif) 100% 3px no-repeat; cursor: pointer; padding-right: 16px; }
@@ -63,13 +64,12 @@ body.ie6 .floating_popup .spinner      { background-color: [[TINT_BG]]; border: 
 .zmenu_holder span.close               { position: absolute; right: 0; cursor: pointer; height: 20px; width: 20px; background: url(/i/close.png) no-repeat; z-index: 201; }
 .zmenu_holder div.header,
 .zmenu_holder .container,
-.zmenu_holder .loading                 { border: 1px outset [[TINT_BORDER]]; }
-.zmenu_holder div.header               { height: 20px; line-height: 20px; font-size: 14px; color: #FFFFFF; background-color: [[BUTTON_BG]]; border-bottom: 2px solid [[TINT_BG]]; text-align: center; }
-.zmenu_holder .container               { border-top: 0; }
+.zmenu_holder .loading                 { border: 1px solid [[TINT_BG]]; }
+.zmenu_holder div.header               { height: 20px; line-height: 20px; font-size: 14px; color: #FFFFFF; background-color: [[BUTTON_BG]]; text-align: center; cursor: default; }
 .zmenu_holder .loading                 { width: 200px; }
-.zmenu_holder .loading div             { padding: 2px 3px; color: #FFFFFF; background-color: [[BUTTON_BG]]; border-bottom: 1px solid black; }
-.zmenu_holder .row                     { padding: 0 0 2px 2px; }
+.zmenu_holder .loading div             { padding: 2px 3px; color: #FFFFFF; background-color: [[BUTTON_BG]]; }
 .zmenu_holder .row .zmenu              { padding: 0 2px 2px 0; display: inline-block; vertical-align: top; } 
+.zmenu_holder .row .zmenu:last-child   { padding-right: 0; }
 .zmenu_holder .row .zmenu tr.header th { width: 180px; }
 .zmenu_holder .grid                    { max-height: 250px; overflow-x: hidden; overflow-y: scroll; }
 
