@@ -22,5 +22,9 @@ use strict;
 
 use base qw(EnsEMBL::Web::Command);
 
+sub write_file {
+## Outputs chosen data to a text file
+## N.B. replace with Bio::EnsEMBL::IO::Writer in due course
+}
 
 1;

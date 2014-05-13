@@ -45,6 +45,16 @@ sub create_form {
       'name'    => 'name',
       'label'   => 'File name (optional)',
     },
+    {
+      'type'    => 'Hidden',
+      'name'    => 'data_type',
+      'value'   => $hub->param('data_type'),
+    },
+    {
+      'type'    => 'Hidden',
+      'name'    => 'component',
+      'value'   => $hub->param('component'),
+    },
   ]);
   return $form;
 }

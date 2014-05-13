@@ -28,6 +28,14 @@ sub process {
 
   my $url_params = {'action' => 'Results'};
 
+  my $format = $hub->param('format');
+
+  if ($format eq 'RTF') {
+  }
+  else {
+    $self->write_file;
+  }
+
   $self->ajax_redirect($hub->url($url_params));
 }
 
