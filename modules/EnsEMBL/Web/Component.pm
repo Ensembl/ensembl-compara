@@ -357,6 +357,15 @@ sub image_width { return shift->hub->param('image_width') || $ENV{'ENSEMBL_IMAGE
 sub caption     { return undef; }
 sub _init       { return; }
 
+sub export_caption  { return undef; }
+sub export_button   {
+  my $self = shift;
+  my $caption = $self->export_caption || 'Export';
+  my $url     = $self->hub->url({'function' => 'Export'});
+  my $src     = $self->img_url.'/16/rev/download.png';
+  return sprintf('<p><a href="%s" class="button modal_link"><img src="%s" style="padding-bottom:2px;vertical-align:middle" /> %s</a></p>', $url, $src, $caption);
+}
+
 ## TODO - remove these four method once above four methods are used instead of these
 sub _error   { return shift->_info_panel('error',   @_);  } # Fatal error message. Couldn't perform action
 sub _warning { return shift->_info_panel('warning', @_ ); } # Error message, but not fatal
