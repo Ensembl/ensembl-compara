@@ -106,7 +106,13 @@ sub write_output {
     my @dataflow = ();
 
     my @ref_support = qw(phyml_nt nj_ds phyml_aa nj_dn nj_mm);
-    my $treebest_stored_tree = $self->store_alternative_tree($self->param('treebest_stdout'), $self->param('output_clusterset_id'), $self->param('gene_tree'), \@ref_support);
+
+    my $treebest_stored_tree = $self->param('gene_tree');
+    if ($self->param('output_clusterset_id') and ($self->param('output_clusterset_id') ne 'default')) {
+        $treebest_stored_tree = $self->store_alternative_tree($self->param('treebest_stdout'), $self->param('output_clusterset_id'), $self->param('gene_tree'), \@ref_support);
+    } else {
+        $self->store_genetree($self->param('gene_tree'), \@ref_support);
+    }
 
     if (not $treebest_stored_tree) {
         $self->input_job->transient_error(0);
