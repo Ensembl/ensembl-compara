@@ -35,9 +35,8 @@ sub populate_tree {
   foreach my $type (keys %export_info) {
     my $module  = ucfirst($type);
     my $key     = $type.'_input';
-    my $key2    = $type.'_output';
     $self->create_node($module, "$module Input", [$key, 'EnsEMBL::Web::Component::DataExport::'.$module]);
-    $self->create_node('Output'.$module,  '', [], { $key2 => 'EnsEMBL::Web::Command::DataExport::Output'.$module});
+    $self->create_node('Output'.$module,  '', [], { 'command' => 'EnsEMBL::Web::Command::DataExport::Output'.$module});
   }
   $self->create_node('Results', 'Results', ['Results', 'EnsEMBL::Web::Component::DataExport::Results']);
 }
