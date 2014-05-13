@@ -435,7 +435,8 @@ sub component_content {
           my $caption = $component->caption;
           $html .= sprintf '<h2>%s</h2>', encode_entities($caption) if $caption;
         }
-        
+     
+        $html .= $component->export_button if $component->can('export_data');   
         $html .= $content;
       }
     }
