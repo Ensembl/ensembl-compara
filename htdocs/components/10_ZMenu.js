@@ -538,7 +538,12 @@ Ensembl.Panel.ZMenu = Ensembl.Panel.extend({
     Ensembl.EventManager.trigger('panelToFront', this.id);
     
     if (!this.el.css({ top: 0, left: 0, display: 'block' }).position({ of: this.event, my: 'left top', collision: 'fit' }).hasClass('ui-draggable')) {
-      this.el.scrollTop(0).draggable({ handle: '.header:not(.subheader)', containment: 'document' });
+      this.el.scrollTop(0).draggable({
+        handle:       '.header:not(.subheader)',
+        containment:  'document',
+        start:        function() { $(this).css({'margin-top': -1 * $(window).scrollTop() }); },
+        stop:         function() { $(this).css({'top': parseInt($(this).css('top')) + parseInt($(this).css('margin-top')), 'margin-top': 0 }); }
+      });
     }
     
     if (this.relatedEl) {      
