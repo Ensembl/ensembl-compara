@@ -69,6 +69,7 @@ sub default_options {
         'exe_dir'               =>  '/nfs/panda/ensemblgenomes/production/compara/binaries',
 
     # "Member" parameters:
+        'allow_ambiguity_codes'     => 1,
 
     # blast parameters:
 

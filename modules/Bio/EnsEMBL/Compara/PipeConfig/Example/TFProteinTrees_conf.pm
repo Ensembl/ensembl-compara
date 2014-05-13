@@ -87,7 +87,6 @@ sub default_options {
 
     # "Member" parameters:
         'allow_ambiguity_codes'     => 1,
-        'allow_pyrrolysine'         => 1,
 
     # blast parameters:
 

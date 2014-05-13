@@ -96,7 +96,6 @@ sub default_options {
 
     # "Member" parameters:
         'allow_ambiguity_codes'     => 0,
-        'allow_pyrrolysine'         => 0,
         # highest member_id for a protein member
         'protein_members_range'     => 100000000,
 
@@ -797,7 +796,7 @@ sub core_pipeline_analyses {
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::LoadMembers',
             -parameters => {
                 'store_related_pep_sequences' => 1,
-                'allow_pyrrolysine'             => $self->o('allow_pyrrolysine'),
+                'allow_ambiguity_codes'         => $self->o('allow_ambiguity_codes'),
                 'find_canonical_translations_for_polymorphic_pseudogene' => 1,
                 'store_missing_dnafrags'        => 0,
             },
