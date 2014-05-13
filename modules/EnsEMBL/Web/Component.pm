@@ -87,8 +87,8 @@ sub new {
 sub id {
   ## @accessor
   ## @return String (last element of package namespace)
-  my $self = shift;
-  $self->{'id'} = shift if @_;
+  my ($self, $id) = @_;
+  $self->{'id'} = $id if $id;
   return $self->{'id'};
 }
 
@@ -357,11 +357,13 @@ sub image_width { return shift->hub->param('image_width') || $ENV{'ENSEMBL_IMAGE
 sub caption     { return undef; }
 sub _init       { return; }
 
+sub export_type     { return undef; }
 sub export_caption  { return undef; }
 sub export_button   {
   my $self = shift;
+  return unless $self->export_type;
   my $caption = $self->export_caption || 'Export';
-  my $url     = $self->hub->url({'function' => 'Export'});
+  my $url     = $self->hub->url({'type' => 'DataExport', 'action' => ucfirst($self->export_type), 'data_type' => $self->hub->type, 'component' => $self->id});
   my $src     = $self->img_url.'/16/rev/download.png';
   return sprintf('<p><a href="%s" class="button modal_link"><img src="%s" style="padding-bottom:2px;vertical-align:middle" /> %s</a></p>', $url, $src, $caption);
 }

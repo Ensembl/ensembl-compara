@@ -16,23 +16,32 @@ limitations under the License.
 
 =cut
 
-package EnsEMBL::Web::Controller::Modal;
+package EnsEMBL::Web::Component::DataExport::Results;
 
 use strict;
+use warnings;
 
-use base qw(EnsEMBL::Web::Controller::Page);
+use base qw(EnsEMBL::Web::Component::DataExport);
 
-sub page_type { return 'Popup'; }
-sub request   { return 'modal'; }
-
-sub init {
+sub _init {
   my $self = shift;
+  $self->cacheable( 0 );
+  $self->ajaxable(  0 );
+  $self->configurable( 0 );
+}
 
-  $self->builder->create_objects unless $self->page_type eq 'Configurator' && !scalar grep $_, values %{$self->hub->core_params};
-  $self->renderer->{'_modal_dialog_'} = $self->r->headers_in->{'X-Requested-With'} eq 'XMLHttpRequest' || $self->hub->param('X-Requested-With') eq 'iframe'; # Flag indicating that this is modal dialog panel, loaded by AJAX/hidden iframe
-  $self->page->initialize; # Adds the components to be rendered to the page module
-  $self->configure;
-  $self->render_page;
+sub content {
+  my $self  = shift;
+  my $hub   = $self->hub;
+
+  my $html;
+
+  $html .= '<p>(preview of file goes here)</p>';
+
+  $html .= '<p><a href="">Link to download file</a></p>';
+  warn ">>> HTML $html";
+
+  return $html;
 }
 
 1;
