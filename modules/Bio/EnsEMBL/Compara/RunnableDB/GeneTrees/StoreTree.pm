@@ -211,7 +211,6 @@ sub store_node_tags
     } else {
         if ($node->has_tag('gene_split')) {
             $node_type = 'gene_split';
-            $node->store_tag('duplication_confidence_score', 1);
         } elsif ($node->get_tagvalue("DD", 0)) {
             $node_type = 'dubious';
         } elsif ($node->get_tagvalue('Duplication', '') eq '1') {
@@ -262,6 +261,7 @@ sub store_node_tags
             $node->delete_tag($db_tag);
         }
     }
+    $node->store_tag('duplication_confidence_score', 1) if $node_type eq 'gene_split';
 
     foreach my $child (@{$node->children}) {
         $self->store_node_tags($child, $ref_support);
