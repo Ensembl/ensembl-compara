@@ -106,9 +106,9 @@ sub default_options {
         'raxml_exe'                 => '/nfs/production/xfam/treefam/software/RAxML/raxmlHPC-SSE3',
 
     # HMM specific parameters (set to 0 or undef if not in use)
+        'hmm_library_basedir'   => '/homes/muffato/just_panther_treefam',
        # List of directories that contain Panther-like databases (with books/ and globals/)
        # It requires two more arguments for each file: the name of the library, and whether subfamilies should be loaded
-       'panther_like_databases'  => [ ["/homes/muffato/just_panther_treefam", "just_panther_treefam", 1], ],
 
        # List of MultiHMM files to load (and their names)
 

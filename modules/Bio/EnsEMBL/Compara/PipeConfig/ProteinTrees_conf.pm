@@ -93,7 +93,6 @@ sub default_options {
         'fasta_dir'             => $self->o('work_dir') . '/blast_db',  # affects 'dump_subset_create_blastdb' and 'blastp'
         'cluster_dir'           => $self->o('work_dir') . '/cluster',
         'dump_dir'              => $self->o('work_dir') . '/dumps',
-        'hmmlib_dir'            => $self->o('work_dir') . '/hmmlib',
 
     # "Member" parameters:
         'allow_ambiguity_codes'     => 0,
@@ -152,6 +151,10 @@ sub default_options {
         #'raxml_exe'                 => '/software/ensembl/compara/raxml/standard-RAxML-8.0.19/raxmlHPC-SSE3',
 
     # HMM specific parameters (set to 0 or undef if not in use)
+       # The location of the HMM library. If the directory is empty, it will be populated with the HMMs found in 'panther_like_databases' and 'multihmm_files'
+       #'hmm_library_basedir'       => '/lustre/scratch110/ensembl/mp12/panther_hmms/PANTHER7.2_ascii',
+        'hmm_library_basedir'       => $self->o('work_dir') . '/hmmlib',
+
        # List of directories that contain Panther-like databases (with books/ and globals/)
        # It requires two more arguments for each file: the name of the library, and whether subfamilies should be loaded
        'panther_like_databases'  => [],
@@ -293,7 +296,7 @@ sub pipeline_create_commands {
         'mkdir -p '.$self->o('cluster_dir'),
         'mkdir -p '.$self->o('dump_dir'),
         'mkdir -p '.$self->o('fasta_dir'),
-        'mkdir -p '.$self->o('hmmlib_dir'),
+        'mkdir -p '.$self->o('hmm_library_basedir'),
 
             # perform "lfs setstripe" only if lfs is runnable and the directory is on lustre:
         'which lfs && lfs getstripe '.$self->o('fasta_dir').' >/dev/null 2>/dev/null && lfs setstripe '.$self->o('fasta_dir').' -c -1 || echo "Striping is not available on this system" ',
@@ -313,7 +316,7 @@ sub pipeline_wide_parameters {  # these parameter values are visible to all anal
         'cluster_dir'   => $self->o('cluster_dir'),
         'fasta_dir'     => $self->o('fasta_dir'),
         'dump_dir'      => $self->o('dump_dir'),
-        'hmmlib_dir'    => $self->o('hmmlib_dir'),
+        'hmm_library_basedir'   => $self->o('hmm_library_basedir'),
 
         'reuse_level'   => $self->o('reuse_level'),
         'clustering_mode'   => $self->o('clustering_mode'),
@@ -875,6 +878,19 @@ sub core_pipeline_analyses {
         },
 
 #--------------------------------------------------------[load the HMM profiles]----------------------------------------------------
+
+        {   -logic_name => 'test_nonempty_hmm_library_basedir',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ConditionalDataFlow',
+            -parameters    => {
+                'condition'     => ' (-d "#hmm_library_basedir#/books") and (-d "#hmm_library_basedir#/globals") and (-s "#hmm_library_basedir#/globals/con.Fasta") ',
+            },
+            -flow_into => {
+                2 => 'load_InterproAnnotation',
+                3 => 'panther_databases_factory',
+            },
+            -meadow_type    => 'LOCAL',
+        },
+
         {   -logic_name => 'panther_databases_factory',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
             -parameters => {
@@ -922,7 +938,6 @@ sub core_pipeline_analyses {
              -logic_name => 'dump_models',
              -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ComparaHMM::DumpModels',
              -parameters => {
-                             'hmm_library_basedir' => '#hmmlib_dir#',
                              'blast_bin_dir'       => $self->o('blast_bin_dir'),  ## For creating the blastdb (formatdb or mkblastdb)
                              'pantherScore_path'    => $self->o('pantherScore_path'),
                             },
@@ -984,7 +999,6 @@ sub core_pipeline_analyses {
                              'blast_bin_dir'       => $self->o('blast_bin_dir'),
                              'pantherScore_path'   => $self->o('pantherScore_path'),
                              'hmmer_path'          => $self->o('hmmer2_home'),
-                             'hmm_library_basedir' => '#hmmlib_dir#',
                              'only_canonical'      => 1,
                             },
              -hive_capacity => $self->o('HMMer_classify_capacity'),
@@ -1155,9 +1169,9 @@ sub core_pipeline_analyses {
                 'condition'     => '"#clustering_mode#" eq "hybrid"',
             },
             -flow_into => {
-                '2->A' => 'panther_databases_factory',
+                '2->A' => 'test_nonempty_hmm_library_basedir',
                 'A->2' => 'dump_unannotated_members',
-                3 => 'panther_databases_factory',
+                3 => 'test_nonempty_hmm_library_basedir',
             },
             -meadow_type    => 'LOCAL',
         },
