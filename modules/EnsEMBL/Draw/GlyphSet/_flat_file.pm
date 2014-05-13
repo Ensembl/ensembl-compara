@@ -95,7 +95,7 @@ sub features {
   } else {
     my $file = EnsEMBL::Web::TmpFile::Text->new(filename => $self->my_config('file'));
     
-    return $self->errorTrack(sprintf 'The file %s could not be found', $self->my_config('caption')) if !$file->exists && $self->strand < 0;
+    return $self->errorTrack(sprintf 'The file %s could not be found', $self->my_config('caption')) if !$file->exists;
 
     my $data = $file->retrieve;
     

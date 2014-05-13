@@ -21,6 +21,7 @@ package EnsEMBL::Web::Tools::FailOver;
 use strict;
 use warnings;
 
+use EnsEMBL::Web::Utils::Syslog qw(syslog);
 use Digest::MD5 qw(md5_hex);
 use EnsEMBL::Web::Tools::FileHandler qw(file_get_contents file_put_contents);
 
@@ -40,6 +41,9 @@ sub liveness_check { die "Must override alive"; }
 
 # seconds to continue to cautiously test for deadness after initial reports
 sub min_initial_dead { return 20; }
+
+# seconds between which to report your upness, for confidence in syslog
+sub report_up { return 3600; }
 
 # Which directory to store failure files in?
 sub failure_dir { return "/tmp"; }
@@ -97,11 +101,31 @@ sub is_dead {
   }
 }
 
+# Periodically report being alive. Override with return 0 if you don't
+# want this.
+sub report_life {
+  my ($self,$endpoint) = @_;
+
+  my $failbase = $self->failure_dir;
+  return 0 unless $failbase;
+  my $filename = $failbase."/.ok-".$self->{'prefix'}."-".md5_hex($endpoint);
+  my $then = 0;
+  if(-e $filename) {
+    $then = join('',file_get_contents($filename));
+  }
+  my $now = time;
+  if(!$then or $then + $self->report_up < $now) {
+    file_put_contents($filename,$now);
+    return 1;
+  }
+  return 0;
+}
+
 sub endpoint_log {
   my ($self,$endpoint,$msg,$debug) = @_;
 
   return if $debug and not $self->debug;
-  warn $self->{'prefix'}.": $endpoint : $msg\n";
+  syslog($self->{'prefix'}.": $endpoint : $msg");
 }
 
 sub go {
@@ -112,7 +136,7 @@ sub go {
   my @early_endpoints = @$endpoints;
   my $last_endpoint = pop @early_endpoints;
   foreach my $endpoint (@early_endpoints) {
-    $self->endpoint_log($endpoint,"Attempting $endpoint",1);
+    $self->endpoint_log($endpoint,"Attempting",1);
     my $is_dead = $self->is_dead($endpoint);
     if($is_dead == 1) {
       $self->endpoint_log($endpoint,"Ignoring due to recent reports of deadness");
@@ -130,7 +154,12 @@ sub go {
     my $out = $self->attempt($endpoint,$payload,0);
     my $success = $self->successful($out);
     $self->endpoint_log($endpoint,"successful = $success",1);
-    return $out if($success);
+    if($success) {
+      if($self->report_life($endpoint)) {
+        $self->endponit_log($endpoint,"still operational");
+      }
+      return $out;
+    }
     if($self->liveness_check($endpoint)) {
       # Is alive, probably just a daft query: rerun without timeout.
       $self->endpoint_log($endpoint,"Retrying as server seems up. Wish me luck!");
@@ -139,8 +168,41 @@ sub go {
     $self->endpoint_log($endpoint,"Marking as dead");
     $self->is_dead($endpoint,1);
   }
-  $self->endpoint_log($last_endpoint,"Attempting (no fallback) $last_endpoint",1);
+  $self->endpoint_log($last_endpoint,"Attempting (no fallback)",1);
   return $self->attempt($last_endpoint,$payload,1);
 }
 
+sub get_cached {
+  my ($self,$payload) = @_;
+
+  my $endpoints = $self->endpoints;
+  $self->endpoint_log("ALL","checking ".scalar(@$endpoints)." endpoints",1);
+  foreach my $endpoint (@$endpoints) {
+    $self->endpoint_log($endpoint,"Considering",1);
+    my $is_dead = $self->is_dead($endpoint);
+    if($is_dead == 1) {
+      $self->endpoint_log($endpoint,"Assuming dead due to recent reports",1);
+      next;
+    }
+    if($is_dead == -1) {
+      $self->endpoint_log($endpoint,"Liveness status uncertain");
+    } else {
+      $self->endpoint_log($endpoint,"No record of problems",1);
+    }
+    my $out = $self->attempt($endpoint,$payload);
+    if($self->successful($out)) {
+      if($is_dead == -1 || $self->report_life($endpoint)) {
+        $self->endpoint_log($endpoint,"Looks alive");
+      } else {
+        $self->endpoint_log($endpoint,"Got good result",1);
+      }
+      return $out;
+    }
+    $self->endpoint_log($endpoint,"Looks dead");
+    $self->is_dead($endpoint,1);
+  }
+  return undef;
+}
+
 1;
+

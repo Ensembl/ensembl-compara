@@ -160,173 +160,182 @@ sub new {
         }
       }
     }
+   
+    ## Factoring out export - no need to do any drawing-related munging for that, surely?
+    ## TODO - replace text rendering with fetching features and passing to EnsEMBL::IO
+    if ($config->get_parameter('text_export')) {
+      my $export_cache;
     
-    ## set the X-locations for each of the bump labels
-    foreach my $glyphset (@glyphsets) {
-      next unless defined $glyphset->label;
-      
-      my $img = $glyphset->label_img;
-      my $img_width = 0;
-      my $img_pad = 4;
-      $img_width = $img->width+$img_pad if $img;
-
-      my $text = $glyphset->label->{'text'};
-      my @res  = $glyphset->get_text_width($label_width - $img_width, $text, '', 'ellipsis' => 1, 'font' => $glyphset->label->{'font'}, 'ptsize' => $glyphset->label->{'ptsize'});
-      
-      if ($res[1] eq 'truncated') {
-        my $label_class = join('_', $glyphset->species, $glyphset->type) =~ s/\W/_/rg;
+      foreach my $glyphset (@glyphsets) {
+        my $name         = $glyphset->{'my_config'}->id;
+        eval {
+          $glyphset->{'export_cache'} = $export_cache;
         
-        if (!$config->{'hover_labels'}{$label_class}) {
-          $label_class = $text  =~ s/\W/_/rg;
-          
-          $config->{'hover_labels'}{$label_class} ||= {
-            header => $text,
-            class  => "name_only $label_class"
-          };
-          
-          $glyphset->label->{'class'} = "label $label_class";
-          $glyphset->label->{'hover'} = 1;
-        }
-      }
-      
-      $glyphset->label->{'font'}        ||= $config->{'_font_face'} || 'arial';
-      $glyphset->label->{'ptsize'}      ||= $config->{'_font_size'} || 100;
-      $glyphset->label->{'halign'}      ||= 'left';
-      $glyphset->label->{'absolutex'}     = 1;
-      $glyphset->label->{'absolutewidth'} = 1;
-      $glyphset->label->{'pixperbp'}      = $x_scale;
-      $glyphset->label->{'colour'}        = $colours->{lc $glyphset->{'my_config'}->get('_class')}{'default'} || 'black';
-      $glyphset->label->{'ellipsis'}      = 1;
-      $glyphset->label->{'text'}          = $res[0];
-      $glyphset->label->{'width'}         = $res[2];
-      
-      $glyphset->label->x(-$label_width - $margin + $img_width);
-      $glyphset->label_img->x(-$label_width - $margin + $img_pad/2) if $img;
-    }
-    
-    ## pull out alternating background colours for this script
-    my $bgcolours = [
-      $config->get_parameter('bgcolour1') || 'background1',
-      $config->get_parameter('bgcolour2') || 'background2'
-    ];
-    
-    $bgcolours->[1] = $bgcolours->[0] if $sortable_tracks;
-    
-    my $bgcolour_flag = $bgcolours->[0] ne $bgcolours->[1];
-
-    ## go ahead and do all the database work
-    $self->timer_push('GlyphSet list prepared for config ' . ref($config), 1);
-    
-    my $export_cache;
-    
-    foreach my $glyphset (@glyphsets) {
-      ## load everything from the database
-      my $name         = $glyphset->{'my_config'}->id;
-      my $ref_glyphset = ref $glyphset;
-      
-      eval {
-        $glyphset->{'export_cache'} = $export_cache;
+          my $text_export = $glyphset->render;
         
-        my $text_export = $glyphset->render;
-        
-        if ($text_export) {
-          # Add a header showing the region being exported
-          if (!$self->{'export'}) {
-            my $container = $glyphset->{'container'};
-            my $config    = $self->{'config'};
+          if ($text_export) {
+            # Add a header showing the region being exported
+            if (!$self->{'export'}) {
+              my $container = $glyphset->{'container'};
+              my $config    = $self->{'config'};
             
-            $self->{'export'} .= sprintf("Region:     %s\r\n", $container->name)                    if $container->can('name');
-            $self->{'export'} .= sprintf("Gene:       %s\r\n", $config->core_object('gene')->long_caption)       if $ENV{'ENSEMBL_TYPE'} eq 'Gene';
-            $self->{'export'} .= sprintf("Transcript: %s\r\n", $config->core_object('transcript')->long_caption) if $ENV{'ENSEMBL_TYPE'} eq 'Transcript';
-            $self->{'export'} .= sprintf("Protein:    %s\r\n", $container->stable_id)               if $container->isa('Bio::EnsEMBL::Translation');
-            $self->{'export'} .= "\r\n";
-          }
+              $self->{'export'} .= sprintf("Region:     %s\r\n", $container->name)                    if $container->can('name');
+              $self->{'export'} .= sprintf("Gene:       %s\r\n", $config->core_object('gene')->long_caption)       if $ENV{'ENSEMBL_TYPE'} eq 'Gene';
+              $self->{'export'} .= sprintf("Transcript: %s\r\n", $config->core_object('transcript')->long_caption) if $ENV{'ENSEMBL_TYPE'} eq 'Transcript';
+              $self->{'export'} .= sprintf("Protein:    %s\r\n", $container->stable_id)               if $container->isa('Bio::EnsEMBL::Translation');
+              $self->{'export'} .= "\r\n";
+            }
           
-          $self->{'export'} .= $text_export;
-        }
+            $self->{'export'} .= $text_export;
+          }
         
-        $export_cache = $glyphset->{'export_cache'};
-      };
+          $export_cache = $glyphset->{'export_cache'};
+        };
       
-      ## don't waste any more time on this row if there's nothing in it
-      if ($@ || scalar @{$glyphset->{'glyphs'}} == 0) {
-        warn $@ if $@;
+        ## don't waste any more time on this row if there's nothing in it
+        if ($@ || scalar @{$glyphset->{'glyphs'}} == 0) {
+          warn $@ if $@;
         
-        $self->timer_push('track finished', 3);
-        $self->timer_push(sprintf("INIT: [ ] $name '%s'", $glyphset->{'my_config'}->get('name')), 2);
-        next;
-      }
-      
-      ## remove any whitespace at the top of this row
-      my $gminy = $glyphset->miny;
-      
-      $config->{'transform'}->{'translatey'} = -$gminy + $yoffset;
-
-      if ($bgcolour_flag && $glyphset->_colour_background) {
-        ## colour the area behind this strip
-        my $background = Sanger::Graphics::Glyph::Rect->new({
-          x             => -$label_width - $padding - $margin * 3/2,
-          y             => $gminy - $padding,
-          z             => -100,
-          width         => $panel_width + $label_width + $margin * 2 + (2 * $padding),
-          height        => $glyphset->maxy - $gminy + (2 * $padding),
-          colour        => $bgcolours->[$iteration % 2],
-          absolutewidth => 1,
-          absolutex     => 1,
-        });
-        
-        # this accidentally gets stuffed in twice (for gif & imagemap) so with
-        # rounding errors and such we shouldn't track this for maxy & miny values
-        unshift @{$glyphset->{'glyphs'}}, $background;
-        
-        $iteration++;
-      }
-      
-      ## set up the "bumping button" label for this strip
-      if ($glyphset->label && $show_labels eq 'yes') {
-        my $gh = $glyphset->label->height || $config->texthelper->height($glyphset->label->font);
-        
-        $glyphset->label->y($gminy + $glyphset->{'label_y_offset'});
-        $glyphset->label->height($gh);
-        $glyphset->push($glyphset->label);
-        if($glyphset->label_img) {
-          my ($miny,$maxy) = ($glyphset->miny,$glyphset->maxy);
-          $glyphset->push($glyphset->label_img);
-          $glyphset->miny($miny);
-          $glyphset->maxy($maxy);
-        }
-
-        if ($glyphset->label->{'hover'}) {
-          $glyphset->push($glyphset->Line({
-            absolutex     => 1,
-            absolutey     => 1,
-            absolutewidth => 1,
-            width         => $glyphset->label->width,
-            x             => $glyphset->label->x,
-            y             => $gminy + $gh + 1 + $glyphset->{'label_y_offset'},
-            colour        => '#336699',
-            dotted        => 'small'
-          }));
+          $self->timer_push('track finished', 3);
+          $self->timer_push(sprintf("INIT: [ ] $name '%s'", $glyphset->{'my_config'}->get('name')), 2);
+          next;
         }
       }
-      
-      $glyphset->transform;
-      
-      ## translate the top of the next row to the bottom of this one
-      $yoffset += $glyphset->height + $trackspacing;
-      $self->timer_push('track finished', 3);
-      $self->timer_push(sprintf("INIT: [X] $name '%s'", $glyphset->{'my_config'}->get('name')), 2);
     }
+    else {
+      ## set the X-locations for each of the bump labels
+      foreach my $glyphset (@glyphsets) {
+        next unless defined $glyphset->label;
+      
+        my $img = $glyphset->label_img;
+        my $img_width = 0;
+        my $img_pad = 4;
+        $img_width = $img->width+$img_pad if $img;
+
+        my $text = $glyphset->label->{'text'};
+        my @res  = $glyphset->get_text_width($label_width - $img_width, $text, '', 'ellipsis' => 1, 'font' => $glyphset->label->{'font'}, 'ptsize' => $glyphset->label->{'ptsize'});
+      
+        if ($res[1] eq 'truncated') {
+          my $label_class = join('_', $glyphset->species, $glyphset->type) =~ s/\W/_/rg;
+        
+          if (!$config->{'hover_labels'}{$label_class}) {
+            $label_class = $text  =~ s/\W/_/rg;
+          
+            $config->{'hover_labels'}{$label_class} ||= {
+              header => $text,
+              class  => "name_only $label_class"
+            };
+          
+            $glyphset->label->{'class'} = "label $label_class";
+            $glyphset->label->{'hover'} = 1;
+          }
+        }
+      
+        $glyphset->label->{'font'}        ||= $config->{'_font_face'} || 'arial';
+        $glyphset->label->{'ptsize'}      ||= $config->{'_font_size'} || 100;
+        $glyphset->label->{'halign'}      ||= 'left';
+        $glyphset->label->{'absolutex'}     = 1;
+        $glyphset->label->{'absolutewidth'} = 1;
+        $glyphset->label->{'pixperbp'}      = $x_scale;
+        $glyphset->label->{'colour'}        = $colours->{lc $glyphset->{'my_config'}->get('_class')}{'default'} || 'black';
+        $glyphset->label->{'ellipsis'}      = 1;
+        $glyphset->label->{'text'}          = $res[0];
+        $glyphset->label->{'width'}         = $res[2];
+      
+        $glyphset->label->x(-$label_width - $margin + $img_width);
+        $glyphset->label_img->x(-$label_width - $margin + $img_pad/2) if $img;
+      }
     
-    $self->timer_push('End of creating glyphs for ' . ref($config), 1);
+      ## pull out alternating background colours for this script
+      my $bgcolours = [
+        $config->get_parameter('bgcolour1') || 'background1',
+        $config->get_parameter('bgcolour2') || 'background2'
+      ];
     
-    push @{$self->{'glyphsets'}}, @glyphsets;
+      $bgcolours->[1] = $bgcolours->[0] if $sortable_tracks;
     
-    $yoffset += $inter_space;
-    $self->{'__extra_block_spacing__'} += $inter_space;
-    $config->{'panel_width'} = undef;
+      my $bgcolour_flag = $bgcolours->[0] ne $bgcolours->[1];
+
+      ## go ahead and do all the database work
+      $self->timer_push('GlyphSet list prepared for config ' . ref($config), 1);
+    
+      foreach my $glyphset (@glyphsets) {
+        ## load everything from the database
+        my $name         = $glyphset->{'my_config'}->id;
+        my $ref_glyphset = ref $glyphset;
+        $glyphset->render;
+      
+        ## remove any whitespace at the top of this row
+        my $gminy = $glyphset->miny;
+      
+        $config->{'transform'}->{'translatey'} = -$gminy + $yoffset;
+
+        if ($bgcolour_flag && $glyphset->_colour_background) {
+          ## colour the area behind this strip
+          my $background = Sanger::Graphics::Glyph::Rect->new({
+            x             => -$label_width - $padding - $margin * 3/2,
+            y             => $gminy - $padding,
+            z             => -100,
+            width         => $panel_width + $label_width + $margin * 2 + (2 * $padding),
+            height        => $glyphset->maxy - $gminy + (2 * $padding),
+            colour        => $bgcolours->[$iteration % 2],
+            absolutewidth => 1,
+            absolutex     => 1,
+          });
+        
+          # this accidentally gets stuffed in twice (for gif & imagemap) so with
+          # rounding errors and such we shouldn't track this for maxy & miny values
+          unshift @{$glyphset->{'glyphs'}}, $background;
+        
+          $iteration++;
+        }
+      
+        ## set up the "bumping button" label for this strip
+        if ($glyphset->label && $show_labels eq 'yes') {
+          my $gh = $glyphset->label->height || $config->texthelper->height($glyphset->label->font);
+        
+          $glyphset->label->y($gminy + $glyphset->{'label_y_offset'});
+          $glyphset->label->height($gh);
+          $glyphset->push($glyphset->label);
+          if($glyphset->label_img) {
+            my ($miny,$maxy) = ($glyphset->miny,$glyphset->maxy);
+            $glyphset->push($glyphset->label_img);
+            $glyphset->miny($miny);
+            $glyphset->maxy($maxy);
+          }
+
+          if ($glyphset->label->{'hover'}) {
+            $glyphset->push($glyphset->Line({
+              absolutex     => 1,
+              absolutey     => 1,
+              absolutewidth => 1,
+              width         => $glyphset->label->width,
+              x             => $glyphset->label->x,
+              y             => $gminy + $gh + 1 + $glyphset->{'label_y_offset'},
+              colour        => '#336699',
+              dotted        => 'small'
+            }));
+          }
+        }
+      
+        $glyphset->transform;
+      
+        ## translate the top of the next row to the bottom of this one
+        $yoffset += $glyphset->height + $trackspacing;
+        $self->timer_push('track finished', 3);
+        $self->timer_push(sprintf("INIT: [X] $name '%s'", $glyphset->{'my_config'}->get('name')), 2);
+      }
+    
+      $self->timer_push('End of creating glyphs for ' . ref($config), 1);
+    
+      push @{$self->{'glyphsets'}}, @glyphsets;
+    
+      $yoffset += $inter_space;
+      $self->{'__extra_block_spacing__'} += $inter_space;
+      $config->{'panel_width'} = undef;
+    }
   }
-  
+
   $self->timer_push('DrawableContainer->new: End GlyphSets');
 
   return $self;

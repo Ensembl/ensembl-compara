@@ -43,6 +43,7 @@ sub slice         { return undef; }
 sub attribs       { return {}; }
 
 sub extra_data { return $_[0]{__extra__}; }
+sub extra_data_order { return undef; }
 
 sub coords {
   ## Default parser for raw data - this is the commonest format
