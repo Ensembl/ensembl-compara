@@ -51,6 +51,14 @@ sub EXPORT_FORMATS {
   );
 }
 
+sub EXPORT_TYPES {
+  return (
+    'sequence' => ['fasta', 'rtf'],
+    'features' => ['bed', 'gff'],
+    'tree'     => ['newick'],
+  );
+}
+
 sub HOMOLOGY_TYPES {
   return {
     'BRH'  => 'Best Reciprocal Hit',

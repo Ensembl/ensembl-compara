@@ -220,6 +220,7 @@ our $OBJECT_TO_SCRIPT = {
   Ajax                => 'Ajax',
   Share               => 'Share',
   Export              => 'Export',
+  DataExport          => 'DataExport',
 
   Gene                => 'Page',
   Transcript          => 'Page',

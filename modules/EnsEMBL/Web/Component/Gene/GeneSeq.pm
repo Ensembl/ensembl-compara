@@ -56,7 +56,8 @@ sub initialize {
   return ($sequence, $config);
 }
 
-sub export_caption { return 'Export this sequence'; }
+sub export_type     { return 'sequence'; }
+sub export_caption  { return 'Export this sequence'; }
 
 sub export_data {
   my $self      = shift;
