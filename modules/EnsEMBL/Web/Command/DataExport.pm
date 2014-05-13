@@ -16,19 +16,11 @@ limitations under the License.
 
 =cut
 
-package EnsEMBL::Web::Command::DataExport::OutputSequence;
+package EnsEMBL::Web::Command::DataExport;
 
 use strict;
 
-use base qw(EnsEMBL::Web::Command::DataExport);
+use base qw(EnsEMBL::Web::Command);
 
-sub process {
-  my $self       = shift;
-  my $hub        = $self->hub;
-
-  my $url_params = {'action' => 'Results'};
-
-  $self->ajax_redirect($hub->url($url_params));
-}
 
 1;
