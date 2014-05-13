@@ -982,7 +982,7 @@ sub core_pipeline_analyses {
             -parameters => {
                 'only_canonical'    => 1,
             },
-            -rc_name       => '250Mb_job',
+            -rc_name       => '4Gb_job',
             -hive_capacity => $self->o('blast_factory_capacity'),
             -flow_into => {
                 '2->A'  => [ 'HMMer_classifyPantherScore' ],
