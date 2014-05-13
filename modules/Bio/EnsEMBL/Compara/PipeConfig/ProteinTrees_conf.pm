@@ -1282,7 +1282,7 @@ sub pipeline_analyses {
                 'store_intermediate_trees'  => 1,
                 'store_filtered_align'      => 1,
                 'treebest_exe'              => $self->o('treebest_exe'),
-                'output_clusterset_id'      => $self->o('use_notung') ? 'treebest' : 'notung',
+                'output_clusterset_id'      => $self->o('use_notung') ? 'treebest' : 'default',
             },
             -hive_capacity        => $self->o('treebest_capacity'),
             -rc_name => '4Gb_job',
@@ -1298,12 +1298,16 @@ sub pipeline_analyses {
                 #'cdna'                      => 1,
                 'raxml_exe'              => $self->o('raxml_exe'),
                 'treebest_exe'              => $self->o('treebest_exe'),
-                'output_clusterset_id'      => $self->o('use_notung') ? 'raxml' : 'notung',
+                'output_clusterset_id'      => $self->o('use_notung') ? 'raxml' : 'default',
             },
             -hive_capacity        => $self->o('raxml_capacity'),
             -rc_name    => '8Gb_job',
             -flow_into  => {
-                2 => { 'treebest' => { 'output_clusterset_id' => 'raxml', 'gene_tree_id' => '#gene_tree_id#' } },
+                2 => { 'treebest' => {
+                            'output_clusterset_id'      => 'raxml',
+                            'gene_tree_id'              => '#gene_tree_id#',
+                            'store_filtered_align'      => 0,
+                } },
                 $self->o('use_notung') ? (1 => [ 'notung' ]) : (),
             }
         },
