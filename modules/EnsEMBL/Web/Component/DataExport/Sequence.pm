@@ -88,7 +88,7 @@ sub content {
   $fieldset->add_field([{
       'name'      => 'config_extra',
       'type'      => 'Checklist',
-      'label'     => 'Structure(s)',
+      'label'     => 'Sequence(s)',
       'values'    => $checklist,
       'selectall' => 1,
   }]);
