@@ -69,7 +69,7 @@ sub process {
     }
     unless ($error) {
       ## Write data to output file in desired format
-      ## N.B. replace with Bio::EnsEMBL::IO::Writer in due course
+      ## TODO - replace with Bio::EnsEMBL::IO::Writer in due course
       my $write_method = 'write_'.lc($format);
       if ($self->can($write_method)) {
         $error = $self->$write_method($file, $component);
@@ -92,7 +92,7 @@ sub process {
   $self->ajax_redirect($hub->url($url_params));
 }
 
-sub params {
+sub config_params {
   my $self = shift;
   my $params = {};
   foreach ($self->hub->param) {
@@ -107,8 +107,8 @@ sub params {
 sub write_rtf {
   my ($self, $file, $component) = @_;
 
-  my ($sequence, $config, $block_mode) = $component->fetch_data; 
-  warn "@@@ $sequence, $config, $block_mode";
+  my $gene = $self->hub->core_object('gene');
+  my ($sequence, $config) = $component->initialize($gene->slice); 
 
   ## Configure RTF display
   my @colours        = (undef);  my $class_to_style = $self->_class_to_style;
@@ -196,16 +196,9 @@ sub write_rtf {
     colors => \@colours,
   );
 
-  if ($block_mode) {
-    foreach my $block (@output) {
-      $rtf->paragraph(\'\fs20', $_)      for @$block;
-      $rtf->paragraph(\'\fs20', $spacer) if $spacer;
-    }
-  } else {
-    for my $i (0..$#{$output[0]}) {
-      $rtf->paragraph(\'\fs20', $_->[$i]) for @output;
-      $rtf->paragraph(\'\fs20', $spacer)  if $spacer;
-    }
+  for my $i (0..$#{$output[0]}) {
+    $rtf->paragraph(\'\fs20', $_->[$i]) for @output;
+    $rtf->paragraph(\'\fs20', $spacer)  if $spacer;
   }
  
   $rtf->close;
@@ -271,6 +264,7 @@ sub write_fasta {
 
   my ($data, $config) = $component->fetch_data;
 
+=pod
   my $data_type       = $hub->param('data_type');
   my $object          = $hub->core_object($data_type);
 
@@ -304,7 +298,6 @@ sub write_fasta {
     };
 
     foreach (@$data) {
-      warn ">>> DATUM $_";
       my $transcript = $_->Obj;
       my $id         = ($object_id ? "$object_id:" : '') . $transcript->stable_id;
       my $type       = $transcript->isa('Bio::EnsEMBL::PredictionTranscript') ? $transcript->analysis->logic_name : $transcript->status . '_' . $transcript->biotype;
@@ -356,7 +349,7 @@ sub write_fasta {
     }
   }
 
-
+=cut
   return $error;
 }
 
