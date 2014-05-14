@@ -35,9 +35,65 @@ sub content {
   my $self  = shift;
   my $hub   = $self->hub;
 
+  ### Options for sequence output
+  my $strands = [
+        { value => 'feature', caption => 'Feature strand' },
+        { value => '1',       caption => 'Forward strand' },
+        { value => '-1',      caption => 'Reverse strand' }
+      ];
+  my $genomic = [
+          { value => 'unmasked',     caption => 'Unmasked' },
+          { value => 'soft_masked',  caption => 'Repeat Masked (soft)' },
+          { value => 'hard_masked',  caption => 'Repeat Masked (hard)' },
+          { value => '5_flanking',   caption => "5' Flanking sequence" },
+          { value => '3_flanking',   caption => "3' Flanking sequence" },
+          { value => '5_3_flanking', caption => "5' and 3' Flanking sequences" }
+      ];
+
+
+  my $settings = [
+        [ 'strand',     'Strand',           'DropDown',  {'fasta' => ''}, $strands ],
+        [ 'upstream',   "5' Flanking sequence (upstream)",   'PosInt', {'rtf' => 600} ],
+        [ 'downstream', "3' Flanking sequence (downstream)", 'PosInt', {'rtf' => 600} ],
+        [ 'genomic',    'Genomic',          'DropDown',  {'fasta' => ''}, $genomic ],
+  ];
+  my $checklist = [
+        { 'value' => 'cdna',       'caption' => 'cDNA',             'checked' => '1' },
+        { 'value' => 'coding',     'caption' => 'Coding sequence',  'checked' => '1' },
+        { 'value' => 'peptide',    'caption' => 'Peptide sequence', 'checked' => '1' },
+        { 'value' => 'utr5',       'caption' => "5' UTR",           'checked' => '1' },
+        { 'value' => 'utr3',       'caption' => "3' UTR",           'checked' => '1' },
+        { 'value' => 'exon',       'caption' => 'Exons',            'checked' => '1' },
+        { 'value' => 'intron',     'caption' => 'Introns',          'checked' => '1' },
+  ];
+
+
+  ## Create settings form (comes with some default fields - see parent)
   my $form = $self->create_form();
 
-  my $fieldset  = $form->add_fieldset;
+  my $fieldset  = $form->add_fieldset('Settings');
+
+  ## TODO Needs to be configurable with JavaScript
+  my $format = 'fasta';
+  foreach (@$settings) {
+    my $params = {
+      'name'    => 'config_'.$_->[0],
+      'label'   => $_->[1],
+      'type'    => $_->[2],
+      'value'   => $_->[3]{$format},
+    };
+    $params->{'values'} = $_->[4] if $_->[2] eq 'DropDown';
+    $fieldset->add_field([$params]);
+  }
+  $fieldset->add_field([{
+      'name'      => 'config_extra',
+      'type'      => 'Checklist',
+      'label'     => 'Structure(s)',
+      'values'    => $checklist,
+      'selectall' => 1,
+  }]);
+
+
   $fieldset->add_button({
     'type'    => 'Submit',
     'name'    => 'submit',

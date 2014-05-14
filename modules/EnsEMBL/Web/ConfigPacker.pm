@@ -1789,8 +1789,6 @@ sub _munge_website_multi {
 }
 
 sub _munge_file_formats {
-## TODO - change this to get the required information from
-## individual modules
   my $self = shift;
 
   my %unsupported = map {uc($_) => 1} @{$self->tree->{'UNSUPPORTED_FILE_FORMATS'}||[]};
@@ -1802,6 +1800,7 @@ sub _munge_file_formats {
     'bedgraph'  => {'ext' => 'bed', 'label' => 'bedGraph',  'display' => 'graph'},
     'gff'       => {'ext' => 'gff', 'label' => 'GFF',       'display' => 'feature'},
     'gtf'       => {'ext' => 'gtf', 'label' => 'GTF',       'display' => 'feature'},
+    'rtf'       => {'ext' => 'rtf', 'label' => 'RTF'},
     'psl'       => {'ext' => 'psl', 'label' => 'PSL',       'display' => 'feature'},
     'vep_input' => {'ext' => 'txt', 'label' => 'VEP',       'display' => 'feature'},
     'wig'       => {'ext' => 'wig', 'label' => 'WIG',       'display' => 'graph'},
@@ -1822,7 +1821,7 @@ sub _munge_file_formats {
     if ($details->{'indexed'}) {
       push @remote, $format;
     }
-    else {
+    elsif ($details->{'display'}) {
       push @upload, $format;
     }
   }
