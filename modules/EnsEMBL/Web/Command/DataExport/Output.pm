@@ -92,6 +92,16 @@ sub process {
   $self->ajax_redirect($hub->url($url_params));
 }
 
+sub params {
+  my $self = shift;
+  my $params = {};
+  foreach ($self->hub->param) {
+    next unless $_ =~ /^config_/;
+    $params->{$_} = $self->hub->param($_);
+  }
+  return $params;
+}
+
 ###### INDIVIDUAL FORMATS #############
 
 sub write_rtf {
@@ -294,6 +304,7 @@ sub write_fasta {
     };
 
     foreach (@$data) {
+      warn ">>> DATUM $_";
       my $transcript = $_->Obj;
       my $id         = ($object_id ? "$object_id:" : '') . $transcript->stable_id;
       my $type       = $transcript->isa('Bio::EnsEMBL::PredictionTranscript') ? $transcript->analysis->logic_name : $transcript->status . '_' . $transcript->biotype;
