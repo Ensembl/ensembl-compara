@@ -163,7 +163,7 @@ sub render_Rect {
 sub render_Text {
   my ($self, $glyph) = @_;
 
-  return unless $glyph->{'text'};
+  return unless length $glyph->{'text'};
   my $font   = $glyph->font();
   my $colour = $self->colour($glyph->{'colour'});
 
