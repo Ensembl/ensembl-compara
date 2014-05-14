@@ -36,10 +36,9 @@ sub content {
 
   my $html;
 
-  $html .= '<p>(preview of file goes here)</p>';
+  $html .= '<p>(preview of file goes here)</p>' unless $hub->param('format') eq 'RTF';
 
-  $html .= '<p><a href="">Link to download file</a></p>';
-  warn ">>> HTML $html";
+  $html .= sprintf('<p><a href="/%s/download?file=%s;prefix=export;format=%s">Download your %s file</a></p>', $hub->species, $hub->param('file'), $hub->param('format'), $hub->param('format'));
 
   return $html;
 }

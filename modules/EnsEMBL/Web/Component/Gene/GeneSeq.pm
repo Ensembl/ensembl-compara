@@ -27,7 +27,10 @@ sub _init { $_[0]->SUPER::_init(5000); }
 sub initialize {
   my ($self, $slice, $start, $end) = @_;
   my $hub    = $self->hub;
-  my $object = $self->object;
+  my $object = $hub->core_object('gene');
+  warn "!!! INITIALISING WITH OBJECT $object";
+  warn "... START ".$slice->start;
+  warn "...   END ".$slice->end;
   
   my $config = {
     display_width   => $hub->param('display_width') || 60,
@@ -54,14 +57,6 @@ sub initialize {
   $self->markup_line_numbers($sequence, $config)       if $config->{'line_numbering'};
   
   return ($sequence, $config);
-}
-
-sub export_type     { return 'sequence'; }
-sub export_caption  { return 'Export this sequence'; }
-
-sub export_data {
-  my $self      = shift;
-  my $hub       = $self->hub;
 }
 
 sub content {
@@ -124,6 +119,16 @@ sub content_sub_slice {
 sub content_rtf {
   my $self = shift;
   return $self->export_sequence($self->initialize($self->object->slice));
+}
+
+sub export_type     { return 'sequence'; }
+sub export_caption  { return 'Export this sequence'; }
+
+sub fetch_data {
+  my $self = shift;
+  my $gene = $self->hub->core_object('gene');
+  warn "!!! GENE $gene";
+  return $self->initialize($gene->slice) if $gene;
 }
 
 sub get_key {

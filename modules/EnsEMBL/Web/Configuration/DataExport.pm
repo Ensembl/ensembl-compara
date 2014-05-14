@@ -36,9 +36,10 @@ sub populate_tree {
     my $module  = ucfirst($type);
     my $key     = $type.'_input';
     $self->create_node($module, "$module Input", [$key, 'EnsEMBL::Web::Component::DataExport::'.$module]);
-    $self->create_node('Output'.$module,  '', [], { 'command' => 'EnsEMBL::Web::Command::DataExport::Output'.$module});
   }
+  $self->create_node('Output',  '', [], { 'command' => 'EnsEMBL::Web::Command::DataExport::Output'});
   $self->create_node('Results', 'Results', ['Results', 'EnsEMBL::Web::Component::DataExport::Results']);
+  $self->create_node('Error', 'Output Error', ['error', 'EnsEMBL::Web::Component::DataExport::Error']);
 }
 
 1;

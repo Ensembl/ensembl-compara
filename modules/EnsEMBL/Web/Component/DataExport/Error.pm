@@ -16,15 +16,28 @@ limitations under the License.
 
 =cut
 
-package EnsEMBL::Web::Command::DataExport;
+package EnsEMBL::Web::Component::DataExport::Error;
 
 use strict;
+use warnings;
 
-use base qw(EnsEMBL::Web::Command);
+use base qw(EnsEMBL::Web::Component::DataExport);
 
-sub write_file {
-## Outputs chosen data to a text file
-## N.B. replace with Bio::EnsEMBL::IO::Writer in due course
+sub _init {
+  my $self = shift;
+  $self->cacheable( 0 );
+  $self->ajaxable(  0 );
+  $self->configurable( 0 );
+}
+
+sub content {
+  my $self  = shift;
+  my $hub   = $self->hub;
+
+  my $html = $self->error_panel('Output error', 
+      'System returned the following message:<br />'.$hub->param('error').'<br />Please try again');
+
+  return $html;
 }
 
 1;

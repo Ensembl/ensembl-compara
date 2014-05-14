@@ -26,12 +26,13 @@ sub create_form {
   my $self = shift;
   my $hub  = $self->hub;
 
-  my $form_url  = sprintf('/%s/DataExport/Output%s', $hub->species, $hub->action);
+  my $form_url  = sprintf('/%s/DataExport/Output', $hub->species);
   my $form      = $self->new_form({'id' => 'export', 'action' => $form_url, 'method' => 'post'});
 
   my $fieldset  = $form->add_fieldset;
   my %export_info = EnsEMBL::Web::Constants::EXPORT_TYPES;
   my @values = map {uc($_)} @{$export_info{lc($hub->action)}};
+  unshift @values, '--- CHOOSE FORMAT ---';
   $fieldset->add_field([
     {
       'type'    => 'DropDown',
@@ -45,17 +46,27 @@ sub create_form {
       'name'    => 'name',
       'label'   => 'File name (optional)',
     },
-    {
+  ]);
+  $form->add_element(
       'type'    => 'Hidden',
       'name'    => 'data_type',
       'value'   => $hub->param('data_type'),
-    },
-    {
+  );
+  $form->add_element(
       'type'    => 'Hidden',
       'name'    => 'component',
       'value'   => $hub->param('component'),
-    },
-  ]);
+  );
+  $form->add_element(
+      'type'    => 'Hidden',
+      'name'    => 'r',
+      'value'   => $hub->param('r'),
+  );
+  $form->add_element(
+      'type'    => 'Hidden',
+      'name'    => 'g',
+      'value'   => $hub->param('g'),
+  );
   return $form;
 }
 

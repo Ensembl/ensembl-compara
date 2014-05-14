@@ -68,10 +68,12 @@ sub object {
   my ($self, $type, $object) = @_;
   my $hub = $self->hub;
   $type ||= $hub->type;
+  #warn "@@@ GETTING OBJECT OF TYPE $type";
   
   $self->{'objects'}{$type} = $object if $object;
   
   my $object_type = $self->{'objects'}{$type};
+  #warn ".... FOUND OBJECT $object_type";
   $object_type  ||= $self->{'objects'}{$hub->factorytype} unless $_[1];
   
   return $object_type;
@@ -168,10 +170,13 @@ sub create_factory {
   };
   
   my $factory = $self->new_factory($type, $data);
+  #warn ">>> FACTORY $factory IS LAZY? ".$factory->canLazy;
+  #warn ">>> SCRIPT ".$hub->script;
   
   if ($factory) {
     my $obj;
-    if($hub->script eq 'Component' and $factory->canLazy) {
+    if($hub->script =~ /Component|DataExport/ and $factory->canLazy) {
+     # warn "!!! BEING LAZY WITH $type";
       $factory->SetTypedDataObject($type,EnsEMBL::Web::Lazy::Object->new(sub {
         $obj = $factory->createObjectsInternal;
         if($obj) {
