@@ -47,6 +47,7 @@ sub process {
     ## TODO - replace relevant parts with Bio::EnsEMBL::IO::Writer in due course
 
     $file = EnsEMBL::Web::TmpFile::Text->new(extension => $format_info->{'ext'}, prefix => 'export');
+    $self->{'__file'} = $file;
 
     ## Create the component we need to get data from 
     my $class = 'EnsEMBL::Web::Component::'.$hub->param('data_type').'::'.$hub->param('component');
@@ -73,7 +74,7 @@ sub process {
       ## Write data to output file in desired format
       my $write_method = 'write_'.lc($format);
       if ($self->can($write_method)) {
-        $error = $self->$write_method($file, $component);
+        $error = $self->$write_method($component);
       }
       else {
         $error = 'Output not implemented for format '.$format;
@@ -108,7 +109,8 @@ sub config_params {
 sub write_rtf {
 ### RTF output is atypical, in that it aims to replicate the visual appearance
 ### of the page (a bit like image export) rather than processing data
-  my ($self, $file, $component) = @_;
+  my ($self, $component) = @_;
+  my $file = $self->{'__file'};
 
   my $gene = $self->hub->core_object('gene');
   $self->hub->param('exon_display', 'on'); ## force exon highlighting on
@@ -263,37 +265,28 @@ sub _class_to_style {
 }
 
 sub write_fasta {
-  my ($self, $file, $component) = @_;
+  my ($self, $component) = @_;
   my $hub     = $self->hub;
   my $error   = undef;
 
-  my @data = $component->get_export_data;
-  warn ">>> DATA @data";
+  my $data_type   = $hub->param('data_type');
+  my $data_object = $hub->core_object($data_type);
+  my @data        = $component->get_export_data;
 
-=pod
-  my $data_type       = $hub->param('data_type');
-  my $object          = $hub->core_object($data_type);
+  ## Do a bit of munging of this data, according to export options selected
+  my $stable_id   = ($data_type eq 'Gene' || $data_type eq 'LRG') ? $data_object->stable_id : '';
+  my $slice       = $self->object->expand_slice($data_object->slice);
 
-  my @trans_objects   = ($data_type eq 'Gene' || $data_type eq 'LRG') ? $object->get_all_transcripts : @$data;
-  @trans_objects      = [$object] if($data_type eq 'Transcript');
-
-  my $object_id       = ($data_type eq 'Gene' || $data_type eq 'LRG') ? $object->stable_id : '';
-  my $slice           = $object->slice('expand');
-  $slice              = $self->slice if($slice == 1);
-  my $strand          = $hub->param('strand');
-  if(($strand ne 1) && ($strand ne -1)) {$strand = $slice->strand;}
-  if($strand != $slice->strand){ $slice=$slice->invert; }
-  my $params          = $self->params;
   my $genomic         = $hub->param('genomic');
-  my $seq_region_name = $object->seq_region_name;
-  my $seq_region_type = $object->seq_region_type;
+  my $seq_region_name = $data_object->seq_region_name;
+  my $seq_region_type = $data_object->seq_region_type;
   my $slice_name      = $slice->name;
   my $slice_length    = $slice->length;
   my $fasta;
-  if (scalar keys %$params) {
-    my $intron_id;
 
-    my $output = {
+  my $intron_id;
+
+  my $output = {
       cdna    => sub { my ($t, $id, $type) = @_; [[ "$id cdna:$type", $t->spliced_seq ]] },
       coding  => sub { my ($t, $id, $type) = @_; [[ "$id cds:$type", $t->translateable_seq ]] },
       peptide => sub { my ($t, $id, $type) = @_; eval { [[ "$id peptide: " . $t->translation->stable_id . " pep:$type", $t->translate->seq ]] }},
@@ -301,28 +294,29 @@ sub write_fasta {
       utr5    => sub { my ($t, $id, $type) = @_; eval { [[ "$id utr5:$type", $t->five_prime_utr->seq ]] }},
       exon    => sub { my ($t, $id, $type) = @_; eval { [ map {[ "$id " . $_->id . " exon:$type", $_->seq->seq ]} @{$t->get_all_Exons} ] }},
       intron  => sub { my ($t, $id, $type) = @_; eval { [ map {[ "$id intron " . $intron_id++ . ":$type", $_->seq ]} @{$t->get_all_Introns} ] }}
-    };
+  };
 
-    foreach (@$data) {
-      my $transcript = $_->Obj;
-      my $id         = ($object_id ? "$object_id:" : '') . $transcript->stable_id;
-      my $type       = $transcript->isa('Bio::EnsEMBL::PredictionTranscript') ? $transcript->analysis->logic_name : $transcript->status . '_' . $transcript->biotype;
+  my $options = EnsEMBL::Web::Constants::FASTA_OPTIONS;
 
-      $intron_id = 1;
+  foreach my $transcript (@data) {
+    my $id         = ($stable_id ? "$stable_id:" : '') . $transcript->stable_id;
+    my $type       = $transcript->isa('Bio::EnsEMBL::PredictionTranscript') ? $transcript->analysis->logic_name : $transcript->status . '_' . $transcript->biotype;
 
-      foreach (sort keys %$params) {
-        my $o = $output->{$_}($transcript, $id, $type) if exists $output->{$_};
+    $intron_id = 1;
 
-        next unless ref $o eq 'ARRAY';
 
-        foreach (@$o) {
-          $self->string(">$_->[0]");
-          $self->string($fasta) while $fasta = substr $_->[1], 0, 60, '';
-        }
+    foreach (sort {$a->{'name'} cmp $b->{'name'}} @$options) {
+      my $o = $output->{$_->{'name'}}($transcript, $id, $type) if exists $output->{$_->{'name'}};
+
+      next unless ref $o eq 'ARRAY';
+
+      foreach (@$o) {
+        $self->print_line(">$_->{'caption'}");
+        $self->print_line($fasta) while $fasta = substr $_->[1], 0, 60, '';
       }
-
-      $self->string('');
     }
+
+    $self->print_line('');
   }
 
   if (defined $genomic && $genomic ne 'off') {
@@ -332,7 +326,7 @@ sub write_fasta {
     if ($genomic =~ /flanking/) {
       for (5, 3) {
         if ($genomic =~ /$_/) {
-          if ($strand == $params->{'feature_strand'}) {
+          if ($hub->param('strand') == $hub->param('feature_strand')) {
             ($start, $end) = $_ == 3 ? ($slice_length - $hub->param('flank3_display') + 1, $slice_length) : (1, $hub->param('flank5_display'));
           } else {
             ($start, $end) = $_ == 5 ? ($slice_length - $hub->param('flank5_display') + 1, $slice_length) : (1, $hub->param('flank3_display'));
@@ -343,21 +337,25 @@ sub write_fasta {
           if ($flank_slice) {
             $seq  = $flank_slice->seq;
 
-            $self->string(">$_' Flanking sequence " . $flank_slice->name);
-            $self->string($fasta) while $fasta = substr $seq, 0, 60, '';
+            $self->print_line(">$_' Flanking sequence " . $flank_slice->name);
+            $self->print_line($fasta) while $fasta = substr $seq, 0, 60, '';
           }
         }
       }
     } else {
       $seq = defined $masking ? $slice->get_repeatmasked_seq(undef, $masking)->seq : $slice->seq;
-      $self->string(">$seq_region_name dna:$seq_region_type $slice_name");
-      $self->string($fasta) while $fasta = substr $seq, 0, 60, '';
+      $self->print_line(">$seq_region_name dna:$seq_region_type $slice_name");
+      $self->print_line($fasta) while $fasta = substr $seq, 0, 60, '';
     }
   }
 
-=cut
   return $error;
 }
 
+sub print_line { 
+  my ($self, $string) = @_;
+  my $file = $self->{'__file'};
+  $file->print("$string\r\n");
+}
 
 1;

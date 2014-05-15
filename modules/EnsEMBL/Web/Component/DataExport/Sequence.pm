@@ -21,6 +21,8 @@ package EnsEMBL::Web::Component::DataExport::Sequence;
 use strict;
 use warnings;
 
+use EnsEMBL::Web::Constants;
+
 use base qw(EnsEMBL::Web::Component::DataExport);
 
 sub _init {
@@ -48,15 +50,8 @@ sub content {
           { value => '3_flanking',   caption => "3' Flanking sequence" },
           { value => '5_3_flanking', caption => "5' and 3' Flanking sequences" }
       ];
-  my $checklist = [
-        { 'value' => 'cdna',       'caption' => 'cDNA',             'checked' => '1' },
-        { 'value' => 'coding',     'caption' => 'Coding sequence',  'checked' => '1' },
-        { 'value' => 'peptide',    'caption' => 'Peptide sequence', 'checked' => '1' },
-        { 'value' => 'utr5',       'caption' => "5' UTR",           'checked' => '1' },
-        { 'value' => 'utr3',       'caption' => "3' UTR",           'checked' => '1' },
-        { 'value' => 'exon',       'caption' => 'Exons',            'checked' => '1' },
-        { 'value' => 'intron',     'caption' => 'Introns',          'checked' => '1' },
-      ];
+
+  my $checklist = EnsEMBL::Web::Constants::FASTA_OPTIONS;
 
   my $settings = {
         'strand' => {
