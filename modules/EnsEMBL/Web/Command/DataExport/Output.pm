@@ -305,7 +305,6 @@ sub write_fasta {
 
     $intron_id = 1;
 
-
     foreach (sort {$a->{'value'} cmp $b->{'value'}} @$options) {
       my $o = $output->{$_->{'value'}}($transcript, $id, $type) if exists $output->{$_->{'value'}};
 
