@@ -217,6 +217,11 @@ sub get_content {
   return $content;
 }
 
+sub get_export_data {
+  ## Stub - implement in child objects to use new DataExport interface
+  ## @return Arrayref of API objects
+}
+
 sub cache {
   my ($panel, $obj, $type, $name) = @_;
   my $cache = EnsEMBL::Web::TmpFile::Text->new(

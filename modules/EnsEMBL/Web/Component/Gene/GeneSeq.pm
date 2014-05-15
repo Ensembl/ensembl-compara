@@ -121,11 +121,14 @@ sub content_rtf {
 sub export_type     { return 'sequence'; }
 sub export_caption  { return 'Export this sequence'; }
 
-sub fetch_data {
+sub get_export_data {
+## Get data for export
   my $self = shift;
+  ## Fetch gene explicitly, as we're probably coming from a DataExport URL
   my $gene = $self->hub->core_object('gene');
-  warn "!!! GENE $gene";
-  return $self->initialize($gene->slice) if $gene;
+  return unless $gene;
+  my @transcripts = @{$gene->get_all_transcripts||[]};
+  return map {$_->Obj} @transcripts;
 }
 
 sub get_key {

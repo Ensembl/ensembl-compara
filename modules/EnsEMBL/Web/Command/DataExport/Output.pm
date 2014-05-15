@@ -267,7 +267,8 @@ sub write_fasta {
   my $hub     = $self->hub;
   my $error   = undef;
 
-  my ($data, $config) = $component->fetch_data;
+  my @data = $component->get_export_data;
+  warn ">>> DATA @data";
 
 =pod
   my $data_type       = $hub->param('data_type');
