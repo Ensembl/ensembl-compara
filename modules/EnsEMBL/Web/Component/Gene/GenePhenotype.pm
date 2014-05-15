@@ -42,64 +42,6 @@ sub content {
 }
 
 
-
-sub source_link {
-  my ($self, $source, $ext_id, $vname, $gname) = @_;
-  
-  my $source_uc = uc $source;
-  $source_uc    = 'OPEN_ACCESS_GWAS_DATABASE' if $source_uc =~ /OPEN/;
-  
-  if ($ext_id) {
-    $source_uc .= '_ID' if $source_uc =~ /COSMIC/;
-    $source_uc  = $1 if $source_uc =~ /(HGMD)/;
-  }
-  my $url = $self->hub->species_defs->ENSEMBL_EXTERNAL_URLS->{$source_uc};
-
-  if ($ext_id && $ext_id ne 'no-ref') {
-    if ($url =~/gwastudies/) {
-      $ext_id =~ s/pubmed\///; 
-      $url    =~ s/###ID###/$ext_id/;
-    } 
-    elsif ($url =~ /omim/) {
-      $ext_id    =~ s/MIM\://; 
-      $url =~ s/###ID###/$ext_id/;
-    } 
-    else {
-      $url =~ s/###ID###/$ext_id/;
-    }
-  } 
-  elsif ($vname || $gname) {
-    if ($url =~ /omim/) {
-        my $search = "search?search=".($vname || $gname);
-        $url =~ s/###ID###/$search/; 
-    } 
-    elsif ($url =~/hgmd/) {
-      $url =~ s/###ID###/$gname/;
-      $url =~ s/###ACC###/$vname/;
-    } 
-    elsif ($url =~/cosmic/) {
-      if ($vname) {
-	      my $cname = ($vname =~ /^COSM(\d+)/) ? $1 : $vname;
-			  $url =~ s/###ID###/$cname/;
-      }
-      else {
-			  $url =~ s/###ID###/$gname/;
-      } 
-		} 
-    else {
-      $url =~ s/###ID###/$vname/;
-    }
-  }
-  elsif ($url =~ /(.+)\?/) { # Only general source link
-    $url = $1;
-  }
-  else {
-    $url =~ s/###ID###//;
-  }
-  return $url ? qq{<a rel="external" href="$url">$source</a>} : $source;
-}
-
-
 sub gene_phenotypes {
   my $self             = shift;
   my $object           = $self->object;
