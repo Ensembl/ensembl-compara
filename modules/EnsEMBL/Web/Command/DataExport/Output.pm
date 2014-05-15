@@ -325,30 +325,9 @@ sub write_fasta {
     my $masking = $genomic eq 'soft_masked' ? 1 : $genomic eq 'hard_masked' ? 0 : undef;
     my ($seq, $start, $end, $flank_slice);
 
-    if ($genomic =~ /flanking/) {
-      for (5, 3) {
-        if ($genomic =~ /$_/) {
-          if ($hub->param('strand') == $hub->param('feature_strand')) {
-            ($start, $end) = $_ == 3 ? ($slice_length - $hub->param('flank3_display') + 1, $slice_length) : (1, $hub->param('flank5_display'));
-          } else {
-            ($start, $end) = $_ == 5 ? ($slice_length - $hub->param('flank5_display') + 1, $slice_length) : (1, $hub->param('flank3_display'));
-          }
-
-          $flank_slice = $slice->sub_Slice($start, $end);
-
-          if ($flank_slice) {
-            $seq  = $flank_slice->seq;
-
-            $self->print_line(">$_' Flanking sequence " . $flank_slice->name);
-            $self->print_line($fasta) while $fasta = substr $seq, 0, 60, '';
-          }
-        }
-      }
-    } else {
-      $seq = defined $masking ? $slice->get_repeatmasked_seq(undef, $masking)->seq : $slice->seq;
-      $self->print_line(">$seq_region_name dna:$seq_region_type $slice_name");
-      $self->print_line($fasta) while $fasta = substr $seq, 0, 60, '';
-    }
+    $seq = defined $masking ? $slice->get_repeatmasked_seq(undef, $masking)->seq : $slice->seq;
+    $self->print_line(">$seq_region_name dna:$seq_region_type $slice_name");
+    $self->print_line($fasta) while $fasta = substr $seq, 0, 60, '';
   }
 
   return $error;

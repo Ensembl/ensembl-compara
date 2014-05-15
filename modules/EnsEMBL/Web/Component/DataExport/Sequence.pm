@@ -46,9 +46,6 @@ sub content {
           { value => 'unmasked',     caption => 'Unmasked' },
           { value => 'soft_masked',  caption => 'Repeat Masked (soft)' },
           { value => 'hard_masked',  caption => 'Repeat Masked (hard)' },
-          { value => '5_flanking',   caption => "5' Flanking sequence" },
-          { value => '3_flanking',   caption => "3' Flanking sequence" },
-          { value => '5_3_flanking', caption => "5' and 3' Flanking sequences" }
       ];
 
   my $checklist = EnsEMBL::Web::Constants::FASTA_OPTIONS;
@@ -70,13 +67,13 @@ sub content {
             'defaults'  => {'rtf' => 600},
         },
         'genomic' => {
-            'label' => 'Genomic',   
+            'label' => 'Genomic sequence',   
             'type'  => 'DropDown', 
             'values' => $genomic,
         },
         'extra' => {
           'type'      => 'Checklist',
-          'label'     => 'Sequence(s)',
+          'label'     => 'Transcript features to include',
           'values'    => $checklist,
           'selectall' => 1,
         },
