@@ -111,10 +111,12 @@ sub write_rtf {
   my ($self, $file, $component) = @_;
 
   my $gene = $self->hub->core_object('gene');
+  $self->hub->param('exon_display', 'on'); ## force exon highlighting on
   my ($sequence, $config) = $component->initialize($gene->slice); 
 
   ## Configure RTF display
-  my @colours        = (undef);  my $class_to_style = $self->_class_to_style;
+  my @colours        = (undef);  
+  my $class_to_style = $self->_class_to_style;
   my $spacer         = $config->{'v_space'} ? ' ' x $config->{'display_width'} : '';
   my $c              = 1;
   my $i              = 0;
