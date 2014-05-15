@@ -179,7 +179,7 @@ sub run_ortheus {
     #Call ortheus
     my $fasta_str = join " ", @{$ordered_fasta_files};
 
-    my $ortheus_exe = "/software/ensembl/compara/OrtheusC/bin/OrtheusC";
+    my $ortheus_exe = $self->param('ortheus_bin');
 
     my $tree_state_file = $dump_dir . "/output.$$.tree";
     my $out_align = $dump_dir . "/output.$$.mfa";
@@ -196,7 +196,7 @@ sub run_ortheus {
 
     if ($return_status ne "OK") {
         print "ortheus execution failed at position $curr_pos ($return_status)\n";
-        $self->warning("ortheus execution failed at position $curr_pos ($return_status)"); 
+        $self->warning("ortheus execution failed at position $curr_pos ($return_status)\n$ortheus_cmd");
         return;
     }
 
