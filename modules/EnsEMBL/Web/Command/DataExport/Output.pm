@@ -47,6 +47,7 @@ sub process {
     ## TODO - replace relevant parts with Bio::EnsEMBL::IO::Writer in due course
 
     $file = EnsEMBL::Web::TmpFile::Text->new(extension => $format_info->{'ext'}, prefix => 'export');
+    ## Ugly hack - stuff file into package hash so we can get at it later without passing as argument
     $self->{'__file'} = $file;
 
     ## Create the component we need to get data from 
@@ -305,13 +306,13 @@ sub write_fasta {
     $intron_id = 1;
 
 
-    foreach (sort {$a->{'name'} cmp $b->{'name'}} @$options) {
-      my $o = $output->{$_->{'name'}}($transcript, $id, $type) if exists $output->{$_->{'name'}};
+    foreach (sort {$a->{'value'} cmp $b->{'value'}} @$options) {
+      my $o = $output->{$_->{'value'}}($transcript, $id, $type) if exists $output->{$_->{'value'}};
 
       next unless ref $o eq 'ARRAY';
 
       foreach (@$o) {
-        $self->print_line(">$_->{'caption'}");
+        $self->print_line(">$_->[0]");
         $self->print_line($fasta) while $fasta = substr $_->[1], 0, 60, '';
       }
     }
