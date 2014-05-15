@@ -119,7 +119,7 @@ sub content_rtf {
 }
 
 sub export_type     { return 'sequence'; }
-sub export_caption  { return 'Export this sequence'; }
+sub export_caption  { return 'Download this sequence'; }
 
 sub get_export_data {
 ## Get data for export

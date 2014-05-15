@@ -22,15 +22,10 @@ use strict;
 
 use base qw(EnsEMBL::Web::Factory);
 
-sub createObjects { 
-  my $self          = shift;
-  $self->DataObjects(
-    $self->new_object(
-     $self->hub->param('data_type'), undef,
-     $self->__data,
-    ) 
-  );
-
+sub createObjects {
+  my $self = shift;
+  $self->DataObjects($self->new_object('DataExport', undef, $self->__data));
 }
+
 
 1;

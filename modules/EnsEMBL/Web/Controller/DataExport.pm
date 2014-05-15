@@ -28,7 +28,8 @@ sub request   { return $_[0]->action =~ /Output/ ? 'Export'  : 'Modal'; }
 
 sub init {
   my $self = shift;
-  
+
+  $self->builder->create_objects('DataExport');  
   $self->renderer->{'_modal_dialog_'} = $self->r->headers_in->{'X-Requested-With'} eq 'XMLHttpRequest'; # Flag indicating that this is modal dialog panel, loaded by AJAX
   $self->page->initialize; # Adds the components to be rendered to the page module  
   $self->configure;
