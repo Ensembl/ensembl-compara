@@ -44,6 +44,7 @@ sub process {
     $error = 'Format not recognised';
   }
   else {
+    ## TODO - replace relevant parts with Bio::EnsEMBL::IO::Writer in due course
 
     $file = EnsEMBL::Web::TmpFile::Text->new(extension => $format_info->{'ext'}, prefix => 'export');
 
@@ -63,13 +64,13 @@ sub process {
       warn "!!! Could not create component $class";
       $error = 'Export not available';
     }
-    elsif (!$component->can('fetch_data')) {
+    elsif (!$component->can('export_type')) {
       warn "!!! Export not implemented in component $class";
       $error = 'Export not available';
     }
+
     unless ($error) {
       ## Write data to output file in desired format
-      ## TODO - replace with Bio::EnsEMBL::IO::Writer in due course
       my $write_method = 'write_'.lc($format);
       if ($self->can($write_method)) {
         $error = $self->$write_method($file, $component);
@@ -105,6 +106,8 @@ sub config_params {
 ###### INDIVIDUAL FORMATS #############
 
 sub write_rtf {
+### RTF output is atypical, in that it aims to replicate the visual appearance
+### of the page (a bit like image export) rather than processing data
   my ($self, $file, $component) = @_;
 
   my $gene = $self->hub->core_object('gene');
