@@ -28,9 +28,6 @@ sub initialize {
   my ($self, $slice, $start, $end) = @_;
   my $hub    = $self->hub;
   my $object = $hub->core_object('gene');
-  warn "!!! INITIALISING WITH OBJECT $object";
-  warn "... START ".$slice->start;
-  warn "...   END ".$slice->end;
   
   my $config = {
     display_width   => $hub->param('display_width') || 60,
