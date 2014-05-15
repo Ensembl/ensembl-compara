@@ -67,7 +67,7 @@ sub create_form {
   ]);
 
   ## TODO Needs to be configurable with JavaScript!
-  my $format    = 'rtf';
+  my $format    = 'fasta';
   my $fields    = $fields_by_format->{$format};
   warn "!!! FORMAT NOT CONFIGURED!" unless $fields;
   my $legend    = $fields->{'shown'} ? 'Settings' : '';
