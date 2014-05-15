@@ -298,6 +298,7 @@ sub write_fasta {
   };
 
   my $options = EnsEMBL::Web::Constants::FASTA_OPTIONS;
+  my @selected_options = $hub->param('extra');
 
   foreach my $transcript (@data) {
     my $id         = ($stable_id ? "$stable_id:" : '') . $transcript->stable_id;
@@ -305,9 +306,10 @@ sub write_fasta {
 
     $intron_id = 1;
 
-    foreach (sort {$a->{'value'} cmp $b->{'value'}} @$options) {
-      my $o = $output->{$_->{'value'}}($transcript, $id, $type) if exists $output->{$_->{'value'}};
+    foreach (sort @selected_options) {
+      next unless exists $output->{$_};
 
+      my $o = $output->{$_}($transcript, $id, $type);
       next unless ref $o eq 'ARRAY';
 
       foreach (@$o) {
