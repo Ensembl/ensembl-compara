@@ -23,7 +23,7 @@ use strict;
 use base qw( EnsEMBL::Web::Component);
 
 sub create_form {
-  my $self = shift;
+  my ($self, $settings, $fields_by_format) = @_;
   my $hub  = $self->hub;
 
   my $form_url  = sprintf('/%s/DataExport/Output', $hub->species);
@@ -47,28 +47,55 @@ sub create_form {
       'label'   => 'File name (optional)',
     },
   ]);
-  $form->add_element(
-      'type'    => 'Hidden',
+  $fieldset->add_hidden([
+    {
       'name'    => 'data_type',
       'value'   => $hub->param('data_type'),
-  );
-  $form->add_element(
-      'type'    => 'Hidden',
+    },
+    {
       'name'    => 'component',
       'value'   => $hub->param('component'),
-  );
-  $form->add_element(
-      'type'    => 'Hidden',
+    },
+    {
       'name'    => 'r',
       'value'   => $hub->param('r'),
-  );
-  $form->add_element(
-      'type'    => 'Hidden',
+    },
+    {
       'name'    => 'g',
       'value'   => $hub->param('g'),
-  );
+    },
+  ]);
+
+  ## TODO Needs to be configurable with JavaScript!
+  my $format    = 'rtf';
+  my $fields    = $fields_by_format->{$format};
+  warn "!!! FORMAT NOT CONFIGURED!" unless $fields;
+  my $legend    = $fields->{'shown'} ? 'Settings' : '';
+  my $settings_fieldset  = $form->add_fieldset($legend);
+
+  ## Add custom fields for this data type and format
+  while (my($key, $field_array) = each (%$fields)) {
+    foreach (@$field_array) {
+      my $field_info = $settings->{$_};
+      $field_info->{'name'} = $_;
+      $field_info->{'value'}  = $field_info->{'defaults'}{$format} if $field_info->{'defaults'}{$format};
+      delete $field_info->{'defaults'};
+      if ($key eq 'hidden') {
+        $settings_fieldset->add_hidden($field_info);
+      }
+      else {
+        $settings_fieldset->add_field($field_info);
+      }
+    }
+  }
+
+  $settings_fieldset->add_button({
+    'type'    => 'Submit',
+    'name'    => 'submit',
+    'value'   => 'Export',
+  });
+
   return $form;
 }
-
 
 1;
