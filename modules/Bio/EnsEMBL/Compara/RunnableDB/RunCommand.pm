@@ -49,10 +49,11 @@ use warnings;
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
 sub run_command {
-    my ($self, $cmd) = @_;
+    my ($self, $cmd, $timeout) = @_;
 
     print STDERR "COMMAND: $cmd\n" if ($self->debug);
-    my $runCmd = Command->new($cmd);
+    print STDERR "TIMEOUT: $timeout\n" if ($timeout and $self->debug);
+    my $runCmd = Command->new($cmd, $timeout);
     $self->compara_dba->dbc->disconnect_when_inactive(1);
     $runCmd->run();
     $self->compara_dba->dbc->disconnect_when_inactive(0);
@@ -74,10 +75,11 @@ use Time::HiRes qw(time gettimeofday tv_interval);
 
 
 sub new {
-    my ($class, $cmd) = @_;
+    my ($class, $cmd, $timeout) = @_;
     my $self = {};
     bless $self, ref($class) || $class;
     $self->{_cmd} = $cmd;
+    $self->{_timeout} = $timeout;
     return $self;
 }
 
@@ -87,6 +89,11 @@ sub cmd {
         return $self->new($cmd);
     }
     return $self->{_cmd};
+}
+
+sub timeout {
+    my ($self) = @_;
+    return $self->{_timeout};
 }
 
 sub out {
@@ -109,7 +116,7 @@ sub exit_code {
     return $self->{_exit_code};
 }
 
-sub run {
+sub _run {
     my ($self) = @_;
     my $cmd = $self->cmd;
 
@@ -122,6 +129,45 @@ sub run {
     $self->{_err} = $self->_read_output(\*CATCHERR);
     $self->{_runtime_msec} = int(time()*1000-$starttime);
     return;
+}
+
+sub run {
+    my ($self) = @_;
+    my $timeout = $self->timeout;
+    if (not $timeout) {
+        $self->_run();
+        return;
+    }
+
+    ## Adapted from the TimeLimit pacakge: http://www.perlmonks.org/?node_id=74429
+    my $die_text = "_____RunCommandTimeLimit_____\n";
+    my $old_alarm = alarm(0);        # turn alarm off and read old value
+    {
+        local $SIG{ALRM} = 'IGNORE'; # ignore alarms in this scope
+
+        eval
+        {
+            local $SIG{__DIE__};     # turn die handler off in eval block
+            local $SIG{ALRM} = sub { die $die_text };
+            alarm($timeout);         # set alarm
+            $self->_run();
+        };
+
+        # Note the alarm is still active here - however we assume that
+        # if we got here without an alarm the user's code succeeded -
+        # hence the IGNOREing of alarms in this scope
+
+        alarm 0;                     # kill off alarm
+    }
+
+    alarm $old_alarm;                # restore alarm
+
+    if ($@) {
+        # the eval returned an error
+        die $@ if $@ ne $die_text;
+        $self->{_exit_code} = 999;
+        $self->{_err} = sprintf("Command's runtime has exceeded the limit of %s seconds", $timeout);
+    }
 }
 
 sub _read_output {
