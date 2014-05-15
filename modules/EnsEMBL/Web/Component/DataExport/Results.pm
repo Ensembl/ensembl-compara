@@ -21,6 +21,8 @@ package EnsEMBL::Web::Component::DataExport::Results;
 use strict;
 use warnings;
 
+use EnsEMBL::Web::TmpFile;
+
 use base qw(EnsEMBL::Web::Component::DataExport);
 
 sub _init {
@@ -36,9 +38,22 @@ sub content {
 
   my $html;
 
-  $html .= '<p>(preview of file goes here)</p>' unless $hub->param('format') eq 'RTF';
+  unless ($hub->param('format') eq 'RTF') {
+    my $file = EnsEMBL::Web::TmpFile::Text->new(filename => $hub->param('file'), 'prefix' => 'export');
+    if ($file) {
+      $html .= '<h2>File preview</h2><div class="code"><pre style="color:#333">';
+      my $i = 0;
+      ### This is really not efficient, but can't see how to slurp a TmpFile!
+      foreach my $line (split /\R/, $file->content) {
+        last if $i > 9;
+        $html .= "$line\n";
+        $i++;
+      }
+      $html .= '</pre></div>';
+    }
+  }
 
-  $html .= sprintf('<p><a href="/%s/download?file=%s;prefix=export;format=%s">Download your %s file</a></p>', $hub->species, $hub->param('file'), $hub->param('format'), $hub->param('format'));
+  $html .= sprintf('<h2 style="margin-top:1em">Download</h2><p>Download your %s file: <a href="/%s/download?file=%s;prefix=export;format=%s">Text</a> | <a href="%s">Gzip</a></p>', $hub->param('format'), $hub->species, $hub->param('file'), $hub->param('format'));
 
   return $html;
 }
