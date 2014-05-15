@@ -31,7 +31,6 @@ sub _init {
 }
 
 sub content {
-
   my $self  = shift;
   my $hub   = $self->hub;
 
@@ -89,42 +88,13 @@ sub content {
   };
 
   ## Options per format
-  my $format_settings = {
+  my $fields_by_format = {
     'rtf'   => {'hidden' => [qw(flank5_display flank3_display)]},
     'fasta' => {'shown'  => [qw(strand flank5_display flank3_display genomic extra)]},
   };
 
   ## Create settings form (comes with some default fields - see parent)
-  my $form = $self->create_form();
-
-  ## TODO Needs to be configurable with JavaScript!
-  my $format    = 'rtf';
-  my $fields    = $format_settings->{$format};
-  my $legend    = $fields->{'shown'} ? 'Settings' : '';
-  my $fieldset  = $form->add_fieldset($legend);
-
-  ## Add custom fields for this data type and format
-  while (my($key, $field_array) = each (%$fields)) {
-    foreach (@$field_array) {
-      my $field_info = $settings->{$_};
-      $field_info->{'name'} = $_;
-      $field_info->{'value'}  = $field_info->{'defaults'}{$format} if $field_info->{'defaults'}{$format};
-      delete $field_info->{'defaults'};
-      if ($key eq 'hidden') {
-        $field_info->{'type'}   = 'Hidden';
-        $fieldset->add_hidden($field_info);
-      }
-      else {
-        $fieldset->add_field($field_info);
-      }
-    }
-  }
-
-  $fieldset->add_button({
-    'type'    => 'Submit',
-    'name'    => 'submit',
-    'value'   => 'Export',
-  });
+  my $form = $self->create_form($settings, $fields_by_format);
 
   return $form->render;
 }
