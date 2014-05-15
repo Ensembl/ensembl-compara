@@ -49,14 +49,6 @@ sub content {
           { value => '3_flanking',   caption => "3' Flanking sequence" },
           { value => '5_3_flanking', caption => "5' and 3' Flanking sequences" }
       ];
-
-
-  my $settings = [
-        [ 'strand',     'Strand',           'DropDown',  {'fasta' => ''}, $strands ],
-        [ 'upstream',   "5' Flanking sequence (upstream)",   'PosInt', {'rtf' => 600} ],
-        [ 'downstream', "3' Flanking sequence (downstream)", 'PosInt', {'rtf' => 600} ],
-        [ 'genomic',    'Genomic',          'DropDown',  {'fasta' => ''}, $genomic ],
-  ];
   my $checklist = [
         { 'value' => 'cdna',       'caption' => 'cDNA',             'checked' => '1' },
         { 'value' => 'coding',     'caption' => 'Coding sequence',  'checked' => '1' },
@@ -65,34 +57,68 @@ sub content {
         { 'value' => 'utr3',       'caption' => "3' UTR",           'checked' => '1' },
         { 'value' => 'exon',       'caption' => 'Exons',            'checked' => '1' },
         { 'value' => 'intron',     'caption' => 'Introns',          'checked' => '1' },
-  ];
+      ];
 
+  my $settings = {
+        'strand' => {
+            'label'   => 'Strand', 
+            'type'    => 'DropDown', 
+            'values'  => $strands 
+        },
+        'flank5_display' => {
+            'label'     => "5' Flanking sequence (upstream)",  
+            'type'      => 'NonNegInt',  
+            'defaults'  => {'rtf' => 600},
+        },
+        'flank3_display' => { 
+            'label'     => "3' Flanking sequence (downstream)", 
+            'type'      => 'NonNegInt',  
+            'defaults'  => {'rtf' => 600},
+        },
+        'genomic' => {
+            'label' => 'Genomic',   
+            'type'  => 'DropDown', 
+            'values' => $genomic,
+        },
+        'extra' => {
+          'type'      => 'Checklist',
+          'label'     => 'Sequence(s)',
+          'values'    => $checklist,
+          'selectall' => 1,
+        },
+  };
+
+  ## Options per format
+  my $format_settings = {
+    'rtf'   => {'hidden' => [qw(flank5_display flank3_display)]},
+    'fasta' => {'shown'  => [qw(strand flank5_display flank3_display genomic extra)]},
+  };
 
   ## Create settings form (comes with some default fields - see parent)
   my $form = $self->create_form();
 
-  my $fieldset  = $form->add_fieldset('Settings');
+  ## TODO Needs to be configurable with JavaScript!
+  my $format    = 'rtf';
+  my $fields    = $format_settings->{$format};
+  my $legend    = $fields->{'shown'} ? 'Settings' : '';
+  my $fieldset  = $form->add_fieldset($legend);
 
-  ## TODO Needs to be configurable with JavaScript
-  my $format = 'fasta';
-  foreach (@$settings) {
-    my $params = {
-      'name'    => 'config_'.$_->[0],
-      'label'   => $_->[1],
-      'type'    => $_->[2],
-      'value'   => $_->[3]{$format},
-    };
-    $params->{'values'} = $_->[4] if $_->[2] eq 'DropDown';
-    $fieldset->add_field([$params]);
+  ## Add custom fields for this data type and format
+  while (my($key, $field_array) = each (%$fields)) {
+    foreach (@$field_array) {
+      my $field_info = $settings->{$_};
+      $field_info->{'name'} = $_;
+      $field_info->{'value'}  = $field_info->{'defaults'}{$format} if $field_info->{'defaults'}{$format};
+      delete $field_info->{'defaults'};
+      if ($key eq 'hidden') {
+        $field_info->{'type'}   = 'Hidden';
+        $fieldset->add_hidden($field_info);
+      }
+      else {
+        $fieldset->add_field($field_info);
+      }
+    }
   }
-  $fieldset->add_field([{
-      'name'      => 'config_extra',
-      'type'      => 'Checklist',
-      'label'     => 'Sequence(s)',
-      'values'    => $checklist,
-      'selectall' => 1,
-  }]);
-
 
   $fieldset->add_button({
     'type'    => 'Submit',
