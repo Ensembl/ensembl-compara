@@ -18,13 +18,11 @@ limitations under the License.
 
 =head1 NAME
 
-HMMProfile
+Bio::EnsEMBL::Compara::HMMProfile
 
 =head1 DESCRIPTION
 
 An object that holds the full description of an HMM profile stored in the database.
-
-=head1 CONTACT
 
 =head1 APPENDIX
 

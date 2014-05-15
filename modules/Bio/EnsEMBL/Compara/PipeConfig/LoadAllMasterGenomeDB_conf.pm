@@ -21,7 +21,7 @@ limitations under the License.
 
 =head1 NAME
 
-  Bio::EnsEMBL::Compara::PipeConfig::LoadAllMasterGenomeDB_conf
+Bio::EnsEMBL::Compara::PipeConfig::LoadAllMasterGenomeDB_conf
 
 =head1 SYNOPSIS
 
@@ -29,7 +29,7 @@ limitations under the License.
 
 =head1 DESCRIPTION  
 
-    This is a test of JobFactory + LoadOneGenomeDB Runnables
+This is a test of JobFactory + LoadOneGenomeDB Runnables
 
 =head1 CONTACT
 

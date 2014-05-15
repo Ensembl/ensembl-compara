@@ -28,7 +28,7 @@ limitations under the License.
 
 =head1 NAME
 
-  Bio::EnsEMBL::Compara::PipeConfig::Examples::EnsemblNcRnaTrees_conf
+Bio::EnsEMBL::Compara::PipeConfig::Examples::EnsemblNcRnaTrees_conf
 
 =head1 SYNOPSIS
 
@@ -36,16 +36,16 @@ limitations under the License.
 
 =head1 DESCRIPTION
 
-    This is the Ensembl PipeConfig for the ncRNAtree pipeline.
+This is the Ensembl PipeConfig for the ncRNAtree pipeline.
 
 =head1 AUTHORSHIP
 
-  Ensembl Team. Individual contributions can be found in the GIT log.
+Ensembl Team. Individual contributions can be found in the GIT log.
 
 =head1 APPENDIX
 
-  The rest of the documentation details each of the object methods.
-  Internal methods are usually preceded with an underscore (_)
+The rest of the documentation details each of the object methods.
+Internal methods are usually preceded with an underscore (_)
 
 =cut
 

@@ -21,7 +21,7 @@ limitations under the License.
 
 =head1 NAME
 
-  Bio::EnsEMBL::Compara::PipeConfig::LoadCertainGenomeDB_conf
+Bio::EnsEMBL::Compara::PipeConfig::LoadCertainGenomeDB_conf
 
 =head1 SYNOPSIS
 
@@ -29,7 +29,7 @@ limitations under the License.
 
 =head1 DESCRIPTION  
 
-    This is a test of LoadOneGenomeDB.pm Runnable
+This is a test of LoadOneGenomeDB.pm Runnable
 
 =head1 CONTACT
 

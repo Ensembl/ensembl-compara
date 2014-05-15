@@ -254,6 +254,8 @@ perl DumpMultiAlign.pl --species "human" \
   --split_size 200 --output_format emf --output_file 10way_pecan_chr19.out \
   --chunk_num 2
 
+=back
+
 =cut
 
 my $usage = qq{

@@ -30,7 +30,7 @@ limitations under the License.
 Bio::EnsEMBL::Compara::GenomicAlignGroup - Defines groups of genomic aligned sequences
 
 =head1 SYNOPSIS
-  
+
   use Bio::EnsEMBL::Compara::GenomicAlignGroup;
   
   my $genomic_align_group = new Bio::EnsEMBL::Compara::GenomicAlignGroup (
@@ -434,6 +434,7 @@ sub aligned_sequence {
   Status      : At risk
 
 =cut
+
 sub original_sequence {
   my $self = shift;
 

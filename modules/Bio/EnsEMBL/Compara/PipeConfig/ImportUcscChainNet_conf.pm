@@ -20,7 +20,7 @@ limitations under the License.
 
 =head1 NAME
 
- Bio::EnsEMBL::Compara::PipeConfig::ImportUcscChainNet_conf
+Bio::EnsEMBL::Compara::PipeConfig::ImportUcscChainNet_conf
 
 =head1 SYNOPSIS
 

@@ -29,8 +29,6 @@ limitations under the License.
 
 Bio::EnsEMBL::Compara::Production::DnaCollectionAdaptor
 
-=head1 SYNOPSIS
-
 =head1 DESCRIPTION
 
 Adpter to DnaCollection objects/tables

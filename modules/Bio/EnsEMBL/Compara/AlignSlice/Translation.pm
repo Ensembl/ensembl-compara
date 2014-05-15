@@ -38,9 +38,6 @@ sub-slices of the original Bio::EnsEMBL::Compara::AlignSlice::Slice.
 Actual mapping is done by the Bio::EnsEMBL::Compara::AlignSlice::Slice module, this one only
 stores the results.
 
-=head1 OBJECT ATTRIBUTES
-
-
 =head1 AUTHORS
 
 Javier Herrero

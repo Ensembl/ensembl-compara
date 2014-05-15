@@ -21,7 +21,7 @@ limitations under the License.
 
 =head1 NAME
 
-  Bio::EnsEMBL::Compara::PipeConfig::MergeDBsIntoRelease_conf
+Bio::EnsEMBL::Compara::PipeConfig::MergeDBsIntoRelease_conf
 
 =head1 SYNOPSIS
 
@@ -34,8 +34,8 @@ limitations under the License.
 
 =head1 DESCRIPTION  
 
-    A pipeline to merge some production databases onto the release one.
-    It is currently working well only with the "gene side" of Compara (protein_trees, families and ncrna_trees).
+A pipeline to merge some production databases onto the release one.
+It is currently working well only with the "gene side" of Compara (protein_trees, families and ncrna_trees).
 
 =cut
 
@@ -223,9 +223,11 @@ sub pipeline_analyses {
 1;
 
 
-=head3
+=head2 Example configurations
 
-If we have projection_db:
+=over
+
+=item If we have projection_db:
 
         'urls'              => {
             #'protein_db'    => 'mysql://ensro@compara1/mm14_compara_homology_71',
@@ -254,12 +256,7 @@ If we have projection_db:
         'ignored_tables'    => {
         },
 
-=cut
-
-
-=head3
-
-If we don't have projection_db:
+=item If we don't have projection_db:
 
         'urls'              => {
             'protein_db'    => 'mysql://ensro@compara1/mm14_compara_homology_71',
@@ -284,11 +281,7 @@ If we don't have projection_db:
             'protein_db'    => [qw(gene_member seq_member sequence)],
         },
 
-=cut
-
-=head3
-
-If we only have trees:
+=item If we only have trees:
 
         'urls'              => {
             'protein_db'    => 'mysql://ensro@compara1/mm14_compara_homology_71',
@@ -310,11 +303,7 @@ If we only have trees:
         'ignored_tables'    => {
         },
 
-=cut
-
-=head3
-
-If we have genomic alignments:
+=item If we have genomic alignments:
 
         'urls'              => {
             'sf5_epo_low_8way_fish_71' => 'mysql://ensro@compara2/sf5_epo_low_8way_fish_71',
@@ -347,6 +336,8 @@ If we have genomic alignments:
         'ignored_tables'    => {
             'kb3_pecan_20way_71'    => [qw(peptide_align_feature_% gene_member seq_member sequence)],
         },
+
+=back
 
 =cut
 

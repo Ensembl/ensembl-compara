@@ -27,7 +27,7 @@ limitations under the License.
 
 =head1 NAME
 
-  Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::SqlHealthChecks.
+Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::SqlHealthChecks.
 
 =head1 DESCRIPTION
 

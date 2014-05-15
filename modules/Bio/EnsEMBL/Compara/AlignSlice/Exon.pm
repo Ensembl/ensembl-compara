@@ -25,7 +25,7 @@ Bio::EnsEMBL::Compara::AlignSlice::Exon - Description
 This module inherits attributes and methods from Bio::EnsEMBL::Exon module
 
 =head1 SYNOPSIS
-  
+
   use Bio::EnsEMBL::Compara::AlignSlice::Exon;
   
   my $exon = new Bio::EnsEMBL::Compara::AlignSlice::Exon(

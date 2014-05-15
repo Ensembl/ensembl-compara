@@ -1367,6 +1367,7 @@ sub get_Mapper {
   Status     : At risk
 
 =cut
+
 sub _count_cigar_elements {
     my ($cigar_line) = @_;
 
@@ -1400,6 +1401,7 @@ sub _count_cigar_elements {
   Status     : At risk
 
 =cut
+
 sub _get_sub_cigar_line {
     my ($target_cigar_pieces, $offset, $length, $start_array_index, $start_target_pos) = @_;
     my $ref_pos = $offset + $length;
@@ -1550,6 +1552,7 @@ sub _get_sub_cigar_line_slow {
   Status     : At risk
 
 =cut
+
 sub _cigar_element {
     my ($mode, $len) = @_;
     my $elem;

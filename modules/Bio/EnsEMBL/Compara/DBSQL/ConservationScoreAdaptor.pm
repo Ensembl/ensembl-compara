@@ -411,6 +411,7 @@ sub fetch_all_by_MethodLinkSpeciesSet_Slice {
   Status     : At risk
 
 =cut
+
 sub fetch_all_by_GenomicAlignBlock {
     my ($self, $genomic_align_block, $start, $end, $slice_length,
 	$display_size, $display_type, $window_size) = @_;

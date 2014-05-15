@@ -148,7 +148,7 @@ sub construct_sql_query {
   Exceptions : none
   Caller     : various adaptors' specific fetch_ subroutines
 =cut
- 
+
 sub generic_fetch {
     my $self = shift;
     my $sql = $self->construct_sql_query(@_);
@@ -184,7 +184,7 @@ sub generic_fetch {
   Exceptions : none
   Caller     : various adaptors' specific fetch_ subroutines
 =cut
- 
+
 sub generic_fetch_one {
     my ($self, $constraint, $join, $final_clause) = @_;
 

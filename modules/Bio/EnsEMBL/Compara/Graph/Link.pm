@@ -18,9 +18,7 @@ limitations under the License.
 
 =head1 NAME
 
-Link - DESCRIPTION of Object
-
-=head1 SYNOPSIS
+Bio::EnsEMBL::Compara::Graph::Link
 
 =head1 DESCRIPTION
 

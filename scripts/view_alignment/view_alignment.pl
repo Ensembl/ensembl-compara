@@ -33,7 +33,7 @@ use Getopt::Long;
 
 =head1 NAME
 
-    view_alignment
+view_alignment
 
 =head1 DESCRIPTION
 
@@ -92,7 +92,7 @@ view_alignment
     [--pairwise_url pairwise_url]
     [--expand_alignments]
     [--template_display]
-    
+
 =head1 OPTIONS
 
 =head2 GETTING HELP

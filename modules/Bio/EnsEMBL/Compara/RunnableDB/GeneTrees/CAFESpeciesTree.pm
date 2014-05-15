@@ -31,8 +31,6 @@ limitations under the License.
 
 Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::CAFESpeciesTree
 
-=head1 SYNOPSIS
-
 =head1 DESCRIPTION
 
 This RunnableDB builds a CAFE-compliant species tree (binary & ultrametric with time units).

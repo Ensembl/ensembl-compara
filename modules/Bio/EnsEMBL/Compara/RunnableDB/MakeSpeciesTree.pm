@@ -21,7 +21,7 @@ limitations under the License.
 
 =head1 NAME
 
-    Bio::EnsEMBL::Compara::RunnableDB::MakeSpeciesTree
+Bio::EnsEMBL::Compara::RunnableDB::MakeSpeciesTree
 
 =head1 SYNOPSIS
 

@@ -27,11 +27,11 @@ limitations under the License.
 
 =head1 NAME
 
-  Bio::EnsEMBL::Compara::PipeConfig::GeneTreeHealthChecks_conf.
+Bio::EnsEMBL::Compara::PipeConfig::GeneTreeHealthChecks_conf.
 
 =head1 DESCRIPTION
 
-    The PipeConfig file for a pipeline that should for data integrity of a gene-tree / homology table.
+The PipeConfig file for a pipeline that should for data integrity of a gene-tree / homology table.
 
 =head1 AUTHORSHIP
 

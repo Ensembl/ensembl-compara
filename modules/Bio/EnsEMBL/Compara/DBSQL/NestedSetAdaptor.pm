@@ -33,8 +33,6 @@ Bio::EnsEMBL::Compara::DBSQL::NestedSetAdaptor
 
 Base adaptor for objects inheriting from NestedSet
 
-=head1 INHERITANCE TREE
-
 =head1 AUTHORSHIP
 
 Ensembl Team. Individual contributions can be found in the GIT log.
@@ -221,6 +219,7 @@ sub fetch_tree_by_root_id {
   Caller     : $nested_set->root
 
 =cut
+
 sub fetch_root_by_node {
   my ($self, $node) = @_;
 
@@ -251,6 +250,7 @@ sub fetch_root_by_node {
   Exceptions : thrown if the nodes don't share the same root_id
 
 =cut
+
 sub fetch_first_shared_ancestor_indexed {
   my $self = shift;
   

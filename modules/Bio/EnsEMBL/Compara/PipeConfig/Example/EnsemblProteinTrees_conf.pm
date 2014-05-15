@@ -27,11 +27,11 @@ limitations under the License.
 
 =head1 NAME
 
-  Bio::EnsEMBL::Compara::PipeConfig::Example::EnsemblProteinTrees_conf
+Bio::EnsEMBL::Compara::PipeConfig::Example::EnsemblProteinTrees_conf
 
 =head1 DESCRIPTION
 
-    The PipeConfig file for ProteinTrees pipeline that should automate most of the pre-execution tasks.
+The PipeConfig file for ProteinTrees pipeline that should automate most of the pre-execution tasks.
 
 =head1 AUTHORSHIP
 
