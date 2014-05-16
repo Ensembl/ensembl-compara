@@ -35,10 +35,10 @@ sub _init {
 sub content {
   my $self  = shift;
   my $hub   = $self->hub;
-
+  my $format = $hub->param('format');
   my $html;
 
-  unless ($hub->param('format') eq 'RTF') {
+  unless ($format eq 'RTF') {
     my $file = EnsEMBL::Web::TmpFile::Text->new(filename => $hub->param('file'), 'prefix' => 'export');
     if ($file) {
       $html .= '<h2>File preview</h2><div class="code"><pre style="color:#333">';
@@ -55,11 +55,11 @@ sub content {
 
   $html .= sprintf(
             '<h2 style="margin-top:1em">Download</h2><p>Download your %s file: <a href="/Download/DataExport?file=%s;prefix=export;format=%s">Text</a> | <a href="/Download/DataExport/Results?file=%s;prefix=export;format=%s">Gzip</a></p>', 
-              $hub->param('format'), 
+              $format, 
               $hub->param('file'), 
-              $hub->param('format'),
+              lc($format),
               $hub->param('file'), 
-              $hub->param('format'),
+              lc($format),
             );
 
   return $html;
