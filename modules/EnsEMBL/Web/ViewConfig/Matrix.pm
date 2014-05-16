@@ -189,7 +189,7 @@ sub form {
             $subtracks
           );
           
-          $cell->{'html'}   = qq{<p><span class="on">$on</span>$total</p>$cell->{'html'}};
+          $cell->{'html'}   = qq{<p><span class="off">0</span><span class="on">$on</span>$total</p>$cell->{'html'}};
           $cell->{'class'} .= ' st';
           
           $track_style_header ||= 'Default';
