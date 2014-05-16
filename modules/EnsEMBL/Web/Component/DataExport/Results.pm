@@ -53,13 +53,13 @@ sub content {
     }
   }
 
+  my $output_format = $hub->param('compression') || $format;
+
   $html .= sprintf(
-            '<h2 style="margin-top:1em">Download</h2><p>Download your %s file: <a href="/Download/DataExport?file=%s;prefix=export;format=%s">Text</a> | <a href="/Download/DataExport/Results?file=%s;prefix=export;format=%s">Gzip</a></p>', 
-              $format, 
+            '<h2 style="margin-top:1em">Download</h2><a href="/Download/DataExport?file=%s;prefix=export;format=%s">Download your %s file</a>', 
               $hub->param('file'), 
-              lc($format),
-              $hub->param('file'), 
-              lc($format),
+              lc($output_format), 
+              $format,
             );
 
   return $html;

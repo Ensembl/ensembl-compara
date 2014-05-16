@@ -44,10 +44,16 @@ sub handle_download {
   ## Match only our tmp file path structure (NNN/N/N/NNNNNNN.nnn) !
   if ($file =~ m#^\w[\w/]*(?:\.\w{1,4})?$#) {
     ## Get content
+    my %mime_types = {
+        'rtf'   => 'application/rtf',
+        'gz'    => 'application/gz',
+        'zip'   => 'application/zip',
+    };
+    my $mime_type = $mime_types{lc($format)} || 'text/plain';
+    my $compress = $format =~ /gz|zip/ ? 1 : 0;
 
-    my $mime_type = $format eq 'RTF' ? 'application/rtf' : 'text/plain';
-
-    my $tmpfile = new EnsEMBL::Web::TmpFile::Text(filename => $file, prefix => $prefix, extension => $format);
+    my $tmpfile = new EnsEMBL::Web::TmpFile::Text(filename => $file, prefix => $prefix, 
+                                                  extension => $format, compress => $compress);
 
     if ($tmpfile->exists) {
       my $content = $tmpfile->retrieve;
