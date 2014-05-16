@@ -91,4 +91,11 @@ sub content {
   return $form->render;
 }
 
+sub default_file_name {
+  my $self = shift;
+  ## TODO - make this a bit more interesting!
+  my $name = 'Sequence_Export';
+  return $name;
+}
+
 1;
