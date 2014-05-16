@@ -18,6 +18,8 @@ limitations under the License.
 
 package EnsEMBL::Web::Object::DataExport;
 
+use EnsEMBL::Web::TmpFile::Text;
+
 use strict;
 use warnings;
 
@@ -26,6 +28,38 @@ use base qw(EnsEMBL::Web::Object);
 sub caption       { return 'Export';  }
 sub short_caption { return 'Export';  }
 
+sub handle_download {
+  ## Method reached by url ensembl.org/Download/DataExport/
+  my ($self, $r) = @_;
+  my $hub = $self->hub;
+
+  my $file   = $hub->param('file');
+  my $name   = $hub->param('name') || $file;
+  my $format = $hub->param('format');
+  my $prefix = $hub->param('prefix');
+
+  ## Strip any invalid characters from params to prevent downloading of arbitrary files!
+  $prefix =~ s/\W//g;
+
+  ## Match only our tmp file path structure (NNN/N/N/NNNNNNN.nnn) !
+  if ($file =~ m#^\w[\w/]*(?:\.\w{1,4})?$#) {
+    ## Get content
+
+    my $mime-type = $format eq 'RTF' ? 'application/rtf' : 'text/plain';
+
+    my $tmpfile = new EnsEMBL::Web::TmpFile::Text(filename => $file, prefix => $prefix, extension => $format);
+
+    if ($tmpfile->exists) {
+      my $content = $tmpfile->retrieve;
+
+      $r->headers_out->add('Content-Type'         => $mime-type);
+      $r->headers_out->add('Content-Length'       => length $content);
+      $r->headers_out->add('Content-Disposition'  => sprintf 'attachment; filename=%s', $name);
+
+      print $content;
+    }
+  }
+}
 
 sub expand_slice {
   my ($self, $slice) = @_;
