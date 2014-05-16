@@ -47,7 +47,7 @@ sub get {
   my $file = $obj->full_path;
 
   my $content = '';
-  if ($obj->compress || $obj->extension =~ /gz$/) {
+  if (($obj->compress || $obj->extension =~ /gz$/) && !$obj->get_compressed) {
     my $gz = gzopen( $file, 'rb' )
          or warn "GZ Cannot open $file: $gzerrno\n";
     if ($gz) {
