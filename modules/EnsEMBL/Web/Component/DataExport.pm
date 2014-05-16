@@ -31,16 +31,21 @@ sub create_form {
 
   my $fieldset  = $form->add_fieldset; 
   my %export_info = EnsEMBL::Web::Constants::EXPORT_TYPES;
-  my $values = [
+  my $formats = [
       {'caption' => '-- Choose Format --', 'value' => ''},
       map { 'value' => uc($_), 'caption' => uc($_), 'class' => "_stt__$_ _action_$_"},  @{$export_info{lc($hub->action)}}
     ];
+  my $compress = [
+      {'caption' => 'Uncompressed', 'value' => '', 'checked' => 1},
+      {'caption' => 'Gzip', 'value' => 'gz'},
+      #{'caption' => 'Zip', 'value' => 'zip'},
+  ];
   $fieldset->add_field([
     {
       'type'    => 'DropDown',
       'name'    => 'format',
       'label'   => 'File format',
-      'values'  => $values,
+      'values'  => $formats,
       'select'  => 'select',
       'class'   => '_stt _action',
     },
@@ -48,6 +53,12 @@ sub create_form {
       'type'    => 'String',
       'name'    => 'name',
       'label'   => 'File name (optional)',
+    },
+    {
+      'type'    => 'Radiolist',
+      'name'    => 'compression',
+      'label'   => 'Output',
+      'values'  => $compress,
     },
   ]);
   $fieldset->add_hidden([

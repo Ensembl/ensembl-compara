@@ -40,13 +40,19 @@ sub process {
   my $format_info = $hub->species_defs->DATA_FORMAT_INFO->{lc($format)};
   my $file;
   
+  ## Compress file by default
+  my $extension   = $format_info->{'ext'};
+  my $compression = $hub->param('compression');
+  my $compress    = $compression ? 1 : 0;
+  $extension   .= '.'.$compression if $compress;
+
   if (!$format_info) {
     $error = 'Format not recognised';
   }
   else {
     ## TODO - replace relevant parts with Bio::EnsEMBL::IO::Writer in due course
 
-    $file = EnsEMBL::Web::TmpFile::Text->new(extension => $format_info->{'ext'}, prefix => 'export');
+    $file = EnsEMBL::Web::TmpFile::Text->new(extension => $extension, prefix => 'export', compress => $compress);
     ## Ugly hack - stuff file into package hash so we can get at it later without passing as argument
     $self->{'__file'} = $file;
 
@@ -90,6 +96,7 @@ sub process {
   else {
     $url_params->{'file'} = $file->filename;
     $url_params->{'format'} = $format;
+    $url_params->{'compression'} = $compression;
   }  
 
   $self->ajax_redirect($hub->url($url_params));
