@@ -45,14 +45,14 @@ sub handle_download {
   if ($file =~ m#^\w[\w/]*(?:\.\w{1,4})?$#) {
     ## Get content
 
-    my $mime-type = $format eq 'RTF' ? 'application/rtf' : 'text/plain';
+    my $mime_type = $format eq 'RTF' ? 'application/rtf' : 'text/plain';
 
     my $tmpfile = new EnsEMBL::Web::TmpFile::Text(filename => $file, prefix => $prefix, extension => $format);
 
     if ($tmpfile->exists) {
       my $content = $tmpfile->retrieve;
 
-      $r->headers_out->add('Content-Type'         => $mime-type);
+      $r->headers_out->add('Content-Type'         => $mime_type);
       $r->headers_out->add('Content-Length'       => length $content);
       $r->headers_out->add('Content-Disposition'  => sprintf 'attachment; filename=%s', $name);
 
