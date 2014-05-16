@@ -78,15 +78,15 @@ sub create_form {
     while (my($key, $field_array) = each (%$fields)) {
       my $i = 0;
       foreach (@$field_array) {
-        my $field_info = $settings->{$_};
-        $field_info->{'name'} = $_;
-        $field_info->{'value'} = $field_info->{'defaults'}{$format} if $field_info->{'defaults'}{$format};
-        delete $field_info->{'defaults'};
+        ## IMPORTANT - use hashes here, not hashrefs, as Form code does weird stuff 
+        ## in background that alters the contents of $settings!
+        my %field_info = %{$settings->{$_}};
+        $field_info{'name'} = $_;
         if ($key eq 'hidden') {
-          $settings_fieldset->add_hidden($field_info);
+          $settings_fieldset->add_hidden(\%field_info);
         }
         else {
-          $settings_fieldset->add_field($field_info);
+          $settings_fieldset->add_field(\%field_info);
         }
         $i++;
       }
