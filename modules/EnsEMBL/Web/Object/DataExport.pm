@@ -33,27 +33,35 @@ sub handle_download {
   my ($self, $r) = @_;
   my $hub = $self->hub;
 
-  my $file   = $hub->param('file');
-  my $name   = $hub->param('name') || $file;
-  my $format = $hub->param('format');
-  my $prefix = $hub->param('prefix');
-
+  my $file        = $hub->param('file');
+  my $name        = $hub->param('name') || $file;
+  my $format      = $hub->param('format');
+  my $prefix      = $hub->param('prefix');
+  my $ext         = $hub->param('ext');
+  my $compression = $hub->param('compression');
+  
   ## Strip any invalid characters from params to prevent downloading of arbitrary files!
   $prefix =~ s/\W//g;
 
-  ## Match only our tmp file path structure (NNN/N/N/NNNNNNN.nnn) !
-  if ($file =~ m#^\w[\w/]*(?:\.\w{1,4})?$#) {
+  ## Match only our tmp file path structure (NNN/N/N/NNNNNNN.nnn[.nnn]) !
+  if ($file =~ m#^\w[\w/]*(?:\.\w{1,4}(\.\w{1,3})?)?$#) {
     ## Get content
-    my %mime_types = {
+    my %mime_types = (
         'rtf'   => 'application/rtf',
-        'gz'    => 'application/gz',
+        'gz'    => 'application/x-gzip',
         'zip'   => 'application/zip',
-    };
-    my $mime_type = $mime_types{lc($format)} || 'text/plain';
-    my $compress = $format =~ /gz|zip/ ? 1 : 0;
+    );
+    my $mime_type = $mime_types{$compression} || $mime_types{$format} || 'text/plain';
+    my $compress = $compression ? 1 : 0;
 
-    my $tmpfile = new EnsEMBL::Web::TmpFile::Text(filename => $file, prefix => $prefix, 
-                                                  extension => $format, compress => $compress);
+    my $tmp_dir = $hub->species_defs->ENSEMBL_TMP_DIR.'/'.$prefix.'/';
+    my %params = (filename => $file, prefix => $prefix);
+    if ($compress) {
+      $params{'compress'} = $compress;
+      $params{'get_compressed'} = 1;
+    }
+    #my $tmpfile = new EnsEMBL::Web::TmpFile::Text(filename => $file, prefix => $prefix, compress => $compress);
+    my $tmpfile = new EnsEMBL::Web::TmpFile::Text(%params);
 
     if ($tmpfile->exists) {
       my $content = $tmpfile->retrieve;

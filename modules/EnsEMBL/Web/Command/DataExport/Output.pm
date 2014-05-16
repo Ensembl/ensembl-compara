@@ -94,9 +94,10 @@ sub process {
     $url_params->{'action'} = 'Error';
   }
   else {
-    $url_params->{'file'} = $file->filename;
-    $url_params->{'format'} = $format;
-    $url_params->{'compression'} = $compression;
+    $url_params->{'file'}         = $file->filename;
+    $url_params->{'format'}       = $format;
+    $url_params->{'ext'}          = $extension;
+    $url_params->{'compression'}  = $compression;
   }  
 
   $self->ajax_redirect($hub->url($url_params));

@@ -35,7 +35,8 @@ sub _init {
 sub content {
   my $self  = shift;
   my $hub   = $self->hub;
-  my $format = $hub->param('format');
+
+  my $format    = $hub->param('format');
   my $html;
 
   unless ($format eq 'RTF') {
@@ -53,12 +54,12 @@ sub content {
     }
   }
 
-  my $output_format = $hub->param('compression') || $format;
-
   $html .= sprintf(
-            '<h2 style="margin-top:1em">Download</h2><a href="/Download/DataExport?file=%s;prefix=export;format=%s">Download your %s file</a>', 
+            '<h2 style="margin-top:1em">Download</h2><a href="/Download/DataExport?file=%s;prefix=export;format=%s;ext=%s;compression=%s">Download your %s file</a>', 
               $hub->param('file'), 
-              lc($output_format), 
+              lc($format), 
+              $hub->param('ext'),
+              $hub->param('compression'),
               $format,
             );
 
