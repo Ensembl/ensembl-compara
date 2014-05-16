@@ -53,7 +53,14 @@ sub content {
     }
   }
 
-  $html .= sprintf('<h2 style="margin-top:1em">Download</h2><p>Download your %s file: <a href="/%s/download?file=%s;prefix=export;format=%s">Text</a> | <a href="%s">Gzip</a></p>', $hub->param('format'), $hub->species, $hub->param('file'), $hub->param('format'));
+  $html .= sprintf(
+            '<h2 style="margin-top:1em">Download</h2><p>Download your %s file: <a href="/Download/DataExport?file=%s;prefix=export;format=%s">Text</a> | <a href="/Download/DataExport/Results?file=%s;prefix=export;format=%s">Gzip</a></p>', 
+              $hub->param('format'), 
+              $hub->param('file'), 
+              $hub->param('format'),
+              $hub->param('file'), 
+              $hub->param('format'),
+            );
 
   return $html;
 }
