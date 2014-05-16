@@ -29,17 +29,20 @@ sub create_form {
   my $form_url  = sprintf('/%s/DataExport/Output', $hub->species);
   my $form      = $self->new_form({'id' => 'export', 'action' => $form_url, 'method' => 'post'});
 
-  my $fieldset  = $form->add_fieldset;
+  my $fieldset  = $form->add_fieldset; 
   my %export_info = EnsEMBL::Web::Constants::EXPORT_TYPES;
-  my @values = map {uc($_)} @{$export_info{lc($hub->action)}};
-  unshift @values, '--- CHOOSE FORMAT ---';
+  my $values = [
+      {'caption' => '-- Choose Format --', 'value' => ''},
+      map { 'value' => uc($_), 'caption' => uc($_), 'class' => "_stt__$_ _action_$_"},  @{$export_info{lc($hub->action)}}
+    ];
   $fieldset->add_field([
     {
       'type'    => 'DropDown',
       'name'    => 'format',
       'label'   => 'File format',
-      'values'  => \@values,
+      'values'  => $values,
       'select'  => 'select',
+      'class'   => '_stt _action',
     },
     {
       'type'    => 'String',
@@ -66,34 +69,37 @@ sub create_form {
     },
   ]);
 
-  ## TODO Needs to be configurable with JavaScript!
-  my $format    = 'fasta';
-  my $fields    = $fields_by_format->{$format};
-  warn "!!! FORMAT NOT CONFIGURED!" unless $fields;
-  my $legend    = $fields->{'shown'} ? 'Settings' : '';
-  my $settings_fieldset  = $form->add_fieldset($legend);
+  ## Create all options forms, then show only one using jQuery
+  while (my($format, $fields) = each (%$fields_by_format)) {
+    my $legend    = $fields->{'shown'} ? 'Settings' : '';
+    my $settings_fieldset  = $form->add_fieldset({'class' => '_stt_'.$format, 'legend' => $legend});
 
-  ## Add custom fields for this data type and format
-  while (my($key, $field_array) = each (%$fields)) {
-    foreach (@$field_array) {
-      my $field_info = $settings->{$_};
-      $field_info->{'name'} = $_;
-      $field_info->{'value'}  = $field_info->{'defaults'}{$format} if $field_info->{'defaults'}{$format};
-      delete $field_info->{'defaults'};
-      if ($key eq 'hidden') {
-        $settings_fieldset->add_hidden($field_info);
-      }
-      else {
-        $settings_fieldset->add_field($field_info);
+    ## Add custom fields for this data type and format
+    while (my($key, $field_array) = each (%$fields)) {
+      my $i = 0;
+      foreach (@$field_array) {
+        my $field_info = $settings->{$_};
+        $field_info->{'name'} = $_;
+        $field_info->{'value'} = $field_info->{'defaults'}{$format} if $field_info->{'defaults'}{$format};
+        delete $field_info->{'defaults'};
+        if ($key eq 'hidden') {
+          $settings_fieldset->add_hidden($field_info);
+        }
+        else {
+          $settings_fieldset->add_field($field_info);
+        }
+        $i++;
       }
     }
+    ## Doesn't matter that each fieldset has a submit button, as we only
+    ## ever display one of them - and it forces user to choose format!
+    $settings_fieldset->add_button({
+      'type'    => 'Submit',
+      'name'    => 'submit',
+      'value'   => 'Export',
+    });
   }
 
-  $settings_fieldset->add_button({
-    'type'    => 'Submit',
-    'name'    => 'submit',
-    'value'   => 'Export',
-  });
 
   return $form;
 }
