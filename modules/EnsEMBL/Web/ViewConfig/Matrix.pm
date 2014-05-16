@@ -83,16 +83,16 @@ sub form {
   
   $self->{'panel_type'} = 'ConfigMatrix';
   
-  my $select_all_col = qq{
+  my $select_all_col = qq(
     <div class="select_all_column floating_popup">
       Select features for %s<br />
       <div><input type="radio" name="%s" class="default">Default</input></div>
       <div><input type="radio" name="%s" class="all">All</input></div>
       <div><input type="radio" name="%s" class="none">None</input></div>
     </div>
-  };
+  );
   
-  my $select_all_row = qq{
+  my $select_all_row = qq(
     <div class="select_all_row_wrapper">
       <div class="select_all_row floating_popup">
         Select all<br />
@@ -100,11 +100,11 @@ sub form {
         <input type="checkbox" />
       </div>
     </div>
-  };
+  );
   
   my @renderer_template = (
-    qq{<ul class="popup_menu"><li class="header">Change track style<img class="close" src="${img_url}close.png" title="Close" alt="Close" /></li>},
-    qq{<li class="%s">%s</li>},
+    qq(<ul class="popup_menu"><li class="header">Change track style<img class="close" src="${img_url}close.png" title="Close" alt="Close" /></li>),
+    qq(<li class="%s">%s</li>),
     '</ul>'
   );
   
@@ -159,11 +159,11 @@ sub form {
             my $popup_menu;
             
             for (my $i = 0; $i < scalar @renderers; $i += 2) {
-              $popup_menu .= sprintf $renderer_template[1], $renderers[$i], ($renderers[$i] eq 'default' ? qq{<div class="$col_renderer"></div>} : '') . $renderers[$i + 1];
+              $popup_menu .= sprintf $renderer_template[1], $renderers[$i], ($renderers[$i] eq 'default' ? qq(<div class="$col_renderer"></div>) : '') . $renderers[$i + 1];
             }
             
             $subtracks .= sprintf(
-              qq{<li id="$feature_id" class="$x_class$li_class $display track">%s$renderer_template[0]$popup_menu$renderer_template[2]<div class="$col_renderer"></div></li>},
+              qq(<li id="$feature_id" class="$x_class$li_class $display track">%s$renderer_template[0]$popup_menu$renderer_template[2]<div class="$col_renderer"></div></li>),
               $feature->data->{'source_name'}
             );
             
@@ -185,11 +185,11 @@ sub form {
               %s
               <ul class="config_menu">%s</ul>
             </div>',
-            $total > 1 ? qq{<div class="select_all config_menu">$select_all<strong class="menu_option">Enable/disable all $cell->{'title'}</strong></div>} : '',
+            $total > 1 ? qq(<div class="select_all config_menu">$select_all<strong class="menu_option">Enable/disable all $cell->{'title'}</strong></div>) : '',
             $subtracks
           );
           
-          $cell->{'html'}   = qq{<p><span class="off">0</span><span class="on">$on</span>$total</p>$cell->{'html'}};
+          $cell->{'html'}   = qq(<p><span class="off">0</span><span class="on">$on</span>$total</p>$cell->{'html'});
           $cell->{'class'} .= ' st';
           
           $track_style_header ||= 'Default';
@@ -237,7 +237,7 @@ sub form {
     video     => sprintf('<a href="%s" class="popup">Click to view a tutorial video</a>', $hub->url({ type => 'Help', action => 'View', id => $help{'Config/Matrix'}, __clear => 1 })),
   );
   
-  $tutorials{$_} = qq{<b class="tutorial $_">$tutorials{$_}</b>} for keys %tutorials;
+  $tutorials{$_} = qq(<b class="tutorial $_">$tutorials{$_}</b>) for keys %tutorials;
   
   if ($tutorial_row < 3) {
     my $margin = $tutorial_row == 0 ? 70 : 60;
@@ -254,14 +254,14 @@ sub form {
     foreach (@$_) {
       $row_html .= sprintf('<%s%s%s>%s</%s>',
         $_->{'tag'},
-        $_->{'class'} ? qq{ class="$_->{'class'}"} : '',
-        $_->{'title'} ? qq{ title="$_->{'title'}"} : '',
+        $_->{'class'} ? qq( class="$_->{'class'}") : '',
+        $_->{'title'} ? qq( title="$_->{'title'}") : '',
         $_->{'html'},
         $_->{'tag'}
       );
     }
     
-    $rows_html .= qq{<tr class="$row_class">$row_html</tr>};
+    $rows_html .= qq(<tr class="$row_class">$row_html</tr>);
   }
   
   my $c = 0;
@@ -278,12 +278,12 @@ sub form {
        $popup_menu .= $renderer_template[2];
     
     $headers_html[0] .= sprintf(
-      qq{<th class="$x_class"><p>$x</p>$select_all_col%s</th>},
+      qq(<th class="$x_class"><p>$x</p>$select_all_col%s</th>),
       $x, $x_class, $x_class, $x_class, $c == $tutorial_col - 2 ? $tutorials{'col'} : ''
     );
     
     # FIXME: don't double up class with id
-    $headers_html[2] .= sprintf qq{<th id="$name" class="$x_class $name $display track%s">%s</th>}, $display eq 'off' ? '' : ' on', $c++ ? '' : $tutorials{'style'};
+    $headers_html[2] .= sprintf qq(<th id="$name" class="$x_class $name $display track%s">%s</th>), $display eq 'off' ? '' : ' on', $c++ ? '' : $tutorials{'style'};
     
     push @{$self->{'json'}{'trackIds'}}, $name;
     push @{$self->{'json'}{'tracks'}}, {
@@ -295,7 +295,7 @@ sub form {
     };
   }
   
-  my $html = sprintf(qq{
+  my $html = sprintf(qq(
     <h1>$matrix_data->{'section'}</h1>
     <div class="toggle_tutorial"></div>
     $tutorials{'video'}
@@ -343,11 +343,11 @@ sub form {
       </div>
       <div class="no_results">No results found</div>
     </div>
-    },
+    ),
     encode_entities($matrix_data->{'header'}),
-    $matrix_data->{'description'} ? qq{<div class="sprite info_icon help" title="Click for more information">&nbsp;</div><div class="desc">$matrix_data->{'description'}</div>} : '',
-    scalar @filters > 1 ? sprintf('<select class="filter">%s</select>', join '', map qq{<option value="$_->[0]">$_->[1]</option>}, @filters) : '',
-    $matrix_data->{'axes'} ? qq{<div><i class="x">$matrix_data->{'axes'}{'x'}</i><b class="x">&#9658;</b><i class="y">$matrix_data->{'axes'}{'y'}</i><b class="y">&#9660;</b></div>} : '',
+    $matrix_data->{'description'} ? qq(<div class="sprite info_icon help" title="Click for more information">&nbsp;</div><div class="desc">$matrix_data->{'description'}</div>) : '',
+    scalar @filters > 1 ? sprintf('<select class="filter">%s</select>', join '', map qq(<option value="$_->[0]">$_->[1]</option>), @filters) : '',
+    $matrix_data->{'axes'} ? qq(<div><i class="x">$matrix_data->{'axes'}{'x'}</i><b class="x">&#9658;</b><i class="y">$matrix_data->{'axes'}{'y'}</i><b class="y">&#9660;</b></div>) : '',
     @headers_html
   );
   
