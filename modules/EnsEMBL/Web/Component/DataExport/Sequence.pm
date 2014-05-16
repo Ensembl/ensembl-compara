@@ -59,12 +59,12 @@ sub content {
         'flank5_display' => {
             'label'     => "5' Flanking sequence (upstream)",  
             'type'      => 'NonNegInt',  
-            'defaults'  => {'rtf' => 600},
+            'value'     => '600',
         },
         'flank3_display' => { 
             'label'     => "3' Flanking sequence (downstream)", 
             'type'      => 'NonNegInt',  
-            'defaults'  => {'rtf' => 600},
+            'value'     => '600',
         },
         'genomic' => {
             'label' => 'Genomic sequence',   
