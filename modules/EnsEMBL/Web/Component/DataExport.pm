@@ -42,23 +42,24 @@ sub create_form {
   ];
   $fieldset->add_field([
     {
-      'type'    => 'DropDown',
-      'name'    => 'format',
-      'label'   => 'File format',
-      'values'  => $formats,
-      'select'  => 'select',
-      'class'   => '_stt _action',
-    },
-    {
       'type'    => 'String',
       'name'    => 'name',
-      'label'   => 'File name (optional)',
+      'label'   => 'File name',
+      'value'   => $self->default_file_name,
     },
     {
       'type'    => 'Radiolist',
       'name'    => 'compression',
       'label'   => 'Output',
       'values'  => $compress,
+    },
+    {
+      'type'    => 'DropDown',
+      'name'    => 'format',
+      'label'   => 'File format',
+      'values'  => $formats,
+      'select'  => 'select',
+      'class'   => '_stt _action',
     },
   ]);
   $fieldset->add_hidden([
@@ -114,5 +115,7 @@ sub create_form {
 
   return $form;
 }
+
+sub default_file_name { return undef; }
 
 1;
