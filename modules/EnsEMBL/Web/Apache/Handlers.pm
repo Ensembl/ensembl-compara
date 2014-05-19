@@ -202,6 +202,7 @@ sub postReadRequestHandler {
   my $width   = $cookies->{'ENSEMBL_WIDTH'} && $cookies->{'ENSEMBL_WIDTH'}->value ? $cookies->{'ENSEMBL_WIDTH'}->value : 0;  
   my $window_width = $cookies->{'WINDOW_WIDTH'} && $cookies->{'WINDOW_WIDTH'}->value ? $cookies->{'WINDOW_WIDTH'}->value : 0;
   
+#warn ">>$window_width";
   $r->subprocess_env->{'WINDOW_WIDTH'}          = $window_width; # use for mobile website to determine device windows size
   $r->subprocess_env->{'ENSEMBL_IMAGE_WIDTH'}   = $width || $SiteDefs::ENSEMBL_IMAGE_WIDTH || 800;
   $r->subprocess_env->{'ENSEMBL_DYNAMIC_WIDTH'} = $cookies->{'DYNAMIC_WIDTH'} && $cookies->{'DYNAMIC_WIDTH'}->value ? 1 : $width ? 0 : 1;
@@ -478,7 +479,7 @@ sub handler {
   # Permanent redirect for old species home pages:
   # e.g. /Homo_sapiens or Homo_sapiens/index.html -> /Homo_sapiens/Info/Index
   if ($species && $species_name && (!$script || $script eq 'index.html')) {
-    $r->uri($species_name eq 'common' ? 'index.html' : "/$species_name/Info/Index");
+    $r->uri($species_name eq 'common' ? 'index.html' : $species_defs->ENSEMBL_SITETYPE eq 'Ensembl mobile' ? "/$species_name/Info/Annotation#assembly" : "/$species_name/Info/Index"); #additional if for mobile site different species home page
     $r->headers_out->add('Location' => $r->uri);
     $r->child_terminate;
     $ENSEMBL_WEB_REGISTRY->timer_push('Handler "REDIRECT"', undef, 'Apache');
