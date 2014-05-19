@@ -35,7 +35,7 @@ sub content {
   my $self  = shift;
   my $hub   = $self->hub;
 
-  my $form      = $self->new_form({'id' => 'contact', 'action' => "/Help/SendEmail", 'method' => 'post', 'enctype'=>'multipart/form-data'});
+  my $form      = $self->new_form({'id' => 'contact', 'action' => "/Help/SendEmail", 'method' => 'post', 'enctype'=>'multipart/form-data', 'data-ajax'=>'false'});
   my $fieldset  = $form->add_fieldset;
 
   if ($hub->param('strong')) {
@@ -88,6 +88,8 @@ sub content {
     'name'    => 'submit',
     'value'   => 'Send',
   });
+  
+  $_->set_attribute('data-role', 'none') for @{$fieldset->get_elements_by_tag_name('input')};
 
   return $form->render;
 }
