@@ -1,4 +1,4 @@
-=head1 LICENSE
+﻿=head1 LICENSE
 
 Copyright [1999-2014] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
@@ -34,7 +34,7 @@ sub content {
   my $matches    = $self->_matches('similarity_matches', 'Similarity Matches', 'PRIMARY_DB_SYNONYM', @dbtypes, 'RenderAsTables');
   my $no_matches = qq(<p>No external references assigned to this gene.</p><br />);
   my $html       = $matches ? $matches : $no_matches;
-  $html         .= $self->matches_to_html(@dbtypes);
+  $html         .= $self->matches_to_html(@dbtypes) if($self->hub->species_defs->ENSEMBL_SITETYPE ne 'Ensembl mobile');
   return $html;
 }
 
