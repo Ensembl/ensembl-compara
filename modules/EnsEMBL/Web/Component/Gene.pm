@@ -54,7 +54,7 @@ sub draw_structure {
       return unless $ss_cons;
       my $input_aln   = $gene_tree->get_SimpleAlign( -id => 'MEMBER' );
       my $aln_file    = $self->_dump_multiple_alignment($input_aln, $model_name, $ss_cons);
-      my ($thumbnail, $plot) = $self->_draw_structure($aln_file, $gene_tree, $peptide->stable_id,$name);
+      my ($thumbnail, $plot) = $self->_draw_structure($aln_file, $gene_tree, $peptide->stable_id,$model_name);
       $filename = $is_thumbnail ? $thumbnail : $plot;
       $svg_path = $r2r_path.'/'.$filename;
     }
@@ -70,9 +70,10 @@ sub _dump_multiple_alignment {
     }
 
     my $aln_file  = EnsEMBL::Web::TmpFile::Text->new(
-                        path_pattern => 'XXXXXXXXXXXXXXX',
-                        prefix   => 'r2r/'.$self->hub->species,
-                        extension => ".aln",
+                        path_pattern  => 'XXXXXXXXXXXXXXX',
+                        filename      => $model_name,
+                        prefix        => 'r2r/'.$self->hub->species,
+                        extension     => ".aln",
                     );
 
     my $content = "# STOCKHOLM 1.0\n";
@@ -87,33 +88,31 @@ sub _dump_multiple_alignment {
 }
 
 sub _create_cons_file {
-  my ($self, $aln_file, $name) = @_;
-  warn ">>> ALN FILE ". $aln_file->{'full_path'};
+  my ($self, $aln_file, $model_name) = @_;
 
-  (my $meta_path = $aln_file->{'full_path'}) =~ s/\.aln//;
-  warn "@@@ META PATH $meta_path";
-  my $filename  = $name.'.cons';
+  (my $meta_path = $aln_file->{'full_path'}) =~ s/\/$model_name\.aln//;
+  my $filename  = $model_name.'.cons';
   ## For information about these options, check http://breaker.research.yale.edu/R2R/R2R-manual-1.0.3.pdf
   $self->_run_r2r_and_check("--GSC-weighted-consensus", $aln_file->{'full_path'}, $meta_path, $filename, "3 0.97 0.9 0.75 4 0.97 0.9 0.75 0.5 0.1");
 }
 
 sub _draw_structure {
-    my ($self, $aln_file, $tree, $peptide_id, $name) = @_;
+    my ($self, $aln_file, $tree, $peptide_id, $model_name) = @_;
 
-    $self->_create_cons_file($aln_file, $name);
+    $self->_create_cons_file($aln_file, $model_name);
     ## Get random directory name being used by meta files
-    (my $meta_path  = $aln_file->{'full_path'}) =~ s/\.aln//;
+    (my $meta_path  = $aln_file->{'full_path'}) =~ s/\/$model_name\.aln//;
     my @tmp_path    = split('/', $meta_path);
     my $random_dir  = $tmp_path[-1];
     my $img_path    = $self->hub->species_defs->ENSEMBL_TMP_DIR_IMG.'/r2r/'.$random_dir;
 
-    my $thumbnail = $name.'-thumbnail.svg';
+    my $thumbnail = $model_name.'-thumbnail.svg';
     my $th_meta = EnsEMBL::Web::TmpFile::Text->new(
                         prefix   => 'r2r/'.$self->hub->species,
                         path_pattern => 'XXXXXXXXXXXXXXX',
                         extension => ".meta",
                     );
-    my $th_content = "$meta_path/$name.cons\tskeleton-with-pairbonds\n";
+    my $th_content = "$meta_path/$model_name.cons\tskeleton-with-pairbonds\n";
     $th_meta->print($th_content);
     $self->_run_r2r_and_check("", $th_meta->{'full_path'}, $img_path, $thumbnail, "");
 
@@ -122,11 +121,11 @@ sub _draw_structure {
                         path_pattern => 'XXXXXXXXXXXXXXX',
                         extension => ".meta",
                     );
-    my $content = "$meta_path/$name.cons\n";
+    my $content = "$meta_path/$model_name.cons\n";
     $content .= $aln_file->{'full_path'}."\toneseq\t$peptide_id\n";
     $meta_file->print($content);
 
-    my $plot_file = $name.'.svg';
+    my $plot_file = $model_name.'.svg';
     $self->_run_r2r_and_check("", $meta_file->{'full_path'}, $img_path, $plot_file, "");
 
     return ($random_dir.'/'.$thumbnail, $random_dir.'/'.$plot_file);
@@ -134,7 +133,6 @@ sub _draw_structure {
 
 sub _run_r2r_and_check {
     my ($self, $opts, $inpath, $outpath, $outfile, $extra_params) = @_;
-    warn ">>> $inpath, $outpath, $outfile";
     my $r2r_exe = $self->hub->species_defs->R2R_BIN;
     warn "$r2r_exe doesn't exist" unless ($r2r_exe);
 
