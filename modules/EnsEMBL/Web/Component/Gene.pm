@@ -30,8 +30,8 @@ sub draw_structure {
   my $html = '';
 
   my $r2r_path  = $self->hub->species_defs->ENSEMBL_TMP_DIR_IMG.'/r2r';
-  my $filename  = $display_name.'-'.$self->hub->param('g');
-  $filename    .= '-thumbnail' if $is_thumbnail;
+  my $name      = $display_name.'-'.$self->hub->param('g');
+  my $filename  = $name.'-thumbnail' if $is_thumbnail;
   $filename    .= '.svg';
   my $svg_path  = $r2r_path.'/'.$filename;
 
@@ -54,7 +54,7 @@ sub draw_structure {
       return unless $ss_cons;
       my $input_aln   = $gene_tree->get_SimpleAlign( -id => 'MEMBER' );
       my $aln_file    = $self->_dump_multiple_alignment($input_aln, $model_name, $ss_cons);
-      my ($thumbnail, $plot) = $self->_draw_structure($aln_file, $gene_tree, $peptide->stable_id,$filename);
+      my ($thumbnail, $plot) = $self->_draw_structure($aln_file, $gene_tree, $peptide->stable_id,$name);
       $filename = $is_thumbnail ? $thumbnail : $plot;
       $svg_path = $r2r_path.'/'.$filename;
     }
@@ -70,7 +70,9 @@ sub _dump_multiple_alignment {
     }
 
     my $aln_file  = EnsEMBL::Web::TmpFile::Text->new(
+                        path_pattern => 'XXXXXXXXXXXXXXX',
                         prefix   => 'r2r/'.$self->hub->species,
+                        extension => ".aln",
                     );
 
     my $content = "# STOCKHOLM 1.0\n";
@@ -84,54 +86,66 @@ sub _dump_multiple_alignment {
     return $aln_file;
 }
 
-sub _get_aln_file {
-  my ($self, $aln_file) = @_;
+sub _create_cons_file {
+  my ($self, $aln_file, $name) = @_;
+  warn ">>> ALN FILE ". $aln_file->{'full_path'};
 
-  my $input_path  = $aln_file->{'full_path'};
-  my $output_path = $input_path . ".cons";
+  (my $meta_path = $aln_file->{'full_path'}) =~ s/\.aln//;
+  warn "@@@ META PATH $meta_path";
+  my $filename  = $name.'.cons';
   ## For information about these options, check http://breaker.research.yale.edu/R2R/R2R-manual-1.0.3.pdf
-  $self->_run_r2r_and_check("--GSC-weighted-consensus", $input_path, $output_path, "3 0.97 0.9 0.75 4 0.97 0.9 0.75 0.5 0.1");
-
-  return $output_path;
+  $self->_run_r2r_and_check("--GSC-weighted-consensus", $aln_file->{'full_path'}, $meta_path, $filename, "3 0.97 0.9 0.75 4 0.97 0.9 0.75 0.5 0.1");
 }
 
 sub _draw_structure {
-    my ($self, $aln_file, $tree, $peptide_id, $svg_path) = @_;
+    my ($self, $aln_file, $tree, $peptide_id, $name) = @_;
 
-    my $output_path = $self->_get_aln_file($aln_file);
-    my $r2r_path    = $self->hub->species_defs->ENSEMBL_TMP_DIR_IMG.'/r2r/';
+    $self->_create_cons_file($aln_file, $name);
+    ## Get random directory name being used by meta files
+    (my $meta_path  = $aln_file->{'full_path'}) =~ s/\.aln//;
+    my @tmp_path    = split('/', $meta_path);
+    my $random_dir  = $tmp_path[-1];
+    my $img_path    = $self->hub->species_defs->ENSEMBL_TMP_DIR_IMG.'/r2r/'.$random_dir;
 
+    my $thumbnail = $name.'-thumbnail.svg';
     my $th_meta = EnsEMBL::Web::TmpFile::Text->new(
                         prefix   => 'r2r/'.$self->hub->species,
+                        path_pattern => 'XXXXXXXXXXXXXXX',
                         extension => ".meta",
                     );
-    my $th_content = "$output_path\tskeleton-with-pairbonds\n";
+    my $th_content = "$meta_path/$name.cons\tskeleton-with-pairbonds\n";
     $th_meta->print($th_content);
-    my $thumbnail = $svg_path;
-    $self->_run_r2r_and_check("", $th_meta->{'full_path'}, $r2r_path.$thumbnail, "");
+    $self->_run_r2r_and_check("", $th_meta->{'full_path'}, $img_path, $thumbnail, "");
 
     my $meta_file  = EnsEMBL::Web::TmpFile::Text->new(
                         prefix   => 'r2r/'.$self->hub->species,
+                        path_pattern => 'XXXXXXXXXXXXXXX',
                         extension => ".meta",
                     );
-    my $content = "$output_path\n";
+    my $content = "$meta_path/$name.cons\n";
     $content .= $aln_file->{'full_path'}."\toneseq\t$peptide_id\n";
     $meta_file->print($content);
 
-    $self->_run_r2r_and_check("", $meta_file->{'full_path'}, $r2r_path.$svg_path, "");
+    my $plot_file = $name.'.svg';
+    $self->_run_r2r_and_check("", $meta_file->{'full_path'}, $img_path, $plot_file, "");
 
-    return ($thumbnail, $svg_path);
+    return ($random_dir.'/'.$thumbnail, $random_dir.'/'.$plot_file);
 }
 
 sub _run_r2r_and_check {
-    my ($self, $opts, $infile, $outfile, $extra_params) = @_;
+    my ($self, $opts, $inpath, $outpath, $outfile, $extra_params) = @_;
+    warn ">>> $inpath, $outpath, $outfile";
     my $r2r_exe = $self->hub->species_defs->R2R_BIN;
     warn "$r2r_exe doesn't exist" unless ($r2r_exe);
 
-    my $cmd = "$r2r_exe $opts $infile $outfile $extra_params";
+    ## Make temporary directory
+    mkdir($outpath) unless -e $outpath;
+    $outpath .= '/'.$outfile;
+
+    my $cmd = "$r2r_exe $opts $inpath $outpath $extra_params";
     system($cmd);
-    if (! -e $outfile) {
-       warn "Problem running r2r: $outfile doesn't exist\nThis is the command I tried to run:\n$cmd\n";
+    if (! -e $outpath) {
+       warn "Problem running r2r: $outpath doesn't exist\nThis is the command I tried to run:\n$cmd\n";
     }
     return;
 }
