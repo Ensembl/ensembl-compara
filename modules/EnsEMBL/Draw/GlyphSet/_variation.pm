@@ -18,6 +18,8 @@ limitations under the License.
 
 package EnsEMBL::Draw::GlyphSet::_variation;
 
+### Draws a SNP track
+
 use strict;
 
 use List::Util qw(min);
@@ -334,8 +336,8 @@ sub highlight {
   my ($f, $composite, $pix_per_bp, $h, $hi_colour) = @_;
   my %highlights = map { $_ => 1 } $self->highlights;
 
-  if ($self->{'config'}->core_objects->{'variation'}){
-    my $var_id = $self->{'config'}->core_objects->{'variation'}->name;
+  if ($self->{'config'}->core_object('variation')){
+    my $var_id = $self->{'config'}->core_object('variation')->name;
        $var_id =~ s/rs//;
        
     $highlights{$var_id} = 1;

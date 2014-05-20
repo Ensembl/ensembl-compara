@@ -30,14 +30,12 @@ sub createObjects {
   my $self       = shift;
   my $variation  = shift;
   my $identifier = $self->param('v') || $self->param('snp');
-  
+
   my $db = $self->species_defs->databases->{'DATABASE_VARIATION'};
   
   return $self->problem('fatal', 'Database Error', 'There is no variation database for this species.') unless $db;
   
   if (!$variation) {
-    return $self->problem('fatal', 'Variation ID required', $self->_help('A variation ID is required to build this page.')) unless $identifier;
-    
     my $dbs = $self->hub->get_databases(qw(core variation));
     
     return $self->problem('fatal', 'Database Error', 'Could not connect to the core database.') unless $dbs;
@@ -48,7 +46,17 @@ sub createObjects {
     return $self->problem('fatal', 'Database Error', 'Could not connect to the variation database.') unless $variation_db;
     
     $variation_db->dnadb($dbs->{'core'});
-    
+ 
+    if(!$identifier) {
+      my $vfid = $self->param('vf');
+      my $vf = $variation_db->get_VariationFeatureAdaptor->fetch_by_dbID($vfid);
+      if($vf) {
+        $identifier = $vf->variation->name;
+        $self->param('v',$identifier);
+      }
+    }
+    return $self->problem('fatal', 'Variation ID required', $self->_help('A variation ID is required to build this page.')) unless $identifier;
+ 
     $variation = $variation_db->get_VariationAdaptor->fetch_by_name($identifier);
   }
   

@@ -113,21 +113,21 @@ sub form {
       type  => 'NoEdit',
       name  => 'gene_to_export',
       label => 'Gene to export',
-      value => $hub->core_objects->{'gene'}->long_caption
+      value => $hub->core_object('gene')->long_caption
     });
   } elsif ($function eq 'Transcript') {    
     $self->add_form_element({
       type  => 'NoEdit',
       name  => 'transcript_to_export',
       label => 'Transcript to export',
-      value => $hub->core_objects->{'transcript'}->long_caption
+      value => $hub->core_object('transcript')->long_caption
     });
   } elsif ($function eq 'Variation') {
     $self->add_form_element({
       type  => 'NoEdit',
       name  => 'variation_to_export',
       label => 'Variation to export',
-      value => $hub->core_objects->{'variation'}->name,
+      value => $hub->core_object('variation')->name,
     });
   }
 

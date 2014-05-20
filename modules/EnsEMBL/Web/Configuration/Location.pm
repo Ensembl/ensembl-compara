@@ -172,7 +172,7 @@ sub add_external_browsers {
   my $hub          = $self->hub;
   my $object       = $self->object;
   my $species_defs = $hub->species_defs;
-  
+
   # Links to external browsers - UCSC, NCBI, etc
   my %browsers = %{$species_defs->EXTERNAL_GENOME_BROWSERS || {}};
   $browsers{'UCSC_DB'} = $species_defs->UCSC_GOLDEN_PATH;
@@ -229,6 +229,8 @@ sub add_external_browsers {
   }
 
   $self->add_vega_link;
+  ## Link to previous/next assembly if available  
+  $self->add_archive_link if $hub->species_defs->SWITCH_ASSEMBLY;
   
   foreach (sort keys %browsers) {
     next unless $browsers{$_};
@@ -236,6 +238,58 @@ sub add_external_browsers {
     $url = $hub->get_ExtURL($_, { CHR => $chr, START => $start, END => $end });
     $self->get_other_browsers_menu->append($self->create_node($browsers{$_}, $browsers{$_}, [], { url => $url, raw => 1, external => 1 }));
   }
+}
+
+sub add_archive_link {
+### Optional link to archive with previous assembly
+  my $self           = shift;
+  my $hub            = $self->hub;
+  my $alt_assembly = $hub->species_defs->SWITCH_ASSEMBLY;
+  return unless $alt_assembly;
+  my $current_assembly = $hub->species_defs->ASSEMBLY_NAME;
+  my $alt_release = $hub->species_defs->SWITCH_VERSION;
+  my $url = 'http://'.$hub->species_defs->SWITCH_ARCHIVE_URL;
+  my ($link, $title);
+  
+  if ($alt_release < $hub->species_defs->ENSEMBL_VERSION) {
+  ## get coordinates on other assembly if available
+    if ($self->object && $self->object->slice) {
+      if (my @mappings = @{$hub->species_defs->get_config($hub->species, 'ASSEMBLY_MAPPINGS')||[]}) {
+        foreach my $mapping (@mappings) {
+          next unless $mapping eq sprintf ('chromosome:%s#chromosome:%s', $current_assembly, $alt_assembly);
+          my $segments = $self->object->slice->project('chromosome', $alt_assembly);
+          ## link if there is an ungapped mapping of whole gene
+          if (scalar(@$segments) == 1) {
+            my $new_slice = $segments->[0]->to_Slice;
+            $link = sprintf('%s%s/Location/%s?r=%s:%s-%s',
+                          $url,
+                          $hub->species_path,
+                          $hub->action,
+                          $new_slice->seq_region_name,
+                          $new_slice->start,
+                          $new_slice->end,
+                  );
+            last;  
+          }
+        }
+      }
+      else {
+        $link = sprintf('%s%s/Location/%s',
+                          $url,
+                          $hub->species_path,
+                          $hub->action,
+                );
+      }
+      $title = "$alt_assembly archive";
+    }
+  }
+  else {
+    $link = sprintf('%s%s/Search/Results?q=%s',
+                    $url, $hub->species_path, $hub->param('r'),
+            );
+    $title = $hub->species_defs->ENSEMBL_SITETYPE.' '.$alt_assembly
+  }
+  $self->get_other_browsers_menu->append($self->create_node($title, $title, [], { availability => 1, url => $link, raw => 1, external => 1 })) if $link;
 }
 
 sub add_vega_link {

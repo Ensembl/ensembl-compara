@@ -335,7 +335,7 @@ sub add_vgroup_to_legend { # add vertical group of members
   my $title_height = $self->{'text_height'} * 2;
   my $gap = $self->{'text_height'}/2;
   $self->push($self->Text({
-    x             => $xo+$self->{'box_width'}/2,
+    x             => $xo,
     y             => $yo,
     height        => $title_height,
     valign        => 'top',
@@ -344,9 +344,9 @@ sub add_vgroup_to_legend { # add vertical group of members
     text          => $title,
     %abs,
     %{$self->{'font'}},
-    ptsize        => $self->{'font'}{'ptsize'} + 0.6, 
+    ptsize        => $self->{'font'}{'ptsize'} + 0.6,
   }));
-  $yo += $title_height+2*$gap;
+  $yo += $title_height+$gap;
 
   my ($w,$h) = (0,0);
   foreach my $k (@$group) {

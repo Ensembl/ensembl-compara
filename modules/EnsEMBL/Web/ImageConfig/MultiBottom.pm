@@ -28,8 +28,15 @@ sub init {
   $self->set_parameters({
     sortable_tracks => 1,  # allow the user to reorder tracks
     opt_lines       => 1,  # register lines
-    spritelib       => { default => $self->species_defs->ENSEMBL_WEBROOT . '/htdocs/img/sprites' }
+    spritelib       => { default => $self->species_defs->ENSEMBL_WEBROOT . '/htdocs/img/sprites' },
   });
+  my $sp_img_48 = $self->species_defs->ENSEMBL_WEBROOT . '/../public-plugins/ensembl/htdocs/i/species/48'; # XXX make configurable
+  if(-e $sp_img_48) {
+    $self->set_parameters({ spritelib => {
+      %{$self->get_parameter('spritelib')||{}},
+      species => $sp_img_48,
+    }});
+  }
 
   # Add menus in the order you want them for this display
   $self->create_menus(qw(
@@ -156,6 +163,18 @@ sub multi {
       );
     }
   }
+  $self->add_tracks('information',
+    [ 'gene_legend', 'Gene Legend','gene_legend', {  display => 'normal', strand => 'r', accumulate => 'yes' }],
+    [ 'variation_legend', 'Variation Legend','variation_legend', {  display => 'normal', strand => 'r', accumulate => 'yes' }],
+    [ 'fg_regulatory_features_legend',   'Reg. Features Legend', 'fg_regulatory_features_legend',   { display => 'normal', strand => 'r', colourset => 'fg_regulatory_features'   }],
+    [ 'fg_segmentation_features_legend', 'Reg. Segments Legend',          'fg_segmentation_features_legend', { strand => 'r', colourset => 'fg_segmentation_features' } ],
+    [ 'fg_methylation_legend', 'Methylation Legend', 'fg_methylation_legend', { strand => 'r' } ],
+    [ 'structural_variation_legend', 'Structural Variation Legend', 'structural_variation_legend', { strand => 'r' } ],
+  );
+  $self->modify_configs(
+    [ 'gene_legend', 'variation_legend','fg_regulatory_features_legend','fg_segmentation_features_legend', 'fg_methylation_legend', 'structural_variation_legend' ],
+    { accumulate => 'yes' }
+  );
 }
 
 sub join_genes {

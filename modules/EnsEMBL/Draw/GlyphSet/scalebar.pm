@@ -16,8 +16,39 @@ limitations under the License.
 
 =cut
 
-# See end of file for docs
 package EnsEMBL::Draw::GlyphSet::scalebar;
+
+### Draws a scalebar as a series of alternating black and white blocks
+### marked with base-pair coordinates
+
+### Notes:
+
+## Scalebar divisions should be
+##  SMALL ENOUGH
+##    to allow a user to be precise
+##  BUT BIG ENOUGH
+##    to not confuse the eye
+##   to allow room for the number underneath.
+##
+## They should be of a nice size and offset for decimal mental calculations.
+##
+## We work on arrays of digits, not numbers. That
+##  avoids rounding errors etc in floats
+##  us to easily track SF, nicely format numbers, etc
+##  to write more directly what we intend to do (which is display digits).
+##
+## We define a minimum size of scalebar major division (ie one with a number)
+## in pixels. That should be enough pixels to write a number and leave some
+## space, and also big enough not to confuse the eye. We then search through
+## all the decimal truncations to find the greatest one which comes in over
+## the minimum division size. Finally, we try multiplying by "nice" decimal
+## divisors, -- 2, 4, 5 -- to see if we can bump the number up and yet stay
+## under the limit.
+##
+## Number writing uses units if that would truncate more than three digits
+## off the number, otherwise it's written literally (takes up no more space
+## and no more confusing because there will be lots of digits on rhs of the
+## unit based rep at this point).
 
 use strict;
 
@@ -203,29 +234,3 @@ sub render {
 
 1;
 
-# Scalebar divisions should be
-#  SMALL ENOUGH
-#    to allow a user to be precise
-#  BUT BIG ENOUGH
-#    to not confuse the eye
-#    to allow room for the number underneath.
-#
-# They should be of a nice size and offset for decimal mental calculations.
-#
-# We work on arrays of digits, not numbers. That
-#  avoids rounding errors etc in floats
-#  us to easily track SF, nicely format numbers, etc
-#  to write more directly what we intend to do (which is display digits).
-#
-# We define a minimum size of scalebar major division (ie one with a number)
-# in pixels. That should be enough pixels to write a number and leave some
-# space, and also big enough not to confuse the eye. We then search through
-# all the decimal truncations to find the greatest one which comes in over
-# the minimum division size. Finally, we try multiplying by "nice" decimal
-# divisors, -- 2, 4, 5 -- to see if we can bump the number up and yet stay
-# under the limit.
-#
-# Number writing uses units if that would truncate more than three digits
-# off the number, otherwise it's written literally (takes up no more space
-# and no more confusing because there will be lots of digits on rhs of the
-# unit based rep at this point).

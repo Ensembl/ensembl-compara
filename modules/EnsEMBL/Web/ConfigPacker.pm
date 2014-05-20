@@ -143,6 +143,7 @@ sub _summarise_core_tables {
   $self->_summarise_generic( $db_name, $dbh );
 
 ## Get chromosomes in order (replacement for array in ini files)
+## and also check for presence of LRGs
 ## Only need to do this once!
   if ($db_name eq 'DATABASE_CORE') {
     my $s_aref = $dbh->selectall_arrayref(
@@ -157,7 +158,13 @@ sub _summarise_core_tables {
     foreach my $row (@$s_aref) {
       push @$chrs, $row->[0];
     }
-   $self->db_tree->{'ENSEMBL_CHROMOSOMES'} = $chrs;
+    $self->db_tree->{'ENSEMBL_CHROMOSOMES'} = $chrs;
+    $s_aref = $dbh->selectall_arrayref(
+        'select count(*) from seq_region where name like "LRG%"'
+    );
+    if ($s_aref->[0][0] > 0) {
+      $self->db_tree->{'HAS_LRG'} = 1;
+    }
   }
 
 ##
@@ -600,14 +607,16 @@ sub _summarise_variation_db {
   
 #--------- Add in phenotype information
   my $pf_aref = $dbh->selectall_arrayref(qq{
-    SELECT type, count(*)
-    FROM phenotype_feature
-    GROUP BY type
+    SELECT pf.type, GROUP_CONCAT(DISTINCT s.name), count(pf.phenotype_feature_id)
+    FROM phenotype_feature pf, source s
+    WHERE pf.source_id=s.source_id AND pf.is_significant=1 AND pf.type!='SupportingStructuralVariation'
+    GROUP BY pf.type
   });
   
   for(@$pf_aref) {
-    $self->db_details($db_name)->{'tables'}{'phenotypes'}{'rows'} += $_->[1];
-    $self->db_details($db_name)->{'tables'}{'phenotypes'}{'types'}{$_->[0]} = $_->[1];
+    $self->db_details($db_name)->{'tables'}{'phenotypes'}{'rows'} += $_->[2];
+    $self->db_details($db_name)->{'tables'}{'phenotypes'}{'types'}{$_->[0]}{'count'} = $_->[2];
+    $self->db_details($db_name)->{'tables'}{'phenotypes'}{'types'}{$_->[0]}{'sources'} = $_->[1];
   }
 
 #--------- Add in somatic mutation information
@@ -971,6 +980,58 @@ sub _summarise_archive_db {
   $dbh->disconnect();
 }
 
+sub _build_compara_default_aligns {
+  my ($self,$dbh,$dest) = @_;
+
+  my $sth = $dbh->prepare(qq(
+    select mlss.method_link_species_set_id
+      from method_link_species_set as mlss
+      join species_set as ss
+        on mlss.species_set_id = ss.species_set_id
+      join method_link as ml
+        on mlss.method_link_id = ml.method_link_id
+      join species_set_tag as sst
+        on ss.species_set_id = sst.species_set_id
+      where sst.tag = 'name'
+        and ml.type = ?
+        and sst.value = ?
+  ));
+  my @defaults;
+  my $cda_conf = $self->full_tree->{'MULTI'}{'COMPARA_DEFAULT_ALIGNMENTS'};
+  foreach my $species (keys %$cda_conf) {
+    my $method = $cda_conf->{$species};
+    $sth->bind_param(1,$method);
+    $sth->bind_param(2,$species);
+    $sth->execute;
+    my ($mlss_id)= $sth->fetchrow_array;
+    push @defaults,[$mlss_id,$species,$method];
+    $sth->execute;
+    $sth->finish;
+  }
+  $dest->{'COMPARA_DEFAULT_ALIGNMENT_IDS'} = \@defaults;
+}
+
+sub _build_compara_mlss {
+  my ($self,$dbh,$dest) = @_;
+
+  my $sth = $dbh->prepare(qq(
+    select mlss.method_link_species_set_id,
+           ss.species_set_id,
+           ml.method_link_id
+      from method_link_species_set as mlss
+      join species_set as ss
+        on mlss.species_set_id = ss.species_set_id
+      join method_link as ml
+        on mlss.method_link_id = ml.method_link_id
+  ));
+  $sth->execute;
+  my %mlss;
+  while(my ($mlss_id,$ss_id,$ml_id) = $sth->fetchrow_array) {
+    $mlss{$mlss_id} = { SPECIES_SET => $ss_id, METHOD_LINK => $ml_id };
+  }
+  $dest->{'MLSS_IDS'} = \%mlss;
+}
+
 sub _summarise_compara_db {
   my ($self, $code, $db_name) = @_;
   
@@ -1152,6 +1213,15 @@ sub _summarise_compara_db {
   }
 
   ## End section about colouring and colapsing/hidding gene in the GeneTree View
+  ###################################################################
+
+  ###################################################################
+  ## Cache MLSS for quick lookup in ImageConfig
+
+  $self->_build_compara_default_aligns($dbh,$self->db_tree->{$db_name});
+  $self->_build_compara_mlss($dbh,$self->db_tree->{$db_name});
+
+  ##
   ###################################################################
 
   ###################################################################

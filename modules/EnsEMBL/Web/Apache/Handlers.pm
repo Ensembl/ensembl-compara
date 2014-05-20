@@ -18,6 +18,10 @@ limitations under the License.
 
 package EnsEMBL::Web::Apache::Handlers;
 
+### Uses mod_perl to replace the normal Apache server functionality,
+### initialising and cleaning up child processes
+### Handles URL routing, cookies, errors, mirror redirects 
+
 use strict;
 
 use Apache2::Const qw(:common :http :methods);
@@ -61,11 +65,15 @@ BEGIN {
 # Perl apache handlers in order they get executed                      #
 #======================================================================#
 
-# Child Init Handler
-# Sets up the web registry object - and initializes the timer
+sub child_init_hook {}
+
 sub childInitHandler {
+## Initiates an Apache child process, sets up the web registry object,
+## and initializes the timer
   my $r = shift;
-  
+ 
+  child_init_hook($r);
+ 
   my @X             = localtime;
   my $temp_hostname = hostname;
   my $temp_proc_id  = '' . reverse $$;
@@ -88,7 +96,8 @@ sub childInitHandler {
 
 
 sub redirect_to_nearest_mirror {
-  ## This does not do an actual HTTP redirect, but sets a cookie that tells the JavaScript to perform a client side redirect after specified time interval
+## Redirects requests based on IP address - only used if the ENSEMBL_MIRRORS site parameter is configured
+## This does not do an actual HTTP redirect, but sets a cookie that tells the JavaScript to perform a client side redirect after specified time interval
   my $r           = shift;
   my $server_name = $species_defs->ENSEMBL_SERVERNAME;
 
@@ -181,13 +190,11 @@ sub redirect_to_nearest_mirror {
   return DECLINED;
 }
 
+sub request_start_hook {}
 sub postReadRequestHandler {
   my $r = shift; # Get the connection handler
 
-  foreach my $h (@SiteDefs::REQUEST_START_HOOK) {
-    no strict;
-    $h->($r);
-  }
+  request_start_hook($r);
 
   # Nullify tags
   $ENV{'CACHE_TAGS'} = {};
@@ -556,13 +563,11 @@ sub logHandler {
   return DECLINED;
 }
 
+sub request_end_hook {}
 sub cleanupHandler {
   my $r = shift;  # Get the connection handler
   
-  foreach my $h (@SiteDefs::REQUEST_END_HOOK) {
-    no strict;
-    $h->($r);
-  }
+  request_end_hook($r);
   return if $r->subprocess_env->{'ENSEMBL_ENDTIME'};
   
   my $end_time   = time;
@@ -782,13 +787,6 @@ sub _load_command_linux {
   my $VAL = `ps --no-heading -C $command  | wc -l`;
   
   return $VAL + 0;
-}
-
-sub _referrer_is_mirror {
-## Mirror hash is now multi-dimensional, so we have to recurse into it
-    my ( $ensembl_mirrors, $referrer ) = @_;
-    map { ref $_ eq 'HASH' ? _referrer_is_mirror( $_, $referrer ) : $referrer eq $_ ? return 'true' : undef }
-      values %$ensembl_mirrors;
 }
 
 1;

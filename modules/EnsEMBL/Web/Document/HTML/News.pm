@@ -25,7 +25,7 @@ use warnings;
 no warnings 'uninitialized';
 
 use EnsEMBL::Web::DBSQL::ProductionAdaptor;
-use EnsEMBL::Web::DBSQL::WebsiteAdaptor;
+use EnsEMBL::Web::DBSQL::ArchiveAdaptor;
 
 use base qw(EnsEMBL::Web::Document::HTML);
 
@@ -35,9 +35,14 @@ sub render {
 
   my $hub           = $self->hub;
   my $release_id    = $hub->param('id') || $hub->species_defs->ENSEMBL_VERSION;
-  my $adaptor       = EnsEMBL::Web::DBSQL::WebsiteAdaptor->new($hub);
+  my $site_type     = $hub->species_defs->ENSEMBL_SITETYPE;
+  my $adaptor       = EnsEMBL::Web::DBSQL::ArchiveAdaptor->new($hub);
   my $release       = $adaptor->fetch_release($release_id);
   my $release_date  = $release->{'date'};
+
+  $html .= sprintf('<h1>%s News for Release %s', $site_type, $release_id);
+  $html .= sprintf(' (%s)', $release_date) if $release_date;
+  $html .= '</h1>';
 
   ## Are we using static news content output from a script?
   my $file          = '/ssi/whatsnew.html';
@@ -65,7 +70,7 @@ sub render {
     }
 
     ## Sort and dedupe records
-    my ($sorted, %seen, %ok_cats);
+    my ($sorted_cats, $sorted_teams, %seen, %ok_cats, %ok_teams);
     foreach (@changes) {
       if ($hub->species) {
         next if $seen{$_->{'id'}};
@@ -73,19 +78,32 @@ sub render {
         next if ($_->{'team'} eq 'Funcgen' && !exists $hub->species_defs->databases->{'DATABASE_FUNCGEN'});
         $seen{$_->{'id'}}++;
       }
+      ## We potentially need to sort by both category and team, depending
+      ## on when the record was created
       $ok_cats{$_->{'category'}}++;
-      if ($sorted->{$_->{'category'}}) {
-        push @{$sorted->{$_->{'category'}}}, $_;
+      if ($sorted_cats->{$_->{'category'}}) {
+        push @{$sorted_cats->{$_->{'category'}}}, $_;
       }
       else {
-        $sorted->{$_->{'category'}} = [$_];
+        $sorted_cats->{$_->{'category'}} = [$_];
+      }
+      $ok_teams{$_->{'team'}}++;
+      if ($sorted_teams->{$_->{'team'}}) {
+        push @{$sorted_teams->{$_->{'team'}}}, $_;
+      }
+      else {
+        $sorted_teams->{$_->{'team'}} = [$_];
       }
     }
+    ## Now we can check if we have any categories beyond other!
+    my $has_cats = scalar keys %ok_cats > 1 ? 1 : 0; 
+    my %headers = $has_cats ? %ok_cats : %ok_teams;
+    my $sorted = $has_cats ? $sorted_cats : $sorted_teams;
 
     if (scalar(@changes) > 0) {
 
       my $record;
-      my @cat_order = qw(web genebuild variation regulation alignment schema other);
+      my @order = $has_cats ? qw(web genebuild variation regulation alignment schema other) : sort keys %ok_teams;
       my %cat_lookup = (
                       'web'         => 'New web displays and tools',
                       'genebuild'   => 'New species, assemblies and genebuilds',
@@ -99,19 +117,19 @@ sub render {
       ## TOC
       $html .= qq(<h2>News categories</h2>
                 <ul>\n);
-      foreach my $cat (@cat_order) {
-        next unless $ok_cats{$cat};
-        my $title   = $cat_lookup{$cat};
-        $html .= sprintf '<li><a href="#cat-%s">%s</a></li>', $cat, $title;
+      foreach my $header (@order) {
+        next unless $headers{$header};
+        my $title   = $has_cats ? $cat_lookup{$header} : ucfirst($header);
+        $html .= sprintf '<li><a href="#cat-%s">%s</a></li>', $header, $title;
       }
       $html .= "</ul>\n\n";
 
       ## format news changes
-      foreach my $cat (@cat_order) {
-        next unless $ok_cats{$cat};
-        my @records = @{$sorted->{$cat}||[]};  
-        my $title   = $cat_lookup{$cat};
-        $html .= sprintf '<h2 id="cat-%s" class="news-category">%s</h2>', $cat, $title;
+      foreach my $header (@order) {
+        next unless $headers{$header};
+        my @records = @{$sorted->{$header}||[]};  
+        my $title   = $has_cats ? $cat_lookup{$header} : ucfirst($header);
+        $html .= sprintf '<h2 id="cat-%s" class="news-category">%s</h2>', $header, $title;
         foreach my $record (@records) {
           $html .= '<h3 id="change_'.$record->{'id'}.'">'.$record->{'title'};
           my @species = @{$record->{'species'}}; 

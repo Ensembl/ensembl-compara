@@ -37,6 +37,7 @@ use Bio::EnsEMBL::Variation::Utils::Sequence qw(ambiguity_code variation_class);
 use EnsEMBL::Web::Cache;
 use Data::Dumper;
 use base qw(EnsEMBL::Web::Object);
+use EnsEMBL::Web::Lazy::Hash qw(lazy_hash);
 
 our $MEMD = EnsEMBL::Web::Cache->new;
 
@@ -1626,8 +1627,27 @@ sub get_genetic_variations {
 }
 
 sub get_transcript_variations {
-  my $self = shift;
+  my ($self,$vf_cache) = @_;
+
+  # Most VFs will be in slice for transcript, so cache them.
+  if($vf_cache and !$self->__data->{'vf_cache'}) {
+    my $vfa = $self->get_adaptor('get_VariationFeatureAdaptor','variation');
+    $self->__data->{'vf_cache'} = {};
+    my $vfs = $vfa->fetch_all_by_Slice_constraint($self->Obj->feature_Slice);
+    $self->__data->{'vf_cache'}{$_->dbID} = $_ for(@$vfs);
+    $vfs = $vfa->fetch_all_somatic_by_Slice_constraint($self->Obj->feature_Slice);
+    $self->__data->{'vf_cache'}{$_->dbID} = $_ for(@$vfs);
+  }
 	return $self->get_adaptor('get_TranscriptVariationAdaptor', 'variation')->fetch_all_by_Transcripts_with_constraint([ $self->Obj ]);
+}
+
+sub transcript_variation_to_variation_feature {
+  my ($self,$tv) = @_;
+
+  my $vfid = $tv->_variation_feature_id;
+  my $val = ($self->__data->{'vf_cache'}||{})->{$vfid};
+  return $val if defined $val;
+  return $tv->variation_feature;
 }
 
 sub variation_data {
@@ -1660,43 +1680,50 @@ sub variation_data {
   #  }
   #}
   
-  foreach my $tv (@{$self->get_transcript_variations}) {
+  foreach my $tv (@{$self->get_transcript_variations(1)}) {
     my $pos = $tv->translation_start;
     
     next if !$include_utr && !$pos;
     next unless $tv->cdna_start && $tv->cdna_end;
     next if scalar keys %consequence_filter && !grep $consequence_filter{$_}, @{$tv->consequence_type};
     
-    my $vf    = $tv->variation_feature;
+    my $vf    = $self->transcript_variation_to_variation_feature($tv);
     my $vdbid = $vf->dbID;
     
     #next if scalar keys %population_filter && !$population_filter{$vdbid};
     
     my $start = $vf->start;
     my $end   = $vf->end;
-    my $tva   = $tv->get_all_alternate_TranscriptVariationAlleles->[0];
     
-    push @data, {
-      tva           => $tva,
+    push @data, lazy_hash({
+      tva           => sub {
+        return $tv->get_all_alternate_TranscriptVariationAlleles->[0];
+      },
       tv            => $tv,
       vf            => $vf,
       position      => $pos,
       vdbid         => $vdbid,
-      snp_source    => $vf->source,
-      snp_id        => $vf->variation_name,
-      ambigcode     => $vf->ambig_code($strand),
-      codons        => $pos ? join(', ', split '/', $tva->display_codon_allele_string) : '',
-      allele        => $vf->allele_string(undef, $strand),
-      pep_snp       => join(', ', split '/', $tva->pep_allele_string),
-      type          => $tv->display_consequence,
-      class         => $vf->var_class,
-      length        => $end - $start,
-      indel         => $vf->var_class =~ /in\-?del|insertion|deletion/ ? ($start > $end ? 'insert' : 'delete') : '',
-      codon_seq     => [ map $coding_sequence[3 * ($pos - 1) + $_], 0..2 ],
-      codon_var_pos => ($tv->cds_start + 2) - ($pos * 3)
-    };
+      snp_source    => sub { $vf->source },
+      snp_id        => sub { $vf->variation_name },
+      ambigcode     => sub { $vf->ambig_code($strand) },
+      codons        => sub {
+        my $tva = $_[0]->get('tva');
+        return $pos ? join(', ', split '/', $tva->display_codon_allele_string) : '';
+      },
+      allele        => sub { $vf->allele_string(undef, $strand) },
+      pep_snp       => sub {
+        my $tva = $_[0]->get('tva');
+        return join(', ', split '/', $tva->pep_allele_string);
+      },
+      type          => sub { $tv->display_consequence },
+      class         => sub { $vf->var_class },
+      length        => $vf->length,
+      indel         => sub { $vf->var_class =~ /in\-?del|insertion|deletion/ ? ($start > $end ? 'insert' : 'delete') : '' },
+      codon_seq     => sub { [ map $coding_sequence[3 * ($pos - 1) + $_], 0..2 ] },
+      codon_var_pos => sub { ($tv->cds_start + 2) - ($pos * 3) },
+    });
   }
-  
+
   @data = map $_->[2], sort { $a->[0] <=> $b->[0] || $a->[1] <=> $b->[1] } map [ $_->{'vf'}->length, $_->{'vf'}->most_severe_OverlapConsequence->rank, $_ ], @data;
   
   return \@data;

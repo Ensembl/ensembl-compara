@@ -18,6 +18,9 @@ limitations under the License.
 
 package EnsEMBL::Draw::GlyphSet::simple_histogram;
 
+### Draws data stored as simple features in a histogram style track
+### e.g. if added to web_data as a rendering option
+
 use strict;
 
 use base qw(EnsEMBL::Draw::GlyphSet_wiggle_and_block);

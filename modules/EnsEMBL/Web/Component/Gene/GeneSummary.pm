@@ -28,6 +28,9 @@ sub _init {
   $self->ajaxable(1);
 }
 
+# Uses SQL wildcards
+my @SYNONYM_PATTERNS = qw(%HGNC% %ZFIN%);
+
 sub content {
   my $self         = shift;
   my $hub          = $self->hub;
@@ -36,8 +39,9 @@ sub content {
   my $table        = $self->new_twocol;
   my $location     = $hub->param('r') || sprintf '%s:%s-%s', $object->seq_region_name, $object->seq_region_start, $object->seq_region_end;
   my $site_type    = $species_defs->ENSEMBL_SITETYPE;
-  my $matches      = $object->get_database_matches;
-  my @CCDS         = grep $_->dbname eq 'CCDS', @{$object->Obj->get_all_DBLinks};
+  my @syn_matches;
+  push @syn_matches,@{$object->get_database_matches($_)} for @SYNONYM_PATTERNS;
+  my @CCDS         = grep $_->dbname eq 'CCDS', @{$object->Obj->get_all_DBLinks('CCDS')};
   my $db           = $object->get_db;
   my $alt_genes    = $self->_matches('alternative_genes', 'Alternative Genes', 'ALT_GENE', 'show_version'); #gets all xrefs, sorts them and stores them on the object. Returns HTML only for ALT_GENES
   my @RefSeqMatches  = @{$object->gene->get_all_Attributes('refseq_compare')};
@@ -63,7 +67,7 @@ sub content {
   foreach my $link (@{$object->__data->{'links'}{'PRIMARY_DB_SYNONYM'}||[]}) {
     my ($key, $text) = @$link;
     my $id           = [split /\<|\>/, $text]->[4];
-    my $synonyms     = $self->get_synonyms($id, @$matches);
+    my $synonyms     = $self->get_synonyms($id, @syn_matches);
 
     $text =~ s/\<div\s*class="multicol"\>|\<\/div\>//g;
     $text =~ s/<br \/>.*$//gism;
@@ -115,11 +119,11 @@ sub content {
 
   ## LRG info
   # first link to direct xrefs (i.e. this gene has an LRG)
-  my @lrg_matches = grep {$_->dbname eq 'ENS_LRG_gene'} @$matches;
+  my @lrg_matches = @{$object->get_database_matches('ENS_LRG_gene')};
   my $lrg_html;
   my %xref_lrgs;    # this hash will store LRGs we don't need to re-print
 
-  if(scalar @lrg_matches) {
+  if(scalar @lrg_matches && $hub->species_defs->HAS_LRG) {
     my $lrg_link;
     for my $i(0..$#lrg_matches) {
       my $lrg = $lrg_matches[$i];
@@ -160,6 +164,62 @@ sub content {
   $table->add_row('LRG', $lrg_html) if $lrg_html;
 
   $table->add_row('Ensembl version', $object->stable_id.'.'.$object->version);
+
+  ## Link to another assembly, e.g. previous archive
+  my $current_assembly = $hub->species_defs->ASSEMBLY_NAME;
+  my $alt_assembly = $hub->species_defs->SWITCH_ASSEMBLY;
+  if ($alt_assembly) {
+    my $alt_release = $hub->species_defs->SWITCH_VERSION;
+    my $url = 'http://'.$hub->species_defs->SWITCH_ARCHIVE_URL;
+    my $txt;
+    ## Are we jumping backwards or forwards?
+    if ($alt_release < $hub->species_defs->ENSEMBL_VERSION) {
+      ## get coordinates on other assembly if available
+      if (my @mappings = @{$hub->species_defs->get_config($hub->species, 'ASSEMBLY_MAPPINGS')||[]}) {
+        foreach my $mapping (@mappings) {
+          next unless $mapping eq sprintf ('chromosome:%s#chromosome:%s', $current_assembly, $alt_assembly);
+          my $segments = $object->get_Slice->project('chromosome', $alt_assembly);
+          ## link if there is an ungapped mapping of whole gene
+          if (scalar(@$segments) == 1) {
+            my $new_slice = $segments->[0]->to_Slice;
+            $txt .= "<p>This gene maps to ";
+            $txt .= sprintf(qq(<a href="${url}%s/Location/View?r=%s:%s-%s" target="external">%s-%s</a>),
+                          $hub->species_path,
+                          $new_slice->seq_region_name,
+                          $new_slice->start,
+                          $new_slice->end,
+                          $self->thousandify($new_slice->start),
+                          $self->thousandify($new_slice->end));
+            $txt .= qq( in $alt_assembly coordinates.</p>);
+          }
+          else {
+            $txt .= qq(<p>There is no ungapped mapping of this gene onto the $alt_assembly assembly.</p>);
+          } 
+        }
+      }
+      ## Plus direct link to feature in Ensembl
+      my $old_id;
+      my $history = $object->history;
+      foreach my $a ( @{ $history->get_all_ArchiveStableIds } ) {
+        next unless $a->release <= $alt_release;
+        $old_id = $a->stable_id;
+        last;
+      }
+      if ($old_id) {
+        $txt .= sprintf(qq(<p><a href="%s" rel="external">Jump to this stable ID</a> in the $alt_assembly archive.</p>),
+                      $url.$hub->species_path."/Gene/Summary?g=".$old_id);
+      }
+      else {
+        $txt .= 'Stable ID '.$hub->param('g')." not present in $alt_assembly.";
+      }
+      $table->add_row('Previous assembly', $txt);
+    }
+    else {
+      ## Jumping forwards is less accurate as we probably don't have mappings - do our best here!
+      $txt .= sprintf('<p><a href="%s/%s/Search/Results?q=%s" rel="external">Search for this gene</a> on assembly %s.</p>', $url, $hub->species_path, $hub->param('g'), $alt_assembly);
+      $table->add_row('Latest assembly', $txt);
+    } 
+  }
 
   # add some Vega info
   if ($db eq 'vega') {

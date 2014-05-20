@@ -18,6 +18,8 @@ limitations under the License.
 
 package EnsEMBL::Draw::GlyphSet::fg_wiggle;
 
+### Regulatory features track? Can't find where it's used!
+
 use strict;
 
 use base qw(EnsEMBL::Draw::GlyphSet_wiggle_and_block);
@@ -169,7 +171,7 @@ sub block_features_zmenu {
 
   my $href = $self->_url({
     action => 'FeatureEvidence',
-    rf     => $self->{'config'}->core_objects->{'regulation'}->stable_id,
+    rf     => $self->{'config'}->core_object('regulation')->stable_id,
     fdb    => 'funcgen',
     pos    => $pos,
     fs     => $feature_set,

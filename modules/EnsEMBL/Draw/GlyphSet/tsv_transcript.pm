@@ -18,11 +18,18 @@ limitations under the License.
 
 package EnsEMBL::Draw::GlyphSet::tsv_transcript;
 
+### Module for drawing transcripts on Transcript/Variation_Transcript/Image 
+### (formerly known as TranscriptSNPView)
+### See EnsEMBL::Web::Component::VariationImage for implementation
+
+
 use strict;
 
 use base qw(EnsEMBL::Draw::GlyphSet_transcript);
 
 sub render_normal {
+## Default (and currently only) rendering style for this track: as exon blocks
+## joined by angled lines, with no labels
   my $self = shift;
   my $type = $self->type;
   
@@ -38,7 +45,7 @@ sub render_normal {
   my $length     = $config->container_width;
   my $trans_ref  = $config->{'transcript'};   
   my $transcript = $trans_ref->{'transcript'}; 
-  my $gene       = $self->{'config'}->core_objects->{'gene'};
+  my $gene       = $self->{'config'}->core_object('gene');
   my @exons      = sort { $a->[0] <=> $b->[0] } @{$trans_ref->{'exons'}};
   
   # If stranded diagram skip if on wrong strand

@@ -806,10 +806,6 @@ sub _fetch {
     $headers = {};
   }
 
-  if($ENV{HTTP_X_FORWARDED_FOR}) {
-    $headers->{'X-Forwarded-For'} ||= $ENV{'HTTP_X_FORWARDED_FOR'};
-  }
-
   # Convert header pairs to strings
   my @headers;
   for my $h (keys %{ $headers }) {

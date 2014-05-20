@@ -18,6 +18,9 @@ limitations under the License.
 
 package EnsEMBL::Draw::GlyphSet::alternative_assembly;
 
+### Draws alternative assembly tracks (e.g. Vega) on Region in Detail
+### and Region Overview images
+
 use strict;
 
 use Bio::EnsEMBL::Registry;

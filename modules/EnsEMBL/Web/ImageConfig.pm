@@ -57,7 +57,7 @@ sub new {
     code             => $code,
     type             => $type,
     species          => $species,
-    altered          => 0,
+    altered          => [],
     _tree            => EnsEMBL::Web::Tree->new,
     transcript_types => [qw(transcript alignslice_transcript tsv_transcript gsv_transcript TSE_transcript)],
     _parameters      => { # Default parameters
@@ -229,11 +229,11 @@ sub modify {} # For plugins
 sub storable     :lvalue { $_[0]{'_parameters'}{'storable'};     } # Set to 1 if configuration can be altered
 sub image_resize :lvalue { $_[0]{'_parameters'}{'image_resize'}; } # Set to 1 if there is image resize function
 sub has_das      :lvalue { $_[0]{'_parameters'}{'has_das'};      } # Set to 1 if there are DAS tracks
-sub altered      :lvalue { $_[0]{'altered'};                     } # Set to 1 if the configuration has been updated
+sub altered      :lvalue { $_[0]{'altered'};                     } 
 
 sub hub                 { return $_[0]->{'hub'};                                               }
 sub code                { return $_[0]->{'code'};                                              }
-sub core_objects        { return $_[0]->hub->core_objects;                                     }
+sub core_object        { return $_[0]->hub->core_object($_[1]);                                }
 sub colourmap           { return $_[0]->hub->colourmap;                                        }
 sub species_defs        { return $_[0]->hub->species_defs;                                     }
 sub sd_call             { return $_[0]->species_defs->get_config($_[0]->{'species'}, $_[1]);   }
@@ -1091,7 +1091,7 @@ sub _add_vcf_track {
     format    => 'VCF', 
     renderers => [
       'off',       'Off',
-      'histogram', 'Normal',
+      'histogram', 'Histogram',
       'compact',   'Compact'
     ], 
     options => {
@@ -1215,7 +1215,7 @@ sub update_from_input {
     $diff = from_json($diff);
     $self->update_track_renderer($_, $diff->{$_}->{'renderer'}) for grep exists $diff->{$_}->{'renderer'}, keys %$diff;
     
-    $reload        = $self->altered;
+    $reload        = scalar(@{$self->altered}) > 0 ? 1 : 0;
     $track_reorder = $self->update_track_order($diff) if $diff->{'track_order'};
     $reload      ||= $track_reorder;
     $self->update_favourite_tracks($diff);
@@ -1232,7 +1232,7 @@ sub update_from_input {
       }
     }
     
-    $reload = $self->altered;
+    $reload = scalar(@{$self->altered}) > 0 ? 1 : 0;
     
     $self->update_favourite_tracks(\%favourites) if scalar keys %favourites;
   }
@@ -1376,12 +1376,13 @@ sub update_from_url {
     }
   }
   
-  if ($self->altered) {
+  if (scalar(@{$self->altered}) > 0) {
+    my $tracks = join(', ', @{$self->altered});
     $session->add_data(
       type     => 'message',
       function => '_info',
       code     => 'image_config',
-      message  => 'The link you followed has made changes to the tracks displayed on this page.',
+      message  => "The link you followed has made changes to these tracks: $tracks.",
     );
   }
 }
@@ -1404,8 +1405,9 @@ sub update_track_renderer {
 
   # if $on_off == 1, only allow track enabling/disabling. Don't allow enabled tracks' renderer to be changed.
   $flag += $node->set_user('display', $renderer) if (!$on_off || $renderer eq 'off' || $node->get('display') eq 'off');
+  my $text = $node->data->{'name'} || $node->data->{'coption'};
 
-  $self->altered = 1 if $flag;
+  push @{$self->altered}, $text if $flag;
 }
 
 sub update_favourite_tracks {
@@ -1441,8 +1443,11 @@ sub update_track_order {
   my ($self, $diff) = @_;
   my $species    = $self->species;
   my $node       = $self->get_node('track_order');
-  $self->altered = $node->set_user($species, { %{$node->get($species) || {}}, %{$diff->{'track_order'}} });
-  return $self->altered if $self->get_parameter('sortable_tracks') ne 'drag';
+  if ($node->set_user($species, { %{$node->get($species) || {}}, %{$diff->{'track_order'}} })) {
+    my $text = $node->data->{'name'} || $node->data->{'coption'};
+    push @{$self->altered}, $text;
+  }
+  return scalar(@{$self->altered}) if $self->get_parameter('sortable_tracks') ne 'drag';
 }
 
 sub reset {
@@ -1457,7 +1462,8 @@ sub reset {
       my $user_data = $node->{'user_data'};
       
       foreach (keys %$user_data) {
-        $self->altered = 1 if $user_data->{$_}{'display'};
+        my $text = $user_data->{$_}{'name'} || $user_data->{$_}{'coption'};
+        push @{$self->altered}, $text if $user_data->{$_}{'display'};
         delete $user_data->{$_}{'display'};
         delete $user_data->{$_} unless scalar keys %{$user_data->{$_}};
       }
@@ -1469,7 +1475,7 @@ sub reset {
     my $species = $self->species;
     
     if ($node->{'user_data'}{'track_order'}{$species}) {
-      $self->altered = 1;
+      #$self->altered = 1;
       delete $node->{'user_data'}{'track_order'}{$species};
       delete $node->{'user_data'}{'track_order'} unless scalar keys %{$node->{'user_data'}{'track_order'}};
     }
@@ -1656,7 +1662,7 @@ sub load_configured_das {
       
       $menu = $self->get_node($_);
       
-      next unless $menu;
+      next unless $menu && $external;
       
       $external->after(ref $menus->{$_} ? $self->get_node($menus->{$_}[1]) : $menu) unless $parent;
     }
@@ -1897,7 +1903,7 @@ sub add_dna_align_features {
   
   foreach my $key_2 (@$keys) {
     my $k    = $data->{$key_2}{'type'} || 'other';
-    my $menu = ($k =~ /rnaseq|simple/) ? $self->tree->get_node($k) : $self->tree->get_node("dna_align_$k");
+    my $menu = ($k =~ /rnaseq|simple|transcript/) ? $self->tree->get_node($k) : $self->tree->get_node("dna_align_$k");
     
     if ($menu) {
       my $alignment_renderers = ['off','Off'];
@@ -2319,6 +2325,7 @@ sub add_simple_features {
   return unless $menu;
   
   my ($keys, $data) = $self->_merge($hashref->{'simple_feature'});
+  use Data::Dumper;
   
   foreach (grep !$data->{$_}{'transcript_associated'}, @$keys) {  
     # Allow override of default glyphset, menu etc.
@@ -2331,6 +2338,7 @@ sub add_simple_features {
       glyphset  => $glyphset,
       colourset => 'simple',
       strand    => 'r',
+      renderers => ['off', 'Off', 'normal', 'On', 'labels', 'With labels'],
     );
 
     foreach my $opt ('renderers', 'height') {
@@ -2680,6 +2688,16 @@ sub add_regulation_builds {
     @renderers = qw(off Off normal On);
   }
   
+  my %all_types;
+  foreach my $set (qw(core non_core)) {
+    $all_types{$set} = [];
+    foreach (@{$evidence_info->{$set}{'classes'}}) {
+      foreach (@{$adaptor->fetch_all_by_class($_)}) {
+        push @{$all_types{$set}},$_;
+      }
+    }
+  }
+
   foreach my $cell_line (@cell_lines) { 
     ### Add tracks for cell_line peaks and wiggles only if we have data to display
     my $ftypes     = $db_tables->{'regbuild_string'}{'feature_type_ids'}{$cell_line}      || {};
@@ -2701,10 +2719,8 @@ sub add_regulation_builds {
         }
       }];
       
-      foreach (@{$evidence_info->{$set}{'classes'}}) {
-        foreach (@{$adaptor->fetch_all_by_class($_)}) {
-          $matrix_rows{$cell_line}{$set}{$_->name} ||= { row => $_->name, group => $_->class, group_order => $_->class =~ /^(Polymerase|Open Chromatin)$/ ? 1 : 2, on => $default_evidence_types{$_->name} } if $ftypes->{$_->dbID};
-        }
+      foreach (@{$all_types{$set}||[]}) {
+        $matrix_rows{$cell_line}{$set}{$_->name} ||= { row => $_->name, group => $_->class, group_order => $_->class =~ /^(Polymerase|Open Chromatin)$/ ? 1 : 2, on => $default_evidence_types{$_->name} } if $ftypes->{$_->dbID};
       }
     }
   }
@@ -3017,11 +3033,12 @@ sub add_phenotypes {
   }));
   
   foreach my $type(keys %{$hashref->{'phenotypes'}{'types'}}) {
+    my $pf_sources = $hashref->{'phenotypes'}{'types'}{$type}{'sources'};
     $pf_menu->append($self->create_track('phenotype_'.lc($type), 'Phenotype annotations ('.$type.'s)', {
       %options,
       caption => 'Phenotypes ('.$type.'s)',
       type => $type,
-      description => 'Phenotype annotations on '.$type.'s',
+      description => 'Phenotype annotations on '.$type.'s (from '.$pf_sources.')',
     }));
   }
   

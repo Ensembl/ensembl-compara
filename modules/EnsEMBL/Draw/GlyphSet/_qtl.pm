@@ -18,6 +18,9 @@ limitations under the License.
 
 package EnsEMBL::Draw::GlyphSet::_qtl;
 
+### Draws QTL (Quantitative Trait Loci) tracks
+### STATUS : Uncertain. Not sure we have any of these tracks right now
+
 use strict;
 
 use base qw(EnsEMBL::Draw::GlyphSet_simple);

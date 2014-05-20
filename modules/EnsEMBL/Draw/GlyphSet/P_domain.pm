@@ -18,6 +18,8 @@ limitations under the License.
 
 package EnsEMBL::Draw::GlyphSet::P_domain;
 
+### Draws protein domains on Transcript/ProteinSummary
+
 use strict;
 
 use base qw(EnsEMBL::Draw::GlyphSet);

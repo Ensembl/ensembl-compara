@@ -18,6 +18,9 @@ limitations under the License.
 
 package EnsEMBL::Draw::GlyphSet::_flat_file;
 
+### Module for drawing features parsed from a non-indexed text file (such as 
+### user-uploaded data)
+
 use strict;
 
 use List::Util qw(reduce);
@@ -92,7 +95,7 @@ sub features {
   } else {
     my $file = EnsEMBL::Web::TmpFile::Text->new(filename => $self->my_config('file'));
     
-    return $self->errorTrack(sprintf 'The file %s could not be found', $self->my_config('caption')) if !$file->exists && $self->strand < 0;
+    return $self->errorTrack(sprintf 'The file %s could not be found', $self->my_config('caption')) if !$file->exists;
 
     my $data = $file->retrieve;
     

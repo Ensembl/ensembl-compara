@@ -18,6 +18,8 @@ limitations under the License.
 
 package EnsEMBL::Draw::GlyphSet::variation_legend;
 
+### Standard legend for variation tracks (e.g. SNP consequences)
+
 use strict;
 
 use Bio::EnsEMBL::Variation::Utils::Constants;
@@ -27,7 +29,12 @@ use base qw(EnsEMBL::Draw::GlyphSet::legend);
 sub _init {
   my $self     = shift;
   my $features = $self->{'legend'}{[split '::', ref $self]->[-1]};
-  
+  # Let them accumulate in structure if accumulating and not last
+  my $Config         = $self->{'config'};
+  return if ($self->my_config('accumulate') eq 'yes' &&
+             $Config->get_parameter('more_slices'));
+  # Clear features (for next legend)
+  $self->{'legend'}{[split '::', ref $self]->[-1]} = {};
   return unless $features;
 
   my %labels = map { $_->SO_term => [ $_->rank, $_->label ] } values %Bio::EnsEMBL::Variation::Utils::Constants::OVERLAP_CONSEQUENCES;

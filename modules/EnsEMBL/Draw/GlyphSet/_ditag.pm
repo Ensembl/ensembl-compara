@@ -18,6 +18,11 @@ limitations under the License.
 
 package EnsEMBL::Draw::GlyphSet::_ditag;
 
+### Draws ditag track
+### STATUS: UNKNOWN - Doesn't seem to be currently used
+### (method _add_ditag_features is commented out in 
+### EnsEMBL::Web::ImageConfig
+
 use strict;
 
 use base qw(EnsEMBL::Draw::GlyphSet_simple);

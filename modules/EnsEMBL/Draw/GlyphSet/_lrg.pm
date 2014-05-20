@@ -18,6 +18,8 @@ limitations under the License.
 
 package EnsEMBL::Draw::GlyphSet::_lrg;
 
+### STATUS : Unknown - not clear if still in use
+
 use strict;
 
 use base qw(EnsEMBL::Draw::GlyphSet);
@@ -105,7 +107,7 @@ sub _init {
   foreach my $g (@{$regions || []}) {
     my $gene_col   = 'skyblue3'; 
     my $label      = $g->seq_region_name;
-    my $high = $g->seq_region_name eq $self->{'config'}->core_objects->{'parameters'}{'lrg'};
+    my $high = $g->seq_region_name eq $self->{'config'}->core_object('parameters')->{'lrg'};
 
     my $gslice = $g->feature_Slice;
 
@@ -266,7 +268,7 @@ sub old_init {
   foreach my $g (@$genes) {
     my $gene_col   = 'skyblue3'; 
     my $label      = $g->external_name || $g->stable_id;
-    my $high = $g->stable_id eq $self->{'config'}->core_objects->{'parameters'}{'g'};
+    my $high = $g->stable_id eq $self->{'config'}->core_object('parameters')->{'g'};
 
     my $start = $g->start;
     my $end   = $g->end;

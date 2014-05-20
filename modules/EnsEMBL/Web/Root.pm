@@ -43,7 +43,6 @@ use Text::Wrap;
 use Time::HiRes           qw(gettimeofday);
 use URI::Escape           qw(uri_escape uri_unescape);
 use Apache2::RequestUtil;
-use Geo::IP;
 
 # Used to enable symbolic debugging support in dynamic_use.
 
@@ -129,6 +128,7 @@ sub requesting_country {
   my ($record, $geo);
 
   eval {
+          require Geo::IP;
           $geo = Geo::IP->open( $geocity_dat_file, 'GEOIP_MEMORY_CACHE' );
           $record = $geo->record_by_addr($ip) if $geo;
   };
@@ -542,7 +542,7 @@ sub new_factory {
   my ($self, $module) = @_;
   my $data = $self->deepcopy($_[-1]) || {};
   $data->{'_feature_IDs'} = [];
-  $data->{'_dataObjects'} = [];
+  $data->{'_dataObjects'} = {};
   return $self->new_module('Factory', $module, $data);
 }
 

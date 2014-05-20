@@ -56,12 +56,15 @@ sub content {
       { key => 'type',    title => 'Type',         width => '10%', align => 'left'                                  },
       { key => 'name',    title => 'Source',       width => '40%', align => 'left', sort => 'html', class => 'wrap' },
       { key => 'species', title => 'Species',      width => '20%', align => 'left', sort => 'html'                  },
+      { key => 'assembly', title => 'Assembly',      width => '20%', align => 'left', sort => 'html'                  },
       { key => 'date',    title => 'Last updated', width => '20%', align => 'left', sort => 'numeric_hidden'        },
     );
     
     push @columns, ({ key => 'actions', title => 'Actions', width => '120px', align => 'center', sort => 'none' });
-    
+   
+    my $old_assemblies = 0; 
     foreach my $file (@data) {
+    $old_assemblies++ if (!$file->{'assembly'} || $file->{'assembly'} ne $hub->species_defs->get_config($file->{'species'}, 'ASSEMBLY_NAME'));
       my $user_record = ref($file) =~ /Record/;
       my $sharers     = $file->{'code'} =~ /_$session_id$/ ? EnsEMBL::Web::Data::Session->count(code => $file->{'code'}, type => $file->{'type'}) : 0;
          $sharers-- if $sharers && !$file->{'user_id'}; # Take one off for the original user
@@ -88,8 +91,10 @@ sub content {
       
       push @rows, $row;
     }
-    
     $html = $self->new_table(\@columns, \@rows, { data_table => 'no_col_toggle', exportable => 0, class => 'fixed editable' })->render;
+    if ($old_assemblies) {
+      $html .= $self->warning_panel('Possible mapping issue', "$old_assemblies of your files contains data on an old or unknown assembly. You may want to convert your data and re-upload.");
+    }
   }
   
   $html  .= $self->group_shared_data;
@@ -152,7 +157,7 @@ sub table_row {
   my $user_record  = ref($file) =~ /Record/;
   my $name         = qq{<div><strong class="val" title="Click here to rename your data">$file->{'name'}</strong>};
   my %url_params   = ( __clear => 1, source => $file->{'url'} ? 'url' : 'upload' );
-  my $save;
+  my ($save, $assembly);
   
   if ($file->{'prefix'} && $file->{'prefix'} eq 'download') {
     my $format   = $file->{'format'} eq 'report' ? 'txt' : $file->{'format'};
@@ -160,10 +165,12 @@ sub table_row {
   }
   
   if ($user_record) {
+    $assembly = $file->assembly || 'Unknown';
     $url_params{'id'} = join '-', $file->id, md5_hex($file->code);
     $save = $self->_icon({ no_link => 1, class => 'sprite_disabled save_icon', title => 'Saved data' });
   } else {
-    
+    $assembly = $file->{'assembly'} || 'Unknown';    
+
     $url_params{'code'} = $file->{'code'};
 
     if ($hub->users_available) {
@@ -228,6 +235,7 @@ sub table_row {
     type    => $file->{'url'} ? 'URL' : 'Upload',
     name    => { value => $name, class => 'wrap editable' },
     species => sprintf('<em>%s</em>', $hub->species_defs->get_config($file->{'species'}, 'SPECIES_SCIENTIFIC_NAME')),
+    assembly => $assembly,
     date    => sprintf('<span class="hidden">%s</span>%s', $file->{'timestamp'} || '-', $self->pretty_date($file->{'timestamp'}, 'simple_datetime')),
     actions => "$download$save$share_html$delete_html",
   };

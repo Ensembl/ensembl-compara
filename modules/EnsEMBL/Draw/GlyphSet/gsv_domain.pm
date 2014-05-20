@@ -18,6 +18,8 @@ limitations under the License.
 
 package EnsEMBL::Draw::GlyphSet::gsv_domain;
 
+### Draws protein domains on Gene/Variation_Gene/Image
+
 use strict;
 
 use Sanger::Graphics::Bump;

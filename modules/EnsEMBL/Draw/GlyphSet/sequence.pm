@@ -18,6 +18,9 @@ limitations under the License.
 
 package EnsEMBL::Draw::GlyphSet::sequence;
 
+### Displays DNA sequence track as a series of pastel-coloured blocks
+### (labelled with appropriate letters at high zoom levels)
+
 use strict;
 
 use Bio::EnsEMBL::Feature;

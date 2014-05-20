@@ -18,6 +18,10 @@ limitations under the License.
 
 package EnsEMBL::Draw::GlyphSet::ruler;
 
+### Draws an arrow showing the direction of the strand, labelled with
+### the size of the current region (in kb) - by default, one is drawn at the 
+### very top of the image and one at the very bottom
+
 use strict;
 
 use base qw(EnsEMBL::Draw::GlyphSet);

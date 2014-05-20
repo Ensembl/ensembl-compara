@@ -18,6 +18,10 @@ limitations under the License.
 
 package EnsEMBL::Draw::GlyphSet;
 
+### Base package for drawing a discreet section of a genomic image,
+### such as a section of assembly, feature track, scalebar or track legend
+### Uses GD and the Sanger::Graphics::Glyph codebase
+
 use strict;
 
 use GD;
@@ -67,6 +71,7 @@ sub new {
     label      => undef,
     label2     => undef,
     bumped     => undef,
+    error      => undef,
     highlights => $data->{'highlights'},
     strand     => $data->{'strand'},
     container  => $data->{'container'},
@@ -92,6 +97,7 @@ sub scalex             { return $_[0]->{'config'}->transform->{'scalex'};       
 sub image_width        { return $_[0]->{'config'}->get_parameter('panel_width') || $_[0]->{'config'}->image_width;                                               }
 sub timer_push         { return shift->{'config'}->species_defs->timer->push(shift, shift || 3, shift || 'draw');                                                }
 sub dbadaptor          { shift; return Bio::EnsEMBL::Registry->get_DBAdaptor(@_);                                                                                }
+sub error              { my $self = shift; $self->{'error'} = @_ if @_; return $self->{'error'};                                                                 }
 sub error_track_name   { return $_[0]->my_config('caption');                                                                                                     }
 sub my_label           { return $_[0]->my_config('caption');                                                                                                     }
 sub depth              { return $_[0]->my_config('depth');                                                                                                       }
@@ -213,6 +219,11 @@ sub init_label {
   
   my $text = $self->my_config('caption');
   
+  my $img = $self->my_config('caption_img');
+  $img = undef if $SiteDefs::ENSEMBL_NO_LEGEND_IMAGES;
+  if($img and $img =~ s/^r:// and $self->{'strand'} ==  1) { $img = undef; }
+  if($img and $img =~ s/^f:// and $self->{'strand'} == -1) { $img = undef; }
+
   return $self->label(undef) unless $text;
   
   my $config    = $self->{'config'};
@@ -260,18 +271,38 @@ sub init_label {
       subset    => $subset ? [ $subset, $hub->url('Config', { species => $config->species, action => $component, function => undef, __clear => 1 }), lc "modal_config_$component" ] : '',
     };
   }
-  
+ 
+  my $ch = $self->my_config('caption_height') || 0;
   $self->label($self->Text({
     text      => $text,
     font      => $font,
     ptsize    => $fsze,
     colour    => $self->{'label_colour'} || 'black',
     absolutey => 1,
-    height    => $res[3],
+    height    => $ch || $res[3],
     class     => "label $class",
     alt       => $name,
-    hover     => $hover
+    hover     => $hover,
   }));
+  if($img) {
+    $img =~ s/^([\d@-]+)://; my $size = $1 || 16;
+    my $offset = 0;
+    $offset = $1 if $size =~ s/@(-?\d+)$//;
+    $self->label_img($self->Sprite({
+        z             => 1000,
+        x             => 0,
+        y             => $offset,
+        sprite        => $img,
+        spritelib     => 'species',
+        width         => $size,
+        height         => $size,
+        absolutex     => 1,
+        absolutey     => 1,
+        absolutewidth => 1,
+        pixperbp      => 1,
+        alt           => '',
+    }));
+  }
 }
 
 sub get_text_simple {
@@ -684,6 +715,8 @@ sub too_many_features {
 
 sub errorTrack {
   my ($self, $message, $x, $y) = @_;
+  return if $self->error; ## Don't try to output more than one!
+  $self->error(1);
   my %font   = $self->get_font_details('text', 1);
   my $length = $self->{'config'}->image_width;
   my @res    = $self->get_text_width(0, $message, '', %font);

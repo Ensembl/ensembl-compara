@@ -170,14 +170,14 @@ sub init {
   if ($compara_db) {
     my $mlss_adaptor    = $compara_db->get_adaptor('MethodLinkSpeciesSet');
     my %alignments      = $self->species_defs->multiX('COMPARA_DEFAULT_ALIGNMENTS');
-    while (my ($species_set, $method) = each (%alignments)) {
-      my $mlss = $mlss_adaptor->fetch_by_method_link_type_species_set_name($method, $species_set);
-      if ($mlss) {
-        $self->modify_configs(
-          [ 'alignment_compara_'.$mlss->dbID.'_constrained' ],
-          { display => 'compact' }
-        );
-      }
+    my $defaults = $self->hub->species_defs->multi_hash->{'DATABASE_COMPARA'}->{'COMPARA_DEFAULT_ALIGNMENT_IDS'};
+
+    foreach my $default (@$defaults) {
+      my ($mlss_id,$species,$method) = @$default;
+      $self->modify_configs(
+        [ 'alignment_compara_'.$mlss_id.'_constrained' ],
+        { display => 'compact' }
+      );
     }
   }
 

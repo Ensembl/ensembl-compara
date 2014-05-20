@@ -18,6 +18,11 @@ limitations under the License.
 
 package EnsEMBL::Draw::VDrawableContainer;
 
+### Base class for Ensembl genomic images in "vertical" configuration
+### i.e. whole chromosomes and karyotypes
+### Collects the individual glyphsets required for the image (e.g. tracks)
+### and manages the overall image settings
+
 use strict;
 
 use EnsEMBL::Draw::GlyphSet::Videogram;

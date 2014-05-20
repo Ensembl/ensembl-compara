@@ -18,6 +18,9 @@ limitations under the License.
 
 package EnsEMBL::Draw::GlyphSet::_das;
 
+### Module for drawing DAS tracks
+### Uses the DAS parsing code found in Bio::EnsEMBL::ExternalData::DAS
+
 use strict;
 
 use Bio::EnsEMBL::ExternalData::DAS::Stylesheet;

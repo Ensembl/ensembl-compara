@@ -18,6 +18,9 @@ limitations under the License.
 
 package EnsEMBL::Draw::GlyphSet::HSP_coverage;
 
+### Draw track showing coverage of BLAST HSP hits (from the old 
+### BLAST ticketed system)
+
 use strict;
 
 use Sanger::Graphics::Bump;

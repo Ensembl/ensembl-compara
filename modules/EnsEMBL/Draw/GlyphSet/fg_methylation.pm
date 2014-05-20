@@ -18,6 +18,10 @@ limitations under the License.
 
 package EnsEMBL::Draw::GlyphSet::fg_methylation;
 
+### Draw DNA methylation tracks on, e.g., Region in Detail
+### Based on BigBED glyphset, since that is how this data
+### is currently stored
+
 use strict;
 
 use base qw(EnsEMBL::Draw::GlyphSet::bigbed);

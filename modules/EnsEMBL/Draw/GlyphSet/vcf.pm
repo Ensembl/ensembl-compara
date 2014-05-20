@@ -18,6 +18,9 @@ limitations under the License.
 
 package EnsEMBL::Draw::GlyphSet::vcf;
 
+### Module for drawing data in VCF format (either user-attached, or
+### internally configured via an ini file or database record
+
 use strict;
 
 use HTML::Entities qw(encode_entities);
@@ -34,8 +37,8 @@ sub reset {
   delete $self->{$_} for qw(x y width minx miny maxx maxy bumped);
 }
 
-# get a bam adaptor
 sub vcf_adaptor {
+## get a vcf adaptor
   my $self = shift;
   my $url  = $self->my_config('url');
   

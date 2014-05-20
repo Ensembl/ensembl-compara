@@ -18,6 +18,10 @@ limitations under the License.
 
 package EnsEMBL::Draw::GlyphSet::_difference;
 
+### Module to show differences between two large regions where
+### those differences are small (in contrast to compara alignments,
+### which show small matches between large regions)
+
 use strict;
 use warnings;
 no warnings 'uninitialized';

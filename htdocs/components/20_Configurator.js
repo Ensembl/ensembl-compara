@@ -450,10 +450,10 @@ Ensembl.Panel.Configurator = Ensembl.Panel.ModalContent.extend({
       }
       
       if (ul[0].innerHTML) {
-        ul.children().each(function () {
+        ul.children(':has(.config_menu)').each(function () {
           data.html[i].push('<li class="', this.className, '" id="', this.id, '">');
           
-          $.each(this.childNodes, function () {
+          $.each($(this).children('.config_menu'), function () {
             var index = $.data(this, 'index');
             var innerHTML;
             

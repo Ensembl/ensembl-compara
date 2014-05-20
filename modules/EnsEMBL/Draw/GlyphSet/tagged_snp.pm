@@ -18,6 +18,8 @@ limitations under the License.
 
 package EnsEMBL::Draw::GlyphSet::tagged_snp;
 
+### Draws the Tagged SNPs track on /Location/LD
+
 use strict;
 
 

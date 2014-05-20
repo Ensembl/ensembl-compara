@@ -35,6 +35,11 @@ sub content {
   my $self  = shift;
   my $hub   = $self->hub;
 
+  ## Where did the user come from?
+  my ($path, $query) = split('\?', $ENV{'HTTP_REFERER'});
+  my @A = split('/', $path);
+  my $source = $A[-1];
+
   my $form      = $self->new_form({'id' => 'contact', 'action' => "/Help/SendEmail", 'method' => 'post', 'enctype'=>'multipart/form-data', 'data-ajax'=>'false'});
   my $fieldset  = $form->add_fieldset;
 
@@ -81,6 +86,11 @@ sub content {
   $fieldset->add_hidden({
     'name'    => 'string',
     'value'   => $hub->param('string') || '',
+  });
+
+  $fieldset->add_hidden({
+    'name'    => 'source',
+    'value'   => $source || '',
   });
 
   $fieldset->add_button({

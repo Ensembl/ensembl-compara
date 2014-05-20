@@ -18,6 +18,8 @@ limitations under the License.
 
 package EnsEMBL::Draw::GlyphSet::lsv_variations;
 
+### STATUS : Unknown - another LRG glyphset that seems to no longer be used
+
 use strict;
 
 use Sanger::Graphics::Bump;

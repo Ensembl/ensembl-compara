@@ -18,12 +18,12 @@ limitations under the License.
 
 package EnsEMBL::Draw::GlyphSet::Vuserdata;
 
+### Fetches userdata and munges it into a basic format 
+### for rendering by the parent module
+
 use strict;
 
 use base qw(EnsEMBL::Draw::GlyphSet::V_density);
-
-### Fetches userdata and munges it into a basic format 
-### for rendering by the parent module
 
 sub _init {
   my $self = shift;

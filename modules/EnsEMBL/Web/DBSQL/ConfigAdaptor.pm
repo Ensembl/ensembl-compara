@@ -191,7 +191,7 @@ sub new_config {
   return unless $args{'type'} && $args{'code'};
   
   return unless $dbh->do(
-    'INSERT INTO configuration_details VALUES ("", ?, ?, "n", ?, ?, ?, ?, ?)', {},
+    'INSERT INTO configuration_details (record_type, record_type_id, is_set, name, description, servername, site_type, release_number) VALUES (?, ?, "n", ?, ?, ?, ?, ?)', {},
     map(encode_entities($args{$_}) || '', qw(record_type record_type_id name description)), $self->servername, $self->site_type, $self->version
   );
   

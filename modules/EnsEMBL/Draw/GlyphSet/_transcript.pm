@@ -18,11 +18,28 @@ limitations under the License.
 
 package EnsEMBL::Draw::GlyphSet::_transcript;
 
+### Default module for drawing Ensembl transcripts (i.e. where rendering
+### does not need to be tweaked to fit a particular display)
+
 use strict;
 
 use List::Util qw(min max);
 
 use base qw(EnsEMBL::Draw::GlyphSet_transcript);
+
+sub _get_all_genes {
+  my ($self,$slice,$analysis,$alias) = @_;
+
+  my $hub = $self->{'config'}->hub;
+  my $species = $self->species;
+  my $load_transcripts = ($self->{'display'} =~ /transcript/);
+  my $key = join('::',$self->species,$slice->name,$analysis,$alias,$load_transcripts);
+  my $out = $hub->req_cache_get($key);
+  return $out if defined $out;
+  $out = $slice->get_all_Genes($analysis,$alias,$load_transcripts);
+  $hub->req_cache_set($key,$out);
+  return $out;
+}
 
 sub features {
   my $self           = shift;
@@ -41,7 +58,7 @@ sub features {
     if ($slice->isa('Bio::EnsEMBL::LRGSlice') && $analyses->[0] ne 'LRG_import') {
       @genes = map @{$slice->feature_Slice->get_all_Genes($_, $db_alias) || []}, @$analyses;
     } else {
-      @genes = map @{$slice->get_all_Genes($_, $db_alias, 1) || []}, @$analyses;
+      @genes = map @{$self->_get_all_genes($slice,$_,$db_alias) || []}, @$analyses;
     }
   }
   

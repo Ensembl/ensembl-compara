@@ -18,6 +18,9 @@ limitations under the License.
 
 package EnsEMBL::Draw::GlyphSet::_alignment;
 
+### Parent class used by various tracks that show features as simple
+### coloured blocks (including histograms)
+
 use strict;
 
 use List::Util qw(min max);
@@ -25,9 +28,9 @@ use List::Util qw(min max);
 use base qw(EnsEMBL::Draw::GlyphSet_wiggle_and_block EnsEMBL::Draw::GlyphSet::_difference);
 
 #==============================================================================
-# The following functions can be over-riden if the class does require
-# something diffirent - main one to be over-riden is probably the
-# features call - as it will need to take different parameters...
+# The following functions can be overridden if the class does require
+# something different - main one to be overridden is probably the
+# features call, as it will need to take different parameters...
 #==============================================================================
 
 sub feature_group {
@@ -182,6 +185,10 @@ sub render_normal {
   my $strand_bump     = $self->my_config('strandbump');
   my $depth           = @_ ? shift : ($self->my_config('dep') || 6);
      $depth           = 0 if $strand_bump || $self->my_config('nobump');
+  ## User setting overrides everything else
+  my $default_depth   = $depth;
+  my $user_depth = $self->{'config'}->hub->param($self->type);
+     $depth           = $user_depth if $user_depth;
   my $gap             = $h < 2 ? 1 : 2;   
   my $strand          = $self->strand;
   my $strand_flag     = $self->my_config('strand');
@@ -210,6 +217,8 @@ sub render_normal {
     $join    = 1; # The no-join thing gets completely mad with labels on.
   }
   
+  my ($total_count, $cumul_count, $overflow, $track_height);
+
   foreach my $feature_key (@sorted) {
     ## Fix for userdata with per-track config
     my ($config, @features);
@@ -230,7 +239,10 @@ sub render_normal {
     }
 
     $self->_init_bump(undef, $depth);
-    
+    $total_count = scalar(@features);
+    $cumul_count += $total_count;
+    $overflow += ($total_count - $depth);
+
     my $nojoin_id = 1;
     
     foreach (sort { $a->[0] <=> $b->[0] }  map [ $_->start, $_->end, $_ ], @features) {
@@ -431,10 +443,37 @@ sub render_normal {
           absolutey => 1,
         }));
       }
+      $track_height = $position->{'y'} if $position->{'y'} > $track_height;
     }
-    
     $y_offset -= $strand * ($self->_max_bump_row * ($h + $gap + $label_h) + 6);
   }
+  if ($cumul_count && $overflow) {
+    my $default = $depth == $default_depth ? 'by default' : '';
+    my $text = "This track is $depth features deep $default - click to show up to $overflow more";
+    my $y = $track_height + $fontsize * 2 + 10;
+    my $href = $self->_url({'action' => 'ExpandTrack', 'goto' => $self->{'config'}->hub->action, 'count' => $overflow + $depth, 'default' => $default_depth}); 
+    $self->push($self->Text({
+          font      => $fontname,
+          colour    => 'black',
+          height    => $fontsize,
+          width     => $self->{'container'}->length,
+          ptsize    => $fontsize,
+          text      => $text,
+          halign    => 'left',
+          valign    => 'center',
+          x         => 0, 
+          y         => $y,
+          absolutey => 1,
+          href      => $href,
+        }));
+    $self->push($self->Space({
+            x         => 0,
+            y         => $y + 5,
+            width     => 100,
+            height    => 8,
+            absolutey => 1,
+    }));
+  } 
   
   $self->_render_hidden_bgd($h) if $features_drawn && $self->my_config('addhiddenbgd') && $self->can('href_bgd');
   

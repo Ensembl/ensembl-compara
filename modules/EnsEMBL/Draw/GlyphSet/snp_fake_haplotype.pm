@@ -18,6 +18,12 @@ limitations under the License.
 
 package EnsEMBL::Draw::GlyphSet::snp_fake_haplotype;
 
+### Comparison track at bottom of Transcript/Population/Image
+### (green/purple rectangles), comparing individual/strain
+### to reference
+### (Called "fake" because blocks are shown equidistant, regardless
+### of SNP coordinates)
+
 use strict;
 
 use base qw(EnsEMBL::Draw::GlyphSet);

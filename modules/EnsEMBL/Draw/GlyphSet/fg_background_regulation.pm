@@ -18,17 +18,17 @@ limitations under the License.
 
 package EnsEMBL::Draw::GlyphSet::fg_background_regulation;
 
+### Needed to shade the region covered by a regulatory feature in regulation detailed view.
+
 use strict;
 
 use base qw(EnsEMBL::Draw::GlyphSet);
-
-# needed to shade the region covered by a regulatory feature in regulation detailed view.
 
 sub _init {
   my $self              = shift;
   my $config            = $self->{'config'};
   my $slice             = $self->{'container'}; 
-  my $target_feature_id = $self->{'config'}->core_objects->{'regulation'}->stable_id;  
+  my $target_feature_id = $self->{'config'}->core_object('regulation')->stable_id;  
   my $strand            = $self->strand; 
   my $colour            = 'lightcoral';
   my $x                 = 0;

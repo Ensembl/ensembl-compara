@@ -18,6 +18,8 @@ limitations under the License.
 
 package EnsEMBL::Draw::GlyphSet::structural_variation_legend;
 
+### Draws legend for structural_variation.pm
+
 use strict;
 
 use Bio::EnsEMBL::Variation::Utils::Constants;
@@ -28,6 +30,12 @@ sub _init {
   my $self     = shift;
   my $features = $self->{'legend'}{[split '::', ref $self]->[-1]};
   
+  # Let them accumulate in structure if accumulating and not last
+  my $Config         = $self->{'config'};
+  return if ($self->my_config('accumulate') eq 'yes' &&
+             $Config->get_parameter('more_slices'));
+  # Clear features (for next legend)
+  $self->{'legend'}{[split '::', ref $self]->[-1]} = {};
   return unless $features;
   
   my %labels = %Bio::EnsEMBL::Variation::Utils::Constants::VARIATION_CLASSES;

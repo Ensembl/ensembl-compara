@@ -40,7 +40,7 @@ use EnsEMBL::Web::Cache;
 use EnsEMBL::Web::Cookie;
 use EnsEMBL::Web::DBSQL::DBConnection;
 use EnsEMBL::Web::DBSQL::ConfigAdaptor;
-use EnsEMBL::Web::ExtIndex;
+use EnsEMBL::Web::Exceptions;
 use EnsEMBL::Web::ExtURL;
 use EnsEMBL::Web::Problem;
 use EnsEMBL::Web::RegObj;
@@ -84,10 +84,13 @@ sub new {
     _timer         => $args->{'timer'}         || undef,
     _databases     => EnsEMBL::Web::DBSQL::DBConnection->new($species, $species_defs),
     _cookies       => $cookies,
-    _core_objects  => {},
+    _ext_indexers  => {},
+    _builder       => undef,
+    _core_params   => {},
     _core_params   => {},
     _species_info  => {},
     _components    => [],
+    _req_cache     => {},
   };
 
   bless $self, $class;
@@ -219,13 +222,22 @@ sub get_db {
   return $db eq 'est' ? 'otherfeatures' : $db;
 }
 
-sub core_objects {
+sub set_builder {
+  my ($self,$builder) = @_;
+
+  $self->{'_builder'} = $builder;
+  $self->{'_core_params'} = $self->core_params;
+  $self->{'_core_params'}{'db'} ||= 'core';
+}
+
+sub core_object {
   my $self = shift;
-  my $core_objects = shift;
-  $self->{'_core_objects'}->{lc $_}        = $core_objects->{$_} for keys %{$core_objects || {}};
-  $self->{'_core_objects'}->{'parameters'} = $self->core_params if $core_objects;
-  $self->{'_core_objects'}->{'parameters'}->{'db'} ||= 'core';
-  return $self->{'_core_objects'};
+  my $name = shift;
+
+  if($name eq 'parameters') {
+    return $self->{'_core_params'};
+  }  
+  return $self->{'_builder'}->object(ucfirst $name);
 }
 
 sub core_param { 
@@ -551,40 +563,60 @@ sub get_ExtURL_link {
   return $url ? qq(<a href="$url" rel="external" class="constant">$text</a>) : $text;
 }
 
-# use PFETCH etc to get description and sequence of an external record
 sub get_ext_seq {
-  my ($self, $id, $ext_db, $strand_mismatch) = @_;
-  my $indexer = EnsEMBL::Web::ExtIndex->new($self->species_defs);
-  
-  return [" Could not get an indexer: $@", -1] unless $indexer;
-  
-  my $seq_ary;
-  my %args;
-  $args{'ID'} = $id;
-  $args{'DB'} = $ext_db ? $ext_db : 'DEFAULT';
-  $args{'strand_mismatch'} = $strand_mismatch ? $strand_mismatch : 0;
+  ## Uses PFETCH etc to get description and sequence of an external record
+  ## @param Extrenal DB type (has to match ENSEMBL_EXTERNAL_DATABASES variable in SiteDefs)
+  ## @param Hashref with keys to be passed to get_sequence method of the required indexer (see EnsEMBL::Web::ExtIndex subclasses)
+  ## @return Hashref (or possibly a list of similar hashrefs for multiple sequences) with keys:
+  ##  - id        Stable ID of the object
+  ##  - sequence  Resultant fasta sequence
+  ##  - length    Length of the sequence
+  ##  - error     Error message if any
+  my ($self, $external_db, $params) = @_;
 
-  eval { $seq_ary = $indexer->get_seq_by_id(\%args); };
-  
-  if (!$seq_ary) {
-    return [ "The $ext_db server is unavailable: $@" , -1];
-  } else {
-      if ($seq_ary->[0] =~ /Error|No entries found/i) {
-	  return [$seq_ary->[0], -1];
-      }
-    my ($list, $l);
-    
-    foreach (@$seq_ary) {
-      if (!/^>/) {
-        $l += length;
-        $l-- if /\n/; # don't count carriage returns
-      }
-      
-      $list .= $_;
+  $external_db  ||= 'DEFAULT';
+  $params       ||= {};
+  my $indexers    = $self->{'_ext_indexers'};
+
+  unless (exists $indexers->{'databases'}{$external_db}) {
+    my ($indexer, $exe);
+
+    # get data from e! databases
+    if ($external_db =~ /^ENS/) {
+      $indexer = 'ENSEMBL_RETRIEVE';
+      $exe     = 1;
+    } else {
+      $indexer = $self->{'_species_defs'}->ENSEMBL_EXTERNAL_DATABASES->{$external_db} || $self->{'_species_defs'}->ENSEMBL_EXTERNAL_DATABASES->{'DEFAULT'} || 'PFETCH';
+      $exe     = $self->{'_species_defs'}->ENSEMBL_EXTERNAL_INDEXERS->{$indexer};
     }
-    
-    return $list =~ /no match/i ? [] : [ $list, $l ];
+    if ($exe) {
+      my $classname = "EnsEMBL::Web::ExtIndex::$indexer";
+      $indexers->{'indexers'}{$classname}  ||= $self->dynamic_use($classname) ? $classname->new($self) : undef; # cache the indexer as it can be shared among different databases
+      $indexers->{'databases'}{$external_db} = { 'indexer' => $indexers->{'indexers'}{$classname}, 'exe' => $exe };
+    } else {
+      $indexers->{'databases'}{$external_db} = {};
+    }
   }
+
+  my $indexer = $indexers->{'databases'}{$external_db}{'indexer'};
+
+  return { 'error' => "Could not get an indexer for '$external_db'" } unless $indexer;
+
+  my (@sequences, $error);
+
+  try {
+    @sequences = $indexer->get_sequence({ %$params,
+      'exe' => $indexers->{'databases'}{$external_db}{'exe'},
+      'db'  => $external_db
+    });
+  } catch {
+    $error = $_->message;
+  };
+
+  return { 'error' => $error             } if $error;
+  return { 'error' => 'No entries found' } if !@sequences;
+
+  return wantarray ? @sequences : $sequences[0];
 }
 
 # This method gets all configured DAS sources for the current species.
@@ -743,6 +775,24 @@ sub get_favourite_species {
   my @favourites   = @{$species_defs->DEFAULT_FAVOURITES || []};
      @favourites   = ($species_defs->ENSEMBL_PRIMARY_SPECIES, $species_defs->ENSEMBL_SECONDARY_SPECIES) unless scalar @favourites;
   return \@favourites;
+}
+
+# The request cache explicitly and deliberately has the lifetime of a
+# request. You can therefore use keys which are only guraranteed unique
+# for a request. This cache is designed for communicating data which we
+# are pretty sure will be useful later but which is at a very different
+# part of the call tree. For example, features on stranded pairs of tracks.
+
+sub req_cache_set {
+  my ($self,$key,$value) = @_;
+
+  $self->{'_req_cache'}{$key} = $value;
+}
+
+sub req_cache_get {
+  my ($self,$key) = @_;
+
+  return $self->{'_req_cache'}{$key};
 }
 
 1;

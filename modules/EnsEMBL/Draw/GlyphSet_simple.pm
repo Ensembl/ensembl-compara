@@ -18,6 +18,8 @@ limitations under the License.
 
 package EnsEMBL::Draw::GlyphSet_simple;
 
+### Parent class of many Ensembl tracks that draw features as simple coloured blocks
+
 use strict;
 
 use Sanger::Graphics::Bump;
@@ -46,7 +48,7 @@ sub get_colours {
 }
 
 sub _init {
-  my $self = shift;
+  my ($self, $no_labels) = @_;
   
   return $self->render_text if $self->{'text_export'};
   
@@ -111,7 +113,7 @@ sub _init {
     $previous_start = $end;
     $previous_end   = $end;
     
-    my $label = $self->feature_label($f);
+    my $label = $no_labels ? undef : $self->feature_label($f);
     my (undef, undef, $text_width, $text_height) = $self->get_text_width(0, $label, '', font => $font, ptsize => $fontsize);
     my ($img_start, $img_end) = ($start, $end);
     my ($tag_start, $tag_end) = ($start, $end);

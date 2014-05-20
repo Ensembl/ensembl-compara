@@ -23,7 +23,7 @@ use strict;
 use EnsEMBL::Web::Controller::SSI;
 use EnsEMBL::Web::Document::Table;
 
-use base qw(EnsEMBL::Web::Component);
+use base qw(EnsEMBL::Web::Component::Shared);
 
 
 sub _init {
@@ -86,12 +86,6 @@ sub content {
   my $file = '/ssi/species/stats_' . $self->hub->species . '.html';
   $html .= '<h2>Statistics</h2>';
   $html .= $self->species_stats;
-
-  my $interpro = $self->hub->url({'action' => 'IPtop500'});
-  $html .= qq(<h3>InterPro Hits</h3>
-<ul>
-  <li><a href="$interpro">Table of top 500 InterPro hits</a></li>
-</ul>);
 
   $html .= '
     </div>

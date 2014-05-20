@@ -18,6 +18,8 @@ limitations under the License.
 
 package EnsEMBL::Draw::GlyphSet::fg_regulatory_features;
 
+### Draw regulatory features track 
+
 use strict;
 
 use base qw(EnsEMBL::Draw::GlyphSet_simple);

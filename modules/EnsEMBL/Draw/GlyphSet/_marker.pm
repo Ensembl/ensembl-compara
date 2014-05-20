@@ -18,6 +18,8 @@ limitations under the License.
 
 package EnsEMBL::Draw::GlyphSet::_marker;
 
+### Draws marker track
+
 use strict;
 
 use base qw(EnsEMBL::Draw::GlyphSet);

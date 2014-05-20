@@ -102,12 +102,14 @@ sub end {
 #---------------------------------------------------------------
 
 sub clear_times {
+  ### Resets values of times and total times
   my $self = shift;
   $self->{'times'} = [];
   $self->{'totals'} = {};
 }
+
 sub push {
-### Push a new tag onto the "heirarchical diagnsotics"
+### Push a new tag onto the "hierarchical diagnostics"
 ### Message is message to display and level is the depth of the tree
 ### for which the timing is recorded
   my( $self, $message, $level, $flag ) = @_;

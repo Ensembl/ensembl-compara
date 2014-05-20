@@ -18,6 +18,8 @@ limitations under the License.
 
 package EnsEMBL::Draw::GlyphSet::urlfeature;
 
+### STATUS: Unknown - doesn't seem to be in use any more
+
 use strict;
 
 use base qw(EnsEMBL::Draw::GlyphSet_feature);

@@ -18,6 +18,8 @@ limitations under the License.
 
 package EnsEMBL::Draw::GlyphSet_generic;
 
+### Parent module of GlyphSet::_das
+
 use strict;
 use warnings;
 no warnings 'uninitialized';

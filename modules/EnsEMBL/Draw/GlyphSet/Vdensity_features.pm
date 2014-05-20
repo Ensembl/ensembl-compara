@@ -17,6 +17,10 @@ limitations under the License.
 =cut
 
 package EnsEMBL::Draw::GlyphSet::Vdensity_features;
+
+### Module used by feature density tracks on Location/Chromosome
+### See EnsEMBL::Web::Component::Location::ChromosomeImage
+
 use strict;
 use warnings;
 no warnings 'uninitialized';

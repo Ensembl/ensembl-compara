@@ -18,6 +18,8 @@ limitations under the License.
 
 package EnsEMBL::Draw::GlyphSet::gsv_variations;
 
+### Draws variation blocks on Gene/Variation_Gene/Image
+
 use strict;
 
 use Sanger::Graphics::Bump;

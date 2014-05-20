@@ -18,6 +18,9 @@ limitations under the License.
 
 package EnsEMBL::Draw::VRenderer::gif;
 
+### Renders vertical ideograms in GIF format using GD::Image
+### Modeled on Sanger::Graphics::Renderer::gif
+
 use strict;
 use GD;
 use base qw(EnsEMBL::Draw::VRenderer);
@@ -44,11 +47,9 @@ sub canvas {
   }
 }
 
-#########
-# colour caching routine.
-# GD can only store 256 colours, so need to cache the ones we colorAllocate. (Doh!)
-# 
 sub colour {
+## colour caching routine.
+## GD can only store 256 colours, so need to cache the ones we colorAllocate. (Doh!)
   my ($self, $id) = @_;
   $id           ||= "black";
   my $colour      = $self->{'_GDColourCache'}->{$id} || $self->{'canvas'}->colorAllocate($self->{'colourmap'}->rgb_by_name($id));

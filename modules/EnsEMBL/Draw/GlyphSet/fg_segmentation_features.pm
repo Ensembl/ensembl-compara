@@ -18,6 +18,9 @@ limitations under the License.
 
 package EnsEMBL::Draw::GlyphSet::fg_segmentation_features;
 
+### Draw regulatory segmentation features track (semi-continuous
+### track of colour blocks)
+
 use strict;
 
 use base qw(EnsEMBL::Draw::GlyphSet_simple);

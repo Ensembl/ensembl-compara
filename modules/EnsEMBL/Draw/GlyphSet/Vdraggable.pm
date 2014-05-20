@@ -18,6 +18,8 @@ limitations under the License.
 
 package EnsEMBL::Draw::GlyphSet::Vdraggable;
 
+### "Invisible" glyph used to define drag'n'select capability of vertical ideogram
+
 use strict;
 
 use base qw(EnsEMBL::Draw::GlyphSet);

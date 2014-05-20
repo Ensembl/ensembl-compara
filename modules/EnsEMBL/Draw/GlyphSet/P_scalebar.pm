@@ -18,6 +18,10 @@ limitations under the License.
 
 package EnsEMBL::Draw::GlyphSet::P_scalebar;
 
+### Draws a simplified scalebar on Transcript/ProteinSummary -
+### just a line with ticks rather than black/white blocks - and
+### numbered according to amino acids rather than bases
+
 use strict;
 
 use base qw(EnsEMBL::Draw::GlyphSet);

@@ -18,6 +18,9 @@ limitations under the License.
 
 package EnsEMBL::Draw::GlyphSet::snp_join;
 
+### Draws "tent" lines joining variation track to zoomed out SNPs
+### on Transcript/Population/Image
+
 use strict;
 
 use base qw(EnsEMBL::Draw::GlyphSet);

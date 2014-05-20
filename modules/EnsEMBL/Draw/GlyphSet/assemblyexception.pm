@@ -18,6 +18,9 @@ limitations under the License.
 
 package EnsEMBL::Draw::GlyphSet::assemblyexception;
 
+### Draw assembly exception track - patches, haplotypes, etc
+### - on the Location Summary image (horizontal chromosome)
+
 use strict;
 
 use Bio::EnsEMBL::AssemblyExceptionFeature;

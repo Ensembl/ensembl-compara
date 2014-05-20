@@ -17,6 +17,11 @@ limitations under the License.
 =cut
 
 package EnsEMBL::Draw::GlyphSet::bam;
+
+### Module for drawing data in BAM format (either user-attached, or
+### internally configured via an ini file or database record
+### Note: uses Inline C for faster handling of these huge files
+
 use strict;
 use base qw(EnsEMBL::Draw::GlyphSet::sequence);
 
@@ -26,22 +31,22 @@ use Bio::EnsEMBL::ExternalData::BAM::BAMAdaptor;
 use Bio::EnsEMBL::DBSQL::DataFileAdaptor;
 use Data::Dumper;
 
-# Hack to override parent errorTrack method
-# sequence glyph errorTrack has been hacked so this unhacks it
 sub errorTrack {
+## Hack to override parent errorTrack method
+## sequence glyph errorTrack has been hacked so this unhacks it
   EnsEMBL::Draw::GlyphSet::errorTrack(@_); 
 }
 
 sub render_histogram {
+## Render only the coverage histogram (by disabling the reads)
   my ($self) = @_;
-  # Render only the coverage histogram (by disabling the reads)
   $self->render_normal(show_reads => 0);
 }
 
 sub render_unlimited {
+## Display "all" reads 
   my ($self) = @_;
-  # Display "all" reads 
-  # Set the maximum row number to 3000 - it;s likely the browser will timeout even at a lesser limit
+  # Set the maximum row number to 3000 - it's likely the browser will timeout even at a lesser limit
   # SMJS 3000 just never works, go down to something which might - 500
   # SMJS 3000 does now render - BUT it sends such a big image map it upsets the browser!
   #$self->render_normal(max_depth => 3000); # effectively unlimited
@@ -103,8 +108,8 @@ sub reset {
   }
 }
 
-# get a bam adaptor
 sub bam_adaptor {
+## get a bam adaptor
   my $self = shift;
  
   my $url = $self->my_config('url');
@@ -134,8 +139,8 @@ sub bam_adaptor {
   return $self->{_cache}->{_bam_adaptor};
 }
 
-# get the alignment features
 sub features {
+## get the alignment features
   my $self = shift;
 
   my $slice = $self->{'container'};
@@ -148,8 +153,8 @@ sub features {
   return $self->{_cache}->{features};
 }
 
-# get the consensus features
 sub consensus_features {
+## get the consensus features
   my $self = shift;
  
   unless ($self->{_cache}->{consensus_features}) {
@@ -186,8 +191,8 @@ sub consensus_features {
   return $self->{_cache}->{consensus_features};
 }
 
-# generate zmenu info for the feature
 sub feature_title {
+## generate zmenu info for the feature
   my ($self, $f) = @_;
   my $slice  = $self->{'container'};
   my $seq_id = $slice->seq_region_name();
@@ -227,8 +232,8 @@ sub feature_title {
   return $title;
 }
 
-# generate zmenu info for the feature
 sub feature_brief_title {
+## generate zmenu info for the feature
   my ($self, $f) = @_;
   my $slice = $self->{'container'};
   my $seq_id = $slice->seq_region_name();
@@ -246,8 +251,8 @@ sub my_colour {
   return $colours->{$key}->{default} || $colours->{default}->{default} || 'grey80';
 }
 
-# render coverage histogram with consensus text overlaid
 sub render_coverage {
+## render coverage histogram with consensus text overlaid
   my ($self, %options) = @_;
   
   # defaults
@@ -516,8 +521,8 @@ AV * pre_filter_depth (SV* features_ref, int depth, double ppbp, int slicestart,
 END_OF_C_CODE
 
 
-# render reads with sequence overlaid and variations from consensus highlighted
 sub render_sequence_reads {
+## render reads with sequence overlaid and variations from consensus highlighted
   my ($self, %options) = @_;
   
   # defaults
@@ -720,8 +725,8 @@ sub _read_type {
   return $type;
 }
 
-# highlight a composite if its in the list of highlights
 sub highlight {
+## highlight a composite if its in the list of highlights
   my ($self, $f, $composite, $pix_per_bp, $h) = @_;
 
   return if (scalar($self->highlights()) == 0);
@@ -746,8 +751,8 @@ sub highlight {
   }
 }
 
-# return just the sequence within the current window
 sub _get_sequence_window {
+## return just the sequence within the current window
   my ($self, $f, $s) = @_;
   
   my $slice = $self->{container};
@@ -772,8 +777,8 @@ sub _get_sequence_window {
   
 }
 
-# build the sequence for the given feature based on the cigar string
 sub _get_sequence {
+## build the sequence for the given feature based on the cigar string
   my ($self, $a, $s) = @_;
   
 #  my $seq = $a->qdna;
@@ -829,8 +834,8 @@ sub _get_sequence {
 }
 
 
-# calculate the coverage
 sub calc_coverage {
+## calculate the coverage
   my ($self) = @_;
   
   my $features = $self->features;

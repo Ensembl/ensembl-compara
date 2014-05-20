@@ -18,6 +18,9 @@ limitations under the License.
 
 package EnsEMBL::Draw::GlyphSet::P_separator;
 
+### Draws a line 
+### STATUS: Unknown - doesn't appear to be used
+
 use strict;
 
 use base qw(EnsEMBL::Draw::GlyphSet);

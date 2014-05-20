@@ -62,23 +62,30 @@ sub content {
 
 # This is a hack, we really need an order to be supplied by the glyphset
 sub sorted_extra_keys {
-  my ($self,$extra) = @_;
+  my ($self,$extra,$order) = @_;
 
-  my %sort;
-  foreach my $k (keys %$extra) {
-    next if $k =~ /^_type/ or $k =~ /^item_colour/;
-    my $v = $k;
-    $v = "A $v" if /start$/;
-    $v = "B $v" if /end$/;
-    $sort{$k} = $v;
+  if($order) {
+    return grep { !/^_type/ and !/^item_colour/ } @$order;
+  } else {
+    my %sort;
+    foreach my $k (keys %$extra) {
+      next if $k =~ /^_type/ or $k =~ /^item_colour/;
+      my $v = $k;
+      $v = "A $v" if /start$/;
+      $v = "B $v" if /end$/;
+      $sort{$k} = $v;
+    }
+
+    return sort { $sort{$a} <=> $sort{$b} } keys %sort;
   }
-
-  return sort { $sort{$a} <=> $sort{$b} } keys %sort;
 }
 
 sub feature_content {
   my ($self, $feature, $i) = @_;
   my %extra  = ref $feature ne 'HASH' && $feature->can('extra_data') && ref $feature->extra_data eq 'HASH' ? %{$feature->extra_data} : ();
+  my $extra_order;
+  $extra_order = $feature->extra_data_order if $feature->can('extra_data_order');
+
   my $start  = $feature->{'start'} + $self->hub->param('click_start') - 1;
   my $end    = $feature->{'end'} + $self->hub->param('click_start') - 1;
   my $single = $start == $end;
@@ -113,7 +120,7 @@ sub feature_content {
     { type => 'Score',      label => $feature->{'score'}   },
   );
   
-  push @entries, { type => $self->format_type($_), label => join(', ', @{$extra{$_}}) } for $self->sorted_extra_keys(\%extra);
+  push @entries, { type => $self->format_type($_), label => join(', ', @{$extra{$_}}) } for $self->sorted_extra_keys(\%extra,$extra_order);
   
   $self->add_entry($_) for grep $_->{'label'}, @entries;
 }
