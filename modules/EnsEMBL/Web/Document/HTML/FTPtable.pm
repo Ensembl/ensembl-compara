@@ -39,7 +39,7 @@ sub render {
   
   my %title = (
     dna       => 'Masked and unmasked genome sequences associated with the assembly (contigs, chromosomes etc.)',
-    cdna      => 'cDNA sequences for Ensembl or "ab initio" predicted genes',
+    cdna      => 'cDNA sequences for both Ensembl and "ab initio" predicted genes',
     cds       => 'Coding sequences for Ensembl or "ab initio" predicted genes',
     prot      => 'Protein sequences for Ensembl or "ab initio" predicted genes',
     rna       => 'Non-coding RNA gene predictions',
