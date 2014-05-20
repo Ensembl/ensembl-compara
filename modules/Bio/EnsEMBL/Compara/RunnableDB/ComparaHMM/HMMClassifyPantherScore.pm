@@ -29,12 +29,6 @@ Questions may also be sent to the Ensembl help desk at
 
 Bio::EnsEMBL::Compara::RunnableDB::ComparaHMM::HMMClassify
 
-=head1 DESCRIPTION
-
-
-=head1 SYNOPSIS
-
-
 =head1 AUTHORSHIP
 
 Ensembl Team. Individual contributions can be found in the GIT log.

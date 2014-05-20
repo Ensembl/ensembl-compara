@@ -18,7 +18,7 @@ limitations under the License.
 
 =head1 NAME
 
- Bio::EnsEMBL::Compara::PipeConfig::TBlat_conf
+Bio::EnsEMBL::Compara::PipeConfig::TBlat_conf
 
 =head1 SYNOPSIS
 

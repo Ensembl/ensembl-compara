@@ -194,6 +194,7 @@ sub uniq {
   Caller     :
 
 =cut
+
 sub get_associated_xrefs_for_tree {
 	my ( $self, $gene_tree, $db_name ) = @_;
 	if ( check_ref( $gene_tree, 'Bio::EnsEMBL::Compara::GeneTree' ) ) {
@@ -220,6 +221,7 @@ sub get_associated_xrefs_for_tree {
   Caller     :
 
 =cut
+
 sub get_members_for_xref {
 	my ( $self, $gene_tree, $dbprimary_acc, $db_name ) = @_;
 	if ( check_ref( $gene_tree, 'Bio::EnsEMBL::Compara::GeneTree' ) ) {
@@ -251,6 +253,7 @@ sub get_members_for_xref {
   Caller     :
 
 =cut
+
 sub get_all_member_associations {
 	my ( $self, $gene_tree, $db_name ) = @_;
 	if ( check_ref( $gene_tree, 'Bio::EnsEMBL::Compara::GeneTree' ) ) {

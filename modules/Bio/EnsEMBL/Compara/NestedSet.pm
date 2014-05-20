@@ -18,9 +18,7 @@ limitations under the License.
 
 =head1 NAME
 
-NestedSet - DESCRIPTION of Object
-
-=head1 SYNOPSIS
+Bio::EnsEMBL::Compara::NestedSet
 
 =head1 DESCRIPTION
 
@@ -594,7 +592,7 @@ sub get_all_adjacent_subtrees {
   Status      : At risk (relies on left and right indexes)
 
 =cut
-#'
+
 sub num_leaves {
    my $self = shift;
 

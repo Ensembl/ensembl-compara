@@ -21,7 +21,7 @@ limitations under the License.
 
 =head1 NAME
 
-  Bio::EnsEMBL::Compara::PipeConfig::DumpTrees_conf
+Bio::EnsEMBL::Compara::PipeConfig::DumpTrees_conf
 
 =head1 SYNOPSIS
 
@@ -58,7 +58,7 @@ use base ('Bio::EnsEMBL::Hive::PipeConfig::HiveGeneric_conf');   # we don't need
 =head2 default_options
 
     Description : Implements default_options() interface method of Bio::EnsEMBL::Hive::PipeConfig::HiveGeneric_conf that is used to initialize default options.
-                
+
 =cut
 
 sub default_options {

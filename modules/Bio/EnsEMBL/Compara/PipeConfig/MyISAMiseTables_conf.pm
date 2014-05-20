@@ -21,7 +21,7 @@ limitations under the License.
 
 =head1 NAME
 
-  Bio::EnsEMBL::Compara::PipeConfig::MyISAMiseTables_conf
+Bio::EnsEMBL::Compara::PipeConfig::MyISAMiseTables_conf
 
 =head1 SYNOPSIS
 
@@ -29,7 +29,7 @@ limitations under the License.
 
 =head1 DESCRIPTION  
 
-    A pipeline to turn all release tables into MyISAM
+A pipeline to turn all release tables into MyISAM
 
 =head1 CONTACT
 

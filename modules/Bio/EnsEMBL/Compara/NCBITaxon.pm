@@ -18,7 +18,7 @@ limitations under the License.
 
 =head1 NAME
 
-NCBITaxon - DESCRIPTION of Object
+Bio::EnsEMBL::Compara::NCBITaxon
 
 =head1 DESCRIPTION
 
@@ -375,7 +375,7 @@ sub ensembl_alias_name {
 }
 
 
-=head scientific_name
+=head2 scientific_name
 
   Example    : $ncbi->scientific_name;
   Description: The scientific name of this taxon

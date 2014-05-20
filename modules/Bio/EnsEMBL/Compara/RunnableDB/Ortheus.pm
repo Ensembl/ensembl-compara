@@ -29,9 +29,6 @@ limitations under the License.
 
 Bio::EnsEMBL::Compara::RunnableDB::Ortheus
 
-=head1 SYNOPSIS
-
-
 =head1 DESCRIPTION
 
 This module acts as a layer between the Hive system and the Bio::EnsEMBL::Analysis::Runnable::Ortheus

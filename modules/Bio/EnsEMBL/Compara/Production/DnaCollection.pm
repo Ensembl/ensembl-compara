@@ -29,8 +29,6 @@ limitations under the License.
 
 Bio::EnsEMBL::Compara::Production::DnaCollection
 
-=head1 SYNOPSIS
-
 =head1 DESCRIPTION
 
 DnaCollection is an object to hold a set of DnaFragChunkSet objects. 

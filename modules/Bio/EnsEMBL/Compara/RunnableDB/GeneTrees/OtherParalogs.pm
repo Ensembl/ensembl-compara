@@ -113,6 +113,7 @@ sub write_output {
     This function will create all the links between two genes from two different sub-trees, and from the same species
 
 =cut
+
 sub run_analysis {
     my $self = shift;
 
@@ -226,6 +227,7 @@ sub duplication_confidence_score {
      - It stores the list of all the leaves to save DB queries
 
 =cut
+
 sub get_ancestor_species_hash
 {
     my $self = shift;

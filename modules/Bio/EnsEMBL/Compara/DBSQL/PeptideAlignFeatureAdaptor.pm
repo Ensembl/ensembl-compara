@@ -18,7 +18,7 @@ limitations under the License.
 
 =head1 NAME
 
-  Bio::EnsEMBL::Compara::DBSQL::PeptideAlignFeatureAdaptor
+Bio::EnsEMBL::Compara::DBSQL::PeptideAlignFeatureAdaptor
 
 =head1 SYNOPSIS
 

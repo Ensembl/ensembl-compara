@@ -18,9 +18,7 @@ limitations under the License.
 
 =head1 NAME
 
-FamilyAdaptor
-
-  This object represents a family coming from a database of protein families.
+FamilyAdaptor - This object represents a family coming from a database of protein families.
 
 =head1 SYNOPSIS
 

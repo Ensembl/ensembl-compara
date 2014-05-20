@@ -131,7 +131,7 @@ sub DESTROY {
   Returntype : Bio::EnsEMBL::Compara::Graph::Link
   Exceptions : none
   Caller     : general
-    
+
 =cut
 
 sub add_connection {

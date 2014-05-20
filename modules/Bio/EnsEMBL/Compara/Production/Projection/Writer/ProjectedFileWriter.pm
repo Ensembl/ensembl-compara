@@ -137,9 +137,9 @@ sub file {
 }
 
 =head2 file_handle()
-  
+
   Description : Getter for the file handle 
-  
+
 =cut
 
 sub file_handle {

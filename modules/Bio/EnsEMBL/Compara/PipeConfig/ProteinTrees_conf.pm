@@ -27,7 +27,7 @@ limitations under the License.
 
 =head1 NAME
 
-  Bio::EnsEMBL::Compara::PipeConfig::ProteinTrees_conf
+Bio::EnsEMBL::Compara::PipeConfig::ProteinTrees_conf
 
 =head1 DESCRIPTION
 

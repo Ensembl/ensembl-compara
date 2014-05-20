@@ -21,7 +21,7 @@ limitations under the License.
 
 =head1 NAME
 
-    Bio::EnsEMBL::Compara::Utils::SpeciesTree
+Bio::EnsEMBL::Compara::Utils::SpeciesTree
 
 =head1 SYNOPSIS
 

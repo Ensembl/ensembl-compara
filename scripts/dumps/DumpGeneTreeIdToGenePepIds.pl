@@ -134,10 +134,10 @@ DumpGeneTreeIdToGenePepIds
 =head1 SYNOPSIS 
 
 	./DumpGeneTreeIdToGenePepIds.pl -reg_conf REG -database DB -file FILE [-gzip] [-overwrite] [ --help | --man ]
-	
+
 =head1 DESCRIPTION
 
-=head1 OPTIONS
+=head2 OPTIONS
 
 =over 8
 

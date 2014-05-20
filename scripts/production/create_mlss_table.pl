@@ -83,7 +83,7 @@ the one set in ENSEMBL_REGISTRY will be used if defined, if not
 ~/.ensembl_init will be used.
 
 =item B<[--reg_alias compara_db_name]>
-  
+
 the name of compara DB in the registry_configuration_file or any
 of its aliases. Uses "compara" by default.
 
@@ -94,7 +94,7 @@ of its aliases. Uses "compara" by default.
 =over
 
 =item B<[--output_file filename]>
-  
+
 The name of the output file. By default the output is the
 standard output
 

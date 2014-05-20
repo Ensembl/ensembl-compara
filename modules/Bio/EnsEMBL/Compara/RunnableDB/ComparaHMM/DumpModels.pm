@@ -24,11 +24,6 @@ limitations under the License.
 
 Bio::EnsEMBL::Compara::RunnableDB::ComparaHMM::DumpModels
 
-
-=head1 SYNOPSIS
-
-
-
 =head1 DESCRIPTION
 
 This Analysis/RunnableDB is designed to fetch the HMM models from

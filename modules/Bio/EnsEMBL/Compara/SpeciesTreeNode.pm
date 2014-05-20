@@ -29,9 +29,6 @@ limitations under the License.
 
 Bio::EnsEMBL::Compara::SpeciesTreeNode
 
-=head1 SYNOPSIS
-
-
 =head1 DESCRIPTION
 
 Specific subclass of the NestedSet to handle species trees

@@ -30,7 +30,7 @@ limitations under the License.
 Bio::EnsEMBL::Compara::ConstrainedElement - constrained element data produced by Gerp
 
 =head1 SYNOPSIS
-  
+
   use Bio::EnsEMBL::Compara::ConstrainedElement;
   
   my $constrained_element = new Bio::EnsEMBL::Compara::ConstrainedElement(
@@ -56,8 +56,8 @@ GET / SET VALUES
   $constrained_element->seq_region_end($self->slice->start + $self->{'end'} - 1);
   $constrained_element->strand($strand);
   $constrained_element->reference_dnafrag_id($dnafrag_id);
- 
   $constrained_element->get_all_overlapping_exons();
+
 =head1 OBJECT ATTRIBUTES
 
 =over
@@ -289,7 +289,7 @@ sub method_link_species_set_id {
 }
 
 =head2 alignment_segments
- 
+
   Arg [1]    : listref $alignment_segments [ [ $dnafrag_id, $start, $end, $genome_db_id, $dnafrag_name ], .. ]
   Example    : my $alignment_segments = $constrained_element->alignment_segments();
                $constrained_element->alignment_segments($alignment_segments);
@@ -389,6 +389,7 @@ sub end {
   Caller     : object::methodname
 
 =cut
+
 sub seq_region_start {
 	my ($self, $seq_region_start) = @_;
 	
@@ -412,6 +413,7 @@ sub seq_region_start {
   Caller     : object::methodname
 
 =cut
+
 sub seq_region_end {
 	my ($self, $seq_region_end) = @_;
 	
@@ -575,7 +577,7 @@ sub summary_as_hash {
 }
 
 =head2 add_alignment_segments
- 
+
  Example       : my $CEs = $constrained_element_adaptor->fetch_all_by_MethodLinkSpeciesSet_Slice($mlss, $slice);
                  foreach my $constrained_element( @{ $CE }) {
                   $constrained_element->add_alignment_segments;

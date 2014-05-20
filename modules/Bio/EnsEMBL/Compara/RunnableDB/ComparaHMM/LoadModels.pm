@@ -24,11 +24,6 @@ limitations under the License.
 
 Bio::EnsEMBL::Compara::RunnableDB::ComparaHMM::LoadModels
 
-
-=head1 SYNOPSIS
-
-
-
 =head1 DESCRIPTION
 
 This Analysis/RunnableDB provides methods to load HMMs into the

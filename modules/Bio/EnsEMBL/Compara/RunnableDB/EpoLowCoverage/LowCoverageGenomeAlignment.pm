@@ -29,8 +29,6 @@ limitations under the License.
 
 Bio::EnsEMBL::Compara::Runnable::EpoLowCoverage::LowCoverageGenomeAlignment
 
-=head1 SYNOPSIS
-
 =head1 DESCRIPTION
 
 This module acts as a layer between the Hive system and the Bio::EnsEMBL::Analysis::Runnable::LowCoverageGenomeAlignment module since the ensembl-analysis API does not know about ensembl-compara
@@ -168,6 +166,7 @@ sub run
     Status     : At risk
 
 =cut
+
 sub write_output {
     my ($self) = @_;
 
@@ -1409,6 +1408,7 @@ sub _construct_pairwise_locations {
   Warning    :
 
 =cut
+
 sub _dump_fasta_and_mfa {
   my $self = shift;
   my $all_genomic_aligns = $self->param('genomic_aligns');

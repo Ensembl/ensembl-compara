@@ -51,7 +51,7 @@ The rest of the documentation details each of the object methods.
 Internal methods are usually preceded with a _
 
 =cut
-#
+
 package Bio::EnsEMBL::Compara::Production::EPOanchors::UpdateGenomeDBLocator;
 
 use strict;

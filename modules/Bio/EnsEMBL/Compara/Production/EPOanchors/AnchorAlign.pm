@@ -16,11 +16,9 @@ limitations under the License.
 
 =cut
 
-=head1 NAME - Bio::EnsEMBL::Compara::Production::EPOanchors::AnchorAlign
+=head1 NAME
 
-=head1 SYNOPSIS
-
-=head1 DESCRIPTION
+Bio::EnsEMBL::Compara::Production::EPOanchors::AnchorAlign
 
 =head1 CONTACT
 

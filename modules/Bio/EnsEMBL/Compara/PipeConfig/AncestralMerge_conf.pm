@@ -21,7 +21,7 @@ limitations under the License.
 
 =head1 NAME
 
-  Bio::EnsEMBL::Compara::PipeConfig::AncestralMerge_conf
+Bio::EnsEMBL::Compara::PipeConfig::AncestralMerge_conf
 
 =head1 SYNOPSIS
 

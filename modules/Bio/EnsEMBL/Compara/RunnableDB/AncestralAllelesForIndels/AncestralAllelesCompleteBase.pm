@@ -72,6 +72,57 @@ sub run_cmd {
 
     my $output; #hash to contain all the variables I want to write to the database
 
+    #=====================================================================
+    # Default values
+    #=====================================================================
+
+    # Default flank regions for the alignment of the alleles
+    $self->param('flank', '10') if (!$self->param_is_defined('flank'));
+    
+    # If an alignment is longer than this, skip this indel!
+    $self->param('max_alignment_length', '100') if (!$self->param_is_defined('max_alignment_length'));
+    
+    # Old way of outputing the info for the VEP tabix file. Diable this.
+    $self->param('verbose_output', '0') if (!$self->param_is_defined('verbose_output'));
+    
+    # Location of the Ortheus executable
+    $self->param('ortheus_bin', '/software/ensembl/compara/OrtheusC/bin/OrtheusC') if (!$self->param_is_defined('ortheus_bin'));
+    
+    # Default values for selecting the multiple alignment
+    $self->param('method_link_type', 'EPO') if (!$self->param_is_defined('method_link_type'));
+    $self->param('species_set_name', 'primates') if (!$self->param_is_defined('species_set_name'));
+    #=====================================================================
+    
+    
+    #=====================================================================
+    # Example parameters (just to test the code or extract example alignments)
+    #=====================================================================
+    if ($self->param_is_defined('example')) {
+
+        # Sets an example query region (human:6:133078660-133078700)
+        $self->param('ref_species', 'homo_sapiens') if (!$self->param_is_defined('ref_species'));
+        $self->param('seq_region', '6') if (!$self->param_is_defined('seq_region'));
+        $self->param('seq_region_start', '133078660') if (!$self->param_is_defined('seq_region_start'));
+        $self->param('seq_region_end', '133078700') if (!$self->param_is_defined('seq_region_end'));
+
+        # Work dir set to current directory and sub_dir ignored.
+        $self->param('work_dir', '.') if (!$self->param_is_defined('work_dir'));
+        $self->param('sub_dir', '') if (!$self->param_is_defined('sub_dir'));
+        
+        # Connect to the public databases. The registry is required to connect to all the primates and the compara_url is required by the module)
+        use Bio::EnsEMBL::Registry;
+        Bio::EnsEMBL::Registry->load_registry_from_url('mysql://anonymous@ensembldb.ensembl.org/');
+        use Bio::EnsEMBL::ApiVersion;
+        $self->param('compara_url', 'mysql://anonymous@ensembldb.ensembl.org/ensembl_compara_'.software_version()) if (!$self->param_is_defined('compara_url'));
+        
+        # This enable the output of the Ortheus alignments
+        $self->param('verbose', '1') if (!$self->param_is_defined('verbose'));
+        
+        # Disable the write_output step, which is meant to store the stats on the DB.
+        $self->execute_writes(0);
+    }
+    #=====================================================================
+
     my $ref_species = $self->param('ref_species');
     my $seq_region = $self->param('seq_region');
     my $seq_region_start = $self->param('seq_region_start');
@@ -80,6 +131,8 @@ sub run_cmd {
     my $ancestor_dir = $self->param('ancestor_dir');
     my $verbose = $self->param('verbose');
     my $verbose_vep = $self->param('verbose_output');
+    my $method_link_type = $self->param('method_link_type');
+    my $species_set_name = $self->param('species_set_name');
 
     #any alignment greater than 100 will be discarded since this means a large insertion which
     #causes difficulties for ortheus.
@@ -95,7 +148,7 @@ sub run_cmd {
 
     #compara database adaptor
     my $compara_dba = new Bio::EnsEMBL::Compara::DBSQL::DBAdaptor(-url=>$self->param('compara_url'));
-    my $genome_db_adaptor = $self->compara_dba->get_genomeDBAdaptor;
+    my $genome_db_adaptor = $compara_dba->get_genomeDBAdaptor;
     my $genome_db = $genome_db_adaptor->fetch_by_name_assembly($ref_species);
 
     $self->param('ancestor_genome_db', $genome_db_adaptor->fetch_by_name_assembly("ancestral_sequences"));
@@ -103,7 +156,7 @@ sub run_cmd {
     my $slice_adaptor = $registry->get_adaptor($ref_species, 'Core', 'Slice');
 
     my $mlss_adaptor = $compara_dba->get_MethodLinkSpeciesSetAdaptor;
-    my $mlss = $mlss_adaptor->fetch_by_method_link_type_species_set_name("EPO", "primates");
+    my $mlss = $mlss_adaptor->fetch_by_method_link_type_species_set_name($method_link_type, $species_set_name);
 
     my $as_adaptor = $compara_dba->get_AlignSliceAdaptor;
     my $gab_adaptor = $compara_dba->get_GenomicAlignBlockAdaptor;
@@ -484,30 +537,38 @@ sub find_ancestral_alleles {
         $alt_flank_ancestral_allele = "-";
     }
 
-    #tab-delimited
-    #Ref: reference allele (realigned sequence, no changes ie insertions, deletions)
-    #Alt: alternative allele (with changes ie insertions, deletions)
-    #RAnc:ancestral sequence on the reference alignment
-    #AAnc: ancestral sequence on the alternative alignment (with changes)
-    if ($verbose_vep) {
-        print VEP "$seq_region\t$allele_end\t$allele_seq\t$event\t" . $ref_flank_allele . "\t" . $alt_flank_allele . "\t" . $ref_flank_ancestral_allele . "\t" . $alt_flank_ancestral_allele . "\n";
-    } else {
-        #Need to convert verbose event into simple tags defined in hash %event_type
-        my ($indel, $type, $detail, $detail1, $improve, $detail2) = $event =~ /(insertion|deletion)_(novel|recovery|unsure)_(of_allele_base|strict|shuffle|realign|neighbouring_deletion|neighbouring_insertion|complex)_{0,1}(strict1|shuffle1){0,1}_{0,1}(better|worse){0,1}_{0,1}(polymorphic_insertion|polymorphic_deletion|complex_polymorphic_insertion|complex_polymorphic_deletion|funny_polymorphic_insertion|funny_polymorphic_deletion){0,1}/;
+    #Need to convert verbose event into simple tags defined in hash %event_type
+    my ($indel, $type, $detail, $detail1, $improve, $detail2) = $event =~ /(insertion|deletion)_(novel|recovery|unsure)_(of_allele_base|strict|shuffle|realign|neighbouring_deletion|neighbouring_insertion|complex)_{0,1}(strict1|shuffle1){0,1}_{0,1}(better|worse){0,1}_{0,1}(polymorphic_insertion|polymorphic_deletion|complex_polymorphic_insertion|complex_polymorphic_deletion|funny_polymorphic_insertion|funny_polymorphic_deletion){0,1}/;
+    
+    my $simple_event = get_simple_event($indel, $type, $detail1, $detail2);
 
-        my $simple_event = get_simple_event($indel, $type, $detail1, $detail2); 
+    #decide which ancestral allele is best to use (RAnc or AAnc)
+    my $ancestral_allele = $self->get_ancestral_allele($indel, $type, $ref_flank_allele, $alt_flank_allele, $ref_flank_ancestral_allele, $alt_flank_ancestral_allele);
+
+    if ($verbose_vep) {
+
+        #tab-delimited
+        #Ref: reference allele (realigned sequence, no changes ie insertions, deletions)
+        #Alt: alternative allele (with changes ie insertions, deletions)
+        #RAnc:ancestral sequence on the reference alignment
+        #AAnc: ancestral sequence on the alternative alignment (with changes)
+        print VEP "$seq_region\t$allele_end\t$allele_seq\t$event\t" . $ref_flank_allele . "\t" . $alt_flank_allele . "\t" . $ref_flank_ancestral_allele . "\t" . $alt_flank_ancestral_allele . "\n";
+
+    } else {
+
         my $event_flag = $event_type{$simple_event};
 
         my ($ind) = $indel =~ /(.)/;
 
-        #decide which ancestral allele is best to use (RAnc or AAnc)
-        my $ancestral_allele = $self->get_ancestral_allele($indel, $type, $ref_flank_allele, $alt_flank_allele, $ref_flank_ancestral_allele, $alt_flank_ancestral_allele);
         $vep_line = "$allele_seq\t$ind\t$event_flag\t$ref_flank_allele\t$alt_flank_allele\t$ancestral_allele;";
+
     }
 
     print OUT "$seq_region $allele_start $allele_end $allele_seq $event " . $ref_flank_allele . " " . $alt_flank_allele . " " . $ref_flank_ancestral_allele . " " . $alt_flank_ancestral_allele . "\n" if ($verbose);
-
     print OUT "TYPE $event\n" if ($verbose);
+    print OUT "FINAL CALL: Type=$simple_event Ref=$ref_flank_allele Alt=$alt_flank_allele Anc=$ancestral_allele\n" if ($verbose);
+    
+    $output->{sum_calls}->{$simple_event}++;
     $output->{sum_types}->{$event}++;
 
     $modified_gat->release_tree;
@@ -1648,6 +1709,16 @@ sub resolve_unsure {
 
 }
 
+
+#==================================================================================
+# print_report
+#==================================================================================
+#
+# This method is called for each indel, to print the alignments in the
+# indel_X_XXXX_XXXXX file, which contains the alignments.
+#
+#==================================================================================
+
 sub print_report {
     my ($ref_alignment, $alt_alignment, $ref_strict_ancestral_allele, $ref_flank_ancestral_allele, $alt_strict_ancestral_allele, $alt_flank_ancestral_allele, $indel_nucleotide, $verbose) = @_;
 
@@ -1687,6 +1758,16 @@ sub print_report {
 
 }
 
+
+#==================================================================================
+# print_summary
+#==================================================================================
+#
+# This method is called at the end of the process, to print some stats at the end
+# of the indel_X_XXXX_XXXXX file, which contains the alignments.
+#
+#==================================================================================
+
 sub print_summary {
     my ($output) = @_;
 
@@ -1704,15 +1785,25 @@ sub print_summary {
 
     print OUT "Summary of types\n";
     foreach my $type (keys %{$output->{'sum_types'}}) {
-        print OUT "$type " . $output->{'sum_types'}{$type} . "\n";	
-        #printf OUT " %s %d (%.2f%%)\n", $type, $output->{'sum_types'}{$type}, ($output->{'sum_types'}{$type}/$output->{'num_bases_analysed'}*100);
+        print OUT "$type " . $output->{'sum_types'}{$type} . "\n";
     }
-
+    print OUT "\n";
+    
+    print OUT "Summary of calls\n";
+    foreach my $call (keys %{$output->{'sum_calls'}}) {
+        print OUT "$call " . $output->{'sum_calls'}{$call} . "\n";
+    }
+    
 }
 
+#==================================================================================
+# parse_ancestor_file
+#==================================================================================
 #
-# Read 1bp variants from ancestral allele file on release ftp site
+# Read 1bp variants from ancestral allele file on release ftp site. This is used
+# at the begining of the execution, for the whole region
 #
+#==================================================================================
 sub parse_ancestor_file {
     my ($file, $seq_region_start, $seq_region_end) = @_;
 

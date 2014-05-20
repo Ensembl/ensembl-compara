@@ -21,7 +21,7 @@ limitations under the License.
 
 =head1 NAME
 
-    Bio::EnsEMBL::Compara::RunnableDB::ncRNAtrees::GenerateSSPict
+Bio::EnsEMBL::Compara::RunnableDB::ncRNAtrees::GenerateSSPict
 
 =head1 DESCRIPTION
 

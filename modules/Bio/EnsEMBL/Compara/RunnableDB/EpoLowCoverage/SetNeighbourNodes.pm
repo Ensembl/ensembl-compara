@@ -35,9 +35,6 @@ Bio::EnsEMBL::Compara::RunnableDB::EpoLowCoverage::SetNeighbourNodes
     $set_neighbour_nodes->run();
     $set_neighbour_nodes->write_output(); writes to database
 
-=head1 DESCRIPTION
-
-
 =head1 APPENDIX
 
 The rest of the documentation details each of the object methods. 

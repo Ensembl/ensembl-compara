@@ -142,7 +142,7 @@ my $phylo_uri = 'http://www.phyloxml.org';
                   -SOURCE => 'Ensembl', -ALIGNED => 1, -HANDLE => $handle
                 );
   Status      : Stable  
-  
+
 =cut
 
 sub new {
@@ -195,7 +195,7 @@ sub namespaces {
   Returntype : Boolean
   Exceptions : None
   Status     : Stable
-  
+
 =cut
 
 sub cdna {
@@ -213,7 +213,7 @@ sub cdna {
   Returntype  : Boolean
   Exceptions  : None
   Status      : Stable
-  
+
 =cut
  
 sub no_sequences {
@@ -230,7 +230,7 @@ sub no_sequences {
   Returntype : Boolean
   Exceptions : None
   Status     : Stable
- 
+
 =cut
 
 sub no_release_trees {
@@ -247,7 +247,7 @@ sub no_release_trees {
   Returntype : Boolean
   Exceptions : None
   Status     : Stable
- 
+
 =cut
 
 sub no_branch_lengths {
@@ -262,7 +262,7 @@ sub no_branch_lengths {
   Returntype : Boolean
   Exceptions : None
   Status     : Stable
- 
+
 =cut
 
 sub compact_alignments {
@@ -281,7 +281,7 @@ sub compact_alignments {
   Returntype : String
   Exceptions : None
   Status     : Stable
-  
+
 =cut
 
 sub source {
@@ -299,7 +299,7 @@ sub source {
   Returntype : Boolean
   Exceptions : None
   Status     : Stable
-  
+
 =cut
 
 sub aligned {
@@ -320,7 +320,7 @@ sub aligned {
   Example     : $writer->write_trees($tree);
                 $writer->write_trees([$tree_one, $tree_two]);
   Status      : Stable  
-  
+
 =cut
 
 sub write_trees {

@@ -18,9 +18,7 @@ limitations under the License.
 
 =head1 NAME
 
-Algorithms - DESCRIPTION of Object
-
-=head1 SYNOPSIS
+Bio::EnsEMBL::Compara::Graph::Algorithms
 
 =head1 DESCRIPTION
 

@@ -2,7 +2,7 @@
 
 =head1 NAME
 
-    Bio::EnsEMBL::Compara::RunnableDB::ConditionalDataFlow
+Bio::EnsEMBL::Compara::RunnableDB::ConditionalDataFlow
 
 =head1 SYNOPSIS
 

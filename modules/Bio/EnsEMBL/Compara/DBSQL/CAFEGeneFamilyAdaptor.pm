@@ -29,9 +29,6 @@ limitations under the License.
 
 Bio::EnsEMBL::Compara::DBSQL::CAFEGeneFamilyAdaptor
 
-=head1 SYNOPSIS
-
-
 =head1 DESCRIPTION
 
   CAFEGeneFamilyAdaptor - Information about CAFE gene families

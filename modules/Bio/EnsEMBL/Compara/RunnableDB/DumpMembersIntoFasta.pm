@@ -29,9 +29,6 @@ limitations under the License.
 
 Bio::EnsEMBL::Compara::RunnableDB::DumpMembersIntoFasta
 
-=head1 SYNOPSIS
-
-
 =head1 DESCRIPTION
 
 This is a Compara-specific module that dumps the sequences related to

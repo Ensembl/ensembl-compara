@@ -52,7 +52,7 @@ It works by:
     - first by comparing the interval of the primary key
     - then comparing the actual values if needed
  4. If everything is fine, the jobs are all dataflown
- 
+
 Primary keys can most of the time be guessed from the schema.
 However, you can define the hash primary_keys as 'table' => 'column_name'
 to override some of the keys / provide them if they are not part of the schema.

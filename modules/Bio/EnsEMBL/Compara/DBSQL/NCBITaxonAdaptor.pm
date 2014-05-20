@@ -18,11 +18,7 @@ limitations under the License.
 
 =head1 NAME
 
-NestedSetAdaptor - DESCRIPTION of Object
-
-=head1 SYNOPSIS
-
-=head1 DESCRIPTION
+Bio::EnsEMBL::Compara::DBSQL::NCBITaxonAdaptor
 
 =head1 CONTACT
 
@@ -261,7 +257,7 @@ sub _default_where_clause {
 sub create_instance_from_rowhash {
   my $self = shift;
   my $rowhash = shift;
-  
+
   my $node = $self->_id_cache->cache->{$rowhash->{'node_id'}};
   return $node if($node);
   
@@ -280,7 +276,7 @@ sub init_instance_from_rowhash {
   my $self = shift;
   my $node = shift;
   my $rowhash = shift;
-  
+
   $self->SUPER::init_instance_from_rowhash($node, $rowhash);
 
   $node->name($rowhash->{'name'});

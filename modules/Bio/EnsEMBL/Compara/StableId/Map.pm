@@ -20,14 +20,12 @@ limitations under the License.
 
 =head1 NAME
 
-  Bio::EnsEMBL::Compara::StableId::Map
-
-=head1 SYNOPSIS
+Bio::EnsEMBL::Compara::StableId::Map
 
 =head1 DESCRIPTION
 
-    A smart container object that maintains clusterid-2-clustername and clusterid-2-mappingscore relationships,
-    can load from file or save to file.
+A smart container object that maintains clusterid-2-clustername and clusterid-2-mappingscore relationships,
+can load from file or save to file.
 
 =cut
 

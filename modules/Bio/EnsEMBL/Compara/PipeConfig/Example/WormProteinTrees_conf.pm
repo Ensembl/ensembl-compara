@@ -21,7 +21,7 @@ limitations under the License.
 
 =head1 NAME
 
-  Bio::EnsEMBL::Compara::PipeConfig::Example::WormProteinTrees_conf
+Bio::EnsEMBL::Compara::PipeConfig::Example::WormProteinTrees_conf
 
 =head1 SYNOPSIS
 
@@ -39,11 +39,11 @@ limitations under the License.
 
 =head1 DESCRIPTION  
 
-    The PipeConfig example file for WormBase group's version of ProteinTrees pipeline
+The PipeConfig example file for WormBase group's version of ProteinTrees pipeline
 
 =head1 CONTACT
 
-  Please contact Compara or WormBase with questions/suggestions
+Please contact Compara or WormBase with questions/suggestions
 
 =cut
 

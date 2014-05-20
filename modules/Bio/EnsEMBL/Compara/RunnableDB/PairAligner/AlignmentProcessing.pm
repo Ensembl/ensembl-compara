@@ -33,9 +33,8 @@ Bio::EnsEMBL::Compara::RunnableDB::PairAligner::AlignmentProcessing
 
 Abstract base class of AlignmentChains and AlignmentNets
 
-=head1 DESCRIPTION
-
 =cut
+
 package Bio::EnsEMBL::Compara::RunnableDB::PairAligner::AlignmentProcessing;
 
 use strict;

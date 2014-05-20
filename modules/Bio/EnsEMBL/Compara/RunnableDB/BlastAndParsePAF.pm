@@ -29,9 +29,6 @@ limitations under the License.
 
 Bio::EnsEMBL::Compara::RunnableDB::BlastAndParsePAF 
 
-=head1 SYNOPSIS
-
-
 =head1 DESCRIPTION
 
 Run ncbi_blastp and parse the output into PeptideAlignFeature objects.

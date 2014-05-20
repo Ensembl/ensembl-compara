@@ -34,7 +34,7 @@ Example:
 supported keys:
     'genome_db_id'  => <number>
         the id of the genome to be checked (main input_id parameter)
-        
+
     'registry_dbs'  => <list_of_dbconn_hashes>
         list of hashes with registry connection parameters (tried in succession).
 

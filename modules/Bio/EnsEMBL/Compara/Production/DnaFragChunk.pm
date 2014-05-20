@@ -25,11 +25,9 @@ limitations under the License.
   Questions may also be sent to the Ensembl help desk at
   <http://www.ensembl.org/Help/Contact>.
 
-=head1 NAME - Bio::EnsEMBL::Compara::Production::DnaFragChunk
+=head1 NAME
 
-=head1 SYNOPSIS
-
-=head1 DESCRIPTION
+Bio::EnsEMBL::Compara::Production::DnaFragChunk
 
 =head1 APPENDIX
 
