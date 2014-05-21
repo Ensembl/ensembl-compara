@@ -32,6 +32,7 @@ sub set_default_action {
 
 sub populate_tree {
   my $self        = shift;
+  my $sd          = $self->hub->species_defs;
   my $data_menu   = $self->create_submenu('CustomData',     'Custom Data');
   my $config_menu = $self->create_submenu('Configurations', 'Manage Configurations');
   my $tools_menu  = $self->create_submenu('Conversion',     'Online Tools');
@@ -97,7 +98,7 @@ sub populate_tree {
   $data_menu->append($self->create_node('Unshare',     '', [], { command => 'EnsEMBL::Web::Command::UnshareRecord'        }));
   
   ## FeatureView 
-  $data_menu->append($self->create_node('FeatureView', 'Features on Karyotype', [qw(featureview EnsEMBL::Web::Component::UserData::FeatureView)], { availability => @{$self->hub->species_defs->ENSEMBL_CHROMOSOMES} }));
+  $data_menu->append($self->create_node('FeatureView', 'Features on Karyotype', [qw(featureview EnsEMBL::Web::Component::UserData::FeatureView)], { availability => @{$sd->ENSEMBL_CHROMOSOMES} }));
   
   $data_menu->append($self->create_node('FviewRedirect', '', [], { command => 'EnsEMBL::Web::Command::UserData::FviewRedirect'})); 
   
@@ -111,6 +112,7 @@ sub populate_tree {
   $config_menu->append($self->create_node('ModifyConfig', '', [], { command => 'EnsEMBL::Web::Command::UserData::ModifyConfig' }));
   
   ## Data conversion
+  $tools_menu->append($self->create_node('UploadVariations',  'Variant Effect Predictor', [qw(upload_snps       EnsEMBL::Web::Component::UserData::UploadVariations)])) unless $sd->ENSEMBL_VEP_ENABLED; # only if new VEP is not enabled
   $tools_menu->append($self->create_node('SelectFeatures',    'Assembly Converter',       [qw(select_features   EnsEMBL::Web::Component::UserData::SelectFeatures)]));
   $tools_menu->append($self->create_node('UploadStableIDs',   'ID History Converter',     [qw(upload_stable_ids EnsEMBL::Web::Component::UserData::UploadStableIDs)]));
   $tools_menu->append($self->create_node('PreviewConvert',    '',                         [qw(conversion_done   EnsEMBL::Web::Component::UserData::PreviewConvert)]));

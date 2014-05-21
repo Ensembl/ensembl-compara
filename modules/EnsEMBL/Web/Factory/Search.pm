@@ -392,45 +392,6 @@ sub search_OLIGOPROBE {
   $self->{'results'}{ 'OligoProbe' }  = [ $self->{_results}, $self->{_result_count} ];
 }
 
-sub search_QTL {
-  my $self = shift;
-  my $species = $self->species;
-  my $species_path = $self->species_path;
-  
-  $self->_fetch_results(
-  [ 'core', 'QTL',
-"select count(*)
-  from qtl_feature as qf, qtl as q
- where q.qtl_id = qf.qtl_id and q.trait [[COMP]] '[[KEY]]'",
-"select q.trait, concat( sr.name,':', qf.seq_region_start, '-', qf.seq_region_end ),
-       qf.seq_region_end - qf.seq_region_start
-  from seq_region as sr, qtl_feature as qf, qtl as q
- where q.qtl_id = qf.qtl_id and qf.seq_region_id = sr.seq_region_id and q.trait [[COMP]] '[[KEY]]'" ],
-  [ 'core', 'QTL',
-"select count(*)
-  from qtl_feature as qf, qtl_synonym as qs ,qtl as q
- where qs.qtl_id = q.qtl_id and q.qtl_id = qf.qtl_id and qs.source_primary_id [[COMP]] '[[KEY]]'",
-"select q.trait, concat( sr.name,':', qf.seq_region_start, '-', qf.seq_region_end ),
-       qf.seq_region_end - qf.seq_region_start
-  from seq_region as sr, qtl_feature as qf, qtl_synonym as qs ,qtl as q
- where qs.qtl_id = q.qtl_id and q.qtl_id = qf.qtl_id and qf.seq_region_id = sr.seq_region_id and qs.source_primary_id [[COMP]] '[[KEY]]'" ]
-  );
-
-  foreach ( @{$self->{_results}} ) {
-    $_ = {
-#      'URL'       => "$species_path/cytoview?l=$_->[1]",
-      'URL'       => "$species_path/Location/View?r=$_->[1]", # Eagle change, updated link to v58 ensembl format
-      'idx'       => 'QTL',
-      'subtype'   => 'QTL',
-      'ID'        => $_->[0],
-      'desc'      => '',
-      'species'   => $species
-    };
-  }
-  $self->{'results'}{'QTL'} = [ $self->{_results}, $self->{_result_count} ];
-}
-
-
 sub search_MARKER {
   my $self = shift;
   my $species = $self->species;

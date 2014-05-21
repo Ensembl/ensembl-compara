@@ -1717,7 +1717,7 @@ sub variation_data {
       },
       type          => sub { $tv->display_consequence },
       class         => sub { $vf->var_class },
-      length        => $end - $start,
+      length        => $vf->length,
       indel         => sub { $vf->var_class =~ /in\-?del|insertion|deletion/ ? ($start > $end ? 'insert' : 'delete') : '' },
       codon_seq     => sub { [ map $coding_sequence[3 * ($pos - 1) + $_], 0..2 ] },
       codon_var_pos => sub { ($tv->cds_start + 2) - ($pos * 3) },

@@ -1798,6 +1798,7 @@ sub add_matrix {
       subset      => $subset,
       track_after => $after,
       $matrix->{'row'} ? (matrix => 'column') : (),
+      column_order => $matrix->{'column_order'} || 999999,
       %{$data->{'column_data'} || {}}
     });
     
@@ -1836,7 +1837,7 @@ sub add_matrix {
       caption   => "$column - $_->{'row'}",
     }));
     
-    $menu_data->{'matrix'}{'rows'}{$_->{'row'}} ||= { id => $_->{'row'}, group => $_->{'group'}, group_order => $_->{'group_order'} };
+    $menu_data->{'matrix'}{'rows'}{$_->{'row'}} ||= { id => $_->{'row'}, group => $_->{'group'}, group_order => $_->{'group_order'}, column_order => $_->{'column_order'}, column => $column };
   }
   
   return $column_track;

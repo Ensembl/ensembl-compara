@@ -129,9 +129,8 @@ sub filter {
 
 sub parse { 
   my ($self, $data, $format) = @_;
-  $format = 'BED' if $format eq 'BEDGRAPH';
+  $format = 'BED' if $format =~ /BEDGRAPH/i;
   return 'No data supplied' unless $data;
-  #use Carp qw(cluck); cluck $format;
 
   my $error = $self->check_format($data, $format);
   if ($error) {
