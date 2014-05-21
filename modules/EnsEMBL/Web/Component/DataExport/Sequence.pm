@@ -93,8 +93,15 @@ sub content {
 
 sub default_file_name {
   my $self = shift;
-  ## TODO - make this a bit more interesting!
-  my $name = 'Sequence_Export';
+  my $name = $self->hub->species;
+  my $data_object = $self->hub->param('g') ? $self->hub->core_object('gene') : undef;
+  if ($data_object) {
+    $name .= '_';
+    my $stable_id = $data_object->stable_id;
+    my ($disp_id) = $data_object->display_xref;
+    $name .= $disp_id || $stable_id;
+  }
+  $name .= '_sequence';
   return $name;
 }
 
