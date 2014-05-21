@@ -1014,8 +1014,8 @@ CREATE TABLE peptide_align_feature (
   peptide_align_feature_id    bigint  unsigned NOT NULL AUTO_INCREMENT, # unique internal id
   qmember_id                  int(10) unsigned NOT NULL, # FK seq_member.seq_member_id
   hmember_id                  int(10) unsigned NOT NULL, # FK seq_member.seq_member_id
-  qgenome_db_id               int(10) unsigned NOT NULL, # FK genome.genome_id
-  hgenome_db_id               int(10) unsigned NOT NULL, # FK genome.genome_id
+  qgenome_db_id               int(10) unsigned, # FK genome.genome_id
+  hgenome_db_id               int(10) unsigned, # FK genome.genome_id
   qstart                      int(10) DEFAULT 0 NOT NULL,
   qend                        int(10) DEFAULT 0 NOT NULL,
   hstart                      int(11) DEFAULT 0 NOT NULL,
