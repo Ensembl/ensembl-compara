@@ -129,9 +129,8 @@ sub filter {
 
 sub parse { 
   my ($self, $data, $format) = @_;
-  $format = 'BED' if $format eq 'BEDGRAPH';
+  $format = 'BED' if $format =~ /BEDGRAPH/i;
   return 'No data supplied' unless $data;
-  #use Carp qw(cluck); cluck $format;
 
   my $error = $self->check_format($data, $format);
   if ($error) {
@@ -163,11 +162,13 @@ sub parse {
     my ($track_def, $track_def_base);
     foreach my $row ( split /\n|\r/, $data ) { 
       ## Clean up the row
+      warn ">>> ROW $row";
       next if $row =~ /^#/;
       $row =~ s/^[\t\r\s]+//g;
       $row =~ s/[\t\r\s]+$//g;
       $row =~ tr/\x80-\xFF//d;
       next unless $row;
+      warn "... ROW $row";
 
       ## Parse as appropriate
       if ( $row =~ /^browser\s+(\w+)\s+(.*)/i ) {
