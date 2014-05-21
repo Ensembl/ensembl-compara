@@ -365,9 +365,9 @@ sub _init       { return; }
 sub export_type     { return undef; }
 sub export_caption  { return undef; }
 sub export_button   {
-  my $self = shift;
+  my ($self, $caption) = @_;
   return unless $self->export_type;
-  my $caption = $self->export_caption || 'Export';
+  $caption ||= 'Export';
   my $url     = $self->hub->url({'type' => 'DataExport', 'action' => ucfirst($self->export_type), 'data_type' => $self->hub->type, 'component' => $self->id});
   my $src     = $self->img_url.'/16/rev/download.png';
   return sprintf('<p><a href="%s" class="button modal_link"><img src="%s" style="padding-bottom:2px;vertical-align:middle" /> %s</a></p>', $url, $src, $caption);
