@@ -52,7 +52,7 @@ sub process {
   else {
     ## TODO - replace relevant parts with Bio::EnsEMBL::IO::Writer in due course
 
-    $file = EnsEMBL::Web::TmpFile::Text->new(extension => $extension, prefix => 'export', compress => $compress);
+    $file = EnsEMBL::Web::TmpFile::Text->new(extension => $extension, prefix => 'export', filename => $hub->param('name'), compress => $compress);
     ## Ugly hack - stuff file into package hash so we can get at it later without passing as argument
     $self->{'__file'} = $file;
 
