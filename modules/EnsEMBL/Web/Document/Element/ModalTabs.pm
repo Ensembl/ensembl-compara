@@ -38,7 +38,7 @@ sub init {
   foreach (@{$self->entries}) {
     if (($type eq 'Config' && $_->{'id'} eq $config) || ($type eq 'UserData' && $_->{'id'} eq 'user_data')) {
       $_->{'class'} = 'active';
-      $self->active = 'modal_' . lc $_->{'id'};
+      $self->active('modal_' . lc $_->{'id'});
       last;
     }
   }
