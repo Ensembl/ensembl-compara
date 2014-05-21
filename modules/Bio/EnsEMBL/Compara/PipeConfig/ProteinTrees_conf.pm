@@ -1020,7 +1020,7 @@ sub core_pipeline_analyses {
             -parameters => {
                 'fasta_file'    => '#fasta_dir#/unannotated.fasta',
             },
-            -rc_name       => '250Mb_job',
+            -rc_name       => '4Gb_job',
             -hive_capacity => $self->o('reuse_capacity'),
             -flow_into => [ 'make_blastdb_unannotated' ],
         },
