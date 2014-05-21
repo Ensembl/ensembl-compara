@@ -67,6 +67,7 @@ sub form {
         display   => $_->get('display'),
         x         => $x,
         renderers => $renderers,
+        column_order => $_->data->{'column_order'},
       };
       
       $cells{$x} = { map { $_->data->{'name'} => $_ } $_->nodes };
@@ -76,6 +77,8 @@ sub form {
     }
   }
   
+  @columns = sort { $a->{'column_order'} <=> $b->{'column_order'} } @columns;
+
   %renderer_counts = reverse %renderer_counts;
   
   my $width = (scalar @columns * 26) + 107; # Each td is 25px wide + 1px border. The first cell (th) is 90px + 1px border + 16px padding-right
