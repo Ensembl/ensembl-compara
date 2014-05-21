@@ -267,7 +267,8 @@ sub write_fasta {
   my $stable_id   = ($data_type eq 'Gene' || $data_type eq 'LRG') ? $data_object->stable_id : '';
   my $slice       = $self->object->expand_slice($data_object->slice);
 
-  my $genomic         = $hub->param('genomic');
+  my $inc_sequence    = $hub->param('sequence');
+  my $masking         = $hub->param('masking');
   my $seq_region_name = $data_object->seq_region_name;
   my $seq_region_type = $data_object->seq_region_type;
   my $slice_name      = $slice->name;
@@ -310,11 +311,11 @@ sub write_fasta {
     $self->print_line('');
   }
 
-  if (defined $genomic && $genomic ne 'off') {
-    my $masking = $genomic eq 'soft_masked' ? 1 : $genomic eq 'hard_masked' ? 0 : undef;
+  if ($masking) {
+    my $mask_flag = $masking eq 'soft_masked' ? 1 : $masking eq 'hard_masked' ? 0 : undef;
     my ($seq, $start, $end, $flank_slice);
 
-    $seq = defined $masking ? $slice->get_repeatmasked_seq(undef, $masking)->seq : $slice->seq;
+    $seq = defined $masking ? $slice->get_repeatmasked_seq(undef, $mask_flag)->seq : $slice->seq;
     $self->print_line(">$seq_region_name dna:$seq_region_type $slice_name");
     $self->print_line($fasta) while $fasta = substr $seq, 0, 60, '';
   }
