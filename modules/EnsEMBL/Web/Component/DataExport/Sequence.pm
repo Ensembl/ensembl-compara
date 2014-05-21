@@ -48,7 +48,21 @@ sub content {
           { value => 'hard_masked',  caption => 'Repeat Masked (hard)' },
       ];
 
-  my $checklist = EnsEMBL::Web::Constants::FASTA_OPTIONS;
+  ## Configure sequence options - check if the gene's transcripts 
+  ## have translations and/or UTRs
+  my $options = { peptide => 0, utr3 => 0, utr5 => 0 };
+  my ($component, $error) = $self->object->create_component;
+  foreach ($component->get_export_data) {
+    $options->{'peptide'} = 1 if $_->translation;
+    $options->{'utr3'}    = 1 if $_->three_prime_utr;
+    $options->{'utr5'}    = 1 if $_->five_prime_utr;
+    last if $options->{'peptide'} && $options->{'utr3'} && $options->{'utr5'};    
+  }
+
+  my $checklist = [];
+  foreach (EnsEMBL::Web::Constants::FASTA_OPTIONS) {
+    push @$checklist, $_ unless (exists $options->{$_->{'value'}} && $options->{$_->{'value'}} == 0); 
+  }
 
   ## Get user's current settings
   my $viewconfig  = $hub->get_viewconfig($hub->param('component'), $hub->param('data_type'));
