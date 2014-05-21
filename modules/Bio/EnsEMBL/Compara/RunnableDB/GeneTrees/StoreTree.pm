@@ -497,7 +497,9 @@ sub parse_filtered_align {
             print "removing ".$leaf->stable_id." keys: ".keys(%hash_initial_strings)."\n";
             delete($hash_initial_strings{$leaf->{_tmp_name}});
             print "after keys: ".keys(%hash_initial_strings)."\n";
-            $treenode_adaptor->remove_seq_member($leaf);
+            $self->call_within_transaction(sub{
+                $treenode_adaptor->remove_seq_member($leaf);
+            });
         }
     }
 

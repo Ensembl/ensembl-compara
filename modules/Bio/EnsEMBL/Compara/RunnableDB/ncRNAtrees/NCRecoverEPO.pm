@@ -481,7 +481,9 @@ sub remove_low_cov_predictions {
   foreach my $leaf (@{$nc_tree->get_all_leaves}) {
     if(my $removed_stable_id = $self->param('low_cov_leaves_to_delete_pmember_id')->{$leaf->seq_member_id}) {
       print STDERR "removing low_cov prediction $removed_stable_id\n" if($self->debug);
-      $self->param('treenode_adaptor')->remove_seq_member($leaf);
+      $self->call_within_transaction(sub {
+        $self->param('treenode_adaptor')->remove_seq_member($leaf);
+      });
     }
   }
   #calc residue count total
