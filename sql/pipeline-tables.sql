@@ -235,14 +235,6 @@ CREATE TABLE recovered_member (
   UNIQUE KEY (stable_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 
-DROP TABLE IF EXISTS removed_member; 
-CREATE TABLE removed_member (
-	seq_member_id	int(10) unsigned NOT NULL,
-	root_id	int(10) unsigned NOT NULL,
-  PRIMARY KEY (seq_member_id),
-  KEY (root_id)
-) ENGINE=InnoDB DEFAULT CHARSET=latin1;
-
 DROP TABLE IF EXISTS cmsearch_hit; 
 CREATE TABLE cmsearch_hit (
   hit_id int(10) unsigned NOT NULL AUTO_INCREMENT,
@@ -313,8 +305,10 @@ CREATE TABLE split_genes (
 CREATE TABLE gene_tree_backup (
 	seq_member_id	int(10) unsigned NOT NULL,
 	root_id	int(10) unsigned NOT NULL,
+	is_removed      tinyint(1) DEFAULT 0,
 
 	PRIMARY KEY (root_id, seq_member_id),
+	KEY (is_removed),
 	KEY (seq_member_id)
 
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;
