@@ -42,13 +42,16 @@ sub content {
         { value => '1',       caption => 'Forward strand' },
         { value => '-1',      caption => 'Reverse strand' }
       ];
-  my $genomic = [
+  my $masking = [
           { value => 'unmasked',     caption => 'Unmasked' },
           { value => 'soft_masked',  caption => 'Repeat Masked (soft)' },
           { value => 'hard_masked',  caption => 'Repeat Masked (hard)' },
       ];
 
   my $checklist = EnsEMBL::Web::Constants::FASTA_OPTIONS;
+
+  ## Get user's current settings
+  my $viewconfig  = $hub->get_viewconfig($hub->param('component'), $hub->param('data_type'));
 
   my $settings = {
         'strand' => {
@@ -59,30 +62,30 @@ sub content {
         'flank5_display' => {
             'label'     => "5' Flanking sequence (upstream)",  
             'type'      => 'NonNegInt',  
-            'value'     => '600',
+            'value'     => $viewconfig->get('flank5_display'),
         },
         'flank3_display' => { 
             'label'     => "3' Flanking sequence (downstream)", 
             'type'      => 'NonNegInt',  
-            'value'     => '600',
-        },
-        'genomic' => {
-            'label' => 'Genomic sequence',   
-            'type'  => 'DropDown', 
-            'values' => $genomic,
+            'value'     => $viewconfig->get('flank3_display'),
         },
         'extra' => {
           'type'      => 'Checklist',
-          'label'     => 'Transcript features to include',
+          'label'     => 'Sequences to include',
           'values'    => $checklist,
           'selectall' => 1,
+        },
+        'masking' => {
+            'label' => 'Genomic sequence masking',   
+            'type'  => 'DropDown', 
+            'values' => $masking,
         },
   };
 
   ## Options per format
   my $fields_by_format = {
     'rtf'   => {'hidden' => [qw(flank5_display flank3_display)]},
-    'fasta' => {'shown'  => [qw(strand flank5_display flank3_display genomic extra)]},
+    'fasta' => {'shown'  => [qw(strand extra masking flank5_display flank3_display)]},
   };
 
   ## Create settings form (comes with some default fields - see parent)
