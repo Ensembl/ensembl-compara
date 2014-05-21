@@ -68,6 +68,7 @@ sub FASTA_OPTIONS {
         { 'value' => 'utr3',       'caption' => "3' UTR",           'checked' => '1' },
         { 'value' => 'exon',       'caption' => 'Exons',            'checked' => '1' },
         { 'value' => 'intron',     'caption' => 'Introns',          'checked' => '1' },
+        { 'value' => 'sequence',   'caption' => 'Genomic sequence', 'checked' => '1' },
   );
 }
 
