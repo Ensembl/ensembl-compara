@@ -48,18 +48,18 @@ sub create_form {
       'value'   => $self->default_file_name,
     },
     {
-      'type'    => 'Radiolist',
-      'name'    => 'compression',
-      'label'   => 'Output',
-      'values'  => $compress,
-    },
-    {
       'type'    => 'DropDown',
       'name'    => 'format',
       'label'   => 'File format',
       'values'  => $formats,
       'select'  => 'select',
       'class'   => '_stt _action',
+    },
+    {
+      'type'    => 'Radiolist',
+      'name'    => 'compression',
+      'label'   => 'Output',
+      'values'  => $compress,
     },
   ]);
   $fieldset->add_hidden([
