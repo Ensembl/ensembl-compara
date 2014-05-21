@@ -60,7 +60,7 @@ sub EXPORT_TYPES {
 }
 
 sub FASTA_OPTIONS {
-  return  [
+  return  (
         { 'value' => 'cdna',       'caption' => 'cDNA',             'checked' => '1' },
         { 'value' => 'coding',     'caption' => 'Coding sequence',  'checked' => '1' },
         { 'value' => 'peptide',    'caption' => 'Peptide sequence', 'checked' => '1' },
@@ -68,7 +68,7 @@ sub FASTA_OPTIONS {
         { 'value' => 'utr3',       'caption' => "3' UTR",           'checked' => '1' },
         { 'value' => 'exon',       'caption' => 'Exons',            'checked' => '1' },
         { 'value' => 'intron',     'caption' => 'Introns',          'checked' => '1' },
-  ];
+  );
 }
 
 sub HOMOLOGY_TYPES {
