@@ -20,8 +20,6 @@ package EnsEMBL::Web::Command::DataExport::Output;
 
 use strict;
 
-use EnsEMBL::Web::Controller;
-use EnsEMBL::Web::Builder;
 use EnsEMBL::Web::TmpFile::Text;
 
 use RTF::Writer;
@@ -57,25 +55,8 @@ sub process {
     $self->{'__file'} = $file;
 
     ## Create the component we need to get data from 
-    my $class = 'EnsEMBL::Web::Component::'.$hub->param('data_type').'::'.$hub->param('component');
     my $component;
-    if ($self->dynamic_use($class)) {
-      my $builder = EnsEMBL::Web::Builder->new({
-                        hub           => $hub,
-                        object_params => EnsEMBL::Web::Controller::OBJECT_PARAMS,
-      });
-      $builder->create_objects(ucfirst($hub->param('data_type')), 'lazy');
-      $hub->set_builder($builder);
-      $component = $class->new($hub, $builder);
-    }
-    if (!$component) {
-      warn "!!! Could not create component $class";
-      $error = 'Export not available';
-    }
-    elsif (!$component->can('export_type')) {
-      warn "!!! Export not implemented in component $class";
-      $error = 'Export not available';
-    }
+    ($component, $error) = $self->object->create_component;
 
     unless ($error) {
       ## Write data to output file in desired format

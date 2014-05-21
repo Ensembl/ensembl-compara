@@ -18,6 +18,8 @@ limitations under the License.
 
 package EnsEMBL::Web::Object::DataExport;
 
+use EnsEMBL::Web::Controller;
+use EnsEMBL::Web::Builder;
 use EnsEMBL::Web::TmpFile::Text;
 
 use strict;
@@ -27,6 +29,34 @@ use base qw(EnsEMBL::Web::Object);
 
 sub caption       { return 'Export';  }
 sub short_caption { return 'Export';  }
+
+sub create_component {
+## Create the component we need to get data from, to be sure we're
+## using exactly the same data that the user sees 
+  my $self = shift;
+  my $hub  = $self->hub;
+  my ($component, $error);
+
+  my $class = 'EnsEMBL::Web::Component::'.$hub->param('data_type').'::'.$hub->param('component');
+  if ($self->dynamic_use($class)) {
+    my $builder = EnsEMBL::Web::Builder->new({
+                      hub           => $hub,
+                      object_params => EnsEMBL::Web::Controller::OBJECT_PARAMS,
+    });
+    $builder->create_objects(ucfirst($hub->param('data_type')), 'lazy');
+    $hub->set_builder($builder);
+    $component = $class->new($hub, $builder);
+  }
+  if (!$component) {
+    warn "!!! Could not create component $class";
+    $error = 'Export not available';
+  }
+  elsif (!$component->can('export_type')) {
+    warn "!!! Export not implemented in component $class";
+    $error = 'Export not available';
+  }
+  return ($component, $error);
+}
 
 sub handle_download {
   ## Method reached by url ensembl.org/Download/DataExport/
@@ -60,7 +90,6 @@ sub handle_download {
       $params{'compress'} = $compress;
       $params{'get_compressed'} = 1;
     }
-    #my $tmpfile = new EnsEMBL::Web::TmpFile::Text(filename => $file, prefix => $prefix, compress => $compress);
     my $tmpfile = new EnsEMBL::Web::TmpFile::Text(%params);
 
     if ($tmpfile->exists) {
