@@ -119,11 +119,13 @@ sub write_rtf {
     my $rtf_style = {};
 
     $rtf_style->{'\cf'      . $c++} = substr $class_to_style->{$class}[1]{'color'}, 1         
-   if $class_to_style->{$class}[1]{'color'};    $rtf_style->{'\chcbpat' . $c++} = substr $class_to_style->{$class}[1]{'background-color'},
- 1 if $class_to_style->{$class}[1]{'background-color'};
-    $rtf_style->{'\b'}              = 1                                                       
-   if $class_to_style->{$class}[1]{'font-weight'}     eq 'bold';
-    $rtf_style->{'\ul'}             = 1                                                          if $class_to_style->{$class}[1]{'text-decoration'} eq 'underline';
+      if $class_to_style->{$class}[1]{'color'};    
+    $rtf_style->{'\chcbpat' . $c++} = substr $class_to_style->{$class}[1]{'background-color'}, 1 
+      if $class_to_style->{$class}[1]{'background-color'};
+    $rtf_style->{'\b'}              = 1
+      if $class_to_style->{$class}[1]{'font-weight'}     eq 'bold';
+    $rtf_style->{'\ul'}             = 1
+      if $class_to_style->{$class}[1]{'text-decoration'} eq 'underline';
 
     $class_to_style->{$class}[1] = $rtf_style;
 
@@ -221,7 +223,7 @@ sub _class_to_style {
     my %class_to_style = (
       con  => [ $i++, { 'background-color' => "#$styles->{'SEQ_CONSERVATION'}{'default'}" } ],
       dif  => [ $i++, { 'background-color' => "#$styles->{'SEQ_DIFFERENCE'}{'default'}" } ],
-      res  => [ $i++, { 'color' => "#$styles->{'SEQ_RESEQEUNCING'}{'default'}" } ],
+      res  => [ $i++, { 'color' => "#$styles->{'SEQ_RESEQUENCING'}{'default'}" } ],
       e0   => [ $i++, { 'color' => "#$styles->{'SEQ_EXON0'}{'default'}" } ],
       e1   => [ $i++, { 'color' => "#$styles->{'SEQ_EXON1'}{'default'}" } ],
       e2   => [ $i++, { 'color' => "#$styles->{'SEQ_EXON2'}{'default'}" } ],
