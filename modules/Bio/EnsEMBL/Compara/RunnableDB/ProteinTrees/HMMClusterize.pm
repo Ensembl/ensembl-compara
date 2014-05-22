@@ -80,6 +80,7 @@ sub fetch_input {
 sub run {
     my $self = shift @_;
     $self->load_hmmer_classifications();
+    $self->load_extra_tags($self->param('extra_tags_file')) if $self->param('extra_tags_file');
 }
 
 
@@ -126,6 +127,19 @@ sub load_hmmer_classifications {
             $allclusters{$model_name}{division} = $division if $division;
         }
     }
+}
+
+sub load_extra_tags {
+    my ($self, $filename) = @_;
+    my $allclusters = $self->param('allclusters');
+
+    open my $file_tags, "<", $filename or die $!;
+    while (<$file_tags>) {
+        chomp;
+        my ($model_name, $tag, $value) = split /\t/;
+        $allclusters->{$model_name}{$tag} = $value if exists $allclusters->{$model_name};
+    }
+    close($file_tags);
 }
 
 1;
