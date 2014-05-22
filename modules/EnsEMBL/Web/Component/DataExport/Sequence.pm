@@ -94,11 +94,17 @@ sub content {
             'type'  => 'DropDown', 
             'values' => $masking,
         },
+        'snp_display' => {
+            'label'   => 'Include variations',
+            'type'    => 'Checkbox',
+            'value'   => 'on',
+            'checked' => $viewconfig->get('snp_display') eq 'off' ? 0 : 1,
+        },
   };
 
   ## Options per format
   my $fields_by_format = {
-    'rtf'   => {'hidden' => [qw(flank5_display flank3_display)]},
+    'rtf'   => {'hidden' => [qw(flank5_display flank3_display)], 'shown' => ['snp_display']},
     'fasta' => {'shown'  => [qw(strand extra masking flank5_display flank3_display)]},
   };
 
