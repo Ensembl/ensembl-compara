@@ -70,7 +70,7 @@ sub dumpTreeMultipleAlignmentToWorkdir {
       my $partial_genes = $sth->fetchall_arrayref;
       my $node1 = shift @$partial_genes;
       my $protein1 = $gene_tree->root->find_leaf_by_node_id($node1->[0]);
-      #print STDERR "node1 ", $node1->[0], " ", $protein1, "\n";
+      #print STDERR "node1 ", $node1->[0], " ", $protein1, " on root_id ", $gene_tree->root_id(), "\n";
       my $cdna = $protein1->alignment_string($seq_type);
       print STDERR "cnda $cdna\n" if $self->debug;
         # We start with the original cdna alignment string of the first gene, and
