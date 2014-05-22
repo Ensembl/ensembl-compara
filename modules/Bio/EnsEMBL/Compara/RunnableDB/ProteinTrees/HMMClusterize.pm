@@ -97,7 +97,7 @@ sub write_output {
 sub load_hmmer_classifications {
     my ($self) = @_;
     my $cluster_dir = $self->param('cluster_dir');
-
+    my $division    = $self->param('division'),
 
     my %allclusters = ();
     $self->param('allclusters', \%allclusters);
@@ -123,6 +123,7 @@ sub load_hmmer_classifications {
             $allclusters{$model_name}{members} = [keys %{$allclusters{$model_name}{members}}];
             # If it is not a singleton, we add the name of the model to store in the db
             $allclusters{$model_name}{model_name} = $model_name;
+            $allclusters{$model_name}{division} = $division if $division;
         }
     }
 }

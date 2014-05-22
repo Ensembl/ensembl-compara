@@ -863,6 +863,9 @@ sub pipeline_analyses {
             {
              -logic_name => 'HMM_clusterize',
              -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::HMMClusterize',
+             -parameters => {
+                 'division'     => $self->o('division'),
+             },
              -rc_name => '8Gb_job',
             },
 
