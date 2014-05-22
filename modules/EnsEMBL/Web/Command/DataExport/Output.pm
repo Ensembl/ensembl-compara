@@ -120,7 +120,7 @@ sub write_rtf {
 
     $rtf_style->{'\cf'      . $c++} = substr $class_to_style->{$class}[1]{'color'}, 1         
       if $class_to_style->{$class}[1]{'color'};    
-    $rtf_style->{'\chcbpat' . $c++} = substr $class_to_style->{$class}[1]{'background-color'}, 1 
+    $rtf_style->{'\chshdng0\chcbpat'.$c.'\cb'.$c++} = substr $class_to_style->{$class}[1]{'background-color'}, 1 
       if $class_to_style->{$class}[1]{'background-color'};
     $rtf_style->{'\b'}              = 1
       if $class_to_style->{$class}[1]{'font-weight'}     eq 'bold';
