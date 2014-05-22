@@ -20,8 +20,6 @@ package EnsEMBL::Web::Command::DataExport::Output;
 
 use strict;
 
-use EnsEMBL::Web::Controller;
-use EnsEMBL::Web::Builder;
 use EnsEMBL::Web::TmpFile::Text;
 
 use RTF::Writer;

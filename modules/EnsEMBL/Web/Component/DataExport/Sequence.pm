@@ -66,7 +66,6 @@ sub content {
 
   ## Get user's current settings
   my $viewconfig  = $hub->get_viewconfig($hub->param('component'), $hub->param('data_type'));
-  my $checklist = EnsEMBL::Web::Constants::FASTA_OPTIONS;
 
   my $settings = {
         'strand' => {

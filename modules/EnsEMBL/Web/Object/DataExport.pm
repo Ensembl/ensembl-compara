@@ -18,11 +18,8 @@ limitations under the License.
 
 package EnsEMBL::Web::Object::DataExport;
 
-<<<<<<< HEAD
 use EnsEMBL::Web::Controller;
 use EnsEMBL::Web::Builder;
-=======
->>>>>>> efe4c129eb79dd979f7eb90ceeb7a1da2a52c9d4
 use EnsEMBL::Web::TmpFile::Text;
 
 use strict;
@@ -33,7 +30,6 @@ use base qw(EnsEMBL::Web::Object);
 sub caption       { return 'Export';  }
 sub short_caption { return 'Export';  }
 
-<<<<<<< HEAD
 sub create_component {
 ## Create the component we need to get data from, to be sure we're
 ## using exactly the same data that the user sees 
@@ -62,8 +58,6 @@ sub create_component {
   return ($component, $error);
 }
 
-=======
->>>>>>> efe4c129eb79dd979f7eb90ceeb7a1da2a52c9d4
 sub handle_download {
   ## Method reached by url ensembl.org/Download/DataExport/
   my ($self, $r) = @_;
