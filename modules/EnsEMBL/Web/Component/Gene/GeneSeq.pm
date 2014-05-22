@@ -120,7 +120,7 @@ sub content_rtf {
   return $self->export_sequence($self->initialize($self->object->slice));
 }
 
-sub export_type     { return 'sequence'; }
+sub export_type     { return 'GeneSeq'; }
 
 sub get_export_data {
 ## Get data for export

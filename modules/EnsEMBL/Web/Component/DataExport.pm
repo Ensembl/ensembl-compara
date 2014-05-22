@@ -30,10 +30,9 @@ sub create_form {
   my $form      = $self->new_form({'id' => 'export', 'action' => $form_url, 'method' => 'post'});
 
   my $fieldset  = $form->add_fieldset; 
-  my %export_info = EnsEMBL::Web::Constants::EXPORT_TYPES;
   my $formats = [
       {'caption' => '-- Choose Format --', 'value' => ''},
-      map { 'value' => uc($_), 'caption' => uc($_), 'class' => "_stt__$_ _action_$_"},  @{$export_info{lc($hub->action)}}
+      map { 'value' => $_, 'caption' => $_, 'class' => "_stt__$_ _action_$_"}, sort keys %$fields_by_format
     ];
   my $compress = [
       {'caption' => 'Uncompressed', 'value' => '', 'checked' => 1},
@@ -83,26 +82,26 @@ sub create_form {
 
   ## Create all options forms, then show only one using jQuery
   while (my($format, $fields) = each (%$fields_by_format)) {
-    my $legend    = $fields->{'shown'} ? 'Settings' : '';
-    my $settings_fieldset  = $form->add_fieldset({'class' => '_stt_'.$format, 'legend' => $legend});
+    my $settings_fieldset  = $form->add_fieldset({'class' => '_stt_'.$format, 'legend' => 'Settings'});
 
     ## Add custom fields for this data type and format
-    while (my($key, $field_array) = each (%$fields)) {
-      my $i = 0;
-      foreach (@$field_array) {
-        ## IMPORTANT - use hashes here, not hashrefs, as Form code does weird stuff 
-        ## in background that alters the contents of $settings!
-        my %field_info = %{$settings->{$_}};
-        $field_info{'name'} = $_;
-        if ($key eq 'hidden') {
-          $settings_fieldset->add_hidden(\%field_info);
-        }
-        else {
-          $settings_fieldset->add_field(\%field_info);
-        }
-        $i++;
+    foreach (@$fields) {
+      my ($name, $value, $hide) = @$_;
+      ## IMPORTANT - use hashes here, not hashrefs, as Form code does weird stuff 
+      ## in background that alters the contents of $settings!
+      my %field_info = %{$settings->{$name}};
+      next unless keys %field_info;
+      $field_info{'name'} = $name;
+      ## Override general default with format-specific default if required
+      $field_info{'value'} = $value if defined($value);
+      if ($hide) {
+        $settings_fieldset->add_hidden(\%field_info);
+      }
+      else { 
+        $settings_fieldset->add_field(\%field_info);
       }
     }
+
     ## Doesn't matter that each fieldset has a submit button, as we only
     ## ever display one of them - and it forces user to choose format!
     $settings_fieldset->add_button({

@@ -31,14 +31,13 @@ sub caption {
 
 sub populate_tree {
   my $self  = shift;
-  my %export_info = EnsEMBL::Web::Constants::EXPORT_TYPES;
-  foreach my $type (keys %export_info) {
-    my $module  = ucfirst($type);
-    my $key     = $type.'_input';
-    $self->create_node($module, "$module Input", [$key, 'EnsEMBL::Web::Component::DataExport::'.$module]);
-  }
+
+  ## Input nodes
+  $self->create_node('GeneSeq', "Sequence Input", ['gene_seq', 'EnsEMBL::Web::Component::DataExport::GeneSeq']);
+
+  ## Output nodes
   $self->create_node('Output',  '', [], { 'command' => 'EnsEMBL::Web::Command::DataExport::Output'});
-  $self->create_node('Results', 'Results', ['Results', 'EnsEMBL::Web::Component::DataExport::Results']);
+  $self->create_node('Results', 'Results', ['results', 'EnsEMBL::Web::Component::DataExport::Results']);
   $self->create_node('Error', 'Output Error', ['error', 'EnsEMBL::Web::Component::DataExport::Error']);
 }
 

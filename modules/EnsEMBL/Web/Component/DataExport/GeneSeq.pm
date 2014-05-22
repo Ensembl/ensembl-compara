@@ -16,37 +16,19 @@ limitations under the License.
 
 =cut
 
-package EnsEMBL::Web::Component::DataExport::Sequence;
+package EnsEMBL::Web::Component::DataExport::GeneSeq;
 
 use strict;
 use warnings;
 
 use EnsEMBL::Web::Constants;
 
-use base qw(EnsEMBL::Web::Component::DataExport);
-
-sub _init {
-  my $self = shift;
-  $self->cacheable( 0 );
-  $self->ajaxable(  0 );
-  $self->configurable( 0 );
-}
+use base qw(EnsEMBL::Web::Component::DataExport::Sequence);
 
 sub content {
+  ### Options for gene sequence output
   my $self  = shift;
   my $hub   = $self->hub;
-
-  ### Options for sequence output
-  my $strands = [
-        { value => 'feature', caption => 'Feature strand' },
-        { value => '1',       caption => 'Forward strand' },
-        { value => '-1',      caption => 'Reverse strand' }
-      ];
-  my $masking = [
-          { value => 'unmasked',     caption => 'Unmasked' },
-          { value => 'soft_masked',  caption => 'Repeat Masked (soft)' },
-          { value => 'hard_masked',  caption => 'Repeat Masked (hard)' },
-      ];
 
   ## Configure sequence options - check if the gene's transcripts 
   ## have translations and/or UTRs
@@ -68,31 +50,25 @@ sub content {
   my $viewconfig  = $hub->get_viewconfig($hub->param('component'), $hub->param('data_type'));
 
   my $settings = {
-        'strand' => {
-            'label'   => 'Strand', 
-            'type'    => 'DropDown', 
-            'values'  => $strands 
+        'gene' => {
+            'label'   => 'Gene Sequence', 
+            'type'    => 'Checkbox', 
+            'value'   => 'on',
+            'checked' => 1, 
         },
         'flank5_display' => {
             'label'     => "5' Flanking sequence (upstream)",  
             'type'      => 'NonNegInt',  
-            'value'     => $viewconfig->get('flank5_display'),
         },
         'flank3_display' => { 
             'label'     => "3' Flanking sequence (downstream)", 
             'type'      => 'NonNegInt',  
-            'value'     => $viewconfig->get('flank3_display'),
         },
         'extra' => {
           'type'      => 'Checklist',
-          'label'     => 'Sequences to include',
+          'label'     => 'Additional sequences',
           'values'    => $checklist,
           'selectall' => 'off',
-        },
-        'masking' => {
-            'label' => 'Genomic sequence masking',   
-            'type'  => 'DropDown', 
-            'values' => $masking,
         },
         'snp_display' => {
             'label'   => 'Include variations',
@@ -104,8 +80,17 @@ sub content {
 
   ## Options per format
   my $fields_by_format = {
-    'rtf'   => {'hidden' => [qw(flank5_display flank3_display)], 'shown' => ['snp_display']},
-    'fasta' => {'shown'  => [qw(strand extra masking flank5_display flank3_display)]},
+    'RTF' => [
+                ['flank5_display',  $viewconfig->get('flank5_display')], 
+                ['flank3_display',  $viewconfig->get('flank3_display')],
+                ['snp_display'],
+              ],  
+    'FASTA' => [
+                ['gene'],
+                ['flank5_display', 0],
+                ['flank3_display', 0],
+                ['extra'],
+               ], 
   };
 
   ## Create settings form (comes with some default fields - see parent)
