@@ -271,7 +271,7 @@ sub write_fasta {
   my $stable_id   = ($data_type eq 'Gene' || $data_type eq 'LRG') ? $data_object->stable_id : '';
   my $slice       = $self->object->expand_slice($data_object->slice);
 
-  my $inc_sequence    = $hub->param('sequence');
+  my $sequence        = $hub->param('sequence');
   my $masking         = $hub->param('masking');
   my $seq_region_name = $data_object->seq_region_name;
   my $seq_region_type = $data_object->seq_region_type;
@@ -315,7 +315,7 @@ sub write_fasta {
     $self->print_line('');
   }
 
-  if ($masking) {
+  if ($sequence) {
     my $mask_flag = $masking eq 'soft_masked' ? 1 : $masking eq 'hard_masked' ? 0 : undef;
     my ($seq, $start, $end, $flank_slice);
 

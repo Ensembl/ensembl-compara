@@ -50,7 +50,7 @@ sub content {
   my $viewconfig  = $hub->get_viewconfig($hub->param('component'), $hub->param('data_type'));
 
   my $settings = {
-        'gene' => {
+        'sequence' => {
             'label'   => 'Gene Sequence', 
             'type'    => 'Checkbox', 
             'value'   => 'on',
@@ -86,7 +86,7 @@ sub content {
                 ['snp_display'],
               ],  
     'FASTA' => [
-                ['gene'],
+                ['sequence'],
                 ['flank5_display', 0],
                 ['flank3_display', 0],
                 ['extra'],
