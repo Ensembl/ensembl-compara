@@ -69,16 +69,16 @@ sub set_raxml_model {
     my $self = shift;
     if ( !$self->param('gene_tree')->has_tag('best_fit_model_family') ) {
 
-        return "PROTGAMMAWAG";
-
-        #return "PROTTJTT";
+        # LG was the most common best-model, but we dont have it in RAxML.
+        # We use the second most common one instead: JTT
+        return "PROTGAMMAJTT";
     }
     my $raxml_bestfit_model            = $self->param('gene_tree')->get_value_for_tag('best_fit_model_family');
     my $raxml_bestfit_model_parameters = $self->param('gene_tree')->get_value_for_tag('best_fit_model_parameter');
     my $raxml_model;
 
     if ( $raxml_bestfit_model !~ /^(DAYHOFF|DCMUT|JTT|MTREV|WAG|RTREV|CPREV|VT|BLOSUM62|MTMAM)$/ ) {
-        $raxml_bestfit_model = "WAG";
+        $raxml_bestfit_model = "JTT";
         $raxml_model = "PROTGAMMA" . $raxml_bestfit_model;
     }
     elsif ( $raxml_bestfit_model_parameters eq "" ) {
@@ -108,6 +108,8 @@ sub set_raxml_model {
     else {
         return "PROTCATJTT";
     }
+
+    print "\n\n>>>>>MODEL:|$raxml_bestfit_model|\n\n" if ( $self->debug );
 
     return $raxml_model;
 }

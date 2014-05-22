@@ -65,6 +65,7 @@ sub param_defaults {
 sub run {
     my $self = shift @_;
     $self->load_hmmer_classifications();
+    $self->load_extra_tags($self->param('extra_tags_file')) if $self->param('extra_tags_file');
 }
 
 
@@ -81,6 +82,7 @@ sub write_output {
 
 sub load_hmmer_classifications {
     my ($self) = @_;
+    my $division    = $self->param('division'),
 
     my %allclusters = ();
     $self->param('allclusters', \%allclusters);
@@ -101,8 +103,22 @@ sub load_hmmer_classifications {
             # If it is not a singleton, we add the name of the model to store in the db
             print STDERR Dumper $allclusters{$model_name};
             $allclusters{$model_name}{model_name} = $model_name;
+            $allclusters{$model_name}{division} = $division if $division;
         }
     }
+}
+
+sub load_extra_tags {
+    my ($self, $filename) = @_;
+    my $allclusters = $self->param('allclusters');
+
+    open my $file_tags, "<", $filename or die $!;
+    while (<$file_tags>) {
+        chomp;
+        my ($model_name, $tag, $value) = split /\t/;
+        $allclusters->{$model_name}{$tag} = $value if exists $allclusters->{$model_name};
+    }
+    close($file_tags);
 }
 
 1;

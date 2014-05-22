@@ -167,6 +167,9 @@ sub default_options {
        'panther_annotation_file'    => '/dev/null',
        #'panther_annotation_file' => '/nfs/nobackup2/ensemblgenomes/ckong/workspace/buildhmmprofiles/panther_Interpro_annot_v8_1/loose_dummy.txt',
 
+       # A file that holds additional tags we want to add to the HMM clusters (for instance: Best-fit models)
+        'extra_model_tags_file'     => undef,
+
     # hive_capacity values for some analyses:
         #'reuse_capacity'            =>   3,
         #'blast_factory_capacity'    =>  50,
@@ -1003,6 +1006,10 @@ sub core_pipeline_analyses {
             {
              -logic_name => 'HMM_clusterize',
              -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ComparaHMM::HMMClusterize',
+             -parameters => {
+                 'division'     => $self->o('division'),
+                 'extra_tags_file'  => $self->o('extra_model_tags_file'),
+             },
              -rc_name => '8Gb_job',
             },
 
