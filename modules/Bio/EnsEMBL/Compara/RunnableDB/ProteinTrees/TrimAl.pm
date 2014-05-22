@@ -75,8 +75,12 @@ sub param_defaults {
 sub get_tags {
     my $self = shift;
 
-    my $removed_columns = $self->parse_filtered_align( $self->param('alignment_file'), $self->param('output_file'), 1 );
-    return { 'removed_columns' => $removed_columns };
+    while (1) {
+        my $removed_columns = $self->parse_filtered_align( $self->param('alignment_file'), $self->param('output_file'), 1 );
+        return { 'removed_columns' => $removed_columns } unless $self->param('removed_members');
+        $self->param('gene_tree')->clear();
+        $self->run;
+    }
 }
 
 1;

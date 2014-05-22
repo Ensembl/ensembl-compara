@@ -514,6 +514,7 @@ sub parse_filtered_align {
     if ($allow_missing_members) {
         my $treenode_adaptor = $self->compara_dba->get_GeneTreeNodeAdaptor;
 
+        $self->param('removed_members', 0);
         foreach my $leaf (@{$self->param('gene_tree')->get_all_leaves()}) {
             next if exists $hash_filtered_strings{$leaf->{_tmp_name}};
 
@@ -527,6 +528,7 @@ sub parse_filtered_align {
             print $self->param('gene_tree_id').", $leaf->stable_id, $leaf->genome_db_id, \n" ;
             $sth->execute($leaf->node_id, $leaf->stable_id, $leaf->genome_db_id );
             $sth->finish;
+            $self->param('removed_members', $self->param('removed_members') + 1);
         }
     }
 
