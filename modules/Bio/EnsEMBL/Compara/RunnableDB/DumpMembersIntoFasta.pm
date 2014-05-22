@@ -41,7 +41,7 @@ Supported keys:
     'fasta_dir' => <directory_path>
         Location to write fasta file
 
-    'only_canonical' => 0/1 [default: 0]
+    'only_canonical' => 0/1 [default: 1]
         Do we dump all the members or only the canonical ones ?
 
 =cut
@@ -54,6 +54,14 @@ use strict;
 use Bio::EnsEMBL::Compara::MemberSet;
 
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
+
+
+
+sub param_defaults {
+    return {
+        'only_canonical'    => 1,
+    };
+}
 
 
 sub fetch_input {

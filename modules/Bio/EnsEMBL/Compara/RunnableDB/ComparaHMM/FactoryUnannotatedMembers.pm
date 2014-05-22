@@ -40,6 +40,9 @@ Supported keys:
    'step' => <number>
        How many sequences to write into each job. Default 100
 
+    'only_canonical' => 0/1 [default: 1]
+        Do we dump all the members or only the canonical ones ?
+
 =cut
 
 package Bio::EnsEMBL::Compara::RunnableDB::ComparaHMM::FactoryUnannotatedMembers;

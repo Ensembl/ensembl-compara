@@ -535,6 +535,7 @@ sub pipeline_analyses {
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::DumpMembersIntoFasta',
             -parameters => {
                  'fasta_dir'                 => $self->o('blastdb_dir'),
+                 'only_canonical'            => 0,
             },
              -batch_size    =>  20,  # they can be really, really short
             -flow_into => {
