@@ -195,9 +195,11 @@ sub write_rtf {
     colors => \@colours,
   );
 
+  ## Each paragraph is font size 20 (10pt), plus
+  ## we explicitly set font to default (0) for Mac compatibility
   for my $i (0..$#{$output[0]}) {
-    $rtf->paragraph(\'\fs20', $_->[$i]) for @output;
-    $rtf->paragraph(\'\fs20', $spacer)  if $spacer;
+    $rtf->paragraph(\'\fs20\f0', $_->[$i]) for @output;
+    $rtf->paragraph(\'\fs20\f0', $spacer)  if $spacer;
   }
  
   $rtf->close;
