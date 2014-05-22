@@ -51,24 +51,15 @@ sub EXPORT_FORMATS {
   );
 }
 
-sub EXPORT_TYPES {
-  return (
-    'sequence' => ['fasta', 'rtf'],
-    'features' => ['bed', 'gff'],
-    'tree'     => ['newick'],
-  );
-}
-
 sub FASTA_OPTIONS {
   return  (
-        { 'value' => 'cdna',       'caption' => 'cDNA',             'checked' => '1' },
-        { 'value' => 'coding',     'caption' => 'Coding sequence',  'checked' => '1' },
-        { 'value' => 'peptide',    'caption' => 'Peptide sequence', 'checked' => '1' },
-        { 'value' => 'utr5',       'caption' => "5' UTR",           'checked' => '1' },
-        { 'value' => 'utr3',       'caption' => "3' UTR",           'checked' => '1' },
-        { 'value' => 'exon',       'caption' => 'Exons',            'checked' => '1' },
-        { 'value' => 'intron',     'caption' => 'Introns',          'checked' => '1' },
-        { 'value' => 'sequence',   'caption' => 'Genomic sequence', 'checked' => '1' },
+        { 'value' => 'cdna',       'caption' => 'cDNA'},
+        { 'value' => 'coding',     'caption' => 'Coding sequence'},
+        { 'value' => 'peptide',    'caption' => 'Peptide sequence'},
+        { 'value' => 'utr5',       'caption' => "5' UTR"},
+        { 'value' => 'utr3',       'caption' => "3' UTR"},
+        { 'value' => 'exon',       'caption' => 'Exons'},
+        { 'value' => 'intron',     'caption' => 'Introns'},
   );
 }
 
