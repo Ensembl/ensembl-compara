@@ -14,7 +14,7 @@ EnsEMBL and BioPerl software:
 	* bioperl-run (version 1.6.9)                - Needed for the CodeML runnable/parser
 	* ensembl ("release/75" branch)              - Core API on which the rest of ensembl APIs are based
 	* ensembl-compara ("release/75" branch)      - Compara API (data objects, db adaptors, pipeline runnables, pipeline configuration)
-	* ensembl-hive ("stable" tag)                - The system to run pipelines
+	* ensembl-hive ("version/2.0" branch)        - The system to run pipelines. Note that the pipeline is also compatible with the version/2.1 branch
 
 Refer to the following pages for tips about installation and setting up the environment:
 	http://www.ensembl.org/info/docs/api/api_installation.html
