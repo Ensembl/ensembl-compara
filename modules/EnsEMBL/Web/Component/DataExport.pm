@@ -70,15 +70,17 @@ sub create_form {
       'name'    => 'component',
       'value'   => $hub->param('component'),
     },
-    {
-      'name'    => 'r',
-      'value'   => $hub->param('r'),
-    },
-    {
-      'name'    => 'g',
-      'value'   => $hub->param('g'),
-    },
   ]);
+  ## Don't forget the core params!
+  my @core_params = keys %{$hub->core_object('parameters')};
+  foreach (@core_params) {
+    $fieldset->add_hidden([
+      {
+        'name'    => $_,
+        'value'   => $hub->param($_),
+      },
+    ]);
+  }
 
   ## Create all options forms, then show only one using jQuery
   while (my($format, $fields) = each (%$fields_by_format)) {

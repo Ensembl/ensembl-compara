@@ -16,7 +16,7 @@ limitations under the License.
 
 =cut
 
-package EnsEMBL::Web::Component::DataExport::Sequence;
+package EnsEMBL::Web::Component::DataExport::ExonSeq;
 
 use strict;
 use warnings;
@@ -33,34 +33,22 @@ sub _init {
 }
 
 sub content {
+  ### Options for gene sequence output
   my $self  = shift;
   my $hub   = $self->hub;
 
-  ### Options for sequence output
-  my $strands = [
-        { value => 'feature', caption => 'Feature strand' },
-        { value => '1',       caption => 'Forward strand' },
-        { value => '-1',      caption => 'Reverse strand' }
-      ];
-  my $masking = [
-          { value => 'unmasked',     caption => 'Unmasked' },
-          { value => 'soft_masked',  caption => 'Repeat Masked (soft)' },
-          { value => 'hard_masked',  caption => 'Repeat Masked (hard)' },
-      ];
-
-  ## Configure sequence options - check if the gene's transcripts 
-  ## have translations and/or UTRs
-  my $options = { peptide => 0, utr3 => 0, utr5 => 0 };
+  ## Configure sequence options - check if the transcript 
+  ## has translations and/or UTRs
+  my $options = {};
   my ($component, $error) = $self->object->create_component;
-  foreach ($component->get_export_data) {
-    $options->{'peptide'} = 1 if $_->translation;
-    $options->{'utr3'}    = 1 if $_->three_prime_utr;
-    $options->{'utr5'}    = 1 if $_->five_prime_utr;
-    last if $options->{'peptide'} && $options->{'utr3'} && $options->{'utr5'};    
-  }
+  my $t = $component->get_export_data;
+  $options->{'utr3'}    = $t->three_prime_utr ? 1 : 0;
+  $options->{'utr5'}    = $t->five_prime_utr ? 1 : 0;
 
   my $checklist = [];
   foreach (EnsEMBL::Web::Constants::FASTA_OPTIONS) {
+    next if $_->{'value'} =~ 'coding|cdna|peptide';
+    $_->{'checked'} = 1;
     push @$checklist, $_ unless (exists $options->{$_->{'value'}} && $options->{$_->{'value'}} == 0); 
   }
 
@@ -68,44 +56,40 @@ sub content {
   my $viewconfig  = $hub->get_viewconfig($hub->param('component'), $hub->param('data_type'));
 
   my $settings = {
-        'strand' => {
-            'label'   => 'Strand', 
-            'type'    => 'DropDown', 
-            'values'  => $strands 
+        'sequence' => {
+            'label'   => 'Transcript Sequence', 
+            'type'    => 'Checkbox', 
+            'value'   => 'on',
+            'checked' => 1, 
         },
         'flank5_display' => {
             'label'     => "5' Flanking sequence (upstream)",  
             'type'      => 'NonNegInt',  
-            'value'     => $viewconfig->get('flank5_display'),
         },
         'flank3_display' => { 
             'label'     => "3' Flanking sequence (downstream)", 
             'type'      => 'NonNegInt',  
-            'value'     => $viewconfig->get('flank3_display'),
         },
         'extra' => {
           'type'      => 'Checklist',
-          'label'     => 'Sequences to include',
+          'label'     => 'Included sequences',
           'values'    => $checklist,
           'selectall' => 'off',
-        },
-        'masking' => {
-            'label' => 'Genomic sequence masking',   
-            'type'  => 'DropDown', 
-            'values' => $masking,
-        },
-        'snp_display' => {
-            'label'   => 'Include variations',
-            'type'    => 'Checkbox',
-            'value'   => 'on',
-            'checked' => $viewconfig->get('snp_display') eq 'off' ? 0 : 1,
         },
   };
 
   ## Options per format
   my $fields_by_format = {
-    'rtf'   => {'hidden' => [qw(flank5_display flank3_display)], 'shown' => ['snp_display']},
-    'fasta' => {'shown'  => [qw(strand extra masking flank5_display flank3_display)]},
+    'RTF' => [
+                ['extra'],
+              ],
+
+    'FASTA' => [
+                ['sequence'],
+                ['flank5_display', 0],
+                ['flank3_display', 0],
+                ['extra'],
+               ], 
   };
 
   ## Create settings form (comes with some default fields - see parent)
@@ -117,7 +101,7 @@ sub content {
 sub default_file_name {
   my $self = shift;
   my $name = $self->hub->species;
-  my $data_object = $self->hub->param('g') ? $self->hub->core_object('gene') : undef;
+  my $data_object = $self->hub->param('t') ? $self->hub->core_object('transcript') : undef;
   if ($data_object) {
     $name .= '_';
     my $stable_id = $data_object->stable_id;

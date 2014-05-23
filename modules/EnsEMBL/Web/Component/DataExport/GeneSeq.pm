@@ -23,7 +23,14 @@ use warnings;
 
 use EnsEMBL::Web::Constants;
 
-use base qw(EnsEMBL::Web::Component::DataExport::Sequence);
+use base qw(EnsEMBL::Web::Component::DataExport);
+
+sub _init {
+  my $self = shift;
+  $self->cacheable( 0 );
+  $self->ajaxable(  0 );
+  $self->configurable( 0 );
+}
 
 sub content {
   ### Options for gene sequence output

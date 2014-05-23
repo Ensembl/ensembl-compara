@@ -37,7 +37,10 @@ sub process {
   my %data_info = %{$hub->species_defs->DATA_FORMAT_INFO};
   my $format_info = $hub->species_defs->DATA_FORMAT_INFO->{lc($format)};
   my $file;
-  
+ 
+  ## Make filename safe
+  (my $filename = $hub->param('name')) =~ s/ |-/_/g;
+ 
   ## Compress file by default
   my $extension   = $format_info->{'ext'};
   my $compression = $hub->param('compression');
@@ -50,7 +53,7 @@ sub process {
   else {
     ## TODO - replace relevant parts with Bio::EnsEMBL::IO::Writer in due course
 
-    $file = EnsEMBL::Web::TmpFile::Text->new(extension => $extension, prefix => 'export', filename => $hub->param('name'), compress => $compress);
+    $file = EnsEMBL::Web::TmpFile::Text->new(extension => $extension, prefix => 'export', filename => $filename, compress => $compress);
     ## Ugly hack - stuff file into package hash so we can get at it later without passing as argument
     $self->{'__file'} = $file;
 
@@ -102,9 +105,8 @@ sub write_rtf {
   my ($self, $component) = @_;
   my $file = $self->{'__file'};
 
-  my $gene = $self->hub->core_object('gene');
   $self->hub->param('exon_display', 'on'); ## force exon highlighting on
-  my ($sequence, $config) = $component->initialize($gene->slice); 
+  my ($sequence, $config, $block_mode) = $component->initialize_export; 
 
   ## Configure RTF display
   my @colours        = (undef);  
@@ -133,6 +135,7 @@ sub write_rtf {
   }
 
   foreach my $lines (@$sequence) {
+    next unless @$lines;
     my ($section, $class, $previous_class, $count);
 
     $lines->[-1]{'end'} = 1;
@@ -195,11 +198,18 @@ sub write_rtf {
     colors => \@colours,
   );
 
-  ## Each paragraph is font size 20 (10pt), plus
+  ## Each paragraph is font size 24 (12pt), plus
   ## we explicitly set font to default (0) for Mac compatibility
-  for my $i (0..$#{$output[0]}) {
-    $rtf->paragraph(\'\fs20\f0', $_->[$i]) for @output;
-    $rtf->paragraph(\'\fs20\f0', $spacer)  if $spacer;
+  if ($block_mode) {
+    foreach my $block (@output) {
+      $rtf->paragraph(\'\fs24\f0', $_)      for @$block;
+      $rtf->paragraph(\'\fs24\f0', $spacer) if $spacer;
+    }
+  } else {
+    for my $i (0..$#{$output[0]}) {
+      $rtf->paragraph(\'\fs24\f0', $_->[$i]) for @output;
+      $rtf->paragraph(\'\fs24\f0', $spacer)  if $spacer;
+    }
   }
  
   $rtf->close;

@@ -102,6 +102,7 @@ sub handle_download {
       print $content;
     }
   }
+  else { warn ">>> PATH NOT RECOGNISED"; }
 }
 
 sub expand_slice {

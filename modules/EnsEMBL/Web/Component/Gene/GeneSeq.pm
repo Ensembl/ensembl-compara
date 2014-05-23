@@ -115,11 +115,6 @@ sub content_sub_slice {
   return $self->build_sequence($sequence, $config);
 }
 
-sub content_rtf {
-  my $self = shift;
-  return $self->export_sequence($self->initialize($self->object->slice));
-}
-
 sub export_type     { return 'GeneSeq'; }
 
 sub get_export_data {
@@ -130,6 +125,11 @@ sub get_export_data {
   return unless $gene;
   my @transcripts = @{$gene->get_all_transcripts||[]};
   return map {$_->Obj} @transcripts;
+}
+
+sub initialize_export {
+  my $self = shift;
+  return $self->initialize;
 }
 
 sub get_key {

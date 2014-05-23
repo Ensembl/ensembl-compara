@@ -27,7 +27,7 @@ sub initialize {
   my $hub        = $self->hub;
   my $only_exon  = $hub->param('oexon') eq 'yes'; # display only exons
   my $entry_exon = $hub->param('exon');
-  my $object     = $self->object;
+  my $object     = $self->object || $hub->core_object('transcript');
   my $transcript = $object->Obj;
   my @exons      = @{$transcript->get_all_Exons};
   my $strand     = $exons[0]->strand;
@@ -145,10 +145,37 @@ sub content {
     { data_table => 'no_sort', exportable => 1 }
   );
   
-  my $html = $self->tool_buttons . $table->render;
-     $html = sprintf '<div class="sequence_key">%s</div>%s', $self->get_key($config), $html;
+  my $html = $self->tool_buttons;
+  $html .= $self->export_button('Download this sequence');
+  $html .= sprintf '<div class="sequence_key">%s</div>%s', $self->get_key($config);
+  $html .= $table->render;
   
   return $html;
+}
+
+sub export_type     { return 'ExonSeq'; }
+
+sub get_export_data {
+## Get data for export
+  my $self = shift;
+  ## Fetch transcript explicitly, as we're probably coming from a DataExport URL
+  my $transcript = $self->hub->core_object('transcript');
+  return $transcript->Obj;
+}
+
+sub initialize_export {
+  my $self = shift;
+  my $hub = $self->hub;
+  ## Set some CGI parameters from the viewconfig
+  ## (because we don't want to have to set them in DataExport)
+  my $vc = $hub->get_viewconfig('Transcript', 'ExonsSpreadsheet');
+  my @params = qw(sscon snp_display flanking line_numbering);
+  foreach (@params) {
+    $hub->param($_, $vc->get($_));
+  }
+  my ($data, $config) = $self->initialize(1);
+  $config->{'v_space'} = "\n";
+  return ($data, $config, 1);
 }
 
 sub content_rtf {
@@ -297,8 +324,9 @@ sub get_flanking_sequence_data {
 
 sub add_variations {
   my ($self, $config, $slice, $sequence) = @_;
+  my $object = $self->object || $self->hub->core_object('transcript');
   my $variation_features    = $config->{'population'} ? $slice->get_all_VariationFeatures_by_Population($config->{'population'}, $config->{'min_frequency'}) : $slice->get_all_VariationFeatures;
-  my @transcript_variations = @{$self->hub->get_adaptor('get_TranscriptVariationAdaptor', 'variation')->fetch_all_by_VariationFeatures($variation_features, [ $self->object->Obj ])};
+  my @transcript_variations = @{$self->hub->get_adaptor('get_TranscriptVariationAdaptor', 'variation')->fetch_all_by_VariationFeatures($variation_features, [ $object->Obj ])};
      @transcript_variations = grep $_->variation_feature->length <= $self->{'snp_length_filter'}, @transcript_variations if $config->{'hide_long_snps'};
   my $length                = scalar @$sequence - 1;
   my (%href, %class);
