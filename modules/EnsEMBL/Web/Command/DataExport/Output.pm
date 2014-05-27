@@ -207,7 +207,7 @@ sub write_rtf {
     }
   } else {
     for my $i (0..$#{$output[0]}) {
-      $rtf->paragraph(\'\fs24\f0', $_->[$i]) for @output;
+      $rtf->paragraph(\'\fs20\f0', $_->[$i]) for @output;
       $rtf->paragraph(\'\fs24\f0', $spacer)  if $spacer;
     }
   }

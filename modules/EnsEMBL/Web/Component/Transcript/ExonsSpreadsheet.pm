@@ -155,14 +155,6 @@ sub content {
 
 sub export_type     { return 'ExonSeq'; }
 
-sub get_export_data {
-## Get data for export
-  my $self = shift;
-  ## Fetch transcript explicitly, as we're probably coming from a DataExport URL
-  my $transcript = $self->hub->core_object('transcript');
-  return $transcript->Obj;
-}
-
 sub initialize_export {
   my $self = shift;
   my $hub = $self->hub;

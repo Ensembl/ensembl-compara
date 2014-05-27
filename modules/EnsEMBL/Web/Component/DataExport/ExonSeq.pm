@@ -23,63 +23,22 @@ use warnings;
 
 use EnsEMBL::Web::Constants;
 
-use base qw(EnsEMBL::Web::Component::DataExport);
+use base qw(EnsEMBL::Web::Component::DataExport::Transcript);
 
-sub _init {
+sub configure_fasta {
   my $self = shift;
-  $self->cacheable( 0 );
-  $self->ajaxable(  0 );
-  $self->configurable( 0 );
-}
+  my @fasta = EnsEMBL::Web::Constants::FASTA_OPTIONS;
+  my @fasta_ok;
 
-sub content {
-  ### Options for gene sequence output
-  my $self  = shift;
-  my $hub   = $self->hub;
-
-  ## Configure sequence options - check if the transcript 
-  ## has translations and/or UTRs
-  my $options = {};
-  my ($component, $error) = $self->object->create_component;
-  my $t = $component->get_export_data;
-  $options->{'utr3'}    = $t->three_prime_utr ? 1 : 0;
-  $options->{'utr5'}    = $t->five_prime_utr ? 1 : 0;
-
-  my $checklist = [];
-  foreach (EnsEMBL::Web::Constants::FASTA_OPTIONS) {
-    next if $_->{'value'} =~ 'coding|cdna|peptide';
-    $_->{'checked'} = 1;
-    push @$checklist, $_ unless (exists $options->{$_->{'value'}} && $options->{$_->{'value'}} == 0); 
+  foreach (@fasta) {
+    push @fasta_ok, $_ unless $_->{'value'} =~ 'coding|cdna|peptide';
   }
 
-  ## Get user's current settings
-  my $viewconfig  = $hub->get_viewconfig($hub->param('component'), $hub->param('data_type'));
+  return @fasta_ok;
+}
 
-  my $settings = {
-        'sequence' => {
-            'label'   => 'Transcript Sequence', 
-            'type'    => 'Checkbox', 
-            'value'   => 'on',
-            'checked' => 1, 
-        },
-        'flank5_display' => {
-            'label'     => "5' Flanking sequence (upstream)",  
-            'type'      => 'NonNegInt',  
-        },
-        'flank3_display' => { 
-            'label'     => "3' Flanking sequence (downstream)", 
-            'type'      => 'NonNegInt',  
-        },
-        'extra' => {
-          'type'      => 'Checklist',
-          'label'     => 'Included sequences',
-          'values'    => $checklist,
-          'selectall' => 'off',
-        },
-  };
-
-  ## Options per format
-  my $fields_by_format = {
+sub configure_fields {
+  return {
     'RTF' => [
                 ['extra'],
               ],
@@ -89,27 +48,8 @@ sub content {
                 ['flank5_display', 0],
                 ['flank3_display', 0],
                 ['extra'],
-               ], 
+               ],
   };
-
-  ## Create settings form (comes with some default fields - see parent)
-  my $form = $self->create_form($settings, $fields_by_format);
-
-  return $form->render;
-}
-
-sub default_file_name {
-  my $self = shift;
-  my $name = $self->hub->species;
-  my $data_object = $self->hub->param('t') ? $self->hub->core_object('transcript') : undef;
-  if ($data_object) {
-    $name .= '_';
-    my $stable_id = $data_object->stable_id;
-    my ($disp_id) = $data_object->display_xref;
-    $name .= $disp_id || $stable_id;
-  }
-  $name .= '_sequence';
-  return $name;
 }
 
 1;

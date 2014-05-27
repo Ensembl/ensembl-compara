@@ -1204,7 +1204,7 @@ sub export_sequence {
     fonts  => [ 'Courier New' ],
     colors => \@colours,
   );
-  
+ 
   if ($block_mode) {
     foreach my $block (@output) {
       $rtf->paragraph(\'\fs20', $_)      for @$block;
