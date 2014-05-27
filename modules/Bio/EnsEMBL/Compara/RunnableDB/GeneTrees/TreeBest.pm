@@ -84,6 +84,7 @@ sub run_treebest_best {
 
     my $species_tree_file = $self->get_species_tree_file();
     my $max_diff_lk;
+    my $filtering_cutoff;
 
     while (1) {
 
@@ -94,6 +95,7 @@ sub run_treebest_best {
         $args .= sprintf(' -p %s', $self->param('intermediate_prefix')) if $self->param('intermediate_prefix');
         $args .= sprintf(' %s', $self->param('extra_args')) if $self->param('extra_args');
         $args .= sprintf(' -Z %f', $max_diff_lk) if $max_diff_lk;
+        $args .= sprintf(' -F %f', $filtering_cutoff) if $filtering_cutoff;
 
         my $cmd = $self->_get_alignment_filtering_cmd($args, $input_aln);
         my $run_cmd = $self->run_command($cmd);
@@ -111,6 +113,12 @@ sub run_treebest_best {
             $max_diff_lk = 1e-5 unless $max_diff_lk;
             $max_diff_lk *= 10;
             $self->warning("Lowering max_diff_lk to $max_diff_lk");
+        } elsif ($logfile =~ /The filtered alignment has 0 columns. Cannot build a tree/ and not ($self->param('extra_args') and $self->param('extra_args') =~ /-F /)) {
+            # Decrease the cutoff to remove columns (only in auto mode, i.e. when the user hasn't given a -F option)
+            # Although the default value in treebest is 11, we start directly at 6, and reduce by 1 at each iteration
+            $filtering_cutoff = 7 unless $filtering_cutoff;
+            $filtering_cutoff--;
+            $self->warning("Lowering filtering_cutoff to $filtering_cutoff");
         } else {
             $self->throw(sprintf("error running treebest [%s]: %d\n%s", $run_cmd->cmd, $run_cmd->exit_code, $logfile));
         }
