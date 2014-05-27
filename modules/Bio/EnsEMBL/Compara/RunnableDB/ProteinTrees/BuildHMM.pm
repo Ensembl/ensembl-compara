@@ -187,10 +187,32 @@ sub run_buildhmm {
 
     my $runtime_msec = $cmd_out->runtime_msec;
     if ($self->param_required('hmmer_version') eq '2') {
-        $cmd = sprintf('%s %s', $self->param('hmmcalibrate_exe'), $hmm_file);
-        my $cmd_out2 = $self->run_command($cmd);
-        die "Could not run hmmcalibrate: ", $cmd_out2->out if ($cmd_out2->exit_code);
-        $runtime_msec += $cmd_out2->runtime_msec
+        my $success = 0;
+        my $num;
+        do {
+            $cmd = join(' ',
+                $self->param('hmmcalibrate_exe'),
+                '--cpu 1',
+                $num ? sprintf(' --num %d', $num) : '',
+                $hmm_file);
+            my $cmd_out2 = $self->run_command($cmd);
+            if ($cmd_out2->exit_code) {
+                if ($cmd_out2->err =~ /fit failed; --num may be set too small/) {
+                    $num = 5000 unless $num; # default in hmmcalibrate
+                    $num *= 3;
+                    if ($num > 1e8) {
+                        $self->input_job->transient_error(0);
+                        die "Cannot calibrate the HMM (tried --num values up until 1e8)";
+                    }
+                    $self->warning("Increasing --num to $num");
+                } else {
+                    die sprintf("Could not run hmmcalibrate\n%s\n%s", $cmd_out2->out, $cmd_out2->err);
+                }
+            } else {
+                $success = 1;
+            }
+            $runtime_msec += $cmd_out2->runtime_msec
+        } until ($success);
     }
 
     $self->param('protein_tree')->store_tag('BuildHMM_runtime_msec', $runtime_msec);
