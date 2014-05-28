@@ -274,7 +274,7 @@ sub content {
   }
 
   ## Secondary structure (currently only non-coding RNAs)
-  if ($self->hub->database('compara') && $object->{'_availability'}{'can_r2r'}) {
+  if ($self->hub->database('compara') && $object->availability->{'can_r2r'}) {
     my $svg_path = $self->draw_structure($display_name, 1);
     my $html;
     if ($svg_path) {

@@ -39,8 +39,8 @@ sub content {
   my $common_name  = $species_defs->SPECIES_COMMON_NAME;
   my $display_name = $species_defs->SPECIES_SCIENTIFIC_NAME;
   
-  $self->{'icon'}     = qq{<img src="${img_url}24/%s.png" alt="" class="homepage-link" />};
-  $self->{'img_link'} = qq{<a class="nodeco _ht _ht_track" href="%s" title="%s"><img src="${img_url}96/%s.png" alt="" class="bordered" />%s</a>};
+  $self->{'icon'}     = qq(<img src="${img_url}24/%s.png" alt="" class="homepage-link" />);
+  $self->{'img_link'} = qq(<a class="nodeco _ht _ht_track" href="%s" title="%s"><img src="${img_url}96/%s.png" alt="" class="bordered" />%s</a>);
   
   return sprintf('
     <div class="column-wrapper">  
@@ -88,9 +88,9 @@ sub whats_new_text {
     my $changes = EnsEMBL::Web::DBSQL::ProductionAdaptor->new($hub)->fetch_changelog({ release => $species_defs->ENSEMBL_VERSION, species => $hub->species, limit => 3 });
     
     $html .= '<ul>';
-    $html .= qq{<li><a href="$news_url#change_$_->{'id'}" class="nodeco">$_->{'title'}</a></li>} for @$changes;
+    $html .= qq(<li><a href="$news_url#change_$_->{'id'}" class="nodeco">$_->{'title'}</a></li>) for @$changes;
     $html .= '</ul>';
-    $html .= qq{<div style="text-align:right;margin-top:-1em;padding-bottom:8px"><a href="$news_url" class="nodeco">More news</a>...</div>};
+    $html .= qq(<div style="text-align:right;margin-top:-1em;padding-bottom:8px"><a href="$news_url" class="nodeco">More news</a>...</div>);
   }
 
   return $html;
@@ -170,11 +170,11 @@ sub assembly_text {
     $html .= '<h3 style="color:#808080;padding-top:8px">Other assemblies</h3>';
     
     if (scalar @other_assemblies > 1) {
-      $html .= qq{<form action="/$species/redirect" method="get"><select name="url">};
-      $html .= qq{<option value="$_->{'url'}">$_->{'assembly'} $_->{'release'}</option>} for @other_assemblies;
+      $html .= qq(<form action="/$species/redirect" method="get"><select name="url">);
+      $html .= qq(<option value="$_->{'url'}">$_->{'assembly'} $_->{'release'}</option>) for @other_assemblies;
       $html .= '</select> <input type="submit" name="submit" class="fbutton" value="Go" /></form>';
     } else { 
-      $html .= qq{<ul><li><a href="$other_assemblies[0]{'url'}" class="nodeco">$other_assemblies[0]{'assembly'}</a> $other_assemblies[0]{'release'}</li></ul>};
+      $html .= qq(<ul><li><a href="$other_assemblies[0]{'url'}" class="nodeco">$other_assemblies[0]{'assembly'}</a> $other_assemblies[0]{'release'}</li></ul>);
     }
   }
 
@@ -222,11 +222,11 @@ sub genebuild_text {
     
     $hub->url({ type => 'UserData', action => 'UploadStableIDs', __clear => 1 }), sprintf($self->{'icon'}, 'tool'),
     
-    $species_defs->get_config('MULTI', 'ENSEMBL_VEGA')->{$species} ? qq{
+    $species_defs->get_config('MULTI', 'ENSEMBL_VEGA')->{$species} ? qq(
       <a href="http://vega.sanger.ac.uk/$species/" class="nodeco">
       <img src="/img/vega_small.gif" alt="Vega logo" style="float:left;margin-right:8px;margin-bottom:1em;width:83px;height:30px;vertical-align:center" title="Vega - Vertebrate Genome Annotation database" /></a>
       <p>Additional manual annotation can be found in <a href="http://vega.sanger.ac.uk/$species/" class="nodeco">Vega</a></p>
-    } : ''
+    ) : ''
   );
 }
 
@@ -262,12 +262,12 @@ sub compara_text {
 }
 
 sub variation_text {
-  my $self = shift;
-  my $hub  = $self->hub;
+  my $self          = shift;
+  my $hub           = $self->hub;
+  my $species_defs  = $hub->species_defs;
   my $html;
 
   if ($hub->database('variation')) {
-    my $species_defs = $hub->species_defs;
     my $sample_data  = $species_defs->SAMPLE_DATA;
     my $ftp          = $species_defs->ENSEMBL_FTP_URL;
        $html         = sprintf('
@@ -314,10 +314,12 @@ sub variation_text {
       <p>This species currently has no variation database. However you can process your own variants using the Variant Effect Predictor:</p>
     ';
   }
-  
+
+  my $new_vep = $species_defs->ENSEMBL_VEP_ENABLED;
   $html .= sprintf(
-    qq{<p><a href="%s" class="nodeco">$self->{'icon'}Variant Effect Predictor<img src="%svep_logo_sm.png" style="vertical-align:top;margin-left:12px" /></a></p>},
-    $hub->url({ type => 'Tools', action => 'VEP', __clear => 1 }),
+    qq(<p><a href="%s" class="%snodeco">$self->{'icon'}Variant Effect Predictor<img src="%svep_logo_sm.png" style="vertical-align:top;margin-left:12px" /></a></p>),
+    $hub->url({'__clear' => 1, $new_vep ? qw(type Tools action VEP) : qw(type UserData action UploadVariations)}),
+    $new_vep ? '' : 'modal_link ',
     'tool',
     $self->img_url
   );

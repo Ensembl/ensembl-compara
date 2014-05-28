@@ -37,9 +37,15 @@ sub new {
   });
 }
 
-sub entries :lvalue { $_[0]->{'entries'}; }
-sub active  :lvalue { $_[0]->{'active'};  }
-sub add_entry       { push @{shift->{'entries'}}, @_; }
+sub entries { return $_[0]->{'entries'}; }
+
+sub active {
+  my $self = shift;
+  $self->{'active'} = shift if @_;
+  return $self->{'active'};
+}
+
+sub add_entry { push @{shift->{'entries'}}, @_; }
 
 sub init_history {} # stub for users plugin
 

@@ -39,7 +39,7 @@ sub render {
   
   my %title = (
     dna       => 'Masked and unmasked genome sequences associated with the assembly (contigs, chromosomes etc.)',
-    cdna      => 'cDNA sequences for Ensembl or "ab initio" predicted genes',
+    cdna      => 'cDNA sequences for both Ensembl and "ab initio" predicted genes',
     cds       => 'Coding sequences for Ensembl or "ab initio" predicted genes',
     prot      => 'Protein sequences for Ensembl or "ab initio" predicted genes',
     rna       => 'Non-coding RNA gene predictions',
@@ -113,7 +113,7 @@ sub render {
 
     push @$rows, {
       fave    => $sp->{'favourite'} ? 'Y' : '',
-      species => sprintf('<b>%s</b><br /><i>%s</i>', $sp->{'common_name'}, $sp->{'sci_name'}),
+      species => sprintf('<b><a href="/%s/">%s</a></b><br /><i>%s</i>', $sp_dir, $sp->{'common_name'}, $sp->{'sci_name'}),
       dna     => sprintf('<a rel="external" title="%s" href="ftp://ftp.ensembl.org/pub/%s/fasta/%s/dna/">FASTA</a>',   $title{'dna'},     $rel, $sp_dir),
       cdna    => sprintf('<a rel="external" title="%s" href="ftp://ftp.ensembl.org/pub/%s/fasta/%s/cdna/">FASTA</a>',  $title{'cdna'},    $rel, $sp_dir),
       cds	  => sprintf('<a rel="external" title="%s" href="ftp://ftp.ensembl.org/pub/%s/fasta/%s/cds/">FASTA</a>',   $title{'cds'},     $rel, $sp_dir),
