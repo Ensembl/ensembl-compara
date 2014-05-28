@@ -21,6 +21,7 @@ package EnsEMBL::Web::Command::DataExport::Output;
 use strict;
 
 use EnsEMBL::Web::TmpFile::Text;
+use EnsEMBL::Web::Tools::RandomString qw(random_ticket);
 
 use RTF::Writer;
 
@@ -61,8 +62,11 @@ sub process {
   }
   else {
     ## TODO - replace relevant parts with Bio::EnsEMBL::IO::Writer in due course
+  
+    ## Have to explicitly set a random path if we want the filename to be human readable
+    my $random_dir = random_ticket;
+    $file = EnsEMBL::Web::TmpFile::Text->new(extension => $extension, prefix => 'export/'.$random_dir, filename => $filename, compress => $compress);
 
-    $file = EnsEMBL::Web::TmpFile::Text->new(extension => $extension, prefix => 'export', filename => $filename, compress => $compress);
     ## Ugly hack - stuff file into package hash so we can get at it later without passing as argument
     $self->{'__file'} = $file;
 
@@ -319,13 +323,14 @@ sub write_fasta {
 
     $intron_id = 1;
 
-    foreach (sort @selected_options) {
-      next unless exists $output->{$_};
+    foreach my $opt (sort @selected_options) {
+      next unless exists $output->{$opt};
 
-      my $o = $output->{$_}($transcript, $id, $type);
+      my $o = $output->{$opt}($transcript, $id, $type);
       next unless ref $o eq 'ARRAY';
 
       foreach (@$o) {
+        warn ">>> $opt = ".$_->[0];
         $self->print_line(">$_->[0]");
         $self->print_line($fasta) while $fasta = substr $_->[1], 0, 60, '';
       }
@@ -339,6 +344,7 @@ sub write_fasta {
     my ($seq, $start, $end, $flank_slice);
 
     $seq = defined $masking ? $slice->get_repeatmasked_seq(undef, $mask_flag)->seq : $slice->seq;
+    warn ">>> OUTPUTTING SEQUENCE FOR $seq_region_name";
     $self->print_line(">$seq_region_name dna:$seq_region_type $slice_name");
     $self->print_line($fasta) while $fasta = substr $seq, 0, 60, '';
   }
