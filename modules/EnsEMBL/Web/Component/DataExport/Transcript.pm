@@ -75,7 +75,7 @@ sub content {
           'type'      => 'Checklist',
           'label'     => 'Included sequences',
           'values'    => $checklist,
-          'selectall' => 'off',
+          'selectall' => 'on',
         },
   };
 
