@@ -34,6 +34,15 @@ sub process {
 
   my $error;
   my $format = $hub->param('format');
+
+  ## Clean up parameters to remove chosen format from name (see Component::DataExport)
+  foreach ($hub->param) {
+    if ($_ =~ /_$format$/) {
+      (my $clean = $_) =~ s/_$format//;
+      $hub->param($clean, $hub->param($_));
+    }
+  }
+
   my %data_info = %{$hub->species_defs->DATA_FORMAT_INFO};
   my $format_info = $hub->species_defs->DATA_FORMAT_INFO->{lc($format)};
   my $file;

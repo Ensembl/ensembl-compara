@@ -93,6 +93,8 @@ sub create_form {
       ## in background that alters the contents of $settings!
       my %field_info = %{$settings->{$name}};
       next unless keys %field_info;
+      ## Reset field name to include format, in case we have different defaults
+      $name .= '_'.$format;
       $field_info{'name'} = $name;
       ## Override general default with format-specific default if required
       $field_info{'value'} = $value if defined($value);
@@ -112,7 +114,6 @@ sub create_form {
       'value'   => 'Export',
     });
   }
-
 
   return $form;
 }
