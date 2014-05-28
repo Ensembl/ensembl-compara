@@ -122,7 +122,8 @@ sub init {
       __clear => 1
     })
   });
-  
+ 
+=pod 
   if ($object && $object->can_export) {
     $self->add_entry({
       caption => 'Export data',
@@ -137,6 +138,7 @@ sub init {
       title   => 'You cannot export data from this page'
     });
   }
+=cut
   
   if ($hub->user) {
     my $title = $controller->page->title;

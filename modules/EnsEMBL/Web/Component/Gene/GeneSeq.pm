@@ -64,7 +64,7 @@ sub content {
   my $species   = $hub->species;
   my $type      = $hub->type;
   my $site_type = ucfirst(lc $hub->species_defs->ENSEMBL_SITETYPE) || 'Ensembl';
-  my $html      = $self->tool_buttons(uc $slice->seq(1));
+  my $html; #      = $self->tool_buttons(uc $slice->seq(1));
  
   $html .= $self->export_button('Download this sequence');
  
@@ -130,6 +130,7 @@ sub get_export_data {
 sub initialize_export {
   my $self = shift;
   my $gene = $self->hub->core_object('gene');
+  warn ">>> SLICE ".$gene->slice;
   return $self->initialize($gene->slice);
 }
 
