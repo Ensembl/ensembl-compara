@@ -72,11 +72,11 @@ sub new {
   ## Useful paths 
   $self->{'random_path'}  = $random_path;
   $self->{'location'}     = sprintf('%s/%s/%s%s', 
-                                      $hub->species_defs->ENSEMBL_TMP_DIR, 
+                                      $self->{'hub'}->species_defs->ENSEMBL_TMP_DIR, 
                                       $prefix, $random_path, $filename,
                                     );
   $self->{'url'}          = sprintf('%s/%s/%s%s', 
-                                      $hub->species_defs->ENSEMBL_TMP_URL, 
+                                      $self->{'hub'}->species_defs->ENSEMBL_TMP_URL, 
                                       $prefix, $random_path, $filename,
                                     ); 
 
@@ -115,7 +115,7 @@ sub is_compressed {
 }
 
 sub fetch {
-### Get entire content of file for download (i.e. not uncompressed)
+### Get raw content of file (e.g. for download, hence not uncompressed)
 ### @return String (entire file)
   my $self = shift;
   my $content;
@@ -179,6 +179,7 @@ sub preview {
           push @$lines, $_;
           last if $count == $limit;
         }
+        return;
       }
     );
   };
@@ -192,16 +193,60 @@ sub preview {
 sub exists {
 ### Check if a file of this name exists
 ### @return Boolean
+  my $self = shift;
+  return -e $self->location && -f $self->location;
 }
 
 sub write {
 ### Write entire file
-### @return String (error message) or undef
+### @param Arrayref - lines of file
+### @return Void
+  my ($self, $lines) = @_;
+
+  unless (ref($lines) eq 'ARRAY') {
+    $self->{'error'} = 'Input must be an arrayref!';
+    return;
+  }
+  
+  my $method = $self->is_compressed ? 'gz_work_with_file' : 'work_with_file';
+
+  eval { 
+    &$method($self->location, 'w+',
+      sub {
+        my $fh = shift;
+        foreach (@$lines) {
+          print $fh, $_;
+        }
+        return;
+      }
+    );
+  };
+
+  if ($@) {
+    $self->{'error'} = $@;
+  }
 }
 
 sub write_line {
-### Write a single line to an open file
-### @return String (error message) or undef
+### Write (append) a single line to a file
+### @param String
+### @return Void 
+  my ($self, $line) = @_;
+  my $method = $self->is_compressed ? 'gz_work_with_file' : 'work_with_file';
+
+  eval { 
+    &$method($self->location, 'a',
+      sub {
+        my $fh = shift;
+        print $fh, $line;
+        return;
+      }
+    );
+  };
+
+  if ($@) {
+    $self->{'error'} = $@;
+  }
 }
 
 
