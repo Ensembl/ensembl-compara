@@ -129,7 +129,8 @@ sub get_export_data {
 
 sub initialize_export {
   my $self = shift;
-  return $self->initialize;
+  my $gene = $self->hub->core_object('gene');
+  return $self->initialize($gene->slice);
 }
 
 sub get_key {
