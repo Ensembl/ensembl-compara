@@ -24,33 +24,35 @@ use Bio::EnsEMBL::Utils::IO qw/:all/;
 use EnsEMBL::Web::Tools::RandomString qw(random_ticket random_string);
 
 ### Replacement for EnsEMBL::Web::TmpFile, using the file-handling
-### functionality in the core API
+### functionality in the core API to provide error reporting
+
+### STATUS: Under development
 
 ### N.B. Will probably require subclass for images
 
 sub new {
 ### @constructor
-### @param Hashref of arguments 
+### @param Hash of arguments 
 ###  - hub - for getting TMP_DIR location, etc
 ###  - prefix - top-level directory
 ###  - name (optional)
 ###  - extension - file extension
-###  - compress (optional)
+###  - compress (optional) Boolean
 ### @return EnsEMBL::Web::File
-  my ($class, $args) = @_;
+  my ($class, %args) = @_;
 
-  my $self = $args;
+  my $self = \%args;
+  $self->{'error'} = undef;
 
   ## Create a filename if none given (not user-friendly, but...whatever)
-  my $name = $args->{'name'} || random_string;
+  my $name = $self->{'name'} || random_string;
   ## Make sure it's a valid file name!
-  ($args->{'name'} = $name) =~ s/[^\w]/_/g;
+  ($self->{'name'} = $name) =~ s/[^\w]/_/g;
 
   ### Web-generated files go into a random directory
   my @random_chars  = split(//, random_ticket);
   my @pattern  = qw(3 1 1 15);
   my $random_path;
-  
   foreach (@pattern) {
     for (my $i = 0; $i < $_; $i++) {
       $random_path .= shift @random_chars;
@@ -58,9 +60,16 @@ sub new {
     $random_path .= '/';
   }
 
+  ## Sort out filename
+  $self->{'extension'} ||= 'txt';
+  (my $ext = $self->{'extension'}) =~ s/\.gz//;
+  $self->{'extension'}    = $ext;
+  my $filename            = $name.'.'.$extension;
+  $filename               .= '.gz' if $self->{'compress'};
+  $self->{'filename'}     = $filename;
+
   ## Useful paths 
   $self->{'random_path'}  = $random_path;
-  $self->{'filename'}     = $name.'.'.$extension;
   $self->{'location'}     = sprintf('%s/%s/%s%s', 
                                       $hub->species_defs->ENSEMBL_TMP_DIR, 
                                       $prefix, $random_path, $filename,
@@ -92,33 +101,90 @@ sub url {
   return $self->{'url'};
 }
 
+sub error {
+### a
+  my $self = shift;
+  return $self->{'error'};
+}
+
+sub is_compressed {
+### a
+  my $self = shift;
+  return $self->{'compress'} ? 1 : 0;
+}
 
 sub read {
+### Get entire content of file, uncompressed
+### @return String (entire file)
+  my $self = shift;
+  my $content;
+  if ($self->is_compressed) {
+    eval { $content = gz_slurp($self->location) }; 
+  }
+  else {
+    eval { $content = slurp($self->location) }; 
+  }
+  if ($@) {
+    $self->{'error'} = $@;
+  }
+  return $content;
+}
+
+sub fetch {
+### Get entire content of file for download (e.g. not uncompressed)
+### @return String (entire file)
+  my $self = shift;
+  my $content;
+  eval { $content = slurp($self->location) }; 
+  if ($@) {
+    $self->{'error'} = $@;
+  }
+  return $content;
+}
+
+sub read_lines {
 ### Get entire content of file
 ### @return Arrayref (lines of file)
   my $self = shift;
-  return slurp_to_array($self->location); 
+  my $content = [];
+  if ($self->is_compressed) {
+    eval { $content = gz_slurp_to_array($self->location) }; 
+  }
+  else {
+    eval { $content = slurp_to_array($self->location) }; 
+  }
+  if ($@) {
+    $self->{'error'} = $@;
+  }
+  return $content;
 }
 
 sub preview {
 ### Get n lines of a file, e.g. for a web preview
-### @return Arrayref (lines of file)
+### @param Integer - number of lines required (default is 10)
+### @return Arrayref (n lines of file)
   my ($self, $limit) = @_;
   $limit ||= 10;
   my $count = 0;
   my $lines = [];
+  my $method = $self->is_compressed ? 'gz_work_with_file' : 'work_with_file';
 
-  work_with_file($self->location, 'r',
-    sub {
-      my $fh = shift;
-      while (<$fh>) {
-        $count++;
-        push @$lines, $_;
-        last if $count == $limit;
+  eval { 
+    &$method($self->location, 'r',
+      sub {
+        my $fh = shift;
+        while (<$fh>) {
+          $count++;
+          push @$lines, $_;
+          last if $count == $limit;
+        }
       }
-    }
-  );
+    );
+  };
 
+  if ($@) {
+    $self->{'error'} = $@;
+  }
   return $lines; 
 }
 
