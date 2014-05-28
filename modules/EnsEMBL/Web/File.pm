@@ -62,7 +62,8 @@ sub new {
 
   ## Sort out filename
   $self->{'extension'} ||= 'txt';
-  (my $ext = $self->{'extension'}) =~ s/\.gz//;
+  ## Allow for atypical file extensions such as gff3 or bedGraph
+  (my $ext = $self->{'extension'}) =~ s/\.?([a-zA-Z0-9]+)[\.gz]?/$1/;
   $self->{'extension'}    = $ext;
   my $filename            = $name.'.'.$extension;
   $filename               .= '.gz' if $self->{'compress'};
@@ -113,6 +114,18 @@ sub is_compressed {
   return $self->{'compress'} ? 1 : 0;
 }
 
+sub fetch {
+### Get entire content of file for download (i.e. not uncompressed)
+### @return String (entire file)
+  my $self = shift;
+  my $content;
+  eval { $content = slurp($self->location) }; 
+  if ($@) {
+    $self->{'error'} = $@;
+  }
+  return $content;
+}
+
 sub read {
 ### Get entire content of file, uncompressed
 ### @return String (entire file)
@@ -130,21 +143,9 @@ sub read {
   return $content;
 }
 
-sub fetch {
-### Get entire content of file for download (e.g. not uncompressed)
-### @return String (entire file)
-  my $self = shift;
-  my $content;
-  eval { $content = slurp($self->location) }; 
-  if ($@) {
-    $self->{'error'} = $@;
-  }
-  return $content;
-}
-
 sub read_lines {
-### Get entire content of file
-### @return Arrayref (lines of file)
+### Get entire content of file as separate lines
+### @return Arrayref
   my $self = shift;
   my $content = [];
   if ($self->is_compressed) {
