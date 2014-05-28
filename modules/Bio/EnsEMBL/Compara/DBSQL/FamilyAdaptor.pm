@@ -166,8 +166,7 @@ sub fetch_by_Member_source_stable_id { ## DEPRECATED
               if set to 1, wildcards are added and the search is a slower LIKE search
  Example    : $fams = $FamilyAdaptor->fetch_by_description_with_wildcards('REDUCTASE',1);
  Description: simplistic substring searching on the description to get the families
-              matching the description. (The search is currently case-insensitive;
-              this may change if SPTR changes to case-preservation)
+              matching the description. The search is currently case-insensitive.
  Returntype : an array reference of Bio::EnsEMBL::Compara::Family objects
  Exceptions : none
  Caller     : general
@@ -180,10 +179,12 @@ sub fetch_by_description_with_wildcards{
     my $constraint;
 
     if ($wildcard) {
-      $constraint = "f.description LIKE '"."%"."\U$desc"."%"."'";
+      $constraint = 'f.description LIKE ?';
+      $self->bind_param_generic_fetch(sprintf('%%%s%%',$desc), SQL_VARCHAR);
     }
     else {
-      $constraint = "f.description = '$desc'";
+      $constraint = 'f.description = ?';
+      $self->bind_param_generic_fetch($desc, SQL_VARCHAR);
     }
 
     return $self->generic_fetch($constraint);

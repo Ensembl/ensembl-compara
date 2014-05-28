@@ -170,8 +170,8 @@ sub delete {
 
     assert_ref_or_dbID($aln, 'Bio::EnsEMBL::Compara::AlignedMemberSet', 'aln');
     my $dbID = ref($aln) ? $aln->dbID : $aln;
-    $self->dbc->do("DELETE FROM gene_align_member WHERE gene_align_id = $dbID");
-    $self->dbc->do("DELETE FROM gene_align        WHERE gene_align_id = $dbID");
+    $self->dbc->do('DELETE FROM gene_align_member WHERE gene_align_id = ?', undef, $dbID);
+    $self->dbc->do('DELETE FROM gene_align        WHERE gene_align_id = ?', undef, $dbID);
 }
 
 1;
