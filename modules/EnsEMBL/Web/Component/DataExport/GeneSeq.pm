@@ -78,7 +78,7 @@ sub content {
           'selectall' => 'off',
         },
         'snp_display' => {
-            'label'   => 'Include variations',
+            'label'   => 'Include sequence variants',
             'type'    => 'Checkbox',
             'value'   => 'on',
             'checked' => $viewconfig->get('snp_display') eq 'off' ? 0 : 1,
