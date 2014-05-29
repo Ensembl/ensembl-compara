@@ -36,33 +36,55 @@ sub content {
   my $self  = shift;
   my $hub   = $self->hub;
 
-  my $format    = $hub->param('format');
+  my $format      = $hub->param('format');
+  my $prefix      = $hub->param('prefix');
+  my $compress    = $hub->param('compression') ? 1 : 0;
   my $html;
 
-  unless ($format eq 'RTF') {
-    my $file = EnsEMBL::Web::TmpFile::Text->new(filename => $hub->param('file'), 'prefix' => 'export');
-    if ($file) {
-      $html .= '<h2>File preview</h2><div class="code"><pre style="color:#333">';
-      my $i = 0;
-      ### This is really not efficient, but can't see how to slurp a TmpFile!
-      foreach my $line (split /\R/, $file->content) {
-        last if $i > 9;
-        $html .= "$line\n";
-        $i++;
-      }
-      $html .= '</pre></div>';
-    }
-  }
-
   $html .= sprintf(
-            '<h2 style="margin-top:1em">Download</h2><a href="/Download/DataExport?file=%s;prefix=export;format=%s;ext=%s;compression=%s">Download your %s file</a>', 
+            '<h2>Download</h2><a href="/Download/DataExport?file=%s;prefix=%s;format=%s;ext=%s;compression=%s">Download your %s file</a>', 
               $hub->param('file'), 
+              $prefix,
               lc($format), 
               $hub->param('ext'),
               $hub->param('compression'),
               $format,
             );
 
+  unless ($format eq 'RTF') {
+    my $file = EnsEMBL::Web::TmpFile::Text->new(filename => $hub->param('file'), 'prefix' => $prefix, 'compress' => $compress);
+    if ($file) {
+      $html .= '<h2 style="margin-top:1em">File preview</h2><div class="code"><pre style="color:#333">';
+      $html .= $file->content;
+      $html .= '</pre></div>';
+    }
+  }
+
+=pod
+  ## Hidden form taking you back to the beginning
+  my $form_url  = sprintf('/%s/DataExport/%s', $hub->species, $hub->param('export_action'));
+  my $form      = $self->new_form({'id' => 'export', 'action' => $form_url, 'method' => 'post'});
+  my $fieldset  = $form->add_fieldset;
+
+  foreach ($hub->param) {
+    my $info = {'name' => $_, 'value' => $hub->param($_)};
+    my @core_params = keys %{$hub->core_object('parameters')};
+    push @core_params, qw(name format compression data_type component export_action);
+    unless (grep @core_params, $_) {
+      $info->{'name'} .= '_'.$hub->param('format');
+    }
+    $fieldset->add_hidden($info);
+  }
+
+  $fieldset->add_button({
+      'type'    => 'Submit',
+      'name'    => 'submit',
+      'value'   => 'Back',
+    });
+
+
+  $html .= $form->render;
+=cut
   return $html;
 }
 

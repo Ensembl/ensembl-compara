@@ -57,11 +57,11 @@ sub content {
   my $viewconfig  = $hub->get_viewconfig($hub->param('component'), $hub->param('data_type'));
 
   my $settings = {
-        'sequence' => {
-            'label'   => 'Gene Sequence', 
-            'type'    => 'Checkbox', 
-            'value'   => 'on',
-            'checked' => 1, 
+        'extra' => {
+          'type'      => 'Checklist',
+          'label'     => 'Sequences to export',
+          'values'    => $checklist,
+          'selectall' => 'off',
         },
         'flank5_display' => {
             'label'     => "5' Flanking sequence (upstream)",  
@@ -70,12 +70,6 @@ sub content {
         'flank3_display' => { 
             'label'     => "3' Flanking sequence (downstream)", 
             'type'      => 'NonNegInt',  
-        },
-        'extra' => {
-          'type'      => 'Checklist',
-          'label'     => 'Additional sequences',
-          'values'    => $checklist,
-          'selectall' => 'off',
         },
         'snp_display' => {
             'label'   => 'Include sequence variants',
@@ -93,10 +87,9 @@ sub content {
                 ['snp_display'],
               ],  
     'FASTA' => [
-                ['sequence'],
+                ['extra'],
                 ['flank5_display', 0],
                 ['flank3_display', 0],
-                ['extra'],
                ], 
   };
 

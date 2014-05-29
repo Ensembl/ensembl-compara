@@ -100,7 +100,7 @@ sub handle_download {
     my $mime_type = $mime_types{$compression} || $mime_types{$format} || 'text/plain';
     my $compress = $compression ? 1 : 0;
 
-    my $tmp_dir = $hub->species_defs->ENSEMBL_TMP_DIR.'/'.$prefix.'/';
+    #my $tmp_dir = $hub->species_defs->ENSEMBL_TMP_DIR.'/'.$prefix.'/';
     my %params = (filename => $file, prefix => $prefix);
     if ($compress) {
       $params{'compress'} = $compress;

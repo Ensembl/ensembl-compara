@@ -40,6 +40,11 @@ sub create_form {
   my ($self, $settings, $fields_by_format) = @_;
   my $hub  = $self->hub;
 
+  my $format_label = {
+    'RTF'   => 'RTF (Word-compatible)',
+    'FASTA' => 'FASTA',
+  };
+
   my $form_url  = sprintf('/%s/DataExport/Output', $hub->species);
   my $form      = $self->new_form({'id' => 'export', 'action' => $form_url, 'method' => 'post'});
 
@@ -47,7 +52,7 @@ sub create_form {
   my $fieldset  = $form->add_fieldset; 
   my $formats = [
       {'caption' => '-- Choose Format --', 'value' => ''},
-      map { 'value' => $_, 'caption' => $_, 'class' => "_stt__$_ _action_$_"}, sort keys %$fields_by_format
+      map { 'value' => $_, 'caption' => $format_label->{$_}, 'class' => "_stt__$_ _action_$_"}, sort keys %$fields_by_format
     ];
   my $compress = [
       {'caption' => 'Uncompressed', 'value' => '', 'checked' => 1},
@@ -85,6 +90,10 @@ sub create_form {
     {
       'name'    => 'component',
       'value'   => $hub->param('component'),
+    },
+    {
+      'name'    => 'export_action',
+      'value'   => $hub->action,
     },
   ]);
   ## Don't forget the core params!

@@ -37,53 +37,61 @@ sub process {
   my $format = $hub->param('format');
 
   ## Clean up parameters to remove chosen format from name (see Component::DataExport)
+  ## and also check that user has actually selected some output options
+  my $setup_ok;
   foreach ($hub->param) {
     if ($_ =~ /_$format$/) {
+      $setup_ok = 1 if $hub->param($_);
       (my $clean = $_) =~ s/_$format//;
       $hub->param($clean, $hub->param($_));
     }
   }
 
-  my %data_info = %{$hub->species_defs->DATA_FORMAT_INFO};
-  my $format_info = $hub->species_defs->DATA_FORMAT_INFO->{lc($format)};
-  my $file;
- 
-  ## Make filename safe
-  (my $filename = $hub->param('name')) =~ s/ |-/_/g;
- 
-  ## Compress file by default
-  my $extension   = $format_info->{'ext'};
-  my $compression = $hub->param('compression');
-  my $compress    = $compression ? 1 : 0;
-  $extension   .= '.'.$compression if $compress;
-
-  if (!$format_info) {
-    $error = 'Format not recognised';
+  my ($file, $filename, $random_dir, $extension, $compression);
+  if (!$setup_ok) {
+    $error = 'No output options selected.';
   }
   else {
-    ## TODO - replace relevant parts with Bio::EnsEMBL::IO::Writer in due course
-  
-    ## Have to explicitly set a random path if we want the filename to be human readable
-    my $random_dir = random_ticket;
-    $file = EnsEMBL::Web::TmpFile::Text->new(extension => $extension, prefix => 'export/'.$random_dir, filename => $filename, compress => $compress);
+    my %data_info = %{$hub->species_defs->DATA_FORMAT_INFO};
+    my $format_info = $hub->species_defs->DATA_FORMAT_INFO->{lc($format)};
+ 
+    ## Make filename safe
+    ($filename = $hub->param('name')) =~ s/ |-/_/g;
+ 
+    ## Compress file by default
+    $extension   = $format_info->{'ext'};
+    $compression = $hub->param('compression');
+    my $compress    = $compression ? 1 : 0;
+    $extension   .= '.'.$compression if $compress;
+    $random_dir = random_ticket;
 
-    ## Ugly hack - stuff file into package hash so we can get at it later without passing as argument
-    $self->{'__file'} = $file;
-
-    ## Create the component we need to get data from 
-    my $component;
-    ($component, $error) = $self->object->create_component;
-
-    unless ($error) {
-      ## Write data to output file in desired format
-      my $write_method = 'write_'.lc($format);
-      if ($self->can($write_method)) {
-        $error = $self->$write_method($component);
-      }
-      else {
-        $error = 'Output not implemented for format '.$format;
-      }
+    if (!$format_info) {
+      $error = 'Format not recognised';
     }
+    else {
+      ## TODO - replace relevant parts with Bio::EnsEMBL::IO::Writer in due course
+  
+      ## Have to explicitly set a random path if we want the filename to be human readable
+      $file = EnsEMBL::Web::TmpFile::Text->new(extension => $extension, prefix => 'export/'.$random_dir, filename => $filename, compress => $compress);
+
+      ## Ugly hack - stuff file into package hash so we can get at it later without passing as argument
+      $self->{'__file'} = $file;
+
+      ## Create the component we need to get data from 
+      my $component;
+      ($component, $error) = $self->object->create_component;
+
+      unless ($error) {
+        ## Write data to output file in desired format
+        my $write_method = 'write_'.lc($format);
+        if ($self->can($write_method)) {
+          $error = $self->$write_method($component);
+        }
+        else {
+          $error = 'Output not implemented for format '.$format;
+        }
+      }
+    } 
   }
 
   if ($error) {
@@ -91,10 +99,18 @@ sub process {
     $url_params->{'action'} = 'Error';
   }
   else {
-    $url_params->{'file'}         = $file->filename;
-    $url_params->{'format'}       = $format;
-    $url_params->{'ext'}          = $extension;
-    $url_params->{'compression'}  = $compression;
+    ## Parameters for file download
+    $url_params->{'file'}           = $file->filename;
+    $url_params->{'format'}         = $format;
+    $url_params->{'prefix'}         = 'export/'.$random_dir;
+    $url_params->{'ext'}            = $extension;
+    $url_params->{'compression'}    = $compression;
+    ## Also pass parameters needed for Back button to work
+    my @core_params = keys %{$hub->core_object('parameters')};
+    push @core_params, qw(export_action data_type component);
+    foreach (@core_params) {
+      $url_params->{$_} = $hub->param($_);
+    }
   }  
 
   $self->ajax_redirect($hub->url($url_params));
@@ -294,7 +310,6 @@ sub write_fasta {
   my $stable_id   = ($data_type eq 'Gene' || $data_type eq 'LRG') ? $data_object->stable_id : '';
   my $slice       = $self->object->expand_slice($data_object->slice);
 
-  my $sequence        = $hub->param('sequence');
   my $masking         = $hub->param('masking');
   my $seq_region_name = $data_object->seq_region_name;
   my $seq_region_type = $data_object->seq_region_type;
@@ -316,6 +331,7 @@ sub write_fasta {
 
   my $options = EnsEMBL::Web::Constants::FASTA_OPTIONS;
   my @selected_options = $hub->param('extra');
+  my $sequence = grep /sequence/, @selected_options;
 
   foreach my $transcript (@data) {
     my $id         = ($stable_id ? "$stable_id:" : '') . $transcript->stable_id;
@@ -324,13 +340,13 @@ sub write_fasta {
     $intron_id = 1;
 
     foreach my $opt (sort @selected_options) {
+      next if $opt eq 'sequence';
       next unless exists $output->{$opt};
 
       my $o = $output->{$opt}($transcript, $id, $type);
       next unless ref $o eq 'ARRAY';
 
       foreach (@$o) {
-        warn ">>> $opt = ".$_->[0];
         $self->print_line(">$_->[0]");
         $self->print_line($fasta) while $fasta = substr $_->[1], 0, 60, '';
       }
@@ -344,7 +360,6 @@ sub write_fasta {
     my ($seq, $start, $end, $flank_slice);
 
     $seq = defined $masking ? $slice->get_repeatmasked_seq(undef, $mask_flag)->seq : $slice->seq;
-    warn ">>> OUTPUTTING SEQUENCE FOR $seq_region_name";
     $self->print_line(">$seq_region_name dna:$seq_region_type $slice_name");
     $self->print_line($fasta) while $fasta = substr $seq, 0, 60, '';
   }

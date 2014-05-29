@@ -54,12 +54,13 @@ sub EXPORT_FORMATS {
 sub FASTA_OPTIONS {
   return  (
         { 'value' => 'cdna',       'caption' => 'cDNA (transcripts)'},
-        { 'value' => 'coding',     'caption' => 'Protein-coding sequence (codons)'},
-        { 'value' => 'peptide',    'caption' => 'Protein sequence (amino acids)'},
+        { 'value' => 'coding',     'caption' => 'Coding sequence (CDS)'},
+        { 'value' => 'peptide',    'caption' => 'Amino acid sequence'},
         { 'value' => 'utr5',       'caption' => "5' UTR"},
         { 'value' => 'utr3',       'caption' => "3' UTR"},
         { 'value' => 'exon',       'caption' => 'Exons'},
         { 'value' => 'intron',     'caption' => 'Introns'},
+        { 'value' => 'sequence',   'caption' => 'Genomic sequence'},
   );
 }
 

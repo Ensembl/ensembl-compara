@@ -34,8 +34,8 @@ sub content {
   my $self  = shift;
   my $hub   = $self->hub;
 
-  my $html = $self->error_panel('Output error', 
-      'System returned the following message:<br />'.$hub->param('error').'<br />Please try again');
+  my $html = $self->error_panel('Error', 
+      'There was a problem with your data export: <b>'.$hub->param('error').'</b><br />Please try again.');
 
   return $html;
 }

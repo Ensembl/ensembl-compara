@@ -169,6 +169,10 @@ sub fix_filename {
    ($self->{shortname}) = $filename =~ m!([^/]+)$!;
     $self->{filename}   = $filename;
   }
+  ## Quick hack for export testing
+  if ($self->{full_path} =~ /tmp\/export([\w+])/) {
+    $self->{full_path} =~ s/tmp\/export([\w+])/tmp\/export\/$1/;
+  } 
   
   return $self->{filename};
 }
