@@ -27,7 +27,7 @@ package EnsEMBL::Web::Component::DataExport;
 
 use strict;
 
-use base qw( EnsEMBL::Web::Component);
+use base qw(EnsEMBL::Web::Component);
 
 sub create_form {
 ### Builds the input form used by DataExport
@@ -137,7 +137,7 @@ sub create_form {
 sub default_file_name { 
 ### Generic name - ideally should be overridden in children
   my $self = shift;
-  return $hub->species_defs->ENSEMBL_SITETYPE.'_data_export';
+  return $self->hub->species_defs->ENSEMBL_SITETYPE.'_data_export';
 }
 
 1;
