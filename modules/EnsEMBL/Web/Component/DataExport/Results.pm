@@ -51,7 +51,7 @@ sub content {
               $format,
             );
 
-  unless ($format eq 'RTF') {
+  unless ($format eq 'RTF' || $compress) {
     my $file = EnsEMBL::Web::TmpFile::Text->new(filename => $hub->param('file'), 'prefix' => $prefix, 'compress' => $compress);
     if ($file) {
       $html .= '<h2 style="margin-top:1em">File preview</h2><div class="code"><pre style="color:#333">';
