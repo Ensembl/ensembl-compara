@@ -130,7 +130,6 @@ sub get_export_data {
 sub initialize_export {
   my $self = shift;
   my $gene = $self->hub->core_object('gene');
-  warn ">>> SLICE ".$gene->slice;
   return $self->initialize($gene->slice);
 }
 
