@@ -18,6 +18,16 @@ limitations under the License.
 
 package EnsEMBL::Web::Object::DataExport;
 
+### Object for DataExport pages
+
+### STATUS: Under development
+
+### DESCRIPTION: Unlike most other EnsEMBL::Web::Object children,
+### this module is not a wrapper around a specific API object.
+### Instead it uses the individual components to fetch and munge 
+### data via their own Objects, and does any additional 
+### export-specific munging as required. 
+
 use EnsEMBL::Web::Controller;
 use EnsEMBL::Web::Builder;
 use EnsEMBL::Web::TmpFile::Text;
@@ -31,8 +41,11 @@ sub caption       { return 'Export';  }
 sub short_caption { return 'Export';  }
 
 sub create_component {
-## Create the component we need to get data from, to be sure we're
-## using exactly the same data that the user sees 
+## Creates the component that the user requested data from. This both 
+### avoids code duplication and ensures we are using exactly the same 
+### data that the user sees 
+### @return Array: object (Component::<data_type>::<component_name>)
+###                plus error message (if any)
   my $self = shift;
   my $hub  = $self->hub;
   my ($component, $error);
@@ -59,7 +72,10 @@ sub create_component {
 }
 
 sub handle_download {
-  ## Method reached by url ensembl.org/Download/DataExport/
+### Retrieves file contents and outputs direct to Apache
+### request, so that the browser will download it instead
+### of displaying it in the window.
+### Uses Controller::Download, via url /Download/DataExport/
   my ($self, $r) = @_;
   my $hub = $self->hub;
 
@@ -106,6 +122,8 @@ sub handle_download {
 }
 
 sub expand_slice {
+### Helper method to ensure the feature slice is expanded to
+### include required flanking distance
   my ($self, $slice) = @_;
   my $hub = $self->hub;
   $slice ||= $hub->core_object('location')->slice;

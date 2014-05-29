@@ -18,17 +18,32 @@ limitations under the License.
 
 package EnsEMBL::Web::Component::DataExport;
 
+### Parent module for new data export interface
+
+### STATUS: Under Development
+
+### DESCRIPTION: Contains base functionality needed by all
+### DataExport input forms
+
 use strict;
 
 use base qw( EnsEMBL::Web::Component);
 
 sub create_form {
+### Builds the input form used by DataExport
+### Note that the form consists of a generic section (file name, format)
+### plus multiple format-specific option fieldsets which are hidden by 
+### JavaScript until the user chooses a format in the top section
+### @param Hashref - form element configuration options
+### @param Hashref - additional form settings for specific output formats
+### @return EnsEMBL::Web::Form
   my ($self, $settings, $fields_by_format) = @_;
   my $hub  = $self->hub;
 
   my $form_url  = sprintf('/%s/DataExport/Output', $hub->species);
   my $form      = $self->new_form({'id' => 'export', 'action' => $form_url, 'method' => 'post'});
 
+  ## Generic fields
   my $fieldset  = $form->add_fieldset; 
   my $formats = [
       {'caption' => '-- Choose Format --', 'value' => ''},
@@ -61,6 +76,7 @@ sub create_form {
       'values'  => $compress,
     },
   ]);
+  ## Hidden fields needed to fetch and process data
   $fieldset->add_hidden([
     {
       'name'    => 'data_type',
@@ -93,7 +109,7 @@ sub create_form {
       ## in background that alters the contents of $settings!
       my %field_info = %{$settings->{$name}};
       next unless keys %field_info;
-      ## Reset field name to include format, in case we have different defaults
+      ## Reset field name to include format, so we have unique field names
       $name .= '_'.$format;
       $field_info{'name'} = $name;
       ## Override general default with format-specific default if required
@@ -106,8 +122,8 @@ sub create_form {
       }
     }
 
-    ## Doesn't matter that each fieldset has a submit button, as we only
-    ## ever display one of them - and it forces user to choose format!
+    ## Doesn't matter that each fieldset has a submit button, as we only ever
+    ## display one of them - and putting it here forces user to choose format!
     $settings_fieldset->add_button({
       'type'    => 'Submit',
       'name'    => 'submit',
@@ -118,6 +134,10 @@ sub create_form {
   return $form;
 }
 
-sub default_file_name { return undef; }
+sub default_file_name { 
+### Generic name - ideally should be overridden in children
+  my $self = shift;
+  return $hub->species_defs->ENSEMBL_SITETYPE.'_data_export';
+}
 
 1;
