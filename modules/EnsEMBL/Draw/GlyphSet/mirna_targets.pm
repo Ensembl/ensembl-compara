@@ -16,26 +16,13 @@ limitations under the License.
 
 =cut
 
-package EnsEMBL::Draw::GlyphSet::microrna_targets;
+package EnsEMBL::Draw::GlyphSet::mirna_targets;
 
 use strict;
 
 use base qw(EnsEMBL::Draw::GlyphSet_simple);
 
 sub squish { return 1; }
-
-=pod
-sub get_feature_sets {
-  my ($self, $fg_db) = @_;
-
-  my $logic_name = $self->my_config('logic_name')
-                   || $self->my_config('description');
-  my $aa =  $fg_db->get_AnalysisAdaptor;
-  my $mrta = $fg_db->get_MicroRnaTargetAdaptor;
-  my $analysis = $fg_a_a->fetch_by_logic_name($logic_name);
-  return [$aa->fetch_all_by()];
-}
-=cut
 
 sub features {
   my ($self) = @_;
