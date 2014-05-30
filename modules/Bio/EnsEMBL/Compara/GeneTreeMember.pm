@@ -110,10 +110,10 @@ sub string_node {
     if($self->genome_db_id and $self->adaptor) {
       $str .= sprintf(" %s", $self->genome_db->name) 
     }
-  if($self->gene_member) {
-    $str .= sprintf(" %s %s %s:%d-%d",
-      $self->gene_member->stable_id, $self->gene_member->display_label || '', $self->gene_member->dnafrag() ? $self->gene_member->dnafrag()->name : '',
-      $self->gene_member->dnafrag_start || 0, $self->gene_member->dnafrag_end || 0);
+  if(my $gene_member = $self->gene_member) {
+    $str .= " ".$gene_member->stable_id;
+    $str .= sprintf(" (%s)", $gene_member->display_label) if $gene_member->display_label;
+    $str .= sprintf(" %s:%d-%d", $gene_member->dnafrag->name, $gene_member->dnafrag_start, $gene_member->dnafrag_end) if $gene_member->dnafrag_id;
   } elsif($self->stable_id) {
     $str .= sprintf(" (%d) %s", $self->seq_member_id, $self->stable_id);
   }
