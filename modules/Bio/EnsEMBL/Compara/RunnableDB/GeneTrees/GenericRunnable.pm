@@ -118,7 +118,7 @@ sub fetch_input {
 
     die "Cannot read tags from TreeBest's output: set run_treebest_sdi or read_tags to 0" if $self->param('run_treebest_sdi') and $self->param('read_tags');
 
-    if ($self->param('input_clusterset_id')) {
+    if ($self->param('input_clusterset_id') and $self->param('input_clusterset_id') ne 'default') {
         print STDERR "getting the tree '".$self->param('input_clusterset_id')."'\n";
         my $other_trees = $self->param('tree_adaptor')->fetch_all_linked_trees($gene_tree);
         my ($selected_tree) = grep {$_->clusterset_id eq $self->param('input_clusterset_id')} @$other_trees;
