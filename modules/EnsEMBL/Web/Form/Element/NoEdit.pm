@@ -31,7 +31,7 @@ sub configure {
     'node_name'                                           => $params->{'is_html'} ? 'div' : 'span',
     ($params->{'is_html'} ? 'inner_HTML' : 'inner_text')  => $params->{'caption'},
     $params->{'caption_class'} ? ('class'                 => $params->{'caption_class'}) : ()
-  }]
+  }];
 
   $self->SUPER::configure($params);
 
