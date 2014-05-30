@@ -20,10 +20,7 @@ package EnsEMBL::Web::Form::Element::Checklist;
 
 use strict;
 
-use base qw(
-  EnsEMBL::Web::DOM::Node::Element::Div
-  EnsEMBL::Web::Form::Element
-);
+use base qw(EnsEMBL::Web::Form::Element::Div);
 
 use constant {
   CSS_CLASS_SUBHEADING    => 'optgroup',
@@ -41,9 +38,10 @@ sub _is_multiple {
 sub configure {
   ## @overrides
   my ($self, $params) = @_;
-  
-  $self->set_attribute('id',    $params->{'wrapper_id'})    if exists $params->{'wrapper_id'};
-  $self->set_attribute('class', $params->{'wrapper_class'}) if exists $params->{'wrapper_class'};
+
+  # configure the wrapping parent div
+  delete $params->{'children'};
+  $self->SUPER::configure($params);
 
   # default attributes for the checkboxs/radiobuttons
   $self->{'__option_name'}        = $params->{'name'} || '';
@@ -71,8 +69,6 @@ sub configure {
       $self->add_option($_);
     }
   }
-
-  $self->force_wrapper if $params->{'force_wrapper'};
 }
 
 sub add_option {

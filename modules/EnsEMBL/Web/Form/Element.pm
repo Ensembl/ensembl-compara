@@ -68,7 +68,8 @@ sub configure {
   ##    - class         Class attribute for the option/checkbox/radio button
   ##    - group         If option needs to go in any <optgroup> in case of <option> or a sub heading in case of checkbox/radio
   ##    - label_first   Flag if on, keeps the label to the left of the checkbox/radiobutton (off by default)
-  ##  - no_input        Flag to prevent a hidden input automatically being added from NoEdit element
+  ##  - no_input        Flag to prevent a hidden input automatically being added from NoEdit and EditableTag element
+  ##  - children        Arrayref of child nodes, only for Div element
   ##  - is_binary       Flag kept on if values for a 'yesno' dropdown, the values to the option are 1 and 0 for Yes and No respectively instead of default 'yes' and 'no'
   ##  - is_html         Flag kept on if the value is HTML (in case of NoEdit only)
   ##  - caption         String to be displayed in NoEdit element if different from value attribute of the hidden input
@@ -113,6 +114,7 @@ sub map_element_class {
     'form-element-checkbox'     => 'EnsEMBL::Web::Form::Element::Checkbox',
     'form-element-checklist'    => 'EnsEMBL::Web::Form::Element::Checklist',
     'form-element-dascheckbox'  => 'EnsEMBL::Web::Form::Element::DASCheckBox',
+    'form-element-div'          => 'EnsEMBL::Web::Form::Element::Div',
     'form-element-dropdown'     => 'EnsEMBL::Web::Form::Element::Dropdown',
     'form-element-email'        => 'EnsEMBL::Web::Form::Element::Email',
     'form-element-editabletag'  => 'EnsEMBL::Web::Form::Element::EditableTag',
@@ -143,12 +145,6 @@ sub shortnote {
   ## @return Node object (span element if shornote found, an empty text node otherwise)
   my $self = shift;
   return exists $self->{'__shortnote'} ? $self->dom->create_element('span', {'class' => $self->CSS_CLASS_SHORTNOTE, 'inner_HTML' => ' '.$self->{'__shortnote'}}) : $self->dom->create_text_node;
-}
-
-sub force_wrapper {
-  ## Adds a flag in the wrapper div is to be kept independent from the element div
-  my $self = shift;
-  $self->set_flag($self->ELEMENT_HAS_WRAPPER) if $self->node_name eq 'div';
 }
 
 sub new {
