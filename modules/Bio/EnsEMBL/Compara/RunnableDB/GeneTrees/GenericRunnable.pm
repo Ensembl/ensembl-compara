@@ -170,7 +170,7 @@ sub write_output {
         # check that the tree is binary
         foreach my $node (@{$target_tree->get_all_nodes}) {
             next if $node->is_leaf;
-            die if scalar(@{$node->children}) != 2;
+            die "The tree should be binary\n" if scalar(@{$node->children}) != 2;
         }
     }
     $target_tree->store_tag($self->param('runtime_tree_tag'), $self->param('runtime_msec')) if $self->input_job->param_exists('runtime_tree_tag');
