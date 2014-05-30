@@ -18,11 +18,21 @@ limitations under the License.
 
 package EnsEMBL::Web::Constants;
 
+### A repository for various site-wide configuration options,
+### typically those that are too complex to be captured in
+### .ini files
+
+### Not an instantiated object, simply a collection of methods
+### that return unblessed data structures
+
+
 use strict;
 use warnings;
 no warnings 'uninitialized';
 
 sub ICON_MAPPINGS {
+### Metadata for the icons that appear on the configuration bar
+### attached to images
   my $component = shift || 'page';
   
   return {
@@ -41,6 +51,7 @@ sub FORMATS {
 }
 
 sub EXPORT_FORMATS {
+### Metadata for image export formats
   return (
 	  'png'  => { 'name' => 'PNG', 'longname' => 'Portable Network Graphics',   'extn' => 'png', 'mime' => 'image/png'              },
     'gif'  => { 'name' => 'GIF', 'longname' => 'Graphics Interchange Format', 'extn' => 'gif', 'mime' => 'image/gif'              },
@@ -52,6 +63,7 @@ sub EXPORT_FORMATS {
 }
 
 sub HOMOLOGY_TYPES {
+### Lookup for compara acronyms
   return {
     'BRH'  => 'Best Reciprocal Hit',
     'UBRH' => 'Unique Best Reciprocal Hit',
@@ -62,6 +74,8 @@ sub HOMOLOGY_TYPES {
 }
 
 sub GENE_JOIN_TYPES {
+### Another compara lookup, this time for orthologues,
+### paralogues, etc
   return {
     'ortholog_one2one'          => 'orthologue',
     'ortholog_one2many'         => 'orthologue_multi',
@@ -86,6 +100,7 @@ sub GENE_JOIN_TYPES {
 }
 
 sub ALIGNMENT_FORMATS {
+### Metadata for alignment export formats
   return (
     'fasta'    => 'FASTA',
     'msf'      => 'MSF',
@@ -101,6 +116,7 @@ sub ALIGNMENT_FORMATS {
 sub SIMPLEALIGN_DEFAULT { return 'clustalw'; }
 
 sub TREE_FORMATS {
+### Metadata for tree export formats
   return (
     'text' => { 
       'caption'    => 'Text dump', 
@@ -125,6 +141,7 @@ sub TREE_FORMATS {
 }
 
 sub NHX_OPTIONS {
+### Extended metadata for NHX (Phylip) format
   return (
     'full'                    => 'Full mode',
     'protein_id'              => 'Protein ID',
@@ -138,6 +155,7 @@ sub NHX_OPTIONS {
 }
 
 sub NEWICK_OPTIONS {
+### Extended metadata for Newick format
   return (
     'full'                    => 'Full',
     'full_common'             => 'Full (common)',
@@ -157,14 +175,16 @@ sub NEWICK_OPTIONS {
 }
 
 sub FAMILY_EXTERNAL {
+### Metadata for protein family sources
   return (
     'swissprot' => { 'name' => 'UniProt/Swiss-Prot' , 'key' => 'Uniprot/SWISSPROT' },
     'trembl'    => { 'name' => 'UniProt/TrEMBL',      'key' => 'Uniprot/SPTREMBL'  }
   );
 }
 
-# shared by 'Genomic Alignments', 'Marked-up Sequence' and 'Resequencing'
 sub GENERAL_MARKUP_OPTIONS {
+### Configuration for text sequence displays, shared by
+### 'Genomic Alignments', 'Marked-up Sequence' and 'Resequencing'
   return (
     'snp_display' => {
       'type'   => 'DropDown', 
@@ -234,8 +254,9 @@ sub GENERAL_MARKUP_OPTIONS {
   );
 }
 
-# shared by 'Genomic Alignments' and 'Marked-up Sequence'
 sub GENE_MARKUP_OPTIONS {
+### Gene-specific text sequence configuration options,
+### shared by 'Genomic Alignments' and 'Marked-up Sequence'
   return (
     'flank5_display' => {
       'type'     => 'NonNegInt', 
@@ -265,8 +286,9 @@ sub GENE_MARKUP_OPTIONS {
   );
 }
 
-# shared by 'Genomic Alignments' and 'Resequencing'
 sub OTHER_MARKUP_OPTIONS {
+### Configuration options for aligned sequence markup,
+### shared by 'Genomic Alignments' and 'Resequencing'
   return (
     'display_width' => {
       'type'   => 'DropDown',
@@ -310,8 +332,9 @@ sub OTHER_MARKUP_OPTIONS {
   );
 }
 
-# shared by transcript and gene snp views
 sub VARIATION_OPTIONS {
+### Variation markup options for text sequence displays, 
+### shared by transcript and gene snp views
   return (
     'variation' =>  {
       'opt_freq'       =>  [ 'on', 'By frequency'      ],
@@ -375,6 +398,7 @@ sub VARIATION_OPTIONS {
 }
 
 sub MESSAGE_PRIORITY {
+### Priority order for message boxes - errors, warnings, etc
   return (
     '_error',
     '_warning',
@@ -384,6 +408,7 @@ sub MESSAGE_PRIORITY {
 }
 
 sub USERDATA_MESSAGES {
+### Standard set of error messages used by user upload interface
   return (
     no_url => {
       'type'    => 'error', 
@@ -454,6 +479,8 @@ sub USERDATA_MESSAGES {
 }
 
 sub ERROR_MESSAGES { 
+### General server error messages - custom versions of
+### standard Apache errors (e.g. 404)
   return (
     404 => [
       'Page not found' ,

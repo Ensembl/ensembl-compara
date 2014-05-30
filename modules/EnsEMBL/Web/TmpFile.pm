@@ -22,6 +22,11 @@ package EnsEMBL::Web::TmpFile;
 ## e.g. save them to the tmp storage using driver(s) - either disk or memcached
 ## see EnsEMBL::Web::TmpFile::* and EnsEMBL::Web::TmpFile::Drivers::* for more info
 
+### STATUS: To Be Replaced
+### This module is widely used but inefficient when handling
+### large files - it will be replaced by EnsEMBL::Web::File
+### in due course
+
 use strict;
 use IO::String;
 use HTTP::Request;
