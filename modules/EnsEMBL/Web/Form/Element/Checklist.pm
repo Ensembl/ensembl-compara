@@ -23,10 +23,11 @@ use strict;
 use base qw(EnsEMBL::Web::Form::Element::Div);
 
 use constant {
-  CSS_CLASS_SUBHEADING    => 'optgroup',
-  CSS_CLASS_INNER_WRAPPER => 'ff-checklist',
-  CSS_CLASS_INNER_LABEL   => 'ff-checklist-label',
-  SELECT_DESELECT_CAPTION => '<u><b>Select/deselect all</b></u>'
+  CSS_CLASS_SUBHEADING      => 'optgroup',
+  CSS_CLASS_INNER_WRAPPER   => 'ff-checklist',
+  CSS_CLASS_INNER_LABEL     => 'ff-checklist-label',
+  SELECT_DESELECT_CAPTION   => '<b>Select/deselect all</b>',
+  SELECT_DESELECT_JS_CLASS  => '_selectall'
 };
 
 sub _is_multiple {
@@ -59,8 +60,10 @@ sub configure {
   if (exists $params->{'selectall'}) {
     $self->add_option({
       'value'         => 'select_all',
-      'caption'       => {'inner_HTML' => $self->SELECT_DESELECT_CAPTION}  ## TODO - this needs a class name for general purpose use
+      'class'         => $self->SELECT_DESELECT_JS_CLASS,
+      'caption'       => {'inner_HTML' => $self->SELECT_DESELECT_CAPTION}
     });
+    $self->set_attribute('class', $self->SELECT_DESELECT_JS_CLASS);
   }
   if (exists $params->{'values'}) {
     for (@{$params->{'values'}}) {

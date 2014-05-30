@@ -28,6 +28,7 @@ Ensembl.Panel.Content = Ensembl.Panel.extend({
       helpTips:       $('._ht', this.el),
       wrapping:       $('table.cellwrap_inside, table.heightwrap_inside', this.el),
       selectToToggle: $('._stt', this.el),
+      selectAll:      $('input._selectall', this.el),
       filterable:     $('._fd', this.el)
     };
     
@@ -316,7 +317,13 @@ Ensembl.Panel.Content = Ensembl.Panel.extend({
   selectToToggle: function() {
     this.elLk.selectToToggle.selectToToggle({}, this.el);
   },
-  
+
+  selectAll: function() {
+    this.elLk.selectAll.on('change', function() {
+      $(this).parents('div._selectall').find('input[type=checkbox]').prop('checked', this.checked);
+    });
+  },
+
   filterable: function() {
     this.elLk.filterable.filterableDropdown();
   }

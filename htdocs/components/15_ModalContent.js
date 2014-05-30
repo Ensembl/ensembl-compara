@@ -183,6 +183,9 @@ Ensembl.Panel.ModalContent = Ensembl.Panel.LocalContext.extend({
     $('form div.select_all input', this.elLk.content).prop('checked', function () {
       return $(this).parents('fieldset').find('input[type=checkbox]:not(:checked)').length - 1 <= 0; // -1 for the select_all checkbox itself
     });
+    this.elLk.content.find('input._selectall').on('change', function() {
+      $(this).parents('div._selectall').find('input[type=checkbox]').prop('checked', this.checked);
+    });
   },
   
   displayErrorMessage: function (message) {
