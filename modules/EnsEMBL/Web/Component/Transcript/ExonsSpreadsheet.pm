@@ -146,7 +146,7 @@ sub content {
   );
   
   my $html = $self->tool_buttons;
-  $html .= $self->export_button('Download this sequence');
+  $html .= $self->export_button;
   $html .= sprintf '<div class="sequence_key">%s</div>%s', $self->get_key($config);
   $html .= $table->render;
   

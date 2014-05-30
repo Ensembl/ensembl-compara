@@ -354,7 +354,7 @@ sub content {
   my ($sequence, $config, $raw_seq) = $self->initialize;
   
   my $html  = $self->tool_buttons($raw_seq);
-     $html .= $self->export_button('Download this sequence');
+     $html .= $self->export_button;
      $html .= sprintf '<div class="sequence_key">%s</div>', $self->get_key($config);
      $html .= $self->build_sequence($sequence, $config);
 

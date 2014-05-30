@@ -66,7 +66,7 @@ sub content {
   my $site_type = ucfirst(lc $hub->species_defs->ENSEMBL_SITETYPE) || 'Ensembl';
   my $html; #      = $self->tool_buttons(uc $slice->seq(1));
  
-  $html .= $self->export_button('Download this sequence');
+  $html .= $self->export_button;
  
   if ($length >= $self->{'subslice_length'}) {
     $html .= '<div class="sequence_key"></div>' . $self->chunked_content($length, $self->{'subslice_length'}, { length => $length, name => $slice->name });

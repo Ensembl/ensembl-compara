@@ -37,7 +37,7 @@ sub create_form {
 ### @param Hashref - form element configuration options
 ### @param Hashref - additional form settings for specific output formats
 ### @return EnsEMBL::Web::Form
-  my ($self, $settings, $fields_by_format) = @_;
+  my ($self, $settings, $fields_by_format, $tutorial) = @_;
   my $hub  = $self->hub;
 
   my $format_label = {
@@ -51,7 +51,7 @@ sub create_form {
   ## Generic fields
   my $fieldset  = $form->add_fieldset; 
   my $formats = [
-      {'caption' => '-- Choose Format --', 'value' => ''},
+      {'caption' => '-- Choose Format --', 'value' => 'tutorial'},
       map { 'value' => $_, 'caption' => $format_label->{$_}, 'class' => "_stt__$_ _action_$_"}, sort keys %$fields_by_format
     ];
   my $compress = [
@@ -107,6 +107,16 @@ sub create_form {
     ]);
   }
 
+  ## Add tutorial "fieldset" that is shown by default
+  if ($tutorial) {
+    my $tutorial_fieldset = $form->add_fieldset({'class' => '_stt_tutorial', 'legend' => 'Guide to output formats'});
+    my $html;
+    foreach my $format (sort keys %$fields_by_format) {
+      $html .= $self->get_tutorial($format);
+    }
+    $tutorial_fieldset->add_notes($html);
+  }
+  
   ## Create all options forms, then show only one using jQuery
   while (my($format, $fields) = each (%$fields_by_format)) {
     my $settings_fieldset  = $form->add_fieldset({'class' => '_stt_'.$format, 'legend' => 'Settings'});
@@ -147,6 +157,12 @@ sub default_file_name {
 ### Generic name - ideally should be overridden in children
   my $self = shift;
   return $self->hub->species_defs->ENSEMBL_SITETYPE.'_data_export';
+}
+
+sub get_tutorial {
+  my ($self, $format) = @_;
+  my $html = sprintf('<div style="float:left;padding-right:20px;"><h2>%s</h2><img src="/img/help/export/%s_tutorial.png"></div>', $format, lc($format));
+  return $html;
 }
 
 1;

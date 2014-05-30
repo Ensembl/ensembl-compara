@@ -50,6 +50,7 @@ sub content {
 
   my $checklist = [];
   foreach (EnsEMBL::Web::Constants::FASTA_OPTIONS) {
+    $_->{'checked'} = 'on' if $_->{'value'} eq 'sequence';
     push @$checklist, $_ unless (exists $options->{$_->{'value'}} && $options->{$_->{'value'}} == 0); 
   }
 
@@ -94,7 +95,7 @@ sub content {
   };
 
   ## Create settings form (comes with some default fields - see parent)
-  my $form = $self->create_form($settings, $fields_by_format);
+  my $form = $self->create_form($settings, $fields_by_format, 'sequence');
 
   return $form->render;
 }
