@@ -57,11 +57,11 @@ sub content {
   my $viewconfig  = $hub->get_viewconfig($hub->param('component'), $hub->param('data_type'));
 
   my $settings = {
-        'sequence' => {
-            'label'   => 'Transcript Sequence', 
-            'type'    => 'Checkbox', 
-            'value'   => 'on',
-            'checked' => 1, 
+        'extra' => {
+          'type'      => 'Checklist',
+          'label'     => 'Included sequences',
+          'values'    => $checklist,
+          'selectall' => 'on',
         },
         'flank5_display' => {
             'label'     => "5' Flanking sequence (upstream)",  
@@ -71,19 +71,19 @@ sub content {
             'label'     => "3' Flanking sequence (downstream)", 
             'type'      => 'NonNegInt',  
         },
-        'extra' => {
-          'type'      => 'Checklist',
-          'label'     => 'Included sequences',
-          'values'    => $checklist,
-          'selectall' => 'on',
+        'snp_display' => {
+            'label'   => 'Include sequence variants',
+            'type'    => 'Checkbox',
+            'value'   => 'on',
+            'checked' => $viewconfig->get('snp_display') eq 'off' ? 0 : 1,
         },
   };
 
   ## Options per format
-  my $fields_by_format = $self->configure_fields;
+  my $fields_by_format = $self->configure_fields($viewconfig);
 
   ## Create settings form (comes with some default fields - see parent)
-  my $form = $self->create_form($settings, $fields_by_format);
+  my $form = $self->create_form($settings, $fields_by_format, 1);
 
   return $form->render;
 }
@@ -96,14 +96,20 @@ sub configure_fasta {
 }
 
 sub configure_fields {
+  my ($self, $viewconfig) = @_;
+
   return {
-    'RTF' => [],
+    'RTF' => [
+                ['extra'],
+                ['flank5_display', $viewconfig->get('flank5_display')],
+                ['flank3_display', $viewconfig->get('flank3_display')],
+                ['snp_display'],
+               ],
 
     'FASTA' => [
-                ['sequence'],
-                ['flank5_display', 0],
-                ['flank3_display', 0],
                 ['extra'],
+                ['flank5_display', $viewconfig->get('flank5_display')],
+                ['flank3_display', $viewconfig->get('flank3_display')],
                ],
   };
 }

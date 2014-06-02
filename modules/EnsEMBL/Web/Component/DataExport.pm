@@ -109,8 +109,8 @@ sub create_form {
 
   ## Add tutorial "fieldset" that is shown by default
   if ($tutorial) {
-    my $tutorial_fieldset = $form->add_fieldset({'class' => '_stt_tutorial', 'legend' => 'Guide to output formats'});
-    my $html;
+    my $tutorial_fieldset = $form->add_fieldset({'class' => '_stt_tutorial'});
+    my $html = '<p><b>Guide to file formats</b> (select from dropdown list above)</p>';
     foreach my $format (sort keys %$fields_by_format) {
       $html .= $self->get_tutorial($format);
     }
@@ -161,7 +161,7 @@ sub default_file_name {
 
 sub get_tutorial {
   my ($self, $format) = @_;
-  my $html = sprintf('<div style="float:left;padding-right:20px;"><h2>%s</h2><img src="/img/help/export/%s_tutorial.png"></div>', $format, lc($format));
+  my $html = sprintf('<div style="float:left;padding-right:20px;"><p>%s</p><img src="/img/help/export/%s_tutorial.png"></div>', $format, lc($format));
   return $html;
 }
 

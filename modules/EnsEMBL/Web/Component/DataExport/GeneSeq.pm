@@ -95,7 +95,7 @@ sub content {
   };
 
   ## Create settings form (comes with some default fields - see parent)
-  my $form = $self->create_form($settings, $fields_by_format, 'sequence');
+  my $form = $self->create_form($settings, $fields_by_format, 1);
 
   return $form->render;
 }

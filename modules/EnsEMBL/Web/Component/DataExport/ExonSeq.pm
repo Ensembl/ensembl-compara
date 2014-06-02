@@ -44,10 +44,9 @@ sub configure_fields {
               ],
 
     'FASTA' => [
-                ['sequence'],
+                ['extra'],
                 ['flank5_display', 0],
                 ['flank3_display', 0],
-                ['extra'],
                ],
   };
 }
