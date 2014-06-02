@@ -73,6 +73,8 @@ sub find_nodes_by_name {
     if ($is_leaf) {
         $taxon_id = $genomeDBAdaptor->fetch_by_name_assembly($val)->taxon_id();
     } else {
+        # We make sure we don't have a dup node
+        $val =~ s/_dup\d+//;
         $taxon_id = $NCBITaxonAdaptor->fetch_node_by_name($val)->taxon_id();
     }
     return $self->find_nodes_by_field_value('taxon_id', $taxon_id);
