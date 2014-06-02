@@ -239,6 +239,11 @@ sub run_generic_command {
     my $cmd = sprintf('cd %s; %s', $self->worker_temp_directory, $self->param_required('cmd'));
     my $run_cmd = $self->run_command($cmd);
     if ($run_cmd->exit_code) {
+        if ($run_cmd->err =~ /Exception in thread ".*" java.lang.OutOfMemoryError: Java heap space at/) {
+            $self->dataflow_output_id( $self->input_id, -1 );
+            $self->input_job->incomplete(0);
+            die "Java heap space is out of memory.\n";
+        }
         die sprintf("'%s' resulted in an error code=%d\nstderr is: %s\nstdout is: %s\n", $run_cmd->cmd, $run_cmd->exit_code, $run_cmd->err, $run_cmd->out);
     }
     $self->param('runtime_msec', $run_cmd->runtime_msec);
