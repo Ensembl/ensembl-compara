@@ -26,62 +26,14 @@ Bio::EnsEMBL::Compara::Graph::PhyloXMLWriter
 
 =head1 SYNOPSIS
 
-  use Bio::EnsEMBL::Compara::Graph::PhyloXMLWriter;
-  
-  my $string_handle = IO::String->new();
-  my $w = Bio::EnsEMBL::Compara::Graph::PhyloXMLWriter->new(
-    -SOURCE => 'Ensembl', -ALIGNED => 1, -HANDLE => $string_handle
-  );
-  
-  my $pt = $dba->get_GeneTreeAdaptor()->fetch_by_dbID(3);
-  
-  $w->write_trees($pt);
-  $w->finish(); #YOU MUST CALL THIS TO WRITE THE FINAL TAG
-  
-  my $xml_scalar_ref = $string_handle->string_ref();
-  
-  #Or to write to a file via IO::File
-  my $file_handle = IO::File->new('output.xml', 'w');
-  $w = Bio::EnsEMBL::Compara::Graph::PhyloXMLWriter->new(
-    -SOURCE => 'Ensembl', -ALIGNED => 1, -HANDLE => $file_handle
-  );
-  $w->write_trees($pt);
-  $w->finish(); #YOU MUST CALL THIS TO WRITE THE FINAL TAG
-  $file_handle->close();
-  
-  #Or letting this deal with it
-  $w = Bio::EnsEMBL::Compara::Graph::PhyloXMLWriter->new(
-    -SOURCE => 'Ensembl', -ALIGNED => 1, -FILE => 'loc.xml'
-  );
-  $w->write_trees($pt);
-  $w->finish(); #YOU MUST CALL THIS TO WRITE THE FINAL TAG
-  $w->handle()->close();
+This is a base class for writing compara trees in PhyloXML format.
+See Bio::EnsEMBL::Compara::Graph::GeneTreePhyloXMLWriter for a specific use of this module
+
 
 =head1 DESCRIPTION
 
-Used as a way of emitting Compara GeneTrees in a format which conforms
-to L<PhyloXML|http://www.phyloxml.org/>. The code is built to work with
-instances of L<Bio::EnsEMBL::Compara::GeneTree> but can be extended to
-operate on any tree structure provided by the Compara Graph infrastructure.
-
-The code provides a number of property extensions to the existing PhyloXML
-standard:
-
-=over 8
-
-=item B<Compara:genome_db_name>
-
-Used to show the name of the GenomeDB of the species found. Useful when 
-taxonomy is not exact
-
-=item B<Compara:dubious_duplication> 
-
-Indicates locations of potential duplications we are unsure about
-
-=back
-
-The same document is persistent between write_trees() calls so to create
-a new XML document create a new instance of this object.
+Used as a way of emitting Compara trees in a format which conforms
+to L<PhyloXML|http://www.phyloxml.org/>.
 
 =head1 SUBROUTINES/METHODS
 
@@ -112,37 +64,27 @@ my $phylo_uri = 'http://www.phyloxml.org';
 
 =head2 new()
 
-  Arg[CDNA]             : Boolean; indicates if we want CDNA emitted or peptide.
-                          Defaults to B<false>. 
   Arg[SOURCE]           : String; the source of the stable identifiers.
                           Defaults to B<Unknown>.
-  Arg[ALIGNED]          : Boolean; indicates if we want to emit aligned
-                          sequence. Defaults to B<false>.
-  Arg[NO_SEQUENCES]     : Boolean; indicates we want to ignore sequence 
-                          dumping. Defaults to B<false>.
   Arg[HANDLE]           : IO::Handle; pass in an instance of IO::File or
                           an instance of IO::String so long as it behaves
-                          the same as IO::Handle. Can be left blank in 
+                          the same as IO::Handle. Can be left blank in
                           favour of the -FILE parameter
-  Arg[FILE]             : Scalar; file to write to              
+  Arg[FILE]             : Scalar; file to write to
   Arg[NO_RELEASE_TREES] : Boolean; if set to true this will force the writer
                           to avoid calling C<release_tree()> on every tree
                           given. Defaults to false
   Arg[NO_BRANCH_LENGTHS]: Boolean; if set to true no branch length will written.
                           Defaults to B<false>.
-  Arg[COMPACT_ALIGNMENTS]: Boolean; if set to true the fragmented alignments 
-                           of the low coveage species will be concatenated.
-                           Defaults to B<true>.
-                           
-                          
-  Description : Creates a new tree writer object. 
+
+  Description : Creates a new tree writer object.
   Returntype  : Instance of the writer
   Exceptions  : None
   Example     : my $w = Bio::EnsEMBL::Compara::Graph::PhyloXMLWriter->new(
-                  -SOURCE => 'Ensembl', -ALIGNED => 1, -HANDLE => $handle
+                  -SOURCE => 'Ensembl', -HANDLE => $handle
                 );
-  Status      : Stable  
-  
+  Status      : Stable
+
 =cut
 
 sub new {
@@ -150,23 +92,15 @@ sub new {
   $class = ref($class) || $class;
   my $self = $class->SUPER::new(@args);
   
-  my ($cdna, $source, $aligned, $no_sequences, $no_release_trees, $no_branch_lengths, $compact_alignments) = 
-    rearrange([qw(cdna source aligned no_sequences no_release_trees no_branch_lengths compact_alignments)], @args);
+  my ($source, $no_release_trees, $no_branch_lengths) = 
+    rearrange([qw(source no_release_trees no_branch_lengths)], @args);
 
   $source ||= 'Unknown';
-  $cdna ||= 0;
-  if( ($cdna || $aligned) && $no_sequences) {
-    warning "-CDNA or -ALIGNED was specified but so was -NO_SEQUENCES. Will ignore sequences";
-  }
-  
-  $self->cdna($cdna);
+
   $self->source($source);
-  $self->aligned($aligned);
-  $self->no_sequences($no_sequences);
   $self->no_release_trees($no_release_trees);
   $self->no_branch_lengths($no_branch_lengths);
-  $self->compact_alignments($compact_alignments);
-  
+
   return $self;
 }
 
@@ -185,42 +119,6 @@ sub namespaces {
   };
 }
 
-=pod
-
-=head2 cdna()
-
-  Arg[0] : The value to set this to
-  Description : Indicates if we want CDNA sequence in the XML. If false
-  the code will dump peptide data
-  Returntype : Boolean
-  Exceptions : None
-  Status     : Stable
-  
-=cut
-
-sub cdna {
-  my ($self, $cdna) = @_;
-  $self->{cdna} = $cdna if defined $cdna;
-  return $self->{cdna};
-}
-
-=pod
-
-=head2 no_sequences()
-
-  Arg[0] : The value to set this to
-  Description : Indicates if we do not want to perform sequence dumping 
-  Returntype  : Boolean
-  Exceptions  : None
-  Status      : Stable
-  
-=cut
- 
-sub no_sequences {
-  my ($self, $no_sequences) = @_;
-  $self->{no_sequences} = $no_sequences if defined $no_sequences;
-  return $self->{no_sequences};
-}
 
 =pod
 
@@ -256,32 +154,18 @@ sub no_branch_lengths {
   return $self->{no_branch_lengths};
 }
 
-=head2 compact_alignments()
-
-  Arg [0] : Boolean; indiciates we wish to comapct the alignments of fragmented regions of low coverage species
-  Returntype : Boolean
-  Exceptions : None
-  Status     : Stable
- 
-=cut
-
-sub compact_alignments {
-  my ($self, $compact_alignments) = @_;
-  $self->{compact_alignments} = $compact_alignments if defined $compact_alignments;
-  return $self->{compact_alignments};
-}
 
 =pod
 
 =head2 source()
 
   Arg[0] : The value to set this to
-  Description : Indicates the source of the stable identifiers for the 
+  Description : Indicates the source of the stable identifiers for the
                 peptides.
   Returntype : String
   Exceptions : None
   Status     : Stable
-  
+
 =cut
 
 sub source {
@@ -290,23 +174,6 @@ sub source {
   return $self->{source};
 }
 
-=pod
-
-=head2 aligned()
-
-  Arg[0] : The value to set this to
-  Description : Indicates if we want to push aligned sequences into the XML
-  Returntype : Boolean
-  Exceptions : None
-  Status     : Stable
-  
-=cut
-
-sub aligned {
-  my ($self, $aligned) = @_;
-  $self->{aligned} = $aligned if defined $aligned;
-  return $self->{aligned};
-}
 
 =pod
 
@@ -319,8 +186,8 @@ sub aligned {
   instance
   Example     : $writer->write_trees($tree);
                 $writer->write_trees([$tree_one, $tree_two]);
-  Status      : Stable  
-  
+  Status      : Stable
+
 =cut
 
 sub write_trees {
@@ -335,12 +202,13 @@ sub write_trees {
 ########### PRIVATE
 
 sub _write_opening {
-  my ($self, $w) = @_;
+  my ($self) = @_;
+  my $w = $self->_writer;
   my $xsi_uri = $self->xml_schema_namespace();
   $w->xmlDecl("UTF-8");
   $w->forceNSDecl($phylo_uri);
   $w->forceNSDecl($xsi_uri);
-  $w->startTag("phyloxml", [$xsi_uri, 'schemaLocation'] => 
+  $w->startTag("phyloxml", [$xsi_uri, 'schemaLocation'] =>
    "${phylo_uri} ${phylo_uri}/1.10/phyloxml.xsd");
   return;
 }
@@ -352,257 +220,35 @@ sub _write_closing {
 
 sub _write_tree {
   my ($self, $tree) = @_;
-  
+
   my $w = $self->_writer();
-  
+
   my %attr = (rooted => 'true');
-  if(check_ref($tree, 'Bio::EnsEMBL::Compara::GeneTreeNode')) {
-    $attr{type} = 'gene tree';
-  } elsif (check_ref($tree, 'Bio::EnsEMBL::Compara::GenomicAlignTree')) {
-      $attr{type} = 'genomic align tree';
-  }
+  $attr{type} = $self->tree_type();
 
   $w->startTag('phylogeny', %attr);
-  $w->dataElement('id', $tree->stable_id()) if $tree->can("stable_id");
-  $self->_process($tree);
+  $self->_process($tree->root);
+  $self->tree_elements($tree);
   $w->endTag('phylogeny');
-  $tree->release_tree() if ! $self->no_release_trees;
-  
+
+  $tree->release_tree() if ((! $self->no_release_trees) && ($tree->can('release_tree')));
+
   return;
 }
 
 sub _process {
   my ($self, $node) = @_;
-  my ($tag, $attributes) = @{$self->_dispatch_tag($node)};
+  my ($tag, $attributes) = @{$self->dispatch_tag($node)};
   $self->_writer()->startTag($tag, %{$attributes});
-  $self->_dispatch_body($node);
+  $self->dispatch_body($node);
+
+  if($node->get_child_count()) {
+    foreach my $child (@{$node->children()}) {
+      $self->_process($child);
+    }
+  }
+
   $self->_writer()->endTag($tag);
-  return; 
-}
-
-sub _dispatch_tag {
-  my ($self, $node) = @_;
-  if(check_ref($node, 'Bio::EnsEMBL::Compara::GeneTreeMember')) {
-    return $self->_genetreemember_tag($node);
-  }
-  elsif(check_ref($node, 'Bio::EnsEMBL::Compara::GeneTreeNode')) {
-    return $self->_genetreenode_tag($node);
-  }
-  elsif(check_ref($node, 'Bio::EnsEMBL::Compara::GenomicAlignTree')) {
-    return $self->_genomicaligntree_tag($node);
-  } 
-
-  my $ref = ref($node);
-  throw("Cannot process type $ref");
-}
-
-sub _dispatch_body {
-  my ($self, $node) = @_;
-  if(check_ref($node, 'Bio::EnsEMBL::Compara::GeneTreeMember')) {
-    $self->_genetreemember_body($node);
-  }
-  elsif(check_ref($node, 'Bio::EnsEMBL::Compara::GeneTreeNode')) {
-    $self->_genetreenode_body($node);
-  }
-  elsif(check_ref($node, 'Bio::EnsEMBL::Compara::GenomicAlignTree')) {
-    return $self->_genomicaligntree_body($node);
-  }
-  else {
-    my $ref = ref($node);
-    throw("Cannot process type $ref");
-  }
-  return;
-}
-
-###### PROCESSORS
-
-#tags return [ 'tag', {attributes} ]
-
-sub _genetreenode_tag {
-  my ($self, $node) = @_;
-  return ['clade', {branch_length => $node->distance_to_parent()}];
-}
-
-#body writes data
-sub _genetreenode_body {
-  my ($self, $node, $defer_taxonomy) = @_;
-  
-  my $type  = $node->node_type();
-  my $boot  = $node->bootstrap();
-  my $stn   = $node->species_tree_node();
-  
-  my $w = $self->_writer();
-  
-  if($boot) {
-    $w->dataElement('confidence', $boot, 'type' => 'bootstrap');
-  }
-  
-  if(!$defer_taxonomy && $stn) {
-    $self->_write_species_tree_node($stn);
-  }
-  
-  if((defined $type) and ($type eq "duplication" || $type eq "dubious")) {
-    $w->startTag('events');
-    $w->dataElement('type', 'speciation_or_duplication');
-    $w->dataElement('duplications', 1);
-    $w->endTag();
-  }
-  
-  if((defined $type) and ($type eq "dubious")) {
-    $w->dataElement('property', 'dubious_duplication', 
-      'datatype' => 'xsd:int', 
-      'ref' => 'Compara:dubious_duplication', 
-      'applies_to' => 'clade'
-    );
-  }
-  
-  if($node->get_child_count()) {
-    foreach my $child (@{$node->children()}) {
-      $self->_process($child);
-    }
-  }
-  
-  return;
-}
-
-sub _genetreemember_tag {
-  my ($self, $node) = @_;
-  return $self->_genetreenode_tag($node);
-}
-
-sub _genetreemember_body {
-  my ($self, $protein) = @_;
-  
-  my $w = $self->_writer();
-  $self->_genetreenode_body($protein , 1); #Used to defer taxonomy writing
-  
-  my $gene = $protein->gene_member();
-  my $taxon = $protein->taxon();
-  
-  #Stable IDs
-  $w->dataElement('name', $gene->stable_id());
-  
-  #Taxon
-  $self->_write_taxonomy($taxon->taxon_id(), $taxon->name());
-  
-  #Dealing with Sequence
-  $w->startTag('sequence');
-  $w->startTag('accession', 'source' => $self->source());
-  $w->characters($protein->stable_id());
-  $w->endTag();
-  $w->dataElement('name', $protein->display_label()) if $protein->display_label();
-  my $location = sprintf('%s:%d-%d',$gene->dnafrag()->name(), $gene->dnafrag_start(), $gene->dnafrag_end());
-  $w->dataElement('location', $location);
-  
-  if(!$self->no_sequences()) {
-    my $mol_seq;
-    if($self->aligned()) {
-      $mol_seq = ($self->cdna()) ? $protein->alignment_string('cds') : $protein->alignment_string();
-    }
-    else {
-      $mol_seq = ($self->cdna()) ? $protein->other_sequence('cds') : $protein->sequence();
-    }
-
-    $w->dataElement('mol_seq', $mol_seq, 'is_aligned' => ($self->aligned() || 0));
-  }
-  
-  $w->endTag('sequence');
-  
-  #Adding GenomeDB
-  $w->dataElement('property', $protein->genome_db()->name(),
-    'datatype' => 'xsd:string', 
-    'ref' => 'Compara:genome_db_name', 
-    'applies_to' => 'clade'
-  );
-  
-  return;
-}
-
-sub _genomicaligntree_tag {
-  my ($self, $node) = @_;
-  if ($self->no_branch_lengths) {
-      return ['clade'];
-  } else {
-      return ['clade', {branch_length => $node->distance_to_parent()}];
-  }
-}
-
-sub _genomicaligntree_body {
-  my ($self, $node) = @_;
-  
-  my $w = $self->_writer();
-
-  my $compact_alignments = $self->compact_alignments;
-  my $all_genomic_aligns = $node->get_all_genomic_aligns_for_node();
-  my $genomic_align_group = $node->genomic_align_group;
-
-  #Tag duplications
-  my $type = $node->node_type;
-  if((defined $type) and ($type eq "duplication")) {
-    $w->startTag('events');
-    $w->dataElement('type', 'speciation_or_duplication');
-    $w->dataElement('duplications', 1);
-    $w->endTag();
-  }
-
-  #Number of genomic_aligns = 0 for ancestral nodes in EPO_LOW_COVERAGE
-  if ($all_genomic_aligns && @$all_genomic_aligns > 0) {
-
-    #Unique name to handle duplications as opposed to scientific name
-    $w->dataElement('name', $node->name);
-    
-    #Get taxon for extant species only (genomic_aligns are for a single species)
-    if ($all_genomic_aligns->[0]->genome_db->name ne "ancestral_sequences") {
-      my $taxon = $all_genomic_aligns->[0]->genome_db->taxon();
-      #Taxon
-      $self->_write_taxonomy($taxon->taxon_id(), $taxon->name());
-    }
-    
-    if ($compact_alignments) {
-      #join together locations of multiple GenomicAlign objects
-      my @locations;
-      
-      #Dealing with Sequence
-      $w->startTag('sequence');
-      
-      #Append the location strings together
-      foreach my $genomic_align (@$all_genomic_aligns) {
-	push @locations, sprintf('%s:%d-%d',$genomic_align->dnafrag->name, $genomic_align->dnafrag_start(), $genomic_align->dnafrag_end());
-      }
-      my $location = join ",", @locations;
-      $w->dataElement('location', $location);
-      
-      #Do I need type?
-      #$w->dataElement('type', 'dna'); 
-      
-      my $mol_seq = ($self->aligned()) ? $genomic_align_group->aligned_sequence : $genomic_align_group->original_sequence;
-
-      $w->dataElement('mol_seq', $mol_seq, 'is_aligned' => ($self->aligned() || 0));
-      $w->endTag('sequence');  
-
-    } else {
-
-      #Write each location and sequence out separately
-      foreach my $genomic_align (@$all_genomic_aligns) {
-	#Dealing with Sequence
-	$w->startTag('sequence');
-	
-	my $location = sprintf('%s:%d-%d',$genomic_align->dnafrag->name, $genomic_align->dnafrag_start(), $genomic_align->dnafrag_end());
-	$w->dataElement('location', $location);
-
-	my $mol_seq = ($self->aligned()) ? $genomic_align->aligned_sequence : $genomic_align->original_sequence;
-
-	$w->dataElement('mol_seq', $mol_seq, 'is_aligned' => ($self->aligned() || 0));
-	$w->endTag('sequence');  
-      }
-    }
-  }
-
-  if($node->get_child_count()) {
-    foreach my $child (@{$node->children()}) {
-      $self->_process($child);
-    }
-  }
   return;
 }
 

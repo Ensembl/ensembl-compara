@@ -1033,13 +1033,17 @@ sub reverse_complement {
 
 sub length {
   my ($self, $length) = @_;
- 
 
   if (defined($length)) {
-      $self->{'length'} = $length;
+    $self->{'length'} = $length;
   } elsif (!defined($self->{'length'})) {
-      # Try to get the ID from other sources...
-      if (defined($self->{'adaptor'}) and defined($self->dbID)) {
+    # Try to get the ID from other sources...
+    my $dbID;
+    eval {
+      $dbID = $self->dbID;
+    };
+      if (defined($self->{'adaptor'}) and (defined $dbID) and ($self->can('retrieve_all_direct_attributes'))) {
+
 	  # ...from the database, using the dbID of the Bio::Ensembl::Compara::GenomicAlignBlock object
 	  $self->adaptor->retrieve_all_direct_attributes($self);
       } elsif (@{$self->get_all_genomic_aligns_for_node} and $self->get_all_genomic_aligns_for_node->[0]->aligned_sequence("+FAKE_SEQ")) {
