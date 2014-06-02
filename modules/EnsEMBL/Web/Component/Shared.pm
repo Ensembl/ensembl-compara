@@ -190,8 +190,12 @@ sub transcript_table {
   $table->add_row('INSDC coordinates',$insdc_accession) if $insdc_accession;
 
   my $gene = $object->gene;
-  
+
+  #text for tooltips
   my $gencode_desc = "The GENCODE Basic set includes all genes in the GENCODE gene set but only a subset of the transcripts.";
+  my $trans_5_3_desc = "5' and 3' truncations in transcript evidence prevent annotation of the start and the end of the CDS.";
+  my $trans_5_desc = "5' truncation in transcript evidence prevents annotation of the start of the CDS.";
+  my $trans_3_desc = "3' truncation in transcript evidence prevents annotation of the end of the CDS.";
 
   if ($gene) {
     my $transcript  = $page_type eq 'transcript' ? $object->stable_id : $hub->param('t');
@@ -306,14 +310,14 @@ sub transcript_table {
       if ($trans_attribs->{$tsi}) {
         if ($trans_attribs->{$tsi}{'CDS_start_NF'}) {
           if ($trans_attribs->{$tsi}{'CDS_end_NF'}) {
-            push @flags,"CDS 5' and 3' incomplete";
+            push @flags,qq(<span class="glossary_mouseover">CDS 5' and 3' incomplete<span class="floating_popup">$trans_5_3_desc</span></span>);
           }
           else {
-            push @flags, "CDS 5' incomplete";
+            push @flags,qq(<span class="glossary_mouseover">CDS 5' incomplete<span class="floating_popup">$trans_5_desc</span></span>);
           }
         }
         elsif ($trans_attribs->{$tsi}{'CDS_end_NF'}) {
-         push @flags,"CDS 3' incomplete";
+         push @flags,qq(<span class="glossary_mouseover">CDS 3' incomplete<span class="floating_popup">$trans_3_desc</span></span>);
         }
       }
 

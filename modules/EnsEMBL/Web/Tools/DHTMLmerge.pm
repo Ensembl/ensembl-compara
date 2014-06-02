@@ -45,17 +45,17 @@ sub merge_all {
 
 sub merge {
   my ($species_defs, $type, $dir, $subdir) = @_;
-  my ($contents, $jquery);
+  my ($uncompressed, $compressed);
   
   if ($dir && $subdir) {
-    ($contents) = get_contents($type, $dir, $subdir);
+    ($uncompressed) = get_contents($type, $dir, $subdir);
   } else {
     foreach (reverse @{$species_defs->ENSEMBL_HTDOCS_DIRS || []}) {
       next if /biomart/; # Not part of Ensembl template system
       
       my @content   = get_contents($type, $_, 'components');
-         $contents .= $content[0];
-         $jquery   .= $content[1] if $content[1];
+         $uncompressed .= $content[0];
+         $compressed   .= $content[1] if $content[1];
     }
   }
   
@@ -64,17 +64,17 @@ sub merge {
     my $sequence_markup = $species_defs->colour('sequence_markup') || {}; # Add sequence markup colours to ENSEMBL_STYLE - they are used in CSS. This smells a lot like a hack.
     my %colours         = (%{$species_defs->ENSEMBL_STYLE || {}}, map { $_ => $sequence_markup->{$_}{'default'} } keys %$sequence_markup);
        $colours{$_}     =~ s/^([0-9A-F]{6})$/#$1/i for keys %colours;
-       $contents        =~ s/\[\[(\w+)\]\]/$colours{$1}||"\/* ARG MISSING DEFINITION $1 *\/"/eg; 
+       $uncompressed    =~ s/\[\[(\w+)\]\]/$colours{$1}||"\/* ARG MISSING DEFINITION $1 *\/"/eg; 
   }
   
-  return compress($species_defs, $type, $contents, $jquery);
+  return compress($species_defs, $type, $uncompressed, $compressed);
 }
 
 sub get_contents {
   my ($type, $root, $subdir) = @_;
   my $dir        = "$root/$subdir";
   my $components = $dir =~ /components/;
-  my ($contents, $jquery);
+  my ($uncompressed, $compressed);
   
   if (-e $dir && -d $dir) {
     opendir DH, $dir;
@@ -84,8 +84,8 @@ sub get_contents {
     foreach (sort { -d "$dir/$a" <=> -d "$dir/$b" || lc $a cmp lc $b } grep /\w/, @files) {
       if (-d "$dir/$_") {
         my @content   = get_contents($type, $root, "$subdir/$_");
-           $contents .= $content[0];
-           $jquery   .= $content[1] if $content[1];
+           $uncompressed .= $content[0];
+           $compressed   .= $content[1] if $content[1];
       } elsif (-f "$dir/$_" && /\.$type$/) {
         next if $components && !/^\d/;
         
@@ -94,36 +94,37 @@ sub get_contents {
         my $file_contents = <I>;
         close I;
         
-        if (/jquery(_ui)?\.js/) {
-          $jquery .= $file_contents;
+        # don't compress the already compressed files
+        if (/\.min\./) {
+          $compressed .= $file_contents;
         } else {
-          $contents .= $file_contents;
+          $uncompressed .= $file_contents;
         }
       }
     }
   }
   
-  return ($contents, $jquery);
+  return ($uncompressed, $compressed);
 }
 
 sub compress {
-  my ($species_defs, $type, $contents, $jquery) = @_;
+  my ($species_defs, $type, $uncompressed, $compressed) = @_;
   my $root_dir        = $species_defs->ENSEMBL_WEBROOT;
   my $compression_dir = "$root_dir/utils/compression/";
-  my $filename        = md5_hex("$jquery$contents");
-  my $minified        = "$root_dir/htdocs/minified/$filename.$type";
-  my $tmp             = "$minified.tmp";
+  my $filename        = md5_hex("$compressed$uncompressed");
+  my $abs_filename    = "$root_dir/htdocs/minified/$filename.$type";
+  my $tmp             = "$abs_filename.tmp";
   
-  if (!-e $minified) {
+  if (!-e $abs_filename) {
     open O, ">$tmp" or die "can't open $tmp for writing";    
     
     if ($type eq 'js') {
       open   J, ">$tmp.jq";
-      print  J $jquery;
+      print  J $compressed;
       close  J;
-      printf O '(function($,window,document,undefined){%s})(jQuery,this,document)', $contents; # wrap javascript for extra compression
+      printf O '(function($,window,document,undefined){%s})(jQuery,this,document)', $uncompressed; # wrap javascript for extra compression
     } else {
-      print O $contents;
+      print O $uncompressed;
     }
     
     close O;
@@ -132,19 +133,19 @@ sub compress {
       my $jq = join ' ', $species_defs->ENSEMBL_JAVA, '-jar', "$compression_dir/compiler.jar", '--js', "$tmp.jq", '--compilation_level', 'WHITESPACE_ONLY',      '--warning_level', 'QUIET';
       my $js = join ' ', $species_defs->ENSEMBL_JAVA, '-jar', "$compression_dir/compiler.jar", '--js', "$tmp",    '--compilation_level', 'SIMPLE_OPTIMIZATIONS', '--warning_level', 'QUIET';
 
-      open  O, ">$minified" or die "can't open $minified for writing";
+      open  O, ">$abs_filename" or die "can't open $abs_filename for writing";
       print O `$_` for $jq, $js;
       close O;
       unlink "$tmp.jq";
     } else {
-      system $species_defs->ENSEMBL_JAVA, '-jar', "$compression_dir/yuicompressor-2.4.7.jar", '--type', 'css', '-o', $minified, $tmp;
+      system $species_defs->ENSEMBL_JAVA, '-jar', "$compression_dir/yuicompressor-2.4.7.jar", '--type', 'css', '-o', $abs_filename, $tmp;
     }
     
     unlink $tmp;
     
-    if (!-s $minified) {
-      open  O, ">$minified" or die "can't open $minified for writing";
-      print O $type eq 'css' ? CSS::Minifier::minify(input => $contents) : JavaScript::Minifier::minify(input => "$jquery$contents");
+    if (!-s $abs_filename) {
+      open  O, ">$abs_filename" or die "can't open $abs_filename for writing";
+      print O $type eq 'css' ? CSS::Minifier::minify(input => $uncompressed) : JavaScript::Minifier::minify(input => "$compressed$uncompressed");
       close O;
     }
   }
