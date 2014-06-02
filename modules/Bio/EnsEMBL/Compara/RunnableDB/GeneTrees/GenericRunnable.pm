@@ -101,6 +101,9 @@ sub param_defaults {
         'input_clusterset_id'       => undef,
         'output_clusterset_id'      => undef,
 
+        'minimum_genes'     => 0,
+        'maximum_genes'     => 1e9,
+
         'run_treebest_sdi'  => 0,
         'reroot_with_sdi'   => 0,
     };
@@ -133,8 +136,6 @@ sub fetch_input {
     $gene_tree->print_tree(10) if($self->debug);
 
     # default parameters
-    $self->param('minimum_genes', 0   ) unless $self->input_job->param_exists('minimum_genes');
-    $self->param('maximum_genes', 1e9 ) unless $self->input_job->param_exists('maximum_genes');
     $self->param('split_genes',   {}  );
     $self->param('cmd_output',  undef );
 }
