@@ -32,10 +32,10 @@ use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
 
 # The majority of core databases live on two staging servers:
 Bio::EnsEMBL::Registry->load_registry_from_url(
-  'mysql://ensro@ens-staging1/75');
+  'mysql://ensro@ens-staging1/76');
 
 Bio::EnsEMBL::Registry->load_registry_from_url(
-  'mysql://ensro@ens-staging2/75');
+  'mysql://ensro@ens-staging2/76');
 
 # Extra core databases that live on genebuilders' servers:
 

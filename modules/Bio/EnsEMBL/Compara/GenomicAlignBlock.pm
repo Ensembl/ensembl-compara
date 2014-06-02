@@ -30,7 +30,7 @@ limitations under the License.
 Bio::EnsEMBL::Compara::GenomicAlignBlock - Alignment of two or more pieces of genomic DNA
 
 =head1 SYNOPSIS
-  
+
   use Bio::EnsEMBL::Compara::GenomicAlignBlock;
   
   my $genomic_align_block = new Bio::EnsEMBL::Compara::GenomicAlignBlock(
@@ -1482,6 +1482,7 @@ sub restrict_between_alignment_positions {
   Status     : At risk
 
 =cut
+
 sub get_GenomicAlignTree {
     my ($self) = @_;
 
@@ -1631,7 +1632,7 @@ alignments will throw an exception.
 
 
 =head2 get_old_consensus_genomic_align [FOR BACKWARDS COMPATIBILITY ONLY]
- 
+
   Arg [1]    : none
   Example    : $old_consensus_genomic_aligns = $genomic_align_group->get_old_consensus_genomic_align();
   Description: get the Bio::EnsEMBL::Compara::GenomicAlign object following the convention for backwards
@@ -1639,7 +1640,7 @@ alignments will throw an exception.
   Returntype : Bio::EnsEMBL::Compara::GenomicAlign object
   Exceptions : 
   Caller     : general
- 
+
 =cut
 
 sub get_old_consensus_genomic_align {
@@ -1698,7 +1699,7 @@ sub get_old_consensus_genomic_align {
 
 
 =head2 get_old_query_genomic_align [FOR BACKWARDS COMPATIBILITY ONLY]
- 
+
   Arg [1]    : none
   Example    : $old_query_genomic_aligns = $genomic_align_group->get_old_query_genomic_align();
   Description: get the Bio::EnsEMBL::Compara::GenomicAlign object following the convention for backwards
@@ -1706,7 +1707,7 @@ sub get_old_consensus_genomic_align {
   Returntype : Bio::EnsEMBL::Compara::GenomicAlign object
   Exceptions : 
   Caller     : general
- 
+
 =cut
 
 sub get_old_query_genomic_align {

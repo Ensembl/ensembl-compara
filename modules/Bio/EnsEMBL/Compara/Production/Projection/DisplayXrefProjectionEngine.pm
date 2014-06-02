@@ -33,7 +33,7 @@ DBEntry so look in the corresponding writer for that information.
 
 =head1 FILTERS
 
-=head3 Source DBEntry Filtering
+=head2 Source DBEntry Filtering
 
 =over 8
 
@@ -47,9 +47,9 @@ DBEntry so look in the corresponding writer for that information.
 
 =cut
 
-=head3 Target DBEntry Filtering
+=head2 Target DBEntry Filtering
 
-=over8
+=over 8
 
 =item If the external name was undefined
 
@@ -57,15 +57,14 @@ DBEntry so look in the corresponding writer for that information.
 
 =back
 
-=head3 Homology Filtering
+=head2 Homology Filtering
 
 Homology objects are filtered accordingly
 
 =over 8
 
-=item The description field is set to ortholog_one2one, 
-      ortholog_one2many or ortholog_many2many
-      
+=item The description field is set to ortholog_one2one, ortholog_one2many or ortholog_many2many
+
 =item Percentage identity of both homologous pepetides is greater than 40%
 
 =back

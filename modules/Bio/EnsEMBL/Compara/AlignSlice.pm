@@ -122,9 +122,9 @@ and invert(). Some other methods work as expected (seq, subseq, get_all_Attribut
 get_all_VariationFeatures, get_all_RepeatFeatures...). All these Bio::EnsEMBL::Compara::AlignSlice::Slice
 share the same fake coordinate system defined by the Bio::EnsEMBL::Compara::AlignSlice. This allows to
 map features from one species onto the others.
-  
+
 =head1 SYNOPSIS
-  
+
   use Bio::EnsEMBL::Compara::AlignSlice;
   
   ## You may create your own AlignSlice objects but if you are interested in
@@ -742,6 +742,7 @@ sub get_all_ConservationScores {
   Status     : At risk
 
 =cut
+
 sub _get_expanded_conservation_scores {
     my ($self, $conservation_score_adaptor, $display_size, $display_type, $window_size) = @_;
     my $y_axis_min;
@@ -829,6 +830,7 @@ sub _get_expanded_conservation_scores {
   Status     : At risk
 
 =cut
+
 sub _get_condensed_conservation_scores {
     my ($self, $conservation_score_adaptor, $display_size, $display_type, $window_size) = @_;
 

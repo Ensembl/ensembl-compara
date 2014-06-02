@@ -142,8 +142,8 @@ sub fetch_by_GenomeDB_and_name {
   $dnafrag = $self->generic_fetch_one('df.genome_db_id = ? AND df.name = ?');
 
   if (!$dnafrag) {
-    warning("No Bio::EnsEMBL::Compara::DnaFrag found for ".$genome_db->name."(".$genome_db->assembly."),".
-        " chromosome $name");
+    $genome_db = sprintf('%s (%s)', $genome_db->name, $genome_db->assembly) if ref($genome_db);
+    warning("No Bio::EnsEMBL::Compara::DnaFrag found for $genome_db and chromosome $name");
   }
   return $dnafrag;
 }

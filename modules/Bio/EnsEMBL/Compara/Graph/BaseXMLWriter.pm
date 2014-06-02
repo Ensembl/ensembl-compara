@@ -52,6 +52,7 @@ See inline
  <http://www.ensembl.org/Help/Contact>.
 
 =cut
+
 use strict;
 use warnings;
 
@@ -74,7 +75,7 @@ use Bio::EnsEMBL::Utils::Exception qw(throw warning);
   Returntype  : Instance of the writer
   Exceptions  : None
   Status      : Internal  
-  
+
 =cut
 
 sub new {
@@ -100,7 +101,7 @@ sub new {
   Returntype : IO::Handle
   Exceptions : Thrown if we cannot open a file handle
   Status     : Stable
-  
+
 =cut
 
 sub handle {
@@ -126,7 +127,7 @@ sub handle {
   Returntype : String
   Exceptions : None
   Status     : Stable
-  
+
 =cut
 
 sub file {

@@ -61,16 +61,16 @@ sub dumpTreeMultipleAlignmentToWorkdir {
   if ($self->param('check_split_genes')) {
     my %split_genes;
     my $sth = $self->compara_dba->dbc->prepare('SELECT DISTINCT gene_split_id FROM split_genes JOIN gene_tree_node USING (seq_member_id) WHERE root_id = ?');
-    $sth->execute($self->param('gene_tree_id'));
+    $sth->execute($gene_tree->root_id());
     my $gene_splits = $sth->fetchall_arrayref();
     $sth->finish;
     $sth = $self->compara_dba->dbc->prepare('SELECT node_id FROM split_genes JOIN gene_tree_node USING (seq_member_id) WHERE root_id = ? AND gene_split_id = ? ORDER BY seq_member_id');
     foreach my $gene_split (@$gene_splits) {
-      $sth->execute($self->param('gene_tree_id'), $gene_split->[0]);
+      $sth->execute($gene_tree->root_id(), $gene_split->[0]);
       my $partial_genes = $sth->fetchall_arrayref;
       my $node1 = shift @$partial_genes;
       my $protein1 = $gene_tree->root->find_leaf_by_node_id($node1->[0]);
-      #print STDERR "node1 ", $node1, " ", $protein1, "\n";
+      #print STDERR "node1 ", $node1->[0], " ", $protein1, " on root_id ", $gene_tree->root_id(), "\n";
       my $cdna = $protein1->alignment_string($seq_type);
       print STDERR "cnda $cdna\n" if $self->debug;
         # We start with the original cdna alignment string of the first gene, and
@@ -494,6 +494,9 @@ sub parse_filtered_align {
         }
 
         foreach my $seq ($aln->each_seq) {
+            # Delete empty sequences => Sequences with only gaps and 'X's
+            # for instance: ---------XXXXX---X---XXXX
+            next if $seq->seq() =~ /^[Xx\-]*$/;
             $hash_filtered_strings{$seq->display_id()} = $seq->seq();
         }
     }
@@ -511,6 +514,7 @@ sub parse_filtered_align {
     if ($allow_missing_members) {
         my $treenode_adaptor = $self->compara_dba->get_GeneTreeNodeAdaptor;
 
+        $self->param('removed_members', 0);
         foreach my $leaf (@{$self->param('gene_tree')->get_all_leaves()}) {
             next if exists $hash_filtered_strings{$leaf->{_tmp_name}};
 
@@ -524,7 +528,9 @@ sub parse_filtered_align {
             print $self->param('gene_tree_id').", $leaf->stable_id, $leaf->genome_db_id, \n" ;
             $sth->execute($leaf->node_id, $leaf->stable_id, $leaf->genome_db_id );
             $sth->finish;
+            $self->param('removed_members', $self->param('removed_members') + 1);
         }
+        $self->param('default_gene_tree')->store_tag('gene_count', scalar(@{$self->param('gene_tree')->get_all_leaves}) );
     }
 
     return Bio::EnsEMBL::Compara::Utils::Cigars::identify_removed_columns(\%hash_initial_strings, \%hash_filtered_strings);

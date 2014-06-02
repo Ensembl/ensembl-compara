@@ -21,7 +21,7 @@ limitations under the License.
 
 =head1 NAME
 
-    Bio::EnsEMBL::Compara::PipeConfig::Families_conf
+Bio::EnsEMBL::Compara::PipeConfig::Families_conf
 
 =head1 SYNOPSIS
 
@@ -43,7 +43,7 @@ limitations under the License.
 
 =head1 DESCRIPTION  
 
-    The PipeConfig file for Families pipeline that should automate most of the tasks
+The PipeConfig file for Families pipeline that should automate most of the tasks
 
 =head1 CONTACT
 

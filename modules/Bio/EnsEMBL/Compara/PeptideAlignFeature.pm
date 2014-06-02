@@ -16,7 +16,9 @@ limitations under the License.
 
 =cut
 
-=head1 NAME - Bio::EnsEMBL::Compara::PeptideAlignFeature
+=head1 NAME
+
+Bio::EnsEMBL::Compara::PeptideAlignFeature
 
 =head1 SYNOPSIS
 
@@ -46,9 +48,7 @@ limitations under the License.
 
 =head1 DESCRIPTION
 
-=head1 CONTACT
-
-Describe contact details here
+Object that describes a blast hit between two proteins (seq_members)
 
 =head1 APPENDIX
 

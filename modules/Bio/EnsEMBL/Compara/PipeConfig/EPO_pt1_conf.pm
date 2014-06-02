@@ -19,7 +19,7 @@ limitations under the License.
 
 =head1 NAME
 
- Bio::EnsEMBL::Compara::PipeConfig::EPO_pt1_conf
+Bio::EnsEMBL::Compara::PipeConfig::EPO_pt1_conf
 
 =head1 SYNOPSIS
 

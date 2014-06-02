@@ -468,6 +468,11 @@ sub gene_list {  # DEPRECATED ?
                  undef is the default sequence. Other types are 'cds', 'exon_bounded'
   Arg [-ID_TYPE]:
         string - how to label the sequences. See SeqMember::bioseq()
+
+  Arg [-WITH_DESCRIPTION]:
+        boolean - flag to include the member descriptions
+                  warning: they may contain weird characters that could hamper the parsing
+
   Example    : $family->print_sequences_to_file(-file => 'output.fa', -format => 'fasta', -id_type => 'MEMBER');
   Description: Prints the sequences of the members into a file
   Returntype : none
@@ -480,8 +485,8 @@ sub gene_list {  # DEPRECATED ?
 sub print_sequences_to_file {
     my $self = shift;
 
-    my ($file, $fh, $format, $unique_seqs, $seq_type, $id_type) =
-        rearrange([qw(FILE FH FORMAT UNIQ_SEQ SEQ_TYPE ID_TYPE)], @_);
+    my ($file, $fh, $format, $unique_seqs, $seq_type, $id_type, $with_description) =
+        rearrange([qw(FILE FH FORMAT UNIQ_SEQ SEQ_TYPE ID_TYPE WITH_DESCRIPTION)], @_);
 
     my $seqio = Bio::SeqIO->new( -file => ($file ? ">$file" : undef), -fh => $fh, -format => $format );
 
@@ -489,7 +494,7 @@ sub print_sequences_to_file {
     foreach my $member (@{$self->get_all_Members}) {
         next unless $member->isa('Bio::EnsEMBL::Compara::SeqMember');
 
-        my $bioseq = $member->bioseq(-SEQ_TYPE => $seq_type, -ID_TYPE => $id_type);
+        my $bioseq = $member->bioseq(-SEQ_TYPE => $seq_type, -ID_TYPE => $id_type, -WITH_DESCRIPTION => $with_description);
         next if $unique_seqs and $seq_hash{$bioseq->seq};
         $seq_hash{$bioseq->seq} = 1;
 

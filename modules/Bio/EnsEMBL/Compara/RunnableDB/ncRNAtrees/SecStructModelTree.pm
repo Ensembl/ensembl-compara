@@ -31,10 +31,6 @@ limitations under the License.
 
 Bio::EnsEMBL::Compara::RunnableDB::ncRNAtrees::SecStructModelTree
 
-=head1 SYNOPSIS
-
-=head1 DESCRIPTION
-
 =head1 INHERITANCE TREE
 
   Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable

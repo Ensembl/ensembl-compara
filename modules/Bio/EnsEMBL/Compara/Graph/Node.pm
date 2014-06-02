@@ -18,9 +18,7 @@ limitations under the License.
 
 =head1 NAME
 
-Node - DESCRIPTION of Object
-
-=head1 SYNOPSIS
+Bio::EnsEMBL::Compara::Graph::Node
 
 =head1 DESCRIPTION
 

@@ -33,7 +33,7 @@ Ensembl Team. Individual contributions can be found in the GIT log.
 
 =head1 NAME
 
-AlignedMember
+Bio::EnsEMBL::Compara::AlignedMember
 
 =head1 DESCRIPTION
 

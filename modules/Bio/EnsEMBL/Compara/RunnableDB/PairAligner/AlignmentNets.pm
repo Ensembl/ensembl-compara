@@ -53,6 +53,7 @@ This module (at least for now) relies heavily on Jim Kent\'s Axt tools.
 
 
 =cut
+
 package Bio::EnsEMBL::Compara::RunnableDB::PairAligner::AlignmentNets;
 
 use strict;

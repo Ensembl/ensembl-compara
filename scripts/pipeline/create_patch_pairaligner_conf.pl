@@ -25,7 +25,7 @@
 
 =head1 NAME
 
- create_patch_pairaligner_conf.pl
+create_patch_pairaligner_conf.pl
 
 =head1 SYNOPSIS
 
@@ -46,6 +46,8 @@ Create the lastz configuration script for just the reference species patches aga
 =item B<[--help]>
 
   Prints help message and exits.
+
+=back
 
 =head2 GENERAL CONFIGURATION
 

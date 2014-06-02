@@ -18,7 +18,7 @@ limitations under the License.
 
 =head1 NAME
 
- Bio::EnsEMBL::Compara::PipeConfig::PairAligner_conf
+Bio::EnsEMBL::Compara::PipeConfig::PairAligner_conf
 
 =head1 SYNOPSIS
 

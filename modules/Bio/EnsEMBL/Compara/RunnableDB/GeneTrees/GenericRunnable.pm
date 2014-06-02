@@ -66,6 +66,11 @@ Other parameters:
  - reroot_with_sdi: should "treebest sdi" also reroot the tree
  - output_clusterset_id: alternative clusterset_id to store the result gene tree
 
+Branch events:
+ - #1: autoflow on success
+ - #2: cluster too small
+ - #3: cluster too large
+
 =head1 APPENDIX
 
 The rest of the documentation details each of the object methods.
@@ -109,10 +114,12 @@ sub fetch_input {
 
     my $gene_tree_id     = $self->param_required('gene_tree_id');
     my $gene_tree        = $self->param('tree_adaptor')->fetch_by_dbID( $gene_tree_id ) or die "Could not fetch gene_tree with gene_tree_id='$gene_tree_id'";
+    $self->param('default_gene_tree', $gene_tree);
 
     die "Cannot read tags from TreeBest's output: set run_treebest_sdi or read_tags to 0" if $self->param('run_treebest_sdi') and $self->param('read_tags');
 
     if ($self->param('input_clusterset_id')) {
+        print STDERR "getting the tree '".$self->param('input_clusterset_id')."'\n";
         my $other_trees = $self->param('tree_adaptor')->fetch_all_linked_trees($gene_tree);
         my ($selected_tree) = grep {$_->clusterset_id eq $self->param('input_clusterset_id')} @$other_trees;
         die sprintf('Cannot find a "%s" tree for tree_id=%d', $self->param('input_clusterset_id'), $self->param('gene_tree_id')) unless $selected_tree;
@@ -155,6 +162,7 @@ sub write_output {
         if ($self->param('output_clusterset_id') and $self->param('output_clusterset_id') ne 'default') {
             $target_tree = $self->store_alternative_tree($cmd_output, $self->param('output_clusterset_id'), $target_tree);
         } else {
+            $target_tree = $self->param('default_gene_tree');
             $self->parse_newick_into_tree($cmd_output, $target_tree);
             $self->store_genetree($target_tree, []);
         }
@@ -212,9 +220,15 @@ sub run_generic_command {
 
     my $number_actual_genes = scalar(@{$gene_tree->get_all_Members}) - scalar(keys %{$self->param('split_genes')});
 
-    if (($number_actual_genes < $self->param('minimum_genes')) or ($number_actual_genes > $self->param('maximum_genes'))) {
-        $self->warning("There are $number_actual_genes genes in this tree. Not running the command");
-        return;
+    if ($number_actual_genes < $self->param('minimum_genes')) {
+        $self->dataflow_output_id($self->input_id, 2);
+        $self->input_job->incomplete(0);
+        die "There are only $number_actual_genes genes in this tree. Not running the command.\n";
+    }
+    if ($number_actual_genes > $self->param('maximum_genes')) {
+        $self->dataflow_output_id($self->input_id, 3);
+        $self->input_job->incomplete(0);
+        die "There are too many genes ($number_actual_genes) in this tree. Not running the command.\n";
     }
 
     foreach my $tag ($gene_tree->get_all_tags()) {
@@ -230,6 +244,7 @@ sub run_generic_command {
 
     $self->param('output_file', $self->worker_temp_directory.'/'.$self->param('output_file')) if $self->param('output_file');
     my $output = $self->param('output_file') ? $self->_slurp($self->param('output_file')) : $run_cmd->out;
+    print "Re-root with sdi=".$self->param('reroot_with_sdi')."\n" if($self->debug);
     $output = $self->run_treebest_sdi($output, $self->param('reroot_with_sdi')) if $self->param('run_treebest_sdi');
     $self->param('cmd_output', $output);
 }

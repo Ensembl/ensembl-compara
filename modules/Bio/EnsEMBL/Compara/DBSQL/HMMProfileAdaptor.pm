@@ -18,13 +18,7 @@ limitations under the License.
 
 =head1 NAME
 
-HMMProfileAdaptor
-
-=head1 SYNOPSIS
-
-=head1 DESCRIPTION
-
-=head1 CONTACT
+Bio::EnsEMBL::Compara::DBSQL::HMMProfileAdaptor
 
 =head1 APPENDIX
 

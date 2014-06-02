@@ -144,7 +144,7 @@ sub cigar_from_alignment_string {
 
     my $cigar_line = '';
     while($alignment_string=~/(?:\b|^)(.)(.*?)(?:\b|$)/g) {
-        $cigar_line .= ($2 ? length($2)+1 : '').(($1 eq '-') ? 'D' : 'M');
+        $cigar_line .= ($2 ? length($2)+1 : '').(($1 eq '-') ? 'D' : ($1 eq '.' ? 'X' : 'M'));
     }
 
     return $cigar_line;

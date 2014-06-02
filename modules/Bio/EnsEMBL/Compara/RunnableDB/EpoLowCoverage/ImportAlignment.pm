@@ -29,8 +29,6 @@ limitations under the License.
 
 Bio::EnsEMBL::Compara::RunnableDB::EpoLowCoverage::ImportAlignment
 
-=head1 SYNOPSIS
-
 =head1 DESCRIPTION
 
 This module imports a specified alignment. This is used in the low coverage genome alignment pipeline for importing the high coverage alignment which is used to build the low coverage genomes on.

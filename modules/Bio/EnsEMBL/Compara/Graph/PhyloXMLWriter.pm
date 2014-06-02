@@ -91,7 +91,7 @@ sub new {
   my ($class, @args) = @_;
   $class = ref($class) || $class;
   my $self = $class->SUPER::new(@args);
-  
+
   my ($source, $no_release_trees, $no_branch_lengths) = 
     rearrange([qw(source no_release_trees no_branch_lengths)], @args);
 
@@ -119,7 +119,6 @@ sub namespaces {
   };
 }
 
-
 =pod
 
 =head2 no_release_trees()
@@ -128,7 +127,7 @@ sub namespaces {
   Returntype : Boolean
   Exceptions : None
   Status     : Stable
- 
+
 =cut
 
 sub no_release_trees {
@@ -145,7 +144,7 @@ sub no_release_trees {
   Returntype : Boolean
   Exceptions : None
   Status     : Stable
- 
+
 =cut
 
 sub no_branch_lengths {
@@ -153,7 +152,6 @@ sub no_branch_lengths {
   $self->{no_branch_lengths} = $no_branch_lengths if defined $no_branch_lengths;
   return $self->{no_branch_lengths};
 }
-
 
 =pod
 

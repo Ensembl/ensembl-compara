@@ -20,14 +20,12 @@ limitations under the License.
 
 =head1 NAME
 
-  Bio::EnsEMBL::Compara::StableId::Adaptor
-
-=head1 SYNOPSIS
+Bio::EnsEMBL::Compara::StableId::Adaptor
 
 =head1 DESCRIPTION
 
-    All database I/O should be done via this class,
-    which has a general functionality of an adaptor, but strictly speaking isn't.
+All database I/O should be done via this class,
+which has a general functionality of an adaptor, but strictly speaking isn't.
 
 =cut
 

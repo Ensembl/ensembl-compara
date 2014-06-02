@@ -45,7 +45,7 @@ subtest "Test fetch methods", sub {
 
     ok(1);
 
-=comment
+=pod
 
     my $member = $ma->fetch_by_source_stable_id("ENSEMBLGENE", $stable_id);
     

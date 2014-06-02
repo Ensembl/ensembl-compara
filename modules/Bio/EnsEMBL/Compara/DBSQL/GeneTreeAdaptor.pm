@@ -231,11 +231,10 @@ sub fetch_all_by_Member {
 
     assert_ref_or_dbID($member, 'Bio::EnsEMBL::Compara::Member', 'member');
 
-    my $join = [[['gene_tree_node', 'gtn'], 'gtn.root_id = gtr.root_id'], [['seq_member', 'm'], 'gtn.seq_member_id = m.seq_member_id']];
-    my $constraint = '((m.seq_member_id = ?) OR (m.gene_member_id = ?))';
+    my $join = [[['gene_tree_node', 'gtn'], 'gtn.root_id = gtr.root_id']];
+    my $constraint = '(gtn.seq_member_id = ?)';
     
-    my $member_id = (ref($member) ? $member->dbID : $member);
-    $self->bind_param_generic_fetch($member_id, SQL_INTEGER);
+    my $member_id = (ref($member) ? ($member->isa('Bio::EnsEMBL::Compara::GeneMember') ? $member->canonical_member_id : $member->dbID) : $member);
     $self->bind_param_generic_fetch($member_id, SQL_INTEGER);
     
     if (defined $mlss) {
@@ -268,16 +267,7 @@ sub fetch_all_by_Member {
 sub fetch_default_for_Member {
     my ($self, $member) = @_;
 
-    assert_ref_or_dbID($member, 'Bio::EnsEMBL::Compara::Member', 'member');
-
-    my $join = [[['gene_tree_node', 'gtn'], 'gtn.root_id = gtr.root_id'], [['seq_member', 'm'], 'gtn.seq_member_id = m.seq_member_id']];
-    my $constraint = '((m.seq_member_id = ?) OR (m.gene_member_id = ?)) AND (gtr.clusterset_id = "default")';
-    
-    my $member_id = (ref($member) ? $member->dbID : $member);
-    $self->bind_param_generic_fetch($member_id, SQL_INTEGER);
-    $self->bind_param_generic_fetch($member_id, SQL_INTEGER);
-    
-    return $self->generic_fetch_one($constraint, $join);
+    return $self->fetch_all_by_Member($member, -CLUSTERSET_ID => 'default')->[0];
 }
 
 
@@ -350,11 +340,14 @@ sub fetch_all_linked_trees {
     if ($tree->ref_root_id) {
         # Trees that share the same reference
         $self->bind_param_generic_fetch($tree->ref_root_id, SQL_INTEGER);
+        $self->bind_param_generic_fetch($tree->root_id, SQL_INTEGER);
+        $self->bind_param_generic_fetch($tree->ref_root_id, SQL_INTEGER);
+        return $self->generic_fetch('(ref_root_id = ? AND root_id != ?) OR (root_id = ?)');
     } else {
         # The given tree is the reference
         $self->bind_param_generic_fetch($tree->root_id, SQL_INTEGER);
+        return $self->generic_fetch('ref_root_id = ?');
     }
-    return $self->generic_fetch('ref_root_id = ?');
 }
 
 

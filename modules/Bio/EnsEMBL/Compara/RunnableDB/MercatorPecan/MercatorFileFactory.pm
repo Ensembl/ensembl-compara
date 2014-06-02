@@ -29,9 +29,6 @@ limitations under the License.
 
 Bio::EnsEMBL::Compara::RunnableDB::MercatorPecan::MercatorFileFactory 
 
-=head1 SYNOPSIS
-
-
 =head1 DESCRIPTION
 Create jobs for DumpMercatorFiles
 

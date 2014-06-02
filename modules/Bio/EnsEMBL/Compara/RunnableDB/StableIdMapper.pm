@@ -20,7 +20,7 @@ limitations under the License.
 
 =head1 NAME
 
-    Bio::EnsEMBL::Compara::RunnableDB::StableIdMapper
+Bio::EnsEMBL::Compara::RunnableDB::StableIdMapper
 
 =cut
 

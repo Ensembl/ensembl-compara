@@ -468,8 +468,8 @@ sub gene_member_id {
 
 sub bioseq {
     my $self = shift;
-    my ($seq_type, $id_type) =
-        rearrange([qw(SEQ_TYPE ID_TYPE)], @_);
+    my ($seq_type, $id_type, $with_description) =
+        rearrange([qw(SEQ_TYPE ID_TYPE WITH_DESCRIPTION)], @_);
 
     throw("Member stable_id undefined") unless defined($self->stable_id());
 
@@ -490,7 +490,7 @@ sub bioseq {
     return Bio::Seq->new(
         -seq                => $sequence,
         -display_id         => $seqname,
-        -desc               => $self->description(),
+        -desc               => $with_description ? $self->description() : undef,
         -alphabet           => $alphabet,
     );
 }

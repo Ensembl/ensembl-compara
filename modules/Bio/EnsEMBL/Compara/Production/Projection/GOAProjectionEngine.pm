@@ -50,9 +50,8 @@ Homology objects are filtered accordingly
 
 =over 8
 
-=item The description field is set to ortholog_one2one, 
-      ortholog_one2many or ortholog_many2many
-      
+=item The description field is set to ortholog_one2one, ortholog_one2many or ortholog_many2many
+
 =item Percentage identity of both homologous pepetides is greater than 40%
 
 =back

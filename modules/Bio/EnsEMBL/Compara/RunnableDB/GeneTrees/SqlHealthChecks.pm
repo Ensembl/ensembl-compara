@@ -27,7 +27,7 @@ limitations under the License.
 
 =head1 NAME
 
-  Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::SqlHealthChecks.
+Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::SqlHealthChecks.
 
 =head1 DESCRIPTION
 
@@ -206,7 +206,7 @@ my $config = {
         tests => [
             {
                 description => 'Checks that the tree has not lost any genes since the backup',
-                query => 'SELECT gene_tree_backup.seq_member_id FROM gene_tree_backup LEFT JOIN gene_tree_node USING (root_id, seq_member_id) WHERE root_id = #gene_tree_id# AND gene_tree_node.seq_member_id IS NULL',
+                query => 'SELECT gene_tree_backup.seq_member_id FROM gene_tree_backup JOIN seq_member USING (seq_member_id) LEFT JOIN gene_tree_node USING (root_id, seq_member_id) LEFT JOIN removed_member USING (stable_id) WHERE root_id = #gene_tree_id# AND gene_tree_node.seq_member_id IS NULL AND removed_member.stable_id IS NULL',
             },
             {
                 description => 'Checks that the tree has not gained any genes since the backup',

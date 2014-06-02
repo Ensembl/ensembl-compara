@@ -20,12 +20,11 @@ limitations under the License.
 
 =head1 NAME
 
-    Bio::EnsEMBL::Compara::PipeConfig::ImportAltAlleGroupsAsHomologies_conf
+Bio::EnsEMBL::Compara::PipeConfig::ImportAltAlleGroupsAsHomologies_conf
 
 =head1 DESCRIPTION  
 
-    The PipeConfig file for the pipeline that imports alternative alleles
-    as homologies.
+The PipeConfig file for the pipeline that imports alternative alleles as homologies.
 
 =cut
 

@@ -18,7 +18,7 @@ limitations under the License.
 
 =head1 NAME
 
- Bio::EnsEMBL::Compara::PipeConfig::PairAligner_conf
+Bio::EnsEMBL::Compara::PipeConfig::PairAligner_conf
 
 =head1 SYNOPSIS
 
@@ -249,7 +249,7 @@ sub default_options {
   	'net_parameters' => {'max_gap'=>'50', 'chainNet'=>$self->o('chainNet_exe')},
   	'net_batch_size' => 1,
   	'net_hive_capacity' => 20,
-  	'bidirectional' => 0,
+  	'bidirectional' => 1,
 
 	#
 	#Default healthcheck

@@ -24,18 +24,11 @@ limitations under the License.
 
 Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::PantherLoadModels
 
-
-=head1 SYNOPSIS
-
-
-
 =head1 DESCRIPTION
 
 This Analysis/RunnableDB is designed to fetch the HMM models from
 the Panther ftp site and load them into the database to be used in the
 alignment process.
-
-
 
 =head1 CONTACT
 
@@ -45,13 +38,10 @@ alignment process.
   Questions may also be sent to the Ensembl help desk at
   <http://www.ensembl.org/Help/Contact>.
 
-
-
 =head1 APPENDIX
 
 The rest of the documentation details each of the object methods. 
 Internal methods are usually preceded with a _
-
 
 =cut
 

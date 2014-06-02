@@ -19,7 +19,7 @@
 
 =head1 NAME
 
-    Bio::EnsEMBL::Compara::RunnableDB::ncRNAtrees::GenerateSSPict
+GenerateSSPict
 
 =head1 DESCRIPTION
 

@@ -20,13 +20,11 @@ limitations under the License.
 
 =head1 NAME
 
-  Bio::EnsEMBL::Compara::StableId::Generator
-
-=head1 SYNOPSIS
+Bio::EnsEMBL::Compara::StableId::Generator
 
 =head1 DESCRIPTION
 
-    A name generator object (maintains the counter and knows the format of stable_ids).
+A name generator object (maintains the counter and knows the format of stable_ids).
 
 =cut
 

@@ -27,7 +27,7 @@ limitations under the License.
 
 =head1 NAME
 
-  Bio::EnsEMBL::Compara::PipeConfig::ProteinTrees_conf
+Bio::EnsEMBL::Compara::PipeConfig::ProteinTrees_conf
 
 =head1 DESCRIPTION
 
@@ -103,6 +103,7 @@ sub default_options {
 
     # tree building parameters:
         'use_raxml'                 => 0,
+        'use_notung'                => 0,
         'treebreak_gene_count'      => 400,     # affects msa_chooser
         'mafft_gene_count'          => 200,     # affects msa_chooser
         'mafft_runtime'             => 7200,    # affects msa_chooser
@@ -121,7 +122,7 @@ sub default_options {
     # mapping parameters:
         'do_stable_id_mapping'      => 1,
         'do_treefam_xref'           => 0,
-        #'tf_release'                => '9_69',     # The TreeFam release to map to
+        'tf_release'                => undef,       # The TreeFam release to map to
 
     # executable locations:
         #'hcluster_exe'              => '/software/ensembl/compara/hcluster/hcluster_sg',
@@ -142,6 +143,7 @@ sub default_options {
         ##'hmm_library_basedir'       => '/lustre/scratch110/ensembl/mp12/Panther_hmms',
         #'pantherScore_path'         => '/software/ensembl/compara/pantherScore1.03',
         #'hmmer_path'                => '/software/ensembl/compara/hmmer-2.3.2/src/',
+        'extra_model_tags_file'     => undef,
 
     # hive_capacity values for some analyses:
         #'reuse_capacity'            =>   3,
@@ -862,6 +864,10 @@ sub pipeline_analyses {
             {
              -logic_name => 'HMM_clusterize',
              -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::HMMClusterize',
+             -parameters => {
+                 'division'     => $self->o('division'),
+                 'extra_tags_file'  => $self->o('extra_model_tags_file'),
+             },
              -rc_name => '8Gb_job',
             },
 
@@ -1111,8 +1117,17 @@ sub pipeline_analyses {
                 'fan_branch_code'   => 2,
             },
             -flow_into  => {
-                 '2->A' => [ 'large_clusters_go_to_mafft' ],
+                 '2->A' => [ 'alignment_entry_point' ],
                  'A->1' => [ 'hc_global_tree_set' ],
+            },
+            -meadow_type    => 'LOCAL',
+        },
+
+        {   -logic_name => 'alignment_entry_point',
+            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
+            -flow_into  => {
+                 '1->A' => [ 'large_clusters_go_to_mafft' ],
+                 'A->1' => [ 'hc_alignment' ],
             },
             -meadow_type    => 'LOCAL',
         },
@@ -1152,7 +1167,7 @@ sub pipeline_analyses {
             },
             -flow_into  => {
                 2  => [ 'quick_tree_break' ],
-                3  => [ 'split_genes' ],
+                3  => [ 'tree_entry_point', 'build_HMM_aa', 'build_HMM_cds' ],
             },
             -meadow_type    => 'LOCAL',
         },
@@ -1182,7 +1197,6 @@ sub pipeline_analyses {
             -hive_capacity        => $self->o('mcoffee_capacity'),
             -rc_name => 'msa',
             -flow_into => {
-                1 => [ 'hc_alignment' ],
                -1 => [ 'mcoffee_himem' ],  # MEMLIMIT
                -2 => [ 'mafft' ],
             },
@@ -1196,7 +1210,6 @@ sub pipeline_analyses {
             -hive_capacity        => $self->o('mcoffee_capacity'),
             -rc_name => 'msa',
             -flow_into => {
-                1 => [ 'hc_alignment' ],
                -1 => [ 'mafft_himem' ],  # MEMLIMIT
             },
         },
@@ -1212,7 +1225,6 @@ sub pipeline_analyses {
             -hive_capacity        => $self->o('mcoffee_capacity'),
             -rc_name => 'msa_himem',
             -flow_into => {
-                1 => [ 'hc_alignment' ],
                -1 => [ 'mafft_himem' ],
                -2 => [ 'mafft_himem' ],
             },
@@ -1225,9 +1237,6 @@ sub pipeline_analyses {
             },
             -hive_capacity        => $self->o('mcoffee_capacity'),
             -rc_name => 'msa_himem',
-            -flow_into => {
-                1 => [ 'hc_alignment' ],
-            },
         },
 
         {   -logic_name         => 'hc_alignment',
@@ -1247,12 +1256,16 @@ sub pipeline_analyses {
             -hive_capacity  => $self->o('split_genes_capacity'),
             -rc_name        => '500Mb_job',
             -batch_size     => 20,
-            -flow_into      => {
-                1   => [ 'build_HMM_aa', 'build_HMM_cds' ],
-                '1->A'   => [ $self->o('use_raxml') ? 'trimal' : 'treebest' ],
-                '999->A' => [ $self->o('use_raxml') ? 'treebest' : 'trimal' ],
-                'A->1'   => 'notung'
-            }
+            -flow_into      => [ $self->o('use_raxml') ? 'trimal' : 'treebest' ],
+        },
+
+        {   -logic_name => 'tree_entry_point',
+            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
+            -meadow_type    => 'LOCAL',
+            -flow_into  => {
+                '1->A'   => [ 'split_genes' ],
+                'A->1'   => [ 'hc_alignment_post_tree' ],
+            },
         },
 
         {   -logic_name     => 'trimal',
@@ -1274,11 +1287,13 @@ sub pipeline_analyses {
                 'store_intermediate_trees'  => 1,
                 'store_filtered_align'      => 1,
                 'treebest_exe'              => $self->o('treebest_exe'),
+                'output_clusterset_id'      => $self->o('use_notung') ? 'treebest' : 'default',
             },
             -hive_capacity        => $self->o('treebest_capacity'),
             -rc_name => '4Gb_job',
             -flow_into => {
                 2 => [ 'hc_tree_structure' ],
+                $self->o('use_notung') ? (1 => [ 'notung' ]) : (),
             }
         },
 
@@ -1287,9 +1302,19 @@ sub pipeline_analyses {
             -parameters => {
                 #'cdna'                      => 1,
                 'raxml_exe'              => $self->o('raxml_exe'),
+                'treebest_exe'              => $self->o('treebest_exe'),
+                'output_clusterset_id'      => $self->o('use_notung') ? 'raxml' : 'default',
             },
             -hive_capacity        => $self->o('raxml_capacity'),
-            -rc_name => '8Gb_job',
+            -rc_name    => '8Gb_job',
+            -flow_into  => {
+                2 => { 'treebest' => {
+                            'output_clusterset_id'      => 'raxml',
+                            'gene_tree_id'              => '#gene_tree_id#',
+                            'store_filtered_align'      => 0,
+                } },
+                $self->o('use_notung') ? (1 => [ 'notung' ]) : (),
+            }
         },
 
         {   -logic_name => 'notung',
@@ -1302,10 +1327,6 @@ sub pipeline_analyses {
             },
             -hive_capacity        => $self->o('treebest_capacity'),
             -rc_name => '2Gb_job',
-            -flow_into  => {
-                '1->A' => [ 'hc_alignment_post_tree' ],
-                'A->1' => [ 'other_tree_factory' ],
-            },
         },
 
         {   -logic_name         => 'hc_alignment_post_tree',
@@ -1313,7 +1334,10 @@ sub pipeline_analyses {
             -parameters         => {
                 mode            => 'alignment',
             },
-            -flow_into          => [ 'hc_tree_structure' ],
+            -flow_into          => {
+                '1->A' => [ 'hc_tree_structure' ],
+                'A->1' => [ 'homology_entry_point' ],
+            },
             %hc_analysis_params,
         },
 
@@ -1325,6 +1349,12 @@ sub pipeline_analyses {
             %hc_analysis_params,
         },
 
+        {   -logic_name => 'homology_entry_point',
+            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
+            -flow_into  => [ 'ortho_tree', 'ktreedist', 'other_tree_factory' ],
+            -meadow_type    => 'LOCAL',
+        },
+
         {   -logic_name => 'other_tree_factory',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
             -parameters => {
@@ -1333,7 +1363,6 @@ sub pipeline_analyses {
             },
             -flow_into  => {
                  2 => [ 'ortho_tree_annot' ],
-                 1 => [ 'ortho_tree', 'ktreedist' ],
             },
             -meadow_type    => 'LOCAL',
         },
@@ -1443,7 +1472,7 @@ sub pipeline_analyses {
             },
             -analysis_capacity => 1,
             -meadow_type    => 'LOCAL',
-            -flow_into      => [ 'mafft' ],
+            -flow_into      => [ 'alignment_entry_point' ],
         },
 
 
