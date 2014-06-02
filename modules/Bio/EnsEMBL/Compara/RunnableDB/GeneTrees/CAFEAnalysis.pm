@@ -310,7 +310,7 @@ sub parse_cafe_output {
             my $n = $node->name();
             $n =~ s/\./_/g;
             $n =~ s/_\d+$//;
-            $n =~ s/_dup\d+//;
+#            $n =~ s/_dup\d+//;
             print STDERR "Storing node name $n\n" if ($self->debug);
 
             my $n_members = $info_by_nodes{$n}{n_members};
