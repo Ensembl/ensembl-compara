@@ -39,7 +39,6 @@ sub content {
 
   my $checklist = [];
   foreach (EnsEMBL::Web::Constants::FASTA_OPTIONS) {
-    next unless $_->{'value'} eq 'peptide' || $_->{'value'} eq 'exon';
     $_->{'checked'} = 'on' if $_->{'value'} eq 'peptide';
     push @$checklist, $_;
   }
