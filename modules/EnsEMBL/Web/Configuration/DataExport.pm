@@ -33,7 +33,7 @@ sub populate_tree {
   my $self  = shift;
 
   ## Input nodes
-  my @input_nodes = qw(GeneSeq ExonSeq Transcript);
+  my @input_nodes = qw(ExonSeq GeneSeq Protein Transcript);
   foreach (@input_nodes) {
     $self->create_node($_, "Sequence Input", [lc($_), 'EnsEMBL::Web::Component::DataExport::'.$_]);
   }

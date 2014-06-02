@@ -516,7 +516,6 @@ sub markup_variation {
     insert => 'si',
     delete => 'sd'
   };
-  
   foreach my $data (@$markup) {
     $seq = $sequence->[$i];
     

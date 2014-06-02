@@ -37,62 +37,54 @@ sub process {
   my $format = $hub->param('format');
 
   ## Clean up parameters to remove chosen format from name (see Component::DataExport)
-  ## and also check that user has actually selected some output options
-  my $setup_ok;
   foreach ($hub->param) {
     if ($_ =~ /_$format$/) {
-      $setup_ok = 1 if $hub->param($_);
       (my $clean = $_) =~ s/_$format//;
       $hub->param($clean, $hub->param($_));
     }
   }
 
   my ($file, $filename, $random_dir, $extension, $compression);
-  if (!$setup_ok) {
-    $error = 'No output options selected.';
+  my %data_info = %{$hub->species_defs->DATA_FORMAT_INFO};
+  my $format_info = $hub->species_defs->DATA_FORMAT_INFO->{lc($format)};
+ 
+  ## Make filename safe
+  ($filename = $hub->param('name')) =~ s/ |-/_/g;
+ 
+  ## Compress file by default
+  $extension   = $format_info->{'ext'};
+  $compression = $hub->param('compression');
+  my $compress    = $compression ? 1 : 0;
+  $extension   .= '.'.$compression if $compress;
+  $random_dir = random_ticket;
+
+  if (!$format_info) {
+    $error = 'Format not recognised';
   }
   else {
-    my %data_info = %{$hub->species_defs->DATA_FORMAT_INFO};
-    my $format_info = $hub->species_defs->DATA_FORMAT_INFO->{lc($format)};
- 
-    ## Make filename safe
-    ($filename = $hub->param('name')) =~ s/ |-/_/g;
- 
-    ## Compress file by default
-    $extension   = $format_info->{'ext'};
-    $compression = $hub->param('compression');
-    my $compress    = $compression ? 1 : 0;
-    $extension   .= '.'.$compression if $compress;
-    $random_dir = random_ticket;
-
-    if (!$format_info) {
-      $error = 'Format not recognised';
-    }
-    else {
-      ## TODO - replace relevant parts with Bio::EnsEMBL::IO::Writer in due course
+    ## TODO - replace relevant parts with Bio::EnsEMBL::IO::Writer in due course
   
-      ## Have to explicitly set a random path if we want the filename to be human readable
-      $file = EnsEMBL::Web::TmpFile::Text->new(extension => $extension, prefix => 'export/'.$random_dir, filename => $filename, compress => $compress);
+    ## Create the component we need to get data from 
+    my $component;
+    ($component, $error) = $self->object->create_component;
 
-      ## Ugly hack - stuff file into package hash so we can get at it later without passing as argument
-      $self->{'__file'} = $file;
+    ## Have to explicitly set a random path if we want the filename to be human readable
+    $file = EnsEMBL::Web::TmpFile::Text->new(extension => $extension, prefix => 'export/'.$random_dir, filename => $filename, compress => $compress);
 
-      ## Create the component we need to get data from 
-      my $component;
-      ($component, $error) = $self->object->create_component;
+    ## Ugly hack - stuff file into package hash so we can get at it later without passing as argument
+    $self->{'__file'} = $file;
 
-      unless ($error) {
-        ## Write data to output file in desired format
-        my $write_method = 'write_'.lc($format);
-        if ($self->can($write_method)) {
-          $error = $self->$write_method($component);
-        }
-        else {
-          $error = 'Output not implemented for format '.$format;
-        }
+    unless ($error) {
+      ## Write data to output file in desired format
+      my $write_method = 'write_'.lc($format);
+      if ($self->can($write_method)) {
+        $error = $self->$write_method($component);
       }
-    } 
-  }
+      else {
+        $error = 'Output not implemented for format '.$format;
+      }
+    }
+  } 
 
   if ($error) {
     $url_params->{'error'} = $error;
@@ -136,6 +128,7 @@ sub write_rtf {
 
   $self->hub->param('exon_display', 'on'); ## force exon highlighting on
   my ($sequence, $config, $block_mode) = $component->initialize_export; 
+  return 'No sequence generated - did you select any required options?' unless scalar(@{$sequence||{}});
 
   ## Configure RTF display
   my @colours        = (undef);  
@@ -146,8 +139,10 @@ sub write_rtf {
   my $j              = 0;
   my @output;
 
+  use Data::Dumper;
   foreach my $class (sort { $class_to_style->{$a}[0] <=> $class_to_style->{$b}[0] } keys %$class_to_style) {
     my $rtf_style = {};
+    #warn ">>> CLASS ".Dumper($class_to_style->{$class});
 
     $rtf_style->{'\cf'      . $c++} = substr $class_to_style->{$class}[1]{'color'}, 1         
       if $class_to_style->{$class}[1]{'color'};    
