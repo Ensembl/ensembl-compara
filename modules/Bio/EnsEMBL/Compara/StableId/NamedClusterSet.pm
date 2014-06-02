@@ -20,14 +20,12 @@ limitations under the License.
 
 =head1 NAME
 
-  Bio::EnsEMBL::Compara::StableId::NamedClusterSet
-
-=head1 SYNOPSIS
+Bio::EnsEMBL::Compara::StableId::NamedClusterSet
 
 =head1 DESCRIPTION
 
-    A data container object (the only methods are getters/setters)
-    that maintains membername-2-clusterid and clusterid-2-clustername relationships
+A data container object (the only methods are getters/setters)
+that maintains membername-2-clusterid and clusterid-2-clustername relationships
 
 =cut
 

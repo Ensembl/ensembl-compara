@@ -363,6 +363,7 @@ sub update_genome_db {
 
     $genome_db_adaptor->store($genome_db);
     print " -> Successfully stored with genome_db_id=".$genome_db->dbID."\n\n";
+    printf("You can add a new 'ensembl alias name' entry in scripts/taxonomy/ensembl_aliases.sql to map the taxon_id %d to '%s'\n", $taxon_id, $species_dba->get_MetaContainer->get_display_name());
 
   }
   return $genome_db;

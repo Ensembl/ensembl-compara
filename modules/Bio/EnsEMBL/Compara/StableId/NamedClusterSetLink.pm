@@ -20,13 +20,11 @@ limitations under the License.
 
 =head1 NAME
 
-  Bio::EnsEMBL::Compara::StableId::NamedClusterSetLink
-
-=head1 SYNOPSIS
+Bio::EnsEMBL::Compara::StableId::NamedClusterSetLink
 
 =head1 DESCRIPTION
 
-    A linked pair of NamedClusterSet objects with extra stats + MNR algorithm
+A linked pair of NamedClusterSet objects with extra stats + MNR algorithm
 
 =cut
 

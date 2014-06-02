@@ -24,14 +24,9 @@ limitations under the License.
 
 Bio::EnsEMBL::Compara::RunnableDB::PairAligner::SetInternalIds
 
-=head1 SYNOPSIS
-
-
 =head1 DESCRIPTION
 
 This module makes the internal ids unique by setting auto_increment to start at method_link_species_set_id * 10**10. This will do this on the following tables: genomic_align_block, genomic_align, genomic_align_group, genomic_align_tree
-
-=head1 PARAMETERS
 
 =head1 CONTACT
 

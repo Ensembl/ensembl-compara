@@ -34,7 +34,7 @@ Bio::EnsEMBL::Compara::DBSQL::AlignSliceAdaptor - An AlignSlice can be used to m
 This module inherits attributes and methods from Bio::EnsEMBL::DBSQL::BaseAdaptor
 
 =head1 SYNOPSIS
-  
+
   use Bio::EnsEMBL::Registry;
 
   ## Load adaptors using the Registry

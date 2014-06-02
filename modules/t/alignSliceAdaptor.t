@@ -346,7 +346,7 @@ done_testing();
 
 exit();
 
-=comment
+=pod
 
 my $species_name = "Gallus gallus";
 my ($excess_start, $excess_end, $exon_id);
@@ -727,7 +727,7 @@ do {
       AND ga2.dnafrag_id = $dnafrag_id
       AND ga1.dnafrag_start < ga2.dnafrag_start
       AND ga1.dnafrag_end > ga2.dnafrag_start");
-  
+
   $slice = $slice_adaptor->fetch_by_region(
         $slice_coord_system_name,
         $slice_seq_region_name,

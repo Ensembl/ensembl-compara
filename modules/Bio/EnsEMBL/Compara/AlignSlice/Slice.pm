@@ -34,13 +34,6 @@ for mapping features through genomic alignments
 
 This module inherits methods and attributes from Bio::EnsEMBL::Slice module.
 
-=head1 SYNOPSIS
-  
-
-SET VALUES
-
-GET VALUES
-
 =head1 OBJECT ATTRIBUTES
 
 =over

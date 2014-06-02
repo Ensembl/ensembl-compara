@@ -29,9 +29,6 @@ limitations under the License.
 
 Bio::EnsEMBL::Compara::RunnableDB::MercatorPecan::DumpMercatorFiles 
 
-=head1 SYNOPSIS
-
-
 =head1 DESCRIPTION
 
     Create Chromosome, Anchor and Hit files needed by Mercator.

@@ -282,7 +282,7 @@ sub gene_align_id {
 }
 
 
-=head2
+=head2 species_tree
 
   Description : Getter for the species-tree this gene tree is reconciled with
   Returntype  : Bio::EnsEMBL::Compara::SpeciesTree

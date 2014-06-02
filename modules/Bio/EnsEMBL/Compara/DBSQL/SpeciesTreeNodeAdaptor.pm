@@ -29,9 +29,6 @@ limitations under the License.
 
 Bio::EnsEMBL::Compara::DBSQL::SpeciesTreeNodeAdaptor
 
-=head1 SYNOPSIS
-
-
 =head1 DESCRIPTION
 
   SpeciesTreeNodeAdaptor - Adaptor for different species trees used in ensembl-compara

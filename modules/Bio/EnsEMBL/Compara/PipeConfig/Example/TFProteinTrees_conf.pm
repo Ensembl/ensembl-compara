@@ -27,7 +27,7 @@ limitations under the License.
 
 =head1 NAME
 
-  Bio::EnsEMBL::Compara::PipeConfig::Example::TFProteinTrees_conf
+Bio::EnsEMBL::Compara::PipeConfig::Example::TFProteinTrees_conf
 
 =head1 SYNOPSIS
 
@@ -46,11 +46,11 @@ limitations under the License.
 
 =head1 DESCRIPTION
 
-    The PipeConfig example file for Treefam's version of ProteinTrees pipeline.
+The PipeConfig example file for Treefam's version of ProteinTrees pipeline.
 
 =head1 CONTACT
 
-  Please contact Compara or TreeFam with questions/suggestions
+Please contact Compara or TreeFam with questions/suggestions
 
 =cut
 

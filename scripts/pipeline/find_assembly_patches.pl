@@ -25,7 +25,7 @@
 
 =head1 NAME
 
- find_assembly_patches.pl
+find_assembly_patches.pl
 
 =head1 SYNOPSIS
 

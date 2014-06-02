@@ -29,7 +29,6 @@ limitations under the License.
 
 Bio::EnsEMBL::Compara::RunnableDB::AncestralAllelesForIndels::CreateCompleteChunkedJobs
 
-
 =head1 SYNOPSIS
 
 This RunnableDB module is part of the AncestralAllelesForIndels pipeline.

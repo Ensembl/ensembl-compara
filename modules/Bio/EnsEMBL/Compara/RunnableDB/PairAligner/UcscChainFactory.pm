@@ -29,9 +29,6 @@ limitations under the License.
 
 Bio::EnsEMBL::Compara::RunnableDB::PairAligner::UcscChainFactory
 
-=head1 SYNOPSIS
-
-
 =head1 DESCRIPTION
 
 Effectively splits a UCSC chain file into smaller bits by using a seek position and the number of lines to be read, to allow for parallel processing 

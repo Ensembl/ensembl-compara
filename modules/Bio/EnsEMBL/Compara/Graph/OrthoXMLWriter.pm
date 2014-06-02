@@ -114,7 +114,7 @@ my $ortho_uri = 'http://orthoXML.org';
                   -SOURCE => 'Ensembl',  -HANDLE => $handle
                 );
   Status      : Stable  
-  
+
 =cut
 
 sub new {
@@ -158,7 +158,7 @@ sub namespaces {
   Returntype : Boolean
   Exceptions : None
   Status     : Stable
- 
+
 =cut
 
 sub no_release_trees {
@@ -177,7 +177,7 @@ sub no_release_trees {
   Returntype : String
   Exceptions : None
   Status     : Stable
-  
+
 =cut
 
 sub source {
@@ -195,7 +195,7 @@ sub source {
   Returntype : String
   Exceptions : None
   Status     : Stable
-  
+
 =cut
 
 sub source_version {
@@ -217,7 +217,7 @@ sub source_version {
   Example     : $writer->write_trees($tree);
                 $writer->write_trees([$tree_one, $tree_two]);
   Status      : Stable  
-  
+
 =cut
 
 sub write_trees {
@@ -255,7 +255,7 @@ sub write_trees {
   Exceptions  : Possible if there is an issue with retrieving data from the tree
   instance
   Status      : Stable  
-  
+
 =cut
 
 sub write_data {

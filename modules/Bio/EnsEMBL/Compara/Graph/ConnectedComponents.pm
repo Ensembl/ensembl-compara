@@ -120,7 +120,7 @@ sub DESTROY {
   Returntype : undef
   Exceptions : none
   Caller     : general
-    
+
 =cut
 
 sub add_connection {

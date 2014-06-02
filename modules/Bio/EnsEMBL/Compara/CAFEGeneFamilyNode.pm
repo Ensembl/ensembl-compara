@@ -29,9 +29,6 @@ limitations under the License.
 
 Bio::EnsEMBL::Compara::CAFEGeneFamilyNode
 
-=head1 SYNOPSIS
-
-
 =head1 DESCRIPTION
 
 Specific class to handle CAFE tree nodes

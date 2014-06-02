@@ -29,8 +29,6 @@ limitations under the License.
 
 Bio::EnsEMBL::Compara::Production::DnaFragChunkSet
 
-=head1 SYNOPSIS
-
 =head1 DESCRIPTION
 
 An object to hold a set or group of DnaFragChunk objects.  Used in production to reduce

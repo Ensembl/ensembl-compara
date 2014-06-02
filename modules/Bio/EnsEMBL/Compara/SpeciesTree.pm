@@ -29,9 +29,6 @@ limitations under the License.
 
 Bio::EnsEMBL::Compara::SpeciesTree
 
-=head1 SYNOPSIS
-
-
 =head1 DESCRIPTION
 
 Header class for species trees

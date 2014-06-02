@@ -71,9 +71,11 @@ Location of the configuration database
 
 Method link species set id of the pairwise alignment
 
-=item B<[--image_location /path/to/write/image]
+=item B<[--image_location /path/to/write/image]>
 
 Directory to write image files. Default current working directory
+
+=back
 
 =cut
 

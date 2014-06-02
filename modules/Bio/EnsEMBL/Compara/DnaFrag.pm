@@ -61,6 +61,7 @@ GET VALUES
   $name = $dnafrag->name;
 
 =head1 DESCRIPTION
+
 The DnaFrag object stores information on the toplevel sequences such as the name, coordinate system, length and species.
 
 =head1 OBJECT ATTRIBUTES
@@ -470,6 +471,7 @@ sub display_id {
   Status     : Stable
 
 =cut
+
 sub isMT {
     my ($self) = @_;
 

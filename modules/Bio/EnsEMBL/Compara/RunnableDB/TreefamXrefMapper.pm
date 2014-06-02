@@ -21,7 +21,7 @@ limitations under the License.
 
 =head1 NAME
 
-    Bio::EnsEMBL::Compara::RunnableDB::TreefamXrefMapper
+Bio::EnsEMBL::Compara::RunnableDB::TreefamXrefMapper
 
 =cut
 

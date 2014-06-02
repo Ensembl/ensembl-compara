@@ -27,7 +27,7 @@ limitations under the License.
 
 =head1 NAME
 
-  Bio::EnsEMBL::Compara::PipeConfig::ProteinTrees_conf
+Bio::EnsEMBL::Compara::PipeConfig::ProteinTrees_conf
 
 =head1 DESCRIPTION
 
@@ -143,6 +143,7 @@ sub default_options {
         ##'hmm_library_basedir'       => '/lustre/scratch110/ensembl/mp12/Panther_hmms',
         #'pantherScore_path'         => '/software/ensembl/compara/pantherScore1.03',
         #'hmmer_path'                => '/software/ensembl/compara/hmmer-2.3.2/src/',
+        'extra_model_tags_file'     => undef,
 
     # hive_capacity values for some analyses:
         #'reuse_capacity'            =>   3,
@@ -863,6 +864,10 @@ sub pipeline_analyses {
             {
              -logic_name => 'HMM_clusterize',
              -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::HMMClusterize',
+             -parameters => {
+                 'division'     => $self->o('division'),
+                 'extra_tags_file'  => $self->o('extra_model_tags_file'),
+             },
              -rc_name => '8Gb_job',
             },
 

@@ -145,7 +145,7 @@ sub new {
 
 
 =head2 method
- 
+
   Arg [1]    : (opt.) Bio::EnsEMBL::Compara::Method object
   Example    : my $method_object = $method_link_species_set->method();
   Example    : $method_link_species_set->method( $method_object );
@@ -153,7 +153,7 @@ sub new {
   Returntype : Bio::EnsEMBL::Compara::Method
   Exceptions : none
   Caller     : general
- 
+
 =cut
 
 sub method {
@@ -315,7 +315,7 @@ sub get_common_classification {
 
 
 =head2 max_alignment_length
- 
+
   Arg [1]    : (opt.) int $max_alignment_length
   Example    : my $max_alignment_length = $method_link_species_set->
                    max_alignment_length();
@@ -324,7 +324,7 @@ sub get_common_classification {
   Returntype : integer
   Exceptions : 
   Caller     : general
- 
+
 =cut
 
 sub max_alignment_length {

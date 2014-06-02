@@ -20,8 +20,6 @@ limitations under the License.
 
 Bio::EnsEMBL::Compara::Production::DBSQL::AnchorAlignAdaptor
 
-=head1 SYNOPSIS
-
 =head1 CONTACT
 
 Please email comments or questions to the public Ensembl
@@ -524,7 +522,7 @@ sub fetch_all_anchors_by_dnafrag_id_and_test_mlssid {
 	$sth->execute($dnafrag_id, $test_mlssid) or die $self->errstr;
 	return $sth->fetchall_arrayref();
 }
- 
+
 =head2 fetch_all_filtered_anchors
 
   Args       : none

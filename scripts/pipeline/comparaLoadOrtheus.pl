@@ -13,6 +13,64 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+=pod
+
+=head1 PROGRAM: 
+
+comparaLoadOrtheus.pl 
+ 
+=head1  DESCRIPTION: 
+
+This software allows you to store the output of Enredo in an Ensembl Compara db
+ 
+=head1 SYNOPSIS: 
+
+  perl comparaLoadOrtheus.pl [options] -i enredo.out
+
+=head1 OPTIONS:
+
+=over
+
+=item --reg-conf <registry configuration file> [default: -none-] 
+
+This should contain all the core databases of the species in the
+enredo.out file (the species names in the enredo.out file must be
+aliased in the reg-conf file). Also include the master db and the
+ancestral core db.
+	
+=item --master <registry name of the master db> [default: compara_master] 
+
+This should correspond to "-species" value for the master db in the
+registry configuration file.
+  
+=item --to_db <registry name of the compara database to populate> [default: -none-] 
+
+This database should be new (no pre-existing data) There should also be
+an new core ancestral database referenced in the registry configuration
+file.
+	
+=item --mlss_id <method_link_species_set_id for ortheus> [default: -none-]
+
+Should be present in the master 
+
+=item --species_tree <newick format species tree> [default: -none-]
+
+Can be presented as a string or a file
+
+=item --addMT <1> [default: 0]
+
+if set, will add rows to job/dnafrag_region/synteny_region tables for MT
+alignments
+
+=back
+
+=head1 EXAMPLE: 
+
+  comparaLoadOrtheus.pl --reg-conf <ensembl_registry_file> --master <compara_master> \
+  --to_db <to_db> --mlss_id <mlss_id> --species_tree <species_tree> --addMT 1 -i enredo.out
+
+=head1 INTERNAL FUNCTIONS:
+=cut
 
 use strict;
 
@@ -24,6 +82,7 @@ use Bio::SearchIO;
 use Cwd qw(realpath);
 use Sys::Hostname;
 use Getopt::Long;
+use Pod::Usage;
 use Data::Dumper;
 use DBI;
 
@@ -48,52 +107,6 @@ my %tables2change = (
 	I  => ["dna", "seq_region"],
 );
 
-my $description = q'
- PROGRAM: 
-   comparaLoadOrtheus.pl 
- 
- DESCRIPTION: 
-  This software allows you to store the output of Enredo in an Ensembl Compara db
- 
- SYNOPSIS: 
-  perl comparaLoadOrtheus.pl [options] -i enredo.out
-
- OPTIONS:
-  --reg-conf <registry configuration file> [default: -none-] 
-}
-	This should contain all the core databases
-	of the species in the enredo.out file (the species names in the enredo.out file
-	must be aliased in the reg-conf file). Also include the master db and the ancestral 
-	core db.
-	
-  --master <registry name of the master db> [default: compara_master] 
-	This should correspond to "-species" value for the master db in the registry 
-	configuration file.
-  
-  --to_db <registry name of the compara database to populate> [default: -none-] 
-	This database should be new (no pre-existing data)
-	There should also be an new core ancestral database referenced in the registry
-	configuration file.
-	
-  --mlss_id <method_link_species_set_id for ortheus> [default: -none-]
-	Should be present in the master
-
-  --species_tree <newick format species tree> [default: -none-]
-	Can be presented as a string or a file
-
-  --addMT <1> [default: 0]
-        if set, will add rows to job/dnafrag_region/synteny_region
-        tables for MT alignments
-
- EXAMPLE: 
-  comparaLoadOrtheus.pl --reg-conf <ensembl_registry_file> --master <compara_master> \
-  --to_db <to_db> --mlss_id <mlss_id> --species_tree <species_tree> --addMT 1 -i enredo.out
-'; 
-
-my $help = sub {
-	print $description;
-};
-
 GetOptions(
     "reg-conf=s" => \$reg_conf,
     "master=s" => \$master,
@@ -106,8 +119,7 @@ GetOptions(
 
 unless(( -f $reg_conf) && defined($to_db) && defined($ortheus_mlss_id) 
 	&& defined($species_tree) && ( -f $input_file)) {
-        $help->();
-        exit(0);
+        pod2usage( -exitstatus => 0, -verbose => 2 );
 }
 
 my ($master_db, $db_to_populate, $ancestral_db);

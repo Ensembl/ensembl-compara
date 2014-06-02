@@ -29,12 +29,6 @@ limitations under the License.
 
 Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::HMMClassify
 
-=head1 DESCRIPTION
-
-
-=head1 SYNOPSIS
-
-
 =head1 AUTHORSHIP
 
 Ensembl Team. Individual contributions can be found in the GIT log.

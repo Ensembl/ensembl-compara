@@ -29,8 +29,6 @@ limitations under the License.
 
 Bio::EnsEMBL::Compara::GenomicAlignTree
 
-=head1 SYNOPSIS
-
 =head1 DESCRIPTION
 
 Specific subclass of NestedSet to add functionality when the nodes of this tree
@@ -695,54 +693,6 @@ sub restrict_between_alignment_positions {
   return $genomic_align_tree;
 }
 
-
-=head2 restrict_between_reference_positions
-
-  Arg[1]     : [optional] int $start, refers to the reference_dnafrag
-  Arg[2]     : [optional] int $end, refers to the reference_dnafrag
-  Arg[3]     : [optional] Bio::EnsEMBL::Compara::GenomicAlign $reference_GenomicAlign
-  Arg[4]     : [optional] boolean $skip_empty_GenomicAligns [ALWAYS FALSE]
-  Example    : none
-  Description: restrict this GenomicAlignBlock. It returns a new object unless no
-               restriction is needed. In that case, it returns the original unchanged
-               object
-               It might be the case that the restricted region coincide with a gap
-               in one or several GenomicAligns. By default these GenomicAligns are
-               returned with a dnafrag_end equals to its dnafrag_start + 1. For instance,
-               a GenomicAlign with dnafrag_start = 12345 and dnafrag_end = 12344
-               correspond to a block which goes on this region from before 12345 to
-               after 12344, ie just between 12344 and 12345. You can choose to remove
-               these empty GenomicAligns by setting $skip_empty_GenomicAligns to any
-               true value.
-  Returntype : Bio::EnsEMBL::Compara::GenomicAlignBlock object in scalar context. In
-               list context, returns the previous object and the start and end
-               positions of the restriction in alignment coordinates (from 1 to
-               alignment_length)
-  Exceptions : return undef if reference positions lie outside of the alignment
-  Caller     : general
-  Status     : At risk
-
-=cut
-
-=comment 
-
-sub restrict_between_reference_positions {
-  my ($self, $start, $end, $reference_genomic_align, $skip_empty_GenomicAligns) = @_;
-  my $genomic_align_tree;
-
-  $reference_genomic_align ||= $self->reference_genomic_align;
-  throw("A reference Bio::EnsEMBL::Compara::GenomicAlignTree must be given")
-      if (!$reference_genomic_align);
-
-   my @restricted_genomic_align_tree_params = $self->SUPER::restrict_between_reference_positions($start, $end, $reference_genomic_align, $skip_empty_GenomicAligns);
-  my $restricted_genomic_align_tree = $restricted_genomic_align_tree_params[0];
-
-  #return $self if (!$restricted_genomic_align_tree or $restricted_genomic_align_tree eq $self);
-
-  return wantarray ? @restricted_genomic_align_tree_params : $restricted_genomic_align_tree;
-}
-
-=cut
 
 =head2 copy
 

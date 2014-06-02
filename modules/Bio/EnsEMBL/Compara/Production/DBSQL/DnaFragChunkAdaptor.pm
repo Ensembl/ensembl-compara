@@ -29,13 +29,12 @@ limitations under the License.
 
 Bio::EnsEMBL::Compara::Production::DBSQL::DnaFragChunkAdaptor
 
-=head1 SYNOPSIS
-
-=head1 APPENDIX
-
 =cut
 
 package Bio::EnsEMBL::Compara::Production::DBSQL::DnaFragChunkAdaptor;
+
+use strict;
+use warnings;
 
 use Bio::EnsEMBL::Compara::Production::DnaFragChunk;
 

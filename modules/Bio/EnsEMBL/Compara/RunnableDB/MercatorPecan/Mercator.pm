@@ -29,9 +29,6 @@ limitations under the License.
 
 Bio::EnsEMBL::Compara::RunnableDB::MercatorPecan::Mercator 
 
-=head1 SYNOPSIS
-
-
 =head1 DESCRIPTION
 
 Wrapper around Bio::EnsEMBL::Analysis::Runnable::Mercator

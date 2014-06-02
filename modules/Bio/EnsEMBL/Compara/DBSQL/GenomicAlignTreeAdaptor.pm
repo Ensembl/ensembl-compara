@@ -29,8 +29,6 @@ limitations under the License.
 
 GenomicAlignTreeAdaptor - Object used to store and retrieve GenomicAlignTrees to/from the databases
 
-=head1 SYNOPSIS
-
 =head1 DESCRIPTION
 
 This version of the module is still very experimental.
@@ -861,6 +859,7 @@ sub update_neighbourhood_data {
   Status     : At risk
 
 =cut
+
 sub set_neighbour_nodes_for_leaf {
   my ($self, $node, $set_flanking) = @_;
   my $flanking = 1000;

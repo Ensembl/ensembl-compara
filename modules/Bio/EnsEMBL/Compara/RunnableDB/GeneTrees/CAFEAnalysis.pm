@@ -31,8 +31,6 @@ limitations under the License.
 
 Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::CAFEAnalysis
 
-=head1 SYNOPSIS
-
 =head1 DESCRIPTION
 
 This RunnableDB calculates the dynamics of a ncRNA family (based on the tree obtained and the CAFE software) in terms of gains losses per branch tree. It needs a CAFE-compliant species tree.
