@@ -119,6 +119,7 @@ sub default_options {
         treebest_exe    =>  $self->o('exe_dir').'/treebest',
         trimal_exe    =>  '/nfs/production/xfam/treefam/software/trimal/source/trimal',
         raxml_exe    =>  '/nfs/production/xfam/treefam/software/RAxML/raxmlHPC-SSE3',
+        prottest_jar => '/nfs/production/xfam/treefam/software/ProtTest/prottest-3.4-20140123/prottest-3.4.jar',
         quicktree_exe   =>  $self->o('exe_dir').'/quicktree',
         buildhmm_exe    =>  $self->o('exe_dir').'/hmmbuild',
         notung_jar    =>  '/nfs/production/xfam/treefam/software/Notung/Notung-2.6/Notung-2.6.jar',
@@ -286,6 +287,7 @@ sub pipeline_analyses {
     $analyses_by_name{'split_genes'}->{'-rc_name'} = '8Gb_job';
     $analyses_by_name{'trimal'}->{'-rc_name'} = '4Gb_job';
     $analyses_by_name{'notung'}->{'-rc_name'} = '8Gb_job';
+    $analyses_by_name{'prottest'}->{'-parameters'}{'java'} = '/usr/bin/java';
 
     ## We add some more analyses
     push @$all_analyses, @{$self->extra_analyses(@_)};

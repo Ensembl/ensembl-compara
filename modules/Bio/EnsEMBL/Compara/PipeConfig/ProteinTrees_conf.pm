@@ -1276,7 +1276,19 @@ sub pipeline_analyses {
             -hive_capacity  => $self->o('raxml_capacity'),
             -rc_name        => '500Mb_job',
             -batch_size     => 5,
-            -flow_into      => [ 'raxml' ],
+            -flow_into      => [ 'prottest' ],
+        },
+
+        {   -logic_name => 'prottest',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::ProtTest',
+            -parameters => {
+                'prottest_jar'          => $self->o('prottest_jar'),
+            },
+            -hive_capacity        => $self->o('raxml_capacity'),
+            -rc_name    => '4Gb_job',
+            -flow_into  => {
+                1 => [ 'raxml' ],
+            }
         },
 
         {   -logic_name => 'treebest',
