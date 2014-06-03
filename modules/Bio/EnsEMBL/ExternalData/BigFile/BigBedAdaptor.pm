@@ -133,7 +133,11 @@ sub _as_mapping {
   my ($self) = @_;
 
   my $as = $self->autosql;
-  return undef unless $as;
+  unless($as and %$as) {
+    my %map;
+    $map{$_} = $_ for(0..$#bed_columns);
+    return [\%map,{},[]];
+  }
   my (%map,%core,@order,%pos);
   my $table = $as->{[keys %$as]->[0]};
   foreach my $idx_bed (0..$#bed_columns) {
