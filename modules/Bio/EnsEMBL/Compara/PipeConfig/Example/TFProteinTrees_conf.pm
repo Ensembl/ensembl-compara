@@ -289,58 +289,7 @@ sub pipeline_analyses {
     $analyses_by_name{'notung'}->{'-rc_name'} = '8Gb_job';
     $analyses_by_name{'prottest'}->{'-parameters'}{'java'} = '/usr/bin/java';
 
-    ## We add some more analyses
-    push @$all_analyses, @{$self->extra_analyses(@_)};
-
-    ## And stich them to the previous ones
-    $analyses_by_name{'split_genes'}->{'-flow_into'} = {
-        1  => [ $self->o('use_raxml') ? 'trimal' : 'treebest' ],
-        -1 => [ 'split_genes_himem' ],
-    };
-    $analyses_by_name{'build_HMM_aa'}->{'-flow_into'} = {
-        -1 => [ 'build_HMM_aa_himem' ],  # MEMLIMIT
-    };
-    $analyses_by_name{'build_HMM_cds'}->{'-flow_into'} = {
-        -1 => [ 'build_HMM_cds_himem' ],  # MEMLIMIT
-    };
-
     return $all_analyses;
-}
-
-sub extra_analyses {
-    my $self = shift;
-    return [
-
-        {   -logic_name     => 'split_genes_himem',
-            -module         => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::FindContiguousSplitGenes',
-            -hive_capacity  => $self->o('split_genes_capacity'),
-            -rc_name        => '32Gb_job',
-            -flow_into      => [ $self->o('use_raxml') ? 'trimal' : 'treebest' ],
-        },
-
-        {   -logic_name     => 'build_HMM_aa_himem',
-            -module         => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::BuildHMM',
-            -parameters     => {
-                'buildhmm_exe'  => $self->o('buildhmm_exe'),
-            },
-            -hive_capacity  => $self->o('build_hmm_capacity'),
-            -batch_size     => 5,
-            -priority       => -10,
-            -rc_name        => '16Gb_job',
-        },
-
-        {   -logic_name     => 'build_HMM_cds_himem',
-            -module         => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::BuildHMM',
-            -parameters     => {
-                'cdna'          => 1,
-                'buildhmm_exe'  => $self->o('buildhmm_exe'),
-            },
-            -hive_capacity  => $self->o('build_hmm_capacity'),
-            -batch_size     => 5,
-            -priority       => -10,
-            -rc_name        => '32Gb_job',
-        },
-    ];
 }
 
 
