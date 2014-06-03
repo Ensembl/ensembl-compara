@@ -44,7 +44,7 @@ sub initialize {
   }
   
   $config->{'snp_display'}        = 0 unless $hub->species_defs->databases->{'DATABASE_VARIATION'};
-  $config->{'consequence_filter'} = { map { $_ => 1 } @consequence } if $config->{'snp_display'} && join('', @consequence) ne 'off';
+  $config->{'consequence_filter'} = { map { $_ => 1 } @consequence } if $config->{'snp_display'} && scalar(@consequence) && join('', @consequence) ne 'off';
   
   if ($config->{'line_numbering'}) {
     $config->{'end_number'} = 1;
@@ -272,8 +272,7 @@ sub set_variations {
   foreach my $transcript_variation (map $_->[2], sort { $b->[0] <=> $a->[0] || $b->[1] <=> $a->[1] } map [ $_->variation_feature->length, $_->most_severe_OverlapConsequence->rank, $_ ], @transcript_variations) {
     my $consequence = $config->{'consequence_filter'} ? lc [ grep $config->{'consequence_filter'}{$_}, @{$transcript_variation->consequence_type} ]->[0] : undef;
     
-    next if $config->{'consequence_filter'} && !$consequence;
-    
+    next if ($config->{'consequence_filter'} && !$consequence);
     my $vf            = $transcript_variation->variation_feature;
     my $name          = $vf->variation_name;
     my $allele_string = $vf->allele_string(undef, $strand);
