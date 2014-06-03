@@ -1353,6 +1353,18 @@ sub pipeline_analyses {
             },
             -hive_capacity        => $self->o('treebest_capacity'),
             -rc_name    => '4Gb_job',
+            -flow_into  => [ 'raxml_longbranches' ],
+        },
+
+        {   -logic_name => 'raxml_longbranches',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::RAxML_EPA_lb',
+            -parameters => {
+                'raxml_exe'                 => $self->o('raxml_exe'),
+                'treebest_exe'              => $self->o('treebest_exe'),
+                'output_clusterset_id'      => $self->o('use_notung') ? 'raxml' : 'default',
+            },
+            -hive_capacity        => $self->o('raxml_capacity'),
+            -rc_name    => '4Gb_job',
             -flow_into  => $self->o('use_notung') ? [ 'notung' ] : [],
         },
 
