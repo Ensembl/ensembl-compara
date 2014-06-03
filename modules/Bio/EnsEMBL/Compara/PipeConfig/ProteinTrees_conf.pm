@@ -1283,6 +1283,7 @@ sub pipeline_analyses {
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::ProtTest',
             -parameters => {
                 'prottest_jar'          => $self->o('prottest_jar'),
+                'prottest_memory'       => 3500,
             },
             -hive_capacity        => $self->o('raxml_capacity'),
             -rc_name    => '4Gb_job',
@@ -1336,6 +1337,7 @@ sub pipeline_analyses {
                 'treebest_exe'              => $self->o('treebest_exe'),
                 'label'                     => 'binary',
                 'input_clusterset_id'       => $self->o('use_raxml') ? 'raxml' : 'treebest',
+                'notung_memory'             => 1500,
             },
             -hive_capacity        => $self->o('treebest_capacity'),
             -rc_name => '2Gb_job',
