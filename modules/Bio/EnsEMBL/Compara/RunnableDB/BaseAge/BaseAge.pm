@@ -399,7 +399,7 @@ sub get_snps {
 
 #use for debugging the pipeline only
 sub quick_base_age {
-    my ($self, $seq_region) = @_;
+    my ($self) = @_;
 
     my $seq_region = $self->param('seq_region');
     my $bed_file = $self->param('bed_dir') . "Test_ages_" . $seq_region . ".bed";
