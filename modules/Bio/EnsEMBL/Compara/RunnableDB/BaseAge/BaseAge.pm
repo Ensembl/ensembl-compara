@@ -285,14 +285,13 @@ sub base_age {
                     $rgb = "$shade,$shade,$shade"; 
                 }
 
-                my $strand = "+";
                 my $name_field;
                 if ($name_mode eq "name") {
                     $name_field = $clade_name;
                 } else {
                     $name_field = $node_id;
                 }
-                printf BED "chr%s\t%d\t%d\t%s\t%d\t%s\t%d\t%d\t%s\n", $seq_region, ($base-1), $base, $name_field, $normalised_age, $strand, 0, 0, $rgb;
+                printf BED "chr%s\t%d\t%d\t%s\t%d\t%s\n", $seq_region, ($base-1), $base, $name_field, $normalised_age, $rgb;
             }
             
             $base++;
