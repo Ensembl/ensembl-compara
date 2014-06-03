@@ -277,6 +277,7 @@ sub set_variations {
     
     $s = 0 if $s < 0;
     $e = $config->{'length'} if $e > $config->{'length'};
+    $e ||= $s;
     
     # Add the sub slice start where necessary - makes the label for the variation show the correct position relative to the sequence
     $snp_start += $config->{'sub_slice_start'} - 1 if $config->{'sub_slice_start'} && $config->{'line_numbering'} ne 'slice';
