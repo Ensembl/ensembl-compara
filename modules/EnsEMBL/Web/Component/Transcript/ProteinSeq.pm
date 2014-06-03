@@ -109,7 +109,7 @@ sub content {
   
   my ($sequence, $config) = $self->initialize($translation);
   
-  my $html  = $self->tool_buttons($translation->Obj->seq, 'peptide');
+  my $html  = $self->tool_buttons;
      $html .= sprintf('<div class="sequence_key">%s</div>', $self->get_key($config));
      $html .= $self->build_sequence($sequence, $config);
 

@@ -353,7 +353,7 @@ sub content {
   my $self = shift;
   my ($sequence, $config, $raw_seq) = $self->initialize;
   
-  my $html  = $self->tool_buttons($raw_seq);
+  my $html  = $self->tool_buttons;
      $html .= sprintf '<div class="sequence_key">%s</div>', $self->get_key($config);
      $html .= $self->build_sequence($sequence, $config);
 

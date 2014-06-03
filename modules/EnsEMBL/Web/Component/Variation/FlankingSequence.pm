@@ -106,7 +106,7 @@ sub content {
     ", 'auto');
   }
   
-  $html .= $self->tool_buttons($raw_seq);
+  $html .= $self->tool_buttons;
   $html .= sprintf '<div class="sequence_key">%s</div>', $self->get_key($config);
   $html .= $self->build_sequence($sequence, $config);
   
