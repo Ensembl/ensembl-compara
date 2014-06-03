@@ -67,6 +67,10 @@ sub content {
   my $length = $slice->length;
   my $html   = $self->tool_buttons;
   
+  my %selected = $self->selected_transcripts;
+  my @t_params = keys %selected;
+     $html  .= $self->export_button(undef, \@t_params);
+  
   if (!$self->hub->param('t1')) {
     $html = $self->_info(
       'No transcripts selected',
@@ -107,6 +111,38 @@ sub content_sub_slice {
   return $self->build_sequence($sequence, $config);
 }
 
+sub selected_transcripts {
+  my $self = shift;
+  return map { $_ => $self->hub->param($_) } grep /^(t\d+)$/, $self->hub->param;
+}
+
+sub export_type     { return 'TranscriptComparison'; }
+
+sub initialize_export {
+  my $self = shift;
+  my $hub  = $self->hub;
+  my $vc = $hub->get_viewconfig('Gene', 'TranscriptComparison');
+  my @params = qw(sscon snp_display flanking line_numbering);
+  foreach (@params) {
+    $hub->param($_, $vc->get($_));
+  }
+  return $self->initialize;
+}
+
+sub get_export_data {
+  my $self = shift;
+  my $hub  = $self->hub;
+  ## Fetch gene explicitly, as we're probably coming from a DataExport URL
+  my $gene = $self->hub->core_object('gene');
+  return unless $gene;
+  my %selected       = reverse $self->selected_transcripts; 
+  my @transcripts;
+  foreach (@{$gene->Obj->get_all_Transcripts}) {
+    push @transcripts, $_ if $selected{$_->stable_id};
+  }
+  return @transcripts;
+}
+
 sub content_rtf {
   my $self = shift;
   return $self->export_sequence($self->initialize);
@@ -115,7 +151,7 @@ sub content_rtf {
 sub get_sequence_data {
   my ($self, $config) = @_;
   my $hub            = $self->hub;
-  my $object         = $self->object;
+  my $object         = $self->object || $hub->core_object('gene');
   my $gene           = $object->Obj;
   my $gene_name      = $gene->external_name;
   my $subslice_start = $config->{'sub_slice_start'};

@@ -360,10 +360,14 @@ sub _init       { return; }
 sub export_type     { return undef; }
 sub export_caption  { return undef; }
 sub export_button   {
-  my ($self, $caption) = @_;
+  my ($self, $caption, $extra_params) = @_;
   return unless $self->export_type;
   $caption ||= 'Download sequence';
-  my $url     = $self->hub->url({'type' => 'DataExport', 'action' => $self->export_type, 'data_type' => $self->hub->type, 'component' => $self->id});
+  my $params  = {'type' => 'DataExport', 'action' => $self->export_type, 'data_type' => $self->hub->type, 'component' => $self->id};
+  foreach (@{$extra_params||[]}) {
+    $params->{$_} = $self->hub->param($_);
+  }
+  my $url     = $self->hub->url($params);
   my $src     = $self->img_url.'/16/rev/download.png';
   return sprintf('<p><a href="%s" class="button modal_link"><img src="%s" style="padding-bottom:2px;vertical-align:middle" /> %s</a></p>', $url, $src, $caption);
 }

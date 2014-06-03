@@ -139,10 +139,8 @@ sub write_rtf {
   my $j              = 0;
   my @output;
 
-  use Data::Dumper;
   foreach my $class (sort { $class_to_style->{$a}[0] <=> $class_to_style->{$b}[0] } keys %$class_to_style) {
     my $rtf_style = {};
-    #warn ">>> CLASS ".Dumper($class_to_style->{$class});
 
     $rtf_style->{'\cf'      . $c++} = substr $class_to_style->{$class}[1]{'color'}, 1         
       if $class_to_style->{$class}[1]{'color'};    

@@ -123,7 +123,7 @@ sub create_form {
 
     ## Add custom fields for this data type and format
     foreach (@$fields) {
-      my ($name, $value, $hide) = @$_;
+      my ($name, $value) = @$_;
       ## IMPORTANT - use hashes here, not hashrefs, as Form code does weird stuff 
       ## in background that alters the contents of $settings!
       my %field_info = %{$settings->{$name}};
@@ -133,7 +133,7 @@ sub create_form {
       $field_info{'name'} = $name;
       ## Override general default with format-specific default if required
       $field_info{'value'} = $value if defined($value);
-      if ($hide) {
+      if ($field_info{'type'} eq 'Hidden') {
         $settings_fieldset->add_hidden(\%field_info);
       }
       else { 
