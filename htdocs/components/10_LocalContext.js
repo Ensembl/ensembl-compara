@@ -84,13 +84,6 @@ Ensembl.Panel.LocalContext = Ensembl.Panel.extend({
       a = existing = null;
     }).remove();
     
-    this.elLk.seqBlastForm = toolButtons.find('form.seq_blast');
-    
-    toolButtons.find('a.seq_blast').on('click', function (e) {
-      e.preventDefault();
-      panel.elLk.seqBlastForm.submit();
-    });
-    
     this.pulseToolButton();
     
     tools = null;

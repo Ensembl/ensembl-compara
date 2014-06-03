@@ -895,7 +895,7 @@ sub build_sequence {
       my $adid = $_->[$x]{'adid'};
       $line =~ s/".*?"//sg;
       $line =~ s/<.*?>//sg;
-      $line = qq(<span class="adorn adorn-$adid">$line</span>);
+      $line = qq(<span class="adorn adorn-$adid _seq">$line</span>);
       my $num  = shift @{$line_numbers->{$y}};
       
       if ($config->{'number'}) {
@@ -1227,7 +1227,7 @@ sub export_sequence {
 }
 
 sub tool_buttons {
-  my ($self, $blast_seq, $peptide) = @_;
+  my $self = shift;
   
   return unless $self->html_format;
   
@@ -1238,22 +1238,6 @@ sub tool_buttons {
     </div>', 
     $self->ajax_url('rtf', { filename => join('_', $hub->type, $hub->action, $hub->species, $self->object->Obj->stable_id), _format => 'RTF', display_width => 60 })
   );
-  
-  if ($blast_seq && $hub->species_defs->ENSEMBL_BLAST_ENABLED) {
-    $html .= sprintf('
-      <div class="other_tool">
-        <p><a class="seq_blast find" href="#">BLAST this sequence</a></p>
-        <form class="external hidden seq_blast" action="/Multi/blastview" method="post">
-          <fieldset>
-            <input type="hidden" name="_query_sequence" value="%s" />
-            <input type="hidden" name="species" value="%s" />
-            %s
-          </fieldset>
-        </form>
-      </div>',
-      $blast_seq, $hub->species, $peptide ? '<input type="hidden" name="query" value="peptide" /><input type="hidden" name="database" value="peptide" />' : ''
-    );
-  }
   
   return $html;
 }
