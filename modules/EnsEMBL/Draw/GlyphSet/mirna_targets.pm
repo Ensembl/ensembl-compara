@@ -30,10 +30,10 @@ sub get_feature_sets {
   my $logic_name = $self->my_config('logic_name')
                    || $self->my_config('description');
   warn ">>> LOGIC NAME $logic_name";
-  my $fg_a_a =  $fg_db->get_AnalysisAdaptor;
-  my $fg_fs_a = $fg_db->get_FeatureSetAdaptor;
-  my $analysis = $fg_a_a->fetch_by_logic_name($logic_name);
-  return $fg_fs_a->fetch_all_by_feature_class('external',undef,{
+  my $aa  =  $fg_db->get_AnalysisAdaptor;
+  my $fsa = $fg_db->get_FeatureSetAdaptor;
+  my $analysis = $aa->fetch_by_logic_name($logic_name);
+  return $fsa->fetch_all_by_feature_class('external',undef,{
     constraints => {
       analyses => [$analysis],
     },
@@ -59,6 +59,9 @@ sub features {
 
   my @fsets = @{$self->get_feature_sets($efg_db)}; 
   warn ">>> SETS @fsets";
+  my $fs = $fsets[0];
+  warn "!!! ".$fs->description;
+  warn "SLICE ".$slice->start;
   my $mirna_adaptor  = $efg_db->get_MirnaFeatureAdaptor;
   my $f = $mirna_adaptor->fetch_all_by_Slice_FeatureSets($slice, \@fsets);
   warn ">>> FEATURES @$f";
