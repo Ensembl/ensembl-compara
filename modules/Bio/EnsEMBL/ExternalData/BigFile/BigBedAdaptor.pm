@@ -21,7 +21,6 @@ use strict;
 
 use List::Util qw(max);
 
-use Data::Dumper;
 use Bio::DB::BigFile;
 use Bio::DB::BigFile::Constants;
 
@@ -172,6 +171,7 @@ sub _as_transform {
 
   my (@out,%extra);
   foreach my $i (0..$#bed_columns) {
+    next unless defined $map->{$i};
     $out[$map->{$i}] = $data->[$i] || undef;
   }
   foreach my $name (@$order) {
