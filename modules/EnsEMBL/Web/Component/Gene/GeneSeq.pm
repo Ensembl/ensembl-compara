@@ -24,10 +24,16 @@ use base qw(EnsEMBL::Web::Component::TextSequence EnsEMBL::Web::Component::Gene)
 
 sub _init { $_[0]->SUPER::_init(5000); }
 
+sub get_object {
+  my $self = shift;
+  my $hub  = $self->hub;
+  return $hub->param('lrg') ? $hub->core_object('LRG') : $hub->core_object('gene');
+}
+
 sub initialize {
   my ($self, $slice, $start, $end) = @_;
   my $hub    = $self->hub;
-  my $object = $hub->core_object('gene');
+  my $object = $self->get_object;
   
   my $config = {
     display_width   => $hub->param('display_width') || 60,
@@ -121,7 +127,7 @@ sub get_export_data {
 ## Get data for export
   my $self = shift;
   ## Fetch gene explicitly, as we're probably coming from a DataExport URL
-  my $gene = $self->hub->core_object('gene');
+  my $gene = $self->get_object;
   return unless $gene;
   my @transcripts = @{$gene->get_all_transcripts||[]};
   return map {$_->Obj} @transcripts;
@@ -129,7 +135,7 @@ sub get_export_data {
 
 sub initialize_export {
   my $self = shift;
-  my $gene = $self->hub->core_object('gene');
+  my $gene = $self->get_object;
   return $self->initialize($gene->slice);
 }
 
