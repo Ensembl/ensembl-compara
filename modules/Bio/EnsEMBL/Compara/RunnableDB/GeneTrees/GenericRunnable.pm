@@ -113,6 +113,12 @@ sub param_defaults {
 sub fetch_input {
     my $self = shift @_;
 
+    if (defined $self->param('escape_branch') and $self->input_job->retry_count >= $self->input_job->analysis->max_retry_count) {
+        $self->dataflow_output_id($self->input_id, $self->param('escape_branch'));
+        $self->input_job->incomplete(0);
+        die sprintf("The job is being tried for the %dth time: escaping to branch #%d\n", $self->input_job->retry_count, $self->param('escape_branch'));
+    }
+
     $self->param('tree_adaptor', $self->compara_dba->get_GeneTreeAdaptor);
 
     my $gene_tree_id     = $self->param_required('gene_tree_id');

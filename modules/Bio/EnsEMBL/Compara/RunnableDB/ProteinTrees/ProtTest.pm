@@ -49,20 +49,6 @@ sub param_defaults {
     };
 }
 
-sub fetch_input{
-    my $self = shift;
-
-    if (defined $self->param('escape_branch') and $self->input_job->retry_count >= 2) {
-        my $jobs = $self->dataflow_output_id($self->input_id, $self->param('escape_branch'));
-        if (scalar(@$jobs)) {
-            $self->input_job->incomplete(0);
-            die "ProtTest has failed, using default model\n";
-        }
-    }
-
-    #Give back control to fetch_input in GenericRunnable
-    return $self->SUPER::fetch_input(@_);
-}
 
 sub run {
     my $self = shift;
