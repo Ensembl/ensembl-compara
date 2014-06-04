@@ -108,7 +108,8 @@ sub fetch_archives {
   my @args;
   my $sql = qq(
     SELECT
-      r.number, r.date, r.archive, s.species_id, s.name, rs.assembly_name
+      r.number, r.date, r.archive, s.species_id, s.name, 
+      rs.assembly_name, rs.initial_release, rs.last_geneset
     FROM
       ens_release as r,
       species as s,
@@ -134,12 +135,54 @@ sub fetch_archives {
   my $records = [];
   while (my @data = $sth->fetchrow_array()) {
     push @$records, {
-      'id'            => $data[0],
-      'date'          => $data[1],
-      'archive'       => $data[2],
-      'species_id'    => $data[3],
-      'species_name'  => $data[4],
-      'assembly'      => $data[5],
+      'id'              => $data[0],
+      'date'            => $data[1],
+      'archive'         => $data[2],
+      'species_id'      => $data[3],
+      'species_name'    => $data[4],
+      'assembly'        => $data[5],
+      'initial_release' => $data[6],
+      'last_geneset'    => $data[7],
+    };
+  }
+  return $records;
+}
+
+sub fetch_archives_by_species {
+  my ($self, $species) = @_;
+  return unless $self->db && $species;
+  
+  my @args = ('Y', $species);
+  my $sql = qq(
+    SELECT
+      r.number, r.date, r.archive, 
+      rs.assembly_name, rs.initial_release, rs.last_geneset
+    FROM
+      ens_release as r,
+      species as s,
+      release_species as rs
+    WHERE
+      r.release_id = rs.release_id
+    AND
+      s.species_id = rs.species_id
+    AND
+      r.online = ?
+    AND
+      s.name = ?
+    ORDER BY r.release_id DESC
+  );
+
+  my $sth = $self->db->prepare($sql);
+  $sth->execute(@args);
+
+  my $records = {};
+  while (my @data = $sth->fetchrow_array()) {
+    $records->{$data[0]} = {
+      'date'            => $data[1],
+      'archive'         => $data[2],
+      'assembly'        => $data[3],
+      'initial_release' => $data[4],
+      'last_geneset'    => $data[5],
     };
   }
   return $records;
