@@ -25,7 +25,7 @@ no warnings 'uninitialized';
 use base qw(EnsEMBL::Web::Text::Feature);
 
 sub new {
-  my( $class, $args, $extra, $order ) = @_;
+  my( $class, $args, $extra, $order, $names ) = @_;
 
   unless(defined $extra) {
     $extra = {};
@@ -37,10 +37,15 @@ sub new {
   }
   my $more = { map { $_ => [$extra->{$_}] } keys %$extra };
 
-  return bless { '__raw__' => $args, '__extra__' => $more, '__order__' => $order }, $class;
+  return bless { '__raw__' => $args, '__extra__' => $more, '__order__' => $order, '__names__' => $names }, $class;
 }
 
 sub extra_data_order { return $_[0]->{'__order__'}; }
+
+sub real_name {
+  return $_[0]->{'__names__'}{$_[1]} if $_[0]->{'__names__'};
+  return $_[1];
+}
 
 sub coords {
   ## BED start coord needs +1 

@@ -37,6 +37,13 @@ my @bed_columns = (
   ['strand'],
 );
 
+# colour, age used in AgeOfBase track
+# Reserved used in old Age-of-Base track: delete after e76
+my %global_name_map = (
+  item_colour => ['item_colour','colour','reserved'],
+  score => ['score','age'],
+);
+
 sub new {
   my ($class, $url) = @_;
 
@@ -135,14 +142,28 @@ sub _as_mapping {
   unless($as and %$as) {
     my %map;
     $map{$_} = $_ for(0..$#bed_columns);
-    return [\%map,{},[]];
+    return [\%map,{},[],{}];
   }
-  my (%map,%core,@order,%pos);
+  my (%name_map,%names,%real_name);
   my $table = $as->{[keys %$as]->[0]};
+  foreach my $name (map { $_->[1] } @$table) {
+    $names{$name} = 1;
+  }
+  foreach my $k (keys %global_name_map) {
+    foreach my $v (@{$global_name_map{$k}}) {
+      next unless $names{$v};
+      $name_map{$v} = $k;
+      $real_name{$k} = $v;
+      last;
+    }
+  }
+  $real_name{$_} ||= $_ for keys %names;
+  my (%map,%core,@order,%pos);
   foreach my $idx_bed (0..$#bed_columns) {
     foreach my $try (@{$bed_columns[$idx_bed]}) {
       foreach my $idx_file (0..$#$table) {
         my $colname = $table->[$idx_file][1];
+        $colname = $name_map{$colname} if defined $name_map{$colname};
         if($try eq $colname or $colname =~ /^(\d+)$/ && $idx_file == $1) {
           $map{$idx_bed} ||= $idx_file;
           $core{$colname} = 1;
@@ -154,11 +175,12 @@ sub _as_mapping {
   }
   foreach my $idx_file (0..$#$table) {
     my $colname = $table->[$idx_file][1];
+    $colname = $name_map{$colname} if defined $name_map{$colname};
     $pos{$colname} = $idx_file;
     next if $core{$colname};
     push @order,$colname;
   }
-  return [\%map,\%pos,\@order];
+  return [\%map,\%pos,\@order,\%real_name];
 }
 
 sub _as_transform {
@@ -167,7 +189,7 @@ sub _as_transform {
   unless(exists $self->{'_bigbed_as_mapping'}) {
     $self->{'_bigbed_as_mapping'} = $self->_as_mapping;
   }
-  my ($map,$pos,$order) = @{$self->{'_bigbed_as_mapping'}};
+  my ($map,$pos,$order,$real_name) = @{$self->{'_bigbed_as_mapping'}};
 
   my (@out,%extra);
   foreach my $i (0..$#bed_columns) {
@@ -180,13 +202,45 @@ sub _as_transform {
   return (\@out,\%extra,$order);
 }
 
+sub has_column {
+  my ($self,$column) = @_;
+
+  unless(exists $self->{'_bigbed_as_mapping'}) {
+    $self->{'_bigbed_as_mapping'} = $self->_as_mapping;
+  }
+  my ($map,$pos,$order,$real_name) = @{$self->{'_bigbed_as_mapping'}};
+  return 1 if defined $pos->{$column};
+  foreach my $bc_idx (0..$#bed_columns) {
+    next unless $bed_columns[$bc_idx]->[0] eq $column;
+    return 1 if exists $map->{$bc_idx};
+  }
+  return 0;
+}
+
+sub real_names {
+  my ($self) = @_;
+
+  unless(exists $self->{'_bigbed_as_mapping'}) {
+    $self->{'_bigbed_as_mapping'} = $self->_as_mapping;
+  }
+  my ($map,$pos,$order,$real_name) = @{$self->{'_bigbed_as_mapping'}};
+  return $real_name;
+}
+
+sub real_name {
+  my ($self,$column) = @_;
+
+  return $self->real_names->{$column};
+}
+
 sub fetch_features  {
   my ($self, $chr_id, $start, $end) = @_;
 
   my @features;
+  my $names = $self->real_names;
   $self->fetch_rows($chr_id,$start,$end,sub {
     my ($row,$extra,$order) = $self->_as_transform(\@_);
-    my $bed = EnsEMBL::Web::Text::Feature::BED->new($row,$extra,$order);
+    my $bed = EnsEMBL::Web::Text::Feature::BED->new($row,$extra,$order,$names);
     $bed->coords([$_[0],$_[1],$_[2]]);
 
     ## Set score to undef if missing to distinguish it from a genuine present but zero score
