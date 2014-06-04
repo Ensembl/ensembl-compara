@@ -45,8 +45,6 @@ sub content {
   my $accession         = $species_defs->ASSEMBLY_ACCESSION;
   my $source            = $species_defs->ASSEMBLY_ACCESSION_SOURCE || 'NCBI';
   my $source_type       = $species_defs->ASSEMBLY_ACCESSION_TYPE;
-  my %archive           = %{$species_defs->get_config($species, 'ENSEMBL_ARCHIVES') || {}};
-  my %assemblies        = %{$species_defs->get_config($species, 'ASSEMBLIES')       || {}};
   my $previous          = $current_assembly;
 
   my $html = qq(
