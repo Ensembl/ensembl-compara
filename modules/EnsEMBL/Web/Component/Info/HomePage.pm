@@ -154,16 +154,18 @@ sub assembly_text {
   my $adaptor  = EnsEMBL::Web::DBSQL::ArchiveAdaptor->new($hub);
   my $archives = $adaptor->fetch_archives_by_species($hub->species);
   my $previous = $assembly;
-  foreach my $archive (reverse sort keys %$archives) {
-    next if $archive->{'id'} == $ensembl_version || $archive->{'assembly'} eq $previous;
-    
+  foreach my $version (reverse sort keys %$archives) {
+    my $archive = $archives->{$version};
+    ## Remove patch sub-versions
+    (my $major_assembly = $archive->{'assembly'}) =~ s/\.p\d+//;
+    next if $version == $ensembl_version || $major_assembly eq $previous;
     push @other_assemblies, {
       url      => sprintf('http://%s.archive.ensembl.org/%s/', lc $archive->{'archive'}, $species),
       assembly => $archive->{'assembly'},
-      release  => (sprintf '(%s release %s)', $species_defs->ENSEMBL_SITETYPE, $archive->{'id'}),
+      release  => (sprintf '(%s release %s)', $species_defs->ENSEMBL_SITETYPE, $version),
     };
     
-    $previous = $archive->{'assembly'};
+    $previous = $major_assembly;
   }
   
   ## Don't link to pre site on archives, as it changes too often
