@@ -22,6 +22,7 @@ use strict;
 
 use EnsEMBL::Web::Document::HTML::HomeSearch;
 use EnsEMBL::Web::DBSQL::ProductionAdaptor;
+use EnsEMBL::Web::DBSQL::ArchiveAdaptor;
 
 use base qw(EnsEMBL::Web::Component);
 
@@ -107,8 +108,6 @@ sub assembly_text {
   my $assembly        = $species_defs->ASSEMBLY_NAME;
   my $mappings        = $species_defs->ASSEMBLY_MAPPINGS;
   my $gca             = $species_defs->ASSEMBLY_ACCESSION;
-  my $archive         = $species_defs->get_config($species, 'ENSEMBL_ARCHIVES') || {};
-  my $assemblies      = $species_defs->get_config($species, 'ASSEMBLIES')       || {};
   my $pre_species     = $species_defs->get_config('MULTI', 'PRE_SPECIES');
   my @other_assemblies;
   
@@ -151,20 +150,24 @@ sub assembly_text {
     $hub->url({ type => 'UserData', action => 'SelectFile', __clear => 1 }), sprintf($self->{'icon'}, 'page-user'), $species_defs->ENSEMBL_SITETYPE
   );
   
-  ## Insert dropdown list of old assemblies
-  foreach my $release (reverse sort keys %$archive) {
-    next if $release == $ensembl_version || $assemblies->{$release} eq $assembly;
+  ## Insert dropdown list of other assemblies
+  my $adaptor  = EnsEMBL::Web::DBSQL::ArchiveAdaptor->new($hub);
+  my $archives = $adaptor->fetch_archives_by_species($hub->species);
+  my $previous = $assembly;
+  foreach my $archive (reverse sort keys %$archives) {
+    next if $archive->{'id'} == $ensembl_version || $archive->{'assembly'} eq $previous;
     
     push @other_assemblies, {
-      url      => sprintf('http://%s.archive.ensembl.org/%s/', lc $archive->{$release}, $species),
-      assembly => "$assemblies->{$release}",
-      release  => (sprintf '(%s release %s)', $species_defs->ENSEMBL_SITETYPE, $release),
+      url      => sprintf('http://%s.archive.ensembl.org/%s/', lc $archive->{'archive'}, $species),
+      assembly => $archive->{'assembly'},
+      release  => (sprintf '(%s release %s)', $species_defs->ENSEMBL_SITETYPE, $archive->{'id'}),
     };
     
-    $assembly = $assemblies->{$release};
+    $previous = $archive->{'assembly'};
   }
   
-  push @other_assemblies, { url => "http://pre.ensembl.org/$species/", assembly => $pre_species->{$species}[1], release => '(Ensembl pre)' } if $pre_species->{$species};
+  ## Don't link to pre site on archives, as it changes too often
+  push @other_assemblies, { url => "http://pre.ensembl.org/$species/", assembly => $pre_species->{$species}[1], release => '(Ensembl pre)' } if ($pre_species->{$species} && $species_defs->ENSEMBL_SITETYPE !~ /archive/i);
 
   if (scalar @other_assemblies) {
     $html .= '<h3 style="color:#808080;padding-top:8px">Other assemblies</h3>';
