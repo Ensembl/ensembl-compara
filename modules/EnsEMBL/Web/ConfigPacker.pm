@@ -957,15 +957,6 @@ sub _summarise_archive_db {
     my @A = @$row;
     $self->db_tree->{'ASSEMBLIES'}->{$row->[0]}{$row->[1]}=$row->[2];
   }
-  $t_aref = $dbh->selectall_arrayref(
-    'select s.name, r.release_id, r.archive
-       from ens_release as r, species as s, release_species as rs
-      where s.species_id = rs.species_id and r.release_id = rs.release_id 
-       and rs.assembly_code != "" and r.online = "Y"'
-  );
-  foreach my $row ( @$t_aref ) {
-    $self->db_tree->{'ENSEMBL_ARCHIVES'}->{$row->[0]}{$row->[1]}=$row->[2];
-  }
 
   $t_aref = $dbh->selectall_arrayref('select name, common_name, code, vega from species');
   foreach my $row ( @$t_aref ) {
@@ -1773,7 +1764,6 @@ sub _munge_website {
 
   ## Release info for ID history etc
   $self->tree->{'ASSEMBLIES'}       = $self->db_multi_tree->{'ASSEMBLIES'}{$self->{_species}};
-  $self->tree->{'ENSEMBL_ARCHIVES'} = $self->db_multi_tree->{'ENSEMBL_ARCHIVES'}{$self->{_species}};
 }
 
 sub _munge_website_multi {
