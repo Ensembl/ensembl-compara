@@ -141,9 +141,11 @@ sub default_options {
         'blastp_capacity'           => 200,
         'mcoffee_capacity'          => 200,
         'split_genes_capacity'      => 150,
-        'filtering_capacity'         => 100,
+        'trimal_capacity'           => 200,
+        'prottest_capacity'         => 200,
         'treebest_capacity'         => 200,
-        'raxml_capacity'         => 200,
+        'raxml_capacity'            => 200,
+        'notung_capacity'           => 200,
         'ortho_tree_capacity'       => 200,
         'ortho_tree_annot_capacity' => 300,
         'quick_tree_break_capacity' => 100,
@@ -267,14 +269,11 @@ sub resource_classes {
          '1Gb_job'      => {'LSF' => '-q production-rh6 -M1000  -R"select[mem>1000]  rusage[mem=1000]"' },
          '4Gb_job'      => {'LSF' => '-q production-rh6 -M4000  -R"select[mem>4000]  rusage[mem=4000]"' },
          '2Gb_job'      => {'LSF' => '-q production-rh6 -M2000  -R"select[mem>2000]  rusage[mem=2000]"' },
-         '2.5Gb_job'    => {'LSF' => '-q production-rh6 -M2500  -R"select[mem>2500]  rusage[mem=2500]"' },
          '8Gb_job'      => {'LSF' => '-q production-rh6 -M8000  -R"select[mem>8000]  rusage[mem=8000]"' },
          '16Gb_job'     => {'LSF' => '-q production-rh6 -M16000 -R"select[mem>16000] rusage[mem=16000]"' },
          '32Gb_job'     => {'LSF' => '-q production-rh6 -M32000 -R"select[mem>32000] rusage[mem=32000]"' },
          '64Gb_job'     => {'LSF' => '-q production-rh6 -M64000 -R"select[mem>64000] rusage[mem=64000]"' },
          'urgent_hcluster'     => {'LSF' => '-q production-rh6 -M32000 -R"select[mem>32000] rusage[mem=32000]"' },
-         'msa'      => {'LSF' => '-q production-rh6' },
-         'msa_himem'    => {'LSF' => '-q production-rh6 -M 32768 -R"select[mem>32768] rusage[mem=32768]"' },
   };
 }
 
@@ -284,10 +283,40 @@ sub pipeline_analyses {
     my %analyses_by_name = map {$_->{'-logic_name'} => $_} @$all_analyses;
 
     ## Extend this section to redefine the resource names of some analysis
-    $analyses_by_name{'split_genes'}->{'-rc_name'} = '8Gb_job';
-    $analyses_by_name{'trimal'}->{'-rc_name'} = '4Gb_job';
-    $analyses_by_name{'notung'}->{'-rc_name'} = '8Gb_job';
+    my %overriden_rc_names = (
+        'mcoffee'                   => '8Gb_job',
+        'mcoffee_himem'             => '64Gb_job',
+        'mafft'                     => '8Gb_job',
+        'mafft_himem'               => '32Gb_job',
+        'split_genes'               => '2Gb_job',
+        'split_genes_himem'         => '8Gb_job',
+        'trimal'                    => '4Gb_job',
+        'prottest'                  => '4Gb_job',
+        'prottest_himem'            => '16Gb_job',
+        'raxml'                     => '1Gb_job',
+        'raxml_himem'               => '8Gb_job',
+        'notung'                    => '4Gb_job',
+        'notung_himem'              => '32Gb_job',
+        'ortho_tree'                => '2Gb_job',
+        'ortho_tree_himem'          => '32Gb_job',
+        'ortho_tree_annot'          => '2Gb_job',
+        'ortho_tree_annot_himem'    => '32Gb_job',
+        'build_HMM_aa'              => '500Mb_job',
+        'build_HMM_aa_himem'        => '2Gb_job',
+        'build_HMM_cds'             => '1Gb_job',
+        'build_HMM_cds_himem'       => '4Gb_job',
+    );
+    foreach my $logic_name (keys %overriden_rc_names) {
+        $analyses_by_name{$logic_name}->{'-rc_name'} = $overriden_rc_names{$logic_name};
+    }
+
+    # Other parameters that have to be set
+    $analyses_by_name{'notung'}->{'-parameters'}{'notung_memory'} = 3500;
+    $analyses_by_name{'notung_himem'}->{'-parameters'}{'notung_memory'} = 29000;
+    $analyses_by_name{'prottest'}->{'-parameters'}{'prottest_memory'} = 3500;
     $analyses_by_name{'prottest'}->{'-parameters'}{'java'} = '/usr/bin/java';
+    $analyses_by_name{'prottest_himem'}->{'-parameters'}{'prottest_memory'} = 14500;
+    $analyses_by_name{'prottest_himem'}->{'-parameters'}{'java'} = '/usr/bin/java';
 
     return $all_analyses;
 }

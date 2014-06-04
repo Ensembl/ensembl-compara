@@ -128,7 +128,11 @@ sub default_options {
         #'hcluster_exe'              => '/software/ensembl/compara/hcluster/hcluster_sg',
         #'mcoffee_home'              => '/software/ensembl/compara/tcoffee/Version_9.03.r1318/',
         #'mafft_home'                => '/software/ensembl/compara/mafft-7.113/',
-        #'treebest_exe'              => '/software/ensembl/compara/treebest.doubletracking',
+        #'trimal_exe'                => '/software/ensembl/compara/trimAl/source/trimal',
+        #'prottest_jar'              => '/software/ensembl/compara/prottest/prottest-3.4-20140123/prottest-3.4.jar',
+        #'treebest_exe'              => '/software/ensembl/compara/treebest',
+        #'raxml_exe'                 => '/software/ensembl/compara/raxml',
+        #'notung_jar'                => '/software/ensembl/compara/notung/Notung-2.6/Notung-2.6.jar',
         #'quicktree_exe'             => '/software/ensembl/compara/quicktree_1.1/bin/quicktree',
         #'buildhmm_exe'              => '/software/ensembl/compara/hmmer-3.1b1/binaries/hmmbuild',
         #'codeml_exe'                => '/software/ensembl/compara/paml43/bin/codeml',
@@ -151,7 +155,11 @@ sub default_options {
         #'blastp_capacity'           => 900,
         #'mcoffee_capacity'          => 600,
         #'split_genes_capacity'      => 600,
+        #'trimal_capacity'           => 400,
+        #'prottest_capacity'         => 400,
         #'treebest_capacity'         => 400,
+        #'raxml_capacity'            => 400,
+        #'notung_capacity'           => 400,
         #'ortho_tree_capacity'       => 200,
         #'ortho_tree_annot_capacity' => 300,
         #'quick_tree_break_capacity' => 100,
@@ -1195,7 +1203,7 @@ sub pipeline_analyses {
                 'mafft_home'            => $self->o('mafft_home'),
             },
             -hive_capacity        => $self->o('mcoffee_capacity'),
-            -rc_name => 'msa',
+            -rc_name    => '2Gb_job',
             -flow_into => {
                -1 => [ 'mcoffee_himem' ],  # MEMLIMIT
                -2 => [ 'mafft' ],
@@ -1208,7 +1216,7 @@ sub pipeline_analyses {
                 'mafft_home'                 => $self->o('mafft_home'),
             },
             -hive_capacity        => $self->o('mcoffee_capacity'),
-            -rc_name => 'msa',
+            -rc_name    => '2Gb_job',
             -flow_into => {
                -1 => [ 'mafft_himem' ],  # MEMLIMIT
             },
@@ -1223,7 +1231,7 @@ sub pipeline_analyses {
                 'escape_branch'         => -2,
             },
             -hive_capacity        => $self->o('mcoffee_capacity'),
-            -rc_name => 'msa_himem',
+            -rc_name    => '8Gb_job',
             -flow_into => {
                -1 => [ 'mafft_himem' ],
                -2 => [ 'mafft_himem' ],
@@ -1236,7 +1244,7 @@ sub pipeline_analyses {
                 'mafft_home'                 => $self->o('mafft_home'),
             },
             -hive_capacity        => $self->o('mcoffee_capacity'),
-            -rc_name => 'msa_himem',
+            -rc_name    => '8Gb_job',
         },
 
         {   -logic_name         => 'hc_alignment',
@@ -1265,7 +1273,7 @@ sub pipeline_analyses {
         {   -logic_name     => 'split_genes_himem',
             -module         => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::FindContiguousSplitGenes',
             -hive_capacity  => $self->o('split_genes_capacity'),
-            -rc_name        => '32Gb_job',
+            -rc_name        => '4Gb_job',
             -flow_into      => [ $self->o('use_raxml') ? 'trimal' : 'treebest' ],
         },
 
@@ -1283,7 +1291,7 @@ sub pipeline_analyses {
             -parameters => {
                 'trimal_exe'    => $self->o('trimal_exe'),
             },
-            -hive_capacity  => $self->o('raxml_capacity'),
+            -hive_capacity  => $self->o('trimal_capacity'),
             -rc_name        => '500Mb_job',
             -batch_size     => 5,
             -flow_into      => [ 'prottest' ],
@@ -1296,7 +1304,7 @@ sub pipeline_analyses {
                 'prottest_memory'       => 3500,
                 'escape_branch'         => -1,
             },
-            -hive_capacity        => $self->o('raxml_capacity'),
+            -hive_capacity        => $self->o('prottest_capacity'),
             -rc_name    => '4Gb_job',
             -flow_into  => {
                 -1 => [ 'prottest_himem' ],
@@ -1308,11 +1316,11 @@ sub pipeline_analyses {
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::ProtTest',
             -parameters => {
                 'prottest_jar'          => $self->o('prottest_jar'),
-                'prottest_memory'       => 3500,
+                'prottest_memory'       => 7000,
                 'escape_branch'         => -1,      # RAxML will use a default model, anyway
             },
-            -hive_capacity        => $self->o('raxml_capacity'),
-            -rc_name    => '4Gb_job',
+            -hive_capacity        => $self->o('prottest_capacity'),
+            -rc_name    => '8Gb_job',
             -flow_into  => [ 'raxml_himem' ],
         },
 
@@ -1339,7 +1347,7 @@ sub pipeline_analyses {
                 'output_clusterset_id'      => $self->o('use_notung') ? 'raxml' : 'default',
             },
             -hive_capacity        => $self->o('raxml_capacity'),
-            -rc_name    => '8Gb_job',
+            -rc_name    => '1Gb_job',
             -flow_into  => {
                 -1 => [ 'raxml_himem' ],
                 2 => { 'treebest' => {
@@ -1359,7 +1367,7 @@ sub pipeline_analyses {
                 'output_clusterset_id'      => $self->o('use_notung') ? 'raxml' : 'default',
             },
             -hive_capacity        => $self->o('raxml_capacity'),
-            -rc_name    => '8Gb_job',
+            -rc_name    => '4Gb_job',
             -flow_into  => $self->o('use_notung') ? [ 'notung' ] : [],
         },
 
@@ -1372,7 +1380,7 @@ sub pipeline_analyses {
                 'input_clusterset_id'       => $self->o('use_raxml') ? 'raxml' : 'treebest',
                 'notung_memory'             => 1500,
             },
-            -hive_capacity  => $self->o('treebest_capacity'),
+            -hive_capacity  => $self->o('notung_capacity'),
             -rc_name        => '2Gb_job',
             -flow_into      => {
                 -1 => [ 'notung_himem' ],
@@ -1386,10 +1394,10 @@ sub pipeline_analyses {
                 'treebest_exe'          => $self->o('treebest_exe'),
                 'label'                 => 'binary',
                 'input_clusterset_id'   => $self->o('use_raxml') ? 'raxml' : 'treebest',
-                'notung_memory'         => 1500,
+                'notung_memory'         => 7000,
             },
-            -hive_capacity  => $self->o('treebest_capacity'),
-            -rc_name        => '2Gb_job',
+            -hive_capacity  => $self->o('notung_capacity'),
+            -rc_name        => '8Gb_job',
         },
 
         {   -logic_name         => 'hc_alignment_post_tree',
@@ -1451,7 +1459,7 @@ sub pipeline_analyses {
                 'tag_split_genes'   => 1,
             },
             -hive_capacity  => $self->o('ortho_tree_capacity'),
-            -rc_name        => '250Mb_job',
+            -rc_name        => '4Gb_job',
             -flow_into      => [ 'hc_tree_attributes', 'hc_tree_homologies' ],
         },
 
@@ -1479,7 +1487,7 @@ sub pipeline_analyses {
                               },
             -hive_capacity => $self->o('ktreedist_capacity'),
             -batch_size    => 5,
-            -rc_name       => '2Gb_job',
+            -rc_name       => '500Mb_job',
             -flow_into     => {
                 -1 => [ 'ktreedist_himem' ],
             },
@@ -1526,7 +1534,7 @@ sub pipeline_analyses {
                 'store_homologies'  => 0,
             },
             -hive_capacity  => $self->o('ortho_tree_annot_capacity'),
-            -rc_name        => '250Mb_job',
+            -rc_name        => '4Gb_job',
             -flow_into      => [ 'hc_tree_attributes' ],
         },
 
@@ -1543,8 +1551,8 @@ sub pipeline_analyses {
             },
             -hive_capacity  => $self->o('build_hmm_capacity'),
             -batch_size     => 5,
-            -priority       => -10,
-            -rc_name        => '500Mb_job',
+            -priority       => -20,
+            -rc_name        => '250Mb_job',
             -flow_into      => {
                 -1  => 'build_HMM_aa_himem'
             },
@@ -1556,8 +1564,8 @@ sub pipeline_analyses {
                 'buildhmm_exe'  => $self->o('buildhmm_exe'),
             },
             -hive_capacity  => $self->o('build_hmm_capacity'),
-            -priority       => -10,
-            -rc_name        => '16Gb_job',
+            -priority       => -20,
+            -rc_name        => '1Gb_job',
         },
 
         {   -logic_name => 'build_HMM_cds',
@@ -1568,8 +1576,8 @@ sub pipeline_analyses {
             },
             -hive_capacity  => $self->o('build_hmm_capacity'),
             -batch_size     => 5,
-            -priority       => -10,
-            -rc_name        => '1Gb_job',
+            -priority       => -20,
+            -rc_name        => '500Mb_job',
             -flow_into      => {
                 -1  => 'build_HMM_cds_himem'
             },
@@ -1582,8 +1590,8 @@ sub pipeline_analyses {
                 'buildhmm_exe'  => $self->o('buildhmm_exe'),
             },
             -hive_capacity  => $self->o('build_hmm_capacity'),
-            -priority       => -10,
-            -rc_name        => '32Gb_job',
+            -priority       => -20,
+            -rc_name        => '2Gb_job',
         },
 
 # ---------------------------------------------[Quick tree break steps]-----------------------------------------------------------------------
