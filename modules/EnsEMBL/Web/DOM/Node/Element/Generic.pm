@@ -21,6 +21,8 @@ package EnsEMBL::Web::DOM::Node::Element::Generic;
 use strict;
 use warnings;
 
+use EnsEMBL::Web::Attributes;
+
 use base qw(EnsEMBL::Web::DOM::Node::Element);
 
 sub new {
@@ -30,12 +32,7 @@ sub new {
   return $self;
 }
 
-sub node_name {
-  ## @override
-  my $self = shift;
-  $self->{'_node_name'} = shift if @_;
-  return $self->{'_node_name'};
-}
+sub node_name :Accessor { '_node_name' } ## @override
 
 sub clone_node {
   ## @override
