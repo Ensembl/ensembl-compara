@@ -247,6 +247,8 @@ sub run_analysis {
      foreach my $gene2 (@$leaves2) {
       my $genepairlink = new Bio::EnsEMBL::Compara::Graph::Link($gene1, $gene2);
       $genepairlink->add_tag("ancestor", $ancestor);
+      $genepairlink->add_tag("subtree1", $child1);
+      $genepairlink->add_tag("subtree2", $child2);
       push @{$genepairlinks{$ancestor->get_tagvalue('node_type')}}, $genepairlink;
       print STDERR "build graph $graphcount\n" if ($graphcount++ % 1000 == 0);
      }
@@ -273,8 +275,6 @@ sub run_analysis {
   }
   printf("%d homologies found so far\n", scalar(@{$self->param('homology_links')}));
 
-  my @todo4 = ();
-
   my @duplication_nodes = ();
   my $last_node_id = undef;
   foreach my $genepairlink (@{$genepairlinks{duplication}}) {
@@ -293,25 +293,12 @@ sub run_analysis {
           my ($pep1, $pep2) = $genepairlink->get_nodes;
           if ($pep1->genome_db_id == $pep2->genome_db_id) {
               push @good_ones, [$genepairlink, 'within_species_paralog', 1];
-          } elsif ($self->is_level3_orthologues($genepairlink)) {
+          } elsif ($self->is_closest_homologue($genepairlink)) {
               push @good_ones, [$genepairlink, $self->tag_orthologues($genepairlink), 0];
-          } else {
-              push @todo4, $genepairlink;
           }
       }
       foreach my $par (@good_ones) {
           $self->tag_genepairlink(@$par);
-      }
-  }
-  printf("%d homologies found so far\n", scalar(@{$self->param('homology_links')}));
-
-  foreach my $genepairlink (@todo4) {
-      my $other = $self->is_level4_orthologues($genepairlink);
-      if (defined $other) {
-          my $type = $self->tag_orthologues($genepairlink);
-          if ($other->get_tagvalue('orthotree_type') eq $type) {
-              $self->tag_genepairlink($genepairlink, $type, 0);
-          }
       }
   }
   printf("%d homologies found so far\n", scalar(@{$self->param('homology_links')}));
@@ -515,30 +502,20 @@ sub tag_orthologues
 
 
 
-sub is_level3_orthologues
+sub is_closest_homologue
 {
     my $self = shift;
     my $genepairlink = shift;
 
     my $has_match = $self->param('has_match');
     my ($pep1, $pep2) = $genepairlink->get_nodes;
+    my $s1 = $self->get_ancestor_species_hash($genepairlink->get_value_for_tag('subtree1'));
+    my $s2 = $self->get_ancestor_species_hash($genepairlink->get_value_for_tag('subtree2'));
 
-    return (not $has_match->{$pep1->seq_member_id}->{$pep2->genome_db_id} and not $has_match->{$pep2->seq_member_id}->{$pep1->genome_db_id});
-}
-
-sub is_level4_orthologues
-{
-    my $self = shift;
-    my $genepairlink = shift;
-
-    my $has_match = $self->param('has_match');
-    my ($pep1, $pep2) = $genepairlink->get_nodes;
-
-    return undef if $has_match->{$pep1->seq_member_id}->{$pep2->genome_db_id} and $has_match->{$pep2->seq_member_id}->{$pep1->genome_db_id};
-    
-    my $dcs = $genepairlink->get_tagvalue('ancestor')->get_tagvalue('duplication_confidence_score');
-    return undef unless $dcs < $self->param('no_between');
-    return $has_match->{$pep1->seq_member_id}->{$pep2->genome_db_id} || $has_match->{$pep2->seq_member_id}->{$pep1->genome_db_id};
+    return 0 if $has_match->{$pep1->seq_member_id}->{$pep2->genome_db_id} or $has_match->{$pep2->seq_member_id}->{$pep1->genome_db_id};
+    return 0 if exists $s1->{$pep2->genome_db_id};
+    return 0 if exists $s2->{$pep1->genome_db_id};
+    return 1;
 }
 
 
