@@ -111,7 +111,12 @@ sub write_output {
     if ($self->param('output_clusterset_id') and ($self->param('output_clusterset_id') ne 'default')) {
         $treebest_stored_tree = $self->store_alternative_tree($self->param('treebest_stdout'), $self->param('output_clusterset_id'), $self->param('gene_tree'), \@ref_support);
     } else {
-        $self->store_genetree($self->param('gene_tree'), \@ref_support);
+        #parse the tree into the datastucture:
+        if ($self->parse_newick_into_tree( $self->param('treebest_stdout'), $self->param('gene_tree') )) {
+            $self->store_genetree($self->param('gene_tree'), \@ref_support);
+        } else {
+            $treebest_stored_tree = undef;
+        }
     }
 
     if (not $treebest_stored_tree) {
