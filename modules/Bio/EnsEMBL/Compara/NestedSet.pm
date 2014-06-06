@@ -463,6 +463,7 @@ sub get_all_nodes {
 
   push @$node_array, $self;
   foreach my $child (@{$self->children}) {
+    no warnings 'recursion';
     $child->get_all_nodes($node_array);
   }
 

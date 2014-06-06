@@ -152,13 +152,10 @@ sub fetch_all_by_column_names {
 
     my $sth = $self->prepare("SELECT $columns FROM hmm_profile" . $constraint);
     $sth->execute();
-    my @id_list = ();
-    while (my $idref = $sth->fetchrow_hashref()) {
-        push @id_list, $idref;
-    }
+    my $id_list = $sth->fetchall_arrayref();
     $sth->finish;
 
-    return [@id_list];
+    return $id_list;
 }
 
 ###############################

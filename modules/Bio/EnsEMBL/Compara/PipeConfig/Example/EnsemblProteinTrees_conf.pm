@@ -79,7 +79,6 @@ sub default_options {
     # clustering parameters:
         # affects 'hcluster_dump_input_per_genome'
         'outgroups'                     => { 'saccharomyces_cerevisiae' => 2 },
-        # (half of the previously used 'clutering_max_gene_count=1500) affects 'hcluster_run'
 
     # tree building parameters:
 
@@ -104,8 +103,11 @@ sub default_options {
         'hcluster_exe'              => '/software/ensembl/compara/hcluster/hcluster_sg',
         'mcoffee_home'              => '/software/ensembl/compara/tcoffee/Version_9.03.r1318/',
         'mafft_home'                => '/software/ensembl/compara/mafft-7.113/',
-        'treebest_exe'              => '/software/ensembl/compara/treebest.doubletracking',
-        'notung_jar'                => '/software/ensembl/compara/Notung-2.6/Notung-2.6.jar',
+        'trimal_exe'                => '/software/ensembl/compara/trimAl/source/trimal',
+        'prottest_jar'              => '/software/ensembl/compara/prottest/prottest-3.4-20140123/prottest-3.4.jar',
+        'treebest_exe'              => '/software/ensembl/compara/treebest',
+        'raxml_exe'                 => '/software/ensembl/compara/raxml',
+        'notung_jar'                => '/software/ensembl/compara/notung/Notung-2.6/Notung-2.6.jar',
         'quicktree_exe'             => '/software/ensembl/compara/quicktree_1.1/bin/quicktree',
         'hmmer2_home'               => '/software/ensembl/compara/hmmer-2.3.2/src/',
         'codeml_exe'                => '/software/ensembl/compara/paml43/bin/codeml',
@@ -130,9 +132,11 @@ sub default_options {
         'blastpu_capacity'          => 700,
         'mcoffee_capacity'          => 600,
         'split_genes_capacity'      => 600,
-        'trimal_capacity'           => 100,
+        'trimal_capacity'           => 400,
+        'prottest_capacity'         => 400,
         'treebest_capacity'         => 400,
         'raxml_capacity'            => 400,
+        'notung_capacity'           => 400,
         'ortho_tree_capacity'       => 200,
         'ortho_tree_annot_capacity' => 300,
         'quick_tree_break_capacity' => 100,
@@ -230,9 +234,6 @@ sub resource_classes {
          '16Gb_job'     => {'LSF' => '-C0 -M16000 -R"select[mem>16000] rusage[mem=16000]"' },
          '32Gb_job'     => {'LSF' => '-C0 -M32000 -R"select[mem>32000] rusage[mem=32000]"' },
          '64Gb_job'     => {'LSF' => '-C0 -M64000 -R"select[mem>64000] rusage[mem=64000]"' },
-
-         'msa'          => {'LSF' => '-C0 -M2000  -R"select[mem>2000]  rusage[mem=2000]"' },
-         'msa_himem'    => {'LSF' => '-C0 -M8000  -R"select[mem>8000]  rusage[mem=8000]"' },
 
          'urgent_hcluster'      => {'LSF' => '-C0 -M32000 -R"select[mem>32000] rusage[mem=32000]" -q yesterday' },
     };

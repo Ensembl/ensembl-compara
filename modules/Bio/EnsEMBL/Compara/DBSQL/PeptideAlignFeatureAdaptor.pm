@@ -45,11 +45,10 @@ use warnings;
 
 package Bio::EnsEMBL::Compara::DBSQL::PeptideAlignFeatureAdaptor;
 
+use DBI qw(:sql_types);
 
 use Bio::EnsEMBL::Compara::PeptideAlignFeature;
 use Bio::EnsEMBL::Utils::Exception;
-
-use vars '@ISA';
 
 use base ('Bio::EnsEMBL::Compara::DBSQL::BaseAdaptor');
 
@@ -82,7 +81,8 @@ sub fetch_all_by_qmember_id{
   my $member = $self->db->get_SeqMemberAdaptor->fetch_by_dbID($seq_member_id);
   $self->{_curr_gdb_id} = $member->genome_db_id;
 
-  my $constraint = "paf.qmember_id = $seq_member_id";
+  my $constraint = 'paf.qmember_id = ?';
+  $self->bind_param_generic_fetch($seq_member_id, SQL_INTEGER);
   return $self->generic_fetch($constraint);
 }
 
@@ -140,7 +140,9 @@ sub fetch_all_by_qmember_id_hmember_id{
   my $qmember = $self->db->get_SeqMemberAdaptor->fetch_by_dbID($qmember_id);
   $self->{_curr_gdb_id} = $qmember->genome_db_id;
 
-  my $constraint = "paf.qmember_id=$qmember_id AND paf.hmember_id=$hmember_id";
+  my $constraint = 'paf.qmember_id=? AND paf.hmember_id=?';
+  $self->bind_param_generic_fetch($qmember_id, SQL_INTEGER);
+  $self->bind_param_generic_fetch($hmember_id, SQL_INTEGER);
   return $self->generic_fetch($constraint);
 }
 
@@ -172,7 +174,9 @@ sub fetch_all_by_qmember_id_hgenome_db_id{
   my $qmember = $self->db->get_SeqMemberAdaptor->fetch_by_dbID($qmember_id);
   $self->{_curr_gdb_id} = $qmember->genome_db_id;
 
-  my $constraint = "paf.qmember_id=$qmember_id AND paf.hgenome_db_id=$hgenome_db_id";
+  my $constraint = 'paf.qmember_id=? AND paf.hgenome_db_id=?';
+  $self->bind_param_generic_fetch($qmember_id, SQL_INTEGER);
+  $self->bind_param_generic_fetch($hgenome_db_id, SQL_INTEGER);
   return $self->generic_fetch($constraint);
 }
 
@@ -203,7 +207,9 @@ sub fetch_all_by_hmember_id_qgenome_db_id{
 
    $self->{_curr_gdb_id} = $qgenome_db_id;
    # we don't need to add "paf.qgenome_db_id=$qgenome_db_id" because it is implicit from the table name
-   my $constraint = "paf.hmember_id=$hmember_id";
+   my $constraint = 'paf.hmember_id=?';
+   $self->bind_param_generic_fetch($hmember_id, SQL_INTEGER);
+   return $self->generic_fetch($constraint);
 }
 
 
@@ -242,7 +248,8 @@ sub fetch_all_by_qgenome_db_id_hgenome_db_id{
 
   $self->{_curr_gdb_id} = $qgenome_db_id;
 
-  my $constraint = "paf.hgenome_db_id = $hgenome_db_id";
+  my $constraint = 'paf.hgenome_db_id = ?';
+  $self->bind_param_generic_fetch($hgenome_db_id, SQL_INTEGER);
   return $self->generic_fetch($constraint);
 }
 
@@ -270,7 +277,8 @@ sub fetch_all_besthit_by_qgenome_db_id_hgenome_db_id{
 
   $self->{_curr_gdb_id} = $qgenome_db_id;
 
-  my $constraint = "paf.hgenome_db_id = $hgenome_db_id AND paf.hit_rank=1";
+  my $constraint = 'paf.hgenome_db_id = ? AND paf.hit_rank=1';
+  $self->bind_param_generic_fetch($hgenome_db_id, SQL_INTEGER);
   return $self->generic_fetch($constraint);
 }
 
@@ -297,7 +305,8 @@ sub fetch_selfhit_by_qmember_id {
   my $member = $self->db->get_SeqMemberAdaptor->fetch_by_dbID($qmember_id);
 
   $self->{_curr_gdb_id} = $member->genome_db_id;
-  my $constraint = "qmember_id=$qmember_id AND qmember_id=hmember_id";
+  my $constraint = 'qmember_id=? AND qmember_id=hmember_id';
+  $self->bind_param_generic_fetch($qmember_id, SQL_INTEGER);
   return $self->generic_fetch_one($constraint);
 }
 
@@ -347,57 +356,38 @@ sub store {
 
 
 sub _store_PAFS {
-    my ($self, $cross_pafs) = @_;
+  my ($self, @out)  = @_;
 
-    print "numbers pafs " . scalar(@$cross_pafs) . "\n";
-    foreach my $feature (@$cross_pafs) {
-        my $peptide_table = $feature->{qgenome_db_id} ? 'peptide_align_feature_'.($feature->{qgenome_db_id}) : 'peptide_align_feature';
+  return unless(@out and scalar(@out));
 
-        my $sql = "INSERT INTO $peptide_table (qmember_id, hmember_id, qgenome_db_id, hgenome_db_id, qstart, qend, hstart, hend, score, evalue, hit_rank,identical_matches, perc_ident,align_length,positive_matches, perc_pos, cigar_line) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?, ?,?,?)";
-        my $sth = $self->prepare( $sql );
+  # Query genome db id should always be the same
+  my $first_qgenome_db_id = $out[0]->query_genome_db_id;
 
-        #print "INSERT INTO $peptide_table (qmember_id, hmember_id, qgenome_db_id, hgenome_db_id, qstart, qend, hstart, hend, score, evalue, hit_rank,identical_matches, perc_ident,align_length,positive_matches, perc_pos) VALUES ('" . $feature->{qmember_id} , "','" . $feature->{hmember_id} . "'," . $feature->{qgenome_db_id} . "," . $feature->{hgenome_db_id} . "," . $feature->{qstart} . "," . $feature->{qend} . "," . $feature->{hstart} . "," . $feature->{hend} . "," . $feature->{score} . "," . $feature->{evalue} . "," . $feature->{hit_rank} . "," . $feature->{identical_matches} . "," . $feature->{perc_ident} . "," . $feature->{length} . "," . $feature->{positive} . "," . $feature->{perc_pos} . "\n";
+  my $gdb = $self->db->get_GenomeDBAdaptor->fetch_by_dbID($first_qgenome_db_id);
+  my $tbl_name = 'peptide_align_feature_'.$first_qgenome_db_id;
 
-        $sth->execute($feature->{qmember_id},
-                $feature->{hmember_id},
-                $feature->{qgenome_db_id},
-                $feature->{hgenome_db_id},
-                $feature->{qstart},
-                $feature->{qend},
-                $feature->{hstart},
-                $feature->{hend},
-                $feature->{score},
-                $feature->{evalue},
-                $feature->{hit_rank},
-                $feature->{identical_matches},
-                $feature->{perc_ident},
-                $feature->{length},
-                $feature->{positive},
-                $feature->{perc_pos},
-                $feature->{cigar_line},
-                );
+  my @stored_columns = qw(qmember_id hmember_id qgenome_db_id hgenome_db_id qstart qend hstart hend score evalue align_length identical_matches perc_ident positive_matches perc_pos hit_rank cigar_line);
+  my $query = sprintf('INSERT INTO %s (%s) VALUES (%s)', $tbl_name, join(',', @stored_columns), join(',', map {'?'} @stored_columns) );
+  my $sth = $self->prepare($query);
+
+  foreach my $paf (@out) {
+    if($paf->isa('Bio::EnsEMBL::Compara::PeptideAlignFeature')) {
+
+      # print STDERR "== ", $paf->query_member_id, " - ", $paf->hit_member_id, "\n";
+      my $qgenome_db_id = $paf->query_genome_db_id;
+      $qgenome_db_id = 0 unless($qgenome_db_id);
+      my $hgenome_db_id = $paf->hit_genome_db_id;
+      $hgenome_db_id = 0 unless($hgenome_db_id);
+      if (not $paf->query_member) { throw("PAF query member undefined\n"); }
+      # Null_cigar option for leaner paf tables
+      $paf->cigar_line('') if (defined $paf->{null_cigar});
+
+      $sth->execute($paf->query_member_id, $paf->hit_member_id, $qgenome_db_id, $hgenome_db_id,
+          $paf->qstart, $paf->qend, $paf->hstart, $paf->hend,
+          $paf->score, $paf->evalue, $paf->alignment_length,
+          $paf->identical_matches, $paf->perc_ident, $paf->positive_matches, $paf->perc_pos, $paf->hit_rank, $paf->cigar_line);
     }
-}
-
-
-
-sub _create_PAF_from_ProteinFeature {
-    my ($self, $feature) = @_;
-
-    my $paf = new Bio::EnsEMBL::Compara::PeptideAlignFeature;
-
-    $paf->query_member_id($feature->seqname);
-    $paf->hit_member_id($feature->hseqname);
-    $paf->qstart($feature->start);
-    $paf->hstart($feature->hstart);
-    $paf->qend($feature->end);
-    $paf->hend($feature->hend);
-    $paf->score($feature->score);
-    $paf->evalue($feature->p_value);
-    $paf->perc_ident(0);
-    $paf->perc_pos(0);
-
-    return $paf;
+  }
 }
 
 
@@ -591,7 +581,8 @@ sub fetch_by_dbID{
 
   $self->{_curr_gdb_id} = int($id/100000000);
 
-  my $constraint = "peptide_align_feature_id=$id";
+  my $constraint = 'peptide_align_feature_id=?';
+  $self->bind_param_generic_fetch($id, SQL_INTEGER);
   return $self->generic_fetch_one($constraint);
 }
 
@@ -651,7 +642,9 @@ sub fetch_BRH_by_member_genomedb
                        ['paf2.peptide_align_feature_id AS pafid2']]
                    ];
 
-   my $constraint = "paf.hit_rank=1 AND paf2.hit_rank=1 AND paf.qmember_id=$qmember_id AND paf.hgenome_db_id=$hit_genome_db_id";
+   my $constraint = "paf.hit_rank=1 AND paf2.hit_rank=1 AND paf.qmember_id=? AND paf.hgenome_db_id=?";
+  $self->bind_param_generic_fetch($qmember_id, SQL_INTEGER);
+  $self->bind_param_generic_fetch($hit_genome_db_id, SQL_INTEGER);
 
   return $self->generic_fetch_one($constraint, $extrajoin);
 }
@@ -691,8 +684,10 @@ sub fetch_all_RH_by_member_genomedb
                        ['paf2.peptide_align_feature_id AS pafid2']]
                    ];
 
-   my $constraint = "paf.qmember_id=$qmember_id AND paf.hgenome_db_id=$hit_genome_db_id";
+   my $constraint = "paf.qmember_id=? AND paf.hgenome_db_id=?";
    my $final_clause = "ORDER BY paf.hit_rank";
+  $self->bind_param_generic_fetch($qmember_id, SQL_INTEGER);
+  $self->bind_param_generic_fetch($hit_genome_db_id, SQL_INTEGER);
 
   return $self->generic_fetch($constraint, $extrajoin, $final_clause);
 

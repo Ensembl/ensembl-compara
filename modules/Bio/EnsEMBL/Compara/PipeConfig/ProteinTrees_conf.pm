@@ -138,8 +138,11 @@ sub default_options {
         #'hcluster_exe'              => '/software/ensembl/compara/hcluster/hcluster_sg',
         #'mcoffee_home'              => '/software/ensembl/compara/tcoffee/Version_9.03.r1318/',
         #'mafft_home'                => '/software/ensembl/compara/mafft-7.113/',
-        #'treebest_exe'              => '/software/ensembl/compara/treebest.doubletracking',
-        #'notung_jar'                => '/software/ensembl/compara/Notung-2.6/Notung-2.6.jar',
+        #'trimal_exe'                => '/software/ensembl/compara/trimAl/source/trimal',
+        #'prottest_jar'              => '/software/ensembl/compara/prottest/prottest-3.4-20140123/prottest-3.4.jar',
+        #'treebest_exe'              => '/software/ensembl/compara/treebest',
+        #'raxml_exe'                 => '/software/ensembl/compara/raxml',
+        #'notung_jar'                => '/software/ensembl/compara/notung/Notung-2.6/Notung-2.6.jar',
         #'quicktree_exe'             => '/software/ensembl/compara/quicktree_1.1/bin/quicktree',
         #'hmmer2_home'               => '/software/ensembl/compara/hmmer-2.3.2/src/',
         #'codeml_exe'                => '/software/ensembl/compara/paml43/bin/codeml',
@@ -177,9 +180,11 @@ sub default_options {
         #'blastpu_capacity'          => 150,
         #'mcoffee_capacity'          => 600,
         #'split_genes_capacity'      => 600,
-        #'trimal_capacity'           => 100,
+        #'trimal_capacity'           => 400,
+        #'prottest_capacity'         => 400,
         #'treebest_capacity'         => 400,
         #'raxml_capacity'            => 400,
+        #'notung_capacity'           => 400,
         #'ortho_tree_capacity'       => 200,
         #'ortho_tree_annot_capacity' => 300,
         #'quick_tree_break_capacity' => 100,
@@ -1311,7 +1316,7 @@ sub core_pipeline_analyses {
         {   -logic_name    => 'clusterset_backup',
             -module        => 'Bio::EnsEMBL::Hive::RunnableDB::SqlCmd',
             -parameters    => {
-                'sql'         => 'INSERT INTO gene_tree_backup (seq_member_id, root_id) SELECT seq_member_id, root_id FROM gene_tree_node WHERE seq_member_id IS NOT NULL',
+                'sql'         => 'INSERT IGNORE INTO gene_tree_backup (seq_member_id, root_id) SELECT seq_member_id, root_id FROM gene_tree_node WHERE seq_member_id IS NOT NULL',
             },
             -analysis_capacity => 1,
             -meadow_type    => 'LOCAL',
@@ -1323,7 +1328,7 @@ sub core_pipeline_analyses {
         {   -logic_name => 'cluster_factory',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
             -parameters => {
-                'inputquery'        => 'SELECT root_id AS gene_tree_id FROM gene_tree_root WHERE tree_type = "tree"',
+                'inputquery'        => 'SELECT root_id AS gene_tree_id FROM gene_tree_root WHERE tree_type = "tree" AND clusterset_id="default"',
                 'fan_branch_code'   => 2,
             },
             -flow_into  => {
@@ -1377,7 +1382,7 @@ sub core_pipeline_analyses {
             },
             -flow_into  => {
                 2  => [ 'quick_tree_break' ],
-                3  => [ 'tree_entry_point', 'build_HMM_aa', 'build_HMM_cds' ],
+                3  => [ 'tree_entry_point' ],
             },
             -meadow_type    => 'LOCAL',
         },
@@ -1405,7 +1410,7 @@ sub core_pipeline_analyses {
                 'mafft_home'            => $self->o('mafft_home'),
             },
             -hive_capacity        => $self->o('mcoffee_capacity'),
-            -rc_name => 'msa',
+            -rc_name    => '2Gb_job',
             -flow_into => {
                -1 => [ 'mcoffee_himem' ],  # MEMLIMIT
                -2 => [ 'mafft' ],
@@ -1418,7 +1423,7 @@ sub core_pipeline_analyses {
                 'mafft_home'                 => $self->o('mafft_home'),
             },
             -hive_capacity        => $self->o('mcoffee_capacity'),
-            -rc_name => 'msa',
+            -rc_name    => '2Gb_job',
             -flow_into => {
                -1 => [ 'mafft_himem' ],  # MEMLIMIT
             },
@@ -1433,7 +1438,7 @@ sub core_pipeline_analyses {
                 'escape_branch'         => -2,
             },
             -hive_capacity        => $self->o('mcoffee_capacity'),
-            -rc_name => 'msa_himem',
+            -rc_name    => '8Gb_job',
             -flow_into => {
                -1 => [ 'mafft_himem' ],
                -2 => [ 'mafft_himem' ],
@@ -1446,7 +1451,7 @@ sub core_pipeline_analyses {
                 'mafft_home'                 => $self->o('mafft_home'),
             },
             -hive_capacity        => $self->o('mcoffee_capacity'),
-            -rc_name => 'msa_himem',
+            -rc_name    => '8Gb_job',
         },
 
         {   -logic_name         => 'hc_alignment',
@@ -1466,6 +1471,16 @@ sub core_pipeline_analyses {
             -hive_capacity  => $self->o('split_genes_capacity'),
             -rc_name        => '500Mb_job',
             -batch_size     => 20,
+            -flow_into      => {
+                1   => $self->o('use_raxml') ? 'trimal' : 'treebest',
+                -1  => 'split_genes_himem',
+            },
+        },
+
+        {   -logic_name     => 'split_genes_himem',
+            -module         => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::FindContiguousSplitGenes',
+            -hive_capacity  => $self->o('split_genes_capacity'),
+            -rc_name        => '4Gb_job',
             -flow_into      => [ $self->o('use_raxml') ? 'trimal' : 'treebest' ],
         },
 
@@ -1486,7 +1501,34 @@ sub core_pipeline_analyses {
             -hive_capacity  => $self->o('trimal_capacity'),
             -rc_name        => '500Mb_job',
             -batch_size     => 5,
-            -flow_into      => [ 'raxml' ],
+            -flow_into      => [ 'prottest' ],
+        },
+
+        {   -logic_name => 'prottest',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::ProtTest',
+            -parameters => {
+                'prottest_jar'          => $self->o('prottest_jar'),
+                'prottest_memory'       => 3500,
+                'escape_branch'         => -1,
+            },
+            -hive_capacity        => $self->o('prottest_capacity'),
+            -rc_name    => '4Gb_job',
+            -flow_into  => {
+                -1 => [ 'prottest_himem' ],
+                1 => [ 'raxml' ],
+            }
+        },
+
+        {   -logic_name => 'prottest_himem',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::ProtTest',
+            -parameters => {
+                'prottest_jar'          => $self->o('prottest_jar'),
+                'prottest_memory'       => 7000,
+                'escape_branch'         => -1,      # RAxML will use a default model, anyway
+            },
+            -hive_capacity        => $self->o('prottest_capacity'),
+            -rc_name    => '8Gb_job',
+            -flow_into  => [ 'raxml_himem' ],
         },
 
         {   -logic_name => 'treebest',
@@ -1500,24 +1542,21 @@ sub core_pipeline_analyses {
                 'output_clusterset_id'      => $self->o('use_notung') ? 'treebest' : 'default',
             },
             -hive_capacity        => $self->o('treebest_capacity'),
-            -rc_name => '4Gb_job',
-            -flow_into => {
-                2 => [ 'hc_tree_structure' ],
-                $self->o('use_notung') ? (1 => [ 'notung' ]) : (),
-            }
+            -rc_name    => '4Gb_job',
+            -flow_into  => $self->o('use_notung') ? [ 'notung' ] : [],
         },
 
         {   -logic_name => 'raxml',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::RAxML',
             -parameters => {
-                #'cdna'                      => 1,
-                'raxml_exe'              => $self->o('raxml_exe'),
+                'raxml_exe'                 => $self->o('raxml_exe'),
                 'treebest_exe'              => $self->o('treebest_exe'),
                 'output_clusterset_id'      => $self->o('use_notung') ? 'raxml' : 'default',
             },
             -hive_capacity        => $self->o('raxml_capacity'),
-            -rc_name    => '8Gb_job',
+            -rc_name    => '1Gb_job',
             -flow_into  => {
+                -1 => [ 'raxml_himem' ],
                 2 => { 'treebest' => {
                             'output_clusterset_id'      => 'raxml',
                             'gene_tree_id'              => '#gene_tree_id#',
@@ -1527,6 +1566,18 @@ sub core_pipeline_analyses {
             }
         },
 
+        {   -logic_name => 'raxml_himem',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::RAxML',
+            -parameters => {
+                'raxml_exe'                 => $self->o('raxml_exe'),
+                'treebest_exe'              => $self->o('treebest_exe'),
+                'output_clusterset_id'      => $self->o('use_notung') ? 'raxml' : 'default',
+            },
+            -hive_capacity        => $self->o('raxml_capacity'),
+            -rc_name    => '4Gb_job',
+            -flow_into  => $self->o('use_notung') ? [ 'notung' ] : [],
+        },
+
         {   -logic_name => 'notung',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::Notung',
             -parameters => {
@@ -1534,9 +1585,26 @@ sub core_pipeline_analyses {
                 'treebest_exe'              => $self->o('treebest_exe'),
                 'label'                     => 'binary',
                 'input_clusterset_id'       => $self->o('use_raxml') ? 'raxml' : 'treebest',
+                'notung_memory'             => 1500,
             },
-            -hive_capacity        => $self->o('treebest_capacity'),
-            -rc_name => '2Gb_job',
+            -hive_capacity  => $self->o('notung_capacity'),
+            -rc_name        => '2Gb_job',
+            -flow_into      => {
+                -1 => [ 'notung_himem' ],
+            },
+        },
+
+        {   -logic_name => 'notung_himem',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::Notung',
+            -parameters => {
+                'notung_jar'            => $self->o('notung_jar'),
+                'treebest_exe'          => $self->o('treebest_exe'),
+                'label'                 => 'binary',
+                'input_clusterset_id'   => $self->o('use_raxml') ? 'raxml' : 'treebest',
+                'notung_memory'         => 7000,
+            },
+            -hive_capacity  => $self->o('notung_capacity'),
+            -rc_name        => '8Gb_job',
         },
 
         {   -logic_name         => 'hc_alignment_post_tree',
@@ -1544,10 +1612,7 @@ sub core_pipeline_analyses {
             -parameters         => {
                 mode            => 'alignment',
             },
-            -flow_into          => {
-                '1->A' => [ 'hc_tree_structure' ],
-                'A->1' => [ 'homology_entry_point' ],
-            },
+            -flow_into          => [ 'hc_tree_structure' ],
             %hc_analysis_params,
         },
 
@@ -1556,12 +1621,16 @@ sub core_pipeline_analyses {
             -parameters         => {
                 mode            => 'tree_structure',
             },
+            -flow_into          => [ 'homology_entry_point' ],
             %hc_analysis_params,
         },
 
         {   -logic_name => 'homology_entry_point',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
-            -flow_into  => [ 'ortho_tree', 'ktreedist', 'other_tree_factory' ],
+            -flow_into  => {
+                '1->A'  => [ 'ortho_tree', 'other_tree_factory' ],
+                'A->1'  => [ 'finalize_entry_point' ],
+            },
             -meadow_type    => 'LOCAL',
         },
 
@@ -1572,7 +1641,7 @@ sub core_pipeline_analyses {
                 'fan_branch_code'   => 2,
             },
             -flow_into  => {
-                 2 => [ 'ortho_tree_annot' ],
+                 2 => [ 'hc_other_tree_structure' ],
             },
             -meadow_type    => 'LOCAL',
         },
@@ -1583,9 +1652,22 @@ sub core_pipeline_analyses {
             -parameters => {
                 'tag_split_genes'   => 1,
             },
-            -hive_capacity      => $self->o('ortho_tree_capacity'),
-            -rc_name => '250Mb_job',
-            -flow_into  => [ 'hc_tree_attributes', 'hc_tree_homologies' ],
+            -hive_capacity  => $self->o('ortho_tree_capacity'),
+            -rc_name        => '250Mb_job',
+            -flow_into      => {
+                1   => [ 'hc_tree_attributes', 'hc_tree_homologies' ],
+                -1  => 'ortho_tree_himem',
+            },
+        },
+
+        {   -logic_name => 'ortho_tree_himem',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::OrthoTree',
+            -parameters => {
+                'tag_split_genes'   => 1,
+            },
+            -hive_capacity  => $self->o('ortho_tree_capacity'),
+            -rc_name        => '4Gb_job',
+            -flow_into      => [ 'hc_tree_attributes', 'hc_tree_homologies' ],
         },
 
         {   -logic_name         => 'hc_tree_attributes',
@@ -1611,8 +1693,30 @@ sub core_pipeline_analyses {
                                'ktreedist_exe' => $self->o('ktreedist_exe'),
                               },
             -hive_capacity => $self->o('ktreedist_capacity'),
-            -batch_size => 5,
+            -batch_size    => 5,
+            -rc_name       => '500Mb_job',
+            -flow_into     => {
+                -1 => [ 'ktreedist_himem' ],
+            },
+        },
+
+        {   -logic_name    => 'ktreedist_himem',
+            -module        => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::Ktreedist',
+            -parameters    => {
+                               'treebest_exe'  => $self->o('treebest_exe'),
+                               'ktreedist_exe' => $self->o('ktreedist_exe'),
+                              },
+            -hive_capacity => $self->o('ktreedist_capacity'),
             -rc_name       => '2Gb_job',
+        },
+
+        {   -logic_name         => 'hc_other_tree_structure',
+            -module             => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::SqlHealthChecks',
+            -parameters         => {
+                mode            => 'tree_structure',
+            },
+            -flow_into          => [ 'ortho_tree_annot' ],
+            %hc_analysis_params,
         },
 
         {   -logic_name => 'ortho_tree_annot',
@@ -1621,10 +1725,30 @@ sub core_pipeline_analyses {
                 'tag_split_genes'   => 1,
                 'store_homologies'  => 0,
             },
-            -hive_capacity        => $self->o('ortho_tree_annot_capacity'),
-            -rc_name => '250Mb_job',
-            -batch_size => 20,
-            -flow_into  => [ 'hc_tree_attributes' ],
+            -hive_capacity  => $self->o('ortho_tree_annot_capacity'),
+            -rc_name        => '250Mb_job',
+            -batch_size     => 20,
+            -flow_into      => {
+                1   => [ 'hc_tree_attributes' ],
+                -1  => [ 'ortho_tree_annot_himem' ],
+            },
+        },
+
+        {   -logic_name => 'ortho_tree_annot_himem',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::OrthoTree',
+            -parameters => {
+                'tag_split_genes'   => 1,
+                'store_homologies'  => 0,
+            },
+            -hive_capacity  => $self->o('ortho_tree_annot_capacity'),
+            -rc_name        => '4Gb_job',
+            -flow_into      => [ 'hc_tree_attributes' ],
+        },
+
+        {   -logic_name => 'finalize_entry_point',
+            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
+            -flow_into  => [ 'ktreedist', 'build_HMM_aa', 'build_HMM_cds' ],
+            -meadow_type    => 'LOCAL',
         },
 
         {   -logic_name => 'build_HMM_aa',
@@ -1633,10 +1757,23 @@ sub core_pipeline_analyses {
                 'hmmer_home'        => $self->o('hmmer2_home'),
                 'hmmer_version'     => 2,
             },
-            -hive_capacity        => $self->o('build_hmm_capacity'),
-            -batch_size           => 5,
-            -priority             => -10,
-            -rc_name => '500Mb_job',
+            -hive_capacity  => $self->o('build_hmm_capacity'),
+            -batch_size     => 5,
+            -priority       => -20,
+            -rc_name        => '250Mb_job',
+            -flow_into      => {
+                -1  => 'build_HMM_aa_himem'
+            },
+        },
+
+        {   -logic_name     => 'build_HMM_aa_himem',
+            -module         => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::BuildHMM',
+            -parameters     => {
+                'buildhmm_exe'  => $self->o('buildhmm_exe'),
+            },
+            -hive_capacity  => $self->o('build_hmm_capacity'),
+            -priority       => -20,
+            -rc_name        => '1Gb_job',
         },
 
         {   -logic_name => 'build_HMM_cds',
@@ -1646,10 +1783,24 @@ sub core_pipeline_analyses {
                 'hmmer_home'        => $self->o('hmmer2_home'),
                 'hmmer_version'     => 2,
             },
-            -hive_capacity        => $self->o('build_hmm_capacity'),
-            -batch_size           => 5,
-            -priority             => -10,
-            -rc_name => '1Gb_job',
+            -hive_capacity  => $self->o('build_hmm_capacity'),
+            -batch_size     => 5,
+            -priority       => -20,
+            -rc_name        => '500Mb_job',
+            -flow_into      => {
+                -1  => 'build_HMM_cds_himem'
+            },
+        },
+
+        {   -logic_name     => 'build_HMM_cds_himem',
+            -module         => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::BuildHMM',
+            -parameters     => {
+                'cdna'          => 1,
+                'buildhmm_exe'  => $self->o('buildhmm_exe'),
+            },
+            -hive_capacity  => $self->o('build_hmm_capacity'),
+            -priority       => -20,
+            -rc_name        => '2Gb_job',
         },
 
 # ---------------------------------------------[Quick tree break steps]-----------------------------------------------------------------------

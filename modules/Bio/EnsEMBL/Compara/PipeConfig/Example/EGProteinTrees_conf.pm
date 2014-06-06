@@ -145,9 +145,11 @@ sub default_options {
         'blastpu_capacity'          => 100,
         'mcoffee_capacity'          => 200,
         'split_genes_capacity'      => 200,
-        'trimal_capacity'           => 100,
+        'trimal_capacity'           => 200,
+        'prottest_capacity'         => 200,
         'treebest_capacity'         => 200,
-        'raxml_capacity'            => 400,
+        'raxml_capacity'            => 200,
+        'notung_capacity'           => 200,
         'ortho_tree_capacity'       => 200,
         'ortho_tree_annot_capacity' => 300,
         'quick_tree_break_capacity' => 100,
@@ -240,9 +242,6 @@ sub resource_classes {
          '32Gb_job'     => {'LSF' => '-q production-rh6 -M32000 -R"select[mem>32000] rusage[mem=32000]"' },
          '64Gb_job'     => {'LSF' => '-q production-rh6 -M64000 -R"select[mem>64000] rusage[mem=64000]"' },
 
-         'msa'          => {'LSF' => '-q production-rh6 -W 24:00' },
-         'msa_himem'    => {'LSF' => '-q production-rh6 -M 32768 -R"select[mem>32768] rusage[mem=32768]" -W 24:00' },
-
          'urgent_hcluster'      => {'LSF' => '-q production-rh6 -M32000 -R"select[mem>32000] rusage[mem=32000]"' },
     };
 }
@@ -253,6 +252,10 @@ sub tweak_analyses {
     my $analyses_by_name = shift;
 
     ## Extend this section to redefine the resource names of some analysis
+    $analyses_by_name->{'mcoffee'}->{'-rc_name'} = '8Gb_job';
+    $analyses_by_name->{'mcoffee_himem'}->{'-rc_name'} = '32Gb_job';
+    $analyses_by_name->{'mafft'}->{'-rc_name'} = '8Gb_job';
+    $analyses_by_name->{'mafft_himem'}->{'-rc_name'} = '32Gb_job';
     $analyses_by_name->{'hcluster_parse_output'}->{'-rc_name'} = '500Mb_job';
 
     # Some parameters can be division-specific

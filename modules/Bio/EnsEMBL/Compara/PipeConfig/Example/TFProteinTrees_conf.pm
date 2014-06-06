@@ -99,7 +99,7 @@ sub default_options {
 
     # species tree reconciliation
         # you can define your own species_tree for 'treebest'. It can contain multifurcations
-        'species_tree_input_file'   => $self->o('ensembl_cvs_root_dir').'/ensembl-compara/scripts/pipeline/tf10_347_species',
+        'species_tree_input_file'   => $self->o('ensembl_cvs_root_dir').'/ensembl-compara/scripts/pipeline/tf10_347_species.nh',
         # you can define your own species_tree for 'notung'. It *has* to be binary
 
     # homology_dnds parameters:
@@ -120,6 +120,7 @@ sub default_options {
         'pantherScore_path'         => '/nfs/production/xfam/treefam/software/pantherScore1.03/',
         'trimal_exe'                => '/nfs/production/xfam/treefam/software/trimal/source/trimal',
         'raxml_exe'                 => '/nfs/production/xfam/treefam/software/RAxML/raxmlHPC-SSE3',
+        prottest_jar                => '/nfs/production/xfam/treefam/software/ProtTest/prottest-3.4-20140123/prottest-3.4.jar',
 
     # HMM specific parameters (set to 0 or undef if not in use)
        # List of directories that contain Panther-like databases (with books/ and globals/)
@@ -137,9 +138,11 @@ sub default_options {
         'blastpu_capacity'          => 150,
         'mcoffee_capacity'          => 200,
         'split_genes_capacity'      => 150,
-        'trimal_capacity'           => 100,
+        'trimal_capacity'           => 200,
+        'prottest_capacity'         => 200,
         'treebest_capacity'         => 200,
-        'raxml_capacity'            => 400,
+        'raxml_capacity'            => 200,
+        'notung_capacity'           => 200,
         'ortho_tree_capacity'       => 200,
         'ortho_tree_annot_capacity' => 300,
         'quick_tree_break_capacity' => 100,
@@ -283,9 +286,6 @@ sub resource_classes {
          '32Gb_job'     => {'LSF' => '-q production-rh6 -M32000 -R"select[mem>32000] rusage[mem=32000]"' },
          '64Gb_job'     => {'LSF' => '-q production-rh6 -M64000 -R"select[mem>64000] rusage[mem=64000]"' },
 
-         'msa'          => {'LSF' => '-q production-rh6' },
-         'msa_himem'    => {'LSF' => '-q production-rh6 -M 32768 -R"select[mem>32768] rusage[mem=32768]"' },
-
          'urgent_hcluster'      => {'LSF' => '-q production-rh6 -M32000 -R"select[mem>32000] rusage[mem=32000]"' },
     };
 }
@@ -296,61 +296,42 @@ sub tweak_analyses {
     my $analyses_by_name = shift;
 
     ## Extend this section to redefine the resource names of some analysis
-    $analyses_by_name->{'split_genes'}->{'-rc_name'} = '8Gb_job';
-    $analyses_by_name->{'trimal'}->{'-rc_name'} = '4Gb_job';
-    $analyses_by_name->{'notung'}->{'-rc_name'} = '8Gb_job';
+    my %overriden_rc_names = (
+        'mcoffee'                   => '8Gb_job',
+        'mcoffee_himem'             => '64Gb_job',
+        'mafft'                     => '8Gb_job',
+        'mafft_himem'               => '32Gb_job',
+        'split_genes'               => '2Gb_job',
+        'split_genes_himem'         => '8Gb_job',
+        'trimal'                    => '4Gb_job',
+        'prottest'                  => '4Gb_job',
+        'prottest_himem'            => '16Gb_job',
+        'raxml'                     => '1Gb_job',
+        'raxml_himem'               => '8Gb_job',
+        'notung'                    => '4Gb_job',
+        'notung_himem'              => '32Gb_job',
+        'ortho_tree'                => '2Gb_job',
+        'ortho_tree_himem'          => '32Gb_job',
+        'ortho_tree_annot'          => '2Gb_job',
+        'ortho_tree_annot_himem'    => '32Gb_job',
+        'build_HMM_aa'              => '500Mb_job',
+        'build_HMM_aa_himem'        => '2Gb_job',
+        'build_HMM_cds'             => '1Gb_job',
+        'build_HMM_cds_himem'       => '4Gb_job',
+    );
+    foreach my $logic_name (keys %overriden_rc_names) {
+        $analyses_by_name->{$logic_name}->{'-rc_name'} = $overriden_rc_names{$logic_name};
+    }
 
-    ## Stitch the core analyses to the new ones
-    $analyses_by_name->{'split_genes'}->{'-flow_into'} = {
-        1  => [ $self->o('use_raxml') ? 'trimal' : 'treebest' ],
-        -1 => [ 'split_genes_himem' ],
-    };
-    $analyses_by_name->{'build_HMM_aa'}->{'-flow_into'} = {
-        -1 => [ 'build_HMM_aa_himem' ],  # MEMLIMIT
-    };
-    $analyses_by_name->{'build_HMM_cds'}->{'-flow_into'} = {
-        -1 => [ 'build_HMM_cds_himem' ],  # MEMLIMIT
-    };
+    # Other parameters that have to be set
+    $analyses_by_name->{'notung'}->{'-parameters'}{'notung_memory'} = 3500;
+    $analyses_by_name->{'notung_himem'}->{'-parameters'}{'notung_memory'} = 29000;
+    $analyses_by_name->{'prottest'}->{'-parameters'}{'prottest_memory'} = 3500;
+    $analyses_by_name->{'prottest'}->{'-parameters'}{'java'} = '/usr/bin/java';
+    $analyses_by_name->{'prottest_himem'}->{'-parameters'}{'prottest_memory'} = 14500;
+    $analyses_by_name->{'prottest_himem'}->{'-parameters'}{'java'} = '/usr/bin/java';
 }
 
-## The TreeFam-specific analysis
-sub extra_analyses {
-    my $self = shift;
-    return [
-
-        {   -logic_name     => 'split_genes_himem',
-            -module         => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::FindContiguousSplitGenes',
-            -hive_capacity  => $self->o('split_genes_capacity'),
-            -rc_name        => '32Gb_job',
-            -flow_into      => [ $self->o('use_raxml') ? 'trimal' : 'treebest' ],
-        },
-
-        {   -logic_name     => 'build_HMM_aa_himem',
-            -module         => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::BuildHMM',
-            -parameters     => {
-                'hmmer_home'        => $self->o('hmmer2_home'),
-                'hmmer_version'     => 2,
-            },
-            -hive_capacity  => $self->o('build_hmm_capacity'),
-            -batch_size     => 5,
-            -priority       => -10,
-            -rc_name        => '16Gb_job',
-        },
-
-        {   -logic_name     => 'build_HMM_cds_himem',
-            -module         => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::BuildHMM',
-            -parameters     => {
-                'cdna'              => 1,
-                'hmmer_home'        => $self->o('hmmer2_home'),
-                'hmmer_version'     => 2,
-            },
-            -hive_capacity  => $self->o('build_hmm_capacity'),
-            -batch_size     => 5,
-            -priority       => -10,
-            -rc_name        => '32Gb_job',
-        },
-    ];
-}
 
 1;
 

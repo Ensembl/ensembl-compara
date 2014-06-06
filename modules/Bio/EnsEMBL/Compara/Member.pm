@@ -172,6 +172,17 @@ sub copy {
 ###################
 
 
+# There is no lazy-loading in Members
+sub _lazy_getter_setter {
+  my ($self, $field, @args) = @_;
+
+  if (@args) {
+     $self->{$field} = $args[0];
+  }
+
+  return $self->{$field};
+}
+
 
 
 =head2 stable_id
@@ -259,7 +270,7 @@ sub source_name {
 sub chr_name {  # DEPRECATED
   my $self = shift;
   deprecate('chr_name() is deprecated and will be removed in e79. Use dnafrag()->name() instead.');
-  return undef unless $self->dnafrag();
+  return undef unless $self->dnafrag_id();
   return $self->dnafrag()->name();
 }
 
@@ -403,8 +414,9 @@ sub genome_db {
 sub print_member {
     my $self = shift;
 
-    printf("   %s %s(%d)\t%s : %d-%d\n",$self->source_name, $self->stable_id,
-            $self->dbID || -1,$self->dnafrag->name,$self->dnafrag_start,$self->dnafrag_end);
+    my $str = sprintf("   %s %s(%d)", $self->source_name, $self->stable_id, $self->dbID || -1);
+    $str .= sprintf("\t%s : %d-%d", $self->dnafrag->name, $self->dnafrag_start, $self->dnafrag_end) if $self->dnafrag_id;
+    print $str, "\n";
 }
 
 

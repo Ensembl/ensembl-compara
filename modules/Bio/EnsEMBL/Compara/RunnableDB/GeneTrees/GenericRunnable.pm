@@ -101,6 +101,9 @@ sub param_defaults {
         'input_clusterset_id'       => undef,
         'output_clusterset_id'      => undef,
 
+        'minimum_genes'     => 0,
+        'maximum_genes'     => 1e9,
+
         'run_treebest_sdi'  => 0,
         'reroot_with_sdi'   => 0,
     };
@@ -110,6 +113,12 @@ sub param_defaults {
 sub fetch_input {
     my $self = shift @_;
 
+    if (defined $self->param('escape_branch') and $self->input_job->retry_count >= $self->input_job->analysis->max_retry_count) {
+        $self->dataflow_output_id($self->input_id, $self->param('escape_branch'));
+        $self->input_job->incomplete(0);
+        die sprintf("The job is being tried for the %dth time: escaping to branch #%d\n", $self->input_job->retry_count, $self->param('escape_branch'));
+    }
+
     $self->param('tree_adaptor', $self->compara_dba->get_GeneTreeAdaptor);
 
     my $gene_tree_id     = $self->param_required('gene_tree_id');
@@ -118,7 +127,7 @@ sub fetch_input {
 
     die "Cannot read tags from TreeBest's output: set run_treebest_sdi or read_tags to 0" if $self->param('run_treebest_sdi') and $self->param('read_tags');
 
-    if ($self->param('input_clusterset_id')) {
+    if ($self->param('input_clusterset_id') and $self->param('input_clusterset_id') ne 'default') {
         print STDERR "getting the tree '".$self->param('input_clusterset_id')."'\n";
         my $other_trees = $self->param('tree_adaptor')->fetch_all_linked_trees($gene_tree);
         my ($selected_tree) = grep {$_->clusterset_id eq $self->param('input_clusterset_id')} @$other_trees;
@@ -133,8 +142,6 @@ sub fetch_input {
     $gene_tree->print_tree(10) if($self->debug);
 
     # default parameters
-    $self->param('minimum_genes', 0   ) unless $self->input_job->param_exists('minimum_genes');
-    $self->param('maximum_genes', 1e9 ) unless $self->input_job->param_exists('maximum_genes');
     $self->param('split_genes',   {}  );
     $self->param('cmd_output',  undef );
 }
@@ -170,7 +177,7 @@ sub write_output {
         # check that the tree is binary
         foreach my $node (@{$target_tree->get_all_nodes}) {
             next if $node->is_leaf;
-            die if scalar(@{$node->children}) != 2;
+            die "The tree should be binary\n" if scalar(@{$node->children}) != 2;
         }
     }
     $target_tree->store_tag($self->param('runtime_tree_tag'), $self->param('runtime_msec')) if $self->input_job->param_exists('runtime_tree_tag');
@@ -238,7 +245,12 @@ sub run_generic_command {
     my $cmd = sprintf('cd %s; %s', $self->worker_temp_directory, $self->param_required('cmd'));
     my $run_cmd = $self->run_command($cmd);
     if ($run_cmd->exit_code) {
-        $self->throw(sprintf('"%s" resulted in an error code=%d. stderr is: %s', $run_cmd->cmd, $run_cmd->exit_code, $run_cmd->err));
+        if ($run_cmd->err =~ /Exception in thread ".*" java.lang.OutOfMemoryError: Java heap space at/) {
+            $self->dataflow_output_id( $self->input_id, -1 );
+            $self->input_job->incomplete(0);
+            die "Java heap space is out of memory.\n";
+        }
+        die sprintf("'%s' resulted in an error code=%d\nstderr is: %s\nstdout is: %s\n", $run_cmd->cmd, $run_cmd->exit_code, $run_cmd->err, $run_cmd->out);
     }
     $self->param('runtime_msec', $run_cmd->runtime_msec);
 

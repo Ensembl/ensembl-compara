@@ -113,6 +113,7 @@ sub default_options {
             # executable locations:
             'populate_new_database_exe' => $self->o('ensembl_cvs_root_dir')."/ensembl-compara/scripts/pipeline/populate_new_database.pl",
             'big_bed_exe' => '/software/ensembl/funcgen/bedToBigBed',
+            'baseage_autosql' => $self->o('ensembl_cvs_root_dir')."/ensembl-compara/scripts/pipeline/baseage_autosql.as",
 
             #Locations to write output files
             'bed_dir' => '', #location to write the bed files
@@ -257,6 +258,7 @@ sub pipeline_analyses {
                               'species' => $self->o('ref_species'),
                               'bed_dir' => $self->o('bed_dir'),
                               'name' => $self->o('name'),
+                              'baseage_autosql' => $self->o('baseage_autosql'),
                              },
               -batch_size => 1,
               -hive_capacity => $self->o('base_age_capacity'),

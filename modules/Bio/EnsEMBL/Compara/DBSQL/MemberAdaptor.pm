@@ -244,7 +244,8 @@ sub fetch_all_by_source {
   throw("source_name arg is required\n")
     unless ($source_name);
 
-  my $constraint = "m.source_name = '$source_name'";
+  my $constraint = 'm.source_name = ?';
+  $self->bind_param_generic_fetch($source_name, SQL_VARCHAR);
 
   return $self->generic_fetch($constraint);
 }
@@ -323,10 +324,13 @@ sub _fetch_all_by_dnafrag_id_start_end_strand_limit {
   $self->throw("all args are required")
       unless($dnafrag_start && $dnafrag_end && $dnafrag_strand && defined ($dnafrag_id));
 
-  my $constraint = "m.dnafrag_id = '$dnafrag_id'
-                    and m.dnafrag_start >= $dnafrag_start and m.dnafrag_start <= $dnafrag_end
-                    and m.dnafrag_end   >= $dnafrag_start and m.dnafrag_end   <= $dnafrag_end
-                    and m.dnafrag_strand = $dnafrag_strand";
+  my $constraint = '(m.dnafrag_id = ?) AND (m.dnafrag_start BETWEEN ? AND ?) AND (m.dnafrag_end BETWEEN ? AND ?) AND (m.dnafrag_strand = ?)';
+  $self->bind_param_generic_fetch($dnafrag_id, SQL_INTEGER);
+  $self->bind_param_generic_fetch($dnafrag_start, SQL_INTEGER);
+  $self->bind_param_generic_fetch($dnafrag_end, SQL_INTEGER);
+  $self->bind_param_generic_fetch($dnafrag_start, SQL_INTEGER);
+  $self->bind_param_generic_fetch($dnafrag_end, SQL_INTEGER);
+  $self->bind_param_generic_fetch($dnafrag_strand, SQL_INTEGER);
 
   return $self->generic_fetch($constraint, undef, defined $limit ? "LIMIT $limit" : "");
 }

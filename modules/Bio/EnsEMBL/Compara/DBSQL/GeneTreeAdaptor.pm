@@ -411,7 +411,7 @@ sub delete_tree {
 
         # The HMM profile
         my $root_id = $tree->root->node_id;
-        $self->dbc->do("DELETE FROM hmm_profile WHERE model_id = '$root_id'");
+        $self->dbc->do('DELETE FROM hmm_profile WHERE model_id = ?', undef, $root_id);
     }
 
 }
