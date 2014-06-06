@@ -172,6 +172,17 @@ sub copy {
 ###################
 
 
+# There is no lazy-loading in Members
+sub _lazy_getter_setter {
+  my ($self, $field, @args) = @_;
+
+  if (@args) {
+     $self->{$field} = $args[0];
+  }
+
+  return $self->{$field};
+}
+
 
 
 =head2 stable_id
