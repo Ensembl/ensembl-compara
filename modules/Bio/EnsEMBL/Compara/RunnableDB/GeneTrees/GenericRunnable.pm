@@ -113,6 +113,12 @@ sub param_defaults {
 sub fetch_input {
     my $self = shift @_;
 
+    if (defined $self->param('escape_branch') and $self->input_job->retry_count >= $self->input_job->analysis->max_retry_count) {
+        $self->dataflow_output_id($self->input_id, $self->param('escape_branch'));
+        $self->input_job->incomplete(0);
+        die sprintf("The job is being tried for the %dth time: escaping to branch #%d\n", $self->input_job->retry_count, $self->param('escape_branch'));
+    }
+
     $self->param('tree_adaptor', $self->compara_dba->get_GeneTreeAdaptor);
 
     my $gene_tree_id     = $self->param_required('gene_tree_id');
@@ -239,6 +245,11 @@ sub run_generic_command {
     my $cmd = sprintf('cd %s; %s', $self->worker_temp_directory, $self->param_required('cmd'));
     my $run_cmd = $self->run_command($cmd);
     if ($run_cmd->exit_code) {
+        if ($run_cmd->err =~ /Exception in thread ".*" java.lang.OutOfMemoryError: Java heap space at/) {
+            $self->dataflow_output_id( $self->input_id, -1 );
+            $self->input_job->incomplete(0);
+            die "Java heap space is out of memory.\n";
+        }
         die sprintf("'%s' resulted in an error code=%d\nstderr is: %s\nstdout is: %s\n", $run_cmd->cmd, $run_cmd->exit_code, $run_cmd->err, $run_cmd->out);
     }
     $self->param('runtime_msec', $run_cmd->runtime_msec);

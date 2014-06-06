@@ -133,7 +133,11 @@ sub default_options {
         'blastp_capacity'           => 200,
         'mcoffee_capacity'          => 200,
         'split_genes_capacity'      => 200,
+        'trimal_capacity'           => 200,
+        'prottest_capacity'         => 200,
         'treebest_capacity'         => 200,
+        'raxml_capacity'            => 200,
+        'notung_capacity'           => 200,
         'ortho_tree_capacity'       => 200,
         'ortho_tree_annot_capacity' => 300,
         'quick_tree_break_capacity' => 100,
@@ -206,11 +210,9 @@ sub resource_classes {
          '1Gb_job'      => {'LSF' => '-q production-rh6 -M1000  -R"select[mem>1000]  rusage[mem=1000]"' },
          '4Gb_job'      => {'LSF' => '-q production-rh6 -M4000  -R"select[mem>4000]  rusage[mem=4000]"' },
          '2Gb_job'      => {'LSF' => '-q production-rh6 -M2000  -R"select[mem>2000]  rusage[mem=2000]"' },
-         '2.5Gb_job'    => {'LSF' => '-q production-rh6 -M2500  -R"select[mem>2500]  rusage[mem=2500]"' },
          '8Gb_job'      => {'LSF' => '-q production-rh6 -M8000  -R"select[mem>8000]  rusage[mem=8000]"' },
+         '32Gb_job'     => {'LSF' => '-q production-rh6 -M32000 -R"select[mem>32000] rusage[mem=32000]"' },
          'urgent_hcluster'     => {'LSF' => '-q production-rh6 -M32000 -R"select[mem>32000] rusage[mem=32000]"' },
-         'msa'      => {'LSF' => '-q production-rh6 -W 24:00' },
-         'msa_himem'    => {'LSF' => '-q production-rh6 -M 32768 -R"select[mem>32768] rusage[mem=32768]" -W 24:00' },
   };
 }
 
@@ -220,6 +222,10 @@ sub pipeline_analyses {
     my %analyses_by_name = map {$_->{'-logic_name'} => $_} @$all_analyses;
 
     ## Extend this section to redefine the resource names of some analysis
+    $analyses_by_name{'mcoffee'}->{'-rc_name'} = '8Gb_job';
+    $analyses_by_name{'mcoffee_himem'}->{'-rc_name'} = '32Gb_job';
+    $analyses_by_name{'mafft'}->{'-rc_name'} = '8Gb_job';
+    $analyses_by_name{'mafft_himem'}->{'-rc_name'} = '32Gb_job';
     $analyses_by_name{'hcluster_parse_output'}->{'-rc_name'} = '500Mb_job';
 
     # Some parameters can be division-specific
@@ -227,7 +233,7 @@ sub pipeline_analyses {
         $analyses_by_name{'dump_canonical_members'}->{'-rc_name'} = '500Mb_job';
         $analyses_by_name{'members_against_allspecies_factory'}->{'-rc_name'} = '500Mb_job';
         $analyses_by_name{'blastp'}->{'-rc_name'} = '500Mb_job';
-        $analyses_by_name{'ktreedist'}->{'-rc_name'} = '2.5Gb_job';
+        $analyses_by_name{'ktreedist_himem'}->{'-rc_name'} = '4Gb_job';
     }
 
     return $all_analyses;
