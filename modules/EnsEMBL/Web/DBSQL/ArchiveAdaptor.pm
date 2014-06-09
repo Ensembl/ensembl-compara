@@ -101,15 +101,14 @@ sub fetch_releases {
   return $records;
 }
 
-sub fetch_archives {
+sub fetch_archive_assemblies {
   my ($self, $first_archive) = @_;
   return unless $self->db;
   
   my @args;
   my $sql = qq(
     SELECT
-      r.number, r.date, r.archive, s.species_id, s.name, 
-      rs.assembly_name, rs.initial_release, rs.last_geneset
+      s.name, s.common_name, r.number, rs.assembly_name
     FROM
       ens_release as r,
       species as s,
@@ -125,24 +124,15 @@ sub fetch_archives {
     );
     @args = ($first_archive);
   }
-  $sql .= qq(
-    ORDER BY r.release_id DESC
-  );
 
   my $sth = $self->db->prepare($sql);
   $sth->execute(@args);
 
-  my $records = [];
+  my $records = {};
   while (my @data = $sth->fetchrow_array()) {
-    push @$records, {
-      'id'              => $data[0],
-      'date'            => $data[1],
-      'archive'         => $data[2],
-      'species_id'      => $data[3],
-      'species_name'    => $data[4],
-      'assembly'        => $data[5],
-      'initial_release' => $data[6],
-      'last_geneset'    => $data[7],
+    $records->{$data[0]}{$data[2]} = {
+      'common_name'     => $data[1],
+      'assembly'        => $data[3],
     };
   }
   return $records;
