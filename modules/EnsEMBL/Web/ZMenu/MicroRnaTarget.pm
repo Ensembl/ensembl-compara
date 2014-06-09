@@ -25,73 +25,55 @@ use base qw(EnsEMBL::Web::ZMenu);
 sub content {
   my $self              = shift;
   my $hub               = $self->hub;
-  my $feature           = $hub->database('funcgen')->get_ExternalFeatureAdaptor->fetch_by_dbID($hub->param('dbid'));
-  my $location          = $feature->slice->seq_region_name . ':' . $feature->start . '-' . $feature->end;
-  my $display_label     = $feature->display_label;
-  my $feature_name      = $feature->feature_type->name;
-  my $external_link     = $self->get_external_link($feature); 
-  my $feature_view_link = $self->get_feature_view_link($feature);
+  my $feature           = $hub->database('funcgen')->get_MirnaTargetFeatureAdaptor->fetch_by_dbID($hub->param('dbid'));
+
+  my $adaptor           = $hub->database('funcgen')->get_DBEntryAdaptor;
+
+  my @gene_stable_ids   = ();
+  my $gene_string = join(',', @gene_stable_ids);
+
+  my $logic_name = $feature->analysis->logic_name;
+  my $source_site = $hub->get_ExtURL($logic_name);
+  my $source_page = $hub->get_ExtURL($logic_name.'_FEATURE', 
+                      {
+                        'ID' => $feature->accession,
+                        'GENE' => $gene_string,
+                      }
+                    );
   
-  $self->caption('MicroRNA target');
+  $self->caption('MicroRNA target: '.$feature->$display_label);
 
   $self->add_entry ({
-    type   => 'Name',
-    label  => $display_label,
+    type   => 'Source',
+    label  => $feature->feature_set->description,
+    link   => $source_site,
   });
 
-  $self->add_entry({
-    type       => 'Location',
-    label_html => $location,
-    link       => $hub->url({
-      type   => 'Location',
-      action => 'View',
-      r      => $location
-    })
+  $self->add_entry ({
+    type   => 'Accession',
+    label  => $feature->accession,
+    link   => $source_page,
   });
-  
-  if ($feature_view_link){
-    $self->add_entry({
-      label_html => 'View all locations',
-      link       => $feature_view_link, 
-    });
+
+  $self->add_entry ({
+    type   => 'bp',
+    label  => $feature->seq_region_start.' - '.$feature->seq_region_end,
+  });
+
+  my @gene_links;
+  foreach (@gene_stable_ids) {
+    push @gene_links, sprintf('<a href="%s">%s</a>', $hub->url({'type' => 'Gene', 'action' => 'Summary', 'g' => $_}), $_);
   }
-}
-
-sub get_external_link {
-  my ($self, $f) = @_;
-  my $ext_id     = $f->display_label;
-  
-  return if $ext_id =~ /Search/;
-  
-  my $hub        = $self->hub;
-  my $type       = $f->feature_type->name;
-  my $logic_name = $f->analysis->logic_name;
-  my $external_link;
-
-  $external_link = $hub->get_ExtURL_link('Tarbase miRNA target', 'TARBASE', $ext_id );
-  
-  if ($external_link =~ /href/) { 
-    my @link_info  = split /href\=|\>|\"/, $external_link;
-    $external_link = $link_info[2]; 
-  }
-  
-  return $external_link;
-}
-
-sub get_feature_view_link {
-  my ($self, $feature) = @_;
-  my $feature_id  = $feature->display_label;
-  my $feature_set = $feature->feature_set->name;
-  
-  my $link = $self->hub->url({
-    type   => 'Location',
-    action => 'Genome',
-    ftype  => 'RegulatoryFactor',
-    fset   => $feature_set,
-    id     => $feature_id,
+  $self->add_entry ({
+    type      => 'Target(s)',
+    label_html => join(', ', @gene_links), 
   });
-  
-  return $link;
+
+  $self->add_entry ({
+    type   => 'Evidence',
+    label  => $feature->evidence,
+  });
+
 }
 
 1;
