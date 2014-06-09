@@ -43,7 +43,6 @@ sub set_species {
   }
 }
 
-
 sub get_url {
   my ($self, $db, $data, $info_text )=@_;
   eval{
