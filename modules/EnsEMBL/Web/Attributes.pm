@@ -33,17 +33,17 @@ use EnsEMBL::Web::Exceptions;
 my %SYMCACHE;
 
 sub _findsym {
-	my ($package, $ref) = @_;
-	return $SYMCACHE{$package,$ref} if $SYMCACHE{$package, $ref};
-	{
+  my ($package, $ref) = @_;
+  return $SYMCACHE{$package,$ref} if $SYMCACHE{$package, $ref};
+  {
     no strict 'refs';
-  	my $type = ref($ref);
+    my $type = ref($ref);
     foreach my $sym (values %{$package."::"}) {
-	    use strict;
-	    next unless ref(\$sym) eq 'GLOB';
+      use strict;
+      next unless ref(\$sym) eq 'GLOB';
       return $SYMCACHE{$package,$ref} = \$sym if *{$sym}{$type} && *{$sym}{$type} == $ref;
     }
-	}
+  }
 }
 
 sub Accessor {
