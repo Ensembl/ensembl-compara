@@ -28,20 +28,23 @@ sub content {
   my $feature           = $hub->database('funcgen')->get_MirnaTargetFeatureAdaptor->fetch_by_dbID($hub->param('dbid'));
 
   my $adaptor           = $hub->database('funcgen')->get_DBEntryAdaptor;
-
+  my @xrefs             = @{$feature->get_all_DBEntries||[]};
   my @gene_stable_ids   = ();
-  my $gene_string = join(',', @gene_stable_ids);
-
+  foreach (@xrefs) {
+    next unless $_;
+    push @gene_stable_ids, $_->primary_id;
+  }
+  
   my $logic_name = $feature->analysis->logic_name;
   my $source_site = $hub->get_ExtURL($logic_name);
   my $source_page = $hub->get_ExtURL($logic_name.'_FEATURE', 
                       {
                         'ID' => $feature->accession,
-                        'GENE' => $gene_string,
+                        'GENE' => $gene_stable_ids[0],
                       }
                     );
   
-  $self->caption('MicroRNA target: '.$feature->$display_label);
+  $self->caption('MicroRNA target: '.$feature->display_label);
 
   $self->add_entry ({
     type   => 'Source',
