@@ -99,7 +99,7 @@ sub create_element {
   }
 
   my $element = $node_class->new($self);
-  $element->node_name = $element_name if $node_class eq 'EnsEMBL::Web::DOM::Node::Element::Generic';
+  $element->node_name($element_name) if $node_class eq 'EnsEMBL::Web::DOM::Node::Element::Generic';
   if (exists $attributes->{'flags'}) {
     $element->set_flags(delete $attributes->{'flags'});
   }

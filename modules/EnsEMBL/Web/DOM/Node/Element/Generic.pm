@@ -19,23 +19,23 @@ limitations under the License.
 package EnsEMBL::Web::DOM::Node::Element::Generic;
 
 use strict;
+use warnings;
+
+use EnsEMBL::Web::Attributes;
 
 use base qw(EnsEMBL::Web::DOM::Node::Element);
 
 sub new {
-  ## @overrides
+  ## @override
   my $self = shift->SUPER::new(@_);
   $self->{'_node_name'} = 'div';#default
   return $self;
 }
 
-sub node_name :lvalue {
-  ## @overrides
-  $_[0]->{'_node_name'};
-}
+sub node_name :Accessor { '_node_name' } ## @override
 
 sub clone_node {
-  ## @overrides
+  ## @override
   ## Copies node name for the new clone
   my $self  = shift;
   my $clone = $self->SUPER::clone_node(@_);

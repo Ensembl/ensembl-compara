@@ -534,15 +534,23 @@ sub evidence_status {
   my $status         = $object->evidence_status;
   
   return unless (scalar @$status);
-  
-  my $html = join("",
-    map {
-      sprintf(
-        '<img class="_ht" style="margin-right:6px;margin-bottom:-2px;vertical-align:top" src="/i/val/evidence_%s.png" title="%s"/>',
-        $_, $_
-      )
-    } sort {$b =~ /1000|hap/i <=> $a =~ /1000|hap/i || $a cmp $b} @$status
-  );
+
+  my $html;
+  foreach my $evidence (sort {$b =~ /1000|hap/i <=> $a =~ /1000|hap/i || $a cmp $b} @$status){
+    my $img_evidence =  sprintf(
+                          '<img class="_ht" style="margin-right:6px;margin-bottom:-2px;vertical-align:top" src="/i/val/evidence_%s.png" title="%s"/>',
+                          $evidence, $evidence
+                        );
+    my $url_type = ($evidence =~ /cited/i) ? 'Citations' : 'Population';
+
+    my $url = $hub->url({
+         type   => 'Variation',
+         action => $url_type,
+         v      => $object->name,
+         vf     => $hub->param('vf')
+       });
+    $html .= qq{<a href="$url">$img_evidence</a>};
+  }
 
   my $img = qq{<img src="/i/16/info.png" class="_ht" style="position:relative;top:2px;width:12px;height:12px;margin-left:2px" title="Click to see all the evidence status descriptions"/>}; 
   my $info_link = qq{<a href="/info/genome/variation/data_description.html#evidence_status" target="_blank">$img</a>};

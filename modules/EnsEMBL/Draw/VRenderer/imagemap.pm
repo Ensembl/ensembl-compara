@@ -68,7 +68,7 @@ sub render_Rect {
   $y2++;
   $x2++;
 
-  $self->render_area('rect', [ $y1, $x1, $y2, $x2 ], $attrs);  
+  $self->render_area('rect', [ $y1, $x1, $y2, $x2 ], $attrs) if($self->{'config'}->species_defs->ENSEMBL_SITETYPE ne 'Ensembl mobile');  
 }
 
 sub render_Poly {
@@ -77,13 +77,14 @@ sub render_Poly {
   
   return unless $attrs;
 
-  $self->render_area('poly', [ reverse @{$glyph->pixelpoints} ], $attrs);
+  $self->render_area('poly', [ reverse @{$glyph->pixelpoints} ], $attrs) if($self->{'config'}->species_defs->ENSEMBL_SITETYPE ne 'Ensembl mobile');
 }
 
 sub render_area {
   my ($self, $shape, $points, $attrs) = @_;
  
   my $coords = join ',', map int, @$points;
+
   $self->{'canvas'} = qq{<area shape="$shape" coords="$coords"$attrs />\n$self->{'canvas'}};  
 }
 

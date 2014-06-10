@@ -82,28 +82,27 @@ sub content {
   
   foreach my $transcript (keys %$evidence) {
     my $ev = $evidence->{$transcript}{'evidence'};
-    
+    my $has_ev = ($ev || $evidence->{$transcript}{'extra_evidence'}) ? 1 : 0;
     my %url_params = (
       type   => 'Transcript',
       action => 'SupportingEvidence',
       t      => $transcript
     );
-    
-    my $row = { transcript => sprintf('%s [<a href="%s">view evidence</a>]', $transcript, $hub->url(\%url_params)) };
+    my $row = $has_ev ? { transcript => sprintf('%s [<a href="%s">view evidence</a>]', $transcript, $hub->url(\%url_params)) } : { transcript => $transcript };
     $row->{'exon'} = scalar keys %{$evidence->{$transcript}{'extra_evidence'}} if $evidence->{$transcript}{'extra_evidence'};
     $row->{'intron'} = scalar @{$evidence->{$transcript}{'intron_supporting_evidence'}} if $evidence->{$transcript}{'intron_supporting_evidence'};
-    
+
     $url_params{'function'} = 'Alignment';
-    
+
     if ($ev) {
       foreach my $type (grep $ev->{$_}, qw(CDS UTR UNKNOWN)) {
         $row->{$type} .= sprintf '<p>[<a href="%s">align</a>] %s</p>', $hub->url({ %url_params, sequence => $_->[1] }), $_->[0] for @{$object->add_evidence_links($ev->{$type})};
       }
     }
-    
+
     push @rows, $row;
   }
-  
+
   return $self->new_table(\@cols, \@rows, { data_table => 1, sorting => [ 'transcript asc' ] })->render;
 }
 

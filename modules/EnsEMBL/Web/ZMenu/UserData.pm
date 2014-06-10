@@ -43,7 +43,8 @@ sub content {
   
   if ($type eq 'bigbed') {
     my %feats    = $glyphset->features; # bigbed returns a stupid data structure
-       @features = grep !($_->can('score') && $_->score == 0), map { ref $_->[0] eq 'ARRAY' ? @{$_->[0]} : @$_ } values %feats;
+
+    @features = grep !($_->can('score') && $_->score == 0), map { ref $_->[0] eq 'ARRAY' ? @{$_->[0]} : @$_ } values %feats;
   } else {
     @features = @{$glyphset->features};
   }
@@ -117,10 +118,23 @@ sub feature_content {
     { type => 'Hit start',  label => $feature->{'hstart'}  },
     { type => 'Hit end',    label => $feature->{'hend'}    },
     { type => 'Hit strand', label => $feature->{'hstrand'} },
-    { type => 'Score',      label => $feature->{'score'}   },
+    { type => 'Score',      label => $feature->{'score'}, name => 'score' },
   );
-  
-  push @entries, { type => $self->format_type($_), label => join(', ', @{$extra{$_}}) } for $self->sorted_extra_keys(\%extra,$extra_order);
+
+  if($feature->can('id')) {
+    push @entries, { type => 'Name', label => $feature->id, name => 'name' };
+  }
+
+  # Replace fields with name in autosql (only score for now)
+  if($feature->can('real_name')) {
+    foreach my $e (@entries) {
+      next unless $e->{'name'};
+      my $name = $feature->real_name($e->{'name'});
+      $e->{'type'} = $self->format_type(undef,$name) unless $name eq $e->{'name'};
+    }
+  }
+
+  push @entries, { type => $self->format_type($feature,$_), label => join(', ', @{$extra{$_}}) } for $self->sorted_extra_keys(\%extra,$extra_order);
   
   $self->add_entry($_) for grep $_->{'label'}, @entries;
 }
@@ -149,7 +163,9 @@ sub summary_content {
 }
 
 sub format_type {
-  my ($self, $type) = @_;
+  my ($self,$feature, $type) = @_;
+
+  $type = $feature->real_name($type) if $feature and $feature->can('real_name');
   $type =~ s/(.)([A-Z])/$1 $2/g;
   $type =~ s/_/ /g;
   return ucfirst lc $type;

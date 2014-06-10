@@ -51,6 +51,8 @@ sub render {
     'class'     => 'submit'
   });
 
+  $_->set_attribute('data-role', 'none') for @{$form->get_elements_by_tag_name('input')};
+
   return $form->render;
 }
 

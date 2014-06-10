@@ -738,14 +738,18 @@ sub load_user_tracks {
 }
 
 sub _add_datahub {
-  my ($self, $menu_name, $url) = @_;
+  my ($self, $menu_name, $url, $is_poor_name) = @_;
   my $parser   = Bio::EnsEMBL::ExternalData::DataHub::SourceParser->new({ timeout => 10, proxy => $self->hub->species_defs->ENSEMBL_WWW_PROXY });
-  my $menu     = $self->tree->append_child($self->create_submenu($menu_name, $menu_name, { external => 1, datahub_menu => 1 }));
   my $hub_info = $parser->get_hub_info($url); ## Do we have data for this species?
   
   if ($hub_info->{'error'}) {
     warn "!!! COULD NOT CONTACT DATAHUB $url: $hub_info->{'error'}";
   } else {
+    my $shortLabel = $hub_info->{'details'}{'shortLabel'};
+    $menu_name = $shortLabel if $shortLabel and $is_poor_name;
+
+    my $menu     = $self->tree->append_child($self->create_submenu($menu_name, $menu_name, { external => 1, datahub_menu => 1 }));
+
     my $golden_path = $self->hub->species_defs->get_config($self->species, 'UCSC_GOLDEN_PATH');
     my $source_list = $hub_info->{'genomes'}{$golden_path} || [];
     
@@ -768,6 +772,7 @@ sub _add_datahub {
       }
     }
   }
+  return $menu_name;
 }
 
 sub _add_datahub_node {
@@ -1328,15 +1333,6 @@ sub update_from_url {
         }
         
         # We have to create a URL upload entry in the session
-        $session->set_data(
-          type    => 'url',
-          url     => $p,
-          species => $species,
-          code    => $code, 
-          name    => $n,
-          format  => $format,
-          style   => $style,
-        );
         
         $session->add_data(
           type     => 'message',
@@ -1347,7 +1343,7 @@ sub update_from_url {
         
         # We then have to create a node in the user_config
         if (uc $format eq 'DATAHUB') {
-          $self->_add_datahub($n, $p);
+          $n = $self->_add_datahub($n, $p,1);
         } else {
           $self->_add_flat_file_track(undef, 'url', "url_$code", $n, 
             sprintf('Data retrieved from an external webserver. This data is attached to the %s, and comes from URL: %s', encode_entities($n), encode_entities($p)),
@@ -1357,6 +1353,15 @@ sub update_from_url {
 
           $self->update_track_renderer("url_$code", $renderer);
         }       
+        $session->set_data(
+          type    => 'url',
+          url     => $p,
+          species => $species,
+          code    => $code,
+          name    => $n,
+          format  => $format,
+          style   => $style,
+        );
       } elsif ($type eq 'das') {
         $p = uri_unescape($p);
 

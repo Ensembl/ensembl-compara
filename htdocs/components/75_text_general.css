@@ -134,6 +134,7 @@ body.ie67 .plain-box      { zoom: 100%; }
 .alert-box    { background-color:[[ALERT_BG]]; border-color:[[ALERT_BORDER]]; }
 .embedded-box { margin:16px 0; padding:8px; }
 .round-box    { -moz-border-radius: 16px; -webkit-border-radius: 16px; border-radius: 16px; }
+.contact-box  { width:50%;height:50px }
 
 /* Modifications to box styles */
 
