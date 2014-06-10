@@ -353,8 +353,7 @@ sub content {
   my $self = shift;
   my ($sequence, $config, $raw_seq) = $self->initialize;
   
-  my $html  = $self->tool_buttons($raw_seq);
-     $html .= $self->export_button;
+  my $html  = $self->tool_buttons({'export' => 1, 'blast' => {'seq' => $raw_seq}});
      $html .= sprintf '<div class="sequence_key">%s</div>', $self->get_key($config);
      $html .= $self->build_sequence($sequence, $config);
 
@@ -375,12 +374,6 @@ sub initialize_export {
   }
   my ($sequence, $config) = $self->initialize;
   return ($sequence, $config);
-}
-
-sub content_rtf {
-  my $self = shift;
-  my ($sequence, $config) = $self->initialize;
-  return $self->export_sequence($sequence, $config);
 }
 
 1;

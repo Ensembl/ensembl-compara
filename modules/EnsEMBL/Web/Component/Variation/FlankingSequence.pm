@@ -94,7 +94,7 @@ sub content {
   my $variation     = $object->Obj;
   my $align_quality = $variation->get_VariationFeature_by_dbID($hub->param('vf'))->flank_match;
   my $html;
-  $html .= $self->export_button;
+  $html .= $self->tool_buttons({'export' => 1, 'blast' => {'seq' => $raw_seq}});
   
   # check if the flanking sequences match the reference sequence
   if (defined $align_quality && $align_quality < 1) {
@@ -107,7 +107,6 @@ sub content {
     ", 'auto');
   }
   
-  $html .= $self->tool_buttons($raw_seq);
   $html .= sprintf '<div class="sequence_key">%s</div>', $self->get_key($config);
   $html .= $self->build_sequence($sequence, $config);
   
@@ -143,12 +142,6 @@ sub markup_variation {
     
     $config->{'key'}{'variations'}{$variation->{'type'}} = 1 if $variation->{'type'} && !$variation->{'focus'};
   }
-}
-
-sub content_rtf {
-  my $self = shift;
-  my ($sequence, $config) = $self->initialize;
-  return $self->export_sequence($sequence, $config);
 }
 
 1;

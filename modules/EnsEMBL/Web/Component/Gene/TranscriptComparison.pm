@@ -65,11 +65,10 @@ sub content {
   my $self   = shift;
   my $slice  = $self->object->slice; # Object for this section is the slice
   my $length = $slice->length;
-  my $html   = $self->tool_buttons;
   
   my %selected = $self->selected_transcripts;
   my @t_params = keys %selected;
-     $html  .= $self->export_button(undef, \@t_params);
+  my $html   = $self->tool_buttons({'export' => {'params' => \@t_params}});
   
   if (!$self->hub->param('t1')) {
     $html = $self->_info(
@@ -141,11 +140,6 @@ sub get_export_data {
     push @transcripts, $_ if $selected{$_->stable_id};
   }
   return @transcripts;
-}
-
-sub content_rtf {
-  my $self = shift;
-  return $self->export_sequence($self->initialize);
 }
 
 sub get_sequence_data {

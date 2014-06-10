@@ -145,8 +145,7 @@ sub content {
     { data_table => 'no_sort', exportable => 1 }
   );
   
-  my $html = $self->tool_buttons;
-  $html .= $self->export_button;
+  my $html = $self->tool_buttons({'export' => 1});
   $html .= sprintf '<div class="sequence_key">%s</div>%s', $self->get_key($config);
   $html .= $table->render;
   
@@ -168,13 +167,6 @@ sub initialize_export {
   my ($data, $config) = $self->initialize(1);
   $config->{'v_space'} = "\n";
   return ($data, $config, 1);
-}
-
-sub content_rtf {
-  my $self = shift;
-  my ($data, $config) = $self->initialize(1);
-  $config->{'v_space'} = "\n";
-  return $self->export_sequence($data, $config, 1);
 }
 
 sub get_exon_sequence_data {

@@ -108,8 +108,11 @@ sub content {
   
   my ($sequence, $config) = $self->initialize($translation);
   
-  my $html  = $self->tool_buttons($translation->Obj->seq, 'peptide');
-     $html .= $self->export_button;
+  my $html  = $self->tool_buttons({
+                    'export' => 1,
+                    'blast'  => {'seq' => $translation->Obj->seq, 
+                                 'peptide' => 1}
+              });
      $html .= sprintf('<div class="sequence_key">%s</div>', $self->get_key($config));
      $html .= $self->build_sequence($sequence, $config);
 
@@ -125,11 +128,6 @@ sub initialize_export {
   $hub->param('exons', $vc->get('exons'));
   my $transcript = $self->object || $hub->core_object('transcript');
   return $self->initialize($transcript->translation_object);
-}
-
-sub content_rtf {
-  my $self = shift;
-  return $self->export_sequence($self->initialize($self->object->translation_object));
 }
 
 1;
