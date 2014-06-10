@@ -370,7 +370,7 @@ sub tool_buttons   {
     my $export = ref($args->{'export'}) eq 'HASH' ? $args->{'export'} : {};
     my $caption = $export->{'caption'} ||= 'Download sequence';
     my $params  = {'type' => 'DataExport', 'action' => $self->export_type, 'data_type' => $self->hub->type, 'component' => $self->id};
-    foreach (@{$export->{'extra_params'}||[]}) {
+    foreach (@{$export->{'params'}||[]}) {
       $params->{$_} = $hub->param($_);
     }
     my $url     = $hub->url($params);
