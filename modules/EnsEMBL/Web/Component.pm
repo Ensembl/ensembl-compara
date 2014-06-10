@@ -379,10 +379,10 @@ sub tool_buttons   {
   }
 
   ## BLAST BUTTON
-  if ($args->{'blast'} && $args->{'blast'}{'seq'}) { # && $hub->species_defs->ENSEMBL_BLAST_ENABLED) {
+  if ($args->{'blast'} && $args->{'blast'}{'seq'} && $hub->species_defs->ENSEMBL_BLAST_ENABLED) {
     warn 'BLAST BUTTON!';
     $html .= sprintf('
-      <a class="button modal_link seq_blast find" href="#"><img src="%s" style="padding-bottom:2px;vertical-align:middle" />BLAST this sequence</a>
+      <a class="button seq_blast find" href="#"><img src="%s" style="padding-bottom:2px;vertical-align:middle" />BLAST this sequence</a>
         <form class="external hidden seq_blast" action="/Multi/blastview" method="post">
           <fieldset>
             <input type="hidden" name="_query_sequence" value="%s" />
@@ -391,8 +391,8 @@ sub tool_buttons   {
           </fieldset>
         </form>
       ',
-      $self->img_url.'/16/rev/blast.png',
-      $args->{'blast'}{'seq'}, $hub->species, $args->{'blast'}{'peptide'} ? '<input type="hidden" name="query" value="peptide" /><input type="hidden" name="database" value="peptide" />' : ''
+      $self->img_url.'/16/rev/blast.png', $args->{'blast'}{'seq'}, $hub->species, 
+      $args->{'blast'}{'peptide'} ? '<input type="hidden" name="query" value="peptide" /><input type="hidden" name="database" value="peptide" />' : ''
     );
   }
 
