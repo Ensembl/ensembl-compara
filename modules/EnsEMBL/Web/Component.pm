@@ -359,17 +359,46 @@ sub _init       { return; }
 
 sub export_type     { return undef; }
 sub export_caption  { return undef; }
-sub export_button   {
-  my ($self, $caption, $extra_params) = @_;
-  return unless $self->export_type;
-  $caption ||= 'Download sequence';
-  my $params  = {'type' => 'DataExport', 'action' => $self->export_type, 'data_type' => $self->hub->type, 'component' => $self->id};
-  foreach (@{$extra_params||[]}) {
-    $params->{$_} = $self->hub->param($_);
+sub tool_buttons   {
+  my ($self, $args) = @_;
+  my $hub  = $self->hub;
+  my $html = '<div class="component-tools">';
+
+  ## EXPORT BUTTON
+  if ($args->{'export'} && $self->export_type) {
+    ## Allow caller to pass a boolean flag rather than empty options
+    my $export = ref($args->{'export'}) eq 'HASH' ? $args->{'export'} : {};
+    my $caption = $export->{'caption'} ||= 'Download sequence';
+    my $params  = {'type' => 'DataExport', 'action' => $self->export_type, 'data_type' => $self->hub->type, 'component' => $self->id};
+    foreach (@{$export->{'extra_params'}||[]}) {
+      $params->{$_} = $hub->param($_);
+    }
+    my $url     = $hub->url($params);
+    my $src     = $self->img_url.'/16/rev/download.png';
+    $html .= sprintf('<a href="%s" class="button modal_link"><img src="%s" style="padding-bottom:2px;vertical-align:middle" /> %s</a>', $url, $src, $caption);
   }
-  my $url     = $self->hub->url($params);
-  my $src     = $self->img_url.'/16/rev/download.png';
-  return sprintf('<p><a href="%s" class="button modal_link"><img src="%s" style="padding-bottom:2px;vertical-align:middle" /> %s</a></p>', $url, $src, $caption);
+
+  ## BLAST BUTTON
+  if ($args->{'blast'} && $args->{'blast'}{'seq'}) { # && $hub->species_defs->ENSEMBL_BLAST_ENABLED) {
+    warn 'BLAST BUTTON!';
+    $html .= sprintf('
+      <a class="button modal_link seq_blast find" href="#"><img src="%s" style="padding-bottom:2px;vertical-align:middle" />BLAST this sequence</a>
+        <form class="external hidden seq_blast" action="/Multi/blastview" method="post">
+          <fieldset>
+            <input type="hidden" name="_query_sequence" value="%s" />
+            <input type="hidden" name="species" value="%s" />
+            %s
+          </fieldset>
+        </form>
+      ',
+      $self->img_url.'/16/rev/blast.png',
+      $args->{'blast'}{'seq'}, $hub->species, $args->{'blast'}{'peptide'} ? '<input type="hidden" name="query" value="peptide" /><input type="hidden" name="database" value="peptide" />' : ''
+    );
+  }
+
+  $html .= '</div>';
+
+  return $html;
 }
 
 ## TODO - remove these four method once above four methods are used instead of these
