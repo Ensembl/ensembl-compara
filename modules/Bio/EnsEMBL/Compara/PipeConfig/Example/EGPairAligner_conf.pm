@@ -702,7 +702,7 @@ sub pipeline_analyses {
 	       -flow_into => {
 			       1 => [ 'update_max_alignment_length_after_net' ],
 			   },
- 	       -wait_for =>  [ 'alignment_nets', 'alignment_nets_himem'],
+ 	       -wait_for =>  [ 'alignment_nets', 'alignment_nets_himem' ],
 	       -rc_name => '100Mb',
 	    },
  	    {  -logic_name => 'create_filter_duplicates_net_jobs', #factory
