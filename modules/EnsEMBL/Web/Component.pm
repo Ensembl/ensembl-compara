@@ -380,7 +380,6 @@ sub tool_buttons   {
 
   ## BLAST BUTTON
   if ($args->{'blast'} && $args->{'blast'}{'seq'} && $hub->species_defs->ENSEMBL_BLAST_ENABLED) {
-    warn 'BLAST BUTTON!';
     $html .= sprintf('
       <a class="button seq_blast find" href="#"><img src="%s" style="padding-bottom:2px;vertical-align:middle" />BLAST this sequence</a>
         <form class="external hidden seq_blast" action="/Multi/blastview" method="post">
