@@ -161,7 +161,7 @@ sub default_file_name {
 
 sub get_tutorial {
   my ($self, $format) = @_;
-  my $html = sprintf('<div style="float:left;padding-right:20px;"><p>%s</p><img src="/img/help/export/%s_tutorial.png"></div>', $format, lc($format));
+  my $html = sprintf('<div style="float:left;padding-right:20px;"><p style="margin-bottom:0">%s</p><img src="/img/help/export/%s_tutorial.png"></div>', $format, lc($format));
   return $html;
 }
 
