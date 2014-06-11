@@ -21,7 +21,7 @@ package EnsEMBL::Web::Component::DataExport::Results;
 use strict;
 use warnings;
 
-use EnsEMBL::Web::TmpFile;
+use EnsEMBL::Web::File;
 
 use base qw(EnsEMBL::Web::Component::DataExport);
 
@@ -36,26 +36,22 @@ sub content {
   my $self  = shift;
   my $hub   = $self->hub;
 
+  my $filename    = $hub->param('filename');
   my $format      = $hub->param('format');
-  my $prefix      = $hub->param('prefix');
-  my $compress    = $hub->param('compression') ? 1 : 0;
+  my $path        = $hub->param('path');
+  my $compression = $hub->param('compression');
   my $html;
 
   $html .= sprintf(
-            '<h2>Download</h2><a href="/Download/DataExport?file=%s;prefix=%s;format=%s;ext=%s;compression=%s">Download your %s file</a>', 
-              $hub->param('file'), 
-              $prefix,
-              lc($format), 
-              $hub->param('ext'),
-              $hub->param('compression'),
-              $format,
+            '<h2>Download</h2><a href="/Download/DataExport?filename=%s;format=%s;path=%s;compression=%s">Download your %s file</a>', 
+              $filename, lc($format), $path, $compression, $format,
             );
 
-  unless ($format eq 'RTF' || $compress) {
-    my $file = EnsEMBL::Web::TmpFile::Text->new(filename => $hub->param('file'), 'prefix' => $prefix, 'compress' => $compress);
+  unless ($format eq 'RTF' || $compression) {
+    my $file = EnsEMBL::Web::File->new(hub => $hub, path => $path);
     if ($file) {
       $html .= '<h2 style="margin-top:1em">File preview</h2><div class="code"><pre style="color:#333">';
-      $html .= $file->content;
+      $html .= $file->read;
       $html .= '</pre></div>';
     }
   }

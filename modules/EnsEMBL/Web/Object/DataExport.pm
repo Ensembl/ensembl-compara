@@ -30,7 +30,7 @@ package EnsEMBL::Web::Object::DataExport;
 
 use EnsEMBL::Web::Controller;
 use EnsEMBL::Web::Builder;
-use EnsEMBL::Web::TmpFile::Text;
+use EnsEMBL::Web::File;
 
 use strict;
 use warnings;
@@ -79,44 +79,40 @@ sub handle_download {
   my ($self, $r) = @_;
   my $hub = $self->hub;
 
-  my $file        = $hub->param('file');
-  my $name        = $hub->param('name') || $file;
+  my $filename    = $hub->param('filename');
+  my $path        = $hub->param('path');
   my $format      = $hub->param('format');
-  my $prefix      = $hub->param('prefix');
-  my $ext         = $hub->param('ext');
   my $compression = $hub->param('compression');
   
-  ## Strip any invalid characters from params to prevent downloading of arbitrary files!
-  $prefix =~ s/\W//g;
+  ## Strip double dots to prevent downloading of files outside tmp directory
+  $path =~ s/\.\.//g;
+  ## Remove any remaining illegal characters
+  $path =~ s/[^\w|-|\.|\/]//g;
 
-  ## Match only our tmp file path structure (NNN/N/N/NNNNNNN.nnn[.nnn]) !
-  if ($file =~ m#^\w[\w/]*(?:\.\w{1,4}(\.\w{1,3})?)?$#) {
-    ## Get content
-    my %mime_types = (
+  ## Get content
+  my %mime_types = (
         'rtf'   => 'application/rtf',
         'gz'    => 'application/x-gzip',
         'zip'   => 'application/zip',
-    );
-    my $mime_type = $mime_types{$compression} || $mime_types{$format} || 'text/plain';
-    my $compress = $compression ? 1 : 0;
+  );
+  my $mime_type = $mime_types{$compression} || $mime_types{$format} || 'text/plain';
+  my $compress = $compression ? 1 : 0;
 
-    #my $tmp_dir = $hub->species_defs->ENSEMBL_TMP_DIR.'/'.$prefix.'/';
-    my %params = (filename => $file, prefix => $prefix);
-    if ($compress) {
-      $params{'compress'} = $compress;
-      $params{'get_compressed'} = 1;
-    }
-    my $tmpfile = new EnsEMBL::Web::TmpFile::Text(%params);
+  my %params = (hub => $hub, path => $path);
+  if ($compress) {
+    $params{'compress'} = $compress;
+    $params{'get_compressed'} = 1;
+  }
+  my $tmpfile = new EnsEMBL::Web::File(%params);
 
-    if ($tmpfile->exists) {
-      my $content = $tmpfile->retrieve;
+  if ($tmpfile->exists) {
+    my $content = $tmpfile->fetch;
 
-      $r->headers_out->add('Content-Type'         => $mime_type);
-      $r->headers_out->add('Content-Length'       => length $content);
-      $r->headers_out->add('Content-Disposition'  => sprintf 'attachment; filename=%s', $name);
+    $r->headers_out->add('Content-Type'         => $mime_type);
+    $r->headers_out->add('Content-Length'       => length $content);
+    $r->headers_out->add('Content-Disposition'  => sprintf 'attachment; filename=%s', $filename);
 
-      print $content;
-    }
+    print $content;
   }
   else { warn ">>> PATH NOT RECOGNISED"; }
 }

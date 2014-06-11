@@ -20,9 +20,7 @@ package EnsEMBL::Web::Command::DataExport::Output;
 
 use strict;
 
-use EnsEMBL::Web::TmpFile::Text;
-use EnsEMBL::Web::Tools::RandomString qw(random_ticket);
-
+use EnsEMBL::Web::File;
 use RTF::Writer;
 
 use base qw(EnsEMBL::Web::Command);
@@ -56,7 +54,6 @@ sub process {
   $compression = $hub->param('compression');
   my $compress    = $compression ? 1 : 0;
   $extension   .= '.'.$compression if $compress;
-  $random_dir = random_ticket;
 
   if (!$format_info) {
     $error = 'Format not recognised';
@@ -68,8 +65,7 @@ sub process {
     my $component;
     ($component, $error) = $self->object->create_component;
 
-    ## Have to explicitly set a random path if we want the filename to be human readable
-    $file = EnsEMBL::Web::TmpFile::Text->new(extension => $extension, prefix => 'export/'.$random_dir, filename => $filename, compress => $compress);
+    $file = EnsEMBL::Web::File->new(hub => $hub, name => $filename, extension => $extension, prefix => 'export',  compress => $compress);
 
     ## Ugly hack - stuff file into package hash so we can get at it later without passing as argument
     $self->{'__file'} = $file;
@@ -92,10 +88,9 @@ sub process {
   }
   else {
     ## Parameters for file download
-    $url_params->{'file'}           = $file->filename;
+    $url_params->{'filename'}       = $file->filename;
     $url_params->{'format'}         = $format;
-    $url_params->{'prefix'}         = 'export/'.$random_dir;
-    $url_params->{'ext'}            = $extension;
+    $url_params->{'path'}          .= '/export/'.$file->random_path.$file->filename;
     $url_params->{'compression'}    = $compression;
     ## Also pass parameters needed for Back button to work
     my @core_params = keys %{$hub->core_object('parameters')};
@@ -125,6 +120,7 @@ sub write_rtf {
 ### of the page (a bit like image export) rather than processing data
   my ($self, $component) = @_;
   my $file = $self->{'__file'};
+  my $error;
 
   $self->hub->param('exon_display', 'on'); ## force exon highlighting on
   my ($sequence, $config, $block_mode) = $component->initialize_export; 
@@ -236,11 +232,9 @@ sub write_rtf {
  
   $rtf->close;
 
-  print $file $string;
+  $file->write_line($string);
 
-  $file->save;
-
-  return undef; ## no error
+  return $error || $file->error;
 }
 
 sub _class_to_style {
@@ -340,12 +334,12 @@ sub write_fasta {
       next unless ref $o eq 'ARRAY';
 
       foreach (@$o) {
-        $self->print_line(">$_->[0]");
-        $self->print_line($fasta) while $fasta = substr $_->[1], 0, 60, '';
+        $self->write_line(">$_->[0]");
+        $self->write_line($fasta) while $fasta = substr $_->[1], 0, 60, '';
       }
     }
 
-    $self->print_line('');
+    $self->write_line('');
   }
 
   if ($sequence) {
@@ -353,17 +347,18 @@ sub write_fasta {
     my ($seq, $start, $end, $flank_slice);
 
     $seq = defined $masking ? $slice->get_repeatmasked_seq(undef, $mask_flag)->seq : $slice->seq;
-    $self->print_line(">$seq_region_name dna:$seq_region_type $slice_name");
-    $self->print_line($fasta) while $fasta = substr $seq, 0, 60, '';
+    $self->write_line(">$seq_region_name dna:$seq_region_type $slice_name");
+    $self->write_line($fasta) while $fasta = substr $seq, 0, 60, '';
   }
 
-  return $error;
+  my $file = $self->{'__file'};
+  return $error || $file->error;
 }
 
-sub print_line { 
+sub write_line { 
   my ($self, $string) = @_;
   my $file = $self->{'__file'};
-  $file->print("$string\r\n");
+  $file->write_line("$string\r\n");
 }
 
 1;
