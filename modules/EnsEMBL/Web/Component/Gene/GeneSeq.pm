@@ -34,6 +34,7 @@ sub initialize {
   my ($self, $slice, $start, $end) = @_;
   my $hub    = $self->hub;
   my $object = $self->get_object;
+  warn ">>> WIDTH ".$hub->param('display_width');
   
   my $config = {
     display_width   => $hub->param('display_width') || 60,
@@ -44,6 +45,8 @@ sub initialize {
     sub_slice_end   => $end,
     ambiguity       => 1,
   };
+  use Data::Dumper;
+  warn Dumper($config);
 
   for (qw(exon_display exon_ori snp_display line_numbering title_display)) {
     $config->{$_} = $hub->param($_) unless $hub->param($_) eq 'off';
@@ -137,6 +140,11 @@ sub get_export_data {
 sub initialize_export {
   my $self = shift;
   my $gene = $self->get_object;
+  my $vc = $self->hub->get_viewconfig('Gene', 'GeneSeq');
+  my @params = qw(display_width flanking line_numbering);
+  foreach (@params) {
+    $self->hub->param($_, $vc->get($_));
+  }
   return $self->initialize($gene->slice);
 }
 
