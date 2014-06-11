@@ -230,7 +230,7 @@ sub build_hash_cms {
 
   my $ids = $self->compara_dba->get_HMMProfileAdaptor()->fetch_all_by_column_names([$field],'infernal');
   for my $id (@$ids) {
-      $self->param('rfamcms')->{$field}{$id->{$field}} = 1;
+      $self->param('rfamcms')->{$field}{$id->[0]} = 1;
   }
 
 }
@@ -244,8 +244,8 @@ sub load_names_model_id {
 
   my $ids = $self->compara_dba->get_HMMProfileAdaptor()->fetch_all_by_column_names(['model_id', 'name'],'infernal');
   for my $id (@$ids) {
-      $self->param('model_id_names')->{$id->{model_id}} = $id->{name};
-      $self->param('model_name_ids')->{$id->{name}} = $id->{model_id};
+      $self->param('model_id_names')->{$id->[0]} = $id->[1];
+      $self->param('model_name_ids')->{$id->[1]} = $id->[0];
   }
 
 }
