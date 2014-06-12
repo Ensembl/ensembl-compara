@@ -1769,7 +1769,8 @@ sub core_pipeline_analyses {
         {   -logic_name     => 'build_HMM_aa_himem',
             -module         => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::BuildHMM',
             -parameters     => {
-                'buildhmm_exe'  => $self->o('buildhmm_exe'),
+                'hmmer_home'        => $self->o('hmmer2_home'),
+                'hmmer_version'     => 2,
             },
             -hive_capacity  => $self->o('build_hmm_capacity'),
             -priority       => -20,
@@ -1795,8 +1796,9 @@ sub core_pipeline_analyses {
         {   -logic_name     => 'build_HMM_cds_himem',
             -module         => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::BuildHMM',
             -parameters     => {
-                'cdna'          => 1,
-                'buildhmm_exe'  => $self->o('buildhmm_exe'),
+                'cdna'              => 1,
+                'hmmer_home'        => $self->o('hmmer2_home'),
+                'hmmer_version'     => 2,
             },
             -hive_capacity  => $self->o('build_hmm_capacity'),
             -priority       => -20,
