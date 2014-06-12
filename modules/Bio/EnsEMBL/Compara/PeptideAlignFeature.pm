@@ -56,8 +56,6 @@ The rest of the documentation details each of the object methods. Internal metho
 
 =cut
 
-my $_paf_build_homology_idx = time(); #global index counter
-
 package Bio::EnsEMBL::Compara::PeptideAlignFeature;
 
 use strict;
@@ -90,15 +88,6 @@ sub create_homology
 
   # create an Homology object
   my $homology = new Bio::EnsEMBL::Compara::Homology;
-
-  my $stable_id;
-  if($self->query_member->taxon_id < $self->hit_member->taxon_id) {
-    $stable_id = $self->query_member->taxon_id() . "_" . $self->hit_member->taxon_id . "_";
-  } else {
-    $stable_id = $self->hit_member->taxon_id . "_" . $self->query_member->taxon_id . "_";
-  }
-  $stable_id .= sprintf ("%011.0d",$_paf_build_homology_idx++);
-  $homology->stable_id($stable_id);
 
   my $cigar_line = $self->cigar_line;
   $cigar_line =~ s/I/M/g;
