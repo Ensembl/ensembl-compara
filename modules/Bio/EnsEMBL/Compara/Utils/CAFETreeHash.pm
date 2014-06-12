@@ -16,18 +16,10 @@ limitations under the License.
 
 =cut
 
-#package EnsEMBL::REST::Builder::CAFETreeHash;
 package Bio::EnsEMBL::Compara::Utils::CAFETreeHash;
 
 use POSIX ();
-# use Moose;
-# use namespace::autoclean;
 use Bio::EnsEMBL::Utils::Scalar qw(check_ref);
-
-# has 'source'          => ( isa => 'Str', is => 'rw', default => 'ensembl');
-# has 'type'            => ( isa => 'Str', is => 'rw', default => 'cafe tree');
-
-
 
 sub convert {
   my ($self, $tree) = @_;
