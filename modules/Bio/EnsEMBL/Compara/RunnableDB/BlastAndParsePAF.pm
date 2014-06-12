@@ -67,11 +67,13 @@ use Bio::EnsEMBL::Utils::SqlHelper;
 
 use Bio::EnsEMBL::Compara::Utils::Cigars;
 use Bio::EnsEMBL::Compara::MemberSet;
+use Bio::EnsEMBL::Compara::PeptideAlignFeature;
 
 sub param_defaults {
     return {
             'evalue_limit'  => 1e-5,
             'tophits'       => 20,
+            'no_cigars'     => 0,
             'allow_same_species_hits'  => 0,
     };
 }
@@ -147,13 +149,11 @@ sub fetch_input {
 sub parse_blast_table_into_paf {
     my ($self, $filename, $qgenome_db_id, $hgenome_db_id) = @_;
 
-    my $debug                   = $self->debug() || $self->param('debug') || 0;
+    my @features = ();
 
-    my $features;
-
-    open(BLASTTABLE, "<$filename") || die "Could not open the blast table file '$filename'";
+    open(BLASTTABLE, '<', $filename) || die "Could not open the blast table file '$filename'";
     
-    print "blast $qgenome_db_id $hgenome_db_id $filename\n" if $debug;
+    print "blast $qgenome_db_id $hgenome_db_id $filename\n" if $self->debug;
 
     while(my $line = <BLASTTABLE>) {
 
@@ -165,71 +165,37 @@ sub parse_blast_table_into_paf {
                 $cigar_line = Bio::EnsEMBL::Compara::Utils::Cigars::cigar_from_two_alignment_strings($qseq, $sseq);
             }
 
-            my $feature = {
-                    qmember_id        => $qmember_id,
-                    hmember_id        => $hmember_id,
-                    qgenome_db_id     => $qgenome_db_id,
-                    hgenome_db_id     => $hgenome_db_id,
-                    perc_ident        => $pident,
-                    score             => $score,
-                    evalue            => $evalue,
-                    qstart            => $qstart,
-                    qend              => $qend,
-                    hstart            => $hstart,
-                    hend              => $hend,
-                    length            => $length,
-                    perc_ident        => $pident,
-                    identical_matches => $nident,
-                    positive          => $positive,
-                    perc_pos          => $ppos,
-                    cigar_line        => $cigar_line,
-            };
+            my $feature = Bio::EnsEMBL::Compara::PeptideAlignFeature->new_fast({
+                    _query_member_id        => $qmember_id,
+                    _hit_member_id        => $hmember_id,
+                    _query_genome_db_id     => $qgenome_db_id,
+                    _hit_genome_db_id     => $hgenome_db_id,
+                    _score             => $score,
+                    _evalue            => $evalue,
+                    _qstart            => $qstart,
+                    _qend              => $qend,
+                    _hstart            => $hstart,
+                    _hend              => $hend,
+                    _alignment_length            => $length,
+                    _perc_ident        => $pident,
+                    _identical_matches => $nident,
+                    _positive_matches          => $positive,
+                    _perc_pos          => $ppos,
+                    _cigar_line        => $cigar_line,
+            });
 
-            print "feature query $qgenome_db_id $qmember_id hit $hgenome_db_id $hmember_id $hmember_id $qstart $qend $hstart $hend $length $nident $positive\n" if $debug;
-            push @{$features->{$qmember_id}}, $feature;
+            print "feature query $qgenome_db_id $qmember_id hit $hgenome_db_id $hmember_id $hmember_id $qstart $qend $hstart $hend $length $nident $positive\n" if $self->debug;
+            push @features, $feature;
         }
     }
     close BLASTTABLE;
-    if (!defined $features) {
-        return $features;
-    }
-
-    #group together by qmember_id and rank the hits
-    foreach my $qmember_id (keys %$features) {
-        my $qfeatures = $features->{$qmember_id};
-        @$qfeatures = sort sort_by_score_evalue_and_pid @$qfeatures;
-        my $rank=1;
-        my $prevPaf = undef;
-        foreach my $paf (@$qfeatures) {
-            $rank++ if($prevPaf and !pafs_equal($prevPaf, $paf));
-            $paf->{hit_rank} = $rank;
-            $prevPaf = $paf;
-        }
-    }
-    return $features;
+    return \@features;
 }
 
-sub sort_by_score_evalue_and_pid {
-  $b->{score} <=> $a->{score} ||
-    $a->{evalue} <=> $b->{evalue} ||
-      $b->{perc_ident} <=> $a->{perc_ident} ||
-        $b->{perc_pos} <=> $a->{perc_pos};
-}
-
-sub pafs_equal {
-  my ($paf1, $paf2) = @_;
-  return 0 unless($paf1 and $paf2);
-  return 1 if(($paf1->{score} == $paf2->{score}) and
-              ($paf1->{evalue} == $paf2->{evalue}) and
-              ($paf1->{perc_ident} == $paf2->{perc_ident}) and
-              ($paf1->{perc_pos} == $paf2->{perc_pos}));
-  return 0;
-}
 
 sub run {
     my $self = shift @_;
     
-    my $debug                   = $self->debug() || $self->param('debug') || 0;
     my $blastdb_dir             = $self->param('fasta_dir');
     my $blast_bin_dir           = $self->param_required('blast_bin_dir');
     my $blast_params            = $self->param('blast_params')  || '';  # no parameters to C++ binary means having composition stats on and -seg masking off
@@ -241,7 +207,7 @@ sub run {
     my $blast_infile  = $worker_temp_directory . 'blast.in.'.$$;     # only for debugging
     my $blast_outfile = $worker_temp_directory . 'blast.out.'.$$;    # looks like inevitable evil (tried many hairy alternatives and failed)
 
-    if($debug) {
+    if($self->debug) {
         print "blast_infile $blast_infile\n";
         $self->param('query_set')->print_sequences_to_file(-file => $blast_infile, -format => 'fasta');
     }
@@ -254,7 +220,7 @@ sub run {
 
         my $cig_cmd = $self->param('no_cigars') ? '' : 'qseq sseq';
         my $cmd = "$blast_bin_dir/blastp -db $blast_db $blast_params -evalue $evalue_limit -max_target_seqs $tophits -out $blast_outfile -outfmt '7 qacc sacc evalue score nident pident qstart qend sstart send length positive ppos $cig_cmd'";
-        warn "CMD:\t$cmd\n" if $debug;
+        warn "CMD:\t$cmd\n" if $self->debug;
 
         my $start_time = time();
         open( BLAST, "| $cmd") || die qq{could not execute "$cmd", returned error code: $!};
@@ -263,13 +229,8 @@ sub run {
         print "Time for blast " . (time() - $start_time) . "\n";
 
         my $features = $self->parse_blast_table_into_paf($blast_outfile, $self->param('genome_db_id'), $target_genome_db_id);
-        if (defined $features) {
-            foreach my $qmember_id (keys %$features) {
-                my $qfeatures = $features->{$qmember_id};
-                push @$cross_pafs, @$qfeatures;
-            }
-        }
-        unlink $blast_outfile unless $debug;
+        push @$cross_pafs, @$features;
+        unlink $blast_outfile unless $self->debug;
     }
     $self->compara_dba->dbc->disconnect_when_inactive(0); 
 
@@ -281,7 +242,7 @@ sub write_output {
     my $cross_pafs = $self->param('cross_pafs');
 
     $self->call_within_transaction(sub {
-        $self->compara_dba->get_PeptideAlignFeatureAdaptor->_store_PAFS($cross_pafs);
+        $self->compara_dba->get_PeptideAlignFeatureAdaptor->rank_and_store_PAFS(@$cross_pafs);
     });
 }
 
