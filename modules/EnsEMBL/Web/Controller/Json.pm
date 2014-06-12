@@ -22,6 +22,8 @@ use strict;
 use warnings;
 
 use Apache2::RequestUtil;
+use JSON qw(to_json);
+
 use EnsEMBL::Web::Hub;
 use EnsEMBL::Web::Exceptions;
 
@@ -33,7 +35,7 @@ sub new {
   my $args      = shift || {};
   my $self      = bless {}, $class;
 
-  my $json;
+  my ($json, $chunked);
 
   try {
     my $hub = EnsEMBL::Web::Hub->new({
@@ -44,18 +46,32 @@ sub new {
 
     my @path      = ($hub->type, $hub->action || (), $hub->function || ());
     my $method    = sprintf 'json_%s', pop @path;
+    my $on_update = $hub->param('X-Comet-Request') eq 'true' || undef;
     my $json_page = 'EnsEMBL::Web::JSONServer';
        $json_page = $self->dynamic_use_fallback(reverse map {$json_page = "${json_page}::$_"} @path);
 
-    $json         = $json_page && ($json_page = $json_page->new($hub)) && $json_page->can($method) ? $json_page->$method : {'header' => {'status' => '404'}};
+    if ($on_update && $json_page) {
+      $chunked = 1;
+      my $js_update_method = $hub->param('_cupdate');
+      $r->content_type('text/html');
+      print "<!DOCTYPE HTML><html><head>";
+
+      $on_update = sub {
+        my $obj = shift;
+        print sprintf '<script>%s(%s);</script>', $js_update_method, to_json($obj);
+        $r->rflush;
+      };
+    }
+
+    $json = $json_page && ($json_page = $json_page->new($hub)) && $json_page->can($method) ? $json_page->$method($on_update) : {'header' => {'status' => '404'}};
     $json->{'header'}{'status'} ||= 200;
 
   } catch {
     warn $_;
-    $json         = {'header' => {'status' => 500}, 'exception' => {'type' => $_->type, 'message' => $_->message, 'stack' => $_->stack_trace}};
+    $json = {'header' => {'status' => 500}, 'exception' => {'type' => $_->type, 'message' => $_->message, 'stack' => $_->stack_trace}};
   };
 
-  print $self->jsonify($json);
+  print sprintf $chunked ? '</head><body>%s</body></html>' : '%s', to_json($json);
 
   return $self;
 }
