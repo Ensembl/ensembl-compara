@@ -696,6 +696,15 @@ sub pipeline_analyses {
 	       -can_be_empty  => 1, 
 	       -rc_name => '3.6Gb',
  	    },
+ 	    {
+	       -logic_name => 'remove_inconsistencies_after_net',
+	       -module     => 'Bio::EnsEMBL::Compara::RunnableDB::PairAligner::RemoveAlignmentDataInconsistencies',
+	       -flow_into => {
+			       1 => [ 'update_max_alignment_length_after_net' ],
+			   },
+ 	       -wait_for =>  [ 'alignment_nets', 'alignment_nets_himem' ],
+	       -rc_name => '100Mb',
+	    },
  	    {  -logic_name => 'create_filter_duplicates_net_jobs', #factory
                -module     => 'Bio::EnsEMBL::Compara::RunnableDB::PairAligner::CreateFilterDuplicatesJobs',
                -parameters => { },
@@ -729,21 +738,13 @@ sub pipeline_analyses {
               -can_be_empty  => 1,
               -rc_name => $self->o('filter_duplicates_himem_rc_name'),
            },
-	    {
-	     -logic_name => 'remove_inconsistencies_after_net',
-	     -module     => 'Bio::EnsEMBL::Compara::RunnableDB::PairAligner::RemoveAlignmentDataInconsistencies',
-	     -flow_into => {
-			       1 => [ 'update_max_alignment_length_after_net' ],
-			   },
- 	       -wait_for =>  [ 'alignment_nets', 'alignment_nets_himem', 'filter_duplicates_net', 'filter_duplicates_net_himem' ],
-	       -rc_name => '100Mb',
-	    },
  	    {  -logic_name => 'update_max_alignment_length_after_net',
  	       -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GenomicAlignBlock::UpdateMaxAlignmentLength',
 # 	       -parameters => { 
 #			       'quick' => $self->o('quick'),
 #			      },
 	       -rc_name => '100Mb',
+	       -wait_for =>  [ 'filter_duplicates_net', 'filter_duplicates_net_himem'],
  	    },
 	    { -logic_name => 'healthcheck',
 	      -module => 'Bio::EnsEMBL::Compara::RunnableDB::HealthCheck',
