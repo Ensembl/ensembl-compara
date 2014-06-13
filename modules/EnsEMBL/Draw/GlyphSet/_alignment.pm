@@ -247,7 +247,8 @@ sub render_normal {
     
     foreach (sort { $a->[0] <=> $b->[0] }  map [ $_->start, $_->end, $_ ], @features) {
       my ($s, $e, $f) = @$_;
-      
+
+
       next if $strand_flag eq 'b' && $strand != (($f->can('hstrand') ? $f->hstrand : 1) * $f->strand || -1) || $e < 1 || $s > $length;
       
       my $fgroup_name = $join ? $self->feature_group($f) : $nojoin_id++;
