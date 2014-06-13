@@ -1793,8 +1793,9 @@ sub _munge_file_formats {
     'bam'       => {'ext' => 'bam', 'label' => 'BAM',       'display' => 'graph', 'indexed' => 1},
     'bigwig'    => {'ext' => 'bw',  'label' => 'BigWig',    'display' => 'graph', 'indexed' => 1},
     'bigbed'    => {'ext' => 'bb',  'label' => 'BigBed',    'display' => 'graph', 'indexed' => 1},
-    'vcf'       => {'ext' => 'vcf', 'label' => 'VCF',       'display' => 'graph', 'indexed' => 1},
     'datahub'   => {'ext' => 'txt', 'label' => 'TrackHub',  'display' => 'graph', 'indexed' => 1},
+    'vcf'       => {'ext' => 'vcf', 'label' => 'VCF',       'display' => 'graph'},
+    'vcfi'      => {'ext' => 'vcf', 'label' => 'VCF (indexed)', 'display' => 'graph', 'indexed' => 1},
   );
 
   ## Munge into something useful to this website
