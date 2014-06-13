@@ -271,7 +271,7 @@ sub add_pointers {
   my $color       = lc($extra->{'color'} || $hub->param('col'))   || 'red';     # set sensible defaults
   my $style       = lc($extra->{'style'} || $hub->param('style')) || 'rharrow'; # set style before doing chromosome layout, as layout may need tweaking for some pointer styles
   my $high        = { style => $style };
-  my ($p_value_sorted, $max_colour);
+  my ($p_value_sorted, $def_colour);
   my $i = 1;
   
   # colour gradient 
@@ -282,8 +282,9 @@ sub add_pointers {
     foreach my $colour (@colour_scale) {
       $p_value_sorted->{$i} = $colour;
       $i = sprintf("%.1f", $i + 0.1);
-      $max_colour = $colour;
     }
+    
+    $def_colour = 'black';
   }
 
   foreach my $row (@data) {
@@ -292,7 +293,7 @@ sub add_pointers {
       start     => $row->{'start'},
       end       => $row->{'end'},
       id        => $row->{'label'},
-      col       => $p_value_sorted->{sprintf("%.1f", $row->{'p_value'})} || $max_colour || $color,
+      col       => $p_value_sorted->{sprintf("%.1f", $row->{'p_value'})} || $def_colour || $color,
       href      => $row->{'href'},
       html_id   => $row->{'html_id'} || '',
     };
