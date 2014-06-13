@@ -16,7 +16,7 @@ limitations under the License.
 
 =cut
 
-package EnsEMBL::Compara::Utils::GeneTreeHash;
+package Bio::EnsEMBL::Compara::Utils::GeneTreeHash;
 
 use namespace::autoclean;
 use Bio::EnsEMBL::Utils::Scalar qw(check_ref);
