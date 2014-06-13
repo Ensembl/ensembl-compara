@@ -53,23 +53,43 @@ sub db {
 }
 
 sub fetch_changelog {
-### Selects all changes for a given release and returns them as an arrayref of hashes
+### Selects all changes for the given criteria and returns them as an arrayref of hashes
   my ($self, $criteria) = @_;
   my $changes = [];
   return [] unless $self->db;
+  my ($sql, $sql2, @args, $filter);
 
-  my ($sql, $sql2);
-  my @args = ($criteria->{'release'});
+  my $order = 'ORDER BY ';
+  $order .= $criteria->{'species'}  ? ' s.species_id DESC, ' : '';
 
-  my $species_filter  = $criteria->{'species'}  ? ' s.species_id DESC, ' : '';
-  my $filter          = $criteria->{'limit'}
-    ? "ORDER BY $species_filter c.priority DESC LIMIT $criteria->{'limit'}"
-    : "ORDER BY$species_filter c.priority DESC";
+  if ($criteria->{'release'}) {
+    @args = ($criteria->{'release'});
+    $filter .= ' c.release_id = ? AND ';
+  }
+  else {
+    $order .= ' c.release_id DESC, ';
+  }
 
+  if ($criteria->{'category'} || $criteria->{'team'}) {
+    push @args, $criteria->{'category'} if $criteria->{'category'};
+    push @args, $criteria->{'team'} if $criteria->{'team'};
+    $filter .= ' (';
+    $filter .= ' c.category = ? ' if $criteria->{'category'};
+    $filter .= ' OR ' if ($criteria->{'category'} && $criteria->{'team'});
+    $filter .= ' c.team = ? ' if $criteria->{'team'};
+    $filter .= ') AND ';
+  }
+
+  $order .= 'c.priority DESC ';
+
+  if ($criteria->{'limit'}) {
+    $order .= 'LIMIT '.$criteria->{'limit'};
+  }
+ 
   if ($criteria->{'species'}) {
     $sql = qq(
       SELECT
-        c.changelog_id, c.title, c.content, c.team, c.category, s.species_id
+        c.changelog_id, c.title, c.content, c.team, c.category, s.species_id, c.release_id
       FROM
         changelog as c
       LEFT JOIN 
@@ -79,27 +99,27 @@ sub fetch_changelog {
         species as s
         ON s.species_id = cs.species_id
       WHERE 
+        $filter
         c.title != ''
         AND c.content != ''
         AND c.status = 'handed_over'
-        AND c.release_id = ?
         AND (s.url_name = ? OR s.url_name IS NULL)
-      $filter
+      $order
     );
     push @args, $criteria->{'species'};
   }
   else {
     $sql = qq(
       SELECT
-        c.changelog_id, c.title, c.content, c.team, c.category
+        c.changelog_id, c.title, c.content, c.team, c.category, c.release_id
       FROM
         changelog as c
       WHERE 
-        c.release_id = ?
-        AND c.title != ''
+        $filter
+        c.title != ''
         AND c.content != ''
         AND c.status = 'handed_over'
-      $filter
+      $order
     );
   }
 
@@ -161,6 +181,7 @@ sub fetch_changelog {
       'content'       => $data[2],
       'team'          => $data[3],
       'category'      => $data[4],
+      'release'       => $data[5],
       'species'       => $species,
     };
     push @$changes, $record;
@@ -168,6 +189,5 @@ sub fetch_changelog {
 
   return $changes;
 }
-
 
 1;
