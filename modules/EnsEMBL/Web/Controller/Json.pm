@@ -46,7 +46,7 @@ sub new {
 
     my @path      = ($hub->type, $hub->action || (), $hub->function || ());
     my $method    = sprintf 'json_%s', pop @path;
-    my $on_update = $hub->param('X-Comet-Request') eq 'true' || undef;
+    my $on_update = ($hub->param('X-Comet-Request') || '') eq 'true' || undef;
     my $json_page = 'EnsEMBL::Web::JSONServer';
        $json_page = $self->dynamic_use_fallback(reverse map {$json_page = "${json_page}::$_"} @path);
 
