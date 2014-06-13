@@ -1333,12 +1333,15 @@ sub update_from_url {
         }
         
         # We have to create a URL upload entry in the session
-        
+        my $message  = sprintf('Data has been attached to your display from the following URL: %s', encode_entities($p));
+        if (uc $format eq 'DATAHUB') {
+          $message .= " Please go to '<b>Configure this page</b>' to choose which tracks to show (we do not turn on tracks automatically in case they overload our server).";
+        }
         $session->add_data(
           type     => 'message',
           function => '_info',
           code     => 'url_data:' . md5_hex($p),
-          message  => sprintf('Data has been attached to your display from the following URL: %s', encode_entities($p))
+          message  => $message, 
         );
         
         # We then have to create a node in the user_config
@@ -3037,7 +3040,8 @@ sub add_phenotypes {
     type => undef,
     description => 'Phenotype annotations on '.(join ", ", map {$_.'s'} keys %{$hashref->{'phenotypes'}{'types'}}),
   }));
-  
+ 
+=pod 
   foreach my $type(keys %{$hashref->{'phenotypes'}{'types'}}) {
     my $pf_sources = $hashref->{'phenotypes'}{'types'}{$type}{'sources'};
     $pf_menu->append($self->create_track('phenotype_'.lc($type), 'Phenotype annotations ('.$type.'s)', {
@@ -3047,6 +3051,7 @@ sub add_phenotypes {
       description => 'Phenotype annotations on '.$type.'s (from '.$pf_sources.')',
     }));
   }
+=cut
   
   $p_menu->append($pf_menu);
 }
