@@ -380,7 +380,7 @@ sub variation_table {
   # create some URLs - quicker than calling the url method for every variation
   my $base_url = $hub->url({
     type   => 'Variation',
-    action => 'Mappings',
+    action => 'Summary',
     vf     => undef,
     v      => undef,
     source => undef,
