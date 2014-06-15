@@ -352,6 +352,7 @@ sub identify_removed_columns {
 
     my $initial_strings  = shift;
     my $filtered_strings = shift;
+    my $cdna             = shift;
 
     #print STDERR Dumper($initial_strings, $filtered_strings);
 
@@ -380,7 +381,7 @@ sub identify_removed_columns {
             $j++;
             $next_filt_column = undef;
             if (defined $start_segment) {
-                push @filt_segments, sprintf('[%d,%d]', $start_segment, $i-1);
+                push @filt_segments, [$start_segment, $i-1];
                 $start_segment = undef;
             }
         } else {
@@ -392,10 +393,18 @@ sub identify_removed_columns {
     die "Could not match alignments" if $j+1 < $filt_length;
 
     if (defined $start_segment) {
-        push @filt_segments, sprintf('[%d,%d]', $start_segment, $ini_length-1);
+        push @filt_segments, [$start_segment, $ini_length-1];
     }
 
-    return join(',', @filt_segments);
+    if ($cdna) {
+        # the coordinates are for the CDNA alignments
+        foreach my $x (@filt_segments) {
+            $x->[0] /= 3;
+            $x->[1] = ($x->[1]-2)/3;
+        }
+    }
+
+    return join(',', map {sprintf('[%d,%d]', @$_)} @filt_segments);
 }
 
 1;

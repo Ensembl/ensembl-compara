@@ -153,13 +153,8 @@ sub write_output {
     if ($self->param('store_filtered_align')) {
         my $alnfile_filtered = sprintf('%s/filtalign.fa', $self->worker_temp_directory);
         if (-e $alnfile_filtered) {
-            my $removed_columns = $self->parse_filtered_align($self->param('input_aln'), $alnfile_filtered);
-
-            # the coordinates are for the CDNA alignments
-            foreach my $x (@$removed_columns) {
-                $x->[0] /= 3;
-                $x->[1] = ($x->[1]+1)/3;
-            }
+            # 3rd argument is set because the coordinates are for the CDNA alignments
+            my $removed_columns = $self->parse_filtered_align($self->param('input_aln'), $alnfile_filtered, 1);
             print Dumper $removed_columns if ( $self->debug() );
             $self->param('gene_tree')->store_tag('removed_columns', $removed_columns);
         }
