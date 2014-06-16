@@ -329,6 +329,7 @@ sub parse_newick_into_tree {
     $leaf->adaptor($old_leaf->adaptor);
     $leaf->add_tag('name', $seq_member_id);
     $leaf->{'_children_loaded'} = 1;
+    $leaf->{_tmp_name} = $old_leaf->{_tmp_name} if $old_leaf->{_tmp_name};
   }
   print  "Tree with GeneTreeNode objects:\n";
   $newroot->print_tree(20) if($self->debug > 1);
