@@ -457,7 +457,7 @@ sub store_alternative_tree {
 }
 
 sub parse_filtered_align {
-    my ($self, $alnfile_ini, $alnfile_filtered, $allow_missing_members) = @_;
+    my ($self, $alnfile_ini, $alnfile_filtered, $cdna, $tree_to_delete_nodes) = @_;
 
     # Loads the filtered alignment strings
     my %hash_filtered_strings = ();
@@ -488,11 +488,11 @@ sub parse_filtered_align {
         }
     }
 
-    if ($allow_missing_members) {
+    if ($tree_to_delete_nodes) {
         my $treenode_adaptor = $self->compara_dba->get_GeneTreeNodeAdaptor;
 
         $self->param('removed_members', 0);
-        foreach my $leaf (@{$self->param('gene_tree')->get_all_leaves()}) {
+        foreach my $leaf (@{$tree_to_delete_nodes->get_all_leaves()}) {
             next if exists $hash_filtered_strings{$leaf->{_tmp_name}};
 
             print "removing ".$leaf->stable_id." keys: ".keys(%hash_initial_strings)."\n";
@@ -503,10 +503,10 @@ sub parse_filtered_align {
             });
             $self->param('removed_members', $self->param('removed_members') + 1);
         }
-        $self->param('default_gene_tree')->store_tag('gene_count', scalar(@{$self->param('gene_tree')->get_all_leaves}) );
+        $tree_to_delete_nodes->store_tag('gene_count', scalar(@{$tree_to_delete_nodes->get_all_leaves}) );
     }
 
-    return Bio::EnsEMBL::Compara::Utils::Cigars::identify_removed_columns(\%hash_initial_strings, \%hash_filtered_strings);
+    return Bio::EnsEMBL::Compara::Utils::Cigars::identify_removed_columns(\%hash_initial_strings, \%hash_filtered_strings, $cdna);
 }
 
 

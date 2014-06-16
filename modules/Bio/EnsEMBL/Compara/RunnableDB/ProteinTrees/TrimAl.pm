@@ -76,7 +76,7 @@ sub get_tags {
     my $self = shift;
 
     while (1) {
-        my $removed_columns = $self->parse_filtered_align( $self->param('alignment_file'), $self->param('output_file'), 1 );
+        my $removed_columns = $self->parse_filtered_align( $self->param('alignment_file'), $self->param('output_file'), 0, $self->param('gene_tree') );
         print "Trimmed colums: ".$removed_columns."\n" if $self->debug;
         return { 'removed_columns' => $removed_columns } unless $self->param('removed_members');
         $self->warning("There are removed members, so we need to re-run TrimAl.\n");
