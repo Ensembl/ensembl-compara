@@ -3041,7 +3041,6 @@ sub add_phenotypes {
     description => 'Phenotype annotations on '.(join ", ", map {$_.'s'} keys %{$hashref->{'phenotypes'}{'types'}}),
   }));
  
-=pod 
   foreach my $type(keys %{$hashref->{'phenotypes'}{'types'}}) {
     my $pf_sources = $hashref->{'phenotypes'}{'types'}{$type}{'sources'};
     $pf_menu->append($self->create_track('phenotype_'.lc($type), 'Phenotype annotations ('.$type.'s)', {
@@ -3051,7 +3050,6 @@ sub add_phenotypes {
       description => 'Phenotype annotations on '.$type.'s (from '.$pf_sources.')',
     }));
   }
-=cut
   
   $p_menu->append($pf_menu);
 }
