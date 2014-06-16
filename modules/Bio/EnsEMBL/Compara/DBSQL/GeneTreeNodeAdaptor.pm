@@ -300,7 +300,7 @@ sub remove_seq_member {
     my $leaf = shift;
     $leaf->disavow_parent;
     $self->delete_flattened_leaf( $leaf );
-    my $sth = $self->prepare('UPDATE gene_tree_backup SET is_removed = 1 WHERE seq_member = ?');
+    my $sth = $self->prepare('UPDATE gene_tree_backup SET is_removed = 1 WHERE seq_member_id = ?');
     $sth->execute($leaf->seq_member_id);
     $sth->finish;
 }
