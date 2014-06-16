@@ -82,12 +82,12 @@ sub fetch_input {
 
     $self->param('connected_split_genes', new Bio::EnsEMBL::Compara::Graph::ConnectedComponentGraphs);
 
+    # We can directly fetch the leaves
     my $gene_tree_id = $self->param_required('gene_tree_id');
-    my $protein_tree = $self->compara_dba->get_GeneTreeAdaptor->fetch_by_dbID($gene_tree_id) or die "Could not fetch protein_tree with gene_tree_id='$gene_tree_id'";
-    $protein_tree->print_tree(0.0001) if($self->debug);
-    $protein_tree->preload();
-    $self->param('all_protein_leaves', $protein_tree->get_all_Members);
-    $protein_tree->release_tree;
+    $self->param('all_protein_leaves', $self->compara_dba->get_GeneTreeNodeAdaptor->fetch_all_AlignedMember_by_root_id($gene_tree_id));
+
+    # Let's preload the gene members
+    $self->compara_dba->get_GeneMemberAdaptor->load_all_from_seq_members($self->param('all_protein_leaves'));
 }
 
 

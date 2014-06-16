@@ -377,15 +377,7 @@ sub preload {
     }
 
     # Loads all the gene members in one go
-    my %leaves;
-    foreach my $pm (@{$self->root->get_all_leaves}) {
-        $leaves{$pm->gene_member_id} = $pm if UNIVERSAL::isa($pm, 'Bio::EnsEMBL::Compara::GeneTreeMember');
-    }
-    my @m_ids = keys(%leaves);
-    my $all_gm = $self->adaptor->db->get_GeneMemberAdaptor->fetch_all_by_dbID_list(\@m_ids);
-    foreach my $gm (@$all_gm) {
-        $leaves{$gm->dbID}->gene_member($gm);
-    }
+    $self->adaptor->db->get_GeneMemberAdaptor->load_all_from_seq_members( [grep {UNIVERSAL::isa($_, 'Bio::EnsEMBL::Compara::GeneTreeMember')} @{$self->root->get_all_leaves}] );
 }
 
 
