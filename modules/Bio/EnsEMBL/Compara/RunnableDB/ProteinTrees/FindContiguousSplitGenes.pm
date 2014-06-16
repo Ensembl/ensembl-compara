@@ -80,13 +80,14 @@ sub param_defaults {
 sub fetch_input {
     my $self = shift @_;
 
+    $self->param('connected_split_genes', new Bio::EnsEMBL::Compara::Graph::ConnectedComponentGraphs);
+
     my $gene_tree_id = $self->param_required('gene_tree_id');
     my $protein_tree = $self->compara_dba->get_GeneTreeAdaptor->fetch_by_dbID($gene_tree_id) or die "Could not fetch protein_tree with gene_tree_id='$gene_tree_id'";
     $protein_tree->print_tree(0.0001) if($self->debug);
     $protein_tree->preload();
-
-    $self->param('protein_tree', $protein_tree);
-    $self->param('gene_member_adaptor', $self->compara_dba->get_GeneMemberAdaptor);
+    $self->param('all_protein_leaves', $protein_tree->get_all_Members);
+    $protein_tree->release_tree;
 }
 
 
@@ -106,28 +107,20 @@ sub write_output {
 
 sub post_cleanup {
     my $self = shift;
-
-    if(my $protein_tree = $self->param('protein_tree')) {
-        printf("FindContiguousSplitGenes::post_cleanup  releasing tree\n") if($self->debug);
-        $protein_tree->release_tree;
-        $self->param('protein_tree', undef);
-    }
     $self->param('connected_split_genes')->holding_node->cascade_unlink;
-
-    $self->SUPER::post_cleanup if $self->can("SUPER::post_cleanup");
 }
 
 
 
 sub check_for_split_genes {
     my $self = shift;
-    my $protein_tree = $self->param('protein_tree');
 
-    my $connected_split_genes = $self->param('connected_split_genes', new Bio::EnsEMBL::Compara::Graph::ConnectedComponentGraphs);
+    my $connected_split_genes = $self->param('connected_split_genes');
+    my $gene_member_adaptor = $self->compara_dba->get_GeneMemberAdaptor;
 
     my $tmp_time = time();
 
-    my @all_protein_leaves = @{$protein_tree->get_all_Members};
+    my @all_protein_leaves = @{$self->param('all_protein_leaves')};
     my @good_leaves = grep {defined $_->dnafrag_start and defined $_->dnafrag_end and defined $_->dnafrag_id and defined $_->dnafrag_strand and defined $_->genome_db_id} @all_protein_leaves;
 
     if($self->debug) {
@@ -202,7 +195,7 @@ sub check_for_split_genes {
                 if ($start1 > $start2) { $starttemp = $start1; $start1 = $start2; $start2 = $starttemp; }
                 if ($end1   <   $end2) {   $endtemp = $end1;     $end1 = $end2;     $end2 = $endtemp; }
                 print "Checking split genes overlap\n" if $self->debug;
-                my @genes_in_range = @{$self->param('gene_member_adaptor')->_fetch_all_by_dnafrag_id_start_end_strand_limit($dnafrag_id1, $start1, $end1, $strand1, 4)};
+                my @genes_in_range = @{$gene_member_adaptor->_fetch_all_by_dnafrag_id_start_end_strand_limit($dnafrag_id1, $start1, $end1, $strand1, 4)};
 
                 if ((2+$self->param('max_nb_genes_no_overlap')) < scalar @genes_in_range) {
                     foreach my $gene (@genes_in_range) {
@@ -211,7 +204,7 @@ sub check_for_split_genes {
                     next;
                 }
                 $self->warning(sprintf('A pair: %s %s', $protein1->stable_id, $protein2->stable_id));
-                $connected_split_genes->add_connection($protein1->node_id, $protein2->node_id);
+                $connected_split_genes->add_connection($protein1->seq_member_id, $protein2->seq_member_id);
             }
 
         # This is a second level of contiguous gene split events, more
@@ -241,7 +234,7 @@ sub check_for_split_genes {
                 if ($start1 > $start2) { $starttemp = $start1; $start1 = $start2; $start2 = $starttemp; }
                 if ($end1   <   $end2) {   $endtemp = $end1;     $end1 = $end2;     $end2 = $endtemp; }
 
-                my @genes_in_range = @{$self->param('gene_member_adaptor')->_fetch_all_by_dnafrag_id_start_end_strand_limit($dnafrag_id1, $start1, $end1, $strand1, 4)};
+                my @genes_in_range = @{$gene_member_adaptor->_fetch_all_by_dnafrag_id_start_end_strand_limit($dnafrag_id1, $start1, $end1, $strand1, 4)};
                 if ((2+$self->param('max_nb_genes_small_overlap')) < scalar @genes_in_range) {
                     foreach my $gene (@genes_in_range) {
                         print STDERR "Too many genes in range: ($start1,$end1,$strand1): ", $gene->stable_id,",", $gene->dnafrag_start,",", $gene->dnafrag_end,"\n" if $self->debug;
@@ -250,7 +243,7 @@ sub check_for_split_genes {
                 }
 
                 $self->warning(sprintf('B pair: %s %s', $protein1->stable_id, $protein2->stable_id));
-                $connected_split_genes->add_connection($protein1->node_id, $protein2->node_id);
+                $connected_split_genes->add_connection($protein1->seq_member_id, $protein2->seq_member_id);
             }
         }
     }
@@ -264,7 +257,6 @@ sub check_for_split_genes {
 
 sub store_split_genes {
     my $self = shift;
-    my $protein_tree = $self->param('protein_tree');
 
     my $connected_split_genes = $self->param('connected_split_genes');
     my $holding_node = $connected_split_genes->holding_node;
@@ -276,18 +268,17 @@ sub store_split_genes {
     my $sth1 = $self->compara_dba->dbc->prepare('INSERT INTO split_genes (seq_member_id) VALUES (?)');
     my $sth2 = $self->compara_dba->dbc->prepare('INSERT INTO split_genes (seq_member_id, gene_split_id) VALUES (?, ?)');
 
+    # node_ids in the connected component are actually seq_member_ids
     foreach my $link (@{$holding_node->links}) {
         my $node1 = $link->get_neighbor($holding_node);
-        my $protein1 = $protein_tree->find_leaf_by_node_id($node1->node_id);
-        print STDERR "node1 $node1 $protein1\n" if $self->debug;
-        $sth1->execute($protein1->seq_member_id);
+        print STDERR "node1 $node1->node_id\n" if $self->debug;
+        $sth1->execute($node1->node_id);
         my $split_gene_id = $sth1->{'mysql_insertid'};
 
         foreach my $node2 (@{$node1->all_nodes_in_graph}) {
-            my $protein2 = $protein_tree->find_leaf_by_node_id($node2->node_id);
-            print STDERR "node2 $node2 $protein2\n" if $self->debug;
+            print STDERR "node2 $node2->node_id\n" if $self->debug;
             next if $node2->node_id eq $node1->node_id;
-            $sth2->execute($protein2->seq_member_id, $split_gene_id);
+            $sth2->execute($node2->node_id, $split_gene_id);
         }
     }
     $sth1->finish;
