@@ -70,7 +70,6 @@ sub param_defaults {
             'output_clusterset_id'  => 'treebest',
             'store_tree_support'    => 1,
             'intermediate_prefix'   => 'interm',
-            'do_transactions'   => 1,
             'extra_lk_scale'    => undef,
             'treebest_stderr'   => undef,
     };

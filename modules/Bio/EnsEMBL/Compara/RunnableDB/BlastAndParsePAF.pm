@@ -45,9 +45,6 @@ eg "seg 'yes' -best_hit_overhang 0.2 -best_hit_score_edge 0.1 -use_sw_tback"
         Species genome db id.
     'reuse_ss_id' => <number>
         Reuse species set id. Normally stored in the meta table. Obligatory.
-    'do_transactions' => <0|1>
-        Whether to do transactions. Default is no.
-
 
 =cut
 

@@ -208,6 +208,8 @@ sub default_options {
         # the production database itself (will be created)
         # it inherits most of the properties from HiveGeneric, we usually only need to redefine the host, but you may want to also redefine 'port'
         #'host' => 'compara1',
+        # We use transactions to ensure that the data is still consistent in case of failures / interruptions
+        'do_transactions'           => 1,
 
         # the master database for synchronization of various ids (use undef if you don't have a master database)
         #'master_db' => 'mysql://ensro@compara1:3306/sf5_ensembl_compara_master',
@@ -327,6 +329,8 @@ sub pipeline_wide_parameters {  # these parameter values are visible to all anal
 
         'reuse_level'   => $self->o('reuse_level'),
         'clustering_mode'   => $self->o('clustering_mode'),
+
+        'do_transactions'   => $self->o('do_transactions'),
     };
 }
 
@@ -588,7 +592,6 @@ sub core_pipeline_analyses {
             -module        => 'Bio::EnsEMBL::Compara::RunnableDB::MakeSpeciesTree',
             -parameters    => {
                                'species_tree_input_file' => $self->o('species_tree_input_file'),   # empty by default, but if nonempty this file will be used instead of tree generation from genome_db
-                               'do_transactions' => 1,
             },
             -flow_into     => {
                 2 => [ 'hc_species_tree' ],
@@ -622,7 +625,6 @@ sub core_pipeline_analyses {
             -parameters    => {
                                'label' => 'binary',
                                'species_tree_input_file' => $self->o('binary_species_tree_input_file'),
-                               'do_transactions' => 1,
             },
             -flow_into     => {
                 2 => [ 'hc_binary_species_tree' ],
