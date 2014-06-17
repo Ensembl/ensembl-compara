@@ -118,11 +118,11 @@ sub table_data {
   my %rows;
   my %column_flags;
    
-  my $mart_somatic_url = 'http://www.ensembl.org/biomart/martview?VIRTUALSCHEMANAME=default'.
+  my $mart_somatic_url = $self->hub->species_defs->ENSEMBL_MART_ENABLED ? '/biomart/martview?VIRTUALSCHEMANAME=default'.
                          '&ATTRIBUTES=hsapiens_snp_som.default.snp.refsnp_id|hsapiens_snp_som.default.snp.chr_name|'.
                          'hsapiens_snp_som.default.snp.chrom_start|hsapiens_snp_som.default.snp.associated_gene'.
                          '&FILTERS=hsapiens_snp_som.default.filters.phenotype_description.&quot;###PHE###&quot;'.
-                         '&VISIBLEPANEL=resultspanel';
+                         '&VISIBLEPANEL=resultspanel' : '';
                  
                  
   foreach my $pf (@$external_data) { 
@@ -183,7 +183,7 @@ sub table_data {
     
     # BioMart link
     my $bm_flag = 0;
-    if ($disease =~ /COSMIC/) { 
+    if ($disease =~ /COSMIC/ && $mart_somatic_url) { 
       if ($pf->adaptor->count_all_by_phenotype_id($id) > 250) {
         $disease_url = $mart_somatic_url;
         $disease_url =~ s/###PHE###/$phenotype/;
