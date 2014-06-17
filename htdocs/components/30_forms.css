@@ -381,3 +381,29 @@ div.filterable-dropdown p.filterable-dropdown-filter input.inactive {
 div.filterable-dropdown p label span.highlight {
   color: red;
 }
+
+/* Override the standard layout */
+
+form.freeform,
+form.freeform fieldset, 
+form.freeform fieldset .form-field {
+  display:inline!important;
+} 
+
+form.freeform fieldset .form-field .ff-right {
+  display:inline!important;
+  margin: 0;
+  padding: 0;
+}
+
+input.blast-button {
+  display:inline!important;
+  float:none!important;
+  font-family:inherit;
+  font-weight:normal!important;
+  font-size:1em!important;
+  background-image: url(/i/16/rev/blast.png); 
+  background-position: 7px 50%; 
+  background-repeat: no-repeat; 
+  padding: 5px 4px 4px 29px;
+}

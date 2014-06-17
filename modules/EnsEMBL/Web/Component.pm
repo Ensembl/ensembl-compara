@@ -380,19 +380,35 @@ sub tool_buttons   {
 
   ## BLAST BUTTON
   if ($args->{'blast'} && $args->{'blast'}{'seq'} && $hub->species_defs->ENSEMBL_BLAST_ENABLED) {
-    $html .= sprintf('
-      <a class="button seq_blast find" href="#"><img src="%s" style="padding-bottom:2px;vertical-align:middle" />BLAST this sequence</a>
-        <form class="external hidden seq_blast" action="/Multi/blastview" method="post">
-          <fieldset>
-            <input type="hidden" name="_query_sequence" value="%s" />
-            <input type="hidden" name="species" value="%s" />
-            %s
-          </fieldset>
-        </form>
-      ',
-      $self->img_url.'/16/rev/blast.png', $args->{'blast'}{'seq'}, $hub->species, 
-      $args->{'blast'}{'peptide'} ? '<input type="hidden" name="query" value="peptide" /><input type="hidden" name="database" value="peptide" />' : ''
-    );
+
+    my $form_url  = sprintf('/%s/blastview', $hub->species);
+    my $form      = $self->new_form({'id' => 'blast', 'action' => $form_url, 
+                                     'class' => 'freeform', 'method' => 'post'});
+    my $fieldset  = $form->add_fieldset;
+
+    $fieldset->add_hidden([
+                    { 'name'    => '_query_sequence',
+                      'value'   => $args->{'blast'}{'seq'}},
+                    { 'name'    => 'species',
+                      'value'   => $hub->species,},
+                  ]);
+      
+    if ($args->{'blast'}{'peptide'}) {
+      $fieldset->add_hidden([
+                    {'name' => 'query', 'value' => 'peptide',},
+                    {'name' => 'database', 'value' => 'peptide',},
+                  ]);
+    }
+
+    $fieldset->add_button({
+      'type'    => 'Submit',
+      'name'    => 'submit',
+      'value'   => 'BLAST this sequence',
+      'class'   => 'blast-button',
+    });
+
+    $html .= $form->render;
+
   }
 
   $html .= '</div>';
