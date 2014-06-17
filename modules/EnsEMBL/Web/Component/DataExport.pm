@@ -50,10 +50,22 @@ sub create_form {
 
   ## Generic fields
   my $fieldset  = $form->add_fieldset; 
+
+  my $filename = $hub->param('filename') || $self->default_file_name;
+  $filename =~ s/\.[\w|\.]+//;
+
+  my @format_info;
+  foreach (sort keys %$fields_by_format) {
+    my $info = { 'value' => $_, 'caption' => $format_label->{$_}, 'class' => "_stt__$_ _action_$_"};
+    $info->{'selected'} = 'selected' if $hub->param('format') eq $_;
+    push @format_info, $info;
+  }
   my $formats = [
       {'caption' => '-- Choose Format --', 'value' => 'tutorial'},
-      map { 'value' => $_, 'caption' => $format_label->{$_}, 'class' => "_stt__$_ _action_$_"}, sort keys %$fields_by_format
+      @format_info
     ];
+  ## Don't update this field from params, as there's no back 
+  ## button for compressed formats!
   my $compress = [
       {'caption' => 'Uncompressed', 'value' => '', 'checked' => 1},
       {'caption' => 'Gzip', 'value' => 'gz'},
@@ -64,7 +76,7 @@ sub create_form {
       'type'    => 'String',
       'name'    => 'name',
       'label'   => 'File name',
-      'value'   => $self->default_file_name,
+      'value'   => $filename,
     },
     {
       'type'    => 'DropDown',
@@ -119,11 +131,12 @@ sub create_form {
   
   ## Create all options forms, then show only one using jQuery
   while (my($format, $fields) = each (%$fields_by_format)) {
+    next if ($hub->param('format') && $hub->param('format') ne $format); ## from back button
     my $settings_fieldset  = $form->add_fieldset({'class' => '_stt_'.$format, 'legend' => 'Settings'});
 
     ## Add custom fields for this data type and format
     foreach (@$fields) {
-      my ($name, $value) = @$_;
+      my ($name, @values) = @$_;
       ## IMPORTANT - use hashes here, not hashrefs, as Form code does weird stuff 
       ## in background that alters the contents of $settings!
       my %field_info = %{$settings->{$name}};
@@ -131,13 +144,34 @@ sub create_form {
       ## Reset field name to include format, so we have unique field names
       $name .= '_'.$format;
       $field_info{'name'} = $name;
-      ## Override general default with format-specific default if required
-      $field_info{'value'} = $value if defined($value);
+      @values = $hub->param($name) if $hub->param($name);
+      ## Deal with multiple values, which have to be passed
+      ## to Form::Fieldset as an arrayref
+      my $params;
+      if (scalar @values > 1) {
+        if ($field_info{'type'} eq 'Hidden') {
+          $params = [];
+          foreach my $v (@values) {
+            my %info = %field_info;
+            $info{'value'} = $v;
+            push @$params, \%info;
+          }
+        }
+        else {
+          $field_info{'value'} = \@values if scalar @values;
+          $params = \%field_info;
+        }
+      }
+      else {
+        $field_info{'value'} = $values[0] if scalar @values;
+        $params = \%field_info;
+      }
+      ## Add to form
       if ($field_info{'type'} eq 'Hidden') {
-        $settings_fieldset->add_hidden(\%field_info);
+        $settings_fieldset->add_hidden($params);
       }
       else { 
-        $settings_fieldset->add_field(\%field_info);
+        $settings_fieldset->add_field($params);
       }
     }
 

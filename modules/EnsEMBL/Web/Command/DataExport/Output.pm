@@ -30,6 +30,7 @@ sub process {
   my $hub        = $self->hub;
 
   my $url_params = {'action' => 'Results'};
+  my @redirect_params;
 
   my $error;
   my $format = $hub->param('format');
@@ -92,25 +93,37 @@ sub process {
     $url_params->{'format'}         = $format;
     $url_params->{'path'}          .= '/export/'.$file->random_path.$file->filename;
     $url_params->{'compression'}    = $compression;
-    ## Also pass parameters needed for Back button to work
-    my @core_params = keys %{$hub->core_object('parameters')};
-    push @core_params, qw(export_action data_type component);
-    foreach (@core_params) {
-      $url_params->{$_} = $hub->param($_);
+    if ($compression || $format eq 'RTF') {
+      $url_params->{'type'}    = 'Download';
+      $url_params->{'action'}  = 'DataExport';
+      ## Force redirect to initiate download
+      @redirect_params = (undef, undef, 'page');
+    }
+    else {
+      ## Pass parameters needed for Back button to work
+      my @core_params = keys %{$hub->core_object('parameters')};
+      push @core_params, qw(export_action data_type component);
+      push @core_params, $self->config_params; 
+      foreach (@core_params) {
+        my @values = $hub->param($_);
+        $url_params->{$_} = scalar @values > 1 ? \@values : $values[0];
+      }
     }
   }  
+  my $url = $hub->url($url_params);
 
-  $self->ajax_redirect($hub->url($url_params));
+  $self->ajax_redirect($hub->url($url_params), @redirect_params);
 }
 
 sub config_params {
   my $self = shift;
-  my $params = {};
+  my @params;
+  my $format = $self->hub->param('format');
   foreach ($self->hub->param) {
-    next unless $_ =~ /^config_/;
-    $params->{$_} = $self->hub->param($_);
+    next unless $_ =~ /_$format$/;
+    push @params, $_;
   }
-  return $params;
+  return @params;
 }
 
 ###### INDIVIDUAL FORMATS #############

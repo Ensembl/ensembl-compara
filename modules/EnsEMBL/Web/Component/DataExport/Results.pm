@@ -47,29 +47,36 @@ sub content {
               $filename, lc($format), $path, $compression, $format,
             );
 
-  unless ($format eq 'RTF' || $compression) {
-    my $file = EnsEMBL::Web::File->new(hub => $hub, path => $path);
-    if ($file) {
-      $html .= '<h2 style="margin-top:1em">File preview</h2><div class="code"><pre style="color:#333">';
-      $html .= $file->read;
-      $html .= '</pre></div>';
-    }
-  }
-
-=pod
   ## Hidden form taking you back to the beginning
   my $form_url  = sprintf('/%s/DataExport/%s', $hub->species, $hub->param('export_action'));
   my $form      = $self->new_form({'id' => 'export', 'action' => $form_url, 'method' => 'post'});
   my $fieldset  = $form->add_fieldset;
 
   foreach ($hub->param) {
-    my $info = {'name' => $_, 'value' => $hub->param($_)};
+    my %field_info = ('name' => $_);
+
     my @core_params = keys %{$hub->core_object('parameters')};
     push @core_params, qw(name format compression data_type component export_action);
     unless (grep @core_params, $_) {
-      $info->{'name'} .= '_'.$hub->param('format');
+      $field_info{'name'} .= '_'.$hub->param('format');
     }
-    $fieldset->add_hidden($info);
+
+    my @values = $hub->param($_);
+    my $params;
+    if (scalar @values > 1) {
+      $params = [];
+      foreach my $v (@values) {
+        my %info = %field_info;
+        $info{'value'} = $v;
+        push @$params, \%info;
+      }
+    }
+    else {
+      $field_info{'value'} = $values[0] if scalar @values;
+      $params = \%field_info;
+    }
+
+    $fieldset->add_hidden($params);
   }
 
   $fieldset->add_button({
@@ -80,7 +87,16 @@ sub content {
 
 
   $html .= $form->render;
-=cut
+
+  unless ($format eq 'RTF' || $compression) {
+    my $file = EnsEMBL::Web::File->new(hub => $hub, path => $path);
+    if ($file) {
+      $html .= '<h2 style="margin-top:1em">File preview</h2><div class="code"><pre style="color:#333">';
+      $html .= $file->read;
+      $html .= '</pre></div>';
+    }
+  }
+
   return $html;
 }
 
