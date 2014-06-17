@@ -90,6 +90,20 @@ sub feature_set       { my $self = shift; return $self->Obj->feature_set;       
 sub feature_type      { my $self = shift; return $self->Obj->feature_type;              }
 sub slice             { my $self = shift; return $self->Obj->slice;                     }           
 sub seq_region_length { my $self = shift; return $self->Obj->slice->seq_region_length;  }
+sub has_evidence {
+  my ($self) = @_;
+
+  # Can be simple accessor for 76, but avoid breaking master
+  return $self->Obj->has_evidence if $self->Obj->can('has_evidence');
+  return 0;
+}
+sub cell_type_count {
+  my ($self) = @_;
+
+  # Can be simple accessor for 76, but avoid breaking master
+  return $self->Obj->cell_type_count if $self->Obj->can('cell_type_count');
+  return 0;
+}
 
 sub fetch_all_objs {
   my $self = shift;
