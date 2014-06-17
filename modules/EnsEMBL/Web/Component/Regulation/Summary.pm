@@ -53,7 +53,7 @@ sub content {
   my $all_objs = $object->fetch_all_objs;
   foreach my $reg_object (sort { $a->feature_set->cell_type->name cmp $b->feature_set->cell_type->name } @$all_objs ) {
     next if $reg_object->feature_set->cell_type->name =~/MultiCell/;
-    $active{$reg_object->feature_set->cell_type->name} = 1 if $reg_object->has_evidence;
+    $active{$reg_object->feature_set->cell_type->name} = 1 if $reg_object->can('has_evidence') and $reg_object->has_evidence;
   }
 
   $summary->add_row('Classification',$object->feature_type->name);
