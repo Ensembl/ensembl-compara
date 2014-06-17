@@ -154,9 +154,16 @@ sub write_output {
         my $alnfile_filtered = sprintf('%s/filtalign.fa', $self->worker_temp_directory);
         if (-e $alnfile_filtered) {
             # 3rd argument is set because the coordinates are for the CDNA alignments
-            my $removed_columns = $self->parse_filtered_align($self->param('input_aln'), $alnfile_filtered, 1);
-            print Dumper $removed_columns if ( $self->debug() );
-            $self->param('gene_tree')->store_tag('removed_columns', $removed_columns);
+            my $removed_columns;
+            eval {
+                $removed_columns = $self->parse_filtered_align($self->param('input_aln'), $alnfile_filtered, 1);
+            };
+            if ($@) {
+                die $@ unless $@ =~ /^Could not match alignments at /;
+            } else {
+                print Dumper $removed_columns if ( $self->debug() );
+                $self->param('gene_tree')->store_tag('removed_columns', $removed_columns);
+            }
         }
     }
 
