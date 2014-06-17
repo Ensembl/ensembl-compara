@@ -492,10 +492,13 @@ sub parse_filtered_align {
         my $treenode_adaptor = $self->compara_dba->get_GeneTreeNodeAdaptor;
 
         $self->param('removed_members', 0);
+        warn sprintf("leaves=%d ini_aln=%d filt_aln=%d\n", scalar(@{$tree_to_delete_nodes->get_all_leaves()}), scalar(keys %hash_initial_strings), scalar(keys %hash_filtered_strings));
+
         foreach my $leaf (@{$tree_to_delete_nodes->get_all_leaves()}) {
+            next if not exists $hash_initial_strings{$leaf->{_tmp_name}};
             next if exists $hash_filtered_strings{$leaf->{_tmp_name}};
 
-            print "removing ".$leaf->stable_id." keys: ".keys(%hash_initial_strings)."\n";
+            printf("removing %s (%s, keys: %d)\n", $leaf->stable_id, $leaf->{_tmp_name}, keys(%hash_initial_strings));
             delete($hash_initial_strings{$leaf->{_tmp_name}});
             print "after keys: ".keys(%hash_initial_strings)."\n";
             $self->call_within_transaction(sub{
