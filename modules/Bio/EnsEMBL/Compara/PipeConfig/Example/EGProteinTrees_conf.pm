@@ -99,6 +99,10 @@ sub default_options {
         'tree_dir'                  =>  $self->o('ensembl_cvs_root_dir').'/ensembl_genomes/EGCompara/config/prod/trees/Version'.$self->o('eg_release').'Trees',
         'species_tree_input_file'   =>  $self->o('tree_dir').'/'.$self->o('division').'.peptide.nh',
 
+      # homology assignment for polyploid genomes
+      # e.g. bread wheat
+      # 'homoeologous_genome_dbs' => [ [ 2001,2002 ], [ 2001,2003 ], [ 2002,2003 ] ],
+
     # homology_dnds parameters:
         'codeml_parameters_file'    => $self->o('ensembl_cvs_root_dir').'/ensembl-compara/scripts/homology/codeml.ctl.hash',
         'taxlevels'                 => ['cellular organisms'],
