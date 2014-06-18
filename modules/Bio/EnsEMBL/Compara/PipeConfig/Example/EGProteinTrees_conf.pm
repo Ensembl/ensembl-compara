@@ -99,9 +99,11 @@ sub default_options {
         'tree_dir'                  =>  $self->o('ensembl_cvs_root_dir').'/ensembl_genomes/EGCompara/config/prod/trees/Version'.$self->o('eg_release').'Trees',
         'species_tree_input_file'   =>  $self->o('tree_dir').'/'.$self->o('division').'.peptide.nh',
 
-      # homology assignment for polyploid genomes
-      # e.g. bread wheat
-      # 'homoeologous_genome_dbs' => [ [ 2001,2002 ], [ 2001,2003 ], [ 2002,2003 ] ],
+    # homology assignment for polyploid genomes
+        # This parameter is an array of groups of genome_db names / IDs.
+        # Each group represents the components of a polyploid genome
+        # e.g. bread wheat for the "plants" division
+        'homoeologous_genome_dbs'   => $self->o('division') eq 'plants' ? [ [ 'triticum_aestivum_a', 'triticum_aestivum_b', 'triticum_aestivum_c' ] ] : [],
 
     # homology_dnds parameters:
         'codeml_parameters_file'    => $self->o('ensembl_cvs_root_dir').'/ensembl-compara/scripts/homology/codeml.ctl.hash',
