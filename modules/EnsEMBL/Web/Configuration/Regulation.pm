@@ -44,9 +44,9 @@ sub populate_tree {
     { 'availability' => 'regulation', 'concise' => 'Feature context' }
   );
   
-  $self->create_node('Evidence', 'Evidence',
+  $self->create_node('Evidence', 'Source Data',
     [qw( evidence EnsEMBL::Web::Component::Regulation::Evidence )],
-    { 'availability' => 'regulation', 'concise' => 'Evidence' }
+    { 'availability' => 'regulation', 'concise' => 'Source data' }
   );
 }
 
