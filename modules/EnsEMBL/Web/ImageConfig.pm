@@ -738,7 +738,7 @@ sub load_user_tracks {
 }
 
 sub _add_datahub {
-  my ($self, $menu_name, $url, $is_poor_name) = @_;
+  my ($self, $menu_name, $url, $is_poor_name, $existing_menu) = @_;
   my $parser   = Bio::EnsEMBL::ExternalData::DataHub::SourceParser->new({ timeout => 10, proxy => $self->hub->species_defs->ENSEMBL_WWW_PROXY });
   my $hub_info = $parser->get_hub_info($url); ## Do we have data for this species?
   
@@ -748,7 +748,7 @@ sub _add_datahub {
     my $shortLabel = $hub_info->{'details'}{'shortLabel'};
     $menu_name = $shortLabel if $shortLabel and $is_poor_name;
 
-    my $menu     = $self->tree->append_child($self->create_submenu($menu_name, $menu_name, { external => 1, datahub_menu => 1 }));
+    my $menu     = $existing_menu || $self->tree->append_child($self->create_submenu($menu_name, $menu_name, { external => 1, datahub_menu => 1 }));
 
     my $golden_path = $self->hub->species_defs->get_config($self->species, 'UCSC_GOLDEN_PATH');
     my $source_list = $hub_info->{'genomes'}{$golden_path} || [];
@@ -971,22 +971,13 @@ sub load_configured_bam    { shift->load_file_format('bam');    }
 sub load_configured_bigbed { shift->load_file_format('bigbed'); }
 sub load_configured_bigwig { shift->load_file_format('bigwig'); }
 sub load_configured_vcf    { shift->load_file_format('vcf');    }
-
-sub load_configured_datahubs {
-  my $self = shift;
-
-  my $datahubs = $self->sd_call('ENSEMBL_INTERNAL_DATAHUBS') || {};
-
-  while (my ($key, $url) = each (%$datahubs)) {
-    $self->_add_datahub($key, $url);
-  }
-}
+sub load_configured_datahubs { shift->load_file_format('datahub') }
 
 sub load_file_format {
   my ($self, $format, $sources) = @_;
   my $function = "_add_${format}_track";
   
-  return unless $self->can($function);
+  return unless ($format eq 'datahub' || $self->can($function));
   
   my $internal = !defined $sources;
      $sources  = $self->sd_call(sprintf 'ENSEMBL_INTERNAL_%s_SOURCES', uc $format) || {} unless defined $sources; # get the internal sources from config
@@ -1015,8 +1006,14 @@ sub load_file_format {
         $self->alphabetise_tracks($menu, $main_menu);
       }
     }
-    
-    $self->$function(key => $source_name, menu => $menu, source => $source, description => $source->{'description'}, internal => $internal, view => $view) if $source;
+    if ($source) {
+      if ($format eq 'datahub') {
+        $self->_add_datahub($source->{'source_name'}, $source->{'url'}, undef, $menu);
+      }
+      else { 
+        $self->$function(key => $source_name, menu => $menu, source => $source, description => $source->{'description'}, internal => $internal, view => $view);
+      }
+    }
   }
 }
 
