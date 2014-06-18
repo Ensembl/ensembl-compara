@@ -240,10 +240,6 @@ sub render_normal {
     }
 
     $self->_init_bump(undef, $depth);
-    $total_count = scalar(@features);
-    $cumul_count += $total_count;
-    $overflow += ($total_count - $depth);
-
     my $nojoin_id = 1;
     
     foreach (sort { $a->[0] <=> $b->[0] }  map [ $_->start, $_->end, $_ ], @features) {
@@ -256,10 +252,14 @@ sub render_normal {
       my $db_name     = $f->can('external_db_id') ? $extdbs->{$f->external_db_id}{'db_name'} : 'OLIGO';
       
       push @{$id{$fgroup_name}}, [ $s, $e, $f, int($s * $pix_per_bp), int($e * $pix_per_bp), $db_name ];
+      $total_count++;
     }
     
     next unless keys %id;
     
+    $cumul_count += $total_count;
+    $overflow += ($total_count - $depth);
+
     my $colour_key     = $self->colour_key($feature_key);
     my $feature_colour = $self->my_colour($colour_key);
     my $join_colour    = $self->my_colour($colour_key, 'join');
