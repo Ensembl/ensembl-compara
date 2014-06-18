@@ -189,10 +189,11 @@ sub run_buildhmm {
     if ($self->param_required('hmmer_version') eq '2') {
         my $success = 0;
         my $num;
+        my $use_cpu_option = 1;
         do {
             $cmd = join(' ',
                 $self->param('hmmcalibrate_exe'),
-                '--cpu 1',
+                $use_cpu_option ? '--cpu 1' : '',
                 $num ? sprintf(' --num %d', $num) : '',
                 $hmm_file);
             my $cmd_out2 = $self->run_command($cmd);
@@ -205,6 +206,8 @@ sub run_buildhmm {
                         die "Cannot calibrate the HMM (tried --num values up until 1e8)";
                     }
                     $self->warning("Increasing --num to $num");
+                } elsif ($cmd_out2->err =~ /Posix threads support is not compiled into HMMER/) {
+                    $use_cpu_option = 0;
                 } else {
                     die sprintf("Could not run hmmcalibrate\n%s\n%s", $cmd_out2->out, $cmd_out2->err);
                 }
