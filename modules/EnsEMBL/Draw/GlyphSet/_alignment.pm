@@ -448,7 +448,7 @@ sub render_normal {
     }
     $y_offset -= $strand * ($self->_max_bump_row * ($h + $gap + $label_h) + 6);
   }
-  if ($cumul_count && $overflow) {
+  if ($cumul_count && $overflow && $overflow > 0) {
     my $default = $depth == $default_depth ? 'by default' : '';
     my $text = "This track is $depth features deep $default - click to show up to $overflow more";
     my $y = $track_height + $fontsize * 2 + 10;
