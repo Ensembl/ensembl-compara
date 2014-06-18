@@ -121,6 +121,12 @@ sub default_options {
         # you can define your own species_tree for 'notung'. It *has* to be binary
         'binary_species_tree_input_file'   => undef,
 
+    # homology assignment for polyploid genomes
+        # This parameter is an array of groups of genome_db names / IDs.
+        # Each group represents the components of a polyploid genome
+        'homoeologous_genome_dbs'   => [],
+
+
     # homology_dnds parameters:
         # used by 'homology_dNdS'
         'codeml_parameters_file'    => $self->o('ensembl_cvs_root_dir').'/ensembl-compara/scripts/pipeline/protein_trees.codeml.ctl.hash',
@@ -1653,6 +1659,7 @@ sub core_pipeline_analyses {
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::OrthoTree',
             -parameters => {
                 'tag_split_genes'   => 1,
+                'homoeologous_genome_dbs' => $self->{'homoeologous_genome_dbs'},
             },
             -hive_capacity  => $self->o('ortho_tree_capacity'),
             -rc_name        => '250Mb_job',
@@ -1666,6 +1673,7 @@ sub core_pipeline_analyses {
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::OrthoTree',
             -parameters => {
                 'tag_split_genes'   => 1,
+                'homoeologous_genome_dbs' => $self->{'homoeologous_genome_dbs'},
             },
             -hive_capacity  => $self->o('ortho_tree_capacity'),
             -rc_name        => '4Gb_job',
@@ -1726,6 +1734,7 @@ sub core_pipeline_analyses {
             -parameters => {
                 'tag_split_genes'   => 1,
                 'store_homologies'  => 0,
+                'homoeologous_genome_dbs' => $self->{'homoeologous_genome_dbs'},
             },
             -hive_capacity  => $self->o('ortho_tree_annot_capacity'),
             -rc_name        => '250Mb_job',
@@ -1741,6 +1750,7 @@ sub core_pipeline_analyses {
             -parameters => {
                 'tag_split_genes'   => 1,
                 'store_homologies'  => 0,
+                'homoeologous_genome_dbs' => $self->{'homoeologous_genome_dbs'},
             },
             -hive_capacity  => $self->o('ortho_tree_annot_capacity'),
             -rc_name        => '4Gb_job',

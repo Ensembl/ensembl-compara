@@ -92,7 +92,6 @@ sub param_defaults {
             'tree_scale'            => 1,
             'store_homologies'      => 1,
             'no_between'            => 0.25, # dont store all possible_orthologs
-            'homoeologous_genome_dbs'  => [],
             '_readonly'             => 0,
     };
 }
@@ -481,6 +480,7 @@ sub store_gene_link_as_homology {
       my $gdb2 = $gene2->genome_db_id;
       if (($self->param('homoeologous_groups')->{$gdb1} || -1) == ($self->param('homoeologous_groups')->{$gdb2} || -2)) {
           $mlss_type = 'ENSEMBL_HOMOEOLOGUES';
+          $type      =~ s/ortholog/homoeolog/;
       } else {
           $mlss_type = 'ENSEMBL_ORTHOLOGUES';
       }
