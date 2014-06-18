@@ -162,7 +162,7 @@ sub run {
     if ($@) {
         # the eval returned an error
         die $@ if $@ ne $die_text;
-        $self->{_exit_code} = 999;
+        $self->{_exit_code} = -2;
         $self->{_err} = sprintf("Command's runtime has exceeded the limit of %s seconds", $timeout);
     }
 }

@@ -56,6 +56,7 @@ Other parameters:
  - check_split_genes: whether we want to group the split genes in fake gene entries
  - minimum_genes: minimum number of genes on which to run the command (generates a #2 event if the condition is not met)
  - maximum_genes: maximum number of genes on which to run the command (generates a #3 event if the condition is not met)
+ - cmd_max_runtime: maximum runtime (in seconds) of the command (generates a #-2 event if the command takes too long)
  - runtime_tree_tag: gene-tree tag to store the runtime of the command
  - cdna: 1 if the alignment file contains the CDS sequences (otherwise: the protein sequences)
  - remove_columns: 1 if the alignment has to be filtered (assumes that there is a "removed_columns" tag)
@@ -71,6 +72,7 @@ Branch events:
  - #2: cluster too small
  - #3: cluster too large
  - #-1: memory limit (JAVA programs)
+ - #-2: runtime limit (using the "cmd_max_runtime" parameter)
 
 =head1 APPENDIX
 
@@ -104,6 +106,7 @@ sub param_defaults {
 
         'minimum_genes'     => 0,
         'maximum_genes'     => 1e9,
+        'cmd_max_runtime'   => undef,
 
         'run_treebest_sdi'  => 0,
         'reroot_with_sdi'   => 0,
@@ -247,9 +250,14 @@ sub run_generic_command {
     }
 
     my $cmd = sprintf('cd %s; %s', $self->worker_temp_directory, $self->param_required('cmd'));
-    my $run_cmd = $self->run_command($cmd);
+    my $run_cmd = $self->run_command($cmd, $self->param('cmd_max_runtime'));
     if ($run_cmd->exit_code) {
-        if ($run_cmd->err =~ /Exception in thread ".*" java.lang.OutOfMemoryError: Java heap space at/) {
+        if ($run_cmd->exit_code == -2) {
+            $self->dataflow_output_id( $self->input_id, -2 );
+            $self->input_job->incomplete(0);
+            $self->autoflow(0);
+            die sprintf("The command is taking more than %d seconds to complete .\n", $self->param('cmd_max_runtime'));
+        } elsif ($run_cmd->err =~ /Exception in thread ".*" java.lang.OutOfMemoryError: Java heap space at/) {
             $self->dataflow_output_id( $self->input_id, -1 );
             $self->input_job->incomplete(0);
             $self->autoflow(0);
