@@ -87,7 +87,7 @@
         e.preventDefault(); // prevent the submission of form when pressed enter on the checkboxes
       },
       'click.filterableDropdown': function(e) {
-        el.trigger('focusInput');
+        el.trigger(el.find('input[type=' + this.type + ']:visible').length === 1 ? 'close' : 'focusInput');
       }
     });
 
@@ -138,7 +138,7 @@
         switch (e.which) {
           case 13:
             e.preventDefault();
-            labels.filter('.highlight:visible').parent().find('input').prop('checked', function() { return !this.checked; }); // any toggleProp method?
+            labels.filter('.highlight:visible').parent().find('input').trigger('click');
           break;
           case 9:
           case 27:
