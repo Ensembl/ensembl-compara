@@ -61,7 +61,7 @@ sub default_options {
 
     # parameters that are likely to change from execution to another:
         # You can add a letter to distinguish this run from other runs on the same release
-        'rel_with_suffix'       => $self->o('ensembl_release')."member",
+        'rel_with_suffix'       => $self->o('ensembl_release'),
         # names of species we don't want to reuse this time
 
     # custom pipeline name, in case you don't like the default one
@@ -158,7 +158,7 @@ sub default_options {
 
         # the production database itself (will be created)
         # it inherits most of the properties from HiveGeneric, we usually only need to redefine the host, but you may want to also redefine 'port'
-        'host' => 'compara1',
+        'host' => 'compara3',
 
         # the master database for synchronization of various ids (use undef if you don't have a master database)
         'master_db' => 'mysql://ensro@compara1:3306/sf5_ensembl_compara_master',
