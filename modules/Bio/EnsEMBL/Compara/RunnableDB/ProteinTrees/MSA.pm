@@ -59,7 +59,7 @@ use Time::HiRes qw(time gettimeofday tv_interval);
 
 use Bio::EnsEMBL::Compara::Utils::Cigars;
 
-use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
+use base ('Bio::EnsEMBL::Compara::RunnableDB::RunCommand');
 
 
 sub param_defaults {
@@ -93,14 +93,9 @@ sub fetch_input {
 
 
     $self->param('tree_adaptor', $self->compara_dba->get_GeneTreeAdaptor);
-    $self->param('protein_tree', $self->param('tree_adaptor')->fetch_by_dbID($self->param('gene_tree_id')));
+    $self->param('protein_tree', $self->param('tree_adaptor')->fetch_by_dbID($self->param_required('gene_tree_id')));
+    $self->throw("no input protein_tree") unless $self->param('protein_tree');
     $self->param('protein_tree')->preload();
-
-  # No input specified.
-  if (!defined($self->param('protein_tree'))) {
-    $self->post_cleanup;
-    $self->throw("no input protein_tree");
-  }
 
   print "RETRY COUNT: ".$self->input_job->retry_count()."\n";
 
@@ -213,19 +208,11 @@ sub run_msa {
 
     my $cmd = $self->get_msa_command_line;
 
-    $self->compara_dba->dbc->disconnect_when_inactive(1);
-
-    print STDERR "Running:\n\t$cmd\n" if ($self->debug);
-    my $ret = system("cd $tempdir; $cmd");
-    print STDERR "Exit status: $ret\n" if $self->debug;
-    if($ret) {
-        my $system_error = $!;
-
+    my $run_cmd = $self->run_command("cd $tempdir; $cmd");
+    if ($run_cmd->exit_code) {
         $self->post_cleanup;
-        die "Failed to execute [$cmd]: $system_error ";
+        die sprintf("'%s' resulted in an error code=%d\nstderr is: %s\nstdout is: %s\n", $run_cmd->cmd, $run_cmd->exit_code, $run_cmd->err, $run_cmd->out);
     }
-
-    $self->compara_dba->dbc->disconnect_when_inactive(0);
 }
 
 ########################################################
