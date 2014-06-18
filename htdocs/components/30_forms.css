@@ -1,12 +1,12 @@
 /*
  * Copyright [1999-2014] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -32,7 +32,7 @@ form.nonstd fieldset { padding: 0.5em; margin: 0; }
 form.std              { margin: 0 0 8px 0; padding: 0;}
 form.std table        { width:100% }
 form.std fieldset     { padding: 0; }
-form.std fieldset th, 
+form.std fieldset th,
 form.std fieldset td  { padding:4px; width: 50%; }
 
 form.labels_right label { text-align: right; margin: 4px 8px 0 0; }
@@ -255,7 +255,7 @@ form.bgcolour div.form-field label.ff-label {
   padding: 8px 0 6px 8px;
   line-height: 20px;
 }
-div.editable-tag {
+div.filterable-dropdown-tag {
   background-color: [[TINT_BG]];
   border: 1px solid [[TINT_BORDER]];
   margin: 0 0 4px;
@@ -268,17 +268,17 @@ div.editable-tag {
   cursor: pointer;
   color: [[BUTTON_BG]];
 }
-div.editable-tag.removable, div.editable-tag.readonly {
+div.filterable-dropdown-tag.removable, div.filterable-dropdown-tag.readonly {
   color: [[PAGE_TEXT]];
   cursor: default;
 }
 
-form.bgcolour div.editable-tag {
+form.bgcolour div.filterable-dropdown-tag {
   background-color: [[PANEL_BG]];
   border: 1px solid [[PANEL_BORDER]];
 }
 
-div.editable-tag span.et-icon {
+div.filterable-dropdown-tag span.fdt-icon {
   background: transparent url(/i/16/swp/pencil.png) no-repeat 0 -18px;
   background-color: inherit;
   margin: 0;
@@ -292,11 +292,11 @@ div.editable-tag span.et-icon {
   cursor: pointer;
 }
 
-div.editable-tag.removable span.et-icon {
+div.filterable-dropdown-tag.removable span.fdt-icon {
   background-image: url(/i/16/swp/cross.png);
 }
 
-div.editable-tag.readonly span.et-icon {
+div.filterable-dropdown-tag.readonly span.fdt-icon {
   display: none;
 }
 
@@ -322,24 +322,31 @@ div.ff-icon-link span.sprite {
   width: auto;
 }
 
-div.filterable-dropdown div {
+div.filterable-dropdown div.filterable-dropdown-div {
   background-color: [[PANEL_BORDER]];
   border: 1px solid [[PANEL_BORDER]];
-  max-height: 200px;
+  max-height: 199px;
   overflow-x: hidden;
   overflow-y: auto;
   width: 400px;
+  position: absolute;
+  margin-top: -1px;
+  display: none;
+}
+
+div.filterable-dropdown.open div.filterable-dropdown-div {
+  display: block;
 }
 
 div.filterable-dropdown p.ff-checklist {
   margin: 1px 0;
 }
 
-div.filterable-dropdown p.ff-checklist:first-child {
+div.filterable-dropdown div.filterable-dropdown-div p.ff-checklist.first-child {
   margin-top: 0;
 }
 
-div.filterable-dropdown p.ff-checklist:last-child {
+div.filterable-dropdown div.filterable-dropdown-div p.ff-checklist.last-child {
   margin-bottom: 0;
 }
 
@@ -364,18 +371,36 @@ div.filterable-dropdown p.ff-checklist input {
 }
 
 div.filterable-dropdown p.filterable-dropdown-filter {
+  width: 402px;
   margin: 0;
 }
 
 div.filterable-dropdown p.filterable-dropdown-filter input {
   height: 20px;
   margin: 0;
-  width: 400px;
-}
-
-div.filterable-dropdown p.filterable-dropdown-filter input.inactive {
+  width: 378px;
   color: [[PAGE_TEXT]];
   font-style: italic;
+}
+
+div.filterable-dropdown.open p.filterable-dropdown-filter input {
+  font-style: normal;
+}
+
+div.filterable-dropdown p.filterable-dropdown-filter span {
+  background: none repeat scroll 0 0 [[PANEL_BORDER]];
+  border-radius: 0 4px 4px 0;
+  display: block;
+  float: right;
+  height: 24px;
+  width: 20px;
+  line-height: 27px;
+  text-align: center;
+  cursor: default;
+}
+
+div.filterable-dropdown.open p.filterable-dropdown-filter span {
+  border-radius: 0 4px 0 0;
 }
 
 div.filterable-dropdown p label span.highlight {

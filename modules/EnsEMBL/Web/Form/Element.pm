@@ -74,15 +74,12 @@ sub configure {
   ##  - is_html         Flag kept on if the value is HTML (in case of NoEdit only)
   ##  - caption         String to be displayed in NoEdit element if different from value attribute of the hidden input
   ##  - filter_text     Text to be displayed in the input used for filtering the dropdown (for Filterable element only)
-  ##  - tags            ArrayRef of tags if adding multiple tags in editabletag field (each element of this array is a hash with keys: tag_type, tag_class, tag_attribs and caption)
-  ##  - tag_type        Type of the tag (eg. removable or readonly) (optional only) (for editabletag elements only)
-  ##  - tag_attribs     Any additional (other than class) attributes for the tag div of editabletag element (Hashref key-value pairs as expected by DOM::Node::Element::set_attribute method)
+  ##  - filter_no_match Text to be displayed in the Filterable element dropdown if no match is found with the value entered in the input filter box
+  ##  - tag_attribs     Any attributes for the tag div of filterable element (Hashref key-value pairs as expected by DOM::Node::Element::set_attribute method)
   ##  - class           Class attribute (space seperated string or arrayref for multiple classes) - goes to all the sub elements (inputs, selects, textarea)
   ##  - element_class   Class attribute for the element div
   ##  - wrapper_class   Class attribute for the wrapper (if there's any wrapper - eg. in checklist etc)
   ##  - caption_class   Class attribute for the div/span containing caption in case of a NoEdit element
-  ##  - tag_class       Class attribute for the tag div (for editabletag element only)
-  ##  - link_class      Class attribute for the <a> tag in case of addlink element
   ##  - option_class    Class attribute for all the options (in case of a dropdown)
   ##  - disabled        Flag for disabled attribute
   ##  - readonly        Flag for readonly attribute
@@ -91,7 +88,7 @@ sub configure {
   ##  - multiple        Flag for multiple attribute in <select>
   ##  - maxlength       Maxlength attribute for <input>
   ##  - max             Allowed maximum value in case of integers
-  ##  - checked         Checked attribute (only for Checkbox or DASCheckBox) - (FOR CHECKLIST - see 'value' key)
+  ##  - checked         Checked attribute (only for Checkbox or DASCheckBox) - (For Checklist - see 'value' key)
   ##  - das             DAS object (only for DASCheckBox)
   warn "Web::Form::Element::configure needs to be overridden in the child class";
 }

@@ -23,27 +23,45 @@ use warnings;
 
 use base qw(EnsEMBL::Web::Form::Element::Checklist);
 
-use constant {
-  CLASSNAME_DIV       => 'filterable-dropdown _fd',
-  CLASSNAME_FILTER    => 'filterable-dropdown-filter _fd_filter',
-  DEFAULT_FILTER_TEXT => 'type in to filter&#8230;'
-};
-
 sub configure {
   ## @overrrides
   my ($self, $params) = @_;
 
-  $params->{'wrapper_class'}  = [ ref $params->{'wrapper_class'} ? @{$params->{'wrapper_class'}} : $params->{'wrapper_class'} || (), $self->CLASSNAME_DIV ];
+  $params->{'wrapper_class'}  = [ ref $params->{'wrapper_class'} ? @{$params->{'wrapper_class'}} : $params->{'wrapper_class'} || (), 'filterable-dropdown', '_fd' ];
   $params->{'force_wrapper'}  = 1;
 
   $self->{'__multiple'} = delete $params->{'multiple'};
 
   $self->SUPER::configure($params);
 
-  $self->append_child('div', {'children' => $self->child_nodes});
+  $self->first_child->set_attribute('class', 'first-child');
+  $self->last_child->set_attribute('class', 'last-child');
+
+  $self->append_child('div', {'class' => 'filterable-dropdown-div', 'children' => [ @{$self->child_nodes}, {
+    'node_name'   => 'p',
+    'class'       => '_fd_nomatch hidden ff-checklist',
+    'inner_HTML'  => $params->{'filter_no_match'} || 'No match found'
+  } ]});
   $self->prepend_child('p', {
-    'class'     => $self->CLASSNAME_FILTER,
-    'children'  => [{'node_name' => 'input', 'class' => 'inactive', 'type' => 'text', 'value' => $params->{'filter_text'} || $self->DEFAULT_FILTER_TEXT}]
+    'class'       => 'filterable-dropdown-filter _fd_filter',
+    'children'    => [{
+      'node_name'   => 'input',
+      'class'       => 'inactive',
+      'type'        => 'text',
+      'value'       => $params->{'filter_text'} || 'type in to filter&#8230;'
+    }, {
+      'node_name'   => 'span'
+    }]
+  });
+
+  # add sample tag hidden element (this will be cloned by javascript)
+  my $tag_attribs = $params->{'tag_attribs'} || {};
+  my $tag_class   = $tag_attribs->{'class'}  || [];
+     $tag_class   = [ split ' ', $tag_class ] unless ref $tag_class;
+
+  $self->prepend_child('div', { %$tag_attribs,
+    'class'       => [ @$tag_class, qw(_fd_tag hidden filterable-dropdown-tag), $self->_is_multiple ? 'removable' : () ],
+    'inner_HTML'  => '<span></span><span class="_fdt_remove fdt-icon"></span>'
   });
 }
 
