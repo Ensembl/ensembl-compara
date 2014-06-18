@@ -3042,6 +3042,7 @@ sub add_phenotypes {
   }));
  
   foreach my $type(keys %{$hashref->{'phenotypes'}{'types'}}) {
+    next unless ref $hashref->{'phenotypes'}{'types'}{$type} eq 'HASH';
     my $pf_sources = $hashref->{'phenotypes'}{'types'}{$type}{'sources'};
     $pf_menu->append($self->create_track('phenotype_'.lc($type), 'Phenotype annotations ('.$type.'s)', {
       %options,
