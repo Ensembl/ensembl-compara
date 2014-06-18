@@ -569,6 +569,7 @@ sub store_gene_link_as_homology {
       my $gdb2 = $gene2->genome_db_id;
       if (($self->param('homoeologous_groups')->{$gdb1} || -1) == ($self->param('homoeologous_groups')->{$gdb2} || -2)) {
           $mlss_type = 'ENSEMBL_HOMOEOLOGUES';
+          $type      =~ s/ortholog/homoeolog/;
       } else {
           $mlss_type = 'ENSEMBL_ORTHOLOGUES';
       }
