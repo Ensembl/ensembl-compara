@@ -211,8 +211,9 @@ sub render_normal {
   my $label_h         = 0;
   my ($fontname, $fontsize);
   
+  ## NB We need fontsize for the track expansion text, even if there are no labels
+  ($fontname, $fontsize) = $self->get_font_details('outertext');
   if ($self->{'show_labels'}) {
-    ($fontname, $fontsize) = $self->get_font_details('outertext');
     $label_h = [ $self->get_text_width(0, 'X', '', ptsize => $fontsize, font => $fontname) ]->[3];
     $join    = 1; # The no-join thing gets completely mad with labels on.
   }
