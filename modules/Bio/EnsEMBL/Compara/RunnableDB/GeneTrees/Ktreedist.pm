@@ -141,7 +141,9 @@ sub run {
 
 sub write_output {
   my $self = shift;
-  $self->store_ktreedist_score;
+  $self->call_within_transaction( sub {
+    $self->store_ktreedist_score;
+  });
 }
 
 sub post_cleanup {
