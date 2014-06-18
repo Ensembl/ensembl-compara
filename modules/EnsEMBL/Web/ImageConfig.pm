@@ -972,6 +972,16 @@ sub load_configured_bigbed { shift->load_file_format('bigbed'); }
 sub load_configured_bigwig { shift->load_file_format('bigwig'); }
 sub load_configured_vcf    { shift->load_file_format('vcf');    }
 
+sub load_configured_datahubs {
+  my $self = shift;
+
+  my $datahubs = $self->sd_call('ENSEMBL_INTERNAL_DATAHUBS') || {};
+
+  while (my ($key, $url) = each (%$datahubs)) {
+    $self->_add_datahub($key, $url);
+  }
+}
+
 sub load_file_format {
   my ($self, $format, $sources) = @_;
   my $function = "_add_${format}_track";
