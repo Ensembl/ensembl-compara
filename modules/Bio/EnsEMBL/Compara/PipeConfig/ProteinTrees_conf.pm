@@ -114,6 +114,10 @@ sub default_options {
         # you can define your own species_tree for 'notung'. It *has* to be binary
         'binary_species_tree_input_file'   => undef,
 
+    # homology assignment
+        'homoeologous_genome_dbs' => undef,
+
+
     # homology_dnds parameters:
         'codeml_parameters_file'    => $self->o('ensembl_cvs_root_dir').'/ensembl-compara/scripts/pipeline/protein_trees.codeml.ctl.hash',      # used by 'homology_dNdS'
         'taxlevels'                 => [],
@@ -1444,6 +1448,7 @@ sub pipeline_analyses {
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::OrthoTree',
             -parameters => {
                 'tag_split_genes'   => 1,
+                'homoeologous_genome_dbs' => $self->{'homoeologous_genome_dbs'},
             },
             -hive_capacity  => $self->o('ortho_tree_capacity'),
             -rc_name        => '250Mb_job',
