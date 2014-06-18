@@ -89,6 +89,7 @@ sub param_defaults {
             'tree_scale'            => 1,
             'store_homologies'      => 1,
             'no_between'            => 0.25, # dont store all possible_orthologs
+            'homoeologous_genome_dbs'  => [],
             '_readonly'             => 0,
     };
 }
