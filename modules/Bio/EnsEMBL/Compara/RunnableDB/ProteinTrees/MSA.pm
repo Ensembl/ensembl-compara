@@ -86,6 +86,7 @@ sub fetch_input {
         my $jobs = $self->dataflow_output_id($self->input_id, $self->param('escape_branch'));
         if (scalar(@$jobs)) {
             $self->input_job->incomplete(0);
+            $self->autoflow(0);
             die "The MSA failed 3 times. Trying another method.\n";
         }
     }
@@ -166,6 +167,7 @@ sub write_output {
             if (scalar(@$new_job)) {
                 $self->input_job->incomplete(0);
                 $self->input_job->lethal_for_worker(1);
+                $self->autoflow(0);
                 die 'Probably not enough memory. Switching to the _himem analysis.';
             } else {
                 die 'Error in the alignment but cannot switch to an analysis with more memory.';

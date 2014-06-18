@@ -54,8 +54,8 @@ to be a Newick/NHX tree. This is overriden by any of the parameters:
 
 Other parameters:
  - check_split_genes: whether we want to group the split genes in fake gene entries
- - minimum_genes: minimum number of genes on which to run the command
- - maximum_genes: maximum number of genes on which to run the command
+ - minimum_genes: minimum number of genes on which to run the command (generates a #2 event if the condition is not met)
+ - maximum_genes: maximum number of genes on which to run the command (generates a #3 event if the condition is not met)
  - runtime_tree_tag: gene-tree tag to store the runtime of the command
  - cdna: 1 if the alignment file contains the CDS sequences (otherwise: the protein sequences)
  - remove_columns: 1 if the alignment has to be filtered (assumes that there is a "removed_columns" tag)
@@ -70,6 +70,7 @@ Branch events:
  - #1: autoflow on success
  - #2: cluster too small
  - #3: cluster too large
+ - #-1: memory limit (JAVA programs)
 
 =head1 APPENDIX
 
@@ -116,6 +117,7 @@ sub fetch_input {
     if (defined $self->param('escape_branch') and $self->input_job->retry_count >= $self->input_job->analysis->max_retry_count) {
         $self->dataflow_output_id($self->input_id, $self->param('escape_branch'));
         $self->input_job->incomplete(0);
+        $self->autoflow(0);
         die sprintf("The job is being tried for the %dth time: escaping to branch #%d\n", $self->input_job->retry_count, $self->param('escape_branch'));
     }
 
@@ -230,11 +232,13 @@ sub run_generic_command {
     if ($number_actual_genes < $self->param('minimum_genes')) {
         $self->dataflow_output_id($self->input_id, 2);
         $self->input_job->incomplete(0);
+        $self->autoflow(0);
         die "There are only $number_actual_genes genes in this tree. Not running the command.\n";
     }
     if ($number_actual_genes > $self->param('maximum_genes')) {
         $self->dataflow_output_id($self->input_id, 3);
         $self->input_job->incomplete(0);
+        $self->autoflow(0);
         die "There are too many genes ($number_actual_genes) in this tree. Not running the command.\n";
     }
 
@@ -248,6 +252,7 @@ sub run_generic_command {
         if ($run_cmd->err =~ /Exception in thread ".*" java.lang.OutOfMemoryError: Java heap space at/) {
             $self->dataflow_output_id( $self->input_id, -1 );
             $self->input_job->incomplete(0);
+            $self->autoflow(0);
             die "Java heap space is out of memory.\n";
         }
         die sprintf("'%s' resulted in an error code=%d\nstderr is: %s\nstdout is: %s\n", $run_cmd->cmd, $run_cmd->exit_code, $run_cmd->err, $run_cmd->out);
