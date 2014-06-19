@@ -57,7 +57,6 @@
         $(this).data('filterableDropdown').closed = false;
         $(this).addClass('open').find('._fd_filter input').trigger('focus').trigger('keyup').next().html('&#9650;');
         $(document).off('.filterableDropdown').on('mousedown.filterableDropdown', function() {
-          $(document).off('.filterableDropdown');
           el.trigger('close');
         });
       },
@@ -72,12 +71,13 @@
             return tag.clone().data('input', this).show().find('span').first().html(this.nextSibling.innerHTML).end().end();
           }).toArray()).trigger('afterAddRemove')
         ;
+        $(document).off('.filterableDropdown');
       },
       'afterAddRemove.filterableDropdown': options.change || $.noop
     }).on('click', '._fdt_remove', function() {
       $($(this).parent().data('input')).prop('checked', false);
       $(this.parentNode).remove();
-        el.trigger('afterAddRemove');
+      el.trigger('afterAddRemove');
     }).children().on({
       'mousedown.filterableDropdown': function(e) {
         e.stopPropagation(); // prevent closing if the dropdown if clicked inside the dropdown
@@ -86,8 +86,12 @@
       'keydown.filterableDropdown': function(e) {
         e.preventDefault(); // prevent the submission of form when pressed enter on the checkboxes
       },
-      'click.filterableDropdown': function(e) {
-        el.trigger(el.find('input[type=' + this.type + ']:visible').length === 1 ? 'close' : 'focusInput');
+      'click.filterableDropdown': function(e, enterKey) {
+        var onlyOneOption = el.find('input[type=' + this.type + ']:visible').length === 1;
+        el.trigger(onlyOneOption ? 'close' : 'focusInput');
+        if (onlyOneOption && enterKey) {
+          el.trigger('open');
+        }
       }
     });
 
@@ -138,7 +142,7 @@
         switch (e.which) {
           case 13:
             e.preventDefault();
-            labels.filter('.highlight:visible').parent().find('input').trigger('click');
+            labels.filter('.highlight:visible').parent().find('input').prop('checked', function() { return !this.checked }).triggerHandler('click', true);
           break;
           case 9:
           case 27:
