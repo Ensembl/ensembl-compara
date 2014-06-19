@@ -18,6 +18,7 @@ Ensembl.Panel.MultiSelector = Ensembl.Panel.extend({
   constructor: function (id, params) {
     this.base(id);
     this.urlParam = params.urlParam;
+    this.paramMode = params.paramMode;
     
     Ensembl.EventManager.register('updateConfiguration', this, this.updateSelection);
     Ensembl.EventManager.register('modalPanelResize',    this, this.style);
@@ -142,9 +143,13 @@ Ensembl.Panel.MultiSelector = Ensembl.Panel.extend({
   updateSelection: function () {
     var params = [];
     var i;
-    
-    for (i = 0; i < this.selection.length; i++) {
-      params.push(this.urlParam + (i + 1) + '=' + this.selection[i]);
+   
+    if(this.paramMode === 'single') {
+      params.push(this.urlParam + '=' + this.selection.join(','));
+    } else {
+      for (i = 0; i < this.selection.length; i++) {
+        params.push(this.urlParam + (i + 1) + '=' + this.selection[i]);
+      }
     }
     
     if (this.selection.join(',') !== this.initialSelection) {

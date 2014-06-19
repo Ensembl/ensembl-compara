@@ -91,14 +91,17 @@ sub content_ajax {
       </div>
     </div>
   };
-  
+ 
+  my $param_mode = $self->{'param_mode'};
+  $param_mode ||= 'multi';
+ 
   return $self->jsonify({
     content   => $content,
     panelType => $self->{'panel_type'},
     activeTab => $self->{'rel'},
     wrapper   => qq{<div class="modal_wrapper"><div class="panel"></div></div>},
     nav       => "$select_by$hint",
-    params    => { urlParam => $self->{'url_param'} },
+    params    => { urlParam => $self->{'url_param'}, paramMode => $param_mode },
   });
 }
 

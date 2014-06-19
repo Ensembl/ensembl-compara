@@ -39,8 +39,6 @@ sub content {
   my $evidence_data = $api_data->{'data'};
   my $cell_count = $api_data->{'cell_count'};
   
-  return '<p>There is no evidence for this regulatory feature </p>' unless scalar keys %$evidence_data;
-
   my $table = $self->new_table([], [], { data_table => 1, sorting => [ 'cell asc', 'type asc', 'location asc' ]});
   
   $table->add_columns(
@@ -87,6 +85,7 @@ sub content {
   my $url = $self->hub->url('Component', {
     action   => 'Web',
     function    => 'CellTypeSelector/ajax',
+    cell => $self->hub->param('cell'),
   });
 
   my $html = qq(
@@ -95,8 +94,11 @@ sub content {
       Choose other cell types (showing $cell_m/$cell_n)
     </a>
   );
-
-  return $html.$table->render;
+  if(scalar keys %$evidence_data) {
+    return $html.$table->render;
+  } else {
+    return "$html<p>There is no evidence for this regulatory feature in the selected cell lines</p>";
+  }
 }
 
 sub get_motif_rows {
