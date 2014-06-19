@@ -103,7 +103,7 @@ sub default_options {
         # This parameter is an array of groups of genome_db names / IDs.
         # Each group represents the components of a polyploid genome
         # e.g. bread wheat for the "plants" division
-        'homoeologous_genome_dbs'   => $self->o('division') eq 'plants' ? [ [ 'triticum_aestivum_a', 'triticum_aestivum_b', 'triticum_aestivum_c' ] ] : [],
+        'homoeologous_genome_dbs'   => $self->o('division') eq 'plants' ? [ [ 'triticum_aestivum_a', 'triticum_aestivum_b', 'triticum_aestivum_d' ] ] : [],
 
     # homology_dnds parameters:
         'codeml_parameters_file'    => $self->o('ensembl_cvs_root_dir').'/ensembl-compara/scripts/homology/codeml.ctl.hash',
