@@ -332,8 +332,8 @@ sub render_normal {
       };
       
       my $composite;
-      
-      if (scalar @feat == 1) {
+
+      if (scalar @feat == 1 and !$depth) {
         $composite = $self;
       } else {
         $composite = $self->Composite({
