@@ -339,6 +339,7 @@ sub get_evidence_data {
       my $cell_type             = $reg_attr_fset->cell_type->name;
       $cells{$cell_type} = 1 unless $cell_type eq 'MultiCell';
       next if $filter->{'cell'} and !grep { $_ eq $cell_type } @{$filter->{'cell'}};
+      next if $filter->{'cells_only'};
       my $reg_attr_dset = $dset_a->fetch_by_product_FeatureSet($reg_attr_fset);
       my @sset          = @{$reg_attr_dset->get_displayable_supporting_sets('result')};
 

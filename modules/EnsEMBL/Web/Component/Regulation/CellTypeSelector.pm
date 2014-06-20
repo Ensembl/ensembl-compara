@@ -41,7 +41,7 @@ sub content_ajax {
   my $object      = $self->object;
   my $params      = $hub->multi_params; 
 
-  my @shown_cells = split(',',$hub->param('cell'));
+  my @shown_cells = @{$object->cell_types||[]};
   my (%shown_cells,%cell_categories);
   $shown_cells{$shown_cells[$_]} = $_+1 for(0..$#shown_cells);
   my %cell_categories = map { $_ => 'shown' } split(',',$hub->param('pagecells'));

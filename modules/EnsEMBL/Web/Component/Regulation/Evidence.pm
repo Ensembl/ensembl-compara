@@ -35,6 +35,11 @@ sub content {
   my $object_slice  = $object->get_bound_context_slice($context); 
      $object_slice  = $object_slice->invert if $object_slice->strand < 1;
   my $cells = $object->cell_types;
+  unless($cells) {
+    my $api_data = $object->get_evidence_data($object_slice,{ cells_only => 1 });
+    my $av_cells = $api_data->{'cells'};
+    $cells = [ $av_cells->[0] ] if @$av_cells;
+  }
   my $api_data = $object->get_evidence_data($object_slice,{ cell => $cells});
   my $evidence_data = $api_data->{'data'};
   my $cell_count = scalar @{$api_data->{'cells'}};
@@ -85,7 +90,7 @@ sub content {
   my $url = $self->hub->url('Component', {
     action   => 'Web',
     function    => 'CellTypeSelector/ajax',
-    cell => $self->hub->param('cell'),
+    cell => join(',',@{$object->cell_types||[]}),
     pagecells => join(',',@{$api_data->{'cells'}}),
   });
 
