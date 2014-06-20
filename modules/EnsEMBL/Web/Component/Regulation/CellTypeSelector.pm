@@ -27,6 +27,7 @@ sub _init {
  
   $self->SUPER::_init;
  
+  $self->{'panel_type'}      = 'CellTypeSelector';
   $self->{'link_text'}       = 'Select cell types';
   $self->{'included_header'} = 'Selected cell types {category}';
   $self->{'excluded_header'} = 'Unselected cell types {category}';

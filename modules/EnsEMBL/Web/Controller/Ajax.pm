@@ -103,6 +103,23 @@ sub multi_species {
   }
 }
 
+sub cell_type {
+  my ($self,$hub) = @_;
+  my $cell = $hub->param('cell');
+  my %args = ( type => 'cell', code => 'cell' );
+
+  my $session = $hub->session;
+  if($cell) {
+    $session->set_data(%args,$hub->species => $cell);
+  } else {
+    my %data = %{$session->get_data(%args)};
+    delete $data{$hub->species};
+
+    $session->purge_data(%args);
+    $session->set_data(%args, %data) if scalar grep $_ !~ /(type|code)/, keys %data;
+  }
+}
+
 sub nav_config {
   my ($self, $hub) = @_;
   my $session = $hub->session;
