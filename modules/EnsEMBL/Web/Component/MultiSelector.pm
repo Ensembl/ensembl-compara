@@ -103,18 +103,19 @@ sub content_ajax {
 
     # Do it
     my $catdata = $category||'';
+    next unless $exclude_list or $include_list or $category;
     $exclude_html .= qq(
       <h2>$exclude_title</h2>
       <ul class="excluded" data-category="$catdata">
         $exclude_list
       </ul>
-    ) if $exclude_list or defined $category;
+    );
     $include_html .= qq(
       <h2>$include_title</h2>
       <ul class="included" data-category="$catdata">
         $include_list
       </ul>
-    ) if $include_list or defined $category;
+    );
   }
 
   my $content      = sprintf('
