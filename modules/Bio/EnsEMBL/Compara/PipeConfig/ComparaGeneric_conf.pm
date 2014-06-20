@@ -31,7 +31,6 @@ sub default_options {
     return {
         %{$self->SUPER::default_options},
 
-        'pipeline_name'         => 'compara_generic',
         'compara_innodb_schema' => 1,
     };
 }
