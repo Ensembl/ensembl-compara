@@ -37,7 +37,7 @@ sub content {
   my $cells = $object->cell_types;
   my $api_data = $object->get_evidence_data($object_slice,{ cell => $cells});
   my $evidence_data = $api_data->{'data'};
-  my $cell_count = $api_data->{'cell_count'};
+  my $cell_count = scalar @{$api_data->{'cells'}};
   
   my $table = $self->new_table([], [], { data_table => 1, sorting => [ 'cell asc', 'type asc', 'location asc' ]});
   
@@ -86,6 +86,7 @@ sub content {
     action   => 'Web',
     function    => 'CellTypeSelector/ajax',
     cell => $self->hub->param('cell'),
+    pagecells => join(',',@{$api_data->{'cells'}}),
   });
 
   my $html = qq(

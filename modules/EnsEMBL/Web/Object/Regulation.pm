@@ -354,7 +354,7 @@ sub get_evidence_data {
     }
   }
   
-  return { data => \%data, cell_count => scalar(keys %cells) };
+  return { data => \%data, cells => [ keys %cells ] };
 }
 
 ################ Calls for Feature in Detail view ###########################
