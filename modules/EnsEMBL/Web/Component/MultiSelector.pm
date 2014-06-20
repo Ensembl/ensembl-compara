@@ -102,15 +102,16 @@ sub content_ajax {
     $include_title =~ s/\{category\}/$category_heading/g;
 
     # Do it
+    my $catdata = $category||'';
     $exclude_html .= qq(
       <h2>$exclude_title</h2>
-      <ul class="excluded">
+      <ul class="excluded" data-category="$catdata">
         $exclude_list
       </ul>
     ) if $exclude_list;
     $include_html .= qq(
       <h2>$include_title</h2>
-      <ul class="included">
+      <ul class="included" data-category="$catdata">
         $include_list
       </ul>
     ) if $include_list;

@@ -53,9 +53,16 @@ Ensembl.Panel.MultiSelector = Ensembl.Panel.extend({
     this.buttonWidth = spans.filter('.switch').on('click', function () {
       var li = $(this).parent();
       var excluded, i;
-      
+     
+      var from_cat = li.parent().data('category'); 
       if (li.parent().hasClass('included')) {
-        excluded = $('li', panel.elLk.excluded);
+        var excluded_ul =
+          panel.elLk.excluded.filter("[data-category='"+from_cat+"']");
+        if(!excluded_ul.length) {
+          excluded_ul = panel.elLk.excluded.first();
+        }
+
+        excluded = $('li',excluded_ul);
         i = excluded.length;
 
         while (i--) {
@@ -67,18 +74,25 @@ Ensembl.Panel.MultiSelector = Ensembl.Panel.extend({
         
         // item to be added is closer to the start of the alphabet than anything in the excluded list
         if (i === -1) {
-          panel.elLk.excluded.prepend(li);
+          excluded_ul.prepend(li);
         }
         
         panel.setSelection();
-        
+       
+        excluded_ul = null; 
         excluded = null;
       } else {
-        panel.elLk.included.append(li);
+        var included_ul =
+          panel.elLk.included.filter("[data-category='"+from_cat+"']");
+        if(!included_ul.length) {
+          included_ul = panel.elLk.included.first();
+        }
+        included_ul.append(li);
         panel.selection.push(li.attr('class'));
       }
       
       li = null;
+      from_cat = null;
     }).width();
     
     this.style();
