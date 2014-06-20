@@ -41,10 +41,16 @@ sub content_ajax {
   my $object      = $self->object;
   my $params      = $hub->multi_params; 
 
+  my $context       = $self->hub->param('context') || 200;
+  my $object_slice  = $object->get_bound_context_slice($context);
+     $object_slice  = $object_slice->invert if $object_slice->strand < 1;
+  my $api_data = $object->get_evidence_data($object_slice,{ cells_only => 1 });
+  my $av_cells = $api_data->{'cells'};
+
   my @shown_cells = @{$object->cell_types||[]};
   my (%shown_cells,%cell_categories);
   $shown_cells{$shown_cells[$_]} = $_+1 for(0..$#shown_cells);
-  my %cell_categories = map { $_ => 'shown' } split(',',$hub->param('pagecells'));
+  my %cell_categories = map { $_ => 'shown' } @$av_cells;
 
   my $fg = $hub->database('funcgen');
   my $fgcta = $fg->get_CellTypeAdaptor();

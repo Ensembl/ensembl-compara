@@ -91,7 +91,6 @@ sub content {
     action   => 'Web',
     function    => 'CellTypeSelector/ajax',
     cell => join(',',@{$object->cell_types||[]}),
-    pagecells => join(',',@{$api_data->{'cells'}}),
   });
 
   my $html = qq(
