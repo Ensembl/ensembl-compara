@@ -83,6 +83,9 @@ sub default_options {
             'skip_epo'                 => 0,   # Never tried this one. It may fail
             'create_ss_pics'           => 0,
 
+            # ambiguity codes
+            'allow_ambiguity_codes'    => 0,
+
            };
 }
 
@@ -260,6 +263,7 @@ sub pipeline_analyses {
             -module             => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::SqlHealthChecks',
             -parameters         => {
                 mode            => 'members_per_genome',
+                allow_ambiguity_codes => $self->o('allow_ambiguity_codes'),
             },
             %hc_params,
         },
@@ -294,7 +298,7 @@ sub pipeline_analyses {
             -module        => 'Bio::EnsEMBL::Compara::RunnableDB::MakeSpeciesTree',
             -parameters    => {
                 'species_tree_input_file'               => $self->o('species_tree_input_file'),   # empty by default, but if nonempty this file will be used instead of tree generation from genome_db
-                'multifurcation_deletes_node'           => [ 129949, 314146 ], # 33316 has been removed from NCBI taxonomy
+                'multifurcation_deletes_node'           => [ 314146, 1489913 ], # 33316 and 129949 has been removed from NCBI taxonomy
                 'multifurcation_deletes_all_subnodes'   => [  9347, 186625,  32561 ],
                 'mlss_id'                               => $self->o('mlss_id'),
             },
@@ -716,7 +720,6 @@ sub pipeline_analyses {
 
         {   -logic_name    => 'ktreedist',
             -module        => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::Ktreedist',
-            -analysis_capacity => -1,
             -parameters => {
                             'treebest_exe'  => $self->o('treebest_exe'),
                             'ktreedist_exe' => $self->o('ktreedist_exe'),
