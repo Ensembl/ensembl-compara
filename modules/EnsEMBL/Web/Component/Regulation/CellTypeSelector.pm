@@ -28,8 +28,8 @@ sub _init {
   $self->SUPER::_init;
  
   $self->{'link_text'}       = 'Select cell types';
-  $self->{'included_header'} = 'Selected cell types';
-  $self->{'excluded_header'} = 'Unselected cell types';
+  $self->{'included_header'} = 'Selected cell types {category}';
+  $self->{'excluded_header'} = 'Unselected cell types {category}';
   $self->{'url_param'}       = 'cell';
   $self->{'rel'}             = 'modal_select_cell_types';
 }
@@ -41,20 +41,24 @@ sub content_ajax {
   my $params      = $hub->multi_params; 
 
   my @shown_cells = split(',',$hub->param('cell'));
-  my %shown_cells;
-  $shown_cells{$shown_cells[$_]} = $_ for(0..$#shown_cells);
+  my (%shown_cells,%cell_categories);
+  $shown_cells{$shown_cells[$_]} = $_+1 for(0..$#shown_cells);
+  my %cell_categories = map { $_ => 'shown' } split(',',$hub->param('pagecells'));
 
   my $fg = $hub->database('funcgen');
   my $fgcta = $fg->get_CellTypeAdaptor();
   my %all_cells = map { $_->name => $_->name } @{$fgcta->fetch_all()};
 
-  my $slice       = $hub->database('core')->get_SliceAdaptor->fetch_by_region($object->seq_region_type, $object->seq_region_name, 1, $object->seq_region_length, 1);
-  my $ld_adaptor  = $hub->database('variation')->get_LDFeatureContainerAdaptor;
-  my $populations = $ld_adaptor->get_populations_hash_by_Slice($slice);
-  my %shown       = map { $params->{"pop$_"} => $_ } grep s/^pop(\d+)$/$1/, keys %$params;
-
   $self->{'all_options'}      = \%all_cells;
   $self->{'included_options'} = \%shown_cells;
+#  $self->{'categories'} = ['with data available for this page','without data for this page'];
+  $self->{'categories'} = ['shown','hidden'];
+  $self->{'category_titles'} = {
+    shown => 'with data available for this page',
+    hidden => 'without data for this page',
+  };
+  $self->{'default_category'} = 'hidden';
+  $self->{'category_map'} = \%cell_categories;
   $self->{'param_mode'} = 'single';
 
   $self->SUPER::content_ajax;
