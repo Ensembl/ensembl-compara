@@ -385,7 +385,7 @@ sub get_all_Members {
         if ($self->isa('Bio::EnsEMBL::Compara::AlignedMemberSet')) {
             $members = $self->adaptor->db->get_AlignedMemberAdaptor->fetch_all_by_AlignedMemberSet($self);
         } else {
-            my $members = $self->adaptor->db->get_MemberAdaptor->fetch_all_by_MemberSet($self);
+            $members = $self->adaptor->db->get_MemberAdaptor->fetch_all_by_MemberSet($self);
         }
         foreach my $member (@{$members}) {
             $self->add_Member($member);
