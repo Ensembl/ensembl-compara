@@ -221,6 +221,7 @@ sub default_options {
         #'master_db' => 'mysql://ensro@compara1:3306/sf5_ensembl_compara_master',
         'master_db' => undef,
         'ncbi_db'   => $self->o('master_db'),
+        'master_db_is_missing_dnafrags' => 0,
 
         # NOTE: The databases referenced in the following arrays have to be hashes (not URLs)
         # Add the database entries for the current core databases and link 'curr_core_sources_locs' to them
@@ -814,7 +815,7 @@ sub core_pipeline_analyses {
                 'store_related_pep_sequences' => 1,
                 'allow_ambiguity_codes'         => $self->o('allow_ambiguity_codes'),
                 'find_canonical_translations_for_polymorphic_pseudogene' => 1,
-                'store_missing_dnafrags'        => 0,
+                'store_missing_dnafrags'        => $self->o('master_db_is_missing_dnafrags'),
             },
             -hive_capacity => $self->o('loadmembers_capacity'),
             -rc_name => '2Gb_job',

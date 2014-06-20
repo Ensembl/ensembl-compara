@@ -67,7 +67,6 @@ sub param_defaults {
     return {
             'cdna'              => 1,   # always use cdna for njtree_phyml
             'check_split_genes' => 1,
-            'output_clusterset_id'  => 'treebest',
             'store_tree_support'    => 1,
             'intermediate_prefix'   => 'interm',
             'extra_lk_scale'    => undef,

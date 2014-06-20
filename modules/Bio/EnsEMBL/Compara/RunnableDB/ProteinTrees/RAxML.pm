@@ -43,7 +43,6 @@ sub param_defaults {
              'remove_columns'             => 1,
              'run_treebest_sdi'           => 1,
              'reroot_with_sdi'            => 1,
-             'output_clusterset_id'       => 'raxml',
              'output_file'                => 'RAxML_result.#gene_tree_id#',
              'minimum_genes'              => 4,
     };

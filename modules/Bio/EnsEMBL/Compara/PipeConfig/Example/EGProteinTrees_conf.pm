@@ -107,7 +107,7 @@ sub default_options {
         # This parameter is an array of groups of genome_db names / IDs.
         # Each group represents the components of a polyploid genome
         # e.g. bread wheat for the "plants" division
-        'homoeologous_genome_dbs'   => $self->o('division') eq 'plants' ? [ [ 'triticum_aestivum_a', 'triticum_aestivum_b', 'triticum_aestivum_c' ] ] : [],
+        'homoeologous_genome_dbs'   => $self->o('division') eq 'plants' ? [ [ 'triticum_aestivum_a', 'triticum_aestivum_b', 'triticum_aestivum_d' ] ] : [],
 
     # homology_dnds parameters:
         # used by 'homology_dNdS'
@@ -180,6 +180,7 @@ sub default_options {
 
         # the master database for synchronization of various ids (use undef if you don't have a master database)
         'master_db' => 'mysql://ensro@mysql-eg-pan-1.ebi.ac.uk:4276/ensembl_compara_master',
+        'master_db_is_missing_dnafrags' => 1,
 
     ######## THESE ARE PASSED INTO LOAD_REGISTRY_FROM_DB SO PASS IN DB_VERSION
     ######## ALSO RAISE THE POINT ABOUT LOAD_FROM_MULTIPLE_DBs
