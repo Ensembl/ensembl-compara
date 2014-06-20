@@ -287,7 +287,7 @@ sub _lazy_getter_setter {
 sub dnafrag_start {
   my $obj = shift;
 
-  assert_integer($_[0]) if @_;
+  assert_integer($_[0]) if( @_ and defined($_[0]) );
   return $obj->_lazy_getter_setter('dnafrag_start', @_);
 }
 
@@ -311,7 +311,7 @@ sub dnafrag_start {
 sub dnafrag_end {
   my $obj = shift;
 
-  assert_integer($_[0]) if @_;
+  assert_integer($_[0]) if( @_ and defined($_[0]) );
   return $obj->_lazy_getter_setter('dnafrag_end', @_);
 }
 
@@ -335,7 +335,7 @@ sub dnafrag_end {
 sub dnafrag_strand {
   my $obj = shift;
 
-  assert_strand($_[0]) if @_;
+  assert_strand($_[0]) if( @_ and defined($_[0]) );
   return $obj->_lazy_getter_setter('dnafrag_strand', @_);
 }
 
