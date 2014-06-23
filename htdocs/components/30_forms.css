@@ -258,19 +258,17 @@ form.bgcolour div.form-field label.ff-label {
 div.filterable-dropdown-tag {
   background-color: [[TINT_BG]];
   border: 1px solid [[TINT_BORDER]];
-  margin: 0 0 4px;
+  margin: 0 0 2px;
   width: 206px;
   padding: 1px 0 0 6px;
   line-height: 19px;
   white-space: nowrap;
   position: relative;
   overflow: hidden;
-  cursor: pointer;
-  color: [[BUTTON_BG]];
+  cursor: default;
 }
 div.filterable-dropdown-tag.removable, div.filterable-dropdown-tag.readonly {
   color: [[PAGE_TEXT]];
-  cursor: default;
 }
 
 form.bgcolour div.filterable-dropdown-tag {
@@ -353,21 +351,27 @@ div.filterable-dropdown div.filterable-dropdown-div p.ff-checklist.last-child {
 div.filterable-dropdown p.ff-checklist label.ff-checklist-label {
   background-color: [[PANEL_BG]];
   white-space: nowrap;
-  padding: 3px 0 1px;
+  padding: 3px 0 1px 6px;
   display: block;
   margin: 0;
   cursor: pointer;
 }
 
-div.filterable-dropdown p.ff-checklist label.highlight {
+div.filterable-dropdown p.ff-checklist label.selected {
   color: [[PANEL_BG]];
   background-color: [[BUTTON_BG]];
 }
 
+div.filterable-dropdown p.ff-checklist label.highlight {
+  background-color: [[PANEL_BORDER]];
+}
+
+div.filterable-dropdown p.ff-checklist label.highlight.selected {
+  background-color: [[PAGE_TEXT]];
+}
+
 div.filterable-dropdown p.ff-checklist input {
-  float: left;
-  position: relative;
-  top: 2px;
+  display: none;
 }
 
 div.filterable-dropdown p.filterable-dropdown-filter {
