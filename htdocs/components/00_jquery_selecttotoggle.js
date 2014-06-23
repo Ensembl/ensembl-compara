@@ -74,7 +74,9 @@
 
       if (data) {
         if (toggleMap === 'trigger') {
-          el.trigger('change.selectToToggle');
+          if (el[0].nodeName === 'SELECT' || el[0].checked) {
+            el.trigger('change.selectToToggle');
+          }
         } else if (toggleMap === 'destroy') {
           getAllEls(el, data.wrapper).off('.selectToToggle').removeData('selectToToggle');
         }
