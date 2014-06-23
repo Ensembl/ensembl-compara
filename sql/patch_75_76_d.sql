@@ -51,8 +51,8 @@ CREATE TABLE gene_member (
   canonical_member_id         int(10) unsigned, # FK seq_member.seq_member_id
   description                 text DEFAULT NULL,
   dnafrag_id                  bigint unsigned, # FK dnafrag.dnafrag_id
-  dnafrag_start               int(10) unsigned,
-  dnafrag_end                 int(10) unsigned,
+  dnafrag_start               int(10),
+  dnafrag_end                 int(10),
   dnafrag_strand              tinyint(4),
   display_label               varchar(128) default NULL,
 
@@ -114,8 +114,8 @@ CREATE TABLE seq_member (
   gene_member_id              int(10) unsigned, # FK gene_member.gene_member_id
   description                 text DEFAULT NULL,
   dnafrag_id                  bigint unsigned, # FK dnafrag.dnafrag_id
-  dnafrag_start               int(10) unsigned,
-  dnafrag_end                 int(10) unsigned,
+  dnafrag_start               int(10),
+  dnafrag_end                 int(10),
   dnafrag_strand              tinyint(4),
   display_label               varchar(128) default NULL,
 
