@@ -21,15 +21,16 @@ Ensembl.Panel.Content = Ensembl.Panel.extend({
     this.xhr = false;
     
     var fnEls = {
-      ajaxLoad:       $('.ajax', this.el),
-      hideHints:      $('.hint', this.el),
-      glossary:       $('.glossary_mouseover', this.el),
-      dataTable:      $('table.data_table', this.el),
-      helpTips:       $('._ht', this.el),
-      wrapping:       $('table.cellwrap_inside, table.heightwrap_inside', this.el),
-      selectToToggle: $('._stt', this.el),
-      selectAll:      $('input._selectall', this.el),
-      filterable:     $('._fd', this.el)
+      ajaxLoad:         $('.ajax', this.el),
+      hideHints:        $('.hint', this.el),
+      glossary:         $('.glossary_mouseover', this.el),
+      dataTable:        $('table.data_table', this.el),
+      helpTips:         $('._ht', this.el),
+      wrapping:         $('table.cellwrap_inside, table.heightwrap_inside', this.el),
+      selectToToggle:   $('._stt', this.el),
+      selectAll:        $('input._selectall', this.el),
+      filterable:       $('._fd', this.el),
+      speciesDropdown:  $('._sdd', this.el)
     };
     
     if (this.el.hasClass('ajax')) {
@@ -326,5 +327,9 @@ Ensembl.Panel.Content = Ensembl.Panel.extend({
 
   filterable: function() {
     this.elLk.filterable.filterableDropdown();
+  },
+
+  speciesDropdown: function() {
+    this.elLk.speciesDropdown.speciesDropdown();
   }
 });
