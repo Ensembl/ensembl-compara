@@ -882,7 +882,8 @@ CREATE TABLE seq_member (
   KEY (sequence_id),
   KEY (gene_member_id),
   KEY dnafrag_id_start (dnafrag_id,dnafrag_start),
-  KEY dnafrag_id_end (dnafrag_id,dnafrag_end)
+  KEY dnafrag_id_end (dnafrag_id,dnafrag_end),
+  KEY seq_member_gene_member_id_end (seq_member_id,gene_member_id)
 ) MAX_ROWS = 100000000 COLLATE=latin1_swedish_ci ENGINE=MyISAM;
 
 
