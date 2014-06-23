@@ -34,7 +34,7 @@ GROUP BY chr_name, member.genome_db_id;
 INSERT INTO dnafrag (length, name, genome_db_id, coord_system_name, is_reference)
 SELECT MAX(chr_end), chr_name, member.genome_db_id, "unknown", 0
 FROM member LEFT JOIN dnafrag ON member.genome_db_id = dnafrag.genome_db_id AND member.chr_name = dnafrag.name
-WHERE dnafrag.name IS NULL
+WHERE chr_name IS NOT NULL AND dnafrag.name IS NULL
 GROUP BY chr_name, member.genome_db_id;
 
 
@@ -97,7 +97,7 @@ AS SELECT
 	IFNULL(orthologues, 0) AS orthologues,
 	IFNULL(paralogues, 0) AS paralogues,
 	IFNULL(homoeologues, 0) AS homoeologues
-FROM member JOIN dnafrag ON member.genome_db_id = dnafrag.genome_db_id AND member.chr_name = dnafrag.name LEFT JOIN member_production_counts USING (stable_id)
+FROM member LEFT JOIN dnafrag ON member.genome_db_id = dnafrag.genome_db_id AND member.chr_name = dnafrag.name LEFT JOIN member_production_counts USING (stable_id)
 WHERE source_name = "ENSEMBLGENE";
 
 
@@ -151,7 +151,7 @@ AS SELECT
 	chr_end AS dnafrag_end,
 	chr_strand AS dnafrag_strand,
 	display_label
-FROM member JOIN dnafrag ON member.genome_db_id = dnafrag.genome_db_id AND member.chr_name = dnafrag.name
+FROM member LEFT JOIN dnafrag ON member.genome_db_id = dnafrag.genome_db_id AND member.chr_name = dnafrag.name
 WHERE source_name != "ENSEMBLGENE";
 
 
