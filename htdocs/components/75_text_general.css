@@ -76,7 +76,7 @@ div.column-right            { margin-left: 0.5em;   margin-right: 0; }
 
 div.box-left                { width:49.5%; float:left; margin-left: 0; margin-right: 0.5%; clear:left; }
 div.box-right               { width:49.5%; float:right; margin-left: 0.5%; margin-right: 0; }
-div.home-wrapper            { float:left; width: 66.6% }
+div.column-twothird         { float:left; width: 66.6% }
 
 /* IE 6 & 7 hacks for above */
 body.ie67 div.column-wrapper,
@@ -122,8 +122,8 @@ div.twocol div.twocol-cell { margin: 0 0 4px; }
 .shadow-box               { box-shadow: 2px 2px 4px [[PANEL_BORDER]]; }
 body.ie67 .plain-box      { zoom: 100%; }
 
-.home-wrapper .tool-box   { height: 96px; padding-top: 8px; }
-.home-wrapper .tool-box p { margin-bottom: 8px; text-align: center; }
+.tool-box                 { height: 96px; padding-top: 8px; }
+.tool-box p               { margin-bottom: 8px; text-align: center; }
 
 .bordered     { border:1px solid [[PANEL_BORDER]]; }
 .unbordered   { border:none; padding:8px 12px 0 12px; }
@@ -137,7 +137,6 @@ body.ie67 .plain-box      { zoom: 100%; }
 .alert-box    { background-color:[[ALERT_BG]]; border-color:[[ALERT_BORDER]]; }
 .embedded-box { margin:16px 0; padding:8px; }
 .round-box    { -moz-border-radius: 16px; -webkit-border-radius: 16px; border-radius: 16px; }
-.contact-box  { width:50%;height:50px }
 
 /* Modifications to box styles */
 
