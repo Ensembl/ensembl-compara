@@ -434,6 +434,7 @@ sub render_normal {
           height    => $label_h,
           absolutey => 1,
           href      => $self->href($feat[0][2]),
+          class     => 'group', # for click_start/end on labels
         }));
       }
       
