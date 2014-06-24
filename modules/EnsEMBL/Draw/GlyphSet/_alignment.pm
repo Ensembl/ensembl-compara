@@ -289,8 +289,10 @@ sub render_normal {
     foreach my $i (sort { $id{$a}[0][3] <=> $id{$b}[0][3] || $id{$b}[-1][4] <=> $id{$a}[-1][4] } keys %id) {
       my @feat       = @{$id{$i}};
       my $db_name    = $feat[0][5];
-      my $bump_start = int($pix_per_bp * ($feat[0][0]  < 1       ? 1       : $feat[0][0])) - 1;
-      my $bump_end   = int($pix_per_bp * ($feat[-1][1] > $length ? $length : $feat[-1][1]));
+      my $feat_from  = min(map { $_->[0] } @feat);
+      my $feat_to    = max(map { $_->[1] } @feat);
+      my $bump_start = int($pix_per_bp * ($feat_from < 1 ? 1 : $feat_from)) - 1;
+      my $bump_end   = int($pix_per_bp * ($feat_to > $length ? $length : $feat_to));
          $bump_end   = max($bump_end, $bump_start + 1 + [ $self->get_text_width(0, $self->feature_label($feat[0][2], $db_name), '', ptsize => $fontsize, font => $fontname) ]->[2]) if $self->{'show_labels'};
       my $x          = -1e8;
       my $row        = 0;
