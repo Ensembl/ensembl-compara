@@ -433,7 +433,7 @@ sub render_normal {
           width     => $position->{'x'} + ($bump_end - $bump_start) / $pix_per_bp,
           height    => $label_h,
           absolutey => 1,
-          href      => $self->href($feat[0][2]),
+          href      => $self->href($feat[0][2],{ fake_click_start => $feat_from, fake_click_end => $feat_to }),
           class     => 'group', # for click_start/end on labels
         }));
       }

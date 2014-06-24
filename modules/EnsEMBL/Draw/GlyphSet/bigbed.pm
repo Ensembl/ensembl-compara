@@ -39,7 +39,7 @@ sub feature_id    { $_[1]->id;       }
 sub feature_group { $_[1]->id;       }
 sub feature_label { $_[1]->id;       }
 sub feature_title { return undef;    }
-sub href          { return $_[0]->_url({ action => 'UserData', id => $_[1]->id }); }
+sub href          { return $_[0]->_url({ action => 'UserData', id => $_[1]->id, %{$_[2]||{}} }); }
 sub href_bgd      { return $_[0]->_url({ action => 'UserData' }); }
 
 sub bigbed_adaptor {
