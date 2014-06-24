@@ -70,6 +70,7 @@ use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 sub param_defaults {
     return {
         'mode'  => 'display_label',      # one of 'display_label', 'description'
+        'source_name' => 'ENSEMBLGENE',  # one of 'ENSEMBLGENE', 'ENSEMBLPEP'
     };
 }
 
@@ -116,6 +117,10 @@ where cs.species_id =?},
 
 };
 
+my %source_name2table = (
+    'ENSEMBLGENE'   => 'gene_member',
+    'ENSEMBLPEP'    => 'seq_member',
+);
 
 =head2 fetch_input
 
@@ -131,11 +136,13 @@ sub fetch_input {
   my ($self) = @_;
 
   die $self->param('mode').' is not a valid mode. Valid modes are: '.join(', ', keys %$modes) unless exists $modes->{$self->param('mode')};
+  die $self->param('source_name').' is not a valid source_name. Valid modes are: '.join(', ', keys %{$modes->{$self->param('mode')}->{sql_lookups}->{$self->param('source_name')}}) unless exists $modes->{$self->param('mode')}->{sql_lookups}->{$self->param('source_name')};
+
   my $species_list = $self->param('species') || $self->param('genome_db_ids');
 
   unless( $species_list ) {
       my $h = Bio::EnsEMBL::Utils::SqlHelper->new(-DB_CONNECTION => $self->compara_dba()->dbc());
-      my $sql = q{SELECT DISTINCT genome_db_id FROM member WHERE genome_db_id IS NOT NULL AND genome_db_id <> 0};
+      my $sql = q{SELECT DISTINCT genome_db_id FROM gene_member WHERE genome_db_id IS NOT NULL AND genome_db_id <> 0};
       $species_list = $h->execute_simple( -SQL => $sql);
   }
 
@@ -219,18 +226,16 @@ sub _process_genome_db {
 	}
 
 	my @members_to_update;
-      my @sources = keys %{$modes->{$self->param('mode')}->{sql_lookups}};
-	foreach my $source_name (@sources) {
-	  print "Working with ${source_name}\n" if $self->debug();
-	  if(!$self->_need_to_process_genome_db_source($genome_db, $source_name) && !$replace) {
+        my $source_name = $self->param('source_name');
+        print "Working with ${source_name}\n" if $self->debug();
+        if(!$self->_need_to_process_genome_db_source($genome_db, $source_name) && !$replace) {
 	    if($self->debug()) {
 	      print "No need to update as all members for ${name} and source ${source_name} have display labels\n";
 	    }
-	    next;
-	  }
+        } else {
 	  my $results = $self->_process($genome_db, $source_name);
 	  push(@members_to_update, @{$results});
-	}
+      }
 	
 	return \@members_to_update;
 }
@@ -267,8 +272,7 @@ sub _process {
 sub _need_to_process_genome_db_source {
 	my ($self, $genome_db, $source_name) = @_;
 	my $h = Bio::EnsEMBL::Utils::SqlHelper->new(-DB_CONNECTION => $self->compara_dba()->dbc());
-	my $sql = q{select count(*) from member 
-where genome_db_id =? and source_name =?};
+	my $sql = sprintf('select count(*) from %s where genome_db_id =? and source_name =?', $source_name2table{$source_name});
       $sql .= sprintf("AND %s IS NULL", $modes->{$self->param('mode')}->{sql_column});
   my $params = [$genome_db->dbID(), $source_name];
 	return $h->execute_single_result( -SQL => $sql, -PARAMS => $params);
@@ -313,8 +317,9 @@ sub _update_field {
 	my $h = Bio::EnsEMBL::Utils::SqlHelper->new(-DB_CONNECTION => $self->compara_dba()->dbc());
 	 
       my $sql_column = $modes->{$self->param('mode')}->{sql_column};
+      my $table = $source_name2table{$self->param('source_name')};
 	$h->transaction( -CALLBACK => sub {
-	  my $sql = "update member set $sql_column = ? where member_id =?";
+	  my $sql = "update $table set $sql_column = ? where ${table}_id =?";
 	  $h->batch(
 	   -SQL => $sql,
 	   -CALLBACK => sub {
