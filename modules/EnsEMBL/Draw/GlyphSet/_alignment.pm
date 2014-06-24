@@ -183,12 +183,13 @@ sub render_normal {
   my $h               = @_ ? shift : ($self->my_config('height') || 8);
      $h               = $self->{'extras'}{'height'} if $self->{'extras'} && $self->{'extras'}{'height'};
   my $strand_bump     = $self->my_config('strandbump');
+  my $explicit_zero   = (defined $_[0] and !$_[0]); # arg of 0 means 0
   my $depth           = @_ ? shift : ($self->my_config('dep') || 6);
      $depth           = 0 if $strand_bump || $self->my_config('nobump');
   ## User setting overrides everything else
   my $default_depth   = $depth;
   my $user_depth = $self->{'config'}->hub->param($self->type);
-     $depth           = $user_depth if $user_depth;
+     $depth           = $user_depth if $user_depth and !$explicit_zero;
   my $gap             = $h < 2 ? 1 : 2;   
   my $strand          = $self->strand;
   my $strand_flag     = $self->my_config('strand');
