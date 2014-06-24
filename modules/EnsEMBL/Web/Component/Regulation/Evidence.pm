@@ -34,10 +34,16 @@ sub content {
   my $context       = $self->hub->param('context') || 200;
   my $object_slice  = $object->get_bound_context_slice($context); 
      $object_slice  = $object_slice->invert if $object_slice->strand < 1;
-  my $evidence_data = $object->get_evidence_data($object_slice);
+  my $cells = $object->cell_types;
+  unless($cells) {
+    my $api_data = $object->get_evidence_data($object_slice,{ cells_only => 1 });
+    my $av_cells = $api_data->{'cells'};
+    $cells = [ $av_cells->[0] ] if @$av_cells;
+  }
+  my $api_data = $object->get_evidence_data($object_slice,{ cell => $cells});
+  my $evidence_data = $api_data->{'data'};
+  my $cell_count = scalar @{$api_data->{'cells'}};
   
-  return '<p>There is no evidence for this regulatory feature </p>' unless scalar keys %$evidence_data;
-
   my $table = $self->new_table([], [], { data_table => 1, sorting => [ 'cell asc', 'type asc', 'location asc' ]});
   
   $table->add_columns(
@@ -48,8 +54,9 @@ sub content {
   ); 
 
   my @rows;
-  
+
   foreach my $cell_line (sort keys %$evidence_data) {
+    next unless !defined($cells) or scalar(grep { $_ eq $cell_line } @$cells);
     my $core_features     = $evidence_data->{$cell_line}{'core'}{'block_features'};
     my $non_core_features = $evidence_data->{$cell_line}{'non_core'}{'block_features'};
     
@@ -77,7 +84,26 @@ sub content {
   
   $table->add_rows(@rows);
 
-  return $table->render;
+  my $cell_n = $cell_count;
+  my $cell_m = $cells?@$cells:$cell_n;
+
+  my $url = $self->hub->url('Component', {
+    action   => 'Web',
+    function    => 'CellTypeSelector/ajax',
+    cell => join(',',@{$object->cell_types||[]}),
+  });
+
+  my $html = qq(
+    <a class="button modal_link" href="$url" rel="modal_select_cell_types" style="margin: 0 0 8px;">
+      <img style="padding:0 2px 2px 0;vertical-align:middle" src="/i/16/rev/lab.png">
+      Choose other cell types (showing $cell_m/$cell_n)
+    </a>
+  );
+  if(scalar keys %$evidence_data) {
+    return $html.$table->render;
+  } else {
+    return "$html<p>There is no evidence for this regulatory feature in the selected cell lines</p>";
+  }
 }
 
 sub get_motif_rows {

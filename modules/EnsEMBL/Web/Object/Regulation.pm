@@ -73,6 +73,16 @@ sub _adaptor {
   return $self->hub->get_adaptor('get_RegulatoryFeatureAdaptor', 'funcgen');
 }
 
+sub cell_types {
+  my $self = shift;
+  if($self->param('cell')) {
+    my @cells = split(',',$self->param('cell'));
+    return \@cells;
+  } else {
+    return undef;
+  }
+}
+
 sub regulation        { my $self = shift; return $self->Obj;                            }
 sub display_label     { my $self = shift; return $self->Obj->display_label;             }
 sub stable_id         { my $self = shift; return $self->Obj->stable_id;                 }
@@ -90,6 +100,20 @@ sub feature_set       { my $self = shift; return $self->Obj->feature_set;       
 sub feature_type      { my $self = shift; return $self->Obj->feature_type;              }
 sub slice             { my $self = shift; return $self->Obj->slice;                     }           
 sub seq_region_length { my $self = shift; return $self->Obj->slice->seq_region_length;  }
+sub has_evidence {
+  my ($self) = @_;
+
+  # Can be simple accessor for 76, but avoid breaking master
+  return $self->Obj->has_evidence if $self->Obj->can('has_evidence');
+  return 0;
+}
+sub cell_type_count {
+  my ($self) = @_;
+
+  # Can be simple accessor for 76, but avoid breaking master
+  return $self->Obj->cell_type_count if $self->Obj->can('cell_type_count');
+  return 0;
+}
 
 sub fetch_all_objs {
   my $self = shift;
@@ -299,23 +323,28 @@ sub bound_location_string {
 }
 
 sub get_evidence_data {
-  my ($self, $slice) = @_;
+  my ($self, $slice,$filter) = @_;
   my $hub    = $self->hub;
   my $fset_a = $hub->get_adaptor('get_FeatureSetAdaptor', 'funcgen');
   my $dset_a = $hub->get_adaptor('get_DataSetAdaptor',    'funcgen');
   my %data;
 
+  my %cells = 0;
+  $filter ||= {};
   foreach my $regf_fset (@{$fset_a->fetch_all_by_type('regulatory')}) {
     my $multicell     = $regf_fset->cell_type->name eq 'MultiCell' ? 'MultiCell' : '';
     my $regf_data_set = $dset_a->fetch_by_product_FeatureSet($regf_fset);
     
     foreach my $reg_attr_fset (@{$regf_data_set->get_supporting_sets}) {
+      my $cell_type             = $reg_attr_fset->cell_type->name;
+      $cells{$cell_type} = 1 unless $cell_type eq 'MultiCell';
+      next if $filter->{'cell'} and !grep { $_ eq $cell_type } @{$filter->{'cell'}};
+      next if $filter->{'cells_only'};
       my $reg_attr_dset = $dset_a->fetch_by_product_FeatureSet($reg_attr_fset);
       my @sset          = @{$reg_attr_dset->get_displayable_supporting_sets('result')};
 
       throw("There should only be one DISPLAYABLE supporting ResultSet to display a wiggle track for DataSet:\t" . $reg_attr_dset->name) if scalar @sset > 1; # There should only be one
       
-      my $cell_type             = $reg_attr_fset->cell_type->name;
       my $feature_type          = $reg_attr_fset->feature_type->name;
       my $block_features        = $reg_attr_fset->get_Features_by_Slice($slice);
       my $set                   = $multicell || $reg_attr_fset->is_focus_set ? 'core' : 'non_core';
@@ -326,7 +355,7 @@ sub get_evidence_data {
     }
   }
   
-  return \%data;
+  return { data => \%data, cells => [ keys %cells ] };
 }
 
 ################ Calls for Feature in Detail view ###########################

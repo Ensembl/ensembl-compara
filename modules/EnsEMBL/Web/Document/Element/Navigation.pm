@@ -200,7 +200,7 @@ sub build_menu {
   push @classes, 'closed'         if $toggle eq 'closed';
   push @classes, 'default_closed' if $data->{'closed'};
   
-  $node->node_name = 'li';
+  $node->node_name('li');
   $node->set_attributes({ id => $data->{'id'}, class => join(' ', @classes) });
   $node->append_children(@append);
 }

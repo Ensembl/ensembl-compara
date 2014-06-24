@@ -48,24 +48,18 @@ sub content {
     $object->thousandify( $object->seq_region_end ),
   );
 
-  $summary->add_row('Location', $location_html);
 
-  ## TODO - use a simpler method to create simple tables
-  my $table = $self->dom->create_element('table', {'cellspacing' => '0', 'children' => [
-    {'node_name' => 'tr', 'children' => [ map {'node_name' => 'th', 'inner_text' => $_}, ('Cell line', 'Feature type', 'Bound co-ordinates') ]}
-  ]});
-
+  my %active;
   my $all_objs = $object->fetch_all_objs;
   foreach my $reg_object (sort { $a->feature_set->cell_type->name cmp $b->feature_set->cell_type->name } @$all_objs ) {
     next if $reg_object->feature_set->cell_type->name =~/MultiCell/;
-    $table->append_child('tr', {'children' => [map {'node_name' => 'td', 'style' => 'padding-right: 8px', 'inner_text' => $_},
-      $reg_object->feature_set->cell_type->name,
-      $reg_object->feature_type->name,
-      $reg_object->bound_start ."-". $reg_object->bound_end
-    ]});
+    $active{$reg_object->feature_set->cell_type->name} = 1 if $reg_object->can('has_evidence') and $reg_object->has_evidence;
   }
+  my $num_active = scalar(grep { $_->feature_set->cell_type->name !~ /MultiCell/ } @$all_objs);
 
-  $summary->add_row('', $table->render);
+  $summary->add_row('Classification',$object->feature_type->name);
+  $summary->add_row('Location', $location_html);
+  $summary->add_row('Active in',$object->cell_type_count."/$num_active <small>(".join(', ',sort keys %active).")</small>");
 
   return $summary->render;
 }

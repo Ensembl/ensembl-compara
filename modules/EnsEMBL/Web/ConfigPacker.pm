@@ -953,17 +953,6 @@ sub _summarise_archive_db {
   foreach my $row ( @$t_aref ) {
     my @A = @$row;
     $self->db_tree->{'ASSEMBLIES'}->{$row->[0]}{$row->[1]}=$row->[2];
-    $self->db_tree->{'INITIAL_GENESETS'}->{$row->[0]}{$row->[1]}=$row->[3];
-    $self->db_tree->{'LATEST_GENESETS'}->{$row->[0]}{$row->[1]}=$row->[4];
-  }
-  $t_aref = $dbh->selectall_arrayref(
-    'select s.name, r.release_id, r.archive
-       from ens_release as r, species as s, release_species as rs
-      where s.species_id = rs.species_id and r.release_id = rs.release_id 
-       and rs.assembly_code != "" and r.online = "Y"'
-  );
-  foreach my $row ( @$t_aref ) {
-    $self->db_tree->{'ENSEMBL_ARCHIVES'}->{$row->[0]}{$row->[1]}=$row->[2];
   }
 
   $t_aref = $dbh->selectall_arrayref('select name, common_name, code, vega from species');
@@ -1772,10 +1761,6 @@ sub _munge_website {
 
   ## Release info for ID history etc
   $self->tree->{'ASSEMBLIES'}       = $self->db_multi_tree->{'ASSEMBLIES'}{$self->{_species}};
-  $self->tree->{'INITIAL_GENESETS'} = $self->db_multi_tree->{'INITIAL_GENESETS'}{$self->{_species}};
-  $self->tree->{'LATEST_GENESETS'}  = $self->db_multi_tree->{'LATEST_GENESETS'}{$self->{_species}};
-
-  $self->tree->{'ENSEMBL_ARCHIVES'} = $self->db_multi_tree->{'ENSEMBL_ARCHIVES'}{$self->{_species}};
 }
 
 sub _munge_website_multi {
@@ -1805,8 +1790,9 @@ sub _munge_file_formats {
     'bam'       => {'ext' => 'bam', 'label' => 'BAM',       'display' => 'graph', 'indexed' => 1},
     'bigwig'    => {'ext' => 'bw',  'label' => 'BigWig',    'display' => 'graph', 'indexed' => 1},
     'bigbed'    => {'ext' => 'bb',  'label' => 'BigBed',    'display' => 'graph', 'indexed' => 1},
-    'vcf'       => {'ext' => 'vcf', 'label' => 'VCF',       'display' => 'graph', 'indexed' => 1},
     'datahub'   => {'ext' => 'txt', 'label' => 'TrackHub',  'display' => 'graph', 'indexed' => 1},
+    'vcf'       => {'ext' => 'vcf', 'label' => 'VCF',       'display' => 'graph'},
+    'vcfi'      => {'ext' => 'vcf', 'label' => 'VCF (indexed)', 'display' => 'graph', 'indexed' => 1},
   );
 
   ## Munge into something useful to this website

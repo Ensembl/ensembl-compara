@@ -122,6 +122,9 @@ div.twocol div.twocol-cell { margin: 0 0 4px; }
 .shadow-box               { box-shadow: 2px 2px 4px [[PANEL_BORDER]]; }
 body.ie67 .plain-box      { zoom: 100%; }
 
+.home-wrapper .tool-box   { height: 96px; padding-top: 8px; }
+.home-wrapper .tool-box p { margin-bottom: 8px; text-align: center; }
+
 .bordered     { border:1px solid [[PANEL_BORDER]]; }
 .unbordered   { border:none; padding:8px 12px 0 12px; }
 .unbordered p { margin-bottom:8px; }
@@ -134,6 +137,7 @@ body.ie67 .plain-box      { zoom: 100%; }
 .alert-box    { background-color:[[ALERT_BG]]; border-color:[[ALERT_BORDER]]; }
 .embedded-box { margin:16px 0; padding:8px; }
 .round-box    { -moz-border-radius: 16px; -webkit-border-radius: 16px; border-radius: 16px; }
+.contact-box  { width:50%;height:50px }
 
 /* Modifications to box styles */
 

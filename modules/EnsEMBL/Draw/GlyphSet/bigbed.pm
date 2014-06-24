@@ -35,10 +35,11 @@ use EnsEMBL::Web::Text::Feature::BED;
 use base qw(EnsEMBL::Draw::GlyphSet::_alignment EnsEMBL::Draw::GlyphSet_wiggle_and_block);
 
 sub my_helplink   { return 'bigbed'; }
+sub feature_id    { $_[1]->id;       }
 sub feature_group { $_[1]->id;       }
 sub feature_label { $_[1]->id;       }
 sub feature_title { return undef;    }
-sub href          { return undef;    }
+sub href          { return $_[0]->_url({ action => 'UserData', id => $_[1]->id, %{$_[2]||{}} }); }
 sub href_bgd      { return $_[0]->_url({ action => 'UserData' }); }
 
 sub bigbed_adaptor {
@@ -186,7 +187,8 @@ sub features {
     }
     
     foreach (@$features) {
-      next if defined $_->external_data->{'item_colour'} && $_->external_data->{'item_colour'}[0] =~ /^\d+,\d+,\d+$/;
+      my $colour = $_->external_data->{'item_colour'};
+      next if defined $colour && $colour->[0] =~ /^\d+,\d+,\d+$/;
       $_->external_data->{'item_colour'}[0] = $default_rgb_string;
     }
     
