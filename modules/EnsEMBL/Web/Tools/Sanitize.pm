@@ -14,14 +14,18 @@ sub strict_clean {
   my @stack;
   my $out = "";
 
-  my @good_tags = qw(p a i b em);
+  my @good_tags = qw(p a i b em br);
+  my @auto_close = qw(br);
   my %good_attrs = ( a => { href => 'url' });
   my %more_attrs = ( a => { target => '_blank' } );
   foreach $_ (split(/(?=[<>])/,$_[0])) {
     s/^>//;
     if(/^<\//) {
-      $_ = pop @stack;
-      $out .= "</$_>";
+      my $tag = $_;
+      unless(grep { $_ eq $tag } @auto_close) {
+        $tag = pop @stack;
+        $out .= "</$tag>";
+      }
     } elsif(s/^<//) {
       s/^(\S+)//;
       my $tag = lc $1;
@@ -52,6 +56,10 @@ sub strict_clean {
         my $value = $attrs{$attr};
         $value =~ s/["'<>]//g;
         $out .= " $attr=\"$value\"";
+      }
+      if(grep { $_ eq $tag } @auto_close) {
+        pop @stack;
+        $out .= "/";
       }
       $out .= ">";
     } else {
