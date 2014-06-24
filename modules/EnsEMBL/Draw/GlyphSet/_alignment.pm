@@ -335,7 +335,7 @@ sub render_normal {
       
       my $composite;
 
-      if (scalar @feat == 1 and $depth == 1) {
+      if (scalar @feat == 1 and !$depth) {
         $composite = $self;
       } else {
         $composite = $self->Composite({
@@ -480,7 +480,7 @@ sub render_normal {
     }));
   } 
   
-  $self->_render_hidden_bgd($h) if $features_drawn && $self->my_config('addhiddenbgd') && $self->can('href_bgd') && $depth == 1;
+  $self->_render_hidden_bgd($h) if $features_drawn && $self->my_config('addhiddenbgd') && $self->can('href_bgd') && !$depth; 
   
   $self->errorTrack(sprintf q{No features from '%s' in this region}, $self->my_config('name')) unless $features_drawn || $self->{'no_empty_track_message'} || $self->{'config'}->get_option('opt_empty_tracks') == 0;
   $self->errorTrack(sprintf(q{%s features from '%s' omitted}, $features_bumped, $self->my_config('name')), undef, $y_offset) if $self->get_parameter('opt_show_bumped') && $features_bumped;
