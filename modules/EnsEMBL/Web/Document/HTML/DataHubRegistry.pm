@@ -38,12 +38,14 @@ sub render {
   my @valid_species = $species_defs->valid_species;
 
   my %datahubs;
+  my $has_grch37;
   foreach my $sp (@valid_species) {
     my $sp_hubs = $species_defs->get_config($sp, 'PUBLIC_DATAHUBS');
     if (keys %{$sp_hubs||{}}) {
       while (my($key,$menu) = each (%$sp_hubs)) {
         my %config = %{$species_defs->get_config($sp, $key)||{}};
         next unless keys %config;
+        $has_grch37++ if $config{'assembly'} eq 'GRCh37';
         $config{'priority'} = 0 unless $config{'priority'};
         $datahubs{$key} = {'menu' => $menu, %config};
         if ($datahubs{$key}{'species'}) {
@@ -58,14 +60,11 @@ sub render {
   my @order = sort { $datahubs{$b}->{'priority'} <=> $datahubs{$a}->{'priority'} 
                     || $datahubs{$a}->{'name'} cmp $datahubs{$b}->{'name'}
                     } keys %datahubs;
-  warn ">>> @order";
-  #use Data::Dumper;
-  #warn Dumper(\%datahubs);
 
   my $html;
   
   $html .= '<p>IMPORTANT NOTE: Human assembly GRCh37 is no longer available in the main Ensembl release. The links below will take you to our long-term archive,
-<a href="">grch37.ensembl.org</a>.</p>';
+<a href="">grch37.ensembl.org</a>.</p>' if $has_grch37;
 
   my $table = EnsEMBL::Web::Document::Table->new([
       { key => 'name',     title => 'Datahub name', width => '30%', align => 'left', sort => 'html' },
@@ -84,9 +83,9 @@ sub render {
                         $site, $sp_info->{'dir'}, $location,
                         $hub_info->{'url'}, $hub_info->{'menu'}
                         );
-      my $text = sprintf('<a href="%s"><img src="/i/species/16/%s.png" alt="%s" style="float:left;padding-right:4px" /></a> <a href="%s">%s</a>', 
+      my $text = sprintf('<a href="%s"><img src="/i/species/16/%s.png" alt="%s" style="float:left;padding-right:4px" /></a> <a href="%s">%s (%s)</a>', 
                           $link, $sp_info->{'dir'}, $sp_info->{'common'}, 
-                          $link, $sp_info->{'common'}
+                          $link, $sp_info->{'common'}, $hub_info->{'assembly'},
                         );
       push @species_links, $text;
     } 
