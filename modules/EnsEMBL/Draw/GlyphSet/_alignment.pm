@@ -289,10 +289,10 @@ sub render_normal {
     foreach my $i (sort { $id{$a}[0][3] <=> $id{$b}[0][3] || $id{$b}[-1][4] <=> $id{$a}[-1][4] } keys %id) {
       my @feat       = @{$id{$i}};
       my $db_name    = $feat[0][5];
-      my $feat_from  = min(map { $_->[0] } @feat);
-      my $feat_to    = max(map { $_->[1] } @feat);
-      my $bump_start = int($pix_per_bp * ($feat_from < 1 ? 1 : $feat_from)) - 1;
-      my $bump_end   = int($pix_per_bp * ($feat_to > $length ? $length : $feat_to));
+      my $feat_from  = max(min(map { $_->[0] } @feat),1);
+      my $feat_to    = min(max(map { $_->[1] } @feat),$length);
+      my $bump_start = int($pix_per_bp * $feat_from) - 1;
+      my $bump_end   = int($pix_per_bp * $feat_to);
          $bump_end   = max($bump_end, $bump_start + 1 + [ $self->get_text_width(0, $self->feature_label($feat[0][2], $db_name), '', ptsize => $fontsize, font => $fontname) ]->[2]) if $self->{'show_labels'};
       my $x          = -1e8;
       my $row        = 0;
@@ -419,6 +419,7 @@ sub render_normal {
       }
       
       if ($self->{'show_labels'}) {
+        my $start = $self->{'container'}->start;
         $self->push($self->Text({
           font      => $fontname,
           colour    => $label_colour,
@@ -433,7 +434,7 @@ sub render_normal {
           width     => $position->{'x'} + ($bump_end - $bump_start) / $pix_per_bp,
           height    => $label_h,
           absolutey => 1,
-          href      => $self->href($feat[0][2],{ fake_click_start => $feat_from, fake_click_end => $feat_to }),
+          href      => $self->href($feat[0][2],{ fake_click_start => $start + $feat_from, fake_click_end => $start + $feat_to }),
           class     => 'group', # for click_start/end on labels
         }));
       }
@@ -499,8 +500,8 @@ sub render_ungrouped {
   my $self           = shift;
   my $strand         = $self->strand;
   my $strand_flag    = $self->my_config('strand');
-  my $length         = $self->{'container'}->length;
-  my $pix_per_bp     = $self->scalex;
+    my $length         = $self->{'container'}->length;
+    my $pix_per_bp     = $self->scalex;
   my $draw_cigar     = $self->my_config('force_cigar') eq 'yes' || $pix_per_bp > 0.2;
   my $h              = $self->my_config('height') || 8;
   my $regexp         = $pix_per_bp > 0.1 ? '\dI' : $pix_per_bp > 0.01 ? '\d\dI' : '\d\d\dI';
