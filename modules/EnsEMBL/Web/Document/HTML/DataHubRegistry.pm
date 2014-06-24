@@ -70,8 +70,7 @@ sub render {
       { key => 'name',     title => 'Datahub name', width => '30%', align => 'left', sort => 'html' },
       { key => 'description',    title => 'Description', width => '30%', align => 'left', sort => 'string' },
       { key => 'species',      title => 'Species and assembly', width => '40%', align => 'left', sort => 'html' },
-  ], [], { data_table => 1, exportable => 1 });
-
+  ], [], {});
 
   foreach my $key (@order) {
     my $hub_info = $datahubs{$key};
