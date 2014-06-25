@@ -23,6 +23,7 @@ package EnsEMBL::Web::Document::HTML::DataHubRegistry;
 use strict;
 
 use EnsEMBL::Web::Document::Table;
+use EnsEMBL::Web::DBSQL::ArchiveAdaptor;
 
 use base qw(EnsEMBL::Web::Document::HTML);
 
@@ -32,13 +33,12 @@ sub render {
   my $hub           = $self->hub;
   my $species_defs  = $hub->species_defs;
   my $sitename      = $species_defs->ENSEMBL_SITETYPE;
-  my $static_server = $species_defs->ENSEMBL_STATIC_SERVER;
+  my $adaptor       = EnsEMBL::Web::DBSQL::ArchiveAdaptor->new($hub); 
 
   ## Get current Ensembl species
   my @valid_species = $species_defs->valid_species;
 
   my %datahubs;
-  my $has_grch37;
   foreach my $sp (@valid_species) {
     ## This is all a bit hacky, but makes configuration of multi-species datahubs simpler
     my %sp_hubs = (%{$species_defs->get_config($sp, 'PUBLIC_DATAHUBS')||{}}, $species_defs->multiX('PUBLIC_MULTISPECIES_DATAHUBS'));
@@ -50,9 +50,6 @@ sub render {
         my %config = keys %multi ? %multi : %{$species_defs->get_config($sp, $key)||{}};
         next unless keys %config;
         my %assemblies = $config{'assemblies'} ? @{$config{'assemblies'}} : ($sp => $config{'assembly'});
-        ## Archive hack!
-        $has_grch37++ if $config{'assembly'} eq 'GRCh37';
-
         $config{'priority'} = 0 unless $config{'priority'};
         $datahubs{$key} = {'menu' => $menu, %config};
         while (my ($sp, $assembly) = each (%assemblies)) {
@@ -73,8 +70,7 @@ sub render {
 
   my $html;
   
-  $html .= '<p>IMPORTANT NOTE: Human assembly GRCh37 is no longer available in the main Ensembl release. The links below will take you to our long-term archive,
-<a href="">grch37.ensembl.org</a>.</p>' if $has_grch37;
+  $html .= '<p>IMPORTANT NOTE: Datahubs on older assemblies have links to Ensembl archives where available.</p>'; 
 
   my $table = EnsEMBL::Web::Document::Table->new([
       { key => 'name',     title => 'Datahub name', width => '30%', align => 'left', sort => 'html' },
@@ -86,8 +82,33 @@ sub render {
     my $hub_info = $datahubs{$key};
     my (@species_links, $species_html);
     foreach my $sp_info (@{$hub_info->{'species'}}) {
-      my $location = $species_defs->get_config($sp_info->{'dir'}, 'SAMPLE_DATA')->{'LOCATION_PARAM'};
-      my $site = ($sp_info->{'dir'} eq 'Homo_sapiens' && $sp_info->{'assembly'} eq 'GRCh37') ? 'http://grch37.ensembl.org' : '';
+      my $species = $sp_info->{'dir'};
+
+      ## Get best archive for older releases
+      my $site = '';
+      my $archive_version = $species_defs->ENSEMBL_VERSION;
+      ## Spaces are problematic in ini file arrays
+      (my $assembly_name = $species_defs->get_config($species, 'ASSEMBLY_NAME')) =~ s/ /_/; 
+      unless ($assembly_name =~ /$sp_info->{'assembly'}/i) {
+        if ($species eq 'Homo_sapiens' && $sp_info->{'assembly'} eq 'GRCh37') {
+          $site = 'http://grch37.ensembl.org'; 
+        }
+        else {
+          my $archives = $adaptor->fetch_archives_by_species($species);
+          foreach (reverse sort keys %$archives) {
+            (my $assembly = $archives->{$_}{'assembly'}) =~ s/ /_/; 
+            if ($assembly =~ /$sp_info->{'assembly'}/i) {
+              $archive_version = $_;
+              $site = sprintf('http://%s.archive.ensembl.org', $archives->{$_}{'archive'});
+              last;
+            }
+          }
+        }
+      }
+      ## Don't link back to archives with no datahub support!
+      next if $archive_version < 69;
+
+      my $location = $species_defs->get_config($species, 'SAMPLE_DATA')->{'LOCATION_PARAM'};
       my $link = sprintf('%s/%s/Location/View?r=%s;contigviewbottom=url:%s;format=DATAHUB;menu=%s',
                         $site, $sp_info->{'dir'}, $location,
                         $hub_info->{'url'}, $hub_info->{'menu'}
