@@ -52,8 +52,6 @@ sub init {
   $self->modify_configs([ 'transcript' ], { render => 'gene_label', strand => 'r' });
   $self->modify_configs([ 'variation',  'variation_legend', 'structural_variation_legend' ], { display => 'off', menu => 'no' });
 
-  $self->load_configured_datahubs;
-  
   $self->add_tracks('decorations',
     [ 'scalebar',  '', 'scalebar',  { display => 'normal', menu => 'no'                }],
     [ 'ruler',     '', 'ruler',     { display => 'normal', menu => 'no', strand => 'f' }],
