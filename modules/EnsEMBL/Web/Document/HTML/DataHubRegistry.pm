@@ -40,25 +40,35 @@ sub render {
   my %datahubs;
   my $has_grch37;
   foreach my $sp (@valid_species) {
-    my $sp_hubs = $species_defs->get_config($sp, 'PUBLIC_DATAHUBS');
-    if (keys %{$sp_hubs||{}}) {
-      while (my($key,$menu) = each (%$sp_hubs)) {
-        my %config = %{$species_defs->get_config($sp, $key)||{}};
+    ## This is all a bit hacky, but makes configuration of multi-species datahubs simpler
+    my %sp_hubs = (%{$species_defs->get_config($sp, 'PUBLIC_DATAHUBS')||{}}, $species_defs->multiX('PUBLIC_MULTISPECIES_DATAHUBS'));
+    if (keys %sp_hubs) {
+      while (my($key,$menu) = each (%sp_hubs)) {
+        ## multiX returns a hash, not a hash ref, and Perl gets confused
+        ## if you try to assign hashes and hashrefs to same variable
+        my %multi = $species_defs->multiX($key);
+        my %config = keys %multi ? %multi : %{$species_defs->get_config($sp, $key)||{}};
         next unless keys %config;
+        my %assemblies = $config{'assemblies'} ? @{$config{'assemblies'}} : ($sp => $config{'assembly'});
+        ## Archive hack!
         $has_grch37++ if $config{'assembly'} eq 'GRCh37';
+
         $config{'priority'} = 0 unless $config{'priority'};
         $datahubs{$key} = {'menu' => $menu, %config};
-        if ($datahubs{$key}{'species'}) {
-          push @{$datahubs{$key}{'species'}}, {'dir' => $sp, 'common' => $species_defs->get_config($sp, 'SPECIES_COMMON_NAME')};
-        }
-        else {
-          $datahubs{$key}{'species'} = [{'dir' => $sp, 'common' => $species_defs->get_config($sp, 'SPECIES_COMMON_NAME')}];
+        while (my ($sp, $assembly) = each (%assemblies)) {
+          if ($datahubs{$key}{'species'}) {
+            push @{$datahubs{$key}{'species'}}, {'dir' => $sp, 'common' => $species_defs->get_config($sp, 'SPECIES_COMMON_NAME'), 'assembly' => $assembly};
+          }
+          else {
+            $datahubs{$key}{'species'} = [{'dir' => $sp, 'common' => $species_defs->get_config($sp, 'SPECIES_COMMON_NAME'), 'assembly' => $assembly}];
+          }
         }
       }
     }
   }
+
   my @order = sort { $datahubs{$b}->{'priority'} <=> $datahubs{$a}->{'priority'} 
-                    || $datahubs{$a}->{'name'} cmp $datahubs{$b}->{'name'}
+                    || lc($datahubs{$a}->{'name'}) cmp lc($datahubs{$b}->{'name'})
                     } keys %datahubs;
 
   my $html;
@@ -74,24 +84,23 @@ sub render {
 
   foreach my $key (@order) {
     my $hub_info = $datahubs{$key};
-    my @species_links;
+    my (@species_links, $species_html);
     foreach my $sp_info (@{$hub_info->{'species'}}) {
       my $location = $species_defs->get_config($sp_info->{'dir'}, 'SAMPLE_DATA')->{'LOCATION_PARAM'};
-      my $site = ($sp_info->{'dir'} eq 'Homo_sapiens' && $hub_info->{'assembly'} eq 'GRCh37') ? 'http://grch37.ensembl.org' : '';
+      my $site = ($sp_info->{'dir'} eq 'Homo_sapiens' && $sp_info->{'assembly'} eq 'GRCh37') ? 'http://grch37.ensembl.org' : '';
       my $link = sprintf('%s/%s/Location/View?r=%s;contigviewbottom=url:%s;format=DATAHUB;menu=%s',
                         $site, $sp_info->{'dir'}, $location,
                         $hub_info->{'url'}, $hub_info->{'menu'}
                         );
-      my $text = sprintf('<a href="%s"><img src="/i/species/16/%s.png" alt="%s" style="float:left;padding-right:4px" /></a> <a href="%s">%s (%s)</a>', 
+      $species_html .= sprintf('<p><a href="%s"><img src="/i/species/16/%s.png" alt="%s" style="float:left;padding-right:4px" /></a> <a href="%s">%s (%s)</a></p>', 
                           $link, $sp_info->{'dir'}, $sp_info->{'common'}, 
-                          $link, $sp_info->{'common'}, $hub_info->{'assembly'},
+                          $link, $sp_info->{'common'}, $sp_info->{'assembly'},
                         );
-      push @species_links, $text;
     } 
     $table->add_row({
               'name'        => $hub_info->{'name'},
               'description' => $hub_info->{'description'},
-              'species'     => join('<br/>', @species_links),
+              'species'     => $species_html,
     });
   }
 
