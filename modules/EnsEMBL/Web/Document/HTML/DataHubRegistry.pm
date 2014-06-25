@@ -82,29 +82,31 @@ sub render {
     foreach my $sp_info (@{$hub_info->{'species'}}) {
       my $species = $sp_info->{'dir'};
 
-      ## Get best archive for older releases
       my $site = '';
-      my $archive_version = $species_defs->ENSEMBL_VERSION;
-      ## Spaces are problematic in ini file arrays
-      (my $assembly_name = $species_defs->get_config($species, 'ASSEMBLY_NAME')) =~ s/ /_/; 
-      unless ($assembly_name =~ /$sp_info->{'assembly'}/i) {
-        if ($species eq 'Homo_sapiens' && $sp_info->{'assembly'} eq 'GRCh37') {
-          $site = 'http://grch37.ensembl.org'; 
-        }
-        else {
-          my $archives = $adaptor->fetch_archives_by_species($species);
-          foreach (reverse sort keys %$archives) {
-            (my $assembly = $archives->{$_}{'assembly'}) =~ s/ /_/; 
-            if ($assembly =~ /$sp_info->{'assembly'}/i) {
-              $archive_version = $_;
-              $site = sprintf('http://%s.archive.ensembl.org', $archives->{$_}{'archive'});
-              last;
+      if ($species_defs->multidb->{'DATABASE_ARCHIVE'}{'NAME'}) {
+        ## Get best archive for older releases
+        my $archive_version = $species_defs->ENSEMBL_VERSION;
+        ## Spaces are problematic in ini file arrays
+        (my $assembly_name = $species_defs->get_config($species, 'ASSEMBLY_NAME')) =~ s/ /_/; 
+        unless ($assembly_name =~ /$sp_info->{'assembly'}/i) {
+          if ($species eq 'Homo_sapiens' && $sp_info->{'assembly'} eq 'GRCh37') {
+            $site = 'http://grch37.ensembl.org'; 
+          }
+          else {
+            my $archives = $adaptor->fetch_archives_by_species($species);
+            foreach (reverse sort keys %$archives) {
+              (my $assembly = $archives->{$_}{'assembly'}) =~ s/ /_/; 
+              if ($assembly =~ /$sp_info->{'assembly'}/i) {
+                $archive_version = $_;
+                $site = sprintf('http://%s.archive.ensembl.org', $archives->{$_}{'archive'});
+                last;
+              }
             }
           }
         }
+        ## Don't link back to archives with no datahub support!
+        next if $archive_version < 69;
       }
-      ## Don't link back to archives with no datahub support!
-      next if $archive_version < 69;
 
       my $location = $species_defs->get_config($species, 'SAMPLE_DATA')->{'LOCATION_PARAM'};
       my $link = sprintf('%s/%s/Location/View?r=%s;contigviewbottom=url:%s;format=DATAHUB;menu=%s',
