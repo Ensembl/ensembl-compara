@@ -44,7 +44,7 @@ package Bio::EnsEMBL::Compara::PipeConfig::MergeDBsIntoRelease_conf;
 use strict;
 use warnings;
 
-use base ('Bio::EnsEMBL::Hive::PipeConfig::HiveGeneric_conf');
+use base ('Bio::EnsEMBL::Hive::PipeConfig::EnsemblGeneric_conf');
 
 
      
