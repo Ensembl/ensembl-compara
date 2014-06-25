@@ -218,7 +218,32 @@ sub render_normal {
     $label_h = [ $self->get_text_width(0, 'X', '', ptsize => $fontsize, font => $fontname) ]->[3];
     $join    = 1; # The no-join thing gets completely mad with labels on.
   }
-  
+
+  if(!$self->{'show_labels'}) { 
+    # Force no bumping if no actual overlap in features
+    # XXX doing a sort is too slow: integrate with main sort below 
+    # Can take about 1-5ms on tracks with a lot of data
+    my %ends;
+    my @features;
+    foreach my $feature_key (@sorted) {
+      my @tmp = @{$features{$feature_key}||[]};
+      if (ref $tmp[0] eq 'ARRAY') {
+        push @features,@{$tmp[0]};
+      } else {
+        push @features,@tmp;
+      }
+    }
+    @features = sort { $a->start <=> $b->start } @features;
+    my $overlap = 0;
+    if(@features) {
+      foreach my $s (1..$#features) {
+        $overlap = 1 if($features[$s-1]->end > $features[$s]->start);
+      }
+    }
+
+    $depth = 0 unless $overlap;
+  }
+
   my ($track_height,$on_screen,$off_screen) = (0,0,0);
 
   foreach my $feature_key (@sorted) {
