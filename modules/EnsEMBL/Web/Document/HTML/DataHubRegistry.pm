@@ -109,9 +109,9 @@ sub render {
       }
 
       my $location = $species_defs->get_config($species, 'SAMPLE_DATA')->{'LOCATION_PARAM'};
-      my $link = sprintf('%s/%s/Location/View?r=%s;contigviewbottom=url:%s;format=DATAHUB;menu=%s',
+      my $link = sprintf('%s/%s/Location/View?r=%s;contigviewbottom=url:%s;format=DATAHUB;menu=%s#modal_config_viewbottom-%s',
                         $site, $sp_info->{'dir'}, $location,
-                        $hub_info->{'url'}, $hub_info->{'menu'}
+                        $hub_info->{'url'}, $hub_info->{'menu'}, $hub_info->{'menu'}
                         );
       $species_html .= sprintf('<p><a href="%s"><img src="/i/species/16/%s.png" alt="%s" style="float:left;padding-right:4px" /></a> <a href="%s">%s (%s)</a></p>', 
                           $link, $sp_info->{'dir'}, $sp_info->{'common'}, 
