@@ -69,14 +69,14 @@ sub default_options {
 
         'urls'              => {
             'master_db'     => 'mysql://ensro@compara1/sf5_ensembl_compara_master',
-            'prev_rel_db'   => 'mysql://ensro@ens-livemirror/ensembl_compara_74',   # <----- make sure this refers to the previous release!
+            'prev_rel_db'   => 'mysql://ensro@ens-livemirror/ensembl_compara_75',   # <----- make sure this refers to the previous release!
 
                                         # make sure that for the rest of the databases you have servers' and owners' names right:
-            'curr_rel_db'   => 'mysql://ensadmin:'.$self->o('password').'@compara5/'.$self->o('ENV','USER').'_ensembl_compara_'.$self->o('ensembl_release'),
+            'curr_rel_db'   => 'mysql://ensadmin:'.$self->o('password').'@compara5/mp12_ensembl_compara_'.$self->o('ensembl_release'),
 
-            'protein_db'    => 'mysql://ensro@compara1/mm14_protein_trees_'.$self->o('ensembl_release'),
-            'ncrna_db'      => 'mysql://ensro@compara4/mp12_compara_nctrees_'.$self->o('ensembl_release'),
-            'family_db'     => 'mysql://ensro@compara2/lg4_compara_families_'.$self->o('ensembl_release'),
+            'protein_db'    => 'mysql://ensro@compara3/mm14_protein_trees_'.$self->o('ensembl_release').'b',
+            'ncrna_db'      => 'mysql://ensro@compara4/mp12_compara_nctrees_'.$self->o('ensembl_release').'b',
+            'family_db'     => 'mysql://ensro@compara2/lg4_families_'.$self->o('ensembl_release'),
             'projection_db' => 'mysql://ensro@compara1/mm14_homology_projections_'.$self->o('ensembl_release'),
         },
 
