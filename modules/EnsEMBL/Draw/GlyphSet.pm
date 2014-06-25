@@ -712,6 +712,10 @@ sub too_many_features {
   $self->errorTrack("Too many $label in this region - please zoom in or select a histogram style");
 }
 
+sub no_track_on_strand {
+  my $self = shift;
+  return $self->errorTrack(sprintf 'No %s on %s strand in this region', $self->error_track_name, $self->strand == 1 ? 'forward' : 'reverse');
+}
 
 sub errorTrack {
   my ($self, $message, $x, $y) = @_;
