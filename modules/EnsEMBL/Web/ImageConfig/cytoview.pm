@@ -66,6 +66,7 @@ sub init {
 
   $self->load_tracks;
   $self->load_configured_das({ strand => 'r' });
+  $self->load_configured_datahubs;
   $self->image_resize = 1;
   
   $self->modify_configs(
