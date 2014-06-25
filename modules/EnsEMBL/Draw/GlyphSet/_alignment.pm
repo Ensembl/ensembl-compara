@@ -219,7 +219,7 @@ sub render_normal {
     $join    = 1; # The no-join thing gets completely mad with labels on.
   }
   
-  my ($total_count, $cumul_count, $overflow, $track_height);
+  my ($track_height,$on_screen,$off_screen) = (0,0,0);
 
   foreach my $feature_key (@sorted) {
     ## Fix for userdata with per-track config
@@ -253,14 +253,10 @@ sub render_normal {
       my $db_name     = $f->can('external_db_id') ? $extdbs->{$f->external_db_id}{'db_name'} : 'OLIGO';
       
       push @{$id{$fgroup_name}}, [ $s, $e, $f, int($s * $pix_per_bp), int($e * $pix_per_bp), $db_name ];
-      $total_count++;
     }
     
     next unless keys %id;
     
-    $cumul_count += $total_count;
-    $overflow += ($total_count - $depth);
-
     my $colour_key     = $self->colour_key($feature_key);
     my $feature_colour = $self->my_colour($colour_key);
     my $join_colour    = $self->my_colour($colour_key, 'join');
@@ -303,9 +299,11 @@ sub render_normal {
         
         if ($row > $depth) {
           $features_bumped++;
+          $off_screen++;
           next;
         }
       }
+      $on_screen++;
       
       if ($config) {
         my $score = $feat[0][2]->score || 0;
@@ -454,11 +452,11 @@ sub render_normal {
     }
     $y_offset -= $strand * ($self->_max_bump_row * ($h + $gap + $label_h) + 6);
   }
-  if ($cumul_count && $overflow && $overflow > 0) {
+  if ($off_screen) {
     my $default = $depth == $default_depth ? 'by default' : '';
-    my $text = "This track is $depth features deep $default - click to show up to $overflow more";
+    my $text = "Showing $on_screen of $off_screen features, due to track being limited to $depth rows $default - click to show more";
     my $y = $track_height + $fontsize * 2 + 10;
-    my $href = $self->_url({'action' => 'ExpandTrack', 'goto' => $self->{'config'}->hub->action, 'count' => $overflow + $depth, 'default' => $default_depth}); 
+    my $href = $self->_url({'action' => 'ExpandTrack', 'goto' => $self->{'config'}->hub->action, 'count' => $on_screen+$off_screen, 'default' => $default_depth}); 
     $self->push($self->Text({
           font      => $fontname,
           colour    => 'black',
