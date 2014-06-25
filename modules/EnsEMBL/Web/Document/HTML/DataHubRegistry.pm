@@ -70,8 +70,6 @@ sub render {
 
   my $html;
   
-  $html .= '<p>IMPORTANT NOTE: Datahubs on older assemblies have links to Ensembl archives where available.</p>'; 
-
   my $table = EnsEMBL::Web::Document::Table->new([
       { key => 'name',     title => 'Datahub name', width => '30%', align => 'left', sort => 'html' },
       { key => 'description',    title => 'Description', width => '30%', align => 'left', sort => 'string' },
