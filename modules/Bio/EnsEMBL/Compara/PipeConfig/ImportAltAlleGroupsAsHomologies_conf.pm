@@ -46,13 +46,13 @@ sub default_options {
 
         # URLs of other databases (from which we inherit the members and sequences, and base objects)
         'master_db'       => 'mysql://ensro@compara1/sf5_ensembl_compara_master',
-        'family_db'       => 'mysql://ensro@compara2/lg4_compara_families_75',
-        'ncrnatrees_db'   => 'mysql://ensro@compara4/mp12_compara_nctrees_75',
+        'family_db'       => 'mysql://ensro@compara2/lg4_families_76',
+        'ncrnatrees_db'   => 'mysql://ensro@compara4/mp12_compara_nctrees_76b',
 
         # Tables to copy and merge
         'tables_from_master'    => [ 'method_link', 'species_set', 'method_link_species_set', 'ncbi_taxa_node', 'ncbi_taxa_name' ],
+        'tables_from_family_db' => [ 'dnafrag', 'genome_db' ],
         'tables_to_merge'       => [ 'seq_member', 'gene_member', 'sequence' ],
-        'tables_to_copy'        => [ 'genome_db' ],
     };
 }
 
@@ -111,7 +111,7 @@ sub pipeline_analyses {
         {   -logic_name => 'copy_from_familydb_factory',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
             -parameters => {
-                'inputlist'     => $self->o('tables_to_copy'),
+                'inputlist'     => $self->o('tables_from_family_db'),
                 'column_names'  => [ 'table' ],
             },
             -flow_into => {
@@ -203,6 +203,22 @@ sub pipeline_analyses {
             -parameters => {
                 'die_if_no_core_adaptor'  => 1,
                 'replace'                 => 1,
+                'mode'                    => 'display_label',
+                'source_name'             => 'ENSEMBLGENE',
+                'genome_db_ids'           => [ '#genome_db_id#' ],
+            },
+            -flow_into => [ 'update_seq_member_display_labels' ],
+            -rc_name => '500Mb_job',
+        },
+
+        {
+            -logic_name => 'update_seq_member_display_labels',
+            -module => 'Bio::EnsEMBL::Compara::RunnableDB::MemberDisplayLabelUpdater',
+            -parameters => {
+                'die_if_no_core_adaptor'  => 1,
+                'replace'                 => 1,
+                'mode'                    => 'display_label',
+                'source_name'             => 'ENSEMBLPEP',
                 'genome_db_ids'           => [ '#genome_db_id#' ],
             },
             -flow_into => [ 'update_member_descriptions' ],

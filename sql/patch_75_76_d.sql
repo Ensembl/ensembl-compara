@@ -34,7 +34,7 @@ GROUP BY chr_name, member.genome_db_id;
 INSERT INTO dnafrag (length, name, genome_db_id, coord_system_name, is_reference)
 SELECT MAX(chr_end), chr_name, member.genome_db_id, "unknown", 0
 FROM member LEFT JOIN dnafrag ON member.genome_db_id = dnafrag.genome_db_id AND member.chr_name = dnafrag.name
-WHERE dnafrag.name IS NULL
+WHERE chr_name IS NOT NULL AND dnafrag.name IS NULL
 GROUP BY chr_name, member.genome_db_id;
 
 
@@ -51,8 +51,8 @@ CREATE TABLE gene_member (
   canonical_member_id         int(10) unsigned, # FK seq_member.seq_member_id
   description                 text DEFAULT NULL,
   dnafrag_id                  bigint unsigned, # FK dnafrag.dnafrag_id
-  dnafrag_start               int(10) unsigned,
-  dnafrag_end                 int(10) unsigned,
+  dnafrag_start               int(10),
+  dnafrag_end                 int(10),
   dnafrag_strand              tinyint(4),
   display_label               varchar(128) default NULL,
 
@@ -97,7 +97,7 @@ AS SELECT
 	IFNULL(orthologues, 0) AS orthologues,
 	IFNULL(paralogues, 0) AS paralogues,
 	IFNULL(homoeologues, 0) AS homoeologues
-FROM member JOIN dnafrag ON member.genome_db_id = dnafrag.genome_db_id AND member.chr_name = dnafrag.name LEFT JOIN member_production_counts USING (stable_id)
+FROM member LEFT JOIN dnafrag ON member.genome_db_id = dnafrag.genome_db_id AND member.chr_name = dnafrag.name LEFT JOIN member_production_counts USING (stable_id)
 WHERE source_name = "ENSEMBLGENE";
 
 
@@ -114,8 +114,8 @@ CREATE TABLE seq_member (
   gene_member_id              int(10) unsigned, # FK gene_member.gene_member_id
   description                 text DEFAULT NULL,
   dnafrag_id                  bigint unsigned, # FK dnafrag.dnafrag_id
-  dnafrag_start               int(10) unsigned,
-  dnafrag_end                 int(10) unsigned,
+  dnafrag_start               int(10),
+  dnafrag_end                 int(10),
   dnafrag_strand              tinyint(4),
   display_label               varchar(128) default NULL,
 
@@ -132,6 +132,7 @@ CREATE TABLE seq_member (
   KEY (source_name),
   KEY (sequence_id),
   KEY (gene_member_id),
+  KEY seq_member_gene_member_id_end (seq_member_id,gene_member_id),
   KEY dnafrag_id_start (dnafrag_id,dnafrag_start),
   KEY dnafrag_id_end (dnafrag_id,dnafrag_end)
 ) MAX_ROWS = 100000000 COLLATE=latin1_swedish_ci ENGINE=MyISAM
@@ -151,7 +152,7 @@ AS SELECT
 	chr_end AS dnafrag_end,
 	chr_strand AS dnafrag_strand,
 	display_label
-FROM member JOIN dnafrag ON member.genome_db_id = dnafrag.genome_db_id AND member.chr_name = dnafrag.name
+FROM member LEFT JOIN dnafrag ON member.genome_db_id = dnafrag.genome_db_id AND member.chr_name = dnafrag.name
 WHERE source_name != "ENSEMBLGENE";
 
 
