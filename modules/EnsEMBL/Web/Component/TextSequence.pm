@@ -63,6 +63,11 @@ sub get_sequence_data {
   foreach my $sl (@$slices) {
     my $mk  = {};    
     my $seq = $sl->{'seq'} || $sl->{'slice'}->seq(1);
+    
+    # uc() used to happen by default, but the resequencing view can now
+    # validly show lowercase sequence. If any other views retrieve lc sequence
+    # from the API but need it rendered in uc, the following line will need to
+    # be uncommented and edited so the uc() doesn't happen on resequencing view
     #$seq = uc($seq) unless 
     
     $self->set_sequence($config, $sequence, $mk, $seq, $sl->{'name'});
