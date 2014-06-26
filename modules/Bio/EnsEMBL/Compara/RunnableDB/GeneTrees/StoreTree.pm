@@ -126,7 +126,7 @@ sub dumpTreeMultipleAlignmentToWorkdir {
 
   $sa->set_displayname_flat(1);
   # Now outputing the alignment
-  open(OUTSEQ, ">$aln_file") or die "Could not open '$aln_file' for writing : $!";
+  open(OUTSEQ, ">", $aln_file) or die "Could not open '$aln_file' for writing : $!";
   my $alignIO = Bio::AlignIO->newFh( -fh => \*OUTSEQ, -format => "fasta");
   print $alignIO $sa;
   close OUTSEQ;
@@ -161,7 +161,7 @@ sub dumpAlignedMemberSet {
 
     # Now outputing the alignment
     my $aln_file = sprintf('%s.%s', $file_root, $format);
-    open(OUTSEQ, ">$aln_file") or die "Could not open '$aln_file' for writing : $!";
+    open(OUTSEQ, ">", $aln_file) or die "Could not open '$aln_file' for writing : $!";
     my $alignIO = Bio::AlignIO->newFh( -fh => \*OUTSEQ, -format => $format);
     print $alignIO $sa;
     close OUTSEQ;
