@@ -809,7 +809,8 @@ sub _summarise_funcgen_db {
       join cell_type c using (cell_type_id)
       join result_set_input using (result_set_id)
       join input_subset on input_subset_id = table_id
-      join experiment using (experiment_id) 
+      join experiment
+        on input_subset.experiment_id = experiment.experiment_id
       join experimental_group g using (experimental_group_id) 
      where feature_class = 'dna_methylation' 
        and table_name = 'input_subset'
