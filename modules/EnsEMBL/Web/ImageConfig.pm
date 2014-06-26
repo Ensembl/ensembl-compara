@@ -1581,9 +1581,9 @@ sub load_tracks {
     ],
     variation => [
       'add_sequence_variations',          # Add to variation_feature tree
+      'add_phenotypes',                   # Add to variation_feature tree
       'add_structural_variations',        # Add to variation_feature tree
       'add_copy_number_variant_probes',   # Add to variation_feature tree
-      'add_phenotypes',                   # Add to variation_feature tree
       'add_recombination',                # Moves recombination menu to the end of the variation_feature tree
       'add_somatic_mutations',            # Add to somatic tree
       'add_somatic_structural_variations' # Add to somatic tree
@@ -2877,7 +2877,7 @@ sub add_sequence_variations {
     renderers  => [ 'off', 'Off', 'normal', 'Normal (collapsed for windows over 200kb)', 'compact', 'Collapsed', 'labels', 'Expanded with name (hidden for windows over 10kb)', 'nolabels', 'Expanded without name' ],
   };
   
-  if (defined($hashref->{'menu'}) && scalar @{$hashref->{'menu'}} && grep {$_->{key} =~ /dbsnp/i} @{$hashref->{menu}}) {
+  if (defined($hashref->{'menu'}) && scalar @{$hashref->{'menu'}}) {
     $self->add_sequence_variations_meta($key, $hashref, $options);
   } else {
     $self->add_sequence_variations_default($key, $hashref, $options);
@@ -2891,12 +2891,12 @@ sub add_sequence_variations_meta {
   my ($self, $key, $hashref, $options) = @_;
   my $menu = $self->get_node('variation');
   
-  foreach my $menu_item(sort {$a->{type} cmp $b->{type} || $a->{parent} cmp $b->{parent}} @{$hashref->{'menu'}}) {
+  foreach my $menu_item (sort {$a->{type} cmp $b->{type} || $a->{parent} cmp $b->{parent}} @{$hashref->{'menu'}}) {
     next if $menu_item->{'type'} =~  /^sv_/; # exclude structural variant items
     
     my $node;
     
-    if ($menu_item->{'type'} eq 'menu') { # just a named submenu
+    if ($menu_item->{'type'} eq 'menu' || $menu_item->{'type'} eq 'menu_sub') { # just a named submenu
       $node = $self->create_submenu($menu_item->{'key'}, $menu_item->{'long_name'});
     } elsif ($menu_item->{'type'} eq 'source') { # source type
       (my $temp_name     = $menu_item->{'long_name'}) =~ s/ variants$//;
@@ -2913,8 +2913,6 @@ sub add_sequence_variations_meta {
       (my $caption   = $menu_item->{'long_name'}) =~ s/1000 Genomes/1KG/;  # shorten name for side of image
       (my $set_name  = $menu_item->{'long_name'}) =~ s/All HapMap/HapMap/; # hack for HapMap set name - remove once variation team fix data for 68
       
-      next if $set_name =~ /HapMap.+/;
-      
       $node = $self->create_track($menu_item->{'key'}, $menu_item->{'long_name'}, {
         %$options,
         caption     => $caption,
@@ -2926,28 +2924,31 @@ sub add_sequence_variations_meta {
     }
     
     # get the node onto which we're going to add this item, then append it
-    ($self->get_node($menu_item->{'parent'}) || $menu)->append($node) if $node;
+    if ($menu_item->{'long_name'} =~ /^all/i || $menu_item->{'long_name'} =~ /^sequence variants/i) {
+      ($self->get_node($menu_item->{'parent'}) || $menu)->prepend($node) if $node;
+    }
+    else {
+      ($self->get_node($menu_item->{'parent'}) || $menu)->append($node) if $node;
+    }
   }
 }
 
 # adds variation tracks the old, hacky way
 sub add_sequence_variations_default {
   my ($self, $key, $hashref, $options) = @_;
-  my $menu               = $self->get_node('variation');
-  my $sequence_variation = $self->create_submenu('sequence_variations', 'Sequence variants');
+  my $menu = $self->get_node('variation');
+  my $sequence_variation = ($menu->get_node('variants')) ? $menu->get_node('variants') : $self->create_submenu('variants', 'Sequence variants');
 
-  # XXX: This is a hack until Laurent gets meta information into the
-  #        private variation database. It should be there for e76, at
-  #        which point this code should never by called in that context.
-  my $title = 'Sequence variants (all sources)';
-  $title = 'Sequence variants (DECIPHER/LOVD)' if $key eq 'variation_private';
+  if (!$menu->get_node('variants')) {
+    my $title = 'Sequence variants (all sources)';
 
-  $sequence_variation->append($self->create_track("variation_feature_$key", $title, {
-    %$options,
-    sources     => undef,
-    description => 'Sequence variants from all sources',
-  }));
-  
+    $sequence_variation->append($self->create_track("variation_feature_$key", $title, {
+      %$options,
+      sources     => undef,
+      description => 'Sequence variants from all sources',
+    }));
+  }
+
   foreach my $key_2 (sort keys %{$hashref->{'source'}{'counts'} || {}}) {
     next unless $hashref->{'source'}{'counts'}{$key_2} > 0;
     next if     $hashref->{'source'}{'somatic'}{$key_2} == 1;
@@ -2960,10 +2961,10 @@ sub add_sequence_variations_default {
     }));
   }
   
-  $menu->append($sequence_variation);
+  $menu->append($sequence_variation) if (!$menu->get_node('variants'));
 
   # add in variation sets
-  if ($hashref->{'variation_set'}{'rows'} > 0) {
+  if ($hashref->{'variation_set'}{'rows'} > 0 ) {
     my $variation_sets = $self->create_submenu('variation_sets', 'Variation sets');
     
     $menu->append($variation_sets);
@@ -3048,7 +3049,7 @@ sub add_phenotypes {
     description => 'Phenotype annotations on '.(join ", ", map {$_.'s'} keys %{$hashref->{'phenotypes'}{'types'}}),
   }));
  
-  foreach my $type(keys %{$hashref->{'phenotypes'}{'types'}}) {
+  foreach my $type( sort {$a cmp $b} keys %{$hashref->{'phenotypes'}{'types'}}) {
     next unless ref $hashref->{'phenotypes'}{'types'}{$type} eq 'HASH';
     my $pf_sources = $hashref->{'phenotypes'}{'types'}{$type}{'sources'};
     $pf_menu->append($self->create_track('phenotype_'.lc($type), 'Phenotype annotations ('.$type.'s)', {
@@ -3085,21 +3086,21 @@ sub add_structural_variations {
   );
   
   # Complete overlap (Larger structural variants)
-  $structural_variants->append($self->create_track('variation_feature_structural_larger', 'Larger structural variants (all sources)', {   
+  $structural_variants->prepend($self->create_track('variation_feature_structural_larger', 'Larger structural variants (all sources)', { 
     %options,
     db         => 'variation',
     caption     => 'Larger structural variants',
-    sources     => undef,
+    source      => undef,
     description => "Structural variants from all sources which are at least 1Mb in length. $desc",
     min_size    => 1e6,
   }));
   
   # Partial overlap (Smaller structural variants)
-  $structural_variants->append($self->create_track('variation_feature_structural_smaller', 'Smaller structural variants (all sources)', {   
+  $structural_variants->prepend($self->create_track('variation_feature_structural_smaller', 'Smaller structural variants (all sources)', {
     %options,
     db         => 'variation',
     caption     => 'Smaller structural variants',
-    sources     => undef,
+    source      => undef,
     description => "Structural variants from all sources which are less than 1Mb in length. $desc",
     depth       => 10,
     max_size    => 1e6 - 1,
@@ -3107,10 +3108,10 @@ sub add_structural_variations {
   
   foreach my $key_2 (sort keys %{$hashref->{'structural_variation'}{'counts'} || {}}) {    
     ## FIXME - Nasty hack to get variation tracks correctly configured
-    my $db = $key_2 =~ /DECIPHER/ ? 'variation_private' : 'variation';
+    next if ($key_2 =~ /(DECIPHER|LOVD)/);
     $structural_variants->append($self->create_track("variation_feature_structural_$key_2", "$key_2 structural variations", {
       %options,
-      db          => $db,
+      db          => 'variation',
       caption     => $key_2,
       source      => $key_2,
       description => $hashref->{'source'}{'descriptions'}{$key_2},
@@ -3118,19 +3119,21 @@ sub add_structural_variations {
   }
   
   # Structural variation sets and studies
-  foreach my $menu_item (@{$hashref->{'menu'}}) {
+  foreach my $menu_item (sort {$a->{type} cmp $b->{type} || $a->{long_name} cmp $b->{long_name}} @{$hashref->{'menu'}}) {
     next if $menu_item->{'type'} !~ /^sv_/;
     
     my $node_name = "$menu_item->{'long_name'} (structural variants)";
-    
+    my $db = 'variation';
+
     if ($menu_item->{'type'} eq 'sv_set') {
       my $temp_name = $menu_item->{'key'};
          $temp_name =~ s/^sv_set_//;
       
       $structural_variants->append($self->create_track($menu_item->{'key'}, $node_name, {
         %options,
+        db          => $db,
         caption     => $node_name,
-        sources     => undef,
+        source      => undef,
         sets        => [ $menu_item->{'long_name'} ],
         set_name    => $menu_item->{'long_name'},
         description => $hashref->{'variation_set'}{'descriptions'}{$temp_name},
@@ -3141,11 +3144,22 @@ sub add_structural_variations {
       
       $structural_variants->append($self->create_track($name, $node_name, {
         %options,
+        db          => $db,
         caption     => $node_name,
-        sources     => undef,
+        source      => undef,
         study       => [ $name ],
         study_name  => $name,
         description => 'DGVa study: '.$hashref->{'structural_variation'}{'study'}{'descriptions'}{$name},
+      }));
+    }
+    elsif ($menu_item->{'type'} eq 'sv_private') { # For DECIPHER and LOVD structural variants
+      my $name = $menu_item->{'key'};
+      $structural_variants->append($self->create_track("variation_feature_structural_$name", "$node_name", {
+        %options,
+        db          => 'variation_private',
+        caption     => "$name structural variants",
+        source      => $name,
+        description => $hashref->{'source'}{'descriptions'}{$name},
       }));  
     }
   }
