@@ -91,7 +91,7 @@ sub feature_content {
   my ($self, $feature, $i) = @_;
   my %extra  = ref $feature ne 'HASH' && $feature->can('extra_data') && ref $feature->extra_data eq 'HASH' ? %{$feature->extra_data} : ();
   my $extra_order;
-  $extra_order = $feature->extra_data_order if $feature->can('extra_data_order');
+  $extra_order = $feature->extra_data_order if ref $feature ne 'HASH' && $feature->can('extra_data_order');
 
   my $start  = $feature->{'start'} + $self->hub->param('click_start') - 1;
   my $end    = $feature->{'end'} + $self->hub->param('click_start') - 1;
@@ -127,12 +127,12 @@ sub feature_content {
     { type => 'Score',      label => $feature->{'score'}, name => 'score' },
   );
 
-  if($feature->can('id')) {
+  if(ref $feature ne 'HASH' && $feature->can('id')) {
     push @entries, { type => 'Name', label => $feature->id, name => 'name' };
   }
 
   # Replace fields with name in autosql (only score for now)
-  if($feature->can('real_name')) {
+  if(ref $feature ne 'HASH' && $feature->can('real_name')) {
     foreach my $e (@entries) {
       next unless $e->{'name'};
       my $name = $feature->real_name($e->{'name'});
