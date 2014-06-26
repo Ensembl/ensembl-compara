@@ -94,10 +94,10 @@ sub process {
     $url_params->{'path'}          .= '/export/'.$file->random_path.$file->filename;
     $url_params->{'compression'}    = $compression;
     if ($compression || $format eq 'RTF') {
-      $url_params->{'type'}    = 'Download';
-      $url_params->{'action'}  = 'DataExport';
+      #$url_params->{'type'}    = 'Download';
+      #$url_params->{'action'}  = 'DataExport';
       ## Force redirect to initiate download
-      @redirect_params = (undef, undef, 'page');
+      #@redirect_params = (undef, undef, 'page');
     }
     else {
       ## Pass parameters needed for Back button to work
