@@ -127,11 +127,11 @@ sub stats_table {
   my ($url, @rows);
   
   
-  my $mart_somatic_url = 'http://www.ensembl.org/biomart/martview?VIRTUALSCHEMANAME=default'.
+  my $mart_somatic_url = $hub->species_defs->ENSEMBL_MART_ENABLED ? '/biomart/martview?VIRTUALSCHEMANAME=default'.
                          '&ATTRIBUTES=hsapiens_snp_som.default.snp.refsnp_id|hsapiens_snp_som.default.snp.chr_name|'.
                          'hsapiens_snp_som.default.snp.chrom_start|hsapiens_snp_som.default.snp.associated_gene'.
                          '&FILTERS=hsapiens_snp_som.default.filters.phenotype_description.&quot;###PHE###&quot;'.
-                         '&VISIBLEPANEL=resultspanel';
+                         '&VISIBLEPANEL=resultspanel' : '';
   my $max_lines = 1000;
   
   # add the row for ALL variations if there are any
@@ -158,7 +158,7 @@ sub stats_table {
     my $mart         = '-';
     
     # BioMart link
-    if ($hub->species_defs->ENSEMBL_MART_ENABLED && grep {$_ eq 'COSMIC'} @{$phenotype->{source}}) {
+    if ($mart_somatic_url && grep {$_ eq 'COSMIC'} @{$phenotype->{source}}) {
       if ($pf_adaptor->count_all_by_phenotype_id($phenotype->{'id'}) > 250) {
         my $mart_phe_url = $mart_somatic_url;
         $mart_phe_url =~ s/###PHE###/$_/;

@@ -119,7 +119,12 @@ sub render {
       $html .= "<p>No news is currently available for release $release_id.</p>\n";
     }
   }
+
   $html .= qq(<p><a href="/info/website/news.html">Full details of this release</a></p>);
+
+  if ($hub->species_defs->multidb->{'DATABASE_PRODUCTION'}{'NAME'}) {
+    $html .= qq(<p><a href="/info/website/news_by_topic.html?topic=web">All web updates, by release</a></p>);
+  }
 
   if ($species_defs->ENSEMBL_BLOG_URL) {
     $html .= qq(<p><a href="http://www.ensembl.info/blog/category/releases/">More release news on our blog &rarr;</a></p>);

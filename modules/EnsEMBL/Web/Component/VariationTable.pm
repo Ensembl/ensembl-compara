@@ -227,7 +227,7 @@ sub stats_table {
   my ($species_name_first, $species_name_second) = split('_', $species_name);
   my $first_letter = lc substr($species_name_first, 0, 1);
   my $mart_species_name = $first_letter . $species_name_second; 
-  my $mart_url = 'http://www.ensembl.org/biomart/martview/?VIRTUALSCHEMANAME=default';
+  my $mart_url = $self->hub->species_defs->ENSEMBL_MART_ENABLED ? '/biomart/martview/?VIRTUALSCHEMANAME=default' : '';
   my @mart_attribute_values = ("$mart_species_name\_snp.default.snp.refsnp_id|",
                             "$mart_species_name\_snp.default.snp.refsnp_source|",
                             "$mart_species_name\_snp.default.snp.chr_name|",
@@ -255,20 +255,21 @@ sub stats_table {
     
     if ($counts{$con}) {
       my $count = $counts{$con};
+      my $warning;
       if ($count > 5000) {
-        # Biomart link
-        my $gene_id = $gene_object->stable_id;
+        $warning = qq{<span style="color:red;">(WARNING: table may not load for this number of variants!)};
+        # optional Biomart link
         if ($hub->species_defs->ENSEMBL_MART_ENABLED) {
+          my $gene_id = $gene_object->stable_id;
           $mart_gene_filter =~ s/###GENE_ID###/$gene_id/;
-		  $mart_con_type_filter =~ s/###SO_TERM###/$con/;
+		      $mart_con_type_filter =~ s/###SO_TERM###/$con/;
           my $mart_variation_table_url = join('', $mart_url, $mart_attributes, $mart_gene_filter, $mart_con_type_filter, $mart_result_panel);
-          $warning_text = qq{<span style="color:red;">(WARNING: table may not load for this number of variants!) <a href="$mart_variation_table_url">View list in BioMart</a></span>};
-		  $mart_con_type_filter =~ s/$con/###SO_TERM###/;
+          $mart_con_type_filter =~ s/$con/###SO_TERM###/;
+          $warning .= qq{ <a href="$mart_variation_table_url">View list in BioMart</a>};
         }
+        $warning .= '</span>';
       }
 
-      my $warning = $count > 5000 ? "$warning_text" : '';
-     
       push @rows, {
         type  => qq{<span class="hidden">$ranks{$con}</span>$labels{$con}},
         desc  => "$descriptions{$con} $warning",
@@ -288,19 +289,20 @@ sub stats_table {
   }
   
   # add the row for ALL variations if there are any
-  $warning_text = '';
   if ($total_counts) {
     my $hidden_span = '<span class="hidden">-</span>'; # create a hidden span to add so that ALL is always last in the table
+    my $warning = '';
     if ($total_counts > 5000) {
-      # Biomart link
+      $warning = qq{<span style="color:red;">(WARNING: table may not load for this number of variants!)};
+      # optional Biomart link
       my $gene_id = $gene_object->stable_id;
       if ($hub->species_defs->ENSEMBL_MART_ENABLED) {
         $mart_gene_filter =~ s/###GENE_ID###/$gene_id/;
         my $mart_variation_table_url = join('', $mart_url, $mart_attributes, $mart_gene_filter, $mart_result_panel);
-        $warning_text = qq{<span style="color:red;">(WARNING: table may not load for this number of variants!) <a href="$mart_variation_table_url">View list in BioMart</a></span>};
+        $warning .= qq{ <a href="$mart_variation_table_url">View list in BioMart</a></span>};
       }
+      $warning .= '</span>';
     }
-    my $warning = $total_counts > 5000 ? $warning_text : '';
     
     push @rows, {
       type  => $hidden_span . 'ALL',
@@ -380,7 +382,7 @@ sub variation_table {
   # create some URLs - quicker than calling the url method for every variation
   my $base_url = $hub->url({
     type   => 'Variation',
-    action => 'Mappings',
+    action => 'Summary',
     vf     => undef,
     v      => undef,
     source => undef,

@@ -1305,6 +1305,7 @@ sub configure_vep {
   }
   
   # set some other values
+  $vep_config{database}       = 1;
   $vep_config{gene}           = 1;
   $vep_config{whole_genome}   = 1;
   $vep_config{chunk_size}     = 50000;
