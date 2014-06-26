@@ -131,6 +131,10 @@ sub render {
     $html .= $self->_include_blog($hub);
   }
 
+  #if ($species_defs->ENSEMBL_TWITTER_ACCOUNT) {
+  #  $html .= $self->_include_twitter;
+  #}
+
   return $html;
 }
 
@@ -184,6 +188,37 @@ sub _include_blog {
 
 }
 
+sub _include_twitter {
+  my $self = shift;
+  my $sd = $self->hub->species_defs;
+  require Net::Twitter;
 
+  my ($html, $statuses);
+  my $twitter_user = $sd->ENSEMBL_TWITTER_ACCOUNT;  
+  my $nt = Net::Twitter->new(
+        traits   => [qw/API::RESTv1_1/],
+        consumer_key        => $sd->TWITTER_CONSUMER_KEY,
+        consumer_secret     => $sd->TWITTER_CONSUMER_SECRET,
+        access_token        => $sd->TWITTER_ACCESS_TOKEN,
+        access_token_secret => $sd->TWITTER_ACCESS_TOKEN_SECRET,
+        ssl                 => 1,
+    );
+  eval {$statuses = $nt->user_timeline({screen_name => $twitter_user, count => 5}); };
+
+  if ($@) {
+    warn "!!! TWITTER ERROR: $@";
+  }
+  else {
+    $html = sprintf('<h3>Recent tweets from @%s</h3>', $twitter_user);
+    if (@$statuses) {
+      $html .= '<ul>';
+      foreach my $status ( @$statuses ) {
+        $html .= "<li>$status->{created_at} $status->{text}\n";
+      }
+      $html .= '</ul>';
+    }
+  }
+  return $html;
+}
 
 1;
