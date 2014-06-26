@@ -403,7 +403,8 @@ sub pipeline_analyses {
             { -logic_name       => 'hc_tree_final_checks',
               -module           => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
               -flow_into        => {
-                                    1 => ['hc_global_tree_set', 'hc_global_epo_removed_members'],
+                                    '1->A' => ['hc_global_tree_set', 'hc_global_epo_removed_members'],
+                                    'A->1' => [ 'write_stn_tags' ],
                                    },
               %hc_params,
             },
@@ -423,6 +424,15 @@ sub pipeline_analyses {
                                   },
               %hc_params,
             },
+
+        {   -logic_name     => 'write_stn_tags',
+            -module         => 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
+            -parameters     => {
+                'stnt_sql_script'   => $self->o('ensembl_cvs_root_dir').'/ensembl-compara/sql/tree-stats-as-stn_tags.sql',
+                'command_line_db'   => $self->dbconn_2_mysql('pipeline_db', 1),
+                'cmd'               => 'mysql  #command_line_db# < #stnt_sql_script#',
+            },
+        },
 
             {   -logic_name    => 'recover_epo',
                 -module        => 'Bio::EnsEMBL::Compara::RunnableDB::ncRNAtrees::NCRecoverEPO',

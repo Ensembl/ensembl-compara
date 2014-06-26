@@ -1193,10 +1193,20 @@ sub pipeline_analyses {
                 mode            => 'global_tree_set',
             },
             -flow_into  => [
+                'write_stn_tags',
                 $self->o('do_stable_id_mapping') ? 'stable_id_mapping' : (),
                 $self->o('do_treefam_xref') ? 'treefam_xref_idmap' : (),
             ],
             %hc_analysis_params,
+        },
+
+        {   -logic_name     => 'write_stn_tags',
+            -module         => 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
+            -parameters     => {
+                'stnt_sql_script'   => $self->o('ensembl_cvs_root_dir').'/ensembl-compara/sql/tree-stats-as-stn_tags.sql',
+                'command_line_db'   => $self->dbconn_2_mysql('pipeline_db', 1),
+                'cmd'               => 'mysql  #command_line_db# < #stnt_sql_script#',
+            },
         },
 
 
