@@ -487,6 +487,21 @@ sub isMT {
     return 0;
 }
 
+
+sub start {
+  my $self = shift;
+  deprecate("All Bio::EnsEMBL::Compara::DnaFrag objects start in 1");
+  return 1;
+}
+
+
+sub end {
+  my $self = shift;
+  deprecate("Use Bio::EnsEMBL::Compara::DnaFrag->length() method instead");
+  return $self->length;
+}
+
+
 1;
 
 
