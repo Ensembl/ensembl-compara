@@ -114,7 +114,7 @@ sub fetch_all_by_GeneMember {
 
   assert_ref($gene_member, 'Bio::EnsEMBL::Compara::GeneMember');
 
-  my $join = [[['family_member', 'fm'], 'f.family_id = fm.family_id'], [['seq_member', 'sm'], 'fm.seq_member_id = dn.seq_member_id'] ];
+  my $join = [[['family_member', 'fm'], 'f.family_id = fm.family_id'], [['seq_member', 'sm'], 'fm.seq_member_id = sm.seq_member_id'] ];
   my $constraint = 'sm.gene_member_id = ?';
 
   $self->bind_param_generic_fetch($gene_member->dbID, SQL_INTEGER);
