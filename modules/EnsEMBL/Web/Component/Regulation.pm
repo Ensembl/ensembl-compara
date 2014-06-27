@@ -22,4 +22,21 @@ use strict;
 
 use base qw(EnsEMBL::Web::Component);
 
+sub cell_line_button {
+  my ($self,$cell_m,$cell_n) = @_;
+
+  my $url = $self->hub->url('Component', {
+    action   => 'Web',
+    function    => 'CellTypeSelector/ajax',
+    cell => join(',',@{$self->object->cell_types||[]}),
+  });
+
+  return qq(
+    <a class="button modal_link" href="$url" rel="modal_select_cell_types" style="margin: 0 0 8px;">
+      <img style="padding:0 2px 2px 0;vertical-align:middle" src="/i/16/rev/lab.png">
+      Choose other cell types (showing $cell_m/$cell_n)
+    </a>
+  );
+}
+
 1;

@@ -16,26 +16,25 @@ limitations under the License.
 
 =cut
 
-package EnsEMBL::Web::ViewConfig::Regulation::Evidence;
+package EnsEMBL::Web::ViewConfig::Regulation;
 
 use strict;
 
-use base qw(EnsEMBL::Web::ViewConfig::Regulation);
+use base qw(EnsEMBL::Web::ViewConfig);
 
-sub init {
+sub extra_tabs {
   my $self = shift;
-
-  $self->set_defaults({
-    show_bottom_panel => 'yes'
-  });
+  my $hub  = $self->hub;
   
-  $self->title = 'Cell types';
-}
-
-sub form {
-  my $self = shift;
-
-  $self->add_image_config('reg_summary');
+  return [
+    'Select cell types',
+    $hub->url('Component', {
+      action   => 'Web',
+      function => 'CellTypeSelector/ajax',
+      time     => time,
+      %{$hub->multi_params}
+    })
+  ];
 }
 
 1;
