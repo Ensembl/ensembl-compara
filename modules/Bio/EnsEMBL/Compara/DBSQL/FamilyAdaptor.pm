@@ -142,7 +142,7 @@ sub fetch_by_SeqMember {
   my $constraint = 'fm.seq_member_id = ?';
 
   $self->bind_param_generic_fetch($seq_member->dbID, SQL_INTEGER);
-  return $self->generic_fetch($constraint, $join);
+  return ($self->generic_fetch($constraint, $join)||[])->[0];
 }
 
 
