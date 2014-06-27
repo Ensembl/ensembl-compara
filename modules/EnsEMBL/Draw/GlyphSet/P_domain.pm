@@ -114,7 +114,7 @@ sub _init {
       
       if ($depth > 0) {
         my $bump_start = int($composite->x * $pix_per_bp);
-        my $bump_end   = $bump_start + int($composite->width / $pix_per_bp);
+        my $bump_end   = $bump_start + int($composite->width * $pix_per_bp);
         my $row        = $self->bump_row($bump_start, $bump_end);
         
         $composite->y($composite->y + ($row * (4 + $h + $font_details->{'height'}))) if $row;
