@@ -79,7 +79,7 @@ sub cell_types {
     my @cells = split(',',$self->param('cell'));
     return \@cells;
   } else {
-    return undef;
+    return [ $self->all_cell_types()->[0] ];
   }
 }
 
@@ -337,7 +337,7 @@ sub all_cell_types {
       $cells{$cell_name} = 1;
     }
   }
-  return [ keys %cells ];
+  return [ sort keys %cells ];
 }
 
 sub get_evidence_data {
