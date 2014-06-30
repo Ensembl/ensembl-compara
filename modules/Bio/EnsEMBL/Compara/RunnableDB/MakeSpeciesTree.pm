@@ -77,6 +77,7 @@ sub fetch_input {
 #        chomp $species_tree_string;
 
         $species_tree_root = Bio::EnsEMBL::Compara::Graph::NewickParser::parse_newick_into_tree( $species_tree_string, 'Bio::EnsEMBL::Compara::SpeciesTreeNode' );
+        $species_tree_root = $species_tree_root->minimize_tree;     # The user-defined trees may have some 1-child nodes
 
         # Let's try to find genome_dbs and ncbi taxa
         my $gdb_a = $self->compara_dba->get_GenomeDBAdaptor;
