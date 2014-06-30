@@ -34,7 +34,6 @@ my $usage = "$0
 
 my $help = 0;
 my ($dbname,$qy_species, $tg_species, $reg_conf, $mlss_id);
-my $method_link_type = "SYNTENY";
 
 GetOptions('help' => \$help,
 	   'dbname=s' => \$dbname,
@@ -64,12 +63,19 @@ my $mlssa = $dba->get_MethodLinkSpeciesSetAdaptor();
 my $qy_gdb = $gdba->fetch_by_registry_name($qy_species);
 my $tg_gdb = $gdba->fetch_by_registry_name($tg_species);
 
-my $mlss = Bio::EnsEMBL::Compara::MethodLinkSpeciesSet->new(
-    -method => Bio::EnsEMBL::Compara::Method->new( -type => $method_link_type ),
-    -species_set_obj => Bio::EnsEMBL::Compara::SpeciesSet->new( -genome_dbs => [$qy_gdb, $tg_gdb] ),
-);
-$mlssa->store($mlss);
-warn ("A new MLSS has been created with the dbID ".($mlss->dbID)." instead of $mlss_id") if defined $mlss_id and $mlss_id != $mlss->dbID;
+my $mlss;
+if ($mlss_id) {
+    $mlss = $mlssa->fetch_by_dbID($mlss_id);
+    my $genome_dbs = $mlss->species_set_obj->genome_dbs;
+    die "The mlss_id $mlss_id does not match the same species set\n" unless ($genome_dbs ~~ [$qy_gdb, $tg_gdb]) or ($genome_dbs ~~ [$tg_gdb, $qy_gdb]);
+    die "The mlss_id $mlss_id does not match the right method_link\n" if $mlss->method->type ne 'SYNTENY';
+} else {
+    $mlss = Bio::EnsEMBL::Compara::MethodLinkSpeciesSet->new(
+        -method => Bio::EnsEMBL::Compara::Method->new( -type => 'SYNTENY', -class => 'SyntenyRegion.synteny' ),
+        -species_set_obj => Bio::EnsEMBL::Compara::SpeciesSet->new( -genome_dbs => [$qy_gdb, $tg_gdb] ),
+    );
+    $mlssa->store($mlss);
+}
 
 my $qy_slices = get_slices($qy_gdb);
 my $tg_slices = get_slices($tg_gdb);
