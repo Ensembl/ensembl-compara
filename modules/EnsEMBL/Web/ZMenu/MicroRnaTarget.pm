@@ -44,7 +44,7 @@ sub content {
                       }
                     );
   
-  $self->caption('MicroRNA target: '.$feature->display_label);
+  $self->caption('MicroRNA ID: '.$feature->display_label);
 
   $self->add_entry ({
     type   => 'Source',
@@ -53,7 +53,7 @@ sub content {
   });
 
   $self->add_entry ({
-    type   => 'Accession',
+    type   => 'MiRBase mature ID',
     label  => $feature->accession,
     link   => $source_page,
   });
@@ -75,6 +75,11 @@ sub content {
   $self->add_entry ({
     type   => 'Evidence',
     label  => $feature->evidence,
+  });
+
+  $self->add_entry ({
+    type   => 'Supporting information',
+    label  => $feature->supporting_information,
   });
 
 }
