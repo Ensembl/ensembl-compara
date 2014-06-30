@@ -240,8 +240,8 @@ my $config = {
         params => [ 'gene_tree_id' ],
         tests => [
             {
-                description => 'Checks that the gene tree is binary',
-                query => 'SELECT gtn1.node_id FROM gene_tree_node gtn1 JOIN gene_tree_node gtn2 ON gtn1.node_id = gtn2.parent_id WHERE gtn1.root_id = #gene_tree_id# GROUP BY gtn1.node_id HAVING COUNT(*) NOT IN (0,2)',
+                description => 'Checks that the gene tree is binary (and minimized)',
+                query => 'SELECT gtn1.node_id FROM gene_tree_node gtn1 JOIN gene_tree_node gtn2 ON gtn1.node_id = gtn2.parent_id WHERE gtn1.root_id = #gene_tree_id# GROUP BY gtn1.node_id HAVING COUNT(*) != 2',
             },
 
             {
