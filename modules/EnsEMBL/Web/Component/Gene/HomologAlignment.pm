@@ -83,7 +83,11 @@ sub content {
     my $sa;
     
     eval {
-      $sa = $homology->get_SimpleAlign(-CDNA => ($seq eq 'cDNA' ? 1 : 0));
+      if($seq eq 'cDNA') {
+        $sa = $homology->get_SimpleAlign(-SEQ_TYPE => 'cds');
+      } else {
+        $sa = $homology->get_SimpleAlign;
+      }
     };
     
     if ($sa) {
