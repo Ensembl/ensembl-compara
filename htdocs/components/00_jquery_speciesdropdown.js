@@ -31,14 +31,20 @@
   };
 
   $.speciesDropdown = function (el, options) {
+
+    if (options && options.change) {
+      el.data('speciesDropdown', { change: options.change });
+    }
+
     $.filterableDropdown(el, $.extend({}, options, {
       'change': function() {
-        $(this).find('._fd_tag').css('background-image', function() {
+        var data = $(this).find('._fd_tag').css('background-image', function() {
           return this.style.backgroundImage.replace(/[^\/]+\.png/, $($(this).data('input')).val() + '.png');
-        });
-        if (options && options.change) {
-          options.change.apply(this, arguments);
+        }).end().data('speciesDropdown');
+        if (data) {
+          data.change.apply(this, arguments);
         }
+        data = null;
       }
     }));
   };
