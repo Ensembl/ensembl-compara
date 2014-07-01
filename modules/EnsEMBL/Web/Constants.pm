@@ -62,6 +62,19 @@ sub EXPORT_FORMATS {
   );
 }
 
+sub FASTA_OPTIONS {
+  return  (
+        { 'value' => 'cdna',       'caption' => 'cDNA (transcripts)'},
+        { 'value' => 'coding',     'caption' => 'Coding sequences (CDS)'},
+        { 'value' => 'peptide',    'caption' => 'Amino acid sequences'},
+        { 'value' => 'utr5',       'caption' => "5' UTRs"},
+        { 'value' => 'utr3',       'caption' => "3' UTRs"},
+        { 'value' => 'exon',       'caption' => 'Exons'},
+        { 'value' => 'intron',     'caption' => 'Introns'},
+        { 'value' => 'sequence',   'caption' => 'Genomic sequence'},
+  );
+}
+
 sub HOMOLOGY_TYPES {
 ### Lookup for compara acronyms
   return {

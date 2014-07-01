@@ -87,8 +87,8 @@ sub new {
 sub id {
   ## @accessor
   ## @return String (last element of package namespace)
-  my $self = shift;
-  $self->{'id'} = shift if @_;
+  my ($self, $id) = @_;
+  $self->{'id'} = $id if $id;
   return $self->{'id'};
 }
 
@@ -356,6 +356,65 @@ sub site_name   { return $SiteDefs::SITE_NAME || $SiteDefs::ENSEMBL_SITETYPE; }
 sub image_width { return shift->hub->param('image_width') || $ENV{'ENSEMBL_IMAGE_WIDTH'}; }
 sub caption     { return undef; }
 sub _init       { return; }
+
+sub export_type     { return undef; }
+sub export_caption  { return undef; }
+sub tool_buttons   {
+  my ($self, $args) = @_;
+  my $hub  = $self->hub;
+  my $html = '<div class="component-tools">';
+
+  ## EXPORT BUTTON
+  if ($args->{'export'} && $self->export_type) {
+    ## Allow caller to pass a boolean flag rather than empty options
+    my $export = ref($args->{'export'}) eq 'HASH' ? $args->{'export'} : {};
+    my $caption = $export->{'caption'} ||= 'Download sequence';
+    my $params  = {'type' => 'DataExport', 'action' => $self->export_type, 'data_type' => $self->hub->type, 'component' => $self->id};
+    foreach (@{$export->{'params'}||[]}) {
+      $params->{$_} = $hub->param($_);
+    }
+    my $url     = $hub->url($params);
+    my $src     = $self->img_url.'/16/rev/download.png';
+    $html .= sprintf('<a href="%s" class="button modal_link"><img src="%s" style="padding-bottom:2px;vertical-align:middle" /> %s</a>', $url, $src, $caption);
+  }
+
+  ## BLAST BUTTON
+  if ($args->{'blast'} && $args->{'blast'}{'seq'} && $hub->species_defs->ENSEMBL_BLAST_ENABLED) {
+
+    my $form_url  = sprintf('/%s/blastview', $hub->species);
+    my $form      = $self->new_form({'id' => 'blast', 'action' => $form_url, 
+                                     'class' => 'freeform', 'method' => 'post'});
+    my $fieldset  = $form->add_fieldset;
+
+    $fieldset->add_hidden([
+                    { 'name'    => '_query_sequence',
+                      'value'   => $args->{'blast'}{'seq'}},
+                    { 'name'    => 'species',
+                      'value'   => $hub->species,},
+                  ]);
+      
+    if ($args->{'blast'}{'peptide'}) {
+      $fieldset->add_hidden([
+                    {'name' => 'query', 'value' => 'peptide',},
+                    {'name' => 'database', 'value' => 'peptide',},
+                  ]);
+    }
+
+    $fieldset->add_button({
+      'type'    => 'Submit',
+      'name'    => 'submit',
+      'value'   => 'BLAST this sequence',
+      'class'   => 'blast-button',
+    });
+
+    $html .= $form->render;
+
+  }
+
+  $html .= '</div>';
+
+  return $html;
+}
 
 ## TODO - remove these four method once above four methods are used instead of these
 sub _error   { return shift->_info_panel('error',   @_);  } # Fatal error message. Couldn't perform action

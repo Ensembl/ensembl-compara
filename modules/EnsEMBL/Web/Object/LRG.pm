@@ -1177,7 +1177,7 @@ sub get_similarity_hash {
 
 sub can_export {
   my $self = shift;
-  return $self->action =~ /^(Export|Genome)$/ ? 0 : $self->availability->{'lrg'};
+  return $self->action =~ /^(Export|Genome|Sequence_DNA)$/ ? 0 : $self->availability->{'lrg'};
 }
 
 1;

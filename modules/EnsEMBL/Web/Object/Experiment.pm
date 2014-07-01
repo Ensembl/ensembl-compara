@@ -81,23 +81,17 @@ sub new {
   # Get info for all feature sets and pack it in an array of hashes
   foreach my $feature_set (@$feature_sets) {
 
-    my $input_set = $feature_set->get_InputSet;
+    my $experiment = $feature_set->experiment;
 
-    if (! defined $input_set) {
-      warn "Failed to get InputSet for FeatureSet:\t".$feature_set->name;
-      next;
-    }
-
-    my $experiment = $input_set->get_Experiment;
     if (! defined $experiment) {
-      warn "Failed to get Experiment for InputSet:\t".$input_set->name;
+      warn "Failed to get Experiment for FeatureSet:\t".$feature_set->name;
       next;
     }
 
     my $experiment_group  = $experiment->experimental_group;
     $experiment_group     = undef unless $experiment_group->is_project;
     my $project_name      = $experiment_group ? $experiment_group->name : '';
-    my $source_info       = $input_set->source_info; # returns [[source_label, source_link], [source_label, source_link], ...]
+    my $source_info       = $experiment->source_info; # returns [[source_label, source_link], [source_label, source_link], ...]
     my $cell_type         = $feature_set->cell_type;
     my $cell_type_name    = $cell_type->name;
     my $feature_type      = $feature_set->feature_type;

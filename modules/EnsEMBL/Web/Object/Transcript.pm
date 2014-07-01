@@ -1768,7 +1768,7 @@ sub peptide_splice_sites {
 sub can_export {
   my $self = shift;
   
-  return $self->action =~ /^Export$/ ? 0 : $self->availability->{'transcript'};
+  return $self->action =~ /^(Export|Exons|Sequence_cDNA|Sequence_Protein)$/ ? 0 : $self->availability->{'transcript'};
 }
 
 1;

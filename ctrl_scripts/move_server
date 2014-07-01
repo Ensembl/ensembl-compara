@@ -1,0 +1,146 @@
+#!/usr/local/bin/perl
+
+=head1 NAME
+
+move_server - moves server logs and (optionally) server symlink 
+
+=head1 SYNOPSIS
+
+    ctrl_scripts/move_server [-vzs]
+
+=head1 DESCRIPTION
+
+This script 
+
+1) calls ctrl_script/stop_server (in case the server has not already been stopped)
+2) moves the access and error logs sideways to a dated or versioned copy, and optionally gzips them
+3) optionally moves the symlink 'server' to point to a new directory (only relevant on live nodes)
+
+Run 'ctrl_script/move_server --help' for usage details.
+
+=head1 LICENSE
+
+Copyright [1999-2014] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+     http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+
+=head1 CONTACT
+
+Post questions to the EnsEMBL development list dev@ensembl.org 
+
+=cut
+
+use strict;
+use warnings;
+no warnings 'uninitialized';
+
+use File::Basename qw(dirname);
+use FindBin qw($Bin);
+use POSIX qw(strftime);
+use Time::localtime;
+use Getopt::Long qw(:config no_ignore_case);
+
+my $serverroot;
+
+BEGIN {
+  $serverroot = dirname($Bin);
+  unshift @INC, "$serverroot/conf";
+  eval{ require SiteDefs };
+  if ($@){ die "Can't use SiteDefs.pm - $@\n"; }
+  map{ unshift @INC, $_ } @SiteDefs::ENSEMBL_LIB_DIRS;
+};
+
+use EnsEMBL::Web::Hub;
+
+my $hub = new EnsEMBL::Web::Hub;
+my $SD = $hub->species_defs;
+
+if($SD->ENSEMBL_CTRLLOG && open(LOG, ">>$SD->ENSEMBL_CTRLLOG")) {
+  print LOG sprintf "%s [005] moving server logs\n", strftime("%Y-%m-%d %H:%M:%S", localtime);
+  close LOG;
+}
+
+my ($help, $version, $zip, $symlink);
+&GetOptions(
+  "version=s" => \$version,
+  "v=s"       => \$version,
+  "zip"       => \$zip,
+  "z"         => \$zip,
+  "symlink=s" => \$symlink,
+  "s=s"       => \$symlink,
+  "help"      => \$help,
+  "h"         => \$help,
+);
+
+if ($help) {
+  print qq(Usage:
+    ctrl_scripts/move_server
+        [-v|--version]
+        [-z|--zip]
+        [-s|--symlink]
+        [-h|--help]
+
+Options:
+    -v, --version   : version to append to moved logs (defaults to timestamp) 
+    -z, --zip       : gzip logs after moving
+    -s, --symlink   : name of directory to symlink to (optional) 
+    -h, --help      : print this help message
+);
+
+  exit;
+}
+
+# stop the server
+system("perl $Bin/stop_server")   == 0 or exit;
+
+# move the logs
+my $log_dir     = $SD->ENSEMBL_LOGDIR;
+my $access_log  = $SD->ENSEMBL_CUSTOMLOG || $log_dir.'/access_log';
+my $error_log   = $SD->ENSEMBL_ERRORLOG || $log_dir.'error_log';
+## remove any parameters from custom log command
+$access_log =~ s/ (.)*$//;
+$error_log =~ s/ (.)*$//;
+
+unless ($version) {
+  ## default to timestamp
+  $version = gmtime(time);
+  $version =~ s/\s+/\./g; 
+}
+
+my $access_bak = $access_log.'_'.$version;
+my $error_bak  = $error_log.'_'.$version;
+
+system("mv $access_log $access_bak") == 0 or exit;
+system("mv $error_log $error_bak") == 0 or exit;
+
+if ($zip) {
+  system("gzip $access_bak") == 0 or exit;
+  system("gzip $error_bak") == 0 or exit;
+}
+
+## Change symlinks
+if ($symlink) {
+  ## Make sure we use the real server root, not the working directory!
+  (my $server_parent = $SD->ENSEMBL_SERVERROOT) =~ s/(\w|-)+$//;
+  my $ln = $server_parent.'server';
+  my $new_dir = $server_parent.$symlink;
+  system("rm $ln")  == 0 or exit;
+  system("ln -s $new_dir $ln")  == 0 or exit;
+}
+
+if ($SD->ENSEMBL_CTRLLOG && open(LOG, ">>$SD->ENSEMBL_CTRLLOG")) {
+  print LOG sprintf "%s [006] end server log move\n", strftime("%Y-%m-%d %H:%M:%S", localtime);
+  close LOG;
+}
+
+exit;

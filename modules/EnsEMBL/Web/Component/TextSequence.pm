@@ -277,6 +277,7 @@ sub set_variations {
     
     $s = 0 if $s < 0;
     $e = $config->{'length'} if $e > $config->{'length'};
+    $e ||= $s;
     
     # Add the sub slice start where necessary - makes the label for the variation show the correct position relative to the sequence
     $snp_start += $config->{'sub_slice_start'} - 1 if $config->{'sub_slice_start'} && $config->{'line_numbering'} ne 'slice';
@@ -516,7 +517,6 @@ sub markup_variation {
     insert => 'si',
     delete => 'sd'
   };
-  
   foreach my $data (@$markup) {
     $seq = $sequence->[$i];
     
@@ -1204,7 +1204,7 @@ sub export_sequence {
     fonts  => [ 'Courier New' ],
     colors => \@colours,
   );
-  
+ 
   if ($block_mode) {
     foreach my $block (@output) {
       $rtf->paragraph(\'\fs20', $_)      for @$block;
@@ -1224,22 +1224,6 @@ sub export_sequence {
   $file->save;
   
   return $file->content;
-}
-
-sub tool_buttons {
-  my $self = shift;
-  
-  return unless $self->html_format;
-  
-  my $hub  = $self->hub;
-  my $html = sprintf('
-    <div class="other_tool">
-      <p><a class="seq_export export" href="%s">Download view as RTF</a></p>
-    </div>', 
-    $self->ajax_url('rtf', { filename => join('_', $hub->type, $hub->action, $hub->species, $self->object->Obj->stable_id), _format => 'RTF', display_width => 60 })
-  );
-  
-  return $html;
 }
 
 1;

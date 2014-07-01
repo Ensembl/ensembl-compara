@@ -78,7 +78,9 @@ sub init {
 
   $self->get_node('opt_empty_tracks')->set('display', 'normal');	
 
+  my $only_cell_types = $self->hub->core_object->cell_types;
   foreach my $cell_line (@cell_lines) {
+    next unless grep { $_ eq $cell_line } @$only_cell_types;
     $_->set('display', 'normal') for map $self->get_node("${_}_$cell_line") || (), 'reg_feats', 'seg';
     
     # Turn on core evidence track

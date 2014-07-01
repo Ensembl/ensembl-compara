@@ -702,8 +702,12 @@ sub sort_features_by_priority {
 
 sub no_features {
   my $self  = shift;
-  my $label = $self->my_label;
-  $self->errorTrack("No $label in this region") if $label && $self->{'config'}->get_option('opt_empty_tracks') == 1;
+  my $label;
+  if($self->can('my_empty_label')) {
+    $label = $self->my_empty_label;
+  }
+  $label ||= $self->my_label;
+  $self->errorTrack($label) if $label && $self->{'config'}->get_option('opt_empty_tracks') == 1;
 }
 
 sub too_many_features {

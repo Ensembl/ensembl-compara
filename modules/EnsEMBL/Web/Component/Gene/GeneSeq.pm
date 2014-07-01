@@ -24,10 +24,17 @@ use base qw(EnsEMBL::Web::Component::TextSequence EnsEMBL::Web::Component::Gene)
 
 sub _init { $_[0]->SUPER::_init(5000); }
 
+sub get_object {
+  my $self = shift;
+  my $hub  = $self->hub;
+  return $hub->param('lrg') ? $hub->core_object('LRG') : $hub->core_object('gene');
+}
+
 sub initialize {
   my ($self, $slice, $start, $end) = @_;
   my $hub    = $self->hub;
-  my $object = $self->object;
+  my $object = $self->get_object;
+  warn ">>> WIDTH ".$hub->param('display_width');
   
   my $config = {
     display_width   => $hub->param('display_width') || 60,
@@ -38,6 +45,8 @@ sub initialize {
     sub_slice_end   => $end,
     ambiguity       => 1,
   };
+  use Data::Dumper;
+  warn Dumper($config);
 
   for (qw(exon_display exon_ori snp_display line_numbering title_display)) {
     $config->{$_} = $hub->param($_) unless $hub->param($_) eq 'off';
@@ -64,8 +73,11 @@ sub content {
   my $species   = $hub->species;
   my $type      = $hub->type;
   my $site_type = ucfirst(lc $hub->species_defs->ENSEMBL_SITETYPE) || 'Ensembl';
-  my $html      = $self->tool_buttons;
-  
+  my $html      = $self->tool_buttons({
+                    'export' => 1,
+                    'blast'  => {'seq' => uc $slice->seq(1)},
+                  });
+ 
   if ($length >= $self->{'subslice_length'}) {
     $html .= '<div class="sequence_key"></div>' . $self->chunked_content($length, $self->{'subslice_length'}, { length => $length, name => $slice->name });
   } else {
@@ -113,9 +125,27 @@ sub content_sub_slice {
   return $self->build_sequence($sequence, $config);
 }
 
-sub content_rtf {
+sub export_type     { return 'GeneSeq'; }
+
+sub get_export_data {
+## Get data for export
   my $self = shift;
-  return $self->export_sequence($self->initialize($self->object->slice));
+  ## Fetch gene explicitly, as we're probably coming from a DataExport URL
+  my $gene = $self->get_object;
+  return unless $gene;
+  my @transcripts = @{$gene->get_all_transcripts||[]};
+  return map {$_->Obj} @transcripts;
+}
+
+sub initialize_export {
+  my $self = shift;
+  my $gene = $self->get_object;
+  my $vc = $self->hub->get_viewconfig('Gene', 'GeneSeq');
+  my @params = qw(display_width flanking line_numbering);
+  foreach (@params) {
+    $self->hub->param($_, $vc->get($_));
+  }
+  return $self->initialize($gene->slice);
 }
 
 sub get_key {

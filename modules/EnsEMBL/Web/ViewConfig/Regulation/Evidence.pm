@@ -20,7 +20,7 @@ package EnsEMBL::Web::ViewConfig::Regulation::Evidence;
 
 use strict;
 
-use base qw(EnsEMBL::Web::ViewConfig);
+use base qw(EnsEMBL::Web::ViewConfig::Regulation);
 
 sub init {
   my $self = shift;
@@ -30,28 +30,6 @@ sub init {
   });
   
   $self->title = 'Cell types';
-  
-  $self->set_defaults({
-    opt_pairwise_blastz   => 'normal',
-    opt_pairwise_tblat    => 'normal',
-    opt_pairwise_lpatch   => 'normal',
-    opt_join_genes_bottom => 'off',
-  });
-}
-
-sub extra_tabs {
-  my $self = shift;
-  my $hub  = $self->hub;
-  
-  return [
-    'Select cell types',
-    $hub->url('Component', {
-      action   => 'Web',
-      function => 'CellTypeSelector/ajax',
-      time     => time,
-      %{$hub->multi_params}
-    })
-  ];
 }
 
 sub form {

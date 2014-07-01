@@ -42,7 +42,6 @@ sub content {
   }
   my $api_data = $object->get_evidence_data($object_slice,{ cell => $cells});
   my $evidence_data = $api_data->{'data'};
-  my $cell_count = scalar @{$api_data->{'cells'}};
   
   my $table = $self->new_table([], [], { data_table => 1, sorting => [ 'cell asc', 'type asc', 'location asc' ]});
   
@@ -84,21 +83,11 @@ sub content {
   
   $table->add_rows(@rows);
 
-  my $cell_n = $cell_count;
+  my $cell_n = scalar @{$api_data->{'cells'}};
+
   my $cell_m = $cells?@$cells:$cell_n;
+  my $html = $self->cell_line_button($cell_m,$cell_n);
 
-  my $url = $self->hub->url('Component', {
-    action   => 'Web',
-    function    => 'CellTypeSelector/ajax',
-    cell => join(',',@{$object->cell_types||[]}),
-  });
-
-  my $html = qq(
-    <a class="button modal_link" href="$url" rel="modal_select_cell_types" style="margin: 0 0 8px;">
-      <img style="padding:0 2px 2px 0;vertical-align:middle" src="/i/16/rev/lab.png">
-      Choose other cell types (showing $cell_m/$cell_n)
-    </a>
-  );
   if(scalar keys %$evidence_data) {
     return $html.$table->render;
   } else {

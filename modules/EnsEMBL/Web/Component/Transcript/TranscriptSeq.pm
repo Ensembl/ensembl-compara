@@ -317,7 +317,7 @@ sub markup_line_numbers {
 sub initialize {
   my $self   = shift;
   my $hub    = $self->hub;
-  my $object = $self->object;
+  my $object = $self->object || $hub->core_object('transcript');
   
   my $config = { 
     display_width   => $hub->param('display_width') || 60,
@@ -352,18 +352,28 @@ sub initialize {
 sub content {
   my $self = shift;
   my ($sequence, $config, $raw_seq) = $self->initialize;
-  
-  my $html  = $self->tool_buttons;
+
+  my $html  = $self->tool_buttons({'export' => 1, 'blast' => {'seq' => $raw_seq}});
      $html .= sprintf '<div class="sequence_key">%s</div>', $self->get_key($config);
      $html .= $self->build_sequence($sequence, $config);
 
   return $html;
 }
 
-sub content_rtf {
+sub export_type     { return 'Transcript'; }
+
+sub initialize_export {
   my $self = shift;
+  my $hub = $self->hub;
+  ## Set some CGI parameters from the viewconfig
+  ## (because we don't want to have to set them in DataExport)
+  my $vc = $hub->get_viewconfig('Transcript', 'TranscriptSeq');
+  my @params = qw(exons codons coding_seq translation rna snp_display utr hide_long_snps);
+    foreach (@params) {
+    $hub->param($_, $vc->get($_));
+  }
   my ($sequence, $config) = $self->initialize;
-  return $self->export_sequence($sequence, $config);
+  return ($sequence, $config);
 }
 
 1;

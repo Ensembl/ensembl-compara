@@ -25,7 +25,7 @@ use base qw(EnsEMBL::Web::Component::TextSequence EnsEMBL::Web::Component::Varia
 sub initialize {
   my $self              = shift;
   my $hub               = $self->hub;
-  my $object            = $self->object;
+  my $object            = $self->object || $hub->core_object('variation');
   my $vf                = $hub->param('vf');
   my $flanking          = $hub->param('select_sequence') || 'both';
   my $flank_size        = $hub->param('flank_size') || 400;
@@ -46,12 +46,12 @@ sub initialize {
     up   => $flank[0] ? $slice_adaptor->fetch_by_region(undef, $v->{'Chr'}, $slice_start, $v->{'start'} - 1, $v->{'strand'}) : undef,
     down => $flank[1] ? $slice_adaptor->fetch_by_region(undef, $v->{'Chr'}, $v->{'end'} + 1, $slice_end,     $v->{'strand'}) : undef
   );
-  
+ 
   my $config = {
     display_width  => $hub->param('display_width') || 60,
     species        => $hub->species,
-    snp_display    => $hub->param('snp_display')    eq 'yes',
-    hide_long_snps => $hub->param('hide_long_snps') eq 'yes',
+    snp_display    => $hub->param('snp_display')    =~ /yes|on/,
+    hide_long_snps => $hub->param('hide_long_snps') =~ /yes|on/,
     v              => $hub->param('v'),
     focus_variant  => $vf,
     failed_variant => 1,
@@ -94,6 +94,7 @@ sub content {
   my $variation     = $object->Obj;
   my $align_quality = $variation->get_VariationFeature_by_dbID($hub->param('vf'))->flank_match;
   my $html;
+  $html .= $self->tool_buttons({'export' => 1, 'blast' => {'seq' => $raw_seq}});
   
   # check if the flanking sequences match the reference sequence
   if (defined $align_quality && $align_quality < 1) {
@@ -106,7 +107,6 @@ sub content {
     ", 'auto');
   }
   
-  $html .= $self->tool_buttons;
   $html .= sprintf '<div class="sequence_key">%s</div>', $self->get_key($config);
   $html .= $self->build_sequence($sequence, $config);
   
@@ -117,6 +117,13 @@ sub content {
     To change the display of the flanking sequence (e.g. hide the other variants, change the length of the flanking sequence), 
     use the "<b>Configure this page</b>" link on the left.
   }, 'auto') . $html;
+}
+
+sub export_type     { return 'FlankingSeq'; }
+
+sub initialize_export {
+  my $self = shift;
+  return $self->initialize;
 }
 
 sub markup_variation {
@@ -135,12 +142,6 @@ sub markup_variation {
     
     $config->{'key'}{'variations'}{$variation->{'type'}} = 1 if $variation->{'type'} && !$variation->{'focus'};
   }
-}
-
-sub content_rtf {
-  my $self = shift;
-  my ($sequence, $config) = $self->initialize;
-  return $self->export_sequence($sequence, $config);
 }
 
 1;

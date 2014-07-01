@@ -295,7 +295,7 @@ sub transcript_table {
         $ccds = join ', ', map $hub->get_ExtURL_link($_, 'CCDS', $_), @CCDS;
       }
       foreach my $k (keys %extra_links) {
-        if(my @links = grep { $_->dbname =~ /$extra_links{$k}->{'match'}/i } @$dblinks) {
+        if(my @links = grep {$_->status ne 'PRED' } grep { $_->dbname =~ /$extra_links{$k}->{'match'}/i } @$dblinks) {
           my %T = map { $_->primary_id => $_->dbname } @links;
           my $cell = '';
           my $i = 0;

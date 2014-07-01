@@ -1473,7 +1473,7 @@ sub get_rnaseq_tracks {
 sub can_export {
   my $self = shift;
   
-  return $self->action =~ /^Export$/ ? 0 : $self->availability->{'gene'};
+  return $self->action =~ /^(Export|Sequence|TranscriptComparison)$/ ? 0 : $self->availability->{'gene'};
 }
 
 1;

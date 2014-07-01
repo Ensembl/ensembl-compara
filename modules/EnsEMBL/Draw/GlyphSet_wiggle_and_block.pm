@@ -204,7 +204,7 @@ sub draw_wiggle_plot {
   my $pix_per_score = $max_score == $min_score ? $self->label->height : $row_height / max($max_score - $min_score, 1);
   my $top_offset    = 0;
   my $initial_offset= $self->_offset;
-  my $bottom_offset = $max_score == $min_score ? 0 : (($max_score - ($min_score < 0 ? $min_score : 0)) || 1) * $pix_per_score;
+  my $bottom_offset = $max_score == $min_score ? 0 : (($max_score - ($min_score > 0 ? $min_score : 0)) || 1) * $pix_per_score;
   my $zero_offset   = $max_score * $pix_per_score;
   
   # Draw the labels

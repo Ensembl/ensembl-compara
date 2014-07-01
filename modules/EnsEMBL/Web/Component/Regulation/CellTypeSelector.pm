@@ -50,22 +50,13 @@ sub content_ajax {
   my @shown_cells = @{$object->cell_types||[]};
   my (%shown_cells,%cell_categories);
   $shown_cells{$shown_cells[$_]} = $_+1 for(0..$#shown_cells);
-  my %cell_categories = map { $_ => 'shown' } @$av_cells;
 
   my $fg = $hub->database('funcgen');
   my $fgcta = $fg->get_CellTypeAdaptor();
-  my %all_cells = map { $_->name => $_->name } @{$fgcta->fetch_all()};
+  my %all_cells = map { $_ => $_ } @{$object->all_cell_types};
 
   $self->{'all_options'}      = \%all_cells;
   $self->{'included_options'} = \%shown_cells;
-#  $self->{'categories'} = ['with data available for this page','without data for this page'];
-  $self->{'categories'} = ['shown','hidden'];
-  $self->{'category_titles'} = {
-    shown => 'with data available for this page',
-    hidden => 'without data for this page',
-  };
-  $self->{'default_category'} = 'hidden';
-  $self->{'category_map'} = \%cell_categories;
   $self->{'param_mode'} = 'single';
 
   $self->SUPER::content_ajax;

@@ -24,7 +24,8 @@ use strict;
 
 use base qw(EnsEMBL::Draw::GlyphSet_simple);
 
-sub my_label { return sprintf 'Reg. Features from cell line %s', $_[0]->my_config('cell_line'); }
+sub my_label { return sprintf 'Reg. Features from cell type %s. Select another using button above?', $_[0]->my_config('cell_line'); }
+sub my_empty_label { return sprintf('No Reg. Features from cell type %s. Select another using button above?', $_[0]->my_config('cell_line')); }
 sub class    { return 'group'; }
 
 sub features {

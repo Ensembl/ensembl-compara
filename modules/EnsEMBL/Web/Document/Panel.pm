@@ -394,7 +394,6 @@ sub component_content {
       $html .= $self->component_failure($self->dynamic_use_failure($module_name), $entry, $module_name);
       next;
     }
-    
     ### If this component is configured to be loaded by an AJAX request, print just the div which the content will be loaded into
     my $ajaxable = $component->ajaxable;
     if ($ajaxable && !$ajax_request && $is_html) {
@@ -435,7 +434,7 @@ sub component_content {
           my $caption = $component->caption;
           $html .= sprintf '<h2>%s</h2>', encode_entities($caption) if $caption;
         }
-        
+     
         $html .= $content;
       }
     }

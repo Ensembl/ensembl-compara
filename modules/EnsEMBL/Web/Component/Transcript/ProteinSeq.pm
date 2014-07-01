@@ -24,7 +24,7 @@ use base qw(EnsEMBL::Web::Component::TextSequence EnsEMBL::Web::Component::Trans
 
 sub get_sequence_data {
   my ($self, $translation, $config) = @_;
-  my $object   = $self->object;
+  my $object   = $self->object || $self->hub->core_object('transcript');
   my $pep_seq  = $translation->Obj->seq;
   my $strand   = $object->Obj->strand;
   my @sequence = [ map {{ letter => $_ }} split //, uc $pep_seq ];
@@ -50,15 +50,14 @@ sub get_sequence_data {
     
     $markup->{'exons'}->{0}->{'type'} = [ 'exon0' ];
   }
-  
+ 
   if ($config->{'snp_display'}) {
     foreach my $snp (reverse @{$object->variation_data($translation->get_Slice, undef, $strand)}) {
       next if $config->{'hide_long_snps'} && $snp->{'vf'}->length > $self->{'snp_length_filter'};
       
       my $pos  = $snp->{'position'} - 1;
       my $dbID = $snp->{'vdbid'};
-      
-      $markup->{'variations'}->{$pos}->{'type'}    = lc($config->{'consequence_filter'} ? [ grep $config->{'consequence_filter'}{$_}, @{$snp->{'tv'}->consequence_type} ]->[0] : $snp->{'type'});
+      $markup->{'variations'}->{$pos}->{'type'}    = lc(($config->{'consequence_filter'} && keys %{$config->{'consequence_filter'}}) ? [ grep $config->{'consequence_filter'}{$_}, @{$snp->{'tv'}->consequence_type} ]->[0] : $snp->{'type'});
       $markup->{'variations'}->{$pos}->{'alleles'} = $snp->{'allele'};
       $markup->{'variations'}->{$pos}->{'href'} ||= {
         type        => 'ZMenu',
@@ -87,7 +86,7 @@ sub initialize {
   };
   
   for (qw(exons snp_display number hide_long_snps)) {
-    $config->{$_} = $hub->param($_) eq 'yes' ? 1 : 0;
+    $config->{$_} = $hub->param($_) =~ /yes|on/ ? 1 : 0;
   }
   
   $config->{'consequence_filter'} = { map { $_ => 1 } @consequence } if $config->{'snp_display'} && join('', @consequence) ne 'off';
@@ -109,16 +108,26 @@ sub content {
   
   my ($sequence, $config) = $self->initialize($translation);
   
-  my $html  = $self->tool_buttons;
+  my $html  = $self->tool_buttons({
+                    'export' => 1,
+                    'blast'  => {'seq' => $translation->Obj->seq, 
+                                 'peptide' => 1}
+              });
      $html .= sprintf('<div class="sequence_key">%s</div>', $self->get_key($config));
      $html .= $self->build_sequence($sequence, $config);
 
   return $html;
 }
 
-sub content_rtf {
+sub export_type     { return 'Protein'; }
+
+sub initialize_export {
   my $self = shift;
-  return $self->export_sequence($self->initialize($self->object->translation_object));
+  my $hub = $self->hub;
+  my $vc = $hub->get_viewconfig('Transcript', 'ProteinSeq');
+  $hub->param('exons', $vc->get('exons'));
+  my $transcript = $self->object || $hub->core_object('transcript');
+  return $self->initialize($transcript->translation_object);
 }
 
 1;

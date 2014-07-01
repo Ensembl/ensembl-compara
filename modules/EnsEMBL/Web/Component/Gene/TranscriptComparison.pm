@@ -44,7 +44,7 @@ sub initialize {
   }
   
   $config->{'snp_display'}        = 0 unless $hub->species_defs->databases->{'DATABASE_VARIATION'};
-  $config->{'consequence_filter'} = { map { $_ => 1 } @consequence } if $config->{'snp_display'} && join('', @consequence) ne 'off';
+  $config->{'consequence_filter'} = { map { $_ => 1 } @consequence } if $config->{'snp_display'} && scalar(@consequence) && join('', @consequence) ne 'off';
   
   if ($config->{'line_numbering'}) {
     $config->{'end_number'} = 1;
@@ -65,7 +65,10 @@ sub content {
   my $self   = shift;
   my $slice  = $self->object->slice; # Object for this section is the slice
   my $length = $slice->length;
-  my $html   = $self->tool_buttons;
+  
+  my %selected = $self->selected_transcripts;
+  my @t_params = keys %selected;
+  my $html   = $self->tool_buttons({'export' => {'params' => \@t_params}});
   
   if (!$self->hub->param('t1')) {
     $html = $self->_info(
@@ -107,15 +110,42 @@ sub content_sub_slice {
   return $self->build_sequence($sequence, $config);
 }
 
-sub content_rtf {
+sub selected_transcripts {
   my $self = shift;
-  return $self->export_sequence($self->initialize);
+  return map { $_ => $self->hub->param($_) } grep /^(t\d+)$/, $self->hub->param;
+}
+
+sub export_type     { return 'TranscriptComparison'; }
+
+sub initialize_export {
+  my $self = shift;
+  my $hub  = $self->hub;
+  my $vc = $hub->get_viewconfig('Gene', 'TranscriptComparison');
+  my @params = qw(sscon snp_display flanking line_numbering);
+  foreach (@params) {
+    $hub->param($_, $vc->get($_));
+  }
+  return $self->initialize;
+}
+
+sub get_export_data {
+  my $self = shift;
+  my $hub  = $self->hub;
+  ## Fetch gene explicitly, as we're probably coming from a DataExport URL
+  my $gene = $self->hub->core_object('gene');
+  return unless $gene;
+  my %selected       = reverse $self->selected_transcripts; 
+  my @transcripts;
+  foreach (@{$gene->Obj->get_all_Transcripts}) {
+    push @transcripts, $_ if $selected{$_->stable_id};
+  }
+  return @transcripts;
 }
 
 sub get_sequence_data {
   my ($self, $config) = @_;
   my $hub            = $self->hub;
-  my $object         = $self->object;
+  my $object         = $self->object || $hub->core_object('gene');
   my $gene           = $object->Obj;
   my $gene_name      = $gene->external_name;
   my $subslice_start = $config->{'sub_slice_start'};
@@ -236,8 +266,7 @@ sub set_variations {
   foreach my $transcript_variation (map $_->[2], sort { $b->[0] <=> $a->[0] || $b->[1] <=> $a->[1] } map [ $_->variation_feature->length, $_->most_severe_OverlapConsequence->rank, $_ ], @transcript_variations) {
     my $consequence = $config->{'consequence_filter'} ? lc [ grep $config->{'consequence_filter'}{$_}, @{$transcript_variation->consequence_type} ]->[0] : undef;
     
-    next if $config->{'consequence_filter'} && !$consequence;
-    
+    next if ($config->{'consequence_filter'} && !$consequence);
     my $vf            = $transcript_variation->variation_feature;
     my $name          = $vf->variation_name;
     my $allele_string = $vf->allele_string(undef, $strand);

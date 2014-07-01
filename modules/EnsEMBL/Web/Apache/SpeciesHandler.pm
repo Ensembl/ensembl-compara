@@ -53,11 +53,10 @@ sub handler_species {
   $function = shift @path_segments;
   
   $r->custom_response($_, "/$species/Info/Error/$_") for (NOT_FOUND, HTTP_BAD_REQUEST, FORBIDDEN, AUTH_REQUIRED);
-    
+
   if ($flag && $script) {
     $ENV{'ENSEMBL_FACTORY'}   = 'MultipleLocation' if $type eq 'Location' && $action =~ /^Multi(Ideogram.*|Top|Bottom)?$/;
-    $ENV{'ENSEMBL_COMPONENT'} = join  '::', 'EnsEMBL', $plugin, 'Component', $type, $action =~ s/__/::/gr if $script eq 'Component';
-    
+    $ENV{'ENSEMBL_COMPONENT'} = join  '::', 'EnsEMBL', $plugin, 'Component', $type, $action =~ s/__/::/gr if $script eq 'Component';  
     $redirect_if_different = 0;
   } else {
     $script = $seg;

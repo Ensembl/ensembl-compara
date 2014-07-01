@@ -41,7 +41,8 @@ sub content {
   my $site_type    = $species_defs->ENSEMBL_SITETYPE;
   my @syn_matches;
   push @syn_matches,@{$object->get_database_matches($_)} for @SYNONYM_PATTERNS;
-  my @CCDS         = grep $_->dbname eq 'CCDS', @{$object->Obj->get_all_DBLinks('CCDS')};
+  my @CCDS         = @{$object->Obj->get_all_DBLinks('CCDS')};
+  my @Uniprot      = @{$object->Obj->get_all_DBLinks('Uniprot/SWISSPROT')};
   my $db           = $object->get_db;
   my $alt_genes    = $self->_matches('alternative_genes', 'Alternative Genes', 'ALT_GENE', 'show_version'); #gets all xrefs, sorts them and stores them on the object. Returns HTML only for ALT_GENES
   my @RefSeqMatches  = @{$object->gene->get_all_Attributes('refseq_compare')};
@@ -101,6 +102,13 @@ sub content {
     my %temp = map { $_->primary_id, 1 } @CCDS;
     @CCDS = sort keys %temp;
     $table->add_row('CCDS', sprintf('<p>This gene is a member of the %s CCDS set: %s</p>', $species_defs->DISPLAY_NAME, join ', ', map $hub->get_ExtURL_link($_, 'CCDS', $_), @CCDS));
+  }
+
+  # add Uniprot info
+  if (scalar @Uniprot) {
+    my %temp = map { $_->primary_id, 1 } @Uniprot;
+    @Uniprot = sort keys %temp;
+    $table->add_row('UniprotKB', sprintf('<p>This gene has proteins that correspond to the following Uniprot identifiers: %s</p>', join ', ', map $hub->get_ExtURL_link($_, 'Uniprot/SWISSPROT', $_), @Uniprot));
   }
 
   ## add RefSeq match info where appropriate

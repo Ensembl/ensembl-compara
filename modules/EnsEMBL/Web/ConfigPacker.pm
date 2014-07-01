@@ -806,7 +806,8 @@ sub _summarise_funcgen_db {
       join cell_type c using (cell_type_id)
       join result_set_input using (result_set_id)
       join input_subset on input_subset_id = table_id
-      join experiment using (experiment_id) 
+      join experiment
+        on input_subset.experiment_id = experiment.experiment_id
       join experimental_group g using (experimental_group_id) 
      where feature_class = 'dna_methylation' 
        and table_name = 'input_subset'
@@ -1771,8 +1772,6 @@ sub _munge_website_multi {
 }
 
 sub _munge_file_formats {
-## TODO - change this to get the required information from
-## individual modules
   my $self = shift;
 
   my %unsupported = map {uc($_) => 1} @{$self->tree->{'UNSUPPORTED_FILE_FORMATS'}||[]};
@@ -1791,6 +1790,8 @@ sub _munge_file_formats {
     'bigwig'    => {'ext' => 'bw',  'label' => 'BigWig',    'display' => 'graph', 'indexed' => 1},
     'bigbed'    => {'ext' => 'bb',  'label' => 'BigBed',    'display' => 'graph', 'indexed' => 1},
     'datahub'   => {'ext' => 'txt', 'label' => 'TrackHub',  'display' => 'graph', 'indexed' => 1},
+    'rtf'       => {'ext' => 'rtf', 'label' => 'RTF'},
+    'fasta'     => {'ext' => 'fa',  'label' => 'FASTA'},
     'vcf'       => {'ext' => 'vcf', 'label' => 'VCF',       'display' => 'graph'},
     'vcfi'      => {'ext' => 'vcf', 'label' => 'VCF (indexed)', 'display' => 'graph', 'indexed' => 1},
   );
@@ -1805,7 +1806,7 @@ sub _munge_file_formats {
     if ($details->{'indexed'}) {
       push @remote, $format;
     }
-    else {
+    elsif ($details->{'display'}) {
       push @upload, $format;
     }
   }

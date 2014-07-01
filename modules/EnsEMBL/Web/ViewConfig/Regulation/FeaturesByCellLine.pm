@@ -20,7 +20,7 @@ package EnsEMBL::Web::ViewConfig::Regulation::FeaturesByCellLine;
 
 use strict;
 
-use base qw(EnsEMBL::Web::ViewConfig);
+use base qw(EnsEMBL::Web::ViewConfig::Regulation);
 
 sub init {
   my $self = shift;

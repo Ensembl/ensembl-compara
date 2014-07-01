@@ -32,5 +32,13 @@ sub non_coding_error {
   return $self->_error('No protein product', '<p>This transcript does not have a protein product</p>');
 }
 
+sub get_export_data {
+## Get data for export
+  my $self = shift;
+  ## Fetch transcript explicitly, as we're probably coming from a DataExport URL
+  my $transcript = $self->hub->core_object('transcript');
+  return $transcript->Obj;
+}
+
 1;
 
