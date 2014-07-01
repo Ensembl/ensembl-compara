@@ -160,11 +160,16 @@ sub mlss_data {
         $species->{$ref_name}++;
 
         ## Build data matrix
-        foreach my $nonref_db (@{$mlss->species_set_obj->genome_dbs}) {
-          $species->{ucfirst($nonref_db->name)}++;
-          if ($mlss->source eq "ucsc" || ($nonref_db->dbID != $ref_genome_db->dbID)) {
+        my @non_ref_genome_dbs = grep {$_->dbID != $ref_genome_db->dbID} @{$mlss->species_set_obj->genome_dbs};
+        if (scalar(@non_ref_genome_dbs)) {
+          # Alignment between 2+ species
+          foreach my $nonref_db (@non_ref_genome_dbs) {
+            $species->{ucfirst($nonref_db->name)}++;
             $data->{$ref_name}{ucfirst($nonref_db->name)} = [$method, $mlss->dbID];
           }
+        } else {
+            # Self-alignment. No need to increment $species->{$ref_name} as it has been done earlier
+            $data->{$ref_name}{$ref_name} = [$method, $mlss->dbID];
         }
       }
     }
