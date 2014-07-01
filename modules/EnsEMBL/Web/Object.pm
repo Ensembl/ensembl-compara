@@ -337,11 +337,16 @@ sub get_slices {
     next unless $_;
     my $name = $_->can('display_Slice_name') ? $_->display_Slice_name : $args->{species};
 
+    my $cigar_line = $_->can('get_cigar_line') ? $_->get_cigar_line : "";
+    #Need to change G to X if genetree glyphs are to be rendered correctly
+    $cigar_line =~ s/G/X/g;
+
     push @formatted_slices, {
       slice             => $_,
       underlying_slices => $underlying_slices && $_->can('get_all_underlying_Slices') ? $_->get_all_underlying_Slices : [ $_ ],
       name              => $name,
-      display_name      => $self->get_slice_display_name($name, $_)
+      display_name      => $self->get_slice_display_name($name, $_),
+      cigar_line        => $cigar_line,
     };
 
     $length ||= $_->length; # Set the slice length value for the reference slice only

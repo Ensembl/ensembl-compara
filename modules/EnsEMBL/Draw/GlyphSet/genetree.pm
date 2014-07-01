@@ -56,6 +56,8 @@ sub _init {
   my $other_gene            = $self->{highlights}->[5];
   my $highlight_ancestor    = $self->{highlights}->[6];
   my $show_exons            = $self->{highlights}->[7];
+  my $slice_cigar_lines     = $self->{highlights}->[8] || [];
+  my $low_coverage_species  = $self->{highlights}->[9] || {};
   my $tree          = $self->{'container'};
   my $Config        = $self->{'config'};
   my $bitmap_width  = $Config->image_width();
@@ -88,7 +90,7 @@ sub _init {
   # Create a sorted list of tree nodes sorted by rank then id
   my @nodes = ( sort { ($a->{_rank} <=> $b->{_rank}) * 10  
                            + ( $a->{_id} <=> $b->{_id}) } 
-                @{$self->features($tree, 0, 0, 0, $show_exons ) || [] } );
+                @{$self->features($tree, 0, 0, 0, $show_exons, $slice_cigar_lines, $low_coverage_species) || [] } );
 
 #  warn ("B-0:".localtime());
 
@@ -115,7 +117,18 @@ sub _init {
   my $font_width  = $res[2];
   # And assign the rest to the nodes 
   my $labels_bitmap_width = $font_width;
-  my $nodes_bitmap_width = $tree_bitmap_width-$labels_bitmap_width;
+
+  my $nodes_bitmap_width;
+  #Need to decrease the node_width region by the number of nodes (width 5) to ensure the
+  #labels don't extend into the alignment_width. Only noticable on Alignments (text) pages
+  if ($tree->isa('Bio::EnsEMBL::Compara::GenomicAlignTree')) {
+    #find the max_rank ie the highest number of nodes in a branch
+    my $max_rank = (sort { $b->{_rank} <=> $a->{_rank} } @nodes)[0]->{_rank};
+    $nodes_bitmap_width = $tree_bitmap_width-$labels_bitmap_width-($max_rank*5);
+  } else {
+    $nodes_bitmap_width = $tree_bitmap_width-$labels_bitmap_width;
+  }
+
   #----------
   # Calculate phylogenetic distance to px scaling
   #my $max_distance = $tree->max_distance;
@@ -384,6 +397,8 @@ sub _init {
         });
       } elsif (exists $f->{_subtree}) {
         $txt->{'href'} = $node_href;
+      } elsif ($f->{'_gat'}) {
+          $txt->{'colour'} = $f->{'_gat'}{'colour'};
       }
       
       push(@labels, $txt);
@@ -422,11 +437,16 @@ sub _init {
   my $alignment_width  = $align_bitmap_width - 20;
   my $alignment_length = 0;
 
-  my @inters = split (/([MmDG])/, $alignments[0]->[1]); # Use first align
-  my $ms = 0;
-  foreach my $i ( grep { $_ !~ /[MmGD]/} @inters) {
-      $ms = $i  || 1;
-      $alignment_length  += $ms;
+  #Find the alignment length from the first alignment
+  my @cigar = grep {$_} split(/(\d*[GDMmXI])/, $alignments[0]->[1]);
+  for my $cigElem ( @cigar ) {
+    my $cigType = substr( $cigElem, -1, 1 );
+    my $cigCount = substr( $cigElem, 0 ,-1 );
+    $cigCount = 1 unless ($cigCount =~ /^\d+$/);
+    #Do not include I in the alignment length
+    if ($cigType =~ /[GDMmX]/) {
+      $alignment_length += $cigCount;
+    }
   }
   $alignment_length ||= $alignment_width; # All nodes collapsed
   my $min_length      = int($alignment_length / $alignment_width);   
@@ -452,9 +472,14 @@ sub _init {
   
         $self->push( $e );
       }
-  
-      my $box_colour = $collapsed ? 'darkgreen' : 'yellowgreen';
-  
+      #Use a different colour for DNA (GenomicAlignTree) and proteins
+      my $box_colour;
+      if ($tree->isa('Bio::EnsEMBL::Compara::GenomicAlignTree')) {
+        $box_colour = '#3366FF'; #blue
+      } else {
+         $box_colour = $collapsed ? 'darkgreen' : 'yellowgreen';
+      }
+
       my $t = $self->Rect({
         'x'         => $alignment_start,
         'y'         => $yc - 3,
@@ -467,7 +492,7 @@ sub _init {
       $self->push( $t );
   
   
-      my @inters = split (/([MmDG])/, $al);
+      my @inters = split (/([MmDGXI])/, $al);
       my $ms = 0;
       my $ds = 0;
       my $box_start = 0;
@@ -478,6 +503,9 @@ sub _init {
       while (@inters) {
         $ms = (shift (@inters) || 1);
         my $mtype = shift (@inters);
+
+        #Skip I elements
+        next if ($mtype eq "I");
         
         $box_end = $box_start + $ms -1;
         
@@ -593,6 +621,8 @@ sub features {
   my $parent_id  = shift || 0;
   my $x_offset   = shift || 0;
   my $show_exons = shift || 0;
+  my $slice_cigar_lines = shift;
+  my $low_coverage_species = shift || {};
   my $node_type;
 
   # Scale the branch length
@@ -687,10 +717,19 @@ sub features {
   }
   
   # Recurse for each child node
-  if (!$f->{'_collapsed'} && @{$tree->sorted_children}) {
-    foreach my $child_node (@{$tree->sorted_children}) {  
-      $f->{'_child_count'}++;
-      push @features, @{$self->features($child_node, $rank, $node_id, $x_offset, $show_exons)};
+  if ($tree->isa('Bio::EnsEMBL::Compara::GenomicAlignTree')) {
+    if (!$f->{'_collapsed'} && @{$tree->sort_children}) {
+      foreach my $child_node (@{$tree->sort_children}) {
+        $f->{'_child_count'}++;
+        push @features, @{$self->features($child_node, $rank, $node_id, $x_offset, $show_exons, $slice_cigar_lines, $low_coverage_species)};
+      }
+    }
+  } else {
+    if (!$f->{'_collapsed'} && @{$tree->sorted_children}) {
+      foreach my $child_node (@{$tree->sorted_children}) {
+	$f->{'_child_count'}++;
+	push @features, @{$self->features($child_node, $rank, $node_id, $x_offset, $show_exons, $slice_cigar_lines, $low_coverage_species)};
+      }
     }
   }
 
@@ -779,6 +818,22 @@ sub features {
     $name = $tree->{_subtree}->get_tagvalue('model_id') unless $name;
     $f->{label} =  $f->{'_display_id'} = sprintf('%s (%d genes)', $name, $tree->{_subtree_size});
     $f->{_subtree_ref} = 1 if exists $tree->{_subtree}->{_supertree};
+  } elsif ($tree->is_leaf  && $tree->isa('Bio::EnsEMBL::Compara::GenomicAlignTree')) {
+    my $genomic_align = $tree->get_all_genomic_aligns_for_node->[0];
+    my $name = $genomic_align->genome_db->name;
+
+    #Get the cigar_line for the GenomicAlignGroup (passed in via highlights structure)
+    my $cigar_line = shift $slice_cigar_lines;
+
+    #Only display cigar glyphs if there is an alignment in this region
+    if ($cigar_line =~ /M/) {
+      $f->{'_cigar_line'} = $cigar_line;
+    }
+    $f->{'label'} = $self->species_defs->get_config(ucfirst($name), 'SPECIES_COMMON_NAME');
+    if ($low_coverage_species && $low_coverage_species->{$genomic_align->genome_db->dbID}) {
+     $f->{'_gat'}{'colour'} = 'brown';
+    }
+    $f->{'_species'} =  ucfirst $name; # This will be used in URLs;
   } else { # Internal node
     $f->{'_name'} = $tree->name;
   }
