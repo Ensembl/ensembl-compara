@@ -41,6 +41,15 @@ sub content {
   
   $self->{'feature_count'} = scalar @features;
   $self->feature_content($_, $i++) for @features;
+  $self->add_entry({
+    'label'       => 'What are assembly exceptions?',
+    'link_class'  => 'popup',
+    'link'        => $hub->url({
+                      'type'    => 'Help',
+                      'action'  => 'Glossary',
+                      'id'      => 296,
+                      }),
+  });
 }
 
 sub feature_content {
