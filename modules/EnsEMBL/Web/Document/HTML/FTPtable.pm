@@ -110,6 +110,7 @@ sub render {
   foreach my $sp (@$all_species) {
     my $sp_dir    = $sp->{'dir'};
     my $sp_var    = $sp_dir. '_variation';
+    my $databases = $hub->species_defs->get_config(ucfirst($sp_dir), 'databases');
 
     push @$rows, {
       fave    => $sp->{'favourite'} ? 'Y' : '',
@@ -123,11 +124,11 @@ sub render {
       genbank => sprintf('<a rel="external" title="%s" href="ftp://ftp.ensembl.org/pub/%s/genbank/%s/">GenBank</a>',   $title{'genbank'}, $rel, $sp_dir),
       genes   => sprintf('<a rel="external" title="%s" href="ftp://ftp.ensembl.org/pub/%s/gtf/%s">GTF</a>',            $title{'gtf'},     $rel, $sp_dir),
       mysql   => sprintf('<a rel="external" title="%s" href="ftp://ftp.ensembl.org/pub/%s/mysql/">MySQL</a>',          $title{'mysql'},   $rel),
-      var2    => $required_lookup->{'var2'}{$sp_dir}    ? sprintf('<a rel="external" title="%s" href="ftp://ftp.ensembl.org/pub/%s/variation/gvf/%s/">GVF</a>',                $title{'gvf'},     $rel, $sp_dir) : '-',
-      var4    => $required_lookup->{'var4'}{$sp_dir}    ? sprintf('<a rel="external" title="%s" href="ftp://ftp.ensembl.org/pub/%s/variation/vcf/%s/">VCF</a>',                $title{'vcf'},     $rel, $sp_dir) : '-',
+      var2    => $databases->{'DATABASE_VARIATION'} ? sprintf('<a rel="external" title="%s" href="ftp://ftp.ensembl.org/pub/%s/variation/gvf/%s/">GVF</a>',                $title{'gvf'},     $rel, $sp_dir) : '-',
+      var4    => $databases->{'DATABASE_VARIATION'} ? sprintf('<a rel="external" title="%s" href="ftp://ftp.ensembl.org/pub/%s/variation/vcf/%s/">VCF</a>',                $title{'vcf'},     $rel, $sp_dir) : '-',
       var3    => sprintf('<a rel="external" title="%s" href="ftp://ftp.ensembl.org/pub/%s/variation/VEP/">VEP</a>',    $title{'vep'},     $rel),
       funcgen => $required_lookup->{'funcgen'}{$sp_dir} ? sprintf('<a rel="external" title="%s" href="ftp://ftp.ensembl.org/pub/%s/regulation/%s/">Regulation</a> (GFF)',      $title{'funcgen'}, $rel, $sp_dir) : '-',
-      bam     => $required_lookup->{'bam'}{$sp_dir}     ? sprintf('<a rel="external" title="%s" href="ftp://ftp.ensembl.org/pub/%s/bam/%s/genebuild/">BAM</a>',                $title{'bam'},     $rel, $sp_dir) : '-',
+      bam     => $databases->{'DATABASE_RNASEQ'}    ? sprintf('<a rel="external" title="%s" href="ftp://ftp.ensembl.org/pub/%s/bam/%s/genebuild/">BAM</a>',                $title{'bam'},     $rel, $sp_dir) : '-',
       files   => $required_lookup->{'files'}{$sp_dir}   ? sprintf('<a rel="external" title="%s" href="ftp://ftp.ensembl.org/pub/%s/data_files/%s/">Regulation data files</a>', $title{'files'},   $rel, $sp_dir) : '-',
     };
   }
@@ -186,27 +187,7 @@ sub required_types_for_species {
   my $self = shift;
   my %required_lookup;
   
-  # GVF
-  $required_lookup{'var2'} = { map { $_ => 1 } qw(
-    bos_taurus canis_familiaris danio_rerio drosophila_melanogaster 
-    equus_caballus felis_catus gallus_gallus homo_sapiens 
-    saccharomyces_cerevisiae monodelphis_domestica mus_musculus 
-    nomascus_leucogenys ornithorhynchus_anatinus ovis_aries pan_troglodytes pongo_pygmaeus 
-    rattus_norvegicus sus_scrofa taeniopygia_guttata tetraodon_nigroviridis 
-    pongo_abelii macaca_mulatta meleagris_gallopavo
-  )};
-
-  # VCF
-  $required_lookup{'var4'} = { map { $_ => 1 } qw(
-    bos_taurus canis_familiaris danio_rerio drosophila_melanogaster 
-    equus_caballus felis_catus gallus_gallus homo_sapiens 
-    saccharomyces_cerevisiae monodelphis_domestica mus_musculus nomascus_leucogenys
-    ornithorhynchus_anatinus ovis_aries pan_troglodytes pongo_pygmaeus 
-    rattus_norvegicus sus_scrofa taeniopygia_guttata tetraodon_nigroviridis 
-    pongo_abelii macaca_mulatta meleagris_gallopavo
-  )};
-  
-  # Funcgen
+  # Regulatory build
   $required_lookup{'funcgen'} = { map { $_ => 1 } qw(
     homo_sapiens mus_musculus
   )};
@@ -214,13 +195,6 @@ sub required_types_for_species {
   # Funcgen files
   $required_lookup{'files'} = { map { $_ => 1 } qw(
     homo_sapiens mus_musculus
-  )};
-  
-  # BAM
-  $required_lookup{'bam'} = { map { $_ => 1 } qw(
-    anolis_carolinensis astyanax_mexicanus canis_familiaris danio_rerio dasypus_novemcinctus ficedula_albicollis gallus_gallus lepisosteus_oculatus monodelphis_domestica mustela_putorius_furo
-    oreochromis_niloticus ornithorhynchus_anatinus oryctolagus_cuniculus ovis_aries pan_troglodytes pelodiscus_sinensis
-    pongo_abelii sarcophilus_harrisii sus_scrofa xiphophorus_maculatus homo_sapiens felis_catus mus_musculus
   )};
   
   return \%required_lookup;
