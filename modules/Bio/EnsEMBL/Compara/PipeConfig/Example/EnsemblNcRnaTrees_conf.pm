@@ -61,9 +61,9 @@ sub default_options {
     return {
             %{$self->SUPER::default_options},
 
-            'mlss_id'          => 40094,
-            'release'          => '75',
-            'rel_suffix'       => '',
+            'mlss_id'          => 40095,
+            'release'          => '76',
+            'rel_suffix'       => 'b',
             'work_dir'         => '/lustre/scratch110/ensembl/' .
                                $self->o('ENV', 'USER') .
                                '/nc_trees_' .
