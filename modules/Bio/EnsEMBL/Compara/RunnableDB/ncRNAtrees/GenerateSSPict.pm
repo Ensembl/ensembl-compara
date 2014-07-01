@@ -105,6 +105,7 @@ sub _dumpMultipleAlignment {
 
     if ($ss_cons =~ /^\.d+$/) {
         $self->input_job->incomplete(0);
+        $self->input_job->autoflow(0);
         die "tree " . $self->param('gene_tree_id') . " has no structure: $ss_cons\n";
     }
 

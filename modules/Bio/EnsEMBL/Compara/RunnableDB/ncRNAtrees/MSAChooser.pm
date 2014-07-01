@@ -102,6 +102,7 @@ sub fetch_input {
         $self->dataflow_output_id($self->input_id, 3);
         $self->dataflow_output_id($self->input_id, 4);
         $self->input_job->incomplete(0);
+        $self->input_job->autoflow(0);
         die "Cluster root_id=$nc_tree_id over threshold (gene_count=$gene_count > ".($self->param('treebreak_gene_count'))."), dataflowing to QuickTreeBreak\n";
     }
 

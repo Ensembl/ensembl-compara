@@ -62,6 +62,7 @@ sub run_ncgenomic_tree {
     die "$input_aln doesn't exist" unless (-e $input_aln);
     if ($method eq "phyml" && (scalar $cluster->get_all_leaves < 4)) {
         $self->input_job->incomplete(0);
+        $self->input_job->autoflow(0);
         die ("tree cluster $nc_tree_id has ".(scalar $cluster->get_all_leaves)." proteins - can not build a phyml tree\n");
     }
 

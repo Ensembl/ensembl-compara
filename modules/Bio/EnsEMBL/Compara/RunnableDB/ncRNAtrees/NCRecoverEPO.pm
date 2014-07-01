@@ -508,6 +508,7 @@ sub remove_low_cov_predictions {
       ## For now, this is not a problem, since add_matching_predictions is not finished, but we may need to
       ## make sure that it is running properly once it is finished.
       $self->input_job->incomplete(0);
+      $self->input_job->autoflow(0);
       die ("$root_id tree has become too short ($leafcount leaf/ves)\n");
   }
   $nc_tree->store_tag('gene_count', $leafcount);

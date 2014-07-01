@@ -50,12 +50,14 @@ sub run {
     my $nc_tree_id = $self->param('gene_tree_id');
     if ($self->param('single_peptide_tree')) {
         $self->input_job->incomplete(0);
+        $self->input_job->autoflow(0);
         die "single peptide tree\n";
     }
 
     if ($self->param('tag_gene_count') > 1000) { ## Too much
         my $tag_gene_count = $self->param('tag_gene_count');
         $self->input_job->incomplete(0);
+        $self->input_job->autoflow(0);
         die "family $nc_tree_id has too many member ($tag_gene_count). No genomic alignments will be computed\n";
     }
 
@@ -75,6 +77,7 @@ sub run {
                                   );
 
         $self->input_job->incomplete(0);
+        $self->input_job->autoflow(0);
         my $tag_residue_count = $self->param('tag_residue_count');
         die "Family too big for normal branch ($tag_residue_count bps) -- Only FastTrees will be generated\n";
     }
@@ -89,6 +92,7 @@ sub run {
         # Should we die here? Nothing more to do in the Runnable?
         my $tag_residue_count = $self->param('tag_residue_count');
         $self->input_job->incomplete(0);
+        $self->input_job->autoflow(0);
         die "Re-scheduled in hugemem queue ($tag_residue_count bps)\n";
 
     }
@@ -242,6 +246,7 @@ sub run_RAxML {
                                        }, -1
                                       );
             $self->input_job->incomplete(0);
+            $self->input_job->autoflow(0);
             die "RAXML ERROR: Problem allocating memory. Re-scheduled with more memory";
         }
         die "RAXML ERROR: ", $command->err, "\n";

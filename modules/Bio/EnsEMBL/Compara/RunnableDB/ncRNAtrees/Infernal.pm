@@ -202,6 +202,7 @@ sub dump_sequences_to_workdir {
   if ($tag_gene_count < 2) {
 #      $self->input_job->transient_error(0);
       $self->input_job->incomplete(0);
+      $self->input_job->autoflow(0);
       die ("Only one member for cluster [$root_id]");
 #      return undef
   }
