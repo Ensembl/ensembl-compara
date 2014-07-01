@@ -146,7 +146,7 @@ sub cigar_line {
   my $self = shift;
   if (@_) {
     my $cigar = shift;
-    if ($self->{'_cigar_line'} and $self->{'_cigar_line'} ne $cigar) {
+    if ($cigar and $self->{'_cigar_line'} and $self->{'_cigar_line'} ne $cigar) {
       foreach my $k (keys %$self) {
         delete $self->{$k} if $k =~ /alignment_string/;
       }

@@ -99,9 +99,15 @@ sub default_options {
         'tree_dir'                  =>  $self->o('ensembl_cvs_root_dir').'/ensembl_genomes/EGCompara/config/prod/trees/Version'.$self->o('eg_release').'Trees',
         'species_tree_input_file'   =>  $self->o('tree_dir').'/'.$self->o('division').'.peptide.nh',
 
+    # homology assignment for polyploid genomes
+        # This parameter is an array of groups of genome_db names / IDs.
+        # Each group represents the components of a polyploid genome
+        # e.g. bread wheat for the "plants" division
+        'homoeologous_genome_dbs'   => $self->o('division') eq 'plants' ? [ [ 'triticum_aestivum_a', 'triticum_aestivum_b', 'triticum_aestivum_d' ] ] : [],
+
     # homology_dnds parameters:
         'codeml_parameters_file'    => $self->o('ensembl_cvs_root_dir').'/ensembl-compara/scripts/homology/codeml.ctl.hash',
-        'taxlevels'                 => ['cellular organisms'],
+        'taxlevels'                 => $self->o('division') eq 'plants' ? ['Liliopsida', 'eudicotyledons', 'Chlorophyta'] : ['cellular organisms'],
         'filter_high_coverage'      => 0,   # affects 'group_genomes_under_taxa'
 
     # mapping parameters:
@@ -162,6 +168,7 @@ sub default_options {
 
         # the master database for synchronization of various ids (use undef if you don't have a master database)
         'master_db' => 'mysql://ensro@mysql-eg-pan-1.ebi.ac.uk:4276/ensembl_compara_master',
+        'master_db_is_missing_dnafrags' => 1,
 
     ######## THESE ARE PASSED INTO LOAD_REGISTRY_FROM_DB SO PASS IN DB_VERSION
     ######## ALSO RAISE THE POINT ABOUT LOAD_FROM_MULTIPLE_DBs

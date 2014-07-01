@@ -114,6 +114,12 @@ sub default_options {
         # you can define your own species_tree for 'notung'. It *has* to be binary
         'binary_species_tree_input_file'   => undef,
 
+    # homology assignment for polyploid genomes
+        # This parameter is an array of groups of genome_db names / IDs.
+        # Each group represents the components of a polyploid genome
+        'homoeologous_genome_dbs'   => [],
+
+
     # homology_dnds parameters:
         'codeml_parameters_file'    => $self->o('ensembl_cvs_root_dir').'/ensembl-compara/scripts/pipeline/protein_trees.codeml.ctl.hash',      # used by 'homology_dNdS'
         'taxlevels'                 => [],
@@ -188,6 +194,7 @@ sub default_options {
         #'master_db' => 'mysql://ensro@compara1:3306/sf5_ensembl_compara_master',
         'master_db' => undef,
         'ncbi_db'   => $self->o('master_db'),
+        'master_db_is_missing_dnafrags' => 0,
 
         # NOTE: The databases referenced in the following arrays have to be hashes (not URLs)
         # Add the database entries for the current core databases and link 'curr_core_sources_locs' to them
@@ -741,7 +748,7 @@ sub pipeline_analyses {
                 'store_related_pep_sequences' => 1,
                 'allow_pyrrolysine'             => $self->o('allow_pyrrolysine'),
                 'find_canonical_translations_for_polymorphic_pseudogene' => 1,
-                'store_missing_dnafrags'        => 0,
+                'store_missing_dnafrags'        => $self->o('master_db_is_missing_dnafrags'),
             },
             -hive_capacity => $self->o('loadmembers_capacity'),
             -rc_name => '2Gb_job',
@@ -1186,10 +1193,20 @@ sub pipeline_analyses {
                 mode            => 'global_tree_set',
             },
             -flow_into  => [
+                'write_stn_tags',
                 $self->o('do_stable_id_mapping') ? 'stable_id_mapping' : (),
                 $self->o('do_treefam_xref') ? 'treefam_xref_idmap' : (),
             ],
             %hc_analysis_params,
+        },
+
+        {   -logic_name     => 'write_stn_tags',
+            -module         => 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
+            -parameters     => {
+                'stnt_sql_script'   => $self->o('ensembl_cvs_root_dir').'/ensembl-compara/sql/tree-stats-as-stn_tags.sql',
+                'command_line_db'   => $self->dbconn_2_mysql('pipeline_db', 1),
+                'cmd'               => 'mysql  #command_line_db# < #stnt_sql_script#',
+            },
         },
 
 
@@ -1444,6 +1461,7 @@ sub pipeline_analyses {
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::OrthoTree',
             -parameters => {
                 'tag_split_genes'   => 1,
+                'homoeologous_genome_dbs' => $self->{'homoeologous_genome_dbs'},
             },
             -hive_capacity  => $self->o('ortho_tree_capacity'),
             -rc_name        => '250Mb_job',
@@ -1457,6 +1475,7 @@ sub pipeline_analyses {
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::OrthoTree',
             -parameters => {
                 'tag_split_genes'   => 1,
+                'homoeologous_genome_dbs' => $self->{'homoeologous_genome_dbs'},
             },
             -hive_capacity  => $self->o('ortho_tree_capacity'),
             -rc_name        => '4Gb_job',
@@ -1517,6 +1536,7 @@ sub pipeline_analyses {
             -parameters => {
                 'tag_split_genes'   => 1,
                 'store_homologies'  => 0,
+                'homoeologous_genome_dbs' => $self->{'homoeologous_genome_dbs'},
             },
             -hive_capacity  => $self->o('ortho_tree_annot_capacity'),
             -rc_name        => '250Mb_job',
@@ -1532,6 +1552,7 @@ sub pipeline_analyses {
             -parameters => {
                 'tag_split_genes'   => 1,
                 'store_homologies'  => 0,
+                'homoeologous_genome_dbs' => $self->{'homoeologous_genome_dbs'},
             },
             -hive_capacity  => $self->o('ortho_tree_annot_capacity'),
             -rc_name        => '4Gb_job',

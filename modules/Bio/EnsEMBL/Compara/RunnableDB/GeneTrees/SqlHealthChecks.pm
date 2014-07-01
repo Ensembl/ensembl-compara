@@ -75,8 +75,12 @@ my $config = {
                 query => 'SELECT gdb.* FROM genome_db gdb LEFT JOIN species_tree_node stn ON gdb.genome_db_id = stn.genome_db_id AND stn.root_id = #species_tree_root_id# WHERE stn.node_id IS NULL',
             },
             {
+                description => 'Checks that the species tree is minimized (i.e. nodes cannot have a single child)',
+                query => 'SELECT stn1.node_id FROM species_tree_node stn1 JOIN species_tree_node stn2 ON stn1.node_id = stn2.parent_id WHERE stn1.root_id = #species_tree_root_id# GROUP BY stn1.node_id HAVING COUNT(*) = 1',
+            },
+            {
                 description => 'Checks that the species tree is binary',
-                query => 'SELECT stn1.node_id FROM species_tree_node stn1 JOIN species_tree_node stn2 ON stn1.node_id = stn2.parent_id WHERE stn1.root_id = #species_tree_root_id# GROUP BY stn1.node_id HAVING COUNT(*) NOT IN (0,2) AND #binary#',
+                query => 'SELECT stn1.node_id FROM species_tree_node stn1 JOIN species_tree_node stn2 ON stn1.node_id = stn2.parent_id WHERE stn1.root_id = #species_tree_root_id# GROUP BY stn1.node_id HAVING COUNT(*) > 2 AND #binary#',
             },
         ],
     },
@@ -240,8 +244,8 @@ my $config = {
         params => [ 'gene_tree_id' ],
         tests => [
             {
-                description => 'Checks that the gene tree is binary',
-                query => 'SELECT gtn1.node_id FROM gene_tree_node gtn1 JOIN gene_tree_node gtn2 ON gtn1.node_id = gtn2.parent_id WHERE gtn1.root_id = #gene_tree_id# GROUP BY gtn1.node_id HAVING COUNT(*) NOT IN (0,2)',
+                description => 'Checks that the gene tree is binary (and minimized)',
+                query => 'SELECT gtn1.node_id FROM gene_tree_node gtn1 JOIN gene_tree_node gtn2 ON gtn1.node_id = gtn2.parent_id WHERE gtn1.root_id = #gene_tree_id# GROUP BY gtn1.node_id HAVING COUNT(*) != 2',
             },
 
             {

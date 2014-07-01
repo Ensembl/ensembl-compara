@@ -47,8 +47,8 @@ CREATE TEMPORARY TABLE tmp_stats_per_genome
 SELECT
 	stn.node_id,
 	COUNT(DISTINCT mg.gene_member_id) AS nb_genes,
-	COUNT(DISTINCT mp.seq_member_id AS nb_seq,
-	SUM(gtn.node_id IS NULL) AS nb_orphan_genes,
+	COUNT(DISTINCT mp.seq_member_id) AS nb_seq,
+	SUM(mg.canonical_member_id = mp.seq_member_id AND gtn.node_id IS NULL) AS nb_orphan_genes,
 	SUM(gtn.node_id IS NOT NULL) AS nb_genes_in_tree,
 	SUM(gtn.node_id IS NOT NULL AND gstn.genome_db_id IS NULL) AS nb_genes_in_tree_multi_species,
 	SUM(gtn.node_id IS NOT NULL AND gstn.genome_db_id IS NOT NULL) AS nb_genes_in_tree_single_species

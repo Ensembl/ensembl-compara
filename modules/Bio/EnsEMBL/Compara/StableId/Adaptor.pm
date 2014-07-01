@@ -131,8 +131,7 @@ sub load_compara_ncs {
     if ($ncs->type() eq 'f') {
         my $member_name = $schema_version < 76 ? 'member' : 'seq_member';
         $sql = qq{
-            SELECT f.family_id, }.(($schema_version<53)?"f.stable_id":"CONCAT(f.stable_id,'.',f.version)").qq{,
-                IF(m.source_name='ENSEMBLPEP', SUBSTRING_INDEX(TRIM(LEADING 'Transcript:' FROM m.description),' ',1), m.stable_id)
+            SELECT f.family_id, }.(($schema_version<53)?"f.stable_id":"CONCAT(f.stable_id,'.',f.version)").qq{, m.stable_id
                     FROM family f, family_member fm, $member_name m
                     WHERE f.family_id=fm.family_id
                     AND   fm.${member_name}_id=m.${member_name}_id
@@ -141,7 +140,7 @@ sub load_compara_ncs {
     } elsif ($ncs->type() eq 't') {
         if ($schema_version <= 52) {
             $sql = qq{
-                SELECT ptn.node_id, CONCAT('Node_',ptn.node_id), IF(m.source_name='ENSEMBLPEP', SUBSTRING_INDEX(TRIM(LEADING 'Transcript:' FROM m.description),' ',1), m.stable_id)
+                SELECT ptn.node_id, CONCAT('Node_',ptn.node_id), m.stable_id
                     FROM protein_tree_node ptn
                     LEFT JOIN protein_tree_member n2m ON ptn.node_id=n2m.node_id
                     LEFT JOIN member m ON n2m.member_id=m.member_id
@@ -150,7 +149,7 @@ sub load_compara_ncs {
             };
         } elsif ($schema_version <= 54) {
             $sql = qq{
-                SELECT ptn.node_id, IFNULL(CONCAT(ptsi.stable_id,'.',ptsi.version), CONCAT('Node_',ptn.node_id)), IF(m.source_name='ENSEMBLPEP', SUBSTRING_INDEX(TRIM(LEADING 'Transcript:' FROM m.description),' ',1), m.stable_id)
+                SELECT ptn.node_id, IFNULL(CONCAT(ptsi.stable_id,'.',ptsi.version), CONCAT('Node_',ptn.node_id)), m.stable_id
                     FROM protein_tree_node ptn
                     LEFT JOIN protein_tree_member n2m ON ptn.node_id=n2m.node_id
                     LEFT JOIN member m ON n2m.member_id=m.member_id
@@ -160,7 +159,7 @@ sub load_compara_ncs {
             };
         } elsif ($schema_version <= 64) {
             $sql = qq{
-                SELECT ptn.node_id, IFNULL(CONCAT(ptsi.stable_id,'.',ptsi.version), CONCAT('Node_',ptn.node_id)), IF(m.source_name='ENSEMBLPEP', SUBSTRING_INDEX(TRIM(LEADING 'Transcript:' FROM m.description),' ',1), m.stable_id)
+                SELECT ptn.node_id, IFNULL(CONCAT(ptsi.stable_id,'.',ptsi.version), CONCAT('Node_',ptn.node_id)), m.stable_id
                     FROM protein_tree_node ptn
                     LEFT JOIN protein_tree_member n2m ON ptn.node_id=n2m.node_id
                     LEFT JOIN member m ON n2m.member_id=m.member_id
@@ -170,7 +169,7 @@ sub load_compara_ncs {
             };
         } elsif ($schema_version == 65) {
             $sql = qq{
-                SELECT ptn.node_id, IFNULL(CONCAT(ptsi.stable_id,'.',ptsi.version), CONCAT('Node_',ptn.node_id)), IF(m.source_name='ENSEMBLPEP', SUBSTRING_INDEX(TRIM(LEADING 'Transcript:' FROM m.description),' ',1), m.stable_id)
+                SELECT ptn.node_id, IFNULL(CONCAT(ptsi.stable_id,'.',ptsi.version), CONCAT('Node_',ptn.node_id)), m.stable_id
                     FROM protein_tree_node ptn
                     LEFT JOIN protein_tree_member n2m ON ptn.node_id=n2m.node_id
                     LEFT JOIN member m ON n2m.member_id=m.member_id
@@ -180,7 +179,7 @@ sub load_compara_ncs {
             };
         } elsif ($schema_version == 66) {
             $sql = qq{
-                SELECT gtn.node_id, IFNULL(CONCAT(gtr.stable_id,'.',gtr.version), CONCAT('Node_',gtn.node_id)), IF(m.source_name='ENSEMBLPEP', SUBSTRING_INDEX(TRIM(LEADING 'Transcript:' FROM m.description),' ',1), m.stable_id)
+                SELECT gtn.node_id, IFNULL(CONCAT(gtr.stable_id,'.',gtr.version), CONCAT('Node_',gtn.node_id)), m.stable_id
                     FROM gene_tree_node gtn
                     JOIN gene_tree_root gtr USING (root_id)
                     LEFT JOIN gene_tree_member gtm USING (node_id)
@@ -190,7 +189,7 @@ sub load_compara_ncs {
             };
         } elsif ($schema_version == 67) {
             $sql = qq{
-                SELECT gtn.node_id, IFNULL(CONCAT(gtr.stable_id,'.',gtr.version), CONCAT('Node_',gtn.node_id)), IF(m.source_name='ENSEMBLPEP', SUBSTRING_INDEX(TRIM(LEADING 'Transcript:' FROM m.description),' ',1), m.stable_id)
+                SELECT gtn.node_id, IFNULL(CONCAT(gtr.stable_id,'.',gtr.version), CONCAT('Node_',gtn.node_id)), m.stable_id
                     FROM gene_tree_node gtn
                     JOIN gene_tree_root gtr USING (root_id)
                     LEFT JOIN gene_tree_member gtm USING (node_id)
@@ -200,7 +199,7 @@ sub load_compara_ncs {
             };
         } elsif ($schema_version < 70) {
             $sql = qq{
-                SELECT gtn.node_id, IFNULL(CONCAT(gtr.stable_id,'.',gtr.version), CONCAT('Node_',gtn.node_id)), IF(m.source_name='ENSEMBLPEP', SUBSTRING_INDEX(TRIM(LEADING 'Transcript:' FROM m.description),' ',1), m.stable_id)
+                SELECT gtn.node_id, IFNULL(CONCAT(gtr.stable_id,'.',gtr.version), CONCAT('Node_',gtn.node_id)), m.stable_id
                     FROM gene_tree_node gtn
                     JOIN gene_tree_root gtr USING (root_id)
                     LEFT JOIN gene_tree_member gtm USING (node_id)
@@ -210,7 +209,7 @@ sub load_compara_ncs {
             };
         } elsif ($schema_version < 76) {
             $sql = qq{
-                SELECT gtn.node_id, IFNULL(CONCAT(gtr.stable_id,'.',gtr.version), CONCAT('Node_',gtn.node_id)), IF(m.source_name='ENSEMBLPEP', SUBSTRING_INDEX(TRIM(LEADING 'Transcript:' FROM m.description),' ',1), m.stable_id)
+                SELECT gtn.node_id, IFNULL(CONCAT(gtr.stable_id,'.',gtr.version), CONCAT('Node_',gtn.node_id)), m.stable_id
                     FROM gene_tree_node gtn
                     JOIN gene_tree_root gtr USING (root_id)
                     LEFT JOIN member m USING (member_id)
@@ -219,7 +218,7 @@ sub load_compara_ncs {
             };
         } else {
             $sql = qq{
-                SELECT gtn.node_id, IFNULL(CONCAT(gtr.stable_id,'.',gtr.version), CONCAT('Node_',gtn.node_id)), IF(m.source_name='ENSEMBLPEP', SUBSTRING_INDEX(TRIM(LEADING 'Transcript:' FROM m.description),' ',1), m.stable_id)
+                SELECT gtn.node_id, IFNULL(CONCAT(gtr.stable_id,'.',gtr.version), CONCAT('Node_',gtn.node_id)), m.stable_id
                     FROM gene_tree_node gtn
                     JOIN gene_tree_root gtr USING (root_id)
                     LEFT JOIN seq_member m USING (seq_member_id)
@@ -232,7 +231,7 @@ sub load_compara_ncs {
         # TreeFam
         if ($schema_version <= 70) {
             $sql = qq{
-                SELECT gtn.node_id, IFNULL(gtrt.value, CONCAT('Node_',gtn.node_id)), IF(m.description LIKE "Transcript:%", SUBSTRING_INDEX(TRIM(LEADING 'Transcript:' FROM m.description),' ',1), m.stable_id)
+                SELECT gtn.node_id, IFNULL(gtrt.value, CONCAT('Node_',gtn.node_id)), m.stable_id
                     FROM gene_tree_node gtn
                     JOIN gene_tree_root gtr USING (root_id)
                     JOIN gene_tree_root_tag gtrt ON gtr.root_id=gtrt.root_id AND gtrt.tag = "model_name"

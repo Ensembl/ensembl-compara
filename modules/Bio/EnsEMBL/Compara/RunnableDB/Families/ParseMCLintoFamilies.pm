@@ -67,7 +67,7 @@ sub write_output {
 
         print STDERR "Loading cluster $cluster_index..." if($self->debug);
 
-        my $family_stable_id = sprintf ("$family_prefix%011.0d",$cluster_index + $family_offset);
+        my $family_stable_id = sprintf ("$family_prefix%011d",$cluster_index + $family_offset);
         my $family = Bio::EnsEMBL::Compara::Family->new_fast({
             '_stable_id'                    => $family_stable_id,
             '_version'                      => 1,

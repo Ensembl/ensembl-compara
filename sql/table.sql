@@ -802,8 +802,8 @@ CREATE TABLE gene_member (
   canonical_member_id         int(10) unsigned, # FK seq_member.seq_member_id
   description                 text DEFAULT NULL,
   dnafrag_id                  bigint unsigned, # FK dnafrag.dnafrag_id
-  dnafrag_start               int(10) unsigned,
-  dnafrag_end                 int(10) unsigned,
+  dnafrag_start               int(10),
+  dnafrag_end                 int(10),
   dnafrag_strand              tinyint(4),
   display_label               varchar(128) default NULL,
 
@@ -865,8 +865,8 @@ CREATE TABLE seq_member (
   gene_member_id              int(10) unsigned, # FK gene_member.gene_member_id
   description                 text DEFAULT NULL,
   dnafrag_id                  bigint unsigned, # FK dnafrag.dnafrag_id
-  dnafrag_start               int(10) unsigned,
-  dnafrag_end                 int(10) unsigned,
+  dnafrag_start               int(10),
+  dnafrag_end                 int(10),
   dnafrag_strand              tinyint(4),
   display_label               varchar(128) default NULL,
 
@@ -882,7 +882,8 @@ CREATE TABLE seq_member (
   KEY (sequence_id),
   KEY (gene_member_id),
   KEY dnafrag_id_start (dnafrag_id,dnafrag_start),
-  KEY dnafrag_id_end (dnafrag_id,dnafrag_end)
+  KEY dnafrag_id_end (dnafrag_id,dnafrag_end),
+  KEY seq_member_gene_member_id_end (seq_member_id,gene_member_id)
 ) MAX_ROWS = 100000000 COLLATE=latin1_swedish_ci ENGINE=MyISAM;
 
 
