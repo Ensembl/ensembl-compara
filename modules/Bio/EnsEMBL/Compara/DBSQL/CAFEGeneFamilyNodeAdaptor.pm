@@ -71,7 +71,7 @@ sub store_node {
     my $sth = $self->prepare("INSERT INTO CAFE_species_gene (cafe_gene_family_id, node_id, n_members, pvalue) VALUES (?,?,?,?)");
     # print STDERR "INSERT INTO CAFE_species_gene (cafe_gene_family_id, node_id, n_members, pvalue) VALUES ($cafe_gene_family_id, " , $node->node_id, ", ", $node->n_members, ", ", $node->pvalue , ")\n";
 
-    $sth->execute($cafe_gene_family_id, $node->node_id, $node->n_members || 0, $node->pvalue || 1);
+    $sth->execute($cafe_gene_family_id, $node->node_id, $node->n_members || 0, $node->pvalue);
     $sth->finish;
     return;
 
