@@ -22,7 +22,7 @@
 (function ($) {
   $.fn.speciesDropdown = function (options) {
   /*
-   * options: same as accepted by filterableDropdown, except 'change' key
+   * options: same as accepted by filterableDropdown
    */
 
     return this.each(function () {
@@ -31,11 +31,14 @@
   };
 
   $.speciesDropdown = function (el, options) {
-    $.filterableDropdown(el, $.extend(options, {
+    $.filterableDropdown(el, $.extend({}, options, {
       'change': function() {
         $(this).find('._fd_tag').css('background-image', function() {
           return this.style.backgroundImage.replace(/[^\/]+\.png/, $($(this).data('input')).val() + '.png');
         });
+        if (options && options.change) {
+          options.change.apply(this, arguments);
+        }
       }
     }));
   };
