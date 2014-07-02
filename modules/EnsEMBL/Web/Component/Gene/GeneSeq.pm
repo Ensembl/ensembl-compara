@@ -34,8 +34,7 @@ sub initialize {
   my ($self, $slice, $start, $end) = @_;
   my $hub    = $self->hub;
   my $object = $self->get_object;
-  warn ">>> WIDTH ".$hub->param('display_width');
-  
+
   my $config = {
     display_width   => $hub->param('display_width') || 60,
     site_type       => ucfirst(lc $hub->species_defs->ENSEMBL_SITETYPE) || 'Ensembl',
@@ -45,8 +44,6 @@ sub initialize {
     sub_slice_end   => $end,
     ambiguity       => 1,
   };
-  use Data::Dumper;
-  warn Dumper($config);
 
   for (qw(exon_display exon_ori snp_display line_numbering title_display)) {
     $config->{$_} = $hub->param($_) unless $hub->param($_) eq 'off';
