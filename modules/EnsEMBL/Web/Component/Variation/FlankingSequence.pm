@@ -93,9 +93,7 @@ sub content {
   my $hub           = $self->hub;
   my $variation     = $object->Obj;
   my $align_quality = $variation->get_VariationFeature_by_dbID($hub->param('vf'))->flank_match;
-  my $html;
-  $html .= $self->tool_buttons({'export' => 1, 'blast' => {'seq' => $raw_seq}});
-  
+
   # check if the flanking sequences match the reference sequence
   if (defined $align_quality && $align_quality < 1) {
     my $source_link = $hub->get_ExtURL_link('here', uc $variation->source, "$config->{'v'}#submission");
@@ -107,8 +105,7 @@ sub content {
     ", 'auto');
   }
   
-  $html .= sprintf '<div class="sequence_key">%s</div>', $self->get_key($config);
-  $html .= $self->build_sequence($sequence, $config);
+  my $html = sprintf '<div class="sequence_key">%s</div>%s', $self->get_key($config), $self->build_sequence($sequence, $config);
   
   return $self->_info('Flanking sequence', qq{ 
     The sequence below is from the <b>reference genome</b> flanking the variant location.
@@ -119,7 +116,7 @@ sub content {
   }, 'auto') . $html;
 }
 
-sub export_type     { return 'FlankingSeq'; }
+sub export_options { return {'action' => 'FlankingSeq'}; }
 
 sub initialize_export {
   my $self = shift;

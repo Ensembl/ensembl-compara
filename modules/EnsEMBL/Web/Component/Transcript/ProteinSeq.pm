@@ -107,19 +107,11 @@ sub content {
   return $self->non_coding_error unless $translation;
   
   my ($sequence, $config) = $self->initialize($translation);
-  
-  my $html  = $self->tool_buttons({
-                    'export' => 1,
-                    'blast'  => {'seq' => $translation->Obj->seq, 
-                                 'peptide' => 1}
-              });
-     $html .= sprintf('<div class="sequence_key">%s</div>', $self->get_key($config));
-     $html .= $self->build_sequence($sequence, $config);
 
-  return $html;
+  return sprintf '<div class="sequence_key">%s</div>%s', $self->get_key($config), $self->build_sequence($sequence, $config);
 }
 
-sub export_type     { return 'Protein'; }
+sub export_options { return {'action' => 'Protein'}; }
 
 sub initialize_export {
   my $self = shift;

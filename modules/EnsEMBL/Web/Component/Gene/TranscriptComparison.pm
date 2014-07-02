@@ -65,11 +65,8 @@ sub content {
   my $self   = shift;
   my $slice  = $self->object->slice; # Object for this section is the slice
   my $length = $slice->length;
-  
-  my %selected = $self->selected_transcripts;
-  my @t_params = keys %selected;
-  my $html   = $self->tool_buttons({'export' => {'params' => \@t_params}});
-  
+  my $html   = '';
+
   if (!$self->hub->param('t1')) {
     $html = $self->_info(
       'No transcripts selected',
@@ -115,7 +112,16 @@ sub selected_transcripts {
   return map { $_ => $self->hub->param($_) } grep /^(t\d+)$/, $self->hub->param;
 }
 
-sub export_type     { return 'TranscriptComparison'; }
+sub export_options {
+  my $self      = shift;
+  my %selected  = $self->selected_transcripts;
+  my @t_params  = keys %selected
+
+  return {
+    'params'  => \@t_params,
+    'action'  => 'TranscriptComparison'
+  };
+}
 
 sub initialize_export {
   my $self = shift;
