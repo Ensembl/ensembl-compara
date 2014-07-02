@@ -144,15 +144,11 @@ sub content {
     $data, 
     { data_table => 'no_sort', exportable => 1 }
   );
-  
-  my $html = $self->tool_buttons({'export' => 1});
-  $html .= sprintf '<div class="sequence_key">%s</div>%s', $self->get_key($config);
-  $html .= $table->render;
-  
-  return $html;
+
+  return sprintf '<div class="sequence_key">%s</div>%s%s', $self->get_key($config), $table->render;
 }
 
-sub export_type     { return 'ExonSeq'; }
+sub export_options { return {'action' => 'ExonSeq'}; }
 
 sub initialize_export {
   my $self = shift;

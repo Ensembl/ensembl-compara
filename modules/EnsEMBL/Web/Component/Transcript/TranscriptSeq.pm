@@ -240,7 +240,7 @@ sub get_sequence_data {
     $_->{'exons'}{0}{'type'} = [ 'exon0' ] for @markup;
   }
   
-  return (\@sequence, \@markup, $seq);
+  return (\@sequence, \@markup);
 }
 
 sub markup_line_numbers {
@@ -337,7 +337,7 @@ sub initialize {
   
   $self->set_variation_filter($config);
   
-  my ($sequence, $markup, $raw_seq) = $self->get_sequence_data($object, $config);
+  my ($sequence, $markup) = $self->get_sequence_data($object, $config);
   
   $self->markup_exons($sequence, $markup, $config)     if $config->{'exons'};
   $self->markup_codons($sequence, $markup, $config)    if $config->{'codons'};
@@ -346,21 +346,17 @@ sub initialize {
   
   $config->{'v_space'} = "\n" if $config->{'coding_seq'} || $config->{'translation'} || $config->{'rna'};
   
-  return ($sequence, $config, $raw_seq);
+  return ($sequence, $config);
 }
 
 sub content {
   my $self = shift;
-  my ($sequence, $config, $raw_seq) = $self->initialize;
+  my ($sequence, $config) = $self->initialize;
 
-  my $html  = $self->tool_buttons({'export' => 1, 'blast' => {'seq' => $raw_seq}});
-     $html .= sprintf '<div class="sequence_key">%s</div>', $self->get_key($config);
-     $html .= $self->build_sequence($sequence, $config);
-
-  return $html;
+  return sprintf '<div class="sequence_key">%s</div>%s', $self->get_key($config), $self->build_sequence($sequence, $config);
 }
 
-sub export_type     { return 'Transcript'; }
+sub export_options { return {'action' => 'Transcript'}; }
 
 sub initialize_export {
   my $self = shift;

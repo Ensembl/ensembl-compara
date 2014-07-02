@@ -38,6 +38,28 @@ sub new {
   return $self;
 }
 
+sub buttons {
+  my $self    = shift;
+  my $hub     = $self->hub;
+
+  return unless $self->can('export_options');
+
+  my $options = $self->export_options || {};
+
+  return unless $options->{'action'};
+
+  my $params  = {'type' => 'DataExport', 'action' => $options->{'action'}, 'data_type' => $self->hub->type, 'component' => $self->id};
+  foreach (@{$options->{'params'} || []}) {
+    $params->{$_} = $hub->param($_);
+  }
+
+  return {
+    'url'     => $hub->url($params),
+    'caption' => $options->{'caption'} || 'Download sequence',
+    'class'   => 'export'
+  };
+}
+
 sub _init {
   my ($self, $subslice_length) = @_;
   $self->cacheable(1);

@@ -34,8 +34,7 @@ sub initialize {
   my ($self, $slice, $start, $end) = @_;
   my $hub    = $self->hub;
   my $object = $self->get_object;
-  warn ">>> WIDTH ".$hub->param('display_width');
-  
+
   my $config = {
     display_width   => $hub->param('display_width') || 60,
     site_type       => ucfirst(lc $hub->species_defs->ENSEMBL_SITETYPE) || 'Ensembl',
@@ -45,8 +44,6 @@ sub initialize {
     sub_slice_end   => $end,
     ambiguity       => 1,
   };
-  use Data::Dumper;
-  warn Dumper($config);
 
   for (qw(exon_display exon_ori snp_display line_numbering title_display)) {
     $config->{$_} = $hub->param($_) unless $hub->param($_) eq 'off';
@@ -73,11 +70,8 @@ sub content {
   my $species   = $hub->species;
   my $type      = $hub->type;
   my $site_type = ucfirst(lc $hub->species_defs->ENSEMBL_SITETYPE) || 'Ensembl';
-  my $html      = $self->tool_buttons({
-                    'export' => 1,
-                    'blast'  => {'seq' => uc $slice->seq(1)},
-                  });
- 
+  my $html      = '';
+
   if ($length >= $self->{'subslice_length'}) {
     $html .= '<div class="sequence_key"></div>' . $self->chunked_content($length, $self->{'subslice_length'}, { length => $length, name => $slice->name });
   } else {
@@ -125,7 +119,7 @@ sub content_sub_slice {
   return $self->build_sequence($sequence, $config);
 }
 
-sub export_type     { return 'GeneSeq'; }
+sub export_options { return {'action' => 'GeneSeq'}; }
 
 sub get_export_data {
 ## Get data for export

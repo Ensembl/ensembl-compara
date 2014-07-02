@@ -64,7 +64,7 @@ sub create_component {
     warn "!!! Could not create component $class";
     $error = 'Export not available';
   }
-  elsif (!$component->can('export_type')) {
+  elsif (!$component->can('export_options')) {
     warn "!!! Export not implemented in component $class";
     $error = 'Export not available';
   }
@@ -103,7 +103,7 @@ sub handle_download {
     $params{'compress'} = $compress;
     $params{'get_compressed'} = 1;
   }
-  my $tmpfile = new EnsEMBL::Web::File(%params);
+  my $tmpfile = EnsEMBL::Web::File->new(%params);
 
   if ($tmpfile->exists) {
     my $content = $tmpfile->fetch;
