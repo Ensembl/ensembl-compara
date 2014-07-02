@@ -1060,6 +1060,7 @@ sub _add_bigbed_track {
     colourset    => 'feature',
     style        => $args{'source'}{'style'},
     addhiddenbgd => 1,
+    max_label_rows => 2,
   };
 
   if ($args{'view'} && $args{'view'} =~ /peaks/i) {
@@ -1091,6 +1092,7 @@ sub _add_bigwig_track {
     sub_type     => 'bigwig',
     colour       => $args{'menu'}{'colour'} || $args{'source'}{'colour'} || 'red',
     addhiddenbgd => 1,
+    max_label_rows => 2,
   };
   
   $self->_add_file_format_track(
