@@ -269,11 +269,13 @@ sub _split_label {
   my ($self,$text,$width,$font,$ptsize) = @_;
 
   my $max_rows = $self->max_label_rows;
-  my @words = split(/\s/,$text);
+  $text =~ s/\t/ /g;
+  my @words = split(/(?<=[\s\-\._])/,$text);
   while(@words > 1 and length($words[-1]) < 6) {
     my $tail = pop @words;
-    $words[-1] .= " $tail";
+    $words[-1] .= $tail;
   }
+  @words = map { s/^\s+//; s/\s+$//; $_; } @words;
   my @split;
   my $line_so_far = '';
   foreach my $word (@words) {
