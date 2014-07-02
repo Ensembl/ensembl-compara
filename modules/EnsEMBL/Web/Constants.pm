@@ -182,7 +182,6 @@ sub NEWICK_OPTIONS {
     'species_short_name'      => 'Short species name',
     'ncbi_taxon'              => 'NCBI taxon',
     'ncbi_name'               => 'NCBI name',
-    'njtree'                  => 'NJ tree',
     'phylip'                  => 'PHYLIP',
   );
 }
