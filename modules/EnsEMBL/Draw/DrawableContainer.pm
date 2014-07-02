@@ -242,6 +242,7 @@ sub new {
         my $name         = $glyphset->{'my_config'}->id;
         my $ref_glyphset = ref $glyphset;
         $glyphset->render;
+        next if scalar @{$glyphset->{'glyphs'}} == 0;
       
         ## remove any whitespace at the top of this row
         my $gminy = $glyphset->miny;
