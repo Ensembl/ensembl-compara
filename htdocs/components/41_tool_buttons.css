@@ -40,4 +40,5 @@
 .tool_buttons .config-reset { background-image: url(/i/16/rev/setting-reset.png); }
 .tool_buttons .order-reset  { background-image: url(/i/16/rev/order-reset.png);   }
 
-.component-tools { margin-bottom:20px; }
+.component-tools            { margin-bottom: 16px; overflow: hidden; }
+.component-tools a          { float: left; }
