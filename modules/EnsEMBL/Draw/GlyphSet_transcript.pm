@@ -1462,4 +1462,6 @@ sub error_no_track_on_strand {
   return $self->errorTrack(sprintf 'No %s on %s strand in this region', $label, $strand == 1 ? 'forward' : 'reverse');
 }
 
+sub max_label_rows { return $_[0]->my_config('max_label_rows') || 2; }
+
 1;
