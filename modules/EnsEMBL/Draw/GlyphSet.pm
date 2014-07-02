@@ -841,4 +841,6 @@ sub bump_sorted_row {
   return 1e9; # If we get to this point we can't draw the feature so return a very large number!
 }
 
+sub max_label_rows { return 1; }
+
 1;
