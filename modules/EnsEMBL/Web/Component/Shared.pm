@@ -1079,13 +1079,12 @@ sub render_consequence_type {
 
   my $type = join ' ',
     map {
-      sprintf(
-        '<nobr><span class="colour" style="background-color:%s">&nbsp;</span> '.
-        '<span class="_ht conhelp" title="%s">%s</span></nobr>',
-        $var_styles->{lc $_->SO_term} ? $colourmap->hex_by_name($var_styles->{lc $_->SO_term}->{'default'}) : $colourmap->hex_by_name($var_styles->{'default'}->{'default'}),
-        $_->description,
-        $_->label
-      )
+      my $hex = $var_styles->{lc $_->SO_term}
+        ? $colourmap->hex_by_name(
+            $var_styles->{lc $_->SO_term}->{'default'}
+          )
+        : $colourmap->hex_by_name($var_styles->{'default'}->{'default'});
+      $self->coltab($_->label,$hex,$_->description);
     }
     @consequences;
   my $rank = $consequences[0]->rank;
