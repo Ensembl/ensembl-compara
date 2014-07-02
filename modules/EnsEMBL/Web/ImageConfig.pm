@@ -877,11 +877,11 @@ sub _add_datahub_tracks {
     }
     
     if ($matrix) {
-      # Should really be shortLabel, but Encode is much better using longLabel (duplicate names using shortLabel)
-      # The problem is that UCSC browser has a grouped set of tracks with a header above them. This
-      # means the short label can be very non specific, because the header gives context of what type of
-      # track it is. For Ensembl we need to have all the information in the track name / caption
-      ($source->{'source_name'} = $track->{'longLabel'}) =~ s/_/ /g;
+      my $label = $track->{'shortLabel'};
+      if($parent->data->{'shortLabel'}) {
+        $label .= " (".$parent->data->{'shortLabel'}.")";
+      }
+      ($source->{'source_name'} = $label) =~ s/_/ /g;
      
       $source->{'matrix'} = {
         menu   => $options{'submenu_key'},
