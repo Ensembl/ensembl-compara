@@ -184,6 +184,10 @@ sub sample_configs {
   my @containers_and_configs; ## array of containers and configs
   my @haplotype;
   
+  # THIS IS A HACK. IT ASSUMES ALL COVERAGE DATA IN DB IS FROM SANGER fc1
+  # Only display coverage data if source Sanger is on 
+  my $display_coverage = $hub->param('opt_sanger') eq 'off' ? 0 : 1;
+  
   foreach my $sample ($object->get_samples) {
     my $sample_slice = $transcript_slice->get_by_strain($sample); 
     next unless $sample_slice; 
@@ -220,6 +224,8 @@ sub sample_configs {
     }
     
     my ($allele_info, $consequences) = $object->getAllelesConsequencesOnSlice($sample, 'tsv_transcript', $sample_slice);
+    my ($coverage_level, $raw_coverage_obj) = $display_coverage ? $object->read_coverage($sample, $sample_slice) : ([], []);
+    my $munged_coverage = $object->munge_read_coverage($raw_coverage_obj);
     
     $sample_config->{'transcript'} = {
       sample         => $sample,
@@ -229,9 +235,11 @@ sub sample_configs {
       transcript     => $transcript,
       allele_info    => $allele_info,
       consequences   => $consequences,
+      coverage_level => $coverage_level,
+      coverage_obj   => $munged_coverage,
     };
     
-    unshift @haplotype, [ $sample, $allele_info ];
+    unshift @haplotype, [ $sample, $allele_info, $munged_coverage ];
     
     $sample_config->modify_configs(
       [ $sample_config->get_track_key('tsv_transcript', $object) ],
