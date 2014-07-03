@@ -597,14 +597,14 @@ sub render_text {
       $gab->score,'.','.',
       sprintf("%s:%d-%d",$nonref->dnafrag->name,
               $nonref->dnafrag_start,
-              $nonref->dnafrag_end
-      );
-      if($type eq 'gff') {
-        @row = map { "$header[$_]=$row[$_]" } (0..$#header);
-        $out .= join("; ",@row)."\r\n";
-      } else {
-        $out .= join("\t",@row)."\r\n";
-      }
+              $nonref->dnafrag_end)
+    );
+    if($type eq 'gff') {
+      @row = map { "$header[$_]=$row[$_]" } (0..$#header);
+      $out .= join("; ",@row)."\r\n";
+    } else {
+      $out .= join("\t",@row)."\r\n";
+    }
   } 
   warn $out;
   return $out; 
