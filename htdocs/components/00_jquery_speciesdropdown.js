@@ -38,8 +38,8 @@
 
     $.filterableDropdown(el, $.extend({}, options, {
       'change': function() {
-        var data = $(this).find('._fd_tag').css('background-image', function() {
-          return this.style.backgroundImage.replace(/[^\/]+\.png/, $($(this).data('input')).val() + '.png');
+        var data = $(this).find('._fd_tag').each(function() {
+          this.style.backgroundImage = this.style.backgroundImage.replace(/[^\/]+\.png/, $($(this).data('input')).val() + '.png');
         }).end().data('speciesDropdown');
         if (data) {
           data.change.apply(this, arguments);
