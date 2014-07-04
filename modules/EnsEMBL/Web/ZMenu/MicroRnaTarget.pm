@@ -58,9 +58,14 @@ sub content {
     link   => $source_page,
   });
 
+  my $r = sprintf("%s:%d-%d",
+                   $feature->seq_region_name,
+                   $feature->seq_region_start,
+                   $feature->seq_region_end);
   $self->add_entry ({
     type   => 'bp',
-    label  => $feature->seq_region_start.' - '.$feature->seq_region_end,
+    label => $r,
+    link  => $hub->url({ r => $r, type => 'Location',  action => 'View' })
   });
 
   my @gene_links;
