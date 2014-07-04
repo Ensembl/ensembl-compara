@@ -25,6 +25,7 @@ no warnings 'uninitialized';
 use Bio::EnsEMBL::ExternalData::DataHub::SourceParser;
 
 use base qw(Bio::EnsEMBL::ExternalData::AttachedFormat);
+use EnsEMBL::Web::Tools::RemoteURL qw(chase_redirects);
 
 sub new {
   my $self = shift->SUPER::new(@_);
@@ -42,6 +43,7 @@ sub check_data {
   my $url  = $self->{'url'};
   my $error;
   
+  $url = chase_redirects($url);
   # try to open and use the datahub file
   # this checks that the datahub files is present and correct
   my $datahub = $self->{'datahub_adaptor'}->get_hub_info($url);

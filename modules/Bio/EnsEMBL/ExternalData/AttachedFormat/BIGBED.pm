@@ -26,6 +26,8 @@ use Bio::EnsEMBL::ExternalData::BigFile::BigBedAdaptor;
 
 use base qw(Bio::EnsEMBL::ExternalData::AttachedFormat);
 
+use EnsEMBL::Web::Tools::RemoteURL qw(chase_redirects);
+
 sub new {
   my $self = shift->SUPER::new(@_);
   return $self;
@@ -47,6 +49,7 @@ sub check_data {
   my $error = '';
   require Bio::DB::BigFile;
 
+  $url = chase_redirects($url);
   if ($url =~ /^ftp:\/\//i && !$self->{'hub'}->species_defs->ALLOW_FTP_BIGWIG) {
     $error = "The BigBed file could not be added - FTP is not supported, please use HTTP.";
   }

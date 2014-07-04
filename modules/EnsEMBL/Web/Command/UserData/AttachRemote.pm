@@ -24,6 +24,7 @@ use Digest::MD5 qw(md5_hex);
 
 use EnsEMBL::Web::Root;
 use Bio::EnsEMBL::ExternalData::AttachedFormat;
+use EnsEMBL::Web::Tools::RemoteURL qw(chase_redirects);
 
 use base qw(EnsEMBL::Web::Command);
 
@@ -90,7 +91,9 @@ sub process {
          $redirect         .= $extra_config_page || 'RemoteFeedback';
       
       delete $options->{'name'};
-      
+
+      $url = chase_redirects($url);
+
       my $data = $session->add_data(
         type      => 'url',
         code      => join('_', md5_hex($name . $url), $session->session_id),

@@ -24,12 +24,15 @@ no warnings 'uninitialized';
 
 use base qw(Bio::EnsEMBL::ExternalData::AttachedFormat);
 
+use EnsEMBL::Web::Tools::RemoteURL qw(chase_redirects);
+
 sub check_data {
   my ($self) = @_;
   my $url = $self->{'url'};
   my $error = '';
   require Bio::EnsEMBL::ExternalData::VCF::VCFAdaptor;
 
+  $url = chase_redirects($url);
   if ($url =~ /^ftp:\/\//i && !$self->{'hub'}->species_defs->ALLOW_FTP_VCF) {
     $error = "The VCF file could not be added - FTP is not supported, please use HTTP.";
   } 
