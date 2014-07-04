@@ -51,10 +51,7 @@
       });
     };
 
-    el.off('.selectToToggle').on('change.selectToToggle', toggle);
-
-    toggle.apply(el.filter('select, input:checked')[0]);
-
+    el.off('.selectToToggle').on('change.selectToToggle', toggle).filter('select, input:checked').first().triggerHandler('change.selectToToggle');
   };
 
   $.fn.selectToToggle = function (
