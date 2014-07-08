@@ -95,7 +95,7 @@
       },
       'click.filterableDropdown': function(e, multiSelect) {
         labels.trigger('refresh');
-        el.trigger(!multiSelect && !e.metaKey || this.type === 'radio' ? 'close' : 'focusInput');
+        el.trigger(!multiSelect && !e.metaKey && !e.ctrlKey || this.type === 'radio' ? 'close' : 'focusInput');
       }
     });
 
@@ -108,7 +108,7 @@
         $(this).toggleClass('selected', $(this.parentNode).find('input').prop('checked'));
       },
       'click.filterableDropdown': function(e) {
-        if (e.metaKey) {
+        if (e.metaKey || e.ctrlKey) {
           e.preventDefault();
           $(this).parent().find('input').prop('checked', function() { return !this.checked }).triggerHandler('click', true);
         }
@@ -156,7 +156,7 @@
         switch (e.which) {
           case 13:
             e.preventDefault();
-            labels.filter('.highlight:visible').parent().find('input').prop('checked', true).triggerHandler('click', e.metaKey);
+            labels.filter('.highlight:visible').parent().find('input').prop('checked', true).triggerHandler('click', e.metaKey || e.ctrlKey);
           break;
           case 9:
           case 27:
