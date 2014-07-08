@@ -156,7 +156,7 @@
         switch (e.which) {
           case 13:
             e.preventDefault();
-            labels.filter('.highlight:visible').parent().find('input').prop('checked', function() { return !this.checked }).triggerHandler('click', e.metaKey);
+            labels.filter('.highlight:visible').parent().find('input').prop('checked', true).triggerHandler('click', e.metaKey);
           break;
           case 9:
           case 27:
