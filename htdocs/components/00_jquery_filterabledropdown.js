@@ -93,14 +93,9 @@
       'keydown.filterableDropdown': function(e) {
         e.preventDefault(); // prevent the submission of form when pressed enter on the checkboxes
       },
-      'click.filterableDropdown': function(e, enterKey) {
-        var onlyOneOption = labels.filter(':visible').length === 1;
+      'click.filterableDropdown': function(e, multiSelect) {
         labels.trigger('refresh');
-        el.trigger(onlyOneOption || this.type === 'radio' ? 'close' : 'focusInput');
-        if (onlyOneOption && enterKey && this.type !== 'radio') {
-          el.trigger('open');
-        }
-        onlyOneOption = null;
+        el.trigger(!multiSelect && !e.metaKey || this.type === 'radio' ? 'close' : 'focusInput');
       }
     });
 
@@ -111,6 +106,12 @@
       },
       'refresh.filterableDropdown': function() {
         $(this).toggleClass('selected', $(this.parentNode).find('input').prop('checked'));
+      },
+      'click.filterableDropdown': function(e) {
+        if (e.metaKey) {
+          e.preventDefault();
+          $(this).parent().find('input').prop('checked', function() { return !this.checked }).triggerHandler('click', true);
+        }
       }
     }).trigger('refresh');
 
@@ -155,7 +156,7 @@
         switch (e.which) {
           case 13:
             e.preventDefault();
-            labels.filter('.highlight:visible').parent().find('input').prop('checked', function() { return !this.checked }).triggerHandler('click', true);
+            labels.filter('.highlight:visible').parent().find('input').prop('checked', function() { return !this.checked }).triggerHandler('click', e.metaKey);
           break;
           case 9:
           case 27:
