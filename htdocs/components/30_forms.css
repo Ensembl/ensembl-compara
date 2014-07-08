@@ -388,6 +388,7 @@ div.filterable-dropdown p.filterable-dropdown-filter input {
 
 div.filterable-dropdown.open p.filterable-dropdown-filter input {
   font-style: normal;
+  outline: none;
 }
 
 div.filterable-dropdown p.filterable-dropdown-filter span {
