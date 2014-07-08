@@ -160,14 +160,6 @@ sub content {
   if ($align && $slice_length && $slice_length >= $self->{'subslice_length'}) {
 
     my ($table, $padding) = $self->get_slice_table($slices, 1);
-
-    #Check for missing species
-    push @$warnings,$self->object->check_for_missing_species({
-                                                    'align'   => $align, 
-                                                    'species' => $species, 
-                                                    'cdb'     => $cdb, 
-                                                    'image'   => $self->has_image
-                                                  });
     $html .= '<div class="sequence_key"></div>' . $table . $self->chunked_content($slice_length, $self->{'subslice_length'}, { padding => $padding, length => $slice_length }) . $self->show_warnings($warnings);
 
   } else {
@@ -179,13 +171,6 @@ sub content {
       $html .= '<div class="sequence_key"></div>' . $table . $self->show_warnings($warnings);
     } else {
       #Write out sequence if length is short enough
-      #Check for missing species 
-      push @$warnings,$self->object->check_for_missing_species({
-                                                      'align'   => $align, 
-                                                      'species' => $species, 
-                                                      'cdb'     => $cdb, 
-                                                      'image'   => $self->has_image
-                                                      }); 
       $html .= $self->content_sub_slice($slice, $slices, $warnings, undef, $cdb); # Direct call if the sequence length is short enough
     }
   }
