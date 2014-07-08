@@ -37,7 +37,7 @@ sub configure {
 
   $self->append_child('div', {'class' => 'filterable-dropdown-div', 'children' => [ @{$self->child_nodes}, {
     'node_name'   => 'p',
-    'class'       => '_fd_nomatch hidden ff-checklist',
+    'class'       => '_fd_nomatch filterable-dropdown-nomatch hidden ff-checklist',
     'inner_HTML'  => $params->{'filter_no_match'} || 'No match found'
   } ]});
   $self->prepend_child('p', {

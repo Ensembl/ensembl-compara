@@ -410,6 +410,11 @@ div.filterable-dropdown p label span.highlight {
   color: red;
 }
 
+div.filterable-dropdown p.filterable-dropdown-nomatch {
+  margin: 0;
+  padding: 3px 3px 1px;
+}
+
 /* Override the standard layout */
 
 form.freeform,
