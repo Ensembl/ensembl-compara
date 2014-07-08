@@ -357,17 +357,16 @@ div.filterable-dropdown p.ff-checklist label.ff-checklist-label {
   cursor: pointer;
 }
 
+div.filterable-dropdown p.ff-checklist label.highlight {
+  background-color: [[PANEL_BORDER]];
+  border: [[PAGE_TEXT]] solid 3px;
+  border-width: 0 3px;
+  padding-left: 3px;
+}
+
 div.filterable-dropdown p.ff-checklist label.selected {
   color: [[PANEL_BG]];
   background-color: [[BUTTON_BG]];
-}
-
-div.filterable-dropdown p.ff-checklist label.highlight {
-  background-color: [[PANEL_BORDER]];
-}
-
-div.filterable-dropdown p.ff-checklist label.highlight.selected {
-  background-color: [[PAGE_TEXT]];
 }
 
 div.filterable-dropdown p.ff-checklist input {
