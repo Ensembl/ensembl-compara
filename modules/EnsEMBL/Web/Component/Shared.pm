@@ -627,22 +627,26 @@ sub check_for_align_problems {
   ## Compile possible error messages for a given alignment
   ## @return HTML
   my ($self, $args) = @_;
-  my $html;
 
-  my ($error, $warnings) = $self->object->check_for_align_in_database($args->{align}, $args->{species}, $args->{cdb});
-  push @$warnings, $self->object->check_for_missing_species($args);
- 
-  if ($error) {
-    $html .= $self->error_panel($error->{title}, $error->{message});
-  }
-  foreach (@$warnings) {
-    next unless $_->{message};
-    $html .= $self->warning_panel($_->{title}, $_->{message});
-  }
+  my @messages = $self->object->check_for_align_in_database($args->{align}, $args->{species}, $args->{cdb});
+  push @messages, $self->object->check_for_missing_species($args);
 
-  return $html;
+  return $self->show_warnings(\@messages);
 }
 
+sub show_warnings {
+  my ($self, $messages) = @_;
+
+  return '' unless defined $messages;
+
+  my $html;
+  my $is_error;
+  foreach (@$messages) {
+    $html .= $self->_info_panel($_->{severity}, ucfirst $_->{title}, $_->{message});
+    $is_error = 1 if $_->{severity} eq 'error';
+  }
+  return ($html, $is_error);
+}
 
 sub _matches { ## TODO - tidy this
   my ($self, $key, $caption, @keys) = @_;

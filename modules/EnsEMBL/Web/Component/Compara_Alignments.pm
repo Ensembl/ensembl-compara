@@ -49,12 +49,6 @@ sub content {
   
   my $align_param = $hub->param('align');
 
-  my $alert_box = $self->check_for_align_problems({
-                    'align' => $align_param, 
-                    'species' => $self->object->species,
-                  });
-  return $alert_box if $alert_box;
-
   #target_species and target_slice_name_range may not be defined so split separately
   #target_species but not target_slice_name_range is defined for pairwise compact alignments. 
   my ($align, $target_species, $target_slice_name_range) = split '--', $align_param;
@@ -68,10 +62,14 @@ sub content {
       $target_slice = $target_slice_adaptor->fetch_by_region('toplevel', $target_slice_name, $target_slice_start, $target_slice_end);
   }
 
-  my ($error, $warnings) = $self->object->check_for_align_in_database($align, $species, $cdb);
-  return $error if $error;
+  my ($alert_box, $error) = $self->check_for_align_problems({
+                    'align' => $align,
+                    'species' => $self->object->species,
+                  });
+  return $alert_box if $error;
+  my $warnings;
   
-  my $html;
+  my $html = $alert_box;
   
   if ($type eq 'Gene') {
     my $location = $object->Obj; # Use this instead of $slice because the $slice region includes flanking
@@ -148,6 +146,7 @@ sub content {
       
     if (scalar @$slices == 1) {
       unshift @$warnings,{
+        severity => 'warning',
         title => 'No alignment in this region',
         message => 'There is no alignment between the selected species in this region'
       };
@@ -178,16 +177,6 @@ sub content {
  
   return $html;
 
-}
-
-sub show_warnings {
-  my ($self, $warnings) = @_;
-  my $alert;
-  return '' unless defined $warnings;
-  foreach (@$warnings) {
-    $alert .= $self->warning_panel(%$_);
-  }
-  return $alert;
 }
 
 sub content_sub_slice {

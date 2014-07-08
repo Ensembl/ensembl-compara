@@ -233,8 +233,7 @@ sub count_alignments {
 sub check_for_align_in_database {
     ## Check if alignment exists in the database
     my ($self, $align, $species, $cdb) = @_;
-    my $error; 
-    my $warnings = []; 
+    my @messages = ();
 
     if ($align) {
       my $hub           = $self->hub;
@@ -244,7 +243,7 @@ sub check_for_align_in_database {
   
       if ($align_details) {
         unless (exists $align_details->{'species'}->{$species}) {
-          $error = {'title' => 'Unknown alignment', 
+          push @messages, {'severity' => 'error', 'title' => 'Unknown alignment',
                     'message' => sprintf('<p>%s is not part of the %s alignment in the database.</p>',
                                     $species_defs->species_label($species),
                                     encode_entities($align_details->{'name'}))
@@ -252,15 +251,15 @@ sub check_for_align_in_database {
         }
       }
       else {
-        $error = {'title' => 'Unknown alignment', 'message' => '<p>The alignment you have selected does not exist in the current database.</p>'};
+        push @messages, {'severity' => 'error', 'title' => 'Unknown alignment', 'message' => '<p>The alignment you have selected does not exist in the current database.</p>'};
       }
     }
     else {
       warn "!!! NO ALIGNMENT";
-      push @$warnings, {'title' => 'No alignment specified', 'message' => '<p>Please select the alignment you wish to display from the box above.</p>'}; 
+      push @messages, {'severity' => 'warning', 'title' => 'No alignment specified', 'message' => '<p>Please select the alignment you wish to display from the box above.</p>'};
     }
 
-    return ($error, $warnings);
+    return @messages;
 }
 
 sub check_for_missing_species {
@@ -320,7 +319,7 @@ sub check_for_missing_species {
                             );
     }
   }
-  return $warnings ? ({'title' => $title, 'message' => $warnings}) : ();
+  return $warnings ? ({'severity' => 'info', 'title' => $title, 'message' => $warnings}) : ();
 }
 
 sub get_slices {
