@@ -210,8 +210,12 @@ sub get_content {
   }
   
   if (!$content) {
-    $content = $function && $self->can($function) ? $self->$function : $self->content_buttons.$self->content;
-    
+    if($function && $self->can($function)) {
+      $content = $self->$function;
+    } else {
+      $content = $self->content; # Force sequence-point before buttons call.
+      $content = $self->content_buttons.$content;
+    }
     if ($cache && $content) {
       $self->set_cache_key;
       $cache->set($ENV{'CACHE_KEY'}, $content, 60*60*24*7, values %{$ENV{'CACHE_TAGS'}});
