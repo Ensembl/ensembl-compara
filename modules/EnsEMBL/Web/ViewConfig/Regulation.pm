@@ -26,15 +26,22 @@ sub extra_tabs {
   my $self = shift;
   my $hub  = $self->hub;
   
-  return [
+  return ([
     'Select cell types',
     $hub->url('Component', {
       action   => 'Web',
       function => 'CellTypeSelector/ajax',
       time     => time,
       %{$hub->multi_params}
-    })
-  ];
+    })],[
+    'Select evidence',
+    $hub->url('Component', {
+      action   => 'Web',
+      function => 'EvidenceSelector/ajax',
+      time     => time,
+      %{$hub->multi_params}
+    })],
+  );
 }
 
 1;

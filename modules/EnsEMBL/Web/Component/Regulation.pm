@@ -30,6 +30,7 @@ sub shown_cells {
   my $image_config = $hub->get_imageconfig('regulation_view');
   foreach my $type (qw(reg_features seg_features)) {
     my $menu = $image_config->get_node($type);
+    next unless $menu;
     foreach my $node (@{$menu->child_nodes}) {
       next unless $node->id =~ /^(reg_feats|seg)_(.*)$/;
       my $cell=$2;
@@ -39,6 +40,43 @@ sub shown_cells {
     }
   }
   return \@shown_cells;
+}
+
+sub all_evidences {
+  my ($self) = @_;
+
+  my $hub = $self->hub;
+  my %evidences;
+  my $image_config = $hub->get_imageconfig('regulation_view');
+  foreach my $type (qw(reg_feats_core reg_feats_non_core)) {
+    my $menu = $image_config->get_node($type);
+    next unless $menu;
+    foreach my $node (@{$menu->child_nodes}) {
+      my $ev = $node->id;
+      my $cell = $node->id;
+      $cell =~ s/^${type}_//;
+      foreach my $node2 (@{$node->child_nodes}) {
+        my $ev = $node2->id;
+        $ev =~ s/^${type}_${cell}_//;  
+        my $on = ( $node2->get('display') ne 'off' );
+        $evidences{$ev} ||= { cells => [], on => 0 };
+        push @{$evidences{$ev}->{'cells'}},$cell;
+        $evidences{$ev}->{'on'} ||= $on;
+      }
+    }
+  }
+  return \%evidences;
+}
+
+sub _button {
+  my ($self,$url,$rel,$img,$text) = @_;
+
+  return qq(
+    <a class="button modal_link" href="$url" rel="$rel" style="margin: 0 0 8px;">
+      <img style="padding:0 2px 2px 0;vertical-align:middle" src="$img">
+      $text
+    </a>
+  );
 }
 
 sub cell_line_button {
@@ -52,12 +90,20 @@ sub cell_line_button {
     function    => 'CellTypeSelector/ajax',
   });
 
-  return qq(
-    <a class="button modal_link" href="$url" rel="modal_select_cell_types" style="margin: 0 0 8px;">
-      <img style="padding:0 2px 2px 0;vertical-align:middle" src="/i/16/rev/lab.png">
-      Choose other cell types (showing $cell_m/$cell_n)
-    </a>
-  );
+  return $self->_button($url,'modal_select_cell_types',"/i/16/rev/lab.png",
+            "Choose other cell types to display (showing $cell_m/$cell_n)");
+}
+
+sub evidence_button {
+  my ($self) = @_;
+
+  my $url = $self->hub->url('Component', {
+    action => 'Web',
+    function => 'EvidenceSelector/ajax',
+  });
+  
+  return $self->_button($url,'modal_select_evidence',"/i/16/rev/museum.png",
+            "Select evidence to display");
 }
 
 1;

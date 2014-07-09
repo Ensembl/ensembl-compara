@@ -106,16 +106,43 @@ sub multi_species {
 sub cell_type {
   my ($self,$hub) = @_;
   my $cell = $hub->param('cell');
-  my %args = ( type => 'cell', code => 'cell' );
 
   my %cell = map { $_ => 1 } split(/,/,$hub->param('cell'));
   my $image_config = $hub->get_imageconfig('regulation_view');
-  foreach my $type (qw(reg_features seg_features)) {
+  foreach my $type (qw(reg_features seg_features reg_feats_core reg_feats_non_core)) {
     my $menu = $image_config->get_node($type);
+    next unless $menu;
     foreach my $node (@{$menu->child_nodes}) {
-      next unless $node->id =~ /^(reg_feats|seg)_(.*)$/;
-      my $cell=$2;
-      $image_config->update_track_renderer($node->id,$cell{$cell} ? 'normal' : 'off');
+      my $cell = $node->id;
+      unless($cell =~ s/^${type}_//) {
+        $cell =~ s/^(reg_feats_|seg_)//;
+      }
+      my $renderer = $cell{$cell} ? 'normal' : 'off';
+      $image_config->update_track_renderer($node->id,$renderer);
+    }
+  }
+  $hub->session->store;
+}
+
+sub evidence {
+  my ($self,$hub) = @_;
+  my $evidence = $hub->param('evidence');
+
+  my %evidence = map { $_ => 1 } split(/,/,$hub->param('evidence'));
+  my $image_config = $hub->get_imageconfig('regulation_view');
+  foreach my $type (qw(reg_feats_core reg_feats_non_core)) {
+    my $menu = $image_config->get_node($type);
+    next unless $menu;
+    foreach my $node (@{$menu->child_nodes}) {
+      my $ev = $node->id;
+      my $cell = $node->id;
+      $cell =~ s/^${type}_//;
+      foreach my $node2 (@{$node->child_nodes}) {
+        my $ev = $node2->id;
+        $ev =~ s/^${type}_${cell}_//;
+        my $renderer = $evidence{$ev} ? 'on' : 'off';
+        $image_config->update_track_renderer($node2->id,$renderer);
+      }
     }
   }
   $hub->session->store;
