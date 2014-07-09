@@ -20,7 +20,7 @@ package EnsEMBL::Web::Component::Regulation::CellTypeSelector;
 
 use strict;
 
-use base qw(EnsEMBL::Web::Component::MultiSelector);
+use base qw(EnsEMBL::Web::Component::MultiSelector EnsEMBL::Web::Component::Regulation);
 
 sub _init {
   my $self = shift;
@@ -47,9 +47,10 @@ sub content_ajax {
   my $api_data = $object->get_evidence_data($object_slice,{ cells_only => 1 });
   my $av_cells = $api_data->{'cells'};
 
-  my @shown_cells = @{$object->cell_types||[]};
+  my $shown_cells = $self->shown_cells;
+
   my (%shown_cells,%cell_categories);
-  $shown_cells{$shown_cells[$_]} = $_+1 for(0..$#shown_cells);
+  $shown_cells{$shown_cells->[$_]} = $_+1 for(0..$#$shown_cells);
 
   my $fg = $hub->database('funcgen');
   my $fgcta = $fg->get_CellTypeAdaptor();

@@ -84,9 +84,7 @@ sub content {
   $image->{'panel_number'} = 'top';
   $image->set_button('drag', 'title' => 'Drag to select region');
 
-  my $cells_m = scalar  @{$self->object->cell_types||[]};
-  my $cells_n = scalar @{$self->object->all_cell_types};
-  my $html = $self->cell_line_button($cells_m,$cells_n);
+  my $html = $self->cell_line_button;
 
   return if $self->_export_image($image);
   return $html.$image->render;

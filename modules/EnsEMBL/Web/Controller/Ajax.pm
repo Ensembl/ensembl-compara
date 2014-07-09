@@ -108,16 +108,17 @@ sub cell_type {
   my $cell = $hub->param('cell');
   my %args = ( type => 'cell', code => 'cell' );
 
-  my $session = $hub->session;
-  if($cell) {
-    $session->set_data(%args,$hub->species => $cell);
-  } else {
-    my %data = %{$session->get_data(%args)};
-    delete $data{$hub->species};
-
-    $session->purge_data(%args);
-    $session->set_data(%args, %data) if scalar grep $_ !~ /(type|code)/, keys %data;
+  my %cell = map { $_ => 1 } split(/,/,$hub->param('cell'));
+  my $image_config = $hub->get_imageconfig('regulation_view');
+  foreach my $type (qw(reg_features seg_features)) {
+    my $menu = $image_config->get_node($type);
+    foreach my $node (@{$menu->child_nodes}) {
+      next unless $node->id =~ /^(reg_feats|seg)_(.*)$/;
+      my $cell=$2;
+      $image_config->update_track_renderer($node->id,$cell{$cell} ? 'normal' : 'off');
+    }
   }
+  $hub->session->store;
 }
 
 sub nav_config {

@@ -73,16 +73,6 @@ sub _adaptor {
   return $self->hub->get_adaptor('get_RegulatoryFeatureAdaptor', 'funcgen');
 }
 
-sub cell_types {
-  my $self = shift;
-  if($self->param('cell')) {
-    my @cells = split(',',$self->param('cell'));
-    return \@cells;
-  } else {
-    return [ $self->all_cell_types()->[0] ];
-  }
-}
-
 sub regulation        { my $self = shift; return $self->Obj;                            }
 sub display_label     { my $self = shift; return $self->Obj->display_label;             }
 sub stable_id         { my $self = shift; return $self->Obj->stable_id;                 }

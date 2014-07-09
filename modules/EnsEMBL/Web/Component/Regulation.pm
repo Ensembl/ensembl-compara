@@ -22,13 +22,34 @@ use strict;
 
 use base qw(EnsEMBL::Web::Component);
 
+sub shown_cells {
+  my ($self) = @_;
+
+  my $hub = $self->hub;
+  my @shown_cells;
+  my $image_config = $hub->get_imageconfig('regulation_view');
+  foreach my $type (qw(reg_features seg_features)) {
+    my $menu = $image_config->get_node($type);
+    foreach my $node (@{$menu->child_nodes}) {
+      next unless $node->id =~ /^(reg_feats|seg)_(.*)$/;
+      my $cell=$2;
+      unless($node->get('display') eq 'off') {
+        push @shown_cells,$cell;
+      }
+    }
+  }
+  return \@shown_cells;
+}
+
 sub cell_line_button {
-  my ($self,$cell_m,$cell_n) = @_;
+  my ($self) = @_;
+
+  my $cell_m = scalar @{$self->shown_cells};
+  my $cell_n = scalar @{$self->object->all_cell_types};
 
   my $url = $self->hub->url('Component', {
     action   => 'Web',
     function    => 'CellTypeSelector/ajax',
-    cell => join(',',@{$self->object->cell_types||[]}),
   });
 
   return qq(

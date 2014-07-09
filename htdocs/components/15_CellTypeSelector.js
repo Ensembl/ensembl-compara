@@ -22,7 +22,7 @@ Ensembl.Panel.CellTypeSelector = Ensembl.Panel.MultiSelector.extend({
       url: '/' + Ensembl.species + '/Ajax/cell_type?' + cells,
       context: this,
       complete: function() {
-        Ensembl.redirect(this.elLk.form.attr('action') + '?' + Ensembl.cleanURL(this.elLk.form.serialize() + ';'+cells));
+        Ensembl.redirect(this.elLk.form.attr('action') + '?' + Ensembl.cleanURL(this.elLk.form.serialize()));
       }
     });
     
