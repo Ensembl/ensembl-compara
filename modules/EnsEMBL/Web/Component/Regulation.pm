@@ -68,6 +68,8 @@ sub all_evidences {
   return \%evidences;
 }
 
+sub buttons { return @{$_[0]->{'buttons'}||[]}; }
+
 sub _button {
   my ($self,$url,$rel,$img,$text) = @_;
 
@@ -90,8 +92,11 @@ sub cell_line_button {
     function    => 'CellTypeSelector/ajax',
   });
 
-  return $self->_button($url,'modal_select_cell_types',"/i/16/rev/lab.png",
-            "Choose other cell types to display (showing $cell_m/$cell_n)");
+  push @{$self->{'buttons'}||=[]},{
+    url => $url,
+    caption => "Select cells (showing $cell_m/$cell_n)",
+    class => 'cell-line',
+  };
 }
 
 sub evidence_button {
@@ -102,8 +107,11 @@ sub evidence_button {
     function => 'EvidenceSelector/ajax',
   });
   
-  return $self->_button($url,'modal_select_evidence',"/i/16/rev/museum.png",
-            "Select evidence to display");
+  push @{$self->{'buttons'}||=[]},{
+    url => $url,
+    caption => "Select evidence",
+    class => 'evidence',
+  };
 }
 
 1;

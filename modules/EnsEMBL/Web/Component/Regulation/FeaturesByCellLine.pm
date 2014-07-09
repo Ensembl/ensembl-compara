@@ -84,10 +84,11 @@ sub content {
   $image->{'panel_number'} = 'top';
   $image->set_button('drag', 'title' => 'Drag to select region');
 
-  my $html = $self->cell_line_button.$self->evidence_button;
+  $self->cell_line_button;
+  $self->evidence_button;
 
   return if $self->_export_image($image);
-  return $html.$image->render;
+  return $image->render;
 }
 
 1;

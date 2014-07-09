@@ -78,12 +78,12 @@ sub content {
   
   $table->add_rows(@rows);
 
-  my $html = $self->cell_line_button;
+  $self->cell_line_button;
 
   if(scalar keys %$evidence_data) {
-    return $html.$table->render;
+    return $table->render;
   } else {
-    return "$html<p>There is no evidence for this regulatory feature in the selected cell lines</p>";
+    return "<p>There is no evidence for this regulatory feature in the selected cell lines</p>";
   }
 }
 

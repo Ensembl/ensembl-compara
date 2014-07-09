@@ -40,6 +40,8 @@
 .tool_buttons .config-load  { background-image: url(/i/16/rev/setting-load.png);  }
 .tool_buttons .config-reset { background-image: url(/i/16/rev/setting-reset.png); }
 .tool_buttons .order-reset  { background-image: url(/i/16/rev/order-reset.png);   }
+.tool_buttons .cell-line    { background-image: url(/i/16/rev/lab.png); }
+.tool_buttons .evidence     { background-image: url(/i/16/rev/museum.png); }
 
 .component-tools            { margin-bottom: 16px; overflow: hidden; }
 .component-tools a          { float: left; margin-right: 4px; }
