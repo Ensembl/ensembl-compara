@@ -81,18 +81,6 @@ sub init {
   foreach my $cell_line (@cell_lines) {
     $_->set('display', 'normal') for map $self->get_node("${_}_$cell_line") || (), 'reg_feats', 'seg';
     
-    # Turn on core evidence track
-    #$self->modify_configs(
-    #  [ "reg_feats_core_$cell_line" ],
-    #  { display => $cell_line =~ /^(MultiCell|CD4)$/ ? 'tiling_feature' : 'compact' }
-    #);
-   
-    # Turn on supporting evidence track
-    #$self->modify_configs(
-    #  [ "reg_feats_non_core_$cell_line" ],
-    #  { display => 'compact' }
-    #);
-    
     $self->{'reg_feats_tracks'}{$_} = 1 for "reg_feats_$cell_line", "reg_feats_core_$cell_line", "reg_feats_non_core_$cell_line", "seg_$cell_line";
   }
 
