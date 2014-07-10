@@ -43,12 +43,18 @@ sub draw_structure {
     $self->make_directory($img_dir);
     my $database = $self->hub->database('compara');
 
-    my ($found_compara, $aln_array, $transcript_stable_id, $model_name, $ss_cons) = $self->find_ss_in_compara($database) if $database;
+    my ($found_compara, $found_core, $aln_array, $transcript_stable_id, $model_name, $ss_cons);
+
+    # Let's try to get the secondary structure from the Compara database
+    ($found_compara, $aln_array, $transcript_stable_id, $model_name, $ss_cons) = $self->find_ss_in_compara($database) if $database;
+
+    # Or from Core
+    ($found_core, $aln_array, $transcript_stable_id, $model_name, $ss_cons) = $self->find_ss_in_core() unless $found_compara;
 
     # Here, we can do the drawing
-    if ($found_compara) {
+    if ($found_compara or $found_core) {
       my $aln_file    = $self->_dump_multiple_alignment($aln_array, $random_dir, $model_name, $ss_cons);
-      my ($thumbnail, $plot) = $self->_draw_structure($aln_file, $transcript_stable_id, $random_dir, $img_dir, $model_name);
+      my ($thumbnail, $plot) = $self->_draw_structure($aln_file, $transcript_stable_id, $random_dir, $img_dir, $model_name, $found_compara ? 1 : 0);
       $filename = $is_thumbnail ? $thumbnail : $plot;
       $svg_path = $img_dir.'/'.$filename;
     }
@@ -73,6 +79,27 @@ sub find_ss_in_compara {
           my $input_aln = $gene_tree->get_SimpleAlign();
           my @aln_array = map {[$_->display_id, $_->seq]} $input_aln->each_seq;
           return (1, \@aln_array, $transcript->stable_id, $model_name, $ss_cons);
+        }
+      }
+    }
+    return (0);
+}
+
+sub find_ss_in_core {
+    my ($self) = @_;
+    my $gene        = $self->object->gene;
+    my $transcript  = $gene->canonical_transcript;
+    if ($transcript) {
+      my $model_name  = $gene->display_xref->display_id;
+      my $ss_attr     = $transcript->get_all_Attributes('ncRNA');
+      if ($ss_attr and scalar(@$ss_attr)) {
+        my $ss_cons = $ss_attr->[0]->value;
+           $ss_cons =~ s/^.*\t//;
+           $ss_cons =~ s/([().])(\d+)/$1 x $2/ge; #Expand
+        my $seq     = $transcript->spliced_seq;
+        if (length($seq) == length($ss_cons)) {
+          my @aln_array = ([$transcript->stable_id, $seq]);
+          return (1, [[$transcript->stable_id, $seq]], $transcript->stable_id, $model_name, $ss_cons);
         }
       }
     }
@@ -106,7 +133,7 @@ sub _dump_multiple_alignment {
 
 
 sub _draw_structure {
-    my ($self, $aln_file, $peptide_id, $random_dir, $img_path, $model_name) = @_;
+    my ($self, $aln_file, $peptide_id, $random_dir, $img_path, $model_name, $with_consensus_structure) = @_;
 
     ## Get random directory name being used by meta files
     (my $meta_path  = $aln_file->{'full_path'}) =~ s/\/$model_name\.aln//;
@@ -130,7 +157,7 @@ sub _draw_structure {
                         filename  => $model_name,
                         extension => ".meta",
                     );
-    my $content = "$meta_path/$cons_filename\n";
+    my $content = $with_consensus_structure ? "$meta_path/$cons_filename\n" : '';
     $content .= $aln_file->{'full_path'}."\toneseq\t$peptide_id\n";
     $meta_file->print($content);
 
