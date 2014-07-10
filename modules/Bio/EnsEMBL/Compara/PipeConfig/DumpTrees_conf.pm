@@ -53,7 +53,7 @@ package Bio::EnsEMBL::Compara::PipeConfig::DumpTrees_conf;
 use strict;
 use warnings;
 
-use base ('Bio::EnsEMBL::Hive::PipeConfig::HiveGeneric_conf');   # we don't need Compara tables in this particular case
+use base ('Bio::EnsEMBL::Hive::PipeConfig::EnsemblGeneric_conf');   # we don't need Compara tables in this particular case
 
 =head2 default_options
 
