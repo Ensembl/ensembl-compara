@@ -21,7 +21,7 @@ use Bio::AlignIO;
 use File::Spec;
 use Getopt::Long;
 use Bio::EnsEMBL::Compara::Graph::OrthoXMLWriter;
-use Bio::EnsEMBL::Compara::Graph::PhyloXMLWriter;
+use Bio::EnsEMBL::Compara::Graph::GeneTreePhyloXMLWriter;
 use Bio::EnsEMBL::ApiVersion;
 
 my $tree_id_file;
@@ -151,7 +151,7 @@ foreach my $tree_id (@tree_ids) {
   dump_if_wanted($fasta_out, $tree_id, $fasta_names{$tree->member_type}, \&dumpTreeFasta, $root, [0]);
   dump_if_wanted($fasta_cds_out, $tree_id, 'cds.fasta', \&dumpTreeFasta, $root, [1]);
   dump_if_wanted($orthoxml, $tree_id, 'orthoxml.xml', \&dumpTreeOrthoXML, $root, [0]);
-  dump_if_wanted($phyloxml, $tree_id, 'phyloxml.xml', \&dumpTreePhyloXML, $root);
+  dump_if_wanted($phyloxml, $tree_id, 'phyloxml.xml', \&dumpTreePhyloXML, $tree);
 
   $root->release_tree;
 }
@@ -247,7 +247,7 @@ sub dumpTreePhyloXML {
     my $tree = shift;
     my $fh = shift;
 
-    my $w = Bio::EnsEMBL::Compara::Graph::PhyloXMLWriter->new(-SOURCE => 'compara', -NO_SEQUENCES => 1, -HANDLE => $fh, -NO_RELEASE_TREES => 1);
+    my $w = Bio::EnsEMBL::Compara::Graph::GeneTreePhyloXMLWriter->new(-SOURCE => 'compara', -NO_SEQUENCES => 1, -HANDLE => $fh, -NO_RELEASE_TREES => 1);
     $w->write_trees($tree);
     $w->finish();
 }
