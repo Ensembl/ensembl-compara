@@ -62,6 +62,7 @@ sub all_evidences {
         $evidences{$ev} ||= { cells => [], on => 0 };
         push @{$evidences{$ev}->{'cells'}},$cell;
         $evidences{$ev}->{'on'} ||= $on;
+        $evidences{$ev}->{'group'} ||= $node2->get('group');
       }
     }
   }
