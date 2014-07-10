@@ -228,8 +228,15 @@ sub get_content {
 sub content_buttons {
   my $self = shift;
 
-  my $html = join '', map sprintf('<a href="%s" class="modal_link %s">%s</a>', $_->{'url'}, $_->{'class'} || '', $_->{'caption'}), $self->buttons;
-
+  my $html = '';
+  foreach my $b ($self->buttons) {
+    my @classes = ('modal_link');
+    push @classes,$b->{'class'} if $b->{'class'};
+    push @classes,'togglebutton' if $b->{'toggle'};
+    push @classes,'off' if $b->{'toggle'} and $b->{'toggle'} eq 'off';
+    $html .= sprintf('<a href="%s" class="%s">%s</a>',
+          $b->{'url'}, join(' ',@classes), $b->{'caption'});
+  }
   return $html ? sprintf('<div class="component-tools tool_buttons">%s</div>', $html) : '';
 }
 

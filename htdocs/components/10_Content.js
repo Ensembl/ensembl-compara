@@ -29,7 +29,8 @@ Ensembl.Panel.Content = Ensembl.Panel.extend({
       wrapping:       $('table.cellwrap_inside, table.heightwrap_inside', this.el),
       selectToToggle: $('._stt', this.el),
       selectAll:      $('input._selectall', this.el),
-      filterable:     $('._fd', this.el)
+      filterable:     $('._fd', this.el),
+      toggleButtons:  $('.tool_buttons a.togglebutton', this.el)
     };
     
     if (this.el.hasClass('ajax')) {
@@ -326,5 +327,9 @@ Ensembl.Panel.Content = Ensembl.Panel.extend({
 
   filterable: function() {
     this.elLk.filterable.filterableDropdown();
+  },
+
+  toggleButtons: function() {
+    this.elLk.toggleButtons.toggleButtons();
   }
 });
