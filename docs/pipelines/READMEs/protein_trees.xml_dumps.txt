@@ -5,6 +5,7 @@ More information about the file formats can be found:
 This directory contains all the XML dumps of the gene-tree related resources:
  - the gene trees themselves
  - the orthologies, which are derived from the gene trees
+ - the CAFE trees, which analyze the expansion and contraction of gene families
 
 Compara.{release}.protein.allhomologies.orthoxml.xml.gz
   Contains all the orthologies in a single OrthoXML file. Each orthology is
@@ -35,4 +36,7 @@ Compara.{release}.protein.tree.orthoxml.tar.gz
 
 Compara.{release}.protein.tree.phyloxml.tar.gz
   Each file will contain one tree, in PhyloXML format.
+
+Compara.{release}.protein.tree.cafe_phyloxml.tar.gz
+  Each file will contain one CAFE tree, in PhyloXML format.
 
