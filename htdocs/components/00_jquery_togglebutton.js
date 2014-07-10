@@ -28,7 +28,10 @@
               type: 'POST',
               traditional: true,
               cache: false,
-              context: this
+              context: this,
+              data: {
+                state: $this.hasClass('off')?0:1
+              }
             }).fail(function() {
               $this.toggleClass('off');
             });
