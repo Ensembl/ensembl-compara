@@ -58,7 +58,8 @@ sub draw_structure {
       return unless $ss_cons;
       my $input_aln   = $gene_tree->get_SimpleAlign();
       my $aln_file    = $self->_dump_multiple_alignment($input_aln, $random_dir, $model_name, $ss_cons);
-      my ($thumbnail, $plot) = $self->_draw_structure($aln_file, $transcript->stable_id, $random_dir, $img_dir, $model_name);
+      my @aln_array   = map {[$_->display_id, $_->seq]} $input_aln->each_seq;
+      my ($thumbnail, $plot) = $self->_draw_structure(\@aln_array, $transcript->stable_id, $random_dir, $img_dir, $model_name);
       $filename = $is_thumbnail ? $thumbnail : $plot;
       $svg_path = $img_dir.'/'.$filename;
     }
@@ -67,7 +68,7 @@ sub draw_structure {
 }
 
 sub _dump_multiple_alignment {
-    my ($self, $aln, $random_dir, $model_name, $ss_cons) = @_;
+    my ($self, $aln_array, $random_dir, $model_name, $ss_cons) = @_;
     if ($ss_cons =~ /^\.+$/) {
       warn "The tree has no structure\n";
       return undef;
@@ -80,8 +81,8 @@ sub _dump_multiple_alignment {
                     );
 
     my $content = "# STOCKHOLM 1.0\n";
-    for my $aln_seq ($aln->each_seq) {
-      $content .= sprintf ("%-20s %s\n", $aln_seq->display_id, $aln_seq->seq);
+    for my $aln_seq (@$aln_array) {
+      $content .= sprintf ("%-20s %s\n", @$aln_seq);
     }
     $content .= sprintf ("%-20s\n", "#=GF R2R keep allpairs");
     $content .= sprintf ("%-20s %s\n//\n", "#=GC SS_cons", $ss_cons);
