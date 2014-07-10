@@ -36,8 +36,7 @@ sub draw_structure {
                               $self->hub->species_defs->ENSEMBL_TMP_DIR_IMG,
                               $random_dir);
   my $name      = $display_name.'-'.$self->hub->param('g');
-  my $filename  = $name.'-thumbnail' if $is_thumbnail;
-  $filename    .= '.svg';
+  my $filename  = $name.($is_thumbnail ? '-thumbnail' : '').'.svg';
   my $svg_path  = $img_dir.'/'.$filename;
 
   unless (-e $svg_path) { 
@@ -59,7 +58,7 @@ sub draw_structure {
       return unless $ss_cons;
       my $input_aln   = $gene_tree->get_SimpleAlign();
       my $aln_file    = $self->_dump_multiple_alignment($input_aln, $random_dir, $model_name, $ss_cons);
-      my ($thumbnail, $plot) = $self->_draw_structure($aln_file, $gene_tree, $transcript->stable_id, $random_dir, $model_name);
+      my ($thumbnail, $plot) = $self->_draw_structure($aln_file, $transcript->stable_id, $random_dir, $img_dir, $model_name);
       $filename = $is_thumbnail ? $thumbnail : $plot;
       $svg_path = $img_dir.'/'.$filename;
     }
@@ -94,7 +93,7 @@ sub _dump_multiple_alignment {
 
 
 sub _draw_structure {
-    my ($self, $aln_file, $tree, $peptide_id, $random_dir, $model_name) = @_;
+    my ($self, $aln_file, $peptide_id, $random_dir, $img_path, $model_name) = @_;
 
     ## Get random directory name being used by meta files
     (my $meta_path  = $aln_file->{'full_path'}) =~ s/\/$model_name\.aln//;
@@ -102,10 +101,6 @@ sub _draw_structure {
     my $cons_filename  = $model_name.'.cons';
     ## For information about these options, check http://breaker.research.yale.edu/R2R/R2R-manual-1.0.3.pdf
     $self->_run_r2r_and_check("--GSC-weighted-consensus", $aln_file->{'full_path'}, $meta_path, $cons_filename, "3 0.97 0.9 0.75 4 0.97 0.9 0.75 0.5 0.1");
-
-    my @tmp_path    = split('/', $meta_path);
-    my $random_dir  = $tmp_path[-1];
-    my $img_path    = $self->hub->species_defs->ENSEMBL_TMP_DIR_IMG.'/r2r/'.$random_dir;
 
     my $thumbnail = $model_name.'-thumbnail.svg';
     my $th_meta = EnsEMBL::Web::TmpFile::Text->new(
