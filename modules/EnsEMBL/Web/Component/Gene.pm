@@ -42,29 +42,41 @@ sub draw_structure {
   unless (-e $svg_path) { 
     $self->make_directory($img_dir);
     my $database = $self->hub->database('compara');
-    if ($database) {
-      my $gma = $database->get_GeneMemberAdaptor();
-      my $gta = $database->get_GeneTreeAdaptor();
 
-      my $member  = $gma->fetch_by_stable_id($self->object->stable_id);
-      return unless $member;
-      return unless $member->has_GeneTree;
-      my $transcript = $member->get_canonical_SeqMember();
+    my ($found_compara, $aln_array, $transcript_stable_id, $model_name, $ss_cons) = $self->find_ss_in_compara($database) if $database;
 
-      my $gene_tree   = $gta->fetch_default_for_Member($member);
-      return unless $gene_tree;
-      my $model_name  = $gene_tree->get_tagvalue('model_name');
-      my $ss_cons     = $gene_tree->get_tagvalue('ss_cons');
-      return unless $ss_cons;
-      my $input_aln   = $gene_tree->get_SimpleAlign();
-      my $aln_file    = $self->_dump_multiple_alignment($input_aln, $random_dir, $model_name, $ss_cons);
-      my @aln_array   = map {[$_->display_id, $_->seq]} $input_aln->each_seq;
-      my ($thumbnail, $plot) = $self->_draw_structure(\@aln_array, $transcript->stable_id, $random_dir, $img_dir, $model_name);
+    # Here, we can do the drawing
+    if ($found_compara) {
+      my $aln_file    = $self->_dump_multiple_alignment($aln_array, $random_dir, $model_name, $ss_cons);
+      my ($thumbnail, $plot) = $self->_draw_structure($aln_file, $transcript_stable_id, $random_dir, $img_dir, $model_name);
       $filename = $is_thumbnail ? $thumbnail : $plot;
       $svg_path = $img_dir.'/'.$filename;
     }
   }
   return $svg_path;
+}
+
+sub find_ss_in_compara {
+    my ($self, $database) = @_;
+
+    my $gma = $database->get_GeneMemberAdaptor();
+    my $gta = $database->get_GeneTreeAdaptor();
+
+    my $member = $gma->fetch_by_source_stable_id(undef, $self->object->stable_id);
+    if ($member and $member->has_GeneTree) {
+      my $transcript = $member->get_canonical_SeqMember();
+      my $gene_tree  = $gta->fetch_default_for_Member($member);
+      if ($gene_tree) {
+        my $model_name = $gene_tree->get_tagvalue('model_name');
+        my $ss_cons    = $gene_tree->get_tagvalue('ss_cons');
+        if ($ss_cons) {
+          my $input_aln = $gene_tree->get_SimpleAlign();
+          my @aln_array = map {[$_->display_id, $_->seq]} $input_aln->each_seq;
+          return (1, \@aln_array, $transcript->stable_id, $model_name, $ss_cons);
+        }
+      }
+    }
+    return (0);
 }
 
 sub _dump_multiple_alignment {
