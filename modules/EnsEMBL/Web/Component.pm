@@ -92,7 +92,7 @@ sub id {
   ## @accessor
   ## @return String (last element of package namespace)
   my ($self, $id) = @_;
-  $self->{'id'} = $id if $id;
+  $self->{'id'} = $id if @_>1;
   return $self->{'id'};
 }
 
