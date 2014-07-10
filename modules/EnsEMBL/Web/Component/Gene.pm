@@ -91,21 +91,18 @@ sub _dump_multiple_alignment {
     return $aln_file;
 }
 
-sub _create_cons_file {
-  my ($self, $aln_file, $model_name) = @_;
 
-  (my $meta_path = $aln_file->{'full_path'}) =~ s/\/$model_name\.aln//;
-  my $filename  = $model_name.'.cons';
-  ## For information about these options, check http://breaker.research.yale.edu/R2R/R2R-manual-1.0.3.pdf
-  $self->_run_r2r_and_check("--GSC-weighted-consensus", $aln_file->{'full_path'}, $meta_path, $filename, "3 0.97 0.9 0.75 4 0.97 0.9 0.75 0.5 0.1");
-}
 
 sub _draw_structure {
     my ($self, $aln_file, $tree, $peptide_id, $random_dir, $model_name) = @_;
 
-    $self->_create_cons_file($aln_file, $model_name);
     ## Get random directory name being used by meta files
     (my $meta_path  = $aln_file->{'full_path'}) =~ s/\/$model_name\.aln//;
+
+    my $cons_filename  = $model_name.'.cons';
+    ## For information about these options, check http://breaker.research.yale.edu/R2R/R2R-manual-1.0.3.pdf
+    $self->_run_r2r_and_check("--GSC-weighted-consensus", $aln_file->{'full_path'}, $meta_path, $cons_filename, "3 0.97 0.9 0.75 4 0.97 0.9 0.75 0.5 0.1");
+
     my @tmp_path    = split('/', $meta_path);
     my $random_dir  = $tmp_path[-1];
     my $img_path    = $self->hub->species_defs->ENSEMBL_TMP_DIR_IMG.'/r2r/'.$random_dir;
@@ -116,7 +113,7 @@ sub _draw_structure {
                         filename  => $model_name.'-thumbnail',
                         extension => ".meta",
                     );
-    my $th_content = "$meta_path/$model_name.cons\tskeleton-with-pairbonds\n";
+    my $th_content = "$meta_path/$cons_filename\tskeleton-with-pairbonds\n";
     $th_meta->print($th_content);
     $self->_run_r2r_and_check("", $th_meta->{'full_path'}, $img_path, $thumbnail, "");
 
@@ -125,7 +122,7 @@ sub _draw_structure {
                         filename  => $model_name,
                         extension => ".meta",
                     );
-    my $content = "$meta_path/$model_name.cons\n";
+    my $content = "$meta_path/$cons_filename\n";
     $content .= $aln_file->{'full_path'}."\toneseq\t$peptide_id\n";
     $meta_file->print($content);
 
