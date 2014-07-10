@@ -320,7 +320,7 @@ sub check_for_missing_species {
                             );
     }
   }
-  return $warnings ? {'title' => $title, 'message' => $warnings} : undef;
+  return $warnings ? ({'title' => $title, 'message' => $warnings}) : ();
 }
 
 sub get_slices {
