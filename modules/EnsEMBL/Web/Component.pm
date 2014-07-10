@@ -228,14 +228,32 @@ sub get_content {
 sub content_buttons {
   my $self = shift;
 
-  my $html = '';
+  # Group the buttons, if requested
+  my @groups;
   foreach my $b ($self->buttons) {
-    my @classes = ('modal_link');
-    push @classes,$b->{'class'} if $b->{'class'};
-    push @classes,'togglebutton' if $b->{'toggle'};
-    push @classes,'off' if $b->{'toggle'} and $b->{'toggle'} eq 'off';
-    $html .= sprintf('<a href="%s" class="%s">%s</a>',
-          $b->{'url'}, join(' ',@classes), $b->{'caption'});
+    if(!@groups or !$b->{'group'} or
+          $groups[-1]->[0]{'group'} ne $b->{'group'}) {
+      push @groups,[];
+    }
+    push @{$groups[-1]},$b;
+  }
+  # Create the buttons
+  my $html = '';
+  foreach my $g (@groups) {
+    my $group = '';
+    foreach my $b (@$g) {
+      my @classes = ('modal_link');
+      push @classes,$b->{'class'} if $b->{'class'};
+      push @classes,'togglebutton' if $b->{'toggle'};
+      push @classes,'off' if $b->{'toggle'} and $b->{'toggle'} eq 'off';
+      $group .= sprintf('<a href="%s" class="%s">%s</a>',
+            $b->{'url'}, join(' ',@classes), $b->{'caption'});
+    }
+    if(@$g>1) {
+      $html .= qq(<div class="group">$group</div>);
+    } else {
+      $html .= $group;
+    }
   }
   return $html ? sprintf('<div class="component-tools tool_buttons">%s</div>', $html) : '';
 }
