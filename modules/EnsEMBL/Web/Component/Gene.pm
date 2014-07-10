@@ -45,21 +45,21 @@ sub draw_structure {
     my $database = $self->hub->database('compara');
     if ($database) {
       my $gma = $database->get_GeneMemberAdaptor();
-      my $sma = $database->get_SeqMemberAdaptor();
       my $gta = $database->get_GeneTreeAdaptor();
 
-      my $member  = $gma->fetch_by_source_stable_id(undef, $self->object->stable_id);
+      my $member  = $gma->fetch_by_stable_id($self->object->stable_id);
       return unless $member;
-      my $peptide = $sma->fetch_canonical_for_gene_member_id($member->member_id);
+      return unless $member->has_GeneTree;
+      my $transcript = $member->get_canonical_SeqMember();
 
       my $gene_tree   = $gta->fetch_default_for_Member($member);
       return unless $gene_tree;
       my $model_name  = $gene_tree->get_tagvalue('model_name');
       my $ss_cons     = $gene_tree->get_tagvalue('ss_cons');
       return unless $ss_cons;
-      my $input_aln   = $gene_tree->get_SimpleAlign( -id => 'MEMBER' );
+      my $input_aln   = $gene_tree->get_SimpleAlign();
       my $aln_file    = $self->_dump_multiple_alignment($input_aln, $random_dir, $model_name, $ss_cons);
-      my ($thumbnail, $plot) = $self->_draw_structure($aln_file, $gene_tree, $peptide->stable_id, $random_dir, $model_name);
+      my ($thumbnail, $plot) = $self->_draw_structure($aln_file, $gene_tree, $transcript->stable_id, $random_dir, $model_name);
       $filename = $is_thumbnail ? $thumbnail : $plot;
       $svg_path = $img_dir.'/'.$filename;
     }
