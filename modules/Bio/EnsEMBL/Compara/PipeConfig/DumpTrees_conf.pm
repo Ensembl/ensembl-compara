@@ -331,8 +331,8 @@ sub pipeline_analyses {
                 'inputlist'     => [
                     ['cd #target_dir#/emf ; md5sum *.gz >MD5SUM.#member_type#_trees'],
                     ['cd #target_dir#/xml ; md5sum *.gz >MD5SUM.#member_type#_trees'],
-                    ['cp #readme_dir#/#member_type#_trees.dumps.txt #target_dir#/emf/README.#member_type#_trees.dumps.txt'],
-                    ['cp #readme_dir#/#member_type#_trees.xml_dumps.txt #target_dir#/xml/README.#member_type#_trees.xml_dumps.txt'],
+                    ['sed "s/{release}/'.($self->o('ensembl_release')).'/" #readme_dir#/#member_type#_trees.dumps.txt     > #target_dir#/emf/README.#member_type#_trees.dumps.txt'],
+                    ['sed "s/{release}/'.($self->o('ensembl_release')).'/" #readme_dir#/#member_type#_trees.xml_dumps.txt > #target_dir#/xml/README.#member_type#_trees.xml_dumps.txt'],
                 ],
                 'column_names'      => [ 'cmd' ],
             },
