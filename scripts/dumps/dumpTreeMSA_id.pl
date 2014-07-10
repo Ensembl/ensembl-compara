@@ -96,7 +96,7 @@ my $adaptor = $dba->get_GeneTreeAdaptor;
 
 my @tree_ids;
 if($tree_id_file and -r $tree_id_file) {
-    open LIST, "$tree_id_file" or die "couldnt open $tree_id_file: $!\n";
+    open LIST, '<', $tree_id_file or die "couldnt open $tree_id_file: $!\n";
     @tree_ids = <LIST>;
     chomp @tree_ids;
     close LIST;
@@ -121,11 +121,11 @@ sub dump_if_wanted {
     my $tree_id = shift;
     my $default_name = shift;
 
-    my $filename = ($param =~ /^\// ? sprintf('>%s.%s', $param, $tree_id) : sprintf('>%s/%s.%s', $dirpath, $tree_id, $param eq 1 ? $default_name : $param));
+    my $filename = ($param =~ /^\// ? sprintf('%s.%s', $param, $tree_id) : sprintf('%s/%s.%s', $dirpath, $tree_id, $param eq 1 ? $default_name : $param));
     return if -s $filename;
 
     my $fh;
-    open $fh, $filename or die "couldnt open $filename:$!\n";
+    open $fh, '>', $filename or die "couldnt open $filename:$!\n";
 
     my $sub = shift;
     my $root = shift;
