@@ -66,21 +66,10 @@ sub all_evidences {
       }
     }
   }
-  return \%evidences;
+  return { all => \%evidences };
 }
 
 sub buttons { return @{$_[0]->{'buttons'}||[]}; }
-
-sub _button {
-  my ($self,$url,$rel,$img,$text) = @_;
-
-  return qq(
-    <a class="button modal_link" href="$url" rel="$rel" style="margin: 0 0 8px;">
-      <img style="padding:0 2px 2px 0;vertical-align:middle" src="$img">
-      $text
-    </a>
-  );
-}
 
 sub cell_line_button {
   my ($self) = @_;
@@ -103,6 +92,10 @@ sub cell_line_button {
 sub evidence_button {
   my ($self) = @_;
 
+  my $ev = $self->all_evidences->{'all'};
+
+  my $n = keys %$ev;
+  my $m = grep { $_->{'on'} } values %$ev;
   my $url = $self->hub->url('Component', {
     action => 'Web',
     function => 'EvidenceSelector/ajax',
@@ -110,7 +103,7 @@ sub evidence_button {
   
   push @{$self->{'buttons'}||=[]},{
     url => $url,
-    caption => "Select evidence",
+    caption => "Select evidence (showing $m/$n)",
     class => 'evidence',
   };
 }

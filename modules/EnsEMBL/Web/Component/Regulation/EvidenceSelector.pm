@@ -46,7 +46,7 @@ sub content_ajax {
   my $context       = $self->hub->param('context') || 200;
   my $object_slice  = $object->get_bound_context_slice($context);
      $object_slice  = $object_slice->invert if $object_slice->strand < 1;
-  my $all_evidences = $self->all_evidences;
+  my $all_evidences = $self->all_evidences->{'all'};
 
   my %all_options = map { $_ => $_ } keys %$all_evidences;
   my @inc_options = grep { $all_evidences->{$_}{'on'} } keys %$all_evidences;
