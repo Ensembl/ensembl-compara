@@ -209,7 +209,10 @@ sub tree_elements {
 
   my $w = $self->_writer;
 
-  $w->dataElement('id', $tree->stable_id());
+  $w->dataElement('property', $tree->stable_id(),
+		  'datatype' => 'xsd:string',
+		  'ref' => 'Compara:gene_tree_stable_id',
+		  'applies_to' => 'phylogeny');
 }
 
 sub dispatch_tag {
