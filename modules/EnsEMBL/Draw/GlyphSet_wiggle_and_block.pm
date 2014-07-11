@@ -328,7 +328,7 @@ sub draw_wiggle_plot {
       }));
     }
     
-    $self->{'label_y_offset'} = $top_offset+($zero_offset/2)-$self->label->height/2;
+    $self->{'label_y_offset'} = $top_offset+($zero_offset/2)-$label_height/2;
   }
   
   # Draw the axis
