@@ -119,10 +119,13 @@ sub dumpTreeMultipleAlignmentToWorkdir {
   }
 
   if ($self->param('remove_columns')) {
-    die "The 'removed_columns' tag is missing" unless $gene_tree->has_tag('removed_columns');
-    my @removed_columns = eval($gene_tree->get_value_for_tag('removed_columns'));
-    print Dumper \@removed_columns if ( $self->debug() );
-    $sa = $sa->remove_columns(@removed_columns) if scalar(@removed_columns);
+    if ($gene_tree->has_tag('removed_columns')) {
+      my @removed_columns = eval($gene_tree->get_value_for_tag('removed_columns'));
+      print Dumper \@removed_columns if ( $self->debug() );
+      $sa = $sa->remove_columns(@removed_columns) if scalar(@removed_columns);
+    } else {
+      $self->warning(sprintf("The 'removed_columns' is missing from tree dbID=%d\n", $gene_tree->dbID));
+    }
   }
 
   $sa->set_displayname_flat(1);
