@@ -460,7 +460,7 @@ sub fetch_or_create_other_tree {
             $member->cigar_line(undef);
             $member->{'_children_loaded'} = 1;
         }
-        $newtree->ref_root_id($tree->root_id);
+        $newtree->ref_root_id($tree->ref_root_id || $tree->root_id);
         $self->store_tree_into_clusterset($newtree, $clusterset);
         ${$self->param('other_trees')}{$clusterset->clusterset_id} = $newtree;
     }
