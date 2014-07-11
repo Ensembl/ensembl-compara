@@ -46,6 +46,7 @@ sub all_evidences {
   my ($self) = @_;
 
   my $hub = $self->hub;
+  my $mode = 3;
   my %evidences;
   my $image_config = $hub->get_imageconfig('regulation_view');
   foreach my $type (qw(reg_feats_core reg_feats_non_core)) {
@@ -58,15 +59,20 @@ sub all_evidences {
       foreach my $node2 (@{$node->child_nodes}) {
         my $ev = $node2->id;
         $ev =~ s/^${type}_${cell}_//;  
-        my $on = ( $node2->get('display') ne 'off' );
         $evidences{$ev} ||= { cells => [], on => 0 };
         push @{$evidences{$ev}->{'cells'}},$cell;
-        $evidences{$ev}->{'on'} ||= $on;
+        $evidences{$ev}->{'on'} ||= ( $node->get('display') ne 'off' );
         $evidences{$ev}->{'group'} ||= $node2->get('group');
+      }
+      my $renderer = $node->get('display');
+      if($renderer ne 'off') {
+        $evidences{$ev}->{'on'} ||= 1;
+        $mode &=~ 1 if $renderer eq 'tiling';
+        $mode &=~ 2 if $renderer eq 'compact';
       }
     }
   }
-  return { all => \%evidences };
+  return { all => \%evidences, mode => $mode };
 }
 
 sub buttons { return @{$_[0]->{'buttons'}||[]}; }
@@ -105,6 +111,41 @@ sub evidence_button {
     url => $url,
     caption => "Select evidence (showing $m/$n)",
     class => 'evidence',
+  };
+}
+
+sub _current_renderer_setting {
+  my ($self) = @_;
+
+  my $mode = $self->all_evidences->{'mode'};
+  return ($mode&1,!!($mode&2));
+}
+
+sub renderer_button {
+  my ($self) = @_;
+
+  my $peaks_url = $self->hub->url('Ajax', {
+    type => 'reg_renderer',
+    renderer => 'peaks',
+  });
+  my $signals_url = $self->hub->url('Ajax', {
+    type => 'reg_renderer',
+    renderer => 'signals',
+  });
+  my ($peaks_on,$signals_on) = $self->_current_renderer_setting;
+
+  push @{$self->{'buttons'}||=[]},{
+    url => $peaks_url,
+    caption => 'Peaks',
+    class => 'export',
+    toggle => $peaks_on?'on':'off',
+    group => 'renderer',
+  },{
+    url => $signals_url,
+    caption => 'Signals',
+    class => 'export',
+    toggle => $signals_on?'on':'off',
+    group => 'renderer',
   };
 }
 

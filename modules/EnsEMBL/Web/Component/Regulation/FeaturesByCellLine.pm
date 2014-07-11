@@ -86,6 +86,7 @@ sub content {
 
   $self->cell_line_button;
   $self->evidence_button;
+  $self->renderer_button;
 
   return if $self->_export_image($image);
   return $image->render;
