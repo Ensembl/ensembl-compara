@@ -1415,8 +1415,10 @@ sub dumpDomain {
 
   my $sth = $conf->{'dbh'}->prepare(
     "select x.dbprimary_acc, i.id, x.description
-       from xref as x, interpro as i
+       from xref as x, interpro as i, protein_feature pf
       where x.dbprimary_acc = i.interpro_ac
+        and i.id = pf.hit_name
+      group by i.id
       order by x.dbprimary_acc");
   $sth->execute();
   my $old_acc     = '';
@@ -1540,7 +1542,7 @@ sub GeneTreeLine {
   <field name="name">$gt_id</field>
   <field name="description">$desc</field>);
     $xml .= &common_fields($species,'GeneTree','compara');
-    $url = sprintf(qq(Multi/GeneTree?gt=%s),$gt_id);
+    $url = sprintf(qq(Multi/GeneTree/Image?gt=%s),$gt_id);
     $xml .= qq(
   <field name="domain_url">$url</field>);
   }
