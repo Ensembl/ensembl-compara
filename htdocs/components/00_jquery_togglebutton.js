@@ -29,11 +29,18 @@
               traditional: true,
               cache: false,
               context: this,
+              dataType: 'json',
               data: {
                 state: $this.hasClass('off')?0:1
               }
             }).fail(function() {
               $this.toggleClass('off');
+            }).done(function(data) {
+              if(data.reload_panels) {
+                $.each(data.reload_panels,function(i,panel) {
+                  Ensembl.EventManager.triggerSpecific('updatePanel',panel);
+                });
+              }
             });
           }
           return false;
