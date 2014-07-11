@@ -1995,7 +1995,7 @@ sub SeqLine {
   my $desc = ($name eq $sr) ? "$type $name has a length of $len bp." : "$type $name (length $len bp) is mapped to $sr_type $sr.";
   #deal with any synonyms
   if (@$synonyms) {
-    $desc .= " It has synonyms or EMBL/GRC accessions of " . join(',',@$synonyms) . ".";
+    $desc .= " It has synonyms of " . join(',',@$synonyms) . ".";
   }
 
   my $xml = qq(
