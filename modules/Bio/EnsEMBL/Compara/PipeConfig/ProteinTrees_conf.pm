@@ -1077,7 +1077,7 @@ sub pipeline_analyses {
             -module             => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::CreateClustersets',
             -parameters         => {
                 member_type     => 'protein',
-                'additional_clustersets'    => [qw(treebest phyml-aa phyml-nt nj-dn nj-ds nj-mm raxml)],
+                'additional_clustersets'    => [qw(treebest phyml-aa phyml-nt nj-dn nj-ds nj-mm raxml notung)],
             },
             -flow_into          => [ 'run_qc_tests' ],
         },
@@ -1395,7 +1395,9 @@ sub pipeline_analyses {
                 'treebest_exe'              => $self->o('treebest_exe'),
                 'label'                     => 'binary',
                 'input_clusterset_id'       => $self->o('use_raxml') ? 'raxml' : 'treebest',
+                'output_clusterset_id'      => 'notung',
                 'notung_memory'             => 1500,
+                'escape_branch'             => -1,
             },
             -hive_capacity  => $self->o('notung_capacity'),
             -rc_name        => '2Gb_job',
@@ -1411,10 +1413,39 @@ sub pipeline_analyses {
                 'treebest_exe'          => $self->o('treebest_exe'),
                 'label'                 => 'binary',
                 'input_clusterset_id'   => $self->o('use_raxml') ? 'raxml' : 'treebest',
+                'output_clusterset_id'  => 'notung',
                 'notung_memory'         => 7000,
             },
             -hive_capacity  => $self->o('notung_capacity'),
             -rc_name        => '8Gb_job',
+        },
+
+        {   -logic_name => 'raxml_bl',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::RAxML_bl',
+            -parameters => {
+                'raxml_exe'                 => $self->o('raxml_exe'),
+                'treebest_exe'              => $self->o('treebest_exe'),
+                'input_clusterset_id'       => 'notung',
+                'escape_branch'             => -1,
+            },
+            -hive_capacity        => $self->o('raxml_capacity'),
+            -rc_name    => '1Gb_job',
+            -flow_into  => {
+                -1 => [ 'raxml_bl_himem' ],
+                2  => [ 'treebest_nj' ]
+            }
+        },
+
+        {   -logic_name => 'raxml_bl_himem',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::RAxML_bl',
+            -parameters => {
+                'raxml_exe'                 => $self->o('raxml_exe'),
+                'treebest_exe'              => $self->o('treebest_exe'),
+                'input_clusterset_id'       => 'notung',
+                'escape_branch'             => -1,
+            },
+            -hive_capacity        => $self->o('raxml_capacity'),
+            -rc_name    => '4Gb_job',
         },
 
         {   -logic_name         => 'hc_alignment_post_tree',
