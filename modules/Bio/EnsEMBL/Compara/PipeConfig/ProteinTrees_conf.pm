@@ -1105,7 +1105,7 @@ sub pipeline_analyses {
             -module             => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::CreateClustersets',
             -parameters         => {
                 member_type     => 'protein',
-                'additional_clustersets'    => [qw(treebest phyml-aa phyml-nt nj-dn nj-ds nj-mm raxml notung)],
+                'additional_clustersets'    => [qw(treebest phyml-aa phyml-nt nj-dn nj-ds nj-mm raxml raxml_bl notung)],
             },
             -flow_into          => [ 'run_qc_tests' ],
         },
@@ -1377,11 +1377,13 @@ sub pipeline_analyses {
                 'store_intermediate_trees'  => 1,
                 'store_filtered_align'      => 1,
                 'treebest_exe'              => $self->o('treebest_exe'),
-                'output_clusterset_id'      => $self->o('use_notung') ? 'treebest' : 'default',
+                'output_clusterset_id'      => $self->o('use_raxml') ? 'default' : 'treebest',
             },
             -hive_capacity        => $self->o('treebest_capacity'),
             -rc_name    => '4Gb_job',
-            -flow_into  => [ 'raxml_longbranches' ],
+            -flow_into  => {
+                $self->o('use_raxml') ? 999 : 1 => [ 'raxml_longbranches' ],
+            }
         },
 
         {   -logic_name => 'raxml_longbranches',
@@ -1389,25 +1391,42 @@ sub pipeline_analyses {
             -parameters => {
                 'raxml_exe'                 => $self->o('raxml_exe'),
                 'treebest_exe'              => $self->o('treebest_exe'),
-                'output_clusterset_id'      => $self->o('use_notung') ? 'raxml' : 'default',
+                'input_clusterset_id'       => 'treebest',
+                'output_clusterset_id'      => $self->o('use_notung') ? 'raxml_bl' : 'default',
             },
             -hive_capacity        => $self->o('raxml_capacity'),
             -rc_name    => '4Gb_job',
-            -flow_into  => $self->o('use_notung') ? [ 'notung' ] : [],
+            -flow_into  => {
+                $self->o('use_notung') ? 1 : 999 => [ 'notung' ],
+                2 => [ 'promote_treebest_tree' ],
+                4 => [ 'raxml_branch_length' ],
+            },
         },
 
-        {   -logic_name => 'copy_tree',
-            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::CopyLocalTree',
+        {   -logic_name => 'raxml_branch_length',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::RAxML_bl',
             -parameters => {
+                'raxml_exe'             => $self->o('raxml_exe'),
+                'treebest_exe'          => $self->o('treebest_exe'),
                 'input_clusterset_id'   => 'treebest',
-                'output_clusterset_id'  => $self->o('use_notung') ? 'raxml' : 'default',
+                'output_clusterset_id'  => $self->o('use_notung') ? 'raxml_bl' : 'default',
             },
             -hive_capacity        => $self->o('raxml_capacity'),
             -rc_name => '8Gb_job',
             -flow_into  => {
-                1 => $self->o('use_notung') ? [ 'notung' ] : [],
-                2 => $self->o('use_notung') ? [ 'notung' ] : [],
+                $self->o('use_notung') ? 1 : 999 => [ 'notung' ],
+                2 => [ 'promote_treebest_tree' ],
              },
+        },
+
+        {   -logic_name => 'promote_treebest_tree',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::CopyLocalTree',
+            -parameters => {
+                'input_clusterset_id'   => 'treebest',
+                'output_clusterset_id'  => 'default',
+            },
+            -hive_capacity        => $self->o('raxml_capacity'),
+            -rc_name => '8Gb_job',
         },
 
 
@@ -1422,12 +1441,8 @@ sub pipeline_analyses {
             -rc_name    => '1Gb_job',
             -flow_into  => {
                 -1 => [ 'raxml_himem' ],
-                2 => { 'treebest' => {
-                            'output_clusterset_id'      => 'raxml',
-                            'gene_tree_id'              => '#gene_tree_id#',
-                            'store_filtered_align'      => 0,
-                } },
-                $self->o('use_notung') ? (1 => [ 'notung' ]) : (),
+                2 =>  [ 'treebest' ],     # This event is triggered if there are 2 or 3 genes in the tree
+                $self->o('use_notung') ? 1 : 999 => [ 'notung' ],
             }
         },
 
@@ -1449,7 +1464,7 @@ sub pipeline_analyses {
                 'notung_jar'                => $self->o('notung_jar'),
                 'treebest_exe'              => $self->o('treebest_exe'),
                 'label'                     => 'binary',
-                'input_clusterset_id'       => $self->o('use_raxml') ? 'raxml' : 'treebest',
+                'input_clusterset_id'       => $self->o('use_raxml') ? 'raxml' : 'raxml_bl',
                 'output_clusterset_id'      => 'notung',
                 'notung_memory'             => 1500,
                 'escape_branch'             => -1,
@@ -1457,6 +1472,7 @@ sub pipeline_analyses {
             -hive_capacity  => $self->o('notung_capacity'),
             -rc_name        => '2Gb_job',
             -flow_into      => {
+                1  => [ 'raxml_bl' ],
                 -1 => [ 'notung_himem' ],
             },
         },
@@ -1467,12 +1483,13 @@ sub pipeline_analyses {
                 'notung_jar'            => $self->o('notung_jar'),
                 'treebest_exe'          => $self->o('treebest_exe'),
                 'label'                 => 'binary',
-                'input_clusterset_id'   => $self->o('use_raxml') ? 'raxml' : 'treebest',
+                'input_clusterset_id'   => $self->o('use_raxml') ? 'raxml' : 'raxml_bl',
                 'output_clusterset_id'  => 'notung',
                 'notung_memory'         => 7000,
             },
             -hive_capacity  => $self->o('notung_capacity'),
             -rc_name        => '8Gb_job',
+            -flow_into      => [ 'raxml_bl_himem' ],
         },
 
         {   -logic_name => 'raxml_bl',
@@ -1487,7 +1504,6 @@ sub pipeline_analyses {
             -rc_name    => '1Gb_job',
             -flow_into  => {
                 -1 => [ 'raxml_bl_himem' ],
-                2  => [ 'treebest_nj' ]
             }
         },
 
