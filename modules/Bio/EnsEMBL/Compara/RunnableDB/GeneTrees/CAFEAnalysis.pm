@@ -294,6 +294,10 @@ sub parse_cafe_output {
         my $root_id = $cafeGeneFamily->root->node_id();
 
         my $lca_taxon_id = $tree->root->name;
+        if ($lca_taxon_id eq 'Testudines+Archosauriagroup') {
+            $lca_taxon_id = 'Testudines + Archosauria group';
+        }
+
         print STDERR "LCA TAXON ID IS $lca_taxon_id\n" if ($self->debug);
 
         my $lca_node = $speciesTree->root->find_nodes_by_field_value('node_name', $lca_taxon_id)->[0]; # Allows _dup
@@ -316,6 +320,10 @@ sub parse_cafe_output {
 
             if ($n eq 'Testudines+Archosauriagroup') {
                 $n = 'Testudines + Archosauria group';
+            }
+
+            if ($pvalue eq '') {
+                $pvalue = 0.5;
             }
 
             print STDERR "Storing N_MEMBERS: $n_members, PVALUE: $pvalue\n" if ($self->debug);

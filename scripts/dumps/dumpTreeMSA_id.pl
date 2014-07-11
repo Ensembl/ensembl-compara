@@ -21,7 +21,8 @@ use Bio::AlignIO;
 use File::Spec;
 use Getopt::Long;
 use Bio::EnsEMBL::Compara::Graph::OrthoXMLWriter;
-use Bio::EnsEMBL::Compara::Graph::PhyloXMLWriter;
+use Bio::EnsEMBL::Compara::Graph::GeneTreePhyloXMLWriter;
+use Bio::EnsEMBL::Compara::Graph::CAFETreePhyloXMLWriter;
 use Bio::EnsEMBL::ApiVersion;
 
 my $tree_id_file;
@@ -35,6 +36,7 @@ my $nh_out;
 my $nhx_out;
 my $orthoxml;
 my $phyloxml;
+my $cafe_phyloxml;
 my $aa = 1;
 my $dirpath;
 
@@ -51,6 +53,7 @@ GetOptions('help'           => \$help,
            'nhx|nhx_out=s'  => \$nhx_out,
            'oxml|orthoxml=s'    => \$orthoxml,
            'pxml|phyloxml=s'    => \$phyloxml,
+           'cafe|cafe_phyloxml=s'    => \$cafe_phyloxml,
            'aa=s'           => \$aa,
            'dirpath=s'      => \$dirpath,
 );
@@ -76,6 +79,7 @@ string is the filename extension. If string is 1, the default extension will be 
 --fasta_cds_out string  nucleotide multiple alignment in FASTA format (cds.fasta)
 --orthoxml string               tree in OrthoXML format (orthoxml.xml)
 --phyloxml string               tree in PhyloXML format (phyloxml.xml)
+--cafe_phyloxml string          CAFE tree in PhyloXML format (cafe_phyloxml.xml)
 
 This scripts assumes that the compara db is linked to all the core dbs
 \n";
@@ -96,7 +100,7 @@ my $adaptor = $dba->get_GeneTreeAdaptor;
 
 my @tree_ids;
 if($tree_id_file and -r $tree_id_file) {
-    open LIST, "$tree_id_file" or die "couldnt open $tree_id_file: $!\n";
+    open LIST, '<', $tree_id_file or die "couldnt open $tree_id_file: $!\n";
     @tree_ids = <LIST>;
     chomp @tree_ids;
     close LIST;
@@ -121,11 +125,11 @@ sub dump_if_wanted {
     my $tree_id = shift;
     my $default_name = shift;
 
-    my $filename = ($param =~ /^\// ? sprintf('>%s.%s', $param, $tree_id) : sprintf('>%s/%s.%s', $dirpath, $tree_id, $param eq 1 ? $default_name : $param));
+    my $filename = ($param =~ /^\// ? sprintf('%s.%s', $param, $tree_id) : sprintf('%s/%s.%s', $dirpath, $tree_id, $param eq 1 ? $default_name : $param));
     return if -s $filename;
 
     my $fh;
-    open $fh, $filename or die "couldnt open $filename:$!\n";
+    open $fh, '>', $filename or die "couldnt open $filename:$!\n";
 
     my $sub = shift;
     my $root = shift;
@@ -141,6 +145,7 @@ foreach my $tree_id (@tree_ids) {
   my $tree = $adaptor->fetch_by_root_id($tree_id);
   $tree->preload();
   my $root = $tree->root;
+  my $cafe_tree = $dba->get_CAFEGeneFamilyAdaptor->fetch_by_GeneTree($tree);
 
   $tree_id = "tree.".$tree_id;
   my %fasta_names = ('protein' => 'aa.fasta', 'ncrna' => 'nt.fasta');
@@ -150,8 +155,9 @@ foreach my $tree_id (@tree_ids) {
   dump_if_wanted($nhx_out, $tree_id, 'nhx.emf', \&dumpNewickTree, $root, [1]);
   dump_if_wanted($fasta_out, $tree_id, $fasta_names{$tree->member_type}, \&dumpTreeFasta, $root, [0]);
   dump_if_wanted($fasta_cds_out, $tree_id, 'cds.fasta', \&dumpTreeFasta, $root, [1]);
-  dump_if_wanted($orthoxml, $tree_id, 'orthoxml.xml', \&dumpTreeOrthoXML, $root, [0]);
-  dump_if_wanted($phyloxml, $tree_id, 'phyloxml.xml', \&dumpTreePhyloXML, $root);
+  dump_if_wanted($orthoxml, $tree_id, 'orthoxml.xml', \&dumpTreeOrthoXML, $tree);
+  dump_if_wanted($phyloxml, $tree_id, 'phyloxml.xml', \&dumpTreePhyloXML, $tree);
+  dump_if_wanted($cafe_phyloxml, $tree_id, 'cafe_phyloxml.xml', \&dumpCafeTreePhyloXML, $cafe_tree) if $cafe_tree;
 
   $root->release_tree;
 }
@@ -247,7 +253,16 @@ sub dumpTreePhyloXML {
     my $tree = shift;
     my $fh = shift;
 
-    my $w = Bio::EnsEMBL::Compara::Graph::PhyloXMLWriter->new(-SOURCE => 'compara', -NO_SEQUENCES => 1, -HANDLE => $fh, -NO_RELEASE_TREES => 1);
+    my $w = Bio::EnsEMBL::Compara::Graph::GeneTreePhyloXMLWriter->new(-SOURCE => 'compara', -NO_SEQUENCES => 1, -HANDLE => $fh, -NO_RELEASE_TREES => 1);
+    $w->write_trees($tree);
+    $w->finish();
+}
+
+sub dumpCafeTreePhyloXML {
+    my $tree = shift;
+    my $fh = shift;
+
+    my $w = Bio::EnsEMBL::Compara::Graph::CAFETreePhyloXMLWriter->new(-SOURCE => 'compara', -NO_SEQUENCES => 1, -HANDLE => $fh, -NO_RELEASE_TREES => 1);
     $w->write_trees($tree);
     $w->finish();
 }

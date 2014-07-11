@@ -94,6 +94,7 @@ sub fetch_input {
     my $aln_seq_type = $self->param('aln_seq_type');
     $nc_tree->gene_align_id($alignment_id);
     my $aln = Bio::EnsEMBL::Compara::AlignedMemberSet->new(-seq_type => $aln_seq_type, -dbID => $alignment_id, -adaptor => $self->compara_dba->get_AlignedMemberAdaptor);
+    print STDERR scalar (@{$nc_tree->get_all_Members}), "\n";
     $nc_tree->attach_alignment($aln);
 
     if (my $input_aln = $self->_dumpMultipleAlignmentStructToWorkdir($nc_tree) ) {
@@ -248,6 +249,7 @@ sub _dumpMultipleAlignmentStructToWorkdir {
   my $leafcount = scalar(@{$tree->get_all_leaves});
   if($leafcount<4) {
       $self->input_job->incomplete(0);
+      $self->input_job->autoflow(0);
       $self->throw("tree cluster $root_id has <4 proteins - can not build a raxml tree\n");
   }
 

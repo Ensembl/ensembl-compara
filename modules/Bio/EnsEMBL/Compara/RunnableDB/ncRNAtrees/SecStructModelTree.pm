@@ -79,6 +79,7 @@ sub fetch_input {
     # This should be:
     my $aln = $self->compara_dba->get_GeneAlignAdaptor->fetch_by_dbID($alignment_id);
 #    my $aln = Bio::EnsEMBL::Compara::AlignedMemberSet->new(-seq_type => 'filtered', -dbID => $alignment_id, -adaptor => $self->compara_dba->get_AlignedMemberAdaptor);
+    print STDERR scalar (@{$nc_tree->get_all_Members}), "\n";
     $nc_tree->attach_alignment($aln);
     ## TODO!! Remember to remove the ->seq_type($seq_type) call in GeneTree.pm
 #    $nc_tree->attach_alignment($alignment_id, 'filtered');
@@ -139,6 +140,7 @@ sub run {
         # This can happen when there is not one of the nucleotides in one of the DNA data partition (RAxML-7.2.8)
         # RAxML will refuse to run this, we can safely skip this model (the rest of the models for this cluster will also fail).
         $self->input_job->incomplete(0);
+        $self->input_job->autoflow(0);
         die "$1\n";
     }
 
@@ -152,6 +154,7 @@ sub run {
         if ($err_msg =~ /Assertion(.+)failed/) {
             my $assertion_failed = $1;
             $self->input_job->incomplete(0);
+            $self->input_job->autoflow(0);
             die "Assertion failed for RAxML: $assertion_failed\n";
         } else {
             $self->throw("error running raxml\ncd $worker_temp_directory; $cmd\n$err_msg\n");
@@ -217,6 +220,7 @@ sub _dumpMultipleAlignmentStructToWorkdir {
     if($leafcount<4) {
         my $node_id = $tree->root_id;
         $self->input_job->incomplete(0);
+        $self->input_job->autoflow(0);
         die ("tree cluster $node_id has <4 proteins - can not build a raxml tree\n");
     }
 
@@ -263,6 +267,7 @@ sub _dumpMultipleAlignmentStructToWorkdir {
     my $struct_file = $file_root . ".struct";
     if ($struct_string =~ /^\.+$/) {
         $self->input_job->incomplete(0);
+        $self->input_job->autoflow(0);
         die "struct string is $struct_string\n";
     } else {
         open(STRUCT, ">$struct_file")

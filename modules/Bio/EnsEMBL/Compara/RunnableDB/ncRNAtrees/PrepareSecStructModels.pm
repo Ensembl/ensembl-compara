@@ -103,6 +103,7 @@ sub fetch_input {
     my $aln_seq_type = 'filtered';
     $self->param('aln_seq_type', $aln_seq_type);
     my $aln = Bio::EnsEMBL::Compara::AlignedMemberSet->new(-seq_type => $aln_seq_type, -dbID => $alignment_id, -adaptor => $self->compara_dba->get_AlignedMemberAdaptor);
+    print STDERR scalar (@{$nc_tree->get_all_Members}), "\n";
     $nc_tree->attach_alignment($aln);
 
 ### !! Struct files are not used in this first tree!!
@@ -137,6 +138,7 @@ sub run {
 #                                   );
 #         # We die here. Nothing more to do in the Runnable
 #         $self->input_job->incomplete(0);
+#         $self->input_job->autoflow(0);
 #         die "$nc_tree_id family is too big. Only fast trees will be computed\n";
 #     } else {
     # Run RAxML without any structure info first
@@ -260,6 +262,7 @@ sub _dumpMultipleAlignmentStructToWorkdir {
     my $leafcount = scalar(@{$tree->get_all_leaves});
     if($leafcount<4) {
         $self->input_job->incomplete(0);
+        $self->input_job->autoflow(0);
         my $tree_id = $tree->root_id;
         die "tree cluster $tree_id has <4 proteins -- can not build a raxml tree\n";
     }
