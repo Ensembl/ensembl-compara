@@ -135,7 +135,7 @@ sub run {
     my $leafcount = scalar(@{$self->param('gene_tree')->get_all_leaves});
     $merged_tree = $self->run_treebest_branchlength_nj($input_aln, $merged_tree) if ($leafcount >= 3);
     
-    $self->parse_newick_into_tree($merged_tree, $self->param('gene_tree'));
+    $self->parse_newick_into_tree($merged_tree, $self->param('gene_tree'), $self->param('ref_support'));
 }
 
 
@@ -153,7 +153,7 @@ sub run {
 sub write_output {
     my ($self) = @_;
 
-    $self->store_genetree($self->param('gene_tree'), $self->param('ref_support')) if defined $self->param('inputtrees_unrooted');
+    $self->store_genetree($self->param('gene_tree')) if defined $self->param('inputtrees_unrooted');
 }
 
 sub post_cleanup {

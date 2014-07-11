@@ -110,8 +110,8 @@ sub write_output {
         $treebest_stored_tree = $self->store_alternative_tree($self->param('treebest_stdout'), $self->param('output_clusterset_id'), $self->param('gene_tree'), \@ref_support);
     } else {
         #parse the tree into the datastucture:
-        if ($self->parse_newick_into_tree( $self->param('treebest_stdout'), $self->param('gene_tree') )) {
-            $self->store_genetree($self->param('gene_tree'), \@ref_support);
+        if ($self->parse_newick_into_tree( $self->param('treebest_stdout'), $self->param('gene_tree'), \@ref_support )) {
+            $self->store_genetree($self->param('gene_tree'));
         } else {
             $treebest_stored_tree = undef;
         }

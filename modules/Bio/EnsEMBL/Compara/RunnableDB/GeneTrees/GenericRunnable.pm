@@ -177,8 +177,8 @@ sub write_output {
             $target_tree = $self->store_alternative_tree($cmd_output, $self->param('output_clusterset_id'), $target_tree);
         } else {
             $target_tree = $self->param('default_gene_tree');
-            $self->parse_newick_into_tree($cmd_output, $target_tree);
-            $self->store_genetree($target_tree, []);
+            $self->parse_newick_into_tree($cmd_output, $target_tree, []);
+            $self->store_genetree($target_tree);
         }
 
         # check that the tree is binary

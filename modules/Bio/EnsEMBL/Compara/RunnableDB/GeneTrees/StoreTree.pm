@@ -155,28 +155,29 @@ sub store_genetree
 {
     my $self = shift;
     my $tree = shift;
-    my $ref_support = shift;
 
     printf("PHYML::store_genetree\n") if($self->debug);
+    my $treenode_adaptor = $tree->adaptor->db->get_GeneTreeNodeAdaptor;
 
     $tree->root->build_leftright_indexing(1);
     $self->call_within_transaction(sub {
         $tree->adaptor->store($tree);
-        $tree->adaptor->db->get_GeneTreeNodeAdaptor->delete_nodes_not_in_tree($tree->root);
+        $treenode_adaptor->delete_nodes_not_in_tree($tree->root);
     });
+
+    # Updating the tags is safe
+    foreach my $node (@{$tree->get_all_nodes}) {
+        $treenode_adaptor->sync_tags_to_database($node);
+    }
+    $self->store_tree_tags($tree);
 
     if($self->debug >1) {
         print("done storing - now print\n");
         $tree->print_tree;
     }
-
-    if ($tree->root->get_child_count == 2) {
-        $self->store_node_tags($tree->root, $ref_support);
-        $self->store_tree_tags($tree);
-    }
 }
 
-sub store_node_tags
+sub interpret_treebest_tags
 {
     my $self = shift;
     my $node = shift;
@@ -186,66 +187,62 @@ sub store_node_tags
         print 'storing tags for:'; $node->print_node;
     }
 
+    my $treebest_tag = { '_tags' => $node->get_tagvalue_hash };
+    bless $treebest_tag, 'Bio::EnsEMBL::Compara::Taggable';
+    $node->{'_tags'} = {};
+
     my $node_type = '';
-    if ($node->is_leaf) {
-        $node->delete_tag('node_type');
-    } else {
-        if ($node->has_tag('gene_split')) {
+    if (not $node->is_leaf) {
+        if ($treebest_tag->has_tag('gene_split')) {
             $node_type = 'gene_split';
-        } elsif ($node->get_tagvalue("DD", 0)) {
+        } elsif ($treebest_tag->get_tagvalue("DD", 0)) {
             $node_type = 'dubious';
-        } elsif ($node->get_tagvalue('Duplication', '') eq '1') {
+        } elsif ($treebest_tag->get_tagvalue('Duplication', '') eq '1') {
             $node_type = 'duplication';
         } else {
             $node_type = 'speciation';
         }
         print "node_type: $node_type\n" if ($self->debug);
-        $node->store_tag('node_type', $node_type);
+        $node->add_tag('node_type', $node_type);
     }
 
-    $node->delete_tag('lost_species_tree_node_id');
-    if ($node->has_tag("E")) {
-        my $n_lost = $node->get_tagvalue("E");
+    if ($treebest_tag->has_tag("E")) {
+        my $n_lost = $treebest_tag->get_tagvalue("E");
         $n_lost =~ s/.{2}//;        # get rid of the initial $-
         my @lost_taxa = split('-', $n_lost);
-        my $topup = 0;
-        foreach my $taxon (@lost_taxa) {
-            print "lost_species_tree_node_id : $taxon\n" if ($self->debug);
-            $node->store_tag('lost_species_tree_node_id', $taxon, $topup);
-            $topup = 1;
-        }
+        print "lost_species_tree_node_id : $n_lost\n" if ($self->debug);
+        $node->add_tag('lost_species_tree_node_id', \@lost_taxa);
     }
     return if $node->is_leaf;
 
-    $node->delete_tag('tree_support');
-    if ($node->has_tag('T') and $self->param('store_tree_support')) {
-        my $binary_support = $node->get_tagvalue('T');
+    if ($treebest_tag->has_tag('T') and $self->param('store_tree_support')) {
+        my $binary_support = $treebest_tag->get_tagvalue('T');
         my $i = 0;
+        my @tree_support = ();
         while ($binary_support) {
             if ($binary_support & 1) {
-                print 'tree_support : ', $ref_support->[$i], "\n" if ($self->debug);
-                $node->store_tag('tree_support', $ref_support->[$i], 1);
+                push @tree_support, $ref_support->[$i];
             }
             $binary_support >>= 1;
             $i++;
         }
+        print 'tree_support : ', join(',', @tree_support), "\n" if ($self->debug);
+        $node->add_tag('tree_support', \@tree_support) if @tree_support;
     }
 
     my %mapped_tags = ('B' => 'bootstrap', 'DCS' => 'duplication_confidence_score', 'S' => 'species_tree_node_id');
     foreach my $tag (keys %mapped_tags) {
         my $db_tag = $mapped_tags{$tag};
-        if ($node->has_tag($tag)) {
-            my $value = $node->get_tagvalue($tag);
+        if ($treebest_tag->has_tag($tag)) {
+            my $value = $treebest_tag->get_tagvalue($tag);
             print "$tag as $db_tag: $value\n" if ($self->debug);
-            $node->store_tag($db_tag, $value);
-        } else {
-            $node->delete_tag($db_tag);
+            $node->add_tag($db_tag, $value);
         }
     }
-    $node->store_tag('duplication_confidence_score', 1) if $node_type eq 'gene_split';
+    $node->add_tag('duplication_confidence_score', 1) if $node_type eq 'gene_split';
 
     foreach my $child (@{$node->children}) {
-        $self->store_node_tags($child, $ref_support);
+        $self->interpret_treebest_tags($child, $ref_support);
     }
 }
 
@@ -253,6 +250,7 @@ sub parse_newick_into_tree {
   my $self = shift;
   my $newick = shift;
   my $tree = shift;
+  my $ref_support = shift;
   
   return undef if $newick =~ /^_null_/;
 
@@ -350,6 +348,7 @@ sub parse_newick_into_tree {
   foreach my $leaf (@{$tree->root->get_all_leaves}) {
     assert_ref($leaf, 'Bio::EnsEMBL::Compara::GeneTreeMember');
   }
+  $self->interpret_treebest_tags($tree->root, $ref_support);
   return $tree;
 }
 
@@ -465,8 +464,8 @@ sub store_alternative_tree {
         return;
     }
     my $newtree = $self->fetch_or_create_other_tree($clusterset, $ref_tree, $remove_previous_tree);
-    return undef unless $self->parse_newick_into_tree($newick, $newtree);
-    $self->store_genetree($newtree, $ref_support);
+    return undef unless $self->parse_newick_into_tree($newick, $newtree, $ref_support);
+    $self->store_genetree($newtree);
     $newtree->release_tree;
     return $newtree;
 }
