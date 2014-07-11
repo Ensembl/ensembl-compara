@@ -162,7 +162,7 @@ ul.variation_consequence_tree li a.leaf   { margin-left: -10px!important; }
 /************************************
    misc conventions
  ************************************/
-div.coltab { line-height: 110%; text-align: left; }
+div.coltab { line-height: 110%; text-align: left; display: inline-block; }
 span.coltab_tab { float: left; }
 div.coltab_text { margin: 0 0 4px 8px; }
 
