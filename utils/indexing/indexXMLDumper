@@ -613,6 +613,20 @@ sub dumpVariation {
     $all_hgnc_names->{$variation_id}{$hgnc_name}++;
   }
 
+  print LOG "    Preparing to identify GWAS variations ".&date_and_mem()."\n";
+  my $gwas_variations;
+  $sth = $conf->{'variation_dbh'}->prepare(qq(
+     SELECT distinct pf.object_id, s.name
+       FROM phenotype_feature pf, source s
+      WHERE pf.source_id = s.source_id
+        AND pf.is_significant = 1
+        AND s.name like "%NHGRI_GWAS%"));
+  $sth->execute;
+  while ( my ($variation_name,$gwas_study) = $sth->fetchrow_array ) {
+    $gwas_study =~ s/_/ /g;
+    $gwas_variations->{$variation_name}{$gwas_study}++;
+  }
+
   print LOG "    Preparing to get extra SNP info (phenotypes etc) ".&date_and_mem()."\n";
   my %snp_extra = map { ($_->[0] => $_) }
     @{$conf->{'variation_dbh'}->selectall_arrayref(
@@ -804,12 +818,13 @@ sub dumpVariation {
         }
       }
       my $loc = $locations->{$variation_id}[0];
-
-      $desc = sprintf( "A $snp_source $type.%s%s%s",
-                       @phenotypes  ? ' Phenotype(s): '        . (join ', ', @phenotypes)         . '.' : '',
-                       %genes       ? ' Gene Association(s): ' . (join ', ', keys %genes)           . '.' : '',
-                       @hgvs_names  ? ' HGVS Name(s): '        . &clean((join ', ', @hgvs_names)) . '.' : '',
-                       $failed_desc ? " $failed_desc."                                         : '');
+      my $gwas_studies = join ', ', keys %{$gwas_variations->{$variation_name}};
+      $desc = sprintf( "A $snp_source $type.%s%s%s%s%s",
+                       @phenotypes   ? ' Phenotype(s): '        . (join ', ', @phenotypes)         . '.' : '',
+                       %genes          ? ' Gene Association(s): ' . (join ', ', keys %genes)           . '.' : '',
+                       @hgvs_names   ? ' HGVS Name(s): '        . &clean((join ', ', @hgvs_names)) . '.' : '',
+                       $gwas_studies ? " GWAS studies: $gwas_studies"                              . '.' : '',
+                       $failed_desc  ? " $failed_desc."                                                  : '');
       if ($somatic_mutation){
         &p( VariationLine( $dbspecies, $variation_name, \@syns, \%genes, \@phenotypes, \@studies, \@hgvs_names, $type, $snp_source, $loc, $quick_links, $desc, $counter2 ), $fh2);
       }
