@@ -1457,4 +1457,6 @@ sub colour_key {
   return lc $pattern;
 }
 
+sub max_label_rows { return $_[0]->my_config('max_label_rows') || 2; }
+
 1;

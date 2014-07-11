@@ -181,15 +181,23 @@ sub template_SCRIPT {
   my $self     = shift;
   my $include  = shift;
   my $function = shift || 'render';
+  my @args     = ();
   
+  # example: [[SCRIPT::EnsEMBL::Web::Document::HTML::Compara::format_wga_list(EPO)]]
+  if ($include =~ /^(.*)::([^:]*)\((.*)\)$/) {
+    $include  = $1;
+    $function = $2;
+    push @args, split(q{,}, $3);
+  }
+
   my ($module, $error) = $self->_use($include, $self->hub);
   
   if ($error) {
     warn "Cannot dynamic_use $include: $error";
   } elsif ($module) {
-    return $module->$function;  # Object oriented module
+    return $module->$function(@args);  # Object oriented module
   } else {
-    return $include->$function; # Non object oriented script
+    return $include->$function(@args); # Non object oriented script
   }
 }
 

@@ -147,8 +147,10 @@ sub content {
     });
       
     if (scalar @$slices == 1) {
-      unshift @$warnings = {'title' => 'No alignment in this region',
-                            'message' => 'There is no alignment between the selected species in this region'}
+      unshift @$warnings,{
+        title => 'No alignment in this region',
+        message => 'There is no alignment between the selected species in this region'
+      };
     }
     $num_slices = @$slices;
   }
@@ -160,7 +162,7 @@ sub content {
     my ($table, $padding) = $self->get_slice_table($slices, 1);
 
     #Check for missing species
-    ($warnings) .= $self->check_for_missing_species({
+    push @$warnings,$self->object->check_for_missing_species({
                                                     'align'   => $align, 
                                                     'species' => $species, 
                                                     'cdb'     => $cdb, 
@@ -178,7 +180,7 @@ sub content {
     } else {
       #Write out sequence if length is short enough
       #Check for missing species 
-      ($warnings) .= $self->check_for_missing_species({
+      push @$warnings,$self->object->check_for_missing_species({
                                                       'align'   => $align, 
                                                       'species' => $species, 
                                                       'cdb'     => $cdb, 
@@ -195,19 +197,11 @@ sub content {
 sub show_warnings {
   my ($self, $warnings) = @_;
   my $alert;
+  return '' unless defined $warnings;
   foreach (@$warnings) {
     $alert .= $self->warning_panel(%$_);
   }
   return $alert;
-}
-
-sub check_for_missing_species {
-    ## Check what species are not present in the alignment
-    my $self = shift;
-
-    my ($title, $warnings) = $self->object->check_for_missing_species(@_);
-
-    return ($self->_info(ucfirst($title), $warnings)) if $warnings;
 }
 
 sub content_sub_slice {
@@ -248,7 +242,16 @@ sub content_sub_slice {
   $config = { %$config, %$defaults } if $defaults;
   
   # Requesting data from a sub slice
-  ($slices) = $self->get_slices($slice, $config->{'align'}, $config->{'species'}, $start, $end, $cdb) if $start && $end;
+  if($start && $end) {
+    ($slices) = $self->object->get_slices({
+      slice => $slice,
+      align => $config->{'align'},
+      species => $config->{'species'},
+      start => $start,
+      end => $end,
+      db => $cdb,
+    });
+  }
   
   $config->{'slices'} = $slices;
   
@@ -265,7 +268,8 @@ sub content_sub_slice {
   $self->markup_line_numbers($sequence, $config)           if $config->{'line_numbering'};
   
   # Only if this IS NOT a sub slice - print the key and the slice list
-  my $template = sprintf('<div class="sequence_key">%s</div>', $self->get_key($config)) . $self->get_slice_table($config->{'slices'}) unless $start && $end;
+  my $template = '';
+  $template = sprintf('<div class="sequence_key">%s</div>', $self->get_key($config)) . $self->get_slice_table($config->{'slices'}) unless $start && $end;
   
   # Only if this IS a sub slice - remove margins from <pre> elements
   my $class = $end == $slice_length ? '' : ' class="no-bottom-margin"' if $start && $end;
@@ -277,15 +281,15 @@ sub content_sub_slice {
     
     $config->{'padded_species'}->{$_} = $_ . (' ' x ($pad[0] - length $_)) for keys %{$config->{'padded_species'}};
     
-    if ($config->{'line_numbering'} eq 'slice') {
+    if ($config->{'line_numbering'} and $config->{'line_numbering'} eq 'slice') {
       $config->{'padding'}->{'pre_number'} = $pad[1];
       $config->{'padding'}->{'number'}     = $pad[2];
     }
   }
   
   $self->id('');
-  
-  return $self->build_sequence($sequence, $config) . $warnings;
+ 
+  return $self->build_sequence($sequence, $config) . $self->show_warnings($warnings);
 }
 
 

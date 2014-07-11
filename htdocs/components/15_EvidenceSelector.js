@@ -14,12 +14,12 @@
  * limitations under the License.
  */
 
-Ensembl.Panel.CellTypeSelector = Ensembl.Panel.MultiSelector.extend({
+Ensembl.Panel.EvidenceSelector = Ensembl.Panel.MultiSelector.extend({
   updateSelection: function () {
     
-    var cells = this.urlParam + '=' + this.selection.join(',');
+    var evidence = this.urlParam + '=' + this.selection.join(',');
     $.ajax({
-      url: '/' + Ensembl.species + '/Ajax/cell_type?' + cells,
+      url: '/' + Ensembl.species + '/Ajax/evidence?' + evidence,
       context: this,
       complete: function() {
         Ensembl.redirect(this.elLk.form.attr('action') + '?' + Ensembl.cleanURL(this.elLk.form.serialize()));

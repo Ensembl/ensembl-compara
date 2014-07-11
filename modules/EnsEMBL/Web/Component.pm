@@ -92,7 +92,7 @@ sub id {
   ## @accessor
   ## @return String (last element of package namespace)
   my ($self, $id) = @_;
-  $self->{'id'} = $id if $id;
+  $self->{'id'} = $id if @_>1;
   return $self->{'id'};
 }
 
@@ -210,8 +210,12 @@ sub get_content {
   }
   
   if (!$content) {
-    $content = $function && $self->can($function) ? $self->$function : $self->content_buttons.$self->content;
-    
+    if($function && $self->can($function)) {
+      $content = $self->$function;
+    } else {
+      $content = $self->content; # Force sequence-point before buttons call.
+      $content = $self->content_buttons.$content;
+    }
     if ($cache && $content) {
       $self->set_cache_key;
       $cache->set($ENV{'CACHE_KEY'}, $content, 60*60*24*7, values %{$ENV{'CACHE_TAGS'}});
@@ -224,8 +228,33 @@ sub get_content {
 sub content_buttons {
   my $self = shift;
 
-  my $html = join '', map sprintf('<a href="%s" class="modal_link %s">%s</a>', $_->{'url'}, $_->{'class'} || '', $_->{'caption'}), $self->buttons;
-
+  # Group the buttons, if requested
+  my @groups;
+  foreach my $b ($self->buttons) {
+    if(!@groups or !$b->{'group'} or
+          $groups[-1]->[0]{'group'} ne $b->{'group'}) {
+      push @groups,[];
+    }
+    push @{$groups[-1]},$b;
+  }
+  # Create the buttons
+  my $html = '';
+  foreach my $g (@groups) {
+    my $group = '';
+    foreach my $b (@$g) {
+      my @classes = ('modal_link');
+      push @classes,$b->{'class'} if $b->{'class'};
+      push @classes,'togglebutton' if $b->{'toggle'};
+      push @classes,'off' if $b->{'toggle'} and $b->{'toggle'} eq 'off';
+      $group .= sprintf('<a href="%s" class="%s">%s</a>',
+            $b->{'url'}, join(' ',@classes), $b->{'caption'});
+    }
+    if(@$g>1) {
+      $html .= qq(<div class="group">$group</div>);
+    } else {
+      $html .= $group;
+    }
+  }
   return $html ? sprintf('<div class="component-tools tool_buttons">%s</div>', $html) : '';
 }
 

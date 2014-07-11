@@ -34,12 +34,7 @@ sub content {
   my $context       = $self->hub->param('context') || 200;
   my $object_slice  = $object->get_bound_context_slice($context); 
      $object_slice  = $object_slice->invert if $object_slice->strand < 1;
-  my $cells = $object->cell_types;
-  unless($cells) {
-    my $api_data = $object->get_evidence_data($object_slice,{ cells_only => 1 });
-    my $av_cells = $api_data->{'cells'};
-    $cells = [ $av_cells->[0] ] if @$av_cells;
-  }
+  my $cells = $self->object->shown_cells;
   my $api_data = $object->get_evidence_data($object_slice,{ cell => $cells});
   my $evidence_data = $api_data->{'data'};
   
@@ -83,15 +78,12 @@ sub content {
   
   $table->add_rows(@rows);
 
-  my $cell_n = scalar @{$api_data->{'cells'}};
-
-  my $cell_m = $cells?@$cells:$cell_n;
-  my $html = $self->cell_line_button($cell_m,$cell_n);
+  $self->cell_line_button;
 
   if(scalar keys %$evidence_data) {
-    return $html.$table->render;
+    return $table->render;
   } else {
-    return "$html<p>There is no evidence for this regulatory feature in the selected cell lines</p>";
+    return "<p>There is no evidence for this regulatory feature in the selected cell lines</p>";
   }
 }
 

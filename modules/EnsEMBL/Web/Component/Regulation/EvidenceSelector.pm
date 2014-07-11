@@ -16,23 +16,25 @@ limitations under the License.
 
 =cut
 
-package EnsEMBL::Web::Component::Regulation::CellTypeSelector;
+package EnsEMBL::Web::Component::Regulation::EvidenceSelector;
 
 use strict;
 
 use base qw(EnsEMBL::Web::Component::MultiSelector EnsEMBL::Web::Component::Regulation);
+
+use List::MoreUtils qw(uniq);
 
 sub _init {
   my $self = shift;
  
   $self->SUPER::_init;
  
-  $self->{'panel_type'}      = 'CellTypeSelector';
-  $self->{'link_text'}       = 'Select cell types';
-  $self->{'included_header'} = 'Selected cell types {category}';
-  $self->{'excluded_header'} = 'Unselected cell types {category}';
-  $self->{'url_param'}       = 'cell';
-  $self->{'rel'}             = 'modal_select_cell_types';
+  $self->{'panel_type'}      = 'EvidenceSelector';
+  $self->{'link_text'}       = 'Select evidence';
+  $self->{'included_header'} = 'Selected {category} evidence';
+  $self->{'excluded_header'} = 'Unselected {category} evidence';
+  $self->{'url_param'}       = 'evidence';
+  $self->{'rel'}             = 'modal_select_evidence';
 }
 
 sub content_ajax {
@@ -44,21 +46,19 @@ sub content_ajax {
   my $context       = $self->hub->param('context') || 200;
   my $object_slice  = $object->get_bound_context_slice($context);
      $object_slice  = $object_slice->invert if $object_slice->strand < 1;
-  my $api_data = $object->get_evidence_data($object_slice,{ cells_only => 1 });
-  my $av_cells = $api_data->{'cells'};
+  my $all_evidences = $self->all_evidences->{'all'};
 
-  my $shown_cells = $self->shown_cells;
+  my %all_options = map { $_ => $_ } keys %$all_evidences;
+  my @inc_options = grep { $all_evidences->{$_}{'on'} } keys %$all_evidences;
+  my %inc_options;
+  $inc_options{$inc_options[$_]} = $_+1 for(0..$#inc_options);
+  my %evidence_categories = map { $_ => $all_evidences->{$_}{'group'} } keys %$all_evidences;
+  $self->{'categories'} = [ uniq(values %evidence_categories) ];
 
-  my (%shown_cells,%cell_categories);
-  $shown_cells{$shown_cells->[$_]} = $_+1 for(0..$#$shown_cells);
-
-  my $fg = $hub->database('funcgen');
-  my $fgcta = $fg->get_CellTypeAdaptor();
-  my %all_cells = map { $_ => $_ } @{$object->all_cell_types};
-
-  $self->{'all_options'}      = \%all_cells;
-  $self->{'included_options'} = \%shown_cells;
+  $self->{'all_options'}      = \%all_options;
+  $self->{'included_options'} = \%inc_options;
   $self->{'param_mode'} = 'single';
+  $self->{'category_map'} = \%evidence_categories;
 
   $self->SUPER::content_ajax;
 }

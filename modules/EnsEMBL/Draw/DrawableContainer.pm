@@ -212,36 +212,14 @@ sub new {
         my $img_pad = 4;
         $img_width = $img->width+$img_pad if $img;
 
-        my $text = $glyphset->label->{'text'};
-        my @res  = $glyphset->get_text_width($label_width - $img_width, $text, '', 'ellipsis' => 1, 'font' => $glyphset->label->{'font'}, 'ptsize' => $glyphset->label->{'ptsize'});
-      
-        if ($res[1] eq 'truncated') {
-          my $label_class = join('_', $glyphset->species, $glyphset->type) =~ s/\W/_/rg;
-        
-          if (!$config->{'hover_labels'}{$label_class}) {
-            $label_class = $text  =~ s/\W/_/rg;
-          
-            $config->{'hover_labels'}{$label_class} ||= {
-              header => $text,
-              class  => "name_only $label_class"
-            };
-          
-            $glyphset->label->{'class'} = "label $label_class";
-            $glyphset->label->{'hover'} = 1;
-          }
-        }
-      
-        $glyphset->label->{'font'}        ||= $config->{'_font_face'} || 'arial';
-        $glyphset->label->{'ptsize'}      ||= $config->{'_font_size'} || 100;
-        $glyphset->label->{'halign'}      ||= 'left';
-        $glyphset->label->{'absolutex'}     = 1;
-        $glyphset->label->{'absolutewidth'} = 1;
-        $glyphset->label->{'pixperbp'}      = $x_scale;
-        $glyphset->label->{'colour'}        = $colours->{lc $glyphset->{'my_config'}->get('_class')}{'default'} || 'black';
-        $glyphset->label->{'ellipsis'}      = 1;
-        $glyphset->label->{'text'}          = $res[0];
-        $glyphset->label->{'width'}         = $res[2];
-      
+        my $text = $glyphset->label_text;
+        $glyphset->recast_label(
+            $x_scale,$label_width-$img_width,$glyphset->max_label_rows,
+            $text,$config->{'_font_face'} || 'arial',
+            $config->{'_font_size'} || 100,
+            $colours->{lc $glyphset->{'my_config'}->get('_class')}
+                      {'default'} || 'black'
+        );
         $glyphset->label->x(-$label_width - $margin + $img_width);
         $glyphset->label_img->x(-$label_width - $margin + $img_pad/2) if $img;
       }
@@ -264,6 +242,7 @@ sub new {
         my $name         = $glyphset->{'my_config'}->id;
         my $ref_glyphset = ref $glyphset;
         $glyphset->render;
+        next if scalar @{$glyphset->{'glyphs'}} == 0;
       
         ## remove any whitespace at the top of this row
         my $gminy = $glyphset->miny;

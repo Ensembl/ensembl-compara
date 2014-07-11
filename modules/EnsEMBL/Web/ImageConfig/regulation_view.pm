@@ -78,22 +78,8 @@ sub init {
 
   $self->get_node('opt_empty_tracks')->set('display', 'normal');	
 
-  my $only_cell_types = $self->hub->core_object->cell_types;
   foreach my $cell_line (@cell_lines) {
-    next unless grep { $_ eq $cell_line } @$only_cell_types;
     $_->set('display', 'normal') for map $self->get_node("${_}_$cell_line") || (), 'reg_feats', 'seg';
-    
-    # Turn on core evidence track
-    $self->modify_configs(
-      [ "reg_feats_core_$cell_line" ],
-      { display => $cell_line =~ /^(MultiCell|CD4)$/ ? 'tiling_feature' : 'compact' }
-    );
-   
-    # Turn on supporting evidence track
-    $self->modify_configs(
-      [ "reg_feats_non_core_$cell_line" ],
-      { display => 'compact' }
-    );
     
     $self->{'reg_feats_tracks'}{$_} = 1 for "reg_feats_$cell_line", "reg_feats_core_$cell_line", "reg_feats_non_core_$cell_line", "seg_$cell_line";
   }

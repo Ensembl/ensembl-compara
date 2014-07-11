@@ -100,6 +100,7 @@ sub dbadaptor          { shift; return Bio::EnsEMBL::Registry->get_DBAdaptor(@_)
 sub error              { my $self = shift; $self->{'error'} = @_ if @_; return $self->{'error'};                                                                 }
 sub error_track_name   { return $_[0]->my_config('caption');                                                                                                     }
 sub my_label           { return $_[0]->my_config('caption');                                                                                                     }
+sub my_label_caption   { return $_[0]->my_config('labelcaption');                                                                                                }
 sub depth              { return $_[0]->my_config('depth');                                                                                                       }
 sub get_colour         { my $self = shift; return $self->my_colour($self->colour_key(shift), @_);                                                                }
 sub _url               { my $self = shift; return $self->{'config'}->hub->url('ZMenu', { %{$_[0]}, config => $self->{'config'}{'type'}, track => $self->type }); }
@@ -844,5 +845,7 @@ sub bump_sorted_row {
 
   return 1e9; # If we get to this point we can't draw the feature so return a very large number!
 }
+
+sub max_label_rows { return $_[0]->my_config('max_label_rows') || 1; }
 
 1;
