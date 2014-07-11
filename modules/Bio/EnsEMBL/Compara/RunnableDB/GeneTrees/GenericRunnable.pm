@@ -132,6 +132,7 @@ sub fetch_input {
         my $other_trees = $self->param('tree_adaptor')->fetch_all_linked_trees($gene_tree);
         my ($selected_tree) = grep {$_->clusterset_id eq $self->param('input_clusterset_id')} @$other_trees;
         die sprintf('Cannot find a "%s" tree for tree_id=%d', $self->param('input_clusterset_id'), $self->param('gene_tree_id')) unless $selected_tree;
+        $selected_tree->add_tag('removed_columns', $gene_tree->get_value_for_tag('removed_columns')) if $gene_tree->has_tag('removed_columns');
         $gene_tree = $selected_tree;
     }
     $self->param('gene_tree', $gene_tree);
