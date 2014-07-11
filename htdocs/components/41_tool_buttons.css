@@ -20,9 +20,9 @@
 .tool_buttons p.disabled { background-position: 7px 50%; background-repeat: no-repeat; border: 3px double [[PAGE_BG]]; margin: 4px -1px; padding: 4px 4px 4px 29px; }
 .tool_buttons a          { background-color: [[BUTTON_BG]]; color: [[BUTTON_TEXT]]; text-decoration: none; display: block; }
 .tool_buttons a.hidden   { display: none; }
-.tool_buttons a.togglebutton.off { background-color: [[BUTTON_OFF]]; outline: 1px outset [[BUTTON_OFF]]; outline-offset: -4px; }
-.tool_buttons a.togglebutton { outline: 1px inset [[BUTTON_BG]]; outline-offset: -4px; }
-.tool_buttons .group     { background-color: [[BUTTON_BG]]; border: 3px double [[PAGE_BG]]; float: left; margin: 4px 0 0; padding: 0 0 0 4px; }
+.tool_buttons a.togglebutton.off { background-color: [[BUTTON_BG]]; outline: 1px outset [[BUTTON_BG]]; outline-offset: -4px; }
+.tool_buttons a.togglebutton { outline: 1px inset [[BUTTON_ON]]; outline-offset: -4px; background-color: [[BUTTON_ON]]; }
+.tool_buttons .group     { background-color: [[BUTTON_BG]]; border: 3px double [[PAGE_BG]]; float: left; margin: 4px 0 0; padding: 0 0 0 1px; }
 .tool_buttons .group a.togglebutton { border: medium none; margin: 2px 3px 2px 0; outline-offset: 0; padding: 2px 6px 2px 29px; }
 .tool_buttons p.disabled { background-color: [[BUTTON_DISABLED]]; color: [[BUTTON_TEXT]]; cursor: default; }
       
@@ -47,6 +47,8 @@
 .tool_buttons .order-reset  { background-image: url(/i/16/rev/order-reset.png);   }
 .tool_buttons .cell-line    { background-image: url(/i/16/rev/lab.png); }
 .tool_buttons .evidence     { background-image: url(/i/16/rev/museum.png); }
+.tool_buttons .peak         { background-image: url(/i/16/rev/normal.gif); }
+.tool_buttons .signal       { background-image: url(/i/16/rev/wiggle.gif); }
 
 .component-tools            { margin-bottom: 16px; overflow: hidden; }
 .component-tools a          { float: left; margin-right: 4px; }

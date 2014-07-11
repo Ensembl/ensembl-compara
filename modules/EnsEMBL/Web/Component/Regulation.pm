@@ -137,13 +137,13 @@ sub renderer_button {
   push @{$self->{'buttons'}||=[]},{
     url => $peaks_url,
     caption => 'Peaks',
-    class => 'export',
+    class => 'peak',
     toggle => $peaks_on?'on':'off',
     group => 'renderer',
   },{
     url => $signals_url,
     caption => 'Signals',
-    class => 'export',
+    class => 'signal',
     toggle => $signals_on?'on':'off',
     group => 'renderer',
   };
