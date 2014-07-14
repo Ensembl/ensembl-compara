@@ -16,10 +16,10 @@ limitations under the License.
 
 =cut
 
-package EnsEMBL::Web::Component::Gene::SVImage;
+package EnsEMBL::Web::Component::LRG::SVTable;
 
 use strict;
 
-use base qw(EnsEMBL::Web::Component::SVImage);
+use base qw(EnsEMBL::Web::Component::SVTable);
 
 1;

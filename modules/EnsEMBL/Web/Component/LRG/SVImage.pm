@@ -16,7 +16,7 @@ limitations under the License.
 
 =cut
 
-package EnsEMBL::Web::Component::Gene::SVImage;
+package EnsEMBL::Web::Component::LRG::SVImage;
 
 use strict;
 
