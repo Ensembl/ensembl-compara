@@ -45,7 +45,7 @@ sub content {
   my $self        = shift;
   my $object      = $self->object;
   my $translation = $object->translation_object;
-  return ($translation ? sprintf '<h2>Protein ID: %s</h2><h3>(Transcript ID: %s)</h3>', $translation->stable_id, $object->stable_id : '') . $self->SUPER::content;
+  return ($translation ? sprintf '<h2>Protein ID: %s</h2><h3>(Transcript ID: %s)</h3>', $translation->Obj->display_id, $object->Obj->external_name : '') . $self->SUPER::content;
 }
 
 1;
