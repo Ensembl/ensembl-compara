@@ -54,7 +54,8 @@ sub populate_tree {
   );
 
   $self->create_node('Cell_line', 'Details by cell line',
-    [qw( cell_line EnsEMBL::Web::Component::Regulation::FeaturesByCellLine )],
+    [qw( buttons    EnsEMBL::Web::Component::Regulation::Buttons
+         cell_line EnsEMBL::Web::Component::Regulation::FeaturesByCellLine )],
     { 'availability' => 'regulation', 'concise' => 'Details by cell line' }
   );
 
