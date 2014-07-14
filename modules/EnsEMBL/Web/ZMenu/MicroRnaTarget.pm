@@ -36,8 +36,7 @@ sub content {
   }
   
   my $logic_name = $feature->analysis->logic_name;
-  my $source_site = $hub->get_ExtURL($logic_name);
-  my $source_page = $hub->get_ExtURL($logic_name.'_FEATURE', 
+  my $source_page = $hub->get_ExtURL($logic_name, 
                       {
                         'ID' => $feature->accession,
                         'GENE' => $gene_stable_ids[0],
@@ -49,13 +48,14 @@ sub content {
   $self->add_entry ({
     type   => 'Source',
     label  => $feature->feature_set->description,
-    link   => $source_site,
+    link   => $source_page,
   });
 
+  my $mirbase_url = $hub->get_ExtURL('MIRBASE', $feature->accession);
   $self->add_entry ({
-    type   => 'MiRBase mature ID',
+    type   => 'miRBase mature ID',
     label  => $feature->accession,
-    link   => $source_page,
+    link   => $mirbase_url,
   });
 
   my $r = sprintf("%s:%d-%d",
