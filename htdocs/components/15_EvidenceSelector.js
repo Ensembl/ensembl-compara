@@ -22,7 +22,7 @@ Ensembl.Panel.EvidenceSelector = Ensembl.Panel.MultiSelector.extend({
       url: '/' + Ensembl.species + '/Ajax/evidence?' + evidence,
       context: this,
       complete: function() {
-        Ensembl.EventManager.triggerSpecific('updatePanel','Buttons');
+        Ensembl.EventManager.triggerSpecific('updatePanel','Buttons',null,null,null,null,{ background: true });
         Ensembl.EventManager.triggerSpecific('updatePanel','FeaturesByCellLine');
       }
     });
