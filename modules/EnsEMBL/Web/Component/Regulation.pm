@@ -136,7 +136,7 @@ sub renderer_button {
   push @{$self->{'buttons'}||=[]},{
     url => $peaks_url,
     caption => 'Peaks',
-    class => 'peak',
+    class => 'peak radiogroup',
     toggle => $peaks_on?'on':'off',
     group => 'renderer',
   },{
