@@ -60,7 +60,7 @@ sub all_evidences {
         $ev =~ s/^${type}_${cell}_//;  
         $evidences{$ev} ||= { cells => [], on => 0 };
         push @{$evidences{$ev}->{'cells'}},$cell;
-        $evidences{$ev}->{'on'} ||= ( $node->get('display') ne 'off' );
+        $evidences{$ev}->{'on'} ||= ( $node2->get('display') ne 'off' );
         $evidences{$ev}->{'group'} ||= $node2->get('group');
       }
       my $renderer = $node->get('display');
