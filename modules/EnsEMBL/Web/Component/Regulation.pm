@@ -26,20 +26,19 @@ sub shown_cells {
   my ($self) = @_;
 
   my $hub = $self->hub;
-  my @shown_cells;
+  my %shown_cells;
   my $image_config = $hub->get_imageconfig('regulation_view');
   foreach my $type (qw(reg_features seg_features)) {
     my $menu = $image_config->get_node($type);
     next unless $menu;
     foreach my $node (@{$menu->child_nodes}) {
       next unless $node->id =~ /^(reg_feats|seg)_(.*)$/;
+      next if $node->id =~ /^reg_feats_(core|non_core)_/;
       my $cell=$2;
-      unless($node->get('display') eq 'off') {
-        push @shown_cells,$cell;
-      }
+      $shown_cells{$cell} = 1 unless $node->get('display') eq 'off';
     }
   }
-  return \@shown_cells;
+  return [ keys %shown_cells ];
 }
 
 sub all_evidences {
