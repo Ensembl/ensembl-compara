@@ -22,7 +22,8 @@ Ensembl.Panel.EvidenceSelector = Ensembl.Panel.MultiSelector.extend({
       url: '/' + Ensembl.species + '/Ajax/evidence?' + evidence,
       context: this,
       complete: function() {
-        Ensembl.redirect(this.elLk.form.attr('action') + '?' + Ensembl.cleanURL(this.elLk.form.serialize()));
+        Ensembl.EventManager.triggerSpecific('updatePanel','Buttons');
+        Ensembl.EventManager.triggerSpecific('updatePanel','FeaturesByCellLine');
       }
     });
     
