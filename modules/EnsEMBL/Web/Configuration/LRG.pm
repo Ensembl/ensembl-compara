@@ -116,10 +116,20 @@ sub populate_tree {
 
   $self->create_node('Differences', 'Reference comparison',
     [qw( 
-		   exons EnsEMBL::Web::Component::LRG::LRGDiff 
-			 align EnsEMBL::Web::Component::LRG::LRGAlign)],
+      exons EnsEMBL::Web::Component::LRG::LRGDiff 
+      align EnsEMBL::Web::Component::LRG::LRGAlign)],
     { 'availability' => 'lrg' }
   );
+
+
+  $self->create_node('Phenotype',  'Phenotype',
+    [qw(
+      phenotype EnsEMBL::Web::Component::LRG::GenePhenotype
+      variation EnsEMBL::Web::Component::LRG::LRGPhenotypeVariation
+      orthologue EnsEMBL::Web::Component::LRG::GenePhenotypeOrthologue
+    )],
+    { 'availability' => 1 }
+   );
  
   my $var_menu = $self->create_submenu('Variation', 'Genetic Variation');
 
@@ -127,6 +137,15 @@ sub populate_tree {
     [qw( snptable EnsEMBL::Web::Component::LRG::VariationTable )],
     { 'availability' => 'lrg' }
   ));
+
+  $var_menu->append($self->create_node('StructuralVariation_LRG', 'Structural variation',
+    [qw(
+      svimage EnsEMBL::Web::Component::LRG::SVImage
+      svtable EnsEMBL::Web::Component::LRG::SVTable
+    )],
+    { 'availability' => 'lrg has_structural_variation core' }
+  ));
+
 
   $self->create_subnode('Output', 'Export LRG Data',
     [qw( export EnsEMBL::Web::Component::Export::Output )],
