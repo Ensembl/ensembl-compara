@@ -17,7 +17,7 @@
 Ensembl.Panel.CellTypeSelector = Ensembl.Panel.MultiSelector.extend({
   updateSelection: function () {
     
-    var cells = this.urlParam + '=' + this.selection.join(',');
+    var cells = this.urlParam + '=' + encodeURIComponent(this.selection.join(','));
     $.ajax({
       url: '/' + Ensembl.species + '/Ajax/cell_type?' + cells,
       context: this,
