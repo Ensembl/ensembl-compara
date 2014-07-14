@@ -51,7 +51,7 @@ sub content {
     link   => $source_page,
   });
 
-  my $mirbase_url = $hub->get_ExtURL('MIRBASE', $feature->accession);
+  my $mirbase_url = $hub->get_ExtURL('MIRBASE_MATURE', $feature->accession);
   $self->add_entry ({
     type   => 'miRBase mature ID',
     label  => $feature->accession,
