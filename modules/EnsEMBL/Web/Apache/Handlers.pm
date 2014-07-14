@@ -280,13 +280,19 @@ sub handler {
 
   ## Simple redirect to VEP
 
-  if ($file =~ /\/info\/docs\/variation\/vep\/vep_script.html/) {
+  if ($SiteDefs::ENSEMBL_SITETYPE eq 'Pre' && $file =~ /\/vep/i) { ## Pre has no VEP, so redirect to tools page
+    $r->uri('/info/docs/tools/index.html');
+    $redirect = 1;
+  } elsif ($file =~ /\/info\/docs\/variation\/vep\/vep_script.html/) {
     $r->uri('/info/docs/tools/vep/script/index.html');
     $redirect = 1;
   } elsif (($raw_path[0] && $raw_path[0] =~ /^VEP$/i) || $file =~ /\/info\/docs\/variation\/vep\//) {
     $r->uri('/info/docs/tools/vep/index.html');
     $redirect = 1;
-  } elsif ($file =~ /\/info\/docs\/(variation|funcgen|compara|genebuild|microarray)/) {
+  }
+
+  ## Redirect moved documentation
+  if ($file =~ /\/info\/docs\/(variation|funcgen|compara|genebuild|microarray)/) {
     $file =~ s/docs/genome/;
     $r->uri($file);
     $redirect = 1;

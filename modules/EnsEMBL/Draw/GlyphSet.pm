@@ -690,7 +690,7 @@ sub sort_features_by_priority {
   my $prioritize = 0;
   
   while (my ($k, $v) = each (%features)) {
-    if ($v && @$v > 1 && $v->[1]{'priority'}) {
+    if ($v && @$v > 1 && ref($v->[1]) eq 'HASH' && $v->[1]{'priority'}) {
       $prioritize = 1;
       last;
     }
@@ -716,7 +716,6 @@ sub too_many_features {
   my $label = $self->my_label || 'features';
   $self->errorTrack("Too many $label in this region - please zoom in or select a histogram style");
 }
-
 
 sub errorTrack {
   my ($self, $message, $x, $y) = @_;

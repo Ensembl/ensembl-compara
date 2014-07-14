@@ -308,7 +308,8 @@ sub add_vega_link {
     
     if ($object) {
       my $reg        = 'Bio::EnsEMBL::Registry';
-      my $orig_group = $reg->get_DNAAdaptor($species, 'vega')->group;
+      my $adaptor    = $reg->get_DNAAdaptor($species, 'vega');
+      my $orig_group = $adaptor->group;
       
       $reg->add_DNAAdaptor($species, 'vega', $species, 'vega');
          

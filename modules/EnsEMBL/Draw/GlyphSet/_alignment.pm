@@ -359,7 +359,7 @@ sub render_normal {
       
       my $composite;
 
-      if (scalar @feat == 1 and !$depth) {
+      if (scalar @feat == 1 and !$depth and $config->{'simpleblock_optimise'}) {
         $composite = $self;
       } else {
         $composite = $self->Composite({

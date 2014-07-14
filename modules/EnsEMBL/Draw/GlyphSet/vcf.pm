@@ -163,6 +163,7 @@ sub features {
       return 'too_many';
     } 
 
+    # If we have a variation db attached we can try and find a known SNP mapped at the same position
     # But at the moment we do not display this info so we might as well just use the faster method 
     #     my $vfa = $slice->_get_VariationFeatureAdaptor()->{list}->[0];
     

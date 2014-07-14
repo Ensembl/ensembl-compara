@@ -73,7 +73,7 @@ sub _init {
   }
   elsif (!scalar(@$features)) {
     return $self->no_features;
-  }  
+  }
   
   my ($font, $fontsize) = $self->get_font_details($self->my_config('font') || 'innertext');
   my $label_overlay     = $self->label_overlay;

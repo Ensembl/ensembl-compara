@@ -51,8 +51,11 @@ sub content {
   }
   
   $form->add_notes({ class => undef, list => \@list });
-  
-  return '<h2>Export Configuration - Linkage Disequilibrium Data</h2>' . $form->render;
+ 
+  my ($chr, $start, $end) = split(':|-', $hub->param('r'));
+  my $warning = $end - $start >= 2e4 ? $self->warning_panel('Large region', 'Please note: <b>haploview export</b> for regions over 20kb may fail to load owing to data density.') : '';
+ 
+  return '<h2>Export Configuration - Linkage Disequilibrium Data</h2>' . $form->render . $warning;
 }
 
 sub get_formats {

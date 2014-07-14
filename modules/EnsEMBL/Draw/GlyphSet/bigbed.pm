@@ -169,6 +169,8 @@ sub features {
   # Explicit: Check if mode is specified on trackline
   my $style = $options->{'style'} || $format->style;
 
+  $config->{'simpleblock_optimise'} = 1; # No joins, etc, no need for composite.
+
   if ($style eq 'score' && !$self->my_config('colour')) {
     $config->{'useScore'}        = 1;
     $config->{'implicit_colour'} = 1;

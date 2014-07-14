@@ -1916,7 +1916,7 @@ sub add_das_tracks {
 # add_dna_align_features
 # loop through all core databases - and attach the dna align
 # features from the dna_align_feature tables...
-# these are added to one of four menus: cdna/mrna, est, rna, other
+# these are added to one of five menus: transcript, cdna/mrna, est, rna, other
 # depending whats in the web_data column in the database
 sub add_dna_align_features {
   my ($self, $key, $hashref) = @_;
