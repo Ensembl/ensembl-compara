@@ -175,9 +175,9 @@ sub content {
     );
   } 
   
-  $info = $self->_info('Notes', $info) if $info;  
-  
-  $html .= $self->content_sub_slice($slice, \@aligned_slices, $info, $defaults);
+  $html .= $self->content_sub_slice($slice, \@aligned_slices, $defaults);
+  $html .= $self->_info('Notes', $info) if $info;
+
   return $html;
 }
 
