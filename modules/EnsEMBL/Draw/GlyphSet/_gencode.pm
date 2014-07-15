@@ -16,30 +16,15 @@ limitations under the License.
 
 =cut
 
-package EnsEMBL::Draw::GlyphSet::_transcript;
+package EnsEMBL::Draw::GlyphSet::_gencode;
 
-### Default module for drawing Ensembl transcripts (i.e. where rendering
-### does not need to be tweaked to fit a particular display)
+### Module for drawing the gencode track inheriting from _transcript.pm, we dont have any web data in the database for gencode. Its a workaround to create a separate track for attribute type gencode.
 
 use strict;
 
 use List::Util qw(min max);
 
-use base qw(EnsEMBL::Draw::GlyphSet_transcript);
-
-sub _get_all_genes {
-  my ($self,$slice,$analysis,$alias) = @_;
-
-  my $hub = $self->{'config'}->hub;
-  my $species = $self->species;
-  my $load_transcripts = ($self->{'display'} =~ /transcript/);
-  my $key = join('::',$self->species,$slice->name,$analysis,$alias,$load_transcripts);
-  my $out = $hub->req_cache_get($key);
-  return $out if defined $out;
-  $out = $slice->get_all_Genes($analysis,$alias,$load_transcripts);
-  $hub->req_cache_set($key,$out);
-  return $out;
-}
+use base qw(EnsEMBL::Draw::GlyphSet::_transcript);
 
 sub features {
   my $self           = shift;
@@ -61,25 +46,25 @@ sub features {
       @genes = map @{$self->_get_all_genes($slice,$_,$db_alias) || []}, @$analyses;
     }
   }
-  
+ 
   if ($highlight) {
     $highlights{$selected_gene}  = $highlight;
     $highlights{$selected_trans} = 'highlight2';
   }
-  
   if ($display =~ /collapsed/) {
     $exons{$_->stable_id} = [ map @{$_->get_all_Exons}, @{$_->get_all_Transcripts} ] for @genes;
-  } elsif ($display =~ /transcript/) {
+  } else {
     my $coding_only = $display =~ /coding/;    
     
-    foreach my $gene (@genes) {    
-      my $gene_id         = $gene->stable_id;
+    foreach my $gene (@genes) {
+      my $gene_id         = $gene->stable_id;      
       my $is_coding_check = $coding_only ? $self->is_coding_gene($gene) : 0;
       my @trans           = @{$gene->get_all_Transcripts};
          @trans           = grep $_->translation, @trans if $is_coding_check;         
     
-      foreach (@trans) {        
-        my $transcript_id           = $_->stable_id;
+      foreach (@trans) {               
+        next if (!@{$_->get_all_Attributes('gencode_basic')});       
+        my $transcript_id           = $_->stable_id;        
         my $transcript_coding_start = defined $_->coding_region_start ? $_->coding_region_start : -1e6;
         my $transcript_coding_end   = defined $_->coding_region_end   ? $_->coding_region_end   : -1e6;
         
@@ -105,37 +90,8 @@ sub features {
       
       $transcripts{$gene_id} = \@trans;
     }
-  }  
+  }
   return (\@genes, \%highlights, \%transcripts, \%exons);
-}
-
-sub export_feature {
-  my ($self, $feature, $transcript_id, $transcript_name, $gene_id, $gene_name, $gene_type, $gene_source) = @_;
-  
-  return $self->_render_text($feature, 'Exon', {
-    headers => [ 'gene_id', 'gene_name', 'transcript_id', 'transcript_name', 'exon_id', 'gene_type' ],
-    values  => [ $gene_id, $gene_name, $transcript_id, $transcript_name, $feature->stable_id, $gene_type ]
-  }, { source => $gene_source });
-}
-
-sub href {
-  my ($self, $gene, $transcript) = @_;
-  my $hub    = $self->{'config'}->hub;
-  my $params = {
-    %{$hub->multi_params},
-    species    => $self->species,
-    type       => $transcript ? 'Transcript' : 'Gene',
-    action     => $self->my_config('zmenu') ? $self->my_config('zmenu') : $hub->action,
-    g          => $gene->stable_id,
-    db         => $self->my_config('db'),
-    calling_sp => $hub->species,
-    real_r     => $hub->param('r'),
-  };
-
-  $params->{'r'} = undef                  if $self->{'container'}{'web_species'} ne $self->species;
-  $params->{'t'} = $transcript->stable_id if $transcript;
-
-  return $self->_url($params);
 }
 
 1;

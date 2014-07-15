@@ -167,7 +167,7 @@ sub menus {
     
     # Transcripts/Genes
     gene_transcript     => 'Genes and transcripts',
-    transcript          => [ 'Genes',                  'gene_transcript' ],
+    transcript          => [ 'Genes',                  'gene_transcript' ],    
     prediction          => [ 'Prediction transcripts', 'gene_transcript' ],
     lrg                 => [ 'LRG transcripts',        'gene_transcript' ],
     rnaseq              => [ 'RNASeq models',          'gene_transcript' ],
@@ -431,10 +431,9 @@ sub remove_disabled_menus {
 sub create_menus {
   my $self = shift;
   my $tree = $self->tree;
-  
+
   foreach (@_) {
-    my $menu = $self->menus->{$_};
-    
+    my $menu = $self->menus->{$_};   
     if (ref $menu) {
       my $parent = $tree->get_node($menu->[1]) || $tree->append_child($self->create_submenu($menu->[1], $self->menus->{$menu->[1]}));
       $parent->append_child($self->create_submenu($_, $menu->[0]));
@@ -2023,6 +2022,7 @@ sub add_genes {
 
   my ($keys, $data) = $self->_merge($hashref->{'gene'}, 'gene');
   my $colours       = $self->species_defs->colour('gene');
+  
   my $flag          = 0;
 
   my $renderers = [
@@ -2036,9 +2036,7 @@ sub add_genes {
           'transcript_label_coding', 'Coding transcripts only (in coding genes)',          
         ];
         
-  push($renderers, 'transcript_gencode_basic','GENCODE basic'); # if($species eq "Homo_sapiens" || $species eq "Mus_musculus");  #only human and mouse have this renderer enable for now
-     
-  foreach my $type (@{$self->{'transcript_types'}}) {  
+  foreach my $type (@{$self->{'transcript_types'}}) {
     my $menu = $self->get_node($type);
     next unless $menu;
 
@@ -2052,9 +2050,9 @@ sub add_genes {
         }
       }
 
-      my $menu = $self->get_node($t);
-      
+      my $menu = $self->get_node($t);      
       next unless $menu;
+
       $self->generic_add($menu, $key, "${t}_${key}_$key2", $data->{$key2}, {
         glyphset  => ($t =~ /_/ ? '' : '_') . $type, # QUICK HACK
         colours   => $colours,
@@ -2071,8 +2069,8 @@ sub add_genes {
       });
       $flag = 1;
     }
-  }
-
+  }   
+  
   # Need to add the gene menu track here
   $self->add_track('information', 'gene_legend', 'Gene Legend', 'gene_legend', { strand => 'r' }) if $flag;
 }
