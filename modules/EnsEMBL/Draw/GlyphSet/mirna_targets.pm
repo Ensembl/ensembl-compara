@@ -55,17 +55,13 @@ sub features {
     }
   }
 
-
   my @fsets = @{$self->get_feature_sets($efg_db)}; 
   my $mirna_adaptor  = $efg_db->get_MirnaTargetFeatureAdaptor;
   my $f = $mirna_adaptor->fetch_all_by_Slice_FeatureSets($slice, \@fsets);
 
-  # count used for colour assignment
-  my $count = 0;
+  ## cache colours
   foreach my $feat (@$f){
-    $wuc->cache($feat->display_label, $count);   
-    $count ++;
-    if ($count >= 15) {$count = 0;} 
+    $wuc->cache($feat->evidence, lc($feat->evidence));   
   } 
 
   return $f;
@@ -88,15 +84,11 @@ sub href {
   return $href;
 }
 
-
-
 sub colour_key {
   my ($self, $f) = @_;
-  my $wuc = $self->{'config'}; 
-  my $colour = $wuc->cache($f->display_label); 
+  my $wuc = $self->{'config'};
+  my $colour = $wuc->cache($f->evidence);
   return $colour;
 }
-
-
 
 1;
