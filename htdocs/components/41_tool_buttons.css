@@ -30,6 +30,9 @@
 .tool_buttons a:hover    { background-color: [[BUTTON_BG_HOVER]]; color: [[BUTTON_TEXT]]; }
 .tool_buttons a.togglebutton:hover    { background-color: [[BUTTON_BG_HOVER]]; color: [[BUTTON_TEXT]]; }
 .tool_buttons a:visited  { color: [[BUTTON_TEXT]]; }
+
+.tool_buttons a.unstyled { background: none; color: #3366bb; display: inline-block; margin: 0; padding: 4px; vertical-align: bottom; line-height: 32px; height: 16px; }
+.tool_buttons a.unstyled:hover { text-decoration: underline; color: #cc0000; }
      
 .tool_buttons .config       { background-image: url(/i/16/rev/setting.png);       }
 .tool_buttons .data         { background-image: url(/i/16/rev/page-user.png);     }

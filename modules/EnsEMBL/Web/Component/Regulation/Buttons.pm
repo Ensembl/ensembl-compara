@@ -26,7 +26,7 @@ sub _init {
   my $self = shift;
   $self->cacheable(0);
   $self->ajaxable(1);
-  $self->has_image(1);
+  $self->has_image(0);
 }
 
 sub content {
@@ -35,6 +35,7 @@ sub content {
   $self->cell_line_button;
   $self->evidence_button;
   $self->renderer_button;
+  $self->advanced_button;
 
   return '';
 }

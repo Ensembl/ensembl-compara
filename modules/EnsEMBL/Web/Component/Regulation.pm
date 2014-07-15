@@ -148,4 +148,25 @@ sub renderer_button {
   };
 }
 
+sub advanced_button {
+  my ($self,$component) = @_;
+
+  my $hub = $self->hub;
+  my @components = @{$hub->components};
+
+  my $view_config;
+  $view_config = $hub->get_viewconfig(@{shift @components}) while !$view_config && scalar @components; 
+  my $url     = $self->hub->url('Config', {
+    type      => $view_config->type,
+    action    => $view_config->component,
+    function  => undef,
+  });
+  push @{$self->{'buttons'}||=[]},{
+    url => $url,
+    caption => 'Advanced ...',
+    class => 'unstyled config',
+    rel => "modal_config_$component",
+  };
+}
+
 1;
