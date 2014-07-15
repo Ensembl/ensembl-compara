@@ -55,19 +55,19 @@ sub all_evidences {
       my $ev = $node->id;
       my $cell = $node->id;
       $cell =~ s/^${type}_//;
+      my $renderer = $node->get('display');
       foreach my $node2 (@{$node->child_nodes}) {
         my $ev = $node2->id;
-        $ev =~ s/^${type}_${cell}_//;  
+        next unless $ev =~ s/^${type}_${cell}_//;
+        my $renderer2 = $node2->get('display');
         $evidences{$ev} ||= { cells => [], on => 0 };
-        push @{$evidences{$ev}->{'cells'}},$cell;
-        $evidences{$ev}->{'on'} ||= ( $node2->get('display') ne 'off' );
+        $evidences{$ev}->{'on'} ||= ( $renderer2 ne 'off' );
         $evidences{$ev}->{'group'} ||= $node2->get('group');
-      }
-      my $renderer = $node->get('display');
-      if($renderer ne 'off') {
-        $evidences{$ev}->{'on'} ||= 1;
-        $mode &=~ 1 if $renderer eq 'tiling';
-        $mode &=~ 2 if $renderer eq 'compact';
+        if($renderer2 ne 'off') {
+          $evidences{$ev}->{'on'} ||= 1;
+          $mode &=~ 1 if $renderer eq 'tiling';
+          $mode &=~ 2 if $renderer eq 'compact';
+        }
       }
     }
   }
