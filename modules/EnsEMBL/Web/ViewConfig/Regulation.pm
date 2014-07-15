@@ -22,7 +22,7 @@ use strict;
 
 use base qw(EnsEMBL::Web::ViewConfig);
 
-sub extra_tabs {
+sub reg_extra_tabs {
   my $self = shift;
   my $hub  = $self->hub;
   
