@@ -20,7 +20,7 @@ package EnsEMBL::Web::Component::Regulation::EvidenceSelector;
 
 use strict;
 
-use base qw(EnsEMBL::Web::Component::MultiSelector EnsEMBL::Web::Component::Regulation);
+use base qw(EnsEMBL::Web::Component::CloudMultiSelector EnsEMBL::Web::Component::Regulation);
 
 use List::MoreUtils qw(uniq);
 

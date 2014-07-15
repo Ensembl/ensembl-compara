@@ -14,29 +14,30 @@
  * limitations under the License.
  */
 
-Ensembl.Panel.EvidenceSelector = Ensembl.Panel.CloudMultiSelector.extend({
-
+Ensembl.Panel.CloudMultiSelector = Ensembl.Panel.extend({
   constructor: function (id, params) {
-    this.base(id,params);
-  },
+    this.base(id);
+    this.urlParam = params.urlParam;
 
+    Ensembl.EventManager.register('updateConfiguration', this, this.updateSelection);
+  },
+  
   init: function () {
     var panel = this;
+    
     this.base();
-  },
-
-  updateSelection: function () {
-    
-    var evidence = this.urlParam + '=' + this.selection.join(',');
-    $.ajax({
-      url: '/' + Ensembl.species + '/Ajax/evidence?' + evidence,
-      context: this,
-      complete: function() {
-        Ensembl.EventManager.triggerSpecific('updatePanel','Buttons',null,null,null,null,{ background: true });
-        Ensembl.EventManager.triggerSpecific('updatePanel','FeaturesByCellLine');
-      }
-    });
-    
-    return true;
+    this.elLk.content = $('.modal_wrapper', this.el);
+    this.elLk.list = $('.cloud_multi_selector_list li', this.elLk.content);
+    this.elLk.list.click(function() {
+      $(this).toggleClass('off');
+      panel.selection = $.makeArray(
+        $('.cloud_multi_selector_list li:not(.off)',panel.elLk.content).map(
+          function(i,val) {
+            return $(val).data('key');
+          }
+        )
+      );
+      return false;
+    }); 
   }
 });
