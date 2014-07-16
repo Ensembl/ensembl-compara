@@ -45,7 +45,7 @@ sub features {
   my $self           = shift;
   my @genes          = @_;
   my $slice          = $self->{'container'};
-  my $display        = $self->{'display'};
+  my $display        = $self->{'display'};  
   my $db_alias       = $self->my_config('db');
   my $analyses       = $self->my_config('logic_names');
   my $selected_gene  = $self->my_config('g') || $self->core('g');
@@ -70,8 +70,7 @@ sub features {
   if ($display =~ /collapsed/) {
     $exons{$_->stable_id} = [ map @{$_->get_all_Exons}, @{$_->get_all_Transcripts} ] for @genes;
   } elsif ($display =~ /transcript/) {
-    my $coding_only = $display =~ /coding/;
-    my $gencode_basic = $display =~ /basic/;
+    my $coding_only = $display =~ /coding/;    
     
     foreach my $gene (@genes) {    
       my $gene_id         = $gene->stable_id;
@@ -79,11 +78,7 @@ sub features {
       my @trans           = @{$gene->get_all_Transcripts};
          @trans           = grep $_->translation, @trans if $is_coding_check;         
     
-      foreach (@trans) {      
-        if($gencode_basic) {          
-          next if (!@{$_->get_all_Attributes('gencode_basic')});
-        }
-        
+      foreach (@trans) {        
         my $transcript_id           = $_->stable_id;
         my $transcript_coding_start = defined $_->coding_region_start ? $_->coding_region_start : -1e6;
         my $transcript_coding_end   = defined $_->coding_region_end   ? $_->coding_region_end   : -1e6;

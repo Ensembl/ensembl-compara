@@ -15,37 +15,58 @@
  */
 
 (function($) {
-  $(function() {
-    $.fn.toggleButtons = function () {
-      return this.each(function () {
-        var $this = $(this);
-        $this.click(function() {
-          $this.toggleClass('off');
-          var url = $this.attr('href');
-          if(url) {
-            $.ajax({
-              url: url,
-              type: 'POST',
-              traditional: true,
-              cache: false,
-              context: this,
-              dataType: 'json',
-              data: {
-                state: $this.hasClass('off')?0:1
-              }
-            }).fail(function() {
-              $this.toggleClass('off');
-            }).done(function(data) {
+  function to_server(url,state) {
+    return $.ajax({
+      url: url,
+      type: 'POST',
+      traditional: true,
+      cache: false,
+      context: this,
+      dataType: 'json',
+      data: { state: state }
+    }).fail(function() {
+      $this.toggleClass('off');
+    });
+  };
+
+  $.fn.toggleButtons = function () {
+    return this.each(function () {
+      var $this = $(this);
+      var $group = $this.parent('.group');
+      var force;
+      var radio = $('a.togglebutton.radiogroup',$group).length;
+      $this.click(function() {
+        $this.toggleClass('off');
+        if(radio) {
+          if(!$('a.togglebutton:not(.off)',$group).length) {
+            $('a.togglebutton:eq(0)',$group).addClass('candidate');
+            if($this.hasClass('candidate')) {
+              $('a.togglebutton:eq(1)',$group).addClass('candidate');
+              $this.removeClass('candidate');
+            }
+            force = $('a.candidate',$group)
+              .removeClass('candidate').removeClass('off').attr('href');
+          }
+        }
+        var state = $this.hasClass('off')?'0':'1';
+
+        var url = $this.attr('href');
+        if(url) {
+          if(force) {
+            defer = to_server(force,1).then(to_server(url,state));
+          } else {
+            defer = to_server(url,state);
+          }
+          defer.done(function(data) {
               if(data.reload_panels) {
                 $.each(data.reload_panels,function(i,panel) {
                   Ensembl.EventManager.triggerSpecific('updatePanel',panel);
                 });
               }
-            });
-          }
-          return false;
-        });
+          });
+        }
+        return false;
       });
-    };
-  });
+    });
+  };
 })(jQuery);

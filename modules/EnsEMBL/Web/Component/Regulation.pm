@@ -26,20 +26,19 @@ sub shown_cells {
   my ($self) = @_;
 
   my $hub = $self->hub;
-  my @shown_cells;
+  my %shown_cells;
   my $image_config = $hub->get_imageconfig('regulation_view');
   foreach my $type (qw(reg_features seg_features)) {
     my $menu = $image_config->get_node($type);
     next unless $menu;
     foreach my $node (@{$menu->child_nodes}) {
       next unless $node->id =~ /^(reg_feats|seg)_(.*)$/;
+      next if $node->id =~ /^reg_feats_(core|non_core)_/;
       my $cell=$2;
-      unless($node->get('display') eq 'off') {
-        push @shown_cells,$cell;
-      }
+      $shown_cells{$cell} = 1 unless $node->get('display') eq 'off';
     }
   }
-  return \@shown_cells;
+  return [ keys %shown_cells ];
 }
 
 sub all_evidences {
@@ -56,19 +55,19 @@ sub all_evidences {
       my $ev = $node->id;
       my $cell = $node->id;
       $cell =~ s/^${type}_//;
+      my $renderer = $node->get('display');
       foreach my $node2 (@{$node->child_nodes}) {
         my $ev = $node2->id;
-        $ev =~ s/^${type}_${cell}_//;  
+        next unless $ev =~ s/^${type}_${cell}_//;
+        my $renderer2 = $node2->get('display');
         $evidences{$ev} ||= { cells => [], on => 0 };
-        push @{$evidences{$ev}->{'cells'}},$cell;
-        $evidences{$ev}->{'on'} ||= ( $node->get('display') ne 'off' );
+        $evidences{$ev}->{'on'} ||= ( $renderer2 ne 'off' );
         $evidences{$ev}->{'group'} ||= $node2->get('group');
-      }
-      my $renderer = $node->get('display');
-      if($renderer ne 'off') {
-        $evidences{$ev}->{'on'} ||= 1;
-        $mode &=~ 1 if $renderer eq 'tiling';
-        $mode &=~ 2 if $renderer eq 'compact';
+        if($renderer2 ne 'off') {
+          $evidences{$ev}->{'on'} ||= 1;
+          $mode &=~ 1 if $renderer eq 'tiling';
+          $mode &=~ 2 if $renderer eq 'compact';
+        }
       }
     }
   }
@@ -92,6 +91,7 @@ sub cell_line_button {
     url => $url,
     caption => "Select cells (showing $cell_m/$cell_n)",
     class => 'cell-line',
+    modal => 1
   };
 }
 
@@ -111,6 +111,7 @@ sub evidence_button {
     url => $url,
     caption => "Select evidence (showing $m/$n)",
     class => 'evidence',
+    modal => 1
   };
 }
 
@@ -137,15 +138,36 @@ sub renderer_button {
   push @{$self->{'buttons'}||=[]},{
     url => $peaks_url,
     caption => 'Peaks',
-    class => 'export',
+    class => 'peak radiogroup',
     toggle => $peaks_on?'on':'off',
     group => 'renderer',
   },{
     url => $signals_url,
     caption => 'Signals',
-    class => 'export',
+    class => 'signal',
     toggle => $signals_on?'on':'off',
     group => 'renderer',
+  };
+}
+
+sub advanced_button {
+  my ($self,$component) = @_;
+
+  my $hub = $self->hub;
+  my @components = @{$hub->components};
+
+  my $view_config;
+  $view_config = $hub->get_viewconfig(@{shift @components}) while !$view_config && scalar @components; 
+  my $url     = $self->hub->url('Config', {
+    type      => $view_config->type,
+    action    => $view_config->component,
+    function  => undef,
+  });
+  push @{$self->{'buttons'}||=[]},{
+    url => $url,
+    caption => 'Advanced ...',
+    class => 'unstyled config',
+    rel => "modal_config_$component",
   };
 }
 

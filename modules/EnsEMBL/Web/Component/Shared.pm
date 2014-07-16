@@ -192,7 +192,7 @@ sub transcript_table {
   my $gene = $object->gene;
 
   #text for tooltips
-  my $gencode_desc = "The GENCODE Basic set includes all genes in the GENCODE gene set but only a subset of the transcripts.";
+  my $gencode_desc = "The GENCODE set is the gene set for human and mouse. GENCODE Basic is a subset of representative transcripts (splice variants).";
   my $trans_5_3_desc = "5' and 3' truncations in transcript evidence prevent annotation of the start and the end of the CDS.";
   my $trans_5_desc = "5' truncation in transcript evidence prevents annotation of the start of the CDS.";
   my $trans_3_desc = "3' truncation in transcript evidence prevents annotation of the end of the CDS.";
@@ -627,22 +627,26 @@ sub check_for_align_problems {
   ## Compile possible error messages for a given alignment
   ## @return HTML
   my ($self, $args) = @_;
-  my $html;
 
-  my ($error, $warnings) = $self->object->check_for_align_in_database($args->{align}, $args->{species}, $args->{cdb});
-  push @$warnings, $self->object->check_for_missing_species($args);
- 
-  if ($error) {
-    $html .= $self->error_panel($error->{title}, $error->{message});
-  }
-  foreach (@$warnings) {
-    next unless $_->{message};
-    $html .= $self->warning_panel($_->{title}, $_->{message});
-  }
+  my @messages = $self->object->check_for_align_in_database($args->{align}, $args->{species}, $args->{cdb});
+  push @messages, $self->object->check_for_missing_species($args);
 
-  return $html;
+  return $self->show_warnings(\@messages);
 }
 
+sub show_warnings {
+  my ($self, $messages) = @_;
+
+  return '' unless defined $messages;
+
+  my $html;
+  my $is_error;
+  foreach (@$messages) {
+    $html .= $self->_info_panel($_->{severity}, ucfirst $_->{title}, $_->{message});
+    $is_error = 1 if $_->{severity} eq 'error';
+  }
+  return ($html, $is_error);
+}
 
 sub _matches { ## TODO - tidy this
   my ($self, $key, $caption, @keys) = @_;

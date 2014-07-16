@@ -89,7 +89,8 @@ sub content {
   return $self->_info('A unique location can not be determined for this Variation', $object->not_unique_location) if $object->not_unique_location;
   
   my ($sequence, $config, $raw_seq) = $self->initialize;
-  
+ 
+  my $html; 
   my $hub           = $self->hub;
   my $variation     = $object->Obj;
   my $align_quality = $variation->get_VariationFeature_by_dbID($hub->param('vf'))->flank_match;
@@ -105,7 +106,7 @@ sub content {
     ", 'auto');
   }
   
-  my $html = sprintf '<div class="sequence_key">%s</div>%s', $self->get_key($config), $self->build_sequence($sequence, $config);
+  $html .= sprintf '<div class="sequence_key">%s</div>%s', $self->get_key($config), $self->build_sequence($sequence, $config);
   
   return $self->_info('Flanking sequence', qq{ 
     The sequence below is from the <b>reference genome</b> flanking the variant location.

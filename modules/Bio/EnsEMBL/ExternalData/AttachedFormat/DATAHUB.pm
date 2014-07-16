@@ -52,8 +52,8 @@ sub check_data {
     $error  = "<p>Unable to open remote TrackHub file: $url</p>";
     $error .= "<p>$_.</p>" for ref $datahub->{'error'} eq 'ARRAY' ? @{$datahub->{'error'}} : $datahub->{'error'};
   }
-  
-  return ($error, { name => $datahub->{'details'}{'shortLabel'} });
+  my @assemblies = keys %{$datahub->{'genomes'}||{}};
+  return ($error, { name => $datahub->{'details'}{'shortLabel'}, assemblies => \@assemblies});  
 }
 
 sub style {

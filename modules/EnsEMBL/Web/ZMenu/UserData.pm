@@ -103,7 +103,7 @@ sub feature_content {
   $self->new_feature;
 
   my $caption = '';
-  if(ref($feature) eq 'HASH' or $type eq 'bigbed') {
+  if(ref($feature) eq 'HASH' or !$feature->id) {
     if($single) { $caption = $start; } else { $caption = "$start-$end"; }
   } else {
     $caption = $feature->id;

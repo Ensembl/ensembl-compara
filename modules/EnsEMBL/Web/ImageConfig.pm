@@ -167,7 +167,7 @@ sub menus {
     
     # Transcripts/Genes
     gene_transcript     => 'Genes and transcripts',
-    transcript          => [ 'Genes',                  'gene_transcript' ],
+    transcript          => [ 'Genes',                  'gene_transcript' ],    
     prediction          => [ 'Prediction transcripts', 'gene_transcript' ],
     lrg                 => [ 'LRG transcripts',        'gene_transcript' ],
     rnaseq              => [ 'RNASeq models',          'gene_transcript' ],
@@ -431,10 +431,9 @@ sub remove_disabled_menus {
 sub create_menus {
   my $self = shift;
   my $tree = $self->tree;
-  
+
   foreach (@_) {
-    my $menu = $self->menus->{$_};
-    
+    my $menu = $self->menus->{$_};   
     if (ref $menu) {
       my $parent = $tree->get_node($menu->[1]) || $tree->append_child($self->create_submenu($menu->[1], $self->menus->{$menu->[1]}));
       $parent->append_child($self->create_submenu($_, $menu->[0]));
@@ -1916,7 +1915,7 @@ sub add_das_tracks {
 # add_dna_align_features
 # loop through all core databases - and attach the dna align
 # features from the dna_align_feature tables...
-# these are added to one of four menus: cdna/mrna, est, rna, other
+# these are added to one of five menus: transcript, cdna/mrna, est, rna, other
 # depending whats in the web_data column in the database
 sub add_dna_align_features {
   my ($self, $key, $hashref) = @_;
@@ -2023,6 +2022,7 @@ sub add_genes {
 
   my ($keys, $data) = $self->_merge($hashref->{'gene'}, 'gene');
   my $colours       = $self->species_defs->colour('gene');
+  
   my $flag          = 0;
 
   my $renderers = [
@@ -2036,9 +2036,7 @@ sub add_genes {
           'transcript_label_coding', 'Coding transcripts only (in coding genes)',          
         ];
         
-  push($renderers, 'transcript_gencode_basic','GENCODE basic'); # if($species eq "Homo_sapiens" || $species eq "Mus_musculus");  #only human and mouse have this renderer enable for now
-     
-  foreach my $type (@{$self->{'transcript_types'}}) {  
+  foreach my $type (@{$self->{'transcript_types'}}) {
     my $menu = $self->get_node($type);
     next unless $menu;
 
@@ -2052,13 +2050,14 @@ sub add_genes {
         }
       }
 
-      my $menu = $self->get_node($t);
-      
+      my $menu = $self->get_node($t);      
       next unless $menu;
+
       $self->generic_add($menu, $key, "${t}_${key}_$key2", $data->{$key2}, {
         glyphset  => ($t =~ /_/ ? '' : '_') . $type, # QUICK HACK
         colours   => $colours,
         strand    => $t eq 'gene' ? 'r' : 'b',
+        label_key => '[biotype]',
         renderers => $t eq 'transcript' ? $renderers : $t eq 'rnaseq' ? [
          'off',                'Off',
          'transcript_nolabel', 'Expanded without labels',
@@ -2071,8 +2070,8 @@ sub add_genes {
       });
       $flag = 1;
     }
-  }
-
+  }   
+  
   # Need to add the gene menu track here
   $self->add_track('information', 'gene_legend', 'Gene Legend', 'gene_legend', { strand => 'r' }) if $flag;
 }
@@ -3127,7 +3126,7 @@ sub add_structural_variations {
   }
   
   # Structural variation sets and studies
-  foreach my $menu_item (sort {$a->{type} cmp $b->{type} || $a->{long_name} cmp $b->{long_name}} @{$hashref->{'menu'}}) {
+  foreach my $menu_item (sort {$a->{type} cmp $b->{type} || $a->{long_name} cmp $b->{long_name}} @{$hashref->{'menu'} || []}) {
     next if $menu_item->{'type'} !~ /^sv_/;
     
     my $node_name = "$menu_item->{'long_name'} (structural variants)";

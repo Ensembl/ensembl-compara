@@ -108,8 +108,8 @@ sub cell_type {
   my ($self,$hub) = @_;
   my $cell = $hub->param('cell');
 
-  my %cell = map { $_ => 1 } split(/,/,$hub->param('cell'));
   my $image_config = $hub->get_imageconfig('regulation_view');
+  my %cell = map { $image_config->tree->clean_id($_) => 1 } split(/,/,$hub->param('cell'));
   foreach my $type (qw(reg_features seg_features reg_feats_core reg_feats_non_core)) {
     my $menu = $image_config->get_node($type);
     next unless $menu;

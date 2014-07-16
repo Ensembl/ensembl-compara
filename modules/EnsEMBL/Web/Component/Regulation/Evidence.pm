@@ -34,7 +34,7 @@ sub content {
   my $context       = $self->hub->param('context') || 200;
   my $object_slice  = $object->get_bound_context_slice($context); 
      $object_slice  = $object_slice->invert if $object_slice->strand < 1;
-  my $cells = $self->object->shown_cells;
+  my $cells = $self->shown_cells;
   my $api_data = $object->get_evidence_data($object_slice,{ cell => $cells});
   my $evidence_data = $api_data->{'data'};
   

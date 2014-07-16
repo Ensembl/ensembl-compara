@@ -62,7 +62,7 @@ sub content {
   $image->{'panel_number'} = 'translation';
   $image->set_button('drag', 'title' => 'Drag to select region');
   
-  my $html = ($translation ? sprintf '<h2>Protein ID: %s</h2><h3>(Transcript ID: %s)</h3>', $translation->stable_id, $transcript->stable_id : '');
+  my $html = ($translation ? sprintf '<h2>Protein ID: %s</h2><h3>(Transcript ID: %s)</h3>', $translation->Obj->display_id, $transcript->Obj->external_name : '');
   
   return $html.$image->render;
 }

@@ -49,12 +49,6 @@ sub content {
   
   my $align_param = $hub->param('align');
 
-  my $alert_box = $self->check_for_align_problems({
-                    'align' => $align_param, 
-                    'species' => $self->object->species,
-                  });
-  return $alert_box if $alert_box;
-
   #target_species and target_slice_name_range may not be defined so split separately
   #target_species but not target_slice_name_range is defined for pairwise compact alignments. 
   my ($align, $target_species, $target_slice_name_range) = split '--', $align_param;
@@ -68,10 +62,14 @@ sub content {
       $target_slice = $target_slice_adaptor->fetch_by_region('toplevel', $target_slice_name, $target_slice_start, $target_slice_end);
   }
 
-  my ($error, $warnings) = $self->object->check_for_align_in_database($align, $species, $cdb);
-  return $error if $error;
+  my ($alert_box, $error) = $self->check_for_align_problems({
+                    'align' => $align,
+                    'species' => $self->object->species,
+                  });
+  return $alert_box if $error;
+  my $warnings;
   
-  my $html;
+  my $html = $alert_box;
   
   if ($type eq 'Gene') {
     my $location = $object->Obj; # Use this instead of $slice because the $slice region includes flanking
@@ -148,6 +146,7 @@ sub content {
       
     if (scalar @$slices == 1) {
       unshift @$warnings,{
+        severity => 'warning',
         title => 'No alignment in this region',
         message => 'There is no alignment between the selected species in this region'
       };
@@ -160,15 +159,8 @@ sub content {
   if ($align && $slice_length && $slice_length >= $self->{'subslice_length'}) {
 
     my ($table, $padding) = $self->get_slice_table($slices, 1);
-
-    #Check for missing species
-    push @$warnings,$self->object->check_for_missing_species({
-                                                    'align'   => $align, 
-                                                    'species' => $species, 
-                                                    'cdb'     => $cdb, 
-                                                    'image'   => $self->has_image
-                                                  });
-    $html .= '<div class="sequence_key"></div>' . $table . $self->chunked_content($slice_length, $self->{'subslice_length'}, { padding => $padding, length => $slice_length }) . $self->show_warnings($warnings);
+    $html .= $self->draw_tree($cdb, $align_blocks, $slice, $align, $method_class, $groups, $slices);
+    $html .= '<div class="sequence_key"></div>' . $table . $self->chunked_content($slice_length, $self->{'subslice_length'}, { padding => $padding, length => $slice_length });
 
   } else {
     my ($table, $padding);
@@ -179,34 +171,19 @@ sub content {
       $html .= '<div class="sequence_key"></div>' . $table . $self->show_warnings($warnings);
     } else {
       #Write out sequence if length is short enough
-      #Check for missing species 
-      push @$warnings,$self->object->check_for_missing_species({
-                                                      'align'   => $align, 
-                                                      'species' => $species, 
-                                                      'cdb'     => $cdb, 
-                                                      'image'   => $self->has_image
-                                                      }); 
-      $html .= $self->content_sub_slice($slice, $slices, $warnings, undef, $cdb); # Direct call if the sequence length is short enough
+      $html .= $self->draw_tree($cdb, $align_blocks, $slice, $align, $method_class, $groups, $slices) if ($align);
+      $html .= $self->content_sub_slice($slice, $slices, undef, $cdb); # Direct call if the sequence length is short enough
     }
   }
+  $html .= $self->show_warnings($warnings);
  
   return $html;
 
 }
 
-sub show_warnings {
-  my ($self, $warnings) = @_;
-  my $alert;
-  return '' unless defined $warnings;
-  foreach (@$warnings) {
-    $alert .= $self->warning_panel(%$_);
-  }
-  return $alert;
-}
-
 sub content_sub_slice {
   my $self = shift;
-  my ($slice, $slices, $warnings, $defaults, $cdb) = @_;
+  my ($slice, $slices, $defaults, $cdb) = @_;
   
   my $hub          = $self->hub;
   my $object       = $self->object;
@@ -289,9 +266,130 @@ sub content_sub_slice {
   
   $self->id('');
  
-  return $self->build_sequence($sequence, $config) . $self->show_warnings($warnings);
+  return $self->build_sequence($sequence, $config);
 }
 
+
+sub draw_tree {
+  my ($self, $cdb, $align_blocks, $slice, $align, $class, $groups, $slices) = @_;
+  my $hub             = $self->hub;
+  my $compara_db      = $hub->database($cdb);
+
+  my $image_config    = $hub->get_imageconfig('speciestreeview');
+
+  my $image_width     = $self->image_width || 800;
+  my $colouring       = $hub->param('colouring') || 'background';
+  my $species         = $hub->species;
+  my $species_name    = $hub->species_defs->get_config(ucfirst($species), 'SPECIES_SCIENTIFIC_NAME');
+  my $mlss_adaptor            = $compara_db->get_adaptor('MethodLinkSpeciesSet');
+  my $method_link_species_set = $mlss_adaptor->fetch_by_dbID($align);
+
+  my $highlights;
+  my $html;
+
+  my $num_groups = (keys %$groups);
+  #Do not draw a tree if have more than group or for pairwise alignments
+  if ($num_groups > 1) {
+    $html = $self->info_panel("Species Tree", "<p>No tree is drawn when there is more than one block displayed because each block is represented by a separate tree");
+    return $html;
+  } elsif ($num_groups < 1) {
+    #No alignment found
+    return;
+  } elsif ($class =~ /pairwise/) {
+    $html = $self->info_panel("Species Tree", "<p>No tree is drawn for pairwise alignments");
+    return $html;
+  }
+
+  $image_config->set_parameters({
+				 container_width => $image_width,
+				 image_width     => $image_width,
+				 slice_number    => '1|1',
+				 cdb             => $cdb,
+				});
+
+  #Take the first block since even if we have more than one block (eg using low coverage species as reference), all the blocks should be compatible since num_groups = 1
+
+  my $gab = $align_blocks->[0];
+
+  #If we only have a single GenomicAlignBlock we can restrict it and skip any
+  #empty GenomicAligns. If we have more than one GenomicAlignBlock we cannot
+  #do this because the first block may not be representative of all the blocks
+  my $skip_empty_GenomicAligns = 0;
+  $skip_empty_GenomicAligns = 1 if (@$align_blocks == 1);
+
+  #get tree and restrict
+  my $restricted_tree;
+  if (@$align_blocks == 1) {
+    my $tree = $align_blocks->[0]->get_GenomicAlignTree;
+
+    #set reference genomic_align if it is not already in the tree
+    my $ref_genomic_align = $tree->reference_genomic_align || $gab->reference_genomic_align;
+
+    $restricted_tree = $tree->restrict_between_reference_positions($slice->start, $slice->end, $ref_genomic_align, $skip_empty_GenomicAligns);
+  } else {
+    #Get the first GenomicAlignBlock from the unrestricted slice (ie all the gabs will be the same)
+    my $gab_adaptor = $compara_db->get_adaptor('GenomicAlignBlock');
+    my $gab = $gab_adaptor->fetch_all_by_MethodLinkSpeciesSet_Slice($method_link_species_set, $slice)->[0];
+
+    #Restrict the tree by looking at the species in the AlignSlice
+    $restricted_tree = $gab->get_GenomicAlignTree;
+    my $num_slices = @$slices;
+    my $cnt =0;
+
+    foreach my $this_node (@{$restricted_tree->get_all_sorted_genomic_align_nodes()}) {
+      my $genomic_align_group = $this_node->genomic_align_group;
+      next if (!$genomic_align_group);
+      my $node_name = $genomic_align_group->genome_db->name;
+      my $this_slice = $slices->[$cnt];
+      if ($cnt < $num_slices && lc($slices->[$cnt]->{name}) eq $node_name) {
+        #if need to distinguish between nodes of the same name, maybe try checking that the
+        #genomic_aligns in the slice and group are identical
+        #my $slice_gas = $this_slice->{genomic_align_ids}; #hash
+        #my $tree_gas = $genomic_align_group->{genomic_align_array};
+        $cnt++;
+      } else {
+        $this_node->disavow_parent;
+        $restricted_tree = $restricted_tree->minimize_tree;
+      }
+    }
+  }
+
+  #Get cigar lines from each Slice which will be passed to the genetree.pm drawing code
+  my $slice_cigar_lines;
+
+  foreach my $this_slice (@$slices) {
+    next if (lc($this_slice->{name}) eq "ancestral_sequences"); #skip cigar lines for ancestral seqs
+    push @$slice_cigar_lines, $this_slice->{cigar_line};
+  }
+
+  #Get low coverage species from the EPO_LOW_COVERAGE species set
+  my $low_coverage_species = {};
+  if ($class =~ /GenomicAlignTree.tree_alignment/) {
+    $low_coverage_species = _get_low_coverage_genome_db_sets($method_link_species_set);
+  }
+
+  #Use highlights array to store the cigar lines and low coverage species but the first 8 fields need to be undef
+  for (my $i = 0; $i < 8; $i++) {
+    push @$highlights, undef;
+  }
+  push @$highlights, $slice_cigar_lines;
+  push @$highlights, $low_coverage_species;
+
+  my $image = $self->new_image($restricted_tree, $image_config, $highlights);
+
+  return $html if $self->_export_image($image, 'no_text');
+
+  my $image_id = $gab->dbID || $gab->original_dbID;
+  $image->image_type       = 'genetree';
+  $image->image_name       = ($hub->param('image_width')) . "-$image_id";
+  $image->imagemap         = 'yes';
+  $image->{'panel_number'} = 'tree';
+  $image->set_button('drag', 'title' => 'Drag to select region');
+
+  $html .= $image->render;
+
+  return $html;
+}
 
 # Displays slices for all species above the sequence
 sub get_slice_table {
@@ -511,6 +609,48 @@ sub markup_region_change {
   }
   
   $config->{'key'}->{'align_change'} = 1 if $change;
+}
+
+
+#Find the set of low coverage species (genome_dbs) from the EPO_LOW_COVERAGE set (high + low coverage)
+#This could be improved by having a direct link between the EPO_LOW_COVERAGE and the corresponding high coverage EPO set
+sub _get_low_coverage_genome_db_sets {
+  my ($mlss) = @_;
+  my $found_high_mlss;
+  my $low_coverage_species_set;
+  my $high_coverage_species_set;
+
+  #Fetch all the high coverage EPO method_link_species_sets
+  my $high_coverage_mlsss = $mlss->adaptor->fetch_all_by_method_link_type("EPO");
+  foreach my $high_coverage_mlss (@$high_coverage_mlsss) {
+    my $species_set = $high_coverage_mlss->species_set_obj;
+    foreach my $genome_db (@{$species_set->genome_dbs}) {
+      $high_coverage_species_set->{ $high_coverage_mlss}{$genome_db->name} = 1;
+    }
+  }
+
+  #Find high coverage mlss which has the same tag name (eg mammals) and is a subset of the low_coverage species set
+  foreach my $high_mlss (@$high_coverage_mlsss) {
+    my $counter = 0;
+    foreach my $low_genome_db (@{$mlss->species_set_obj->genome_dbs}) {
+      if ($high_coverage_species_set->{$high_mlss}{$low_genome_db->name} && $mlss->species_set_obj->get_value_for_tag("name") eq $high_mlss->species_set_obj->get_value_for_tag("name")) {
+        $counter++;
+      }
+    }
+    if ($counter == @{$high_mlss->species_set_obj->genome_dbs}) {
+      $found_high_mlss = $high_mlss;
+      last;
+    }
+  }
+
+  my $low_coverage_species;
+  foreach my $low_genome_db (@{$mlss->species_set_obj->genome_dbs}) {
+    unless ($high_coverage_species_set->{$found_high_mlss}{$low_genome_db->name}) {
+#      push @$low_coverage_species, $low_genome_db->dbID;
+      $low_coverage_species->{$low_genome_db->dbID} = 1;
+    }
+  }
+  return $low_coverage_species;
 }
 
 1;

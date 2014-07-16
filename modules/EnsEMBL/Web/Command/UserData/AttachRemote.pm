@@ -94,15 +94,32 @@ sub process {
 
       $url = chase_redirects($url);
 
+      my @assemblies = @{$options->{'assemblies'}||[]};
+      my $assembly_string;
+      if (@assemblies) {
+        ## Convert UCSC assembly names to Ensembl assembly names where appropriate
+        my %ucsc = @{$hub->species_defs->get_config($hub->data_species, 'UCSC_ASSEMBLIES')||[]};
+        if (keys %ucsc) {
+          foreach (@assemblies) {
+            $_ = $ucsc{$_} if $ucsc{$_}; 
+          }
+        }
+        $assembly_string = join(', ', @assemblies);
+      }
+      else {
+        $assembly_string = $hub->species_defs->get_config($hub->data_species, 'ASSEMBLY_NAME');
+      }
+
       my $data = $session->add_data(
-        type      => 'url',
-        code      => join('_', md5_hex($name . $url), $session->session_id),
-        url       => $url,
-        name      => $name,
-        format    => $format->name,
-        style     => $format->trackline,
-        species   => $hub->data_species,
-        timestamp => time,
+        type        => 'url',
+        code        => join('_', md5_hex($name . $url), $session->session_id),
+        url         => $url,
+        name        => $name,
+        format      => $format->name,
+        style       => $format->trackline,
+        species     => $hub->data_species,
+        assembly    => $assembly_string,
+        timestamp   => time,
         %$options,
       );
       
@@ -113,6 +130,7 @@ sub process {
       %params = (
         format => $format->name,
         type   => 'url',
+        name   => $name,
         code   => $data->{'code'},
       );
     }

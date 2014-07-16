@@ -40,15 +40,11 @@ use Digest::MD5 qw(md5_hex);
 
 $| = 1;
 
-my ($species_list,$ignore_species_list,$indexes_list,$ignore_indexes_list,$sub_host,$sub_port,$sub_user,$no_sub,$create_elevate,$do_private,$debug,$log,$dir,$help);
+my ($species_list,$ignore_species_list,$indexes_list,$ignore_indexes_list,$create_elevate,$do_private,$debug,$log,$dir,$help);
 GetOptions('species=s'        => \$species_list,
            'ignore_species=s' => \$ignore_species_list,
            'index|indices=s'  => \$indexes_list,
            'ignore_index=s'   => \$ignore_indexes_list,
-           'sub_host=s'       => \$sub_host,
-           'sub_port=s'       => \$sub_port,
-           'sub_user=s'       => \$sub_user,
-           'no_sub'           => \$no_sub,
            'create_elevate'   => \$create_elevate,
            'do_private'       => \$do_private,
            'debug'            => \$debug,
@@ -143,23 +139,6 @@ else {
     print LOG "WARNING - one or more of your indexes is not recognised, please check your spelling. Available ones are are:\n";
     print LOG join "\n", @available_indexes;
     exit;
-  }
-}
-
-if (grep {$_ eq 'Sequence'} @indexes) {
-  if (! $no_sub) {
-    unless ( $sub_host && $sub_port && $sub_user ) {
-      print "Please either (i) enter db connection details for submissions database, or (ii)_rerun with '--no_sub' option\n";
-      exit;
-    }
-    $conf->{'sub'}{'dbh'} = DBI->connect("DBI:mysql:host=$sub_host;port=$sub_port;database=submissions",
-                                         $sub_user,
-                                         undef,
-                                         { PrintError => 1, RaiseError => 0}
-                                       );
-  }
-  else {
-    $conf->{'sub'}{'no_sub'} = 1;
   }
 }
 
@@ -613,6 +592,20 @@ sub dumpVariation {
     $all_hgnc_names->{$variation_id}{$hgnc_name}++;
   }
 
+  print LOG "    Preparing to identify GWAS variations ".&date_and_mem()."\n";
+  my $gwas_variations;
+  $sth = $conf->{'variation_dbh'}->prepare(qq(
+     SELECT distinct pf.object_id, s.name
+       FROM phenotype_feature pf, source s
+      WHERE pf.source_id = s.source_id
+        AND pf.is_significant = 1
+        AND s.name like "%NHGRI_GWAS%"));
+  $sth->execute;
+  while ( my ($variation_name,$gwas_study) = $sth->fetchrow_array ) {
+    $gwas_study =~ s/_/ /g;
+    $gwas_variations->{$variation_name}{$gwas_study}++;
+  }
+
   print LOG "    Preparing to get extra SNP info (phenotypes etc) ".&date_and_mem()."\n";
   my %snp_extra = map { ($_->[0] => $_) }
     @{$conf->{'variation_dbh'}->selectall_arrayref(
@@ -804,12 +797,13 @@ sub dumpVariation {
         }
       }
       my $loc = $locations->{$variation_id}[0];
-
-      $desc = sprintf( "A $snp_source $type.%s%s%s",
-                       @phenotypes  ? ' Phenotype(s): '        . (join ', ', @phenotypes)         . '.' : '',
-                       %genes       ? ' Gene Association(s): ' . (join ', ', keys %genes)           . '.' : '',
-                       @hgvs_names  ? ' HGVS Name(s): '        . &clean((join ', ', @hgvs_names)) . '.' : '',
-                       $failed_desc ? " $failed_desc."                                         : '');
+      my $gwas_studies = join ', ', keys %{$gwas_variations->{$variation_name}};
+      $desc = sprintf( "A $snp_source $type.%s%s%s%s%s",
+                       @phenotypes   ? ' Phenotype(s): '        . (join ', ', @phenotypes)         . '.' : '',
+                       %genes          ? ' Gene Association(s): ' . (join ', ', keys %genes)           . '.' : '',
+                       @hgvs_names   ? ' HGVS Name(s): '        . &clean((join ', ', @hgvs_names)) . '.' : '',
+                       $gwas_studies ? " GWAS studies: $gwas_studies"                              . '.' : '',
+                       $failed_desc  ? " $failed_desc."                                                  : '');
       if ($somatic_mutation){
         &p( VariationLine( $dbspecies, $variation_name, \@syns, \%genes, \@phenotypes, \@studies, \@hgvs_names, $type, $snp_source, $loc, $quick_links, $desc, $counter2 ), $fh2);
       }
@@ -1400,8 +1394,10 @@ sub dumpDomain {
 
   my $sth = $conf->{'dbh'}->prepare(
     "select x.dbprimary_acc, i.id, x.description
-       from xref as x, interpro as i
+       from xref as x, interpro as i, protein_feature pf
       where x.dbprimary_acc = i.interpro_ac
+        and i.id = pf.hit_name
+      group by i.id
       order by x.dbprimary_acc");
   $sth->execute();
   my $old_acc     = '';
@@ -1495,14 +1491,15 @@ sub dumpGeneTree {
   header($fh);
   my $gene_names = { map { @$_ } @{$conf->{'dbh'}->selectall_arrayref( "select g.stable_id, x.display_label from gene g, xref x where g.display_xref_id = x.xref_id" )} };
   my $sql = qq(
-        SELECT gtr.stable_id, mg.stable_id
-          FROM gene_tree_root gtr
-          JOIN gene_tree_node USING (root_id)
-          JOIN member mp USING (member_id)
-          JOIN member mg ON mg.member_id = mp.gene_member_id
-          JOIN genome_db gdb ON mg.genome_db_id = gdb.genome_db_id
-         WHERE clusterset_id = "default"
-           AND tree_type = "tree" AND gdb.name = '$dbspecies');
+        SELECT gtr.stable_id, gm.stable_id
+         FROM gene_tree_root gtr
+         JOIN gene_tree_node USING (root_id)
+         JOIN seq_member sm USING (seq_member_id)
+         JOIN gene_member gm ON sm.gene_member_id = gm.gene_member_id
+         JOIN genome_db gdb ON gm.genome_db_id = gdb.genome_db_id
+        WHERE clusterset_id = "default"
+          AND tree_type = "tree"
+          AND gdb.name = '$dbspecies');
   my $sth =  $conf->{'dbh_compara'}->prepare($sql);
   $sth->execute;
   while (my ($gt_id, $gid) = $sth->fetchrow_array() ) {
@@ -1525,7 +1522,7 @@ sub GeneTreeLine {
   <field name="name">$gt_id</field>
   <field name="description">$desc</field>);
     $xml .= &common_fields($species,'GeneTree','compara');
-    $url = sprintf(qq(Multi/GeneTree?gt=%s),$gt_id);
+    $url = sprintf(qq(Multi/GeneTree/Image?gt=%s),$gt_id);
     $xml .= qq(
   <field name="domain_url">$url</field>);
   }
@@ -1750,9 +1747,6 @@ sub FamilyLine {
 sub dumpSequence {
   my $conf = shift;
   my $sanger = {};
-  unless ($conf->{'sub'}{'no_sub'}) {
-    $sanger = sanger_project_names( $conf );
-  }
   my @misc_feat_disallowed = (); #features that we know we don't want to dump if we ever decide to do this (not implemented)
   my @name_order = (qw(name well_name clone_name sanger_project synonym embl_acc)); #defines the order of attribute_type we use to get the name for misc_features (comes from B::E::G::_clone.pm)
   my $dbname    = $conf->{'dbs'}{'DATABASE_CORE'};
@@ -1999,28 +1993,10 @@ sub SeqLine {
   $species =~ s/_/ /;
 
   my $desc = ($name eq $sr) ? "$type $name has a length of $len bp." : "$type $name (length $len bp) is mapped to $sr_type $sr.";
-  my $extra_desc = '';
-
   #deal with any synonyms
   if (@$synonyms) {
-    $extra_desc = " It has synonyms or EMBL/GRC accessions of " . join(',',@$synonyms) . ".";
+    $desc .= " It has synonyms of " . join(',',@$synonyms) . ".";
   }
-
- #deal with with Sanger Projects
-  my %extra;
-  foreach my $n ($name, @$synonyms) {
-    foreach( keys %{$sanger->{$n}||{}} ) {
-      $extra{$_}=1;
-    }
-  }
-  if (%extra) {
-    foreach my $k (keys %extra) {
-      push @$synonyms, $k unless grep {$_ eq $k} @$synonyms;
-    }
-    $extra_desc .= " It is mapped to the following Sanger projects: ".join( ', ',sort keys %extra ) . ".";
-  }
-
-  $desc .= $extra_desc;
 
   my $xml = qq(
 <doc>
@@ -2037,40 +2013,6 @@ sub SeqLine {
   $counter->();
   return $xml;
 }
-
-#retrieve sanger project name details
-sub sanger_project_names {
-  my $conf = shift;
-  my %SPECIES = qw(
-    Homo_sapiens Human Mus_musculus Mouse Danio_rerio Zebrafish
-    Drosophila_melanogaster Drosophila Rattus_norvegicus Rat
-  );
-  my $sanger_species_name = $SPECIES{$conf->{'species'}};
-  return {} unless $sanger_species_name;
-  my $clones = {};
-  my $dbh = $conf->{'sub'}{'dbh'};
-  unless( $dbh ) {
-    print LOG "WARNING: Can't connect to submissions database", DBI::errstr();
-    return $clones;
-  }
-  my $sth = $dbh->prepare(
-    "SELECT distinct a.project_name, a.accession
-       FROM project_acc a, project_dump d,
-            sequence s, species_chromosome c
-      WHERE a.sanger_id = d.sanger_id AND d.seq_id = s.seq_id
-        AND s.chromosome_id = c.chromosome_id 
-        AND c.species_name = '$sanger_species_name' AND a.accession != 'UNKNOWN'"
-  );
-  $sth->execute(  );
-  while( my ($proj, $acc) = $sth->fetchrow() ) {
-    $clones->{$acc}{$proj}=1;
-  }
-  unless (%$clones) {
-    print LOG "WARNING: No records retrieved from submissions database for $sanger_species_name\n", DBI::errstr();
-  }
-  return $clones;
-}
-
 
 ########################################################################## Genes
 

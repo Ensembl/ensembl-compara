@@ -542,7 +542,7 @@ sub new_factory {
   my ($self, $module) = @_;
   my $data = $self->deepcopy($_[-1]) || {};
   $data->{'_feature_IDs'} = [];
-  $data->{'_dataObjects'} = {};
+  $data->{'_dataObjects'} ||= {};
   return $self->new_module('Factory', $module, $data);
 }
 

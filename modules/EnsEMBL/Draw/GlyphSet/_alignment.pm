@@ -330,7 +330,7 @@ sub render_normal {
       }
       $on_screen++;
       
-      if ($config) {
+      if ($config->{'useScore'}) {
         my $score = $feat[0][2]->score || 0;
         
         # implicit_colour means that a colour has been arbitrarily assigned
@@ -359,7 +359,7 @@ sub render_normal {
       
       my $composite;
 
-      if (scalar @feat == 1 and !$depth) {
+      if (scalar @feat == 1 and !$depth and $config->{'simpleblock_optimise'}) {
         $composite = $self;
       } else {
         $composite = $self->Composite({

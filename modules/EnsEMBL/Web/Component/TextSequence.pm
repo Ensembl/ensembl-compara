@@ -56,7 +56,8 @@ sub buttons {
   return {
     'url'     => $hub->url($params),
     'caption' => $options->{'caption'} || 'Download sequence',
-    'class'   => 'export'
+    'class'   => 'export',
+    'modal'   => 1
   };
 }
 

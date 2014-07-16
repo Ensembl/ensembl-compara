@@ -12,7 +12,7 @@ package SiteDefs;
 use strict;
 
 use Config;
-use Exporter;
+use ConfigDeferrer qw(:all);
 use File::Spec;
 use Sys::Hostname::Long;
 use Text::Wrap;
@@ -283,7 +283,8 @@ sub update_conf {
   while (my ($dir, $name) = splice @plugins, 0, 2) {
     my $plugin_conf = "${name}::SiteDefs";
     
-    eval "require '$dir/conf/SiteDefs.pm'";
+    eval qq{ package $plugin_conf; use ConfigDeferrer qw(defer); }; # export 'defer' to the plugin SiteDefs
+    eval qq{ require '$dir/conf/SiteDefs.pm' };                     # load the actual plugin SiteDefs
     
     if ($@) {
       my $message = "Can't locate $dir/conf/SiteDefs.pm in";
@@ -302,6 +303,7 @@ sub update_conf {
           error("Error calling $func in $dir/conf/SiteDefs.pm\n$@");
         }
       }
+      register_deferred_configs();
     }
     
     unshift @ENSEMBL_PERL_DIRS,     "$dir/perl"; 
@@ -309,6 +311,7 @@ sub update_conf {
     unshift @$ENSEMBL_PLUGIN_ROOTS, $name;
     push    @ENSEMBL_CONF_DIRS,     "$dir/conf"; 
   }
+  build_deferred_configs();
   
   push @ENSEMBL_LIB_DIRS, (
     "$ENSEMBL_WEBROOT/modules",

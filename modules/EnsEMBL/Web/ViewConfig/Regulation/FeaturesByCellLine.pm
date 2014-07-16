@@ -54,4 +54,6 @@ sub form {
   $self->add_form_element({ type => 'YesNo', name => 'opt_highlight', select => 'select', label => 'Highlight core region' });
 }
 
+sub extra_tabs { return $_[0]->reg_extra_tabs; }
+
 1;

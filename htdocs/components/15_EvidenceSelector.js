@@ -14,7 +14,17 @@
  * limitations under the License.
  */
 
-Ensembl.Panel.EvidenceSelector = Ensembl.Panel.MultiSelector.extend({
+Ensembl.Panel.EvidenceSelector = Ensembl.Panel.CloudMultiSelector.extend({
+
+  constructor: function (id, params) {
+    this.base(id,params);
+  },
+
+  init: function () {
+    var panel = this;
+    this.base();
+  },
+
   updateSelection: function () {
     
     var evidence = this.urlParam + '=' + this.selection.join(',');
@@ -22,7 +32,8 @@ Ensembl.Panel.EvidenceSelector = Ensembl.Panel.MultiSelector.extend({
       url: '/' + Ensembl.species + '/Ajax/evidence?' + evidence,
       context: this,
       complete: function() {
-        Ensembl.redirect(this.elLk.form.attr('action') + '?' + Ensembl.cleanURL(this.elLk.form.serialize()));
+        Ensembl.EventManager.triggerSpecific('updatePanel','Buttons',null,null,null,null,{ background: true });
+        Ensembl.EventManager.triggerSpecific('updatePanel','FeaturesByCellLine');
       }
     });
     

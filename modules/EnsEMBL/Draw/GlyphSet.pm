@@ -690,7 +690,7 @@ sub sort_features_by_priority {
   my $prioritize = 0;
   
   while (my ($k, $v) = each (%features)) {
-    if ($v && @$v > 1 && $v->[1]{'priority'}) {
+    if ($v && @$v > 1 && ref($v->[1]) eq 'HASH' && $v->[1]{'priority'}) {
       $prioritize = 1;
       last;
     }
