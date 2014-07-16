@@ -99,10 +99,6 @@ sub content {
       'no_input'    => 1,
       'is_html'     => 1
     });
-    $fieldset->add_hidden({
-      'name'  => 'assembly',
-      'value' => $assembly_names,
-    });
   }
 
   $self->add_file_format_dropdown($form, '', 1);
