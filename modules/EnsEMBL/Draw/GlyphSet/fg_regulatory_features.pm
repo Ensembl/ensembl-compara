@@ -104,19 +104,29 @@ sub colour_key {
 
 sub tag {
   my ($self, $f) = @_;
-  my $colour     = $self->my_colour($self->colour_key($f));
+  my $colour_key = $self->colour_key($f);
+  my $colour     = $self->my_colour($colour_key);
+  my $flank_colour = $colour;
+  if($colour_key eq 'promoter') {
+    $flank_colour = $self->my_colour('promoter_flanking');
+  }
   my @loci       = @{$f->get_underlying_structure};
   my $bound_end  = pop @loci;
   my $end        = pop @loci;
   my ($bound_start, $start, @mf_loci) = @loci;
   my @result;
   
-  if ($bound_start != $start || $bound_end != $end) {
+  if ($bound_start < $start || $bound_end > $end) {
     # Bound start/ends
     push @result, {
-      style  => 'fg_ends',
-      colour => $colour,
+      style  => 'rect',
+      colour => $flank_colour,
       start  => $bound_start,
+      end    => $start
+    },{
+      style  => 'rect',
+      colour => $flank_colour,
+      start  => $end,
       end    => $bound_end
     };
   }
