@@ -307,11 +307,10 @@ sub _summarise_core_tables {
 #
 
     my $aref =  $dbh->selectall_arrayref(
-      'select sr.name, sr.length 
-         from seq_region as sr, coord_system as cs 
-        where cs.name in( "chromosome", "group" )
-              and cs.attrib like "%default_version%"
-              and cs.coord_system_id = sr.coord_system_id' 
+      'SELECT sr.name, sr.length FROM seq_region sr 
+       INNER JOIN seq_region_attrib sra USING (seq_region_id) 
+       INNER JOIN attrib_type at USING (attrib_type_id)
+       WHERE at.code = "karyotype_rank"' 
     );
     $self->db_tree->{'MAX_CHR_NAME'  } = undef;
     $self->db_tree->{'MAX_CHR_LENGTH'} = undef;
