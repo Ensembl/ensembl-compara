@@ -130,6 +130,7 @@ sub process {
       %params = (
         format => $format->name,
         type   => 'url',
+        name   => $name,
         code   => $data->{'code'},
       );
     }

@@ -37,12 +37,32 @@ sub caption {
 
 sub content {
   my $self = shift;
+  my $hub = $self->hub;
   
   my $form = $self->new_form({'id' => 'url_feedback', 'method' => 'post'});
 
+  my $message;
+  if ($hub->param('format') eq 'DATAHUB') {
+    my $sample_data = $hub->species_defs->get_config($hub->data_species, 'SAMPLE_DATA') || {};
+    my $default_loc = $sample_data->{'LOCATION_PARAM'};
+    $message = sprintf('<p class="space-below"><strong><a href="%s#modal_config_viewbottom-%s">Configure your hub</a></strong></p>',
+      $hub->url({
+              species   => $hub->data_species,
+              type      => 'Location',
+              action    => 'View',
+              function  => undef,
+              r         => $hub->param('r') || $default_loc,
+      }),
+      $hub->param('name'),
+    );
+  }
+  else {
+    $message = qq(Thank you - your remote data was successfully attached. Close this Control Panel to view your data);
+  }
+
   $form->add_element(
       type  => 'Information',
-      value => qq(Thank you - your remote data was successfully attached. Close this Control Panel to view your data),
+      value => $message, 
     );
   $form->add_element( 'type' => 'ForceReload' );
 
