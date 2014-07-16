@@ -3126,7 +3126,7 @@ sub add_structural_variations {
   }
   
   # Structural variation sets and studies
-  foreach my $menu_item (sort {$a->{type} cmp $b->{type} || $a->{long_name} cmp $b->{long_name}} @{$hashref->{'menu'}}) {
+  foreach my $menu_item (sort {$a->{type} cmp $b->{type} || $a->{long_name} cmp $b->{long_name}} @{$hashref->{'menu'} || []}) {
     next if $menu_item->{'type'} !~ /^sv_/;
     
     my $node_name = "$menu_item->{'long_name'} (structural variants)";
