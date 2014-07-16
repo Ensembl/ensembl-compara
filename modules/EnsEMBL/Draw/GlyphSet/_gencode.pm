@@ -36,7 +36,7 @@ sub features {
   my $selected_gene  = $self->my_config('g') || $self->core('g');
   my $selected_trans = $self->core('t')      || $self->core('pt');
   my $highlight      = $self->core('db') eq $self->my_config('db') ? $display =~ /transcript/ ? 'highlight1' : 'highlight2' : undef;
-  my (%highlights, %transcripts, %exons);
+  my (%highlights, %transcripts, %exons);  
   
   if (!scalar @genes) {
     ## FIXME - this is an ugly hack!
@@ -93,5 +93,7 @@ sub features {
   }
   return (\@genes, \%highlights, \%transcripts, \%exons);
 }
+
+sub max_label_rows { return $_[0]->my_config('max_label_rows') || 2; }
 
 1;
