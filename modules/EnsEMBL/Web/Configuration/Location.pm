@@ -251,7 +251,7 @@ sub add_archive_link {
   my $url = 'http://'.$hub->species_defs->SWITCH_ARCHIVE_URL;
   my ($link, $title);
   
-  if ($alt_release < $hub->species_defs->ENSEMBL_VERSION) {
+  if ($current_assembly ne $alt_assembly && $alt_release < $hub->species_defs->ENSEMBL_VERSION) {
   ## get coordinates on other assembly if available
     if ($self->object && $self->object->slice) {
       if (my @mappings = @{$hub->species_defs->get_config($hub->species, 'ASSEMBLY_MAPPINGS')||[]}) {
