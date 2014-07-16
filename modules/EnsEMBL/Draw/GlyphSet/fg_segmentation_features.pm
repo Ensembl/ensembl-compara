@@ -83,8 +83,8 @@ sub href {
 sub colour_key {
   my ($self, $f) = @_;
   my $type = $f->feature_type->name;
-  
-  if ($type =~ /Repressed/) {
+ 
+  if ($type =~ /Repressed/ or $type =~ /low activity/) {
     $type = 'predicted_repressed';
   } elsif ($type =~ /CTCF/) {
     $type = 'ctcf';
@@ -98,10 +98,11 @@ sub colour_key {
     $type = 'predicted_region';
   } elsif ($type =~ /Weak/) {
     $type = 'predicted_weak';
+  } elsif ($type =~ /Heterochr?omatin/i) { # ? = typo in e76
+    $type = 'predicted_heterochromatin';
   } else {
     $type = 'default';
   }
-  
   return lc $type;
 }
 
