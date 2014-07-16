@@ -82,15 +82,19 @@ sub fetch_features {
 sub colour_key {
   my ($self, $f) = @_;
   my $type = $f->feature_type->name;
-  
-  if ($type =~ /Promoter/) {
-    $type = 'Promoter_associated';
-  } elsif ($type =~ /Non/) {
-    $type = 'Non-genic';
-  } elsif ($type =~ /Gene/) {
-    $type = 'Genic';
-  } elsif ($type =~ /Pol/) {
-    $type = 'poliii_associated';
+
+  if($type eq 'CTCF') {
+    $type = 'ctcf';
+  } elsif($type eq 'Enhancer') {
+    $type = 'enhancer';
+  } elsif($type eq 'Open chromatin') {
+    $type = 'open_chromatin';
+  } elsif($type eq 'Promoter') {
+    $type = 'promoter';
+  } elsif($type eq 'TF binding site') {
+    $type = 'tf_binding_site';
+  } elsif($type eq 'Promoter Flanking Region') {
+    $type = 'promoter_flanking';
   } else  {
     $type = 'Unclassified';
   }
