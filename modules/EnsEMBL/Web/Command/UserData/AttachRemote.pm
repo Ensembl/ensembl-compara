@@ -102,6 +102,7 @@ sub process {
         format    => $format->name,
         style     => $format->trackline,
         species   => $hub->data_species,
+        assembly  => $hub->param('assembly') || '-',
         timestamp => time,
         %$options,
       );
