@@ -2057,6 +2057,7 @@ sub add_genes {
         glyphset  => ($t =~ /_/ ? '' : '_') . $type, # QUICK HACK
         colours   => $colours,
         strand    => $t eq 'gene' ? 'r' : 'b',
+        label_key => '',
         renderers => $t eq 'transcript' ? $renderers : $t eq 'rnaseq' ? [
          'off',                'Off',
          'transcript_nolabel', 'Expanded without labels',
