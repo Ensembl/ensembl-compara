@@ -83,17 +83,17 @@ sub colour_key {
   my ($self, $f) = @_;
   my $type = $f->feature_type->name;
 
-  if($type eq 'CTCF') {
+  if($type =~ /CTCF/i) {
     $type = 'ctcf';
-  } elsif($type eq 'Enhancer') {
+  } elsif($type =~ /Enhancer/i) {
     $type = 'enhancer';
-  } elsif($type eq 'Open chromatin') {
+  } elsif($type =~ /Open chromatin/i) {
     $type = 'open_chromatin';
-  } elsif($type eq 'Promoter') {
+  } elsif($type =~ /Promoter/i) {
     $type = 'promoter';
-  } elsif($type eq 'TF binding site') {
+  } elsif($type =~ /TF binding site/i) {
     $type = 'tf_binding_site';
-  } elsif($type eq 'Promoter Flanking Region') {
+  } elsif($type =~ /Promoter Flanking Region/i) {
     $type = 'promoter_flanking';
   } else  {
     $type = 'Unclassified';

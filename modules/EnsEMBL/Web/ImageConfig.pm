@@ -2624,6 +2624,7 @@ sub add_regulation_features {
       colourset   => $fg_data{$key_2}{'colourset'} || $type,
       display     => $fg_data{$key_2}{'display'}   || 'off', 
       description => $fg_data{$key_2}{'description'},
+      priority    => $fg_data{$key_2}{'priority'},
       logic_name  => $fg_data{$key_2}{'logic_names'}[0],
       renderers   => \@renderers, 
     }));
