@@ -83,7 +83,7 @@ sub new {
 }
 
 sub buttons {
-  ## Returns a list of hashrefs, each containing info about the component context buttons (keys: url, caption, class)
+  ## Returns a list of hashrefs, each containing info about the component context buttons (keys: url, caption, class, modal, toggle)
 }
 
 #################### ACCESSORS ###############################
@@ -242,10 +242,10 @@ sub content_buttons {
   foreach my $g (@groups) {
     my $group = '';
     foreach my $b (@$g) {
-      my @classes = ('modal_link');
-      push @classes,$b->{'class'} if $b->{'class'};
-      push @classes,'togglebutton' if $b->{'toggle'};
-      push @classes,'off' if $b->{'toggle'} and $b->{'toggle'} eq 'off';
+      my @classes = $b->{'class'} || ();
+      push @classes, 'modal_link'   if $b->{'modal'};
+      push @classes, 'togglebutton' if $b->{'toggle'};
+      push @classes, 'off'          if $b->{'toggle'} and $b->{'toggle'} eq 'off';
       $group .= sprintf('<a href="%s" class="%s">%s</a>',
             $b->{'url'}, join(' ',@classes), $b->{'caption'});
     }

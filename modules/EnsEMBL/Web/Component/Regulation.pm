@@ -91,6 +91,7 @@ sub cell_line_button {
     url => $url,
     caption => "Select cells (showing $cell_m/$cell_n)",
     class => 'cell-line',
+    modal => 1
   };
 }
 
@@ -110,6 +111,7 @@ sub evidence_button {
     url => $url,
     caption => "Select evidence (showing $m/$n)",
     class => 'evidence',
+    modal => 1
   };
 }
 
