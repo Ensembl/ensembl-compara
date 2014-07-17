@@ -373,8 +373,8 @@ sub alleles {
       "<pre>$alleles</pre>");
   }
   else {
-    my $allele_title = ($alleles =~ /\//) ? qq{Reference/Alternative$alt_string$alleles_strand"} : qq{$alleles$alleles_strand};
-    $html = qq{<span class="_ht ht" style="font-weight:bold;font-size:1.2em;cursor:default" title="$allele_title">$alleles</span>$ancestor$ambiguity$maf};
+    my $allele_title = ($alleles =~ /\//) ? qq{Reference/Alternative$alt_string alleles $alleles_strand} : qq{$alleles$alleles_strand};
+    $html = qq{<span class="_ht conhelp" style="font-weight:bold;font-size:1.2em" title="$allele_title">$alleles</span>$ancestor$ambiguity$maf};
   }
 
   # Check somatic mutation base matches reference
@@ -567,14 +567,28 @@ sub clinical_significance {
 
   return unless (scalar(@$clin_sign));
 
-  my $img = qq{<img src="/i/16/info.png" class="_ht" style="position:relative;top:2px;width:12px;height:12px;margin-left:2px" title="Click to view the explanation (from the dbSNP website)" />};
-  my $info_link = $hub->get_ExtURL_link($img, "DBSNP_CLIN", '');
+  my $img = qq{<img src="/i/16/info.png" class="_ht" style="position:relative;top:2px;width:12px;height:12px;margin-left:2px" title="Click to view the explanation (from the CliVar website)"/>};
+  my $info_link = $hub->get_ExtURL_link($img, "CLIN_SIG", '');
+
+  my %clin_sign_icon;
+  foreach my $cs (@{$clin_sign}) {
+    my $icon_name = $cs;
+    $icon_name =~ s/ /-/g;
+    $clin_sign_icon{$cs} = $icon_name;
+  }
+
+  my $url = $hub->url({
+    type   => 'Variation',
+    action => 'Phenotype',
+    v      => $object->name,
+    vf     => $hub->param('vf')
+  });
 
   my $cs_content = join("",
     map {
       sprintf(
-        '<img class="_ht" style="margin-right:6px;margin-bottom:-2px;vertical-align:top" src="/i/val/clinsig_%s.png" title="%s" />',
-        $_, $_
+        '<a href="%s"><img class="_ht" style="margin-right:6px;margin-bottom:-2px;vertical-align:top" title="%s" src="/i/val/clinsig_%s.png" /></a>',
+        $url, $_, $clin_sign_icon{$_}
       )
     } @$clin_sign
   );
