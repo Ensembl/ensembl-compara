@@ -160,7 +160,6 @@ div.new-to-ensembl p      { background: url("/i/e-quest.gif") no-repeat scroll l
 div.new-to-ensembl p a    { font-weight: bold; font-size: 108%; }
 div.new-to-ensembl p span { display: block; }
 div.did-you-know          { padding: 16px; }
-div.did-you-know p        { margin: 0; }
 
 /*-----------------------------------------------------------------------
 contact link on help and faq page 
