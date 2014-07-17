@@ -106,15 +106,21 @@ sub content_ajax {
     $include_html,
   );
   
-  my $hint = qq{
-    <div class="multi_selector_hint info">
-      <h3>Tip</h3>
-      <div class="error-pad">
-        <p>Click on the plus and minus buttons to select or deselect options.</p>
-        <p>Selected options can be reordered by dragging them to a different position in the list</p>
+  my $hint = qq(
+    <div class="cloud_flip_hint">
+      <div class="cloud_flip_hint_wrap">
+        <div class="info">
+          <h3>tip</h3>
+          <div class="error_pad">
+            <h1>click to flip</h1>
+            <span class="on">ON</span>
+            <span class="flip_icon"></span>
+            <span class="off">OFF</span>
+          </div>
+        </div>
       </div>
     </div>
-  };
+  );
  
   my $param_mode = $self->{'param_mode'};
   $param_mode ||= 'multi';
