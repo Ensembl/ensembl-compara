@@ -98,7 +98,7 @@ sub content {
     }
     $html = $self->new_table(\@columns, \@rows, { data_table => 'no_col_toggle', exportable => 0, class => 'fixed editable' })->render;
     if ($old_assemblies) {
-      $html .= $self->warning_panel('Possible mapping issue', "$old_assemblies of your files contains data on an old or unknown assembly. You may want to convert your data and re-upload.");
+      $html .= $self->warning_panel('Possible mapping issue', "$old_assemblies of your files contains data on an old or unknown assembly. You may want to convert your data and re-upload, or try an archive site.");
     }
   }
   
