@@ -824,6 +824,7 @@ sub get_compara_Member {
 sub get_GeneTree {
   my $self       = shift;
   my $compara_db = shift || 'compara';
+  my $whole_tree = shift;
   my $clusterset_id = $self->hub->param('clusterset_id') || 'default';
   my $cache_key  = sprintf('_protein_tree_%s_%s', $compara_db, $clusterset_id);
 
@@ -835,6 +836,7 @@ sub get_GeneTree {
         $tree = $adaptor->fetch_default_for_Member($member);
     }
     return unless $tree;
+    return $tree if $whole_tree;
     
     $tree->preload;
     $self->{$cache_key} = $tree->root;
