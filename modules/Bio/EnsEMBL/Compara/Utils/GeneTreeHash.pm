@@ -20,17 +20,92 @@ package Bio::EnsEMBL::Compara::Utils::GeneTreeHash;
 
 use namespace::autoclean;
 use Bio::EnsEMBL::Utils::Scalar qw(check_ref);
+use Bio::EnsEMBL::Utils::Argument qw(rearrange);
 
 sub convert {
-  my ($self, $tree) = @_;
+  my ($self, $tree, @args) = @_;
+
+  my ($no_sequences, $aligned, $cdna, $species_common_name, $exon_boundaries, $gaps) = rearrange([qw(NO_SEQUENCES ALIGNED CDNA SPECIES_COMMON_NAME EXON_BOUNDARIES GAPS)], @args);
+  $species_common_name = 1;
+  $gaps = 1;
+  $exon_boundaries = 1;
+  $no_sequences = 0;
+  $aligned = 1;
+
+  if (defined $no_sequences) {
+      $self->no_sequences($no_sequences);
+  }
+  if (defined $aligned) {
+      $self->aligned($aligned);
+  }
+  if (defined $cdna) {
+      $self->cdna($cdna);
+  }
+  if (defined $species_common_name) {
+      $self->species_common_name($species_common_name);
+  }
+  if (defined $exon_boundaries) {
+      $self->exon_boundaries($exon_boundaries);
+  }
+  if (defined $gaps) {
+      $self->gaps($gaps);
+  }
 
   return $self->_head_node($tree);
+}
+
+sub no_sequences {
+    my ($self, $no_seq) = @_;
+    if (defined ($no_seq)) {
+        $self->{_no_sequences} = $no_seq;
+    }
+    return $self->{_no_sequences};
+}
+
+sub aligned {
+    my ($self, $aligned) = @_;
+    if (defined ($aligned)) {
+        $self->{_aligned} = $aligned;
+    }
+    return $self->{_aligned};
+}
+
+sub cdna {
+    my ($self, $cdna) = @_;
+    if (defined ($cdna)) {
+        $self->{_cdna} = $cdna;
+    }
+    return $self->{_cdna};
+}
+
+sub species_common_name {
+    my ($self, $sp_flag) = @_;
+    if (defined ($sp_flag)) {
+        $self->{_species_common_name} = $sp_flag;
+    }
+    return $self->{_species_common_name};
+}
+
+sub exon_boundaries {
+    my ($self, $exon_boundaries) = @_;
+    if (defined ($exon_boundaries)) {
+        $self->{_exon_boundaries} = $exon_boundaries;
+    }
+    return $self->{_exon_boundaries};
+}
+
+sub gaps {
+    my ($self, $gaps) = @_;
+    if (defined ($gaps)) {
+        $self->{_gaps} = $gaps;
+    }
+    return $self->{_gaps};
 }
 
 sub _head_node {
   my ($self, $tree) = @_;
   my $hash = {
-    type => $self->type(),
+    type => 'gene tree',
     rooted => 1,
   };
 
@@ -68,7 +143,12 @@ sub _convert_node {
 
   $hash->{branch_length} = $node->distance_to_parent() + 0;
   if($tax) {
-    $hash->{taxonomy} = { id => $tax->taxon_id + 0, scientific_name => $tax->node_name };
+      my $taxon = $tax->taxon;
+      $hash->{taxonomy} = { id => $tax->taxon_id + 0,
+                            scientific_name => $tax->node_name,
+                            timetree_mya => $taxon->get_tagvalue('ensembl timetree mya') || 0 + 0,
+                            alias_name => $taxon->ensembl_alias_name
+                          };
   }
   if($boot) {
     $hash->{confidence} = { type => "boostrap", value => $boot + 0 };
@@ -76,16 +156,89 @@ sub _convert_node {
   if($type) { # && $type ~~ [qw/duplication dubious/]) {
     $hash->{events} = { type => $type };
   }
-  
+
+
+  # Gaps -- on members and internal nodes
+  if ($self->gaps) {
+      my $no_gap_blocks = [];
+
+      my $cigar_line = check_ref ($node, 'Bio::EnsEMBL::Compara::GeneTreeMember')
+          ? $node->cigar_line
+              : $node->consensus_cigar_line;
+
+      my @inters = split (/([MmDG])/, $cigar_line);
+      my $ms = 0;
+      my $box_start = 0;
+      my $box_end = 0;
+      while (@inters) {
+          $ms = (shift (@inters) || 1);
+          my $mtype = shift (@inters);
+          $box_end = $box_start + $ms;
+          if ($node->isa ('Bio::EnsEMBL::Compara::GeneTreeMember')) {
+              if ($mtype eq 'M') {
+                  push @$no_gap_blocks, {"start" => $box_start,
+                                         "end" => $box_end,
+                                         "type" => 'low'
+                                        };
+              }
+          } else {
+              if ($mtype eq 'M') {
+                  push @$no_gap_blocks, {"start" => $box_start,
+                                         "end" => $box_end,
+                                         "type" => "high"
+                                        }
+              } elsif ($mtype eq 'm') {
+                  push @$no_gap_blocks, {"start" => $box_start,
+                                         "end" => $box_end,
+                                         "type" => 'low'
+                                        };
+              }
+          }
+
+          $box_start = $box_end;
+      }
+      $hash->{no_gaps} = $no_gap_blocks;
+  }
+
   if(check_ref($node, 'Bio::EnsEMBL::Compara::GeneTreeMember')) {
     my $gene = $node->gene_member();
+
+    # exon boundaries
+    if ($self->exon_boundaries) {
+        my $aligned_sequence_bounded_by_exon = $node->alignment_string('exon_bounded');
+        my @bounded_exons = split ' ', $aligned_sequence_bounded_by_exon;
+        pop @bounded_exons;
+
+        my $aligned_exon_lengths = [ map length ($_), @bounded_exons ];
+
+        my $aligned_exon_positions = [];
+        my $exon_end;
+        for my $exon_length (@$aligned_exon_lengths) {
+            $exon_end += $exon_length;
+            push @$aligned_exon_positions, $exon_end;
+        }
+
+        $hash->{exon_boundaries} = {
+                                    num_exons => scalar @$aligned_exon_positions,
+                                    positions => $aligned_exon_positions
+                                   };
+    }
+
     $hash->{id} = { source => "EnsEMBL", accession => $gene->stable_id() };
 
     my $genome_db = $node->genome_db();
     my $taxid = $genome_db->taxon_id();
+
+    my $taxon = $genome_db->taxon;
     $hash->{taxonomy} = 
-      { id => $taxid + 0, scientific_name => $genome_db->taxon->scientific_name() }
+      { id => $taxid + 0,
+        scientific_name => $taxon->scientific_name(),
+      }
 	if $taxid;
+
+    if ($self->species_common_name) {
+        $hash->{taxonomy}->{common_name} = $genome_db->taxon->ensembl_alias_name;
+    }
 
     $hash->{sequence} = 
       { 
@@ -95,20 +248,18 @@ sub _convert_node {
       };
     $hash->{sequence}->{name} = $node->display_label() if $node->display_label();
 
-    if(! $self->no_sequences()) {
-      my $aligned = $self->aligned();
-      my $mol_seq;
-      if($aligned) {
-        $mol_seq = ($self->cdna()) ? $node->alignment_string('cds') : $node->alignment_string();
-      }
-      else {
-        $mol_seq = ($self->cdna()) ? $node->other_sequence('cds') : $node->sequence();
-      }
-
-      $hash->{sequence}->{mol_seq} = { is_aligned => $aligned + 0, seq => $mol_seq };
+    unless($self->no_sequences()) {
+        my $aligned = $self->aligned();
+        my $mol_seq;
+        if($aligned) {
+            $mol_seq = ($self->cdna()) ? $node->alignment_string('cds') : $node->alignment_string();
+        }
+        else {
+            $mol_seq = ($self->cdna()) ? $node->other_sequence('cds') : $node->sequence();
+        }
+        $hash->{sequence}->{mol_seq} = { is_aligned => $aligned + 0, seq => $mol_seq };
     }
-  }
-
+}
   return $hash;
 }
 
