@@ -23,7 +23,7 @@ use warnings;
 
 use EnsEMBL::Web::Utils::Syslog qw(syslog);
 use Digest::MD5 qw(md5_hex);
-use EnsEMBL::Web::Tools::FileHandler qw(file_get_contents file_put_contents);
+use EnsEMBL::Web::Utils::FileHandler qw(file_get_contents file_put_contents);
 
 sub new {
   my ($proto,$prefix) = @_;

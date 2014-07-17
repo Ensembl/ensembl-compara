@@ -23,7 +23,7 @@ use strict;
 use List::Util qw(first);
 
 use EnsEMBL::Web::Document::HTML::Movie;
-use EnsEMBL::Web::Tools::FileHandler qw(file_get_contents);
+use EnsEMBL::Web::Utils::FileHandler qw(file_get_contents);
 use EnsEMBL::Web::Exceptions;
 
 use base qw( EnsEMBL::Web::Component);
