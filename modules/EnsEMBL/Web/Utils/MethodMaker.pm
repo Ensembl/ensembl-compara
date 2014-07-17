@@ -16,18 +16,18 @@ limitations under the License.
 
 =cut
 
-package EnsEMBL::Web::Tools::MethodMaker;
+package EnsEMBL::Web::Utils::MethodMaker;
 
 ### Module contains helpful methods to dynamically add, copy methods in a class
 
 ### @usage 1
 ### package EnsEMBL::Module
-### use EnsEMBL::Web::Tools::MethodMaker (copy => {'new' => '_new'})
+### use EnsEMBL::Web::Utils::MethodMaker (copy => {'new' => '_new'})
 ### # This makes a copy of 'new' method as '_new'
 
 ### @usage 2
 ### package Example;
-### use EnsEMBL::Web::Tools::MethodMaker qw(copy_method add_method)
+### use EnsEMBL::Web::Utils::MethodMaker qw(copy_method add_method)
 ### # This imports methods 'copy_method' and 'add_method' to the calling package
 
 use strict;

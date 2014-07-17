@@ -1282,14 +1282,13 @@ sub get_archive_object {
   my $id = $self->stable_id;
   my $archive_adaptor = $self->database('core')->get_ArchiveStableIdAdaptor;
   my $archive_object = $archive_adaptor->fetch_by_stable_id($id);
-
- return $archive_object;
+  return $archive_object;
 }
 
 =head2 history
 
  Arg1        : data object
- Description : gets the archive id history tree based around this ID
+ Description : gets the deduplicated archive id history tree based around this ID
  Return type : listref of Bio::EnsEMBL::ArchiveStableId
                As every ArchiveStableId knows about it's successors, this is
                 a linked tree.
@@ -1303,7 +1302,24 @@ sub history {
   return unless $archive_adaptor;
 
   my $history = $archive_adaptor->fetch_history_tree_by_stable_id($self->stable_id);
+
   return $history;
+}
+
+=head2 get_predecessors
+
+ Arg1        : data object
+ Description : gets the complete archive id history tree based around this ID
+ Return type : listref of Bio::EnsEMBL::ArchiveStableId
+
+=cut
+
+sub get_predecessors {
+  my $self = shift;
+  my $archive_adaptor = $self->database('core')->get_ArchiveStableIdAdaptor;
+  my $archive = $archive_adaptor->fetch_by_stable_id($self->stable_id);
+  my $predecessors = $archive_adaptor->fetch_predecessor_history($archive);
+  return $predecessors;
 }
 
 # Calls for GeneRegulationView 
