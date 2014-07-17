@@ -128,10 +128,11 @@ sub process {
       $object->move_to_user(type => 'url', code => $data->{'code'}) if $hub->param('save');
       
       %params = (
-        format => $format->name,
-        type   => 'url',
-        name   => $name,
-        code   => $data->{'code'},
+        format    => $format->name,
+        type      => 'url',
+        name      => $name,
+        assembly  => $assembly_string,
+        code      => $data->{'code'},
       );
     }
   } else {
