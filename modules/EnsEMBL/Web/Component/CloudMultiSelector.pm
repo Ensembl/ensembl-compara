@@ -39,9 +39,7 @@ sub _content_li {
   $class .= "off" unless $on;
   $class .= "heading" if $on>1;
   return qq(
-    <li class="$class" data-key="$key">
-      <span>$content</span>
-    </li>);
+    <li class="$class" data-key="$key">$content</li>);
 }
 
 sub content_ajax {
@@ -133,6 +131,11 @@ sub content_ajax {
             <span class="off">OFF</span>
           </div>
         </div>
+      </div>
+      <div class="cloud_filter">
+        <h2>filter</h2>
+        <input type="text" name="cloud_filter" id="cloud_filter" tabindex="0" class="ftext"/>
+        <a href="#" class="cloud_filter_clear">clear filter</a>
       </div>
     </div>
   );

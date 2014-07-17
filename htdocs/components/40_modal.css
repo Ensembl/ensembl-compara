@@ -192,3 +192,5 @@ body.ie7 #modal_panel .fixed_width .modal_wrapper .panel { margin-left: 229px; }
 .modal_content .cloud_multi_selector_list li.heading { background: none; border: medium none; color: black; font-size: 140%;  }
 .modal_content .cloud_multi_selector_list h4 { display: inline-block; }
 .modal_content .cloud_multi_selector_list ul { display: inline-block; padding-left: 12px; }
+.modal_content .cloud_multi_selector_list li.hidden { display: none; }
+.cloud_filter_clear { font-size: 80%; }
