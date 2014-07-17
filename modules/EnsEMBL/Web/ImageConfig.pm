@@ -749,8 +749,9 @@ sub _add_datahub {
 
     my $menu     = $existing_menu || $self->tree->append_child($self->create_submenu($menu_name, $menu_name, { external => 1, datahub_menu => 1 }));
 
-    my $golden_path = $self->hub->species_defs->get_config($self->species, 'UCSC_GOLDEN_PATH');
-    my $source_list = $hub_info->{'genomes'}{$golden_path} || [];
+    my $assembly = $self->hub->species_defs->get_config($self->species, 'UCSC_GOLDEN_PATH')
+                        || $self->hub->species_defs->get_config($self->species, 'ASSEMBLY_NAME');
+    my $source_list = $hub_info->{'genomes'}{$assembly} || [];
     
     return unless scalar @$source_list;
     
