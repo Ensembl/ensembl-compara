@@ -93,8 +93,12 @@ sub _calc_style {
   } elsif($tl_score == 4) {
     return 'wiggle';
   } elsif($tl_score == 0) {
+    # Explicit: try autosql
+    my $bba = $self->_bigbed_adaptor;
+    return 'colour' if defined $bba->has_column('item_colour');
+    return 'score'  if defined $bba->has_column('score');
     # Implicit: No help from trackline, have to work it out
-    my $line_length = $self->_bigbed_adaptor->file_bedline_length;
+    my $line_length = $bba->file_bedline_length;
     if($line_length >= 8) {
       return 'colour';      
     } elsif($line_length >= 5) {

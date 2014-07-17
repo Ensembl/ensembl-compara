@@ -80,7 +80,7 @@ sub content {
     
     push @data, {
       res    => $snp->{'position'},
-      id     => sprintf('<a href="%s">%s</a>', $hub->url({ type => 'Variation', action => 'Mappings', v => $snp->{'snp_id'}, vf => $snp->{'vdbid'}, vdb => 'variation' }), $snp->{'snp_id'}),
+      id     => sprintf('<a href="%s">%s</a>', $hub->url({ type => 'Variation', action => 'Summary', v => $snp->{'snp_id'}, vf => $snp->{'vdbid'}, vdb => 'variation' }), $snp->{'snp_id'}),
       type   => $type,
       status => $status,
       allele => $allele,

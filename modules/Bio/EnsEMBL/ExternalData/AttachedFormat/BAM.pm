@@ -61,7 +61,7 @@ sub check_data {
     warn "Failed to open BAM index for " . $url unless $index;
 
     if ($@ or !$bam or !$index) {
-        $error = "Unable to open/index remote BAM file: $url<br>Ensembl can only display sorted, indexed BAM files.<br>Please ensure that your web server is accessible to the Ensembl site and that both your .bam and .bai files are present, named consistently, and have the correct file permissions (public readable).";
+        $error = "Unable to open/index remote BAM file: $url<br>Ensembl can only display sorted, indexed BAM files.<br>Please ensure that your web server is accessible to the Ensembl site and both your BAM and index files are present and publicly readable.<br>Your BAM and index files must have the same name, with a .bam extension for the BAM file, and a .bam.bai extension for the index file.";
     }
   }
   return $error;

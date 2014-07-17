@@ -247,7 +247,8 @@ sub render_normal {
     
     foreach (sort { $a->[0] <=> $b->[0] }  map [ $_->start, $_->end, $_ ], @features) {
       my ($s, $e, $f) = @$_;
-      
+
+
       next if $strand_flag eq 'b' && $strand != (($f->can('hstrand') ? $f->hstrand : 1) * $f->strand || -1) || $e < 1 || $s > $length;
       
       my $fgroup_name = $join ? $self->feature_group($f) : $nojoin_id++;
@@ -447,7 +448,7 @@ sub render_normal {
     }
     $y_offset -= $strand * ($self->_max_bump_row * ($h + $gap + $label_h) + 6);
   }
-  if ($cumul_count && $overflow) {
+  if ($cumul_count && $overflow && $overflow > 0) {
     my $default = $depth == $default_depth ? 'by default' : '';
     my $text = "This track is $depth features deep $default - click to show up to $overflow more";
     my $y = $track_height + $fontsize * 2 + 10;

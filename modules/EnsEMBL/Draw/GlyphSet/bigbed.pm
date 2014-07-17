@@ -186,7 +186,8 @@ sub features {
     }
     
     foreach (@$features) {
-      next if defined $_->external_data->{'item_colour'} && $_->external_data->{'item_colour'}[0] =~ /^\d+,\d+,\d+$/;
+      my $colour = $_->external_data->{'item_colour'};
+      next if defined $colour && $colour->[0] =~ /^\d+,\d+,\d+$/;
       $_->external_data->{'item_colour'}[0] = $default_rgb_string;
     }
     

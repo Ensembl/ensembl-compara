@@ -129,7 +129,9 @@ sub filter {
 
 sub parse { 
   my ($self, $data, $format) = @_;
-  $format = 'BED' if $format =~ /BEDGRAPH/i;
+  ## Make sure format is given as uppercase
+  $format = uc($format);
+  $format = 'BED' if $format eq 'BEDGRAPH';
   return 'No data supplied' unless $data;
 
   my $error = $self->check_format($data, $format);
@@ -137,7 +139,6 @@ sub parse {
     return $error;
   }
   else {
-    $format = uc($self->format); 
     my $filter = $self->filter;
 
     ## Some complex formats need extra parsing capabilities
@@ -146,7 +147,7 @@ sub parse {
       bless $self, $sub_package;
     }
     ## Create an empty feature that gives us access to feature info
-    my $feature_class = 'EnsEMBL::Web::Text::Feature::'.uc($format);  
+    my $feature_class = 'EnsEMBL::Web::Text::Feature::'.$format;  
     my $empty = $feature_class->new();
     my $count;
     my $current_max = 0;
@@ -371,7 +372,7 @@ sub _find_nearest {
 
 sub check_format {
   my ($self, $data, $format) = @_;
-  my $feature_class = 'EnsEMBL::Web::Text::Feature::'.uc($format);  
+  my $feature_class = 'EnsEMBL::Web::Text::Feature::'.$format;  
   unless ($format) {
     foreach my $row ( split /\n|\r/, $data ) { 
       next unless $row;

@@ -28,7 +28,8 @@ sub initialize_HTML {
   return $self->initialize_JSON if $self->renderer->{'_modal_dialog_'};
   
   $self->include_navigation(1);
-  
+  $self->add_body_attr('class', 'pop');
+
   # General layout for popup pages
   $self->add_head_elements(qw(
     title      EnsEMBL::Web::Document::Element::Title

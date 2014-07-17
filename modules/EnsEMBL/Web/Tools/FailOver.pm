@@ -156,7 +156,7 @@ sub go {
     $self->endpoint_log($endpoint,"successful = $success",1);
     if($success) {
       if($self->report_life($endpoint)) {
-        $self->endponit_log($endpoint,"still operational");
+        $self->endpoint_log($endpoint,"still operational");
       }
       return $out;
     }

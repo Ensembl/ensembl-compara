@@ -738,14 +738,18 @@ sub load_user_tracks {
 }
 
 sub _add_datahub {
-  my ($self, $menu_name, $url) = @_;
+  my ($self, $menu_name, $url, $is_poor_name, $existing_menu) = @_;
   my $parser   = Bio::EnsEMBL::ExternalData::DataHub::SourceParser->new({ timeout => 10, proxy => $self->hub->species_defs->ENSEMBL_WWW_PROXY });
-  my $menu     = $self->tree->append_child($self->create_submenu($menu_name, $menu_name, { external => 1, datahub_menu => 1 }));
   my $hub_info = $parser->get_hub_info($url); ## Do we have data for this species?
   
   if ($hub_info->{'error'}) {
     warn "!!! COULD NOT CONTACT DATAHUB $url: $hub_info->{'error'}";
   } else {
+    my $shortLabel = $hub_info->{'details'}{'shortLabel'};
+    $menu_name = $shortLabel if $shortLabel and $is_poor_name;
+
+    my $menu     = $existing_menu || $self->tree->append_child($self->create_submenu($menu_name, $menu_name, { external => 1, datahub_menu => 1 }));
+
     my $golden_path = $self->hub->species_defs->get_config($self->species, 'UCSC_GOLDEN_PATH');
     my $source_list = $hub_info->{'genomes'}{$golden_path} || [];
     
@@ -768,6 +772,7 @@ sub _add_datahub {
       }
     }
   }
+  return $menu_name;
 }
 
 sub _add_datahub_node {
@@ -966,12 +971,13 @@ sub load_configured_bam    { shift->load_file_format('bam');    }
 sub load_configured_bigbed { shift->load_file_format('bigbed'); }
 sub load_configured_bigwig { shift->load_file_format('bigwig'); }
 sub load_configured_vcf    { shift->load_file_format('vcf');    }
+sub load_configured_datahubs { shift->load_file_format('datahub') }
 
 sub load_file_format {
   my ($self, $format, $sources) = @_;
   my $function = "_add_${format}_track";
   
-  return unless $self->can($function);
+  return unless ($format eq 'datahub' || $self->can($function));
   
   my $internal = !defined $sources;
      $sources  = $self->sd_call(sprintf 'ENSEMBL_INTERNAL_%s_SOURCES', uc $format) || {} unless defined $sources; # get the internal sources from config
@@ -1000,8 +1006,14 @@ sub load_file_format {
         $self->alphabetise_tracks($menu, $main_menu);
       }
     }
-    
-    $self->$function(key => $source_name, menu => $menu, source => $source, description => $source->{'description'}, internal => $internal, view => $view) if $source;
+    if ($source) {
+      if ($format eq 'datahub') {
+        $self->_add_datahub($source->{'source_name'}, $source->{'url'}, undef, $menu);
+      }
+      else { 
+        $self->$function(key => $source_name, menu => $menu, source => $source, description => $source->{'description'}, internal => $internal, view => $view);
+      }
+    }
   }
 }
 
@@ -1180,7 +1192,7 @@ sub _user_track_settings {
     $strand         = 'r';
     @user_renderers = ('off', 'Off', 'tiling', 'Wiggle plot');
   } else {
-    $strand         = uc($format) eq 'VEP_INPUT' ? 'f' : 'b'; 
+    $strand         = (uc($format) eq 'VEP_INPUT' || uc($format) eq 'VCF') ? 'f' : 'b'; 
     @user_renderers = (@{$self->{'alignment_renderers'}}, 'difference', 'Differences');
   }
   
@@ -1328,26 +1340,20 @@ sub update_from_url {
         }
         
         # We have to create a URL upload entry in the session
-        $session->set_data(
-          type    => 'url',
-          url     => $p,
-          species => $species,
-          code    => $code, 
-          name    => $n,
-          format  => $format,
-          style   => $style,
-        );
-        
+        my $message  = sprintf('Data has been attached to your display from the following URL: %s', encode_entities($p));
+        if (uc $format eq 'DATAHUB') {
+          $message .= " Please go to '<b>Configure this page</b>' to choose which tracks to show (we do not turn on tracks automatically in case they overload our server).";
+        }
         $session->add_data(
           type     => 'message',
           function => '_info',
           code     => 'url_data:' . md5_hex($p),
-          message  => sprintf('Data has been attached to your display from the following URL: %s', encode_entities($p))
+          message  => $message, 
         );
         
         # We then have to create a node in the user_config
         if (uc $format eq 'DATAHUB') {
-          $self->_add_datahub($n, $p);
+          $n = $self->_add_datahub($n, $p,1);
         } else {
           $self->_add_flat_file_track(undef, 'url', "url_$code", $n, 
             sprintf('Data retrieved from an external webserver. This data is attached to the %s, and comes from URL: %s', encode_entities($n), encode_entities($p)),
@@ -1357,6 +1363,15 @@ sub update_from_url {
 
           $self->update_track_renderer("url_$code", $renderer);
         }       
+        $session->set_data(
+          type    => 'url',
+          url     => $p,
+          species => $species,
+          code    => $code,
+          name    => $n,
+          format  => $format,
+          style   => $style,
+        );
       } elsif ($type eq 'das') {
         $p = uri_unescape($p);
 
@@ -3032,8 +3047,9 @@ sub add_phenotypes {
     type => undef,
     description => 'Phenotype annotations on '.(join ", ", map {$_.'s'} keys %{$hashref->{'phenotypes'}{'types'}}),
   }));
-  
+ 
   foreach my $type(keys %{$hashref->{'phenotypes'}{'types'}}) {
+    next unless ref $hashref->{'phenotypes'}{'types'}{$type} eq 'HASH';
     my $pf_sources = $hashref->{'phenotypes'}{'types'}{$type}{'sources'};
     $pf_menu->append($self->create_track('phenotype_'.lc($type), 'Phenotype annotations ('.$type.'s)', {
       %options,
