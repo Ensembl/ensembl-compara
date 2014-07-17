@@ -38,7 +38,7 @@ use IO::String;
 use EnsEMBL::Web::Component::Compara_Alignments;
 use EnsEMBL::Web::Document::Table;
 use EnsEMBL::Web::SeqDumper;
-use Bio::EnsEMBL::Compara::Graph::PhyloXMLWriter;
+use Bio::EnsEMBL::Compara::Graph::GeneTreePhyloXMLWriter;
 use Bio::EnsEMBL::Compara::Graph::OrthoXMLWriter;
 
 use base qw(EnsEMBL::Web::Object);
@@ -375,36 +375,43 @@ sub process {
 sub phyloxml{
   my ($self,$cdb) = @_;
   my $params = $self->params;
-  my $handle          = IO::String->new();
-  my $w = Bio::EnsEMBL::Compara::Graph::PhyloXMLWriter->new(
+
+  my $object = $self->get_object;
+  return $self->string('no data') unless $object->can('get_GeneTree');
+  my $tree = $object->get_GeneTree($cdb, 1);
+
+  my $handle = IO::String->new();
+  my $w = Bio::EnsEMBL::Compara::Graph::GeneTreePhyloXMLWriter->new(
           -SOURCE => $cdb eq 'compara' ? $SiteDefs::ENSEMBL_SITETYPE:'Ensembl Genomes',
           -ALIGNED => $params->{'aligned'},
           -CDNA => $params->{'cdna'},
           -NO_SEQUENCES => $params->{'no_sequences'},
           -HANDLE => $handle
   ); 
-  $self->writexml($cdb, $handle, $w);
+  $self->writexml($tree, $handle, $w);
 }
 
 sub orthoxml{
   my ($self,$cdb) = @_;
   my $params = $self->params;
-  my $handle          = IO::String->new();
+
+  my $object = $self->get_object;
+  return $self->string('no data') unless $object->can('get_GeneTree');
+  my $tree = $object->get_GeneTree($cdb);
+
+  my $handle = IO::String->new();
   my $w = Bio::EnsEMBL::Compara::Graph::OrthoXMLWriter->new(
           -SOURCE => $cdb eq 'compara' ? $SiteDefs::ENSEMBL_SITETYPE:'Ensembl Genomes',
-	    -SOURCE_VERSION => $SiteDefs::SITE_RELEASE_VERSION, 
+	        -SOURCE_VERSION => $SiteDefs::SITE_RELEASE_VERSION, 
           -HANDLE => $handle,
           -POSSIBLE_ORTHOLOGS => $params->{'possible_orthologs'},
   ); 
-  $self->writexml($cdb, $handle, $w);
+  $self->writexml($tree, $handle, $w);
 }
 
 sub writexml{
-  my ($self,$cdb,$handle,$w) = @_;
-  my $hub             = $self->hub;
-  my $object          = $self->get_object;
-  if(! $object->can('get_GeneTree')){return $self->string('no data');}
-  my $tree = $object->get_GeneTree($cdb);
+  my ($self,$tree,$handle,$w) = @_;
+  my $hub = $self->hub;
   $w->write_trees($tree);
   $w->finish();
   my $out = ${$handle->string_ref()};
