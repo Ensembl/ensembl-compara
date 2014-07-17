@@ -25,6 +25,7 @@ no warnings 'uninitialized';
 use Bio::EnsEMBL::ExternalData::DataHub::SourceParser;
 
 use base qw(Bio::EnsEMBL::ExternalData::AttachedFormat);
+use EnsEMBL::Web::Tools::RemoteURL qw(chase_redirects);
 
 sub new {
   my $self = shift->SUPER::new(@_);
@@ -42,6 +43,7 @@ sub check_data {
   my $url  = $self->{'url'};
   my $error;
   
+  $url = chase_redirects($url);
   # try to open and use the datahub file
   # this checks that the datahub files is present and correct
   my $datahub = $self->{'datahub_adaptor'}->get_hub_info($url);
@@ -50,8 +52,8 @@ sub check_data {
     $error  = "<p>Unable to open remote TrackHub file: $url</p>";
     $error .= "<p>$_.</p>" for ref $datahub->{'error'} eq 'ARRAY' ? @{$datahub->{'error'}} : $datahub->{'error'};
   }
-  
-  return ($error, { name => $datahub->{'details'}{'shortLabel'} });
+  my @assemblies = keys %{$datahub->{'genomes'}||{}};
+  return ($error, { name => $datahub->{'details'}{'shortLabel'}, assemblies => \@assemblies});  
 }
 
 sub style {

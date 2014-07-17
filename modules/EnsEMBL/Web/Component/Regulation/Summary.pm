@@ -55,11 +55,11 @@ sub content {
     next if $reg_object->feature_set->cell_type->name =~/MultiCell/;
     $active{$reg_object->feature_set->cell_type->name} = 1 if $reg_object->can('has_evidence') and $reg_object->has_evidence;
   }
+  my $num_active = scalar(grep { $_->feature_set->cell_type->name !~ /MultiCell/ } @$all_objs);
 
   $summary->add_row('Classification',$object->feature_type->name);
   $summary->add_row('Location', $location_html);
-  $summary->add_row('Active in',scalar(keys %active)."/".$object->cell_type_count." <small>(".join(', ',sort keys %active).")</small>");
-  $summary->add_row('Transcripts','TODO');
+  $summary->add_row('Active in',$object->cell_type_count."/$num_active <small>(".join(', ',sort keys %active).")</small>");
 
   return $summary->render;
 }

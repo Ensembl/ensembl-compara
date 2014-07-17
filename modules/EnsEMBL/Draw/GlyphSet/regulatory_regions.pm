@@ -63,6 +63,13 @@ sub features {
   my $external_Feature_adaptor  = $efg_db->get_ExternalFeatureAdaptor;
   my $f = $external_Feature_adaptor->fetch_all_by_Slice_FeatureSets($slice, \@fsets);
 
+  my $priority = $self->my_config('priority');
+  if($priority) {
+    my %p;
+    $p{$priority->[$_]} = @$priority-$_ for(0..$#$priority);
+    $f = [ sort { $p{$b->feature_type->name} <=> $p{$a->feature_type->name} } @$f ]; 
+  }
+
   # count used for colour assignment
   my $count = 0;
   foreach my $feat (@$f){
@@ -91,13 +98,15 @@ sub href {
   return $href;
 }
 
-
-
 sub colour_key {
   my ($self, $f) = @_;
   my $wuc = $self->{'config'}; 
-  my $colour = $wuc->cache($f->display_label); 
-  return $colour;
+
+  my $type = lc $f->feature_type->name;
+  $type =~ s/[^a-z0-9]/_/g;
+  my $colour = $self->my_colour($type,undef,'');
+  return $type if $colour;
+  return $wuc->cache($f->display_label);
 }
 
 

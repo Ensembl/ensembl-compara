@@ -24,6 +24,8 @@ use List::Util qw(min max);
 
 use base qw(EnsEMBL::Web::ZMenu);
 
+use EnsEMBL::Web::Tools::Sanitize qw(strict_clean);
+
 sub content {
   my $self       = shift;
   my $hub        = $self->hub;
@@ -44,9 +46,13 @@ sub content {
   if ($type eq 'bigbed') {
     my %feats    = $glyphset->features; # bigbed returns a stupid data structure
 
-    @features = grep !($_->can('score') && $_->score == 0), map { ref $_->[0] eq 'ARRAY' ? @{$_->[0]} : @$_ } values %feats;
+    @features = map { ref $_->[0] eq 'ARRAY' ? @{$_->[0]} : @$_ } values %feats;
   } else {
     @features = @{$glyphset->features};
+  }
+  my $id = $hub->param('id');
+  if($id && $glyphset->can('feature_id')) {
+    @features = grep { $glyphset->feature_id($_) eq $id } @features;
   }
   
   if (scalar @features > 5) {
@@ -85,7 +91,7 @@ sub feature_content {
   my ($self, $feature, $i) = @_;
   my %extra  = ref $feature ne 'HASH' && $feature->can('extra_data') && ref $feature->extra_data eq 'HASH' ? %{$feature->extra_data} : ();
   my $extra_order;
-  $extra_order = $feature->extra_data_order if $feature->can('extra_data_order');
+  $extra_order = $feature->extra_data_order if ref $feature ne 'HASH' && $feature->can('extra_data_order');
 
   my $start  = $feature->{'start'} + $self->hub->param('click_start') - 1;
   my $end    = $feature->{'end'} + $self->hub->param('click_start') - 1;
@@ -97,7 +103,7 @@ sub feature_content {
   $self->new_feature;
 
   my $caption = '';
-  if(ref($feature) eq 'HASH' or $type eq 'bigbed') {
+  if(ref($feature) eq 'HASH' or !$feature->id) {
     if($single) { $caption = $start; } else { $caption = "$start-$end"; }
   } else {
     $caption = $feature->id;
@@ -121,12 +127,12 @@ sub feature_content {
     { type => 'Score',      label => $feature->{'score'}, name => 'score' },
   );
 
-  if($feature->can('id')) {
+  if(ref $feature ne 'HASH' && $feature->can('id')) {
     push @entries, { type => 'Name', label => $feature->id, name => 'name' };
   }
 
   # Replace fields with name in autosql (only score for now)
-  if($feature->can('real_name')) {
+  if(ref $feature ne 'HASH' && $feature->can('real_name')) {
     foreach my $e (@entries) {
       next unless $e->{'name'};
       my $name = $feature->real_name($e->{'name'});
@@ -134,9 +140,14 @@ sub feature_content {
     }
   }
 
-  push @entries, { type => $self->format_type($feature,$_), label => join(', ', @{$extra{$_}}) } for $self->sorted_extra_keys(\%extra,$extra_order);
+  for($self->sorted_extra_keys(\%extra,$extra_order)) {
+    push @entries, {
+      type => $self->format_type($feature,$_),
+      label_html => join(', ', map { strict_clean ($_) } @{$extra{$_}})
+    };
+  }
   
-  $self->add_entry($_) for grep $_->{'label'}, @entries;
+  $self->add_entry($_) for grep { $_->{'label'} or $_->{'label_html'} } @entries;
 }
 
 sub summary_content {
@@ -157,9 +168,11 @@ sub summary_content {
   $self->caption(sprintf '%s:%s-%s summary', $self->click_location);
   
   $self->add_entry({ type => 'Feature count', label => scalar @$features });
-  $self->add_entry({ type => 'Min score',     label => $min              });
-  $self->add_entry({ type => 'Mean score',    label => $mean / $i        });
-  $self->add_entry({ type => 'Max score',     label => $max              });
+  if($i) {
+    $self->add_entry({ type => 'Min score',  label => $min              });
+    $self->add_entry({ type => 'Mean score', label => $mean / $i        });
+    $self->add_entry({ type => 'Max score',  label => $max              });
+  }
 }
 
 sub format_type {

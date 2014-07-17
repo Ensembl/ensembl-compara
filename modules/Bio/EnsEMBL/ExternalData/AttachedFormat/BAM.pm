@@ -27,6 +27,8 @@ use File::Basename qw(fileparse);
 use File::Spec;
 use File::stat qw(stat);
 
+use EnsEMBL::Web::Tools::RemoteURL qw(chase_redirects);
+
 use base qw(Bio::EnsEMBL::ExternalData::AttachedFormat);
 
 sub check_data {
@@ -34,6 +36,8 @@ sub check_data {
   my $url = $self->{'url'};
   my $error = '';
   require Bio::DB::Sam;
+
+  $url = chase_redirects($url);
 
   if ($url =~ /^ftp:\/\//i && !$self->{'hub'}->species_defs->ALLOW_FTP_BAM) {
     $error = "The bam file could not be added - FTP is not supported, please use HTTP.";

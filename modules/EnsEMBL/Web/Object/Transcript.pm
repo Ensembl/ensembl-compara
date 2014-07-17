@@ -830,6 +830,31 @@ sub munge_gaps_split {
   return @return;
 }
 
+sub read_coverage {
+  my ($self, $sample, $sample_slice) = @_;
+  
+  my $individual_adaptor = $self->Obj->adaptor->db->get_db_adaptor('variation')->get_IndividualAdaptor;
+  my $sample_objs = $individual_adaptor->fetch_all_by_name($sample);
+  return ([], []) unless @$sample_objs;
+  my $sample_obj = $sample_objs->[0];
+  
+  my $rc_adaptor = $self->Obj->adaptor->db->get_db_adaptor('variation')->get_ReadCoverageAdaptor;
+  my $coverage_level = $rc_adaptor->get_coverage_levels;
+  my $coverage_obj = $rc_adaptor->fetch_all_by_Slice_Individual_depth($sample_slice, $sample_obj);
+  return ($coverage_level, $coverage_obj);
+}
+
+sub munge_read_coverage {
+  my ($self, $coverage_obj) = @_;
+  
+  my @filtered_obj =
+    sort { $a->[2]->start <=> $b->[2]->start }
+    map  { $self->munge_gaps_split('tsv_transcript', $_->start, $_->end, $_) }
+    @$coverage_obj;
+  
+  return  \@filtered_obj;
+}
+
 #-- end transcript SNP view ----------------------------------------------
 
 =head2 gene

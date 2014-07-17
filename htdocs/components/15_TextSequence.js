@@ -30,7 +30,6 @@ Ensembl.Panel.TextSequence = Ensembl.Panel.Content.extend({
     this.zmenuId = 1;
     
     this.base();
-    this.initPopups();
     
     if (!Ensembl.browser.ie) {
       $('pre > [title]', this.el).helptip({ track: true });
@@ -66,6 +65,7 @@ Ensembl.Panel.TextSequence = Ensembl.Panel.Content.extend({
   
   sequenceKey: function () {
     $('.adornment',this.el).adorn();
+    this.initPopups();
     if (!$('.sequence_key', this.el).length) {
       var key = Ensembl.EventManager.trigger('getSequenceKey');
       

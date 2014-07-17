@@ -156,15 +156,21 @@ sub draw_features {
     my $min_score;
     my $max_score;
     
-    if (defined $viewLimits) {
-      ($min_score, $max_score) = split ':', $viewLimits;
-    } else {
-      $min_score = $features->[0]{'score'};
-      $max_score = $features->[0]{'score'};
-      
-      foreach my $feature (@$features) {
-        $min_score = min($min_score, $feature->{'score'});
-        $max_score = max($max_score, $feature->{'score'});
+    my $signal_range = $self->my_config('signal_range');
+    if(defined $signal_range) {
+      ($min_score, $max_score) = @$signal_range;
+    }
+    unless(defined $min_score and defined $max_score) {
+      if (defined $viewLimits) {
+        ($min_score, $max_score) = split ':', $viewLimits;
+      } else {
+        $min_score = $features->[0]{'score'};
+        $max_score = $features->[0]{'score'};
+
+        foreach my $feature (@$features) {
+          $min_score = min($min_score, $feature->{'score'});
+          $max_score = max($max_score, $feature->{'score'});
+        }
       }
     }
     

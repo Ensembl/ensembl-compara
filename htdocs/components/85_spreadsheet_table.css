@@ -78,7 +78,7 @@ body.ie6 .dataTables_filter input { height: 20px; }
 .dataTables_export .floating_popup a { display: block; padding: 0 2px 3px }
 
 .col_toggle              { float: left; width: 34%; text-align: center; color: [[PAGE_TEXT]]; }
-.col_toggle .toggle      { cursor: pointer; background-color: [[TINT_BG]]; border: 2px outset [[TINT_BG]]; width: 125px; padding: 1px 5px; margin: auto; }
+.col_toggle .toggle      { cursor: pointer; background-color: [[TINT_BG]]; border: 2px outset [[TINT_BG]]; min-width: 125px; display: inline-block; padding: 1px 5px; margin: auto; }
 .col_toggle.left         { text-align: left; }
 .col_toggle.left .toggle { margin: 0; text-align: center; }
 .col_toggle ul           { border: 1px solid; border-top: 0; margin: 3px 0 0 -8px; padding: 0; display: none; width: auto; min-width: 137px; }
@@ -106,7 +106,7 @@ div.up_arrow   { width: 0; height: 0; border-left: 8px solid transparent; border
 div.down_arrow { width: 0; height: 0; border-left: 8px solid transparent; border-right: 8px solid transparent; border-top:    15px solid red;   }
 div.no_arrow   { width: 15px; height: 15px; background: grey; }
 
-div.score         { -moz-border-radius: 5px; border-radius: 5px; width: 50px; color: white; text-align: center; }
+div.score         { -moz-border-radius: 5px; border-radius: 5px; width: 100%; max-width: 50px; color: white; text-align: center; }
 div.score_good    { background: green;  }
 div.score_ok      { background: orange; }
 div.score_bad     { background: red;    }

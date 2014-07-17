@@ -16,18 +16,32 @@ limitations under the License.
 
 =cut
 
-package EnsEMBL::Web::Document::HTML::Compara::Pecan;
-
-## Provides content for compara documeentation - see /info/docs/compara/analyses.html
+package EnsEMBL::Web::ViewConfig::Regulation;
 
 use strict;
 
-use base qw(EnsEMBL::Web::Document::HTML::Compara);
+use base qw(EnsEMBL::Web::ViewConfig);
 
-sub render {
+sub reg_extra_tabs {
   my $self = shift;
-
-  return $self->format_wga_list('PECAN');
+  my $hub  = $self->hub;
+  
+  return ([
+    'Select cell types',
+    $hub->url('Component', {
+      action   => 'Web',
+      function => 'CellTypeSelector/ajax',
+      time     => time,
+      %{$hub->multi_params}
+    })],[
+    'Select evidence',
+    $hub->url('Component', {
+      action   => 'Web',
+      function => 'EvidenceSelector/ajax',
+      time     => time,
+      %{$hub->multi_params}
+    })],
+  );
 }
 
 1;

@@ -35,10 +35,11 @@ use EnsEMBL::Web::Text::Feature::BED;
 use base qw(EnsEMBL::Draw::GlyphSet::_alignment EnsEMBL::Draw::GlyphSet_wiggle_and_block);
 
 sub my_helplink   { return 'bigbed'; }
+sub feature_id    { $_[1]->id;       }
 sub feature_group { $_[1]->id;       }
 sub feature_label { $_[1]->id;       }
 sub feature_title { return undef;    }
-sub href          { return undef;    }
+sub href          { return $_[0]->_url({ action => 'UserData', id => $_[1]->id, %{$_[2]||{}} }); }
 sub href_bgd      { return $_[0]->_url({ action => 'UserData' }); }
 
 sub bigbed_adaptor {
@@ -167,6 +168,8 @@ sub features {
   # WORK OUT HOW TO CONFIGURE FEATURES FOR RENDERING
   # Explicit: Check if mode is specified on trackline
   my $style = $options->{'style'} || $format->style;
+
+  $config->{'simpleblock_optimise'} = 1; # No joins, etc, no need for composite.
 
   if ($style eq 'score' && !$self->my_config('colour')) {
     $config->{'useScore'}        = 1;

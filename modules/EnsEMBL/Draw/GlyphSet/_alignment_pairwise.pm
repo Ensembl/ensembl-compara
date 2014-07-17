@@ -370,8 +370,8 @@ sub calculate_region {
   my $end2      = $cstart+$gab->reference_slice_end-1;
   
   # Start and end of nonref block (inc off-screen)
-  my $start_nr  = $nonref->dnafrag->start + $nonref->dnafrag_start - 1;
-  my $end_nr    = $nonref->dnafrag->start + $nonref->dnafrag_end   - 1;
+  my $start_nr  = $nonref->dnafrag_start;
+  my $end_nr    = $nonref->dnafrag_end;
   
   # Drawn ref block start/end (ie only on-screen bit)
   my $dstart    = max($start2,$cstart);
@@ -592,19 +592,19 @@ sub render_text {
     my @row = ( 
       $ref->dnafrag->name,
       $db eq 'vega' ? 'Vega' : 'Ensembl', $type,
-      $ref->dnafrag->start + $ref->dnafrag_start - 1,
-      $ref->dnafrag->start + $ref->dnafrag_end   - 1,
+      $ref->dnafrag_start,
+      $ref->dnafrag_end,
       $gab->score,'.','.',
       sprintf("%s:%d-%d",$nonref->dnafrag->name,
-              $nonref->dnafrag->start + $nonref->dnafrag_start - 1,
-              $nonref->dnafrag->start + $nonref->dnafrag_end -1)
-      );
-      if($type eq 'gff') {
-        @row = map { "$header[$_]=$row[$_]" } (0..$#header);
-        $out .= join("; ",@row)."\r\n";
-      } else {
-        $out .= join("\t",@row)."\r\n";
-      }
+              $nonref->dnafrag_start,
+              $nonref->dnafrag_end)
+    );
+    if($type eq 'gff') {
+      @row = map { "$header[$_]=$row[$_]" } (0..$#header);
+      $out .= join("; ",@row)."\r\n";
+    } else {
+      $out .= join("\t",@row)."\r\n";
+    }
   } 
   warn $out;
   return $out; 

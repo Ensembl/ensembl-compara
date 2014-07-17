@@ -183,12 +183,13 @@ sub render_normal {
   my $h               = @_ ? shift : ($self->my_config('height') || 8);
      $h               = $self->{'extras'}{'height'} if $self->{'extras'} && $self->{'extras'}{'height'};
   my $strand_bump     = $self->my_config('strandbump');
+  my $explicit_zero   = (defined $_[0] and !$_[0]); # arg of 0 means 0
   my $depth           = @_ ? shift : ($self->my_config('dep') || 6);
      $depth           = 0 if $strand_bump || $self->my_config('nobump');
   ## User setting overrides everything else
   my $default_depth   = $depth;
   my $user_depth = $self->{'config'}->hub->param($self->type);
-     $depth           = $user_depth if $user_depth;
+     $depth           = $user_depth if $user_depth and !$explicit_zero;
   my $gap             = $h < 2 ? 1 : 2;   
   my $strand          = $self->strand;
   my $strand_flag     = $self->my_config('strand');
@@ -211,13 +212,39 @@ sub render_normal {
   my $label_h         = 0;
   my ($fontname, $fontsize);
   
+  ## NB We need fontsize for the track expansion text, even if there are no labels
+  ($fontname, $fontsize) = $self->get_font_details('outertext');
   if ($self->{'show_labels'}) {
-    ($fontname, $fontsize) = $self->get_font_details('outertext');
     $label_h = [ $self->get_text_width(0, 'X', '', ptsize => $fontsize, font => $fontname) ]->[3];
     $join    = 1; # The no-join thing gets completely mad with labels on.
   }
-  
-  my ($total_count, $cumul_count, $overflow, $track_height);
+
+  if(!$self->{'show_labels'}) { 
+    # Force no bumping if no actual overlap in features
+    # XXX doing a sort is too slow: integrate with main sort below 
+    # Can take about 1-5ms on tracks with a lot of data
+    my %ends;
+    my @features;
+    foreach my $feature_key (@sorted) {
+      my @tmp = @{$features{$feature_key}||[]};
+      if (ref $tmp[0] eq 'ARRAY') {
+        push @features,@{$tmp[0]};
+      } else {
+        push @features,@tmp;
+      }
+    }
+    @features = sort { $a->start <=> $b->start } @features;
+    my $overlap = 0;
+    if(@features) {
+      foreach my $s (1..$#features) {
+        $overlap = 1 if($features[$s-1]->end > $features[$s]->start);
+      }
+    }
+
+    $depth = 0 unless $overlap;
+  }
+
+  my ($track_height,$on_screen,$off_screen) = (0,0,0);
 
   foreach my $feature_key (@sorted) {
     ## Fix for userdata with per-track config
@@ -239,10 +266,6 @@ sub render_normal {
     }
 
     $self->_init_bump(undef, $depth);
-    $total_count = scalar(@features);
-    $cumul_count += $total_count;
-    $overflow += ($total_count - $depth);
-
     my $nojoin_id = 1;
     
     foreach (sort { $a->[0] <=> $b->[0] }  map [ $_->start, $_->end, $_ ], @features) {
@@ -288,8 +311,10 @@ sub render_normal {
     foreach my $i (sort { $id{$a}[0][3] <=> $id{$b}[0][3] || $id{$b}[-1][4] <=> $id{$a}[-1][4] } keys %id) {
       my @feat       = @{$id{$i}};
       my $db_name    = $feat[0][5];
-      my $bump_start = int($pix_per_bp * ($feat[0][0]  < 1       ? 1       : $feat[0][0])) - 1;
-      my $bump_end   = int($pix_per_bp * ($feat[-1][1] > $length ? $length : $feat[-1][1]));
+      my $feat_from  = max(min(map { $_->[0] } @feat),1);
+      my $feat_to    = min(max(map { $_->[1] } @feat),$length);
+      my $bump_start = int($pix_per_bp * $feat_from) - 1;
+      my $bump_end   = int($pix_per_bp * $feat_to);
          $bump_end   = max($bump_end, $bump_start + 1 + [ $self->get_text_width(0, $self->feature_label($feat[0][2], $db_name), '', ptsize => $fontsize, font => $fontname) ]->[2]) if $self->{'show_labels'};
       my $x          = -1e8;
       my $row        = 0;
@@ -299,11 +324,13 @@ sub render_normal {
         
         if ($row > $depth) {
           $features_bumped++;
+          $off_screen++;
           next;
         }
       }
+      $on_screen++;
       
-      if ($config) {
+      if ($config->{'useScore'}) {
         my $score = $feat[0][2]->score || 0;
         
         # implicit_colour means that a colour has been arbitrarily assigned
@@ -331,8 +358,8 @@ sub render_normal {
       };
       
       my $composite;
-      
-      if (scalar @feat == 1) {
+
+      if (scalar @feat == 1 and !$depth and $config->{'simpleblock_optimise'}) {
         $composite = $self;
       } else {
         $composite = $self->Composite({
@@ -416,6 +443,7 @@ sub render_normal {
       }
       
       if ($self->{'show_labels'}) {
+        my $start = $self->{'container'}->start;
         $self->push($self->Text({
           font      => $fontname,
           colour    => $label_colour,
@@ -430,7 +458,8 @@ sub render_normal {
           width     => $position->{'x'} + ($bump_end - $bump_start) / $pix_per_bp,
           height    => $label_h,
           absolutey => 1,
-          href      => $self->href($feat[0][2]),
+          href      => $self->href($feat[0][2],{ fake_click_start => $start + $feat_from, fake_click_end => $start + $feat_to }),
+          class     => 'group', # for click_start/end on labels
         }));
       }
       
@@ -448,11 +477,11 @@ sub render_normal {
     }
     $y_offset -= $strand * ($self->_max_bump_row * ($h + $gap + $label_h) + 6);
   }
-  if ($cumul_count && $overflow && $overflow > 0) {
+  if ($off_screen) {
     my $default = $depth == $default_depth ? 'by default' : '';
-    my $text = "This track is $depth features deep $default - click to show up to $overflow more";
+    my $text = "Showing $on_screen of $off_screen features, due to track being limited to $depth rows $default - click to show more";
     my $y = $track_height + $fontsize * 2 + 10;
-    my $href = $self->_url({'action' => 'ExpandTrack', 'goto' => $self->{'config'}->hub->action, 'count' => $overflow + $depth, 'default' => $default_depth}); 
+    my $href = $self->_url({'action' => 'ExpandTrack', 'goto' => $self->{'config'}->hub->action, 'count' => $on_screen+$off_screen, 'default' => $default_depth}); 
     $self->push($self->Text({
           font      => $fontname,
           colour    => 'black',
@@ -476,7 +505,7 @@ sub render_normal {
     }));
   } 
   
-  $self->_render_hidden_bgd($h) if $features_drawn && $self->my_config('addhiddenbgd') && $self->can('href_bgd');
+  $self->_render_hidden_bgd($h) if $features_drawn && $self->my_config('addhiddenbgd') && $self->can('href_bgd') && !$depth; 
   
   $self->errorTrack(sprintf q{No features from '%s' in this region}, $self->my_config('name')) unless $features_drawn || $self->{'no_empty_track_message'} || $self->{'config'}->get_option('opt_empty_tracks') == 0;
   $self->errorTrack(sprintf(q{%s features from '%s' omitted}, $features_bumped, $self->my_config('name')), undef, $y_offset) if $self->get_parameter('opt_show_bumped') && $features_bumped;
@@ -495,8 +524,8 @@ sub render_ungrouped {
   my $self           = shift;
   my $strand         = $self->strand;
   my $strand_flag    = $self->my_config('strand');
-  my $length         = $self->{'container'}->length;
-  my $pix_per_bp     = $self->scalex;
+    my $length         = $self->{'container'}->length;
+    my $pix_per_bp     = $self->scalex;
   my $draw_cigar     = $self->my_config('force_cigar') eq 'yes' || $pix_per_bp > 0.2;
   my $h              = $self->my_config('height') || 8;
   my $regexp         = $pix_per_bp > 0.1 ? '\dI' : $pix_per_bp > 0.01 ? '\d\dI' : '\d\d\dI';

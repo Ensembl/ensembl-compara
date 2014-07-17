@@ -41,43 +41,50 @@
         el.off('afterAddRemove.filterableDropdown').on('afterAddRemove.filterableDropdown', options.change);
       }
       if (options.refresh) {
-        el.trigger('close');
+        el.trigger('close').find('label').trigger('refresh');
       }
       return;
     }
 
     el.on({
       'focusInput.filterableDropdown': function() {
-        $(this).find('._fd_filter input').trigger('focus');
+        el.find('._fd_filter input').trigger('focus');
       },
       'open.filterableDropdown': function() {
-        if (!$(this).data('filterableDropdown').closed) {
+        if (!el.data('filterableDropdown').closed) {
           return;
         }
-        $(this).data('filterableDropdown').closed = false;
-        $(this).addClass('open').find('._fd_filter input').trigger('focus').trigger('keyup').next().html('&#9650;');
+        el.data('filterableDropdown').closed = false;
+        el.addClass('open').find('._fd_filter').show().find('input').trigger('focus').trigger('keyup').next().html('&#9650;');
         $(document).off('.filterableDropdown').on('mousedown.filterableDropdown', function() {
           el.trigger('close');
         });
       },
       'close.filterableDropdown': function() {
-        var el  = $(this);
         var tag = el.data('filterableDropdown').tag;
+        var inp = el.find('input[type=checkbox]:checked, input[type=radio]:checked');
         el.data('filterableDropdown').closed = true;
-        el.prepend(el.removeClass('open')
-          .find('._fd_filter input').trigger('reset').next().html('&#9660;').end().end()
-          .find('._fd_tag').remove().end()
-          .find('input[type=checkbox]:checked').map(function() {
-            return tag.clone().data('input', this).show().find('span').first().html(this.nextSibling.innerHTML).end().end();
-          }).toArray()).trigger('afterAddRemove')
-        ;
+        el.removeClass('open').find('._fd_tag').remove().end().find('._fd_filter input').trigger('reset').next().html('&#9660;').end().end().prepend(inp.map(function() {
+          return tag.clone().data('input', this).show().find('span').first().html(this.nextSibling.innerHTML).end().end();
+        }).toArray()).trigger('afterAddRemove');
+        if (inp.length && inp.prop('type') === 'radio') {
+          el.find('._fd_filter').hide();
+        }
         $(document).off('.filterableDropdown');
+        tag = inp = null;
       },
       'afterAddRemove.filterableDropdown': options.change || $.noop
-    }).on('click', '._fdt_remove', function() {
-      $($(this).parent().data('input')).prop('checked', false);
+    }).on('click', '._fdt_button', function() {
+      var inp = $($(this).parent().data('input'));
       $(this.parentNode).remove();
-      el.trigger('afterAddRemove');
+      if (inp.prop('type') === 'checkbox') {
+        inp.prop('checked', false);
+        labels.trigger('refresh');
+        el.trigger('afterAddRemove');
+      } else {
+        el.trigger('open');
+      }
+      inp = null;
     }).children().on({
       'mousedown.filterableDropdown': function(e) {
         e.stopPropagation(); // prevent closing if the dropdown if clicked inside the dropdown
@@ -86,20 +93,27 @@
       'keydown.filterableDropdown': function(e) {
         e.preventDefault(); // prevent the submission of form when pressed enter on the checkboxes
       },
-      'click.filterableDropdown': function(e, enterKey) {
-        var onlyOneOption = el.find('input[type=' + this.type + ']:visible').length === 1;
-        el.trigger(onlyOneOption ? 'close' : 'focusInput');
-        if (onlyOneOption && enterKey) {
-          el.trigger('open');
-        }
+      'click.filterableDropdown': function(e, multiSelect) {
+        labels.trigger('refresh');
+        el.trigger(!multiSelect && !e.metaKey && !e.ctrlKey || this.type === 'radio' ? 'close' : 'focusInput');
       }
     });
 
-    // hover effect for the labels
-    var labels = el.find('label').on('mouseenter.filterableDropdown', function() {
-      labels.removeClass('highlight');
-      $(this).addClass('highlight');
-    });
+    var labels = el.find('label').on({
+      'mouseenter.filterableDropdown': function() {
+        labels.removeClass('highlight');
+        $(this).addClass('highlight');
+      },
+      'refresh.filterableDropdown': function() {
+        $(this).toggleClass('selected', $(this.parentNode).find('input').prop('checked'));
+      },
+      'click.filterableDropdown': function(e) {
+        if (e.metaKey || e.ctrlKey) {
+          e.preventDefault();
+          $(this).parent().find('input').prop('checked', function() { return !this.checked }).triggerHandler('click', true);
+        }
+      }
+    }).trigger('refresh');
 
     el.find('._fd_filter input').on({
       'focus.filterableDropdown': function() {
@@ -142,7 +156,7 @@
         switch (e.which) {
           case 13:
             e.preventDefault();
-            labels.filter('.highlight:visible').parent().find('input').prop('checked', function() { return !this.checked }).triggerHandler('click', true);
+            labels.filter('.highlight:visible').parent().find('input').prop('checked', true).triggerHandler('click', e.metaKey || e.ctrlKey);
           break;
           case 9:
           case 27:

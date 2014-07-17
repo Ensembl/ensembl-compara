@@ -61,7 +61,7 @@ sub _bool {
 sub token {
 
 }
-__PACKAGE__->mk_accessors(qw(species_defs compress drivers exptime URL));
+__PACKAGE__->mk_accessors(qw(species_defs compress get_compressed drivers exptime URL));
 __PACKAGE__->mk_ro_accessors(qw(full_path prefix extension tmp_dir path_pattern URL_root shortname token));
 
 ## new - tmp file constructor
@@ -174,6 +174,10 @@ sub fix_filename {
    ($self->{shortname}) = $filename =~ m!([^/]+)$!;
     $self->{filename}   = $filename;
   }
+  ## Quick hack for export testing
+  if ($self->{full_path} =~ /tmp\/export([\w+])/) {
+    $self->{full_path} =~ s/tmp\/export([\w+])/tmp\/export\/$1/;
+  } 
   
   return $self->{filename};
 }

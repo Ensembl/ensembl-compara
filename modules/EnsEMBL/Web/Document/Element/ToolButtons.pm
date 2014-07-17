@@ -122,7 +122,7 @@ sub init {
       __clear => 1
     })
   });
-  
+ 
   if ($object && $object->can_export) {
     $self->add_entry({
       caption => 'Export data',

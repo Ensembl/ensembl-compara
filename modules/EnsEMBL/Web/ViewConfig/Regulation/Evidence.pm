@@ -16,16 +16,28 @@ limitations under the License.
 
 =cut
 
-package EnsEMBL::Web::Document::HTML::Compara::NCTrees;
+package EnsEMBL::Web::ViewConfig::Regulation::Evidence;
 
 use strict;
 
-use base qw(EnsEMBL::Web::Document::HTML::Compara::GeneTrees);
+use base qw(EnsEMBL::Web::ViewConfig::Regulation);
 
-sub render { 
+sub init {
   my $self = shift;
 
-  return $self->format_gene_tree_stats('NC_TREES');
+  $self->set_defaults({
+    show_bottom_panel => 'yes'
+  });
+  
+  $self->title = 'Cell types';
 }
+
+sub form {
+  my $self = shift;
+
+  $self->add_image_config('reg_summary');
+}
+
+sub extra_tabs { return $_[0]->reg_extra_tabs; }
 
 1;

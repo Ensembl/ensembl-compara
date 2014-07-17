@@ -240,7 +240,7 @@ sub get_sequence_data {
     $_->{'exons'}{0}{'type'} = [ 'exon0' ] for @markup;
   }
   
-  return (\@sequence, \@markup, $seq);
+  return (\@sequence, \@markup);
 }
 
 sub markup_line_numbers {
@@ -317,7 +317,7 @@ sub markup_line_numbers {
 sub initialize {
   my $self   = shift;
   my $hub    = $self->hub;
-  my $object = $self->object;
+  my $object = $self->object || $hub->core_object('transcript');
   
   my $config = { 
     display_width   => $hub->param('display_width') || 60,
@@ -337,7 +337,7 @@ sub initialize {
   
   $self->set_variation_filter($config);
   
-  my ($sequence, $markup, $raw_seq) = $self->get_sequence_data($object, $config);
+  my ($sequence, $markup) = $self->get_sequence_data($object, $config);
   
   $self->markup_exons($sequence, $markup, $config)     if $config->{'exons'};
   $self->markup_codons($sequence, $markup, $config)    if $config->{'codons'};
@@ -346,24 +346,30 @@ sub initialize {
   
   $config->{'v_space'} = "\n" if $config->{'coding_seq'} || $config->{'translation'} || $config->{'rna'};
   
-  return ($sequence, $config, $raw_seq);
+  return ($sequence, $config);
 }
 
 sub content {
   my $self = shift;
-  my ($sequence, $config, $raw_seq) = $self->initialize;
-  
-  my $html  = $self->tool_buttons;
-     $html .= sprintf '<div class="sequence_key">%s</div>', $self->get_key($config);
-     $html .= $self->build_sequence($sequence, $config);
+  my ($sequence, $config) = $self->initialize;
 
-  return $html;
+  return sprintf '<div class="sequence_key">%s</div>%s', $self->get_key($config), $self->build_sequence($sequence, $config);
 }
 
-sub content_rtf {
+sub export_options { return {'action' => 'Transcript'}; }
+
+sub initialize_export {
   my $self = shift;
+  my $hub = $self->hub;
+  ## Set some CGI parameters from the viewconfig
+  ## (because we don't want to have to set them in DataExport)
+  my $vc = $hub->get_viewconfig('Transcript', 'TranscriptSeq');
+  my @params = qw(exons codons coding_seq translation rna snp_display utr hide_long_snps);
+    foreach (@params) {
+    $hub->param($_, $vc->get($_));
+  }
   my ($sequence, $config) = $self->initialize;
-  return $self->export_sequence($sequence, $config);
+  return ($sequence, $config);
 }
 
 1;

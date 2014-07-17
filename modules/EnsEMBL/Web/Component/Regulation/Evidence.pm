@@ -34,10 +34,10 @@ sub content {
   my $context       = $self->hub->param('context') || 200;
   my $object_slice  = $object->get_bound_context_slice($context); 
      $object_slice  = $object_slice->invert if $object_slice->strand < 1;
-  my $evidence_data = $object->get_evidence_data($object_slice);
+  my $cells = $self->shown_cells;
+  my $api_data = $object->get_evidence_data($object_slice,{ cell => $cells});
+  my $evidence_data = $api_data->{'data'};
   
-  return '<p>There is no evidence for this regulatory feature </p>' unless scalar keys %$evidence_data;
-
   my $table = $self->new_table([], [], { data_table => 1, sorting => [ 'cell asc', 'type asc', 'location asc' ]});
   
   $table->add_columns(
@@ -48,8 +48,9 @@ sub content {
   ); 
 
   my @rows;
-  
+
   foreach my $cell_line (sort keys %$evidence_data) {
+    next unless !defined($cells) or scalar(grep { $_ eq $cell_line } @$cells);
     my $core_features     = $evidence_data->{$cell_line}{'core'}{'block_features'};
     my $non_core_features = $evidence_data->{$cell_line}{'non_core'}{'block_features'};
     
@@ -77,7 +78,13 @@ sub content {
   
   $table->add_rows(@rows);
 
-  return $table->render;
+  $self->cell_line_button;
+
+  if(scalar keys %$evidence_data) {
+    return $table->render;
+  } else {
+    return "<p>There is no evidence for this regulatory feature in the selected cell lines</p>";
+  }
 }
 
 sub get_motif_rows {

@@ -57,11 +57,12 @@ sub configure {
     $params->{'value'}  = [ shift @{$params->{'value'}} ] unless $self->_is_multiple;
     $checked_values     = { map { $_ => 1 } @{$params->{'value'}} };
   }
-  if (exists $params->{'selectall'}) {
+  if ($params->{'selectall'}) {
     $self->add_option({
       'value'         => 'select_all',
       'class'         => $self->SELECT_DESELECT_JS_CLASS,
-      'caption'       => {'inner_HTML' => $self->SELECT_DESELECT_CAPTION}
+      'caption'       => {'inner_HTML' => $self->SELECT_DESELECT_CAPTION},
+      'checked'       => $params->{'selectall'} eq 'on',
     });
     $self->set_attribute('class', $self->SELECT_DESELECT_JS_CLASS);
   }

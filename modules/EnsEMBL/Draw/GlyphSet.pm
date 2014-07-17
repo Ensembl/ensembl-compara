@@ -100,6 +100,7 @@ sub dbadaptor          { shift; return Bio::EnsEMBL::Registry->get_DBAdaptor(@_)
 sub error              { my $self = shift; $self->{'error'} = @_ if @_; return $self->{'error'};                                                                 }
 sub error_track_name   { return $_[0]->my_config('caption');                                                                                                     }
 sub my_label           { return $_[0]->my_config('caption');                                                                                                     }
+sub my_label_caption   { return $_[0]->my_config('labelcaption');                                                                                                }
 sub depth              { return $_[0]->my_config('depth');                                                                                                       }
 sub get_colour         { my $self = shift; return $self->my_colour($self->colour_key(shift), @_);                                                                }
 sub _url               { my $self = shift; return $self->{'config'}->hub->url('ZMenu', { %{$_[0]}, config => $self->{'config'}{'type'}, track => $self->type }); }
@@ -689,7 +690,7 @@ sub sort_features_by_priority {
   my $prioritize = 0;
   
   while (my ($k, $v) = each (%features)) {
-    if ($v && @$v > 1 && $v->[1]{'priority'}) {
+    if ($v && @$v > 1 && ref($v->[1]) eq 'HASH' && $v->[1]{'priority'}) {
       $prioritize = 1;
       last;
     }
@@ -702,8 +703,12 @@ sub sort_features_by_priority {
 
 sub no_features {
   my $self  = shift;
-  my $label = $self->my_label;
-  $self->errorTrack("No $label in this region") if $label && $self->{'config'}->get_option('opt_empty_tracks') == 1;
+  my $label;
+  if($self->can('my_empty_label')) {
+    $label = $self->my_empty_label;
+  }
+  $label ||= $self->my_label;
+  $self->errorTrack($label) if $label && $self->{'config'}->get_option('opt_empty_tracks') == 1;
 }
 
 sub too_many_features {
@@ -712,6 +717,10 @@ sub too_many_features {
   $self->errorTrack("Too many $label in this region - please zoom in or select a histogram style");
 }
 
+sub no_track_on_strand {
+  my $self = shift;
+  return $self->errorTrack(sprintf 'No %s on %s strand in this region', $self->error_track_name, $self->strand == 1 ? 'forward' : 'reverse');
+}
 
 sub errorTrack {
   my ($self, $message, $x, $y) = @_;
@@ -836,5 +845,7 @@ sub bump_sorted_row {
 
   return 1e9; # If we get to this point we can't draw the feature so return a very large number!
 }
+
+sub max_label_rows { return $_[0]->my_config('max_label_rows') || 1; }
 
 1;

@@ -16,16 +16,28 @@ limitations under the License.
 
 =cut
 
-package EnsEMBL::Web::Document::HTML::Compara::EPO;
+package EnsEMBL::Web::Component::Regulation::Buttons;
 
 use strict;
 
-use base qw(EnsEMBL::Web::Document::HTML::Compara);
+use base qw(EnsEMBL::Web::Component::Regulation);
 
-sub render { 
+sub _init {
   my $self = shift;
+  $self->cacheable(0);
+  $self->ajaxable(1);
+  $self->has_image(0);
+}
 
-  return $self->format_wga_list('EPO');
+sub content {
+  my $self         = shift;
+
+  $self->cell_line_button;
+  $self->evidence_button;
+  $self->renderer_button;
+  $self->advanced_button;
+
+  return '';
 }
 
 1;

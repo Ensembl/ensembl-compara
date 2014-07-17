@@ -167,7 +167,7 @@ sub menus {
     
     # Transcripts/Genes
     gene_transcript     => 'Genes and transcripts',
-    transcript          => [ 'Genes',                  'gene_transcript' ],
+    transcript          => [ 'Genes',                  'gene_transcript' ],    
     prediction          => [ 'Prediction transcripts', 'gene_transcript' ],
     lrg                 => [ 'LRG transcripts',        'gene_transcript' ],
     rnaseq              => [ 'RNASeq models',          'gene_transcript' ],
@@ -431,10 +431,9 @@ sub remove_disabled_menus {
 sub create_menus {
   my $self = shift;
   my $tree = $self->tree;
-  
+
   foreach (@_) {
-    my $menu = $self->menus->{$_};
-    
+    my $menu = $self->menus->{$_};   
     if (ref $menu) {
       my $parent = $tree->get_node($menu->[1]) || $tree->append_child($self->create_submenu($menu->[1], $self->menus->{$menu->[1]}));
       $parent->append_child($self->create_submenu($_, $menu->[0]));
@@ -858,10 +857,12 @@ sub _add_datahub_tracks {
       colour      => exists $track->{'color'} ? $track->{'color'} : undef,
       no_titles   => $type eq 'BIGWIG', # To improve browser speed don't display a zmenu for bigwigs
       squish      => $squish,
+      signal_range => $track->{'signal_range'},
       %options
     };
     
     # Graph range - Track Hub default is 0-127
+
     if (exists $track->{'viewLimits'}) {
       $source->{'viewLimits'} = $track->{'viewLimits'};
     } elsif ($track->{'autoScale'} eq 'off') {
@@ -875,11 +876,12 @@ sub _add_datahub_tracks {
     }
     
     if ($matrix) {
-      # Should really be shortLabel, but Encode is much better using longLabel (duplicate names using shortLabel)
-      # The problem is that UCSC browser has a grouped set of tracks with a header above them. This
-      # means the short label can be very non specific, because the header gives context of what type of
-      # track it is. For Ensembl we need to have all the information in the track name / caption
+      my $caption = $track->{'shortLabel'};
+      if($parent->data->{'shortLabel'}) {
+        $caption .= " (\t>".$parent->data->{'shortLabel'}.")";
+      }
       ($source->{'source_name'} = $track->{'longLabel'}) =~ s/_/ /g;
+      $source->{'labelcaption'} = $caption;
      
       $source->{'matrix'} = {
         menu   => $options{'submenu_key'},
@@ -918,6 +920,7 @@ sub _add_datahub_extras_options {
   }
   
   $args{'options'}{'viewLimits'} = $args{'menu'}{'viewLimits'} || $args{'source'}{'viewLimits'} if exists $args{'menu'}{'viewLimits'} || exists $args{'source'}{'viewLimits'};
+  $args{'options'}{'signal_range'} = $args{'source'}{'signal_range'} if exists $args{'source'}{'signal_range'};
   $args{'options'}{'no_titles'}  = $args{'menu'}{'no_titles'}  || $args{'source'}{'no_titles'}  if exists $args{'menu'}{'no_titles'}  || exists $args{'source'}{'no_titles'};
   $args{'options'}{'set'}        = $args{'source'}{'submenu_key'};
   $args{'options'}{'subset'}     = $self->tree->clean_id($args{'source'}{'submenu_key'}, '\W') unless $args{'source'}{'matrix'};
@@ -1057,6 +1060,7 @@ sub _add_bigbed_track {
     colourset    => 'feature',
     style        => $args{'source'}{'style'},
     addhiddenbgd => 1,
+    max_label_rows => 2,
   };
 
   if ($args{'view'} && $args{'view'} =~ /peaks/i) {
@@ -1088,6 +1092,7 @@ sub _add_bigwig_track {
     sub_type     => 'bigwig',
     colour       => $args{'menu'}{'colour'} || $args{'source'}{'colour'} || 'red',
     addhiddenbgd => 1,
+    max_label_rows => 2,
   };
   
   $self->_add_file_format_track(
@@ -1178,6 +1183,7 @@ sub _add_file_format_track {
     renderers   => $args{'renderers'},
     name        => $args{'source'}{'source_name'},
     caption     => exists($args{'source'}{'caption'}) ? $args{'source'}{'caption'} : $args{'source'}{'source_name'},
+    labelcaption => $args{'source'}{'labelcaption'},
     url         => $url || $args{'source'}{'source_url'},
     description => $desc,
     %{$args{'options'}}
@@ -1581,9 +1587,9 @@ sub load_tracks {
     ],
     variation => [
       'add_sequence_variations',          # Add to variation_feature tree
+      'add_phenotypes',                   # Add to variation_feature tree
       'add_structural_variations',        # Add to variation_feature tree
       'add_copy_number_variant_probes',   # Add to variation_feature tree
-      'add_phenotypes',                   # Add to variation_feature tree
       'add_recombination',                # Moves recombination menu to the end of the variation_feature tree
       'add_somatic_mutations',            # Add to somatic tree
       'add_somatic_structural_variations' # Add to somatic tree
@@ -1850,6 +1856,7 @@ sub add_matrix {
       display   => $_->{'on'} ? 'on' : 'off',
       renderers => [qw(on on off off)],
       caption   => "$column - $_->{'row'}",
+      group => $_->{'group'},
     }));
     
     $menu_data->{'matrix'}{'rows'}{$_->{'row'}} ||= { id => $_->{'row'}, group => $_->{'group'}, group_order => $_->{'group_order'}, column_order => $_->{'column_order'}, column => $column };
@@ -1908,7 +1915,7 @@ sub add_das_tracks {
 # add_dna_align_features
 # loop through all core databases - and attach the dna align
 # features from the dna_align_feature tables...
-# these are added to one of four menus: cdna/mrna, est, rna, other
+# these are added to one of five menus: transcript, cdna/mrna, est, rna, other
 # depending whats in the web_data column in the database
 sub add_dna_align_features {
   my ($self, $key, $hashref) = @_;
@@ -2015,6 +2022,7 @@ sub add_genes {
 
   my ($keys, $data) = $self->_merge($hashref->{'gene'}, 'gene');
   my $colours       = $self->species_defs->colour('gene');
+  
   my $flag          = 0;
 
   my $renderers = [
@@ -2028,9 +2036,7 @@ sub add_genes {
           'transcript_label_coding', 'Coding transcripts only (in coding genes)',          
         ];
         
-  push($renderers, 'transcript_gencode_basic','GENCODE basic'); # if($species eq "Homo_sapiens" || $species eq "Mus_musculus");  #only human and mouse have this renderer enable for now
-     
-  foreach my $type (@{$self->{'transcript_types'}}) {  
+  foreach my $type (@{$self->{'transcript_types'}}) {
     my $menu = $self->get_node($type);
     next unless $menu;
 
@@ -2044,13 +2050,14 @@ sub add_genes {
         }
       }
 
-      my $menu = $self->get_node($t);
-      
+      my $menu = $self->get_node($t);      
       next unless $menu;
+
       $self->generic_add($menu, $key, "${t}_${key}_$key2", $data->{$key2}, {
         glyphset  => ($t =~ /_/ ? '' : '_') . $type, # QUICK HACK
         colours   => $colours,
         strand    => $t eq 'gene' ? 'r' : 'b',
+        label_key => '[biotype]',
         renderers => $t eq 'transcript' ? $renderers : $t eq 'rnaseq' ? [
          'off',                'Off',
          'transcript_nolabel', 'Expanded without labels',
@@ -2063,8 +2070,8 @@ sub add_genes {
       });
       $flag = 1;
     }
-  }
-
+  }   
+  
   # Need to add the gene menu track here
   $self->add_track('information', 'gene_legend', 'Gene Legend', 'gene_legend', { strand => 'r' }) if $flag;
 }
@@ -2617,6 +2624,7 @@ sub add_regulation_features {
       colourset   => $fg_data{$key_2}{'colourset'} || $type,
       display     => $fg_data{$key_2}{'display'}   || 'off', 
       description => $fg_data{$key_2}{'description'},
+      priority    => $fg_data{$key_2}{'priority'},
       logic_name  => $fg_data{$key_2}{'logic_names'}[0],
       renderers   => \@renderers, 
     }));
@@ -2877,7 +2885,7 @@ sub add_sequence_variations {
     renderers  => [ 'off', 'Off', 'normal', 'Normal (collapsed for windows over 200kb)', 'compact', 'Collapsed', 'labels', 'Expanded with name (hidden for windows over 10kb)', 'nolabels', 'Expanded without name' ],
   };
   
-  if (defined($hashref->{'menu'}) && scalar @{$hashref->{'menu'}} && grep {$_->{key} =~ /dbsnp/i} @{$hashref->{menu}}) {
+  if (defined($hashref->{'menu'}) && scalar @{$hashref->{'menu'}}) {
     $self->add_sequence_variations_meta($key, $hashref, $options);
   } else {
     $self->add_sequence_variations_default($key, $hashref, $options);
@@ -2891,12 +2899,12 @@ sub add_sequence_variations_meta {
   my ($self, $key, $hashref, $options) = @_;
   my $menu = $self->get_node('variation');
   
-  foreach my $menu_item(sort {$a->{type} cmp $b->{type} || $a->{parent} cmp $b->{parent}} @{$hashref->{'menu'}}) {
+  foreach my $menu_item (sort {$a->{type} cmp $b->{type} || $a->{parent} cmp $b->{parent}} @{$hashref->{'menu'}}) {
     next if $menu_item->{'type'} =~  /^sv_/; # exclude structural variant items
     
     my $node;
     
-    if ($menu_item->{'type'} eq 'menu') { # just a named submenu
+    if ($menu_item->{'type'} eq 'menu' || $menu_item->{'type'} eq 'menu_sub') { # just a named submenu
       $node = $self->create_submenu($menu_item->{'key'}, $menu_item->{'long_name'});
     } elsif ($menu_item->{'type'} eq 'source') { # source type
       (my $temp_name     = $menu_item->{'long_name'}) =~ s/ variants$//;
@@ -2913,8 +2921,6 @@ sub add_sequence_variations_meta {
       (my $caption   = $menu_item->{'long_name'}) =~ s/1000 Genomes/1KG/;  # shorten name for side of image
       (my $set_name  = $menu_item->{'long_name'}) =~ s/All HapMap/HapMap/; # hack for HapMap set name - remove once variation team fix data for 68
       
-      next if $set_name =~ /HapMap.+/;
-      
       $node = $self->create_track($menu_item->{'key'}, $menu_item->{'long_name'}, {
         %$options,
         caption     => $caption,
@@ -2926,28 +2932,31 @@ sub add_sequence_variations_meta {
     }
     
     # get the node onto which we're going to add this item, then append it
-    ($self->get_node($menu_item->{'parent'}) || $menu)->append($node) if $node;
+    if ($menu_item->{'long_name'} =~ /^all/i || $menu_item->{'long_name'} =~ /^sequence variants/i) {
+      ($self->get_node($menu_item->{'parent'}) || $menu)->prepend($node) if $node;
+    }
+    else {
+      ($self->get_node($menu_item->{'parent'}) || $menu)->append($node) if $node;
+    }
   }
 }
 
 # adds variation tracks the old, hacky way
 sub add_sequence_variations_default {
   my ($self, $key, $hashref, $options) = @_;
-  my $menu               = $self->get_node('variation');
-  my $sequence_variation = $self->create_submenu('sequence_variations', 'Sequence variants');
+  my $menu = $self->get_node('variation');
+  my $sequence_variation = ($menu->get_node('variants')) ? $menu->get_node('variants') : $self->create_submenu('variants', 'Sequence variants');
 
-  # XXX: This is a hack until Laurent gets meta information into the
-  #        private variation database. It should be there for e76, at
-  #        which point this code should never by called in that context.
-  my $title = 'Sequence variants (all sources)';
-  $title = 'Sequence variants (DECIPHER/LOVD)' if $key eq 'variation_private';
+  if (!$menu->get_node('variants')) {
+    my $title = 'Sequence variants (all sources)';
 
-  $sequence_variation->append($self->create_track("variation_feature_$key", $title, {
-    %$options,
-    sources     => undef,
-    description => 'Sequence variants from all sources',
-  }));
-  
+    $sequence_variation->append($self->create_track("variation_feature_$key", $title, {
+      %$options,
+      sources     => undef,
+      description => 'Sequence variants from all sources',
+    }));
+  }
+
   foreach my $key_2 (sort keys %{$hashref->{'source'}{'counts'} || {}}) {
     next unless $hashref->{'source'}{'counts'}{$key_2} > 0;
     next if     $hashref->{'source'}{'somatic'}{$key_2} == 1;
@@ -2960,10 +2969,10 @@ sub add_sequence_variations_default {
     }));
   }
   
-  $menu->append($sequence_variation);
+  $menu->append($sequence_variation) if (!$menu->get_node('variants'));
 
   # add in variation sets
-  if ($hashref->{'variation_set'}{'rows'} > 0) {
+  if ($hashref->{'variation_set'}{'rows'} > 0 ) {
     my $variation_sets = $self->create_submenu('variation_sets', 'Variation sets');
     
     $menu->append($variation_sets);
@@ -3048,7 +3057,7 @@ sub add_phenotypes {
     description => 'Phenotype annotations on '.(join ", ", map {$_.'s'} keys %{$hashref->{'phenotypes'}{'types'}}),
   }));
  
-  foreach my $type(keys %{$hashref->{'phenotypes'}{'types'}}) {
+  foreach my $type( sort {$a cmp $b} keys %{$hashref->{'phenotypes'}{'types'}}) {
     next unless ref $hashref->{'phenotypes'}{'types'}{$type} eq 'HASH';
     my $pf_sources = $hashref->{'phenotypes'}{'types'}{$type}{'sources'};
     $pf_menu->append($self->create_track('phenotype_'.lc($type), 'Phenotype annotations ('.$type.'s)', {
@@ -3085,21 +3094,21 @@ sub add_structural_variations {
   );
   
   # Complete overlap (Larger structural variants)
-  $structural_variants->append($self->create_track('variation_feature_structural_larger', 'Larger structural variants (all sources)', {   
+  $structural_variants->prepend($self->create_track('variation_feature_structural_larger', 'Larger structural variants (all sources)', { 
     %options,
     db         => 'variation',
     caption     => 'Larger structural variants',
-    sources     => undef,
+    source      => undef,
     description => "Structural variants from all sources which are at least 1Mb in length. $desc",
     min_size    => 1e6,
   }));
   
   # Partial overlap (Smaller structural variants)
-  $structural_variants->append($self->create_track('variation_feature_structural_smaller', 'Smaller structural variants (all sources)', {   
+  $structural_variants->prepend($self->create_track('variation_feature_structural_smaller', 'Smaller structural variants (all sources)', {
     %options,
     db         => 'variation',
     caption     => 'Smaller structural variants',
-    sources     => undef,
+    source      => undef,
     description => "Structural variants from all sources which are less than 1Mb in length. $desc",
     depth       => 10,
     max_size    => 1e6 - 1,
@@ -3107,10 +3116,10 @@ sub add_structural_variations {
   
   foreach my $key_2 (sort keys %{$hashref->{'structural_variation'}{'counts'} || {}}) {    
     ## FIXME - Nasty hack to get variation tracks correctly configured
-    my $db = $key_2 =~ /DECIPHER/ ? 'variation_private' : 'variation';
+    next if ($key_2 =~ /(DECIPHER|LOVD)/);
     $structural_variants->append($self->create_track("variation_feature_structural_$key_2", "$key_2 structural variations", {
       %options,
-      db          => $db,
+      db          => 'variation',
       caption     => $key_2,
       source      => $key_2,
       description => $hashref->{'source'}{'descriptions'}{$key_2},
@@ -3118,19 +3127,21 @@ sub add_structural_variations {
   }
   
   # Structural variation sets and studies
-  foreach my $menu_item (@{$hashref->{'menu'}}) {
+  foreach my $menu_item (sort {$a->{type} cmp $b->{type} || $a->{long_name} cmp $b->{long_name}} @{$hashref->{'menu'} || []}) {
     next if $menu_item->{'type'} !~ /^sv_/;
     
     my $node_name = "$menu_item->{'long_name'} (structural variants)";
-    
+    my $db = 'variation';
+
     if ($menu_item->{'type'} eq 'sv_set') {
       my $temp_name = $menu_item->{'key'};
          $temp_name =~ s/^sv_set_//;
       
       $structural_variants->append($self->create_track($menu_item->{'key'}, $node_name, {
         %options,
+        db          => $db,
         caption     => $node_name,
-        sources     => undef,
+        source      => undef,
         sets        => [ $menu_item->{'long_name'} ],
         set_name    => $menu_item->{'long_name'},
         description => $hashref->{'variation_set'}{'descriptions'}{$temp_name},
@@ -3141,11 +3152,22 @@ sub add_structural_variations {
       
       $structural_variants->append($self->create_track($name, $node_name, {
         %options,
+        db          => $db,
         caption     => $node_name,
-        sources     => undef,
+        source      => undef,
         study       => [ $name ],
         study_name  => $name,
         description => 'DGVa study: '.$hashref->{'structural_variation'}{'study'}{'descriptions'}{$name},
+      }));
+    }
+    elsif ($menu_item->{'type'} eq 'sv_private') { # For DECIPHER and LOVD structural variants
+      my $name = $menu_item->{'key'};
+      $structural_variants->append($self->create_track("variation_feature_structural_$name", "$node_name", {
+        %options,
+        db          => 'variation_private',
+        caption     => "$name structural variants",
+        source      => $name,
+        description => $hashref->{'source'}{'descriptions'}{$name},
       }));  
     }
   }

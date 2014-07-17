@@ -283,11 +283,11 @@ sub otherspecies {
   my $secondary_sp = $species_defs->ENSEMBL_SECONDARY_SPECIES;
   my %synteny      = $species_defs->multi('DATABASE_COMPARA', 'SYNTENY');
 
-  return $primary_sp if  ($synteny{$species}->{$primary_sp});
+  return $primary_sp if  ($synteny{$species}->{$primary_sp} and $primary_sp ne $species);
 
-  return $secondary_sp if  ($synteny{$species}->{$secondary_sp});
+  return $secondary_sp if  ($synteny{$species}->{$secondary_sp} and $secondary_sp ne $species);
 
-  my @has_synteny  = sort keys %{$synteny{$species}};
+  my @has_synteny  = grep { $_ ne $species } sort keys %{$synteny{$species}};
   return $has_synteny[0];
 }
 

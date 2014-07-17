@@ -190,7 +190,7 @@ sub draw_wiggle_plot {
 
   my ($self, $features, $parameters, $colours, $labels) = @_; 
   my $slice         = $self->{'container'};
-  my $row_height    = $self->{'height'} || $self->my_config('height') || 60;
+  my $row_height    = $self->my_config('height') || 60;
   my $max_score     = $parameters->{'max_score'};
   my $min_score     = $parameters->{'min_score'};
   my $axis_style    = $parameters->{'graph_type'} eq 'line' ? 0 : 1;
@@ -204,7 +204,7 @@ sub draw_wiggle_plot {
   my $pix_per_score = $max_score == $min_score ? $self->label->height : $row_height / max($max_score - $min_score, 1);
   my $top_offset    = 0;
   my $initial_offset= $self->_offset;
-  my $bottom_offset = $max_score == $min_score ? 0 : (($max_score - ($min_score < 0 ? $min_score : 0)) || 1) * $pix_per_score;
+  my $bottom_offset = $max_score == $min_score ? 0 : (($max_score - ($min_score > 0 ? $min_score : 0)) || 1) * $pix_per_score;
   my $zero_offset   = $max_score * $pix_per_score;
   
   # Draw the labels
@@ -295,7 +295,7 @@ sub draw_wiggle_plot {
     my $height        = [ $self->get_text_width(0, 1, '', %font) ]->[3];
     my $label_height  = 0;
     $label_height = $self->label->height if($self->label);
-    $bottom_offset = max($bottom_offset, $top_offset + $label_height + (2 * $height));
+    $bottom_offset = max($bottom_offset, $top_offset + $label_height + $height);
     $pix_per_score = $bottom_offset / (($max_score - ($min_score < 0 ? $min_score : 0)) || 1);
     $zero_offset   = $max_score * $pix_per_score;
     
@@ -328,7 +328,7 @@ sub draw_wiggle_plot {
       }));
     }
     
-    $self->{'label_y_offset'} = ($zero_offset - $height)/2;
+    $self->{'label_y_offset'} = $top_offset+($zero_offset/2)-$label_height/2;
   }
   
   # Draw the axis

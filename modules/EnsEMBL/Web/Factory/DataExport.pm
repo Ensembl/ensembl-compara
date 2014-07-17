@@ -16,16 +16,24 @@ limitations under the License.
 
 =cut
 
-package EnsEMBL::Web::Document::HTML::Compara::ProteinTrees;
+package EnsEMBL::Web::Factory::DataExport;
+
+### Factory for the DataExport pages
+
+### STATUS: Stable
+
+### DESCRIPTION - see parent module for general description and usage
 
 use strict;
 
-use base qw(EnsEMBL::Web::Document::HTML::Compara::GeneTrees);
+use base qw(EnsEMBL::Web::Factory);
 
-sub render { 
+sub createObjects {
+### Creates an empty DataExport object - the data to be exported
+### is fetched from the individual components
   my $self = shift;
-
-  return $self->format_gene_tree_stats('PROTEIN_TREES');
+  $self->DataObjects($self->new_object('DataExport', undef, $self->__data));
 }
+
 
 1;

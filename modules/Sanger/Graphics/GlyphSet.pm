@@ -30,6 +30,8 @@ use Sanger::Graphics::Glyph::Text;
 use Sanger::Graphics::Root;
 use Sanger::Graphics::Glyph::Space;
 
+use List::Util qw(max min);
+
 use base qw(Sanger::Graphics::Root);
 
 #########
@@ -244,6 +246,129 @@ sub label_img {
   my ($self, $val) = @_;
   $self->{'label_img'} = $val if(defined $val);
   return $self->{'label_img'};
+}
+
+sub _label_glyphs {
+  my ($self) = @_;
+  my $glyphs = [$self->label];
+  if($self->label->can('glyphs')) {
+    $glyphs = [ $self->{'label'}->glyphs ];
+  }
+  return $glyphs;
+}
+
+sub label_text {
+  my ($self) = @_;
+
+  return join(' ',map { $_->{'text'} } @{$self->_label_glyphs});
+}
+
+# Text wrapping is a job for the human eye. We do the best we can:
+# wrap on word boundaries but don't have <6 trailing characters.
+sub _split_label {
+  my ($self,$text,$width,$font,$ptsize,$chop) = @_;
+
+  for (1..$chop) {
+    $text =~ s/.\t</\t</;
+    $text =~ s/\t>./\t>/;
+  }
+  $text =~ s/\t[<>]//;
+  my $max_rows = $self->max_label_rows;
+  my @words = split(/(?<=[ \-\._])/,$text);
+  while(@words > 1 and length($words[-1]) < 6) {
+    my $tail = pop @words;
+    $words[-1] .= $tail;
+  }
+  my @split;
+  my $line_so_far = '';
+  foreach my $word (@words) {
+    my $candidate_line = $line_so_far.$word;
+    my $replacement_line = $candidate_line;
+    $candidate_line =~ s/^ +//;
+    $candidate_line =~ s/ +$//;
+    my @res = $self->get_text_width(undef, $candidate_line, '', font => $font, ptsize => $ptsize);
+    if(!@split or $res[2] > $width) { # CR
+      if(@split == $max_rows) { # No room!
+        my @res = $self->get_text_width($width, $candidate_line, '', ellipsis => 1, font => $font, ptsize => $ptsize);
+        $split[-1][0] = $res[0];
+        $split[-1][1] = $res[2];
+        return (\@split,$text,1);
+        last;
+      }
+      my @res = $self->get_text_width($width, $word, '', ellipsis => 1, font => $font, ptsize => $ptsize);
+      $line_so_far = $res[0];
+      push @split,[$line_so_far,$res[2]];
+    } else {
+      $line_so_far = $replacement_line;
+      $split[-1][0] = $line_so_far;
+      $split[-1][1] = $res[2];
+    }
+  }
+  return (\@split,$text,0);
+}
+
+sub recast_label {
+  my ($self,$pixperbp,$width,$rows,$text,$font,$ptsize,$colour) = @_;
+
+  my $caption = $self->my_label_caption;
+  $text = $caption if $caption;
+
+  my $n = 0;
+  my ($ov,$text_out);
+  ($rows,$text_out,$ov) = $self->_split_label($text,$width,$font,$ptsize,0);
+  if($ov and $text =~ /\t[<>]/) {
+    $text.="\t<" unless $text =~ /\t[<>]/;
+    $text =~ s/\t>./...\t>/;
+    $text =~ s/.\t</\t<.../;
+    my $ov = 1;
+    my $text_out;
+    my $known_good = length $text;
+    my $known_bad = 0;
+    my $good_rows;
+    foreach my $step ((5,2,1)) {
+      my $n = $known_bad + $step;
+      while($n<$known_good) {
+        ($rows,$text_out,$ov) = $self->_split_label($text,$width,$font,$ptsize,$n);
+        if($ov) { $known_bad = $n; }
+        else    { $known_good = $n; $good_rows = $rows; }
+        $n += $step;
+      }
+    }
+    $rows = $good_rows;
+  }
+
+  my $max_width = max(map { $_->[1] } @$rows);
+
+  my $composite = $self->Composite({
+    halign => 'left',
+    absolutex => 1,
+    absolutewidth => 1,
+    width => $max_width,
+    x => 0,
+    y => 0,
+    class     => $self->label->{'class'},
+    alt       => $self->label->{'alt'},
+    hover     => $self->label->{'hover'},
+  });
+
+  my $y = 0;
+  my $h = $self->my_config('caption_height') || $self->label->{'height'};
+  foreach my $row_data (@$rows) {
+    my ($row_text,$row_width) = @$row_data;
+    my $row = $self->Text({
+      font => $font,
+      ptsize => $ptsize,
+      text => $row_text,
+      height => $h + ($y?0:4),
+      colour    => $colour,
+      y => $y,
+      width => $max_width,
+      halign => 'left',
+    });
+    $composite->push($row);
+    $y += $h + ($y?0:4); # The 4 is to add some extra delimiting margin
+  }
+  $self->label($composite);
 }
 
 sub bumped {

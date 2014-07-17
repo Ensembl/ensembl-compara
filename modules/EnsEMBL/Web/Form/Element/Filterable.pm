@@ -28,9 +28,7 @@ sub configure {
   my ($self, $params) = @_;
 
   $params->{'wrapper_class'}  = [ ref $params->{'wrapper_class'} ? @{$params->{'wrapper_class'}} : $params->{'wrapper_class'} || (), 'filterable-dropdown', '_fd' ];
-  $params->{'force_wrapper'}  = 1;
-
-  $self->{'__multiple'} = delete $params->{'multiple'};
+  $self->{'__multiple'}       = delete $params->{'multiple'};
 
   $self->SUPER::configure($params);
 
@@ -39,14 +37,13 @@ sub configure {
 
   $self->append_child('div', {'class' => 'filterable-dropdown-div', 'children' => [ @{$self->child_nodes}, {
     'node_name'   => 'p',
-    'class'       => '_fd_nomatch hidden ff-checklist',
+    'class'       => '_fd_nomatch filterable-dropdown-nomatch hidden ff-checklist',
     'inner_HTML'  => $params->{'filter_no_match'} || 'No match found'
   } ]});
   $self->prepend_child('p', {
     'class'       => 'filterable-dropdown-filter _fd_filter',
     'children'    => [{
       'node_name'   => 'input',
-      'class'       => 'inactive',
       'type'        => 'text',
       'value'       => $params->{'filter_text'} || 'type in to filter&#8230;'
     }, {
@@ -60,8 +57,8 @@ sub configure {
      $tag_class   = [ split ' ', $tag_class ] unless ref $tag_class;
 
   $self->prepend_child('div', { %$tag_attribs,
-    'class'       => [ @$tag_class, qw(_fd_tag hidden filterable-dropdown-tag), $self->_is_multiple ? 'removable' : () ],
-    'inner_HTML'  => '<span></span><span class="_fdt_remove fdt-icon"></span>'
+    'class'       => [ @$tag_class, qw(_fd_tag hidden filterable-dropdown-tag), $self->_is_multiple ? 'removable' : 'editable' ],
+    'inner_HTML'  => '<span></span><span class="_fdt_button fdt-icon"></span>'
   });
 }
 

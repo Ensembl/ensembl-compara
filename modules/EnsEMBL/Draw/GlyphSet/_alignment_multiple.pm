@@ -223,7 +223,7 @@ sub element_features {
   my $ml = $db->get_adaptor('Method')->_uncached_fetch_by_dbID($mlss_conf->{'METHOD_LINK'});
   my $mlss = Bio::EnsEMBL::Compara::MethodLinkSpeciesSet->new(
     -DBID => $id,
-    -ADAPTOR => $adaptor,
+    -ADAPTOR => $db->get_adaptor('MethodLinkSpeciesSet'),
     -METHOD => $ml,
     -SPECIES_SET_OBJ => $ss
   );

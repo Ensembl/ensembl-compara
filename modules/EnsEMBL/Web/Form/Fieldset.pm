@@ -59,6 +59,17 @@ sub render {
   ## @overrides
   my $self = shift;
 
+  $self->prepare_to_render;
+
+  return $self->SUPER::render;
+}
+
+sub prepare_to_render {
+  ## Does some extra modifications before returning the fieldset for rendering
+  my $self = shift;
+
+  return if $self->{'__prepared_to_render'};
+
   unless ($self->has_flag($self->_FLAG_SKIP_REQUIRED_NOTES)) {
     $_->has_class(EnsEMBL::Web::Form::Element::CSS_CLASS_REQUIRED) and $self->add_notes($self->FOOT_NOTE_REQUIRED) and last for @{$self->inputs};
   }
@@ -88,7 +99,7 @@ sub render {
     }
   }
 
-  return $self->SUPER::render;
+  $self->{'__prepared_to_render'} = 1;
 }
 
 sub configure {

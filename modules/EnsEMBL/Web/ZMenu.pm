@@ -89,7 +89,7 @@ sub new_feature {
   push @{$self->{'features'}}, $self->{'feature'};
 }
 
-sub click_location { return map { $_[0]->hub->param("click_$_") || () } qw(chr start end); }
+sub click_location { return map { $_[0]->hub->param("fake_click_$_") || $_[0]->hub->param("click_$_") || () } qw(chr start end); }
 
 sub click_data {
   my $self  = shift;

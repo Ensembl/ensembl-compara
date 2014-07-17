@@ -21,6 +21,7 @@ package EnsEMBL::Web::Component::MultiSelector;
 use strict;
 
 use HTML::Entities qw(encode_entities);
+use List::MoreUtils qw(uniq);
 
 use base qw(EnsEMBL::Web::Component);
 
@@ -46,40 +47,92 @@ sub content {
   );
 }
 
+sub _content_li {
+  my ($self,$class,$content) = @_;
+  return qq(
+    <li class="$class">
+      <span class="switch"></span>
+      <span>$content</span>
+    </li>);
+}
+
 sub content_ajax {
   my $self         = shift;
   my $hub          = $self->hub;
   my %all          = %{$self->{'all_options'}};       # Set in child content_ajax function - complete list of options in the form { URL param value => display label }
   my %included     = %{$self->{'included_options'}};  # Set in child content_ajax function - List of options currently set in URL in the form { url param value => order } where order is 1, 2, 3 etc.
+  my @all_categories = @{$self->{'categories'}||[]};
+
   my $url          = $self->{'url'} || $hub->url({ function => undef, align => $hub->param('align') }, 1);
   my $extra_inputs = join '', map sprintf('<input type="hidden" name="%s" value="%s" />', encode_entities($_), encode_entities($url->[1]{$_})), sort keys %{$url->[1]};
-  my $include_list = join '', map sprintf('<li class="%s"><span class="switch"></span><span>%s</span></li>', $_, $all{$_}), sort { $included{$a} <=> $included{$b} } keys %included;
-  my $exclude_list = join '', map sprintf('<li class="%s"><span class="switch"></span><span>%s</span></li>', $_, $all{$_}), sort { $all{$a} cmp $all{$b} } grep !$included{$_}, keys %all;
   my $select_by    = join '', map sprintf('<option value="%s">%s</option>', @$_), @{$self->{'select_by'} || []};
      $select_by    = qq{<div class="select_by"><h2>Select by type:</h2><select><option value="">----------------------------------------</option>$select_by</select></div>} if $select_by;
+  my ($exclude_html,$include_html);
+  foreach my $category ((@all_categories,undef)) {
+    # The data
+    my ($include_list,$exclude_list,@all);
+    @all = sort { ($included{$a} <=> $included{$b}) || ($a cmp $b) } keys %all;
+    foreach my $key (@all) {
+      if(defined $category) {
+        my $my_category = ($self->{'category_map'}||{})->{$key};
+        $my_category ||= $self->{'default_category'};
+        if($my_category) {
+          next unless $my_category eq $category;
+        } else {
+          next;
+        }
+      } else {
+        next if $self->{'category_map'}{$key} || $self->{'default_category'};
+      }
+
+      my $fragment = $self->_content_li($key,$all{$key});
+      if($included{$key}) {
+        $include_list .= $fragment;
+      } else {
+        $exclude_list .= $fragment;
+      }
+    }
+
+    # The heading
+    my $include_title = $self->{'included_header'};
+    my $exclude_title = $self->{'excluded_header'};
+    my $category_heading = ($self->{'category_titles'}||{})->{$category} || $category;
+    $category_heading = '' unless defined $category_heading;
+    $exclude_title =~ s/\{category\}/$category_heading/g;
+    $include_title =~ s/\{category\}/$category_heading/g;
+
+    # Do it
+    my $catdata = $category||'';
+    next unless $exclude_list or $include_list or $category;
+    $exclude_html .= qq(
+      <h2>$exclude_title</h2>
+      <ul class="excluded" data-category="$catdata">
+        $exclude_list
+      </ul>
+    );
+    $include_html .= qq(
+      <h2>$include_title</h2>
+      <ul class="included" data-category="$catdata">
+        $include_list
+      </ul>
+    );
+  }
+
   my $content      = sprintf('
     <div class="content">
       <form action="%s" method="get" class="hidden">%s</form>
       <div class="multi_selector_list">
-        <h2>%s</h2>
-        <ul class="included">
-          %s
-        </ul>
+        %s
       </div>
       <div class="multi_selector_list">
-        <h2>%s</h2>
-        <ul class="excluded">
-          %s
-        </ul>
+        %s
       </div>
       <p class="invisible">.</p>
     </div>',
     $url->[0],
     $extra_inputs,
-    $self->{'included_header'}, # Set in child _init function
-    $include_list,
-    $self->{'excluded_header'}, # Set in child _init function
-    $exclude_list,
+    $include_html,
+    $exclude_html,
   );
   
   my $hint = qq{
@@ -91,14 +144,17 @@ sub content_ajax {
       </div>
     </div>
   };
-  
+ 
+  my $param_mode = $self->{'param_mode'};
+  $param_mode ||= 'multi';
+ 
   return $self->jsonify({
     content   => $content,
     panelType => $self->{'panel_type'},
     activeTab => $self->{'rel'},
     wrapper   => qq{<div class="modal_wrapper"><div class="panel"></div></div>},
     nav       => "$select_by$hint",
-    params    => { urlParam => $self->{'url_param'} },
+    params    => { urlParam => $self->{'url_param'}, paramMode => $param_mode },
   });
 }
 

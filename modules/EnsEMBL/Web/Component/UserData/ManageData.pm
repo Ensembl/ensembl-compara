@@ -64,7 +64,12 @@ sub content {
    
     my $old_assemblies = 0; 
     foreach my $file (@data) {
-    $old_assemblies++ if (!$file->{'assembly'} || $file->{'assembly'} ne $hub->species_defs->get_config($file->{'species'}, 'ASSEMBLY_NAME'));
+      my @assemblies = split(', ', $file->{'assembly'});
+      ## check if we have current assemblies
+      $old_assemblies++ if (scalar(@assemblies) < 1); 
+      foreach (@assemblies) {
+        $old_assemblies++ if ($_ ne $hub->species_defs->get_config($file->{'species'}, 'ASSEMBLY_NAME'));
+      }
       my $user_record = ref($file) =~ /Record/;
       my $sharers     = $file->{'code'} =~ /_$session_id$/ ? EnsEMBL::Web::Data::Session->count(code => $file->{'code'}, type => $file->{'type'}) : 0;
          $sharers-- if $sharers && !$file->{'user_id'}; # Take one off for the original user

@@ -31,14 +31,17 @@ use base qw(EnsEMBL::Draw::GlyphSet::sequence);
 
 sub features {
   my $self        = shift;
-  my $seq         = $self->{'container'}->subseq(-2, $self->{'container'}->length + 4);
+  my $slice       = $self->{'container'};
+  my $seq         = $slice->subseq(-2, $slice->length + 4);
+  my $offset      = 3 - $slice->start % 3;
   my $strand      = $self->strand;
-  my $codon_table = ($self->{'container'}->get_all_Attributes('codon_table')->[0] || {})->{'value'};
+  my $codon_table = ($slice->get_all_Attributes('codon_table')->[0] || {})->{'value'};
   my @features;
-  
+
   # We have to create fake features in the features call
-  foreach my $phase (0..2) {
-    my $string = substr $seq, $phase, 3 * int((length($seq) - $phase)/3);
+  for (0..2) {
+    my $phase   = ($offset + $_) % 3;
+    my $string  = substr $seq, $phase, 3 * int((length($seq) - $phase)/3);
     
     if ($strand == -1) { # Reverse complement sequence
        $string = reverse $string;
@@ -58,7 +61,7 @@ sub features {
         -end     => $start +  2,
         -seqname => $_,
         -strand  => $strand,
-        -slice   => $self->{'container'},
+        -slice   => $slice,
       )
     } split //, $string;
   }

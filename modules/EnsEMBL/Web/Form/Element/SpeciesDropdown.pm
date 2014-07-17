@@ -16,18 +16,32 @@ limitations under the License.
 
 =cut
 
-package EnsEMBL::Web::Document::HTML::Compara::EPOlc;
-
-## Provides content for compara documeentation - see /info/docs/compara/analyses.html
+package EnsEMBL::Web::Form::Element::SpeciesDropdown;
 
 use strict;
+use warnings;
 
-use base qw(EnsEMBL::Web::Document::HTML::Compara);
+use EnsEMBL::Web::SpeciesDefs;
 
-sub render {
-  my $self = shift;
+use base qw(EnsEMBL::Web::Form::Element::Filterable);
 
-  return $self->format_wga_list('EPO_LOW_COVERAGE');
+sub configure {
+  ## @overrrides
+  my ($self, $params) = @_;
+
+  my $sd = EnsEMBL::Web::SpeciesDefs->new;
+
+  $self->SUPER::configure($params);
+
+  $self->remove_attribute('class', '_fd');
+  $self->set_attribute('class', '_sdd');
+
+  $self->first_child->set_attributes({
+    'class' => 'species-tag',
+    'style' => {
+      'background-image' => sprintf('url(%sspecies/16/%s.png)', $sd->img_url, $sd->ENSEMBL_PRIMARY_SPECIES)
+    }
+  });
 }
 
 1;

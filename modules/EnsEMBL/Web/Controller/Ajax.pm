@@ -21,8 +21,9 @@ package EnsEMBL::Web::Controller::Ajax;
 use strict;
 
 use Apache2::RequestUtil;
-use HTML::Entities qw(decode_entities);
-use JSON           qw(from_json);
+use HTML::Entities  qw(decode_entities);
+use JSON            qw(from_json);
+use List::MoreUtils qw(firstidx);
 
 use EnsEMBL::Web::DBSQL::WebsiteAdaptor;
 use EnsEMBL::Web::Hub;
@@ -101,6 +102,80 @@ sub multi_species {
     $session->purge_data(%args);
     $session->set_data(%args, %data) if scalar grep $_ !~ /(type|code)/, keys %data;
   }
+}
+
+sub cell_type {
+  my ($self,$hub) = @_;
+  my $cell = $hub->param('cell');
+
+  my $image_config = $hub->get_imageconfig('regulation_view');
+  my %cell = map { $image_config->tree->clean_id($_) => 1 } split(/,/,$hub->param('cell'));
+  foreach my $type (qw(reg_features seg_features reg_feats_core reg_feats_non_core)) {
+    my $menu = $image_config->get_node($type);
+    next unless $menu;
+    foreach my $node (@{$menu->child_nodes}) {
+      my $cell = $node->id;
+      unless($cell =~ s/^${type}_//) {
+        $cell =~ s/^(reg_feats_|seg_)//;
+      }
+      my $renderer = $cell{$cell} ? 'normal' : 'off';
+      $image_config->update_track_renderer($node->id,$renderer);
+    }
+  }
+  $hub->session->store;
+}
+
+sub evidence {
+  my ($self,$hub) = @_;
+  my $evidence = $hub->param('evidence');
+
+  my %evidence = map { $_ => 1 } split(/,/,$hub->param('evidence'));
+  my $image_config = $hub->get_imageconfig('regulation_view');
+  foreach my $type (qw(reg_feats_core reg_feats_non_core)) {
+    my $menu = $image_config->get_node($type);
+    next unless $menu;
+    foreach my $node (@{$menu->child_nodes}) {
+      my $ev = $node->id;
+      my $cell = $node->id;
+      $cell =~ s/^${type}_//;
+      foreach my $node2 (@{$node->child_nodes}) {
+        my $ev = $node2->id;
+        $ev =~ s/^${type}_${cell}_//;
+        my $renderer = $evidence{$ev} ? 'on' : 'off';
+        $image_config->update_track_renderer($node2->id,$renderer);
+      }
+    }
+  }
+  $hub->session->store;
+}
+
+sub reg_renderer {
+  my ($self,$hub) = @_;
+
+  my $renderer = $hub->input->url_param('renderer');
+  my $state = $hub->param('state');
+
+  my $mask = firstidx { $renderer eq $_ } qw(x peaks signals);
+  my $image_config = $hub->get_imageconfig('regulation_view');
+  foreach my $type (qw(reg_features seg_features reg_feats_core reg_feats_non_core)) {
+    my $menu = $image_config->get_node($type);
+    next unless $menu;
+    foreach my $node (@{$menu->child_nodes}) {
+      my $old = $node->get('display');
+      my $renderer = firstidx { $old eq $_ }
+        qw(off compact tiling tiling_feature);
+      next if !$renderer;
+      $renderer |= $mask if $state;
+      $renderer &=~ $mask unless $state;
+      $renderer = 1 unless $renderer;
+      $renderer = [ qw(off compact tiling tiling_feature) ]->[$renderer];
+      $image_config->update_track_renderer($node->id,$renderer);
+    }
+  }
+  $hub->session->store;
+  print $self->jsonify({
+    reload_panels => ['FeaturesByCellLine'],
+  });
 }
 
 sub nav_config {

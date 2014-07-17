@@ -35,17 +35,21 @@ sub _init {
   $self->{'legend'}{[split '::', ref $self]->[-1]} = {};
   return unless $features;
 
-
   $self->init_legend(3);
-  my (%sections,%headings,%priorities);
+  my (%sections,%headings,%priorities, @legend_check);
   
   foreach my $type (sort { $features->{$a}{'priority'} <=> $features->{$b}{'priority'} } keys %$features) {
     my $join    = $type eq 'joins';
     my @colours = $join ? map { $_, $features->{$type}{'legend'}{$_} } sort keys %{$features->{$type}{'legend'}} : @{$features->{$type}{'legend'}};
   
     $self->newline(1);
-    
+
     while (my ($legend, $colour) = splice @colours, 0, 2) {
+      
+      #making sure not duplicating legend (issue arised with gencode basic track)
+      next if(grep(/^$legend$/, @legend_check));
+      push (\@legend_check, $legend);
+      
       my $section = undef;
       if(ref($colour) eq 'ARRAY') {
         $section = $colour->[1];
@@ -53,16 +57,18 @@ sub _init {
       } else {
         $section = { name => 'Other', key => '_missing' };
       }
+      
       push @{$sections{$section->{'key'}}||=[]},{
         legend => $legend,
         colour => $colour,
         style  => $type eq 'joins' ? 'line' : 'box',
-      };
+      };      
       $headings{$section->{'key'}} = $section->{'name'};
       $priorities{$section->{'key'}} = $section->{'priority'};
     }
   }
-  foreach my $key (sort { $priorities{$b} <=> $priorities{$a} } keys %sections) {
+  
+  foreach my $key (sort { $priorities{$b} <=> $priorities{$a} } keys %sections) {      
     $self->add_vgroup_to_legend($sections{$key},$headings{$key});
   }
 }

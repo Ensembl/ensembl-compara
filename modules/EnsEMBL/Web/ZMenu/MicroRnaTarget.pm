@@ -36,31 +36,36 @@ sub content {
   }
   
   my $logic_name = $feature->analysis->logic_name;
-  my $source_site = $hub->get_ExtURL($logic_name);
-  my $source_page = $hub->get_ExtURL($logic_name.'_FEATURE', 
+  my $source_page = $hub->get_ExtURL($logic_name, 
                       {
                         'ID' => $feature->accession,
                         'GENE' => $gene_stable_ids[0],
                       }
                     );
   
-  $self->caption('MicroRNA target: '.$feature->display_label);
+  $self->caption('MicroRNA ID: '.$feature->display_label);
 
   $self->add_entry ({
     type   => 'Source',
     label  => $feature->feature_set->description,
-    link   => $source_site,
-  });
-
-  $self->add_entry ({
-    type   => 'Accession',
-    label  => $feature->accession,
     link   => $source_page,
   });
 
+  my $mirbase_url = $hub->get_ExtURL('MIRBASE_MATURE', $feature->accession);
+  $self->add_entry ({
+    type   => 'miRBase mature ID',
+    label  => $feature->accession,
+    link   => $mirbase_url,
+  });
+
+  my $r = sprintf("%s:%d-%d",
+                   $feature->seq_region_name,
+                   $feature->seq_region_start,
+                   $feature->seq_region_end);
   $self->add_entry ({
     type   => 'bp',
-    label  => $feature->seq_region_start.' - '.$feature->seq_region_end,
+    label => $r,
+    link  => $hub->url({ r => $r, type => 'Location',  action => 'View' })
   });
 
   my @gene_links;
@@ -75,6 +80,11 @@ sub content {
   $self->add_entry ({
     type   => 'Evidence',
     label  => $feature->evidence,
+  });
+
+  $self->add_entry ({
+    type   => 'Supporting information',
+    label  => $feature->supporting_information,
   });
 
 }

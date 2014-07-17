@@ -347,7 +347,7 @@ sub _parse_HTML_to_nodes {
       'string'  => $1,
       'start'   => $-[1],
       'end'     => $+[1],
-      'name'    => $3,
+      'name'    => lc $3,
       'type'    => $2 eq '' ? $7 eq '' ? 'start_tag' : 'selfclosing_tag' : 'end_tag',
       'attr'    => {}
     };

@@ -241,7 +241,7 @@ sub render_page {
   
   foreach my $element (@order) {
     my $module = $elements->{$element};
-    $content->{$element} = $module->$func() if $module;
+    $content->{$element} = $module->$func() if $module && $module->can($func);
   }
   
   my $page_content = $page->render($content);

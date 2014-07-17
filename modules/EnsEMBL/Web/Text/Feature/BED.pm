@@ -43,7 +43,7 @@ sub new {
 sub extra_data_order { return $_[0]->{'__order__'}; }
 
 sub real_name {
-  return $_[0]->{'__names__'}{$_[1]} if $_[0]->{'__names__'};
+  return $_[0]->{'__names__'}{$_[1]} || $_[1] if $_[0]->{'__names__'};
   return $_[1];
 }
 

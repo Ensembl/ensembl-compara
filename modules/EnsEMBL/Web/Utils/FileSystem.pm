@@ -16,7 +16,7 @@ limitations under the License.
 
 =cut
 
-package EnsEMBL::Web::Tools::FileSystem;
+package EnsEMBL::Web::Utils::FileSystem;
 
 use strict;
 use warnings;

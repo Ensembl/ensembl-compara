@@ -230,7 +230,7 @@ sub real_names {
 sub real_name {
   my ($self,$column) = @_;
 
-  return $self->real_names->{$column};
+  return $self->real_names->{$column} || $column;
 }
 
 sub fetch_features  {

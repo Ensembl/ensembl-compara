@@ -83,9 +83,12 @@
     this.each(function(i,outer) {
       var $outer = $(outer);
       if(!$outer.hasClass('adornment-done')) {
+        var data = $.parseJSON($('.adornment-data',outer).text());
+        if ($.isEmptyObject(data.ref)) {
+          return;
+        }
         var wrapper = $outer.wrap("<div></div>").parent();
         $outer.detach(); 
-        var data = $.parseJSON($('.adornment-data',outer).text());
         $.each(data.seq,function(key,values) {
           var el = $('.adorn-'+key,outer);
           if(el.length) {

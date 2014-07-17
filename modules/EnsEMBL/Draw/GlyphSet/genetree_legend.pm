@@ -33,9 +33,16 @@ sub render_normal {
   my $other_gene         = $self->{'highlights'}[5];
   my $highlight_ancestor = $self->{'highlights'}[6];
   my $cafe               = $container->isa('Bio::EnsEMBL::Compara::CAFEGeneFamilyNode');
+  my $gat               = $container->isa('Bio::EnsEMBL::Compara::GenomicAlignTree');
   my @nodes;
   
-  $self->init_legend($cafe ? 4 : 6);
+  if ($cafe) {
+    $self->init_legend(4);
+  } elsif ($gat) {
+    $self->init_legend(3);
+  } else {
+    $self->init_legend(6);
+  }
   $self->newline; # Make room for "LEGEND"
   $self->newline;
   
@@ -78,11 +85,23 @@ sub render_normal {
   
   push @nodes, { legend => 'ancestor node', colour => '444444', envelop => 1 } if $highlight_ancestor;
   
-  $self->add_vgroup_to_legend(\@nodes, $cafe ? '' : 'Nodes', {
-    width  => 5,
-    height => 5
-  });
- 
+  unless ($gat) {
+    $self->add_vgroup_to_legend(\@nodes, $cafe ? '' : 'Nodes', {
+      width  => 5,
+      height => 5
+    });
+  }
+
+  #Labels for high and low coverage species
+  if ($gat) {
+    $self->add_vgroup_to_legend([
+      { legend => 'high quality assembly',  colour => 'black', text => 'SpeciesName' },
+      { legend => 'low quality assembly',   colour => 'brown', text => 'SpeciesName' },
+     ], 'Species', {
+        style => 'text',
+     });
+  }
+
   # Genes vertical group
   if ($other_gene) {
     $self->add_vgroup_to_legend([
@@ -101,7 +120,7 @@ sub render_normal {
     ], '', {
       style => 'text',
     });
-  } else {
+  } elsif (!$gat) {
     $self->add_vgroup_to_legend([
       { legend => 'gene of interest',   colour => 'red',  text => 'Gene ID' },
       { legend => 'within-sp. paralog', colour => 'blue', text => 'Gene ID' }
@@ -111,36 +130,43 @@ sub render_normal {
   }
   
   if (!$cafe) {
-    # Collapsed Nodes vertical group
-    $self->add_vgroup_to_legend([    
-      { legend => 'collapsed sub-tree',    colour => 'grey'                             },
-      { legend => 'collapsed (this gene)', colour => 'red'                              },
-      { legend => 'collapsed (paralog)',   colour => 'royalblue'                        },
-      { legend => '(x10 branch length)',   colour => 'grey',    pattern => 'hatch_vert' },
-      { legend => '(x100 branch length)',  colour => 'grey',    pattern => 'pin_vert'   },
-    ], 'Collapsed nodes', {
-      style => 'collapsed'
-    });
+    if (!$gat) {
+      # Collapsed Nodes vertical group
+      $self->add_vgroup_to_legend([
+        { legend => 'collapsed sub-tree',    colour => 'grey'                             },
+        { legend => 'collapsed (this gene)', colour => 'red'                              },
+        { legend => 'collapsed (paralog)',   colour => 'royalblue'                        },
+        { legend => '(x10 branch length)',   colour => 'grey',    pattern => 'hatch_vert' },
+        { legend => '(x100 branch length)',  colour => 'grey',    pattern => 'pin_vert'   },
+      ], 'Collapsed nodes', {
+        style => 'collapsed'
+      });
 
-    # Collapsed Alignments vertical group
-    $self->add_vgroup_to_legend([
-      { legend => '0 - 33% aligned seq',   colour => 'white',       border => 'darkgreen' },
-      { legend => '33 - 66% aligned seq',  colour => 'yellowgreen', border => 'darkgreen' },
-      { legend => '66 - 100% aligned seq', colour => 'darkgreen',   border => 'darkgreen' },
-    ], 'Collapsed Alignments', {
-      width  => 12,
-      height => 12
-    });
-
+      # Collapsed Alignments vertical group
+      $self->add_vgroup_to_legend([
+        { legend => '0 - 33% aligned seq',   colour => 'white',       border => 'darkgreen' },
+        { legend => '33 - 66% aligned seq',  colour => 'yellowgreen', border => 'darkgreen' },
+        { legend => '66 - 100% aligned seq', colour => 'darkgreen',   border => 'darkgreen' },
+      ], 'Collapsed Alignments', {
+        width  => 12,
+        height => 12
+      });
+    }
     # Expanded Alignments vertical group
+    my $alignment_colour = 'yellowgreen';
+    if ($gat) {
+      $alignment_colour = '#3366FF'; #blue
+    }
+
     $self->add_vgroup_to_legend([
-      { legend => 'gap',         colour => 'white',       border => 'yellowgreen' },
-      { legend => 'aligned seq', colour => 'yellowgreen', border => 'yellowgreen' },
+      { legend => 'gap',         colour => 'white',       border => $alignment_colour },
+      { legend => 'aligned seq', colour => $alignment_colour, border => $alignment_colour },
     ], 'Expanded Alignments', {
       width  => 12,
       height => 12
     });
   }
+
 
   # The word "LEGEND"
   my %font_params = $self->get_font_details('legend', 1);

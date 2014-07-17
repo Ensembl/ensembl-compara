@@ -16,16 +16,10 @@ limitations under the License.
 
 =cut
 
-package EnsEMBL::Web::Document::HTML::Compara::TBlat;
+package EnsEMBL::Web::Component::LRG::SVTable;
 
 use strict;
 
-use base qw(EnsEMBL::Web::Document::HTML::Compara);
-
-sub render { 
-  my $self = shift;
-
-  return $self->draw_stepped_table('TRANSLATED_BLAT_NET'); 
-}
+use base qw(EnsEMBL::Web::Component::SVTable);
 
 1;

@@ -42,7 +42,8 @@ sub content {
   my $coding_exons = @{$transcript->get_all_translateable_Exons};
   my $basepairs    = $self->thousandify($transcript->seq->length);
   my $residues     = $translation ? $self->thousandify($translation->length) : 0;
-  my @CCDS         = grep $_->dbname eq 'CCDS', @{$transcript->get_all_DBLinks};
+  my @CCDS         = @{$transcript->get_all_DBLinks('CCDS')};
+  my @Uniprot      = @{$transcript->get_all_DBLinks('Uniprot/SWISSPROT')};
   my $html         = "<strong>Exons:</strong> $exons <strong>Coding exons:</strong> $coding_exons <strong>Transcript length:</strong> $basepairs bps";
   $html           .= " <strong>Translation length:</strong> $residues residues" if $residues;
 
@@ -53,6 +54,12 @@ sub content {
     my %T = map { $_->primary_id => 1 } @CCDS;
     @CCDS = sort keys %T;
     $table->add_row('CCDS', sprintf('<p>This transcript is a member of the %s CCDS set: %s</p>', $sp, join ', ', map $hub->get_ExtURL_link($_, 'CCDS', $_), @CCDS));
+  }
+  ## add Uniprot info
+  if (scalar @Uniprot) {
+    my %T = map { $_->primary_id => 1 } @Uniprot;
+    @Uniprot = sort keys %T;
+    $table->add_row('Uniprot', sprintf('<p>This transcript corresponds to the following Uniprot identifiers: %s</p>', join ', ', map $hub->get_ExtURL_link($_, 'Uniprot/SWISSPROT', $_), @Uniprot));
   }
 
   $table->add_row('Ensembl version', $object->stable_id.'.'.$object->version);

@@ -34,12 +34,12 @@ sub content {
   $self->caption("$caption: $name");
   
   $self->add_entry({
-    type  => 'bp',
+    type  => 'Range',
     label => $mf->seq_region_start . '-' . $mf->seq_region_end
   });
   
   $self->add_entry({
-    type  => 'length',
+    type  => 'Length',
     label => $mf->length . ' bps'
   });
   

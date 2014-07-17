@@ -38,6 +38,29 @@ sub new {
   return $self;
 }
 
+sub buttons {
+  my $self    = shift;
+  my $hub     = $self->hub;
+
+  return unless $self->can('export_options');
+
+  my $options = $self->export_options || {};
+
+  return unless $options->{'action'};
+
+  my $params  = {'type' => 'DataExport', 'action' => $options->{'action'}, 'data_type' => $self->hub->type, 'component' => $self->id};
+  foreach (@{$options->{'params'} || []}) {
+    $params->{$_} = $hub->param($_);
+  }
+
+  return {
+    'url'     => $hub->url($params),
+    'caption' => $options->{'caption'} || 'Download sequence',
+    'class'   => 'export',
+    'modal'   => 1
+  };
+}
+
 sub _init {
   my ($self, $subslice_length) = @_;
   $self->cacheable(1);
@@ -61,8 +84,14 @@ sub get_sequence_data {
   $config->{'length'} ||= $slices->[0]{'slice'}->length;
   
   foreach my $sl (@$slices) {
-    my $mk  = {};
-    my $seq = uc($sl->{'seq'} || $sl->{'slice'}->seq(1));
+    my $mk  = {};    
+    my $seq = $sl->{'seq'} || $sl->{'slice'}->seq(1);
+    
+    # uc() used to happen by default, but the resequencing view can now
+    # validly show lowercase sequence. If any other views retrieve lc sequence
+    # from the API but need it rendered in uc, the following line will need to
+    # be uncommented and edited so the uc() doesn't happen on resequencing view
+    #$seq = uc($seq) unless 
     
     $self->set_sequence($config, $sequence, $mk, $seq, $sl->{'name'});
     $self->set_alignments($config, $sl, $mk, $seq)      if $config->{'align'}; # Markup region changes and inserts on comparisons
@@ -84,7 +113,7 @@ sub set_sequence {
       push @$sequence, [ map {{ letter => $_ }} @{$config->{'ref_slice_seq'}} ];
     } else {
       my $i       = 0;
-      my @cmp_seq = map {{ letter => ($config->{'ref_slice_seq'}[$i++] eq $_ ? '.' : $_) }} split '', $seq;
+      my @cmp_seq = map {{ letter => ($config->{'ref_slice_seq'}[$i++] eq $_ ? '|' : ($config->{'ref_slice_seq'}[$i-1] eq uc($_) ? '.' : $_)) }} split '', $seq;
 
       while ($seq =~ m/([^~]+)/g) {
         my $reseq_length = length $1;
@@ -157,6 +186,7 @@ sub set_variations {
   my $hub    = $self->hub;
   my $name   = $slice_data->{'name'};
   my $slice  = $slice_data->{'slice'};
+  
   my $species = $slice->can('genome_db') ? ucfirst($slice->genome_db->name) : $hub->species;
   return unless $hub->database('variation', $species);
   my $strand = $slice->strand;
@@ -277,6 +307,7 @@ sub set_variations {
     
     $s = 0 if $s < 0;
     $e = $config->{'length'} if $e > $config->{'length'};
+    $e ||= $s;
     
     # Add the sub slice start where necessary - makes the label for the variation show the correct position relative to the sequence
     $snp_start += $config->{'sub_slice_start'} - 1 if $config->{'sub_slice_start'} && $config->{'line_numbering'} ne 'slice';
@@ -299,7 +330,8 @@ sub set_variations {
     for ($s..$e) {
       # Don't mark up variations when the secondary strain is the same as the sequence.
       # $sequence->[-1] is the current secondary strain, as it is the last element pushed onto the array
-      next if defined $config->{'match_display'} && $sequence->[-1][$_]{'letter'} =~ /[\.~$sequence->[0][$_]{'letter'}]/;
+      # uncomment last part to enable showing ALL variants on ref strain (might want to add as an opt later)
+      next if defined $config->{'match_display'} && $sequence->[-1][$_]{'letter'} =~ /[\.\|~$sequence->[0][$_]{'letter'}]/i;# && scalar @$sequence > 1;
       
       $markup->{'variations'}{$_}{'focus'}     = 1 if $config->{'focus_variant'} && $config->{'focus_variant'} eq $dbID;
       $markup->{'variations'}{$_}{'type'}      = $snp_type;
@@ -1112,8 +1144,11 @@ sub get_key {
      $key_list .= sprintf '<li style="%s">Focus variant</li>', join ';', map "$_:$class_to_style->{'var'}[1]{$_}", keys %{$class_to_style->{'var'}[1]}      if $config->{'focus_variant'};
      $key_list .= '<li>Conserved regions are where >50&#37; of bases in alignments match</li>'                                                              if $config->{'key'}{'conservation'};
      $key_list .= '<li>For secondary species we display the coordinates of the first and the last mapped (i.e A,T,G,C or N) basepairs of each line</li>'    if $config->{'alignment_numbering'};
-     $key_list .= "<li><code>&middot;&nbsp;&nbsp;&nbsp;</code>Basepairs in secondary ${strain}s matching the reference $strain are replaced with dots</li>" if $config->{'match_display'};
-     $key_list .= '<li><code>~&nbsp;&nbsp;</code>No resequencing coverage at this position</li>'                                                            if $config->{'resequencing'};
+     $key_list .= "<li><code>&middot;&nbsp;&nbsp;&nbsp;&nbsp;</code>Implicit match to reference sequence (no read coverage data available)</li>".
+                  "<li><code>|&nbsp;&nbsp;&nbsp;&nbsp;</code>Confirmed match to reference sequence (genotype or read coverage data available)</li>"         if $config->{'match_display'};
+     $key_list .= '<li><code>~&nbsp;&nbsp;&nbsp;&nbsp;</code>No resequencing coverage at this position</li>'                                                if $config->{'resequencing'};
+     $key_list .= '<li><code>acgt&nbsp;</code>Implicit sequence (no read coverage data available)</li>'.
+                  '<li><code>ACGT&nbsp;</code>Confirmed sequence (genotype or read coverage data available)</li>'                                           if $config->{'resequencing'} && !$config->{'match_display'};
      $key_list  = "<ul>$key_list</ul>" if $key_list;
   
   return "<h4>Key</h4>$key_img$key_list" if $key_img || $key_list;
@@ -1224,22 +1259,6 @@ sub export_sequence {
   $file->save;
   
   return $file->content;
-}
-
-sub tool_buttons {
-  my $self = shift;
-  
-  return unless $self->html_format;
-  
-  my $hub  = $self->hub;
-  my $html = sprintf('
-    <div class="other_tool">
-      <p><a class="seq_export export" href="%s">Download view as RTF</a></p>
-    </div>', 
-    $self->ajax_url('rtf', { filename => join('_', $hub->type, $hub->action, $hub->species, $self->object->Obj->stable_id), _format => 'RTF', display_width => 60 })
-  );
-  
-  return $html;
 }
 
 1;

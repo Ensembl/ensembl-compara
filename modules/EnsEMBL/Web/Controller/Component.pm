@@ -30,10 +30,10 @@ sub request   { return $_[0]{'request'} ||= $_[0]->species_defs->OBJECT_TO_SCRIP
 
 sub init {
   my $self = shift;
-  
-  return if $self->get_cached_content('component'); # Page retrieved from cache
-  
   my $hub     = $self->hub;
+ 
+  return if ($hub->function ne 'Export' && $self->get_cached_content('component')); # Page retrieved from cache
+  
   my $referer = $hub->referer;
   
   # Set action of component to be the same as the action of the referer page - needed for view configs to be correctly created

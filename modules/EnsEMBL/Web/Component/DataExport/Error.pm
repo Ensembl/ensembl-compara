@@ -16,16 +16,28 @@ limitations under the License.
 
 =cut
 
-package EnsEMBL::Web::Document::HTML::Compara::Synteny;
+package EnsEMBL::Web::Component::DataExport::Error;
 
 use strict;
+use warnings;
 
-use base qw(EnsEMBL::Web::Document::HTML::Compara);
+use base qw(EnsEMBL::Web::Component::DataExport);
 
-sub render { 
+sub _init {
   my $self = shift;
+  $self->cacheable( 0 );
+  $self->ajaxable(  0 );
+  $self->configurable( 0 );
+}
 
-  return $self->draw_stepped_table('SYNTENY');
+sub content {
+  my $self  = shift;
+  my $hub   = $self->hub;
+
+  my $html = $self->error_panel('Error', 
+      'There was a problem with your data export: <b>'.$hub->param('error').'</b><br />Please try again.');
+
+  return $html;
 }
 
 1;

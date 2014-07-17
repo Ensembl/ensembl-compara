@@ -51,7 +51,7 @@ sub content {
   }
   $self->add_entry({
     label_html => "All features ($count)",
-    link       => $hub->url({ action => $action, $track => 'all' })
+    link       => $hub->url({ action => $action, $track => $count })
   });
 }
 
