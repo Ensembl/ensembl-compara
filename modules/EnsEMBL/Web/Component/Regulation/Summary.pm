@@ -66,10 +66,17 @@ sub content {
   }
   my $num_active = scalar(grep { $_->feature_set->cell_type->name !~ /MultiCell/ } @$all_objs);
 
-  $summary->add_row('Classification',$object->feature_type->name);
+  my @class = ($object->feature_type->name);
+  if(!$object->is_new_pipeline) {
+    @class = grep { !/Unclassified/ } map { $_->feature_type->name } @$all_objs;
+  }
+
+  $summary->add_row('Classification',join(', ',@class));
   $summary->add_row('Location', $location_html);
   $summary->add_row('Bound region', $bound_html) if $location_html ne $bound_html;
-  $summary->add_row('Active in',$object->cell_type_count."/$num_active <small>(".join(', ',sort keys %active).")</small>");
+  if($object->is_new_pipeline) {
+    $summary->add_row('Active in',$object->cell_type_count."/$num_active <small>(".join(', ',sort keys %active).")</small>");
+  }
 
   return $summary->render;
 }
