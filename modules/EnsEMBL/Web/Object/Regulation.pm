@@ -91,23 +91,11 @@ sub feature_type      { my $self = shift; return $self->Obj->feature_type;      
 sub slice             { my $self = shift; return $self->Obj->slice;                     }           
 sub seq_region_length { my $self = shift; return $self->Obj->slice->seq_region_length;  }
 
-sub is_new_pipeline { # Regulation rewrote their pipeline, things changed
-  my ($self) = @_;
-
-  return $self->{'is_new_pipeline'} if defined $self->{'is_new_pipeline'};
-  my $mca = $self->hub->database('funcgen')->get_MetaContainer;
-  my $date = $mca->single_value_by_key('regbuild.last_annotation_update');
-  my ($year,$month) = split('-',$date);
-  my $new = 1;
-  $new = 0 if $year < 2014 or $year == 2014 and $month < 6;
-  $self->{'is_new_pipeline'} = $new;
-  return $new;
-}
-
 sub has_evidence {
   my ($self) = @_;
 
   # Can be simple accessor for 76, but avoid breaking master
+  return 1 unless $self->hub->is_new_regulation_pipeline;
   return !!$self->Obj->has_evidence if $self->Obj->can('has_evidence');
   return undef;
 }
