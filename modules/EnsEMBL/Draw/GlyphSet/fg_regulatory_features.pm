@@ -226,4 +226,10 @@ sub export_feature {
   });
 }
 
+sub pattern {
+  my ($self,$f) = @_;
+
+  return ['hatch_really_thick','grey90'] if $f->can('has_evidence') and !$f->has_evidence;
+}
+
 1;

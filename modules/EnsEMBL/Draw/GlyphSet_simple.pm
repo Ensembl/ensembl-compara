@@ -166,6 +166,10 @@ sub _init {
       next if $row > $depth;
     }
     
+    my ($pattern,$patterncolour);
+    $pattern = $self->pattern($f) if $self->can('pattern');
+    ($pattern,$patterncolour) = @$pattern if ref($pattern);
+
     my $colours   = $self->get_colours($f);
     my $composite = $self->Composite;
     my $rowheight = int($height * 1.5);
@@ -216,6 +220,8 @@ sub _init {
         width       => $end - $start + 1,
         height      => $height,
         $colour_key => $colours->{'feature'},
+        pattern     => $pattern,
+        patterncolour => $patterncolour,
         absolutey   => 1,
       }));
     }
