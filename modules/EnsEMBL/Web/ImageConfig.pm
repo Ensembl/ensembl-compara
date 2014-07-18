@@ -541,16 +541,20 @@ sub alphabetise_tracks {
   
   my $name = $track->data->{$key};
   my ($after, $node_name);
-  
-  foreach (@{$menu->child_nodes}) {
-    $node_name = $_->data->{$key};
-    $after     = $_ if $node_name && $node_name lt $name;
+
+  if (scalar(@{$menu->child_nodes}) > 1) {  
+    foreach (@{$menu->child_nodes}) {
+      $node_name = $_->data->{$key};
+      $after     = $_ if $node_name && $node_name lt $name;
+    }
+    if ($after) {
+      $after->after($track);
+    } else {
+      $menu->prepend_child($track);
+    }
   }
-  
-  if ($after) {
-    $after->after($track);
-  } else {
-    $menu->prepend_child($track);
+  else {
+    $menu->append_child($track);
   }
 }
 
