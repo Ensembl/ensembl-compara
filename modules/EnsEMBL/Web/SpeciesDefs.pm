@@ -1020,7 +1020,7 @@ sub species_label {
 }
 
 sub assembly_lookup {
-  my $self = shift;
+  my ($self, $old_assemblies) = @_;
   my $lookup = {};
   foreach ($self->valid_species) {
     my $assembly = $self->get_config($_, 'ASSEMBLY_NAME');
@@ -1030,11 +1030,13 @@ sub assembly_lookup {
     if ($self->get_config($_, 'UCSC_GOLDEN_PATH')) {
       $lookup->{$self->get_config($_, 'UCSC_GOLDEN_PATH')} = [$_, $assembly];
     }
-    ## including past assemblies
-    if ($self->get_config($_, 'UCSC_ASSEMBLIES')) {
-      my %ucsc = @{$self->get_config($_, 'UCSC_ASSEMBLIES')||[]};
-      while (my($k, $v) = each(%ucsc)) {
-        $lookup->{$k} = [$_, $v];
+    if ($old_assemblies) {
+      ## Include past UCSC assemblies
+      if ($self->get_config($_, 'UCSC_ASSEMBLIES')) {
+        my %ucsc = @{$self->get_config($_, 'UCSC_ASSEMBLIES')||[]};
+        while (my($k, $v) = each(%ucsc)) {
+          $lookup->{$k} = [$_, $v];
+        }
       }
     }
   }
