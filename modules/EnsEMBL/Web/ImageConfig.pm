@@ -742,7 +742,7 @@ sub _add_datahub {
   my $hub_info = $parser->get_hub_info($url); ## Do we have data for this species?
   
   if ($hub_info->{'error'}) {
-    warn "!!! COULD NOT CONTACT DATAHUB $url: $hub_info->{'error'}";
+    warn "!!! COULD NOT CONTACT DATAHUB $url: @{$hub_info->{'error'}||{}}";
   } else {
     my $shortLabel = $hub_info->{'details'}{'shortLabel'};
     $menu_name = $shortLabel if $shortLabel and $is_poor_name;
@@ -752,7 +752,7 @@ sub _add_datahub {
     my $assembly = $self->hub->species_defs->get_config($self->species, 'UCSC_GOLDEN_PATH')
                         || $self->hub->species_defs->get_config($self->species, 'ASSEMBLY_NAME');
     my $source_list = $hub_info->{'genomes'}{$assembly} || [];
-    
+   
     return unless scalar @$source_list;
     
     ## Get tracks from hub
