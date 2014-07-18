@@ -160,6 +160,7 @@ sub table_row {
   my $delete       = $self->_icon({ link_class => $delete_class, class => 'delete_icon', link_extra => $title });
   my $share        = $self->_icon({ link_class => 'modal_link',  class => 'share_icon' });
   my $download     = $self->_no_icon;
+  my $conf_template = $self->_no_icon;
   my $user_record  = ref($file) =~ /Record/;
   my $name         = qq{<div><strong class="val" title="Click here to rename your data">$file->{'name'}</strong>};
   my %url_params   = ( __clear => 1, source => $file->{'url'} ? 'url' : 'upload' );
@@ -235,21 +236,26 @@ sub table_row {
   $name .= $file->{'url'} || sprintf '%s file', $file->{'filetype'} || $file->{'format'};
 
   ## Link for valid datahub  
+  my ($config_link, $conf_template);
   if ($file->{'format'} eq 'DATAHUB' && $hub->species_defs->get_config($file->{'species'}, 'ASSEMBLY_NAME') eq $file->{'assembly'}) {
+    $conf_template  = $self->_icon({ link_class => 'modal_link',  class => 'config_icon', 'title' => 'Configure hub tracks for '.$file->{'species'} });
     my $sample_data = $hub->species_defs->get_config($hub->data_species, 'SAMPLE_DATA') || {};
     my $default_loc = $sample_data->{'LOCATION_PARAM'};
-    $name .= sprintf('<br /><a href="%s#modal_config_viewbottom-%s">Configure hub</a>',
-      $hub->url({
+    (my $menu_name = $file->{'name'}) =~ s/ /_/g;
+    $config_link = $hub->url({
         species  => $file->{'species'},
         type     => 'Location',
         action   => 'View',
         function => undef,
         r        => $hub->param('r') || $default_loc,
-      }),
-      $file->{'name'},
+    });
+    $name .= sprintf('<br /><a href="%s#modal_config_viewbottom-%s">Configure hub</a>',
+      $config_link,
+      $menu_name,
     );
   }
 
+  my $config_html = $config_link ? sprintf $conf_template, $config_link : '';
   my $share_html  = sprintf $share,  $hub->url({ action => 'SelectShare', %url_params });
   my $delete_html = sprintf $delete, $hub->url({ action => 'ModifyData', function => $file->{'url'} ? 'delete_remote' : 'delete_upload', %url_params });
   
@@ -259,7 +265,7 @@ sub table_row {
     species => sprintf('<em>%s</em>', $hub->species_defs->get_config($file->{'species'}, 'SPECIES_SCIENTIFIC_NAME')),
     assembly => $assembly,
     date    => sprintf('<span class="hidden">%s</span>%s', $file->{'timestamp'} || '-', $self->pretty_date($file->{'timestamp'}, 'simple_datetime')),
-    actions => "$download$save$share_html$delete_html",
+    actions => "$config_html$download$save$share_html$delete_html",
   };
 }
 

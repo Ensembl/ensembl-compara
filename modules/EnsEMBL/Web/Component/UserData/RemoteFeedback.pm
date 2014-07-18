@@ -69,6 +69,7 @@ sub content {
         $template = '<p class="space-below"><strong>Your hub includes multiple assemblies, so not all features will be shown. Alternative assemblies may available on archive sites.</strong></p>';
       }
       $template .= '<p class="space-below"><a href="%s#modal_config_viewbottom-%s">Configure your hub</a></p>';
+      (my $menu_name = $hub->param('name')) =~ s/ /_/g;
       $message = sprintf($template,
                     $hub->url({
                               species   => $hub->data_species,
@@ -77,7 +78,7 @@ sub content {
                               function  => undef,
                               r         => $hub->param('r') || $default_loc,
                     }),
-                    $hub->param('name'),
+                    $menu_name,
       );
     }
   }
