@@ -94,45 +94,45 @@ sub process {
 
       $url = chase_redirects($url);
 
-      my @assemblies = @{$options->{'assemblies'}||[]};
-      my $assembly_string;
-      if (@assemblies) {
-        ## Convert UCSC assembly names to Ensembl assembly names where appropriate
-        my %ucsc = @{$hub->species_defs->get_config($hub->data_species, 'UCSC_ASSEMBLIES')||[]};
-        if (keys %ucsc) {
-          foreach (@assemblies) {
-            $_ = $ucsc{$_} if $ucsc{$_}; 
-          }
-        }
-        $assembly_string = join(', ', @assemblies);
-      }
-      else {
-        $assembly_string = $hub->species_defs->get_config($hub->data_species, 'ASSEMBLY_NAME');
-      }
+      my $assemblies = $options->{'assemblies'}
+                        || [$hub->species_defs->get_config($hub->data_species, 'ASSEMBLY_NAME')];
+      my ($code, @ok_assemblies);
+      my %ensembl_assemblies = %{$hub->species_defs->assembly_lookup};
 
-      my $data = $session->add_data(
-        type        => 'url',
-        code        => join('_', md5_hex($name . $url), $session->session_id),
-        url         => $url,
-        name        => $name,
-        format      => $format->name,
-        style       => $format->trackline,
-        species     => $hub->data_species,
-        assembly    => $assembly_string,
-        timestamp   => time,
-        %$options,
-      );
+      foreach (@$assemblies) {
+
+        my ($data_species, $assembly) = @{$ensembl_assemblies{$_}||[]};         
+        if ($assembly) {
+          push @ok_assemblies, $assembly;
+
+          my $data = $session->add_data(
+            type        => 'url',
+            code        => join('_', md5_hex($name . $data_species . $assembly . $url), $session->session_id),
+            url         => $url,
+            name        => $name,
+            format      => $format->name,
+            style       => $format->trackline,
+            species     => $data_species,
+            assembly    => $assembly, 
+            timestamp   => time,
+            %$options,
+          );
+          if ($data_species eq $hub->species) {
+            $code = $data->{'code'};
+          }
       
-      $session->configure_user_data('url', $data);
+          $session->configure_user_data('url', $data);
       
-      $object->move_to_user(type => 'url', code => $data->{'code'}) if $hub->param('save');
-      
+          $object->move_to_user(type => 'url', code => $data->{'code'}) if $hub->param('save');
+        }
+      }      
+      my $assembly_string = join(', ', @ok_assemblies);
       %params = (
         format    => $format->name,
         type      => 'url',
         name      => $name,
         assembly  => $assembly_string,
-        code      => $data->{'code'},
+        code      => $code,
       );
     }
   } else {
