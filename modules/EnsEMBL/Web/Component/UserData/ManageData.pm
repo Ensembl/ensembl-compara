@@ -98,7 +98,8 @@ sub content {
     }
     $html = $self->new_table(\@columns, \@rows, { data_table => 'no_col_toggle', exportable => 0, class => 'fixed editable' })->render;
     if ($old_assemblies) {
-      $html .= $self->warning_panel('Possible mapping issue', "$old_assemblies of your files contains data on an old or unknown assembly. You may want to convert your data and re-upload, or try an archive site.");
+      my $plural = $old_assemblies > 1 ? '' : 's';
+      $html .= $self->warning_panel('Possible mapping issue', "$old_assemblies of your files contain$plural data on an old or unknown assembly. You may want to convert your data and re-upload, or try an archive site.");
     }
   }
   
@@ -232,7 +233,23 @@ sub table_row {
   }
   
   $name .= $file->{'url'} || sprintf '%s file', $file->{'filetype'} || $file->{'format'};
-  
+
+  ## Link for valid datahub  
+  if ($file->{'format'} eq 'DATAHUB' && $hub->species_defs->get_config($file->{'species'}, 'ASSEMBLY_NAME') eq $file->{'assembly'}) {
+    my $sample_data = $hub->species_defs->get_config($hub->data_species, 'SAMPLE_DATA') || {};
+    my $default_loc = $sample_data->{'LOCATION_PARAM'};
+    $name .= sprintf('<br /><a href="%s#modal_config_viewbottom-%s">Configure hub</a>',
+      $hub->url({
+        species  => $file->{'species'},
+        type     => 'Location',
+        action   => 'View',
+        function => undef,
+        r        => $hub->param('r') || $default_loc,
+      }),
+      $file->{'name'},
+    );
+  }
+
   my $share_html  = sprintf $share,  $hub->url({ action => 'SelectShare', %url_params });
   my $delete_html = sprintf $delete, $hub->url({ action => 'ModifyData', function => $file->{'url'} ? 'delete_remote' : 'delete_upload', %url_params });
   
