@@ -776,7 +776,7 @@ sub _add_datahub {
       }
     }
   }
-  return $menu_name;
+  return ($menu_name, $hub_info);
 }
 
 sub _add_datahub_node {
@@ -1364,7 +1364,27 @@ sub update_from_url {
         
         # We then have to create a node in the user_config
         if (uc $format eq 'DATAHUB') {
-          $n = $self->_add_datahub($n, $p,1);
+          my $info;
+          ($n, $info) = $self->_add_datahub($n, $p,1);
+          my $assemblies = $info->{'genomes'}
+                        || [$hub->species_defs->get_config($hub->species, 'ASSEMBLY_NAME')];
+          my %ensembl_assemblies = %{$hub->species_defs->assembly_lookup};
+
+          foreach (keys %$assemblies) {
+            my ($data_species, $assembly) = @{$ensembl_assemblies{$_}||[]};
+            if ($assembly) {
+              my $data = $session->add_data(
+                type        => 'url',
+                url         => $p,
+                species     => $data_species,
+                code        => join('_', md5_hex($n . $data_species . $assembly . $p), $session->session_id),
+                name        => $n,
+                format      => $format,
+                style       => $style,
+                assembly    => $assembly,
+              );
+            }
+          }
         } else {
           $self->_add_flat_file_track(undef, 'url', "url_$code", $n, 
             sprintf('Data retrieved from an external webserver. This data is attached to the %s, and comes from URL: %s', encode_entities($n), encode_entities($p)),
@@ -1373,16 +1393,16 @@ sub update_from_url {
           );
 
           $self->update_track_renderer("url_$code", $renderer);
+          $session->set_data(
+            type    => 'url',
+            url     => $p,
+            species => $species,
+            code    => $code,
+            name    => $n,
+            format  => $format,
+            style   => $style,
+          );
         }       
-        $session->set_data(
-          type    => 'url',
-          url     => $p,
-          species => $species,
-          code    => $code,
-          name    => $n,
-          format  => $format,
-          style   => $style,
-        );
       } elsif ($type eq 'das') {
         $p = uri_unescape($p);
 
