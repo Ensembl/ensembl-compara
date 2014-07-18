@@ -18,5 +18,5 @@ $(".owl-carousel").owlCarousel({
   singleItem  : true,
   autoPlay    : 5000,
   stopOnHover : true,
-  rewindSpeed : 5000
+  rewindSpeed : 0
 });
