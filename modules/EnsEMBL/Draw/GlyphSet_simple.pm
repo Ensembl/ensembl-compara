@@ -148,8 +148,8 @@ sub _init {
         $tag_start = $x - ($1 eq 'left'  ? (($height / 2) + 1) / $pix_per_bp : 0);
         $tag_end   = $x + ($1 eq 'right' ? (($height / 2) + 1) / $pix_per_bp : 0);
       } else {
-        $tag_start = $start; 
-        $tag_end   = $end;
+        $tag_start = $tag->{'start'} || $start;
+        $tag_end   = $tag->{'end'} || $end;
       }
       
       $img_start = $tag_start if $tag_start < $img_start;
