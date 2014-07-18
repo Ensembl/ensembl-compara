@@ -226,7 +226,7 @@ sub _init {
       }));
     }
     
-    push @tag_glyphs, $self->render_tags(\@tags, $composite, $slice_length, $height, $start, $end, $img_start, $img_end);
+    push @tag_glyphs, $self->render_tags(\@tags, $composite, $slice_length, $height, $start, $end, $img_start, $img_end,$pattern,$patterncolour);
     
     if ($label) {
       my $font_size = $fontsize;
@@ -300,7 +300,7 @@ sub _init {
 sub render_tags {
   my $self = shift;
   my $tags = shift;
-  my ($composite, $slice_length, $height) = @_;
+  my ($composite,$slice_length,$height,$_x1,$_x2,$_x3,$_x4,$pattern,$patterncolour) = @_;
   my @glyphs;
   
   foreach my $tag (@$tags) {
@@ -316,7 +316,9 @@ sub render_tags {
         width     => $e - $s + 1,
         height    => $height,
         colour    => $tag->{'colour'},
-        absolutey => 1
+        absolutey => 1,
+        pattern => $pattern,
+        patterncolour => $patterncolour,
       }));
     } elsif ($tag->{'style'} eq 'join') {
       my $pos = $self->strand > 0 ? 1 : 0;
