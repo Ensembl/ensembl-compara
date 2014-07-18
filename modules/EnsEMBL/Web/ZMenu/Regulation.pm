@@ -71,7 +71,20 @@ sub content {
       link  => $object->get_bound_location_url
     });
   }
-  
+
+  my $status = "Unknown";
+  my $has_evidence = $object->has_evidence;
+  if($has_evidence) {
+    $status = "Active";
+  } elsif(defined $has_evidence) {
+    $status = "Inactive";
+  }
+
+  $self->add_entry({
+    type => 'Status',
+    label => $status
+  });
+
   $self->add_entry({
     type  => 'Attributes',
     label => $object->get_attribute_list
