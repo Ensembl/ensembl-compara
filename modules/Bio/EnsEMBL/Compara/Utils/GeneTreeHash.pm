@@ -25,12 +25,7 @@ use Bio::EnsEMBL::Utils::Argument qw(rearrange);
 sub convert {
   my ($self, $tree, @args) = @_;
 
-  my ($no_sequences, $aligned, $cdna, $species_common_name, $exon_boundaries, $gaps) = rearrange([qw(NO_SEQUENCES ALIGNED CDNA SPECIES_COMMON_NAME EXON_BOUNDARIES GAPS)], @args);
-  $species_common_name = 1;
-  $gaps = 1;
-  $exon_boundaries = 1;
-  $no_sequences = 0;
-  $aligned = 1;
+  my ($no_sequences, $aligned, $cdna, $species_common_name, $exon_boundaries, $gaps, $full_tax_info) = rearrange([qw(NO_SEQUENCES ALIGNED CDNA SPECIES_COMMON_NAME EXON_BOUNDARIES GAPS FULL_TAX_INFO)], @args);
 
   if (defined $no_sequences) {
       $self->no_sequences($no_sequences);
@@ -49,6 +44,9 @@ sub convert {
   }
   if (defined $gaps) {
       $self->gaps($gaps);
+  }
+  if (defined $full_tax_info) {
+    $self->full_tax_info($full_tax_info);
   }
 
   return $self->_head_node($tree);
@@ -102,6 +100,14 @@ sub gaps {
     return $self->{_gaps};
 }
 
+sub full_tax_info {
+  my ($self, $fti) = @_;
+  if (defined ($fti)) {
+    $self->{_full_tax_info} = $fti;
+  }
+  return $self->{_fti};
+}
+
 sub _head_node {
   my ($self, $tree) = @_;
   my $hash = {
@@ -146,9 +152,11 @@ sub _convert_node {
       my $taxon = $tax->taxon;
       $hash->{taxonomy} = { id => $tax->taxon_id + 0,
                             scientific_name => $tax->node_name,
-                            timetree_mya => $taxon->get_tagvalue('ensembl timetree mya') || 0 + 0,
-                            alias_name => $taxon->ensembl_alias_name
                           };
+      if ($self->full_tax_info()) {
+	$hash->{taxonomy}{alias_name} = $taxon->ensembl_alias_name;
+	$hash->{taxonomy}{timetree_mya} = $taxon->get_tagvalue('ensembl timetree mya') || 0 + 0;
+      }
   }
   if($boot) {
     $hash->{confidence} = { type => "boostrap", value => $boot + 0 };
@@ -244,7 +252,7 @@ sub _convert_node {
       { 
        # type     => 'protein', # are we sure we always have proteins?
        id       => [ { source => 'EnsEMBL', accession => $node->stable_id() } ],
-       location => sprintf('%s:%d-%d',$gene->chr_name(), $gene->dnafrag_start(), $gene->dnafrag_end())
+       location => sprintf('%s:%d-%d',$gene->dnafrag()->name(), $gene->dnafrag_start(), $gene->dnafrag_end())
       };
     $hash->{sequence}->{name} = $node->display_label() if $node->display_label();
 
