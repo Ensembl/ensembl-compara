@@ -2797,7 +2797,9 @@ sub add_regulation_builds {
       description => $fg_data{$key_2}{'description'}{'reg_feats'},
       display     => $display,
       renderers   => \@renderers,
-      cell_line   => $cell_line
+      cell_line   => $cell_line,
+      section => $cell_line,
+      caption    => "Reg. Feats",
     }));
     
     if ($fg_data{"seg_$cell_line"}{'key'} eq "seg_$cell_line") {
@@ -2813,8 +2815,9 @@ sub add_regulation_builds {
         description => $fg_data{"seg_$cell_line"}{'description'},
         renderers   => \@renderers,
         cell_line   => $cell_line,
-        caption     => "Reg. Segs $cell_line",
+        caption     => "Reg. Segs",
         track_after => $prev_track,
+        section => $cell_line,
       }));
     }
     
@@ -2825,6 +2828,7 @@ sub add_regulation_builds {
       depth     => $fg_data{$key_2}{'depth'} || 0.5,
       colourset => 'feature_set',
       cell_line => $cell_line,
+      section   => $cell_line,
       menu_key  => 'regulatory_features',
       renderers => [
         'off',            'Off', 
@@ -2838,14 +2842,16 @@ sub add_regulation_builds {
       $prev_track = $self->add_matrix({
         track_name  => "$evidence_info->{$_}{'name'}$label",
         track_after => $prev_track,
+        section => $cell_line,
         matrix      => {
           menu   => $matrix_menus{$_}->id,
           column => $cell_line,
+          section => $cell_line,
           rows   => [ values %{$matrix_rows{$cell_line}{$_}} ],
         },
         column_data => {
           set         => $_,
-          label       => "$evidence_info->{$_}{'label'} $label",
+          label       => "$evidence_info->{$_}{'label'}",
           description => $fg_data{$key_2}{'description'}{$_},
           %column_data
         }, 

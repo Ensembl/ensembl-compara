@@ -250,8 +250,11 @@ sub label_img {
 
 sub _label_glyphs {
   my ($self) = @_;
-  my $glyphs = [$self->label];
-  if($self->label->can('glyphs')) {
+
+  my $label = $self->label;
+  return [] unless $label;
+  my $glyphs = [$label];
+  if($label->can('glyphs')) {
     $glyphs = [ $self->{'label'}->glyphs ];
   }
   return $glyphs;
@@ -308,6 +311,7 @@ sub _split_label {
 }
 
 sub recast_label {
+  # XXX we should see which of these args are used and also pass as hash
   my ($self,$pixperbp,$width,$rows,$text,$font,$ptsize,$colour) = @_;
 
   my $caption = $self->my_label_caption;
@@ -355,6 +359,7 @@ sub recast_label {
   my $h = $self->my_config('caption_height') || $self->label->{'height'};
   foreach my $row_data (@$rows) {
     my ($row_text,$row_width) = @$row_data;
+    next unless $row_text;
     my $row = $self->Text({
       font => $font,
       ptsize => $ptsize,
@@ -446,4 +451,21 @@ sub check {
   my ($name) = ref($self) =~ /::([^:]+)$/;
   return $name;
 } 
+
+sub section {
+  my $self = CORE::shift;
+
+  return $self->my_config('section') || '';
+}
+
+sub section_text {
+  $_[0]->{'section_text'} = $_[1] if @_>1;
+  return $_[0]->{'section_text'};
+}
+
+sub section_height {
+  return 0 unless $_[0]->{'section_text'};
+  return 24;
+}
+
 1;

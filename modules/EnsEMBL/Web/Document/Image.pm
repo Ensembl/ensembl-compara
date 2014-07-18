@@ -473,8 +473,8 @@ sub track_boundaries {
   
   foreach my $glyphset (@{$container->{'glyphsets'}}) {
     next unless scalar @{$glyphset->{'glyphs'}};
-    
-    my $height = $glyphset->height + $spacing;
+
+    my $height = $glyphset->height + $spacing + $glyphset->section_height;
     my $type   = $glyphset->type;
     my $node;  
     
