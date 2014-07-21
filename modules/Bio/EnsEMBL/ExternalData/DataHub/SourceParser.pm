@@ -116,11 +116,24 @@ sub get_hub_info {
   return { error => 'genomesFile: ' . $response->status_line } unless $response->is_success;
   
   (my $genome_file = $response->content) =~ s/\r//g;
-  my %genome_info  = map { [ split /\s/ ]->[1] || () } split /\n/, $genome_file; ## We only need the values, not the fieldnames
+  my %genome_info;
+  my @lines = split /\n/, $genome_file;
+  my ($genome, $file);
+  foreach (split /\n/, $genome_file) {
+    my ($k, $v) = split(/\s/, $_);
+    if ($k =~ /genome/) {
+      $genome = $v;
+    }
+    elsif ($k =~ /trackDb/) {
+      $file = $v;
+      $genome_info{$genome} = $file;
+      ($genome, $file) = (undef, undef);
+    }
+  }
   my @track_errors;
   
   ## Parse list of config files
-  while (my ($genome, $file) = each %genome_info) {
+  while (($genome, $file) = each %genome_info) {
     $response = $ua->get("$url/$file");
     
     if (!$response->is_success) {

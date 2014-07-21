@@ -98,7 +98,8 @@ sub content {
     }
     $html = $self->new_table(\@columns, \@rows, { data_table => 'no_col_toggle', exportable => 0, class => 'fixed editable' })->render;
     if ($old_assemblies) {
-      $html .= $self->warning_panel('Possible mapping issue', "$old_assemblies of your files contains data on an old or unknown assembly. You may want to convert your data and re-upload.");
+      my $plural = $old_assemblies > 1 ? '' : 's';
+      $html .= $self->warning_panel('Possible mapping issue', "$old_assemblies of your files contain$plural data on an old or unknown assembly. You may want to convert your data and re-upload, or try an archive site.");
     }
   }
   
@@ -159,6 +160,7 @@ sub table_row {
   my $delete       = $self->_icon({ link_class => $delete_class, class => 'delete_icon', link_extra => $title });
   my $share        = $self->_icon({ link_class => 'modal_link',  class => 'share_icon' });
   my $download     = $self->_no_icon;
+  my $conf_template = $self->_no_icon;
   my $user_record  = ref($file) =~ /Record/;
   my $name         = qq{<div><strong class="val" title="Click here to rename your data">$file->{'name'}</strong>};
   my %url_params   = ( __clear => 1, source => $file->{'url'} ? 'url' : 'upload' );
@@ -232,7 +234,29 @@ sub table_row {
   }
   
   $name .= $file->{'url'} || sprintf '%s file', $file->{'filetype'} || $file->{'format'};
-  
+
+  ## Link for valid datahub  
+  my ($config_link, $conf_template);
+  if ($file->{'format'} eq 'DATAHUB' && $hub->species_defs->get_config($file->{'species'}, 'ASSEMBLY_NAME') eq $file->{'assembly'}) {
+    $conf_template  = $self->_icon({ class => 'config_icon', 'title' => 'Configure hub tracks for '.$hub->species_defs->get_config($file->{'species'}, 'SPECIES_COMMON_NAME') });
+    my $sample_data = $hub->species_defs->get_config($file->{'species'}, 'SAMPLE_DATA') || {};
+    my $default_loc = $sample_data->{'LOCATION_PARAM'};
+    (my $menu_name = $file->{'name'}) =~ s/ /_/g;
+    $config_link = $hub->url({
+        species  => $file->{'species'},
+        type     => 'Location',
+        action   => 'View',
+        function => undef,
+        r        => $hub->param('r') || $default_loc,
+    });
+    ## Add menu name here, as we need it in icon link, below this block
+    $config_link .= '#modal_config_viewbottom-'.$menu_name;
+    $name .= sprintf('<br /><a href="%s">Configure hub</a>',
+      $config_link,
+    );
+  }
+
+  my $config_html = $config_link ? sprintf $conf_template, $config_link : '';
   my $share_html  = sprintf $share,  $hub->url({ action => 'SelectShare', %url_params });
   my $delete_html = sprintf $delete, $hub->url({ action => 'ModifyData', function => $file->{'url'} ? 'delete_remote' : 'delete_upload', %url_params });
   
@@ -242,7 +266,7 @@ sub table_row {
     species => sprintf('<em>%s</em>', $hub->species_defs->get_config($file->{'species'}, 'SPECIES_SCIENTIFIC_NAME')),
     assembly => $assembly,
     date    => sprintf('<span class="hidden">%s</span>%s', $file->{'timestamp'} || '-', $self->pretty_date($file->{'timestamp'}, 'simple_datetime')),
-    actions => "$download$save$share_html$delete_html",
+    actions => "$config_html$download$save$share_html$delete_html",
   };
 }
 

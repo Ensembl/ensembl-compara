@@ -1610,7 +1610,7 @@ sub hgvs_url {
   
   # Treat the URL differently depending on if it will take us to a regular page or a LRG page
   if ($refseq =~ /^LRG/) {
-    my ($id, $tr, $pr) = $refseq =~ m/^(LRG_\d+)\_?(t\d+)?\_?(p\d+)?$/; # Split the reference into LRG_id, transcript and protein
+    my ($id, $tr_pr, $tr_pr_id) = $refseq =~ m/^(LRG_\d+)(t|p)?(\d+)?$/; # Split the reference into LRG_id, transcript or protein
     
     $p->{'type'}    = 'LRG';
     $p->{'lrg'}     = $id;
@@ -1620,8 +1620,8 @@ sub hgvs_url {
       $p->{'action'}           = 'Summary';
       $p->{'contigviewbottom'} = $config_param;
     } else {
-      $p->{'action'} = 'Variation_LRG';
-      $p->{'lrgt'} = "${id}_$tr";
+      $p->{'action'} = 'Variation_LRG/Table';
+      $p->{'lrgt'} = "${id}t$tr_pr_id";
     }
   } else {
     if ($type eq 'g') { # genomic position

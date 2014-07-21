@@ -22,6 +22,7 @@ use strict;
 
 use JSON qw(from_json);
 use Scalar::Util qw(looks_like_number);
+use HTML::Entities qw(encode_entities);
 
 use Sanger::Graphics::ColourMap;
 
@@ -130,9 +131,8 @@ sub export_options {
     $index++;
     $options[$index] = $_->{'export_options'} if defined $_->{'export_options'};
   }
- 
-  (my $options = $self->jsonify(\@options)) =~ s/"/'/g;
-  return $options;
+
+  return $self->jsonify(\@options);
 }
 
 sub render {
@@ -184,7 +184,7 @@ sub render {
       
       foreach my $header (@{$self->{'spanning'}}) {
         my $span = $header->{'colspan'} || 1;
-        $thead .= qq(<th colspan="$span"><em>$header->{'title'}</em></th>);
+        $thead .= sprintf q(<th colspan="%s"><em>%s</em></th>), $span, encode_entities($header->{'title'});
       }
       
       $thead .= '</tr>';
@@ -222,7 +222,7 @@ sub render {
     my $id       = $options->{'id'};
        $id       =~ s/[\W_]table//g;
     my $filename = join '-', grep $_, $id, $self->filename;
-    my $options  = sprintf '<input type="hidden" name="expopts" value="%s" />', $self->export_options;
+    my $options  = sprintf '<input type="hidden" name="expopts" value="%s" />', encode_entities($self->export_options);
     
     $table .= qq{
       <form class="data_table_export" action="/Ajax/table_export" method="post">
@@ -329,8 +329,7 @@ sub data_table_config {
   my $sorting        = $session_data->{'sorting'} ?        from_json($session_data->{'sorting'})        : $self->{'options'}{'sorting'}        || [];
   my $hidden         = $session_data->{'hidden_columns'} ? from_json($session_data->{'hidden_columns'}) : $self->{'options'}{'hidden_columns'} || [];
   my $default_hidden = $self->{'options'}{'hidden_columns'} ? $self->jsonify({ map { $_ => 1 } @{$self->{'options'}{'hidden_columns'}} }) : '';
-     $default_hidden =~ s/"/'/g;
-  my $config         = qq{<input type="hidden" name="code" value="$code" />};
+  my $config         = sprintf '<input type="hidden" name="code" value="%s" />', encode_entities($code);
   my $sort           = [];
   
   foreach (@$sorting) {
@@ -340,27 +339,26 @@ sub data_table_config {
   }
   
   if (scalar @$sort) {
-    (my $aaSorting = $self->jsonify($sort)) =~ s/"/'/g;
-    $config .= qq{<input type="hidden" name="aaSorting" value="$aaSorting" />};
+    $config .= sprintf '<input type="hidden" name="aaSorting" value="%s" />', encode_entities($self->jsonify($sort));
   }
   
-  $config .= sprintf '<input type="hidden" name="hiddenColumns" value="%s" />', $self->jsonify($hidden) if scalar @$hidden;
-  $config .= qq{<input type="hidden" name="defaultHiddenColumns" value="$default_hidden" />} if $default_hidden;
-  
+  $config .= sprintf '<input type="hidden" name="hiddenColumns" value="%s" />', encode_entities($self->jsonify($hidden)) if scalar @$hidden;
+  $config .= sprintf '<input type="hidden" name="defaultHiddenColumns" value="%s" />', encode_entities($default_hidden) if $default_hidden;
+
   foreach (keys %{$self->{'options'}{'data_table_config'}}) {
     my $option = $self->{'options'}{'data_table_config'}{$_};
     my $val;
     
     if (ref $option) {
-      ($val = $self->jsonify($option)) =~ s/"/'/g;
+      $val = encode_entities($self->jsonify($option));
     } else {
       $val = $option;
     }
     
-    $config .= qq{<input type="hidden" name="$_" value="$val" />};
+    $config .= qq(<input type="hidden" name="$_" value="$val" />);
   }
   
-  $config .= sprintf '<input type="hidden" name="expopts" value="%s" />', $self->export_options;
+  $config .= sprintf '<input type="hidden" name="expopts" value="%s" />', encode_entities($self->export_options);
  
   return qq{<form class="data_table_config" action="#">$config</form>};
 }

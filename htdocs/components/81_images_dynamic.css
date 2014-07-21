@@ -163,6 +163,7 @@ span.sprite                   { float: left; width: 16px; margin: 2px 4px 0 4px;
 .fave_icon     { background-image: url(/i/16/swp/star.png);         }
 .info_icon     { background-image: url(/i/16/swp/info.png);         }
 .save_icon     { background-image: url(/i/16/swp/save.png);         }
+.config_icon   { background-image: url(/i/16/swp/setting.png);      }
 .delete_icon   { background-image: url(/i/16/swp/trash.png);        }
 .share_icon    { background-image: url(/i/16/swp/share.png);        }
 .download_icon { background-image: url(/i/16/swp/download.png);     }

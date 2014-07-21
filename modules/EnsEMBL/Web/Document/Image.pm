@@ -100,13 +100,13 @@ sub render_toolbar {
     my $resize_url = $hub->url;
     
     # add best fit option
-    $image_sizes .= qq{<div><a href="$resize_url" class="image_resize"><div>Best Fit</div></a></div>};
+    $image_sizes .= qq(<div><a href="$resize_url" class="image_resize"><div>Best Fit</div></a></div>);
     
     # get current image_width and provide size of +- 100 three times    
     for (my $counter = ($self->image_width-300);$counter <= ($self->image_width+300); $counter+=100) {      
       my $selected_size = 'class="current"' if($counter eq $self->image_width);
       my $hidden_width = ($counter < 500) ? "style='display:none'" : '';      
-      $image_sizes .= qq{<div $hidden_width><a href="$resize_url" class="image_resize"><div $selected_size>$counter px</div></a></div>};
+      $image_sizes .= qq(<div $hidden_width><a href="$resize_url" class="image_resize"><div $selected_size>$counter px</div></a></div>);
     }
     
     $image_resize = qq{
@@ -115,7 +115,7 @@ sub render_toolbar {
           $image_sizes    
        </div>    
     };    
-    $toolbar   .= qq{<a href="$resize_url" class="resize popup" title="Resize this image"></a>};    
+    $toolbar   .= qq(<a href="$resize_url" class="resize popup" title="Resize this image"></a>);    
   }  
   ## Image export popup menu
   if ($self->{'export'}) {
@@ -142,7 +142,7 @@ sub render_toolbar {
       if ($_->{'text'}) {
         next if $self->{'export'} =~ /no_text/;
 
-        $export .= qq{<div><div>$_->{'label'}</div><a href="$href;download=1"><img src="/i/16/download.png" alt="download" title="Download" /></a></div>};
+        $export .= qq(<div><div>$_->{'label'}</div><a href="$href;download=1"><img src="/i/16/download.png" alt="download" title="Download" /></a></div>);
         
       } elsif ($_->{'f'} eq 'pdf') {
         # option not to include pdf export
@@ -178,7 +178,7 @@ sub render_toolbar {
   }
 
   if ($toolbar) {
-    $top    = $self->toolbars->{'top'} ? qq{<div class="image_toolbar top print_hide">$toolbar</div>$export$image_resize} : '';
+    $top    = $self->toolbars->{'top'} ? qq(<div class="image_toolbar top print_hide">$toolbar</div>$export$image_resize) : '';
     $bottom = ($self->toolbars->{'bottom'} || $height > 999) ? sprintf '<div class="image_toolbar bottom print_hide">%s</div>%s', $toolbar, $top ? '' : "$export$image_resize" : '';
   }
 
@@ -327,11 +327,11 @@ sub set_button {
 sub extra_html {
   my $self  = shift;
   my $class =  'imagemap' . ($self->drawable_container->isa('EnsEMBL::Draw::VDrawableContainer') ? ' vertical' : '');
-  my $extra = qq{class="$class"};
+  my $extra = qq(class="$class");
 
 #  if ($self->imagemap eq 'yes') {
 #    my $map_name = $self->{'token'};
-#    $extra .= qq{usemap="#$map_name" };
+#    $extra .= qq(usemap="#$map_name" );
 #  }
   
   return $extra;
@@ -470,14 +470,18 @@ sub track_boundaries {
   my %track_ids       = map  { $_->id => 1 } @sortable_tracks;
   my %strand_map      = ( f => 1, r => -1 );
   my @boundaries;
-  
+ 
+  my $prev_section; 
   foreach my $glyphset (@{$container->{'glyphsets'}}) {
     next unless scalar @{$glyphset->{'glyphs'}};
-    
-    my $height = $glyphset->height + $spacing;
+
+    my $height = $glyphset->height + $spacing + $glyphset->section_height;
     my $type   = $glyphset->type;
     my $node;  
     
+    my $collapse = 0;
+    my $this_section = $glyphset->section;
+      
     if ($track_ids{$type}) {
       while (scalar @sortable_tracks) {
         my $track  = $sortable_tracks[0];
@@ -490,9 +494,16 @@ sub track_boundaries {
       $node = shift @sortable_tracks;
     }
     
-    push @boundaries, [ $top, $height, $type, $node->get('drawing_strand'), $node->get('order') ] if $node && $node->get('sortable') && !scalar keys %{$glyphset->{'tags'}};
+    if($node && $node->get('sortable') && !scalar keys %{$glyphset->{'tags'}}) {
+      if(!$this_section or !$prev_section or $this_section ne $prev_section) {
+        push @boundaries, [ $top, $height, $type, $node->get('drawing_strand'), $node->get('order') ];
+      } else {
+        $boundaries[-1]->[1] += $height;
+      }
+    }
     
     $top += $height;
+    $prev_section = $this_section;
   }
   
   return \@boundaries;

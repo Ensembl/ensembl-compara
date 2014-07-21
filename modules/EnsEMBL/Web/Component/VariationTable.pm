@@ -503,15 +503,24 @@ sub variation_table {
               )
             } @$evidence
           );
-          
+
+          my %clin_sign_icon;
+          foreach my $cs (@{$clin_sig}) {
+            my $icon_name = $cs;
+            $icon_name =~ s/ /-/g;
+            $clin_sign_icon{$cs} = $icon_name;
+          }
+
           $clin_sig = join("",
             map {
               sprintf(
                 '<img src="/i/val/clinsig_%s.png" class="_ht" title="%s"/><span class="hidden export">%s,</span>',
-                $_, $_, $_
+                $clin_sign_icon{$_}, $_, $_
               )
             } @$clin_sig
           );
+
+          my $transcript_name = ($url_transcript_prefix eq 'lrgt') ? $transcript->Obj->external_name : $transcript_stable_id;
           
           push @rows, {
             ID         => qq{<a href="$url">$variation_name</a>},
@@ -525,7 +534,7 @@ sub variation_table {
             Source     => $source,
             Submitters => %handles && defined($handles{$snp->{_variation_id}}) ? join(", ", @{$handles{$snp->{_variation_id}}}) : undef,
             snptype    => $type,
-            Transcript => qq{<a href="$trans_url">$transcript_stable_id</a>},
+            Transcript => qq{<a href="$trans_url">$transcript_name</a>},
             aachange   => $aachange,
             aacoord    => $aacoord,
             sift       => $sift,

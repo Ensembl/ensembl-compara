@@ -30,24 +30,33 @@ sub _init {
   $self->ajaxable(  0 );
 }
 
-sub content {
-  my $self    = shift;
-  my $object  = $self->object;
-  my $summary = $self->new_twocol;
+sub _location_url {
+  my ($self,$start,$end) = @_;
 
+  my $object  = $self->object;
   my $url = $self->hub->url({
     'type'   => 'Location',
     'action' => 'View',
-    'r'      => $object->seq_region_name.':'.$object->bound_start.'-'.$object->bound_end
+    'r'      => $object->seq_region_name.':'.$start.'-'.$end
   });
 
   my $location_html = sprintf('<p><a href="%s" class="constant">%s: %s-%s</a></p>',
     $url,
     $object->neat_sr_name( $object->seq_region_type, $object->seq_region_name ),
-    $object->thousandify( $object->seq_region_start ),
-    $object->thousandify( $object->seq_region_end ),
+    $object->thousandify( $start ),
+    $object->thousandify( $end ),
   );
+}
 
+sub content {
+  my $self    = shift;
+  my $object  = $self->object;
+  my $summary = $self->new_twocol;
+
+  my $location_html = $self->_location_url($object->seq_region_start,
+                                           $object->seq_region_end);
+  my $bound_html = $self->_location_url($object->bound_start,
+                                        $object->bound_end);
 
   my %active;
   my $all_objs = $object->fetch_all_objs;
@@ -57,9 +66,17 @@ sub content {
   }
   my $num_active = scalar(grep { $_->feature_set->cell_type->name !~ /MultiCell/ } @$all_objs);
 
-  $summary->add_row('Classification',$object->feature_type->name);
+  my @class = ($object->feature_type->name);
+  if(!$hub->is_new_regulation_pipeline) {
+    @class = grep { !/Unclassified/ } map { $_->feature_type->name } @$all_objs;
+  }
+
+  $summary->add_row('Classification',join(', ',@class));
   $summary->add_row('Location', $location_html);
-  $summary->add_row('Active in',$object->cell_type_count."/$num_active <small>(".join(', ',sort keys %active).")</small>");
+  $summary->add_row('Bound region', $bound_html) if $location_html ne $bound_html;
+  if($object->is_new_regulation_pipeline) {
+    $summary->add_row('Active in',$object->cell_type_count."/$num_active <small>(".join(', ',sort keys %active).")</small>");
+  }
 
   return $summary->render;
 }

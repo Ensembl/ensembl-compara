@@ -90,12 +90,14 @@ sub feature_set       { my $self = shift; return $self->Obj->feature_set;       
 sub feature_type      { my $self = shift; return $self->Obj->feature_type;              }
 sub slice             { my $self = shift; return $self->Obj->slice;                     }           
 sub seq_region_length { my $self = shift; return $self->Obj->slice->seq_region_length;  }
+
 sub has_evidence {
   my ($self) = @_;
 
   # Can be simple accessor for 76, but avoid breaking master
-  return $self->Obj->has_evidence if $self->Obj->can('has_evidence');
-  return 0;
+  return 1 unless $self->hub->is_new_regulation_pipeline;
+  return !!$self->Obj->has_evidence if $self->Obj->can('has_evidence');
+  return undef;
 }
 sub cell_type_count {
   my ($self) = @_;

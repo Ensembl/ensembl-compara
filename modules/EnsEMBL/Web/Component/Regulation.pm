@@ -71,6 +71,14 @@ sub all_evidences {
       }
     }
   }
+  foreach my $ev (keys %evidences) {
+    next unless $evidences{$ev}->{'group'} eq 'Histone';
+    my $histone = 'Other';
+    if($ev =~ /^(H\d)/) {
+      $histone = $1;
+    }
+    $evidences{$ev}->{'cluster'} = $histone;
+  }
   return { all => \%evidences, mode => $mode };
 }
 

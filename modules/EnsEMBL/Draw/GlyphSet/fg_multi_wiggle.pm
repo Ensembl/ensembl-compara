@@ -252,7 +252,7 @@ sub display_error_message {
   
   return unless $config->get_option('opt_empty_tracks') == 1; 
   
-  $self->draw_track_name(join(' ', $config->hub->get_adaptor('get_FeatureTypeAdaptor', 'funcgen')->get_regulatory_evidence_info($set)->{'label'}, $cell_line), 'black', -118,  2, 1);
+  $self->draw_track_name(join(' ', $config->hub->get_adaptor('get_FeatureTypeAdaptor', 'funcgen')->get_regulatory_evidence_info($set)->{'label'}), 'black', -118,  2, 1);
   $self->display_no_data_error(sprintf '%s/%s available feature sets turned on', map scalar keys %{$self->data_by_cell_line($config)->{$cell_line}{$set}{$_} || {}}, qw(on available));
   
   return 1;

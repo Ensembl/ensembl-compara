@@ -60,82 +60,88 @@ sub content_ajax {
   my $formats = $hub->species_defs->REMOTE_FILE_FORMATS;
   my $html;
   
-  if (grep /^$format$/i, @$formats) {
-    $html .= '<p>We cannot parse large file formats to navigate to the nearest feature. Please select appropriate coordinates after closing this window</p>';
-  } else {
-    my $size = int($data->{'filesize'} / (1024 ** 2));
+  unless ($format eq 'DATAHUB' && $hub->param('assembly') !~ $hub->species_defs->get_config($hub->data_species, 'ASSEMBLY_NAME')) { ## Don't give parsing message if this is a hub and we can't show it!
+    if (grep /^$format$/i, @$formats) {
+      $html .= '<p>We cannot parse large file formats to navigate to the nearest feature. Please select appropriate coordinates after closing this window</p>';
+    } 
+    else {
+      my $size = int($data->{'filesize'} / (1024 ** 2));
   
-    if ($size > 10) {
-      $html .= "<p>Your uncompressed file is over $size MB, which may be very slow to parse and load. Please consider using a smaller dataset.</p>";
-    } else {
-      my $content;
+      if ($size > 10) {
+        $html .= "<p>Your uncompressed file is over $size MB, which may be very slow to parse and load. Please consider using a smaller dataset.</p>";
+      } 
+      else {
+        my $content;
       
-      if ($type eq 'url') {
-        $content = get_url_content($data->{'url'})->{'content'};
-      }  elsif ($type eq 'upload') {
-        $content = EnsEMBL::Web::TmpFile::Text->new(filename => $data->{'filename'}, extension => $data->{'extension'})->retrieve;
-      }
+        if ($type eq 'url') {
+          $content = get_url_content($data->{'url'})->{'content'};
+        }  
+        elsif ($type eq 'upload') {
+          $content = EnsEMBL::Web::TmpFile::Text->new(filename => $data->{'filename'}, extension => $data->{'extension'})->retrieve;
+        }
 
-      if ($content) {      
-        my $error   = $parser->parse($content, $data->{'format'});
-        my $nearest = $parser->nearest;
-           $nearest = undef if $nearest && !$hub->get_adaptor('get_SliceAdaptor')->fetch_by_region('toplevel', split /[^\w|\.]/, $nearest); # Make sure we have a valid location
+        if ($content) {      
+          my $error   = $parser->parse($content, $data->{'format'});
+          my $nearest = $parser->nearest;
+          $nearest = undef if $nearest && !$hub->get_adaptor('get_SliceAdaptor')->fetch_by_region('toplevel', split /[^\w|\.]/, $nearest); # Make sure we have a valid location
         
-        if ($nearest) {
-          $data->{'format'}  ||= $parser->format;
-          $data->{'style'}     = $parser->style;
-          $data->{'nearest'}   = $nearest;
-    
-          $session->set_data(%$data);
-          $session->configure_user_data($type, $data);
-    
-          $html .= sprintf '<p class="space-below"><strong>Total features found</strong>: %s</p>', $parser->feature_count;
-    
           if ($nearest) {
+            $data->{'format'}  ||= $parser->format;
+            $data->{'style'}     = $parser->style;
+            $data->{'nearest'}   = $nearest;
+    
+            $session->set_data(%$data);
+            $session->configure_user_data($type, $data);
+    
+            $html .= sprintf '<p class="space-below"><strong>Total features found</strong>: %s</p>', $parser->feature_count;
+    
+            if ($nearest) {
+              $html .= sprintf('
+                <p class="space-below"><strong>Go to %s region with data</strong>: <a href="%s;contigviewbottom=%s">%s</a></p>
+                <p class="space-below">or</p>',
+                $hub->referer->{'params'}{'r'} ? 'nearest' : 'first',
+                $hub->url({
+                  species  => $data->{'species'},
+                  type     => 'Location',
+                  action   => 'View',
+                  function => undef,
+                  r        => $nearest,
+                  __clear => 1
+                }),
+                join(',', map $_ ? "$_=on" : (), $data->{'analyses'} ? split ', ', $data->{'analyses'} : join '_', $data->{'type'}, $data->{'code'}),
+                $nearest
+              );
+            }
+          } 
+          else {
+            if ($error) {
+              $error = sprintf 'Region %s does not exist.', $parser->nearest if $error eq $parser->nearest;
+              $error = qq{<p class="space-below">$error</p>};
+            }
+        
             $html .= sprintf('
-              <p class="space-below"><strong>Go to %s region with data</strong>: <a href="%s;contigviewbottom=%s">%s</a></p>
+              <div class="ajax_error">
+                %s
+                <p class="space-below">None of the features in your file could be mapped to the %s genome.</p>
+                <p class="space-below">Please check that you have selected the right species.</p>
+              </div>
+              <p class="space-below"><a href="%s" class="modal_link" rel="modal_user_data">Delete upload and start again</a></p>
               <p class="space-below">or</p>',
-              $hub->referer->{'params'}{'r'} ? 'nearest' : 'first',
+              $error,
+              $hub->species_defs->get_config($data->{'species'}, 'SPECIES_SCIENTIFIC_NAME'),
               $hub->url({
-                species  => $data->{'species'},
-                type     => 'Location',
-                action   => 'View',
-                function => undef,
-                r        => $nearest,
-                __clear => 1
-              }),
-              join(',', map $_ ? "$_=on" : (), $data->{'analyses'} ? split ', ', $data->{'analyses'} : join '_', $data->{'type'}, $data->{'code'}),
-              $nearest
+                action   => 'ModifyData',
+                function => 'delete_upload',
+                goto     => 'SelectFile',
+                code     => $hub->param('code'),
+              })
             );
           }
-        } else {
-          if ($error) {
-            $error = sprintf 'Region %s does not exist.', $parser->nearest if $error eq $parser->nearest;
-            $error = qq{<p class="space-below">$error</p>};
-          }
-        
-          $html .= sprintf('
-            <div class="ajax_error">
-              %s
-              <p class="space-below">None of the features in your file could be mapped to the %s genome.</p>
-              <p class="space-below">Please check that you have selected the right species.</p>
-            </div>
-            <p class="space-below"><a href="%s" class="modal_link" rel="modal_user_data">Delete upload and start again</a></p>
-            <p class="space-below">or</p>',
-            $error,
-            $hub->species_defs->get_config($data->{'species'}, 'SPECIES_SCIENTIFIC_NAME'),
-            $hub->url({
-              action   => 'ModifyData',
-              function => 'delete_upload',
-              goto     => 'SelectFile',
-              code     => $hub->param('code'),
-            })
-          );
         }
       }
     }
   }
-  
+
   $html .= '<p>Close this window to return to current page</p>';
 
   return $html;

@@ -37,10 +37,9 @@ sub _content_li {
 
   my $class;
   $class .= "off" unless $on;
+  $class .= "heading" if $on>1;
   return qq(
-    <li class="$class" data-key="$key">
-      <span>$content</span>
-    </li>);
+    <li class="$class" data-key="$key">$content</li>);
 }
 
 sub content_ajax {
@@ -54,43 +53,57 @@ sub content_ajax {
   my $extra_inputs = join '', map sprintf('<input type="hidden" name="%s" value="%s" />', encode_entities($_), encode_entities($url->[1]{$_})), sort keys %{$url->[1]};
   my $select_by    = join '', map sprintf('<option value="%s">%s</option>', @$_), @{$self->{'select_by'} || []};
      $select_by    = qq{<div class="select_by"><h2>Select by type:</h2><select><option value="">----------------------------------------</option>$select_by</select></div>} if $select_by;
-  my ($include_html);
+  my @display;
   foreach my $category ((@all_categories,undef)) {
     # The data
-    my ($include_list,@all);
-    @all = sort { $a cmp $b } keys %all;
-    foreach my $key (@all) {
+    my %items;
+    foreach my $key (keys %all) {
       if(defined $category) {
         my $my_category = ($self->{'category_map'}||{})->{$key};
         $my_category ||= $self->{'default_category'};
         if($my_category) {
-          next unless $my_category eq $category;
+          next unless $my_category eq $category; # in a cat, is it ours?
         } else {
-          next;
+          next; # in a cat, we don't have one
         }
       } else {
-        next if $self->{'category_map'}{$key} || $self->{'default_category'};
+        # not in a cat
+        next if ($self->{'category_map'}||{})->{$key} || $self->{'default_category'};
       }
+      my $cluster = ($self->{'cluster_map'}||{})->{$key} || '';
+      push @{$items{$cluster}||=[]},$key;
+    }
+    push @display,{
+      category => $category,
+      clusters => \%items
+    };
+  }
+  my $include_html;
+  foreach my $d (@display) {
+    my $include_list;
 
-      my $fragment = $self->_content_li($key,$all{$key},$included{$key});
-      $include_list .= $fragment;
+    foreach my $cluster (sort { $a cmp $b } keys %{$d->{'clusters'}}) {
+      my $cluster_list;
+      my $heading = '';
+      if($cluster) {
+        $heading .= "<h4>$cluster:</h4>";
+      }
+      foreach my $key (sort { $a cmp $b } @{$d->{'clusters'}{$cluster}}) {
+        $cluster_list .=
+          $self->_content_li($key,$all{$key},!!$included{$key});
+      }
+      $include_list .= qq(<div>$heading<ul class="included">$cluster_list</ul></div>);
     }
 
     # The heading
     my $include_title = $self->{'included_header'};
-    my $category_heading = ($self->{'category_titles'}||{})->{$category} || $category;
+    my $category_heading = ($self->{'category_titles'}||{})->{$d->{'category'}} || $d->{'category'};
     $category_heading = '' unless defined $category_heading;
     $include_title =~ s/\{category\}/$category_heading/g;
 
     # Do it
-    my $catdata = $category||'';
-    next unless $include_list or $category;
-    $include_html .= qq(
-      <h2>$include_title</h2>
-      <ul class="included" data-category="$catdata">
-        $include_list
-      </ul>
-    );
+    next unless $include_list or $d->{'category'};
+    $include_html .= qq(<h2>$include_title</h2>$include_list);
   }
 
   my $content      = sprintf('
@@ -106,15 +119,26 @@ sub content_ajax {
     $include_html,
   );
   
-  my $hint = qq{
-    <div class="multi_selector_hint info">
-      <h3>Tip</h3>
-      <div class="error-pad">
-        <p>Click on the plus and minus buttons to select or deselect options.</p>
-        <p>Selected options can be reordered by dragging them to a different position in the list</p>
+  my $hint = qq(
+    <div class="cloud_flip_hint">
+      <div class="cloud_flip_hint_wrap">
+        <div class="info">
+          <h3>tip</h3>
+          <div class="error_pad">
+            <h1>click to flip</h1>
+            <span class="on">ON</span>
+            <span class="flip_icon"></span>
+            <span class="off">OFF</span>
+          </div>
+        </div>
+      </div>
+      <div class="cloud_filter">
+        <h2>filter</h2>
+        <input type="text" name="cloud_filter" id="cloud_filter" tabindex="0" class="ftext"/>
+        <a href="#" class="cloud_filter_clear">clear filter</a>
       </div>
     </div>
-  };
+  );
  
   my $param_mode = $self->{'param_mode'};
   $param_mode ||= 'multi';

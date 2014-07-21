@@ -31,8 +31,8 @@ sub _init {
  
   $self->{'panel_type'}      = 'EvidenceSelector';
   $self->{'link_text'}       = 'Select evidence';
-  $self->{'included_header'} = 'Selected {category} evidence';
-  $self->{'excluded_header'} = 'Unselected {category} evidence';
+  $self->{'included_header'} = '{category}';
+  $self->{'excluded_header'} = '{category}';
   $self->{'url_param'}       = 'evidence';
   $self->{'rel'}             = 'modal_select_evidence';
 }
@@ -53,12 +53,15 @@ sub content_ajax {
   my %inc_options;
   $inc_options{$inc_options[$_]} = $_+1 for(0..$#inc_options);
   my %evidence_categories = map { $_ => $all_evidences->{$_}{'group'} } keys %$all_evidences;
+  my %evidence_clusters = map { $_ => $all_evidences->{$_}{'cluster'} } keys %$all_evidences;
   $self->{'categories'} = [ uniq(values %evidence_categories) ];
+
 
   $self->{'all_options'}      = \%all_options;
   $self->{'included_options'} = \%inc_options;
   $self->{'param_mode'} = 'single';
   $self->{'category_map'} = \%evidence_categories;
+  $self->{'cluster_map'} = \%evidence_clusters;
 
   $self->SUPER::content_ajax;
 }

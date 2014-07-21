@@ -204,9 +204,15 @@ sub new {
     }
     else {
       ## set the X-locations for each of the bump labels
+
+      my $section = '';
       foreach my $glyphset (@glyphsets) {
+        my $new_section = $glyphset->section;
+        if($section ne $new_section) {
+          $section = $new_section;
+          $glyphset->section_text($section);
+        }
         next unless defined $glyphset->label;
-      
         my $img = $glyphset->label_img;
         my $img_width = 0;
         my $img_pad = 4;
@@ -247,7 +253,7 @@ sub new {
         ## remove any whitespace at the top of this row
         my $gminy = $glyphset->miny;
       
-        $config->{'transform'}->{'translatey'} = -$gminy + $yoffset;
+        $config->{'transform'}->{'translatey'} = -$gminy + $yoffset + $glyphset->section_height;
 
         if ($bgcolour_flag && $glyphset->_colour_background) {
           ## colour the area behind this strip
@@ -296,11 +302,27 @@ sub new {
             }));
           }
         }
-      
+
+        if($glyphset->section_text) {
+          my $section = $glyphset->section_text;
+          $glyphset->push($glyphset->Text({
+            font => 'Arial',
+            ptsize => 12,
+            text => $section,
+            height => 16,
+            colour    => 'black',
+            x => -$label_width - $margin,
+            y => -$glyphset->section_height + 4,
+            width => $label_width - $margin,
+            halign => 'left',
+            absolutex => 1,
+          }));
+        }
+
         $glyphset->transform;
       
         ## translate the top of the next row to the bottom of this one
-        $yoffset += $glyphset->height + $trackspacing;
+        $yoffset += $glyphset->height + $trackspacing + $glyphset->section_height;
         $self->timer_push('track finished', 3);
         $self->timer_push(sprintf("INIT: [X] $name '%s'", $glyphset->{'my_config'}->get('name')), 2);
       }
