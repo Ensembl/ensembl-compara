@@ -144,11 +144,6 @@ sub counts {
       my $vdb = $self->species_defs->get_config($self->species,'databases')->{'DATABASE_VARIATION'};
       $counts->{structural_variation} = $vdb->{'tables'}{'structural_variation'}{'rows'};
     }
-    if ($member) {
-      $counts->{'orthologs'}  = $member->number_of_orthologues;
-      $counts->{'paralogs'}   = $member->number_of_paralogues;
-      $counts->{'families'}   = $member->number_of_families;
-    }
     my $alignments = $self->count_alignments;
     $counts->{'alignments'} = $alignments->{'all'} if $self->get_db eq 'core';
     $counts->{'pairwise_alignments'} = $alignments->{'pairwise'} + $alignments->{'patch'};

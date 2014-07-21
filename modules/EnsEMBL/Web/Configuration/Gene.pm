@@ -128,7 +128,7 @@ sub populate_tree {
   
   $compara_menu->append($tree_node);
     
-  my $ol_node = $self->create_node('Compara_Ortholog', 'Orthologues ([[counts::orthologs]])',
+  my $ol_node = $self->create_node('Compara_Ortholog', 'Orthologues',
     [qw( orthologues EnsEMBL::Web::Component::Gene::ComparaOrthologs )],
     { 'availability' => 'gene database:compara core has_orthologs', 'concise' => 'Orthologues' }
   );
@@ -140,7 +140,7 @@ sub populate_tree {
   
   $compara_menu->append($ol_node);
   
-  my $pl_node = $self->create_node('Compara_Paralog', 'Paralogues ([[counts::paralogs]])',
+  my $pl_node = $self->create_node('Compara_Paralog', 'Paralogues',
     [qw(paralogues EnsEMBL::Web::Component::Gene::ComparaParalogs)],
     { 'availability' => 'gene database:compara core has_paralogs', 'concise' => 'Paralogues' }
   );
@@ -152,7 +152,7 @@ sub populate_tree {
   
   $compara_menu->append($pl_node);
   
-  my $fam_node = $self->create_node('Family', 'Protein families ([[counts::families]])',
+  my $fam_node = $self->create_node('Family', 'Protein families',
     [qw( family EnsEMBL::Web::Component::Gene::Family )],
     { 'availability' => 'family', 'concise' => 'Protein families' }
   );
