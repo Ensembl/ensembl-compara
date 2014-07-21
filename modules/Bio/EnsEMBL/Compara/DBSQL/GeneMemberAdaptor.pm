@@ -136,7 +136,7 @@ sub _columns {
 
 sub create_instance_from_rowhash {
 	my ($self, $rowhash) = @_;
-	
+
 	return Bio::EnsEMBL::Compara::GeneMember->new_fast({
 		adaptor         => $self,
 		dbID            => $rowhash->{gene_member_id},
@@ -152,12 +152,12 @@ sub create_instance_from_rowhash {
 		_source_name    => $rowhash->{source_name},
 		_display_label  => $rowhash->{display_label},
             _canonical_member_id => $rowhash->{canonical_member_id},
-            _families       => $rowhash->{families},
-            _gene_trees     => $rowhash->{gene_trees},
-            _gene_gain_loss_trees      => $rowhash->{gene_gain_loss_trees},
-            _orthologues    => $rowhash->{orthologues},
-            _paralogues     => $rowhash->{paralogues},
-            _homoeologues   => $rowhash->{homoeologues},
+            _num_families      => $rowhash->{families},
+            _has_genetree   => $rowhash->{gene_trees},
+            _has_genegainlosstree  => $rowhash->{gene_gain_loss_trees},
+            _num_orthologues    => $rowhash->{orthologues},
+            _num_paralogues     => $rowhash->{paralogues},
+            _num_homoeologues   => $rowhash->{homoeologues},
 	});
 }
 
