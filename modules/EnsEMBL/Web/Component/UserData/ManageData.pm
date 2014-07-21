@@ -238,8 +238,8 @@ sub table_row {
   ## Link for valid datahub  
   my ($config_link, $conf_template);
   if ($file->{'format'} eq 'DATAHUB' && $hub->species_defs->get_config($file->{'species'}, 'ASSEMBLY_NAME') eq $file->{'assembly'}) {
-    $conf_template  = $self->_icon({ link_class => 'modal_link',  class => 'config_icon', 'title' => 'Configure hub tracks for '.$file->{'species'} });
-    my $sample_data = $hub->species_defs->get_config($hub->data_species, 'SAMPLE_DATA') || {};
+    $conf_template  = $self->_icon({ link_class => 'modal_link',  class => 'config_icon', 'title' => 'Configure hub tracks for '.$hub->species_defs->get_config($file->{'species'}, 'SPECIES_COMMON_NAME') });
+    my $sample_data = $hub->species_defs->get_config($file->{'species'}, 'SAMPLE_DATA') || {};
     my $default_loc = $sample_data->{'LOCATION_PARAM'};
     (my $menu_name = $file->{'name'}) =~ s/ /_/g;
     $config_link = $hub->url({
