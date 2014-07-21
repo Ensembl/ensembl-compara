@@ -283,7 +283,7 @@ sub add_archive_link {
       else {
         $link = sprintf('%s/%s', $site, $hub->url());
       }
-      $title = "$alt_assembly archive";
+      $title = $hub->species_defs->ENSEMBL_SITETYPE.' '.$alt_assembly;
     }
   }
   else {
