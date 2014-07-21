@@ -47,7 +47,8 @@ sub init {
     [ 'draggable', '', 'draggable', { display => 'normal', strand => 'b', menu => 'no' }],
   );
  
-  $self->add_track('transcript', 'gencode', 'Basic Gene Annotations from GENCODE 20', '_gencode', {
+  my $gencode_version = $self->hub->species_defs->GENCODE ? $self->hub->species_defs->GENCODE->{'version'} : '';
+  $self->add_track('transcript', 'gencode', "Basic Gene Annotations from GENCODE $gencode_version", '_gencode', {
     display     => 'off',       
     description => 'The GENCODE set is the gene set for human and mouse. GENCODE Basic is a subset of representative transcripts (splice variants).',
     sortable    => 1,
@@ -64,7 +65,7 @@ sub init {
       'collapsed_label',         'Collapsed with labels',
       'transcript_label_coding', 'Coding transcripts only (in coding genes)',
     ],
-  }) if($self->species eq "Homo_sapiens" || $self->species eq "Mus_musculus");  #this is a hack for now, should be fixed for 76 by checking the web_data
+  }) if($gencode_version);
   
   $self->add_tracks('sequence',
     [ 'contig', 'Contigs',  'contig', { display => 'normal', strand => 'r' }]

@@ -76,6 +76,9 @@ sub feature_content {
   my $alleles       = length $allele < 16 ? $allele : substr($allele, 0, 14) . '..';
   my $gmaf          = $feature->minor_allele_frequency . ' (' . $feature->minor_allele . ')' if defined $feature->minor_allele;
   my ($lrg_bp, $codon_change);
+
+  my $var_styles = $self->hub->species_defs->colour('variation');
+  my $colourmap  = $self->hub->colourmap;
   
   $self->new_feature;
   
@@ -104,18 +107,35 @@ sub feature_content {
       }
     }
   }
+
+
+
+  my $color = $var_styles->{$type} ? $colourmap->hex_by_name($var_styles->{$type}->{'default'}) : $colourmap->hex_by_name($var_styles->{'default'}->{'default'});
+  my $consequence_label = $types->{$type}{'text'};
+
+  if ($feature->most_severe_OverlapConsequence->SO_term eq $type) {
+    my $cons_desc = $feature->most_severe_OverlapConsequence->description;
+    $consequence_label = sprintf(
+         '<nobr><span class="colour" style="background-color:%s">&nbsp;</span> '.
+         '<span class="_ht conhelp coltab_text" title="%s">%s</span></nobr>',
+         $color,
+         $cons_desc,
+         $types->{$type}{'text'}
+    );
+  }
+
+  my $sources = join(', ', @{$feature->get_all_sources});
   
   my @entries = (
-    [ 'bp',             $bp                                      ],
-    [ 'Class',          $feature->var_class                      ],
-    [ 'Ambiguity code', $feature->ambig_code                     ],
-    [ 'Alleles',        $alleles                                 ],
-    [ 'Source',         join(', ', @{$feature->get_all_sources}) ],
-    [ 'Type',           $types->{$type}{'text'}                  ],
+    [ 'Class',    $feature->var_class ],
+    [ 'Location', $bp                 ]
   );
-  
-  unshift @entries, [ 'LRG bp',     $lrg_bp ] if $lrg_bp;
-  push    @entries, [ 'Global MAF', $gmaf   ] if defined $gmaf;
+  push @entries, [ 'LRG location',   $lrg_bp              ] if $lrg_bp;
+  push @entries, [ 'Alleles',        $alleles             ];
+  push @entries, [ 'Ambiguity code', $feature->ambig_code ];
+  push @entries, [ 'Global MAF',     $gmaf                ] if defined $gmaf;
+  push @entries, [ 'Consequence',    $consequence_label   ];
+  push @entries, [ 'Source',         $sources             ];
   
   if ($transcript_id) {
     foreach (@{$feature->get_all_TranscriptVariations}) {
@@ -134,7 +154,7 @@ sub feature_content {
 
   if ($db eq 'variation') {
     $self->add_entry({
-      label_html => "$name properties",
+      label_html => "more about $name",
       link       => $hub->url({
         type   => 'Variation',
         action => 'Explore',
@@ -161,20 +181,20 @@ sub feature_content {
     }
   }
   
-  $self->add_entry({ type => $_->[0], label => $_->[1] }) for grep $_->[1], @entries;
+  $self->add_entry({ type => $_->[0], label_html => $_->[1] }) for grep $_->[1], @entries;
   $self->add_entry({ label_html => $codon_change }) if $codon_change;
 
   if ($var_box && $var_box ne '-') {
     $self->add_entry({
       type     => 'Amino acid',
       label    => $var_box,
-      position => 5
+      position => 6
     });
   } elsif ($snp_fake || $hub->type eq 'Variation') {    
     $self->add_entry({
-      type     => 'Status',
+      type     => 'Evidence',
       label    => join(', ', @{$feature->get_all_evidence_values || []}) || '-',
-      position => $snp_fake && $lrg_bp ? 4 : 3
+      position => (scalar @entries)+1 # Above "Source"
     });
   }
   

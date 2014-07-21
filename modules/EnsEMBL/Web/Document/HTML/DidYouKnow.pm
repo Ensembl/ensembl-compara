@@ -58,10 +58,20 @@ sub render {
     }
   }
 
-  ## Now pick a random tip and display it
-  if (scalar(@$tips)) {
-    $html .= sprintf q(<div class="info-box did-you-know"><h3>Did you know&hellip;?</h3>%s</div>), $tips->[ int(rand(scalar(@$tips))) ]->{'content'};
+  ## Shuffle tips to give a random order
+  my @shuffled;
+  while (@$tips) {
+    my $i = int(rand(scalar(@$tips)));
+    my $random_tip = splice @$tips, $i, 1;
+    push @shuffled, $random_tip;
   }
+
+  ## "Carousel" of tips
+  $html .= '<div class="info-box did-you-know"><h3>Did you know&hellip;?</h3><div class="owl-carousel">';
+  foreach (@shuffled) {
+    $html .= sprintf('<div>%s</div>', $_->{'content'});
+  }
+  $html .= '</div></div>';
 
   return $html;
 }

@@ -49,10 +49,19 @@ sub render {
         my %multi = $species_defs->multiX($key);
         my %config = keys %multi ? %multi : %{$species_defs->get_config($sp, $key)||{}};
         next unless keys %config;
-        my %assemblies = $config{'assemblies'} ? @{$config{'assemblies'}} : ($sp => $config{'assembly'});
+        my %assemblies;
+        if ($config{'assemblies'}) {
+          %assemblies = @{$config{'assemblies'}};
+        }
+        else {
+          foreach (@{$config{'assembly'}}) {
+            $assemblies{$_} = $sp;
+          }
+        }
         $config{'priority'} = 0 unless $config{'priority'};
         $datahubs{$key} = {'menu' => $menu, %config};
-        while (my ($sp, $assembly) = each (%assemblies)) {
+        foreach my $assembly (sort { $assemblies{$a} cmp $assemblies{$b} || $a cmp $b } keys %assemblies) {
+          my $sp = $assemblies{$assembly};
           if ($datahubs{$key}{'species'}) {
             push @{$datahubs{$key}{'species'}}, {'dir' => $sp, 'common' => $species_defs->get_config($sp, 'SPECIES_COMMON_NAME'), 'assembly' => $assembly};
           }
@@ -82,15 +91,17 @@ sub render {
     foreach my $sp_info (@{$hub_info->{'species'}}) {
       my $species = $sp_info->{'dir'};
 
-      my $site = '';
       if ($species_defs->multidb->{'DATABASE_ARCHIVE'}{'NAME'}) {
         ## Get best archive for older releases
         my $archive_version = $species_defs->ENSEMBL_VERSION;
         ## Spaces are problematic in ini file arrays
-        (my $assembly_name = $species_defs->get_config($species, 'ASSEMBLY_NAME')) =~ s/ /_/; 
-        unless ($assembly_name =~ /$sp_info->{'assembly'}/i) {
+        (my $current_assembly = $species_defs->get_config($species, 'ASSEMBLY_NAME')) =~ s/ /_/; 
+        if ($current_assembly =~ /$sp_info->{'assembly'}/i) {
+          $sp_info->{'site'} = 'current';
+        }
+        else {
           if ($species eq 'Homo_sapiens' && $sp_info->{'assembly'} eq 'GRCh37') {
-            $site = 'http://grch37.ensembl.org'; 
+            $sp_info->{'site'} = 'http://grch37.ensembl.org'; 
           }
           else {
             my $archives = $adaptor->fetch_archives_by_species($species);
@@ -98,25 +109,34 @@ sub render {
               (my $assembly = $archives->{$_}{'assembly'}) =~ s/ /_/; 
               if ($assembly =~ /$sp_info->{'assembly'}/i) {
                 $archive_version = $_;
-                $site = sprintf('http://%s.archive.ensembl.org', $archives->{$_}{'archive'});
+                $sp_info->{'site'} = sprintf('http://%s.archive.ensembl.org', $archives->{$_}{'archive'});
                 last;
               }
             }
+            $sp_info->{'site'} = '' if $archive_version < 75;
           }
         }
-        ## Don't link back to archives with no datahub support!
-        next if $archive_version < 69;
+        ## Don't link back to archives with no/buggy datahub support!
       }
 
       my $location = $species_defs->get_config($species, 'SAMPLE_DATA')->{'LOCATION_PARAM'};
-      my $link = sprintf('%s/%s/Location/View?r=%s;contigviewbottom=url:%s;format=DATAHUB;menu=%s#modal_config_viewbottom-%s',
+      if ($sp_info->{'site'}) {
+        my $site = $sp_info->{'site'} eq 'current' ? '' : $sp_info->{'site'};
+        my $link = sprintf('%s/%s/Location/View?r=%s;contigviewbottom=url:%s;format=DATAHUB;menu=%s#modal_user_data',
                         $site, $sp_info->{'dir'}, $location,
                         $hub_info->{'url'}, $hub_info->{'menu'}, $hub_info->{'menu'}
-                        );
-      $species_html .= sprintf('<p><a href="%s"><img src="/i/species/16/%s.png" alt="%s" style="float:left;padding-right:4px" /></a> <a href="%s">%s (%s)</a></p>', 
+                      );
+        $species_html .= sprintf('<p><a href="%s"><img src="/i/species/16/%s.png" alt="%s" style="float:left;padding-right:4px" /></a> <a href="%s">%s (%s)</a></p>', 
                           $link, $sp_info->{'dir'}, $sp_info->{'common'}, 
                           $link, $sp_info->{'common'}, $sp_info->{'assembly'},
                         );
+      }
+      else {
+        $species_html .= sprintf('<p><img src="/i/species/16/%s.png" alt="%s" style="float:left;padding-right:4px" /> %s (%s)</p>', 
+                          $sp_info->{'dir'}, $sp_info->{'common'}, 
+                          $sp_info->{'common'}, $sp_info->{'assembly'},
+                        );
+      }
     } 
     $table->add_row({
               'name'        => $hub_info->{'name'},

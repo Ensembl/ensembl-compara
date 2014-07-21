@@ -141,7 +141,29 @@ sub supporting_evidence_table {
       my $sv_class = '<div><div style="float:left;background-color:'.$colour.';padding:5px;margin-top:4px"></div> <div style="float:left;margin-left:5px">'.$ssv_obj->var_class.'</div></div>';
        
       # Annotation(s)
-      my $clin = $ssv_obj->clinical_significance;
+      my $clin_sign = $ssv_obj->get_all_clinical_significance_states;
+
+      my %clin_sign_icon;
+      foreach my $cs (@{$clin_sign}) {
+        my $icon_name = $cs;
+        $icon_name =~ s/ /-/g;
+        $clin_sign_icon{$cs} = $icon_name;
+      }
+
+      my $clin = join('',
+         map {
+           sprintf(
+             '<img class="_ht" style="margin-right:6px;margin-bottom:-2px;vertical-align:top" title="%s" src="/i/val/clinsig_%s.png" />',
+             $_, $clin_sign_icon{$_}
+           )
+         } @$clin_sign
+      );
+
+      if ($clin_sign) {
+        my $clin_export = sprintf('<span class="hidden export">%s</span>', join(',',@$clin_sign));
+        $clin = $clin_export.$clin;
+      }
+
       my ($indiv, $strain, $phen);
       my ($indivs, $strains, $phens);
       

@@ -541,16 +541,20 @@ sub alphabetise_tracks {
   
   my $name = $track->data->{$key};
   my ($after, $node_name);
-  
-  foreach (@{$menu->child_nodes}) {
-    $node_name = $_->data->{$key};
-    $after     = $_ if $node_name && $node_name lt $name;
+
+  if (scalar(@{$menu->child_nodes}) > 1) {  
+    foreach (@{$menu->child_nodes}) {
+      $node_name = $_->data->{$key};
+      $after     = $_ if $node_name && $node_name lt $name;
+    }
+    if ($after) {
+      $after->after($track);
+    } else {
+      $menu->prepend_child($track);
+    }
   }
-  
-  if ($after) {
-    $after->after($track);
-  } else {
-    $menu->prepend_child($track);
+  else {
+    $menu->append_child($track);
   }
 }
 
@@ -742,16 +746,17 @@ sub _add_datahub {
   my $hub_info = $parser->get_hub_info($url); ## Do we have data for this species?
   
   if ($hub_info->{'error'}) {
-    warn "!!! COULD NOT CONTACT DATAHUB $url: $hub_info->{'error'}";
+    warn "!!! COULD NOT CONTACT DATAHUB $url: @{$hub_info->{'error'}||{}}";
   } else {
     my $shortLabel = $hub_info->{'details'}{'shortLabel'};
     $menu_name = $shortLabel if $shortLabel and $is_poor_name;
 
     my $menu     = $existing_menu || $self->tree->append_child($self->create_submenu($menu_name, $menu_name, { external => 1, datahub_menu => 1 }));
 
-    my $golden_path = $self->hub->species_defs->get_config($self->species, 'UCSC_GOLDEN_PATH');
-    my $source_list = $hub_info->{'genomes'}{$golden_path} || [];
-    
+    my $assembly = $self->hub->species_defs->get_config($self->species, 'UCSC_GOLDEN_PATH')
+                        || $self->hub->species_defs->get_config($self->species, 'ASSEMBLY_NAME');
+    my $source_list = $hub_info->{'genomes'}{$assembly} || [];
+   
     return unless scalar @$source_list;
     
     ## Get tracks from hub
@@ -771,7 +776,7 @@ sub _add_datahub {
       }
     }
   }
-  return $menu_name;
+  return ($menu_name, $hub_info);
 }
 
 sub _add_datahub_node {
@@ -1359,7 +1364,27 @@ sub update_from_url {
         
         # We then have to create a node in the user_config
         if (uc $format eq 'DATAHUB') {
-          $n = $self->_add_datahub($n, $p,1);
+          my $info;
+          ($n, $info) = $self->_add_datahub($n, $p,1);
+          my $assemblies = $info->{'genomes'}
+                        || [$hub->species_defs->get_config($hub->species, 'ASSEMBLY_NAME')];
+          my %ensembl_assemblies = %{$hub->species_defs->assembly_lookup};
+
+          foreach (keys %$assemblies) {
+            my ($data_species, $assembly) = @{$ensembl_assemblies{$_}||[]};
+            if ($assembly) {
+              my $data = $session->add_data(
+                type        => 'url',
+                url         => $p,
+                species     => $data_species,
+                code        => join('_', md5_hex($n . $data_species . $assembly . $p), $session->session_id),
+                name        => $n,
+                format      => $format,
+                style       => $style,
+                assembly    => $assembly,
+              );
+            }
+          }
         } else {
           $self->_add_flat_file_track(undef, 'url', "url_$code", $n, 
             sprintf('Data retrieved from an external webserver. This data is attached to the %s, and comes from URL: %s', encode_entities($n), encode_entities($p)),
@@ -1368,16 +1393,16 @@ sub update_from_url {
           );
 
           $self->update_track_renderer("url_$code", $renderer);
+          $session->set_data(
+            type    => 'url',
+            url     => $p,
+            species => $species,
+            code    => $code,
+            name    => $n,
+            format  => $format,
+            style   => $style,
+          );
         }       
-        $session->set_data(
-          type    => 'url',
-          url     => $p,
-          species => $species,
-          code    => $code,
-          name    => $n,
-          format  => $format,
-          style   => $style,
-        );
       } elsif ($type eq 'das') {
         $p = uri_unescape($p);
 
@@ -2772,7 +2797,9 @@ sub add_regulation_builds {
       description => $fg_data{$key_2}{'description'}{'reg_feats'},
       display     => $display,
       renderers   => \@renderers,
-      cell_line   => $cell_line
+      cell_line   => $cell_line,
+      section => $cell_line,
+      caption    => "Reg. Feats",
     }));
     
     if ($fg_data{"seg_$cell_line"}{'key'} eq "seg_$cell_line") {
@@ -2788,8 +2815,9 @@ sub add_regulation_builds {
         description => $fg_data{"seg_$cell_line"}{'description'},
         renderers   => \@renderers,
         cell_line   => $cell_line,
-        caption     => "Reg. Segs $cell_line",
+        caption     => "Reg. Segs",
         track_after => $prev_track,
+        section => $cell_line,
       }));
     }
     
@@ -2800,6 +2828,7 @@ sub add_regulation_builds {
       depth     => $fg_data{$key_2}{'depth'} || 0.5,
       colourset => 'feature_set',
       cell_line => $cell_line,
+      section   => $cell_line,
       menu_key  => 'regulatory_features',
       renderers => [
         'off',            'Off', 
@@ -2813,14 +2842,16 @@ sub add_regulation_builds {
       $prev_track = $self->add_matrix({
         track_name  => "$evidence_info->{$_}{'name'}$label",
         track_after => $prev_track,
+        section => $cell_line,
         matrix      => {
           menu   => $matrix_menus{$_}->id,
           column => $cell_line,
+          section => $cell_line,
           rows   => [ values %{$matrix_rows{$cell_line}{$_}} ],
         },
         column_data => {
           set         => $_,
-          label       => "$evidence_info->{$_}{'label'} $label",
+          label       => "$evidence_info->{$_}{'label'}",
           description => $fg_data{$key_2}{'description'}{$_},
           %column_data
         }, 
