@@ -248,21 +248,25 @@ sub add_archive_link {
   return unless $alt_assembly;
   my $current_assembly = $hub->species_defs->ASSEMBLY_NAME;
   my $alt_release = $hub->species_defs->SWITCH_VERSION;
-  my $url = 'http://'.$hub->species_defs->SWITCH_ARCHIVE_URL;
+  my $site = 'http://'.$hub->species_defs->SWITCH_ARCHIVE_URL;
   my ($link, $title);
-  
-  if ($current_assembly ne $alt_assembly && $alt_release < $hub->species_defs->ENSEMBL_VERSION) {
+
+  if ($current_assembly ne $alt_assembly ) {
   ## get coordinates on other assembly if available
+
     if ($self->object && $self->object->slice) {
       if (my @mappings = @{$hub->species_defs->get_config($hub->species, 'ASSEMBLY_MAPPINGS')||[]}) {
-        foreach my $mapping (@mappings) {
-          next unless $mapping eq sprintf ('chromosome:%s#chromosome:%s', $current_assembly, $alt_assembly);
+        my $mapping;
+        foreach $mapping (@mappings) {
+          last if $mapping eq sprintf ('chromosome:%s#chromosome:%s', $current_assembly, $alt_assembly);
+        }
+        if ($mapping) {
           my $segments = $self->object->slice->project('chromosome', $alt_assembly);
           ## link if there is an ungapped mapping of whole gene
           if (scalar(@$segments) == 1) {
             my $new_slice = $segments->[0]->to_Slice;
             $link = sprintf('%s%s/Location/%s?r=%s:%s-%s',
-                          $url,
+                          $site,
                           $hub->species_path,
                           $hub->action,
                           $new_slice->seq_region_name,
@@ -272,20 +276,20 @@ sub add_archive_link {
             last;  
           }
         }
+        else {
+          $link = sprintf('%s/%s', $site, $hub->url());
+        }
       }
       else {
-        $link = sprintf('%s%s/Location/%s',
-                          $url,
-                          $hub->species_path,
-                          $hub->action,
-                );
+        $link = sprintf('%s/%s', $site, $hub->url());
       }
       $title = "$alt_assembly archive";
     }
   }
   else {
+
     $link = sprintf('%s%s/Search/Results?q=%s',
-                    $url, $hub->species_path, $hub->param('r'),
+                    $site, $hub->species_path, $hub->param('r'),
             );
     $title = $hub->species_defs->ENSEMBL_SITETYPE.' '.$alt_assembly
   }
