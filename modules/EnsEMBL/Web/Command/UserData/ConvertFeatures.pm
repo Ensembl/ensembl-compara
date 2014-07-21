@@ -21,6 +21,7 @@ package EnsEMBL::Web::Command::UserData::ConvertFeatures;
 use strict;
 
 use Bio::EnsEMBL::DnaDnaAlignFeature;
+use Bio::EnsEMBL::Utils::Exception qw(try catch);
 
 use EnsEMBL::Web::Object::Export;
 use EnsEMBL::Web::TmpFile::Text;
@@ -42,7 +43,8 @@ sub process {
   my $new_cs     = $csa->fetch_by_name(shift @conversion, shift @conversion);
   my $mapper     = $ama->fetch_by_CoordSystems($old_cs, $new_cs);
   my $gaps;
-  
+  my $error;
+
   foreach my $id (grep $_, $hub->param('convert_file')) {
     ## Get data for remapping
     my ($file, $name) = split ':', $id;
@@ -84,9 +86,23 @@ sub process {
     
     ## Loop through features
     ## NB - this next bit only works for GFF export!
-    foreach my $f (@fs) {    
-      my @coords = $mapper->map($f->seqname, $f->start, $f->end, $f->strand, $old_cs);
-
+    foreach my $f (@fs) {   
+  
+      my @coords; 
+      try {
+        @coords = $mapper->map($f->seqname, $f->start, $f->end, $f->strand, $old_cs);
+      } catch {
+        warn $_;
+        if ($_ =~ /MSG:/) {
+          ($error) = $_ =~ m/MSG: (.*)$/m;
+        } else {
+          $error = $_;
+        }
+      };
+      
+      if ($error) {
+        $url_params->{'error'} = $error if $error;
+      }
       foreach my $new (@coords) {
         if (ref($new) =~ /Gap/) {
           $gaps++;
