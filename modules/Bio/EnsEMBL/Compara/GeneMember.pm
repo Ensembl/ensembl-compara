@@ -268,37 +268,49 @@ sub get_all_SeqMembers {
 
 sub number_of_families {
   my ($self, $num_families) = @_;
-  $self->{'_num_families'} = shift if(@_);
+  if (defined $num_families) {
+      $self->{'_num_families'} = $num_families;
+  }
   return $self->{'_num_families'};
 }
 
 sub has_GeneTree {
   my ($self, $has_genetree) = @_;
-  $self->{'_has_genetree'} = shift if(@_);
+  if (defined $has_genetree) {
+      $self->{'_has_genetree'} = $has_genetree;
+  }
   return $self->{'_has_genetree'};
 }
 
 sub has_GeneGainLossTree {
   my ($self, $has_genegainlosstree) = @_;
-  $self->{'_has_genegainlosstree'} = shift if(@_);
+  if (defined $has_genegainlosstree) {
+      $self->{'_has_genegainlosstree'} = $has_genegainlosstree;
+  }
   return $self->{'_has_genegainlosstree'};
 }
 
 sub number_of_orthologues {
   my ($self, $num_orthologues) = @_;
-  $self->{'_num_orthologues'} = shift if(@_);
+  if (defined $num_orthologues) {
+      $self->{'_num_orthologues'} = $num_orthologues;
+  }
   return $self->{'_num_orthologues'};
 }
 
 sub number_of_paralogues {
   my ($self, $num_paralogues) = @_;
-  $self->{'_num_paralogues'} = shift if(@_);
+  if (defined $num_paralogues) {
+      $self->{'_num_paralogues'} = $num_paralogues;
+  }
   return $self->{'_num_paralogues'};
 }
 
 sub number_of_homoeologues {
   my ($self, $num_homoeologues) = @_;
-  $self->{'_num_homoeologues'} = shift if(@_);
+  if (defined $num_homoeologues) {
+      $self->{'_num_homoeologues'} = $num_homoeologues;
+  }
   return $self->{'_num_homoeologues'};
 }
 
