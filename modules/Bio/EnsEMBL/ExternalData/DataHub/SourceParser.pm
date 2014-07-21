@@ -99,7 +99,7 @@ sub get_hub_info {
   
   my $response = $ua->get("$url/$hub_file");
   
-  return { error => $response->status_line } unless $response->is_success;
+  return { error => [$response->status_line] } unless $response->is_success;
   
   my %hub_details;
   
@@ -109,11 +109,11 @@ sub get_hub_info {
     $hub_details{$line[0]} = $line[1];
   }
   
-  return { error => 'No genomesFile found' } unless $hub_details{'genomesFile'};
+  return { error => ['No genomesFile found'] } unless $hub_details{'genomesFile'};
   
   $response = $ua->get("$url/$hub_details{'genomesFile'}"); ## Now get genomes file and parse
   
-  return { error => 'genomesFile: ' . $response->status_line } unless $response->is_success;
+  return { error => ['genomesFile: ' . $response->status_line] } unless $response->is_success;
   
   (my $genome_file = $response->content) =~ s/\r//g;
   my %genome_info;
