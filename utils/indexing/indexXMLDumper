@@ -78,7 +78,8 @@ my $boosts = {
 			      'is_ref' => '10',
 			     },
 	      'Family' => {
-			   'All' => '50',
+			   'species' => '50',
+                           'ms'      => '10', 
 			  },
 	      'GeneTree' => {
 			     'All' => '50',
@@ -1577,11 +1578,11 @@ sub dumpFamily {
     # uniprot records linked to families do not have a species to filter on so link them to the cross species view
     my $uniprot_members;
     my $sth = $conf->{'dbh_compara'}->prepare(qq(
-        SELECT f.stable_id as family_id, m.stable_id as uniprot_id
-          FROM family f, family_member fm, member m
+        SELECT f.stable_id as family_id, sm.stable_id as uniprot_id
+          FROM family f, family_member fm, seq_member sm
          WHERE f.family_id = fm.family_id
-           AND fm.member_id = m.member_id
-           AND m.source_name like 'Uniprot%'));
+           AND fm.seq_member_id = sm.seq_member_id
+           AND sm.source_name like 'Uniprot%'));
     $sth->execute;
     while( my( $fid, $uniprot_id ) = $sth->fetchrow_array()) {
       push @{$uniprot_members->{$fid}}, $uniprot_id;
@@ -1625,54 +1626,58 @@ sub dumpFamily {
         SELECT tl.stable_id as transl, t.stable_id as trans
           FROM translation tl, transcript t
          WHERE tl.transcript_id = t.transcript_id),'transl');
+#  warn
   my $gene_members = $conf->{'dbh_compara'}->selectall_hashref(qq(
-        SELECT m.member_id, m.stable_id
-          FROM member m, genome_db gdb
-         WHERE m.genome_db_id = gdb.genome_db_id
-           AND m.source_name = 'ENSEMBLGENE'
-           AND gdb.name = '$dbspecies'),'member_id');
+        SELECT gm.gene_member_id, gm.stable_id
+          FROM gene_member gm, genome_db gdb
+         WHERE gm.genome_db_id = gdb.genome_db_id
+           AND gm.source_name = 'ENSEMBLGENE'
+           AND gdb.name = '$dbspecies'),'gene_member_id');
   my $protein_members = $conf->{'dbh_compara'}->selectall_hashref(qq(
-        SELECT m.member_id, m.stable_id
-          FROM member m, genome_db gdb
-         WHERE m.genome_db_id = gdb.genome_db_id
-           AND m.source_name = 'ENSEMBLPEP'
-           AND gdb.name = '$dbspecies'),'member_id');
+        SELECT sm.seq_member_id, sm.stable_id
+          FROM seq_member sm, genome_db gdb
+         WHERE sm.genome_db_id = gdb.genome_db_id
+           AND sm.source_name = 'ENSEMBLPEP'
+           AND gdb.name = '$dbspecies'),'seq_member_id');
   #get all families
   my $sth = $conf->{'dbh_compara'}->prepare(qq(
     select f.stable_id,
            f.description,
-           group_concat(fm.member_id)
-      from family as f, family_member as fm, member m
+           group_concat(fm.seq_member_id),
+           group_concat(gm.gene_member_id)
+      from family as f, family_member as fm, seq_member sm, gene_member gm
      where f.family_id = fm.family_id
-       and fm.member_id = m.member_id
-       and m.source_name not like 'Uniprot%'
+       and fm.seq_member_id = sm.seq_member_id
+       and sm.gene_member_id = gm.gene_member_id
+       and sm.source_name not like 'Uniprot%'
      group by f.stable_id ));
   $sth->execute();
   my $X = $conf->{'authority'} || 'Ensembl';
-  while( my( $fid, $desc, $member_ids ) = $sth->fetchrow_array()) {
+  while( my( $fid, $desc, $seq_member_ids,$gene_member_ids ) = $sth->fetchrow_array()) {
     $desc =~ s/(\S+)\/(\S+)/$1 \/ $2/g;
-    my (@genes,%proteins,%transcripts);
-    foreach my $id (split ',', $member_ids) {
-      if ($gene_members->{$id}) {
-	my $stable_id = $gene_members->{$id}{'stable_id'};
-	my $display_label = $gene_names->{$stable_id} || '';
-	my $dets = { stable_id     => $stable_id };
-	$dets->{'display_label'}   = $display_label if $display_label;
-        push @genes, $dets;
-      }
-      elsif (my $tl_id = $protein_members->{$id}{'stable_id'}) {
-        $proteins{$tl_id}++;
-	my $t_id = $transl->{$tl_id}{'trans'};
-	$transcripts{$t_id}++;
+    my (%genes,%proteins,%transcripts);
+    foreach my $gene_id (split ',',$gene_member_ids) {
+      if ($gene_members->{$gene_id}) {
+	my $stable_id = $gene_members->{$gene_id}{'stable_id'};
+	my $display_label = $gene_names->{$stable_id} || 'none';
+        $genes{$stable_id}{display_label} = $display_label;
       }
     }
-    if (@genes) {
-      my $ensembl_genes_species    = scalar @genes;
+    foreach my $tl_id (split ',', $seq_member_ids) {
+      if ($protein_members->{$tl_id}) {
+        my $tl_sid = $protein_members->{$tl_id}{'stable_id'};
+        $proteins{$tl_sid}++;
+	my $t_sid = $transl->{$tl_sid}{'trans'};
+	$transcripts{$t_sid}++;
+      }
+    }
+    if (%genes) {
+      my $ensembl_genes_species    = scalar (keys %genes);
       my $ensembl_peptides_species = scalar (keys %proteins);
       my $genes   = $ensembl_genes_species == 1 ? 'gene' : 'genes';
       my $peptide = $ensembl_peptides_species == 1 ? 'protein' : 'proteins';
       my $full_desc = qq($X protein family $fid [$desc]: $ensembl_genes_species $genes / $ensembl_peptides_species $peptide in $species);
-      &p( FamilyLine($dbspecies,$fid,$full_desc,$multi_species,\@genes,\%proteins,\%transcripts,'',$counter ), $fh);
+      &p( FamilyLine($dbspecies,$fid,$full_desc,$multi_species,\%genes,\%proteins,\%transcripts,'',$counter ), $fh);
     }
   }
   return footer( $counter->(), $fh);
@@ -1681,7 +1686,7 @@ sub dumpFamily {
 sub FamilyLine {
   my($species,$fid,$desc,$ms,$genes,$proteins,$transcripts,$uniprots,$counter) = @_;
   my ($url,$xml);
-  my $boost = $boosts->{'Family'}{'All'};
+  my $boost = $ms ? $boosts->{'Family'}{'ms'} : $boosts->{'Family'}{'species'};
   my $doc = $boost ? qq(doc boost="$boost") : 'doc';
   $desc = &clean($desc,'desc');
   $xml = qq(
@@ -1704,23 +1709,27 @@ sub FamilyLine {
   else {
     $xml .= qq(
   <field name="description">$desc</field>);
-    my $sample_g = $genes->[0]{'stable_id'};
-    $url = sprintf(qq(%s/Gene/Family?family=%s;g=%s),
-		   $species,
-		   $fid,
-		   $sample_g,
-		  );
-    $species =~ s/_/ /;
-    my %seengenes;
-    foreach my $g (@$genes){
-      my $id   = $g->{'stable_id'};
+    my $sample_g;
+    my %seen_names;
+    foreach my $gsi (keys $genes){
+      unless ($sample_g) {
+        $sample_g = $gsi;
+        $url = sprintf(qq(%s/Gene/Family?family=%s;g=%s),
+                       $species,
+                       $fid,
+                       $sample_g,
+                     );
+        $species =~ s/_/ /;
+      }
       $xml .= qq(
-  <field name="assoc_gene">$id</field>);
-      my $name = $g->{'display_label'};
-      unless ($seengenes{'names'}{$name}) {
-	$seengenes{'names'}{$name}++;
-	$xml .= qq(
+  <field name="assoc_gene">$gsi</field>);
+      my $name = $genes->{$gsi}{'display_label'};
+      unless ($seen_names{$name}) {
+        unless ($name eq 'none') {
+          $seen_names{$name}++;
+          $xml .= qq(
   <field name="assoc_gene_name">$name</field>);
+        }
       }
     }
     foreach my $id (keys %$proteins){
@@ -2413,7 +2422,39 @@ sub dumpTranscript {
       }
       print LOG "    $type xref query done ".&date_and_mem()."\n";
     }
-#    warn Dumper(\%xrefs); exit;
+#    warn Dumper(\%xrefs); #exit;
+
+    print LOG "    Getting supporting evidence... ".&date_and_mem()."\n";
+    my $supporting_evidence;
+    foreach my $t ('dna_align_feature','protein_align_feature') {
+      my $sql = qq(
+        SELECT t.stable_id, f.hit_name, edb.db_display_name
+          FROM transcript t, transcript_supporting_feature tsf, $t f
+          LEFT JOIN external_db edb ON f.external_db_id = edb.external_db_id
+         WHERE t.transcript_id = tsf.transcript_id
+           AND tsf.feature_id = f.${t}_id and tsf.feature_type = '$t');
+      my $sth = $conf->{'dbh'}->prepare($sql);
+      $sth->execute();
+      while (my ($tsi,$hit,$db) = $sth->fetchrow_array()) {
+        $supporting_evidence->{$tsi}{$db}{$hit}++;
+      }
+      $sql = qq(
+        SELECT t.stable_id, f.hit_name, edb.db_display_name
+          FROM transcript t, exon_transcript et, supporting_feature sf, $t f
+          LEFT JOIN external_db edb ON f.external_db_id = edb.external_db_id
+         WHERE t.transcript_id = et.transcript_id
+           AND et.exon_id = sf.exon_id
+           AND sf.feature_id = f.${t}_id
+           AND sf.feature_type = '$t');
+      $sth = $conf->{'dbh'}->prepare($sql);
+      $sth->execute();
+      while (my ($tsi,$hit,$db) = $sth->fetchrow_array()) {
+        $supporting_evidence->{$tsi}{$db}{$hit}++;
+      }
+    }
+
+    warn Data::Dumper::Dumper($supporting_evidence); exit;
+
 
     my %trans_syns = ();
     if ($sitetype eq 'Vega') {
@@ -2477,6 +2518,7 @@ sub dumpTranscript {
        ORDER by t.stable_id);
     $sth = $conf->{'dbh'}->prepare($sql);
     $sth->execute();
+
 
     my $old;
     my $c = 0;
