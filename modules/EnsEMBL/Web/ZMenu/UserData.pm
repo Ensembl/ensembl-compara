@@ -127,7 +127,7 @@ sub feature_content {
     { type => 'Score',      label => $feature->{'score'}, name => 'score' },
   );
 
-  if(ref $feature ne 'HASH' && $feature->can('id')) {
+  if(ref $feature ne 'HASH' && $feature->can('id') && $feature->id ne $caption) {
     push @entries, { type => 'Name', label => $feature->id, name => 'name' };
   }
 
