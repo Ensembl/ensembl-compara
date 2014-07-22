@@ -48,7 +48,7 @@ sub content {
   $table->add_columns(
     { key => 'id',          title => 'Family ID',                            width => '20%', align => 'left', sort => 'html'   },
     { key => 'annot',       title => 'Consensus annotation',                 width => '30%', align => 'left', sort => 'string' },
-    { key => 'transcripts', title => "Other $gene_label transcripts in this family", width => '30%', align => 'left', sort => 'html'   },
+    { key => 'proteins', title => "Other $gene_label proteins in this family", width => '30%', align => 'left', sort => 'html'   },
     { key => 'jalview',     title => 'Multiple alignments',                  width => '20%', align => 'left', sort => 'none'   }
   );
 
@@ -62,12 +62,12 @@ sub content {
     $row->{'id'}  .= sprintf('(<a href="%s">%s %s</a>)', $hub->url($url_params), scalar @$genes, $label);
     $row->{'annot'}        = $families->{$family_id}{'info'}{'description'};
 
-    $row->{'transcripts'}  = '<ul class="compact">';
+    $row->{'proteins'}  = '<ul class="compact">';
     foreach my $t ( @{$family->{'transcripts'}}) {
       (my $name) = $t->display_xref;
       $label = $name ? ' ('.$name.')' : '';
-      my $url = $hub->url({type => 'Transcript', action => 'Summary', t => $t->stable_id });
-      $row->{'transcripts'} .= sprintf '<li><a href="%s">%s</a>%s</li>', $url, $t->stable_id, $label;
+      my $url = $hub->url({type => 'Transcript', action => 'ProteinSummary', t => $t->stable_id });
+      $row->{'proteins'} .= sprintf '<li><a href="%s">%s</a>%s</li>', $url, $t->Obj->translation->stable_id, $label;
     }
     $row->{'transcripts'} .= '</ul>';
 
