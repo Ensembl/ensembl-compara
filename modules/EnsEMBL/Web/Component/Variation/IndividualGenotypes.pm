@@ -141,8 +141,8 @@ sub summary_tables {
       { key => 'Description', title => 'Description',         width => '55%', sort => 'html'                       },
     );
   }
-  
-  foreach my $pop (sort keys %$all_pops) {
+
+  foreach my $pop (sort { ($a !~ /ALL/ cmp $b !~ /ALL/) || $a cmp $b } keys %$all_pops) {
     my $row_count   = scalar @{$rows->{$pop}};
     my $pop_name    = $all_pops->{$pop} || 'Other individuals';
     my $description = $descriptions{$pop} || '';
@@ -150,7 +150,10 @@ sub summary_tables {
     
     if (length $description > 75 && $self->html_format) {
       while ($description =~ m/^.{75}.*?(\s|\,|\.)/g) {
-        $description = substr($description, 0, (pos $description) - 1) . '...(more)';
+        my $extra_desc =  substr($description, (pos $description));
+           $extra_desc =~ s/,/ /g;
+        $description  = qq{<span class="hidden export">$full_desc</span>};
+        $description .= substr($description, 0, (pos $description) - 1) . qq{... <span class="_ht" title="... $extra_desc">(more)</span>};
         last;
       }
     }
@@ -176,7 +179,7 @@ sub summary_tables {
     
     $table->add_row({
       Population  => $pop_name,
-      Description => qq{<span title="$full_desc">$description</span>},
+      Description => $description,
       count       => $row_count,
       view        => $self->ajax_add($self->ajax_url(undef, { pop => $pop, update_panel => 1 }), $pop),
     });
