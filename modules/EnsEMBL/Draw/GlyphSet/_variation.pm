@@ -72,7 +72,15 @@ sub features {
     $self->errorTrack("Variation features are not displayed for regions larger than ${max_length}Kb");
     return [];
   } else {
-    return $self->fetch_features;
+    my $features_list = $self->fetch_features;
+    if (!scalar(@$features_list)) {
+      my $track_name = $self->my_config('caption'); 
+      $self->errorTrack("No $track_name data for this region");
+      return [];
+    }
+    else {
+      return $features_list;
+    }
   }
 }
 
