@@ -55,6 +55,9 @@ sub upload {
   
   $params->{'name'} = $name;
 
+  ## Some uploads shouldn't be viewable as tracks, e.g. assembly converter input
+  my $no_attach = $type eq 'no_attach') ? 1 : 0;
+
   ## Has the user specified a format?
   if ($f_param) {
     $format = $f_param;
@@ -124,6 +127,7 @@ sub upload {
           name      => $name,
           species   => $params->{'species'},
           format    => $format,
+          no_attach => $no_attach,
           timestamp => time,
           assembly  => $hub->species_defs->get_config($params->{'species'}, 'ASSEMBLY_NAME'),
           %inputs
