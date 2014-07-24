@@ -162,7 +162,16 @@ sub features {
     $self->cache($id, $features);
   }
       
-  return $self->cache($id) || [];
+  my $features_list = $self->cache($id);
+  if (scalar @$features_list) {
+    return $features_list;
+  }
+  else {
+    my $track_name = $self->my_config('caption');
+    $self->errorTrack("No $track_name data for this region");
+    return [];
+  }
+
 }
 
 sub tag {
