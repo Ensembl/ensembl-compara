@@ -20,7 +20,7 @@ package EnsEMBL::Web::Component::StructuralVariation::Mappings;
 
 use strict;
 
-use base qw(EnsEMBL::Web::Component);
+use base qw(EnsEMBL::Web::Component::StructuralVariation);
 
 sub _init {
   my $self = shift;
