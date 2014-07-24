@@ -2202,6 +2202,7 @@ sub dumpGene {
                        $old->{'desc'},
                        $old->{'xrefs'},
                        $old->{'synonyms'},
+                       '',
                        $gene_locations->{$old_gsi},
                        $db,
                        $counter),
@@ -2270,6 +2271,7 @@ sub dumpGene {
                         $old->{'desc'},
                         $old->{'xrefs'},
                         $old->{'synonyms'},
+                        '',
                         $gene_locations->{$old_gsi},
                         $db,
                         $counter),
@@ -2422,9 +2424,7 @@ sub dumpTranscript {
       }
       print LOG "    $type xref query done ".&date_and_mem()."\n";
     }
-#    warn Dumper(\%xrefs); #exit;
 
-    print LOG "    Getting supporting evidence... ".&date_and_mem()."\n";
     my $supporting_evidence;
     foreach my $t ('dna_align_feature','protein_align_feature') {
       my $sql = qq(
@@ -2453,8 +2453,9 @@ sub dumpTranscript {
       }
     }
 
-    warn Data::Dumper::Dumper($supporting_evidence); exit;
+    print LOG "    Supporting evidence query done... ".&date_and_mem()."\n";
 
+#    warn Data::Dumper::Dumper($supporting_evidence); exit;
 
     my %trans_syns = ();
     if ($sitetype eq 'Vega') {
@@ -2547,6 +2548,7 @@ sub dumpTranscript {
                         $old->{'desc'},
                         $old->{'xrefs'},
                         $old->{'synonyms'},
+                        $old->{'supporting_evidence'},
                         $trans_locations->{$old_tsi},
                         $db,
                         $counter),
@@ -2581,6 +2583,15 @@ sub dumpTranscript {
             push @{$old->{'xrefs'}}, $xref;
           }
         }
+
+        #add supporting_evidence
+        if ($supporting_evidence->{$tsid}) {
+          foreach my $db (keys %{$supporting_evidence->{$tsid}}) {
+            foreach my $hit (keys %{$supporting_evidence->{$tsid}{$db}}) {
+              $old->{'supporting_evidence'}{$hit} = "$hit ($db) is used as supporting evidence for transcript $tsid";
+            }
+          }
+        }
       }
       else {
         $old->{'tlsids'}{$tlsid} = $tlver if $tlsid;
@@ -2592,6 +2603,14 @@ sub dumpTranscript {
                  : '';
           foreach my $xref (@{$xrefs{$type}{$id}}) {
             push @{$old->{'xrefs'}}, $xref;
+          }
+        }
+        #add supporting_evidence
+        if ($supporting_evidence->{$tsid}) {
+          foreach my $db (keys %{$supporting_evidence->{$tsid}}) {
+            foreach my $hit (keys %{$supporting_evidence->{$tsid}{$db}}) {
+              $old->{'supporting_evidence'}{$hit} = "$hit ($db) is used as supporting evidence for transcript $tsid";
+            }
           }
         }
       }
@@ -2610,6 +2629,7 @@ sub dumpTranscript {
                         $old->{'desc'},
                         $old->{'xrefs'},
                         $old->{'synonyms'},
+                        $old->{'supporting_evidence'},
                         $trans_locations->{$old_tsi},
                         $db,
                         $counter),
@@ -2627,7 +2647,7 @@ sub dumpTranscript {
 }
 
 sub GeneTransLine {
-  my ($type, $species, $id, $tsids, $tlsids, $exons, $biotype, $ad_label, $disp_xref, $desc, $xrefs, $synonyms, $feat_loc, $db, $counter) = @_;
+  my ($type, $species, $id, $tsids, $tlsids, $exons, $biotype, $ad_label, $disp_xref, $desc, $xrefs, $synonyms, $supporting_evidence, $feat_loc, $db, $counter) = @_;
 
   #get stable ID of object
   my ($sid,$sid_ver);
@@ -2683,8 +2703,18 @@ sub GeneTransLine {
    $xml .=qq(
   <field name="quick_links">$quick_links</field>);
   }
-  my (%seen_labels,%seen_syns,%seen_sources,@labels);
-  foreach my $xref (@$xrefs) {
+  my (%seen_labels,%seen_syns,%seen_sources,%labels);
+
+  #treat supporting evidence as we do xrefs (if we decide to change it then need to update solr)
+  foreach my $hit (keys %$supporting_evidence) {
+    $hit = &clean($hit);
+    $labels{$hit}++;
+    my $se_desc = &clean($supporting_evidence->{$hit});
+    $xml .= qq(
+  <field name="__hr">$se_desc</field>);
+  }
+
+ foreach my $xref (@$xrefs) {
     my $search_term = $xref->{'search_term'};
     my $xref_id     = $xref->{'id'};
     my $desc        = $xref->{'desc'};
@@ -2697,12 +2727,13 @@ sub GeneTransLine {
     next if ($xref_id eq $sid) || ( grep {$_ eq $xref_id} keys(%$tsids), keys(%$tlsids));
 
     $search_term = &clean($search_term);
-    push @labels, $search_term;
+    $labels{$search_term}++;
     $desc        = &clean($desc);
     $xml .= qq(
   <field name="_hr">$desc</field>);
   }
-  my $xrefs = join ' ', @labels;
+
+  my $xrefs = join ' ', keys %labels;
     $xml .= qq(
   <field name="xrefs">$xrefs</field>);
   my %seen_syns;
