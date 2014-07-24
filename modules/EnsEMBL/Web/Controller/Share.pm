@@ -320,7 +320,7 @@ sub accept {
     
     if ($image_config && scalar keys %{$config->{'image_config'}}) {
       $image_config->set_user_settings($config->{'image_config'});
-      $image_config->altered = 1;
+      push @{$image_config->altered}, 'Tracks on image';
     }
     
     if (scalar keys %{$config->{'view_config'}}) {
@@ -328,7 +328,7 @@ sub accept {
       $view_config->altered = 1;
     }
     
-    if ($view_config->altered || ($image_config && $image_config->altered)) {
+    if (scalar $view_config->altered || ($image_config && scalar @{$image_config->altered})) {
       push @revert, [ sprintf('
         <a class="update_panel config-reset" rel="%s" href="%s">Revert to previous configuration%%s</a>',
         $view_config->component,

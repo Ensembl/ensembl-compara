@@ -100,8 +100,9 @@ sub update_track_renderer {
 
   # if $on_off == 1, only allow track enabling/disabling. Don't allow enabled tracks' renderer to be changed.
   $flag += $node->set_user('display', $renderer) if $valid_renderers{$renderer} && (!$on_off || $renderer eq 'off' || $node->get('display') eq 'off');
-  
-  $self->altered = 1 if $flag;
+ 
+  my $text = $node->data->{'name'} || $node->data->{'coption'}; 
+  push @{$self->altered}, $text if $flag;
   
   delete $self->{'user_settings'}{$self->species}{$key} if $flag && !$node->user_data->{$key};
 }
@@ -114,7 +115,7 @@ sub update_track_order {
     my $order   = $self->{'user_settings'}{$species}{'track_order'}{$species} || {};
     
     $self->{'user_settings'}{$species}{'track_order'}{$species} = { %$order, %{$diff->{'track_order'}} };
-    $self->altered = 1;
+    push @{$self->altered}, 'Track order';
     
     return $self->get_parameter('sortable_tracks') ne 'drag';
   } else {
@@ -134,7 +135,7 @@ sub reset {
       my $user_data = $self->{'user_settings'}{$species};
       
       foreach (keys %$user_data) {
-        $self->altered = 1 if $user_data->{$_}{'display'};
+        push @{$self->altered}, $_ if $user_data->{$_}{'display'};
         delete $user_data->{$_}{'display'};
         delete $user_data->{$_} unless scalar keys %{$user_data->{$_}};
       }
@@ -144,7 +145,7 @@ sub reset {
       my $node = $self->get_node('track_order');
       
       if ($self->{'user_settings'}{$species}{'track_order'}) {
-        $self->altered = 1;
+        push @{$self->altered}, 'Track order';
         delete $self->{'user_settings'}{$species}{'track_order'};
       }
     }
