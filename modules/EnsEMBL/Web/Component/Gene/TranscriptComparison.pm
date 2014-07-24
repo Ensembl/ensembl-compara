@@ -115,7 +115,7 @@ sub selected_transcripts {
 sub export_options {
   my $self      = shift;
   my %selected  = $self->selected_transcripts;
-  my @t_params  = keys %selected
+  my @t_params  = keys %selected;
 
   return {
     'params'  => \@t_params,
