@@ -2901,25 +2901,58 @@ sub dumpRegulatoryFeature {
 
 ## External Features...
   my $e = $conf->{'dbh'}->selectall_arrayref(
-  "select ef.display_label, group_concat(distinct ft.name), count(distinct ef.external_feature_id),
-          ft.description, ft.class, fs.name, sr.name, ef.seq_region_start, ef.seq_region_end,
-          ef.seq_region_strand
+ "select ef.display_label, group_concat(distinct ft.name), count(distinct ef.external_feature_id), ft.description, ft.class, fs.name
     from  $dbname.feature_type ft, $dbname.external_feature ef, $dbname.feature_set fs, $dbname.seq_region sr,
           $dbname.coord_system cs,$dbname.status s, $dbname.status_name sn
-    where ft.feature_type_id=ef.feature_type_id and fs.feature_set_id=ef.feature_set_id and
-          fs.type='external' and ef.seq_region_id=sr.seq_region_id  and sr.coord_system_id=cs.coord_system_id
-          and cs.is_current=1 and s.table_name='feature_set' and s.table_id=fs.feature_set_id and
-          s.status_name_id=sn.status_name_id and sn.name='MART_DISPLAYABLE'
+    where ft.feature_type_id=ef.feature_type_id
+      and fs.feature_set_id=ef.feature_set_id
+      and fs.type='external'
+      and ef.seq_region_id=sr.seq_region_id
+      and sr.coord_system_id=cs.coord_system_id
+      and cs.is_current=1
+      and s.table_name='feature_set'
+      and s.table_id=fs.feature_set_id
+      and s.status_name_id=sn.status_name_id
+      and sn.name='MART_DISPLAYABLE'
  group by ef.display_label"
   );
 
   foreach my $f ( @$e) {
-    my ($display_label, $f_name, $count, $f_desc, $f_class, $fs_name, $seq_region, $start, $end, $strand) = @$f;
-    my @ids = split ' ', $f_name;
+    my ($display_label, $f_name, $count, $f_desc, $f_class, $fs_name ) = @$f;
+    next if ($f_name =~ /FANTOM/);
+    my @syns;
+    foreach my $id (split ',', $f_name) {
+      push @syns unless $id eq 'display_label';
+    }
     $params = { 'fs_name' => $fs_name, 'subtype' => 'RegulatoryFactor' };
     my $desc = "$display_label is a $f_class from $fs_name which hits the genome in $count locations";
-    &p(RegulatoryFeatureLine($dbspecies,$desc,$display_label,\@ids,$ftype,$params,$db,$counter), $fh);
+    &p(RegulatoryFeatureLine($dbspecies,$desc,$display_label,\@syns,$ftype,$params,$db,$counter), $fh);
   }
+
+## Tarbase features
+  my $e = $conf->{'dbh'}->selectall_arrayref(
+  "select mrf.display_label, group_concat(distinct ft.name), group_concat(distinct mrf.accession), count(distinct mrf.mirna_target_feature_id),
+          ft.description, ft.class, fs.name
+     from $dbname.feature_type ft, $dbname.mirna_target_feature mrf, $dbname.feature_set fs, $dbname.seq_region sr, $dbname.coord_system cs
+    where ft.feature_type_id = mrf.feature_type_id
+      and fs.feature_set_id = mrf.feature_set_id
+      and mrf.seq_region_id = sr.seq_region_id
+      and sr.coord_system_id = cs.coord_system_id
+          and cs.is_current = 1
+ group by mrf.display_label"
+);
+  foreach my $f ( @$e) {
+    my ($display_label, $f_name, $accs, $count, $f_desc, $f_class, $fs_name) = @$f;
+    my @syns;
+    foreach my $id (split ',', $f_name) {
+      push @syns unless $id eq 'display_label';
+    }
+    push @syns, split ',', $accs;
+    $params = { 'fs_name' => $fs_name, 'subtype' => 'RegulatoryFactor' };
+    my $desc = "$display_label is a $f_class from $fs_name which hits the genome in $count locations";
+    &p(RegulatoryFeatureLine($dbspecies,$desc,$display_label,\@syns,$ftype,$params,$db,$counter), $fh);
+  }
+
   return footer( $counter->(), $fh);
 }
 
