@@ -36,10 +36,6 @@ sub content {
   
   return unless defined $pop_freq;
   
-  my @pop_phase1 = grep /phase_1/, keys %$pop_freq;
-  
-  return unless scalar @pop_phase1;
-  
   my $graph_id = 0;
   my $height   = 50;
   my (@graphs, $pop_tree, %sub_pops, @alleles);
@@ -51,11 +47,14 @@ sub content {
   );
   
   # Get alleles list
+  my $project_name;
   foreach my $pop_name (sort keys %$pop_freq) {
     my $values   = '';
     my $p_name   = (split ':', $pop_name)[1];
        $pop_tree = $self->update_pop_tree($pop_tree, $pop_name, $pop_freq->{$pop_name}{'sub_pop'}) if defined $pop_freq->{$pop_name}{'sub_pop'};
-    
+
+    $project_name = $pop_freq->{$pop_name}{'group'} if (!$project_name);
+
     foreach my $ssid (keys %{$pop_freq->{$pop_name}{'freq'}}) {
       foreach my $allele (keys %{$pop_freq->{$pop_name}{'freq'}{$ssid}}) {
         my $freq = $pop_freq->{$pop_name}{'freq'}{$ssid}{$allele};
@@ -74,11 +73,11 @@ sub content {
   }
   
   # Create graphs
-  foreach my $pop_name (sort { ($a !~ /ALL/ cmp $b !~ /ALL/) || $a cmp $b } @pop_phase1) {
+  foreach my $pop_name (sort { ($a !~ /ALL/ cmp $b !~ /ALL/) || $a cmp $b } keys %$pop_freq) {
     my $values    = '';
     my @pop_names = split ':', $pop_name;
     
-    shift @pop_names;
+    shift @pop_names if (scalar @pop_names > 1);
     
     my $p_name     = join ':', @pop_names;
     my $short_name = $self->get_short_name($p_name);
@@ -97,10 +96,13 @@ sub content {
         last;
       }
     }
-    
+
+    $pop_desc = $self->strip_HTML($pop_desc);
+
     push @inputs, qq{<input type="hidden" class="graph_data" value="[$values]" />};
-    
-    if ($short_name =~ /ALL/) {
+
+    # Main "ALL" population OR no population structure
+    if ($short_name =~ /ALL/ || scalar(keys(%$pop_tree)) == 0) {
       push @graphs, sprintf('
         <div class="pie_chart_holder">
           <div class="pie_chart%s _ht" title="%s">
@@ -109,7 +111,9 @@ sub content {
           </div>
         </div>
       ', $short_name eq 'ALL' ? ' all_population' : '', $pop_desc, $short_name, $graph_id, $height);
-    } elsif ($pop_tree->{$short_name}) {
+    }
+    # Super-population
+    elsif ($pop_tree->{$short_name}) {
       push @graphs, sprintf('
         <div class="pie_chart_holder">
           <div class="pie_chart _ht" title="%s">
@@ -119,7 +123,9 @@ sub content {
           <a class="toggle set_cookie %s" href="#" style="margin-left:5px" rel="population_freq_%s" title="Click to toggle sub-population frequencies">Sub-populations</a>
         </div>
       ', $pop_desc, $short_name, $graph_id, $height, $hub->get_cookie_value("toggle_population_freq_$short_name") eq 'open' ? 'open' : 'closed', $short_name);
-    } else {
+    }
+    # Sub-populations
+    else {
       foreach (grep $pop_tree->{$_}{$short_name}, keys %$pop_tree) {
         push @{$sub_pops{$_}}, sprintf('
           <div class="pie_chart_holder">
@@ -136,7 +142,8 @@ sub content {
   }
   
   my $html = sprintf(
-    '<h2>1000 Genomes allele frequencies</h2><div><input type="hidden" class="panel_type" value="PopulationGraph" />%s</div><div class="population_genetics_pie">%s</div>',
+    '<h2>%s allele frequencies</h2><div><input type="hidden" class="panel_type" value="PopulationGraph" />%s</div><div class="population_genetics_pie">%s</div>',
+    $project_name,
     join('', @inputs),
     join('', @graphs)
   );
@@ -162,14 +169,28 @@ sub format_frequencies {
   my ($self, $freq_data) = @_;
   my $hub = $self->hub;
   my $pop_freq;
-  
+  my $main_priority_level;
+
+  # Get the main priority group level
   foreach my $pop_id (keys %$freq_data) {
+    my $priority_level = $freq_data->{$pop_id}{'pop_info'}{'GroupPriority'};
+    next if (!defined($priority_level));
+
+    $main_priority_level = $priority_level if (!defined($main_priority_level) || $main_priority_level > $priority_level);
+  }
+  return undef if (!defined($main_priority_level));
+
+  foreach my $pop_id (keys %$freq_data) {
+    ## is it a priority project ?
+    my $priority_level = $freq_data->{$pop_id}{'pop_info'}{'GroupPriority'};
+    next if (!defined($priority_level) || $priority_level!=$main_priority_level);
+
     my $pop_name = $freq_data->{$pop_id}{'pop_info'}{'Name'};
-    next if $freq_data->{$pop_id}{'pop_info'}{'Name'} !~ /^1000genomes\:.*/i;
-    
+
     $pop_freq->{$pop_name}{'desc'}    = $freq_data->{$pop_id}{'pop_info'}{'Description'};
     $pop_freq->{$pop_name}{'sub_pop'} = $freq_data->{$pop_id}{'pop_info'}{'Sub-Population'} if scalar keys %{$freq_data->{$pop_id}{'pop_info'}{'Sub-Population'}};
-    
+    $pop_freq->{$pop_name}{'group'}   = $freq_data->{$pop_id}{'pop_info'}{'PopGroup'};
+
     foreach my $ssid (keys %{$freq_data->{$pop_id}{'ssid'}}) {
       next if $freq_data->{$pop_id}{$ssid}{'failed_desc'};
       
