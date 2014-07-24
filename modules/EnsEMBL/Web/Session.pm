@@ -633,7 +633,7 @@ sub configure_user_data {
           } else {
             $_->set_user('display', $valid{'normal'} ? 'normal' : $renderers->[2]);
           }
-          my $text = $node->data->{'name'} || $node->data->{'coption'};
+          my $text = $_->data->{'name'} || $_->data->{'coption'};
           push @{$image_config->altered}, $text;
         }
         
