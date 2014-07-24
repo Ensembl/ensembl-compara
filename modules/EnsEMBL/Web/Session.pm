@@ -633,11 +633,11 @@ sub configure_user_data {
           } else {
             $_->set_user('display', $valid{'normal'} ? 'normal' : $renderers->[2]);
           }
+          my $text = $node->data->{'name'} || $node->data->{'coption'};
+          push @{$image_config->altered}, $text;
         }
         
         $image_config->{'code'} = $ic_code;
-        my $text = $node->data->{'name'} || $node->data->{'coption'};
-        push @{$image_config->altered}, $text;
         $view_config->altered   = 1;
       }
     }
