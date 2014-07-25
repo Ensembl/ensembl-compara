@@ -88,7 +88,7 @@ sub check_set {
   my ($self, $f, $sets) = @_; 
   
   foreach (@{$f->get_all_VariationSets}) {
-    return 1 if $sets->{$_->name};
+    return 1 if $sets->{$_->short_name};
   }
   
   return 0;
@@ -140,8 +140,9 @@ sub fetch_features {
       my @vari_features;
       
       if ($id =~ /set/) {
+        my $short_name = ($self->my_config('sets'))->[0];
         my $track_set  = $self->my_config('set_name');
-        my $set_object = $variation_db_adaptor->get_VariationSetAdaptor->fetch_by_name($track_set);
+        my $set_object = $variation_db_adaptor->get_VariationSetAdaptor->fetch_by_short_name($short_name);
     
         # Enable the display of failed variations in order to display the failed variation track
         $variation_db_adaptor->include_failed_variations(1) if $track_set =~ /failed/i;
