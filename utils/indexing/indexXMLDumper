@@ -2706,12 +2706,14 @@ sub GeneTransLine {
   my (%seen_labels,%seen_syns,%seen_sources,%labels);
 
   #treat supporting evidence as we do xrefs (if we decide to change it then need to update solr)
-  foreach my $hit (keys %$supporting_evidence) {
-    $hit = &clean($hit);
-    $labels{$hit}++;
-    my $se_desc = &clean($supporting_evidence->{$hit});
-    $xml .= qq(
-  <field name="__hr">$se_desc</field>);
+  if ($supporting_evidence) {
+    foreach my $hit (keys %$supporting_evidence) {
+      $hit = &clean($hit);
+      $labels{$hit}++;
+      my $se_desc = &clean($supporting_evidence->{$hit});
+      $xml .= qq(
+  <field name="_hr">$se_desc</field>);
+    }
   }
 
  foreach my $xref (@$xrefs) {
@@ -2979,7 +2981,7 @@ sub dumpRegulatoryFeature {
       push @syns unless $id eq 'display_label';
     }
     push @syns, split ',', $accs;
-    $params = { 'fs_name' => $fs_name, 'subtype' => 'RegulatoryFactor' };
+    $params = { 'fs_name' => $fs_name, 'subtype' => 'TarBase miRNA' };
     my $desc = "$display_label is a $f_class from $fs_name which hits the genome in $count locations";
     &p(RegulatoryFeatureLine($dbspecies,$desc,$display_label,\@syns,$ftype,$params,$db,$counter), $fh);
   }
@@ -2996,9 +2998,11 @@ sub RegulatoryFeatureLine {
                    $id);
   }
   else {
-    $url = sprintf(qq(%s/Location/Genome?ftype=RegulatoryFactor;id=%s;fset=RegulatoryFactor),
+    $url = sprintf(qq(%s/Location/Genome?ftype=RegulatoryFactor;id=%s;fset=%s),
                    $species,
-                   $id);
+                   $id,
+                   $params->{'subtype'},
+                 );
   }
   $species =~ s/_/ /;
   my $xml = qq(
