@@ -2956,7 +2956,7 @@ sub add_sequence_variations_meta {
         %$options,
         caption     => $caption,
         sources     => undef,
-        sets        => [ $set_name ],
+        sets        => [ $temp_name ],
         set_name    => $set_name,
         description => $hashref->{'variation_set'}{'descriptions'}{$temp_name}
       });
@@ -3023,7 +3023,7 @@ sub add_sequence_variations_default {
         %$options,
         caption     => $caption,
         sources     => undef,
-        sets        => [ $name ],
+        sets        => [ $key ],
         set_name    => $name,
         description => $toplevel_set->{'description'},
       }));
@@ -3040,7 +3040,7 @@ sub add_sequence_variations_default {
             %$options,
             caption     => $sub_set_name,
             sources     => undef,
-            sets        => [ $sub_set_name ],
+            sets        => [ $sub_set_key ],
             set_name    => $sub_set_name,
             description => $sub_set_description
           }));
