@@ -687,30 +687,38 @@ sub dumpVariation {
     $ssid_sth = $conf->{'variation_dbh'}->prepare($stmt);
   }
 
+  ## get synonym info
+  print LOG "    Preparing to get all synonyms ".&date_and_mem()."\n";
+  my $synonyms;
+  $sth = $conf->{'variation_dbh'}->prepare(qq(
+      SELECT v.variation_id,
+GROUP_CONCAT(vs.source_id,' ',vs.name)
+       FROM variation v, variation_synonym vs
+      WHERE v.variation_id = vs.variation_id
+   GROUP BY v.variation_id));
+  $sth->execute;
+  while ( my ($variation_id,$syns) = $sth->fetchrow_array ) {
+    $synonyms->{$variation_id} = $syns;
+  }
+
+  ## get failed mappings
+  print LOG "    Preparing to get details of failed mappings ".&date_and_mem()."\n";
+  my $failures;
+  $sth = $conf->{'variation_dbh'}->prepare(qq(
+      SELECT v.variation_id, fd.description
+       FROM variation v, failed_variation fv, failed_description fd
+      WHERE v.variation_id = fv.variation_id
+        AND fv.failed_description_id = fd.failed_description_id));
+  $sth->execute;
+  while ( my ($variation_id,$desc) = $sth->fetchrow_array ) {
+    $failures->{$variation_id} = $desc;
+  }
+
   # Statement to get all variations, both mapped, failed and the precious non-mapped, non-failed
   print LOG "    Preparing to get all SNPs ".&date_and_mem()."\n";
-  $sth = $conf->{'variation_dbh'}->prepare(qq{
-    SELECT
-        v.variation_id,
-        v.name,
-        v.source_id,
-        GROUP_CONCAT(
-            vs.source_id,
-            ' ',
-            vs.name
-        ),
-        fd.description,
-        v.somatic
-    FROM
-        variation v LEFT JOIN
-        variation_synonym vs USING (variation_id) LEFT JOIN (
-            failed_variation fv JOIN
-            failed_description fd USING (failed_description_id)
-        ) USING (variation_id)
-    GROUP BY
-        v.variation_id
-    ORDER BY
-        NULL});
+  $sth = $conf->{'variation_dbh'}->prepare(qq(
+    SELECT v.variation_id, v.name, v.source_id, v.somatic
+      FROM variation v));
 
   $sth->execute() or die "Error:", $DBI::errstr;
 
@@ -722,9 +730,9 @@ sub dumpVariation {
       my $variation_id       = $row->[0];
       my $variation_name     = $row->[1];
       my $source_id          = $row->[2];
-      my $synonyms           = $row->[3];
-      my $failed_desc        = $row->[4];
-      my $somatic_var        = $row->[5];
+      my $synonyms           = $synonyms->{$variation_id} || '';
+      my $failed_desc        = $failures->{$variation_id} || '';
+      my $somatic_var        = $row->[3];
       my $ssids;
       if ($ssid_hash) {
         $ssids = $ssid_hash->{$variation_id}{'ssid'};
