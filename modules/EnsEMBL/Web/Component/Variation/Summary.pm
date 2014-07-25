@@ -567,7 +567,7 @@ sub clinical_significance {
 
   return unless (scalar(@$clin_sign));
 
-  my $img = qq{<img src="/i/16/info.png" class="_ht" style="position:relative;top:2px;width:12px;height:12px;margin-left:2px" title="Click to view the explanation (from the CliVar website)"/>};
+  my $img = qq{<img src="/i/16/info.png" class="_ht" style="position:relative;top:2px;width:12px;height:12px;margin-left:2px" title="Click to view the explanation (from the ClinVar website)"/>};
   my $info_link = $hub->get_ExtURL_link($img, "CLIN_SIG", '');
 
   my %clin_sign_icon;
