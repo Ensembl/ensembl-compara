@@ -216,8 +216,9 @@ sub parse {
         }
         if ($columns && scalar(@$columns)) {   
           my ($chr, $start, $end) = $empty->coords($columns); 
-          $chr =~ s/[cC]hr//;
-
+          
+          $chr =~ s/[cC]hr// unless grep {$_ eq $chr} @{$self->drawn_chrs};
+          
           ## We currently only do this on initial upload (by passing current location)  
           $self->{'_find_nearest'}{'done'} = $self->_find_nearest(
                       {
@@ -504,7 +505,7 @@ sub parse_track_def {
   ## Clean up chromosome names
   if (defined $config->{'chrom'}) {
     my $chr = $config->{'chrom'};
-    $chr =~ s/chr//;
+    $chr =~ s/[cC]hr// unless grep {$_ eq $chr} @{$self->drawn_chrs};
     $config->{'chrom'} = $chr;
   }
   ## Add a description
@@ -583,7 +584,7 @@ sub bin_size {
 
 sub store_density_feature {
   my ( $self, $chr, $start, $end ) = @_;
-  $chr =~ s/chr//;  
+  $chr =~ s/[cC]hr// unless grep {$_ eq $chr} @{$self->drawn_chrs};
   if (!$self->{'tracks'}{$self->current_key}) {
     $self->add_track();
   }
