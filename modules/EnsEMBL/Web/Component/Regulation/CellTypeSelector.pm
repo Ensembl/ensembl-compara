@@ -20,7 +20,7 @@ package EnsEMBL::Web::Component::Regulation::CellTypeSelector;
 
 use strict;
 
-use base qw(EnsEMBL::Web::Component::MultiSelector EnsEMBL::Web::Component::Regulation);
+use base qw(EnsEMBL::Web::Component::CloudMultiSelector EnsEMBL::Web::Component::Regulation);
 
 sub _init {
   my $self = shift;
@@ -29,8 +29,8 @@ sub _init {
  
   $self->{'panel_type'}      = 'CellTypeSelector';
   $self->{'link_text'}       = 'Select cell types';
-  $self->{'included_header'} = 'Selected cell types {category}';
-  $self->{'excluded_header'} = 'Unselected cell types {category}';
+  $self->{'included_header'} = 'Cell types';
+  $self->{'excluded_header'} = 'Cell types';
   $self->{'url_param'}       = 'cell';
   $self->{'rel'}             = 'modal_select_cell_types';
 }

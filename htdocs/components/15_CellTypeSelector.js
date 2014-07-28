@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-Ensembl.Panel.CellTypeSelector = Ensembl.Panel.MultiSelector.extend({
+Ensembl.Panel.CellTypeSelector = Ensembl.Panel.CloudMultiSelector.extend({
   updateSelection: function () {
     
     var cells = this.urlParam + '=' + encodeURIComponent(this.selection.join(','));
