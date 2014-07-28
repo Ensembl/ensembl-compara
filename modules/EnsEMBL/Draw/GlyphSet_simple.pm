@@ -166,9 +166,9 @@ sub _init {
       next if $row > $depth;
     }
     
-    my ($pattern,$patterncolour);
+    my ($pattern,$patterncolour,$notags);
     $pattern = $self->pattern($f) if $self->can('pattern');
-    ($pattern,$patterncolour) = @$pattern if ref($pattern);
+    ($pattern,$patterncolour,$notags) = @$pattern if ref($pattern);
 
     my $colours   = $self->get_colours($f);
     my $composite = $self->Composite;
@@ -226,7 +226,7 @@ sub _init {
       }));
     }
     
-    push @tag_glyphs, $self->render_tags(\@tags, $composite, $slice_length, $height, $start, $end, $img_start, $img_end,$pattern,$patterncolour);
+    push @tag_glyphs, $self->render_tags(\@tags, $composite, $slice_length, $height, $start, $end, $img_start, $img_end,$pattern,$patterncolour) unless $notags;
     
     if ($label) {
       my $font_size = $fontsize;

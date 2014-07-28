@@ -230,7 +230,7 @@ sub pattern {
   my ($self,$f) = @_;
 
   return undef unless $self->{'config'}->hub->is_new_regulation_pipeline;
-  return ['hatch_really_thick','grey90'] if $f->can('has_evidence') and !$f->has_evidence;
+  return ['hatch_really_thick','grey90',1] if $f->can('has_evidence') and !$f->has_evidence;
   return undef;
 }
 
