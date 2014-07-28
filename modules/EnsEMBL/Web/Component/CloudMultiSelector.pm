@@ -42,6 +42,14 @@ sub _content_li {
     <li class="$class" data-key="$key">$content</li>);
 }
 
+sub _sort_values {
+  my ($self,$values) = @_;
+
+  my $sort_func = $self->{'sort_func'};
+  $sort_func = sub { [ sort {$a cmp $b} @{$_[0]} ]; } unless $sort_func;
+  return $sort_func->($values);
+}
+
 sub content_ajax {
   my $self         = shift;
   my $hub          = $self->hub;
@@ -88,7 +96,7 @@ sub content_ajax {
       if($cluster) {
         $heading .= "<h4>$cluster:</h4>";
       }
-      foreach my $key (sort { $a cmp $b } @{$d->{'clusters'}{$cluster}}) {
+      foreach my $key (@{$self->_sort_values($d->{'clusters'}{$cluster})}) {
         $cluster_list .=
           $self->_content_li($key,$all{$key},!!$included{$key});
       }

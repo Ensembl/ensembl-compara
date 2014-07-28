@@ -22,6 +22,8 @@ use strict;
 
 use base qw(EnsEMBL::Web::Component::CloudMultiSelector EnsEMBL::Web::Component::Regulation);
 
+use EnsEMBL::Web::Tools::ExoticSorts qw(id_sort);
+
 use List::MoreUtils qw(uniq);
 
 sub _init {
@@ -62,6 +64,7 @@ sub content_ajax {
   $self->{'param_mode'} = 'single';
   $self->{'category_map'} = \%evidence_categories;
   $self->{'cluster_map'} = \%evidence_clusters;
+  $self->{'sort_func'} = \&id_sort;
 
   $self->SUPER::content_ajax;
 }
