@@ -117,6 +117,10 @@ sub content_ajax {
   my $content      = sprintf('
     <div class="content">
       <form action="%s" method="get" class="hidden">%s</form>
+      <div class="cloud_filter">
+        <input type="text" name="cloud_filter" id="cloud_filter" tabindex="0" class="ftext" placeholder="type to filter options..."/>
+        <a href="#" class="cloud_filter_clear">clear filter</a>
+      </div>
       <div class="cloud_multi_selector_list">
         %s
       </div>
@@ -139,11 +143,6 @@ sub content_ajax {
             <span class="off">OFF</span>
           </div>
         </div>
-      </div>
-      <div class="cloud_filter">
-        <h2>filter</h2>
-        <input type="text" name="cloud_filter" id="cloud_filter" tabindex="0" class="ftext"/>
-        <a href="#" class="cloud_filter_clear">clear filter</a>
       </div>
     </div>
   );
