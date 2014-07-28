@@ -718,7 +718,7 @@ sub too_many_features {
 }
 
 sub errorTrack {
-  my ($self, $message, $x, $y) = @_;
+  my ($self, $message, $x, $y,$mild) = @_;
   return if $self->error; ## Don't try to output more than one!
   $self->error(1);
   my %font   = $self->get_font_details('text', 1);
@@ -732,7 +732,7 @@ sub errorTrack {
     textwidth     => $res[2],
     height        => $res[3],
     halign        => 'center',
-    colour        => 'red',
+    colour        => $mild?'grey30':'red',
     text          => $message,
     absolutey     => 1,
     absolutex     => 1,

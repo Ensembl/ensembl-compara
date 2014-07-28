@@ -542,8 +542,8 @@ sub draw_track_name {
 }
 
 sub display_no_data_error {
-  my ($self, $error_string) = @_;
-  my $height = $self->errorTrack($error_string, 0, $self->_offset);
+  my ($self, $error_string,$mild) = @_;
+  my $height = $self->errorTrack($error_string, 0, $self->_offset,$mild);
   $self->_offset($height + 4); 
 }
 
