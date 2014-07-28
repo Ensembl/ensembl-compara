@@ -174,7 +174,7 @@ sub advanced_button {
   push @{$self->{'buttons'}||=[]},{
     url => $url,
     caption => 'Advanced ...',
-    class => 'unstyled config',
+    class => 'unstyled config modal_link',
     rel => "modal_config_$component",
   };
 }
