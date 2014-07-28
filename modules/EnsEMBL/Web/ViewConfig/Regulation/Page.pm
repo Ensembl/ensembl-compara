@@ -16,7 +16,11 @@ limitations under the License.
 
 =cut
 
-package EnsEMBL::Web::ViewConfig::Regulation;
+package EnsEMBL::Web::ViewConfig::Regulation::Page;
+
+# Really this should be a superclass for regulation VeiwConfigs, but the
+# code picks that package name up even for components without viewconfigs in
+# their own right (eg Buttons component).
 
 use strict;
 
