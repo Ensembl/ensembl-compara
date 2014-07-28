@@ -34,7 +34,7 @@ sub _init {
   my $slice_adapt   = $self->{'container'}->{'sa'};
   my $density_adapt = $self->{'container'}->{'da'};
 
-  my $chr_slice = $slice_adapt->fetch_by_region('chromosome', $chr);
+  my $chr_slice = $slice_adapt->fetch_by_region(undef, $chr);
 
   my @objs = map { { 'key' => $_,'scale'=>1,'max_value'=>0} }
              @{ $self->my_config('keys')||[] };
