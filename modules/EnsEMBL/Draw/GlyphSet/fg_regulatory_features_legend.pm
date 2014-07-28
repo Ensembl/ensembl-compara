@@ -53,6 +53,13 @@ sub _init {
     
     $empty = 0;
   }
+  unless($empty) {
+    $self->add_to_legend({
+      legend => '... but inactive in this cell line',
+      colour => 'black',
+      stripe => 'hatch_really_thick|grey90',
+    });
+  }
   
   $self->errorTrack('No Regulatory Features in this panel') if $empty;
 }

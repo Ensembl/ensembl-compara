@@ -145,8 +145,10 @@ sub _icon_box {
   # Envelopes, borders, stripes, oh my!
   $icon->{'bordercolour'} = $k->{'border'} if $k->{'border'};
   if($k->{'stripe'}) {
-    $icon->{'pattern'} = 'hatch_thick';
-    $icon->{'patterncolour'} = $k->{'stripe'};
+    my ($stripe,$pattern) = ($k->{'stripe'},'hatch_thick');
+    $pattern = $1 if $stripe =~ s/^(.*?)\|//;
+    $icon->{'pattern'} = $pattern;
+    $icon->{'patterncolour'} = $stripe;
   }
   if($k->{'envelop'}) { # grow box so it can be inscribed
     $icon->{'x'} -= 1;
