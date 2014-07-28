@@ -234,4 +234,14 @@ sub pattern {
   return undef;
 }
 
+sub feature_label {
+  my ($self,$f) = @_;
+
+  return undef unless $self->{'config'}->hub->is_new_regulation_pipeline;
+  return undef if $f->can('has_evidence') and $f->has_evidence;
+  return "{grey30}inactive in this cell line";
+}
+
+sub label_overlay { return 1; }
+
 1;

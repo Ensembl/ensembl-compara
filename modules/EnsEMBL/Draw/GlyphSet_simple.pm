@@ -242,6 +242,8 @@ sub _init {
         
         ## Only add labels above a certain feature size
         if ($tmp_textwidth < $end - $start + 1) {
+          my $colour = $colours->{'label'} eq $colours->{'feature'} ? $colours->{'feature'} =~ /^(black|#000000)$/ ? 'white' : 'black' : $colours->{'label'};
+          $colour = $1 if $label =~ s/\{(.+?)\}//;
           $composite->push($self->Text({
             x         => $start - 1,
             y         => ($height - $text_height)/2 - 1,
@@ -251,7 +253,7 @@ sub _init {
             ptsize    => $font_size,
             halign    => 'center',
             height    => $text_height,
-            colour    => $colours->{'label'} eq $colours->{'feature'} ? $colours->{'feature'} =~ /^(black|#000000)$/ ? 'white' : 'black' : $colours->{'label'},
+            colour    => $colour,
             text      => $label,
             absolutey => 1,
           }));
