@@ -29,35 +29,34 @@
     });
   };
 
+  function fix_radio($this) {
+    var $group = $this.parent('.group');
+    var radio = $('a.togglebutton.radiogroup',$group).length;
+    if(radio && $('a.togglebutton:not(.off)',$group).length < 2) {
+      $('a.togglebutton:not(.off)',$group).addClass('inactive');
+    } else {
+      $('a.togglebutton',$group).removeClass('inactive');
+    }
+  };
+
   $.fn.toggleButtons = function () {
     return this.each(function () {
       var $this = $(this);
       var $group = $this.parent('.group');
-      var force;
       var radio = $('a.togglebutton.radiogroup',$group).length;
+      fix_radio($this);
+
       $this.click(function() {
-        $this.toggleClass('off');
-        if(radio) {
-          if(!$('a.togglebutton:not(.off)',$group).length) {
-            $('a.togglebutton:eq(0)',$group).addClass('candidate');
-            if($this.hasClass('candidate')) {
-              $('a.togglebutton:eq(1)',$group).addClass('candidate');
-              $this.removeClass('candidate');
-            }
-            force = $('a.candidate',$group)
-              .removeClass('candidate').removeClass('off').attr('href');
-          }
+        if($this.hasClass('inactive')) {
+          return false;
         }
+        $this.toggleClass('off');
+        fix_radio($this);
         var state = $this.hasClass('off')?'0':'1';
 
         var url = $this.attr('href');
         if(url) {
-          if(force) {
-            defer = to_server(force,1).then(to_server(url,state));
-          } else {
-            defer = to_server(url,state);
-          }
-          defer.done(function(data) {
+          to_server(url,state).done(function(data) {
               if(data.reload_panels) {
                 $.each(data.reload_panels,function(i,panel) {
                   Ensembl.EventManager.triggerSpecific('updatePanel',panel);

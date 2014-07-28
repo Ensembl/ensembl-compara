@@ -29,6 +29,7 @@
 .tool_buttons a.pulse,
 .tool_buttons a:hover    { background-color: [[BUTTON_BG_HOVER]]; color: [[BUTTON_TEXT]]; }
 .tool_buttons a.togglebutton:hover    { background-color: [[BUTTON_BG_HOVER]]; color: [[BUTTON_TEXT]]; }
+.tool_buttons a.togglebutton.inactive:hover    { background-color: [[BUTTON_BG]]; color: [[BUTTON_TEXT]]; }
 .tool_buttons a:visited  { color: [[BUTTON_TEXT]]; }
 
 .tool_buttons a.unstyled { background: none; color: #3366bb; display: inline-block; margin: 0; padding: 4px; vertical-align: bottom; line-height: 32px; height: 16px; }
