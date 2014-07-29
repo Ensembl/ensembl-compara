@@ -16,26 +16,32 @@ limitations under the License.
 
 =cut
 
-package EnsEMBL::Web::Form::Element::IconLink;
+package EnsEMBL::Web::Form::Element::SpeciesDropdown;
 
 use strict;
+use warnings;
 
-use base qw(EnsEMBL::Web::Form::Element::NoEdit);
+use EnsEMBL::Web::SpeciesDefs;
 
-use constant CSS_CLASS => 'ff-icon-link';
+use base qw(EnsEMBL::Web::Form::Element::Filterable);
 
 sub configure {
-  ## @overrides
+  ## @overrrides
   my ($self, $params) = @_;
 
-  $params->{'is_html'}        = 1; # forced to be on so it's always a div
-  $params->{'no_input'}       = 1; # don't need any hidden input
-  $params->{'caption_class'}  = [ $self->CSS_CLASS, $params->{'caption_class'} || () ];
-  $params->{'caption'}        = sprintf '<a href="#"%s><span class="sprite %s_icon">%s</span></a>', $params->{'link_class'} ? qq( class="$params->{'link_class'}") : '', $params->{'link_icon'}, $params->{'caption'};
+  my $sd = EnsEMBL::Web::SpeciesDefs->new;
 
   $self->SUPER::configure($params);
-}
 
-sub caption {} # disabling this method since this exists in the parent module
+  $self->remove_attribute('class', '_fd');
+  $self->set_attribute('class', '_sdd');
+
+  $self->first_child->set_attributes({
+    'class' => 'species-tag',
+    'style' => {
+      'background-image' => sprintf('url(%sspecies/16/%s.png)', $sd->img_url, $sd->ENSEMBL_PRIMARY_SPECIES)
+    }
+  });
+}
 
 1;

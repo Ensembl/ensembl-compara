@@ -16,20 +16,23 @@ limitations under the License.
 
 =cut
 
-package EnsEMBL::Draw::GlyphSet::HSP_query_plot;
-
-### Draw track showing a plot of BLAST HSP queries (from the old 
-### BLAST ticketed system)
+package EnsEMBL::Web::Form::Element::Div;
 
 use strict;
 
-use base qw(EnsEMBL::Draw::GlyphSet::HSP_plot);
+use base qw(
+  EnsEMBL::Web::DOM::Node::Element::Div
+  EnsEMBL::Web::Form::Element
+);
 
-sub region {
-  my ($self, $hsp) = @_;
-  my $start = $hsp->start();
-  my $end   = $hsp->end();
-  return ($start, $end);
+sub configure {
+  ## @overrides
+  my ($self, $params) = @_;
+
+  $self->append_children(@{$params->{'children'}}) 					if $params->{'children'};
+  $self->set_attribute('id',    $params->{'wrapper_id'})    if exists $params->{'wrapper_id'};
+  $self->set_attribute('class', $params->{'wrapper_class'}) if exists $params->{'wrapper_class'};
+	$self->set_flag($self->ELEMENT_HAS_WRAPPER) 							if $params->{'force_wrapper'};
 }
 
 1;

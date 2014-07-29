@@ -927,7 +927,7 @@ sub build_sequence {
       my $adid = $_->[$x]{'adid'};
       $line =~ s/".*?"//sg;
       $line =~ s/<.*?>//sg;
-      $line = qq(<span class="adorn adorn-$adid">$line</span>);
+      $line = qq(<span class="adorn adorn-$adid _seq">$line</span>);
       my $num  = shift @{$line_numbers->{$y}};
       
       if ($config->{'number'}) {

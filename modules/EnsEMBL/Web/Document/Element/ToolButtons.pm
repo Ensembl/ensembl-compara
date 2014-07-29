@@ -62,8 +62,8 @@ sub content {
   my $html;
 
   foreach (@$entries) {
-    if ($_->{'class'} eq 'disabled') {
-      $html .= qq(<p class="disabled $classes->{$_->{'caption'}}" title="$_->{'title'}">$_->{'caption'}</p>);
+    if (grep {$_ eq 'disabled'} split ' ', $_->{'class'}) {
+      $html .= qq(<p class="$_->{'class'} $classes->{$_->{'caption'}}" title="$_->{'title'}">$_->{'caption'}</p>);
     } else {
       my $rel   = lc $_->{'rel'};
       my $class = join ' ', map $_ || (), $_->{'class'}, $rel eq 'external' ? 'external' : '', $classes->{$_->{'caption'}};

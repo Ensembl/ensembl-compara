@@ -587,6 +587,7 @@ sub load_user_tracks {
   # Then those attached as URLs to either the session or the User
   # Now we deal with the url sources... again flat file
   foreach my $entry ($session->get_data(type => 'url')) {
+    next if $entry->{'no_attach'};
     next unless $entry->{'species'} eq $self->{'species'};
     
     $url_sources{"url_$entry->{'code'}"} = {

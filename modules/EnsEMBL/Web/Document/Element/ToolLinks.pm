@@ -47,9 +47,9 @@ sub content {
   my @links; # = sprintf '<a class="constant" href="%s">Home</a>', $self->home;
   
   
-  push @links, qq{<a class="constant" href="/$species/blastview">BLAST/BLAT</a>} if $self->blast;
-  push @links,   '<a class="constant" href="/biomart/martview">BioMart</a>'      if $self->biomart;
-  push @links,   '<a class="constant" href="/info/docs/tools/index.html">Tools</a>';
+  push @links, qq(<a class="constant" href="/$species/Tools/Blast">BLAST/BLAT</a>) if $self->blast;
+  push @links,   '<a class="constant" href="/biomart/martview">BioMart</a>'        if $self->biomart;
+  push @links, qq(<a class="constant" href="/$species/Tools/Summary">Tools</a>);
   push @links,   '<a class="constant" href="/downloads.html">Downloads</a>';
   push @links,   '<a class="constant" href="/info/">Help &amp; Documentation</a>';
   push @links,   '<a class="constant" href="'.$self->blog.'">Blog</a>'                  if $self->blog;

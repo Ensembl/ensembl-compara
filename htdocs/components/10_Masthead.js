@@ -61,7 +61,7 @@ Ensembl.Panel.Masthead = Ensembl.Panel.extend({
       $.ajax({
         url: this.href,
         success: function () {
-          var lis = li.siblings();
+          var lis = li.parents('.dropdown').find('.recent li');
           
           li.remove();
           panel.deleteFromDropdown(lis);

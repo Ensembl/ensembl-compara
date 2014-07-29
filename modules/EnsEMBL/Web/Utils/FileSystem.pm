@@ -28,7 +28,7 @@ use File::Copy;
 use EnsEMBL::Web::Exceptions;
 
 use Exporter qw(import);
-our @EXPORT_OK = qw(create_path remove_directory remove_empty_path copy_dir_contents copy_files);
+our @EXPORT_OK = qw(create_path remove_directory remove_empty_path copy_dir_contents copy_files list_dir_contents);
 
 sub create_path {
   ## Wrapper around make_path, throws an exception if things don't work as expected
@@ -110,12 +110,7 @@ sub copy_dir_contents {
   my $no_exception  = delete $params->{'no_exception'};
   my $contents      = [];
   my %exclude       = map { $_ =~ s/\/$//r => 1 } @{$params->{'exclude'} || []};
-  my $dir_handle    = DirHandle->new($source_dir);
-
-  if (!$dir_handle) {
-    throw exception('FileSystemException', "An error occoured while reading the directory $source_dir: $!") unless $no_exception;
-    return undef;
-  }
+  my $dir_contents  = list_dir_contents($source_dir, {'no_exception' => $no_exception}) or return undef;
 
   if (!-d $dest_dir) {
     if ($params->{'create_path'}) {
@@ -126,7 +121,7 @@ sub copy_dir_contents {
     }
   }
 
-  while (my $content = $dir_handle->read) {
+  foreach my $content (@$dir_contents) {
 
     next if $content =~ /^\.+/ || $exclude{$content};
 
@@ -152,8 +147,6 @@ sub copy_dir_contents {
     last unless $contents;
   }
 
-  $dir_handle->close;
-
   return $contents;
 }
 
@@ -176,6 +169,35 @@ sub copy_files {
     }
   }
   return \@copied;
+}
+
+sub list_dir_contents {
+  ## Returns all the files and dir in a directory
+  ## @param Dir path
+  ## @param Hashref with keys
+  ##  - hidden : if on, will return hidden files too (off by default)
+  ##  - no_exception :  if set true will not throw an exception if there's any problem
+  ## @return Arrayref of files/dir, undef if dir not existing
+  my ($dir, $params) = @_;
+
+  $params ||= {};
+  my $ls    = [];
+  my $dh    = DirHandle->new($dir);
+
+  if (!$dh) {
+    throw exception('FileSystemException', "An error occoured while reading the directory $dir: $!") unless $params->{'no_exception'};
+    return undef;
+  }
+
+  while (my $content = $dh->read) {
+
+    next if !$params->{'hidden'} && $content =~ /^\.+/;
+    push @$ls, $content;
+  }
+
+  $dh->close;
+
+  return $ls;
 }
 
 sub displayable_error {

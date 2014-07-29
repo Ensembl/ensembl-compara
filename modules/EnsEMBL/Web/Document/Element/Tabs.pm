@@ -153,7 +153,7 @@ sub content {
   $content  = $short_tabs . $long_tabs;
   $content  = qq{<ul class="tabs">$content</ul>} if $content;
   $content .= $self->species_list                if $self->{'species_list'};
-  $content .= $self->history                     if $history;
+  $content .= join '', values %{$self->dropdown} if $history;
   
   return $content;
 }
@@ -197,7 +197,7 @@ sub species_list {
   return sprintf '<div class="dropdown species">%s<h4>%s</h4><ul>%s</ul></div>', $fav_species, $fav_species ? 'All species' : 'Select a species', $all_species;  
 }
 
-sub history {
+sub dropdown {
   my $self = shift;
   my %html;
   
@@ -219,7 +219,7 @@ sub history {
       <ul class="recent"><li><a class="constant clear_history bold" href="/Account/ClearHistory?object=Location">Clear history</a></li></ul>
     </div>';
   
-  return join '', values %html;
+  return \%html;
 }
 
 1;

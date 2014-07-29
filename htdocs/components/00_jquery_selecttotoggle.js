@@ -51,10 +51,7 @@
       });
     };
 
-    el.off('.selectToToggle').on('change.selectToToggle', toggle);
-
-    toggle.apply(el.filter('select, input:checked')[0]);
-
+    el.off('.selectToToggle').on('change.selectToToggle', toggle).filter('select, input:checked').first().triggerHandler('change.selectToToggle');
   };
 
   $.fn.selectToToggle = function (
@@ -74,7 +71,9 @@
 
       if (data) {
         if (toggleMap === 'trigger') {
-          el.trigger('change.selectToToggle');
+          if (el[0].nodeName === 'SELECT' || el[0].checked) {
+            el.trigger('change.selectToToggle');
+          }
         } else if (toggleMap === 'destroy') {
           getAllEls(el, data.wrapper).off('.selectToToggle').removeData('selectToToggle');
         }

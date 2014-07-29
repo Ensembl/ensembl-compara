@@ -131,7 +131,7 @@ sub parse {
   my ($self, $data, $format) = @_;
   ## Make sure format is given as uppercase
   $format = uc($format);
-  $format = 'BED' if $format eq 'BEDGRAPH';
+  $format = 'BED' if $format =~ /BEDGRAPH|BGR/;
   return 'No data supplied' unless $data;
 
   my $error = $self->check_format($data, $format);

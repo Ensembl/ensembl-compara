@@ -68,7 +68,8 @@ Ensembl.Panel.LocalContext = Ensembl.Panel.extend({
   },
   
   relocateTools: function (tools) {
-    var toolButtons = $('.tool_buttons', this.el);
+    var panel = this;
+    var toolButtons = this.el.find('.tool_buttons');
     
     tools.each(function () {
       var a        = $(this).find('a')[0];
@@ -82,11 +83,6 @@ Ensembl.Panel.LocalContext = Ensembl.Panel.extend({
       
       a = existing = null;
     }).remove();
-    
-    $('a.seq_blast', toolButtons).on('click', function () {
-      $('form.seq_blast', toolButtons).submit();
-      return false;
-    });
     
     this.pulseToolButton();
     

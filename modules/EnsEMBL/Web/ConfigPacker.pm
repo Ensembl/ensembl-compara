@@ -76,9 +76,6 @@ sub munge_config_tree {
 
   # get data about file formats from corresponding Perl modules
   $self->_munge_file_formats;
-
-  # parse the BLAST configuration
-  $self->_configure_blast;
 }
 
 sub munge_config_tree_multi {
@@ -1818,59 +1815,5 @@ sub _munge_file_formats {
   $self->tree->{'REMOTE_FILE_FORMATS'} = \@remote;
   $self->tree->{'DATA_FORMAT_INFO'} = \%formats;
 }
-
-sub _configure_blast {
-  my $self = shift;
-  my $tree = $self->tree;
-  my $species = $self->species;
-  $species =~ s/ /_/g;
-  my $method = $self->full_tree->{'MULTI'}{'ENSEMBL_BLAST_METHODS'};
-  foreach my $blast_type (keys %$method) { ## BLASTN, BLASTP, BLAT, etc
-    next unless ref($method->{$blast_type}) eq 'ARRAY';
-    my @method_info = @{$method->{$blast_type}};
-    my $search_type = uc($method_info[0]); ## BLAST or BLAT at the moment
-    my $sources = $self->full_tree->{'MULTI'}{$search_type.'_DATASOURCES'};
-    $tree->{$blast_type.'_DATASOURCES'}{'DATASOURCE_TYPE'} = $method_info[1]; ## dna or peptide
-    my $db_type = $method_info[2]; ## dna or peptide
-    foreach my $source_type (keys %$sources) { ## CDNA_ALL, PEP_ALL, etc
-      my $source_label = $sources->{$source_type};
-      next if $source_type eq 'DEFAULT';
-      next if ($db_type eq 'dna' && $source_type =~ /^PEP/);
-      next if ($db_type eq 'peptide' && $source_type !~ /^PEP/);
-      if ($source_type eq 'CDNA_ABINITIO') { ## Does this species have prediction transcripts?
-        next unless 1;
-      }
-      elsif ($source_type eq 'RNA_NC') { ## Does this species have RNA data?
-        next unless 1;
-      }
-      elsif ($source_type eq 'PEP_KNOWN') { ## Does this species have species-specific protein data?
-        next unless 1;
-      }
-      my $assembly = $tree->{$species}{'ASSEMBLY_NAME'}; 
-      (my $type = lc($source_type)) =~ s/_/\./ ;
-      if ($type =~ /latestgp/) {
-        if ($search_type ne 'BLAT') {
-          $type =~ s/latestgp(.*)/dna$1\.toplevel/;
-          $type =~ s/.masked/_rm/;
-          $type =~ s/.soft/_sm/;
-          my $repeat_date = $self->db_tree->{'REPEAT_MASK_DATE'} || $self->db_tree->{'DB_RELEASE_VERSION'};
-          my $file = sprintf( '%s.%s.%s.%s', $species, $assembly, $repeat_date, $type ).".fa";
-#           print "AUTOGENERATING $source_type......$file\n";
-          $tree->{$blast_type.'_DATASOURCES'}{$source_type} = {'file' => $file, 'label' => $source_label};
-        }
-      } 
-      else {
-        $type = "ncrna" if $type eq 'rna.nc';
-        my $version = $self->db_tree->{'DB_RELEASE_VERSION'} || $SiteDefs::ENSEMBL_VERSION;
-        my $file = sprintf( '%s.%s.%s.%s', $species, $assembly, $version, $type ).".fa";
-#        print "AUTOGENERATING $source_type......$file\n";
-        $tree->{$blast_type.'_DATASOURCES'}{$source_type} = {'file' => $file, 'label' => $source_label};
-      }
-    }
-#   use Data::Dumper;
-#   warn "TREE $blast_type = ".Dumper($tree->{$blast_type.'_DATASOURCES'});
-  }
-}
-
 
 1;

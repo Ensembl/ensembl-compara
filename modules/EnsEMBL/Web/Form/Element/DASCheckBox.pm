@@ -20,10 +20,7 @@ package EnsEMBL::Web::Form::Element::DASCheckBox;
 
 use strict;
 
-use base qw(
-  EnsEMBL::Web::DOM::Node::Element::Div
-  EnsEMBL::Web::Form::Element
-);
+use base qw(EnsEMBL::Web::Form::Element::Div);
 
 use constant {
   CSS_CLASS                  => 'ele-das',
@@ -42,11 +39,7 @@ sub configure {
   $params->{'label'}  ||= $das->label;
   $params->{'id'}     ||= $self->unique_id;
 
-  $self->set_attribute('class', $self->CSS_CLASS);
-  $self->set_attribute('class', $params->{'wrapper_class'})  if $params->{'wrapper_class'};
-  $self->set_attribute('id',    $params->{'wrapper_id'})     if $params->{'wrapper_id'};
-
-  $self->append_children({
+  $params->{'children'} = [{
     'node_name'   => 'p',
     'class'       => $self->CSS_CLASS_CHECKBOX_WRAPPER,
     'children'    => [{
@@ -63,9 +56,10 @@ sub configure {
       $params->{'label'} eq $logic_name ? $params->{'label'} : "$params->{'label'} ($logic_name)",
       $das->{'description'},
       $das->{'homepage'} ? qq( [<a href="$das->{'homepage'}">Homepage</a>]) : ''),
-  });
+  }];
 
-  $self->force_wrapper if $params->{'force_wrapper'};
+  $self->SUPER::configure($params);
+  $self->set_attribute('class', $self->CSS_CLASS);
 }
 
 1;

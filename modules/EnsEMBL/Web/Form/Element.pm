@@ -68,20 +68,18 @@ sub configure {
   ##    - class         Class attribute for the option/checkbox/radio button
   ##    - group         If option needs to go in any <optgroup> in case of <option> or a sub heading in case of checkbox/radio
   ##    - label_first   Flag if on, keeps the label to the left of the checkbox/radiobutton (off by default)
-  ##  - no_input        Flag to prevent a hidden input automatically being added from NoEdit element
+  ##  - no_input        Flag to prevent a hidden input automatically being added from NoEdit and EditableTag element
+  ##  - children        Arrayref of child nodes, only for Div element
   ##  - is_binary       Flag kept on if values for a 'yesno' dropdown, the values to the option are 1 and 0 for Yes and No respectively instead of default 'yes' and 'no'
   ##  - is_html         Flag kept on if the value is HTML (in case of NoEdit only)
   ##  - caption         String to be displayed in NoEdit element if different from value attribute of the hidden input
   ##  - filter_text     Text to be displayed in the input used for filtering the dropdown (for Filterable element only)
-  ##  - tags            ArrayRef of tags if adding multiple tags in editabletag field (each element of this array is a hash with keys: tag_type, tag_class, tag_attribs and caption)
-  ##  - tag_type        Type of the tag (eg. removable or readonly) (optional only) (for editabletag elements only)
-  ##  - tag_attribs     Any additional (other than class) attributes for the tag div of editabletag element (Hashref key-value pairs as expected by DOM::Node::Element::set_attribute method)
+  ##  - filter_no_match Text to be displayed in the Filterable element dropdown if no match is found with the value entered in the input filter box
+  ##  - tag_attribs     Any attributes for the tag div of filterable element (Hashref key-value pairs as expected by DOM::Node::Element::set_attribute method)
   ##  - class           Class attribute (space seperated string or arrayref for multiple classes) - goes to all the sub elements (inputs, selects, textarea)
   ##  - element_class   Class attribute for the element div
   ##  - wrapper_class   Class attribute for the wrapper (if there's any wrapper - eg. in checklist etc)
   ##  - caption_class   Class attribute for the div/span containing caption in case of a NoEdit element
-  ##  - tag_class       Class attribute for the tag div (for editabletag element only)
-  ##  - link_class      Class attribute for the <a> tag in case of addlink element
   ##  - option_class    Class attribute for all the options (in case of a dropdown)
   ##  - disabled        Flag for disabled attribute
   ##  - readonly        Flag for readonly attribute
@@ -90,7 +88,7 @@ sub configure {
   ##  - multiple        Flag for multiple attribute in <select>
   ##  - maxlength       Maxlength attribute for <input>
   ##  - max             Allowed maximum value in case of integers
-  ##  - checked         Checked attribute (only for Checkbox or DASCheckBox) - (FOR CHECKLIST - see 'value' key)
+  ##  - checked         Checked attribute (only for Checkbox or DASCheckBox) - (For Checklist - see 'value' key)
   ##  - das             DAS object (only for DASCheckBox)
   warn "Web::Form::Element::configure needs to be overridden in the child class";
 }
@@ -108,33 +106,33 @@ sub map_element_class {
   ## @params DOM object for which mapping is to be done
   my ($self, $dom) = @_;
   $dom->map_element_class({
-    'form-element-age'          => 'EnsEMBL::Web::Form::Element::Age',
-    'form-element-button'       => 'EnsEMBL::Web::Form::Element::Button',
-    'form-element-checkbox'     => 'EnsEMBL::Web::Form::Element::Checkbox',
-    'form-element-checklist'    => 'EnsEMBL::Web::Form::Element::Checklist',
-    'form-element-dascheckbox'  => 'EnsEMBL::Web::Form::Element::DASCheckBox',
-    'form-element-dropdown'     => 'EnsEMBL::Web::Form::Element::Dropdown',
-    'form-element-email'        => 'EnsEMBL::Web::Form::Element::Email',
-    'form-element-editabletag'  => 'EnsEMBL::Web::Form::Element::EditableTag',
-    'form-element-file'         => 'EnsEMBL::Web::Form::Element::File',
-    'form-element-float'        => 'EnsEMBL::Web::Form::Element::Float',
-    'form-element-html'         => 'EnsEMBL::Web::Form::Element::Html',
-    'form-element-iconlink'     => 'EnsEMBL::Web::Form::Element::IconLink',
-    'form-element-int'          => 'EnsEMBL::Web::Form::Element::Int',
-    'form-element-noedit'       => 'EnsEMBL::Web::Form::Element::NoEdit',
-    'form-element-nonnegfloat'  => 'EnsEMBL::Web::Form::Element::NonNegFloat',
-    'form-element-nonnegint'    => 'EnsEMBL::Web::Form::Element::NonNegInt',
-    'form-element-password'     => 'EnsEMBL::Web::Form::Element::Password',
-    'form-element-posfloat'     => 'EnsEMBL::Web::Form::Element::PosFloat',
-    'form-element-posint'       => 'EnsEMBL::Web::Form::Element::PosInt',
-    'form-element-radiolist'    => 'EnsEMBL::Web::Form::Element::Radiolist',
-    'form-element-reset'        => 'EnsEMBL::Web::Form::Element::Reset',
-    'form-element-filterable'   => 'EnsEMBL::Web::Form::Element::Filterable',
-    'form-element-string'       => 'EnsEMBL::Web::Form::Element::String',
-    'form-element-submit'       => 'EnsEMBL::Web::Form::Element::Submit',
-    'form-element-text'         => 'EnsEMBL::Web::Form::Element::Text',
-    'form-element-url'          => 'EnsEMBL::Web::Form::Element::Url',
-    'form-element-yesno'        => 'EnsEMBL::Web::Form::Element::YesNo',
+    'form-element-age'              => 'EnsEMBL::Web::Form::Element::Age',
+    'form-element-button'           => 'EnsEMBL::Web::Form::Element::Button',
+    'form-element-checkbox'         => 'EnsEMBL::Web::Form::Element::Checkbox',
+    'form-element-checklist'        => 'EnsEMBL::Web::Form::Element::Checklist',
+    'form-element-dascheckbox'      => 'EnsEMBL::Web::Form::Element::DASCheckBox',
+    'form-element-div'              => 'EnsEMBL::Web::Form::Element::Div',
+    'form-element-dropdown'         => 'EnsEMBL::Web::Form::Element::Dropdown',
+    'form-element-email'            => 'EnsEMBL::Web::Form::Element::Email',
+    'form-element-file'             => 'EnsEMBL::Web::Form::Element::File',
+    'form-element-filterable'       => 'EnsEMBL::Web::Form::Element::Filterable',
+    'form-element-float'            => 'EnsEMBL::Web::Form::Element::Float',
+    'form-element-html'             => 'EnsEMBL::Web::Form::Element::Html',
+    'form-element-int'              => 'EnsEMBL::Web::Form::Element::Int',
+    'form-element-noedit'           => 'EnsEMBL::Web::Form::Element::NoEdit',
+    'form-element-nonnegfloat'      => 'EnsEMBL::Web::Form::Element::NonNegFloat',
+    'form-element-nonnegint'        => 'EnsEMBL::Web::Form::Element::NonNegInt',
+    'form-element-password'         => 'EnsEMBL::Web::Form::Element::Password',
+    'form-element-posfloat'         => 'EnsEMBL::Web::Form::Element::PosFloat',
+    'form-element-posint'           => 'EnsEMBL::Web::Form::Element::PosInt',
+    'form-element-radiolist'        => 'EnsEMBL::Web::Form::Element::Radiolist',
+    'form-element-reset'            => 'EnsEMBL::Web::Form::Element::Reset',
+    'form-element-speciesdropdown'  => 'EnsEMBL::Web::Form::Element::SpeciesDropdown',
+    'form-element-string'           => 'EnsEMBL::Web::Form::Element::String',
+    'form-element-submit'           => 'EnsEMBL::Web::Form::Element::Submit',
+    'form-element-text'             => 'EnsEMBL::Web::Form::Element::Text',
+    'form-element-url'              => 'EnsEMBL::Web::Form::Element::Url',
+    'form-element-yesno'            => 'EnsEMBL::Web::Form::Element::YesNo',
   });
 }
 
@@ -143,12 +141,6 @@ sub shortnote {
   ## @return Node object (span element if shornote found, an empty text node otherwise)
   my $self = shift;
   return exists $self->{'__shortnote'} ? $self->dom->create_element('span', {'class' => $self->CSS_CLASS_SHORTNOTE, 'inner_HTML' => ' '.$self->{'__shortnote'}}) : $self->dom->create_text_node;
-}
-
-sub force_wrapper {
-  ## Adds a flag in the wrapper div is to be kept independent from the element div
-  my $self = shift;
-  $self->set_flag($self->ELEMENT_HAS_WRAPPER) if $self->node_name eq 'div';
 }
 
 sub new {

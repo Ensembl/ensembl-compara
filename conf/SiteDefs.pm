@@ -236,11 +236,9 @@ our $OBJECT_TO_SCRIPT = {
   Experiment          => 'Page',
 
   Blast               => 'Page',
-  Tools               => 'Page',
   Info                => 'AltPage',
   Search              => 'Page',
   
-  Account             => 'Modal',
   UserConfig          => 'Modal',
   UserData            => 'Modal',
   Help                => 'Modal',  
