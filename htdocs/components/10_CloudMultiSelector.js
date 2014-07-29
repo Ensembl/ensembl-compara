@@ -43,6 +43,8 @@ Ensembl.Panel.CloudMultiSelector = Ensembl.Panel.extend({
     this.elLk.list = $('.cloud_multi_selector_list li', this.elLk.content);
     this.elLk.filter = $('.cloud_filter input',this.el);
     this.elLk.clear = $('.cloud_filter_clear',this.el);
+    this.elLk.all = $('.all',this.el);
+    this.elLk.none = $('.none',this.el);
     $(panel.el).on('filter',function(e,val) {
       panel.elLk.list.each(function() {
         var $li = $(this);
@@ -61,6 +63,8 @@ Ensembl.Panel.CloudMultiSelector = Ensembl.Panel.extend({
       panel.elLk.filter.focus();
       return false;
     });
+    this.elLk.all.click(function() { panel.elLk.list.removeClass('off'); panel.set_selection(); });
+    this.elLk.none.click(function() { panel.elLk.list.addClass('off'); panel.set_selection(); });
     this.set_selection();
     this.val = '';
     panel.elLk.filter.val('');
