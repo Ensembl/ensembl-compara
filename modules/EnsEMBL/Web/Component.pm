@@ -83,7 +83,12 @@ sub new {
 }
 
 sub buttons {
-  ## Returns a list of hashrefs, each containing info about the component context buttons (keys: url, caption, class, modal, toggle)
+  ## Returns a list of hashrefs, each containing info about the component context buttons (keys: url, caption, class, modal, toggle, disabled)
+}
+
+sub button_style {
+  ## Optional configuration of button style if using buttons method. Returns hashref.
+  return {};
 }
 
 #################### ACCESSORS ###############################
@@ -228,6 +233,7 @@ sub get_content {
 sub content_buttons {
   my $self = shift;
 
+  my $style = $self->button_style;
   # Group the buttons, if requested
   my @groups;
   foreach my $b ($self->buttons) {
@@ -241,21 +247,30 @@ sub content_buttons {
   my $html = '';
   foreach my $g (@groups) {
     my $group = '';
+    my $all_disabled = 1;
     foreach my $b (@$g) {
       my @classes = $b->{'class'} || ();
       push @classes, 'modal_link'   if $b->{'modal'};
+      push @classes, 'disabled'     if $b->{'disabled'};
       push @classes, 'togglebutton' if $b->{'toggle'};
       push @classes, 'off'          if $b->{'toggle'} and $b->{'toggle'} eq 'off';
+      $all_disabled = 0 unless $b->{'disabled'};
       $group .= sprintf('<a href="%s" class="%s">%s</a>',
             $b->{'url'}, join(' ',@classes), $b->{'caption'});
     }
     if(@$g>1) {
-      $html .= qq(<div class="group">$group</div>);
+      my $class = "group";
+      $class .= " disabled" if $all_disabled;
+      $html .= qq(<div class="$class">$group</div>);
     } else {
       $html .= $group;
     }
   }
-  return $html ? sprintf('<div class="component-tools tool_buttons">%s</div>', $html) : '';
+  return '' unless $html;
+  my $class = $style->{'class'} || '';
+  return qq(
+    <div class="component-tools tool_buttons $class">$html</div>
+  );
 }
 
 sub cache {

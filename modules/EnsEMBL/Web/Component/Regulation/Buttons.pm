@@ -40,4 +40,12 @@ sub content {
   return '';
 }
 
+sub button_style {
+  my ($self) = @_;
+
+  return {
+    class => 'regulation_buttons',
+  };
+}
+
 1;

@@ -45,7 +45,7 @@ sub all_evidences {
   my ($self) = @_;
 
   my $hub = $self->hub;
-  my $mode = 3;
+  my $mode = 4;
   my %evidences;
   my $image_config = $hub->get_imageconfig('regulation_view');
   foreach my $type (qw(reg_feats_core reg_feats_non_core)) {
@@ -64,6 +64,7 @@ sub all_evidences {
         $evidences{$ev}->{'on'} ||= ( $renderer2 ne 'off' );
         $evidences{$ev}->{'group'} ||= $node2->get('group');
         if($renderer2 ne 'off') {
+          $mode = 3 if $mode == 4;
           $evidences{$ev}->{'on'} ||= 1;
           $mode &=~ 1 if $renderer eq 'tiling';
           $mode &=~ 2 if $renderer eq 'compact';
@@ -127,7 +128,7 @@ sub _current_renderer_setting {
   my ($self) = @_;
 
   my $mode = $self->all_evidences->{'mode'};
-  return ($mode&1,!!($mode&2));
+  return (!!($mode&4),$mode&1,!!($mode&2));
 }
 
 sub renderer_button {
@@ -141,19 +142,21 @@ sub renderer_button {
     type => 'reg_renderer',
     renderer => 'signals',
   });
-  my ($peaks_on,$signals_on) = $self->_current_renderer_setting;
+  my ($disabled,$peaks_on,$signals_on) = $self->_current_renderer_setting;
 
   push @{$self->{'buttons'}||=[]},{
     url => $peaks_url,
     caption => 'Peaks',
     class => 'peak radiogroup',
     toggle => $peaks_on?'on':'off',
+    disabled => $disabled,
     group => 'renderer',
   },{
     url => $signals_url,
-    caption => 'Signals',
+    caption => 'Signal',
     class => 'signal',
     toggle => $signals_on?'on':'off',
+    disabled => $disabled,
     group => 'renderer',
   };
 }

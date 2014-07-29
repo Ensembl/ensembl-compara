@@ -47,7 +47,7 @@
       fix_radio($this);
 
       $this.click(function() {
-        if($this.hasClass('inactive')) {
+        if($this.hasClass('inactive') || $this.hasClass('disabled')) {
           return false;
         }
         $this.toggleClass('off');
