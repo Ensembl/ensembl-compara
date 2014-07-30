@@ -370,10 +370,7 @@ Ensembl.Panel.ZMenu = Ensembl.Panel.extend({
             }
           }
           
-          menu = [
-            '<a class="' + cls + '" href="' + url + '">Jump to region (' + (end - start + 1) + ' bp)</a>',
-            '<a class="location_change" href="' + this.zoomURL(1) + '">Centre here</a>'
-          ];
+          menu = [ '<a class="' + cls + '" href="' + url + '">Jump to region (' + (end - start + 1) + ' bp)</a>' ];
         }
       }
     } else { // Point select
