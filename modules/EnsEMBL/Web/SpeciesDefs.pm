@@ -679,6 +679,18 @@ sub _munge_colours {
   my $in   = shift;
   my $out  = {};
   
+  my $proc = 1;
+  # Handle inheritance
+  while($proc) {
+    $proc = 0;
+    foreach my $set (keys %$in) {
+      my $base = $in->{$set}{'_inherit'};
+      next unless $base and $in->{$base} and !$in->{$base}{'_inherit'};
+      $in->{$set}{$_} ||= $in->{$base}{$_} for keys %{$in->{$base}};
+      delete $in->{$set}{'_inherit'};
+      $proc = 1;
+    }
+  }
   foreach my $set (keys %$in) {
     foreach my $key (keys %{$in->{$set}}) {
       my ($c, $n) = split /\s+/, $in->{$set}{$key}, 2;
@@ -690,7 +702,6 @@ sub _munge_colours {
       $out->{$set}{$key}{'section'} ||= '';
     }
   }
-  
   return $out;
 }
 

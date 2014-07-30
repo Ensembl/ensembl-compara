@@ -167,12 +167,11 @@ sub multi {
     [ 'gene_legend', 'Gene Legend','gene_legend', {  display => 'normal', strand => 'r', accumulate => 'yes' }],
     [ 'variation_legend', 'Variation Legend','variation_legend', {  display => 'normal', strand => 'r', accumulate => 'yes' }],
     [ 'fg_regulatory_features_legend',   'Reg. Features Legend', 'fg_regulatory_features_legend',   { display => 'normal', strand => 'r', colourset => 'fg_regulatory_features'   }],
-    [ 'fg_segmentation_features_legend', 'Reg. Segments Legend',          'fg_segmentation_features_legend', { strand => 'r', colourset => 'fg_segmentation_features' } ],
     [ 'fg_methylation_legend', 'Methylation Legend', 'fg_methylation_legend', { strand => 'r' } ],
     [ 'structural_variation_legend', 'Structural Variation Legend', 'structural_variation_legend', { strand => 'r' } ],
   );
   $self->modify_configs(
-    [ 'gene_legend', 'variation_legend','fg_regulatory_features_legend','fg_segmentation_features_legend', 'fg_methylation_legend', 'structural_variation_legend' ],
+    [ 'gene_legend', 'variation_legend','fg_regulatory_features_legend', 'fg_methylation_legend', 'structural_variation_legend' ],
     { accumulate => 'yes' }
   );
 }
