@@ -61,7 +61,7 @@ sub build_tracks {
   my @settings;
 	my $chr_min_data ;
   my $chr_max_data  = 0;
-	my $slice			    = $self->{'container'}->{'sa'}->fetch_by_region('chromosome', $chr);
+	my $slice			    = $self->{'container'}->{'sa'}->fetch_by_region(undef, $chr);
   my $width         = $image_config->get_parameter( 'width') || 80;
   my $max_data      = $image_config->get_parameter( 'max_value' ) || 1;
   my $bins          = $image_config->get_parameter('bins') || 150;
