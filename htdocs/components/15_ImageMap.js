@@ -621,15 +621,17 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
       case false: coords.b = y; coords.t = this.dragCoords.map.y; break;
     }
     
-    if (x < this.dragRegion.l) {
+    if (this.vertical || x < this.dragRegion.l) {
       coords.l = this.dragRegion.l;
-    } else if (x > this.dragRegion.r) {
+    }
+    if (this.vertical || x > this.dragRegion.r) {
       coords.r = this.dragRegion.r;
     }
     
-    if (y < this.dragRegion.t) {
+    if (!this.vertical || y < this.dragRegion.t) {
       coords.t = this.dragRegion.t;
-    } else if (y > this.dragRegion.b) {
+    }
+    if (!this.vertical || y > this.dragRegion.b) {
       coords.b = this.dragRegion.b;
     }
     
