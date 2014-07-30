@@ -119,9 +119,11 @@ sub content_ajax {
       <form action="%s" method="get" class="hidden">%s</form>
       <div class="cloud_filter">
         <input type="text" name="cloud_filter" id="cloud_filter" tabindex="0" class="ftext" placeholder="type to filter options..."/>
-        <span class="all">ALL ON</span>
-        <span class="none">ALL OFF</span>
         <a href="#" class="cloud_filter_clear">clear filter</a>
+        <div class="cloud_all_none">
+          <span class="all">ALL ON</span>
+          <span class="none">ALL OFF</span>
+        </div>
       </div>
       <div class="cloud_multi_selector_list">
         %s

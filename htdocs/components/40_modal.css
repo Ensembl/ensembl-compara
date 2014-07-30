@@ -194,7 +194,8 @@ body.ie7 #modal_panel .fixed_width .modal_wrapper .panel { margin-left: 229px; }
 .modal_content .cloud_multi_selector_list ul { display: inline-block; padding-left: 12px; }
 .modal_content .cloud_multi_selector_list li.hidden { display: none; }
 .cloud_filter_clear { font-size: 80%; }
-.cloud_filter { border-bottom: 2px solid grey; padding-bottom: 16px; text-align: center; }
+.cloud_filter { border-bottom: 2px solid grey; padding-bottom: 8px; text-align: center; }
 .cloud_filter .ftext { border: 2px solid #667aa6; font-size: 150%; width: 50%; }
-.cloud_filter .none { background: none repeat scroll 0 0 #628e4e; border: 1px solid #628e4e; color: white; display: inline-block; padding: 2px 8px; cursor: pointer; float: right; margin: 4px; }
-.cloud_filter .all { background: none repeat scroll 0 0 #8e4e62; border: 1px solid #8e4e62; color: white; display: inline-block; padding: 2px 8px; cursor: pointer; float: right; margin: 4px; }
+.cloud_all_none { text-align: center; margin: 8px 0 0 0; }
+.cloud_all_none .none { background: none repeat scroll 0 0 #628e4e; border: 1px solid #628e4e; color: white; display: inline-block; padding: 2px 8px; cursor: pointer; margin: 4px; }
+.cloud_all_none .all { background: none repeat scroll 0 0 #8e4e62; border: 1px solid #8e4e62; color: white; display: inline-block; padding: 2px 8px; cursor: pointer; margin: 4px; }
