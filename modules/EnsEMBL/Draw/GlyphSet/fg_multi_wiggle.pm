@@ -50,11 +50,12 @@ sub draw_features {
   my ($peaks, $wiggle) = $display eq 'tiling_feature' ? (1, 1) : $display eq 'compact' ? (1, 0) : (0, 1);
   
   # First draw block features
+  my $any_on = scalar keys %{$data->{$set}{'on'}};
   if ($peaks) {
     if ($data->{$set}{'block_features'}) {   
       $self->draw_blocks($data->{$set}{'block_features'}, $label, undef, $colours, $data->{$set}{'on'} ? sprintf '%s/%s features turned on', map scalar keys %{$data->{$set}{$_} || {}}, qw(on available) : '');
     } else {
-      $self->display_error_message($cell_line, $set, 'peaks');
+      $self->display_error_message($cell_line, $set, 'peaks') if $any_on;
     }
   }
   
@@ -63,7 +64,7 @@ sub draw_features {
     if ($data->{$set}{'wiggle_features'}) {   
       $self->process_wiggle_data($data->{$set}{'wiggle_features'}, $colours, $label, $cell_line, $set, $reg_view);
     } else {
-      $self->display_error_message($cell_line, $set, 'wiggle'); 
+      $self->display_error_message($cell_line, $set, 'wiggle') if $any_on; 
     }
   } 
   
@@ -253,7 +254,7 @@ sub display_error_message {
   return unless $config->get_option('opt_empty_tracks') == 1; 
   
   $self->draw_track_name(join(' ', $config->hub->get_adaptor('get_FeatureTypeAdaptor', 'funcgen')->get_regulatory_evidence_info($set)->{'label'}), 'black', -118,  2, 1);
-  $self->display_no_data_error('No evidence of selected types in this cell line. Select more types?',1);
+  $self->display_no_data_error('No evidence of those types in this cell line. Select more evidence?',1);
   
   return 1;
 }
