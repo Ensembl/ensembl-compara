@@ -243,5 +243,6 @@ sub feature_label {
 }
 
 sub label_overlay { return 1; }
+sub max_label_rows { return $_[0]->my_config('max_label_rows') || 2; }
 
 1;

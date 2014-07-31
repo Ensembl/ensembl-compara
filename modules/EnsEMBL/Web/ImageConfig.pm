@@ -2799,8 +2799,9 @@ sub add_regulation_builds {
       display     => $display,
       renderers   => \@renderers,
       cell_line   => $cell_line,
-      section => $cell_line,
-      caption    => "Reg. Feats",
+      section     => $cell_line,
+      section_zmenu => { type => 'regulation', cell_line => $cell_line, _id => "regulation:$cell_line" },
+      caption     => "Regulatory Features",
     }));
     
     if ($fg_data{"seg_$cell_line"}{'key'} eq "seg_$cell_line") {
@@ -2816,9 +2817,10 @@ sub add_regulation_builds {
         description => $fg_data{"seg_$cell_line"}{'description'},
         renderers   => \@renderers,
         cell_line   => $cell_line,
-        caption     => "Reg. Segs",
+        caption     => "Regulatory Segments",
         track_after => $prev_track,
-        section => $cell_line,
+        section_zmenu => { type => 'regulation', cell_line => $cell_line, _id => "regulation:$cell_line" },
+        section     => $cell_line,
       }));
     }
     

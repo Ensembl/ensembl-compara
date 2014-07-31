@@ -30,6 +30,8 @@ use Sanger::Graphics::Glyph::Rect;
 
 use base qw(Sanger::Graphics::Root);
 
+use JSON qw(to_json);
+
 sub new {
   my $class           = shift;
   my $self            = $class->_init(@_); 
@@ -206,8 +208,18 @@ sub new {
       ## set the X-locations for each of the bump labels
 
       my $section = '';
+      my (%section_label_data,%section_label_dedup);
       foreach my $glyphset (@glyphsets) {
         my $new_section = $glyphset->section;
+        my $section_zmenu = $glyphset->section_zmenu;
+        if($new_section and $section_zmenu) {
+          my $id = $section_zmenu->{'_id'};
+          unless($id and $section_label_dedup{$id}) {
+            $section_label_data{$new_section} ||= [];
+            push @{$section_label_data{$new_section}},$section_zmenu;
+            $section_label_dedup{$id} = 1 if $id;
+          }
+        }
         if($section ne $new_section) {
           $section = $new_section;
           $glyphset->section_text($section);
@@ -305,6 +317,16 @@ sub new {
 
         if($glyphset->section_text) {
           my $section = $glyphset->section_text;
+          my $zmdata = $section_label_data{$section};
+          my $url;
+          if($zmdata) {
+            $url = $self->{'config'}->hub->url ({
+              type => 'ZMenu',
+              action => 'Label',
+              section => $section,
+              zmdata => to_json($zmdata),
+            });
+          }
           $glyphset->push($glyphset->Text({
             font => 'Arial',
             ptsize => 12,
@@ -313,9 +335,11 @@ sub new {
             colour    => 'black',
             x => -$label_width - $margin,
             y => -$glyphset->section_height + 4,
-            width => $label_width - $margin,
+            width => $label_width,
             halign => 'left',
             absolutex => 1,
+            absolutewidth => 1,
+            href => $url,
           }));
         }
 

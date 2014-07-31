@@ -458,6 +458,8 @@ sub section {
   return $self->my_config('section') || '';
 }
 
+sub section_zmenu { $_[0]->my_config('section_zmenu'); }
+
 sub section_text {
   $_[0]->{'section_text'} = $_[1] if @_>1;
   return $_[0]->{'section_text'};
