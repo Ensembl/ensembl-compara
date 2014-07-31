@@ -106,7 +106,7 @@ sub content {
     my $readable_location = sprintf(
       '%s: %s',
       $self->neat_sr_name($gene->slice->coord_system->name, $gene->slice->seq_region_name),
-      $self->round_bp($gene->start)
+      $gene->start
     );
     
     $row->{'loc'}= sprintf '<a href="%s">%s</a>', $hub->url({ type => 'Location', action => 'View', g => $stable_id, __clear => 1}), $readable_location;
