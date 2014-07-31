@@ -63,7 +63,7 @@ sub all_evidences {
         $evidences{$ev}->{'on'} ||= ( $renderer2 ne 'off' );
         $evidences{$ev}->{'group'} ||= $node2->get('group');
         if($renderer2 ne 'off') {
-          $mode = 3 if $mode == 4;
+          $mode = 3 if $mode == 4 and $renderer ne 'off';
           $evidences{$ev}->{'on'} ||= 1;
           $mode &=~ 1 if $renderer eq 'tiling';
           $mode &=~ 2 if $renderer eq 'compact';
