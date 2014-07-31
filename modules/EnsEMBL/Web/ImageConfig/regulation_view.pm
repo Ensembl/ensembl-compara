@@ -22,6 +22,8 @@ use strict;
 
 use base qw(EnsEMBL::Web::ImageConfig);
 
+use EnsEMBL::Web::Tree;
+
 sub cache_key        { return $_[0]->code eq 'cell_line' ? '' : $_[0]->SUPER::cache_key; }
 sub load_user_tracks { return $_[0]->SUPER::load_user_tracks($_[1]) unless $_[0]->code eq 'set_evidence_types'; } # Stops unwanted cache tags being added for the main page (not the component)
 
@@ -99,6 +101,7 @@ sub init {
   $self->get_node('opt_empty_tracks')->set('display', 'normal');	
 
   foreach my $cell_line (@cell_lines) {
+    $cell_line = EnsEMBL::Web::Tree->clean_id($cell_line);
     $_->set('display', 'normal') for map $self->get_node("${_}_$cell_line") || (), 'reg_feats', 'seg';
     
     $self->{'reg_feats_tracks'}{$_} = 1 for "reg_feats_$cell_line", "reg_feats_core_$cell_line", "reg_feats_non_core_$cell_line", "seg_$cell_line";
