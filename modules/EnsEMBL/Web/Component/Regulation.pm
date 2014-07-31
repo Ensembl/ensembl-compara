@@ -28,13 +28,12 @@ sub shown_cells {
   my $hub = $self->hub;
   my %shown_cells;
   my $image_config = $hub->get_imageconfig('regulation_view');
-  foreach my $type (qw(reg_features seg_features)) {
+  foreach my $type (qw(reg_features seg_features reg_feats_core reg_feats_non_core)) {
     my $menu = $image_config->get_node($type);
     next unless $menu;
     foreach my $node (@{$menu->child_nodes}) {
-      next unless $node->id =~ /^(reg_feats|seg)_(.*)$/;
-      next if $node->id =~ /^reg_feats_(core|non_core)_/;
-      my $cell=$2;
+      next unless $node->id =~ /^(reg_feats|seg)_(core_|non_core_)?(.*)$/;
+      my $cell=$3;
       $shown_cells{$cell} = 1 unless $node->get('display') eq 'off';
     }
   }
