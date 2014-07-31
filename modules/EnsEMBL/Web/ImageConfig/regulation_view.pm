@@ -133,13 +133,8 @@ sub init_cell_line {
   $on{$_->data->{'cell_line'}} ||= [ $_, $i++ ] for grep $_->get('display') ne 'off', $self->get_tracks;
   
   foreach (grep $_->[1], values %on) {
-    my $spacer = $_->[0]->before($self->create_track("spacer_$_->[1]", '', { glyphset => 'spacer', strand => 'r', colour => 'grey40', width => $self->image_width, height => 2 }));
-    my $after  = $_->[0]->get('track_after');
-    
-    if ($after) {
-      $spacer->set('track_after', $after);
-      $_->[0]->set('track_after', $spacer);
-    }
+    my $section = $_->[0]->get('section');
+    my $spacer = $_->[0]->before($self->create_track("spacer_$_->[1]", '', { glyphset => 'spacer', strand => 'r', colour => 'grey40', width => $self->image_width, height => 2, section => $section, no_section_text => 1 }));
   }
   
   $self->add_tracks('other',

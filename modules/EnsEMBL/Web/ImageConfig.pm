@@ -267,21 +267,18 @@ sub get_user_settings {
 
 sub default_track_order {
   my ($self, @tracks) = @_;
-  my (@out, %seen, %before, %after);
-  
-  foreach (@tracks) {
-    next unless my $ta = $_->get('track_after');
-    $before{$ta->id} = $_;
-    $after{$_->id}   = $ta;
-  }
-  
-  foreach my $t (grep !$after{$_->id}, @tracks) {
-    for (my $t2 = $t; $t2 && !$seen{$t2}; $t2 = $before{$t2->id}) {
-      push @out, $t2;
-      $seen{$t2} = 1; # %seen is paranoia against infinite loops
+ 
+  my (%sections,@out);
+  push @{$sections{$_->get('section')||''}||=[]},$_ for @tracks;
+  foreach my $track (@tracks) {
+    my $section = $track->get('section');
+    if($section and $sections{$section}) {
+      push @out,@{$sections{$section}};
+      $sections{$section} = [];
+    } else {
+      push @out,$track;  
     }
   }
-  
   return @out;
 }
 
@@ -1830,7 +1827,6 @@ sub add_matrix {
   my $menu_data    = $menu->data;
   my $matrix       = $data->{'matrix'};
   my $caption      = $data->{'caption'};
-  my $after        = $data->{'track_after'};
   my $column       = $matrix->{'column'};
   my $subset       = $matrix->{'menu'};
   my @rows         = $matrix->{'rows'} ? @{$matrix->{'rows'}} : $matrix;
@@ -1843,7 +1839,6 @@ sub add_matrix {
       label_x     => $column,
       display     => 'off',
       subset      => $subset,
-      track_after => $after,
       $matrix->{'row'} ? (matrix => 'column') : (),
       column_order => $matrix->{'column_order'} || 999999,
       %{$data->{'column_data'} || {}}
@@ -2776,7 +2771,7 @@ sub add_regulation_builds {
   }
   
   $matrix_menus{$_} = $menu->after($self->create_submenu(@{$matrix_menus{$_}})) for 'non_core', 'core';
-  
+ 
   foreach my $cell_line (@cell_lines) {
     my $track_key = "reg_feats_$cell_line";
     my $display   = 'off';
@@ -2818,7 +2813,6 @@ sub add_regulation_builds {
         renderers   => \@renderers,
         cell_line   => $cell_line,
         caption     => "Regulatory Segments",
-        track_after => $prev_track,
         section_zmenu => { type => 'regulation', cell_line => $cell_line, _id => "regulation:$cell_line" },
         section     => $cell_line,
       }));
@@ -2844,7 +2838,6 @@ sub add_regulation_builds {
     foreach (grep exists $matrix_rows{$cell_line}{$_}, keys %matrix_menus) {
       $prev_track = $self->add_matrix({
         track_name  => "$evidence_info->{$_}{'name'}$label",
-        track_after => $prev_track,
         section => $cell_line,
         matrix      => {
           menu   => $matrix_menus{$_}->id,

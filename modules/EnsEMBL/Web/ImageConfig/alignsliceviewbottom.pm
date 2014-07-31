@@ -47,22 +47,22 @@ sub init {
     information
   ));
   
-  if ($species eq 'Multi') {
-    $self->set_parameter('sortable_tracks', 0);
-  } else {
-    $self->load_tracks;
-  }
-  
   $self->add_track('sequence', 'contig', 'Contigs', 'contig', { display => 'normal', strand => 'r', description => 'Track showing underlying assembly contigs' });
  
   $self->add_tracks('information', 
     [ 'alignscalebar',     '',                  'alignscalebar',     { display => 'normal', strand => 'b', menu => 'no' }],
     [ 'ruler',             '',                  'ruler',             { display => 'normal', strand => 'f', menu => 'no' }],
     [ 'draggable',         '',                  'draggable',         { display => 'normal', strand => 'b', menu => 'no' }], # TODO: get this working
-    [ 'gene_legend', 'Gene Legend','gene_legend', {  display => 'normal', strand => 'r', accumulate => 'yes' }],
     [ 'variation_legend', 'Variation Legend','variation_legend', {  display => 'normal', strand => 'r', accumulate => 'yes' }],
-    [ 'alignslice_legend', 'AlignSlice Legend', 'alignslice_legend', { display => 'normal', strand => 'r', accumulate => 'yes' }]
+    [ 'alignslice_legend', 'AlignSlice Legend', 'alignslice_legend', { display => 'normal', strand => 'r', accumulate => 'yes' }],
+    [ 'gene_legend', 'Gene Legend','gene_legend', {  display => 'normal', strand => 'r', accumulate => 'yes' }],
   );
+  
+  if ($species eq 'Multi') {
+    $self->set_parameter('sortable_tracks', 0);
+  } else {
+    $self->load_tracks;
+  }
   
   my $gencode_version = $self->hub->species_defs->GENCODE ? $self->hub->species_defs->GENCODE->{'version'} : '';
   $self->add_track('transcript', 'gencode', "Basic Gene Annotations from GENCODE $gencode_version", '_gencode', {
