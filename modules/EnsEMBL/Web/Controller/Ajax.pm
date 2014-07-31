@@ -120,7 +120,9 @@ sub cell_type {
         $cell =~ s/^(reg_feats_|seg_)//;
       }
       my $renderer = $cell{$cell} ? 'normal' : 'off';
-      $image_config->update_track_renderer($node->id,$renderer);
+      if($type eq 'reg_features' or !$cell{$cell}) {
+        $image_config->update_track_renderer($node->id,$renderer);
+      }
     }
   }
   $hub->session->store;
