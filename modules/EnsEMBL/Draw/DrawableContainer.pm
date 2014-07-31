@@ -208,7 +208,7 @@ sub new {
       ## set the X-locations for each of the bump labels
 
       my $section = '';
-      my (%section_label_data,%section_label_dedup);
+      my (%section_label_data,%section_label_dedup,$section_title_pending);
       foreach my $glyphset (@glyphsets) {
         my $new_section = $glyphset->section;
         my $section_zmenu = $glyphset->section_zmenu;
@@ -222,7 +222,11 @@ sub new {
         }
         if($section ne $new_section) {
           $section = $new_section;
-          $glyphset->section_text($section);
+          $section_title_pending = $section;
+        }
+        if($section_title_pending and not $glyphset->section_no_text) {
+          $glyphset->section_text($section_title_pending);
+          $section_title_pending = undef;
         }
         next unless defined $glyphset->label;
         my $img = $glyphset->label_img;

@@ -459,6 +459,7 @@ sub section {
 }
 
 sub section_zmenu { $_[0]->my_config('section_zmenu'); }
+sub section_no_text { $_[0]->my_config('no_section_text'); }
 
 sub section_text {
   $_[0]->{'section_text'} = $_[1] if @_>1;
