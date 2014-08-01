@@ -200,7 +200,7 @@ sub regfeat_table {
       # create a URL
       my $url = $hub->url({
         type   => 'Regulation',
-        action => 'Cell_line',
+        action => 'Summary',
         rf     => $rsv->feature->stable_id,
         fdb    => 'funcgen',
       });
@@ -242,7 +242,7 @@ sub regfeat_table {
       # create a URL
       my $url = $hub->url({
         type   => 'Regulation',
-        action => 'Cell_line',
+        action => 'Summary',
         rf     => $rf->stable_id,
         fdb    => 'funcgen',
       });

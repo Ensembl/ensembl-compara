@@ -48,11 +48,7 @@ sub caption {
   return $caption;    
 }
 
-sub default_action {
-  my $self         = shift;
-  my $availability = $self->availability;
-  return $availability->{'regulation'} ? 'Cell_line' : 'Summary';
-}
+sub default_action { return 'Summary'; }
 
 sub availability {
   my $self = shift;
@@ -232,12 +228,12 @@ sub get_bound_location_url {
   });
 }
 
-sub get_details_page_url {
+sub get_summary_page_url {
   my $self = shift;
   
   return $self->hub->url({
     type   => 'Regulation',
-    action => 'Cell_line',
+    action => 'Summary',
     rf     => $self->stable_id,
     fdb    => 'funcgen',
   });

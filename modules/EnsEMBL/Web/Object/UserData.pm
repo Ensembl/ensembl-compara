@@ -976,7 +976,7 @@ sub consequence_table {
         my $feature_url = $hub->url({
           species => $species,
           type    => 'Regulation',
-          action  => 'Cell_line',
+          action  => 'Summary',
           rf      => $feature_id,
         });
         

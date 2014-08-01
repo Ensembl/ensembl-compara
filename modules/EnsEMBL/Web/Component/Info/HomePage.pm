@@ -354,7 +354,7 @@ sub funcgen_text {
       
       sprintf(
         $self->{'img_link'},
-        $hub->url({ type => 'Regulation', action => 'Cell_line', db => 'funcgen', rf => $sample_data->{'REGULATION_PARAM'}, __clear => 1 }),
+        $hub->url({ type => 'Regulation', action => 'Summary', db => 'funcgen', rf => $sample_data->{'REGULATION_PARAM'}, __clear => 1 }),
         "Go to regulatory feature $sample_data->{'REGULATION_TEXT'}", 'regulation', 'Example regulatory feature'
       ),
       

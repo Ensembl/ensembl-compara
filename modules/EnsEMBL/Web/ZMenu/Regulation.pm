@@ -50,7 +50,7 @@ sub content {
   $self->add_entry({
     type  => 'Stable ID',
     label => $object->stable_id,
-    link  => $object->get_details_page_url
+    link  => $object->get_summary_page_url
   });
   
   $self->add_entry({

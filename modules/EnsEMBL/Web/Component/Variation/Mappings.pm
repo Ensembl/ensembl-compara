@@ -283,7 +283,7 @@ sub content {
       # create a URL
       my $url = $hub->url({
         type   => 'Regulation',
-        action => 'Cell_line',
+        action => 'Summary',
         rf     => $rfv->regulatory_feature->stable_id,
         fdb    => 'funcgen',
       });
@@ -327,7 +327,7 @@ sub content {
       # create a URL
       my $url = $hub->url({
         type   => 'Regulation',
-        action => 'Cell_line',
+        action => 'Summary',
         rf     => $rf->stable_id,
         fdb    => 'funcgen',
       });
