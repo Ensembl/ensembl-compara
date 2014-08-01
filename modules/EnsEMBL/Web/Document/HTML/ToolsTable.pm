@@ -30,6 +30,7 @@ sub render {
   my $self    = shift;
   my $hub     = EnsEMBL::Web::Hub->new;
   my $sd      = $hub->species_defs;
+  my $sp      = $sd->ENSEMBL_PRIMARY_SPECIES;
   my $img_url = $sd->img_url;
 
   my $table = EnsEMBL::Web::Document::Table->new([
@@ -43,7 +44,7 @@ sub render {
 
   ## VEP
   my $new_vep  = $sd->ENSEMBL_VEP_ENABLED;
-  my $vep_link = $hub->url({'species' => $sd->ENSEMBL_PRIMARY_SPECIES, $new_vep ? qw(type Tools action VEP) : qw(type UserData action UploadVariations)});
+  my $vep_link = $hub->url({'species' => $sp, $new_vep ? qw(type Tools action VEP) : qw(type UserData action UploadVariations)});
   $table->add_row({
     'name' => sprintf('<a href="%s" class="%snodeco"><b>Variant Effect Predictor</b><br /><img src="%svep_logo_sm.png" alt="[logo]" /></a>', $vep_link,  $new_vep ? '' : 'modal_link ', $img_url),
     'desc' => 'Analyse your own variants and predict the functional consequences of known and unknown variants via our Variant Effect Predictor (VEP) tool.',
@@ -54,12 +55,13 @@ sub render {
 
   ## BLAST
   if ($sd->ENSEMBL_BLAST_ENABLED) {
+    my $link = $hub->url({'species' => $sp, qw(type Tools action Blast)});
     $table->add_row({
-      'name' => '<b><a class="nodeco" href="/Multi/blastview">BLAST/BLAT</a></b>',
+      'name' => sprintf('<b><a class="nodeco" href="%s">BLAST/BLAT</a></b>', $link),
       'desc' => 'Search our genomes for your DNA or protein sequence.',
-      'tool' => sprintf('<a href="/Multi/blastview" class="nodeco"><img src="%s16/tool.png" alt="Tool" title="Go to online tool" /></a>', $img_url),
+      'tool' => sprintf('<a href="%s" class="nodeco"><img src="%s16/tool.png" alt="Tool" title="Go to online tool" /></a>', $link, $img_url),
       'code' => '',
-      'docs' => sprintf('<a href="%s" class="popup"><img src="%s16/info.png" alt="Documentation" /></a>', $hub->url({'species' => '', 'type' => 'Help', 'action' => 'View', 'id' => { $sd->multiX('ENSEMBL_HELP') }->{'Multi/blastview'}}), $img_url)
+      'docs' => sprintf('<a href="/%s" class="popup"><img src="%s16/info.png" alt="Documentation" /></a>', $hub->url({'species' => '', 'type' => 'Help', 'action' => 'View', 'id' => { $sd->multiX('ENSEMBL_HELP') }->{'Tools/Blast'}}), $img_url)
     });
   }
 
@@ -75,13 +77,16 @@ sub render {
   }
 
   ## ASSEMBLY CONVERTER
-  $table->add_row({
-    'name' => '<b>Assembly converter</b>',
-    'desc' => "Map (liftover) your data's coordinates to the current assembly.",
-    'tool' => sprintf('<a href="%s" class="modal_link nodeco"><img src="%s16/tool.png" alt="Tool" title="Go to online tool" /></a>', $hub->url({'species' => $sd->ENSEMBL_PRIMARY_SPECIES, 'type' => 'UserData', 'action' => 'SelectFeatures'}), $img_url),
-    'code' => sprintf('<a href="https://github.com/Ensembl/ensembl-tools/tree/release/%s/scripts/assembly_converter" rel="external" class="nodeco"><img src="%s16/download.png" alt="Download" title="Download Perl script" /></a>', $sd->ENSEMBL_VERSION, $img_url),
-    'docs' => '',
-  });
+  if ($sd->ENSEMBL_AC_ENABLED) {
+    my $link = $hub->url({'species' => $sp, qw(type Tools action AssemblyConverter)});
+    $table->add_row({
+      'name' => sprintf('<b><a class="nodeco" href="%s">Assembly converter</a></b>', $link),
+      'desc' => "Map (liftover) your data's coordinates to the current assembly.",
+      'tool' => sprintf('<a href="%s" class="modal_link nodeco"><img src="%s16/tool.png" alt="Tool" title="Go to online tool" /></a>', $link, $img_url),
+      'code' => '',
+      'docs' => '',
+    });
+  }
 
   ## ID HISTORY CONVERTER
   $table->add_row({
