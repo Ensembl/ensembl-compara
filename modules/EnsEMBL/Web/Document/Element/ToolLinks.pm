@@ -49,7 +49,7 @@ sub content {
   
   push @links, qq(<a class="constant" href="/$species/Tools/Blast">BLAST/BLAT</a>) if $self->blast;
   push @links,   '<a class="constant" href="/biomart/martview">BioMart</a>'        if $self->biomart;
-  push @links,   '<a class="constant" href="info/docs/tools/index.html">Tools</a>';
+  push @links,   '<a class="constant" href="/info/docs/tools/index.html">Tools</a>';
   push @links,   '<a class="constant" href="/downloads.html">Downloads</a>';
   push @links,   '<a class="constant" href="/info/">Help &amp; Documentation</a>';
   push @links,   '<a class="constant" href="'.$self->blog.'">Blog</a>'                  if $self->blog;
