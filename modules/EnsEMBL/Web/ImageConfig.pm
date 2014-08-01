@@ -2812,9 +2812,10 @@ sub add_regulation_builds {
         description => $fg_data{"seg_$cell_line"}{'description'},
         renderers   => \@renderers,
         cell_line   => $cell_line,
-        caption     => "Regulatory Segments",
+        caption     => "Reg. Segments",
         section_zmenu => { type => 'regulation', cell_line => $cell_line, _id => "regulation:$cell_line" },
         section     => $cell_line,
+        height      => 2,
       }));
     }
     

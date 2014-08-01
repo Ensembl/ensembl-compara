@@ -106,6 +106,4 @@ sub colour_key {
   return lc $type;
 }
 
-sub max_label_rows { return $_[0]->my_config('max_label_rows') || 2; }
-
 1;
