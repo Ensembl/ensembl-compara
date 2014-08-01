@@ -40,7 +40,7 @@ sub content {
   my $object_slice = $object->get_bound_context_slice($context);
      $object_slice = $object_slice->invert if $object_slice->strand < 1;
 
-  my $wuc = $object->get_imageconfig( 'reg_detail' );
+  my $wuc = $object->get_imageconfig( 'reg_summary_page' );
   $wuc->set_parameters({
     'container_width'   => $object_slice->length,
     'image_width',      => $self->image_width || 800,
@@ -54,10 +54,6 @@ sub content {
   }
 
   if ($object->param('opt_focus') eq 'yes'){ 
-    $wuc->modify_configs(
-      [ 'reg_feats_core_MultiCell'],
-      {qw(display compact)}
-    );
     my ($focus_set_blocks, $colours) = $object->get_focus_set_block_features($object_slice);
     $wuc->{'data_by_cell_line'}{'MultiCell'}{'core'}{'block_features'} = $focus_set_blocks;
     $wuc->{'data_by_cell_line'}{'colours'} = $colours; 
