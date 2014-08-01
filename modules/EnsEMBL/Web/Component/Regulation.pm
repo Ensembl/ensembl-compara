@@ -76,6 +76,7 @@ sub all_evidences {
     my $histone = 'Other';
     if($ev =~ /^(H\d)/) {
       $histone = $1;
+      $histone = "H2A/B" if $histone eq 'H2';
     }
     $evidences{$ev}->{'cluster'} = $histone;
   }
