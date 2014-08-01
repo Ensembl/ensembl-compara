@@ -49,7 +49,8 @@ sub set_default_action {
 sub populate_tree {
   my $self = shift;
   $self->create_node('Summary', 'Summary',
-    [qw( feature_details EnsEMBL::Web::Component::Regulation::FeatureDetails )],
+    [qw(        buttons EnsEMBL::Web::Component::Regulation::SummaryButtons
+        feature_details EnsEMBL::Web::Component::Regulation::FeatureDetails )],
     { 'availability' => 'regulation', 'concise' => 'Summary' }
   );
 

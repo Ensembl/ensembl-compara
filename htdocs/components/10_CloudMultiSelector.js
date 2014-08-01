@@ -18,6 +18,7 @@ Ensembl.Panel.CloudMultiSelector = Ensembl.Panel.extend({
   constructor: function (id, params) {
     this.base(id);
     this.urlParam = params.urlParam;
+    this.params = params;
 
     this.selection = [];
     Ensembl.EventManager.register('updateConfiguration', this, this.updateSelection);

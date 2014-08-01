@@ -47,7 +47,7 @@ sub content_ajax {
   my $api_data = $object->get_evidence_data($object_slice,{ cells_only => 1 });
   my $av_cells = $api_data->{'cells'};
 
-  my $shown_cells = $self->shown_cells;
+  my $shown_cells = $self->shown_cells($hub->param('image_config'));
 
   my (%shown_cells,%cell_categories);
   $shown_cells{$shown_cells->[$_]} = $_+1 for(0..$#$shown_cells);
@@ -59,6 +59,7 @@ sub content_ajax {
   $self->{'all_options'}      = \%all_cells;
   $self->{'included_options'} = \%shown_cells;
   $self->{'param_mode'} = 'single';
+  $self->{'extra_params'} = { image_config => $hub->param('image_config') };
 
   $self->SUPER::content_ajax;
 }

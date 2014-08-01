@@ -24,6 +24,7 @@ use Apache2::RequestUtil;
 use HTML::Entities  qw(decode_entities);
 use JSON            qw(from_json);
 use List::MoreUtils qw(firstidx);
+use URI::Escape     qw(uri_unescape);
 
 use EnsEMBL::Web::DBSQL::WebsiteAdaptor;
 use EnsEMBL::Web::Hub;
@@ -108,9 +109,13 @@ sub multi_species {
 sub cell_type {
   my ($self,$hub) = @_;
   my $cell = $hub->param('cell');
+  my $image_config_name = $hub->param('image_config') || 'regulation_view';
 
-  my $image_config = $hub->get_imageconfig('regulation_view');
-  my %cell = map { $image_config->tree->clean_id($_) => 1 } split(/,/,$hub->param('cell'));
+  my $image_config = $hub->get_imageconfig($image_config_name);
+  my %cell;
+  foreach my $cell (split(/,/,uri_unescape($hub->param('cell')))) {
+    $cell{$image_config->tree->clean_id($cell)} = 1;
+  }
   foreach my $type (qw(reg_features seg_features reg_feats_core reg_feats_non_core)) {
     my $menu = $image_config->get_node($type);
     next unless $menu;
@@ -133,19 +138,21 @@ sub evidence {
   my $evidence = $hub->param('evidence');
 
   my %evidence = map { $_ => 1 } split(/,/,$hub->param('evidence'));
-  my $image_config = $hub->get_imageconfig('regulation_view');
-  foreach my $type (qw(reg_feats_core reg_feats_non_core)) {
-    my $menu = $image_config->get_node($type);
-    next unless $menu;
-    foreach my $node (@{$menu->child_nodes}) {
-      my $ev = $node->id;
-      my $cell = $node->id;
-      $cell =~ s/^${type}_//;
-      foreach my $node2 (@{$node->child_nodes}) {
-        my $ev = $node2->id;
-        $ev =~ s/^${type}_${cell}_//;
-        my $renderer = $evidence{$ev} ? 'on' : 'off';
-        $image_config->update_track_renderer($node2->id,$renderer);
+  foreach my $image_config_name (qw(regulation_view reg_summary_page)) {
+    my $image_config = $hub->get_imageconfig($image_config_name);
+    foreach my $type (qw(reg_feats_core reg_feats_non_core)) {
+      my $menu = $image_config->get_node($type);
+      next unless $menu;
+      foreach my $node (@{$menu->child_nodes}) {
+        my $ev = $node->id;
+        my $cell = $node->id;
+        $cell =~ s/^${type}_//;
+        foreach my $node2 (@{$node->child_nodes}) {
+          my $ev = $node2->id;
+          $ev =~ s/^${type}_${cell}_//;
+          my $renderer = $evidence{$ev} ? 'on' : 'off';
+          $image_config->update_track_renderer($node2->id,$renderer);
+        }
       }
     }
   }

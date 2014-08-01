@@ -160,7 +160,7 @@ sub content_ajax {
     activeTab => $self->{'rel'},
     wrapper   => qq{<div class="modal_wrapper"><div class="panel"></div></div>},
     nav       => "$select_by$hint",
-    params    => { urlParam => $self->{'url_param'}, paramMode => $param_mode },
+    params    => { urlParam => $self->{'url_param'}, paramMode => $param_mode, %{$self->{'extra_params'}||{}} },
   });
 }
 

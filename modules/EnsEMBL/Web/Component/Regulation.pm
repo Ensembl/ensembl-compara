@@ -23,11 +23,11 @@ use strict;
 use base qw(EnsEMBL::Web::Component);
 
 sub shown_cells {
-  my ($self) = @_;
+  my ($self,$image_config) = @_;
 
   my $hub = $self->hub;
   my %shown_cells;
-  my $image_config = $hub->get_imageconfig('regulation_view');
+  my $image_config = $hub->get_imageconfig($image_config);
   foreach my $type (qw(reg_features seg_features reg_feats_core reg_feats_non_core)) {
     my $menu = $image_config->get_node($type);
     next unless $menu;
@@ -85,14 +85,15 @@ sub all_evidences {
 sub buttons { return @{$_[0]->{'buttons'}||[]}; }
 
 sub cell_line_button {
-  my ($self) = @_;
+  my ($self,$image_config) = @_;
 
-  my $cell_m = scalar @{$self->shown_cells};
+  my $cell_m = scalar @{$self->shown_cells($image_config)};
   my $cell_n = scalar @{$self->object->all_cell_types};
 
   my $url = $self->hub->url('Component', {
     action   => 'Web',
     function    => 'CellTypeSelector/ajax',
+    image_config => $image_config,
   });
 
   push @{$self->{'buttons'}||=[]},{

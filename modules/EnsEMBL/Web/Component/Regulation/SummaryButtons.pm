@@ -16,27 +16,16 @@ limitations under the License.
 
 =cut
 
-package EnsEMBL::Web::Component::Regulation::Buttons;
+package EnsEMBL::Web::Component::Regulation::SummaryButtons;
 
 use strict;
 
-use base qw(EnsEMBL::Web::Component::Regulation);
-
-sub _init {
-  my $self = shift;
-  $self->cacheable(0);
-  $self->ajaxable(1);
-  $self->has_image(0);
-}
+use base qw(EnsEMBL::Web::Component::Regulation::Buttons);
 
 sub content {
   my $self         = shift;
 
-  $self->cell_line_button('regulation_view');
-  $self->evidence_button;
-  $self->renderer_button;
-  $self->advanced_button;
-
+  $self->cell_line_button('reg_summary_page');
   return '';
 }
 

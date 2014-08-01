@@ -16,14 +16,24 @@
 
 Ensembl.Panel.CellTypeSelector = Ensembl.Panel.CloudMultiSelector.extend({
   updateSelection: function () {
-    
-    var cells = this.urlParam + '=' + encodeURIComponent(this.selection.join(','));
+   
+    var params = {
+      image_config: this.params.image_config
+    };
+    params[this.urlParam] = encodeURIComponent(this.selection.join(','));
     $.ajax({
-      url: '/' + Ensembl.species + '/Ajax/cell_type?' + cells,
+      url: '/' + Ensembl.species + '/Ajax/cell_type',
+      data: params,
       context: this,
       complete: function() {
-        Ensembl.EventManager.triggerSpecific('updatePanel','Buttons',null,null,null,null,{ background: true });
-        Ensembl.EventManager.triggerSpecific('updatePanel','FeaturesByCellLine');
+        var panels = ['FeaturesByCellLine','FeatureDetails'];
+        var bg_panels = ['Buttons','SummaryButtons'];
+        for(var i=0;i<bg_panels.length;i++) {
+          Ensembl.EventManager.triggerSpecific('updatePanel',bg_panels[i],null,null,null,null,{ background: true });
+        }
+        for(var i=0;i<panels.length;i++) {
+          Ensembl.EventManager.triggerSpecific('updatePanel',panels[i]);
+        }
       }
     });
     
