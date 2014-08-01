@@ -33,8 +33,6 @@ sub init {
       $self->modify_configs([$node->id],{ display => 'off' });  
     }
   }
-  $self->modify_configs(['reg_feats_core_MultiCell'],
-                        { display => 'off' });
 }
 
 1;
