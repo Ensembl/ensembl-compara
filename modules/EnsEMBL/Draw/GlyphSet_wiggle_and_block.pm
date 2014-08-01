@@ -182,6 +182,48 @@ sub draw_block_features {
   return 1;
 }
 
+sub add_legend_box {
+  my ($self,$click_text,$content,$y) = @_;
+
+  my %font_details = $self->get_font_details('innertext', 1);
+  my @text = $self->get_text_width(0,$click_text, '', %font_details);
+  my ($width,$height) = @text[2,3];
+  # add colour key legend
+  $self->push($self->Rect({
+    width         => $width + 15,
+    absolutewidth => $width + 15,
+    height        => $height + 2,
+    y             => $y,
+    x             => -119,
+    absolutey     => 1,
+    absolutex     => 1,
+    title         => join('; ',@$content),
+    class         => 'coloured',
+    bordercolour  => '#336699',
+    colour        => 'white',
+  }), $self->Text({
+    text      => $click_text,
+    height    => $height,
+    halign    => 'left',
+    valign    => 'bottom',
+    colour    => '#336699',
+    y         => $y,
+    x         => -118,
+    absolutey => 1,
+    absolutex => 1,
+    %font_details,
+  }), $self->Triangle({
+    width     => 6,
+    height    => 5,
+    direction => 'down',
+    mid_point => [ -123 + $width + 10, $y + 10 ],
+    colour    => '#336699',
+    absolutex => 1,
+    absolutey => 1,
+  }));
+  return $height+4;
+}
+
 sub draw_wiggle_plot {
   ### Wiggle plot
   ### Args: array_ref of features in score order, colour, min score for features, max_score for features, display label
@@ -214,7 +256,7 @@ sub draw_wiggle_plot {
     my $y            = $self->_offset;
     my $y_offset     = 0;
     my %font_details = $self->get_font_details('innertext', 1);
-    my @res_analysis = $self->get_text_width(0, 'Legend', '', %font_details);
+    my @res_analysis = $self->get_text_width(0,'Legend & More', '', %font_details);
     my $max          = scalar @$labels - 1;
     my ($legend_alt_text, %seen);
     
@@ -249,41 +291,14 @@ sub draw_wiggle_plot {
     
     $legend_alt_text =~ s/,$//;
     $y              += 13;
-    
-    # add colour key legend
-    $self->push($self->Rect({
-      width         => $res_analysis[2] + 15,
-      absolutewidth => $res_analysis[2] + 15,
-      height        => $res_analysis[3] + 2,
-      y             => $y,
-      x             => -109,
-      absolutey     => 1,
-      absolutex     => 1,
-      title         => "$header_label; [$legend_alt_text ]",
-      class         => 'coloured',
-      bordercolour  => '#336699',
-      colour        => 'white',
-    }), $self->Text({
-      text      => 'Legend',
-      height    => $res_analysis[3],
-      halign    => 'left',
-      valign    => 'bottom',
-      colour    => '#336699',
-      y         => $y,
-      x         => -108,
-      absolutey => 1,
-      absolutex => 1,
-      %font_details,
-    }), $self->Triangle({
-      width     => 6,
-      height    => 5,
-      direction => 'down',
-      mid_point => [ -113 + $res_analysis[2] + 10, $y + 10 ],
-      colour    => '#336699',
-      absolutex => 1,
-      absolutey => 1,
-    }));
-    
+
+    my $zmenu_title = join(', ',$header_label,
+                           @{$parameters->{'zmenu_extra_title'}||[]});
+    my $zmenu_content = [$zmenu_title,"[ $legend_alt_text ]",
+                             @{$parameters->{'zmenu_extra_content'}||[]}];
+    my $zmenu_click = $parameters->{'zmenu_click_text'} || 'Legend';
+    $self->add_legend_box($zmenu_click,$zmenu_content,$y);
+ 
     $y_offset   += 12;
     $top_offset += 15;
     
