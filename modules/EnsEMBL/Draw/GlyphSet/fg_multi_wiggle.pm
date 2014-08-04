@@ -68,7 +68,7 @@ sub draw_features {
       href => $cell_type_url,
       class => 'modal_link',
     },{
-      text => 'Select evidence shown',
+      text => 'Select evidence to show',
       href => $evidence_url,
       class => 'modal_link',
     }, 

@@ -20,7 +20,7 @@ package EnsEMBL::Web::ZMenu::SegFeature;
 
 use strict;
 
-use base qw(EnsEMBL::Web::ZMenu);
+use base qw(EnsEMBL::Web::ZMenu::RegulationBase);
 
 sub content {
   my $self              = shift;
@@ -55,7 +55,8 @@ sub content {
     type        => 'Analysis',
     label_html  => $seg_feat->analysis->description,
   });
-      
+
+  $self->_add_nav_entries;      
 }
 
 1;
