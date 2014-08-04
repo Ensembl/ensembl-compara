@@ -2817,7 +2817,7 @@ sub add_regulation_builds {
         caption     => "Reg. Segments",
         section_zmenu => { type => 'regulation', cell_line => $cell_line, _id => "regulation:$cell_line" },
         section     => $cell_line,
-        height      => 2,
+        height      => 4,
       }));
     }
     
