@@ -3016,7 +3016,7 @@ sub RegulatoryFeatureLine {
   my ($species,$desc,$id,$ids,$ftype,$params,$db,$counter) = @_;
   my $url;
   if ($params->{'subtype'} eq 'RegulatoryFeature') {
-    $url = sprintf(qq(%s/Regulation/Cell_line?rf=%s),
+    $url = sprintf(qq(%s/Regulation/Summary?rf=%s),
                    $species,
                    $id);
   }
