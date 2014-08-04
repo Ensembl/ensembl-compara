@@ -38,7 +38,14 @@ sub createObjectsInternal {
   my $adaptor = $db_adaptor->get_TranscriptAdaptor;
   return undef unless $adaptor;
   my $transcript = $adaptor->fetch_by_stable_id($self->param('t'));
-  return $self->new_object('Transcript', $transcript, $self->__data);
+  if ($transcript) {
+    return $self->new_object('Transcript', $transcript, $self->__data);
+  }
+  else {
+    ## Fall back to standard method if stable ID doesn't return
+    ## a transcript, e.g. if it's a prediction transcript
+    $self->createObjects;
+  }
 }
 
 sub createObjects {   
