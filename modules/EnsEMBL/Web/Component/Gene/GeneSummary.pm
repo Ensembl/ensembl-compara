@@ -176,12 +176,13 @@ sub content {
   ## Link to another assembly, e.g. previous archive
   my $current_assembly = $hub->species_defs->ASSEMBLY_NAME;
   my $alt_assembly = $hub->species_defs->SWITCH_ASSEMBLY;
+  my $site_version = $hub->species_defs->ORIGINAL_VERSION || $hub->species_defs->ENSEMBL_VERSION;
   if ($alt_assembly) {
     my $alt_release = $hub->species_defs->SWITCH_VERSION;
     my $url = 'http://'.$hub->species_defs->SWITCH_ARCHIVE_URL;
     my $txt;
     ## Are we jumping backwards or forwards?
-    if ($alt_release < $hub->species_defs->ENSEMBL_VERSION) {
+    if ($alt_release < $site_version) {
       ## get coordinates on other assembly if available
       if (my @mappings = @{$hub->species_defs->get_config($hub->species, 'ASSEMBLY_MAPPINGS')||[]}) {
         foreach my $mapping (@mappings) {
