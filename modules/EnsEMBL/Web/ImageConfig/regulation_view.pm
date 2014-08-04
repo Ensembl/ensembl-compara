@@ -107,7 +107,10 @@ sub init {
     my $node = $self->get_node("${type}_$cell_line");
     next unless $node;
     $node->set('display',$type =~ /_core/ ? 'compact' : 'normal');
-    $self->{'reg_feats_tracks'}{$node->id} = 1;
+  }
+  foreach my $cell_line (@cell_lines) {
+    EnsEMBL::Web::Tree->clean_id($cell_line); # Eugh, modifies arg.
+    $self->{'reg_feats_tracks'}{$_} = 1 for "reg_feats_$cell_line", "reg_feats_core_$cell_line", "reg_feats_non_core_$cell_line", "seg_$cell_line";
   }
 
   if ($self->{'code'} ne $self->{'type'}) {    
