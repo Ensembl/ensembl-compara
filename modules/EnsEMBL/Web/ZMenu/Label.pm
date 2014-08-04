@@ -27,7 +27,7 @@ use JSON qw(from_json);
 # These *_content should probably end up as packages if we get enough of
 #   them, say three or more.
 sub regulation_content {
-  my ($self,$data) = @_;
+  my ($self,$data,$context) = @_;
   my $hub = $self->hub;
 
   my $cell_line = $data->{'cell_line'};
@@ -36,10 +36,20 @@ sub regulation_content {
   my $fg_dba = $hub->database('funcgen');
   my $fg_cta = $fg_dba->get_CellTypeAdaptor;
   my $fg_ct = $fg_cta->fetch_by_name($cell_line);
-
+ 
   $self->caption('Cell Line');
   $self->add_entry({ type => "Cell Line", label => $cell_line });
   $self->add_entry({ type => "Description", label => $fg_ct->description });
+
+  if(grep { $_ eq $context->{'image_config'} } qw(regulation_view)) {
+    my $cell_type_url = $self->hub->url('Component', {
+      type => 'Regulation',
+      action   => 'Web',
+      function    => 'CellTypeSelector/ajax',
+      image_config => $context->{'image_config'},
+    });
+    $self->add_entry({ label => "Select other cell types", link => $cell_type_url, link_class => 'modal_link' });
+  }
 }
 
 sub content {
@@ -47,13 +57,14 @@ sub content {
   my $hub = $self->hub;
 
   my $zmdata = from_json($hub->param('zmdata'));
+  my $zmcontext = from_json($hub->param('zmcontext'));
 
   $self->header(' ');
   foreach my $data (@{$zmdata||[]}) {
     $self->new_feature;
     my $type = $data->{'type'};
     if($type eq 'regulation') {
-      $self->regulation_content($data);
+      $self->regulation_content($data,$zmcontext);
     }
   }
 

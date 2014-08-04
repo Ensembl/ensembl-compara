@@ -152,6 +152,8 @@ sub initialize {
   }
 }
 
+sub type { return $_[0]->{'type'}; }
+
 sub menus {
   return $_[0]->{'menus'} ||= {
     # Sequence

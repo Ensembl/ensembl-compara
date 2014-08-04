@@ -324,11 +324,14 @@ sub new {
           my $zmdata = $section_label_data{$section};
           my $url;
           if($zmdata) {
-            $url = $self->{'config'}->hub->url ({
+            $url = $self->{'config'}->hub->url({
               type => 'ZMenu',
               action => 'Label',
               section => $section,
               zmdata => to_json($zmdata),
+              zmcontext => to_json({
+                image_config => $self->{'config'}->type,
+              }),
             });
           }
           $glyphset->push($glyphset->Text({
