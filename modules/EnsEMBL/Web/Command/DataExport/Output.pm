@@ -93,21 +93,13 @@ sub process {
     $url_params->{'format'}         = $format;
     $url_params->{'path'}          .= '/export/'.$file->random_path.$file->filename;
     $url_params->{'compression'}    = $compression;
-    if ($compression || $format eq 'RTF') {
-      #$url_params->{'type'}    = 'Download';
-      #$url_params->{'action'}  = 'DataExport';
-      ## Force redirect to initiate download
-      #@redirect_params = (undef, undef, 'page');
-    }
-    else {
-      ## Pass parameters needed for Back button to work
-      my @core_params = keys %{$hub->core_object('parameters')};
-      push @core_params, qw(export_action data_type component);
-      push @core_params, $self->config_params; 
-      foreach (@core_params) {
-        my @values = $hub->param($_);
-        $url_params->{$_} = scalar @values > 1 ? \@values : $values[0];
-      }
+    ## Pass parameters needed for Back button to work
+    my @core_params = keys %{$hub->core_object('parameters')};
+    push @core_params, qw(export_action data_type component);
+    push @core_params, $self->config_params; 
+    foreach (@core_params) {
+      my @values = $hub->param($_);
+      $url_params->{$_} = scalar @values > 1 ? \@values : $values[0];
     }
   }  
   my $url = $hub->url($url_params);
