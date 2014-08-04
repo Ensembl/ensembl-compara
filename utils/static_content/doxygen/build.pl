@@ -123,17 +123,18 @@ if ($apis[0] ne 'edocs') {
   print "Finished building Doxygen documentation.\n";
 }
 
-if ($edocs) {
+# commenting the whole things out, we are not generating edocs at the moment and there is a separate script to generate edocs
+#if ($edocs) {
   # generate e! docs:
-  system(qq{
-    echo "Generating e! docs";
-    rm -rf $root/htdocs/info/docs/webcode/edoc
-    perl $root/utils/edoc/update_docs.pl
-    echo "Copying temp files to live directory"
-    cp -r $root/utils/edoc/temp htdocs/info/docs/webcode/edoc
-    echo "Clearing up e! docs temp files";
-    rm -rf $root/utils/edoc/temp
-  });
+#  system(qq{
+#    echo "Generating e! docs";
+#    rm -rf $root/htdocs/info/docs/webcode/edoc
+#    perl $root/utils/edoc/update_docs.pl
+#    echo "Copying temp files to live directory"
+#    cp -r $root/utils/edoc/temp htdocs/info/docs/webcode/edoc
+#    echo "Clearing up e! docs temp files";
+#    rm -rf $root/utils/edoc/temp
+#  });
 
-  print "Finished building e! docs\n";
-}
+#  print "Finished building e! docs\n";
+#}
