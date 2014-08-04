@@ -48,8 +48,35 @@ sub draw_features {
   my $data             = $self->data_by_cell_line($config)->{$cell_line};
   my $colours          = $config->{'fg_multi_wiggle_colours'} ||= $self->get_colours;
   my ($peaks, $wiggle) = $display eq 'tiling_feature' ? (1, 1) : $display eq 'compact' ? (1, 0) : (0, 1);
+
+  my $hub = $self->{'config'}->hub;
+  my $cell_type_url = $hub->url('Component', {
+    type => 'Regulation',
+    action   => 'Web',
+    function    => 'CellTypeSelector/ajax',
+    image_config => $self->{'config'}->type,
+  });
+  my $evidence_url = $hub->url('Component', {
+    type => 'Regulation',
+    action => 'Web',
+    function => 'EvidenceSelector/ajax',
+    image_config => $self->{'config'}->type,
+  });
+  my @zmenu_links = (
+    {
+      text => 'Select other cell types',
+      href => $cell_type_url,
+      class => 'modal_link',
+    },{
+      text => 'Select evidence shown',
+      href => $evidence_url,
+      class => 'modal_link',
+    }, 
+  );
  
-  my $zmenu_extra_content ; # = ["C"];
+  my $zmenu_extra_content = [ map {
+      qq(<a href="$_->{'href'}" class="$_->{'class'}">$_->{'text'}</a>)
+  } @zmenu_links ];
  
   # First draw block features
   my $any_on = scalar keys %{$data->{$set}{'on'}};
