@@ -42,6 +42,8 @@ sub buttons {
   my $self    = shift;
   my $hub     = $self->hub;
 
+  return if ($self->object->Obj->isa('Bio::EnsEMBL::Transcript') && !$self->object->Obj->translation);
+
   return unless $self->can('export_options');
 
   my $options = $self->export_options || {};
