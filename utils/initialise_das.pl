@@ -152,8 +152,7 @@ my $hash = $species_defs;
 
 my $das_coords = _get_das_coords();
 
-#my @species = $species_defs->valid_species();
-my @species = ('Homo_sapiens');
+my @species = $species_defs->valid_species();
 
 my $shash;
 $| = 1;
