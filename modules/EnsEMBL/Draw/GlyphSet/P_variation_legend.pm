@@ -62,6 +62,13 @@ sub _init {
       });
     }
   }
+
+  $self->add_to_legend({
+        legend => 'Substitution',
+        border => 'black',
+        width => 4,
+        height => 4,
+  });
 }
 
 1;
