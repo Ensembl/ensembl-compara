@@ -131,7 +131,6 @@ sub create_form {
   
   ## Create all options forms, then show only one using jQuery
   while (my($format, $fields) = each (%$fields_by_format)) {
-    next if ($hub->param('format') && $hub->param('format') ne $format); ## from back button
     my $settings_fieldset  = $form->add_fieldset({'class' => '_stt_'.$format, 'legend' => 'Settings'});
 
     ## Add custom fields for this data type and format
