@@ -41,7 +41,7 @@
         el.off('afterAddRemove.filterableDropdown').on('afterAddRemove.filterableDropdown', options.change);
       }
       if (options.refresh) {
-        el.trigger('close').find('label').trigger('refresh');
+        el.trigger('open').trigger('close').find('label').trigger('refresh');
       }
       return;
     }
