@@ -91,7 +91,28 @@ sub content {
   });
   
   $self->add_entry({ label_html => 'NOTE: This feature has been projected by the <a href="/info/docs/funcgen/index.html">RegulatoryBuild</a>' }) if $reg_feature->is_projected;
-  
+
+  my %zmenu_links = (
+    'Cell_line' => 'regulation_view',
+  );
+
+  if($zmenu_links{$self->hub->action}) {
+    my $cell_type_url = $self->hub->url('Component', {
+      type => 'Regulation',
+      action   => 'Web',
+      function    => 'CellTypeSelector/ajax',
+      image_config => $zmenu_links{$self->hub->action},
+    });
+    my $evidence_url = $self->hub->url('Component', {
+      type => 'Regulation',
+      action => 'Web',
+      function => 'EvidenceSelector/ajax',
+      image_config => $zmenu_links{$self->hub->action},
+    });
+    $self->add_entry({ label => "Select other cell types", link => $cell_type_url, link_class => 'modal_link' });
+    $self->add_entry({ label => "Select evidence shown", link => $evidence_url, link_class => 'modal_link' });
+  }
+ 
   if (scalar keys %motif_features > 0) {
     # get region clicked on
     my $click_start = $hub->param('click_start');

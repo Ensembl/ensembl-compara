@@ -48,7 +48,14 @@ sub regulation_content {
       function    => 'CellTypeSelector/ajax',
       image_config => $context->{'image_config'},
     });
+    my $evidence_url = $self->hub->url('Component', {
+      type => 'Regulation',
+      action => 'Web',
+      function => 'EvidenceSelector/ajax',
+      image_config => $context->{'image_config'},
+    });
     $self->add_entry({ label => "Select other cell types", link => $cell_type_url, link_class => 'modal_link' });
+    $self->add_entry({ label => "Select evidence shown", link => $evidence_url, link_class => 'modal_link' });
   }
 }
 
