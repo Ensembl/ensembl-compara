@@ -115,20 +115,34 @@ sub tag {
   my $end        = pop @loci;
   my ($bound_start, $start, @mf_loci) = @loci;
   my @result;
-  
+ 
+  unless(defined $self->{'new_reg_build'}) {
+    $self->{'new_reg_build'} =
+      $self->{'config'}->hub->is_new_regulation_pipeline;
+  }
+ 
   if ($bound_start < $start || $bound_end > $end) {
     # Bound start/ends
-    push @result, {
-      style  => 'rect',
-      colour => $flank_colour,
-      start  => $bound_start,
-      end    => $start
-    },{
-      style  => 'rect',
-      colour => $flank_colour,
-      start  => $end,
-      end    => $bound_end
-    };
+    if($self->{'new_reg_build'}) {
+      push @result, {
+        style  => 'rect',
+        colour => $flank_colour,
+        start  => $bound_start,
+        end    => $start
+      },{
+        style  => 'rect',
+        colour => $flank_colour,
+        start  => $end,
+        end    => $bound_end
+      };
+    } else {
+      push @result,{
+        style => 'fg_ends',
+        colour => $colour,
+        start => $bound_start,
+        end => $bound_end
+      };
+    }
   }
   
   # Motif features
