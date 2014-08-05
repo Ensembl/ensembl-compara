@@ -57,9 +57,12 @@ sub content {
     my $row        = { id => sprintf qq(<a href="%s">$family_id</a><br />), $hub->url({ species => 'Multi', type => "Family$ckey", action => 'Details', fm => $family_id, __clear => 1 })};
     my $genes      = $families->{$family_id}{'info'}{'genes'};
     my $url_params = { function => "Genes$ckey", family => $family_id, g => $gene_stable_id, cdb => $cdb };
-    my $label      =  scalar @$genes > 1 ? 'genes' : 'gene';
+    my $label;
 
-    $row->{'id'}  .= sprintf('(<a href="%s">%s %s</a>)', $hub->url($url_params), scalar @$genes, $label);
+    if (scalar(@$genes)) {
+      $label      =  scalar @$genes > 1 ? 'genes' : 'gene';
+      $row->{'id'}  .= sprintf('(<a href="%s">%s %s</a>)', $hub->url($url_params), scalar @$genes, $label);
+    }
     $row->{'annot'}        = $families->{$family_id}{'info'}{'description'};
 
     $row->{'proteins'}  = '<ul class="compact">';
