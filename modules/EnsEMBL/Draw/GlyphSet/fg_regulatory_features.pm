@@ -79,26 +79,50 @@ sub fetch_features {
   return $reg_feats;
 }
 
+sub _check_build_type {
+  my ($self) = @_;
+
+  unless(defined $self->{'new_reg_build'}) {
+    $self->{'new_reg_build'} =
+      $self->{'config'}->hub->is_new_regulation_pipeline;
+  }
+}
+
 sub colour_key {
   my ($self, $f) = @_;
   my $type = $f->feature_type->name;
 
-  if($type =~ /CTCF/i) {
-    $type = 'ctcf';
-  } elsif($type =~ /Enhancer/i) {
-    $type = 'enhancer';
-  } elsif($type =~ /Open chromatin/i) {
-    $type = 'open_chromatin';
-  } elsif($type =~ /Promoter/i) {
-    $type = 'promoter';
-  } elsif($type =~ /TF binding site/i) {
-    $type = 'tf_binding_site';
-  } elsif($type =~ /Promoter Flanking Region/i) {
-    $type = 'promoter_flanking';
-  } else  {
-    $type = 'Unclassified';
+  $self->_check_build_type;
+  if($self->{'new_reg_build'}) {
+    if($type =~ /CTCF/i) {
+      $type = 'ctcf';
+    } elsif($type =~ /Enhancer/i) {
+      $type = 'enhancer';
+    } elsif($type =~ /Open chromatin/i) {
+      $type = 'open_chromatin';
+    } elsif($type =~ /Promoter/i) {
+      $type = 'promoter';
+    } elsif($type =~ /TF binding site/i) {
+      $type = 'tf_binding_site';
+    } elsif($type =~ /Promoter Flanking Region/i) {
+      $type = 'promoter_flanking';
+    } else  {
+      $type = 'Unclassified';
+    }
+  } else {
+    if ($type =~ /Promoter/) {
+      $type = 'Promoter_associated';
+    } elsif ($type =~ /Non/) {
+      $type = 'Non-genic';
+    } elsif ($type =~ /Gene/) {
+      $type = 'Genic';
+    } elsif ($type =~ /Pol/) {
+      $type = 'poliii_associated';
+    } else {
+      $type = 'Unclassified';
+    }
+    $type = 'old_'.$type;
   }
-  
   return lc $type;
 }
 
@@ -116,11 +140,7 @@ sub tag {
   my ($bound_start, $start, @mf_loci) = @loci;
   my @result;
  
-  unless(defined $self->{'new_reg_build'}) {
-    $self->{'new_reg_build'} =
-      $self->{'config'}->hub->is_new_regulation_pipeline;
-  }
- 
+  $self->_check_build_type; 
   if ($bound_start < $start || $bound_end > $end) {
     # Bound start/ends
     if($self->{'new_reg_build'}) {

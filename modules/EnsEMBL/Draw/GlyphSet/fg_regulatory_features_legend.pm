@@ -24,6 +24,15 @@ use strict;
 
 use base qw(EnsEMBL::Draw::GlyphSet::legend);
 
+sub _check_build_type {
+  my ($self) = @_;
+
+  unless(defined $self->{'new_reg_build'}) {
+    $self->{'new_reg_build'} =
+      $self->{'config'}->hub->is_new_regulation_pipeline;
+  }
+}
+
 sub _init {
   my $self = shift;
   
@@ -40,12 +49,20 @@ sub _init {
   $self->init_legend(2);
  
   my $empty = 1;
+
+  $self->_check_build_type;
  
   foreach (sort keys %features) {
     my $legend = $self->my_colour($_, 'text'); 
     
     next if $legend =~ /unknown/i; 
-    
+  
+    if($self->{'new_reg_build'}) {
+      next if /^old_/;
+    } else {
+      next unless /^old_/;
+    }
+ 
     $self->add_to_legend({
       legend => $legend,
       colour => $self->my_colour($_),
@@ -53,7 +70,7 @@ sub _init {
     
     $empty = 0;
   }
-  unless($empty) {
+  unless($empty or !$self->{'new_reg_build'}) {
     $self->add_to_legend({
       legend => '... but inactive in this cell line',
       colour => 'black',
