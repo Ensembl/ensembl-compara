@@ -538,15 +538,15 @@ sub get_all_families {
     my $genes = [];
     my $prots = {};
     foreach my $member (@$members) {
-        my $gene = $member->gene_member->get_Gene;
-        push @$genes, $gene;
-        my $protein = $member->get_Translation;
-          if ($prots->{$gene->stable_id}) {
-            push @{$prots->{$gene->stable_id}}, $protein;
-          }
-          else {
-            $prots->{$gene->stable_id} = [$protein];
-          }
+      my $gene = $member->gene_member->get_Gene;
+      push @$genes, $gene;
+      my $protein = $member->get_Translation;
+      if ($prots->{$gene->stable_id}) {
+        push @{$prots->{$gene->stable_id}}, $protein;
+      }
+      else {
+        $prots->{$gene->stable_id} = [$protein];
+      }
     }
     $info->{'genes'}    = $genes;
     $info->{'proteins'} = $prots;
