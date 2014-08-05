@@ -34,8 +34,7 @@ sub content {
   my $context       = $self->hub->param('context') || 200;
   my $object_slice  = $object->get_bound_context_slice($context); 
      $object_slice  = $object_slice->invert if $object_slice->strand < 1;
-  my $cells = $self->shown_cells('regulation_view');
-  my $api_data = $object->get_evidence_data($object_slice,{ cell => $cells});
+  my $api_data = $object->get_evidence_data($object_slice,{});
   my $evidence_data = $api_data->{'data'};
   
   my $table = $self->new_table([], [], { data_table => 1, sorting => [ 'cell asc', 'type asc', 'location asc' ]});
@@ -50,7 +49,7 @@ sub content {
   my @rows;
 
   foreach my $cell_line (sort keys %$evidence_data) {
-    next unless !defined($cells) or scalar(grep { $_ eq $cell_line } @$cells);
+#    next unless !defined($cells) or scalar(grep { $_ eq $cell_line } @$cells);
     my $core_features     = $evidence_data->{$cell_line}{'core'}{'block_features'};
     my $non_core_features = $evidence_data->{$cell_line}{'non_core'}{'block_features'};
     
@@ -78,7 +77,7 @@ sub content {
   
   $table->add_rows(@rows);
 
-  $self->cell_line_button;
+#  $self->cell_line_button;
 
   if(scalar keys %$evidence_data) {
     return $table->render;
