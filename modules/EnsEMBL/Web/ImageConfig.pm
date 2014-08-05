@@ -1366,23 +1366,34 @@ sub update_from_url {
         if (uc $format eq 'DATAHUB') {
           my $info;
           ($n, $info) = $self->_add_datahub($n, $p,1);
-          my $assemblies = $info->{'genomes'}
-                        || [$hub->species_defs->get_config($hub->species, 'ASSEMBLY_NAME')];
-          my %ensembl_assemblies = %{$hub->species_defs->assembly_lookup};
+          if ($info->{'error'}) {
+            my @errors = @{$info->{'error'}};
+            $session->add_data(
+              type     => 'message',
+              function => '_warning',
+              code     => 'datahub:' . md5_hex($p),
+              message  => "There was a problem attaching datahub $n: @errors<br /><br />Please check the source URL in a web browser.",
+            );
+          }
+          else {
+            my $assemblies = $info->{'genomes'}
+                        || {$hub->species => $hub->species_defs->get_config($hub->species, 'ASSEMBLY_NAME')};
+            my %ensembl_assemblies = %{$hub->species_defs->assembly_lookup};
 
-          foreach (keys %$assemblies) {
-            my ($data_species, $assembly) = @{$ensembl_assemblies{$_}||[]};
-            if ($assembly) {
-              my $data = $session->add_data(
-                type        => 'url',
-                url         => $p,
-                species     => $data_species,
-                code        => join('_', md5_hex($n . $data_species . $assembly . $p), $session->session_id),
-                name        => $n,
-                format      => $format,
-                style       => $style,
-                assembly    => $assembly,
-              );
+            foreach (keys %$assemblies) {
+              my ($data_species, $assembly) = @{$ensembl_assemblies{$_}||[]};
+              if ($assembly) {
+                my $data = $session->add_data(
+                  type        => 'url',
+                  url         => $p,
+                  species     => $data_species,
+                  code        => join('_', md5_hex($n . $data_species . $assembly . $p), $session->session_id),
+                  name        => $n,
+                  format      => $format,
+                  style       => $style,
+                  assembly    => $assembly,
+                );
+              }
             }
           }
         } else {
