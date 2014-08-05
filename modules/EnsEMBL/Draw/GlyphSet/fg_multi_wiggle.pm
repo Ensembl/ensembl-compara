@@ -77,6 +77,8 @@ sub draw_features {
   my $zmenu_extra_content = [ map {
       qq(<a href="$_->{'href'}" class="$_->{'class'}">$_->{'text'}</a>)
   } @zmenu_links ];
+
+  $self->{'will_draw_wiggle'} = $wiggle;
  
   # First draw block features
   my $any_on = scalar keys %{$data->{$set}{'on'}};
@@ -211,7 +213,7 @@ sub process_wiggle_data {
 }
 
 sub block_features_zmenu {
-  my ($self, $f) = @_;
+  my ($self, $f,$evidence) = @_;
   my $offset = $self->{'container'}->strand > 0 ? $self->{'container'}->start - 1 :  $self->{'container'}->end + 1;
   
   return $self->_url({
@@ -220,6 +222,8 @@ sub block_features_zmenu {
     pos    => sprintf('%s:%s-%s', $f->slice->seq_region_name, $offset + $f->start, $f->end + $offset),
     fs     => $f->feature_set->name,
     ps     => $f->summit || 'undetermined',
+    act    => $self->{'config'}->hub->action,
+    evidence => !$self->{'will_draw_wiggle'},
   });
 }
 

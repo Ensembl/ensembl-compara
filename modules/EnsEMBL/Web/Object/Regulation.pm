@@ -251,6 +251,11 @@ sub get_context_slice {
   return $self->Obj->feature_Slice->expand($padding, $padding) || 1;
 }
 
+sub show_signal {
+  $_[0]->{'show_signal'} = $_[1] if @_>1;
+  return $_[0]->{'show_signal'};
+}
+
 sub get_seq {
   my ($self, $strand) = @_;
   $self->Obj->{'strand'} = $strand;

@@ -20,7 +20,7 @@ package EnsEMBL::Web::ZMenu::FeatureEvidence;
 
 use strict;
 
-use base qw(EnsEMBL::Web::ZMenu);
+use base qw(EnsEMBL::Web::ZMenu::RegulationBase);
 
 sub content {
   my $self                = shift;
@@ -85,7 +85,9 @@ sub content {
     });
   }
 
-  if (scalar (keys %motif_features) >> 0  ){
+  $self->_add_nav_entries($hub->param('evidence')||0);
+
+  if (scalar (keys %motif_features) > 0  ){
     # get region clicked on
     my $nearest_feature = 1;
     my $nearest         = 1e12; # Arbitrary large number

@@ -53,8 +53,9 @@ sub createObjects {
   
   if ($regulation) {
     my $context = $self->param('context') || 1000;
-    
-    $self->DataObjects($self->new_object('Regulation', $regulation, $self->__data));
+   
+    my $obj = $self->new_object('Regulation', $regulation, $self->__data);
+    $self->DataObjects($obj);
     $self->generate_object('Location', $regulation->feature_Slice->expand($context, $context));
   } else {
     return $self->problem('fatal', "Could not find regulatory feature $rf", $self->_help("Either $rf does not exist in the current Ensembl database, or there was a problem retrieving it."));

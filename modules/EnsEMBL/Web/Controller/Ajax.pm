@@ -23,9 +23,9 @@ use strict;
 use Apache2::RequestUtil;
 use HTML::Entities  qw(decode_entities);
 use JSON            qw(from_json);
-use List::MoreUtils qw(firstidx);
 use URI::Escape     qw(uri_unescape);
 
+use EnsEMBL::Web::ViewConfig::Regulation::Page;
 use EnsEMBL::Web::DBSQL::WebsiteAdaptor;
 use EnsEMBL::Web::Hub;
 
@@ -162,25 +162,8 @@ sub reg_renderer {
 
   my $renderer = $hub->input->url_param('renderer');
   my $state = $hub->param('state');
-
-  my $mask = firstidx { $renderer eq $_ } qw(x peaks signals);
-  my $image_config = $hub->get_imageconfig('regulation_view');
-  foreach my $type (qw(reg_features seg_features reg_feats_core reg_feats_non_core)) {
-    my $menu = $image_config->get_node($type);
-    next unless $menu;
-    foreach my $node (@{$menu->child_nodes}) {
-      my $old = $node->get('display');
-      my $renderer = firstidx { $old eq $_ }
-        qw(off compact tiling tiling_feature);
-      next if !$renderer;
-      $renderer |= $mask if $state;
-      $renderer &=~ $mask unless $state;
-      $renderer = 1 unless $renderer;
-      $renderer = [ qw(off compact tiling tiling_feature) ]->[$renderer];
-      $image_config->update_track_renderer($node->id,$renderer);
-    }
-  }
-  $hub->session->store;
+  EnsEMBL::Web::ViewConfig::Regulation::Page->reg_renderer(
+    $hub,'regulation_view',$renderer,$state);
   print $self->jsonify({
     reload_panels => ['FeaturesByCellLine'],
   });

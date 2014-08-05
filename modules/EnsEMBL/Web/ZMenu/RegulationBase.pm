@@ -23,7 +23,7 @@ use strict;
 use base qw(EnsEMBL::Web::ZMenu);
 
 sub _add_nav_entries {
-  my $self = shift;
+  my ($self,$evidence) = @_;
 
   my @zmenu_links = qw(regulation_view);
 
@@ -43,6 +43,13 @@ sub _add_nav_entries {
     });
     $self->add_entry({ label => "Select other cell types", link => $cell_type_url, link_class => 'modal_link' });
     $self->add_entry({ label => "Select evidence to show", link => $evidence_url, link_class => 'modal_link' });
+  }
+  if($evidence&1) {
+    my $signal_url = $self->hub->url({
+      action => $self->hub->param('act'),
+      plus_signal => $config,
+    });
+    $self->add_entry({ label => "Also show raw signal", link => $signal_url });
   }
 }
 
