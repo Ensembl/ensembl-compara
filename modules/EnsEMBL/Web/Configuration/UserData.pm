@@ -113,9 +113,12 @@ sub populate_tree {
   
   ## Data conversion
   $tools_menu->append($self->create_node('UploadVariations',  'Variant Effect Predictor', [qw(upload_snps       EnsEMBL::Web::Component::UserData::UploadVariations)])) unless $sd->ENSEMBL_VEP_ENABLED; # only if new VEP is not enabled
-  $tools_menu->append($self->create_node('SelectFeatures',    'Assembly Converter',       [qw(select_features   EnsEMBL::Web::Component::UserData::SelectFeatures)]));
+  unless ($sd->ENSEMBL_AC_ENABLED) {
+    $tools_menu->append($self->create_node('SelectFeatures',    'Assembly Converter',       [qw(select_features   EnsEMBL::Web::Component::UserData::SelectFeatures)]));
+    $tools_menu->append($self->create_node('PreviewConvert',    '',                         [qw(conversion_done   EnsEMBL::Web::Component::UserData::PreviewConvert)]));
+  }
+
   $tools_menu->append($self->create_node('UploadStableIDs',   'ID History Converter',     [qw(upload_stable_ids EnsEMBL::Web::Component::UserData::UploadStableIDs)]));
-  $tools_menu->append($self->create_node('PreviewConvert',    '',                         [qw(conversion_done   EnsEMBL::Web::Component::UserData::PreviewConvert)]));
   $tools_menu->append($self->create_node('PreviewConvertIDs', '',                         [qw(conversion_done   EnsEMBL::Web::Component::UserData::PreviewConvertIDs)]));
   $tools_menu->append($self->create_node('SelectOutput',      '',                         [qw(select_output     EnsEMBL::Web::Component::UserData::SelectOutput)]));
   

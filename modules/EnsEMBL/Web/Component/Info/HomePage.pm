@@ -110,7 +110,15 @@ sub assembly_text {
   my $gca             = $species_defs->ASSEMBLY_ACCESSION;
   my $pre_species     = $species_defs->get_config('MULTI', 'PRE_SPECIES');
   my @other_assemblies;
-  
+ 
+  my $ac_link;
+  if ($species_defs->ENSEMBL_AC_ENABLED) {
+    $ac_link = sprintf('<a href="%s" class="nodeco">', $hub->url({'type' => 'Tools', 'action' => 'AssemblyConverter'}));
+  }
+  else {
+    $ac_link = sprintf('<a href="%s" class="modal_link nodeco" rel="modal_user_data">', $hub->url({'type' => 'UserData', 'action' => 'SelectFeatures', __clear => 1}));
+  }
+
   my $html = sprintf('
     <div class="homepage-icon">
       %s
@@ -143,8 +151,8 @@ sub assembly_text {
     ) : '',
     
     $mappings && ref $mappings eq 'ARRAY' ? sprintf(
-      '<p><a href="%s" class="modal_link nodeco" rel="modal_user_data">%sConvert your data to %s coordinates</a></p>', ## Link to assembly mapper
-      $hub->url({ type => 'UserData', action => 'SelectFeatures', __clear => 1 }), sprintf($self->{'icon'}, 'tool'), $assembly
+      '<p>%s%sConvert your data to %s coordinates</a></p>', ## Link to assembly mapper
+      $ac_link, sprintf($self->{'icon'}, 'tool'), $assembly
     ) : '',
     
     $hub->url({ type => 'UserData', action => 'SelectFile', __clear => 1 }), sprintf($self->{'icon'}, 'page-user'), $species_defs->ENSEMBL_SITETYPE
