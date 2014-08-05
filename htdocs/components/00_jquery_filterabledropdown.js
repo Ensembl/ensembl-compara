@@ -93,9 +93,14 @@
       'keydown.filterableDropdown': function(e) {
         e.preventDefault(); // prevent the submission of form when pressed enter on the checkboxes
       },
-      'click.filterableDropdown': function(e, multiSelect) {
+      'click.filterableDropdown': function(e) {
+        if (e.originalEvent) { // in other scenarios, afterClick is triggered explicitly
+          $(this).triggerHandler('afterClick', this.type !== 'radio' && (e.metaKey || e.ctrlKey));
+        }
+      },
+      'afterClick.filterableDropdown': function(e, multiSelect) {
         labels.trigger('refresh');
-        el.trigger(!multiSelect && !e.metaKey && !e.ctrlKey || this.type === 'radio' ? 'close' : 'focusInput');
+        el.trigger(multiSelect ? 'focusInput' : 'close');
       }
     });
 
@@ -108,10 +113,12 @@
         $(this).toggleClass('selected', $(this.parentNode).find('input').prop('checked'));
       },
       'click.filterableDropdown': function(e) {
-        if (e.metaKey || e.ctrlKey) {
+        var inp = $(this).parent().find('input');
+        if (inp.prop('type') !== 'radio' && (e.metaKey || e.ctrlKey)) {
           e.preventDefault();
-          $(this).parent().find('input').prop('checked', function() { return !this.checked }).triggerHandler('click', true);
+          inp.prop('checked', function() { return !this.checked }).triggerHandler('afterClick', true);
         }
+        inp = null;
       }
     }).trigger('refresh');
 
@@ -156,7 +163,14 @@
         switch (e.which) {
           case 13:
             e.preventDefault();
-            labels.filter('.highlight:visible').parent().find('input').prop('checked', true).triggerHandler('click', e.metaKey || e.ctrlKey);
+            var inp = labels.filter('.highlight:visible').parent().find('input');
+            if (inp.prop('type') !== 'radio' && (e.metaKey || e.ctrlKey)) {
+              inp.prop('checked', true).triggerHandler('afterClick', true);
+            } else {
+              // triggering the click event actually sets the checked prop to true along with firing any other attached click events
+              inp.prop('checked', false).trigger('click').triggerHandler('afterClick', false);
+            }
+            inp = null;
           break;
           case 9:
           case 27:
