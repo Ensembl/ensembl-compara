@@ -415,10 +415,10 @@ CREATE TABLE `species_tree_node_tag` (
 @colour #FF8500
 
 @example    This query shows that the syntenic region 34965 corresponds to a synteny relationship between the Human and Opossum genomes
-   @sql                                  SELECT * FROM synteny_region WHERE synteny_region_id = 34965;
+   @sql                                  SELECT * FROM synteny_region WHERE synteny_region_id = 41285;
 
 @example    Linking with the @link method_link_species_set table we get the names:
-   @sql                                  SELECT synteny_region_id, name FROM synteny_region join method_link_species_set USING(method_link_species_set_id) WHERE synteny_region_id = 34965;
+   @sql                                  SELECT synteny_region_id, name FROM synteny_region join method_link_species_set USING(method_link_species_set_id) WHERE synteny_region_id = 41285;
 
 @column synteny_region_id             Internal unique ID
 @column method_link_species_set_id    External reference to method_link_species_set_id in the @link method_link_species_set table
@@ -478,9 +478,9 @@ CREATE TABLE dnafrag (
 @colour #FF8500
 
 @example     Example of dnafrag_region query
-    @sql                        SELECT * FROM dnafrag_region WHERE synteny_region_id = 34965;
+    @sql                        SELECT * FROM dnafrag_region WHERE synteny_region_id = 41285;
 @example     When joining to @link dnafrag and @link genome_db tables we get more comprehensive information:
-    @sql                        SELECT genome_db.name, dnafrag.name, dnafrag_start, dnafrag_end, dnafrag_strand FROM dnafrag_region LEFT JOIN dnafrag USING (dnafrag_id) LEFT JOIN genome_db USING (genome_db_id) WHERE synteny_region_id = 34965;
+    @sql                        SELECT genome_db.name, dnafrag.name, dnafrag_start, dnafrag_end, dnafrag_strand FROM dnafrag_region LEFT JOIN dnafrag USING (dnafrag_id) LEFT JOIN genome_db USING (genome_db_id) WHERE synteny_region_id = 41285;
 
 @column synteny_region_id   External reference to synteny_region_id in the @link synteny_region table
 @column dnafrag_id          External reference to dnafrag_id in the @link dnafrag table
@@ -513,7 +513,7 @@ CREATE TABLE dnafrag_region (
 @colour #FF8500
 
 @example    The following query refers to a primates EPO alignment:
-    @sql                                 SELECT * FROM genomic_align_block WHERE genomic_align_block_id = 5480000000010;
+    @sql                                 SELECT * FROM genomic_align_block WHERE genomic_align_block_id = 2250002943513;
 
 @column genomic_align_block_id       Internal unique ID
 @column method_link_species_set_id   External reference to method_link_species_set_id in the @link method_link_species_set table
@@ -622,9 +622,9 @@ The aligned sequence will be:<br />
     </table>
 
 @example      The following query corresponds to the three sequences included in the alignment described above (see @link genomic_align_block table description).
-      @sql                                   SELECT * FROM genomic_align WHERE genomic_align_block_id = 5480000000010;
+      @sql                                   SELECT * FROM genomic_align WHERE genomic_align_block_id = 2250002943513;
 @example      Here is a better way to get this by joining the @link dnafrag and @link genome_db tables:
-      @sql                                   SELECT genome_db.name, dnafrag.name, dnafrag_start, dnafrag_end, dnafrag_strand str, cigar_line FROM genomic_align LEFT JOIN dnafrag USING (dnafrag_id) LEFT JOIN genome_db USING (genome_db_id) WHERE genomic_align_block_id = 5480000000010;
+      @sql                                   SELECT genome_db.name, dnafrag.name, dnafrag_start, dnafrag_end, dnafrag_strand str, cigar_line FROM genomic_align LEFT JOIN dnafrag USING (dnafrag_id) LEFT JOIN genome_db USING (genome_db_id) WHERE genomic_align_block_id = 2250002943513;
 @colour #FF8500
 
 @column genomic_align_id               Unique internal ID
@@ -703,7 +703,7 @@ CREATE TABLE conservation_score (
 @example   Example entry for a constrained_element:
      @sql                                SELECT * FROM constrained_element LIMIT 1;
 @example   There are 2 other elements in the same constrained_element:
-     @sql                                SELECT constrained_element_id, genome_db.name, dnafrag.name FROM constrained_element JOIN dnafrag USING (dnafrag_id) JOIN genome_db USING (genome_db_id) WHERE constrained_element_id = 5290000000001;
+     @sql                                SELECT constrained_element_id, genome_db.name, dnafrag.name FROM constrained_element JOIN dnafrag USING (dnafrag_id) JOIN genome_db USING (genome_db_id) WHERE constrained_element_id = 6650000000001;
 
 @column constrained_element_id      Internal ID
 @column dnafrag_id                  External reference to dnafrag_id in the @link dnafrag table
@@ -788,6 +788,12 @@ CREATE TABLE sequence (
 @column dnafrag_end           Ending position within the dnafrag defined by dnafrag_id
 @column dnafrag_strand        Strand in the dnafrag defined by dnafrag_id
 @column display_label         Display name (imported from the core database)
+@column families              The number of families associated with this member
+@column gene_trees            If this member is part of a gene tree
+@column gene_gain_loss_trees  If this member is part of a gene gain/loss tree
+@column orthologues           The number of orthologues for this member
+@column paralogues            The number of paralogues for this member
+@column homoeologues          The number of homoeologues for this member
 
 @see sequence
 */
@@ -982,9 +988,9 @@ CREATE TABLE other_member_sequence (
 @colour   #1E90FF
 
 @example    Example of peptide_align_feature entry:
-     @sql                              SELECT * FROM peptide_align_feature_90 WHERE peptide_align_feature_id = 9000000001;
+     @sql                              SELECT * FROM peptide_align_feature_91 WHERE peptide_align_feature_id = 9100000001;
 @example    The following query corresponds to a particular hit found between a Homo sapiens protein and a Anolis carolinensis protein:
-     @sql                              SELECT g1.name as qgenome, m1.stable_id as qstable_id, g2.name as hgenome, m2.stable_id as hstable_id, score, evalue FROM peptide_align_feature_90 LEFT JOIN seq_member m1 ON (qmember_id = m1.seq_member_id) LEFT JOIN seq_member m2 ON (hmember_id = m2.seq_member_id) LEFT JOIN genome_db g1 ON (qgenome_db_id = g1.genome_db_id) LEFT JOIN genome_db g2 ON (hgenome_db_id = g2.genome_db_id) WHERE peptide_align_feature_id = 9000000001;
+     @sql                              SELECT g1.name as qgenome, m1.stable_id as qstable_id, g2.name as hgenome, m2.stable_id as hstable_id, score, evalue FROM peptide_align_feature_91 LEFT JOIN seq_member m1 ON (qmember_id = m1.seq_member_id) LEFT JOIN seq_member m2 ON (hmember_id = m2.seq_member_id) LEFT JOIN genome_db g1 ON (qgenome_db_id = g1.genome_db_id) LEFT JOIN genome_db g2 ON (hgenome_db_id = g2.genome_db_id) WHERE peptide_align_feature_id = 9100000001;
 
 
 @column peptide_align_feature_id  Internal unique ID

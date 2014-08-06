@@ -413,5 +413,40 @@ sub taxonomy_level {
 }
 
 
+
+
+sub node_id {  ## DEPRECATED
+  my $self = shift;
+  deprecate('$self->node_id() is deprecated and will be removed in e79. Use $self->gene_tree_node()->node_id() instead.');
+  $self->{'_gene_tree_node_id'} = shift if(@_);
+  return $self->{'_gene_tree_node_id'};
+}
+
+sub ancestor_node_id { ## DEPRECATED
+  my $self = shift;
+  deprecate('$self->ancestor_tree_node_id() is deprecated and will be removed in e79. Use $self->gene_tree_node()->node_id() instead.');
+  $self->{'_gene_tree_node_id'} = shift if(@_);
+  return $self->{'_gene_tree_node_id'};
+}
+
+sub tree_node_id { ## DEPRECATED
+  my $self = shift;
+  deprecate('$self->tree_node_id() is deprecated and will be removed in e79. Use $self->gene_tree()->dbID() instead.');
+  return $self->gene_tree()->dbID();
+}
+
+sub subtype {  ## DEPRECATED
+    my $self = shift;
+    deprecate("Homology::subtype() is deprecated and will be removed in e79. Use taxonomy_level() instead.");
+    return $self->taxonomy_level();
+}
+
+sub taxonomy_alias {  ## DEPRECATED
+    my $self = shift;
+    deprecate("Homology::taxonomy_alias() is deprecated and will be removed in e79. Use species_tree_node()->taxon()->ensembl_alias() instead.");
+    return $self->species_tree_node()->taxon()->ensembl_alias();
+}
+
+
 1;
 
