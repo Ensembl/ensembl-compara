@@ -65,38 +65,6 @@ sub content {
 
   $table->add_row('Name', qq{<p>$linked_display_name ($dbname_disp) $info_text</p>}) if $linked_display_name;
 
-  foreach my $link (@{$object->__data->{'links'}{'PRIMARY_DB_SYNONYM'}||[]}) {
-    my ($key, $text) = @$link;
-    my $id           = [split /\<|\>/, $text]->[4];
-    my $synonyms     = $self->get_synonyms($id, @syn_matches);
-
-    $text =~ s/\<div\s*class="multicol"\>|\<\/div\>//g;
-    $text =~ s/<br \/>.*$//gism;
-
-    if ($id =~ /$display_name/ && $synonyms =~ /\w/) {
-      $disp_syn  = 1;
-      $syns{$id} = $synonyms;
-    }
-    $text_info{$id} = $text;
-    $syns{$id}      = $synonyms if $synonyms =~ /\w/ && $id !~ /$display_name/;
-  }
-  foreach my $k (keys %text_info) {
-    my $syn = $syns{$k};
-    my $syn_entry;
-    if ($disp_syn == 1) {
-      my $url = $hub->url({
-        type   => 'Location',
-        action => 'Genome', 
-        r      => $location,
-        id     => $display_name,
-        ftype  => 'Gene'
-      });
-      $syns_html .= qq{<p>$syn [<span class="small">To view all $site_type genes linked to the name <a href="$url">click here</a>.</span>]</p>};
-    }
-  }
-
-  $table->add_row('Synonyms', $syns_html) if $syns_html;
-
   # add CCDS info
   if (scalar @CCDS) {
     my %temp = map { $_->primary_id, 1 } @CCDS;

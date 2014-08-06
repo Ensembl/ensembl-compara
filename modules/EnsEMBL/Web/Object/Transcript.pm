@@ -1082,13 +1082,13 @@ sub display_xref {
 =cut
 
 sub get_similarity_hash {
-  my ($self, $recurse) = @_;  
-
+  my ($self, $recurse, $obj) = @_;  
+  $obj ||= $self->transcript;
   $recurse = 1 unless defined $recurse;
   my $DBLINKS;
   
   eval { 
-    $DBLINKS = $recurse ? $self->transcript->get_all_DBLinks : $self->transcript->get_all_DBEntries;
+    $DBLINKS = $recurse ? $obj->get_all_DBLinks : $obj->get_all_DBEntries;
   };
   
   warn "SIMILARITY_MATCHES Error on retrieving gene DB links $@" if $@;
@@ -1795,6 +1795,14 @@ sub can_export {
 
   return $self->action =~ /^(Export|Exons|Sequence_cDNA|Sequence_Protein)$/ ? 0 : $self->availability->{'transcript'};
   
+}
+
+sub get_database_matches {
+  my $self = shift;
+  my $dbpat = shift;
+  my @DBLINKS;
+  eval { @DBLINKS = @{$self->gene->get_all_DBLinks($dbpat)};};
+  return \@DBLINKS  || [];
 }
 
 1;

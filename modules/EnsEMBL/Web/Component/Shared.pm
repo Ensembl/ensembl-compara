@@ -105,7 +105,31 @@ sub transcript_table {
 
     $table->add_row('Description', $description);
   }
-  
+
+  my $location    = $hub->param('r') || sprintf '%s:%s-%s', $object->seq_region_name, $object->seq_region_start, $object->seq_region_end;
+
+  my $site_type         = $hub->species_defs->ENSEMBL_SITETYPE; 
+  my @SYNONYM_PATTERNS  = qw(%HGNC% %ZFIN%);
+  my (@syn_matches, $syns_html);
+  push @syn_matches,@{$object->get_database_matches($_)} for @SYNONYM_PATTERNS;
+
+  my $gene = $page_type eq 'gene' ? $object->Obj : $object->gene;
+  foreach (@{$object->get_similarity_hash(0, $gene)}) {
+    next unless $_->{'type'} eq 'PRIMARY_DB_SYNONYM';
+    my $id           = $_->display_id; 
+    my $synonym     = $self->get_synonyms($id, @syn_matches);
+    my $url = $hub->url({
+      type   => 'Location',
+      action => 'Genome',
+      r      => $location, 
+      id     => $id,
+      ftype  => 'Gene',
+    });
+    $syns_html .= qq{<p>$synonym [<span class="small"><a href="$url">View all $site_type genes linked to this name</a>.</span>]</p>};
+  }
+
+  $table->add_row('Synonyms', $syns_html) if $syns_html;
+
   my $seq_region_name  = $object->seq_region_name;
   my $seq_region_start = $object->seq_region_start;
   my $seq_region_end   = $object->seq_region_end;
@@ -115,7 +139,7 @@ sub transcript_table {
     $hub->url({
       type   => 'Location',
       action => 'View',
-      r      => "$seq_region_name:$seq_region_start-$seq_region_end"
+      r      => $location, 
     }),
     $self->neat_sr_name($object->seq_region_type, $seq_region_name),
     $self->thousandify($seq_region_start),
@@ -407,6 +431,23 @@ sub transcript_table {
   }
   
   return qq{<div class="summary_panel">$html</div>};
+}
+
+sub get_synonyms {
+  my ($self, $match_id, @matches) = @_;
+  my ($ids, $syns);
+  foreach my $m (@matches) {
+    my $dbname = $m->db_display_name;
+    my $disp_id = $m->display_id;
+    if ($dbname =~/(HGNC|ZFIN)/ && $disp_id eq $match_id) {
+      my $synonyms = $m->get_all_synonyms;
+      $ids = '';
+      $ids = $ids . ', ' . (ref $_ eq 'ARRAY' ? "@$_" : $_) for @$synonyms;
+    }
+  }
+  $ids  =~ s/^\,\s*//;
+  $syns = $ids if $ids =~ /^\w/;
+  return $syns;
 }
 
 sub species_stats {

@@ -1471,9 +1471,10 @@ sub vega_projection {
 }
 
 sub get_similarity_hash {
-  my $self = shift;
+  my ($self, $recurse, $obj) = @_;
+  $obj ||= $self->Obj;
   my $DBLINKS;
-  eval { $DBLINKS = $self->Obj->get_all_DBEntries; };
+  eval { $DBLINKS = $obj->get_all_DBEntries; };
   warn ("SIMILARITY_MATCHES Error on retrieving gene DB links $@") if ($@);
   return $DBLINKS  || [];
 }
