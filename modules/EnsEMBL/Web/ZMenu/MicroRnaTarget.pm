@@ -47,7 +47,7 @@ sub content {
 
   $self->add_entry ({
     type   => 'Source',
-    label  => $feature->feature_set->description,
+    label  => "TarBase ".$feature->display_label." target",
     link   => $source_page,
   });
 
