@@ -275,11 +275,33 @@ sub sequence {
 }
 
 
+sub sequence_exon_cased {  ## DEPRECATED
+    my $self = shift;
+
+    deprecate('SeqMember::sequence_exon_cased() is deprecated and will be removed in e79. Use SeqMember::other_sequence("exon_cased") instead');
+    return $self->other_sequence('exon_cased');
+}
+
+sub sequence_exon_bounded { ## DEPRECATED
+    my $self = shift;
+
+    deprecate('SeqMember::sequence_exon_bounded() is deprecated and will be removed in e79. Use SeqMember::other_sequence("exon_bounded") instead');
+    return $self->other_sequence('exon_bounded');
+}
+
+sub sequence_cds {  ## DEPRECATED
+    my $self = shift;
+
+    deprecate('SeqMember::sequence_cds() is deprecated and will be removed in e79. Use SeqMember::other_sequence("cds") instead');
+    return $self->other_sequence('cds');
+}
+
+
 =head2 other_sequence
 
   Arg [1]    : string $seq_type
   Arg [2]    : (opt) string $sequence
-  Example    : my $filtered_seq = $member->other_sequence('filtered');
+  Example    : my $filtered_seq = $member->other_sequence('cds');
   Description: Get/Set the alternative sequence of type $seq_type for this member.
                 Currently, proteins have 'cds', 'exon_bounded' and 'exon_cased'
                 sequences, while RNAs have 'seq_with_flanking' sequences.
@@ -587,6 +609,23 @@ sub get_Translation {
     my $transcript = $self->get_Transcript;
     return undef unless $transcript;
     return $transcript->translation();
+}
+
+
+
+### Deprecated methods
+
+sub get_exon_bounded_sequence {  # DEPRECATED
+    my $self = shift;
+    deprecate('get_exon_bounded_sequence() is deprecated and will be removed in e79. Use other_sequence("exon_bounded") instead.');
+    return $self->other_sequence('exon_bounded');
+}
+
+sub get_other_sequence {  # DEPRECATED
+    my $self = shift;
+    my $seq_type = shift;
+    deprecate('get_other_sequence() is deprecated and will be removed in e79. Use other_sequence($seq_type) instead.');
+    return $self->other_sequence($seq_type);
 }
 
 
