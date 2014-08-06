@@ -32,8 +32,6 @@ use strict;
 
 use HTML::Entities  qw(encode_entities);
 
-use EnsEMBL::Web::Text::FeatureParser;
-use EnsEMBL::Web::TmpFile::Text;
 use EnsEMBL::Web::DBSQL::WebsiteAdaptor;
 use EnsEMBL::Web::Tools::Misc qw(get_url_content);
 use HTML::Entities  qw(encode_entities);
