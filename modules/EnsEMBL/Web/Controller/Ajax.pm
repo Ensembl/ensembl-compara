@@ -125,6 +125,10 @@ sub cell_type {
         $cell =~ s/^(reg_feats_|seg_)//;
       }
       my $renderer = $cell{$cell} ? 'normal' : 'off';
+      if($image_config_name ne 'regulation_view' and
+          $type eq 'seg_features') {
+        next;
+      }
       $image_config->update_track_renderer($node->id,$renderer);
     }
   }
