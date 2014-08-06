@@ -206,6 +206,13 @@ sub fetch_canonical_for_gene_member_id {
 }
 
 
+sub fetch_canonical_member_for_gene_member_id { ## DEPRECATED
+  my $self = shift;
+  deprecate('SeqMemberAdaptor::fetch_canonical_member_for_gene_member_id() is deprecated and will be removed in e79. Please use fetch_canonical_for_gene_member_id() instead');
+  return $self->fetch_canonical_for_gene_member_id(@_);
+}
+
+
 
 
 #
