@@ -39,7 +39,7 @@ Ensembl.Panel.TextSequence = Ensembl.Panel.Content.extend({
       $(this).css('zIndex', ++Ensembl.PanelManager.zIndex);
     }).on('click', '.info_popup .close', function () {
       $(this).parent().hide();
-    }).on('click', 'pre a._seq', function (e) {
+    }).on('click', 'pre a.sequence_info', function (e) {
         panel.makeZMenu(e, $(this));
         return false;
     });
@@ -50,7 +50,7 @@ Ensembl.Panel.TextSequence = Ensembl.Panel.Content.extend({
     
     $('.info_popup', this.el).hide();
     
-    $('pre a._seq', this.el).each(function () {
+    $('pre a.sequence_info', this.el).each(function () {
       if (!panel.popups[this.href]) {
         panel.popups[this.href] = 'zmenu_' + panel.id + '_' + (panel.zmenuId++);
       }
