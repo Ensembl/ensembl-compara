@@ -129,8 +129,8 @@ sub content {
     my $archives = $adaptor->fetch_archives_by_species($species_defs->ENSEMBL_PRIMARY_SPECIES); 
     @links    = map { $_ == $current ? () : $self->output_link($archives, $_, $url) } reverse sort keys %$archives;
   }
- 
-  $html .= sprintf '<p>The following archives are available for this page:</p><ul>%s</ul>', join '', @links if scalar @links;
+   my $grch37 = '<li><a href="http://grch37.ensembl.org">Ensembl GRCh37</a>: Full Feb 2014 archive with BLAST, VEP and BioMart</li>'; 
+  $html .= sprintf '<p>The following archives are available for this page:</p><ul>%s%s</ul>', $grch37, join '', @links if scalar @links;
   $html .= '<p><a href="/info/website/archives/" class="cp-external">More information about the Ensembl archives</a></p>';
 
   return $html;
