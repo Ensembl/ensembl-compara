@@ -249,6 +249,7 @@ sub render_normal {
   foreach my $feature_key (@sorted) {
     ## Fix for userdata with per-track config
     my ($config, @features);
+    warn ">>> FEATURE KEY $feature_key";
     
     $self->{'track_key'} = $feature_key;
     
@@ -271,9 +272,7 @@ sub render_normal {
     foreach (sort { $a->[0] <=> $b->[0] }  map [ $_->start, $_->end, $_ ], @features) {
       my ($s, $e, $f) = @$_;
 
-
       next if $strand_flag eq 'b' && $strand != (($f->can('hstrand') ? $f->hstrand : 1) * $f->strand || -1) || $e < 1 || $s > $length;
-      
       my $fgroup_name = $join ? $self->feature_group($f) : $nojoin_id++;
       my $db_name     = $f->can('external_db_id') ? $extdbs->{$f->external_db_id}{'db_name'} : 'OLIGO';
       

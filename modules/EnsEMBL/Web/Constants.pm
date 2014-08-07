@@ -45,6 +45,23 @@ sub ICON_MAPPINGS {
   };
 }
 
+sub PARSER_FORMATS {
+### Maps file formats to correct module classes
+  return {
+    'bed'       => {'class' => 'Bed',     'ext' => 'bed'},
+    'bedgraph'  => {'class' => 'Bed',     'ext' => 'bed|bgr'},
+    'bigbed'    => {'class' => 'BigBed',  'ext' => 'bb'},
+    'bigwig'    => {'class' => 'BigWig',  'ext' => 'bw'},
+    'gff'       => {'class' => 'GFF3',    'ext' => 'gff'},
+    'gtf'       => {'class' => 'GFF3',    'ext' => 'gtf'},
+    'gvf'       => {'class' => 'GVF',     'ext' => ''},
+    'hgvs'      => {'class' => 'HGVS',    'ext' => ''},
+    'psl'       => {'class' => 'Psl',     'ext' => 'psl'},
+    'evf'       => {'class' => 'VEP_input', 'ext' => 'evf'},
+    'wig'       => {'class' => 'Wig',     'ext' => 'wig'},
+  };
+}
+
 sub FORMATS {
   warn "!!! DEPRECATED - PLEASE USE 'EXPORT_FORMATS' INSTEAD";
   return &EXPORT_FORMATS;
