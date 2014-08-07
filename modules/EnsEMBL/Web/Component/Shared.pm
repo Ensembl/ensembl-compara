@@ -276,7 +276,7 @@ sub transcript_table {
        { key => 'biotype',    sort => 'html',    title => 'Biotype'       },
     );
 
-    push @columns, { key => 'ccds', sort => 'html', title => 'CCDS' } if $species =~ /^Homo|Mus/;
+    push @columns, { key => 'ccds', sort => 'html', title => 'CCDS' } if $species =~ /^Homo_sapiens|Mus_musculus/;
     
     my @rows;
    
