@@ -156,7 +156,7 @@ sub initialize_export {
   ## Set some CGI parameters from the viewconfig
   ## (because we don't want to have to set them in DataExport)
   my $vc = $hub->get_viewconfig('Transcript', 'ExonsSpreadsheet');
-  my @params = qw(sscon snp_display flanking line_numbering);
+  my @params = qw(sscon flanking line_numbering);
   foreach (@params) {
     $hub->param($_, $vc->get($_));
   }
@@ -204,7 +204,7 @@ sub get_exon_sequence_data {
   
   $config->{'last_number'} = $strand == 1 ? $exon_start - 1 : $exon_end + 1 if $config->{'number'} eq 'slice'; # Ensures that line numbering is correct if there are no introns
   $config->{'key'}{'exons/Introns'}{$coding_start && $coding_end ? 'exon' : 'utr'} = 1;
-  
+ 
   $self->add_variations($config, $exon->feature_Slice, \@sequence) if $config->{'snp_display'} ne 'off';
   
   if ($config->{'number'} eq 'cds') {
@@ -235,7 +235,7 @@ sub get_intron_sequence_data {
       $start->{'sequence'} = [ map {{ letter => $_, class => 'e1' }} split '', lc $start->{'slice'}->seq ];
       $end->{'sequence'}   = [ map {{ letter => $_, class => 'e1' }} split '', lc $end->{'slice'}->seq   ];
       
-      if ($config->{'snp_display'} eq 'yes') {
+      if ($config->{'snp_display'} eq 'yes' || $config->{'snp_display'} eq 'on') {
         $self->add_variations($config, $_->{'slice'}, $_->{'sequence'}) for $start, $end;
       }
       
@@ -290,7 +290,7 @@ sub get_flanking_sequence_data {
   $upstream->{'sequence'}   = [ map {{ letter => $_, class => 'ef' }} split '', lc $upstream->{'seq'}   ];
   $downstream->{'sequence'} = [ map {{ letter => $_, class => 'ef' }} split '', lc $downstream->{'seq'} ];
   
-  if ($config->{'snp_display'} eq 'yes') {
+  if ($config->{'snp_display'} eq 'yes' || $config->{'snp_display'} eq 'on') {
     $self->add_variations($config, $_->{'slice'}, $_->{'sequence'}) for $upstream, $downstream;
   }
   
@@ -314,7 +314,7 @@ sub add_variations {
   foreach my $transcript_variation (map $_->[2], sort { $b->[0] <=> $a->[0] || $b->[1] <=> $a->[1] } map [ $_->variation_feature->length, $_->most_severe_OverlapConsequence->rank, $_ ], @transcript_variations) {
     my $consequence = $config->{'consequence_filter'} ? lc [ grep $config->{'consequence_filter'}{$_}, @{$transcript_variation->consequence_type} ]->[0] : undef;
     
-    next if $config->{'consequence_filter'} && !$consequence;
+    next if keys %{$config->{'consequence_filter'}||{}} && !$consequence;
     
     my $vf    = $transcript_variation->variation_feature;
     my $name  = $vf->variation_name;
