@@ -159,6 +159,13 @@ sub assembly_text {
   );
   
   ## Insert dropdown list of other assemblies
+  if ($species eq 'Homo_sapiens') {
+    push @other_assemblies, {
+      url      => "http://grch37.ensembl.org/$species/",
+      assembly => 'GRCh37',
+      release  => '(Long-term archive with BLAST, VEP and BioMart)',
+    };
+  }
   my $adaptor  = EnsEMBL::Web::DBSQL::ArchiveAdaptor->new($hub);
   my $archives = $adaptor->fetch_archives_by_species($hub->species);
   my $previous = $assembly;
