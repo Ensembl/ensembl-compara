@@ -118,7 +118,7 @@ sub fetch_all_by_GeneMember {
   my $constraint = 'sm.gene_member_id = ?';
 
   $self->bind_param_generic_fetch($gene_member->dbID, SQL_INTEGER);
-  return $self->generic_fetch($constraint, $join);
+  return $self->generic_fetch($constraint, $join, 'GROUP BY fm.family_id');
 }
 
 
