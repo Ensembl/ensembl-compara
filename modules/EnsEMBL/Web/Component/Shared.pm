@@ -125,7 +125,8 @@ sub transcript_table {
       id     => $id,
       ftype  => 'Gene',
     });
-    $syns_html .= qq{<p>$synonym [<span class="small"><a href="$url">View all $site_type genes linked to this name</a>.</span>]</p>};
+    $syns_html .= "<p>$synonym</p>";
+    #$syns_html .= qq{<p>$synonym [<span class="small"><a href="$url">View all $site_type genes linked to this name</a>.</span>]</p>};
   }
 
   $table->add_row('Synonyms', $syns_html) if $syns_html;
