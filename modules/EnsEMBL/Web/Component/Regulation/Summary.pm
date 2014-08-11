@@ -53,6 +53,7 @@ sub content {
   my $object  = $self->object;
   my $summary = $self->new_twocol;
 
+  $self->nav_buttons;
   my $location_html = $self->_location_url($object->seq_region_start,
                                            $object->seq_region_end);
   my $bound_html = $self->_location_url($object->bound_start,

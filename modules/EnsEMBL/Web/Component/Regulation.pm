@@ -85,6 +85,39 @@ sub all_evidences {
 
 sub buttons { return @{$_[0]->{'buttons'}||[]}; }
 
+sub nav_buttons {
+  my ($self) = @_;
+
+  my @buttons = (
+    { css => 'summary', caption => 'Summary', action => 'Summary' },
+    {
+      css => 'details', caption => 'Details by Cell type',
+      action => 'Cell_line'
+    },
+    { css => 'context', caption => 'Feature Context', action => 'Context' },
+    { css => 'sourcedata', caption => 'Source Data', action => 'Evidence' }
+  );
+
+  my $action = $self->hub->action;
+  foreach my $b (@buttons) {
+    my $url = $self->hub->url({ action => $b->{'action'} });
+    my $title = $b->{'caption'};
+    my $disabled = 0;
+    if($action eq $b->{'action'}) {
+      $url = '#';
+      $title = 'YOU ARE ON THIS PAGE';
+      $disabled = 1;
+    }
+    push @{$self->{'buttons'}||=[]},{
+      nav_image => "navb_reg_$b->{'css'}",
+      caption => $b->{'caption'},
+      title => $title,
+      url => $url,
+      disabled => $disabled,
+    };
+  }
+}
+
 sub cell_line_button {
   my ($self,$image_config) = @_;
 
