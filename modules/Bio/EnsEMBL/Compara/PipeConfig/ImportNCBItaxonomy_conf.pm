@@ -68,7 +68,7 @@ sub default_options {
         'pipeline_name' => 'ncbi_taxonomy'.$self->o('ensembl_release'),
 
         # 'pipeline_db' is defined in HiveGeneric_conf. We only need to redefine a few parameters
-        'host' => 'ensembl-production',
+        'host' => 'ens-production',
 
         'taxdump_loc'   => 'ftp://ftp.ncbi.nih.gov/pub/taxonomy',   # the original location of the dump
         'taxdump_file'  => 'taxdump.tar.gz',                        # the filename of the dump
