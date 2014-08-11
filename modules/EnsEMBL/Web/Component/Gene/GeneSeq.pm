@@ -22,7 +22,7 @@ use strict;
 
 use base qw(EnsEMBL::Web::Component::TextSequence EnsEMBL::Web::Component::Gene);
 
-sub _init { $_[0]->SUPER::_init(5000); }
+sub _init { $_[0]->SUPER::_init(500); }
 
 sub get_object {
   my $self = shift;
