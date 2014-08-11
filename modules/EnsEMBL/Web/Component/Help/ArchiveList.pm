@@ -56,6 +56,8 @@ sub content {
   
   $url =~ s/^\///;
   
+  push @links, sprintf('<li><a href="http://grch37.ensembl.org/%s">Ensembl GRCh37</a> - full Feb 2014 archive with BLAST, VEP and BioMart</li>', $url); 
+    
   # is this a species page?
   
   my @check = split '/', $path;
@@ -81,8 +83,6 @@ sub content {
   
   my $adaptor   = EnsEMBL::Web::DBSQL::ArchiveAdaptor->new($self->hub);
   if ($species) {
-    push @links, sprintf('<li><a href="http://grch37.ensembl.org/%s">Ensembl GRCh37</a> - full Feb 2014 archive with BLAST, VEP and BioMart</li>', $url); 
-    
     $archives     = $adaptor->fetch_archives_by_species($species); 
     if (scalar grep $_ != $current, keys %$archives) {
       if ($type =~ /\.html/ || $action =~ /\.html/) {
@@ -128,7 +128,7 @@ sub content {
     }
   } else { # TODO - map static content moves
     my $archives = $adaptor->fetch_archives_by_species($species_defs->ENSEMBL_PRIMARY_SPECIES); 
-    @links    = map { $_ == $current ? () : $self->output_link($archives, $_, $url) } reverse sort keys %$archives;
+    push @links, map { $_ == $current ? () : $self->output_link($archives, $_, $url) } reverse sort keys %$archives;
   }
   $html .= sprintf '<p>The following archives are available for this page:</p><ul>%s</ul>', join '', @links if scalar @links;
   $html .= '<p><a href="/info/website/archives/" class="cp-external">More information about the Ensembl archives</a></p>';
