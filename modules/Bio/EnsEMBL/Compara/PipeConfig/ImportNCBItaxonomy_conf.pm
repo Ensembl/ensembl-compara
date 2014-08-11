@@ -68,7 +68,7 @@ sub default_options {
         'pipeline_name' => 'ncbi_taxonomy'.$self->o('ensembl_release'),
 
         # 'pipeline_db' is defined in HiveGeneric_conf. We only need to redefine a few parameters
-        'host' => 'compara3',
+        'host' => 'ensembl-production',
 
         'taxdump_loc'   => 'ftp://ftp.ncbi.nih.gov/pub/taxonomy',   # the original location of the dump
         'taxdump_file'  => 'taxdump.tar.gz',                        # the filename of the dump
@@ -239,7 +239,7 @@ sub pipeline_analyses {
         {   -logic_name    => 'web_name_patches',
             -module        => 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
             -parameters    => {
-                'cmd'       => 'mysql '.$self->dbconn_2_mysql('pipeline_db', 1).' <'.$self->o('ensembl_cvs_root_dir').'/ensembl-compara/scripts/taxonomy/web_name_patches.sql',
+                'cmd'       => 'mysql '.$self->db_cmd().' <'.$self->o('ensembl_cvs_root_dir').'/ensembl-compara/scripts/taxonomy/web_name_patches.sql',
             },
             -hive_capacity  => 10,  # to allow parallel branches
             -flow_into => {
