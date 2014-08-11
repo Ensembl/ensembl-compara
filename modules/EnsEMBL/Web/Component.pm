@@ -83,7 +83,7 @@ sub new {
 }
 
 sub buttons {
-  ## Returns a list of hashrefs, each containing info about the component context buttons (keys: url, caption, class, modal, toggle, disabled)
+  ## Returns a list of hashrefs, each containing info about the component context buttons (keys: url, caption, class, modal, toggle, disabled, group, nav_image)
 }
 
 sub button_style {
@@ -235,16 +235,32 @@ sub content_buttons {
 
   my $style = $self->button_style;
   # Group the buttons, if requested
-  my @groups;
+  my (@groups,@nav);
   foreach my $b ($self->buttons) {
-    if(!@groups or !$b->{'group'} or
-          $groups[-1]->[0]{'group'} ne $b->{'group'}) {
-      push @groups,[];
+    if($b->{'nav_image'}) {
+      # "Variation style" pictoral nav buttons
+      push @nav,$b;
+    } else {
+      # Blue rectangles
+      if(!@groups or !$b->{'group'} or
+            $groups[-1]->[0]{'group'} ne $b->{'group'}) {
+        push @groups,[];
+      }
+      push @{$groups[-1]},$b;
     }
-    push @{$groups[-1]},$b;
   }
-  # Create the buttons
-  my $html = '';
+  # Create the variation type buttons
+  my $nav_html = '';
+  foreach my $b (@nav) {
+    $nav_html .= qq(
+      <a href="$b->{'url'}" class="$b->{'nav_image'} _ht"
+         title="$b->{'title'}" alt="$b->{'title'}">
+        $b->{'caption'}
+      </a>
+    );
+  }
+  # Create the blue-regctangle buttons
+  my $blue_html = '';
   foreach my $g (@groups) {
     my $group = '';
     my $all_disabled = 1;
@@ -261,16 +277,20 @@ sub content_buttons {
     if(@$g>1) {
       my $class = "group";
       $class .= " disabled" if $all_disabled;
-      $html .= qq(<div class="$class">$group</div>);
+      $blue_html .= qq(<div class="$class">$group</div>);
     } else {
-      $html .= $group;
+      $blue_html .= $group;
     }
   }
-  return '' unless $html;
+  return '' unless $blue_html or $nav_html;
   my $class = $style->{'class'} || '';
-  return qq(
-    <div class="component-tools tool_buttons $class">$html</div>
-  );
+  $blue_html = qq(
+    <div class="component-tools tool_buttons $class">$blue_html</div>
+  ) if $blue_html;
+  $nav_html = qq(
+    <div class="component-navs nav_buttons $class">$nav_html</div>
+  ) if $nav_html;
+  return $nav_html.$blue_html;
 }
 
 sub cache {
