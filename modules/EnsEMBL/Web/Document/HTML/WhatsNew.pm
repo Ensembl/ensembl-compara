@@ -51,7 +51,7 @@ sub render {
   my $adaptor = EnsEMBL::Web::DBSQL::ArchiveAdaptor->new($hub);
   my $release      = $adaptor->fetch_release($release_id);
   my $release_date = $release->{'date'};
-  my $html = qq{<h2 class="box-header">What's New in Release $release_id ($release_date)</h2>};
+  my $html = qq{<h2 class="box-header"><img src="/i/24/announcement.png" style="vertical-align:middle" /> What's New in Release $release_id ($release_date)</h2>};
 
   ## Are we using static news content output from a script?
   my $file         = '/ssi/whatsnew.html';
@@ -120,20 +120,27 @@ sub render {
     }
   }
 
-  $html .= qq(<p><a href="/info/website/news.html">Full details of this release</a></p>);
+  $html .= qq(<p style="text-align:right"><a href="/info/website/news.html">Full details</a>);
 
   if ($hub->species_defs->multidb->{'DATABASE_PRODUCTION'}{'NAME'}) {
-    $html .= qq(<p><a href="/info/website/news_by_topic.html?topic=web">All web updates, by release</a></p>);
+    $html .= qq( | <a href="/info/website/news_by_topic.html?topic=web">All web updates, by release</a>);
   }
 
   if ($species_defs->ENSEMBL_BLOG_URL) {
-    $html .= qq(<p><a href="http://www.ensembl.info/blog/category/releases/">More release news on our blog &rarr;</a></p>);
+    $html .= qq( | <a href="http://www.ensembl.info/blog/category/releases/">More news on our blog</a></p>);
     $html .= $self->_include_blog($hub);
   }
+  else {
+    $html .= '</p>';
+  }
 
-  #if ($species_defs->ENSEMBL_TWITTER_ACCOUNT) {
-  #  $html .= $self->_include_twitter;
-  #}
+  my $twitter_user = $species_defs->ENSEMBL_TWITTER_ACCOUNT;
+  my $widget_id    = $species_defs->TWITTER_FEED_WIDGET_ID;
+  if ($twitter_user && $widget_id) {
+    $html .= sprintf(qq(<a class="twitter-timeline" href="https://twitter.com/%s" height="300" data-widget-id="%s">Recent tweets from @%s</a>
+<script>!function(d,s,id){var js,fjs=d.getElementsByTagName(s)[0],p=/^http:/.test(d.location)?'http':'https';if(!d.getElementById(id)){js=d.createElement(s);js.id=id;js.src=p+"://platform.twitter.com/widgets.js";fjs.parentNode.insertBefore(js,fjs);}}(document,"script","twitter-wjs");</script>), 
+                $twitter_user, $widget_id, $twitter_user);
+  }
 
   return $html;
 }
@@ -144,7 +151,7 @@ sub _include_blog {
 
   my $rss_url = $hub->species_defs->ENSEMBL_BLOG_RSS;
 
-  my $html = '<h3>Latest blog posts</h3>';
+  my $html = '<h3><img src="/i/wordpress.png"> Latest blog posts</h3>';
 
   my $blog_url  = $hub->species_defs->ENSEMBL_BLOG_URL;
   my $items = [];
@@ -182,43 +189,10 @@ sub _include_blog {
     $html .= qq(<p>Sorry, no feed is available from our blog at the moment</p>);
   }
 
-  $html .= qq(<p><a href="$blog_url">Go to Ensembl blog &rarr;</a></p>);
+  $html .= qq(<p style="text-align:right"><a href="$blog_url">Go to Ensembl blog &rarr;</a></p>);
 
   return $html;
 
-}
-
-sub _include_twitter {
-  my $self = shift;
-  my $sd = $self->hub->species_defs;
-  require Net::Twitter;
-
-  my ($html, $statuses);
-  my $twitter_user = $sd->ENSEMBL_TWITTER_ACCOUNT;  
-  my $nt = Net::Twitter->new(
-        traits   => [qw/API::RESTv1_1/],
-        consumer_key        => $sd->TWITTER_CONSUMER_KEY,
-        consumer_secret     => $sd->TWITTER_CONSUMER_SECRET,
-        access_token        => $sd->TWITTER_ACCESS_TOKEN,
-        access_token_secret => $sd->TWITTER_ACCESS_TOKEN_SECRET,
-        ssl                 => 1,
-    );
-  eval {$statuses = $nt->user_timeline({screen_name => $twitter_user, count => 5}); };
-
-  if ($@) {
-    warn "!!! TWITTER ERROR: $@";
-  }
-  else {
-    $html = sprintf('<h3>Recent tweets from @%s</h3>', $twitter_user);
-    if (@$statuses) {
-      $html .= '<ul>';
-      foreach my $status ( @$statuses ) {
-        $html .= "<li>$status->{created_at} $status->{text}\n";
-      }
-      $html .= '</ul>';
-    }
-  }
-  return $html;
 }
 
 1;
