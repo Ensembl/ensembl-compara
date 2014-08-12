@@ -100,12 +100,12 @@ sub colour_key {
       $type = 'enhancer';
     } elsif($type =~ /Open chromatin/i) {
       $type = 'open_chromatin';
-    } elsif($type =~ /Promoter/i) {
-      $type = 'promoter';
     } elsif($type =~ /TF binding site/i) {
       $type = 'tf_binding_site';
     } elsif($type =~ /Promoter Flanking Region/i) {
       $type = 'promoter_flanking';
+    } elsif($type =~ /Promoter/i) {
+      $type = 'promoter';
     } else  {
       $type = 'Unclassified';
     }
