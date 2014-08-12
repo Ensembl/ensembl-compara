@@ -64,31 +64,37 @@ Ensembl.Panel.TextSequence = Ensembl.Panel.Content.extend({
   },
   
   sequenceKey: function () {
-    $('.adornment',this.el).adorn();
-    this.initPopups();
-    if (!$('.sequence_key', this.el).length) {
-      var key = Ensembl.EventManager.trigger('getSequenceKey');
-      
-      if (!key) { 
-        return;
-      }
-      
-      var params = {};
-      
-      $.each(key, function (id, k) {
-        $.extend(true, params, k);
-      });
-      
-      var urlParams = $.extend({}, params, { variations: [], exons: [] });
-      
-      $.each([ 'variations', 'exons' ], function () {
-        for (var p in params[this]) {
-          urlParams[this].push(p);
+    var panel = this;
+    var all = [];
+    $('.adornment',this.el).each(function() {
+      all.push($(this).adorn());
+    });
+    $.when.apply($,all).then(function() {
+      panel.initPopups();
+      if (!$('.sequence_key', panel.el).length) {
+        var key = Ensembl.EventManager.trigger('getSequenceKey');
+
+        if (!key) {
+          return;
         }
-      });
-      
-      this.getContent(this.params.updateURL.replace(/sub_slice\?/, 'key?') + ';' + $.param(urlParams, true), this.el.parent().siblings('.sequence_key'));
-    }
+
+        var params = {};
+
+        $.each(key, function (id, k) {
+          $.extend(true, params, k);
+        });
+
+        var urlParams = $.extend({}, params, { variations: [], exons: [] });
+
+        $.each([ 'variations', 'exons' ], function () {
+          for (var p in params[this]) {
+            urlParams[this].push(p);
+          }
+        });
+
+        panel.getContent(panel.params.updateURL.replace(/sub_slice\?/, 'key?') + ';' + $.param(urlParams, true), panel.el.parent().siblings('.sequence_key'));
+      }
+    });
   },
   
   getSequenceKey: function () {
