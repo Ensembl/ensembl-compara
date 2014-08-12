@@ -33,7 +33,7 @@ sub data_by_cell_line {
 
   my $data = $config->{'data_by_cell_line'};
   $data = $data->() if ref($data) eq 'CODE';
-  return $data;
+  return $data||{};
 }
 
 sub draw_features {
