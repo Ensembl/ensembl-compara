@@ -18,7 +18,7 @@
   function beat(def) {
     return def.then(function(data) {
       var d = $.Deferred();
-      setInterval(function() { d.resolve(data); },0);
+      setTimeout(function() { d.resolve(data); },0);
       return d;
     });
   }
