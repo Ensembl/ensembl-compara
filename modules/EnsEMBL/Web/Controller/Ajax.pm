@@ -124,6 +124,7 @@ sub cell_type {
       unless($cell =~ s/^${type}_//) {
         $cell =~ s/^(reg_feats_|seg_)//;
       }
+      next if $cell eq 'MultiCell';
       my $renderer = $cell{$cell} ? 'normal' : 'off';
       if($image_config_name ne 'regulation_view' and
           $type eq 'seg_features') {
