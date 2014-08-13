@@ -116,44 +116,60 @@
 
   function _do_adorn(outer) {
     var $outer = $(outer);
-    if(!$outer.hasClass('adornment-done')) {
-      $outer.addClass('adornment-done');
-      var data = $.parseJSON($('.adornment-data',outer).text());
-      if ($.isEmptyObject(data.ref)) {
-        return;
-      }
-      var wrapper = $outer.wrap("<div></div>").parent();
-      var d = $.Deferred().resolve(data.seq);
-      d = loop(d,function(key,values) {
-        var el = $('.adorn-'+key,outer);
-        if(el.length) {
-          return [el,el.text(),data.ref,values,key];
-        } else {
-          return undefined;
-        }
-      },1000,'a');
-      d = loop(d,function(i,task) {
-        var out = prepare_adorn_span(task[1],task[2],task[3],task[4]);
-        return [task[0],out];
-      },1000,'b');
-      d = fire(d,function() {
-        $outer.detach();
-      });
-      d = loop(d,function(i,change) {
-        change[0].html(change[1]);
-      },1000,'c');
-      d = fire(d,function() {
-        $('.adornment-data',outer).remove();
-        $outer.appendTo(wrapper);
-      });
+    if($outer.hasClass('adornment-running') ||
+       $outer.hasClass('adornment-done')) {
+      return $.Deferred().resolve(0);
     }
+    $outer.addClass('adornment-running');
+    var data = $.parseJSON($('.adornment-data',outer).text());
+    if ($.isEmptyObject(data.ref)) {
+      return $.Deferred().resolve(0);
+    }
+    var wrapper = $outer.wrap("<div></div>").parent();
+    var d = $.Deferred().resolve(data.seq);
+    d = loop(d,function(key,values) {
+      var el = $('.adorn-'+key,outer);
+      if(el.length) {
+        return [el,el.text(),data.ref,values,key];
+      } else {
+        return undefined;
+      }
+    },1000,'a');
+    d = loop(d,function(i,task) {
+      var out = prepare_adorn_span(task[1],task[2],task[3],task[4]);
+      return [task[0],out];
+    },1000,'b');
+    d = fire(d,function() {
+      $outer.detach();
+    });
+    d = loop(d,function(i,change) {
+      change[0].html(change[1]);
+    },1000,'c');
+    d = fire(d,function() {
+      $('.adornment-data',outer).remove();
+      $outer.appendTo(wrapper);
+      $outer.addClass('adornment-done');
+      $outer.removeClass('adornment-running');
+    });
+    return d.then(function() { return $.Deferred().resolve(1); });
   }
 
+  // Horrible Deferred stuff just makes sure each _do_adorn is called
+  // only after the previous finishes, and that the overall output is the
+  // logical-or of the output of each one.
   $.fn.adorn = function() {
+    var all = [];
+    var d = $.Deferred().resolve(0);
     this.each(function(i,outer) {
-      setTimeout(function() { _do_adorn(outer); },50);
+      d = d.then(function(nework_1) {
+        var e = $.Deferred();
+        beat(_do_adorn(outer)).done(function(nework_2) {
+          e.resolve(nework_1||nework_2);
+        });
+        return e;
+      });
     });
-    return this;
+    return d;
   }; 
 
 })(jQuery);

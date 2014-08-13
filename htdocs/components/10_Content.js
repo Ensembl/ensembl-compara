@@ -122,7 +122,7 @@ Ensembl.Panel.Content = Ensembl.Panel.extend({
     }
     
     if(!background) {
-      el.append('<' + node + ' class="spinner">Loading component</' + node + '>');
+      el.append('<' + node + ' class="spinner ajax_pending">Loading component</' + node + '>');
     }
     
     if (newContent === true) {
