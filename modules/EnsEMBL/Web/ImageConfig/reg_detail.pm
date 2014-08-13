@@ -78,7 +78,7 @@ sub init {
     [ 'contig', 'Contigs', 'contig', { display => 'normal', strand => 'r' }]
   );
   
-  $self->load_tracks;
+  $self->load_tracks({ reg_minimal => 1 });
   $self->load_configured_das;
   $self->image_resize = 1;
 
