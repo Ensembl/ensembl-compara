@@ -360,18 +360,20 @@ sub recast_label {
   foreach my $row_data (@$rows) {
     my ($row_text,$row_width) = @$row_data;
     next unless $row_text;
+    my $pad = 0;
+    $pad = 4 if !$y and @$rows>1;
     my $row = $self->Text({
       font => $font,
       ptsize => $ptsize,
       text => $row_text,
-      height => $h + ($y?0:4),
+      height => $h + $pad,
       colour    => $colour,
       y => $y,
       width => $max_width,
       halign => 'left',
     });
     $composite->push($row);
-    $y += $h + ($y?0:4); # The 4 is to add some extra delimiting margin
+    $y += $h + $pad; # The 4 is to add some extra delimiting margin
   }
   $self->label($composite);
 }
