@@ -213,7 +213,7 @@ sub advanced_button {
     url => $url,
     caption => 'Advanced ...',
     class => 'unstyled config modal_link',
-    rel => "modal_config_$component",
+    rel => "modal_config_$component-functional",
   };
 }
 

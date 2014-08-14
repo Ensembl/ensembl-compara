@@ -271,8 +271,8 @@ sub content_buttons {
       push @classes, 'togglebutton' if $b->{'toggle'};
       push @classes, 'off'          if $b->{'toggle'} and $b->{'toggle'} eq 'off';
       $all_disabled = 0 unless $b->{'disabled'};
-      $group .= sprintf('<a href="%s" class="%s">%s</a>',
-            $b->{'url'}, join(' ',@classes), $b->{'caption'});
+      $group .= sprintf('<a href="%s" class="%s" rel="%s">%s</a>',
+            $b->{'url'}, join(' ',@classes),$b->{'rel'},$b->{'caption'});
     }
     if(@$g>1) {
       my $class = "group";
