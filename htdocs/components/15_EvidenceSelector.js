@@ -15,17 +15,8 @@
  */
 
 Ensembl.Panel.EvidenceSelector = Ensembl.Panel.CloudMultiSelector.extend({
-
-  constructor: function (id, params) {
-    this.base(id,params);
-  },
-
-  init: function () {
-    var panel = this;
-    this.base();
-  },
-
   updateSelection: function () {
+    if(!this.changed) { return; }
     
     var evidence = this.urlParam + '=' + this.selection.join(',');
     $.ajax({

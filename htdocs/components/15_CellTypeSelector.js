@@ -16,7 +16,9 @@
 
 Ensembl.Panel.CellTypeSelector = Ensembl.Panel.CloudMultiSelector.extend({
   updateSelection: function () {
-   
+
+    if(!this.changed) { return; }
+
     var params = {
       image_config: this.params.image_config
     };
