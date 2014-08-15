@@ -244,7 +244,7 @@ sub pipeline_analyses {
             },
             -flow_into => {
                 '2->A' => [ 'load_nonref_members' ],
-                'A->1' => [ 'load_uniprot_superfactory' ],
+                'A->1' => [ 'hc_nonref_members' ],
             },
         },
 
@@ -257,6 +257,14 @@ sub pipeline_analyses {
                 'store_missing_dnafrags'=> 1,
             },
             -rc_name => '2GigMem',
+        },
+
+        {   -logic_name         => 'hc_nonref_members',
+            -module             => 'Bio::EnsEMBL::Compara::RunnableDB::Families::SqlHealthChecks',
+            -parameters         => {
+                mode            => 'nonref_members',
+            },
+            -flow_into  => [ 'load_uniprot_superfactory' ],
         },
 
         {   -logic_name => 'load_uniprot_superfactory',
