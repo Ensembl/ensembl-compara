@@ -24,7 +24,7 @@ CREATE TEMPORARY TABLE temp_member_family_counts (
 );
 
 SELECT "Populating the temporary temp_member_family_counts table" AS "";
-INSERT INTO temp_member_family_counts (gene_member_id, families) SELECT gene_member_id, COUNT(*) FROM family_member JOIN seq_member USING (seq_member_id) GROUP BY gene_member_id;
+INSERT INTO temp_member_family_counts (gene_member_id, families) SELECT gene_member_id, COUNT(DISTINCT family_id) FROM family_member JOIN seq_member USING (seq_member_id) GROUP BY gene_member_id;
 
 SELECT "Populating the families column in gene_member" AS "";
 UPDATE gene_member gm JOIN temp_member_family_counts t USING (gene_member_id) SET gm.families = t.families;
