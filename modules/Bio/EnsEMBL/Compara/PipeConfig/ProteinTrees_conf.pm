@@ -1368,6 +1368,21 @@ sub pipeline_analyses {
             -flow_into  => $self->o('use_notung') ? [ 'notung' ] : [],
         },
 
+        {   -logic_name => 'copy_tree',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::CopyLocalTree',
+            -parameters => {
+                'input_clusterset_id'   => 'treebest',
+                'output_clusterset_id'  => $self->o('use_notung') ? 'raxml' : 'default',
+            },
+            -hive_capacity        => $self->o('raxml_capacity'),
+            -rc_name => '8Gb_job',
+            -flow_into  => {
+                1 => $self->o('use_notung') ? [ 'notung' ] : [],
+                2 => $self->o('use_notung') ? [ 'notung' ] : [],
+             },
+        },
+
+
         {   -logic_name => 'raxml',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::RAxML',
             -parameters => {
