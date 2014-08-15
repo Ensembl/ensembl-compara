@@ -18,52 +18,41 @@ limitations under the License.
 
 package EnsEMBL::Web::Document::Element::ToolLinks;
 
-### Generates links to site tools - BLAST, help, login, etc (currently in masthead)
+### Generates links in masthead
 
 use strict;
+use warnings;
 
-use base qw(EnsEMBL::Web::Document::Element);
+use parent qw(EnsEMBL::Web::Document::Element);
 
-sub home    :lvalue { $_[0]{'home'};   }
-sub blast   :lvalue { $_[0]{'blast'};   }
-sub biomart :lvalue { $_[0]{'biomart'}; }
-sub blog    :lvalue { $_[0]{'blog'};   }
+sub links {
+  my $self  = shift;
+  my $hub   = $self->hub;
+  my $sd    = $self->species_defs;
+  my $blog  = $sd->ENSEMBL_BLOG_URL;
+  my @links;
 
-sub init {
-  my $self         = shift;
-  my $species_defs = $self->species_defs;
-  
-  $self->home    = $species_defs->ENSEMBL_BASE_URL;
-  $self->blast   = $species_defs->ENSEMBL_BLAST_ENABLED;
-  $self->biomart = $species_defs->ENSEMBL_MART_ENABLED;
-  $self->blog    = $species_defs->ENSEMBL_BLOG_URL;
+  push @links, 'mart',          '<a class="constant" href="/biomart/martview">BioMart</a>' if $sd->ENSEMBL_MART_ENABLED;
+  push @links, 'tools',         '<a class="constant" href="/info/docs/tools/index.html">Tools</a>';
+  push @links, 'download',      '<a class="constant" href="/downloads.html">Downloads</a>';
+  push @links, 'documentation', '<a class="constant" href="/info/">Help &amp; Documentation</a>';
+  push @links, 'blog',          qq(<a class="constant" href="$blog">Blog</a>) if $blog;
+  push @links, 'mirrors',       '<a class="constant modal_link" href="/Help/Mirrors">Mirrors</a>' if keys %{$hub->species_defs->ENSEMBL_MIRRORS || {}};
+
+  return \@links;
 }
 
 sub content {
   my $self    = shift;
   my $hub     = $self->hub;
-  my $species = $hub->species;
-     $species = !$species || $species eq 'Multi' || $species eq 'common' ? 'Multi' : $species;
-  my @links; # = sprintf '<a class="constant" href="%s">Home</a>', $self->home;
-  
-  
-  push @links, qq(<a class="constant" href="/$species/Tools/Blast">BLAST/BLAT</a>) if $self->blast;
-  push @links,   '<a class="constant" href="/biomart/martview">BioMart</a>'        if $self->biomart;
-  push @links,   '<a class="constant" href="/info/docs/tools/index.html">Tools</a>';
-  push @links,   '<a class="constant" href="/downloads.html">Downloads</a>';
-  push @links,   '<a class="constant" href="/info/">Help &amp; Documentation</a>';
-  push @links,   '<a class="constant" href="'.$self->blog.'">Blog</a>'                  if $self->blog;
-  push @links,   '<a class="constant modal_link" href="/Help/Mirrors">Mirrors</a>' if keys %{$hub->species_defs->ENSEMBL_MIRRORS || {}};
+  my $links   = $self->links;
+  my $menu    = '';
 
-  my $last  = pop @links;
-  my $tools = join '', map "<li>$_</li>", @links;
-  
-  return qq{
-    <ul class="tools">$tools<li class="last">$last</li></ul>
-    <div class="more">
-      <a href="#">More <span class="arrow">&#9660;</span></a>
-    </div>
-  };
+  while (my (undef, $link) =  splice @$links, 0, 2) {
+    $menu .= sprintf '<li%s>%s</li>', @$links ? '' : ' class="last"', $link;
+  }
+
+  return qq(<ul class="tools">$menu</ul><div class="more"><a href="#">More <span class="arrow">&#9660;</span></a></div>);
 }
 
 1;
