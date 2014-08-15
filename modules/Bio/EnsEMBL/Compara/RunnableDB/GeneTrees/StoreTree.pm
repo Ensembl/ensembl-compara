@@ -131,7 +131,7 @@ sub dumpTreeMultipleAlignmentToWorkdir {
   $sa->set_displayname_flat(1);
   # Now outputing the alignment
   open(OUTSEQ, ">$aln_file") or die "Could not open '$aln_file' for writing : $!";
-  my $alignIO = Bio::AlignIO->newFh( -fh => \*OUTSEQ, -format => "fasta");
+  my $alignIO = Bio::AlignIO->newFh( -fh => \*OUTSEQ, -format => ($self->param('aln_format') || "fasta"));
   print $alignIO $sa;
   close OUTSEQ;
 

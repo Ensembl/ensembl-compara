@@ -65,6 +65,7 @@ Other parameters:
  - run_treebest_sdi: do we have to pass the output tree through "treebest sdi"
  - reroot_with_sdi: should "treebest sdi" also reroot the tree
  - output_clusterset_id: alternative clusterset_id to store the result gene tree
+ - aln_format: (default: "fasta"). In which format the alignment should be dumped
 
 Branch events:
  - #1: autoflow on success
