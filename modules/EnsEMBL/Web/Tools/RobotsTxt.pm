@@ -57,7 +57,7 @@ sub create {
   print FH _lines("User-agent","*");
   print FH _lines("Disallow",qw(
 				 /Multi/  /biomart/  /Account/  /ExternalData/  /UserAnnotation/
-				 */Ajax/  */Config/  */blastview/  */Export/  */Experiment/ */Experiment*
+				 */Ajax/  */Config/  */Export/  */Experiment/ */Experiment*
 				 */Location/  */LRG/  */Phenotype/  */Regulation/  */Search/ */Share
 				 */UserConfig/  */UserData/  */Variation/
 			      ));

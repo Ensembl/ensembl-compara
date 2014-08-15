@@ -234,7 +234,6 @@ our $OBJECT_TO_SCRIPT = {
   Phenotype           => 'Page',
   Experiment          => 'Page',
 
-  Blast               => 'Page',
   Info                => 'AltPage',
   Search              => 'Page',
   

@@ -53,7 +53,7 @@ my $builder = new EnsEMBL::Web::Builder({ hub => $hub });
 my (@object_types, %old_links);
 
 while (my ($k, $v) = each (%{$hub->species_defs->OBJECT_TO_SCRIPT})) {
-  push @object_types, $k if $v eq 'Page' && $k !~ /^(Info|Blast)$/;
+  push @object_types, $k if $v eq 'Page' && $k ne 'Info';
 } 
 
 while (my ($k, $v) = each (%EnsEMBL::Web::OldLinks::mapping)) {

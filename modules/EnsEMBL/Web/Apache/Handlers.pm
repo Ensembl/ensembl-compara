@@ -52,7 +52,6 @@ use EnsEMBL::Web::Apache::SpeciesHandler;
 our $species_defs = EnsEMBL::Web::SpeciesDefs->new;
 our $MEMD         = EnsEMBL::Web::Cache->new;
 
-our $BLAST_LAST_RUN;
 our $LOAD_COMMAND;
 
 BEGIN {
@@ -669,27 +668,6 @@ sub push_script_line {
   );
   
   $r->subprocess_env->{'LOG_TIME'} = time;
-}
-
-#======================================================================#
-# BLAST Support functionality - TODO: update before implementing!      #
-#======================================================================#
-
-sub _run_blast_no_ticket {
-  my ($loads, $seconds_since_last_run) = @_;
-  return $loads->{'blast'} < 3 && rand $loads->{'httpd'} < 10 && rand $seconds_since_last_run > 1;
-}
-
-sub _run_blast_ticket {
-  my ($loads, $seconds_since_last_run) = @_;
-  return $loads->{'blast'} < 8;
-}
-
-sub _get_loads {
-  return {
-    blast => &$LOAD_COMMAND('parse_blast.pl'),
-    httpd => &$LOAD_COMMAND('httpd')
-  };
 }
 
 sub  _load_command_null {
