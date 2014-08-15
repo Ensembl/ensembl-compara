@@ -558,26 +558,6 @@ sub parse_referer {
     $info->{'ENSEMBL_ACTION'}   = $action;
     $info->{'ENSEMBL_FUNCTION'} = $function;
   }
-
-  if ($species_defs->ENSEMBL_DEBUG_FLAGS & $species_defs->ENSEMBL_DEBUG_REFERER) {
-    warn "\n";
-    warn "------------------------------------------------------------------------------\n";
-    warn "\n";
-    warn "  SPECIES:  $info->{'species'}\n";
-    warn "  TYPE:     $info->{'type'}\n";
-    warn "  ACTION:   $info->{'action'}\n";
-    warn "  FUNCTION: $info->{'function'}\n";
-    warn "  QS:       $query_string\n";
-
-    foreach my $param (sort keys %$params) {
-      warn sprintf '%20s = %s\n', $param, $_ for sort @{$params->{$param}};
-    }
-
-    warn "\n";
-    warn "  URI:      $uri\n";
-    warn "\n";
-    warn "------------------------------------------------------------------------------\n";
-  }
  
   return $info;
 }
