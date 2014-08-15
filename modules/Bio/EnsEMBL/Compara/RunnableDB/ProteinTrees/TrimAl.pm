@@ -31,9 +31,10 @@ Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::TrimAl;
 
 =head1 DESCRIPTION
 
-This Analysis/RunnableDB is designed to take ProteinTree as input
-This must already have a multiple alignment run on it. It uses that alignment
-as input into the NJTREE PHYML program which then generates a phylogenetic tree
+This Analysis/RunnableDB is designed to take a root_id as input.
+This must already have a multiple alignment run on it. That
+alignment is filered by TrimAl. and stored in the "removed_columns"
+tree tag.
 
 input_id/parameters format eg: "{'gene_tree_id'=>1234}"
     gene_tree_id : use 'id' to fetch a cluster from the ProteinTree
