@@ -73,7 +73,6 @@ our $ENSEMBL_IMAGE_WIDTH       = 800;
 our $ENSEMBL_JSCSS_TYPE        = 'minified';
 
 our $ENSEMBL_MART_ENABLED      = 0;
-our $ENSEMBL_BLAST_ENABLED     = 0;
 
 our $ENSEMBL_ORM_DATABASES     = {};
 
@@ -133,7 +132,7 @@ our $ENSEMBL_TMP_URL        = '/tmp';
 our $ENSEMBL_TMP_URL_IMG    = '/img-tmp';
 our $ENSEMBL_TMP_URL_CACHE  = '/img-cache';
 
-our ($ENSEMBL_REGISTRY, $ENSEMBL_BLASTSCRIPT);
+our ($ENSEMBL_REGISTRY);
 
 # Environment variables to set using the SetEnv directive
 our %ENSEMBL_SETENV = (
@@ -387,7 +386,6 @@ sub tmp {
   $SiteDefs::ENSEMBL_TMP_DIR       = $tmp_dir;
   $SiteDefs::ENSEMBL_TMP_DIR_IMG   = "$tmp_dir/img/tmp";
   $SiteDefs::ENSEMBL_TMP_DIR_CACHE = "$tmp_dir/img/cache";
-  $SiteDefs::ENSEMBL_TMP_DIR_BLAST = "$tmp_dir/blastqueue";
 }
 
 sub logs {
