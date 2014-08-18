@@ -127,10 +127,10 @@ sub dumpTreeMultipleAlignmentToWorkdir {
 
   $sa->set_displayname_flat(1);
   # Now outputing the alignment
-  open(OUTSEQ, ">$aln_file") or die "Could not open '$aln_file' for writing : $!";
-  my $alignIO = Bio::AlignIO->newFh( -fh => \*OUTSEQ, -format => "fasta");
+  open my $fh, ">", $aln_file or die "Could not open '$aln_file' for writing : $!";
+  my $alignIO = Bio::AlignIO->newFh( -fh => $fh, -format => "fasta");
   print $alignIO $sa;
-  close OUTSEQ;
+  close $fh;
 
   unless(-e $aln_file and -s $aln_file) {
     die "There are no alignments in '$aln_file', cannot continue";
@@ -161,10 +161,10 @@ sub dumpAlignedMemberSetAsStockholm {
 
     # Now outputing the alignment
     my $stk_file = $file_root . '.stk';
-    open(OUTSEQ, ">$stk_file") or die "Could not open '$stk_file' for writing : $!";
-    my $alignIO = Bio::AlignIO->newFh( -fh => \*OUTSEQ, -format => "stockholm");
+    open my $fh, ">", $stk_file or die "Could not open '$stk_file' for writing : $!";
+    my $alignIO = Bio::AlignIO->newFh( -fh => $fh, -format => "stockholm");
     print $alignIO $sa;
-    close OUTSEQ;
+    close $fh;
     return $stk_file;
 }
 
