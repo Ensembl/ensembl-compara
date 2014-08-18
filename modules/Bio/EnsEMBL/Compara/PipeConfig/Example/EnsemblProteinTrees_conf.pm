@@ -60,15 +60,15 @@ sub default_options {
         %{$self->SUPER::default_options},   # inherit the generic ones
 
     # parameters that are likely to change from execution to another:
-        'rel_with_suffix'       => $self->o('ensembl_release')."member", # You can add a letter to distinguish this run from other runs on the same release
-        'do_not_reuse_list'     => ['homo_sapiens', 'gallus_gallus' ],     # names of species we don't want to reuse this time
+        'rel_with_suffix'       => $self->o('ensembl_release'), # You can add a letter to distinguish this run from other runs on the same release
+        'do_not_reuse_list'     => [ ],     # names of species we don't want to reuse this time
 
     # custom pipeline name, in case you don't like the default one
         'pipeline_name'         => 'protein_trees_'.$self->o('rel_with_suffix'),   # name the pipeline to differentiate the submitted processes
         'division'              => 'ensembl',       # Tag attached to every single tree
 
     # dependent parameters: updating 'work_dir' should be enough
-        'work_dir'              => '/lustre/scratch110/ensembl/'.$self->o('ENV', 'USER').'/protein_trees_'.$self->o('rel_with_suffix'),
+        'work_dir'              => '/lustre/scratch109/ensembl/'.$self->o('ENV', 'USER').'/protein_trees_'.$self->o('rel_with_suffix'),
 
     # "Member" parameters:
 
@@ -185,7 +185,7 @@ sub default_options {
         #'prev_core_sources_locs'   => [ $self->o('staging_loc1'), $self->o('staging_loc2') ],
 
         # Add the database location of the previous Compara release. Use "undef" if running the pipeline without reuse
-        'prev_rel_db' => 'mysql://ensro@compara1:3306/mm14_protein_trees_75',
+        'prev_rel_db' => 'mysql://ensro@ens-livemirror:3306/ensembl_compara_'.($self->o('ensembl_release')-1),
 
         # To run without a master database
         #'master_db'                 => undef,
