@@ -336,9 +336,10 @@ sub minimize_cigars {
 
 =head2 identify_removed_columns
 
-  Arg [1]    : Arrayref of the initial alignment strings
-  Arg [2]    : Arrayref of the filtered alignment strings (in the same order)
-  Example    : my $removed_columns = identify_removed_columns([$aln1, $aln2], [$fil1, $fil2]);
+  Arg [1]    : Hashref of the initial alignment strings
+  Arg [2]    : Hashref of the filtered alignment strings
+  Arg [3]    : "scaling" integer (default 1). Use 3 to scale cDNA alignments to protein-space coordinates
+  Example    : my $removed_columns = identify_removed_columns({'seq1' => $aln1, 'seq2' => $aln2}, {'seq1' => $fil1, 'seq2' => $fil2});
   Description: Compares each alignment string to its filtered version
                and compiles a list of kept / discarded columns.
                The return string is like "[0,0],[6,8]". Here, two regions
@@ -352,8 +353,10 @@ sub identify_removed_columns {
 
     my $initial_strings  = shift;
     my $filtered_strings = shift;
+    my $scaling          = shift || 1;
 
     #print STDERR Dumper($initial_strings, $filtered_strings);
+    die sprintf("The number of sequences do not match: initial=%d filtered=%d\n", scalar(keys %$initial_strings), scalar(keys %$filtered_strings)) if scalar(keys %$initial_strings) != scalar(keys %$filtered_strings);
 
     my $start_segment = undef;
     my @filt_segments = ();
@@ -380,7 +383,7 @@ sub identify_removed_columns {
             $j++;
             $next_filt_column = undef;
             if (defined $start_segment) {
-                push @filt_segments, sprintf('[%d,%d]', $start_segment, $i-1);
+                push @filt_segments, sprintf('[%d,%d]', $start_segment/$scaling, $i/$scaling - 1);
                 $start_segment = undef;
             }
         } else {
@@ -392,7 +395,7 @@ sub identify_removed_columns {
     die "Could not match alignments" if $j+1 < $filt_length;
 
     if (defined $start_segment) {
-        push @filt_segments, sprintf('[%d,%d]', $start_segment, $ini_length-1);
+        push @filt_segments, sprintf('[%d,%d]', $start_segment/$scaling, $ini_length/$scaling-1);
     }
 
     return join(',', @filt_segments);
