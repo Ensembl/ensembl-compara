@@ -139,7 +139,7 @@ sub default_options {
         'blastp_capacity'           => 200,
         'mcoffee_capacity'          => 200,
         'split_genes_capacity'      => 200,
-        'trimal_capacity'           => 200,
+        'alignment_filtering_capacity'  => 200,
         'prottest_capacity'         => 200,
         'treebest_capacity'         => 200,
         'raxml_capacity'            => 200,

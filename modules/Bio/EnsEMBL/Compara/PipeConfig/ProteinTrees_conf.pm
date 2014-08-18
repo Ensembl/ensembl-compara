@@ -107,6 +107,17 @@ sub default_options {
         'treebreak_gene_count'      => 400,     # affects msa_chooser
         'mafft_gene_count'          => 200,     # affects msa_chooser
         'mafft_runtime'             => 7200,    # affects msa_chooser
+        'raxml_threshold_n_genes' => 500,
+        'raxml_threshold_aln_len' => 2500,
+        'raxml_cores'             => 16,
+
+    # alignment filtering options
+        'threshold_n_genes'       => 20,
+        'threshold_aln_len'       => 1000,
+        'threshold_n_genes_large' => 2000,
+        'threshold_aln_len_large' => 15000,
+        'noisy_cutoff'            => 0.4,
+        'noisy_cutoff_large'      => 1,
 
     # species tree reconciliation
         # you can define your own species_tree for 'treebest'. It can contain multifurcations
@@ -161,7 +172,7 @@ sub default_options {
         #'blastp_capacity'           => 900,
         #'mcoffee_capacity'          => 600,
         #'split_genes_capacity'      => 600,
-        #'trimal_capacity'           => 400,
+        #'alignment_filtering_capacity' => 400,
         #'prottest_capacity'         => 400,
         #'treebest_capacity'         => 400,
         #'raxml_capacity'            => 400,
@@ -1310,7 +1321,7 @@ sub pipeline_analyses {
             -rc_name        => '500Mb_job',
             -batch_size     => 20,
             -flow_into      => {
-                1   => $self->o('use_raxml') ? 'trimal' : 'treebest',
+                1   => $self->o('use_raxml') ? 'filter_decision' : 'treebest',
                 -1  => 'split_genes_himem',
             },
         },
@@ -1319,7 +1330,7 @@ sub pipeline_analyses {
             -module         => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::FindContiguousSplitGenes',
             -hive_capacity  => $self->o('split_genes_capacity'),
             -rc_name        => '4Gb_job',
-            -flow_into      => [ $self->o('use_raxml') ? 'trimal' : 'treebest' ],
+            -flow_into      => [ $self->o('use_raxml') ? 'filter_decision' : 'treebest' ],
         },
 
         {   -logic_name => 'tree_entry_point',
@@ -1331,12 +1342,68 @@ sub pipeline_analyses {
             },
         },
 
+        {   -logic_name => 'filter_decision',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ConditionalDataFlow',
+            -parameters => {
+                'condition'             => '($self->compara_dba->get_GeneTreeAdaptor->fetch_by_dbID(#gene_tree_id#)->get_value_for_tag("gene_count") <= #threshold_n_genes#) || ($self->compara_dba->get_GeneTreeAdaptor->fetch_by_dbID(#gene_tree_id#)->get_value_for_tag("aln_length") <= #threshold_aln_len#)',
+                'threshold_n_genes'      => $self->o('threshold_n_genes'),
+                'threshold_aln_len'      => $self->o('threshold_aln_len'),
+            },
+            -flow_into  => {
+                2 => [ 'prottest' ],
+                3 => [ 'filtering_strictness' ],
+                999 => [ 'trimal' ],
+            },
+        },
+
+        {   -logic_name => 'filtering_strictness',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ConditionalDataFlow',
+            -parameters => {
+                'condition'             => '($self->compara_dba->get_GeneTreeAdaptor->fetch_by_dbID(#gene_tree_id#)->get_value_for_tag("gene_count") >= #threshold_n_genes_large#) || ($self->compara_dba->get_GeneTreeAdaptor->fetch_by_dbID(#gene_tree_id#)->get_value_for_tag("aln_length") >= #threshold_aln_len_large#)',
+                'threshold_n_genes_large'      => $self->o('threshold_n_genes_large'),
+                'threshold_aln_len_large'      => $self->o('threshold_aln_len_large'),
+            },
+            -flow_into  => {
+                2 => [ 'noisy_large' ],
+                3 => [ 'noisy' ],
+            },
+        },
+
+        {   -logic_name     => 'noisy',
+            -module         => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::Noisy',
+            -parameters => {
+                'noisy_exe'    => $self->o('noisy_exe'),
+                               'noisy_cutoff' => $self->o('noisy_cutoff'),
+            },
+            -hive_capacity  => $self->o('alignment_filtering_capacity'),
+            -rc_name           => '4Gb_job',
+            -batch_size     => 5,
+            -flow_into      => {
+                1   => [ 'prottest' ],
+                  }
+        },
+
+        {   -logic_name     => 'noisy_large',
+            -module         => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::Noisy',
+            -parameters => {
+                'noisy_exe'    => $self->o('noisy_exe'),
+                               'noisy_cutoff'  => $self->o('noisy_cutoff_large'),
+            },
+            -hive_capacity  => $self->o('alignment_filtering_capacity'),
+            -rc_name           => '16Gb_job',
+            -batch_size     => 5,
+            -flow_into      => {
+                1   => [ 'prottest' ],
+                  }
+        },
+
+
         {   -logic_name     => 'trimal',
             -module         => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::TrimAl',
             -parameters => {
                 'trimal_exe'    => $self->o('trimal_exe'),
             },
-            -hive_capacity  => $self->o('trimal_capacity'),
+            -hive_capacity  => $self->o('alignment_filtering_capacity'),
             -rc_name        => '500Mb_job',
             -batch_size     => 5,
             -flow_into      => [ 'prottest' ],
