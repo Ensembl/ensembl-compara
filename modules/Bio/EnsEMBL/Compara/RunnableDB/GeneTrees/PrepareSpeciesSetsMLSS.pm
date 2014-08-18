@@ -89,8 +89,11 @@ sub write_output {
 
     my $ss = $self->_write_ss($ self->param('genome_dbs') );
     my $mlss = $self->_write_mlss( $ss, $self->param('ml_genetree') );
+    my $hive_pwp_adaptor = $self->db->get_PipelineWideParametersAdaptor;
+
     # Should be a pipeline-wide parameter
-    $self->compara_dba->get_MetaContainer->store_key_value('mlss_id', $mlss->dbID);
+    $hive_pwp_adaptor->store( {'param_name' => 'mlss_id', 'param_value' => $mlss->dbID} );
+    $hive_pwp_adaptor->store( {'param_name' => 'species_count', 'param_value' => scalar(@{$self->param('genome_dbs')})} );
 
     foreach my $genome_db1 (@{$self->param('genome_dbs')}) {
         my $ss1 = $self->_write_ss( [$genome_db1] );
@@ -108,14 +111,15 @@ sub write_output {
 
     my @reuse_gdbs = map {$gdb_a->fetch_by_dbID($_)} @{$self->param('reused_gdb_ids')};
     my $reuse_ss = $self->_write_ss( \@reuse_gdbs );
-    $self->compara_dba->get_MetaContainer->store_key_value('reuse_ss_id', $reuse_ss->dbID);
-    $self->compara_dba->get_MetaContainer->store_key_value('reuse_ss_csv', join(',', -1, @{$self->param('reused_gdb_ids')}));
+    $hive_pwp_adaptor->store( {'param_name' => 'reuse_ss_id', 'param_value' => $reuse_ss->dbID} );
+    $hive_pwp_adaptor->store( {'param_name' => 'reuse_ss_csv', 'param_value' => join(',', -1, @{$self->param('reused_gdb_ids')}) } );
 
     my @nonreuse_gdbs = map {$gdb_a->fetch_by_dbID($_)} @{$self->param('nonreused_gdb_ids')};
     my $nonreuse_ss = $self->_write_ss( \@nonreuse_gdbs );
-    $self->compara_dba->get_MetaContainer->store_key_value('nonreuse_ss_id', $nonreuse_ss->dbID);
-    $self->compara_dba->get_MetaContainer->store_key_value('nonreuse_ss_csv', join(',', -1, @{$self->param('nonreused_gdb_ids')}));
-
+    $hive_pwp_adaptor->store( {'param_name' => 'nonreuse_ss_id', 'param_value' => $nonreuse_ss->dbID} );
+    $hive_pwp_adaptor->store( {'param_name' => 'nonreuse_ss_csv', 'param_value' => join(',', -1, @{$self->param('nonreused_gdb_ids')})} );
+    # Whether all the species are reused
+    $hive_pwp_adaptor->store( {'param_name' => 'are_all_species_reused', 'param_value' => (scalar(@nonreuse_gdbs) ? 0 : 1)} );
 }
 
 sub _write_ss {
