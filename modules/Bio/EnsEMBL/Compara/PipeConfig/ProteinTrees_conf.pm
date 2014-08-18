@@ -1461,7 +1461,7 @@ sub pipeline_analyses {
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::OrthoTree',
             -parameters => {
                 'tag_split_genes'   => 1,
-                'homoeologous_genome_dbs' => $self->{'homoeologous_genome_dbs'},
+                'homoeologous_genome_dbs' => $self->o('homoeologous_genome_dbs'),
             },
             -hive_capacity  => $self->o('ortho_tree_capacity'),
             -rc_name        => '250Mb_job',
@@ -1475,7 +1475,7 @@ sub pipeline_analyses {
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::OrthoTree',
             -parameters => {
                 'tag_split_genes'   => 1,
-                'homoeologous_genome_dbs' => $self->{'homoeologous_genome_dbs'},
+                'homoeologous_genome_dbs' => $self->o('homoeologous_genome_dbs'),
             },
             -hive_capacity  => $self->o('ortho_tree_capacity'),
             -rc_name        => '4Gb_job',
@@ -1536,7 +1536,7 @@ sub pipeline_analyses {
             -parameters => {
                 'tag_split_genes'   => 1,
                 'store_homologies'  => 0,
-                'homoeologous_genome_dbs' => $self->{'homoeologous_genome_dbs'},
+                'homoeologous_genome_dbs' => $self->o('homoeologous_genome_dbs'),
             },
             -hive_capacity  => $self->o('ortho_tree_annot_capacity'),
             -rc_name        => '250Mb_job',
@@ -1552,7 +1552,7 @@ sub pipeline_analyses {
             -parameters => {
                 'tag_split_genes'   => 1,
                 'store_homologies'  => 0,
-                'homoeologous_genome_dbs' => $self->{'homoeologous_genome_dbs'},
+                'homoeologous_genome_dbs' => $self->o('homoeologous_genome_dbs'),
             },
             -hive_capacity  => $self->o('ortho_tree_annot_capacity'),
             -rc_name        => '4Gb_job',
