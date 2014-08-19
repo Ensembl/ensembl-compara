@@ -1187,9 +1187,9 @@ sub pipeline_analyses {
         },
 
         {   -logic_name => 'large_clusters_go_to_mafft',
-            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ConditionalDataFlow',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::GeneTreeConditionalDataFlow',
             -parameters => {
-                'condition'             => '$self->compara_dba->get_GeneTreeAdaptor->fetch_by_dbID(#gene_tree_id#)->get_value_for_tag("gene_count") > #mafft_gene_count#',
+                'condition'             => '#tree_gene_count# > #mafft_gene_count#',
                 'mafft_gene_count'      => $self->o('mafft_gene_count'),
             },
             -flow_into  => {
@@ -1200,9 +1200,9 @@ sub pipeline_analyses {
         },
 
         {   -logic_name => 'long_running_clusters_go_to_mafft',
-            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ConditionalDataFlow',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::GeneTreeConditionalDataFlow',
             -parameters => {
-                'condition'             => '$self->compara_dba->get_GeneTreeAdaptor->fetch_by_dbID(#gene_tree_id#)->get_value_for_tag("reuse_aln_runtime", 0)/1000 > #mafft_runtime#',
+                'condition'             => '(#tree_reuse_aln_runtime# || 0)/1000 > #mafft_runtime#',
                 'mafft_runtime'         => $self->o('mafft_runtime'),
             },
             -flow_into  => {
@@ -1214,9 +1214,9 @@ sub pipeline_analyses {
 
 
         {   -logic_name => 'very_large_clusters_go_to_qtb',
-            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ConditionalDataFlow',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::GeneTreeConditionalDataFlow',
             -parameters => {
-                'condition'             => '$self->compara_dba->get_GeneTreeAdaptor->fetch_by_dbID(#gene_tree_id#)->get_value_for_tag("gene_count") > #treebreak_gene_count#',
+                'condition'             => '#tree_gene_count# > #treebreak_gene_count#',
                 'treebreak_gene_count'  => $self->o('treebreak_gene_count'),
             },
             -flow_into  => {
@@ -1343,9 +1343,9 @@ sub pipeline_analyses {
         },
 
         {   -logic_name => 'filter_decision',
-            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ConditionalDataFlow',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::GeneTreeConditionalDataFlow',
             -parameters => {
-                'condition'             => '($self->compara_dba->get_GeneTreeAdaptor->fetch_by_dbID(#gene_tree_id#)->get_value_for_tag("gene_count") <= #threshold_n_genes#) || ($self->compara_dba->get_GeneTreeAdaptor->fetch_by_dbID(#gene_tree_id#)->get_value_for_tag("aln_length") <= #threshold_aln_len#)',
+                'condition'              => '(#tree_gene_count# <= #threshold_n_genes#) || (#tree_aln_length# <= #threshold_aln_len#)',
                 'threshold_n_genes'      => $self->o('threshold_n_genes'),
                 'threshold_aln_len'      => $self->o('threshold_aln_len'),
             },
@@ -1357,9 +1357,9 @@ sub pipeline_analyses {
         },
 
         {   -logic_name => 'filtering_strictness',
-            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ConditionalDataFlow',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::GeneTreeConditionalDataFlow',
             -parameters => {
-                'condition'             => '($self->compara_dba->get_GeneTreeAdaptor->fetch_by_dbID(#gene_tree_id#)->get_value_for_tag("gene_count") >= #threshold_n_genes_large#) || ($self->compara_dba->get_GeneTreeAdaptor->fetch_by_dbID(#gene_tree_id#)->get_value_for_tag("aln_length") >= #threshold_aln_len_large#)',
+                'condition'                    => '(#tree_gene_count# >= #threshold_n_genes_large#) || (#tree_aln_length# >= #threshold_aln_len_large#)',
                 'threshold_n_genes_large'      => $self->o('threshold_n_genes_large'),
                 'threshold_aln_len_large'      => $self->o('threshold_aln_len_large'),
             },
