@@ -79,6 +79,7 @@ sub default_options {
 
     # tree building parameters:
         'treebreak_gene_count'      => 40000,     # affects msa_chooser
+        'mafft_gene_count'          => 300,     # affects msa_chooser
 
     # species tree reconciliation
         # you can define your own species_tree for 'treebest'. It can contain multifurcations
