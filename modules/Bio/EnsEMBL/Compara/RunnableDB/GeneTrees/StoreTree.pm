@@ -512,7 +512,7 @@ sub parse_filtered_align {
         }
     }
 
-    if ($allow_missing_members) {
+    if ($allow_missing_members and (scalar(keys %hash_filtered_strings) != scalar(keys %hash_initial_strings))) {
         my $treenode_adaptor = $self->compara_dba->get_GeneTreeNodeAdaptor;
 
         $self->param('removed_members', 0);
