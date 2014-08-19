@@ -77,7 +77,7 @@ body.ie6 .dataTables_filter input { height: 20px; }
 .dataTables_export .floating_popup   { color: [[PAGE_TEXT]]; right: 0; width: 125px; }
 .dataTables_export .floating_popup a { display: block; padding: 0 2px 3px }
 
-.col_toggle              { float: left; width: 35%; text-align: center; color: [[PAGE_TEXT]]; }
+.col_toggle              { float: left;  text-align: center; color: [[PAGE_TEXT]]; }
 .col_toggle .toggle      { cursor: pointer; background-color: [[TINT_BG]]; border: 2px outset [[TINT_BG]]; min-width: 125px; display: inline-block; padding: 1px 5px; margin: auto; }
 .col_toggle.left         { text-align: left; }
 .col_toggle.left .toggle { margin: 0; text-align: center; }
