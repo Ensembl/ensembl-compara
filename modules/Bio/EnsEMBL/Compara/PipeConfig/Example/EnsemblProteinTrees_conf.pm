@@ -78,6 +78,7 @@ sub default_options {
         'outgroups'                     => { 'saccharomyces_cerevisiae' => 2 },   # affects 'hcluster_dump_input_per_genome'
 
     # tree building parameters:
+        'treebreak_gene_count'      => 40000,     # affects msa_chooser
 
     # species tree reconciliation
         # you can define your own species_tree for 'treebest'. It can contain multifurcations

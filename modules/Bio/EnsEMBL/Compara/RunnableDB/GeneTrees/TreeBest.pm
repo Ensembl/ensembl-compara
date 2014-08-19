@@ -98,7 +98,7 @@ sub run_treebest_best {
         $args .= sprintf(' -Z %f', $max_diff_lk) if $max_diff_lk;
         $args .= sprintf(' -X %f', $lk_scale) if $lk_scale;
         $args .= ' -D';
-        $args .= sprintf(' -F %f', $filtering_cutoff) if $filtering_cutoff;
+        $args .= sprintf(' -F %d', $filtering_cutoff) if $filtering_cutoff;
 
         my $cmd = $self->_get_alignment_filtering_cmd($args, $input_aln);
         my $run_cmd = $self->run_command($cmd);

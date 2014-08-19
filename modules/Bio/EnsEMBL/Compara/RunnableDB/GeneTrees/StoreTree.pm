@@ -483,7 +483,7 @@ sub store_alternative_tree {
 }
 
 sub parse_filtered_align {
-    my ($self, $alnfile_ini, $alnfile_filtered, $allow_missing_members) = @_;
+    my ($self, $alnfile_ini, $alnfile_filtered, $allow_missing_members, $cdna) = @_;
 
     # Loads the filtered alignment strings
     my %hash_filtered_strings = ();
@@ -499,7 +499,8 @@ sub parse_filtered_align {
         foreach my $seq ($aln->each_seq) {
             # Delete empty sequences => Sequences with only gaps and 'X's
             # for instance: ---------XXXXX---X---XXXX
-            next if $seq->seq() =~ /^[Xx\-]*$/;
+            next if  $cdna and $seq->seq() =~ /^[Nn\-]*$/;
+            next if !$cdna and $seq->seq() =~ /^[Xx\-]*$/;
             $hash_filtered_strings{$seq->display_id()} = $seq->seq();
         }
     }
@@ -514,7 +515,7 @@ sub parse_filtered_align {
         }
     }
 
-    if ($allow_missing_members) {
+    if ($allow_missing_members and (scalar(keys %hash_filtered_strings) != scalar(keys %hash_initial_strings))) {
         my $treenode_adaptor = $self->compara_dba->get_GeneTreeNodeAdaptor;
 
         $self->param('removed_members', 0);
@@ -536,7 +537,7 @@ sub parse_filtered_align {
         $self->param('default_gene_tree')->store_tag('gene_count', scalar(@{$self->param('gene_tree')->get_all_leaves}) );
     }
 
-    return Bio::EnsEMBL::Compara::Utils::Cigars::identify_removed_columns(\%hash_initial_strings, \%hash_filtered_strings);
+    return Bio::EnsEMBL::Compara::Utils::Cigars::identify_removed_columns(\%hash_initial_strings, \%hash_filtered_strings, $cdna ? 3 : 1);
 }
 
 
