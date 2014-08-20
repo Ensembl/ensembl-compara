@@ -118,6 +118,7 @@ sub default_options {
         mafft_home      =>  '/nfs/panda/ensemblgenomes/external/mafft',
         treebest_exe    =>  $self->o('exe_dir').'/treebest',
         trimal_exe    =>  '/nfs/production/xfam/treefam/software/trimal/source/trimal',
+        noisy_exe     => '/nfs/production/xfam/treefam/software/Noisy-1.5.12/noisy',
         raxml_exe    =>  '/nfs/production/xfam/treefam/software/RAxML/raxmlHPC-SSE3',
         prottest_jar => '/nfs/production/xfam/treefam/software/ProtTest/prottest-3.4-20140123/prottest-3.4.jar',
         quicktree_exe   =>  $self->o('exe_dir').'/quicktree',

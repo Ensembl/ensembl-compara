@@ -97,6 +97,13 @@ sub default_options {
         codeml_exe      =>  $self->o('exe_dir').'/codeml',
         ktreedist_exe   =>  $self->o('exe_dir').'/ktreedist',
         'blast_bin_dir'  => '/nfs/panda/ensemblgenomes/external/ncbi-blast-2+/bin/',
+        # The following ones are currently installed by TreeFam, but should
+        # also be under /nfs/panda/ensemblgenomes/external/
+        noisy_exe     => '/nfs/production/xfam/treefam/software/Noisy-1.5.12/noisy',
+        notung_jar    => '/nfs/production/xfam/treefam/software/Notung/Notung-2.6/Notung-2.6.jar',
+        prottest_jar  => '/nfs/production/xfam/treefam/software/ProtTest/prottest-3.4-20140123/prottest-3.4.jar',
+        raxml_exe     => '/nfs/production/xfam/treefam/software/RAxML/raxmlHPC-SSE3',
+        trimal_exe    => '/nfs/production/xfam/treefam/software/trimal/source/trimal',
 
     # HMM specific parameters (set to 0 or undef if not in use)
         'hmm_clustering'            => 0, ## by default run blastp clustering
@@ -111,7 +118,11 @@ sub default_options {
         'blastp_capacity'           => 1900,
         'mcoffee_capacity'          => 600,
         'split_genes_capacity'      => 600,
-        'njtree_phyml_capacity'     => 400,
+        'alignment_filtering_capacity'  => 200,
+        'prottest_capacity'         => 200,
+        'treebest_capacity'         => 400,
+        'raxml_capacity'            => 200,
+        'notung_capacity'           => 200,
         'ortho_tree_capacity'       => 300,
         'ortho_tree_annot_capacity' => 300,
         'quick_tree_break_capacity' => 100,
@@ -123,7 +134,7 @@ sub default_options {
         'qc_capacity'               =>   4,
         'hc_capacity'               =>   4,
         'HMMer_classify_capacity'   => 100,
-
+        'loadmembers_capacity'      =>  30,
 
     # hive priority for non-LOCAL health_check analysis:
 
@@ -181,6 +192,8 @@ sub resource_classes {
          '2Gb_job'      => {'LSF' => '-C0 -q production-rh6 -M2000  -R"select[mem>2000]  rusage[mem=2000]"' },
          '4Gb_job'      => {'LSF' => '-C0 -q production-rh6 -M4000  -R"select[mem>4000]  rusage[mem=4000]"' },
          '8Gb_job'      => {'LSF' => '-C0 -q production-rh6 -M8000  -R"select[mem>8000]  rusage[mem=8000]"' },
+         '16Gb_job'     => {'LSF' => '-q production-rh6 -M16000 -R"select[mem>16000] rusage[mem=16000]"' },
+         '32Gb_job'     => {'LSF' => '-q production-rh6 -M32000 -R"select[mem>32000] rusage[mem=32000]"' },
 
          'urgent_hcluster'   => {'LSF' => '-C0 -q production-rh6 -M32000 -R"select[mem>32000] rusage[mem=32000]"' },
     };

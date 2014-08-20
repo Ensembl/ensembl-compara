@@ -145,11 +145,12 @@ sub default_options {
         #'hcluster_exe'              => '/software/ensembl/compara/hcluster/hcluster_sg',
         #'mcoffee_home'              => '/software/ensembl/compara/tcoffee/Version_9.03.r1318/',
         #'mafft_home'                => '/software/ensembl/compara/mafft-7.113/',
-        #'trimal_exe'                => '/software/ensembl/compara/trimAl/source/trimal',
-        #'prottest_jar'              => '/software/ensembl/compara/prottest/prottest-3.4-20140123/prottest-3.4.jar',
+        #'trimal_exe'                => '/software/ensembl/compara/trimAl/trimal-1.2',
+        #'noisy_exe'                 => '/software/ensembl/compara/noisy/noisy-1.5.12',
+        #'prottest_jar'              => '/software/ensembl/compara/prottest/prottest-3.4.jar',
         #'treebest_exe'              => '/software/ensembl/compara/treebest',
-        #'raxml_exe'                 => '/software/ensembl/compara/raxml',
-        #'notung_jar'                => '/software/ensembl/compara/notung/Notung-2.6/Notung-2.6.jar',
+        #'raxml_exe'                 => '/software/ensembl/compara/raxml/raxmlHPC-SSE3-8.1.3',
+        #'notung_jar'                => '/software/ensembl/compara/notung/Notung-2.6.jar',
         #'quicktree_exe'             => '/software/ensembl/compara/quicktree_1.1/bin/quicktree',
         #'buildhmm_exe'              => '/software/ensembl/compara/hmmer-3.1b1/binaries/hmmbuild',
         #'codeml_exe'                => '/software/ensembl/compara/paml43/bin/codeml',
@@ -172,7 +173,7 @@ sub default_options {
         #'blastp_capacity'           => 900,
         #'mcoffee_capacity'          => 600,
         #'split_genes_capacity'      => 600,
-        #'alignment_filtering_capacity' => 400,
+        #'alignment_filtering_capacity'  => 400,
         #'prottest_capacity'         => 400,
         #'treebest_capacity'         => 400,
         #'raxml_capacity'            => 400,
@@ -1319,6 +1320,7 @@ sub pipeline_analyses {
             -batch_size     => 20,
             -flow_into      => {
                 1   => $self->o('use_raxml') ? 'filter_decision' : 'treebest',
+                999 => $self->o('use_raxml') ? 'treebest' : 'filter_decision',
                 -1  => 'split_genes_himem',
             },
         },
@@ -1327,7 +1329,10 @@ sub pipeline_analyses {
             -module         => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::FindContiguousSplitGenes',
             -hive_capacity  => $self->o('split_genes_capacity'),
             -rc_name        => '4Gb_job',
-            -flow_into      => [ $self->o('use_raxml') ? 'filter_decision' : 'treebest' ],
+            -flow_into      => {
+                1   => $self->o('use_raxml') ? 'filter_decision' : 'treebest',
+                999 => $self->o('use_raxml') ? 'treebest' : 'filter_decision',
+            },
         },
 
         {   -logic_name => 'tree_entry_point',
@@ -1349,7 +1354,6 @@ sub pipeline_analyses {
             -flow_into  => {
                 2 => [ 'prottest' ],
                 3 => [ 'filtering_strictness' ],
-                999 => [ 'trimal' ],
             },
         },
 
@@ -1363,6 +1367,7 @@ sub pipeline_analyses {
             -flow_into  => {
                 2 => [ 'noisy_large' ],
                 3 => [ 'noisy' ],
+                999 => [ 'trimal' ],
             },
         },
 
