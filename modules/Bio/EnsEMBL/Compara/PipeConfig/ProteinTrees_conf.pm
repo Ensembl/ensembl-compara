@@ -114,6 +114,17 @@ sub default_options {
         'treebreak_gene_count'      => 400,     # affects msa_chooser
         'mafft_gene_count'          => 200,     # affects msa_chooser
         'mafft_runtime'             => 7200,    # affects msa_chooser
+        'raxml_threshold_n_genes' => 500,
+        'raxml_threshold_aln_len' => 2500,
+        'raxml_cores'             => 16,
+
+    # alignment filtering options
+        'threshold_n_genes'       => 20,
+        'threshold_aln_len'       => 1000,
+        'threshold_n_genes_large' => 2000,
+        'threshold_aln_len_large' => 15000,
+        'noisy_cutoff'            => 0.4,
+        'noisy_cutoff_large'      => 1,
 
     # species tree reconciliation
         # you can define your own species_tree for 'treebest'. It can contain multifurcations
@@ -144,11 +155,12 @@ sub default_options {
         #'hcluster_exe'              => '/software/ensembl/compara/hcluster/hcluster_sg',
         #'mcoffee_home'              => '/software/ensembl/compara/tcoffee/Version_9.03.r1318/',
         #'mafft_home'                => '/software/ensembl/compara/mafft-7.113/',
-        #'trimal_exe'                => '/software/ensembl/compara/trimAl/source/trimal',
-        #'prottest_jar'              => '/software/ensembl/compara/prottest/prottest-3.4-20140123/prottest-3.4.jar',
+        #'trimal_exe'                => '/software/ensembl/compara/trimAl/trimal-1.2',
+        #'noisy_exe'                 => '/software/ensembl/compara/noisy/noisy-1.5.12',
+        #'prottest_jar'              => '/software/ensembl/compara/prottest/prottest-3.4.jar',
         #'treebest_exe'              => '/software/ensembl/compara/treebest',
-        #'raxml_exe'                 => '/software/ensembl/compara/raxml',
-        #'notung_jar'                => '/software/ensembl/compara/notung/Notung-2.6/Notung-2.6.jar',
+        #'raxml_exe'                 => '/software/ensembl/compara/raxml/raxmlHPC-SSE3-8.1.3',
+        #'notung_jar'                => '/software/ensembl/compara/notung/Notung-2.6.jar',
         #'quicktree_exe'             => '/software/ensembl/compara/quicktree_1.1/bin/quicktree',
         #'hmmer2_home'               => '/software/ensembl/compara/hmmer-2.3.2/src/',
         #'codeml_exe'                => '/software/ensembl/compara/paml43/bin/codeml',
@@ -186,7 +198,7 @@ sub default_options {
         #'blastpu_capacity'          => 150,
         #'mcoffee_capacity'          => 600,
         #'split_genes_capacity'      => 600,
-        #'trimal_capacity'           => 400,
+        #'alignment_filtering_capacity'  => 400,
         #'prottest_capacity'         => 400,
         #'treebest_capacity'         => 400,
         #'raxml_capacity'            => 400,
@@ -269,13 +281,12 @@ sub resource_classes {
          '1Gb_job'      => {'LSF' => '-C0 -M1000  -R"select[mem>1000]  rusage[mem=1000]"' },
          '2Gb_job'      => {'LSF' => '-C0 -M2000  -R"select[mem>2000]  rusage[mem=2000]"' },
          '4Gb_job'      => {'LSF' => '-C0 -M4000  -R"select[mem>4000]  rusage[mem=4000]"' },
+         '4Gb_8c_job'   => {'LSF' => '-C0 -M4000  -R"select[mem>4000]  rusage[mem=4000]"  -n 8' },
          '8Gb_job'      => {'LSF' => '-C0 -M8000  -R"select[mem>8000]  rusage[mem=8000]"' },
+         '8Gb_8c_job'   => {'LSF' => '-C0 -M8000  -R"select[mem>8000]  rusage[mem=8000]"  -n 8' },
          '16Gb_job'     => {'LSF' => '-C0 -M16000 -R"select[mem>16000] rusage[mem=16000]"' },
          '32Gb_job'     => {'LSF' => '-C0 -M32000 -R"select[mem>32000] rusage[mem=32000]"' },
          '64Gb_job'     => {'LSF' => '-C0 -M64000 -R"select[mem>64000] rusage[mem=64000]"' },
-
-         'msa'          => {'LSF' => '-C0 -M2000  -R"select[mem>2000]  rusage[mem=2000]"' },
-         'msa_himem'    => {'LSF' => '-C0 -M8000  -R"select[mem>8000]  rusage[mem=8000]"' },
 
          'urgent_hcluster'      => {'LSF' => '-C0 -M32000 -R"select[mem>32000] rusage[mem=32000]"' },
     };
@@ -578,22 +589,10 @@ sub core_pipeline_analyses {
             -parameters => {
                 'mlss_id'   => $self->o('mlss_id'),
             },
-            -flow_into => [ 'make_treebest_species_tree', 'extra_sql_prepare' ],
+            -flow_into => [ 'make_treebest_species_tree' ],
             -meadow_type    => 'LOCAL',
         },
 
-        {   -logic_name    => 'extra_sql_prepare',
-            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::SqlCmd',
-            -parameters => {
-                'sql' => [
-                    # Counts the number of species
-                    'INSERT INTO meta (meta_key,meta_value) SELECT "species_count", COUNT(*) FROM genome_db',
-                    # Whether all the species are reused
-                    'INSERT INTO meta (meta_key,meta_value) SELECT "are_all_species_reused", IF(meta_value = "-1", 1, 0) FROM meta WHERE meta_key = "nonreuse_ss_csv"',
-                ],
-            },
-            -meadow_type    => 'LOCAL',
-        },
 
 # ---------------------------------------------[load species tree]-------------------------------------------------------------------
 
@@ -1359,9 +1358,9 @@ sub core_pipeline_analyses {
         },
 
         {   -logic_name => 'test_large_clusters_go_to_mafft',
-            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ConditionalDataFlow',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::GeneTreeConditionalDataFlow',
             -parameters => {
-                'condition'             => '$self->compara_dba->get_GeneTreeAdaptor->fetch_by_dbID(#gene_tree_id#)->get_value_for_tag("gene_count") > #mafft_gene_count#',
+                'condition'             => '#tree_gene_count# > #mafft_gene_count#',
                 'mafft_gene_count'      => $self->o('mafft_gene_count'),
             },
             -flow_into  => {
@@ -1372,9 +1371,9 @@ sub core_pipeline_analyses {
         },
 
         {   -logic_name => 'test_previous_runtime',
-            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ConditionalDataFlow',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::GeneTreeConditionalDataFlow',
             -parameters => {
-                'condition'             => '$self->compara_dba->get_GeneTreeAdaptor->fetch_by_dbID(#gene_tree_id#)->get_value_for_tag("reuse_aln_runtime", 0)/1000 > #mafft_runtime#',
+                'condition'             => '(#tree_reuse_aln_runtime# || 0)/1000 > #mafft_runtime#',
                 'mafft_runtime'         => $self->o('mafft_runtime'),
             },
             -flow_into  => {
@@ -1386,9 +1385,9 @@ sub core_pipeline_analyses {
 
 
         {   -logic_name => 'test_very_large_clusters_go_to_qtb',
-            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ConditionalDataFlow',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::GeneTreeConditionalDataFlow',
             -parameters => {
-                'condition'             => '$self->compara_dba->get_GeneTreeAdaptor->fetch_by_dbID(#gene_tree_id#)->get_value_for_tag("gene_count") > #treebreak_gene_count#',
+                'condition'             => '#tree_gene_count# > #treebreak_gene_count#',
                 'treebreak_gene_count'  => $self->o('treebreak_gene_count'),
             },
             -flow_into  => {
@@ -1493,7 +1492,8 @@ sub core_pipeline_analyses {
             -rc_name        => '500Mb_job',
             -batch_size     => 20,
             -flow_into      => {
-                1   => $self->o('use_raxml') ? 'trimal' : 'treebest',
+                1   => $self->o('use_raxml') ? 'filter_decision' : 'treebest',
+                999 => $self->o('use_raxml') ? 'treebest' : 'filter_decision',
                 -1  => 'split_genes_himem',
             },
         },
@@ -1502,7 +1502,10 @@ sub core_pipeline_analyses {
             -module         => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::FindContiguousSplitGenes',
             -hive_capacity  => $self->o('split_genes_capacity'),
             -rc_name        => '4Gb_job',
-            -flow_into      => [ $self->o('use_raxml') ? 'trimal' : 'treebest' ],
+            -flow_into      => {
+                1   => $self->o('use_raxml') ? 'filter_decision' : 'treebest',
+                999 => $self->o('use_raxml') ? 'treebest' : 'filter_decision',
+            },
         },
 
         {   -logic_name => 'tree_entry_point',
@@ -1514,12 +1517,68 @@ sub core_pipeline_analyses {
             },
         },
 
+        {   -logic_name => 'filter_decision',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::GeneTreeConditionalDataFlow',
+            -parameters => {
+                'condition'              => '(#tree_gene_count# <= #threshold_n_genes#) || (#tree_aln_length# <= #threshold_aln_len#)',
+                'threshold_n_genes'      => $self->o('threshold_n_genes'),
+                'threshold_aln_len'      => $self->o('threshold_aln_len'),
+            },
+            -flow_into  => {
+                2 => [ 'prottest' ],
+                3 => [ 'filtering_strictness' ],
+            },
+        },
+
+        {   -logic_name => 'filtering_strictness',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::GeneTreeConditionalDataFlow',
+            -parameters => {
+                'condition'                    => '(#tree_gene_count# >= #threshold_n_genes_large#) || (#tree_aln_length# >= #threshold_aln_len_large#)',
+                'threshold_n_genes_large'      => $self->o('threshold_n_genes_large'),
+                'threshold_aln_len_large'      => $self->o('threshold_aln_len_large'),
+            },
+            -flow_into  => {
+                2 => [ 'noisy_large' ],
+                3 => [ 'noisy' ],
+                999 => [ 'trimal' ],
+            },
+        },
+
+        {   -logic_name     => 'noisy',
+            -module         => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::Noisy',
+            -parameters => {
+                'noisy_exe'    => $self->o('noisy_exe'),
+                               'noisy_cutoff' => $self->o('noisy_cutoff'),
+            },
+            -hive_capacity  => $self->o('alignment_filtering_capacity'),
+            -rc_name           => '4Gb_job',
+            -batch_size     => 5,
+            -flow_into      => {
+                1   => [ 'prottest' ],
+                  }
+        },
+
+        {   -logic_name     => 'noisy_large',
+            -module         => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::Noisy',
+            -parameters => {
+                'noisy_exe'    => $self->o('noisy_exe'),
+                               'noisy_cutoff'  => $self->o('noisy_cutoff_large'),
+            },
+            -hive_capacity  => $self->o('alignment_filtering_capacity'),
+            -rc_name           => '16Gb_job',
+            -batch_size     => 5,
+            -flow_into      => {
+                1   => [ 'prottest' ],
+                  }
+        },
+
+
         {   -logic_name     => 'trimal',
             -module         => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::TrimAl',
             -parameters => {
                 'trimal_exe'    => $self->o('trimal_exe'),
             },
-            -hive_capacity  => $self->o('trimal_capacity'),
+            -hive_capacity  => $self->o('alignment_filtering_capacity'),
             -rc_name        => '500Mb_job',
             -batch_size     => 5,
             -flow_into      => [ 'prottest' ],
@@ -1531,9 +1590,10 @@ sub core_pipeline_analyses {
                 'prottest_jar'          => $self->o('prottest_jar'),
                 'prottest_memory'       => 3500,
                 'escape_branch'         => -1,
+                'n_cores'               => 8,
             },
             -hive_capacity        => $self->o('prottest_capacity'),
-            -rc_name    => '4Gb_job',
+            -rc_name    => '4Gb_8c_job',
             -flow_into  => {
                 -1 => [ 'prottest_himem' ],
                 1 => [ 'raxml' ],
@@ -1546,9 +1606,10 @@ sub core_pipeline_analyses {
                 'prottest_jar'          => $self->o('prottest_jar'),
                 'prottest_memory'       => 7000,
                 'escape_branch'         => -1,      # RAxML will use a default model, anyway
+                'n_cores'               => 8,
             },
             -hive_capacity        => $self->o('prottest_capacity'),
-            -rc_name    => '8Gb_job',
+            -rc_name    => '8Gb_8c_job',
             -flow_into  => [ 'raxml_himem' ],
         },
 
@@ -1746,7 +1807,7 @@ sub core_pipeline_analyses {
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::OrthoTree',
             -parameters => {
                 'tag_split_genes'   => 1,
-                'homoeologous_genome_dbs' => $self->{'homoeologous_genome_dbs'},
+                'homoeologous_genome_dbs' => $self->o('homoeologous_genome_dbs'),
             },
             -hive_capacity  => $self->o('ortho_tree_capacity'),
             -rc_name        => '250Mb_job',
@@ -1760,7 +1821,7 @@ sub core_pipeline_analyses {
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::OrthoTree',
             -parameters => {
                 'tag_split_genes'   => 1,
-                'homoeologous_genome_dbs' => $self->{'homoeologous_genome_dbs'},
+                'homoeologous_genome_dbs' => $self->o('homoeologous_genome_dbs'),
             },
             -hive_capacity  => $self->o('ortho_tree_capacity'),
             -rc_name        => '4Gb_job',
@@ -1821,7 +1882,7 @@ sub core_pipeline_analyses {
             -parameters => {
                 'tag_split_genes'   => 1,
                 'store_homologies'  => 0,
-                'homoeologous_genome_dbs' => $self->{'homoeologous_genome_dbs'},
+                'homoeologous_genome_dbs' => $self->o('homoeologous_genome_dbs'),
             },
             -hive_capacity  => $self->o('ortho_tree_annot_capacity'),
             -rc_name        => '250Mb_job',
@@ -1837,7 +1898,7 @@ sub core_pipeline_analyses {
             -parameters => {
                 'tag_split_genes'   => 1,
                 'store_homologies'  => 0,
-                'homoeologous_genome_dbs' => $self->{'homoeologous_genome_dbs'},
+                'homoeologous_genome_dbs' => $self->o('homoeologous_genome_dbs'),
             },
             -hive_capacity  => $self->o('ortho_tree_annot_capacity'),
             -rc_name        => '4Gb_job',

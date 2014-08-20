@@ -66,6 +66,7 @@ Other parameters:
  - run_treebest_sdi: do we have to pass the output tree through "treebest sdi"
  - reroot_with_sdi: should "treebest sdi" also reroot the tree
  - output_clusterset_id: alternative clusterset_id to store the result gene tree
+ - aln_format: (default: "fasta"). In which format the alignment should be dumped
 
 Branch events:
  - #1: autoflow on success
@@ -186,7 +187,7 @@ sub write_output {
             die "The tree should be binary\n" if scalar(@{$node->children}) != 2;
         }
     }
-    $target_tree->store_tag($self->param('runtime_tree_tag'), $self->param('runtime_msec')) if $self->input_job->param_exists('runtime_tree_tag');
+    $target_tree->store_tag($self->param('runtime_tree_tag'), $self->param('runtime_msec')) if $self->param('runtime_tree_tag');
     $target_tree->release_tree();
 }
 

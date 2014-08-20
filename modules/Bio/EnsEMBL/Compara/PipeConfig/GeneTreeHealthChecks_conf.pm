@@ -100,13 +100,13 @@ sub pipeline_analyses {
         {   -logic_name => 'count_number_species',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
             -parameters => {
-                'inputquery'    => 'SELECT "species_count" AS meta_key, COUNT(*) AS meta_value FROM genome_db',
+                'inputquery'    => 'SELECT "species_count" AS param_name, COUNT(*) AS param_value FROM genome_db',
                 'fan_branch_code'   => 2,
             },
             -input_ids  => [ {} ],
             -flow_into => {
                 1 => [ 'species_factory', 'tree_factory', 'hc_members_globally', 'hc_global_tree_set' ],
-                2 => [ 'mysql:////meta' ],
+                2 => [ 'mysql:////pipeline_wide_parameters' ],
             },
             -meadow_type    => 'LOCAL',
         },

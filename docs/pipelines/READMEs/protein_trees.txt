@@ -12,9 +12,9 @@ This document describes how to run ensembl-compara ProteinTrees pipeline.
 EnsEMBL and BioPerl software:
 	* bioperl-live (version 1.6.9)               - Base of the BioPerl distribution. Mainly needed to provide I/O for alignments
 	* bioperl-run (version 1.6.9)                - Needed for the CodeML runnable/parser
-	* ensembl ("release/75" branch)              - Core API on which the rest of ensembl APIs are based
-	* ensembl-compara ("release/75" branch)      - Compara API (data objects, db adaptors, pipeline runnables, pipeline configuration)
-	* ensembl-hive ("version/2.0" branch)        - The system to run pipelines. Note that the pipeline is also compatible with the version/2.1 branch
+	* ensembl ("release/76" branch)              - Core API on which the rest of ensembl APIs are based
+	* ensembl-compara ("release/76" branch)      - Compara API (data objects, db adaptors, pipeline runnables, pipeline configuration)
+	* ensembl-hive ("version/2.1" branch)        - The system to run pipelines.
 
 Refer to the following pages for tips about installation and setting up the environment:
 	http://www.ensembl.org/info/docs/api/api_installation.html
@@ -35,7 +35,7 @@ Perl libraries:
 
 
 Any compiled binaries mentioned in ensembl-compara/modules/Bio/EnsEMBL/Compara/PipeConfig/Example/EnsemblProteinTrees_conf.pm
-Here is the list of the versions that we used for the e74 production:
+Here is the list of the versions that we used for the e76 production:
 
 	* NCBI-blast 2.2.28+   - ftp://ftp.ncbi.nlm.nih.gov/blast/executables/blast+/LATEST/
 	* mcoffee 9.03.r1318   - http://www.tcoffee.org/Projects/mcoffee/

@@ -27,14 +27,13 @@ limitations under the License.
 
 =head1 NAME
 
-Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::TrimAl;
+Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::Noisy;
 
 =head1 DESCRIPTION
 
 This Analysis/RunnableDB is designed to take a root_id as input.
-This must already have a multiple alignment run on it. That
-alignment is filered by TrimAl. and stored in the "removed_columns"
-tree tag.
+This must already have a multiple alignment run on it. 
+It uses that alignment as input to the filterring tool Noisy.
 
 input_id/parameters format eg: "{'gene_tree_id'=>1234}"
     gene_tree_id : use 'id' to fetch a cluster from the ProteinTree
@@ -50,7 +49,7 @@ Internal methods are usually preceded with an underscore (_)
 
 =cut
 
-package Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::TrimAl;
+package Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::Noisy;
 
 use strict;
 use warnings;
@@ -59,31 +58,19 @@ use base ('Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::GenericRunnable');
 
 sub param_defaults {
     my $self = shift;
-    return {
-        %{$self->SUPER::param_defaults},
-
-        'cmd'               => '#trimal_exe# -in  #alignment_file# -automated1 > #gene_tree_id#.filtered',
-        'output_file'       => '#gene_tree_id#.filtered',
-        'read_tags'         => 1,
-        'runtime_tree_tag'  => 'trimal_runtime',
-    };
+    return { %{ $self->SUPER::param_defaults },
+             'cmd'              => '#noisy_exe# -s -v --seqtype P --cutoff #noisy_cutoff# #alignment_file#',
+             'output_file'      => '#gene_align_id#_out.fas',
+             'read_tags'        => 1,
+             'runtime_tree_tag' => 'noisy_runtime', };
 }
-
-
-
-## We redefine get_tags to populate the removed_columns tag the right way
 
 sub get_tags {
     my $self = shift;
 
-    while (1) {
-        my $removed_columns = $self->parse_filtered_align( $self->param('alignment_file'), $self->param('output_file'), 0, $self->param('gene_tree') );
-        print "Trimmed colums: ".$removed_columns."\n" if $self->debug;
-        return { 'removed_columns' => $removed_columns } unless $self->param('removed_members');
-        $self->warning("There are removed members, so we need to re-run TrimAl.\n");
-        $self->param('gene_tree')->clear();
-        $self->run;
-    }
+    my $removed_columns = $self->parse_filtered_align( $self->param('alignment_file'), $self->param('output_file'), 0, $self->param('gene_tree') );
+    print "Trimmed colums: " . $removed_columns . "\n" if $self->debug;
+    return { 'removed_columns' => $removed_columns };
 }
 
 1;

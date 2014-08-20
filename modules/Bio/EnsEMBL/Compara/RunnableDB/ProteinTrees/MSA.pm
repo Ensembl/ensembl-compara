@@ -356,6 +356,7 @@ sub _store_aln_tags {
     my $aln_num_residues = $sa->no_residues;
     $tree->store_tag("aln_num_residues",$aln_num_residues);
 
+    $tree->store_tag('aln_length', $tree->aln_length);
 }
 
 

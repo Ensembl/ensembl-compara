@@ -129,10 +129,10 @@ sub dumpTreeMultipleAlignmentToWorkdir {
 
   $sa->set_displayname_flat(1);
   # Now outputing the alignment
-  open(OUTSEQ, ">", $aln_file) or die "Could not open '$aln_file' for writing : $!";
-  my $alignIO = Bio::AlignIO->newFh( -fh => \*OUTSEQ, -format => "fasta");
+  open my $fh, ">", $aln_file or die "Could not open '$aln_file' for writing : $!";
+  my $alignIO = Bio::AlignIO->newFh( -fh => $fh, -format => ($self->param('aln_format') || "fasta"));
   print $alignIO $sa;
-  close OUTSEQ;
+  close $fh;
 
   unless(-e $aln_file and -s $aln_file) {
     die "There are no alignments in '$aln_file', cannot continue";
@@ -164,10 +164,10 @@ sub dumpAlignedMemberSet {
 
     # Now outputing the alignment
     my $aln_file = sprintf('%s.%s', $file_root, $format);
-    open(OUTSEQ, ">", $aln_file) or die "Could not open '$aln_file' for writing : $!";
-    my $alignIO = Bio::AlignIO->newFh( -fh => \*OUTSEQ, -format => $format);
+    open my $fh, ">", $aln_file or die "Could not open '$aln_file' for writing : $!";
+    my $alignIO = Bio::AlignIO->newFh( -fh => $fh, -format => "stockholm");
     print $alignIO $sa;
-    close OUTSEQ;
+    close $fh;
     return $aln_file;
 }
 
@@ -477,7 +477,8 @@ sub parse_filtered_align {
         foreach my $seq ($aln->each_seq) {
             # Delete empty sequences => Sequences with only gaps and 'X's
             # for instance: ---------XXXXX---X---XXXX
-            next if $seq->seq() =~ /^[Xx\-]*$/;
+            next if  $cdna and $seq->seq() =~ /^[Nn\-]*$/;
+            next if !$cdna and $seq->seq() =~ /^[Xx\-]*$/;
             $hash_filtered_strings{$seq->display_id()} = $seq->seq();
         }
     }
@@ -492,7 +493,7 @@ sub parse_filtered_align {
         }
     }
 
-    if ($tree_to_delete_nodes) {
+    if ($tree_to_delete_nodes and (scalar(keys %hash_filtered_strings) != scalar(keys %hash_initial_strings))) {
         my $treenode_adaptor = $self->compara_dba->get_GeneTreeNodeAdaptor;
 
         $self->param('removed_members', 0);

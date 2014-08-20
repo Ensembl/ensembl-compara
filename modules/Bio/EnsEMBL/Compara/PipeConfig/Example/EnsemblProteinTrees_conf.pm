@@ -81,6 +81,8 @@ sub default_options {
         'outgroups'                     => { 'saccharomyces_cerevisiae' => 2 },
 
     # tree building parameters:
+        'treebreak_gene_count'      => 40000,     # affects msa_chooser
+        'mafft_gene_count'          => 300,     # affects msa_chooser
 
     # species tree reconciliation
         # you can define your own species_tree for 'treebest'. It can contain multifurcations
@@ -103,11 +105,12 @@ sub default_options {
         'hcluster_exe'              => '/software/ensembl/compara/hcluster/hcluster_sg',
         'mcoffee_home'              => '/software/ensembl/compara/tcoffee/Version_9.03.r1318/',
         'mafft_home'                => '/software/ensembl/compara/mafft-7.113/',
-        'trimal_exe'                => '/software/ensembl/compara/trimAl/source/trimal',
-        'prottest_jar'              => '/software/ensembl/compara/prottest/prottest-3.4-20140123/prottest-3.4.jar',
+        'trimal_exe'                => '/software/ensembl/compara/trimAl/trimal-1.2',
+        'noisy_exe'                 => '/software/ensembl/compara/noisy/noisy-1.5.12',
+        'prottest_jar'              => '/software/ensembl/compara/prottest/prottest-3.4.jar',
         'treebest_exe'              => '/software/ensembl/compara/treebest',
-        'raxml_exe'                 => '/software/ensembl/compara/raxml',
-        'notung_jar'                => '/software/ensembl/compara/notung/Notung-2.6/Notung-2.6.jar',
+        'raxml_exe'                 => '/software/ensembl/compara/raxml/raxmlHPC-SSE3-8.1.3',
+        'notung_jar'                => '/software/ensembl/compara/notung/Notung-2.6.jar',
         'quicktree_exe'             => '/software/ensembl/compara/quicktree_1.1/bin/quicktree',
         'hmmer2_home'               => '/software/ensembl/compara/hmmer-2.3.2/src/',
         'codeml_exe'                => '/software/ensembl/compara/paml43/bin/codeml',
@@ -132,7 +135,7 @@ sub default_options {
         'blastpu_capacity'          => 700,
         'mcoffee_capacity'          => 600,
         'split_genes_capacity'      => 600,
-        'trimal_capacity'           => 400,
+        'alignment_filtering_capacity'  => 400,
         'prottest_capacity'         => 400,
         'treebest_capacity'         => 400,
         'raxml_capacity'            => 400,
@@ -230,7 +233,9 @@ sub resource_classes {
          '1Gb_job'      => {'LSF' => '-C0 -M1000  -R"select[mem>1000]  rusage[mem=1000]"' },
          '2Gb_job'      => {'LSF' => '-C0 -M2000  -R"select[mem>2000]  rusage[mem=2000]"' },
          '4Gb_job'      => {'LSF' => '-C0 -M4000  -R"select[mem>4000]  rusage[mem=4000]"' },
+         '4Gb_8c_job'   => {'LSF' => '-C0 -M4000  -R"select[mem>4000]  rusage[mem=4000]"  -n 8' },
          '8Gb_job'      => {'LSF' => '-C0 -M8000  -R"select[mem>8000]  rusage[mem=8000]"' },
+         '8Gb_8c_job'   => {'LSF' => '-C0 -M8000  -R"select[mem>8000]  rusage[mem=8000]"  -n 8' },
          '16Gb_job'     => {'LSF' => '-C0 -M16000 -R"select[mem>16000] rusage[mem=16000]"' },
          '32Gb_job'     => {'LSF' => '-C0 -M32000 -R"select[mem>32000] rusage[mem=32000]"' },
          '64Gb_job'     => {'LSF' => '-C0 -M64000 -R"select[mem>64000] rusage[mem=64000]"' },

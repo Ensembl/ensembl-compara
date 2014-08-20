@@ -154,7 +154,7 @@ sub write_output {
             # 3rd argument is set because the coordinates are for the CDNA alignments
             my $removed_columns;
             eval {
-                $removed_columns = $self->parse_filtered_align($self->param('input_aln'), $alnfile_filtered, 1);
+                $removed_columns = $self->parse_filtered_align($self->param('input_aln'), $alnfile_filtered, 1, $treebest_stored_tree);
             };
             if ($@) {
                 die $@ unless $@ =~ /^Could not match alignments at /;

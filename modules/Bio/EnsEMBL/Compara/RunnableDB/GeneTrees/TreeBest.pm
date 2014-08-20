@@ -101,7 +101,7 @@ sub run_treebest_best {
         $args .= sprintf(' -Z %f', $max_diff_lk) if $max_diff_lk;
         $args .= sprintf(' -X %f', $lk_scale) if $lk_scale;
         $args .= ' -D';
-        $args .= sprintf(' -F %f', $filtering_cutoff) if $filtering_cutoff;
+        $args .= sprintf(' -F %d', $filtering_cutoff) if $filtering_cutoff;
 
         my $cmd = $self->_get_alignment_filtering_cmd($args, $input_aln);
         my $run_cmd = $self->run_command($cmd);
@@ -315,9 +315,9 @@ sub _write_temp_tree_file {
     my ($self, $tree_name, $tree_content) = @_;
 
     my $filename = $self->worker_temp_directory . $tree_name;
-    open FILE,">$filename" or die $!;
-    print FILE $tree_content;
-    close FILE;
+    open my $fh, ">", $filename or die $!;
+    print $fh $tree_content;
+    close $fh;
 
     return $filename;
 }
