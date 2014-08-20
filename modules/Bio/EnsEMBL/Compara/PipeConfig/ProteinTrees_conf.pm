@@ -247,7 +247,9 @@ sub resource_classes {
          '1Gb_job'      => {'LSF' => '-C0 -M1000  -R"select[mem>1000]  rusage[mem=1000]"' },
          '2Gb_job'      => {'LSF' => '-C0 -M2000  -R"select[mem>2000]  rusage[mem=2000]"' },
          '4Gb_job'      => {'LSF' => '-C0 -M4000  -R"select[mem>4000]  rusage[mem=4000]"' },
+         '4Gb_8c_job'   => {'LSF' => '-C0 -M4000  -R"select[mem>4000]  rusage[mem=4000]"  -n 8' },
          '8Gb_job'      => {'LSF' => '-C0 -M8000  -R"select[mem>8000]  rusage[mem=8000]"' },
+         '8Gb_8c_job'   => {'LSF' => '-C0 -M8000  -R"select[mem>8000]  rusage[mem=8000]"  -n 8' },
          '16Gb_job'     => {'LSF' => '-C0 -M16000 -R"select[mem>16000] rusage[mem=16000]"' },
          '32Gb_job'     => {'LSF' => '-C0 -M32000 -R"select[mem>32000] rusage[mem=32000]"' },
          '64Gb_job'     => {'LSF' => '-C0 -M64000 -R"select[mem>64000] rusage[mem=64000]"' },
@@ -1417,9 +1419,10 @@ sub pipeline_analyses {
                 'prottest_jar'          => $self->o('prottest_jar'),
                 'prottest_memory'       => 3500,
                 'escape_branch'         => -1,
+                'n_cores'               => 8,
             },
             -hive_capacity        => $self->o('prottest_capacity'),
-            -rc_name    => '4Gb_job',
+            -rc_name    => '4Gb_8c_job',
             -flow_into  => {
                 -1 => [ 'prottest_himem' ],
                 1 => [ 'raxml' ],
@@ -1432,9 +1435,10 @@ sub pipeline_analyses {
                 'prottest_jar'          => $self->o('prottest_jar'),
                 'prottest_memory'       => 7000,
                 'escape_branch'         => -1,      # RAxML will use a default model, anyway
+                'n_cores'               => 8,
             },
             -hive_capacity        => $self->o('prottest_capacity'),
-            -rc_name    => '8Gb_job',
+            -rc_name    => '8Gb_8c_job',
             -flow_into  => [ 'raxml_himem' ],
         },
 

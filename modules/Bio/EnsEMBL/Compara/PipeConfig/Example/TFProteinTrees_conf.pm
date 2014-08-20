@@ -269,9 +269,11 @@ sub resource_classes {
          '500Mb_job'    => {'LSF' => '-q production-rh6 -M500   -R"select[mem>500]   rusage[mem=500]"' },
          '1Gb_job'      => {'LSF' => '-q production-rh6 -M1000  -R"select[mem>1000]  rusage[mem=1000]"' },
          '4Gb_job'      => {'LSF' => '-q production-rh6 -M4000  -R"select[mem>4000]  rusage[mem=4000]"' },
+         '4Gb_16c_job'  => {'LSF' => '-q production-rh6 -M4000  -R"select[mem>4000]  rusage[mem=4000]" -n 16' },
          '2Gb_job'      => {'LSF' => '-q production-rh6 -M2000  -R"select[mem>2000]  rusage[mem=2000]"' },
          '8Gb_job'      => {'LSF' => '-q production-rh6 -M8000  -R"select[mem>8000]  rusage[mem=8000]"' },
          '16Gb_job'     => {'LSF' => '-q production-rh6 -M16000 -R"select[mem>16000] rusage[mem=16000]"' },
+         '16Gb_16c_job' => {'LSF' => '-q production-rh6 -M16000 -R"select[mem>16000] rusage[mem=16000]" -n 16' },
          '32Gb_job'     => {'LSF' => '-q production-rh6 -M32000 -R"select[mem>32000] rusage[mem=32000]"' },
          '64Gb_job'     => {'LSF' => '-q production-rh6 -M64000 -R"select[mem>64000] rusage[mem=64000]"' },
          'urgent_hcluster'     => {'LSF' => '-q production-rh6 -M32000 -R"select[mem>32000] rusage[mem=32000]"' },
@@ -292,8 +294,8 @@ sub pipeline_analyses {
         'split_genes'               => '2Gb_job',
         'split_genes_himem'         => '8Gb_job',
         'trimal'                    => '4Gb_job',
-        'prottest'                  => '4Gb_job',
-        'prottest_himem'            => '16Gb_job',
+        'prottest'                  => '4Gb_16c_job',
+        'prottest_himem'            => '16Gb_16c_job',
         'raxml'                     => '1Gb_job',
         'raxml_himem'               => '8Gb_job',
         'notung'                    => '4Gb_job',
@@ -315,8 +317,10 @@ sub pipeline_analyses {
     $analyses_by_name{'notung'}->{'-parameters'}{'notung_memory'} = 3500;
     $analyses_by_name{'notung_himem'}->{'-parameters'}{'notung_memory'} = 29000;
     $analyses_by_name{'prottest'}->{'-parameters'}{'prottest_memory'} = 3500;
+    $analyses_by_name{'prottest'}->{'-parameters'}{'n_cores'} = 16;
     $analyses_by_name{'prottest'}->{'-parameters'}{'java'} = '/usr/bin/java';
     $analyses_by_name{'prottest_himem'}->{'-parameters'}{'prottest_memory'} = 14500;
+    $analyses_by_name{'prottest_himem'}->{'-parameters'}{'n_cores'} = 16;
     $analyses_by_name{'prottest_himem'}->{'-parameters'}{'java'} = '/usr/bin/java';
 
     return $all_analyses;
