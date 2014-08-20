@@ -315,9 +315,9 @@ sub _write_temp_tree_file {
     my ($self, $tree_name, $tree_content) = @_;
 
     my $filename = $self->worker_temp_directory . $tree_name;
-    open FILE,">$filename" or die $!;
-    print FILE $tree_content;
-    close FILE;
+    open my $fh, ">", $filename or die $!;
+    print $fh $tree_content;
+    close $fh;
 
     return $filename;
 }

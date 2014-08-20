@@ -546,22 +546,10 @@ sub pipeline_analyses {
             -parameters => {
                 'mlss_id'   => $self->o('mlss_id'),
             },
-            -flow_into => [ 'make_treebest_species_tree', 'extra_sql_prepare' ],
+            -flow_into => [ 'make_treebest_species_tree' ],
             -meadow_type    => 'LOCAL',
         },
 
-        {   -logic_name    => 'extra_sql_prepare',
-            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::SqlCmd',
-            -parameters => {
-                'sql' => [
-                    # Counts the number of species
-                    'INSERT INTO meta (meta_key,meta_value) SELECT "species_count", COUNT(*) FROM genome_db',
-                    # Whether all the species are reused
-                    'INSERT INTO meta (meta_key,meta_value) SELECT "are_all_species_reused", IF(meta_value = "-1", 1, 0) FROM meta WHERE meta_key = "nonreuse_ss_csv"',
-                ],
-            },
-            -meadow_type    => 'LOCAL',
-        },
 
 # ---------------------------------------------[load species tree]-------------------------------------------------------------------
 
