@@ -182,9 +182,6 @@ sub resource_classes {
          '4Gb_job'      => {'LSF' => '-C0 -q production-rh6 -M4000  -R"select[mem>4000]  rusage[mem=4000]"' },
          '8Gb_job'      => {'LSF' => '-C0 -q production-rh6 -M8000  -R"select[mem>8000]  rusage[mem=8000]"' },
 
-         'msa'          => {'LSF' => '-C0 -q production-rh6 -M2000  -R"select[mem>2000]  rusage[mem=2000]"' },
-         'msa_himem'    => {'LSF' => '-C0 -q production-rh6 -M8000  -R"select[mem>8000]  rusage[mem=8000]"' },
-
          'urgent_hcluster'   => {'LSF' => '-C0 -q production-rh6 -M32000 -R"select[mem>32000] rusage[mem=32000]"' },
     };
 }
