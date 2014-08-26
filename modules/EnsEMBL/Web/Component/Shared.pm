@@ -834,7 +834,7 @@ sub _sort_similarity_links {
       }
     }
     if ($type->isa('Bio::EnsEMBL::IdentityXref')) {
-      $text .= ' <span class="small"> [Target %id: ' . $type->target_identity . '; Query %id: ' . $type->query_identity . ']</span>';
+      $text .= ' <span class="small"> [Target %id: ' . $type->ensembl_identity . '; Query %id: ' . $type->xref_identity . ']</span>';
       $join_links = 1;
     }
 
