@@ -152,7 +152,7 @@ sub write_output {
     if ($self->param('store_filtered_align') and 0) {
         my $alnfile_filtered = sprintf('%s/filtalign.fa', $self->worker_temp_directory);
         if (-e $alnfile_filtered) {
-            my $removed_columns = $self->parse_filtered_align($self->param('input_aln'), $alnfile_filtered, 1, 1);
+            my $removed_columns = $self->parse_filtered_align($self->param('input_aln'), $alnfile_filtered, 0, 1);
             print Dumper $removed_columns if ( $self->debug() );
             $self->param('gene_tree')->store_tag('removed_columns', $removed_columns);
         }
