@@ -427,12 +427,17 @@ sub clear {
 sub get_all_GeneMembers {
     my ($self) = @_;
 
-    my $members = [];
+    my %seen_gene_members = ();
     foreach my $aligned_member (@{$self->get_all_Members}) {
-        push @$members, $aligned_member->gene_member if defined $aligned_member->gene_member;
+        next unless $aligned_member->gene_member_id;
+        if ($seen_gene_members{$aligned_member->gene_member_id}) {
+            $aligned_member->gene_member($seen_gene_members{$aligned_member->gene_member_id});
+        } else {
+            $seen_gene_members{$aligned_member->gene_member_id} = $aligned_member->gene_member;
+        }
     }
 
-    return $members;
+    return [values %seen_gene_members];
 }
 
 
