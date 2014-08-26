@@ -209,9 +209,25 @@ sub resource_classes {
          '2Gb_job'      => {'LSF' => '-C0 -M2000  -R"select[mem>2000]  rusage[mem=2000]"' },
          '4Gb_job'      => {'LSF' => '-C0 -M4000  -R"select[mem>4000]  rusage[mem=4000]"' },
          '8Gb_job'      => {'LSF' => '-C0 -M8000  -R"select[mem>8000]  rusage[mem=8000]"' },
+         'treebest_job'      => {'LSF' => '-q long -C0 -M8000  -R"select[mem>8000]  rusage[mem=8000]"' },
 
          'urgent_hcluster'   => {'LSF' => '-C0 -M32000 -R"select[mem>32000] rusage[mem=32000]" -q yesterday' },
     };
+}
+
+
+sub pipeline_analyses {
+    my $self = shift;
+    my $all_analyses = $self->SUPER::pipeline_analyses(@_);
+    my %analyses_by_name = map {$_->{'-logic_name'} => $_} @$all_analyses;
+
+    ## Extend this section to redefine the resource names of some analysis
+    my %overriden_rc_names = (
+        'treebest'                  => 'treebest_job',
+    );
+    foreach my $logic_name (keys %overriden_rc_names) {
+        $analyses_by_name{$logic_name}->{'-rc_name'} = $overriden_rc_names{$logic_name};
+    }
 }
 
 1;
