@@ -1347,7 +1347,7 @@ sub pipeline_analyses {
                 'cdna'                      => 1,
                 'bootstrap'                 => 1,
                 'store_intermediate_trees'  => 1,
-                'store_filtered_align'      => 1,
+                'store_filtered_align'      => 0,
                 'treebest_exe'              => $self->o('treebest_exe'),
                 'output_clusterset_id'      => $self->o('use_notung') ? 'treebest' : 'default',
             },
