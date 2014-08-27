@@ -31,6 +31,7 @@ sub render {
 
   my $hub           = $self->hub;
   my $species_defs  = $hub->species_defs;
+  my $version       = $species_defs->ENSEMBL_VERSION;
   my $sitename      = $species_defs->ENSEMBL_SITETYPE;
   my $static_server = $species_defs->ENSEMBL_STATIC_SERVER;
 
@@ -57,45 +58,53 @@ sub render {
     $species{$sp} = $info;
   }
 
-  ## Add in pre species
-  my $pre_species = $species_defs->get_config('MULTI', 'PRE_SPECIES');
-  if ($pre_species) {
-    while (my ($bioname, $array) = each (%$pre_species)) {
-      my ($common, $assembly, $taxon_id) = @$array;
-      $common =~ s/_/ /;
-      my $status = $species{$bioname} ? 'both' : 'pre';
-      my $info;
-      if ($status eq 'pre') {
-        ## This is a bit of a fudge, but we have only basic config atm
-        (my $sci_name = $bioname) =~ s/_/ /g;
-        $info = {
-          'dir'           => $bioname,
-          'common'        => $common,
-          'sci_name'      => $sci_name,
-          'status'        => $status,
-          'assembly'      => '-',
-          'accession'     => '-',
-          'pre_assembly'  => $assembly,
-          'taxon_id'      => $taxon_id,
-        };
+  if ($sitename !~ /Archive/) {
+    ## Add in pre species
+    my $pre_species = $species_defs->get_config('MULTI', 'PRE_SPECIES');
+    if ($pre_species) {
+      while (my ($bioname, $array) = each (%$pre_species)) {
+        my ($common, $assembly, $taxon_id) = @$array;
+        $common =~ s/_/ /;
+        my $status = $species{$bioname} ? 'both' : 'pre';
+        my $info;
+        if ($status eq 'pre') {
+          ## This is a bit of a fudge, but we have only basic config atm
+          (my $sci_name = $bioname) =~ s/_/ /g;
+          $info = {
+            'dir'           => $bioname,
+            'common'        => $common,
+            'sci_name'      => $sci_name,
+            'status'        => $status,
+            'assembly'      => '-',
+            'accession'     => '-',
+            'pre_assembly'  => $assembly,
+            'taxon_id'      => $taxon_id,
+          };
+        }
+        else {
+          ## Don't overwrite existing meta info!
+          $info = $species{$bioname};
+          $info->{'pre_assembly'} = $assembly;
+        }
+        $info->{'status'} = $status;
+        $species{$bioname} = $info;
       }
-      else {
-        ## Don't overwrite existing meta info!
-        $info = $species{$bioname};
-        $info->{'pre_assembly'} = $assembly;
-      }
-      $info->{'status'} = $status;
-      $species{$bioname} = $info;
     }
   }
 
   ## Display all the species in data table
-  my $html = '<h3>Current Ensembl Species</h3>
-<p>Note: to find out which species were in previous releases, please see the <a href="/info/website/archives/assembly.html">table of assemblies</a></p>
-<div class="js_panel" id="species-table">
+  my $html = "<h3>$sitename Species</h3>";
+
+  if ($sitename =~ /Archive/) {
+    $html .= qq(<div class="info-box"><p>N.B. The table below shows only those species that were included in release $version - for an up-to-date list, please see our main site at <a href="http://www.ensembl.org/">www.ensembl.org</a>.</p></div>);
+  }
+  elsif ($hub->species_defs->multidb->{'DATABASE_ARCHIVE'}{'NAME'}) {
+    $html .= '<p>Note: to find out which species were in previous releases, please see the <a href="/info/website/archives/assembly.html">table of assemblies</a></p>';
+  }
+  $html .= '<div class="js_panel" id="species-table">
       <input type="hidden" class="panel_type" value="Content">';
 
-  my $table = EnsEMBL::Web::Document::Table->new([
+  my $columns = [
       { key => 'common',      title => 'Common name',     width => '40%', align => 'left', sort => 'string' },
       { key => 'species',     title => 'Scientific name', width => '25%', align => 'left', sort => 'string' },
       { key => 'taxon_id',    title => 'Taxon ID',        width => '10%', align => 'left', sort => 'integer' },
@@ -103,8 +112,12 @@ sub render {
       { key => 'accession',   title => 'Accession',       width => '10%', align => 'left' },
       { key => 'variation',   title => 'Variation database',  width => '5%', align => 'center', sort => 'string' },
       { key => 'regulation',  title => 'Regulation database', width => '5%', align => 'center', sort => 'string' },
-      { key => 'pre',         title => 'Pre assembly',    width => '5%', align => 'left' },
-  ], [], { data_table => 1, exportable => 1 });
+  ];
+  if ($sitename !~ /Archive/) {
+    push @$columns, { key => 'pre', title => 'Pre assembly', width => '5%', align => 'left' };
+  }
+
+  my $table = EnsEMBL::Web::Document::Table->new($columns, [], { data_table => 1, exportable => 1 });
   
   $table->filename = 'Species';
   
