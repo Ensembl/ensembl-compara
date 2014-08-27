@@ -16,7 +16,9 @@
 
 Ensembl.Panel.CellTypeSelector = Ensembl.Panel.CloudMultiSelector.extend({
   updateSelection: function () {
-   
+
+    if(!this.changed) { return; }
+
     var params = {
       image_config: this.params.image_config
     };
@@ -26,7 +28,7 @@ Ensembl.Panel.CellTypeSelector = Ensembl.Panel.CloudMultiSelector.extend({
       data: params,
       context: this,
       complete: function() {
-        var panels = ['FeaturesByCellLine','FeatureDetails'];
+        var panels = ['FeaturesByCellLine','FeatureDetails','FeatureSummary'];
         var bg_panels = ['Buttons','SummaryButtons'];
         for(var i=0;i<bg_panels.length;i++) {
           Ensembl.EventManager.triggerSpecific('updatePanel',bg_panels[i],null,null,null,null,{ background: true });

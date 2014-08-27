@@ -58,3 +58,8 @@
 
 .component-tools            { margin-bottom: 16px; overflow: hidden; }
 .component-tools a          { float: left; margin-right: 4px; }
+.component-navs a           { border: 1px solid #ccc; border-radius: 16px; color: black !important; display: inline-block; height: 28px; margin: 0 16px 16px 0; padding: 68px 8px 8px; text-align: center; text-decoration: none; vertical-align: bottom; width: 96px; font-size: 110%; }
+.navb_reg_details { background: url(/i/navb-reg-details.png) no-repeat 8px 4px; }
+.navb_reg_summary { background: url(/i/navb-reg-summary.png) no-repeat 8px 4px; }
+.navb_reg_context { background: url(/i/navb-reg-context.png) no-repeat 10px 4px; }
+.navb_reg_sourcedata { background: url(/i/navb-reg-sourcedata.png) no-repeat 10px 4px; }

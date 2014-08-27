@@ -799,11 +799,15 @@ sub is_new_regulation_pipeline { # Regulation rewrote their pipeline
   my ($self) = @_;
 
   return $self->{'is_new_pipeline'} if defined $self->{'is_new_pipeline'};
-  my $mca = $self->database('funcgen')->get_MetaContainer;
-  my $date = $mca->single_value_by_key('regbuild.last_annotation_update');
-  my ($year,$month) = split('-',$date);
-  my $new = 1;
-  $new = 0 if $year < 2014 or $year == 2014 and $month < 6;
+  my $fg = $self->database('funcgen');
+  my $new = 0;
+  if($fg) {
+    my $mca = $fg->get_MetaContainer;
+    my $date = $mca->single_value_by_key('regbuild.last_annotation_update');
+    my ($year,$month) = split('-',$date);
+    $new = 1;
+    $new = 0 if $year < 2014 or $year == 2014 and $month < 6;
+  }
   $self->{'is_new_pipeline'} = $new;
   return $new;
 }

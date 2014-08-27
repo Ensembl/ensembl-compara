@@ -44,8 +44,9 @@ sub content {
   
   my $object         = $self->new_object('Regulation', $reg_feature, $self->object->__data);
   my %motif_features = %{$object->get_motif_features};
-  
-  $self->caption('Regulatory Feature - ' . $reg_feature->feature_set->cell_type->name);
+ 
+  my $cell_type = $reg_feature->feature_set->cell_type->name;
+  $self->caption("Regulatory Feature - $cell_type");
   
   $self->add_entry({
     type  => 'Stable ID',
@@ -72,7 +73,7 @@ sub content {
     });
   }
 
-  if($hub->is_new_regulation_pipeline) {
+  if($hub->is_new_regulation_pipeline and $cell_type ne 'MultiCell') {
     my $status = "Unknown";
     my $has_evidence = $object->has_evidence;
     if($has_evidence) {
