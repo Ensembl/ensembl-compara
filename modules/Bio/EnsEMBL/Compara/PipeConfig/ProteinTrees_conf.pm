@@ -1342,7 +1342,7 @@ sub pipeline_analyses {
                 'threshold_aln_len'      => $self->o('threshold_aln_len'),
             },
             -flow_into  => {
-                2 => [ 'prottest' ],
+                2 => [ 'aln_filtering_tagging' ],
                 3 => [ 'filtering_strictness' ],
             },
         },
@@ -1370,9 +1370,7 @@ sub pipeline_analyses {
             -hive_capacity  => $self->o('alignment_filtering_capacity'),
             -rc_name           => '4Gb_job',
             -batch_size     => 5,
-            -flow_into      => {
-                1   => [ 'prottest' ],
-                  }
+            -flow_into      => [ 'aln_filtering_tagging' ],
         },
 
         {   -logic_name     => 'noisy_large',
@@ -1384,9 +1382,7 @@ sub pipeline_analyses {
             -hive_capacity  => $self->o('alignment_filtering_capacity'),
             -rc_name           => '16Gb_job',
             -batch_size     => 5,
-            -flow_into      => {
-                1   => [ 'prottest' ],
-                  }
+            -flow_into      => [ 'aln_filtering_tagging' ],
         },
 
 
@@ -1397,6 +1393,13 @@ sub pipeline_analyses {
             },
             -hive_capacity  => $self->o('alignment_filtering_capacity'),
             -rc_name        => '500Mb_job',
+            -batch_size     => 5,
+            -flow_into      => [ 'aln_filtering_tagging' ],
+        },
+
+        {   -logic_name     => 'aln_filtering_tagging',
+            -module         => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::AlignmentFilteringTagging',
+            -hive_capacity  => $self->o('alignment_filtering_capacity'),
             -batch_size     => 5,
             -flow_into      => [ 'prottest' ],
         },
