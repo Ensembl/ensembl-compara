@@ -275,7 +275,6 @@ sub add_archive_link {
                           $new_slice->start,
                           $new_slice->end,
                   );
-            last;  
           }
           elsif (scalar(@$segments) > 1) {
             $external = 0;
