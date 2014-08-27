@@ -37,11 +37,11 @@ sub initialize {
   
   my $config = {
     display_width => $hub->param('display_width') || 60,
-    sscon         => $hub->param('sscon'),            # no of bp to show either side of a splice site
-    flanking      => $hub->param('flanking'),         # no of bp up/down stream of transcript
-    full_seq      => $hub->param('fullseq') eq 'yes', # flag to display full sequence (introns and exons)
-    snp_display   => $hub->param('snp_display'),
-    number        => $hub->param('line_numbering'),
+    sscon         => $hub->param('sscon')             // undef,   # no of bp to show either side of a splice site
+    flanking      => $hub->param('flanking')          // undef,   # no of bp up/down stream of transcript
+    full_seq      => ($hub->param('fullseq') || '') eq 'yes',     # flag to display full sequence (introns and exons)
+    snp_display   => $hub->param('snp_display')       // undef,
+    number        => $hub->param('line_numbering')    // undef,
     coding_start  => $transcript->coding_region_start,
     coding_end    => $transcript->coding_region_end,
     strand        => $strand,
@@ -155,8 +155,8 @@ sub initialize_export {
   my $hub = $self->hub;
   ## Set some CGI parameters from the viewconfig
   ## (because we don't want to have to set them in DataExport)
-  my $vc = $hub->get_viewconfig('Transcript', 'ExonsSpreadsheet');
-  my @params = qw(sscon flanking line_numbering);
+  my $vc = $hub->get_viewconfig('ExonsSpreadsheet', 'Transcript');
+  my @params = qw(sscon flanking line_numbering fullseq);
   foreach (@params) {
     $hub->param($_, $vc->get($_));
   }
