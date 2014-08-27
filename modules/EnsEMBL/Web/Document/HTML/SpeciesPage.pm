@@ -118,10 +118,13 @@ sub render {
       $common =~ s/([A-Z])([a-z]+)\s+([a-z]+)/$1. $3/;
     }
 
-    my ($sp_link, $pre_link, $image_fade);
+    my ($sp_link, $rel, $pre_link, $image_fade);
+    my $img_url = '/';
     if ($info->{'status'} eq 'pre') {
       $image_fade = 'opacity:0.7';
       $sp_link    = sprintf('<span class="bigtext">%s</span><br />(Pre only)', $common);
+      $img_url    = 'http://pre.ensembl.org/';
+      $rel        = ' rel="external"';
       $pre_link   = sprintf('<a href="http://pre.ensembl.org/%s">%s</a>', $dir, $info->{'pre_assembly'});
     }
     elsif ($info->{'status'} eq 'both') {
@@ -133,8 +136,8 @@ sub render {
       $pre_link   = '-';
     }
     $table->add_row({
-      'common' => sprintf('<a href="/%s/"><img src="/i/species/48/%s.png" alt="%s" style="float:left;padding-right:4px;%s" /></a>%s',
-                        $dir, $dir, $common, $image_fade, $sp_link),
+        'common' => sprintf('<a href="%s%s/"%s><img src="/i/species/48/%s.png" alt="%s" style="float:left;padding-right:4px;%s" /></a>%s',
+                        $img_url, $dir, $rel, $dir, $common, $image_fade, $sp_link),
       'species'     => '<i>'.$name.'</i>',
       'taxon_id'    => $info->{'taxon_id'},
       'assembly'    => $info->{'assembly'},
