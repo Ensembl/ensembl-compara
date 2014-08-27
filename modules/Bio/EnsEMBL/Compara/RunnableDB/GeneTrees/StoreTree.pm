@@ -513,6 +513,8 @@ sub parse_filtered_align {
         $self->param('removed_members', $missing_members);
         $tree_to_delete_nodes->store_tag('n_removed_members', $missing_members);
         $tree_to_delete_nodes->store_tag('gene_count', scalar(@{$tree_to_delete_nodes->get_all_leaves}) );
+    } elsif ($missing_members) {
+        $tree_to_delete_nodes->store_tag('n_removable_members', $missing_members);
     }
 
     return Bio::EnsEMBL::Compara::Utils::Cigars::identify_removed_columns(\%hash_initial_strings, \%hash_filtered_strings, $cdna);
