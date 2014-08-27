@@ -240,7 +240,9 @@ sub pipeline_analyses {
 
     ## Extend this section to redefine the resource names of some analysis
     $analyses_by_name{'mcoffee'}->{'-rc_name'} = '8Gb_job';
+    $analyses_by_name{'mcoffee'}->{'-parameters'}{'cmd_max_runtime'} = 82800;
     $analyses_by_name{'mcoffee_himem'}->{'-rc_name'} = '32Gb_job';
+    $analyses_by_name{'mcoffee_himem'}->{'-parameters'}{'cmd_max_runtime'} = 82800;
     $analyses_by_name{'mafft'}->{'-rc_name'} = '8Gb_job';
     $analyses_by_name{'mafft_himem'}->{'-rc_name'} = '32Gb_job';
     $analyses_by_name{'hcluster_parse_output'}->{'-rc_name'} = '500Mb_job';

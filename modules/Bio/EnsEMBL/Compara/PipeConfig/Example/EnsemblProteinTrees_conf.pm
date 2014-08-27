@@ -233,6 +233,8 @@ sub pipeline_analyses {
     foreach my $logic_name (keys %overriden_rc_names) {
         $analyses_by_name{$logic_name}->{'-rc_name'} = $overriden_rc_names{$logic_name};
     }
+    $analyses_by_name{'mcoffee'}->{'-parameters'}{'cmd_max_runtime'} = 39600;
+    $analyses_by_name{'mcoffee_himem'}->{'-parameters'}{'cmd_max_runtime'} = 39600;
     return $all_analyses;
 }
 

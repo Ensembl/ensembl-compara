@@ -322,6 +322,8 @@ sub pipeline_analyses {
     $analyses_by_name{'prottest_himem'}->{'-parameters'}{'prottest_memory'} = 14500;
     $analyses_by_name{'prottest_himem'}->{'-parameters'}{'n_cores'} = 16;
     $analyses_by_name{'prottest_himem'}->{'-parameters'}{'java'} = '/usr/bin/java';
+    $analyses_by_name{'mcoffee'}->{'-parameters'}{'cmd_max_runtime'} = 129600;
+    $analyses_by_name{'mcoffee_himem'}->{'-parameters'}{'cmd_max_runtime'} = 129600;
 
     return $all_analyses;
 }

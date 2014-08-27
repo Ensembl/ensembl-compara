@@ -59,7 +59,7 @@ use Time::HiRes qw(time gettimeofday tv_interval);
 
 use Bio::EnsEMBL::Compara::Utils::Cigars;
 
-use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
+use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable', 'Bio::EnsEMBL::Compara::RunnableDB::RunCommand');
 
 
 sub param_defaults {
@@ -211,19 +211,15 @@ sub run_msa {
 
     my $cmd = $self->get_msa_command_line;
 
-    $self->compara_dba->dbc->disconnect_when_inactive(1);
+    my $cmd_out = $self->run_command("cd $tempdir; $cmd", $self->param('cmd_max_runtime'));
+    $self->throw(sprintf("Failed to execute the MSA program [%s]: %d\n%s", $cmd_out->cmd, $cmd_out->exit_code, $cmd_out->err)) if $cmd_out->exit_code;
 
-    print STDERR "Running:\n\t$cmd\n" if ($self->debug);
-    my $ret = system("cd $tempdir; $cmd");
-    print STDERR "Exit status: $ret\n" if $self->debug;
-    if($ret) {
-        my $system_error = $!;
-
-        $self->post_cleanup;
-        die "Failed to execute [$cmd]: $system_error ";
+    if ($cmd_out->exit_code == -2) {
+        $self->dataflow_output_id( $self->input_id, -2 );
+        $self->input_job->incomplete(0);
+        $self->autoflow(0);
+        die sprintf("The command is taking more than %d seconds to complete .\n", $self->param('cmd_max_runtime'));
     }
-
-    $self->compara_dba->dbc->disconnect_when_inactive(0);
 }
 
 ########################################################
