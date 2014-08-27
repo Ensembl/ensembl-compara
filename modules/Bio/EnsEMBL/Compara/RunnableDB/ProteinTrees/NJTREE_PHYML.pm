@@ -154,10 +154,14 @@ sub write_output {
             # 3rd argument is set because the coordinates are for the CDNA alignments
             my $removed_columns;
             eval {
-                $removed_columns = $self->parse_filtered_align($self->param('input_aln'), $alnfile_filtered, 1, $treebest_stored_tree);
+                $removed_columns = $self->parse_filtered_align($self->param('input_aln'), $alnfile_filtered, 1);
             };
             if ($@) {
-                die $@ unless $@ =~ /^Could not match alignments at /;
+                if ($@ =~ /^Could not match alignments at /) {
+                    $self->warning($@);
+                } else {
+                    die $@;
+                }
             } else {
                 print Dumper $removed_columns if ( $self->debug() );
                 $self->param('gene_tree')->store_tag('removed_columns', $removed_columns);

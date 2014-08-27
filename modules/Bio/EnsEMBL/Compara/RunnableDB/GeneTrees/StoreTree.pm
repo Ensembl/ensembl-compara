@@ -484,33 +484,34 @@ sub parse_filtered_align {
     }
 
     my %hash_initial_strings = ();
+    my $missing_members = 0;
     {
         my $alignio = Bio::AlignIO->new(-file => $alnfile_ini, -format => 'fasta');
         my $aln = $alignio->next_aln or die "The input alignment '$alnfile_ini' cannot be read";
 
         foreach my $seq ($aln->each_seq) {
-            $hash_initial_strings{$seq->display_id()} = $seq->seq();
+            if (exists $hash_filtered_strings{$seq->display_id()}) {
+                $hash_initial_strings{$seq->display_id()} = $seq->seq();
+            } else {
+                $missing_members++;
+            }
         }
     }
 
-    if ($tree_to_delete_nodes and (scalar(keys %hash_filtered_strings) != scalar(keys %hash_initial_strings))) {
+    if ($tree_to_delete_nodes and $missing_members) {
         my $treenode_adaptor = $self->compara_dba->get_GeneTreeNodeAdaptor;
 
-        $self->param('removed_members', 0);
         warn sprintf("leaves=%d ini_aln=%d filt_aln=%d\n", scalar(@{$tree_to_delete_nodes->get_all_leaves()}), scalar(keys %hash_initial_strings), scalar(keys %hash_filtered_strings));
 
         foreach my $leaf (@{$tree_to_delete_nodes->get_all_leaves()}) {
-            next if not exists $hash_initial_strings{$leaf->{_tmp_name}};
             next if exists $hash_filtered_strings{$leaf->{_tmp_name}};
 
-            printf("removing %s (%s, keys: %d)\n", $leaf->stable_id, $leaf->{_tmp_name}, keys(%hash_initial_strings));
-            delete($hash_initial_strings{$leaf->{_tmp_name}});
-            print "after keys: ".keys(%hash_initial_strings)."\n";
             $self->call_within_transaction(sub{
                 $treenode_adaptor->remove_seq_member($leaf);
             });
-            $self->param('removed_members', $self->param('removed_members') + 1);
         }
+        $self->param('removed_members', $missing_members);
+        $tree_to_delete_nodes->store_tag('n_removed_members', $missing_members);
         $tree_to_delete_nodes->store_tag('gene_count', scalar(@{$tree_to_delete_nodes->get_all_leaves}) );
     }
 
