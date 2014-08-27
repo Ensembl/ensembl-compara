@@ -249,7 +249,8 @@ sub add_archive_link {
   my $current_assembly = $hub->species_defs->ASSEMBLY_NAME;
   my $alt_release = $hub->species_defs->SWITCH_VERSION;
   my $site = 'http://'.$hub->species_defs->SWITCH_ARCHIVE_URL;
-  my ($link, $title);
+  my $external = 1;
+  my ($link, $title, $class);
 
   if ($current_assembly ne $alt_assembly ) {
   ## get coordinates on other assembly if available
@@ -257,12 +258,13 @@ sub add_archive_link {
     if ($self->object && $self->object->slice) {
       if (my @mappings = @{$hub->species_defs->get_config($hub->species, 'ASSEMBLY_MAPPINGS')||[]}) {
         my $mapping;
-        foreach $mapping (@mappings) {
-          last if $mapping eq sprintf ('chromosome:%s#chromosome:%s', $current_assembly, $alt_assembly);
+        foreach (@mappings) {
+          $mapping = $_; 
+          last if $mapping eq sprintf('chromosome:%s#chromosome:%s', $current_assembly, $alt_assembly);
         }
         if ($mapping) {
           my $segments = $self->object->slice->project('chromosome', $alt_assembly);
-          ## link if there is an ungapped mapping of whole gene
+          ## link if there is an ungapped mapping
           if (scalar(@$segments) == 1) {
             my $new_slice = $segments->[0]->to_Slice;
             $link = sprintf('%s%s/Location/%s?r=%s:%s-%s',
@@ -274,6 +276,11 @@ sub add_archive_link {
                           $new_slice->end,
                   );
             last;  
+          }
+          elsif (scalar(@$segments) > 1) {
+            $external = 0;
+            $class = 'modal_link';
+            $link  = $self->hub->url({ type => 'Help', action => 'ListMappings', alt_assembly => $alt_assembly });
           }
         }
         else {
@@ -293,7 +300,9 @@ sub add_archive_link {
             );
     $title = $hub->species_defs->ENSEMBL_SITETYPE.' '.$alt_assembly
   }
-  $self->get_other_browsers_menu->append($self->create_node($title, $title, [], { availability => 1, url => $link, raw => 1, external => 1 })) if $link;
+  if ($link) {
+    $self->get_other_browsers_menu->append($self->create_node($title, $title, [], { availability => 1, url => $link, raw => 1, external => $external, class => $class }));
+  }
 }
 
 sub add_vega_link {
