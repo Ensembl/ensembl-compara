@@ -94,6 +94,10 @@ Ensembl.Panel.ModalContent = Ensembl.Panel.LocalContext.extend({
           return this.getContent(link, json.redirectURL);
         } else if (json.redirectType === 'page') {
           return Ensembl.redirect(json.redirectURL);
+        } else if (json.redirectType === 'download') {
+          Ensembl.EventManager.trigger('modalClose');
+          window.location.href = json.redirectURL;
+          return;
         }
         
         // Avoid race conditions if the user has clicked another nav link while waiting for content to load
@@ -125,7 +129,10 @@ Ensembl.Panel.ModalContent = Ensembl.Panel.LocalContext.extend({
           return json.modalTab ? Ensembl.EventManager.trigger('modalOpen', { href: json.redirectURL, rel: json.modalTab }) : this.getContent(undefined, json.redirectURL);
         }
         
-        if (json.success === true || json.redirectType === 'page') {
+        if (json.redirectType === 'download') {
+          Ensembl.EventManager.trigger('modalClose');
+          window.location.href = json.redirectURL; // not triggering reloadPage here as reloadPage will call destructor on existing panels
+        } else if (json.success === true || json.redirectType === 'page') {
           Ensembl.EventManager.trigger('reloadPage', false, json.redirectType === 'page' ? json.redirectURL : false);
         } else if (this.el.is(':visible')) {
           this.updateContent(json);

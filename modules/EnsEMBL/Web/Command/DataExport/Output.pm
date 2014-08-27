@@ -29,8 +29,8 @@ sub process {
   my $self       = shift;
   my $hub        = $self->hub;
 
-  my $url_params = {'action' => 'Results'};
-  my @redirect_params;
+  my $controller;
+  my $url_params = {};
 
   my $error;
   my $format = $hub->param('format');
@@ -89,6 +89,8 @@ sub process {
   }
   else {
     ## Parameters for file download
+    $controller                     = 'Download';
+    $url_params->{'action'}         = '';
     $url_params->{'filename'}       = $file->filename;
     $url_params->{'format'}         = $format;
     $url_params->{'path'}          .= '/export/'.$file->random_path.$file->filename;
@@ -104,7 +106,7 @@ sub process {
   }  
   my $url = $hub->url($url_params);
 
-  $self->ajax_redirect($hub->url($url_params), @redirect_params);
+  $self->ajax_redirect($hub->url($controller || (), $url_params), $controller ? (undef, undef, 'download') : ());
 }
 
 sub config_params {
