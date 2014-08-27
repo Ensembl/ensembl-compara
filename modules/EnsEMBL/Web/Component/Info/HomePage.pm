@@ -159,7 +159,7 @@ sub assembly_text {
   );
   
   ## Insert dropdown list of other assemblies
-  if ($species eq 'Homo_sapiens') {
+  if ($species eq 'Homo_sapiens' && $species_defs->ENSEMBL_SERVERNAME ne 'grch37.ensembl.org') {
     push @other_assemblies, {
       url      => "http://grch37.ensembl.org/$species/",
       assembly => 'GRCh37',
