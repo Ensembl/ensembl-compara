@@ -84,16 +84,16 @@ sub content {
     $archives     = $adaptor->fetch_archives_by_species($species); 
     
     if (scalar grep $_ != $current, keys %$archives) {
-      if ($type =~ /\.html/ || $action =~ /\.html/) {
-        foreach (sort keys %$archives) {
+      if ($path =~ /\.html$/) {
+        ## Static (or pseudostatic) pages
+        foreach (sort {$b <=> $a} keys %$archives) {
           next if $_ == $current;
           push @links, $self->output_link($archives, $_, $url);
         }
       }
-      
-      # species home pages
-      if ($type eq 'Info') {
-        foreach (reverse sort keys %$archives) {
+      elsif ($type eq 'Info') {
+        # species home pages
+        foreach (sort {$b <=> $a} keys %$archives) {
           next if $_ == $current;
           push @links, $self->output_link($archives, $_, $url);
         }
@@ -101,7 +101,7 @@ sub content {
         my $releases = get_archive_redirect($type, $action, $hub) || [];
         my $missing  = 0;
         
-        foreach my $poss_release (reverse sort keys %$archives) {
+        foreach my $poss_release (sort {$b <=> $a} keys %$archives) {
           next if $poss_release == $current;
           
           my $release_happened = 0;
@@ -127,7 +127,7 @@ sub content {
     }
   } else { # TODO - map static content moves
     my $archives = $adaptor->fetch_archives_by_species($species_defs->ENSEMBL_PRIMARY_SPECIES); 
-    @links    = map { $_ == $current ? () : $self->output_link($archives, $_, $url) } reverse sort keys %$archives;
+    push @links, map { $_ == $current ? () : $self->output_link($archives, $_, $url) } sort {$b <=> $a} keys %$archives;
   }
    my $grch37 = '<li><a href="http://grch37.ensembl.org">Ensembl GRCh37</a>: Full Feb 2014 archive with BLAST, VEP and BioMart</li>'; 
   $html .= sprintf '<p>The following archives are available for this page:</p><ul>%s%s</ul>', $grch37, join '', @links if scalar @links;
@@ -148,17 +148,23 @@ sub output_link {
   my $current_geneset  = $archives->{$release}{'last_geneset'}  || '';
   my $previous_geneset = $archives->{$release - 1}{'last_geneset'} || '';
  
-  my $string  = qq{<li><a href="http://$date.archive.ensembl.org/$url" class="cp-external">$sitename $release: $month $year</a>};
-     $string .= sprintf ' (%s)', $assembly if $assembly;
+  my $string;
+  if ($archives->{$release}{'date'}) {
+    $string = qq{<li><a href="http://$date.archive.ensembl.org/$url" class="cp-external">$sitename $release: $month $year</a>};
+    $string .= sprintf ' (%s)', $assembly if $assembly;
 
-  if ($current_geneset) {
-    if ($current_geneset eq $initial_geneset) {
-      $string .= sprintf ' - gene set updated %s', $current_geneset;
-    } elsif ($current_geneset ne $previous_geneset) {
-      $string .= sprintf ' - patched/updated gene set %s', $current_geneset;
+    if ($current_geneset) {
+      if ($current_geneset eq $initial_geneset) {
+        $string .= sprintf ' - gene set updated %s', $current_geneset;
+      } elsif ($current_geneset ne $previous_geneset) {
+        $string .= sprintf ' - patched/updated gene set %s', $current_geneset;
+      }
     }
   }
-  
+  else {
+    $string = sprintf('<li><strong><a href="http://%s.ensembl.org">Ensembl %s</a></strong>: %s', lc($date), $date, $archives->{$release}{'description'});
+  }
+ 
   $string .= '</li>';
   
   return $string;
