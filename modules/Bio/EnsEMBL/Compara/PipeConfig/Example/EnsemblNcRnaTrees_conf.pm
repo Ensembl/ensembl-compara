@@ -61,15 +61,16 @@ sub default_options {
     return {
             %{$self->SUPER::default_options},
 
-            'mlss_id'          => 40095,
-            'release'          => '76',
-            'rel_suffix'       => 'b',
+            'mlss_id'          => 40098,
+            # Found automatically if the Core API is in PERL5LIB
+            #'ensembl_release'          => '76',
+            'rel_suffix'       => '',
             'work_dir'         => '/lustre/scratch110/ensembl/' .
                                $self->o('ENV', 'USER') .
                                '/nc_trees_' .
                                $self->o('rel_with_suffix'),
 
-            'rel_with_suffix'  => $self->o('release').$self->o('rel_suffix'),
+            'rel_with_suffix'  => $self->o('ensembl_release').$self->o('rel_suffix'),
             'pipeline_name'    => $self->o('pipeline_basename') . '_' . $self->o('rel_with_suffix'),
 
 
@@ -126,7 +127,7 @@ sub default_options {
             # connection parameters
             'pipeline_db' => {
                               -driver => 'mysql',
-                              -host   => 'compara4',
+                              -host   => 'compara3',
                               -port   => 3306,
                               -user   => 'ensadmin',
                               -pass   => $self->o('password'),
@@ -156,11 +157,11 @@ sub default_options {
                            },
 
             'epo_db' => {   # ideally, the current release database with epo pipeline results already loaded
-                         -host   => 'compara3',
+                         -host   => 'compara5',
                          -port   => 3306,
                          -user   => 'ensro',
                          -pass   => '',
-                         -dbname => 'mp12_ensembl_compara_74',
+                         -dbname => 'sf5_epoLc_39mammals_77',
                         },
 
 

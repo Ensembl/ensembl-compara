@@ -63,6 +63,7 @@ sub default_options {
         # You can add a letter to distinguish this run from other runs on the same release
         'rel_with_suffix'       => $self->o('ensembl_release'),
         # names of species we don't want to reuse this time
+        'do_not_reuse_list'     => [ ],
 
     # custom pipeline name, in case you don't like the default one
         'pipeline_name'         => 'protein_trees_'.$self->o('rel_with_suffix'),
@@ -70,7 +71,7 @@ sub default_options {
         'division'              => 'ensembl',
 
     # dependent parameters: updating 'work_dir' should be enough
-        'work_dir'              => '/lustre/scratch110/ensembl/'.$self->o('ENV', 'USER').'/protein_trees_'.$self->o('rel_with_suffix'),
+        'work_dir'              => '/lustre/scratch109/ensembl/'.$self->o('ENV', 'USER').'/protein_trees_'.$self->o('rel_with_suffix'),
 
     # "Member" parameters:
 
@@ -199,7 +200,7 @@ sub default_options {
         #'prev_core_sources_locs'   => [ $self->o('staging_loc1'), $self->o('staging_loc2') ],
 
         # Add the database location of the previous Compara release. Use "undef" if running the pipeline without reuse
-        'prev_rel_db' => 'mysql://ensro@compara1:3306/mm14_protein_trees_75',
+        'prev_rel_db' => 'mysql://ensro@ens-livemirror:3306/ensembl_compara_'.($self->o('ensembl_release')-1),
 
         # How will the pipeline create clusters (families) ?
         # Possible values: 'blastp' (default), 'hmm', 'hybrid'
@@ -245,20 +246,14 @@ sub resource_classes {
     };
 }
 
-
-sub pipeline_analyses {
+sub tweak_analyses {
     my $self = shift;
-    my $all_analyses = $self->SUPER::pipeline_analyses(@_);
-    my %analyses_by_name = map {$_->{'-logic_name'} => $_} @$all_analyses;
+    my $analyses_by_name = shift;
 
     ## Extend this section to redefine the resource names of some analysis
-    my %overriden_rc_names = (
-        'treebest'                  => 'treebest_job',
-    );
-    foreach my $logic_name (keys %overriden_rc_names) {
-        $analyses_by_name{$logic_name}->{'-rc_name'} = $overriden_rc_names{$logic_name};
-    }
-    return $all_analyses;
+    $analyses_by_name->{'treebest'}->{'-rc_name'} = 'treebest_job';
+    $analyses_by_name->{'mcoffee'}->{'-parameters'}{'cmd_max_runtime'} = 39600;
+    $analyses_by_name->{'mcoffee_himem'}->{'-parameters'}{'cmd_max_runtime'} = 39600;
 }
 
 1;

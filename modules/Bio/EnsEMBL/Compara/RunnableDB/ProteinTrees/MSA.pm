@@ -208,10 +208,14 @@ sub run_msa {
 
     my $cmd = $self->get_msa_command_line;
 
-    my $run_cmd = $self->run_command("cd $tempdir; $cmd");
-    if ($run_cmd->exit_code) {
-        $self->post_cleanup;
-        die sprintf("'%s' resulted in an error code=%d\nstderr is: %s\nstdout is: %s\n", $run_cmd->cmd, $run_cmd->exit_code, $run_cmd->err, $run_cmd->out);
+    my $cmd_out = $self->run_command("cd $tempdir; $cmd", $self->param('cmd_max_runtime'));
+    $self->throw(sprintf("Failed to execute the MSA program [%s]: %d\n%s", $cmd_out->cmd, $cmd_out->exit_code, $cmd_out->err)) if $cmd_out->exit_code;
+
+    if ($cmd_out->exit_code == -2) {
+        $self->dataflow_output_id( $self->input_id, -2 );
+        $self->input_job->incomplete(0);
+        $self->autoflow(0);
+        die sprintf("The command is taking more than %d seconds to complete .\n", $self->param('cmd_max_runtime'));
     }
 }
 
