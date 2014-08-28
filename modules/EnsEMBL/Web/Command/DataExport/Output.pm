@@ -76,12 +76,20 @@ sub process {
 
     unless ($error) {
       ## Write data to output file in desired format
-      my $write_method = 'write_'.lc($format);
-      if ($self->can($write_method)) {
-        $error = $self->$write_method($component);
+
+      ## All alignments go via a single outputter
+      if ($hub->param('align')) {
+        my @data = $component->get_export_data;
+        $error = $self->write_alignments($format, @data);
       }
       else {
-        $error = 'Output not implemented for format '.$format;
+        my $write_method = 'write_'.lc($format);
+        if ($self->can($write_method)) {
+          $error = $self->$write_method($component);
+        }
+        else {
+          $error = 'Output not implemented for format '.$format;
+        }
       }
     }
   } 
@@ -300,13 +308,6 @@ sub write_fasta {
   my $data_type   = $hub->param('data_type');
   my $data_object = $hub->core_object($data_type);
   my @data        = $component->get_export_data;
-
-  ## Alignments go via a separate outputter
-  if ($hub->param('align')) {
-    $self->write_alignments('FASTA', @data);
-    my $file = $self->{'__file'};
-    return $error || $file->error;
-  }
 
   ## Do a bit of munging of this data, according to export options selected
   my $stable_id   = ($data_type eq 'Gene' || $data_type eq 'LRG') ? $data_object->stable_id : '';

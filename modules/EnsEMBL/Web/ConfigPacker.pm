@@ -1789,10 +1789,18 @@ sub _munge_file_formats {
     'bigwig'    => {'ext' => 'bw',  'label' => 'BigWig',    'display' => 'graph', 'indexed' => 1},
     'bigbed'    => {'ext' => 'bb',  'label' => 'BigBed',    'display' => 'graph', 'indexed' => 1},
     'datahub'   => {'ext' => 'txt', 'label' => 'TrackHub',  'display' => 'graph', 'indexed' => 1},
-    'rtf'       => {'ext' => 'rtf', 'label' => 'RTF'},
-    'fasta'     => {'ext' => 'fa',  'label' => 'FASTA'},
     'vcf'       => {'ext' => 'vcf', 'label' => 'VCF',       'display' => 'graph'},
     'vcfi'      => {'ext' => 'vcf', 'label' => 'VCF (indexed)', 'display' => 'graph', 'indexed' => 1},
+    'fasta'     => {'ext' => 'fa',   'label' => 'FASTA'},
+    'clustalw'  => {'ext' => 'aln',  'label' => 'CLUSTALW'},
+    'msf'       => {'ext' => 'msf',  'label' => 'MSF'},
+    'mega'      => {'ext' => 'meg',  'label' => 'Mega'},
+    'nexus'     => {'ext' => 'nex',  'label' => 'Nexus'},
+    'psi'       => {'ext' => 'psi',  'label' => 'PSI'},
+    'pfam'      => {'ext' => 'pfam', 'label' => 'Pfam'},
+    'phylip'    => {'ext' => 'phy',  'label' => 'Phylip'},
+    'rtf'       => {'ext' => 'rtf',  'label' => 'RTF'},
+    'selex'     => {'ext' => 'slx',  'label' => 'Selex'},
   );
 
   ## Munge into something useful to this website

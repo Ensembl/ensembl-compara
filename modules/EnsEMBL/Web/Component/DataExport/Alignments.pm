@@ -41,15 +41,15 @@ sub content {
 
   ## Options per format
   my $fields_by_format = {
-    'CLUSTAL' => [],
-    'FASTA'   => [], 
-    'Mega'    => [],
-    'MSF'     => [],
-    'Nexus'   => [],
-    'Pfam'    => [],
-    'Phylip'  => [],
-    'PSI'     => [],
-    'Selex'   => [],
+    'CLUSTALW'  => [],
+    'FASTA'     => [], 
+    'Mega'      => [],
+    'MSF'       => [],
+    'Nexus'     => [],
+    'Pfam'      => [],
+    'Phylip'    => [],
+    'PSI'       => [],
+    'Selex'     => [],
   };
 
   ## Create settings form (comes with some default fields - see parent)
