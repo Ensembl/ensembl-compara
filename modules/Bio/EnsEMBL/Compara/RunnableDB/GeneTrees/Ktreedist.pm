@@ -273,6 +273,13 @@ sub reroot_inputtrees {
     # Parse the rooted tree string
     my $rootedstring = $self->run_treebest_sdi($inputtree, 1);
 
+    # The string may be empty if the bison parser couldn't parse the tree
+    # due to memory exhaustion
+    if (not $rootedstring) {
+        $self->warning(sprintf("Treebest could not root the '%s' tree due probably to memory exhaustion\n", $method));
+        next;
+    }
+
     $self->param('inputtrees_rooted')->{$method} = $rootedstring;
   }
 }
