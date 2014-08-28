@@ -37,6 +37,7 @@ sub populate_tree {
   foreach (@input_nodes) {
     $self->create_node($_, "Sequence Input", [lc($_), 'EnsEMBL::Web::Component::DataExport::'.$_]);
   }
+  $self->create_node('Alignments', ['alignments', 'EnsEMBL::Web::Component::DataExport::Alignments']);
 
   ## Output nodes
   $self->create_node('Output',  '', [], { 'command' => 'EnsEMBL::Web::Command::DataExport::Output'});

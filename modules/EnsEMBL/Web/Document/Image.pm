@@ -178,7 +178,7 @@ sub render_toolbar {
   }
 
   if ($self->{'data_export'}) {
-    my $url = $hub->url({'type' => 'DataExport'});
+    my $url = $hub->url({'type' => 'DataExport', 'action' => $self->{'data_export'}});
     $toolbar .= sprintf '<a href="%s" class="download modal_link" title="%s"></a>', $url, $icon_mapping->{'download'}{'title'};
   }
 
