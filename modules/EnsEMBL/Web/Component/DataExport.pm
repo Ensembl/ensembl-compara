@@ -108,6 +108,16 @@ sub create_form {
       'value'   => $hub->action,
     },
   ]);
+  ## Miscellaneous parameters from settings
+  foreach (@{$settings->{'Hidden'}||[]}) {
+    $fieldset->add_hidden([
+      {
+        'name'    => $_,
+        'value'   => $hub->param($_),
+      },
+    ]);
+  }
+  
   ## Don't forget the core params!
   my @core_params = keys %{$hub->core_object('parameters')};
   foreach (@core_params) {
@@ -131,7 +141,8 @@ sub create_form {
   
   ## Create all options forms, then show only one using jQuery
   while (my($format, $fields) = each (%$fields_by_format)) {
-    my $settings_fieldset  = $form->add_fieldset({'class' => '_stt_'.$format, 'legend' => 'Settings'});
+    my $legend = scalar(@$fields) ? 'Settings' : '';
+    my $settings_fieldset  = $form->add_fieldset({'class' => '_stt_'.$format, 'legend' => $legend});
 
     ## Add custom fields for this data type and format
     foreach (@$fields) {

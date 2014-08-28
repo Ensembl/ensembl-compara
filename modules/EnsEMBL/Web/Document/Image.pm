@@ -178,8 +178,16 @@ sub render_toolbar {
   }
 
   if ($self->{'data_export'}) {
-    my $url = $hub->url({'type' => 'DataExport', 'action' => $self->{'data_export'}});
-    $toolbar .= sprintf '<a href="%s" class="download modal_link" title="%s"></a>', $url, $icon_mapping->{'download'}{'title'};
+    my $params = {
+                   'type'      => 'DataExport', 
+                   'action'    => $self->{'data_export'},
+                   'data_type' => $hub->type,
+                   'component' => $component,
+                };
+    foreach (@{$self->{'export_params'}||[]}) {
+      $params->{$_} = $hub->param($_);
+    }
+    $toolbar .= sprintf '<a href="%s" class="download modal_link" title="%s"></a>', $hub->url($params), $icon_mapping->{'download'}{'title'};
   }
 
   if ($toolbar) {

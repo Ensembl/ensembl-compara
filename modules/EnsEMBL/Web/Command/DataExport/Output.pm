@@ -20,8 +20,11 @@ package EnsEMBL::Web::Command::DataExport::Output;
 
 use strict;
 
-use EnsEMBL::Web::File;
 use RTF::Writer;
+use Bio::AlignIO;
+use IO::String;
+
+use EnsEMBL::Web::File;
 
 use base qw(EnsEMBL::Web::Command);
 
@@ -298,6 +301,13 @@ sub write_fasta {
   my $data_object = $hub->core_object($data_type);
   my @data        = $component->get_export_data;
 
+  ## Alignments go via a separate outputter
+  if ($hub->param('align')) {
+    $self->write_alignments('FASTA', @data);
+    my $file = $self->{'__file'};
+    return $error || $file->error;
+  }
+
   ## Do a bit of munging of this data, according to export options selected
   my $stable_id   = ($data_type eq 'Gene' || $data_type eq 'LRG') ? $data_object->stable_id : '';
   my $slice       = $self->object->expand_slice($data_object->slice);
@@ -358,6 +368,24 @@ sub write_fasta {
 
   my $file = $self->{'__file'};
   return $error || $file->error;
+}
+
+sub write_alignments {
+  my ($self, $format, $location) = @_;
+  my $hub = $self->hub;
+
+  my $alignments = $self->object->get_alignments($location->slice, $hub->param('align'), $hub->species);
+
+  my $export;
+
+  my $align_io = Bio::AlignIO->newFh(
+    -fh     => IO::String->new($export),
+    -format => $format
+  );
+
+  print $align_io $alignments;
+
+  $self->write_line($export);
 }
 
 sub write_line { 

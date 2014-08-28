@@ -37,6 +37,8 @@ sub content {
   my $self  = shift;
   my $hub   = $self->hub;
 
+  my $settings = {'Hidden' => ['align']};
+
   ## Options per format
   my $fields_by_format = {
     'CLUSTAL' => [],
