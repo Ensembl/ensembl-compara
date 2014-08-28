@@ -324,7 +324,7 @@ sub handler {
   ## Check for stable id URL (/id/ENSG000000nnnnnn) 
   ## and malformed Gene/Summary URLs from external users
   if (($raw_path[0] && $raw_path[0] =~ /^id$/i && $raw_path[1]) || ($raw_path[0] eq 'Gene' && $querystring =~ /g=/ )) {
-    my ($stable_id, $object_type, $db_type, $uri);
+    my ($stable_id, $object_type, $db_type, $retired, $uri);
     
     if ($raw_path[0] =~ /^id$/i) {
       $stable_id = $raw_path[1];
@@ -352,11 +352,11 @@ sub handler {
       );
     }
 
-    ($species, $object_type, $db_type) = Bio::EnsEMBL::Registry->get_species_and_object_type($stable_id);
+    ($species, $object_type, $db_type, $retired) = Bio::EnsEMBL::Registry->get_species_and_object_type($stable_id, undef, undef, undef, undef, 1);
     
     if (!$species || !$object_type) {
       ## Maybe that wasn't versioning after all!
-      ($species, $object_type, $db_type) = Bio::EnsEMBL::Registry->get_species_and_object_type($unstripped_stable_id);
+      ($species, $object_type, $db_type, $retired) = Bio::EnsEMBL::Registry->get_species_and_object_type($unstripped_stable_id, undef, undef, undef, undef, 1);
       $stable_id = $unstripped_stable_id if($species && $object_type);
     }
     
@@ -364,37 +364,29 @@ sub handler {
       $uri = $species ? "/$species/" : '/Multi/';
       
       if ($object_type eq 'Gene') {
-        $uri .= "Gene/Summary?g=$stable_id";
+        $uri .= sprintf 'Gene/%s?g=%s', $retired ? 'Idhistory' : 'Summary', $stable_id;
       } elsif ($object_type eq 'Transcript') {
-        $uri .= "Transcript/Summary?t=$stable_id";
+        $uri .= sprintf 'Transcript/%s?t=%s',$retired ? 'Idhistory' : 'Summary', $stable_id;
       } elsif ($object_type eq 'Translation') {
-        $uri .= "Transcript/ProteinSummary?t=$stable_id";
+        $uri .= sprintf 'Transcript/%s?t=%s', $retired ? 'Idhistory/Protein' : 'ProteinSummary', $stable_id;
       } elsif ($object_type eq 'GeneTree') {
-        $uri = "/Multi/GeneTree/Image?gt=$stable_id";
+        $uri = "/Multi/GeneTree/Image?gt=$stable_id"; # no history page!
       } elsif ($object_type eq 'Family') {
-        $uri = "/Multi/Family/Details?fm=$stable_id";
+        $uri = "/Multi/Family/Details?fm=$stable_id"; # no history page!
       } else {
         $uri .= "psychic?q=$stable_id";
       }
-      
-      $r->uri($uri);
-      $r->headers_out->add('Location' => $r->uri);
-      $r->child_terminate;
-      
-      $ENSEMBL_WEB_REGISTRY->timer_push('Handler "REDIRECT"', undef, 'Apache');
-    
-      return HTTP_MOVED_PERMANENTLY;
     }
-    
-    ## In case the given ID is retired, which means no species 
-    ## can be returned by the API call above
-    $r->uri('/');
+
+    $uri ||= "/Multi/psychic?q=$stable_id";
+
+    $r->uri($uri);
     $r->headers_out->add('Location' => $r->uri);
     $r->child_terminate;
-    
+
     $ENSEMBL_WEB_REGISTRY->timer_push('Handler "REDIRECT"', undef, 'Apache');
-    
-    return NOT_FOUND;
+
+    return HTTP_MOVED_PERMANENTLY;
   }
 
   my %lookup = map { $_ => 1 } $species_defs->valid_species;
