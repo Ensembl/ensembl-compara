@@ -177,6 +177,11 @@ sub render_toolbar {
     $toolbar .= sprintf '<a href="%spdf" class="export popup %s" title="%s"></a>', $url, $self->{'export'}, $icon_mapping->{'image'}{'title'};
   }
 
+  if ($self->{'data_export'}) {
+    my $url = $hub->url({'type' => 'DataExport'});
+    $toolbar .= sprintf '<a href="%s" class="download modal_link" title="%s"></a>', $url, $icon_mapping->{'download'}{'title'};
+  }
+
   if ($toolbar) {
     $top    = $self->toolbars->{'top'} ? qq(<div class="image_toolbar top print_hide">$toolbar</div>$export$image_resize) : '';
     $bottom = ($self->toolbars->{'bottom'} || $height > 999) ? sprintf '<div class="image_toolbar bottom print_hide">%s</div>%s', $toolbar, $top ? '' : "$export$image_resize" : '';
