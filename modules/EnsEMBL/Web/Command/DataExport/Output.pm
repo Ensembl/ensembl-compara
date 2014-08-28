@@ -374,7 +374,13 @@ sub write_alignments {
   my ($self, $format, $location) = @_;
   my $hub = $self->hub;
 
-  my $alignments = $self->object->get_alignments($location->slice, $hub->param('align'), $hub->species);
+  $self->object->{'alignments_function'} = 'get_SimpleAlign';
+
+  my $alignments = $self->object->get_alignments({
+                                                'slice'   => $location->slice,
+                                                'align'   => $hub->param('align'),
+                                                'species' => $hub->species,
+                                              });
 
   my $export;
 
