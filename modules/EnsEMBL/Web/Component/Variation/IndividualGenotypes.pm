@@ -152,8 +152,8 @@ sub summary_tables {
       while ($description =~ m/^.{75}.*?(\s|\,|\.)/g) {
         my $extra_desc =  substr($description, (pos $description));
            $extra_desc =~ s/,/ /g;
-        $description  = qq{<span class="hidden export">$full_desc</span>};
-        $description .= substr($description, 0, (pos $description) - 1) . qq{... <span class="_ht" title="... $extra_desc">(more)</span>};
+           $extra_desc = $self->strip_HTML($extra_desc);
+        $description = qq{<span class="hidden export">$full_desc</span>} . substr($description, 0, (pos $description) - 1) . qq{... <span class="_ht" title="... $extra_desc">(more)</span>};
         last;
       }
     }
