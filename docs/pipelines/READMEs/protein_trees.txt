@@ -428,10 +428,7 @@ Make sure that your species tree contains all the species.
 
 6. Looking at the results
 
+The pipeline generates and emails a report with statistics about the gene trees.
+You'll need to use either the PERL API or a REST server to actually connect to the database and study the trees.
 
-You'll need to use either the PERL API or a REST server to connect to the database
-
-There is a script to generate tables of statistics about the gene trees:
-
-cat $ENSEMBL_CVS_ROOT_DIR/ensembl-compara/sql/tree-stats.sql | $ENSEMBL_CVS_ROOT_DIR/ensembl-hive/scripts/db_cmd.pl -url ${EHIVE_URL} -extra='--html' | sed 's/\/TABLE>/\/TABLE>\n/g' | grep -v optimize | bash $ENSEMBL_CVS_ROOT_DIR/ensembl-compara/scripts/pipeline/get_stats_trees.sh pt > protein_trees.html
 
