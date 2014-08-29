@@ -279,7 +279,7 @@ sub handler {
 
   ## Simple redirect to VEP
 
-  if ($SiteDefs::ENSEMBL_SITETYPE eq 'Pre' && $file =~ /\/vep/i) { ## Pre has no VEP, so redirect to tools page
+  if ($SiteDefs::ENSEMBL_SUBTYPE eq 'Pre' && $file =~ /\/vep/i) { ## Pre has no VEP, so redirect to tools page
     $r->uri('/info/docs/tools/index.html');
     $redirect = 1;
   } elsif ($file =~ /\/info\/docs\/variation\/vep\/vep_script.html/) {
@@ -483,7 +483,7 @@ sub handler {
   # Permanent redirect for old species home pages:
   # e.g. /Homo_sapiens or Homo_sapiens/index.html -> /Homo_sapiens/Info/Index
   if ($species && $species_name && (!$script || $script eq 'index.html')) {
-    $r->uri($species_name eq 'common' ? 'index.html' : $species_defs->ENSEMBL_SITETYPE eq 'Ensembl mobile' ? "/$species_name/Info/Annotation#assembly" : "/$species_name/Info/Index"); #additional if for mobile site different species home page
+    $r->uri($species_name eq 'common' ? 'index.html' : $species_defs->ENSEMBL_SUBTYPE =~ /mobile/i ? "/$species_name/Info/Annotation#assembly" : "/$species_name/Info/Index"); #additional if for mobile site different species home page
     $r->headers_out->add('Location' => $r->uri);
     $r->child_terminate;
     $ENSEMBL_WEB_REGISTRY->timer_push('Handler "REDIRECT"', undef, 'Apache');

@@ -2503,7 +2503,7 @@ sub add_alignments {
   
   my $species_defs = $self->species_defs;
   
-  return if $species_defs->ENSEMBL_SITETYPE eq 'Pre';
+  return if $species_defs->ENSEMBL_SUBTYPE eq 'Pre';
   
   my $alignments = {};
   my $self_label = $species_defs->species_label($species, 'no_formatting');
