@@ -91,6 +91,7 @@ sub create_form {
       'name'    => 'compression',
       'label'   => 'Output',
       'values'  => $compress,
+      'notes'   => 'Select "uncompressed" to get a preview of your file',
     },
   ]);
   ## Hidden fields needed to fetch and process data
