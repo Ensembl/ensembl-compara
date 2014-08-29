@@ -72,6 +72,9 @@ sub default_options {
     return {
         %{$self->SUPER::default_options},   # inherit the generic ones
 
+    # User details
+        #'email'                 => 'john.smith@example.com',
+
     # parameters that are likely to change from execution to another:
         #'mlss_id'               => 40077,   # it is very important to check that this value is current (commented out to make it obligatory to specify)
         #'ensembl_release'       => 68,      # it defaults to Bio::EnsEMBL::ApiVersion::software_version(): you're unlikely to change the value
@@ -1233,6 +1236,14 @@ sub pipeline_analyses {
                 'stnt_sql_script'   => $self->o('ensembl_cvs_root_dir').'/ensembl-compara/sql/tree-stats-as-stn_tags.sql',
                 'command_line_db'   => $self->dbconn_2_mysql('pipeline_db', 1),
                 'cmd'               => 'mysql  #command_line_db# < #stnt_sql_script#',
+            },
+            -flow_into      => [ 'email_tree_stats_report' ],
+        },
+
+        {   -logic_name     => 'email_tree_stats_report',
+            -module         => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::HTMLReport',
+            -parameters     => {
+                'email' => $self->o('email'),
             },
         },
 

@@ -59,6 +59,9 @@ sub default_options {
     return {
         %{$self->SUPER::default_options},   # inherit the generic ones
 
+    # User details
+        'email'                 => $self->o('ENV', 'USER').'@sanger.ac.uk',
+
     # parameters that are likely to change from execution to another:
         'rel_with_suffix'       => $self->o('ensembl_release'), # You can add a letter to distinguish this run from other runs on the same release
         'do_not_reuse_list'     => [ ],     # names of species we don't want to reuse this time

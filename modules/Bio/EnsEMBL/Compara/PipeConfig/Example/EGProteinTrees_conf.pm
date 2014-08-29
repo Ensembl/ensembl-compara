@@ -73,6 +73,9 @@ sub default_options {
     return {
         %{$self->SUPER::default_options},   # inherit the generic ones
 
+    # User details
+        'email'                 => $self->o('ENV', 'USER').'@ebi.ac.uk',
+
     # parameters that are likely to change from execution to another:
         #mlss_id => 40043,
         #'do_not_reuse_list' => ['guillardia_theta'], # set this to empty or to the genome db names we should ignore
