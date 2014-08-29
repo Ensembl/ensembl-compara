@@ -56,7 +56,7 @@ sub content {
     my %field_info = ('name' => $_);
 
     my @core_params = keys %{$hub->core_object('parameters')};
-    push @core_params, qw(name format compression data_type component export_action);
+    push @core_params, qw(name format compression data_type component export_action align);
     unless (grep @core_params, $_) {
       $field_info{'name'} .= '_'.$hub->param('format');
     }
