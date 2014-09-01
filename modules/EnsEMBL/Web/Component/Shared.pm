@@ -463,7 +463,7 @@ sub species_stats {
   my %glossary          = $sd->multiX('ENSEMBL_GLOSSARY');
   my %glossary_lookup   = (
       'coding'              => 'Protein coding',
-      'snoncoding'          => 'Short non coding gene',
+      'snoncoding'          => 'Small non coding gene',
       'lnoncoding'          => 'Long non coding gene',
       'pseudogene'          => 'Pseudogene',
       'transcript'          => 'Transcript',
