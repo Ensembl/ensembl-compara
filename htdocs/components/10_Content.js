@@ -308,7 +308,7 @@ Ensembl.Panel.Content = Ensembl.Panel.extend({
   glossary: function () {
     this.elLk.glossary.each(function() {
       var el  = $(this);
-      el.helptip({ content: el.children('.floating_popup').remove().html() });
+      el.helptip({ content: el.children('.floating_popup').remove().html(), delay: true });
     });
   },
   
