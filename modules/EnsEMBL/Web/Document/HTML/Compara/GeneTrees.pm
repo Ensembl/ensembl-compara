@@ -30,49 +30,56 @@ use EnsEMBL::Web::Document::Table;
 
 use Bio::EnsEMBL::Compara::Utils::SpeciesTree;
 
+use HTML::Entities qw(encode_entities);
+
 use base qw(EnsEMBL::Web::Document::HTML::Compara);
 
 
+#
+# Read the site-wide configuration variables TAXON_LABEL and TAXON_ORDER
+# and sorts all the SpeciesTreeNode objects given in $species
+#
+
 sub order_species_by_clade {
   my ($self, $species) = @_;
-  my $species_sets = $self->hub->species_defs->multi_hash->{'DATABASE_COMPARA'}{'SPECIES_SET'} || {};
 
-  my @species_set_names = grep {$species_sets->{$_}->{'taxon_id'}} (keys %$species_sets);
-  my %ss_by_gdb_ids = ();
-  my %ss_length = ();
-  foreach my $name (@species_set_names) {
-    foreach my $gdb_id (uniq @{$species_sets->{$name}->{genome_db_ids}}) {
-      push @{$ss_by_gdb_ids{$gdb_id}}, $name;
-      $ss_length{$name} ++;
-    }
-  }
-  my %is_below = ();
-  my %after_rules = ();
-  my %true_content = ();
-  foreach my $gdb_id (keys %ss_by_gdb_ids) {
-    my @names = sort {$ss_length{$a} <=> $ss_length{$b}} @{$ss_by_gdb_ids{$gdb_id}};
-    push @{$true_content{$names[0]}}, $gdb_id;
-    while (scalar(@names) >= 2) {
-      $after_rules{$names[1]}{$names[0]} = 1;
-      $is_below{$names[0]} = 1;
-      shift @names;
-    }
-  }
-  my @ss_order = ();
-  my @top_names = sort {$ss_length{$b} <=> $ss_length{$a} || lc $a cmp lc $b} (grep {not $is_below{$_}} @species_set_names);
-  $self->add_species_set($_, \%after_rules, \%ss_length, \@ss_order) for @top_names;
+  my $hub           = $self->hub;
+  my $species_defs  = $hub->species_defs;
+  my $species_info  = $hub->get_species_info;
+  my $labels        = $species_defs->TAXON_LABEL; ## sort out labels
 
-  my %stn_by_gdb_id = ();
+  my (@group_order, %label_check);
+  foreach my $taxon (@{$species_defs->TAXON_ORDER || []}) {
+    my $label = $labels->{$taxon} || $taxon;
+    push @group_order, $label unless $label_check{$label}++;
+  }
+
+  my %stn_by_name = ();
   foreach my $stn (@$species) {
-    $stn_by_gdb_id{$stn->genome_db_id} = $stn;
+    $stn_by_name{$stn->genome_db->name} = $stn;
   };
 
-  my @final_sets;
-  foreach my $name (reverse @ss_order) {
-    my @species_here = map {delete $stn_by_gdb_id{$_}} @{$true_content{$name}};
-    push @final_sets, [(scalar(@species_here) != $ss_length{$name} ? 'other ' : '').$name, [sort {$a->node_name cmp $b->node_name} @species_here]];
+  ## Sort species into desired groups
+  my %phylo_tree;
+
+  foreach (keys %$species_info) {
+    my $group = $species_info->{$_}->{'group'};
+    my $group_name = $group ? $labels->{$group} || $group : 'no_group';
+    push @{$phylo_tree{$group_name}}, $_;
   }
-  push @final_sets, [undef, [sort {$a->node_name cmp $b->node_name} (grep {$stn_by_gdb_id{$_->genome_db_id} } @$species)]] if scalar(keys %stn_by_gdb_id);
+
+  my @final_sets;
+
+  ## Output in taxonomic groups, ordered by common name
+  foreach my $group_name (@group_order) {
+    my $species_list = $phylo_tree{$group_name};
+
+    if ($species_list && ref $species_list eq 'ARRAY' && scalar @$species_list) {
+      my $name_to_use = ($group_name eq 'no_group') ? (scalar(@group_order) > 1 ? 'Other species' : 'All species') : encode_entities($group_name);
+      my @sorted_by_common = sort { $species_info->{$a}->{'common'} cmp $species_info->{$b}->{'common'} } @$species_list;
+      push @final_sets, [$name_to_use, [map {encode_entities($stn_by_name{lc $_})} @sorted_by_common]];
+    }
+  }
 
   return \@final_sets;
 }
