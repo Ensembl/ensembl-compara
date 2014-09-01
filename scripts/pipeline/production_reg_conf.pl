@@ -68,7 +68,7 @@ Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->new(
     -pass => $ENV{'ENSADMIN_PSW'},
     -port => 3306,
     -species => 'compara_nctrees',
-    -dbname => 'mp12_compara_nctrees_77',
+    -dbname => 'mm14_compara_nctrees_77',
 );
 
 # Individual pipeline database for Families:
