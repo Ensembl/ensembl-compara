@@ -26,6 +26,7 @@
       
       var tip      = options.content;
       var track    = options.track    || $(this).hasClass('_ht_track');
+      var delay    = options.delay    || $(this).hasClass('_ht_delay');
       var position = $.extend({
         my:    track ? 'center top+24' : 'center top+8',
         at:    'center bottom',
@@ -40,6 +41,21 @@
       
       delete options.content;
       delete options.position;
+      delete options.delay;
+
+      if (delay) {
+        options.close = function(e, ui) {
+          ui.tooltip.on({
+            'mouseenter.helptip': function() {
+              $(this).clearQueue();
+            },
+            'mouseleave.helptip': function() {
+              $(this).remove();
+            }
+          });
+        };
+        options.hide = { delay: 200, duration: 0 }; // this is to give user 200ms to enter the tooltip popup before it closes
+      }
       
       return this.map(function () {
         return $(this).data('uiTooltip') ? this : $(this).tooltip($.extend({
