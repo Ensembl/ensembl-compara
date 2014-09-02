@@ -438,6 +438,14 @@ sub get_families {
     return {};
   }
 
+  ## Get gene member
+  my $gm_adaptor;
+  eval {
+    $gm_adaptor = $databases->get_GeneMemberAdaptor
+  };
+ 
+  my $member  = $gm_adaptor->fetch_by_stable_id($self->gene->stable_id);
+
   # create family object
   my $family_adaptor;
   eval {
@@ -450,10 +458,9 @@ sub get_families {
   }
   
   my $families = [];
-  my $translation = $self->translation_object;
-  
+
   eval {
-    $families = $family_adaptor->fetch_by_Member_source_stable_id('ENSEMBLPEP',$translation->stable_id)
+    $families = $family_adaptor->fetch_all_by_GeneMember($member);
   };
 
   # munge data
@@ -463,10 +470,13 @@ sub get_families {
     my $ga = $self->database('core')->get_GeneAdaptor;
     
     foreach my $family (@$families) {
+      my @members = @{$family->get_all_GeneMembers};
+      my $count = grep $_->taxon_id eq $taxon_id, @members;
+      my @genes = map { $ga->fetch_by_stable_id($_->stable_id) } @members;
       $family_hash->{$family->stable_id} = {
         'description' => $family->description,
-        'count'       => $family->Member_count_by_source_taxon('ENSEMBLGENE', $taxon_id),
-        'genes'       => [ map { $ga->fetch_by_stable_id($_->stable_id) } @{$family->get_Member_by_source_taxon('ENSEMBLGENE', $taxon_id) || []} ],
+        'genes'       => \@genes,
+        'count'       => $count, 
       };
     }
   }
