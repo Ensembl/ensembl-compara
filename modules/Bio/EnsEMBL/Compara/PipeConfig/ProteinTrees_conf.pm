@@ -573,7 +573,9 @@ sub pipeline_analyses {
                 mode            => 'species_tree',
                 binary          => 0,
             },
-            -flow_into  => [ 'has_user_provided_binary_species_tree' ],
+            -flow_into  => {
+                $self->o('use_notung') ? 1 : 999 => [ 'has_user_provided_binary_species_tree' ],
+            },
             %hc_analysis_params,
         },
 
