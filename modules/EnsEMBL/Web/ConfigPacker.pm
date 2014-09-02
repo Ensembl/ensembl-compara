@@ -1661,18 +1661,10 @@ sub _munge_meta {
     my $taxonomy = $meta_hash->{'species.classification'};
     
     if ($taxonomy && scalar(@$taxonomy)) {
-      my $order = $self->tree->{'TAXON_ORDER'};
-      
-      foreach my $taxon (@$taxonomy) {
-        foreach my $group (@$order) {
-          if ($taxon eq $group) {
-            $self->tree->{$species}{'SPECIES_GROUP'} = $group;
-            last;
-          }
-        }
-        
-        last if $self->tree->{$species}{'SPECIES_GROUP'};
-      }
+      my %valid_taxa = map {$_ => 1} @{ $self->tree->{'TAXON_ORDER'} };
+      my @matched_groups = grep {$valid_taxa{$_}} @$taxonomy;
+      $self->tree->{$species}{'SPECIES_GROUP'} = $matched_groups[0] if @matched_groups;
+      $self->tree->{$species}{'SPECIES_GROUP_HIERARCHY'} = \@matched_groups;
     }
 
     ## create lookup hash for species aliases
