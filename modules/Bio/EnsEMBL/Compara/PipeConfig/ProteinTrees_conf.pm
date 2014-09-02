@@ -1195,7 +1195,8 @@ sub pipeline_analyses {
         {   -logic_name => 'long_running_clusters_go_to_mafft',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::GeneTreeConditionalDataFlow',
             -parameters => {
-                'condition'             => '(#tree_reuse_aln_runtime# || 0)/1000 > #mafft_runtime#',
+                'condition'             => '#tree_reuse_aln_runtime#/1000 > #mafft_runtime#',
+                'defaults'              => { 'tree_reuse_aln_runtime' => 0 },
                 'mafft_runtime'         => $self->o('mafft_runtime'),
             },
             -flow_into  => {

@@ -36,6 +36,21 @@ use warnings;
 use base ('Bio::EnsEMBL::Compara::RunnableDB::ConditionalDataFlow');
 
 
+=head2 param_defaults
+
+    Description : "defaults" is expected to be there. It contains the default values of the parameters that could be missing
+
+=cut
+
+sub param_defaults {
+    my $self = shift;
+    return {
+        %{ $self->SUPER::param_defaults() },
+        defaults => {},
+    }
+}
+
+
 =head2 fetch_input
 
     Description : Loads all the gene-tree tags with the "tree_" prefix, and the tree itself in "gene_tree".
@@ -51,7 +66,13 @@ sub fetch_input {
     my $gene_tree = $self->compara_dba->get_GeneTreeAdaptor->fetch_by_dbID($self->param_required('gene_tree_id'));
     $self->param('gene_tree', $gene_tree);
 
+    my $defaults = $self->param_required('defaults');
+    foreach my $tag (keys %$defaults) {
+        $self->param($tag, $defaults->{$tag});
+    }
+
     foreach my $tag ($gene_tree->get_all_tags()) {
+        warn sprintf("setting %s=%s\n", 'tree_'.$tag, $gene_tree->get_value_for_tag($tag)) if $self->debug;
         $self->param('tree_'.$tag, $gene_tree->get_value_for_tag($tag));
     }
 
