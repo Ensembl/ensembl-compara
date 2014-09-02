@@ -55,13 +55,13 @@ sub content {
   foreach my $family_id (sort keys %$families) {
     my $family     = $families->{$family_id};
     my $row        = { id => sprintf qq(<a href="%s">$family_id</a><br />), $hub->url({ species => 'Multi', type => "Family$ckey", action => 'Details', fm => $family_id, __clear => 1 })};
-    my $genes      = $families->{$family_id}{'info'}{'genes'};
+    my $gene_count = $families->{$family_id}{'info'}{'count'};
     my $url_params = { function => "Genes$ckey", family => $family_id, g => $gene_stable_id, cdb => $cdb };
     my $label;
 
-    if (scalar(@$genes)) {
-      $label      =  scalar @$genes > 1 ? 'genes' : 'gene';
-      $row->{'id'}  .= sprintf('(<a href="%s">%s %s</a>)', $hub->url($url_params), scalar @$genes, $label);
+    if ($gene_count) {
+      $label      =  $gene_count > 1 ? 'genes' : 'gene';
+      $row->{'id'}  .= sprintf('(<a href="%s">%s %s</a>)', $hub->url($url_params), $gene_count, $label);
     }
     $row->{'annot'}        = $families->{$family_id}{'info'}{'description'};
 
@@ -70,7 +70,7 @@ sub content {
       (my $name) = $t->display_xref;
       $label = $name ? ' ('.$name.')' : '';
       my $url = $hub->url({type => 'Transcript', action => 'ProteinSummary', t => $t->stable_id });
-      $row->{'proteins'} .= sprintf '<li><a href="%s">%s</a>%s</li>', $url, $t->Obj->translation->stable_id, $label;
+      $row->{'proteins'} .= $t->Obj->translation ? sprintf '<li><a href="%s">%s</a>%s</li>', $url, $t->Obj->translation->stable_id, $label : '';
     }
     $row->{'transcripts'} .= '</ul>';
 
