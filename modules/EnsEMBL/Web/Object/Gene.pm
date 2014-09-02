@@ -602,7 +602,6 @@ sub get_all_families {
           push @{$families->{$id}{'transcripts'}}, $transcript;
         }
         else {
-          my @A = keys %$info;
           $families->{$id} = {'info' => $info, 'transcripts' => [$transcript]};
         }
       }
