@@ -70,6 +70,11 @@ sub order_species_by_clade {
 
   my @final_sets;
 
+  my $favourites    = $hub->get_favourite_species;
+  if (scalar @$favourites) {
+    push @final_sets, ['Favourite species', [map {encode_entities($stn_by_name{lc $_})} @$favourites]];
+  }
+
   ## Output in taxonomic groups, ordered by common name
   foreach my $group_name (@group_order) {
     my $species_list = $phylo_tree{$group_name};
