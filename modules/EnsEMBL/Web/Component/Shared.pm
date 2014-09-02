@@ -77,7 +77,7 @@ sub transcript_table {
   my $hub         = $self->hub;
   my $object      = $self->object;
   my $species     = $hub->species;
-  my $table       = $self->new_twocol; 
+  my $table       = $self->new_twocol;
   my $html        = '';
   my $page_type   = ref($self) =~ /::Gene\b/ ? 'gene' : 'transcript';
   my $description = $object->gene_description;
@@ -116,16 +116,10 @@ sub transcript_table {
   my $gene = $page_type eq 'gene' ? $object->Obj : $object->gene;
   foreach (@{$object->get_similarity_hash(0, $gene)}) {
     next unless $_->{'type'} eq 'PRIMARY_DB_SYNONYM';
-    my $id           = $_->display_id; 
+    my $id           = $_->display_id;
     my $synonym     = $self->get_synonyms($id, @syn_matches);
-    my $url = $hub->url({
-      type   => 'Location',
-      action => 'Genome',
-      r      => $location, 
-      id     => $id,
-      ftype  => 'Gene',
-    });
-    $syns_html .= qq{<p>$synonym [<span class="small"><a href="$url">View all $site_type genes linked to this name</a>.</span>]</p>};
+    next unless $synonym;
+    $syns_html .= "<p>$synonym</p>";
   }
 
   $table->add_row('Synonyms', $syns_html) if $syns_html;
