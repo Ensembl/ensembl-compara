@@ -20,9 +20,7 @@ package EnsEMBL::Web::Component::Gene::SpeciesTree;
 
 use strict;
 
-use Bio::AlignIO;
 use Bio::EnsEMBL::Registry;
-use IO::Scalar;
 
 use EnsEMBL::Web::Constants;
 
