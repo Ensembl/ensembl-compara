@@ -173,10 +173,13 @@ List of available views:
 
 } elsif ($page eq 'coverage')  {
 
+    my $n_group = scalar(@$ordered_species)-1;
     $html .= q{<h2>Gene-tree coverage (per species)</h2>};
+    $html .= '<p>Quick links: '.join(', ', map {sprintf('<a href="#cladegroup%d">%s</a>', $_, $ordered_species->[$_]->[0])} 1..$n_group).'</p>' if scalar(@$ordered_species) > 1;
     $html .= $self->piechart_header([qw(#fc0 #909 #69f #a22 #25a #8a2)]);
-    foreach my $set (@$ordered_species) {
-      $html .= sprintf('<h3>%s</h3>', ucfirst $set->[0] || 'Others') if scalar(@$ordered_species) > 1;
+    for (0..$n_group) {
+      my $set = $ordered_species->[$_];
+      $html .= sprintf('<h3><a name="cladegroup%d"></a>%s</h3>', $_, ucfirst $set->[0] || 'Others') if scalar(@$ordered_species) > 1;
       $html .= $self->get_html_for_gene_tree_coverage($set->[0], $set->[1], $method, \$counter_raphael_holders);
     }
 
