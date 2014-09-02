@@ -61,6 +61,12 @@ sub populate_tree {
     { 'availability' => 'gene', 'concise' => 'Supporting evidence' }
   );
 
+  my $caption = $self->object && $self->object->availability->{'has_alt_alleles'} ? 'Alt. alleles ([[counts::alternative_alleles]])' : 'Alt. alleles';
+  $self->create_node('Alleles', $caption,
+                     [qw(alleles EnsEMBL::Web::Component::Gene::Alleles)],
+                     { 'availability' => 'core has_alt_alleles', 'concise' => 'Alleles' }
+                   );
+
   my $seq_menu = $self->create_node('Sequence', 'Sequence',
     [qw( sequence EnsEMBL::Web::Component::Gene::GeneSeq )],
     { 'availability' => 'gene', 'concise' => 'Marked-up sequence' }
