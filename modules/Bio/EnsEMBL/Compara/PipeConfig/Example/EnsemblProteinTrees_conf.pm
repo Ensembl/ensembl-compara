@@ -190,7 +190,7 @@ sub default_options {
         #'prev_core_sources_locs'   => [ $self->o('staging_loc1'), $self->o('staging_loc2') ],
 
         # Add the database location of the previous Compara release. Use "undef" if running the pipeline without reuse
-        'prev_rel_db' => 'mysql://ensro@ens-livemirror:3306/ensembl_compara_'.($self->o('ensembl_release')-1),
+        'prev_rel_db' => 'mysql://ensro@ens-livemirror:3306/ensembl_compara_76',
 
         # To run without a master database
         #'master_db'                 => undef,
