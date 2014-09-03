@@ -17,6 +17,16 @@ limitations under the License.
 
 =cut
 
+##################################
+#
+#  DEPRECATED MODULE
+#
+# The local BioPerl server is no
+# longer in use, so this module is
+# obsolete. It will be removed in
+# Ensembl release 78.
+#
+##################################
 
 package EnsEMBL::Web::ExtIndex::bioperl;
 use strict;
@@ -24,15 +34,19 @@ use Bio::DB::SQL::DBAdaptor;
 use Bio::SeqIO;
 
 sub new {
+warn "!!! DEPRECATED MODULE - will be removed in Release 78";
   my $class = shift;
   my $self = {};
   bless $self, $class;
   return $self;
 }
 
-sub get_seq_by_acc{ my $self = shift; $self->get_seq_by_id( @_ ); }
+sub get_seq_by_acc{ 
+warn "!!! DEPRECATED MODULE - will be removed in Release 78";
+my $self = shift; $self->get_seq_by_id( @_ ); }
 
 sub get_seq_by_id{
+warn "!!! DEPRECATED MODULE - will be removed in Release 78";
   my ($self, $args)=@_;
   my $db = Bio::DB::SQL::DBAdaptor->new(
     -user   => 'ensro',

@@ -17,6 +17,16 @@ limitations under the License.
 
 =cut
 
+##################################
+#
+#  DEPRECATED MODULE
+#
+# The SRS service is no longer
+# maintained, so this module is
+# obsolete. It will be removed in
+# Ensembl release 78.
+#
+##################################
 
 package EnsEMBL::Web::ExtIndex::WEBSRS;
 require LWP::UserAgent;
@@ -24,6 +34,7 @@ require LWP::UserAgent;
 use strict;
 
 sub new {
+warn "!!! DEPRECATED MODULE - will be removed in Release 78";
   my $class = shift;
   my $self = {
     'options' => {
@@ -38,10 +49,15 @@ sub new {
   return $self;
 }
 
-sub get_seq_by_id  { my ($self, $args)=@_; return $self->query_server( "id",  $args); }
-sub get_seq_by_acc { my ($self, $args)=@_; return $self->query_server( "acc", $args); }
+sub get_seq_by_id  { 
+warn "!!! DEPRECATED MODULE - will be removed in Release 78";
+my ($self, $args)=@_; return $self->query_server( "id",  $args); }
+sub get_seq_by_acc { 
+warn "!!! DEPRECATED MODULE - will be removed in Release 78";
+my ($self, $args)=@_; return $self->query_server( "acc", $args); }
 
 sub query_server {
+warn "!!! DEPRECATED MODULE - will be removed in Release 78";
   my ($self, $type, $args) = @_;
   
   my $db = lc($args->{'DB'});

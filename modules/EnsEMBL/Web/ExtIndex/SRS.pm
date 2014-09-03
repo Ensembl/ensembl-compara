@@ -16,10 +16,23 @@ limitations under the License.
 
 =cut
 
+##################################
+#
+#  DEPRECATED MODULE
+#
+# The SRS service is no longer
+# maintained, so this module is
+# obsolete. It will be removed in
+# Ensembl release 78.
+#
+##################################
+
+
 package EnsEMBL::Web::ExtIndex::SRS;
 use strict;
 
 sub new {
+warn "!!! DEPRECATED MODULE - will be removed in Release 78";
   my $class = shift;
   my $self = {
     'options' => {
@@ -35,16 +48,19 @@ sub new {
 }
 
 sub get_seq_by_id {
+warn "!!! DEPRECATED MODULE - will be removed in Release 78";
   my ($self, $args)=@_;
   return $self->_get( "$args->{'DB'}-id", $args );
 }
 
 sub get_seq_by_acc {
+warn "!!! DEPRECATED MODULE - will be removed in Release 78";
   my ($self, $args)=@_;
   return $self->_get( "$args->{'DB'}-acc", $args );
 }
 
 sub _get {
+warn "!!! DEPRECATED MODULE - will be removed in Release 78";
   my( $self,$db, $args ) = @_;
   my $pid='';
   my @output;
