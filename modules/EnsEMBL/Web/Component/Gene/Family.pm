@@ -55,7 +55,7 @@ sub content {
   foreach my $family_id (sort keys %$families) {
     my $family     = $families->{$family_id};
     my $row        = { id => sprintf qq(<a href="%s">$family_id</a><br />), $hub->url({ species => 'Multi', type => "Family$ckey", action => 'Details', fm => $family_id, __clear => 1 })};
-    my $gene_count = $families->{$family_id}{'info'}{'count'};
+    my $gene_count = scalar @{$families->{$family_id}{'info'}{'genes'}};
     my $url_params = { function => "Genes$ckey", family => $family_id, g => $gene_stable_id, cdb => $cdb };
     my $label;
 
