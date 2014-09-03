@@ -22,6 +22,8 @@ use strict;
   
 use base qw(EnsEMBL::Web::Component::TextSequence EnsEMBL::Web::Component::Transcript);
 
+use List::Util qw(max);
+
 sub get_sequence_data {
   my ($self, $object, $config) = @_;
   my $hub          = $self->hub;
@@ -228,7 +230,11 @@ sub get_sequence_data {
       
       foreach my $type (keys %$mk) {
         my %tmp = map { $_ - $cd_start + 1 >= 0 && $_ - $cd_start + 1 < $length ? ($_ - $cd_start + 1 => $mk->{$type}{$_}) : () } keys %{$mk->{$type}};
+        my $decap = max(-1,grep {  $_-$cd_start+1 < 0 } keys %{$mk->{$type}});
         $shifted->{$type} = \%tmp;
+        if($decap > 0 and $type eq 'exons') {
+          $shifted->{$type}{0}{'type'} = $mk->{$type}{$decap}{'type'};
+        }
       }
       
       $mk = $shifted;
@@ -237,7 +243,7 @@ sub get_sequence_data {
   
   # Used to set the initial sequence colour
   if ($config->{'exons'}) {
-    $_->{'exons'}{0}{'type'} = [ 'exon0' ] for @markup;
+    $_->{'exons'}{0}{'type'} ||= [ 'exon0' ] for @markup;
   }
   
   return (\@sequence, \@markup);
