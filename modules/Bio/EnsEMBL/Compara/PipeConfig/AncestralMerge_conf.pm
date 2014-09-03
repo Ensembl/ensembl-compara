@@ -58,7 +58,7 @@ sub default_options {
     return {
          %{$self->SUPER::default_options},
 
-            'ensembl_release' => 76,
+            'ensembl_release' => 77,
         'rel_suffix'        => '',                                                  # empty string by default
         'rel_with_suffix'   => $self->o('ensembl_release').$self->o('rel_suffix'),  # for convenience
 
@@ -66,7 +66,7 @@ sub default_options {
 
         'merge_script'  => $self->o('ensembl_cvs_root_dir').'/ensembl-compara/scripts/pipeline/copy_ancestral_core.pl',
 
-        'prev_ancestral_db' => 'mysql://ensadmin:' . $self->o('password') . '@ens-livemirror/ensembl_ancestral_75',
+        'prev_ancestral_db' => 'mysql://ensadmin:' . $self->o('password') . '@ens-livemirror/ensembl_ancestral_76',
 
         'reservation_sfx' => '',    # set to '000' for farm2, to '' for farm3 and EBI
     };
@@ -121,8 +121,8 @@ sub pipeline_analyses {
                                       # [ '654' => $self->o('prev_ancestral_db'), ],     # 16 eutherian mammals
 
                         # copying from new sources:
-                     [ '742' => 'mysql://ensadmin:'.$self->o('password').'@compara4/sf5_epo_7primates_ancestral_core_76' ],   # 7-way primates
-                     [ '741' => 'mysql://ensadmin:'.$self->o('password').'@compara3/sf5_epo_16mammals_ancestral_core_76' ],   # 16-way mammals
+                     [ '756' => 'mysql://ensadmin:'.$self->o('password').'@compara5/sf5_epo_8primates_ancestral_core_77' ],   # 8-way primates
+                     [ '755' => 'mysql://ensadmin:'.$self->o('password').'@compara4/sf5_epo_17mammals_ancestral_core_77' ],   # 17-way mammals
                 ],
             },
             -flow_into => {
