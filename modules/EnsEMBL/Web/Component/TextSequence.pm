@@ -50,7 +50,8 @@ sub buttons {
 
   return unless $options->{'action'};
 
-  my $params  = {'type' => 'DataExport', 'action' => $options->{'action'}, 'data_type' => $self->hub->type, 'component' => $self->id};
+  my @namespace = split('::', ref($self));
+  my $params  = {'type' => 'DataExport', 'action' => $options->{'action'}, 'data_type' => $self->hub->type, 'component' => $namespace[-1]};
   foreach (@{$options->{'params'} || []}) {
     $params->{$_} = $hub->param($_);
   }
