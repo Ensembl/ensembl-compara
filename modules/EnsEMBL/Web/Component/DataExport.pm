@@ -55,7 +55,7 @@ sub create_form {
   $filename =~ s/\.[\w|\.]+//;
 
   my @format_info;
-  foreach (sort keys %$fields_by_format) {
+  foreach (sort {lc($a) cmp lc($b)} keys %$fields_by_format) {
     my $info = { 'value' => $_, 'caption' => $format_label->{$_}, 'class' => "_stt__$_ _action_$_"};
     $info->{'selected'} = 'selected' if $hub->param('format') eq $_;
     push @format_info, $info;
@@ -133,9 +133,9 @@ sub create_form {
   ## Add tutorial "fieldset" that is shown by default
   if ($tutorial) {
     my $tutorial_fieldset = $form->add_fieldset({'class' => '_stt_tutorial'});
-    my $html = '<p><b>Guide to file formats</b> (select from dropdown list above)</p>';
-    foreach my $format (sort keys %$fields_by_format) {
-      $html .= $self->get_tutorial($format);
+    my $html = '<p><b>Guide to file formats</b></p>';
+    foreach my $format (sort {lc($a) cmp lc($b)} keys %$fields_by_format) {
+      $html .= $self->show_preview($format);
     }
     $tutorial_fieldset->add_notes($html);
   }
@@ -148,6 +148,7 @@ sub create_form {
     ## Add custom fields for this data type and format
     foreach (@$fields) {
       my ($name, @values) = @$_;
+      next if $name eq 'snp_display' && !$hub->database('variation');
       ## IMPORTANT - use hashes here, not hashrefs, as Form code does weird stuff 
       ## in background that alters the contents of $settings!
       my %field_info = %{$settings->{$name}};
@@ -204,9 +205,12 @@ sub default_file_name {
   return $self->hub->species_defs->ENSEMBL_SITETYPE.'_data_export';
 }
 
-sub get_tutorial {
+sub show_preview {
   my ($self, $format) = @_;
-  my $html = sprintf('<div style="float:left;padding-right:20px;"><p style="margin-bottom:0">%s</p><img src="/img/help/export/%s_tutorial.png"></div>', $format, lc($format));
+  my $img = lc($format);
+  $img .= '_align' if (lc($format) eq 'fasta' && $self->hub->param('align'));
+  
+  my $html = sprintf('<div style="float:left;padding:0 20px 20px 0;"><p style="margin-bottom:0">%s</p><img src="/img/help/export/%s_preview.png" style="width:200px;height:150px" /></div>', $format, $img);
   return $html;
 }
 

@@ -175,7 +175,7 @@ sub create_factory {
   
   if ($factory) {
     my $obj;
-    if($hub->script =~ /Component|DataExport/ and $factory->canLazy) {
+    if($hub->script =~ /Component/ and $factory->canLazy) {
      # warn "!!! BEING LAZY WITH $type";
       $factory->SetTypedDataObject($type,EnsEMBL::Web::Lazy::Object->new(sub {
         $obj = $factory->createObjectsInternal;

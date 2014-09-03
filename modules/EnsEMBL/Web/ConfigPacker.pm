@@ -1796,11 +1796,11 @@ sub _munge_file_formats {
     'msf'       => {'ext' => 'msf',  'label' => 'MSF'},
     'mega'      => {'ext' => 'meg',  'label' => 'Mega'},
     'nexus'     => {'ext' => 'nex',  'label' => 'Nexus'},
-    'psi'       => {'ext' => 'psi',  'label' => 'PSI'},
-    'pfam'      => {'ext' => 'pfam', 'label' => 'Pfam'},
     'phylip'    => {'ext' => 'phy',  'label' => 'Phylip'},
+    'pfam'      => {'ext' => 'pfam', 'label' => 'Pfam'},
+    'psi'       => {'ext' => 'aln',  'label' => 'PSI'},
     'rtf'       => {'ext' => 'rtf',  'label' => 'RTF'},
-    'selex'     => {'ext' => 'slx',  'label' => 'Selex'},
+    'stockholm' => {'ext' => 'stk',  'label' => 'Stockholm'},
   );
 
   ## Munge into something useful to this website

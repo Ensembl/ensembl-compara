@@ -40,17 +40,11 @@ sub content {
   my $settings = {'Hidden' => ['align']};
 
   ## Options per format
-  my $fields_by_format = {
-    'CLUSTALW'  => [],
-    'FASTA'     => [], 
-    'Mega'      => [],
-    'MSF'       => [],
-    'Nexus'     => [],
-    'Pfam'      => [],
-    'Phylip'    => [],
-    'PSI'       => [],
-    'Selex'     => [],
-  };
+  my $fields_by_format = {};
+  ## Add formats output by BioPerl
+  foreach ($self->alignment_formats) {
+    $fields_by_format->{$_} = [];
+  }
 
   ## Create settings form (comes with some default fields - see parent)
   my $form = $self->create_form($settings, $fields_by_format, 1);
@@ -63,6 +57,13 @@ sub default_file_name {
   my $name = $self->hub->species;
   $name .= '_alignment';
   return $name;
+}
+
+sub alignment_formats {
+### Configure this list to match what's available
+### in the installed version of BioPerl
+  my $self = shift;
+  return qw(CLUSTALW FASTA Mega MSF Nexus Pfam Phylip PSI Stockholm);
 }
 
 1;
