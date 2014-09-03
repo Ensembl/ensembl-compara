@@ -29,7 +29,7 @@ Ensembl.Panel.LocationNav = Ensembl.Panel.extend({
 
   currentLocation: function() { // extract r=, in easy to use format
     var url = window.location[Ensembl.locationURL];
-    var url_r = url.match(Ensembl.locationMatch)[1];
+    var url_r = decodeURIComponent(url.match(Ensembl.locationMatch)[1]);
     var r_parts = url_r.match(/^(.*):(.*)-(.*)/);
     return [r_parts[1],parseInt(r_parts[2]),parseInt(r_parts[3])];
   },
@@ -105,13 +105,7 @@ Ensembl.Panel.LocationNav = Ensembl.Panel.extend({
     this.base();
     
     this.enabled = this.params.enabled || false;
-    
-    $('span.ramp', this.el).hide();
-    var sliderConfig = $.parseJSON($('span.ramp', this.el).text());
-    var sliderLabel  = $('.slider_label', this.el);
-    
-    $('.slider_wrapper', this.el).children().css('display', 'inline-block');
-    
+
     this.elLk.locationInput = $('.location_selector', this.el);
     this.elLk.navbar        = $('.navbar', this.el);
     this.elLk.imageNav      = $('.image_nav', this.elLk.navbar);
@@ -136,6 +130,12 @@ Ensembl.Panel.LocationNav = Ensembl.Panel.extend({
       }
     });
     
+    if(!$('span.ramp', this.el).length) { return; } // No slider here
+    $('span.ramp', this.el).hide();
+    var sliderConfig = $.parseJSON($('span.ramp', this.el).text());
+    var sliderLabel  = $('.slider_label', this.el);
+    
+    $('.slider_wrapper', this.el).children().css('display', 'inline-block');
     var slide_min = sliderConfig.min;
     var slide_max = sliderConfig.max;
     var slide_mul = ( Math.log(slide_max) - Math.log(slide_min) ) / 100;
@@ -182,11 +182,13 @@ Ensembl.Panel.LocationNav = Ensembl.Panel.extend({
   
   getContent: function () {
     var panel = this;
-  
-    panel.elLk.slider.slider('option','fake',true); 
-    panel.elLk.slider.slider('value',panel.val2pos());
-    panel.elLk.slider.slider('option','fake',false); 
-    panel.updateButtons();
+
+    if(panel.elLk.slider) {  
+      panel.elLk.slider.slider('option','fake',true); 
+      panel.elLk.slider.slider('value',panel.val2pos());
+      panel.elLk.slider.slider('option','fake',false); 
+      panel.updateButtons();
+    }
   },
   
   resize: function () {
