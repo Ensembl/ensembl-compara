@@ -324,6 +324,7 @@ sub get_slices {
   my ($self, $args) = @_;
   my (@slices, @formatted_slices, $length);
   my $underlying_slices = !$args->{image}; # Don't get underlying slices for alignment images - they are only needed for text sequence views, and the process is slow.
+  warn ">>> ALIGNMENT ".$args->{align};
 
   if ($args->{align}) {
     push @slices, @{$self->get_alignments($args)};
@@ -353,21 +354,34 @@ sub get_slices {
   return (\@formatted_slices, $length);
 }
 
+sub get_target_slice {
+  my $self = shift;
+  my $hub = $self->hub;
+  my $align_param = $hub->param('align');
+  my $target_slice;
+
+  #target_species and target_slice_name_range may not be defined so split separately
+  #target_species but not target_slice_name_range is defined for pairwise compact alignments. 
+  my ($align, $target_species, $target_slice_name_range) = split '--', $align_param;
+  my ($target_slice_name, $target_slice_start, $target_slice_end) = $target_slice_name_range ?
+    $target_slice_name_range =~ /(\w+):(\d+)-(\d+)/ : (undef, undef, undef);
+
+  #Define target_slice
+  if ($target_species && $target_slice_start) {
+      my $target_slice_adaptor = $hub->database('core', $target_species)->get_SliceAdaptor;
+      $target_slice = $target_slice_adaptor->fetch_by_region('toplevel', $target_slice_name, $target_slice_start, $target_slice_end);
+  }
+
+  return $target_slice;
+}
+
 sub get_alignments {
   my ($self, $args) = @_;
   my $hub = $self->hub;
 
   my $cdb = $args->{'cdb'} || 'compara';
 
-  #target_species and target_slice_name_range may not be defined so split separately
-  #target_species but not target_slice_name_range is defined for pairwise compact alignments. 
-  my ($align, $target_species, $target_slice_name_range) = split '--', $args->{align};
-  my ($target_slice_name, $target_slice_start, $target_slice_end) = $target_slice_name_range =~ /(\w+):(\d+)-(\d+)/;
-  my $target_slice;
-  if ($target_species && $target_slice_start) {
-      my $target_slice_adaptor = $hub->database('core', $target_species)->get_SliceAdaptor;
-      $target_slice = $target_slice_adaptor->fetch_by_region('toplevel', $target_slice_name, $target_slice_start, $target_slice_end);
-  }
+  my $target_slice = $self->get_target_slice;
 
   my $func                    = $self->{'alignments_function'} || 'get_all_Slices';
   my $compara_db              = $hub->database($cdb);

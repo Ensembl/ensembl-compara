@@ -50,7 +50,7 @@ sub content {
   my $align_param = $hub->param('align');
 
   my ($align, $target_species, $target_slice_name_range) = split '--', $align_param;
-  my $target_slice = $self->_get_target_slice;
+  my $target_slice = $object->get_target_slice;
 
   my ($alert_box, $error) = $self->check_for_align_problems({
                     'align' => $align,
@@ -171,27 +171,6 @@ sub content {
  
   return $html;
 
-}
-
-sub _get_target_slice {
-  my $self = shift;
-  my $hub = $self->hub;
-  my $align_param = $hub->param('align');
-  my $target_slice;
-
-  #target_species and target_slice_name_range may not be defined so split separately
-  #target_species but not target_slice_name_range is defined for pairwise compact alignments. 
-  my ($align, $target_species, $target_slice_name_range) = split '--', $align_param;
-  my ($target_slice_name, $target_slice_start, $target_slice_end) = $target_slice_name_range ?
-    $target_slice_name_range =~ /(\w+):(\d+)-(\d+)/ : (undef, undef, undef);
-
-  #Define target_slice
-  if ($target_species && $target_slice_start) {
-      my $target_slice_adaptor = $hub->database('core', $target_species)->get_SliceAdaptor;
-      $target_slice = $target_slice_adaptor->fetch_by_region('toplevel', $target_slice_name, $target_slice_start, $target_slice_end);
-  }
-
-  return $target_slice;
 }
 
 sub content_sub_slice {
@@ -701,7 +680,7 @@ sub initialize_export {
                         'start'   => undef,
                         'end'     => undef,
                         'db'      => $cdb,
-                        'target'  => $self->_get_target_slice,
+                        'target'  => $object->get_target_slice,
                         'image'   => $self->has_image
                 });
   warn ">>> SLICES @$slices";
