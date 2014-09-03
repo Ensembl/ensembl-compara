@@ -49,18 +49,8 @@ sub content {
   
   my $align_param = $hub->param('align');
 
-  #target_species and target_slice_name_range may not be defined so split separately
-  #target_species but not target_slice_name_range is defined for pairwise compact alignments. 
   my ($align, $target_species, $target_slice_name_range) = split '--', $align_param;
-  my ($target_slice_name, $target_slice_start, $target_slice_end) = $target_slice_name_range ?
-    $target_slice_name_range =~ /(\w+):(\d+)-(\d+)/ : (undef, undef, undef);
-
-  #Define target_slice
-  my $target_slice;
-  if ($target_species && $target_slice_start) {
-      my $target_slice_adaptor = $hub->database('core', $target_species)->get_SliceAdaptor;
-      $target_slice = $target_slice_adaptor->fetch_by_region('toplevel', $target_slice_name, $target_slice_start, $target_slice_end);
-  }
+  my $target_slice = $self->_get_target_slice;
 
   my ($alert_box, $error) = $self->check_for_align_problems({
                     'align' => $align,
@@ -153,6 +143,8 @@ sub content {
     }
     $num_slices = @$slices;
   }
+  my @A = @{$slices||[]};
+  warn "@@@ SLICES @A";
 
   #If the slice_length is long, split the sequence into chunks to speed up the process
   #Note that slice_length is not set if need to display a target_slice_eable
@@ -181,12 +173,39 @@ sub content {
 
 }
 
+sub _get_target_slice {
+  my $self = shift;
+  my $hub = $self->hub;
+  my $align_param = $hub->param('align');
+  my $target_slice;
+
+  #target_species and target_slice_name_range may not be defined so split separately
+  #target_species but not target_slice_name_range is defined for pairwise compact alignments. 
+  my ($align, $target_species, $target_slice_name_range) = split '--', $align_param;
+  my ($target_slice_name, $target_slice_start, $target_slice_end) = $target_slice_name_range ?
+    $target_slice_name_range =~ /(\w+):(\d+)-(\d+)/ : (undef, undef, undef);
+
+  #Define target_slice
+  if ($target_species && $target_slice_start) {
+      my $target_slice_adaptor = $hub->database('core', $target_species)->get_SliceAdaptor;
+      $target_slice = $target_slice_adaptor->fetch_by_region('toplevel', $target_slice_name, $target_slice_start, $target_slice_end);
+  }
+
+  return $target_slice;
+}
+
 sub content_sub_slice {
   my $self = shift;
+  my ($sequence, $config) = $self->_get_sequence(@_);  
+  return $self->build_sequence($sequence, $config);
+}
+
+sub _get_sequence {
+  my $self = shift;
   my ($slice, $slices, $defaults, $cdb) = @_;
-  
+
   my $hub          = $self->hub;
-  my $object       = $self->object;
+  my $object       = $self->object || $hub->core_object($hub->param('data_type'));
      $slice      ||= $object->slice;
      $slice        = $slice->invert if !$_[0] && $hub->param('strand') == -1;
   my $species_defs = $hub->species_defs;
@@ -249,7 +268,7 @@ sub content_sub_slice {
   $template = sprintf('<div class="sequence_key">%s</div>', $self->get_key($config)) . $self->get_slice_table($config->{'slices'}) unless $start && $end;
   
   # Only if this IS a sub slice - remove margins from <pre> elements
-  my $class = $end == $slice_length ? '' : ' class="no-bottom-margin"' if $start && $end;
+  my $class = ($start && $end && $end == $slice_length) ? '' : ' class="no-bottom-margin"';
   
   $config->{'html_template'} = qq{$template<pre$class>%s</pre>};
 
@@ -266,9 +285,8 @@ sub content_sub_slice {
   
   $self->id('');
  
-  return $self->build_sequence($sequence, $config);
+  return ($sequence, $config);
 }
-
 
 sub draw_tree {
   my ($self, $cdb, $align_blocks, $slice, $align, $class, $groups, $slices) = @_;
@@ -651,6 +669,43 @@ sub _get_low_coverage_genome_db_sets {
     }
   }
   return $low_coverage_species;
+}
+
+sub export_options { return {'action' => 'TextAlignments'}; }
+
+sub get_export_data {
+## Get data for export
+  my $self = shift;
+  my $hub = $self->hub;
+  ## Fetch explicitly, as we're probably coming from a DataExport URL
+  my $obj = $hub->core_object($hub->param('data_type'));
+  return $obj;
+}
+
+sub initialize_export {
+  my $self = shift;
+  my $hub = $self->hub;
+  my $vc = $hub->get_viewconfig($hub->param('data_type'), 'Compara_Alignments');
+  my @params = qw(display_width flanking line_numbering);
+  foreach (@params) {
+    $hub->param($_, $vc->get($_));
+  }
+
+  my $object    = $self->builder->object($hub->param('data_type'));
+  my $location  = $object->Obj;
+  my $cdb       = $hub->param('cdb') || 'compara';
+  my ($slices)  = $object->get_slices({
+                        'slice'   => $object->slice,
+                        'align'   => $hub->param('align'),
+                        'species' => $hub->species,
+                        'start'   => undef,
+                        'end'     => undef,
+                        'db'      => $cdb,
+                        'target'  => $self->_get_target_slice,
+                        'image'   => $self->has_image
+                });
+  warn ">>> SLICES @$slices";
+  return $self->_get_sequence($object->slice, $slices, undef, $cdb);
 }
 
 1;
