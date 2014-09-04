@@ -338,7 +338,7 @@ sub transcript_table {
         elsif ($trans_attribs->{$tsi}{'CDS_end_NF'}) {
          push @flags,qq(<span class="glossary_mouseover">CDS 3' incomplete<span class="floating_popup">$trans_3_desc</span></span>);
         }
-        elsif ($trans_attribs->{$tsi}{'TSL'}) {
+        if ($trans_attribs->{$tsi}{'TSL'}) {
           push @flags, sprintf qq(<span class="glossary_mouseover">TSL:%s<span class="floating_popup">%s</span></span>), $trans_attribs->{$tsi}{'TSL'} =~ s/^tsl([^\s]+).*$/$1/gr, $glossary{'Transcript Support Level'};
         }
       }
