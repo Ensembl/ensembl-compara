@@ -65,7 +65,7 @@ sub content {
         foreach my $segment (@$segments) {
           my $s          = $segment->from_start + $ensembl_start - 1;
           my $slice      = $segment->to_Slice;
-          my $mapped_url = "$base_url?r=" . $slice->seq_region_name. ':' . $slice->start. '-'.  $slice->end;
+          my $mapped_url = "$base_url/$species/Location/View?r=" . $slice->seq_region_name. ':' . $slice->start. '-'.  $slice->end;
 	        my $match_txt  = $slice->seq_region_name . ':' . $hub->thousandify($slice->start) . '-' . $hub->thousandify($slice->end);
       
 	        $table->add_row({
