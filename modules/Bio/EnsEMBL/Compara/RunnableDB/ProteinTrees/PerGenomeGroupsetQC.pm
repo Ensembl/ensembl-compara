@@ -109,14 +109,14 @@ sub write_output {
     my $sth = $self->compara_dba->dbc->prepare($sql);
     $sth->execute($genome_db_id);
 
-    my $sql = "UPDATE protein_tree_qc SET total_orphans_num=?, prop_orphans=? WHERE genome_db_id=?";
-    my $sth = $self->compara_dba->dbc->prepare($sql);
+    $sql = "UPDATE protein_tree_qc SET total_orphans_num=?, prop_orphans=? WHERE genome_db_id=?";
+    $sth = $self->compara_dba->dbc->prepare($sql);
     $sth->execute($self->param('total_orphans_num'), $self->param('prop_orphan'), $genome_db_id);
 
     return unless $self->param('reuse_this');
 
-    my $sql = "UPDATE protein_tree_qc SET common_orphans_num=?, new_orphans_num=? WHERE genome_db_id=?";
-    my $sth = $self->compara_dba->dbc->prepare($sql);
+    $sql = "UPDATE protein_tree_qc SET common_orphans_num=?, new_orphans_num=? WHERE genome_db_id=?";
+    $sth = $self->compara_dba->dbc->prepare($sql);
     $sth->execute($self->param('common_orphans_num'), $self->param('new_orphans_num'), $genome_db_id);
 
 }
