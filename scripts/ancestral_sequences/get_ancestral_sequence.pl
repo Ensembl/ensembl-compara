@@ -28,10 +28,10 @@ GetOptions(
 );
 
 if ($registry_file) {
-  die if (!-e $registry_file);
-  $reg->load_all($registry_file);
+  die "Registry file '$registry_file' doesn't exist\n" if (!-e $registry_file);
+  $reg->load_all($registry_file, 1);
 } elsif ($url) {
-  $reg->load_registry_from_url($url);
+  $reg->load_registry_from_url($url, 1);
 } else {
   $reg->load_all();
 }
@@ -79,6 +79,8 @@ if (!$mlss) {
   my $all_mlss = $method_link_species_set_adaptor->fetch_all_by_method_link_type('EPO');
   $mlss = $all_mlss->[0] if (scalar(@$all_mlss) == 1) and $all_mlss->[0]->name =~ /primates/i;
 }
+die "Couldn't find a MLSS for the EPO primates alignment\n" unless $mlss;
+warn sprintf("Found MLSS mlss_id=%d name='%s'\n", $mlss->dbID, $mlss->name);
 
 my $compara_dbc = $compara_dba->dbc;
 
