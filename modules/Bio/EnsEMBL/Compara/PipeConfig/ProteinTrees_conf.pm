@@ -1491,7 +1491,25 @@ sub pipeline_analyses {
                 'remove_columns'        => 0,
             },
             -hive_capacity        => $self->o('raxml_capacity'),
-            -rc_name => '8Gb_job',
+            -rc_name => '4Gb_job',
+            -flow_into  => {
+                $self->o('use_notung') ? 1 : 999 => [ 'notung' ],
+                2 => [ 'promote_treebest_tree' ],
+                -1 => [ 'raxml_bl_unfiltered_himem' ],
+             },
+        },
+
+        {   -logic_name => 'raxml_bl_unfiltered_himem',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::RAxML_bl',
+            -parameters => {
+                'raxml_exe'             => $self->o('raxml_exe'),
+                'treebest_exe'          => $self->o('treebest_exe'),
+                'input_clusterset_id'   => 'treebest',
+                'output_clusterset_id'  => $self->o('use_notung') ? 'raxml_bl' : 'default',
+                'remove_columns'        => 0,
+            },
+            -hive_capacity        => $self->o('raxml_capacity'),
+            -rc_name => '16Gb_job',
             -flow_into  => {
                 $self->o('use_notung') ? 1 : 999 => [ 'notung' ],
                 2 => [ 'promote_treebest_tree' ],
