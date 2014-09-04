@@ -397,7 +397,7 @@ a low-confidence call. If there is more disagreement, the call is not made.
 
 The convention for the sequence is:
 ACTG : high-confidence call, ancestral state supproted by the other two sequences
-actg : low-confindence call, ancestral state supported by one sequence only
+actg : low-confidence call, ancestral state supported by one sequence only
 N    : failure, the ancestral state is not supported by any other sequence
 -    : the extant species contains an insertion at this postion
 .    : no coverage in the alignment
