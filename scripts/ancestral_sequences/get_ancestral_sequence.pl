@@ -194,9 +194,10 @@ if ($mlss_id) {
 }
 if (!$mlss) {
   my $all_mlss = $method_link_species_set_adaptor->fetch_all_by_method_link_type('EPO');
-  $mlss = $all_mlss->[0] if (scalar(@$all_mlss) == 1) and $all_mlss->[0]->name =~ /primates/i;
+  my @good_mlss = grep {$_->name =~ /$alignment_set/i} @$all_mlss;
+  $mlss = $good_mlss[0] if @good_mlss;
 }
-die "Couldn't find a MLSS for the EPO primates alignment\n" unless $mlss;
+die "Couldn't find a MLSS for the EPO $alignment_set alignment\n" unless $mlss;
 warn sprintf("Found MLSS mlss_id=%d name='%s'\n", $mlss->dbID, $mlss->name);
 
 my $compara_dbc = $compara_dba->dbc;
