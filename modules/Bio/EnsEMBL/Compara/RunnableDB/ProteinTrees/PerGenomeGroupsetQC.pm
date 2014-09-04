@@ -77,6 +77,8 @@ sub run {
     $self->param('total_orphans_num', $total_orphans_num);
     $self->param('prop_orphan',       $total_orphans_num/$total_num_genes);
 
+    my $reused_species_set = $self->compara_dba()->get_SpeciesSetAdaptor->fetch_by_dbID($self->param('reuse_ss_id'));
+    $self->param('reuse_this', $reused_species_set ? scalar(grep {$_->dbID == $genome_db_id} @{$reused_species_set->genome_dbs}) : 0);
     return unless $self->param('reuse_this');
 
     my $reuse_db                = $self->param_required('reuse_db');
