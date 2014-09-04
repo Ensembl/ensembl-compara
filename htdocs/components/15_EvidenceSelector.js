@@ -15,17 +15,8 @@
  */
 
 Ensembl.Panel.EvidenceSelector = Ensembl.Panel.CloudMultiSelector.extend({
-
-  constructor: function (id, params) {
-    this.base(id,params);
-  },
-
-  init: function () {
-    var panel = this;
-    this.base();
-  },
-
   updateSelection: function () {
+    if(!this.changed) { return; }
     
     var evidence = this.urlParam + '=' + this.selection.join(',');
     $.ajax({
@@ -34,6 +25,7 @@ Ensembl.Panel.EvidenceSelector = Ensembl.Panel.CloudMultiSelector.extend({
       complete: function() {
         Ensembl.EventManager.triggerSpecific('updatePanel','Buttons',null,null,null,null,{ background: true });
         Ensembl.EventManager.triggerSpecific('updatePanel','FeaturesByCellLine');
+        Ensembl.EventManager.triggerSpecific('updatePanel','ViewBottom');
       }
     });
     

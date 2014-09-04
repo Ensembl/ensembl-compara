@@ -1589,7 +1589,7 @@ sub _update_missing {
 # load_tracks - loads in various database derived tracks; 
 # loop through core like dbs, compara like dbs, funcgen like dbs, variation like dbs
 sub load_tracks { 
-  my $self         = shift;
+  my ($self,$params) = @_;
   my $species      = $self->{'species'};
   my $species_defs = $self->species_defs;
   my $dbs_hash     = $self->databases;
@@ -1637,7 +1637,7 @@ sub load_tracks {
     
     foreach my $db (grep exists $check->{$_}, @{$databases || []}) {
       my $key = lc substr $db, 9;
-      $self->$_($key, $check->{$db}{'tables'} || $check->{$db}, $species) for @{$data_types{$type}}; # Look through tables in databases and add data from each one      
+      $self->$_($key, $check->{$db}{'tables'} || $check->{$db}, $species,$params) for @{$data_types{$type}}; # Look through tables in databases and add data from each one      
     }
   }
   
@@ -2503,7 +2503,7 @@ sub add_alignments {
   
   my $species_defs = $self->species_defs;
   
-  return if $species_defs->ENSEMBL_SITETYPE eq 'Pre';
+  return if $species_defs->ENSEMBL_SUBTYPE eq 'Pre';
   
   my $alignments = {};
   my $self_label = $species_defs->species_label($species, 'no_formatting');
@@ -2700,7 +2700,7 @@ sub add_regulation_features {
 }
 
 sub add_regulation_builds {
-  my ($self, $key, $hashref) = @_;  
+  my ($self, $key, $hashref,$species,$params) = @_;
   my $menu = $self->get_node('functional');
   
   return unless $menu;
@@ -2849,6 +2849,7 @@ sub add_regulation_builds {
       ],
     );
     
+    next if $params->{'reg_minimal'};
     foreach (grep exists $matrix_rows{$cell_line}{$_}, keys %matrix_menus) {
       $prev_track = $self->add_matrix({
         track_name  => "$evidence_info->{$_}{'name'}$label",

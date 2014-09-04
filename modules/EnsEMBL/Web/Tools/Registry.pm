@@ -55,8 +55,6 @@ sub configure {
     WEB_TOOLS           => undef,
     ARCHIVE             => undef,
     HEALTHCHECK         => undef,
-    BLAST               => undef,
-    BLAST_LOG           => undef,
     MART                => undef,
     GO                  => [ 'Bio::EnsEMBL::DBSQL::OntologyDBAdaptor', 'ontology' ],
     FASTA               => undef,

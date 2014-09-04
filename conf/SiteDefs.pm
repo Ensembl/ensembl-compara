@@ -73,7 +73,6 @@ our $ENSEMBL_IMAGE_WIDTH       = 800;
 our $ENSEMBL_JSCSS_TYPE        = 'minified';
 
 our $ENSEMBL_MART_ENABLED      = 0;
-our $ENSEMBL_BLAST_ENABLED     = 0;
 
 our $ENSEMBL_ORM_DATABASES     = {};
 
@@ -133,7 +132,7 @@ our $ENSEMBL_TMP_URL        = '/tmp';
 our $ENSEMBL_TMP_URL_IMG    = '/img-tmp';
 our $ENSEMBL_TMP_URL_CACHE  = '/img-cache';
 
-our ($ENSEMBL_REGISTRY, $ENSEMBL_BLASTSCRIPT);
+our ($ENSEMBL_REGISTRY);
 
 # Environment variables to set using the SetEnv directive
 our %ENSEMBL_SETENV = (
@@ -235,7 +234,6 @@ our $OBJECT_TO_SCRIPT = {
   Phenotype           => 'Page',
   Experiment          => 'Page',
 
-  Blast               => 'Page',
   Info                => 'AltPage',
   Search              => 'Page',
   
@@ -244,8 +242,16 @@ our $OBJECT_TO_SCRIPT = {
   Help                => 'Modal',  
 };
 
-logs("$ENSEMBL_SERVERROOT/logs");
-tmp("$ENSEMBL_SERVERROOT/tmp");
+## Set log directory and files
+our $ENSEMBL_LOGDIR    = defer { "$ENSEMBL_SERVERROOT/logs" };
+our $ENSEMBL_PIDFILE   = defer { "$ENSEMBL_LOGDIR/$ENSEMBL_SERVER.httpd.pid" };
+our $ENSEMBL_ERRORLOG  = defer { "$ENSEMBL_LOGDIR/$ENSEMBL_SERVER.error_log" };
+our $ENSEMBL_CUSTOMLOG = defer { "$ENSEMBL_LOGDIR/$ENSEMBL_SERVER.access_log ensembl_extended" };
+
+## Set tmp dirs
+our $ENSEMBL_TMP_DIR       = defer { "$ENSEMBL_SERVERROOT/tmp" };
+our $ENSEMBL_TMP_DIR_IMG   = defer { "$ENSEMBL_TMP_DIR/img/tmp" };
+our $ENSEMBL_TMP_DIR_CACHE = defer { "$ENSEMBL_TMP_DIR/img/cache" };
 
 #### END OF VARIABLE DEFINITION #### DO NOT REMOVE OR CHANGE THIS COMMENT ####
 ###############################################################################
@@ -381,31 +387,8 @@ sub error {
        "\n", '#' x 78, "\n";
 }
 
-sub tmp {
-  my $tmp_dir = shift;
-  
-  $SiteDefs::ENSEMBL_TMP_DIR       = $tmp_dir;
-  $SiteDefs::ENSEMBL_TMP_DIR_IMG   = "$tmp_dir/img/tmp";
-  $SiteDefs::ENSEMBL_TMP_DIR_CACHE = "$tmp_dir/img/cache";
-  $SiteDefs::ENSEMBL_TMP_DIR_BLAST = "$tmp_dir/blastqueue";
-}
-
-sub logs {
-  my $log_dir = shift;
-  my $datestamp;
-  
-  if ($SiteDefs::ENSEMBL_DEBUG_FLAGS & $SiteDefs::ENSEMBL_DEBUG_TIMESTAMPED_LOGS) {
-    my @time = gmtime;
-    $datestamp = sprintf '.%04d-%02d-%02d-%02d-%02d-%02d', $time[5] + 1900, $time[4] + 1, @time[3,2,1,0];
-  }
-
-  ## Set all log files into the /ensemblweb/tmp/logs/uswest/ directory
-  my $log_prefix               = "$log_dir/$SiteDefs::ENSEMBL_SERVER";
-  $SiteDefs::ENSEMBL_LOGDIR    = "$log_dir";
-  $SiteDefs::ENSEMBL_PIDFILE   = "$log_prefix.httpd.pid";
-  $SiteDefs::ENSEMBL_ERRORLOG  = "$log_prefix$datestamp.error_log";
-  $SiteDefs::ENSEMBL_CUSTOMLOG = "$log_prefix$datestamp.access_log ensembl_extended";
-}
+sub logs { warn sprintf q(SiteDefs::logs is deprecated. Just define $SiteDefs::ENSEMBL_LOGDIR = '%s' instead if needed.%s), $_[0] =~ s/\/$//r, "\n"; }
+sub tmp { warn sprintf q(SiteDefs::tmp is deprecated. Just define $SiteDefs::ENSEMBL_TMP_DIR = '%s' instead if needed.%s), $_[0] =~ s/\/$//r, "\n"; }
 
 =for Information
 

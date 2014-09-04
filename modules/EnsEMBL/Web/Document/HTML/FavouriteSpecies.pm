@@ -60,7 +60,7 @@ sub render_species_list {
   return $fav_html if $fragment;
   
   # output list
-  my $modal_class = $hub->species_defs->ENSEMBL_SITETYPE eq 'Ensembl mobile' ? "" : "modal_link";
+  my $modal_class = $hub->species_defs->ENSEMBL_SUBTYPE eq 'mobile' ? "" : "modal_link";
   my $star = '<img src="/i/16/star.png" style="vertical-align:middle;margin-right:4px" />';
   my $html = sprintf qq{<div class="static_favourite_species"><h3>%s genomes</h3><div class="species_list_container species-list">$fav_html</div>%s</div>}, 
     $logins && $user && scalar(@ok_faves) ? 'Favourite' : 'Popular',

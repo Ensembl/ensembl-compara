@@ -429,15 +429,3 @@ form.freeform fieldset .form-field .ff-right {
   margin: 0;
   padding: 0;
 }
-
-input.blast-button {
-  display:inline!important;
-  float:none!important;
-  font-family:inherit;
-  font-weight:normal!important;
-  font-size:1em!important;
-  background-image: url(/i/16/rev/blast.png); 
-  background-position: 4px 50%; 
-  background-repeat: no-repeat; 
-  padding: 5px 6px 3px 22px;
-}

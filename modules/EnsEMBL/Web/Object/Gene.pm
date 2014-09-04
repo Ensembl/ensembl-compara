@@ -77,6 +77,7 @@ sub availability {
       $availability->{"has_$_"}               = $counts->{$_} for qw(transcripts alignments paralogs orthologs similarity_matches operons structural_variation pairwise_alignments);
       $availability->{'multiple_transcripts'} = $counts->{'transcripts'} > 1;
       $availability->{'not_patch'}            = $obj->stable_id =~ /^ASMPATCH/ ? 0 : 1; ## TODO - hack - may need rewriting for subsequent releases
+      $availability->{'has_alt_alleles'} =  scalar @{$self->get_alt_alleles};
       
       my $phen_avail = 0;
       if ($self->database('variation')) {
@@ -136,6 +137,7 @@ sub counts {
 #      similarity_matches => $self->count_xrefs
       similarity_matches => $self->get_xref_available,
       operons => 0,
+      alternative_alleles =>  scalar @{$self->get_alt_alleles},
     };
     if ($obj->feature_Slice->can('get_all_Operons')){
       $counts->{'operons'} = scalar @{$obj->feature_Slice->get_all_Operons};
@@ -243,26 +245,34 @@ sub insdc_accession {
   my $csv = $self->Obj->slice->coord_system->version; 
   my $csa = Bio::EnsEMBL::Registry->get_adaptor($self->species,'core',
                                                 'CoordSystem');
-  my $slice;
-  if($self->Obj->slice->is_reference) {
-    $slice = $self->Obj->slice->sub_Slice($self->Obj->start,
-                                          $self->Obj->end);
-  } else {
-    # Try to project to supercontig (aka scaffold)
-    foreach my $level (qw(supercontig scaffold)) {
-      next unless $csa->fetch_by_name($level,$csv);
-      my $gsa = $self->Obj->project($level,$csv);
-      if(@$gsa==1) {
-        $slice = $gsa->[0]->to_Slice;
-        last;
+  # 0 = look on chromosome
+  # 1 = look on supercontig/scaffold
+  # maybe in future 2 = ... ?
+  for(my $method = 0;$method < 2;$method++) {
+    my $slice;
+    if($method == 0) {
+      $slice = $self->Obj->slice->sub_Slice($self->Obj->start,
+                                            $self->Obj->end);
+    } elsif($method == 1) {
+      # Try to project to supercontig (aka scaffold)
+      foreach my $level (qw(supercontig scaffold)) {
+        next unless $csa->fetch_by_name($level,$csv);
+        my $gsa = $self->Obj->project($level,$csv);
+        if(@$gsa==1) {
+          $slice = $gsa->[0]->to_Slice;
+          last;
+        }
+      }
+    }
+    if($slice) {
+      my $name = $self->_insdc_synonym($slice,'INSDC');
+      if($name) {
+        return join(':',$slice->coord_system->name,$csv,$name,
+                      $slice->start,$slice->end,$slice->strand);
       }
     }
   }
-  return undef unless $slice;
-  my $name = $self->_insdc_synonym($slice,'INSDC');
-  return undef unless $name;
-  return join(':',$slice->coord_system->name,$csv,$name,
-                  $slice->start,$slice->end,$slice->strand);
+  return undef;
 }
 
 sub count_xrefs {
@@ -433,6 +443,37 @@ sub get_gene_supporting_evidence {
   return $e;
 }
 
+=head2 get_alt_alleles
+
+ Example     : my ($stable_id,$alleles) = $gene->get_allele_info
+ Description : retrieves stable id and details of alt_alleles
+ Return type : list (stable_id string and arrayref of B::E::Genes)
+
+=cut
+
+sub get_alt_alleles {
+  my $self = shift;
+  my $gene = $self->Obj;
+  my $stable_id = $gene->stable_id;
+  my $alleles = [];
+  if ($gene->slice->is_reference) {
+    $alleles = $self->Obj->get_all_alt_alleles;
+  }
+  else {
+    my $adaptor = $self->hub->get_adaptor('get_AltAlleleGroupAdaptor');
+    my $group = $adaptor->fetch_Group_by_Gene_dbID($gene->dbID);
+    if ($group) {
+      foreach my $alt_allele_gene (@{$group->get_all_Genes}) {
+        if ($alt_allele_gene->stable_id ne $stable_id) {
+          push @$alleles, $alt_allele_gene;
+        }
+      }
+    }
+  }
+  return $alleles;
+}
+
+
 # generate URLs for evidence links
 sub add_evidence_links {
   my $self = shift;
@@ -561,7 +602,6 @@ sub get_all_families {
           push @{$families->{$id}{'transcripts'}}, $transcript;
         }
         else {
-          my @A = keys %$info;
           $families->{$id} = {'info' => $info, 'transcripts' => [$transcript]};
         }
       }

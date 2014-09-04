@@ -18,7 +18,6 @@ limitations under the License.
 
 package EnsEMBL::Web::ImageConfig::Vertical;
 
-## Alternative configuration for karyotype used in BlastView
 use strict;
 
 use EnsEMBL::Web::Text::FeatureParser;

@@ -384,23 +384,6 @@ sub _get_go_database{
   return  $self->_get_database( $db_info, 'Bio::EnsEMBL::DBSQL::OntologyDBAdaptor' );
 }
 
-=head2 _get_blast_database
-
- Arg[1]      : none
- 
- Example     : $self->_get_blast_database
- Description : Gets blast database connection
- Return type : Bio::EnsEMBL::External::BlastAdaptor
-
-=cut
-
-sub _get_blast_database{
-  my $self = shift;
-  my $db_info = $self->{'species_defs'}->multidb->{DATABASE_BLAST} ||
-     die( "No blast database in MULTI" );
-  return  $self->_get_database( $db_info, 'Bio::EnsEMBL::External::BlastAdaptor' );
-}
-
 =head2 _get_database_info
 
  Arg[1]      : String
@@ -432,7 +415,7 @@ sub _get_database_info{
  Arg[2]      : String
                 Adaptor type
  
- Example     : $self->_get_database( $db_info, 'Bio::EnsEMBL::External::BlastAdaptor' );
+ Example     : $self->_get_database( $db_info, 'Bio::EnsEMBL::DBSQL::DBAdaptor' );
  Description : Creates the database adaptor for the adaptor type passed in ARG[2]
  Return type : A new database adaptor with connection information
 

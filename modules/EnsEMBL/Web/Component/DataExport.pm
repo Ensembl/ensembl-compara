@@ -192,7 +192,7 @@ sub create_form {
     $settings_fieldset->add_button({
       'type'    => 'Submit',
       'name'    => 'submit',
-      'value'   => 'Export',
+      'value'   => 'Download',
     });
   }
 

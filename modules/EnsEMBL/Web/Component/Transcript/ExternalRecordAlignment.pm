@@ -44,7 +44,10 @@ sub content {
   #get external sequence and type (DNA or PEP)
   my $ext_seq   = $self->hub->get_ext_seq($ext_db, {'id' => $hit_id, 'translation' => 1});
 
-  return qq(<p>Unable to retrieve sequence for $hit_id from external service $ext_db.\n$ext_seq->{'error'}.</p>) unless $ext_seq->{'sequence'};
+  unless ($ext_seq->{'sequence'}) {
+    $self->mcacheable(0);
+    return qq(<p>Unable to retrieve sequence for $hit_id from external service $ext_db. $ext_seq->{'error'}.</p>);
+  }
 
   my $seq_type  = $object->determine_sequence_type($ext_seq->{'sequence'});
   my $trans_seq = $object->get_int_seq($trans, $seq_type)->[0];

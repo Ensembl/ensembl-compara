@@ -52,7 +52,6 @@ use EnsEMBL::Web::Apache::SpeciesHandler;
 our $species_defs = EnsEMBL::Web::SpeciesDefs->new;
 our $MEMD         = EnsEMBL::Web::Cache->new;
 
-our $BLAST_LAST_RUN;
 our $LOAD_COMMAND;
 
 BEGIN {
@@ -280,7 +279,7 @@ sub handler {
 
   ## Simple redirect to VEP
 
-  if ($SiteDefs::ENSEMBL_SITETYPE eq 'Pre' && $file =~ /\/vep/i) { ## Pre has no VEP, so redirect to tools page
+  if ($SiteDefs::ENSEMBL_SUBTYPE eq 'Pre' && $file =~ /\/vep/i) { ## Pre has no VEP, so redirect to tools page
     $r->uri('/info/docs/tools/index.html');
     $redirect = 1;
   } elsif ($file =~ /\/info\/docs\/variation\/vep\/vep_script.html/) {
@@ -324,7 +323,7 @@ sub handler {
   ## Check for stable id URL (/id/ENSG000000nnnnnn) 
   ## and malformed Gene/Summary URLs from external users
   if (($raw_path[0] && $raw_path[0] =~ /^id$/i && $raw_path[1]) || ($raw_path[0] eq 'Gene' && $querystring =~ /g=/ )) {
-    my ($stable_id, $object_type, $db_type, $uri);
+    my ($stable_id, $object_type, $db_type, $retired, $uri);
     
     if ($raw_path[0] =~ /^id$/i) {
       $stable_id = $raw_path[1];
@@ -352,11 +351,11 @@ sub handler {
       );
     }
 
-    ($species, $object_type, $db_type) = Bio::EnsEMBL::Registry->get_species_and_object_type($stable_id);
+    ($species, $object_type, $db_type, $retired) = Bio::EnsEMBL::Registry->get_species_and_object_type($stable_id, undef, undef, undef, undef, 1);
     
     if (!$species || !$object_type) {
       ## Maybe that wasn't versioning after all!
-      ($species, $object_type, $db_type) = Bio::EnsEMBL::Registry->get_species_and_object_type($unstripped_stable_id);
+      ($species, $object_type, $db_type, $retired) = Bio::EnsEMBL::Registry->get_species_and_object_type($unstripped_stable_id, undef, undef, undef, undef, 1);
       $stable_id = $unstripped_stable_id if($species && $object_type);
     }
     
@@ -364,37 +363,29 @@ sub handler {
       $uri = $species ? "/$species/" : '/Multi/';
       
       if ($object_type eq 'Gene') {
-        $uri .= "Gene/Summary?g=$stable_id";
+        $uri .= sprintf 'Gene/%s?g=%s', $retired ? 'Idhistory' : 'Summary', $stable_id;
       } elsif ($object_type eq 'Transcript') {
-        $uri .= "Transcript/Summary?t=$stable_id";
+        $uri .= sprintf 'Transcript/%s?t=%s',$retired ? 'Idhistory' : 'Summary', $stable_id;
       } elsif ($object_type eq 'Translation') {
-        $uri .= "Transcript/ProteinSummary?t=$stable_id";
+        $uri .= sprintf 'Transcript/%s?t=%s', $retired ? 'Idhistory/Protein' : 'ProteinSummary', $stable_id;
       } elsif ($object_type eq 'GeneTree') {
-        $uri = "/Multi/GeneTree/Image?gt=$stable_id";
+        $uri = "/Multi/GeneTree/Image?gt=$stable_id"; # no history page!
       } elsif ($object_type eq 'Family') {
-        $uri = "/Multi/Family/Details?fm=$stable_id";
+        $uri = "/Multi/Family/Details?fm=$stable_id"; # no history page!
       } else {
         $uri .= "psychic?q=$stable_id";
       }
-      
-      $r->uri($uri);
-      $r->headers_out->add('Location' => $r->uri);
-      $r->child_terminate;
-      
-      $ENSEMBL_WEB_REGISTRY->timer_push('Handler "REDIRECT"', undef, 'Apache');
-    
-      return HTTP_MOVED_PERMANENTLY;
     }
-    
-    ## In case the given ID is retired, which means no species 
-    ## can be returned by the API call above
-    $r->uri('/');
+
+    $uri ||= "/Multi/psychic?q=$stable_id";
+
+    $r->uri($uri);
     $r->headers_out->add('Location' => $r->uri);
     $r->child_terminate;
-    
+
     $ENSEMBL_WEB_REGISTRY->timer_push('Handler "REDIRECT"', undef, 'Apache');
-    
-    return NOT_FOUND;
+
+    return HTTP_MOVED_PERMANENTLY;
   }
 
   my %lookup = map { $_ => 1 } $species_defs->valid_species;
@@ -492,7 +483,7 @@ sub handler {
   # Permanent redirect for old species home pages:
   # e.g. /Homo_sapiens or Homo_sapiens/index.html -> /Homo_sapiens/Info/Index
   if ($species && $species_name && (!$script || $script eq 'index.html')) {
-    $r->uri($species_name eq 'common' ? 'index.html' : $species_defs->ENSEMBL_SITETYPE eq 'Ensembl mobile' ? "/$species_name/Info/Annotation#assembly" : "/$species_name/Info/Index"); #additional if for mobile site different species home page
+    $r->uri($species_name eq 'common' ? 'index.html' : $species_defs->ENSEMBL_SUBTYPE =~ /mobile/i ? "/$species_name/Info/Annotation#assembly" : "/$species_name/Info/Index"); #additional if for mobile site different species home page
     $r->headers_out->add('Location' => $r->uri);
     $r->child_terminate;
     $ENSEMBL_WEB_REGISTRY->timer_push('Handler "REDIRECT"', undef, 'Apache');
@@ -634,91 +625,6 @@ sub cleanupHandler_script {
   warn $ENSEMBL_WEB_REGISTRY->timer->render if $SiteDefs::ENSEMBL_DEBUG_FLAGS & $SiteDefs::ENSEMBL_DEBUG_PERL_PROFILER;
   
   push_script_line($r, 'ENDSCR', sprintf '%10.3f', time - $r->subprocess_env->{'LOG_TIME'}) if $SiteDefs::ENSEMBL_DEBUG_FLAGS & $SiteDefs::ENSEMBL_DEBUG_HANDLER_ERRORS;
-  
-  cleanupHandler_blast($r) if $SiteDefs::ENSEMBL_BLASTSCRIPT;
-}
-
-sub cleanupHandler_blast {
-  my $r = shift;
-  
-  my $directory = $SiteDefs::ENSEMBL_TMP_DIR_BLAST . '/pending';
-  my $FLAG  = 0;
-  my $count = 0;
-  my $ticket;
-  my $_process_blast_called_at = time;
-
-  $ticket = $ENV{'ticket'};
-  
-  # Lets work out when to run this!
-  my $run_blast;
-  my $loads = _get_loads();
-  my $seconds_since_last_run = (time - $BLAST_LAST_RUN);
-
-  if ($ticket) {
-    if (_run_blast_ticket($loads, $seconds_since_last_run)) {
-      $FLAG = 1;
-      $BLAST_LAST_RUN = time;
-    }
-  } else {
-    # Current run blasts
-    if (_run_blast_no_ticket($loads, $seconds_since_last_run)) {
-      $BLAST_LAST_RUN = time;
-      $FLAG = 1;
-    }
-  }
-  
-  while ($FLAG) {
-    $count++;
-    $FLAG = 0;
-    
-    if (opendir(DH, $directory)) {
-      while (my $FN = readdir(DH)) {
-        my $file = "$directory/$FN";
-        
-        next unless -f $file; # File
-        next if -z $file;     # Contains something
-        
-        my @STAT = stat $file;
-        
-        next if $STAT[8]+5 > time; # Was last modified more than 5 seconds ago
-        next if $ticket && $file !~ /$ticket/;
-        
-        # We have a ticket
-        open  FH, $file;
-        
-        flock FH, LOCK_EX;
-        my $blast_file = <FH>;
-        chomp $blast_file;
-        
-        $blast_file = $1 if $blast_file =~ /^([\/\w\.-]+)/;
-        
-        (my $FILE2 = $file) =~ s/pending/parsing/;
-        
-        rename $file, $FILE2;
-        
-        (my $FILE3 = $file) =~ s/pending/sent/;
-        
-        unlink $FILE3;
-        
-        flock FH, LOCK_UN;
-        
-        my $COMMAND = "$SiteDefs::ENSEMBL_BLASTSCRIPT $blast_file $FILE2";
-        
-        warn "BLAST: $COMMAND";
-        
-        `$COMMAND`; # Now we parse the blast file
-        
-        if ($ticket && ($_process_blast_called_at + 30 > time)) {
-          $loads = _get_loads();
-          $FLAG = 1 if $count < 15;
-        }
-        
-        last;
-      }
-      
-      closedir(DH);
-    }
-  }
 }
 
 sub childExitHandler {
@@ -754,27 +660,6 @@ sub push_script_line {
   );
   
   $r->subprocess_env->{'LOG_TIME'} = time;
-}
-
-#======================================================================#
-# BLAST Support functionality - TODO: update before implementing!      #
-#======================================================================#
-
-sub _run_blast_no_ticket {
-  my ($loads, $seconds_since_last_run) = @_;
-  return $loads->{'blast'} < 3 && rand $loads->{'httpd'} < 10 && rand $seconds_since_last_run > 1;
-}
-
-sub _run_blast_ticket {
-  my ($loads, $seconds_since_last_run) = @_;
-  return $loads->{'blast'} < 8;
-}
-
-sub _get_loads {
-  return {
-    blast => &$LOAD_COMMAND('parse_blast.pl'),
-    httpd => &$LOAD_COMMAND('httpd')
-  };
 }
 
 sub  _load_command_null {

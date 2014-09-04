@@ -33,7 +33,8 @@ sub data_by_cell_line {
 
   my $data = $config->{'data_by_cell_line'};
   $data = $data->() if ref($data) eq 'CODE';
-  return $data;
+  $config->{'data_by_cell_line'} = $data;
+  return $data||{};
 }
 
 sub draw_features {
@@ -51,13 +52,11 @@ sub draw_features {
 
   my $hub = $self->{'config'}->hub;
   my $cell_type_url = $hub->url('Component', {
-    type => 'Regulation',
     action   => 'Web',
     function    => 'CellTypeSelector/ajax',
     image_config => $self->{'config'}->type,
   });
   my $evidence_url = $hub->url('Component', {
-    type => 'Regulation',
     action => 'Web',
     function => 'EvidenceSelector/ajax',
     image_config => $self->{'config'}->type,

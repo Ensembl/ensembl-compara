@@ -315,24 +315,6 @@ sub bound_location_string {
   return sprintf '%s:%s-%s', $self->seq_region_name, $start, $end;
 }
 
-sub all_cell_types {
-  my ($self) = @_;
-  my $hub    = $self->hub;
-  my $fset_a = $hub->get_adaptor('get_FeatureSetAdaptor', 'funcgen');
-  my $dset_a = $hub->get_adaptor('get_DataSetAdaptor',    'funcgen');
-
-  my %cells;
-  foreach my $regf_fset (@{$fset_a->fetch_all_by_type('regulatory')}) {
-    my $regf_data_set = $dset_a->fetch_by_product_FeatureSet($regf_fset);
-    foreach my $reg_attr_fset (@{$regf_data_set->get_supporting_sets}) {
-      my $cell_name = $reg_attr_fset->cell_type->name;
-      next if $cell_name eq 'MultiCell';
-      $cells{$cell_name} = 1;
-    }
-  }
-  return [ sort keys %cells ];
-}
-
 sub get_evidence_data {
   my ($self, $slice,$filter) = @_;
   my $hub    = $self->hub;

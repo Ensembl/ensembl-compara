@@ -49,43 +49,4 @@ sub reg_extra_tabs {
   );
 }
 
-sub reg_renderer {
-  my ($self,$hub,$image_config,$renderer,$state) = @_;
-
-  my $mask = firstidx { $renderer eq $_ } qw(x peaks signals);
-  my $image_config = $hub->get_imageconfig($image_config);
-  foreach my $type (qw(reg_features seg_features reg_feats_core reg_feats_non_core)) {
-    my $menu = $image_config->get_node($type);
-    next unless $menu;
-    foreach my $node (@{$menu->child_nodes}) {
-      my $old = $node->get('display');
-      my $renderer = firstidx { $old eq $_ }
-        qw(off compact tiling tiling_feature);
-      next if !$renderer;
-      $renderer |= $mask if $state;
-      $renderer &=~ $mask unless $state;
-      $renderer = 1 unless $renderer;
-      $renderer = [ qw(off compact tiling tiling_feature) ]->[$renderer];
-      $image_config->update_track_renderer($node->id,$renderer);
-    }
-  }
-  $hub->session->store;
-}
-
-sub update_from_url {  
-  my ($self, $r, $delete_params) = @_;
-
-  my $modified = 0;
-  my $input = $self->hub->input;
-  my $plus = $input->param('plus_signal');
-  if($plus) {
-    $self->reg_renderer($self->hub,$plus,'signals',1);
-    if($delete_params) {
-      $input->delete('plus_signal');
-      $modified = 1;
-    }
-  }
-  return $self->SUPER::update_from_url($r,$delete_params) || $modified;
-}
-
 1;

@@ -24,6 +24,7 @@ use Digest::MD5 qw(md5_hex);
 use HTML::Entities qw(encode_entities);
 use JSON qw(from_json);
 use URI::Escape qw(uri_unescape);
+use List::MoreUtils qw(firstidx);
 
 use EnsEMBL::Web::Form;
 use EnsEMBL::Web::Tree;
@@ -265,7 +266,21 @@ sub update_from_url {
       $params_removed = 1;
     }
   }
-  
+
+  # plus_signal turns on some regulation tracks in a complex algorithm
+  # on both regulation and location views. It can be specified in a URL
+  # and is currently used in some zmenus. Annoyingly there seems to
+  # be no better place for this code. Move it if you know of one. --dan
+
+  my $plus = $input->param('plus_signal');
+  if($plus) {
+    $self->reg_renderer($self->hub,$plus,'signals',1);
+    if($delete_params) {
+      $input->delete('plus_signal');
+      $params_removed = 1;
+    }
+  }
+
   my @values = split /,/, $input->param($image_config);
   
   $hub->get_imageconfig($image_config)->update_from_url(@values) if @values;
@@ -750,6 +765,28 @@ sub add_select_all {
     });
   } elsif ($caption && !$external) {
     $menu->before('h3', { inner_HTML => $caption });
+  }
+}
+
+sub reg_renderer {
+  my ($self,$hub,$image_config,$renderer,$state) = @_;
+
+  my $mask = firstidx { $renderer eq $_ } qw(x peaks signals);
+  my $image_config = $hub->get_imageconfig($image_config);
+  foreach my $type (qw(reg_features seg_features reg_feats_core reg_feats_non_core)) {
+    my $menu = $image_config->get_node($type);
+    next unless $menu;
+    foreach my $node (@{$menu->child_nodes}) {
+      my $old = $node->get('display');
+      my $renderer = firstidx { $old eq $_ }
+        qw(off compact tiling tiling_feature);
+      next if !$renderer;
+      $renderer |= $mask if $state;
+      $renderer &=~ $mask unless $state;
+      $renderer = 1 unless $renderer;
+      $renderer = [ qw(off compact tiling tiling_feature) ]->[$renderer];
+      $image_config->update_track_renderer($node->id,$renderer);
+    }
   }
 }
 

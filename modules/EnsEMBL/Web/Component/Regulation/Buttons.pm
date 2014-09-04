@@ -35,7 +35,7 @@ sub content {
   $self->cell_line_button('regulation_view');
   $self->evidence_button;
   $self->renderer_button;
-  $self->advanced_button;
+  $self->advanced_button('featuresbycellline');
 
   return '';
 }

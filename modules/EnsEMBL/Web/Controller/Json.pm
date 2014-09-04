@@ -33,16 +33,32 @@ sub new {
   my $class     = shift;
   my $r         = shift || Apache2::RequestUtil->can('request') ? Apache2::RequestUtil->request : undef;
   my $args      = shift || {};
-  my $self      = bless {}, $class;
+  my $hub       = EnsEMBL::Web::Hub->new({
+    apache_handle  => $r,
+    session_cookie => $args->{'session_cookie'},
+    user_cookie    => $args->{'user_cookie'},
+  });
+
+  my $self      = bless {
+    r             => $r,
+    hub           => $hub,
+    cache         => $hub->cache,
+    type          => $hub->type,
+    action        => $hub->action,
+    function      => $hub->function,
+  }, $class;
+
+  $CGI::POST_MAX = $self->upload_size_limit; # Set max upload size
+
+  $hub->{'_input'} = $self->{'input'} = CGI->new; # Hack to force the new upload limit! FIXME!
 
   my ($json, $chunked);
 
   try {
-    my $hub = EnsEMBL::Web::Hub->new({
-      apache_handle  => $r,
-      session_cookie => $args->{'session_cookie'},
-      user_cookie    => $args->{'user_cookie'},
-    });
+
+    if (($hub->input->cgi_error || '') =~ /413/) {
+      throw exception('InputError', sprintf 'File exceeds the size limit of %d MB', $CGI::POST_MAX / (1024 * 1024));
+    }
 
     my @path      = ($hub->type, $hub->action || (), $hub->function || ());
     my $method    = sprintf 'json_%s', pop @path;

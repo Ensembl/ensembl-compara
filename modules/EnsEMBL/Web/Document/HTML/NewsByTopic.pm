@@ -38,6 +38,7 @@ sub render {
   my $site_type     = $hub->species_defs->ENSEMBL_SITETYPE;
 
   if ($hub->species_defs->multidb->{'DATABASE_PRODUCTION'}{'NAME'}) {
+    my $cat = $hub->param('topic');
     my %cat_lookup = (
                       'web'         => 'Web',
                       'genebuild'   => 'Assembly and Genebuild',
@@ -55,12 +56,24 @@ sub render {
                       'alignment'   => 'Compara',
                       'schema'      => 'Core',
                       );
-    my $cat = $hub->param('topic');
+    ## TOC
+    my $div = $cat ? '<div class="tinted-box float-right">' : '';
+    my $adj = $cat ? 'Other news' : 'News'; 
+    $html .= qq($div<h2>$adj categories</h2>
+            <ul>\n);
+    my @order = qw(web genebuild variation regulation alignment schema);
+    foreach (@order) {
+      next if $_ eq $cat;
+      my $title   = $cat_lookup{$_};
+      my $url = $hub->url({'topic' => $_});
+      $html .= sprintf '<li><a href="%s">%s</a></li>', $url, $title;
+    }
+    $html .= "</ul>";
+    $html .= "</div>\n\n" if $div;
+
     if ($cat) {
       $html .= sprintf('<h1>%s %s News</h1>', $site_type, $cat_lookup{$cat});
       my $adaptor = EnsEMBL::Web::DBSQL::ProductionAdaptor->new($hub);
-
-      ## Topic chooser
 
       ## News items
       my @changes = @{$adaptor->fetch_changelog({'category' => $cat, 'team' => $team_lookup{$cat}})};
@@ -113,22 +126,7 @@ sub render {
           my $content = $record->{'content'};
           $html .= $content."\n\n";
         }
-
-        ## TOC
-        $html .= qq(<h2 style="margin-top:1em">Other news topics</h2>
-                <ul>\n);
-        my @order = qw(web genebuild variation regulation alignment schema);
-        foreach (@order) {
-          next if $_ eq $cat;
-          my $title   = $cat_lookup{$_};
-          my $url = $hub->url({'topic' => $_});
-          $html .= sprintf '<li><a href="%s">%s</a></li>', $url, $title;
-        }
-        $html .= "</ul>\n\n";
-      } 
-    }
-    else {
-      $html = "<p>Sorry, this news category is not available in $site_type.</p>";
+      }
     }
   }
   else {

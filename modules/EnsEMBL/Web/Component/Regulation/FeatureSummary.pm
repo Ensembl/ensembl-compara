@@ -35,6 +35,8 @@ sub content {
   my $self = shift;
   my $object = $self->object;
 
+  $self->cell_line_button('reg_summary');
+
   my $object_slice = $object->get_context_slice(25000);
      $object_slice = $object_slice->invert if $object_slice->strand < 1; 
 

@@ -438,37 +438,37 @@ sub get_families {
     return {};
   }
 
-  # create family object
-  my $family_adaptor;
-  eval {
-    $family_adaptor = $databases->get_FamilyAdaptor
-  };
-  
-  if ($@) {
-    warn $@; 
-    return {};
-  }
-  
-  my $families = [];
   my $translation = $self->translation_object;
-  
-  eval {
-    $families = $family_adaptor->fetch_by_Member_source_stable_id('ENSEMBLPEP',$translation->stable_id)
-  };
+  return unless $translation;
+
+  my $member = $self->database($cdb)->get_SeqMemberAdaptor->fetch_by_stable_id($translation->stable_id);
+  my $family = $self->database($cdb)->get_FamilyAdaptor->fetch_by_SeqMember($member);
 
   # munge data
   my $family_hash = {};
   
-  if (@$families) {
+  if ($family) {
     my $ga = $self->database('core')->get_GeneAdaptor;
     
-    foreach my $family (@$families) {
-      $family_hash->{$family->stable_id} = {
-        'description' => $family->description,
-        'count'       => $family->Member_count_by_source_taxon('ENSEMBLGENE', $taxon_id),
-        'genes'       => [ map { $ga->fetch_by_stable_id($_->stable_id) } @{$family->get_Member_by_source_taxon('ENSEMBLGENE', $taxon_id) || []} ],
-      };
+    my @members = grep $_->taxon_id eq $taxon_id, @{$family->get_all_GeneMembers};
+    #my @genes = map { $ga->fetch_by_stable_id($_->stable_id) } @members;
+    my @genes = map { $_->get_Gene } @members;
+
+    ## dedupe genes
+    my %seen;
+    foreach (@genes) {
+      next unless $_;
+      next if $seen{$_->stable_id};
+      $seen{$_->stable_id} = $_;
     }
+
+    my @unique_genes = values %seen;
+
+    $family_hash->{$family->stable_id} = {
+      'description' => $family->description,
+      'genes'       => \@unique_genes, 
+      'count'       => scalar @members, 
+    };
   }
   
   return $family_hash;

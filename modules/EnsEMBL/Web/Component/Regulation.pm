@@ -34,6 +34,7 @@ sub shown_cells {
     foreach my $node (@{$menu->child_nodes}) {
       next unless $node->id =~ /^(reg_feats|seg)_(core_|non_core_)?(.*)$/;
       my $cell=$3;
+      next if $cell eq 'MultiCell';
       $shown_cells{$cell} = 1 unless $node->get('display') eq 'off';
     }
   }
@@ -212,7 +213,7 @@ sub advanced_button {
     url => $url,
     caption => 'Advanced ...',
     class => 'unstyled config modal_link',
-    rel => "modal_config_$component",
+    rel => "modal_config_$component-functional",
   };
 }
 

@@ -171,8 +171,7 @@ if ($flush || $rmconfig) {
 
 warn "==============================================================================\n";
 
-# LOAD LSF ENVIRONMENT - REQUIRED FOR BLAST
-my $cmd     = ". /usr/local/lsf/conf/profile.lsf;" if -e '/usr/local/lsf/conf/profile.lsf';
+my $cmd = '';
 
 if($SiteDefs::APACHE_DEFINE) {
   push @defines,grep { /\S/ } split(' ',$SiteDefs::APACHE_DEFINE);

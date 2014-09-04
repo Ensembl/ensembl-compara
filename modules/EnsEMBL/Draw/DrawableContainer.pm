@@ -294,8 +294,18 @@ sub new {
         ## set up the "bumping button" label for this strip
         if ($glyphset->label && $show_labels eq 'yes') {
           my $gh = $glyphset->label->height || $config->texthelper->height($glyphset->label->font);
-        
-          $glyphset->label->y($gminy + $glyphset->{'label_y_offset'});
+
+          my ($miny,$maxy) = ($glyphset->miny,$glyphset->maxy);
+          my $liney;
+          if($maxy-$miny < $gh) {
+            # Very narrow track, align with centre and hope for the best
+            $glyphset->label->y(($miny+$maxy-$gh)/2);
+            $liney = ($miny+$maxy+$gh)/2 + 1;
+          } else {
+            # Almost all tracks
+            $glyphset->label->y($gminy + $glyphset->{'label_y_offset'});
+            $liney = $gminy+$gh+1+$glyphset->{'label_y_offset'};
+          }
           $glyphset->label->height($gh);
           $glyphset->push($glyphset->label);
           if($glyphset->label_img) {
@@ -312,7 +322,7 @@ sub new {
               absolutewidth => 1,
               width         => $glyphset->label->width,
               x             => $glyphset->label->x,
-              y             => $gminy + $gh + 1 + $glyphset->{'label_y_offset'},
+              y             => $liney,
               colour        => '#336699',
               dotted        => 'small'
             }));

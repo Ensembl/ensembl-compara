@@ -122,7 +122,7 @@ Ensembl.Panel.Content = Ensembl.Panel.extend({
     }
     
     if(!background) {
-      el.append('<' + node + ' class="spinner">Loading component</' + node + '>');
+      el.append('<' + node + ' class="spinner ajax_pending">Loading component</' + node + '>');
     }
     
     if (newContent === true) {
@@ -308,7 +308,7 @@ Ensembl.Panel.Content = Ensembl.Panel.extend({
   glossary: function () {
     this.elLk.glossary.each(function() {
       var el  = $(this);
-      el.helptip({ content: el.children('.floating_popup').remove().html() });
+      el.helptip({ content: el.children('.floating_popup').remove().html(), delay: true });
     });
   },
   

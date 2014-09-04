@@ -63,6 +63,7 @@ sub new {
     id            => $id,
     object        => undef,
     cacheable     => 0,
+    mcacheable    => 1,
     ajaxable      => 0,
     configurable  => 0,
     has_image     => 0,
@@ -157,8 +158,12 @@ sub cacheable {
 }
 
 sub mcacheable {
-  # temporary method in e75 only - will be replaced in 76 (hr5)
-  return 1;
+  ## temporary method only - will be replaced in 77 (hr5) - use cacheable method instead
+  ## @accessor
+  ## @return Boolean
+  my $self = shift;
+  $self->{'mcacheable'} = shift if @_;
+  return $self->{'mcacheable'};
 }
 
 sub ajaxable {
@@ -221,7 +226,7 @@ sub get_content {
       $content = $self->content; # Force sequence-point before buttons call.
       $content = $self->content_buttons.$content;
     }
-    if ($cache && $content) {
+    if ($cache && $content && $self->mcacheable) { # content method call can change mcacheable value
       $self->set_cache_key;
       $cache->set($ENV{'CACHE_KEY'}, $content, 60*60*24*7, values %{$ENV{'CACHE_TAGS'}});
     }
@@ -271,8 +276,8 @@ sub content_buttons {
       push @classes, 'togglebutton' if $b->{'toggle'};
       push @classes, 'off'          if $b->{'toggle'} and $b->{'toggle'} eq 'off';
       $all_disabled = 0 unless $b->{'disabled'};
-      $group .= sprintf('<a href="%s" class="%s">%s</a>',
-            $b->{'url'}, join(' ',@classes), $b->{'caption'});
+      $group .= sprintf('<a href="%s" class="%s" rel="%s">%s</a>',
+            $b->{'url'}, join(' ',@classes),$b->{'rel'},$b->{'caption'});
     }
     if(@$g>1) {
       my $class = "group";

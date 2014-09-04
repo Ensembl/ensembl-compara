@@ -16,17 +16,11 @@ limitations under the License.
 
 =cut
 
+package EnsEMBL::Web::Component::Location::CellTypeSelector;
 
-# Let the code begin...
-
-
-package Bio::Search::HSP::StorableHSP;
-use vars qw(@ISA);
 use strict;
 
-use Bio::Root::Storable;
-use Bio::Search::HSP::GenericHSP;
-
-@ISA = qw( Bio::Search::HSP::GenericHSP Bio::Root::Storable );
+use base qw(EnsEMBL::Web::Component::Regulation::CellTypeSelector);
 
 1;
+

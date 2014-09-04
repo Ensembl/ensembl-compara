@@ -24,12 +24,6 @@ use HTML::Entities qw(encode_entities);
 
 use base qw(EnsEMBL::Web::Document::Element);
 
-sub new {
-  my $self = shift->SUPER::new(@_);
-  $self->set('BLAST Search') if $self->hub->type eq 'blastview'; ## FIXME - this is a temporary hack until we rewrite the BLAST front end
-  return $self;
-}
-
 sub set       { $_[0]{'title'} = $_[1]; }
 sub get       { return $_[0]{'title'};  }
 sub set_short { $_[0]{'short'} = $_[1]; }
