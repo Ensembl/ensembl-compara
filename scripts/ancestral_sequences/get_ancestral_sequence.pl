@@ -2,6 +2,118 @@
 use strict;
 use warnings;
 
+=head1 NAME
+
+get_ancestral_sequence.pl
+
+=head1 AUTHORS
+
+ Javier Herrero
+
+=head1 CONTACT
+
+Please email comments or questions to the public Ensembl
+developers list at <http://lists.ensembl.org/mailman/listinfo/dev>.
+
+Questions may also be sent to the Ensembl help desk at
+<http://www.ensembl.org/Help/Contact>.
+
+=head1 DESCRIPTION
+
+This script reads an EPO alignment and prints the ancestral sequence predicted
+for the ancestor just older than the query species. By default, we use the
+primates alignment, and the query is human, thus giving the sequence of the
+human/chimp ancestor.
+The script creates a directory with a pair of BED+FASTA files for each
+chromosome of the query species. The FASTA file contains the actual sequence,
+while the BED file contains the phylogenetic tree associated with each region.
+
+=head1 SYNOPSIS
+
+perl get_ancestral_sequence.pl --help
+
+perl get_ancestral_sequence.pl
+    [--url main_ensembl_url]
+    [--conf|--registry registry_file]
+    [--compara_url url_of_compara_database]
+    [--species name_of_query_species]
+    [--alignment_set name_of_species_set]
+    [--mlss_id mlss_id]
+    [--dir directory_name]
+
+=head1 OPTIONS
+
+=head2 GETTING HELP
+
+=over
+
+=item B<[--help]>
+
+  Prints help message and exits.
+
+=back
+
+=head2 GENERAL CONFIGURATION
+
+=over
+
+=item B<[--url main_ensembl_url]>
+
+URL of Ensembl databases, e.g. mysql://anonymous@ensembldb.ensembl.org/
+
+=item B<[--conf|--registry registry_configuration_file]>
+
+The Bio::EnsEMBL::Registry configuration file. If none given,
+the one set in ENSEMBL_REGISTRY will be used if defined, if not
+~/.ensembl_init will be used.
+
+=item B<[--compara_url url_of_compara_database]>
+
+The compara database that contains the EPO alignment. If none given,
+the script will try to connect to the "Multi" database
+
+=back
+
+=head2 INPUT ALIGNMENT CONFIGURATION
+
+=over
+
+=item B<[--mlss_id mlss_id]>
+
+The MethodLinkSpeciesSet ID of the alignment. By default, the script will
+try to fetch the alignment associated with a species set correctly named
+(see L<--alignment_set>). It then tries all the EPO alignments found with
+a matching MLSS name
+
+=item B<[--species name_of_query_species]>
+
+The name for the species to get the ancestral sequence of (default: "Homo sapiens")
+
+=item B<[--alignment_set name_of_query_species]>
+
+The name of the species set of the alignment (default: "primates")
+
+=back
+
+=head2 OUTPUT CONFIGURATION
+
+=over
+
+=item B<[--dir directory_name]>
+
+Where to dump all the files. Defaults to "${species_production_name}_ancestor_${species_assembly}_e${ensembl_version}"
+
+=back
+
+=head2 Examples
+
+perl $ENSEMBL_CVS_ROOT_DIR/ensembl-compara/scripts/ancestral_sequences/get_ancestral_sequence.pl --conf $ENSEMBL_CVS_ROOT_DIR/ensembl-compara/scripts/pipeline/production_reg_conf.pl --compara_url mysql://ensro@compara5/sf5_epo_8primates_77 --species homo_sapiens
+
+=head1 INTERNAL METHODS
+
+=cut
+
+
 use Bio::EnsEMBL::Registry;
 use Getopt::Long;
 
@@ -26,6 +138,11 @@ GetOptions(
   "mlss_id=i" => \$mlss_id,
   "dir=s" => \$dir,
 );
+
+# Print Help and exit if help is requested
+if ($help) {
+  exec("/usr/bin/env perldoc $0");
+}
 
 if ($registry_file) {
   die "Registry file '$registry_file' doesn't exist\n" if (!-e $registry_file);
