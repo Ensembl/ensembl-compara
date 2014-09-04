@@ -77,8 +77,8 @@ sub process {
     unless ($error) {
       ## Write data to output file in desired format
 
-      ## All alignments go via a single outputter
-      if ($hub->param('align')) {
+      ## All non-RTF alignments go via a single outputter
+      if ($hub->param('align') && lc($format) ne 'rtf') {
         my @data = $component->get_export_data;
         $error = $self->write_alignments($format, @data);
       }
@@ -149,6 +149,8 @@ sub write_rtf {
   my $c              = 1;
   my $i              = 0;
   my $j              = 0;
+  my $sp             = 0;
+  my $newline        = 1;
   my @output;
 
   foreach my $class (sort { $class_to_style->{$a}[0] <=> $class_to_style->{$b}[0] } keys %$class_to_style) {
@@ -168,13 +170,21 @@ sub write_rtf {
     push @colours, [ map hex, unpack 'A2A2A2', $rtf_style->{$_} ] for sort grep /\d/, keys %$rtf_style;
   }
 
+  ## Rotate the species if this is an alignment
+  my $repeat = scalar keys %{$config->{'padded_species'}||{}};
+
   foreach my $lines (@$sequence) {
     next unless @$lines;
-    my ($section, $class, $previous_class, $count);
+    my ($section, $class, $previous_class, $count, %stash);
 
     $lines->[-1]{'end'} = 1;
 
+    ## Output each line of sequence letters
     foreach my $seq (@$lines) {
+      $sp = 0 if $sp == $repeat;
+      next unless keys %{$seq||{}};
+      warn "... SP = $sp for ".$seq->{'letter'};
+      warn "... $section";
       if ($seq->{'class'}) {
         $class = $seq->{'class'};
 
@@ -188,6 +198,26 @@ sub write_rtf {
       }
 
       $class = join ' ', sort { $class_to_style->{$a}[0] <=> $class_to_style->{$b}[0] } split /\s+/, $class;
+
+      ## Add species name if this is an alignment
+      ## (on pages, this is done by build_sequence, but that adds HTML)
+      my $pre_string;
+      if ($config->{'comparison'} && $newline) {
+    
+        if (scalar keys %{$config->{'padded_species'}}) {
+          $pre_string = $config->{'padded_species'}{$config->{'seq_order'}[$sp]} || $config->{'display_species'};
+        } else {
+          $pre_string = $config->{'display_species'};
+        }
+
+        $pre_string .= '  ';
+        ## To avoid styling the species name like sequence, put this letter
+        ## back in the queue and just process the species name
+        my %recycle = keys %stash ? %stash : %$seq;
+        unshift @$lines, \%recycle;
+        $seq = {'letter' => $pre_string};
+        $newline = 0;
+      }
 
       $seq->{'letter'} =~ s/<a.+>(.+)<\/a>/$1/ if $seq->{'url'};
 
@@ -210,13 +240,18 @@ sub write_rtf {
           $count = 0;
           $j++;
         }
-
+        
+        $newline = 1;
+        %stash = %$seq;
+        $seq   = {};
         $section = '';
       }
 
-      $section       .= $seq->{'letter'};
+      $section       .= $seq->{'letter'} if keys %$seq;
+      $seq            = {};
       $previous_class = $class;
       $count++;
+      $sp++;
     }
 
     $i++;
