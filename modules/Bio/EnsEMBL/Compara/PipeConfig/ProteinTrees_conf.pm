@@ -107,6 +107,7 @@ sub default_options {
     # tree building parameters:
         'use_raxml'                 => 0,
         'use_notung'                => 0,
+        'use_raxml_epa_on_treebest' => 0,
         'treebreak_gene_count'      => 400,     # affects msa_chooser
         'mafft_gene_count'          => 200,     # affects msa_chooser
         'mafft_runtime'             => 7200,    # affects msa_chooser
@@ -1455,12 +1456,12 @@ sub pipeline_analyses {
                 'store_intermediate_trees'  => 1,
                 'store_filtered_align'      => 1,
                 'treebest_exe'              => $self->o('treebest_exe'),
-                'output_clusterset_id'      => $self->o('use_raxml') ? 'default' : 'treebest',
+                'output_clusterset_id'      => ($self->o('use_raxml') or not $self->o('use_raxml_epa_on_treebest')) ? 'default' : 'treebest',
             },
             -hive_capacity        => $self->o('treebest_capacity'),
             -rc_name    => '4Gb_job',
             -flow_into  => {
-                $self->o('use_raxml') ? 999 : 1 => [ 'raxml_epa_longbranches' ],
+                ($self->o('use_raxml') or not $self->o('use_raxml_epa_on_treebest')) ? 999 : 1 => [ 'raxml_epa_longbranches' ],
             }
         },
 
