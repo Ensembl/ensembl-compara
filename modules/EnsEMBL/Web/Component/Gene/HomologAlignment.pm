@@ -44,12 +44,13 @@ sub content {
   my $seq          = $hub->param('seq');
   my $text_format  = $hub->param('text_format');
   my $database     = $hub->database($cdb);
-  my $qm           = $database->get_GeneMemberAdaptor->fetch_by_source_stable_id('ENSEMBLGENE', $gene_id);
+  my $qm           = $database->get_GeneMemberAdaptor->fetch_by_stable_id($gene_id);
   my ($homologies, $html, %skipped);
   
   eval {
     $homologies = $database->get_HomologyAdaptor->fetch_all_by_Member($qm);
   };
+  warn $@ if $@;
  
   my ($match_type, %desc_mapping);
   
@@ -89,6 +90,7 @@ sub content {
         $sa = $homology->get_SimpleAlign;
       }
     };
+    warn $@ if $@;
     
     if ($sa) {
       my $data = [];
@@ -100,7 +102,7 @@ sub content {
         $flag = 1 if $gene->stable_id eq $second_gene;
         
         my $member_species = ucfirst $peptide->genome_db->name;
-        my $location       = sprintf '%s:%d-%d', $gene->chr_name, $gene->chr_start, $gene->chr_end;
+        my $location       = sprintf '%s:%d-%d', $gene->dnafrag->name, $gene->dnafrag_start, $gene->dnafrag_end;
         
         if (!$second_gene && $member_species ne $species && $hub->param('species_' . lc $member_species) eq 'off') {
           $flag = 0;
