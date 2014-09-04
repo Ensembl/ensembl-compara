@@ -1520,6 +1520,7 @@ sub pipeline_analyses {
         {   -logic_name => 'promote_treebest_tree',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::CopyLocalTree',
             -parameters => {
+                'treebest_exe'          => $self->o('treebest_exe'),
                 'input_clusterset_id'   => 'treebest',
                 'output_clusterset_id'  => 'default',
             },
