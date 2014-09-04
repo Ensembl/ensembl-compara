@@ -1479,6 +1479,24 @@ sub pipeline_analyses {
                 $self->o('use_notung') ? 1 : 999 => [ 'notung' ],
                 2 => [ 'promote_treebest_tree' ],
                 4 => [ 'raxml_bl_unfiltered' ],
+                -1 => [ 'raxml_epa_longbranches_himem' ],
+            },
+        },
+
+        {   -logic_name => 'raxml_epa_longbranches_himem',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::RAxML_EPA_lb',
+            -parameters => {
+                'raxml_exe'                 => $self->o('raxml_exe'),
+                'treebest_exe'              => $self->o('treebest_exe'),
+                'input_clusterset_id'       => 'treebest',
+                'output_clusterset_id'      => $self->o('use_notung') ? 'raxml_bl' : 'default',
+            },
+            -hive_capacity        => $self->o('raxml_capacity'),
+            -rc_name    => '16Gb_job',
+            -flow_into  => {
+                $self->o('use_notung') ? 1 : 999 => [ 'notung' ],
+                2 => [ 'promote_treebest_tree' ],
+                4 => [ 'raxml_bl_unfiltered' ],
             },
         },
 
