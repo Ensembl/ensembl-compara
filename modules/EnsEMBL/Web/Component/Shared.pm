@@ -214,6 +214,7 @@ sub transcript_table {
   my $trans_5_3_desc = "5' and 3' truncations in transcript evidence prevent annotation of the start and the end of the CDS.";
   my $trans_5_desc = "5' truncation in transcript evidence prevents annotation of the start of the CDS.";
   my $trans_3_desc = "3' truncation in transcript evidence prevents annotation of the end of the CDS.";
+  my %glossary     = $hub->species_defs->multiX('ENSEMBL_GLOSSARY');
 
   if ($gene) {
     my $transcript  = $page_type eq 'transcript' ? $object->stable_id : $hub->param('t');
@@ -228,7 +229,7 @@ sub transcript_table {
     my $trans_gencode = {};
 
     foreach my $trans (@$transcripts) {
-      foreach my $attrib_type (qw(CDS_start_NF CDS_end_NF gencode_basic)) {
+      foreach my $attrib_type (qw(CDS_start_NF CDS_end_NF gencode_basic TSL)) {
         (my $attrib) = @{$trans->get_all_Attributes($attrib_type)};
         if($attrib_type eq 'gencode_basic') {
             if ($attrib && $attrib->value) {
@@ -336,6 +337,9 @@ sub transcript_table {
         }
         elsif ($trans_attribs->{$tsi}{'CDS_end_NF'}) {
          push @flags,qq(<span class="glossary_mouseover">CDS 3' incomplete<span class="floating_popup">$trans_3_desc</span></span>);
+        }
+        elsif ($trans_attribs->{$tsi}{'TSL'}) {
+          push @flags, sprintf qq(<span class="glossary_mouseover">TSL:%s<span class="floating_popup">%s</span></span>), $trans_attribs->{$tsi}{'TSL'} =~ s/^tsl([^\s]+).*$/$1/gr, $glossary{'Transcript Support Level'};
         }
       }
 
