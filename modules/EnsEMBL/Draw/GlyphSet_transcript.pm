@@ -396,7 +396,7 @@ sub render_transcripts {
             my $fill_start = max($exon->start + $exons[$i][2], 1);
             my $fill_end   = min($exon->end   - $exons[$i][3], $length);
             
-            if ($fill_end > $fill_start) {
+            if ($fill_end >= $fill_start) {
               $composite2->push($self->Rect({
                 x         => $fill_start - 1,
                 y         => $y,
