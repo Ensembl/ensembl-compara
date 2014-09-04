@@ -324,7 +324,6 @@ sub get_slices {
   my ($self, $args) = @_;
   my (@slices, @formatted_slices, $length);
   my $underlying_slices = !$args->{image}; # Don't get underlying slices for alignment images - they are only needed for text sequence views, and the process is slow.
-  warn ">>> ALIGNMENT ".$args->{align};
 
   if ($args->{align}) {
     push @slices, @{$self->get_alignments($args)};
@@ -381,6 +380,7 @@ sub get_alignments {
 
   my $cdb = $args->{'cdb'} || 'compara';
 
+  my ($align, $target_species, $target_slice_name_range) = split '--', $hub->param('align');
   my $target_slice = $self->get_target_slice;
 
   my $func                    = $self->{'alignments_function'} || 'get_all_Slices';
