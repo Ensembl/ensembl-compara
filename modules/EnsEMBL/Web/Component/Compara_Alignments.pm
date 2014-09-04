@@ -650,7 +650,7 @@ sub _get_low_coverage_genome_db_sets {
   return $low_coverage_species;
 }
 
-sub export_options { return {'action' => 'TextAlignments'}; }
+sub export_options { return {'action' => 'TextAlignments', 'params' => ['align']}; }
 
 sub get_export_data {
 ## Get data for export
@@ -683,7 +683,6 @@ sub initialize_export {
                         'target'  => $object->get_target_slice,
                         'image'   => $self->has_image
                 });
-  warn ">>> SLICES @$slices";
   return $self->_get_sequence($object->slice, $slices, undef, $cdb);
 }
 
