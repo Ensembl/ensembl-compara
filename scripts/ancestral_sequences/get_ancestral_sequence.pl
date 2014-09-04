@@ -75,6 +75,10 @@ if ($mlss_id) {
 } else {
   $mlss = $method_link_species_set_adaptor->fetch_by_method_link_type_species_set_name("EPO", $alignment_set);
 }
+if (!$mlss) {
+  my $all_mlss = $method_link_species_set_adaptor->fetch_all_by_method_link_type('EPO');
+  $mlss = $all_mlss->[0] if (scalar(@$all_mlss) == 1) and $all_mlss->[0]->name =~ /primates/i;
+}
 
 my $compara_dbc = $compara_dba->dbc;
 
