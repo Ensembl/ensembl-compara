@@ -44,6 +44,14 @@ if ($compara_url) {
   $compara_dba = $reg->get_DBAdaptor("Multi", "compara");
 }
 
+# Check that the "ancestral_sequences" species is available
+if (not $reg->get_DBAdaptor('ancestral_sequences', 'core')) {
+  if ($reg->get_DBAdaptor('ancestral_curr', 'core')) {
+    # 'ancestral_curr' is the name of the database in the production_reg_conf.pl
+    $reg->add_alias('ancestral_curr', 'ancestral_sequences');
+  }
+}
+
 my $species_scientific_name = $reg->get_adaptor($species_name, "core", "MetaContainer")->get_scientific_name();
 my $species_production_name = $reg->get_adaptor($species_name, "core", "MetaContainer")->get_production_name();
 my $species_assembly = $reg->get_adaptor($species_name, "core", "CoordSystem")->fetch_all->[0]->version();
