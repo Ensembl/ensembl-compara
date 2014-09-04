@@ -133,7 +133,7 @@ sub dump_ancestral_sequence {
     }
 #    print $ref_aligned_sequence, "\n\n", "$ancestral_sequence\n\n\n\n";
     my $ref_ga = $ref_gat->genomic_align_group->get_all_GenomicAligns->[0];
-    my $tree = $this_genomic_align_tree->newick_simple_format;
+    my $tree = $this_genomic_align_tree->newick_format("simple");
     $tree =~ s/\:[\d\.]+//g;
     $tree =~ s/_\w+//g;
     $tree =~ s/\[[\+\-]\]//g;
