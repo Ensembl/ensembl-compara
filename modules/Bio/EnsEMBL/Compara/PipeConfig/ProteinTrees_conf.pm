@@ -1488,6 +1488,7 @@ sub pipeline_analyses {
                 'treebest_exe'          => $self->o('treebest_exe'),
                 'input_clusterset_id'   => 'treebest',
                 'output_clusterset_id'  => $self->o('use_notung') ? 'raxml_bl' : 'default',
+                'remove_columns'        => 0,
             },
             -hive_capacity        => $self->o('raxml_capacity'),
             -rc_name => '8Gb_job',
