@@ -38,7 +38,8 @@ sub param_defaults {
     my $self = shift;
     return {
         %{$self->SUPER::param_defaults},
-        'cmd'                        => '#raxml_exe# -f v -G .10 -m #best_fit_model# -p 99123746531 -t #gene_tree_file# -s #alignment_file# -n #gene_tree_id#',
+        'cmd'                        => '#raxml_exe# #raxml_extra_params# -f v -G .10 -m #best_fit_model# -p 99123746531 -t #gene_tree_file# -s #alignment_file# -n #gene_tree_id#',
+        'raxml_extra_params'         => '',
         'runtime_tree_tag'           => 'raxml_epa_runtime',
         'remove_columns'             => 0,
         'cdna'                       => 1,
