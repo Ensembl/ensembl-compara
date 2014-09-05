@@ -130,7 +130,7 @@ Ensembl.Panel.Configurator = Ensembl.Panel.ModalContent.extend({
     }
     
     this.elLk.configDivs.not('.view_config')
-    .on('click', 'ul.config_menu > li.track, .select_all', $.proxy(this.showConfigMenu, this)) // Popup menus - displaying
+    .on('click', 'ul.config_menu > li.track div.track_name, .select_all', $.proxy(this.showConfigMenu, this)) // Popup menus - displaying
     .on('click', '.popup_menu li',                         $.proxy(this.setTrackConfig, this)) // Popup menus - setting values
     .on('click', '.config_header', function () {                                               // Header on search results and active tracks sections will act like the links on the left
       $('a.' + this.parentNode.className.replace(/\s*config\s*/, ''), panel.elLk.links).trigger('click');
@@ -287,7 +287,7 @@ Ensembl.Panel.Configurator = Ensembl.Panel.ModalContent.extend({
       return true;
     }
     
-    var el        = $(e.currentTarget);
+    var el        = $(e.currentTarget.parentNode);
     var selectAll = el.hasClass('select_all');
     
     if (selectAll && e.target === e.currentTarget) {

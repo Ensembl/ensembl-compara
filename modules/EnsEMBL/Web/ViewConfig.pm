@@ -676,13 +676,14 @@ sub build_imageconfig_menus {
     
     my $child = $parent->append_child('li', {
       id         => $id,
-      class      => join(' ', @classes),
-      inner_HTML => qq{$name
+      class      => \@classes,
+      inner_HTML => qq{
         <div class="controls">
           $controls
           <div class="favourite sprite fave_icon _ht" title="Favorite this track"></div>
           $help
         </div>
+        <div class="track_name">$name</div>
         $desc
       }
     });
