@@ -43,9 +43,9 @@ sub _init {
   my $Config         = $self->{'config'};
   return if ($self->my_config('accumulate') eq 'yes' &&
              $Config->get_parameter('more_slices'));
+  return unless $self->{'legend'}{[split '::', ref $self]->[-1]};
   # Clear features (for next legend)
   $self->{'legend'}{[split '::', ref $self]->[-1]} = {};
-  return unless $self->{'legend'}{[split '::', ref $self]->[-1]};
   
   $self->init_legend(2);
 
