@@ -161,7 +161,7 @@ sub run_cafe_script {
 
     print $sf '#!' . $cafe_shell . "\n\n";
     print $sf "tree $cafe_tree_str\n\n";
-    print $sf "load -p ${pval_lim} -i $cafe_table_file\n\n";
+    print $sf "load -p ${pval_lim} -i $cafe_table_file -t 1\n\n";
     print $sf "lambda -l $lambda\n";
 #    print $sf $cafe_lambdas ? " -l $cafe_lambdas\n\n" : " -s\n\n";
 #    print $sf $cafe_lambdas ? "-l $cafe_lambdas -t $cafe_struct_tree\n\n" : " -s\n\n";
