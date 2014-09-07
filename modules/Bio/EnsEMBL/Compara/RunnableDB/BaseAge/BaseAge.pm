@@ -145,14 +145,14 @@ sub base_age {
 
     my $ref_genome_db = $self->param('ref_genome_db');
     #create tag name
-    my $gdb_name = short_name($ref_genome_db->name);
+    my $gdb_name = $ref_genome_db->get_short_name;
     
     #Find clade containing ref species and all the other species in this clade
     my ($clade, $all_clade_species, $all_clade_species_name) = $self->find_clade($compara_dba, $ref_genome_db);
     print "CLADE $clade\n" if ($self->debug);
 
     #generate bed_file location
-    my $bed_file = $self->param('bed_dir') . short_name($ref_genome_db->name) . "_ages_" . $mlss->dbID . "_" . $seq_region . ".bed";
+    my $bed_file = $self->param('bed_dir') . $ref_genome_db->get_short_name . "_ages_" . $mlss->dbID . "_" . $seq_region . ".bed";
     open (BED, ">$bed_file") || die "ERROR writing ($bed_file) file\n";
 
     foreach my $gat (@$genomic_align_trees) {
@@ -341,7 +341,7 @@ sub find_clade {
         }
     }
     foreach my $genome_db (@{$clade_species_set->genome_dbs}) {
-        my $short_name = short_name($genome_db->name);
+        my $short_name = $genome_db->get_short_name;
         
         $all_clade_species->{$genome_db->dbID} = 1;
         $all_clade_species_name->{$short_name} = 1;
@@ -349,20 +349,6 @@ sub find_clade {
 
     #return clade of this species and all the species in this clade (as genome_db_ids)
     return ($clade, $all_clade_species, $all_clade_species_name);
-}
-
-sub short_name {
-    my ($long_name) = @_;
-    my $short_name;
-
-    if($long_name =~ /(.)[^ ]+_(.{3})/) {
-        $short_name = "${1}${2}";
-    } else {
-        $short_name = $long_name;
-        $short_name =~ tr/_//;
-    }
-    $short_name = ucfirst($short_name);
-    return $short_name;
 }
 
 #Get all snps
