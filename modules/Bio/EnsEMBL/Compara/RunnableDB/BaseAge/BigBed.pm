@@ -116,6 +116,7 @@ sub write_output {
 sub sort_bed {
     my ($bed_file) = @_;
     my $sorted_bed_file = $bed_file . ".sort";
+    return $sorted_bed_file if (-e $sorted_bed_file) and ((-s $sorted_bed_file) == (-s $bed_file));
     my $sort_cmd = "sort -k2,2n $bed_file > $sorted_bed_file";
     unless (system($sort_cmd) == 0) {
         throw("Problem running $sort_cmd: $!");
