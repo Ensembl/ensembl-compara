@@ -254,7 +254,6 @@ sub pipeline_analyses {
                               'species' => $self->o('ref_species'),
                               'bed_dir' => $self->o('bed_dir'),
                               'name' => $self->o('name'),
-                              'baseage_autosql' => $self->o('baseage_autosql'),
                               'clade_taxon_id' => $self->o('clade_taxon_id'),
                              },
               -batch_size => 1,
@@ -270,6 +269,7 @@ sub pipeline_analyses {
                -parameters => {
                                'program' => $self->o('big_bed_exe'),
                                'big_bed_file' => $self->o('big_bed_file'),
+                              'baseage_autosql' => $self->o('baseage_autosql'),
                                'bed_dir' => $self->o('bed_dir'),
                                'chr_sizes_file' => $self->o('chr_sizes_file'),
                                'chr_sizes' => '#bed_dir#/#chr_sizes_file#',
