@@ -71,16 +71,9 @@ sub default_options {
             'anc_name'   => 'ancestral_sequences',
             'anc_dbname' => 'ensembl_ancestral_' . $self->o('ensembl_release'),
 
-            #Connection parameters for production database
+            #Connection parameters for production database (the rest is defined in the base class)
             'host' => 'compara2',
-            'pipeline_db' => {
-                              -host   => $self->o('host'),
-                              -port   => 3306,
-                              -user   => 'ensadmin',
-                              -pass   => $self->o('password'),
-                              -dbname => $ENV{USER}.'_'.$self->o('pipeline_name'),
-                              -driver => 'mysql',
-                             },
+
             'master_db' => 'mysql://ensro@compara1/sf5_ensembl_compara_master',
 
             'staging_loc1' => {
