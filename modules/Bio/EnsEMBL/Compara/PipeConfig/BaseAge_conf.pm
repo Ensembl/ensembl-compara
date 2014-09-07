@@ -51,7 +51,6 @@ sub default_options {
             'ensembl_cvs_root_dir' => $ENV{'ENSEMBL_CVS_ROOT_DIR'}, 
 
             'ref_species' => 'homo_sapiens',
-            'seq_region' => '',
             'release_suffix'=> '', # set it to '' for the actual release
             'rel_with_suffix'       => $self->o('ensembl_release').$self->o('release_suffix'),
             'pipeline_name' => $self->o('ref_species').'_base_age_'.$self->o('rel_with_suffix'), # name used by the beekeeper to prefix job names on the farm
