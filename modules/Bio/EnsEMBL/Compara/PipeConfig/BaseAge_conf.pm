@@ -64,6 +64,7 @@ sub default_options {
 
             #Location url of database to get EPO GenomicAlignTree objects from
             'compara_url' => 'mysql://ensro@ens-livemirror:3306/ensembl_compara_' . $self->o('release'),
+            'clade_taxon_id' => 9443,   # this is the taxon_id of Primates
 
             #Location url of database to get snps from
             'variation_url' => 'mysql://ensro@ens-livemirror:3306/' . $self->o('release'),
@@ -259,6 +260,7 @@ sub pipeline_analyses {
                               'bed_dir' => $self->o('bed_dir'),
                               'name' => $self->o('name'),
                               'baseage_autosql' => $self->o('baseage_autosql'),
+                              'clade_taxon_id' => $self->o('clade_taxon_id'),
                              },
               -batch_size => 1,
               -hive_capacity => $self->o('base_age_capacity'),

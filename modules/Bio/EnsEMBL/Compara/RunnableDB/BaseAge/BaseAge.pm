@@ -147,8 +147,10 @@ sub base_age {
     #create tag name
     my $gdb_name = $ref_genome_db->get_short_name;
     
-    #Find clade containing ref species and all the other species in this clade
-    my ($clade, $all_clade_species, $all_clade_species_name) = $self->find_clade($compara_dba, $ref_genome_db);
+    #return clade of this species and all the species in this clade (as genome_db_ids)
+    my $clade = $compara_dba->get_NCBITaxonAdaptor->fetch_node_by_taxon_id($self->param('clade_taxon_id'))->scientific_name();
+    my $all_clade_species_name = {map {$_->get_short_name => 1} @{ $compara_dba->get_GenomeDBAdaptor->fetch_all_by_ancestral_taxon_id($self->param('clade_taxon_id')) } };
+
     print "CLADE $clade\n" if ($self->debug);
 
     #generate bed_file location
@@ -302,54 +304,6 @@ sub base_age {
     $self->dataflow_output_id($output, 2);
 }
 
-#
-#Find which clade the ref_genome_db belongs and all the other species in this clade
-#
-sub find_clade {
-    my ($self, $compara_dba, $ref_genome_db) = @_;
-
-    my $all_clade_species;
-    my $all_clade_species_name;
-
-    my $species_set_adaptor = $compara_dba->get_SpeciesSetAdaptor;
-
-    #find species_sets with 'taxon_id' tags
-    my $taxon_tags = $species_set_adaptor->fetch_all_by_tag('taxon_id');
-
-    my $smallest;
-    my $clade;
-    my $clade_species_set;
-    foreach my $species_set (@$taxon_tags) {
-        my $num_species_in_set = @{$species_set->genome_dbs};
-        print "taxon " . $species_set->get_value_for_tag("name") . "\n" if ($self->debug);
-
-        my $taxon_name = $species_set->get_value_for_tag("name");
-        my $genome_dbs = $species_set->genome_dbs;
-
-        foreach my $genome_db (@{$species_set->genome_dbs}) {
-            print "   genome " . $genome_db->name . " " . $genome_db->dbID . "\n" if ($self->debug);
-            #ref_species is in this species_set
-            if ($genome_db->dbID == $ref_genome_db->dbID) {
-
-                #only want to find the clade with the smallest number of species (primates is smaller than mammals)
-                $smallest = $num_species_in_set unless ($smallest);
-                if ($num_species_in_set <= $smallest) {
-                    $clade = $species_set->get_value_for_tag("name");
-                    $clade_species_set = $species_set;
-                }
-            } 
-        }
-    }
-    foreach my $genome_db (@{$clade_species_set->genome_dbs}) {
-        my $short_name = $genome_db->get_short_name;
-        
-        $all_clade_species->{$genome_db->dbID} = 1;
-        $all_clade_species_name->{$short_name} = 1;
-    }
-
-    #return clade of this species and all the species in this clade (as genome_db_ids)
-    return ($clade, $all_clade_species, $all_clade_species_name);
-}
 
 #Get all snps
 sub get_snps {
