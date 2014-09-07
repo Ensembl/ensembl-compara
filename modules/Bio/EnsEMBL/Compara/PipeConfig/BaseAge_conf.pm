@@ -52,27 +52,25 @@ sub default_options {
 
             'ref_species' => 'homo_sapiens',
             'seq_region' => '',
-            'release' => 74,       #core and variation db version
             'release_suffix'=> '', # set it to '' for the actual release
-            'rel_with_suffix'       => $self->o('release').$self->o('release_suffix'),
-            'dbname' => 'hsap_base_age',
-            'pipeline_name' => $self->o('dbname').$self->o('rel_with_suffix'), # name used by the beekeeper to prefix job names on the farm
+            'rel_with_suffix'       => $self->o('ensembl_release').$self->o('release_suffix'),
+            'pipeline_name' => 'hsap_base_age_'.$self->o('rel_with_suffix'), # name used by the beekeeper to prefix job names on the farm
 
             #Write either the node name or node_id in "name" field of the bed file
 #            'name' => "node_id",
             'name' => "name",
 
             #Location url of database to get EPO GenomicAlignTree objects from
-            'compara_url' => 'mysql://ensro@ens-livemirror:3306/ensembl_compara_' . $self->o('release'),
+            'compara_url' => 'mysql://ensro@ens-livemirror:3306/ensembl_compara_' . $self->o('ensembl_release'),
             'clade_taxon_id' => 9443,   # this is the taxon_id of Primates
 
             #Location url of database to get snps from
-            'variation_url' => 'mysql://ensro@ens-livemirror:3306/' . $self->o('release'),
+            'variation_url' => 'mysql://ensro@ens-livemirror:3306/' . $self->o('ensembl_release'),
             
             #Location details of ancestral sequences database
             'anc_host'   => 'ens-livemirror',
             'anc_name'   => 'ancestral_sequences',
-            'anc_dbname' => 'ensembl_ancestral_' . $self->o('release'),
+            'anc_dbname' => 'ensembl_ancestral_' . $self->o('ensembl_release'),
 
             #Connection parameters for production database
             'host' => 'compara2',
@@ -91,21 +89,21 @@ sub default_options {
                                -port   => 3306,
                                -user   => 'ensro',
                                -pass   => '',
-                               -db_version => $self->o('release'),
+                               -db_version => $self->o('ensembl_release'),
                               },
             'staging_loc2' => {
                                -host   => 'ens-staging2',
                                -port   => 3306,
                                -user   => 'ensro',
                                -pass   => '',
-                               -db_version => $self->o('release'),
+                               -db_version => $self->o('ensembl_release'),
                               },  
             'livemirror_loc' => {
                                  -host   => 'ens-livemirror',
                                  -port   => 3306,
                                  -user   => 'ensro',
                                  -pass   => '',
-                                 -db_version => $self->o('release'),
+                                 -db_version => $self->o('ensembl_release'),
                                 },
 
             'curr_core_sources_locs'    => [ $self->o('staging_loc1'), $self->o('staging_loc2'), ],
@@ -206,7 +204,7 @@ sub pipeline_analyses {
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::LoadOneGenomeDB',
             -parameters => {
                 'registry_dbs'  => $self->o('curr_core_sources_locs'),
-                'db_version'    => $self->o('release'),
+                'db_version'    => $self->o('ensembl_release'),
             },
             -hive_capacity => 1,    # they are all short jobs, no point doing them in parallel
 	    -rc_name => '100Mb',
