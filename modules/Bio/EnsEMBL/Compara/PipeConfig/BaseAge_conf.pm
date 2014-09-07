@@ -206,7 +206,6 @@ sub pipeline_analyses {
                 'registry_dbs'  => $self->o('curr_core_sources_locs'),
                 'db_version'    => $self->o('ensembl_release'),
             },
-            -hive_capacity => 1,    # they are all short jobs, no point doing them in parallel
 	    -rc_name => '100Mb',
         },
         {   -logic_name => 'load_ancestral_genomedb',
@@ -215,7 +214,6 @@ sub pipeline_analyses {
                             'sql' => [ 'INSERT INTO genome_db (genome_db_id, name, locator) VALUE (63, "ancestral_sequences", "Bio::EnsEMBL::DBSQL::DBAdaptor/host=' . $self->o('anc_host') .';port=3306;user=ensro;pass=;dbname=' . $self->o('anc_dbname') . ';species=' . $self->o('anc_name') . ';species_id=1;disconnect_when_inactive=1")' ],
                            },
             #                -input_ids => [ { } ],
-            -hive_capacity => 1,    # they are all short jobs, no point doing them in parallel
             -rc_name => '100Mb',
             -flow_into => {
                            '1' => [ 'chrom_sizes' ],
@@ -245,7 +243,6 @@ sub pipeline_analyses {
                               'A->1' => [ 'big_bed' ],
                              },
                -rc_name => '100Mb',
-               -hive_capacity => 10,
             },
             
             { -logic_name => 'base_age',
@@ -277,8 +274,6 @@ sub pipeline_analyses {
                                'chr_sizes_file' => $self->o('chr_sizes_file'),
                                'chr_sizes' => '#bed_dir#/#chr_sizes_file#',
                               },
-               -batch_size => 10,
-               -hive_capacity => $self->o('base_age_capacity'),
                -rc_name => '1.8Gb',
              },
 
