@@ -100,7 +100,7 @@ sub write_output {
   my $concat_file = $self->param('concat_file');
   #First check concat_file is not empty
   if (-s $concat_file) {
-      my $cmd = join " ", $self->param('program'), '-as='.$self->param('baseage_autosql'), '-type=3+3', '-extraIndex=taxon_name', $concat_file, $self->param('chr_sizes'), $self->param('big_bed_file');
+      my $cmd = join " ", $self->param('program'), '-as='.$self->param('baseage_autosql'), '-type=bed3+3', '-extraIndex=taxon_name', $concat_file, $self->param('chr_sizes'), $self->param('big_bed_file');
       unless (system($cmd) == 0) {
           throw("Failed $cmd: $?\n");
       }
