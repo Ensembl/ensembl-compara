@@ -84,7 +84,7 @@ sub fetch_input {
 
   $self->param('concat_file', $concat_bed_file);
   #Should be able to delete the original files now
-  unlink @ordered_files;
+  #unlink @ordered_files;
 
   return 1;
 }
@@ -106,7 +106,7 @@ sub write_output {
       }
   } else {
       #empty concat_file
-      unlink $concat_file;
+      #unlink $concat_file;
   }
 
   return 1;
@@ -121,7 +121,7 @@ sub sort_bed {
         throw("Problem running $sort_cmd: $!");
     }
     #remove original bed file
-    unlink $bed_file;
+    #unlink $bed_file;
     return $sorted_bed_file;
 }
 
