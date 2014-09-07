@@ -107,9 +107,9 @@ sub default_options {
             'baseage_autosql' => $self->o('ensembl_cvs_root_dir')."/ensembl-compara/scripts/pipeline/baseage_autosql.as",
 
             #Locations to write output files
-            'bed_dir' => '', #location to write the bed files
+            'bed_dir'        => sprintf('/lustre/scratch109/ensembl/%s/%s', $ENV{USER}, $self->o('pipeline_name')),
             'chr_sizes_file' => 'chrom.sizes',
-            'big_bed_file' => '',
+            'big_bed_file'   => 'base_age'.$self->o('ensembl_release').'.bb',
 
             #Number of workers to run base_age analysis
             'base_age_capacity'        => 100,
@@ -260,8 +260,8 @@ sub pipeline_analyses {
                -module     => 'Bio::EnsEMBL::Compara::RunnableDB::BaseAge::BigBed',
                -parameters => {
                                'program' => $self->o('big_bed_exe'),
-                               'big_bed_file' => $self->o('big_bed_file'),
                               'baseage_autosql' => $self->o('baseage_autosql'),
+                               'big_bed_file' => '#bed_dir#/'.$self->o('big_bed_file'),
                                'bed_dir' => $self->o('bed_dir'),
                                'chr_sizes_file' => $self->o('chr_sizes_file'),
                                'chr_sizes' => '#bed_dir#/#chr_sizes_file#',
