@@ -60,16 +60,20 @@ sub default_options {
             'name' => "name",
 
             #Location url of database to get EPO GenomicAlignTree objects from
-            'compara_url' => 'mysql://ensro@ens-livemirror:3306/ensembl_compara_' . $self->o('ensembl_release'),
+#            'compara_url' => 'mysql://ensro@ens-livemirror:3306/ensembl_compara_' . $self->o('ensembl_release'),
+            'compara_url' => 'mysql://ensro@compara4:3306/sf5_epo_17mammals_77',
             'clade_taxon_id' => 9443,   # this is the taxon_id of Primates
 
             #Location url of database to get snps from
-            'variation_url' => 'mysql://ensro@ens-livemirror:3306/' . $self->o('ensembl_release'),
+            #'variation_url' => 'mysql://ensro@ens-livemirror:3306/' . $self->o('release'),
+            'variation_url' => 'mysql://ensro@ens-staging1:3306/homo_sapiens_variation_77_38?group=variation',
             
             #Location details of ancestral sequences database
-            'anc_host'   => 'ens-livemirror',
+            #'anc_host'   => 'ens-livemirror',
+            'anc_host'   => 'compara4',
             'anc_name'   => 'ancestral_sequences',
-            'anc_dbname' => 'ensembl_ancestral_' . $self->o('ensembl_release'),
+            #'anc_dbname' => 'ensembl_ancestral_' . $self->o('ensembl_release'),
+            'anc_dbname' => 'sf5_epo_17mammals_ancestral_core_77',
 
             #Connection parameters for production database (the rest is defined in the base class)
             'host' => 'compara2',
