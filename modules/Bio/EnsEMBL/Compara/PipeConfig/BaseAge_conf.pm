@@ -54,7 +54,7 @@ sub default_options {
             'seq_region' => '',
             'release_suffix'=> '', # set it to '' for the actual release
             'rel_with_suffix'       => $self->o('ensembl_release').$self->o('release_suffix'),
-            'pipeline_name' => 'hsap_base_age_'.$self->o('rel_with_suffix'), # name used by the beekeeper to prefix job names on the farm
+            'pipeline_name' => $self->o('ref_species').'_base_age_'.$self->o('rel_with_suffix'), # name used by the beekeeper to prefix job names on the farm
 
             #Write either the node name or node_id in "name" field of the bed file
 #            'name' => "node_id",
