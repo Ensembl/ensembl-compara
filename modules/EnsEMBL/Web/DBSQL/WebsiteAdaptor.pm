@@ -93,9 +93,8 @@ sub fetch_help_by_ids {
   return unless $self->db;
   my $records = [];
 
-  ## For some reason, DBI doesn't like 'IN' arrays passed
-  ## as bound parameters - either that or I'm doing it wrong!
-  my $id_string = join(', ', @$ids);
+  ## Build the correct number of placeholders for the size of the array.
+  my $id_string = join(', ', ('?') x scalar(@$ids));
   my $sql = qq(
     SELECT
       help_record_id, type, data
@@ -108,7 +107,7 @@ sub fetch_help_by_ids {
   );
 
   my $sth = $self->db->prepare($sql);
-  $sth->execute();
+  $sth->execute( @$ids );
 
   while (my @data = $sth->fetchrow_array()) {
     my $record = {

@@ -85,9 +85,12 @@ sub count {
 
   my $dbh = $self->database($db);
   return 0 unless $dbh;
+  ## quote before assignment to full text keyword
+  $kw = $dbh->dbc->db_handle->quote($kw);
   my $full_kw = $kw; 
   $full_kw =~ s/\%/\*/g; 
-  $kw = $dbh->dbc->db_handle->quote($kw);
+  ## remove leading and trailing quote that DBI->quote() adds
+  $full_kw =~ s/^'|'$//g;
   (my $t = $sql ) =~ s/'\[\[KEY\]\]'/$kw/g;
                $t =~ s/\[\[COMP\]\]/$comp/g;
                $t =~ s/\[\[FULLTEXTKEY\]\]/$full_kw/g; # Eagle extra regexp as we can have ' ' around our search term using full text search 
@@ -102,9 +105,12 @@ sub _fetch {
   my( $self, $db, $search_SQL, $comparator, $kw, $limit ) = @_;
   my $dbh = $self->database( $db );
   return [] unless $dbh;
+  ## quote before assignment to full text keyword
+  $kw = $dbh->dbc->db_handle->quote($kw);
   my $full_kw = $kw; 
   $full_kw =~ s/\%/\*/g; 
-  $kw = $dbh->dbc->db_handle->quote($kw);
+  ## remove leading and trailing quote that DBI->quote() adds
+  $full_kw =~ s/^'|'$//g;
   (my $t = $search_SQL ) =~ s/'\[\[KEY\]\]'/$kw/g;
   $t =~ s/\[\[COMP\]\]/$comparator/g;
   $t =~ s/\[\[FULLTEXTKEY\]\]/$full_kw/g;
