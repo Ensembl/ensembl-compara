@@ -697,6 +697,17 @@ sub pipeline_analyses {
             },
             -hive_capacity => $self->o('reuse_capacity'),
             -flow_into => {
+                1 => [ 'reset_gene_member_counters' ],
+            },
+        },
+
+        {   -logic_name => 'reset_gene_member_counters',
+            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::SqlCmd',
+            -parameters => {
+                'sql' => [  'UPDATE gene_member SET families = 0, gene_trees = 0, gene_gain_loss_trees = 0, orthologues = 0, paralogues = 0, homoeologues = 0 WHERE genome_db_id = #genome_db_id#' ],
+            },
+            -hive_capacity => $self->o('reuse_capacity'),
+            -flow_into => {
                 1 => [ 'other_sequence_table_reuse' ],
             },
         },
