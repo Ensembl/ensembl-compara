@@ -51,38 +51,33 @@ sub default_options {
             'ensembl_cvs_root_dir' => $ENV{'ENSEMBL_CVS_ROOT_DIR'}, 
 
             'ref_species' => 'homo_sapiens',
-            'seq_region' => '',
-            'release' => 74,       #core and variation db version
             'release_suffix'=> '', # set it to '' for the actual release
-            'rel_with_suffix'       => $self->o('release').$self->o('release_suffix'),
-            'dbname' => 'hsap_base_age',
-            'pipeline_name' => $self->o('dbname').$self->o('rel_with_suffix'), # name used by the beekeeper to prefix job names on the farm
+            'rel_with_suffix'       => $self->o('ensembl_release').$self->o('release_suffix'),
+            'pipeline_name' => $self->o('ref_species').'_base_age_'.$self->o('rel_with_suffix'), # name used by the beekeeper to prefix job names on the farm
 
             #Write either the node name or node_id in "name" field of the bed file
 #            'name' => "node_id",
             'name' => "name",
 
             #Location url of database to get EPO GenomicAlignTree objects from
-            'compara_url' => 'mysql://ensro@ens-livemirror:3306/ensembl_compara_' . $self->o('release'),
+#            'compara_url' => 'mysql://ensro@ens-livemirror:3306/ensembl_compara_' . $self->o('ensembl_release'),
+            'compara_url' => 'mysql://ensro@compara4:3306/sf5_epo_17mammals_77',
+            'clade_taxon_id' => 9443,   # this is the taxon_id of Primates
 
             #Location url of database to get snps from
-            'variation_url' => 'mysql://ensro@ens-livemirror:3306/' . $self->o('release'),
+            #'variation_url' => 'mysql://ensro@ens-livemirror:3306/' . $self->o('release'),
+            'variation_url' => 'mysql://ensro@ens-staging1:3306/homo_sapiens_variation_77_38?group=variation',
             
             #Location details of ancestral sequences database
-            'anc_host'   => 'ens-livemirror',
+            #'anc_host'   => 'ens-livemirror',
+            'anc_host'   => 'compara4',
             'anc_name'   => 'ancestral_sequences',
-            'anc_dbname' => 'ensembl_ancestral_' . $self->o('release'),
+            #'anc_dbname' => 'ensembl_ancestral_' . $self->o('ensembl_release'),
+            'anc_dbname' => 'sf5_epo_17mammals_ancestral_core_77',
 
-            #Connection parameters for production database
+            #Connection parameters for production database (the rest is defined in the base class)
             'host' => 'compara2',
-            'pipeline_db' => {
-                              -host   => $self->o('host'),
-                              -port   => 3306,
-                              -user   => 'ensadmin',
-                              -pass   => $self->o('password'),
-                              -dbname => $ENV{USER}.'_'.$self->o('pipeline_name'),
-                              -driver => 'mysql',
-                             },
+
             'master_db' => 'mysql://ensro@compara1/sf5_ensembl_compara_master',
 
             'staging_loc1' => {
@@ -90,21 +85,21 @@ sub default_options {
                                -port   => 3306,
                                -user   => 'ensro',
                                -pass   => '',
-                               -db_version => $self->o('release'),
+                               -db_version => $self->o('ensembl_release'),
                               },
             'staging_loc2' => {
                                -host   => 'ens-staging2',
                                -port   => 3306,
                                -user   => 'ensro',
                                -pass   => '',
-                               -db_version => $self->o('release'),
+                               -db_version => $self->o('ensembl_release'),
                               },  
             'livemirror_loc' => {
                                  -host   => 'ens-livemirror',
                                  -port   => 3306,
                                  -user   => 'ensro',
                                  -pass   => '',
-                                 -db_version => $self->o('release'),
+                                 -db_version => $self->o('ensembl_release'),
                                 },
 
             'curr_core_sources_locs'    => [ $self->o('staging_loc1'), $self->o('staging_loc2'), ],
@@ -116,9 +111,9 @@ sub default_options {
             'baseage_autosql' => $self->o('ensembl_cvs_root_dir')."/ensembl-compara/scripts/pipeline/baseage_autosql.as",
 
             #Locations to write output files
-            'bed_dir' => '', #location to write the bed files
+            'bed_dir'        => sprintf('/lustre/scratch109/ensembl/%s/%s', $ENV{USER}, $self->o('pipeline_name')),
             'chr_sizes_file' => 'chrom.sizes',
-            'big_bed_file' => '',
+            'big_bed_file'   => 'base_age'.$self->o('ensembl_release').'.bb',
 
             #Number of workers to run base_age analysis
             'base_age_capacity'        => 100,
@@ -205,9 +200,8 @@ sub pipeline_analyses {
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::LoadOneGenomeDB',
             -parameters => {
                 'registry_dbs'  => $self->o('curr_core_sources_locs'),
-                'db_version'    => $self->o('release'),
+                'db_version'    => $self->o('ensembl_release'),
             },
-            -hive_capacity => 1,    # they are all short jobs, no point doing them in parallel
 	    -rc_name => '100Mb',
         },
         {   -logic_name => 'load_ancestral_genomedb',
@@ -216,7 +210,6 @@ sub pipeline_analyses {
                             'sql' => [ 'INSERT INTO genome_db (genome_db_id, name, locator) VALUE (63, "ancestral_sequences", "Bio::EnsEMBL::DBSQL::DBAdaptor/host=' . $self->o('anc_host') .';port=3306;user=ensro;pass=;dbname=' . $self->o('anc_dbname') . ';species=' . $self->o('anc_name') . ';species_id=1;disconnect_when_inactive=1")' ],
                            },
             #                -input_ids => [ { } ],
-            -hive_capacity => 1,    # they are all short jobs, no point doing them in parallel
             -rc_name => '100Mb',
             -flow_into => {
                            '1' => [ 'chrom_sizes' ],
@@ -246,7 +239,6 @@ sub pipeline_analyses {
                               'A->1' => [ 'big_bed' ],
                              },
                -rc_name => '100Mb',
-               -hive_capacity => 10,
             },
             
             { -logic_name => 'base_age',
@@ -258,7 +250,7 @@ sub pipeline_analyses {
                               'species' => $self->o('ref_species'),
                               'bed_dir' => $self->o('bed_dir'),
                               'name' => $self->o('name'),
-                              'baseage_autosql' => $self->o('baseage_autosql'),
+                              'clade_taxon_id' => $self->o('clade_taxon_id'),
                              },
               -batch_size => 1,
               -hive_capacity => $self->o('base_age_capacity'),
@@ -272,13 +264,12 @@ sub pipeline_analyses {
                -module     => 'Bio::EnsEMBL::Compara::RunnableDB::BaseAge::BigBed',
                -parameters => {
                                'program' => $self->o('big_bed_exe'),
-                               'big_bed_file' => $self->o('big_bed_file'),
+                              'baseage_autosql' => $self->o('baseage_autosql'),
+                               'big_bed_file' => '#bed_dir#/'.$self->o('big_bed_file'),
                                'bed_dir' => $self->o('bed_dir'),
                                'chr_sizes_file' => $self->o('chr_sizes_file'),
                                'chr_sizes' => '#bed_dir#/#chr_sizes_file#',
                               },
-               -batch_size => 10,
-               -hive_capacity => $self->o('base_age_capacity'),
                -rc_name => '1.8Gb',
              },
 
