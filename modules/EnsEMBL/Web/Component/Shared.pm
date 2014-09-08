@@ -339,7 +339,8 @@ sub transcript_table {
          push @flags,qq(<span class="glossary_mouseover">CDS 3' incomplete<span class="floating_popup">$trans_3_desc</span></span>);
         }
         if ($trans_attribs->{$tsi}{'TSL'}) {
-          push @flags, sprintf qq(<span class="glossary_mouseover">TSL:%s<span class="floating_popup">%s</span></span>), $trans_attribs->{$tsi}{'TSL'} =~ s/^tsl([^\s]+).*$/$1/gr, $glossary{'Transcript Support Level'};
+          my $tsl = uc($trans_attribs->{$tsi}{'TSL'} =~ s/^tsl([^\s]+).*$/$1/gr);
+          push @flags, sprintf qq(<span class="glossary_mouseover">TSL:%s<span class="floating_popup">%s</span></span>), $tsl, $glossary{"TSL$tsl"};
         }
       }
 
