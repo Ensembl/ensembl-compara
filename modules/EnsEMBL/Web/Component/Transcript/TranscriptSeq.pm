@@ -363,9 +363,10 @@ sub initialize_export {
   my $hub = $self->hub;
   ## Set some CGI parameters from the viewconfig
   ## (because we don't want to have to set them in DataExport)
-  my $vc = $hub->get_viewconfig('Transcript', 'TranscriptSeq');
-  my @params = qw(exons codons coding_seq translation rna utr hide_long_snps);
-    foreach (@params) {
+  my $vc = $hub->get_viewconfig('TranscriptSeq', 'Transcript');
+  my @params = qw(exons codons coding_seq translation rna snp_display utr hide_long_snps);
+
+  foreach (@params) {
     $hub->param($_, $vc->get($_));
   }
   my ($sequence, $config) = $self->initialize;

@@ -133,7 +133,7 @@ sub get_export_data {
 sub initialize_export {
   my $self = shift;
   my $gene = $self->get_object;
-  my $vc = $self->hub->get_viewconfig('Gene', 'GeneSeq');
+  my $vc = $self->hub->get_viewconfig('GeneSeq', 'Gene');
   my @params = qw(display_width flanking line_numbering);
   foreach (@params) {
     $self->hub->param($_, $vc->get($_));
