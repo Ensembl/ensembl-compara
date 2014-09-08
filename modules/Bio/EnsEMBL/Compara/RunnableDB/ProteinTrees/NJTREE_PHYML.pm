@@ -151,6 +151,7 @@ sub write_output {
     if ($self->param('store_filtered_align')) {
         my $alnfile_filtered = sprintf('%s/filtalign.fa', $self->worker_temp_directory);
         if (-e $alnfile_filtered) {
+            $self->param('default_gene_tree', $self->param('gene_tree'));
             # 3rd argument is set because the coordinates are for the CDNA alignments
             my $removed_columns;
             eval {

@@ -72,6 +72,9 @@ sub default_options {
     return {
         %{$self->SUPER::default_options},   # inherit the generic ones
 
+    # User details
+        #'email'                 => 'john.smith@example.com',
+
     # parameters that are likely to change from execution to another:
         # It is very important to check that this value is current (commented out to make it obligatory to specify)
         #'mlss_id'               => 40077,
@@ -111,6 +114,7 @@ sub default_options {
     # tree building parameters:
         'use_raxml'                 => 0,
         'use_notung'                => 0,
+        'use_raxml_epa_on_treebest' => 0,
         'treebreak_gene_count'      => 400,     # affects msa_chooser
         'mafft_gene_count'          => 200,     # affects msa_chooser
         'mafft_runtime'             => 7200,    # affects msa_chooser
@@ -292,6 +296,7 @@ sub resource_classes {
          '8Gb_job'      => {'LSF' => '-C0 -M8000  -R"select[mem>8000]  rusage[mem=8000]"' },
          '8Gb_8c_job'   => {'LSF' => '-C0 -M8000  -R"select[mem>8000]  rusage[mem=8000]"  -n 8' },
          '16Gb_job'     => {'LSF' => '-C0 -M16000 -R"select[mem>16000] rusage[mem=16000]"' },
+         '16Gb_long_job'=> {'LSF' => '-C0 -M16000 -R"select[mem>16000] rusage[mem=16000]" -q long' },
          '32Gb_job'     => {'LSF' => '-C0 -M32000 -R"select[mem>32000] rusage[mem=32000]"' },
          '64Gb_job'     => {'LSF' => '-C0 -M64000 -R"select[mem>64000] rusage[mem=64000]"' },
 
@@ -619,7 +624,9 @@ sub core_pipeline_analyses {
                 mode            => 'species_tree',
                 binary          => 0,
             },
-            -flow_into  => [ 'has_user_provided_binary_species_tree' ],
+            -flow_into  => {
+                $self->o('use_notung') ? 1 : 999 => [ 'has_user_provided_binary_species_tree' ],
+            },
             %hc_analysis_params,
         },
 
@@ -1380,7 +1387,8 @@ sub core_pipeline_analyses {
         {   -logic_name => 'test_previous_runtime',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::GeneTreeConditionalDataFlow',
             -parameters => {
-                'condition'             => '(#tree_reuse_aln_runtime# || 0)/1000 > #mafft_runtime#',
+                'condition'             => '#tree_reuse_aln_runtime#/1000 > #mafft_runtime#',
+                'defaults'              => { 'tree_reuse_aln_runtime' => 0 },
                 'mafft_runtime'         => $self->o('mafft_runtime'),
             },
             -flow_into  => {
@@ -1423,6 +1431,14 @@ sub core_pipeline_analyses {
                 'stnt_sql_script'   => $self->o('ensembl_cvs_root_dir').'/ensembl-compara/sql/tree-stats-as-stn_tags.sql',
                 'command_line_db'   => $self->dbconn_2_mysql('pipeline_db', 1),
                 'cmd'               => 'mysql  #command_line_db# < #stnt_sql_script#',
+            },
+            -flow_into      => [ 'email_tree_stats_report' ],
+        },
+
+        {   -logic_name     => 'email_tree_stats_report',
+            -module         => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::HTMLReport',
+            -parameters     => {
+                'email' => $self->o('email'),
             },
         },
 
@@ -1631,16 +1647,16 @@ sub core_pipeline_analyses {
                 'store_intermediate_trees'  => 1,
                 'store_filtered_align'      => 1,
                 'treebest_exe'              => $self->o('treebest_exe'),
-                'output_clusterset_id'      => $self->o('use_raxml') ? 'default' : 'treebest',
+                'output_clusterset_id'      => ($self->o('use_raxml') or not $self->o('use_raxml_epa_on_treebest')) ? 'default' : 'treebest',
             },
             -hive_capacity        => $self->o('treebest_capacity'),
             -rc_name    => '4Gb_job',
             -flow_into  => {
-                $self->o('use_raxml') ? 999 : 1 => [ 'raxml_longbranches' ],
+                ($self->o('use_raxml') or not $self->o('use_raxml_epa_on_treebest')) ? 999 : 1 => [ 'raxml_epa_longbranches' ],
             }
         },
 
-        {   -logic_name => 'raxml_longbranches',
+        {   -logic_name => 'raxml_epa_longbranches',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::RAxML_EPA_lb',
             -parameters => {
                 'raxml_exe'                 => $self->o('raxml_exe'),
@@ -1653,20 +1669,58 @@ sub core_pipeline_analyses {
             -flow_into  => {
                 $self->o('use_notung') ? 1 : 999 => [ 'notung' ],
                 2 => [ 'promote_treebest_tree' ],
-                4 => [ 'raxml_branch_length' ],
+                4 => [ 'raxml_bl_unfiltered' ],
+                -1 => [ 'raxml_epa_longbranches_himem' ],
             },
         },
 
-        {   -logic_name => 'raxml_branch_length',
+        {   -logic_name => 'raxml_epa_longbranches_himem',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::RAxML_EPA_lb',
+            -parameters => {
+                'raxml_exe'                 => $self->o('raxml_exe'),
+                'treebest_exe'              => $self->o('treebest_exe'),
+                'input_clusterset_id'       => 'treebest',
+                'output_clusterset_id'      => $self->o('use_notung') ? 'raxml_bl' : 'default',
+                'raxml_extra_params'        => '-U',
+            },
+            -hive_capacity        => $self->o('raxml_capacity'),
+            -rc_name    => '16Gb_job',
+            -flow_into  => {
+                $self->o('use_notung') ? 1 : 999 => [ 'notung' ],
+                2 => [ 'promote_treebest_tree' ],
+                4 => [ 'raxml_bl_unfiltered' ],
+            },
+        },
+
+        {   -logic_name => 'raxml_bl_unfiltered',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::RAxML_bl',
             -parameters => {
                 'raxml_exe'             => $self->o('raxml_exe'),
                 'treebest_exe'          => $self->o('treebest_exe'),
                 'input_clusterset_id'   => 'treebest',
                 'output_clusterset_id'  => $self->o('use_notung') ? 'raxml_bl' : 'default',
+                'remove_columns'        => 0,
             },
             -hive_capacity        => $self->o('raxml_capacity'),
-            -rc_name => '8Gb_job',
+            -rc_name => '4Gb_job',
+            -flow_into  => {
+                $self->o('use_notung') ? 1 : 999 => [ 'notung' ],
+                2 => [ 'promote_treebest_tree' ],
+                -1 => [ 'raxml_bl_unfiltered_himem' ],
+             },
+        },
+
+        {   -logic_name => 'raxml_bl_unfiltered_himem',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::RAxML_bl',
+            -parameters => {
+                'raxml_exe'             => $self->o('raxml_exe'),
+                'treebest_exe'          => $self->o('treebest_exe'),
+                'input_clusterset_id'   => 'treebest',
+                'output_clusterset_id'  => $self->o('use_notung') ? 'raxml_bl' : 'default',
+                'remove_columns'        => 0,
+            },
+            -hive_capacity        => $self->o('raxml_capacity'),
+            -rc_name => '16Gb_job',
             -flow_into  => {
                 $self->o('use_notung') ? 1 : 999 => [ 'notung' ],
                 2 => [ 'promote_treebest_tree' ],
@@ -1676,6 +1730,7 @@ sub core_pipeline_analyses {
         {   -logic_name => 'promote_treebest_tree',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::CopyLocalTree',
             -parameters => {
+                'treebest_exe'          => $self->o('treebest_exe'),
                 'input_clusterset_id'   => 'treebest',
                 'output_clusterset_id'  => 'default',
             },

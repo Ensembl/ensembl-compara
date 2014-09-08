@@ -470,6 +470,32 @@ sub get_all_nodes {
   return $node_array;
 }
 
+=head2 get_all_sorted_nodes
+
+  Arg 1       : arrayref $node_array [used for recursivity, do not use it!]
+  Example     : my $all_sorted_nodes = $root->get_sorted_nodes();
+  Description : Returns this and all underlying sub nodes ordered
+  ReturnType  : listref of Bio::EnsEMBL::Compara::NestedSet objects
+  Exceptions  : none
+  Caller      : general
+  Status      : Stable
+
+=cut
+
+sub get_all_sorted_nodes {
+  my $self = shift;
+  my $node_array = shift || [];
+
+  push @$node_array, $self;
+  foreach my $child (@{$self->sorted_children}) {
+    no warnings 'recursion';
+    $child->get_all_sorted_nodes($node_array);
+  }
+
+  return $node_array;
+}
+
+
 
 =head2 get_all_nodes_by_tag_value
 

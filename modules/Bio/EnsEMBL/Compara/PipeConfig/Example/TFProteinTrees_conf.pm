@@ -69,6 +69,9 @@ sub default_options {
     return {
         %{$self->SUPER::default_options},   # inherit the generic ones
 
+    # User details
+        'email'                 => $self->o('ENV', 'USER').'@ebi.ac.uk',
+
     # parameters that are likely to change from execution to another:
         # It is very important to check that this value is current (commented out to make it obligatory to specify)
         #mlss_id => 40043,
@@ -320,6 +323,7 @@ sub tweak_analyses {
         'build_HMM_aa_himem'        => '2Gb_job',
         'build_HMM_cds'             => '1Gb_job',
         'build_HMM_cds_himem'       => '4Gb_job',
+        'raxml_epa_longbranches_himem'  => '16Gb_job',
     );
     foreach my $logic_name (keys %overriden_rc_names) {
         $analyses_by_name->{$logic_name}->{'-rc_name'} = $overriden_rc_names{$logic_name};

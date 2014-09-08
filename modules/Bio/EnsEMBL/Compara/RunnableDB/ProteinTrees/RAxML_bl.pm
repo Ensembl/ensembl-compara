@@ -40,7 +40,6 @@ sub param_defaults {
              %{$self->SUPER::param_defaults},
              # Most of the parameters are identical to the super-class: RAxML
              'cmd'                        => '#raxml_exe# -m #best_fit_model# -p 99123746531 -t #gene_tree_file# -s #alignment_file# -n #gene_tree_id# -f e',
-             'reroot_with_sdi'            => 0,
              'runtime_tree_tag'           => 'raxml_bl_runtime',
     };
 }

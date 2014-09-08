@@ -59,6 +59,9 @@ sub default_options {
     return {
         %{$self->SUPER::default_options},   # inherit the generic ones
 
+    # User details
+        'email'                 => $self->o('ENV', 'USER').'@sanger.ac.uk',
+
     # parameters that are likely to change from execution to another:
         # You can add a letter to distinguish this run from other runs on the same release
         'rel_with_suffix'       => $self->o('ensembl_release'),
@@ -200,7 +203,7 @@ sub default_options {
         #'prev_core_sources_locs'   => [ $self->o('staging_loc1'), $self->o('staging_loc2') ],
 
         # Add the database location of the previous Compara release. Use "undef" if running the pipeline without reuse
-        'prev_rel_db' => 'mysql://ensro@ens-livemirror:3306/ensembl_compara_'.($self->o('ensembl_release')-1),
+        'prev_rel_db' => 'mysql://ensro@ens-livemirror:3306/ensembl_compara_76',
 
         # How will the pipeline create clusters (families) ?
         # Possible values: 'blastp' (default), 'hmm', 'hybrid'
@@ -238,6 +241,7 @@ sub resource_classes {
          '8Gb_job'      => {'LSF' => '-C0 -M8000  -R"select[mem>8000]  rusage[mem=8000]"' },
          '8Gb_8c_job'   => {'LSF' => '-C0 -M8000  -R"select[mem>8000]  rusage[mem=8000]"  -n 8' },
          '16Gb_job'     => {'LSF' => '-C0 -M16000 -R"select[mem>16000] rusage[mem=16000]"' },
+         '16Gb_long_job'=> {'LSF' => '-C0 -M16000 -R"select[mem>16000] rusage[mem=16000]" -q long' },
          '32Gb_job'     => {'LSF' => '-C0 -M32000 -R"select[mem>32000] rusage[mem=32000]"' },
          '64Gb_job'     => {'LSF' => '-C0 -M64000 -R"select[mem>64000] rusage[mem=64000]"' },
          'treebest_job'      => {'LSF' => '-q long -C0 -M8000  -R"select[mem>8000]  rusage[mem=8000]"' },

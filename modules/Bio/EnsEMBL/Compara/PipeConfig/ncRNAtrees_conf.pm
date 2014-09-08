@@ -62,6 +62,8 @@ sub default_options {
     return {
         %{$self->SUPER::default_options},
 
+            # User details
+            #'email'                 => 'john.smith@example.com',
 
             # dependent parameters ('work_dir' should be defined)
             'rel_with_suffix'       => '',
@@ -436,6 +438,14 @@ sub pipeline_analyses {
                 'stnt_sql_script'   => $self->o('ensembl_cvs_root_dir').'/ensembl-compara/sql/tree-stats-as-stn_tags.sql',
                 'command_line_db'   => $self->dbconn_2_mysql('pipeline_db', 1),
                 'cmd'               => 'mysql  #command_line_db# < #stnt_sql_script#',
+            },
+            -flow_into      => [ 'email_tree_stats_report' ],
+        },
+
+        {   -logic_name     => 'email_tree_stats_report',
+            -module         => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::HTMLReport',
+            -parameters     => {
+                'email' => $self->o('email'),
             },
         },
 

@@ -85,6 +85,13 @@ init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::CAFE_conf -password <your_pa
   init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::CAFE_conf -mlss_id 40096 -work_dir /lustre/scratch110/ensembl/mp12/protein_trees_76_CAFE -wait_for backbone_fire_dnds -per_family_table 1 -type prot -pipeline_url mysql://ensadmin:ensembl@compara3/mm14_protein_trees_76b -cafe_species []
 
 
+  Release 77:
+  ncRNAtrees:
+  init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::CAFE_conf -mlss_id 40098 -work_dir scratch/109/cafe_nctrees_77 -wait_for backbone_fire_db_prepare -per_family_table 0 -type nc -pipeline_url mysql://ensadmin:ensembl@compara3/mm14_compara_nctrees_77 -cafe_species "['danio.rerio', 'taeniopygia.guttata', 'callithrix.jacchus', 'pan.troglodytes', 'homo.sapiens', 'mus.musculus']"
+
+  proteinTrees:
+
+
 =head1 CONTACT
 
 Please email comments or questions to the public Ensembl
@@ -142,7 +149,6 @@ sub resource_classes {
     my ($self) = @_;
     return {
             'cafe_default' => { 'LSF' => '-C0 -M1000 -R"select[mem>1000] rusage[mem=1000]"' },
-            'cafe' => { 'LSF' => '-S 1024 -C0 -M1000 -R"select[mem>1000] rusage[mem=1000]"' },
            };
 }
 
@@ -217,7 +223,7 @@ sub pipeline_analyses {
                              'mlss_id'              => $self->o('mlss_id'),
                              'cafe_shell'           => $self->o('cafe_shell'),
                             },
-             -rc_name => 'cafe',
+             -rc_name => 'cafe_default',
              -priority => 10,
             },
            ]

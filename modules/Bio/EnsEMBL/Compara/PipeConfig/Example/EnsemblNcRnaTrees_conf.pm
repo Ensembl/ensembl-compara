@@ -61,6 +61,9 @@ sub default_options {
     return {
             %{$self->SUPER::default_options},
 
+            # User details
+            'email'                 => $self->o('ENV', 'USER').'@sanger.ac.uk',
+
             'mlss_id'          => 40098,
             # Found automatically if the Core API is in PERL5LIB
             #'ensembl_release'          => '76',

@@ -73,6 +73,9 @@ sub default_options {
     return {
         %{$self->SUPER::default_options},   # inherit the generic ones
 
+    # User details
+        'email'                 => $self->o('ENV', 'USER').'@ebi.ac.uk',
+
     # parameters that are likely to change from execution to another:
         # It is very important to check that this value is current (commented out to make it obligatory to specify)
         #mlss_id => 40043,
@@ -272,6 +275,7 @@ sub tweak_analyses {
     $analyses_by_name->{'mafft'}->{'-rc_name'} = '8Gb_job';
     $analyses_by_name->{'mafft_himem'}->{'-rc_name'} = '32Gb_job';
     $analyses_by_name->{'hcluster_parse_output'}->{'-rc_name'} = '500Mb_job';
+    $analyses_by_name->{'raxml_epa_longbranches_himem'}->{'-rc_name'} = '16Gb_job';
 
     # Some parameters can be division-specific
     if ($self->o('division') eq 'plants') {

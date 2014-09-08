@@ -77,6 +77,8 @@ sub run {
     $self->param('total_orphans_num', $total_orphans_num);
     $self->param('prop_orphan',       $total_orphans_num/$total_num_genes);
 
+    my $reused_species_set = $self->compara_dba()->get_SpeciesSetAdaptor->fetch_by_dbID($self->param('reuse_ss_id'));
+    $self->param('reuse_this', $reused_species_set ? scalar(grep {$_->dbID == $genome_db_id} @{$reused_species_set->genome_dbs}) : 0);
     return unless $self->param('reuse_this');
 
     my $reuse_db                = $self->param_required('reuse_db');
@@ -107,14 +109,14 @@ sub write_output {
     my $sth = $self->compara_dba->dbc->prepare($sql);
     $sth->execute($genome_db_id);
 
-    my $sql = "UPDATE protein_tree_qc SET total_orphans_num=?, prop_orphans=? WHERE genome_db_id=?";
-    my $sth = $self->compara_dba->dbc->prepare($sql);
+    $sql = "UPDATE protein_tree_qc SET total_orphans_num=?, prop_orphans=? WHERE genome_db_id=?";
+    $sth = $self->compara_dba->dbc->prepare($sql);
     $sth->execute($self->param('total_orphans_num'), $self->param('prop_orphan'), $genome_db_id);
 
     return unless $self->param('reuse_this');
 
-    my $sql = "UPDATE protein_tree_qc SET common_orphans_num=?, new_orphans_num=? WHERE genome_db_id=?";
-    my $sth = $self->compara_dba->dbc->prepare($sql);
+    $sql = "UPDATE protein_tree_qc SET common_orphans_num=?, new_orphans_num=? WHERE genome_db_id=?";
+    $sth = $self->compara_dba->dbc->prepare($sql);
     $sth->execute($self->param('common_orphans_num'), $self->param('new_orphans_num'), $genome_db_id);
 
 }
