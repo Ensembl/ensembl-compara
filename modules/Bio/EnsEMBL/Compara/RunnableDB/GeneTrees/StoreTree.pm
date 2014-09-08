@@ -49,6 +49,8 @@ sub dumpTreeMultipleAlignmentToWorkdir {
     print("aln_file = '$aln_file'\n");
   }
 
+  my %leaf_by_seq_member_id = (map {$_->seq_member_id => $_} @{ $gene_tree->get_all_Members });
+
   print STDERR "fetching alignment\n" if ($self->debug);
   my $seq_type = $self->param('cdna') ? 'cds' : undef;
 
@@ -64,13 +66,13 @@ sub dumpTreeMultipleAlignmentToWorkdir {
     $sth->execute($gene_tree->root_id());
     my $gene_splits = $sth->fetchall_arrayref();
     $sth->finish;
-    $sth = $self->compara_dba->dbc->prepare('SELECT node_id FROM split_genes JOIN gene_tree_node USING (seq_member_id) WHERE root_id = ? AND gene_split_id = ? ORDER BY seq_member_id');
+    $sth = $self->compara_dba->dbc->prepare('SELECT seq_member_id FROM split_genes JOIN gene_tree_node USING (seq_member_id) WHERE root_id = ? AND gene_split_id = ? ORDER BY seq_member_id');
     foreach my $gene_split (@$gene_splits) {
       $sth->execute($gene_tree->root_id(), $gene_split->[0]);
       my $partial_genes = $sth->fetchall_arrayref;
-      my $node1 = shift @$partial_genes;
-      my $protein1 = $gene_tree->root->find_leaf_by_node_id($node1->[0]);
-      #print STDERR "node1 ", $node1->[0], " ", $protein1, " on root_id ", $gene_tree->root_id(), "\n";
+      my $seq_member_id1 = (shift @$partial_genes)->[0];
+      my $protein1 = $leaf_by_seq_member_id{$seq_member_id1};
+      #print STDERR "seq_member_id1 $seq_member_id -> ", $protein1->stable_id, " on root_id ", $gene_tree->root_id(), "\n";
       my $cdna = $protein1->alignment_string($seq_type);
       print STDERR "cnda $cdna\n" if $self->debug;
         # We start with the original cdna alignment string of the first gene, and
@@ -84,9 +86,9 @@ sub dumpTreeMultipleAlignmentToWorkdir {
         # cdna3 = --- --- --- --- --- --- --- --- --- --- --- --- CCC CCC CCC CCC CCC
         # and form:
         # cdna1 = AAA AAA AAA AAA AAA --- TTT TTT TTT TTT TTT --- CCC CCC CCC CCC CCC
-      foreach my $node2 (@$partial_genes) {
-        my $protein2 = $gene_tree->root->find_leaf_by_node_id($node2->[0]);
-        #print STDERR "node2 ", $node2, " ", $protein2, "\n";
+      foreach my $rseq_member_id2 (@$partial_genes) {
+        my $protein2 = $leaf_by_seq_member_id{$rseq_member_id2->[0]};
+        #print STDERR "seq_member_id2 ", $rseq_member_id2, " ", $protein2->stable_id, "\n";
         $split_genes{$protein2->{_tmp_name}} = $protein1->{_tmp_name};
         #print STDERR Dumper(%split_genes);
         print STDERR "Joining in ", $protein1->stable_id, " and ", $protein2->stable_id, " in input cdna alignment\n" if ($self->debug);
