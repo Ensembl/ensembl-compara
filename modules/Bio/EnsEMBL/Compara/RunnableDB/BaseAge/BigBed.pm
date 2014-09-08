@@ -89,12 +89,6 @@ sub fetch_input {
   return 1;
 }
 
-sub run {
-  my( $self) = @_;
-
-  return 1;
-}
-
 sub write_output {
   my( $self) = @_;
   my $concat_file = $self->param('concat_file');
