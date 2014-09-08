@@ -742,7 +742,7 @@ sub copy_all_mlss_tags {
   my $dbname = $new_dba->dbc->dbname;
 
   my $mlss_tag_fetch_sth = $from_dba->dbc->prepare("SELECT * FROM method_link_species_set_tag".
-      " WHERE method_link_species_set_id = ?");
+      " WHERE method_link_species_set_id = ? AND tag != 'threshold_on_ds'");
   foreach my $this_mlss (@$mlsss) {
     $mlss_tag_fetch_sth->execute($this_mlss->dbID);
     my $all_rows = $mlss_tag_fetch_sth->fetchall_arrayref;
