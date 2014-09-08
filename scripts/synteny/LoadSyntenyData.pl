@@ -63,12 +63,25 @@ my $mlssa = $dba->get_MethodLinkSpeciesSetAdaptor();
 my $qy_gdb = $gdba->fetch_by_registry_name($qy_species);
 my $tg_gdb = $gdba->fetch_by_registry_name($tg_species);
 
+print ref($qy_gdb), " *** ", ref($tg_gdb), "\n";
+
 my $mlss;
 if ($mlss_id) {
     $mlss = $mlssa->fetch_by_dbID($mlss_id);
     my $genome_dbs = $mlss->species_set_obj->genome_dbs;
-    die "The mlss_id $mlss_id does not match the same species set\n" unless ($genome_dbs ~~ [$qy_gdb, $tg_gdb]) or ($genome_dbs ~~ [$tg_gdb, $qy_gdb]);
+   # die "The mlss_id $mlss_id does not match the same species set\n" unless ($genome_dbs ~~ [$qy_gdb, $tg_gdb]) or ($genome_dbs ~~ [$tg_gdb, $qy_gdb]);
     die "The mlss_id $mlss_id does not match the right method_link\n" if $mlss->method->type ne 'SYNTENY';
+    my($qy_match, $tg_match)=(0,0);
+    foreach my$this_genome_db(@$genome_dbs){
+     if($this_genome_db->dbID == $qy_gdb->dbID){ 
+      $qy_match++;
+     } 
+     elsif($this_genome_db->dbID == $tg_gdb->dbID){
+      $tg_match++;
+     }
+    }
+    die "The mlss_id $mlss_id does not match the same species set\n" unless($tg_match && $qy_match);
+    
 } else {
     $mlss = Bio::EnsEMBL::Compara::MethodLinkSpeciesSet->new(
         -method => Bio::EnsEMBL::Compara::Method->new( -type => 'SYNTENY', -class => 'SyntenyRegion.synteny' ),
