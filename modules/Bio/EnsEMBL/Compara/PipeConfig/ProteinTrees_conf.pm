@@ -255,6 +255,7 @@ sub resource_classes {
          '8Gb_job'      => {'LSF' => '-C0 -M8000  -R"select[mem>8000]  rusage[mem=8000]"' },
          '8Gb_8c_job'   => {'LSF' => '-C0 -M8000  -R"select[mem>8000]  rusage[mem=8000]"  -n 8' },
          '16Gb_job'     => {'LSF' => '-C0 -M16000 -R"select[mem>16000] rusage[mem=16000]"' },
+         '16Gb_long_job'=> {'LSF' => '-C0 -M16000 -R"select[mem>16000] rusage[mem=16000]" -q long' },
          '32Gb_job'     => {'LSF' => '-C0 -M32000 -R"select[mem>32000] rusage[mem=32000]"' },
          '64Gb_job'     => {'LSF' => '-C0 -M64000 -R"select[mem>64000] rusage[mem=64000]"' },
 
@@ -1490,6 +1491,7 @@ sub pipeline_analyses {
                 'treebest_exe'              => $self->o('treebest_exe'),
                 'input_clusterset_id'       => 'treebest',
                 'output_clusterset_id'      => $self->o('use_notung') ? 'raxml_bl' : 'default',
+                'raxml_extra_params'        => '-U',
             },
             -hive_capacity        => $self->o('raxml_capacity'),
             -rc_name    => '16Gb_job',

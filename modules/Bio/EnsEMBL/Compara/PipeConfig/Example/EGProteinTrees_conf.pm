@@ -249,6 +249,7 @@ sub pipeline_analyses {
     $analyses_by_name{'mafft'}->{'-rc_name'} = '8Gb_job';
     $analyses_by_name{'mafft_himem'}->{'-rc_name'} = '32Gb_job';
     $analyses_by_name{'hcluster_parse_output'}->{'-rc_name'} = '500Mb_job';
+    $analyses_by_name{'raxml_epa_longbranches_himem'}->{'-rc_name'} = '16Gb_job';
 
     # Some parameters can be division-specific
     if ($self->o('division') eq 'plants') {

@@ -311,6 +311,7 @@ sub pipeline_analyses {
         'build_HMM_aa_himem'        => '2Gb_job',
         'build_HMM_cds'             => '1Gb_job',
         'build_HMM_cds_himem'       => '4Gb_job',
+        'raxml_epa_longbranches_himem'  => '16Gb_job',
     );
     foreach my $logic_name (keys %overriden_rc_names) {
         $analyses_by_name{$logic_name}->{'-rc_name'} = $overriden_rc_names{$logic_name};
