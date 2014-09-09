@@ -1284,7 +1284,7 @@ sub get_archive_object {
   my $self = shift;
   my $id = $self->stable_id;
   my $archive_adaptor = $self->database('core')->get_ArchiveStableIdAdaptor;
-  my $archive_object = $archive_adaptor->fetch_by_stable_id($id);
+  my $archive_object = $archive_adaptor->fetch_by_stable_id($id, 'Gene');
   return $archive_object;
 }
 
@@ -1320,7 +1320,7 @@ sub history {
 sub get_predecessors {
   my $self = shift;
   my $archive_adaptor = $self->database('core')->get_ArchiveStableIdAdaptor;
-  my $archive = $archive_adaptor->fetch_by_stable_id($self->stable_id);
+  my $archive = $archive_adaptor->fetch_by_stable_id($self->stable_id, 'Gene');
   my $predecessors = $archive_adaptor->fetch_predecessor_history($archive);
   return $predecessors;
 }
