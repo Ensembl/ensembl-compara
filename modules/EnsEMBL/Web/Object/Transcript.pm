@@ -1381,7 +1381,7 @@ sub get_archive_object {
   my $self = shift;
   my $id = $self->stable_id;
   my $archive_adaptor = $self->database('core')->get_ArchiveStableIdAdaptor;
-  my $archive_object = $archive_adaptor->fetch_by_stable_id($id);
+  my $archive_object = $archive_adaptor->fetch_by_stable_id($id, 'Transcript');
 
   return $archive_object;
 }
