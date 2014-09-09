@@ -24,6 +24,7 @@ use RTF::Writer;
 
 use EnsEMBL::Web::Fake;
 use EnsEMBL::Web::TmpFile::Text;
+use EnsEMBL::Web::Tools::RandomString qw(random_string);
 
 use base qw(EnsEMBL::Web::Component::Shared);
 
@@ -973,12 +974,16 @@ sub build_sequence {
     $config->{'html_template'} .= sprintf '<div class="sequence_key_json hidden">%s</div>', $self->jsonify($partial_key) if $partial_key;
   }
 
+  my $random_id = random_string(8);
+
   $config->{'html_template'} = qq(
-    <div class="adornment">
-      <span class="adornment-data" style="display:none;">
-        $adornment
-      </span>
-      $config->{'html_template'}
+    <div class="js_panel" id="$random_id">
+      <div class="adornment">
+        <span class="adornment-data" style="display:none;">
+          $adornment
+        </span>
+        $config->{'html_template'}
+      </div>
     </div>
   );
  
@@ -992,7 +997,7 @@ sub chunked_content {
   my $i   = 1;
   my $j   = $chunk_length;
   my $end = (int ($total_length / $j)) * $j; # Find the final position covered by regular chunking - we will add the remainer once we get past this point.
-  my $url = $self->ajax_url('sub_slice', { %$url_params, update_panel => undef });
+  my $url = $self->ajax_url('sub_slice', { %$url_params, update_panel => 1 });
   my $html;
   
   # The display is split into a managable number of sub slices, which will be processed in parallel by requests
