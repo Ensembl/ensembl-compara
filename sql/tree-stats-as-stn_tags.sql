@@ -156,6 +156,6 @@ INSERT INTO species_tree_node_tag SELECT species_tree_node_id, "nb_dup_nodes", n
 INSERT INTO species_tree_node_tag SELECT species_tree_node_id, "nb_gene_splits", nb_gene_splits FROM tmp_stats_per_node;
 INSERT INTO species_tree_node_tag SELECT species_tree_node_id, "nb_spec_nodes", nb_spec_nodes FROM tmp_stats_per_node;
 INSERT INTO species_tree_node_tag SELECT species_tree_node_id, "nb_dubious_nodes", nb_dubious_nodes FROM tmp_stats_per_node;
-INSERT INTO species_tree_node_tag SELECT species_tree_node_id, "avg_dupscore", avg_dupscore FROM tmp_stats_per_node;
-INSERT INTO species_tree_node_tag SELECT species_tree_node_id, "avg_dupscore_nondub", avg_dupscore_nondub FROM tmp_stats_per_node;
+INSERT INTO species_tree_node_tag SELECT species_tree_node_id, "avg_dupscore", avg_dupscore FROM tmp_stats_per_node WHERE avg_dupscore IS NOT NULL;
+INSERT INTO species_tree_node_tag SELECT species_tree_node_id, "avg_dupscore_nondub", avg_dupscore_nondub FROM tmp_stats_per_node WHERE avg_dupscore_nondub IS NOT NULL;
 
