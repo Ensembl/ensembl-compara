@@ -41,9 +41,9 @@ sub content {
     my $type = 'Transcript';
     my $species = $object->species;
 
-    my @annotations = $user->annotations;
+    my $annotations = $user->annotations;
     my @trans_annotations;
-    foreach my $record (@annotations) {
+    foreach my $record (@$annotations) {
       next unless $record->stable_id eq $id;
       push @trans_annotations, $record;
     }
