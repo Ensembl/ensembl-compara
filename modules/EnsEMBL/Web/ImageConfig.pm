@@ -742,6 +742,9 @@ sub load_user_tracks {
 
 sub _add_datahub {
   my ($self, $menu_name, $url, $is_poor_name, $existing_menu) = @_;
+
+  return ($menu_name, {}) if $self->{'_attached_datahubs'}{$url};
+
   my $parser   = Bio::EnsEMBL::ExternalData::DataHub::SourceParser->new({ timeout => 10, proxy => $self->hub->species_defs->ENSEMBL_WWW_PROXY });
   my $hub_info = $parser->get_hub_info($url); ## Do we have data for this species?
   
@@ -775,6 +778,8 @@ sub _add_datahub {
         $self->_add_datahub_node($node, $menu, $menu_name);
       }
     }
+
+    $self->{'_attached_datahubs'}{$url} = 1;
   }
   return ($menu_name, $hub_info);
 }
