@@ -17,33 +17,13 @@
 use strict;
 use warnings;
 
-my $description = q{
-###########################################################################
-##
-## PROGRAM update_genome.pl
-##
-## AUTHORS
-##    Javier Herrero
-##
-## DESCRIPTION
-##    This script takes the new core DB and a compara DB in production fase
-##    and updates it in several steps:
-##
-##      - It updates the genome_db table
-##      - It updates all the dnafrags for the given genome_db
-##      - It updates all the collections for the given genome_db
-##
-###########################################################################
-
-};
-
 =head1 NAME
 
 update_genome.pl
 
 =head1 AUTHORS
 
- Javier Herrero
+ Javier Herrero et al.
 
 =head1 CONTACT
 
@@ -55,40 +35,31 @@ Questions may also be sent to the Ensembl help desk at
 
 =head1 DESCRIPTION
 
-This script takes the new core DB and a compara DB in production fase and updates it in several steps:
-
+This script's main purpose is to take the new core DB and a compara DB
+in production phase and update it in several steps:
  - It updates the genome_db table
  - It updates all the dnafrags for the given genome_db
+ - It updates all the collections for the given genome_db
+
+It can also edit a few properties like:
+ - Turn assembly_default to 0 for a genome_db
+ - Add a genome_db to a collection species set
+ - Remove a genome_db from a collection species set
 
 =head1 SYNOPSIS
 
-perl update_genome.pl --help
+  perl update_genome.pl --help
 
-perl update_genome.pl
+  perl update_genome.pl
     [--reg_conf registry_configuration_file]
     --compara compara_db_name_or_alias
     --species new_species_db_name_or_alias
     [--species_name "Species name"]
-        Set up the species name. This is needed when the core database
-        misses this information
     [--taxon_id 1234]
-        Set up the NCBI taxon ID. This is needed when the core database
-        misses this information
     [--[no]force]
-        This scripts fails if the genome_db table of the compara DB
-        already matches the new species DB. This options allows you
-        to overcome this. USE ONLY IF YOU REALLY KNOW WHAT YOU ARE
-        DOING!
     [--offset 1000]
-        This allows you to offset identifiers assigned to Genome DBs by a given
-        amount. If not specified we assume we will use the autoincrement key
-        offered by the Genome DB table. If given then IDs will start
-        from that number (and we will assign according to the current number
-        of Genome DBs exceeding the offset). First ID will be equal to the
-        offset+1
     [--collection "collection name"]
-        Adds the new / updated genome_db_id to the collection. This option
-        can be used multiple times
+    [--remove_from_collection | --add_to_collection | --set_non_default]
 
 =head1 OPTIONS
 
@@ -98,7 +69,7 @@ perl update_genome.pl
 
 =item B<[--help]>
 
-  Prints help message and exits.
+Prints help message and exits.
 
 =back
 
@@ -165,6 +136,12 @@ offset+1
 Adds the new / updated genome_db_id to the collection. This option
 can be used multiple times
 
+=item B<[--remove_from_collection | --add_to_collection || --set_non_default]>
+
+(exclusive) options to respectively remove the species from its
+collections, add the species to more collections, and set the
+species as non-default
+
 =back
 
 =head1 INTERNAL METHODS
@@ -179,47 +156,7 @@ use Bio::EnsEMBL::Compara::Utils::CoreDBAdaptor;
 
 use Getopt::Long;
 
-my $usage = qq{
-perl update_genome.pl
-
-  Getting help:
-    [--help]
-
-  General configuration:
-    [--reg_conf registry_configuration_file]
-        the Bio::EnsEMBL::Registry configuration file. If none given,
-        the one set in ENSEMBL_REGISTRY will be used if defined, if not
-        ~/.ensembl_init will be used.
-  Databases:
-    --compara compara_db_name_or_alias
-    --species new_species_db_name_or_alias
-
-  Options:
-    [--species_name "Species name"]
-        Set up the species name. This is needed when the core database
-        misses this information
-    [--taxon_id 1234]
-        Set up the NCBI taxon ID. This is needed when the core database
-        misses this information
-    [--[no]force]
-        This scripts fails if the genome_db table of the compara DB
-        already matches the new species DB. This options allows you
-        to overcome this. USE ONLY IF YOU REALLY KNOW WHAT YOU ARE
-        DOING!
-    [--offset 1000]
-        This allows you to offset identifiers assigned to Genome DBs by a given
-        amount. If not specified we assume we will use the autoincrement key
-        offered by the Genome DB table. If given then IDs will start
-        from that number (and we will assign according to the current number
-        of Genome DBs exceeding the offset). First ID will be equal to the
-        offset+1
-    [--collection "Collection name"]
-        Adds the new / updated genome_db_id to the collection. This option
-        can be used multiple times
-};
-
 my $help;
-
 my $reg_conf;
 my $compara;
 my $species = "";
@@ -251,9 +188,13 @@ $| = 0;
 
 # Print Help and exit if help is requested
 if ($help or !$species or !$compara) {
-  print $description, $usage;
-  exit(0);
+    use Pod::Usage;
+    pod2usage({-exitvalue => 0, -verbose => 2});
 }
+
+die "'remove_from_collection', 'add_to_collection', and 'set_non_default' are exclusive options\n" if
+    ($action_set_non_default and ($action_remove_from_collection or $action_add_to_collection))
+    or ($action_remove_from_collection and $action_add_to_collection);
 
 my $species_no_underscores = $species;
 $species_no_underscores =~ s/\_/\ /;
