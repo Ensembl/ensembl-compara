@@ -17,23 +17,6 @@
 use warnings;
 use strict;
 
-my $description = q{
-###########################################################################
-##
-## PROGRAM create_mlss.pl
-##
-## AUTHORS
-##    Javier Herrero
-##
-## DESCRIPTION
-##    This script creates a new MethodLinkSpeciesSet based on the
-##    information provided through the command line and tries to store
-##    it in the database 
-##
-###########################################################################
-
-};
-
 =head1 NAME
 
 create_mlss.pl
@@ -217,7 +200,8 @@ if (scalar(@input_genome_db_ids) && $collection) {
 
 # Print Help and exit if help is requested
 if ($help) {
-  exec("/usr/bin/env perldoc $0");
+    use Pod::Usage;
+    pod2usage({-exitvalue => 0, -verbose => 2});
 }
 
 #################################################
