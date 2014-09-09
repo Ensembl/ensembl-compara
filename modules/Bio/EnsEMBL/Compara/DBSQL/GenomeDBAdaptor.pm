@@ -394,6 +394,36 @@ sub update {
 }
 
 
+=head2 set_non_default
+
+  Arg [1]    : Bio::EnsEMBL::Compara::GenomeDB $gdb
+  Example    : $gdba->set_non_default($gdb);
+  Description: Makes the GenomeDB object in the database
+  Returntype : Bio::EnsEMBL::Compara::GenomeDB
+  Exceptions : thrown if the argument is not a Bio::EnsEMBL::Compara:GenomeDB
+  Caller     : general
+  Status     : Stable
+
+=cut
+
+sub set_non_default {
+    my ($self, $gdb) = @_;
+
+    assert_ref($gdb, 'Bio::EnsEMBL::Compara::GenomeDB');
+
+    die "This GenomeDB is already non-default\n" unless $gdb->assembly_default;
+    my $sth = $self->prepare('UPDATE genome_db SET assembly_default = 0 WHERE genome_db_id = ?');
+    my $nrows = $sth->execute($gdb->dbID);
+    $sth->finish();
+    die "assembly_default has not been updated |\n" unless $nrows;
+
+    $gdb->assembly_default(0);
+    # Update the cache (e.g. remove this $gdb from the *_default_assembly lookups)
+    $self->_id_cache->remove($gdb->dbID);
+    $self->_id_cache->put($gdb->dbID, $gdb);
+}
+
+
 sub _find_missing_DBAdaptors {
     my $self = shift;
 
