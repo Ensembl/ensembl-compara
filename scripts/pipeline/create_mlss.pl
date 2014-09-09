@@ -165,6 +165,7 @@ use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
 use Bio::EnsEMBL::Registry;
 use Bio::EnsEMBL::Compara::MethodLinkSpeciesSet;
 use Bio::EnsEMBL::Utils::Exception qw(throw warning);
+use Bio::EnsEMBL::Utils::SqlHelper;
 use Getopt::Long;
 
 my $help;
@@ -233,6 +234,7 @@ if ($compara =~ /mysql:\/\//) {
 if (!$compara_dba) {
   die "Cannot connect to compara database <$compara>.";
 }
+my $helper = Bio::EnsEMBL::Utils::SqlHelper->new(-DB_CONNECTION => $compara_dba->dbc);
 my $gdba = $compara_dba->get_GenomeDBAdaptor();
 my $ma = $compara_dba->get_MethodAdaptor();
 my $mlssa = $compara_dba->get_MethodLinkSpeciesSetAdaptor();
@@ -401,14 +403,15 @@ foreach my $genome_db_ids (@new_input_genome_db_ids) {
                                                                  -source => $source,
                                                                  -url => $url);
 
-  $mlssa->store($new_mlss);
+  $helper->transaction( -CALLBACK => sub {
+    $mlssa->store($new_mlss);
+    if ($species_set_name) {
+      $species_set->store_tag('name', $species_set_name);
+    }
+  } );
+
   print "  MethodLinkSpeciesSet has dbID: ", $new_mlss->dbID, "\n";
   $name = undef if ($pairwise || $singleton);
-
-  if ($species_set_name) {
-      $species_set->store_tag('name', $species_set_name);
-  }
-
 }
 
 
