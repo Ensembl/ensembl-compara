@@ -173,6 +173,7 @@ can be used multiple times
 
 use Bio::EnsEMBL::Registry;
 use Bio::EnsEMBL::Utils::Exception qw(throw warning verbose);
+use Bio::EnsEMBL::Utils::SqlHelper;
 
 use Bio::EnsEMBL::Compara::Utils::CoreDBAdaptor;
 
@@ -266,18 +267,16 @@ throw ("Cannot connect to database [${species_no_underscores} or ${species}]") i
 
 my $compara_db = Bio::EnsEMBL::Registry->get_DBAdaptor($compara, "compara");
 throw ("Cannot connect to database [$compara]") if (!$compara_db);
+my $helper = Bio::EnsEMBL::Utils::SqlHelper->new(-DB_CONNECTION => $compara_db->dbc);
 
-my $genome_db = update_genome_db($species_db, $compara_db, $force);
-
-update_collections($compara_db, $genome_db, \@collection);
-
-# delete_genomic_align_data($compara_db, $genome_db);
-
-# delete_syntenic_data($compara_db, $genome_db);
-
-update_dnafrags($compara_db, $genome_db, $species_db);
-
-print_method_link_species_sets_to_update($compara_db, $genome_db);
+$helper->transaction( -CALLBACK => sub {
+    my $genome_db = update_genome_db($species_db, $compara_db, $force);
+    update_collections($compara_db, $genome_db, \@collection);
+    #delete_genomic_align_data($compara_db, $genome_db);
+    #delete_syntenic_data($compara_db, $genome_db);
+    update_dnafrags($compara_db, $genome_db, $species_db);
+    print_method_link_species_sets_to_update($compara_db, $genome_db);
+} );
 
 exit(0);
 
@@ -325,6 +324,7 @@ sub update_genome_db {
 
     # Get fresher information from the core database
     $genome_db->db_adaptor($species_dba, 1);
+    $genome_db->assembly_default(1);
 
     # And store it back in Compara
     $genome_db_adaptor->update($genome_db);
