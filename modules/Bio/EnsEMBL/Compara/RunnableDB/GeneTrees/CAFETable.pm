@@ -240,7 +240,7 @@ sub get_per_family_cafe_table_from_db {
             my $sp = $sp_node->name();
             push @flds, ($species{$sp} || 0);
         }
-        $fam_table .= join ("\t", @flds), "\n";
+        $fam_table .= join("\t", @flds). "\n";
         print STDERR "TABLE FOR THIS FAM:\n$fam_table\n" if ($self->debug());
         $ok_fams++;
         my $sth = $self->compara_dba->dbc->prepare("INSERT INTO CAFE_data (fam_id, tree, tabledata) VALUES (?,?,?);");
