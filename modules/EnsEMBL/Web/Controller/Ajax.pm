@@ -191,6 +191,28 @@ sub nav_config {
   $session->set_data(%args, %data) if scalar grep $_ !~ /(type|code)/, keys %data;
 }
 
+sub enstab {
+  my ($self,$hub) = @_;
+
+  my $data;
+  eval {
+    my $class = $hub->param('source');
+    $class =~ s/[^\w\/]//g;
+    my $pkg = "EnsEMBL::Web::Component::$class";
+    $self->dynamic_use($pkg) or die "Dynamic use failed on $class";
+    $pkg->can('table_content') or die "$class has no table_content method";
+    print $self->jsonify({
+      data => from_json($hub->param('data')),
+      response => $pkg->table_content($hub),
+      regions => from_json($hub->param('regions')),
+    });
+  };
+  if($@) {
+    warn $@;
+    print $self->jsonify({ failed => $@ });
+  }
+}
+
 sub data_table_config {
   my ($self, $hub) = @_;
   my $session = $hub->session;

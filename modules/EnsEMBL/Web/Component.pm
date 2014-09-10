@@ -43,6 +43,7 @@ use EnsEMBL::Draw::VDrawableContainer;
 
 use EnsEMBL::Web::Document::Image;
 use EnsEMBL::Web::Document::Table;
+use EnsEMBL::Web::Document::NewTable;
 use EnsEMBL::Web::Document::TwoCol;
 use EnsEMBL::Web::Constants;
 use EnsEMBL::Web::DOM;
@@ -271,8 +272,8 @@ sub content_buttons {
       push @classes, 'togglebutton' if $b->{'toggle'};
       push @classes, 'off'          if $b->{'toggle'} and $b->{'toggle'} eq 'off';
       $all_disabled = 0 unless $b->{'disabled'};
-      $group .= sprintf('<a href="%s" class="%s" rel="%s">%s</a>',
-            $b->{'url'}, join(' ',@classes),$b->{'rel'},$b->{'caption'});
+      $group .= sprintf('<a href="%s" class="%s">%s</a>',
+            $b->{'url'}, join(' ',@classes), $b->{'caption'});
     }
     if(@$g>1) {
       my $class = "group";
@@ -617,6 +618,22 @@ sub new_table {
   return $table;
 }
 
+sub new_new_table {
+  my $self     = shift;
+  my $hub      = $self->hub;
+  my $table    = EnsEMBL::Web::Document::NewTable->new(@_);
+  my $filename = $hub->filename($self->object);
+  my $options  = $_[2];
+  
+  $table->session    = $hub->session;
+  $table->format     = $self->format;
+  $table->export_url = $hub->url unless defined $options->{'exportable'} || $self->{'_table_count'}++;
+  $table->filename   = join '-', $self->id, $filename;
+  $table->code       = $self->id . '::' . ($options->{'id'} || $self->{'_table_count'});
+  
+  return $table;
+}
+
 sub new_twocol {
   ## Creates and returns a new EnsEMBL::Web::Document::TwoCol.
   shift;
@@ -670,7 +687,7 @@ sub _export_image {
 }
 
 sub toggleable_table {
-  my ($self, $title, $id, $table, $open, $extra_html) = @_;
+  my ($self, $title, $id, $table, $open, $extra_html, $for_render) = @_;
   my @state = $open ? qw(show open) : qw(hide closed);
   
   $table->add_option('class', $state[0]);
@@ -683,7 +700,7 @@ sub toggleable_table {
       %s
       %s
     </div>',
-    $id, $state[1], $id, $title, $extra_html, $table->render
+    $id, $state[1], $id, $title, $extra_html, $table->render(@{$for_render||[]})
   ); 
 }
 

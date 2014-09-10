@@ -20,6 +20,8 @@ package EnsEMBL::Web::Component::VariationTable;
 
 use strict;
 
+use JSON qw(from_json);
+
 use Bio::EnsEMBL::Variation::Utils::Constants;
 
 use base qw(EnsEMBL::Web::Component::Variation);
@@ -28,6 +30,56 @@ sub _init {
   my $self = shift;
   $self->cacheable(0);
   $self->ajaxable(1);
+}
+
+sub new_content {
+  my $self = shift;
+
+  my $url = $self->hub->url('Ajax', {
+    type => 'enstab',
+    action => undef,
+    function => undef,
+    source => 'VariationTable',
+  },0,1);
+
+  return qq(<a class="enstab" href="$url">data</a>);
+}
+
+sub table_content {
+  my ($self,$hub) = @_;
+
+  my $regions = from_json($hub->param('regions'));
+  my @out;
+  foreach my $region (@$regions) {
+    my $columns = $region->{'columns'};
+    my $rows = $region->{'rows'};
+    my ($data,$these_cols,$these_rows);
+    # respond A (if 0,0), A B a b (if 1,1)  C c cc (if 2,2), rest
+    if($rows->[0] == 0 and $columns->[0]) {
+      $data = [[qw(A)]];
+      $these_cols = [1,0,0,0,0,0,0,0,0,0,0,0,0,0];
+      $these_rows = [0,1];
+    } elsif($rows->[0]<2 and ($rows->[1]>1 or $rows->[1]==-1) and $columns->[1]) {
+      $data = [[qw(A B)],[qw(a b)]];
+      $these_cols = [1,1,0,0,0,0,0,0,0,0,0,0,0,0];
+      $these_rows = [0,2];
+    } elsif($rows->[0]<3 and ($rows->[1]>2 or $rows->[1]==-1) and $columns->[2]) {
+      $data = [[qw(A B C)],[qw(a b c)],[qw(aa bb cc)]];
+      $these_cols = [1,1,1,0,0,0,0,0,0,0,0,0,0,0];
+      $these_rows = [0,-1];
+    } else {
+      $data = [[qw(D E F G H I J K L M N)],
+               [qw(d e f g h i j k l m n)],
+               [qw(dd ee ff gg hh ii jj kk ll mm nn)]];
+      $these_cols = [0,0,0,1,1,1,1,1,1,1,1,1,1,1];
+      $these_rows = [0,-1];
+    }
+    push @out,{
+      data => $data,
+      region => { columns => $these_cols, rows => $these_rows }
+    };
+  }
+  return \@out;
 }
 
 sub content {
@@ -77,6 +129,7 @@ sub content {
 
 sub make_table {
   my ($self, $table_rows, $consequence_type) = @_;
+
   my $hub      = $self->hub;
   my $glossary = EnsEMBL::Web::DBSQL::WebsiteAdaptor->new($hub)->fetch_glossary_lookup;
   
@@ -121,7 +174,7 @@ sub make_table {
     push @$columns, { key => 'Transcript', sort => 'string', width => '11u', help => $self->strip_HTML($glossary->{'Transcript'}) };
   }
 
-  return $self->new_table($columns, $table_rows, { data_table => 1, sorting => [ 'chr asc' ], exportable => 1, id => "${consequence_type}_table", class => 'cellwrap_inside fast_fixed_table' });
+  return $self->new_new_table($columns, $table_rows, { data_table => 1, sorting => [ 'chr asc' ], exportable => 1, id => "${consequence_type}_table", class => 'cellwrap_inside fast_fixed_table' });
 } 
 
 sub render_content {
@@ -135,7 +188,7 @@ sub render_content {
        $consequence_label =~ s/_/ /g;
        $consequence_label =~ s/children/\(with children\)/;
     
-    $html = $self->toggleable_table("$consequence_label consequences", $table_id, $table, 1, qq(<span style="float:right"><a href="#$self->{'id'}_top">[back to top]</a></span>));
+    $html = $self->toggleable_table("$consequence_label consequences", $table_id, $table, 1, qq(<span style="float:right"><a href="#$self->{'id'}_top">[back to top]</a></span>),[$self->hub,'VariationTable']);
   } else {
     my $hub      = $self->hub;
     my $current  = $hub->param('summary_type') || 'table';

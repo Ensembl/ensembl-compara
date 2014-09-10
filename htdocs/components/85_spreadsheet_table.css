@@ -115,3 +115,13 @@ div.score_neutral { background: blue;   }
 td a.hover_show        { display: none; text-decoration: none; font-size: 90%; position: absolute; margin: -1px 1px; background-color: [[PANEL_BG]]; padding: 2px; }
 tr.bg2 td a.hover_show { background-color: [[NEUTRAL_BG]]; }
 td:hover a.hover_show  { display: inline; }
+
+table.new_table th { cursor: pointer; padding: 2px 20px 2px 4px; }
+.new_table_wrapper { clear: both; margin: 0 0 16px; }
+.new_table_top     { background-color: #8b9bc1; border: 1px solid #ccc; color: #fff; height: 22px; padding: 7px 0 5px 10px; }
+.new_table_section { float: left; width: 33%; height: 100%; }
+.new_table_section_2 > * { float: right; }
+div.new_table_section_1 > div { display: block; margin: 0 auto; text-align: center; }
+.new_table_section div { display: inline-block; }
+.new_table_pagesize select { border: 1px solid #ccc; }
+
