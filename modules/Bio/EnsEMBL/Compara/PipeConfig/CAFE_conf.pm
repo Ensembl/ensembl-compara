@@ -87,9 +87,10 @@ init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::CAFE_conf -password <your_pa
 
   Release 77:
   ncRNAtrees:
-  init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::CAFE_conf -mlss_id 40098 -work_dir scratch/109/cafe_nctrees_77 -wait_for backbone_fire_db_prepare -per_family_table 0 -type nc -pipeline_url mysql://ensadmin:ensembl@compara3/mm14_compara_nctrees_77 -cafe_species "['danio.rerio', 'taeniopygia.guttata', 'callithrix.jacchus', 'pan.troglodytes', 'homo.sapiens', 'mus.musculus']"
+  init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::CAFE_conf -mlss_id 40098 -wait_for backbone_fire_db_prepare -per_family_table 0 -type nc -pipeline_url mysql://ensadmin:ensembl@compara3/mm14_compara_nctrees_77 -cafe_species "['danio.rerio', 'taeniopygia.guttata', 'callithrix.jacchus', 'pan.troglodytes', 'homo.sapiens', 'mus.musculus']"
 
   proteinTrees:
+  init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::CAFE_conf -mlss_id 40097 -wait_for backbone_fire_dnds -per_family_table 1 -type prot -pipeline_url mysql://ensadmin:ensembl@compara1/mm14_protein_trees_77 -cafe_species []
 
 
 =head1 CONTACT
@@ -113,7 +114,7 @@ sub default_options {
     return {
             %{$self->SUPER::default_options},
 
-            # You need to specify -pipeline_name, -host, -work_dir and -password on command line (if they are not already set as an environmental variable)
+            # You need to specify -pipeline_name, -host and -password on command line (if they are not already set as an environmental variable)
 
             # Data needed for CAFE
             'cafe_lambdas'             => '',  # For now, we don't supply lambdas
@@ -130,25 +131,6 @@ sub default_options {
                                 -pass   => $self->o('password'),
                                 -dbname => $self->o('pipeline_name'),  # redefined (defined also in HiveGeneric_conf.pm) to allow toping up in other user's pipelines
                                },
-           };
-}
-
-## WARNING!!
-## Currently init_pipeline.pl doesn't run this method when a pipeline is created with the -analysis_topup option
-## So make sure that $self->o('work_dir') exists in the filesystem before running the pipeline
-## This method remains here for documentation purposes (to support this warning) and in case the init_pipeline/hive is modified to allow topup analysis create its own commands
-sub pipeline_create_commands {
-    my ($self) = @_;
-    return [
-        'mkdir -p '.$self->o('work_dir'),
-    ];
-}
-
-
-sub resource_classes {
-    my ($self) = @_;
-    return {
-            'cafe_default' => { 'LSF' => '-C0 -M1000 -R"select[mem>1000] rusage[mem=1000]"' },
            };
 }
 
@@ -198,7 +180,6 @@ sub pipeline_analyses {
              -logic_name => 'CAFE_table',
              -module => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::CAFETable',
              -parameters => {
-                             'work_dir'     => $self->o('work_dir'),
                              'cafe_species' => $self->o('cafe_species'),
                              'mlss_id'      => $self->o('mlss_id'),
                              'type'         => $self->o('type'),   # [nc|prot]
@@ -206,7 +187,8 @@ sub pipeline_analyses {
                              'mlss_id'      => $self->o('mlss_id'),
                              'cafe_shell'   => $self->o('cafe_shell'),
                             },
-             -rc_name => 'cafe_default',
+             -rc_name => '1Gb_job',
+             -meadow_type => 'LSF',
              -flow_into => {
                             2 => ['CAFE_analysis'],
                            },
@@ -216,14 +198,14 @@ sub pipeline_analyses {
              -logic_name => 'CAFE_analysis',
              -module => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::CAFEAnalysis',
              -parameters => {
-                             'work_dir'             => $self->o('work_dir'),
 #                             'cafe_lambdas'         => $self->o('cafe_lambdas'),
 #                             'cafe_struct_taxons'  => $self->o('cafe_'),
                              'cafe_struct_tree_str' => $self->o('cafe_struct_tree_str'),
                              'mlss_id'              => $self->o('mlss_id'),
                              'cafe_shell'           => $self->o('cafe_shell'),
                             },
-             -rc_name => 'cafe_default',
+             -rc_name => '1Gb_job',
+             -meadow_type => 'LSF',
              -priority => 10,
             },
            ]

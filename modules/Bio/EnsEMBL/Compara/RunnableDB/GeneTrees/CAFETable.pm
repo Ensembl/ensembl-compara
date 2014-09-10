@@ -240,7 +240,7 @@ sub get_per_family_cafe_table_from_db {
             my $sp = $sp_node->name();
             push @flds, ($species{$sp} || 0);
         }
-        $fam_table .= join ("\t", @flds), "\n";
+        $fam_table .= join("\t", @flds). "\n";
         print STDERR "TABLE FOR THIS FAM:\n$fam_table\n" if ($self->debug());
         $ok_fams++;
         my $sth = $self->compara_dba->dbc->prepare("INSERT INTO CAFE_data (fam_id, tree, tabledata) VALUES (?,?,?);");
@@ -346,6 +346,7 @@ LABEL:    while (1) {
         }
         last LABEL;
     }
+    die "lambda cannot be 0 !\n" unless $lambda;
     return $lambda;
 }
 
@@ -422,7 +423,7 @@ sub get_script {
     open my $sf, ">", $script_file or die "$!: $script_file\n";
     print $sf '#!' . $cafe_shell . "\n\n";
     print $sf "tree $cafe_tree_string\n\n";
-    print $sf "load -i $table_file\n\n";
+    print $sf "load -i $table_file -t 1\n\n";
     print $sf "lambda -s\n";
     close ($sf);
 
