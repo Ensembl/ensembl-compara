@@ -249,7 +249,6 @@ sub render_normal {
   foreach my $feature_key (@sorted) {
     ## Fix for userdata with per-track config
     my ($config, @features);
-    warn ">>> FEATURE KEY $feature_key";
     
     $self->{'track_key'} = $feature_key;
     
