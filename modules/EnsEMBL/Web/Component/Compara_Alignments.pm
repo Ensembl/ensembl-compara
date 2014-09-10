@@ -144,7 +144,6 @@ sub content {
     $num_slices = @$slices;
   }
   my @A = @{$slices||[]};
-  warn "@@@ SLICES @A";
 
   #If the slice_length is long, split the sequence into chunks to speed up the process
   #Note that slice_length is not set if need to display a target_slice_eable
