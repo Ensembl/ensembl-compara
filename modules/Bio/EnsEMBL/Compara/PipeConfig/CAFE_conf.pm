@@ -134,13 +134,6 @@ sub default_options {
            };
 }
 
-sub resource_classes {
-    my ($self) = @_;
-    return {
-            'cafe_default' => { 'LSF' => '-C0 -M1000 -R"select[mem>1000] rusage[mem=1000]"' },
-           };
-}
-
 sub pipeline_analyses {
     my ($self) = @_;
     return [
@@ -194,7 +187,7 @@ sub pipeline_analyses {
                              'mlss_id'      => $self->o('mlss_id'),
                              'cafe_shell'   => $self->o('cafe_shell'),
                             },
-             -rc_name => 'cafe_default',
+             -rc_name => '1Gb_job',
              -flow_into => {
                             2 => ['CAFE_analysis'],
                            },
@@ -210,7 +203,7 @@ sub pipeline_analyses {
                              'mlss_id'              => $self->o('mlss_id'),
                              'cafe_shell'           => $self->o('cafe_shell'),
                             },
-             -rc_name => 'cafe_default',
+             -rc_name => '1Gb_job',
              -priority => 10,
             },
            ]
