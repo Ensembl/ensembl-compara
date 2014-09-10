@@ -181,4 +181,11 @@ sub content {
   return $html;
 }
 
+sub get_export_data {
+## Get data for export
+  my $self = shift;
+  ## Fetch explicitly, as we're probably coming from a DataExport URL
+  return $self->hub->core_object('Location');
+}
+
 1;
