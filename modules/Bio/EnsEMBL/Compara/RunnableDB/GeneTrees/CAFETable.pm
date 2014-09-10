@@ -422,7 +422,7 @@ sub get_script {
     open my $sf, ">", $script_file or die "$!: $script_file\n";
     print $sf '#!' . $cafe_shell . "\n\n";
     print $sf "tree $cafe_tree_string\n\n";
-    print $sf "load -i $table_file\n\n";
+    print $sf "load -i $table_file -t 1\n\n";
     print $sf "lambda -s\n";
     close ($sf);
 
