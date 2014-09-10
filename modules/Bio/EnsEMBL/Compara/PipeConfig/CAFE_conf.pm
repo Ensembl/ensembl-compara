@@ -188,6 +188,7 @@ sub pipeline_analyses {
                              'cafe_shell'   => $self->o('cafe_shell'),
                             },
              -rc_name => '1Gb_job',
+             -meadow_type => 'LSF',
              -flow_into => {
                             2 => ['CAFE_analysis'],
                            },
@@ -204,6 +205,7 @@ sub pipeline_analyses {
                              'cafe_shell'           => $self->o('cafe_shell'),
                             },
              -rc_name => '1Gb_job',
+             -meadow_type => 'LSF',
              -priority => 10,
             },
            ]
