@@ -346,6 +346,7 @@ LABEL:    while (1) {
         }
         last LABEL;
     }
+    die "lambda cannot be 0 !\n" unless $lambda;
     return $lambda;
 }
 
