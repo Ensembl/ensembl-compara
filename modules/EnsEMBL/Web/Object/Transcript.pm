@@ -1712,7 +1712,7 @@ sub variation_data {
     next unless $tv->cdna_start && $tv->cdna_end;
     next if scalar keys %consequence_filter && !grep $consequence_filter{$_}, @{$tv->consequence_type};
     
-    my $vf    = $self->transcript_variation_to_variation_feature($tv);
+    my $vf    = $self->transcript_variation_to_variation_feature($tv) or next;
     my $vdbid = $vf->dbID;
     
     #next if scalar keys %population_filter && !$population_filter{$vdbid};
