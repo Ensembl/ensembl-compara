@@ -266,9 +266,9 @@ sub transcript_table {
     my @columns = (
        { key => 'name',       sort => 'string',  title => 'Name'          },
        { key => 'transcript', sort => 'html',    title => 'Transcript ID' },
-       { key => 'bp_length',  sort => 'numeric', title => 'Length'   },
-       { key => 'protein',    sort => 'html',    title => 'Protein'    },
-       { key => 'biotype',    sort => 'html',    title => 'Biotype'       },
+       { key => 'bp_length',  sort => 'numeric', label => 'bp', title => 'Length in base pairs'},
+       { key => 'protein',    sort => 'html',    label => 'Protein', title => 'Protein length in amino acids' },
+       { key => 'biotype',    sort => 'html',    title => 'Biotype', align => 'left' },
     );
 
     push @columns, { key => 'ccds', sort => 'html', title => 'CCDS' } if $species =~ /^Homo_sapiens|Mus_musculus/;
@@ -281,28 +281,27 @@ sub transcript_table {
     );
     my %any_extras;
  
+    my @appris = qw(pi alt ci ci1 ci2 ci3);
+    srand;
     foreach (map { $_->[2] } sort { $a->[0] cmp $b->[0] || $a->[1] cmp $b->[1] } map { [ $_->external_name, $_->stable_id, $_ ] } @$transcripts) {
       my $transcript_length = $_->length;
       my $tsi               = $_->stable_id;
-      my $protein           = 'No protein product';
+      my $protein           = 'No protein';
+      my $protein_url       = '';
       my $protein_length    = '-';
       my $ccds              = '-';
       my %extras;
       my $cds_tag           = '-';
       my $gencode_set       = '-';
       my $url               = $hub->url({ %url_params, t => $tsi });
-      my @flags;
+      my (@flags, @evidence);
       
       if ($_->translation) {
-        $protein = sprintf(
-          '(<a href="%s">%s</a>)',
-          $hub->url({
-            type   => 'Transcript',
-            action => 'ProteinSummary',
-            t      => $tsi
-          }),
-          'view'
-        );
+        $protein_url = $hub->url({
+                          type   => 'Transcript',
+                          action => 'ProteinSummary',
+                          t      => $tsi
+                        });
         
         $protein_length = $_->translation->length;
       }
@@ -349,6 +348,11 @@ sub transcript_table {
           push @flags,qq(<span class="glossary_mouseover">GENCODE basic<span class="floating_popup">$gencode_desc</span></span>);
         }
       }
+
+      ## APPRIS and TSL GO HERE
+      my $rand = @appris[rand @appris];
+      push @evidence, sprintf('<img src="/i/transcript/appris_%s.png" alt="%s" title="%s" />', $rand, 'APPRIS '.uc($rand));
+
       (my $biotype_text = $_->biotype) =~ s/_/ /g;
       my $merged = '';
       $merged .= " Merged Ensembl/Havana gene." if $_->analysis->logic_name =~ /ensembl_havana/;
@@ -357,7 +361,9 @@ sub transcript_table {
         name       => { value => $_->display_xref ? $_->display_xref->display_id : 'Novel', class => 'bold' },
         transcript => sprintf('<a href="%s">%s</a>', $url, $tsi),
         bp_length  => $transcript_length,
-        protein    => (($protein_length ne '-')?"$protein_length aa ":' ').$protein,
+        protein    => ($protein_length ne '-') ?
+                          sprintf('<a href="%s" title="View protein">%s</a>', $protein_url, $protein_length.' aa') 
+                          : $protein,
         biotype    => $self->colour_biotype($self->glossary_mouseover(ucfirst $biotype_text,undef,$merged),$_),
         ccds       => $ccds,
         %extras,
@@ -366,6 +372,7 @@ sub transcript_table {
         gencode_set=> $gencode_set,
         options    => { class => $count == 1 || $tsi eq $transcript ? 'active' : '' },
         flags => join('',map { "<span class='ts_flag'>$_</span>" } @flags),
+        evidence => join('', @evidence),
       };
       
       $biotype_text = '.' if $biotype_text eq 'protein coding';
@@ -378,6 +385,7 @@ sub transcript_table {
       push @columns, { key => $k, sort => 'html', title => $x->{'name'}};
     }
     push @columns, { key => 'flags', sort => 'html', title => 'Flags' };
+    push @columns, { key => 'evidence', sort => 'html', title => 'Support' } if $species eq 'Homo_sapiens';
 
     ## Additionally, sort by CCDS status and length
     while (my ($k,$v) = each (%biotype_rows)) {
@@ -388,10 +396,6 @@ sub transcript_table {
 
     # Add rows to transcript table
     push @rows, @{$biotype_rows{$_}} for sort keys %biotype_rows; 
-    # Add suffixes to lengths (kept numeric till now to aid sorting)
-    for (@rows) { 
-      $_->{'bp_length'} .= ' bp' if $_->{'bp_length'} =~ /\d/;
-    }
 
     $table->add_row(
       $page_type eq 'gene' ? 'Transcripts' : 'Gene',
