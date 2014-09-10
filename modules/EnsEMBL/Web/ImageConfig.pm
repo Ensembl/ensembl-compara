@@ -233,7 +233,6 @@ sub modify {} # For plugins
 sub storable     :lvalue { $_[0]{'_parameters'}{'storable'};     } # Set to 1 if configuration can be altered
 sub image_resize :lvalue { $_[0]{'_parameters'}{'image_resize'}; } # Set to 1 if there is image resize function
 sub has_das      :lvalue { $_[0]{'_parameters'}{'has_das'};      } # Set to 1 if there are DAS tracks
-sub altered      :lvalue { $_[0]{'altered'};                     } 
 
 sub hub                 { return $_[0]->{'hub'};                                               }
 sub code                { return $_[0]->{'code'};                                              }
@@ -261,6 +260,16 @@ sub toolbars            { return shift->parameter('toolbars',        @_);       
 sub slice_number        { return shift->parameter('slice_number',    @_);                      } # TODO: delete?
 sub get_tracks          { return grep { $_->{'data'}{'node_type'} eq 'track' } $_[0]->tree->nodes; } # return a list of track nodes
 sub get_sortable_tracks { return grep { $_->get('sortable') && $_->get('menu') ne 'no' } @{$_[0]->glyphset_configs}; }
+
+sub altered {
+  my $self = shift;
+  push @{$self->{'altered'}}, @_ if @_;
+  return $self->{'altered'};
+}
+
+sub is_altered {
+  return @{$_[0]->{'altered'}} ? 1 : 0;
+}
 
 sub get_user_settings {
   my $self     = shift;
@@ -1259,7 +1268,7 @@ sub update_from_input {
     $diff = from_json($diff);
     $self->update_track_renderer($_, $diff->{$_}->{'renderer'}) for grep exists $diff->{$_}->{'renderer'}, keys %$diff;
     
-    $reload        = scalar(@{$self->altered}) > 0 ? 1 : 0;
+    $reload        = $self->is_altered;
     $track_reorder = $self->update_track_order($diff) if $diff->{'track_order'};
     $reload      ||= $track_reorder;
     $self->update_favourite_tracks($diff);
@@ -1276,7 +1285,7 @@ sub update_from_input {
       }
     }
     
-    $reload = scalar(@{$self->altered}) > 0 ? 1 : 0;
+    $reload = $self->is_altered;
     
     $self->update_favourite_tracks(\%favourites) if scalar keys %favourites;
   }
@@ -1454,7 +1463,7 @@ sub update_from_url {
     }
   }
   
-  if (scalar(@{$self->altered}) > 0) {
+  if ($self->is_altered) {
     my $tracks = join(', ', @{$self->altered});
     $session->add_data(
       type     => 'message',
@@ -1485,7 +1494,7 @@ sub update_track_renderer {
   $flag += $node->set_user('display', $renderer) if (!$on_off || $renderer eq 'off' || $node->get('display') eq 'off');
   my $text = $node->data->{'name'} || $node->data->{'coption'};
 
-  push @{$self->altered}, $text if $flag;
+  $self->altered($text) if $flag;
 }
 
 sub update_favourite_tracks {
@@ -1523,9 +1532,9 @@ sub update_track_order {
   my $node       = $self->get_node('track_order');
   if ($node->set_user($species, { %{$node->get($species) || {}}, %{$diff->{'track_order'}} })) {
     my $text = $node->data->{'name'} || $node->data->{'coption'};
-    push @{$self->altered}, $text;
+    $self->altered($text);
   }
-  return scalar(@{$self->altered}) if $self->get_parameter('sortable_tracks') ne 'drag';
+  return $self->is_altered if $self->get_parameter('sortable_tracks') ne 'drag';
 }
 
 sub reset {
@@ -1541,7 +1550,7 @@ sub reset {
       
       foreach (keys %$user_data) {
         my $text = $user_data->{$_}{'name'} || $user_data->{$_}{'coption'};
-        push @{$self->altered}, $text if $user_data->{$_}{'display'};
+        $self->altered($text) if $user_data->{$_}{'display'};
         delete $user_data->{$_}{'display'};
         delete $user_data->{$_} unless scalar keys %{$user_data->{$_}};
       }
@@ -1553,7 +1562,6 @@ sub reset {
     my $species = $self->species;
     
     if ($node->{'user_data'}{'track_order'}{$species}) {
-      #$self->altered = 1;
       delete $node->{'user_data'}{'track_order'}{$species};
       delete $node->{'user_data'}{'track_order'} unless scalar keys %{$node->{'user_data'}{'track_order'}};
     }

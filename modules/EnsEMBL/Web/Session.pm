@@ -118,7 +118,7 @@ sub store {
   foreach my $type (qw(view_config image_config)) {
     foreach my $config (values %{$self->{"${type}s"}}) {
       ## Only store if config has changed
-      my $altered = $type eq 'view_config' ? $config->altered : scalar @{$config->altered};
+      my $altered = $type eq 'view_config' ? $config->altered : $config->is_altered;
       if ($config->storable && $altered) {
         push @data, {
           code => $config->code,
@@ -600,7 +600,7 @@ sub configure_das_views {
     
     $node->set_user($_, $track_options->{$_}) for keys %$track_options;
     my $text = $node->data->{'name'} || $node->data->{'coption'};
-    push @{$image_config->altered}, $text;
+    $image_config->altered($text);
   }
 }
 
@@ -633,8 +633,7 @@ sub configure_user_data {
           } else {
             $_->set_user('display', $valid{'normal'} ? 'normal' : $renderers->[2]);
           }
-          my $text = $_->data->{'name'} || $_->data->{'coption'};
-          push @{$image_config->altered}, $text;
+          $image_config->altered($_->data->{'name'} || $_->data->{'coption'});
         }
         
         $image_config->{'code'} = $ic_code;
