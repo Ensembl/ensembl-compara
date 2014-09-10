@@ -95,11 +95,11 @@ sub fetch_input {
 sub run {
     my ($self) = @_;
     $self->run_cafe_script;
-    $self->parse_cafe_output;
 }
 
 sub write_output {
     my ($self) = @_;
+    $self->parse_cafe_output;
 }
 
 ###########################################
