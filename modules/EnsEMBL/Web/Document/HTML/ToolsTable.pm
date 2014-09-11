@@ -32,6 +32,8 @@ sub render {
   my $sd      = $hub->species_defs;
   my $sp      = $sd->ENSEMBL_PRIMARY_SPECIES;
   my $img_url = $sd->img_url;
+  #my $rest_url = [[SPECIESDEFS::REST_URL]];
+  my $rest_url = 'http://rest.ensembl.org';
 
   my $table = EnsEMBL::Web::Document::Table->new([
       { key => 'name', title => 'Name', width => '20%', align => 'left' },
@@ -104,6 +106,15 @@ sub render {
     'tool' => '-',
     'code' => sprintf('<a href="ftp://ftp.ensembl.org/pub/current_virtual_machine" rel="external" class="nodeco"><img src="%s16/download.png" alt="Download" title="Download Virtual Machine" /></a>', $img_url),
     'docs' => sprintf('<a href="/info/data/virtual_machine.html"><img src="%s16/info.png" alt="Documentation" /></a>', $img_url)
+  });
+
+  ## REST
+  $table->add_row({
+    "name" => sprintf("<b><a href=%s>Ensembl REST server</a></b>", $rest_url),
+    'desc' => 'Access Ensembl data using your favourite programming language',
+    "tool" => sprintf("<a href='%s' class='nodeco'><img src='%s16/tool.png' alt='Tool' title='Go to online tool' /></a>", $rest_url, $img_url),
+    'code' => '-',
+    'docs' => sprintf('<a href="https://github.com/Ensembl/ensembl-rest/wiki"><img src="%s16/info.png" alt="Documentation" /></a>', $img_url)
   });
 
   return $table->render;
