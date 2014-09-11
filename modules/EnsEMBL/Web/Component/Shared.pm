@@ -227,14 +227,17 @@ sub transcript_table {
 
     my $trans_attribs = {};
     my $trans_gencode = {};
+    my $appris_lookup = EnsEMBL::Web::Constants::APPRIS_CODES;
 
     foreach my $trans (@$transcripts) {
-      foreach my $attrib_type (qw(CDS_start_NF CDS_end_NF gencode_basic TSL)) {
+      foreach my $attrib_type (qw(CDS_start_NF CDS_end_NF gencode_basic TSL appris)) {
         (my $attrib) = @{$trans->get_all_Attributes($attrib_type)};
         if($attrib_type eq 'gencode_basic') {
             if ($attrib && $attrib->value) {
               $trans_gencode->{$trans->stable_id}{$attrib_type} = $attrib->value;
             }
+        } elsif ($attrib_type eq 'appris') {
+          $trans_attribs->{$trans->stable_id}{$attrib_type} = [$attrib->value, $appris_lookup->{$attrib->value}] if ($attrib && $attrib->value);
         } else {
           $trans_attribs->{$trans->stable_id}{$attrib_type} = $attrib->value if ($attrib && $attrib->value);
         }
@@ -281,8 +284,6 @@ sub transcript_table {
     );
     my %any_extras;
  
-    my @appris = qw(pi alt ci ci1 ci2 ci3);
-    srand;
     foreach (map { $_->[2] } sort { $a->[0] cmp $b->[0] || $a->[1] cmp $b->[1] } map { [ $_->external_name, $_->stable_id, $_ ] } @$transcripts) {
       my $transcript_length = $_->length;
       my $tsi               = $_->stable_id;
@@ -348,10 +349,10 @@ sub transcript_table {
           push @flags,qq(<span class="glossary_mouseover">GENCODE basic<span class="floating_popup">$gencode_desc</span></span>);
         }
       }
-
-      ## APPRIS and TSL GO HERE
-      my $rand = @appris[rand @appris];
-      push @evidence, sprintf('<img src="/i/transcript/appris_%s.png" alt="%s" title="%s" />', $rand, 'APPRIS '.uc($rand));
+      if ($trans_attribs->{$tsi}{'appris'}) {
+        my ($text, $code) = @{$trans_attribs->{$tsi}{'appris'}};
+        push @flags, sprintf('<span class="glossary_mouseover"><img src="/i/transcript/appris_%s.png" alt="%s" /><span class="floating_popup">%s</span></span>', $code, 'APPRIS '.uc($code), $text);
+      }
 
       (my $biotype_text = $_->biotype) =~ s/_/ /g;
       my $merged = '';
@@ -371,7 +372,7 @@ sub transcript_table {
         cds_tag    => $cds_tag,
         gencode_set=> $gencode_set,
         options    => { class => $count == 1 || $tsi eq $transcript ? 'active' : '' },
-        flags => join('',map { "<span class='ts_flag'>$_</span>" } @flags),
+        flags => join('',map { $_ =~ /<img/ ? $_ : "<span class='ts_flag'>$_</span>" } @flags),
         evidence => join('', @evidence),
       };
       
@@ -385,7 +386,6 @@ sub transcript_table {
       push @columns, { key => $k, sort => 'html', title => $x->{'name'}};
     }
     push @columns, { key => 'flags', sort => 'html', title => 'Flags' };
-    push @columns, { key => 'evidence', sort => 'html', title => 'Support' } if $species eq 'Homo_sapiens';
 
     ## Additionally, sort by CCDS status and length
     while (my ($k,$v) = each (%biotype_rows)) {
