@@ -1006,7 +1006,14 @@ sub _load_url_feature {
 }
 
 sub load_configured_bam    { shift->load_file_format('bam');    }
-sub load_configured_bigbed { shift->load_file_format('bigbed'); }
+sub load_configured_bigbed { 
+  my $self = shift;
+  $self->load_file_format('bigbed'); 
+  my $sources  = $self->sd_call('ENSEMBL_INTERNAL_BIGBED_SOURCES') || {};
+  if ($sources->{'age_of_base'}) {
+    $self->add_track('information', 'age_of_base_legend', 'Age of Base Legend', 'age_of_base_legend', { strand => 'r' });        
+  }
+}
 sub load_configured_bigwig { shift->load_file_format('bigwig'); }
 sub load_configured_vcf    { shift->load_file_format('vcf');    }
 sub load_configured_datahubs { shift->load_file_format('datahub') }
