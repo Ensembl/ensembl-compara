@@ -36,8 +36,9 @@ sub _init {
 
   foreach (@info) {
     $self->add_to_legend({
-      legend => $_->[0],
-      colour => $_->[1],
+      legend    => $_->[0],
+      colour    => $_->[1],
+      gradient  => {'boxes' => 5, 'labels' => 0}, 
     });
   }
 
