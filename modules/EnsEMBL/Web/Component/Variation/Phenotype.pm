@@ -79,7 +79,7 @@ sub content {
     
     if (!$is_somatic) {
       $table->add_columns(
-        { key => 'allele',  title => 'Most associated allele', align => 'left', sort => 'string'    },
+        { key => 'allele',  title => 'Associated allele', align => 'left', sort => 'string', help => 'Most associated risk allele' },
       );
     }
 
@@ -91,13 +91,6 @@ sub content {
     $html .= sprintf qq{<h3>Significant association(s)</h3>};
     $html .= $table->render;
   }
-  
-  my $info_text = qq{
-    This variant might have phenotypes with non-significant associations, which are not shown on the website. 
-    However these phenotype associations are available through the <a href="/info/data/mysql.html" rel="external">Ensembl Variation databases</a>, 
-    the <a href="/info/docs/api/variation/index.html" rel="external">Ensembl Variation Perl API</a> or the <a href="/biomart/martview" rel="external">Ensembl BioMart</a>.
-  };
-  $html .= $self->_info('Non-significant phenotype associations', $info_text);
   
   return $html;
 };
@@ -153,18 +146,22 @@ sub table_data {
     my $associated_studies = $pf->associated_studies; # List of Study objects
     my $attributes         = $pf->get_all_attributes();
 
-    my $clin_sign = $pf->clinical_significance;
-    if ($clin_sign) {
-      my $clin_sign_icon = $clin_sign;
-      $clin_sign_icon =~ s/ /-/g;
-      my $clin_sign_term = $clin_sign;
-      $clin_sign = qq{<span class="hidden export">$clin_sign</span><img class="_ht" style="margin-right:5px;vertical-align:top" src="/i/val/clinsig_$clin_sign_icon.png" title="$clin_sign" />};
+    my $clin_sign_list = $pf->clinical_significance;
+    my $clin_sign;
+    if ($clin_sign_list) {
+      # Clinical significance icons
+      $clin_sign .= qq{<span class="hidden export">$clin_sign_list</span>};
+      foreach my $clin_sign_term (split(',',$clin_sign_list)) {
+        my $clin_sign_icon = $clin_sign_term;
+        $clin_sign_icon =~ s/ /-/g;
+        $clin_sign .= qq{<img class="_ht" style="margin-right:5px;vertical-align:top" src="/i/val/clinsig_$clin_sign_icon.png" title="$clin_sign_term" />};
+      }
 
       # ClinVar review stars
       if ($attributes->{'review_status'}) {
         my $clin_status = $attributes->{'review_status'};
         my $count_stars = $clin_review_status{$clin_status};
-        my $stars = qq{<span class="_ht nowrap" style="margin-left:2px;vertical-align:top" title="$clin_sign_term  -  Review status: '$clin_status'">(};
+        my $stars = qq{<span class="_ht nowrap" style="margin-left:2px;vertical-align:top" title="$clin_sign_list -  Review status: '$clin_status'">(};
         for (my $i=1; $i<5; $i++) {
           my $star_color = ($i <= $count_stars) ? 'gold' : 'grey';
           $stars .= qq{<img style="vertical-align:top" src="/i/val/$star_color\_star.png" alt="$star_color"/>};
@@ -206,13 +203,13 @@ sub table_data {
       if ($pf->adaptor->count_all_by_phenotype_id($id) > 250) {
         $disease_url = $mart_somatic_url;
         $disease_url =~ s/###PHE###/$phenotype/;
-        $disease .= qq{<br /><a href="$disease_url">[View list in BioMart]</a>};
+        $disease .= qq{<br /><a href="$disease_url" class="small">View list in BioMart</a>};
         $bm_flag = 1;
       }
     }
     # Karyotype link
     if ($bm_flag == 0) {
-      $disease .= qq{<br /><a href="$disease_url">[View on Karyotype]</a>} unless ($disease =~ /HGMD/);
+      $disease .= qq{<br /><a href="$disease_url" class="small">View on Karyotype</a>} unless ($disease =~ /HGMD/);
     }
 
     # Stats column
@@ -220,7 +217,8 @@ sub table_data {
     my @stats;
     foreach my $attr ('p_value','odds_ratio', 'beta_coef') {
       if ($attributes->{$attr}) {
-        push @stats, "$attr:".$attributes->{$attr};
+        my $attr_label = ($attr eq 'beta_coef') ? 'beta_coefficient' : $attr;
+        push @stats, "$attr_label:".$attributes->{$attr};
         $column_flags{'stats'} = 1;
       }
     }
@@ -376,7 +374,7 @@ sub external_reference_link {
     foreach my $mim (split /\,\s*/, $study) {
       my $id = (split /\:/, $mim)[-1];
       my $sub_link;
-      # Most associated allele
+      # Associated allele
       if (defined($allele)) {
         $sub_link = $self->hub->get_ExtURL_link($mim, 'OMIM', '');
         my @parts = split /\"/, $sub_link;
