@@ -18,6 +18,9 @@ limitations under the License.
 
 package EnsEMBL::Draw::GlyphSet::missing;
 
+### AS FAR AS I CAN TELL, THIS GLYPHSET IS NOT IN CURRENT USE - THE
+### 'TURNED OFF' MESSAGE IS RENDERED USING THE text.pm GLYPHSET
+
 ### Displays a message at the bottom of configurable images, showing
 ### the number of tracks that are currently turned off
 
