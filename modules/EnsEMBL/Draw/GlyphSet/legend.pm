@@ -215,9 +215,10 @@ sub _icon_line {
 sub _icon_scale { # %age scale, like on meth tracks
   my ($self,$x,$y,$k) = @_;
 
-  my $num_boxwidths = 10;
+  my $gradient_settings = $k->{'gradient'} || {'boxes' => 10, 'labels' => 1};
+
   my $style = $k->{'style'} || 'box';
-  my @cg = $self->_colourmap->build_linear_gradient($num_boxwidths,
+  my @cg = $self->_colourmap->build_linear_gradient($gradient_settings->{'boxes'},
                                                     $k->{'colour'});
   for my $i (0..@cg) {
     if($i<@cg) {
@@ -226,20 +227,22 @@ sub _icon_scale { # %age scale, like on meth tracks
       $k->{'colour'} = $cg[$i];
       $self->$method($x+$i*$self->{'box_width'},$y,$k);
     }
-    $self->push($self->Text({
-      x => $x + $i*$self->{'box_width'} -($i?$self->{'text_width'}*2/3:0),
-      y => $y + $self->{'text_height'},
-      height => $self->{'text_height'},
-      valign => 'center',
-      halign => 'center',
-      colour => 'black',
-      text   => ($i*10)." ",
-      font   => 'Small',
-      %abs,
-    }));
+    if ($gradient_settings->{'labels'}) {
+      $self->push($self->Text({
+        x => $x + $i*$self->{'box_width'} -($i?$self->{'text_width'}*2/3:0),
+        y => $y + $self->{'text_height'},
+        height => $self->{'text_height'},
+        valign => 'center',
+        halign => 'center',
+        colour => 'black',
+        text   => ($i*10)." ",
+        font   => 'Small',
+        %abs,
+      }));
+    }
   }
   $self->{'max_height'} += $self->{'text_height'};
-  return ($self->{'box_width'}*$num_boxwidths,$self->{'text_height'});
+  return ($self->{'box_width'} * $gradient_settings->{'boxes'}, $self->{'text_height'});
 }
 
 # MAIN METHODS
