@@ -41,6 +41,8 @@ sub _init {
     legend => '% methylated reads',
     colour => [qw(yellow green blue)],
   }); 
+  
+  $self->add_space;
 }
 
 1;

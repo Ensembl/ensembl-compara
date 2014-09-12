@@ -41,6 +41,7 @@ sub _init {
     });
   }
 
+  $self->add_space;
 }
 
 1;

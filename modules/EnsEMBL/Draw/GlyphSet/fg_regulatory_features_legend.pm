@@ -79,6 +79,8 @@ sub _init {
   }
   
   $self->errorTrack('No Regulatory Features in this panel') if $empty;
+
+  $self->add_space;
 }
 
 1;
