@@ -26,12 +26,12 @@ use base qw(EnsEMBL::Draw::GlyphSet::legend);
 
 sub _init {
   my $self     = shift;
-  $self->init_legend(3);
+  $self->init_legend(2);
 
   my @info = (
               ['Human-specific variant', 'red2'],
-              ['Primate-specific variant', 'blue3'],
-              ['Ancient variant', 'snow4'],
+              ['Appeared in primates (paler = older)', [qw(blue slateblue2 white)]],
+              ['Appeared in mammals (paler = older)', [qw(snow4 snow3 white)]],
               );
 
   foreach (@info) {
