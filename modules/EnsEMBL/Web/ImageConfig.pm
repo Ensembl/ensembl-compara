@@ -1602,6 +1602,8 @@ sub _update_missing {
   my $species_defs    = $self->species_defs;
   my $count_missing   = grep { $_->get('display') eq 'off' || !$_->get('display') } $self->get_tracks; 
   my $missing         = $self->get_node('missing');
+
+  $missing->set('extra_height', 6) if $missing;
   $missing->set('text', $count_missing > 0 ? "There are currently $count_missing tracks turned off." : 'All tracks are turned on') if $missing;
   
   my $info = sprintf(
@@ -1618,6 +1620,7 @@ sub _update_missing {
 
   my $information = $self->get_node('info');
   $information->set('text', $info) if $information;
+  $information->set('extra_height', 2) if $information;
   
   return { count => $count_missing, information => $info };
 }
