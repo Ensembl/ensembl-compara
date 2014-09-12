@@ -1603,7 +1603,7 @@ sub _update_missing {
   my $count_missing   = grep { $_->get('display') eq 'off' || !$_->get('display') } $self->get_tracks; 
   my $missing         = $self->get_node('missing');
 
-  $missing->set('extra_height', 10) if $missing;
+  $missing->set('extra_height', 4) if $missing;
   $missing->set('text', $count_missing > 0 ? "There are currently $count_missing tracks turned off." : 'All tracks are turned on') if $missing;
   
   my $info = sprintf(
