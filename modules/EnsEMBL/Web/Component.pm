@@ -684,7 +684,7 @@ sub toggleable_table {
   
   return sprintf('
     <div class="toggleable_table">
-      <h2><a rel="%s_table" class="toggle %s" href="#%s_table">%s</a></h2>
+      <h2><a rel="%s_table" class="toggle _slide_toggle %s" href="#%s_table">%s</a></h2>
       %s
       %s
     </div>',
