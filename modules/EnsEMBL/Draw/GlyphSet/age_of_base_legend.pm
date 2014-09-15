@@ -29,7 +29,7 @@ sub _init {
   $self->init_legend(2);
 
   my @info = (
-              ['Human-specific variant', 'red2'],
+              ['Human-specific base', 'red2'],
               ['Appeared in primates (paler = older)', [qw(blue slateblue2 white)]],
               ['Appeared in mammals (paler = older)', [qw(snow4 snow3 white)]],
               );
