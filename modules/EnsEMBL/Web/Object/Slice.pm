@@ -387,7 +387,7 @@ sub get_data {
 
   return $data unless scalar keys %$data;
   
-  foreach my $regf_fset (@{$hub->get_adaptor('get_FeatureSetAdaptor', 'funcgen')->fetch_all_by_type('regulatory')}) { 
+  foreach my $regf_fset (@{$hub->get_adaptor('get_FeatureSetAdaptor', 'funcgen')->fetch_all_by_feature_class('regulatory')}) {
     my $regf_data_set = $dataset_adaptor->fetch_by_product_FeatureSet($regf_fset);
     my $cell_line     = $regf_data_set->cell_type->name;
 
