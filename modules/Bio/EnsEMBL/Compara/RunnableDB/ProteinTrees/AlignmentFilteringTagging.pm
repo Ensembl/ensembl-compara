@@ -44,7 +44,6 @@ sub fetch_input {
 
     #print Dumper $gene_tree;
     $self->param( 'gene_tree', $gene_tree );
-    $self->param( 'mlss_id',   $gene_tree->method_link_species_set_id );
 }
 
 sub run {
