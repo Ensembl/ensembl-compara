@@ -17,33 +17,13 @@
 use strict;
 use warnings;
 
-my $description = q{
-###########################################################################
-##
-## PROGRAM update_genome.pl
-##
-## AUTHORS
-##    Javier Herrero
-##
-## DESCRIPTION
-##    This script takes the new core DB and a compara DB in production fase
-##    and updates it in several steps:
-##
-##      - It updates the genome_db table
-##      - It updates all the dnafrags for the given genome_db
-##      - It updates all the collections for the given genome_db
-##
-###########################################################################
-
-};
-
 =head1 NAME
 
 update_genome.pl
 
 =head1 AUTHORS
 
- Javier Herrero
+ Javier Herrero et al.
 
 =head1 CONTACT
 
@@ -55,40 +35,31 @@ Questions may also be sent to the Ensembl help desk at
 
 =head1 DESCRIPTION
 
-This script takes the new core DB and a compara DB in production fase and updates it in several steps:
-
+This script's main purpose is to take the new core DB and a compara DB
+in production phase and update it in several steps:
  - It updates the genome_db table
  - It updates all the dnafrags for the given genome_db
+ - It updates all the collections for the given genome_db
+
+It can also edit a few properties like:
+ - Turn assembly_default to 0 for a genome_db
+ - Add a genome_db to a collection species set
+ - Remove a genome_db from a collection species set
 
 =head1 SYNOPSIS
 
-perl update_genome.pl --help
+  perl update_genome.pl --help
 
-perl update_genome.pl
+  perl update_genome.pl
     [--reg_conf registry_configuration_file]
     --compara compara_db_name_or_alias
     --species new_species_db_name_or_alias
     [--species_name "Species name"]
-        Set up the species name. This is needed when the core database
-        misses this information
     [--taxon_id 1234]
-        Set up the NCBI taxon ID. This is needed when the core database
-        misses this information
     [--[no]force]
-        This scripts fails if the genome_db table of the compara DB
-        already matches the new species DB. This options allows you
-        to overcome this. USE ONLY IF YOU REALLY KNOW WHAT YOU ARE
-        DOING!
     [--offset 1000]
-        This allows you to offset identifiers assigned to Genome DBs by a given
-        amount. If not specified we assume we will use the autoincrement key
-        offered by the Genome DB table. If given then IDs will start
-        from that number (and we will assign according to the current number
-        of Genome DBs exceeding the offset). First ID will be equal to the
-        offset+1
     [--collection "collection name"]
-        Adds the new / updated genome_db_id to the collection. This option
-        can be used multiple times
+    [--remove_from_collection | --add_to_collection | --set_non_default]
 
 =head1 OPTIONS
 
@@ -98,7 +69,7 @@ perl update_genome.pl
 
 =item B<[--help]>
 
-  Prints help message and exits.
+Prints help message and exits.
 
 =back
 
@@ -165,6 +136,12 @@ offset+1
 Adds the new / updated genome_db_id to the collection. This option
 can be used multiple times
 
+=item B<[--remove_from_collection | --add_to_collection || --set_non_default]>
+
+(exclusive) options to respectively remove the species from its
+collections, add the species to more collections, and set the
+species as non-default
+
 =back
 
 =head1 INTERNAL METHODS
@@ -173,52 +150,13 @@ can be used multiple times
 
 use Bio::EnsEMBL::Registry;
 use Bio::EnsEMBL::Utils::Exception qw(throw warning verbose);
+use Bio::EnsEMBL::Utils::SqlHelper;
 
 use Bio::EnsEMBL::Compara::Utils::CoreDBAdaptor;
 
 use Getopt::Long;
 
-my $usage = qq{
-perl update_genome.pl
-
-  Getting help:
-    [--help]
-
-  General configuration:
-    [--reg_conf registry_configuration_file]
-        the Bio::EnsEMBL::Registry configuration file. If none given,
-        the one set in ENSEMBL_REGISTRY will be used if defined, if not
-        ~/.ensembl_init will be used.
-  Databases:
-    --compara compara_db_name_or_alias
-    --species new_species_db_name_or_alias
-
-  Options:
-    [--species_name "Species name"]
-        Set up the species name. This is needed when the core database
-        misses this information
-    [--taxon_id 1234]
-        Set up the NCBI taxon ID. This is needed when the core database
-        misses this information
-    [--[no]force]
-        This scripts fails if the genome_db table of the compara DB
-        already matches the new species DB. This options allows you
-        to overcome this. USE ONLY IF YOU REALLY KNOW WHAT YOU ARE
-        DOING!
-    [--offset 1000]
-        This allows you to offset identifiers assigned to Genome DBs by a given
-        amount. If not specified we assume we will use the autoincrement key
-        offered by the Genome DB table. If given then IDs will start
-        from that number (and we will assign according to the current number
-        of Genome DBs exceeding the offset). First ID will be equal to the
-        offset+1
-    [--collection "Collection name"]
-        Adds the new / updated genome_db_id to the collection. This option
-        can be used multiple times
-};
-
 my $help;
-
 my $reg_conf;
 my $compara;
 my $species = "";
@@ -227,6 +165,9 @@ my $taxon_id;
 my $force = 0;
 my $offset = 0;
 my @collection = ();
+my $action_remove_from_collection = 0;
+my $action_add_to_collection = 0;
+my $action_set_non_default = 0;
 
 GetOptions(
     "help" => \$help,
@@ -238,15 +179,22 @@ GetOptions(
     "force!" => \$force,
     'offset=i' => \$offset,
     "collection=s@" => \@collection,
+    "remove_from_collection!" => \$action_remove_from_collection,
+    "add_to_collection!" => \$action_add_to_collection,
+    "set_non_default!" => \$action_set_non_default,
   );
 
 $| = 0;
 
 # Print Help and exit if help is requested
 if ($help or !$species or !$compara) {
-  print $description, $usage;
-  exit(0);
+    use Pod::Usage;
+    pod2usage({-exitvalue => 0, -verbose => 2});
 }
+
+die "'remove_from_collection', 'add_to_collection', and 'set_non_default' are exclusive options\n" if
+    ($action_set_non_default and ($action_remove_from_collection or $action_add_to_collection))
+    or ($action_remove_from_collection and $action_add_to_collection);
 
 my $species_no_underscores = $species;
 $species_no_underscores =~ s/\_/\ /;
@@ -266,18 +214,30 @@ throw ("Cannot connect to database [${species_no_underscores} or ${species}]") i
 
 my $compara_db = Bio::EnsEMBL::Registry->get_DBAdaptor($compara, "compara");
 throw ("Cannot connect to database [$compara]") if (!$compara_db);
+my $helper = Bio::EnsEMBL::Utils::SqlHelper->new(-DB_CONNECTION => $compara_db->dbc);
 
-my $genome_db = update_genome_db($species_db, $compara_db, $force);
+$helper->transaction( -CALLBACK => sub {
+    if ($action_set_non_default or $action_remove_from_collection or $action_add_to_collection) {
+        my $genome_db_adaptor = $compara_db->get_GenomeDBAdaptor();
+        my $genome_db = $genome_db_adaptor->fetch_by_core_DBAdaptor($species_db);
 
-update_collections($compara_db, $genome_db, \@collection);
-
-# delete_genomic_align_data($compara_db, $genome_db);
-
-# delete_syntenic_data($compara_db, $genome_db);
-
-update_dnafrags($compara_db, $genome_db, $species_db);
-
-print_method_link_species_sets_to_update($compara_db, $genome_db);
+        if ($action_set_non_default) {
+            $genome_db_adaptor->set_non_default($genome_db);
+            remove_species_from_collections($compara_db, $genome_db, \@collection);
+        } elsif ($action_remove_from_collection) {
+            remove_species_from_collections($compara_db, $genome_db, \@collection);
+        } else {
+            add_to_collections($compara_db, $genome_db, \@collection);
+        }
+        return;
+    }
+    my $genome_db = update_genome_db($species_db, $compara_db, $force);
+    add_to_collections($compara_db, $genome_db, \@collection);
+    #delete_genomic_align_data($compara_db, $genome_db);
+    #delete_syntenic_data($compara_db, $genome_db);
+    update_dnafrags($compara_db, $genome_db, $species_db);
+    print_method_link_species_sets_to_update($compara_db, $genome_db);
+} );
 
 exit(0);
 
@@ -325,6 +285,7 @@ sub update_genome_db {
 
     # Get fresher information from the core database
     $genome_db->db_adaptor($species_dba, 1);
+    $genome_db->assembly_default(1);
 
     # And store it back in Compara
     $genome_db_adaptor->update($genome_db);
@@ -369,7 +330,7 @@ sub update_genome_db {
   return $genome_db;
 }
 
-=head2 update_collections
+=head2 add_to_collections
 
   Arg[1]      : Bio::EnsEMBL::Compara::DBSQL::DBAdaptor $compara_dba
   Arg[2]      : Bio::EnsEMBL::Compara::GenomeDB $genome_db
@@ -381,38 +342,62 @@ sub update_genome_db {
 
 =cut
 
-sub update_collections {
+sub add_to_collections {
   my ($compara_dba, $genome_db, $all_collections) = @_;
 
   # Gets all the collections with that genome_db
-  my $sql = 'SELECT species_set_id FROM species_set_tag JOIN species_set USING (species_set_id) JOIN genome_db USING (genome_db_id) WHERE tag = "name" AND value LIKE "collection-%" AND name = ?';
-  my $ss_ids = $compara_dba->dbc->db_handle->selectall_arrayref($sql, undef, $genome_db->name);
-
   my $ssa = $compara_dba->get_SpeciesSetAdaptor;
-  my $sss = $ssa->fetch_all_by_dbID_list([map {$_->[0]} @$ss_ids]);
-
-  foreach my $collection (@$all_collections) {
-    my $all_ss = $ssa->fetch_all_by_tag_value("name", "collection-$collection");
-    if (scalar(@$all_ss) == 0) {
-      warn "cannot find the collection '$collection'";
-    } elsif (scalar(@$all_ss) > 1) {
-      warn "There are multiple collections '$collection'";
-    } else {
-      push @$sss, $all_ss->[0];
-    }
-  }
+  my $sss = $ssa->fetch_all_collections_by_genome($genome_db->name);
+  push @$sss, @{_fetch_all_collections_by_name($ssa, $all_collections)};
 
   foreach my $ss (@$sss) {
-      my $ini_genome_dbs = $ss->genome_dbs;
-      my $new_genome_dbs = [grep {$_->name ne $genome_db->name} @$ini_genome_dbs];
+      my $new_genome_dbs = [grep {$_->name ne $genome_db->name} @{$ss->genome_dbs}];
       push @$new_genome_dbs, $genome_db;
-      my $species_set = Bio::EnsEMBL::Compara::SpeciesSet->new( -genome_dbs => $new_genome_dbs );
-      $ssa->store($species_set);
-      my $sql = 'UPDATE species_set_tag SET species_set_id = ? WHERE species_set_id = ? AND tag = "name"';
-      my $sth = $compara_dba->dbc->prepare($sql);
-      $sth->execute($species_set->dbID, $ss->dbID);
-      $sth->finish();
+      my $new_ss = $ssa->update_collection($ss, $new_genome_dbs);
   }
+}
+
+=head2 remove_species_from_collections
+
+  Arg[1]      : Bio::EnsEMBL::Compara::DBSQL::DBAdaptor $compara_dba
+  Arg[2]      : Bio::EnsEMBL::Compara::GenomeDB $genome_db
+  Arg[3]      : arrayref of string $all_collection_names (optional)
+  Description : This method updates the collection species sets to
+                exclude the given $genome_db. Updates them all unless
+                $all_collection_names is given
+  Returns     : -none-
+  Exceptions  : throw if any SQL statment fails
+
+=cut
+
+sub remove_species_from_collections {
+    my ($compara_dba, $genome_db, $all_collection_names) = @_;
+
+    my $sss;
+    my $ssa = $compara_dba->get_SpeciesSetAdaptor;
+
+    if ($all_collection_names and scalar(@$all_collection_names)) {
+        $sss = _fetch_all_collections_by_name($ssa, $all_collection_names);
+    } else {
+        $sss = $ssa->fetch_all_collections_by_genome($genome_db->dbID);
+    }
+
+    foreach my $ss (@$sss) {
+        my $new_genome_dbs = [grep {$_->dbID != $genome_db->dbID} @{$ss->genome_dbs}];
+        my $new_ss = $ssa->update_collection($ss, $new_genome_dbs);
+    }
+}
+
+# Wrapper around Bio::EnsEMBL::Compara::DBSQL::SpeciesSetAdaptor::fetch_collection_by_name
+sub _fetch_all_collections_by_name {
+    my ($ssa, $all_collection_names) = @_;
+
+    my @sss;
+    foreach my $collection (@{$all_collection_names || []}) {
+        my $c = $ssa->fetch_collection_by_name($collection);
+        push @sss, $c if $c;
+    }
+    return \@sss;
 }
 
 =head2 delete_genomic_align_data

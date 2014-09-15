@@ -95,19 +95,11 @@ sub fetch_input {
 sub run {
     my ($self) = @_;
     $self->run_cafe_script;
-    $self->parse_cafe_output;
 }
 
 sub write_output {
     my ($self) = @_;
-
-    my $lambda = $self->param('lambda');
-    $self->dataflow_output_id ( {
-                                 'cafe_lambda' => $self->param('lambda'),
-                                 'cafe_table_file' => $self->param('work_dir') . "/" . $self->param('cafe_table_file'),
-                                 'cafe_tree_string' => $self->param('cafe_tree_string'),
-                                }, 3);
-
+    $self->parse_cafe_output;
 }
 
 ###########################################
@@ -155,7 +147,6 @@ sub run_cafe_script {
     chop($cafe_tree_str); #remove final semicolon
     $cafe_tree_str =~ s/:\d+$//; # remove last branch length
 
-#    my $cafe_table_file = $self->param('work_dir') . "/" . $self->param('cafe_table_file');
     my $lambda = $self->param('lambda');  ## For now, it only works with 1 lambda
     my $cafe_struct_tree = $self->param('cafe_struct_tree_str');
 

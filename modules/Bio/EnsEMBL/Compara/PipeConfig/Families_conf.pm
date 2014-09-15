@@ -68,13 +68,11 @@ sub default_options {
     return {
         %{$self->SUPER::default_options},
 
-#       'mlss_id'         => 30043,         # it is very important to check that this value is current (commented out to make it obligatory to specify)
-        'host'            => 'compara1',    # where the pipeline database will be created
-        'rel_suffix'      => 'hmm',         # an empty string by default, a letter otherwise
+#       'mlss_id'         => 30045,         # it is very important to check that this value is current (commented out to make it obligatory to specify)
+        'host'            => 'compara2',    # where the pipeline database will be created
+        'rel_suffix'      => '',            # an empty string by default, a letter otherwise
         'rel_with_suffix' => $self->o('ensembl_release').$self->o('rel_suffix'),
         'file_basename'   => 'metazoa_families_'.$self->o('rel_with_suffix'),
-
-        'pipeline_name'   => 'compara_families_'.$self->o('rel_with_suffix'),   # also used to differentiate submitted processes
 
         'email'           => $self->o('ENV', 'USER').'@ebi.ac.uk',    # NB: your EBI address may differ from the Sanger one!
 
@@ -103,7 +101,7 @@ sub default_options {
             # resource requirements:
         'blast_gigs'      =>  2,
         'blast_hm_gigs'   =>  4,
-        'mcl_gigs'        => 50,
+        'mcl_gigs'        => 60,
         'mcl_procs'       =>  4,
         'lomafft_gigs'    =>  4,
         'himafft_gigs'    => 14,
@@ -115,11 +113,11 @@ sub default_options {
         'reservation_sfx' => '',    # set to '000' for farm2, to '' for farm3 and EBI
 
             # homology database connection parameters (we inherit half of the members and sequences from there):
-#        'protein_trees_db'  => 'mysql://ensro@compara1/mm14_protein_trees_'.$self->o('ensembl_release'),
         'protein_trees_db'  => 'mysql://ensro@compara1/mm14_protein_trees_'.$self->o('ensembl_release'),
+#        'protein_trees_db'  => 'mysql://ensro@compara3/mm14_protein_trees_'.$self->o('rel_with_suffix'),
 
             # used by the StableIdMapper as the reference:
-        'prev_rel_db' => 'mysql://ensadmin:'.$self->o('password').'@compara3/mp12_ensembl_compara_74',
+        'prev_rel_db' => 'mysql://ensadmin:'.$self->o('password').'@compara5/mp12_ensembl_compara_76',
 
             # used by the StableIdMapper as the location of the master 'mapping_session' table:
         'master_db' => 'mysql://ensadmin:'.$self->o('password').'@compara1/sf5_ensembl_compara_master',    
@@ -319,7 +317,7 @@ sub pipeline_analyses {
         {   -logic_name => 'snapshot_after_load_uniprot',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::DatabaseDumper',
             -parameters => {
-                'output_file'      => '#work_dir#/snapshot_after_load_uniprot.sql',
+                'output_file'      => '#work_dir#/snapshot_after_load_uniprot.sql.gz',
                 'blastdb_name'  => $self->o('blastdb_name'),
             },
             -flow_into => {
@@ -397,7 +395,7 @@ sub pipeline_analyses {
         {   -logic_name => 'snapshot_after_blast',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::DatabaseDumper',
             -parameters => {
-                'output_file'  => '#work_dir#/snapshot_after_blast.sql',
+                'output_file'  => '#work_dir#/snapshot_after_blast.sql.gz',
             },
             -flow_into => {
                 1 => [ 'mcxload_matrix' ],
@@ -644,6 +642,44 @@ sub pipeline_analyses {
 1;
 
 =head1 STATS and TIMING
+
+=head2 rel.77 stats
+
+    sequences to cluster:       6,546,543           [ SELECT count(*) from sequence; ] -- took 1.5m to run
+    distances by Blast:         1,251,923,987       [ SELECT count(*) from mcl_sparse_matrix; ] -- took 34m to run
+
+    non-reference genes:         2699               [ SELECT count(*) FROM gene_member WHERE gene_member_id>=200000001 AND source_name='ENSEMBLGENE'; ]
+    non-reference peps:          7021               [ SELECT count(*) FROM seq_member WHERE seq_member_id>=200000001 AND source_name='ENSEMBLPEP'; ]
+
+    uniprot loading method:     { 20 x pfetch }
+
+    total running time:         12.9d               [ call time_analysis('%'); ]
+    uniprot_loading time:       11.0h               [ call time_analysis('load_uniprot%'); ]
+    blasting time:               4.5d               [ call time_analysis('blast%'); ]
+    mcxload running time:        2.6h               [ call time_analysis('mcxload_matrix'); ]
+    mcl running time:           10.9h               [ call time_analysis('mcl'); ]
+
+    memory used by mcxload:     33.2G               [ SELECT mem_megs, swap_megs FROM analysis_base JOIN role USING(analysis_id) JOIN worker_resource_usage USING(worker_id) WHERE logic_name='mcxload_matrix'; ]
+    memory used by mcl:         50.0G               [ SELECT mem_megs, swap_megs FROM analysis_base JOIN worker USING(analysis_id) JOIN lsf_report USING(process_id) WHERE logic_name='mcl'; ]
+
+=head2 rel.76 stats
+
+    sequences to cluster:       6,293,923           [ SELECT count(*) from sequence; ] -- took 2 minutes to run
+    distances by Blast:         1,204,402,584       [ SELECT count(*) from mcl_sparse_matrix; ] -- took 1h18m to run
+
+    non-reference genes:         2182               [ SELECT count(*) FROM gene_member WHERE gene_member_id>=200000001 AND source_name='ENSEMBLGENE'; ]
+    non-reference peps:          6394               [ SELECT count(*) FROM seq_member WHERE seq_member_id>=200000001 AND source_name='ENSEMBLPEP'; ]
+
+    uniprot loading method:     { 20 x pfetch }
+
+    total running time:         10.8d               [ call time_analysis('%'); ]
+    uniprot_loading time:        3.8h               [ call time_analysis('load_uniprot%'); ]
+    blasting time:               6.0d               [ call time_analysis('blast%'); ]
+    mcxload running time:        3.0h               [ call time_analysis('mcxload_matrix'); ]
+    mcl running time:           15.8h               [ call time_analysis('mcl'); ]
+
+    memory used by mcxload:     32.5G               [ SELECT mem_megs, swap_megs FROM analysis_base JOIN role USING(analysis_id) JOIN worker_resource_usage USING(worker_id) WHERE logic_name='mcxload_matrix'; ]
+    memory used by mcl:         48.2G               [ SELECT mem_megs, swap_megs FROM analysis_base JOIN worker USING(analysis_id) JOIN lsf_report USING(process_id) WHERE logic_name='mcl'; ]
 
 =head2 rel.75 stats
 

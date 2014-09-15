@@ -322,6 +322,7 @@ sub pipeline_create_commands {
     die "Mapping of stable_id is only possible with a master database" if $self->o('do_stable_id_mapping') and not $self->o('master_db');
     die "Species reuse is only possible with a master database" if $self->o('prev_rel_db') and not $self->o('master_db');
     die "Species reuse is only possible with some previous core databases" if $self->o('prev_rel_db') and ref $self->o('prev_core_sources_locs') and not scalar(@{$self->o('prev_core_sources_locs')});
+    die "Cannot refine TreeBest's trees with RAxML EPA in RAxML mode (because TreeBest is only run on small trees, and cannot produce long branches)" if $self->o('use_raxml') and $self->o('use_raxml_epa_on_treebest') and not ($self->o('use_raxml') =~ /^#:subst/);
 
     # Without a master database, we must provide other parameters
     die if not $self->o('master_db') and not $self->o('ncbi_db');
@@ -741,6 +742,17 @@ sub core_pipeline_analyses {
                 'table'         => 'gene_member',
                 'where'         => 'gene_member_id<='.$self->o('protein_members_range').' AND genome_db_id = #genome_db_id#',
                 'mode'          => 'topup',
+            },
+            -hive_capacity => $self->o('reuse_capacity'),
+            -flow_into => {
+                1 => [ 'reset_gene_member_counters' ],
+            },
+        },
+
+        {   -logic_name => 'reset_gene_member_counters',
+            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::SqlCmd',
+            -parameters => {
+                'sql' => [  'UPDATE gene_member SET families = 0, gene_trees = 0, gene_gain_loss_trees = 0, orthologues = 0, paralogues = 0, homoeologues = 0 WHERE genome_db_id = #genome_db_id#' ],
             },
             -hive_capacity => $self->o('reuse_capacity'),
             -flow_into => {
@@ -1646,13 +1658,14 @@ sub core_pipeline_analyses {
                 'bootstrap'                 => 1,
                 'store_intermediate_trees'  => 1,
                 'store_filtered_align'      => 1,
+                'extra_args'                => $self->o('use_raxml') ? ' -F 0 ' : '',
                 'treebest_exe'              => $self->o('treebest_exe'),
-                'output_clusterset_id'      => ($self->o('use_raxml') or not $self->o('use_raxml_epa_on_treebest')) ? 'default' : 'treebest',
+                'output_clusterset_id'      => $self->o('use_raxml_epa_on_treebest') ? 'treebest' : 'default',
             },
             -hive_capacity        => $self->o('treebest_capacity'),
             -rc_name    => '4Gb_job',
             -flow_into  => {
-                ($self->o('use_raxml') or not $self->o('use_raxml_epa_on_treebest')) ? 999 : 1 => [ 'raxml_epa_longbranches' ],
+                $self->o('use_raxml_epa_on_treebest') ? 1 : 999 => [ 'raxml_epa_longbranches' ],
             }
         },
 

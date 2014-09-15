@@ -71,7 +71,7 @@ package Bio::EnsEMBL::Compara::Homology;
 use strict;
 use warnings;
 
-use Bio::EnsEMBL::Utils::Exception qw(throw warning);
+use Bio::EnsEMBL::Utils::Exception qw(throw warning deprecate);
 
 use base ('Bio::EnsEMBL::Compara::AlignedMemberSet');
 
