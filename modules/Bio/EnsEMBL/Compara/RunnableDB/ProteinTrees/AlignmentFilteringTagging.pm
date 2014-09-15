@@ -31,10 +31,10 @@ package Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::AlignmentFilteringTaggi
 
 use strict;
 use warnings;
-use Data::Dumper;
-use base ('Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::GenericRunnable');
 
-#use base ( 'Bio::EnsEMBL::Compara::RunnableDB::RunCommand', 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::StoreTree', 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::TreeBest' );
+use Data::Dumper;
+
+use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
 sub fetch_input {
     my $self         = shift @_;
