@@ -574,7 +574,8 @@ sub dumpVariation {
 
   my $sth;
   my ($all_hgvs_names,$hgvs_sth);
-  if ($dbspecies !~ /Bos_taurus|Homo_sapiens|Mus_musculus/) {
+	if (1) { 
+#if ($dbspecies !~ /Bos_taurus|Homo_sapiens|Mus_musculus/) {
     print LOG "    Preparing to get HGVS data ".&date_and_mem()."\n";
     $sth = $conf->{'variation_dbh'}->prepare(qq(
     SELECT variation_id, hgvs_name
@@ -671,7 +672,8 @@ sub dumpVariation {
 
   my ($ssid_sth, $stmt,$ssid_hash);
   # the mouse and human databases are so big that that dumping in one go runs out of memory even with 48Gb!
-  if ($dbspecies !~ /Bos_taurus|Homo_sapiens|Mus_musculus/) {
+	if (1) {
+#  if ($dbspecies !~ /Bos_taurus|Homo_sapiens|Mus_musculus/) {
     print LOG "    Preparing to get extra ssID info ".&date_and_mem()."\n";
     $stmt = qq{SELECT variation_id,
                       GROUP_CONCAT('ss',subsnp_id) as ssid
