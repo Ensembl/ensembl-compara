@@ -515,7 +515,6 @@ sub update_dnafrags {
         AND at.code = 'toplevel'
         AND sr.seq_region_id = sra.seq_region_id
         AND sr.coord_system_id = cs.coord_system_id
-        AND cs.name != "lrg"
         AND cs.species_id =?
     };
   my $sth1 = $species_dba->dbc->prepare($sql1);

@@ -255,7 +255,6 @@ sub pipeline_analyses {
                 'include_nonreference'  => 1,
                 'include_patches'       => 1,
                 'include_reference'     => 0,
-                'store_missing_dnafrags'=> 1,
             },
             -rc_name => '2GigMem',
         },
