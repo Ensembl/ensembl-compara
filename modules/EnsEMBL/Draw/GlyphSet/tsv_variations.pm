@@ -33,18 +33,18 @@ sub _init {
   return unless defined $check;
   return unless $self->strand() == -1;
 
-  my $Config        = $self->{'config'};  
-  my $transcript = $Config->{'transcript'}->{'transcript'}; 
-  my $consequences_ref = $Config->{'transcript'}->{'consequences'}; 
-  my $alleles      = $Config->{'transcript'}->{'allele_info'};
+  my $Config            = $self->{'config'};
+  my $transcript        = $Config->{'transcript'}->{'transcript'};
+  my $consequences_ref  = $Config->{'transcript'}->{'consequences'};
+  my $alleles           = $Config->{'transcript'}->{'allele_info'};
   return unless $alleles && $consequences_ref;
 
   # Drawing params
-  my( $fontname, $fontsize ) = $self->get_font_details( 'innertext' );
-  my $pix_per_bp    = $Config->transform->{'scalex'};
-  my @res = $self->get_text_width( 0, 'M', '', 'font'=>$fontname, 'ptsize' => $fontsize );
+  my( $fontname, $fontsize )  = $self->get_font_details( 'innertext' );
+  my $pix_per_bp              = $Config->transform->{'scalex'};
+  my @res                     = $self->get_text_width( 0, 'M', '', 'font'=>$fontname, 'ptsize' => $fontsize );
   my( $font_w_bp, $font_h_bp) = ($res[2]/$pix_per_bp,$res[3]);
-  my $height = $res[3] + 4;   
+  my $height                  = $res[3] + 4;
 
   # Bumping params
   my $pix_per_bp    = $Config->transform->{'scalex'};
@@ -53,13 +53,13 @@ sub _init {
   my @bitmap;
 
   # Data stuff
-  my $colour_map = $self->my_config('colours');
-  my $EXTENT        = $Config->get_parameter( 'context')|| 1e6;
-     $EXTENT        = 1e6 if $EXTENT eq 'FULL';
+  my $colour_map  = $self->my_config('colours');
+  my $EXTENT      = $Config->get_parameter( 'context')|| 1e6;
+     $EXTENT      = 1e6 if $EXTENT eq 'FULL';
   warn "######## ERROR arrays should be same length" unless length @$alleles == length @$consequences_ref;
 
 
-  my $raw_coverage_obj  = $Config->{'transcript'}->{'coverage_obj'}; 
+  my $raw_coverage_obj  = $Config->{'transcript'}->{'coverage_obj'};
   my $coverage_level  = $Config->{'transcript'}->{'coverage_level'};
   my @coverage_obj;
   if ( @$raw_coverage_obj ){
@@ -68,34 +68,34 @@ sub _init {
 
   my $index = 0;
   foreach my $allele_ref (  @$alleles ) {
-    my $allele = $allele_ref->[2]; 
+    my $allele = $allele_ref->[2];
     my $conseq_type = $consequences_ref->[$index];
     $index++;
     next unless $conseq_type && $allele;
     next if $allele->end < $transcript->start - $EXTENT;
     next if $allele->start > $transcript->end + $EXTENT;
-	
+
     # Type and colour -------------------------------------------
-    my $type = lc($conseq_type->display_consequence); 
+    my $type = lc($conseq_type->display_consequence);
     my $colour;
     if ($type eq 'sara') {
-      $colour = $colour_map->{$type}->{'border'}; 
+      $colour = $colour_map->{$type}->{'border'};
     } else {
-      $colour = $colour_map->{$type}->{'default'}; 
+      $colour = $colour_map->{$type}->{'default'};
     }
 
     # Alleles (if same as ref, draw empty box )---------------------
     my $var_pep  = $type eq 'sara' ? '' : ($conseq_type->pep_allele_string || '');
-	$var_pep =~ s/\//\|/g;
-	my $aa_change;
-	@$aa_change = split /\|/, $var_pep;
+    $var_pep =~ s/\//\|/g;
+    my $aa_change;
+    @$aa_change = split /\|/, $var_pep;
     my $S =  ( $allele_ref->[0]+$allele_ref->[1] )/2;
     my $width = $font_w_bp * length( $var_pep );
 
     my $ref_allele = $allele->ref_allele_string();
-	# get the feature seq from each TVA
-	# this will come flipped if transcript is on opposite strand to feature
-	my @conseq_alleles = map {$_->feature_seq} @{$conseq_type->get_all_alternate_TranscriptVariationAlleles};
+    # get the feature seq from each TVA
+    # this will come flipped if transcript is on opposite strand to feature
+    my @conseq_alleles = map {$_->feature_seq} @{$conseq_type->get_all_alternate_TranscriptVariationAlleles};
     warn "Consequence alleles has more than one alt allele" if $#conseq_alleles > 0;
 
     my $c;
@@ -103,37 +103,37 @@ sub _init {
     if ( grep { $_ eq "Sanger"}  @{$allele->get_all_sources() || []}  ) {
       my $coverage = 0;
       foreach ( @coverage_obj ) {
-	next if $allele->start >  $_->[2]->end;
-	last if $allele->start < $_->[2]->start;
-	$coverage = $_->[2]->level if $_->[2]->level > $coverage;
+        next if $allele->start >  $_->[2]->end;
+        last if $allele->start < $_->[2]->start;
+        $coverage = $_->[2]->level if $_->[2]->level > $coverage;
       }
       if ($coverage) {
-	$coverage = ">".($coverage-1) if $coverage == $coverage_level->[-1];
-      $c= $coverage;
+        $coverage = ">".($coverage-1) if $coverage == $coverage_level->[-1];
+        $c= $coverage;
       }
     }
 
     my $allele_id = $allele->variation_name;
-    my $dbid = $allele->variation ? $allele->variation->dbID : undef or next;
+    my $dbid      = $allele->variation ? $allele->variation->dbID : undef or next;
     my $href_sara = $self->_url({
-      'type'   => 'Transcript',
-      'action'  => 'TranscriptVariation',
-      'v'     => $allele_id,
-      'vf'    => $dbid,
-      'alt_allele' => $allele->allele_string,#$conseq_alleles[0],
-      'sara'  => 1,
+      'type'        => 'Transcript',
+      'action'      => 'TranscriptVariation',
+      'v'           => $allele_id,
+      'vf'          => $dbid,
+      'alt_allele'  => $allele->allele_string,#$conseq_alleles[0],
+      'sara'        => 1,
     });
 
     # SARA snps ----------------------------------------------------
     if ($type eq 'sara') { # if 'negative snp'
        my $bglyph = $self->Rect({
-      'x'         => $S - $font_w_bp / 2,
-      'y'         => $height + 2,
-      'height'    => $height,
-      'width'     => $width + $font_w_bp +4,
-      'bordercolour' => 'grey70',
-      'absolutey' => 1,
-      'href'     => $href_sara,
+      'x'             => $S - $font_w_bp / 2,
+      'y'             => $height + 2,
+      'height'        => $height,
+      'width'         => $width + $font_w_bp +4,
+      'bordercolour'  => 'grey70',
+      'absolutey'     => 1,
+      'href'          => $href_sara,
      });
       my $bump_start = int($bglyph->{'x'} * $pix_per_bp);
       $bump_start = 0 if ($bump_start < 0);
@@ -147,30 +147,30 @@ sub _init {
 
     # Normal SNPs
     # we need to get the original allele
-	my $ref_tva = $conseq_type->{_alleles_by_seq}->{$ref_allele};
-	my $ref_pep = $ref_tva->peptide;
-	
-	my $ref_codon = $ref_tva->codon;
-	my $var_codon = $conseq_type->codons;
-	$var_codon =~ s/\//\|/g;
-	
+    my $ref_tva = $conseq_type->{_alleles_by_seq}->{$ref_allele};
+    my $ref_pep = $ref_tva->peptide;
+
+    my $ref_codon = $ref_tva->codon;
+    my $var_codon = $conseq_type->codons;
+    $var_codon =~ s/\//\|/g;
+
     my $aa;
     $aa = "$ref_pep to $var_pep" if defined $ref_pep and defined $var_pep;
-	my $codon = "$ref_codon $var_codon" if defined $ref_codon and defined $var_codon;
+    my $codon = "$ref_codon $var_codon" if defined $ref_codon and defined $var_codon;
 
     # Draw ------------------------------------------------
     my @res = $self->get_text_width( 0, $var_pep, '', 'font'=>$fontname, 'ptsize' => $fontsize );
     my $W = ($res[2]+4)/$pix_per_bp;
 
     my $href = $self->_url({
-      'type'   => 'Transcript',
-      'action'  => 'TranscriptVariation',
-      'v'     => $allele_id,
-      'vf'    => $dbid,
-      'alt_allele' => $allele->allele_string,#$conseq_alleles[0],
-      'aa_change' => $aa,
-      'cov'       => $c,
-	  'codon'     => $codon,
+      'type'        => 'Transcript',
+      'action'      => 'TranscriptVariation',
+      'v'           => $allele_id,
+      'vf'          => $dbid,
+      'alt_allele'  => $allele->allele_string,#$conseq_alleles[0],
+      'aa_change'   => $aa,
+      'cov'         => $c,
+      'codon'       => $codon,
     });
 
     my $tglyph = $self->Text({
