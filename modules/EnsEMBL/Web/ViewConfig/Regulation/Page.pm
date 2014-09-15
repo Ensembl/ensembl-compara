@@ -25,18 +25,18 @@ package EnsEMBL::Web::ViewConfig::Regulation::Page;
 use strict;
 
 use base qw(EnsEMBL::Web::ViewConfig);
-use List::MoreUtils qw(firstidx);
 
 sub reg_extra_tabs {
-  my $self = shift;
-  my $hub  = $self->hub;
+  my ($self, $image_config) = @_;
+  my $hub = $self->hub;
   
   return ([
     'Select cell types',
     $hub->url('Component', {
-      action   => 'Web',
-      function => 'CellTypeSelector/ajax',
-      time     => time,
+      action       => 'Web',
+      function     => 'CellTypeSelector/ajax',
+      image_config => $image_config,
+      time         => time,
       %{$hub->multi_params}
     })],[
     'Select evidence',
