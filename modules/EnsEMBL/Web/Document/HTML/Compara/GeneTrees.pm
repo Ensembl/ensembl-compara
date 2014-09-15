@@ -30,64 +30,7 @@ use EnsEMBL::Web::Document::Table;
 
 use Bio::EnsEMBL::Compara::Utils::SpeciesTree;
 
-use HTML::Entities qw(encode_entities);
-
 use base qw(EnsEMBL::Web::Document::HTML::Compara);
-
-
-#
-# Read the site-wide configuration variables TAXON_LABEL and TAXON_ORDER
-# and sorts all the SpeciesTreeNode objects given in $species
-#
-
-sub order_species_by_clade {
-  my ($self, $species) = @_;
-
-  my $hub           = $self->hub;
-  my $species_defs  = $hub->species_defs;
-  my $species_info  = $hub->get_species_info;
-  my $labels        = $species_defs->TAXON_LABEL; ## sort out labels
-
-  my (@group_order, %label_check);
-  foreach my $taxon (@{$species_defs->TAXON_ORDER || []}) {
-    my $label = $labels->{$taxon} || $taxon;
-    push @group_order, $label unless $label_check{$label}++;
-  }
-
-  my %stn_by_name = ();
-  foreach my $stn (@$species) {
-    $stn_by_name{$stn->genome_db->name} = $stn;
-  };
-
-  ## Sort species into desired groups
-  my %phylo_tree;
-
-  foreach (keys %$species_info) {
-    my $group = $species_info->{$_}->{'group'};
-    my $group_name = $group ? $labels->{$group} || $group : 'no_group';
-    push @{$phylo_tree{$group_name}}, $_;
-  }
-
-  my @final_sets;
-
-  my $favourites    = $hub->get_favourite_species;
-  if (scalar @$favourites) {
-    push @final_sets, ['Favourite species', [map {encode_entities($stn_by_name{lc $_})} @$favourites]];
-  }
-
-  ## Output in taxonomic groups, ordered by common name
-  foreach my $group_name (@group_order) {
-    my $species_list = $phylo_tree{$group_name};
-
-    if ($species_list && ref $species_list eq 'ARRAY' && scalar @$species_list) {
-      my $name_to_use = ($group_name eq 'no_group') ? (scalar(@group_order) > 1 ? 'Other species' : 'All species') : encode_entities($group_name);
-      my @sorted_by_common = sort { $species_info->{$a}->{'common'} cmp $species_info->{$b}->{'common'} } @$species_list;
-      push @final_sets, [$name_to_use, [map {encode_entities($stn_by_name{lc $_})} @sorted_by_common]];
-    }
-  }
-
-  return \@final_sets;
-}
 
 sub add_species_set {
   my ($self, $name, $after_rules, $ss_length, $acc) = @_;
@@ -97,7 +40,6 @@ sub add_species_set {
   }
   unshift @$acc, $name;
 }
-
 
 sub format_gene_tree_stats {
   my ($self, $method) = @_;
@@ -115,7 +57,7 @@ sub format_gene_tree_stats {
   my $species_tree = $species_tree_adaptor->fetch_by_method_link_species_set_id_label($mlss->dbID, 'default');
 
   # Reads the species set that are defined in the database (if any)
-  my $ordered_species = $self->order_species_by_clade($species_tree->root->get_all_leaves);
+  my $ordered_species = $hub->order_species_by_clade($species_tree->root->get_all_leaves);
 
   my $counter_raphael_holders = 0;
 
