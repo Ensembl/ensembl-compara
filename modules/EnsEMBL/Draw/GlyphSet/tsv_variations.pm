@@ -114,7 +114,7 @@ sub _init {
     }
 
     my $allele_id = $allele->variation_name;
-    my $dbid = $allele->variation->dbID;
+    my $dbid = $allele->variation ? $allele->variation->dbID : undef or next;
     my $href_sara = $self->_url({
       'type'   => 'Transcript',
       'action'  => 'TranscriptVariation',
