@@ -49,7 +49,6 @@ foreach my $gene (@$genes) {
   foreach my $this_homology (@$all_homologies) {
     my $description = $this_homology->description;
     next unless ($description =~ /one2one/); # if only one2one wanted
-    my $first_found = 0;
     foreach my $member (@{$this_homology->get_all_GeneMembers}) {
       my $label = $member->display_label || $member->stable_id;
       print $member->genome_db->get_short_name, ",", $label, "\t";
