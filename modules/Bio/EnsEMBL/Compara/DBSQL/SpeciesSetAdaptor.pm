@@ -325,8 +325,11 @@ sub fetch_all_collections_by_genome {
 
 sub update_collection {
     my ($self, $old_ss, $new_genome_dbs) = @_;
+
     my $species_set = Bio::EnsEMBL::Compara::SpeciesSet->new( -genome_dbs => $new_genome_dbs );
     $self->store($species_set);
+    return $old_ss if $old_ss->dbID == $species_set->dbID;
+
     my $sql = 'UPDATE species_set_tag SET species_set_id = ? WHERE species_set_id = ? AND tag = "name"';
     my $sth = $self->prepare($sql);
     $sth->execute($species_set->dbID, $old_ss->dbID);
