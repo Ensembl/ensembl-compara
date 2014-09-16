@@ -1202,7 +1202,7 @@ sub _add_file_format_track {
   my ($desc, $url);
   
   if ($args{'internal'}) {
-    $desc = "Data served from a $args{'format'} file: $args{'description'}";
+    $desc = $args{'description'};
     $url = join '/', $self->hub->species_defs->DATAFILE_BASE_PATH, lc $self->hub->species, $self->hub->species_defs->ASSEMBLY_NAME, $args{'source'}{'dir'}, $args{'source'}{'file'};
     $args{'options'}{'external'} = undef;
   } else {
