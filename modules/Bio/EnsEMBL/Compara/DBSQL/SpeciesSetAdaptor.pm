@@ -330,10 +330,16 @@ sub update_collection {
     $self->store($species_set);
     return $old_ss if $old_ss->dbID == $species_set->dbID;
 
-    my $sql = 'UPDATE species_set_tag SET species_set_id = ? WHERE species_set_id = ? AND tag = "name"';
+    my $sql = 'REPLACE INTO species_set_tag SELECT ?, tag, value FROM species_set_tag WHERE species_set_id = ? AND tag = "name"';
     my $sth = $self->prepare($sql);
     $sth->execute($species_set->dbID, $old_ss->dbID);
     $sth->finish();
+
+    $sql = 'UPDATE species_set_tag SET value = CONCAT("old", value) WHERE species_set_id = ? AND tag = "name"';
+    $sth = $self->prepare($sql);
+    $sth->execute($old_ss->dbID);
+    $sth->finish();
+
     return $species_set;
 }
 
