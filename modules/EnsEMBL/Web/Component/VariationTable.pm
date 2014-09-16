@@ -84,11 +84,11 @@ sub make_table {
   # u = 1unit, where unit is calculated so that total width is 100%
   my $columns = [
     { key => 'ID',       width => '12u', sort => 'html',                                                      help => 'Variant identifier'                                        },
-    { key => 'chr' ,     width => '10u', sort => 'hidden_position', label => 'Chr: bp',                       help => $self->strip_HTML($glossary->{'Chr:bp'})                    },
+    { key => 'chr' ,     width => '10u', sort => 'hidden_position', label => 'Chr: bp',                       help => $self->html_encode($glossary->{'Chr:bp'})                    },
     { key => 'Alleles',  width => '16u', sort => 'string',          label => "Alle\fles",  align => 'center', help => 'Alternative nucleotides'                                   },
-    { key => 'class',    width => '11u', sort => 'string',          label => 'Class',      align => 'center', help => $self->strip_HTML($glossary->{'Class'})                     },
-    { key => 'Source',   width => '8u',  sort => 'string',          label => "Sour\fce",                      help => $self->strip_HTML($glossary->{'Source'})                    },
-    { key => 'status',   width => '9u',  sort => 'string',          label => "Evid\fence", align => 'center', help => $self->strip_HTML($glossary->{'Evidence status (variant)'}) },
+    { key => 'class',    width => '11u', sort => 'string',          label => 'Class',      align => 'center', help => $self->html_encode($glossary->{'Class'})                     },
+    { key => 'Source',   width => '8u',  sort => 'string',          label => "Sour\fce",                      help => $self->html_encode($glossary->{'Source'})                    },
+    { key => 'status',   width => '9u',  sort => 'string',          label => "Evid\fence", align => 'center', help => $self->html_encode($glossary->{'Evidence status (variant)'}) },
     { key => 'clinsig',  width => '6u',  sort => 'string',          label => "Clin\f sig",                    help => 'Clinical significance'                                     },
     { key => 'snptype',  width => '12u', sort => 'position_html',   label => 'Type',                          help => 'Consequence type'                                          }, 
     { key => 'aachange', width => '6u',  sort => 'string',          label => 'AA',         align => 'center', help => 'Resulting amino acid(s)'                                   },
@@ -104,21 +104,21 @@ sub make_table {
   # add SIFT for supported species
   if ($hub->species =~ /bos_taurus|canis_familiaris|danio_rerio|gallus_gallus|mus_musculus|rattus_norvegicus|sus_scrofa/i) {
     push @$columns, (
-      { key => 'sift',     sort => 'position_html', width => '6u', label => "SI\aFT",     align => 'center', help => $self->strip_HTML($glossary->{'SIFT'}) });
+      { key => 'sift',     sort => 'position_html', width => '6u', label => "SI\aFT",     align => 'center', help => $self->html_encode($glossary->{'SIFT'}) });
   }
 
   # add GMAF, SIFT and PolyPhen for human
   if ($hub->species eq 'Homo_sapiens') {
     push @$columns, (
-      { key => 'sift',     sort => 'position_html', width => '6u', label => "SI\aFT",     align => 'center', help => $self->strip_HTML($glossary->{'SIFT'})     },
-      { key => 'polyphen', sort => 'position_html', width => '6u', label => "Poly\fPhen", align => 'center', help => $self->strip_HTML($glossary->{'PolyPhen'}) },
+      { key => 'sift',     sort => 'position_html', width => '6u', label => "SI\aFT",     align => 'center', help => $self->html_encode($glossary->{'SIFT'})     },
+      { key => 'polyphen', sort => 'position_html', width => '6u', label => "Poly\fPhen", align => 'center', help => $self->html_encode($glossary->{'PolyPhen'}) },
     );
 
-    splice @$columns, 3, 0, { key => 'gmaf', sort => 'numeric', width => '6u', label => "Glo\fbal MAF", align => 'center', help => $self->strip_HTML($glossary->{'Global MAF'}) };
+    splice @$columns, 3, 0, { key => 'gmaf', sort => 'numeric', width => '6u', label => "Glo\fbal MAF", align => 'center', help => $self->html_encode($glossary->{'Global MAF'}) };
   }
  
   if ($hub->type ne 'Transcript') {
-    push @$columns, { key => 'Transcript', sort => 'string', width => '11u', help => $self->strip_HTML($glossary->{'Transcript'}) };
+    push @$columns, { key => 'Transcript', sort => 'string', width => '11u', help => $self->html_encode($glossary->{'Transcript'}) };
   }
 
   return $self->new_table($columns, $table_rows, { data_table => 1, sorting => [ 'chr asc' ], exportable => 1, id => "${consequence_type}_table", class => 'cellwrap_inside fast_fixed_table' });
