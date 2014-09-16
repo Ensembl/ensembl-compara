@@ -103,17 +103,6 @@ sub APPRIS_CODES {
   };
 }
 
-sub HOMOLOGY_TYPES {
-### Lookup for compara acronyms
-  return {
-    'BRH'  => 'Best Reciprocal Hit',
-    'UBRH' => 'Unique Best Reciprocal Hit',
-    'MBRH' => 'Multiple Best Reciprocal Hit',
-    'RHS'  => 'Reciprocal Hit based on Synteny around BRH',
-    'DWGA' => 'Derived from Whole Genome Alignment'
-  };
-}
-
 sub GENE_JOIN_TYPES {
 ### Another compara lookup, this time for orthologues,
 ### paralogues, etc
