@@ -387,7 +387,7 @@ sub process {
     
     if ($col->{'help'}) {
       delete $col->{'title'};
-      $label = qq(<span class="ht _ht" title="$col->{'help'}">$label</span>);
+      $label = qq(<span class="ht _ht"><span class="_ht_tip">$col->{'help'}</span>$label</span>);
     }
     
     push @{$head[0]}, sprintf '<th%s>%s</th>', join('', map { $col->{$_} ? qq( $_="$col->{$_}") : () } qw(id class title style colspan rowspan)), $label;
