@@ -35,7 +35,16 @@ sub _check_build_type {
 
 sub _init {
   my $self = shift;
-  
+
+  ## Hide if corresponding tracks are all off
+  my $node = $self->{'config'}{'_tree'}->get_node('regulatory_features');
+  return unless $node;
+  my $show = 0;
+  foreach ($node->descendants) {
+    $show++ if ($_->get('display') && $_->get('display') ne 'off');
+  }
+  return unless $show; 
+ 
   my %features = %{$self->my_config('colours')};
   # Let them accumulate in structure if accumulating and not last
   my $Config         = $self->{'config'};
