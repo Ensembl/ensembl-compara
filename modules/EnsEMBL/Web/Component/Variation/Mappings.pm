@@ -298,7 +298,7 @@ sub content {
             my $row = {
               rf       => sprintf('<a href="%s">%s</a>', $url, $rfv->regulatory_feature->stable_id),
               cell_type => $rf->cell_type->name,
-              ftype    => $rf->feature_type->name,
+              ftype    => $rf->feature_type->so_name,
               allele   => $r_allele,
               type     => $type || '-',
             };
@@ -341,7 +341,7 @@ sub content {
         
         my $row = {
           rf       => sprintf('%s<br/><span class="small" style="white-space:nowrap;"><a href="%s">%s</a></span>', $mf->binding_matrix->name, $url, $rf->stable_id),
-          ftype    => 'Motif feature',
+          ftype    => $mfva->feature->feature_type->so_name,#'Motif feature',
           allele   => $m_allele,
           type     => $type,
           matrix   => $matrix_url,
