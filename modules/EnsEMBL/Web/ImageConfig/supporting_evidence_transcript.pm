@@ -22,6 +22,11 @@ use strict;
 
 use base qw(EnsEMBL::Web::ImageConfig);
 
+sub cache_key { # image config may vary according to db type
+  my $self = shift;
+  return join '::', $self->SUPER::cache_key(@_), $self->hub->get_db;
+}
+
 sub init {
   my $self = shift;
   
