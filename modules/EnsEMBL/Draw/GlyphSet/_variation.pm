@@ -74,7 +74,7 @@ sub features {
   } else {
     my $features_list = $self->fetch_features;
     if (!scalar(@$features_list)) {
-      my $track_name = $self->my_config('caption'); 
+      my $track_name = $self->my_config('name'); 
       $self->errorTrack("No $track_name data for this region");
       return [];
     }

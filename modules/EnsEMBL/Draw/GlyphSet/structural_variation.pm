@@ -167,7 +167,7 @@ sub features {
     return $features_list;
   }
   else {
-    my $track_name = $self->my_config('caption');
+    my $track_name = $self->my_config('name');
     $self->errorTrack("No $track_name data for this region");
     return [];
   }
