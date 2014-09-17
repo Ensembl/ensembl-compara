@@ -55,11 +55,13 @@ sub content {
     label => $hub->param('zoom'),
     order => 1,
   });
+  warn ">>> ZOOMING HERE with action ".$self->hub->action;
   $self->add_entry({
     type  => 'Zoom',
     label => "zoom here",
     link => $self->hub->url({
       r => $hub->param('zoom_r'),
+      action => $hub->param('parent_action'),
     }),
     order => 2,
   });
