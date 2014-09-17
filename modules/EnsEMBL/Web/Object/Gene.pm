@@ -1348,6 +1348,7 @@ sub get_predecessors {
   my $self = shift;
   my $archive_adaptor = $self->database('core')->get_ArchiveStableIdAdaptor;
   my $archive = $archive_adaptor->fetch_by_stable_id($self->stable_id, 'Gene');
+  return [] unless $archive;
   my $predecessors = $archive_adaptor->fetch_predecessor_history($archive);
   return $predecessors;
 }
