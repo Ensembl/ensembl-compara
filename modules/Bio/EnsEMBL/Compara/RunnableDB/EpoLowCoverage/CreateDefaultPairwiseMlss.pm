@@ -34,7 +34,7 @@ Bio::EnsEMBL::Compara::RunnableDB::CreateDefaultPairwiseMlss
 
 Create a list of method_link_species_set ids for the pairwise alignments of the 
 low coverage genomes with the reference species in the pairwise_default_location
- database (usually the previous release). Stores the resulting list in the meta table
+ database (usually the previous release). Stores the resulting list in the pipeline_wide_parameters table
 
 =cut
 
@@ -137,8 +137,8 @@ sub create_default_mlss {
     $default_mlss .= ")";
 
     #Store in meta table
-    $self->dataflow_output_id({'meta_key' => 'pairwise_default_mlss',
-			       'meta_value' => $default_mlss}, 3);
+    $self->dataflow_output_id({'param_name' => 'pairwise_default_mlss',
+			       'param_value' => $default_mlss}, 3);
 }
 
 1;
