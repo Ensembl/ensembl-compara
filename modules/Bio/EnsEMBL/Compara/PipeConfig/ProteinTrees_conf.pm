@@ -1229,7 +1229,7 @@ sub pipeline_analyses {
             },
             -flow_into  => {
                 2  => [ 'quick_tree_break' ],
-                3  => [ 'tree_entry_point' ],
+                3  => [ 'split_genes' ],
             },
             -meadow_type    => 'LOCAL',
         },
@@ -1337,8 +1337,8 @@ sub pipeline_analyses {
             -rc_name        => '500Mb_job',
             -batch_size     => 20,
             -flow_into      => {
-                1   => $self->o('use_raxml') ? 'filter_decision' : 'treebest',
-                999 => $self->o('use_raxml') ? 'treebest' : 'filter_decision',
+                '1->A'   => [ 'tree_entry_point' ],
+                'A->1'   => [ 'hc_alignment_post_tree' ],
                 -1  => 'split_genes_himem',
             },
         },
@@ -1348,8 +1348,8 @@ sub pipeline_analyses {
             -hive_capacity  => $self->o('split_genes_capacity'),
             -rc_name        => '4Gb_job',
             -flow_into      => {
-                1   => $self->o('use_raxml') ? 'filter_decision' : 'treebest',
-                999 => $self->o('use_raxml') ? 'treebest' : 'filter_decision',
+                '1->A'   => [ 'tree_entry_point' ],
+                'A->1'   => [ 'hc_alignment_post_tree' ],
             },
         },
 
@@ -1357,10 +1357,13 @@ sub pipeline_analyses {
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
             -meadow_type    => 'LOCAL',
             -flow_into  => {
-                '1->A'   => [ 'split_genes' ],
-                'A->1'   => [ 'hc_alignment_post_tree' ],
+                sprintf('%d%s', $self->o('use_raxml') ? 1 : 999, $self->o('use_notung') ? '->A' : '') => [ 'filter_decision' ],
+                sprintf('%d%s', $self->o('use_raxml') ? 999 : 1, $self->o('use_notung') ? '->A' : '') => [ 'treebest' ],
+                ($self->o('use_notung') ? 'A->1' : 998) => [ 'notung' ],
             },
         },
+
+# ---------------------------------------------[alignment filtering]-------------------------------------------------------------
 
         {   -logic_name => 'filter_decision',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::GeneTreeConditionalDataFlow',
@@ -1432,6 +1435,8 @@ sub pipeline_analyses {
             -flow_into      => [ 'prottest' ],
         },
 
+# ---------------------------------------------[model test]-------------------------------------------------------------
+
         {   -logic_name => 'prottest',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::ProtTest',
             -parameters => {
@@ -1461,6 +1466,8 @@ sub pipeline_analyses {
             -flow_into  => [ 'raxml_himem' ],
         },
 
+# ---------------------------------------------[tree building with treebest]-------------------------------------------------------------
+
         {   -logic_name => 'treebest',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::NJTREE_PHYML',
             -parameters => {
@@ -1475,7 +1482,7 @@ sub pipeline_analyses {
             -hive_capacity        => $self->o('treebest_capacity'),
             -rc_name    => '4Gb_job',
             -flow_into  => {
-                $self->o('use_raxml_epa_on_treebest') ? 1 : 999 => [ 'raxml_epa_longbranches' ],
+                ($self->o('use_raxml_epa_on_treebest') ? 1 : 999) => [ 'raxml_epa_longbranches' ],
             }
         },
 
@@ -1490,7 +1497,6 @@ sub pipeline_analyses {
             -hive_capacity        => $self->o('raxml_capacity'),
             -rc_name    => '4Gb_job',
             -flow_into  => {
-                $self->o('use_notung') ? 1 : 999 => [ 'notung' ],
                 2 => [ 'promote_treebest_tree' ],
                 4 => [ 'raxml_bl_unfiltered' ],
                 -1 => [ 'raxml_epa_longbranches_himem' ],
@@ -1508,11 +1514,6 @@ sub pipeline_analyses {
             },
             -hive_capacity        => $self->o('raxml_capacity'),
             -rc_name    => '16Gb_job',
-            -flow_into  => {
-                $self->o('use_notung') ? 1 : 999 => [ 'notung' ],
-                2 => [ 'promote_treebest_tree' ],
-                4 => [ 'raxml_bl_unfiltered' ],
-            },
         },
 
         {   -logic_name => 'raxml_bl_unfiltered',
@@ -1527,7 +1528,6 @@ sub pipeline_analyses {
             -hive_capacity        => $self->o('raxml_capacity'),
             -rc_name => '4Gb_job',
             -flow_into  => {
-                $self->o('use_notung') ? 1 : 999 => [ 'notung' ],
                 2 => [ 'promote_treebest_tree' ],
                 -1 => [ 'raxml_bl_unfiltered_himem' ],
              },
@@ -1544,10 +1544,6 @@ sub pipeline_analyses {
             },
             -hive_capacity        => $self->o('raxml_capacity'),
             -rc_name => '16Gb_job',
-            -flow_into  => {
-                $self->o('use_notung') ? 1 : 999 => [ 'notung' ],
-                2 => [ 'promote_treebest_tree' ],
-             },
         },
 
         {   -logic_name => 'promote_treebest_tree',
@@ -1555,12 +1551,13 @@ sub pipeline_analyses {
             -parameters => {
                 'treebest_exe'          => $self->o('treebest_exe'),
                 'input_clusterset_id'   => 'treebest',
-                'output_clusterset_id'  => 'default',
+                'output_clusterset_id'  => $self->o('use_notung') ? 'raxml_bl' : 'default',
             },
             -hive_capacity        => $self->o('raxml_capacity'),
             -rc_name => '8Gb_job',
         },
 
+# ---------------------------------------------[tree building with raxml]-------------------------------------------------------------
 
         {   -logic_name => 'raxml',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::RAxML',
@@ -1574,7 +1571,6 @@ sub pipeline_analyses {
             -flow_into  => {
                 -1 => [ 'raxml_himem' ],
                 2 =>  [ 'treebest' ],     # This event is triggered if there are 2 or 3 genes in the tree
-                $self->o('use_notung') ? 1 : 999 => [ 'notung' ],
             }
         },
 
@@ -1587,8 +1583,10 @@ sub pipeline_analyses {
             },
             -hive_capacity        => $self->o('raxml_capacity'),
             -rc_name    => '4Gb_job',
-            -flow_into  => $self->o('use_notung') ? [ 'notung' ] : [],
         },
+
+
+# ---------------------------------------------[tree reconciliation / rearrangements]-------------------------------------------------------------
 
         {   -logic_name => 'notung',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::Notung',
@@ -1650,6 +1648,8 @@ sub pipeline_analyses {
             -hive_capacity        => $self->o('raxml_capacity'),
             -rc_name    => '4Gb_job',
         },
+
+# ---------------------------------------------[orthologies]-------------------------------------------------------------
 
         {   -logic_name         => 'hc_alignment_post_tree',
             -module             => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::SqlHealthChecks',
