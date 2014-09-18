@@ -301,6 +301,14 @@ sub parse_newick_into_tree {
   print  "Tree loaded from file:\n";
   $newroot->print_tree(20) if($self->debug > 1);
 
+  # get rid of the taxon_id needed by njtree -- name tag
+  my %new_leaves = ();
+  foreach my $new_leaf (@{$newroot->get_all_leaves}) {
+    my $njtree_phyml_name = $new_leaf->get_tagvalue('name');
+    $njtree_phyml_name =~ /(\d+)\_\d+/;
+    $new_leaves{$1} = $new_leaf;
+  }
+
   my $split_genes = $self->param('split_genes');
 
   if (defined $split_genes) {
@@ -310,7 +318,10 @@ sub parse_newick_into_tree {
         print  "$name is split_gene of $other_name\n" if $self->debug;
         my $split_gene_leaf = new Bio::EnsEMBL::Compara::GeneTreeNode;
         $split_gene_leaf->name($name);       # This is needed for the for loop below
-        my $othernode = $newroot->find_node_by_name($other_name);
+        $other_name =~ /(\d+)\_\d+/;
+        my $other_member_id = $1;
+        my $othernode = $new_leaves{$other_member_id};
+        die sprintf("Couldn't find the node '%s' in the tree (to create a split gene of '%s').\nNewick string is:\n%s\n", $other_name, $name, $newick) unless $othernode;
         print  "$split_gene_leaf is split_gene of $othernode\n" if $self->debug;
         my $new_internal_node = new Bio::EnsEMBL::Compara::GeneTreeNode;
         $nsplits++;
