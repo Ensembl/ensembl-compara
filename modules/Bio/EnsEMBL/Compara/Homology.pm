@@ -76,6 +76,44 @@ use Bio::EnsEMBL::Utils::Exception qw(throw warning deprecate);
 use base ('Bio::EnsEMBL::Compara::AlignedMemberSet');
 
 
+# These are the general-purpose full-text descriptions of the homology types
+our %PLAIN_TEXT_DESCRIPTIONS = (
+
+      ortholog_one2one          => '1-to-1 orthologues',
+      ortholog_one2many         => '1-to-many orthologues',
+      ortholog_many2many        => 'many-to-many orthologues',
+
+      homoeolog_one2one         => '1-to-1 homoeologues',
+      homoeolog_one2many        => '1-to-many homoeologues',
+      homoeolog_many2many       => 'many-to-many homoeologues',
+
+      within_species_paralog    => 'Paralogues (same species)',
+      other_paralog             => 'Ancient paralogues (same species)',
+      between_species_paralog   => 'Paralogues (different species)',
+
+      gene_split                => 'Split genes',
+
+      alt_allele                => 'Alternative alleles'
+);
+
+
+# These are context-aware descriptions used by the web-code
+our %PLAIN_TEXT_WEB_DESCRIPTIONS = (
+
+      %PLAIN_TEXT_DESCRIPTIONS,
+
+      ortholog_one2one          => '1-to-1',
+      ortholog_one2many         => '1-to-many',
+      ortholog_many2many        => 'many-to-many',
+
+      homoeolog_one2one         => '1-to-1',
+      homoeolog_one2many        => '1-to-many',
+      homoeolog_many2many       => 'many-to-many',
+
+);
+
+
+
 =head2 is_tree_compliant
 
   Arg [1]    : float $is_tree_compliant (optional)
