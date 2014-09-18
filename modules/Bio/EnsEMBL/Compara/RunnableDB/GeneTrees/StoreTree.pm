@@ -281,14 +281,22 @@ sub parse_newick_into_tree {
   return undef if $newick =~ /^_null_/;
   #cleanup old tree structure- 
   #  flatten and reduce to only GeneTreeMember leaves
-  my %leaves;
+  my %old_leaves;
   foreach my $node (@{$tree->get_all_Members}) {
-    $leaves{$node->seq_member_id} = $node;
+    $old_leaves{$node->seq_member_id} = $node;
   }
 
   my $newroot = Bio::EnsEMBL::Compara::Graph::NewickParser::parse_newick_into_tree($newick, "Bio::EnsEMBL::Compara::GeneTreeNode");
   print  "Tree loaded from file:\n";
   $newroot->print_tree(20) if($self->debug > 1);
+
+  # get rid of the taxon_id needed by njtree -- name tag
+  my %new_leaves = ();
+  foreach my $new_leaf (@{$newroot->get_all_leaves}) {
+    my $njtree_phyml_name = $new_leaf->get_tagvalue('name');
+    $njtree_phyml_name =~ /(\d+)\_\d+/;
+    $new_leaves{$1} = $new_leaf;
+  }
 
   my $split_genes = $self->param('split_genes');
 
@@ -297,18 +305,21 @@ sub parse_newick_into_tree {
     my $nsplits = 0;
     while ( my ($name, $other_name) = each(%{$split_genes})) {
         print  "$name is split_gene of $other_name\n" if $self->debug;
-        my $node = new Bio::EnsEMBL::Compara::GeneTreeNode;
-        $node->name($name);
-        my $othernode = $newroot->find_node_by_name($other_name);
-        print  "$node is split_gene of $othernode\n" if $self->debug;
-        my $newnode = new Bio::EnsEMBL::Compara::GeneTreeNode;
+        my $split_gene_leaf = new Bio::EnsEMBL::Compara::GeneTreeNode;
+        $split_gene_leaf->name($name);       # This is needed for the for loop below
+        $other_name =~ /(\d+)\_\d+/;
+        my $other_member_id = $1;
+        my $othernode = $new_leaves{$other_member_id};
+        die sprintf("Couldn't find the node '%s' in the tree (to create a split gene of '%s').\nNewick string is:\n%s\n", $other_name, $name, $newick) unless $othernode;
+        print  "$split_gene_leaf is split_gene of $othernode\n" if $self->debug;
+        my $new_internal_node = new Bio::EnsEMBL::Compara::GeneTreeNode;
         $nsplits++;
-        $othernode->parent->add_child($newnode);
-        $newnode->add_child($othernode);
-        $newnode->add_child($node);
-        $newnode->add_tag('gene_split', 1);
-        $newnode->add_tag('S', $othernode->get_tagvalue('S'));
-        $newnode->print_tree(10) if $self->debug;
+        $othernode->parent->add_child($new_internal_node);
+        $new_internal_node->add_child($othernode);
+        $new_internal_node->add_child($split_gene_leaf);
+        $new_internal_node->add_tag('gene_split', 1);
+        $new_internal_node->add_tag('S', $othernode->get_tagvalue('S'));
+        $new_internal_node->print_tree(10) if $self->debug;
     }
   }
   print  "Tree after split_genes insertions:\n";
@@ -319,7 +330,7 @@ sub parse_newick_into_tree {
     my $njtree_phyml_name = $leaf->get_tagvalue('name');
     $njtree_phyml_name =~ /(\d+)\_\d+/;
     my $seq_member_id = $1;
-    my $old_leaf = $leaves{$seq_member_id};
+    my $old_leaf = $old_leaves{$seq_member_id};
     if (not $old_leaf) {
       $leaf->print_node;
       die "unable to find seq_member '$seq_member_id' (in '$njtree_phyml_name', from newick '$newick')";

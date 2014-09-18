@@ -122,7 +122,12 @@ sub default_options {
         'blast_bin_dir'             => '/nfs/panda/ensemblgenomes/external/ncbi-blast-2+/bin/',
         'pantherScore_path'         => '/nfs/production/xfam/treefam/software/pantherScore1.03/',
         'trimal_exe'                => '/nfs/production/xfam/treefam/software/trimal/source/trimal',
+        'noisy_exe'                 => '/nfs/production/xfam/treefam/software/Noisy-1.5.12/noisy',
         'raxml_exe'                 => '/nfs/production/xfam/treefam/software/RAxML/raxmlHPC-SSE3',
+        'raxml_pthreads_exe'        => '/nfs/production/xfam/treefam/software/RAxML/raxmlHPC-PTHREADS-SSE3',
+        'examl_exe_avx'             => '/nfs/production/xfam/treefam/software/ExaML/examl',
+        'examl_exe_sse3'            => '/nfs/production/xfam/treefam/software/ExaML/examl',
+        'parse_examl_exe'           => '/nfs/production/xfam/treefam/software/ExaML/parse-examl',
         'prottest_jar'              => '/nfs/production/xfam/treefam/software/ProtTest/prottest-3.4-20140123/prottest-3.4.jar',
 
     # HMM specific parameters (set to 0 or undef if not in use)
@@ -145,6 +150,7 @@ sub default_options {
         'prottest_capacity'         => 200,
         'treebest_capacity'         => 200,
         'raxml_capacity'            => 200,
+        'examl_capacity'            => 400,
         'notung_capacity'           => 100,
         'ortho_tree_capacity'       => 200,
         'ortho_tree_annot_capacity' => 300,
@@ -284,15 +290,17 @@ sub resource_classes {
          '1Gb_job'      => {'LSF' => '-q production-rh6 -M1000  -R"select[mem>1000]  rusage[mem=1000]"' },
          '2Gb_job'      => {'LSF' => '-q production-rh6 -M2000  -R"select[mem>2000]  rusage[mem=2000]"' },
          '4Gb_job'      => {'LSF' => '-q production-rh6 -M4000  -R"select[mem>4000]  rusage[mem=4000]"' },
-         '4Gb_16c_job'  => {'LSF' => '-q production-rh6 -M4000  -R"select[mem>4000]  rusage[mem=4000]" -n 16' },
          '8Gb_job'      => {'LSF' => '-q production-rh6 -M8000  -R"select[mem>8000]  rusage[mem=8000]"' },
          '16Gb_job'     => {'LSF' => '-q production-rh6 -M16000 -R"select[mem>16000] rusage[mem=16000]"' },
-         '16Gb_16c_job' => {'LSF' => '-q production-rh6 -M16000 -R"select[mem>16000] rusage[mem=16000]" -n 16' },
          '32Gb_job'     => {'LSF' => '-q production-rh6 -M32000 -R"select[mem>32000] rusage[mem=32000]"' },
          '64Gb_job'     => {'LSF' => '-q production-rh6 -M64000 -R"select[mem>64000] rusage[mem=64000]"' },
 
-         'urgent_hcluster'      => {'LSF' => '-q production-rh6 -M32000 -R"select[mem>32000] rusage[mem=32000]"' },
-    };
+         '16Gb_16c_job' => {'LSF' => '-q production-rh6 -n 16 -C0 -M16000 -R"select[mem>16000] rusage[mem=16000]"' },
+         '64Gb_16c_job' => {'LSF' => '-q production-rh6 -n 16 -C0 -M64000 -R"select[mem>64000] rusage[mem=64000]"' },
+
+         '4Gb_64c_mpi'  => {'LSF' => '-q mpi -n 64 -a openmpi -M4000  -R"select[mem>4000]  rusage[mem=4000]  same[model] span[ptile=4]"' },
+         '16Gb_64c_mpi' => {'LSF' => '-q mpi -n 64 -a openmpi -M16000 -R"select[mem>16000] rusage[mem=16000] same[model] span[ptile=4]"' },
+  };
 }
 
 
@@ -309,10 +317,6 @@ sub tweak_analyses {
         'split_genes'               => '2Gb_job',
         'split_genes_himem'         => '8Gb_job',
         'trimal'                    => '4Gb_job',
-        'prottest'                  => '4Gb_16c_job',
-        'prottest_himem'            => '16Gb_16c_job',
-        'raxml'                     => '1Gb_job',
-        'raxml_himem'               => '8Gb_job',
         'notung'                    => '4Gb_job',
         'notung_himem'              => '32Gb_job',
         'ortho_tree'                => '2Gb_job',
