@@ -90,6 +90,7 @@ sub default_options {
         'fasta_dir'             => $self->o('work_dir') . '/blast_db',  # affects 'dump_subset_create_blastdb' and 'blastp'
         'cluster_dir'           => $self->o('work_dir') . '/cluster',
         'dump_dir'              => $self->o('work_dir') . '/dumps',
+        'examl_dir'             => $self->o('work_dir') . '/examl',
 
     # "Member" parameters:
         'allow_ambiguity_codes'     => 0,
@@ -114,6 +115,7 @@ sub default_options {
         'raxml_threshold_n_genes' => 500,
         'raxml_threshold_aln_len' => 2500,
         'raxml_cores'             => 16,
+        'examl_cores'             => 64,
 
     # alignment filtering options
         'threshold_n_genes'       => 20,
@@ -181,6 +183,7 @@ sub default_options {
         #'prottest_capacity'         => 400,
         #'treebest_capacity'         => 400,
         #'raxml_capacity'            => 400,
+        #'examl_capacity'            => 400,
         #'notung_capacity'           => 400,
         #'ortho_tree_capacity'       => 200,
         #'ortho_tree_annot_capacity' => 300,
@@ -251,15 +254,19 @@ sub resource_classes {
          '1Gb_job'      => {'LSF' => '-C0 -M1000  -R"select[mem>1000]  rusage[mem=1000]"' },
          '2Gb_job'      => {'LSF' => '-C0 -M2000  -R"select[mem>2000]  rusage[mem=2000]"' },
          '4Gb_job'      => {'LSF' => '-C0 -M4000  -R"select[mem>4000]  rusage[mem=4000]"' },
-         '4Gb_8c_job'   => {'LSF' => '-C0 -M4000  -R"select[mem>4000]  rusage[mem=4000]"  -n 8' },
          '8Gb_job'      => {'LSF' => '-C0 -M8000  -R"select[mem>8000]  rusage[mem=8000]"' },
-         '8Gb_8c_job'   => {'LSF' => '-C0 -M8000  -R"select[mem>8000]  rusage[mem=8000]"  -n 8' },
          '16Gb_job'     => {'LSF' => '-C0 -M16000 -R"select[mem>16000] rusage[mem=16000]"' },
-         '16Gb_long_job'=> {'LSF' => '-C0 -M16000 -R"select[mem>16000] rusage[mem=16000]" -q long' },
+         '24Gb_job'     => {'LSF' => '-C0 -M24000 -R"select[mem>24000] rusage[mem=24000]"' },
          '32Gb_job'     => {'LSF' => '-C0 -M32000 -R"select[mem>32000] rusage[mem=32000]"' },
+         '48Gb_job'     => {'LSF' => '-C0 -M48000 -R"select[mem>48000] rusage[mem=48000]"' },
          '64Gb_job'     => {'LSF' => '-C0 -M64000 -R"select[mem>64000] rusage[mem=64000]"' },
 
-         'urgent_hcluster'      => {'LSF' => '-C0 -M32000 -R"select[mem>32000] rusage[mem=32000]"' },
+         '16Gb_16c_job' => {'LSF' => '-n 16 -C0 -M16000 -R"select[mem>16000] rusage[mem=16000]"' },
+         '64Gb_16c_job' => {'LSF' => '-n 16 -C0 -M64000 -R"select[mem>64000] rusage[mem=64000]"' },
+
+         '4Gb_64c_mpi'  => {'LSF' => '-q mpi -n 64 -a openmpi -M4000  -R"select[mem>4000]  rusage[mem=4000]  same[model] span[ptile=4]"' },
+         '16Gb_64c_mpi' => {'LSF' => '-q mpi -n 64 -a openmpi -M16000 -R"select[mem>16000] rusage[mem=16000] same[model] span[ptile=4]"' },
+
     };
 }
 
@@ -291,6 +298,7 @@ sub pipeline_create_commands {
 
         'mkdir -p '.$self->o('cluster_dir'),
         'mkdir -p '.$self->o('dump_dir'),
+        'mkdir -p '.$self->o('examl_dir'),
         'mkdir -p '.$self->o('fasta_dir'),
 
             # perform "lfs setstripe" only if lfs is runnable and the directory is on lustre:
@@ -310,6 +318,7 @@ sub pipeline_wide_parameters {  # these parameter values are visible to all anal
 
         'cluster_dir'   => $self->o('cluster_dir'),
         'fasta_dir'     => $self->o('fasta_dir'),
+        'examl_dir'     => $self->o('examl_dir'),
         'dump_dir'      => $self->o('dump_dir'),
 
         'reuse_level'   => $self->o('reuse_level'),
@@ -1090,7 +1099,7 @@ sub pipeline_analyses {
             -flow_into => {
                 1 => [ 'hcluster_parse_output' ],
             },
-            -rc_name => 'urgent_hcluster',
+            -rc_name => '32Gb_job',
         },
 
         {   -logic_name => 'hcluster_parse_output',
@@ -1446,10 +1455,10 @@ sub pipeline_analyses {
                 'n_cores'               => 8,
             },
             -hive_capacity        => $self->o('prottest_capacity'),
-            -rc_name    => '4Gb_8c_job',
+            -rc_name    => '16Gb_16c_job',
             -flow_into  => {
                 -1 => [ 'prottest_himem' ],
-                1 => [ 'raxml' ],
+                1 => [ 'raxml_n_cores_decision' ],
             }
         },
 
@@ -1462,8 +1471,8 @@ sub pipeline_analyses {
                 'n_cores'               => 8,
             },
             -hive_capacity        => $self->o('prottest_capacity'),
-            -rc_name    => '8Gb_8c_job',
-            -flow_into  => [ 'raxml_himem' ],
+            -rc_name    => '64Gb_16c_job',
+            -flow_into  => [ 'examl_chooser' ],
         },
 
 # ---------------------------------------------[tree building with treebest]-------------------------------------------------------------
@@ -1559,6 +1568,69 @@ sub pipeline_analyses {
 
 # ---------------------------------------------[tree building with raxml]-------------------------------------------------------------
 
+        {   -logic_name => 'raxml_n_cores_decision',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::GeneTreeConditionalDataFlow',
+            -parameters => {
+                'condition'             => '(#tree_gene_count# >= #raxml_threshold_n_genes#) && (#tree_aln_length# >= #raxml_threshold_aln_len#)',
+                'raxml_threshold_n_genes'      => $self->o('raxml_threshold_n_genes'),
+                'raxml_threshold_aln_len'      => $self->o('raxml_threshold_aln_len'),
+            },
+            -hive_capacity  => 100,
+            -rc_name 		=> '1Gb_job',
+            -flow_into  => {
+                2 => [ 'examl_chooser' ],
+                3 => [ 'raxml' ],
+            },
+        },
+
+        {   -logic_name => 'examl_chooser',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::GeneTreeConditionalDataFlow',
+            -parameters => {
+                'condition'             => '(#tree_gene_count# >= #threshold_n_genes_large#) || (#tree_aln_length# >= #threshold_aln_len_large#)',
+                'threshold_n_genes_large'      => $self->o('threshold_n_genes_large'),
+                'threshold_aln_len_large'      => $self->o('threshold_aln_len_large'),
+            },
+            -hive_capacity  => 100,
+            -rc_name 		=> '1Gb_job',
+            -flow_into  => {
+                2 => [ 'examl' ],
+                3 => [ 'raxml_multi_core' ],
+            },
+        },
+
+        {   -logic_name => 'examl',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::ExaML',
+            -parameters => {
+                'raxml_exe'             => $self->o('raxml_exe'),
+                'examl_exe_sse3'        => $self->o('examl_exe_sse3'),
+                'examl_exe_avx'         => $self->o('examl_exe_avx'),
+                'parse_examl_exe'       => $self->o('parse_examl_exe'),
+                'examl_cores'           => $self->o('examl_cores'),
+                'treebest_exe'          => $self->o('treebest_exe'),
+            },
+            -hive_capacity        => $self->o('examl_capacity'),
+            -rc_name => '4Gb_64c_mpi',
+            -max_retry_count => 0,
+            -flow_into => {
+               -1 => [ 'examl_himem' ],  # MEMLIMIT
+            }
+        },
+
+        {   -logic_name => 'examl_himem',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::ExaML',
+            -parameters => {
+                'raxml_exe'             => $self->o('raxml_exe'),
+                'examl_exe_sse3'        => $self->o('examl_exe_sse3'),
+                'examl_exe_avx'         => $self->o('examl_exe_avx'),
+                'parse_examl_exe'       => $self->o('parse_examl_exe'),
+                'examl_cores'           => $self->o('examl_cores'),
+                'treebest_exe'          => $self->o('treebest_exe'),
+            },
+            -hive_capacity        => $self->o('examl_capacity'),
+            -rc_name => '16Gb_64c_mpi',
+            -max_retry_count => 0,
+        },
+
         {   -logic_name => 'raxml',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::RAxML',
             -parameters => {
@@ -1569,20 +1641,34 @@ sub pipeline_analyses {
             -hive_capacity        => $self->o('raxml_capacity'),
             -rc_name    => '1Gb_job',
             -flow_into  => {
-                -1 => [ 'raxml_himem' ],
+                -1 => [ 'raxml_multi_core_himem' ],
                 2 =>  [ 'treebest' ],     # This event is triggered if there are 2 or 3 genes in the tree
             }
         },
 
-        {   -logic_name => 'raxml_himem',
+        {   -logic_name => 'raxml_multi_core',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::RAxML',
             -parameters => {
-                'raxml_exe'                 => $self->o('raxml_exe'),
+                'raxml_exe'                 => $self->o('raxml_pthreads_exe'),
                 'treebest_exe'              => $self->o('treebest_exe'),
-                'output_clusterset_id'      => $self->o('use_notung') ? 'raxml' : 'default',
+                'extra_raxml_args'          => '-T #raxml_cores#',
             },
             -hive_capacity        => $self->o('raxml_capacity'),
-            -rc_name    => '4Gb_job',
+            -rc_name 		=> '16Gb_16c_job',
+            -flow_into  => {
+                -1 => [ 'raxml_multi_core_himem' ],
+            }
+        },
+
+        {   -logic_name => 'raxml_multi_core_himem',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::RAxML',
+            -parameters => {
+                'raxml_exe'                 => $self->o('raxml_pthreads_exe'),
+                'treebest_exe'              => $self->o('treebest_exe'),
+                'extra_raxml_args'          => '-T #raxml_cores#',
+            },
+            -hive_capacity        => $self->o('raxml_capacity'),
+            -rc_name 		=> '64Gb_16c_job',
         },
 
 

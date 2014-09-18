@@ -132,6 +132,11 @@ sub default_options {
         notung_jar    => '/nfs/production/xfam/treefam/software/Notung/Notung-2.6/Notung-2.6.jar',
         prottest_jar  => '/nfs/production/xfam/treefam/software/ProtTest/prottest-3.4-20140123/prottest-3.4.jar',
         raxml_exe     => '/nfs/production/xfam/treefam/software/RAxML/raxmlHPC-SSE3',
+        raxml_pthreads_exe => '/nfs/production/xfam/treefam/software/RAxML/raxmlHPC-PTHREADS-SSE3',
+        examl_exe_avx => '/nfs/production/xfam/treefam/software/ExaML/examl',
+        examl_exe_sse3     => '/nfs/production/xfam/treefam/software/ExaML/examl',
+        parse_examl_exe    => '/nfs/production/xfam/treefam/software/ExaML/parse-examl',
+        prottest_jar  => '/nfs/production/xfam/treefam/software/ProtTest/prottest-3.4-20140123/prottest-3.4.jar',
         trimal_exe    => '/nfs/production/xfam/treefam/software/trimal/source/trimal',
 
     # HMM specific parameters (set to 0 or undef if not in use)
@@ -153,6 +158,7 @@ sub default_options {
         'prottest_capacity'         => 200,
         'treebest_capacity'         => 200,
         'raxml_capacity'            => 200,
+        'examl_capacity'            => 400,
         'notung_capacity'           => 200,
         'ortho_tree_capacity'       => 200,
         'ortho_tree_annot_capacity' => 300,
@@ -226,13 +232,17 @@ sub resource_classes {
          '500Mb_job'    => {'LSF' => '-q production-rh6 -M500   -R"select[mem>500]   rusage[mem=500]"' },
          '1Gb_job'      => {'LSF' => '-q production-rh6 -M1000  -R"select[mem>1000]  rusage[mem=1000]"' },
          '4Gb_job'      => {'LSF' => '-q production-rh6 -M4000  -R"select[mem>4000]  rusage[mem=4000]"' },
-         '4Gb_8c_job'   => {'LSF' => '-q production-rh6 -M4000  -R"select[mem>4000]  rusage[mem=4000]"  -n 8' },
          '2Gb_job'      => {'LSF' => '-q production-rh6 -M2000  -R"select[mem>2000]  rusage[mem=2000]"' },
          '8Gb_job'      => {'LSF' => '-q production-rh6 -M8000  -R"select[mem>8000]  rusage[mem=8000]"' },
-         '8Gb_8c_job'   => {'LSF' => '-q production-rh6 -M8000  -R"select[mem>8000]  rusage[mem=8000]"  -n 8' },
          '16Gb_job'     => {'LSF' => '-q production-rh6 -M16000 -R"select[mem>16000] rusage[mem=16000]"' },
          '32Gb_job'     => {'LSF' => '-q production-rh6 -M32000 -R"select[mem>32000] rusage[mem=32000]"' },
-         'urgent_hcluster'     => {'LSF' => '-q production-rh6 -M32000 -R"select[mem>32000] rusage[mem=32000]"' },
+         '64Gb_job'     => {'LSF' => '-q production-rh6 -M64000 -R"select[mem>64000] rusage[mem=64000]"' },
+
+         '16Gb_16c_job' => {'LSF' => '-q production-rh6 -n 16 -C0 -M16000 -R"select[mem>16000] rusage[mem=16000]"' },
+         '64Gb_16c_job' => {'LSF' => '-q production-rh6 -n 16 -C0 -M64000 -R"select[mem>64000] rusage[mem=64000]"' },
+
+         '4Gb_64c_mpi'  => {'LSF' => '-q mpi -n 64 -a openmpi -M4000  -R"select[mem>4000]  rusage[mem=4000]  same[model] span[ptile=4]"' },
+         '16Gb_64c_mpi' => {'LSF' => '-q mpi -n 64 -a openmpi -M16000 -R"select[mem>16000] rusage[mem=16000] same[model] span[ptile=4]"' },
   };
 }
 
