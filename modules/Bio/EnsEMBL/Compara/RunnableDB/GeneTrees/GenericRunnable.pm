@@ -252,7 +252,7 @@ sub run_generic_command {
             $self->input_job->incomplete(0);
             die "Java heap space is out of memory.\n";
         }
-        die sprintf("'%s' resulted in an error code=%d\nstderr is: %s\nstdout is: %s\n", $run_cmd->cmd, $run_cmd->exit_code, $run_cmd->err, $run_cmd->out);
+        $self->throw( sprintf( "'%s' resulted in an error code=%d\nstderr is: %s\nstdout is %s", $run_cmd->cmd, $run_cmd->exit_code, $run_cmd->err, $run_cmd->out) );
     }
     $self->param('runtime_msec', $run_cmd->runtime_msec);
 
