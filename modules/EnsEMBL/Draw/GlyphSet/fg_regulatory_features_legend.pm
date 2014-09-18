@@ -41,7 +41,10 @@ sub _init {
   return unless $node;
   my $show = 0;
   foreach ($node->descendants) {
-    $show++ if ($_->get('display') && $_->get('display') ne 'off');
+    if ($_->get('display') && $_->get('display') ne 'off') {
+      $show = 1;
+      last;
+    }
   }
   return unless $show; 
  
