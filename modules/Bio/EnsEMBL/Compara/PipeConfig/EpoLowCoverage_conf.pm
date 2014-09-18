@@ -31,25 +31,23 @@ sub default_options {
 
         'ensembl_cvs_root_dir' => $ENV{'ENSEMBL_CVS_ROOT_DIR'},
 
-	'release'       => 76,
-	'prev_release'  => 75,
+	'release'       => 77,
+	'prev_release'  => 76,
         'release_suffix'=> '', # set it to '' for the actual release
         'rel_with_suffix'       => $self->o('release').$self->o('release_suffix'),
-        'pipeline_name' => 'LOW7saurop_GT'.$self->o('release').$self->o('release_suffix'), # name used by the beekeeper to prefix job names on the farm
+        'pipeline_name' => 'TestEPO_low_'.$self->o('release').$self->o('release_suffix'), # name used by the beekeeper to prefix job names on the farm
 
 	#location of new pairwise mlss if not in the pairwise_default_location eg:
-#	'pairwise_exception_location' => { 656 => 'mysql://ensro@compara4/sf5_hsap_dnov_lastz_74'},
-#	'pairwise_exception_location' => { },
-#	'pairwise_exception_location' => { 657 => 'mysql://ensro@compara2/sf5_ggal_psin_lastz_74'},
+	'pairwise_exception_location' => { },
 	#'pairwise_exception_location' => { 649 => 'mysql://ensro@compara5/kb3_olat_amex_lastz_74', 
 		#			653 => 'mysql://ensro@compara5/kb3_olat_locu_lastz_74',},
-        'host' => 'compara4',
+        'host' => 'compara5',
         'pipeline_db' => {
             -host   => $self->o('host'),
             -port   => 3306,
             -user   => 'ensadmin',
             -pass   => $self->o('password'),
-            -dbname => $ENV{USER}.'_GERP_TEST_epo_7way_sauropsids_'.$self->o('release').$self->o('release_suffix'),
+            -dbname => $ENV{USER}.'_TestEPO_low_'.$self->o('release').$self->o('release_suffix'),
 	    -driver => 'mysql',
         },
 
@@ -59,13 +57,13 @@ sub default_options {
             -port   => 3306,
             -user   => 'ensro',
             -pass   => '',
-	    -dbname => 'ensembl_compara_74',
+	    -dbname => 'ensembl_compara_76',
 #	    -dbname => 'ensembl_compara_' . $self->o('prev_release'),
 	    -driver => 'mysql',
         },
 
 	#Location of compara db containing the high coverage alignments
-	'epo_db' => 'mysql://ensro@compara4:3306/sf5_epo_4sauropsids_74',
+	'epo_db' => 'mysql://ensro@compara4:3306/sf5_epo_17mammals_77',
 
 	master_db => { 
             -host   => 'compara1',
@@ -103,10 +101,9 @@ sub default_options {
 	'high_epo_mlss_id' => $self->o('high_epo_mlss_id'), #mlss_id for high coverage epo alignment
 	'ce_mlss_id' => $self->o('ce_mlss_id'),             #mlss_id for low coverage constrained elements
 	'cs_mlss_id' => $self->o('cs_mlss_id'),             #mlss_id for low coverage conservation scores
-	#'master_db_name' => 'sf5_ensembl_compara_master',   
-	'ref_species' => 'gallus_gallus',                    #ref species for pairwise alignments
+#	'ref_species' => 'gallus_gallus',                    #ref species for pairwise alignments
 #	'ref_species' => 'oryzias_latipes',
-	#'ref_species' => 'homo_sapiens',
+	'ref_species' => 'homo_sapiens',
 	'max_block_size'  => 1000000,                       #max size of alignment before splitting 
 	'pairwise_default_location' => $self->dbconn_2_url('live_compara_db'), #default location for pairwise alignments
 
@@ -120,7 +117,7 @@ sub default_options {
 	'gerp_version' => '2.1',                            #gerp program version
 	'gerp_window_sizes'    => '[1,10,100,500]',         #gerp window sizes
 	'no_gerp_conservation_scores' => 0,                 #Not used in productions but is a valid argument
-	'species_tree_file' => $self->o('ensembl_cvs_root_dir').'/ensembl-compara/scripts/pipeline/species_tree_blength.nh', #location of full species tree, will be pruned 
+	'species_tree_file' => $self->o('ensembl_cvs_root_dir').'/ensembl-compara/scripts/pipeline/species_tree.39mammals.branch_len.nw', #location of full species tree, will be pruned 
 	'newick_format' => 'simple',
 	'work_dir' => $self->o('work_dir'),                 #location to put pruned tree file 
         'species_to_skip' => undef,
@@ -136,8 +133,8 @@ sub default_options {
         #Default statistics
         #
         'skip_multiplealigner_stats' => 0, #skip this module if set to 1
-        'bed_dir' => '/lustre/scratch109/ensembl/' . $ENV{USER} . '/gt_sauropsids_epo_low_coverage/bed_dir/' . 'release_' . $self->o('rel_with_suffix') . '/',
-        'output_dir' => '/lustre/scratch109/ensembl/' . $ENV{USER} . '/gt_sauropsids_epo_low_coverage/feature_dumps/' . 'release_' . $self->o('rel_with_suffix') . '/',
+        'bed_dir' => '/lustre/scratch109/ensembl/' . $ENV{USER} . '/EPO_Lc_test/bed_dir/' . 'release_' . $self->o('rel_with_suffix') . '/',
+        'output_dir' => '/lustre/scratch109/ensembl/' . $ENV{USER} . '/EPO_Lc_test/feature_dumps/' . 'release_' . $self->o('rel_with_suffix') . '/',
 
         #
         #Resource requirements
@@ -162,6 +159,7 @@ sub pipeline_wide_parameters {  # these parameter values are visible to all anal
 
     return {
             %{$self->SUPER::pipeline_wide_parameters},          # here we inherit anything from the base class
+            'pairwise_exception_location' => $self->o('pairwise_exception_location'),
     };
 }
 
@@ -275,11 +273,6 @@ sub pipeline_analyses {
 		-parameters    => { 
 				   'mlss_id' => $self->o('low_epo_mlss_id'),
 				  },
-	     #   -flow_into  => {
-            #       3 => { 'mysql:////method_link_species_set_tag' => { 'method_link_species_set_id' => '#mlss_id#', 'tag' => 'taxon_tree', 'value' => '#species_tree_string#' } },
-		   # 4 => { 'mysql:////method_link_species_set_tag' => { 'method_link_species_set_id' => '#mlss_id#', 'tag' => 'species_tree', 'value' => '#species_tree_string#' } },
-
-              #  },
 		-rc_name => '100Mb',
 	    },
 
@@ -290,14 +283,13 @@ sub pipeline_analyses {
 				'new_method_link_species_set_id' => $self->o('low_epo_mlss_id'),
 				'base_method_link_species_set_id' => $self->o('high_epo_mlss_id'),
 				'pairwise_default_location' => $self->o('pairwise_default_location'),
-				#'base_location' => $self->dbconn_2_url('epo_db'),
 				'base_location' => $self->o('epo_db'),
 				'reference_species' => $self->o('ref_species'),
 				'fan_branch_code' => 3,
 			       },
 		-flow_into => {
 			       1 => [ 'import_alignment' ],
-			       3 => [ 'mysql:////meta' ],
+			       3 => [ 'mysql:////pipeline_wide_parameters' ],
 			      },
 		-rc_name => '100Mb',
 	    },
@@ -307,7 +299,6 @@ sub pipeline_analyses {
 		-module     => 'Bio::EnsEMBL::Compara::RunnableDB::EpoLowCoverage::ImportAlignment',
 		-parameters => {
 				'method_link_species_set_id'       => $self->o('high_epo_mlss_id'),
-				#'from_db_url'                      => $self->dbconn_2_url('epo_db'),
 				'from_db_url'                      => $self->o('epo_db'),
                                 'step'                             => $self->o('step'),
 			       },
@@ -328,7 +319,7 @@ sub pipeline_analyses {
 			       '2->A' => [ 'low_coverage_genome_alignment' ],
 			       'A->1' => [ 'delete_alignment' ],
 			      },
-		-rc_name => '100Mb',
+		-rc_name => '3.6Gb',
 	    },
 	    {   -logic_name => 'low_coverage_genome_alignment',
 		-module     => 'Bio::EnsEMBL::Compara::RunnableDB::EpoLowCoverage::LowCoverageGenomeAlignment',
@@ -336,7 +327,7 @@ sub pipeline_analyses {
 				'max_block_size' => $self->o('max_block_size'),
 				'mlss_id' => $self->o('low_epo_mlss_id'),
 				'reference_species' => $self->o('ref_species'),
-		#		'pairwise_exception_location' => $self->o('pairwise_exception_location'),
+#				'pairwise_exception_location' => $self->o('pairwise_exception_location'),
 				'pairwise_default_location' => $self->o('pairwise_default_location'),
                                 'semphy_exe' => $self->o('semphy_exe'),
                                 'treebest_exe' => $self->o('treebest_exe'),
@@ -350,14 +341,14 @@ sub pipeline_analyses {
 			      },
 		-rc_name => '1.8Gb',
 	    },
-	    #If fail due to MEMLIMIT, probably due to memory leak, and rerunning with the default memory should be fine.
+	    #If fail due to MEMLIMIT, probably due to memory leak, and rerunning with extra memory.
 	    {   -logic_name => 'low_coverage_genome_alignment_again',
 		-module     => 'Bio::EnsEMBL::Compara::RunnableDB::EpoLowCoverage::LowCoverageGenomeAlignment',
 		-parameters => {
 				'max_block_size' => $self->o('max_block_size'),
 				'mlss_id' => $self->o('low_epo_mlss_id'),
 				'reference_species' => $self->o('ref_species'),
-		#		'pairwise_exception_location' => $self->o('pairwise_exception_location'),
+#				'pairwise_exception_location' => $self->o('pairwise_exception_location'),
 				'pairwise_default_location' => $self->o('pairwise_default_location'),
                                 'semphy_exe' => $self->o('semphy_exe'),
                                 'treebest_exe' => $self->o('treebest_exe'),
@@ -367,7 +358,7 @@ sub pipeline_analyses {
 		-flow_into => {
 			       2 => [ 'gerp' ],
 			      },
-		-rc_name => '1.8Gb',
+		-rc_name => '3.6Gb',
 	    },
 # ---------------------------------------------------------------[Gerp]-------------------------------------------------------------------
 	    {   -logic_name => 'gerp',
@@ -393,7 +384,7 @@ sub pipeline_analyses {
 		-flow_into => {
 			       1 => [ 'update_max_alignment_length' ],
 			      },
-		-rc_name => '100Mb',
+		-rc_name => '1.8Gb',
 	    },
 
 # ---------------------------------------------------[Update the max_align data in meta]--------------------------------------------------
@@ -406,7 +397,7 @@ sub pipeline_analyses {
 	       -flow_into => {
 			      1 => [ 'create_neighbour_nodes_jobs_alignment' ],
 			     },
-		-rc_name => '100Mb',
+		-rc_name => '1.8Gb',
 	    },
 
 # --------------------------------------[Populate the left and right node_id of the genomic_align_tree table]-----------------------------
@@ -420,7 +411,7 @@ sub pipeline_analyses {
 			       '2->A' => [ 'set_neighbour_nodes' ],
 			       'A->1' => [ 'healthcheck_factory' ],
 			      },
-		-rc_name => '100Mb',
+		-rc_name => '1.8Gb',
 	    },
 	    {   -logic_name => 'set_neighbour_nodes',
 		-module     => 'Bio::EnsEMBL::Compara::RunnableDB::EpoLowCoverage::SetNeighbourNodes',
