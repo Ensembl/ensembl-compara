@@ -156,6 +156,29 @@ sub locator {
 }
 
 
+=head2 get_ploidy_level
+
+  Arg [1]    : Bio::EnsEMBL::DBSQL::DBAdaptor
+  Example    : my $ploidy_level = $genome_db->db_adaptor->get_ploidy_level;
+  Description: Returns the ploidy level of that species, using diploidy as the base level
+               when the species is not diploid
+               e.g. the method would return 3 for an hexaploid, but 0 for a diploid
+  Returntype : integer
+
+=cut
+
+sub get_ploidy_level {
+    my $core_dba = shift;
+
+    return undef unless $core_dba;
+
+    my $ploidy = $core_dba->get_MetaContainer->single_value_by_key('ploidy');
+    return undef unless $ploidy;
+
+    return ($ploidy > 2) ? int($ploidy / 2) : 0;
+}
+
+
 =head2 component_names
 
   Arg [1]    : Bio::EnsEMBL::DBSQL::DBAdaptor
@@ -174,5 +197,6 @@ sub component_names {
     my $names = $core_dba->dbc->db_handle->selectall_arrayref($sql);
     return [sort map {$_->[0]} @$names];
 }
+
 
 1;
