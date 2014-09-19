@@ -16,13 +16,13 @@ limitations under the License.
 
 =cut
 
-package EnsEMBL::Web::Component::Gene::ExpressionTable;
+package EnsEMBL::Web::Component::Info::ExpressionTable;
 
 use strict;
 
 use EnsEMBL::Web::Document::Table;
 
-use base qw(EnsEMBL::Web::Component::Gene);
+use base qw(EnsEMBL::Web::Component);
 
 sub _init {
   my $self = shift;
@@ -34,9 +34,10 @@ sub content {
   my $self         = shift;
   my $hub          = $self->hub;
   my $html;
-  my %glossary = $self->hub->species_defs->multiX('ENSEMBL_GLOSSARY');
+  my %glossary = $hub->species_defs->multiX('ENSEMBL_GLOSSARY');
+  my $common   = $hub->species_defs->SPECIES_COMMON_NAME;
 
-  $html .= '<p>Expression data is available for the following tissues:</p>';
+  $html .= "<p>$common gene expression data is available for the following tissues:</p>";
 
   my @track_order = ('rnaseq', 'dna_align', 'data_file'); 
   my $columns = [
@@ -53,7 +54,12 @@ sub content {
   my $rows = [];
   my $previous;
 
-  my $rnaseq_tracks = $self->object->get_rnaseq_tracks;
+  my $rnaseq_tracks = [];
+  my $rnaseq_db = $self->hub->database('rnaseq');
+  if ($rnaseq_db) {
+    my $aa = $self->hub->get_adaptor('get_AnalysisAdaptor', 'rnaseq');
+    $rnaseq_tracks = [ grep { $_->displayable } @{$aa->fetch_all} ];
+  }
 
   ## Munge the data first, or the logic becomes hideous!
   my $track_info = {};
@@ -102,8 +108,12 @@ sub content {
       }
     }
 
-    my $url = $hub->url({'type'=>'Location','action'=>'View', 'contigviewbottom' => join(',', @configs)});
-    $row->{'all'} = sprintf('<a href="%s">View in location</a>', $url);
+    my $url = $hub->url({
+                            'type'    => 'Location',
+                            'action'  => 'View',
+                            'r'       => $hub->species_defs->SAMPLE_DATA->{'LOCATION_PARAM'},
+                            'contigviewbottom' => join(',', @configs)});
+    $row->{'all'} = sprintf('<a href="%s">View in example location</a>', $url);
     push @$rows, $row;            
   }
  
