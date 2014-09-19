@@ -55,9 +55,16 @@ sub init {
     [ 'variation_legend' ],
     { glyphset => 'P_variation_legend' }
   );
-  
-  my $translation = $self->hub->core_object('transcript') ? $self->hub->core_object('transcript')->Obj->translation : undef;
-  my $id = $translation ? $translation->stable_id : $self->hub->species_defs->ENSEMBL_SITETYPE.' Protein'; 
+}
+
+sub initialize {
+  my $self        = shift;
+  my $hub         = $self->hub;
+  my $translation = $hub->core_object('transcript') ? $hub->core_object('transcript')->Obj->translation : undef;
+  my $id          = $translation ? $translation->stable_id : $hub->species_defs->ENSEMBL_SITETYPE.' Protein';
+
+  $self->SUPER::initialize(@_);
+
   $self->add_tracks('other',
     [ 'scalebar',       'Scale bar', 'P_scalebar', { display => 'normal', strand => 'r' }],
     [ 'exon_structure', $id, 'P_protein',  { display => 'normal', strand => 'f', colourset => 'protein_feature', menu => 'no' }],
