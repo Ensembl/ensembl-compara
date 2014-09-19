@@ -22,6 +22,11 @@ use strict;
 
 use base qw(EnsEMBL::Web::ImageConfig);
 
+sub cache_key {
+  my $self = shift;
+  return join '::', $self->SUPER::cache_key(@_), $self->hub->param('t') || '';
+}
+
 sub init {
   my $self = shift;
 
