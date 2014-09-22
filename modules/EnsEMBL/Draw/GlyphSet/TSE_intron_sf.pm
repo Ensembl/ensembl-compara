@@ -34,7 +34,7 @@ sub _init {
 
 sub draw_glyphs {
   my $self         = shift;
-  my $all_matches  = shift;
+  my $all_matches  = shift or return;
   my $wuc          = $self->{'config'};
   my $h            = 8; #height of glyph
   my $pix_per_bp   = $wuc->transform->{'scalex'};
