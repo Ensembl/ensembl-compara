@@ -365,7 +365,7 @@ sub transcript_table {
       }
       if ($trans_attribs->{$tsi}{'appris'}) {
         my ($text, $code) = @{$trans_attribs->{$tsi}{'appris'}};
-        push @flags, sprintf('<span class="glossary_mouseover"><img src="/i/transcript/appris_%s.png" alt="%s" /><span class="floating_popup">%s</span></span>', $code, 'APPRIS '.uc($code), $text);
+        push @flags, sprintf('<span class="glossary_mouseover"><img class="middle-align" src="/i/transcript/appris_%s.png" alt="%s" /><span class="floating_popup">%s</span></span>', $code, 'APPRIS '.uc($code), $text);
       }
 
       (my $biotype_text = $_->biotype) =~ s/_/ /g;

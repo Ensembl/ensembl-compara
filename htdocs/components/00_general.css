@@ -36,6 +36,7 @@ body.ie6 th, body.ie6 td { font-size: 13px; }
 ----------------------------------------------------------------------*/
 
 img     { border: 0; }
+img.middle-align { vertical-align: middle; }
 form    { border: none; margin: 0 0 1em 0; }
 p       { margin: 0 0 1em; line-height: 1.25em; padding: 0; }
 ul, ol  { margin: 0 0 1.25em; line-height: 1.25em; padding-left: 2em; }
