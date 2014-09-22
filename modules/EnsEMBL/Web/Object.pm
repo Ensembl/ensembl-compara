@@ -209,6 +209,69 @@ sub rose_manager {
   return $self->{'_rose_managers'}{$db}{$type} ||= $self->dynamic_use_fallback($db ? "ORM::EnsEMBL::DB::${db}::Manager${type}" : (), 'ORM::EnsEMBL::Rose::Manager');
 }
 
+=head2 get_alt_alleles
+
+ Example     : my ($stable_id,$alleles) = $gene->get_allele_info
+ Description : retrieves stable id and details of alt_alleles
+ Return type : list (stable_id string and arrayref of B::E::Genes)
+
+=cut
+
+sub get_alt_alleles {
+  my $self = shift;
+  my $gene = $self->type eq 'Gene' ? $self->Obj : $self->gene;
+  my $stable_id = $gene->stable_id;
+  my $alleles = [];
+  if ($gene->slice->is_reference) {
+    $alleles = $gene->get_all_alt_alleles;
+  }
+  else {
+    my $adaptor = $self->hub->get_adaptor('get_AltAlleleGroupAdaptor');
+    my $group = $adaptor->fetch_by_gene_id($gene->dbID);
+    if ($group) {
+      foreach my $alt_allele_gene (@{$group->get_all_Genes}) {
+        if ($alt_allele_gene->stable_id ne $stable_id) {
+          push @$alleles, $alt_allele_gene;
+        }
+      }
+    }
+  }
+  return $alleles;
+}
+
+sub get_alt_allele_link {
+  my ($self, $type) = @_;
+  my $hub   = $self->hub;
+
+  my @alt_alleles = @{$self->get_alt_alleles};
+  return unless scalar @alt_alleles;
+
+  my $alt_link;
+  ## Are we on the reference or haplotype?
+  my ($reference) = grep { $self->slice->seq_region_name eq $_ } @{$hub->species_defs->ENSEMBL_CHROMOSOMES||[]};
+  if ($reference) {
+    ## Link to Alt Allele page, since there could be several
+    $alt_link = sprintf('View <a href="%s">alternative alleles</a> of this gene',
+                                  $hub->url({'action' => 'Alleles'}));
+  }
+  else {
+    ## Link to reference gene
+    my $ref_gene;
+    foreach my $gene (@alt_alleles) {
+      if (grep { $gene->seq_region_name eq $_ } @{$hub->species_defs->ENSEMBL_CHROMOSOMES||[]}) {
+        $ref_gene = $gene;
+        last;
+      }
+    }
+    my $ref_location = sprintf('%s:%s-%s', $ref_gene->seq_region_name, $ref_gene->seq_region_start, $ref_gene->seq_region_end);
+    my $params = {'type' => 'Gene', 'g' => $ref_gene->stable_id, 'r' => $ref_location };
+    $params->{'action'} = 'Summary' if $type eq 'Location';
+    $alt_link = sprintf('View this gene <a href="%s">on the reference assembly.', $hub->url($params));
+  }
+  return $alt_link;
+}
+
+
 ## Compara data-munging methods - not tied to a specific web data object type?
 
 sub count_alignments {

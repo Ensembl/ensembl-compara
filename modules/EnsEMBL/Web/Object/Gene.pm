@@ -443,37 +443,6 @@ sub get_gene_supporting_evidence {
   return $e;
 }
 
-=head2 get_alt_alleles
-
- Example     : my ($stable_id,$alleles) = $gene->get_allele_info
- Description : retrieves stable id and details of alt_alleles
- Return type : list (stable_id string and arrayref of B::E::Genes)
-
-=cut
-
-sub get_alt_alleles {
-  my $self = shift;
-  my $gene = $self->Obj;
-  my $stable_id = $gene->stable_id;
-  my $alleles = [];
-  if ($gene->slice->is_reference) {
-    $alleles = $self->Obj->get_all_alt_alleles;
-  }
-  else {
-    my $adaptor = $self->hub->get_adaptor('get_AltAlleleGroupAdaptor');
-    my $group = $adaptor->fetch_Group_by_Gene_dbID($gene->dbID);
-    if ($group) {
-      foreach my $alt_allele_gene (@{$group->get_all_Genes}) {
-        if ($alt_allele_gene->stable_id ne $stable_id) {
-          push @$alleles, $alt_allele_gene;
-        }
-      }
-    }
-  }
-  return $alleles;
-}
-
-
 # generate URLs for evidence links
 sub add_evidence_links {
   my $self = shift;
