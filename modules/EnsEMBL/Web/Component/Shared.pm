@@ -140,7 +140,7 @@ sub transcript_table {
     $self->thousandify($seq_region_end),
     $object->seq_region_strand < 0 ? ' reverse strand' : 'forward strand'
   );
-  
+ 
   # alternative (Vega) coordinates
   if ($object->get_db eq 'vega') {
     my $alt_assemblies  = $hub->species_defs->ALTERNATIVE_ASSEMBLIES || [];
@@ -253,7 +253,7 @@ sub transcript_table {
       $splices =~ s/s$//;
     }
     
-    my $gene_html = "This gene has $count $plural ($splices)";
+    my $gene_html;
     
     if ($page_type eq 'transcript') {
       my $gene_id  = $gene->stable_id;
@@ -262,9 +262,23 @@ sub transcript_table {
         action => 'Summary',
         g      => $gene_id
       });
-      $gene_html = qq{This transcript is a product of gene <a href="$gene_url">$gene_id</a><br /><br />$gene_html};
+      $gene_html .= qq{This transcript is a product of gene <a href="$gene_url">$gene_id</a>};
     }
+   
+    ## Link to other haplotype genes
+    my $alt_link = $object->get_alt_allele_link;
+    if ($alt_link) {
+      if ($page_type eq 'transcript') {
+        $gene_html .= '<br />'.$alt_link;
+      }
+      else {
+        $location_html .= '<br />'.$alt_link;
+      }
+    }
+
+    $gene_html .= "<br /><br />This gene has $count $plural ($splices)";
     
+ 
     my $show    = $hub->get_cookie_value('toggle_transcripts_table') eq 'open';
     my @columns = (
        { key => 'name',       sort => 'string',  title => 'Name'          },
