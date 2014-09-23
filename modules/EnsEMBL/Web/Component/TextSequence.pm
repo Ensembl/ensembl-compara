@@ -922,6 +922,26 @@ sub build_sequence {
     $adref{$k} = [ map { s/^\w+="(.*)"$/$1/s; $_; } @{$adref{$k}} ];
   }
 
+  # RLE
+  foreach my $a (keys %adseq) {
+    foreach my $k (keys %{$adseq{$a}}) {
+      my @rle;
+      my $lastval;
+      foreach my $v (@{$adseq{$a}->{$k}}) {
+        $v = -1 if !defined $v;
+        if(@rle and $v == $lastval) {
+          if($rle[-1] < 0) { $rle[-1]--; } else { push @rle,-1; }
+        } elsif($v == -1) {
+          push @rle,undef;
+        } else {
+          push @rle,$v;
+        }
+        $lastval = $v;
+      }
+      $adseq{$a}->{$k} = \@rle;
+    }
+  }
+
   my $adornment = $self->jsonify({
     seq => \%adseq,
     ref => \%adref,

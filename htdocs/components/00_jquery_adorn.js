@@ -67,6 +67,21 @@
     return out;
   }
 
+  function unrle(seq) {
+    var prev;
+    var out = [];
+
+    for(var i=0;i<seq.length;i++) {
+      if(seq[i]<0) {
+        for(var j=0;j<-seq[i];j++) { out.push(prev); }
+      } else {
+        out.push(seq[i]);
+        prev = seq[i];
+      }
+    }
+    return out;
+  }
+
   function make_groups(seq) {
     var styles = [];
     $.each(seq,function(key,values) {
@@ -121,6 +136,9 @@
   }
 
   function prepare_adorn_span(text,ref,seq,xxx) {
+    $.each(seq,function(k,v) {
+      seq[k] = unrle(seq[k]);
+    });
     text = fix_letters(text,ref,seq);
     var groups = make_groups(seq);
     var pos = 0;
@@ -158,7 +176,7 @@
       },1000,'a');
     });
     d = loop(d,function(i,task) {
-      var out = prepare_adorn_span(task[1],task[2],task[3],task[4]);
+        var out = prepare_adorn_span(task[1],task[2],task[3],task[4]);
       return [task[0],out];
     },1000,'b');
     d = fire(d,function() {
