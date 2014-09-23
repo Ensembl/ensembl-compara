@@ -182,7 +182,6 @@
       return [task[0],out];
     },1000,'b');
     d = fire(d,function() {
-      $outer.detach();
     });
     d = loop(d,function(i,change) {
       change[0].html(change[1]);
