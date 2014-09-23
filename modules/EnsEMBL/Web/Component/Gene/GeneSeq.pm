@@ -55,8 +55,8 @@ sub initialize {
 
   my ($sequence, $markup) = $self->get_sequence_data($config->{'slices'}, $config,$adorn);
 
+  $self->markup_exons($sequence, $markup, $config)     if $config->{'exon_display'};
   if($adorn ne 'none') {
-    $self->markup_exons($sequence, $markup, $config)     if $config->{'exon_display'};
     $self->markup_variation($sequence, $markup, $config) if $config->{'snp_display'};
   }
   $self->markup_line_numbers($sequence, $config)       if $config->{'line_numbering'};

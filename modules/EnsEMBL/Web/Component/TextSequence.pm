@@ -101,8 +101,8 @@ sub get_sequence_data {
     $self->set_alignments($config, $sl, $mk, $seq)      if $config->{'align'}; # Markup region changes and inserts on comparisons
     if($adorn ne 'none') {
       $self->set_variations($config, $sl, $mk, $sequence) if $config->{'snp_display'};
-      $self->set_exons($config, $sl, $mk)                 if $config->{'exon_display'};
     }
+    $self->set_exons($config, $sl, $mk)                 if $config->{'exon_display'};
     $self->set_codons($config, $sl, $mk)                if $config->{'codons_display'};
     
     push @markup, $mk;
@@ -942,10 +942,11 @@ sub build_sequence {
     }
   }
 
-  my $adornment = $self->jsonify({
+  my $adornment = {
     seq => \%adseq,
     ref => \%adref,
-  });
+  };
+  my $adornment_json = $self->jsonify($adornment);
 
   my $length = $output[0] ? scalar @{$output[0]} - 1 : 0;
   
@@ -1009,7 +1010,7 @@ sub build_sequence {
     my @params = split(/;/,$params);
     for(@params) { $_ = 'adorn=only' if /^adorn=/; }
     $ajax_url = $path.'?'.join(';',@params,'adorn=only');
-    my $ajax_json = $self->jsonify({ url => $ajax_url });
+    my $ajax_json = $self->jsonify({ url => $ajax_url, provisional => $adornment });
     $config->{'html_template'} = qq(
       <div class="js_panel" id="$random_id">
         <div class="adornment">
@@ -1024,13 +1025,13 @@ sub build_sequence {
     return $config->{'html_template'} . sprintf '<input type="hidden" class="panel_type" value="TextSequence" name="panel_type_%s" />', $self->id;
 
   } elsif($adorn eq 'only') {
-    return $adornment;
+    return $adornment_json;
   } else {
     $config->{'html_template'} = qq(
       <div class="js_panel" id="$random_id">
         <div class="adornment">
           <span class="adornment-data" style="display:none;">
-            $adornment
+            $adornment_json
           </span>
           $config->{'html_template'}
         </div>

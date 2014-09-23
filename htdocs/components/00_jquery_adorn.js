@@ -150,18 +150,20 @@
     return out;
   }
 
-  function _do_adorn(outer) {
+  function _do_adorn(outer,data) {
     var $outer = $(outer);
-    if($outer.hasClass('adornment-running') ||
+    if(($outer.hasClass('adornment-running') && !data) ||
        $outer.hasClass('adornment-done')) {
       return $.Deferred().resolve(0);
     }
     var wrapper = $outer.wrap("<div></div>").parent();
     $outer.addClass('adornment-running');
-    var data = $.parseJSON($('.adornment-data',outer).text());
+    if(!data) {
+      data = $.parseJSON($('.adornment-data',outer).text());
+    }
     var d;
     if(data.url) {
-      d = $.getJSON(data.url,{});
+      d = $.Deferred().resolve(data.provisional);
     } else {
       d = $.Deferred().resolve(data);
     }
@@ -188,9 +190,19 @@
     d = fire(d,function() {
       $('.adornment-data',outer).remove();
       $outer.appendTo(wrapper);
-      $outer.addClass('adornment-done');
-      $outer.removeClass('adornment-running');
     });
+    if(data.url) {
+      d = d.then(function() {
+        return $.getJSON(data.url,{});
+      }).then(function(data) {
+        _do_adorn(outer,data); 
+      });
+    } else {
+      d = fire(d,function() {
+        $outer.addClass('adornment-done');
+        $outer.removeClass('adornment-running');
+      });
+    }
     return d.then(function() { return $.Deferred().resolve(1); });
   }
 
