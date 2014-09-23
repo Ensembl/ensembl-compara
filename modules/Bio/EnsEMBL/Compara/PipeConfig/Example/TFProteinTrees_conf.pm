@@ -80,7 +80,8 @@ sub default_options {
         'rel_with_suffix'       => $self->o('release').$self->o('release_suffix'),
 
     # custom pipeline name, in case you don't like the default one
-        'pipeline_name'         => $self->o('division').$self->o('rel_with_suffix').'_hom_eg'.$self->o('eg_release').'_e'.$self->o('ensembl_release'),
+		#'pipeline_name'         => $self->o('division').$self->o('rel_with_suffix').'_hom_eg'.$self->o('eg_release').'_e'.$self->o('ensembl_release'),
+		'pipeline_name'         => 'treefam_10_baboon',
         # Tag attached to every single tree
         'division'              => 'treefam',
 
@@ -259,7 +260,7 @@ sub default_options {
 
         # Add the database location of the previous Compara release. Use "undef" if running the pipeline without reuse
         #'prev_rel_db' => 'mysql://ensro@mysql-eg-staging-1.ebi.ac.uk:4160/ensembl_compara_fungi_19_72',
-        'prev_rel_db' => 'mysql://treefam_ro:treefam_ro@mysql-treefam-prod:4401/treefam_production_9_69',
+        'prev_rel_db' => 'mysql://treefam_ro:treefam_ro@mysql-treefam-prod:4401/TreeFam10_final_filtering_other_notung_param',
 
         # How will the pipeline create clusters (families) ?
         # Possible values: 'blastp' (default), 'hmm', 'hybrid'
