@@ -237,7 +237,9 @@ sub transcript_table {
               $trans_gencode->{$trans->stable_id}{$attrib_type} = $attrib->value;
             }
         } elsif ($attrib_type eq 'appris') {
-          $trans_attribs->{$trans->stable_id}{$attrib_type} = [$attrib->value, $appris_lookup->{$attrib->value}] if ($attrib && $attrib->value);
+          if ($attrib && (my $attrib_val = $attrib->value)) {
+            $trans_attribs->{$trans->stable_id}{$attrib_type} = [$attrib_val, $appris_lookup->{ $attrib_val =~ s/\s*\[[^\]]+\]\s*//rg }];
+          }
         } else {
           $trans_attribs->{$trans->stable_id}{$attrib_type} = $attrib->value if ($attrib && $attrib->value);
         }
@@ -365,7 +367,9 @@ sub transcript_table {
       }
       if ($trans_attribs->{$tsi}{'appris'}) {
         my ($text, $code) = @{$trans_attribs->{$tsi}{'appris'}};
-        push @flags, sprintf('<span class="glossary_mouseover"><img class="middle-align" src="/i/transcript/appris_%s.png" alt="%s" /><span class="floating_popup">%s</span></span>', $code, 'APPRIS '.uc($code), $text);
+        push @flags, $code
+          ? sprintf('<span class="glossary_mouseover"><img class="middle-align" src="/i/transcript/appris_%s.png" alt="APPRIS %s" /><span class="floating_popup">%s</span></span>', $code, uc $code, $text)
+          : sprintf('<span class="glossary_mouseover">APPRIS<span class="floating_popup">%s</span></span>', $text);
       }
 
       (my $biotype_text = $_->biotype) =~ s/_/ /g;

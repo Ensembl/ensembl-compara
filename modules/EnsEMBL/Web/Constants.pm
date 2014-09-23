@@ -95,11 +95,11 @@ sub FASTA_OPTIONS {
 sub APPRIS_CODES {
 ### A hopefully temporary lookup!
   return {
-    'APPRIS principal isoform [01-09-2014]' => 'pi',
-    'APPRIS candidate principal isoform (CCDS) [01-09-2014]' => 'ci3',
-    'APPRIS candidate principal isoform (longest CCDS) [01-09-2014]' => 'ci2',
-    'APPRIS candidate principal isoform (longest coding sequence) [01-09-2014]' => 'ci1',
-    'APPRIS candidate principal isoform [01-09-2014]' => 'ci',
+    'APPRIS principal isoform'                                      => 'pi',
+    'APPRIS candidate principal isoform (CCDS)'                     => 'ci3',
+    'APPRIS candidate principal isoform (longest CCDS)'             => 'ci2',
+    'APPRIS candidate principal isoform (longest coding sequence)'  => 'ci1',
+    'APPRIS candidate principal isoform'                            => 'ci',
   };
 }
 
