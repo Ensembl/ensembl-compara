@@ -43,38 +43,15 @@ sub content {
   my $second_gene  = $hub->param('g1');
   my $seq          = $hub->param('seq');
   my $text_format  = $hub->param('text_format');
-  my $database     = $hub->database($cdb);
-  my $qm           = $database->get_GeneMemberAdaptor->fetch_by_stable_id($gene_id);
-  my ($homologies, $html, %skipped);
-  
-  eval {
-    $homologies = $database->get_HomologyAdaptor->fetch_all_by_Member($qm);
-  };
-  warn $@ if $@;
- 
-  my ($match_type, %desc_mapping);
-  
-  if ($hub->action eq 'Compara_Ortholog') {
-    $match_type = 'Orthologue';
-    %desc_mapping = (
-      ortholog_one2one          => '1 to 1 orthologue',
-      apparent_ortholog_one2one => '1 to 1 orthologue (apparent)',
-      ortholog_one2many         => '1 to many orthologue',
-      ortholog_many2many        => 'many to many orthologue',
-      possible_ortholog         => 'possible orthologue',
-    );
-  }
-  else {
-    $match_type = 'Paralogue';
-    %desc_mapping = (
-      within_species_paralog    => 'paralogue (within species)',
-      putative_gene_split       => 'putative gene split',
-      contiguous_gene_split     => 'contiguous gene split',
-    );
-  }
+  my (%skipped, $html);
+
+  my $match_type = $hub->action eq 'Compara_Ortholog' ? 'Orthologue' : 'Paralogue';
+  my %desc_mapping = $self->object->get_desc_mapping($match_type); 
  
   my $homology_types = EnsEMBL::Web::Constants::HOMOLOGY_TYPES;
-  
+ 
+  my $homologies = $self->get_homologies;
+ 
   foreach my $homology (@{$homologies}) {
 
     ## filter out non-required types
@@ -191,12 +168,95 @@ sub content {
   return $html;
 }        
 
+sub get_homologies {
+  my $self         = shift;
+  my $hub          = $self->hub;
+  my $cdb          = shift || $hub->param('cdb') || 'compara';
+  my $object       = $self->object || $hub->core_object('gene');
+  my $gene_id      = $object->stable_id;
+
+  my $database     = $hub->database($cdb);
+  my $qm           = $database->get_GeneMemberAdaptor->fetch_by_stable_id($gene_id);
+  my $homologies;
+  my $ok_homologies = [];
+  
+  eval {
+    $homologies = $database->get_HomologyAdaptor->fetch_all_by_Member($qm);
+  };
+  warn $@ if $@;
+ 
+  my $match_type    = $hub->action eq 'Compara_Ortholog' ? 'Orthologue' : 'Paralogue';
+  my %desc_mapping  = $object->get_desc_mapping($match_type); 
+ 
+  my $homology_types = EnsEMBL::Web::Constants::HOMOLOGY_TYPES;
+
+  foreach my $homology (@{$homologies}) {
+
+    ## filter out non-required types
+    my $homology_desc  = $homology_types->{$homology->{'_description'}} || $homology->{'_description'};
+    next unless $desc_mapping{$homology_desc}; 
+
+    push @$ok_homologies, $homology;     
+  }
+
+  return $homologies;
+}
+
 sub renderer_type {
   my $self = shift;
   my $K    = shift;
   my %T    = EnsEMBL::Web::Constants::ALIGNMENT_FORMATS;
   return $T{$K} ? $K : EnsEMBL::Web::Constants::SIMPLEALIGN_DEFAULT;
 }
+
+sub export_options { return {'action' => 'Homologs'}; }
+
+sub get_export_data {
+## Get data for export
+  my $self = shift;
+  ## Fetch explicitly, as we're probably coming from a DataExport URL
+  my $simple_alignments = [];
+  my $seq = $self->hub->param('seq');
+  
+  my $homologies = $self->get_homologies;
+ 
+  foreach my $homology (@{$homologies}) {
+
+    my $sa;
+    
+    eval {
+      if($seq eq 'cDNA') {
+        $sa = $homology->get_SimpleAlign(-SEQ_TYPE => 'cds');
+      } else {
+        $sa = $homology->get_SimpleAlign;
+      }
+    };
+    warn $@ if $@;
+    
+    push @$simple_alignments, $sa if $sa;
+  }
+
+  return $simple_alignments;
+}
+
+sub buttons {
+  my $self    = shift;
+  my $hub     = $self->hub;
+  my $gene    =  $self->object->Obj;
+
+  my $dxr  = $gene->can('display_xref') ? $gene->display_xref : undef;
+  my $name = $dxr ? $dxr->display_id : $gene->stable_id;
+
+  my $params  = {'type' => 'DataExport', 'action' => 'Homologs', 'data_type' => 'Gene', 'component' => 'HomologAlignment', 'gene_name' => $name, 'align' => 'yes'};
+
+  return {
+    'url'     => $hub->url($params),
+    'caption' => 'Download alignment',
+    'class'   => 'export',
+    'modal'   => 1
+  };
+}
+
 
 1;
 

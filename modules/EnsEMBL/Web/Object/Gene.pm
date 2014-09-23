@@ -700,6 +700,38 @@ sub get_alternative_locations {
   return \@alt_locs;
 }
 
+sub get_desc_mapping {
+### Returns descriptions for ortholog types.
+### TODO - get this info from compara API
+  my ($self, $match_type) = @_;
+  my %desc_mapping;
+
+  my %orth_mapping = (
+      ortholog_one2one          => '1 to 1 orthologue',
+      apparent_ortholog_one2one => '1 to 1 orthologue (apparent)',
+      ortholog_one2many         => '1 to many orthologue',
+      ortholog_many2many        => 'many to many orthologue',
+      possible_ortholog         => 'possible orthologue',
+  );
+  my %para_mapping = (
+      within_species_paralog    => 'paralogue (within species)',
+      other_paralog             => 'other paralogue (within species)',
+      putative_gene_split       => 'putative gene split',
+      contiguous_gene_split     => 'contiguous gene split',
+  );
+
+  if ($match_type eq 'Orthologue') {
+    %desc_mapping = %orth_mapping;
+  }
+  elsif ($match_type eq 'Paralogue') {
+    %desc_mapping = %para_mapping;
+  }
+  else {
+    %desc_mapping = (%orth_mapping, %para_mapping);
+  }
+  return %desc_mapping;
+}
+
 sub get_homology_matches {
   my ($self, $homology_source, $homology_description, $disallowed_homology, $compara_db) = @_;
   #warn ">>> MATCHING $homology_source, $homology_description BUT NOT $disallowed_homology";
@@ -721,17 +753,7 @@ sub get_homology_matches {
     my %homology_list;
 
     # Convert descriptions into more readable form
-    my %desc_mapping = (
-      ortholog_one2one          => '1-to-1',
-      apparent_ortholog_one2one => '1-to-1 (apparent)', 
-      ortholog_one2many         => '1-to-many',
-      possible_ortholog         => 'possible ortholog',
-      ortholog_many2many        => 'many-to-many',
-      within_species_paralog    => 'paralogue (within species)',
-      other_paralog             => 'other paralogue (within species)',
-      putative_gene_split       => 'putative gene split',
-      contiguous_gene_split     => 'contiguous gene split'
-    );
+    my %desc_mapping = $self->get_desc_mapping;
     
     foreach my $display_spp (keys %$homologues) {
       my $order = 0;

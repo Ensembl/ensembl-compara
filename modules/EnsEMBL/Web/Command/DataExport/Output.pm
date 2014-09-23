@@ -25,6 +25,7 @@ use Bio::AlignIO;
 use IO::String;
 
 use EnsEMBL::Web::File;
+use EnsEMBL::Web::Constants;
 
 use base qw(EnsEMBL::Web::Command);
 
@@ -77,8 +78,10 @@ sub process {
     unless ($error) {
       ## Write data to output file in desired format
 
-      ## All non-RTF alignments go via a single outputter
-      if ($hub->param('align') && lc($format) ne 'rtf') {
+      ## All BioPerl alignments go via a single outputter
+      my %align_formats = EnsEMBL::Web::Constants::ALIGNMENT_FORMATS;
+      my $in_bioperl = grep { lc($_) eq lc($format) } keys %align_formats;
+      if ($hub->param('align') && $in_bioperl) {
         my @data = $component->get_export_data;
         $error = $self->write_alignments($format, @data);
       }
@@ -392,16 +395,22 @@ sub write_fasta {
 }
 
 sub write_alignments {
-  my ($self, $format, $location) = @_;
+  my ($self, $format, $data) = @_;
   my $hub = $self->hub;
+  my @alignments;
 
-  $self->object->{'alignments_function'} = 'get_SimpleAlign';
+  if (ref($data) eq 'ARRAY') {
+    @alignments = @$data;
+  }
+  else {
+    $self->object->{'alignments_function'} = 'get_SimpleAlign';
 
-  my $alignments = $self->object->get_alignments({
-                                                'slice'   => $location->slice,
+    push @alignments, $self->object->get_alignments({
+                                                'slice'   => $data->slice,
                                                 'align'   => $hub->param('align'),
                                                 'species' => $hub->species,
                                               });
+  }
 
   my $export;
 
@@ -410,9 +419,19 @@ sub write_alignments {
     -format => $format
   );
 
-  print $align_io $alignments;
+  foreach (@alignments) {
+    print $align_io $_;
+  }
 
   $self->write_line($export);
+}
+
+sub write_orthoxml {
+  my ($self, $component) = @_;
+  my $hub     = $self->hub;
+  my $error   = undef;
+
+  warn '>>> WRITING ORTHOXML';
 }
 
 sub write_line { 
