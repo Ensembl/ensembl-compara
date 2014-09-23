@@ -56,12 +56,12 @@ sub create_form {
 
   my @format_info;
   foreach (sort {lc($a) cmp lc($b)} keys %$fields_by_format) {
-    my $info = { 'value' => $_, 'caption' => $format_label->{$_}, 'class' => "_stt__$_ _action_$_"};
+    my $info = { 'value' => $_, 'caption' => $format_label->{$_}, 'class' => "_stt__$_"};
     $info->{'selected'} = 'selected' if $hub->param('format') eq $_;
     push @format_info, $info;
   }
   my $formats = [
-      {'caption' => '-- Choose Format --', 'value' => 'tutorial'},
+      {'caption' => '-- Choose Format --'},
       @format_info
     ];
   ## Don't update this field from params, as there's no back 
@@ -84,7 +84,7 @@ sub create_form {
       'label'   => 'File format',
       'values'  => $formats,
       'select'  => 'select',
-      'class'   => '_stt _action',
+      'class'   => '_stt _export_formats',
     },
     {
       'type'    => 'Radiolist',
@@ -128,16 +128,6 @@ sub create_form {
         'value'   => $hub->param($_),
       },
     ]);
-  }
-
-  ## Add tutorial "fieldset" that is shown by default
-  if ($tutorial) {
-    my $tutorial_fieldset = $form->add_fieldset({'class' => '_stt_tutorial'});
-    my $html = '<p><b>Guide to file formats</b></p>';
-    foreach my $format (sort {lc($a) cmp lc($b)} keys %$fields_by_format) {
-      $html .= $self->show_preview($format);
-    }
-    $tutorial_fieldset->add_notes($html);
   }
   
   ## Create all options forms, then show only one using jQuery
@@ -196,6 +186,17 @@ sub create_form {
     });
   }
 
+  ## Add images fieldset
+  if ($tutorial) {
+    my $tutorial_fieldset = $form->add_fieldset;
+    my $html = '<p><b>Guide to file formats</b></p><div class="_export_formats export-formats">';
+    foreach my $format (sort {lc($a) cmp lc($b)} keys %$fields_by_format) {
+      $html .= $self->show_preview($format);
+    }
+    $html .= '</div>';
+    $tutorial_fieldset->add_notes($html);
+  }
+
   return $form;
 }
 
@@ -210,7 +211,7 @@ sub show_preview {
   my $img = lc($format);
   $img .= '_align' if (lc($format) eq 'fasta' && $self->hub->param('align'));
   
-  my $html = sprintf('<div style="float:left;padding:0 20px 20px 0;"><p style="margin-bottom:0">%s</p><img src="/img/help/export/%s_preview.png" style="width:200px;height:150px" /></div>', $format, $img);
+  my $html = sprintf('<div><p>%s</p><p><img src="/img/help/export/%s_preview.png" /></p></div>', $format, $img);
   return $html;
 }
 
