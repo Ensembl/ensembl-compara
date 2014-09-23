@@ -236,6 +236,12 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
         
         return false;
       },
+      mousemove: function(e) {
+        var coords  = panel.getMapCoords(e);
+        var area    = coords.r ? panel.dragRegion : panel.getArea(coords);
+
+        $(this).toggleClass('drag_select_pointer', !(!area || $(area.a).hasClass('label') || $(area.a).hasClass('drag')));
+      },
       click: function (e) {
         if (panel.clicking) {
           panel.makeZMenu(e, panel.getMapCoords(e));
