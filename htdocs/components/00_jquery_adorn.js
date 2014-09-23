@@ -207,9 +207,10 @@
     });
     if(data.url) {
       d = d.then(function() {
-        return $.getJSON(data.url,{});
-      }).then(function(data) {
-        _do_adorn(outer,data); 
+        $.getJSON(data.url,{}).then(function(data) {
+            _do_adorn(outer,data); 
+        });
+        return d;
       });
     } else {
       d = fire(d,function() {
