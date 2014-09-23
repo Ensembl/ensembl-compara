@@ -199,8 +199,15 @@ sub export_options { return {'action' => 'Homologs'}; }
 
 sub get_export_data {
 ## Get data for export
-  my $self = shift;
+  my ($self, $type) = @_;
+
   ## Fetch explicitly, as we're probably coming from a DataExport URL
+  if ($type && $type eq 'gene') {
+    warn ">>> GENE: ".$self->hub->core_object('gene');
+    return $self->hub->core_object('gene');
+  }
+
+  ## ...or get alignments
   my $simple_alignments = [];
   my $seq = $self->hub->param('seq');
   
