@@ -31,7 +31,7 @@ sub get_object {
 }
 
 sub initialize {
-  my ($self, $slice, $start, $end) = @_;
+  my ($self, $slice, $start, $end, $adorn) = @_;
   my $hub    = $self->hub;
   my $object = $self->get_object;
 
@@ -53,10 +53,12 @@ sub initialize {
   $config->{'slices'}        = [{ slice => $slice, name => $config->{'species'} }];
   $config->{'end_number'}    = $config->{'number'} = 1 if $config->{'line_numbering'};
 
-  my ($sequence, $markup) = $self->get_sequence_data($config->{'slices'}, $config);
+  my ($sequence, $markup) = $self->get_sequence_data($config->{'slices'}, $config,$adorn);
 
-  $self->markup_exons($sequence, $markup, $config)     if $config->{'exon_display'};
-  $self->markup_variation($sequence, $markup, $config) if $config->{'snp_display'};
+  if($adorn ne 'none') {
+    $self->markup_exons($sequence, $markup, $config)     if $config->{'exon_display'};
+    $self->markup_variation($sequence, $markup, $config) if $config->{'snp_display'};
+  }
   $self->markup_line_numbers($sequence, $config)       if $config->{'line_numbering'};
   
   return ($sequence, $config);
@@ -103,8 +105,9 @@ sub content_sub_slice {
   
   $slice ||= $self->object->slice;
   $slice   = $slice->sub_Slice($start, $end) if $start && $end;
-  
-  my ($sequence, $config) = $self->initialize($slice, $start, $end);
+ 
+  my $adorn = $hub->param('adorn') || 'none'; 
+  my ($sequence, $config) = $self->initialize($slice, $start, $end,$adorn);
   
   if ($end && $end == $length) {
     $config->{'html_template'} = '<pre class="text_sequence">%s</pre>';

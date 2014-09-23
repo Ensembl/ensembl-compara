@@ -78,7 +78,7 @@ sub _init {
 
 # Used by Compara_Alignments, Gene::GeneSeq and Location::SequenceAlignment
 sub get_sequence_data {
-  my ($self, $slices, $config) = @_;
+  my ($self, $slices, $config,$adorn) = @_;
   my $hub      = $self->hub;
   my $sequence = [];
   my @markup;
@@ -99,8 +99,10 @@ sub get_sequence_data {
     
     $self->set_sequence($config, $sequence, $mk, $seq, $sl->{'name'});
     $self->set_alignments($config, $sl, $mk, $seq)      if $config->{'align'}; # Markup region changes and inserts on comparisons
-    $self->set_variations($config, $sl, $mk, $sequence) if $config->{'snp_display'};
-    $self->set_exons($config, $sl, $mk)                 if $config->{'exon_display'};
+    if($adorn ne 'none') {
+      $self->set_variations($config, $sl, $mk, $sequence) if $config->{'snp_display'};
+      $self->set_exons($config, $sl, $mk)                 if $config->{'exon_display'};
+    }
     $self->set_codons($config, $sl, $mk)                if $config->{'codons_display'};
     
     push @markup, $mk;
@@ -560,6 +562,7 @@ sub markup_variation {
       $variation = $data->{'variations'}{$_};
       
       $seq->[$_]{'letter'} = $variation->{'ambiguity'} if $variation->{'ambiguity'};
+      $seq->[$_]{'new_letter'} = $variation->{'ambiguity'} if $variation->{'ambiguity'};
       $seq->[$_]{'title'} .= ($seq->[$_]{'title'} ? "\n" : '') . $variation->{'alleles'} if $config->{'title_display'};
       $seq->[$_]{'class'} .= ($class->{$variation->{'type'}} || $variation->{'type'}) . ' ';
       $seq->[$_]{'class'} .= 'bold ' if $variation->{'align'};
@@ -781,6 +784,8 @@ sub build_sequence {
   my $single_line    = scalar @{$sequence->[0]||[]} <= $config->{'display_width'}; # Only one line of sequence to display
   my $s              = 0;
   my ($html, @output);
+
+  my $adorn = $self->hub->param('adorn') || 'none';
  
   my $adid = 0;
   my $adoff = 0;
@@ -802,6 +807,7 @@ sub build_sequence {
       $current{'title'} = $seq->{'title'}  ? qq(title="$seq->{'title'}") : '';
       $current{'href'}  = $seq->{'href'}   ? qq(href="$seq->{'href'}")   : '';;
       $current{'tag'}   = $current{'href'} ? 'a class="sequence_info"'   : 'span';
+      $current{'letter'} = $seq->{'new_letter'} || '-';
       
       if ($seq->{'class'}) {
         $current{'class'} = $seq->{'class'};
@@ -831,7 +837,7 @@ sub build_sequence {
         $style = sprintf 'style="%s"', join ';', map "$_:$style_hash{$_}", keys %style_hash;
       }
     
-      foreach my $k (qw(style title href tag)) {
+      foreach my $k (qw(style title href tag letter)) {
         my $v = $current{$k};
         $v = $style if $k eq 'style';
         $v = $seq->{'tag'} if $k eq 'tag';
@@ -977,18 +983,42 @@ sub build_sequence {
 
   my $random_id = random_string(8);
 
-  $config->{'html_template'} = qq(
-    <div class="js_panel" id="$random_id">
-      <div class="adornment">
-        <span class="adornment-data" style="display:none;">
-          $adornment
-        </span>
-        $config->{'html_template'}
+  if($adorn eq 'none') {
+    my $ajax_url = $self->hub->apache_handle->unparsed_uri;
+    my ($path,$params) = split(/\?/,$ajax_url,2);
+    my @params = split(/;/,$params);
+    for(@params) { $_ = 'adorn=only' if /^adorn=/; }
+    $ajax_url = $path.'?'.join(';',@params,'adorn=only');
+    my $ajax_json = $self->jsonify({ url => $ajax_url });
+    $config->{'html_template'} = qq(
+      <div class="js_panel" id="$random_id">
+        <div class="adornment">
+          <span class="adornment-data" style="display:none;">
+            $ajax_json
+          </span>
+          $config->{'html_template'}
+        </div>
       </div>
-    </div>
-  );
- 
-  return $config->{'html_template'} . sprintf '<input type="hidden" class="panel_type" value="TextSequence" name="panel_type_%s" />', $self->id;
+    );
+  
+    return $config->{'html_template'} . sprintf '<input type="hidden" class="panel_type" value="TextSequence" name="panel_type_%s" />', $self->id;
+
+  } elsif($adorn eq 'only') {
+    return $adornment;
+  } else {
+    $config->{'html_template'} = qq(
+      <div class="js_panel" id="$random_id">
+        <div class="adornment">
+          <span class="adornment-data" style="display:none;">
+            $adornment
+          </span>
+          $config->{'html_template'}
+        </div>
+      </div>
+    );
+  
+    return $config->{'html_template'} . sprintf '<input type="hidden" class="panel_type" value="TextSequence" name="panel_type_%s" />', $self->id;
+  }
 }
 
 # When displaying a very large sequence we can break it up into smaller sections and render each of them much more quickly

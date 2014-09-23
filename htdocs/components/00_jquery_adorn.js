@@ -51,6 +51,22 @@
     });
   }
 
+  function fix_letters(text,ref,seq) {
+    var out = "";
+
+    var x = "";
+    for(var i=0;i<seq.letter.length;i++) {
+      var t = ref.letter[seq.letter[i]];
+      x = x + t;
+      if(t == '-') {
+        out += text.substr(i,1);
+      } else {
+        out += t;
+      }
+    }
+    return out;
+  }
+
   function make_groups(seq) {
     var styles = [];
     $.each(seq,function(key,values) {
@@ -64,6 +80,7 @@
       if(last) {
         var diffs = 0;
         $.each(seq,function(k,v) {
+          if(k == 'letter') { return; }
           if(last[k] || cur[k]) {
             if(!last[k] || !cur[k] || last[k]!=cur[k]) { diffs = 1; }
           }
@@ -104,6 +121,7 @@
   }
 
   function prepare_adorn_span(text,ref,seq,xxx) {
+    text = fix_letters(text,ref,seq);
     var groups = make_groups(seq);
     var pos = 0;
     var out = '';
@@ -120,21 +138,25 @@
        $outer.hasClass('adornment-done')) {
       return $.Deferred().resolve(0);
     }
+    var wrapper = $outer.wrap("<div></div>").parent();
     $outer.addClass('adornment-running');
     var data = $.parseJSON($('.adornment-data',outer).text());
-    if ($.isEmptyObject(data.ref)) {
-      return $.Deferred().resolve(0);
+    var d;
+    if(data.url) {
+      d = $.getJSON(data.url,{});
+    } else {
+      d = $.Deferred().resolve(data);
     }
-    var wrapper = $outer.wrap("<div></div>").parent();
-    var d = $.Deferred().resolve(data.seq);
-    d = loop(d,function(key,values) {
-      var el = $('.adorn-'+key,outer);
-      if(el.length) {
-        return [el,el.text(),data.ref,values,key];
-      } else {
-        return undefined;
-      }
-    },1000,'a');
+    d = d.then(function(data) {
+      return loop($.Deferred().resolve(data.seq),function(key,values) {
+        var el = $('.adorn-'+key,outer);
+        if(el.length) {
+          return [el,el.text(),data.ref,values,key];
+        } else {
+          return undefined;
+        }
+      },1000,'a');
+    });
     d = loop(d,function(i,task) {
       var out = prepare_adorn_span(task[1],task[2],task[3],task[4]);
       return [task[0],out];
