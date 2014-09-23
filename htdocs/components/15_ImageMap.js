@@ -815,8 +815,8 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
     this.imgOffset = this.imgOffset || this.elLk.img.offset();
     
     return {
-      x: e.pageX - this.imgOffset.left, 
-      y: e.pageY - this.imgOffset.top
+      x: e.pageX - this.imgOffset.left - 1, // exclude the 1px borders
+      y: e.pageY - this.imgOffset.top - 1
     };
   },
   
