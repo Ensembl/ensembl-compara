@@ -447,6 +447,7 @@ sub get_target_slice {
 sub get_alignments {
   my ($self, $args) = @_;
   my $hub = $self->hub;
+  my $slice = $args->{slice};
 
   my $cdb = $args->{'cdb'} || 'compara';
 
