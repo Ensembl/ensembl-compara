@@ -23,6 +23,7 @@ use strict;
 use RTF::Writer;
 use Bio::AlignIO;
 use IO::String;
+use Bio::EnsEMBL::Compara::Graph::OrthoXMLWriter;
 
 use EnsEMBL::Web::File;
 use EnsEMBL::Web::Constants;
@@ -430,8 +431,29 @@ sub write_orthoxml {
   my ($self, $component) = @_;
   my $hub     = $self->hub;
   my $error   = undef;
+  my $cdb     = $hub->param('cdb') || 'compara';
 
-  warn '>>> WRITING ORTHOXML';
+  my ($gene)  = $component->get_export_data('gene');
+  my $tree    = $gene->get_GeneTree($cdb);
+
+  my $handle = IO::String->new();
+  my $w = Bio::EnsEMBL::Compara::Graph::OrthoXMLWriter->new(
+          -SOURCE => $cdb eq 'compara' ? $hub->species_defs->ENSEMBL_SITETYPE : 'Ensembl Genomes',
+          -SOURCE_VERSION => $hub->species_defs->SITE_RELEASE_VERSION,
+          -HANDLE => $handle,
+          -POSSIBLE_ORTHOLOGS => $hub->param('possible_orthologs'),
+  );
+  $self->_writexml($tree, $handle, $w);
+}
+
+sub _writexml{
+  my ($self,$tree,$handle,$w) = @_;
+  my $hub = $self->hub;
+  $w->write_trees($tree);
+  $w->finish();
+
+  my $out = ${$handle->string_ref()};
+  $self->write_line($out);
 }
 
 sub write_line { 
