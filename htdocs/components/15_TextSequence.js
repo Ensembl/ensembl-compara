@@ -46,7 +46,7 @@ Ensembl.Panel.TextSequence = Ensembl.Panel.Content.extend({
           if(!$('.ajax_pending',this.el).length &&
              !$('.ajax_load',this.el).length &&
              !$('.sequence_key img',this.el).length) {
-            panel.requestKey($this);
+//            panel.requestKey($this);
           }
         }
       });
