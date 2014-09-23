@@ -942,6 +942,55 @@ sub build_sequence {
     }
   }
 
+  # PREFIX
+  foreach my $k (keys %adref) {
+    # ... sort
+    my @sorted;
+    foreach my $i (0..$#{$adref{$k}}) {
+      push @sorted,[$i,$adref{$k}->[$i]];
+    }
+    @sorted = sort { $a->[1] cmp $b->[1] } @sorted;
+    my %pmap; 
+    foreach my $i (0..$#sorted) {
+      $pmap{$sorted[$i]->[0]} = $i;
+    }
+    @sorted = map { $_->[1] } @sorted;
+    # ... calculate prefixes
+    my @prefixes;
+    my $prev = "";
+    foreach my $s (@sorted) {
+      if($prev) {
+        my $match = "";
+        while(substr($s,0,length($match)) eq $match and 
+              length($match) < length($prev)) {
+          $match .= substr($prev,length($match),1);
+        }
+        push @prefixes,[length($match)-1,substr($s,length($match)-1)];
+      } else {
+        push @prefixes,[0,$s];
+      }
+      $prev = $s; 
+    } 
+    # ... fix references
+    foreach my $a (keys %adseq) {
+      next unless $adseq{$a}->{$k};
+      my @seq;
+      foreach my $v (@{$adseq{$a}->{$k}}) {
+        if(defined $v) {
+          if($v>0) {
+            push @seq,$pmap{$v};
+          } else {
+            push @seq,$v;
+          }
+        } else {
+          push @seq,undef;
+        }
+      }
+      $adseq{$a}->{$k} = \@seq;
+      $adref{$k} = \@prefixes;
+    }
+  }
+
   my $adornment = {
     seq => \%adseq,
     ref => \%adref,

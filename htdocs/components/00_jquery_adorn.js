@@ -67,6 +67,18 @@
     return out;
   }
 
+  function unprefix(ref) {
+    for(var i=0;i<ref.length;i++) {
+      if(ref[i][0]) {
+        ref[i][0] = ref[i-1].substr(0,ref[i][0]);
+      } else {
+        ref[i][0] = "";
+      }
+      ref[i] = ref[i][0] + ref[i][1];
+    }
+    return ref;
+  }
+
   function unrle(seq) {
     var prev;
     var out = [];
@@ -168,6 +180,9 @@
       d = $.Deferred().resolve(data);
     }
     d = d.then(function(data) {
+      $.each(data.ref,function(k,v) {
+        data.ref[k] = unprefix(data.ref[k]);
+      });
       return loop($.Deferred().resolve(data.seq),function(key,values) {
         var el = $('.adorn-'+key,outer);
         if(el.length) {
