@@ -127,12 +127,12 @@ sub populate_tree {
     { 'availability' => 'gene database:compara core has_gene_tree' }
   ));
   
-  $tree_node->append($self->create_node('SpeciesTree', 'Gene gain/loss tree',
+  $compara_menu->append($tree_node);
+  
+  $compara_menu->append($self->create_node('SpeciesTree', 'Gene gain/loss tree',
       [qw( image EnsEMBL::Web::Component::Gene::SpeciesTree )],
       { 'availability' => 'gene database:compara core has_species_tree' }
     ));
-  
-  $compara_menu->append($tree_node);
     
   my $ol_node = $self->create_node('Compara_Ortholog', 'Orthologues ([[counts::orthologs]])',
     [qw( orthologues EnsEMBL::Web::Component::Gene::ComparaOrthologs )],
