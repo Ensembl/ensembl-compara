@@ -567,7 +567,9 @@ sub markup_variation {
       $seq->[$_]{'class'} .= 'bold ' if $variation->{'align'};
       $seq->[$_]{'class'} .= 'var '  if $variation->{'focus'};
       $seq->[$_]{'href'}   = $hub->url($variation->{'href'}) if $variation->{'href'};
-      $seq->[$_]{'post'}   = join '', @{$variation->{'link_text'}} if $config->{'snp_display'} eq 'snp_link' && $variation->{'link_text'};
+      my $new_post  = join '', @{$variation->{'link_text'}} if $config->{'snp_display'} eq 'snp_link' && $variation->{'link_text'};
+      $seq->[$_]{'new_post'} = $new_post if $new_post ne $seq->[$_]{'post'};
+      $seq->[$_]{'post'} = $new_post;
       
       $config->{'key'}{'variations'}{$variation->{'type'}} = 1 if $variation->{'type'} && !$variation->{'focus'};
     }
@@ -1117,7 +1119,7 @@ sub build_sequence {
     return $config->{'html_template'} . sprintf '<input type="hidden" class="panel_type" value="TextSequence" name="panel_type_%s" />', $self->id;
 
   } elsif($adorn eq 'only') {
-    return $adornment_json;
+    return qq(<span class="adornment-data">$adornment_json</span>);
   } else {
     $config->{'html_template'} = qq(
       <div class="js_panel" id="$random_id">

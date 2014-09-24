@@ -25,7 +25,7 @@ use base qw(EnsEMBL::Web::Component::TextSequence EnsEMBL::Web::Component::Trans
 use List::Util qw(max);
 
 sub get_sequence_data {
-  my ($self, $object, $config) = @_;
+  my ($self, $object, $config,$adorn) = @_;
   my $hub          = $self->hub;
   my $trans        = $object->Obj;
   my $slice        = $trans->feature_Slice;
@@ -139,7 +139,7 @@ sub get_sequence_data {
     $protein_seq->{'seq'}[$pos]{'letter'} = $partial[$pos] while $pos--; # Replace . with as much of -X- as fits in the space
   }
   
-  if ($config->{'snp_display'}) {
+  if ($config->{'snp_display'} and $adorn ne 'none') {
     foreach my $snp (reverse @{$object->variation_data($slice, $config->{'utr'}, $trans_strand)}) {
       next if $config->{'hide_long_snps'} && $snp->{'vf'}->length > $self->{'snp_length_filter'};
       
@@ -187,6 +187,7 @@ sub get_sequence_data {
         push @{$mk->{'variations'}{$_}{'href'}{'vf'}}, $dbID;
         
         $variation_seq->{'seq'}[$_]{'letter'} = $ambigcode;
+        $variation_seq->{'seq'}[$_]{'new_letter'} = $ambigcode;
         $variation_seq->{'seq'}[$_]{'href'} = $url;
         $variation_seq->{'seq'}[$_]{'title'} = $variation_name;
         $variation_seq->{'seq'}[$_]{'tag'} = 'a';
@@ -324,7 +325,9 @@ sub initialize {
   my $self   = shift;
   my $hub    = $self->hub;
   my $object = $self->object || $hub->core_object('transcript');
-  
+ 
+  my $adorn = $hub->param('adorn') || 'none';
+ 
   my $config = { 
     display_width   => $hub->param('display_width') || 60,
     species         => $hub->species,
@@ -343,11 +346,13 @@ sub initialize {
   
   $self->set_variation_filter($config);
   
-  my ($sequence, $markup) = $self->get_sequence_data($object, $config);
+  my ($sequence, $markup) = $self->get_sequence_data($object, $config,$adorn);
   
   $self->markup_exons($sequence, $markup, $config)     if $config->{'exons'};
   $self->markup_codons($sequence, $markup, $config)    if $config->{'codons'};
-  $self->markup_variation($sequence, $markup, $config) if $config->{'snp_display'};  
+  if($adorn ne 'none') {
+    $self->markup_variation($sequence, $markup, $config) if $config->{'snp_display'};  
+  }
   $self->markup_line_numbers($sequence, $config)       if $config->{'line_numbering'};
   
   $config->{'v_space'} = "\n" if $config->{'coding_seq'} || $config->{'translation'} || $config->{'rna'};

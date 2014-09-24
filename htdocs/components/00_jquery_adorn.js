@@ -219,7 +219,8 @@
     });
     if(data.url) {
       d = d.then(function() {
-        $.getJSON(data.url,{}).then(function(data) {
+        $.ajax({ dataType: "html", url: data.url}).then(function(page) {
+          var data = $.parseJSON($('.adornment-data',page).text());
           _do_adorn(outer,fixups,data);
         });
       });
