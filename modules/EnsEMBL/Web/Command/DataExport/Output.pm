@@ -83,8 +83,8 @@ sub process {
       my %align_formats = EnsEMBL::Web::Constants::ALIGNMENT_FORMATS;
       my $in_bioperl = grep { lc($_) eq lc($format) } keys %align_formats;
       if ($hub->param('align') && $in_bioperl) {
-        my @data = $component->get_export_data;
-        $error = $self->write_alignments($format, @data);
+        my $data = $component->get_export_data;
+        $error = $self->write_alignment($format, $data);
       }
       else {
         my $write_method = 'write_'.lc($format);
@@ -395,18 +395,18 @@ sub write_fasta {
   return $error || $file->error;
 }
 
-sub write_alignments {
+sub write_alignment {
   my ($self, $format, $data) = @_;
   my $hub = $self->hub;
-  my @alignments;
+  my $alignment;
 
-  if (ref($data) eq 'ARRAY') {
-    @alignments = @$data;
+  if (ref($data) =~ 'SimpleAlign') {
+    $alignment = $data;
   }
   else {
     $self->object->{'alignments_function'} = 'get_SimpleAlign';
 
-    push @alignments, $self->object->get_alignments({
+    $alignment = $self->object->get_alignments({
                                                 'slice'   => $data->slice,
                                                 'align'   => $hub->param('align'),
                                                 'species' => $hub->species,
@@ -420,9 +420,7 @@ sub write_alignments {
     -format => $format
   );
 
-  foreach (@alignments) {
-    print $align_io $_;
-  }
+  print $align_io $alignment;
 
   $self->write_line($export);
 }
