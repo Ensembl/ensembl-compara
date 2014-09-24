@@ -185,7 +185,12 @@ sub render_toolbar {
                    'component' => $component,
                 };
     foreach (@{$self->{'export_params'}||[]}) {
-      $params->{$_} = $hub->param($_);
+      if (ref($_) eq 'ARRAY') {
+        $params->{$_->[0]} = $_->[1];
+      }
+      else {
+        $params->{$_} = $hub->param($_);
+      }
     }
     $toolbar .= sprintf '<a href="%s" class="download modal_link" title="%s"></a>', $hub->url($params), $icon_mapping->{'download'}{'title'};
   }

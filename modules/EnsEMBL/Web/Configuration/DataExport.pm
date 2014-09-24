@@ -40,6 +40,7 @@ sub populate_tree {
   $self->create_node('Alignments', 'Alignments', ['alignments', 'EnsEMBL::Web::Component::DataExport::Alignments']);
   $self->create_node('TextAlignments', 'Alignments', ['text_alignments', 'EnsEMBL::Web::Component::DataExport::TextAlignments']);
   $self->create_node('Homologs', 'Alignments', ['alignments', 'EnsEMBL::Web::Component::DataExport::Homologs']);
+  $self->create_node('GeneTree', 'Gene Tree', ['genetree', 'EnsEMBL::Web::Component::DataExport::GeneTree']);
 
   ## Output nodes
   $self->create_node('Output',  '', [], { 'command' => 'EnsEMBL::Web::Command::DataExport::Output'});
