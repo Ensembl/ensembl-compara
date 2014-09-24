@@ -279,16 +279,15 @@ sub count_alignments {
   my $cdb        = shift || 'DATABASE_COMPARA';
   my $species    = $self->species;
   my %alignments = $self->species_defs->multi($cdb, 'ALIGNMENTS');
-  my $c          = { all => 0, pairwise => 0 };
-  
+  my $c          = { all => 0, pairwise => 0, multi => 0 };
+
   foreach (grep $_->{'species'}{$species}, values %alignments) {
     $c->{'all'}++ ;
     $c->{'pairwise'}++ if $_->{'class'} =~ /pairwise_alignment/ && scalar keys %{$_->{'species'}} == 2;
+    $c->{'multi'}++    if $_->{'class'} !~ /pairwise/ && $_->{'species'}->{$species};
   }
-  
-  $c->{'multi'} = $c->{'all'} - $c->{'pairwise'};
-  
-  return $c; 
+
+  return $c;
 }
 
 sub check_for_align_in_database {
