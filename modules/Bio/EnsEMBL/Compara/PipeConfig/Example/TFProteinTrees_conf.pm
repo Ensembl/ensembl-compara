@@ -177,7 +177,7 @@ sub default_options {
 
         # the master database for synchronization of various ids (use undef if you don't have a master database)
         #'master_db' => 'mysql://ensro@mysql-eg-pan-1.ebi.ac.uk:4276/ensembl_compara_master',
-		#'master_db' => 'mysql://admin:00ABuSzd@mysql-treefam-prod:4401/treefam_master10',
+		#'master_db' => 'mysql://admin:XXXXXXXX@mysql-treefam-prod:4401/treefam_master10',
 
     ######## THESE ARE PASSED INTO LOAD_REGISTRY_FROM_DB SO PASS IN DB_VERSION
     ######## ALSO RAISE THE POINT ABOUT LOAD_FROM_MULTIPLE_DBs
@@ -187,13 +187,14 @@ sub default_options {
       -port   => 4401,
       -user   => 'admin',
       -pass   => $self->o('password'),
-      -dbname => 'TreeFam'.$self->o('release').$self->o('release_suffix'),
+	  #-dbname => 'TreeFam'.$self->o('release').$self->o('release_suffix'),
+      -dbname => 'treefam_10_baboon',
 	  -driver => 'mysql',
       #-db_version => $self->o('ensembl_release')
     },
     eg_mirror => {       
             -host => 'mysql-eg-mirror.ebi.ac.uk',
-            -port => 4205,
+            -port => 4157,
             -user => 'ensro',
             #-verbose => 1,
             -db_version => 75, 
@@ -260,7 +261,8 @@ sub default_options {
 
         # Add the database location of the previous Compara release. Use "undef" if running the pipeline without reuse
         #'prev_rel_db' => 'mysql://ensro@mysql-eg-staging-1.ebi.ac.uk:4160/ensembl_compara_fungi_19_72',
-        'prev_rel_db' => 'mysql://treefam_ro:treefam_ro@mysql-treefam-prod:4401/TreeFam10_final_filtering_other_notung_param',
+		#'prev_rel_db' => 'mysql://treefam_ro:treefam_ro@mysql-treefam-prod:4401/TreeFam10_final_filtering_other_notung_param',
+        'prev_rel_db' => 'mysql://'.$self->o('password').':admin@mysql-treefam-prod:4401/TreeFam10_final_filtering_other_notung_param',
 
         # How will the pipeline create clusters (families) ?
         # Possible values: 'blastp' (default), 'hmm', 'hybrid'
