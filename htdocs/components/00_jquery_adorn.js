@@ -54,23 +54,25 @@
   function fix_letters(text,ref,seq) {
     var out = "";
 
-    var x = "";
-    for(var i=0;i<seq.letter.length;i++) {
-      var t = ref.letter[seq.letter[i]];
-      x = x + t;
-      if(t == '-') {
-        out += text.substr(i,1);
+    var s = undefined;
+    if(!seq.letter) { seq.letter = []; }
+    for(var i=0;i<text.length;i++) {
+      if(i < seq.letter.length) { s = seq.letter[i]; }
+      if(s) {
+        out += ref.letter[s];
       } else {
-        out += t;
+        out += text.substr(i,1);
       }
     }
     return out;
   }
 
   function unprefix(ref) {
+    var len = 0;
     for(var i=0;i<ref.length;i++) {
-      if(ref[i][0]) {
-        ref[i][0] = ref[i-1].substr(0,ref[i][0]);
+      len += ref[i][0];
+      if(len) {
+        ref[i][0] = ref[i-1].substr(0,len);
       } else {
         ref[i][0] = "";
       }
@@ -80,9 +82,10 @@
   }
 
   function unrle(seq) {
-    var prev;
+    var prev = undefined;
     var out = [];
 
+    if(!$.isArray(seq)) { return seq; }
     for(var i=0;i<seq.length;i++) {
       if(seq[i]<0) {
         for(var j=0;j<-seq[i];j++) { out.push(prev); }
@@ -94,13 +97,15 @@
     return out;
   }
 
-  function make_groups(seq) {
+  function make_groups(seq,textlen) {
     var styles = [];
     $.each(seq,function(key,values) {
-      $.each(values,function(i,value) {
+      var value = undefined;
+      for(var i=0;i<textlen;i++) {
+        if(i < values.length) { value = values[i]; }
         if(!styles[i]) { styles[i] = {}; }
         styles[i][key] = value;
-      });
+      }
     });
     var last = null;
     $.each(styles,function(i,cur) {
@@ -148,11 +153,8 @@
   }
 
   function prepare_adorn_span(text,ref,seq,xxx) {
-    $.each(seq,function(k,v) {
-      seq[k] = unrle(seq[k]);
-    });
     text = fix_letters(text,ref,seq);
-    var groups = make_groups(seq);
+    var groups = make_groups(seq,text.length);
     var pos = 0;
     var out = '';
     $.each(groups,function(i,group) {
@@ -183,12 +185,22 @@
       $.each(data.ref,function(k,v) {
         data.ref[k] = unprefix(data.ref[k]);
       });
+      $.each(data.seq,function(k,v) {
+        if($.isPlainObject(data.seq[k])) {
+          $.each(data.seq[k],function(a,b) {
+            data.seq[k][a] = unrle(data.seq[k][a]);
+          });
+        }
+      });
+      data.seq = unrle(data.seq);
       return loop($.Deferred().resolve(data.seq),function(key,values) {
-        var el = $('.adorn-'+key,outer);
-        if(el.length) {
-          return [el,el.text(),data.ref,values,key];
-        } else {
-          return undefined;
+        if(values) {
+          var el = $('.adorn-'+key,outer);
+          if(el.length) {
+            return [el,el.text(),data.ref,values,key];
+          } else {
+            return undefined;
+          }
         }
       },1000,'a');
     });
