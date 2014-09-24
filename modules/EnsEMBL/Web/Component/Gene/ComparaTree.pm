@@ -307,11 +307,23 @@ sub content {
   my $image_id = $gene ? $gene->stable_id : $tree_stable_id;
   my $li_tmpl  = '<li><a href="%s">%s</a></li>';
   my @view_links;
-  
-  $image->image_type       = 'genetree';
-  $image->image_name       = ($hub->param('image_width')) . "-$image_id";
-  $image->imagemap         = 'yes';
-  $image->{'panel_number'} = 'tree';
+ 
+  my $gene_name;
+  warn ">>> GENE $gene";
+  if ($gene) {
+    my $dxr    = $gene->Obj->can('display_xref') ? $gene->Obj->display_xref : undef;
+    $gene_name = $dxr ? $dxr->display_id : $gene->stable_id;
+  }
+  else {
+    $gene_name = $tree_stable_id;
+  }
+
+  $image->image_type        = 'genetree';
+  $image->image_name        = ($hub->param('image_width')) . "-$image_id";
+  $image->imagemap          = 'yes';
+  $image->{'panel_number'}  = 'tree';
+  $image->{'data_export'}   = 'GeneTree';
+  $image->{'export_params'} = [['gene_name', $gene_name]];
   $image->set_button('drag', 'title' => 'Drag to select region');
   
   if ($gene) {
@@ -561,10 +573,18 @@ sub genomic_alignment_links {
   foreach (sort { $a cmp $b } keys %species_hash) {
     my ($name, $type) = split /###/, $_;
     
-    $list .= qq{<li><a href="$url;align=$species_hash{$_}">$name - $type</a></li>};
+    $list .= qq(<li><a href="$url;align=$species_hash{$_}">$name - $type</a></li>);
   }
   
   return qq{<div class="alignment_list"><p>View genomic alignments for this gene</p><ul>$list</ul></div>};
+}
+
+sub export_options { return {'action' => 'GeneTree'}; }
+
+sub get_export_data {
+## Get data for export
+  my $self      = shift;
+  return $self->hub->core_object('gene');
 }
 
 1;
