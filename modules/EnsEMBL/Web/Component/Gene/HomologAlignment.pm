@@ -203,13 +203,12 @@ sub get_export_data {
 
   ## Fetch explicitly, as we're probably coming from a DataExport URL
   if ($type && $type eq 'gene') {
-    warn ">>> GENE: ".$self->hub->core_object('gene');
     return $self->hub->core_object('gene');
   }
 
   ## ...or get alignments
   my $simple_alignments = [];
-  my $seq = $self->hub->param('seq');
+  my $seq = $self->hub->param('align');
   
   my $homologies = $self->get_homologies;
  
@@ -240,7 +239,14 @@ sub buttons {
   my $dxr  = $gene->can('display_xref') ? $gene->display_xref : undef;
   my $name = $dxr ? $dxr->display_id : $gene->stable_id;
 
-  my $params  = {'type' => 'DataExport', 'action' => 'Homologs', 'data_type' => 'Gene', 'component' => 'HomologAlignment', 'gene_name' => $name, 'align' => 'yes'};
+  my $params  = {
+                  'type'      => 'DataExport', 
+                  'action'    => 'Homologs', 
+                  'data_type' => 'Gene', 
+                  'component' => 'HomologAlignment', 
+                  'gene_name' => $name, 
+                  'align'     => $hub->param('seq') || 'protein',
+                };
 
   return {
     'url'     => $hub->url($params),
