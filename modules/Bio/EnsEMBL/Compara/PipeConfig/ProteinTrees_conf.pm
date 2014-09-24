@@ -599,7 +599,7 @@ sub core_pipeline_analyses {
                 'do_not_reuse_list' => $self->o('do_not_reuse_list'),
             },
             -hive_capacity => 10,
-            -rc_name => '500Mb_job',
+            -rc_name => '1Gb_job',
             -flow_into => {
                 2 => { ':////accu?reused_gdb_ids=[]' => { 'reused_gdb_ids' => '#genome_db_id#'} },
                 3 => { ':////accu?nonreused_gdb_ids=[]' => { 'nonreused_gdb_ids' => '#genome_db_id#'} },
