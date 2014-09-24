@@ -162,7 +162,7 @@
     return out;
   }
 
-  function _do_adorn(outer,data) {
+  function _do_adorn(outer,fixups,data) {
     var $outer = $(outer);
     if(($outer.hasClass('adornment-running') && !data) ||
        $outer.hasClass('adornment-done')) {
@@ -208,9 +208,8 @@
     if(data.url) {
       d = d.then(function() {
         $.getJSON(data.url,{}).then(function(data) {
-            _do_adorn(outer,data); 
+          _do_adorn(outer,fixups,data);
         });
-        return d;
       });
     } else {
       d = fire(d,function() {
@@ -218,23 +217,14 @@
         $outer.removeClass('adornment-running');
       });
     }
-    return d.then(function() { return $.Deferred().resolve(1); });
+    d = d.then(function() { fixups(outer); });
+    return d;
   }
 
-  // Horrible Deferred stuff just makes sure each _do_adorn is called
-  // only after the previous finishes, and that the overall output is the
-  // logical-or of the output of each one.
-  $.fn.adorn = function() {
+  $.fn.adorn = function(fixups) {
     var all = [];
-    var d = $.Deferred().resolve(0);
     this.each(function(i,outer) {
-      d = d.then(function(nework_1) {
-        var e = $.Deferred();
-        beat(_do_adorn(outer)).done(function(nework_2) {
-          e.resolve(nework_1||nework_2);
-        });
-        return e;
-      });
+      beat(_do_adorn(outer,fixups));
     });
     return d;
   }; 
