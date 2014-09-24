@@ -31,8 +31,6 @@ use HTML::Entities qw(encode_entities);
 
 use base qw(Sanger::Graphics::Renderer);
 
-our $VERSION = do { my @r = (q$Revision$ =~ /\d+/mxg); sprintf '%d.'.'%03d' x $#r, @r };
-
 #########
 # imagemaps are basically strings, so initialise the canvas with ""
 # imagemaps also aren't too fussed about width & height boundaries

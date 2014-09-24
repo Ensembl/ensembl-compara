@@ -1177,10 +1177,13 @@ sub get_go_list {
       my $has_ancestor = (!defined ($ancestor));
       if (!$has_ancestor){
         $has_ancestor=($go eq $ancestor);
+        my $term = $goa->fetch_by_accession($go);
 
-        my $ancestors = $goa->fetch_all_by_descendant_term($goa->fetch_by_accession($go));
-        for(my $i=0; $i< scalar (@$ancestors) && !$has_ancestor; $i++){
-          $has_ancestor=(@{$ancestors}[$i]->accession eq $ancestor);
+        if ($term) {
+          my $ancestors = $goa->fetch_all_by_descendant_term($term);
+          for(my $i=0; $i< scalar (@$ancestors) && !$has_ancestor; $i++){
+            $has_ancestor=(@{$ancestors}[$i]->accession eq $ancestor);
+          }
         }
       }
       

@@ -225,7 +225,7 @@ sub _init {
     my $vc_band_start = $band->start + $v_offset;
     my $vc_band_end   = $band->end   + $v_offset;
     
-    next if $vc_band_end - $vc_band_start < 280000; # hack to make zfish annotated regions look wider on the ideogram
+#    next if $vc_band_end - $vc_band_start < 280000; # hack to make zfish annotated regions look wider on the ideogram
     
     my $stain = $band->stain;
     my $R     = $vc_band_start;

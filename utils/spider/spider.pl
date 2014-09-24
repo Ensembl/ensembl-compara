@@ -35,9 +35,6 @@ use HTML::LinkExtor;
 use HTML::Tagset;
 use Data::Dumper;
 
-use vars '$VERSION';
-$VERSION = sprintf '%d.%02d', q$Revision$ =~ /: (\d+)\.(\d+)/;
-
 use vars '$bit';
 use constant DEBUG_ERRORS   => $bit = 1;    # program errors
 use constant DEBUG_URL      => $bit <<= 1;  # print out every URL processes

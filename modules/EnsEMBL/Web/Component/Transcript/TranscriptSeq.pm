@@ -371,7 +371,8 @@ sub initialize_export {
   ## (because we don't want to have to set them in DataExport)
   my $vc = $hub->get_viewconfig('TranscriptSeq', 'Transcript');
   my @params = qw(exons codons coding_seq translation rna snp_display utr hide_long_snps);
-    foreach (@params) {
+
+  foreach (@params) {
     $hub->param($_, $vc->get($_));
   }
   my ($sequence, $config) = $self->initialize;
