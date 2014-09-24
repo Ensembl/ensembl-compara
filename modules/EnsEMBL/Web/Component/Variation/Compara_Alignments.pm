@@ -132,7 +132,7 @@ sub content {
                                     'species' => $species
                                 });
   my ($info, @aligned_slices, %non_aligned_slices, %no_variation_slices, $ancestral_seq);
-  
+
   foreach my $s (@$slices) {
     my $other_species_dbs = $species_defs->get_config($s->{'name'}, 'databases');
     my $name              = $species_defs->species_label($s->{'name'});
@@ -163,6 +163,12 @@ sub content {
       }
     }
   }
+
+  # Don't show the aligment if there is only 1 sequence (reference)
+  my $align_threshold = ($ancestral_seq) ? 2 : 1;
+  if (scalar(@aligned_slices) <= $align_threshold) {
+    return $self->_info('No alignment', "No phylogenetic context available at this location.");
+  }
  
   my $align_species = $species_defs->multi_hash->{'DATABASE_COMPARA'}{'ALIGNMENTS'}{$align}{'species'};
   my %aligned_names = map { $_->{'name'} => 1 } @aligned_slices;
@@ -174,8 +180,9 @@ sub content {
       join "</li>\n<li>", sort keys %no_variation_slices
     );
   } 
-  
+
   $html .= $self->content_sub_slice($slice, \@aligned_slices, $defaults);
+
   $html .= $self->_info('Notes', $info) if $info;
 
   return $html;
