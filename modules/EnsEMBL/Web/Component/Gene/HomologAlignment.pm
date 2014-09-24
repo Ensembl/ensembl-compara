@@ -195,7 +195,6 @@ sub get_homologies {
     ## filter out non-required types
     my $homology_desc  = $homology_types->{$homology->{'_description'}} || $homology->{'_description'};
     next unless $desc_mapping{$homology_desc}; 
-
     push @$ok_homologies, $homology;     
   }
 
@@ -220,12 +219,13 @@ sub get_export_data {
     return $self->hub->core_object('gene');
   }
 
-  ## ...or get alignments
-  my $simple_alignments = [];
-  my $seq = $self->hub->param('align');
-  
+  ## ...or get alignment
+  my $simple_alignment;
+  my $seq           = $self->hub->param('align');
+  my $second_gene   = $self->hub->param('g1');
   my $homologies = $self->get_homologies;
  
+  HOMOLOGY:
   foreach my $homology (@{$homologies}) {
 
     my $sa;
@@ -238,11 +238,19 @@ sub get_export_data {
       }
     };
     warn $@ if $@;
-    
-    push @$simple_alignments, $sa if $sa;
+
+    if ($sa) {
+      foreach my $peptide (@{$homology->get_all_Members}) {
+        my $gene = $peptide->gene_member;
+        if ($gene->stable_id eq $second_gene) {
+          $simple_alignment = $sa;
+          last HOMOLOGY;
+        }
+      }
+    }
   }
 
-  return $simple_alignments;
+  return $simple_alignment;
 }
 
 sub buttons {
@@ -260,6 +268,7 @@ sub buttons {
                   'component' => 'HomologAlignment', 
                   'gene_name' => $name, 
                   'align'     => $hub->param('seq') || 'protein',
+                  'g1'        => $hub->param('g1'),
                 };
 
   return {
