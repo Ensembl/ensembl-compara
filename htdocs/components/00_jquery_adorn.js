@@ -197,7 +197,15 @@
         if(values) {
           var el = $('.adorn-'+key,outer);
           if(el.length) {
-            return [el,el.text(),data.ref,values,key];
+            var fl = {};
+            $.each(data.flourishes,function(k,v) {
+              var f = v[key];
+              var fl_el = $('.ad-'+k+'-'+key,outer);
+              if(f && fl_el.length) {
+                fl[k] = [fl_el,$.parseJSON(f).v];
+              }
+            });
+            return [el,el.text(),data.ref,values,key,fl];
           } else {
             return undefined;
           }
@@ -205,13 +213,14 @@
       },1000,'a');
     });
     d = loop(d,function(i,task) {
-        var out = prepare_adorn_span(task[1],task[2],task[3],task[4]);
-      return [task[0],out];
+      var out = prepare_adorn_span(task[1],task[2],task[3],task[4]);
+      return [task[0],out,task[5]];
     },1000,'b');
-    d = fire(d,function() {
-    });
     d = loop(d,function(i,change) {
       change[0].html(change[1]);
+      $.each(change[2],function(i,fl) {
+        fl[0].html(fl[1]);
+      });
     },1000,'c');
     d = fire(d,function() {
       $('.adornment-data',outer).remove();

@@ -25,6 +25,7 @@ use RTF::Writer;
 use EnsEMBL::Web::Fake;
 use EnsEMBL::Web::TmpFile::Text;
 use EnsEMBL::Web::Tools::RandomString qw(random_string);
+use HTML::Entities        qw(encode_entities);
 
 use base qw(EnsEMBL::Web::Component::Shared);
 
@@ -811,6 +812,7 @@ sub build_sequence {
   my %addata;
   my %adlookup;
   my %adlookid;
+  my %flourishes;
 
   foreach my $lines (@$sequence) {
     my %current  = ( tag => 'span', class => '', title => '', href => '' );
@@ -905,6 +907,10 @@ sub build_sequence {
         
         push @{$output[$s]}, { line => $row, length => $count, pre => $pre, post => $post, adid => $adid };
         $adid++;
+        
+        if($post) {
+          ($flourishes{'post'}||={})->{$adid} = $self->jsonify({ v => $post });
+        }
         
         $new_line{$_} = $current{$_} for keys %current;
         $count        = 0;
@@ -1039,8 +1045,9 @@ sub build_sequence {
   my $adornment = {
     seq => \@adseq,
     ref => \%adref,
+    flourishes => \%flourishes,
   };
-  my $adornment_json = $self->jsonify($adornment);
+  my $adornment_json = encode_entities($self->jsonify($adornment));
 
   my $length = $output[0] ? scalar @{$output[0]} - 1 : 0;
   
@@ -1072,7 +1079,9 @@ sub build_sequence {
       }
      
       $line = "$_->[$x]{'pre'}$line" if $_->[$x]{'pre'};
-      $line .= $_->[$x]{'post'}      if $_->[$x]{'post'};
+      $line .= qq(<span class="ad-post-$adid">);
+      $line .= $_->[$x]{'post'} if $_->[$x]{'post'};
+      $line .= qq(</span>);
       $html .= "$line\n";
       
       $y++;
@@ -1119,7 +1128,7 @@ sub build_sequence {
     return $config->{'html_template'} . sprintf '<input type="hidden" class="panel_type" value="TextSequence" name="panel_type_%s" />', $self->id;
 
   } elsif($adorn eq 'only') {
-    return qq(<span class="adornment-data">$adornment_json</span>);
+    return qq(<div><span class="adornment-data">$adornment_json</span></div>);
   } else {
     $config->{'html_template'} = qq(
       <div class="js_panel" id="$random_id">
