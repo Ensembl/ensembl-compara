@@ -105,6 +105,7 @@ sub content {
 
   my $upload_fieldset = $form->add_fieldset({'class' => '_stt_upload', 'no_required_notes' => 1});
   my $remote_fieldset = $form->add_fieldset({'class' => '_stt_remote', 'no_required_notes' => 1});
+  my $datahub_fieldset = $form->add_fieldset({'class' => '_stt_datahub', 'no_required_notes' => 1});
 
   my $actions = [
     {'caption' => "Upload data (max $max_upload_size)", 'value' => 'upload', 'class' => '_stt__upload1 _stt _action _action_upload', 'checked' => 1},
@@ -130,6 +131,9 @@ sub content {
 
   $remote_fieldset->add_field({ 'type' => 'URL', 'name' => 'url_2', 'label' => 'Provide file URL', 'size' => 30, 'required' => 1 });
   $remote_fieldset->add_button({ 'name' => 'submit_button', 'value' => 'Attach' });
+
+  $datahub_fieldset->add_field({ 'type' => 'URL', 'name' => 'url_3', 'label' => 'Provide hub.txt URL', 'size' => 30, 'required' => 1 });
+  $datahub_fieldset->add_button({ 'name' => 'submit_button', 'value' => 'Attach' });
 
   return sprintf '<input type="hidden" class="subpanel_type" value="UserData" /><h2>Add a custom track</h2>%s', $form->render;
 }
