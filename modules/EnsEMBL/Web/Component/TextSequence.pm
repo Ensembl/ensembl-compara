@@ -266,7 +266,7 @@ sub set_variations {
     my $ambigcode;
     
     if ($config->{'variation_sequence'}) {
-      my $url = $hub->url({ species => $name, r => undef, v => $variation_name, vf => $dbID });
+      my $url = $hub->url({ species => $name, r => undef, vf => $dbID, v => undef });
       
       $ambigcode = $var_class =~ /in-?del|insertion|deletion/ ? '*' : $_->ambig_code;
       $ambigcode = $variation_name eq $config->{'v'} ? $ambigcode : qq{<a href="$url">$ambigcode</a>} if $ambigcode;
@@ -357,7 +357,8 @@ sub set_variations {
         species => $config->{'ref_slice_name'} ? $config->{'species'} : $name,
         type        => 'ZMenu',
         action      => 'TextSequence',
-        factorytype => 'Location'
+        factorytype => 'Location',
+        v => undef,
       };
       
       push @{$markup->{'variations'}{$_}{'href'}{'vf'}}, $dbID;
