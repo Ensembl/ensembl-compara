@@ -32,7 +32,7 @@ if ($help or !$reg_conf or !$compara_name) {
 }
 
 Bio::EnsEMBL::Registry->load_all($reg_conf);
-Bio::EnsEMBL::Registry->set_disconnect_when_inactive(1);
+#Bio::EnsEMBL::Registry->set_disconnect_when_inactive(1);
 
 # get compara database
 my ($compara) = grep { $_->dbc()->dbname() eq $compara_name }
