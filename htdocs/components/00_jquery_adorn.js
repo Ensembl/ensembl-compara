@@ -15,6 +15,24 @@
  */
 
 (function($) {
+  function sorted_each(hash,fn,map) {
+    var arr = [];
+    if(!map) { map = {}; }
+    $.each(hash,function(k,v) { arr.push([k,v]); });
+    arr.sort(function(a,b) {
+      var al = a[0].toLowerCase();
+      var bl = b[0].toLowerCase();
+      if(map[a[0]]) { al = map[a[0]]; }
+      if(map[b[0]]) { bl = map[b[0]]; }
+      if(al<bl) { return -1; }
+      if(al>bl) { return 1; }
+      return 0;
+    });
+    $.each(arr,function(i,e) {
+      fn(e[0],e[1]);
+    });
+  }
+
   function beat(def) {
     return def.then(function(data) {
       var d = $.Deferred();
@@ -164,6 +182,41 @@
     return out;
   }
 
+  function add_legend($outer,legend) {
+    var $key = $outer.parents('.js_panel').find('.adornment-key');
+    // Add new legend to data
+    var data = $key.data('data');
+    if(!data) { data = {}; }
+    $.each(legend,function(cn,cv) {
+      if(!data[cn]) { data[cn] = {}; }
+      $.each(cv,function(en,ev) {
+        data[cn][en] = ev;
+      });
+    });
+    $key.data('data',data);
+    // Replace legend with new data
+    var html = '<h4>Key:</h4><dl>';
+    sorted_each(data,function(cn,cv) {
+      var row = '';
+      sorted_each(cv,function(en,ev) {
+        var style = '';
+        if(!ev) { return; }
+        if(ev['default']) {
+          style += "background-color: " + ev['default'] + ";";
+        }
+        if(ev.tag) { style += "background-color: " + ev.tag + ";"; }
+        if(ev.label) { style += "color: " + ev.label + ";"; }
+        row += '<li><span class="adorn-key-entry" style="'+style+'">' +
+          ev.text + '</span></li>';
+      });
+      if(row) {
+        html += '<dt>'+cn.substr(0,1).toUpperCase()+cn.substr(1)+'</dt><dd><ul>'+row+'</ul></dd>';
+      }
+    },{ other: "~" });
+    html += '</dl>';
+    $key.html(html);
+  }
+
   function _do_adorn(outer,fixups,data) {
     var $outer = $(outer);
     if(($outer.hasClass('adornment-running') && !data) ||
@@ -225,6 +278,7 @@
     d = fire(d,function() {
       $('.adornment-data',outer).remove();
       $outer.appendTo(wrapper);
+      add_legend($outer,data.legend||data.provisional.legend);
     });
     if(data.url) {
       d = d.then(function() {

@@ -27,6 +27,8 @@ use EnsEMBL::Web::TmpFile::Text;
 use EnsEMBL::Web::Tools::RandomString qw(random_string);
 use HTML::Entities        qw(encode_entities);
 
+use Sanger::Graphics::ColourMap;
+
 use base qw(EnsEMBL::Web::Component::Shared);
 
 sub new {
@@ -798,7 +800,7 @@ sub markup_line_numbers {
 }
 
 sub build_sequence {
-  my ($self, $sequence, $config) = @_;
+  my ($self, $sequence, $config, $exclude_key) = @_;
   my $line_numbers   = $config->{'line_numbers'};
   my %class_to_style = %{$self->class_to_style}; # Firefox doesn't copy/paste anything but inline styles, so convert classes to styles
   my $single_line    = scalar @{$sequence->[0]||[]} <= $config->{'display_width'}; # Only one line of sequence to display
@@ -1041,11 +1043,23 @@ sub build_sequence {
       push @adseq,$prev;
     }
   }
+  
+  my $key = $self->get_key($config,undef,1);
+
+  # Put things not in a type into a 'other' type
+  $key->{'other'} ||= {};
+  foreach my $k (keys %$key) {
+    if($key->{$k}{'class'}) {
+      $key->{'other'}{$k} = $key->{$k};
+      delete $key->{$k};
+    }
+  }
 
   my $adornment = {
     seq => \@adseq,
     ref => \%adref,
     flourishes => \%flourishes,
+    legend => $key,
   };
   my $adornment_json = encode_entities($self->jsonify($adornment));
 
@@ -1107,6 +1121,11 @@ sub build_sequence {
 
   my $random_id = random_string(8);
 
+  my $key_html = '';
+  unless($exclude_key) {
+    $key_html = qq(<div class="adornment-key"></div>);
+  }
+
   if($adorn eq 'none') {
     my $ajax_url = $self->hub->apache_handle->unparsed_uri;
     my ($path,$params) = split(/\?/,$ajax_url,2);
@@ -1116,6 +1135,7 @@ sub build_sequence {
     my $ajax_json = $self->jsonify({ url => $ajax_url, provisional => $adornment });
     $config->{'html_template'} = qq(
       <div class="js_panel" id="$random_id">
+        $key_html
         <div class="adornment">
           <span class="adornment-data" style="display:none;">
             $ajax_json
@@ -1132,6 +1152,7 @@ sub build_sequence {
   } else {
     $config->{'html_template'} = qq(
       <div class="js_panel" id="$random_id">
+        $key_html
         <div class="adornment">
           <span class="adornment-data" style="display:none;">
             $adornment_json
@@ -1216,6 +1237,15 @@ sub class_to_style {
   return $self->{'class_to_style'};
 }
 
+my $cm = Sanger::Graphics::ColourMap->new();
+
+sub col_to_hex {
+  my ($col) = @_;
+
+  return undef unless $col;
+  return $cm->hex_by_name($col);
+}
+
 sub content_key {
   my $self   = shift;
   my $config = shift || {};
@@ -1237,13 +1267,13 @@ sub content_key {
 }
 
 sub get_key {
-  my ($self, $config, $k) = @_;
+  my ($self, $config, $k,$newkey) = @_;
   my $hub            = $self->hub;
   my $class_to_style = $self->class_to_style;
   my $image_config   = $hub->get_imageconfig('text_seq_legend');
   my $var_styles     = $hub->species_defs->colour('variation');
   my $strain         = $hub->species_defs->translate('strain') || 'strain';
-  
+ 
   my $exon_type;
      $exon_type = $config->{'exon_display'} unless $config->{'exon_display'} eq 'selected';
      $exon_type = 'All' if $exon_type eq 'core' || !$exon_type;
@@ -1270,7 +1300,8 @@ sub get_key {
   );
   
   %key = (%key, %$k) if $k;
-  
+ 
+ 
   foreach my $type (keys %key) {
     if ($key{$type}{'class'}) {
       my $style = $class_to_style->{$key{$type}{'class'}}[1];
@@ -1287,7 +1318,18 @@ sub get_key {
   }
   
   $key{'variations'}{$_} = $var_styles->{$_} for keys %$var_styles;
-  
+ 
+  foreach my $type (keys %key) {
+    my @each = ($key{$type});
+    @each = values %{$key{$type}} unless($key{$type}->{'class'});
+    foreach my $v (@each) {
+      foreach my $t (qw(default label)) {
+        next unless $v->{$t};
+        $v->{$t} = col_to_hex($v->{$t});
+      }
+    }
+  }
+ 
   foreach my $type (keys %{$config->{'key'}}) {
     if (ref $config->{'key'}{$type} eq 'HASH') {
       $image_config->{'legend'}{$type}{$_} = $key{$type}{$_} for grep $config->{'key'}{$type}{$_}, keys %{$config->{'key'}{$type}};
@@ -1295,9 +1337,13 @@ sub get_key {
       $image_config->{'legend'}{$type} = $key{$type};
     }
   }
-  
+
+  return '' unless $newkey;
+  return $image_config->{'legend'};
+ 
   $image_config->image_width(700);
-  
+ 
+  # XXX find how to get these on 
   my $key_img = $image_config->{'legend'} ? $self->new_image(EnsEMBL::Web::Fake->new({}), $image_config)->render : '';
   
   my $key_list;

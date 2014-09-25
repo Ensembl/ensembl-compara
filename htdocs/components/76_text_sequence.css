@@ -1,0 +1,8 @@
+.adornment-key { margin: 0 0 24px; border: 1px solid #ccc; display: inline-block; }
+.adornment-key dl { display: inline-block; margin: 0; }
+.adornment-key ul { max-width: 400px; margin-bottom: 0; display: inline-block; padding-left: 12; }
+.adornment-key li { list-style: none; display: inline-block; margin: 4px 0; }
+.adornment-key li span { display: inline-block; margin: 0 4px; padding: 0 4px; }
+.adornment-key dt { float: left; width: 75px; text-align: right; padding: 9px 0 0; }
+.adornment-key dd { width: 100%; margin: 0 0 0 75px; padding: 4px 0; }
+.adornment-key h4 { font-size: 16px; margin: 8px; color: #999; }

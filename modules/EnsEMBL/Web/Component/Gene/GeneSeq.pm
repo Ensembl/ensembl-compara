@@ -75,6 +75,7 @@ sub content {
   my $html      = '';
 
   if ($length >= $self->{'subslice_length'}) {
+    $html .= '<div class="adornment-key"></div>';
     $html .= '<div class="sequence_key"></div>' . $self->chunked_content($length, $self->{'subslice_length'}, { length => $length, name => $slice->name });
   } else {
     $html .= $self->content_sub_slice($slice); # Direct call if the sequence length is short enough
@@ -118,7 +119,7 @@ sub content_sub_slice {
   }
   
   $config->{'html_template'} .= '<p class="invisible">.</p>';
-  return $self->build_sequence($sequence, $config);
+  return $self->build_sequence($sequence, $config,1);
 }
 
 sub export_options { return {'action' => 'GeneSeq'}; }
@@ -145,7 +146,7 @@ sub initialize_export {
 }
 
 sub get_key {
-  my ($self, $config) = @_;
+  my ($self, $config,$new) = @_;
   
   my $exon_type;
      $exon_type = $config->{'exon_display'} unless $config->{'exon_display'} eq 'selected';
@@ -160,7 +161,7 @@ sub get_key {
     }
   };
   
-  return $self->SUPER::get_key($config, $key);
+  return $self->SUPER::get_key($config, $key,$new);
 }
 
 1;

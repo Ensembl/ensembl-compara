@@ -104,7 +104,7 @@ sub content_sub_slice {
   $config->{'html_template'} .= '<p class="invisible">.</p>';
   $self->id('');
   
-  return $self->build_sequence($sequence, $config);
+  return $self->build_sequence($sequence, $config,1);
 }
 
 sub selected_transcripts {
@@ -314,14 +314,14 @@ sub get_key {
   $_[1]->{'key'}{'exons/Introns'} = 1;
   $_[1]->{'key'}{'exons'} = 0;
   
-  return shift->SUPER::get_key(@_, {
+  return shift->SUPER::get_key($_[0], {
     exons           => {},
     'exons/Introns' => {
       exon1  => { class => 'e1',     text => 'Translated sequence'          },
       eu     => { class => 'eu',     text => 'UTR'                          },
       intron => { class => 'intron', text => 'Intron or gene sequence' }
     }
-  });
+  },$_[1]);
 }
 
 1;

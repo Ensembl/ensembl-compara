@@ -175,7 +175,7 @@ sub content {
 sub content_sub_slice {
   my $self = shift;
   my ($sequence, $config) = $self->_get_sequence(@_);  
-  return $self->build_sequence($sequence, $config);
+  return $self->build_sequence($sequence, $config,1);
 }
 
 sub _get_sequence {
