@@ -80,7 +80,7 @@ sub render {
   my $html;
   
   my $table = EnsEMBL::Web::Document::Table->new([
-      { key => 'name',     title => 'Datahub name', width => '30%', align => 'left', sort => 'html' },
+      { key => 'name',     title => 'Trackhub name', width => '30%', align => 'left', sort => 'html' },
       { key => 'description',    title => 'Description', width => '30%', align => 'left', sort => 'string' },
       { key => 'species',      title => 'Species and assembly', width => '40%', align => 'left', sort => 'html' },
   ], [], {});

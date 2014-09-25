@@ -818,7 +818,7 @@ sub _add_datahub_tracks {
   my $hub    = $self->hub;
   my $data   = $parent->data;
   my $matrix = $config->{'dimensions'}{'x'} && $config->{'dimensions'}{'y'};
-  my $link   = $config->{'description_url'} ? qq(<br /><a href="$config->{'description_url'}" rel="external">Go to track description on datahub</a>) : '';
+  my $link   = $config->{'description_url'} ? qq(<br /><a href="$config->{'description_url'}" rel="external">Go to track description on trackhub</a>) : '';
   my $info   = $config->{'longLabel'} . $link;
   my %tracks;
   
@@ -1409,7 +1409,7 @@ sub update_from_url {
               type     => 'message',
               function => '_warning',
               code     => 'datahub:' . md5_hex($p),
-              message  => "There was a problem attaching datahub $n: @errors<br /><br />Please check the source URL in a web browser.",
+              message  => "There was a problem attaching trackhub $n: @errors<br /><br />Please check the source URL in a web browser.",
             );
           }
           else {
