@@ -352,6 +352,8 @@ sub initialize {
   $self->markup_codons($sequence, $markup, $config)    if $config->{'codons'};
   if($adorn ne 'none') {
     $self->markup_variation($sequence, $markup, $config) if $config->{'snp_display'};  
+  } else {
+    push @{$config->{'loading'}||=[]},'variations';
   }
   $self->markup_line_numbers($sequence, $config)       if $config->{'line_numbering'};
   

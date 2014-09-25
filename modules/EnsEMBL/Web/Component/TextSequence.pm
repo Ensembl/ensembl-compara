@@ -85,7 +85,11 @@ sub get_sequence_data {
   my $hub      = $self->hub;
   my $sequence = [];
   my @markup;
-  
+ 
+  if($config->{'snp_display'} and $adorn eq 'none') {
+    push @{$config->{'loading'}||=[]},'variations';
+  }
+ 
   $self->set_variation_filter($config) if $config->{'snp_display'};
   
   $config->{'length'} ||= $slices->[0]{'slice'}->length;
@@ -1060,6 +1064,7 @@ sub build_sequence {
     ref => \%adref,
     flourishes => \%flourishes,
     legend => $key,
+    loading => $config->{'loading'}||[],
   };
   my $adornment_json = encode_entities($self->jsonify($adornment));
 

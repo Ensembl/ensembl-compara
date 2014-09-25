@@ -182,33 +182,48 @@
     return out;
   }
 
-  function add_legend($outer,legend) {
+  function add_legend($outer,legend,loading) {
     var $key = $outer.parents('.js_panel').find('.adornment-key');
     // Add new legend to data
     var data = $key.data('data');
     if(!data) { data = {}; }
-    $.each(legend,function(cn,cv) {
-      if(!data[cn]) { data[cn] = {}; }
-      $.each(cv,function(en,ev) {
-        data[cn][en] = ev;
+    if(legend) {
+      $.each(legend,function(cn,cv) {
+        if(!data[cn] || data[cn] === -1) { data[cn] = {}; }
+        $.each(cv,function(en,ev) {
+          data[cn][en] = ev;
+        });
       });
+    }
+    delete data['Basic Annotation'];
+    var any = 0;
+    $.each(data,function(a,b) { any = 1; });
+    if(!any) {  
+      data['Basic Annotation'] = -1;
+    }
+    $.each(loading,function(i,load) {
+      if(!data[load]) { data[load] = -1; }
     });
     $key.data('data',data);
     // Replace legend with new data
     var html = '<h4>Key:</h4><dl>';
     sorted_each(data,function(cn,cv) {
       var row = '';
-      sorted_each(cv,function(en,ev) {
-        var style = '';
-        if(!ev) { return; }
-        if(ev['default']) {
-          style += "background-color: " + ev['default'] + ";";
-        }
-        if(ev.tag) { style += "background-color: " + ev.tag + ";"; }
-        if(ev.label) { style += "color: " + ev.label + ";"; }
-        row += '<li><span class="adorn-key-entry" style="'+style+'">' +
-          ev.text + '</span></li>';
-      });
+      if(cv === -1) {
+        row += '<li><span class="ad-loading">loading</span></li>';
+      } else {
+        sorted_each(cv,function(en,ev) {
+          var style = '';
+          if(!ev) { return; }
+          if(ev['default']) {
+            style += "background-color: " + ev['default'] + ";";
+          }
+          if(ev.tag) { style += "background-color: " + ev.tag + ";"; }
+          if(ev.label) { style += "color: " + ev.label + ";"; }
+          row += '<li><span class="adorn-key-entry" style="'+style+'">' +
+            ev.text + '</span></li>';
+        });
+      }
       if(row) {
         html += '<dt>'+cn.substr(0,1).toUpperCase()+cn.substr(1)+'</dt><dd><ul>'+row+'</ul></dd>';
       }
@@ -228,6 +243,7 @@
     if(!data) {
       data = $.parseJSON($('.adornment-data',outer).text());
     }
+    add_legend($outer,null,data.loading||data.provisional.loading);
     var d;
     if(data.url) {
       d = $.Deferred().resolve(data.provisional);
@@ -278,7 +294,8 @@
     d = fire(d,function() {
       $('.adornment-data',outer).remove();
       $outer.appendTo(wrapper);
-      add_legend($outer,data.legend||data.provisional.legend);
+      add_legend($outer,data.legend||data.provisional.legend,
+                        data.loading||data.provisional.loading);
     });
     if(data.url) {
       d = d.then(function() {

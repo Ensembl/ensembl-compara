@@ -146,7 +146,7 @@ sub initialize_export {
 }
 
 sub get_key {
-  my ($self, $config,$new) = @_;
+  my ($self, $config,$k,$new) = @_;
   
   my $exon_type;
      $exon_type = $config->{'exon_display'} unless $config->{'exon_display'} eq 'selected';
