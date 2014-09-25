@@ -1323,6 +1323,16 @@ sub get_key {
   }
   
   $key{'variations'}{$_} = $var_styles->{$_} for keys %$var_styles;
+  
+  if($config->{'focus_variant'}) {
+    $image_config->{'legend'}{'focus'} = {
+      class => 'focus',
+      label => 'red',
+      default => 'white',
+      text => 'Focus variant',
+      extra_css => 'text-decoration: underline; font-weight: bold;',
+    };
+  }
  
   foreach my $type (keys %key) {
     my @each = ($key{$type});
@@ -1344,6 +1354,7 @@ sub get_key {
   }
 
   return '' unless $newkey;
+
   return $image_config->{'legend'};
  
   $image_config->image_width(700);
@@ -1354,7 +1365,6 @@ sub get_key {
   my $key_list;
      $key_list .= "<li>Displaying variations for $config->{'population_filter'} with a minimum frequency of $config->{'min_frequency'}</li>"                if $config->{'population_filter'};
      $key_list .= '<li>Variations are filtered by consequence type</li>',                                                                                   if $config->{'consequence_filter'};
-     $key_list .= sprintf '<li style="%s">Focus variant</li>', join ';', map "$_:$class_to_style->{'var'}[1]{$_}", keys %{$class_to_style->{'var'}[1]}      if $config->{'focus_variant'};
      $key_list .= '<li>Conserved regions are where >50&#37; of bases in alignments match</li>'                                                              if $config->{'key'}{'conservation'};
      $key_list .= '<li>For secondary species we display the coordinates of the first and the last mapped (i.e A,T,G,C or N) basepairs of each line</li>'    if $config->{'alignment_numbering'};
      $key_list .= "<li><code>&middot;&nbsp;&nbsp;&nbsp;&nbsp;</code>Implicit match to reference sequence (no read coverage data available)</li>".
