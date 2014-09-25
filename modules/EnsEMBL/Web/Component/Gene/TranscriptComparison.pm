@@ -76,7 +76,7 @@ sub content {
       )
     ); 
   } elsif ($length >= $self->{'subslice_length'}) {
-    $html .= '<div class="sequence_key"></div>' . $self->chunked_content($length, $self->{'subslice_length'}, { length => $length });
+    $html .= '<div class="sequence_key"></div><div class="adornment-key"></div>' . $self->chunked_content($length, $self->{'subslice_length'}, { length => $length });
   } else {
     $html .= $self->content_sub_slice; # Direct call if the sequence length is short enough
   }
@@ -98,7 +98,7 @@ sub content_sub_slice {
   } elsif ($start && $end) {
     $config->{'html_template'} = '<pre class="text_sequence" style="margin:0">%s</pre>';
   } else {
-    $config->{'html_template'} = sprintf('<div class="sequence_key">%s</div>', $self->get_key($config)) . '<pre class="text_sequence">%s</pre>';
+    $config->{'html_template'} = sprintf('<div class="sequence_key">%s</div>', $self->get_key($config,undef,1)) . '<pre class="text_sequence">%s</pre>';
   }
   
   $config->{'html_template'} .= '<p class="invisible">.</p>';
@@ -321,7 +321,7 @@ sub get_key {
       eu     => { class => 'eu',     text => 'UTR'                          },
       intron => { class => 'intron', text => 'Intron or gene sequence' }
     }
-  },$_[1]);
+  },$_[2]);
 }
 
 1;

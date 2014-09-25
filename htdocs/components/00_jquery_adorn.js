@@ -220,6 +220,7 @@
           }
           if(ev.tag) { style += "background-color: " + ev.tag + ";"; }
           if(ev.label) { style += "color: " + ev.label + ";"; }
+          if(ev.extra_css) { style += ev.extra_css; }
           row += '<li><span class="adorn-key-entry" style="'+style+'">' +
             ev.text + '</span></li>';
         });
@@ -299,7 +300,7 @@
     });
     if(data.url) {
       d = d.then(function() {
-        $.ajax({ dataType: "html", url: data.url}).then(function(page) {
+        $.paced_ajax({ dataType: "html", url: data.url}).then(function(page) {
           var data = $.parseJSON($('.adornment-data',page).text());
           _do_adorn(outer,fixups,data);
         });
