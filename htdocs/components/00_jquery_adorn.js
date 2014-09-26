@@ -243,7 +243,8 @@
         messages += '<li>'+message+'</li>';
       });
     }
-    var html = '<h4>Key:</h4>';
+    var html = '';
+    if(key || messages) { html += '<h4>Key:</h4>'; }
     if(key) { html += '<dl>' + key +'</dl>'; }
     if(messages) { html += '<ul>' + messages + '</ul>'; }
     $key.html(html);
