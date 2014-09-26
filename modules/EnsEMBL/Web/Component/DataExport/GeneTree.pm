@@ -33,16 +33,46 @@ sub _init {
 }
 
 sub content {
-  ### N.B. There currently are no additional options for alignment export
   my $self  = shift;
   my $hub   = $self->hub;
 
+  my $nhx_values = [];
+  my $newick_values = [];
+
+  my %nhx = EnsEMBL::Web::Constants::NHX_OPTIONS;
+  foreach my $k (sort {lc($a) cmp lc($b)} keys %nhx) {
+    push @$nhx_values, {'label' => $k, 'value' => $nhx{$k}};
+  }  
+  my %newick = EnsEMBL::Web::Constants::NEWICK_OPTIONS;
+  foreach my $k (sort {lc($a) cmp lc($b)} keys %newick) {
+    push @$newick_values, {'label' => $k, 'value' => $newick{$k}};
+  } 
+
+
   my $settings = {
-                'Hidden' => ['align']
+                  'nhx_modes' => {
+                                  'type'    => 'DropDown',
+                                  'label'   => 'Mode for NHX tree dumping',
+                                  'values'  => $nhx_values,
+                                  },
+                  'newick_modes' => {
+                                  'type'    => 'DropDown',
+                                  'label'   => 'Mode for Newick tree dumping',
+                                  'values'  => $newick_values,
+                                  },
+                  'scale' => {
+                                  'type'  => 'NonNegInt',
+                                  'label' => 'Scale for text tree dump',
+                                  'value' => '150',
+                                  },
                 };
 
   ## Options per format
-  my $fields_by_format = {'Newick' => []};
+  my $fields_by_format = {
+                          'Newick'    => [['newick_modes']],
+                          'NHX'       => [['nhx_modes']],
+                          'Text tree' => [['scale']],
+  };
 
   ## Add formats output by BioPerl
   foreach ($self->alignment_formats) {
