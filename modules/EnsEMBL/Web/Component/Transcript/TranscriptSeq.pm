@@ -366,7 +366,7 @@ sub content {
   my $self = shift;
   my ($sequence, $config) = $self->initialize;
 
-  return sprintf '<div class="sequence_key">%s</div>%s', $self->get_key($config), $self->build_sequence($sequence, $config);
+  return $self->build_sequence($sequence, $config);
 }
 
 sub export_options { return {'action' => 'Transcript'}; }

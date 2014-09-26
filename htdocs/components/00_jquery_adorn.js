@@ -190,9 +190,15 @@
     if(legend) {
       $.each(legend,function(cn,cv) {
         if(!data[cn] || data[cn] === -1) { data[cn] = {}; }
-        $.each(cv,function(en,ev) {
-          data[cn][en] = ev;
-        });
+        if(cn == '_messages') {
+          $.each(cv,function(i,ev) {
+            data[cn][ev] = 1;
+          });
+        } else {
+          $.each(cv,function(en,ev) {
+            data[cn][en] = ev;
+          });
+        }
       });
     }
     delete data['Basic Annotation'];
@@ -206,8 +212,9 @@
     });
     $key.data('data',data);
     // Replace legend with new data
-    var html = '';
+    var key = '';
     sorted_each(data,function(cn,cv) {
+      if(cn == '_messages') { return; }
       var row = '';
       if(cv === -1) {
         row += '<li><span class="ad-loading">loading</span></li>';
@@ -227,12 +234,18 @@
       if(row) {
         var name = cn.substr(0,1).toUpperCase()+cn.substr(1);
         name = name.replace(/([\/-])/g,"$1 ");
-        html += '<dt>'+name+'</dt><dd><ul>'+row+'</ul></dd>';
+        key += '<dt>'+name+'</dt><dd><ul>'+row+'</ul></dd>';
       }
     },{ other: "~" });
-    if(html) {
-      html = '<h4>Key:</h4><dl>' + html +'</dl>';
+    var messages = '';
+    if(data._messages) {
+      $.each(data._messages,function(message,v) {
+        messages += '<li>'+message+'</li>';
+      });
     }
+    var html = '<h4>Key:</h4>';
+    if(key) { html += '<dl>' + key +'</dl>'; }
+    if(messages) { html += '<ul>' + messages + '</ul>'; }
     $key.html(html);
   }
 

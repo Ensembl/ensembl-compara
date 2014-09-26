@@ -94,7 +94,7 @@ sub content {
       </table>
     };
     
-    $config->{'html_template'} = sprintf('<div class="sequence_key">%s</div>', $self->get_key($config)) . "$table<pre>%s</pre>";
+    $config->{'html_template'} = "$table<pre>%s</pre>";
     
     $html  = $self->build_sequence($sequence, $config);
     $html .= $self->_hint(

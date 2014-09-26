@@ -145,7 +145,7 @@ sub content {
     { data_table => 'no_sort', exportable => 1 }
   );
 
-  return sprintf '<div class="sequence_key">%s</div><div class="adornment-key"></div>%s%s', $self->get_key($config), $table->render;
+  return sprintf '<div class="adornment-key"></div>'.$table->render;
 }
 
 sub export_options { return {'action' => 'ExonSeq'}; }

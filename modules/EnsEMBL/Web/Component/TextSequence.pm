@@ -1054,10 +1054,15 @@ sub build_sequence {
   # Put things not in a type into a 'other' type
   $key->{'other'} ||= {};
   foreach my $k (keys %$key) {
+    next if $k eq '_messages';
     if($key->{$k}{'class'}) {
       $key->{'other'}{$k} = $key->{$k};
       delete $key->{$k};
     }
+  }
+
+  if($adorn eq 'only') {
+    $key->{$_}||={} for @{$config->{'loading'}||[]};
   }
 
   my $adornment = {
@@ -1067,7 +1072,7 @@ sub build_sequence {
     legend => $key,
     loading => $config->{'loading'}||[],
   };
-  my $adornment_json = encode_entities($self->jsonify($adornment));
+  my $adornment_json = encode_entities($self->jsonify($adornment),"<>");
 
   my $length = $output[0] ? scalar @{$output[0]} - 1 : 0;
   
@@ -1354,28 +1359,24 @@ sub get_key {
     }
   }
 
-  #return '' unless $newkey;
+  my @messages;
 
-  return $image_config->{'legend'};
- 
-  $image_config->image_width(700);
- 
-  # XXX find how to get these on 
-  my $key_img = $image_config->{'legend'} ? $self->new_image(EnsEMBL::Web::Fake->new({}), $image_config)->render : '';
-  
   my $key_list;
-     $key_list .= "<li>Displaying variations for $config->{'population_filter'} with a minimum frequency of $config->{'min_frequency'}</li>"                if $config->{'population_filter'};
-     $key_list .= '<li>Variations are filtered by consequence type</li>',                                                                                   if $config->{'consequence_filter'};
-     $key_list .= '<li>Conserved regions are where >50&#37; of bases in alignments match</li>'                                                              if $config->{'key'}{'conservation'};
-     $key_list .= '<li>For secondary species we display the coordinates of the first and the last mapped (i.e A,T,G,C or N) basepairs of each line</li>'    if $config->{'alignment_numbering'};
-     $key_list .= "<li><code>&middot;&nbsp;&nbsp;&nbsp;&nbsp;</code>Implicit match to reference sequence (no read coverage data available)</li>".
-                  "<li><code>|&nbsp;&nbsp;&nbsp;&nbsp;</code>Confirmed match to reference sequence (genotype or read coverage data available)</li>"         if $config->{'match_display'};
-     $key_list .= '<li><code>~&nbsp;&nbsp;&nbsp;&nbsp;</code>No resequencing coverage at this position</li>'                                                if $config->{'resequencing'};
-     $key_list .= '<li><code>acgt&nbsp;</code>Implicit sequence (no read coverage data available)</li>'.
-                  '<li><code>ACGT&nbsp;</code>Confirmed sequence (genotype or read coverage data available)</li>'                                           if $config->{'resequencing'} && !$config->{'match_display'};
+     push @messages,"Displaying variations for $config->{'population_filter'} with a minimum frequency of $config->{'min_frequency'}"                if $config->{'population_filter'};
+     push @messages,'Variations are filtered by consequence type',                                                                                   if $config->{'consequence_filter'};
+     push @messages,'Conserved regions are where >50&#37; of bases in alignments match'                                                              if $config->{'key'}{'conservation'};
+     push @messages,'For secondary species we display the coordinates of the first and the last mapped (i.e A,T,G,C or N) basepairs of each line'    if $config->{'alignment_numbering'};
+     push @messages,"<code>&middot;&nbsp;&nbsp;&nbsp;&nbsp;</code>Implicit match to reference sequence (no read coverage data available)",
+                  "<code>|&nbsp;&nbsp;&nbsp;&nbsp;</code>Confirmed match to reference sequence (genotype or read coverage data available)"         if $config->{'match_display'};
+     push @messages,'<code>~&nbsp;&nbsp;&nbsp;&nbsp;</code>No resequencing coverage at this position'                                                if $config->{'resequencing'};
+     '<code>acgt&nbsp;</code>Implicit sequence (no read coverage data available)',
+                  '<code>ACGT&nbsp;</code>Confirmed sequence (genotype or read coverage data available)'                                           if $config->{'resequencing'} && !$config->{'match_display'};
      $key_list  = "<ul>$key_list</ul>" if $key_list;
   
-  return "<h4>Key</h4>$key_img$key_list" if $key_img || $key_list;
+ 
+  $image_config->{'legend'}{'_messages'}= \@messages;
+
+  return $image_config->{'legend'};
 }
 
 sub export_sequence {
