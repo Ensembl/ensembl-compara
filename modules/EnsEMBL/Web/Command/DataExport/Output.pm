@@ -81,12 +81,21 @@ sub process {
 
       ## All BioPerl alignments go via a single outputter
       my %align_formats = EnsEMBL::Web::Constants::ALIGNMENT_FORMATS;
-      my %tree_formats = EnsEMBL::Web::Constants::TREE_FORMATS;
-      my @compara_formats = (keys %align_formats, keys %tree_formats);
-      my $in_bioperl = grep { lc($_) eq lc($format) } @compara_formats;
-      if ($hub->param('align') && $in_bioperl) {
-        my $data = $component->get_export_data;
-        $error = $self->write_alignment($format, $data);
+      my $in_bioperl    = grep { lc($_) eq lc($format) } keys %align_formats;
+      my %tree_formats  = EnsEMBL::Web::Constants::TREE_FORMATS;
+      my $is_tree       = grep { lc($_) eq lc($format) } keys %tree_formats;
+      if ($hub->param('align')) {
+        if ($in_bioperl) {
+          my $data = $component->get_export_data;
+          $error = $self->write_alignment($format, $data);
+        }
+        elsif ($is_tree) {
+          my $data = $component->get_export_data('tree');
+          $error = $self->write_tree($format, $data);
+        }
+        else {
+          $error = 'Output not implemented for format '.$format;
+        }
       }
       else {
         my $write_method = 'write_'.lc($format);
@@ -425,6 +434,24 @@ sub write_alignment {
   print $align_io $alignment;
 
   $self->write_line($export);
+}
+
+sub write_tree {
+  my ($self, $format, $tree) = @_;
+  my $hub = $self->hub;
+
+  my %formats = EnsEMBL::Web::Constants::TREE_FORMATS;
+  $format     = 'newick' unless $formats{$format};
+  my $fn      = $formats{$format}{'method'};
+  my @params  = map $hub->param($_), @{$formats{$format}{'parameters'} || []};
+  my $string  = $tree->$fn(@params);
+  
+  if ($formats{$format}{'split'}) {
+    my $reg = '([' . quotemeta($formats{$format}{'split'}) . '])';
+    $string =~ s/$reg/$1\n/g;
+  }
+
+  $self->write_line($string);
 }
 
 sub write_orthoxml {
