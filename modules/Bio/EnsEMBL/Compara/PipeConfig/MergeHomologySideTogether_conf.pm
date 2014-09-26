@@ -82,14 +82,14 @@ sub default_options {
         },
 
         'master_db' => 'mysql://ensro@compara1/sf5_ensembl_compara_master',
-        'master_copy_tables' => [ 'genome_db', 'species_set', 'method_link', 'method_link_species_set', 'mapping_session', 'ncbi_taxa_name', 'ncbi_taxa_node', 'species_set_tag' ],
+        'master_copy_tables' => [ 'genome_db', 'species_set', 'method_link', 'method_link_species_set', 'mapping_session', 'ncbi_taxa_name', 'ncbi_taxa_node', 'species_set_tag', 'dnafrag' ],
 
         'prevrel_db' => 'mysql://ensro@compara3/kb3_ensembl_compara_71',
         'prevrel_merge_tables' => [ 'stable_id_history' ],
 
-        'genetrees_db' => 'mysql://ensro@compara3/mp12_compara_homology_72',
-        'genetrees_copy_tables'  => [  ],
-        'genetrees_merge_tables' => [ 'stable_id_history', 'method_link_species_set_tag', 'other_member_sequence', 'hmm_profile', 'CAFE_gene_family', 'CAFE_species_gene' ],
+        'proteintrees_db' => 'mysql://ensro@compara3/mp12_compara_homology_72',
+        'proteintrees_copy_tables'  => [  ],
+        'proteintrees_merge_tables' => [ 'stable_id_history', 'method_link_species_set_tag', 'other_member_sequence', 'hmm_profile', 'CAFE_gene_family', 'CAFE_species_gene' ],
 
         'families_db' => 'mysql://ensro@compara4/lg4_compara_families_7204',
         'families_copy_tables'  => [ 'family', 'family_member' ],
@@ -147,13 +147,13 @@ sub pipeline_analyses {
                 { 'fan_branch_code' => 2, 'db_conn' => $self->o('families_db'),  'inputlist'  => $self->o('families_copy_tables') },
                 { 'fan_branch_code' => 4, 'db_conn' => $self->o('families_db'),  'inputlist'  => $self->o('families_merge_tables') },
 
-                { 'fan_branch_code' => 2, 'db_conn' => $self->o('genetrees_db'), 'inputquery' => "SHOW TABLES LIKE 'peptide\_align\_feature\_%'" },
-                { 'fan_branch_code' => 2, 'db_conn' => $self->o('genetrees_db'), 'inputlist'  => $self->o('genetrees_copy_tables') },
-                { 'fan_branch_code' => 4, 'db_conn' => $self->o('genetrees_db'), 'inputlist'  => $self->o('genetrees_merge_tables') },
-                { 'fan_branch_code' => 4, 'db_conn' => $self->o('genetrees_db'), 'inputquery' => "SHOW TABLES LIKE 'gene\_tree\_%'" },
-                { 'fan_branch_code' => 4, 'db_conn' => $self->o('genetrees_db'), 'inputquery' => "SHOW TABLES LIKE 'gene\_align%'" },
-                { 'fan_branch_code' => 4, 'db_conn' => $self->o('genetrees_db'), 'inputquery' => "SHOW TABLES LIKE 'homology%'" },
-                { 'fan_branch_code' => 4, 'db_conn' => $self->o('genetrees_db'), 'inputquery' => "SHOW TABLES LIKE 'species\_tree\_%'" },
+                { 'fan_branch_code' => 2, 'db_conn' => $self->o('proteintrees_db'), 'inputquery' => "SHOW TABLES LIKE 'peptide\_align\_feature\_%'" },
+                { 'fan_branch_code' => 2, 'db_conn' => $self->o('proteintrees_db'), 'inputlist'  => $self->o('proteintrees_copy_tables') },
+                { 'fan_branch_code' => 4, 'db_conn' => $self->o('proteintrees_db'), 'inputlist'  => $self->o('proteintrees_merge_tables') },
+                { 'fan_branch_code' => 4, 'db_conn' => $self->o('proteintrees_db'), 'inputquery' => "SHOW TABLES LIKE 'gene\_tree\_%'" },
+                { 'fan_branch_code' => 4, 'db_conn' => $self->o('proteintrees_db'), 'inputquery' => "SHOW TABLES LIKE 'gene\_align%'" },
+                { 'fan_branch_code' => 4, 'db_conn' => $self->o('proteintrees_db'), 'inputquery' => "SHOW TABLES LIKE 'homology%'" },
+                { 'fan_branch_code' => 4, 'db_conn' => $self->o('proteintrees_db'), 'inputquery' => "SHOW TABLES LIKE 'species\_tree\_%'" },
 
                 { 'fan_branch_code' => 2, 'db_conn' => $self->o('nctrees_db'),   'inputlist'  => $self->o('nctrees_copy_tables') },
                 { 'fan_branch_code' => 4, 'db_conn' => $self->o('nctrees_db'),   'inputlist'  => $self->o('nctrees_merge_tables') },
