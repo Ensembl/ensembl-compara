@@ -37,7 +37,7 @@ sub _init {
 sub get_details {
   my $self   = shift;
   my $cdb    = shift;
-  my $object = $self->object;
+  my $object = shift || $self->object;
   my $member = $object->get_compara_Member($cdb);
 
   return (undef, '<strong>Gene is not in the compara database</strong>') unless $member;
@@ -307,9 +307,15 @@ sub content {
   my $image_id = $gene ? $gene->stable_id : $tree_stable_id;
   my $li_tmpl  = '<li><a href="%s">%s</a></li>';
   my @view_links;
- 
+
+
+  $image->image_type        = 'genetree';
+  $image->image_name        = ($hub->param('image_width')) . "-$image_id";
+  $image->imagemap          = 'yes';
+  $image->{'panel_number'}  = 'tree';
+
+  ## Need to pass gene name to export form 
   my $gene_name;
-  warn ">>> GENE $gene";
   if ($gene) {
     my $dxr    = $gene->Obj->can('display_xref') ? $gene->Obj->display_xref : undef;
     $gene_name = $dxr ? $dxr->display_id : $gene->stable_id;
@@ -317,13 +323,9 @@ sub content {
   else {
     $gene_name = $tree_stable_id;
   }
-
-  $image->image_type        = 'genetree';
-  $image->image_name        = ($hub->param('image_width')) . "-$image_id";
-  $image->imagemap          = 'yes';
-  $image->{'panel_number'}  = 'tree';
+  $image->{'export_params'} = [['gene_name', $gene_name],['align', 'tree']];
   $image->{'data_export'}   = 'GeneTree';
-  $image->{'export_params'} = [['gene_name', $gene_name]];
+
   $image->set_button('drag', 'title' => 'Drag to select region');
   
   if ($gene) {
@@ -476,6 +478,7 @@ sub find_nodes_by_genome_db_ids {
   return $node_ids;
 }
 
+=pod
 sub content_align {
   my $self = shift;
   my $cdb  = shift || 'compara';
@@ -497,14 +500,13 @@ sub content_align {
   
   $aio->write_aln($tree->get_SimpleAlign);
 
-  return $self->format eq 'Text' ? $formatted : sprintf(q{
+  return sprintf(q{
     <p>Multiple sequence alignment in "<i>%s</i>" format:</p>
     <p>The sequence alignment format can be configured using the
     'configure page' link in the left panel.<p>
     <pre>%s</pre>
   }, $formats{$mode} || $mode, $formatted);
 }
-
 sub content_text {
   my $self = shift;
   my $cdb  = shift || 'compara';
@@ -535,7 +537,7 @@ sub content_text {
     <pre>%s</pre>
   }, $formats{$mode}{'caption'} || $mode, $string);
 }
-
+=cut
 sub genomic_alignment_links {
   my $self          = shift;
   my $hub           = $self->hub;
@@ -584,7 +586,10 @@ sub export_options { return {'action' => 'GeneTree'}; }
 sub get_export_data {
 ## Get data for export
   my $self      = shift;
-  return $self->hub->core_object('gene');
+  my $cdb       = $self->hub->param('cdb') || 'compara';
+  my $gene      = $self->hub->core_object('gene');
+  my ($member, $tree) = $self->get_details($cdb, $gene);
+  return $tree->get_SimpleAlign; 
 }
 
 1;
