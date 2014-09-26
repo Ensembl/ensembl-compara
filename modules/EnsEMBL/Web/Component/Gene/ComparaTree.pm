@@ -20,11 +20,6 @@ package EnsEMBL::Web::Component::Gene::ComparaTree;
 
 use strict;
 
-use Bio::AlignIO;
-use IO::Scalar;
-
-use EnsEMBL::Web::Constants;
-
 use base qw(EnsEMBL::Web::Component::Gene);
 
 sub _init {
@@ -478,66 +473,6 @@ sub find_nodes_by_genome_db_ids {
   return $node_ids;
 }
 
-=pod
-sub content_align {
-  my $self = shift;
-  my $cdb  = shift || 'compara';
-  my $hub  = $self->hub;
-  
-  # Get the ProteinTree object
-  my ($member, $tree, $node) = $self->get_details($cdb);
-  
-  return $tree . $self->genomic_alignment_links($cdb) unless defined $member;
-  
-  # Determine the format
-  my %formats = EnsEMBL::Web::Constants::ALIGNMENT_FORMATS;
-  my $mode    = $hub->param('text_format');
-  $mode       = 'fasta' unless $formats{$mode};
-
-  my $formatted; # Variable to hold the formatted alignment string
-  my $fh  = IO::Scalar->new(\$formatted);
-  my $aio = Bio::AlignIO->new( -format => $mode, -fh => $fh );
-  
-  $aio->write_aln($tree->get_SimpleAlign);
-
-  return sprintf(q{
-    <p>Multiple sequence alignment in "<i>%s</i>" format:</p>
-    <p>The sequence alignment format can be configured using the
-    'configure page' link in the left panel.<p>
-    <pre>%s</pre>
-  }, $formats{$mode} || $mode, $formatted);
-}
-sub content_text {
-  my $self = shift;
-  my $cdb  = shift || 'compara';
-  my $hub  = $self->hub;
-
-  # Get the ProteinTree object
-  my ($member, $tree, $node) = $self->get_details($cdb);
-  
-  return $tree . $self->genomic_alignment_links($cdb) unless defined $member;
-
-  # Return the text representation of the tree
-  my %formats = EnsEMBL::Web::Constants::TREE_FORMATS;
-  my $mode    = $hub->param('tree_format');
-  $mode       = 'newick' unless $formats{$mode};
-  my $fn      = $formats{$mode}{'method'};
-  my @params  = map $hub->param($_), @{$formats{$mode}{'parameters'} || []};
-  my $string  = $tree->$fn(@params);
-  
-  if ($formats{$mode}{'split'} && $self->format ne 'Text') {
-    my $reg = '([' . quotemeta($formats{$mode}{'split'}) . '])';
-    $string =~ s/$reg/$1\n/g;
-  }
-
-  return $self->format eq 'Text' ? $string : sprintf(q{
-    <p>The following is a representation of the tree in "<i>%s</i>" format</p>
-    <p>The tree representation can be configured using the
-    'configure page' link in the left panel.<p>
-    <pre>%s</pre>
-  }, $formats{$mode}{'caption'} || $mode, $string);
-}
-=cut
 sub genomic_alignment_links {
   my $self          = shift;
   my $hub           = $self->hub;
@@ -585,11 +520,16 @@ sub export_options { return {'action' => 'GeneTree'}; }
 
 sub get_export_data {
 ## Get data for export
-  my $self      = shift;
+  my ($self, $type) = @_;
   my $cdb       = $self->hub->param('cdb') || 'compara';
   my $gene      = $self->hub->core_object('gene');
   my ($member, $tree) = $self->get_details($cdb, $gene);
-  return $tree->get_SimpleAlign; 
+  if ($type eq 'tree') {
+    return $tree;
+  }
+  else {
+    return $tree->get_SimpleAlign;
+  } 
 }
 
 1;
