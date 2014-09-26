@@ -105,22 +105,10 @@ sub populate_tree {
     { 'availability' => 'gene database:compara core has_alignments' }
   ));
   
-  my $tree_node = $self->create_node('Compara_Tree', 'Gene tree (image)',
+  $compara_menu->append($self->create_node('Compara_Tree', 'Gene tree',
     [qw( image EnsEMBL::Web::Component::Gene::ComparaTree )],
     { 'availability' => 'gene database:compara core has_gene_tree' }
-  );
-  
-  $tree_node->append($self->create_subnode('Compara_Tree/Text', 'Gene tree (text)',
-    [qw( treetext EnsEMBL::Web::Component::Gene::ComparaTree/text )],
-    { 'availability' => 'gene database:compara core has_gene_tree' }
   ));
-  
-  $tree_node->append($self->create_subnode('Compara_Tree/Align', 'Gene tree (alignment)',
-    [qw( treealign EnsEMBL::Web::Component::Gene::ComparaTree/align )],
-    { 'availability' => 'gene database:compara core has_gene_tree' }
-  ));
-  
-  $compara_menu->append($tree_node);
   
   $compara_menu->append($self->create_node('SpeciesTree', 'Gene gain/loss tree',
       [qw( image EnsEMBL::Web::Component::Gene::SpeciesTree )],
