@@ -1354,7 +1354,7 @@ sub get_key {
     }
   }
 
-  return '' unless $newkey;
+  #return '' unless $newkey;
 
   return $image_config->{'legend'};
  
