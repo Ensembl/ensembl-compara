@@ -218,7 +218,6 @@
           if(ev['default']) {
             style += "background-color: " + ev['default'] + ";";
           }
-          if(ev.tag) { style += "background-color: " + ev.tag + ";"; }
           if(ev.label) { style += "color: " + ev.label + ";"; }
           if(ev.extra_css) { style += ev.extra_css; }
           row += '<li><span class="adorn-key-entry" style="'+style+'">' +
@@ -226,7 +225,9 @@
         });
       }
       if(row) {
-        html += '<dt>'+cn.substr(0,1).toUpperCase()+cn.substr(1)+'</dt><dd><ul>'+row+'</ul></dd>';
+        var name = cn.substr(0,1).toUpperCase()+cn.substr(1);
+        name = name.replace(/([\/-])/g,"$1 ");
+        html += '<dt>'+name+'</dt><dd><ul>'+row+'</ul></dd>';
       }
     },{ other: "~" });
     html += '</dl>';
