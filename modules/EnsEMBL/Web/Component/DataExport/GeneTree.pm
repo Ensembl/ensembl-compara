@@ -68,16 +68,18 @@ sub content {
                 };
 
   ## Options per format
-  my $fields_by_format = {
-                          'Newick'    => [['newick_modes']],
-                          'NHX'       => [['nhx_modes']],
-                          'Text tree' => [['scale']],
-  };
+  my $fields_by_format = [{'Tree formats' => {
+                                              'Newick'  => [['newick_modes']],
+                                              'NHX'     => [['nhx_modes']],
+                                              'Text'    => [['scale']],
+                          }}];
 
   ## Add formats output by BioPerl
+  my $align_formats = {};
   foreach ($self->alignment_formats) {
-    $fields_by_format->{$_} = [];
+    $align_formats->{$_} = [];
   }
+  push @$fields_by_format, {'Alignment formats' => $align_formats};
 
   ## Create settings form (comes with some default fields - see parent)
   my $form = $self->create_form($settings, $fields_by_format, 1);
