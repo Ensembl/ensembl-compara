@@ -206,7 +206,7 @@
     });
     $key.data('data',data);
     // Replace legend with new data
-    var html = '<h4>Key:</h4><dl>';
+    var html = '';
     sorted_each(data,function(cn,cv) {
       var row = '';
       if(cv === -1) {
@@ -230,7 +230,9 @@
         html += '<dt>'+name+'</dt><dd><ul>'+row+'</ul></dd>';
       }
     },{ other: "~" });
-    html += '</dl>';
+    if(html) {
+      html = '<h4>Key:</h4><dl>' + html +'</dl>';
+    }
     $key.html(html);
   }
 
