@@ -81,7 +81,9 @@ sub process {
 
       ## All BioPerl alignments go via a single outputter
       my %align_formats = EnsEMBL::Web::Constants::ALIGNMENT_FORMATS;
-      my $in_bioperl = grep { lc($_) eq lc($format) } keys %align_formats;
+      my %tree_formats = EnsEMBL::Web::Constants::TREE_FORMATS;
+      my @compara_formats = (keys %align_formats, keys %tree_formats);
+      my $in_bioperl = grep { lc($_) eq lc($format) } @compara_formats;
       if ($hub->param('align') && $in_bioperl) {
         my $data = $component->get_export_data;
         $error = $self->write_alignment($format, $data);

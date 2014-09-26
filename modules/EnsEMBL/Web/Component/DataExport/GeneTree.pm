@@ -50,6 +50,7 @@ sub content {
 
 
   my $settings = {
+                  'Hidden' => ['align'],
                   'nhx_modes' => {
                                   'type'    => 'DropDown',
                                   'label'   => 'Mode for NHX tree dumping',
