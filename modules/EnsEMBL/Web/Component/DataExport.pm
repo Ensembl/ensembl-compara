@@ -54,12 +54,25 @@ sub create_form {
   my $filename = $hub->param('filename') || $self->default_file_name;
   $filename =~ s/\.[\w|\.]+//;
 
-  my @format_info;
-  foreach (sort {lc($a) cmp lc($b)} keys %$fields_by_format) {
-    my $info = { 'value' => $_, 'caption' => $format_label->{$_}, 'class' => "_stt__$_"};
-    $info->{'selected'} = 'selected' if $hub->param('format') eq $_;
-    push @format_info, $info;
+  ## Deal with optgroups
+  my (@format_info, %ok_formats);
+  if (ref($fields_by_format) eq 'ARRAY') {
+    foreach (@$fields_by_format) {
+      while (my($group,$formats) = each (%$_)) {
+        push @format_info, $self->_munge_format_info($formats, $group);
+        while (my($f,$h) = each (%$formats)) {
+          $ok_formats{$f} = $h;
+        }
+      }
+    }
   }
+  else {
+    @format_info = $self->_munge_format_info($fields_by_format);
+    while (my($k,$v) = each (%$fields_by_format)) {
+      $ok_formats{$k} = $v;
+    }
+  }
+
   my $formats = [
       {'caption' => '-- Choose Format --'},
       @format_info
@@ -130,9 +143,19 @@ sub create_form {
       },
     ]);
   }
+
+  ## Add tutorial "fieldset" that is shown by default
+  if ($tutorial) {
+    my $tutorial_fieldset = $form->add_fieldset({'class' => '_stt_tutorial'});
+    my $html = '<p><b>Guide to file formats</b></p>';
+    foreach my $format (sort {lc($a) cmp lc($b)} keys %ok_formats) {
+      $html .= $self->show_preview($format);
+    }
+    $tutorial_fieldset->add_notes($html);
+  }
   
   ## Create all options forms, then show only one using jQuery
-  while (my($format, $fields) = each (%$fields_by_format)) {
+  while (my($format, $fields) = each (%ok_formats)) {
     my $legend = scalar(@$fields) ? 'Settings' : '';
     my $settings_fieldset  = $form->add_fieldset({'class' => '_stt_'.$format, 'legend' => $legend});
 
@@ -214,6 +237,28 @@ sub show_preview {
   
   my $html = sprintf('<div><p>%s</p><p><img src="/img/help/export/%s_preview.png" /></p></div>', $format, $img);
   return $html;
+}
+
+## Only needs to be set for a format if we want to insert extra text into the dropdown
+our $format_label = {
+  'RTF'   => 'RTF (Word-compatible)',
+};
+
+
+sub _munge_format_info {
+  my ($self, $hashref, $optgroup) = @_;
+  my @munged_info;
+
+  foreach (sort {lc($a) cmp lc($b)} keys %$hashref) {
+    my $info = {'value' => $_,
+                'caption' => $format_label->{$_} || $_,
+                'class' => "_stt__$_ _action_$_",
+                };
+    $info->{'group'} = $optgroup if $optgroup;
+    $info->{'selected'} = 'selected' if $self->hub->param('format') eq $_;
+    push @munged_info, $info;
+  }
+  return @munged_info;
 }
 
 1;
