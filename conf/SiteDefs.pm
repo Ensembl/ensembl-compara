@@ -387,8 +387,8 @@ sub error {
        "\n", '#' x 78, "\n";
 }
 
-sub logs { warn sprintf q(SiteDefs::logs is deprecated. Just define $SiteDefs::ENSEMBL_LOGDIR = '%s' instead if needed.%s), $_[0] =~ s/\/$//r, "\n"; }
-sub tmp { warn sprintf q(SiteDefs::tmp is deprecated. Just define $SiteDefs::ENSEMBL_TMP_DIR = '%s' instead if needed.%s), $_[0] =~ s/\/$//r, "\n"; }
+sub logs { warn sprintf q(SiteDefs::logs is deprecated. Just define $SiteDefs::ENSEMBL_LOGDIR = '%s' instead in %s if needed.%s), $_[0] =~ s/\/$//r, [ caller ]->[0],  "\n"; }
+sub tmp { warn sprintf q(SiteDefs::tmp is deprecated. Just define $SiteDefs::ENSEMBL_TMP_DIR = '%s' instead in %s if needed.%s), $_[0] =~ s/\/$//r, [ caller ]->[0], "\n"; }
 
 =for Information
 
