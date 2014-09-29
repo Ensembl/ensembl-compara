@@ -60,12 +60,23 @@ sub buttons {
     $params->{$_} = $hub->param($_);
   }
 
-  return {
-    'url'     => $hub->url($params),
-    'caption' => $options->{'caption'} || 'Download sequence',
-    'class'   => 'export',
-    'modal'   => 1
-  };
+  
+  if ($options->{'action'} =~ /Align/ && !$hub->param('align')) {
+    return {
+      'url'       => undef, 
+      'caption'   => $options->{'caption'} || 'Download sequence',
+      'class'     => 'export',
+      'disabled'  => 1,
+    };
+  }
+  else {
+    return {
+      'url'     => $hub->url($params),
+      'caption' => $options->{'caption'} || 'Download sequence',
+      'class'   => 'export',
+      'modal'   => 1
+    };
+  }
 }
 
 sub _init {
