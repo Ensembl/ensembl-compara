@@ -126,7 +126,7 @@ sub content {
   return $html;
 }
 
-sub export_options { return {'action' => 'Alignments'}; }
+sub export_options { return {'action' => 'Alignments', 'caption' => 'Download alignment'}; }
 
 sub get_export_data {
 ## Get data for export

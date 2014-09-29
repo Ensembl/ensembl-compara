@@ -649,7 +649,12 @@ sub _get_low_coverage_genome_db_sets {
   return $low_coverage_species;
 }
 
-sub export_options { return {'action' => 'TextAlignments', 'params' => ['align']}; }
+sub export_options { return {
+                              'action'  => 'TextAlignments', 
+                              'params'  => ['align'], 
+                              'caption' => 'Download alignment',
+                              }; 
+}
 
 sub get_export_data {
 ## Get data for export
