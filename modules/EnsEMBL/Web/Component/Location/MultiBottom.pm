@@ -84,7 +84,7 @@ sub content {
            compara => 'secondary'
          });
     }
-    $image_config->get_node('scalebar')->set('caption', $_->{'short_name'});
+    $image_config->get_node('scalebar')->set('caption', $_->{'short_name'} =~ s/^[^\s]+\s+//r);
     $image_config->get_node('scalebar')->set('name', $_->{'short_name'});
     $image_config->get_node('scalebar')->set('caption_img',"f:24\@-11:".$_->{'species'});
     $_->{'slice'}->adaptor->db->set_adaptor('compara', $compara_db) if $compara_db;
@@ -121,7 +121,7 @@ sub content {
         }
         
         if ($join_alignments) {
-          $primary_image_config->get_node('scalebar')->set('caption', $short_name);
+          $primary_image_config->get_node('scalebar')->set('caption', $short_name =~ s/^[^\s]+\s+//r);
           $primary_image_config->get_node('scalebar')->set('name', $short_name);
           $primary_image_config->get_node('scalebar')->set('caption_img',"f:24\@-11:".$slices->[0]->{'species'});
           $primary_image_config->multi($methods, $seq_region_name, 1, $max, map $slices->[$_], $i - 1, $i);
