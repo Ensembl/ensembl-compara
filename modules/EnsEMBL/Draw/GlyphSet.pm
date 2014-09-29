@@ -45,6 +45,8 @@ use Sanger::Graphics::Glyph::Text;
 
 use Bio::EnsEMBL::Registry;
 
+use EnsEMBL::Web::Tools::RandomString qw(random_string);
+
 use base qw(Sanger::Graphics::GlyphSet);
 
 our %cache;
@@ -239,8 +241,8 @@ sub init_label {
   my $node      = $config->get_node($track);
   my $component = $config->get_parameter('component');
   my $hover     = $component && !$hub->param('export') && $node->get('menu') ne 'no';
-  (my $class    = $self->species . "_$track") =~ s/\W/_/g;
-  
+  my $class     = random_string(8);
+
   if ($hover) {
     my $fav       = $config->get_favourite_tracks->{$track};
     my @renderers = grep !/default/i, @{$node->get('renderers') || []};
