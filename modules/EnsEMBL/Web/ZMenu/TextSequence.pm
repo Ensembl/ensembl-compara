@@ -95,8 +95,8 @@ sub variation_content {
   my @entries = ({ type => 'Position', label => $position });
   
   if (scalar @failed) {
-    push @entries, { type => 'Failed status', label => sprintf '<span style="color:red">%s</span>', shift @failed };
-    push @entries, { type => '',              label => sprintf '<span style="color:red">%s</span>', shift @failed } while @failed;
+    push @entries, { type => 'Failed status', label_html => sprintf '<span style="color:red">%s</span>', shift @failed };
+    push @entries, { type => '',              label_html => sprintf '<span style="color:red">%s</span>', shift @failed } while @failed;
   }
   
   push @entries, { type => 'LRG position', label => $lrg_position } if $lrg_position;
