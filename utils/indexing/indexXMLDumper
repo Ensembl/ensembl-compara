@@ -1096,7 +1096,6 @@ sub dumpGenomicAlignment {
   my %dbs      = ( 'core' => $COREDB );
   $dbs{'otherfeatures'} = $ESTDB  if $ESTDB;
   $dbs{'cdna'}          = $CDNADB if $CDNADB;
-  $dbs{'rnaseq'}        = $RNASEQDB if $RNASEQDB;
   my %tables = (
     'dna_align_feature'     => [ 'DnaAlignFeature',     'DNA alignment feature' ],
     'protein_align_feature' => [ 'ProteinAlignFeature', 'Protein alignment feature' ]
