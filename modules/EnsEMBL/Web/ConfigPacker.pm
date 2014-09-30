@@ -1036,8 +1036,7 @@ sub _summarise_compara_db {
       where mls.species_set_id = ss.species_set_id
         and ss.genome_db_id = gd.genome_db_id 
         and mls.method_link_id = ml.method_link_id
-        and ml.type not like "%PARALOGUES"
-        and mls.source != "ucsc"
+        and ml.type LIKE "LASTZ%"
       group by mls.method_link_species_set_id, mls.method_link_id
       having count = 1
   ');
@@ -1273,10 +1272,11 @@ sub _summarise_compara_alignments {
   
   # get details of alignments
   $q = sprintf('
-    select genomic_align_block_id, method_link_species_set_id, dnafrag_start, dnafrag_end, dnafrag_id
-      from genomic_align %s
-      order by genomic_align_block_id, dnafrag_id',
-      @method_link_species_set_ids ? sprintf 'where method_link_species_set_id in (%s)', join ',', @method_link_species_set_ids : ''
+    select genomic_align_block_id, ga.method_link_species_set_id, ga.dnafrag_start, ga.dnafrag_end, ga.dnafrag_id
+      from genomic_align ga_ref join dnafrag using (dnafrag_id) join genomic_align ga using (genomic_align_block_id)
+      where is_reference = 0 %s
+      order by genomic_align_block_id, ga.dnafrag_id',
+      @method_link_species_set_ids ? sprintf 'and ga_ref.method_link_species_set_id in (%s)', join ',', @method_link_species_set_ids : ''
   );
   
   $sth = $dbh->prepare($q);
