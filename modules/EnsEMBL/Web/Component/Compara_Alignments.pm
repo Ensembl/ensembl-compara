@@ -518,6 +518,7 @@ sub _get_target_slice_table {
       #want num_species but not non_ref details
       ($ref_start, $ref_end, $non_ref_start, $non_ref_end, undef, $num_species) = $self->object->get_start_end_of_slice($gab_group, $ref_species);
     }
+    next if $num_species == 0;
 
     $gab_num++;
 
@@ -570,17 +571,19 @@ sub _get_target_slice_table {
     push @rows, $this_row;
   }
 
-  my $table = $self->new_table(\@columns, \@rows, {
+  my $html;
+  if (scalar(@rows)) {
+    my $table = $self->new_table(\@columns, \@rows, {
       data_table => 1,
       data_table_config => {iDisplayLength => 25},
       class             => 'fixed_width',
       sorting           => [ 'length desc' ],
       exportable        => 0
-  });
+    });
 
-  my $html = "A total of " . @$merged_blocks . " alignment blocks have been found. Please select an alignment to view by selecting a Block from the Alignment column. <br /> <br />";
-  $html .= $table->render;
-  
+    $html = "A total of " . @$merged_blocks . " alignment blocks have been found. Please select an alignment to view by selecting a Block from the Alignment column. <br /> <br />";
+    $html .= $table->render;
+  }
   return qq{<div class="summary_panel">$html</div>};
 
 }
