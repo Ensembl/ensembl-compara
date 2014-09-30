@@ -306,7 +306,6 @@ sub pipeline_wide_parameters {  # these parameter values are visible to all anal
 sub resource_classes {
     my ($self) = @_;
 
-    my $host = $self->o('pipeline_db')->{host};
     return {
             %{$self->SUPER::resource_classes},  # inherit 'default' from the parent class
             '100Mb' => { 'LSF' => '-C0 -M100' . $self->o('memory_suffix') .' -R"select[mem>100] rusage[mem=100]"' },
