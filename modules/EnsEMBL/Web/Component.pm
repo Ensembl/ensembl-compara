@@ -745,8 +745,8 @@ sub trim_large_string {
   my $self        = shift;
   my $string      = shift;
   my $cell_prefix = shift;
-  my $truncator = shift;
-  my $options = shift || {};
+  my $truncator   = shift;
+  my $options     = shift || {};
   
   unless(ref($truncator)) {
     my $len = $truncator || 25;
@@ -769,10 +769,12 @@ sub trim_large_string {
   
   return $string unless defined $truncated;
   return sprintf(qq(
-    <div class="toggle_div">
-      <span class="%s">%s</span>
-      <span class="cell_detail">%s</span>
-      <span class="toggle_img"/>
+    <div class="height_wrap">
+      <div class="toggle_div">
+        <span class="%s">%s</span>
+        <span class="cell_detail">%s</span>
+        <span class="toggle_img"/>
+      </div>
     </div>),
       join(" ",@summary_classes),$truncated,$string);  
 }
