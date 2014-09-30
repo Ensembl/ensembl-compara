@@ -123,11 +123,13 @@ sub fetch_input {
 
             my $this_assembly = $this_core_dba->assembly_name();
             my $this_start_date = $this_core_dba->get_MetaContainer->get_genebuild();
+            my $this_taxon_id = $this_core_dba->get_MetaContainer->get_taxonomy_id();
 
             my $genebuild = $self->param('genebuild') || $this_start_date;
             my $assembly_name = $self->param('assembly_name') || $this_assembly;
+            my $taxon_id = $self->param('taxon_id') || $this_taxon_id;
 
-            if($this_assembly eq $assembly_name && $this_start_date eq $genebuild) {
+            if($this_assembly eq $assembly_name && $this_start_date eq $genebuild && $this_taxon_id eq $taxon_id) {
                 $core_dba = $this_core_dba;
                 $self->param('assembly_name', $assembly_name);
 
@@ -135,7 +137,7 @@ sub fetch_input {
                     last;
                 }
             } else {
-                warn "Found assembly '$this_assembly' when looking for '$assembly_name' or '$this_start_date' when looking for '$genebuild'";
+                warn "Found assembly '$this_assembly' when looking for '$assembly_name', or '$this_start_date' when looking for '$genebuild', or '$this_taxon_id' when looking for '$taxon_id'";
             }
 
         } # try next registry server
