@@ -33,7 +33,7 @@ Ensembl.Panel.LocationNav = Ensembl.Panel.extend({
     parts = url[1].split(/[;&]/);
     $.each(parts,function(i,part) {
       kv = part.split("=");
-      if(kv[0].substr(0,1) != 'r')
+      if(!kv[0].match(/^r[0-9]*$/))
         return;
       var r_parts = kv[1].match(/^([^:]*):([^-]*)-([^:]*)(:.*)?/);
       out[kv[0]] = [r_parts[1],parseInt(r_parts[2]),parseInt(r_parts[3]),r_parts[4]||''];
@@ -47,7 +47,7 @@ Ensembl.Panel.LocationNav = Ensembl.Panel.extend({
     new_parts = [];
     $.each(parts,function(i,part) {
       kv = part.split("=");
-      if(kv[0].substr(0,1) == 'r') {
+      if(kv[0].match(/^r[0-9]*$/)) {
         new_parts.push(kv[0]+"="+rs[kv[0]][0]+":"+rs[kv[0]][1]+"-"+rs[kv[0]][2]+rs[kv[0]][3]);
       } else {
         new_parts.push(part);
