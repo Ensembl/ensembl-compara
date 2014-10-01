@@ -727,7 +727,7 @@ sub pipeline_analyses {
 #			       'quick' => $self->o('quick'),
 #			      },
 	      -rc_name => '100Mb',
-	      -wait_for =>  [ 'filter_duplicates', 'filter_duplicates_himem' ],
+	      -wait_for =>  [ 'filter_duplicates_net', 'filter_duplicates_net_himem' ],
  	    },
 	    { -logic_name => 'healthcheck',
 	      -module => 'Bio::EnsEMBL::Compara::RunnableDB::HealthCheck',
