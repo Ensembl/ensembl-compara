@@ -46,7 +46,7 @@ sub content {
     $self->nav_url(1e6)
   ];
   
-  return $hub->param('update_panel') ? $self->jsonify($values) : $self->navbar($self->ramp($ramp_entries, $wd), $wd, $values);
+  return $self->navbar($self->ramp($ramp_entries->[0][1],$ramp_entries->[-1][1]));
 }
 
 sub ramp_url { return shift->nav_url(shift, 'resize'); }
