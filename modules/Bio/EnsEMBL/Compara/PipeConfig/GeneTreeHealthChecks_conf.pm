@@ -62,7 +62,8 @@ sub default_options {
 
         'pipeline_name'         => 'HC',   # name the pipeline to differentiate the submitted processes
 
-        'hc_capacity'           =>   4,
+        'hc_capacity'           =>  10,
+        'hc_batch_size'         =>  20,
 
         # connection parameters to various databases:
 
@@ -98,6 +99,12 @@ sub pipeline_wide_parameters {
 
 sub pipeline_analyses {
     my ($self) = @_;
+
+    my %hc_analysis_params = (
+            -hive_capacity      => $self->o('hc_capacity'),
+            -batch_size         => $self->o('hc_batch_size'),
+    );
+
     return [
 
         {   -logic_name => 'count_number_species',
@@ -119,8 +126,7 @@ sub pipeline_analyses {
             -parameters         => {
                 mode            => 'members_per_genome',
             },
-            -analysis_capacity  => $self->o('hc_capacity'),
-            -priority           => $self->o('hc_priority'),
+            %hc_analysis_params,
         },
 
         {   -logic_name         => 'hc_global_tree_set',
@@ -128,8 +134,7 @@ sub pipeline_analyses {
             -parameters         => {
                 mode            => 'global_tree_set',
             },
-            -analysis_capacity  => $self->o('hc_capacity'),
-            -priority           => $self->o('hc_priority'),
+            %hc_analysis_params,
         },
 
         {   -logic_name => 'species_factory',
@@ -149,8 +154,7 @@ sub pipeline_analyses {
             -parameters         => {
                 mode            => 'members_per_genome',
             },
-            -analysis_capacity  => $self->o('hc_capacity'),
-            -priority           => $self->o('hc_priority'),
+            %hc_analysis_params,
         },
 
         {   -logic_name         => 'hc_pafs',
@@ -158,8 +162,7 @@ sub pipeline_analyses {
             -parameters         => {
                 mode            => 'peptide_align_features',
             },
-            -analysis_capacity  => $self->o('hc_capacity'),
-            -priority           => $self->o('hc_priority'),
+            %hc_analysis_params,
         },
 
 
@@ -181,8 +184,7 @@ sub pipeline_analyses {
             -parameters         => {
                 mode            => 'alignment',
             },
-            -analysis_capacity  => $self->o('hc_capacity'),
-            -priority           => $self->o('hc_priority'),
+            %hc_analysis_params,
         },
 
         {   -logic_name         => 'hc_tree_structure',
@@ -190,8 +192,7 @@ sub pipeline_analyses {
             -parameters         => {
                 mode            => 'tree_structure',
             },
-            -analysis_capacity  => $self->o('hc_capacity'),
-            -priority           => $self->o('hc_priority'),
+            %hc_analysis_params,
         },
 
         {   -logic_name         => 'hc_tree_attributes',
@@ -200,8 +201,7 @@ sub pipeline_analyses {
             -parameters         => {
                 mode            => 'tree_attributes',
             },
-            -analysis_capacity  => $self->o('hc_capacity'),
-            -priority           => $self->o('hc_priority'),
+            %hc_analysis_params,
         },
 
         {   -logic_name => 'homology_tree_factory',
@@ -221,8 +221,7 @@ sub pipeline_analyses {
             -parameters         => {
                 mode            => 'tree_homologies',
             },
-            -analysis_capacity  => $self->o('hc_capacity'),
-            -priority           => $self->o('hc_priority'),
+            %hc_analysis_params,
         },
 
     ];
