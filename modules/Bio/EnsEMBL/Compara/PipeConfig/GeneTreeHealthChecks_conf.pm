@@ -60,20 +60,10 @@ sub default_options {
     return {
         %{$self->SUPER::default_options},   # inherit the generic ones
 
-        'pipeline_name'         => 'HC',   # name the pipeline to differentiate the submitted processes
+        'host'                  => 'compara3',
 
         'hc_capacity'           =>  10,
         'hc_batch_size'         =>  20,
-
-        # connection parameters to various databases:
-
-        'pipeline_db' => {                      # the production database itself (will be created)
-            -host   => 'compara3',
-            -port   => 3306,
-            -user   => 'ensadmin',
-            -pass   => $self->o('password'),
-            -dbname => $self->o('ENV', 'USER').'_compara_tree_hc',
-        },
 
         # The database that needs to be checked
         'db_conn' => {
