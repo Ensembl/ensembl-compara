@@ -48,7 +48,10 @@ package Bio::EnsEMBL::Compara::PipeConfig::GeneTreeHealthChecks_conf;
 
 use strict;
 use warnings;
-use base ('Bio::EnsEMBL::Hive::PipeConfig::HiveGeneric_conf');
+
+use Bio::EnsEMBL::Hive::Version 2.0;
+
+use base ('Bio::EnsEMBL::Hive::PipeConfig::EnsemblGeneric_conf');
 
 
 sub default_options {
