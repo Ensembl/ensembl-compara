@@ -33,6 +33,14 @@ Bio::EnsEMBL::Compara::PipeConfig::GeneTreeHealthChecks_conf.
 
 The PipeConfig file for a pipeline that should for data integrity of a gene-tree / homology table.
 
+=head1 SYNOPSIS
+
+It can be entirely configured from the command line
+ $ init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::GeneTreeHealthChecks_conf [-host pipeline_db_host] [-hc_capacity number_of_workers] [-hc_batch_size how_many_jobs_they_claim_at_a_time] [-allow_ambiguity_codes default_parameter_for_ambiguity_codes]
+ $ seed_pipeline.pl -url ${EHIVE_URL} -logic_name pipeline_entry -input_id '{"db_conn" => "mysql://ensro\@compara1/mm14_protein_trees_77"}'
+ $ beekeeper.pl -url ${EHIVE_URL} -loop
+Note that allow_ambiguity_codes can be overriden in the input_id of the seeded job, and that multiple databases can be tested (one per seeded job)
+
 =head1 AUTHORSHIP
 
 Ensembl Team. Individual contributions can be found in the GIT log.
@@ -65,28 +73,19 @@ sub default_options {
         'hc_capacity'           =>  10,
         'hc_batch_size'         =>  20,
 
-        # The database that needs to be checked
-        'db_conn' => {
-           -host   => 'compara1',
-           -port   => 3306,
-           -user   => 'ensro',
-           -pass   => '',
-           -dbname => 'mm14_compara_homology_70c',
-        },
         'allow_ambiguity_codes' =>   0,
 
     };
 }
 
-sub pipeline_wide_parameters {
-    my $self = shift @_;
+sub hive_meta_table {
+    my ($self) = @_;
     return {
-        %{$self->SUPER::pipeline_wide_parameters},
-        'db_conn'   => $self->o('db_conn'),
-    }
+        %{$self->SUPER::hive_meta_table},       # here we inherit anything from the base class
+
+        'hive_use_param_stack'  => 1,           # switch on the new param_stack mechanism
+    };
 }
-
-
 
 sub pipeline_analyses {
     my ($self) = @_;
@@ -98,16 +97,15 @@ sub pipeline_analyses {
 
     return [
 
-        {   -logic_name => 'count_number_species',
+        {   -logic_name => 'pipeline_entry',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
             -parameters => {
-                'inputquery'    => 'SELECT "species_count" AS param_name, COUNT(*) AS param_value FROM genome_db',
+                'inputquery'    => 'SELECT COUNT(*) AS species_count FROM genome_db',
                 'fan_branch_code'   => 2,
             },
-            -input_ids  => [ {} ],
             -flow_into => {
-                1 => [ 'species_factory', 'all_trees_factory', 'hc_members_globally', 'hc_global_tree_set', 'default_trees_factory' ],
-                2 => [ 'mysql:////pipeline_wide_parameters' ],
+                1 => [ 'all_trees_factory', 'hc_members_globally', 'hc_global_tree_set', 'default_trees_factory' ],
+                2 => [ 'species_factory' ],
             },
         },
 
