@@ -33,6 +33,14 @@ Bio::EnsEMBL::Compara::PipeConfig::GeneTreeHealthChecks_conf.
 
 The PipeConfig file for a pipeline that should for data integrity of a gene-tree / homology table.
 
+=head1 SYNOPSIS
+
+It can be entirely configured from the command line
+ $ init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::GeneTreeHealthChecks_conf [-host pipeline_db_host] [-hc_capacity number_of_workers] [-hc_batch_size how_many_jobs_they_claim_at_a_time] [-allow_ambiguity_codes default_parameter_for_ambiguity_codes]
+ $ seed_pipeline.pl -url ${EHIVE_URL} -logic_name pipeline_entry -input_id '{"db_conn" => "mysql://ensro\@compara1/mm14_protein_trees_77"}'
+ $ beekeeper.pl -url ${EHIVE_URL} -loop
+Note that allow_ambiguity_codes can be overriden in the input_id of the seeded job, and that multiple databases can be tested (one per seeded job)
+
 =head1 AUTHORSHIP
 
 Ensembl Team. Individual contributions can be found in the GIT log.
@@ -48,7 +56,10 @@ package Bio::EnsEMBL::Compara::PipeConfig::GeneTreeHealthChecks_conf;
 
 use strict;
 use warnings;
-use base ('Bio::EnsEMBL::Hive::PipeConfig::HiveGeneric_conf');
+
+use Bio::EnsEMBL::Hive::Version 2.0;
+
+use base ('Bio::EnsEMBL::Hive::PipeConfig::EnsemblGeneric_conf');
 
 
 sub default_options {
@@ -57,67 +68,53 @@ sub default_options {
     return {
         %{$self->SUPER::default_options},   # inherit the generic ones
 
-        'pipeline_name'         => 'HC',   # name the pipeline to differentiate the submitted processes
+        'host'                  => 'compara3',
 
-        'hc_capacity'           =>   4,
+        'hc_capacity'           =>  10,
+        'hc_batch_size'         =>  20,
 
-        # connection parameters to various databases:
-
-        'pipeline_db' => {                      # the production database itself (will be created)
-            -host   => 'compara3',
-            -port   => 3306,
-            -user   => 'ensadmin',
-            -pass   => $self->o('password'),
-            -dbname => $self->o('ENV', 'USER').'_compara_tree_hc',
-        },
-
-        # The database that needs to be checked
-        'db_conn' => {
-           -host   => 'compara1',
-           -port   => 3306,
-           -user   => 'ensro',
-           -pass   => '',
-           -dbname => 'mm14_compara_homology_70c',
-        },
+        'allow_ambiguity_codes' =>   0,
 
     };
 }
 
-sub pipeline_wide_parameters {
-    my $self = shift @_;
+sub hive_meta_table {
+    my ($self) = @_;
     return {
-        %{$self->SUPER::pipeline_wide_parameters},
-        'db_conn'   => $self->o('db_conn'),
-    }
+        %{$self->SUPER::hive_meta_table},       # here we inherit anything from the base class
+
+        'hive_use_param_stack'  => 1,           # switch on the new param_stack mechanism
+    };
 }
-
-
 
 sub pipeline_analyses {
     my ($self) = @_;
+
+    my %hc_analysis_params = (
+            -hive_capacity      => $self->o('hc_capacity'),
+            -batch_size         => $self->o('hc_batch_size'),
+    );
+
     return [
 
-        {   -logic_name => 'count_number_species',
+        {   -logic_name => 'pipeline_entry',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
             -parameters => {
-                'inputquery'    => 'SELECT "species_count" AS param_name, COUNT(*) AS param_value FROM genome_db',
+                'inputquery'    => 'SELECT COUNT(*) AS species_count FROM genome_db',
                 'fan_branch_code'   => 2,
             },
-            -input_ids  => [ {} ],
             -flow_into => {
-                1 => [ 'species_factory', 'tree_factory', 'hc_members_globally', 'hc_global_tree_set' ],
-                2 => [ 'mysql:////pipeline_wide_parameters' ],
+                1 => [ 'all_trees_factory', 'hc_members_globally', 'hc_global_tree_set', 'default_trees_factory' ],
+                2 => [ 'species_factory' ],
             },
-            -meadow_type    => 'LOCAL',
         },
 
         {   -logic_name         => 'hc_members_globally',
             -module             => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::SqlHealthChecks',
             -parameters         => {
-                mode            => 'members_per_genome',
+                mode            => 'members_globally',
             },
-            -analysis_capacity  => $self->o('hc_capacity'),
-            -priority           => $self->o('hc_priority'),
+            %hc_analysis_params,
         },
 
         {   -logic_name         => 'hc_global_tree_set',
@@ -125,8 +122,7 @@ sub pipeline_analyses {
             -parameters         => {
                 mode            => 'global_tree_set',
             },
-            -analysis_capacity  => $self->o('hc_capacity'),
-            -priority           => $self->o('hc_priority'),
+            %hc_analysis_params,
         },
 
         {   -logic_name => 'species_factory',
@@ -138,16 +134,15 @@ sub pipeline_analyses {
             -flow_into  => {
                 2 => [ 'hc_members_per_genome', 'hc_pafs' ],
             },
-            -meadow_type    => 'LOCAL',
         },
 
         {   -logic_name         => 'hc_members_per_genome',
             -module             => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::SqlHealthChecks',
             -parameters         => {
                 mode            => 'members_per_genome',
+                allow_ambiguity_codes   => $self->o('allow_ambiguity_codes'),
             },
-            -analysis_capacity  => $self->o('hc_capacity'),
-            -priority           => $self->o('hc_priority'),
+            %hc_analysis_params,
         },
 
         {   -logic_name         => 'hc_pafs',
@@ -155,22 +150,19 @@ sub pipeline_analyses {
             -parameters         => {
                 mode            => 'peptide_align_features',
             },
-            -analysis_capacity  => $self->o('hc_capacity'),
-            -priority           => $self->o('hc_priority'),
+            %hc_analysis_params,
         },
 
 
-        {   -logic_name => 'tree_factory',
+        {   -logic_name => 'all_trees_factory',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
             -parameters => {
                 'inputquery'        => 'SELECT root_id AS gene_tree_id FROM gene_tree_root WHERE tree_type = "tree"',
                 'fan_branch_code'   => 2,
             },
             -flow_into  => {
-                1 => [ 'homology_tree_factory' ],
-                2 => [ 'hc_alignment', 'hc_tree_structure', 'hc_tree_attributes' ],
+                2 => [ 'hc_tree_structure', 'hc_tree_attributes' ],
             },
-            -meadow_type    => 'LOCAL',
         },
 
         {   -logic_name         => 'hc_alignment',
@@ -178,8 +170,7 @@ sub pipeline_analyses {
             -parameters         => {
                 mode            => 'alignment',
             },
-            -analysis_capacity  => $self->o('hc_capacity'),
-            -priority           => $self->o('hc_priority'),
+            %hc_analysis_params,
         },
 
         {   -logic_name         => 'hc_tree_structure',
@@ -187,8 +178,7 @@ sub pipeline_analyses {
             -parameters         => {
                 mode            => 'tree_structure',
             },
-            -analysis_capacity  => $self->o('hc_capacity'),
-            -priority           => $self->o('hc_priority'),
+            %hc_analysis_params,
         },
 
         {   -logic_name         => 'hc_tree_attributes',
@@ -197,20 +187,18 @@ sub pipeline_analyses {
             -parameters         => {
                 mode            => 'tree_attributes',
             },
-            -analysis_capacity  => $self->o('hc_capacity'),
-            -priority           => $self->o('hc_priority'),
+            %hc_analysis_params,
         },
 
-        {   -logic_name => 'homology_tree_factory',
+        {   -logic_name => 'default_trees_factory',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
             -parameters => {
                 'inputquery'        => 'SELECT root_id AS gene_tree_id FROM gene_tree_root WHERE tree_type = "tree" AND clusterset_id = "default"',
                 'fan_branch_code'   => 2,
             },
             -flow_into  => {
-                2 => [ 'hc_tree_homologies' ],
+                2 => [ 'hc_alignment', 'hc_tree_homologies' ],
             },
-            -meadow_type    => 'LOCAL',
         },
 
         {   -logic_name         => 'hc_tree_homologies',
@@ -218,8 +206,7 @@ sub pipeline_analyses {
             -parameters         => {
                 mode            => 'tree_homologies',
             },
-            -analysis_capacity  => $self->o('hc_capacity'),
-            -priority           => $self->o('hc_priority'),
+            %hc_analysis_params,
         },
 
     ];
