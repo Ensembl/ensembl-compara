@@ -42,7 +42,11 @@ sub content {
   my $sitename        = $sd->ENSEMBL_SITETYPE;
   my $current_species = $hub->data_species;
   my $max_upload_size = abs($sd->CGI_POST_MAX / 1048576).'MB'; # Should default to 5.0MB :)
-  my %urls            = ( 'upload' => $hub->url({'type' => 'UserData', 'action' => 'UploadFile'}), 'remote' => $hub->url({'type' => 'UserData', 'action' => 'AttachRemote'}) );
+  my %urls            = ( 
+                          'upload' => $hub->url({'type' => 'UserData', 'action' => 'UploadFile'}), 
+                          'remote' => $hub->url({'type' => 'UserData', 'action' => 'AttachRemote'}), 
+                          'datahub' => $hub->url({'type' => 'UserData', 'action' => 'AttachRemote'}), 
+                        );
   my $form            = $self->modal_form('select', $urls{'upload'}, {'skip_validation' => 1, 'class' => 'check', 'no_button' => 1}); # default JS validation is skipped as this form goes through a customised validation
   my $fieldset        = $form->add_fieldset({'no_required_notes' => 1});
 

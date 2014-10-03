@@ -35,7 +35,7 @@ sub process {
   my $species_defs  = $hub->species_defs;
   my $session       = $hub->session;
   my $redirect      = $hub->species_path($hub->data_species) . '/UserData/';
-  my $url           = $hub->param('url') || $hub->param('url_2');
+  my $url           = $hub->param('url') || $hub->param('url_2') || $hub->param('url_3');
      $url           =~ s/(^\s+|\s+$)//g; # Trim leading and trailing whitespace
   my $filename      = [split '/', $url]->[-1];
   my $chosen_format = $hub->param('format');
