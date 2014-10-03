@@ -57,6 +57,7 @@ Ensembl.Panel.LocationNav = Ensembl.Panel.extend({
   },
 
   rescale: function(rs,input) {
+    input = Math.round(input);
     var out = {};
     $.each(rs,function(k,v) {
       var r_2centre = Math.round(v[1]+v[2]);
