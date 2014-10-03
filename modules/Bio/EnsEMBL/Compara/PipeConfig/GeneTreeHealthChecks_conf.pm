@@ -109,7 +109,6 @@ sub pipeline_analyses {
                 1 => [ 'species_factory', 'all_trees_factory', 'hc_members_globally', 'hc_global_tree_set', 'default_trees_factory' ],
                 2 => [ 'mysql:////pipeline_wide_parameters' ],
             },
-            -meadow_type    => 'LOCAL',
         },
 
         {   -logic_name         => 'hc_members_globally',
@@ -137,7 +136,6 @@ sub pipeline_analyses {
             -flow_into  => {
                 2 => [ 'hc_members_per_genome', 'hc_pafs' ],
             },
-            -meadow_type    => 'LOCAL',
         },
 
         {   -logic_name         => 'hc_members_per_genome',
@@ -167,7 +165,6 @@ sub pipeline_analyses {
             -flow_into  => {
                 2 => [ 'hc_tree_structure', 'hc_tree_attributes' ],
             },
-            -meadow_type    => 'LOCAL',
         },
 
         {   -logic_name         => 'hc_alignment',
@@ -204,7 +201,6 @@ sub pipeline_analyses {
             -flow_into  => {
                 2 => [ 'hc_alignment', 'hc_tree_homologies' ],
             },
-            -meadow_type    => 'LOCAL',
         },
 
         {   -logic_name         => 'hc_tree_homologies',
