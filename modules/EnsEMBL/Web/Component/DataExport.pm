@@ -118,7 +118,8 @@ sub create_form {
       },
     ]);
   }
-  
+  $fieldset->add_hidden([{ name => 'adorn', value => 'both' }]);
+
   ## Don't forget the core params!
   my @core_params = keys %{$hub->core_object('parameters')};
   foreach (@core_params) {
