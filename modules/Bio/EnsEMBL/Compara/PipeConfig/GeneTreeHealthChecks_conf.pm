@@ -83,6 +83,7 @@ sub default_options {
            -pass   => '',
            -dbname => 'mm14_compara_homology_70c',
         },
+        'allow_ambiguity_codes' =>   0,
 
     };
 }
@@ -115,7 +116,7 @@ sub pipeline_analyses {
             },
             -input_ids  => [ {} ],
             -flow_into => {
-                1 => [ 'species_factory', 'tree_factory', 'hc_members_globally', 'hc_global_tree_set' ],
+                1 => [ 'species_factory', 'all_trees_factory', 'hc_members_globally', 'hc_global_tree_set', 'default_trees_factory' ],
                 2 => [ 'mysql:////pipeline_wide_parameters' ],
             },
             -meadow_type    => 'LOCAL',
@@ -124,7 +125,7 @@ sub pipeline_analyses {
         {   -logic_name         => 'hc_members_globally',
             -module             => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::SqlHealthChecks',
             -parameters         => {
-                mode            => 'members_per_genome',
+                mode            => 'members_globally',
             },
             %hc_analysis_params,
         },
@@ -153,6 +154,7 @@ sub pipeline_analyses {
             -module             => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::SqlHealthChecks',
             -parameters         => {
                 mode            => 'members_per_genome',
+                allow_ambiguity_codes   => $self->o('allow_ambiguity_codes'),
             },
             %hc_analysis_params,
         },
@@ -166,15 +168,14 @@ sub pipeline_analyses {
         },
 
 
-        {   -logic_name => 'tree_factory',
+        {   -logic_name => 'all_trees_factory',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
             -parameters => {
                 'inputquery'        => 'SELECT root_id AS gene_tree_id FROM gene_tree_root WHERE tree_type = "tree"',
                 'fan_branch_code'   => 2,
             },
             -flow_into  => {
-                1 => [ 'homology_tree_factory' ],
-                2 => [ 'hc_alignment', 'hc_tree_structure', 'hc_tree_attributes' ],
+                2 => [ 'hc_tree_structure', 'hc_tree_attributes' ],
             },
             -meadow_type    => 'LOCAL',
         },
@@ -204,14 +205,14 @@ sub pipeline_analyses {
             %hc_analysis_params,
         },
 
-        {   -logic_name => 'homology_tree_factory',
+        {   -logic_name => 'default_trees_factory',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
             -parameters => {
                 'inputquery'        => 'SELECT root_id AS gene_tree_id FROM gene_tree_root WHERE tree_type = "tree" AND clusterset_id = "default"',
                 'fan_branch_code'   => 2,
             },
             -flow_into  => {
-                2 => [ 'hc_tree_homologies' ],
+                2 => [ 'hc_alignment', 'hc_tree_homologies' ],
             },
             -meadow_type    => 'LOCAL',
         },
