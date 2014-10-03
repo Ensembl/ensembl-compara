@@ -186,7 +186,7 @@ sub fetch_archives_by_species {
   ## Now get ordinary archives
   $sql = qq(
     SELECT
-      r.number, r.date, r.archive, 
+      r.number, r.date, r.archive, r.description, 
       rs.assembly_name, rs.initial_release, rs.last_geneset
     FROM
       ens_release as r,
@@ -194,6 +194,8 @@ sub fetch_archives_by_species {
       release_species as rs
     WHERE
       r.release_id = rs.release_id
+    AND
+      r.release_id < 10000
     AND
       s.species_id = rs.species_id
     AND
