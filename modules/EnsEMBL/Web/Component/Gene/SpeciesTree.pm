@@ -129,10 +129,33 @@ sub content {
   $image->imagemap         = 'yes';
   $image->{'panel_number'} = 'tree';
   $image->set_button('drag', 'title' => 'Drag to select region');
+
+  ## Need to pass gene name to export form 
+  my $gene_name;
+  if ($gene) {
+    my $dxr    = $gene->Obj->can('display_xref') ? $gene->Obj->display_xref : undef;
+    $gene_name = $dxr ? $dxr->display_id : $gene->stable_id;
+  }
+  else {
+    $gene_name = $tree->tree->stable_id;
+  }
+  $image->{'export_params'} = [['gene_name', $gene_name],['align', 'tree']];
+  $image->{'data_export'}   = 'SpeciesTree';
   
   $html .= $image->render;
   
   return $html;
+}
+
+sub export_options { return {'action' => 'SpeciesTree'}; }
+
+sub get_export_data {
+## Get data for export
+  my ($self, $type) = @_;
+  my $cdb       = $self->hub->param('cdb') || 'compara';
+  my $gene      = $self->hub->core_object('gene');
+  my ($member, $tree) = $self->get_details($cdb, $gene);
+  return $tree;
 }
 
 1;

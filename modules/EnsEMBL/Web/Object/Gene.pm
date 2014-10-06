@@ -721,12 +721,8 @@ sub get_homology_matches {
     my $adaptor_call = $self->param('gene_adaptor') || 'get_GeneAdaptor';
     my %homology_list;
 
-<<<<<<< HEAD
     # Convert descriptions into more readable form
     my %desc_mapping = $self->get_desc_mapping;
-    
-=======
->>>>>>> master
     foreach my $display_spp (keys %$homologues) {
       my $order = 0;
       

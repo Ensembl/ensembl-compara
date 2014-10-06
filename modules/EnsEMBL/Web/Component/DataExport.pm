@@ -143,20 +143,7 @@ sub create_form {
       },
     ]);
   }
-<<<<<<< HEAD
 
-  ## Add tutorial "fieldset" that is shown by default
-  if ($tutorial) {
-    my $tutorial_fieldset = $form->add_fieldset({'class' => '_stt_tutorial'});
-    my $html = '<p><b>Guide to file formats</b></p>';
-    foreach my $format (sort {lc($a) cmp lc($b)} keys %ok_formats) {
-      $html .= $self->show_preview($format);
-    }
-    $tutorial_fieldset->add_notes($html);
-  }
-=======
->>>>>>> master
-  
   ## Create all options forms, then show only one using jQuery
   while (my($format, $fields) = each (%ok_formats)) {
     my $legend = scalar(@$fields) ? 'Settings' : '';

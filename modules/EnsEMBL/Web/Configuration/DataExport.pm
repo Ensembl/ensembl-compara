@@ -32,15 +32,20 @@ sub caption {
 sub populate_tree {
   my $self  = shift;
 
-  ## Input nodes
+  ## Input nodes:
+
+  ## Text sequence
   my @input_nodes = qw(ExonSeq FlankingSeq GeneSeq Protein Transcript TranscriptComparison);
   foreach (@input_nodes) {
     $self->create_node($_, "Sequence Input", [lc($_), 'EnsEMBL::Web::Component::DataExport::'.$_]);
   }
+
+  ## Compara alignments and trees
   $self->create_node('Alignments', 'Alignments', ['alignments', 'EnsEMBL::Web::Component::DataExport::Alignments']);
   $self->create_node('TextAlignments', 'Alignments', ['text_alignments', 'EnsEMBL::Web::Component::DataExport::TextAlignments']);
   $self->create_node('Homologs', 'Alignments', ['alignments', 'EnsEMBL::Web::Component::DataExport::Homologs']);
   $self->create_node('GeneTree', 'Gene Tree', ['genetree', 'EnsEMBL::Web::Component::DataExport::GeneTree']);
+  $self->create_node('SpeciesTree', 'Species Tree', ['species_tree', 'EnsEMBL::Web::Component::DataExport::SpeciesTree']);
 
   ## Output nodes
   $self->create_node('Output',  '', [], { 'command' => 'EnsEMBL::Web::Command::DataExport::Output'});
