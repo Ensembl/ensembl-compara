@@ -109,7 +109,7 @@ sub run {
 
     my $list_species = $self->compara_dba->get_GenomeDBAdaptor->fetch_all;
     # Launches the dump
-    $self->param('writer')->write_data($list_species, $callback_list_members, $self->param('tree_list'));
+    $self->param('writer')->_write_data($list_species, $callback_list_members, $self->param('tree_list'));
 }
 
 

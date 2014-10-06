@@ -232,7 +232,7 @@ sub write_trees {
     $self->_get_members_list($tree, $list_species, $hash_members);
   }
 
-  return $self->write_data(
+  return $self->_write_data(
     $list_species,
     sub {
       my ($species) = @_;
@@ -244,7 +244,7 @@ sub write_trees {
 
 =pod
 
-=head2 write_data()
+=head2 _write_data()
 
   Arg[0]      : List reference of all the species (must contain GenomeDB objects)
   Arg[1]      : A function that, given a GenomeDB, returns a list of all the
@@ -258,7 +258,7 @@ sub write_trees {
 
 =cut
 
-sub write_data {
+sub _write_data {
   my ($self, $list_species, $callback_list_members, $list_trees) = @_;
   my $w = $self->_writer();
 
