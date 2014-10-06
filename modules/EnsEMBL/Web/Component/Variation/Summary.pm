@@ -194,9 +194,8 @@ sub variation_source {
 
 sub co_located {
   my ($self, $feature_slice) = @_;
-  my $hub        = $self->hub;
-  my $adaptor    = $hub->get_adaptor('get_VariationFeatureAdaptor', 'variation');
-  $adaptor->db->include_failed_variations(1);
+  my $hub     = $self->hub;
+  my $adaptor = $hub->get_adaptor('get_VariationFeatureAdaptor', 'variation');
 
   my $slice;
   if ($feature_slice->start > $feature_slice->end) { # Insertion
@@ -696,7 +695,7 @@ sub most_severe_consequence {
       });
  
       my $html = sprintf(
-         '%s | <a href="%s">See all predicted consequences <small>[Genes and regulation]</small></a>',
+         '<div>%s | <a href="%s">See all predicted consequences <small>[Genes and regulation]</small></a></div>',
          $self->render_consequence_type($vf_object,1),
          $url
       );
