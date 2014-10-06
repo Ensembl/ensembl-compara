@@ -24,6 +24,7 @@ use RTF::Writer;
 use Bio::AlignIO;
 use IO::String;
 use Bio::EnsEMBL::Compara::Graph::OrthoXMLWriter;
+use Bio::EnsEMBL::Compara::Graph::GeneTreePhyloXMLWriter;
 
 use EnsEMBL::Web::File;
 use EnsEMBL::Web::Constants;
@@ -79,19 +80,20 @@ sub process {
     unless ($error) {
       ## Write data to output file in desired format
 
-      ## All BioPerl alignments go via a single outputter
-      my %align_formats = EnsEMBL::Web::Constants::ALIGNMENT_FORMATS;
-      my $in_bioperl    = grep { lc($_) eq lc($format) } keys %align_formats;
-      my %tree_formats  = EnsEMBL::Web::Constants::TREE_FORMATS;
-      my $is_tree       = grep { lc($_) eq lc($format) } keys %tree_formats;
+      ## Alignments and trees are handled by external writers
       if ($hub->param('align')) {
+        my %align_formats = EnsEMBL::Web::Constants::ALIGNMENT_FORMATS;
+        my $in_bioperl    = grep { lc($_) eq lc($format) } keys %align_formats;
+        my %tree_formats  = EnsEMBL::Web::Constants::TREE_FORMATS;
+        my $is_tree       = grep { lc($_) eq lc($format) } keys %tree_formats;
         if ($in_bioperl) {
-          my $data = $component->get_export_data;
-          $error = $self->write_alignment($format, $data);
+          $error = $self->write_alignment($component);
+        }
+        elsif ($format eq 'phyloxml') {
+          $error = $self->write_phyloxml($component);
         }
         elsif ($is_tree) {
-          my $data = $component->get_export_data('tree');
-          $error = $self->write_tree(lc($format), $data);
+          $error = $self->write_tree($component);
         }
         else {
           $error = 'Output not implemented for format '.$format;
@@ -407,8 +409,11 @@ sub write_fasta {
 }
 
 sub write_alignment {
-  my ($self, $format, $data) = @_;
-  my $hub = $self->hub;
+  my ($self, $component) = @_;
+  my $hub     = $self->hub;
+  my $format  = $hub->param('format');
+
+  my $data = $component->get_export_data;
   my $alignment;
 
   if (ref($data) =~ 'SimpleAlign') {
@@ -437,8 +442,10 @@ sub write_alignment {
 }
 
 sub write_tree {
-  my ($self, $format, $tree) = @_;
-  my $hub = $self->hub;
+  my ($self, $component) = @_;
+  my $hub     = $self->hub;
+  my $format  = lc($hub->param('format'));
+  my $data    = $component->get_export_data('tree');
 
   my %formats = EnsEMBL::Web::Constants::TREE_FORMATS;
   $format     = 'newick' unless $formats{$format};
@@ -452,6 +459,23 @@ sub write_tree {
   }
 
   $self->write_line($string);
+}
+
+sub write_phyloxml {
+  my ($self, $component) = @_;
+  my $cdb  = $hub->param('cdb') || 'compara';
+
+  my $tree = $component->get_export_data;
+
+  my $handle = IO::String->new();
+  my $w = Bio::EnsEMBL::Compara::Graph::GeneTreePhyloXMLWriter->new(
+          -SOURCE       => $cdb eq 'compara' ? $SiteDefs::ENSEMBL_SITETYPE:'Ensembl Genomes',
+          -ALIGNED      => $hub->param('aligned'),
+          -CDNA         => $hub->param('cdna'),
+          -NO_SEQUENCES => $hub->param('no_sequences'),
+          -HANDLE       => $handle,
+  );
+  $self->_writexml($tree, $handle, $w);
 }
 
 sub write_orthoxml {
