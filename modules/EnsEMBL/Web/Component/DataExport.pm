@@ -74,7 +74,7 @@ sub create_form {
   }
 
   my $formats = [
-      {'caption' => '-- Choose Format --', 'value' => 'tutorial'},
+      {'caption' => '-- Choose Format --'},
       @format_info
     ];
   ## Don't update this field from params, as there's no back 
@@ -97,7 +97,7 @@ sub create_form {
       'label'   => 'File format',
       'values'  => $formats,
       'select'  => 'select',
-      'class'   => '_stt _action',
+      'class'   => '_stt _export_formats',
     },
     {
       'type'    => 'Radiolist',
@@ -131,7 +131,8 @@ sub create_form {
       },
     ]);
   }
-  
+  $fieldset->add_hidden([{ name => 'adorn', value => 'both' }]);
+
   ## Don't forget the core params!
   my @core_params = keys %{$hub->core_object('parameters')};
   foreach (@core_params) {
@@ -142,6 +143,7 @@ sub create_form {
       },
     ]);
   }
+<<<<<<< HEAD
 
   ## Add tutorial "fieldset" that is shown by default
   if ($tutorial) {
@@ -152,6 +154,8 @@ sub create_form {
     }
     $tutorial_fieldset->add_notes($html);
   }
+=======
+>>>>>>> master
   
   ## Create all options forms, then show only one using jQuery
   while (my($format, $fields) = each (%ok_formats)) {
@@ -209,6 +213,17 @@ sub create_form {
     });
   }
 
+  ## Add images fieldset
+  if ($tutorial) {
+    my $tutorial_fieldset = $form->add_fieldset;
+    my $html = '<p><b>Guide to file formats</b></p><div class="_export_formats export-formats">';
+    foreach my $format (sort {lc($a) cmp lc($b)} keys %$fields_by_format) {
+      $html .= $self->show_preview($format);
+    }
+    $html .= '</div>';
+    $tutorial_fieldset->add_notes($html);
+  }
+
   return $form;
 }
 
@@ -223,7 +238,7 @@ sub show_preview {
   my $img = lc($format);
   $img .= '_align' if (lc($format) eq 'fasta' && $self->hub->param('align'));
   
-  my $html = sprintf('<div style="float:left;padding:0 20px 20px 0;"><p style="margin-bottom:0">%s</p><img src="/img/help/export/%s_preview.png" style="width:200px;height:150px" /></div>', $format, $img);
+  my $html = sprintf('<div><p>%s</p><p><img src="/img/help/export/%s_preview.png" /></p></div>', $format, $img);
   return $html;
 }
 

@@ -76,6 +76,7 @@ sub content {
     'name'    => 'message',
     'label'   => 'Message',
     'value'   => $hub->param('message') || '',
+    'notes'   => 'Tip: drag the bottom righthand corner to make this box bigger.',
   }, {
     'type'    => 'File',
     'name'    => 'attachment',

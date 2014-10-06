@@ -233,7 +233,6 @@ sub modify {} # For plugins
 sub storable     :lvalue { $_[0]{'_parameters'}{'storable'};     } # Set to 1 if configuration can be altered
 sub image_resize :lvalue { $_[0]{'_parameters'}{'image_resize'}; } # Set to 1 if there is image resize function
 sub has_das      :lvalue { $_[0]{'_parameters'}{'has_das'};      } # Set to 1 if there are DAS tracks
-sub altered      :lvalue { $_[0]{'altered'};                     } 
 
 sub hub                 { return $_[0]->{'hub'};                                               }
 sub code                { return $_[0]->{'code'};                                              }
@@ -261,6 +260,16 @@ sub toolbars            { return shift->parameter('toolbars',        @_);       
 sub slice_number        { return shift->parameter('slice_number',    @_);                      } # TODO: delete?
 sub get_tracks          { return grep { $_->{'data'}{'node_type'} eq 'track' } $_[0]->tree->nodes; } # return a list of track nodes
 sub get_sortable_tracks { return grep { $_->get('sortable') && $_->get('menu') ne 'no' } @{$_[0]->glyphset_configs}; }
+
+sub altered {
+  my $self = shift;
+  push @{$self->{'altered'}}, @_ if @_;
+  return $self->{'altered'};
+}
+
+sub is_altered {
+  return @{$_[0]->{'altered'}} ? 1 : 0;
+}
 
 sub get_user_settings {
   my $self     = shift;
@@ -997,7 +1006,14 @@ sub _load_url_feature {
 }
 
 sub load_configured_bam    { shift->load_file_format('bam');    }
-sub load_configured_bigbed { shift->load_file_format('bigbed'); }
+sub load_configured_bigbed { 
+  my $self = shift;
+  $self->load_file_format('bigbed'); 
+  my $sources  = $self->sd_call('ENSEMBL_INTERNAL_BIGBED_SOURCES') || {};
+  if ($sources->{'age_of_base'}) {
+    $self->add_track('information', 'age_of_base_legend', 'Age of Base Legend', 'age_of_base_legend', { strand => 'r' });        
+  }
+}
 sub load_configured_bigwig { shift->load_file_format('bigwig'); }
 sub load_configured_vcf    { shift->load_file_format('vcf');    }
 sub load_configured_datahubs { shift->load_file_format('datahub') }
@@ -1186,7 +1202,7 @@ sub _add_file_format_track {
   my ($desc, $url);
   
   if ($args{'internal'}) {
-    $desc = "Data served from a $args{'format'} file: $args{'description'}";
+    $desc = $args{'description'};
     $url = join '/', $self->hub->species_defs->DATAFILE_BASE_PATH, lc $self->hub->species, $self->hub->species_defs->ASSEMBLY_NAME, $args{'source'}{'dir'}, $args{'source'}{'file'};
     $args{'options'}{'external'} = undef;
   } else {
@@ -1259,7 +1275,7 @@ sub update_from_input {
     $diff = from_json($diff);
     $self->update_track_renderer($_, $diff->{$_}->{'renderer'}) for grep exists $diff->{$_}->{'renderer'}, keys %$diff;
     
-    $reload        = scalar(@{$self->altered}) > 0 ? 1 : 0;
+    $reload        = $self->is_altered;
     $track_reorder = $self->update_track_order($diff) if $diff->{'track_order'};
     $reload      ||= $track_reorder;
     $self->update_favourite_tracks($diff);
@@ -1276,7 +1292,7 @@ sub update_from_input {
       }
     }
     
-    $reload = scalar(@{$self->altered}) > 0 ? 1 : 0;
+    $reload = $self->is_altered;
     
     $self->update_favourite_tracks(\%favourites) if scalar keys %favourites;
   }
@@ -1454,7 +1470,7 @@ sub update_from_url {
     }
   }
   
-  if (scalar(@{$self->altered}) > 0) {
+  if ($self->is_altered) {
     my $tracks = join(', ', @{$self->altered});
     $session->add_data(
       type     => 'message',
@@ -1485,7 +1501,7 @@ sub update_track_renderer {
   $flag += $node->set_user('display', $renderer) if (!$on_off || $renderer eq 'off' || $node->get('display') eq 'off');
   my $text = $node->data->{'name'} || $node->data->{'coption'};
 
-  push @{$self->altered}, $text if $flag;
+  $self->altered($text) if $flag;
 }
 
 sub update_favourite_tracks {
@@ -1523,9 +1539,9 @@ sub update_track_order {
   my $node       = $self->get_node('track_order');
   if ($node->set_user($species, { %{$node->get($species) || {}}, %{$diff->{'track_order'}} })) {
     my $text = $node->data->{'name'} || $node->data->{'coption'};
-    push @{$self->altered}, $text;
+    $self->altered($text);
   }
-  return scalar(@{$self->altered}) if $self->get_parameter('sortable_tracks') ne 'drag';
+  return $self->is_altered if $self->get_parameter('sortable_tracks') ne 'drag';
 }
 
 sub reset {
@@ -1541,7 +1557,7 @@ sub reset {
       
       foreach (keys %$user_data) {
         my $text = $user_data->{$_}{'name'} || $user_data->{$_}{'coption'};
-        push @{$self->altered}, $text if $user_data->{$_}{'display'};
+        $self->altered($text) if $user_data->{$_}{'display'};
         delete $user_data->{$_}{'display'};
         delete $user_data->{$_} unless scalar keys %{$user_data->{$_}};
       }
@@ -1553,7 +1569,6 @@ sub reset {
     my $species = $self->species;
     
     if ($node->{'user_data'}{'track_order'}{$species}) {
-      #$self->altered = 1;
       delete $node->{'user_data'}{'track_order'}{$species};
       delete $node->{'user_data'}{'track_order'} unless scalar keys %{$node->{'user_data'}{'track_order'}};
     }
@@ -1587,6 +1602,8 @@ sub _update_missing {
   my $species_defs    = $self->species_defs;
   my $count_missing   = grep { $_->get('display') eq 'off' || !$_->get('display') } $self->get_tracks; 
   my $missing         = $self->get_node('missing');
+
+  $missing->set('extra_height', 4) if $missing;
   $missing->set('text', $count_missing > 0 ? "There are currently $count_missing tracks turned off." : 'All tracks are turned on') if $missing;
   
   my $info = sprintf(
@@ -1603,6 +1620,7 @@ sub _update_missing {
 
   my $information = $self->get_node('info');
   $information->set('text', $info) if $information;
+  $information->set('extra_height', 2) if $information;
   
   return { count => $count_missing, information => $info };
 }
@@ -2960,7 +2978,8 @@ sub add_sequence_variations {
 sub add_sequence_variations_meta {
   my ($self, $key, $hashref, $options) = @_;
   my $menu = $self->get_node('variation');
-  
+  my $prefix_caption = 'Variant - '; 
+ 
   foreach my $menu_item (sort {$a->{type} cmp $b->{type} || $a->{parent} cmp $b->{parent}} @{$hashref->{'menu'}}) {
     next if $menu_item->{'type'} =~  /^sv_/; # exclude structural variant items
     
@@ -2974,7 +2993,7 @@ sub add_sequence_variations_meta {
       
       $node = $self->create_track($menu_item->{'key'}, $menu_item->{'long_name'}, {
         %$options,
-        caption     => $menu_item->{'long_name'},
+        caption     => $prefix_caption.$menu_item->{'long_name'},
         sources     => $other_sources ? undef : [ $temp_name ],
         description => $other_sources ? 'Sequence variants from all sources' : $hashref->{'source'}{'descriptions'}{$temp_name},
       });
@@ -2985,7 +3004,7 @@ sub add_sequence_variations_meta {
       
       $node = $self->create_track($menu_item->{'key'}, $menu_item->{'long_name'}, {
         %$options,
-        caption     => $caption,
+        caption     => $prefix_caption.$caption,
         sources     => undef,
         sets        => [ $temp_name ],
         set_name    => $set_name,
@@ -3008,12 +3027,14 @@ sub add_sequence_variations_default {
   my ($self, $key, $hashref, $options) = @_;
   my $menu = $self->get_node('variation');
   my $sequence_variation = ($menu->get_node('variants')) ? $menu->get_node('variants') : $self->create_submenu('variants', 'Sequence variants');
+  my $prefix_caption = 'Variant - ';
 
   if (!$menu->get_node('variants')) {
     my $title = 'Sequence variants (all sources)';
 
     $sequence_variation->append($self->create_track("variation_feature_$key", $title, {
       %$options,
+      caption     => $prefix_caption.'All sources',
       sources     => undef,
       description => 'Sequence variants from all sources',
     }));
@@ -3025,7 +3046,7 @@ sub add_sequence_variations_default {
     
     $sequence_variation->append($self->create_track("variation_feature_${key}_$key_2", "$key_2 variations", {
       %$options,
-      caption     => $key_2,
+      caption     => $prefix_caption.$key_2,
       sources     => [ $key_2 ],
       description => $hashref->{'source'}{'descriptions'}{$key_2},
     }));
@@ -3052,7 +3073,7 @@ sub add_sequence_variations_default {
       
       $set_variation->append($self->create_track("variation_set_$key", $caption, {
         %$options,
-        caption     => $caption,
+        caption     => $prefix_caption.$caption,
         sources     => undef,
         sets        => [ $key ],
         set_name    => $name,
@@ -3069,7 +3090,7 @@ sub add_sequence_variations_default {
           
           $set_variation->append($self->create_track("variation_set_$sub_set_key", $sub_set_name, {
             %$options,
-            caption     => $sub_set_name,
+            caption     => $prefix_caption.$sub_set_name,
             sources     => undef,
             sets        => [ $sub_set_key ],
             set_name    => $sub_set_name,
@@ -3139,7 +3160,7 @@ sub add_structural_variations {
   my @A = keys $hashref;
   
   return unless $menu && scalar(keys(%{$hashref->{'structural_variation'}{'counts'}})) > 0;
-  
+  my $prefix_caption      = 'SV - ';
   my $sv_menu             = $self->create_submenu('structural_variation', 'Structural variants');
   my $structural_variants = $self->create_submenu('structural_variants',  'Structural variants');
   my $desc                = 'The colours correspond to the structural variant classes.';
@@ -3158,8 +3179,8 @@ sub add_structural_variations {
   # Complete overlap (Larger structural variants)
   $structural_variants->prepend($self->create_track('variation_feature_structural_larger', 'Larger structural variants (all sources)', { 
     %options,
-    db         => 'variation',
-    caption     => 'Larger structural variants',
+    db          => 'variation',
+    caption     => $prefix_caption.'Larger variants',
     source      => undef,
     description => "Structural variants from all sources which are at least 1Mb in length. $desc",
     min_size    => 1e6,
@@ -3169,7 +3190,7 @@ sub add_structural_variations {
   $structural_variants->prepend($self->create_track('variation_feature_structural_smaller', 'Smaller structural variants (all sources)', {
     %options,
     db         => 'variation',
-    caption     => 'Smaller structural variants',
+    caption     => $prefix_caption.'Smaller variants',
     source      => undef,
     description => "Structural variants from all sources which are less than 1Mb in length. $desc",
     depth       => 10,
@@ -3182,7 +3203,7 @@ sub add_structural_variations {
     $structural_variants->append($self->create_track("variation_feature_structural_$key_2", "$key_2 structural variations", {
       %options,
       db          => 'variation',
-      caption     => $key_2,
+      caption     => $prefix_caption.$key_2,
       source      => $key_2,
       description => $hashref->{'source'}{'descriptions'}{$key_2},
     }));  
@@ -3193,6 +3214,9 @@ sub add_structural_variations {
     next if $menu_item->{'type'} !~ /^sv_/;
     
     my $node_name = "$menu_item->{'long_name'} (structural variants)";
+    my $caption   = "$prefix_caption$menu_item->{'long_name'}";
+       $caption   =~ s/1000 Genomes/1KG/;
+
     my $db = 'variation';
 
     if ($menu_item->{'type'} eq 'sv_set') {
@@ -3202,7 +3226,7 @@ sub add_structural_variations {
       $structural_variants->append($self->create_track($menu_item->{'key'}, $node_name, {
         %options,
         db          => $db,
-        caption     => $node_name,
+        caption     => $caption,
         source      => undef,
         sets        => [ $menu_item->{'long_name'} ],
         set_name    => $menu_item->{'long_name'},
@@ -3215,7 +3239,7 @@ sub add_structural_variations {
       $structural_variants->append($self->create_track($name, $node_name, {
         %options,
         db          => $db,
-        caption     => $node_name,
+        caption     => $caption,
         source      => undef,
         study       => [ $name ],
         study_name  => $name,
@@ -3227,7 +3251,7 @@ sub add_structural_variations {
       $structural_variants->append($self->create_track("variation_feature_structural_$name", "$node_name", {
         %options,
         db          => 'variation_private',
-        caption     => "$name structural variants",
+        caption     => $prefix_caption.$name,
         source      => $name,
         description => $hashref->{'source'}{'descriptions'}{$name},
       }));  
@@ -3300,6 +3324,7 @@ sub add_somatic_mutations {
   my $menu = $self->get_node('somatic');
   return unless $menu;
   
+  my $prefix_caption = 'Variant - ';
   my $somatic = $self->create_submenu('somatic_mutation', 'Somatic variants');
   my %options = (
     db         => $key,
@@ -3315,7 +3340,7 @@ sub add_somatic_mutations {
   # All sources
   $somatic->append($self->create_track("somatic_mutation_all", "Somatic variants (all sources)", {
     %options,
-    caption     => 'Somatic variants (all sources)',
+    caption     => $prefix_caption.'All somatic',
     description => 'Somatic variants from all sources'
   }));
   
@@ -3326,7 +3351,7 @@ sub add_somatic_mutations {
       (my $k = $key_1) =~ s/\W/_/g;
       $somatic->append($self->create_track("somatic_mutation_$k", "$key_1 somatic variants", {
         %options,
-        caption     => "$key_1 somatic variants",
+        caption     => $prefix_caption."$key_1 somatic",
         source      => $key_1,
         description => "Somatic variants from $key_1"
       }));
@@ -3339,7 +3364,7 @@ sub add_somatic_mutations {
     
     $somatic->append($self->create_track("somatic_mutation_$key_2", "$key_2 somatic mutations (all)", {
       %options,
-      caption     => "$key_2 somatic mutations (all)",
+      caption     => $prefix_caption."$key_2 somatic mutations (all)",
       source      => $key_2,
       description => "All somatic variants from $key_2"
     }));
@@ -3378,6 +3403,7 @@ sub add_somatic_structural_variations {
   
   return unless $menu && scalar(keys(%{$hashref->{'structural_variation'}{'somatic'}{'counts'}})) > 0;
   
+  my $prefix_caption = 'SV - ';
   my $somatic = $self->create_submenu('somatic_structural_variation', 'Somatic structural variants');
   
   my %options = (
@@ -3393,7 +3419,7 @@ sub add_somatic_structural_variations {
   
   $somatic->append($self->create_track('somatic_sv_feature', 'Somatic structural variants (all sources)', {   
     %options,
-    caption     => 'Somatic structural variants',
+    caption     => $prefix_caption.'Somatic',
     sources     => undef,
     description => 'Somatic structural variants from all sources. For an explanation of the display, see the <a rel="external" href="http://www.ncbi.nlm.nih.gov/dbvar/content/overview/#representation">dbVar documentation</a>. In addition, we display the breakpoints in yellow.',
     depth       => 10
@@ -3402,7 +3428,7 @@ sub add_somatic_structural_variations {
   foreach my $key_2 (sort keys %{$hashref->{'structural_variation'}{'somatic'}{'counts'} || {}}) {
     $somatic->append($self->create_track("somatic_sv_feature_$key_2", "$key_2 somatic structural variations", {
       %options,
-      caption     => "$key_2 somatic",
+      caption     => $prefix_caption."$key_2 somatic",
       source      => $key_2,
       description => $hashref->{'source'}{'descriptions'}{$key_2},
       depth       => 100

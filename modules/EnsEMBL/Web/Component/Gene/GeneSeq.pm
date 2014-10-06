@@ -31,7 +31,7 @@ sub get_object {
 }
 
 sub initialize {
-  my ($self, $slice, $start, $end) = @_;
+  my ($self, $slice, $start, $end, $adorn) = @_;
   my $hub    = $self->hub;
   my $object = $self->get_object;
 
@@ -53,10 +53,12 @@ sub initialize {
   $config->{'slices'}        = [{ slice => $slice, name => $config->{'species'} }];
   $config->{'end_number'}    = $config->{'number'} = 1 if $config->{'line_numbering'};
 
-  my ($sequence, $markup) = $self->get_sequence_data($config->{'slices'}, $config);
+  my ($sequence, $markup) = $self->get_sequence_data($config->{'slices'}, $config,$adorn);
 
   $self->markup_exons($sequence, $markup, $config)     if $config->{'exon_display'};
-  $self->markup_variation($sequence, $markup, $config) if $config->{'snp_display'};
+  if($adorn ne 'none') {
+    $self->markup_variation($sequence, $markup, $config) if $config->{'snp_display'};
+  }
   $self->markup_line_numbers($sequence, $config)       if $config->{'line_numbering'};
   
   return ($sequence, $config);
@@ -73,7 +75,8 @@ sub content {
   my $html      = '';
 
   if ($length >= $self->{'subslice_length'}) {
-    $html .= '<div class="sequence_key"></div>' . $self->chunked_content($length, $self->{'subslice_length'}, { length => $length, name => $slice->name });
+    $html .= '<div class="adornment-key"></div>';
+    $html .= $self->chunked_content($length, $self->{'subslice_length'}, { length => $length, name => $slice->name });
   } else {
     $html .= $self->content_sub_slice($slice); # Direct call if the sequence length is short enough
   }
@@ -103,19 +106,20 @@ sub content_sub_slice {
   
   $slice ||= $self->object->slice;
   $slice   = $slice->sub_Slice($start, $end) if $start && $end;
-  
-  my ($sequence, $config) = $self->initialize($slice, $start, $end);
+ 
+  my $adorn = $hub->param('adorn') || 'none'; 
+  my ($sequence, $config) = $self->initialize($slice, $start, $end,$adorn);
   
   if ($end && $end == $length) {
     $config->{'html_template'} = '<pre class="text_sequence">%s</pre>';
   } elsif ($start && $end) {
     $config->{'html_template'} = sprintf '<pre class="text_sequence" style="margin:0">%s%%s</pre>', $start == 1 ? '&gt;' . $hub->param('name') . "\n" : '';
   } else {
-    $config->{'html_template'} = sprintf('<div class="sequence_key">%s</div>', $self->get_key($config)) . '<pre class="text_sequence">&gt;' . $slice->name . "\n%s</pre>";
+    $config->{'html_template'} = '<pre class="text_sequence">&gt;' . $slice->name . "\n%s</pre>";
   }
   
   $config->{'html_template'} .= '<p class="invisible">.</p>';
-  return $self->build_sequence($sequence, $config);
+  return $self->build_sequence($sequence, $config,1);
 }
 
 sub export_options { return {'action' => 'GeneSeq'}; }
@@ -142,7 +146,7 @@ sub initialize_export {
 }
 
 sub get_key {
-  my ($self, $config) = @_;
+  my ($self, $config,$k,$new) = @_;
   
   my $exon_type;
      $exon_type = $config->{'exon_display'} unless $config->{'exon_display'} eq 'selected';
@@ -157,7 +161,7 @@ sub get_key {
     }
   };
   
-  return $self->SUPER::get_key($config, $key);
+  return $self->SUPER::get_key($config, $key,$new);
 }
 
 1;

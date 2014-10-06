@@ -41,6 +41,7 @@ sub modify_page_elements {
   
   $page->remove_body_element('tabs');
   $page->remove_body_element('navigation') if $self->hub->action eq 'ListVegaMappings';
+  $page->remove_body_element('navigation') if $self->hub->action eq 'ListMappings';
 }
 
 sub populate_tree {
@@ -73,6 +74,7 @@ sub populate_tree {
 
   # to enable the ListVegaMappings page, a menu itme is needed. We do not want ListVegaMappings in the help menu so so a hidden menu item is added.
   $self->create_node('ListVegaMappings', 'Vega', [qw(ListVegaMappings EnsEMBL::Web::Component::Help::ListVegaMappings)], { class => 'modal_link', concise => 'ListVegaMappings', no_menu_entry => 1 });  
+  $self->create_node('ListMappings', 'Vega', [qw(ListMappings EnsEMBL::Web::Component::Help::ListMappings)], { class => 'modal_link', no_menu_entry => 1 });  
 }
 
 1;

@@ -19,9 +19,9 @@ use Text::Wrap;
 
 $Text::Wrap::columns = 75;
 
-our $ENSEMBL_VERSION           = 76;
-our $ARCHIVE_VERSION           = 'Aug2014';    # Change this to the archive site for this version
-our $ENSEMBL_RELEASE_DATE      = 'August 2014';
+our $ENSEMBL_VERSION           = 77;
+our $ARCHIVE_VERSION           = 'Oct2014';    # Change this to the archive site for this version
+our $ENSEMBL_RELEASE_DATE      = 'October 2014';
 
 #### START OF VARIABLE DEFINITION #### DO NOT REMOVE OR CHANGE THIS COMMENT ####
 
@@ -387,8 +387,8 @@ sub error {
        "\n", '#' x 78, "\n";
 }
 
-sub logs { warn sprintf q(SiteDefs::logs is deprecated. Just define $SiteDefs::ENSEMBL_LOGDIR = '%s' instead if needed.%s), $_[0] =~ s/\/$//r, "\n"; }
-sub tmp { warn sprintf q(SiteDefs::tmp is deprecated. Just define $SiteDefs::ENSEMBL_TMP_DIR = '%s' instead if needed.%s), $_[0] =~ s/\/$//r, "\n"; }
+sub logs { warn sprintf q(SiteDefs::logs is deprecated. Just define $SiteDefs::ENSEMBL_LOGDIR = '%s' instead in %s if needed.%s), $_[0] =~ s/\/$//r, [ caller ]->[0],  "\n"; }
+sub tmp { warn sprintf q(SiteDefs::tmp is deprecated. Just define $SiteDefs::ENSEMBL_TMP_DIR = '%s' instead in %s if needed.%s), $_[0] =~ s/\/$//r, [ caller ]->[0], "\n"; }
 
 =for Information
 

@@ -88,6 +88,14 @@ sub _content {
       label_html => $object->analysis->description
     });
   }
+
+  my $alt_allele_link = $object->get_alt_allele_link('Location');
+  $self->add_entry({
+                    'type'       => 'Alt. alleles',
+                    'label_html' => $alt_allele_link,
+                  }) 
+    if $alt_allele_link;
+  
 }
 
 1;

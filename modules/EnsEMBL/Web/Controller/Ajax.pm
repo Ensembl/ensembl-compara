@@ -84,8 +84,7 @@ sub track_order {
   my $node         = $image_config->get_node('track_order');
   
   $node->set_user($species, { %{$node->get($species) || {}}, $hub->param('track') => $hub->param('order') });
-  my $text = $node->data->{'name'} || $node->data->{'coption'};
-  push @{$image_config->altered}, $text;
+  $image_config->altered($node->data->{'name'} || $node->data->{'coption'});
   $hub->session->store;
 }
 

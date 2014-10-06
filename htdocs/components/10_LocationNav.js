@@ -27,52 +27,87 @@ Ensembl.Panel.LocationNav = Ensembl.Panel.extend({
     }
   },
 
-  currentLocation: function() { // extract r=, in easy to use format
-    var url = window.location[Ensembl.locationURL];
-    var url_r = decodeURIComponent(url.match(Ensembl.locationMatch)[1]);
-    var r_parts = url_r.match(/^(.*):(.*)-(.*)/);
-    return [r_parts[1],parseInt(r_parts[2]),parseInt(r_parts[3])];
+  currentLocations: function() { // extract r's into easy to use format
+    var out = {};
+    var url = decodeURIComponent(window.location.href).split("?");
+    parts = url[1].split(/[;&]/);
+    $.each(parts,function(i,part) {
+      kv = part.split("=");
+      if(!kv[0].match(/^r[0-9]*$/))
+        return;
+      var r_parts = kv[1].match(/^([^:]*):([^-]*)-([^:]*)(:.*)?/);
+      out[kv[0]] = [r_parts[1],parseInt(r_parts[2]),parseInt(r_parts[3]),r_parts[4]||''];
+    });
+    return out;
   },
 
-  urlNewLocation: function(r) { // current url as string, but with new r=
-    var url = window.location.href;
-    return url.replace(/([#?;&])r=([^;&]+)/,'$1r='+r);
+  newLocation: function(rs) {
+    var url = decodeURIComponent(window.location.href).split("?");
+    parts = url[1].split(/[;&]/);
+    new_parts = [];
+    $.each(parts,function(i,part) {
+      kv = part.split("=");
+      if(kv[0].match(/^r[0-9]*$/)) {
+        new_parts.push(kv[0]+"="+rs[kv[0]][0]+":"+rs[kv[0]][1]+"-"+rs[kv[0]][2]+rs[kv[0]][3]);
+      } else {
+        new_parts.push(part);
+      }
+    });
+    return url[0]+"?"+new_parts.join(";");
+  },
+
+  rescale: function(rs,input) {
+    input = Math.round(input);
+    var out = {};
+    $.each(rs,function(k,v) {
+      var r_2centre = Math.round(v[1]+v[2]);
+      var r_start = Math.round((r_2centre-input)/2);
+      out[k] = [v[0],r_start,r_start+input+1,v[3]]; 
+    });
+    return out;
   },
 
   arrow: function(step) { // href for arrow buttons at cur pos. as string
-    var r = this.currentLocation();
-    return this.urlNewLocation(r[0]+':'+(r[1]+step)+'-'+(r[2]+step));  
+    var rs = this.currentLocations();
+    var out =  {};
+    $.each(rs,function(k,v) {
+      v[1] += step;
+      v[2] += step;
+    });
+    return this.newLocation(rs);
   },
 
   zoom: function(factor) { // href for +/- buttons at cur pos. as string
-    var r = this.currentLocation();
-    var centre = (r[1] + r[2])/2;
-    var width = r[2] - r[1];
-    var start = Math.round(centre-width*factor/2);
-    var end = Math.round(start + width*factor);
-    if(start == end && factor > 1) { end += 1; } // enable zoom out from 1bp
-    return this.urlNewLocation(r[0]+':'+start+'-'+end);
+    var rs = this.currentLocations();
+    var width = rs['r'][2] - rs['r'][1];
+    rs = this.rescale(rs,width*factor);
+    if(factor>1) {
+      $.each(rs,function(k,v) {
+        if(v[1] == v[2]) { v[2]++; }
+      });
+    }
+    return this.newLocation(rs);
   },
 
   updateButtons: function() { // update button hrefs (and loc) at cur. pos
     var panel = this;
 
-    var r = this.currentLocation();
-    var width = r[2]-r[1]+1;
+    var rs = this.currentLocations();
+    var width = rs['r'][2]-rs['r'][1]+1;
     $('.left_2',panel.el).attr('href',panel.arrow(-1e6));
     $('.left_1',panel.el).attr('href',panel.arrow(-width));
     $('.zoom_in',panel.el).attr('href',panel.zoom(0.5));
     $('.zoom_out',panel.el).attr('href',panel.zoom(2));
     $('.right_1',panel.el).attr('href',panel.arrow(width));
     $('.right_2',panel.el).attr('href',panel.arrow(1e6));
-    $('#loc_r',panel.el).val(r[0]+':'+r[1]+'-'+r[2]);
+    $('#loc_r',panel.el).val(rs['r'][0]+':'+rs['r'][1]+'-'+rs['r'][2]);
   },
 
   val2pos: function () { // from 0-100 on UI slider to bp
     var panel = this;
 
-    var r = this.currentLocation();
-    var input = r[2]-r[1]+1;
+    var rs = this.currentLocations();
+    var input = rs['r'][2]-rs['r'][1]+1;
     var sliderConfig = $.parseJSON($('span.ramp', panel.el).text());
     var slide_min = sliderConfig.min;
     var slide_max = sliderConfig.max;
@@ -140,9 +175,7 @@ Ensembl.Panel.LocationNav = Ensembl.Panel.extend({
     var slide_max = sliderConfig.max;
     var slide_mul = ( Math.log(slide_max) - Math.log(slide_min) ) / 100;
     var slide_off = Math.log(slide_min);
-    var r = panel.currentLocation();
-    var chr = r[0];
-    var r_2centre = Math.round(r[1]+r[2]);
+    var rs = panel.currentLocations();
     this.elLk.slider = $('.slider', this.el).slider({
       value: panel.val2pos(),
       step:  1,
@@ -156,20 +189,19 @@ Ensembl.Panel.LocationNav = Ensembl.Panel.extend({
       change: function (e, ui) {
         if(panel.elLk.slider.slider('option','fake')) { return; }
         var input = panel.pos2val(ui.value);
-        var r_start = Math.round((r_2centre-input)/2);
-        var r = chr+':'+r_start+'-'+(r_start+input+1);
-        var url = panel.urlNewLocation(r);
+        rs = panel.rescale(rs,input);
+        var url = panel.newLocation(rs);
         
         if (panel.enabled === false) {
           Ensembl.redirect(url);
           return false;
-        } else if (Ensembl.locationURL === 'hash' && !window.location.hash.match(Ensembl.locationMatch) && window.location.search.match(Ensembl.locationMatch)[1] === r) {
+        } else if (Ensembl.locationURL === 'hash' && !window.location.hash.match(Ensembl.locationMatch) && window.location.search.match(Ensembl.locationMatch)[1] === rs['r']) {
           return false; // when there's no hash, but the current location is the same as the new r
-        } else if ((window.location[Ensembl.locationURL].match(Ensembl.locationMatch) || [])[1] === r) {
+        } else if ((window.location[Ensembl.locationURL].match(Ensembl.locationMatch) || [])[1] === rs['r']) {
           return false;
         }
         
-        Ensembl.updateLocation(r);
+        Ensembl.updateLocation(rs['r'][0]+":"+rs['r'][1]+"-"+rs['r'][2]);
       },
       stop: function () {
         sliderLabel.hide();

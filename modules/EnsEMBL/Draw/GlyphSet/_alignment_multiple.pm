@@ -68,7 +68,7 @@ sub draw_features {
   #colours to distinguish alternating features for GenomicAlignBlock objects only 
   my @block_colours;
   if ($constrained_element) {
-      push @block_colours, $feature_colour;
+      @block_colours = ($feature_colour, $feature_colour);
   } else {
       @block_colours =($feature_colour, $self->{'config'}->colourmap->mix($feature_colour,'white',0.5));
 

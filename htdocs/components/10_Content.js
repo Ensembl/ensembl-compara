@@ -143,7 +143,7 @@ Ensembl.Panel.Content = Ensembl.Panel.extend({
       });
     }
     
-    this.xhr = $.ajax({
+    this.xhr = $.paced_ajax({
       url: url,
       data: data,
       dataType: 'html',
@@ -308,7 +308,7 @@ Ensembl.Panel.Content = Ensembl.Panel.extend({
   glossary: function () {
     this.elLk.glossary.each(function() {
       var el  = $(this);
-      el.helptip({ content: el.children('.floating_popup').remove().html(), delay: true });
+      el.helptip({ content: el.children('.floating_popup').remove().html() });
     });
   },
   

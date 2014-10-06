@@ -121,7 +121,7 @@ sub initialize {
     
     push @data, $export ? $downstream : { 
       exint    => "3' downstream sequence", 
-      Sequence => $self->build_sequence($downstream, $config)
+      Sequence => $self->build_sequence($downstream, $config,1)
     };
   }
   
@@ -145,7 +145,7 @@ sub content {
     { data_table => 'no_sort', exportable => 1 }
   );
 
-  return sprintf '<div class="sequence_key">%s</div>%s%s', $self->get_key($config), $table->render;
+  return sprintf '<div class="adornment-key"></div>'.$table->render;
 }
 
 sub export_options { return {'action' => 'ExonSeq'}; }
@@ -400,18 +400,18 @@ sub add_line_numbers {
 sub build_sequence {
   my ($self, $sequence, $config) = @_;
   $config->{'html_template'} = '<pre class="exon_sequence">%s</pre>';
-  return $self->SUPER::build_sequence([ $sequence ], $config);
+  return $self->SUPER::build_sequence([ $sequence ], $config,1);
 }
 
 sub get_key {
-  return shift->SUPER::get_key(@_, {
+  return shift->SUPER::get_key($_[0], {
     'exons/Introns' => {
       exon     => { class => 'e0', text => 'Translated sequence' },
       intron   => { class => 'e1', text => 'Intron sequence'     },
       utr      => { class => 'eu', text => 'UTR'                 },
       flanking => { class => 'ef', text => 'Flanking sequence'   },
     }
-  });
+  },$_[2]);
 }
 
 1;

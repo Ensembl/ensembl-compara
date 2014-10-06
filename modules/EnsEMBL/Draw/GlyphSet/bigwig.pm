@@ -83,7 +83,7 @@ sub render_normal {
   
   $self->_render_hidden_bgd($h) if $features_drawn && $self->my_config('addhiddenbgd');
   
-  $self->errorTrack("No features from '$name' in this region") unless $features_drawn || $self->{'no_empty_track_message'} || $self->{'config'}->get_option('opt_empty_tracks') == 0;
+  $self->errorTrack("No features from '$name' on this strand") unless $features_drawn || $self->{'no_empty_track_message'} || $self->{'config'}->get_option('opt_empty_tracks') == 0;
   $self->errorTrack("$features_bumped features from '$name' omitted", undef, $self->_max_bump_row * ($h + $h < 2 ? 1 : 2) + 6) if $features_bumped && $self->get_parameter('opt_show_bumped');
 }
 

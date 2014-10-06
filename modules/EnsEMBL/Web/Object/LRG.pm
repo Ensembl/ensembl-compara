@@ -22,6 +22,7 @@ use strict;
 
 use Time::HiRes qw(time);
 use Bio::EnsEMBL::Compara::GenomeDB;
+use Bio::EnsEMBL::Compara::Homology;
 use Exporter;
 
 use EnsEMBL::Web::Cache;
@@ -756,19 +757,6 @@ sub get_homology_matches {
     my $adaptor_call  = $self->param('gene_adaptor') || 'get_GeneAdaptor';
     my %homology_list;
 
-    # Convert descriptions into more readable form
-    my %desc_mapping = (
-      'ortholog_one2one'          => '1-to-1',
-      'apparent_ortholog_one2one' => '1-to-1 (apparent)', 
-      'ortholog_one2many'         => '1-to-many',
-      'between_species_paralog'   => 'paralogue (between species)',
-      'ortholog_many2many'        => 'many-to-many',
-      'within_species_paralog'    => 'paralogue (within species)',
-      'other_paralog'             => 'other paralogue (within species)',
-      'putative_gene_split'       => 'putative gene split',
-      'contiguous_gene_split'     => 'contiguous gene split'
-    );
-    
     foreach my $display_spp (keys %$homologues){
       my $order = 0;
       
@@ -781,7 +769,7 @@ sub get_homology_matches {
         next if $homology_list{$display_spp}{$homologue->stable_id} && $homology_desc eq 'other_paralog';
  
         $homology_list{$display_spp}{$homologue->stable_id} = {
-          homology_desc       => $desc_mapping{$homology_desc} || 'no description',
+          homology_desc       => $Bio::EnsEMBL::Compara::Homology::PLAIN_TEXT_WEB_DESCRIPTIONS{$homology_desc} || 'no description',
           description         => $homologue->description       || 'No description',
           display_id          => $homologue->display_label     || 'Novel Ensembl prediction',
           homology_subtype    => $homology_subtype,

@@ -135,7 +135,8 @@ sub new {
         next if ($self->{'strandedness'} || $glyphset_ids{$row_config->id} > 1) && $strand eq 'f';
         
         my $classname = "$self->{'prefix'}::GlyphSet::" . $row_config->get('glyphset');
-        
+        #warn ">>> GLYPHSET ".$row_config->get('glyphset');       
+ 
         next unless $self->dynamic_use($classname);
         
         my $glyphset;

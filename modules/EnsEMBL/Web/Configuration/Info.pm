@@ -85,6 +85,13 @@ sub populate_tree {
     ));
   }
 
+  $self->create_node('Expression', 'Gene Expression',
+    [qw(
+      rnaseq_table  EnsEMBL::Web::Component::Info::ExpressionTable
+    )],
+    { 'availability' => 'database:rnaseq' }
+  );
+
   my $stats_menu = $self->create_submenu('Stats', 'Genome Statistics');
   
   $stats_menu->append($self->create_node('StatsTable', 'Assembly and Genebuild',

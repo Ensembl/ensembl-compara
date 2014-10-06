@@ -77,7 +77,7 @@ sub content {
   
   $table->add_rows(@rows);
 
-#  $self->cell_line_button;
+#  $self->cell_line_button('reg_summary');
 
   if(scalar keys %$evidence_data) {
     return $table->render;

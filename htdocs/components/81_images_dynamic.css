@@ -41,7 +41,8 @@ body.ie6 div.image_container { background-color: [[BUTTON_BG]]; }
 /**
  as we have to remove the href tags to get IE to work - make the whole of the slice "clickable"...**/
 
-.drag_select { cursor: pointer; position: relative; }
+.drag_select { cursor: default; position: relative; }
+.drag_select.drag_select_pointer { cursor: pointer; }
 
 .hover_label                              { position: absolute; padding: 0 0 5px 0; border: 1px solid; z-index: 999; display: none; text-align: left; width: auto; cursor: default; }
 .hover_label.name_only                    { padding: 0; }

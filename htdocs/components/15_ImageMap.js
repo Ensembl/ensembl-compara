@@ -236,6 +236,12 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
         
         return false;
       },
+      mousemove: function(e) {
+        var coords  = panel.getMapCoords(e);
+        var area    = coords.r ? panel.dragRegion : panel.getArea(coords);
+
+        $(this).toggleClass('drag_select_pointer', !(!area || $(area.a).hasClass('label') || $(area.a).hasClass('drag')));
+      },
       click: function (e) {
         if (panel.clicking) {
           panel.makeZMenu(e, panel.getMapCoords(e));
@@ -809,8 +815,8 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
     this.imgOffset = this.imgOffset || this.elLk.img.offset();
     
     return {
-      x: e.pageX - this.imgOffset.left, 
-      y: e.pageY - this.imgOffset.top
+      x: e.pageX - this.imgOffset.left - 1, // exclude the 1px borders
+      y: e.pageY - this.imgOffset.top - 1
     };
   },
   

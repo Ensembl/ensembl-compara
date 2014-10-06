@@ -144,7 +144,6 @@ sub content {
     $num_slices = @$slices;
   }
   my @A = @{$slices||[]};
-  warn "@@@ SLICES @A";
 
   #If the slice_length is long, split the sequence into chunks to speed up the process
   #Note that slice_length is not set if need to display a target_slice_eable
@@ -152,7 +151,7 @@ sub content {
 
     my ($table, $padding) = $self->get_slice_table($slices, 1);
     $html .= $self->draw_tree($cdb, $align_blocks, $slice, $align, $method_class, $groups, $slices);
-    $html .= '<div class="sequence_key"></div>' . $table . $self->chunked_content($slice_length, $self->{'subslice_length'}, { padding => $padding, length => $slice_length });
+    $html .= $table . $self->chunked_content($slice_length, $self->{'subslice_length'}, { padding => $padding, length => $slice_length });
 
   } else {
     my ($table, $padding);
@@ -160,7 +159,7 @@ sub content {
     #Draw target_slice_table for overlapping alignments
     if ($need_target_slice_table) {
       $table = $self->_get_target_slice_table($slice, $align, $align_blocks, $groups, $method_class, $method_type, $is_low_coverage_species, $cdb);
-      $html .= '<div class="sequence_key"></div>' . $table . $self->show_warnings($warnings);
+      $html .= $table . $self->show_warnings($warnings);
     } else {
       #Write out sequence if length is short enough
       $html .= $self->draw_tree($cdb, $align_blocks, $slice, $align, $method_class, $groups, $slices) if ($align);
@@ -176,7 +175,7 @@ sub content {
 sub content_sub_slice {
   my $self = shift;
   my ($sequence, $config) = $self->_get_sequence(@_);  
-  return $self->build_sequence($sequence, $config);
+  return $self->build_sequence($sequence, $config,1);
 }
 
 sub _get_sequence {
@@ -244,7 +243,7 @@ sub _get_sequence {
   
   # Only if this IS NOT a sub slice - print the key and the slice list
   my $template = '';
-  $template = sprintf('<div class="sequence_key">%s</div>', $self->get_key($config)) . $self->get_slice_table($config->{'slices'}) unless $start && $end;
+  $template = $self->get_slice_table($config->{'slices'}) unless $start && $end;
   
   # Only if this IS a sub slice - remove margins from <pre> elements
   my $class = ($start && $end && $end == $slice_length) ? '' : ' class="no-bottom-margin"';

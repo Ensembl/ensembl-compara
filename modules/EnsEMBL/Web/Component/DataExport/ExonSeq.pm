@@ -41,6 +41,7 @@ sub configure_fields {
   return {
     'RTF' => [
                 ['extra'],
+                ['snp_display'],
               ],
 
     'FASTA' => [

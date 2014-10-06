@@ -159,6 +159,13 @@ sub assembly_text {
   );
   
   ## Insert dropdown list of other assemblies
+  if ($species eq 'Homo_sapiens' && $species_defs->ENSEMBL_SERVERNAME ne 'grch37.ensembl.org') {
+    push @other_assemblies, {
+      url      => "http://grch37.ensembl.org/$species/",
+      assembly => 'GRCh37',
+      release  => '(Long-term archive with BLAST, VEP and BioMart)',
+    };
+  }
   my $adaptor  = EnsEMBL::Web::DBSQL::ArchiveAdaptor->new($hub);
   my $archives = $adaptor->fetch_archives_by_species($hub->species);
   my $previous = $assembly;
@@ -209,9 +216,10 @@ sub genebuild_text {
     </div>
     <h2>Gene annotation</h2>
     <p><strong>What can I find?</strong> Protein-coding and non-coding genes, splice variants, cDNA and protein sequences, non-coding RNAs.</p>
-    <p><a href="%s#genebuild" class="nodeco">%sMore about this genebuild</a></p>
+    <p><a href="%s#genebuild" class="nodeco">%sMore about this genebuild</a>%s</p>
     %s
     <p><a href="%s" class="modal_link nodeco" rel="modal_user_data">%sUpdate your old Ensembl IDs</a></p>
+    %s
     %s',
     
     sprintf(
@@ -228,6 +236,8 @@ sub genebuild_text {
     
     $hub->url({ action => 'Annotation', __clear => 1 }), sprintf($self->{'icon'}, 'info'),
     
+    $hub->database('rnaseq') ? sprintf(', including <a href="%s" class="nodeco">RNASeq gene expression models</a>', $hub->url({'action' => 'Expression'})) : '',
+
     $ftp ? sprintf(
       '<p><a href="%s/release-%s/fasta/%s/" class="nodeco">%sDownload genes, cDNAs, ncRNA, proteins</a> (FASTA)</p>', ## Link to FTP site
       $ftp, $species_defs->ENSEMBL_VERSION, lc $species, sprintf($self->{'icon'}, 'download')

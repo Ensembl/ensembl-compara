@@ -54,10 +54,6 @@ sub content {
  
   foreach my $homology (@{$homologies}) {
 
-    ## filter out non-required types
-    my $homology_desc  = $homology_types->{$homology->{'_description'}} || $homology->{'_description'};
-    next unless $desc_mapping{$homology_desc};      
-
     my $sa;
     
     eval {
@@ -121,10 +117,9 @@ sub content {
       
       next unless $flag;
       
-      my $homology_desc_mapped = $desc_mapping{$homology_desc} ? $desc_mapping{$homology_desc} : 
-                                 $homology_desc ? $homology_desc : 'no description';
+      my $homology_desc_mapped = $Bio::EnsEMBL::Compara::Homology::PLAIN_TEXT_DESCRIPTIONS{$homology->{'_description'}} || $homology->{'_description'} || 'no description';
 
-      $html .= "<h2>$match_type type: $homology_desc_mapped</h2>";
+      $html .= "<h2>Type: $homology_desc_mapped</h2>";
       
       my $ss = $self->new_table([
           { title => 'Species',          width => '15%' },

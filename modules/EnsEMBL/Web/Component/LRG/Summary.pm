@@ -116,7 +116,7 @@ sub content {
     my $show = (defined($tr_cookie) && $tr_cookie ne '' ) ? $tr_cookie eq 'open' : 'open';
 
     my $tr_line = $tr_html . sprintf(
-        ' <a rel="transcripts_table" class="button toggle no_img set_cookie %s" href="#" title="Click to toggle the transcript table">
+        ' <a rel="transcripts_table" class="button toggle _slide_toggle no_img set_cookie %s" href="#" title="Click to toggle the transcript table">
           <span class="closed">Show transcript table</span><span class="open">Hide transcript table</span>
         </a>',
         $show ? 'open' : 'closed'

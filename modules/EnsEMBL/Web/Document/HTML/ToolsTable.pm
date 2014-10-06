@@ -106,6 +106,17 @@ sub render {
     'docs' => sprintf('<a href="/info/data/virtual_machine.html"><img src="%s16/info.png" alt="Documentation" /></a>', $img_url)
   });
 
+  ## REST
+  if (my $rest_url = $sd->ENSEMBL_REST_URL) {
+    $table->add_row({
+      "name" => sprintf("<b><a href=%s>Ensembl REST server</a></b>", $rest_url),
+      'desc' => 'Access Ensembl data using your favourite programming language',
+      "tool" => sprintf("<a href='%s' class='nodeco'><img src='%s16/tool.png' alt='Tool' title='Go to online tool' /></a>", $rest_url, $img_url),
+      'code' => '-',
+      'docs' => sprintf('<a href="%s"><img src="%s16/info.png" alt="Documentation" /></a>', $sd->ENSEMBL_REST_DOC_URL || $rest_url, $img_url)
+    });
+  }
+
   return $table->render;
 }
 

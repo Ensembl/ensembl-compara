@@ -105,6 +105,7 @@ sub get_assoc {
     if ($r->[0]->release == $last_release) {
       $release = undef;
     } else {
+      $last_gsi = undef;
       $release = $r->[0]->release;
     }
 

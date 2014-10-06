@@ -104,12 +104,16 @@ sub render_collapsed {
   $self->_init_bump;
   
   my ($genes, $highlights, $transcripts, $exons) = $self->features;
+  my $on_other_strand = 0;
   
   foreach my $gene (@$genes) {
     my $gene_stable_id = $gene->stable_id;
     my $gene_strand    = $gene->strand;
     
-    next if $gene_strand != $strand && $strand_flag eq 'b';
+    if ($gene_strand != $strand && $strand_flag eq 'b') { # skip features on wrong strand
+      $on_other_strand = 1;
+      next;
+    }
     
     $transcript_drawn = 1;
     
@@ -223,7 +227,7 @@ sub render_collapsed {
       priority => $self->_pos,
       legend   => \@legend
     };
-  } elsif ($config->get_option('opt_empty_tracks') != 0) {
+  } elsif ($config->get_option('opt_empty_tracks') != 0 && !$on_other_strand) {
     $self->no_track_on_strand;
   }
 }
@@ -264,12 +268,16 @@ sub render_transcripts {
   $self->_init_bump;
   
   my ($genes, $highlights, $transcripts, $exons) = $self->features;
+  my $on_other_strand = 0;
   
   foreach my $gene (@$genes) {
     my $gene_strand    = $gene->strand;
     my $gene_stable_id = $gene->can('stable_id') ? $gene->stable_id : undef;
     
-    next if $gene_strand != $strand && $strand_flag eq 'b'; # skip features on wrong strand
+    if ($gene_strand != $strand && $strand_flag eq 'b') { # skip features on wrong strand
+      $on_other_strand = 1;
+      next;
+    }
     next if $target_gene && $gene_stable_id ne $target_gene;
     
     my (%tags, @gene_tags, $tsid);
@@ -476,7 +484,7 @@ sub render_transcripts {
       priority => $self->_pos,
       legend   => \@legend
     };
-  } elsif ($config->get_option('opt_empty_tracks') != 0) {
+  } elsif ($config->get_option('opt_empty_tracks') != 0 && !$on_other_strand) {
     $self->no_track_on_strand;
   }
 }
@@ -904,11 +912,15 @@ sub render_genes {
   my @genes_to_label;
   
   my ($genes, $highlights) = $self->features;
+  my $on_other_strand = 0;
   
   foreach my $gene (@$genes) {
     my $gene_strand = $gene->strand;
     
-    next if $gene_strand != $strand && $strand_flag eq 'b';
+    if ($gene_strand != $strand && $strand_flag eq 'b') { # skip features on wrong strand
+      $on_other_strand = 1;
+      next;
+    }
     
     my $colour_key     = $self->colour_key($gene);
     my $gene_col       = $self->my_colour($colour_key);
@@ -1101,7 +1113,7 @@ sub render_genes {
       priority => $self->_pos,
       legend   => \@legend
     }
-  } elsif ($config->get_option('opt_empty_tracks') != 0) {
+  } elsif ($config->get_option('opt_empty_tracks') != 0 && !$on_other_strand) {
     $self->no_track_on_strand;
   }
 }

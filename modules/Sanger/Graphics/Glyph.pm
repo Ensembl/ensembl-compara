@@ -28,8 +28,6 @@ no warnings qw(uninitialized);
 use Sanger::Graphics::ColourMap;
 use vars qw($AUTOLOAD);
 
-our $VERSION = do { my @r = (q$Revision$ =~ /\d+/mxg); sprintf '%d.'.'%03d' x $#r, @r };
-
 #########
 # constructor
 # _methods is a hash of valid methods you can call on this object

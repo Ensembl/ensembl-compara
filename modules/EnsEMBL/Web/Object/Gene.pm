@@ -33,7 +33,7 @@ use strict;
 
 use EnsEMBL::Web::Constants; 
 use EnsEMBL::Web::Cache;
-use Bio::EnsEMBL::Compara::GenomeDB;
+use Bio::EnsEMBL::Compara::Homology;
 
 use Time::HiRes qw(time);
 
@@ -443,37 +443,6 @@ sub get_gene_supporting_evidence {
   return $e;
 }
 
-=head2 get_alt_alleles
-
- Example     : my ($stable_id,$alleles) = $gene->get_allele_info
- Description : retrieves stable id and details of alt_alleles
- Return type : list (stable_id string and arrayref of B::E::Genes)
-
-=cut
-
-sub get_alt_alleles {
-  my $self = shift;
-  my $gene = $self->Obj;
-  my $stable_id = $gene->stable_id;
-  my $alleles = [];
-  if ($gene->slice->is_reference) {
-    $alleles = $self->Obj->get_all_alt_alleles;
-  }
-  else {
-    my $adaptor = $self->hub->get_adaptor('get_AltAlleleGroupAdaptor');
-    my $group = $adaptor->fetch_Group_by_Gene_dbID($gene->dbID);
-    if ($group) {
-      foreach my $alt_allele_gene (@{$group->get_all_Genes}) {
-        if ($alt_allele_gene->stable_id ne $stable_id) {
-          push @$alleles, $alt_allele_gene;
-        }
-      }
-    }
-  }
-  return $alleles;
-}
-
-
 # generate URLs for evidence links
 sub add_evidence_links {
   my $self = shift;
@@ -752,9 +721,12 @@ sub get_homology_matches {
     my $adaptor_call = $self->param('gene_adaptor') || 'get_GeneAdaptor';
     my %homology_list;
 
+<<<<<<< HEAD
     # Convert descriptions into more readable form
     my %desc_mapping = $self->get_desc_mapping;
     
+=======
+>>>>>>> master
     foreach my $display_spp (keys %$homologues) {
       my $order = 0;
       
@@ -768,7 +740,7 @@ sub get_homology_matches {
         next if $homology_list{$display_spp}{$homologue->stable_id} && $homology_desc eq 'other_paralog';
         
         $homology_list{$display_spp}{$homologue->stable_id} = { 
-          homology_desc       => $desc_mapping{$homology_desc} || 'no description',
+          homology_desc       => $Bio::EnsEMBL::Compara::Homology::PLAIN_TEXT_WEB_DESCRIPTIONS{$homology_desc} || 'no description',
           description         => $homologue->description       || 'No description',
           display_id          => $homologue->display_label     || 'Novel Ensembl prediction',
           homology_subtype    => $homology_subtype,
@@ -1383,6 +1355,7 @@ sub get_predecessors {
   my $self = shift;
   my $archive_adaptor = $self->database('core')->get_ArchiveStableIdAdaptor;
   my $archive = $archive_adaptor->fetch_by_stable_id($self->stable_id, 'Gene');
+  return [] unless $archive;
   my $predecessors = $archive_adaptor->fetch_predecessor_history($archive);
   return $predecessors;
 }

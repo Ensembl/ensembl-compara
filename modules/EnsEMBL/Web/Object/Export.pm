@@ -564,7 +564,11 @@ sub alignment {
   
   $self->{'alignments_function'} = 'get_SimpleAlign';
   
-  my $alignments = EnsEMBL::Web::Component::Compara_Alignments::get_alignments($self, $self->slice, $hub->param('align'), $hub->species);
+  my $alignments = $self->get_alignments({
+                              'slice' => $self->slice,
+                              'align' => $hub->param('align'), 
+                              'species' => $hub->species
+                          });
   my $export;
 
   my $align_io = Bio::AlignIO->newFh(

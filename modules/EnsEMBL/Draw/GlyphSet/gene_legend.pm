@@ -71,6 +71,8 @@ sub _init {
   foreach my $key (sort { $priorities{$b} <=> $priorities{$a} } keys %sections) {      
     $self->add_vgroup_to_legend($sections{$key},$headings{$key});
   }
+
+  $self->add_space;
 }
 
 1;
