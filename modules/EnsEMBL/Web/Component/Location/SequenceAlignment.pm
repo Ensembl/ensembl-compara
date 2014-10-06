@@ -85,14 +85,14 @@ sub content {
     
     my (undef, undef, $region, $start, $end) = split ':', $slice_name;
     my $url   = $hub->url({ action => 'View', r => "$region:$start-$end" });
-    my $table = qq{
+    my $table = qq(
       <table>
         <tr>
           <th>$config->{'species'} &gt;&nbsp;</th>
           <td><a href="$url">$slice_name</a><br /></td>
         </tr>
       </table>
-    };
+    );
     
     $config->{'html_template'} = "$table<pre>%s</pre>";
     
@@ -100,7 +100,7 @@ sub content {
     $html .= $self->_hint(
       'strain_config', 
       ucfirst "$strain configuration",
-      qq{<p>You can choose which ${strain}s to display from the "<b>Resequenced ${strain}s</b>" section of the configuration panel, accessible via the "<b>Configure this page</b>" link to the left.</p>}
+      qq(<p>You can choose which ${strain}s to display from the "<b>Resequenced ${strain}s</b>" section of the configuration panel, accessible via the "<b>Configure this page</b>" link to the left.</p>)
     );
   } else {
     $strain .= 's';
@@ -108,7 +108,7 @@ sub content {
     if ($ref_slice->get_individuals('reseq')) {
       $html = $self->_info(
         "No $strain specified", 
-        qq{<p>Please select $strain to display from the "<b>Resequenced $strain</b>" section of the configuration panel, accessible via "<b>Configure this page</b>" link to the left.</p>}
+        qq(<p>Please select $strain to display from the "<b>Resequenced $strain</b>" section of the configuration panel, accessible via "<b>Configure this page</b>" link to the left.</p>)
       );
     } else {
       $html = $self->_warning("No $strain available", "<p>No resequenced $strain available for this species</p>");
