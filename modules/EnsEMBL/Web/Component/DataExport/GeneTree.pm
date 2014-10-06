@@ -41,22 +41,22 @@ sub content {
 
   my %nhx = EnsEMBL::Web::Constants::NHX_OPTIONS;
   foreach my $k (sort {lc($a) cmp lc($b)} keys %nhx) {
-    push @$nhx_values, {'label' => $k, 'value' => $nhx{$k}};
+    push @$nhx_values, {'value' => $k, 'caption' => $nhx{$k}};
   }  
   my %newick = EnsEMBL::Web::Constants::NEWICK_OPTIONS;
   foreach my $k (sort {lc($a) cmp lc($b)} keys %newick) {
-    push @$newick_values, {'label' => $k, 'value' => $newick{$k}};
+    push @$newick_values, {'value' => $k, 'caption' => $newick{$k}};
   } 
 
 
   my $settings = {
                   'Hidden' => ['align'],
-                  'nhx_modes' => {
+                  'nhx_mode' => {
                                   'type'    => 'DropDown',
                                   'label'   => 'Mode for NHX tree dumping',
                                   'values'  => $nhx_values,
                                   },
-                  'newick_modes' => {
+                  'newick_mode' => {
                                   'type'    => 'DropDown',
                                   'label'   => 'Mode for Newick tree dumping',
                                   'values'  => $newick_values,
@@ -70,8 +70,8 @@ sub content {
 
   ## Options per format
   my $fields_by_format = [{'Tree formats' => {
-                                              'Newick'  => [['newick_modes']],
-                                              'NHX'     => [['nhx_modes']],
+                                              'Newick'  => [['newick_mode']],
+                                              'NHX'     => [['nhx_mode']],
                                               'Text'    => [['scale']],
                           }}];
 

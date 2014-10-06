@@ -91,7 +91,7 @@ sub process {
         }
         elsif ($is_tree) {
           my $data = $component->get_export_data('tree');
-          $error = $self->write_tree($format, $data);
+          $error = $self->write_tree(lc($format), $data);
         }
         else {
           $error = 'Output not implemented for format '.$format;
