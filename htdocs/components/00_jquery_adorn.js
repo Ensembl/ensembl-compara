@@ -325,7 +325,7 @@
           $.paced_ajax({ dataType: "html", url: data.url}).then(function(page) {
             var start = $outer;
             if(load_div.length) { start = load_div.get(0); }
-            var adornments = $('.adornment',start);
+            var adornments = $('.adornment',start).addBack('.adornment');
             var datas = $('.adornment-data',page);
             for(var i=0;i<adornments.length;i++) {
               _do_adorn(adornments[i],fixups,$.parseJSON($(datas[i]).text()));
