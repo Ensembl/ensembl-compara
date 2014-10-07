@@ -91,14 +91,36 @@ sub create_form {
       'label'   => 'File name',
       'value'   => $filename,
     },
-    {
-      'type'    => 'DropDown',
-      'name'    => 'format',
-      'label'   => 'File format',
-      'values'  => $formats,
-      'select'  => 'select',
-      'class'   => '_stt _export_formats',
-    },
+  ]);
+  if (scalar(@format_info) > 1) {
+    $fieldset->add_field([
+      {
+        'type'    => 'DropDown',
+        'name'    => 'format',
+        'label'   => 'File format',
+        'values'  => $formats,
+        'select'  => 'select',
+        'class'   => '_stt _export_formats',
+      },
+    ]);
+  }
+  else {
+    my $info = $format_info[0];
+    $fieldset->add_field([
+      {
+        'type'    => 'NoEdit',
+        'label'   => 'File format',
+        'value'   => $info->{'caption'},
+      },
+    ]);
+    $fieldset->add_hidden([
+      {
+        'name'    => 'format',
+        'value'   => $info->{'value'},
+      },
+    ]);
+  }
+  $fieldset->add_field([
     {
       'type'    => 'Radiolist',
       'name'    => 'compression',
