@@ -323,8 +323,13 @@
           load_div.addClass('adornment-loaded')
           // Do load
           $.paced_ajax({ dataType: "html", url: data.url}).then(function(page) {
-            var data = $.parseJSON($('.adornment-data',page).text());
-            _do_adorn(outer,fixups,data);
+            var start = $outer;
+            if(load_div.length) { start = load_div.get(0); }
+            var adornments = $('.adornment',start);
+            var datas = $('.adornment-data',page);
+            for(var i=0;i<adornments.length;i++) {
+              _do_adorn(adornments[i],fixups,$.parseJSON($(datas[i]).text()));
+            }
           });
         }
       });
