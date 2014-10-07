@@ -318,9 +318,9 @@ sub add_variations {
   
   foreach my $transcript_variation (map $_->[2], sort { $b->[0] <=> $a->[0] || $b->[1] <=> $a->[1] } map [ $_->variation_feature->length, $_->most_severe_OverlapConsequence->rank, $_ ], @transcript_variations) {
     my $consequence = $config->{'consequence_filter'} ? lc [ grep $config->{'consequence_filter'}{$_}, @{$transcript_variation->consequence_type} ]->[0] : undef;
-    
-    next if $config->{'consequence_filter'} && !$consequence;
-    
+
+    next if $config->{'consequence_filter'} && %{$config->{'consequence_filter'}} && !$consequence;
+
     my $vf    = $transcript_variation->variation_feature;
     my $name  = $vf->variation_name;
     my $start = $vf->start - 1;
