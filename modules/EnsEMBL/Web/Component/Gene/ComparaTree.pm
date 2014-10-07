@@ -521,14 +521,22 @@ sub export_options { return {'action' => 'GeneTree'}; }
 sub get_export_data {
 ## Get data for export
   my ($self, $type) = @_;
-  my $cdb       = $self->hub->param('cdb') || 'compara';
-  my $gene      = $self->hub->core_object('gene');
-  my ($member, $tree) = $self->get_details($cdb, $gene);
-  if ($type eq 'tree') {
-    return $tree;
+  my $hub   = $self->hub;
+  my $cdb   = $hub->param('cdb') || 'compara';
+  my $gene  = $hub->core_object('gene');
+
+  if ($type eq 'genetree') {
+    my $object = $hub->core_object('gene');
+    return $object->get_GeneTree($cdb, 1);
   }
   else {
-    return $tree->get_SimpleAlign;
+    my ($member, $tree) = $self->get_details($cdb, $gene);
+    if ($type eq 'tree') {
+      return $tree;
+    }
+    else {
+      return $tree->get_SimpleAlign;
+    }
   } 
 }
 

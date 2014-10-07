@@ -25,6 +25,7 @@ use Bio::AlignIO;
 use IO::String;
 use Bio::EnsEMBL::Compara::Graph::OrthoXMLWriter;
 use Bio::EnsEMBL::Compara::Graph::GeneTreePhyloXMLWriter;
+use Bio::EnsEMBL::Compara::Graph::CAFETreePhyloXMLWriter;
 
 use EnsEMBL::Web::File;
 use EnsEMBL::Web::Constants;
@@ -89,7 +90,7 @@ sub process {
         if ($in_bioperl) {
           $error = $self->write_alignment($component);
         }
-        elsif ($format eq 'phyloxml') {
+        elsif (lc($format) eq 'phyloxml') {
           $error = $self->write_phyloxml($component);
         }
         elsif ($is_tree) {
@@ -445,7 +446,7 @@ sub write_tree {
   my ($self, $component) = @_;
   my $hub     = $self->hub;
   my $format  = lc($hub->param('format'));
-  my $data    = $component->get_export_data('tree');
+  my $tree    = $component->get_export_data('tree');
 
   my %formats = EnsEMBL::Web::Constants::TREE_FORMATS;
   $format     = 'newick' unless $formats{$format};
@@ -463,16 +464,20 @@ sub write_tree {
 
 sub write_phyloxml {
   my ($self, $component) = @_;
+  my $hub  = $self->hub;
   my $cdb  = $hub->param('cdb') || 'compara';
 
-  my $tree = $component->get_export_data;
+  my $tree = $component->get_export_data('genetree');
+
+  my $type = ref($component) =~ /SpeciesTree/ ? 'CAFE' : 'Gene';
+  my $class = sprintf('Bio::EnsEMBL::Compara::Graph::%sTreePhyloXMLWriter', $type);
 
   my $handle = IO::String->new();
-  my $w = Bio::EnsEMBL::Compara::Graph::GeneTreePhyloXMLWriter->new(
+  my $w = $class->new(
           -SOURCE       => $cdb eq 'compara' ? $SiteDefs::ENSEMBL_SITETYPE:'Ensembl Genomes',
-          -ALIGNED      => $hub->param('aligned'),
-          -CDNA         => $hub->param('cdna'),
-          -NO_SEQUENCES => $hub->param('no_sequences'),
+          -ALIGNED      => $hub->param('aligned') eq 'on' ? 1 : 0,
+          -CDNA         => $hub->param('cdna') eq 'on' ? 1 : 0,
+          -NO_SEQUENCES => $hub->param('no_sequences') eq 'on' ? 1 : 0,
           -HANDLE       => $handle,
   );
   $self->_writexml($tree, $handle, $w);

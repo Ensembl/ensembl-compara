@@ -23,7 +23,7 @@ use warnings;
 
 use EnsEMBL::Web::Constants;
 
-use base qw(EnsEMBL::Web::Component::DataExport::Alignments);
+use base qw(EnsEMBL::Web::Component::DataExport::GeneTree);
 
 sub _init {
   my $self = shift;
@@ -38,26 +38,11 @@ sub content {
 
   my $settings = {
                   'Hidden' => ['align'],
-                  'cdna' => {
-                                  'type'    => 'Checkbox',
-                                  'label'   => 'cDNA rather than protein sequence',
-                                  },
-                  'aligned' => {
-                                  'type'    => 'Checkbox',
-                                  'label'   => 'Aligned sequences with gaps',
-                                  },
-                  'no_sequences' => {
-                                  'type'    => 'Checkbox',
-                                  'label'   => 'Omit sequences',
-                                  },
+                  %{$self->phyloxml_settings},
                 };
 
   ## Options per format
-  my $fields_by_format = {'PhyloXML' => [
-                                          ['cdna'],
-                                          ['aligned'],
-                                          ['no_sequences'],
-                          ]};
+  my $fields_by_format = {'PhyloXML' => $self->phyloxml_fields};
 
   ## Create settings form (comes with some default fields - see parent)
   my $form = $self->create_form($settings, $fields_by_format, 1);
@@ -68,7 +53,7 @@ sub content {
 sub default_file_name {
   my $self = shift;
 
-  my $name = $self->hub->param('gene_name').'_gene_tree';
+  my $name = $self->hub->param('gene_name').'_species_tree';
   return $name;
 }
 

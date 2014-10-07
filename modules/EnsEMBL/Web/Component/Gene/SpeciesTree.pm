@@ -36,9 +36,8 @@ sub _init {
 sub get_details {
   my $self   = shift;
   my $cdb    = shift;  
-  my $hub    = $self->hub;  
   
-  my $object = $self->object;
+  my $object = shift || $self->object;
   my $member = $object->get_compara_Member($cdb);
 
   return (undef, '<strong>Gene is not in the compara database</strong>') unless $member;

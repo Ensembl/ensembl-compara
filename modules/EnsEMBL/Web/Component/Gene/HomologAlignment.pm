@@ -21,7 +21,7 @@ package EnsEMBL::Web::Component::Gene::HomologAlignment;
 use strict;
 
 use Bio::AlignIO;
-
+use Bio::EnsEMBL::Compara::Homology;
 use EnsEMBL::Web::Constants;
 
 use base qw(EnsEMBL::Web::Component::Gene);
@@ -45,11 +45,6 @@ sub content {
   my $text_format  = $hub->param('text_format');
   my (%skipped, $html);
 
-  my $match_type = $hub->action eq 'Compara_Ortholog' ? 'Orthologue' : 'Paralogue';
-  my %desc_mapping = $self->object->get_desc_mapping($match_type); 
- 
-  my $homology_types = EnsEMBL::Web::Constants::HOMOLOGY_TYPES;
- 
   my $homologies = $self->get_homologies;
  
   foreach my $homology (@{$homologies}) {
@@ -174,25 +169,14 @@ sub get_homologies {
   my $qm           = $database->get_GeneMemberAdaptor->fetch_by_stable_id($gene_id);
   my $homologies;
   my $ok_homologies = [];
-  
+  my $action        = $hub->param('data_action') || $hub->action;
+  my $homology_method_link = $action eq 'Compara_Ortholog' ? 'ENSEMBL_ORTHOLOGUES' : 'ENSEMBL_PARALOGUES';
+
   eval {
-    $homologies = $database->get_HomologyAdaptor->fetch_all_by_Member($qm);
+    $homologies = $database->get_HomologyAdaptor->fetch_all_by_Member($qm, -METHOD_LINK_TYPE => $homology_method_link);
   };
   warn $@ if $@;
  
-  my $match_type    = $hub->action eq 'Compara_Ortholog' ? 'Orthologue' : 'Paralogue';
-  my %desc_mapping  = $object->get_desc_mapping($match_type); 
- 
-  my $homology_types = EnsEMBL::Web::Constants::HOMOLOGY_TYPES;
-
-  foreach my $homology (@{$homologies}) {
-
-    ## filter out non-required types
-    my $homology_desc  = $homology_types->{$homology->{'_description'}} || $homology->{'_description'};
-    next unless $desc_mapping{$homology_desc}; 
-    push @$ok_homologies, $homology;     
-  }
-
   return $homologies;
 }
 
@@ -219,7 +203,7 @@ sub get_export_data {
   my $seq           = $self->hub->param('align');
   my $second_gene   = $self->hub->param('g1');
   my $homologies = $self->get_homologies;
- 
+
   HOMOLOGY:
   foreach my $homology (@{$homologies}) {
 
@@ -257,13 +241,14 @@ sub buttons {
   my $name = $dxr ? $dxr->display_id : $gene->stable_id;
 
   my $params  = {
-                  'type'      => 'DataExport', 
-                  'action'    => 'Homologs', 
-                  'data_type' => 'Gene', 
-                  'component' => 'HomologAlignment', 
-                  'gene_name' => $name, 
-                  'align'     => $hub->param('seq') || 'protein',
-                  'g1'        => $hub->param('g1'),
+                  'type'        => 'DataExport', 
+                  'action'      => 'Homologs', 
+                  'data_type'   => 'Gene', 
+                  'component'   => 'HomologAlignment', 
+                  'data_action' => $hub->action,
+                  'gene_name'   => $name, 
+                  'align'       => $hub->param('seq') || 'protein',
+                  'g1'          => $hub->param('g1'),
                 };
 
   return {
