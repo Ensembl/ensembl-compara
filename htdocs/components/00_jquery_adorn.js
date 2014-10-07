@@ -317,10 +317,21 @@
     });
     if(data.url) {
       d = d.then(function() {
-        $.paced_ajax({ dataType: "html", url: data.url}).then(function(page) {
-          var data = $.parseJSON($('.adornment-data',page).text());
-          _do_adorn(outer,fixups,data);
-        });
+        // Look for parent adornment-load for lock
+        var load_div = $outer.parents('.adornment-load');
+        if(!load_div.length || !load_div.hasClass('adornment-loaded')) {
+          load_div.addClass('adornment-loaded')
+          // Do load
+          $.paced_ajax({ dataType: "html", url: data.url}).then(function(page) {
+            var start = $outer;
+            if(load_div.length) { start = load_div.get(0); }
+            var adornments = $('.adornment',start).addBack('.adornment');
+            var datas = $('.adornment-data',page);
+            for(var i=0;i<adornments.length;i++) {
+              _do_adorn(adornments[i],fixups,$.parseJSON($(datas[i]).text()));
+            }
+          });
+        }
       });
     } else {
       d = fire(d,function() {

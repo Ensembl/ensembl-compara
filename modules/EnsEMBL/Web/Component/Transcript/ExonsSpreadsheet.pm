@@ -145,7 +145,7 @@ sub content {
     { data_table => 'no_sort', exportable => 1 }
   );
 
-  return sprintf '<div class="adornment-key"></div>'.$table->render;
+  return sprintf '<div class="adornment-key"></div><div class="adornment-load">'.$table->render."</div>";
 }
 
 sub export_options { return {'action' => 'ExonSeq'}; }
@@ -304,6 +304,11 @@ sub get_flanking_sequence_data {
 
 sub add_variations {
   my ($self, $config, $slice, $sequence) = @_;
+
+  my $adorn = $self->hub->param('adorn') || 'none';
+
+  return if $adorn eq 'none';
+
   my $object = $self->object || $self->hub->core_object('transcript');
   my $variation_features    = $config->{'population'} ? $slice->get_all_VariationFeatures_by_Population($config->{'population'}, $config->{'min_frequency'}) : $slice->get_all_VariationFeatures;
   my @transcript_variations = @{$self->hub->get_adaptor('get_TranscriptVariationAdaptor', 'variation')->fetch_all_by_VariationFeatures($variation_features, [ $object->Obj ])};
@@ -313,9 +318,9 @@ sub add_variations {
   
   foreach my $transcript_variation (map $_->[2], sort { $b->[0] <=> $a->[0] || $b->[1] <=> $a->[1] } map [ $_->variation_feature->length, $_->most_severe_OverlapConsequence->rank, $_ ], @transcript_variations) {
     my $consequence = $config->{'consequence_filter'} ? lc [ grep $config->{'consequence_filter'}{$_}, @{$transcript_variation->consequence_type} ]->[0] : undef;
-    
-    next if $config->{'consequence_filter'} && !$consequence;
-    
+
+    next if $config->{'consequence_filter'} && %{$config->{'consequence_filter'}} && !$consequence;
+
     my $vf    = $transcript_variation->variation_feature;
     my $name  = $vf->variation_name;
     my $start = $vf->start - 1;
