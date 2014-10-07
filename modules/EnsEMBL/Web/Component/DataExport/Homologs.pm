@@ -43,7 +43,7 @@ sub content {
                                           'label' => 'Treat not-supported duplications as speciations (makes a non species-tree-compliant tree)',       
                                           'checked' => 1,
                                         },
-                'Hidden' => ['align', 'g1']
+                'Hidden' => ['align', 'g1', 'data_action']
                 };
 
   ## Options per format

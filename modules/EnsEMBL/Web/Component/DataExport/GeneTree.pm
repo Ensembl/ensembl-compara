@@ -66,13 +66,16 @@ sub content {
                                   'label' => 'Scale for text tree dump',
                                   'value' => '150',
                                   },
+                  %{$self->phyloxml_settings},
+
                 };
 
   ## Options per format
   my $fields_by_format = [{'Tree formats' => {
-                                              'Newick'  => [['newick_mode']],
-                                              'NHX'     => [['nhx_mode']],
-                                              'Text'    => [['scale']],
+                                'Newick'    => [['newick_mode']],
+                                'NHX'       => [['nhx_mode']],
+                                'Text'      => [['scale']],
+                                'PhyloXML'  => $self->phyloxml_fields, 
                           }}];
 
   ## Add formats output by BioPerl
@@ -93,6 +96,33 @@ sub default_file_name {
 
   my $name = $self->hub->param('gene_name').'_gene_tree';
   return $name;
+}
+
+sub phyloxml_settings {
+  return {
+          'cdna' => {
+                            'type'    => 'Checkbox',
+                            'label'   => 'cDNA rather than protein sequence',
+                            'value'   => 'on',
+                            'checked' => 1,
+                     },
+          'aligned' => {
+                            'type'    => 'Checkbox',
+                            'label'   => 'Aligned sequences with gaps',
+                            'value'   => 'on',
+                            'checked' => 1,
+                        },
+          'no_sequences' => {
+                             'type'    => 'Checkbox',
+                             'label'   => 'Omit sequences',
+                             'value'   => 'on',
+                             'checked' => 0,
+                            },
+  };
+}
+
+sub phyloxml_fields {
+  return [['cdna'], ['aligned'], ['no_sequences']];
 }
 
 1;

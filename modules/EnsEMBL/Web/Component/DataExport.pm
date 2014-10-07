@@ -214,7 +214,7 @@ sub create_form {
   if ($tutorial) {
     my $tutorial_fieldset = $form->add_fieldset;
     my $html = '<p><b>Guide to file formats</b></p><div class="_export_formats export-formats">';
-    foreach my $format (sort {lc($a) cmp lc($b)} keys %$fields_by_format) {
+    foreach my $format (sort {lc($a) cmp lc($b)} keys %ok_formats) {
       $html .= $self->show_preview($format);
     }
     $html .= '</div>';
