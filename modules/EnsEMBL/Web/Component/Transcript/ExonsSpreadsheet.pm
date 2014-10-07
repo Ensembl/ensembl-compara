@@ -304,6 +304,11 @@ sub get_flanking_sequence_data {
 
 sub add_variations {
   my ($self, $config, $slice, $sequence) = @_;
+
+  my $adorn = $self->hub->param('adorn') || 'none';
+
+  return if $adorn eq 'none';
+
   my $object = $self->object || $self->hub->core_object('transcript');
   my $variation_features    = $config->{'population'} ? $slice->get_all_VariationFeatures_by_Population($config->{'population'}, $config->{'min_frequency'}) : $slice->get_all_VariationFeatures;
   my @transcript_variations = @{$self->hub->get_adaptor('get_TranscriptVariationAdaptor', 'variation')->fetch_all_by_VariationFeatures($variation_features, [ $object->Obj ])};
