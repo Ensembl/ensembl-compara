@@ -580,7 +580,7 @@ sub process_link {
         if $server->{max_time} && $server->{max_time} < time;
 
 
-    # clean up some per-request crap.
+    # clean up some per-request rubbish.
     # Really should just subclass the response object!
     $server->{no_contents} = 0;
     $server->{no_index} = 0;
