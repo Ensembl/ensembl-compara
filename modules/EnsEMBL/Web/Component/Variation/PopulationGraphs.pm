@@ -237,7 +237,7 @@ sub update_pop_tree {
 sub get_short_name {
   my $self   = shift;
   my $p_name = shift;
-     $p_name =~ /phase_1_(.+)/; # Gets a shorter name for the display
+     $p_name =~ /phase_\d_(.+)/; # Gets a shorter name for the display
   
   return $1 || $p_name;
 }
