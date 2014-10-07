@@ -29,6 +29,8 @@ no warnings 'uninitialized';
 
 use base qw(EnsEMBL::Web::Factory);
 
+sub canLazy { return 1; }
+
 sub createObjects {
   my $self     = shift;
 
