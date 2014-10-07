@@ -62,7 +62,10 @@ Ensembl.Panel.LocationNav = Ensembl.Panel.extend({
     $.each(rs,function(k,v) {
       var r_2centre = Math.round(v[1]+v[2]);
       var r_start = Math.round((r_2centre-input)/2);
-      out[k] = [v[0],r_start,r_start+input+1,v[3]]; 
+      if(r_start<1) { r_start = 1; }
+      var r_end = r_start+input+1;
+      // TODO: limit end. Means we would need to pass in size from server
+      out[k] = [v[0],r_start,r_end,v[3]];
     });
     return out;
   },
