@@ -67,7 +67,7 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
     this.elLk.boundaries    = $('.boundaries',        this.elLk.container);
     this.elLk.toolbars      = $('.image_toolbar',     this.elLk.container);
     this.elLk.popupLinks    = $('a.popup',            this.elLk.toolbars);
-    
+
     this.vertical = this.elLk.img.hasClass('vertical');
     this.multi    = this.elLk.areas.hasClass('multi');
     this.align    = this.elLk.areas.hasClass('align');
@@ -228,46 +228,27 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
     
     this.elLk.drag.on({
       mousedown: function (e) {
-        // Only draw the drag box for left clicks.
-        // This property exists in all our supported browsers, and browsers without it will draw the box for all clicks
-        if (!e.which || e.which === 1) {
+
+        if (!e.which || e.which === 1) { // Only draw the drag box for left clicks.
           panel.dragStart(e);
         }
         
         return false;
       },
       mousemove: function(e) {
-        var coords  = panel.getMapCoords(e);
-        var area    = coords.r ? panel.dragRegion : panel.getArea(coords);
 
-        $(this).toggleClass('drag_select_pointer', !(!area || $(area.a).hasClass('label') || $(area.a).hasClass('drag')));
-      },
-      click: function (e) {
-        if (panel.clicking) {
-          panel.makeZMenu(e, panel.getMapCoords(e));
-        } else {
-          panel.clicking = true;
-        }
-      }
-    });
-  },
-  
-  makeHoverLabels: function () {
-    var panel = this;
-    var tip   = false;
-    
-    this.elLk.hoverLabels.detach().appendTo('body'); // IE 6/7 can't do z-index, so move hover labels to body
-    
-    this.elLk.drag.on({
-      mousemove: function (e) {
         if (panel.dragging !== false) {
           return;
         }
         
-        var area  = panel.getArea(panel.getMapCoords(e));
-        var hover = false;
-        
-        if (area && area.a && $(area.a).hasClass('nav')) { // Add helptips on navigation controls in multi species view
+        var area = panel.getArea(panel.getMapCoords(e));
+        var tip;
+
+        // change the cursor to pointer for clickable areas
+        $(this).toggleClass('drag_select_pointer', !(!area || $(area.a).hasClass('label') || $(area.a).hasClass('drag')));
+
+        // Add helptips on navigation controls in multi species view
+        if (area && area.a && $(area.a).hasClass('nav')) {
           if (tip !== area.a.alt) {
             tip = area.a.alt;
             
@@ -281,73 +262,71 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
             });
           }
         } else {
-          if (tip) {
-            tip = false;
+          if (panel.elLk.navHelptip) {
             panel.elLk.navHelptip.detach().css({ top: 0, left: 0 });
           }
-          
-          if (area && area.a && $(area.a).hasClass('label')) {
-            var label = panel.elLk.hoverLabels.filter('.' + area.a.className.replace(/label /, ''));
-            
-            if (!label.hasClass('active')) {
-              panel.elLk.hoverLabels.filter('.active').removeClass('active');
-              label.addClass('active');
-              
-              clearTimeout(panel.hoverTimeout);
-              
-              panel.hoverTimeout = setTimeout(function () {
-                var offset = panel.elLk.img.offset();
-                
-                panel.elLk.hoverLabels.filter(':visible').hide().end().filter('.active').css({
-                  left:    area.l + offset.left,
-                  top:     area.t + offset.top,
-                  display: 'block'
-                });
-              }, 100);
-            }
-            
-            hover = true;
-          }
-        }
-        
-        if (hover === false) {
-          clearTimeout(panel.hoverTimeout);
-          panel.elLk.hoverLabels.filter('.active').removeClass('active');
         }
       },
-      mouseleave: function (e) {
+      mouseleave: function(e) {
         if (e.relatedTarget) {
-          var active = panel.elLk.hoverLabels.filter('.active');
-          
-          if (!active.has(e.relatedTarget).length) {
-            active.removeClass('active').hide();
-          }
-          
+
           if (panel.elLk.navHelptip) {
             panel.elLk.navHelptip.detach();
           }
           
           active = null;
         }
+      },
+      click: function (e) {
+        if (panel.clicking) {
+          panel.makeZMenu(e, panel.getMapCoords(e));
+        } else {
+          panel.clicking = true;
+        }
       }
     });
-    
-    this.elLk.hoverLabels.on('mouseleave', function () {
-      $(this).hide().children('div').hide();
+  },
+  
+  makeHoverLabels: function () {
+    var panel   = this;
+    var offset  = this.elLk.img.offset();
+    var right   = this.draggables[0].l; // label ends where the drag region starts
+
+    this.elLk.labelLayers = $();
+    this.elLk.hoverLayers = $();
+
+    $.each(this.areas, function() {
+
+      if (!this.a) {
+        return;
+      }
+
+      if (this.a.className.match(/label/)) {
+        var hoverLabel = panel.elLk.hoverLabels.filter('.' + this.a.className.replace(/label /, '')).css('left', right - this.l);
+
+        if (hoverLabel.length) {
+
+          // add a div layer over the label, and append the hover menu to the layer. Hover menu toggling is controlled by CSS.
+          panel.elLk.labelLayers = panel.elLk.labelLayers.add($('<div class="label_layer">').append('<div class="label_layer_bg">').append(hoverLabel).appendTo(document.body).css({
+            left:   offset.left + this.l,
+            top:    offset.top + this.t,
+            height: this.b - this.t,
+            width:  right - this.l
+          }));
+        }
+
+        hoverLabel = null;
+
+      }
     });
-    
-    this.elLk.hoverLabels.children('img').hoverIntent(
-      function () {
-        var width = $(this).parent().outerWidth();
-        
-        $(this).siblings('div').hide().filter('.' + this.className.replace(/ /g, '.')).show().width(function (i, value) {
-          return value > width && value > 300 ? 300 : value;
-        });
-      },
-      $.noop
-    );
-    
-    $('a.config', this.elLk.hoverLabels).on('click', function () {
+
+    this.elLk.hoverLabels.each(function() {
+
+      // init the tab styled icons inside the hover menus
+      $(this).find('._hl_icon').tabs($(this).find('._hl_tab'))
+
+    // init config tab, fav icon and close icon
+    }).find('a.config').on('click', function () {
       var config = this.rel;
       var update = this.href.split(';').reverse()[0].split('='); // update = [ trackId, renderer ]
       var fav    = '';
@@ -356,9 +335,7 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
         fav = $(this).hasClass('selected') ? 'off' : 'on';
         Ensembl.EventManager.trigger('changeFavourite', update[0], fav === 'on');
       } else {
-        $(this).parents('.hover_label').width(function (i, value) {
-          return value > 100 ? value : 100;
-        }).find('.spinner').show().siblings('div').hide();
+        $(this).parents('.hover_label').addClass('hover_label_spinner');
       }
       
       $.ajax({
@@ -575,7 +552,7 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
     
     if (this.dragRegion) {
       this.mousemove = function (e2) {
-        panel.dragging = e; // store mousedown even
+        panel.dragging = e; // store mousedown event
         panel.drag(e2);
         return false;
       };

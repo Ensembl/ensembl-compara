@@ -38,27 +38,28 @@ body.ie6 div.image_container { background-color: [[BUTTON_BG]]; }
 .redbox      { background-image: url(/i/red.gif); }
 .redbox2     { background-color: red; }
 
-/**
- as we have to remove the href tags to get IE to work - make the whole of the slice "clickable"...**/
+.drag_select                              { cursor: default; position: relative; }
+.drag_select.drag_select_pointer          { cursor: pointer; }
 
-.drag_select { cursor: default; position: relative; }
-.drag_select.drag_select_pointer { cursor: pointer; }
-
-.hover_label                              { position: absolute; padding: 0 0 5px 0; border: 1px solid; z-index: 999; display: none; text-align: left; width: auto; cursor: default; }
+.label_layer,
+.label_layer .label_layer_bg              { position: absolute; margin-left: -5px; padding-right: 5px; padding-bottom: 2px; }
+.label_layer .label_layer_bg              { width: inherit; height: inherit; margin: 0; background-color: #333; opacity: 0.1; display: none; }
+.hover_label                              { position: absolute; margin-left: 5px; padding: 0 0 4px; border: none; display: none; text-align: left; width: 300px; cursor: default; }
+.hover_label div.spinner                  { display: none; }
+.hover_label_spinner div                  { display: none; }
+.hover_label_spinner div.spinner          { display: block; }
+.label_layer:hover .label_layer_bg,
+.label_layer:hover .hover_label           { display: block; }
 .hover_label.name_only                    { padding: 0; }
 .hover_label.name_only p.header           { margin: 0; }
-.hover_label img,
-.hover_label a.favourite                  { margin: 0 4px; }
-.hover_label a.favourite                  { display: inline-block; width: 16px; height: 16px; background: url(/i/16/swp/star.png) no-repeat 0 0; }
-.hover_label img.config,
-.hover_label img.url,
-.hover_label img.desc                     { cursor: pointer; }
+.hover_label a.favourite,
+.hover_label a.closetrack                 { display: block; width: 16px; height: 16px; background: url(/i/16/swp/star.png) no-repeat 2px 2px; margin: -2px; padding: 2px; }
+.hover_label a.favourite:hover            { background-position: 2px -16px; }
+.hover_label a.favourite.selected         { background-position: 2px -34px; }
+.hover_label a.closetrack                 { background-image: url(/i/16/cross.png); }
 .hover_label a.config                     { text-decoration: none; }
-.hover_label a.favourite:hover            { background-position: 0 -18px; }
-.hover_label a.favourite.selected         { background-position: 0 -36px; }
-.hover_label p.header                     { margin-bottom: 5px; padding: 2px 5px; background-color: [[BUTTON_BG]]; color: #FFF; }
-.hover_label div                          { display: none; padding: 0 5px; }
-.hover_label p                            { padding: 3px 0; margin: 0; }
+.hover_label p                            { padding: 4px 0; margin: 0; line-height: 1.5em; }
+.hover_label p.header                     { margin: 0; padding: 4px; background-color: [[BUTTON_BG]]; color: #FFF; }
 .hover_label div.config ul,
 .hover_label div.config li                { margin: 0; padding: 0; list-style: none; list-style-image: none; }
 .hover_label div.config li                { line-height: 22px; }
@@ -69,6 +70,18 @@ body.ie6 div.image_container { background-color: [[BUTTON_BG]]; }
 .hover_label div.config li.subset a:hover { color: [[PAGE_HOVER]]; }
 .hover_label div.config img               { vertical-align: top; padding: 2px 0; margin-left: 0; }
 .hover_label div.config img.tick          { margin: 9px 0 0 -11px; }
+
+.hover_label div.hl-buttons               { padding: 4px 8px; }
+.hover_label div.hl-content               { padding: 0 4px; }
+.hover_label div.hl-icon                  { float: left; margin-right: 4px; padding: 6px; width: 16px; height: 16px; background-repeat: no-repeat; background-position: 6px center; border-radius: 4px 4px 0 0; }
+.hover_label div.hl-icon.active           { background-color: [[PANEL_BG]]; }
+.hover_label div.hl-tab                   { background-color: [[PANEL_BG]]; display: none; clear: both; padding: 8px; }
+.hover_label div.hl-tab.active            { display: block; }
+.hover_label div.hl-tab input             { width: 97% }
+
+.hl-icon-info                             { background-image: url(/i/16/info.png); }
+.hl-icon-setting                          { background-image: url(/i/16/setting.png); }
+.hl-icon-link                             { background-image: url(/i/16/link.png); }
 
 body.ie6 .hover_label div.config li { margin: 5px 0 0; }
 body.ie67 .hover_label a.favourite  { position: relative; top: -2px; left: 3px; }

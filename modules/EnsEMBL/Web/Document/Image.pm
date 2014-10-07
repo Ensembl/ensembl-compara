@@ -427,7 +427,10 @@ sub render_image_map {
 
 sub hover_labels {
   my $self    = shift;
-  my $img_url = $self->hub->species_defs->img_url;
+  my $hub     = $self->hub;
+  my $sd      = $hub->species_defs;
+  my $img_url = $sd->img_url;
+
   my ($html, %done);
   
   foreach my $label (map values %{$_->{'hover_labels'} || {}}, @{$self->{'image_configs'}}) {
@@ -446,31 +449,41 @@ sub hover_labels {
         $renderers .= qq(<li><a href="$_->{'url'}" class="config" rel="$label->{'component'}"><img src="${img_url}render/$_->{'val'}.gif" alt="$text" title="$text" /> $text</a></li>);
       }
     }
+
+    $label->{'conf_url'} = $sd->ENSEMBL_BASE_URL.$label->{'conf_url'} if $label->{'conf_url'};
     
     $renderers .= qq(<li class="subset subset_$subset->[0]"><a class="modal_link force" href="$subset->[1]#$subset->[0]" rel="$subset->[2]"><img src="${img_url}16/setting.png" /> Configure track options</a></li>) if $subset;
     $html      .= sprintf(qq(
       <div class="hover_label floating_popup %s">
         <p class="header">%s</p>
-        %s
-        %s
-        %s
-        %s
-        %s
-        <div class="desc">%s</div>
-        <div class="config">%s</div>
-        <div class="url">%s</div>
+        <div class="hl-buttons">
+          %s
+          %s
+          %s
+          %s
+          %s
+        </div>
+        <div class="hl-content">
+          %s
+          %s
+          %s
+          %s
+          %s
+        </div>
         <div class="spinner"></div>
       </div>),
       $label->{'class'},
       $label->{'header'},
-      $label->{'desc'}     ? qq(<img class="desc" src="${img_url}16/info.png" alt="Info" title="Info" />)                                  : '',
-      $renderers           ? qq(<img class="config" src="${img_url}16/setting.png" alt="Change track style" title="Change track style" />) : '',
-      $label->{'conf_url'} ? qq(<img class="url" src="${img_url}16/link.png" alt="Link" title="URL to turn this track on" />)              : '',
-      $label->{'fav'}      ? sprintf(qq(<a href="$label->{'fav'}[1]" class="config favourite%s" rel="$label->{'component'}" title="Favourite track"></a>), $label->{'fav'}[0] ? ' selected' : '') : '',
-      $label->{'off'}      ? qq(<a href="$label->{'off'}" class="config" rel="$label->{'component'}"><img src="${img_url}16/cross.png" alt="Turn track off" title="Turn track off" /></a>) : '',
-      $desc,
-      $renderers           ? qq(<p>Change track style:</p><ul>$renderers</ul>)                                                : '',
-      $label->{'conf_url'} ? qq(<p>Copy <a href="$label->{'conf_url'}">this link</a> to force this track to be turned on</p>) : ''
+      $label->{'desc'}     ? qq(<div class="_hl_icon hl-icon hl-icon-info active"></div>) : '',
+      $renderers           ? qq(<div class="_hl_icon hl-icon hl-icon-setting"></div>) : '',
+      $label->{'conf_url'} ? qq(<div class="_hl_icon hl-icon hl-icon-link"></div>) : '',
+      $label->{'fav'}      ? sprintf(qq(<div class="_hl_icon hl-icon"><a href="$label->{'fav'}[1]" class="config favourite %s" rel="$label->{'component'}"></a></div>), $label->{'fav'}[0] ? 'selected' : '') : '',
+      $label->{'off'}      ? qq(<div class="_hl_icon hl-icon"><a href="$label->{'off'}" class="config closetrack" rel="$label->{'component'}"></a></div>) : '',
+      $label->{'desc'}     ? qq(<div class="_hl_tab hl-tab active">$desc</div>) : '',
+      $renderers           ? qq(<div class="_hl_tab hl-tab config"><p>Change track style:</p><ul>$renderers</ul></div>) : '',
+      $label->{'conf_url'} ? qq(<div class="_hl_tab hl-tab"><p>URL to turn this track on</p><p><input type="text" value="$label->{'conf_url'}" /></p><p>Copy the above url to force this track to be turned on</p></div>) : '',
+      $label->{'fav'}      ? qq(<div class="_hl_tab hl-tab"><p>Click on the star to add/remove this track from your favourites</p></div>) : '',
+      $label->{'off'}      ? qq(<div class="_hl_tab hl-tab"><p>Click on the cross to turn the track off</p></div>) : '',
     );
   }
   
