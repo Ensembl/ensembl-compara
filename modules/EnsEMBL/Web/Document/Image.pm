@@ -481,7 +481,7 @@ sub hover_labels {
       $label->{'off'}      ? qq(<div class="_hl_icon hl-icon"><a href="$label->{'off'}" class="config closetrack" rel="$label->{'component'}"></a></div>) : '',
       $label->{'desc'}     ? qq(<div class="_hl_tab hl-tab active">$desc</div>) : '',
       $renderers           ? qq(<div class="_hl_tab hl-tab config"><p>Change track style:</p><ul>$renderers</ul></div>) : '',
-      $label->{'conf_url'} ? qq(<div class="_hl_tab hl-tab"><p>URL to turn this track on</p><p><input type="text" value="$label->{'conf_url'}" /></p><p>Copy the above url to force this track to be turned on</p></div>) : '',
+      $label->{'conf_url'} ? qq(<div class="_hl_tab hl-tab"><p>URL to turn this track on</p><p><input class="_copy_url" type="text" value="$label->{'conf_url'}" /></p><p>Copy the above url to force this track to be turned on</p></div>) : '',
       $label->{'fav'}      ? qq(<div class="_hl_tab hl-tab"><p>Click on the star to add/remove this track from your favourites</p></div>) : '',
       $label->{'off'}      ? qq(<div class="_hl_tab hl-tab"><p>Click on the cross to turn the track off</p></div>) : '',
     );

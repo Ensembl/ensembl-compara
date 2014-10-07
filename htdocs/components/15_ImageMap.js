@@ -368,6 +368,8 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
       $this = null;
 
       return false;
+    }).end().find('input._copy_url').on('click focus blur', function(e) {
+      $(this).val(this.defaultValue).select().parents('.label_layer').toggleClass('hover', e.type !== 'blur');
     });
   },
   

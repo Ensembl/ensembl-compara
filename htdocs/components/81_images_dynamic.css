@@ -51,7 +51,9 @@ body.ie6 div.image_container { background-color: [[BUTTON_BG]]; }
 .hover_label div.spinner                  { display: none; }
 .hover_label_spinner div                  { display: none; }
 .hover_label_spinner div.spinner          { display: block; }
+.label_layer.hover .label_layer_bg,
 .label_layer:hover .label_layer_bg,
+.label_layer.hover .hover_label,
 .label_layer:hover .hover_label           { display: block; }
 .hover_label.name_only                    { padding: 0; }
 .hover_label.name_only p.header           { margin: 0; }
