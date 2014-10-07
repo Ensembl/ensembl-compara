@@ -218,7 +218,7 @@ sub get_content {
     $self->set_cache_params;
     $content = $cache->get($ENV{'CACHE_KEY'});
   }
-  
+
   if (!$content) {
     if($function && $self->can($function)) {
       $content = $self->$function;
