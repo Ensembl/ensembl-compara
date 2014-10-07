@@ -245,7 +245,7 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
         var tip;
 
         // change the cursor to pointer for clickable areas
-        $(this).toggleClass('drag_select_pointer', !(!area || $(area.a).hasClass('label') || $(area.a).hasClass('drag')));
+        $(this).toggleClass('drag_select_pointer', !(!area || $(area.a).hasClass('label') || $(area.a).hasClass('drag') || $(area.a).hasClass('hover')));
 
         // Add helptips on navigation controls in multi species view
         if (area && area.a && $(area.a).hasClass('nav')) {
@@ -277,9 +277,9 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
           active = null;
         }
       },
-      click: function (e) {
+      click: function (e, e2) {
         if (panel.clicking) {
-          panel.makeZMenu(e, panel.getMapCoords(e));
+          panel.makeZMenu(e2 || e, panel.getMapCoords(e2 || e));
         } else {
           panel.clicking = true;
         }
@@ -301,7 +301,9 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
         return;
       }
 
-      if (this.a.className.match(/label/)) {
+      var $a = $(this.a);
+
+      if ($a.hasClass('label')) {
         var hoverLabel = panel.elLk.hoverLabels.filter('.' + this.a.className.replace(/label /, '')).css('left', right - this.l);
 
         if (hoverLabel.length) {
@@ -317,7 +319,20 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
 
         hoverLabel = null;
 
+      } else if ($a.hasClass('hover')) {
+
+        panel.elLk.hoverLayers = panel.elLk.hoverLayers.add($('<div class="hover_layer">').appendTo(document.body).css({
+          left:   offset.left + this.l,
+          top:    offset.top + this.t,
+          height: this.b - this.t,
+          width:  this.r - this.l
+        }).on('click', function(e) {
+          panel.clicking = true;
+          panel.elLk.drag.triggerHandler('click', e);
+        }));
       }
+
+      $a = null;
     });
 
     this.elLk.hoverLabels.each(function() {
