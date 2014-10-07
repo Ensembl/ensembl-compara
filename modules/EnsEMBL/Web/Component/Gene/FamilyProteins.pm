@@ -141,7 +141,8 @@ sub content_ensembl {
   $html .= $table->render;
   
   if ($count > 0) {
-    $html .= $self->content_buttons;
+    ## No point in exporting alignment if only one peptide!
+    $html .= $self->content_buttons if $count > 1;
 
     my $ens_table = $self->new_table([], [], { margin  => '1em 0px' });
     
