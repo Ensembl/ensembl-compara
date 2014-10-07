@@ -317,10 +317,16 @@
     });
     if(data.url) {
       d = d.then(function() {
-        $.paced_ajax({ dataType: "html", url: data.url}).then(function(page) {
-          var data = $.parseJSON($('.adornment-data',page).text());
-          _do_adorn(outer,fixups,data);
-        });
+        // Look for parent adornment-load for lock
+        var load_div = $outer.parents('.adornment-load');
+        if(!load_div.length || !load_div.hasClass('adornment-loaded')) {
+          load_div.addClass('adornment-loaded')
+          // Do load
+          $.paced_ajax({ dataType: "html", url: data.url}).then(function(page) {
+            var data = $.parseJSON($('.adornment-data',page).text());
+            _do_adorn(outer,fixups,data);
+          });
+        }
       });
     } else {
       d = fire(d,function() {
