@@ -153,7 +153,7 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
     // If the panel contains an ajax loaded sub-panel, this function will be reached before ImageMap.init has been completed.
     // Make sure that this doesn't cause an error.
     if (this.imageConfig) {
-      this.elLk.exportMenu.add(this.elLk.hoverLabels).add(this.elLk.resizeMenu).remove();
+      this.elLk.exportMenu.add(this.elLk.labelLayers).add(this.elLk.hoverLayers).add(this.elLk.resizeMenu).remove();
     
       for (var id in this.zMenus) {
         Ensembl.EventManager.trigger('destroyPanel', id);
@@ -342,34 +342,33 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
 
     // init config tab, fav icon and close icon
     }).find('a.config').on('click', function () {
-      var config = this.rel;
-      var update = this.href.split(';').reverse()[0].split('='); // update = [ trackId, renderer ]
-      var fav    = '';
-      
-      if ($(this).hasClass('favourite')) {
-        fav = $(this).hasClass('selected') ? 'off' : 'on';
+      var config  = this.rel;
+      var update  = this.href.split(';').reverse()[0].split('='); // update = [ trackId, renderer ]
+      var fav     = '';
+      var $this   = $(this);
+
+      if ($this.hasClass('favourite')) {
+        fav = $this.hasClass('selected') ? 'off' : 'on';
         Ensembl.EventManager.trigger('changeFavourite', update[0], fav === 'on');
       } else {
-        $(this).parents('.hover_label').addClass('hover_label_spinner');
+        $this.parents('.label_layer').addClass('hover_label_spinner');
       }
-      
+
       $.ajax({
         url: this.href + fav,
         dataType: 'json',
         success: function (json) {
           if (json.updated) {
-            panel.elLk.hoverLabels.remove(); // Deletes elements moved to body
-            Ensembl.EventManager.trigger('hideHoverLabels'); // Hide labels on other ImageMap panels
             Ensembl.EventManager.triggerSpecific('changeConfiguration', 'modal_config_' + config, update[0], update[1]);
             Ensembl.EventManager.trigger('reloadPage', panel.id);
           }
         }
       });
       
+      $this = null;
+
       return false;
     });
-    
-    Ensembl.EventManager.register('hideHoverLabels', this, function () { this.elLk.hoverLabels.hide(); });
   },
   
   makeResizable: function () {
