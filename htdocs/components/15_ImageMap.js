@@ -537,8 +537,8 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
     return order;
   },
   
-  changeFavourite: function (trackId) {
-    this.elLk.hoverLabels.filter(function () { return this.className.match(trackId); }).children('a.favourite').toggleClass('selected');
+  changeFavourite: function (trackId, on) {
+    this.elLk.hoverLabels.filter('.' + trackId).find('a.favourite').toggleClass('selected', on);
   },
   
   dragStart: function (e) {
