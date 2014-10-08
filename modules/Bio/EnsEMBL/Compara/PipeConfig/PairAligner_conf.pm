@@ -701,7 +701,8 @@ sub pipeline_analyses {
            {  -logic_name   => 'filter_duplicates_net',
               -module        => 'Bio::EnsEMBL::Compara::RunnableDB::PairAligner::FilterDuplicates',
               -parameters    => { 
-                                 'window_size' => $self->o('window_size') 
+                                 'window_size' => $self->o('window_size'),
+                                 'filter_duplicates_net' => 1,
                                 },
               -hive_capacity => 50,
               -batch_size    => 3,
@@ -714,7 +715,8 @@ sub pipeline_analyses {
            {  -logic_name   => 'filter_duplicates_net_himem',
               -module        => 'Bio::EnsEMBL::Compara::RunnableDB::PairAligner::FilterDuplicates',
               -parameters    => { 
-                                 'window_size' => $self->o('window_size') 
+                                 'window_size' => $self->o('window_size'),
+                                 'filter_duplicates_net' => 1,
                                 },
               -hive_capacity => 50,
               -batch_size    => 3,
