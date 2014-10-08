@@ -291,7 +291,7 @@ sub _write_data {
   # Prints each tree
   $w->startTag("groups");
   foreach my $tree (@{$list_trees}) {
-    $self->_write_tree($tree->root);
+    $self->_find_valid_genetree_roots($tree->root);
     $tree->root->release_tree() if ! $self->no_release_trees;
   }
   $w->endTag("groups");
@@ -334,49 +334,25 @@ sub _get_members_list {
   }
 }
 
-sub _write_tree {
+# an OrthoXML file must begin with a orthologGroup
+# We need to scan the tree to call _genetreenode_body() on all such nodes
+sub _find_valid_genetree_roots {
   my ($self, $tree) = @_;
   no warnings 'recursion';
   
-  # an OrthoXML file must begin with a orthologGroup
   if (not $tree->is_leaf() and ($tree->node_type ne 'speciation')) {
     # Goes recursively until the next speciation node
     foreach my $child (@{$tree->children()}) {
-      $self->_write_tree($child);
+      $self->_find_valid_genetree_roots($child);
     }
   } elsif (not $tree->is_leaf) {
     # Can now write the tree
-    $self->_process($tree);
+    $self->_genetreenode_body($tree);
   }
   
   return;
 }
 
-
-sub _process {
-  my ($self, $node) = @_;
-  no warnings 'recursion';
-
-  if(check_ref($node, 'Bio::EnsEMBL::Compara::GeneTreeMember')) {
-    return $self->_writer->emptyTag("geneRef", "id" => $node->seq_member_id);
-  }
-  elsif(check_ref($node, 'Bio::EnsEMBL::Compara::GeneTreeNode')) {
-    my $tagname = $node->node_type ne 'speciation' ? "paralogGroup" : "orthologGroup";
-
-    my $w = $self->_writer();
-    $w->startTag(
-      $tagname,
-      $node->can("stable_id") ? ("id" => $node->stable_id()) : ("id" => $node->node_id()),
-    );
- 
-    $self->_genetreenode_body($node);
- 
-    $w->endTag($tagname);
-    return;
-  }
-  my $ref = ref($node);
-  throw("Cannot process type $ref");
-}
 
 ###### PROCESSORS
 
@@ -387,6 +363,17 @@ sub _genetreenode_body {
   
   my $w = $self->_writer();
   
+  if ($node->is_leaf) {
+    return $w->emptyTag("geneRef", "id" => $node->seq_member_id);
+  }
+
+  my $tagname = $node->node_type ne 'speciation' ? "paralogGroup" : "orthologGroup";
+
+  $w->startTag(
+    $tagname,
+    $node->can("stable_id") ? ("id" => $node->stable_id()) : ("id" => $node->node_id()),
+  );
+
    # Scores
   foreach my $tag (qw(duplication_confidence_score bootstrap)) {
     next unless $node->has_tag($tag);
@@ -411,11 +398,11 @@ sub _genetreenode_body {
   
   if($node->get_child_count()) {
     foreach my $child (@{$node->children()}) {
-      $self->_process($child);
+      $self->_genetreenode_body($child);
     }
     }
   
-  return;
+  return $w->endTag($tagname);
 }
 
 
