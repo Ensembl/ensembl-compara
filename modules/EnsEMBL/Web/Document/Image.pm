@@ -109,12 +109,12 @@ sub render_toolbar {
       $image_sizes .= qq(<div $hidden_width><a href="$resize_url" class="image_resize"><div $selected_size>$counter px</div></a></div>);
     }
     
-    $image_resize = qq{
+    $image_resize = qq(
        <div class="toggle image_resize_menu">
           <div class="header">Resize image to:</div>
           $image_sizes    
        </div>    
-    };    
+    );
     $toolbar   .= qq(<a href="$resize_url" class="resize popup" title="Resize this image"></a>);    
   }  
   ## Image export popup menu
@@ -148,31 +148,31 @@ sub render_toolbar {
         # option not to include pdf export
         next if $self->{'export'} =~ /no_pdf/;
                 
-        $export .= qq{
+        $export .= qq(
           <div>
             <div>$_->{'label'}</div>
             <a class="view" href="$href" rel="external"><img src="/i/16/eye.png" alt="view" title="View image" /></a>
             <a href="$href;download=1"><img src="/i/16/download.png" alt="download" title="Download" /></a>
           </div>
-        };                
+        );
         
-      }else {
-        $export .= qq{
+      } else {
+        $export .= qq(
           <div>
             <div>$_->{'label'}</div>
             <a class="view" href="$href" rel="external"><img src="/i/16/eye.png" alt="view" title="View image" /></a>
             <a href="$href;download=1"><img src="/i/16/download.png" alt="download" title="Download" /></a>
           </div>
-        };
+        );
       }
     }
     
-    $export = qq{
+    $export = qq(
       <div class="toggle iexport_menu">
         <div class="header">Export as:</div>
         $export
       </div>
-    };
+    );
    
     $toolbar .= sprintf '<a href="%spdf" class="export popup %s" title="%s"></a>', $url, $self->{'export'}, $icon_mapping->{'image'}{'title'};
   }
@@ -414,11 +414,11 @@ sub render_image_map {
   my $imagemap = $self->drawable_container->render('imagemap');
   my $map_name = $image->token;
   
-  my $map = qq{
+  my $map = qq(
     <map name="$map_name">
       $imagemap
     </map>
-  };
+  );
   
   $map .= '<input type="hidden" class="panel_type" value="ImageMap" />';
   
