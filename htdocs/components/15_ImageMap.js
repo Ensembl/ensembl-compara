@@ -84,7 +84,7 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
     this.shareInit({ species: species, type: 'image', positionPopup: this.positionToolbarPopup });
     
     if (this.elLk.boundaries.length) {
-      Ensembl.EventManager.register('changeTrackOrder', this, this.sortUpdate);
+      Ensembl.EventManager.register('changeTrackOrder', this, this.sortOrder);
       
       if (this.elLk.img[0].complete) {
         this.makeSortable();
@@ -446,9 +446,7 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
     var wrapperTop = $('.boundaries_wrapper', this.el).position().top;
     var ulTop      = this.elLk.boundaries.position().top + wrapperTop - (Ensembl.browser.ie7 ? 3 : 0); // IE7 reports li.position().top as 3 pixels higher than other browsers, so offset that here.
     var lis        = [];
-    
-    this.dragCursor = Ensembl.browser.mac ? 'move' : 'n-resize';
-    
+
     this.elLk.boundaries.children().each(function (i) {
       var li = $(this);
       var t  = li.position().top + ulTop;
@@ -476,48 +474,60 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
     }).sortable({
       axis:   'y',
       handle: 'p.handle',
+      revert: 200,
       helper: 'clone',
-      placeholder: 'tmp',
+      placeholder: 'placeholder',
       start: function (e, ui) {
-        ui.placeholder.css({
-          backgroundImage:     ui.item.css('backgroundImage'),
-          backgroundPosition:  ui.item.css('backgroundPosition'),  // Firefox
-          backgroundPositionY: ui.item.css('backgroundPositionY'), // IE (Chrome works with either)
-          height:              ui.item.height(),
-          opacity:             0.8,
-          visibility:          'visible'
-        }).html(ui.item.html());
-        
-        ui.helper.hide();
-        $(this).find(':not(.tmp) p.handle').addClass('nohover');
-        panel.elLk.drag.css('cursor', panel.dragCursor);
-        panel.dragging = true;
+        panel.sortStart(e, ui);
       },
-      stop: function () {
-        $(this).find('p.nohover').removeClass('nohover');
-        panel.elLk.drag.css('cursor', 'pointer');
-        panel.dragging = false;
+      stop: function (e, ui) {
+        panel.sortStop(e, ui);
       },
       update: function (e, ui) {
-        var order = panel.sortUpdate(ui.item);
-        var track = ui.item[0].className.replace(' ', '.');
-        
-        $.ajax({
-          url: $(this).data('updateURL'),
-          type: 'post',
-          data: {
-            image_config: panel.imageConfig,
-            track: track,
-            order: order
-          }
-        });
-        
-        Ensembl.EventManager.triggerSpecific('changeTrackOrder', 'modal_config_' + panel.id.toLowerCase(), track, order);
+        panel.sortUpdate(e, ui);
       }
     }).css('visibility', 'visible');
   },
+
+  sortStart: function (e, ui) {
+    ui.placeholder.css({
+      backgroundImage:     ui.item.css('backgroundImage'),
+      backgroundPosition:  ui.item.css('backgroundPosition'),  // Firefox
+      backgroundPositionY: ui.item.css('backgroundPositionY'), // IE (Chrome works with either)
+      height:              ui.item.height(),
+      opacity:             0.8
+    }).html(ui.item.html());
+
+    ui.helper.hide();
+    ui.item.css({opacity: 0.8});
+
+    $(document.body).addClass('track-reordering'); // css deals with the rest of the things
+    this.dragging = true;
+  },
+
+  sortStop: function (e, ui) {
+    ui.item.animate({opacity: 1}, 200);
+    $(document.body).removeClass('track-reordering');
+    this.dragging = false;
+  },
+
+  sortUpdate: function(e, ui) {
+    var order = this.sortOrder(ui.item);
+    var track = ui.item[0].className.replace(' ', '.');
+
+    $.ajax({
+      url: ui.item.parent().data('updateURL'),
+      type: 'post',
+      data: {
+        image_config: this.imageConfig,
+        track: track,
+        order: order
+      }
+    });
+    Ensembl.EventManager.triggerSpecific('changeTrackOrder', 'modal_config_' + this.id.toLowerCase(), track, order);
+  },
   
-  sortUpdate: function (track, order) {
+  sortOrder: function (track, order) {
     var tracks = this.elLk.boundaries.children();
     var i, p, n, o, move, li, top;
     
@@ -574,11 +584,11 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
     });
     
     tracks = track = null;
+
+    this.positionLayers();
     
     this.removeShare();
     Ensembl.EventManager.trigger('removeShare');
-
-    this.positionLayers();
 
     return order;
   },
