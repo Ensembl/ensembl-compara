@@ -288,9 +288,7 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
   },
   
   makeHoverLabels: function () {
-    var panel   = this;
-    var offset  = this.elLk.img.offset();
-    var right   = this.draggables[0].l; // label ends where the drag region starts
+    var panel = this;
 
     this.elLk.labelLayers = $();
     this.elLk.hoverLayers = $();
@@ -304,41 +302,38 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
       var $a = $(this.a);
 
       if ($a.hasClass('label')) {
-        var hoverLabel = panel.elLk.hoverLabels.filter('.' + this.a.className.replace(/label /, '')).css('left', right - this.l);
+        var hoverLabel = panel.elLk.hoverLabels.filter('.' + this.a.className.replace(/label /, ''));
 
         if (hoverLabel.length) {
 
           // add a div layer over the label, and append the hover menu to the layer. Hover menu toggling is controlled by CSS.
-          panel.elLk.labelLayers = panel.elLk.labelLayers.add($('<div class="label_layer">').append('<div class="label_layer_bg">').append(hoverLabel).appendTo(document.body).css({
-            left:   offset.left + this.l,
-            top:    offset.top + this.t,
-            height: this.b - this.t,
-            width:  right - this.l
-          }));
+          panel.elLk.labelLayers = panel.elLk.labelLayers.add(
+            $('<div class="label_layer">').append('<div class="label_layer_bg">').append(hoverLabel).appendTo(document.body).data({area: this})
+          );
         }
 
         hoverLabel = null;
 
       } else if ($a.hasClass('hover')) {
 
-        panel.elLk.hoverLayers = panel.elLk.hoverLayers.add($('<div class="hover_layer">').appendTo(document.body).css({
-          left:   offset.left + this.l,
-          top:    offset.top + this.t,
-          height: this.b - this.t,
-          width:  this.r - this.l
-        }).on('click', function(e) {
-          panel.clicking = true;
-          panel.elLk.drag.triggerHandler('click', e);
-        }));
+        panel.elLk.hoverLayers = panel.elLk.hoverLayers.add(
+          $('<div class="hover_layer">').appendTo(document.body).data({area: this}).on('click', function(e) {
+            panel.clicking = true;
+            panel.elLk.drag.triggerHandler('click', e);
+          }
+        ));
       }
 
       $a = null;
     });
 
+    // apply css positions to the hover layers
+    this.positionLayers();
+
     this.elLk.hoverLabels.each(function() {
 
-      // init the tab styled icons inside the hover menus
-      $(this).find('._hl_icon').tabs($(this).find('._hl_tab'))
+      // position hover menus to the right of the layer and init the tab styled icons inside the hover menus
+      $(this).css('left', function() { return $(this.parentNode).width(); }).find('._hl_icon').tabs($(this).find('._hl_tab'));
 
     // init config tab, fav icon and close icon
     }).find('a.config').on('click', function () {
@@ -370,6 +365,39 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
       return false;
     }).end().find('input._copy_url').on('click focus blur', function(e) {
       $(this).val(this.defaultValue).select().parents('.label_layer').toggleClass('hover', e.type !== 'blur');
+    });
+  },
+
+  positionLayers: function() {
+    var offset = this.elLk.img.offset();
+    var right  = this.draggables[0].l; // label ends where the drag region starts
+
+    this.elLk.labelLayers.each(function() {
+      var $this = $(this);
+      var area  = $this.data('area');
+
+      $this.css({
+        left:   offset.left + area.l,
+        top:    offset.top + area.t,
+        height: area.b - area.t,
+        width:  right - area.l
+      });
+
+      area = $this = null;
+    });
+
+    this.elLk.hoverLayers.each(function() {
+      var $this = $(this);
+      var area  = $this.data('area');
+
+      $this.css({
+        left:   offset.left + area.l,
+        top:    offset.top + area.t,
+        height: area.b - area.t,
+        width:  area.r - area.l
+      });
+
+      area = $this = null;
     });
   },
   
@@ -549,7 +577,9 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
     
     this.removeShare();
     Ensembl.EventManager.trigger('removeShare');
-    
+
+    this.positionLayers();
+
     return order;
   },
   
