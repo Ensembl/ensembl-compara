@@ -92,12 +92,12 @@ foreach my $sp (sort @species) {
   # check if this species is in the database yet
   if (!$lookup{$sp}) {
     my $record = {
-      'name'          => $SD->get_config($sp, 'SPECIES_BIO_NAME'),
+      'name'          => $SD->get_config($sp, 'SPECIES_URL'),
       'common_name'   => $SD->get_config($sp, 'SPECIES_COMMON_NAME'),
       'code'          => $SD->get_config($sp, 'SPECIES_CODE'),
     };
     $sql = 'INSERT INTO species SET code = ?, name = ?, common_name = ?, vega = ?, online = ?';
-    @args = ($SD->get_config($sp, 'SPECIES_CODE'), $SD->get_config($sp, 'SPECIES_BIO_NAME'),
+    @args = ($SD->get_config($sp, 'SPECIES_CODE'), $SD->get_config($sp, 'SPECIES_URL'),
               $SD->get_config($sp, 'SPECIES_COMMON_NAME'), 'N', 'Y');
     $sth = $adaptor->db->prepare($sql);
     $sth->execute(@args);
