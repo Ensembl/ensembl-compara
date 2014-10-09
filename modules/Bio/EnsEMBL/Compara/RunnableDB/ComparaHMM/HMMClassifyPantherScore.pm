@@ -178,10 +178,6 @@ sub run_HMM_search {
         $self->add_hmm_annot($seq_id, $hmm_id, $eval);
         $has_hits = 1;
     }
-
-    unless ($has_hits) {
-        $self->throw("pantherScore did not return any hits. Is it normal ?");
-    }
 }
 
 sub add_hmm_annot {
