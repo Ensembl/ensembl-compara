@@ -37,8 +37,8 @@ Ensembl.Panel.TextSequence = Ensembl.Panel.Content.extend({
       var $this = $(this);
       $this.adorn(function(outer) {
         var $outer = $(outer);
-        panel.initPopups($this);
-        panel.updateKey($this);
+        panel.initPopups($outer);
+        panel.updateKey($outer);
         if(!$('.ajax_pending',this.el).length &&
             !$('.ajax_load',this.el).length &&
             !$('.sequence_key img',this.el).length) {
