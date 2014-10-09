@@ -473,7 +473,7 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
       $(this).data('updateURL', '/' + this.className.split(' ')[0] + '/Ajax/track_order');
     }).sortable({
       axis:   'y',
-      handle: 'p.handle',
+      handle: 'div.handle',
       revert: 200,
       helper: 'clone',
       placeholder: 'placeholder',
@@ -486,27 +486,38 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
       update: function (e, ui) {
         panel.sortUpdate(e, ui);
       }
-    }).css('visibility', 'visible');
+    }).css('visibility', 'visible').find('div.handle').on({
+      mousedown: function() {
+        $(this.parentNode).stop().animate({opacity: 0.8}, 200);
+      },
+      mouseup: function() {
+        $(this.parentNode).stop().animate({opacity: 1}, 200);
+      }
+    });
   },
 
   sortStart: function (e, ui) {
+
+    // make the placeholder similar to the actual track but slightly faded so the saturated background colour beneath gives it a highlighted effect
     ui.placeholder.css({
       backgroundImage:     ui.item.css('backgroundImage'),
       backgroundPosition:  ui.item.css('backgroundPosition'),  // Firefox
       backgroundPositionY: ui.item.css('backgroundPositionY'), // IE (Chrome works with either)
       height:              ui.item.height(),
       opacity:             0.8
-    }).html(ui.item.html());
+    }).html(ui.item.html()).addClass(ui.item.prop('className'));
 
-    ui.helper.hide();
-    ui.item.css({opacity: 0.8});
+    // add some transparency to the helper (already a clone of actual track) that moves with the mouse
+    ui.helper.stop().css({opacity: 0.8}).addClass('helper');
 
-    $(document.body).addClass('track-reordering'); // css deals with the rest of the things
+    // css deals with the rest of the things
+    $(document.body).addClass('track-reordering');
+
     this.dragging = true;
   },
 
   sortStop: function (e, ui) {
-    ui.item.animate({opacity: 1}, 200);
+    ui.item.stop().animate({opacity: 1}, 200);
     $(document.body).removeClass('track-reordering');
     this.dragging = false;
   },
@@ -571,7 +582,7 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
       if (j !== li.data('position')) {
         top  = li.offset().top;
         move = top - li.data('top'); // Up is positive, down is negative
-        
+
         $.each(li.data('areas'), function () {
           this.t += move;
           this.b += move;

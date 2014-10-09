@@ -554,7 +554,7 @@ sub moveable_tracks {
     
     $html .= sprintf(
       '<li class="%s%s" style="height:%spx;background:url(%s) 0 %spx%s">
-        <p class="handle" style="height:%spx"%s></p>
+        <div class="handle" style="height:%spx"%s><p></p></div>
         <i class="%s"></i>
       </li>',
       $type, $strand ? " $strand" : '',
@@ -567,8 +567,8 @@ sub moveable_tracks {
     
     $top ||= $t - 3 if $h;
   }
-  
-  return qq(<div class="boundaries_wrapper" style="top:${top}px"><div class="up"></div><ul class="$species boundaries">$html</ul><div class="down"></div></div>) if $html;
+
+  return qq(<div class="boundaries_wrapper" style="top:${top}px"><ul class="$species boundaries">$html</ul></div>) if $html;
 }
 
 sub render {

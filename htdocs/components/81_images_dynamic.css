@@ -98,13 +98,11 @@ body.ie67 .hover_label a.favourite  { position: relative; top: -2px; left: 3px; 
 div.boundaries_wrapper                         { position: absolute; width: 100%; }
 div.boundaries_wrapper ul                      { position: relative; width: 100%; list-style: none; margin: 0; padding: 0; visibility: hidden; background-color: #666; }
 div.boundaries_wrapper ul li                   { list-style-image: none; margin: 0; padding: 0; }
-div.boundaries_wrapper ul li p                 { width: 10px; border: solid [[BUTTON_BG]]; border-width: 0 1px 0 0; position: relative; background: [[BUTTON_BG]]; margin: 0; }
-div.boundaries_wrapper ul li p.handle          { cursor: n-resize; border-width: 1px 1px 1px 0; background: [[TINT_BG]]; }
-div.boundaries_wrapper ul li.f p.handle        { background: #9ED4DC; }
-div.boundaries_wrapper ul li.r p.handle        { background: #F1D7A4; }
-div.boundaries_wrapper div                     { position: absolute; left: 0; height: 10px; width: 10px; border: solid [[BUTTON_BG]]; border-width: 1px 1px 1px 0; background: url(/i/sort.png) no-repeat [[BUTTON_BG]]; }
-div.boundaries_wrapper div.up                  { background-position: top center; top: -10px; }
-div.boundaries_wrapper div.down                { background-position: bottom center; bottom: -10px; }
+div.boundaries_wrapper ul li.helper            { outline: [[PANEL_BORDER]] solid 1px; }
+div.boundaries_wrapper ul li div.handle        { width: 10px; cursor: n-resize; background-color: [[TINT_BG]]; }
+div.boundaries_wrapper ul li div.handle p      { height: 60%; position: relative; top: 20%; background-image: url(/i/track_grabber.png); }
+div.boundaries_wrapper ul li.f div.handle      { background: #9ED4DC; }
+div.boundaries_wrapper ul li.r div.handle      { background: #F1D7A4; }
 
 body.track-reordering *                        { cursor: n-resize !important; }
 body.track-reordering.mac *                    { cursor: ns-resize !important; }
@@ -115,8 +113,8 @@ body.ie7 div.boundaries_wrapper                     { left: 0; }
 body.ie7 div.boundaries_wrapper ul                  { padding-top: 3px; }
 body.ie7 div.boundaries_wrapper ul li               { margin: -3px 0; }
 body.ie7 div.boundaries_wrapper ul.f li:first-child { margin-top: 0; }
-body.ie7 div.boundaries_wrapper ul li p             { position: absolute; left: 0; }
-body.mac div.boundaries_wrapper ul li p.handle      { cursor: ns-resize; }
+body.ie7 div.boundaries_wrapper ul li div           { position: absolute; left: 0; }
+body.mac div.boundaries_wrapper ul li div.handle    { cursor: ns-resize; }
 
 @media print {
   div.boundaries_wrapper { display: none; }
