@@ -273,8 +273,7 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
           if (panel.elLk.navHelptip) {
             panel.elLk.navHelptip.detach();
           }
-          
-          active = null;
+
         }
       },
       click: function (e, e2) {
@@ -450,25 +449,26 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
     this.elLk.boundaries.children().each(function (i) {
       var li = $(this);
       var t  = li.position().top + ulTop;
-      
+
       li.data({ areas: [], position: i, order: parseFloat(li.children('i')[0].className, 10), top: li.offset().top });
-      
-      lis.push({ top: t, bottom: t + li.height(), areas: li.data('areas') });
-      
+      lis.push({ top: Math.floor(t), bottom: Math.ceil(t + li.height()), areas: li.data('areas') });
+
       li = null;
     });
-    
+
     $.each(this.areas, function () {
-      var i = lis.length;
-      
-      while (i--) {
-        if (lis[i].top <= this.t && lis[i].bottom >= this.b) {
-          lis[i].areas.push(this);
-          break;
+
+      assignArea:
+      for (var i = 0; i <= 5; i++) { // this is to overcome an apparent drawing code bug that areas sometimes are not completely enclosed inside a track's li
+        for (var j = lis.length - 1; j >= 0; j--) {
+          if (lis[j].top <= this.t + i && lis[j].bottom >= this.b - i) {
+            lis[j].areas.push(this);
+            break assignArea;
+          }
         }
       }
     });
-    
+
     this.elLk.boundaries.each(function () {
       $(this).data('updateURL', '/' + this.className.split(' ')[0] + '/Ajax/track_order');
     }).sortable({
