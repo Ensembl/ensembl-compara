@@ -427,6 +427,29 @@ sub core_pipeline_analyses {
             -meadow_type    => 'LOCAL',
         },
 
+		{   -logic_name => 'update_pipeline_decision',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ConditionalDataFlow',
+            -parameters => {
+                'condition'     => '"#clustering_mode#" eq "topup"',
+            },
+            -hive_capacity  => 100,
+            -flow_into  => {
+                2 => [ 'backbone_update_trees' ],
+                3 => [ 'backbone_fire_tree_building' ],
+            },
+        },
+
+		{   -logic_name => 'backbone_update_trees',
+            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::DatabaseDumper',
+            -parameters => {
+                'filename'      => 'snapshot_6_before_updating_pipeline',
+            },
+            -flow_into  => {
+                '1->A'  => [ 'update_job_factory' ],
+                'A->1'  => [ 'backbone_fire_dnds' ],
+            },
+        },
+
         {   -logic_name => 'backbone_fire_allvsallblast',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::DatabaseDumper',
             -parameters => {
@@ -447,7 +470,7 @@ sub core_pipeline_analyses {
             },
             -flow_into  => {
                 '1->A'  => [ 'test_whether_can_copy_clusters' ],
-                'A->1'  => [ 'backbone_fire_tree_building' ],
+                'A->1'  => [ 'update_pipeline_decision' ],
             },
         },
 
@@ -684,6 +707,18 @@ sub core_pipeline_analyses {
             %hc_analysis_params,
         },
 
+        {   -logic_name => 'copy_trees_from_previous_release',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::CopyLocalTree',
+            -parameters => {
+                'input_clusterset_id'   => 'default',
+                'output_clusterset_id'  => 'copy',
+            },
+            -flow_into  => {
+                 2 => [ 'mafft_update' ],
+            },
+            -hive_capacity        => $self->o('raxml_capacity'),
+            -rc_name => '8Gb_job',
+        },
 
 # ---------------------------------------------[reuse members]-----------------------------------------------------------------------
 
@@ -1049,7 +1084,7 @@ sub core_pipeline_analyses {
                              'pantherScore_path'   => $self->o('pantherScore_path'),
                              'hmmer_path'          => $self->o('hmmer2_home'),
                             },
-             -hive_capacity => $self->o('HMMer_classify_capacity'),
+             -hive_capacity => $self->o('HMMer_classifyPantherScore_capacity'),
              -rc_name => '4Gb_job',
             },
 
@@ -1061,15 +1096,16 @@ sub core_pipeline_analyses {
                  'extra_tags_file'  => $self->o('extra_model_tags_file'),
              },
              -rc_name => '8Gb_job',
+             -flow_into      => [ 'flag_update_clusters' ],
             },
 
         {
             -logic_name     => 'flag_update_clusters',
-            -module         => 'Bio::EnsEMBL::Hive::RunnableDB::SqlCmd',
-            -parameters     => {
-                'sql'   => 'INSERT INTO gene_tree_root_tag SELECT root_id, "needs_update", 1  FROM treefam_10_baboon.species_set JOIN seq_member USING (genome_db_id) JOIN gene_tree_node USING (seq_member_id) WHERE species_set_id=#nonreuse_ss_id# GROUP BY root_id;',
-            },
-            -meadow_type    => 'LOCAL',
+            -module         => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::FlagUpdateClusters',
+			#-parameters     => {
+			#    'reuse_db'   => '#reuse_db#',
+			#},
+            -rc_name => '16Gb_job',
         },
 
 
@@ -1390,6 +1426,18 @@ sub core_pipeline_analyses {
             -meadow_type    => 'LOCAL',
         },
 
+        {   -logic_name => 'update_job_factory',
+            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
+            -parameters => {
+                'inputquery'        => 'SELECT root_id AS gene_tree_id FROM gene_tree_root, stable_id WHERE tree_type = "tree" AND clusterset_id="default"',
+                'fan_branch_code'   => 2,
+            },
+            -flow_into  => {
+                 2 => [ 'copy_trees_from_previous_release' ],
+            },
+            -meadow_type    => 'LOCAL',
+        },
+
         {   -logic_name => 'alignment_entry_point',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
             -flow_into  => {
@@ -1498,6 +1546,16 @@ sub core_pipeline_analyses {
             -flow_into => {
                -1 => [ 'mafft_himem' ],  # MEMLIMIT
             },
+        },
+
+        {   -logic_name => 'mafft_update',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::Mafft_update',
+            -parameters => {
+                'mafft_home'                 => $self->o('mafft_home'),
+            },
+            -hive_capacity        => $self->o('mcoffee_capacity'),
+            -rc_name    => '2Gb_job',
+            -flow_into      => [ 'raxml_update' ],
         },
 
         {   -logic_name => 'mcoffee_himem',
@@ -1841,6 +1899,17 @@ sub core_pipeline_analyses {
                 -1 => [ 'raxml_multi_core_himem' ],
                 2 =>  [ 'treebest' ],     # This event is triggered if there are 2 or 3 genes in the tree
             }
+        },
+
+        {   -logic_name => 'raxml_update',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::RAxML_update',
+            -parameters => {
+                'raxml_exe'                 => $self->o('raxml_exe'),
+                'treebest_exe'              => $self->o('treebest_exe'),
+                'output_clusterset_id'      => $self->o('use_notung') ? 'raxml' : 'default',
+            },
+            -hive_capacity        => $self->o('raxml_capacity'),
+            -rc_name    => '8Gb_job',
         },
 
         {   -logic_name => 'raxml_multi_core',
