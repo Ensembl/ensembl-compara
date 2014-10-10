@@ -225,9 +225,9 @@ sub default_options {
   	'chain_hive_capacity' => 20,
 
 	#
-        #Default set_internal_ids
+        #Default patch_alignments
         #
-	'skip_set_internal_ids' => 0,  #skip this module if set to 1
+	'patch_alignments' => 0,  #set to 1 to align the patches of a species to many other species
 
         #
         #Default net 
@@ -656,7 +656,7 @@ sub pipeline_analyses {
  	       -module     => 'Bio::EnsEMBL::Compara::RunnableDB::PairAligner::SetInternalIds',
  	       -parameters => {
 			       'tables' => [ 'genomic_align_block', 'genomic_align' ],
-			       'skip' => $self->o('skip_set_internal_ids'),
+			       'skip' => $self->o('patch_alignments'),
 			      },
 	       -rc_name => '100Mb',
  	    },
@@ -701,7 +701,8 @@ sub pipeline_analyses {
            {  -logic_name   => 'filter_duplicates_net',
               -module        => 'Bio::EnsEMBL::Compara::RunnableDB::PairAligner::FilterDuplicates',
               -parameters    => { 
-                                 'window_size' => $self->o('window_size') 
+                                 'window_size' => $self->o('window_size'),
+                                 'filter_duplicates_net' => 1,
                                 },
               -hive_capacity => 50,
               -batch_size    => 3,
@@ -714,7 +715,8 @@ sub pipeline_analyses {
            {  -logic_name   => 'filter_duplicates_net_himem',
               -module        => 'Bio::EnsEMBL::Compara::RunnableDB::PairAligner::FilterDuplicates',
               -parameters    => { 
-                                 'window_size' => $self->o('window_size') 
+                                 'window_size' => $self->o('window_size'),
+                                 'filter_duplicates_net' => 1,
                                 },
               -hive_capacity => 50,
               -batch_size    => 3,
@@ -727,8 +729,17 @@ sub pipeline_analyses {
 #			       'quick' => $self->o('quick'),
 #			      },
 	      -rc_name => '100Mb',
-	      -wait_for =>  [ 'filter_duplicates', 'filter_duplicates_himem' ],
+	      -wait_for =>  [ 'filter_duplicates_net', 'filter_duplicates_net_himem' ],
+              -flow_into => [ 'set_internal_ids_collection' ],
  	    },
+          {  -logic_name => 'set_internal_ids_collection',
+              -module     => 'Bio::EnsEMBL::Compara::RunnableDB::PairAligner::SetInternalIdsCollection',
+              -parameters => {
+                  'skip' => $self->o('patch_alignments'),
+              },
+              -analysis_capacity => 1,
+              -rc_name => '100Mb',
+          },
 	    { -logic_name => 'healthcheck',
 	      -module => 'Bio::EnsEMBL::Compara::RunnableDB::HealthCheck',
 	      -parameters => {

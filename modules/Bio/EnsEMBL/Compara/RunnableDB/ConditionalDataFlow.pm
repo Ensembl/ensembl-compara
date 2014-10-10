@@ -77,6 +77,7 @@ sub fetch_input {
     my $self = shift;
 
     my $condition = $self->param_required('condition');
+    print STDERR "Condition is: ", $condition, "\n" if $self->debug;
     
     if (not ref($condition)) {
         $condition = eval($condition);
