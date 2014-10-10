@@ -287,9 +287,13 @@ Ensembl.Panel.Configurator = Ensembl.Panel.ModalContent.extend({
       return true;
     }
     
-    var el        = $(e.currentTarget.parentNode);
+    var el        = $(e.currentTarget);
     var selectAll = el.hasClass('select_all');
-    
+
+    if (el.hasClass('track_name')) {
+      el = el.parent();
+    }
+
     if (selectAll && e.target === e.currentTarget) {
       return false; // Stop clicks for select all firing unless you click on the actual text, not the div
     }
