@@ -1063,26 +1063,44 @@ sub load_file_format {
 }
 
 sub _add_bam_track {
-  my $self = shift;
+  my ($self, %args) = @_;
   my $desc = '
     The read end bars indicate the direction of the read and the colour indicates the type of read pair:
     Green = both mates are part of a proper pair; Blue = either this read is not paired, or its mate was not mapped; Red = this read is not properly paired.
   ';
   
-  $self->_add_file_format_track(
-    format      => 'BAM',
-    description => $desc,
-    renderers   => [
-      'off',       'Off', 
-      'normal',    'Normal', 
-      'unlimited', 'Unlimited', 
+  warn ">>> INTERNAL?? ".$args{'internal'}; 
+
+  my ($format, $renderers);
+  if ($args{'internal'}) {
+    $format = 'BAM_AND_BIGWIG';
+    $renderers = [
+      'off',       'Off',
+      'histogram', 'Coverage (BigWig)',
+      'normal',    'Normal',
+      'unlimited', 'Unlimited',
+    ];
+  }
+  else {
+    $format = 'BAM';
+    $renderers = [
+      'off',       'Off',
+      'normal',    'Normal',
+      'unlimited', 'Unlimited',
       'histogram', 'Coverage only'
-    ], 
+    ];
+  }
+
+  $self->_add_file_format_track(
+    format      => $format,
+    description => $desc,
+    renderers   => $renderers,
+    colourset   => 'BAM',
     options => {
       external => 'external',
       sub_type => 'bam'
     },
-    @_
+    %args,
   );
 }
 
@@ -1221,7 +1239,7 @@ sub _add_file_format_track {
     strand      => 'f',
     format      => $args{'format'},
     glyphset    => $type,
-    colourset   => $type,
+    colourset   => $args{'colourset'} || $type,
     renderers   => $args{'renderers'},
     name        => $args{'source'}{'source_name'},
     caption     => exists($args{'source'}{'caption'}) ? $args{'source'}{'caption'} : $args{'source'}{'source_name'},
