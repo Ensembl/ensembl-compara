@@ -77,7 +77,7 @@ sub default_options {
         'email'           => $self->o('ENV', 'USER').'@ebi.ac.uk',    # NB: your EBI address may differ from the Sanger one!
 
             # HMM clustering
-        'hmm_clustering'  => 1,
+        'hmm_clustering'  => 0,
         'hmm_library_basedir'       => '/lustre/scratch109/sanger/fs9/treefam8_hmms',
         'pantherScore_path'         => '/software/ensembl/compara/pantherScore1.03',
         'hmmer2_home'               => '/software/ensembl/compara/hmmer-2.3.2/src/',
@@ -320,11 +320,13 @@ sub pipeline_analyses {
                 'output_file'      => '#work_dir#/snapshot_after_load_uniprot.sql.gz',
                 'blastdb_name'  => $self->o('blastdb_name'),
             },
-            -flow_into => {
-                $self->o('hmm_clustering') ? '1->A' : '999->A' => 'HMMer_classifyCurated',
-                $self->o('hmm_clustering') ? '999->A' : '1->A' => { 'dump_member_proteins' => { 'fasta_name' => '#blastdb_dir#/#blastdb_name#', 'blastdb_name' => '#blastdb_name#' } },
-                'A->1'  => [ 'stable_id_map' ],
-            },
+            -flow_into => $self->o('hmm_clustering') ?
+                {
+                    1 => 'HMMer_classifyCurated',
+                } : {
+                    '1->A' => { 'dump_member_proteins' => { 'fasta_name' => '#blastdb_dir#/#blastdb_name#', 'blastdb_name' => '#blastdb_name#' } },
+                    'A->1'  => [ 'stable_id_map' ],
+                },
         },
         
         {   -logic_name => 'dump_member_proteins',
