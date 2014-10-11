@@ -96,15 +96,12 @@ sub fetch_input {
     $nc_tree->species_tree->attach_to_genome_dbs();
     $self->param('gene_tree', $nc_tree);
 
-    my $alignment_id = $self->param('alignment_id');
-    $self->throw("alignment_id has to be defined\n") unless(defined $alignment_id);
+    my $alignment_id = $self->param_required('alignment_id');
     $nc_tree->gene_align_id($alignment_id);
     print STDERR "ALN INPUT ID: $alignment_id\n" if ($self->debug);
-    my $aln_seq_type = 'filtered';
-    $self->param('aln_seq_type', $aln_seq_type);
-    my $aln = Bio::EnsEMBL::Compara::AlignedMemberSet->new(-seq_type => $aln_seq_type, -dbID => $alignment_id, -adaptor => $self->compara_dba->get_AlignedMemberAdaptor);
+    my $aln = $self->compara_dba->get_GeneAlignAdaptor->fetch_by_dbID($alignment_id);
     print STDERR scalar (@{$nc_tree->get_all_Members}), "\n";
-    $nc_tree->attach_alignment($aln);
+    $nc_tree->alignment($aln);
 
 ### !! Struct files are not used in this first tree!!
     if(my $input_aln = $self->_dumpMultipleAlignmentStructToWorkdir() ) {
