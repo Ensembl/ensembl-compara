@@ -104,9 +104,8 @@ sub _dumpMultipleAlignment {
     my $ss_cons = $self->param('ss_cons');
 
     if ($ss_cons =~ /^\.d+$/) {
-        $self->input_job->incomplete(0);
         $self->input_job->autoflow(0);
-        die "tree " . $self->param('gene_tree_id') . " has no structure: $ss_cons\n";
+        $self->complete_early("tree " . $self->param('gene_tree_id') . " has no structure: $ss_cons\n");
     }
 
     my $ss_model_picts_dir = $self->param('ss_model_picts_dir');

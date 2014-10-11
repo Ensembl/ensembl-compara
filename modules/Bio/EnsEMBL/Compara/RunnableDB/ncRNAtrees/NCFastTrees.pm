@@ -245,9 +245,8 @@ sub _dumpMultipleAlignmentStructToWorkdir {
   my $root_id = $tree->root_id;
   my $leafcount = scalar(@{$tree->get_all_leaves});
   if($leafcount<4) {
-      $self->input_job->incomplete(0);
       $self->input_job->autoflow(0);
-      $self->throw("tree cluster $root_id has <4 proteins - can not build a raxml tree\n");
+      $self->complete_early("tree cluster $root_id has <4 proteins - can not build a raxml tree\n");
   }
 
   my $file_root = $self->worker_temp_directory. "nctree_". $root_id;

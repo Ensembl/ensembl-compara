@@ -49,16 +49,13 @@ sub run {
     my ($self) = @_;
     my $nc_tree_id = $self->param('gene_tree_id');
     if ($self->param('single_peptide_tree')) {
-        $self->input_job->incomplete(0);
         $self->input_job->autoflow(0);
-        die "single peptide tree\n";
+        $self->complete_early("single peptide tree\n");
     }
 
     if ($self->param('tag_gene_count') > 1000) { ## Too much
-        my $tag_gene_count = $self->param('tag_gene_count');
-        $self->input_job->incomplete(0);
         $self->input_job->autoflow(0);
-        die "family $nc_tree_id has too many member ($tag_gene_count). No genomic alignments will be computed\n";
+        $self->complete_early(sprintf("family %d has too many members (%s). No genomic alignments will be computed\n", $nc_tree_id, $self->param('tag_gene_count')));
     }
 
     if ($self->param('tag_residue_count') > 150000) {  ## Likely to take too long
@@ -75,11 +72,8 @@ sub run {
                                     'aln_seq_type' => $self->param('aln_seq_type'),
                                    },3
                                   );
-
-        $self->input_job->incomplete(0);
         $self->input_job->autoflow(0);
-        my $tag_residue_count = $self->param('tag_residue_count');
-        die "Family too big for normal branch ($tag_residue_count bps) -- Only FastTrees will be generated\n";
+        $self->complete_early(sprintf("Family too big for normal branch (%s bps) -- Only FastTrees will be generated\n", $self->param('tag_residue_count')));
     }
     if (($self->param('tag_residue_count') > 40000) && $self->param('inhugemem') != 1) { ## Big family -- queue in hugemem
         $self->dataflow_output_id (
@@ -90,10 +84,8 @@ sub run {
                                    }, -1
                                   );
         # Should we die here? Nothing more to do in the Runnable?
-        my $tag_residue_count = $self->param('tag_residue_count');
-        $self->input_job->incomplete(0);
         $self->input_job->autoflow(0);
-        die "Re-scheduled in hugemem queue ($tag_residue_count bps)\n";
+        $self->complete_early(sprintf("Re-scheduled in hugemem queue (%s bps)\n", $self->param('tag_residue_count')));
 
     }
 
@@ -240,9 +232,8 @@ sub run_RAxML {
                                         'gene_tree_id' => $self->param('gene_tree_id'),
                                        }, -1
                                       );
-            $self->input_job->incomplete(0);
             $self->input_job->autoflow(0);
-            die "RAXML ERROR: Problem allocating memory. Re-scheduled with more memory";
+            $self->complete_early("RAXML ERROR: Problem allocating memory. Re-scheduled with more memory");
         }
         die "RAXML ERROR: ", $command->err, "\n";
     }

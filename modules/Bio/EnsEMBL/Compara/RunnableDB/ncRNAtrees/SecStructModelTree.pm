@@ -133,9 +133,8 @@ sub run {
     if ($command->out =~ /(Empirical base frequency for state number \d+ is equal to zero in DNA data partition)/) {
         # This can happen when there is not one of the nucleotides in one of the DNA data partition (RAxML-7.2.8)
         # RAxML will refuse to run this, we can safely skip this model (the rest of the models for this cluster will also fail).
-        $self->input_job->incomplete(0);
         $self->input_job->autoflow(0);
-        die "$1\n";
+        $self->complete_early($1);
     }
 
     # Inspect error
@@ -146,10 +145,8 @@ sub run {
     if ($err_msg) {
         print STDERR "We have a problem running RAxML -- Inspecting error file\n";
         if ($err_msg =~ /Assertion(.+)failed/) {
-            my $assertion_failed = $1;
-            $self->input_job->incomplete(0);
             $self->input_job->autoflow(0);
-            die "Assertion failed for RAxML: $assertion_failed\n";
+            $self->complete_early("Assertion failed for RAxML: $1\n");
         } else {
             $self->throw("error running raxml\ncd $worker_temp_directory; $cmd\n$err_msg\n");
         }
@@ -213,9 +210,8 @@ sub _dumpMultipleAlignmentStructToWorkdir {
     my $leafcount = scalar(@{$tree->get_all_leaves});
     if($leafcount<4) {
         my $node_id = $tree->root_id;
-        $self->input_job->incomplete(0);
         $self->input_job->autoflow(0);
-        die ("tree cluster $node_id has <4 proteins - can not build a raxml tree\n");
+        $self->complete_early("tree cluster $node_id has <4 proteins - can not build a raxml tree\n");
     }
 
     my $file_root = $self->worker_temp_directory. "nctree_". $tree->root_id;
@@ -260,9 +256,8 @@ sub _dumpMultipleAlignmentStructToWorkdir {
 
     my $struct_file = $file_root . ".struct";
     if ($struct_string =~ /^\.+$/) {
-        $self->input_job->incomplete(0);
         $self->input_job->autoflow(0);
-        die "struct string is $struct_string\n";
+        $self->complete_early("struct string is $struct_string\n");
     } else {
         open(STRUCT, ">$struct_file")
             or $self->throw("Error opening $struct_file for write");

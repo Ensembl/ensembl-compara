@@ -95,15 +95,13 @@ sub fetch_input {
   $self->param('gene_tree')->preload();
 
   if ($self->check_members) {
-      $self->input_job->incomplete(0);
-      die "Ktreedist.pm: All members have the same sequence.";
+      $self->complete_early("Ktreedist.pm: All members have the same sequence.");
   }
 
   $self->load_input_trees;
 
   unless (scalar(keys %{$self->param('inputtrees_unrooted')})) {
-    $self->input_job->incomplete(0);
-    die "No trees with non-0 distances. Nothing to compute";
+    $self->complete_early("No trees with non-0 distances. Nothing to compute");
   }
 
   $self->require_executable('ktreedist_exe');

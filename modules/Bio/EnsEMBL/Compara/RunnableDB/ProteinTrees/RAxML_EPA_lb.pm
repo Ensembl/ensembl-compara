@@ -55,9 +55,8 @@ sub run {
     $self->remove_long_branches;
     if (not $self->param('has_removed_node')) {
         $self->dataflow_output_id($self->input_id, 4);
-        $self->input_job->incomplete(0);
-        $self->autoflow(0);
-        die "No branches to remove / re-insert\n";
+        $self->input_job->autoflow(0);
+        $self->complete_early("No branches to remove / re-insert.");
     }
     $self->SUPER::run(@_);
 }

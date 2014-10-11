@@ -134,9 +134,8 @@ sub run {
 #                                    }, -1
 #                                   );
 #         # We die here. Nothing more to do in the Runnable
-#         $self->input_job->incomplete(0);
 #         $self->input_job->autoflow(0);
-#         die "$nc_tree_id family is too big. Only fast trees will be computed\n";
+#         $self->complete_early("$nc_tree_id family is too big. Only fast trees will be computed\n");
 #     } else {
     # Run RAxML without any structure info first
         $self->_run_bootstrap_raxml;
@@ -258,10 +257,8 @@ sub _dumpMultipleAlignmentStructToWorkdir {
 
     my $leafcount = scalar(@{$tree->get_all_leaves});
     if($leafcount<4) {
-        $self->input_job->incomplete(0);
         $self->input_job->autoflow(0);
-        my $tree_id = $tree->root_id;
-        die "tree cluster $tree_id has <4 proteins -- can not build a raxml tree\n";
+        $self->complete_early(sprintf("tree cluster %d has <4 proteins -- can not build a raxml tree\n", $tree->root_id));
     }
 
     my $file_root = $self->worker_temp_directory. "nctree_". $tree->root_id;
