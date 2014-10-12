@@ -61,11 +61,11 @@ sub dumpTreeMultipleAlignmentToWorkdir {
   #
   if ($self->param('check_split_genes')) {
     my %split_genes;
-    my $sth = $self->compara_dba->dbc->prepare('SELECT DISTINCT gene_split_id FROM split_genes JOIN gene_tree_node USING (seq_member_id) WHERE root_id = ?');
+    my $sth = $gene_tree->adaptor->db->dbc->prepare('SELECT DISTINCT gene_split_id FROM split_genes JOIN gene_tree_node USING (seq_member_id) WHERE root_id = ?');
     $sth->execute($gene_tree->root_id());
     my $gene_splits = $sth->fetchall_arrayref();
     $sth->finish;
-    $sth = $self->compara_dba->dbc->prepare('SELECT seq_member_id FROM split_genes JOIN gene_tree_node USING (seq_member_id) WHERE root_id = ? AND gene_split_id = ? ORDER BY seq_member_id');
+    $sth = $gene_tree->adaptor->db->dbc->prepare('SELECT seq_member_id FROM split_genes JOIN gene_tree_node USING (seq_member_id) WHERE root_id = ? AND gene_split_id = ? ORDER BY seq_member_id');
     foreach my $gene_split (@$gene_splits) {
       $sth->execute($gene_tree->root_id(), $gene_split->[0]);
       my $partial_genes = $sth->fetchall_arrayref;
@@ -185,8 +185,8 @@ sub store_genetree
 
     $tree->root->build_leftright_indexing(1);
     $self->call_within_transaction(sub {
-        $self->compara_dba->get_GeneTreeAdaptor->store($tree);
-        $self->compara_dba->get_GeneTreeNodeAdaptor->delete_nodes_not_in_tree($tree->root);
+        $tree->adaptor->store($tree);
+        $tree->adaptor->db->get_GeneTreeNodeAdaptor->delete_nodes_not_in_tree($tree->root);
     });
 
     if($self->debug >1) {
@@ -332,7 +332,17 @@ sub parse_newick_into_tree {
     my $seq_member_id = $1;
     my $old_leaf = $old_leaves{$seq_member_id};
     if (not $old_leaf) {
+	  #In case the tree is been updated (copied from previous_db) we need to:
+	  #set the updated node to use the temporary id "0" to avoid dammaging other trees in the database
+	  #We set the children_loaded=1 to tell the API not to load the leaf
+	  #Then we "next" the loop
       $leaf->print_node;
+	  bless $leaf, 'Bio::EnsEMBL::Compara::GeneTreeMember';
+	  $leaf->node_id(0);
+	  $leaf->seq_member_id($seq_member_id);
+	  $leaf->adaptor($tree->adaptor->db->get_GeneTreeNodeAdaptor);
+	  $leaf->{'_children_loaded'} = 1;
+	  next;
       die "unable to find seq_member '$seq_member_id' (in '$njtree_phyml_name', from newick '$newick')";
     }
     bless $leaf, 'Bio::EnsEMBL::Compara::GeneTreeMember';
@@ -432,16 +442,22 @@ sub store_tree_into_clusterset {
 }
 
 sub fetch_or_create_other_tree {
-    my ($self, $clusterset, $tree) = @_;
+    my ($self, $clusterset, $tree, $remove_previous_copy) = @_;
 
     if (not defined $self->param('other_trees')) {
         my %other_trees;
-        foreach my $other_tree (@{$self->compara_dba->get_GeneTreeAdaptor->fetch_all_linked_trees($tree)}) {
+        foreach my $other_tree (@{$tree->adaptor->fetch_all_linked_trees($tree)}) {
             $other_tree->preload();
             $other_trees{$other_tree->clusterset_id} = $other_tree;
         }
         $self->param('other_trees', \%other_trees);
     }
+
+    if ($remove_previous_copy and exists ${$self->param('other_trees')}{$clusterset->clusterset_id}) {
+		warn "deleting the previous tree\n";
+		$tree->adaptor->delete_tree(${$self->param('other_trees')}{$clusterset->clusterset_id});
+		delete ${$self->param('other_trees')}{$clusterset->clusterset_id};
+	}
 
     if (not exists ${$self->param('other_trees')}{$clusterset->clusterset_id}) {
         my $newtree = $tree->deep_copy();
@@ -460,13 +476,13 @@ sub fetch_or_create_other_tree {
 }
 
 sub store_alternative_tree {
-    my ($self, $newick, $clusterset_id, $ref_tree, $ref_support) = @_;
-    my $clusterset = $self->compara_dba->get_GeneTreeAdaptor->fetch_all(-tree_type => 'clusterset', -clusterset_id => $clusterset_id)->[0];
+    my ($self, $newick, $clusterset_id, $ref_tree, $ref_support, $remove_previous_tree) = @_;
+    my $clusterset = $ref_tree->adaptor->fetch_all(-tree_type => 'clusterset', -clusterset_id => $clusterset_id)->[0];
     if (not defined $clusterset) {
         $self->throw("The clusterset_id '$clusterset_id' is not defined. Cannot store the alternative tree");
         return;
     }
-    my $newtree = $self->fetch_or_create_other_tree($clusterset, $ref_tree);
+    my $newtree = $self->fetch_or_create_other_tree($clusterset, $ref_tree, $remove_previous_tree);
     return undef unless $self->parse_newick_into_tree($newick, $newtree);
     $self->store_genetree($newtree, $ref_support);
     $newtree->release_tree;

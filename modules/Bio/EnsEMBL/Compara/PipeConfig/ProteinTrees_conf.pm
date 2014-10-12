@@ -261,7 +261,7 @@ sub default_options {
         #   'hmm' means that the pipeline will run an HMM classification
         #   'hybrid' is like "hmm" except that the unclustered proteins go to a all-vs-all blastp + hcluster stage
         #   'topup' means that the HMM classification is reused from prev_rel_db, and topped-up with the updated / new species  >> UNIMPLEMENTED <<
-        'clustering_mode'           => 'blastp',
+        'clustering_mode'           => 'topup',
 
         # How much the pipeline will try to reuse from "prev_rel_db"
         # Possible values: 'clusters' (default), 'blastp', 'members'
@@ -599,7 +599,7 @@ sub core_pipeline_analyses {
                 'do_not_reuse_list' => $self->o('do_not_reuse_list'),
             },
             -hive_capacity => 10,
-            -rc_name => '500Mb_job',
+            -rc_name => '1Gb_job',
             -flow_into => {
                 2 => { ':////accu?reused_gdb_ids=[]' => { 'reused_gdb_ids' => '#genome_db_id#'} },
                 3 => { ':////accu?nonreused_gdb_ids=[]' => { 'nonreused_gdb_ids' => '#genome_db_id#'} },
@@ -1063,7 +1063,14 @@ sub core_pipeline_analyses {
              -rc_name => '8Gb_job',
             },
 
-
+        {
+            -logic_name     => 'flag_update_clusters',
+            -module         => 'Bio::EnsEMBL::Hive::RunnableDB::SqlCmd',
+            -parameters     => {
+                'sql'   => 'INSERT INTO gene_tree_root_tag SELECT root_id, "needs_update", 1  FROM treefam_10_baboon.species_set JOIN seq_member USING (genome_db_id) JOIN gene_tree_node USING (seq_member_id) WHERE species_set_id=#nonreuse_ss_id# GROUP BY root_id;',
+            },
+            -meadow_type    => 'LOCAL',
+        },
 
 
 # -------------------------------------------------[BuildHMMprofiles pipeline]-------------------------------------------------------
