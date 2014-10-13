@@ -713,6 +713,7 @@ X  0 -1 -1 -1 -2 -1 -1 -1 -1 -1 -1 -1 -1 -1 -2  0  0 -2 -1 -1 -1 -1 -1 -4
 
 sub update_alignment_stats {
     my $self = shift;
+    my $seq_type = shift;
 
     my $genes = $self->get_all_Members;
     my $ngenes = scalar(@$genes);
@@ -723,7 +724,7 @@ sub update_alignment_stats {
         $genes->[$j]->cigar_line($new_cigars[$j]);
     }
 
-    my @aln = map {$_->alignment_string} @$genes;
+    my @aln = map {$_->alignment_string($seq_type)} @$genes;
     my $aln_length = length($aln[0]);
 
     my @seq_length   = (0) x $ngenes;
