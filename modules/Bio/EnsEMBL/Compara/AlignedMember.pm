@@ -212,12 +212,12 @@ sub cigar_end {
   Arg [1]     : (optional) $perc_cov
   Example     : $object->perc_cov($perc_cov);
   Example     : $perc_cov = $object->perc_cov();
-  Description : Getter/setter for the perc_cov attribute. For non-global
-                alignments, this represent the coverage of the alignment in
-                percentage of the total length of the sequence.
-                Currently the data provided as AlignedMembers (leaves of the
-                GeneTree) are obtained using global alignments (the whole
-                sequence is always included) and the perc_cov is always undefined.
+  Description : Getter/setter for the perc_cov attribute. This represents the number
+                of positions in the sequence that are aligned to a non-gap in the
+                other sequence.
+                perc_cov is by default only populated for homologies, but can be
+                computed on gene-tree leaves and family members by calling
+                update_alignment_stats() on the GeneTree / Family object.
   Returntype  : integer
   Exceptions  : none
   Caller      : general
@@ -237,13 +237,11 @@ sub perc_cov {
   Arg [1]     : (optional) $perc_id
   Example     : $object->perc_id($perc_id);
   Example     : $perc_id = $object->perc_id();
-  Description : Getter/setter for the perc_id attribute. This is generally
-                used for pairwise relationships. The percentage identity
-                reprensents the number of positions that are identical in
-                the alignment in both sequences.
-                Currently the data provided as AlignedMembers (leaves of the
-                GeneTree) are obtained using multiple alignments and the
-                perc_id is always undefined.
+  Description : Getter/setter for the perc_id attribute. This represents the number
+                of identical positions between the sequences
+                perc_id is by default only populated for homologies, but can be
+                computed on gene-tree leaves and family members by calling
+                update_alignment_stats() on the GeneTree / Family object.
   Returntype  : integer
   Exceptions  : none
   Caller      : general
@@ -263,14 +261,13 @@ sub perc_id {
   Arg [1]     : (optional) $perc_pos
   Example     : $object->perc_pos($perc_pos);
   Example     : $perc_pos = $object->perc_pos();
-  Description : Getter/setter for the perc_pos attribute. This is generally
-                used for pairwise relationships. The percentage positivity
-                reprensents the number of positions that are positive in
-                the alignment in both sequences. Currently, this is calculated
-                for protein sequences using the BLOSUM62 scoring matrix.
-                Currently the data provided as AlignedMembers (leaves of the
-                GeneTree) are obtained using multiple alignments and the
-                perc_cov is always undefined.
+  Description : Getter/setter for the perc_pos attribute. This represents the number
+                of positions that are positive in the alignment in both sequences.
+                Currently, this is calculated for protein sequences using the BLOSUM62
+                scoring matrix.
+                perc_pos is by default only populated for homologies, but can be
+                computed on gene-tree leaves and family members by calling
+                update_alignment_stats() on the GeneTree / Family object.
   Returntype  : integer
   Exceptions  : none
   Caller      : general
