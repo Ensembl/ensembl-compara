@@ -43,10 +43,10 @@ sub content {
   my $availability = $object->availability;
   
   my @orthologues = (
-    $object->get_homology_matches('ENSEMBL_ORTHOLOGUES', undef, undef, $cdb), 
+    $object->get_homology_matches('ENSEMBL_ORTHOLOGUES', undef, undef, $cdb),
     $object->get_homology_matches('ENSEMBL_PARALOGUES', 'possible_ortholog', undef, $cdb)
   );
-  
+
   my %orthologue_list;
   my %skipped;
   
@@ -103,6 +103,8 @@ sub content {
   ##----------------------------- FULL TABLE -----------------------------------------
 
   $html .= '<h3>Selected orthologues</h3>' if $species_sets;
+
+  $html .= $self->content_buttons;
  
   my $column_name = $self->html_format ? 'Compare' : 'Description';
   
@@ -265,6 +267,48 @@ sub content {
     );
   }  
   return $html;
+}
+
+sub export_options { return {'action' => 'GeneSeq'}; }
+
+sub get_export_data {
+## Get data for export
+  my $self = shift;
+  my $hub          = $self->hub;
+  my $object       = $self->object || $hub->core_object('gene');
+  my $cdb          = shift || $hub->param('cdb') || 'compara';
+
+  my @data_1 = $object->get_homologies('ENSEMBL_ORTHOLOGUES', undef, undef, $cdb);
+  my @data_2 = $object->get_homologies('ENSEMBL_PARALOGUES', 'possible_ortholog', undef, $cdb);
+
+  my $homologies = [@{$data_1[0]}, @{$data_2[0]}];
+
+  return $homologies;
+}
+
+sub buttons {
+  my $self    = shift;
+  my $hub     = $self->hub;
+  my $gene    =  $self->object->Obj;
+
+  my $dxr  = $gene->can('display_xref') ? $gene->display_xref : undef;
+  my $name = $dxr ? $dxr->display_id : $gene->stable_id;
+
+  my $params  = {
+                  'type'        => 'DataExport',
+                  'action'      => 'Orthologs',
+                  'data_type'   => 'Gene',
+                  'component'   => 'ComparaOrthologs',
+                  'data_action' => $hub->action,
+                  'gene_name'   => $name,
+                };
+
+  return {
+    'url'     => $hub->url($params),
+    'caption' => 'Download orthologues',
+    'class'   => 'export',
+    'modal'   => 1
+  };
 }
 
 1;

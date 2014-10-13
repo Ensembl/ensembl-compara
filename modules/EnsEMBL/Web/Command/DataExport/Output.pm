@@ -480,7 +480,7 @@ sub write_phyloxml {
           -NO_SEQUENCES => $hub->param('no_sequences') eq 'on' ? 1 : 0,
           -HANDLE       => $handle,
   );
-  $self->_writexml($tree, $handle, $w);
+  $self->_writexml('tree', $tree, $handle, $w);
 }
 
 sub write_orthoxml {
@@ -488,9 +488,9 @@ sub write_orthoxml {
   my $hub     = $self->hub;
   my $error   = undef;
   my $cdb     = $hub->param('cdb') || 'compara';
+  my $method  = ref($component) eq 'HomologAlignment' ? 'trees' : 'homologies';
 
-  my ($gene)  = $component->get_export_data('gene');
-  my $tree    = $gene->get_GeneTree($cdb);
+  my ($data)  = $component->get_export_data('gene');
 
   my $handle = IO::String->new();
   my $w = Bio::EnsEMBL::Compara::Graph::OrthoXMLWriter->new(
@@ -499,13 +499,14 @@ sub write_orthoxml {
           -HANDLE => $handle,
           -POSSIBLE_ORTHOLOGS => $hub->param('possible_orthologs'),
   );
-  $self->_writexml($tree, $handle, $w);
+  $self->_writexml($method, $data, $handle, $w);
 }
 
 sub _writexml{
-  my ($self,$tree,$handle,$w) = @_;
+  my ($self, $method, $data, $handle, $w) = @_;
   my $hub = $self->hub;
-  $w->write_trees($tree);
+  my $method = 'write_'.$method;
+  $w->$method($data);
   $w->finish();
 
   my $out = ${$handle->string_ref()};

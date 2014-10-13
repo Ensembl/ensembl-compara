@@ -736,6 +736,7 @@ sub get_homology_matches {
         next if $homology_list{$display_spp}{$homologue->stable_id} && $homology_desc eq 'other_paralog';
         
         $homology_list{$display_spp}{$homologue->stable_id} = { 
+          homologue           => $homologue,
           homology_desc       => $Bio::EnsEMBL::Compara::Homology::PLAIN_TEXT_WEB_DESCRIPTIONS{$homology_desc} || 'no description',
           description         => $homologue->description       || 'No description',
           display_id          => $homologue->display_label     || 'Novel Ensembl prediction',
@@ -759,7 +760,7 @@ sub get_homology_matches {
   return $self->{'homology_matches'}{$key};
 }
 
-sub fetch_homology_species_hash {
+sub get_homologies {
   my $self                 = shift;
   my $homology_source      = shift;
   my $homology_description = shift;
@@ -806,9 +807,22 @@ sub fetch_homology_species_hash {
   
   $self->timer_push('classification', 6);
   
+  my $ok_homologies = [];
   foreach my $homology (@$homologies_array) {
-    next unless $homology->description =~ /$homology_description/;
+    push @$ok_homologies, $homology if $homology->description =~ /$homology_description/;
+  }
+  return ($ok_homologies, \%classification, $query_member);
+}
     
+sub fetch_homology_species_hash {
+  my $self                 = shift;
+  my $homology_source      = shift;
+  my $homology_description = shift;
+  my $compara_db           = shift || 'compara';
+  my ($homologies, $classification, $query_member) = $self->get_homologies($homology_source, $homology_description, $compara_db);
+  my %homologues;
+
+  foreach my $homology (@$homologies) {
     my ($query_perc_id, $target_perc_id, $genome_db_name, $target_member, $dnds_ratio);
     
     foreach my $member (@{$homology->get_all_Members}) {
@@ -831,7 +845,7 @@ sub fetch_homology_species_hash {
   
   $self->timer_push('homologies hacked', 6);
   
-  @{$homologues{$_}} = sort { $classification{$a->[2]} <=> $classification{$b->[2]} } @{$homologues{$_}} for keys %homologues;
+  @{$homologues{$_}} = sort { $classification->{$a->[2]} <=> $classification->{$b->[2]} } @{$homologues{$_}} for keys %homologues;
   
   return \%homologues;
 }
