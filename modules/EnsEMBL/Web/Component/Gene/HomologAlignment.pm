@@ -47,7 +47,13 @@ sub content {
   my $qm           = $database->get_GeneMemberAdaptor->fetch_by_stable_id($gene_id);
   my ($homologies, $html, %skipped);
 
+  my $is_ncrna     = ($self->object->Obj->biotype =~ /RNA/);
+  my $gene_product = $is_ncrna ? 'Transcript' : 'Peptide';
+  my $unit         = $is_ncrna ? 'nt' : 'aa';
+  my $identity_title = '% identity'.(!$is_ncrna ? " ($seq)" : '');
   my $homology_method_link = $hub->action eq 'Compara_Ortholog' ? 'ENSEMBL_ORTHOLOGUES' : 'ENSEMBL_PARALOGUES';
+
+  # Fetch from the database
   eval {
     $homologies = $database->get_HomologyAdaptor->fetch_all_by_Member($qm, -METHOD_LINK_TYPE => $homology_method_link);
   };
@@ -55,14 +61,12 @@ sub content {
  
   foreach my $homology (@{$homologies}) {
 
+    my $compara_seq_type = $seq eq 'cDNA' ? 'cds' : undef;
+    $homology->update_alignment_stats($compara_seq_type);
     my $sa;
     
     eval {
-      if($seq eq 'cDNA') {
-        $sa = $homology->get_SimpleAlign(-SEQ_TYPE => 'cds');
-      } else {
-        $sa = $homology->get_SimpleAlign;
-      }
+      $sa = $homology->get_SimpleAlign(-SEQ_TYPE => $compara_seq_type);
     };
     warn $@ if $@;
     
@@ -89,7 +93,7 @@ sub content {
             $species_defs->get_config($member_species, 'SPECIES_SCIENTIFIC_NAME'),
             $gene->stable_id,
             $peptide->stable_id,
-            sprintf('%d aa', $peptide->seq_length),
+            sprintf('%d %s', $peptide->seq_length, $unit),
             sprintf('%d %%', $peptide->perc_id),
             sprintf('%d %%', $peptide->perc_cov),
             $location,
@@ -105,7 +109,7 @@ sub content {
               $hub->url({ species => $member_species, type => 'Transcript', action => 'ProteinSummary', peptide => $peptide->stable_id, __clear => 1 }),
               $peptide->stable_id
             ),
-            sprintf('%d aa', $peptide->seq_length),
+            sprintf('%d %s', $peptide->seq_length, $unit),
             sprintf('%d %%', $peptide->perc_id),
             sprintf('%d %%', $peptide->perc_cov),
             sprintf('<a href="%s">%s</a>',
@@ -125,9 +129,9 @@ sub content {
       my $ss = $self->new_table([
           { title => 'Species',          width => '15%' },
           { title => 'Gene ID',          width => '15%' },
-          { title => 'Peptide ID',       width => '15%' },
-          { title => 'Peptide length',   width => '10%' },
-          { title => '% identity',       width => '10%' },
+          { title => "$gene_product ID",       width => '15%' },
+          { title => "$gene_product length",   width => '10%' },
+          { title => $identity_title,    width => '10%' },
           { title => '% coverage',       width => '10%' },
           { title => 'Genomic location', width => '25%' }
         ],
