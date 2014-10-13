@@ -704,8 +704,10 @@ X  0 -1 -1 -1 -2 -1 -1 -1 -1 -1 -1 -1 -1 -1 -2  0  0 -2 -1 -1 -1 -1 -1 -4
 
 =head2 update_alignment_stats
 
+  Arg [1]    : (optional) $seq_type
   Example    : my $consensus_cigar = $gene_tree->consensus_cigar_line();
   Description: Update the AlignedMemberSet properties (% identity, % coverage, etc)
+               for the given seq_type (the default sequence is used otherwise)
   Returntype : string
   Caller     : internal
 
@@ -730,7 +732,7 @@ sub update_alignment_stats {
     my @seq_length   = (0) x $ngenes;
     my @nmatch_id    = (0) x $ngenes;
     my @nmatch_pos   = (0) x $ngenes;
-    my @nmatch_cov   = (0) x $ngenes;
+    my @nmismatch    = (0) x $ngenes;
 
     if ($ngenes == 2) {
         # This code is >4 times faster with pairs of genes
@@ -747,19 +749,21 @@ sub update_alignment_stats {
             $seq_length[0]++ unless $gap1;
             $seq_length[1]++ unless $gap2;
             if (not $gap1 and not $gap2) {
-                $nmatch_cov[0]++;
                 if ($aln1[$i] eq $aln2[$i]) {
                     $nmatch_id[0]++;
                     $nmatch_pos[0]++;
                 } elsif ($matrix_hash{uc $aln1[$i]}{uc $aln2[$i]} > 0) {
                     $nmatch_pos[0]++;
+                    $nmismatch[0]++;
+                } else {
+                    $nmismatch[0]++;
                 }
             }
         }
 
         $nmatch_id[1] = $nmatch_id[0];
         $nmatch_pos[1] = $nmatch_pos[0];
-        $nmatch_cov[1] = $nmatch_cov[0];
+        $nmismatch[1] = $nmismatch[0];
 
     } else {
 
@@ -791,12 +795,14 @@ sub update_alignment_stats {
             for (my $j=0; $j<$ngenes; $j++) {
                 if ($char_i[$j] ne '-') {
                     $seq_length[$j]++;
-                    $nmatch_cov[$j]++ if $is_cov_match;
                     if ($seen{$char_i[$j]} >= $min_seq) {
                         $nmatch_id[$j]++;
                         $nmatch_pos[$j]++;
                     } elsif (exists $pos_chars{$char_i[$j]}) {
                         $nmatch_pos[$j]++;
+                        $nmismatch[$j]++;
+                    } else {
+                        $nmismatch[$j]++;
                     }
                 }
             }
@@ -805,9 +811,12 @@ sub update_alignment_stats {
 
     for (my $j=0; $j<$ngenes; $j++) {
         if ($seq_length[$j]) {
+            $genes->[$j]->num_matches( $nmatch_id[$j] );
+            $genes->[$j]->num_pos_matches( $nmatch_pos[$j] );
+            $genes->[$j]->num_mismatches( $nmismatch[$j] );
             $genes->[$j]->perc_id( int((100.0 * $nmatch_id[$j] / $seq_length[$j] + 0.5)) );
             $genes->[$j]->perc_pos( int((100.0 * $nmatch_pos[$j] / $seq_length[$j] + 0.5)) );
-            $genes->[$j]->perc_cov( int((100.0 * $nmatch_cov[$j] / $seq_length[$j] + 0.5)) );
+            $genes->[$j]->perc_cov( int((100.0 * ($nmatch_id[$j]+$nmismatch[$j]) / $seq_length[$j] + 0.5)) );
         }
     }
 }

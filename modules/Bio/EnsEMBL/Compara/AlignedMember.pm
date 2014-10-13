@@ -50,13 +50,21 @@ General enough to allow for global, local, pair-wise and multiple alignments.
 The alignment of this SeqMember:
  - alignment_string()
  - cigar_line()
- - cigar_start()
- - cigar_end()
+ - cigar_start()   # always returns undef
+ - cigar_end()     # always returns undef
 
 Statistics about the alignment of this SeqMember:
  - perc_cov()
  - perc_id()
  - perc_pos()
+ - num_matches()
+ - num_pos_matches()
+ - num_mismatches()
+ - update_alignment_stats()    # to update the above counters
+NB: Only Homology::perc_*() are pre-computed. To query num_*() on an Homology
+object, or any counter on a GeneTree / Family object, first initialize them with
+update_alignment_stats(). The latter is also useful to get the statistics on a
+different sequence type (e.g. the CDS sequence instead of the protein sequence).
 
 Links to the AlignedMemberSet:
  - set()
@@ -109,6 +117,9 @@ sub copy {
     $mycopy->perc_cov($self->perc_cov);
     $mycopy->perc_id($self->perc_id);
     $mycopy->perc_pos($self->perc_pos);
+    $mycopy->num_matches($self->num_matches);
+    $mycopy->num_pos_matches($self->num_pos_matches);
+    $mycopy->num_mismatches($self->num_mismatches);
     $mycopy->method_link_species_set_id($self->method_link_species_set_id);
   }
 
@@ -280,6 +291,66 @@ sub perc_pos {
   $self->{'perc_pos'} = shift if(@_);
   return $self->{'perc_pos'};
 }
+
+
+=head2 num_matches
+
+  Example     : my $num_matches = $aligned_member->num_matches();
+  Example     : $aligned_member->num_matches($num_matches);
+  Description : Getter/Setter for the number of matches in the alignment
+  Returntype  : integer
+  Exceptions  : none
+  Caller      : general
+  Status      : Stable
+
+=cut
+
+sub num_matches {
+    my $self = shift;
+    $self->{'_num_matches'} = shift if @_;
+    return $self->{'_num_matches'};
+}
+
+
+=head2 num_pos_matches
+
+  Example     : my $num_pos_matches = $aligned_member->num_pos_matches();
+  Example     : $aligned_member->num_pos_matches($num_pos_matches);
+  Description : Getter/Setter for the number of positive matches in the
+                alignment (only for protein sequences, using the BLOSUM62
+                scoring matrix)
+  Returntype  : integer
+  Exceptions  : none
+  Caller      : general
+  Status      : Stable
+
+=cut
+
+sub num_pos_matches {
+    my $self = shift;
+    $self->{'_num_pos_matches'} = shift if @_;
+    return $self->{'_num_pos_matches'};
+}
+
+
+=head2 num_mismatches
+
+  Example     : my $num_mismatches = $aligned_member->num_mismatches();
+  Example     : $aligned_member->num_mismatches($num_mismatches);
+  Description : Getter/Setter for the number of mismatches in the alignment
+  Returntype  : integer
+  Exceptions  : none
+  Caller      : general
+  Status      : Stable
+
+=cut
+
+sub num_mismatches {
+    my $self = shift;
+    $self->{'_num_mismatches'} = shift if @_;
+    return $self->{'_num_mismatches'};
+}
+
 
 
 =head2 method_link_species_set_id
