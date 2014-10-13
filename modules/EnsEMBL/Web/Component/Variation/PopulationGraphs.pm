@@ -36,8 +36,11 @@ sub content {
   
   return unless defined $pop_freq;
   
-  my $graph_id = 0;
-  my $height   = 50;
+  my $graph_id    = 0;
+  my $height      = 50;
+  my $width       = 118;
+  my $large_width = 135;
+  my $max_width   = 150;
   my (@graphs, $pop_tree, %sub_pops, @alleles);
   
   my @inputs = (
@@ -58,6 +61,7 @@ sub content {
     foreach my $ssid (keys %{$pop_freq->{$pop_name}{'freq'}}) {
       foreach my $allele (keys %{$pop_freq->{$pop_name}{'freq'}{$ssid}}) {
         my $freq = $pop_freq->{$pop_name}{'freq'}{$ssid}{$allele};
+        $width = $large_width if (length($allele) > 2 and $width!=$large_width);
         push (@alleles, $allele) if $freq > 0 && !(grep $allele eq $_, @alleles);
       }
     }  
@@ -92,6 +96,10 @@ sub content {
         
         $values .= ',' if $values ne '';
         $freq    = 0.5 if $freq < 0.5; # Fixed bug if freq between 0 and 0.5
+        if (length($al)>4) {
+          $al = substr($al,0,4).'...';
+          $width = ($freq==100) ? $max_width+5 : $max_width;
+        }
         $values .= "[$freq,'$al']";
         last;
       }
@@ -107,10 +115,10 @@ sub content {
         <div class="pie_chart_holder">
           <div class="pie_chart%s _ht" title="%s">
             <h4>%s</h4>
-            <div id="graphHolder%s" style="width:118px;height:%spx"></div>
+            <div id="graphHolder%s" style="width:%ipx;height:%ipx"></div>
           </div>
         </div>
-      ', $short_name eq 'ALL' ? ' all_population' : '', $pop_desc, $short_name, $graph_id, $height);
+      ', $short_name eq 'ALL' ? ' all_population' : '', $pop_desc, $short_name, $graph_id, $width, $height);
     }
     # Super-population
     elsif ($pop_tree->{$short_name}) {
@@ -118,11 +126,11 @@ sub content {
         <div class="pie_chart_holder">
           <div class="pie_chart _ht" title="%s">
             <h4>%s</h4>
-            <div id="graphHolder%s" style="width:118px;height:%spx"></div>
+            <div id="graphHolder%s" style="width:%ipx;height:%ipx"></div>
           </div>
-          <a class="toggle set_cookie %s" href="#" style="margin-left:5px" rel="population_freq_%s" title="Click to toggle sub-population frequencies">Sub-populations</a>
+          <a class="toggle %s _slide_toggle set_cookie" href="#" style="margin-left:5px" rel="population_freq_%s" title="Click to toggle sub-population frequencies">Sub-populations</a>
         </div>
-      ', $pop_desc, $short_name, $graph_id, $height, $hub->get_cookie_value("toggle_population_freq_$short_name") eq 'open' ? 'open' : 'closed', $short_name);
+      ', $pop_desc, $short_name, $graph_id, $width, $height, $hub->get_cookie_value("toggle_population_freq_$short_name") eq 'open' ? 'open' : 'closed', $short_name);
     }
     # Sub-populations
     else {
@@ -131,10 +139,10 @@ sub content {
           <div class="pie_chart_holder">
             <div class="pie_chart _ht" title="%s">
               <h4>%s</h4>
-              <div id="graphHolder%s" style="width:118px;height:%spx"></div>
+              <div id="graphHolder%s" style="width:%ipx;height:%ipx"></div>
             </div>
           </div>
-        ', $pop_desc, $short_name, $graph_id, $height);
+        ', $pop_desc, $short_name, $graph_id, $width, $height);
       }
     }
     
@@ -153,7 +161,7 @@ sub content {
     my $show     = $hub->get_cookie_value("toggle_population_freq_$sp") eq 'open';
     
     $html .= sprintf('
-      <div class="population_genetics_pie population_freq_%s">
+      <div class="population_freq_%s population_genetics_pie">
         <div class="toggleable" %s>
           <div><p><b>%s sub-populations</b></p></div>
           %s
