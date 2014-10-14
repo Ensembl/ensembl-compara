@@ -90,7 +90,7 @@ sub content {
         
         if ($gene->stable_id eq $gene_id) {
           push @$data, [
-            $species_defs->get_config($member_species, 'SPECIES_SCIENTIFIC_NAME'),
+            $species_defs->species_label($member_species),
             $gene->stable_id,
             $peptide->stable_id,
             sprintf('%d %s', $peptide->seq_length, $unit),
@@ -100,7 +100,7 @@ sub content {
           ]; 
         } else {
           push @$data, [
-            $species_defs->get_config($member_species, 'SPECIES_SCIENTIFIC_NAME') || $species_defs->species_label($member_species),
+            $species_defs->species_label($member_species),
             sprintf('<a href="%s">%s</a>',
               $hub->url({ species => $member_species, type => 'Gene', action => 'Summary', g => $gene->stable_id, r => undef }),
               $gene->stable_id
