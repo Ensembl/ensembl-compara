@@ -31,12 +31,9 @@ sub _init {
 sub content {
   my $self   = shift;
 
-  my $html = '<h2>Alignment of Supporting Evidence</h2>';
-
   my $order = [qw(external_record transcript_details exon_info exon_coords e_alignment t_alignment)];
 
-  $html .= $self->make_twocol($order);
-  return $html;
+  return $self->make_twocol($order);
 }
 
 sub get_data {
@@ -176,6 +173,7 @@ sub get_data {
         $alignment =~ s/$hit_id/$hit_id .' (reverse complement)'/e if $strand_mismatch;
         $data->{'e_alignment'}{'content'} = $alignment; 
         $data->{'e_alignment'}{'raw'} = 1;
+        $hub->param('has_e_alignment', 'yes');
       }
     }
     else {
@@ -185,6 +183,7 @@ sub get_data {
 
   my $type   = $seq_type eq 'PEP' ? 'Translation' : 'Transcript';
   $data->{'t_alignment'} = {'label' => "$type alignment"};
+  $hub->param('align_type', $type);
   if ($ext_seq) {
     # get transcript sequence
     my $trans_sequence = $object->get_int_seq($transcript, $seq_type)->[0];
@@ -196,6 +195,7 @@ sub get_data {
       $alignment =~ s/$hit_id/$hit_id .' (reverse complement)'/e if $strand_mismatch;
       $data->{'t_alignment'}{'content'} = $alignment; 
       $data->{'t_alignment'}{'raw'} = 1;
+      $hub->param('has_t_alignment', 'yes');
     }
   }
   else {
@@ -213,6 +213,7 @@ sub get_export_data {
   my @fields = qw(e_alignment t_alignment);
   my $output = [];
   foreach (@fields) {
+    next unless $self->hub->param($_) eq 'on';
     next unless $data->{$_}{'raw'}; ## actual output, not an error message
     push @$output, $data->{$_}{'content'};
   }
@@ -230,11 +231,16 @@ sub buttons {
                   'component'   => 'SupportingEvidenceAlignment',
                   'sequence'    => $hub->param('sequence'),
                   'exon'        => $hub->param('exon'), 
+                  'align_type'  => lc($hub->param('align_type')),
+                  'has_e_alignment' => $hub->param('has_e_alignment'), 
+                  'has_t_alignment' => $hub->param('has_t_alignment'), 
               };
+
+  my $plural = ($hub->param('e_alignment') && $hub->param('t_alignment')) ? 's' : '';
 
   return {
     'url'     => $hub->url($params),
-    'caption' => 'Download alignment',
+    'caption' => "Download alignment$plural",
     'class'   => 'export',
     'modal'   => 1
   };

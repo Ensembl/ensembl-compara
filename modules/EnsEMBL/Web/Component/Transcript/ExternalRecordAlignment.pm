@@ -35,12 +35,10 @@ sub caption {
 
 sub content {
   my $self  = shift;
-  my $html  = '<h2>Alignment of External Feature</h2>';
 
   my $order = [qw(description alignment)];
 
-  $html .= $self->make_twocol($order);
-  return $html;
+  return $self->make_twocol($order);
 }
 
 sub get_data {

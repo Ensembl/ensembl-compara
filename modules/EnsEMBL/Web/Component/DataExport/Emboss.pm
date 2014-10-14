@@ -33,14 +33,33 @@ sub _init {
 }
 
 sub content {
-  ### N.B. There currently are no additional options for alignment export
   my $self  = shift;
   my $hub   = $self->hub;
+  my $type  = $hub->param('align_type');
 
-  my $settings = {'Hidden' => ['sequence', 'exon'],};
+  my $settings = {
+                    'Hidden' => ['sequence', 'exon'],
+                    'e_alignment' => {
+                                      'label'   => 'Include exon alignment',
+                                      'type'    => 'Checkbox',
+                                      'value'   => 'on',
+                                      'checked' => 1,
+                                      },
+                    't_alignment' => {
+                                      'label'   => "Include $type alignment",
+                                      'type'    => 'Checkbox',
+                                      'value'   => 'on',
+                                      'checked' => 1,
+                                      },
+                  };
 
   ## Options per format
-  my $fields_by_format = {'EMBOSS' => []};
+  my $fields;
+  foreach (qw(e_alignment t_alignment)) {
+    push @$fields, [$_] if $hub->param('has_'.$_);
+  } 
+
+  my $fields_by_format = {'EMBOSS' => $fields};
 
   ## Create settings form (comes with some default fields - see parent)
   my $form = $self->create_form($settings, $fields_by_format, 1);
