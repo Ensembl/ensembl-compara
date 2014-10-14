@@ -36,7 +36,7 @@ sub content {
   my $availability   = $self->object->availability;
   my $cdb            = shift || $hub->param('cdb') || 'compara';
   my $is_ncrna       = ($self->object->Obj->biotype =~ /RNA/);
-  my %paralogue_list = %{$self->object->get_homology_matches('ENSEMBL_PARALOGUES', 'paralog|gene_split', 'possible_ortholog', $cdb)};
+  my %paralogue_list = %{$self->object->get_homology_matches('ENSEMBL_PARALOGUES', 'paralog|gene_split', undef, $cdb)};
   
   return '<p>No paralogues have been identified for this gene</p>' unless keys %paralogue_list;
   

@@ -206,9 +206,6 @@ sub config {
         [ 'orthoxml',    'OrthoXML from Compara' ],
         [ 'orthopan',    'OrthoXML from Pan-taxonomic Compara' ]
       ],
-      params => [
-        [ 'possible_orthologs', 'Treat not supported duplications as speciations (makes a non species-tree-compliant tree)' ],
-      ]
     }  
   };
 
@@ -404,7 +401,6 @@ sub orthoxml{
           -SOURCE => $cdb eq 'compara' ? $SiteDefs::ENSEMBL_SITETYPE:'Ensembl Genomes',
 	        -SOURCE_VERSION => $SiteDefs::SITE_RELEASE_VERSION, 
           -HANDLE => $handle,
-          -POSSIBLE_ORTHOLOGS => $params->{'possible_orthologs'},
   ); 
   $self->writexml($tree, $handle, $w);
 }
