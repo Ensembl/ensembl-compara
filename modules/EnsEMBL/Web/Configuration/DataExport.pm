@@ -50,6 +50,9 @@ sub populate_tree {
   $self->create_node('GeneTree', 'Gene Tree', ['genetree', 'EnsEMBL::Web::Component::DataExport::GeneTree']);
   $self->create_node('SpeciesTree', 'Species Tree', ['species_tree', 'EnsEMBL::Web::Component::DataExport::SpeciesTree']);
 
+  ## External alignments
+  $self->create_node('Emboss', 'Alignment', ['emboss', 'EnsEMBL::Web::Component::DataExport::Emboss']);
+
   ## Output nodes
   $self->create_node('Output',  '', [], { 'command' => 'EnsEMBL::Web::Command::DataExport::Output'});
   $self->create_node('Error', 'Output Error', ['error', 'EnsEMBL::Web::Component::DataExport::Error']);

@@ -204,8 +204,6 @@ sub get_data {
   return $data;
 }
 
-sub export_options { return {'action' => 'Emboss'}; }
-
 sub get_export_data {
 ## Get data for export
   my $self = shift;
@@ -219,6 +217,23 @@ sub get_export_data {
   return $output;
 }
 
+sub buttons {
+  my $self = shift;
+
+  my $params  = {
+                  'type'        => 'DataExport',
+                  'action'      => 'Emboss',
+                  'data_type'   => 'Transcript',
+                  'component'   => 'SupportingEvidenceAlignment',
+              };
+
+  return {
+    'url'     => $self->hub->url($params),
+    'caption' => 'Download alignment',
+    'class'   => 'export',
+    'modal'   => 1
+  };
+}
 
 
 1;
