@@ -196,32 +196,6 @@ sub get_xref_available{
   return $available;
 }
 
-sub count_homologues {
-  my ($self, $compara_dbh) = @_;
-  
-  my $counts = {};
-  
-  my $res = $compara_dbh->selectall_arrayref(
-    'select ml.type, h.description, count(*) as N
-      from member as m, homology_member as hm, homology as h,
-           method_link as ml, method_link_species_set as mlss
-     where m.stable_id = ? and hm.member_id = m.member_id and
-           h.homology_id = hm.homology_id and 
-           mlss.method_link_species_set_id = h.method_link_species_set_id and
-           ml.method_link_id = mlss.method_link_id
-     group by description', {}, $self->Obj->stable_id
-  );
-  
-  foreach (@$res) {
-    if ($_->[0] eq 'ENSEMBL_PARALOGUES' && $_->[1] ne 'possible_ortholog') {
-      $counts->{'paralogs'} += $_->[2];
-    } elsif ($_->[1] !~ /^UBRH|BRH|MBRH|RHS$/) {
-      $counts->{'orthologs'} += $_->[2];
-    }
-  }
-  
-  return $counts;
-}
 
 sub _insdc_synonym {
   my ($self,$slice,$name) = @_;
