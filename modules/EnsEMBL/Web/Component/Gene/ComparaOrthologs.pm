@@ -34,6 +34,8 @@ sub _init {
 ## (see public-plugins/ensembl for an example data structure)
 sub _species_sets {}
 
+our %button_set = ('download' => 1, 'view' => 0);
+
 sub content {
   my $self         = shift;
   my $hub          = $self->hub;
@@ -104,8 +106,6 @@ sub content {
 
   $html .= '<h3>Selected orthologues</h3>' if $species_sets;
 
-  $html .= $self->content_buttons;
- 
   my $column_name = $self->html_format ? 'Compare' : 'Description';
   
   my $columns = [
@@ -244,11 +244,7 @@ sub content {
   my $table = $self->new_table($columns, \@rows, { data_table => 1, sorting => [ 'Species asc', 'Type asc' ], id => 'orthologues' });
   
   if ($alignview && keys %orthologue_list) {
-    # PREpend
-    $html = sprintf(
-      '<p><a href="%s">View sequence alignments of all orthologues</a>.</p>', 
-      $hub->url({ action => 'Compara_Ortholog', function => 'Alignment' . ($cdb =~ /pan/ ? '_pan_compara' : ''), })
-    ).$html;
+    $button_set{'view'} = 1;
   }
   
   $html .= $table->render;
@@ -289,12 +285,16 @@ sub get_export_data {
 sub buttons {
   my $self    = shift;
   my $hub     = $self->hub;
-  my $gene    =  $self->object->Obj;
+  my @buttons;
 
-  my $dxr  = $gene->can('display_xref') ? $gene->display_xref : undef;
-  my $name = $dxr ? $dxr->display_id : $gene->stable_id;
+  if ($button_set{'download'}) {
 
-  my $params  = {
+    my $gene    =  $self->object->Obj;
+
+    my $dxr  = $gene->can('display_xref') ? $gene->display_xref : undef;
+    my $name = $dxr ? $dxr->display_id : $gene->stable_id;
+
+    my $params  = {
                   'type'        => 'DataExport',
                   'action'      => 'Orthologs',
                   'data_type'   => 'Gene',
@@ -303,12 +303,31 @@ sub buttons {
                   'gene_name'   => $name,
                 };
 
-  return {
-    'url'     => $hub->url($params),
-    'caption' => 'Download orthologues',
-    'class'   => 'export',
-    'modal'   => 1
-  };
+    push @buttons, {
+                    'url'     => $hub->url($params),
+                    'caption' => 'Download orthologues',
+                    'class'   => 'export',
+                    'modal'   => 1
+                    };
+  }
+
+  if ($button_set{'view'}) {
+
+    my $cdb = $hub->param('cdb') || 'compara';
+
+    my $params = {
+                  'action' => 'Compara_Ortholog',
+                  'function' => 'Alignment'.($cdb =~ /pan/ ? '_pan_compara' : ''),
+                  };
+
+    push @buttons, {
+                    'url'     => $hub->url($params),
+                    'caption' => 'View sequence alignments',
+                    'class'   => 'view',
+                    'modal'   => 0
+    };
+  }
+  return @buttons;
 }
 
 1;
