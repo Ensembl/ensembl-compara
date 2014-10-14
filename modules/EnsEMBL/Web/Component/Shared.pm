@@ -367,9 +367,11 @@ sub transcript_table {
       }
       if ($trans_attribs->{$tsi}{'appris'}) {
         my ($text, $code) = @{$trans_attribs->{$tsi}{'appris'}};
+        my $glossary_url  = $hub->url({'type' => 'Help', 'action' => 'Glossary', 'id' => '493'});
+        my $appris_link   = $hub->get_ExtURL_link('APPRIS website', 'APPRIS');;
         push @flags, $code
-          ? sprintf('<span class="glossary_mouseover"><img class="middle-align" src="/i/transcript/appris_%s.png" alt="APPRIS %s" /><span class="floating_popup">%s</span></span>', $code, uc $code, $text)
-          : sprintf('<span class="glossary_mouseover">APPRIS<span class="floating_popup">%s</span></span>', $text);
+          ? sprintf('<span class="glossary_mouseover"><img class="middle-align" src="/i/transcript/appris_%s.png" alt="APPRIS %s" /><span class="floating_popup">%s<br /><a href="%s" class="popup">Glossary entry for APPRIS</a><br />%s</span></span>', $code, uc $code, $text, $glossary_url, $appris_link)
+          : sprintf('<span class="glossary_mouseover">APPRIS<span class="floating_popup">%s<br />%s</span></span>', $text, $appris_link);
       }
 
       (my $biotype_text = $_->biotype) =~ s/_/ /g;

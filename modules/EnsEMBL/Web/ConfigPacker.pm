@@ -1762,7 +1762,7 @@ sub _munge_file_formats {
     'nexus'     => {'ext' => 'nex',  'label' => 'Nexus'},
     'phylip'    => {'ext' => 'phy',  'label' => 'Phylip'},
     'pfam'      => {'ext' => 'pfam', 'label' => 'Pfam'},
-    'psi'       => {'ext' => 'aln',  'label' => 'PSI'},
+    'psi'       => {'ext' => 'psi',  'label' => 'PSI'},
     'rtf'       => {'ext' => 'rtf',  'label' => 'RTF'},
     'stockholm' => {'ext' => 'stk',  'label' => 'Stockholm'},
   );

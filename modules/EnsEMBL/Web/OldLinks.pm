@@ -25,6 +25,7 @@ use base qw(Exporter);
 our @EXPORT = our @EXPORT_OK = qw(get_redirect get_archive_redirect);
 
 our %mapping = (
+  'blastview'             => [{ 'type' => 'Tools',               'action' => 'Blast',                        'initial_release' => 76 }],
   'featureview'           => [{ 'type' => 'Location',            'action' => 'Genome',                       'initial_release' => 34 }],
   'karyoview'             => [{ 'type' => 'Location',            'action' => 'Genome',                       'initial_release' => 1, 'final_release' => 31 }],
   'mapview'               => [{ 'type' => 'Location',            'action' => 'Chromosome',                   'initial_release' => 1  }],

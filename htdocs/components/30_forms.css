@@ -382,7 +382,7 @@ div.filterable-dropdown p.filterable-dropdown-filter {
 div.filterable-dropdown p.filterable-dropdown-filter input {
   height: 20px;
   margin: 0;
-  width: 378px;
+  width: 375px;
   color: [[PAGE_TEXT]];
   font-style: italic;
 }

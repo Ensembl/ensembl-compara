@@ -358,7 +358,7 @@ sub check_for_missing_species {
   if (scalar @skipped) {
     $title = 'hidden';
     $warnings .= sprintf(
-                             '<p>The following %d species in the alignment are not shown in the image. Use the "<strong>Configure this page</strong>" on the left to show them.<ul><li>%s</li></ul></p>',
+                             '<p>The following %d species in the alignment are not shown - use "<strong>Configure this page</strong>" on the left to show them.<ul><li>%s</li></ul></p>',
                              scalar @skipped,
                              join "</li>\n<li>", sort map $species_defs->species_label($_), @skipped
                             );
@@ -368,10 +368,16 @@ sub check_for_missing_species {
     $title .= ' and ';
   }
 
+  my $not_missing = scalar(keys %{$align_details->{'species'}}) - scalar(@missing);
+  my $ancestral = grep {$_ =~ /ancestral/} keys %{$align_details->{'species'}};
+  my $multi_check = $ancestral ? 2 : 1;
+
   if (scalar @missing) {
     $title .= ' species';
     if ($align_details->{'class'} =~ /pairwise/) {
       $warnings .= sprintf '<p>%s has no alignment in this region</p>', $species_defs->species_label($missing[0]);
+    } elsif ($not_missing == $multi_check) {
+      $warnings .= sprintf('<p>None of the other species in this set align to %s in this region</p>', $species_defs->SPECIES_COMMON_NAME);
     } else {
       $warnings .= sprintf('<p>The following %d species have no alignment in this region:<ul><li>%s</li></ul></p>',
                                  scalar @missing,

@@ -168,6 +168,9 @@ sub reg_renderer {
   my $state = $hub->param('state');
   EnsEMBL::Web::ViewConfig::Regulation::Page->reg_renderer(
     $hub,'regulation_view',$renderer,$state);
+
+  $hub->session->store;
+
   print $self->jsonify({
     reload_panels => ['FeaturesByCellLine'],
   });
