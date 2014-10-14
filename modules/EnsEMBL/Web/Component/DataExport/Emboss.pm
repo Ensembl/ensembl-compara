@@ -37,10 +37,10 @@ sub content {
   my $self  = shift;
   my $hub   = $self->hub;
 
-  my $settings = {};
+  my $settings = {'Hidden' => ['sequence', 'exon'],};
 
   ## Options per format
-  my $fields_by_format = {'Emboss' => []};
+  my $fields_by_format = {'EMBOSS' => []};
 
   ## Create settings form (comes with some default fields - see parent)
   my $form = $self->create_form($settings, $fields_by_format, 1);

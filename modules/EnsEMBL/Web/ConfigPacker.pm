@@ -1767,6 +1767,7 @@ sub _munge_file_formats {
     'psi'       => {'ext' => 'aln',  'label' => 'PSI'},
     'rtf'       => {'ext' => 'rtf',  'label' => 'RTF'},
     'stockholm' => {'ext' => 'stk',  'label' => 'Stockholm'},
+    'emboss'    => {'ext' => 'txt',  'label' => 'EMBOSS'},
   );
 
   ## Munge into something useful to this website

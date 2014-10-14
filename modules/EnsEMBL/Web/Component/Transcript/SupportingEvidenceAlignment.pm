@@ -42,7 +42,7 @@ sub content {
 sub get_data {
   my $self         = shift;
   my $hub          = $self->hub;
-  my $object       = $self->object;
+  my $object       = $self->object || $hub->core_object('transcript');
   my $transcript   = $object->Obj;
   my $tsi          = $object->stable_id;
   my $hit_id       = $object->param('sequence');
@@ -195,7 +195,7 @@ sub get_data {
       my $alignment = $object->get_alignment($ext_seq, $trans_sequence, $seq_type);
       $alignment =~ s/$hit_id/$hit_id .' (reverse complement)'/e if $strand_mismatch;
       $data->{'t_alignment'}{'content'} = $alignment; 
-      $data->{'t_alignment'}{'raw' => 1};
+      $data->{'t_alignment'}{'raw'} = 1;
     }
   }
   else {
@@ -203,6 +203,8 @@ sub get_data {
   }
   return $data;
 }
+
+sub export_options  { return {'action' => 'Emboss'}; }
 
 sub get_export_data {
 ## Get data for export
@@ -219,16 +221,19 @@ sub get_export_data {
 
 sub buttons {
   my $self = shift;
+  my $hub = $self->hub;
 
   my $params  = {
                   'type'        => 'DataExport',
                   'action'      => 'Emboss',
                   'data_type'   => 'Transcript',
                   'component'   => 'SupportingEvidenceAlignment',
+                  'sequence'    => $hub->param('sequence'),
+                  'exon'        => $hub->param('exon'), 
               };
 
   return {
-    'url'     => $self->hub->url($params),
+    'url'     => $hub->url($params),
     'caption' => 'Download alignment',
     'class'   => 'export',
     'modal'   => 1

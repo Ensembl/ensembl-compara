@@ -409,6 +409,16 @@ sub write_fasta {
   return $error || $file->error;
 }
 
+sub write_emboss {
+  my ($self, $component) = @_;
+
+  my $data = $component->get_export_data;
+
+  foreach (@$data) {
+    $self->write_line($_);
+  }
+}
+
 sub write_alignment {
   my ($self, $component) = @_;
   my $hub     = $self->hub;
