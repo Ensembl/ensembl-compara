@@ -183,6 +183,7 @@ sub export_options { return {'action' => 'Homologs'}; }
 sub get_export_data {
 ## Get data for export
   my ($self, $type) = @_;
+  my $hub = $self->hub;
 
   ## Fetch explicitly, as we're probably coming from a DataExport URL
   if ($type && $type eq 'gene') {
@@ -193,8 +194,8 @@ sub get_export_data {
 
   ## ...or get alignment
   my $simple_alignment;
-  my $seq           = $self->hub->param('align');
-  my $second_gene   = $self->hub->param('g1');
+  my $seq           = $hub->param('align');
+  my $second_gene   = $hub->param('g1');
   my $homologies = $self->get_homologies;
 
   HOMOLOGY:
