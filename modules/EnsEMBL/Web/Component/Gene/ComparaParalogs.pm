@@ -108,6 +108,7 @@ sub content {
         my $align_url = $hub->url({
             action   => 'Compara_Paralog', 
             function => "Alignment". ($cdb=~/pan/ ? '_pan_compara' : ''),, 
+            hom_id   => $paralogue->{'dbID'},
             g1       => $stable_id
         });
 

@@ -168,6 +168,7 @@ sub content {
         my $align_url = $hub->url({
             action   => 'Compara_Ortholog',
             function => 'Alignment' . ($cdb =~ /pan/ ? '_pan_compara' : ''),
+            hom_id   => $orthologue->{'dbID'},
             g1       => $stable_id,
           });
         
