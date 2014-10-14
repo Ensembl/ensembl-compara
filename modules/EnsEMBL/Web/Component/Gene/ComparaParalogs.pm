@@ -35,7 +35,8 @@ sub content {
   my $hub            = $self->hub;
   my $availability   = $self->object->availability;
   my $cdb            = shift || $hub->param('cdb') || 'compara';
-  my %paralogue_list = %{$self->object->get_homology_matches('ENSEMBL_PARALOGUES', 'paralog|gene_split', 'possible_ortholog', $cdb)};
+  my $is_ncrna       = ($self->object->Obj->biotype =~ /RNA/);
+  my %paralogue_list = %{$self->object->get_homology_matches('ENSEMBL_PARALOGUES', 'paralog|gene_split', undef, $cdb)};
   
   return '<p>No paralogues have been identified for this gene</p>' unless keys %paralogue_list;
   
@@ -107,11 +108,16 @@ sub content {
         my $align_url = $hub->url({
             action   => 'Compara_Paralog', 
             function => "Alignment". ($cdb=~/pan/ ? '_pan_compara' : ''),, 
+            hom_id   => $paralogue->{'dbID'},
             g1       => $stable_id
         });
-        $links .= sprintf '<li><a href="%s" class="notext">Alignment (protein)</a></li>', $align_url;
-        $align_url .= ';seq=cDNA';
-        $links .= sprintf '<li><a href="%s" class="notext">Alignment (cDNA)</a></li>', $align_url;
+
+        if ($is_ncrna) {
+          $links .= sprintf '<li><a href="%s" class="notext">Alignment</a></li>', $align_url;
+        } else {
+          $links .= sprintf '<li><a href="%s" class="notext">Alignment (protein)</a></li>', $align_url;
+          $links .= sprintf '<li><a href="%s" class="notext">Alignment (cDNA)</a></li>', $align_url.';seq=cDNA';
+        }
         
         ($target, $query) = ($paralogue->{'target_perc_id'}, $paralogue->{'query_perc_id'});
         $alignview = 1;

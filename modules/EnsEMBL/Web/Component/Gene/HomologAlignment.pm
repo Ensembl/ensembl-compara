@@ -41,62 +41,76 @@ sub content {
   my $species_defs = $hub->species_defs;
   my $gene_id      = $self->object->stable_id;
   my $second_gene  = $hub->param('g1');
+  my $homology_id  = $hub->param('hom_id');
   my $seq          = $hub->param('seq');
   my $text_format  = $hub->param('text_format');
   my $database     = $hub->database($cdb);
   my $qm           = $database->get_GeneMemberAdaptor->fetch_by_stable_id($gene_id);
   my ($homologies, $html, %skipped);
 
-  my $homology_method_link = $hub->action eq 'Compara_Ortholog' ? 'ENSEMBL_ORTHOLOGUES' : 'ENSEMBL_PARALOGUES';
+  my $is_ncrna     = ($self->object->Obj->biotype =~ /RNA/);
+  my $gene_product = $is_ncrna ? 'Transcript' : 'Peptide';
+  my $unit         = $is_ncrna ? 'nt' : 'aa';
+  my $identity_title = '% identity'.(!$is_ncrna ? " ($seq)" : '');
+
+  # Fetch from the database
   eval {
-    $homologies = $database->get_HomologyAdaptor->fetch_all_by_Member($qm, -METHOD_LINK_TYPE => $homology_method_link);
+    if ($homology_id) {
+      $homologies = [$database->get_HomologyAdaptor->fetch_by_dbID($homology_id)];
+    } elsif ($second_gene) {
+      my $tm = $database->get_GeneMemberAdaptor->fetch_by_stable_id($second_gene);
+      $homologies = [$database->get_HomologyAdaptor->fetch_by_Member_Member($qm, $tm)];
+    } else {
+      my $homology_method_link = $hub->action eq 'Compara_Ortholog' ? 'ENSEMBL_ORTHOLOGUES' : 'ENSEMBL_PARALOGUES';
+      my $all_homologies = $database->get_HomologyAdaptor->fetch_all_by_Member($qm, -METHOD_LINK_TYPE => $homology_method_link);
+      # Remove the homologies with hidden species
+      $homologies = [];
+      foreach my $homology (@{$all_homologies}) {
+        my $member_species = ucfirst $homology->get_all_Members->[1]->genome_db->name;
+        if ($member_species ne $species && $hub->param('species_' . lc $member_species) eq 'off') {
+          $skipped{$species_defs->species_label($member_species)}++;
+        } else {
+          push @$homologies, $homology;
+        }
+      }
+    }
   };
   warn $@ if $@;
- 
+
+  # Remove the homologies with hidden species
   foreach my $homology (@{$homologies}) {
 
+    my $compara_seq_type = $seq eq 'cDNA' ? 'cds' : undef;
+    $homology->update_alignment_stats($compara_seq_type);
     my $sa;
     
     eval {
-      if($seq eq 'cDNA') {
-        $sa = $homology->get_SimpleAlign(-SEQ_TYPE => 'cds');
-      } else {
-        $sa = $homology->get_SimpleAlign;
-      }
+      $sa = $homology->get_SimpleAlign(-SEQ_TYPE => $compara_seq_type);
     };
     warn $@ if $@;
     
     if ($sa) {
       my $data = [];
-      my $flag = !$second_gene;
       
       foreach my $peptide (@{$homology->get_all_Members}) {
         
         my $gene = $peptide->gene_member;
-        $flag = 1 if $gene->stable_id eq $second_gene;
-        
         my $member_species = ucfirst $peptide->genome_db->name;
         my $location       = sprintf '%s:%d-%d', $gene->dnafrag->name, $gene->dnafrag_start, $gene->dnafrag_end;
         
-        if (!$second_gene && $member_species ne $species && $hub->param('species_' . lc $member_species) eq 'off') {
-          $flag = 0;
-          $skipped{$species_defs->species_label($member_species)}++;
-          next;
-        }
-        
         if ($gene->stable_id eq $gene_id) {
           push @$data, [
-            $species_defs->get_config($member_species, 'SPECIES_SCIENTIFIC_NAME'),
+            $species_defs->species_label($member_species),
             $gene->stable_id,
             $peptide->stable_id,
-            sprintf('%d aa', $peptide->seq_length),
+            sprintf('%d %s', $peptide->seq_length, $unit),
             sprintf('%d %%', $peptide->perc_id),
             sprintf('%d %%', $peptide->perc_cov),
             $location,
           ]; 
         } else {
           push @$data, [
-            $species_defs->get_config($member_species, 'SPECIES_SCIENTIFIC_NAME') || $species_defs->species_label($member_species),
+            $species_defs->species_label($member_species),
             sprintf('<a href="%s">%s</a>',
               $hub->url({ species => $member_species, type => 'Gene', action => 'Summary', g => $gene->stable_id, r => undef }),
               $gene->stable_id
@@ -105,7 +119,7 @@ sub content {
               $hub->url({ species => $member_species, type => 'Transcript', action => 'ProteinSummary', peptide => $peptide->stable_id, __clear => 1 }),
               $peptide->stable_id
             ),
-            sprintf('%d aa', $peptide->seq_length),
+            sprintf('%d %s', $peptide->seq_length, $unit),
             sprintf('%d %%', $peptide->perc_id),
             sprintf('%d %%', $peptide->perc_cov),
             sprintf('<a href="%s">%s</a>',
@@ -116,20 +130,18 @@ sub content {
         }
       }
       
-      next unless $flag;
-      
       my $homology_desc_mapped = $Bio::EnsEMBL::Compara::Homology::PLAIN_TEXT_DESCRIPTIONS{$homology->{'_description'}} || $homology->{'_description'} || 'no description';
 
       $html .= "<h2>Type: $homology_desc_mapped</h2>";
       
       my $ss = $self->new_table([
-          { title => 'Species',          width => '15%' },
+          { title => 'Species',          width => '20%' },
           { title => 'Gene ID',          width => '15%' },
-          { title => 'Peptide ID',       width => '15%' },
-          { title => 'Peptide length',   width => '10%' },
-          { title => '% identity',       width => '10%' },
+          { title => "$gene_product ID",       width => '15%' },
+          { title => "$gene_product length",   width => '10%' },
+          { title => $identity_title,    width => '10%' },
           { title => '% coverage',       width => '10%' },
-          { title => 'Genomic location', width => '25%' }
+          { title => 'Genomic location', width => '20%' }
         ],
         $data
       );
