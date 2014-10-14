@@ -209,6 +209,27 @@ sub html_format {
 
 ########### END OF ACCESSORS ###################
 
+sub make_twocol {
+  my ($self, $order) = @_;
+
+  my $data    = $self->get_data;
+  my $twocol  = $self->new_twocol;
+
+  foreach (@$order) {
+    my $field = $data->{$_};
+    next unless $field->{'content'};
+    my $content = $field->{'raw'} == 1 ? $self->_wrap_content($field->{'content'}) : $field->{'content'};
+    $twocol->add_row($field->{'label'}, $content);
+  }
+
+  return $twocol->render;
+}
+
+sub _wrap_content {
+  my ($self, $content) = @_;
+  return "<p><pre>$content</pre></p>";
+}
+
 sub get_content {
   my ($self, $function) = @_;
   my $cache = $self->mcacheable && $self->ajaxable && !$self->renderer->{'_modal_dialog_'} ? $self->hub->cache : undef;

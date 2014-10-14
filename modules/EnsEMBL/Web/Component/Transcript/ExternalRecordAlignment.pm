@@ -34,14 +34,26 @@ sub caption {
 }
 
 sub content {
+  my $self  = shift;
+  my $html  = '<h2>Alignment of External Feature</h2>';
+
+  my $order = [qw(description alignment)];
+
+  $html .= $self->make_twocol($order);
+  return $html;
+}
+
+sub get_data {
   my $self      = shift;
   my $object    = $self->object;
   my $trans     = $object->Obj;
   my $tsi       = $object->stable_id;
   my $hit_id    = $object->param('sequence');
   my $ext_db    = $object->param('extdb');
-
-  my $html = '<h2>Alignment of External Feature</h2>';
+  my $data      = {
+                    'description' => {'label' => 'Description'},
+                    'alignment'   => {'label' => 'EMBOSS output'},
+                  };
 
   #get external sequence and type (DNA or PEP)
   my $ext_seq   = $self->hub->get_ext_seq($ext_db, {'id' => $hit_id, 'translation' => 1});
@@ -51,16 +63,19 @@ sub content {
     my $trans_seq = $object->get_int_seq($trans, $seq_type)->[0];
     my $alignment = $object->get_alignment($ext_seq->{'sequence'}, $trans_seq, $seq_type) || '';
 
-    $html .= $seq_type eq 'PEP'
-      ? qq(<p>Alignment between external feature $hit_id and translation of transcript $tsi</p><p><pre>$alignment</pre></p>)
-      : qq(<p>Alignment between external feature $hit_id and transcript $tsi</p><p><pre>$alignment</pre></p>);
+
+    $data->{'description'}{'content'} = $seq_type eq 'PEP'
+      ? qq(Alignment between external feature $hit_id and translation of transcript $tsi)
+      : qq(Alignment between external feature $hit_id and transcript $tsi);
+    $data->{'alignment'}{'content'} = $alignment;
+    $data->{'alignment'}{'raw'} = 1;
   }
   else {
     $self->mcacheable(0);
-    $html .= qq(<p>Unable to retrieve sequence for $hit_id from external service $ext_db. $ext_seq->{'error'}.</p>);
+    $data->{'description'}{'content'} = qq(Unable to retrieve sequence for $hit_id from external service $ext_db. $ext_seq->{'error'});
   }
 
-  return $html;
+  return $data;
 }
 
 1;

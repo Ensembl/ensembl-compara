@@ -30,27 +30,13 @@ sub _init {
 
 sub content {
   my $self   = shift;
-  my $table  = $self->new_twocol;
 
   my $html = '<h2>Alignment of Supporting Evidence</h2>';
 
-  my $data = $self->get_data;
-  my @order = qw(external_record transcript_details exon_info exon_coords e_alignment t_alignment);
+  my $order = [qw(external_record transcript_details exon_info exon_coords e_alignment t_alignment)];
 
-  foreach (@order) {
-    my $field = $data->{$_};
-    next unless $field->{'content'};
-    my $content = $field->{'raw'} == 1 ? $self->_wrap_content($field->{'content'}) : $field->{'content'};
-    $table->add_row($field->{'label'}, $content);
-  }
-
-  $html .= $table->render;
+  $html .= $self->make_twocol($order);
   return $html;
-}
-
-sub _wrap_content {
-  my ($self, $content) = @_;
-  return "<p><pre>$content</pre></p>";
 }
 
 sub get_data {
@@ -113,14 +99,15 @@ sub get_data {
   # working with DNA or PEP?
   my $seq_type = $object->determine_sequence_type($ext_seq);
   my $label    = $seq_type eq 'PEP' ? 'aa' : 'bp';
+  $data->{'external_record'} = {'label' => 'External record'};
 
   if ($ext_seq) {
     my $hit_url = $hub->get_ExtURL_link($hit_id, $hit_db_name, $hit_id);
     my $txt = "$hit_url ($hit_db_name)";
     $txt   .= ", length = $ext_seq_length $label" if $ext_seq_length;
-    $data->{'external_record'} = {'label' => 'External record', 'content' => $txt};
+    $data->{'external_record'}{'content'} = $txt;
   } else {
-    $data->{'external_record'} = {'label' => 'External record', 'content' => "Unable to fetch sequence for $hit_id from the $hit_db_name database at this time."};
+    $data->{'external_record'}{'content'} => "Unable to fetch sequence for $hit_id from the $hit_db_name database at this time.";
   }
 
   if ($seq_type eq 'PEP' && $translation) {
@@ -177,38 +164,42 @@ sub get_data {
 
     $data->{'exon_info'} = {'label' => 'Exon Information', 'content' => "<p>$exon_id</p><p>$e_length_text</p>"};
     $data->{'exon_coords'} = {'label' => 'Exon coordinates', 'content' => "<p>Transcript: $cdna_start-$cdna_end bp</p><p>$exon_cds_pos</p>"};
+    $data->{'e_alignment'} = {'label' => 'Exon alignment'};
 
     if ($ext_seq) {
       if (!$e_sequence && $seq_type eq 'PEP') {
-        $data->{'e_alignment'} = {'label' => 'Exon alignment', 'content' => "Unable to fetch translation for $exon_id from the $hit_db_name database at this time."};
+        $data->{'e_alignment'}{'content'} = "Unable to fetch translation for $exon_id from the $hit_db_name database at this time.";
       }
       else {
         # get exon alignment
         my $alignment = $object->get_alignment($ext_seq, $e_sequence, $seq_type);
         $alignment =~ s/$hit_id/$hit_id .' (reverse complement)'/e if $strand_mismatch;
-        $data->{'e_alignment'} = {'label' => 'Exon alignment', 'content' => $alignment, 'raw' => 1};
+        $data->{'e_alignment'}{'content'} = $alignment; 
+        $data->{'e_alignment'}{'raw'} = 1;
       }
     }
     else {
-      $data->{'e_alignment'} = {'label' => 'Exon alignment', 'content' => "Unable to show alignment"};
+      $data->{'e_alignment'}{'content'} = "Unable to show alignment";
     }
   }
 
   my $type   = $seq_type eq 'PEP' ? 'Translation' : 'Transcript';
+  $data->{'t_alignment'} = {'label' => "$type alignment"};
   if ($ext_seq) {
     # get transcript sequence
     my $trans_sequence = $object->get_int_seq($transcript, $seq_type)->[0];
     if (!$trans_sequence && $seq_type eq 'PEP') {
-      $data->{'t_alignment'} = {'label' => "$type alignment", 'content' => "Unable to retrieve translation for $tsi"};
+      $data->{'t_alignment'}{'content'} = "Unable to retrieve translation for $tsi";
     } else {
       # get transcript alignment
       my $alignment = $object->get_alignment($ext_seq, $trans_sequence, $seq_type);
       $alignment =~ s/$hit_id/$hit_id .' (reverse complement)'/e if $strand_mismatch;
-      $data->{'t_alignment'} = {'label' => "$type alignment", 'content' => $alignment, 'raw' => 1};
+      $data->{'t_alignment'}{'content'} = $alignment; 
+      $data->{'t_alignment'}{'raw' => 1};
     }
   }
   else {
-    $data->{'t_alignment'} = {'label' => "$type alignment", 'content' => "Unable to show alignment"};
+    $data->{'t_alignment'}{'content'} = "Unable to show alignment";
   }
   return $data;
 }
@@ -219,7 +210,13 @@ sub get_export_data {
 ## Get data for export
   my $self = shift;
   my $data = $self->get_data;
-  return ($data->{'e_alignment'}{'content'}, $data->{'t_alignment'}{'content'});
+  my @fields = qw(e_alignment t_alignment);
+  my $output = [];
+  foreach (@fields) {
+    next unless $data->{$_}{'raw'}; ## actual output, not an error message
+    push @$output, $data->{$_}{'content'};
+  }
+  return $output;
 }
 
 
