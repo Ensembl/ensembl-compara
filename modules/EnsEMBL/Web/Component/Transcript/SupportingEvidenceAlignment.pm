@@ -41,7 +41,9 @@ sub content {
   my $e_count      = scalar @{$transcript->get_all_Exons};
   my $translation  = $transcript->translation;
   my $table        = $self->new_twocol;
-  my ($cds_aa_length, $cds_length, $e_alignment, $html);
+  my ($cds_aa_length, $cds_length, $e_alignment);
+
+  my $html = '<h2>Alignment of Supporting Evidence</h2>';
 
   # get external sequence and type (DNA or PEP) - refseq try with and without version
   my $query_db = '';

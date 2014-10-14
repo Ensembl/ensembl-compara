@@ -41,22 +41,26 @@ sub content {
   my $hit_id    = $object->param('sequence');
   my $ext_db    = $object->param('extdb');
 
+  my $html = '<h2>Alignment of External Feature</h2>';
+
   #get external sequence and type (DNA or PEP)
   my $ext_seq   = $self->hub->get_ext_seq($ext_db, {'id' => $hit_id, 'translation' => 1});
 
-  unless ($ext_seq->{'sequence'}) {
+  if ($ext_seq->{'sequence'}) {
+    my $seq_type  = $object->determine_sequence_type($ext_seq->{'sequence'});
+    my $trans_seq = $object->get_int_seq($trans, $seq_type)->[0];
+    my $alignment = $object->get_alignment($ext_seq->{'sequence'}, $trans_seq, $seq_type) || '';
+
+    $html .= $seq_type eq 'PEP'
+      ? qq(<p>Alignment between external feature $hit_id and translation of transcript $tsi</p><p><pre>$alignment</pre></p>)
+      : qq(<p>Alignment between external feature $hit_id and transcript $tsi</p><p><pre>$alignment</pre></p>);
+  }
+  else {
     $self->mcacheable(0);
-    return qq(<p>Unable to retrieve sequence for $hit_id from external service $ext_db. $ext_seq->{'error'}.</p>);
+    $html .= qq(<p>Unable to retrieve sequence for $hit_id from external service $ext_db. $ext_seq->{'error'}.</p>);
   }
 
-  my $seq_type  = $object->determine_sequence_type($ext_seq->{'sequence'});
-  my $trans_seq = $object->get_int_seq($trans, $seq_type)->[0];
-  my $alignment = $object->get_alignment($ext_seq->{'sequence'}, $trans_seq, $seq_type) || '';
-
-  return $seq_type eq 'PEP'
-    ? qq(<p>Alignment between external feature $hit_id and translation of transcript $tsi</p><p><pre>$alignment</pre></p>)
-    : qq(<p>Alignment between external feature $hit_id and transcript $tsi</p><p><pre>$alignment</pre></p>)
-  ;
+  return $html;
 }
 
 1;
