@@ -18,13 +18,19 @@ limitations under the License.
 
 package EnsEMBL::Draw::GlyphSet::bam_and_bigwig;
 
-### Module for drawing data in BAM format (either user-attached, or
-### internally configured via an ini file or database record
-### Note: uses Inline C for faster handling of these huge files
+### Module for drawing data in either BAM or BigWig format 
+### (initially only for internal data sources where we can
+### guarantee there is a BigWig file)
 
 use strict;
-use base qw(EnsEMBL::Draw::GlyphSet::bam EnsEMBL::Draw::GlyphSet::bigwig);
+use base qw(EnsEMBL::Draw::GlyphSet::bam);
 
-use EnsEMBL::Draw::GlyphSet;
+use EnsEMBL::Draw::GlyphSet::bigwig;
+
+sub render_histogram {
+## Replace standard BAM histogram with BigWig
+  my $self = shift;
+  return EnsEMBL::Draw::GlyphSet::bigwig::render_normal($self);
+}
 
 1;

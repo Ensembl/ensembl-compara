@@ -1070,6 +1070,7 @@ sub _add_bam_track {
   ';
   
   warn ">>> INTERNAL?? ".$args{'internal'}; 
+  $args{'internal'} = 1;
 
   my ($format, $renderers);
   if ($args{'internal'}) {
