@@ -95,9 +95,7 @@ sub render_content {
 sub stats_table {
   my ($self, $gene_name) = @_;  
   my $hub        = $self->hub;
-  my $db_adaptor = $self->hub->database('variation');
-     $db_adaptor->include_failed_variations(1);
-  my $pf_adaptor = $db_adaptor->get_PhenotypeFeatureAdaptor;
+  my $pf_adaptor = $self->hub->database('variation')->get_PhenotypeFeatureAdaptor;
   my ($total_counts, %phenotypes, @va_ids);
   
   my $columns = [
