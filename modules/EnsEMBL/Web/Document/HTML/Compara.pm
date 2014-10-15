@@ -281,12 +281,16 @@ sub draw_stepped_table {
       my $content = '-';
 
       if ($mlss_id) {
-        if (($method eq 'SYNTENY') or not $with_extra_info) {
+        if ($method eq 'SYNTENY') {
           $content = '<b>YES</b>';
-        }
-        else {
+        } elsif ($with_extra_info) {
           my $url = '/info/genome/compara/mlss.html?mlss='.$mlss_id;
           $content = sprintf('<a href="%s">YES</a>', $url);
+        } else {
+          # Fix for e77: the data that we are missing is actually in the
+          # e75 database. Let's link there
+          my $url = 'http://feb2014.archive.ensembl.org/info/genome/compara/mlss.html?mlss='.$mlss_id;
+          $content = sprintf('<a href="%s" target="_blank">YES (e75)</a>', $url);
         }
       }
       $html .= sprintf '<td class="center %s" style="padding:2px;vertical-align:middle">%s</td>', $cbg, $content;

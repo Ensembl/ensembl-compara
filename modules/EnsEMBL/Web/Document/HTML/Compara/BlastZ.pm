@@ -49,7 +49,11 @@ sub render {
           my $url = '/info/genome/compara/mlss.html?mlss='.$mlss_id;
           $html .= sprintf '<li><a href="%s">%s (%s)</a></li>', $url, $info->{$other}{'common_name'}, $info->{$other}{'long_name'};
       } else {
-          $html .= sprintf('<li>%s (%s)</li>', $info->{$other}{'common_name'}, $info->{$other}{'long_name'});
+          # Fix for e77: the data that we are missing is actually in the
+          # e75 database. Let's link there
+          my $mlss_id = $values->[1];
+          my $url = 'http://feb2014.archive.ensembl.org/info/genome/compara/mlss.html?mlss='.$mlss_id;
+          $html .= sprintf '<li><a href="%s" target="_blank">%s (%s)</a> (redirect to the e75 archive)</li>', $url, $info->{$other}{'common_name'}, $info->{$other}{'long_name'};
       }
     } 
     $html .= '</ul>';
