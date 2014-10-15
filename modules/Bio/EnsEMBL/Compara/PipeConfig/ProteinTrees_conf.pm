@@ -513,8 +513,8 @@ sub pipeline_analyses {
             -module         => 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
             -parameters     => {
                 'method_link_dump_file' => $self->o('method_link_dump_file'),
-                'command_line_db'   => $self->dbconn_2_mysql('pipeline_db', 1),
-                'cmd'               => 'mysqlimport #command_line_db# #method_link_dump_file#',
+                'db_cmd'            => $self->db_cmd(),
+                'cmd'               => '#db_cmd# --executable mysqlimport --append #method_link_dump_file#',
             },
             -flow_into      => [ 'load_all_genomedbs' ],
             -meadow_type    => 'LOCAL',
@@ -1252,8 +1252,8 @@ sub pipeline_analyses {
             -module         => 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
             -parameters     => {
                 'stnt_sql_script'   => $self->o('ensembl_cvs_root_dir').'/ensembl-compara/sql/tree-stats-as-stn_tags.sql',
-                'command_line_db'   => $self->dbconn_2_mysql('pipeline_db', 1),
-                'cmd'               => 'mysql  #command_line_db# < #stnt_sql_script#',
+                'db_cmd'            => $self->db_cmd(),
+                'cmd'               => '#db_cmd# < #stnt_sql_script#',
             },
             -flow_into      => [ 'email_tree_stats_report' ],
         },

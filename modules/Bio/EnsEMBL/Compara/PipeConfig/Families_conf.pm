@@ -61,6 +61,9 @@ package Bio::EnsEMBL::Compara::PipeConfig::Families_conf;
 
 use strict;
 use warnings;
+
+use Bio::EnsEMBL::Hive::Version 2.2;
+
 use base ('Bio::EnsEMBL::Compara::PipeConfig::ComparaGeneric_conf');
 
 sub default_options {
@@ -392,8 +395,8 @@ sub pipeline_analyses {
         {   -logic_name => 'mcxload_matrix',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
             -parameters => {
-                'db_conn'  => $self->dbconn_2_mysql('pipeline_db', 1), # to conserve the valuable input_id space
-                'cmd'      => "mysql #db_conn# -N -q -e 'select * from mcl_sparse_matrix' | #mcl_bin_dir#/mcxload -abc - -ri max -o #work_dir#/#file_basename#.tcx -write-tab #work_dir#/#file_basename#.itab",
+                'db_cmd'   => $self->db_cmd(), # to conserve the valuable input_id space
+                'cmd'      => "#db_cmd# --append -N --append -q -sql 'select * from mcl_sparse_matrix' | #mcl_bin_dir#/mcxload -abc - -ri max -o #work_dir#/#file_basename#.tcx -write-tab #work_dir#/#file_basename#.itab",
             },
             -flow_into => {
                 1 => [ 'mcl' ],
