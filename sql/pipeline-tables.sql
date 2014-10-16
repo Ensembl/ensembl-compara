@@ -263,31 +263,6 @@ CREATE TABLE CAFE_data (
 PRIMARY KEY (fam_id)
 ) ENGINE=InnoDB;
 
--- ----------------------------------------------------------------------------------
---
--- Table structure for table 'protein_tree_qc'
---
--- overview: This table contains statistics related to the protein trees
--- semantics:
---   genome_db_id  - link to genome_db table id
---   total_orphans_num   - number of orphaned genes (not in the set)
---   prop_orphans        - proportion of orphaned genes, compared to the whole set
---   common_orphans_num  - number of still orphaned genes (only if the species is reused)
---   new_orphans_num     - number of new orphaned genes (only if the species is reused)
-
-
-CREATE TABLE protein_tree_qc (
-    genome_db_id                       int(10) unsigned NOT NULL,
-
-    total_orphans_num                  INT UNSIGNED,
-    prop_orphans                       DOUBLE,
-    common_orphans_num                 INT UNSIGNED,
-    new_orphans_num                    INT UNSIGNED,
-
-    PRIMARY KEY (genome_db_id),
-    FOREIGN KEY (genome_db_id) REFERENCES genome_db(genome_db_id)
-
-) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 
 
 

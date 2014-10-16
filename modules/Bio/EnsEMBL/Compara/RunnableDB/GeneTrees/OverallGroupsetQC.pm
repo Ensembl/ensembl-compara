@@ -27,7 +27,7 @@ limitations under the License.
 
 =head1 NAME
 
-Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::OverallGroupsetQC
+Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::OverallGroupsetQC
 
 =head1 DESCRIPTION
 
@@ -38,7 +38,7 @@ cigar_lines for each sequence.
 =head1 SYNOPSIS
 
 my $db           = Bio::EnsEMBL::Compara::DBAdaptor->new($locator);
-my $sillytemplate = Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::OverallGroupsetQC->new
+my $sillytemplate = Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::OverallGroupsetQC->new
   (
    -db         => $db,
    -input_id   => $input_id,
@@ -59,7 +59,7 @@ Internal methods are usually preceded with an underscore (_)
 
 =cut
 
-package Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::OverallGroupsetQC;
+package Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::OverallGroupsetQC;
 
 use strict;
 

@@ -22,20 +22,7 @@
 */
 
 TRUNCATE species_tree_node_tag;
-DELETE FROM gene_tree_root_tag WHERE tag = "spec_count";
 
--- Number of different species in a tree
-INSERT INTO gene_tree_root_tag
-SELECT
-	root_id,
-	"spec_count",
-	COUNT(DISTINCT seq_member.genome_db_id) AS nb_spec
-FROM
-	seq_member
-	JOIN gene_tree_node USING (seq_member_id)
-GROUP BY
-	root_id
-;
 
 CREATE TEMPORARY TABLE tmp_ngenes
 SELECT genome_db_id, COUNT(*) FROM gene_member GROUP BY genome_db_id;
@@ -46,10 +33,7 @@ SELECT genome_db_id, COUNT(*) FROM seq_member GROUP BY genome_db_id;
 CREATE TEMPORARY TABLE tmp_stats_per_genome
 SELECT
 	stn.node_id,
-	COUNT(DISTINCT mg.gene_member_id) AS nb_genes,
 	COUNT(DISTINCT mp.seq_member_id) AS nb_seq,
-	SUM(mg.canonical_member_id = mp.seq_member_id AND gtn.node_id IS NULL) AS nb_orphan_genes,
-	SUM(gtn.node_id IS NOT NULL) AS nb_genes_in_tree,
 	SUM(gtn.node_id IS NOT NULL AND gstn.genome_db_id IS NULL) AS nb_genes_in_tree_multi_species,
 	SUM(gtn.node_id IS NOT NULL AND gstn.genome_db_id IS NOT NULL) AS nb_genes_in_tree_single_species
 FROM
@@ -134,10 +118,7 @@ GROUP BY species_tree_node_id
 
 
 
-INSERT INTO species_tree_node_tag SELECT node_id, "nb_genes", nb_genes FROM tmp_stats_per_genome;
 INSERT INTO species_tree_node_tag SELECT node_id, "nb_seq", nb_seq FROM tmp_stats_per_genome;
-INSERT INTO species_tree_node_tag SELECT node_id, "nb_orphan_genes", nb_orphan_genes FROM tmp_stats_per_genome;
-INSERT INTO species_tree_node_tag SELECT node_id, "nb_genes_in_tree", nb_genes_in_tree FROM tmp_stats_per_genome;
 INSERT INTO species_tree_node_tag SELECT node_id, "nb_genes_in_tree_single_species", nb_genes_in_tree_single_species FROM tmp_stats_per_genome;
 INSERT INTO species_tree_node_tag SELECT node_id, "nb_genes_in_tree_multi_species", nb_genes_in_tree_multi_species FROM tmp_stats_per_genome;
 

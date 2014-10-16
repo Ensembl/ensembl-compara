@@ -67,6 +67,9 @@ package Bio::EnsEMBL::Compara::PipeConfig::EPO_pt3_conf;
 
 use strict;
 use warnings;
+
+use Bio::EnsEMBL::Hive::Version 2.2;
+
 use base ('Bio::EnsEMBL::Compara::PipeConfig::ComparaGeneric_conf');
 
 sub default_options {
@@ -245,9 +248,9 @@ return
  -logic_name => 'dump_mappings_to_file',
  -module     => 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
  -parameters => {
-  'db_conn' => $self->dbconn_2_mysql('compara_mapped_anchor_db', 1),
+  'db_cmd' => $self->db_cmd(),
   'enredo_mapping_file' => $self->o('enredo_mapping_file'),
-  'cmd' => "mysql #db_conn# -NB -e \'SELECT aa.anchor_id, gdb.name, df.name, aa.dnafrag_start, aa.dnafrag_end, CASE ".
+  'cmd' => "#db_cmd# --append -N --append -B -sql \'SELECT aa.anchor_id, gdb.name, df.name, aa.dnafrag_start, aa.dnafrag_end, CASE ".
   "aa.dnafrag_strand WHEN 1 THEN \"+\" ELSE \"-\" END, aa.num_of_organisms, aa.score FROM anchor_align aa INNER JOIN ".
   "dnafrag df ON aa.dnafrag_id = df.dnafrag_id INNER JOIN genome_db gdb ON gdb.genome_db_id = df.genome_db_id WHERE ".
   "aa.method_link_species_set_id = \'" . $self->o('mapping_mlssid') . 

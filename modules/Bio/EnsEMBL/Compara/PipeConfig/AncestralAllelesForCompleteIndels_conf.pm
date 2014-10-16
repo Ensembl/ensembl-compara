@@ -170,9 +170,9 @@ sub pipeline_create_commands {
         @{$self->SUPER::pipeline_create_commands},  # inheriting database and hive tables' creation
         
         #Store DumpMultiAlign healthcheck results
-        'mysql ' . $self->dbconn_2_mysql('pipeline_db', 1) . ' -e "CREATE TABLE IF NOT EXISTS statistics (
+        $self->db_cmd('CREATE TABLE IF NOT EXISTS statistics (
         statistics_id               INT(10) unsigned NOT NULL AUTO_INCREMENT,
-        seq_region                  varchar(40) DEFAULT \'\' NOT NULL,
+        seq_region                  varchar(40) DEFAULT "" NOT NULL,
         seq_region_start            INT(10) DEFAULT 1,
         seq_region_end              INT(10) DEFAULT 0,
         total_bases		    INT(10) DEFAULT 0,
@@ -186,20 +186,20 @@ sub pipeline_create_commands {
         num_bases_analysed          INT(10) DEFAULT 0,
         PRIMARY KEY (statistics_id),
         UNIQUE KEY seq_region_start_end  (seq_region, seq_region_start, seq_region_end)
-        ) COLLATE=latin1_swedish_ci ENGINE=InnoDB;"',
+        ) COLLATE=latin1_swedish_ci ENGINE=InnoDB;'),
 
-        'mysql ' . $self->dbconn_2_mysql('pipeline_db', 1) . ' -e "CREATE TABLE IF NOT EXISTS event (
+        $self->db_cmd('CREATE TABLE IF NOT EXISTS event (
          statistics_id              INT(10) unsigned NOT NULL,
 #         microinversion             tinyint(2) unsigned NOT NULL DEFAULT 0,
-         indel                      ENUM(\'insertion\', \'deletion\'),
-         type                       ENUM(\'novel\', \'recovery\', \'unsure\'),
-         detail                     ENUM(\'of_allele_base\', \'strict\', \'shuffle\', \'realign\', \'neighbouring_deletion\', \'neighbouring_insertion\', \'complex\'),
-         detail1                    ENUM(\'strict1\', \'shuffle1\'),
-         improvement                ENUM(\'better\', \'worse\'),
-         detail2                    ENUM(\'polymorphic_insertion\',\'polymorphic_deletion\',\'complex_polymorphic_insertion\', \'complex_polymorphic_deletion\', \'funny_polymorphic_insertion\', \'funny_polymorphic_deletion\'),
+         indel                      ENUM("insertion", "deletion"),
+         type                       ENUM("novel", "recovery", "unsure"),
+         detail                     ENUM("of_allele_base", "strict", "shuffle", "realign", "neighbouring_deletion", "neighbouring_insertion", "complex"),
+         detail1                    ENUM("strict1", "shuffle1"),
+         improvement                ENUM("better", "worse"),
+         detail2                    ENUM("polymorphic_insertion","polymorphic_deletion","complex_polymorphic_insertion", "complex_polymorphic_deletion", "funny_polymorphic_insertion", "funny_polymorphic_deletion"),
          count                      INT(10) DEFAULT 0,
          FOREIGN KEY (statistics_id) REFERENCES statistics(statistics_id)
-        ) COLLATE=latin1_swedish_ci ENGINE=InnoDB;"',
+        ) COLLATE=latin1_swedish_ci ENGINE=InnoDB;'),
 
     ];
 }

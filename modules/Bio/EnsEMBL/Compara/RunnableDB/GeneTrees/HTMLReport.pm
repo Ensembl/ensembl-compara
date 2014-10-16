@@ -44,7 +44,7 @@ package Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::HTMLReport;
 use strict;
 use warnings;
 
-use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
+use base ('Bio::EnsEMBL::Hive::RunnableDB::NotifyByEmail', 'Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
 my $txt = <<EOF;
 <html>
@@ -69,6 +69,7 @@ EOF
 
 sub param_defaults {
     return {
+        is_html => 1,
         text => $txt,
         subject => 'Gene-tree pipeline report',
     }
@@ -250,22 +251,6 @@ sub fetch_input {
 }
 
 
-# NB: This could be in a base class
-
-sub run {
-    my $self = shift;
-
-    my $email   = $self->param_required('email');
-    my $subject = $self->param_required('subject');
-    my $text    = $self->param_required('text');
-
-    open(my $sendmail_fh, '|-', "sendmail $email");
-    print $sendmail_fh "Subject: $subject\n";
-    print $sendmail_fh "Content-Type: text/html;\n";
-    print $sendmail_fh "\n";
-    print $sendmail_fh "$text\n";
-    close $sendmail_fh;
-}
 
 
 
@@ -281,7 +266,7 @@ sub array_arrays_to_html_table {
 
 
 
-# Functions to format the data
+# Functions to format the numbers
 
 sub roundperc2 {
     return sprintf('%.2f&nbsp;%%', 100*$_[0]);
