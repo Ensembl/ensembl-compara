@@ -534,7 +534,7 @@ sub parse_filtered_align {
     }
 
     if ($tree_to_delete_nodes and $missing_members) {
-        my $treenode_adaptor = $self->compara_dba->get_GeneTreeNodeAdaptor;
+        my $treenode_adaptor = $tree_to_delete_nodes->adaptor->db->get_GeneTreeNodeAdaptor;
 
         warn sprintf("leaves=%d ini_aln=%d filt_aln=%d\n", scalar(@{$tree_to_delete_nodes->get_all_leaves()}), scalar(keys %hash_initial_strings), scalar(keys %hash_filtered_strings));
 
