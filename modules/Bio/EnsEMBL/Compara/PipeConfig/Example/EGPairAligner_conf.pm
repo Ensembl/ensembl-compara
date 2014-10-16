@@ -68,7 +68,7 @@ package Bio::EnsEMBL::Compara::PipeConfig::Example::EGPairAligner_conf;
 
 use strict;
 use warnings;
-use base ('Bio::EnsEMBL::Compara::PipeConfig::Example::EGComparaGeneric_conf');  # All Hive databases configuration files should inherit from HiveGeneric, directly or indirectly
+use base ('Bio::EnsEMBL::Compara::PipeConfig::ComparaGeneric_conf');  # All Hive databases configuration files should inherit from HiveGeneric, directly or indirectly
 
 sub default_options {
     my ($self) = @_;
