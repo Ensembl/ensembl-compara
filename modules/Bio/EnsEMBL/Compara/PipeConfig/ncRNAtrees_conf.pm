@@ -112,7 +112,6 @@ sub pipeline_analyses {
                      -analysis_capacity => $self->o('hc_capacity'),
                      -priority          => $self->o('hc_priority'),
                      -bacth_size        => $self->o('hc_batch_size'),
-                     -meadow_type       => 'LOCAL',
                     );
 
     my %backbone_params = (
@@ -139,7 +138,7 @@ sub pipeline_analyses {
                 -module     => 'Bio::EnsEMBL::Hive::RunnableDB::DatabaseDumper',
                 -parameters  => {
                                   'table_list'        => '',
-                                  'output_file'          => 'snapshot_before_load.sql',
+                                  'output_file'          => $self->o('dump_dir').'/snapshot_before_load.sql',
                                 },
                 -flow_into  => {
                                '1->A'   => [ 'load_genomedb_factory' ],
@@ -152,7 +151,7 @@ sub pipeline_analyses {
                 -module     => 'Bio::EnsEMBL::Hive::RunnableDB::DatabaseDumper',
                 -parameters  => {
                                   'table_list'        => '', 
-                                  'output_file'          => 'snapshot_before_tree_building.sql',
+                                  'output_file'          => $self->o('dump_dir').'/snapshot_before_tree_building.sql',
                                  },
                 -flow_into  => {
                                 '1->A'  => [ 'rfam_classify' ],
@@ -400,7 +399,7 @@ sub pipeline_analyses {
                                },
                 -rc_name       => 'default',
                 -flow_into     => {
-                                   '2->A' => [ $self->o('skip_epo') ? 'msa_chooser' : 'recover_epo' ],
+                                   '2->A' => [ $self->o('skip_epo') ? 'clusterset_backup' : 'recover_epo' ],
                                    'A->1' => [ 'hc_tree_final_checks' ],
                                   },
                 -meadow_type   => 'LOCAL',
