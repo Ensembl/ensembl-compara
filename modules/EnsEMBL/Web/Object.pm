@@ -263,10 +263,12 @@ sub get_alt_allele_link {
         last;
       }
     }
-    my $ref_location = sprintf('%s:%s-%s', $ref_gene->seq_region_name, $ref_gene->seq_region_start, $ref_gene->seq_region_end);
-    my $params = {'type' => 'Gene', 'g' => $ref_gene->stable_id, 'r' => $ref_location };
-    $params->{'action'} = 'Summary' if $type eq 'Location';
-    $alt_link = sprintf('View this gene <a href="%s">on the reference assembly.', $hub->url($params));
+    if ($ref_gene) {
+      my $ref_location = sprintf('%s:%s-%s', $ref_gene->seq_region_name, $ref_gene->seq_region_start, $ref_gene->seq_region_end);
+      my $params = {'type' => 'Gene', 'g' => $ref_gene->stable_id, 'r' => $ref_location };
+      $params->{'action'} = 'Summary' if $type eq 'Location';
+      $alt_link = sprintf('View this gene <a href="%s">on the reference assembly.', $hub->url($params));
+    }
   }
   return $alt_link;
 }
