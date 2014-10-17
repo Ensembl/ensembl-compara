@@ -22,16 +22,18 @@ limitations under the License.
 
 Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::Threshold_on_dS
 
-=cut
-
 =head1 DESCRIPTION
 
-This is a homology compara specific runnableDB, that based on a
-method_link_species_set_id, calculates the median dS where dS
-values are available, and stores 2*median in the threshold_on_ds
-tag of the current method_link_species_set
+This module defines the highest acceptable value of dS, for a given
+pair of species. We take all the orthologues between the two
+species, and get the median value of dS. If the median is > 1, the
+threshold will be defined as 2. Otherwise, the threshold will be 1.
+It is stored as a method_link_species_set tag.
 
-=cut
+This threshold is used by the API the following way. You can get the
+pre-computed value of dN or dS with the API. But if you call the
+"dnds_ratio" method, the API will return undef if dS is higher than the
+threshold previously defined, or if it is 0.
 
 =head1 CONTACT
 
