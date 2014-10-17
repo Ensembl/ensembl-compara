@@ -222,10 +222,6 @@ dog vs mouse
 horse vs mouse
 Note that it should not matter which species is the reference and which the non-reference since the order cannot be defined.
 
-It is also necessary to skip the automatic setting of the internal ids by setting in the configuration file:
-'skip_set_internal_ids' => 1,
-
-
 4) Using no master and a pairwise alignment configuration file
 This should work with several pairwise analyses in the same database
 

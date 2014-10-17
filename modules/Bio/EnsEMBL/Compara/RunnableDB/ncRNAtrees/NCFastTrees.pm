@@ -90,12 +90,9 @@ sub fetch_input {
     $nc_tree->species_tree->attach_to_genome_dbs();
     $self->param('nc_tree', $nc_tree);
 
-    my $alignment_id = $self->param('alignment_id');
-    my $aln_seq_type = $self->param('aln_seq_type');
-    $nc_tree->gene_align_id($alignment_id);
-    my $aln = Bio::EnsEMBL::Compara::AlignedMemberSet->new(-seq_type => $aln_seq_type, -dbID => $alignment_id, -adaptor => $self->compara_dba->get_AlignedMemberAdaptor);
+    my $aln = $self->compara_dba->get_GeneAlignAdaptor->fetch_by_dbID($self->param_required('alignment_id'));
     print STDERR scalar (@{$nc_tree->get_all_Members}), "\n";
-    $nc_tree->attach_alignment($aln);
+    $nc_tree->alignment($aln);
 
     if (my $input_aln = $self->_dumpMultipleAlignmentStructToWorkdir($nc_tree) ) {
         $self->param('input_aln', $input_aln);
@@ -248,9 +245,8 @@ sub _dumpMultipleAlignmentStructToWorkdir {
   my $root_id = $tree->root_id;
   my $leafcount = scalar(@{$tree->get_all_leaves});
   if($leafcount<4) {
-      $self->input_job->incomplete(0);
       $self->input_job->autoflow(0);
-      $self->throw("tree cluster $root_id has <4 proteins - can not build a raxml tree\n");
+      $self->complete_early("tree cluster $root_id has <4 proteins - can not build a raxml tree\n");
   }
 
   my $file_root = $self->worker_temp_directory. "nctree_". $root_id;

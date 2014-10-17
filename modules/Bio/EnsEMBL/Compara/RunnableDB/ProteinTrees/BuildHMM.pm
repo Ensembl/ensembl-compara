@@ -111,8 +111,7 @@ sub fetch_input {
     }
 
     if (scalar @$members < 2) {
-        $self->input_job->incomplete(0);
-        die "No HMM will be buid (only ", scalar @$members, ") members\n";
+        $self->complete_early(sprintf('No HMM will be buid (only %d members).', scalar(@$members)));
     }
 
     $self->param('protein_align', Bio::EnsEMBL::Compara::AlignedMemberSet->new(-dbid => $self->param('gene_tree_id'), -members => $members));

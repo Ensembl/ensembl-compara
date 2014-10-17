@@ -82,8 +82,7 @@ sub fetch_input {
         $self->throw("Error creating the library!\n");
     }
     if ($code == -1) {
-    #    $self->input_job->incomplete(0);
-        $self->warning("The library already exists. I will reuse it (but have you set the stripe on it?)\n");
+        $self->complete_early("The library already exists. I will reuse it (but have you set the stripe on it?)\n");
     } elsif ($code == 1) {
         print STDERR "OK creating the library\n" if ($self->debug());
 

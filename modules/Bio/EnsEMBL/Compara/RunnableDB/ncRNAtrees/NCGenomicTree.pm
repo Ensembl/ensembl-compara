@@ -60,10 +60,9 @@ sub run_ncgenomic_tree {
     my $input_aln = $self->param('aln_input');
     print STDERR "INPUT ALN: $input_aln\n";
     die "$input_aln doesn't exist" unless (-e $input_aln);
-    if ($method eq "phyml" && (scalar $cluster->get_all_leaves < 4)) {
-        $self->input_job->incomplete(0);
+    if ($method eq "phyml" && (scalar(@{$cluster->get_all_leaves}) < 4)) {
         $self->input_job->autoflow(0);
-        die ("tree cluster $nc_tree_id has ".(scalar $cluster->get_all_leaves)." proteins - can not build a phyml tree\n");
+        $self->complete_early(sprintf("tree cluster %d has %d proteins - can not build a phyml tree.\n", $nc_tree_id, scalar(@{$cluster->get_all_leaves})));
     }
 
     my $newick;

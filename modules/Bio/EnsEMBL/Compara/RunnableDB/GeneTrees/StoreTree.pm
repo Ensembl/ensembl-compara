@@ -422,6 +422,12 @@ sub store_tree_tags {
     $tree->store_tag("tree_num_dup_nodes",$num_dups);
     $tree->store_tag("tree_num_spec_nodes",$num_specs);
 
+    # The number of species
+    my %hash_species = ();
+    map {$hash_species{$_->genome_db_id}=1} @leaves;
+    # Could be renamed to 'tree_num_species' !
+    $tree->store_tag('spec_count', scalar keys %hash_species);
+
     print "Done storing stuff!\n" if ($self->debug);
 }
 
@@ -528,7 +534,7 @@ sub parse_filtered_align {
     }
 
     if ($tree_to_delete_nodes and $missing_members) {
-        my $treenode_adaptor = $self->compara_dba->get_GeneTreeNodeAdaptor;
+        my $treenode_adaptor = $tree_to_delete_nodes->adaptor->db->get_GeneTreeNodeAdaptor;
 
         warn sprintf("leaves=%d ini_aln=%d filt_aln=%d\n", scalar(@{$tree_to_delete_nodes->get_all_leaves()}), scalar(keys %hash_initial_strings), scalar(keys %hash_filtered_strings));
 

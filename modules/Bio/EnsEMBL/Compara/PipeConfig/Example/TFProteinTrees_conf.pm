@@ -261,8 +261,8 @@ sub default_options {
 
         # Add the database location of the previous Compara release. Use "undef" if running the pipeline without reuse
         #'prev_rel_db' => 'mysql://ensro@mysql-eg-staging-1.ebi.ac.uk:4160/ensembl_compara_fungi_19_72',
-		#'prev_rel_db' => 'mysql://treefam_ro:treefam_ro@mysql-treefam-prod:4401/TreeFam10_final_filtering_other_notung_param',
-        'prev_rel_db' => 'mysql://'.$self->o('password').':admin@mysql-treefam-prod:4401/TreeFam10_final_filtering_other_notung_param',
+        #'prev_rel_db' => 'mysql://treefam_ro:treefam_ro@mysql-treefam-prod:4401/treefam_production_9_69',
+        'prev_rel_db' => 'mysql://admin:'.$self->o('password').'@mysql-treefam-prod:4401/treefam_production_9_69',
 
         # How will the pipeline create clusters (families) ?
         # Possible values: 'blastp' (default), 'hmm', 'hybrid'

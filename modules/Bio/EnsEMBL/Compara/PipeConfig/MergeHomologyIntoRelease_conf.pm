@@ -47,7 +47,7 @@ package Bio::EnsEMBL::Compara::PipeConfig::MergeHomologyIntoRelease_conf;
 use strict;
 use warnings;
 
-use base ('Bio::EnsEMBL::Hive::PipeConfig::HiveGeneric_conf');
+use base ('Bio::EnsEMBL::Hive::PipeConfig::EnsemblGeneric_conf');
 
 =head2 default_options
 
@@ -67,8 +67,7 @@ sub default_options {
 
             %{$self->SUPER::default_options},
 
-        'rel'           => 72,
-        'pipeline_name' => 'compara_full_merge_'.$self->o('rel'),         # name used by the beekeeper to prefix job names on the farm
+        'pipeline_name' => 'compara_full_merge_'.$self->o('ensembl_release'),         # name used by the beekeeper to prefix job names on the farm
 
         'pipeline_db' => {
             -host   => 'compara3',
@@ -83,7 +82,7 @@ sub default_options {
             -port   => 3306,
             -user   => 'ensro',
             -pass   => '',
-            -dbname => sprintf('%s_compara_homology_merged_%s', $self->o('ENV', 'USER'), $self->o('rel')),
+            -dbname => sprintf('%s_compara_homology_merged_%s', $self->o('ENV', 'USER'), $self->o('ensembl_release')),
         },
 
         'rel_db' => {
@@ -91,14 +90,14 @@ sub default_options {
             -port   => 3306,
             -user   => 'ensadmin',
             -pass   => $self->o('password'),
-            -dbname => sprintf('%s_ensembl_compara_%s', $self->o('ENV', 'USER'), $self->o('rel')),
+            -dbname => sprintf('%s_ensembl_compara_%s', $self->o('ENV', 'USER'), $self->o('ensembl_release')),
         },
 
         # Please make sure that all the "merged_tables" also appear in "skipped_tables"
-        'merged_tables'     => [ 'method_link_species_set_tag' ],
-        'skipped_tables'    => [ 'meta', 'ncbi_taxa_name', 'ncbi_taxa_node', 'species_set', 'species_set_tag', 'genome_db', 'method_link', 'method_link_species_set',
+        'merged_tables'     => [ 'method_link_species_set_tag', 'species_tree_node', 'species_tree_root' ],
+        'skipped_tables'    => [ 'meta', 'ncbi_taxa_name', 'ncbi_taxa_node', 'species_set', 'species_set_tag', 'genome_db', 'method_link', 'method_link_species_set', 'dnafrag',
                               'analysis', 'analysis_data', 'job', 'job_file', 'job_message', 'analysis_stats', 'analysis_stats_monitor', 'analysis_ctrl_rule',
-                              'dataflow_rule', 'worker', 'monitor', 'resource_description', 'resource_class', 'log_message', 'analysis_base', 'method_link_species_set_tag' ],
+                              'dataflow_rule', 'worker', 'monitor', 'resource_description', 'resource_class', 'log_message', 'analysis_base', 'role' ],
 
         'copying_capacity'  => 10,                                  # how many tables can be dumped and re-created in parallel (too many will slow the process down)
     };
@@ -137,10 +136,11 @@ sub pipeline_analyses {
             -parameters => {
                 'db_conn'         => $self->o('merged_homology_db'),
                 'skipped_tables'  => $self->o('skipped_tables'),
+                'merged_tables'   => $self->o('merged_tables'),
                 'fan_branch_code' => 2,
             },
             -input_ids => [
-                { 'inputquery' => 'SELECT table_name AS `table` FROM information_schema.tables WHERE table_schema ="#mysql_dbname:db_conn#" AND table_name NOT IN (#csvq:skipped_tables#) AND table_rows' },
+                { 'inputquery' => 'SELECT table_name AS `table` FROM information_schema.tables WHERE table_schema ="#mysql_dbname:db_conn#" AND table_name NOT IN (#csvq:skipped_tables#) AND table_name NOT IN (#csvq:merged_tables#) AND table_rows' },
             ],
             -flow_into => {
                 2 => [ 'copy_table'  ],

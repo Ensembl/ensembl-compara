@@ -80,6 +80,7 @@ The additionnal getter / setters are:
  - tree_type()
  - clusterset_id()
  - species_tree()
+ - alignment()
 
 As dbID() can be misleading for composite objects, please refer to:
  - root_id() (for the tree itself)
@@ -88,7 +89,6 @@ As dbID() can be misleading for composite objects, please refer to:
 
 A few methods affect the structure of the nodes:
  - preload()
- - attach_alignment()
  - expand_subtrees()
 
 And finally, GeneTree aliases a few GeneTreeNode methods that actually apply on the root node:
@@ -381,25 +381,28 @@ sub preload {
 }
 
 
-=head2 attach_alignment
+=head2 alignment
 
   Arg [1]     : Bio::EnsEMBL::Compara::AlignedMemberSet $gene_align
   Description : Method to attach another multiple alignment of the
                 same members the current tree.
   Returntype  : GeneTree
-  Example     : $supertree->attach_alignment($filtered_aln);
+  Example     : $supertree->alignment($filtered_aln);
   Caller      : General
 
 =cut
 
-sub attach_alignment {
+sub alignment {
     my $self = shift;
     my $other_gene_align = shift;
+
+    return $self->adaptor->db->get_GeneAlignAdaptor->fetch_by_dbID($self->gene_align_id()) unless $other_gene_align;
 
     assert_ref($other_gene_align, 'Bio::EnsEMBL::Compara::AlignedMemberSet');
 
     $self->preload;
     $self->seq_type($other_gene_align->seq_type);
+    $self->gene_align_id($other_gene_align->dbID);
 
     # Gets the alignment
     my %cigars;

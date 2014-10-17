@@ -70,17 +70,12 @@ sub fetch_input {
 
 ## Because Examl is using MPI, it has to be run in a shared directory
 #  Here we override the eHive method to use #examl_dir# instead
-sub worker_temp_directory {
+sub worker_temp_directory_name {
     my $self = shift @_;
 
-    unless(defined($self->{'_tmp_dir'}) and (-e $self->{'_tmp_dir'})) {
-        my $username = $ENV{'USER'};
-        my $worker_id = $self->worker ? $self->worker->dbID : 'standalone';
-        $self->{'_tmp_dir'} = $self->param('examl_dir')."/worker_${username}.${worker_id}/";
-        mkdir($self->{'_tmp_dir'}, 0777);
-        throw("unable to create a writable directory ".$self->{'_tmp_dir'}) unless(-w $self->{'_tmp_dir'});
-    }
-    return $self->{'_tmp_dir'};
+    my $username = $ENV{'USER'};
+    my $worker_id = $self->worker ? $self->worker->dbID : "standalone.$$";
+    return $self->param('examl_dir')."/worker_${username}.${worker_id}/";
 }
 
 

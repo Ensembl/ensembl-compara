@@ -62,6 +62,7 @@ package Bio::EnsEMBL::Compara::PipeConfig::ProteinTrees_conf;
 use strict;
 use warnings;
 
+use Bio::EnsEMBL::Hive::Version 2.2;
 
 use base ('Bio::EnsEMBL::Compara::PipeConfig::ComparaGeneric_conf');
 
@@ -594,8 +595,8 @@ sub core_pipeline_analyses {
             -module         => 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
             -parameters     => {
                 'method_link_dump_file' => $self->o('method_link_dump_file'),
-                'command_line_db'   => $self->dbconn_2_mysql('pipeline_db', 1),
-                'cmd'               => 'mysqlimport #command_line_db# #method_link_dump_file#',
+                'db_cmd'            => $self->db_cmd(),
+                'cmd'               => '#db_cmd# --executable mysqlimport --append #method_link_dump_file#',
             },
             -flow_into      => [ 'load_all_genomedbs' ],
             -meadow_type    => 'LOCAL',
@@ -1389,14 +1390,14 @@ sub core_pipeline_analyses {
         },
 
         {   -logic_name => 'overall_qc',
-            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::OverallGroupsetQC',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::OverallGroupsetQC',
             -hive_capacity  => $self->o('qc_capacity'),
             -failed_job_tolerance => 0,
             -rc_name    => '2Gb_job',
         },
 
         {   -logic_name => 'per_genome_qc',
-            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::PerGenomeGroupsetQC',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::PerGenomeGroupsetQC',
             -hive_capacity => $self->o('qc_capacity'),
             -failed_job_tolerance => 0,
         },
@@ -1505,8 +1506,8 @@ sub core_pipeline_analyses {
             -module         => 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
             -parameters     => {
                 'stnt_sql_script'   => $self->o('ensembl_cvs_root_dir').'/ensembl-compara/sql/tree-stats-as-stn_tags.sql',
-                'command_line_db'   => $self->dbconn_2_mysql('pipeline_db', 1),
-                'cmd'               => 'mysql  #command_line_db# < #stnt_sql_script#',
+                'db_cmd'            => $self->db_cmd(),
+                'cmd'               => '#db_cmd# < #stnt_sql_script#',
             },
             -flow_into      => [ 'email_tree_stats_report' ],
         },

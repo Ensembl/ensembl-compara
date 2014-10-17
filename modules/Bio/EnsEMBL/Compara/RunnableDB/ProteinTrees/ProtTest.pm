@@ -55,9 +55,7 @@ sub run {
     my $self = shift;
 
     if ($self->param('gene_tree')->has_tag('best_fit_model_family')) {
-        my $jobs = $self->dataflow_output_id($self->input_id, 1);
-        $self->input_job->incomplete(0);
-        die "Aready has bets-fit model.\n";
+        $self->complete_early("Already has best-fit model");
     }
 
     #Give back control to run in GenericRunnable

@@ -96,15 +96,12 @@ sub fetch_input {
     $nc_tree->species_tree->attach_to_genome_dbs();
     $self->param('gene_tree', $nc_tree);
 
-    my $alignment_id = $self->param('alignment_id');
-    $self->throw("alignment_id has to be defined\n") unless(defined $alignment_id);
+    my $alignment_id = $self->param_required('alignment_id');
     $nc_tree->gene_align_id($alignment_id);
     print STDERR "ALN INPUT ID: $alignment_id\n" if ($self->debug);
-    my $aln_seq_type = 'filtered';
-    $self->param('aln_seq_type', $aln_seq_type);
-    my $aln = Bio::EnsEMBL::Compara::AlignedMemberSet->new(-seq_type => $aln_seq_type, -dbID => $alignment_id, -adaptor => $self->compara_dba->get_AlignedMemberAdaptor);
+    my $aln = $self->compara_dba->get_GeneAlignAdaptor->fetch_by_dbID($alignment_id);
     print STDERR scalar (@{$nc_tree->get_all_Members}), "\n";
-    $nc_tree->attach_alignment($aln);
+    $nc_tree->alignment($aln);
 
 ### !! Struct files are not used in this first tree!!
     if(my $input_aln = $self->_dumpMultipleAlignmentStructToWorkdir() ) {
@@ -137,9 +134,8 @@ sub run {
 #                                    }, -1
 #                                   );
 #         # We die here. Nothing more to do in the Runnable
-#         $self->input_job->incomplete(0);
 #         $self->input_job->autoflow(0);
-#         die "$nc_tree_id family is too big. Only fast trees will be computed\n";
+#         $self->complete_early("$nc_tree_id family is too big. Only fast trees will be computed\n");
 #     } else {
     # Run RAxML without any structure info first
         $self->_run_bootstrap_raxml;
@@ -261,10 +257,8 @@ sub _dumpMultipleAlignmentStructToWorkdir {
 
     my $leafcount = scalar(@{$tree->get_all_leaves});
     if($leafcount<4) {
-        $self->input_job->incomplete(0);
         $self->input_job->autoflow(0);
-        my $tree_id = $tree->root_id;
-        die "tree cluster $tree_id has <4 proteins -- can not build a raxml tree\n";
+        $self->complete_early(sprintf("tree cluster %d has <4 proteins -- can not build a raxml tree\n", $tree->root_id));
     }
 
     my $file_root = $self->worker_temp_directory. "nctree_". $tree->root_id;

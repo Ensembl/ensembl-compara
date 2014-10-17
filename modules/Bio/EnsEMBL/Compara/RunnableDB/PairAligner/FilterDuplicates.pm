@@ -308,6 +308,13 @@ sub removed_equals_from_genomic_align_block_list {
   my $region_start = shift;
   my $region_end = shift;
   
+  # Flag to define whether we are filtering raw alignments or net alignments
+  # By default, it is set to raw alignment
+  my $filter_duplicates_net = 0;
+  if (defined $self->param('filter_duplicates_net')) {
+  	$filter_duplicates_net = $self->param('filter_duplicates_net');
+  }
+  
   return unless(scalar(@$genomic_align_block_list));
   if($self->debug > 2) {
     for(my $index=0; $index<(scalar(@$genomic_align_block_list)); $index++) {
@@ -327,12 +334,35 @@ sub removed_equals_from_genomic_align_block_list {
       next if($self->param('delete_hash')->{$gab2->dbID}); #already deleted so skip it
 
       if(genomic_align_blocks_identical($gab1, $gab2)) {
-        if($gab1->dbID < $gab2->dbID) {
-          $self->param('delete_hash')->{$gab2->dbID} = 1;
+        if($gab1->score != $gab2->score) {
+          # Choose which one to delete based on the score first
+          if ($gab1->score > $gab2->score) {
+            $self->param('delete_hash')->{$gab2->dbID} = 1;
+          }
+          else {
+            $self->param('delete_hash')->{$gab1->dbID} = 1;
+          }
         } else {
-          $self->param('delete_hash')->{$gab1->dbID} = 1;
+          # If scores are identical, keep the block with lower id
+          if ($gab1->dbID < $gab2->dbID) {
+            $self->param('delete_hash')->{$gab2->dbID} = 1;
+          }
+          else {
+            $self->param('delete_hash')->{$gab1->dbID} = 1;
+          }
         }
         $self->param('identical_count', $self->param('identical_count')+1);        
+      }
+      elsif ($filter_duplicates_net) {
+	  # At the net step, check for overlapping blocks as well
+	  if (genomic_align_blocks_overlap ($gab1, $gab2)) {
+	      if($gab1->score >= $gab2->score) {
+		  $self->param('delete_hash')->{$gab2->dbID} = 1;
+	      } else {
+		  $self->param('delete_hash')->{$gab1->dbID} = 1;
+	      }
+	      $self->param('identical_count', $self->param('identical_count')+1);       
+	  }
       }
     }
   }
@@ -400,8 +430,9 @@ sub genomic_align_blocks_identical {
 
   return 0 if(($gab1_1->dnafrag_start != $gab2_1->dnafrag_start) or ($gab1_1->dnafrag_end != $gab2_1->dnafrag_end));  
   return 0 if(($gab1_2->dnafrag_start != $gab2_2->dnafrag_start) or ($gab1_2->dnafrag_end != $gab2_2->dnafrag_end));  
-
-  return 0 if($gab1->score != $gab2->score);
+  
+  # if they have different score, let's still consider them as identical
+  #return 0 if($gab1->score != $gab2->score);
 
   return 0 if($gab1_1->cigar_line ne $gab2_1->cigar_line);  
   return 0 if($gab1_2->cigar_line ne $gab2_2->cigar_line);

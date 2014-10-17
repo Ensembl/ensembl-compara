@@ -70,7 +70,7 @@ You may get warnings for those pairwise alignments which are still BLASTZ_NET, i
 
 4) Run init_pipeline
 Run the init_pipeline command, setting --conf_file to lastz.conf
-init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::Lastz_conf --dbname hsap_lastz_hap_68 --password <PASSWORD> --reg_conf reg.conf --conf_file lastz.conf --pipeline_name LASTZ_HAP_68 --skip_set_internal_ids 1
+init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::Lastz_conf --dbname hsap_lastz_hap_68 --password <PASSWORD> --reg_conf reg.conf --conf_file lastz.conf --pipeline_name LASTZ_HAP_68 --patch_alignments 1
 
 5) Run the beekeeper
 

@@ -91,7 +91,7 @@ sub param_defaults {
         'master_name'       => 'master_db',     # the master database (gives the list of tables that shouldn't be copied)
 
         # Static list of tables that must be ignored
-        'production_tables' => [qw(ktreedist_score recovered_member cmsearch_hit CAFE_data gene_tree_backup protein_tree_qc split_genes mcl_sparse_matrix statistics constrained_element_production dnafrag_chunk lr_index_offset dnafrag_chunk_set dna_collection)],
+        'production_tables' => [qw(ktreedist_score recovered_member cmsearch_hit CAFE_data gene_tree_backup split_genes mcl_sparse_matrix statistics constrained_element_production dnafrag_chunk lr_index_offset dnafrag_chunk_set dna_collection)],
         'hive_tables'       => [qw(accu hive_meta analysis_base analysis_data job job_file log_message analysis_stats analysis_stats_monitor analysis_ctrl_rule dataflow_rule worker monitor resource_description resource_class lsf_report analysis job_message pipeline_wide_parameters role worker_resource_usage)],
 
         # How to compare overlapping data. Primary keys are read from the schema unless overriden here
