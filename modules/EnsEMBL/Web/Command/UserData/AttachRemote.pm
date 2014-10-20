@@ -54,6 +54,9 @@ sub process {
     my %big_formats = map {$formats->{$_}{'ext'} => $_} @{$species_defs->REMOTE_FILE_FORMATS};
     $format_name = uc($big_formats{$extension});
   }
+  elsif ($format_name eq 'VCFI') {
+    $format_name = 'VCF';
+  }
 
   if (!$format_name) {
     $redirect .= 'SelectFile';
