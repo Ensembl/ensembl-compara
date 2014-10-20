@@ -33,4 +33,14 @@ sub render_histogram {
   return EnsEMBL::Draw::GlyphSet::bigwig::render_normal($self);
 }
 
+sub wiggle_features {
+  my $self = shift;
+  return EnsEMBL::Draw::GlyphSet::bigwig::wiggle_features($self);
+}
+
+sub bigwig_adaptor {
+  my $self = shift;
+  return EnsEMBL::Draw::GlyphSet::bigwig::bigwig_adaptor($self);
+}
+
 1;

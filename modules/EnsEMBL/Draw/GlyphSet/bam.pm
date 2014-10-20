@@ -142,6 +142,7 @@ sub bam_adaptor {
 sub features {
 ## get the alignment features
   my $self = shift;
+  warn ">>> GETTING BAM FEATURES";
 
   my $slice = $self->{'container'};
   if (!exists($self->{_cache}->{features})) {

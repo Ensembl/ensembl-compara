@@ -27,6 +27,10 @@ my $DEBUG = 0;
 
 sub new {
   my ($class, $url) = @_;
+  
+  ## Hack to change URL if we're using a combined BAM/BigWig data source
+  $url =~ s/bam$/bw/;
+  warn ">>> URL $url";
 
   my $self = bless {
     _cache => {},

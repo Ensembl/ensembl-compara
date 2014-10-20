@@ -1069,33 +1069,15 @@ sub _add_bam_track {
     Green = both mates are part of a proper pair; Blue = either this read is not paired, or its mate was not mapped; Red = this read is not properly paired.
   ';
   
-  warn ">>> INTERNAL?? ".$args{'internal'}; 
-  $args{'internal'} = 1;
-
-  my ($format, $renderers);
-  if ($args{'internal'}) {
-    $format = 'BAM_AND_BIGWIG';
-    $renderers = [
-      'off',       'Off',
-      'histogram', 'Coverage (BigWig)',
-      'normal',    'Normal',
-      'unlimited', 'Unlimited',
-    ];
-  }
-  else {
-    $format = 'BAM';
-    $renderers = [
-      'off',       'Off',
-      'normal',    'Normal',
-      'unlimited', 'Unlimited',
-      'histogram', 'Coverage only'
-    ];
-  }
-
   $self->_add_file_format_track(
-    format      => $format,
+    format      => 'BAM',
     description => $desc,
-    renderers   => $renderers,
+    renderers   => [
+                    'off',       'Off',
+                    'normal',    'Normal',
+                    'unlimited', 'Unlimited',
+                    'histogram', 'Coverage only'
+                    ],
     colourset   => 'BAM',
     options => {
       external => 'external',
@@ -2072,16 +2054,32 @@ sub add_data_files {
   my ($keys, $data) = $self->_merge($hashref->{'data_file'});
   
   foreach (@$keys) {
+    my $glyphset = $data->{$_}{'format'} || '_alignment';
+    $glyphset = 'bam_and_bigwig' if $glyphset eq 'bam';
+
+    my $renderers;
+    if ($glyphset eq 'bam_and_bigwig') {
+      $renderers = [
+                    'off',       'Off',
+                    'histogram', 'Coverage (BigWig)',
+                    'normal',    'Normal',
+                    'unlimited', 'Unlimited',
+                    ];
+    }
+    else {
+      $renderers = [
+                    'off',       'Off',
+                    'normal',    'Normal',
+                    'unlimited', 'Unlimited',
+                    'histogram', 'Coverage only'
+                    ];
+    }
+
     $self->generic_add($menu, $key, "data_file_${key}_$_", $data->{$_}, { 
-      glyphset  => $data->{$_}{'format'}     || '_alignment', 
+      glyphset  => $glyphset, 
       colourset => $data->{$_}{'colour_key'} || 'feature',
       strand    => 'f',
-      renderers => [
-        'off',       'Off', 
-        'normal',    'Normal', 
-        'unlimited', 'Unlimited', 
-        'histogram', 'Coverage only'
-      ], 
+      renderers => $renderers, 
     });
   }
 }

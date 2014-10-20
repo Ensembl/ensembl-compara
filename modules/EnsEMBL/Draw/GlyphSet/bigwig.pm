@@ -40,7 +40,8 @@ sub render_normal {
   return if $self->strand != 1;
   return $self->render_text if $self->{'text_export'};
   
-  my $features        = $self->features;
+  my $features        = &features($self);
+  warn ">>> FEATURES = ".scalar(@$features);
   my $h               = @_ ? shift : ($self->my_config('height') || 8);
      $h               = $self->{'extras'}{'height'} if $self->{'extras'} && $self->{'extras'}{'height'};
   my $depth           = @_ ? shift : ($self->my_config('dep') || 6);
@@ -95,6 +96,7 @@ sub render_text {
 
 sub features {
   my $self          = shift;
+  warn ">>> GETTING BIGWIG FEATURES";
   my $slice         = $self->{'container'};
   my $max_bins      = min($self->{'config'}->image_width, $slice->length);
   my $fake_analysis = Bio::EnsEMBL::Analysis->new(-logic_name => 'fake');
@@ -117,10 +119,12 @@ sub features {
 # get the alignment features
 sub wiggle_features {
   my ($self, $bins) = @_;
+  warn ">>> GETTING WIGGLE FEATURES";
   
   if (!$self->{'_cache'}{'wiggle_features'}) {
     my $slice     = $self->{'container'};
     my $summary   = $self->bigwig_adaptor->fetch_extended_summary_array($slice->seq_region_name, $slice->start, $slice->end, $bins);
+    warn ">>> SUMMARY $summary";
     my $bin_width = $slice->length / $bins;
     my $flip      = $slice->strand == -1 ? $slice->length + 1 : undef;
     my @features;
