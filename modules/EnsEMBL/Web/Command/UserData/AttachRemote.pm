@@ -49,7 +49,11 @@ sub process {
 
   ## We have to do some intelligent checking here, in case the user
   ## tries to attach a large format file with a small format selected in the form
-  my $format_name = (!$chosen_format || grep(/$chosen_format/i, @small_formats) || grep(/$pattern/i, @big_exts)) ? uc $extension : $chosen_format;
+  my $format_name = $chosen_format;
+  if (grep(/$chosen_format/i, @small_formats) && grep(/$pattern/i, @big_exts)) {
+    my %big_formats = map {$formats->{$_}{'ext'} => $_} @{$species_defs->REMOTE_FILE_FORMATS};
+    $format_name = uc($big_formats{$extension});
+  }
 
   if (!$format_name) {
     $redirect .= 'SelectFile';
