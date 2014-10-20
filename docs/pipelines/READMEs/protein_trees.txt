@@ -18,7 +18,7 @@ EnsEMBL and BioPerl software:
 
 Refer to the following pages for tips about installation and setting up the environment:
 	http://www.ensembl.org/info/docs/api/api_installation.html
-	http://www.ensembl.org/info/docs/eHive/installation.html
+	http://www.ensembl.org/info/docs/eHive.html
 
 !! Please ensure that your PERL5LIB includes all of these modules and $ENSEMBL_CVS_ROOT_DIR points to the location of the checkouts !!
 
