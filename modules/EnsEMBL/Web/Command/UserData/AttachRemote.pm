@@ -92,7 +92,7 @@ sub process {
       
       delete $options->{'name'};
 
-      $url = chase_redirects($url);
+      $url = $self->chase_redirects($url);
 
       my $assemblies = $options->{'assemblies'}
                         || [$hub->species_defs->get_config($hub->data_species, 'ASSEMBLY_NAME')];
