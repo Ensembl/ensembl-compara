@@ -223,7 +223,7 @@ sub run_njtree_phyml {
     
     } else {
 
-        my $input_aln = $self->dumpTreeMultipleAlignmentToWorkdir($gene_tree);
+        my $input_aln = $self->dumpTreeMultipleAlignmentToWorkdir($gene_tree, 'fasta', {-APPEND_SPECIES_TREE_NODE_ID => 1});
         $self->param('input_aln', $input_aln);
 
         my $extra_lk_scale = $self->param('extra_lk_scale');

@@ -169,7 +169,7 @@ sub write_output {
 sub run_buildhmm {
     my $self = shift;
 
-    my $aln_file = $self->dumpAlignedMemberSet($self->param('protein_align'), $self->param('hmmer_version') == 2 ? 'fasta' : 'stockholm');
+    my $aln_file = $self->dumpTreeMultipleAlignmentToWorkdir($self->param('protein_align'), $self->param('hmmer_version') == 2 ? 'fasta' : 'stockholm');
     my $hmm_file = $self->param('hmm_file', $aln_file . '_hmmbuild.hmm');
 
     ## as in treefam

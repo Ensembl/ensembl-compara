@@ -110,83 +110,42 @@ sub merge_split_genes {
 
 
 sub dumpTreeMultipleAlignmentToWorkdir {
-  my $self = shift;
-  my $gene_tree = shift;
-
-
-  my $file_root = $self->worker_temp_directory. ($gene_tree->dbID || $gene_tree->gene_align_id);
-  $file_root =~ s/\/\//\//g;  # converts any // in path to /
-
-  my $aln_file = $file_root . '.aln';
-  return $aln_file if(-e $aln_file);
-  if($self->debug) {
-    my $leafcount = scalar(@{$gene_tree->get_all_Members});
-    printf("dumpTreeMultipleAlignmentToWorkdir : %d members\n", $leafcount);
-    print("aln_file = '$aln_file'\n");
-  }
- 
-  print STDERR "fetching alignment\n" if ($self->debug);
-  my $seq_type = $self->param('cdna') ? 'cds' : undef;
-
-  # Getting the multiple alignment
-  my $sa = $gene_tree->root->get_SimpleAlign(
-     -id_type => 'MEMBER',
-     -APPEND_SPECIES_TREE_NODE_ID => 1,
-     -stop2x => 1,
-     -SEQ_TYPE => $seq_type,
-  );
-
-  if ($self->param('remove_columns')) {
-    if ($gene_tree->has_tag('removed_columns')) {
-      my @removed_columns = eval($gene_tree->get_value_for_tag('removed_columns'));
-      print Dumper \@removed_columns if ( $self->debug() );
-      $sa = $sa->remove_columns(@removed_columns) if scalar(@removed_columns);
-    } else {
-      $self->warning(sprintf("The 'removed_columns' is missing from tree dbID=%d\n", $gene_tree->dbID));
-    }
-  }
-
-  $sa->set_displayname_flat(1);
-  # Now outputing the alignment
-  open my $fh, ">", $aln_file or die "Could not open '$aln_file' for writing : $!";
-  my $alignIO = Bio::AlignIO->newFh( -fh => $fh, -format => ($self->param('aln_format') || "fasta"));
-  print $alignIO $sa;
-  close $fh;
-
-  unless(-e $aln_file and -s $aln_file) {
-    die "There are no alignments in '$aln_file', cannot continue";
-  }
-
-  return $aln_file
-}
-
-
-sub dumpAlignedMemberSet {
-
     my $self = shift;
     my $gene_tree = shift;
     my $format = shift;
-
-    my $file_root = $self->worker_temp_directory.'/align';
-    $file_root =~ s/\/\//\//g;  # converts any // in path to /
-
-    print STDERR "fetching alignment\n" if ($self->debug);
+    my $simple_align_options = shift || {};
 
     # Getting the multiple alignment
     my $sa = $gene_tree->get_SimpleAlign(
             -id_type => 'MEMBER',
             $self->param('cdna') ? (-seq_type => 'cds') : (),
             -stop2x => 1,
-            );
+            %$simple_align_options,
+    );
+
+    if ($self->param('remove_columns')) {
+        if ($gene_tree->has_tag('removed_columns')) {
+            my @removed_columns = eval($gene_tree->get_value_for_tag('removed_columns'));
+            print Dumper \@removed_columns if ( $self->debug() );
+            $sa = $sa->remove_columns(@removed_columns) if scalar(@removed_columns);
+        } else {
+            $self->warning(sprintf("The 'removed_columns' is missing from tree dbID=%d\n", $gene_tree->dbID));
+        }
+    }
 
     $sa->set_displayname_flat(1);
 
     # Now outputing the alignment
-    my $aln_file = sprintf('%s.%s', $file_root, $format);
+    my $aln_file = $self->worker_temp_directory.sprintf('align.%d.%s', $gene_tree->dbID || $gene_tree->gene_align_id, $format);
     open my $fh, ">", $aln_file or die "Could not open '$aln_file' for writing : $!";
     my $alignIO = Bio::AlignIO->newFh( -fh => $fh, -format => $format);
     print $alignIO $sa;
     close $fh;
+
+    unless(-e $aln_file and -s $aln_file) {
+        die "There are no alignments in '$aln_file', cannot continue";
+    }
+
     return $aln_file;
 }
 
