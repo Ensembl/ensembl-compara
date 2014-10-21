@@ -46,7 +46,7 @@ sub render {
   my $html           = ''; 
 
   my $rss_url = $sd->ENSEMBL_TIPS_RSS;
-  my $tips = []; #$MEMD && $MEMD->get('::TIPS') || [];
+  my $tips = $MEMD && $MEMD->get('::TIPS') || [];
   
   ## Check the cache, then fetch new tips
   unless (@$tips && $rss_url) {
