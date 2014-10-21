@@ -167,7 +167,7 @@ sub dumpAlignedMemberSet {
     # Now outputing the alignment
     my $aln_file = sprintf('%s.%s', $file_root, $format);
     open my $fh, ">", $aln_file or die "Could not open '$aln_file' for writing : $!";
-    my $alignIO = Bio::AlignIO->newFh( -fh => $fh, -format => "stockholm");
+    my $alignIO = Bio::AlignIO->newFh( -fh => $fh, -format => $format);
     print $alignIO $sa;
     close $fh;
     return $aln_file;
