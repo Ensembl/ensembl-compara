@@ -184,6 +184,7 @@ sub get_consensus_from_HMMs {
 
     my $hmmemit_exe = $self->param_required('hmmemit_exe');
 
+    warn "Getting a consensus sequence with: $hmmemit_exe -c $hmm_file\n";
     open my $pipe, "-|", "$hmmemit_exe -c $hmm_file" or die $!;
 
     my %consensus;
@@ -194,7 +195,7 @@ sub get_consensus_from_HMMs {
         chomp;
         if (/^>/) {
             $consensus{$header} = $seq if (defined $header);
-            ($header) = $_ =~ /^>(.+?)\s/;
+            ($header) = $_ =~ /^>(\w+)/;
             $count++;
             $seq = "";
             next;
