@@ -218,7 +218,7 @@ sub run_njtree_phyml {
     } elsif ($genes_for_treebest == 2) {
 
         warn "2 leaves only, we only need sdi\n";
-        my @goodgenes = map { sprintf('%d_%d', $_->seq_member_id, $_->genome_db->species_tree_node_id) } @{$gene_tree->get_all_leaves};
+        my @goodgenes = map { sprintf('%d_%d', $_->seq_member_id, $_->genome_db->_species_tree_node_id) } @{$gene_tree->get_all_leaves};
         $newick = $self->run_treebest_sdi_genepair(@goodgenes);
     
     } else {

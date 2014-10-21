@@ -24,26 +24,23 @@ limitations under the License.
 
 Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::Homology_dNdS
 
-=cut
+=head1 DESCRIPTION
 
-=head1 SYNOPSIS
+To summarize:
+ - We run codeml
+ - We "refine" the dN and dS values from codeml with Jukes-Cantor when needed
+ - We cap the values of dS and don't compute dN/dS if ds is 0 or too high
 
-my $db      = Bio::EnsEMBL::Compara::DBAdaptor->new($locator);
-my $repmask = Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::Homology_dNdS->new ( 
-                                                    -db      => $db,
-                                                    -input_id   => $input_id
-                                                    -analysis   => $analysis );
-$repmask->fetch_input(); #reads from DB
-$repmask->run();
-$repmask->write_output(); #writes to DB
+More details:
 
-=cut
-
-=head1 CONTACT
-
-Describe contact details here
-
-=cut
+The module is running codeml/PAML (via BioPerl) on each of the homologies
+we are inferring in Ensembl.
+Now, around line 250 (search for REF1 in this file), there is a test for
+very low values of dS (and dN). We then fall-back to a more traditional
+way of computing Ka and Ks: still with BioPerl, but with a Jukes-Cantor
+model instead of maximum likelihood.
+Even with this method, there is an additional test that would transform
+the very low values into zeros.
 
 =head1 APPENDIX
 
@@ -217,6 +214,7 @@ sub calc_genetic_distance {
   $homology->ds($MLmatrix->[0]->[1]->{'dS'});
   $homology->lnl($MLmatrix->[0]->[1]->{'lnL'});
 
+  # REF1
   # We check that the sequences differ to avoid the dS=0.000N0 codeml
   # problem - there is one case in the DB with dS=0.00110 that is
   # clearly a 0 because dS*S is way lower than 1

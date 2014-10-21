@@ -270,7 +270,7 @@ sub get_gene_tree_file {
 
     # horrible hack: we replace taxon_id with species_tree_node_id
     foreach my $leaf (@{$gene_tree->root->get_all_leaves}) {
-        $leaf->taxon_id($leaf->genome_db->species_tree_node_id);
+        $leaf->taxon_id($leaf->genome_db->_species_tree_node_id);
     }
 
     my $gene_tree_file = sprintf('gene_tree_%d.nhx', $gene_tree->root_id);
