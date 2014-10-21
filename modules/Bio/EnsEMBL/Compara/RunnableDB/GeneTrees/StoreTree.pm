@@ -32,39 +32,24 @@ use Bio::EnsEMBL::Compara::Graph::NewickParser;
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
 
-sub dumpTreeMultipleAlignmentToWorkdir {
-  my $self = shift;
-  my $gene_tree = shift;
-  
+########################################
+# Gene split mirroring code
+#
+# This will have the effect of grouping the different
+# fragments of a gene split event together in a subtree
+########################################
+sub merge_split_genes {
+    my ($self, $gene_tree) = @_;
 
-  my $file_root = $self->worker_temp_directory. ($gene_tree->dbID || $gene_tree->gene_align_id);
-  $file_root =~ s/\/\//\//g;  # converts any // in path to /
-
-  my $aln_file = $file_root . '.aln';
-  return $aln_file if(-e $aln_file);
-  if($self->debug) {
-    my $leafcount = scalar(@{$gene_tree->get_all_Members});
-    printf("dumpTreeMultipleAlignmentToWorkdir : %d members\n", $leafcount);
-    print("aln_file = '$aln_file'\n");
-  }
-
-  my %leaf_by_seq_member_id = (map {$_->seq_member_id => $_} @{ $gene_tree->get_all_Members });
-
-  print STDERR "fetching alignment\n" if ($self->debug);
-  my $seq_type = $self->param('cdna') ? 'cds' : undef;
-
-  ########################################
-  # Gene split mirroring code
-  #
-  # This will have the effect of grouping the different
-  # fragments of a gene split event together in a subtree
-  #
-  if ($self->param('check_split_genes')) {
+    my %leaf_by_seq_member_id = (map {$_->seq_member_id => $_} @{ $gene_tree->get_all_leaves });
+    my $seq_type = $self->param('cdna') ? 'cds' : undef;
     my %split_genes;
+
     my $sth = $gene_tree->adaptor->db->dbc->prepare('SELECT DISTINCT gene_split_id FROM split_genes JOIN gene_tree_node USING (seq_member_id) WHERE root_id = ?');
     $sth->execute($gene_tree->root_id());
     my $gene_splits = $sth->fetchall_arrayref();
     $sth->finish;
+
     $sth = $gene_tree->adaptor->db->dbc->prepare('SELECT seq_member_id FROM split_genes JOIN gene_tree_node USING (seq_member_id) WHERE root_id = ? AND gene_split_id = ? ORDER BY seq_member_id');
     foreach my $gene_split (@$gene_splits) {
       $sth->execute($gene_tree->root_id(), $gene_split->[0]);
@@ -88,36 +73,68 @@ sub dumpTreeMultipleAlignmentToWorkdir {
       foreach my $rseq_member_id2 (@$partial_genes) {
         my $protein2 = $leaf_by_seq_member_id{$rseq_member_id2->[0]};
         #print STDERR "seq_member_id2 ", $rseq_member_id2, " ", $protein2->stable_id, "\n";
-        $split_genes{$protein2->{_tmp_name}} = $protein1->{_tmp_name};
-        #print STDERR Dumper(%split_genes);
+        $split_genes{$protein2->seq_member_id} = [$seq_member_id1, $protein2];
         print STDERR "Joining in ", $protein1->stable_id, " and ", $protein2->stable_id, " in input cdna alignment\n" if ($self->debug);
         my $other_cdna = $protein2->alignment_string($seq_type);
         print STDERR "cnda2 $other_cdna\n" if $self->debug;
         $cdna =~ s/-/substr($other_cdna, pos($cdna), 1)/eg;
         print STDERR "cnda $cdna\n" if $self->debug;
+
+
+            # Remove the split genes and all the parents that are left without members
+            my $node = $protein2->parent;
+            $protein2->disavow_parent();
+            while ($node->get_child_count() == 0) {
+                my $parent = $node->parent;
+                $node->disavow_parent();
+                $node = $parent;
+            }
+
       }
         # We then directly override the cached alignment_string_cds
         # entry in the hash, which will be used next time it is called
-      $protein1->{$self->param('cdna') ? 'alignment_string_cds' : 'alignment_string'} = $cdna;
+      $protein1->{'alignment_string'.($seq_type || '')} = $cdna;
+    }
+
+    if (scalar(keys %split_genes)) {
+        $gene_tree->{'_root'} = $gene_tree->root->minimize_tree;
+        $gene_tree->{'_with_removed_split_genes'} = 1;
     }
 
     # Removing duplicate sequences of split genes
-    print STDERR "split_genes hash: ", Dumper(\%split_genes), "\n" if $self->debug;
+    print STDERR "split_genes list: ", Dumper([map {$_ => $split_genes{$_}->[0]} keys %split_genes]), "\n" if $self->debug;
+    warn sprintf("Removed %d split genes, %d leaves left in the tree\n", scalar(keys %split_genes), scalar(@{$gene_tree->get_all_leaves})) if $self->debug;
     $self->param('split_genes', \%split_genes);
+}
+
+
+
+sub dumpTreeMultipleAlignmentToWorkdir {
+  my $self = shift;
+  my $gene_tree = shift;
+
+
+  my $file_root = $self->worker_temp_directory. ($gene_tree->dbID || $gene_tree->gene_align_id);
+  $file_root =~ s/\/\//\//g;  # converts any // in path to /
+
+  my $aln_file = $file_root . '.aln';
+  return $aln_file if(-e $aln_file);
+  if($self->debug) {
+    my $leafcount = scalar(@{$gene_tree->get_all_Members});
+    printf("dumpTreeMultipleAlignmentToWorkdir : %d members\n", $leafcount);
+    print("aln_file = '$aln_file'\n");
   }
  
+  print STDERR "fetching alignment\n" if ($self->debug);
+  my $seq_type = $self->param('cdna') ? 'cds' : undef;
+
   # Getting the multiple alignment
-  my $sa = $gene_tree->get_SimpleAlign(
+  my $sa = $gene_tree->root->get_SimpleAlign(
      -id_type => 'MEMBER',
      -APPEND_SPECIES_TREE_NODE_ID => 1,
      -stop2x => 1,
      -SEQ_TYPE => $seq_type,
   );
-  if ($self->param('check_split_genes')) {
-    foreach my $gene_to_remove (keys %{$self->param('split_genes')}) {
-      $sa->remove_seq($sa->each_seq_with_id($gene_to_remove));
-    }
-  }
 
   if ($self->param('remove_columns')) {
     if ($gene_tree->has_tag('removed_columns')) {
@@ -279,11 +296,18 @@ sub parse_newick_into_tree {
   my $tree = shift;
   
   return undef if $newick =~ /^_null_/;
-  #cleanup old tree structure- 
-  #  flatten and reduce to only GeneTreeMember leaves
+
+  # List all the GeneTreeNode that have to be stored
   my %old_leaves;
-  foreach my $node (@{$tree->get_all_Members}) {
+  foreach my $node (@{$tree->get_all_leaves}) {
     $old_leaves{$node->seq_member_id} = $node;
+  }
+  # Top it up with the split genes
+  if ($self->param('check_split_genes') and $tree->{_with_removed_split_genes}) {
+    my $split_genes = $self->param('split_genes');
+    foreach my $this_member_id (keys %$split_genes) {
+      $old_leaves{$this_member_id} = $split_genes->{$this_member_id}->[1];
+    }
   }
 
   my $newroot = Bio::EnsEMBL::Compara::Graph::NewickParser::parse_newick_into_tree($newick, "Bio::EnsEMBL::Compara::GeneTreeNode");
@@ -292,44 +316,44 @@ sub parse_newick_into_tree {
 
   # get rid of the taxon_id needed by njtree -- name tag
   my %new_leaves = ();
-  foreach my $new_leaf (@{$newroot->get_all_leaves}) {
-    my $njtree_phyml_name = $new_leaf->get_tagvalue('name');
-    $njtree_phyml_name =~ /(\d+)\_\d+/;
-    $new_leaves{$1} = $new_leaf;
+  foreach my $leaf (@{$newroot->get_all_leaves}) {
+    my $njtree_phyml_name = $leaf->name;
+    $njtree_phyml_name =~ /^(\d+)/;
+    my $seq_member_id = $1;
+    $new_leaves{$seq_member_id} = $leaf;
+    $leaf->name($seq_member_id);
   }
 
-  my $split_genes = $self->param('split_genes');
+  # Insert back the split genes that have been removed by merge_split_genes()
+  if ($self->param('check_split_genes')) {
 
-  if (defined $split_genes) {
-    print  "Retrieved split_genes hash: ", Dumper($split_genes) if $self->debug;
-    my $nsplits = 0;
-    while ( my ($name, $other_name) = each(%{$split_genes})) {
-        print  "$name is split_gene of $other_name\n" if $self->debug;
+    my $split_genes = $self->param('split_genes');
+    print  "Retrieved split_genes list: ", Dumper([map {$_ => $split_genes->{$_}->[0]} keys %$split_genes]), "\n" if $self->debug;
+    if (scalar(keys %$split_genes)) {
+      foreach my $this_member_id (keys %$split_genes) {
         my $split_gene_leaf = new Bio::EnsEMBL::Compara::GeneTreeNode;
-        $split_gene_leaf->name($name);       # This is needed for the for loop below
-        $other_name =~ /(\d+)\_\d+/;
-        my $other_member_id = $1;
+        $split_gene_leaf->name($this_member_id);       # To match the naming convention of the other leaves
+        my $other_member_id = $split_genes->{$this_member_id}->[0];
+        print $this_member_id." is split_gene of $other_member_id\n" if $self->debug;
         my $othernode = $new_leaves{$other_member_id};
-        die sprintf("Couldn't find the node '%s' in the tree (to create a split gene of '%s').\nNewick string is:\n%s\n", $other_name, $name, $newick) unless $othernode;
+        die sprintf("Couldn't find the node '%d' in the tree (to re-create '%d').\nNewick string is:\n%s\n", $other_member_id, $this_member_id, $newick) unless $othernode;
         print  "$split_gene_leaf is split_gene of $othernode\n" if $self->debug;
         my $new_internal_node = new Bio::EnsEMBL::Compara::GeneTreeNode;
-        $nsplits++;
         $othernode->parent->add_child($new_internal_node);
         $new_internal_node->add_child($othernode);
         $new_internal_node->add_child($split_gene_leaf);
         $new_internal_node->add_tag('gene_split', 1);
         $new_internal_node->add_tag('S', $othernode->get_tagvalue('S'));
+        $split_gene_leaf->add_tag('S', $othernode->get_tagvalue('S'));
         $new_internal_node->print_tree(10) if $self->debug;
+      }
+      print  "Tree after split genes insertions:\n";
+      $newroot->print_tree(20) if($self->debug > 1);
     }
   }
-  print  "Tree after split_genes insertions:\n";
-  $newroot->print_tree(20) if($self->debug > 1);
 
-  # get rid of the taxon_id needed by njtree -- name tag
   foreach my $leaf (@{$newroot->get_all_leaves}) {
-    my $njtree_phyml_name = $leaf->get_tagvalue('name');
-    $njtree_phyml_name =~ /(\d+)\_\d+/;
-    my $seq_member_id = $1;
+    my $seq_member_id = $leaf->name();
     my $old_leaf = $old_leaves{$seq_member_id};
     if (not $old_leaf) {
 	  #In case the tree is been updated (copied from previous_db) we need to:
@@ -343,19 +367,12 @@ sub parse_newick_into_tree {
 	  $leaf->adaptor($tree->adaptor->db->get_GeneTreeNodeAdaptor);
 	  $leaf->{'_children_loaded'} = 1;
 	  next;
-      die "unable to find seq_member '$seq_member_id' (in '$njtree_phyml_name', from newick '$newick')";
     }
     bless $leaf, 'Bio::EnsEMBL::Compara::GeneTreeMember';
-    $leaf->seq_member_id($seq_member_id);
-    $leaf->gene_member_id($old_leaf->gene_member_id);
-    $leaf->cigar_line($old_leaf->cigar_line);
+    $old_leaf->Bio::EnsEMBL::Compara::AlignedMember::copy($leaf);
     $leaf->node_id($old_leaf->node_id);
-    $leaf->taxon_id($old_leaf->taxon_id);
-    $leaf->stable_id($old_leaf->stable_id);
     $leaf->adaptor($old_leaf->adaptor);
-    $leaf->add_tag('name', $seq_member_id);
     $leaf->{'_children_loaded'} = 1;
-    $leaf->{_tmp_name} = $old_leaf->{_tmp_name} if $old_leaf->{_tmp_name};
   }
   print  "Tree with GeneTreeNode objects:\n";
   $newroot->print_tree(20) if($self->debug > 1);
@@ -539,7 +556,7 @@ sub parse_filtered_align {
         warn sprintf("leaves=%d ini_aln=%d filt_aln=%d\n", scalar(@{$tree_to_delete_nodes->get_all_leaves()}), scalar(keys %hash_initial_strings), scalar(keys %hash_filtered_strings));
 
         foreach my $leaf (@{$tree_to_delete_nodes->get_all_leaves()}) {
-            next if exists $hash_filtered_strings{$leaf->{_tmp_name}};
+            next if exists $hash_filtered_strings{$leaf->seq_member_id};
 
             $self->call_within_transaction(sub{
                 $treenode_adaptor->remove_seq_member($leaf);

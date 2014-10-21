@@ -164,7 +164,7 @@ sub write_output {
                     die $@;
                 }
             } else {
-                print Dumper $removed_columns if ( $self->debug() );
+                print "TreeBest's filtered alignment: ", Dumper $removed_columns if ( $self->debug() );
                 $self->param('gene_tree')->store_tag('removed_columns', $removed_columns);
             }
         }
@@ -208,39 +208,29 @@ sub run_njtree_phyml {
 
     my $starttime = time()*1000;
     
-    foreach my $member (@{$gene_tree->get_all_Members}) {
-        $member->{_tmp_name} = sprintf('%d_%d', $member->seq_member_id, $member->genome_db->species_tree_node_id);
-    }
+    $self->merge_split_genes($gene_tree) if $self->param('check_split_genes');
+    my $genes_for_treebest = scalar(@{$gene_tree->get_all_leaves});
 
-    if (scalar(@{$gene_tree->get_all_Members}) == 2) {
+    if ($genes_for_treebest < 2) {
 
-        warn "Number of elements: 2 leaves, N/A split genes\n";
-        my @goodgenes = map {$_->{_tmp_name}} @{$gene_tree->get_all_Members};
+        $self->throw("Cannot build a tree with $genes_for_treebest genes");
+
+    } elsif ($genes_for_treebest == 2) {
+
+        warn "2 leaves only, we only need sdi\n";
+        my @goodgenes = map { sprintf('%d_%d', $_->seq_member_id, $_->genome_db->species_tree_node_id) } @{$gene_tree->get_all_leaves};
         $newick = $self->run_treebest_sdi_genepair(@goodgenes);
     
     } else {
 
         my $input_aln = $self->dumpTreeMultipleAlignmentToWorkdir($gene_tree);
         $self->param('input_aln', $input_aln);
-        
-        warn sprintf("Number of elements: %d leaves, %d split genes\n", scalar(@{$gene_tree->get_all_Members}), scalar(keys %{$self->param('split_genes')}));
 
-        my $genes_for_treebest = scalar(@{$gene_tree->get_all_Members}) - scalar(keys %{$self->param('split_genes')});
-        $self->throw("Cannot build a tree with $genes_for_treebest genes (exclud. split genes)") if $genes_for_treebest < 2;
-
-        if ($genes_for_treebest == 2) {
-
-            my @goodgenes = grep {not exists $self->param('split_genes')->{$_}} (map {$_->{_tmp_name}} @{$gene_tree->get_all_Members});
-            $newick = $self->run_treebest_sdi_genepair(@goodgenes);
-
-        } else {
-
-            my $extra_lk_scale = $self->param('extra_lk_scale');
-            if ((defined $extra_lk_scale) and ($extra_lk_scale < 0)) {
-                $extra_lk_scale = -$extra_lk_scale * $gene_tree->get_value_for_tag('aln_num_residues') / $gene_tree->get_value_for_tag('gene_count');
-            }
-            $newick = $self->run_treebest_best($input_aln, $extra_lk_scale);
+        my $extra_lk_scale = $self->param('extra_lk_scale');
+        if ((defined $extra_lk_scale) and ($extra_lk_scale < 0)) {
+            $extra_lk_scale = -$extra_lk_scale * $gene_tree->get_value_for_tag('aln_num_residues') / $gene_tree->get_value_for_tag('gene_count');
         }
+        $newick = $self->run_treebest_best($input_aln, $extra_lk_scale);
     }
 
     $self->param('treebest_stdout', $newick);
