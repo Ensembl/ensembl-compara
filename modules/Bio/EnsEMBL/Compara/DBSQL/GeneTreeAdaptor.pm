@@ -432,8 +432,15 @@ sub _tag_capabilities {
 
 sub _tables {
 
-    return (['gene_tree_root', 'gtr'])
+    return (['gene_tree_root', 'gtr'], ['gene_align', 'ga'])
 }
+
+sub _left_join {
+    return (
+        ['gene_align', 'gtr.gene_align_id = ga.gene_align_id'],
+    );
+}
+
 
 sub _columns {
 
@@ -447,6 +454,9 @@ sub _columns {
         gtr.stable_id
         gtr.version
         gtr.ref_root_id
+        ga.seq_type
+        ga.aln_length
+        ga.aln_method
     );
 }
 
@@ -468,6 +478,9 @@ sub _objs_from_sth {
         _version                    => $rowhash->{version},
         _ref_root_id                => $rowhash->{ref_root_id},
         _parent_id                  => $rowhash->{parent_id},
+        _seq_type                   => $rowhash->{seq_type},
+        _aln_length                 => $rowhash->{aln_length},
+        _aln_method                 => $rowhash->{aln_method},
     });
     push @tree_list, $tree;
   }
