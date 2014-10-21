@@ -131,8 +131,11 @@ sub copy {
   
   my $mycopy = $self->SUPER::copy(@_);
   
-  $mycopy->sequence($self->sequence);
-  $mycopy->sequence_id($self->sequence_id);
+  foreach my $key (keys %$self) {
+      if (($key =~ /^_seq_/) or ($key =~ /^_sequence/)) {
+          $mycopy->{$key} = $self->{$key};
+      }
+  }
   $mycopy->gene_member_id($self->gene_member_id);
   
   return $mycopy;
