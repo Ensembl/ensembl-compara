@@ -402,4 +402,102 @@ sub sync_tags_to_database {
     }
 }
 
+
+=head2 _wipe_all_tags
+
+  Arg [1]     : <scalar or arrayref> object(s)
+  Arg [2]     : <boolean> should attributes be excluded (i.e. not deleted) (default: 0)
+  Arg [3]     : <boolean> should tags be excluded (i.e. not deleted) (default: 0)
+  Example     : $gene_tree_node_adaptor->_wipe_all_tags($gene_tree->get_all_nodes);
+  Description : Deletes all the tags from the database for those objects
+  Returntype  : none
+  Exceptions  : none
+  Caller      : internal
+
+=cut
+
+sub _wipe_all_tags {
+    my ($self, $objects, $exclude_attr, $exclude_tags) = @_;
+
+    $objects = [$objects] if ref($objects) ne 'ARRAY';
+
+    my ($db_tagtable, $db_attrtable, $db_keyname, $perl_keyname) = $self->_tag_capabilities($objects->[0]);
+    $self->_read_attr_list($db_attrtable, $db_keyname);
+    #print STDERR "CALL _wipe_all_tags $self/$exclude_attr/$exclude_tags: attr=", join("/", keys %{$self->{"_attr_list_$db_attrtable"}}), "\n";
+
+    unless ($exclude_attr) {
+        my $sth = $self->prepare("DELETE FROM $db_attrtable WHERE $db_keyname=?");
+        foreach my $object (@$objects) {
+            $sth->execute($object->$perl_keyname);
+        }
+        $sth->finish;
+
+    }
+
+    unless ($exclude_tags) {
+        my $sth = $self->prepare("DELETE FROM $db_tagtable WHERE $db_keyname=?");
+        foreach my $object (@$objects) {
+            $sth->execute($object->$perl_keyname);
+        }
+        $sth->finish;
+    }
+}
+
+
+=head2 _store_all_tags
+
+  Arg [1]     : <scalar or arrayref> object(s)
+  Example     : $gene_tree_node_attr->_store_all($gene_tree->get_all_nodes);
+  Description : Store all the tags / attributes for all the objects. The
+                method assumes that the database doesn't contain any data.
+  Returntype  : none
+  Exceptions  : Database errors like duplicated entries
+  Caller      : internal
+
+=cut
+
+sub _store_all_tags {
+    my ($self, $objects) = @_;
+
+    $objects = [$objects] if ref($objects) ne 'ARRAY';
+
+    my ($db_tagtable, $db_attrtable, $db_keyname, $perl_keyname) = $self->_tag_capabilities($objects->[0]);
+    $self->_read_attr_list($db_attrtable, $db_keyname);
+    #print STDERR "CALL _store_all $self/$object/$tag/$value/$allow_overloading: attr=", join("/", keys %{$self->{"_attr_list_$db_attrtable"}}), "\n";
+
+    # First the attributes
+    if (defined $db_attrtable) {
+        my @attr_names = keys %{$self->{"_attr_list_$db_attrtable"}};
+        my $sql = "INSERT INTO $db_attrtable ($db_keyname, ".join(", ", @attr_names).") VALUES (?".(",?" x scalar(@attr_names)).")";
+        my $sth = $self->prepare($sql);
+        foreach my $object (@$objects) {
+            my $tag_hash = $object->get_tagvalue_hash;
+            my @defined_attrs = grep {$tag_hash->{$_}} @attr_names;
+            if (scalar(@defined_attrs)) {
+                $sth->execute($object->$perl_keyname, map {$tag_hash->{$_}} @attr_names);
+            }
+        }
+        $sth->finish;
+    }
+
+    # And then the tags
+    my $sth = $self->prepare("INSERT INTO $db_tagtable ($db_keyname, tag, value) VALUES (?, ?, ?)");
+    foreach my $object (@$objects) {
+        my $tag_hash = $object->get_tagvalue_hash;
+        my $object_key = $object->$perl_keyname;
+        foreach my $tag (keys %$tag_hash) {
+            next if exists $self->{"_attr_list_$db_attrtable"}->{$tag};
+            if (ref($tag_hash->{$tag}) eq 'ARRAY') {
+                foreach my $value (@{$tag_hash->{$tag}}) {
+                    $sth->execute($object_key, $tag, $value);
+                }
+            } else {
+                $sth->execute($object_key, $tag, $tag_hash->{$tag});
+            }
+        }
+    }
+    $sth->finish;
+}
+
+
 1;
