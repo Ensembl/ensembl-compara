@@ -31,7 +31,36 @@ use Bio::EnsEMBL::ExternalData::BigFile::BigWigAdaptor;
 use base qw(EnsEMBL::Draw::GlyphSet::_alignment EnsEMBL::Draw::GlyphSet_wiggle_and_block);
 
 sub href_bgd       { return $_[0]->_url({ action => 'UserData' }); }
-sub bigwig_adaptor { return $_[0]{'_cache'}{'_bigwig_adaptor'} ||= Bio::EnsEMBL::ExternalData::BigFile::BigWigAdaptor->new($_[0]->my_config('url')); }
+
+sub bigwig_adaptor { 
+  my $self = shift;
+
+  my $url = $self->my_config('url');
+  if ($url) { ## remote bigwig file
+    $self->{_cache}->{_bigwig_adaptor} ||= Bio::EnsEMBL::ExternalData::BigFile::BigWigAdaptor->new($url);
+  }
+  else { ## local bigwig file
+    my $config    = $self->{'config'};
+    my $hub       = $config->hub;
+    my $dba       = $hub->database($self->my_config('type'), $self->species);
+
+    if ($dba) {
+      my $dfa = $dba->get_DataFileAdaptor();
+      $dfa->global_base_path($hub->species_defs->DATAFILE_BASE_PATH);
+      my ($logic_name) = @{$self->my_config('logic_names')||[]};
+      my $datafiles = $dfa->fetch_all_by_logic_name($logic_name);
+      ## Alter datafile objects to point to bigwig files instead of bam files
+      foreach (@$datafiles) {
+        $_->file_type('BIGWIG');
+      }
+      my ($df) = @{$datafiles};
+
+      $self->{_cache}->{_bigwig_adaptor} ||= $df->get_ExternalAdaptor();
+    }
+  }
+  return $self->{_cache}->{_bigwig_adaptor};
+}
+
 sub render_compact { $_[0]->render_normal(8, 0); }
 
 sub render_normal {
@@ -41,7 +70,6 @@ sub render_normal {
   return $self->render_text if $self->{'text_export'};
   
   my $features        = &features($self);
-  warn ">>> FEATURES = ".scalar(@$features);
   my $h               = @_ ? shift : ($self->my_config('height') || 8);
      $h               = $self->{'extras'}{'height'} if $self->{'extras'} && $self->{'extras'}{'height'};
   my $depth           = @_ ? shift : ($self->my_config('dep') || 6);
@@ -96,11 +124,11 @@ sub render_text {
 
 sub features {
   my $self          = shift;
-  warn ">>> GETTING BIGWIG FEATURES";
   my $slice         = $self->{'container'};
   my $max_bins      = min($self->{'config'}->image_width, $slice->length);
   my $fake_analysis = Bio::EnsEMBL::Analysis->new(-logic_name => 'fake');
   my @features;
+  my @wiggle = $self->wiggle_features($max_bins);
   
   foreach (@{$self->wiggle_features($max_bins)}) {
     push @features, {
@@ -119,12 +147,12 @@ sub features {
 # get the alignment features
 sub wiggle_features {
   my ($self, $bins) = @_;
-  warn ">>> GETTING WIGGLE FEATURES";
+  my $hub = $self->{'config'}->hub;
+  my $has_chrs = scalar(@{$hub->species_defs->ENSEMBL_CHROMOSOMES});
   
   if (!$self->{'_cache'}{'wiggle_features'}) {
     my $slice     = $self->{'container'};
-    my $summary   = $self->bigwig_adaptor->fetch_extended_summary_array($slice->seq_region_name, $slice->start, $slice->end, $bins);
-    warn ">>> SUMMARY $summary";
+    my $summary   = $self->bigwig_adaptor->fetch_extended_summary_array($slice->seq_region_name, $slice->start, $slice->end, $bins, $has_chrs);
     my $bin_width = $slice->length / $bins;
     my $flip      = $slice->strand == -1 ? $slice->length + 1 : undef;
     my @features;
