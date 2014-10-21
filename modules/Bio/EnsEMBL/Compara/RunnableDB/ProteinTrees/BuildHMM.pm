@@ -55,7 +55,7 @@ use strict;
 
 use Bio::EnsEMBL::Compara::AlignedMemberSet;
 
-use base ('Bio::EnsEMBL::Compara::RunnableDB::ComparaHMM::MultiHMMLoadModels', 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::StoreTree', 'Bio::EnsEMBL::Compara::RunnableDB::RunCommand');
+use base ('Bio::EnsEMBL::Compara::RunnableDB::ComparaHMM::LoadModels', 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::StoreTree', 'Bio::EnsEMBL::Compara::RunnableDB::RunCommand');
 
 sub param_defaults {
     return {
