@@ -365,9 +365,8 @@ sub add_Member {
 
 =head2 get_all_Members
 
-  Arg [1]    : None
   Example    : 
-  Description: 
+  Description: Returns all the members in this set
   Returntype : array reference of Bio::EnsEMBL::Compara::Member
   Exceptions : 
   Caller     : 

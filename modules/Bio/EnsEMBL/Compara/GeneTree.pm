@@ -507,7 +507,6 @@ sub _attr_to_copy_list {
 
 =head2 get_all_Members
 
-  Example    :
   Description: Returns the list of all the GeneTreeMember of the tree
   Returntype : array reference of Bio::EnsEMBL::Compara::GeneTreeMember
   Caller     : General
@@ -575,9 +574,9 @@ sub release_tree {
 
 
 
-########
-# Misc #
-########
+##########################
+# GeneTreeNode interface #
+##########################
 
 # These methods used to be automatically created, but were missing from the Doxygen doc
 
