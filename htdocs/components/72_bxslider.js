@@ -14,9 +14,12 @@
  * limitations under the License.
  */
 
-$(".owl-carousel").owlCarousel({
-  singleItem  : true,
-  autoPlay    : 5000,
-  stopOnHover : true,
-  rewindSpeed : 0
+$("document").ready(function(){
+  $('.bxslider').bxSlider({
+    randomStart: true,
+    infiniteLoop: true,
+    auto: true,
+    speed: 5000,
+    autoControls: true,
+  });
 });

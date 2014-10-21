@@ -46,7 +46,7 @@ sub render {
   my $html           = ''; 
 
   my $rss_url = $sd->ENSEMBL_TIPS_RSS;
-  my $tips = $MEMD && $MEMD->get('::TIPS') || [];
+  my $tips = []; #$MEMD && $MEMD->get('::TIPS') || [];
   
   ## Check the cache, then fetch new tips
   unless (@$tips && $rss_url) {
@@ -58,20 +58,13 @@ sub render {
     }
   }
 
-  ## Shuffle tips to give a random order
-  my @shuffled;
-  while (@$tips) {
-    my $i = int(rand(scalar(@$tips)));
-    my $random_tip = splice @$tips, $i, 1;
-    push @shuffled, $random_tip;
+  $html .= '<div class="info-box did-you-know"><ul class="bxslider">';
+
+  foreach (@$tips) {
+    $html .= sprintf('<li><div><b>Did you know...?</b><br />%s</div></li>', $_->{'content'});
   }
 
-  ## "Carousel" of tips
-  $html .= '<div class="info-box did-you-know"><h3>Did you know&hellip;?</h3><div class="owl-carousel">';
-  foreach (@shuffled) {
-    $html .= sprintf('<div>%s</div>', $_->{'content'});
-  }
-  $html .= '</div></div>';
+  $html .= '</ul></div>';
 
   return $html;
 }
