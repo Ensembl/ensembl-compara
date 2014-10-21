@@ -28,10 +28,6 @@ my $DEBUG = 0;
 sub new {
   my ($class, $url) = @_;
   
-  ## Hack to change URL if we're using a combined BAM/BigWig data source
-  $url =~ s/bam$/bw/;
-  warn ">>> URL $url";
-
   my $self = bless {
     _cache => {},
     _url => $url,
@@ -56,7 +52,7 @@ sub bigwig_open {
 # checking whats in the BigWig file
 sub munge_chr_id {
   my ($self, $chr_id) = @_;
-  my $bw = $self->bigwig_open;
+  my $bw = $self->{_cache}->{_bigwig_handle} || $self->bigwig_open;
   
   warn "Failed to open BigWig file " . $self->url unless $bw;
   
@@ -76,14 +72,14 @@ sub munge_chr_id {
 }
 
 sub fetch_extended_summary_array {
-  my ($self, $chr_id, $start, $end, $bins) = @_;
+  my ($self, $chr_id, $start, $end, $bins, $has_chrs) = @_;
 
   my $bw = $self->bigwig_open;
   warn "Failed to open BigWig file" . $self->url unless $bw;
   return [] unless $bw;
   
-  #  Maybe need to add 'chr' 
-  my $seq_id = $self->munge_chr_id($chr_id);
+  #  Maybe need to add 'chr' (only try if species has chromosomes)
+  my $seq_id = $has_chrs ? $self->munge_chr_id($chr_id) : $chr_id;
   return [] if !defined($seq_id);
 
 # Remember this method takes half-open coords (subtract 1 from start)
