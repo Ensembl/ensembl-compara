@@ -396,13 +396,17 @@ sub alignment {
     my $self = shift;
     my $other_gene_align = shift;
 
-    return $self->adaptor->db->get_GeneAlignAdaptor->fetch_by_dbID($self->gene_align_id()) unless $other_gene_align;
+    if (not $other_gene_align) {
+        $self->{_alignment} = $self->adaptor->db->get_GeneAlignAdaptor->fetch_by_dbID($self->gene_align_id()) unless $self->{_alignment};
+        return $self->{_alignment};
+    }
 
     assert_ref($other_gene_align, 'Bio::EnsEMBL::Compara::AlignedMemberSet');
 
     $self->preload;
     $self->seq_type($other_gene_align->seq_type);
     $self->gene_align_id($other_gene_align->dbID);
+    $self->{_alignment} = $other_gene_align;
 
     # Gets the alignment
     my %cigars;
