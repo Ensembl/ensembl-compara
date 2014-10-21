@@ -165,10 +165,16 @@ sub store_genetree
         $treenode_adaptor->delete_nodes_not_in_tree($tree->root);
     });
 
-    # Updating the tags is safe
-    foreach my $node (@{$tree->get_all_nodes}) {
-        $treenode_adaptor->sync_tags_to_database($node);
-    }
+    # We can update the tags outside of the transaction because nothing is
+    # linked to them. Nothing will break if they're partially there
+    # Note that the direct methods here are faster than calling
+    # sync_tags_to_database() on each node
+    my $all_nodes = $tree->get_all_nodes;
+    my @leaves = grep {$_->is_leaf} @$all_nodes;
+    $treenode_adaptor->_wipe_all_tags($tree->root);
+    $treenode_adaptor->_wipe_all_tags(\@leaves, 1);
+    $treenode_adaptor->_store_all_tags($all_nodes);
+
     $self->store_tree_tags($tree);
 
     if($self->debug >1) {
