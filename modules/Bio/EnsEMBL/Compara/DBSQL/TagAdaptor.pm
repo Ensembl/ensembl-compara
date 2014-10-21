@@ -193,6 +193,7 @@ sub _load_tagvalues_multiple {
 sub _read_attr_list {
     my $self = shift;
     my $db_attrtable = shift;
+    my $db_keyname = shift;
 
     # No table provided
     return if not defined $db_attrtable;
@@ -204,8 +205,10 @@ sub _read_attr_list {
         my $sth = $self->dbc->db_handle->column_info(undef, undef, $db_attrtable, '%');
         $sth->execute();
         while (my $row = $sth->fetchrow_hashref()) {
-            ${$self->{"_attr_list_$db_attrtable"}}{${$row}{'COLUMN_NAME'}} = 1;
-            #print STDERR "adding ", ${$row}{'COLUMN_NAME'}, " to the attribute list $db_attrtable of adaptor $self\n";
+            my $this_column = ${$row}{'COLUMN_NAME'};
+            next if $this_column eq $db_keyname;
+            ${$self->{"_attr_list_$db_attrtable"}}{$this_column} = 1;
+            #print STDERR "adding $this_column to the attribute list $db_attrtable of adaptor $self\n";
         }
         $sth->finish;
     };
@@ -237,7 +240,7 @@ sub _store_tagvalue {
     my $allow_overloading = shift;
     
     my ($db_tagtable, $db_attrtable, $db_keyname, $perl_keyname) = $self->_tag_capabilities($object);
-    $self->_read_attr_list($db_attrtable);
+    $self->_read_attr_list($db_attrtable, $db_keyname);
     #print STDERR "CALL _store_tagvalue $self/$object/$tag/$value/$allow_overloading: attr=", join("/", keys %{$self->{"_attr_list_$db_attrtable"}}), "\n";
   
     if (defined $db_attrtable && exists $self->{"_attr_list_$db_attrtable"}->{$tag}) {
@@ -307,7 +310,7 @@ sub _delete_tagvalue {
     my $value = shift;
     
     my ($db_tagtable, $db_attrtable, $db_keyname, $perl_keyname) = $self->_tag_capabilities($object);
-    $self->_read_attr_list($db_attrtable);
+    $self->_read_attr_list($db_attrtable, $db_keyname);
     #print STDERR "CALL _delete_tagvalue $self/$object/$tag/$value: attr=", join("/", keys %{$self->{"_attr_list_$db_attrtable"}}), "\n";
   
     if (exists $self->{"_attr_list_$db_attrtable"}->{$tag}) {
