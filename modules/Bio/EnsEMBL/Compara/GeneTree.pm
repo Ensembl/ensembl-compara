@@ -414,10 +414,11 @@ sub alignment {
         $cigars{$leaf->seq_member_id} = $leaf->cigar_line;
     }
 
-    die "The other alignment has a different size\n" if scalar(keys %cigars) != scalar(@{$self->get_all_Members});
+    my $self_members = $self->get_all_Members;
+    die "The other alignment has a different size\n" if scalar(keys %cigars) != scalar(@$self_members);
 
     # Assigns it
-    foreach my $leaf (@{$self->get_all_Members}) {
+    foreach my $leaf (@$self_members) {
         $leaf->cigar_line($cigars{$leaf->seq_member_id});
     }
 }
