@@ -20,6 +20,6 @@ $("document").ready(function(){
     infiniteLoop: true,
     auto: true,
     speed: 5000,
-    autoControls: true,
+    autoControls: true
   });
 });
