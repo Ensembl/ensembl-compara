@@ -95,6 +95,7 @@ use base ('Bio::EnsEMBL::Compara::RunnableDB::RunCommand', 'Bio::EnsEMBL::Compar
 sub param_defaults {
     return {
         'cdna'              => 0,
+        'aln_format'        => 'fasta',
         'remove_columns'    => 0,
         'check_split_genes' => 1,
         'read_tags'         => 0,
