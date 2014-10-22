@@ -928,11 +928,11 @@ sub build_sequence {
         }
         
         push @{$output[$s]}, { line => $row, length => $count, pre => $pre, post => $post, adid => $adid };
-        $adid++;
         
         if($post) {
           ($flourishes{'post'}||={})->{$adid} = $self->jsonify({ v => $post });
         }
+        $adid++;
         
         $new_line{$_} = $current{$_} for keys %current;
         $count        = 0;
