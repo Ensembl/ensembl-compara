@@ -65,8 +65,7 @@ sub content {
   }
 
   my $tagvalues       = $node->get_tagvalue_hash;
-  my $species_tree_node_id = $node->_species_tree_node_id();
-  my $speciesTreeNode      = $tree->adaptor->db->get_SpeciesTreeNodeAdaptor->fetch_node_by_node_id($species_tree_node_id);
+  my $speciesTreeNode = $node->species_tree_node();
   my $taxon_id             = $speciesTreeNode->taxon_id;
      $taxon_id        = $node->genome_db->taxon_id if !$taxon_id && $is_leaf && not $is_supertree;
   my $taxon_name           = $speciesTreeNode->node_name;
