@@ -376,8 +376,8 @@ sub get_SimpleAlign {
 
         # Sequence name
         my $seqID = $member->stable_id;
-        $seqID = $member->sequence_id if $id_type and $id_type eq 'SEQ';
-        $seqID = $member->seq_member_id if $id_type and $id_type eq 'MEMBER';
+        $seqID = $member->sequence_id if $id_type and $id_type =~ m/^SEQ/i;
+        $seqID = $member->seq_member_id if $id_type and $id_type =~ m/^MEM/i;
         $seqID .= "_" . $member->taxon_id if($append_taxon_id);
         $seqID .= "_" . $member->genome_db_id if ($append_genomedb_id);
         $seqID .= "_" . $member->genome_db->_species_tree_node_id if ($append_stn_id);
