@@ -307,6 +307,9 @@ sub load_cigars_from_file {
     Arg [-SEQ_TYPE] (opt) string
         : which sequence should be used instead of the default one.
         : Can be 'exon_cased' for proteins and ncRNAs, and 'cds' for proteins only
+    Arg [-REMOVED_COLUMNS] (opt) arrayref of arrayrefs of 2 integers
+        : intervals of columns that have to be filtered out from the alignment
+        : Used to remove low-information sites
 
   Example    : $tree->get_SimpleAlign(-SEQ_TYPE => 'cds');
   Description: Returns the alignment as a BioPerl object
@@ -329,9 +332,10 @@ sub get_SimpleAlign {
     my $append_stn_id = 0;
     my $keep_gaps = 0;
     my $seq_type = undef;
+    my $removed_columns = undef;
     if (scalar @args) {
-        ($unique_seqs,  $id_type, $stop2x, $append_taxon_id, $append_sp_short_name, $append_genomedb_id, $append_stn_id, $keep_gaps, $seq_type) =
-            rearrange([qw(UNIQ_SEQ ID_TYPE STOP2X APPEND_TAXON_ID APPEND_SP_SHORT_NAME APPEND_GENOMEDB_ID APPEND_SPECIES_TREE_NODE_ID KEEP_GAPS SEQ_TYPE)], @args);
+        ($unique_seqs,  $id_type, $stop2x, $append_taxon_id, $append_sp_short_name, $append_genomedb_id, $append_stn_id, $keep_gaps, $seq_type, $removed_columns) =
+            rearrange([qw(UNIQ_SEQ ID_TYPE STOP2X APPEND_TAXON_ID APPEND_SP_SHORT_NAME APPEND_GENOMEDB_ID APPEND_SPECIES_TREE_NODE_ID KEEP_GAPS SEQ_TYPE REMOVED_COLUMNS)], @args);
     }
 
     die "-SEQ_TYPE cannot be specified if \$self->seq_type is already defined" if $seq_type and $self->seq_type;
@@ -419,6 +423,7 @@ sub get_SimpleAlign {
         }
     }
     $sa = $sa->remove_gaps(undef, 1) if UNIVERSAL::can($sa, 'remove_gaps') and not $keep_gaps;
+    $sa = $sa->removed_columns(@$removed_columns) if $removed_columns and scalar(@$removed_columns);
     return $sa;
 }
 
