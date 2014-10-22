@@ -464,29 +464,15 @@ sub print_sequences_to_fasta {  ## DEPRECATED
 
 =head2 print_sequences_to_file
 
-  Arg [-FILE]  :
-        string - name of the output file
-  Arg [-FH]:
-        file handle - file handle for the output
-  Arg [-FORMAT] :
-        string - format of the output (cf BioPerl capabilities)
-                 example: 'fasta'
-  Arg [-UNIQ_SEQ] :
-        boolean - whether only 1 copy of each sequence should be printed
-                  (when multiple proteins share the same sequence)
-  Arg [-SEQ_TYPE] :
-        string - the type of the sequence that should be printed
-                 undef is the default sequence. Other types are 'cds', 'exon_bounded'
-  Arg [-ID_TYPE]:
-        string - how to label the sequences. See SeqMember::bioseq()
-
-  Arg [-WITH_DESCRIPTION]:
-        boolean - flag to include the member descriptions
-                  warning: they may contain weird characters that could hamper the parsing
-
+  Arg [-FILE]     : string - name of the output file
+  Arg [-FH]       : file handle - file handle for the output
+  Arg [-FORMAT]   : string - format of the output (cf BioPerl capabilities) (example: 'fasta')
+  Arg [-UNIQ_SEQ] : boolean - whether only 1 copy of each sequence should be printed
+                    (when multiple proteins share the same sequence)
+  Arg [...]  : all the other arguments of SeqMember::bioseq()
   Example    : $family->print_sequences_to_file(-file => 'output.fa', -format => 'fasta', -id_type => 'MEMBER');
   Description: Prints the sequences of the members into a file
-  Returntype : none
+  Returntype : number of unique sequences in the set
   Exceptions : none
   Caller     : general
   Status     : Stable
@@ -494,10 +480,8 @@ sub print_sequences_to_fasta {  ## DEPRECATED
 =cut
 
 sub print_sequences_to_file {
-    my $self = shift;
-
-    my ($file, $fh, $format, $unique_seqs, $seq_type, $id_type, $with_description) =
-        rearrange([qw(FILE FH FORMAT UNIQ_SEQ SEQ_TYPE ID_TYPE WITH_DESCRIPTION)], @_);
+    my ($self, @args) = @_;
+    my ($file, $fh, $format, $unique_seqs) = rearrange([qw(FILE FH FORMAT UNIQ_SEQ)], @args);
 
     my $seqio = Bio::SeqIO->new( -file => ($file ? ">$file" : undef), -fh => $fh, -format => $format );
 
@@ -505,7 +489,7 @@ sub print_sequences_to_file {
     foreach my $member (@{$self->get_all_Members}) {
         next unless $member->isa('Bio::EnsEMBL::Compara::SeqMember');
 
-        my $bioseq = $member->bioseq(-SEQ_TYPE => $seq_type, -ID_TYPE => $id_type, -WITH_DESCRIPTION => $with_description);
+        my $bioseq = $member->bioseq(@args);
         next if $unique_seqs and $seq_hash{$bioseq->seq};
         $seq_hash{$bioseq->seq} = 1;
 
