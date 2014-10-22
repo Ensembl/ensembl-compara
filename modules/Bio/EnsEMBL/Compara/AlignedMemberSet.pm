@@ -62,6 +62,7 @@ Global properties of the alignment:
 
 I/O:
  - load_cigars_from_file()
+ - print_alignment_to_file()
  - get_SimpleAlign()
  - get_4D_SimpleAlign()
 
@@ -419,6 +420,31 @@ sub get_SimpleAlign {
     }
     $sa = $sa->remove_gaps(undef, 1) if UNIVERSAL::can($sa, 'remove_gaps') and not $keep_gaps;
     return $sa;
+}
+
+
+=head2 print_alignment_to_file
+
+  Arg [1]     : scalar (string or file handle) - output file
+  Arg [-FORMAT] : string - format of the output (cf BioPerl capabilities) (example: 'fasta')
+  Arg [...]   : all the other arguments of L<get_SimpleAlign>
+  Example     : $family->print_alignment_to_file(-APPEND_TAXON_ID => 1);
+  Description : Wrapper around get_SimpleAlign to print the alignment to a file (stdout by default)
+  Returntype  : none
+  Exceptions  : none
+  Caller      : general
+  Status      : Stable
+
+=cut
+
+sub print_alignment_to_file {
+    my ($self, $file, @args) = @_;
+    my ($format) = rearrange([qw(FORMAT)], @args);
+
+    my $sa = $self->get_SimpleAlign(@args);    # We assume that none of print_alignment_to_file() arguments clash with get_SimpleAlign()'s
+    $sa->set_displayname_flat(1);
+    my $alignIO = Bio::AlignIO->new( ref($file) ? (-fh => $file) : (-file => ">$file"), -format => $format );
+    $alignIO->write_aln($sa);
 }
 
 
