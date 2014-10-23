@@ -232,6 +232,9 @@ sub _attr_to_copy_list {
                guess it from the file extension.  Refer to
                http://www.bioperl.org/wiki/HOWTO:AlignIO_and_SimpleAlign
                for a list of the supported formats.
+  Arg [-ID_TYPE] (opt) string (one of 'STABLE', 'SEQ', 'MEMBER'*)
+                : which identifier should be used as sequence names:
+                  the stable_id, the sequence_id, or the seq_member_id (default)
   Example    : $family->load_cigars_from_file('/tmp/clustalw.aln');
   Description: Parses the multiple alignment fileand sets the cigar lines
                of each of the memebers of this AlignedMemberSet
@@ -247,40 +250,76 @@ sub load_cigars_from_file {
 
     my $format;
     my $import_seq;
+    my $id_type;
     if (scalar @args) {
-        ($import_seq, $format) =
-            rearrange([qw(IMPORT_SEQ FORMAT)], @args);
+        ($import_seq, $format, $id_type) =
+            rearrange([qw(IMPORT_SEQ FORMAT ID_TYPE)], @args);
     }
 
+    ## First read the alignment file and put the data in a hash
     my $alignio = Bio::AlignIO->new(-file => $file, -format => $format);
-
     my $aln = $alignio->next_aln or die "Bio::AlignIO could not get next_aln() from file '$file'";
-    $self->aln_length($aln->length);
 
-    #place all members in a hash on their member name
-    my %member_hash;
-    foreach my $member (@{$self->get_all_Members}) {
-        $member->cigar_line(undef);
-        $member->sequence(undef) if $import_seq;
-        $member_hash{$member->seq_member_id} = $member;
-    }
-
-    #assign cigar_line to each of the member attribute
+    my $aln_length;
+    my %aln_string_hash;
     foreach my $seq ($aln->each_seq) {
+
         my $id = $seq->display_id;
         $id =~ s/_.*$//;
-        throw("No member for alignment portion: [$id]") unless exists $member_hash{$id};
-
-        my $cigar_line = Bio::EnsEMBL::Compara::Utils::Cigars::cigar_from_alignment_string($seq->seq());
-        $member_hash{$id}->cigar_line($cigar_line);
 
         my $seqseq = $seq->seq();
+        throw("No sequence for alignment portion: [$id]") unless $seqseq;
+
+        $aln_length = length($seqseq) unless $aln_length;
+        throw("While parsing the alignment, [$id] did not return the expected alignment length $aln_length\n") if $aln_length != length($seqseq);
+
+        my $cigar_line = Bio::EnsEMBL::Compara::Utils::Cigars::cigar_from_alignment_string($seqseq);
+        throw("empty cigar_line for [$id]\n") unless length($cigar_line);
+
         $seqseq =~ s/-//g;
+
+        # The following code is disabled because it slows down the method by 10%
+        # We should rather have unit-testing on Bio::EnsEMBL::Compara::Utils::Cigars
+
+        ## Check that the cigar length (Ms) matches the sequence length
+        ## Take the M lengths into an array
+        #my @cigar_match_lengths = map { $_ eq '' ? 1 : $_ } map { $_ =~ /^(\d*)/ } ( $cigar_line =~ /(\d*[M])/g );
+        ## Sum up the M lengths
+        #my $seq_cigar_length; map { $seq_cigar_length += $_ } @cigar_match_lengths;
+        #if ($seq_cigar_length != length($seqseq)) {
+            #warn "$id:$seq_cigar_length:".length($seqseq)."\n$seqseq\n$cigar_line\n".$seq->seq."\n";
+            #$self->throw("While storing the cigar line, the returned cigar length did not match the sequence length\n");
+        #}
+
+        $aln_string_hash{$id} = [$seqseq, $cigar_line];
+    }
+    $self->aln_length($aln_length);
+
+    ## Then we associate each member with its alignment, based on the required $id_type
+    foreach my $member (@{$self->get_all_Members}) {
+
+        my $seqID = $member->seq_member_id;
+        $seqID = $member->sequence_id if $id_type and $id_type =~ m/^SEQ/i;
+        $seqID = $member->stable_id if $id_type and $id_type =~ m/^STA/i;
+
+        throw($member->stable_id." ($seqID) cannot be found in the alignment\n") unless exists $aln_string_hash{$seqID};
+
+        my $seqseq = $aln_string_hash{$seqID}->[0];
+        my $cigar_line = $aln_string_hash{$seqID}->[1];
+
+        $member->cigar_line($cigar_line);
+
         if ($import_seq) {
-            $member_hash{$id}->sequence($seqseq);
-        } else {
-            die "'$id' has a different sequence in the file '$file'" if $member_hash{$id}->sequence ne $seqseq;
+            $member->sequence($seqseq);
+        } elsif ($member->sequence ne $seqseq) {
+            throw($member->stable_id." ($seqID) has a different sequence in the alignment file '$file'");
         }
+
+        delete $aln_string_hash{$seqID};
+    }
+
+    if (scalar(keys %aln_string_hash)) {
+        throw("No member for alignment ids: ".join(", ", keys %aln_string_hash));
     }
 }
 
