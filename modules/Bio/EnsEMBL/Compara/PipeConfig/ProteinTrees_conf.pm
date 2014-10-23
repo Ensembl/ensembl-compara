@@ -262,7 +262,7 @@ sub default_options {
         #   'hmm' means that the pipeline will run an HMM classification
         #   'hybrid' is like "hmm" except that the unclustered proteins go to a all-vs-all blastp + hcluster stage
         #   'topup' means that the HMM classification is reused from prev_rel_db, and topped-up with the updated / new species  >> UNIMPLEMENTED <<
-        'clustering_mode'           => 'topup',
+        'clustering_mode'           => 'blastp',
 
         # How much the pipeline will try to reuse from "prev_rel_db"
         # Possible values: 'clusters' (default), 'blastp', 'members'
