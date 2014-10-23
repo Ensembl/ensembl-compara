@@ -75,8 +75,6 @@ use strict;
 use IO::File;
 use File::Basename;
 
-use Bio::AlignIO;
-
 use Bio::EnsEMBL::Compara::Graph::NewickParser;
 use Bio::EnsEMBL::Compara::GeneTree;
 use Bio::EnsEMBL::Compara::GeneTreeNode;
