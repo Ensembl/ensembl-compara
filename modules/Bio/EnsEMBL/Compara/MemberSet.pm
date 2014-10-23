@@ -464,8 +464,7 @@ sub print_sequences_to_fasta {  ## DEPRECATED
 
 =head2 print_sequences_to_file
 
-  Arg [-FILE]     : string - name of the output file
-  Arg [-FH]       : file handle - file handle for the output
+  Arg [1]     : scalar (string or file handle) - output file
   Arg [-FORMAT]   : string - format of the output (cf BioPerl capabilities) (example: 'fasta')
   Arg [-UNIQ_SEQ] : boolean - whether only 1 copy of each sequence should be printed
                     (when multiple proteins share the same sequence)
@@ -480,10 +479,10 @@ sub print_sequences_to_fasta {  ## DEPRECATED
 =cut
 
 sub print_sequences_to_file {
-    my ($self, @args) = @_;
-    my ($file, $fh, $format, $unique_seqs) = rearrange([qw(FILE FH FORMAT UNIQ_SEQ)], @args);
+    my ($self, $file, @args) = @_;
+    my ($format, $unique_seqs) = rearrange([qw(FORMAT UNIQ_SEQ)], @args);
 
-    my $seqio = Bio::SeqIO->new( -file => ($file ? ">$file" : undef), -fh => $fh, -format => $format );
+    my $seqio = Bio::SeqIO->new( ref($file) ? (-fh => $file) : (-file => ">$file"), -format => $format );
 
     my %seq_hash = ();
     foreach my $member (@{$self->get_all_Members}) {

@@ -206,7 +206,7 @@ sub run {
 
     if($self->debug) {
         print "blast_infile $blast_infile\n";
-        $self->param('query_set')->print_sequences_to_file(-file => $blast_infile, -format => 'fasta');
+        $self->param('query_set')->print_sequences_to_file($blast_infile, -format => 'fasta');
     }
 
     $self->compara_dba->dbc->disconnect_when_inactive(1); 
@@ -221,7 +221,7 @@ sub run {
 
         my $start_time = time();
         open( BLAST, "| $cmd") || die qq{could not execute "$cmd", returned error code: $!};
-        $self->param('query_set')->print_sequences_to_file(-fh => \*BLAST, -format => 'fasta');
+        $self->param('query_set')->print_sequences_to_file(\*BLAST, -format => 'fasta');
         close BLAST;
         print "Time for blast " . (time() - $start_time) . "\n";
 
