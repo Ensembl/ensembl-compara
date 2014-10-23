@@ -333,7 +333,6 @@ sub parse_and_store_alignment_into_tree {
   #
   # parse SS_cons lines and store into nc_tree_tag
   #
-  my $stk_output = $self->param('stk_output');
   open (STKFILE, $stk_output) or $self->throw("Couldnt open STK file [$stk_output]");
   my $ss_cons_string = '';
   while(<STKFILE>) {
