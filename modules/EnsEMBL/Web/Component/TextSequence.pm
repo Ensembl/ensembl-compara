@@ -1158,7 +1158,7 @@ sub build_sequence {
     my @params = split(/;/,$params);
     for(@params) { $_ = 'adorn=only' if /^adorn=/; }
     $ajax_url = $path.'?'.join(';',@params,'adorn=only');
-    my $ajax_json = $self->jsonify({ url => $ajax_url, provisional => $adornment });
+    my $ajax_json = encode_entities($self->jsonify({ url => $ajax_url, provisional => $adornment }),"<>");
     $config->{'html_template'} = qq(
       <div class="js_panel" id="$random_id">
         $key_html
