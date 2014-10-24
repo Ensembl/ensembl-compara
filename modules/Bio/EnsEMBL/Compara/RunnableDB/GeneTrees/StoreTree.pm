@@ -495,7 +495,7 @@ sub parse_filtered_align {
     }
 
     my %hash_initial_strings = ();
-    my $missing_members = 0;
+    my @missing_members = ();
     {
         my $alignio = Bio::AlignIO->new(-file => $alnfile_ini, -format => 'fasta');
         my $aln = $alignio->next_aln or die "The input alignment '$alnfile_ini' cannot be read";
@@ -504,12 +504,13 @@ sub parse_filtered_align {
             if (exists $hash_filtered_strings{$seq->display_id()}) {
                 $hash_initial_strings{$seq->display_id()} = $seq->seq();
             } else {
-                $missing_members++;
+                push @missing_members, $seq->display_id();
             }
         }
     }
+    my $all_missing_members = join('/', @missing_members);
 
-    if ($tree_to_delete_nodes and $missing_members) {
+    if ($tree_to_delete_nodes and scalar(@missing_members)) {
         my $treenode_adaptor = $tree_to_delete_nodes->adaptor->db->get_GeneTreeNodeAdaptor;
 
         warn sprintf("leaves=%d ini_aln=%d filt_aln=%d\n", scalar(@{$tree_to_delete_nodes->get_all_leaves()}), scalar(keys %hash_initial_strings), scalar(keys %hash_filtered_strings));
@@ -521,11 +522,13 @@ sub parse_filtered_align {
                 $treenode_adaptor->remove_seq_member($leaf);
             });
         }
-        $self->param('removed_members', $missing_members);
-        $tree_to_delete_nodes->store_tag('n_removed_members', $missing_members);
+        $self->param('removed_members', 1);
+        $tree_to_delete_nodes->store_tag('n_removed_members', scalar(@missing_members));
+        $tree_to_delete_nodes->store_tag('removed_members', $all_missing_members);
         $tree_to_delete_nodes->store_tag('gene_count', scalar(@{$tree_to_delete_nodes->get_all_leaves}) );
-    } elsif ($missing_members) {
-        $tree_to_delete_nodes->store_tag('n_removable_members', $missing_members);
+    } elsif (scalar(@missing_members)) {
+        $self->param('gene_tree')->store_tag('n_removable_members', scalar(@missing_members));
+        $self->param('gene_tree')->store_tag('removable_members', $all_missing_members);
     }
 
     return Bio::EnsEMBL::Compara::Utils::Cigars::identify_removed_columns(\%hash_initial_strings, \%hash_filtered_strings, $cdna);
