@@ -119,6 +119,7 @@ sub download_models {
     Parameters:
         cm_file_or_directory : HMM file
         type : value of the "type" field in the hmm_profile table
+        skip_consensus : [Optional] -- If we should skip building the consensus sequence of the HMM
 
     Description:
         Reads an HMM file and loads all the HMMs it contains
@@ -134,7 +135,8 @@ sub store_hmmprofile {
     my ($name, $model_id) = ($hmm_name)x2;
     my $profile_content;
 
-    if (not $consensus) {
+    print STDERR "SKIP_CONSENSUS:", $self->param('skip_consensus'), "\n";
+    if ((!$consensus) && (!$self->param('skip_consensus'))) {
         $consensus = $self->get_consensus_from_HMMs($multicm_file);
     }
 

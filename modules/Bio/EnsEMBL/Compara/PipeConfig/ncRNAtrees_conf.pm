@@ -363,6 +363,7 @@ sub pipeline_analyses {
                                'expanded_basename' => $self->o('rfam_expanded_basename'),
                                'expander'          => $self->o('rfam_expander'),
                                'type'              => 'infernal',
+                               'skip_consensus'    => 1,
                               },
             -rc_name => 'default',
         },
