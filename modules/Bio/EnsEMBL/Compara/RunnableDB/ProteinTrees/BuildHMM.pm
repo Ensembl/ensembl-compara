@@ -89,7 +89,7 @@ sub fetch_input {
     }
     $self->param('type', $hmm_type);
 
-    my $members = $self->compara_dba->get_AlignedMemberAdaptor->fetch_all_by_GeneTree($protein_tree);
+    my $members = $protein_tree->alignment->get_all_Members;
     if ($self->param('notaxon')) {
         my $newmembers = [];
         foreach my $member (@$members) {
