@@ -1480,6 +1480,7 @@ sub core_pipeline_analyses {
                 'method'                => 'cmcoffee',
                 'mcoffee_home'          => $self->o('mcoffee_home'),
                 'mafft_home'            => $self->o('mafft_home'),
+                'escape_branch'         => -1,
             },
             -hive_capacity        => $self->o('mcoffee_capacity'),
             -rc_name    => '2Gb_job',
@@ -1493,6 +1494,7 @@ sub core_pipeline_analyses {
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::Mafft',
             -parameters => {
                 'mafft_home'                 => $self->o('mafft_home'),
+                'escape_branch'              => -1,
             },
             -hive_capacity        => $self->o('mcoffee_capacity'),
             -rc_name    => '2Gb_job',

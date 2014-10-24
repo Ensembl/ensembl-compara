@@ -62,12 +62,6 @@ use Bio::EnsEMBL::Compara::Utils::Cigars;
 use base ('Bio::EnsEMBL::Compara::RunnableDB::RunCommand');
 
 
-sub param_defaults {
-    return {
-        'escape_branch'         => -1,
-    };
-}
-
 
 =head2 fetch_input
 
