@@ -46,22 +46,46 @@ sub render {
   my $html           = ''; 
 
   my $rss_url = $sd->ENSEMBL_TIPS_RSS;
-  my $tips = $MEMD && $MEMD->get('::TIPS') || [];
+  my $tips = {}; #$MEMD && $MEMD->get('::TIPS') || {};
   
-  ## Check the cache, then fetch new tips
-  unless (@$tips && $rss_url) {
-    $tips = $self->get_rss_feed($hub, $rss_url);
+  my %categories = (
+                    'new' => 'New!',
+                    'did-you-know' => 'Did you know...?', 
+                    );
 
-    if ($tips && @$tips) {
-      $_->{'content'} = encode_utf8($_->{'content'}) for @$tips;
-      $MEMD->set('::TIPS', $tips, 3600, qw(STATIC TIPS)) if $MEMD;
+  ## Check the cache, then fetch new tips
+  foreach my $cat (keys %categories) {
+    (my $cat_url = $rss_url) =~ s/feed\/$/category\/$cat\/feed\//;
+    unless (scalar(@{$tips->{$cat}||[]}) && $cat_url) {
+      $tips->{$cat} = $self->get_rss_feed($hub, $cat_url);
+
+      if (scalar(@{$tips->{$cat}||[]})) {
+        $_->{'content'} = encode_utf8($_->{'content'}) for @{$tips->{$cat}};
+      }
     }
+    $MEMD->set('::TIPS', $tips, 3600, qw(STATIC TIPS)) if $MEMD;
   }
 
   $html .= '<div class="info-box did-you-know"><ul class="bxslider">';
 
-  foreach (@$tips) {
-    $html .= sprintf('<li><div><b>Did you know...?</b><br />%s</div></li>', $_->{'content'});
+  ## We want all the news plus some random tips
+  my $limit = 5;
+
+  my @tips_to_show = map {[$categories{'new'}, $_->{'content'}]} @{$tips->{'new'}};
+
+  ## Random did-you-knows
+  my $to_add = $limit - scalar(@tips_to_show);
+  srand;
+
+  for (my $i = 0; $i < $to_add; $i++) {
+    my $j = int(rand (scalar(@{$tips->{'did-you-know'}}) - 1));
+    push @tips_to_show, [$categories{'did-you-know'}, $tips->{'did-you-know'}[$j]{'content'}];
+    splice @{$tips->{'did-you-know'}}, $j, 1;
+  }
+
+  ## Build HTML list
+  foreach (@tips_to_show) {
+    $html .= sprintf('<li><div><b>%s</b><br />%s</div></li>', $_->[0], $_->[1]);
   }
 
   $html .= '</ul></div>';
