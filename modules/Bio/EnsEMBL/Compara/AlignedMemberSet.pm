@@ -295,6 +295,8 @@ sub load_cigars_from_file {
     }
     $self->aln_length($aln_length);
 
+    my %unseen = (map {$_ => 1} (keys %aln_string_hash));
+
     ## Then we associate each member with its alignment, based on the required $id_type
     foreach my $member (@{$self->get_all_Members}) {
 
@@ -315,11 +317,11 @@ sub load_cigars_from_file {
             throw($member->stable_id." ($seqID) has a different sequence in the alignment file '$file'");
         }
 
-        delete $aln_string_hash{$seqID};
+        delete $unseen{$seqID} if exists $unseen{$seqID};
     }
 
-    if (scalar(keys %aln_string_hash)) {
-        throw("No member for alignment ids: ".join(", ", keys %aln_string_hash));
+    if (scalar(keys %unseen)) {
+        throw("No member for alignment ids: ".join(", ", keys %unseen));
     }
 }
 
