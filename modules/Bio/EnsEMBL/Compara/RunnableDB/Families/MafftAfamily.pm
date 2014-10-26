@@ -127,7 +127,7 @@ sub write_output {
     } elsif(my $mafft_file = $self->param('mafft_file')) {
 
         my $family = $self->param('family');
-        $family->load_cigars_from_file($mafft_file, -format => 'fasta');
+        $family->load_cigars_from_file($mafft_file, -format => 'fasta', -CHECK_SEQ => 1);
         $family->adaptor->update($family, 1);
 
         unless($self->debug) {

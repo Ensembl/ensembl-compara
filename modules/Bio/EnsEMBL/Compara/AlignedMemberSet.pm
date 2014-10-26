@@ -227,6 +227,9 @@ sub _attr_to_copy_list {
   Arg [-IMPORT_SEQ] : (opt) boolean (default: false)
                Whether the sequences of the members should be reassigned
                using the alignment file
+  Arg [-CHECK_SEQ] : (opt) boolean (default: false)
+               Checks that all the sequences recovered from the alignment file
+               match the data in the Members
   Arg [-FORMAT]     : (opt) string (default: undef)
                The format of the alignment. By default, BioPerl will try to
                guess it from the file extension.  Refer to
@@ -251,9 +254,10 @@ sub load_cigars_from_file {
     my $format;
     my $import_seq;
     my $id_type;
+    my $check_seq;
     if (scalar @args) {
-        ($import_seq, $format, $id_type) =
-            rearrange([qw(IMPORT_SEQ FORMAT ID_TYPE)], @args);
+        ($import_seq, $format, $id_type, $check_seq) =
+            rearrange([qw(IMPORT_SEQ FORMAT ID_TYPE CHECK_SEQ)], @args);
     }
 
     ## First read the alignment file and put the data in a hash
@@ -313,8 +317,11 @@ sub load_cigars_from_file {
 
         if ($import_seq) {
             $member->sequence($seqseq);
-        } elsif ($member->sequence ne $seqseq) {
-            throw($member->stable_id." ($seqID) has a different sequence in the alignment file '$file'");
+        } elsif ($check_seq) {
+            my $member_sequence = $member->sequence;
+            if ($member_sequence ne $seqseq) {
+                throw($member->stable_id." ($seqID) has a different sequence in the alignment file '$file'");
+            }
         }
 
         delete $unseen{$seqID} if exists $unseen{$seqID};
