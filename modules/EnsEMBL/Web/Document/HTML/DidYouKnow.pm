@@ -46,7 +46,7 @@ sub render {
   my $html           = ''; 
 
   my $rss_url = $sd->ENSEMBL_TIPS_RSS;
-  my $tips = {}; #$MEMD && $MEMD->get('::TIPS') || {};
+  my $tips = $MEMD && $MEMD->get('::TIPS') || {};
   
   my %categories = (
                     'new' => 'New!',
@@ -66,7 +66,7 @@ sub render {
     $MEMD->set('::TIPS', $tips, 3600, qw(STATIC TIPS)) if $MEMD;
   }
 
-  $html .= '<div class="info-box did-you-know"><ul class="bxslider">';
+  $html .= '<div class="did-you-know"><ul class="bxslider">';
 
   ## We want all the news plus some random tips
   my $limit = 5;
