@@ -108,6 +108,7 @@ sub fetch_input {
   $self->param('inputtrees_unrooted', {});
   $self->param('inputtrees_rooted', {});
   
+  $self->_load_species_tree_string_from_db();
   $self->load_input_trees;
 
 }
