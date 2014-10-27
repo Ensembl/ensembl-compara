@@ -114,7 +114,7 @@ sub default_options {
             'parsimonator_exe'      => '/software/ensembl/compara/parsimonator/Parsimonator-1.0.2/parsimonator-SSE3',
             'ktreedist_exe'         => '/software/ensembl/compara/ktreedist/Ktreedist.pl',
             'fasttree_exe'          => '/software/ensembl/compara/fasttree/FastTree',
-            'treebest_exe'          => '/software/ensembl/compara/treebest.doubletracking',
+            'treebest_exe'          => '/software/ensembl/compara/treebest',
             'quicktree_exe'         => '/software/ensembl/compara/quicktree_1.1/bin/quicktree',
             'r2r_exe'               => '/software/ensembl/compara/R2R-1.0.3/src/r2r',
 
