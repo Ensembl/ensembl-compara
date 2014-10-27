@@ -94,6 +94,7 @@ sub param_defaults {
             'no_between'            => 0.25, # dont store all possible_orthologs
             'homoeologous_genome_dbs'  => [],
             '_readonly'             => 0,
+            'tag_split_genes'       => 0,
     };
 }
 
