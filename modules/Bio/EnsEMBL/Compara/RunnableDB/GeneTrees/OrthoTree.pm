@@ -315,7 +315,11 @@ sub display_link_analysis
     print "    ";
   }
   printf("%9s)", $ancestor->node_id);
-  printf(" %.4f ", $ancestor->get_tagvalue('duplication_confidence_score'));
+  if ($ancestor->has_tag('duplication_confidence_score')) {
+    printf(" %.4f ", $ancestor->get_tagvalue('duplication_confidence_score'));
+  } else {
+    print " N/A    ";
+  }
 
   printf(" %s %d %s\n",
          $genepairlink->get_tagvalue('orthotree_type'), 
