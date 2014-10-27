@@ -152,7 +152,9 @@ sub release_tree {
 
 
 sub dbID {
-    throw("NestedSet objects do not implement dbID()");
+    my ($self) = @_;
+#    throw("NestedSet objects do not implement dbID()");
+    return $self->node_id;
 }
 
 #################################################
