@@ -97,6 +97,8 @@ sub fetch_input {
     my $gene_count = scalar(@{$tree->get_all_Members});
     die "Unfetchable leaves root_id=$nc_tree_id\n" unless $gene_count;
 
+    $tree->release_tree();   # To free up the memory
+
     if ($gene_count > $self->param('treebreak_gene_count')) {
         # Create an alignment job and the waiting quicktree break job
         $self->dataflow_output_id($self->input_id, 3);
