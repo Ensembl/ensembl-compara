@@ -137,13 +137,14 @@ sub write_output {
     }
 
     if ($self->param('store_intermediate_trees')) {
+        delete $self->param('gene_tree')->{'_member_array'};   # To make sure we use teh freshest data
         foreach my $filename (glob(sprintf('%s/%s.*.nhx', $self->worker_temp_directory, $self->param('intermediate_prefix')) )) {
             $filename =~ /\.([^\.]*)\.nhx$/;
             my $clusterset_id = $1;
             next if $clusterset_id eq 'mmerge';
             next if $clusterset_id eq 'phyml';
             print STDERR "Found file $filename for clusterset $clusterset_id\n";
-            my $newtree = $self->store_alternative_tree($self->_slurp($filename), $clusterset_id, $self->param('gene_tree'));
+            my $newtree = $self->store_alternative_tree($self->_slurp($filename), $clusterset_id, $self->param('gene_tree'), [], 1);
             push @dataflow, $newtree->root_id;
         }
     }
