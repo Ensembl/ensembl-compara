@@ -371,9 +371,6 @@ sub pipeline_wide_parameters {  # these parameter values are visible to all anal
         'dump_dir'      => $self->o('dump_dir'),
         'hmm_library_basedir'   => $self->o('hmm_library_basedir'),
 
-        'reuse_level'   => $self->o('reuse_level'),
-        'clustering_mode'   => $self->o('clustering_mode'),
-
         'do_transactions'   => $self->o('do_transactions'),
     };
 }
@@ -496,7 +493,7 @@ sub core_pipeline_analyses {
             },
             -flow_into => {
                 '2->A' => [ 'copy_ncbi_table'  ],
-                'A->1' => [ 'test_can_use_master_db'],
+                'A->1' => [ $self->o('master_db') ? 'populate_method_links_from_db' : 'populate_method_links_from_file' ],
             },
             -meadow_type    => 'LOCAL',
         },
@@ -510,19 +507,6 @@ sub core_pipeline_analyses {
             },
             -meadow_type    => 'LOCAL',
         },
-
-        {   -logic_name => 'test_can_use_master_db',
-            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ConditionalDataFlow',
-            -parameters    => {
-                'condition'     => '$self->param_is_defined("master_db")',
-            },
-            -flow_into => {
-                2 => [ 'populate_method_links_from_db' ],
-                3 => [ 'populate_method_links_from_file' ],
-            },
-            -meadow_type    => 'LOCAL',
-        },
-
 
         {   -logic_name    => 'populate_method_links_from_db',
             -module        => 'Bio::EnsEMBL::Hive::RunnableDB::MySQLTransfer',
@@ -636,20 +620,8 @@ sub core_pipeline_analyses {
                 mode            => 'species_tree',
                 binary          => 0,
             },
-            -flow_into  => [ $self->o('use_notung') ? ('has_user_provided_binary_species_tree') : () ],
+            -flow_into  => [ $self->o('use_notung') ? ( $self->o('binary_species_tree_input_file') ? 'load_binary_species_tree' : 'make_binary_species_tree' ) : () ],
             %hc_analysis_params,
-        },
-
-        {   -logic_name => 'has_user_provided_binary_species_tree',
-            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ConditionalDataFlow',
-            -parameters    => {
-                'condition'     => $self->o('binary_species_tree_input_file') ? 1 : 0,
-            },
-            -flow_into => {
-                2 => [ 'load_binary_species_tree' ],
-                3 => [ 'make_binary_species_tree' ],
-            },
-            -meadow_type    => 'LOCAL',
         },
 
          {   -logic_name    => 'load_binary_species_tree',
@@ -815,20 +787,8 @@ sub core_pipeline_analyses {
                 'condition'     => '"#locator#" =~ /^Bio::EnsEMBL::DBSQL::DBAdaptor/',
             },
             -flow_into => {
-                2 => [ 'test_is_there_master_db' ],
+                2 => [ $self->o('master_db') ? 'copy_dnafrags_from_master' : 'load_fresh_members_from_db' ],
                 3 => [ 'load_fresh_members_from_file' ],
-            },
-            -meadow_type    => 'LOCAL',
-        },
-
-        {   -logic_name => 'test_is_there_master_db',
-            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ConditionalDataFlow',
-            -parameters    => {
-                'condition'     => '$self->param_is_defined("master_db")',
-            },
-            -flow_into => {
-                2 => [ 'copy_dnafrags_from_master' ],
-                3 => { 'load_fresh_members_from_db' => { 'genome_db_id' => '#genome_db_id#', 'store_missing_dnafrags' => 1} },
             },
             -meadow_type    => 'LOCAL',
         },
@@ -851,7 +811,7 @@ sub core_pipeline_analyses {
                 'store_related_pep_sequences' => 1,
                 'allow_ambiguity_codes'         => $self->o('allow_ambiguity_codes'),
                 'find_canonical_translations_for_polymorphic_pseudogene' => 1,
-                'store_missing_dnafrags'        => $self->o('master_db_is_missing_dnafrags'),
+                'store_missing_dnafrags'        => ((not $self->o('master_db')) or $self->o('master_db_is_missing_dnafrags') ? 1 : 0),
             },
             -hive_capacity => $self->o('loadmembers_capacity'),
             -rc_name => '2Gb_job',
@@ -881,7 +841,7 @@ sub core_pipeline_analyses {
         {   -logic_name => 'reusedspecies_factory',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
             -parameters => {
-                '_force_blast_run'   => '#expr(#reuse_level# eq "members" ? 1 : 0)expr#',
+                '_force_blast_run'   => $self->o('reuse_level') eq 'members' ? 1 : 0,
                 'inputquery'        => 'SELECT genome_db_id, name FROM species_set JOIN genome_db USING (genome_db_id) WHERE species_set_id = #reuse_ss_id# AND NOT #_force_blast_run#',
                 'fan_branch_code'   => 2,
             },
@@ -895,7 +855,7 @@ sub core_pipeline_analyses {
         {   -logic_name => 'nonreusedspecies_factory',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
             -parameters => {
-                '_force_blast_run'   => '#expr(#reuse_level# eq "members" ? 1 : 0)expr#',
+                '_force_blast_run'   => $self->o('reuse_level') eq 'members' ? 1 : 0,
                 'inputquery'        => 'SELECT genome_db_id, name FROM species_set JOIN genome_db USING (genome_db_id) WHERE species_set_id = #nonreuse_ss_id# OR #_force_blast_run#',
                 'fan_branch_code'   => 2,
             },
@@ -930,18 +890,6 @@ sub core_pipeline_analyses {
         },
 
 #--------------------------------------------------------[load the HMM profiles]----------------------------------------------------
-
-        {   -logic_name => 'test_nonempty_hmm_library_basedir',
-            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ConditionalDataFlow',
-            -parameters    => {
-                'condition'     => ' (-d "#hmm_library_basedir#/books") and (-d "#hmm_library_basedir#/globals") and (-s "#hmm_library_basedir#/globals/con.Fasta") ',
-            },
-            -flow_into => {
-                2 => 'load_InterproAnnotation',
-                3 => 'panther_databases_factory',
-            },
-            -meadow_type    => 'LOCAL',
-        },
 
         {   -logic_name => 'panther_databases_factory',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
@@ -1214,7 +1162,14 @@ sub core_pipeline_analyses {
             },
             -flow_into => {
                 '2->A' => [ 'copy_clusters' ],
-                '3->A' => [ $self->o('clustering_mode') eq 'blastp' ? ('hcluster_dump_factory') : ('test_nonempty_hmm_library_basedir') ],
+                '3->A' => [
+                    $self->o('clustering_mode') eq 'blastp'
+                    ? 'hcluster_dump_factory'
+                    : ( ((-d $self->o('hmm_library_basedir')."/books") and (-d $self->o('hmm_library_basedir')."/globals") and (-s $self->o('hmm_library_basedir')."/globals/con.Fasta"))
+                        ? 'load_InterproAnnotation'
+                        : 'panther_databases_factory'
+                      )
+                    ],
                 'A->1' => [ 'hc_clusters' ],
             },
             -meadow_type    => 'LOCAL',
