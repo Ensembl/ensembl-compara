@@ -41,8 +41,12 @@ sub content_region {
 
 sub content {
   my ($self,$min,$max) = @_;
+
+  my $length = -1;
+  my $object = $self->hub->core_object('Location');
+  $length = $object->seq_region_length if $object;
   
-  my $ramp = $self->ramp($min||1e3,$max||1e6);
+  my $ramp = $self->ramp($min||1e3,$max||1e6,$length);
   return $self->navbar($ramp);
 }
 
@@ -99,12 +103,17 @@ sub navbar {
 }
 
 sub ramp {
-  my ($self,$min,$max) = @_;
+  my ($self,$min,$max,$length) = @_;
   
   my $scale = $self->hub->species_defs->ENSEMBL_GENOME_SIZE || 1;
+  $length = 0+$length;
+  $max *= $scale;
+  $min *= $scale;
+  $max = $length if $length > 0 and $length < $max;
   my $json = $self->jsonify({
-    min => $min * $scale,
-    max => $max * $scale,
+    min => $min,
+    max => $max,
+    'length' => 0+$length,
   });
   return $json;
 }
