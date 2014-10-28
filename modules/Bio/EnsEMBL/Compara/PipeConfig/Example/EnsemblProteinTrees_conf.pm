@@ -121,6 +121,7 @@ sub default_options {
         'notung_jar'                => '/software/ensembl/compara/notung/Notung-2.6.jar',
         'quicktree_exe'             => '/software/ensembl/compara/quicktree_1.1/bin/quicktree',
         'hmmer2_home'               => '/software/ensembl/compara/hmmer-2.3.2/src/',
+        'hmmer3_home'               => '/software/ensembl/compara/hmmer-3.1b1/binaries/',
         'codeml_exe'                => '/software/ensembl/compara/paml43/bin/codeml',
         'ktreedist_exe'             => '/software/ensembl/compara/ktreedist/Ktreedist.pl',
         'blast_bin_dir'             => '/software/ensembl/compara/ncbi-blast-2.2.28+/bin',

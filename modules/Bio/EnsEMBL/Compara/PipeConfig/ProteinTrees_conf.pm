@@ -170,6 +170,7 @@ sub default_options {
         #'notung_jar'                => '/software/ensembl/compara/notung/Notung-2.6.jar',
         #'quicktree_exe'             => '/software/ensembl/compara/quicktree_1.1/bin/quicktree',
         #'hmmer2_home'               => '/software/ensembl/compara/hmmer-2.3.2/src/',
+        #'hmmer3_home'               => '/software/ensembl/compara/hmmer-3.1b1/binaries/',
         #'codeml_exe'                => '/software/ensembl/compara/paml43/bin/codeml',
         #'ktreedist_exe'             => '/software/ensembl/compara/ktreedist/Ktreedist.pl',
         #'blast_bin_dir'             => '/software/ensembl/compara/ncbi-blast-2.2.28+/bin',
@@ -2065,11 +2066,11 @@ sub core_pipeline_analyses {
 
         {   -logic_name => 'finalize_entry_point',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
-            -flow_into  => [ 'ktreedist', 'build_HMM_aa', 'build_HMM_cds' ],
+            -flow_into  => [ 'ktreedist', 'build_HMM_aa_v2', 'build_HMM_aa_v3', 'build_HMM_cds_v3' ],
             -meadow_type    => 'LOCAL',
         },
 
-        {   -logic_name => 'build_HMM_aa',
+        {   -logic_name => 'build_HMM_aa_v2',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::BuildHMM',
             -parameters => {
                 'hmmer_home'        => $self->o('hmmer2_home'),
@@ -2080,11 +2081,11 @@ sub core_pipeline_analyses {
             -priority       => -20,
             -rc_name        => '250Mb_job',
             -flow_into      => {
-                -1  => 'build_HMM_aa_himem'
+                -1  => 'build_HMM_aa_v2_himem'
             },
         },
 
-        {   -logic_name     => 'build_HMM_aa_himem',
+        {   -logic_name     => 'build_HMM_aa_v2_himem',
             -module         => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::BuildHMM',
             -parameters     => {
                 'hmmer_home'        => $self->o('hmmer2_home'),
@@ -2095,7 +2096,33 @@ sub core_pipeline_analyses {
             -rc_name        => '1Gb_job',
         },
 
-        {   -logic_name => 'build_HMM_cds',
+        {   -logic_name => 'build_HMM_aa_v3',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::BuildHMM',
+            -parameters => {
+                'hmmer_home'        => $self->o('hmmer3_home'),
+                'hmmer_version'     => 3,
+            },
+            -hive_capacity  => $self->o('build_hmm_capacity'),
+            -batch_size     => 5,
+            -priority       => -20,
+            -rc_name        => '250Mb_job',
+            -flow_into      => {
+                -1  => 'build_HMM_aa_v3_himem'
+            },
+        },
+
+        {   -logic_name     => 'build_HMM_aa_v3_himem',
+            -module         => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::BuildHMM',
+            -parameters     => {
+                'hmmer_home'        => $self->o('hmmer3_home'),
+                'hmmer_version'     => 3,
+            },
+            -hive_capacity  => $self->o('build_hmm_capacity'),
+            -priority       => -20,
+            -rc_name        => '1Gb_job',
+        },
+
+        {   -logic_name => 'build_HMM_cds_v3',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::BuildHMM',
             -parameters => {
                 'cdna'              => 1,
@@ -2107,11 +2134,11 @@ sub core_pipeline_analyses {
             -priority       => -20,
             -rc_name        => '500Mb_job',
             -flow_into      => {
-                -1  => 'build_HMM_cds_himem'
+                -1  => 'build_HMM_cds_v3_himem'
             },
         },
 
-        {   -logic_name     => 'build_HMM_cds_himem',
+        {   -logic_name     => 'build_HMM_cds_v3_himem',
             -module         => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::BuildHMM',
             -parameters     => {
                 'cdna'              => 1,
