@@ -32,6 +32,8 @@ sub content {
   my $lrg     = $hub->param('lrg');
   my $adaptor = $hub->get_adaptor('get_VariationAdaptor', 'variation');
   
+  $object = $self->hub->core_object('LRG') unless defined $object;
+
   if ($lrg && $hub->referer->{'ENSEMBL_TYPE'} eq 'LRG') {
     eval { $self->{'lrg_slice'} = $hub->get_adaptor('get_SliceAdaptor')->fetch_by_region('LRG', $lrg); };
   } elsif ($hub->referer->{'ENSEMBL_TYPE'} eq 'Transcript' || $hub->param('_transcript')) {
