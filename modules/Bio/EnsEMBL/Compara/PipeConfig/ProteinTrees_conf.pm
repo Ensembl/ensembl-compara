@@ -1520,7 +1520,7 @@ sub core_pipeline_analyses {
             -batch_size     => 20,
             -flow_into      => {
                 '1->A'   => [ $self->o('use_notung') ? 'tree_entry_point' : ($self->o('use_raxml') ? 'filter_decision' : 'treebest' ) ],
-                'A->1'   => [ 'hc_alignment_post_tree' ],
+                'A->1'   => [ 'hc_post_tree' ],
                 -1  => 'split_genes_himem',
             },
         },
@@ -1531,7 +1531,7 @@ sub core_pipeline_analyses {
             -rc_name        => '4Gb_job',
             -flow_into      => {
                 '1->A'   => [ $self->o('use_notung') ? 'tree_entry_point' : ($self->o('use_raxml') ? 'filter_decision' : 'treebest' ) ],
-                'A->1'   => [ 'hc_alignment_post_tree' ],
+                'A->1'   => [ 'hc_post_tree' ],
             },
         },
 
@@ -1925,12 +1925,25 @@ sub core_pipeline_analyses {
 
 # ---------------------------------------------[orthologies]-------------------------------------------------------------
 
+        {   -logic_name => 'hc_post_tree',
+            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
+            -parameters => {
+                'inputquery'        => 'SELECT root_id AS gene_tree_id FROM gene_tree_root WHERE ref_root_id = #gene_tree_id#',
+                'fan_branch_code'   => 2,
+            },
+            -flow_into  => {
+                 '2->A' => [ 'hc_tree_structure' ],
+                 '1->A' => [ 'hc_alignment_post_tree', 'hc_tree_structure' ],
+                 'A->1' => 'homology_entry_point',
+            },
+            -meadow_type    => 'LOCAL',
+        },
+
         {   -logic_name         => 'hc_alignment_post_tree',
             -module             => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::SqlHealthChecks',
             -parameters         => {
                 mode            => 'alignment',
             },
-            -flow_into          => [ 'hc_tree_structure' ],
             %hc_analysis_params,
         },
 
@@ -1939,27 +1952,19 @@ sub core_pipeline_analyses {
             -parameters         => {
                 mode            => 'tree_structure',
             },
-            -flow_into          => [ 'homology_entry_point' ],
             %hc_analysis_params,
         },
 
         {   -logic_name => 'homology_entry_point',
-            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
-            -flow_into  => {
-                '1->A'  => [ 'ortho_tree', 'other_tree_factory' ],
-                'A->1'  => [ 'finalize_entry_point' ],
-            },
-            -meadow_type    => 'LOCAL',
-        },
-
-        {   -logic_name => 'other_tree_factory',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
             -parameters => {
                 'inputquery'        => 'SELECT root_id AS gene_tree_id FROM gene_tree_root WHERE ref_root_id = #gene_tree_id#',
                 'fan_branch_code'   => 2,
             },
             -flow_into  => {
-                 2 => [ 'hc_other_tree_structure' ],
+                 '1->A' => [ 'ortho_tree' ],
+                 '2->A' => [ 'ortho_tree_annot' ],
+                 'A->1' => 'finalize_entry_point',
             },
             -meadow_type    => 'LOCAL',
         },
@@ -2028,15 +2033,6 @@ sub core_pipeline_analyses {
                               },
             -hive_capacity => $self->o('ktreedist_capacity'),
             -rc_name       => '2Gb_job',
-        },
-
-        {   -logic_name         => 'hc_other_tree_structure',
-            -module             => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::SqlHealthChecks',
-            -parameters         => {
-                mode            => 'tree_structure',
-            },
-            -flow_into          => [ 'ortho_tree_annot' ],
-            %hc_analysis_params,
         },
 
         {   -logic_name => 'ortho_tree_annot',
