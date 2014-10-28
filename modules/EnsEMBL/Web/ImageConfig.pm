@@ -2061,7 +2061,7 @@ sub add_data_files {
     if ($glyphset eq 'bam_and_bigwig') {
       $renderers = [
                     'off',       'Off',
-                    'histogram', 'Coverage (BigWig)',
+                    'tiling', 'Coverage (BigWig)',
                     'normal',    'Normal',
                     'unlimited', 'Unlimited',
                     ];
