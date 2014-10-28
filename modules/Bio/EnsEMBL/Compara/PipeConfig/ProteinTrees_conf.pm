@@ -1681,10 +1681,8 @@ sub core_pipeline_analyses {
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::NJTREE_PHYML',
             -parameters => {
                 'cdna'                      => 1,
-                'bootstrap'                 => 1,
                 'store_intermediate_trees'  => 1,
                 'store_filtered_align'      => 1,
-                'extra_args'                => $self->o('use_raxml') ? ' -F 0 ' : '',
                 'treebest_exe'              => $self->o('treebest_exe'),
                 'output_clusterset_id'      => $self->o('use_raxml_epa_on_treebest') ? 'treebest' : 'default',
             },
@@ -1842,9 +1840,23 @@ sub core_pipeline_analyses {
             -rc_name    => '1Gb_job',
             -flow_into  => {
                 -1 => [ 'raxml_multi_core_himem' ],
-                2 =>  [ 'treebest' ],     # This event is triggered if there are 2 or 3 genes in the tree
+                2 =>  [ 'treebest_small_families' ],     # This event is triggered if there are 2 or 3 genes in the tree
             }
         },
+
+        {   -logic_name => 'treebest_small_families',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::NJTREE_PHYML',
+            -parameters => {
+                'cdna'                      => 1,
+                'store_intermediate_trees'  => 1,
+                'extra_args'                => ' -F 0 ',
+                'treebest_exe'              => $self->o('treebest_exe'),
+                'output_clusterset_id'      => $self->o('use_notung') ? 'raxml' : 'default',
+            },
+            -hive_capacity        => $self->o('treebest_capacity'),
+            -rc_name    => '1Gb_job',
+        },
+
 
         {   -logic_name => 'raxml_multi_core',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::RAxML',
