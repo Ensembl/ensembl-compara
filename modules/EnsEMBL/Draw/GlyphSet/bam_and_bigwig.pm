@@ -22,25 +22,11 @@ package EnsEMBL::Draw::GlyphSet::bam_and_bigwig;
 ### (initially only for internal data sources where we can
 ### guarantee there is a BigWig file)
 
+### At the moment this module doesn't actually do anything 
+### apart from enabling a track to inherit from both bam and bigwig!
+
 use strict;
-use base qw(EnsEMBL::Draw::GlyphSet::bam);
+use base qw(EnsEMBL::Draw::GlyphSet::bam EnsEMBL::Draw::GlyphSet::bigwig);
 
-use EnsEMBL::Draw::GlyphSet::bigwig;
-
-sub render_histogram {
-## Replace standard BAM histogram with BigWig
-  my $self = shift;
-  return EnsEMBL::Draw::GlyphSet::bigwig::render_normal($self);
-}
-
-sub wiggle_features {
-  my ($self, $bins) = @_;
-  return EnsEMBL::Draw::GlyphSet::bigwig::wiggle_features($self, $bins);
-}
-
-sub bigwig_adaptor {
-  my $self = shift;
-  return EnsEMBL::Draw::GlyphSet::bigwig::bigwig_adaptor($self);
-}
 
 1;
