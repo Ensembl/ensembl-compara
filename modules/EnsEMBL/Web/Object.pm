@@ -32,7 +32,7 @@ use strict;
 
 use HTML::Entities  qw(encode_entities);
 
-use EnsEMBL::Web::DBSQL::WebsiteAdaptor;
+use EnsEMBL::Web::DBSQL::ArchiveAdaptor;
 use EnsEMBL::Web::Tools::Misc qw(get_url_content);
 use HTML::Entities  qw(encode_entities);
 use List::Util qw(min max);
@@ -189,7 +189,7 @@ sub get_earliest_archive {
   ## Method required for ID history views, applies to several web objects
   my $self = shift;
   
-  my $adaptor = EnsEMBL::Web::DBSQL::WebsiteAdaptor->new($self->hub);
+  my $adaptor = EnsEMBL::Web::DBSQL::ArchiveAdaptor->new($self->hub);
   my $releases = $adaptor->fetch_releases();
   foreach my $r (@$releases){ 
     return $r->{'id'} if $r->{'online'} eq 'Y';
