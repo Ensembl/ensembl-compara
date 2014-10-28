@@ -411,7 +411,7 @@ sub core_pipeline_analyses {
             },
             -flow_into  => {
                 '1->A'  => [ 'genome_reuse_factory' ],
-                'A->1'  => [ 'test_should_blast_be_skipped' ],
+                'A->1'  => [ $self->o('clustering_mode') eq 'blastp' ? 'test_should_blast_be_skipped' : 'backbone_fire_clustering' ],
             },
         },
 
@@ -419,7 +419,7 @@ sub core_pipeline_analyses {
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ConditionalDataFlow',
             -parameters    => {
                 'quick_reuse'   => $self->o('quick_reuse'),
-                'condition'     => '(#are_all_species_reused# and #quick_reuse#) or ("#clustering_mode#" ne "blastp")',
+                'condition'     => '(#are_all_species_reused# and #quick_reuse#)',
             },
             -flow_into => {
                 2 => [ 'backbone_fire_clustering' ],
@@ -635,9 +635,7 @@ sub core_pipeline_analyses {
                 mode            => 'species_tree',
                 binary          => 0,
             },
-            -flow_into  => {
-                $self->o('use_notung') ? 1 : 999 => [ 'has_user_provided_binary_species_tree' ],
-            },
+            -flow_into  => [ $self->o('use_notung') ? ('has_user_provided_binary_species_tree') : () ],
             %hc_analysis_params,
         },
 
@@ -1062,6 +1060,7 @@ sub core_pipeline_analyses {
                  'extra_tags_file'  => $self->o('extra_model_tags_file'),
              },
              -rc_name => '8Gb_job',
+             -flow_into => [ $self->o('clustering_mode') eq 'hybrid' ? ('dump_unannotated_members') : () ],
             },
 
         {
@@ -1207,40 +1206,14 @@ sub core_pipeline_analyses {
 
 # ---------------------------------------------[clustering step]---------------------------------------------------------------------
 
-        {   -logic_name => 'test_hmm_clustering',
-            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ConditionalDataFlow',
-            -parameters    => {
-                'condition'     => '"#clustering_mode#" ne "blastp"',
-            },
-            -flow_into => {
-                2 => 'test_hybrid_clustering',
-                3 => 'hcluster_dump_factory',
-            },
-            -meadow_type    => 'LOCAL',
-        },
-
-        {   -logic_name => 'test_hybrid_clustering',
-            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ConditionalDataFlow',
-            -parameters    => {
-                'condition'     => '"#clustering_mode#" eq "hybrid"',
-            },
-            -flow_into => {
-                '2->A' => 'test_nonempty_hmm_library_basedir',
-                'A->2' => 'dump_unannotated_members',
-                3 => 'test_nonempty_hmm_library_basedir',
-            },
-            -meadow_type    => 'LOCAL',
-        },
-
-
         {   -logic_name => 'test_whether_can_copy_clusters',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ConditionalDataFlow',
             -parameters    => {
-                'condition'     => '#are_all_species_reused# and ("#reuse_level#" eq "clusters")',
+                'condition'     => '#are_all_species_reused#',
             },
             -flow_into => {
                 '2->A' => [ 'copy_clusters' ],
-                '3->A' => [ 'test_hmm_clustering' ],
+                '3->A' => [ $self->o('clustering_mode') eq 'blastp' ? ('hcluster_dump_factory') : ('test_nonempty_hmm_library_basedir') ],
                 'A->1' => [ 'hc_clusters' ],
             },
             -meadow_type    => 'LOCAL',
@@ -1546,7 +1519,7 @@ sub core_pipeline_analyses {
             -rc_name        => '500Mb_job',
             -batch_size     => 20,
             -flow_into      => {
-                '1->A'   => [ 'tree_entry_point' ],
+                '1->A'   => [ $self->o('use_notung') ? 'tree_entry_point' : ($self->o('use_raxml') ? 'filter_decision' : 'treebest' ) ],
                 'A->1'   => [ 'hc_alignment_post_tree' ],
                 -1  => 'split_genes_himem',
             },
@@ -1557,7 +1530,7 @@ sub core_pipeline_analyses {
             -hive_capacity  => $self->o('split_genes_capacity'),
             -rc_name        => '4Gb_job',
             -flow_into      => {
-                '1->A'   => [ 'tree_entry_point' ],
+                '1->A'   => [ $self->o('use_notung') ? 'tree_entry_point' : ($self->o('use_raxml') ? 'filter_decision' : 'treebest' ) ],
                 'A->1'   => [ 'hc_alignment_post_tree' ],
             },
         },
@@ -1566,9 +1539,8 @@ sub core_pipeline_analyses {
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
             -meadow_type    => 'LOCAL',
             -flow_into  => {
-                sprintf('%d%s', $self->o('use_raxml') ? 1 : 999, $self->o('use_notung') ? '->A' : '') => [ 'filter_decision' ],
-                sprintf('%d%s', $self->o('use_raxml') ? 999 : 1, $self->o('use_notung') ? '->A' : '') => [ 'treebest' ],
-                ($self->o('use_notung') ? 'A->1' : 998) => [ 'notung' ],
+                '1->A' => [ $self->o('use_raxml') ? 'filter_decision' : 'treebest' ],
+                'A->1' => [ 'notung' ],
             },
         },
 
@@ -1597,7 +1569,7 @@ sub core_pipeline_analyses {
             -flow_into  => {
                 2 => [ 'noisy_large' ],
                 3 => [ 'noisy' ],
-                999 => [ 'trimal' ],
+                4 => [ 'trimal' ],
             },
         },
 
@@ -1689,7 +1661,7 @@ sub core_pipeline_analyses {
             -hive_capacity        => $self->o('treebest_capacity'),
             -rc_name    => '4Gb_job',
             -flow_into  => {
-                ($self->o('use_raxml_epa_on_treebest') ? 1 : 999) => [ 'raxml_epa_longbranches' ],
+                1 => [ $self->o('use_raxml_epa_on_treebest') ? ('raxml_epa_longbranches') : () ],
             }
         },
 
@@ -1721,6 +1693,10 @@ sub core_pipeline_analyses {
             },
             -hive_capacity        => $self->o('raxml_capacity'),
             -rc_name    => '16Gb_job',
+            -flow_into  => {
+                2 => [ 'promote_treebest_tree' ],
+                4 => [ 'raxml_bl_unfiltered_himem' ],
+            },
         },
 
         {   -logic_name => 'raxml_bl_unfiltered',
@@ -2279,7 +2255,54 @@ sub pipeline_analyses {
     my %analyses_by_name = map {$_->{'-logic_name'} => $_} @$all_analyses;
     $self->tweak_analyses(\%analyses_by_name);
 
+    $all_analyses = $self->filter_analyses($all_analyses, 'backbone_fire_db_prepare');
     return $all_analyses;
+}
+
+# Method to find all the analyses that can be reached from $start_logic_name
+# It also discards all the branches named 99[0-9]
+sub filter_analyses {
+    my ($self, $all_analyses, $start_logic_name) = @_;
+
+    my @to_process = ($start_logic_name);
+    my %to_keep = ();
+
+    while (@to_process) {
+        my $logic_name = shift @to_process;
+        next if $to_keep{$logic_name};
+        $to_keep{$logic_name} = 1;
+
+        my $a = (grep {$_->{-logic_name} eq $logic_name} @$all_analyses)[0];
+        next unless exists $a->{-flow_into};
+        if (ref($a->{-flow_into})) {
+            if (ref($a->{-flow_into}) eq 'ARRAY') {
+                push @to_process, @{$a->{-flow_into}};
+            } else {
+                my @bns = keys %{$a->{-flow_into}};
+                foreach my $branch_number (@bns) {
+                    if ($branch_number =~ /99[0-9]/) {
+                        warn sprintf("Deleting %s -> #%s\n", $logic_name, $branch_number);
+                        delete $a->{-flow_into}->{$branch_number};
+                        next;
+                    }
+                    my $target = $a->{-flow_into}->{$branch_number};
+                    if (ref($target)) {
+                        if (ref($target) eq 'ARRAY') {
+                            push @to_process, @$target;
+                        } else {
+                            push @to_process, keys %$target;
+                        }
+                    } else {
+                        push @to_process, $target;
+                    }
+                }
+            }
+        } else {
+            push @to_process, $a->{-flow_into};
+        }
+    }
+
+    return [grep {$to_keep{$_->{-logic_name}}} @$all_analyses];
 }
 
 
