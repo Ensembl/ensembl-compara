@@ -26,6 +26,13 @@ Ensembl.Panel.LocationNav = Ensembl.Panel.extend({
       Ensembl.EventManager.register('ajaxComplete', this, function () { this.enabled = true; });
     }
   },
+    
+  config: function() {
+    var panel = this;
+    var sliderConfig = $.parseJSON($('span.ramp', panel.el).text());
+    // TODO cache it? Is it worth it?
+    return sliderConfig;
+  },
 
   currentLocations: function() { // extract r's into easy to use format
     var out = {};
@@ -57,6 +64,7 @@ Ensembl.Panel.LocationNav = Ensembl.Panel.extend({
   },
 
   rescale: function(rs,input) {
+    var config = this.config();
     input = Math.round(input);
     var out = {};
     $.each(rs,function(k,v) {
@@ -64,18 +72,33 @@ Ensembl.Panel.LocationNav = Ensembl.Panel.extend({
       var r_start = Math.round((r_2centre-input)/2);
       if(r_start<1) { r_start = 1; }
       var r_end = r_start+input+1;
-      // TODO: limit end. Means we would need to pass in size from server
+      if(k=='r') {
+        if(r_start > config.length) {
+          r_start = config.length - config.min;
+        }
+        if(r_end > config.length) {
+          r_end = config.length;
+        }
+      }
+      if(r_start<1) { r_start = 1; }
       out[k] = [v[0],r_start,r_end,v[3]];
     });
     return out;
   },
 
   arrow: function(step) { // href for arrow buttons at cur pos. as string
+    var config = this.config();
     var rs = this.currentLocations();
     var out =  {};
     $.each(rs,function(k,v) {
       v[1] += step;
       v[2] += step;
+      if(k=='r') {
+        if(v[1] > config.length) { v[1] = config.length - config.min; }
+        if(v[2] > config.length) { v[2] = config.length; }
+        if(v[1] < 1) { v[1] = 1; }
+        if(v[2] < 1) { v[2] = config.min; }
+      }
     });
     return this.newLocation(rs);
   },
@@ -111,7 +134,7 @@ Ensembl.Panel.LocationNav = Ensembl.Panel.extend({
 
     var rs = this.currentLocations();
     var input = rs['r'][2]-rs['r'][1]+1;
-    var sliderConfig = $.parseJSON($('span.ramp', panel.el).text());
+    var sliderConfig = panel.config();
     var slide_min = sliderConfig.min;
     var slide_max = sliderConfig.max;
     var slide_mul = ( Math.log(slide_max) - Math.log(slide_min) ) / 100;
@@ -125,7 +148,7 @@ Ensembl.Panel.LocationNav = Ensembl.Panel.extend({
   pos2val: function(pos) { // from bp to 0-100 on UI slider
     var panel = this;
 
-    var sliderConfig = $.parseJSON($('span.ramp', panel.el).text());
+    var sliderConfig = panel.config();
     var slide_min = sliderConfig.min;
     var slide_max = sliderConfig.max;
     var slide_mul = ( Math.log(slide_max) - Math.log(slide_min) ) / 100;
@@ -170,7 +193,7 @@ Ensembl.Panel.LocationNav = Ensembl.Panel.extend({
     
     if(!$('span.ramp', this.el).length) { return; } // No slider here
     $('span.ramp', this.el).hide();
-    var sliderConfig = $.parseJSON($('span.ramp', this.el).text());
+    var sliderConfig = panel.config();
     var sliderLabel  = $('.slider_label', this.el);
     
     $('.slider_wrapper', this.el).children().css('display', 'inline-block');
