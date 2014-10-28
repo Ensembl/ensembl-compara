@@ -723,7 +723,7 @@ sub core_pipeline_analyses {
                 'src_db_conn'   => '#reuse_db#',
                 'table'         => 'dnafrag',
                 'where'         => 'genome_db_id = #genome_db_id#',
-                'mode'          => 'topup',
+                'mode'          => 'insertignore',
             },
             -hive_capacity => $self->o('reuse_capacity'),
             -flow_into => {
@@ -737,7 +737,7 @@ sub core_pipeline_analyses {
                 'src_db_conn'   => '#reuse_db#',
                 'table'         => 'seq_member',
                 'where'         => 'seq_member_id<='.$self->o('protein_members_range').' AND genome_db_id = #genome_db_id#',
-                'mode'          => 'topup',
+                'mode'          => 'insertignore',
             },
             -hive_capacity => $self->o('reuse_capacity'),
             -flow_into => {
@@ -751,7 +751,7 @@ sub core_pipeline_analyses {
                 'src_db_conn'   => '#reuse_db#',
                 'table'         => 'gene_member',
                 'where'         => 'gene_member_id<='.$self->o('protein_members_range').' AND genome_db_id = #genome_db_id#',
-                'mode'          => 'topup',
+                'mode'          => 'insertignore',
             },
             -hive_capacity => $self->o('reuse_capacity'),
             -flow_into => {
@@ -840,7 +840,7 @@ sub core_pipeline_analyses {
                 'src_db_conn'   => '#master_db#',
                 'table'         => 'dnafrag',
                 'where'         => 'genome_db_id = #genome_db_id#',
-                'mode'          => 'topup',
+                'mode'          => 'insertignore',
             },
             -hive_capacity => $self->o('reuse_capacity'),
             -flow_into => [ 'load_fresh_members_from_db' ],
