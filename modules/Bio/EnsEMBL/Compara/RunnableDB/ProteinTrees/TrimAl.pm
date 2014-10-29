@@ -81,7 +81,7 @@ sub get_tags {
         print "Trimmed colums: ".$removed_columns."\n" if $self->debug;
         return { 'removed_columns' => $removed_columns } unless $self->param('removed_members');
         $self->warning("There are removed members, so we need to re-run TrimAl.\n");
-        $self->param('gene_tree')->clear();
+        delete $self->param('gene_tree')->{'_member_array'};
         $self->run;
     }
 }
