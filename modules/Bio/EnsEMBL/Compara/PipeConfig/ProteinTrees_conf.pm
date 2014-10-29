@@ -1889,8 +1889,8 @@ sub core_pipeline_analyses {
                 'fan_branch_code'   => 2,
             },
             -flow_into  => {
-                 '2->A' => [ 'hc_tree_structure' ],
-                 '1->A' => [ 'hc_alignment_post_tree', 'hc_tree_structure' ],
+                 '2->A' => [ 'hc_tree_structure', 'hc_tree_attributes' ],
+                 '1->A' => [ 'hc_alignment_post_tree', 'hc_tree_structure', 'hc_tree_attributes' ],
                  'A->1' => 'homology_entry_point',
             },
             -meadow_type    => 'LOCAL',
@@ -1936,7 +1936,7 @@ sub core_pipeline_analyses {
             -hive_capacity  => $self->o('ortho_tree_capacity'),
             -rc_name        => '250Mb_job',
             -flow_into      => {
-                1   => [ 'hc_tree_attributes', 'hc_tree_homologies' ],
+                1   => [ 'hc_tree_homologies' ],
                 -1  => 'ortho_tree_himem',
             },
         },
@@ -1949,7 +1949,7 @@ sub core_pipeline_analyses {
             },
             -hive_capacity  => $self->o('ortho_tree_capacity'),
             -rc_name        => '4Gb_job',
-            -flow_into      => [ 'hc_tree_attributes', 'hc_tree_homologies' ],
+            -flow_into      => [ 'hc_tree_homologies' ],
         },
 
         {   -logic_name         => 'hc_tree_attributes',
