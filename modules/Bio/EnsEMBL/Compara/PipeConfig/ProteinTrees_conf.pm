@@ -214,7 +214,6 @@ sub default_options {
         #'examl_capacity'            => 400,
         #'notung_capacity'           => 400,
         #'ortho_tree_capacity'       => 200,
-        #'ortho_tree_annot_capacity' => 300,
         #'quick_tree_break_capacity' => 100,
         #'build_hmm_capacity'        => 200,
         #'ktreedist_capacity'        => 150,
@@ -1891,7 +1890,7 @@ sub core_pipeline_analyses {
             -flow_into  => {
                  '2->A' => [ 'hc_tree_structure', 'hc_tree_attributes' ],
                  '1->A' => [ 'hc_alignment_post_tree', 'hc_tree_structure', 'hc_tree_attributes' ],
-                 'A->1' => 'homology_entry_point',
+                 'A->1' => 'ortho_tree',
             },
             -meadow_type    => 'LOCAL',
         },
@@ -1911,21 +1910,6 @@ sub core_pipeline_analyses {
             },
             %hc_analysis_params,
         },
-
-        {   -logic_name => 'homology_entry_point',
-            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
-            -parameters => {
-                'inputquery'        => 'SELECT root_id AS gene_tree_id FROM gene_tree_root WHERE ref_root_id = #gene_tree_id#',
-                'fan_branch_code'   => 2,
-            },
-            -flow_into  => {
-                 '1->A' => [ 'ortho_tree' ],
-                 '2->A' => [ 'ortho_tree_annot' ],
-                 'A->1' => 'finalize_entry_point',
-            },
-            -meadow_type    => 'LOCAL',
-        },
-
 
         {   -logic_name => 'ortho_tree',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::OrthoTree',
@@ -1990,34 +1974,6 @@ sub core_pipeline_analyses {
                               },
             -hive_capacity => $self->o('ktreedist_capacity'),
             -rc_name       => '2Gb_job',
-        },
-
-        {   -logic_name => 'ortho_tree_annot',
-            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::OrthoTree',
-            -parameters => {
-                'tag_split_genes'   => 1,
-                'store_homologies'  => 0,
-                'homoeologous_genome_dbs' => $self->o('homoeologous_genome_dbs'),
-            },
-            -hive_capacity  => $self->o('ortho_tree_annot_capacity'),
-            -rc_name        => '250Mb_job',
-            -batch_size     => 20,
-            -flow_into      => {
-                1   => [ 'hc_tree_attributes' ],
-                -1  => [ 'ortho_tree_annot_himem' ],
-            },
-        },
-
-        {   -logic_name => 'ortho_tree_annot_himem',
-            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::OrthoTree',
-            -parameters => {
-                'tag_split_genes'   => 1,
-                'store_homologies'  => 0,
-                'homoeologous_genome_dbs' => $self->o('homoeologous_genome_dbs'),
-            },
-            -hive_capacity  => $self->o('ortho_tree_annot_capacity'),
-            -rc_name        => '4Gb_job',
-            -flow_into      => [ 'hc_tree_attributes' ],
         },
 
         {   -logic_name => 'finalize_entry_point',
