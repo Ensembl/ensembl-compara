@@ -547,6 +547,8 @@ my %CODONS =   ("ATG" => "Met",
 
 sub get_4D_SimpleAlign {
     my $self = shift;
+    my $keep_gaps = shift;
+    my $aa_must_be_identical = shift;
 
     my $sa = Bio::SimpleAlign->new();
 
@@ -564,7 +566,8 @@ sub get_4D_SimpleAlign {
         my $seqstr = $member->alignment_string('cds');
         next if(!$seqstr);
         #print STDERR $seqstr,"\n";
-        my @tmp_tab = split /\s+/, $seqstr;
+        $seqstr =~ s/(.{3})/$1 /g;
+        my @tmp_tab =  split /\s+/, $seqstr;
         #print STDERR "tnp_tab 0: ", $tmp_tab[0],"\n";
         $member_seqstr{$member->stable_id} = \@tmp_tab;
     }
@@ -586,7 +589,10 @@ sub get_4D_SimpleAlign {
         my $FourD_codon = 1;
         my $FourD_aminoacid;
         foreach my $seqid (keys %member_seqstr) {
-            if (defined $FOURD_CODONS{$member_seqstr{$seqid}->[$i]}) {
+            if (defined $FOURD_CODONS{$member_seqstr{$seqid}->[$i]} or ($keep_gaps and $member_seqstr{$seqid}->[$i] eq '---')) {
+                #print STDERR "YES ",$FOURD_CODONS{$member_seqstr{$seqid}->[$i]}," ",$member_seqstr{$seqid}->[$i],"\n";
+                next unless $aa_must_be_identical;
+
                 if (defined $FourD_aminoacid && $FourD_aminoacid eq $FOURD_CODONS{$member_seqstr{$seqid}->[$i]}) {
                     #print STDERR "YES ",$FOURD_CODONS{$member_seqstr{$seqid}->[$i]}," ",$member_seqstr{$seqid}->[$i],"\n";
                     next;
@@ -627,6 +633,8 @@ sub get_4D_SimpleAlign {
             $sa->add_seq($seq);
         }
     }
+
+    $sa = $sa->remove_gaps(undef, 1) if UNIVERSAL::can($sa, 'remove_gaps');
 
     return $sa;
 }
