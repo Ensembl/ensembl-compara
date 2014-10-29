@@ -72,7 +72,7 @@ if($db_name=~/^\d+$/){
  my @db_adaptors = @{ Bio::EnsEMBL::Registry->get_all_DBAdaptors( -group => "$group") };
  foreach my $db_adaptor (@db_adaptors) {
   my $db_connection = $db_adaptor->dbc();
-  my $pass = $db_connection->pass() ? $db_connection->pass() : '""';
+  my $pass = $db_connection->pass() ? $db_connection->pass() : '';
   push(@connection_params, { 
    adaptor => ref($db_adaptor), 
    host => $db_connection->host(), 
@@ -97,7 +97,7 @@ elsif($db_name=~/\w+/){
   if($assembly_default){
    push @locator_strings, $genome_db->locator if ( $genome_db->assembly_default && $genome_db->locator );
   } else {
-   push @locator_strings, $genome_db->locator if defined($genome_db->locator);
+   push @locator_strings, $genome_db->locator if $genome_db->locator;
   }
  }
  throw("no locator strings in database $db_name") unless @locator_strings;
@@ -124,7 +124,7 @@ sub print_con {
   print "\n######\nnew $con_hash->{'adaptor'} (\n";
   delete($con_hash->{'adaptor'});
   foreach my $key(keys %$con_hash){
-   print " $key => ", $con_hash->{$key}, ",\n";
+   print " -$key => \"", $con_hash->{$key}, "\",\n";
   }
   print ");\n";
  }
