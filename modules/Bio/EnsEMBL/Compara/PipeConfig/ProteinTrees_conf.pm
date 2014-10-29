@@ -117,6 +117,7 @@ sub default_options {
         'use_raxml'                 => 0,
         'use_notung'                => 0,
         'use_raxml_epa_on_treebest' => 0,
+        'use_quick_tree_break'      => 1,
         'treebreak_gene_count'      => 400,     # affects msa_chooser
         'mafft_gene_count'          => 200,     # affects msa_chooser
         'mafft_runtime'             => 7200,    # affects msa_chooser
@@ -1462,7 +1463,7 @@ sub core_pipeline_analyses {
             -parameters         => {
                 mode            => 'alignment',
             },
-            -flow_into => [ 'test_very_large_clusters_go_to_qtb' ],
+            -flow_into => [ $self->o('use_quick_tree_break') ? 'test_very_large_clusters_go_to_qtb' : 'split_genes' ],
             %hc_analysis_params,
         },
 
