@@ -89,6 +89,7 @@ sub render_normal {
       #print STDERR "Rendering reads\n";
       $self->render_sequence_reads(%options) if $options{show_reads};
       #print STDERR "Done rendering reads\n";
+      $self->render_caption;
     }
     alarm 0;
   };
@@ -142,7 +143,6 @@ sub bam_adaptor {
 sub features {
 ## get the alignment features
   my $self = shift;
-  warn ">>> GETTING BAM FEATURES";
 
   my $slice = $self->{'container'};
   if (!exists($self->{_cache}->{features})) {
@@ -250,6 +250,24 @@ sub my_colour {
   my ($self, $key) = @_;
   my $colours = $self->my_config('colours');
   return $colours->{$key}->{default} || $colours->{default}->{default} || 'grey80';
+}
+
+sub render_caption {
+  my $self = shift;
+
+  my( $fontname_i, $fontsize_i ) = $self->get_font_details( 'innertext' );
+
+  $self->push($self->Text({
+        'x'         => 0,
+        'y'         => $self->{_yoffset}, 
+        'height'    => $fontsize_i + 2,
+        'font'      => $fontname_i,
+        'ptsize'    => $fontsize_i,
+        'colour'    => $self->my_colour('consensus'), 
+        'text'      => $self->my_config('caption'),
+   }));
+
+
 }
 
 sub render_coverage {
