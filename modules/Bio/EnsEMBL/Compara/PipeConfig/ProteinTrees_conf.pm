@@ -125,6 +125,8 @@ sub default_options {
         'raxml_threshold_aln_len' => 2500,
         'raxml_cores'             => 16,
         'examl_cores'             => 64,
+        'treebest_threshold_n_residues' => 10000,
+        'treebest_threshold_n_genes'    => 400,
 
     # alignment filtering options
         'threshold_n_genes'       => 20,
@@ -1475,7 +1477,7 @@ sub core_pipeline_analyses {
             -rc_name        => '500Mb_job',
             -batch_size     => 20,
             -flow_into      => {
-                '1->A'   => [ $self->o('use_notung') ? 'tree_entry_point' : ($self->o('use_raxml') ? 'filter_decision' : 'treebest' ) ],
+                '1->A'   => [ $self->o('use_notung') ? 'tree_entry_point' : ($self->o('use_raxml') ? 'filter_decision' : 'treebest_decision_short' ) ],
                 'A->1'   => [ 'hc_post_tree' ],
                 -1  => 'split_genes_himem',
             },
@@ -1486,7 +1488,7 @@ sub core_pipeline_analyses {
             -hive_capacity  => $self->o('split_genes_capacity'),
             -rc_name        => '4Gb_job',
             -flow_into      => {
-                '1->A'   => [ $self->o('use_notung') ? 'tree_entry_point' : ($self->o('use_raxml') ? 'filter_decision' : 'treebest' ) ],
+                '1->A'   => [ $self->o('use_notung') ? 'tree_entry_point' : ($self->o('use_raxml') ? 'filter_decision' : 'treebest_decision_long' ) ],
                 'A->1'   => [ 'hc_post_tree' ],
             },
         },
@@ -1495,7 +1497,7 @@ sub core_pipeline_analyses {
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
             -meadow_type    => 'LOCAL',
             -flow_into  => {
-                '1->A' => [ $self->o('use_raxml') ? 'filter_decision' : 'treebest' ],
+                '1->A' => [ $self->o('use_raxml') ? 'filter_decision' : 'treebest_decision_short' ],
                 'A->1' => [ 'notung' ],
             },
         },
@@ -1605,6 +1607,49 @@ sub core_pipeline_analyses {
 
 # ---------------------------------------------[tree building with treebest]-------------------------------------------------------------
 
+        {   -logic_name => 'treebest_decision_short',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::GeneTreeConditionalDataFlow',
+            -parameters => {
+                'condition'             => '(#tree_aln_num_residues# < #treebest_threshold_n_residues#)',
+                'treebest_threshold_n_residues'      => $self->o('treebest_threshold_n_residues'),
+            },
+            -flow_into  => {
+                2 => [ 'treebest_short' ],
+                3 => [ 'treebest_decision_long' ],
+            },
+        },
+
+        {   -logic_name => 'treebest_decision_long',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::GeneTreeConditionalDataFlow',
+            -parameters => {
+                'condition'             => '(#tree_gene_count# >= #treebest_threshold_n_genes#)',
+                'treebest_threshold_n_genes'      => $self->o('treebest_threshold_n_genes'),
+            },
+            -flow_into  => {
+                2 => [ 'treebest_long_himem' ],
+                3 => [ 'treebest' ],
+            },
+        },
+
+        {   -logic_name => 'treebest_short',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::NJTREE_PHYML',
+            -parameters => {
+                'cdna'                      => 1,
+                'store_intermediate_trees'  => 1,
+                'store_filtered_align'      => 1,
+                'treebest_exe'              => $self->o('treebest_exe'),
+                'output_clusterset_id'      => $self->o('use_raxml_epa_on_treebest') ? 'treebest' : 'default',
+            },
+            -hive_capacity        => $self->o('treebest_capacity'),
+            -rc_name    => '2Gb_job',
+            -batch_size => 10,
+            -flow_into  => {
+                -1 => 'treebest',
+                -2 => 'treebest',
+                1 => [ $self->o('use_raxml_epa_on_treebest') ? ('raxml_epa_longbranches') : () ],
+            }
+        },
+
         {   -logic_name => 'treebest',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::NJTREE_PHYML',
             -parameters => {
@@ -1617,8 +1662,23 @@ sub core_pipeline_analyses {
             -hive_capacity        => $self->o('treebest_capacity'),
             -rc_name    => '4Gb_job',
             -flow_into  => {
+                -1 => 'treebest_long_himem',
+                -2 => 'treebest_long_himem',
                 1 => [ $self->o('use_raxml_epa_on_treebest') ? ('raxml_epa_longbranches') : () ],
             }
+        },
+        {   -logic_name => 'treebest_long_himem',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::NJTREE_PHYML',
+            -parameters => {
+                'cdna'                      => 1,
+                'store_intermediate_trees'  => 1,
+                'store_filtered_align'      => 1,
+                'treebest_exe'              => $self->o('treebest_exe'),
+                'output_clusterset_id'      => $self->o('use_raxml_epa_on_treebest') ? 'treebest' : 'default',
+            },
+            -hive_capacity        => $self->o('treebest_capacity'),
+            -rc_name    => '8Gb_job',
+            -flow_into  => [ $self->o('use_raxml_epa_on_treebest') ? ('raxml_epa_longbranches_himem') : () ],
         },
 
         {   -logic_name => 'raxml_epa_longbranches',
