@@ -151,7 +151,7 @@ sub fetch_input {
 
     # default parameters
     $self->param('split_genes',   {}  );
-    $self->param('cmd_output',  undef );
+    $self->param('newick_output',  undef );
 }
 
 
@@ -165,9 +165,6 @@ sub run {
 sub write_output {
     my $self = shift;
 
-    my $cmd_output = $self->param('cmd_output');
-    return unless $cmd_output;
-
     my $target_tree = $self->param('gene_tree');
 
     if ($self->param('read_tags')) {
@@ -177,11 +174,12 @@ sub write_output {
         }
 
     } else {
+
         if ($self->param('output_clusterset_id') and $self->param('output_clusterset_id') ne 'default') {
-            $target_tree = $self->store_alternative_tree($cmd_output, $self->param('output_clusterset_id'), $target_tree);
+            $target_tree = $self->store_alternative_tree($self->param('newick_output'), $self->param('output_clusterset_id'), $target_tree);
         } else {
             $target_tree = $self->param('default_gene_tree');
-            $self->parse_newick_into_tree($cmd_output, $target_tree, []);
+            $self->parse_newick_into_tree($self->param('newick_output'), $target_tree, []);
             $self->store_genetree($target_tree);
         }
 
@@ -260,12 +258,19 @@ sub run_generic_command {
         $self->throw( sprintf( "'%s' resulted in an error code=%d\nstderr is: %s\nstdout is %s", $run_cmd->cmd, $run_cmd->exit_code, $run_cmd->err, $run_cmd->out) );
     }
     $self->param('runtime_msec', $run_cmd->runtime_msec);
+    $self->param('cmd_out',      $run_cmd->out);
 
     $self->param('output_file', $self->worker_temp_directory.'/'.$self->param('output_file')) if $self->param('output_file');
-    my $output = $self->param('output_file') ? $self->_slurp($self->param('output_file')) : $run_cmd->out;
-    print "Re-root with sdi=".$self->param('reroot_with_sdi')."\n" if($self->debug);
-    $output = $self->run_treebest_sdi($output, $self->param('reroot_with_sdi')) if $self->param('run_treebest_sdi');
-    $self->param('cmd_output', $output);
+
+    unless ($self->param('read_tags')) {
+        my $output = $self->param('output_file') ? $self->_slurp($self->param('output_file')) : $run_cmd->out;
+        if ($self->param('run_treebest_sdi')) {
+            print "Re-rooting the tree with 'treebest sdi'\n" if($self->debug);
+            $output = $self->run_treebest_sdi($output, $self->param('reroot_with_sdi'));
+        }
+        die "The Newick output is empty\n" unless $output;
+        $self->param('newick_output', $output);
+    }
 }
 
 
