@@ -44,7 +44,7 @@ The command has to be defined using the following parameters:
  - #gene_tree_file#: current gene tree
  - #species_tree_file#: the reference species tree
  - #alignment_file#: the alignment file
- - #tag:XYZ#: the value of the tag "XYZ" of the gene-tree
+ - #tag_XYZ#: the value of the tag "XYZ" of the gene-tree
 
 By default, the standard output of the job is captured and is expected
 to be a Newick/NHX tree. This is overriden by any of the parameters:
@@ -238,7 +238,7 @@ sub run_generic_command {
     }
 
     foreach my $tag ($gene_tree->get_all_tags()) {
-        $self->param("tag:$tag", $gene_tree->get_value_for_tag($tag));
+        $self->param("tag_$tag", $gene_tree->get_value_for_tag($tag));
     }
 
     my $cmd = sprintf('cd %s; %s', $self->worker_temp_directory, $self->param_required('cmd'));
