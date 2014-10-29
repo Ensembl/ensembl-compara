@@ -389,6 +389,7 @@ sub core_pipeline_analyses {
             -analysis_capacity  => $self->o('hc_capacity'),
             -priority           => $self->o('hc_priority'),
             -batch_size         => 20,
+            -max_retry_count    => 1,
     );
 
     return [
