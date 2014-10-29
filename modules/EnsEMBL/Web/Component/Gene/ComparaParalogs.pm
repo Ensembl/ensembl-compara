@@ -42,7 +42,13 @@ sub content {
   
   my %paralogue_map = qw(SEED BRH PIP RHS);
   my $alignview     = 0;
-  
+ 
+  my %glossary = $hub->species_defs->multiX('ENSEMBL_GLOSSARY');
+
+  my $lookup = {
+                'Paralogues (same species)' => 'Within species paralogues (within species paralogs)',
+                };
+ 
   my $columns = [
     { key => 'Type',                align => 'left', width => '10%', sort => 'html'          },
     { key => 'Ancestral taxonomy',  align => 'left', width => '10%', sort => 'html'          },
@@ -124,10 +130,11 @@ sub content {
       }
 
       $links .= '</ul>';
-      
+
+      my $glossary_def = $glossary{$lookup->{ucfirst $paralogue_desc}} || '';
       
       push @rows, {
-        'Type'                => ucfirst $paralogue_desc,
+        'Type'                => $glossary_def ? sprintf('<span class="glossary_mouseover">%s<span class="floating_popup">%s</span></span>', ucfirst $paralogue_desc, $glossary_def) : ucfirst $paralogue_desc,
         'Ancestral taxonomy'  => $paralogue_subtype,
         'identifier' => $self->html_format ? $id_info : $stable_id,
         'Compare'             => $self->html_format ? qq{<span class="small">$links</span>} : '',
