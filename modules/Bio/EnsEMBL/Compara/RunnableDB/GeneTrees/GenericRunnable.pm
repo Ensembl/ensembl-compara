@@ -49,8 +49,9 @@ The command has to be defined using the following parameters:
 By default, the standard output of the job is captured and is expected
 to be a Newick/NHX tree. This is overriden by any of the parameters:
  - output_file: file to read instead of the standard output
- - read_tags: if 1, the output is parsed as lines of "key: value" that
-              are stored as tags. Otherwise, it is assumed to be a tree
+ - read_tags: if 1, the runnable will call a get_tags() method that must be
+              implemented in the derived class and return a hash of tag/values
+              to be stored on the gene-tree.
 
 Other parameters:
  - check_split_genes: whether we want to group the split genes in fake gene entries
@@ -170,7 +171,10 @@ sub write_output {
     my $target_tree = $self->param('gene_tree');
 
     if ($self->param('read_tags')) {
-        $self->store_tags($target_tree, $self->get_tags($cmd_output));
+        my $tags = $self->get_tags();
+        while ( my ($tag, $value) = each %$tags ) {
+            $target_tree->store_tag($tag, $value);
+        }
 
     } else {
         if ($self->param('output_clusterset_id') and $self->param('output_clusterset_id') ne 'default') {
@@ -291,27 +295,8 @@ sub _load_species_tree_string_from_db {
 
 
 sub get_tags {
-    my ($self, $output) = @_;
-
-    my %tags = ();
-    foreach my $line (split /\n/, $output) {
-        chomp $line;
-        if ($line =~ /([^:]*):(.*)/) {
-            $tags{$1} = $2;
-        }
-    }
-    return \%tags;
+    die "get_tags() must be implemented by the derived module\n";
 }
-
-
-sub store_tags {
-    my ($self, $gene_tree, $tags) = @_;
-    while ( my ($tag, $value) = each %$tags ) {
-        $gene_tree->store_tag($tag, $value);
-    }
-}
-
-
 
 
 1;
