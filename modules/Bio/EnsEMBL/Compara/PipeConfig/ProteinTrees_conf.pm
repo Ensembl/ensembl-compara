@@ -118,9 +118,13 @@ sub default_options {
         'use_notung'                => 0,
         'use_raxml_epa_on_treebest' => 0,
         'use_quick_tree_break'      => 1,
-        'treebreak_gene_count'      => 400,     # affects msa_chooser
-        'mafft_gene_count'          => 200,     # affects msa_chooser
-        'mafft_runtime'             => 7200,    # affects msa_chooser
+
+        'treebreak_gene_count'      => 400,
+
+        'mcoffee_himem_gene_count'  => 250,
+        'mafft_gene_count'          => 300,
+        'mafft_himem_gene_count'    => 400,
+        'mafft_runtime'             => 7200,
         'raxml_threshold_n_genes' => 500,
         'raxml_threshold_aln_len' => 2500,
         'raxml_cores'             => 16,
@@ -1321,41 +1325,28 @@ sub core_pipeline_analyses {
         },
 
         {   -logic_name => 'alignment_entry_point',
-            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
-            -flow_into  => {
-                 '1->A' => [ 'test_large_clusters_go_to_mafft' ],
-                 'A->1' => [ 'hc_alignment' ],
-            },
-            -meadow_type    => 'LOCAL',
-        },
-
-        {   -logic_name => 'test_large_clusters_go_to_mafft',
-            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::GeneTreeConditionalDataFlow',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::GeneTreeMultiConditionalDataFlow',
             -parameters => {
-                'condition'             => '#tree_gene_count# > #mafft_gene_count#',
-                'mafft_gene_count'      => $self->o('mafft_gene_count'),
+                'defaults'  => { 'tree_reuse_aln_runtime' => 0 },
+                'branches'  => {
+                    2 => '(#tree_gene_count# <  #mcoffee_himem_gene_count#)                                                 and (#tree_reuse_aln_runtime#/1000 <  #mafft_runtime#)',
+                    3 => '(#tree_gene_count# >= #mcoffee_himem_gene_count# and #tree_gene_count# < #mafft_gene_count#)      and (#tree_reuse_aln_runtime#/1000 <  #mafft_runtime#)',
+                    4 => '(#tree_gene_count# >= #mafft_gene_count#         and #tree_gene_count# < #mafft_himem_gene_count#) or (#tree_reuse_aln_runtime#/1000 >= #mafft_runtime#)',
+                    5 => '(#tree_gene_count# >= #mafft_himem_gene_count#)                                                    or (#tree_reuse_aln_runtime#/1000 >= #mafft_runtime#) ',
+                },
+                'mcoffee_himem_gene_count'  => $self->o('mcoffee_himem_gene_count'),
+                'mafft_gene_count'          => $self->o('mafft_gene_count'),
+                'mafft_himem_gene_count'    => $self->o('mafft_himem_gene_count'),
+                'mafft_runtime'             => $self->o('mafft_runtime'),
             },
             -flow_into  => {
-                2 => [ 'mafft' ],
-                3 => [ 'test_previous_runtime' ],
+                2 => [ 'mcoffee' ],
+                3 => [ 'mcoffee_himem' ],
+                4 => [ 'mafft' ],
+                5 => [ 'mafft_himem' ],
             },
             -meadow_type    => 'LOCAL',
         },
-
-        {   -logic_name => 'test_previous_runtime',
-            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::GeneTreeConditionalDataFlow',
-            -parameters => {
-                'condition'             => '#tree_reuse_aln_runtime#/1000 > #mafft_runtime#',
-                'defaults'              => { 'tree_reuse_aln_runtime' => 0 },
-                'mafft_runtime'         => $self->o('mafft_runtime'),
-            },
-            -flow_into  => {
-                2 => [ 'mafft' ],
-                3 => [ 'mcoffee' ],
-            },
-            -meadow_type    => 'LOCAL',
-        },
-
 
         {   -logic_name => 'test_very_large_clusters_go_to_qtb',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::GeneTreeConditionalDataFlow',
@@ -1414,6 +1405,7 @@ sub core_pipeline_analyses {
             -hive_capacity        => $self->o('mcoffee_capacity'),
             -rc_name    => '2Gb_job',
             -flow_into => {
+                1 => [ 'hc_alignment' ],
                -1 => [ 'mcoffee_himem' ],  # MEMLIMIT
                -2 => [ 'mafft' ],
             },
@@ -1428,6 +1420,7 @@ sub core_pipeline_analyses {
             -hive_capacity        => $self->o('mcoffee_capacity'),
             -rc_name    => '2Gb_job',
             -flow_into => {
+                1 => [ 'hc_alignment' ],
                -1 => [ 'mafft_himem' ],  # MEMLIMIT
             },
         },
@@ -1443,6 +1436,7 @@ sub core_pipeline_analyses {
             -hive_capacity        => $self->o('mcoffee_capacity'),
             -rc_name    => '8Gb_job',
             -flow_into => {
+                1 => [ 'hc_alignment' ],
                -1 => [ 'mafft_himem' ],
                -2 => [ 'mafft_himem' ],
             },
@@ -1455,6 +1449,9 @@ sub core_pipeline_analyses {
             },
             -hive_capacity        => $self->o('mcoffee_capacity'),
             -rc_name    => '8Gb_job',
+            -flow_into => {
+                1 => [ 'hc_alignment' ],
+            },
         },
 
         {   -logic_name         => 'hc_alignment',
@@ -1475,7 +1472,7 @@ sub core_pipeline_analyses {
             -rc_name        => '500Mb_job',
             -batch_size     => 20,
             -flow_into      => {
-                '1->A'   => [ $self->o('use_notung') ? 'tree_entry_point' : ($self->o('use_raxml') ? 'filter_decision' : 'treebest_decision_short' ) ],
+                '1->A'   => [ $self->o('use_notung') ? 'tree_entry_point' : ($self->o('use_raxml') ? 'filter_decision' : 'treebest_decision' ) ],
                 'A->1'   => [ 'hc_post_tree' ],
                 -1  => 'split_genes_himem',
             },
@@ -1486,7 +1483,7 @@ sub core_pipeline_analyses {
             -hive_capacity  => $self->o('split_genes_capacity'),
             -rc_name        => '4Gb_job',
             -flow_into      => {
-                '1->A'   => [ $self->o('use_notung') ? 'tree_entry_point' : ($self->o('use_raxml') ? 'filter_decision' : 'treebest_decision_long' ) ],
+                '1->A'   => [ $self->o('use_notung') ? 'tree_entry_point' : ($self->o('use_raxml') ? 'filter_decision' : 'treebest_decision' ) ],
                 'A->1'   => [ 'hc_post_tree' ],
             },
         },
@@ -1495,7 +1492,7 @@ sub core_pipeline_analyses {
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
             -meadow_type    => 'LOCAL',
             -flow_into  => {
-                '1->A' => [ $self->o('use_raxml') ? 'filter_decision' : 'treebest_decision_short' ],
+                '1->A' => [ $self->o('use_raxml') ? 'filter_decision' : 'treebest_decision' ],
                 'A->1' => [ 'notung' ],
             },
         },
@@ -1503,29 +1500,25 @@ sub core_pipeline_analyses {
 # ---------------------------------------------[alignment filtering]-------------------------------------------------------------
 
         {   -logic_name => 'filter_decision',
-            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::GeneTreeConditionalDataFlow',
+
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::GeneTreeMultiConditionalDataFlow',
             -parameters => {
-                'condition'              => '(#tree_gene_count# <= #threshold_n_genes#) || (#tree_aln_length# <= #threshold_aln_len#)',
+                'branches'  => {
+                    2 => '(#tree_gene_count# <= #threshold_n_genes#) || (#tree_aln_length# <= #threshold_aln_len#)',
+                    4 => '(#tree_gene_count# >= #threshold_n_genes_large# and #tree_aln_length# > #threshold_aln_len#) || (#tree_aln_length# >= #threshold_aln_len_large# and #tree_gene_count# > #threshold_n_genes#)',
+                },
+                'else_branch'   => 3,
+
                 'threshold_n_genes'      => $self->o('threshold_n_genes'),
                 'threshold_aln_len'      => $self->o('threshold_aln_len'),
-            },
-            -flow_into  => {
-                2 => [ 'aln_filtering_tagging' ],
-                3 => [ 'filtering_strictness' ],
-            },
-        },
-
-        {   -logic_name => 'filtering_strictness',
-            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::GeneTreeConditionalDataFlow',
-            -parameters => {
-                'condition'                    => '(#tree_gene_count# >= #threshold_n_genes_large#) || (#tree_aln_length# >= #threshold_aln_len_large#)',
                 'threshold_n_genes_large'      => $self->o('threshold_n_genes_large'),
                 'threshold_aln_len_large'      => $self->o('threshold_aln_len_large'),
             },
             -flow_into  => {
-                2 => [ 'noisy_large' ],
+                2 => [ 'aln_filtering_tagging' ],
                 3 => [ 'noisy' ],
-                4 => [ 'trimal' ],
+                4 => [ 'noisy_large' ],
+                5 => [ 'trimal' ], # Not actually used
             },
         },
 
@@ -1586,7 +1579,7 @@ sub core_pipeline_analyses {
             -rc_name    => '16Gb_16c_job',
             -flow_into  => {
                 -1 => [ 'prottest_himem' ],
-                1 => [ 'raxml_n_cores_decision' ],
+                1 => [ 'raxml_decision' ],
             }
         },
 
@@ -1600,32 +1593,26 @@ sub core_pipeline_analyses {
             },
             -hive_capacity        => $self->o('prottest_capacity'),
             -rc_name    => '64Gb_16c_job',
-            -flow_into  => [ 'examl_chooser' ],
+            -flow_into  => [ 'raxml_decision' ],
         },
 
 # ---------------------------------------------[tree building with treebest]-------------------------------------------------------------
 
-        {   -logic_name => 'treebest_decision_short',
-            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::GeneTreeConditionalDataFlow',
+        {   -logic_name => 'treebest_decision',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::GeneTreeMultiConditionalDataFlow',
             -parameters => {
-                'condition'             => '(#tree_aln_num_residues# < #treebest_threshold_n_residues#)',
+                'branches'  => {
+                    2 => '(#tree_aln_num_residues# < #treebest_threshold_n_residues#)',
+                    4 => '(#tree_gene_count# >= #treebest_threshold_n_genes#)',
+                },
+                'else_branch'   => 3,
                 'treebest_threshold_n_residues'      => $self->o('treebest_threshold_n_residues'),
-            },
-            -flow_into  => {
-                2 => [ 'treebest_short' ],
-                3 => [ 'treebest_decision_long' ],
-            },
-        },
-
-        {   -logic_name => 'treebest_decision_long',
-            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::GeneTreeConditionalDataFlow',
-            -parameters => {
-                'condition'             => '(#tree_gene_count# >= #treebest_threshold_n_genes#)',
                 'treebest_threshold_n_genes'      => $self->o('treebest_threshold_n_genes'),
             },
             -flow_into  => {
-                2 => [ 'treebest_long_himem' ],
+                2 => [ 'treebest_short' ],
                 3 => [ 'treebest' ],
+                4 => [ 'treebest_long_himem' ],
             },
         },
 
@@ -1756,33 +1743,24 @@ sub core_pipeline_analyses {
 
 # ---------------------------------------------[tree building with raxml]-------------------------------------------------------------
 
-        {   -logic_name => 'raxml_n_cores_decision',
-            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::GeneTreeConditionalDataFlow',
+        {   -logic_name => 'raxml_decision',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::GeneTreeMultiConditionalDataFlow',
             -parameters => {
-                'condition'             => '(#tree_gene_count# >= #raxml_threshold_n_genes#) && (#tree_aln_length# >= #raxml_threshold_aln_len#)',
+                'branches'  => {
+                    2 => '(#tree_gene_count# <  #raxml_threshold_n_genes#) || (#tree_aln_length# <  #raxml_threshold_aln_len#)',
+                    4 => '(#tree_gene_count# >= #threshold_n_genes_large#) || (#tree_aln_length# >= #threshold_aln_len_large#)',
+                },
+                'else_branch'   => 3,
                 'raxml_threshold_n_genes'      => $self->o('raxml_threshold_n_genes'),
                 'raxml_threshold_aln_len'      => $self->o('raxml_threshold_aln_len'),
-            },
-            -hive_capacity  => 100,
-            -rc_name 		=> '1Gb_job',
-            -flow_into  => {
-                2 => [ 'examl_chooser' ],
-                3 => [ 'raxml' ],
-            },
-        },
-
-        {   -logic_name => 'examl_chooser',
-            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::GeneTreeConditionalDataFlow',
-            -parameters => {
-                'condition'             => '(#tree_gene_count# >= #threshold_n_genes_large#) || (#tree_aln_length# >= #threshold_aln_len_large#)',
                 'threshold_n_genes_large'      => $self->o('threshold_n_genes_large'),
                 'threshold_aln_len_large'      => $self->o('threshold_aln_len_large'),
             },
             -hive_capacity  => 100,
-            -rc_name 		=> '1Gb_job',
             -flow_into  => {
-                2 => [ 'examl' ],
+                2 => [ 'raxml' ],
                 3 => [ 'raxml_multi_core' ],
+                4 => [ 'examl' ],
             },
         },
 
