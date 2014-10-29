@@ -124,7 +124,7 @@ sub run {
 
       #recheck err file
       if ($command->err) {
-          die "Error even after sorting gff_file";
+          die "Error even after sorting gff_file " . $command->err;
       }
   }
 

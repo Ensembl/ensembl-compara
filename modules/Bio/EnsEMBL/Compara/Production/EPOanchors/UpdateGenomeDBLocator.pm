@@ -68,11 +68,11 @@ sub fetch_input {
  my $species_name = $self->param('species_loc_name');
 
 # load the species db into the registry
- if($species_name eq "ancestral_sequences"){
+ if($species_name eq "ancestral_sequences" && not $self->param('no_ancestral_sequences')){
   my $species_dba = Bio::EnsEMBL::DBSQL::DBAdaptor->new( %{ $self->param('ancestral_db') } );
   throw('no ancestral_db found') unless $species_dba;
   Bio::EnsEMBL::Registry->add_DBAdaptor( "$species_name", "core", $species_dba);
- } elsif(exists($self->param('additional_core_db_urls')->{"$species_name"})){
+ } elsif($self->param('additional_core_db_urls') && exists($self->param('additional_core_db_urls')->{"$species_name"})){
    my $species_url = $self->param('additional_core_db_urls')->{"$species_name"};
    $species_url .= "?group=core&species=$species_name";
    if(Bio::EnsEMBL::Registry->get_alias("$species_name")){ # need to remove if species already added from main_core_dbs 
