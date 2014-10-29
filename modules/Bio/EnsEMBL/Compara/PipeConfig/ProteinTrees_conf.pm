@@ -1949,6 +1949,7 @@ sub core_pipeline_analyses {
             -parameters         => {
                 mode            => 'tree_homologies',
             },
+            -flow_into      => [ 'ktreedist', 'build_HMM_aa_v2', 'build_HMM_aa_v3', 'build_HMM_cds_v3' ],
             %hc_analysis_params,
         },
 
@@ -1974,12 +1975,6 @@ sub core_pipeline_analyses {
                               },
             -hive_capacity => $self->o('ktreedist_capacity'),
             -rc_name       => '2Gb_job',
-        },
-
-        {   -logic_name => 'finalize_entry_point',
-            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
-            -flow_into  => [ 'ktreedist', 'build_HMM_aa_v2', 'build_HMM_aa_v3', 'build_HMM_cds_v3' ],
-            -meadow_type    => 'LOCAL',
         },
 
         {   -logic_name => 'build_HMM_aa_v2',
