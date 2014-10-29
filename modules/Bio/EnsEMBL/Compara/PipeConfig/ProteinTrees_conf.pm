@@ -1287,14 +1287,12 @@ sub core_pipeline_analyses {
         {   -logic_name => 'overall_qc',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::OverallGroupsetQC',
             -hive_capacity  => $self->o('qc_capacity'),
-            -failed_job_tolerance => 0,
             -rc_name    => '2Gb_job',
         },
 
         {   -logic_name => 'per_genome_qc',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::PerGenomeGroupsetQC',
             -hive_capacity => $self->o('qc_capacity'),
-            -failed_job_tolerance => 0,
         },
 
         {   -logic_name    => 'clusterset_backup',
@@ -2213,7 +2211,6 @@ sub core_pipeline_analyses {
                 'codeml_exe'                => $self->o('codeml_exe'),
             },
             -hive_capacity        => $self->o('homology_dNdS_capacity'),
-            -failed_job_tolerance => 2,
             -rc_name => '500Mb_job',
         },
 
