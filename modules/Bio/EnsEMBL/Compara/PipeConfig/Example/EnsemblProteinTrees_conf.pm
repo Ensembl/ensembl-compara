@@ -85,6 +85,7 @@ sub default_options {
         'outgroups'                     => { 'saccharomyces_cerevisiae' => 2 },
 
     # tree building parameters:
+        'use_quick_tree_break'      => 0,
         'treebreak_gene_count'      => 40000,     # affects msa_chooser
         'mafft_gene_count'          => 300,     # affects msa_chooser
 
