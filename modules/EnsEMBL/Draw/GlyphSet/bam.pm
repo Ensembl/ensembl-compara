@@ -701,7 +701,7 @@ sub render_sequence_reads {
 #              : 2 + $self->{'config'}->texthelper()->height($self->{'config'}->species_defs->ENSEMBL_STYLE->{'GRAPHIC_FONT'})
 #              ;
     my $y_pos = 2 + $self->{'config'}->texthelper()->height($self->{'config'}->species_defs->ENSEMBL_STYLE->{'GRAPHIC_FONT'});
-    $self->errorTrack( sprintf( q(%s features from '%s' omitted), $features_bumped, $self->my_config('name')), undef, $max_y );
+    $self->errorTrack( sprintf( q(%s features from '%s' not shown), $features_bumped, $self->my_config('name')), undef, $max_y );
   }
   
   return;
