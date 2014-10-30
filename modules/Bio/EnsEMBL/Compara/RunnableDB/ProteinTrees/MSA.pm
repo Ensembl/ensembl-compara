@@ -148,14 +148,19 @@ sub write_output {
         my $aln_ok = $self->parse_and_store_alignment_into_proteintree;
         unless ($aln_ok) {
             # Probably an ongoing MEMLIMIT
-            # We have 10 seconds to dataflow and exit;
-            my $new_job = $self->dataflow_output_id($self->input_id, $self->param('escape_branch'));
-            if (scalar(@$new_job)) {
-                $self->input_job->autoflow(0);
-                $self->complete_early('Probably not enough memory. Switching to the _himem analysis.');
-            } else {
-                die 'Error in the alignment but cannot switch to an analysis with more memory.';
-            }
+            # Let's wait a bit to let LSF kill the worker as it should
+            sleep 30;
+            # If we're still there, there is something weird going on.
+            # Perhaps not a MEMLIMIT, after all. Let's die and hope that
+            # next run will be better
+            die "There is no output file !\n";
+            #my $new_job = $self->dataflow_output_id($self->input_id, $self->param('escape_branch'));
+            #if (scalar(@$new_job)) {
+                #$self->input_job->autoflow(0);
+                #$self->complete_early('Probably not enough memory. Switching to the _himem analysis.');
+            #} else {
+                #die 'Error in the alignment but cannot switch to an analysis with more memory.';
+            #}
         }
     }
 
