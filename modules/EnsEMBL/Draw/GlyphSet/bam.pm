@@ -394,7 +394,24 @@ sub render_coverage {
   }));
   
   $self->{_yoffset} += $smax / $scale + 2; # add on height of area just drawn
-  
+ 
+  $self->push( $self->Text({
+    'text'          => '0',
+    'width'         => $res_i[2],
+    'textwidth'     => $res_i[2],
+    'font'          => $fontname_i,
+    'ptsize'        => $fontsize_i,
+    'halign'        => 'right',
+    'valign'        => 'top',
+    'colour'        => 'slategray', 
+    'height'        => $textheight_i,
+    'y'             => $self->{_yoffset} - ($textheight_i + 2),
+    'x'             => -4 - $res_i[2],
+    'absolutey'     => 1,
+    'absolutex'     => 1,
+    'absolutewidth' => 1,
+  }));
+ 
   return;
 }
 
