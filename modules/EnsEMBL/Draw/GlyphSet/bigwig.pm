@@ -177,7 +177,7 @@ sub draw_features {
   my ($self, $wiggle) = @_;
   my $slice        = $self->{'container'};
   my $feature_type = $self->my_config('caption');
-  my $colour       = $self->my_config('colour');
+  my $colour       = $self->my_config('colour') || 'slategray';
 
   # render wiggle if wiggle
   if ($wiggle) {
@@ -212,6 +212,7 @@ sub draw_features {
       max_score    => $max_score, 
       description  => $feature_type,
       score_colour => $colour,
+      axis_colour  => $colour,
       no_titles    => defined $no_titles,
     });
     
