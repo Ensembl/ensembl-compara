@@ -151,6 +151,7 @@ sub fetch_input {
 
     # default parameters
     $self->param('split_genes',   {}  );
+    $self->param('hidden_genes',   []  );
     $self->param('newick_output',  undef );
 }
 

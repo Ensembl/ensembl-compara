@@ -41,6 +41,7 @@ use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 sub merge_split_genes {
     my ($self, $gene_tree) = @_;
 
+    warn sprintf("%d leaves in the tree before merge_split_genes()\n", scalar(@{$gene_tree->get_all_leaves})) if $self->debug;
     my %leaf_by_seq_member_id = (map {$_->seq_member_id => $_} @{ $gene_tree->get_all_leaves });
     my $seq_type = $self->param('cdna') ? 'cds' : undef;
     my %split_genes;
@@ -73,7 +74,7 @@ sub merge_split_genes {
       foreach my $rseq_member_id2 (@$partial_genes) {
         my $protein2 = $leaf_by_seq_member_id{$rseq_member_id2->[0]};
         #print STDERR "seq_member_id2 ", $rseq_member_id2, " ", $protein2->stable_id, "\n";
-        $split_genes{$protein2->seq_member_id} = [$seq_member_id1, $protein2];
+        $split_genes{$protein2->seq_member_id} = $seq_member_id1;
         print STDERR "Joining in ", $protein1->stable_id, " and ", $protein2->stable_id, " in input cdna alignment\n" if ($self->debug);
         my $other_cdna = $protein2->alignment_string($seq_type);
         print STDERR "cnda2 $other_cdna\n" if $self->debug;
@@ -89,6 +90,7 @@ sub merge_split_genes {
                 $node->disavow_parent();
                 $node = $parent;
             }
+            push @{$self->param('hidden_genes')}, $protein2;
 
       }
         # We then directly override the cached alignment_string_cds
@@ -98,11 +100,10 @@ sub merge_split_genes {
 
     if (scalar(keys %split_genes)) {
         $gene_tree->{'_root'} = $gene_tree->root->minimize_tree;
-        $gene_tree->{'_with_removed_split_genes'} = 1;
     }
 
     # Removing duplicate sequences of split genes
-    print STDERR "split_genes list: ", Dumper([map {$_ => $split_genes{$_}->[0]} keys %split_genes]), "\n" if $self->debug;
+    print STDERR "split_genes list: ", Dumper(\%split_genes), "\n" if $self->debug;
     warn sprintf("Removed %d split genes, %d leaves left in the tree\n", scalar(keys %split_genes), scalar(@{$gene_tree->get_all_leaves})) if $self->debug;
     $self->param('split_genes', \%split_genes);
 }
@@ -260,11 +261,10 @@ sub parse_newick_into_tree {
   foreach my $node (@{$tree->get_all_leaves}) {
     $old_leaves{$node->seq_member_id} = $node;
   }
-  # Top it up with the split genes
-  if ($self->param('check_split_genes') and $tree->{_with_removed_split_genes}) {
-    my $split_genes = $self->param('split_genes');
-    foreach my $this_member_id (keys %$split_genes) {
-      $old_leaves{$this_member_id} = $split_genes->{$this_member_id}->[1];
+  # Top it up with the genes that have been hidden (split genes, long branches, etc)
+  if ($self->param('hidden_genes')) {
+    foreach my $hidden_member (@{$self->param('hidden_genes')}) {
+      $old_leaves{$hidden_member->seq_member_id} = $hidden_member unless $old_leaves{$hidden_member->seq_member_id};
     }
   }
 
@@ -286,12 +286,11 @@ sub parse_newick_into_tree {
   if ($self->param('check_split_genes')) {
 
     my $split_genes = $self->param('split_genes');
-    print  "Retrieved split_genes list: ", Dumper([map {$_ => $split_genes->{$_}->[0]} keys %$split_genes]), "\n" if $self->debug;
+    print  "Retrieved split_genes list: ", Dumper($split_genes), "\n" if $self->debug;
     if (scalar(keys %$split_genes)) {
-      foreach my $this_member_id (keys %$split_genes) {
+      while (my ($this_member_id, $other_member_id) = each %$split_genes) {
         my $split_gene_leaf = new Bio::EnsEMBL::Compara::GeneTreeNode;
         $split_gene_leaf->name($this_member_id);       # To match the naming convention of the other leaves
-        my $other_member_id = $split_genes->{$this_member_id}->[0];
         print $this_member_id." is split_gene of $other_member_id\n" if $self->debug;
         my $othernode = $new_leaves{$other_member_id};
         die sprintf("Couldn't find the node '%d' in the tree (to re-create '%d').\nNewick string is:\n%s\n", $other_member_id, $this_member_id, $newick) unless $othernode;
