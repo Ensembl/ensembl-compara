@@ -1631,7 +1631,7 @@ sub core_pipeline_analyses {
             -batch_size => 10,
             -flow_into  => {
                 -1 => 'treebest',
-                -2 => 'treebest',
+                -2 => 'treebest_long_himem',
                 1 => [ $self->o('use_raxml_epa_on_treebest') ? ('raxml_epa_longbranches') : () ],
             }
         },
