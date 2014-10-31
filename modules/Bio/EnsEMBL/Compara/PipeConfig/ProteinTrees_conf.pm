@@ -405,7 +405,6 @@ sub core_pipeline_analyses {
                 '1->A'  => [ 'copy_ncbi_tables_factory' ],
                 'A->1'  => [ 'backbone_fire_genome_load' ],
             },
-            -meadow_type    => 'LOCAL',
         },
 
         {   -logic_name => 'backbone_fire_genome_load',
@@ -430,7 +429,6 @@ sub core_pipeline_analyses {
                 2 => [ 'backbone_fire_clustering' ],
                 3 => [ 'backbone_fire_allvsallblast' ],
             },
-            -meadow_type    => 'LOCAL',
         },
 
         {   -logic_name => 'backbone_fire_allvsallblast',
@@ -486,7 +484,6 @@ sub core_pipeline_analyses {
 
         {   -logic_name => 'backbone_pipeline_finished',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
-            -meadow_type    => 'LOCAL',
         },
 
 # ---------------------------------------------[copy tables from master]-----------------------------------------------------------------
@@ -502,7 +499,6 @@ sub core_pipeline_analyses {
                 '2->A' => [ 'copy_ncbi_table'  ],
                 'A->1' => [ $self->o('master_db') ? 'populate_method_links_from_db' : 'populate_method_links_from_file' ],
             },
-            -meadow_type    => 'LOCAL',
         },
 
         {   -logic_name    => 'copy_ncbi_table',
@@ -512,7 +508,6 @@ sub core_pipeline_analyses {
                 'mode'          => 'overwrite',
                 'filter_cmd'    => 'sed "s/ENGINE=MyISAM/ENGINE=InnoDB/"',
             },
-            -meadow_type    => 'LOCAL',
         },
 
         {   -logic_name    => 'populate_method_links_from_db',
@@ -525,7 +520,6 @@ sub core_pipeline_analyses {
             },
             -analysis_capacity  => 1,
             -flow_into      => [ 'load_genomedb_factory' ],
-            -meadow_type    => 'LOCAL',
         },
 
 # ---------------------------------------------[load GenomeDB entries from master+cores]---------------------------------------------
@@ -544,7 +538,6 @@ sub core_pipeline_analyses {
                 '2->A' => [ 'load_genomedb' ],
                 'A->1' => [ 'create_mlss_ss' ],
             },
-            -meadow_type    => 'LOCAL',
         },
 
         {   -logic_name => 'load_genomedb',
@@ -557,7 +550,6 @@ sub core_pipeline_analyses {
             },
             -flow_into  => [ 'check_reusability' ],
             -analysis_capacity => 1,
-            -meadow_type    => 'LOCAL',
         },
 
         {   -logic_name     => 'populate_method_links_from_file',
@@ -568,7 +560,6 @@ sub core_pipeline_analyses {
                 'cmd'               => '#db_cmd# --executable mysqlimport --append #method_link_dump_file#',
             },
             -flow_into      => [ 'load_all_genomedbs' ],
-            -meadow_type    => 'LOCAL',
         },
 
         {   -logic_name => 'load_all_genomedbs',
@@ -580,7 +571,6 @@ sub core_pipeline_analyses {
                 'registry_files'    => $self->o('curr_file_sources_locs'),
             },
             -analysis_capacity => 1,
-            -meadow_type    => 'LOCAL',
             -flow_into => [ 'create_mlss_ss' ],
         },
 # ---------------------------------------------[filter genome_db entries into reusable and non-reusable ones]------------------------
@@ -605,7 +595,6 @@ sub core_pipeline_analyses {
                 'mlss_id'   => $self->o('mlss_id'),
             },
             -flow_into => [ 'make_treebest_species_tree' ],
-            -meadow_type    => 'LOCAL',
         },
 
 
@@ -676,7 +665,6 @@ sub core_pipeline_analyses {
                 '2->A' => [ 'sequence_table_reuse' ],
                 'A->1' => [ 'load_fresh_members_factory' ],
             },
-            -meadow_type    => 'LOCAL',
         },
 
 
@@ -785,7 +773,6 @@ sub core_pipeline_analyses {
                 '2->A' => [ 'test_is_genome_in_core_db' ],
                 'A->1' => [ 'hc_members_globally' ],
             },
-            -meadow_type    => 'LOCAL',
         },
 
         {   -logic_name => 'test_is_genome_in_core_db',
@@ -797,7 +784,6 @@ sub core_pipeline_analyses {
                 2 => [ $self->o('master_db') ? 'copy_dnafrags_from_master' : 'load_fresh_members_from_db' ],
                 3 => [ 'load_fresh_members_from_file' ],
             },
-            -meadow_type    => 'LOCAL',
         },
 
         {   -logic_name => 'copy_dnafrags_from_master',
@@ -856,7 +842,6 @@ sub core_pipeline_analyses {
                 2 => [ 'paf_table_reuse' ],
                 1 => [ 'nonreusedspecies_factory' ],
             },
-            -meadow_type    => 'LOCAL',
         },
 
         {   -logic_name => 'nonreusedspecies_factory',
@@ -869,7 +854,6 @@ sub core_pipeline_analyses {
             -flow_into => {
                 2 => [ 'paf_create_empty_table' ],
             },
-            -meadow_type    => 'LOCAL',
         },
 
         {   -logic_name => 'paf_table_reuse',
@@ -893,7 +877,6 @@ sub core_pipeline_analyses {
             },
             -flow_into  => [ 'members_against_allspecies_factory' ],
             -analysis_capacity => 1,
-            -meadow_type    => 'LOCAL',
         },
 
 #--------------------------------------------------------[load the HMM profiles]----------------------------------------------------
@@ -909,7 +892,6 @@ sub core_pipeline_analyses {
                 '2->A' => [ 'load_panther_database_models'  ],
                 'A->1' => [ 'multihmm_files_factory' ],
             },
-            -meadow_type    => 'LOCAL',
         },
 
         {   -logic_name => 'multihmm_files_factory',
@@ -923,7 +905,6 @@ sub core_pipeline_analyses {
                 '2->A' => [ 'load_multihmm_models'  ],
                 'A->1' => [ 'dump_models' ],
             },
-            -meadow_type    => 'LOCAL',
         },
 
         {
@@ -962,7 +943,6 @@ sub core_pipeline_analyses {
                                                 (upi, ensembl_id, ensembl_div, panther_family_id, start, end, score, evalue)",
             },
             -flow_into      => [ 'HMMer_classifyCurated' ],
-            -meadow_type    => 'LOCAL',
         },
 
         {
@@ -972,7 +952,6 @@ sub core_pipeline_analyses {
                 'sql'   => 'INSERT INTO hmm_annot SELECT seq_member_id, model_id, NULL FROM hmm_curated_annot hca JOIN seq_member sm ON sm.stable_id = hca.seq_member_stable_id',
             },
             -flow_into      => [ 'HMMer_classifyInterpro' ],
-            -meadow_type    => 'LOCAL',
         },
 
         {
@@ -982,7 +961,6 @@ sub core_pipeline_analyses {
                 'sql'   => 'INSERT IGNORE INTO hmm_annot SELECT seq_member_id, panther_family_id, evalue FROM panther_annot pa JOIN seq_member sm ON sm.stable_id = pa.ensembl_id',
             },
             -flow_into      => [ 'HMMer_classify_factory' ],
-            -meadow_type    => 'LOCAL',
         },
 
         {   -logic_name => 'HMMer_classify_factory',
@@ -1025,7 +1003,6 @@ sub core_pipeline_analyses {
             -parameters     => {
                 'sql'   => 'INSERT INTO gene_tree_root_tag SELECT root_id, "needs_update", 1  FROM treefam_10_baboon.species_set JOIN seq_member USING (genome_db_id) JOIN gene_tree_node USING (seq_member_id) WHERE species_set_id=#nonreuse_ss_id# GROUP BY root_id;',
             },
-            -meadow_type    => 'LOCAL',
         },
 
 
@@ -1098,7 +1075,6 @@ sub core_pipeline_analyses {
                 '2->A'  => [ 'dump_canonical_members' ],
                 'A->1'  => [ 'reusedspecies_factory' ],
             },
-            -meadow_type    => 'LOCAL',
         },
 
         {   -logic_name => 'dump_canonical_members',
@@ -1179,7 +1155,6 @@ sub core_pipeline_analyses {
                     ],
                 'A->1' => [ 'hc_clusters' ],
             },
-            -meadow_type    => 'LOCAL',
         },
 
         {   -logic_name => 'hcluster_dump_factory',
@@ -1194,7 +1169,6 @@ sub core_pipeline_analyses {
                 '2->A' => [ 'hcluster_dump_input_per_genome' ],
                 'A->1' => [ 'hcluster_merge_factory' ],
             },
-            -meadow_type    => 'LOCAL',
         },
 
         {   -logic_name => 'hcluster_dump_input_per_genome',
@@ -1213,7 +1187,6 @@ sub core_pipeline_analyses {
                 },
                 'A->1' => [ 'hcluster_run' ],
             },
-            -meadow_type    => 'LOCAL',
         },
 
         {   -logic_name    => 'hcluster_merge_inputs',
@@ -1286,7 +1259,6 @@ sub core_pipeline_analyses {
                 '1->A' => [ 'overall_qc' ],
                 'A->1' => [ 'clusterset_backup' ],
             },
-            -meadow_type    => 'LOCAL',
         },
 
         {   -logic_name => 'overall_qc',
@@ -1306,7 +1278,6 @@ sub core_pipeline_analyses {
                 'sql'         => 'INSERT IGNORE INTO gene_tree_backup (seq_member_id, root_id) SELECT seq_member_id, root_id FROM gene_tree_node WHERE seq_member_id IS NOT NULL',
             },
             -analysis_capacity => 1,
-            -meadow_type    => 'LOCAL',
         },
 
 
@@ -1322,7 +1293,6 @@ sub core_pipeline_analyses {
                  '2->A' => [ 'alignment_entry_point' ],
                  'A->1' => [ 'hc_global_tree_set' ],
             },
-            -meadow_type    => 'LOCAL',
         },
 
         {   -logic_name => 'alignment_entry_point',
@@ -1346,7 +1316,6 @@ sub core_pipeline_analyses {
                 4 => [ 'mafft' ],
                 5 => [ 'mafft_himem' ],
             },
-            -meadow_type    => 'LOCAL',
         },
 
         {   -logic_name => 'test_very_large_clusters_go_to_qtb',
@@ -1359,7 +1328,6 @@ sub core_pipeline_analyses {
                 2  => [ 'quick_tree_break' ],
                 3  => [ 'split_genes' ],
             },
-            -meadow_type    => 'LOCAL',
         },
 
         {   -logic_name         => 'hc_global_tree_set',
@@ -1491,7 +1459,6 @@ sub core_pipeline_analyses {
 
         {   -logic_name => 'tree_entry_point',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
-            -meadow_type    => 'LOCAL',
             -flow_into  => {
                 '1->A' => [ $self->o('use_raxml') ? 'filter_decision' : 'treebest_decision' ],
                 'A->1' => [ 'notung' ],
@@ -1929,7 +1896,6 @@ sub core_pipeline_analyses {
                  '1->A' => [ 'hc_alignment_post_tree', 'hc_tree_structure', 'hc_tree_attributes' ],
                  'A->1' => 'ortho_tree',
             },
-            -meadow_type    => 'LOCAL',
         },
 
         {   -logic_name         => 'hc_alignment_post_tree',
@@ -2125,7 +2091,6 @@ sub core_pipeline_analyses {
                 'sql'         => 'INSERT INTO gene_tree_backup (seq_member_id, root_id) SELECT seq_member_id, root_id FROM gene_tree_node WHERE seq_member_id IS NOT NULL AND root_id = #gene_tree_id#',
             },
             -analysis_capacity => 1,
-            -meadow_type    => 'LOCAL',
             -flow_into      => [ 'alignment_entry_point' ],
         },
 
@@ -2163,7 +2128,6 @@ sub core_pipeline_analyses {
             -flow_into => {
                 2 => [ 'mlss_factory' ],
             },
-            -meadow_type    => 'LOCAL',
         },
 
         {   -logic_name => 'mlss_factory',
@@ -2171,7 +2135,6 @@ sub core_pipeline_analyses {
             -flow_into => {
                 2 => [ 'homology_factory' ],
             },
-            -meadow_type    => 'LOCAL',
         },
 
         {   -logic_name => 'homology_factory',
