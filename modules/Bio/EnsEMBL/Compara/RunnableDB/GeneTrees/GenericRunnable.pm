@@ -225,7 +225,7 @@ sub run_generic_command {
     my $input_aln = $self->dumpTreeMultipleAlignmentToWorkdir($gene_tree, $self->param('aln_format'), {-APPEND_SPECIES_TREE_NODE_ID => 1}) || die "Could not fetch alignment for ($gene_tree)";
     $self->param('alignment_file', $input_aln);
 
-    $self->param('gene_tree_file', $self->get_gene_tree_file($gene_tree));
+    $self->param('gene_tree_file', $self->get_gene_tree_file($gene_tree->root));
 
     my $number_actual_genes = scalar(@{$gene_tree->get_all_leaves});
     if ($number_actual_genes < $self->param('minimum_genes')) {
@@ -275,16 +275,16 @@ sub run_generic_command {
 
 
 sub get_gene_tree_file {
-    my ($self, $gene_tree) = @_;
+    my ($self, $gene_tree_root) = @_;
 
     # horrible hack: we replace taxon_id with species_tree_node_id
-    foreach my $leaf (@{$gene_tree->root->get_all_leaves}) {
+    foreach my $leaf (@{$gene_tree_root->get_all_leaves}) {
         $leaf->taxon_id($leaf->genome_db->_species_tree_node_id);
     }
 
-    my $gene_tree_file = sprintf('gene_tree_%d.nhx', $gene_tree->root_id);
+    my $gene_tree_file = sprintf('gene_tree_%d.nhx', $gene_tree_root->node_id);
     open( my $genetree, '>', $self->worker_temp_directory."/".$gene_tree_file) or die "Could not open '$gene_tree_file' for writing : $!";
-    print $genetree $gene_tree->newick_format('ryo','%{-m}%{"_"-x}:%{d}');
+    print $genetree $gene_tree_root->newick_format('ryo','%{-m}%{"_"-x}:%{d}');
     close $genetree;
 
     return $gene_tree_file;
