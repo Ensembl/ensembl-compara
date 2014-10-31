@@ -62,6 +62,7 @@ Other parameters:
  - cdna: 1 if the alignment file contains the CDS sequences (otherwise: the protein sequences)
  - remove_columns: 1 if the alignment has to be filtered (assumes that there is a "removed_columns" tag)
  - ryo_species_tree: Roll-Your-Own format string for the species-tree
+ - ryo_gene_tree: Roll-Your-Own format string for the gene-tree (NB: taxon_ids are in fact species_tree_node_ids !)
  - species_tree_label: the label od the species-tree that should be used for this command
  - input_clusterset_id: alternative clusterset_id for the input gene tree
  - run_treebest_sdi: do we have to pass the output tree through "treebest sdi"
@@ -102,6 +103,7 @@ sub param_defaults {
         'read_tags'         => 0,
         'do_transactions'   => 1,
         'ryo_species_tree'  => '%{o}',
+        'ryo_gene_tree'     => '%{-m}%{"_"-x}:%{d}',
 
         'species_tree_label'        => undef,
         'input_clusterset_id'       => undef,
@@ -285,7 +287,7 @@ sub get_gene_tree_file {
 
     my $gene_tree_file = sprintf('gene_tree_%d.nhx', $gene_tree_root->node_id);
     open( my $genetree, '>', $self->worker_temp_directory."/".$gene_tree_file) or die "Could not open '$gene_tree_file' for writing : $!";
-    print $genetree $gene_tree_root->newick_format('ryo','%{-m}%{"_"-x}:%{d}');
+    print $genetree $gene_tree_root->newick_format('ryo', $self->param('ryo_gene_tree'));
     close $genetree;
 
     return $gene_tree_file;
