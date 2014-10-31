@@ -127,8 +127,6 @@ sub default_options {
         'ktreedist_exe'             => '/software/ensembl/compara/ktreedist/Ktreedist.pl',
         'blast_bin_dir'             => '/software/ensembl/compara/ncbi-blast-2.2.28+/bin',
         'pantherScore_path'         => '/software/ensembl/compara/pantherScore1.03',
-        'trimal_exe'                => '/software/ensembl/compara/src/trimAl/source/trimal',
-        'raxml_exe'                 => '/software/ensembl/compara/raxml/standard-RAxML-8.0.19/raxmlHPC-SSE3',
 
     # HMM specific parameters (set to 0 or undef if not in use)
        # List of directories that contain Panther-like databases (with books/ and globals/)
