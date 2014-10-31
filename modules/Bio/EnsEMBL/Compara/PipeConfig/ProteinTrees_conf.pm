@@ -1627,7 +1627,7 @@ sub core_pipeline_analyses {
                 'output_clusterset_id'      => $self->o('use_raxml_epa_on_treebest') ? 'treebest' : 'default',
             },
             -hive_capacity        => $self->o('treebest_capacity'),
-            -rc_name    => '2Gb_job',
+            -rc_name    => '500Mb_job',
             -batch_size => 10,
             -flow_into  => {
                 -1 => 'treebest',
