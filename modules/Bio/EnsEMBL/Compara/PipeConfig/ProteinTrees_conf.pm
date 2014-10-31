@@ -1658,7 +1658,7 @@ sub core_pipeline_analyses {
                 'treebest_exe'              => $self->o('treebest_exe'),
                 'input_clusterset_id'       => 'treebest',
                 'output_clusterset_id'      => $self->o('use_notung') ? 'raxml_bl' : 'default',
-                'raxml_extra_params'        => '-U',
+                'extra_raxml_args'          => '-U',
             },
             -hive_capacity        => $self->o('raxml_capacity'),
             -rc_name    => '16Gb_job',
