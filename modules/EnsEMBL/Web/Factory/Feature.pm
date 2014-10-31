@@ -341,7 +341,13 @@ sub _create_RegulatoryFactor {
     }
     my $fset  = $fg_db->get_featureSetAdaptor->fetch_by_name($self->param('fset'));
     my $ftype = $fg_db->get_FeatureTypeAdaptor->fetch_by_name($id);
-    $features = $fset->get_Features_by_FeatureType($ftype);
+    ## Defensive programming against API barfs
+    if (ref($ftype)) {
+      $features = $fset->get_Features_by_FeatureType($ftype);
+    }
+    else {
+      warn ">>> UNKNOWN FEATURE TYPE";
+    }
   }
 
   if (@$features) {
