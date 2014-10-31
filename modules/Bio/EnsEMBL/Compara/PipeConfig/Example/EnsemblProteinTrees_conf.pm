@@ -267,7 +267,7 @@ sub tweak_analyses {
     ## Extend this section to redefine the resource names of some analysis
     my %overriden_rc_names = (
         'hcluster_run'              => '32Gb_urgent_job',
-        'treebest'                  => '8Gb_job',
+        'treebest_long_himem'       => '8Gb_long_job',
     );
     foreach my $logic_name (keys %overriden_rc_names) {
         $analyses_by_name->{$logic_name}->{'-rc_name'} = $overriden_rc_names{$logic_name};
