@@ -102,7 +102,7 @@ sub get_msa_command_line {
     my %members_2_b_updated = map { $_ => 1 } split( /,/, $self->param('current_gene_tree')->get_value_for_tag('updated_genes_list') );
     my %tree_members = ( map { $_->stable_id => $_ } @{ $self->param('current_gene_tree')->get_all_Members } );
     foreach my $updated_member_stable_id ( keys %members_2_b_updated ) {
-		print "======>$updated_member_stable_id\n";
+		print "updated member\t$updated_member_stable_id\n" if ( $self->debug );
         my $bioseq = $tree_members{$updated_member_stable_id}->bioseq( -ID_TYPE => 'SEQUENCE' );
         $new_seq->write_seq($bioseq);
     }
