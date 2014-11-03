@@ -18,13 +18,16 @@ limitations under the License.
 
 package EnsEMBL::Web::IOWrapper::BED;
 
+### Wrapper for Bio::EnsEMBL::IO::Parser::Bed, which builds
+### simple hash features suitable for use in the drawing code 
+
 use strict;
 use warnings;
 no warnings 'uninitialized';
 
 use base qw(EnsEMBL::Web::IOWrapper);
 
-sub create_hash
+sub create_hash {
   my $self = shift;
   return {
     'start'         => $self->parser->get_start,

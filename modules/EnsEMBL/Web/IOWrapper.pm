@@ -18,8 +18,8 @@ limitations under the License.
 
 package EnsEMBL::Web::IOWrapper;
 
-### A lightweight adapter wrapped around EnsEMBL::IO, providing the extra 
-### functionality required by the website
+### A lightweight interpreter layer on top of the ensembl-io parsers, 
+### providing the extra functionality required by the website
 
 use strict;
 use warnings;
@@ -30,6 +30,9 @@ use EnsEMBL::Web::Constants;
 use base qw(EnsEMBL::Web::Root);
 
 sub new {
+  ### Constructor
+  ### Instantiates a parser for the appropriate file type 
+  ### and opens the file for reading
   my ($class, $format, $path) = @_;
 
   my $parser;
@@ -46,15 +49,21 @@ sub new {
 
 sub create_hash {
   ### Stub - needs to be implemented in each child
+  ### The purpose of this method is to convert IO-specific terms 
+  ### into ones familiar to the webcode, and also munge data for
+  ### the web display
 }
 
 sub coords {
+  ### Simple accessor to return the coordinates from the parser
   my $self = shift;
   return ($self->parser->get_seqname, $self->parser->get_start, $self->parser->get_end);
 }
 
 sub rgb_to_hex {
-## For the web we really need hex colours, but file formats have traditionally used RGB
+  ### For the web we really need hex colours, but file formats have traditionally used RGB
+  ### @param Arrayref of three RGB values
+  ### @return String - same colour in hex
   my ($self, $triple_ref) = @_;
   return sprintf("%02x%02x%02x", @{$triple_ref});
 }
