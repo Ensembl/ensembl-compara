@@ -60,18 +60,18 @@ sub build_tracks_from_file {
     my $class = 'EnsEMBL::Web::IOWrapper::'.uc($args->{'format'});
     if (EnsEMBL::Web::Root::dynamic_use(undef, $class)) {
       my $path = $species_defs->ENSEMBL_TMP_DIR.'/user_upload/'.$args->{'file'};
-      my $file_reader = $class->new($path);
+      my $wrapper = $class->new($path);
       ## Loop through file
-      while ($file_reader->next) {
-        my $key = $file_reader->get_metadata_value('name') || 'default';
+      while ($wrapper->parser->next) {
+        my $key = $wrapper->parser->get_metadata_value('name') || 'default';
         if ($is_metadata) {
-          $tracks->{$key}{'config'}{'description'} = $file_reader->get_metadata_value('description') unless $tracks->{$key}{'config'}{'description'};
+          $tracks->{$key}{'config'}{'description'} = $wrapper->parser->get_metadata_value('description') unless $tracks->{$key}{'config'}{'description'};
         }
         else {
           my $feature_array = $tracks->{$key}{'features'} || [];
           
           ## Create feature
-          my $feature = $file_reader->get_hash;
+          my $feature = $wrapper->get_hash;
           next unless keys %$feature;
 
           ## Add to track hash
