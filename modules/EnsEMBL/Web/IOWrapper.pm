@@ -16,7 +16,7 @@ limitations under the License.
 
 =cut
 
-package EnsEMBL::Web::Wrapper;
+package EnsEMBL::Web::IOWrapper;
 
 ### A lightweight adapter wrapped around EnsEMBL::IO, providing the extra 
 ### functionality required by the website

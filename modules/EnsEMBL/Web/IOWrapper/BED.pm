@@ -16,13 +16,13 @@ limitations under the License.
 
 =cut
 
-package EnsEMBL::Web::Wrapper::BED;
+package EnsEMBL::Web::IOWrapper::BED;
 
 use strict;
 use warnings;
 no warnings 'uninitialized';
 
-use base qw(EnsEMBL::Web::Wrapper);
+use base qw(EnsEMBL::Web::IOWrapper);
 
 sub create_hash
   my $self = shift;
