@@ -66,7 +66,7 @@ sub default_options {
         #'ensembl_cvs_root_dir' => $ENV{'HOME'}.'/src/ensembl_main/', 
         'ensembl_cvs_root_dir' => $ENV{'ENSEMBL_CVS_ROOT_DIR'}, 
 
-	'release'               => '76',
+	'release'               => '77',
         'release_suffix'        => '',    # an empty string by default, a letter otherwise
 	#'dbname'               => '', #Define on the command line. Compara database name eg hsap_ggor_lastz_64
 
@@ -74,7 +74,7 @@ sub default_options {
         'rel_with_suffix'       => $self->o('release').$self->o('release_suffix'),
         'pipeline_name'         => 'pairalign_'.$self->o('rel_with_suffix'),   # name the pipeline to differentiate the submitted processes
 
-        'host'        => 'mysql-eg-vmtest.ebi.ac.uk',                        #separate parameter to use the resources aswell
+        'host'        => 'mysql-eg-hive.ebi.ac.uk',                        #separate parameter to use the resources aswell
         'pipeline_db' => {                                  # connection parameters
             -host   => $self->o('host'),
             -port   => 4411,
@@ -84,7 +84,7 @@ sub default_options {
             -driver => 'mysql',
         },
 
-	    'master_db' => 'mysql://ensro@mysql-eg-staging-1.ebi.ac.uk:4160/ensembl_compara_plants_23_76',
+	    'master_db' => 'mysql://ensro@mysql-eg-staging-2.ebi.ac.uk:4275/ensembl_compara_metazoa_24_77',
 
 	# 'staging_loc1' => {
         #     -host   => 'ens-staging1',
@@ -94,19 +94,21 @@ sub default_options {
         # },
 
 	    'staging_loc2' => {
-			       -host   => 'mysql-eg-staging-1.ebi.ac.uk',
-			       -port   => 4160,
+			       -host   => 'mysql-eg-staging-2.ebi.ac.uk',
+			       -port   => 4275,
 			       -user   => 'ensro',
 			       -pass   => '',
 			       -driver => 'mysql',
+			       -db_version => 77,
 			      },
 
 	    'main_core_dbs' => [{
-			       -host   => 'mysql-eg-staging-1.ebi.ac.uk',
-			       -port   => 4160,
+			       -host   => 'mysql-eg-staging-2.ebi.ac.uk',
+			       -port   => 4275,
 			       -user   => 'ensro',
 			       -pass   => '',
 			       -driver => 'mysql',
+			       -db_version => 77,
 			      },],
 
 	  'livemirror_loc' => {
@@ -114,7 +116,7 @@ sub default_options {
 			       -port   => 4205,
 			       -user   => 'ensro',
 			       -pass   => '',
-			       -db_version => 72,
+			       -db_version => 76,
 			      },
 	  'pipeline_db' => {
 	  		    -host => $self->o('hive_db_host'),
@@ -128,7 +130,7 @@ sub default_options {
 	'curr_core_sources_locs'    => [ $self->o('staging_loc2'), ],
 	#'curr_core_sources_locs'    => [ $self->o('livemirror_loc') ],
 	'curr_core_dbs_locs'        => '', #if defining core dbs with config file. Define in Lastz_conf.pm or TBlat_conf.pm
-	    'core_db_urls' => 'mysql://ensro@mysql-eg-staging-1.ebi.ac.uk:4160/76',
+	    'core_db_urls' => {}, #'mysql://ensro@mysql-eg-staging-2.ebi.ac.uk:4275/77',
 	# executable locations:
 	'populate_new_database_exe' => $self->o('ensembl_cvs_root_dir')."/ensembl-compara/scripts/pipeline/populate_new_database.pl",
 	'dump_features_exe' => $self->o('ensembl_cvs_root_dir')."/ensembl-compara/scripts/dumps/dump_features.pl",
@@ -262,8 +264,8 @@ sub default_options {
 	#
 	'skip_pairaligner_stats' => 0, #skip this module if set to 1
 #	'bed_dir' => '/nfs/ensembl/compara/dumps/bed/',
-	'bed_dir' => '/nfs/production/panda/ensemblgenomes/production/bwalts/compare_pairaligner_stats_22_75/plants_23_76/coding-region-stats',
-	'output_dir' => '/nfs/production/panda/ensemblgenomes/production/bwalts/compare_pairaligner_stats_22_75/plants_23_76/coding-region-stats',
+	'bed_dir' => '/nfs/production/panda/ensemblgenomes/production/'.$ENV{USER}.'/pairaligner_stats/coding-region-stats',
+	'output_dir' => '/nfs/production/panda/ensemblgenomes/production/'.$ENV{USER}.'/pairaligner_stats/coding-region-stats',
             
         #
         #Resource requirements
