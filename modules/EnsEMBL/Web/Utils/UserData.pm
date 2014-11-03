@@ -57,7 +57,7 @@ sub build_tracks_from_file {
 
   ## Parse it and build into lightweight hash "features"
   if ($args->{'file'}) {
-    my $class = 'EnsEMBL::Web::Wrapper::'.uc($args->{'format'});
+    my $class = 'EnsEMBL::Web::IOWrapper::'.uc($args->{'format'});
     if (EnsEMBL::Web::Root::dynamic_use(undef, $class)) {
       my $path = $species_defs->ENSEMBL_TMP_DIR.'/user_upload/'.$args->{'file'};
       my $file_reader = $class->new($path);
