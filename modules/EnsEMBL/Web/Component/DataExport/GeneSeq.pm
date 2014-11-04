@@ -67,7 +67,8 @@ sub content {
                           };
 
   ## Options per format
-  my @rtf_fields = map {$_ ne 'title_display'} @field_order;
+  my @field_order = $viewconfig->field_order;
+  my @rtf_fields = map {$_ if $_ ne 'title_display'} @field_order;
 
   my $fields_by_format = {
                           'RTF' => [@rtf_fields],
