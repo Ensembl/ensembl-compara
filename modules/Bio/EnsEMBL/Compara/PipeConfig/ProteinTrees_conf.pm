@@ -1952,7 +1952,7 @@ sub core_pipeline_analyses {
             -parameters         => {
                 mode            => 'tree_homologies',
             },
-            -flow_into      => [ 'ktreedist', 'build_HMM_aa_v2', 'build_HMM_aa_v3', 'build_HMM_cds_v3' ],
+            -flow_into      => [ 'ktreedist', 'build_HMM_aa_v3', 'build_HMM_cds_v3' ],
             %hc_analysis_params,
         },
 
