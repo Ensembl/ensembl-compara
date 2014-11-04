@@ -82,7 +82,9 @@ sub extra_tabs       { return ();                           } # Used to add tabs
 
 sub init   {}
 sub modify {} # For plugins
-sub form_fields {}
+
+## The following stub methods should be overwritten in child modules
+sub form_fields { return {}; }
 sub field_order {}
 
 sub form {
