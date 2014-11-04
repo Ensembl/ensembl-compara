@@ -211,10 +211,12 @@ sub FAMILY_EXTERNAL {
   );
 }
 
-sub GENERAL_MARKUP_OPTIONS {
-### Configuration for text sequence displays, shared by
-### 'Genomic Alignments', 'Marked-up Sequence' and 'Resequencing'
+
+
+sub MARKUP_OPTIONS {
+### Configuration for text sequence displays
   return (
+  ### TEXT SEQUENCE MARKUP
     'snp_display' => {
       'type'   => 'DropDown', 
       'select' => 'select',
@@ -280,13 +282,7 @@ sub GENERAL_MARKUP_OPTIONS {
         { 'value' => 'off', 'caption' => 'No'  },
       ]
     },
-  );
-}
-
-sub GENE_MARKUP_OPTIONS {
-### Gene-specific text sequence configuration options,
-### shared by 'Genomic Alignments' and 'Marked-up Sequence'
-  return (
+    ### GENE-SPECIFIC TEXT SEQUENCE
     'flank5_display' => {
       'type'     => 'NonNegInt', 
       'required' => 'yes',
@@ -312,13 +308,7 @@ sub GENE_MARKUP_OPTIONS {
         { 'value' => 'core',      'caption' => 'Core exons'      },
       ],
     },
-  );
-}
-
-sub OTHER_MARKUP_OPTIONS {
-### Configuration options for aligned sequence markup,
-### shared by 'Genomic Alignments' and 'Resequencing'
-  return (
+    ### ALIGNED SEQUENCE MARKUP
     'display_width' => {
       'type'   => 'DropDown',
       'select' => 'select',
@@ -360,6 +350,161 @@ sub OTHER_MARKUP_OPTIONS {
     },
   );
 }
+
+############ OLD MARKUP HASHES - REMOVE ONCE VIEWCONFIG REFACTOR IS COMPLETE ################
+
+sub GENERAL_MARKUP_OPTIONS {
+### Configuration for text sequence displays, shared by
+### 'Genomic Alignments', 'Marked-up Sequence' and 'Resequencing'
+  return (
+    'snp_display' => {
+      'type'   => 'DropDown',
+      'select' => 'select',
+      'name'   => 'snp_display',
+      'label'  => 'Show variations',
+      'values' => [
+        { 'value' => 'off', 'caption' => 'No'  },
+        { 'value' => 'yes', 'caption' => 'Yes' },
+      ]
+    },
+    'line_numbering' => {
+      'type'   => 'DropDown',
+      'select' => 'select',
+      'name'   => 'line_numbering',
+      'label'  => 'Line numbering',
+      'values' => [
+        { 'value' => 'sequence', 'caption' => 'Relative to this sequence'      },
+        { 'value' => 'slice',    'caption' => 'Relative to coordinate systems' },
+        { 'value' => 'off',      'caption' => 'None'                           },
+      ]
+    },
+    'exon_ori' => {
+      'type'   => 'DropDown',
+      'select' => 'select',
+      'name'   => 'exon_ori',
+      'label'  => 'Orientation of additional exons',
+      'values' => [
+        { 'value' => 'fwd', 'caption' => 'Display same orientation exons only'    },
+        { 'value' => 'rev', 'caption' => 'Display reverse orientation exons only' },
+        { 'value' => 'all', 'caption' => 'Display exons in both orientations'     },
+      ],
+    },
+    'pop_filter' => {
+      'type'   => 'DropDown',
+      'select' => 'select',
+      'name'   => 'population_filter',
+      'label'  => 'Filter variations by population',
+      'notes'  => 'Warning: This could cause the page to take a long time to load',
+      'values' => [{ 'value' => 'off', 'caption' => 'None' }]
+    },
+    'pop_min_freq' => {
+      'type'  => 'NonNegFloat',
+      'label' => 'Minor allele frequency for population filter',
+      'name'  => 'min_frequency',
+      'max'   => 0.5
+    },
+    'consequence_filter' => {
+      'type'     => 'DropDown',
+      'multiple' => 1,
+      'size'     => 5,
+      'select'   => 'select',
+      'name'     => 'consequence_filter',
+      'label'    => 'Filter variations by consequence type',
+      'values'   => [{ 'value' => 'off', 'caption' => 'No filter' }]
+    },
+    'hide_long_snps' => {
+      'type'   => 'DropDown',
+      'select' => 'select',
+      'name'   => 'hide_long_snps',
+      'label'  => 'Hide variations longer than 10bp',
+      'values' => [
+        { 'value' => 'yes', 'caption' => 'Yes' },
+        { 'value' => 'off', 'caption' => 'No'  },
+      ]
+    },
+  );
+}
+
+sub GENE_MARKUP_OPTIONS {
+### Gene-specific text sequence configuration options,
+### shared by 'Genomic Alignments' and 'Marked-up Sequence'
+  return (
+    'flank5_display' => {
+      'type'     => 'NonNegInt',
+      'required' => 'yes',
+      'label'    => "5' Flanking sequence (upstream)",
+      'name'     => 'flank5_display',
+      'max'      => 1e6
+    },
+    'flank3_display' => {
+      'type'     => 'NonNegInt',
+      'required' => 'yes',
+      'label'    => "3' Flanking sequence (downstream)",
+      'name'     => 'flank3_display',
+      'max'      => 1e6
+    },
+    'exon_display' => {
+      'type'   => 'DropDown',
+      'select' => 'select',
+      'name'   => 'exon_display',
+      'label'  => 'Additional exons to display',
+      'values' => [
+        { 'value' => 'off',       'caption' => 'No exon markup'  },
+        { 'value' => 'Ab-initio', 'caption' => 'Ab-initio exons' },
+        { 'value' => 'core',      'caption' => 'Core exons'      },
+      ],
+    },
+  );
+}
+
+sub OTHER_MARKUP_OPTIONS {
+### Configuration options for aligned sequence markup,
+### shared by 'Genomic Alignments' and 'Resequencing'
+  return (
+    'display_width' => {
+      'type'   => 'DropDown',
+      'select' => 'select',
+      'name'   => 'display_width',
+      'label'  => 'Number of base pairs per row',
+      'values' => [
+        map { { 'value' => $_, 'caption' => "$_ bps" } } map { $_*15 } (2..12)
+      ],
+    },
+    'strand' => {
+      'type'   => 'DropDown',
+      'select' => 'select',
+      'name'   => 'strand',
+      'label'  => 'Strand',
+      'values' => [
+        { 'value' => '1',  'caption' => 'Forward' },
+        { 'value' => '-1', 'caption' => 'Reverse' }
+      ]
+    },
+    'codons_display' => {
+      'type'   => 'DropDown',
+      'select' => 'select',
+      'name'   => 'codons_display',
+      'label'  => 'Codons',
+      'values' => [
+        { 'value' => 'all', 'caption' => 'START/STOP codons'  },
+        { 'value' => 'off', 'caption' => 'Do not show codons' },
+      ],
+    },
+    'title_display' => {
+      'type'   => 'DropDown',
+      'select' => 'select',
+      'name'   => 'title_display',
+      'label'  => 'Display pop-up information on mouseover',
+      'values' => [
+        { 'value' => 'yes', 'caption' => 'Yes' },
+        { 'value' => 'off', 'caption' => 'No'  },
+      ],
+    },
+  );
+}
+
+
+################################################################################################
 
 sub VARIATION_OPTIONS {
 ### Variation markup options for text sequence displays, 

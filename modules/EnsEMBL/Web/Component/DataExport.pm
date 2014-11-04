@@ -172,9 +172,7 @@ sub create_form {
     my $settings_fieldset  = $form->add_fieldset({'class' => '_stt_'.$format, 'legend' => $legend});
 
     ## Add custom fields for this data type and format
-    foreach (@$fields) {
-      my ($name, @values) = @$_;
-      next if $name eq 'snp_display' && !$hub->database('variation');
+    foreach my $name (@$fields) {
       ## IMPORTANT - use hashes here, not hashrefs, as Form code does weird stuff 
       ## in background that alters the contents of $settings!
       my %field_info = %{$settings->{$name}};
@@ -182,6 +180,7 @@ sub create_form {
       ## Reset field name to include format, so we have unique field names
       $name .= '_'.$format;
       $field_info{'name'} = $name;
+      my @values = $field_info{'values'};
       @values = $hub->param($name) if $hub->param($name);
       ## Deal with multiple values, which have to be passed
       ## to Form::Fieldset as an arrayref

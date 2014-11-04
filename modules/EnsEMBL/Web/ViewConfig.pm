@@ -82,7 +82,17 @@ sub extra_tabs       { return ();                           } # Used to add tabs
 
 sub init   {}
 sub modify {} # For plugins
-sub form   {}
+sub form_fields {}
+sub field_order {}
+
+sub form {
+  my $self = shift;
+  my $fields = $self->form_fields;
+  
+  foreach ($self->field_order) {
+    $self->add_form_element($fields->{$_});
+  }
+}
 
 sub options { 
   my $self = shift;

@@ -35,8 +35,10 @@ sub initialize {
   my $hub    = $self->hub;
   my $object = $self->get_object;
 
+  my $vc = $self->view_config;
+
   my $config = {
-    display_width   => $hub->param('display_width') || 60,
+    display_width   => $hub->param('display_width') || $vc->get('display_width'),
     site_type       => ucfirst(lc $hub->species_defs->ENSEMBL_SITETYPE) || 'Ensembl',
     gene_name       => $object->Obj->can('external_name') && $object->Obj->external_name ? $object->Obj->external_name : $object->stable_id,
     species         => $hub->species,
@@ -46,7 +48,9 @@ sub initialize {
   };
 
   for (qw(exon_display exon_ori snp_display line_numbering title_display)) {
-    $config->{$_} = $hub->param($_) unless $hub->param($_) eq 'off';
+    my $param = $hub->param($_) || $vc->get($_);
+    next if $param eq 'off';
+    $config->{$_} = $param;
   }
   
   $config->{'exon_features'} = $object->Obj->get_all_Exons;
@@ -137,11 +141,6 @@ sub get_export_data {
 sub initialize_export {
   my $self = shift;
   my $gene = $self->get_object;
-  my $vc = $self->hub->get_viewconfig('GeneSeq', 'Gene');
-  my @params = qw(display_width flanking line_numbering);
-  foreach (@params) {
-    $self->hub->param($_, $vc->get($_));
-  }
   return $self->initialize($gene->slice);
 }
 
