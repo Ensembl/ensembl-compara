@@ -1799,7 +1799,7 @@ sub core_pipeline_analyses {
             -parameters => {
                 'raxml_exe'                 => $self->o('raxml_pthreads_exe'),
                 'treebest_exe'              => $self->o('treebest_exe'),
-                'extra_raxml_args'          => '-T #raxml_cores#',
+                'extra_raxml_args'          => '-T '.$self->o('raxml_cores'),
             },
             -hive_capacity        => $self->o('raxml_capacity'),
             -rc_name 		=> '16Gb_16c_job',
@@ -1813,7 +1813,7 @@ sub core_pipeline_analyses {
             -parameters => {
                 'raxml_exe'                 => $self->o('raxml_pthreads_exe'),
                 'treebest_exe'              => $self->o('treebest_exe'),
-                'extra_raxml_args'          => '-T #raxml_cores#',
+                'extra_raxml_args'          => '-T '.$self->o('raxml_cores'),
             },
             -hive_capacity        => $self->o('raxml_capacity'),
             -rc_name 		=> '64Gb_16c_job',
