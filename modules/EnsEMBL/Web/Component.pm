@@ -63,6 +63,7 @@ sub new {
     id            => $id,
     object        => undef,
     cacheable     => 0,
+    mcacheable    => 1,
     ajaxable      => 0,
     configurable  => 0,
     has_image     => 0,
@@ -157,8 +158,12 @@ sub cacheable {
 }
 
 sub mcacheable {
-  # temporary method in e75 only - will be replaced in 76 (hr5)
-  return 1;
+  ## temporary method only - will be replaced in 77 (hr5) - use cacheable method instead
+  ## @accessor
+  ## @return Boolean
+  my $self = shift;
+  $self->{'mcacheable'} = shift if @_;
+  return $self->{'mcacheable'};
 }
 
 sub ajaxable {
@@ -213,7 +218,7 @@ sub get_content {
     $self->set_cache_params;
     $content = $cache->get($ENV{'CACHE_KEY'});
   }
-  
+
   if (!$content) {
     if($function && $self->can($function)) {
       $content = $self->$function;
@@ -221,7 +226,7 @@ sub get_content {
       $content = $self->content; # Force sequence-point before buttons call.
       $content = $self->content_buttons.$content;
     }
-    if ($cache && $content) {
+    if ($cache && $content && $self->mcacheable) { # content method call can change mcacheable value
       $self->set_cache_key;
       $cache->set($ENV{'CACHE_KEY'}, $content, 60*60*24*7, values %{$ENV{'CACHE_TAGS'}});
     }
@@ -259,7 +264,7 @@ sub content_buttons {
       </a>
     );
   }
-  # Create the blue-regctangle buttons
+  # Create the blue-rectangle buttons
   my $blue_html = '';
   foreach my $g (@groups) {
     my $group = '';
@@ -271,8 +276,14 @@ sub content_buttons {
       push @classes, 'togglebutton' if $b->{'toggle'};
       push @classes, 'off'          if $b->{'toggle'} and $b->{'toggle'} eq 'off';
       $all_disabled = 0 unless $b->{'disabled'};
-      $group .= sprintf('<a href="%s" class="%s" rel="%s">%s</a>',
+      if ($b->{'disabled'}) {
+        $group .= sprintf('<div class="%s">%s</div>',
+            join(' ',@classes), $b->{'caption'});
+      }
+      else {
+        $group .= sprintf('<a href="%s" class="%s" rel="%s">%s</a>',
             $b->{'url'}, join(' ',@classes),$b->{'rel'},$b->{'caption'});
+      }
     }
     if(@$g>1) {
       my $class = "group";
@@ -679,7 +690,7 @@ sub toggleable_table {
   
   return sprintf('
     <div class="toggleable_table">
-      <h2><a rel="%s_table" class="toggle %s" href="#%s_table">%s</a></h2>
+      <h2><a rel="%s_table" class="toggle _slide_toggle %s" href="#%s_table">%s</a></h2>
       %s
       %s
     </div>',
@@ -740,8 +751,8 @@ sub trim_large_string {
   my $self        = shift;
   my $string      = shift;
   my $cell_prefix = shift;
-  my $truncator = shift;
-  my $options = shift || {};
+  my $truncator   = shift;
+  my $options     = shift || {};
   
   unless(ref($truncator)) {
     my $len = $truncator || 25;
@@ -764,10 +775,12 @@ sub trim_large_string {
   
   return $string unless defined $truncated;
   return sprintf(qq(
-    <div class="toggle_div">
-      <span class="%s">%s</span>
-      <span class="cell_detail">%s</span>
-      <span class="toggle_img"/>
+    <div class="height_wrap">
+      <div class="toggle_div">
+        <span class="%s">%s</span>
+        <span class="cell_detail">%s</span>
+        <span class="toggle_img"/>
+      </div>
     </div>),
       join(" ",@summary_classes),$truncated,$string);  
 }

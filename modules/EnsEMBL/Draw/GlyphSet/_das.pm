@@ -241,7 +241,7 @@ sub features {
     }
   }
   
-  push @errors, sprintf 'No %s in this region', $self->label->text if $c_f == 0 && $self->{'config'}->get_option('opt_empty_tracks') == 1;
+  push @errors, sprintf 'No %s on this strand', $self->label->text if $c_f == 0 && $self->{'config'}->get_option('opt_empty_tracks') == 1;
   
   return {
     'f_count'    => $c_f,

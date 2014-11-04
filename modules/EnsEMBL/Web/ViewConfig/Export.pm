@@ -41,8 +41,6 @@ sub init {
   $defaults->{"phylopan_$_"}   = 'yes' for qw(cdna aligned);
   $defaults->{"phyloxml_$_"}   = 'no'  for qw(no_sequences);
   $defaults->{"phylopan_$_"}   = 'no'  for qw(no_sequences);
-  $defaults->{"orthoxml_$_"}   = 'yes' for qw(possible_orthologs);
-  $defaults->{"orthopan_$_"}   = 'yes' for qw(possible_orthologs);
   $defaults->{'fasta_genomic'} = 'unmasked';
   
   foreach my $f (qw(csv tab gff)) {

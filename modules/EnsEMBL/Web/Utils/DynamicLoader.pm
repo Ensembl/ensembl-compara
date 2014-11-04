@@ -82,7 +82,7 @@ sub _dynamic_require {
 
   return 'Classname parameter missing' unless $classname;
 
-  unless (exists $INC{$classname} || exists $FAILED_INC{$classname}) { # if neither already loaded nor already failed
+  unless (exists $FAILED_INC{$classname}) { # if not already failed
     eval "require $classname";
     if ($@) {
       $FAILED_INC{$classname} = "Module '$classname' could not be loaded: $@";

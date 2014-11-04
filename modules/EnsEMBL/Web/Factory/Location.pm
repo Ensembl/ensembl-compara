@@ -81,7 +81,7 @@ sub DataObjects {
   # 1) There is no current r parameter OR
   # 2) The r parameter has a : (in other words, it's not a whole chromosome)
 
-  if($self->hub->script ne 'Component') {
+  if($self->hub->script !~ /Component|DataExport/) {
     my $loc = $objects->{'Location'}[0];
     $self->param('r', sprintf '%s:%s-%s', map $loc->$_, qw(seq_region_name seq_region_start seq_region_end)) if $loc && (!$self->param('r') || $self->param('r') =~ /:/);
   } 
@@ -308,7 +308,6 @@ sub createObjects {
       }
     }
   }
-  
   $self->DataObjects($location) if $location;
   return $location;
 }

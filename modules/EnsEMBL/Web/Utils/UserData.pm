@@ -26,7 +26,6 @@ package EnsEMBL::Web::Utils::UserData;
 
 use LWP::UserAgent;
 use HTTP::Headers;
-use Bio::EnsEMBL::DnaDnaAlignFeature;
 use EnsEMBL::Web::Root;
 use EnsEMBL::Web::RegObj;
 use EnsEMBL::Web::CompressionSupport;
@@ -56,39 +55,24 @@ sub build_tracks_from_file {
     ## Save to file
   }
 
-  ## Parse it and build into features
-  my $parser;
+  ## Parse it and build into lightweight hash "features"
   if ($args->{'file'}) {
-    my $parser_formats = EnsEMBL::Web::Constants::PARSER_FORMATS;
-    my $class = 'Bio::EnsEMBL::IO::Parser::'.$parser_formats->{lc($args->{'format'})}{'class'};
+    my $class = 'EnsEMBL::Web::IOWrapper::'.uc($args->{'format'});
     if (EnsEMBL::Web::Root::dynamic_use(undef, $class)) {
       my $path = $species_defs->ENSEMBL_TMP_DIR.'/user_upload/'.$args->{'file'};
-      my $parser = $class->open($path);
+      my $wrapper = $class->new($path);
       ## Loop through file
-      while ($parser->next) {
+      while ($wrapper->parser->next) {
+        my $key = $wrapper->parser->get_metadata_value('name') || 'default';
         if ($is_metadata) {
-          warn ">>> METADATA ".$parser->{'metadata'};
-          $parser->read_metadata;
-          warn "... METADATA ".$parser->{'metadata'};
+          $tracks->{$key}{'config'}{'description'} = $wrapper->parser->get_metadata_value('description') unless $tracks->{$key}{'config'}{'description'};
         }
         else {
-          my $key = $parser->get_metadata_value('name') || 'default';
-          #warn ">>> KEY $key";
           my $feature_array = $tracks->{$key}{'features'} || [];
-          #warn "... COORDS ".$parser->get_seqname.':'.$parser->get_start.'-'.$parser->get_end;
           
           ## Create feature
-          my $feature_class = 'Bio::EnsEMBL::Feature';
-          my $feature;
-          if ($parser->get_seqname eq $args->{'slice'}->seq_region_name) {
-            $feature = $feature_class->new(
-                            -start  => $parser->get_start,
-                            -end    => $parser->get_end,
-                            -slice  => $args->{'slice'},
-                            -strand => $parser->get_strand,
-                       );
-          }
-          next unless $feature;
+          my $feature = $wrapper->get_hash;
+          next unless keys %$feature;
 
           ## Add to track hash
           push @$feature_array, $feature;
@@ -108,7 +92,6 @@ sub check_file_date {
 
   my $request  = HTTP::Request->new('HEAD', $url);
   my $last_modified = $request->header('Last-Modified');
-  warn ">>> LAST MODIFIED $last_modified";
   return $modified;
 }
 

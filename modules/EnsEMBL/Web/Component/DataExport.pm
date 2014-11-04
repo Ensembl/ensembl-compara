@@ -54,14 +54,27 @@ sub create_form {
   my $filename = $hub->param('filename') || $self->default_file_name;
   $filename =~ s/\.[\w|\.]+//;
 
-  my @format_info;
-  foreach (sort keys %$fields_by_format) {
-    my $info = { 'value' => $_, 'caption' => $format_label->{$_}, 'class' => "_stt__$_ _action_$_"};
-    $info->{'selected'} = 'selected' if $hub->param('format') eq $_;
-    push @format_info, $info;
+  ## Deal with optgroups
+  my (@format_info, %ok_formats);
+  if (ref($fields_by_format) eq 'ARRAY') {
+    foreach (@$fields_by_format) {
+      while (my($group,$formats) = each (%$_)) {
+        push @format_info, $self->_munge_format_info($formats, $group);
+        while (my($f,$h) = each (%$formats)) {
+          $ok_formats{$f} = $h;
+        }
+      }
+    }
   }
+  else {
+    @format_info = $self->_munge_format_info($fields_by_format);
+    while (my($k,$v) = each (%$fields_by_format)) {
+      $ok_formats{$k} = $v;
+    }
+  }
+
   my $formats = [
-      {'caption' => '-- Choose Format --', 'value' => 'tutorial'},
+      {'caption' => '-- Choose Format --'},
       @format_info
     ];
   ## Don't update this field from params, as there's no back 
@@ -78,19 +91,42 @@ sub create_form {
       'label'   => 'File name',
       'value'   => $filename,
     },
-    {
-      'type'    => 'DropDown',
-      'name'    => 'format',
-      'label'   => 'File format',
-      'values'  => $formats,
-      'select'  => 'select',
-      'class'   => '_stt _action',
-    },
+  ]);
+  if (scalar(@format_info) > 1) {
+    $fieldset->add_field([
+      {
+        'type'    => 'DropDown',
+        'name'    => 'format',
+        'label'   => 'File format',
+        'values'  => $formats,
+        'select'  => 'select',
+        'class'   => '_stt _export_formats',
+      },
+    ]);
+  }
+  else {
+    my $info = $format_info[0];
+    $fieldset->add_field([
+      {
+        'type'    => 'NoEdit',
+        'label'   => 'File format',
+        'value'   => $info->{'caption'},
+      },
+    ]);
+    $fieldset->add_hidden([
+      {
+        'name'    => 'format',
+        'value'   => $info->{'value'},
+      },
+    ]);
+  }
+  $fieldset->add_field([
     {
       'type'    => 'Radiolist',
       'name'    => 'compression',
       'label'   => 'Output',
       'values'  => $compress,
+      'notes'   => 'Select "uncompressed" to get a preview of your file',
     },
   ]);
   ## Hidden fields needed to fetch and process data
@@ -108,6 +144,17 @@ sub create_form {
       'value'   => $hub->action,
     },
   ]);
+  ## Miscellaneous parameters from settings
+  foreach (@{$settings->{'Hidden'}||[]}) {
+    $fieldset->add_hidden([
+      {
+        'name'    => $_,
+        'value'   => $hub->param($_),
+      },
+    ]);
+  }
+  $fieldset->add_hidden([{ name => 'adorn', value => 'both' }]);
+
   ## Don't forget the core params!
   my @core_params = keys %{$hub->core_object('parameters')};
   foreach (@core_params) {
@@ -122,20 +169,22 @@ sub create_form {
   ## Add tutorial "fieldset" that is shown by default
   if ($tutorial) {
     my $tutorial_fieldset = $form->add_fieldset({'class' => '_stt_tutorial'});
-    my $html = '<p><b>Guide to file formats</b> (select from dropdown list above)</p>';
-    foreach my $format (sort keys %$fields_by_format) {
-      $html .= $self->get_tutorial($format);
+    my $html = '<p><b>Guide to file formats</b></p>';
+    foreach my $format (sort {lc($a) cmp lc($b)} keys %ok_formats) {
+      $html .= $self->show_preview($format);
     }
     $tutorial_fieldset->add_notes($html);
   }
   
   ## Create all options forms, then show only one using jQuery
-  while (my($format, $fields) = each (%$fields_by_format)) {
-    my $settings_fieldset  = $form->add_fieldset({'class' => '_stt_'.$format, 'legend' => 'Settings'});
+  while (my($format, $fields) = each (%ok_formats)) {
+    my $legend = scalar(@$fields) ? 'Settings' : '';
+    my $settings_fieldset  = $form->add_fieldset({'class' => '_stt_'.$format, 'legend' => $legend});
 
     ## Add custom fields for this data type and format
     foreach (@$fields) {
       my ($name, @values) = @$_;
+      next if $name eq 'snp_display' && !$hub->database('variation');
       ## IMPORTANT - use hashes here, not hashrefs, as Form code does weird stuff 
       ## in background that alters the contents of $settings!
       my %field_info = %{$settings->{$name}};
@@ -179,8 +228,19 @@ sub create_form {
     $settings_fieldset->add_button({
       'type'    => 'Submit',
       'name'    => 'submit',
-      'value'   => 'Export',
+      'value'   => 'Download',
     });
+  }
+
+  ## Add images fieldset
+  if ($tutorial) {
+    my $tutorial_fieldset = $form->add_fieldset;
+    my $html = '<p><b>Guide to file formats</b></p><div class="_export_formats export-formats">';
+    foreach my $format (sort {lc($a) cmp lc($b)} keys %ok_formats) {
+      $html .= $self->show_preview($format);
+    }
+    $html .= '</div>';
+    $tutorial_fieldset->add_notes($html);
   }
 
   return $form;
@@ -192,10 +252,35 @@ sub default_file_name {
   return $self->hub->species_defs->ENSEMBL_SITETYPE.'_data_export';
 }
 
-sub get_tutorial {
+sub show_preview {
   my ($self, $format) = @_;
-  my $html = sprintf('<div style="float:left;padding-right:20px;"><p style="margin-bottom:0">%s</p><img src="/img/help/export/%s_tutorial.png"></div>', $format, lc($format));
+  my $img = lc($format);
+  $img .= '_align' if (lc($format) eq 'fasta' && $self->hub->param('align'));
+  
+  my $html = sprintf('<div><p>%s</p><p><img src="/img/help/export/%s_preview.png" /></p></div>', $format, $img);
   return $html;
+}
+
+## Only needs to be set for a format if we want to insert extra text into the dropdown
+our $format_label = {
+  'RTF'   => 'RTF (Word-compatible)',
+};
+
+
+sub _munge_format_info {
+  my ($self, $hashref, $optgroup) = @_;
+  my @munged_info;
+
+  foreach (sort {lc($a) cmp lc($b)} keys %$hashref) {
+    my $info = {'value' => $_,
+                'caption' => $format_label->{$_} || $_,
+                'class' => "_stt__$_ _action_$_",
+                };
+    $info->{'group'} = $optgroup if $optgroup;
+    $info->{'selected'} = 'selected' if $self->hub->param('format') eq $_;
+    push @munged_info, $info;
+  }
+  return @munged_info;
 }
 
 1;

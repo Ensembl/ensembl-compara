@@ -130,7 +130,7 @@ Ensembl.Panel.Configurator = Ensembl.Panel.ModalContent.extend({
     }
     
     this.elLk.configDivs.not('.view_config')
-    .on('click', 'ul.config_menu > li.track, .select_all', $.proxy(this.showConfigMenu, this)) // Popup menus - displaying
+    .on('click', 'ul.config_menu > li.track div.track_name, .select_all', $.proxy(this.showConfigMenu, this)) // Popup menus - displaying
     .on('click', '.popup_menu li',                         $.proxy(this.setTrackConfig, this)) // Popup menus - setting values
     .on('click', '.config_header', function () {                                               // Header on search results and active tracks sections will act like the links on the left
       $('a.' + this.parentNode.className.replace(/\s*config\s*/, ''), panel.elLk.links).trigger('click');
@@ -289,7 +289,11 @@ Ensembl.Panel.Configurator = Ensembl.Panel.ModalContent.extend({
     
     var el        = $(e.currentTarget);
     var selectAll = el.hasClass('select_all');
-    
+
+    if (el.hasClass('track_name')) {
+      el = el.parent();
+    }
+
     if (selectAll && e.target === e.currentTarget) {
       return false; // Stop clicks for select all firing unless you click on the actual text, not the div
     }

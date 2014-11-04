@@ -69,4 +69,13 @@ sub get_all_phenotypes {
   return $pa->fetch_all();
 };
 
+sub get_gene_display_label {
+  my ($self, $gene_id) = @_;
+
+  my $gene  = $self->hub->database('core')->get_adaptor('Gene')->fetch_by_stable_id($gene_id);
+  my $xref  = $gene && $gene->display_xref;
+
+  return $xref && $xref->display_id || '';
+}
+
 1;

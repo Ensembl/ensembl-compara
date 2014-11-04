@@ -75,6 +75,9 @@ body.ie .open .cell_detail { display: block; }
 .ts_flag { background: none repeat scroll 0 0 #CBD7EB; border-radius: 4px; display: inline-block; margin: 1px; padding: 1px 6px; text-decoration: none; font-size: 95%; }
 .ts_biotype { background: none repeat scroll 0 0 #CBD7EB; border-radius: 4px; display: inline-block; margin: 1px; padding: 1px 6px; text-decoration: none; font-size: 95%; }
 .ts_flag .glossary_mouseover { border-bottom: 1px dotted #000099; }
+.appris_green { color:#006600; }
+.appris_yellow { color:#c19200; }
+
 
 /************************************
              other stuff
@@ -111,7 +114,7 @@ img.helptip-icon                                   { vertical-align: middle; }
 div.ui-tooltip                                     { position: absolute; z-index: 999999; }
 div.ui-tooltip div.ui-tooltip-content              { position: relative; background-color: [[PAGE_TEXT]]; color: [[PAGE_BG]]; padding: 8px; margin: 6px; line-height: 16px; border-radius: 4px; max-width: 300px; }
 div.ui-tooltip div.ui-tooltip-content p:last-child { margin-bottom: 0; }
-div.ui-tooltip div.ui-tooltip-content a            { color: inherit; text-decoration: none; }
+div.ui-tooltip div.ui-tooltip-content a            { color: inherit; }
 
 /* IE is stupid and can't cope with :before and :after on different classnames, so have to use .helptip-top/.helptip-bottom instead of .ui-tooltip */
 div.helptip-top    div.ui-tooltip-content:before,

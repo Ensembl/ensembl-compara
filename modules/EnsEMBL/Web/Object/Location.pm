@@ -1619,7 +1619,7 @@ sub get_all_genotypes{
 
 sub can_export {
   my $self = shift;
-  return $self->action =~ /^(Export|Chromosome|Genome|Synteny)$/ ? 0 : $self->availability->{'slice'};
+  return $self->action =~ /^(Export|Chromosome|Genome|Synteny|Compara_Alignments)$/ ? 0 : $self->availability->{'slice'};
 }
 
 sub multi_locations {

@@ -92,14 +92,14 @@ sub FASTA_OPTIONS {
   );
 }
 
-sub HOMOLOGY_TYPES {
-### Lookup for compara acronyms
+sub APPRIS_CODES {
+### A hopefully temporary lookup!
   return {
-    'BRH'  => 'Best Reciprocal Hit',
-    'UBRH' => 'Unique Best Reciprocal Hit',
-    'MBRH' => 'Multiple Best Reciprocal Hit',
-    'RHS'  => 'Reciprocal Hit based on Synteny around BRH',
-    'DWGA' => 'Derived from Whole Genome Alignment'
+    'APPRIS principal isoform'                                      => 'pi',
+    'APPRIS candidate principal isoform (CCDS)'                     => 'ci3',
+    'APPRIS candidate principal isoform (longest CCDS)'             => 'ci2',
+    'APPRIS candidate principal isoform (longest coding sequence)'  => 'ci1',
+    'APPRIS candidate principal isoform'                            => 'ci',
   };
 }
 

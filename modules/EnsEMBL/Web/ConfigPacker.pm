@@ -1036,8 +1036,7 @@ sub _summarise_compara_db {
       where mls.species_set_id = ss.species_set_id
         and ss.genome_db_id = gd.genome_db_id 
         and mls.method_link_id = ml.method_link_id
-        and ml.type not like "%PARALOGUES"
-        and mls.source != "ucsc"
+        and ml.type LIKE "LASTZ%"
       group by mls.method_link_species_set_id, mls.method_link_id
       having count = 1
   ');
@@ -1164,39 +1163,11 @@ sub _summarise_compara_db {
   
   ###################################################################
   ## Section for colouring and colapsing/hidding genes per species in the GeneTree View
-  # 1. Only use the species_sets that have a genetree_display tag
   
-  $res_aref = $dbh->selectall_arrayref(q{SELECT taxon_id, name FROM ncbi_taxa_name WHERE name_class = 'ensembl web display'});
-  
-  foreach my $row (@$res_aref) {
-    # 2.1 For each set, get all the tags
-    my ($taxon_id, $name) = @$row;
-    next unless $name; # Requires a name for the species_set
-    my %ss = (taxon_id => $taxon_id);
-
-    my $res_aref2 = $dbh->selectall_arrayref("SELECT name_class, name FROM ncbi_taxa_name WHERE taxon_id = $taxon_id AND name_class LIKE 'genetree\_%'");
-    foreach my $row2 (@$res_aref2) {
-      my ($tag, $value) = @$row2;
-      $ss{$tag} = $value;
-    }
-    next unless $ss{'genetree_display'};
-
-    # 3. Get the genome_db_ids for each set
-    # This query is a copy of DBSQL::GenomeDBAdaptor
-    $res_aref2 = $dbh->selectall_arrayref("SELECT genome_db_id FROM ncbi_taxa_node ntn1, ncbi_taxa_node ntn2, genome_db gdb WHERE ntn1.taxon_id = $taxon_id AND ntn1.left_index < ntn2.left_index AND ntn1.right_index > ntn2.left_index AND ntn2.taxon_id = gdb.taxon_id");
-    
-    $ss{'genome_db_ids'} = [map {$_->[0]} @$res_aref2];
-    $self->db_tree->{$db_name}{'SPECIES_SET'}{$name} = \%ss;
-  }
-  
-  # We need to add the "special" set of low-coverage species
-  {
-    my $res_aref2 = $dbh->selectall_arrayref(q{SELECT genome_db_id FROM genome_db WHERE is_high_coverage = 0});
-    $self->db_tree->{$db_name}{'SPECIES_SET'}{'low-coverage'} = {
-      genome_db_ids     => [map {$_->[0]} @$res_aref2],
-      genetree_display  => 'default',
-    };
-  }
+  # The config for taxon-groups is in DEFAULTS.ini
+  # Here, we only need to add the "special" set of low-coverage species
+  $res_aref = $dbh->selectall_arrayref(q{SELECT genome_db_id FROM genome_db WHERE is_high_coverage = 0});
+  $self->db_tree->{$db_name}{'SPECIES_SET'}{'LOWCOVERAGE'} = [map {$_->[0]} @$res_aref];
 
   ## End section about colouring and colapsing/hidding gene in the GeneTree View
   ###################################################################
@@ -1301,10 +1272,11 @@ sub _summarise_compara_alignments {
   
   # get details of alignments
   $q = sprintf('
-    select genomic_align_block_id, method_link_species_set_id, dnafrag_start, dnafrag_end, dnafrag_id
-      from genomic_align %s
-      order by genomic_align_block_id, dnafrag_id',
-      @method_link_species_set_ids ? sprintf 'where method_link_species_set_id in (%s)', join ',', @method_link_species_set_ids : ''
+    select genomic_align_block_id, ga.method_link_species_set_id, ga.dnafrag_start, ga.dnafrag_end, ga.dnafrag_id
+      from genomic_align ga_ref join dnafrag using (dnafrag_id) join genomic_align ga using (genomic_align_block_id)
+      where is_reference = 0 %s
+      order by genomic_align_block_id, ga.dnafrag_id',
+      @method_link_species_set_ids ? sprintf 'and ga_ref.method_link_species_set_id in (%s)', join ',', @method_link_species_set_ids : ''
   );
   
   $sth = $dbh->prepare($q);
@@ -1661,18 +1633,10 @@ sub _munge_meta {
     my $taxonomy = $meta_hash->{'species.classification'};
     
     if ($taxonomy && scalar(@$taxonomy)) {
-      my $order = $self->tree->{'TAXON_ORDER'};
-      
-      foreach my $taxon (@$taxonomy) {
-        foreach my $group (@$order) {
-          if ($taxon eq $group) {
-            $self->tree->{$species}{'SPECIES_GROUP'} = $group;
-            last;
-          }
-        }
-        
-        last if $self->tree->{$species}{'SPECIES_GROUP'};
-      }
+      my %valid_taxa = map {$_ => 1} @{ $self->tree->{'TAXON_ORDER'} };
+      my @matched_groups = grep {$valid_taxa{$_}} @$taxonomy;
+      $self->tree->{$species}{'SPECIES_GROUP'} = $matched_groups[0] if @matched_groups;
+      $self->tree->{$species}{'SPECIES_GROUP_HIERARCHY'} = \@matched_groups;
     }
 
     ## create lookup hash for species aliases
@@ -1789,10 +1753,20 @@ sub _munge_file_formats {
     'bigwig'    => {'ext' => 'bw',  'label' => 'BigWig',    'display' => 'graph', 'indexed' => 1},
     'bigbed'    => {'ext' => 'bb',  'label' => 'BigBed',    'display' => 'graph', 'indexed' => 1},
     'datahub'   => {'ext' => 'txt', 'label' => 'TrackHub',  'display' => 'graph', 'indexed' => 1},
-    'rtf'       => {'ext' => 'rtf', 'label' => 'RTF'},
-    'fasta'     => {'ext' => 'fa',  'label' => 'FASTA'},
     'vcf'       => {'ext' => 'vcf', 'label' => 'VCF',       'display' => 'graph'},
     'vcfi'      => {'ext' => 'vcf', 'label' => 'VCF (indexed)', 'display' => 'graph', 'indexed' => 1},
+    'fasta'     => {'ext' => 'fa',   'label' => 'FASTA'},
+    'clustalw'  => {'ext' => 'aln',  'label' => 'CLUSTALW'},
+    'msf'       => {'ext' => 'msf',  'label' => 'MSF'},
+    'mega'      => {'ext' => 'meg',  'label' => 'Mega'},
+    'nexus'     => {'ext' => 'nex',  'label' => 'Nexus'},
+    'orthoxml'  => {'ext' => 'xml',  'label' => 'OrthoXML'},
+    'phylip'    => {'ext' => 'phy',  'label' => 'Phylip'},
+    'phyloxml'  => {'ext' => 'xml',  'label' => 'PhyloXML'},
+    'pfam'      => {'ext' => 'pfam', 'label' => 'Pfam'},
+    'psi'       => {'ext' => 'psi',  'label' => 'PSI'},
+    'rtf'       => {'ext' => 'rtf',  'label' => 'RTF'},
+    'stockholm' => {'ext' => 'stk',  'label' => 'Stockholm'},
   );
 
   ## Munge into something useful to this website

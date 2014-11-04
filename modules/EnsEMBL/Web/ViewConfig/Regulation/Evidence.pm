@@ -38,6 +38,6 @@ sub form {
   $self->add_image_config('reg_summary');
 }
 
-sub extra_tabs { return $_[0]->reg_extra_tabs; }
+sub extra_tabs { return $_[0]->reg_extra_tabs('reg_summary'); }
 
 1;

@@ -87,6 +87,21 @@ sub content {
     label  => $feature->supporting_information,
   });
 
+  my $feature_view_link = $self->hub->url({
+                              type   => 'Location',
+                              action => 'Genome',
+                              ftype  => 'RegulatoryFactor',
+                              fset   => $feature->feature_set->name,
+                              id     => $feature->display_label,
+                            });
+
+
+  if ($feature_view_link){
+    $self->add_entry({
+      label_html => 'View all locations',
+      link       => $feature_view_link,
+    });
+  }
 }
 
 1;

@@ -35,19 +35,14 @@ Ensembl.Panel.TextSequence = Ensembl.Panel.Content.extend({
    
     $('.adornment',this.el).each(function() {
       var $this = $(this);
-      if($this.hasClass('adornment-done') ||
-         $this.hasClass('adornment-running')) {
-        return;
-      }
-      $this.adorn().then(function(nework) {
-        if(nework) {
-          panel.initPopups($this);
-          panel.updateKey($this);
-          if(!$('.ajax_pending',this.el).length &&
-             !$('.ajax_load',this.el).length &&
-             !$('.sequence_key img',this.el).length) {
-            panel.requestKey($this);
-          }
+      $this.adorn(function(outer) {
+        var $outer = $(outer);
+        panel.initPopups($outer);
+        panel.updateKey($outer);
+        if(!$('.ajax_pending',this.el).length &&
+            !$('.ajax_load',this.el).length &&
+            !$('.sequence_key img',this.el).length) {
+//            panel.requestKey($this);
         }
       });
     });

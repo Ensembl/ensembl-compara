@@ -206,9 +206,6 @@ sub config {
         [ 'orthoxml',    'OrthoXML from Compara' ],
         [ 'orthopan',    'OrthoXML from Pan-taxonomic Compara' ]
       ],
-      params => [
-        [ 'possible_orthologs', 'Treat not supported duplications as speciations (makes a non species-tree-compliant tree)' ],
-      ]
     }  
   };
 
@@ -404,7 +401,6 @@ sub orthoxml{
           -SOURCE => $cdb eq 'compara' ? $SiteDefs::ENSEMBL_SITETYPE:'Ensembl Genomes',
 	        -SOURCE_VERSION => $SiteDefs::SITE_RELEASE_VERSION, 
           -HANDLE => $handle,
-          -POSSIBLE_ORTHOLOGS => $params->{'possible_orthologs'},
   ); 
   $self->writexml($tree, $handle, $w);
 }
@@ -564,7 +560,11 @@ sub alignment {
   
   $self->{'alignments_function'} = 'get_SimpleAlign';
   
-  my $alignments = EnsEMBL::Web::Component::Compara_Alignments::get_alignments($self, $self->slice, $hub->param('align'), $hub->species);
+  my $alignments = $self->get_alignments({
+                              'slice' => $self->slice,
+                              'align' => $hub->param('align'), 
+                              'species' => $hub->species
+                          });
   my $export;
 
   my $align_io = Bio::AlignIO->newFh(

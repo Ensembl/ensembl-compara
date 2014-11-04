@@ -156,34 +156,34 @@ sub variation_source {
   # Source link
   if ($source =~ /dbSNP/) {
     $sname       = 'DBSNP';
-    $source_link = $hub->get_ExtURL_link("View in dbSNP", $sname, $name);
+    $source_link = $hub->get_ExtURL_link("[View in dbSNP]", $sname, $name);
   } elsif ($source =~ /SGRP/) {
-    $source_link = $hub->get_ExtURL_link("About $source", 'SGRP_PROJECT');
+    $source_link = $hub->get_ExtURL_link("[About $source]", 'SGRP_PROJECT');
   } elsif ($source =~ /COSMIC/) {
     $sname       = 'COSMIC';
     my $cname = ($name =~ /^COSM(\d+)/) ? $1 : $name;
-    $source_link = $hub->get_ExtURL_link("View in $source", "${sname}_ID", $cname);
+    $source_link = $hub->get_ExtURL_link("[View in $source]", "${sname}_ID", $cname);
   } elsif ($source =~ /HGMD/) {
     $version =~ /(\d{4})(\d+)/;
     $version = "$1.$2";
     my $pf          = ($hub->get_adaptor('get_PhenotypeFeatureAdaptor', 'variation')->fetch_all_by_Variation($object->Obj))->[0];
     my $asso_gene   = $pf->associated_gene;
-       $source_link = $hub->get_ExtURL_link("View in $source", 'HGMD', { ID => $asso_gene, ACC => $name });
+       $source_link = $hub->get_ExtURL_link("[View in $source]", 'HGMD', { ID => $asso_gene, ACC => $name });
   } elsif ($source =~ /ESP/) {
     if ($name =~ /^TMP_ESP_(\d+)_(\d+)/) {
-      $source_link = $hub->get_ExtURL_link("View in $source", $source, { CHR => $1 , START => $2, END => $2});
+      $source_link = $hub->get_ExtURL_link("[View in $source]", $source, { CHR => $1 , START => $2, END => $2});
     }
     else {
-      $source_link = $hub->get_ExtURL_link("View in $source", "${source}_HOME");
+      $source_link = $hub->get_ExtURL_link("[View in $source]", "${source}_HOME");
     }
   } elsif ($source =~ /LSDB/) {
     $version = ($version) ? " ($version)" : '';
-    $source_link = $hub->get_ExtURL_link("View in $source", $source, $name);
+    $source_link = $hub->get_ExtURL_link("[View in $source]", $source, $name);
   }  elsif ($source =~ /PhenCode/) {
      $sname       = 'PHENCODE';
-     $source_link = $hub->get_ExtURL_link("View in PhenCode", $sname, $name);
+     $source_link = $hub->get_ExtURL_link("[View in PhenCode]", $sname, $name);
 } else {
-    $source_link = $url ? qq{<a href="$url" class="constant">View in $source</a>} : "$source $version";
+    $source_link = $url ? qq{<a href="$url" class="constant">[View in $source]</a>} : "$source $version";
   }
   
   $version = ($version) ? " (release $version)" : '';
@@ -194,15 +194,25 @@ sub variation_source {
 
 sub co_located {
   my ($self, $feature_slice) = @_;
-  my $hub        = $self->hub;
-  my $adaptor    = $hub->get_adaptor('get_VariationFeatureAdaptor', 'variation');
-  $adaptor->db->include_failed_variations(1);
-  my @variations = (@{$adaptor->fetch_all_by_Slice($feature_slice)}, @{$adaptor->fetch_all_somatic_by_Slice($feature_slice)});
+  my $hub     = $self->hub;
+  my $adaptor = $hub->get_adaptor('get_VariationFeatureAdaptor', 'variation');
+
+  my $slice;
+  if ($feature_slice->start > $feature_slice->end) { # Insertion
+    my $slice_adaptor = $hub->get_adaptor('get_SliceAdaptor', 'core');
+    $slice = $slice_adaptor->fetch_by_region( $feature_slice->coord_system_name, $feature_slice->chr_name,
+                                              $feature_slice->end, $feature_slice->start, $feature_slice->strand );
+  }
+  else {
+    $slice = $feature_slice;
+  }
+
+  my @variations = (@{$adaptor->fetch_all_by_Slice($slice)}, @{$adaptor->fetch_all_somatic_by_Slice($slice)});
 
   if (@variations) {
     my $name  = $self->object->name;
-    my $start = $feature_slice->start;
-    my $end   = $feature_slice->end;
+    my $start = $slice->start;
+    my $end   = $slice->end;
     my %by_source;
     
     foreach (@variations) {
@@ -212,9 +222,9 @@ sub co_located {
       
       my $v_start = $_->start + $start - 1;
       my $v_end   = $_->end   + $start - 1;
-      
-      next unless $v_start == $start && $v_end == $end; 
-      
+
+      next unless $v_start == $feature_slice->start && $v_end == $feature_slice->end;
+
       my $link      = $hub->url({ v => $v_name, vf => $_->dbID });
       my $alleles   = ' ('.$_->allele_string.')' if $_->allele_string =~ /\//;
       my $variation = qq{<a href="$link">$v_name</a>$alleles};
@@ -308,7 +318,7 @@ sub synonyms {
     my $show = $self->hub->get_cookie_value('toggle_variation_synonyms') eq 'open';
 
     return [
-      sprintf('<a class="toggle %s set_cookie" href="#" rel="variation_synonyms" title="Click to toggle sets names">Synonyms</a>', $show ? 'open' : 'closed'),
+      sprintf('<a class="toggle %s _slide_toggle set_cookie" href="#" rel="variation_synonyms" title="Click to toggle sets names">Synonyms</a>', $show ? 'open' : 'closed'),
       sprintf('<p>This variation has <strong>%s</strong> synonyms - click the plus to show</p><div class="variation_synonyms twocol-cell"><div class="toggleable" style="font-weight:normal;%s"><ul>%s</ul></div></div>',
         $count,
         $show ? '' : 'display:none',
@@ -362,7 +372,7 @@ sub alleles {
     my $show = $self->hub->get_cookie_value('toggle_Alleles') eq 'open';
 
     $html = sprintf(
-     '<a class="toggle _ht %s set_cookie" href="#" rel="Alleles" style="font-weight:bold;font-size:1.2em" title="Click to toggle Reference/Alternative%s alleles%s">%s</a>
+     '<a class="toggle _ht %s _slide_toggle set_cookie" href="#" rel="Alleles" style="font-weight:bold;font-size:1.2em" title="Click to toggle Reference/Alternative%s alleles%s">%s</a>
       <small>Click the plus to show all of the alleles</small>%s
       <div class="Alleles"><div class="toggleable" style="font-weight:normal;%s">%s</div></div>',
       $show ? 'open' : 'closed',
@@ -395,7 +405,7 @@ sub alleles {
           $allele = substr($allele,0,50).'...' if (length $allele > 50);
           my $show2 = $self->hub->get_cookie_value('toggle_Sequence') eq 'open';
           $html  .= sprintf('<em>Note</em>: The reference %s for this variant (%s) does not match the Ensembl reference %s at this location.
-                             <a class="toggle %s set_cookie" href="#" rel="Sequence" title="Click to toggle Sequence"></a><small>Click the plus to show all of the sequence</small></a>
+                             <a class="toggle %s _slide_toggle set_cookie" href="#" rel="Sequence" title="Click to toggle Sequence"></a><small>Click the plus to show all of the sequence</small></a>
                              <div class="Sequence"><div class="toggleable" style="font-weight:normal;%s">%s</div></div>',
                             $seq,
                             $allele,
@@ -615,7 +625,7 @@ sub hgvs {
     my $show = $self->hub->get_cookie_value('toggle_HGVS_names') eq 'open';
 
     return [
-      sprintf('<a class="toggle %s set_cookie" href="#" rel="HGVS_names" title="Click to toggle HGVS names">HGVS names</a>', $show ? 'open' : 'closed'),
+      sprintf('<a class="toggle %s _slide_toggle set_cookie" href="#" rel="HGVS_names" title="Click to toggle HGVS names">HGVS names</a>', $show ? 'open' : 'closed'),
       sprintf(qq(<div class="twocol-cell">
         <p>This variation has <strong>%s</strong> HGVS names - click the plus to show</p>
         <div class="HGVS_names"><div class="toggleable"%s>$html</div></div>
@@ -651,7 +661,7 @@ sub sets{
     my $show = $self->hub->get_cookie_value('toggle_variation_sets') eq 'open';
   
     return [
-      sprintf('<a class="toggle %s set_cookie" href="#" rel="variation_sets" title="Click to toggle sets names">Genotyping chips</a>', $show ? 'open' : 'closed'),
+      sprintf('<a class="toggle %s _slide_toggle set_cookie" href="#" rel="variation_sets" title="Click to toggle sets names">Genotyping chips</a>', $show ? 'open' : 'closed'),
       sprintf('<p>This variation has assays on <strong>%s</strong> chips - click the plus to show</p><div class="variation_sets twocol-cell"><div class="toggleable" style="font-weight:normal;%s"><ul>%s</ul></div></div>',
         $count,
         $show ? '' : 'display:none',
@@ -685,7 +695,7 @@ sub most_severe_consequence {
       });
  
       my $html = sprintf(
-         '%s | <a href="%s">See all predicted consequences <small>[Genes and regulation]</small></a>',
+         '<div>%s | <a href="%s">See all predicted consequences <small>[Genes and regulation]</small></a></div>',
          $self->render_consequence_type($vf_object,1),
          $url
       );

@@ -121,6 +121,7 @@ div.config div.config_matrix div.subtracks ul.config_menu           { margin: 0;
 div.config div.config_matrix div.subtracks ul li.default            { position: relative; }
 div.config div.config_matrix div.subtracks ul li.track div          { display: none; }
 div.config div.config_matrix div.subtracks ul li.default div        { display: block; position: absolute; height: 17px; width: 17px; top: 2px; left: 2px; }
+div.config div.config_matrix div.subtracks ul li.track { padding: 3px 0 2px 25px; top: inherit; left: inherit; width: inherit; height: inherit; }
 div.config div.config_matrix div.subtracks div.select_all           { margin: 0 0 3px 0; }
 div.config div.config_matrix div.subtracks div.select_all strong    { padding: 2px 0; }
 div.config div.config_matrix div.subtracks div.select_all .current  { font-weight: bold; }

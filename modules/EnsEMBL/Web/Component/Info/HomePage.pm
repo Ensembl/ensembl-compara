@@ -161,16 +161,20 @@ sub assembly_text {
   ## Insert dropdown list of other assemblies
   my $adaptor  = EnsEMBL::Web::DBSQL::ArchiveAdaptor->new($hub);
   my $archives = $adaptor->fetch_archives_by_species($hub->species);
+
   my $previous = $assembly;
-  foreach my $version (reverse sort keys %$archives) {
+  foreach my $version (reverse sort {$a <=> $b} keys %$archives) {
     my $archive = $archives->{$version};
     ## Remove patch sub-versions
     (my $major_assembly = $archive->{'assembly'}) =~ s/\.p\d+//;
     next if $version == $ensembl_version || $major_assembly eq $previous;
+    my $desc = $archive->{'description'} || sprintf '(%s release %s)', $species_defs->ENSEMBL_SITETYPE, $version;
+    my $subdomain = ((lc $archive->{'archive'}) =~ /^[a-z]{3}[0-9]{4}$/) 
+                      ? lc $archive->{'archive'}.'.archive' : lc $archive->{'archive'};
     push @other_assemblies, {
-      url      => sprintf('http://%s.archive.ensembl.org/%s/', lc $archive->{'archive'}, $species),
-      assembly => $archive->{'assembly'},
-      release  => (sprintf '(%s release %s)', $species_defs->ENSEMBL_SITETYPE, $version),
+      url      => sprintf('http://%s.ensembl.org/%s/', $subdomain, $species),
+      assembly => $major_assembly,
+      release  => $desc,
     };
     
     $previous = $major_assembly;
@@ -209,9 +213,10 @@ sub genebuild_text {
     </div>
     <h2>Gene annotation</h2>
     <p><strong>What can I find?</strong> Protein-coding and non-coding genes, splice variants, cDNA and protein sequences, non-coding RNAs.</p>
-    <p><a href="%s#genebuild" class="nodeco">%sMore about this genebuild</a></p>
+    <p><a href="%s#genebuild" class="nodeco">%sMore about this genebuild</a>%s</p>
     %s
     <p><a href="%s" class="modal_link nodeco" rel="modal_user_data">%sUpdate your old Ensembl IDs</a></p>
+    %s
     %s',
     
     sprintf(
@@ -228,6 +233,8 @@ sub genebuild_text {
     
     $hub->url({ action => 'Annotation', __clear => 1 }), sprintf($self->{'icon'}, 'info'),
     
+    $hub->database('rnaseq') ? sprintf(', including <a href="%s" class="nodeco">RNASeq gene expression models</a>', $hub->url({'action' => 'Expression'})) : '',
+
     $ftp ? sprintf(
       '<p><a href="%s/release-%s/fasta/%s/" class="nodeco">%sDownload genes, cDNAs, ncRNA, proteins</a> (FASTA)</p>', ## Link to FTP site
       $ftp, $species_defs->ENSEMBL_VERSION, lc $species, sprintf($self->{'icon'}, 'download')

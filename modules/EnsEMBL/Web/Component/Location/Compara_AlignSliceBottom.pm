@@ -108,7 +108,9 @@ sub content {
   
   return if $self->_export_image($image);
   
-  $image->{'panel_number'} = 'bottom';
+  $image->{'panel_number'}  = 'bottom';
+  $image->{'data_export'}   = 'Alignments';
+  $image->{'export_params'}   = ['align'];
   $image->imagemap = 'yes';
   $image->set_button('drag', 'title' => 'Click or drag to centre display');
   
@@ -122,6 +124,14 @@ sub content {
   $html .=  $alert_box;
   
   return $html;
+}
+
+sub export_options { return {'action' => 'Alignments', 'caption' => 'Download alignment'}; }
+
+sub get_export_data {
+## Get data for export
+  my $self      = shift;
+  return $self->hub->core_object('location');
 }
 
 1;

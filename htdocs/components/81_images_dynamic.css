@@ -41,7 +41,8 @@ body.ie6 div.image_container { background-color: [[BUTTON_BG]]; }
 /**
  as we have to remove the href tags to get IE to work - make the whole of the slice "clickable"...**/
 
-.drag_select { cursor: pointer; position: relative; }
+.drag_select { cursor: default; position: relative; }
+.drag_select.drag_select_pointer { cursor: pointer; }
 
 .hover_label                              { position: absolute; padding: 0 0 5px 0; border: 1px solid; z-index: 999; display: none; text-align: left; width: auto; cursor: default; }
 .hover_label.name_only                    { padding: 0; }
@@ -106,11 +107,12 @@ div.image_toolbar.top    { border-bottom: 1px solid #999999; }
 div.image_toolbar.bottom { border-top: 1px solid #999999; }
 div.image_toolbar a      { float: left; width: 16px; height: 16px; display: block; margin: 0 4px 2px 4px; }
 
-div.image_toolbar a.config { background-image: url(/i/16/rev/setting.png);      }
-div.image_toolbar a.data   { background-image: url(/i/16/rev/page-user.png);    }
-div.image_toolbar a.export { background-image: url(/i/16/rev/picture.png);      }
-div.image_toolbar a.resize { background-image: url(/i/16/rev/image_resize.png); }
-div.image_toolbar a.share  { background-image: url(/i/16/rev/share.png);        }
+div.image_toolbar a.config    { background-image: url(/i/16/rev/setting.png);      }
+div.image_toolbar a.data      { background-image: url(/i/16/rev/page-user.png);    }
+div.image_toolbar a.export    { background-image: url(/i/16/rev/picture.png);      }
+div.image_toolbar a.download  { background-image: url(/i/16/rev/download.png);      }
+div.image_toolbar a.resize    { background-image: url(/i/16/rev/image_resize.png); }
+div.image_toolbar a.share     { background-image: url(/i/16/rev/share.png);        }
 
 /* Image exporting */
 

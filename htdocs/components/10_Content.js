@@ -143,7 +143,7 @@ Ensembl.Panel.Content = Ensembl.Panel.extend({
       });
     }
     
-    this.xhr = $.ajax({
+    this.xhr = $.paced_ajax({
       url: url,
       data: data,
       dataType: 'html',

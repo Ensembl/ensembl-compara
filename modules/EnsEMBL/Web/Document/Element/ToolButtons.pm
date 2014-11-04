@@ -134,7 +134,6 @@ sub init {
       caption => 'Export data',
       class   => 'disabled',
       url     => undef,
-      title   => 'You cannot export data from this page'
     });
   }
   

@@ -244,12 +244,11 @@ sub render_normal {
     $depth = 0 unless $overlap;
   }
 
-  my ($track_height,$on_screen,$off_screen) = (0,0,0);
+  my ($track_height,$on_screen,$off_screen,$on_other_strand) = (0,0,0,0);
 
   foreach my $feature_key (@sorted) {
     ## Fix for userdata with per-track config
     my ($config, @features);
-    warn ">>> FEATURE KEY $feature_key";
     
     $self->{'track_key'} = $feature_key;
     
@@ -272,7 +271,10 @@ sub render_normal {
     foreach (sort { $a->[0] <=> $b->[0] }  map [ $_->start, $_->end, $_ ], @features) {
       my ($s, $e, $f) = @$_;
 
-      next if $strand_flag eq 'b' && $strand != (($f->can('hstrand') ? $f->hstrand : 1) * $f->strand || -1) || $e < 1 || $s > $length;
+      if ($strand_flag eq 'b' && $strand != (($f->can('hstrand') ? $f->hstrand : 1) * $f->strand || -1) || $e < 1 || $s > $length) {
+        $on_other_strand = 1;
+        next;
+      }
       my $fgroup_name = $join ? $self->feature_group($f) : $nojoin_id++;
       my $db_name     = $f->can('external_db_id') ? $extdbs->{$f->external_db_id}{'db_name'} : 'OLIGO';
       
@@ -506,7 +508,7 @@ sub render_normal {
   
   $self->_render_hidden_bgd($h) if $features_drawn && $self->my_config('addhiddenbgd') && $self->can('href_bgd') && !$depth; 
   
-  $self->errorTrack(sprintf q{No features from '%s' in this region}, $self->my_config('name')) unless $features_drawn || $self->{'no_empty_track_message'} || $self->{'config'}->get_option('opt_empty_tracks') == 0;
+  $self->errorTrack(sprintf q{No features from '%s' on this strand}, $self->my_config('name')) unless $features_drawn || $on_other_strand || $self->{'no_empty_track_message'} || $self->{'config'}->get_option('opt_empty_tracks') == 0;
   $self->errorTrack(sprintf(q{%s features from '%s' omitted}, $features_bumped, $self->my_config('name')), undef, $y_offset) if $self->get_parameter('opt_show_bumped') && $features_bumped;
 }
 
@@ -533,7 +535,7 @@ sub render_ungrouped {
   my %features       = $self->features;
   my $y_offset       = 0;
   my $label_h        = 0;
-  my ($fontname, $fontsize);
+  my ($fontname, $fontsize, $on_this_strand, @ok_features);
   
   if ($self->{'show_labels'}) {
     ($fontname, $fontsize) = $self->get_font_details('outertext');
@@ -551,7 +553,7 @@ sub render_ungrouped {
 
     ## Sanity check - make sure the feature set only contains arrayrefs, or the fancy transformation
     ## below will barf (mainly when trying to handle userdata, which includes a config hashref)
-    my @ok_features = grep ref $_ eq 'ARRAY', @{$features{$feature_key}};
+    @ok_features = grep ref $_ eq 'ARRAY', @{$features{$feature_key}};
     
     $self->{'track_key'} = $feature_key;
     
@@ -567,6 +569,7 @@ sub render_ungrouped {
       ($start, $end) = ($end, $start) if $end < $start; # Flip start end YUK!
       $start = 1       if $start < 1;
       $end   = $length if $end > $length;
+      $on_this_strand++;
       
       next if ($end * $pix_per_bp) == int($x * $pix_per_bp);
       
@@ -629,7 +632,7 @@ sub render_ungrouped {
     $y_offset -= $strand * ($h + 2);
   }
   
-  $self->errorTrack(sprintf q{No features from '%s' in this region}, $self->my_config('name')) unless $features_drawn || $self->{'no_empty_track_message'} || $self->{'config'}->get_option('opt_empty_tracks') == 0;
+  $self->errorTrack(sprintf q{No features from '%s' on this strand}, $self->my_config('name')) unless $features_drawn || ($on_this_strand == scalar(@ok_features)) || $self->{'no_empty_track_message'} || $self->{'config'}->get_option('opt_empty_tracks') == 0;
 }
 
 sub render_text {

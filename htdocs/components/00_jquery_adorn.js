@@ -15,6 +15,24 @@
  */
 
 (function($) {
+  function sorted_each(hash,fn,map) {
+    var arr = [];
+    if(!map) { map = {}; }
+    $.each(hash,function(k,v) { arr.push([k,v]); });
+    arr.sort(function(a,b) {
+      var al = a[0].toLowerCase();
+      var bl = b[0].toLowerCase();
+      if(map[a[0]]) { al = map[a[0]]; }
+      if(map[b[0]]) { bl = map[b[0]]; }
+      if(al<bl) { return -1; }
+      if(al>bl) { return 1; }
+      return 0;
+    });
+    $.each(arr,function(i,e) {
+      fn(e[0],e[1]);
+    });
+  }
+
   function beat(def) {
     return def.then(function(data) {
       var d = $.Deferred();
@@ -51,19 +69,68 @@
     });
   }
 
-  function make_groups(seq) {
+  function fix_letters(text,ref,seq) {
+    var out = "";
+
+    var s = undefined;
+    if(!seq.letter) { seq.letter = []; }
+    for(var i=0;i<text.length;i++) {
+      if(i < seq.letter.length) { s = seq.letter[i]; }
+      if(s) {
+        out += ref.letter[s];
+      } else {
+        out += text.substr(i,1);
+      }
+    }
+    return out;
+  }
+
+  function unprefix(ref) {
+    var len = 0;
+    for(var i=0;i<ref.length;i++) {
+      len += ref[i][0];
+      if(len) {
+        ref[i][0] = ref[i-1].substr(0,len);
+      } else {
+        ref[i][0] = "";
+      }
+      ref[i] = ref[i][0] + ref[i][1];
+    }
+    return ref;
+  }
+
+  function unrle(seq) {
+    var prev = undefined;
+    var out = [];
+
+    if(!$.isArray(seq)) { return seq; }
+    for(var i=0;i<seq.length;i++) {
+      if(seq[i]<0) {
+        for(var j=0;j<-seq[i];j++) { out.push(prev); }
+      } else {
+        out.push(seq[i]);
+        prev = seq[i];
+      }
+    }
+    return out;
+  }
+
+  function make_groups(seq,textlen) {
     var styles = [];
     $.each(seq,function(key,values) {
-      $.each(values,function(i,value) {
+      var value = undefined;
+      for(var i=0;i<textlen;i++) {
+        if(i < values.length) { value = values[i]; }
         if(!styles[i]) { styles[i] = {}; }
         styles[i][key] = value;
-      });
+      }
     });
     var last = null;
     $.each(styles,function(i,cur) {
       if(last) {
         var diffs = 0;
         $.each(seq,function(k,v) {
+          if(k == 'letter') { return; }
           if(last[k] || cur[k]) {
             if(!last[k] || !cur[k] || last[k]!=cur[k]) { diffs = 1; }
           }
@@ -104,7 +171,8 @@
   }
 
   function prepare_adorn_span(text,ref,seq,xxx) {
-    var groups = make_groups(seq);
+    text = fix_letters(text,ref,seq);
+    var groups = make_groups(seq,text.length);
     var pos = 0;
     var out = '';
     $.each(groups,function(i,group) {
@@ -114,60 +182,171 @@
     return out;
   }
 
-  function _do_adorn(outer) {
+  function add_legend($outer,legend,loading) {
+    var $key = $outer.parents('.js_panel').find('.adornment-key');
+    // Add new legend to data
+    var data = $key.data('data');
+    if(!data) { data = {}; }
+    if(legend) {
+      $.each(legend,function(cn,cv) {
+        if(!data[cn] || data[cn] === -1) { data[cn] = {}; }
+        if(cn == '_messages') {
+          $.each(cv,function(i,ev) {
+            data[cn][ev] = 1;
+          });
+        } else {
+          $.each(cv,function(en,ev) {
+            data[cn][en] = ev;
+          });
+        }
+      });
+    }
+    delete data['Basic Annotation'];
+    var any = 0;
+    $.each(data,function(a,b) { any = 1; });
+    if(!any) {  
+      data['Basic Annotation'] = -1;
+    }
+    $.each(loading,function(i,load) {
+      if(!data[load]) { data[load] = -1; }
+    });
+    $key.data('data',data);
+    // Replace legend with new data
+    var key = '';
+    sorted_each(data,function(cn,cv) {
+      if(cn == '_messages') { return; }
+      var row = '';
+      if(cv === -1) {
+        row += '<li><span class="ad-loading">loading</span></li>';
+      } else {
+        sorted_each(cv,function(en,ev) {
+          var style = '';
+          if(!ev) { return; }
+          if(ev['default']) {
+            style += "background-color: " + ev['default'] + ";";
+          }
+          if(ev.label) { style += "color: " + ev.label + ";"; }
+          if(ev.extra_css) { style += ev.extra_css; }
+          row += '<li><span class="adorn-key-entry" style="'+style+'">' +
+            ev.text + '</span></li>';
+        });
+      }
+      if(row) {
+        var name = cn.substr(0,1).toUpperCase()+cn.substr(1);
+        name = name.replace(/([\/-])/g,"$1 ");
+        key += '<dt>'+name+'</dt><dd><ul>'+row+'</ul></dd>';
+      }
+    },{ other: "~" });
+    var messages = '';
+    if(data._messages) {
+      $.each(data._messages,function(message,v) {
+        messages += '<li>'+message+'</li>';
+      });
+    }
+    var html = '';
+    if(key || messages) { html += '<h4>Key:</h4>'; }
+    if(key) { html += '<dl>' + key +'</dl>'; }
+    if(messages) { html += '<ul>' + messages + '</ul>'; }
+    $key.html(html);
+  }
+
+  function _do_adorn(outer,fixups,data) {
     var $outer = $(outer);
-    if($outer.hasClass('adornment-running') ||
+    if(($outer.hasClass('adornment-running') && !data) ||
        $outer.hasClass('adornment-done')) {
       return $.Deferred().resolve(0);
     }
-    $outer.addClass('adornment-running');
-    var data = $.parseJSON($('.adornment-data',outer).text());
-    if ($.isEmptyObject(data.ref)) {
-      return $.Deferred().resolve(0);
-    }
     var wrapper = $outer.wrap("<div></div>").parent();
-    var d = $.Deferred().resolve(data.seq);
-    d = loop(d,function(key,values) {
-      var el = $('.adorn-'+key,outer);
-      if(el.length) {
-        return [el,el.text(),data.ref,values,key];
-      } else {
-        return undefined;
-      }
-    },1000,'a');
+    $outer.addClass('adornment-running');
+    if(!data) {
+      data = $.parseJSON($('.adornment-data',outer).text());
+    }
+    add_legend($outer,null,data.loading||data.provisional.loading);
+    var d;
+    if(data.url) {
+      d = $.Deferred().resolve(data.provisional);
+    } else {
+      d = $.Deferred().resolve(data);
+    }
+    d = d.then(function(data) {
+      $.each(data.ref,function(k,v) {
+        data.ref[k] = unprefix(data.ref[k]);
+      });
+      $.each(data.seq,function(k,v) {
+        if($.isPlainObject(data.seq[k])) {
+          $.each(data.seq[k],function(a,b) {
+            data.seq[k][a] = unrle(data.seq[k][a]);
+          });
+        }
+      });
+      data.seq = unrle(data.seq);
+      return loop($.Deferred().resolve(data.seq),function(key,values) {
+        if(values) {
+          var el = $('.adorn-'+key,outer);
+          if(el.length) {
+            var fl = {};
+            $.each(data.flourishes,function(k,v) {
+              var f = v[key];
+              var fl_el = $('.ad-'+k+'-'+key,outer);
+              if(f && fl_el.length) {
+                fl[k] = [fl_el,$.parseJSON(f).v];
+              }
+            });
+            return [el,el.text(),data.ref,values,key,fl];
+          } else {
+            return undefined;
+          }
+        }
+      },1000,'a');
+    });
     d = loop(d,function(i,task) {
       var out = prepare_adorn_span(task[1],task[2],task[3],task[4]);
-      return [task[0],out];
+      return [task[0],out,task[5]];
     },1000,'b');
-    d = fire(d,function() {
-      $outer.detach();
-    });
     d = loop(d,function(i,change) {
       change[0].html(change[1]);
+      $.each(change[2],function(i,fl) {
+        fl[0].html(fl[1]);
+      });
     },1000,'c');
     d = fire(d,function() {
       $('.adornment-data',outer).remove();
       $outer.appendTo(wrapper);
-      $outer.addClass('adornment-done');
-      $outer.removeClass('adornment-running');
+      add_legend($outer,data.legend||data.provisional.legend,
+                        data.loading||data.provisional.loading);
     });
-    return d.then(function() { return $.Deferred().resolve(1); });
+    if(data.url) {
+      d = d.then(function() {
+        // Look for parent adornment-load for lock
+        var load_div = $outer.parents('.adornment-load');
+        if(!load_div.length || !load_div.hasClass('adornment-loaded')) {
+          load_div.addClass('adornment-loaded')
+          // Do load
+          $.paced_ajax({ dataType: "html", url: data.url}).then(function(page) {
+            var start = $outer;
+            if(load_div.length) { start = load_div.get(0); }
+            var adornments = $('.adornment',start).addBack('.adornment');
+            var datas = $('.adornment-data',page);
+            for(var i=0;i<adornments.length;i++) {
+              _do_adorn(adornments[i],fixups,$.parseJSON($(datas[i]).text()));
+            }
+          });
+        }
+      });
+    } else {
+      d = fire(d,function() {
+        $outer.addClass('adornment-done');
+        $outer.removeClass('adornment-running');
+      });
+    }
+    d = d.then(function() { fixups(outer); });
+    return d;
   }
 
-  // Horrible Deferred stuff just makes sure each _do_adorn is called
-  // only after the previous finishes, and that the overall output is the
-  // logical-or of the output of each one.
-  $.fn.adorn = function() {
+  $.fn.adorn = function(fixups) {
     var all = [];
-    var d = $.Deferred().resolve(0);
     this.each(function(i,outer) {
-      d = d.then(function(nework_1) {
-        var e = $.Deferred();
-        beat(_do_adorn(outer)).done(function(nework_2) {
-          e.resolve(nework_1||nework_2);
-        });
-        return e;
-      });
+      beat(_do_adorn(outer,fixups));
     });
     return d;
   }; 

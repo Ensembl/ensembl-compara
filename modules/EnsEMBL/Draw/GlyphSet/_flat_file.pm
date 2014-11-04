@@ -25,7 +25,9 @@ use strict;
 
 use List::Util qw(reduce);
 
-use EnsEMBL::Web::Utils::UserData;
+use EnsEMBL::Web::Text::FeatureParser;
+use EnsEMBL::Web::TmpFile::Text;
+use EnsEMBL::Web::Tools::Misc;
 use Bio::EnsEMBL::Variation::Utils::Constants;
 
 use base qw(EnsEMBL::Draw::GlyphSet::_alignment EnsEMBL::Draw::GlyphSet_wiggle_and_block);
@@ -68,31 +70,46 @@ sub features {
   my $container    = $self->{'container'};
   my $species_defs = $self->species_defs;
   my $sub_type     = $self->my_config('sub_type');
+  my $parser = EnsEMBL::Web::Text::FeatureParser->new($species_defs);
   my $features     = [];
   my %results;
   
   $self->{'_default_colour'} = $self->SUPER::my_colour($sub_type);
  
-  my $args = {
-    'slice'   => $container,
-    'format'  => $self->my_config('format'),
-    'url'     => $self->my_config('url'),
-    'file'    => $self->my_config('file'),
-    'content' => $self->my_config('data'),
-  };
- 
-  my $track_data = EnsEMBL::Web::Utils::UserData::build_tracks_from_file($species_defs, $args);
+  $parser->filter($container->seq_region_name, $container->start, $container->end);
+
+  $self->{'parser'} = $parser;
+
+  if ($sub_type eq 'single_feature') {
+    $parser->parse($self->my_config('data'), $self->my_config('format'));
+  }
+  elsif ($sub_type eq 'url') {
+    my $response = EnsEMBL::Web::Tools::Misc::get_url_content($self->my_config('url'));
+
+    if (my $data = $response->{'content'}) {
+      $parser->parse($data, $self->my_config('format'));
+    } else {
+      warn "!!! $response->{'error'}";
+    }
+  } else {
+    my $file = EnsEMBL::Web::TmpFile::Text->new(filename => $self->my_config('file'));
+
+    return $self->errorTrack(sprintf 'The file %s could not be found', $self->my_config('caption')) if !$file->exists;
+
+    my $data = $file->retrieve;
+
+    return [] unless $data;
+
+    $parser->parse($data, $self->my_config('format'));
+  }
 
   ## Now we translate all the features to their rightful co-ordinates
-  while (my ($key, $T) = each (%$track_data)) {
-    my @A = @{$T->{'features'}};
-    warn ">>> KEY $key has FEATURES @A";
-    $self->map($container, $_) for @{$T->{'features'}};
+  while (my ($key, $T) = each (%{$parser->{'tracks'}})) {
+    $_->map($container) for @{$T->{'features'}};
  
     ## Set track depth a bit higher if there are lots of user features
     $T->{'config'}{'dep'} = scalar @{$T->{'features'}} > 20 ? 20 : scalar @{$T->{'features'}};
 
-=pod
     ### ensure the display of the VEP features using colours corresponding to their consequence
     if ($self->my_config('format') eq 'VEP_OUTPUT') {
       my %overlap_cons = %Bio::EnsEMBL::Variation::Utils::Constants::OVERLAP_CONSEQUENCES;      
@@ -139,9 +156,8 @@ sub features {
       }
     }
     else {
-=cut
       $features = $T->{'features'};
-    #}
+    }
 
     $results{$key} = [$features, $T->{'config'}];
   }
@@ -161,13 +177,13 @@ sub feature_title {
     $strand_name[$f->seq_region_strand]
   );
 
-  $title .= '; Hit start: '  . $f->hstart  if ($f->can('hstart') && $f->hstart);
-  $title .= '; Hit end: '    . $f->hend    if ($f->can('hend') && $f->hend);
-  $title .= '; Hit strand: ' . $f->hstrand if ($f->can('hstrand') && $f->hstrand);
-  $title .= '; Score: '      . $f->score   if($f->can('score') && $f->score);
-  
-  my %extra = $f->can('extra_data') && $f->extra_data && ref $f->extra_data eq 'HASH' ? %{$f->extra_data} : ();
-  
+  $title .= '; Hit start: ' . $f->hstart if $f->hstart;
+  $title .= '; Hit end: ' . $f->hend if $f->hend;
+  $title .= '; Hit strand: ' . $f->hstrand if $f->hstrand;
+  $title .= '; Score: ' . $f->score if $f->score; 
+ 
+  my %extra = $f->extra_data && ref $f->extra_data eq 'HASH' ? %{$f->extra_data} : (); 
+ 
   foreach my $k (sort keys %extra) {
     next if $k eq '_type';
     next if $k eq 'item_colour';
@@ -195,29 +211,6 @@ sub my_colour {
   my ($self, $k, $v) = @_;
   my $c = $self->{'parser'}{'tracks'}{$self->{'track_key'}}{'config'}{'color'} || $self->{'_default_colour'};
   return $v eq 'join' ?  $self->{'config'}->colourmap->mix($c, 'white', 0.8) : $c;
-}
-
-sub map {
-  my( $self, $slice, $f ) = @_;
-  my $chr = $f->slice->seq_region_name();
-  $chr=~s/^chr//;
-  return () unless $chr eq $slice->seq_region_name;
-  my $start = $f->start();
-  my $slice_end = $slice->end();
-  return () unless $start <= $slice_end;
-  my $end   = $f->end();
-  my $slice_start = $slice->start();
-  return () unless $slice_start <= $end;
-  $self->slide($f, 1 - $slice_start );
-
-  if ($slice->strand == -1) {
-    my $flip = $slice->length + 1;
-    my ($start, $end) = ($f->start, $f->end);
-    $f->start($flip - $end);
-    $f->end($flip - $start);
-  }
-
-  return $f;
 }
 
 sub slide    {

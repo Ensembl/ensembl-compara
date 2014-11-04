@@ -16,16 +16,17 @@
 
 .tool_buttons p,
 .other_tool              { display: none; margin: 0; }
+.tool_buttons div        { display: inline-block; }
 .tool_buttons a,
-.tool_buttons p.disabled { background-position: 7px 50%; background-repeat: no-repeat; border: 3px double [[PAGE_BG]]; margin: 4px -1px; padding: 4px 4px 4px 29px; }
+.tool_buttons p.disabled, .tool_buttons div.disabled { background-position: 7px 50%; background-repeat: no-repeat; border: 3px double [[PAGE_BG]]; margin: 4px -1px; padding: 4px 4px 4px 29px; }
 .tool_buttons a          { background-color: [[BUTTON_BG]]; color: [[BUTTON_TEXT]]; text-decoration: none; display: block; }
 .tool_buttons a.hidden   { display: none; }
 .tool_buttons a.togglebutton.off { background-color: [[BUTTON_ON]]; outline: 1px outset [[BUTTON_ON]]; outline-offset: -4px; }
 .tool_buttons a.togglebutton { outline: 1px inset [[BUTTON_BG]]; outline-offset: -4px; background-color: [[BUTTON_BG]]; }
 .tool_buttons .group     { background-color: [[BUTTON_BG]]; border: 3px double [[PAGE_BG]]; float: left; margin: 4px 0 0; padding: 0 0 0 1px; }
 .tool_buttons .group a.togglebutton { border: medium none; margin: 2px 3px 2px 0; outline-offset: 0; padding: 2px 6px 2px 29px; }
-.tool_buttons p.disabled { background-color: [[BUTTON_DISABLED]]; color: [[BUTTON_TEXT]]; cursor: default; }
-      
+.tool_buttons p.disabled, .tool_buttons div.disabled { background-color: [[BUTTON_DISABLED]]; color: [[BUTTON_TEXT]]; cursor: default; }
+
 .tool_buttons a.pulse,
 .tool_buttons a:hover    { background-color: [[BUTTON_BG_HOVER]]; color: [[BUTTON_TEXT]]; }
 .tool_buttons a.togglebutton:hover    { background-color: [[BUTTON_BG_HOVER]]; color: [[BUTTON_TEXT]]; }
@@ -40,6 +41,7 @@
 .tool_buttons .config       { background-image: url(/i/16/rev/setting.png);       }
 .tool_buttons .data         { background-image: url(/i/16/rev/page-user.png);     }
 .tool_buttons .export       { background-image: url(/i/16/rev/download.png);      }
+.tool_buttons .view         { background-image: url(/i/16/rev/eye.png);           }
 .tool_buttons .csv          { background-image: url(/i/16/rev/page-csv.png);      }
 .tool_buttons .bookmark     { background-image: url(/i/16/rev/bookmark.png);      }
 .tool_buttons .find         { background-image: url(/i/16/rev/search.png);        }

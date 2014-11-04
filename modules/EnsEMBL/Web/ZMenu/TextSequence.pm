@@ -32,6 +32,8 @@ sub content {
   my $lrg     = $hub->param('lrg');
   my $adaptor = $hub->get_adaptor('get_VariationAdaptor', 'variation');
   
+  $object = $self->hub->core_object('LRG') unless defined $object;
+
   if ($lrg && $hub->referer->{'ENSEMBL_TYPE'} eq 'LRG') {
     eval { $self->{'lrg_slice'} = $hub->get_adaptor('get_SliceAdaptor')->fetch_by_region('LRG', $lrg); };
   } elsif ($hub->referer->{'ENSEMBL_TYPE'} eq 'Transcript' || $hub->param('_transcript')) {
@@ -95,8 +97,8 @@ sub variation_content {
   my @entries = ({ type => 'Position', label => $position });
   
   if (scalar @failed) {
-    push @entries, { type => 'Failed status', label => sprintf '<span style="color:red">%s</span>', shift @failed };
-    push @entries, { type => '',              label => sprintf '<span style="color:red">%s</span>', shift @failed } while @failed;
+    push @entries, { type => 'Failed status', label_html => sprintf '<span style="color:red">%s</span>', shift @failed };
+    push @entries, { type => '',              label_html => sprintf '<span style="color:red">%s</span>', shift @failed } while @failed;
   }
   
   push @entries, { type => 'LRG position', label => $lrg_position } if $lrg_position;

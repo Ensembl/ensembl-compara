@@ -84,8 +84,7 @@ sub track_order {
   my $node         = $image_config->get_node('track_order');
   
   $node->set_user($species, { %{$node->get($species) || {}}, $hub->param('track') => $hub->param('order') });
-  my $text = $node->data->{'name'} || $node->data->{'coption'};
-  push @{$image_config->altered}, $text;
+  $image_config->altered($node->data->{'name'} || $node->data->{'coption'});
   $hub->session->store;
 }
 
@@ -169,6 +168,9 @@ sub reg_renderer {
   my $state = $hub->param('state');
   EnsEMBL::Web::ViewConfig::Regulation::Page->reg_renderer(
     $hub,'regulation_view',$renderer,$state);
+
+  $hub->session->store;
+
   print $self->jsonify({
     reload_panels => ['FeaturesByCellLine'],
   });

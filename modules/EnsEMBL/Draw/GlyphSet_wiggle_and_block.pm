@@ -98,7 +98,9 @@ sub _render {
   
   return unless $error && $self->{'config'}->get_option('opt_empty_tracks') == 1;
   
-  my $height = $self->errorTrack("No $error in this region", 0, $self->_offset);
+  my $here = $self->my_config('strand') eq 'b' ? 'on this strand' : 'in this region';
+
+  my $height = $self->errorTrack("No $error $here", 0, $self->_offset);
   $self->_offset($height + 4);
   
   return 1;

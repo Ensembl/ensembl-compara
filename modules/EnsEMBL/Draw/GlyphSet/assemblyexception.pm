@@ -175,7 +175,7 @@ sub href {
     range       => $feature ? undef : sprintf('%s:%s-%s', $f->seq_region_name, $start, $end),
     target      => $f->slice->seq_region_name,
     target_type => $f->type,
-    dbID        => $f->id,
+    dbID        => $f->dbID,
   });
 }
 

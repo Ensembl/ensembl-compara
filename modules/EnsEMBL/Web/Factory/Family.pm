@@ -29,6 +29,21 @@ no warnings 'uninitialized';
 
 use base qw(EnsEMBL::Web::Factory);
 
+sub canLazy { return 1; }
+sub createObjectsInternal {
+  my $self = shift;
+
+  my $db = $self->param('db') || 'compara';
+  my $db_adaptor = $self->database($db);
+  return undef unless $db_adaptor;
+  my $adaptor = $db_adaptor->get_FamilyAdaptor;
+  my $family = $adaptor->fetch_by_stable_id($self->param('fm'));
+  return undef unless $family;
+  return $self->new_object('Family', $family, $self->__data);
+}
+
+
+
 sub createObjects {
   my $self     = shift;
 

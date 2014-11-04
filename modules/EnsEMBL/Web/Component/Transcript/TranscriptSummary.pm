@@ -44,6 +44,7 @@ sub content {
   my $residues     = $translation ? $self->thousandify($translation->length) : 0;
   my @CCDS         = @{$transcript->get_all_DBLinks('CCDS')};
   my @Uniprot      = @{$transcript->get_all_DBLinks('Uniprot/SWISSPROT')};
+  my ($tsl)        = @{$transcript->get_all_Attributes('TSL')};
   my $html         = "<strong>Exons:</strong> $exons <strong>Coding exons:</strong> $coding_exons <strong>Transcript length:</strong> $basepairs bps";
   $html           .= " <strong>Translation length:</strong> $residues residues" if $residues;
 
@@ -60,6 +61,11 @@ sub content {
     my %T = map { $_->primary_id => 1 } @Uniprot;
     @Uniprot = sort keys %T;
     $table->add_row('Uniprot', sprintf('<p>This transcript corresponds to the following Uniprot identifiers: %s</p>', join ', ', map $hub->get_ExtURL_link($_, 'Uniprot/SWISSPROT', $_), @Uniprot));
+  }
+
+  ## add TSL info
+  if ($tsl && ($tsl = $tsl->value)) {
+    $table->add_row('Transcript Support Level', sprintf('<p>%s</p>', $tsl =~ s/^tsl([^\s]+).*$/$1/gr));
   }
 
   $table->add_row('Ensembl version', $object->stable_id.'.'.$object->version);

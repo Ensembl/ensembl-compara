@@ -37,11 +37,11 @@ sub initialize {
   
   my $config = {
     display_width => $hub->param('display_width') || 60,
-    sscon         => $hub->param('sscon'),            # no of bp to show either side of a splice site
-    flanking      => $hub->param('flanking'),         # no of bp up/down stream of transcript
-    full_seq      => $hub->param('fullseq') eq 'yes', # flag to display full sequence (introns and exons)
-    snp_display   => $hub->param('snp_display'),
-    number        => $hub->param('line_numbering'),
+    sscon         => $hub->param('sscon')             // undef,   # no of bp to show either side of a splice site
+    flanking      => $hub->param('flanking')          // undef,   # no of bp up/down stream of transcript
+    full_seq      => ($hub->param('fullseq') || '') eq 'yes',     # flag to display full sequence (introns and exons)
+    snp_display   => $hub->param('snp_display')       // undef,
+    number        => $hub->param('line_numbering')    // undef,
     coding_start  => $transcript->coding_region_start,
     coding_end    => $transcript->coding_region_end,
     strand        => $strand,
@@ -121,7 +121,7 @@ sub initialize {
     
     push @data, $export ? $downstream : { 
       exint    => "3' downstream sequence", 
-      Sequence => $self->build_sequence($downstream, $config)
+      Sequence => $self->build_sequence($downstream, $config,1)
     };
   }
   
@@ -145,7 +145,7 @@ sub content {
     { data_table => 'no_sort', exportable => 1 }
   );
 
-  return sprintf '<div class="sequence_key">%s</div>%s%s', $self->get_key($config), $table->render;
+  return sprintf '<div class="adornment-key"></div><div class="adornment-load">'.$table->render."</div>";
 }
 
 sub export_options { return {'action' => 'ExonSeq'}; }
@@ -155,8 +155,8 @@ sub initialize_export {
   my $hub = $self->hub;
   ## Set some CGI parameters from the viewconfig
   ## (because we don't want to have to set them in DataExport)
-  my $vc = $hub->get_viewconfig('Transcript', 'ExonsSpreadsheet');
-  my @params = qw(sscon snp_display flanking line_numbering);
+  my $vc = $hub->get_viewconfig('ExonsSpreadsheet', 'Transcript');
+  my @params = qw(sscon snp_display flanking line_numbering fullseq);
   foreach (@params) {
     $hub->param($_, $vc->get($_));
   }
@@ -304,6 +304,11 @@ sub get_flanking_sequence_data {
 
 sub add_variations {
   my ($self, $config, $slice, $sequence) = @_;
+
+  my $adorn = $self->hub->param('adorn') || 'none';
+
+  return if $adorn eq 'none';
+
   my $object = $self->object || $self->hub->core_object('transcript');
   my $variation_features    = $config->{'population'} ? $slice->get_all_VariationFeatures_by_Population($config->{'population'}, $config->{'min_frequency'}) : $slice->get_all_VariationFeatures;
   my @transcript_variations = @{$self->hub->get_adaptor('get_TranscriptVariationAdaptor', 'variation')->fetch_all_by_VariationFeatures($variation_features, [ $object->Obj ])};
@@ -313,9 +318,9 @@ sub add_variations {
   
   foreach my $transcript_variation (map $_->[2], sort { $b->[0] <=> $a->[0] || $b->[1] <=> $a->[1] } map [ $_->variation_feature->length, $_->most_severe_OverlapConsequence->rank, $_ ], @transcript_variations) {
     my $consequence = $config->{'consequence_filter'} ? lc [ grep $config->{'consequence_filter'}{$_}, @{$transcript_variation->consequence_type} ]->[0] : undef;
-    
-    next if $config->{'consequence_filter'} && !$consequence;
-    
+
+    next if $config->{'consequence_filter'} && %{$config->{'consequence_filter'}} && !$consequence;
+
     my $vf    = $transcript_variation->variation_feature;
     my $name  = $vf->variation_name;
     my $start = $vf->start - 1;
@@ -400,18 +405,18 @@ sub add_line_numbers {
 sub build_sequence {
   my ($self, $sequence, $config) = @_;
   $config->{'html_template'} = '<pre class="exon_sequence">%s</pre>';
-  return $self->SUPER::build_sequence([ $sequence ], $config);
+  return $self->SUPER::build_sequence([ $sequence ], $config,1);
 }
 
 sub get_key {
-  return shift->SUPER::get_key(@_, {
+  return shift->SUPER::get_key($_[0], {
     'exons/Introns' => {
       exon     => { class => 'e0', text => 'Translated sequence' },
       intron   => { class => 'e1', text => 'Intron sequence'     },
       utr      => { class => 'eu', text => 'UTR'                 },
       flanking => { class => 'ef', text => 'Flanking sequence'   },
     }
-  });
+  },$_[2]);
 }
 
 1;

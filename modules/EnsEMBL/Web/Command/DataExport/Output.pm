@@ -20,8 +20,15 @@ package EnsEMBL::Web::Command::DataExport::Output;
 
 use strict;
 
-use EnsEMBL::Web::File;
 use RTF::Writer;
+use Bio::AlignIO;
+use IO::String;
+use Bio::EnsEMBL::Compara::Graph::OrthoXMLWriter;
+use Bio::EnsEMBL::Compara::Graph::GeneTreePhyloXMLWriter;
+use Bio::EnsEMBL::Compara::Graph::CAFETreePhyloXMLWriter;
+
+use EnsEMBL::Web::File;
+use EnsEMBL::Web::Constants;
 
 use base qw(EnsEMBL::Web::Command);
 
@@ -29,8 +36,8 @@ sub process {
   my $self       = shift;
   my $hub        = $self->hub;
 
-  my $url_params = {'action' => 'Results'};
-  my @redirect_params;
+  my $controller;
+  my $url_params = {};
 
   my $error;
   my $format = $hub->param('format');
@@ -73,12 +80,34 @@ sub process {
 
     unless ($error) {
       ## Write data to output file in desired format
-      my $write_method = 'write_'.lc($format);
-      if ($self->can($write_method)) {
-        $error = $self->$write_method($component);
+
+      ## Alignments and trees are handled by external writers
+      if ($hub->param('align')) {
+        my %align_formats = EnsEMBL::Web::Constants::ALIGNMENT_FORMATS;
+        my $in_bioperl    = grep { lc($_) eq lc($format) } keys %align_formats;
+        my %tree_formats  = EnsEMBL::Web::Constants::TREE_FORMATS;
+        my $is_tree       = grep { lc($_) eq lc($format) } keys %tree_formats;
+        if ($in_bioperl) {
+          $error = $self->write_alignment($component);
+        }
+        elsif (lc($format) eq 'phyloxml') {
+          $error = $self->write_phyloxml($component);
+        }
+        elsif ($is_tree) {
+          $error = $self->write_tree($component);
+        }
+        else {
+          $error = 'Output not implemented for format '.$format;
+        }
       }
       else {
-        $error = 'Output not implemented for format '.$format;
+        my $write_method = 'write_'.lc($format);
+        if ($self->can($write_method)) {
+          $error = $self->$write_method($component);
+        }
+        else {
+          $error = 'Output not implemented for format '.$format;
+        }
       }
     }
   } 
@@ -89,13 +118,15 @@ sub process {
   }
   else {
     ## Parameters for file download
+    $controller                     = 'Download';
+    $url_params->{'action'}         = '';
     $url_params->{'filename'}       = $file->filename;
     $url_params->{'format'}         = $format;
     $url_params->{'path'}          .= '/export/'.$file->random_path.$file->filename;
     $url_params->{'compression'}    = $compression;
     ## Pass parameters needed for Back button to work
     my @core_params = keys %{$hub->core_object('parameters')};
-    push @core_params, qw(export_action data_type component);
+    push @core_params, qw(export_action data_type component align);
     push @core_params, $self->config_params; 
     foreach (@core_params) {
       my @values = $hub->param($_);
@@ -104,7 +135,7 @@ sub process {
   }  
   my $url = $hub->url($url_params);
 
-  $self->ajax_redirect($hub->url($url_params), @redirect_params);
+  $self->ajax_redirect($hub->url($controller || (), $url_params), $controller ? (undef, undef, 'download') : ());
 }
 
 sub config_params {
@@ -138,6 +169,8 @@ sub write_rtf {
   my $c              = 1;
   my $i              = 0;
   my $j              = 0;
+  my $sp             = 0;
+  my $newline        = 1;
   my @output;
 
   foreach my $class (sort { $class_to_style->{$a}[0] <=> $class_to_style->{$b}[0] } keys %$class_to_style) {
@@ -159,10 +192,11 @@ sub write_rtf {
 
   foreach my $lines (@$sequence) {
     next unless @$lines;
-    my ($section, $class, $previous_class, $count);
+    my ($section, $class, $previous_class, $count, %stash);
 
     $lines->[-1]{'end'} = 1;
 
+    ## Output each line of sequence letters
     foreach my $seq (@$lines) {
       if ($seq->{'class'}) {
         $class = $seq->{'class'};
@@ -177,6 +211,21 @@ sub write_rtf {
       }
 
       $class = join ' ', sort { $class_to_style->{$a}[0] <=> $class_to_style->{$b}[0] } split /\s+/, $class;
+
+      ## Add species name at beginning of each line if this is an alignment
+      ## (on pages, this is done by build_sequence, but that adds HTML)
+      my $sp_string;
+      if ($config->{'comparison'} && !scalar($output[$i][$j])) {
+    
+        if (scalar keys %{$config->{'padded_species'}}) {
+          $sp_string = $config->{'padded_species'}{$config->{'seq_order'}[$i]} || $config->{'display_species'};
+        } else {
+          $sp_string = $config->{'display_species'};
+        }
+
+        $sp_string .= '  ';
+        push @{$output[$i][$j]}, [ undef, $sp_string ];
+      }
 
       $seq->{'letter'} =~ s/<a.+>(.+)<\/a>/$1/ if $seq->{'url'};
 
@@ -199,7 +248,7 @@ sub write_rtf {
           $count = 0;
           $j++;
         }
-
+        
         $section = '';
       }
 
@@ -358,6 +407,110 @@ sub write_fasta {
 
   my $file = $self->{'__file'};
   return $error || $file->error;
+}
+
+sub write_alignment {
+  my ($self, $component) = @_;
+  my $hub     = $self->hub;
+  my $format  = $hub->param('format');
+
+  my $data = $component->get_export_data;
+  my $alignment;
+
+  if (ref($data) =~ 'SimpleAlign') {
+    $alignment = $data;
+  }
+  else {
+    $self->object->{'alignments_function'} = 'get_SimpleAlign';
+
+    $alignment = $self->object->get_alignments({
+                                                'slice'   => $data->slice,
+                                                'align'   => $hub->param('align'),
+                                                'species' => $hub->species,
+                                              });
+  }
+
+  my $export;
+
+  my $align_io = Bio::AlignIO->newFh(
+    -fh     => IO::String->new($export),
+    -format => $format
+  );
+
+  print $align_io $alignment;
+
+  $self->write_line($export);
+}
+
+sub write_tree {
+  my ($self, $component) = @_;
+  my $hub     = $self->hub;
+  my $format  = lc($hub->param('format'));
+  my $tree    = $component->get_export_data('tree');
+
+  my %formats = EnsEMBL::Web::Constants::TREE_FORMATS;
+  $format     = 'newick' unless $formats{$format};
+  my $fn      = $formats{$format}{'method'};
+  my @params  = map $hub->param($_), @{$formats{$format}{'parameters'} || []};
+  my $string  = $tree->$fn(@params);
+  
+  if ($formats{$format}{'split'}) {
+    my $reg = '([' . quotemeta($formats{$format}{'split'}) . '])';
+    $string =~ s/$reg/$1\n/g;
+  }
+
+  $self->write_line($string);
+}
+
+sub write_phyloxml {
+  my ($self, $component) = @_;
+  my $hub  = $self->hub;
+  my $cdb  = $hub->param('cdb') || 'compara';
+
+  my $tree = $component->get_export_data('genetree');
+
+  my $type = ref($component) =~ /SpeciesTree/ ? 'CAFE' : 'Gene';
+  my $class = sprintf('Bio::EnsEMBL::Compara::Graph::%sTreePhyloXMLWriter', $type);
+
+  my $handle = IO::String->new();
+  my $w = $class->new(
+          -SOURCE       => $cdb eq 'compara' ? $SiteDefs::ENSEMBL_SITETYPE:'Ensembl Genomes',
+          -ALIGNED      => $hub->param('aligned') eq 'on' ? 1 : 0,
+          -CDNA         => $hub->param('cdna') eq 'on' ? 1 : 0,
+          -NO_SEQUENCES => $hub->param('no_sequences') eq 'on' ? 1 : 0,
+          -HANDLE       => $handle,
+  );
+  $self->_writexml('tree', $tree, $handle, $w);
+}
+
+sub write_orthoxml {
+  my ($self, $component) = @_;
+  my $hub     = $self->hub;
+  my $error   = undef;
+  my $cdb     = $hub->param('cdb') || 'compara';
+  my $method  = ref($component) eq 'HomologAlignment' ? 'trees' : 'homologies';
+
+  my ($data)  = $component->get_export_data('gene');
+
+  my $handle = IO::String->new();
+  my $w = Bio::EnsEMBL::Compara::Graph::OrthoXMLWriter->new(
+          -SOURCE => $cdb eq 'compara' ? $hub->species_defs->ENSEMBL_SITETYPE : 'Ensembl Genomes',
+          -SOURCE_VERSION => $hub->species_defs->SITE_RELEASE_VERSION,
+          -HANDLE => $handle,
+          -POSSIBLE_ORTHOLOGS => $hub->param('possible_orthologs'),
+  );
+  $self->_writexml($method, $data, $handle, $w);
+}
+
+sub _writexml{
+  my ($self, $method, $data, $handle, $w) = @_;
+  my $hub = $self->hub;
+  my $method = 'write_'.$method;
+  $w->$method($data);
+  $w->finish();
+
+  my $out = ${$handle->string_ref()};
+  $self->write_line($out);
 }
 
 sub write_line { 

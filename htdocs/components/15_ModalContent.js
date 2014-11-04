@@ -64,6 +64,7 @@ Ensembl.Panel.ModalContent = Ensembl.Panel.LocalContext.extend({
   initialize: function () {
     this.addSubPanel();
     this.setSelectAll();
+    this.initSeqExport();
     
     this.elLk.dataTable = $('table.data_table', this.el);
     
@@ -94,6 +95,10 @@ Ensembl.Panel.ModalContent = Ensembl.Panel.LocalContext.extend({
           return this.getContent(link, json.redirectURL);
         } else if (json.redirectType === 'page') {
           return Ensembl.redirect(json.redirectURL);
+        } else if (json.redirectType === 'download') {
+          Ensembl.EventManager.trigger('modalClose');
+          window.location.href = json.redirectURL;
+          return;
         }
         
         // Avoid race conditions if the user has clicked another nav link while waiting for content to load
@@ -125,7 +130,10 @@ Ensembl.Panel.ModalContent = Ensembl.Panel.LocalContext.extend({
           return json.modalTab ? Ensembl.EventManager.trigger('modalOpen', { href: json.redirectURL, rel: json.modalTab }) : this.getContent(undefined, json.redirectURL);
         }
         
-        if (json.success === true || json.redirectType === 'page') {
+        if (json.redirectType === 'download') {
+          Ensembl.EventManager.trigger('modalClose');
+          window.location.href = json.redirectURL; // not triggering reloadPage here as reloadPage will call destructor on existing panels
+        } else if (json.success === true || json.redirectType === 'page') {
           Ensembl.EventManager.trigger('reloadPage', false, json.redirectType === 'page' ? json.redirectURL : false);
         } else if (this.el.is(':visible')) {
           this.updateContent(json);
@@ -187,7 +195,26 @@ Ensembl.Panel.ModalContent = Ensembl.Panel.LocalContext.extend({
       $(this).parents('div._selectall').find('input[type=checkbox]').prop('checked', this.checked);
     });
   },
-  
+
+  initSeqExport: function() {
+    var panel = this;
+    this.elLk.content.find('div._export_formats').on('deselect', function() {
+      $(this).find('div').removeClass('selected');
+    }).find('div').on({
+      'select': function() {
+        $(this).addClass('selected');
+      },
+      'click': function() {
+        $(this).parent().trigger('deselect').end().trigger('select').data('option').prop('selected', true).parent().selectToToggle('trigger');
+      }
+    }).each(function() {
+      $(this).data('option', panel.elLk.content.find('select._export_formats').on('change', function() {
+        panel.elLk.content.find('div._export_formats').trigger('deselect');
+        $($(this).find('option:selected').data('image')).trigger('select');
+      }).find('option[value=' + this.firstChild.innerHTML + ']').data('image', this));
+    });
+  },
+
   displayErrorMessage: function (message) {
     message = message || 'Sorry, the page request failed to load.';
     this.elLk.content.html('<div class="error ajax_error"><h3>Ajax error</h3><div class="error-pad"><p>' + message + '</p></div></div>');

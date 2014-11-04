@@ -48,6 +48,8 @@ sub _init {
       colour => $features->{$_},
     });
   }
+
+  $self->add_space;
 }
 
 1;

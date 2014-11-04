@@ -115,7 +115,6 @@ sub _create_Phenotype {
   
   my $id         = $self->param('id');   
   my $dbc        = $self->hub->database('variation');
-	$dbc->include_failed_variations(1);
   my $a          = $dbc->get_adaptor('VariationFeature');
   my $func       = $self->param('somatic') ? 'fetch_all_somatic_with_phenotype' : 'fetch_all_with_phenotype';
   my $variations = $a->$func(undef, undef, $id);
@@ -183,13 +182,13 @@ sub _create_ProbeFeatures_linked_transcripts {
     my $id = $self->param('id');
     my $probe_set_adaptor = $db_adaptor->get_ProbeSetAdaptor;
     my $probe_set = shift @{$probe_set_adaptor->fetch_all_by_name($id)};
-    @db_entries = @{$probe_set->get_all_Transcript_DBEntries};
+    @db_entries = $probe_set ? @{$probe_set->get_all_Transcript_DBEntries} : ();
   } else {
     my $probe_adaptor = $db_adaptor->get_ProbeAdaptor;
     @probe_objs = @{$probe_adaptor->fetch_all_by_name($self->param('id'))};
     foreach my $probe (@probe_objs) {
-     my @entries = @{$probe->get_all_Transcript_DBEntries};
-     push(@db_entries, @entries);
+      my @entries = @{$probe->get_all_Transcript_DBEntries};
+      push(@db_entries, @entries);
     }
   }
 
@@ -342,7 +341,13 @@ sub _create_RegulatoryFactor {
     }
     my $fset  = $fg_db->get_featureSetAdaptor->fetch_by_name($self->param('fset'));
     my $ftype = $fg_db->get_FeatureTypeAdaptor->fetch_by_name($id);
-    $features = $fset->get_Features_by_FeatureType($ftype);
+    ## Defensive programming against API barfs
+    if (ref($ftype)) {
+      $features = $fset->get_Features_by_FeatureType($ftype);
+    }
+    else {
+      warn ">>> UNKNOWN FEATURE TYPE";
+    }
   }
 
   if (@$features) {

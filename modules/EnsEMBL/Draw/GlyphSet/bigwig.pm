@@ -31,7 +31,36 @@ use Bio::EnsEMBL::ExternalData::BigFile::BigWigAdaptor;
 use base qw(EnsEMBL::Draw::GlyphSet::_alignment EnsEMBL::Draw::GlyphSet_wiggle_and_block);
 
 sub href_bgd       { return $_[0]->_url({ action => 'UserData' }); }
-sub bigwig_adaptor { return $_[0]{'_cache'}{'_bigwig_adaptor'} ||= Bio::EnsEMBL::ExternalData::BigFile::BigWigAdaptor->new($_[0]->my_config('url')); }
+
+sub bigwig_adaptor { 
+  my $self = shift;
+
+  my $url = $self->my_config('url');
+  if ($url) { ## remote bigwig file
+    $self->{_cache}->{_bigwig_adaptor} ||= Bio::EnsEMBL::ExternalData::BigFile::BigWigAdaptor->new($url);
+  }
+  else { ## local bigwig file
+    my $config    = $self->{'config'};
+    my $hub       = $config->hub;
+    my $dba       = $hub->database($self->my_config('type'), $self->species);
+
+    if ($dba) {
+      my $dfa = $dba->get_DataFileAdaptor();
+      $dfa->global_base_path($hub->species_defs->DATAFILE_BASE_PATH);
+      my ($logic_name) = @{$self->my_config('logic_names')||[]};
+      my $datafiles = $dfa->fetch_all_by_logic_name($logic_name);
+      ## Alter datafile objects to point to bigwig files instead of bam files
+      foreach (@$datafiles) {
+        $_->file_type('BIGWIG');
+      }
+      my ($df) = @{$datafiles};
+
+      $self->{_cache}->{_bigwig_adaptor} ||= $df->get_ExternalAdaptor();
+    }
+  }
+  return $self->{_cache}->{_bigwig_adaptor};
+}
+
 sub render_compact { $_[0]->render_normal(8, 0); }
 
 sub render_normal {
@@ -40,7 +69,7 @@ sub render_normal {
   return if $self->strand != 1;
   return $self->render_text if $self->{'text_export'};
   
-  my $features        = $self->features;
+  my $features        = &features($self);
   my $h               = @_ ? shift : ($self->my_config('height') || 8);
      $h               = $self->{'extras'}{'height'} if $self->{'extras'} && $self->{'extras'}{'height'};
   my $depth           = @_ ? shift : ($self->my_config('dep') || 6);
@@ -83,7 +112,7 @@ sub render_normal {
   
   $self->_render_hidden_bgd($h) if $features_drawn && $self->my_config('addhiddenbgd');
   
-  $self->errorTrack("No features from '$name' in this region") unless $features_drawn || $self->{'no_empty_track_message'} || $self->{'config'}->get_option('opt_empty_tracks') == 0;
+  $self->errorTrack("No features from '$name' on this strand") unless $features_drawn || $self->{'no_empty_track_message'} || $self->{'config'}->get_option('opt_empty_tracks') == 0;
   $self->errorTrack("$features_bumped features from '$name' omitted", undef, $self->_max_bump_row * ($h + $h < 2 ? 1 : 2) + 6) if $features_bumped && $self->get_parameter('opt_show_bumped');
 }
 
@@ -99,6 +128,7 @@ sub features {
   my $max_bins      = min($self->{'config'}->image_width, $slice->length);
   my $fake_analysis = Bio::EnsEMBL::Analysis->new(-logic_name => 'fake');
   my @features;
+  my @wiggle = $self->wiggle_features($max_bins);
   
   foreach (@{$self->wiggle_features($max_bins)}) {
     push @features, {
@@ -117,10 +147,12 @@ sub features {
 # get the alignment features
 sub wiggle_features {
   my ($self, $bins) = @_;
+  my $hub = $self->{'config'}->hub;
+  my $has_chrs = scalar(@{$hub->species_defs->ENSEMBL_CHROMOSOMES});
   
   if (!$self->{'_cache'}{'wiggle_features'}) {
     my $slice     = $self->{'container'};
-    my $summary   = $self->bigwig_adaptor->fetch_extended_summary_array($slice->seq_region_name, $slice->start, $slice->end, $bins);
+    my $summary   = $self->bigwig_adaptor->fetch_extended_summary_array($slice->seq_region_name, $slice->start, $slice->end, $bins, $has_chrs);
     my $bin_width = $slice->length / $bins;
     my $flip      = $slice->strand == -1 ? $slice->length + 1 : undef;
     my @features;
@@ -145,7 +177,7 @@ sub draw_features {
   my ($self, $wiggle) = @_;
   my $slice        = $self->{'container'};
   my $feature_type = $self->my_config('caption');
-  my $colour       = $self->my_config('colour');
+  my $colour       = $self->my_config('colour') || 'slategray';
 
   # render wiggle if wiggle
   if ($wiggle) {
@@ -180,6 +212,7 @@ sub draw_features {
       max_score    => $max_score, 
       description  => $feature_type,
       score_colour => $colour,
+      axis_colour  => $colour,
       no_titles    => defined $no_titles,
     });
     

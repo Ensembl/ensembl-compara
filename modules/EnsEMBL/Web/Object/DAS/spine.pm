@@ -246,7 +246,6 @@ if (0) {
 	      foreach my $homology (@{$hmgs}){
 		  $hHash->{ortholog} += 1 if ($homology->description =~ /ortholog/);
 #		  next if ($homology->description =~ /between_species_paralog/);
-		  next if ($homology->description =~ /possible_ortholog/);
 		  $hHash->{paralog} += 1 if ($homology->description =~ /paralog|gene_split/);
 	      }
 
@@ -291,7 +290,6 @@ if (0) {
 	      foreach my $homology (@{$hmgs}){
 		  $hHash->{ortholog} += 1 if ($homology->description =~ /ortholog/);
 #		  next if ($homology->description =~ /between_species_paralog/);
-		  next if ($homology->description =~ /possible_ortholog/);
 		  $hHash->{paralog} += 1 if ($homology->description =~ /paralog|gene_split/);
 	      }
 

@@ -559,9 +559,7 @@ sub clinical_significance {
   ### Returns and array
 
   my $self = shift;
-  my $css = $self->vari->clinical_significance;
-  my @cs_list = split(",",$css);
-  return \@cs_list;
+  return $self->vari->get_all_clinical_significance_states;
 }
 
 

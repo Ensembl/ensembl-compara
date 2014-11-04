@@ -76,7 +76,7 @@ sub content {
       )
     ); 
   } elsif ($length >= $self->{'subslice_length'}) {
-    $html .= '<div class="sequence_key"></div>' . $self->chunked_content($length, $self->{'subslice_length'}, { length => $length });
+    $html .= '<div class="adornment-key"></div>' . $self->chunked_content($length, $self->{'subslice_length'}, { length => $length });
   } else {
     $html .= $self->content_sub_slice; # Direct call if the sequence length is short enough
   }
@@ -98,13 +98,13 @@ sub content_sub_slice {
   } elsif ($start && $end) {
     $config->{'html_template'} = '<pre class="text_sequence" style="margin:0">%s</pre>';
   } else {
-    $config->{'html_template'} = sprintf('<div class="sequence_key">%s</div>', $self->get_key($config)) . '<pre class="text_sequence">%s</pre>';
+    $config->{'html_template'} = '<pre class="text_sequence">%s</pre>';
   }
   
   $config->{'html_template'} .= '<p class="invisible">.</p>';
   $self->id('');
   
-  return $self->build_sequence($sequence, $config);
+  return $self->build_sequence($sequence, $config,1);
 }
 
 sub selected_transcripts {
@@ -126,7 +126,7 @@ sub export_options {
 sub initialize_export {
   my $self = shift;
   my $hub  = $self->hub;
-  my $vc = $hub->get_viewconfig('Gene', 'TranscriptComparison');
+  my $vc = $hub->get_viewconfig('TranscriptComparison', 'Gene');
   my @params = qw(sscon snp_display flanking line_numbering);
   foreach (@params) {
     $hub->param($_, $vc->get($_));
@@ -314,14 +314,14 @@ sub get_key {
   $_[1]->{'key'}{'exons/Introns'} = 1;
   $_[1]->{'key'}{'exons'} = 0;
   
-  return shift->SUPER::get_key(@_, {
+  return shift->SUPER::get_key($_[0], {
     exons           => {},
     'exons/Introns' => {
       exon1  => { class => 'e1',     text => 'Translated sequence'          },
       eu     => { class => 'eu',     text => 'UTR'                          },
       intron => { class => 'intron', text => 'Intron or gene sequence' }
     }
-  });
+  },$_[2]);
 }
 
 1;

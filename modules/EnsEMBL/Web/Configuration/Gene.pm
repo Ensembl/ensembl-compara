@@ -61,6 +61,12 @@ sub populate_tree {
     { 'availability' => 'gene', 'concise' => 'Supporting evidence' }
   );
 
+  my $caption = $self->object && $self->object->availability->{'has_alt_alleles'} ? 'Alt. alleles ([[counts::alternative_alleles]])' : 'Alt. alleles';
+  $self->create_node('Alleles', $caption,
+                     [qw(alleles EnsEMBL::Web::Component::Gene::Alleles)],
+                     { 'availability' => 'core has_alt_alleles', 'concise' => 'Alleles' }
+                   );
+
   my $seq_menu = $self->create_node('Sequence', 'Sequence',
     [qw( sequence EnsEMBL::Web::Component::Gene::GeneSeq )],
     { 'availability' => 'gene', 'concise' => 'Marked-up sequence' }
@@ -86,13 +92,6 @@ sub populate_tree {
     { 'availability' => 'regulation not_patch not_rnaseq' }
   );
 
-  $self->create_node('Expression', 'Expression',
-    [qw(
-      rnaseq_table  EnsEMBL::Web::Component::Gene::ExpressionTable
-    )],
-    { 'availability' => 'gene database:rnaseq not_rnaseq' }
-  );
-  
   my $compara_menu = $self->create_node('Compara', 'Comparative Genomics',
     [qw(button_panel EnsEMBL::Web::Component::Gene::Compara_Portal)],
     {'availability' => 'gene database:compara core'}
@@ -106,27 +105,15 @@ sub populate_tree {
     { 'availability' => 'gene database:compara core has_alignments' }
   ));
   
-  my $tree_node = $self->create_node('Compara_Tree', 'Gene tree (image)',
+  $compara_menu->append($self->create_node('Compara_Tree', 'Gene tree',
     [qw( image EnsEMBL::Web::Component::Gene::ComparaTree )],
     { 'availability' => 'gene database:compara core has_gene_tree' }
-  );
-  
-  $tree_node->append($self->create_subnode('Compara_Tree/Text', 'Gene tree (text)',
-    [qw( treetext EnsEMBL::Web::Component::Gene::ComparaTree/text )],
-    { 'availability' => 'gene database:compara core has_gene_tree' }
   ));
   
-  $tree_node->append($self->create_subnode('Compara_Tree/Align', 'Gene tree (alignment)',
-    [qw( treealign EnsEMBL::Web::Component::Gene::ComparaTree/align )],
-    { 'availability' => 'gene database:compara core has_gene_tree' }
-  ));
-  
-  $tree_node->append($self->create_node('SpeciesTree', 'Gene gain/loss tree',
+  $compara_menu->append($self->create_node('SpeciesTree', 'Gene gain/loss tree',
       [qw( image EnsEMBL::Web::Component::Gene::SpeciesTree )],
       { 'availability' => 'gene database:compara core has_species_tree' }
     ));
-  
-  $compara_menu->append($tree_node);
     
   my $ol_node = $self->create_node('Compara_Ortholog', 'Orthologues ([[counts::orthologs]])',
     [qw( orthologues EnsEMBL::Web::Component::Gene::ComparaOrthologs )],
