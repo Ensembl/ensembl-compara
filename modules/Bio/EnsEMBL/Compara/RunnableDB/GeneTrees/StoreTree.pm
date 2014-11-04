@@ -466,7 +466,6 @@ sub store_alternative_tree {
     my $newtree = $self->fetch_or_create_other_tree($clusterset, $ref_tree, $remove_previous_tree);
     return undef unless $self->parse_newick_into_tree($newick, $newtree, $ref_support);
     $self->store_genetree($newtree);
-    $newtree->release_tree;
     return $newtree;
 }
 
