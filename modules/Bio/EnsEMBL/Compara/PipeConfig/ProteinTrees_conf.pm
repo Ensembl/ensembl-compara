@@ -1654,11 +1654,11 @@ sub core_pipeline_analyses {
         {   -logic_name => 'raxml_epa_longbranches_himem',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::RAxML_EPA_lb',
             -parameters => {
-                'raxml_exe'                 => $self->o('raxml_exe'),
+                'raxml_exe'                 => $self->o('raxml_pthreads_exe'),
                 'treebest_exe'              => $self->o('treebest_exe'),
                 'input_clusterset_id'       => 'treebest',
                 'output_clusterset_id'      => $self->o('use_notung') ? 'raxml_bl' : 'default',
-                'extra_raxml_args'          => '-U',
+                'extra_raxml_args'          => '-T '.$self->o('raxml_cores'),
             },
             -hive_capacity        => $self->o('raxml_capacity'),
             -rc_name    => '16Gb_job',
