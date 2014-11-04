@@ -179,9 +179,11 @@ sub write_output {
     } else {
 
         if ($self->param('output_clusterset_id') and $self->param('output_clusterset_id') ne 'default') {
-            $target_tree = $self->store_alternative_tree($self->param('newick_output'), $self->param('output_clusterset_id'), $target_tree);
+            delete $target_tree->{'_member_array'};   # To make sure we use the freshest data
+            $target_tree = $self->store_alternative_tree($self->param('newick_output'), $self->param('output_clusterset_id'), $target_tree, [], 1);
         } else {
             $target_tree = $self->param('default_gene_tree');
+            delete $target_tree->{'_member_array'};   # To make sure we use the freshest data
             $self->parse_newick_into_tree($self->param('newick_output'), $target_tree, []);
             $self->store_genetree($target_tree);
         }
@@ -189,7 +191,7 @@ sub write_output {
         # check that the tree is binary
         foreach my $node (@{$target_tree->get_all_nodes}) {
             next if $node->is_leaf;
-            die "The tree should be binary\n" if scalar(@{$node->children}) != 2;
+            die "The tree should be binary" if scalar(@{$node->children}) != 2;
         }
     }
     $self->param('default_gene_tree')->store_tag($self->param('runtime_tree_tag'), $self->param('runtime_msec')) if $self->param('runtime_tree_tag');
