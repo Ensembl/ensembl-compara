@@ -2036,8 +2036,8 @@ sub core_pipeline_analyses {
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::BuildHMM',
             -parameters => {
                 'cdna'              => 1,
-                'hmmer_home'        => $self->o('hmmer2_home'),
-                'hmmer_version'     => 2,
+                'hmmer_home'        => $self->o('hmmer3_home'),
+                'hmmer_version'     => 3,
             },
             -hive_capacity  => $self->o('build_hmm_capacity'),
             -batch_size     => 5,
@@ -2052,8 +2052,8 @@ sub core_pipeline_analyses {
             -module         => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::BuildHMM',
             -parameters     => {
                 'cdna'              => 1,
-                'hmmer_home'        => $self->o('hmmer2_home'),
-                'hmmer_version'     => 2,
+                'hmmer_home'        => $self->o('hmmer3_home'),
+                'hmmer_version'     => 3,
             },
             -hive_capacity  => $self->o('build_hmm_capacity'),
             -priority       => -20,
