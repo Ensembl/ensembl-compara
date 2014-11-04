@@ -53,16 +53,17 @@ sub field_order {
 sub form_fields {
   my $self            = shift;
   my $dbs             = $self->species_defs->databases;
-  my %markup_options  = EnsEMBL::Web::Constants::MARKUP_OPTIONS;
+  my $markup_options  = EnsEMBL::Web::Constants::MARKUP_OPTIONS;
   my $fields = {};
 
-  push @{$markup_options{'exon_display'}{'values'}}, { value => 'vega',          caption => 'Vega exons' } if $dbs->{'DATABASE_VEGA'};
-  push @{$markup_options{'exon_display'}{'values'}}, { value => 'otherfeatures', caption => 'EST gene exons' } if $dbs->{'DATABASE_OTHERFEATURES'};
+  push @{$markup_options->{'exon_display'}{'values'}}, { value => 'vega',          caption => 'Vega exons' } if $dbs->{'DATABASE_VEGA'};
+  push @{$markup_options->{'exon_display'}{'values'}}, { value => 'otherfeatures', caption => 'EST gene exons' } if $dbs->{'DATABASE_OTHERFEATURES'};
 
-  $self->add_variation_options if $dbs->{'DATABASE_VARIATION'};
+  $self->add_variation_options($markup_options) if $dbs->{'DATABASE_VARIATION'};
  
   foreach ($self->field_order) {
-    $fields->{$_} = $markup_options{$_};
+    $fields->{$_} = $markup_options->{$_};
+    $fields->{$_}{'value'} = $self->get($_);
   }
  
   return $fields; 

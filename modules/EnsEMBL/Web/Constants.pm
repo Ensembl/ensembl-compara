@@ -215,7 +215,7 @@ sub FAMILY_EXTERNAL {
 
 sub MARKUP_OPTIONS {
 ### Configuration for text sequence displays
-  return (
+  return {
   ### TEXT SEQUENCE MARKUP
     'snp_display' => {
       'type'   => 'DropDown', 
@@ -348,7 +348,7 @@ sub MARKUP_OPTIONS {
         { 'value' => 'off', 'caption' => 'No'  },
       ],
     },
-  );
+  };
 }
 
 ############ OLD MARKUP HASHES - REMOVE ONCE VIEWCONFIG REFACTOR IS COMPLETE ################

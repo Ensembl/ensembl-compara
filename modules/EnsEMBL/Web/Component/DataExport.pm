@@ -180,12 +180,11 @@ sub create_form {
       ## Reset field name to include format, so we have unique field names
       $name .= '_'.$format;
       $field_info{'name'} = $name;
-      my @values = $field_info{'values'};
-      @values = $hub->param($name) if $hub->param($name);
+      my @values = @{$field_info{'values'}||[]};
       ## Deal with multiple values, which have to be passed
       ## to Form::Fieldset as an arrayref
       my $params;
-      if (scalar @values > 1) {
+      if (scalar @values > 1) { ## Dropdown
         if ($field_info{'type'} eq 'Hidden') {
           $params = [];
           foreach my $v (@values) {
@@ -195,12 +194,10 @@ sub create_form {
           }
         }
         else {
-          $field_info{'value'} = \@values if scalar @values;
           $params = \%field_info;
         }
       }
       else {
-        $field_info{'value'} = $values[0] if scalar @values;
         $params = \%field_info;
       }
       ## Add to form

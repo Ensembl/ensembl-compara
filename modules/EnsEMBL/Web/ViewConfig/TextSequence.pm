@@ -48,23 +48,23 @@ sub variation_fields {
  
 
 sub add_variation_options {
-  my $self = shift;
+  my $self    = shift;
+  my $markup  = shift || EnsEMBL::Web::Constants::MARKUP_OPTIONS;
   my $options = shift || {};
   my $hub     = $self->hub;
-  my %markup  = EnsEMBL::Web::Constants::MARKUP_OPTIONS;
   my @order   = $self->variation_fields($options);
   my $fields;
 
   ## Tweak standard markup 
-  $markup{'snp_display'}{'label'} = $options->{'label'} if $options->{'label'};
+  $markup->{'snp_display'}{'label'} = $options->{'label'} if $options->{'label'};
   
-  push @{$markup{'snp_display'}{'values'}}, { value => 'snp_link', caption => 'Yes and show links' } unless $options->{'snp_link'} eq 'no';
-  push @{$markup{'snp_display'}{'values'}}, @{$options->{'snp_display'}} if $options->{'snp_display'};
+  push @{$markup->{'snp_display'}{'values'}}, { value => 'snp_link', caption => 'Yes and show links' } unless $options->{'snp_link'} eq 'no';
+  push @{$markup->{'snp_display'}{'values'}}, @{$options->{'snp_display'}} if $options->{'snp_display'};
   
   if ($options->{'consequence'} ne 'no') {
     my %consequence_types = map { $_->label && $_->feature_class =~ /transcript/i ? ($_->label => $_->SO_term) : () } values %Bio::EnsEMBL::Variation::Utils::Constants::OVERLAP_CONSEQUENCES;
     
-    push @{$markup{'consequence_filter'}{'values'}}, map { value => $consequence_types{$_}, caption => $_ }, sort keys %consequence_types;
+    push @{$markup->{'consequence_filter'}{'values'}}, map { value => $consequence_types{$_}, caption => $_ }, sort keys %consequence_types;
     
   }
   
@@ -80,13 +80,6 @@ sub add_variation_options {
 #      $self->add_form_element($markup{'pop_min_freq'});
 #    }
 #  }
-
-  ## Create the hash
-  foreach (@order) {
-    $fields->{$_} = $markup{$_};
-  }
-
-  return $fields; 
 }
 
 1;
