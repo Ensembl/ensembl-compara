@@ -175,7 +175,7 @@ sub create_form {
     foreach my $name (@$fields) {
       ## IMPORTANT - use hashes here, not hashrefs, as Form code does weird stuff 
       ## in background that alters the contents of $settings!
-      my %field_info = %{$settings->{$name}};
+      my %field_info = %{$settings->{$name}||{}};
       next unless keys %field_info;
       ## Reset field name to include format, so we have unique field names
       $name .= '_'.$format;
