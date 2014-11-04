@@ -134,6 +134,7 @@ sub init {
       caption => 'Export data',
       class   => 'disabled',
       url     => undef,
+      title   => 'Generic export has been disabled on this page. Check individual images, tables, etc for download buttons',
     });
   }
   
