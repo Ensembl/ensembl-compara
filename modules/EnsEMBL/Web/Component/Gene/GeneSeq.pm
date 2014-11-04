@@ -34,8 +34,9 @@ sub initialize {
   my ($self, $slice, $start, $end, $adorn) = @_;
   my $hub    = $self->hub;
   my $object = $self->get_object;
+  my $type   = $hub->param('data_type') || $hub->type;
 
-  my $vc = $self->view_config;
+  my $vc = $self->view_config($type);
 
   my $config = {
     display_width   => $hub->param('display_width') || $vc->get('display_width'),

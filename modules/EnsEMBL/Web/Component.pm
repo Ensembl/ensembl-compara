@@ -126,7 +126,10 @@ sub renderer {
 sub view_config { 
   ## @getter
   ## @return EnsEMBL::Web::ViewConfig::[type]
-  my $self = shift;
+  my ($self, $type) = @_;
+  unless ($self->{'view_config'}) {
+    $self->{'view_config'} = $self->hub->get_viewconfig($self->id, $type);
+  }
   return $self->{'view_config'};
 }
 
