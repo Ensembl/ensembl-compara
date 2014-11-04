@@ -54,7 +54,7 @@ sub form_fields {
   my $self            = shift;
   my $dbs             = $self->species_defs->databases;
   my %markup_options  = EnsEMBL::Web::Constants::MARKUP_OPTIONS;
-  my $fields;
+  my $fields = {};
 
   push @{$markup_options{'exon_display'}{'values'}}, { value => 'vega',          caption => 'Vega exons' } if $dbs->{'DATABASE_VEGA'};
   push @{$markup_options{'exon_display'}{'values'}}, { value => 'otherfeatures', caption => 'EST gene exons' } if $dbs->{'DATABASE_OTHERFEATURES'};
