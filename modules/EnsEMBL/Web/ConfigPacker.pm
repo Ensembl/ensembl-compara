@@ -1584,8 +1584,7 @@ sub _munge_meta {
     assembly.accession            ASSEMBLY_ACCESSION
     assembly.web_accession_source ASSEMBLY_ACCESSION_SOURCE
     assembly.web_accession_type   ASSEMBLY_ACCESSION_TYPE
-    assembly.default              ASSEMBLY_NAME
-    assembly.name                 ASSEMBLY_DISPLAY_NAME
+    assembly.name                 ASSEMBLY_NAME
     liftover.mapping              ASSEMBLY_MAPPINGS
     genebuild.method              GENEBUILD_METHOD
     provider.name                 PROVIDER_NAME
