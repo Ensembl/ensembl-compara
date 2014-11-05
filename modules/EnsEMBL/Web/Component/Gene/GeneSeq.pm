@@ -34,8 +34,8 @@ sub initialize {
   my ($self, $slice, $start, $end, $adorn) = @_;
   my $hub    = $self->hub;
   my $object = $self->get_object;
-  my $type   = $hub->param('data_type') || $hub->type;
 
+  my $type   = $hub->param('data_type') || $hub->type;
   my $vc = $self->view_config($type);
 
   my $config = {
