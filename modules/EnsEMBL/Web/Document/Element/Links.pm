@@ -67,7 +67,7 @@ sub init {
     title => $species_defs->ENSEMBL_SITE_NAME_SHORT . ' (All)'
   });
   
-  if ($species && $species ne 'common') {
+  if ($species && $species ne 'common' && $species ne 'Multi') {
     $self->add_link({
       rel   => 'search',
       type  => 'application/opensearchdescription+xml',
