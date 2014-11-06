@@ -128,7 +128,7 @@ sub get {
   return undef unless exists $self->{'options'}{$key};
   
   my $type = exists $self->{'options'}{$key}{'user'} ? 'user' : 'default';
-  
+ 
   return ref $self->{'options'}{$key}{$type} eq 'ARRAY' ? @{$self->{'options'}{$key}{$type}} : $self->{'options'}{$key}{$type};
 }
 
@@ -350,6 +350,11 @@ sub add_form_element {
   my ($self, $element) = @_;
     
   if ($element->{'type'} eq 'CheckBox' || $element->{'type'} eq 'DASCheckBox') {
+    ## Allow defaults to be set to 'off', even though the checkbox value attribute 
+    ## needs to be set to 'on' - otherwise we get weird reverse-logic checkboxes!
+    if ($element->{'value'} eq 'off') {
+      $element->{'value'} = 'on';
+    }
     $element->{'selected'} = $self->get($element->{'name'}) eq $element->{'value'} ? 1 : 0 ;
   } elsif (!exists $element->{'value'}) {
     if ($element->{'multiple'}) {
