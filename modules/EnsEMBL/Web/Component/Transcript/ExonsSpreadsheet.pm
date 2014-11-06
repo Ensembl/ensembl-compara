@@ -34,14 +34,17 @@ sub initialize {
   my $chr_name   = $exons[0]->slice->seq_region_name;
   my $i          = 0;
   my @data;
+
+  my $type   = $hub->param('data_type') || $hub->type;
+  my $vc = $self->view_config($type);
   
   my $config = {
-    display_width => $hub->param('display_width') || 60,
-    sscon         => $hub->param('sscon')             // undef,   # no of bp to show either side of a splice site
-    flanking      => $hub->param('flanking')          // undef,   # no of bp up/down stream of transcript
-    full_seq      => ($hub->param('fullseq') || '') eq 'yes',     # flag to display full sequence (introns and exons)
-    snp_display   => $hub->param('snp_display')       // undef,
-    number        => $hub->param('line_numbering')    // undef,
+    display_width => $hub->param('display_width') || $vc->get('display_width'),
+    sscon         => $hub->param('sscon') || $vc->get('sscon'),   # no of bp to show either side of a splice site
+    flanking      => $hub->param('flanking') || $vc->get('flanking'),   # no of bp up/down stream of transcript
+    full_seq      => $hub->param('fullseq') || $vc->get('fullseq'),     # flag to display full sequence (introns and exons)
+    snp_display   => $hub->param('snp_display') || $vc->get('snp_display'),
+    number        => $hub->param('line_numbering') || $vc->get('line_numbering'),
     coding_start  => $transcript->coding_region_start,
     coding_end    => $transcript->coding_region_end,
     strand        => $strand,
@@ -153,13 +156,6 @@ sub export_options { return {'action' => 'ExonSeq'}; }
 sub initialize_export {
   my $self = shift;
   my $hub = $self->hub;
-  ## Set some CGI parameters from the viewconfig
-  ## (because we don't want to have to set them in DataExport)
-  my $vc = $hub->get_viewconfig('ExonsSpreadsheet', 'Transcript');
-  my @params = qw(sscon snp_display flanking line_numbering fullseq);
-  foreach (@params) {
-    $hub->param($_, $vc->get($_));
-  }
   my ($data, $config) = $self->initialize(1);
   $config->{'v_space'} = "\n";
   return ($data, $config, 1);
@@ -228,7 +224,7 @@ sub get_intron_sequence_data {
   my @sequence;
   
   eval {
-    if (!$config->{'full_seq'} && $intron_length > ($sscon * 2)) {
+    if ((!$config->{'full_seq'} || $config->{'full_seq'} eq 'off') && $intron_length > ($sscon * 2)) {
       my $start = { slice => $exon->slice->sub_Slice($intron_start, $intron_start + $sscon - 1, $strand) };
       my $end   = { slice => $next_exon->slice->sub_Slice($intron_end - ($sscon - 1), $intron_end, $strand) };
       
