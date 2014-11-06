@@ -50,7 +50,6 @@ sub initialize {
 
   for (qw(exon_display exon_ori snp_display line_numbering title_display)) {
     my $param = $hub->param($_) || $vc->get($_);
-    next if $param eq 'off';
     $config->{$_} = $param;
   }
   
