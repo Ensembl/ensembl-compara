@@ -198,6 +198,7 @@ sub create_form {
         }
       }
       else {
+        $field_info{'value'} = 'on' if $field_info{'value'} eq 'off'; ## stupid checkboxes are stupid
         $params = \%field_info;
       }
       ## Add to form
