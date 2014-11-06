@@ -18,6 +18,12 @@ limitations under the License.
 
 package EnsEMBL::Web::Tools::OpenSearchDescription;
 
+### OpenSearch enables direct access to the Ensembl search engine
+### from the Chrome browser address bar - this functionality requires
+### XML files on the webserver, which are created by this module
+
+### See http://www.opensearch.org/Specifications/OpenSearch/1.1#OpenSearch_description_document
+
 use strict;
 
 sub create {
