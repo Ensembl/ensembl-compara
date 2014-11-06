@@ -367,7 +367,7 @@ sub transcript_table {
       }
       if ($trans_attribs->{$tsi}{'appris'}) {
         my ($text, $code) = @{$trans_attribs->{$tsi}{'appris'}};
-        my $glossary_url  = $hub->url({'type' => 'Help', 'action' => 'Glossary', 'id' => '493'});
+        my $glossary_url  = $hub->url({'type' => 'Help', 'action' => 'Glossary', 'id' => '493', '__clear' => 1});
         my $appris_link   = $hub->get_ExtURL_link('APPRIS website', 'APPRIS');
         my $class         = $code eq 'pi' ? 'green' : 'yellow';
         push @flags, $code
