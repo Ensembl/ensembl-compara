@@ -224,7 +224,7 @@ sub MARKUP_OPTIONS {
       'label'  => 'Show variations',
       'values' => [
         { 'value' => 'off', 'caption' => 'No'  },
-        { 'value' => 'yes', 'caption' => 'Yes' },
+        { 'value' => 'on', 'caption' => 'Yes' },
       ]
     },
     'line_numbering' => {
@@ -278,7 +278,7 @@ sub MARKUP_OPTIONS {
       'name'   => 'hide_long_snps',
       'label'  => 'Hide variations longer than 10bp',
       'values' => [
-        { 'value' => 'yes', 'caption' => 'Yes' },
+        { 'value' => 'on', 'caption' => 'Yes' },
         { 'value' => 'off', 'caption' => 'No'  },
       ]
     },
@@ -344,7 +344,7 @@ sub MARKUP_OPTIONS {
       'name'   => 'title_display',
       'label'  => 'Display pop-up information on mouseover',
       'values' => [
-        { 'value' => 'yes', 'caption' => 'Yes' },
+        { 'value' => 'on', 'caption' => 'Yes' },
         { 'value' => 'off', 'caption' => 'No'  },
       ],
     },
