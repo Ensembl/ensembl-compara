@@ -54,10 +54,10 @@ sub content {
       'For more information, visit the <a href="http://www.lrg-sequence.org">LRG website</a>.</p>';
   } else {
     my $lrg         = $object->Obj;
-    my $param       = $hub->param('lrg');
+    my $lrg_gene       = $hub->param('lrg');
     my $transcript  = $hub->param('lrgt');
-    (my $href       = $external_urls->{'LRG'}) =~ s/###ID###//;
-    my $description = qq{LRG region <a rel="external" href="$href">$param</a>.};
+    (my $href       = $external_urls->{'LRG'}) =~ s/###ID###/$lrg_gene/;
+    my $description = qq{LRG region <a rel="external" href="$href">$lrg_gene</a>.};
     my @genes       = @{$lrg->get_all_Genes('lrg_import')||[]};
     my $display     = $genes[0]->display_xref();
 
@@ -65,7 +65,7 @@ sub content {
     my $slice       = $lrg->feature_Slice;
     my $source      = $genes[0]->source;
        $source      = 'LRG' if $source =~ /LRG/;
-    (my $source_url = $external_urls->{uc $source}) =~ s/###ID###//;
+    (my $source_url = $external_urls->{uc $source}) =~ s/\/###ID###//;
     
     if (scalar(@hgnc_xrefs)) {
       my $hgnc = $hgnc_xrefs[0]->display_id;
