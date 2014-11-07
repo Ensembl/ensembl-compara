@@ -34,7 +34,7 @@ sub init {
     min_frequency      => 0.1,
     consequence_filter => 'off',
     title_display      => 'off',
-    hide_long_snps     => 'yes',
+    hide_long_snps     => 'on',
   });
 }
 
@@ -56,11 +56,32 @@ sub add_variation_options {
   my $fields;
 
   ## Tweak standard markup 
-  $markup->{'snp_display'}{'label'} = $options->{'label'} if $options->{'label'};
-  
-  push @{$markup->{'snp_display'}{'values'}}, { value => 'snp_link', caption => 'Yes and show links' } unless $options->{'snp_link'} eq 'no';
-  push @{$markup->{'snp_display'}{'values'}}, @{$options->{'snp_display'}} if $options->{'snp_display'};
-  
+  $markup->{'snp_display'} = { 
+                              'name'  => 'snp_display',
+                              'label' => $options->{'label'} || 'Show variations',
+                              };
+  my @snp_values;
+
+  unless ($options->{'snp_link'} eq 'no') { 
+    push @snp_values, { 'value' => 'snp_link', 'caption' => 'Yes and show links' };
+  }
+
+  if ($options->{'snp_display'}) {
+    push @snp_values, @{$options->{'snp_display'}};
+  } 
+
+  if (scalar @snp_values) {
+    unshift @snp_values, (
+                            { 'value' => 'on', 'caption' => 'Yes' },
+                            { 'value' => 'off', 'caption' => 'No'  },
+                          );
+    $markup->{'snp_display'}{'type'}  = 'Dropdown';
+  }
+  else {
+    $markup->{'snp_display'}{'type'}  = 'Checkbox';
+    $markup->{'snp_display'}{'value'} = 'on'; 
+  }
+
   if ($options->{'consequence'} ne 'no') {
     my %consequence_types = map { $_->label && $_->feature_class =~ /transcript/i ? ($_->label => $_->SO_term) : () } values %Bio::EnsEMBL::Variation::Utils::Constants::OVERLAP_CONSEQUENCES;
     
