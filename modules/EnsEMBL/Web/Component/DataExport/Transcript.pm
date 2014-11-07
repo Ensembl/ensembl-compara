@@ -57,11 +57,11 @@ sub content {
     push @$checklist, $_ unless (exists $options->{$_->{'value'}} && $options->{$_->{'value'}} == 0); 
   }
 
-  $settings->{'extra'} => {
-                            'type'      => 'Checklist',
-                            'label'     => 'Included sequences',
-                            'values'    => $checklist,
-                            'selectall' => 'on',
+  $settings->{'extra'} = {
+                          'type'      => 'Checklist',
+                          'label'     => 'Included sequences',
+                          'values'    => $checklist,
+                          'selectall' => 'on',
   };
 
   ## Options per format
@@ -85,10 +85,9 @@ sub configure_fields {
   my @field_order = $viewconfig->field_order;
 
   return {
-          'RTF'   => ['extra', @field_order],
-          'FASTA' => [qw(extra flank5_display flank3_display)],
+          'RTF'   => [@field_order],
+          'FASTA' => ['extra'],
   };
-
 }
 
 sub default_file_name {
