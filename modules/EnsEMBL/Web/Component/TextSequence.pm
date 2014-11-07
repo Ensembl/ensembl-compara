@@ -72,10 +72,13 @@ sub _init {
   my ($self, $subslice_length) = @_;
   $self->cacheable(1);
   $self->ajaxable(1);
+
+  my $type  = $self->hub->param('data_type') || $self->hub->type;
+  my $vc    = $self->view_config($type);
   
   if ($subslice_length) {
     my $hub = $self->hub;
-    $self->{'subslice_length'} = $hub->param('force') || $subslice_length * ($hub->param('display_width') || 60);
+    $self->{'subslice_length'} = $hub->param('force') || $subslice_length * ($hub->param('display_width') || $vc->get('display_width'));
   }
 }
 
