@@ -75,15 +75,18 @@ sub default_options {
 
     # parameters that are likely to change from execution to another:
     'mlss_id'               => '100032',   # equivalent to mlss_id for PROTEIN_TREES in the db (commented out to make it obligatory to specify)
-#    'release'               => '73',
+    'release'               => '76',
 
-    'pipeline_name'         => 'vega_genetree_20130211_71_step3', #edit this each time
+    'pipeline_name'         => 'vega_genetree_20140905_76_new', #edit this each time
+
+    "registry_dbs" => [{"-host" => "vegabuild","-pass" => "","-port" => 5304,"-user" => "ottro"}],
 
     'rel_suffix'            => 'vega',
     'work_dir'              => '/lustre/scratch109/ensembl/'.$ENV{'USER'}.'/compara_generation/'.$self->o('pipeline_name'),
     'outgroups'             => { },   # affects 'hcluster_dump_input_per_genome'
     'taxlevels'             => [ 'Theria' ],
     'filter_high_coverage'  => 1,   # affects 'group_genomes_under_taxa'
+    'master_db_is_missing_dnafrags' => 1,
 
     # connection parameters to various databases:
     # the production database itself (will be created)
@@ -95,7 +98,7 @@ sub default_options {
     'master_db' => 'mysql://ottro@vegabuild:5304/vega_compara_master',
 
     # switch off the reuse:
-    'prev_core_sources_locs'    => [ ],
+#    'prev_core_sources_locs'    => [ ],
     'prev_release'              => 0,   # 0 is the default and it means "take current release number and subtract 1"
     'reuse_from_prev_rel_db'    => 0,
     'do_stable_id_mapping'      => 0,
@@ -143,9 +146,11 @@ sub pipeline_analyses {
     }
 
     #include non-reference slices
-    if ($name eq 'load_fresh_members') {
-      $_->{'-parameters'}{'include_nonreference'} = 1;
-      $_->{'-parameters'}{'include_reference'} = 1;
+    if ($name eq 'load_fresh_members_from_db') {
+      $analyses->[$i]{'-parameters'}{'include_nonreference'} = 1;
+      $analyses->[$i]{'-parameters'}{'include_reference'} = 1;
+      $analyses->[$i]{'-parameters'}{'store_missing_dnafrags'} = 1;
+      $analyses->[$i]{'-parameters'}{'force_unique_canonical'} = 1;
     }
   }
   return $analyses;
