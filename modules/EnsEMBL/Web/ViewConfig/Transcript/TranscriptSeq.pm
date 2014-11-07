@@ -54,7 +54,6 @@ sub form_fields {
   my $fields = {};
 
   my @extra = (
-    ['exons',       'exons'],
     ['codons',      'codons'],
     ['utr',         'UTR'],
     ['coding_seq',  'coding sequence'],
