@@ -112,7 +112,7 @@ sub render {
       { key => 'common',      title => 'Common name',     width => '40%', align => 'left', sort => 'string' },
       { key => 'species',     title => 'Scientific name', width => '25%', align => 'left', sort => 'string' },
       { key => 'taxon_id',    title => 'Taxon ID',        width => '10%', align => 'left', sort => 'integer' },
-      { key => 'assembly',    title => 'Assembly',        width => '10%', align => 'left' },
+      { key => 'assembly',    title => 'Ensembl Assembly',width => '10%', align => 'left' },
       { key => 'accession',   title => 'Accession',       width => '10%', align => 'left' },
       { key => 'variation',   title => 'Variation database',  width => '5%', align => 'center', sort => 'string' },
       { key => 'regulation',  title => 'Regulation database', width => '5%', align => 'center', sort => 'string' },
@@ -139,15 +139,16 @@ sub render {
     my $img_url = '/';
     if ($info->{'status'} eq 'pre') {
       $image_fade = 'opacity:0.7';
-      $sp_link    = sprintf('<span class="bigtext">%s</span><br />(Pre only)', $common);
+      $sp_link    = sprintf('<a href="http://pre.ensembl.org/%s" rel="external" class="bigtext pre_species">%s</a><br />(Pre)', $dir, $common);
       $img_url    = 'http://pre.ensembl.org/';
       $rel        = ' rel="external"';
-      $pre_link   = sprintf('<a href="http://pre.ensembl.org/%s">%s</a>', $dir, $info->{'pre_assembly'});
+      $pre_link   = sprintf('<a href="http://pre.ensembl.org/%s" rel="external">%s</a>', $dir, $info->{'pre_assembly'});
     }
-    elsif ($info->{'status'} eq 'both') {
-      $sp_link    = sprintf('<a href="/%s" class="bigtext">%s</a>', $dir, $common);
-      $pre_link   = sprintf('<a href="http://pre.ensembl.org/%s">%s</a>', $dir, $info->{'pre_assembly'});
-    }
+# this has been replaced with creating another row instead (see below after add_row)
+#    elsif ($info->{'status'} eq 'both') {
+#      $sp_link    = sprintf('<a href="/%s" class="bigtext">%s</a>', $dir, $common);
+#      $pre_link   = sprintf('<a href="http://pre.ensembl.org/%s">%s</a>', $dir, $info->{'pre_assembly'});
+#    }
     else {
       $sp_link    = sprintf('<a href="/%s" class="bigtext">%s</a>', $dir, $common);
       $pre_link   = '-';
@@ -164,6 +165,19 @@ sub render {
       'pre'         => $pre_link,
     });
 
+# if a species is both pre and ensembl we are adding a new row for the pre assembly    
+    if ($info->{'status'} eq 'both') {
+      $table->add_row({
+          'common' => sprintf('<a href="http://pre.ensembl.org/%s" rel="external"><img src="/i/species/48/%1$s.png" alt="%s" style="float:left;padding-right:4px;opacity:0.7" /></a><a href="http://pre.ensembl.org/%1$s" rel="external" class="bigtext pre_species">%2$s</a><br />(Pre)', $dir, $common),
+          'species'     => '<i>'.$name.'</i>',
+          'taxon_id'    => $info->{'taxon_id'},
+          'assembly'    => '-',
+          'accession'   => '-',
+          'variation'   => '-',
+          'regulation'  => '-',
+          'pre'         => sprintf('<a href="http://pre.ensembl.org/%s" rel="external">%s</a>', $dir, $info->{'pre_assembly'}),
+      });
+    } 
   }
   $html .= $table->render;
   $html .= '</div>';
