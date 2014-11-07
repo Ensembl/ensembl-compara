@@ -198,7 +198,10 @@ sub create_form {
         }
       }
       else {
-        $field_info{'value'} = 'on' if $field_info{'value'} eq 'off'; ## stupid checkboxes are stupid
+        if ($field_info{'type'} =~ /Checkbox|CheckBox/) {
+          $field_info{'selected'} = 1 if $field_info{'value'} eq 'on';
+          $field_info{'value'} = 'on' if $field_info{'value'} eq 'off'; ## stupid checkboxes are stupid
+        }
         $params = \%field_info;
       }
       ## Add to form
