@@ -219,22 +219,18 @@ sub set_variations {
   my $u_snps = {};
   my ($adaptor, $include_failed);
   
-  if ($config->{'failed_variant'}) {
-    $adaptor        = $hub->get_adaptor('get_VariationFeatureAdaptor', 'variation');
-    $include_failed = $adaptor->db->include_failed_variations;
-    
-    $adaptor->db->include_failed_variations(1);
-  }
-  
   if ($focus_snp_only) {
     push @$snps, $focus_snp_only;
   } else {
     eval {
       # NOTE: currently we can't filter by both population and consequence type, since the API doesn't support it.
       # This isn't a problem, however, since filtering by population is disabled for now anyway.
-      $snps = $config->{'population'} ? 
-        $slice_data->{'slice'}->get_all_VariationFeatures_by_Population($config->{'population'}, $config->{'min_frequency'}) :
-        $slice_data->{'slice'}->get_all_VariationFeatures($config->{'consequence_filter'}, 1);
+      if ($config->{'population'}) {
+         $snps = $slice_data->{'slice'}->get_all_VariationFeatures_by_Population($config->{'population'}, $config->{'min_frequency'});
+      } else {
+        my @snps_list = (@{$slice_data->{'slice'}->get_all_VariationFeatures($config->{'consequence_filter'}, 1)},  @{$slice_data->{'slice'}->get_all_somatic_VariationFeatures()});
+        $snps = \@snps_list;
+      }
     };
   }
   
@@ -251,7 +247,7 @@ sub set_variations {
         map { $u_snps->{$_->variation_name} = $_ } @{$u_slice->get_all_VariationFeatures};
       };
     }
-    
+
     $snps = [ grep $_->length <= $self->{'snp_length_filter'} || $config->{'focus_variant'} && $config->{'focus_variant'} eq $_->dbID, @$snps ] if $config->{'hide_long_snps'};
   }
   
@@ -263,9 +259,7 @@ sub set_variations {
   foreach (@ordered_snps) {
     my $dbID   = $_->dbID;
     my $failed = $_->variation ? $_->variation->is_failed : 0;
-    
-    next if $failed && $dbID != $focus;
-    
+
     my $variation_name = $_->variation_name;
     my $var_class      = $_->can('var_class') ? $_->var_class : $_->can('variation') && $_->variation ? $_->variation->var_class : '';
     my $start          = $_->start;
