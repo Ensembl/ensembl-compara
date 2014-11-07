@@ -66,7 +66,13 @@
         $this.tooltip($.extend({
           show:     { delay: 100, duration: 1 },
           hide:     false,
-          items:    opts.content ? '*' : undefined
+          items:    '*',
+          open:     function(e, ui) {
+            if (e.originalEvent.type === 'focusin' && !$(e.originalEvent.currentTarget).is('input,textarea')) {
+              ui.tooltip.remove();
+              return false;
+            }
+          }
         }, opts))[0];
 
         $this = null;
