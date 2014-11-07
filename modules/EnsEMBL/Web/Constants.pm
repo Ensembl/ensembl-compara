@@ -217,6 +217,13 @@ sub MARKUP_OPTIONS {
 ### Configuration for text sequence displays
   return {
   ### TEXT SEQUENCE MARKUP
+    'exons' => {
+      'type'    => 'Checkbox',
+      'name'    => 'exons',
+      'label'   => 'Show exons',
+      'value'   => 'on',
+      'checked' => 'checked',
+    },
     'line_numbering' => {
       'type'   => 'DropDown', 
       'select' => 'select',
