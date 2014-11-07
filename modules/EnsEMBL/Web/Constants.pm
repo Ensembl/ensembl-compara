@@ -217,16 +217,6 @@ sub MARKUP_OPTIONS {
 ### Configuration for text sequence displays
   return {
   ### TEXT SEQUENCE MARKUP
-    'snp_display' => {
-      'type'   => 'DropDown', 
-      'select' => 'select',
-      'name'   => 'snp_display',
-      'label'  => 'Show variations',
-      'values' => [
-        { 'value' => 'off', 'caption' => 'No'  },
-        { 'value' => 'on', 'caption' => 'Yes' },
-      ]
-    },
     'line_numbering' => {
       'type'   => 'DropDown', 
       'select' => 'select',
@@ -273,14 +263,11 @@ sub MARKUP_OPTIONS {
       'values'   => [{ 'value' => 'off', 'caption' => 'No filter' }]
     },
     'hide_long_snps' => {
-      'type'   => 'DropDown', 
+      'type'   => 'Checkbox', 
       'select' => 'select',
       'name'   => 'hide_long_snps',
       'label'  => 'Hide variations longer than 10bp',
-      'values' => [
-        { 'value' => 'on', 'caption' => 'Yes' },
-        { 'value' => 'off', 'caption' => 'No'  },
-      ]
+      'value'  => 'on',
     },
     ### GENE-SPECIFIC TEXT SEQUENCE
     'flank5_display' => {
