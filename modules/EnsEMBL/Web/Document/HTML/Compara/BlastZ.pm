@@ -44,10 +44,13 @@ sub render {
       my $values = $data->{$sp}{$other};
       next unless $values;  
         
-      my $mlss_id = $values->[1];
-      my $url = '/info/genome/compara/mlss.html?mlss='.$mlss_id;
-      $html .= sprintf '<li><a href="%s">%s (%s)</a></li>', 
-                          $url, $info->{$other}{'common_name'}, $info->{$other}{'long_name'};
+      if ($values->[2]) {
+          my $mlss_id = $values->[1];
+          my $url = '/info/genome/compara/mlss.html?mlss='.$mlss_id;
+          $html .= sprintf '<li><a href="%s">%s (%s)</a></li>', $url, $info->{$other}{'common_name'}, $info->{$other}{'long_name'};
+      } else {
+          $html .= sprintf('<li>%s (%s)</li>', $info->{$other}{'common_name'}, $info->{$other}{'long_name'});
+      }
     } 
     $html .= '</ul>';
   }

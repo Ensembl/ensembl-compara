@@ -43,10 +43,10 @@ sub content {
   my $species_defs = $hub->species_defs;
   my $cdb          = shift || $hub->param('cdb') || 'compara';
   my $availability = $object->availability;
+  my $is_ncrna     = ($object->Obj->biotype =~ /RNA/);
   
   my @orthologues = (
-    $object->get_homology_matches('ENSEMBL_ORTHOLOGUES', undef, undef, $cdb),
-    $object->get_homology_matches('ENSEMBL_PARALOGUES', 'possible_ortholog', undef, $cdb)
+    $object->get_homology_matches('ENSEMBL_ORTHOLOGUES', undef, undef, $cdb), 
   );
 
   my %orthologue_list;
@@ -170,14 +170,16 @@ sub content {
         my $align_url = $hub->url({
             action   => 'Compara_Ortholog',
             function => 'Alignment' . ($cdb =~ /pan/ ? '_pan_compara' : ''),
+            hom_id   => $orthologue->{'dbID'},
             g1       => $stable_id,
           });
         
-        unless ($object->Obj->biotype =~ /RNA/) {
+        if ($is_ncrna) {
+          $target_links .= sprintf '<li><a href="%s" class="notext">Alignment</a></li>', $align_url;
+        } else {
           $target_links .= sprintf '<li><a href="%s" class="notext">Alignment (protein)</a></li>', $align_url;
+          $target_links .= sprintf '<li><a href="%s" class="notext">Alignment (cDNA)</a></li>', $align_url.';seq=cDNA';
         }
-        $align_url    .= ';seq=cDNA';
-        $target_links .= sprintf '<li><a href="%s" class="notext">Alignment (cDNA)</a></li>', $align_url;
         
         $alignview = 1;
       }

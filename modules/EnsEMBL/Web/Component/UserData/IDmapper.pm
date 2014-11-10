@@ -22,7 +22,7 @@ use strict;
 
 use Bio::EnsEMBL::StableIdHistoryTree;
 
-use EnsEMBL::Web::DBSQL::WebsiteAdaptor;
+use EnsEMBL::Web::DBSQL::ArchiveAdaptor;
 
 use base qw(EnsEMBL::Web::Component::UserData);
 
@@ -176,7 +176,7 @@ sub archive_link {
   if ($release == $current) {
      $url = $hub->url({ type => $type, action => $action, $p => $name });
   } else {
-    my $adaptor      = EnsEMBL::Web::DBSQL::WebsiteAdaptor->new($hub);
+    my $adaptor      = EnsEMBL::Web::DBSQL::ArchiveAdaptor->new($hub);
     my $release_info = $adaptor->fetch_release($release);
     
     return unless $release_info;

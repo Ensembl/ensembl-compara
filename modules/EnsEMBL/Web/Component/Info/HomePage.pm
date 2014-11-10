@@ -159,25 +159,22 @@ sub assembly_text {
   );
   
   ## Insert dropdown list of other assemblies
-  if ($species eq 'Homo_sapiens' && $species_defs->ENSEMBL_SERVERNAME ne 'grch37.ensembl.org') {
-    push @other_assemblies, {
-      url      => "http://grch37.ensembl.org/$species/",
-      assembly => 'GRCh37',
-      release  => '(Long-term archive with BLAST, VEP and BioMart)',
-    };
-  }
   my $adaptor  = EnsEMBL::Web::DBSQL::ArchiveAdaptor->new($hub);
   my $archives = $adaptor->fetch_archives_by_species($hub->species);
+
   my $previous = $assembly;
-  foreach my $version (reverse sort keys %$archives) {
+  foreach my $version (reverse sort {$a <=> $b} keys %$archives) {
     my $archive = $archives->{$version};
     ## Remove patch sub-versions
     (my $major_assembly = $archive->{'assembly'}) =~ s/\.p\d+//;
     next if $version == $ensembl_version || $major_assembly eq $previous;
+    my $desc = $archive->{'description'} || sprintf '(%s release %s)', $species_defs->ENSEMBL_SITETYPE, $version;
+    my $subdomain = ((lc $archive->{'archive'}) =~ /^[a-z]{3}[0-9]{4}$/) 
+                      ? lc $archive->{'archive'}.'.archive' : lc $archive->{'archive'};
     push @other_assemblies, {
-      url      => sprintf('http://%s.archive.ensembl.org/%s/', lc $archive->{'archive'}, $species),
-      assembly => $archive->{'assembly'},
-      release  => (sprintf '(%s release %s)', $species_defs->ENSEMBL_SITETYPE, $version),
+      url      => sprintf('http://%s.ensembl.org/%s/', $subdomain, $species),
+      assembly => $major_assembly,
+      release  => $desc,
     };
     
     $previous = $major_assembly;

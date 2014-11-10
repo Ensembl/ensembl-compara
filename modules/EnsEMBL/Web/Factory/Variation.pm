@@ -42,7 +42,6 @@ sub createObjects {
     
     my $variation_db = $dbs->{'variation'};
        $variation_db->include_non_significant_phenotype_associations(0);
-       $variation_db->include_failed_variations(1);    
 
     return $self->problem('fatal', 'Database Error', 'Could not connect to the variation database.') unless $variation_db;
     

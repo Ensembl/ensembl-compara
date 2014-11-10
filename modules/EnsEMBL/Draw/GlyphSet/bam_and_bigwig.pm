@@ -16,28 +16,17 @@ limitations under the License.
 
 =cut
 
-##################################
-#
-#  DEPRECATED MODULE
-#
-# This module was not put into
-# service and has thus been judged
-# obsolete. It will be removed in
-# Ensembl release 78.
-#
-##################################
+package EnsEMBL::Draw::GlyphSet::bam_and_bigwig;
 
-package EnsEMBL::Web::ExtIndex::EFETCH;
+### Module for drawing data in either BAM or BigWig format 
+### (initially only for internal data sources where we can
+### guarantee there is a BigWig file)
+
+### At the moment this module doesn't actually do anything 
+### apart from enabling a track to inherit from both bam and bigwig!
+
 use strict;
+use base qw(EnsEMBL::Draw::GlyphSet::bam EnsEMBL::Draw::GlyphSet::bigwig);
 
-sub new { 
-warn "!!! DEPRECATED MODULE - will be removed in Release 78";
-my $class = shift; my $self = {}; bless $self, $class; return $self; }
-sub get_seq_by_id {
-warn "!!! DEPRECATED MODULE - will be removed in Release 78";
-print "EFETCH: @_ \n"; return 1; }
-sub get_seq_by_acc{
-warn "!!! DEPRECATED MODULE - will be removed in Release 78";
-print "EFETCH: @_ \n"; return 1; }
 
 1;

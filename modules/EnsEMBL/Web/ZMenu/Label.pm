@@ -37,8 +37,8 @@ sub regulation_content {
   my $fg_cta = $fg_dba->get_CellTypeAdaptor;
   my $fg_ct = $fg_cta->fetch_by_name($cell_line);
  
-  $self->caption('Cell Line');
-  $self->add_entry({ type => "Cell Line", label => $cell_line });
+  $self->caption('Cell Type');
+  $self->add_entry({ type => "Cell Type", label => $cell_line });
   $self->add_entry({ type => "Description", label => $fg_ct->description });
 
   if(grep { $_ eq $context->{'image_config'} } qw(regulation_view)) {

@@ -60,12 +60,23 @@ sub buttons {
     $params->{$_} = $hub->param($_);
   }
 
-  return {
-    'url'     => $hub->url($params),
-    'caption' => $options->{'caption'} || 'Download sequence',
-    'class'   => 'export',
-    'modal'   => 1
-  };
+  
+  if ($options->{'action'} =~ /Align/ && !$hub->param('align')) {
+    return {
+      'url'       => undef, 
+      'caption'   => $options->{'caption'} || 'Download sequence',
+      'class'     => 'export',
+      'disabled'  => 1,
+    };
+  }
+  else {
+    return {
+      'url'     => $hub->url($params),
+      'caption' => $options->{'caption'} || 'Download sequence',
+      'class'   => 'export',
+      'modal'   => 1
+    };
+  }
 }
 
 sub _init {
@@ -363,8 +374,12 @@ sub set_variations {
         factorytype => 'Location',
         v => undef,
       };
-      
-      push @{$markup->{'variations'}{$_}{'href'}{'vf'}}, $dbID;
+
+      if($dbID) {
+        push @{$markup->{'variations'}{$_}{'href'}{'vf'}}, $dbID;
+      } else {
+        push @{$markup->{'variations'}{$_}{'href'}{'v'}},  $variation_name;
+      }
       
       $sequence->[$_] = $ambigcode if $config->{'variation_sequence'} && $ambigcode;
     }
@@ -916,11 +931,11 @@ sub build_sequence {
         }
         
         push @{$output[$s]}, { line => $row, length => $count, pre => $pre, post => $post, adid => $adid };
-        $adid++;
         
         if($post) {
           ($flourishes{'post'}||={})->{$adid} = $self->jsonify({ v => $post });
         }
+        $adid++;
         
         $new_line{$_} = $current{$_} for keys %current;
         $count        = 0;
@@ -1146,7 +1161,7 @@ sub build_sequence {
     my @params = split(/;/,$params);
     for(@params) { $_ = 'adorn=only' if /^adorn=/; }
     $ajax_url = $path.'?'.join(';',@params,'adorn=only');
-    my $ajax_json = $self->jsonify({ url => $ajax_url, provisional => $adornment });
+    my $ajax_json = encode_entities($self->jsonify({ url => $ajax_url, provisional => $adornment }),"<>");
     $config->{'html_template'} = qq(
       <div class="js_panel" id="$random_id">
         $key_html

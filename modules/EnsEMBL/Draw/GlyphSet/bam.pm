@@ -89,6 +89,7 @@ sub render_normal {
       #print STDERR "Rendering reads\n";
       $self->render_sequence_reads(%options) if $options{show_reads};
       #print STDERR "Done rendering reads\n";
+      $self->render_caption;
     }
     alarm 0;
   };
@@ -251,6 +252,24 @@ sub my_colour {
   return $colours->{$key}->{default} || $colours->{default}->{default} || 'grey80';
 }
 
+sub render_caption {
+  my $self = shift;
+
+  my( $fontname_i, $fontsize_i ) = $self->get_font_details( 'innertext' );
+
+  $self->push($self->Text({
+        'x'         => 0,
+        'y'         => $self->{_yoffset}, 
+        'height'    => $fontsize_i + 2,
+        'font'      => $fontname_i,
+        'ptsize'    => $fontsize_i,
+        'colour'    => $self->my_colour('consensus'), 
+        'text'      => $self->my_config('caption'),
+   }));
+
+
+}
+
 sub render_coverage {
 ## render coverage histogram with consensus text overlaid
   my ($self, %options) = @_;
@@ -375,7 +394,24 @@ sub render_coverage {
   }));
   
   $self->{_yoffset} += $smax / $scale + 2; # add on height of area just drawn
-  
+ 
+  $self->push( $self->Text({
+    'text'          => '0',
+    'width'         => $res_i[2],
+    'textwidth'     => $res_i[2],
+    'font'          => $fontname_i,
+    'ptsize'        => $fontsize_i,
+    'halign'        => 'right',
+    'valign'        => 'top',
+    'colour'        => 'slategray', 
+    'height'        => $textheight_i,
+    'y'             => $self->{_yoffset} - ($textheight_i + 2),
+    'x'             => -4 - $res_i[2],
+    'absolutey'     => 1,
+    'absolutex'     => 1,
+    'absolutewidth' => 1,
+  }));
+ 
   return;
 }
 
@@ -700,7 +736,7 @@ sub render_sequence_reads {
 #              : 2 + $self->{'config'}->texthelper()->height($self->{'config'}->species_defs->ENSEMBL_STYLE->{'GRAPHIC_FONT'})
 #              ;
     my $y_pos = 2 + $self->{'config'}->texthelper()->height($self->{'config'}->species_defs->ENSEMBL_STYLE->{'GRAPHIC_FONT'});
-    $self->errorTrack( sprintf( q(%s features from '%s' omitted), $features_bumped, $self->my_config('name')), undef, $max_y );
+    $self->errorTrack( sprintf( q(%s features from '%s' not shown), $features_bumped, $self->my_config('name')), undef, $max_y );
   }
   
   return;

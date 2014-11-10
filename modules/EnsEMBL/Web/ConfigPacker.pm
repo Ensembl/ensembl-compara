@@ -1764,7 +1764,7 @@ sub _munge_file_formats {
     'phylip'    => {'ext' => 'phy',  'label' => 'Phylip'},
     'phyloxml'  => {'ext' => 'xml',  'label' => 'PhyloXML'},
     'pfam'      => {'ext' => 'pfam', 'label' => 'Pfam'},
-    'psi'       => {'ext' => 'aln',  'label' => 'PSI'},
+    'psi'       => {'ext' => 'psi',  'label' => 'PSI'},
     'rtf'       => {'ext' => 'rtf',  'label' => 'RTF'},
     'stockholm' => {'ext' => 'stk',  'label' => 'Stockholm'},
     'emboss'    => {'ext' => 'txt',  'label' => 'EMBOSS'},

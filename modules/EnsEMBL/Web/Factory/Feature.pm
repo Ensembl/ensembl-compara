@@ -115,7 +115,6 @@ sub _create_Phenotype {
   
   my $id         = $self->param('id');   
   my $dbc        = $self->hub->database('variation');
-	$dbc->include_failed_variations(1);
   my $a          = $dbc->get_adaptor('VariationFeature');
   my $func       = $self->param('somatic') ? 'fetch_all_somatic_with_phenotype' : 'fetch_all_with_phenotype';
   my $variations = $a->$func(undef, undef, $id);
@@ -342,7 +341,13 @@ sub _create_RegulatoryFactor {
     }
     my $fset  = $fg_db->get_featureSetAdaptor->fetch_by_name($self->param('fset'));
     my $ftype = $fg_db->get_FeatureTypeAdaptor->fetch_by_name($id);
-    $features = $fset->get_Features_by_FeatureType($ftype);
+    ## Defensive programming against API barfs
+    if (ref($ftype)) {
+      $features = $fset->get_Features_by_FeatureType($ftype);
+    }
+    else {
+      warn ">>> UNKNOWN FEATURE TYPE";
+    }
   }
 
   if (@$features) {

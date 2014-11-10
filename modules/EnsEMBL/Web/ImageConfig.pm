@@ -818,7 +818,7 @@ sub _add_datahub_tracks {
   my $hub    = $self->hub;
   my $data   = $parent->data;
   my $matrix = $config->{'dimensions'}{'x'} && $config->{'dimensions'}{'y'};
-  my $link   = $config->{'description_url'} ? qq(<br /><a href="$config->{'description_url'}" rel="external">Go to track description on datahub</a>) : '';
+  my $link   = $config->{'description_url'} ? qq(<br /><a href="$config->{'description_url'}" rel="external">Go to track description on trackhub</a>) : '';
   my $info   = $config->{'longLabel'} . $link;
   my %tracks;
   
@@ -1063,7 +1063,7 @@ sub load_file_format {
 }
 
 sub _add_bam_track {
-  my $self = shift;
+  my ($self, %args) = @_;
   my $desc = '
     The read end bars indicate the direction of the read and the colour indicates the type of read pair:
     Green = both mates are part of a proper pair; Blue = either this read is not paired, or its mate was not mapped; Red = this read is not properly paired.
@@ -1073,16 +1073,17 @@ sub _add_bam_track {
     format      => 'BAM',
     description => $desc,
     renderers   => [
-      'off',       'Off', 
-      'normal',    'Normal', 
-      'unlimited', 'Unlimited', 
-      'histogram', 'Coverage only'
-    ], 
+                    'off',       'Off',
+                    'normal',    'Normal',
+                    'unlimited', 'Unlimited',
+                    'histogram', 'Coverage only'
+                    ],
+    colourset   => 'BAM',
     options => {
       external => 'external',
       sub_type => 'bam'
     },
-    @_
+    %args,
   );
 }
 
@@ -1221,7 +1222,7 @@ sub _add_file_format_track {
     strand      => 'f',
     format      => $args{'format'},
     glyphset    => $type,
-    colourset   => $type,
+    colourset   => $args{'colourset'} || $type,
     renderers   => $args{'renderers'},
     name        => $args{'source'}{'source_name'},
     caption     => exists($args{'source'}{'caption'}) ? $args{'source'}{'caption'} : $args{'source'}{'source_name'},
@@ -1409,7 +1410,7 @@ sub update_from_url {
               type     => 'message',
               function => '_warning',
               code     => 'datahub:' . md5_hex($p),
-              message  => "There was a problem attaching datahub $n: @errors<br /><br />Please check the source URL in a web browser.",
+              message  => "There was a problem attaching trackhub $n: @errors<br /><br />Please check the source URL in a web browser.",
             );
           }
           else {
@@ -2053,16 +2054,32 @@ sub add_data_files {
   my ($keys, $data) = $self->_merge($hashref->{'data_file'});
   
   foreach (@$keys) {
+    my $glyphset = $data->{$_}{'format'} || '_alignment';
+    $glyphset = 'bam_and_bigwig' if $glyphset eq 'bam';
+
+    my $renderers;
+    if ($glyphset eq 'bam_and_bigwig') {
+      $renderers = [
+                    'off',       'Off',
+                    'tiling', 'Coverage (BigWig)',
+                    'normal',    'Normal',
+                    'unlimited', 'Unlimited',
+                    ];
+    }
+    else {
+      $renderers = [
+                    'off',       'Off',
+                    'normal',    'Normal',
+                    'unlimited', 'Unlimited',
+                    'histogram', 'Coverage only'
+                    ];
+    }
+
     $self->generic_add($menu, $key, "data_file_${key}_$_", $data->{$_}, { 
-      glyphset  => $data->{$_}{'format'}     || '_alignment', 
+      glyphset  => $glyphset, 
       colourset => $data->{$_}{'colour_key'} || 'feature',
       strand    => 'f',
-      renderers => [
-        'off',       'Off', 
-        'normal',    'Normal', 
-        'unlimited', 'Unlimited', 
-        'histogram', 'Coverage only'
-      ], 
+      renderers => $renderers, 
     });
   }
 }

@@ -46,7 +46,11 @@ sub content {
     $self->nav_url(1e6)
   ];
   
-  return $self->navbar($self->ramp($ramp_entries->[0][1],$ramp_entries->[-1][1]));
+  my $length = -1;
+  my $object = $self->hub->core_object('Location');
+  $length = $object->seq_region_length if $object;
+  
+  return $self->navbar($self->ramp($ramp_entries->[0][1],$ramp_entries->[-1][1],$length));
 }
 
 sub ramp_url { return shift->nav_url(shift, 'resize'); }

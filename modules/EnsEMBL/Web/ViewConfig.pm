@@ -798,7 +798,7 @@ sub reg_renderer {
       my $old = $node->get('display');
       my $renderer = firstidx { $old eq $_ }
         qw(off compact tiling tiling_feature);
-      next if !$renderer;
+      next if $renderer <= 0;
       $renderer |= $mask if $state;
       $renderer &=~ $mask unless $state;
       $renderer = 1 unless $renderer;

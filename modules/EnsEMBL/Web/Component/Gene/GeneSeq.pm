@@ -82,6 +82,7 @@ sub content {
     $html .= '<div class="adornment-key"></div>';
     $html .= $self->chunked_content($length, $self->{'subslice_length'}, { length => $length, name => $slice->name });
   } else {
+    $html .= '<div class="adornment-key"></div>';
     $html .= $self->content_sub_slice($slice); # Direct call if the sequence length is short enough
   }
   

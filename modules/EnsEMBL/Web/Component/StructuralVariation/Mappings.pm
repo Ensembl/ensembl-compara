@@ -30,10 +30,9 @@ sub _init {
 
 sub content {
   my $self = shift;
-  my $object         = $self->object;
-  my $hub           = $self->hub;
-  my $slice_adaptor = $hub->get_adaptor('get_SliceAdaptor');
-  my %mappings      = %{$object->variation_feature_mapping};  # first determine correct SNP location 
+  my $object   = $self->object;
+  my $hub      = $self->hub;
+  my %mappings = %{$object->variation_feature_mapping};  # first determine correct SNP location 
   my $v;
   
   if (keys %mappings == 1) {
@@ -53,6 +52,48 @@ sub content {
     );
   }
   
+  my $max_display_length = $object->max_display_length;
+  my $feature_length = $v->{end} - $v->{start} + 1;
+  if ($feature_length > $max_display_length) {
+    my $max_display_end = $v->{start} + $max_display_length - 1;
+    my $region_overview_url = $hub->url({
+       type   => 'Location',
+       action => 'Overview',
+       db     => 'core',
+       r      => $v->{Chr}.':'.$v->{start}.'-'.$v->{end},
+       sv     => $hub->param('sv'),
+       svf    => $hub->param('svf'),
+       cytoview => 'variation_feature_structural_smaller=compact,variation_feature_structural_larger=gene_nolabel'
+    });
+    my $region_detail_url = $hub->url({
+       type   => 'Location',
+       action => 'View',
+       db     => 'core',
+       r      => $v->{Chr}.':'.$v->{start}.'-'.$max_display_end,
+       sv     => $hub->param('sv'),
+       svf    => $hub->param('svf'),
+       contigviewbottom => 'variation_feature_structural_smaller=gene_nolabel,variation_feature_structural_larger=gene_nolabel'
+    });
+    my $warning_header = sprintf('The structural variant is too long for this display (more than %sbp)',$self->thousandify($max_display_length));
+    my $warning_content = qq{Please, view the list of overlapping genes, transcripts and structural variants in the <a href="$region_overview_url">Region overview</a> page};
+    my $warning_content_end = sprintf('.<br />The context of the first %sbp of the structural variant is available in the <a href="%s">Region in detail</a> page.',
+                                      $self->thousandify($max_display_length),$region_detail_url
+                                     );
+    if ($hub->species_defs->ENSEMBL_MART_ENABLED) {
+      my @species = split('_',lc($hub->species));
+      my $mart_dataset = substr($species[0],0,1).$species[1].'_gene_ensembl';
+      my $mart_url = sprintf( '/biomart/martview?VIRTUALSCHEMANAME=default'.
+                       '&ATTRIBUTES=%s.default.feature_page.ensembl_gene_id|%s.default.feature_page.ensembl_transcript_id|'.
+                       '%s.default.feature_page.strand|%s.default.feature_page.ensembl_peptide_id'.
+                       '&FILTERS=%s.default.filters.chromosomal_region.%s:%i:%i:1&VISIBLEPANEL=resultspanel',
+                       $mart_dataset,$mart_dataset,$mart_dataset,$mart_dataset,$mart_dataset,$v->{Chr}, $v->{start}, $v->{end}
+                     );
+
+      $warning_content .= qq{ or in <a href="$mart_url">BioMart</a>};
+    } 
+    return $self->_warning( $warning_header, $warning_content.$warning_content_end );
+  }
+
   # get SVFs for all SSVs
   my @svfs = grep {
     $v->{start} == $_->seq_region_start &&
@@ -60,7 +101,7 @@ sub content {
     $v->{Chr} == $_->seq_region_name
   } map {@{$_->get_all_StructuralVariationFeatures}}
   @{$object->Obj->get_all_SupportingStructuralVariants};
-  
+ 
   return
     '<h2>Gene and Transcript consequences</h2>'.$self->gene_transcript_table(\@svfs).
     '<h2>Regulatory consequences</h2>'.$self->regfeat_table(\@svfs);

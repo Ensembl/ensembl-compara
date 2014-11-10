@@ -56,8 +56,6 @@ sub content {
   
   $url =~ s/^\///;
   
-  push @links, sprintf('<li><a href="http://grch37.ensembl.org/%s">Ensembl GRCh37</a> - full Feb 2014 archive with BLAST, VEP and BioMart</li>', $url); 
-    
   # is this a species page?
   
   my @check = split '/', $path;

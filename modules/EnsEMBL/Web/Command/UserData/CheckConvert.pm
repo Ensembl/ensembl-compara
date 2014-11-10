@@ -40,6 +40,7 @@ sub process {
   if ($id_mapper) {
     $url_params->{'action'}    = 'SelectOutput';
     $url_params->{'id_mapper'} = $id_mapper;
+    $hub->param('format', 'ID');
   } elsif ($consequence_mapper) {
     $url_params->{'action'}             = 'SNPConsequence';
     $url_params->{'consequence_mapper'} = $consequence_mapper;

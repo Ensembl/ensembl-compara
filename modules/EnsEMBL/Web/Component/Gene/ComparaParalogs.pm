@@ -35,13 +35,20 @@ sub content {
   my $hub            = $self->hub;
   my $availability   = $self->object->availability;
   my $cdb            = shift || $hub->param('cdb') || 'compara';
-  my %paralogue_list = %{$self->object->get_homology_matches('ENSEMBL_PARALOGUES', 'paralog|gene_split', 'possible_ortholog', $cdb)};
+  my $is_ncrna       = ($self->object->Obj->biotype =~ /RNA/);
+  my %paralogue_list = %{$self->object->get_homology_matches('ENSEMBL_PARALOGUES', 'paralog|gene_split', undef, $cdb)};
   
   return '<p>No paralogues have been identified for this gene</p>' unless keys %paralogue_list;
   
   my %paralogue_map = qw(SEED BRH PIP RHS);
   my $alignview     = 0;
-  
+ 
+  my %glossary = $hub->species_defs->multiX('ENSEMBL_GLOSSARY');
+
+  my $lookup = {
+                'Paralogues (same species)' => 'Within species paralogues (within species paralogs)',
+                };
+ 
   my $columns = [
     { key => 'Type',                align => 'left', width => '10%', sort => 'html'          },
     { key => 'Ancestral taxonomy',  align => 'left', width => '10%', sort => 'html'          },
@@ -107,21 +114,27 @@ sub content {
         my $align_url = $hub->url({
             action   => 'Compara_Paralog', 
             function => "Alignment". ($cdb=~/pan/ ? '_pan_compara' : ''),, 
+            hom_id   => $paralogue->{'dbID'},
             g1       => $stable_id
         });
-        $links .= sprintf '<li><a href="%s" class="notext">Alignment (protein)</a></li>', $align_url;
-        $align_url .= ';seq=cDNA';
-        $links .= sprintf '<li><a href="%s" class="notext">Alignment (cDNA)</a></li>', $align_url;
+
+        if ($is_ncrna) {
+          $links .= sprintf '<li><a href="%s" class="notext">Alignment</a></li>', $align_url;
+        } else {
+          $links .= sprintf '<li><a href="%s" class="notext">Alignment (protein)</a></li>', $align_url;
+          $links .= sprintf '<li><a href="%s" class="notext">Alignment (cDNA)</a></li>', $align_url.';seq=cDNA';
+        }
         
         ($target, $query) = ($paralogue->{'target_perc_id'}, $paralogue->{'query_perc_id'});
         $alignview = 1;
       }
 
       $links .= '</ul>';
-      
+
+      my $glossary_def = $glossary{$lookup->{ucfirst $paralogue_desc}} || '';
       
       push @rows, {
-        'Type'                => ucfirst $paralogue_desc,
+        'Type'                => $glossary_def ? sprintf('<span class="glossary_mouseover">%s<span class="floating_popup">%s</span></span>', ucfirst $paralogue_desc, $glossary_def) : ucfirst $paralogue_desc,
         'Ancestral taxonomy'  => $paralogue_subtype,
         'identifier' => $self->html_format ? $id_info : $stable_id,
         'Compare'             => $self->html_format ? qq{<span class="small">$links</span>} : '',

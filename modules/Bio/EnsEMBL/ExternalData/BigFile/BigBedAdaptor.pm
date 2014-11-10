@@ -35,6 +35,12 @@ my @bed_columns = (
   ['name'],
   ['score'],
   ['strand'],
+  ['thickStart'],
+  ['thickEnd'],
+  ['itemRgb'],
+  ['blockCount',9],
+  ['blockSizes',10],
+  ['chromStarts'],
 );
 
 # colour, age used in AgeOfBase track
