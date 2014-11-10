@@ -768,7 +768,7 @@ sub _add_datahub {
     my $menu     = $existing_menu || $self->tree->append_child($self->create_submenu($menu_name, $menu_name, { external => 1, datahub_menu => 1 }));
 
     my $assembly = $self->hub->species_defs->get_config($self->species, 'UCSC_GOLDEN_PATH')
-                        || $self->hub->species_defs->get_config($self->species, 'ASSEMBLY_NAME');
+                        || $self->hub->species_defs->get_config($self->species, 'ASSEMBLY_VERSION');
     my $source_list = $hub_info->{'genomes'}{$assembly} || [];
    
     return unless scalar @$source_list;
@@ -1113,134 +1113,134 @@ sub _add_bigbed_track {
   } 
   
   $self->_add_file_format_track(
-    format      => 'BigBed',
-    description => 'Bigbed file',
-    renderers   => $renderers,
-    options     => $options,
-    %args,
-  );
-}
-
-sub _add_bigwig_track {
-  my ($self, %args) = @_;
-  
-  my $renderers = $args{'source'}{'renderers'} || [
-    'off',     'Off',
-    'tiling',  'Wiggle plot',
-    'compact', 'Compact',
-  ];
- 
-  my $options = {
-    external     => 'external',
-    sub_type     => 'bigwig',
-    colour       => $args{'menu'}{'colour'} || $args{'source'}{'colour'} || 'red',
-    addhiddenbgd => 1,
-    max_label_rows => 2,
-  };
-  
-  $self->_add_file_format_track(
-    format    => 'BigWig', 
-    renderers =>  $renderers,
-    options   => $options,
-    %args
-  );
-}
-
-sub _add_vcf_track {
-  shift->_add_file_format_track(
-    format    => 'VCF', 
-    renderers => [
-      'off',       'Off',
-      'histogram', 'Histogram',
-      'compact',   'Compact'
-    ], 
-    options => {
-      external   => 'external',
-      sources    => undef,
-      depth      => 0.5,
-      bump_width => 0,
-      colourset  => 'variation'
-    },
-    @_
-  );
-}
-
-sub _add_flat_file_track {
-  my ($self, $menu, $sub_type, $key, $name, $description, %options) = @_;
-  
-  $menu ||= $self->get_node('user_data');
-  
-  return unless $menu;
- 
-  my ($strand, $renderers) = $self->_user_track_settings($options{'style'}, $options{'format'});
-  
-  my $track = $self->create_track($key, $name, {
-    display     => 'off',
-    strand      => $strand,
-    external    => 'external',
-    glyphset    => '_flat_file',
-    colourset   => 'classes',
-    caption     => $name,
-    sub_type    => $sub_type,
-    renderers   => $renderers,
-    description => $description,
-    %options
-  });
-  
-  $menu->append($track) if $track;
-}
-
-sub _add_file_format_track {
-  my ($self, %args) = @_;
-  my $menu = $args{'menu'} || $self->get_node('user_data');
-  
-  return unless $menu;
-  
-  %args = $self->_add_datahub_extras_options(%args) if $args{'source'}{'datahub'};
-  
-  my $type    = lc $args{'format'};
-  my $article = $args{'format'} =~ /^[aeiou]/ ? 'an' : 'a';
-  my ($desc, $url);
-  
-  if ($args{'internal'}) {
-    $desc = $args{'description'};
-    $url = join '/', $self->hub->species_defs->DATAFILE_BASE_PATH, lc $self->hub->species, $self->hub->species_defs->ASSEMBLY_NAME, $args{'source'}{'dir'}, $args{'source'}{'file'};
-    $args{'options'}{'external'} = undef;
-  } else {
-    $desc = sprintf(
-      'Data retrieved from %s %s file on an external webserver. %s This data is attached to the %s, and comes from URL: %s',
-      $article,
-      $args{'format'},
-      $args{'description'},
-      encode_entities($args{'source'}{'source_type'}), 
-      encode_entities($args{'source'}{'source_url'})
-    );
+    # No cached defaults found, so initialize them and cache
+    $self->init;
+    $self->modify;
+    
+    if ($cache && $cache_key) {
+      $self->tree->hide_user_data;
+      
+      my $defaults = {
+        _tree       => $self->{'_tree'},
+        _parameters => $self->{'_parameters'},
+        extra_menus => $self->{'extra_menus'},
+      };
+      
+      $cache->set($cache_key, $defaults, undef, 'IMAGE_CONFIG', $species);
+      $self->tree->reveal_user_data;
+    }
   }
   
-  $self->generic_add($menu, undef, $args{'key'}, {}, {
-    display     => 'off',
-    strand      => 'f',
-    format      => $args{'format'},
-    glyphset    => $type,
-    colourset   => $args{'colourset'} || $type,
-    renderers   => $args{'renderers'},
-    name        => $args{'source'}{'source_name'},
-    caption     => exists($args{'source'}{'caption'}) ? $args{'source'}{'caption'} : $args{'source'}{'source_name'},
-    labelcaption => $args{'source'}{'labelcaption'},
-    url         => $url || $args{'source'}{'source_url'},
-    description => $desc,
-    %{$args{'options'}}
-  });
+  my $sortable = $self->get_parameter('sortable_tracks');
+  
+  $self->set_parameter('sortable_tracks', 1) if $sortable eq 'drag' && $ENV{'HTTP_USER_AGENT'} =~ /MSIE (\d+)/ && $1 < 7; # No sortable tracks on images for IE6 and lower
+  $self->{'extra_menus'}{'track_order'} = 1  if $sortable;
+  
+  $self->{'no_image_frame'} = 1;
+  
+  # Add user defined data sources
+  $self->load_user_tracks;
+  
+  # Combine info and decorations into a single menu
+  my $decorations = $self->get_node('decorations') || $self->get_node('other');
+  my $information = $self->get_node('information');
+  
+  if ($decorations && $information) {
+    $decorations->set('caption', 'Information and decorations');
+    $decorations->append_children($information->nodes);
+  }
 }
 
-sub _user_track_settings {
-  my ($self, $style, $format) = @_;
-  my ($strand, @user_renderers);
-      
-  if ($style =~ /^(wiggle|WIG)$/) {
-    $strand         = 'r';
-    @user_renderers = ('off', 'Off', 'tiling', 'Wiggle plot');
-  } else {
+sub type { return $_[0]->{'type'}; }
+
+sub menus {
+  return $_[0]->{'menus'} ||= {
+    # Sequence
+    seq_assembly        => 'Sequence and assembly',
+    sequence            => [ 'Sequence',                'seq_assembly' ],
+    misc_feature        => [ 'Clones & misc. regions',  'seq_assembly' ],
+    genome_attribs      => [ 'Genome attributes',       'seq_assembly' ],
+    marker              => [ 'Markers',                 'seq_assembly' ],
+    simple              => [ 'Simple features',         'seq_assembly' ],
+    ditag               => [ 'Ditag features',          'seq_assembly' ],
+    dna_align_other     => [ 'GRC alignments',          'seq_assembly' ],
+    dna_align_compara   => [ 'Imported alignments',     'seq_assembly' ],
+    
+    # Transcripts/Genes
+    gene_transcript     => 'Genes and transcripts',
+    transcript          => [ 'Genes',                  'gene_transcript' ],    
+    prediction          => [ 'Prediction transcripts', 'gene_transcript' ],
+    lrg                 => [ 'LRG transcripts',        'gene_transcript' ],
+    rnaseq              => [ 'RNASeq models',          'gene_transcript' ],
+    
+    # Supporting evidence
+    splice_sites        => 'Splice sites',
+    evidence            => 'Evidence',
+    
+    # Alignments
+    mrna_prot           => 'mRNA and protein alignments',
+    dna_align_cdna      => [ 'mRNA alignments',    'mrna_prot' ],
+    dna_align_est       => [ 'EST alignments',     'mrna_prot' ],
+    protein_align       => [ 'Protein alignments', 'mrna_prot' ],
+    protein_feature     => [ 'Protein features',   'mrna_prot' ],
+    dna_align_rna       => 'ncRNA',
+    
+    # Proteins
+    domain              => 'Protein domains',
+    gsv_domain          => 'Protein domains',
+    feature             => 'Protein features',
+    
+    # Variations
+    variation           => 'Variation',
+    recombination       => [ 'Recombination & Accessibility', 'variation' ],
+    somatic             => 'Somatic mutations',
+    ld_population       => 'Population features',
+    
+    # Regulation
+    functional          => 'Regulation',
+    
+    # Compara
+    compara             => 'Comparative genomics',
+    pairwise_blastz     => [ 'BLASTz/LASTz alignments',    'compara' ],
+    pairwise_other      => [ 'Pairwise alignment',         'compara' ],
+    pairwise_tblat      => [ 'Translated blat alignments', 'compara' ],
+    multiple_align      => [ 'Multiple alignments',        'compara' ],
+    conservation        => [ 'Conservation regions',       'compara' ],
+    synteny             => 'Synteny',
+    
+    # Other features
+    repeat              => 'Repeat regions',
+    oligo               => 'Oligo probes',
+    trans_associated    => 'Transcript features',
+    
+    # Info/decorations
+    information         => 'Information',
+    decorations         => 'Additional decorations',
+    other               => 'Additional decorations',
+    
+    # External data
+    user_data           => 'Your data',
+    external_data       => 'External data',
+  };
+}
+
+sub init   {}
+sub modify {} # For plugins
+
+sub storable     :lvalue { $_[0]{'_parameters'}{'storable'};     } # Set to 1 if configuration can be altered
+sub image_resize :lvalue { $_[0]{'_parameters'}{'image_resize'}; } # Set to 1 if there is image resize function
+sub has_das      :lvalue { $_[0]{'_parameters'}{'has_das'};      } # Set to 1 if there are DAS tracks
+
+sub hub                 { return $_[0]->{'hub'};                                               }
+sub code                { return $_[0]->{'code'};                                              }
+sub core_object        { return $_[0]->hub->core_object($_[1]);                                }
+sub colourmap           { return $_[0]->hub->colourmap;                                        }
+sub species_defs        { return $_[0]->hub->species_defs;                                     }
+sub sd_call             { return $_[0]->species_defs->get_config($_[0]->{'species'}, $_[1]);   }
+sub databases           { return $_[0]->sd_call('databases');                                  }
+sub texthelper          { return $_[0]->{'_texthelper'};                                       }
+sub transform           { return $_[0]->{'transform'};                                         }
+sub tree                { return $_[0]->{'_tree'};                                             }
     $strand         = (uc($format) eq 'VEP_INPUT' || uc($format) eq 'VCF') ? 'f' : 'b'; 
     @user_renderers = (@{$self->{'alignment_renderers'}}, 'difference', 'Differences');
   }
@@ -1251,7 +1251,7 @@ sub _user_track_settings {
 sub _compare_assemblies {
   my ($self, $entry, $session) = @_;
 
-  if ($entry->{'assembly'} && $entry->{'assembly'} ne $self->sd_call('ASSEMBLY_NAME')) {
+  if ($entry->{'assembly'} && $entry->{'assembly'} ne $self->sd_call('ASSEMBLY_VERSION')) {
     $session->add_data(
       type     => 'message',
       code     => 'userdata_assembly_mismatch',
@@ -1415,7 +1415,7 @@ sub update_from_url {
           }
           else {
             my $assemblies = $info->{'genomes'}
-                        || {$hub->species => $hub->species_defs->get_config($hub->species, 'ASSEMBLY_NAME')};
+                        || {$hub->species => $hub->species_defs->get_config($hub->species, 'ASSEMBLY_VERSION')};
             my %ensembl_assemblies = %{$hub->species_defs->assembly_lookup};
 
             foreach (keys %$assemblies) {
@@ -2748,99 +2748,99 @@ sub add_regulation_features {
       display      => 'off',
       renderers    => [ qw(off Off compact On) ],
       glyphset     => 'fg_methylation',
-      colourset    => 'seq',
-    }));
+    # No cached defaults found, so initialize them and cache
+    $self->init;
+    $self->modify;
+    
+    if ($cache && $cache_key) {
+      $self->tree->hide_user_data;
+      
+      my $defaults = {
+        _tree       => $self->{'_tree'},
+        _parameters => $self->{'_parameters'},
+        extra_menus => $self->{'extra_menus'},
+      };
+      
+      $cache->set($cache_key, $defaults, undef, 'IMAGE_CONFIG', $species);
+      $self->tree->reveal_user_data;
+    }
   }
   
-  $self->add_track('information', 'fg_methylation_legend', 'Methylation Legend', 'fg_methylation_legend', { strand => 'r' });        
+  my $sortable = $self->get_parameter('sortable_tracks');
+  
+  $self->set_parameter('sortable_tracks', 1) if $sortable eq 'drag' && $ENV{'HTTP_USER_AGENT'} =~ /MSIE (\d+)/ && $1 < 7; # No sortable tracks on images for IE6 and lower
+  $self->{'extra_menus'}{'track_order'} = 1  if $sortable;
+  
+  $self->{'no_image_frame'} = 1;
+  
+  # Add user defined data sources
+  $self->load_user_tracks;
+  
+  # Combine info and decorations into a single menu
+  my $decorations = $self->get_node('decorations') || $self->get_node('other');
+  my $information = $self->get_node('information');
+  
+  if ($decorations && $information) {
+    $decorations->set('caption', 'Information and decorations');
+    $decorations->append_children($information->nodes);
+  }
 }
 
-sub add_regulation_builds {
-  my ($self, $key, $hashref,$species,$params) = @_;
-  my $menu = $self->get_node('functional');
-  
-  return unless $menu;
-  
-  my ($keys_1, $data_1) = $self->_merge($hashref->{'feature_set'});
-  my ($keys_2, $data_2) = $self->_merge($hashref->{'result_set'});
-  my %fg_data           = (%$data_1, %$data_2);
-  my $key_2             = 'Regulatory_Build';
-  my $type              = $fg_data{$key_2}{'type'};
-  
-  return unless $type;
-  
-  my $hub = $self->hub;
-  my $db  = $hub->database('funcgen', $self->species);
-  
-  return unless $db;
+sub type { return $_[0]->{'type'}; }
 
-  $menu = $menu->append($self->create_submenu('regulatory_features', 'Regulatory features'));
-  
-  my $db_tables     = $self->databases->{'DATABASE_FUNCGEN'}{'tables'};
-  my $reg_feats     = $menu->append($self->create_submenu('reg_features', 'Regulatory features'));
-  my $reg_segs      = $menu->append($self->create_submenu('seg_features', 'Segmentation features'));
-  my $adaptor       = $db->get_FeatureTypeAdaptor;
-  my $evidence_info = $adaptor->get_regulatory_evidence_info;
-  my @cell_lines    = sort { ($b eq 'MultiCell') <=> ($a eq 'MultiCell') || $a cmp $b } map [split ':']->[0], keys %{$db_tables->{'cell_type'}{'ids'}}; # Put MultiCell first
-  my (@renderers, $prev_track, %matrix_menus, %matrix_rows);
-  
-  # FIXME: put this in db
-  my %default_evidence_types = (
-    CTCF     => 1,
-    DNase1   => 1,
-    H3K4me3  => 1,
-    H3K36me3 => 1,
-    H3K27me3 => 1,
-    H3K9me3  => 1,
-    PolII    => 1,
-    PolIII   => 1,
-  );
-  
-  if ($fg_data{$key_2}{'renderers'}) {
-    push @renderers, $_, $fg_data{$key_2}{'renderers'}{$_} for sort keys %{$fg_data{$key_2}{'renderers'}}; 
-  } else {
-    @renderers = qw(off Off normal On);
-  }
-  
-  my %all_types;
-  foreach my $set (qw(core non_core)) {
-    $all_types{$set} = [];
-    foreach (@{$evidence_info->{$set}{'classes'}}) {
-      foreach (@{$adaptor->fetch_all_by_class($_)}) {
-        push @{$all_types{$set}},$_;
-      }
-    }
-  }
-
-  foreach my $cell_line (@cell_lines) { 
-    ### Add tracks for cell_line peaks and wiggles only if we have data to display
-    my $ftypes     = $db_tables->{'regbuild_string'}{'feature_type_ids'}{$cell_line}      || {};
-    my $focus_sets = $db_tables->{'regbuild_string'}{'focus_feature_set_ids'}{$cell_line} || {};
-    my @sets;
+sub menus {
+  return $_[0]->{'menus'} ||= {
+    # Sequence
+    seq_assembly        => 'Sequence and assembly',
+    sequence            => [ 'Sequence',                'seq_assembly' ],
+    misc_feature        => [ 'Clones & misc. regions',  'seq_assembly' ],
+    genome_attribs      => [ 'Genome attributes',       'seq_assembly' ],
+    marker              => [ 'Markers',                 'seq_assembly' ],
+    simple              => [ 'Simple features',         'seq_assembly' ],
+    ditag               => [ 'Ditag features',          'seq_assembly' ],
+    dna_align_other     => [ 'GRC alignments',          'seq_assembly' ],
+    dna_align_compara   => [ 'Imported alignments',     'seq_assembly' ],
     
-    push @sets, 'core'     if scalar keys %$focus_sets && scalar keys %$focus_sets <= scalar keys %$ftypes;
-    push @sets, 'non_core' if scalar keys %$ftypes != scalar keys %$focus_sets && $cell_line ne 'MultiCell';
+    # Transcripts/Genes
+    gene_transcript     => 'Genes and transcripts',
+    transcript          => [ 'Genes',                  'gene_transcript' ],    
+    prediction          => [ 'Prediction transcripts', 'gene_transcript' ],
+    lrg                 => [ 'LRG transcripts',        'gene_transcript' ],
+    rnaseq              => [ 'RNASeq models',          'gene_transcript' ],
     
-    foreach my $set (@sets) {
-      $matrix_menus{$set} ||= [ "reg_feats_$set", $evidence_info->{$set}{'name'}, {
-        menu   => 'matrix',
-        url    => $hub->url('Config', { action => 'Matrix', function => $hub->action, partial => 1, menu => "reg_feats_$set" }),
-        matrix => {
-          section     => $menu->data->{'caption'},
-          header      => $evidence_info->{$set}{'long_name'},
-          description => $db_tables->{'feature_set'}{'analyses'}{'Regulatory_Build'}{'desc'}{$set},
-          axes        => { x => 'Cell type', y => 'Evidence type' },
-        }
-      }];
-      
-      foreach (@{$all_types{$set}||[]}) {
-        $matrix_rows{$cell_line}{$set}{$_->name} ||= { row => $_->name, group => $_->class, group_order => $_->class =~ /^(Polymerase|Open Chromatin)$/ ? 1 : 2, on => $default_evidence_types{$_->name} } if $ftypes->{$_->dbID};
-      }
-    }
-  }
-  
-  $matrix_menus{$_} = $menu->after($self->create_submenu(@{$matrix_menus{$_}})) for 'non_core', 'core';
- 
+    # Supporting evidence
+    splice_sites        => 'Splice sites',
+    evidence            => 'Evidence',
+    
+    # Alignments
+    mrna_prot           => 'mRNA and protein alignments',
+    dna_align_cdna      => [ 'mRNA alignments',    'mrna_prot' ],
+    dna_align_est       => [ 'EST alignments',     'mrna_prot' ],
+    protein_align       => [ 'Protein alignments', 'mrna_prot' ],
+    protein_feature     => [ 'Protein features',   'mrna_prot' ],
+    dna_align_rna       => 'ncRNA',
+    
+    # Proteins
+    domain              => 'Protein domains',
+    gsv_domain          => 'Protein domains',
+    feature             => 'Protein features',
+    
+    # Variations
+    variation           => 'Variation',
+    recombination       => [ 'Recombination & Accessibility', 'variation' ],
+    somatic             => 'Somatic mutations',
+    ld_population       => 'Population features',
+    
+    # Regulation
+    functional          => 'Regulation',
+    
+    # Compara
+    compara             => 'Comparative genomics',
+    pairwise_blastz     => [ 'BLASTz/LASTz alignments',    'compara' ],
+    pairwise_other      => [ 'Pairwise alignment',         'compara' ],
+    pairwise_tblat      => [ 'Translated blat alignments', 'compara' ],
+    multiple_align      => [ 'Multiple alignments',        'compara' ],
+    conservation        => [ 'Conservation regions',       'compara' ],
   foreach my $cell_line (@cell_lines) {
     my $track_key = "reg_feats_$cell_line";
     my $display   = 'off';
@@ -3112,9 +3112,105 @@ sub add_sequence_variations_default {
             sets        => [ $sub_set_key ],
             set_name    => $sub_set_name,
             description => $sub_set_description
-          }));
-        }
-       
+    # No cached defaults found, so initialize them and cache
+    $self->init;
+    $self->modify;
+    
+    if ($cache && $cache_key) {
+      $self->tree->hide_user_data;
+      
+      my $defaults = {
+        _tree       => $self->{'_tree'},
+        _parameters => $self->{'_parameters'},
+        extra_menus => $self->{'extra_menus'},
+      };
+      
+      $cache->set($cache_key, $defaults, undef, 'IMAGE_CONFIG', $species);
+      $self->tree->reveal_user_data;
+    }
+  }
+  
+  my $sortable = $self->get_parameter('sortable_tracks');
+  
+  $self->set_parameter('sortable_tracks', 1) if $sortable eq 'drag' && $ENV{'HTTP_USER_AGENT'} =~ /MSIE (\d+)/ && $1 < 7; # No sortable tracks on images for IE6 and lower
+  $self->{'extra_menus'}{'track_order'} = 1  if $sortable;
+  
+  $self->{'no_image_frame'} = 1;
+  
+  # Add user defined data sources
+  $self->load_user_tracks;
+  
+  # Combine info and decorations into a single menu
+  my $decorations = $self->get_node('decorations') || $self->get_node('other');
+  my $information = $self->get_node('information');
+  
+  if ($decorations && $information) {
+    $decorations->set('caption', 'Information and decorations');
+    $decorations->append_children($information->nodes);
+  }
+}
+
+sub type { return $_[0]->{'type'}; }
+
+sub menus {
+  return $_[0]->{'menus'} ||= {
+    # Sequence
+    seq_assembly        => 'Sequence and assembly',
+    sequence            => [ 'Sequence',                'seq_assembly' ],
+    misc_feature        => [ 'Clones & misc. regions',  'seq_assembly' ],
+    genome_attribs      => [ 'Genome attributes',       'seq_assembly' ],
+    marker              => [ 'Markers',                 'seq_assembly' ],
+    simple              => [ 'Simple features',         'seq_assembly' ],
+    ditag               => [ 'Ditag features',          'seq_assembly' ],
+    dna_align_other     => [ 'GRC alignments',          'seq_assembly' ],
+    dna_align_compara   => [ 'Imported alignments',     'seq_assembly' ],
+    
+    # Transcripts/Genes
+    gene_transcript     => 'Genes and transcripts',
+    transcript          => [ 'Genes',                  'gene_transcript' ],    
+    prediction          => [ 'Prediction transcripts', 'gene_transcript' ],
+    lrg                 => [ 'LRG transcripts',        'gene_transcript' ],
+    rnaseq              => [ 'RNASeq models',          'gene_transcript' ],
+    
+    # Supporting evidence
+    splice_sites        => 'Splice sites',
+    evidence            => 'Evidence',
+    
+    # Alignments
+    mrna_prot           => 'mRNA and protein alignments',
+    dna_align_cdna      => [ 'mRNA alignments',    'mrna_prot' ],
+    dna_align_est       => [ 'EST alignments',     'mrna_prot' ],
+    protein_align       => [ 'Protein alignments', 'mrna_prot' ],
+    protein_feature     => [ 'Protein features',   'mrna_prot' ],
+    dna_align_rna       => 'ncRNA',
+    
+    # Proteins
+    domain              => 'Protein domains',
+    gsv_domain          => 'Protein domains',
+    feature             => 'Protein features',
+    
+    # Variations
+    variation           => 'Variation',
+    recombination       => [ 'Recombination & Accessibility', 'variation' ],
+    somatic             => 'Somatic mutations',
+    ld_population       => 'Population features',
+    
+    # Regulation
+    functional          => 'Regulation',
+    
+    # Compara
+    compara             => 'Comparative genomics',
+    pairwise_blastz     => [ 'BLASTz/LASTz alignments',    'compara' ],
+    pairwise_other      => [ 'Pairwise alignment',         'compara' ],
+    pairwise_tblat      => [ 'Translated blat alignments', 'compara' ],
+    multiple_align      => [ 'Multiple alignments',        'compara' ],
+    conservation        => [ 'Conservation regions',       'compara' ],
+    synteny             => 'Synteny',
+    
+    # Other features
+    repeat              => 'Repeat regions',
+    oligo               => 'Oligo probes',
+    trans_associated    => 'Transcript features',
         $variation_sets->append($set_variation);
       }
     }
@@ -3212,102 +3308,6 @@ sub add_structural_variations {
     description => "Structural variants from all sources which are less than 1Mb in length. $desc",
     depth       => 10,
     max_size    => 1e6 - 1,
-  }));
-  
-  foreach my $key_2 (sort keys %{$hashref->{'structural_variation'}{'counts'} || {}}) {    
-    ## FIXME - Nasty hack to get variation tracks correctly configured
-    next if ($key_2 =~ /(DECIPHER|LOVD)/);
-    $structural_variants->append($self->create_track("variation_feature_structural_$key_2", "$key_2 structural variations", {
-      %options,
-      db          => 'variation',
-      caption     => $prefix_caption.$key_2,
-      source      => $key_2,
-      description => $hashref->{'source'}{'descriptions'}{$key_2},
-    }));  
-  }
-  
-  # Structural variation sets and studies
-  foreach my $menu_item (sort {$a->{type} cmp $b->{type} || $a->{long_name} cmp $b->{long_name}} @{$hashref->{'menu'} || []}) {
-    next if $menu_item->{'type'} !~ /^sv_/;
-    
-    my $node_name = "$menu_item->{'long_name'} (structural variants)";
-    my $caption   = "$prefix_caption$menu_item->{'long_name'}";
-       $caption   =~ s/1000 Genomes/1KG/;
-
-    my $db = 'variation';
-
-    if ($menu_item->{'type'} eq 'sv_set') {
-      my $temp_name = $menu_item->{'key'};
-         $temp_name =~ s/^sv_set_//;
-      
-      $structural_variants->append($self->create_track($menu_item->{'key'}, $node_name, {
-        %options,
-        db          => $db,
-        caption     => $caption,
-        source      => undef,
-        sets        => [ $menu_item->{'long_name'} ],
-        set_name    => $menu_item->{'long_name'},
-        description => $hashref->{'variation_set'}{'descriptions'}{$temp_name},
-      }));
-    }
-    elsif ($menu_item->{'type'} eq 'sv_study') {
-      my $name = $menu_item->{'key'};
-      
-      $structural_variants->append($self->create_track($name, $node_name, {
-        %options,
-        db          => $db,
-        caption     => $caption,
-        source      => undef,
-        study       => [ $name ],
-        study_name  => $name,
-        description => 'DGVa study: '.$hashref->{'structural_variation'}{'study'}{'descriptions'}{$name},
-      }));
-    }
-    elsif ($menu_item->{'type'} eq 'sv_private') { # For DECIPHER and LOVD structural variants
-      my $name = $menu_item->{'key'};
-      $structural_variants->append($self->create_track("variation_feature_structural_$name", "$node_name", {
-        %options,
-        db          => 'variation_private',
-        caption     => $prefix_caption.$name,
-        source      => $name,
-        description => $hashref->{'source'}{'descriptions'}{$name},
-      }));  
-    }
-  }
-  
-  $self->add_track('information', 'structural_variation_legend', 'Structural Variation Legend', 'structural_variation_legend', { strand => 'r' });
-  
-  $sv_menu->append($structural_variants);
-  $menu->append($sv_menu);
-}
-  
-sub add_copy_number_variant_probes {
-  my ($self, $key, $hashref) = @_;
-  my $menu = $self->get_node('variation');
-  
-  return unless $menu && scalar(keys(%{$hashref->{'structural_variation'}{'cnv_probes'}{'counts'}})) > 0;
-  
-  my $sv_menu        = $self->get_node('structural_variation') || $menu->append($self->create_submenu('structural_variation', 'Structural variants'));
-  my $cnv_probe_menu = $self->create_submenu('cnv_probe','Copy number variant probes');
-  
-  my %options = (
-    db         => $key,
-    glyphset   => 'cnv_probes',
-    strand     => 'r', 
-    bump_width => 0,
-    height     => 6,
-    colourset  => 'structural_variant',
-    display    => 'off'
-  );
-  
-  $cnv_probe_menu->append($self->create_track('variation_feature_cnv', 'Copy number variant probes (all sources)', {   
-    %options,
-    caption     => 'CNV probes',
-    sources     => undef,
-    depth       => 10,
-    description => 'Copy number variant probes from all sources'
-  }));
-  
   foreach my $key_2 (sort keys %{$hashref->{'structural_variation'}{'cnv_probes'}{'counts'} || {}}) {   
     $cnv_probe_menu->append($self->create_track("variation_feature_cnv_$key_2", "$key_2", {
       %options,

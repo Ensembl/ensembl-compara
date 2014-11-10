@@ -98,7 +98,7 @@ sub __set_species {
   
   $species     ||= $self->species;
   $golden_path ||= $self->species_defs->get_config($species, 'ENSEMBL_GOLDEN_PATH');
-  $golden_path ||= $self->species_defs->get_config($species, 'ASSEMBLY_NAME');
+  $golden_path ||= $self->species_defs->get_config($species, 'ASSEMBLY_VERSION');
   
   $self->__species = $species; # to store co-ordinate system information
   $self->__species_hash ||= {};
@@ -854,7 +854,7 @@ sub merge {
 sub _map_assembly {
   my ($self, $seq_region, $start, $end, $strand) = @_;
   
-  my $assembly_name = $self->species_defs->ASSEMBLY_NAME;
+  my $assembly_name = $self->species_defs->ASSEMBLY_VERSION;
   my $assembly      = $self->param('a');
   
   $self->delete_param('a');

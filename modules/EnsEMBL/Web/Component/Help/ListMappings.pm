@@ -36,7 +36,7 @@ sub content {
   my $location       = $self->builder->object('Location');
   my $chromosome     = $location->seq_region_name;
   my $ensembl_start  = $location->seq_region_start;
-  my $current_assembly  = $hub->species_defs->ASSEMBLY_NAME;
+  my $current_assembly  = $hub->species_defs->ASSEMBLY_VERSION;
   my $alt_assembly      = $hub->param('alt_assembly');
   my $alt_assemblies    = $hub->species_defs->ASSEMBLY_MAPPINGS || [];
   my $referer           = $hub->referer;

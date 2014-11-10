@@ -98,17 +98,18 @@ sub whats_new_text {
 }
 
 sub assembly_text {
-  my $self            = shift;
-  my $hub             = $self->hub;
-  my $species_defs    = $hub->species_defs;
-  my $species         = $hub->species;
-  my $sample_data     = $species_defs->SAMPLE_DATA;
-  my $ftp             = $species_defs->ENSEMBL_FTP_URL;
-  my $ensembl_version = $species_defs->ENSEMBL_VERSION;
-  my $assembly        = $species_defs->ASSEMBLY_NAME;
-  my $mappings        = $species_defs->ASSEMBLY_MAPPINGS;
-  my $gca             = $species_defs->ASSEMBLY_ACCESSION;
-  my $pre_species     = $species_defs->get_config('MULTI', 'PRE_SPECIES');
+  my $self              = shift;
+  my $hub               = $self->hub;
+  my $species_defs      = $hub->species_defs;
+  my $species           = $hub->species;
+  my $sample_data       = $species_defs->SAMPLE_DATA;
+  my $ftp               = $species_defs->ENSEMBL_FTP_URL;
+  my $ensembl_version   = $species_defs->ENSEMBL_VERSION;
+  my $assembly          = $species_defs->ASSEMBLY_NAME;
+  my $assembly_version  = $species_defs->ASSEMBLY_VERSION;
+  my $mappings          = $species_defs->ASSEMBLY_MAPPINGS;
+  my $gca               = $species_defs->ASSEMBLY_ACCESSION;
+  my $pre_species       = $species_defs->get_config('MULTI', 'PRE_SPECIES');
   my @other_assemblies;
  
   my $ac_link;
@@ -152,7 +153,7 @@ sub assembly_text {
     
     $mappings && ref $mappings eq 'ARRAY' ? sprintf(
       '<p>%s%sConvert your data to %s coordinates</a></p>', ## Link to assembly mapper
-      $ac_link, sprintf($self->{'icon'}, 'tool'), $assembly
+      $ac_link, sprintf($self->{'icon'}, 'tool'), $assembly_version
     ) : '',
     
     $hub->url({ type => 'UserData', action => 'SelectFile', __clear => 1 }), sprintf($self->{'icon'}, 'page-user'), $species_defs->ENSEMBL_SITETYPE
@@ -162,7 +163,7 @@ sub assembly_text {
   my $adaptor  = EnsEMBL::Web::DBSQL::ArchiveAdaptor->new($hub);
   my $archives = $adaptor->fetch_archives_by_species($hub->species);
 
-  my $previous = $assembly;
+  my $previous = $assembly_version;
   foreach my $version (reverse sort {$a <=> $b} keys %$archives) {
     my $archive = $archives->{$version};
     ## Remove patch sub-versions

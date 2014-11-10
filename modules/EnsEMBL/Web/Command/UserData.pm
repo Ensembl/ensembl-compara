@@ -129,7 +129,7 @@ sub upload {
           format    => $format,
           no_attach => $no_attach,
           timestamp => time,
-          assembly  => $hub->species_defs->get_config($params->{'species'}, 'ASSEMBLY_NAME'),
+          assembly  => $hub->species_defs->get_config($params->{'species'}, 'ASSEMBLY_VERSION'),
           %inputs
         );
         

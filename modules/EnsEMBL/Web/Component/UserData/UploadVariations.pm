@@ -79,7 +79,7 @@ sub content {
   my @species;
   
   foreach my $sp ($hub->species_defs->valid_species) {
-    push @species, {'value' => $sp, 'name' => $hub->species_defs->species_label($sp, 1).': '.$hub->species_defs->get_config($sp, 'ASSEMBLY_NAME')};
+    push @species, {'value' => $sp, 'name' => $hub->species_defs->species_label($sp, 1).': '.$hub->species_defs->get_config($sp, 'ASSEMBLY_VERSION')};
   }
   @species = sort {$a->{'name'} cmp $b->{'name'}} @species;
 

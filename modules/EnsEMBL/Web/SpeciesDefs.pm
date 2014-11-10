@@ -1034,7 +1034,7 @@ sub assembly_lookup {
   my ($self, $old_assemblies) = @_;
   my $lookup = {};
   foreach ($self->valid_species) {
-    my $assembly = $self->get_config($_, 'ASSEMBLY_NAME');
+    my $assembly = $self->get_config($_, 'ASSEMBLY_VERSION');
     ## A bit clunky, but it makes code cleaner in use
     $lookup->{$assembly} = [$_, $assembly];
     ## Now look up UCSC assembly names
