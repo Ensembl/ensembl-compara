@@ -342,13 +342,17 @@ sub _summarise_core_tables {
 # * Assemblies...
 # This is a bit ugly, because there's no easy way to sort the assemblies via MySQL
   $t_aref = $dbh->selectall_arrayref(
-    'select version, attrib from coord_system where version is not null' 
+    'select version, attrib, rank from coord_system where version is not null' 
   );
   my (%default, %not_default);
   foreach my $row (@$t_aref) {
     my $version = $row->[0];
-    my $attrib = $row->[1];
+    my $attrib  = $row->[1];
+    my $rank    = $row->[2];
     if ($attrib =~ /default_version/) {
+      if ($rank == 1) {    
+        $self->db_tree->{'ASSEMBLY_VERSION'} = $version;
+      }
       $default{$version}++;
     }
     else {
