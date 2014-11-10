@@ -39,13 +39,9 @@ sub content {
   my $species           = $hub->species;
   my $path              = $hub->species_path;
   my $common_name       = $species_defs->SPECIES_COMMON_NAME;
-  my $display_name      = $species_defs->SPECIES_SCIENTIFIC_NAME;
-  my $ensembl_version   = $species_defs->ENSEMBL_VERSION;
-  my $current_assembly  = $species_defs->ASSEMBLY_NAME;
   my $accession         = $species_defs->ASSEMBLY_ACCESSION;
   my $source            = $species_defs->ASSEMBLY_ACCESSION_SOURCE || 'NCBI';
   my $source_type       = $species_defs->ASSEMBLY_ACCESSION_TYPE;
-  my $previous          = $current_assembly;
 
   my $html = qq(
 <div class="column-wrapper">  
