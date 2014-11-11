@@ -1146,6 +1146,8 @@ sub build_sequence {
     $key_html = qq(<div class="adornment-key"></div>);
   }
 
+  my $id = $self->id;
+  my $panel_type = qq(<input type="hidden" class="panel_type" value="TextSequence" name="panel_type_$id" />);
   if($adorn eq 'none') {
     my $ajax_url = $self->hub->apache_handle->unparsed_uri;
     my ($path,$params) = split(/\?/,$ajax_url,2);
@@ -1153,7 +1155,7 @@ sub build_sequence {
     for(@params) { $_ = 'adorn=only' if /^adorn=/; }
     $ajax_url = $path.'?'.join(';',@params,'adorn=only');
     my $ajax_json = encode_entities($self->jsonify({ url => $ajax_url, provisional => $adornment }),"<>");
-    $config->{'html_template'} = qq(
+    return qq(
       <div class="js_panel" id="$random_id">
         $key_html
         <div class="adornment">
@@ -1162,15 +1164,14 @@ sub build_sequence {
           </span>
           $config->{'html_template'}
         </div>
+        $panel_type
       </div>
     );
-  
-    return $config->{'html_template'} . sprintf '<input type="hidden" class="panel_type" value="TextSequence" name="panel_type_%s" />', $self->id;
 
   } elsif($adorn eq 'only') {
     return qq(<div><span class="adornment-data">$adornment_json</span></div>);
   } else {
-    $config->{'html_template'} = qq(
+    return qq(
       <div class="js_panel" id="$random_id">
         $key_html
         <div class="adornment">
@@ -1179,10 +1180,9 @@ sub build_sequence {
           </span>
           $config->{'html_template'}
         </div>
+        $panel_type
       </div>
     );
-  
-    return $config->{'html_template'} . sprintf '<input type="hidden" class="panel_type" value="TextSequence" name="panel_type_%s" />', $self->id;
   }
 }
 
