@@ -88,6 +88,8 @@ sub form_fields { return {}; }
 sub field_order {}
 
 sub form {
+  ## Generic form-building method - overridden in views that have not yet been
+  ## upgraded to use the new export interface
   my $self = shift;
   my $fields = $self->form_fields;
   
