@@ -164,7 +164,12 @@ sub default_options {
         'qc_capacity'               =>   4,
         'hc_capacity'               =>   4,
         'HMMer_classify_capacity'   => 400,
+		'HMMer_classifyPantherScore_capacity'=> 500,
         'loadmembers_capacity'      =>  30,
+        'copy_trees_capacity'       => 100,
+		'copy_alignments_capacity'  => 100,
+		'mafft_update_capacity'     => 100,
+		'raxml_update_capacity'     => 100,
 
     # hive priority for non-LOCAL health_check analysis:
 
@@ -261,8 +266,8 @@ sub default_options {
 
         # Add the database location of the previous Compara release. Use "undef" if running the pipeline without reuse
         #'prev_rel_db' => 'mysql://ensro@mysql-eg-staging-1.ebi.ac.uk:4160/ensembl_compara_fungi_19_72',
-        #'prev_rel_db' => 'mysql://treefam_ro:treefam_ro@mysql-treefam-prod:4401/treefam_production_9_69',
-        'prev_rel_db' => 'mysql://admin:'.$self->o('password').'@mysql-treefam-prod:4401/treefam_production_9_69',
+		#'prev_rel_db' => 'mysql://treefam_ro:treefam_ro@mysql-treefam-prod:4401/TreeFam10_final_filtering_other_notung_param',
+        'prev_rel_db' => 'mysql://admin:'.$self->o('password').'@mysql-treefam-prod:4401/TreeFam10_final_filtering_other_notung_param',
 
         # How will the pipeline create clusters (families) ?
         # Possible values: 'blastp' (default), 'hmm', 'hybrid'
@@ -301,8 +306,8 @@ sub resource_classes {
          '16Gb_16c_job' => {'LSF' => '-q production-rh6 -n 16 -C0 -M16000 -R"select[mem>16000] rusage[mem=16000]"' },
          '64Gb_16c_job' => {'LSF' => '-q production-rh6 -n 16 -C0 -M64000 -R"select[mem>64000] rusage[mem=64000]"' },
 
-         '4Gb_64c_mpi'  => {'LSF' => '-q mpi -n 64 -a openmpi -M4000  -R"select[mem>4000]  rusage[mem=4000]  same[model] span[ptile=4]"' },
-         '16Gb_64c_mpi' => {'LSF' => '-q mpi -n 64 -a openmpi -M16000 -R"select[mem>16000] rusage[mem=16000] same[model] span[ptile=4]"' },
+         '8Gb_64c_mpi'  => {'LSF' => '-q mpi -n 64 -a openmpi -M8000  -R"select[mem>8000]  rusage[mem=8000]  same[model] span[ptile=16]"' },
+         '16Gb_64c_mpi' => {'LSF' => '-q mpi -n 64 -a openmpi -M16000 -R"select[mem>16000] rusage[mem=16000] same[model] span[ptile=16]"' },
   };
 }
 
