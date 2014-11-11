@@ -145,6 +145,7 @@ sub render_align_bar {
     my $s2e       = $s2->{'end'};
     my $s2st      = $s2->{'strand'};
     my $s2t       = $s2->{'seq_region_name'};
+    my $s2sp      = $s2->adaptor->db->species;
     my $box_start = $ss;
     my $box_end   = $se;
     my $filled    = $sst;
@@ -192,6 +193,8 @@ sub render_align_bar {
     }
     
     $self->push($glyph);
+
+    my $other_species_common_name = lc $config->{'hub'}->species_defs->get_config(ucfirst $s2sp, 'SPECIES_COMMON_NAME') || lc $s2sp;
     
     # This happens when we have two contiguous underlying slices
     if ($last_end == $ss - 1) {
@@ -207,18 +210,18 @@ sub render_align_bar {
         # Different chromosomes
         $colour = 'black';
         $title = "AlignSlice Break; There is a breakpoint in the alignment between chromosome $last_chr and $s2t";
-        $legend = 'Breakpoint between different chromosomes';
+        $legend = "Breakpoint between $other_species_common_name chromosomes";
       } elsif ($last_s2st ne $s2st) {
         # Same chromosome, different strand (inversion)
-        $colour = '3333ff';
+        $colour = 'dodgerblue';
         $title = "AlignSlice Break; There is an inversion in chromosome $s2t";
-        $legend = 'Inversion in chromosome';
+        $legend = "Inversion on the $other_species_common_name chromosome";
       } elsif ($s3l > 0) {
         # Same chromosome, same strand, gap between the two underlying slices
         my ($from, $to);
         
         $colour = 'red';
-        $legend = 'Gap between two underlying slices';
+        $legend = 'Indel (> 50 bp)';
         
         if ($s2st == 1) {
           $from = $last_s2e;
@@ -232,10 +235,10 @@ sub render_align_bar {
         
         $href = $self->_url({ species => $species, action => 'Align', r => "$s2t:$from-$to", break => 1 });
       } else {
-        # Same chromosome, same strand, no gap between the two underlying slices (BreakPoint in another species)
-        $colour = 'indianred3';
+        # Same chromosome, same strand, inverted order in the target species
+        $colour = 'yellowgreen';
         $title = "AlignSlice Break; There is a breakpoint in the alignment on chromosome $s2t";
-        $legend = 'Breakpoint on chromosome';
+        $legend = "Shuffled blocks on the $other_species_common_name chromosome";
       }
       
       my $base = $self->strand == 1 ? $h - 3 : $h + 9;
