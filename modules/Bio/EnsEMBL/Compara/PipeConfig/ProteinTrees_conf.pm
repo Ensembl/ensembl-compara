@@ -713,14 +713,27 @@ sub core_pipeline_analyses {
             -parameters => {
                 'input_clusterset_id'   => 'default',
                 'output_clusterset_id'  => 'copy',
+                'escape_branch'         => -3,
             },
             -flow_into  => {
-                 2 => [ 'mafft_update' ],
+                 1 => [ 'copy_alignments_from_previous_release' ],
+                 -3 => [ 'cluster_factory' ],
             },
-            -hive_capacity        => $self->o('raxml_capacity'),
+            -hive_capacity        => $self->o('copy_trees_capacity'),
+            -analysis_capacity 	  => $self->o('copy_trees_capacity'),
             -rc_name => '8Gb_job',
         },
 
+        {   -logic_name => 'copy_alignments_from_previous_release',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::CopyAlignmentsFromDB',
+            -parameters => {
+                'input_clusterset_id'   => 'default',
+            },
+            -flow_into  			=> [ 'mafft_update' ],
+            -hive_capacity          => $self->o('copy_alignments_capacity'),
+            -analysis_capacity 		=> $self->o('copy_alignments_capacity'),
+            -rc_name => '8Gb_job',
+        },
 # ---------------------------------------------[reuse members]-----------------------------------------------------------------------
 
         {   -logic_name => 'genome_reuse_factory',
@@ -1554,7 +1567,8 @@ sub core_pipeline_analyses {
             -parameters => {
                 'mafft_home'                 => $self->o('mafft_home'),
             },
-            -hive_capacity        => $self->o('mcoffee_capacity'),
+            -hive_capacity        => $self->o('mafft_update_capacity'),
+            -analysis_capacity 	  => $self->o('mafft_update_capacity'),
             -rc_name    => '2Gb_job',
             -flow_into      => [ 'raxml_update' ],
         },
@@ -1907,9 +1921,10 @@ sub core_pipeline_analyses {
             -parameters => {
                 'raxml_exe'                 => $self->o('raxml_exe'),
                 'treebest_exe'              => $self->o('treebest_exe'),
-                'output_clusterset_id'      => $self->o('use_notung') ? 'raxml' : 'default',
+                'output_clusterset_id'      => $self->o('use_notung') ? 'raxml_update' : 'default',
             },
-            -hive_capacity        => $self->o('raxml_capacity'),
+            -hive_capacity        => $self->o('raxml_update_capacity'),
+            -analysis_capacity 	  => $self->o('raxml_update_capacity'),
             -rc_name    => '8Gb_job',
         },
 
