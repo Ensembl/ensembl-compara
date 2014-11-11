@@ -82,7 +82,7 @@ sub process {
       ## Write data to output file in desired format
 
       ## Alignments and trees are handled by external writers
-      if ($hub->param('align')) {
+      if ($hub->param('align') && lc($format) ne 'rtf') {
         my %align_formats = EnsEMBL::Web::Constants::ALIGNMENT_FORMATS;
         my $in_bioperl    = grep { lc($_) eq lc($format) } keys %align_formats;
         my %tree_formats  = EnsEMBL::Web::Constants::TREE_FORMATS;
@@ -169,6 +169,7 @@ sub write_rtf {
   my $c              = 1;
   my $i              = 0;
   my $j              = 0;
+  my $previous_j     = undef;
   my $sp             = 0;
   my $newline        = 1;
   my @output;
@@ -197,6 +198,8 @@ sub write_rtf {
     $lines->[-1]{'end'} = 1;
 
     ## Output each line of sequence letters
+    my $num;
+    my $is_alignment = $self->hub->param('align');
     foreach my $seq (@$lines) {
       if ($seq->{'class'}) {
         $class = $seq->{'class'};
@@ -234,13 +237,16 @@ sub write_rtf {
 
         $section .= $seq->{'letter'} if $seq->{'end'};
 
-        if (!scalar @{$output[$i][$j] || []} && $config->{'number'}) {
-          my $num  = shift @{$config->{'line_numbers'}{$i}};
+        if ($config->{'number'} && 
+              (!scalar @{$output[$i][$j]||[]} 
+                  || ($is_alignment && (!defined($previous_j) || $j != $previous_j)))) {
+          $num = scalar @{$output[$i][$j]|| []} > 1 ? $num : shift @{$config->{'line_numbers'}{$i}};
           my $pad1 = ' ' x ($config->{'padding'}{'pre_number'} - length $num->{'label'});
           my $pad2 = ' ' x ($config->{'padding'}{'number'}     - length $num->{'start'});
 
           push @{$output[$i][$j]}, [ \'', $config->{'h_space'} . sprintf '%6s ', "$pad1$num->{'label'}$pad2$num->{'start'}" ];
         }
+        $previous_j     = $j;
 
         push @{$output[$i][$j]}, [ \$style, $section ];
 
@@ -259,6 +265,7 @@ sub write_rtf {
 
     $i++;
     $j = 0;
+    $previous_j = undef;
   }
 
   ### Write information to RTF file
