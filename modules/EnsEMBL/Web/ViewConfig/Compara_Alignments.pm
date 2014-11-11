@@ -59,61 +59,67 @@ sub init {
 }
 
 sub form {
+### Override base class, because alignments have multiple configuration screens
+  my $self = shift;
+  my $fields = $self->form_fields;
+
+  foreach ($self->field_order) {
+    $self->add_form_element($fields->{$_});
+  }
+  ## Extra fieldsets for configuring species within an alignment (omitted from export)
+  $self->alignment_options; 
+}
+
+sub field_order {
+  my $self = shift;
+  my $dbs   = $self->species_defs->databases;
+  my @order;
+  if (!$self->{'species_only'}) {
+    if (!$self->{'no_flanking'}) {
+      push @order, qw(flank5_display flank3_display);
+    }
+    push @order, qw(display_width);
+    push @order, qw(strand) if $self->{'strand_option'};
+    push @order, qw(exon_display exon_ori);
+    push @order, $self->variation_fields if $dbs->{'DATABASE_VARIATION'};
+    push @order, qw(line_numbering codons_display conservation_display region_change_display title_options);
+  }
+  return @order;
+}
+
+sub form_fields {
   my $self = shift;
   my $dbs  = $self->species_defs->databases;
+  my $fields = {};
   
   if (!$self->{'species_only'}) {
-    my %gene_markup_options    = EnsEMBL::Web::Constants::GENE_MARKUP_OPTIONS;    # options shared with marked-up sequence
-    my %general_markup_options = EnsEMBL::Web::Constants::GENERAL_MARKUP_OPTIONS; # options shared with resequencing and marked-up sequence
-    my %other_markup_options   = EnsEMBL::Web::Constants::OTHER_MARKUP_OPTIONS;   # options shared with resequencing
-    
-    push @{$gene_markup_options{'exon_display'}{'values'}}, { value => 'vega',          caption => 'Vega exons'     } if $dbs->{'DATABASE_VEGA'};
-    push @{$gene_markup_options{'exon_display'}{'values'}}, { value => 'otherfeatures', caption => 'EST gene exons' } if $dbs->{'DATABASE_OTHERFEATURES'};
-    
-    if (!$self->{'no_flanking'}) {
-      $self->add_form_element($gene_markup_options{'flank5_display'});
-      $self->add_form_element($gene_markup_options{'flank3_display'});
-    }
-    
-    $self->add_form_element($other_markup_options{'display_width'});
-    $self->add_form_element($other_markup_options{'strand'}) if $self->{'strand_option'};
-    $self->add_form_element($gene_markup_options{'exon_display'});
-    $self->add_form_element($general_markup_options{'exon_ori'});
-    $self->variation_options if $dbs->{'DATABASE_VARIATION'};
-    $self->add_form_element($general_markup_options{'line_numbering'});
-    $self->add_form_element($other_markup_options{'codons_display'});
+    my $markup_options  = EnsEMBL::Web::Constants::MARKUP_OPTIONS;
 
-    $self->add_form_element({
-      name     => 'conservation_display',
-      label    => 'Conservation regions',
-      type     => 'DropDown',
-      select   => 'select',
-      values   => [{
-        value   => 'all',
-        caption => 'All conserved regions'
-      }, {
-        value   => 'off',
-        caption => 'None'
-      }]
-    });
-    $self->add_form_element({
-      name   => 'region_change_display',
-      label  => 'Mark alignment start/end',
-      type   => 'DropDown',
-      select => 'select',
-      values => [{
-        value   => 'yes',
-        caption => 'Yes'
-      }, {
-        value   => 'off',
-        caption => 'No'
-      }]
-    });
+    push @{$markup_options->{'exon_display'}{'values'}}, { value => 'vega',          caption => 'Vega exons'     } if $dbs->{'DATABASE_VEGA'};
+    push @{$markup_options->{'exon_display'}{'values'}}, { value => 'otherfeatures', caption => 'EST gene exons' } if $dbs->{'DATABASE_OTHERFEATURES'};
     
-    $self->add_form_element($other_markup_options{'title_display'});
-  }
+    $self->add_variation_options($markup_options) if $dbs->{'DATABASE_VARIATION'};
+    
+    $markup_options->{'conservation_display'} = {
+                                                  name  => 'conservation_display',
+                                                  label => 'Show conservation regions',
+                                                  type  => 'Checkbox',
+                                                  value => 'on',
+                                                  };
+    $markup_options->{'region_change_display'} = {
+                                                  name  => 'region_change_display',
+                                                  label => 'Mark alignment start/end',
+                                                  type  => 'Checkbox',
+                                                  value => 'on',
+                                                  };
   
-  $self->alignment_options; 
+    foreach ($self->field_order) {
+      $fields->{$_} = $markup_options->{$_};
+      $fields->{$_}{'value'} = $self->get($_);
+    }
+  }
+
+  return $fields;
 }
 
 sub alignment_options {

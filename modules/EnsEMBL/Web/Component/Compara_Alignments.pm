@@ -192,8 +192,11 @@ sub _get_sequence {
   my $padding      = $hub->param('padding');
   my $slice_length = $hub->param('length') || $slice->length;
 
+  my $type   = $hub->param('data_type') || $hub->type;
+  my $vc = $self->view_config($type);
+
   my $config = {
-    display_width   => $hub->param('display_width') || 60,
+    display_width   => $hub->param('display_width') || $vc->get('display_width'),
     site_type       => ucfirst lc $species_defs->ENSEMBL_SITETYPE || 'Ensembl',
     species         => $hub->species,
     display_species => $species_defs->SPECIES_COMMON_NAME,
@@ -205,10 +208,11 @@ sub _get_sequence {
   };
   
   for (qw(exon_display exon_ori snp_display line_numbering conservation_display codons_display region_change_display title_display align)) {
-    $config->{$_} = $hub->param($_) unless $hub->param($_) eq 'off';
+    my $param = $hub->param($_) || $vc->get($_);
+    $config->{$_} = $param;
   }
   
-  if ($config->{'line_numbering'}) {
+  if ($config->{'line_numbering'} ne 'off') {
     $config->{'end_number'} = 1;
     $config->{'number'}     = 1;
   }
@@ -234,12 +238,12 @@ sub _get_sequence {
   # markup_comparisons must be called first to get the order of the comparison sequences
   # The order these functions are called in is also important because it determines the order in which things are added to $config->{'key'}
   $self->markup_comparisons($sequence, $markup, $config)   if $config->{'align'};
-  $self->markup_conservation($sequence, $config)           if $config->{'conservation_display'};
-  $self->markup_region_change($sequence, $markup, $config) if $config->{'region_change_display'};
-  $self->markup_codons($sequence, $markup, $config)        if $config->{'codons_display'};
-  $self->markup_exons($sequence, $markup, $config)         if $config->{'exon_display'};
-  $self->markup_variation($sequence, $markup, $config)     if $config->{'snp_display'};
-  $self->markup_line_numbers($sequence, $config)           if $config->{'line_numbering'};
+  $self->markup_conservation($sequence, $config)           if $config->{'conservation_display'} ne 'off';
+  $self->markup_region_change($sequence, $markup, $config) if $config->{'region_change_display'} ne 'off';
+  $self->markup_codons($sequence, $markup, $config)        if $config->{'codons_display'} ne 'off';
+  $self->markup_exons($sequence, $markup, $config)         if $config->{'exon_display'} ne 'off';
+  $self->markup_variation($sequence, $markup, $config)     if $config->{'snp_display'} ne 'off';
+  $self->markup_line_numbers($sequence, $config)           if $config->{'number'};
   
   # Only if this IS NOT a sub slice - print the key and the slice list
   my $template = '';
@@ -671,11 +675,6 @@ sub get_export_data {
 sub initialize_export {
   my $self = shift;
   my $hub = $self->hub;
-  my $vc = $hub->get_viewconfig($hub->param('data_type'), 'Compara_Alignments');
-  my @params = qw(display_width flanking line_numbering);
-  foreach (@params) {
-    $hub->param($_, $vc->get($_));
-  }
 
   my $object    = $self->builder->object($hub->param('data_type'));
   my $location  = $object->Obj;

@@ -38,7 +38,11 @@ sub content {
   my $self  = shift;
   my $hub   = $self->hub;
 
-  my $settings = {'Hidden' => ['align']};
+  ## Get user's current settings
+  my $viewconfig  = $hub->get_viewconfig($hub->param('component'), $hub->param('data_type'));
+  my $settings = $viewconfig->form_fields;
+
+  $settings->{'Hidden'} = ['align'];
 
   ## Options per format
   my $fields_by_format = {};
