@@ -518,7 +518,7 @@ sub _get_target_slice_table {
       #want num_species but not non_ref details
       ($ref_start, $ref_end, $non_ref_start, $non_ref_end, undef, $num_species) = $self->object->get_start_end_of_slice($gab_group, $ref_species);
     }
-    next if $num_species == 0;
+    next if $num_species == 0 && $class !~ /pairwise/;
 
     $gab_num++;
 
