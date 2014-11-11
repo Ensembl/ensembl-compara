@@ -125,7 +125,7 @@ sub render_align_bar {
   my $config      = $self->{'config'};
   my $species     = $self->species;
   my $pix_per_bp  = $self->scalex;
-  my $last_end    = -1;
+  my $last_end    = undef;
   my $last_chr    = -1;
   my $join_z      = -20;
   my $last_s2s    = -1;
@@ -196,10 +196,10 @@ sub render_align_bar {
 
     my $other_species_common_name = lc $config->{'hub'}->species_defs->get_config(ucfirst $s2sp, 'SPECIES_COMMON_NAME') || lc $s2sp;
     
-    # This happens when we have two contiguous underlying slices
-    if ($last_end == $ss - 1) {
+    # This happens when we have two slices following each other
+    if (defined $last_end and ($last_end <= $ss - 1)) {
       my $s3l = $s2st == -1 && $last_s2st == -1 ? $s2e - $last_s2s + 1 : $s2s - $last_s2e - 1;
-      my $xc  = $box_start - $global_start;
+      my $xc  = $box_start - $global_start - ($ss-$last_end)/2;
       my $h   = $yc - 2;
       my $colour;
       my $legend;
