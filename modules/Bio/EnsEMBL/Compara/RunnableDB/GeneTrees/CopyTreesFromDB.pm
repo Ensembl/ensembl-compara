@@ -49,8 +49,7 @@ use strict;
 use warnings;
 use Data::Dumper;
 
-#use base ( 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::GenericRunnable', 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::StoreTree' );
-use base ( 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::StoreTree' );
+use base ('Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::StoreTree');
 
 sub param_defaults {
     return {};
@@ -69,8 +68,8 @@ sub fetch_input {
         #get reuse compara_dba adaptor
         $self->param( 'reuse_compara_dba', Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->go_figure_compara_dba( $self->param('reuse_db') ) );
 
-        print Dumper $self->param('compara_dba');
-        print Dumper $self->param('reuse_compara_dba');
+        print Dumper $self->param('compara_dba')       if ( $self->debug );
+        print Dumper $self->param('reuse_compara_dba') if ( $self->debug );
 
         #get reuse tree adaptor
         $self->param( 'reuse_tree_adaptor', $self->param('reuse_compara_dba')->get_GeneTreeAdaptor );
@@ -82,7 +81,7 @@ sub fetch_input {
 
         #Get gene_tree
         #----------------------------------------------------------------------------------------------------------------------------
-        $self->param( 'current_gene_tree', $self->param('current_tree_adaptor')->fetch_by_dbID( $self->param('gene_tree_id') ) );
+        $self->param( 'current_gene_tree', $self->param('current_tree_adaptor')->fetch_by_dbID( $self->param('gene_tree_id') ) ) || die "update: Could not get current_gene_tree for stable_id\t" . $self->param('stable_id');
         $self->param('current_gene_tree')->preload();
         $self->param( 'stable_id', $self->param('current_gene_tree')->get_value_for_tag('model_name') );
 
@@ -91,7 +90,7 @@ sub fetch_input {
         #Disavow members' parents
         #----------------------------------------------------------------------------------------------------------------------------
         #Get list of members to be updated
-        my $members_2_b_updated = $self->param('current_gene_tree')->get_value_for_tag('updated_genes_list');
+        #my $members_2_b_updated = $self->param('current_gene_tree')->get_value_for_tag('updated_genes_list');
 
         print "Fetching tree for stable ID/root_id: " . $self->param('stable_id') . "/" . $self->param('gene_tree_id') . "\n" if ( $self->debug );
 
@@ -113,7 +112,15 @@ sub write_output {
         my %members_2_b_updated = map { $_ => 1 } split( /,/, $self->param('current_gene_tree')->get_value_for_tag('updated_genes_list') );
 
         #Get previous tree
-        $self->param( 'reuse_gene_tree', $self->param('reuse_tree_adaptor')->fetch_by_stable_id( $self->param('stable_id') ) );
+
+        #Escape branch to deal with the trees that brand new.
+        if ( !$self->param('reuse_tree_adaptor')->fetch_by_stable_id( $self->param('stable_id') ) ) {
+            $self->dataflow_output_id( $self->input_id, $self->param('escape_branch') );
+            $self->input_job->autoflow(0);
+            $self->complete_early("This tree is brand new, it didnt exist before. So it needs to go to the cluster_factory.");
+        }
+
+        $self->param( 'reuse_gene_tree', $self->param('reuse_tree_adaptor')->fetch_by_stable_id( $self->param('stable_id') ) ) || die "update: Could not get reuse_gene_tree for stable_id" . $self->param('stable_id');
         $self->param('reuse_gene_tree')->preload();
         $self->param( 'reuse_gene_tree_id', $self->param('reuse_gene_tree')->root_id );
 
@@ -137,14 +144,24 @@ sub write_output {
         print "new newick" . $self->param('current_gene_tree')->newick_format( 'ryo', '%{-m}%{"_"-x}:%{d}' ) . "\n" if ( $self->debug );
 
         #Copy tree to the DB
-        my $target_tree = $self->store_alternative_tree( $self->param('reuse_gene_tree')->newick_format( 'ryo', '%{-m}%{"_"-x}:%{d}' ), $self->param('output_clusterset_id'), $self->param('current_gene_tree'), undef, 1 );
+        my $target_tree = $self->store_alternative_tree( $self->param('reuse_gene_tree')->newick_format( 'ryo', '%{-m}%{"_"-x}:%{d}' ),
+                                                         $self->param('output_clusterset_id'),
+                                                         $self->param('current_gene_tree'),
+                                                         undef, 1 );
 
     } ## end if ( ( $self->param('current_gene_tree'...)))
     else {
+        #Get previous tree
         print "Just copy over trees\n" if ( $self->debug );
 
-        #Get previous tree
-        $self->param( 'reuse_gene_tree', $self->param('reuse_tree_adaptor')->fetch_by_stable_id( $self->param('stable_id') ) );
+        #Escape branch to deal with the trees that brand new.
+        if ( !$self->param('reuse_tree_adaptor')->fetch_by_stable_id( $self->param('stable_id') ) ) {
+            $self->dataflow_output_id( $self->input_id, $self->param('escape_branch') );
+            $self->input_job->autoflow(0);
+            $self->complete_early("This tree is brand new, it didnt exist before. So it needs to go to the cluster_factory.");
+        }
+
+        $self->param( 'reuse_gene_tree', $self->param('reuse_tree_adaptor')->fetch_by_stable_id( $self->param('stable_id') ) ) || die "copy over: Could not get reuse_gene_tree for stable_id:\t" . $self->param('stable_id');
         $self->param('reuse_gene_tree')->preload();
         $self->param( 'reuse_gene_tree_id', $self->param('reuse_gene_tree')->root_id );
 
