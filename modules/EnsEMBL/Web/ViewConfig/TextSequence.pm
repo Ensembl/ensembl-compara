@@ -72,10 +72,11 @@ sub add_variation_options {
 
   if (scalar @snp_values) {
     unshift @snp_values, (
-                            { 'value' => 'on', 'caption' => 'Yes' },
                             { 'value' => 'off', 'caption' => 'No'  },
+                            { 'value' => 'on', 'caption' => 'Yes' },
                           );
     $markup->{'snp_display'}{'type'}  = 'Dropdown';
+    $markup->{'snp_display'}{'values'}  = \@snp_values;
   }
   else {
     $markup->{'snp_display'}{'type'}  = 'Checkbox';
