@@ -34,6 +34,7 @@ Ensembl.Panel.ZMenu = Ensembl.Panel.extend({
     this.relatedEl  = data.relatedEl;
     this.areaCoords = $.extend({}, data.area);
     this.location   = 0;
+    this.helptips   = false;
     
     if (area.hasClass('das')) {
       this.das       = area.hasClass('group') ? 'group' : area.hasClass('pseudogroup') ? 'pseudogroup' : 'feature';
@@ -546,6 +547,11 @@ Ensembl.Panel.ZMenu = Ensembl.Panel.extend({
     
     if (this.relatedEl) {      
       this.relatedEl.addClass('highlight');
+    }
+
+    if (!this.helptips && this.elLk.container.html()) {
+      this.elLk.container.find('._ht').helptip();
+      this.helptips = true;
     }
   },
   
