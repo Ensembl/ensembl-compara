@@ -129,7 +129,7 @@ sub content {
     { key => 'allele',   title => 'Allele',                 sort => 'string'                           },
     { key => 'type',     title => 'Consequence type',       sort => 'position_html'                    },
   );
-  my $reg_table = $self->new_table(\@reg_columns, [], { data_table => 1, sorting => ['type asc'], class => 'cellwrap_inside' } );
+  my $reg_table = $self->new_table(\@reg_columns, [], { data_table => 1, sorting => ['type asc'], class => 'cellwrap_inside', data_table_config => {iDisplayLength => 10} } );
   my @motif_columns = (
     { key => 'rf',       title => 'Feature',                   sort => 'html'                             },
     { key => 'ftype',    title => 'Feature type',              sort => 'string'                           },
