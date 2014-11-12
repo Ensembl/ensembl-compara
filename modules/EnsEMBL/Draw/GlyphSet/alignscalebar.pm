@@ -199,7 +199,7 @@ sub render_align_bar {
     
     # This happens when we have two slices following each other
     if (defined $last_end and ($last_end <= $ss - 1)) {
-      my $s3l = $s2st == -1 && $last_s2st == -1 ? $s2e - $last_s2s + 1 : $s2s - $last_s2e - 1;
+      my $s3l = $s2st == -1 && $last_s2st == -1 ? $last_s2s - $s2e + 1 : $s2s - $last_s2e - 1;
       my $xc  = $box_start - $global_start - ($ss-$last_end)/2;
       my $h   = $yc - 2;
       my $colour;
