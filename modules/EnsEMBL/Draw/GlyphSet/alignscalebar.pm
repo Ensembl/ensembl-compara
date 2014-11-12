@@ -194,6 +194,7 @@ sub render_align_bar {
     
     $self->push($glyph);
 
+    my $ref_species_common_name = lc $config->{'hub'}->species_defs->get_config(ucfirst $species, 'SPECIES_COMMON_NAME') || lc $species;
     my $other_species_common_name = lc $config->{'hub'}->species_defs->get_config(ucfirst $s2sp, 'SPECIES_COMMON_NAME') || lc $s2sp;
     
     # This happens when we have two slices following each other
@@ -216,11 +217,12 @@ sub render_align_bar {
         $colour = 'dodgerblue';
         $title = "AlignSlice Break; There is an inversion in chromosome $s2t";
         $legend = "Inversion on the $other_species_common_name chromosome";
-      } elsif ($s3l > 0) {
-        # Same chromosome, same strand, gap between the two underlying slices
+      } elsif ( (($last_end == $ss-1) && ($s3l > 0)) or ($s3l == 0) ) {
+        # Same chromosome, same strand, gap in only 1 genome (blocks are adjacent in the other)
         my ($from, $to);
         
         $colour = 'red';
+        $title = sprintf('Gap in the %s genome', $s3l ? $other_species_common_name : $ref_species_common_name);
         $legend = 'Indel (> 50 bp)';
         
         if ($s2st == 1) {
@@ -234,11 +236,14 @@ sub render_align_bar {
         ($from, $to) = ($to, $from) if $from > $to;
         
         $href = $self->_url({ species => $species, action => 'Align', r => "$s2t:$from-$to", break => 1 });
-      } else {
+      } elsif ($s3l < 0 ) {
         # Same chromosome, same strand, inverted order in the target species
         $colour = 'yellowgreen';
         $title = "AlignSlice Break; There is a breakpoint in the alignment on chromosome $s2t";
         $legend = "Shuffled blocks on the $other_species_common_name chromosome";
+      } else {
+        # Gap in both genomes
+        #warn "else s3l=$s3l last_end=$last_end ss=$ss diff=".($ss-$last_end-1)."\n";
       }
       
       my $base = $self->strand == 1 ? $h - 3 : $h + 9;
@@ -252,12 +257,12 @@ sub render_align_bar {
         width     => 4 / $pix_per_bp,
         height    => 6,
         direction => $self->strand == 1 ? 'down' : 'up'
-      }));
+      })) if $legend;
       
       $config->{'alignslice_legend'}{$colour} = {
         priority => $self->_pos,
         legend   => $legend
-      };
+      } if $legend;
     }
     
     $last_end = $se;
