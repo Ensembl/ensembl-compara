@@ -67,6 +67,10 @@ sub run {
 ##########################################
 sub set_raxml_model {
     my $self = shift;
+
+    # For DNA models, we don't have the choice
+    return "GTRGAMMA" if $self->param('cdna');
+
     if ( !$self->param('gene_tree')->has_tag('best_fit_model_family') ) {
 
         # LG was the most common best-model, but we dont have it in RAxML.

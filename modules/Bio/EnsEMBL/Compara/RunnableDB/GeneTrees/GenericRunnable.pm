@@ -44,13 +44,14 @@ The command has to be defined using the following parameters:
  - #gene_tree_file#: current gene tree
  - #species_tree_file#: the reference species tree
  - #alignment_file#: the alignment file
- - #tag:XYZ#: the value of the tag "XYZ" of the gene-tree
+ - #tag_XYZ#: the value of the tag "XYZ" of the gene-tree
 
 By default, the standard output of the job is captured and is expected
 to be a Newick/NHX tree. This is overriden by any of the parameters:
  - output_file: file to read instead of the standard output
- - read_tags: if 1, the output is parsed as lines of "key: value" that
-              are stored as tags. Otherwise, it is assumed to be a tree
+ - read_tags: if 1, the runnable will call a get_tags() method that must be
+              implemented in the derived class and return a hash of tag/values
+              to be stored on the gene-tree.
 
 Other parameters:
  - check_split_genes: whether we want to group the split genes in fake gene entries
@@ -61,6 +62,7 @@ Other parameters:
  - cdna: 1 if the alignment file contains the CDS sequences (otherwise: the protein sequences)
  - remove_columns: 1 if the alignment has to be filtered (assumes that there is a "removed_columns" tag)
  - ryo_species_tree: Roll-Your-Own format string for the species-tree
+ - ryo_gene_tree: Roll-Your-Own format string for the gene-tree (NB: taxon_ids are in fact species_tree_node_ids !)
  - species_tree_label: the label od the species-tree that should be used for this command
  - input_clusterset_id: alternative clusterset_id for the input gene tree
  - run_treebest_sdi: do we have to pass the output tree through "treebest sdi"
@@ -89,7 +91,7 @@ use warnings;
 
 use Data::Dumper;
 
-use base ('Bio::EnsEMBL::Compara::RunnableDB::RunCommand', 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::StoreTree');
+use base ('Bio::EnsEMBL::Compara::RunnableDB::RunCommand', 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::StoreTree', 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::TreeBest');
 
 
 sub param_defaults {
@@ -101,6 +103,7 @@ sub param_defaults {
         'read_tags'         => 0,
         'do_transactions'   => 1,
         'ryo_species_tree'  => '%{o}',
+        'ryo_gene_tree'     => '%{-m}%{"_"-x}:%{d}',
 
         'species_tree_label'        => undef,
         'input_clusterset_id'       => undef,
@@ -150,7 +153,8 @@ sub fetch_input {
 
     # default parameters
     $self->param('split_genes',   {}  );
-    $self->param('cmd_output',  undef );
+    $self->param('hidden_genes',   []  );
+    $self->param('newick_output',  undef );
 }
 
 
@@ -164,27 +168,30 @@ sub run {
 sub write_output {
     my $self = shift;
 
-    my $cmd_output = $self->param('cmd_output');
-    return unless $cmd_output;
-
     my $target_tree = $self->param('gene_tree');
 
     if ($self->param('read_tags')) {
-        $self->store_tags($target_tree, $self->get_tags($cmd_output));
+        my $tags = $self->get_tags();
+        while ( my ($tag, $value) = each %$tags ) {
+            $target_tree->store_tag($tag, $value);
+        }
 
     } else {
+
         if ($self->param('output_clusterset_id') and $self->param('output_clusterset_id') ne 'default') {
-            $target_tree = $self->store_alternative_tree($cmd_output, $self->param('output_clusterset_id'), $target_tree);
+            delete $target_tree->{'_member_array'};   # To make sure we use the freshest data
+            $target_tree = $self->store_alternative_tree($self->param('newick_output'), $self->param('output_clusterset_id'), $target_tree, [], 1);
         } else {
             $target_tree = $self->param('default_gene_tree');
-            $self->parse_newick_into_tree($cmd_output, $target_tree, []);
+            delete $target_tree->{'_member_array'};   # To make sure we use the freshest data
+            $self->parse_newick_into_tree($self->param('newick_output'), $target_tree, []);
             $self->store_genetree($target_tree);
         }
 
         # check that the tree is binary
         foreach my $node (@{$target_tree->get_all_nodes}) {
             next if $node->is_leaf;
-            die "The tree should be binary\n" if scalar(@{$node->children}) != 2;
+            die "The tree should be binary" if scalar(@{$node->children}) != 2;
         }
     }
     $self->param('default_gene_tree')->store_tag($self->param('runtime_tree_tag'), $self->param('runtime_msec')) if $self->param('runtime_tree_tag');
@@ -223,7 +230,7 @@ sub run_generic_command {
     my $input_aln = $self->dumpTreeMultipleAlignmentToWorkdir($gene_tree, $self->param('aln_format'), {-APPEND_SPECIES_TREE_NODE_ID => 1}) || die "Could not fetch alignment for ($gene_tree)";
     $self->param('alignment_file', $input_aln);
 
-    $self->param('gene_tree_file', $self->get_gene_tree_file($gene_tree));
+    $self->param('gene_tree_file', $self->get_gene_tree_file($gene_tree->root));
 
     my $number_actual_genes = scalar(@{$gene_tree->get_all_leaves});
     if ($number_actual_genes < $self->param('minimum_genes')) {
@@ -238,7 +245,7 @@ sub run_generic_command {
     }
 
     foreach my $tag ($gene_tree->get_all_tags()) {
-        $self->param("tag:$tag", $gene_tree->get_value_for_tag($tag));
+        $self->param("tag_$tag", $gene_tree->get_value_for_tag($tag));
     }
 
     my $cmd = sprintf('cd %s; %s', $self->worker_temp_directory, $self->param_required('cmd'));
@@ -256,26 +263,33 @@ sub run_generic_command {
         $self->throw( sprintf( "'%s' resulted in an error code=%d\nstderr is: %s\nstdout is %s", $run_cmd->cmd, $run_cmd->exit_code, $run_cmd->err, $run_cmd->out) );
     }
     $self->param('runtime_msec', $run_cmd->runtime_msec);
+    $self->param('cmd_out',      $run_cmd->out);
 
     $self->param('output_file', $self->worker_temp_directory.'/'.$self->param('output_file')) if $self->param('output_file');
-    my $output = $self->param('output_file') ? $self->_slurp($self->param('output_file')) : $run_cmd->out;
-    print "Re-root with sdi=".$self->param('reroot_with_sdi')."\n" if($self->debug);
-    $output = $self->run_treebest_sdi($output, $self->param('reroot_with_sdi')) if $self->param('run_treebest_sdi');
-    $self->param('cmd_output', $output);
+
+    unless ($self->param('read_tags')) {
+        my $output = $self->param('output_file') ? $self->_slurp($self->param('output_file')) : $run_cmd->out;
+        if ($self->param('run_treebest_sdi')) {
+            print "Re-rooting the tree with 'treebest sdi'\n" if($self->debug);
+            $output = $self->run_treebest_sdi($output, $self->param('reroot_with_sdi'));
+        }
+        die "The Newick output is empty\n" unless $output;
+        $self->param('newick_output', $output);
+    }
 }
 
 
 sub get_gene_tree_file {
-    my ($self, $gene_tree) = @_;
+    my ($self, $gene_tree_root) = @_;
 
     # horrible hack: we replace taxon_id with species_tree_node_id
-    foreach my $leaf (@{$gene_tree->root->get_all_leaves}) {
+    foreach my $leaf (@{$gene_tree_root->get_all_leaves}) {
         $leaf->taxon_id($leaf->genome_db->_species_tree_node_id);
     }
 
-    my $gene_tree_file = sprintf('gene_tree_%d.nhx', $gene_tree->root_id);
+    my $gene_tree_file = sprintf('gene_tree_%d.nhx', $gene_tree_root->node_id);
     open( my $genetree, '>', $self->worker_temp_directory."/".$gene_tree_file) or die "Could not open '$gene_tree_file' for writing : $!";
-    print $genetree $gene_tree->newick_format('ryo','%{-m}%{"_"-x}:%{d}');
+    print $genetree $gene_tree_root->newick_format('ryo', $self->param('ryo_gene_tree'));
     close $genetree;
 
     return $gene_tree_file;
@@ -291,27 +305,8 @@ sub _load_species_tree_string_from_db {
 
 
 sub get_tags {
-    my ($self, $output) = @_;
-
-    my %tags = ();
-    foreach my $line (split /\n/, $output) {
-        chomp $line;
-        if ($line =~ /([^:]*):(.*)/) {
-            $tags{$1} = $2;
-        }
-    }
-    return \%tags;
+    die "get_tags() must be implemented by the derived module\n";
 }
-
-
-sub store_tags {
-    my ($self, $gene_tree, $tags) = @_;
-    while ( my ($tag, $value) = each %$tags ) {
-        $gene_tree->store_tag($tag, $value);
-    }
-}
-
-
 
 
 1;

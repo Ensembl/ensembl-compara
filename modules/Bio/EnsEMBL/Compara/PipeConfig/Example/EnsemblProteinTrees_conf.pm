@@ -85,6 +85,7 @@ sub default_options {
         'outgroups'                     => { 'saccharomyces_cerevisiae' => 2 },
 
     # tree building parameters:
+        'use_quick_tree_break'      => 0,
         'treebreak_gene_count'      => 40000,     # affects msa_chooser
         'mafft_gene_count'          => 300,     # affects msa_chooser
 
@@ -114,19 +115,18 @@ sub default_options {
         'prottest_jar'              => '/software/ensembl/compara/prottest/prottest-3.4.jar',
         'treebest_exe'              => '/software/ensembl/compara/treebest',
         'raxml_exe'                 => '/software/ensembl/compara/raxml/raxmlHPC-SSE3-8.1.3',
-        'raxml_pthreads_exe'        => '/nfs/production/xfam/treefam/software/RAxML/raxmlHPC-PTHREADS-SSE3',
-        'examl_exe_avx'             => '/nfs/production/xfam/treefam/software/ExaML/examl',
-        'examl_exe_sse3'            => '/nfs/production/xfam/treefam/software/ExaML/examl',
-        'parse_examl_exe'           => '/nfs/production/xfam/treefam/software/ExaML/parse-examl',
+        'raxml_pthreads_exe'        => '/software/ensembl/compara/raxml/raxmlHPC-PTHREADS-SSE3-8.1.3',
+        'examl_exe_avx'             => 'UNDEF',
+        'examl_exe_sse3'            => 'UNDEF',
+        'parse_examl_exe'           => 'UNDEF',
         'notung_jar'                => '/software/ensembl/compara/notung/Notung-2.6.jar',
         'quicktree_exe'             => '/software/ensembl/compara/quicktree_1.1/bin/quicktree',
         'hmmer2_home'               => '/software/ensembl/compara/hmmer-2.3.2/src/',
+        'hmmer3_home'               => '/software/ensembl/compara/hmmer-3.1b1/binaries/',
         'codeml_exe'                => '/software/ensembl/compara/paml43/bin/codeml',
         'ktreedist_exe'             => '/software/ensembl/compara/ktreedist/Ktreedist.pl',
         'blast_bin_dir'             => '/software/ensembl/compara/ncbi-blast-2.2.28+/bin',
         'pantherScore_path'         => '/software/ensembl/compara/pantherScore1.03',
-        'trimal_exe'                => '/software/ensembl/compara/src/trimAl/source/trimal',
-        'raxml_exe'                 => '/software/ensembl/compara/raxml/standard-RAxML-8.0.19/raxmlHPC-SSE3',
 
     # HMM specific parameters (set to 0 or undef if not in use)
        # List of directories that contain Panther-like databases (with books/ and globals/)
@@ -267,7 +267,7 @@ sub tweak_analyses {
     ## Extend this section to redefine the resource names of some analysis
     my %overriden_rc_names = (
         'hcluster_run'              => '32Gb_urgent_job',
-        'treebest'                  => '8Gb_job',
+        'treebest_long_himem'       => '8Gb_long_job',
     );
     foreach my $logic_name (keys %overriden_rc_names) {
         $analyses_by_name->{$logic_name}->{'-rc_name'} = $overriden_rc_names{$logic_name};

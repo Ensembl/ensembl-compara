@@ -80,6 +80,7 @@ sub fetch_input {
 
     my $hmm_type = 'tree_hmm_';
     $hmm_type .= $self->param('cdna') ? 'dna' : 'aa';
+    $hmm_type .= '_v'.$self->param_required('hmmer_version');
 
     if ($self->param('notaxon')) {
         $hmm_type .= "_notaxon" . "_" . $self->param('notaxon');
@@ -117,7 +118,7 @@ sub fetch_input {
     $self->param('protein_align', Bio::EnsEMBL::Compara::AlignedMemberSet->new(-dbid => $self->param('gene_tree_id'), -members => $members));
 
     $self->require_executable('hmmbuild_exe');
-    $self->require_executable('hmmcalibrate_exe') if $self->param_required('hmmer_version') eq '2';
+    $self->require_executable('hmmcalibrate_exe') if $self->param('hmmer_version') eq '2';
     $self->require_executable('hmmemit_exe');
 
 }
