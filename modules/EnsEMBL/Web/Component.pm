@@ -305,6 +305,7 @@ sub content_buttons {
 }
 
 sub cache {
+warn "###############\n!!! DEPRECATED - will be removed in release 79\n################";
   my ($panel, $obj, $type, $name) = @_;
   my $cache = EnsEMBL::Web::TmpFile::Text->new(
     prefix   => $type,
