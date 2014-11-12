@@ -1386,19 +1386,8 @@ sub update_from_url {
           
           next;
         }
-        
-        # We have to create a URL upload entry in the session
-        my $message  = sprintf('Data has been attached to your display from the following URL: %s', encode_entities($p));
-        if (uc $format eq 'DATAHUB') {
-          $message .= " Please go to '<b>Configure this page</b>' to choose which tracks to show (we do not turn on tracks automatically in case they overload our server).";
-        }
-        $session->add_data(
-          type     => 'message',
-          function => '_info',
-          code     => 'url_data:' . md5_hex($p),
-          message  => $message, 
-        );
-        
+
+        my $found_data = 0;
         # We then have to create a node in the user_config
         if (uc $format eq 'DATAHUB') {
           my $info;
@@ -1420,6 +1409,7 @@ sub update_from_url {
             foreach (keys %$assemblies) {
               my ($data_species, $assembly) = @{$ensembl_assemblies{$_}||[]};
               if ($assembly) {
+                $found_data = 1;
                 my $data = $session->add_data(
                   type        => 'url',
                   url         => $p,
@@ -1434,6 +1424,7 @@ sub update_from_url {
             }
           }
         } else {
+          $found_data = 1;
           $self->_add_flat_file_track(undef, 'url', "url_$code", $n, 
             sprintf('Data retrieved from an external webserver. This data is attached to the %s, and comes from URL: %s', encode_entities($n), encode_entities($p)),
             url   => $p,
@@ -1450,7 +1441,23 @@ sub update_from_url {
             format  => $format,
             style   => $style,
           );
-        }       
+        }
+        # We have to create a URL upload entry in the session
+        my $message;
+        if($found_data) {
+          $message  = sprintf('Data has been attached to your display from the following URL: %s', encode_entities($p));
+          if (uc $format eq 'DATAHUB') {
+            $message .= " Please go to '<b>Configure this page</b>' to choose which tracks to show (we do not turn on tracks automatically in case they overload our server).";
+          }
+        } else {
+          $message = "The URL you provided has been inspected and, while valid, contained <b>no tracks for this assembly</b> (".encode_entities($p).")";
+        }
+        $session->add_data(
+          type     => 'message',
+          function => '_info',
+          code     => 'url_data:' . md5_hex($p),
+          message  => $message,
+        );
       } elsif ($type eq 'das') {
         $p = uri_unescape($p);
 
