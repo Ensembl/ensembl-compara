@@ -67,7 +67,7 @@ sub default_options {
             'mlss_id'          => 40098,
             # Found automatically if the Core API is in PERL5LIB
             #'ensembl_release'          => '76',
-            'rel_suffix'       => 'a',
+            'rel_suffix'       => 'b',
             'work_dir'         => '/lustre/scratch110/ensembl/' .
                                $self->o('ENV', 'USER') .
                                '/nc_trees_' .

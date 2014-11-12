@@ -401,7 +401,7 @@ sub pipeline_analyses {
                                },
                 -rc_name       => 'default',
                 -flow_into     => {
-                                   '2->A' => [ $self->o('skip_epo') ? 'clusterset_backup' : 'recover_epo' ],
+                                   '2->A' => ['clusterset_backup'],
                                    'A->1' => [ 'hc_tree_final_checks' ],
                                   },
                 -meadow_type   => 'LOCAL',
@@ -450,6 +450,17 @@ sub pipeline_analyses {
             },
         },
 
+            {   -logic_name    => 'clusterset_backup',
+                -module        => 'Bio::EnsEMBL::Hive::RunnableDB::SqlCmd',
+                -parameters    => {
+                                   'sql'         => 'INSERT INTO gene_tree_backup (seq_member_id, root_id) SELECT seq_member_id, root_id FROM gene_tree_node WHERE seq_member_id IS NOT NULL AND root_id = #gene_tree_id#',
+                                  },
+                -analysis_capacity => 1,
+                -flow_into      => [ $self->o('skip_epo') ? 'msa_chooser' : 'recover_epo' ],
+                -meadow_type    => 'LOCAL',
+            },
+
+
             {   -logic_name    => 'recover_epo',
                 -module        => 'Bio::EnsEMBL::Compara::RunnableDB::ncRNAtrees::NCRecoverEPO',
                 -parameters    => {
@@ -466,18 +477,8 @@ sub pipeline_analyses {
                -parameters        => {
                                       mode => 'epo_removed_members',
                                      },
-               -flow_into         => [ 'clusterset_backup' ],
+               -flow_into         => [ 'msa_chooser' ],
                %hc_params,
-            },
-
-            {   -logic_name    => 'clusterset_backup',
-                -module        => 'Bio::EnsEMBL::Hive::RunnableDB::SqlCmd',
-                -parameters    => {
-                                   'sql'         => 'INSERT INTO gene_tree_backup (seq_member_id, root_id) SELECT seq_member_id, root_id FROM gene_tree_node WHERE seq_member_id IS NOT NULL AND root_id = #gene_tree_id#',
-                                  },
-                -analysis_capacity => 1,
-                -flow_into     => [ 'msa_chooser' ],
-                -meadow_type    => 'LOCAL',
             },
 
             {   -logic_name    => 'msa_chooser',
