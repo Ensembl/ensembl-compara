@@ -9,8 +9,6 @@ our @EXPORT_OK = qw(chase_redirects);
 
 use LWP::UserAgent;
 
-use Data::Dumper;
-
 sub chase_redirects {
   my ($self,$url,$max_follow) = @_;
 
