@@ -78,7 +78,6 @@ sub transcript_table {
   my $object      = $self->object;
   my $species     = $hub->species;
   my $table       = $self->new_twocol;
-  my $html        = '';
   my $page_type   = ref($self) =~ /::Gene\b/ ? 'gene' : 'transcript';
   my $description = $object->gene_description;
      $description = '' if $description eq 'No description';
@@ -201,12 +200,6 @@ sub transcript_table {
     }
   }
 
-  $table->add_row('Location', $location_html);
-
-  my $insdc_accession;
-  $insdc_accession = $self->object->insdc_accession if $self->object->can('insdc_accession');
-  $table->add_row('INSDC coordinates',$insdc_accession) if $insdc_accession;
-
   my $gene = $object->gene;
 
   #text for tooltips
@@ -215,6 +208,8 @@ sub transcript_table {
   my $trans_5_desc = "5' truncation in transcript evidence prevents annotation of the start of the CDS.";
   my $trans_3_desc = "3' truncation in transcript evidence prevents annotation of the end of the CDS.";
   my %glossary     = $hub->species_defs->multiX('ENSEMBL_GLOSSARY');
+  my $gene_html    = '';
+  my $transc_table;
 
   if ($gene) {
     my $transcript  = $page_type eq 'transcript' ? $object->stable_id : $hub->param('t');
@@ -254,9 +249,7 @@ sub transcript_table {
       $plural =~ s/s$//;
       $splices =~ s/s$//;
     }
-    
-    my $gene_html;
-    
+
     if ($page_type eq 'transcript') {
       my $gene_id  = $gene->stable_id;
       my $gene_url = $hub->url({
@@ -289,8 +282,6 @@ sub transcript_table {
       $splices,
       $show ? 'open' : 'closed'
     );
-
-    $table->add_row($page_type eq 'gene' ? 'Transcripts' : 'Gene', $gene_html);
 
     my @columns = (
        { key => 'name',       sort => 'string',  title => 'Name'          },
@@ -438,7 +429,7 @@ sub transcript_table {
       }
     }
 
-    my $table_2 = $self->new_table(\@columns, \@rows, {
+    $transc_table = $self->new_table(\@columns, \@rows, {
       data_table        => 1,
       data_table_config => { asStripClasses => [ '', '' ], oSearch => { sSearch => '', bRegex => 'false', bSmart => 'false' } },
       toggleable        => 1,
@@ -447,14 +438,17 @@ sub transcript_table {
       exportable        => 1,
       hidden_columns    => \@hidecols,
     });
-
-    $html = $table->render.$table_2->render;
-
-  } else {
-    $html = $table->render;
   }
-  
-  return qq{<div class="summary_panel">$html</div>};
+
+  $table->add_row('Location', $location_html);
+
+  my $insdc_accession;
+  $insdc_accession = $self->object->insdc_accession if $self->object->can('insdc_accession');
+  $table->add_row('INSDC coordinates',$insdc_accession) if $insdc_accession;
+
+  $table->add_row($page_type eq 'gene' ? 'Transcripts' : 'Gene', $gene_html) if $gene_html;
+
+  return sprintf '<div class="summary_panel">%s%s</div>', $table->render, $transc_table ? $transc_table->render : '';
 }
 
 sub get_synonyms {
