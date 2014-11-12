@@ -48,10 +48,17 @@ sub content {
   my $max_len        = $end < 1e6 ? $end : 1e6;
   my $seq_region_end = $hub->param('r') =~ /:/ ? $object->seq_region_end : $max_len;
   my $chr            = $object->seq_region_name; 
+
+  ## Mainly a hack for stickleback, which doesn't have normal chromosomes
+  my $coordAdaptor   = $hub->get_adaptor('get_CoordSystemAdaptor');
+  my %coord_system   = map {$_->name => $_->name} @{$coordAdaptor->fetch_all};
+  my $cs_type        = $coord_system{'chromosome'} || $coord_system{'group'};
+  return unless $cs_type;
+
   my $sliceAdaptor   = $hub->get_adaptor('get_SliceAdaptor');
   my $max_index      = 15;
-  my $upstream       = $sliceAdaptor->fetch_by_region('chromosome', $chr, 1, $start - 1 );
-  my $downstream     = $sliceAdaptor->fetch_by_region('chromosome', $chr, $seq_region_end + 1, $chromosome_end );
+  my $upstream       = $sliceAdaptor->fetch_by_region($cs_type, $chr, 1, $start - 1 );
+  my $downstream     = $sliceAdaptor->fetch_by_region($cs_type, $chr, $seq_region_end + 1, $chromosome_end );
   my @up_genes       = $upstream ?   reverse @{$object->get_synteny_local_genes($upstream)} : ();
   my @down_genes     = $downstream ? @{$object->get_synteny_local_genes($downstream)}       : ();
   my $up_count       = @up_genes;

@@ -22,6 +22,8 @@ use strict;
 
 use base qw(EnsEMBL::Web::Object::Feature);
 
+sub default_action { return 'Locations'; }
+
 sub short_caption {
   my $self = shift;
   my $caption;

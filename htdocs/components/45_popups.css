@@ -68,7 +68,7 @@ body.ie6 .floating_popup .spinner      { background-color: [[TINT_BG]]; border: 
 .zmenu_holder div.header               { height: 20px; line-height: 20px; font-size: 14px; color: #FFFFFF; background-color: [[BUTTON_BG]]; text-align: center; cursor: default; }
 .zmenu_holder .loading                 { width: 200px; }
 .zmenu_holder .loading div             { padding: 2px 3px; color: #FFFFFF; background-color: [[BUTTON_BG]]; }
-.zmenu_holder .row .zmenu              { padding: 0 2px 2px 0; display: inline-block; vertical-align: top; } 
+.zmenu_holder .row .zmenu              { padding: 0 2px 2px 0; display: inline-table; vertical-align: top; }
 .zmenu_holder .row .zmenu:last-child   { padding-right: 0; }
 .zmenu_holder .row .zmenu tr.header th { width: 180px; }
 .zmenu_holder .grid                    { max-height: 250px; overflow-x: hidden; overflow-y: scroll; }
