@@ -18,22 +18,28 @@ limitations under the License.
 
 package EnsEMBL::Web::File::Utils::IO;
 
-### Wrapper around the core API file-handling code
+### Non-OO wrapper around the core API file-handling code
 ### Transparently handles file compression (if desired), or for efficiency you
 ### can explicitly pass a compression type (e.g. 'gz'), or 0 for no compression, 
 ### to any appropriate method to bypass internal checking
 
 ### Examples:
 
+### use EnsEMBL::Web::File::Utils::IO qw/:all/;
+
+### Read file contents into a variable
 ### my $file_content = read_file('/path/to/my/file.txt', {'no_exception' => 1});
 
+### Fetch API features and output data about each one to a gzipped file
 ### my $output_file = '/path/to/my/output.gz';
 ### my @features = $adaptor->fetch_Features();
 ### foreach (@features) {
+###   # Write one line per feature
 ###   append_lines($output_file, {
-###                                'lines' => [$_->stable_id],
+###                                'lines'       => [$_->stable_id],
 ###                                'compression' => 'gz',
 ###                              };                                         
+### }
 
 use strict;
 
