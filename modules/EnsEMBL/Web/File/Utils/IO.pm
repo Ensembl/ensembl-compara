@@ -255,8 +255,13 @@ sub _write_to_file {
     &$method($path, @params); 
   };
 
-  if ($@ && !$args->{'no_exception'}) {
+  if ($@) {
+    if (!$args->{'no_exception'}) {
     throw exception('FileIOException', sprintf qq(Could not write to file '%s' due to following errors: \n%s), $path, $@);
+    }
+  }
+  else {
+    return 1;
   }
 }
 
