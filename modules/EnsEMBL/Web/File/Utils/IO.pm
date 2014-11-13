@@ -163,7 +163,7 @@ sub write_file {
     return;
   }
   
-  $self->_write_to_file($path, $compression, '>',
+  _write_to_file($path, $compression, '>',
       sub {
         my ($fh) = @_;
         print $fh $content;
@@ -184,12 +184,12 @@ sub write_lines {
   my $lines = $args->{'lines'};
 
   if (ref($lines) ne 'ARRAY' && !$args->{'no_exception'}) {
-    throw exception('FileIOException', sprintf qq(Input for '%s' must be an arrayref. Use the write_file method to create a file from a single string.', $path);
+    throw exception('FileIOException', sprintf qq(Input for '%s' must be an arrayref. Use the write_file method to create a file from a single string.), $path);
     return;
   }
   
   my $compression = $args->{'compression'} || _compression($path);
-  $self->_write_to_file($path, $compression, '>',
+  _write_to_file($path, $compression, '>',
       sub {
         my $fh = shift;
         foreach (@$lines) {
@@ -212,12 +212,12 @@ sub append_lines {
   my $lines = $args->{'lines'};
 
   if (ref($lines) ne 'ARRAY' && !$args->{'no_exception'}) {
-    throw exception('FileIOException', sprintf qq(Input for '%s' must be an arrayref. Use the write_file method to create a file from a single string.', $path);
+    throw exception('FileIOException', sprintf qq(Input for '%s' must be an arrayref. Use the write_file method to create a file from a single string.), $path);
     return;
   }
   
   my $compression = $args->{'compression'} || _compression($path);
-  $self->_write_to_file($path, $compression, '>>',
+  _write_to_file($path, $compression, '>>',
       sub {
         my $fh = shift;
         foreach (@$lines) {
@@ -237,11 +237,11 @@ sub _write_to_file {
 ###         compression (optional) String - compression type
 ###         no_exception (optional) Boolean - whether to throw an exception
 ### @return Void
-  my ($self, $args) = @_;
+  my ($path, $args) = @_;
 
   my $compression = $args->{'compression'} || _compression($path);
   my $method = $compression ? $compression.'_work_with_file' : 'work_with_file';
-  eval { &$method(@{$args->{'params'}}); }
+  eval { &$method(@{$args->{'params'}}); };
 
   if ($@ && !$args->{'no_exception'}) {
     throw exception('FileIOException', sprintf qq(Could not fetch contents of file '%s' due to following errors: \n%s), $path, displayable_error($@));
