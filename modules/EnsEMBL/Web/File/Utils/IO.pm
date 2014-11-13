@@ -163,7 +163,6 @@ sub write_file {
 ### @return Void 
   my ($path, $args) = @_;
 
-  my $compression = $args->{'compression'} || _compression($path);
   my $content = $args->{'content'};
 
   if (!$content && !$args->{'no_exception'}) {
@@ -171,7 +170,8 @@ sub write_file {
     return;
   }
   
-  _write_to_file($path, $compression, '>',
+  $args->{'compression'} ||= _compression($path);
+  _write_to_file($path, $args, '>',
       sub {
         my ($fh) = @_;
         print $fh $content;
@@ -196,8 +196,8 @@ sub write_lines {
     return;
   }
   
-  my $compression = $args->{'compression'} || _compression($path);
-  _write_to_file($path, $compression, '>',
+  $args->{'compression'} ||= _compression($path);
+  _write_to_file($path, $args, '>',
       sub {
         my $fh = shift;
         foreach (@$lines) {
@@ -224,8 +224,8 @@ sub append_lines {
     return;
   }
   
-  my $compression = $args->{'compression'} || _compression($path);
-  _write_to_file($path, $compression, '>>',
+  $args->{'compression'} ||= _compression($path);
+  _write_to_file($path, $args, '>>',
       sub {
         my $fh = shift;
         foreach (@$lines) {
@@ -241,21 +241,22 @@ sub _write_to_file {
 ### @private
 ### @param String - full path to file
 ### @param Args Hashref 
-###         params ArrayRef - parameters for work_with_file        
 ###         compression (optional) String - compression type
 ###         no_exception (optional) Boolean - whether to throw an exception
+### @param write mode String - parameter to pass to API method
+### @param Coderef - parameter to pass to API method
 ### @return Void
-  my ($path, $args) = @_;
+  my ($path, $args, @params) = @_;
 
   my $compression = $args->{'compression'} || _compression($path);
   my $method = $compression ? $compression.'_work_with_file' : 'work_with_file';
   eval { 
     no strict 'refs';
-    &$method(@{$args->{'params'}}); 
+    &$method($path, @params); 
   };
 
   if ($@ && !$args->{'no_exception'}) {
-    throw exception('FileIOException', sprintf qq(Could not fetch contents of file '%s' due to following errors: \n%s), $path, $@);
+    throw exception('FileIOException', sprintf qq(Could not write to file '%s' due to following errors: \n%s), $path, $@);
   }
 }
 
