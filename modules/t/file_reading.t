@@ -3,7 +3,7 @@ use warnings;
 
 use Test::More;
 
-use EnsEMBL::Web::File::Utils::IO;
+use EnsEMBL::Web::File::Utils::IO qw/:all/;
 
 my $test_file = "modules/t/data.bed";
 
