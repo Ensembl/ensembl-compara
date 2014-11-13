@@ -201,7 +201,7 @@ sub write_lines {
       sub {
         my $fh = shift;
         foreach (@$lines) {
-          print $fh, $_;
+          print $fh "$_\n";
         }
         return;
       }
@@ -229,7 +229,7 @@ sub append_lines {
       sub {
         my $fh = shift;
         foreach (@$lines) {
-          print $fh, $_;
+          print $fh "$_\n";
         }
         return;
       }
