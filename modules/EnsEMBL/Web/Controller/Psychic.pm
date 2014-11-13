@@ -86,11 +86,18 @@ sub psychic {
   $query =~ s/\s+$//g;
   $query =~ s/\s+/ /g;
 
-  $species = undef if $dest_site =~ /_all/;
+  my @extra;
+  push @extra,"facet_feature_type=Documentation" if $species eq 'help';
+  $species = undef if $dest_site =~ /_all/ or $species eq 'help';
 
   return $hub->redirect("http://www.ebi.ac.uk/ebisearch/search.ebi?db=allebi&query=$query")                          if $dest_site eq 'ebi';
   return $hub->redirect("http://www.sanger.ac.uk/search?db=allsanger&t=$query")                                      if $dest_site eq 'sanger';
   return $hub->redirect("http://www.ensemblgenomes.org/search/eg/$query")                                            if $dest_site eq 'ensembl_genomes';
+
+  my $extra = '';
+  if(@extra) {
+    $extra = join(';','',@extra);
+  }
 
   if ($dest_site =~ /vega/) {
     if ($site_type eq 'vega') {
@@ -103,7 +110,7 @@ sub psychic {
     $url  = "/Multi/Search/Results?species=all&idx=All&q=$query";
     $site = 'http://www.ensembl.org'; 
   } else {
-    $url = "/Multi/Search/Results?species=$species&idx=All&q=$query";
+    $url = "/Multi/Search/Results?species=$species&idx=All&q=$query$extra";
   }
 
   my $flag = 0;
@@ -230,7 +237,7 @@ sub psychic {
   if($url =~ m!/Search/!) {
     my @params = grep {$_ ne 'q'} $hub->param();
     $url .= ($url =~ /\?/ ? ';' : '?');
-    $url .= join(";",map {; "$_=".$hub->param($_) } @params);
+    $url .= join(";",map {; "$_=".$hub->param($_) } @params).$extra;
   }
 
   $hub->redirect($site . $url);
