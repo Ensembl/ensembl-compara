@@ -63,7 +63,7 @@ sub fetch_file {
   eval { $content = slurp($path) }; 
 
   if ($@ && !$args->{'no_exception'}) {
-    throw exception('FileIOException', sprintf qq(Could not fetch contents of file '%s' due to following errors: \n%s), $path, displayable_error($@));
+    throw exception('FileIOException', sprintf qq(Could not fetch contents of file '%s' due to following errors: \n%s), $path, $@);
   }
   return $content;
 }
@@ -80,10 +80,13 @@ sub read_file {
 
   my $compression = defined($args->{'compression'}) || _compression($path);
   my $method = $compression ? $compression.'_slurp' : 'slurp';
-  eval { $content = &$method($path) }; 
+  eval { 
+    no strict 'refs';
+    $content = &$method($path) 
+  }; 
 
   if ($@ && !$args->{'no_exception'}) {
-    throw exception('FileIOException', sprintf qq(Could not read file '%s' due to following errors: \n%s), $path, displayable_error($@));
+    throw exception('FileIOException', sprintf qq(Could not read file '%s' due to following errors: \n%s), $path, $@);
   }
   return $content;
 }
@@ -101,10 +104,13 @@ sub read_lines {
 
   my $compression = defined($args->{'compression'}) || _compression($path);
   my $method = $compression ? $compression.'_slurp_to_array' : 'slurp_to_array';
-  eval { $content = &$method($path) }; 
+  eval { 
+    no strict 'refs';
+    $content = &$method($path) 
+  }; 
 
   if ($@ && !$args->{'no_exception'}) {
-    throw exception('FileIOException', sprintf qq(Could not read lines from  file '%s' due to following errors: \n%s), $path, displayable_error($@));
+    throw exception('FileIOException', sprintf qq(Could not read lines from  file '%s' due to following errors: \n%s), $path, $@);
   }
   return $content;
 }
@@ -126,6 +132,7 @@ sub preview_file {
   my $method = $compression ? $compression.'_work_with_file' : 'work_with_file';
 
   eval { 
+    no strict 'refs';
     &$method($path, 'r',
       sub {
         my $fh = shift;
@@ -140,7 +147,7 @@ sub preview_file {
   };
 
   if ($@ && !$args->{'no_exception'}) {
-    throw exception('FileIOException', sprintf qq(Could not fetch preview of file '%s' due to following errors: \n%s), $path, displayable_error($@));
+    throw exception('FileIOException', sprintf qq(Could not fetch preview of file '%s' due to following errors: \n%s), $path, $@);
     ## Throw exception 
   }
   return $lines; 
@@ -242,10 +249,13 @@ sub _write_to_file {
 
   my $compression = $args->{'compression'} || _compression($path);
   my $method = $compression ? $compression.'_work_with_file' : 'work_with_file';
-  eval { &$method(@{$args->{'params'}}); };
+  eval { 
+    no strict 'refs';
+    &$method(@{$args->{'params'}}); 
+  };
 
   if ($@ && !$args->{'no_exception'}) {
-    throw exception('FileIOException', sprintf qq(Could not fetch contents of file '%s' due to following errors: \n%s), $path, displayable_error($@));
+    throw exception('FileIOException', sprintf qq(Could not fetch contents of file '%s' due to following errors: \n%s), $path, $@);
   }
 }
 
