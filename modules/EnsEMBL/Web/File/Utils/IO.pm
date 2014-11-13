@@ -42,6 +42,7 @@ use EnsEMBL::Web::Exceptions;
 
 use Exporter qw(import);
 our @EXPORT_OK = qw(file_exists fetch_file read_file read_lines preview_file write_file write_lines append_lines);
+our %EXPORT_TAGS = (all     => [@EXPORT_OK]);
 
 sub file_exists {
 ### Check if a file of this name exists
