@@ -26,7 +26,7 @@ use Bio::EnsEMBL::Utils::IO qw/:all/;
 use EnsEMBL::Web::Exceptions;
 
 use Exporter qw(import);
-our @EXPORT_OK = qw(file_exists fetch_content read_file read_lines preview_file write_lines append_lines);
+our @EXPORT_OK = qw(file_exists fetch_content read_file read_lines preview_file write_file write_lines append_lines);
 
 sub exists {
 ### Check if a file of this name exists
@@ -118,6 +118,24 @@ sub preview_file {
     ## Throw exception 
   }
   return $lines; 
+}
+
+sub write_file {
+### Write an entire file in one chunk
+### @param String - full path to file
+### @param String - content of file
+### @param (optional) String - compression type
+### @return Void 
+  my ($path, $content, $compression) = @_;
+  $compression ||= _compression($path);
+
+  $self->_write_to_file($path, $compression, '>',
+      sub {
+        my ($fh) = @_;
+        print $fh $content;
+        return;
+      }
+  );
 }
 
 sub write_lines {
