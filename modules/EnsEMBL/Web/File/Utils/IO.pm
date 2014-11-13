@@ -19,6 +19,21 @@ limitations under the License.
 package EnsEMBL::Web::File::Utils::IO;
 
 ### Wrapper around the core API file-handling code
+### Transparently handles file compression (if desired), or for efficiency you
+### can explicitly pass a compression type (e.g. 'gz'), or 0 for no compression, 
+### to any appropriate method to bypass internal checking
+
+### Examples:
+
+### my $file_content = read_file('/path/to/my/file.txt', {'no_exception' => 1});
+
+### my $output_file = '/path/to/my/output.gz';
+### my @features = $adaptor->fetch_Features();
+### foreach (@features) {
+###   append_lines($output_file, {
+###                                'lines' => [$_->stable_id],
+###                                'compression' => 'gz',
+###                              };                                         
 
 use strict;
 
@@ -26,9 +41,9 @@ use Bio::EnsEMBL::Utils::IO qw/:all/;
 use EnsEMBL::Web::Exceptions;
 
 use Exporter qw(import);
-our @EXPORT_OK = qw(file_exists fetch_content read_file read_lines preview_file write_file write_lines append_lines);
+our @EXPORT_OK = qw(file_exists fetch_file read_file read_lines preview_file write_file write_lines append_lines);
 
-sub exists {
+sub file_exists {
 ### Check if a file of this name exists
 ### @param String - full path to file
 ### @return Boolean
@@ -36,15 +51,18 @@ sub exists {
   return -e $path && -f $path;
 }
 
-sub fetch_content {
+sub fetch_file {
 ### Get raw content of file (e.g. for download, hence ignoring compression)
 ### @param Path string
+### @param Args (optional) Hashref 
+###         no_exception Boolean - whether to throw an exception
 ### @return String (entire file)
-  my $path = shift;
+  my ($path, $args) = @_;
   my $content;
   eval { $content = slurp($path) }; 
-  if ($@) {
-    ## Throw exception 
+
+  if ($@ && !$args->{'no_exception'}) {
+    throw exception('FileIOException', sprintf qq(Could not fetch contents of file '%s' due to following errors: \n%s), $path, displayable_error($@));
   }
   return $content;
 }
@@ -52,18 +70,19 @@ sub fetch_content {
 sub read_file {
 ### Get entire content of file, uncompressed
 ### @param String - full path to file
-### @param (optional) String - compression type
+### @param Args (optional) Hashref 
+###         compression String - compression type
+###         no_exception Boolean - whether to throw an exception
 ### @return String (entire file)
-  my ($path, $compression) = @_;
+  my ($path, $args) = @_;
   my $content;
-  if (($compression && $compression eq 'gz') || _compression($path) eq 'gz') {
-    eval { $content = gz_slurp($path) }; 
-  }
-  else {
-    eval { $content = slurp($path) }; 
-  }
-  if ($@) {
-    ## Throw exception 
+
+  my $compression = defined($args->{'compression'}) || _compression($path);
+  my $method = $compression ? $compression.'_slurp' : 'slurp';
+  eval { $content = &$method($path) }; 
+
+  if ($@ && !$args->{'no_exception'}) {
+    throw exception('FileIOException', sprintf qq(Could not read file '%s' due to following errors: \n%s), $path, displayable_error($@));
   }
   return $content;
 }
@@ -71,18 +90,20 @@ sub read_file {
 sub read_lines {
 ### Get entire content of file as separate lines
 ### @param String - full path to file
+### @param Args (optional) Hashref 
+###         compression String - compression type
+###         no_exception Boolean - whether to throw an exception
 ### @param (optional) String - compression type
 ### @return Arrayref
-  my ($path, $compression) = @_;
+  my ($path, $args) = @_;
   my $content = [];
-  if (($compression && $compression eq 'gz') || _compression($path) eq 'gz') {
-    eval { $content = gz_slurp_to_array($path) }; 
-  }
-  else {
-    eval { $content = slurp_to_array($path) }; 
-  }
-  if ($@) {
-    ## Throw exception 
+
+  my $compression = defined($args->{'compression'}) || _compression($path);
+  my $method = $compression ? $compression.'_slurp_to_array' : 'slurp_to_array';
+  eval { $content = &$method($path) }; 
+
+  if ($@ && !$args->{'no_exception'}) {
+    throw exception('FileIOException', sprintf qq(Could not read lines from  file '%s' due to following errors: \n%s), $path, displayable_error($@));
   }
   return $content;
 }
@@ -90,15 +111,18 @@ sub read_lines {
 sub preview_file {
 ### Get n lines of a file, e.g. for a web preview
 ### @param String - full path to file
-### @param (optional) String - compression type
-### @param (optional) Integer - number of lines required (default is 10)
+### @param Args (optional) Hashref 
+###         compression String - compression type
+###         no_exception Boolean - whether to throw an exception
+###         limit Integer - number of lines required (defaults to 10)
 ### @return Arrayref (n lines of file)
-  my ($path, $compression, $limit) = @_;
-  $limit ||= 10;
+  my ($path, $args) = @_;
+  my $limit = $args->{'limit'} || 10;
   my $count = 0;
   my $lines = [];
-  my $method = (($compression && $compression eq 'gz') || _compression($path) eq 'gz') 
-                    ? 'gz_work_with_file' : 'work_with_file';
+
+  my $compression = $args->{'compression'} || _compression($path);
+  my $method = $compression ? $compression.'_work_with_file' : 'work_with_file';
 
   eval { 
     &$method($path, 'r',
@@ -114,7 +138,8 @@ sub preview_file {
     );
   };
 
-  if ($@) {
+  if ($@ && !$args->{'no_exception'}) {
+    throw exception('FileIOException', sprintf qq(Could not fetch preview of file '%s' due to following errors: \n%s), $path, displayable_error($@));
     ## Throw exception 
   }
   return $lines; 
@@ -123,12 +148,21 @@ sub preview_file {
 sub write_file {
 ### Write an entire file in one chunk
 ### @param String - full path to file
-### @param String - content of file
-### @param (optional) String - compression type
+### @param Args Hashref 
+###         content String - content of file
+###         compression (optional) String - compression type
+###         no_exception (optional) Boolean - whether to throw an exception
 ### @return Void 
-  my ($path, $content, $compression) = @_;
-  $compression ||= _compression($path);
+  my ($path, $args) = @_;
 
+  my $compression = $args->{'compression'} || _compression($path);
+  my $content = $args->{'content'};
+
+  if (!$content && !$args->{'no_exception'}) {
+    throw exception('FileIOException', sprintf qq(No content given for file '%s'.), $path);
+    return;
+  }
+  
   $self->_write_to_file($path, $compression, '>',
       sub {
         my ($fh) = @_;
@@ -141,18 +175,20 @@ sub write_file {
 sub write_lines {
 ### Write one or more lines to a file
 ### @param String - full path to file
-### @param Arrayref - lines of file
-### @param (optional) String - compression type
+### @param Args Hashref 
+###         lines Arrayref - lines of file
+###         compression (optional) String - compression type
+###         no_exception (optional) Boolean - whether to throw an exception
 ### @return Void
-  my ($path, $lines, $compression) = @_;
-  $compression ||= _compression($path);
+  my ($path, $args) = @_;
+  my $lines = $args->{'lines'};
 
-  unless (ref($lines) eq 'ARRAY') {
-    # Throw exception
-    #$self->{'error'} = 'Input must be an arrayref!';
+  if (ref($lines) ne 'ARRAY' && !$args->{'no_exception'}) {
+    throw exception('FileIOException', sprintf qq(Input for '%s' must be an arrayref. Use the write_file method to create a file from a single string.', $path);
     return;
   }
   
+  my $compression = $args->{'compression'} || _compression($path);
   $self->_write_to_file($path, $compression, '>',
       sub {
         my $fh = shift;
@@ -167,18 +203,20 @@ sub write_lines {
 sub append_lines {
 ### Append one or more lines to a file
 ### @param String - full path to file
-### @param Arrayref - lines of file
-### @param (optional) String - compression type
+### @param Args Hashref 
+###         lines Arrayref - lines of file
+###         compression (optional) String - compression type
+###         no_exception (optional) Boolean - whether to throw an exception
 ### @return Void
-  my ($path, $lines, $compression) = @_;
-  $compression ||= _compression($path);
+  my ($path, $args) = @_;
+  my $lines = $args->{'lines'};
 
-  unless (ref($lines) eq 'ARRAY') {
-    # Throw exception
-    #$self->{'error'} = 'Input must be an arrayref!';
+  if (ref($lines) ne 'ARRAY' && !$args->{'no_exception'}) {
+    throw exception('FileIOException', sprintf qq(Input for '%s' must be an arrayref. Use the write_file method to create a file from a single string.', $path);
     return;
   }
   
+  my $compression = $args->{'compression'} || _compression($path);
   $self->_write_to_file($path, $compression, '>>',
       sub {
         my $fh = shift;
@@ -191,17 +229,22 @@ sub append_lines {
 }
 
 sub _write_to_file {
-  my ($self, $compression, @params) = @_;
+### Generic method for file-writing
+### @private
+### @param String - full path to file
+### @param Args Hashref 
+###         params ArrayRef - parameters for work_with_file        
+###         compression (optional) String - compression type
+###         no_exception (optional) Boolean - whether to throw an exception
+### @return Void
+  my ($self, $args) = @_;
 
-  if ($compression && $compression eq 'gz') {
-    eval { gz_work_with_file(@params); }
-  }
-  else {
-    eval { work_with_file(@params); }
-  }
+  my $compression = $args->{'compression'} || _compression($path);
+  my $method = $compression ? $compression.'_work_with_file' : 'work_with_file';
+  eval { &$method(@{$args->{'params'}}); }
 
-  if ($@) {
-    ## Throw exception
+  if ($@ && !$args->{'no_exception'}) {
+    throw exception('FileIOException', sprintf qq(Could not fetch contents of file '%s' due to following errors: \n%s), $path, displayable_error($@));
   }
 }
 
@@ -211,6 +254,9 @@ sub _compression {
 ### what kind of compression appears to have been used.
 ### Currently only supports gzip, but should be extended to
 ### zip and bzip
+### @private
+### @param String - full path to file
+### @return String - file extention for this type of compression
   my $path = shift;
   return $path =~ /\.gz$/ ? 'gz' : undef;
 }
