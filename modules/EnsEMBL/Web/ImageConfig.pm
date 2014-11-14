@@ -31,8 +31,6 @@ use Sanger::Graphics::TextHelper;
 
 use EnsEMBL::Web::DBSQL::DBConnection;
 use EnsEMBL::Web::Tree;
-use EnsEMBL::Web::DOM;
-use EnsEMBL::Web::Exceptions;
 
 #########
 # 'user' settings are restored from cookie if available
@@ -870,24 +868,10 @@ sub _add_datahub_tracks {
     my $type         = ref $track->{'type'} eq 'HASH' ? uc $track->{'type'}{'format'} : uc $track->{'type'};
     my $squish       = $track->{'visibility'} eq 'squish' || $config->{'visibility'} eq 'squish'; # FIXME: make it inherit correctly
     (my $source_name = $track->{'shortLabel'}) =~ s/_/ /g;
-    my $html_desc    = $track->{'description'} || '';
-
-    if ($html_desc) {
-      my $dom = $self->{'dom'} ||= EnsEMBL::Web::DOM->new;
-      my $div;
-      try {
-        $div = $dom->create_element('div', { 'inner_HTML' => [ $html_desc, 1 ] });          # validates HTML
-        $_->set_attribute('target', '_blank') for @{$div->get_elements_by_tag_name('a')};   # all links in new windows
-      } catch {
-        $div = $dom->create_element('div', { 'inner_HTML' => "Invalid HTML at $track->{'description_url'}"})
-      };
-      $html_desc = $div->render;
-    }
-
     my $source       = {
       name        => $track->{'track'},
       source_name => $source_name,
-      description => "<h1>$track->{'longLabel'}</h1>$html_desc",
+      description => $track->{'longLabel'} . $link,
       source_url  => $track->{'bigDataUrl'},
       colour      => exists $track->{'color'} ? $track->{'color'} : undef,
       no_titles   => $type eq 'BIGWIG', # To improve browser speed don't display a zmenu for bigwigs
