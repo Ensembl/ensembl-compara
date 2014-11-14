@@ -28,6 +28,8 @@ use parent qw(EnsEMBL::Web::File);
 
 ### Data can be written to disk or, if enabled and appropriate, memcached
 
+### Path structure: /base_dir/YYYY-MM-DD/user_identifier/XXXXXXXXXXXXXXX/filename.ext
+
 sub new {
 ### @constructor
   my ($class, %args) = @_;
