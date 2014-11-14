@@ -55,12 +55,6 @@ sub size {
   return $self->{'size'}; 
 }
 
-sub mtime { 
-### @accessor
-  my $self = shift;
-  return $self->{'mtime'}; 
-}
-
 sub read {
 ### Read  the contents of an image file and set dimensions
   my $self = shift;
@@ -93,7 +87,6 @@ sub _set_image_params {
   $self->{'width'}  = $x;
   $self->{'height'} = $y;
   $self->{'size'}   = length($data);
-  $self->{'mtime'}  = time;
 }
 
 1;
