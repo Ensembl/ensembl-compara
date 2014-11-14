@@ -197,3 +197,4 @@
 1206	\N	patch	patch_74_75_c.sql|add_genome_statistics
 1207	\N	patch	patch_74_75_d.sql|default_transcript_source
 1208	\N	patch	patch_74_75_e.sql|unique_attrib_key
+1209	\N	patch	patch_74_75_f.sql|longer_code

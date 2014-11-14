@@ -1,17 +1,3 @@
--- Copyright [1999-2014] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
--- 
--- Licensed under the Apache License, Version 2.0 (the "License");
--- you may not use this file except in compliance with the License.
--- You may obtain a copy of the License at
--- 
---      http://www.apache.org/licenses/LICENSE-2.0
--- 
--- Unless required by applicable law or agreed to in writing, software
--- distributed under the License is distributed on an "AS IS" BASIS,
--- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
--- See the License for the specific language governing permissions and
--- limitations under the License.
-
 CREATE TABLE `alt_allele` (
   `alt_allele_id` int(10) unsigned NOT NULL AUTO_INCREMENT,
   `alt_allele_group_id` int(10) unsigned NOT NULL,
@@ -112,7 +98,7 @@ CREATE TABLE `associated_xref` (
 
 CREATE TABLE `attrib_type` (
   `attrib_type_id` smallint(5) unsigned NOT NULL AUTO_INCREMENT,
-  `code` varchar(15) NOT NULL DEFAULT '',
+  `code` varchar(20) NOT NULL DEFAULT '',
   `name` varchar(255) NOT NULL DEFAULT '',
   `description` text,
   PRIMARY KEY (`attrib_type_id`),
@@ -506,7 +492,7 @@ CREATE TABLE `meta` (
   PRIMARY KEY (`meta_id`),
   UNIQUE KEY `species_key_value_idx` (`species_id`,`meta_key`,`meta_value`),
   KEY `species_value_idx` (`species_id`,`meta_value`)
-) ENGINE=MyISAM AUTO_INCREMENT=1664 DEFAULT CHARSET=latin1;
+) ENGINE=MyISAM AUTO_INCREMENT=1665 DEFAULT CHARSET=latin1;
 
 CREATE TABLE `meta_coord` (
   `table_name` varchar(40) NOT NULL,

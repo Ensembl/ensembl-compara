@@ -145,3 +145,4 @@
 900	\N	patch	patch_74_75_c.sql|add_genome_statistics
 901	\N	patch	patch_74_75_d.sql|default_transcript_source
 902	\N	patch	patch_74_75_e.sql|unique_attrib_key
+903	\N	patch	patch_74_75_f.sql|longer_code

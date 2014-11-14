@@ -20,3 +20,4 @@
 26	\N	patch	patch_73_74_i.sql|gene_tree_node_attr.taxon_id
 28	\N	patch	patch_74_75_a.sql|schema_version
 29	\N	patch	patch_74_75_b.sql|genome_db_haskaryo_highcov
+30	\N	patch	patch_74_75c.sql|species_tree_root_256

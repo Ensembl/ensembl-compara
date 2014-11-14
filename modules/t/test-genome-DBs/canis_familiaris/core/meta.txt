@@ -120,3 +120,4 @@
 387	\N	patch	patch_74_75_c.sql|add_genome_statistics
 388	\N	patch	patch_74_75_d.sql|default_transcript_source
 389	\N	patch	patch_74_75_e.sql|unique_attrib_key
+390	\N	patch	patch_74_75_f.sql|longer_code

@@ -1,17 +1,3 @@
--- Copyright [1999-2014] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
--- 
--- Licensed under the Apache License, Version 2.0 (the "License");
--- you may not use this file except in compliance with the License.
--- You may obtain a copy of the License at
--- 
---      http://www.apache.org/licenses/LICENSE-2.0
--- 
--- Unless required by applicable law or agreed to in writing, software
--- distributed under the License is distributed on an "AS IS" BASIS,
--- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
--- See the License for the specific language governing permissions and
--- limitations under the License.
-
 CREATE TABLE `CAFE_gene_family` (
   `cafe_gene_family_id` int(10) unsigned NOT NULL AUTO_INCREMENT,
   `root_id` int(10) unsigned NOT NULL,
@@ -65,18 +51,6 @@ CREATE TABLE `CAFE_tree_node` (
   KEY `root_id` (`root_id`,`left_index`),
   KEY `root_id_2` (`root_id`,`right_index`)
 ) ENGINE=MyISAM DEFAULT CHARSET=latin1;
-
-CREATE TABLE `backup_homology_member` (
-  `homology_id` int(10) unsigned NOT NULL,
-  `member_id` int(10) unsigned NOT NULL,
-  `cigar_line` mediumtext,
-  `perc_cov` int(10) DEFAULT NULL,
-  `perc_id` int(10) DEFAULT NULL,
-  `perc_pos` int(10) DEFAULT NULL,
-  PRIMARY KEY (`homology_id`,`member_id`),
-  KEY `homology_id` (`homology_id`),
-  KEY `member_id` (`member_id`)
-) ENGINE=MyISAM DEFAULT CHARSET=latin1 MAX_ROWS=300000000;
 
 CREATE TABLE `conservation_score` (
   `genomic_align_block_id` bigint(20) unsigned NOT NULL,
@@ -401,7 +375,7 @@ CREATE TABLE `meta` (
   PRIMARY KEY (`meta_id`),
   UNIQUE KEY `species_key_value_idx` (`species_id`,`meta_key`,`meta_value`(255)),
   KEY `species_value_idx` (`species_id`,`meta_value`(255))
-) ENGINE=MyISAM AUTO_INCREMENT=30 DEFAULT CHARSET=latin1;
+) ENGINE=MyISAM AUTO_INCREMENT=31 DEFAULT CHARSET=latin1;
 
 CREATE TABLE `method_link` (
   `method_link_id` int(10) unsigned NOT NULL AUTO_INCREMENT,
