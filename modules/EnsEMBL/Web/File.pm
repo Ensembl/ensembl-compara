@@ -27,6 +27,15 @@ use EnsEMBL::Web::File::Utils::FileSystem qw(create_path);
 ### functionality in EnsEMBL::Web::File::Utils 
 
 ### Data can be written to disk or, if enabled and appropriate, memcached
+### Note that to aid cleanup, all files written to disk should use a common
+### path pattern, as follows:
+### /base_dir/timestamp/user_identifier/random/path/filename.ext
+###  - base_dir is set in subclasses - this is the main temporary file location
+###  - timestamp aids in cleaning up older files by date
+###  - user_identifier is either session id or user id, and helps to
+###  - ensure that users only see their own data
+###  - random/path is a quasi-random series of directories
+###  - filename may be auto-generated, or set by the user
 
 sub new {
 ### @constructor
