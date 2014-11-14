@@ -20,20 +20,13 @@ package EnsEMBL::Web::File;
 
 use strict;
 
-use File::Path;
-use File::Spec::Functions qw(splitpath);
-
-use Bio::EnsEMBL::Utils::IO qw/:all/;
-use EnsEMBL::Web::Tools::RandomString qw(random_ticket random_string);
+use EnsEMBL::Web::File::Utils::IO qw/:all/;
+use EnsEMBL::Web::File::Utils::FileSystem qw(create_path);
 
 ### Replacement for EnsEMBL::Web::TmpFile, using the file-handling
-### functionality in the core API to provide error reporting
-### Used to both create new files for writing data, and opening
-### existing files for download
+### functionality in EnsEMBL::Web::File::Utils 
 
-### STATUS: Under development
-
-### N.B. Will probably require subclass for images
+### Data can be written to disk or, if enabled and appropriate, memcached
 
 sub new {
 ### @constructor
@@ -43,12 +36,20 @@ sub new {
 ###  - hub - for getting TMP_DIR location, etc
 ###  - location - full path to file (optional)
 ###  - prefix - top-level directory (optional)
-###  - name (optional)
-###  - extension - file extension (optional)
-###  - compress (optional) Boolean
+###  - name (optional) String
+###  - extension (optional) String
+###  - compression (optional) String
 ### @return EnsEMBL::Web::File
   my ($class, %args) = @_;
 
+  ## Set default driver (disk only) and include modules
+  $args{'drivers'} ||= ['IO'];
+  foreach (@{$args{'drivers'}}) {
+    my $library = "EnsEMBL::Web::File::Utils::$_";
+    require $library;
+  }
+
+### ToDo - sort this lot out - might need moving into a subclass 
   my $self = \%args;
   $self->{'error'} = undef;
 
@@ -91,7 +92,7 @@ sub new {
                                       $self->{'prefix'}, $self->{'random_path'}, 
                                       $self->{'filename'},
                                     );
-    &_make_directory($self->{'hub'}->species_defs->ENSEMBL_TMP_DIR.$self->{'path'});
+    create_path($self->{'hub'}->species_defs->ENSEMBL_TMP_DIR.$self->{'path'});
   }
   $self->{'location'}     = $self->{'hub'}->species_defs->ENSEMBL_TMP_DIR.$self->{'path'}; 
   $self->{'url'}          = $self->{'hub'}->species_defs->ENSEMBL_TMP_URL.$self->{'path'}; 
@@ -133,28 +134,23 @@ sub error {
 sub is_compressed {
 ### a
   my $self = shift;
-  return $self->{'compress'} ? 1 : 0;
+  return $self->{'compression'} ? 1 : 0;
 }
 
-sub _make_directory {
-### Creates a writeable directory - making sure all parents exist!
-  my $path = shift;
+### Wrappers around E::W::File::Utils::IO methods
+### N.B. this parent class only includes methods that are supported
+### by all drivers
 
-  my ($volume, $dir_path, $file) = splitpath( $path );
-  mkpath( $dir_path, 0, 0777 );
-  return ($dir_path, $file);
-}
-
-sub fetch {
-### Get raw content of file (e.g. for download, hence not uncompressed)
-### @return String (entire file)
+sub exists {
+### Check if a file of this name exists
+### @return Boolean
   my $self = shift;
-  my $content;
-  eval { $content = slurp($self->location) }; 
-  if ($@) {
-    $self->{'error'} = $@;
+
+  foreach ($self->{'drivers'}) {
+    my $method = 'EnsEMBL::Web::File::Utils::'.$_.'::file_exists'; 
+    my $exists = $method();
+    return $exists if $exists;
   }
-  return $content;
 }
 
 sub read {
@@ -162,122 +158,25 @@ sub read {
 ### @return String (entire file)
   my $self = shift;
   my $content;
-  if ($self->is_compressed) {
-    eval { $content = gz_slurp($self->location) }; 
-  }
-  else {
-    eval { $content = slurp($self->location) }; 
-  }
-  if ($@) {
-    $self->{'error'} = $@;
+
+  foreach ($self->{'drivers'}) {
+    my $method = 'EnsEMBL::Web::File::Utils::'.$_.'::read_file'; 
+    $content = $method();
+    last if $content;
   }
   return $content;
-}
-
-sub read_lines {
-### Get entire content of file as separate lines
-### @return Arrayref
-  my $self = shift;
-  my $content = [];
-  if ($self->is_compressed) {
-    eval { $content = gz_slurp_to_array($self->location) }; 
-  }
-  else {
-    eval { $content = slurp_to_array($self->location) }; 
-  }
-  if ($@) {
-    $self->{'error'} = $@;
-  }
-  return $content;
-}
-
-sub preview {
-### Get n lines of a file, e.g. for a web preview
-### @param Integer - number of lines required (default is 10)
-### @return Arrayref (n lines of file)
-  my ($self, $limit) = @_;
-  $limit ||= 10;
-  my $count = 0;
-  my $lines = [];
-  my $method = $self->is_compressed ? 'gz_work_with_file' : 'work_with_file';
-
-  eval { 
-    &$method($self->location, 'r',
-      sub {
-        my $fh = shift;
-        while (<$fh>) {
-          $count++;
-          push @$lines, $_;
-          last if $count == $limit;
-        }
-        return;
-      }
-    );
-  };
-
-  if ($@) {
-    $self->{'error'} = $@;
-  }
-  return $lines; 
-}
-
-sub exists {
-### Check if a file of this name exists
-### @return Boolean
-  my $self = shift;
-  return -e $self->location && -f $self->location;
 }
 
 sub write {
 ### Write entire file
 ### @param Arrayref - lines of file
 ### @return Void
-  my ($self, $lines) = @_;
-
-  unless (ref($lines) eq 'ARRAY') {
-        $self->{'error'} = 'Input must be an arrayref!';
-    return;
-  }
-  
-  $self->_write_to_file($self->location, '>',
-      sub {
-        my $fh = shift;
-        foreach (@$lines) {
-          print $fh, $_;
-        }
-        return;
-      }
-  );
-}
-
-sub write_line {
-### Write (append) a single line to a file
-### @param String
-### @return Void 
-  my ($self, $line) = @_;
-
-  $self->_write_to_file($self->location, '>>',
-      sub {
-        my ($fh) = @_;
-        print $fh $line;
-        return;
-      }
-  );
-}
-
-sub _write_to_file {
-  my ($self, @params) = @_;
-
-  if ($self->is_compressed) {
-    eval { gz_work_with_file(@params); }
-  }
-  else {
-    eval { work_with_file(@params); }
-  }
-
-  if ($@) {
-    $self->{'error'} = $@;
-    warn "!!! $@";
+  my ($self, $content) = @_;
+ 
+  foreach ($self->{'drivers'}) {
+    my $method = 'EnsEMBL::Web::File::Utils::'.$_.'::write_file'; 
+    my $success = $method();
+    return 1 if $success;
   }
 }
 
