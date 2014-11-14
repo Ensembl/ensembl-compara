@@ -1,4 +1,4 @@
-1	\N	schema_version	75
+1	\N	schema_version	76
 8	1	assembly.mapping	scaffold:MMUL_1|contig:MMUL_1
 1117	1	xref.timestamp	2011-05-12 11:51:30
 184	1	assembly.default	MMUL_1
@@ -242,3 +242,6 @@
 1662	\N	patch	patch_74_75_d.sql|default_transcript_source
 1663	\N	patch	patch_74_75_e.sql|unique_attrib_key
 1664	\N	patch	patch_74_75_f.sql|longer_code
+1665	\N	patch	patch_75_76_a.sql|schema_version
+1666	\N	patch	patch_75_76_b.sql|allow_null_karyotype
+1667	\N	patch	patch_75_76_c.sql|remove_alternative_splicing
