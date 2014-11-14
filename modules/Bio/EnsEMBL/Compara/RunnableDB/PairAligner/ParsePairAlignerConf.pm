@@ -164,9 +164,9 @@ sub write_output {
 #		print "num chr dnafrags for " .$non_ref_genome_db->name . " is " . @$dnafrags . "\n" if ($self->debug);
 #		if (@$dnafrags == 0) {
 		if($non_ref_genome_db->has_karyotype){
-		    $dna_collections->{$pair_aligner->{'reference_collection_name'}}->{'include_non_reference'} = 0;
-		} else {
 		    $dna_collections->{$pair_aligner->{'reference_collection_name'}}->{'include_non_reference'} = 1;
+		} else {
+		    $dna_collections->{$pair_aligner->{'reference_collection_name'}}->{'include_non_reference'} = 0;
 		}
 	    }
 	}
