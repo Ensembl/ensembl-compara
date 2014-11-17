@@ -104,24 +104,4 @@ subtest "Test Bio::EnsEMBL::Compara::DnaFrag::getter/setters", sub {
 };
 
 
-# Test deprecated methods...
-subtest "Test Bio::EnsEMBL::Compara::DnaFrag deprecated methods", sub {
-    my $dnafrag = new Bio::EnsEMBL::Compara::DnaFrag(
-                                                     -adaptor => $dnafrag_adaptor,
-                                                     -genome_db_id => $genome_db_id,
-                                                     -coord_system_name => $coord_system_name,
-                                                     -name => $name
-                                                    );
-
-    my $prev_verbose_level = verbose();
-    verbose(0);     #Prevents WARNING messages
-    is( test_getter_setter( $dnafrag, "start", 1 ), 1,
-        "Testing DEPRECATED Bio::EnsEMBL::Compara::DnaFrag::start method ");
-    is( test_getter_setter( $dnafrag, "end", 256 ), 1,
-        "Testing DEPRECATED Bio::EnsEMBL::Compara::DnaFrag::end method ");
-    verbose($prev_verbose_level);
-
-    done_testing();
-};
-
 done_testing();
