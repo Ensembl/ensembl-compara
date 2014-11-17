@@ -1,7 +1,7 @@
 #!/bin/bash
 
-export PERL5LIB=$PWD/bioperl-live-bioperl-release-1-2-3:$PWD/ensembl-test/modules:$PWD/ensembl/modules:$PWD/ensembl-compara/modules
-
+export PERL5LIB=$PWD/bioperl-live-bioperl-release-1-2-3:$PWD/ensembl-test/modules:$PWD/ensembl/modules:$PWD/modules
+export ENSEMBL_CVS_ROOT_DIR=$PWD
 
 echo "Running test suite"
 echo "Using $PERL5LIB"

@@ -5,7 +5,7 @@ perl:
   - "5.10"
 
 env:
-  - COVERALLS=true  DB=mysql  ENSEMBL_CVS_ROOT_DIR=$TRAVIS_BUILD_DIR/..
+  - COVERALLS=true  DB=mysql
 
 before_install:
     - sudo apt-get -y update
@@ -13,7 +13,7 @@ before_install:
     - sudo apt-get -y install sendmail
     - git clone --branch master --depth 1 https://github.com/Ensembl/ensembl-test.git
     - git clone --branch master --depth 1 https://github.com/Ensembl/ensembl.git
-    - git clone --branch master --depth 1 https://github.com/Ensembl/ensembl-compara.git
+    - ln -s ../ ensembl-compara
     - wget https://github.com/bioperl/bioperl-live/archive/bioperl-release-1-2-3.zip
     - unzip bioperl-release-1-2-3.zip
     - echo -e "[server]\nwait_timeout=28000" | sudo tee -a /etc/mysql/my.cnf
