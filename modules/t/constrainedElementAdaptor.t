@@ -247,7 +247,7 @@ sub load_pipeline_tables {
     unless ($create_table) {
         my $db_conn = sprintf "mysql -u %s -p%s -h %s -P%d %s", $compara_dba->dbc->user, $compara_dba->dbc->pass, $compara_dba->dbc->host, $compara_dba->dbc->port, $compara_dba->dbc->dbname;
     
-        `$db_conn < $ensembl_root_dir/ensembl-compara/sql/pipeline-tables.sql`;
+        `sed 's/ENGINE=InnoDB/ENGINE=MyISAM/g' $ensembl_root_dir/ensembl-compara/sql/pipeline-tables.sql | $db_conn`;
     }
     
 }
