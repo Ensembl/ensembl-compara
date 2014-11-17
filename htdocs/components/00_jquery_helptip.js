@@ -23,13 +23,13 @@
       return this.tooltip.apply(this, arguments);
     } else {
 
-      return this.map(function () {
+      return this.each(function () {
 
         var $this = $(this);
         var opts  = $.extend({}, options || {});
 
         if ($this.data('uiTooltip')) {
-          return this;
+          return;
         }
 
         opts.content  = opts.content  || this.title.replace(/\n/g, '<br />') || $this.find('>._ht_tip').first().remove().text();
@@ -77,7 +77,7 @@
 
         $this = null;
 
-        return this;
+        return;
       });
     }
   };
