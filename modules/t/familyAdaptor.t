@@ -42,6 +42,8 @@ my $mlssa = $compara_dba->get_MethodLinkSpeciesSetAdaptor;
 
 my $source = "ENSEMBLGENE";
 
+is($source, 'ENSEMBLGENE');
+
 =pod
 
 my ($family_id, $family_stable_id, $family_description, $family_method_link_species_set_id,

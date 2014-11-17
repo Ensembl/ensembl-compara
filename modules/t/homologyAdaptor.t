@@ -35,6 +35,7 @@ my $gdba = $compara_dba->get_GenomeDBAdaptor;
 my $hs_gdb = $gdba->fetch_by_name_assembly($ref_species,$human_assembly);
 $hs_gdb->db_adaptor($hs_dba);
 
+is($ref_species, 'homo_sapiens');
 
 =pod
 
