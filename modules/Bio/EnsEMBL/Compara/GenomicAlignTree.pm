@@ -470,7 +470,7 @@ sub group_id {
 	    foreach my $genomic_align (@{$this_genomic_align_node->genomic_align_group->get_all_GenomicAligns}) {
 		my $this_genomic_align_block_id = $genomic_align->genomic_align_block_id;
 		my $this_genomic_align_block = $genomic_align_block_adaptor->fetch_by_dbID($this_genomic_align_block_id);
-		if ($this_genomic_align_block->group_id) {
+		if ($this_genomic_align_block and $this_genomic_align_block->group_id) {
 		    $group_ids{$this_genomic_align_block->group_id} = 1;
 		} else {
 		    $group_ids{"undef"} = 1;
