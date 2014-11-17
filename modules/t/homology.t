@@ -29,7 +29,7 @@ subtest "Test getter/setter Bio::EnsEMBL::Compara::Homology methods", sub {
                                                        -dbID => 12,
                                                        -stable_id => "my_dummy_stable_id",
                                                        -description => "dummy gene",
-                                                       -adaptor => "dummy_adaptor",
+                                                       #-adaptor => "dummy_adaptor",
                                                        -method_link_species_set_id => 6);
 
     #$homology->method_link_type("ENSEMBL_ORTHOLOGUES");
@@ -42,7 +42,7 @@ subtest "Test getter/setter Bio::EnsEMBL::Compara::Homology methods", sub {
     ok( test_getter_setter( $homology, "method_link_species_set_id", 2 ));
     #ok( test_getter_setter( $homology, "method_link_id", 2 ));
     #ok( test_getter_setter( $homology, "method_link_type", "blablablo" ));
-    ok( test_getter_setter( $homology, "adaptor", "dummy_adaptor" ));
+    #ok( test_getter_setter( $homology, "adaptor", "dummy_adaptor" ));
 
     done_testing();
 };

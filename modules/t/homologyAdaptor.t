@@ -35,6 +35,9 @@ my $gdba = $compara_dba->get_GenomeDBAdaptor;
 my $hs_gdb = $gdba->fetch_by_name_assembly($ref_species,$human_assembly);
 $hs_gdb->db_adaptor($hs_dba);
 
+
+=pod
+
 my $ma = $compara_dba->get_MemberAdaptor;
 my $ha = $compara_dba->get_HomologyAdaptor;
 my $mlssa = $compara_dba->get_MethodLinkSpeciesSetAdaptor;
@@ -53,8 +56,6 @@ my $method_link_type = "ENSEMBL_ORTHOLOGUES";
 subtest "Test fetch methods", sub {
 
     ok(1);
-
-=pod
 
     my $member = $ma->fetch_by_source_stable_id("ENSEMBLGENE","$member_stable_id");
 
@@ -122,9 +123,10 @@ subtest "Test fetch methods", sub {
 
     ok($homologies);
 
-=cut
 
     done_testing();
 };
+
+=cut
 
 done_testing();

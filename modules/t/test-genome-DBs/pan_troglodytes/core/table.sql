@@ -1,17 +1,3 @@
--- Copyright [1999-2014] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
--- 
--- Licensed under the Apache License, Version 2.0 (the "License");
--- you may not use this file except in compliance with the License.
--- You may obtain a copy of the License at
--- 
---      http://www.apache.org/licenses/LICENSE-2.0
--- 
--- Unless required by applicable law or agreed to in writing, software
--- distributed under the License is distributed on an "AS IS" BASIS,
--- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
--- See the License for the specific language governing permissions and
--- limitations under the License.
-
 CREATE TABLE `alt_allele` (
   `alt_allele_id` int(10) unsigned NOT NULL AUTO_INCREMENT,
   `alt_allele_group_id` int(10) unsigned NOT NULL,
@@ -112,7 +98,7 @@ CREATE TABLE `associated_xref` (
 
 CREATE TABLE `attrib_type` (
   `attrib_type_id` smallint(5) unsigned NOT NULL AUTO_INCREMENT,
-  `code` varchar(15) NOT NULL DEFAULT '',
+  `code` varchar(20) NOT NULL DEFAULT '',
   `name` varchar(255) NOT NULL DEFAULT '',
   `description` text,
   PRIMARY KEY (`attrib_type_id`),
@@ -322,7 +308,7 @@ CREATE TABLE `gene` (
   `seq_region_end` int(10) unsigned NOT NULL,
   `seq_region_strand` tinyint(2) NOT NULL,
   `display_xref_id` int(10) unsigned DEFAULT NULL,
-  `source` varchar(20) NOT NULL,
+  `source` varchar(40) NOT NULL,
   `status` enum('KNOWN','NOVEL','PUTATIVE','PREDICTED','KNOWN_BY_PROJECTION','UNKNOWN','ANNOTATED') DEFAULT NULL,
   `description` text,
   `is_current` tinyint(1) NOT NULL DEFAULT '1',
@@ -418,8 +404,8 @@ CREATE TABLE `karyotype` (
   `seq_region_id` int(10) unsigned NOT NULL,
   `seq_region_start` int(10) unsigned NOT NULL,
   `seq_region_end` int(10) unsigned NOT NULL,
-  `band` varchar(40) NOT NULL,
-  `stain` varchar(40) NOT NULL,
+  `band` varchar(40) DEFAULT NULL,
+  `stain` varchar(40) DEFAULT NULL,
   PRIMARY KEY (`karyotype_id`),
   KEY `region_band_idx` (`seq_region_id`,`band`)
 ) ENGINE=MyISAM DEFAULT CHARSET=latin1;
@@ -506,7 +492,7 @@ CREATE TABLE `meta` (
   PRIMARY KEY (`meta_id`),
   UNIQUE KEY `species_key_value_idx` (`species_id`,`meta_key`,`meta_value`),
   KEY `species_value_idx` (`species_id`,`meta_value`)
-) ENGINE=MyISAM AUTO_INCREMENT=682 DEFAULT CHARSET=latin1;
+) ENGINE=MyISAM AUTO_INCREMENT=689 DEFAULT CHARSET=latin1;
 
 CREATE TABLE `meta_coord` (
   `table_name` varchar(40) NOT NULL,
@@ -790,44 +776,6 @@ CREATE TABLE `simple_feature` (
   KEY `hit_idx` (`display_label`)
 ) ENGINE=MyISAM AUTO_INCREMENT=152108 DEFAULT CHARSET=latin1;
 
-CREATE TABLE `splicing_event` (
-  `splicing_event_id` int(10) unsigned NOT NULL AUTO_INCREMENT,
-  `name` varchar(134) DEFAULT NULL,
-  `gene_id` int(10) unsigned NOT NULL,
-  `seq_region_id` int(10) unsigned NOT NULL,
-  `seq_region_start` int(10) unsigned NOT NULL,
-  `seq_region_end` int(10) unsigned NOT NULL,
-  `seq_region_strand` tinyint(2) NOT NULL,
-  `attrib_type_id` smallint(5) unsigned NOT NULL DEFAULT '0',
-  PRIMARY KEY (`splicing_event_id`),
-  KEY `gene_idx` (`gene_id`),
-  KEY `seq_region_idx` (`seq_region_id`,`seq_region_start`)
-) ENGINE=MyISAM DEFAULT CHARSET=latin1;
-
-CREATE TABLE `splicing_event_feature` (
-  `splicing_event_feature_id` int(10) unsigned NOT NULL,
-  `splicing_event_id` int(10) unsigned NOT NULL,
-  `exon_id` int(10) unsigned NOT NULL,
-  `transcript_id` int(10) unsigned NOT NULL,
-  `feature_order` int(10) unsigned NOT NULL,
-  `transcript_association` int(10) unsigned NOT NULL,
-  `type` enum('constitutive_exon','exon','flanking_exon') DEFAULT NULL,
-  `start` int(10) unsigned NOT NULL,
-  `end` int(10) unsigned NOT NULL,
-  PRIMARY KEY (`splicing_event_feature_id`,`exon_id`,`transcript_id`),
-  KEY `se_idx` (`splicing_event_id`),
-  KEY `transcript_idx` (`transcript_id`)
-) ENGINE=MyISAM DEFAULT CHARSET=latin1;
-
-CREATE TABLE `splicing_transcript_pair` (
-  `splicing_transcript_pair_id` int(10) unsigned NOT NULL,
-  `splicing_event_id` int(10) unsigned NOT NULL,
-  `transcript_id_1` int(10) unsigned NOT NULL,
-  `transcript_id_2` int(10) unsigned NOT NULL,
-  PRIMARY KEY (`splicing_transcript_pair_id`),
-  KEY `se_idx` (`splicing_event_id`)
-) ENGINE=MyISAM DEFAULT CHARSET=latin1;
-
 CREATE TABLE `stable_id_event` (
   `old_stable_id` varchar(128) DEFAULT NULL,
   `old_version` smallint(6) DEFAULT NULL,
@@ -858,7 +806,7 @@ CREATE TABLE `transcript` (
   `seq_region_end` int(10) unsigned NOT NULL,
   `seq_region_strand` tinyint(2) NOT NULL,
   `display_xref_id` int(10) unsigned DEFAULT NULL,
-  `source` varchar(20) NOT NULL DEFAULT 'ensembl',
+  `source` varchar(40) NOT NULL DEFAULT 'ensembl',
   `biotype` varchar(40) NOT NULL,
   `status` enum('KNOWN','NOVEL','PUTATIVE','PREDICTED','KNOWN_BY_PROJECTION','UNKNOWN','ANNOTATED') DEFAULT NULL,
   `description` text,
