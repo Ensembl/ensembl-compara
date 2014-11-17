@@ -464,7 +464,7 @@ sub group_id {
     } elsif (!defined($self->{'group_id'}) and defined($self->{adaptor})) {
         # Try to get the ID from other sources...
         my %group_ids;
-        my $genomic_align_block_adaptor = $self->adaptor->dba->get_GenomicAlignBlockAdaptor;
+        my $genomic_align_block_adaptor = $self->adaptor->db->get_GenomicAlignBlockAdaptor;
         foreach my $this_genomic_align_node (@{$self->get_all_nodes()}) {
 	    next if (!defined $this_genomic_align_node->genomic_align_group);
 	    foreach my $genomic_align (@{$this_genomic_align_node->genomic_align_group->get_all_GenomicAligns}) {
