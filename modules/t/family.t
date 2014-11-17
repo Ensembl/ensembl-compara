@@ -29,7 +29,7 @@ subtest "Test getter/setter Bio::EnsEMBL::Compara::Family methods", sub {
                                                    -dbID => 12,
                                                    -stable_id => "my_dummy_stable_id",
                                                    -description => "dummy gene",
-                                                   -adaptor => "dummy_adaptor",
+                                                   #-adaptor => "dummy_adaptor",
                                                    -method_link_species_set_id => 7);
     
     #$family->method_link_type("FAMILY");
@@ -42,7 +42,7 @@ subtest "Test getter/setter Bio::EnsEMBL::Compara::Family methods", sub {
     ok( test_getter_setter( $family, "method_link_species_set_id", 2 ));
     #ok( test_getter_setter( $family, "method_link_id", 2 ));
     #ok( test_getter_setter( $family, "method_link_type", "blablablo" ));
-    ok( test_getter_setter( $family, "adaptor", "dummy_adaptor" ));
+    #ok( test_getter_setter( $family, "adaptor", "dummy_adaptor" ));
 
     done_testing();
 };
