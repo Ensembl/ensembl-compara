@@ -5,7 +5,8 @@ perl:
   - "5.10"
 
 env:
-  - COVERALLS=true  DB=mysql
+  - COVERALLS=true
+  - COVERALLS=false
 
 before_install:
     - sudo apt-get -y update
@@ -27,6 +28,14 @@ install:
     - cp -f travisci/MultiTestDB.conf.travisci  modules/t/MultiTestDB.conf
 
 script: "./travisci/harness.sh"
+
+# Get the matrix to only build coveralls support when on 5.10
+matrix:
+  exclude:
+    - perl: "5.10"
+      env: COVERALLS=false
+    - perl: "5.14"
+      env: COVERALLS=true
 
 notifications:
   email:
