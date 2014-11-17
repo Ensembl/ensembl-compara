@@ -40,7 +40,7 @@ subtest "Test getter/setter Bio::EnsEMBL::Compara::Member methods", sub {
     #ok( test_getter_setter( $member, "source_id", 2 ));
     ok( test_getter_setter( $member, "source_name", "ENSEMBLPEP" ));
     #ok( test_getter_setter( $member, "adaptor", "dummy_adaptor" ));
-    ok( test_getter_setter( $member, "chr_name", "14" ));
+    #ok( test_getter_setter( $member, "chr_name", "14" ));
 #    ok( test_getter_setter( $member, "dnafrag_start", 50146593 ));
 #    ok( test_getter_setter( $member, "dnafrag_end", 50184785 ));
 #    ok( test_getter_setter( $member, "dnafrag_strand", 1 ));
