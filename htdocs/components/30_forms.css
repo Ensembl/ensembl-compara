@@ -155,6 +155,7 @@ input.fbutton:active, input.fbutton:hover {
 }
 input.fbutton.disabled, input.fbutton.disabled:active {
   background-color:#999;
+  cursor: default;
 }
 .fselect {
   width: 210px;
