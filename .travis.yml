@@ -5,7 +5,7 @@ perl:
   - "5.10"
 
 env:
-  - COVERALLS=true  DB=mysql  ENSEMBL_CVS_ROOT_DIR=$TRAVIS_BUILD_DIR
+  - COVERALLS=true  DB=mysql  ENSEMBL_CVS_ROOT_DIR=$TRAVIS_BUILD_DIR/..
 
 before_install:
     - sudo apt-get -y update
