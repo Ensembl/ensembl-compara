@@ -43,7 +43,9 @@ sub get_transcript {
 
 sub content {
   my $self = shift;
-  return sprintf '<h2>Transcript ID: %s</h2>%s', $self->object->Obj->external_name, $self->SUPER::content;
+  my $external_name = $self->object->Obj->external_name;
+  my $display_id = ($external_name && $external_name ne '') ? $external_name : $self->object->Obj->stable_id;
+  return sprintf '<h2>Transcript ID: %s</h2>%s', $display_id, $self->SUPER::content;
 }
 
 1;
