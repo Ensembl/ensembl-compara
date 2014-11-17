@@ -42,6 +42,8 @@ my $mlssa = $compara_dba->get_MethodLinkSpeciesSetAdaptor;
 
 my $source = "ENSEMBLGENE";
 
+=pod
+
 my ($family_id, $family_stable_id, $family_description, $family_method_link_species_set_id,
     $stable_id) = $compara_dba->dbc->db_handle->selectrow_array("
         SELECT family_id, family.stable_id, family.description,
@@ -53,8 +55,6 @@ my ($family_id, $family_stable_id, $family_description, $family_method_link_spec
 subtest "Test fetch methods", sub {
 
     ok(1);
-
-=pod
 
     my $member = $ma->fetch_by_source_stable_id($source,$stable_id);
 
@@ -111,9 +111,9 @@ subtest "Test fetch methods", sub {
     $multi->restore('compara', 'family_member');
     $multi->restore('compara', 'method_link_species_set');
 
-=cut
 
     done_testing();
 };
 
+=cut
 done_testing();
