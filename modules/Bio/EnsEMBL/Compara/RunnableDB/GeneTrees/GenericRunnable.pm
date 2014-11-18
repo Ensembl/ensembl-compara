@@ -231,11 +231,6 @@ sub run_generic_command {
     $self->param('species_tree_file', $self->get_species_tree_file());
     $self->merge_split_genes($gene_tree) if $self->param('check_split_genes');
 
-    # This is needed for check_split_genes and parse_filtered_align
-    foreach my $member (@{$gene_tree->get_all_Members}) {
-        $member->{_tmp_name} = sprintf('%d_%d', $member->seq_member_id, $member->genome_db->species_tree_node_id);
-    }
-
 	if ($self->param('tree_update')){
 		my $input_aln = $self->dumpTreeMultipleAlignmentToWorkdir($self->param('default_gene_tree'), $self->param('aln_format'), {-APPEND_SPECIES_TREE_NODE_ID => 1}) || die "Could not fetch alignment for ($self->param('default_gene_tree'))";
 		$self->param('alignment_file', $input_aln);
