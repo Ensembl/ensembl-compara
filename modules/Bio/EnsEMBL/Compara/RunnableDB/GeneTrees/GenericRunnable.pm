@@ -67,6 +67,7 @@ Other parameters:
  - reroot_with_sdi: should "treebest sdi" also reroot the tree
  - output_clusterset_id: alternative clusterset_id to store the result gene tree
  - aln_format: (default: "fasta"). In which format the alignment should be dumped
+ - aln_update: Is used to run "mafft -add" which is used by the update pipeline
 
 Branch events:
  - #1: autoflow on success
@@ -180,6 +181,9 @@ sub write_output {
             $self->store_genetree($target_tree, []);
         }
 
+		#We minimize the trees here in order to remove parents of disavowed members.
+		$target_tree->{'_root'} = $target_tree->root->minimize_tree;
+
         # check that the tree is binary
         foreach my $node (@{$target_tree->get_all_nodes}) {
             next if $node->is_leaf;
@@ -224,8 +228,14 @@ sub run_generic_command {
         $member->{_tmp_name} = sprintf('%d_%d', $member->seq_member_id, $member->genome_db->species_tree_node_id);
     }
 
-    my $input_aln = $self->dumpTreeMultipleAlignmentToWorkdir($gene_tree) || die "Could not fetch alignment for ($gene_tree)";
-    $self->param('alignment_file', $input_aln);
+	if ($self->param('tree_update')){
+		my $input_aln = $self->dumpTreeMultipleAlignmentToWorkdir($self->param('default_gene_tree')) || die "Could not fetch alignment for ($self->param('default_gene_tree'))";
+		$self->param('alignment_file', $input_aln);
+	}
+	else{
+		my $input_aln = $self->dumpTreeMultipleAlignmentToWorkdir($gene_tree) || die "Could not fetch alignment for ($gene_tree)";
+		$self->param('alignment_file', $input_aln);
+	}
 
     $self->param('gene_tree_file', $self->get_gene_tree_file($gene_tree));
 
