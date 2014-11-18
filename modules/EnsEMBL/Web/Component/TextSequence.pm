@@ -281,7 +281,8 @@ sub set_variations {
     }
     
     # Use the variation from the underlying slice if we have it.
-    my $snp = scalar keys %$u_snps ? $u_snps->{$variation_name} : $_;
+    my $snp = $u_snps->{$variation_name} if scalar keys %$u_snps;
+    $snp ||= $_; 
     
     # Co-ordinates relative to the region - used to determine if the variation is an insert or delete
     my $seq_region_start = $snp->seq_region_start;
