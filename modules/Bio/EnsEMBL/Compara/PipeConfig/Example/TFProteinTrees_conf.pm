@@ -81,7 +81,7 @@ sub default_options {
 
     # custom pipeline name, in case you don't like the default one
 		#'pipeline_name'         => $self->o('division').$self->o('rel_with_suffix').'_hom_eg'.$self->o('eg_release').'_e'.$self->o('ensembl_release'),
-		'pipeline_name'         => 'treefam_10_baboon',
+		'pipeline_name'         => 'treefam_10_mammals_baboon',
         # Tag attached to every single tree
         'division'              => 'treefam',
 
@@ -134,7 +134,7 @@ sub default_options {
     # HMM specific parameters (set to 0 or undef if not in use)
        # List of directories that contain Panther-like databases (with books/ and globals/)
        # It requires two more arguments for each file: the name of the library, and whether subfamilies should be loaded
-       'panther_like_databases'  => [ ["/nfs/nobackup2/xfam/treefam/datasets/panhmms/just_panther_treefam/", "just_panther_treefam", 1], ],
+       'hmm_library_basedir'     => "/gpfs/nobackup/ensembl/muffato/mateus/TF10",
 
        # List of MultiHMM files to load (and their names)
 
@@ -164,7 +164,7 @@ sub default_options {
         'qc_capacity'               =>   4,
         'hc_capacity'               =>   4,
         'HMMer_classify_capacity'   => 400,
-		'HMMer_classifyPantherScore_capacity'=> 500,
+		'HMMer_classifyPantherScore_capacity'=> 1000,
         'loadmembers_capacity'      =>  30,
         'copy_trees_capacity'       => 100,
 		'copy_alignments_capacity'  => 100,
@@ -193,7 +193,7 @@ sub default_options {
       -user   => 'admin',
       -pass   => $self->o('password'),
 	  #-dbname => 'TreeFam'.$self->o('release').$self->o('release_suffix'),
-      -dbname => 'treefam_10_baboon',
+      -dbname => 'treefam_10_mammals_baboon',
 	  -driver => 'mysql',
       #-db_version => $self->o('ensembl_release')
     },
@@ -274,7 +274,8 @@ sub default_options {
         #   blastp means that the pipeline will run a all-vs-all blastp comparison of the proteins and run hcluster to create clusters. This can take a *lot* of compute
         #   hmm means that the pipeline will run an HMM classification
         #   hybrid is like "hmm" except that the unclustered proteins go to a all-vs-all blastp + hcluster stage
-        'clustering_mode'           => 'hmm',
+		#'clustering_mode'           => 'hmm',
+        'clustering_mode'           => 'topup',
 
         # How much the pipeline will try to reuse from "prev_rel_db"
         # Possible values: 'clusters' (default), 'blastp', 'members'
@@ -306,8 +307,10 @@ sub resource_classes {
          '16Gb_16c_job' => {'LSF' => '-q production-rh6 -n 16 -C0 -M16000 -R"select[mem>16000] rusage[mem=16000]"' },
          '64Gb_16c_job' => {'LSF' => '-q production-rh6 -n 16 -C0 -M64000 -R"select[mem>64000] rusage[mem=64000]"' },
 
-         '8Gb_64c_mpi'  => {'LSF' => '-q mpi -n 64 -a openmpi -M8000  -R"select[mem>8000]  rusage[mem=8000]  same[model] span[ptile=16]"' },
-         '16Gb_64c_mpi' => {'LSF' => '-q mpi -n 64 -a openmpi -M16000 -R"select[mem>16000] rusage[mem=16000] same[model] span[ptile=16]"' },
+         '8Gb_64c_mpi'  => {'LSF' => '-q mpi -n 64 -a openmpi -M8000 -R"select[mem>8000] rusage[mem=8000] same[model] span[ptile=16]"' },
+         '16Gb_64c_mpi' => {'LSF' => '-q mpi -n 64 -a openmpi -M32000 -R"select[mem>32000] rusage[mem=32000] same[model] span[ptile=16]"' },
+
+         '4Gb_job_gpfs'      => {'LSF' => '-q production-rh6 -M4000 -R"select[mem>4000] rusage[mem=4000] select[gpfs]"' },
   };
 }
 
