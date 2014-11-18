@@ -112,8 +112,8 @@ sub table_data {
 
     my $has_phenotype_html = qq{
       <span class="hidden export">$export_phenotypes</span>
-      <a href="$url" title="This variant has significant associated phenotype(s) in this paper: $phenotypes">
-        <img class="_ht" src="/i/val/var_phenotype_data_small.png" style="border-radius:5px;border:1px solid #000" alt="Phenotype"/>
+      <a class="_ht" href="$url" title="This variant has significant associated phenotype(s) in this paper: $phenotypes">
+        <img src="/i/val/var_phenotype_data_small.png" style="border-radius:5px;border:1px solid #000" alt="Phenotype"/>
       </a>
     };
 
