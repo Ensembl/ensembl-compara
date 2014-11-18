@@ -302,7 +302,7 @@ sub glyphset_configs {
     my @tracks      = $self->get_tracks;
     my $track_order = $self->track_order;
 
-    my ($pointer, $last_pointer, $i, %lookup, @default_order, @ordered_tracks);
+    my ($pointer, $first_track, $last_pointer, $i, %lookup, @default_order, @ordered_tracks);
 
     foreach my $track ($self->default_track_order(@tracks)) {
       my $strand = $track->get('strand');
@@ -338,15 +338,25 @@ sub glyphset_configs {
     }
 
     # Apply user track sorting now
-    $pointer = $default_order[0];
+    $pointer = $first_track = $default_order[0];
+    $pointer = $pointer->{'__next'} while $pointer->id =~ /^(draggable|ideogram|info|ruler|scalebar)$/; # these tracks can't be moved from the beginning of the list
+    $pointer = $pointer->{'__prev'}; # point to the last track among all the immovable tracks at beginning of the track list
     for (@$track_order) {
       my $track = $lookup{$_->[0]} or next;
-      my $prev  = $_->[1] && $lookup{$_->[1]} || undef;
+      my $prev  = $_->[1] && $lookup{$_->[1]} || $pointer; # pointer (and thus prev) could possibly be undef if there was no immovable track in the beginning
+      my $next  = $prev ? $prev->{'__next'} : undef;
+
+      # if $prev is undef, it means $track is supposed to moved to first position in the list, thus $next should be current first track
+      # First track in the list could possibly have changed in the last iteration of this loop, so rewind it before setting $next
+      if (!$prev) {
+        $first_track  = $first_track->{'__prev'} while $first_track->{'__prev'};
+        $next         = $first_track;
+      }
 
       $track->{'__prev'}{'__next'}  = $track->{'__next'} if $track->{'__prev'};
       $track->{'__next'}{'__prev'}  = $track->{'__prev'} if $track->{'__next'};
       $track->{'__prev'}            = $prev;
-      $track->{'__next'}            = $prev ? $prev->{'__next'} : $pointer;
+      $track->{'__next'}            = $next;
       $track->{'__prev'}{'__next'}  = $track if $track->{'__prev'};
       $track->{'__next'}{'__prev'}  = $track if $track->{'__next'};
     }
