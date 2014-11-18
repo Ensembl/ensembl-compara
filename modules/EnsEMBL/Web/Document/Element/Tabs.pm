@@ -62,7 +62,7 @@ sub init {
     class    => 'species',
     type     => 'Info',
     action   => 'Index',
-    caption  => sprintf('%s (%s)', $species_defs->SPECIES_COMMON_NAME, $species_defs->ASSEMBLY_NAME),
+    caption  => sprintf('%s (%s)', $species_defs->SPECIES_COMMON_NAME, $species_defs->ASSEMBLY_SHORT_NAME),
     dropdown => 1
   } : {
     class    => 'species',
