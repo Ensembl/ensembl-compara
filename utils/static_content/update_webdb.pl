@@ -117,11 +117,12 @@ foreach my $sp (sort @species) {
       $already_done = 1;
     }
     unless ($already_done) {
-      my $a_code = $sd->get_config($sp, 'ASSEMBLY_NAME') || '';
+      my $a_name = $sd->get_config($sp, 'ASSEMBLY_NAME') || '';
+      my $a_version = $sd->get_config($sp, 'ASSEMBLY_VERSION') || '';
       my $initial = $sd->get_config($sp, 'GENEBUILD_RELEASE') || '';
       my $latest = $sd->get_config($sp, 'GENEBUILD_LATEST') || '';
       $sql = 'INSERT INTO release_species VALUES (?, ?, ?, ?, ?, ?, ?, ?)';
-      @args = ($release_id, $species_id, $a_code, $a_code, '', '', $initial, $latest);
+      @args = ($release_id, $species_id, $a_version, $a_name, '', '', $initial, $latest);
       $sth = $adaptor->db->prepare($sql);
       $sth->execute(@args);
       print "ADDED $sp to release $release_id \n";
