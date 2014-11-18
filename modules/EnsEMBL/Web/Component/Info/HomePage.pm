@@ -175,19 +175,20 @@ sub assembly_text {
   my $previous = $assembly_version;
   foreach my $version (reverse sort {$a <=> $b} keys %$archives) {
     my $archive = $archives->{$version};
-    ## Remove patch sub-versions
-    (my $major_assembly = $archive->{'assembly'}) =~ s/\.p\d+//;
-    next if $version == $ensembl_version || $major_assembly eq $previous;
-    my $desc = $archive->{'description'} || sprintf '(%s release %s)', $species_defs->ENSEMBL_SITETYPE, $version;
-    my $subdomain = ((lc $archive->{'archive'}) =~ /^[a-z]{3}[0-9]{4}$/) 
+    my $archive_assembly = $archive->{'version'};
+    if ($archive_assembly ne $previous && $archive_assembly ne $assembly) {
+      my $desc = $archive->{'description'} 
+                  || sprintf '(%s release %s)', $species_defs->ENSEMBL_SITETYPE, $version;
+      my $subdomain = ((lc $archive->{'archive'}) =~ /^[a-z]{3}[0-9]{4}$/) 
                       ? lc $archive->{'archive'}.'.archive' : lc $archive->{'archive'};
-    push @other_assemblies, {
-      url      => sprintf('http://%s.ensembl.org/%s/', $subdomain, $species),
-      assembly => $major_assembly,
-      release  => $desc,
-    };
+      push @other_assemblies, {
+        url      => sprintf('http://%s.ensembl.org/%s/', $subdomain, $species),
+        assembly => $archive_assembly,
+        release  => $desc,
+      };
+    }
     
-    $previous = $major_assembly;
+    $previous = $archive_assembly;
   }
   
   ## Don't link to pre site on archives, as it changes too often
