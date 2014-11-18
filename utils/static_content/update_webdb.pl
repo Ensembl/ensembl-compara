@@ -24,18 +24,18 @@ use File::Basename qw( dirname );
 use Pod::Usage;
 use Getopt::Long;
 
-my ( $SERVERROOT, $help, $info, $date);
+my ($SERVERROOT, $help, $info, $date);
 
 BEGIN{
-  &GetOptions( 
-	      'help'      => \$help,
-	      'info'      => \$info,
-          'date=s'    => \$date,
-	     );
-  
+  &GetOptions(
+    'help'    => \$help,
+    'info'    => \$info,
+    'date=s'  => \$date,
+  );
+
   pod2usage(-verbose => 2) if $info;
   pod2usage(1) if $help;
-  
+
   $SERVERROOT = dirname( $Bin );
   $SERVERROOT =~ s#/utils##;
   unshift @INC, "$SERVERROOT/conf";
@@ -50,15 +50,15 @@ use EnsEMBL::Web::DBSQL::ArchiveAdaptor;
 print "\n\n";
 
 my $hub = new EnsEMBL::Web::Hub;
-my $SD = $hub->species_defs;
+my $sd  = $hub->species_defs;
 
 # Check database to see if this release is included already, then
 # give the user the option to update the release date
 
 my $adaptor = EnsEMBL::Web::DBSQL::ArchiveAdaptor->new($hub);
-my ($sql, $sth, @args); 
+my ($sql, $sth, @args);
 
-my $release_id = $SD->ENSEMBL_VERSION;
+my $release_id = $sd->ENSEMBL_VERSION;
 my $release = $adaptor->fetch_release($release_id);
 
 if ($release) {
@@ -67,7 +67,7 @@ if ($release) {
 } else {
     my $archive = $SiteDefs::ARCHIVE_VERSION;
     my $date = $hub->pretty_date($archive);
-    $sql = 'INSERT INTO ens_release values(?, ?, ?, ?, ?, ?)';
+    $sql = 'INSERT INTO ens_release (release_id, number, date, archive, online, mart) values(?, ?, ?, ?, ?, ?)';
     @args = ($release_id, $release_id, $date, $archive, 'Y', 'Y');
     $sth = $adaptor->db->prepare($sql);
     $sth->execute(@args);
@@ -77,14 +77,14 @@ if ($release) {
 print "Adding species...\n\n";
 
 # get the hash of all species in the database
-my @db_spp = @{$adaptor->fetch_all_species}; 
+my @db_spp = @{$adaptor->fetch_all_species};
 my %lookup;
 foreach my $sp (@db_spp) {
   $lookup{$sp->{'name'}} = $sp->{'id'};
 }
 
 # get a list of valid (configured) species
-my @species = $SD->valid_species();
+my @species = $sd->valid_species();
 my ($record, $result, $species_id);
 
 foreach my $sp (sort @species) {
@@ -92,13 +92,13 @@ foreach my $sp (sort @species) {
   # check if this species is in the database yet
   if (!$lookup{$sp}) {
     my $record = {
-      'name'          => $SD->get_config($sp, 'SPECIES_URL'),
-      'common_name'   => $SD->get_config($sp, 'SPECIES_COMMON_NAME'),
-      'code'          => $SD->get_config($sp, 'SPECIES_CODE'),
+      'name'          => $sd->get_config($sp, 'SPECIES_URL'),
+      'common_name'   => $sd->get_config($sp, 'SPECIES_COMMON_NAME'),
+      'code'          => $sd->get_config($sp, 'SPECIES_CODE'),
     };
     $sql = 'INSERT INTO species SET code = ?, name = ?, common_name = ?, vega = ?, online = ?';
-    @args = ($SD->get_config($sp, 'SPECIES_CODE'), $SD->get_config($sp, 'SPECIES_URL'),
-              $SD->get_config($sp, 'SPECIES_COMMON_NAME'), 'N', 'Y');
+    @args = ($sd->get_config($sp, 'SPECIES_CODE'), $sd->get_config($sp, 'SPECIES_URL'),
+              $sd->get_config($sp, 'SPECIES_COMMON_NAME'), 'N', 'Y');
     $sth = $adaptor->db->prepare($sql);
     $sth->execute(@args);
     print "Adding new species $sp to database, with ID $species_id\n";
@@ -117,9 +117,9 @@ foreach my $sp (sort @species) {
       $already_done = 1;
     }
     unless ($already_done) {
-      my $a_code = $SD->get_config($sp, 'ASSEMBLY_NAME') || ''; 
-      my $initial = $SD->get_config($sp, 'GENEBUILD_RELEASE') || ''; 
-      my $latest = $SD->get_config($sp, 'GENEBUILD_LATEST') || '';
+      my $a_code = $sd->get_config($sp, 'ASSEMBLY_NAME') || '';
+      my $initial = $sd->get_config($sp, 'GENEBUILD_RELEASE') || '';
+      my $latest = $sd->get_config($sp, 'GENEBUILD_LATEST') || '';
       $sql = 'INSERT INTO release_species VALUES (?, ?, ?, ?, ?, ?, ?, ?)';
       @args = ($release_id, $species_id, $a_code, $a_code, '', '', $initial, $latest);
       $sth = $adaptor->db->prepare($sql);
@@ -164,9 +164,9 @@ It will add information about the release itself (if not already present), based
 the SiteDefs.pm module, and also prompts the user for a release date. If the release record is
 present, it asks the user if the release date is still correct.
 
-It then either adds a cross-reference record between the release and the species configured for 
-that release, or reports on existing cross-reference records. If a new species has been added to 
-this release, a species record will be added to the database provided there is an ini file for it 
+It then either adds a cross-reference record between the release and the species configured for
+that release, or reports on existing cross-reference records. If a new species has been added to
+this release, a species record will be added to the database provided there is an ini file for it
 in the correct location.
 
 The database location is specified in Ensembl web config file:
