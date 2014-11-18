@@ -681,6 +681,7 @@ sub core_pipeline_analyses {
                 'input_clusterset_id'   => 'default',
                 'output_clusterset_id'  => 'copy',
                 'escape_branch'         => -3,
+				'treebest_exe'			=> $self->o('treebest_exe'), 
             },
             -flow_into  => {
                  1 => [ 'copy_alignments_from_previous_release' ],
@@ -1290,7 +1291,7 @@ sub core_pipeline_analyses {
             -module             => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::CreateClustersets',
             -parameters         => {
                 member_type     => 'protein',
-                'additional_clustersets'    => [qw(treebest phyml-aa phyml-nt nj-dn nj-ds nj-mm raxml raxml_bl notung)],
+                'additional_clustersets'    => [qw(treebest phyml-aa phyml-nt nj-dn nj-ds nj-mm raxml raxml_bl notung copy)],
             },
             -flow_into          => [ 'run_qc_tests' ],
         },
