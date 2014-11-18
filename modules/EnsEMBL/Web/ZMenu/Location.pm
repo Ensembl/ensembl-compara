@@ -31,7 +31,7 @@ sub content {
   my $alt_assembly   = $hub->param('assembly'); # code for alternative assembly
   my $alt_clone      = $hub->param('jump_loc'); # code for alternative clones
   my $threshold      = 1000100 * ($species_defs->ENSEMBL_GENOME_SIZE||1);
-  my $this_assembly  = $species_defs->ASSEMBLY_NAME;
+  my $this_assembly  = $species_defs->ASSEMBLY_VERSION;
   my ($chr, $loc)    = split ':', $r;
   my ($start, $stop) = split '-', $loc;
   my $action         = $hub->action || 'View';

@@ -435,7 +435,7 @@ sub _create_LRG {
   my $csa           = $hub->database('core',$hub->species)->get_CoordSystemAdaptor;
   my $ama           = $hub->database('core', $hub->species)->get_AssemblyMapperAdaptor;
   my $old_cs        = $csa->fetch_by_name('lrg');
-  my $new_cs        = $csa->fetch_by_name('chromosome', $hub->species_defs->ASSEMBLY_NAME);
+  my $new_cs        = $csa->fetch_by_name('chromosome', $hub->species_defs->ASSEMBLY_VERSION);
   my $mapper        = $ama->fetch_by_CoordSystems($old_cs, $new_cs);
 
   foreach my $s (@$slices) {

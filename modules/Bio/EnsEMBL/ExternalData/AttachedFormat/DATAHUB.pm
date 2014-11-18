@@ -43,7 +43,7 @@ sub check_data {
   my $url  = $self->{'url'};
   my $error;
   
-  $url = chase_redirects($url);
+  $url = $self->chase_redirects($url);
   # try to open and use the datahub file
   # this checks that the datahub files is present and correct
   my $datahub = $self->{'datahub_adaptor'}->get_hub_info($url);

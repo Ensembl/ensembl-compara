@@ -95,7 +95,7 @@ sub render {
         ## Get best archive for older releases
         my $archive_version = $species_defs->ENSEMBL_VERSION;
         ## Spaces are problematic in ini file arrays
-        (my $current_assembly = $species_defs->get_config($species, 'ASSEMBLY_NAME')) =~ s/ /_/; 
+        (my $current_assembly = $species_defs->get_config($species, 'ASSEMBLY_VERSION')) =~ s/ /_/; 
         if ($current_assembly =~ /$sp_info->{'assembly'}/i) {
           $sp_info->{'site'} = 'current';
         }

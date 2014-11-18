@@ -222,22 +222,18 @@ sub set_variations {
   my $u_snps = {};
   my ($adaptor, $include_failed);
   
-  if ($config->{'failed_variant'}) {
-    $adaptor        = $hub->get_adaptor('get_VariationFeatureAdaptor', 'variation');
-    $include_failed = $adaptor->db->include_failed_variations;
-    
-    $adaptor->db->include_failed_variations(1);
-  }
-  
   if ($focus_snp_only) {
     push @$snps, $focus_snp_only;
   } else {
     eval {
       # NOTE: currently we can't filter by both population and consequence type, since the API doesn't support it.
       # This isn't a problem, however, since filtering by population is disabled for now anyway.
-      $snps = $config->{'population'} ? 
-        $slice_data->{'slice'}->get_all_VariationFeatures_by_Population($config->{'population'}, $config->{'min_frequency'}) :
-        $slice_data->{'slice'}->get_all_VariationFeatures($config->{'consequence_filter'}, 1);
+      if ($config->{'population'}) {
+         $snps = $slice_data->{'slice'}->get_all_VariationFeatures_by_Population($config->{'population'}, $config->{'min_frequency'});
+      } else {
+        my @snps_list = (@{$slice_data->{'slice'}->get_all_VariationFeatures($config->{'consequence_filter'}, 1)},  @{$slice_data->{'slice'}->get_all_somatic_VariationFeatures($config->{'consequence_filter'}, 1)});
+        $snps = \@snps_list;
+      }
     };
   }
   
@@ -254,7 +250,7 @@ sub set_variations {
         map { $u_snps->{$_->variation_name} = $_ } @{$u_slice->get_all_VariationFeatures};
       };
     }
-    
+
     $snps = [ grep $_->length <= $self->{'snp_length_filter'} || $config->{'focus_variant'} && $config->{'focus_variant'} eq $_->dbID, @$snps ] if $config->{'hide_long_snps'};
   }
   
@@ -266,9 +262,7 @@ sub set_variations {
   foreach (@ordered_snps) {
     my $dbID   = $_->dbID;
     my $failed = $_->variation ? $_->variation->is_failed : 0;
-    
-    next if $failed && $dbID != $focus;
-    
+
     my $variation_name = $_->variation_name;
     my $var_class      = $_->can('var_class') ? $_->var_class : $_->can('variation') && $_->variation ? $_->variation->var_class : '';
     my $start          = $_->start;
@@ -1155,6 +1149,8 @@ sub build_sequence {
     $key_html = qq(<div class="adornment-key"></div>);
   }
 
+  my $id = $self->id;
+  my $panel_type = qq(<input type="hidden" class="panel_type" value="TextSequence" name="panel_type_$id" />);
   if($adorn eq 'none') {
     my $ajax_url = $self->hub->apache_handle->unparsed_uri;
     my ($path,$params) = split(/\?/,$ajax_url,2);
@@ -1162,7 +1158,7 @@ sub build_sequence {
     for(@params) { $_ = 'adorn=only' if /^adorn=/; }
     $ajax_url = $path.'?'.join(';',@params,'adorn=only');
     my $ajax_json = encode_entities($self->jsonify({ url => $ajax_url, provisional => $adornment }),"<>");
-    $config->{'html_template'} = qq(
+    return qq(
       <div class="js_panel" id="$random_id">
         $key_html
         <div class="adornment">
@@ -1171,15 +1167,14 @@ sub build_sequence {
           </span>
           $config->{'html_template'}
         </div>
+        $panel_type
       </div>
     );
-  
-    return $config->{'html_template'} . sprintf '<input type="hidden" class="panel_type" value="TextSequence" name="panel_type_%s" />', $self->id;
 
   } elsif($adorn eq 'only') {
     return qq(<div><span class="adornment-data">$adornment_json</span></div>);
   } else {
-    $config->{'html_template'} = qq(
+    return qq(
       <div class="js_panel" id="$random_id">
         $key_html
         <div class="adornment">
@@ -1188,10 +1183,9 @@ sub build_sequence {
           </span>
           $config->{'html_template'}
         </div>
+        $panel_type
       </div>
     );
-  
-    return $config->{'html_template'} . sprintf '<input type="hidden" class="panel_type" value="TextSequence" name="panel_type_%s" />', $self->id;
   }
 }
 

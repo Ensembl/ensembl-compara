@@ -63,7 +63,6 @@ sub feature_content {
   my $type          = $hub->param('target_type'); # code for patch regions
   my $target        = $hub->param('target');      # code for patch regions - compare patch with reference
   my $threshold     = 1000100 * ($species_defs->ENSEMBL_GENOME_SIZE || 1);
-  my $this_assembly = $species_defs->ASSEMBLY_NAME;
   my $bgcolor       = $i % 2 ? 'bg2' : 'bg1';
   my $url           = $hub->url({ type => 'Location', action => $end - $start + 1 > $threshold ? 'Overview' : 'View', r => $r });
   

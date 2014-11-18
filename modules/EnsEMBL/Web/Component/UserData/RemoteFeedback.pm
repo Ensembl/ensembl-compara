@@ -44,7 +44,7 @@ sub content {
   my $message;
   if ($hub->param('format') eq 'DATAHUB') {
     my $assembly_string   = $hub->param('assembly');
-    my $current_assembly  = $hub->species_defs->get_config($hub->data_species, 'ASSEMBLY_NAME');
+    my $current_assembly  = $hub->species_defs->get_config($hub->data_species, 'ASSEMBLY_VERSION');
     if ($assembly_string !~ $current_assembly) {
       ## No match to current assembly
       $message = '<p><strong>Your hub contains no data on the current assembly and cannot be displayed.';
@@ -64,7 +64,7 @@ sub content {
       my $sample_data = $hub->species_defs->get_config($hub->data_species, 'SAMPLE_DATA') || {};
       my $default_loc = $sample_data->{'LOCATION_PARAM'};
       my $template;
-      if ($assembly_string ne $hub->species_defs->get_config($hub->data_species, 'ASSEMBLY_NAME')) {
+      if ($assembly_string ne $hub->species_defs->get_config($hub->data_species, 'ASSEMBLY_VERSION')) {
         ## Not exact match -> multiple assemblies
         $template = '<p class="space-below"><strong>Your hub includes multiple assemblies, so not all features will be shown. Alternative assemblies may available on archive sites.</strong></p>';
       }

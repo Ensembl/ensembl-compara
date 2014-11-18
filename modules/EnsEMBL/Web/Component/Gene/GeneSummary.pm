@@ -142,7 +142,7 @@ sub content {
   $table->add_row('Ensembl version', $object->stable_id.'.'.$object->version);
 
   ## Link to another assembly, e.g. previous archive
-  my $current_assembly = $hub->species_defs->ASSEMBLY_NAME;
+  my $current_assembly = $hub->species_defs->ASSEMBLY_VERSION;
   my $alt_assembly = $hub->species_defs->SWITCH_ASSEMBLY;
   my $alt_release = $hub->species_defs->SWITCH_VERSION;
   my $site_version = $hub->species_defs->ORIGINAL_VERSION || $hub->species_defs->ENSEMBL_VERSION;

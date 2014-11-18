@@ -310,12 +310,13 @@ sub get_species_info {
 
     for (@required_species) {
       $self->{'_species_info'}{$_} = {
-        'key'         => $_,
-        'name'        => $species_defs->get_config($_, 'SPECIES_BIO_NAME'),
-        'common'      => $species_defs->get_config($_, 'SPECIES_COMMON_NAME'),
-        'scientific'  => $species_defs->get_config($_, 'SPECIES_SCIENTIFIC_NAME'),
-        'assembly'    => $species_defs->get_config($_, 'ASSEMBLY_NAME'),
-        'group'       => $species_defs->get_config($_, 'SPECIES_GROUP')
+        'key'               => $_,
+        'name'              => $species_defs->get_config($_, 'SPECIES_BIO_NAME'),
+        'common'            => $species_defs->get_config($_, 'SPECIES_COMMON_NAME'),
+        'scientific'        => $species_defs->get_config($_, 'SPECIES_SCIENTIFIC_NAME'),
+        'assembly'          => $species_defs->get_config($_, 'ASSEMBLY_NAME'),
+        'assembly_version'  => $species_defs->get_config($_, 'ASSEMBLY_VERSION'),
+        'group'             => $species_defs->get_config($_, 'SPECIES_GROUP')
       } unless exists $self->{'_species_info'}{$_};
     }
 

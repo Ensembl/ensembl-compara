@@ -37,7 +37,7 @@ sub check_data {
   my $error = '';
   require Bio::DB::Sam;
 
-  $url = chase_redirects($url);
+  $url = $self->chase_redirects($url);
 
   if ($url =~ /^ftp:\/\//i && !$self->{'hub'}->species_defs->ALLOW_FTP_BAM) {
     $error = "The bam file could not be added - FTP is not supported, please use HTTP.";

@@ -143,7 +143,6 @@ sub content {
     }
     $num_slices = @$slices;
   }
-  my @A = @{$slices||[]};
 
   #If the slice_length is long, split the sequence into chunks to speed up the process
   #Note that slice_length is not set if need to display a target_slice_eable
@@ -159,7 +158,7 @@ sub content {
     #Draw target_slice_table for overlapping alignments
     if ($need_target_slice_table) {
       $table = $self->_get_target_slice_table($slice, $align, $align_blocks, $groups, $method_class, $method_type, $is_low_coverage_species, $cdb);
-      $html .= $table . $self->show_warnings($warnings);
+      $html .= $table;
     } else {
       #Write out sequence if length is short enough
       $html .= $self->draw_tree($cdb, $align_blocks, $slice, $align, $method_class, $groups, $slices) if ($align);
@@ -464,6 +463,7 @@ sub _get_target_slice_table {
   my $mlss_adaptor            = $compara_db->get_adaptor('MethodLinkSpeciesSet');
   my $method_link_species_set = $mlss_adaptor->fetch_by_dbID($align);
   my $ref_region              = $slice->seq_region_name;
+  my $html                    = '';
 
   my $other_species;
 
@@ -522,7 +522,7 @@ sub _get_target_slice_table {
       #want num_species but not non_ref details
       ($ref_start, $ref_end, $non_ref_start, $non_ref_end, undef, $num_species) = $self->object->get_start_end_of_slice($gab_group, $ref_species);
     }
-    next if $num_species == 0;
+    next if $num_species == 0 && $class !~ /pairwise/;
 
     $gab_num++;
 
@@ -575,7 +575,6 @@ sub _get_target_slice_table {
     push @rows, $this_row;
   }
 
-  my $html;
   if (scalar(@rows)) {
     my $table = $self->new_table(\@columns, \@rows, {
       data_table => 1,
@@ -587,8 +586,9 @@ sub _get_target_slice_table {
 
     $html = "A total of " . @$merged_blocks . " alignment blocks have been found. Please select an alignment to view by selecting a Block from the Alignment column. <br /> <br />";
     $html .= $table->render;
+    $html = qq{<div class="summary_panel">$html</div>};
   }
-  return qq{<div class="summary_panel">$html</div>};
+  return $html;
 
 }
 

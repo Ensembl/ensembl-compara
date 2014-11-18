@@ -134,7 +134,7 @@ sub content {
       label         => 'expand all sub-trees',
       link_class    => 'update_panel',
       order         => 8,
-      update_params => '<input type="hidden" class="update_url" name="collapse" value="none" />',
+      update_params => qq{<input type="hidden" class="update_url" name="collapse" value="$collapse" />},
       link          => $hub->url('Component', {
         type     => $hub->type,
         action   => $action,

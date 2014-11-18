@@ -78,7 +78,6 @@ sub transcript_table {
   my $object      = $self->object;
   my $species     = $hub->species;
   my $table       = $self->new_twocol;
-  my $html        = '';
   my $page_type   = ref($self) =~ /::Gene\b/ ? 'gene' : 'transcript';
   my $description = $object->gene_description;
      $description = '' if $description eq 'No description';
@@ -201,12 +200,6 @@ sub transcript_table {
     }
   }
 
-  $table->add_row('Location', $location_html);
-
-  my $insdc_accession;
-  $insdc_accession = $self->object->insdc_accession if $self->object->can('insdc_accession');
-  $table->add_row('INSDC coordinates',$insdc_accession) if $insdc_accession;
-
   my $gene = $object->gene;
 
   #text for tooltips
@@ -215,6 +208,8 @@ sub transcript_table {
   my $trans_5_desc = "5' truncation in transcript evidence prevents annotation of the start of the CDS.";
   my $trans_3_desc = "3' truncation in transcript evidence prevents annotation of the end of the CDS.";
   my %glossary     = $hub->species_defs->multiX('ENSEMBL_GLOSSARY');
+  my $gene_html    = '';
+  my $transc_table;
 
   if ($gene) {
     my $transcript  = $page_type eq 'transcript' ? $object->stable_id : $hub->param('t');
@@ -254,9 +249,7 @@ sub transcript_table {
       $plural =~ s/s$//;
       $splices =~ s/s$//;
     }
-    
-    my $gene_html;
-    
+
     if ($page_type eq 'transcript') {
       my $gene_id  = $gene->stable_id;
       my $gene_url = $hub->url({
@@ -264,24 +257,32 @@ sub transcript_table {
         action => 'Summary',
         g      => $gene_id
       });
-      $gene_html .= qq{This transcript is a product of gene <a href="$gene_url">$gene_id</a>};
+      $gene_html .= qq(<p>This transcript is a product of gene <a href="$gene_url">$gene_id</a></p>);
     }
    
     ## Link to other haplotype genes
     my $alt_link = $object->get_alt_allele_link;
     if ($alt_link) {
       if ($page_type eq 'transcript') {
-        $gene_html .= '<br />'.$alt_link;
+        $gene_html .= "<p>$alt_link</p>";
       }
       else {
-        $location_html .= '<br />'.$alt_link;
+        $location_html .= "<p>$alt_link</p>";
       }
     }
 
-    $gene_html .= "<br /><br />This gene has $count $plural ($splices)";
-    
- 
     my $show    = $hub->get_cookie_value('toggle_transcripts_table') eq 'open';
+
+    $gene_html .= sprintf('<p>This gene has %s %s (%s)
+      <a rel="transcripts_table" class="button toggle no_img _slide_toggle set_cookie %s" href="#" title="Click to toggle the transcript table">
+      <span class="closed">Show transcript table</span><span class="open">Hide transcript table</span>
+      </a></p>',
+      $count,
+      $plural,
+      $splices,
+      $show ? 'open' : 'closed'
+    );
+
     my @columns = (
        { key => 'name',       sort => 'string',  title => 'Name'          },
        { key => 'transcript', sort => 'html',    title => 'Transcript ID' },
@@ -367,7 +368,7 @@ sub transcript_table {
       }
       if ($trans_attribs->{$tsi}{'appris'}) {
         my ($text, $code) = @{$trans_attribs->{$tsi}{'appris'}};
-        my $glossary_url  = $hub->url({'type' => 'Help', 'action' => 'Glossary', 'id' => '493'});
+        my $glossary_url  = $hub->url({'type' => 'Help', 'action' => 'Glossary', 'id' => '493', '__clear' => 1});
         my $appris_link   = $hub->get_ExtURL_link('APPRIS website', 'APPRIS');
         my $class         = $code eq 'pi' ? 'green' : 'yellow';
         push @flags, $code
@@ -418,16 +419,6 @@ sub transcript_table {
     # Add rows to transcript table
     push @rows, @{$biotype_rows{$_}} for sort keys %biotype_rows; 
 
-    $table->add_row(
-      $page_type eq 'gene' ? 'Transcripts' : 'Gene',
-      $gene_html . sprintf(
-        ' <a rel="transcripts_table" class="button toggle no_img _slide_toggle set_cookie %s" href="#" title="Click to toggle the transcript table">
-          <span class="closed">Show transcript table</span><span class="open">Hide transcript table</span>
-        </a>',
-        $show ? 'open' : 'closed'
-      )
-    );
-
     my @hidecols;
     foreach my $id (keys %extra_links) {
       foreach my $i (0..$#columns) {
@@ -438,7 +429,7 @@ sub transcript_table {
       }
     }
 
-    my $table_2 = $self->new_table(\@columns, \@rows, {
+    $transc_table = $self->new_table(\@columns, \@rows, {
       data_table        => 1,
       data_table_config => { asStripClasses => [ '', '' ], oSearch => { sSearch => '', bRegex => 'false', bSmart => 'false' } },
       toggleable        => 1,
@@ -447,14 +438,17 @@ sub transcript_table {
       exportable        => 1,
       hidden_columns    => \@hidecols,
     });
-
-    $html = $table->render.$table_2->render;
-
-  } else {
-    $html = $table->render;
   }
-  
-  return qq{<div class="summary_panel">$html</div>};
+
+  $table->add_row('Location', $location_html);
+
+  my $insdc_accession;
+  $insdc_accession = $self->object->insdc_accession if $self->object->can('insdc_accession');
+  $table->add_row('INSDC coordinates',$insdc_accession) if $insdc_accession;
+
+  $table->add_row($page_type eq 'gene' ? 'Transcripts' : 'Gene', $gene_html) if $gene_html;
+
+  return sprintf '<div class="summary_panel">%s%s</div>', $table->render, $transc_table ? $transc_table->render : '';
 }
 
 sub get_synonyms {

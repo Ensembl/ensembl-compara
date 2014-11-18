@@ -55,7 +55,7 @@ sub content {
   $fieldset->add_field({'type' => 'String', 'name' => 'name', 'label' => 'Name for this data (optional)'});
 
   # Create a data structure for species, with display labels and their current assemblies
-  my @species = sort {$a->{'caption'} cmp $b->{'caption'}} map({'value' => $_, 'caption' => $sd->species_label($_, 1), 'assembly' => $sd->get_config($_, 'ASSEMBLY_NAME')}, $sd->valid_species);
+  my @species = sort {$a->{'caption'} cmp $b->{'caption'}} map({'value' => $_, 'caption' => $sd->species_label($_, 1), 'assembly' => $sd->get_config($_, 'ASSEMBLY_VERSION')}, $sd->valid_species);
 
   # Create HTML for showing/hiding assembly names to work with JS
   my $assembly_names = join '', map { sprintf '<span class="_stt_%s%s">%s</span>', $_->{'value'}, $_->{'value'} eq $current_species ? '' : ' hidden', delete $_->{'assembly'} } @species;
@@ -73,7 +73,7 @@ sub content {
   ## FIXME - reinstate auto-mapping option when we have a solution!
   ## TODO - once fixed, the assembly name toggling (wrt species selected) will need redoing - hr5
   my $mappings; # = $sd->ASSEMBLY_MAPPINGS;
-  my $current_assembly = $sd->get_config($current_species, 'ASSEMBLY_NAME');
+  my $current_assembly = $sd->get_config($current_species, 'ASSEMBLY_VERSION');
   if ($mappings && ref($mappings) eq 'ARRAY') {
     my @values = {'name' => $current_assembly, 'value' => $current_assembly};
     foreach my $string (reverse sort @$mappings) { 

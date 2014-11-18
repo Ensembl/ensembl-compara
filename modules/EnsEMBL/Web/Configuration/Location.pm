@@ -246,7 +246,7 @@ sub add_archive_link {
   my $hub            = $self->hub;
   my $alt_assembly = $hub->species_defs->SWITCH_ASSEMBLY;
   return unless $alt_assembly;
-  my $current_assembly = $hub->species_defs->ASSEMBLY_NAME;
+  my $current_assembly = $hub->species_defs->ASSEMBLY_VERSION;
   my $alt_release = $hub->species_defs->SWITCH_VERSION;
   my $site = 'http://'.$hub->species_defs->SWITCH_ARCHIVE_URL;
   my $external = 1;

@@ -34,13 +34,10 @@ sub get_feature_sets {
   my $fg_a_a =  $fg_db->get_AnalysisAdaptor;
   my $fg_fs_a = $fg_db->get_FeatureSetAdaptor;
   my $analysis = $fg_a_a->fetch_by_logic_name($logic_name);
-  return [grep {
-    $_->name !~ /cisRED\s+search\s+regions/i
-  } @{$fg_fs_a->fetch_all_by_feature_class('external',undef,{
-    constraints => {
-      analyses => [$analysis],
-    },
-  })}];
+  return $fg_fs_a->fetch_all_by_feature_class('external', 
+                                               undef,
+                                               {constraints => {analyses => [$analysis]}},
+                                              );
 }
 
 sub features {

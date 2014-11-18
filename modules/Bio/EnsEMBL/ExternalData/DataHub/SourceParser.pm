@@ -208,7 +208,6 @@ sub parse {
 sub parse_file_content {
   my ($self, $tree, $content, $file) = @_;
   my %tracks;
-  my $ua       = $self->{'ua'};
   my $url      = $file =~ s|^(.+)/.+|$1|r; # URL relative to the file (up until the last slash before the file name)
   my @contents = split /track /, $content;
   shift @contents;
@@ -316,14 +315,9 @@ sub parse_file_content {
     
     # any track which doesn't have any of these is definitely invalid
     if ($tracks{$id}{'type'} || $tracks{$id}{'shortLabel'} || $tracks{$id}{'longLabel'}) {
-      $tracks{$id}{'track'} = $id;
-
-      my $response = $ua->get("$url/$id.html");
-      if ($response->is_success) {
-        $tracks{$id}{'description_url'} = "$url/$id.html";
-        $tracks{$id}{'description'} = $response->content =~ s/\R+/ /gr;
-      }
-
+      $tracks{$id}{'track'}           = $id;
+      $tracks{$id}{'description_url'} = "$url/$id.html" unless $tracks{$id}{'parent'};
+      
       if ($tracks{$id}{'dimensions'}) {
         # filthy last-character-of-string hack to support dimensions in the same way as UCSC
         my @dimensions = keys %{$tracks{$id}{'dimensions'}};

@@ -74,7 +74,7 @@ sub process {
     $session_data->{'border'}   = 'off'; ## show as unjoined features
     $session_data->{'md5'}      = $temp_file->md5;
     $session_data->{'nearest'}  = $nearest;
-    $session_data->{'assembly'} = $species_defs->get_config($species, 'ASSEMBLY_NAME');
+    $session_data->{'assembly'} = $species_defs->get_config($species, 'ASSEMBLY_VERSION');
 
     $session->set_data(%$session_data);
     

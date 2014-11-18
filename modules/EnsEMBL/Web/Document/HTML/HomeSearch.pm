@@ -83,6 +83,7 @@ sub render {
       'class'   => 'input',
       'values'  => [
         {'value' => '', 'caption' => 'All species'},
+        {'value' => 'help', 'caption' => 'Help and Documentation' },
         {'value' => '', 'caption' => '---', 'disabled' => 1},
         map({ $common_names{$_} ? {'value' => $_, 'caption' => $common_names{$_}, 'group' => 'Favourite species'} : ()} @$favourites),
         {'value' => '', 'caption' => '---', 'disabled' => 1},
