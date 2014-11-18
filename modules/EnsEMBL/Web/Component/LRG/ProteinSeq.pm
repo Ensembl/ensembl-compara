@@ -44,8 +44,10 @@ sub get_transcript {
 sub content {
   my $self        = shift;
   my $object      = $self->object;
+  my $external_name = $object->Obj->external_name;
+  my $display_id = ($external_name && $external_name ne '') ? $external_name : $object->Obj->stable_id;
   my $translation = $object->translation_object;
-  return ($translation ? sprintf '<h2>Protein ID: %s</h2><h3>(Transcript ID: %s)</h3>', $translation->Obj->display_id, $object->Obj->external_name : '') . $self->SUPER::content;
+  return ($translation ? sprintf '<h2>Protein ID: %s</h2><h3>(Transcript ID: %s)</h3>', $translation->Obj->display_id, $display_id : '') . $self->SUPER::content;
 }
 
 1;

@@ -54,7 +54,7 @@ sub content {
       'For more information, visit the <a href="http://www.lrg-sequence.org">LRG website</a>.</p>';
   } else {
     my $lrg         = $object->Obj;
-    my $lrg_gene       = $hub->param('lrg');
+    my $lrg_gene    = $hub->param('lrg');
     my $transcript  = $hub->param('lrgt');
     (my $href       = $external_urls->{'LRG'}) =~ s/###ID###/$lrg_gene/;
     my $description = qq{LRG region <a rel="external" href="$href">$lrg_gene</a>.};
@@ -102,6 +102,9 @@ sub content {
     my $transcripts = $lrg->get_all_Transcripts(undef, 'LRG_import'); 
 
     my %distinct_tr = map { $_->external_name => 1} @$transcripts;
+    if (scalar (keys(%distinct_tr)) == 0) {
+      %distinct_tr = map { $_->stable_id => 1} @$transcripts;
+    }
 
     my $count  = scalar (keys(%distinct_tr));
     my $plural = 'transcripts';
@@ -175,7 +178,7 @@ sub transcript_table {
     
   foreach (map { $_->[2] } sort { $a->[0] cmp $b->[0] || $a->[1] cmp $b->[1] } map { [ $_->external_name, $_->display_id, $_ ] } @$transcripts) {
     my $transcript_length = $_->length;
-    my $t_label           = $_->external_name; # Because of LRG_321: several proteins per transcripti
+    my $t_label           = ($_->external_name && $_->external_name ne '') ? $_->external_name : $_->stable_id; # Because of LRG_321: several proteins per transcripti
     my $tsi               = $_->stable_id;
     my $protein           = 'No protein product';
     my $protein_length    = '-';
