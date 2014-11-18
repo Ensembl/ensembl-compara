@@ -535,8 +535,8 @@ sub track_boundaries {
     $top += $height;
     $prev_section = $this_section;
   }
-  
-  return \@boundaries;
+
+  return [ sort { ($a->[4] || 0) <=> ($b->[4] || 0) } @boundaries ];
 }
 
 sub moveable_tracks {
@@ -550,21 +550,19 @@ sub moveable_tracks {
   my ($top, $html);
   
   foreach (@{$self->track_boundaries}) {
-    my ($t, $h, $type, $strand, $order) = @$_;
-    
+    my ($t, $h, $type, $strand) = @$_;
+
     $html .= sprintf(
       '<li class="%s%s" style="height:%spx;background:url(%s) 0 %spx%s">
         <div class="handle" style="height:%spx"%s><p></p></div>
-        <i class="%s"></i>
       </li>',
       $type, $strand ? " $strand" : '',
       $h, $url, 3 - $t,
       $h == 0 ? ';display:none' : '',
       $h - 1,
-      $strand ? sprintf(' title="%s strand"', $strand eq 'f' ? 'Forward' : 'Reverse') : '',
-      $order
+      $strand ? sprintf(' title="%s strand"', $strand eq 'f' ? 'Forward' : 'Reverse') : ''
     );
-    
+
     $top ||= $t - 3 if $h;
   }
 

@@ -301,9 +301,9 @@ sub glyphset_configs {
   if (!$self->{'ordered_tracks'}) {
     my @tracks      = $self->get_tracks;
     my $track_order = $self->track_order;
-    my $i           = 1;
-    my @default_order;
-    
+
+    my ($pointer, $last_pointer, $i, %lookup, @default_order, @ordered_tracks);
+
     foreach my $track ($self->default_track_order(@tracks)) {
       my $strand = $track->get('strand');
       
@@ -328,19 +328,47 @@ sub glyphset_configs {
     if ($self->get_parameter('sortable_tracks')) {
       $_->set('sortable', 1) for grep !$self->{'unsortable_menus'}->{$_->parent_key}, @default_order;
     }
-    
-    my @ordered_tracks;
-    my %order     = map { join('.', grep $_, $_->id, $_->get('drawing_strand')) => [ $i++, $_ ] } @default_order;
-    $order{$_}[0] = $track_order->{$_} for grep $order{$_}, keys %$track_order;
-    
-    foreach (sort { $a->[0] <=> $b->[0] } values %order) {
-      $_->[1]->set('order', $_->[0]);
-      push @ordered_tracks, $_->[1];
+
+    # make a 'double linked list' to make it easy to apply user sorting on it
+    for (@default_order) {
+      $lookup{ join('.', $_->id, $_->get('drawing_strand') || ()) } = $_;
+      $_->{'__prev'} = $last_pointer if $last_pointer;
+      $last_pointer->{'__next'} = $_ if $last_pointer;
+      $last_pointer = $_;
     }
-    
+
+    # Apply user track sorting now
+    $pointer = $default_order[0];
+    for (@$track_order) {
+      my $track = $lookup{$_->[0]} or next;
+      my $prev  = $_->[1] && $lookup{$_->[1]} || undef;
+
+      $track->{'__prev'}{'__next'}  = $track->{'__next'} if $track->{'__prev'};
+      $track->{'__next'}{'__prev'}  = $track->{'__prev'} if $track->{'__next'};
+      $track->{'__prev'}            = $prev;
+      $track->{'__next'}            = $prev ? $prev->{'__next'} : $pointer;
+      $track->{'__prev'}{'__next'}  = $track if $track->{'__prev'};
+      $track->{'__next'}{'__prev'}  = $track if $track->{'__next'};
+    }
+
+    # Get the first track in the list after sorting and create a new ordered list starting from that track
+    $pointer = $pointer->{'__prev'} while $pointer->{'__prev'};
+    delete $pointer->{'__prev'};
+    $pointer->set('order', ++$i);
+    push @ordered_tracks, $pointer;
+
+    while ($pointer = $pointer->{'__next'}) {
+      delete $pointer->{'__prev'}{'__next'};
+      delete $pointer->{'__prev'};
+      $pointer->set('order', ++$i);
+      push @ordered_tracks, $pointer;
+    }
+
+    delete $pointer->{'__next'};
+
     $self->{'ordered_tracks'} = \@ordered_tracks;
   }
-  
+
   return $self->{'ordered_tracks'};
 }
 
@@ -360,9 +388,11 @@ sub get_favourite_tracks {
 }
 
 sub track_order {
-  my $self = shift;
-  my $node = $self->get_node('track_order');
-  return $node ? $node->get($self->species) || {} : {};
+  my $self  = shift;
+  my $node  = $self->get_node('track_order');
+  my $order = $node && $node->get($self->species) || [];
+
+  return ref $order eq 'ARRAY' ? $order : []; # ignore the older schema track order entry
 }
 
 sub set_user_settings {

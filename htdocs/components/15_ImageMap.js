@@ -84,7 +84,7 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
     this.shareInit({ species: species, type: 'image', positionPopup: this.positionToolbarPopup });
     
     if (this.elLk.boundaries.length) {
-      Ensembl.EventManager.register('changeTrackOrder', this, this.sortOrder);
+      Ensembl.EventManager.register('changeTrackOrder', this, this.changeTrackOrder);
       
       if (this.elLk.img[0].complete) {
         this.makeSortable();
@@ -444,14 +444,15 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
     var panel      = this;
     var wrapperTop = $('.boundaries_wrapper', this.el).position().top;
     var ulTop      = this.elLk.boundaries.position().top + wrapperTop - (Ensembl.browser.ie7 ? 3 : 0); // IE7 reports li.position().top as 3 pixels higher than other browsers, so offset that here.
-    var lis        = [];
+    var lis        = []; // just a throwaway list to allocate areas to their respective tracks
 
     this.elLk.boundaries.children().each(function (i) {
-      var li = $(this);
-      var t  = li.position().top + ulTop;
+      var li  = $(this);
+      var t   = li.position().top + ulTop;
+      var ref = []; // reference for array containing areas for a track that will be populated later
 
-      li.data({ areas: [], position: i, order: parseFloat(li.children('i')[0].className, 10), top: li.offset().top });
-      lis.push({ top: Math.floor(t), bottom: Math.ceil(t + li.height()), areas: li.data('areas') });
+      li.data({ areas: ref, position: i, top: li.offset().top });
+      lis.push({ top: Math.floor(t), bottom: Math.ceil(t + li.height()), areas: ref });
 
       li = null;
     });
@@ -523,8 +524,14 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
   },
 
   sortUpdate: function(e, ui) {
-    var order = this.sortOrder(ui.item);
-    var track = ui.item[0].className.replace(' ', '.');
+
+    this.positionAreas();
+    this.positionLayers();
+    this.removeShare();
+    Ensembl.EventManager.trigger('removeShare');
+
+    var prev  = (ui.item.prev().prop('className') || '').replace(' ', '.');
+    var track = ui.item.prop('className').replace(' ', '.');
 
     $.ajax({
       url: ui.item.parent().data('updateURL'),
@@ -532,54 +539,34 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
       data: {
         image_config: this.imageConfig,
         track: track,
-        order: order
+        prev: prev
       }
     });
-    Ensembl.EventManager.triggerSpecific('changeTrackOrder', 'modal_config_' + this.id.toLowerCase(), track, order);
+    Ensembl.EventManager.triggerSpecific('changeTrackOrder', 'modal_config_' + this.id.toLowerCase(), track, prev);
   },
-  
-  sortOrder: function (track, order) {
-    var tracks = this.elLk.boundaries.children();
-    var i, p, n, o, move, li, top;
-    
-    if (typeof track === 'string') {
-      i     = tracks.length;
-      track = tracks.filter('.' + track).detach();
-      
-      if (!track.length) {
-        return;
-      }
-      
-      while (i--) {
-        if ($(tracks[i]).data('order') < order && tracks[i] !== track[0]) {
-          track.insertAfter(tracks[i]);
-          break;
-        }
-      }
-      
-      if (i === -1) {
-        track.insertBefore(tracks[0]);
-      }
-      
-      tracks = this.elLk.boundaries.children();
-    } else {
-      p = track.prev().data('order') || 0;
-      n = track.next().data('order') || 0;
-      o = p || n;
-      
-      if (Math.floor(n) === Math.floor(p)) {
-        order = p + (n - p) / 2;
-      } else {
-        order = o + (p ? 1 : -1) * (Math.round(o) - o || 1) / 2;
-      }
+
+  changeTrackOrder: function(trackName, previousTrackName) {
+    var boundary      = this.elLk.boundaries[0];
+    var track         = tracks.filter('.' + trackName)[0];
+    var previousTrack = previousTrackName ? tracks.filter('.' + previousTrackName)[0] : false;
+
+    if (!track) {
+      return;
     }
-    
-    track.data('order', order);
-    
-    tracks.each(function (j) {
-      li = $(this);
-      
-      if (j !== li.data('position')) {
+
+    boundary[previousTrack ? 'insertAfter' : 'insertBefore'](track, previousTrack || boundary.firstChild); // hopefully boundary would have at least two tracks
+
+    boundary = track = previousTrack = null;
+  },
+
+  positionAreas: function () {
+    var tracks = this.elLk.boundaries.children();
+
+    tracks.each(function (i) {
+      var li = $(this);
+      var top, move;
+
+      if (i !== li.data('position')) {
         top  = li.offset().top;
         move = top - li.data('top'); // Up is positive, down is negative
 
@@ -587,23 +574,16 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
           this.t += move;
           this.b += move;
         });
-        
-        li.data({ top: top, position: j });
+
+        li.data({ top: top, position: i });
       }
-      
+
       li = null;
     });
-    
-    tracks = track = null;
 
-    this.positionLayers();
-    
-    this.removeShare();
-    Ensembl.EventManager.trigger('removeShare');
-
-    return order;
+    tracks = null;
   },
-  
+
   changeFavourite: function (trackId, on) {
     this.elLk.hoverLabels.filter('.' + trackId).find('a.favourite').toggleClass('selected', on);
   },
