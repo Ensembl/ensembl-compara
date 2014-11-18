@@ -239,7 +239,7 @@ sub pipeline_analyses {
         {   -logic_name    => 'web_name_patches',
             -module        => 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
             -parameters    => {
-                'cmd'       => 'mysql '.$self->db_cmd().' <'.$self->o('ensembl_cvs_root_dir').'/ensembl-compara/scripts/taxonomy/web_name_patches.sql',
+                'cmd'       => $self->db_cmd().' <'.$self->o('ensembl_cvs_root_dir').'/ensembl-compara/scripts/taxonomy/web_name_patches.sql',
             },
             -hive_capacity  => 10,  # to allow parallel branches
             -flow_into => {

@@ -196,9 +196,7 @@ sub store_ncrna_gene {
                                                                             );
         $ncrna_member->description($fasta_description);
 
-        print STDERR "SEQMEMBER: ";
-        print STDERR "    ... ", $ncrna_member->description, "\n";
-        print STDERR "    ... ", $ncrna_member->display_label, "\n";
+        print STDERR "SEQMEMBER: ", $ncrna_member->description, "    ... ", $ncrna_member->display_label, "\n" if ($self->debug);
 
         print STDERR  " => ncrna_member " . $ncrna_member->stable_id if ($self->debug);
         my $transcript_spliced_seq = $transcript->spliced_seq;
