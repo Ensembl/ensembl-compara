@@ -205,7 +205,7 @@ sub dump_sequences_to_workdir {
   }
   print STDERR "Counting number of members\n" if ($self->debug);
 
-  my $count = $cluster->print_sequences_to_file( -file => $fastafile, -uniq_seq => 1, -id_type => 'SEQUENCE');
+  my $count = $cluster->print_sequences_to_file( $fastafile, -uniq_seq => 1, -id_type => 'SEQUENCE');
 
   if ($count == 1) {
     $self->update_single_peptide_tree($cluster);
@@ -333,7 +333,6 @@ sub parse_and_store_alignment_into_tree {
   #
   # parse SS_cons lines and store into nc_tree_tag
   #
-  my $stk_output = $self->param('stk_output');
   open (STKFILE, $stk_output) or $self->throw("Couldnt open STK file [$stk_output]");
   my $ss_cons_string = '';
   while(<STKFILE>) {

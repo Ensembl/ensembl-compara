@@ -1602,7 +1602,7 @@ sub _sort_and_compile_GenomicAlignBlocks {
       # there is a gap between this genomic_align_block and the previous one. Close and save
       # this set_of_genomic_align_blocks (if it exists) and start a new one.
       push(@{$sets_of_genomic_align_blocks}, [$start_pos, $end_pos, $this_set_of_genomic_align_blocks])
-          if (defined(@$this_set_of_genomic_align_blocks));
+          if (@$this_set_of_genomic_align_blocks);
       $start_pos = $this_start_pos;
       $end_pos = $this_end_pos;
       $this_set_of_genomic_align_blocks = [];
@@ -1610,7 +1610,7 @@ sub _sort_and_compile_GenomicAlignBlocks {
     push(@$this_set_of_genomic_align_blocks, $this_genomic_align_block);
   }
   push(@{$sets_of_genomic_align_blocks}, [$start_pos, $end_pos, $this_set_of_genomic_align_blocks])
-        if (defined(@$this_set_of_genomic_align_blocks));
+        if (@$this_set_of_genomic_align_blocks);
   ##
   ##############################################################################################
 

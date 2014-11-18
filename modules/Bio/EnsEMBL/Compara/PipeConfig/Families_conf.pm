@@ -255,7 +255,6 @@ sub pipeline_analyses {
                 'include_nonreference'  => 1,
                 'include_patches'       => 1,
                 'include_reference'     => 0,
-                'store_missing_dnafrags'=> 1,
             },
             -rc_name => '2GigMem',
         },
@@ -323,13 +322,9 @@ sub pipeline_analyses {
                 'output_file'      => '#work_dir#/snapshot_after_load_uniprot.sql.gz',
                 'blastdb_name'  => $self->o('blastdb_name'),
             },
-            -flow_into => $self->o('hmm_clustering') ?
-                {
-                    1 => 'HMMer_classifyCurated',
-                } : {
-                    '1->A' => { 'dump_member_proteins' => { 'fasta_name' => '#blastdb_dir#/#blastdb_name#', 'blastdb_name' => '#blastdb_name#' } },
-                    'A->1'  => [ 'stable_id_map' ],
-                },
+            -flow_into => {
+                1 => $self->o('hmm_clustering') ? 'HMMer_classifyCurated' : { 'dump_member_proteins' => { 'fasta_name' => '#blastdb_dir#/#blastdb_name#', 'blastdb_name' => '#blastdb_name#' } },
+            },
         },
         
         {   -logic_name => 'dump_member_proteins',
@@ -414,7 +409,6 @@ sub pipeline_analyses {
                 'sql'   => 'INSERT IGNORE INTO hmm_annot SELECT seq_member_id, model_id, NULL FROM hmm_curated_annot hca JOIN seq_member sm ON sm.stable_id = hca.seq_member_stable_id',
             },
             -flow_into      => [ 'HMMer_classifyInterpro' ],
-            -meadow_type    => 'LOCAL',
         },
 
         {
@@ -424,7 +418,6 @@ sub pipeline_analyses {
                 'sql'   => 'INSERT IGNORE INTO hmm_annot SELECT seq_member_id, panther_family_id, evalue FROM panther_annot pa JOIN seq_member sm ON sm.stable_id = pa.ensembl_id',
             },
             -flow_into      => [ 'HMMer_classify_factory' ],
-            -meadow_type    => 'LOCAL',
         },
 
 
@@ -460,7 +453,10 @@ sub pipeline_analyses {
              -logic_name => 'HMM_clusterize',
              -module     => 'Bio::EnsEMBL::Compara::RunnableDB::Families::HMMClusterize',
              -rc_name => '4GigMem',
-             -flow_into  => [ 'fire_family_building' ],
+             -flow_into  => {
+                '1->A'  => [ 'fire_family_building' ],
+                'A->1'  => [ 'notify_pipeline_completed' ],
+             },
             },
 
 
@@ -482,10 +478,12 @@ sub pipeline_analyses {
             -parameters => {
                 'cmd' => "#mcl_bin_dir#/mcl #work_dir#/#file_basename#.tcx -I 2.1 -t 4 -tf 'gq(50)' -scheme 6 -use-tab #work_dir#/#file_basename#.itab -o #work_dir#/#file_basename#.mcl",
             },
-            -flow_into => { 1 => {
-                'archive_long_files' => { 'input_filenames' => '#work_dir#/#file_basename#.tcx #work_dir#/#file_basename#.itab' },
-                'parse_mcl'          => { 'mcl_name' => '#work_dir#/#file_basename#.mcl' },
-            } },
+            -flow_into => {
+                '1->A' => { 'archive_long_files' => { 'input_filenames' => '#work_dir#/#file_basename#.tcx #work_dir#/#file_basename#.itab' },
+                            'parse_mcl'          => { 'mcl_name' => '#work_dir#/#file_basename#.mcl' },
+                },
+                'A->1'  => [ 'stable_id_map' ],
+            },
             -rc_name => 'BigMcl',
         },
 
@@ -494,16 +492,17 @@ sub pipeline_analyses {
             -parameters => {
                 'family_prefix'         => 'fam'.$self->o('rel_with_suffix'),
             },
-            -flow_into  => { 1 => {
-                'fire_family_building' => {},
-                'archive_long_files'    => { 'input_filenames' => '#work_dir#/#file_basename#.mcl' },
-            } },
+             -flow_into => {
+                 1 => {
+                    'archive_long_files'    => { 'input_filenames' => '#work_dir#/#file_basename#.mcl' },
+                    'fire_family_building'  => { },
+                 },
+            },
             -rc_name => 'urgent',
         },
 
         {   -logic_name => 'fire_family_building',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
-            -meadow_type => 'LOCAL',
             -parameters => {
                 'first_n_big_families'  => $self->o('first_n_big_families'),
             },
@@ -524,6 +523,7 @@ sub pipeline_analyses {
                     'find_update_singleton_cigars' => { },
                 }
             },
+            -rc_name => 'urgent',
         },
 
 # <Archiving flow-in sub-branch>

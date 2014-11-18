@@ -143,7 +143,7 @@ sub fetch_by_GenomeDB_and_name {
 
   if (!$dnafrag) {
     $genome_db = sprintf('%s (%s)', $genome_db->name, $genome_db->assembly) if ref($genome_db);
-    warning("No Bio::EnsEMBL::Compara::DnaFrag found for $genome_db and chromosome $name");
+#    warning("No Bio::EnsEMBL::Compara::DnaFrag found for $genome_db and chromosome $name");
   }
   return $dnafrag;
 }

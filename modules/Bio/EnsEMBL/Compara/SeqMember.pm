@@ -131,8 +131,13 @@ sub copy {
   
   my $mycopy = $self->SUPER::copy(@_);
   
-  $mycopy->sequence($self->sequence);
-  $mycopy->sequence_id($self->sequence_id);
+  $self->sequence;  # To make sure the sequence is loaded
+  # And now we can copy all the sequence keys
+  foreach my $key (keys %$self) {
+      if (($key =~ /^_seq_/) or ($key =~ /^_sequence/)) {
+          $mycopy->{$key} = $self->{$key};
+      }
+  }
   $mycopy->gene_member_id($self->gene_member_id);
   
   return $mycopy;
@@ -479,7 +484,14 @@ sub gene_member_id {
 
 =head2 bioseq
 
-  Args       : none
+  Arg [-SEQ_TYPE] : string - alternate sequence to use
+  Arg [-ID_TYPE] : string - how to form the display_id of the Bio::Seq object
+                            - SEQ_MEMBER_ID => dbID of this SeqMember (default)
+                            - SEQUENCE_ID => sequence ID
+                            - STABLE_ID => stable ID
+                            - VERSION => stable ID and version number
+                            - SOURCE_STABLE_ID => source name and stable ID
+  Arg [-WITH_DESCRIPTION] : boolean - add this Member's description
   Example    : my $bioperl_seq = $member->bioseq;
   Description: returns sequence of this member as a Bio::Seq object
   Returntype : Bio::Seq object
@@ -503,7 +515,7 @@ sub bioseq {
 
     my $seqname = $self->seq_member_id;
     if ($id_type) {
-        $seqname = $self->sequence_id if $id_type =~ m/^SEQ/i;
+        $seqname = $self->sequence_id if $id_type =~ m/^SEQUENCE/i;
         $seqname = $self->stable_id if $id_type =~ m/^STA/i;
         $seqname = $self->stable_id.($self->version ? '.'.$self->version : '') if $id_type =~ m/^VER/i;
         $seqname = $self->source_name . ':' . $self->stable_id if $id_type =~ m/^SOU/i;

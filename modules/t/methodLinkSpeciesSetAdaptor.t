@@ -187,7 +187,7 @@ subtest "Test Bio::EnsEMBL::Compara::DBSQL::MethodLinkSpeciesSetAdaptor::fetch_a
     my $method_link_species_sets = $method_link_species_set_adaptor->fetch_all_by_GenomeDB(
                                                                                            $genome_db_adaptor->fetch_by_name_assembly($species_name)
                                                                                           );
-    is(scalar(@{$method_link_species_sets}), grep {$_->{species_set} =~ /$species_name/} values(%$all_mlss));
+    is(scalar(@{$method_link_species_sets}), scalar(grep {$_->{species_set} =~ /$species_name/} values(%$all_mlss)));
     check_mlss($method_link_species_sets);
 
     done_testing();

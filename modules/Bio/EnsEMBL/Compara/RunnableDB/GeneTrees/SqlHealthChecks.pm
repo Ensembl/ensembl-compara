@@ -134,12 +134,20 @@ my $config = {
                 query => 'SELECT gene_member_id FROM gene_member WHERE genome_db_id = #genome_db_id# AND (dnafrag_id IS NULL OR dnafrag_start IS NULL OR dnafrag_end IS NULL)',
             },
             {
+                description => 'GeneMembers should map to a dnafrag of their own species',
+                query => 'SELECT gene_member_id FROM gene_member LEFT JOIN dnafrag USING (dnafrag_id) WHERE gene_member.genome_db_id = #genome_db_id# AND (dnafrag.dnafrag_id IS NULL OR gene_member.genome_db_id != dnafrag.genome_db_id)',
+            },
+            {
                 description => 'GeneMembers should have the same taxonomy ID as their genomeDB',
                 query => 'SELECT gene_member_id FROM gene_member JOIN genome_db USING (genome_db_id) WHERE genome_db_id = #genome_db_id# AND gene_member.taxon_id != genome_db.taxon_id',
             },
             {
                 description => 'SeqMembers should have chromosome coordinates',
                 query => 'SELECT seq_member_id FROM seq_member WHERE genome_db_id = #genome_db_id# AND (dnafrag_id IS NULL OR dnafrag_start IS NULL OR dnafrag_end IS NULL)',
+            },
+            {
+                description => 'SeqMembers should map to a dnafrag of their own species',
+                query => 'SELECT seq_member_id FROM seq_member LEFT JOIN dnafrag USING (dnafrag_id) WHERE seq_member.genome_db_id = #genome_db_id# AND (dnafrag.dnafrag_id IS NULL OR seq_member.genome_db_id != dnafrag.genome_db_id)',
             },
             {
                 description => 'SeqMembers should have the same taxonomy ID as their genomeDB',

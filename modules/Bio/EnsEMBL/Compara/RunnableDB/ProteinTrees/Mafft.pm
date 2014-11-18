@@ -55,7 +55,8 @@ sub param_defaults {
     my $self = shift;
     return {
         %{$self->SUPER::param_defaults},
-        'mafft_exe'         => '/bin/mafft'             # where to find the mafft executable from $mafft_home
+        'mafft_exe'         => '/bin/mafft',            # where to find the mafft executable from $mafft_home
+        'check_seq'         => 1,
     };
 }
 

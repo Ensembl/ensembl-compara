@@ -396,13 +396,17 @@ sub alignment {
     my $self = shift;
     my $other_gene_align = shift;
 
-    return $self->adaptor->db->get_GeneAlignAdaptor->fetch_by_dbID($self->gene_align_id()) unless $other_gene_align;
+    if (not $other_gene_align) {
+        $self->{_alignment} = $self->adaptor->db->get_GeneAlignAdaptor->fetch_by_dbID($self->gene_align_id()) unless $self->{_alignment};
+        return $self->{_alignment};
+    }
 
     assert_ref($other_gene_align, 'Bio::EnsEMBL::Compara::AlignedMemberSet');
 
     $self->preload;
     $self->seq_type($other_gene_align->seq_type);
     $self->gene_align_id($other_gene_align->dbID);
+    $self->{_alignment} = $other_gene_align;
 
     # Gets the alignment
     my %cigars;
@@ -410,10 +414,11 @@ sub alignment {
         $cigars{$leaf->seq_member_id} = $leaf->cigar_line;
     }
 
-    die "The other alignment has a different size\n" if scalar(keys %cigars) != scalar(@{$self->get_all_Members});
+    my $self_members = $self->get_all_Members;
+    die "The other alignment has a different size\n" if scalar(keys %cigars) != scalar(@$self_members);
 
     # Assigns it
-    foreach my $leaf (@{$self->get_all_Members}) {
+    foreach my $leaf (@$self_members) {
         $leaf->cigar_line($cigars{$leaf->seq_member_id});
     }
 }
@@ -502,7 +507,6 @@ sub _attr_to_copy_list {
 
 =head2 get_all_Members
 
-  Example    :
   Description: Returns the list of all the GeneTreeMember of the tree
   Returntype : array reference of Bio::EnsEMBL::Compara::GeneTreeMember
   Caller     : General
@@ -570,9 +574,9 @@ sub release_tree {
 
 
 
-########
-# Misc #
-########
+##########################
+# GeneTreeNode interface #
+##########################
 
 # These methods used to be automatically created, but were missing from the Doxygen doc
 

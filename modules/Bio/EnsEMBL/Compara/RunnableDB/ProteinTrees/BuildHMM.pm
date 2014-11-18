@@ -55,7 +55,7 @@ use strict;
 
 use Bio::EnsEMBL::Compara::AlignedMemberSet;
 
-use base ('Bio::EnsEMBL::Compara::RunnableDB::ComparaHMM::MultiHMMLoadModels', 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::StoreTree', 'Bio::EnsEMBL::Compara::RunnableDB::RunCommand');
+use base ('Bio::EnsEMBL::Compara::RunnableDB::ComparaHMM::LoadModels', 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::StoreTree', 'Bio::EnsEMBL::Compara::RunnableDB::RunCommand');
 
 sub param_defaults {
     return {
@@ -80,6 +80,7 @@ sub fetch_input {
 
     my $hmm_type = 'tree_hmm_';
     $hmm_type .= $self->param('cdna') ? 'dna' : 'aa';
+    $hmm_type .= '_v'.$self->param_required('hmmer_version');
 
     if ($self->param('notaxon')) {
         $hmm_type .= "_notaxon" . "_" . $self->param('notaxon');
@@ -89,7 +90,7 @@ sub fetch_input {
     }
     $self->param('type', $hmm_type);
 
-    my $members = $self->compara_dba->get_AlignedMemberAdaptor->fetch_all_by_GeneTree($protein_tree);
+    my $members = $protein_tree->alignment->get_all_Members;
     if ($self->param('notaxon')) {
         my $newmembers = [];
         foreach my $member (@$members) {
@@ -117,7 +118,7 @@ sub fetch_input {
     $self->param('protein_align', Bio::EnsEMBL::Compara::AlignedMemberSet->new(-dbid => $self->param('gene_tree_id'), -members => $members));
 
     $self->require_executable('hmmbuild_exe');
-    $self->require_executable('hmmcalibrate_exe') if $self->param_required('hmmer_version') eq '2';
+    $self->require_executable('hmmcalibrate_exe') if $self->param('hmmer_version') eq '2';
     $self->require_executable('hmmemit_exe');
 
 }
@@ -169,7 +170,7 @@ sub write_output {
 sub run_buildhmm {
     my $self = shift;
 
-    my $aln_file = $self->dumpAlignedMemberSet($self->param('protein_align'), $self->param('hmmer_version') == 2 ? 'fasta' : 'stockholm');
+    my $aln_file = $self->dumpTreeMultipleAlignmentToWorkdir($self->param('protein_align'), $self->param('hmmer_version') == 2 ? 'fasta' : 'stockholm');
     my $hmm_file = $self->param('hmm_file', $aln_file . '_hmmbuild.hmm');
 
     ## as in treefam

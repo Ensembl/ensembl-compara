@@ -94,6 +94,7 @@ sub param_defaults {
             'no_between'            => 0.25, # dont store all possible_orthologs
             'homoeologous_genome_dbs'  => [],
             '_readonly'             => 0,
+            'tag_split_genes'       => 0,
     };
 }
 
@@ -315,12 +316,16 @@ sub display_link_analysis
     print "    ";
   }
   printf("%9s)", $ancestor->node_id);
-  printf(" %.4f ", $ancestor->get_tagvalue('duplication_confidence_score'));
+  if ($ancestor->has_tag('duplication_confidence_score')) {
+    printf(" %.4f ", $ancestor->get_tagvalue('duplication_confidence_score'));
+  } else {
+    print " N/A    ";
+  }
 
   printf(" %s %d %s\n",
          $genepairlink->get_tagvalue('orthotree_type'), 
          $genepairlink->get_tagvalue('is_tree_compliant'),
-         $ancestor->get_tagvalue('taxon_name'),
+         $ancestor->taxonomy_level(),
         );
 }
 

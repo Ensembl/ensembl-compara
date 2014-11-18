@@ -138,7 +138,7 @@ sub run {
 
     my $tempdir = $self->worker_temp_directory;
     my $fastafile = "$tempdir/alt_alleles.fa";
-    $set->print_sequences_to_file(-file => $fastafile, -id_type => 'MEMBER');
+    $set->print_sequences_to_file($fastafile, -id_type => 'MEMBER');
 
     my $msa_output = "$tempdir/output.fa";
 
