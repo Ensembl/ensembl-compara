@@ -1629,8 +1629,16 @@ sub _munge_meta {
       next unless $meta_hash->{$meta_key};
       
       my $value = scalar @{$meta_hash->{$meta_key}} > 1 ? $meta_hash->{$meta_key} : $meta_hash->{$meta_key}[0]; 
+
+      ## Set version of assembly name that we can use where space is limited 
+      if ($meta_key eq 'assembly.name') {
+        $self->tree->{$species}{'ASSEMBLY_SHORT_NAME'} = (length($value) > 16)
+                  ? $self->db_tree->{'ASSEMBLY_VERSION'} : $value;
+      }
+
       $self->tree->{$species}{$key} = $value;
     }
+
 
     ## Do species group
     my $taxonomy = $meta_hash->{'species.classification'};
