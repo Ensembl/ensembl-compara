@@ -61,7 +61,7 @@ sub buttons {
   }
 
   
-  if ($options->{'action'} =~ /Align/ && !$hub->param('align')) {
+  if ($options->{'action'} =~ /Align/ && ($hub->param('need_target_slice_table') || !$hub->param('align'))) {
     return {
       'url'       => undef, 
       'caption'   => $options->{'caption'} || 'Download sequence',

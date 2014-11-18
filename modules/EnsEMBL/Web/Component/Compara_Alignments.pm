@@ -117,6 +117,8 @@ sub content {
   } elsif ($is_overlap && $target_species && !$target_slice) {
       $need_target_slice_table = 1;  
   }
+  ## Need to pass information to button code
+  $hub->param('need_target_slice_table', $need_target_slice_table);
 
   my ($slices, $slice_length, $num_slices);
   
