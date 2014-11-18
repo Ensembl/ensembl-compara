@@ -460,7 +460,7 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
     $.each(this.areas, function () {
 
       assignArea:
-      for (var i = 0; i <= 5; i++) { // this is to overcome an apparent drawing code bug that areas sometimes are not completely enclosed inside a track's li
+      for (var i = 0; i <= 10; i++) { // this is to overcome an apparent drawing code bug that areas sometimes are not completely enclosed inside a track's li
         for (var j = lis.length - 1; j >= 0; j--) {
           if (lis[j].top <= this.t + i && lis[j].bottom >= this.b - i) {
             lis[j].areas.push(this);
