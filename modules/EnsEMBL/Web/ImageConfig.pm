@@ -2987,7 +2987,11 @@ sub add_sequence_variations_meta {
   my ($self, $key, $hashref, $options) = @_;
   my $menu = $self->get_node('variation');
   my $prefix_caption = 'Variant - '; 
- 
+  my $suffix_caption = ' - short variants (SNPs and indels)';
+  my $regexp_suffix_caption = $suffix_caption;
+     $regexp_suffix_caption =~ s/\(/\\\(/;
+     $regexp_suffix_caption =~ s/\)/\\\)/;
+
   foreach my $menu_item (sort {$a->{type} cmp $b->{type} || $a->{parent} cmp $b->{parent}} @{$hashref->{'menu'}}) {
     next if $menu_item->{'type'} =~  /^sv_/; # exclude structural variant items
     
@@ -2998,7 +3002,9 @@ sub add_sequence_variations_meta {
     } elsif ($menu_item->{'type'} eq 'source') { # source type
       (my $temp_name     = $menu_item->{'long_name'}) =~ s/ variants$//;
       my $other_sources = ($menu_item->{'long_name'} =~ /all other sources/);
-      
+
+      $menu_item->{'long_name'} =~ s/ variants$/$suffix_caption/;
+
       $node = $self->create_track($menu_item->{'key'}, $menu_item->{'long_name'}, {
         %$options,
         caption     => $prefix_caption.$menu_item->{'long_name'},
@@ -3006,6 +3012,13 @@ sub add_sequence_variations_meta {
         description => $other_sources ? 'Sequence variants from all sources' : $hashref->{'source'}{'descriptions'}{$temp_name},
       });
     } elsif ($menu_item->{'type'} eq 'set') { # set type
+      if ($menu_item->{'long_name'} =~ / variants$/) {
+        $menu_item->{'long_name'} =~ s/ variants$/$suffix_caption/;
+      }
+      elsif ($menu_item->{'long_name'} !~ /$regexp_suffix_caption$/){# / short variants \(SNPs and indels\)$/){
+        $menu_item->{'long_name'} .= $suffix_caption;
+      }
+
       (my $temp_name = $menu_item->{'key'})       =~ s/^variation_set_//;
       (my $caption   = $menu_item->{'long_name'}) =~ s/1000 Genomes/1KG/;  # shorten name for side of image
       (my $set_name  = $menu_item->{'long_name'}) =~ s/All HapMap/HapMap/; # hack for HapMap set name - remove once variation team fix data for 68
