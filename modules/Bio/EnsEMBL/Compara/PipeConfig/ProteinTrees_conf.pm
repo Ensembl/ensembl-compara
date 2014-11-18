@@ -306,8 +306,8 @@ sub resource_classes {
          '16Gb_16c_job' => {'LSF' => '-n 16 -C0 -M16000 -R"select[mem>16000] rusage[mem=16000]"' },
          '64Gb_16c_job' => {'LSF' => '-n 16 -C0 -M64000 -R"select[mem>64000] rusage[mem=64000]"' },
 
-         '4Gb_64c_mpi'  => {'LSF' => '-q mpi -n 64 -a openmpi -M4000  -R"select[mem>4000]  rusage[mem=4000]  same[model] span[ptile=4]"' },
-         '16Gb_64c_mpi' => {'LSF' => '-q mpi -n 64 -a openmpi -M16000 -R"select[mem>16000] rusage[mem=16000] same[model] span[ptile=4]"' },
+         '8Gb_64c_mpi'  => {'LSF' => '-q mpi -n 64 -a openmpi -M8000 -R"select[mem>8000] rusage[mem=8000] same[model] span[ptile=16]"' },
+         '32Gb_64c_mpi' => {'LSF' => '-q mpi -n 64 -a openmpi -M32000 -R"select[mem>32000] rusage[mem=32000] same[model] span[ptile=16]"' },
 
     };
 }
@@ -337,8 +337,8 @@ sub pipeline_create_commands {
 
     my %reuse_modes = (clusters => 1, blastp => 1, members => 1);
     die "'reuse_level' must be set to one of: clusters, blastp, members" if not $self->o('reuse_level') or (not $reuse_modes{$self->o('reuse_level')} and not $self->o('reuse_level') =~ /^#:subst/);
-    my %clustering_modes = (blastp => 1, hmm => 1, hybrid => 1);
-    die "'clustering_mode' must be set to one of: blastp, hmm, hybrid" if not $self->o('clustering_mode') or (not $clustering_modes{$self->o('clustering_mode')} and not $self->o('clustering_mode') =~ /^#:subst/);
+    my %clustering_modes = (blastp => 1, hmm => 1, hybrid => 1, topup => 1);
+    die "'clustering_mode' must be set to one of: blastp, hmm, hybrid or topup" if not $self->o('clustering_mode') or (not $clustering_modes{$self->o('clustering_mode')} and not $self->o('clustering_mode') =~ /^#:subst/);
 
     return [
         @{$self->SUPER::pipeline_create_commands},  # here we inherit creation of database, hive tables and compara tables
@@ -622,7 +622,7 @@ sub core_pipeline_analyses {
                 'registry_dbs'      => $self->o('prev_core_sources_locs'),
                 'do_not_reuse_list' => $self->o('do_not_reuse_list'),
             },
-            -hive_capacity => 10,
+            -hive_capacity => 50,
             -rc_name => '1Gb_job',
             -flow_into => {
                 2 => { ':////accu?reused_gdb_ids=[]' => { 'reused_gdb_ids' => '#genome_db_id#'} },
@@ -771,7 +771,7 @@ sub core_pipeline_analyses {
                 'src_db_conn'   => '#reuse_db#',
                 'table'         => 'dnafrag',
                 'where'         => 'genome_db_id = #genome_db_id#',
-                'mode'          => 'topup',
+                'mode'          => 'insertignore',
             },
             -hive_capacity => $self->o('reuse_capacity'),
             -flow_into => {
@@ -785,7 +785,7 @@ sub core_pipeline_analyses {
                 'src_db_conn'   => '#reuse_db#',
                 'table'         => 'seq_member',
                 'where'         => 'seq_member_id<='.$self->o('protein_members_range').' AND genome_db_id = #genome_db_id#',
-                'mode'          => 'topup',
+                'mode'          => 'insertignore',
             },
             -hive_capacity => $self->o('reuse_capacity'),
             -flow_into => {
@@ -799,7 +799,7 @@ sub core_pipeline_analyses {
                 'src_db_conn'   => '#reuse_db#',
                 'table'         => 'gene_member',
                 'where'         => 'gene_member_id<='.$self->o('protein_members_range').' AND genome_db_id = #genome_db_id#',
-                'mode'          => 'topup',
+                'mode'          => 'insertignore',
             },
             -hive_capacity => $self->o('reuse_capacity'),
             -flow_into => {
@@ -888,7 +888,7 @@ sub core_pipeline_analyses {
                 'src_db_conn'   => '#master_db#',
                 'table'         => 'dnafrag',
                 'where'         => 'genome_db_id = #genome_db_id#',
-                'mode'          => 'topup',
+                'mode'          => 'insertignore',
             },
             -hive_capacity => $self->o('reuse_capacity'),
             -flow_into => [ 'load_fresh_members_from_db' ],
@@ -1099,7 +1099,7 @@ sub core_pipeline_analyses {
                              'hmmer_path'          => $self->o('hmmer2_home'),
                             },
              -hive_capacity => $self->o('HMMer_classifyPantherScore_capacity'),
-             -rc_name => '4Gb_job',
+             -rc_name => '4Gb_job_gpfs',
             },
 
             {
@@ -1443,7 +1443,7 @@ sub core_pipeline_analyses {
         {   -logic_name => 'update_job_factory',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
             -parameters => {
-                'inputquery'        => 'SELECT root_id AS gene_tree_id FROM gene_tree_root, stable_id WHERE tree_type = "tree" AND clusterset_id="default"',
+                'inputquery'        => 'SELECT root_id AS gene_tree_id FROM gene_tree_root WHERE tree_type = "tree" AND clusterset_id="default"',
                 'fan_branch_code'   => 2,
             },
             -flow_into  => {
@@ -1710,6 +1710,7 @@ sub core_pipeline_analyses {
         {   -logic_name     => 'aln_filtering_tagging',
             -module         => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::AlignmentFilteringTagging',
             -hive_capacity  => $self->o('alignment_filtering_capacity'),
+            -rc_name    	=> '4Gb_job',
             -batch_size     => 5,
             -flow_into      => [ 'prottest' ],
         },
@@ -1879,7 +1880,7 @@ sub core_pipeline_analyses {
                 'treebest_exe'          => $self->o('treebest_exe'),
             },
             -hive_capacity        => $self->o('examl_capacity'),
-            -rc_name => '4Gb_64c_mpi',
+            -rc_name => '8Gb_64c_mpi',
             -max_retry_count => 0,
             -flow_into => {
                -1 => [ 'examl_himem' ],  # MEMLIMIT
