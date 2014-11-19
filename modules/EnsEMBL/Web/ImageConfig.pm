@@ -1611,6 +1611,8 @@ sub reset {
     if ($node->{'user_data'}{'track_order'}{$species}) {
       delete $node->{'user_data'}{'track_order'}{$species};
       delete $node->{'user_data'}{'track_order'} unless scalar keys %{$node->{'user_data'}{'track_order'}};
+
+      $self->altered('Track order');
     }
   }
 }
