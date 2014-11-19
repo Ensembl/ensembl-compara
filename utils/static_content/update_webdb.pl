@@ -26,6 +26,7 @@ use Getopt::Long;
 
 my ($SERVERROOT, $help, $info, $date);
 
+## In debug mode, select queries will be run but not inserts and updates
 my $DEBUG = 0;
 
 BEGIN{
