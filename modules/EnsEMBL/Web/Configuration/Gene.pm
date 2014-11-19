@@ -139,9 +139,9 @@ sub populate_tree {
   
   $compara_menu->append($pl_node);
   
-  my $fam_node = $self->create_node('Family', 'Protein families ([[counts::families]])',
+  my $fam_node = $self->create_node('Family', 'Ensembl protein families ([[counts::families]])',
     [qw( family EnsEMBL::Web::Component::Gene::Family )],
-    { 'availability' => 'family', 'concise' => 'Protein families' }
+    { 'availability' => 'family', 'concise' => 'Ensembl protein families' }
   );
   
   $fam_node->append($self->create_subnode('Family/Genes', uc($species_defs->get_config($hub->species, 'SPECIES_COMMON_NAME')) . ' genes in this family',
