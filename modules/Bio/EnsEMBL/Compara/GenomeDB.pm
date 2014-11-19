@@ -40,6 +40,7 @@ The end-user is probably only interested in the following methods:
  - genebuild()
  - has_karyotype()
  - is_high_coverage()
+ - genome_component()
  - db_adaptor() (returns a Bio::EnsEMBL::DBSQL::DBAdaptor for this species)
  - toString()
 
@@ -101,8 +102,8 @@ sub new {
 
     my $self = $class->SUPER::new(@_);       # deal with Storable stuff
 
-    my($db_adaptor, $name, $assembly, $taxon_id,  $genebuild, $has_karyotype, $is_high_coverage) =
-        rearrange([qw(DB_ADAPTOR NAME ASSEMBLY TAXON_ID GENEBUILD HAS_KARYOTYPE IS_HIGH_COVERAGE)], @_);
+    my($db_adaptor, $name, $assembly, $taxon_id,  $genebuild, $has_karyotype, $genome_component, $is_high_coverage) =
+        rearrange([qw(DB_ADAPTOR NAME ASSEMBLY TAXON_ID GENEBUILD HAS_KARYOTYPE GENOME_COMPONENT IS_HIGH_COVERAGE)], @_);
 
     # If there is a Core DBAdaptor, we can get most of the info from there
     if ($db_adaptor) {
@@ -130,6 +131,9 @@ sub new {
             }
             ${$test->[1]} = $test->[2];
         }
+        if ($genome_component and not scalar(grep {$_ eq $genome_component} @{$db_adaptor->component_names})) {
+            die "The required genome component '$genome_component' cannot be found in the database, please investigate\n";
+        }
     }
 
     $name         && $self->name($name);
@@ -137,6 +141,7 @@ sub new {
     $taxon_id     && $self->taxon_id($taxon_id);
     $genebuild    && $self->genebuild($genebuild);
     defined $has_karyotype      && $self->has_karyotype($has_karyotype);
+    defined $genome_component   && $self->genome_component($genome_component);
     defined $is_high_coverage   && $self->is_high_coverage($is_high_coverage);
 
     return $self;
@@ -438,6 +443,25 @@ sub is_high_coverage {
 }
 
 
+=head2 genome_component
+
+  Example     : my $genome_component = $genome_db->genome_component();
+  Example     : $genome_db->genome_component($genome_component);
+  Description : For polyploid genomes, the name of the sub-component.
+  Returntype  : string
+  Exceptions  : none
+  Caller      : general
+  Status      : Stable
+
+=cut
+
+sub genome_component {
+    my $self = shift;
+    $self->{'_genome_component'} = shift if @_;
+    return $self->{'_genome_component'};
+}
+
+
 =head2 toString
 
   Example    : print $dbID->toString()."\n";
@@ -460,6 +484,7 @@ sub toString {
         ."', taxon_id='".$self->taxon_id
         ."', karyotype='".$self->has_karyotype
         ."', high_coverage='".$self->is_high_coverage
+        ."', genome_component='".$self->genome_component if $self->genome_component
         ."', locator='".$self->locator
         ."'";
 }
