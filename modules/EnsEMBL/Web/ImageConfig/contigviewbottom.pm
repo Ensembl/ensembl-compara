@@ -169,6 +169,13 @@ sub init {
       $self->modify_configs([$track], {display => $style});
     }
   }
+  elsif ($self->hub->database('variation')) {
+    my $tracks = [qw(variation_feature_variation)];
+    if ($self->species_defs->databases->{'DATABASE_VARIATION'}{'STRUCTURAL_VARIANT_COUNT'}) {
+      push @$tracks, 'variation_feature_structural_smaller';
+    }
+    $self->modify_configs($tracks, {display => 'compact'});
+  }
 
   # These tracks get added after the "auto-loaded tracks get addded
   if ($self->species_defs->ENSEMBL_MOD) {
