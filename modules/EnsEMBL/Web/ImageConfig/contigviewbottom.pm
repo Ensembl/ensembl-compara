@@ -164,10 +164,11 @@ sub init {
 #  $self->load_configured_bam;
 
   #switch on some variation tracks by default
-  $self->modify_configs(
-    [ 'variation_set_1kg_com','variation_set_ph_variants', 'sv_set_1kg_hq' ],
-    { display => 'compact' }
-  );
+  if ($self->species_defs->DEFAULT_VARIATION_TRACKS) {
+    while (my ($track, $style) = each (%{$self->species_defs->DEFAULT_VARIATION_TRACKS})) {
+      $self->modify_configs([$track], {display => $style});
+    }
+  }
 
   # These tracks get added after the "auto-loaded tracks get addded
   if ($self->species_defs->ENSEMBL_MOD) {
