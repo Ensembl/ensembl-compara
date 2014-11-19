@@ -26,6 +26,8 @@ use Getopt::Long;
 
 my ($SERVERROOT, $help, $info, $date);
 
+my $DEBUG = 0;
+
 BEGIN{
   &GetOptions(
     'help'    => \$help,
@@ -62,16 +64,41 @@ my $release_id = $sd->ENSEMBL_VERSION;
 my $release = $adaptor->fetch_release($release_id);
 
 if ($release) {
-    print "Release $release_id is already in the database.\n\n";
+  print "Release $release_id is currently scheduled for ". $release->{'date'} .".
+            Is this correct? [y/n]";
 
+  while (<STDIN>) {
+    chomp;
+    unless (/^y$/i) {
+      print "Please give the correct release date, formatted as full month name and year separated by a space, e.g. March 2015:";
+      INPUT: while (<STDIN>) {
+        chomp;
+        my ($month, $year) = /([A-Z][a-z]+) (\d{4})/;
+        if ($month && $year) {
+          my $short_month = substr($month, 0, 3);
+          my $archive = $short_month.$year;
+          print "Setting release date to $_ and archive subdomain to $archive\n\n";
+          $sql = "UPDATE ens_release SET date = '$_', archive = '$archive' WHERE release_id = ?";
+          $sth = $adaptor->db->prepare($sql);
+          $sth->execute($release_id) unless $DEBUG;
+          last INPUT;
+        }
+        else {
+          print "Sorry, that was not a valid date format.\n";
+          exit;
+        }
+      }
+    }
+    last;
+  }
 } else {
-    my $archive = $SiteDefs::ARCHIVE_VERSION;
-    my $date = $hub->pretty_date($archive);
-    $sql = 'INSERT INTO ens_release (release_id, number, date, archive, online, mart) values(?, ?, ?, ?, ?, ?)';
-    @args = ($release_id, $release_id, $date, $archive, 'Y', 'Y');
-    $sth = $adaptor->db->prepare($sql);
-    $sth->execute(@args);
-    print "Inserting release $release_id, scheduled for $date.\n\n";
+  my $archive = $sd->ARCHIVE_VERSION;
+  my $date = $hub->pretty_date($archive);
+  $sql = 'INSERT INTO ens_release (release_id, number, date, archive, online, mart) values(?, ?, ?, ?, ?, ?)';
+  @args = ($release_id, $release_id, $date, $archive, 'Y', 'Y');
+  $sth = $adaptor->db->prepare($sql);
+  $sth->execute(@args) unless $DEBUG;
+  print "Inserting release $release_id, scheduled for $date.\n\n";
 }
 
 print "Adding species...\n\n";
@@ -87,7 +114,7 @@ foreach my $sp (@db_spp) {
 my @species = $sd->valid_species();
 my ($record, $result, $species_id);
 
-foreach my $sp (sort @species) {
+SPECIES: foreach my $sp (sort @species) {
 
   # check if this species is in the database yet
   if (!$lookup{$sp}) {
@@ -100,7 +127,7 @@ foreach my $sp (sort @species) {
     @args = ($sd->get_config($sp, 'SPECIES_CODE'), $sd->get_config($sp, 'SPECIES_URL'),
               $sd->get_config($sp, 'SPECIES_COMMON_NAME'), 'N', 'Y');
     $sth = $adaptor->db->prepare($sql);
-    $sth->execute(@args);
+    $sth->execute(@args) unless $DEBUG;
     print "Adding new species $sp to database, with ID $species_id\n";
   }
   else {
@@ -116,15 +143,48 @@ foreach my $sp (sort @species) {
     while (my @data = $sth->fetchrow_array()) {
       $already_done = 1;
     }
-    unless ($already_done) {
+    if ($already_done) {
+      print "Species $sp is already in the database.\n";
+    }
+    else {
       my $a_name = $sd->get_config($sp, 'ASSEMBLY_NAME') || '';
       my $a_version = $sd->get_config($sp, 'ASSEMBLY_VERSION') || '';
+
+      ## Check if the assembly has changed - mostly to catch human error!
+      $sql = 'SELECT assembly_version, assembly_name FROM release_species WHERE release_id = ? AND species_id = ?';
+      @args = ($release_id-1, $species_id);
+      $sth = $adaptor->db->prepare($sql);
+      $sth->execute(@args);
+      while (my @data = $sth->fetchrow_array()) {
+        my $old_version   = $data[0];
+        my $old_name      = $data[1];
+        my $is_different  = 0;
+        if ($old_version ne $a_version) {
+          print "!!! Old assembly version was $old_version; new version is $a_version\n";
+          $is_different = 1;
+        }
+        if ($old_name ne $a_name) {
+          print "!!! Old assembly name was $old_name; new nome is $a_name\n";
+          $is_different = 1;
+        }
+        if ($is_different) {
+          print "Is this correct? [y/n]\n";
+          print "If not, please patch the database and run this script again (it will skip any species already added)\n";
+
+          while (<STDIN>) {
+            chomp;
+            next SPECIES unless (/^y$/i);
+          } 
+        }
+      }
+
+      ## Now set new assembly
       my $initial = $sd->get_config($sp, 'GENEBUILD_RELEASE') || '';
       my $latest = $sd->get_config($sp, 'GENEBUILD_LATEST') || '';
       $sql = 'INSERT INTO release_species VALUES (?, ?, ?, ?, ?, ?, ?, ?)';
       @args = ($release_id, $species_id, $a_version, $a_name, '', '', $initial, $latest);
       $sth = $adaptor->db->prepare($sql);
-      $sth->execute(@args);
+      $sth->execute(@args) unless $DEBUG;
       print "ADDED $sp to release $release_id \n";
     }
   }
