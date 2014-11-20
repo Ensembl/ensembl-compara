@@ -104,6 +104,26 @@ sub order_reset {
   $hub->session->store;
 }
 
+sub config_reset {
+  my ($self, $hub)  = @_;
+  my $image_config  = $hub->get_imageconfig($hub->param('image_config'));
+  my $species       = $image_config->species;
+  my $node          = $image_config->tree;
+
+  for ($node, $node->nodes) {
+    my $user_data = $_->{'user_data'};
+
+    foreach (keys %$user_data) {
+      my $text = $user_data->{$_}{'name'} || $user_data->{$_}{'coption'};
+      $image_config->altered($text) if $user_data->{$_}{'display'};
+      delete $user_data->{$_}{'display'};
+      delete $user_data->{$_} unless scalar keys %{$user_data->{$_}};
+    }
+  }
+
+  $hub->session->store;
+}
+
 sub multi_species {
   my ($self, $hub) = @_;
   my %species = map { $_ => $hub->param($_) } $hub->param;

@@ -85,9 +85,10 @@ sub render_toolbar {
   my ($toolbar, $export, $top, $bottom, $image_resize, $image_sizes);
   my $hub         = $self->hub;
   my $component   = $self->component;
+  my $viewconfig  = $hub->get_viewconfig($component);
   
   ## Config panel link
-  if ($hub->get_viewconfig($component)) {
+  if ($viewconfig) {
     my $config_url = $hub->url('Config', { action => $component, function => undef });
     my $data_url   = $hub->url({ type => 'UserData', action => 'ManageData', function => undef });
     my $share_url  = $hub->url('Share', { action => $component, function => undef, __clear => 1, create => 1, share_type => 'image', time => time });
@@ -189,6 +190,10 @@ sub render_toolbar {
       $params->{$_} = $hub->param($_);
     }
     $toolbar .= sprintf '<a href="%s" class="download modal_link" title="%s"></a>', $hub->url($params), $icon_mapping->{'download'}{'title'};
+  }
+
+  if ($viewconfig) {
+    $toolbar .= sprintf '<a href="%s" class="config-reset _reset" title="%s"></a>', $hub->url({qw(type Ajax action config_reset __clear 1)}), $icon_mapping->{'config_order'}{'title'};
   }
 
   if ($self->has_moveable_tracks) {

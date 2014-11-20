@@ -134,6 +134,7 @@ div.image_toolbar a.download      { background-image: url(/i/16/rev/download.png
 div.image_toolbar a.resize        { background-image: url(/i/16/rev/image_resize.png);  }
 div.image_toolbar a.share         { background-image: url(/i/16/rev/share.png);         }
 div.image_toolbar a.order-reset   { background-image: url(/i/16/rev/order-reset.png);   }
+div.image_toolbar a.config-reset  { background-image: url(/i/16/rev/setting-reset.png); }
 
 /* Image exporting */
 
