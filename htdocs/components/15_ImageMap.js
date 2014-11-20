@@ -545,11 +545,6 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
 
   sortUpdate: function(e, ui) {
 
-    this.positionAreas();
-    this.positionLayers();
-    this.removeShare();
-    Ensembl.EventManager.trigger('removeShare');
-
     var prev  = (ui.item.prev().prop('className') || '').replace(' ', '.');
     var track = ui.item.prop('className').replace(' ', '.');
 
@@ -578,6 +573,11 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
   },
 
   saveSortOrder: function(url, track, prev) {
+    this.positionAreas();
+    this.positionLayers();
+    this.removeShare();
+    Ensembl.EventManager.trigger('removeShare');
+
     $.ajax({
       url: url,
       type: 'post',
