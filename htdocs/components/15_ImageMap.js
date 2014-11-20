@@ -492,7 +492,7 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
     });
 
     this.elLk.boundaries.each(function () {
-      $(this).data('updateURL', '/' + this.className.split(' ')[0] + '/Ajax/track_order');
+      $(this).data('species', this.className.split(' ')[0]);
     }).sortable({
       axis:   'y',
       handle: 'div.handle',
@@ -551,36 +551,43 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
 
     Ensembl.EventManager.triggerSpecific('changeTrackOrder', 'modal_config_' + this.id.toLowerCase(), track, prev);
 
-    this.saveSortOrder(ui.item.parent().data('updateURL'), track, prev);
+    this.saveSortOrder(ui.item.parent().data('species'), track, prev);
   },
 
-  externalOrder: function(trackId, prevTrackId) {
+  externalOrder: function(species, trackId, prevTrackIds) {
     var track = this.elLk.boundaries.find('li.' + trackId);
-    var prev  = prevTrackId ? this.elLk.boundaries.find('li.' + prevTrackId) : false;
+    var prev  = [];
 
-    if (!track) {
-      return;
+    // there is a possibility that immediate previous track according to the config panel is not actually drawn by the drawing code,
+    // in that case, find the next one in the list that's present on the image.
+    for (var i in prevTrackIds) {
+      prev = this.elLk.boundaries.find('li.' + prevTrackIds[i]);
+      if (prev.length) {
+        break;
+      }
     }
 
-    if (prev && prev.length) {
-      track.insertAfter(prev);
-    } else {
-      track.parent().prepend(track);
+    if (track.length) {
+      if (prev.length) {
+        track.insertAfter(prev);
+      } else {
+        track.parent().prepend(track);
+      }
     }
 
-    this.saveSortOrder(track.parent().data('updateURL'), trackId, prevTrackId || '');
+    this.saveSortOrder(species, trackId, prevTrackIds[0] || '');
 
     track = prev = null;
   },
 
-  saveSortOrder: function(url, track, prev) {
+  saveSortOrder: function(species, track, prev) {
     this.positionAreas();
     this.positionLayers();
     this.removeShare();
     Ensembl.EventManager.trigger('removeShare');
 
     $.ajax({
-      url: url,
+      url:  '/' + species + '/Ajax/track_order',
       type: 'post',
       data: {
         image_config: this.imageConfig,

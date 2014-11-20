@@ -940,10 +940,12 @@ Ensembl.Panel.Configurator = Ensembl.Panel.ModalContent.extend({
       axis: 'y',
       containment: 'parent',
       update: function (e, ui) {
-        var track = ui.item.data('trackName').replace(' ', '.');
-        var prev  = (ui.item.prev().data('trackName') || '').replace(' ', '.');
+        var trackId = ui.item.data('trackName').replace(' ', '.');
+        var prevIds = $.makeArray(ui.item.prevAll().map(function(i, track) {
+          return ($(track).data('trackName') || '').replace(' ', '.');
+        }));
 
-        Ensembl.EventManager.triggerSpecific('changeTrackOrder', panel.component, track, prev);
+        Ensembl.EventManager.triggerSpecific('changeTrackOrder', panel.component, panel.params.species, trackId, prevIds);
       }
     });
   },
