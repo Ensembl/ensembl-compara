@@ -54,7 +54,7 @@ sub matches_to_html {
 
   my (%seen, %hidden_columns, %columns_with_data);
 
-  my @other_columns = @{$hub->species_defs->DEFAULT_XREFS};
+  my @other_columns = @{$hub->species_defs->DEFAULT_XREFS||[]};
   foreach (@other_columns) {
     $_ =~ s/_/ /g;
     push @columns, {
