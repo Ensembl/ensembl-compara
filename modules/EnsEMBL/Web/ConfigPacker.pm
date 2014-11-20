@@ -382,37 +382,19 @@ sub _summarise_xref_types {
   
   return unless $dbh; 
   my @xref_types;
-  my %xrefs_types_hash;
-
-
-  if($self->db_tree->{'XREF_TYPES'}){
-    @xref_types=  split(/,/, $self->db_tree->{'XREF_TYPES'});
-    foreach(@xref_types){
-      my @type_priority=  split(/=/, $_);
-      $xrefs_types_hash{$type_priority[0]}=$type_priority[1];
-    }
-  }
+  my %xrefs_types_hash = %{$self->db_tree->{'XREF_TYPES'}||{}};
 
   my $aref =  $dbh->selectall_arrayref(qq(
-  SELECT distinct(edb.db_display_name), max(edb.priority) as m
+  SELECT distinct(edb.db_display_name) 
     FROM object_xref ox JOIN xref x ON ox.xref_id =x.xref_id JOIN external_db edb ON x.external_db_id = edb.external_db_id
    WHERE edb.type IN ('MISC', 'LIT')
      AND (ox.ensembl_object_type ='Transcript' OR ox.ensembl_object_type ='Translation' )
-   GROUP BY edb.db_display_name
-   ORDER BY m desc) );
-  foreach my $row (@$aref) {
-    if($xrefs_types_hash{$row->[0]} ){
-      $xrefs_types_hash{$row->[0]}= ($row->[1]>$xrefs_types_hash{$row->[0]})?$row->[1]:$xrefs_types_hash{$row->[0]};
-    }else{
-      $xrefs_types_hash{$row->[0]}=$row->[1];
-    }
+   GROUP BY edb.db_display_name) );
+
+  foreach my $row (@$aref) {    
+    $xrefs_types_hash{$row->[0]} = 1;
   }
-  my $xref_types_string="";
-  for my $key ( keys %xrefs_types_hash ) {
-    my $value = $xrefs_types_hash{$key};
-    $xref_types_string.=$key."=".$value.",";
-  }
-  $self->db_tree->{'XREF_TYPES'} = $xref_types_string;
+  $self->db_tree->{'XREF_TYPES'} = \%xrefs_types_hash;
   $dbh->disconnect();
 }
 
@@ -949,10 +931,10 @@ sub _summarise_archive_db {
   return unless $dbh;
 
   my $t_aref = $dbh->selectall_arrayref(
-    'select s.name, r.release_id, rs.assembly_code, rs.initial_release, rs.last_geneset
+    'select s.name, r.release_id, rs.assembly_version, rs.initial_release, rs.last_geneset
        from species as s, ens_release as r, release_species as rs
       where s.species_id =rs.species_id and r.release_id =rs.release_id
-       and rs.assembly_code != ""'
+       and rs.assembly_version != ""'
   );
   foreach my $row ( @$t_aref ) {
     my @A = @$row;
