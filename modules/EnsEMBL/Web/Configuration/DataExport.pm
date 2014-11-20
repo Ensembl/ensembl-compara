@@ -46,7 +46,7 @@ sub populate_tree {
   $self->create_node('Homologs', 'Alignments', ['alignments', 'EnsEMBL::Web::Component::DataExport::Homologs']);
   $self->create_node('Orthologs', 'Orthologues', ['orthologues', 'EnsEMBL::Web::Component::DataExport::Orthologs']);
   $self->create_node('Paralogs', 'Paralogues', ['paralogues', 'EnsEMBL::Web::Component::DataExport::Paralogs']);
-  $self->create_node('Family', 'Protein Family', ['family', 'EnsEMBL::Web::Component::DataExport::Family']);
+  $self->create_node('Family', 'Ensembl protein Family', ['family', 'EnsEMBL::Web::Component::DataExport::Family']);
   $self->create_node('GeneTree', 'Gene Tree', ['genetree', 'EnsEMBL::Web::Component::DataExport::GeneTree']);
   $self->create_node('SpeciesTree', 'Species Tree', ['species_tree', 'EnsEMBL::Web::Component::DataExport::SpeciesTree']);
 
