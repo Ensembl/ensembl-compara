@@ -42,6 +42,7 @@ Ensembl.Panel.Configurator = Ensembl.Panel.ModalContent.extend({
     Ensembl.EventManager.register('syncViewConfig',      this, this.syncViewConfig);
     Ensembl.EventManager.register('updateSavedConfig',   this, this.updateSavedConfig);
     Ensembl.EventManager.register('activateConfig',      this, this.activateConfig);
+    Ensembl.EventManager.register('resetConfig',         this, this.externalReset);
   },
   
   init: function () {
@@ -1190,6 +1191,11 @@ Ensembl.Panel.Configurator = Ensembl.Panel.ModalContent.extend({
     }
 
     track = prev = null;
+  },
+
+  // Called when track order or configs are reset on the image
+  externalReset: function() {
+    this.el.empty();
   },
   
   destructor: function () {
