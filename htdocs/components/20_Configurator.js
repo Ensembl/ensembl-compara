@@ -1177,6 +1177,14 @@ Ensembl.Panel.Configurator = Ensembl.Panel.ModalContent.extend({
   
   // Called when track order is changed on the image
   externalOrder: function (trackId, prevTrackId) {
+
+    if (!this.elLk.trackOrderList.children().length) {
+      var active = this.elLk.links.filter('.active').children('a')[0].className;
+      this.show('track_order');
+      this.getContent();
+      this.show(active);
+    }
+
     var track = this.elLk.trackOrderList.find('.' + trackId);
     var prev  = prevTrackId ? this.elLk.trackOrderList.find('.' + prevTrackId) : false;
 
