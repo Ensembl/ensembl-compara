@@ -85,7 +85,7 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
     this.shareInit({ species: species, type: 'image', positionPopup: this.positionToolbarPopup });
     
     if (this.elLk.boundaries.length) {
-      Ensembl.EventManager.register('changeTrackOrder', this, this.changeTrackOrder);
+      Ensembl.EventManager.register('changeTrackOrder', this, this.externalOrder);
       
       if (this.elLk.img[0].complete) {
         this.makeSortable();
@@ -553,8 +553,33 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
     var prev  = (ui.item.prev().prop('className') || '').replace(' ', '.');
     var track = ui.item.prop('className').replace(' ', '.');
 
+    Ensembl.EventManager.triggerSpecific('changeTrackOrder', 'modal_config_' + this.id.toLowerCase(), track, prev);
+
+    this.saveSortOrder(ui.item.parent().data('updateURL'), track, prev);
+  },
+
+  externalOrder: function(trackId, prevTrackId) {
+    var track = this.elLk.boundaries.find('li.' + trackId);
+    var prev  = prevTrackId ? this.elLk.boundaries.find('li.' + prevTrackId) : false;
+
+    if (!track) {
+      return;
+    }
+
+    if (prev && prev.length) {
+      track.insertAfter(prev);
+    } else {
+      track.parent().prepend(track);
+    }
+
+    this.saveSortOrder(track.parent().data('updateURL'), trackId, prevTrackId || '');
+
+    track = prev = null;
+  },
+
+  saveSortOrder: function(url, track, prev) {
     $.ajax({
-      url: ui.item.parent().data('updateURL'),
+      url: url,
       type: 'post',
       data: {
         image_config: this.imageConfig,
@@ -562,21 +587,6 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
         prev: prev
       }
     });
-    Ensembl.EventManager.triggerSpecific('changeTrackOrder', 'modal_config_' + this.id.toLowerCase(), track, prev);
-  },
-
-  changeTrackOrder: function(trackName, previousTrackName) {
-    var boundary      = this.elLk.boundaries[0];
-    var track         = tracks.filter('.' + trackName)[0];
-    var previousTrack = previousTrackName ? tracks.filter('.' + previousTrackName)[0] : false;
-
-    if (!track) {
-      return;
-    }
-
-    boundary[previousTrack ? 'insertAfter' : 'insertBefore'](track, previousTrack || boundary.firstChild); // hopefully boundary would have at least two tracks
-
-    boundary = track = previousTrack = null;
   },
 
   positionAreas: function () {
