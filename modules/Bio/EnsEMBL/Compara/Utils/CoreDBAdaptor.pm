@@ -172,7 +172,7 @@ sub component_names {
 
     my $sql = 'SELECT DISTINCT value FROM seq_region_attrib JOIN attrib_type USING (attrib_type_id) WHERE code = "genome_component"';
     my $names = $core_dba->dbc->db_handle->selectall_arrayref($sql);
-    return [map {$_->[0]} @$names];
+    return [sort map {$_->[0]} @$names];
 }
 
 1;
