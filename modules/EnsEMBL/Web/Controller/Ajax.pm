@@ -89,7 +89,18 @@ sub track_order {
   my @order         = (grep($_->[0] ne $track, @$track_order), [ $track, $prev_track || '' ]); # remove existing entry for the same track and add a new one at the end
 
   $node->set_user($species, \@order);
-  $image_config->altered($node->data->{'name'} || $node->data->{'coption'});
+  $image_config->altered('Track order');
+  $hub->session->store;
+}
+
+sub order_reset {
+  my ($self, $hub)  = @_;
+  my $image_config  = $hub->get_imageconfig($hub->param('image_config'));
+  my $species       = $image_config->species;
+  my $node          = $image_config->get_node('track_order');
+
+  $node->set_user($species, []);
+  $image_config->altered('Track order');
   $hub->session->store;
 }
 

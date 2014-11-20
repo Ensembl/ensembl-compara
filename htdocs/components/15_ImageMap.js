@@ -74,6 +74,7 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
     
     this.makeImageMap();
     this.makeHoverLabels();
+    this.initImageButtons()
     
     if (!this.vertical) {
       this.makeResizable();
@@ -123,7 +124,26 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
       return false;
     });
   },
-  
+
+  initImageButtons: function() {
+    var panel = this;
+
+    this.el.find('._reset').on('click', function(e) {
+      e.preventDefault();
+      $.ajax({
+        context: panel,
+        url: this.href,
+        type: 'post',
+        success: function() {
+          this.getContent();
+        },
+        data: {
+          image_config: panel.imageConfig
+        }
+      });
+    });
+  },
+
   hashChange: function (r) {
     var reload = this.hashChangeReload;
     

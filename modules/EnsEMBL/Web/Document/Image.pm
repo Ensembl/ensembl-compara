@@ -72,8 +72,9 @@ sub caption            :lvalue { $_[0]->{'caption'};            }
 sub format             :lvalue { $_[0]->{'format'};             }
 sub toolbars           :lvalue { $_[0]->{'toolbars'};           }
 
-sub image_width  { return $_[0]->{'image_configs'}[0]->get_parameter('image_width'); }
-sub has_toolbars { return 1 if ($_[0]->{'toolbars'}{'top'} || $_[0]->{'toolbars'}{'bottom'}); }
+sub image_width         { return $_[0]->{'image_configs'}[0]->get_parameter('image_width'); }
+sub has_toolbars        { return 1 if ($_[0]->{'toolbars'}{'top'} || $_[0]->{'toolbars'}{'bottom'}); }
+sub has_moveable_tracks { return $_[0]->drawable_container->{'config'}->get_parameter('sortable_tracks') eq 'drag'; }
 
 sub render_toolbar {
   my ($self, $height) = @_;
@@ -82,8 +83,8 @@ sub render_toolbar {
   return unless $icon_mapping;
 
   my ($toolbar, $export, $top, $bottom, $image_resize, $image_sizes);
-  my $hub       = $self->hub;
-  my $component = $self->component;
+  my $hub         = $self->hub;
+  my $component   = $self->component;
   
   ## Config panel link
   if ($hub->get_viewconfig($component)) {
@@ -188,6 +189,10 @@ sub render_toolbar {
       $params->{$_} = $hub->param($_);
     }
     $toolbar .= sprintf '<a href="%s" class="download modal_link" title="%s"></a>', $hub->url($params), $icon_mapping->{'download'}{'title'};
+  }
+
+  if ($self->has_moveable_tracks) {
+    $toolbar .= sprintf '<a href="%s" class="order-reset _reset" title="%s"></a>', $hub->url({qw(type Ajax action order_reset __clear 1)}), $icon_mapping->{'reset_order'}{'title'};
   }
 
   if ($toolbar) {
@@ -543,7 +548,7 @@ sub moveable_tracks {
   my ($self, $image) = @_;
   my $config = $self->drawable_container->{'config'};
   
-  return unless $config->get_parameter('sortable_tracks') eq 'drag';
+  return unless $self->has_moveable_tracks;
   
   my $species = $config->species;
   my $url     = $image->URL;
