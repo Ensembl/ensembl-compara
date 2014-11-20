@@ -279,11 +279,13 @@ sub accept {
      $data         = from_json($data);
   my @view_configs = $configuration ? map { $hub->get_viewconfig(@$_) || () } @{$configuration->new_for_components($hub, split '/', $action, 2)} : $hub->get_viewconfig(keys %$data);
   my (@revert, $manage);
-  
+ 
+  my @altered; 
   foreach my $view_config (@view_configs) {
     my $config       = $data->{$view_config->component};
     my $ic_type      = $view_config->image_config;
     my $image_config = $ic_type ? $hub->get_imageconfig($ic_type) : undef;
+    warn ">>> IMAGE CONFIG $image_config";
     my $saved_config = $self->save_config($view_config->code, $ic_type, (
       record_type    => 'session',
       record_type_id => $session->create_session_id,
@@ -319,8 +321,15 @@ sub accept {
     $view_config->reset($image_config);
     
     if ($image_config && scalar keys %{$config->{'image_config'}}) {
+      my @changes;
+      foreach (keys %{$config->{'image_config'}}) {
+        my $node = $image_config->get_node($_);
+        my $track_name = $node->data->{'name'} || $node->data->{'coption'};
+        push @changes, $track_name if $track_name;
+      }
       $image_config->set_user_settings($config->{'image_config'});
-      $image_config->altered('Tracks on image');
+      $image_config->altered(@changes);
+      push @altered, @changes;
     }
     
     if (scalar keys %{$config->{'view_config'}}) {
@@ -344,18 +353,21 @@ sub accept {
   }
   
   if (scalar @revert) {
+    my $tracks = join(', ', @altered);
     $session->add_data(
       type     => 'message',
       function => '_info',
       code     => 'configuration',
       order    => 101,
       message  => sprintf('
-        <p>The URL you just used has changed the configuration for this page%s. You may want to:</p>
+        <p>The URL you just used has changed the %s this page%s. You may want to:</p>
         <p class="tool_buttons" style="width:225px">
           %s
           %s
         </p>
-      ', $manage ? ', and your previous configuration has been saved' : '', join('', map { sprintf $_->[0], scalar @revert > 1 ? $_->[1] : '' } @revert), $manage)
+      ',
+      $tracks ? "following tracks: $tracks<br /> on" : 'configuration for', 
+      $manage ? ', and your previous configuration has been saved' : '', join('', map { sprintf $_->[0], scalar @revert > 1 ? $_->[1] : '' } @revert), $manage)
     );
   }
   
