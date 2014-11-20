@@ -99,7 +99,7 @@ sub order_reset {
   my $species       = $image_config->species;
   my $node          = $image_config->get_node('track_order');
 
-  $node->set_user($species, []);
+  $node->set_user($species, undef);
   $image_config->altered('Track order');
   $hub->session->store;
 }
