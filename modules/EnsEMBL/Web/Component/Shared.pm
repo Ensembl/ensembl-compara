@@ -263,10 +263,7 @@ sub transcript_table {
     ## Link to other haplotype genes
     my $alt_link = $object->get_alt_allele_link;
     if ($alt_link) {
-      if ($page_type eq 'transcript') {
-        $gene_html .= "<p>$alt_link</p>";
-      }
-      else {
+      if ($page_type eq 'gene') {
         $location_html .= "<p>$alt_link</p>";
       }
     }
