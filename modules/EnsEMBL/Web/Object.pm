@@ -251,7 +251,7 @@ sub get_alt_allele_link {
   my ($reference) = grep { $self->slice->seq_region_name eq $_ } @{$hub->species_defs->ENSEMBL_CHROMOSOMES||[]};
   if ($reference) {
     ## Link to Alt Allele page, since there could be several
-    $alt_link = sprintf('View <a href="%s">alternative alleles</a> of this gene',
+    $alt_link = sprintf('View <a href="%s">alleles</a> of this gene on alternate assemblies',
                                   $hub->url({'action' => 'Alleles'}));
   }
   else {
@@ -267,7 +267,7 @@ sub get_alt_allele_link {
       my $ref_location = sprintf('%s:%s-%s', $ref_gene->seq_region_name, $ref_gene->seq_region_start, $ref_gene->seq_region_end);
       my $params = {'type' => 'Gene', 'g' => $ref_gene->stable_id, 'r' => $ref_location };
       $params->{'action'} = 'Summary' if $type eq 'Location';
-      $alt_link = sprintf('View this gene <a href="%s">on the reference assembly.', $hub->url($params));
+      $alt_link = sprintf('View this gene on the <a href="%s">primary assembly</a>.', $hub->url($params));
     }
   }
   return $alt_link;
