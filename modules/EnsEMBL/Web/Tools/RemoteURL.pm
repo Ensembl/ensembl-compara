@@ -18,8 +18,12 @@ sub chase_redirects {
   $ua->env_proxy;
   $ua->proxy([qw(http https)], $self->{'hub'}->species_defs->ENSEMBL_WWW_PROXY) || ();
   my $response = $ua->head($url);
-  return $response->request->uri->as_string if($response->is_success);
-  return undef;
+  if ($response->is_success) {
+    return $response->request->uri->as_string;
+  }
+  else {
+    return {'error' => $response->{'error'}};
+  }
 }
 
 1;

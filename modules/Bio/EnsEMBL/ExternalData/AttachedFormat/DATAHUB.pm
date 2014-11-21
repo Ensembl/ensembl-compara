@@ -44,16 +44,21 @@ sub check_data {
   my $error;
   
   $url = $self->chase_redirects($url);
-  # try to open and use the datahub file
-  # this checks that the datahub files is present and correct
-  my $datahub = $self->{'datahub_adaptor'}->get_hub_info($url);
+  if (ref($url) eq 'SCALAR') {
+    # try to open and use the datahub file
+    # this checks that the datahub files is present and correct
+    my $datahub = $self->{'datahub_adaptor'}->get_hub_info($url);
   
-  if ($datahub->{'error'}) {
-    $error  = "<p>Unable to open remote TrackHub file: $url</p>";
-    $error .= "<p>$_.</p>" for ref $datahub->{'error'} eq 'ARRAY' ? @{$datahub->{'error'}} : $datahub->{'error'};
+    if ($datahub->{'error'}) {
+      $error  = "<p>Unable to open remote TrackHub file: $url</p>";
+      $error .= "<p>$_.</p>" for ref $datahub->{'error'} eq 'ARRAY' ? @{$datahub->{'error'}} : $datahub->{'error'};
+    }
+    my @assemblies = keys %{$datahub->{'genomes'}||{}};
+    return ($error, { name => $datahub->{'details'}{'shortLabel'}, assemblies => \@assemblies});  
   }
-  my @assemblies = keys %{$datahub->{'genomes'}||{}};
-  return ($error, { name => $datahub->{'details'}{'shortLabel'}, assemblies => \@assemblies});  
+  else {
+    return ($url->{'error'});
+  }
 }
 
 sub style {
