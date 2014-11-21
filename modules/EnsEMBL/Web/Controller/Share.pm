@@ -285,13 +285,18 @@ sub accept {
     my $config       = $data->{$view_config->component};
     my $ic_type      = $view_config->image_config;
     my $image_config = $ic_type ? $hub->get_imageconfig($ic_type) : undef;
-    warn ">>> IMAGE CONFIG $image_config";
-    my $saved_config = $self->save_config($view_config->code, $ic_type, (
-      record_type    => 'session',
-      record_type_id => $session->create_session_id,
-      name           => $view_config->title . ' - '. $self->pretty_date(time, 'simple_datetime'),
-      description    => 'This configuration was automatically saved when you used a URL to view a shared image. It contains your configuration before you accepted the shared image.',
-    ));
+    ## Save current config for this component (if any)
+    my $saved_config;
+    my @current_configs = ($hub->config_adaptor->get_config('view_config', $view_config->code),
+                            $hub->config_adaptor->get_config('image_config', $ic_type));
+    if (scalar(@current_configs)) {
+      $saved_config = $self->save_config($view_config->code, $ic_type, (
+        record_type    => 'session',
+        record_type_id => $session->create_session_id,
+        name           => $view_config->title . ' - '. $self->pretty_date(time, 'simple_datetime'),
+        description    => 'This configuration was automatically saved when you used a URL to view a shared image. It contains your configuration before you accepted the shared image.',
+      ));
+    }
     
     $session->receive_shared_data(grep !$custom_data{$_}, @{$config->{'shared_data'}}) if $config->{'shared_data'};
     
