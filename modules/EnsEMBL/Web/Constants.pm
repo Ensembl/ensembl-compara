@@ -92,17 +92,6 @@ sub FASTA_OPTIONS {
   );
 }
 
-sub APPRIS_CODES {
-### A hopefully temporary lookup!
-  return {
-    'APPRIS principal isoform'                                      => 'pi',
-    'APPRIS candidate principal isoform (CCDS)'                     => 'ci3',
-    'APPRIS candidate principal isoform (longest CCDS)'             => 'ci2',
-    'APPRIS candidate principal isoform (longest coding sequence)'  => 'ci1',
-    'APPRIS candidate principal isoform'                            => 'ci',
-  };
-}
-
 sub GENE_JOIN_TYPES {
 ### Another compara lookup, this time for orthologues,
 ### paralogues, etc
