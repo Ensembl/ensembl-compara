@@ -758,7 +758,8 @@ sub _add_datahub {
   my $hub_info = $parser->get_hub_info($url); ## Do we have data for this species?
   
   if ($hub_info->{'error'}) {
-    warn "!!! COULD NOT CONTACT DATAHUB $url: @{$hub_info->{'error'}||{}}";
+    ## Probably couldn't contact the hub
+    push @{$hub_info->{'error'}||[]}, '<br /><br />Please check the source URL in a web browser.';
   } else {
     my $shortLabel = $hub_info->{'details'}{'shortLabel'};
     $menu_name = $shortLabel if $shortLabel and $is_poor_name;
@@ -769,26 +770,29 @@ sub _add_datahub {
                         || $self->hub->species_defs->get_config($self->species, 'ASSEMBLY_VERSION');
     my $source_list = $hub_info->{'genomes'}{$assembly} || [];
    
-    return unless scalar @$source_list;
+    if (scalar @$source_list) {
+      ## Get tracks from hub
+      my $datahub = $parser->parse($source_list);
     
-    ## Get tracks from hub
-    my $datahub = $parser->parse($source_list);
-    
-    foreach my $node (@{$datahub->child_nodes}) {
-      my $data = $node->data;
+      foreach my $node (@{$datahub->child_nodes}) {
+        my $data = $node->data;
       
-      if ($data->{'error'}) {
-        warn "!!! COULD NOT PARSE CONFIG $data->{'file'}: $data->{'error'}";
-      } elsif (!$node->has_child_nodes) {
-        # No inheritance structure - assumes that the top level in the hub contains only tracks
-        $self->_add_datahub_node($node->parent_node, $menu, $menu_name);
-        last;
-      } else {
-        $self->_add_datahub_node($node, $menu, $menu_name);
+        if ($data->{'error'}) {
+          warn "!!! COULD NOT PARSE CONFIG $data->{'file'}: $data->{'error'}";
+        } elsif (!$node->has_child_nodes) {
+          # No inheritance structure - assumes that the top level in the hub contains only tracks
+          $self->_add_datahub_node($node->parent_node, $menu, $menu_name);
+          last;
+        } else {
+          $self->_add_datahub_node($node, $menu, $menu_name);
+        }
       }
-    }
 
-    $self->{'_attached_datahubs'}{$url} = 1;
+      $self->{'_attached_datahubs'}{$url} = 1;
+    }
+    else {
+      $hub_info->{'error'} = ["No sources could be found for assembly $assembly. Please check the hub's genomes.txt file for supported assemblies."];
+    }
   }
   return ($menu_name, $hub_info);
 }
@@ -1372,18 +1376,17 @@ sub update_from_url {
           next;
         }
 
-        my $found_data = 0;
         # We then have to create a node in the user_config
         if (uc $format eq 'DATAHUB') {
           my $info;
           ($n, $info) = $self->_add_datahub($n, $p,1);
           if ($info->{'error'}) {
-            my @errors = @{$info->{'error'}};
+            my @errors = @{$info->{'error'}||[]};
             $session->add_data(
               type     => 'message',
               function => '_warning',
               code     => 'datahub:' . md5_hex($p),
-              message  => "There was a problem attaching trackhub $n: @errors<br /><br />Please check the source URL in a web browser.",
+              message  => "There was a problem attaching trackhub $n: @errors",
             );
           }
           else {
@@ -1394,7 +1397,6 @@ sub update_from_url {
             foreach (keys %$assemblies) {
               my ($data_species, $assembly) = @{$ensembl_assemblies{$_}||[]};
               if ($assembly) {
-                $found_data = 1;
                 my $data = $session->add_data(
                   type        => 'url',
                   url         => $p,
@@ -1409,7 +1411,6 @@ sub update_from_url {
             }
           }
         } else {
-          $found_data = 1;
           $self->_add_flat_file_track(undef, 'url', "url_$code", $n, 
             sprintf('Data retrieved from an external webserver. This data is attached to the %s, and comes from URL: %s', encode_entities($n), encode_entities($p)),
             url   => $p,
@@ -1428,14 +1429,9 @@ sub update_from_url {
           );
         }
         # We have to create a URL upload entry in the session
-        my $message;
-        if($found_data or 1) {
-          $message  = sprintf('Data has been attached to your display from the following URL: %s', encode_entities($p));
-          if (uc $format eq 'DATAHUB') {
-            $message .= " Please go to '<b>Configure this page</b>' to choose which tracks to show (we do not turn on tracks automatically in case they overload our server).";
-          }
-        } else {
-          $message = "The URL you provided has been inspected and, while valid, contained <b>no tracks for this assembly</b> (".encode_entities($p).")";
+        my $message  = sprintf('Data has been attached to your display from the following URL: %s', encode_entities($p));
+        if (uc $format eq 'DATAHUB') {
+          $message .= " Please go to '<b>Configure this page</b>' to choose which tracks to show (we do not turn on tracks automatically in case they overload our server).";
         }
         $session->add_data(
           type     => 'message',
