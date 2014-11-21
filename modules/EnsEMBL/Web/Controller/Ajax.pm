@@ -78,13 +78,49 @@ sub autocomplete {
 }
 
 sub track_order {
-  my ($self, $hub) = @_;
-  my $image_config = $hub->get_imageconfig($hub->param('image_config'));
-  my $species      = $image_config->species;
-  my $node         = $image_config->get_node('track_order');
-  
-  $node->set_user($species, { %{$node->get($species) || {}}, $hub->param('track') => $hub->param('order') });
-  $image_config->altered($node->data->{'name'} || $node->data->{'coption'});
+  my ($self, $hub)  = @_;
+  my $image_config  = $hub->get_imageconfig($hub->param('image_config'));
+  my $species       = $image_config->species;
+  my $node          = $image_config->get_node('track_order');
+  my $track_order   = $node->get($species) || [];
+     $track_order   = [] unless ref $track_order eq 'ARRAY'; # ignore the old schema entry
+  my $track         = $hub->param('track');
+  my $prev_track    = $hub->param('prev');
+  my @order         = (grep($_->[0] ne $track, @$track_order), [ $track, $prev_track || '' ]); # remove existing entry for the same track and add a new one at the end
+
+  $node->set_user($species, \@order);
+  $image_config->altered('Track order');
+  $hub->session->store;
+}
+
+sub order_reset {
+  my ($self, $hub)  = @_;
+  my $image_config  = $hub->get_imageconfig($hub->param('image_config'));
+  my $species       = $image_config->species;
+  my $node          = $image_config->get_node('track_order');
+
+  $node->set_user($species, undef);
+  $image_config->altered('Track order');
+  $hub->session->store;
+}
+
+sub config_reset {
+  my ($self, $hub)  = @_;
+  my $image_config  = $hub->get_imageconfig($hub->param('image_config'));
+  my $species       = $image_config->species;
+  my $node          = $image_config->tree;
+
+  for ($node, $node->nodes) {
+    my $user_data = $_->{'user_data'};
+
+    foreach (keys %$user_data) {
+      my $text = $user_data->{$_}{'name'} || $user_data->{$_}{'coption'};
+      $image_config->altered($text) if $user_data->{$_}{'display'};
+      delete $user_data->{$_}{'display'};
+      delete $user_data->{$_} unless scalar keys %{$user_data->{$_}};
+    }
+  }
+
   $hub->session->store;
 }
 

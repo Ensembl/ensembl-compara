@@ -72,8 +72,9 @@ sub caption            :lvalue { $_[0]->{'caption'};            }
 sub format             :lvalue { $_[0]->{'format'};             }
 sub toolbars           :lvalue { $_[0]->{'toolbars'};           }
 
-sub image_width  { return $_[0]->{'image_configs'}[0]->get_parameter('image_width'); }
-sub has_toolbars { return 1 if ($_[0]->{'toolbars'}{'top'} || $_[0]->{'toolbars'}{'bottom'}); }
+sub image_width         { return $_[0]->{'image_configs'}[0]->get_parameter('image_width'); }
+sub has_toolbars        { return 1 if ($_[0]->{'toolbars'}{'top'} || $_[0]->{'toolbars'}{'bottom'}); }
+sub has_moveable_tracks { return $_[0]->drawable_container->{'config'}->get_parameter('sortable_tracks') eq 'drag'; }
 
 sub render_toolbar {
   my ($self, $height) = @_;
@@ -82,11 +83,12 @@ sub render_toolbar {
   return unless $icon_mapping;
 
   my ($toolbar, $export, $top, $bottom, $image_resize, $image_sizes);
-  my $hub       = $self->hub;
-  my $component = $self->component;
+  my $hub         = $self->hub;
+  my $component   = $self->component;
+  my $viewconfig  = $hub->get_viewconfig($component);
   
   ## Config panel link
-  if ($hub->get_viewconfig($component)) {
+  if ($viewconfig) {
     my $config_url = $hub->url('Config', { action => $component, function => undef });
     my $data_url   = $hub->url({ type => 'UserData', action => 'ManageData', function => undef });
     my $share_url  = $hub->url('Share', { action => $component, function => undef, __clear => 1, create => 1, share_type => 'image', time => time });
@@ -109,12 +111,12 @@ sub render_toolbar {
       $image_sizes .= qq(<div $hidden_width><a href="$resize_url" class="image_resize"><div $selected_size>$counter px</div></a></div>);
     }
     
-    $image_resize = qq{
+    $image_resize = qq(
        <div class="toggle image_resize_menu">
           <div class="header">Resize image to:</div>
           $image_sizes    
        </div>    
-    };    
+    );
     $toolbar   .= qq(<a href="$resize_url" class="resize popup" title="Resize this image"></a>);    
   }  
   ## Image export popup menu
@@ -148,31 +150,31 @@ sub render_toolbar {
         # option not to include pdf export
         next if $self->{'export'} =~ /no_pdf/;
                 
-        $export .= qq{
+        $export .= qq(
           <div>
             <div>$_->{'label'}</div>
             <a class="view" href="$href" rel="external"><img src="/i/16/eye.png" alt="view" title="View image" /></a>
             <a href="$href;download=1"><img src="/i/16/download.png" alt="download" title="Download" /></a>
           </div>
-        };                
+        );
         
-      }else {
-        $export .= qq{
+      } else {
+        $export .= qq(
           <div>
             <div>$_->{'label'}</div>
             <a class="view" href="$href" rel="external"><img src="/i/16/eye.png" alt="view" title="View image" /></a>
             <a href="$href;download=1"><img src="/i/16/download.png" alt="download" title="Download" /></a>
           </div>
-        };
+        );
       }
     }
     
-    $export = qq{
+    $export = qq(
       <div class="toggle iexport_menu">
         <div class="header">Export as:</div>
         $export
       </div>
-    };
+    );
    
     $toolbar .= sprintf '<a href="%spdf" class="export popup %s" title="%s"></a>', $url, $self->{'export'}, $icon_mapping->{'image'}{'title'};
   }
@@ -193,6 +195,14 @@ sub render_toolbar {
       }
     }
     $toolbar .= sprintf '<a href="%s" class="download modal_link" title="%s"></a>', $hub->url($params), $icon_mapping->{'download'}{'title'};
+  }
+
+  if ($viewconfig) {
+    $toolbar .= sprintf '<a href="%s" class="config-reset _reset" title="%s"></a>', $hub->url({qw(type Ajax action config_reset __clear 1)}), $icon_mapping->{'config_order'}{'title'};
+  }
+
+  if ($self->has_moveable_tracks) {
+    $toolbar .= sprintf '<a href="%s" class="order-reset _reset" title="%s"></a>', $hub->url({qw(type Ajax action order_reset __clear 1)}), $icon_mapping->{'reset_order'}{'title'};
   }
 
   if ($toolbar) {
@@ -419,11 +429,11 @@ sub render_image_map {
   my $imagemap = $self->drawable_container->render('imagemap');
   my $map_name = $image->token;
   
-  my $map = qq{
+  my $map = qq(
     <map name="$map_name">
       $imagemap
     </map>
-  };
+  );
   
   $map .= '<input type="hidden" class="panel_type" value="ImageMap" />';
   
@@ -432,7 +442,10 @@ sub render_image_map {
 
 sub hover_labels {
   my $self    = shift;
-  my $img_url = $self->hub->species_defs->img_url;
+  my $hub     = $self->hub;
+  my $sd      = $hub->species_defs;
+  my $img_url = $sd->img_url;
+
   my ($html, %done);
   
   foreach my $label (map values %{$_->{'hover_labels'} || {}}, @{$self->{'image_configs'}}) {
@@ -451,31 +464,41 @@ sub hover_labels {
         $renderers .= qq(<li><a href="$_->{'url'}" class="config" rel="$label->{'component'}"><img src="${img_url}render/$_->{'val'}.gif" alt="$text" title="$text" /> $text</a></li>);
       }
     }
+
+    $label->{'conf_url'} = $sd->ENSEMBL_BASE_URL.$label->{'conf_url'} if $label->{'conf_url'};
     
     $renderers .= qq(<li class="subset subset_$subset->[0]"><a class="modal_link force" href="$subset->[1]#$subset->[0]" rel="$subset->[2]"><img src="${img_url}16/setting.png" /> Configure track options</a></li>) if $subset;
     $html      .= sprintf(qq(
       <div class="hover_label floating_popup %s">
         <p class="header">%s</p>
-        %s
-        %s
-        %s
-        %s
-        %s
-        <div class="desc">%s</div>
-        <div class="config">%s</div>
-        <div class="url">%s</div>
+        <div class="hl-buttons">
+          %s
+          %s
+          %s
+          %s
+          %s
+        </div>
+        <div class="hl-content">
+          %s
+          %s
+          %s
+          %s
+          %s
+        </div>
         <div class="spinner"></div>
       </div>),
       $label->{'class'},
       $label->{'header'},
-      $label->{'desc'}     ? qq(<img class="desc" src="${img_url}16/info.png" alt="Info" title="Info" />)                                  : '',
-      $renderers           ? qq(<img class="config" src="${img_url}16/setting.png" alt="Change track style" title="Change track style" />) : '',
-      $label->{'conf_url'} ? qq(<img class="url" src="${img_url}16/link.png" alt="Link" title="URL to turn this track on" />)              : '',
-      $label->{'fav'}      ? sprintf(qq(<a href="$label->{'fav'}[1]" class="config favourite%s" rel="$label->{'component'}" title="Favourite track"></a>), $label->{'fav'}[0] ? ' selected' : '') : '',
-      $label->{'off'}      ? qq(<a href="$label->{'off'}" class="config" rel="$label->{'component'}"><img src="${img_url}16/cross.png" alt="Turn track off" title="Turn track off" /></a>) : '',
-      $desc,
-      $renderers           ? qq(<p>Change track style:</p><ul>$renderers</ul>)                                                : '',
-      $label->{'conf_url'} ? qq(<p>Copy <a href="$label->{'conf_url'}">this link</a> to force this track to be turned on</p>) : ''
+      $label->{'desc'}     ? qq(<div class="_hl_icon hl-icon hl-icon-info active"></div>) : '',
+      $renderers           ? qq(<div class="_hl_icon hl-icon hl-icon-setting"></div>) : '',
+      $label->{'conf_url'} ? qq(<div class="_hl_icon hl-icon hl-icon-link"></div>) : '',
+      $label->{'fav'}      ? sprintf(qq(<div class="_hl_icon hl-icon"><a href="$label->{'fav'}[1]" class="config favourite %s" rel="$label->{'component'}"></a></div>), $label->{'fav'}[0] ? 'selected' : '') : '',
+      $label->{'off'}      ? qq(<div class="_hl_icon hl-icon"><a href="$label->{'off'}" class="config closetrack" rel="$label->{'component'}"></a></div>) : '',
+      $label->{'desc'}     ? qq(<div class="_hl_tab hl-tab active">$desc</div>) : '',
+      $renderers           ? qq(<div class="_hl_tab hl-tab config"><p>Change track style:</p><ul>$renderers</ul></div>) : '',
+      $label->{'conf_url'} ? qq(<div class="_hl_tab hl-tab"><p>URL to turn this track on</p><p><input class="_copy_url" type="text" value="$label->{'conf_url'}" /></p><p>Copy the above url to force this track to be turned on</p></div>) : '',
+      $label->{'fav'}      ? qq(<div class="_hl_tab hl-tab"><p>Click on the star to add/remove this track from your favourites</p></div>) : '',
+      $label->{'off'}      ? qq(<div class="_hl_tab hl-tab"><p>Click on the cross to turn the track off</p></div>) : '',
     );
   }
   
@@ -527,40 +550,38 @@ sub track_boundaries {
     $top += $height;
     $prev_section = $this_section;
   }
-  
-  return \@boundaries;
+
+  return [ sort { ($a->[4] || 0) <=> ($b->[4] || 0) } @boundaries ];
 }
 
 sub moveable_tracks {
   my ($self, $image) = @_;
   my $config = $self->drawable_container->{'config'};
   
-  return unless $config->get_parameter('sortable_tracks') eq 'drag';
+  return unless $self->has_moveable_tracks;
   
   my $species = $config->species;
   my $url     = $image->URL;
   my ($top, $html);
   
   foreach (@{$self->track_boundaries}) {
-    my ($t, $h, $type, $strand, $order) = @$_;
-    
+    my ($t, $h, $type, $strand) = @$_;
+
     $html .= sprintf(
       '<li class="%s%s" style="height:%spx;background:url(%s) 0 %spx%s">
-        <p class="handle" style="height:%spx"%s></p>
-        <i class="%s"></i>
+        <div class="handle" style="height:%spx"%s><p></p></div>
       </li>',
       $type, $strand ? " $strand" : '',
       $h, $url, 3 - $t,
       $h == 0 ? ';display:none' : '',
       $h - 1,
-      $strand ? sprintf(' title="%s strand"', $strand eq 'f' ? 'Forward' : 'Reverse') : '',
-      $order
+      $strand ? sprintf(' title="%s strand"', $strand eq 'f' ? 'Forward' : 'Reverse') : ''
     );
-    
+
     $top ||= $t - 3 if $h;
   }
-  
-  return qq(<div class="boundaries_wrapper" style="top:${top}px"><div class="up"></div><ul class="$species boundaries">$html</ul><div class="down"></div></div>) if $html;
+
+  return qq(<div class="boundaries_wrapper" style="top:${top}px"><ul class="$species boundaries">$html</ul></div>) if $html;
 }
 
 sub render {

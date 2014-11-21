@@ -27,6 +27,7 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
     this.draggables       = [];
     this.speciesCount     = 0;
     this.minImageWidth    = 500;
+    this.labelRight       = 0;
     
     function resetOffset() {
       delete this.imgOffset;
@@ -67,13 +68,14 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
     this.elLk.boundaries    = $('.boundaries',        this.elLk.container);
     this.elLk.toolbars      = $('.image_toolbar',     this.elLk.container);
     this.elLk.popupLinks    = $('a.popup',            this.elLk.toolbars);
-    
+
     this.vertical = this.elLk.img.hasClass('vertical');
     this.multi    = this.elLk.areas.hasClass('multi');
     this.align    = this.elLk.areas.hasClass('align');
     
     this.makeImageMap();
     this.makeHoverLabels();
+    this.initImageButtons()
     
     if (!this.vertical) {
       this.makeResizable();
@@ -84,7 +86,7 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
     this.shareInit({ species: species, type: 'image', positionPopup: this.positionToolbarPopup });
     
     if (this.elLk.boundaries.length) {
-      Ensembl.EventManager.register('changeTrackOrder', this, this.sortUpdate);
+      Ensembl.EventManager.register('changeTrackOrder', this, this.externalOrder);
       
       if (this.elLk.img[0].complete) {
         this.makeSortable();
@@ -123,7 +125,27 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
       return false;
     });
   },
-  
+
+  initImageButtons: function() {
+    var panel = this;
+
+    this.el.find('._reset').on('click', function(e) {
+      e.preventDefault();
+      $.ajax({
+        context: panel,
+        url: this.href,
+        type: 'post',
+        success: function() {
+          Ensembl.EventManager.triggerSpecific('resetConfig', 'modal_config_' + this.id.toLowerCase());
+          this.getContent();
+        },
+        data: {
+          image_config: panel.imageConfig
+        }
+      });
+    });
+  },
+
   hashChange: function (r) {
     var reload = this.hashChangeReload;
     
@@ -153,7 +175,7 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
     // If the panel contains an ajax loaded sub-panel, this function will be reached before ImageMap.init has been completed.
     // Make sure that this doesn't cause an error.
     if (this.imageConfig) {
-      this.elLk.exportMenu.add(this.elLk.hoverLabels).add(this.elLk.resizeMenu).remove();
+      this.elLk.exportMenu.add(this.elLk.labelLayers).add(this.elLk.hoverLayers).add(this.elLk.resizeMenu).remove();
     
       for (var id in this.zMenus) {
         Ensembl.EventManager.trigger('destroyPanel', id);
@@ -221,53 +243,38 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
         }
       }
     });
-    
+
+    if (this.draggables.length) {
+      this.labelRight = this.draggables[0].l;  // label ends where the drag region starts
+    }
+
     if (Ensembl.images.total) {
       this.highlightAllImages();
     }
     
     this.elLk.drag.on({
       mousedown: function (e) {
-        // Only draw the drag box for left clicks.
-        // This property exists in all our supported browsers, and browsers without it will draw the box for all clicks
-        if (!e.which || e.which === 1) {
+
+        if (!e.which || e.which === 1) { // Only draw the drag box for left clicks.
           panel.dragStart(e);
         }
         
         return false;
       },
       mousemove: function(e) {
-        var coords  = panel.getMapCoords(e);
-        var area    = coords.r ? panel.dragRegion : panel.getArea(coords);
 
-        $(this).toggleClass('drag_select_pointer', !(!area || $(area.a).hasClass('label') || $(area.a).hasClass('drag')));
-      },
-      click: function (e) {
-        if (panel.clicking) {
-          panel.makeZMenu(e, panel.getMapCoords(e));
-        } else {
-          panel.clicking = true;
-        }
-      }
-    });
-  },
-  
-  makeHoverLabels: function () {
-    var panel = this;
-    var tip   = false;
-    
-    this.elLk.hoverLabels.detach().appendTo('body'); // IE 6/7 can't do z-index, so move hover labels to body
-    
-    this.elLk.drag.on({
-      mousemove: function (e) {
         if (panel.dragging !== false) {
           return;
         }
         
-        var area  = panel.getArea(panel.getMapCoords(e));
-        var hover = false;
-        
-        if (area && area.a && $(area.a).hasClass('nav')) { // Add helptips on navigation controls in multi species view
+        var area = panel.getArea(panel.getMapCoords(e));
+        var tip;
+
+        // change the cursor to pointer for clickable areas
+        $(this).toggleClass('drag_select_pointer', !(!area || $(area.a).hasClass('label') || $(area.a).hasClass('drag') || $(area.a).hasClass('hover')));
+
+        // Add helptips on navigation controls in multi species view
+        if (area && area.a && $(area.a).hasClass('nav')) {
           if (tip !== area.a.alt) {
             tip = area.a.alt;
             
@@ -281,103 +288,142 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
             });
           }
         } else {
-          if (tip) {
-            tip = false;
+          if (panel.elLk.navHelptip) {
             panel.elLk.navHelptip.detach().css({ top: 0, left: 0 });
           }
-          
-          if (area && area.a && $(area.a).hasClass('label')) {
-            var label = panel.elLk.hoverLabels.filter('.' + area.a.className.replace(/label /, ''));
-            
-            if (!label.hasClass('active')) {
-              panel.elLk.hoverLabels.filter('.active').removeClass('active');
-              label.addClass('active');
-              
-              clearTimeout(panel.hoverTimeout);
-              
-              panel.hoverTimeout = setTimeout(function () {
-                var offset = panel.elLk.img.offset();
-                
-                panel.elLk.hoverLabels.filter(':visible').hide().end().filter('.active').css({
-                  left:    area.l + offset.left,
-                  top:     area.t + offset.top,
-                  display: 'block'
-                });
-              }, 100);
-            }
-            
-            hover = true;
-          }
-        }
-        
-        if (hover === false) {
-          clearTimeout(panel.hoverTimeout);
-          panel.elLk.hoverLabels.filter('.active').removeClass('active');
         }
       },
-      mouseleave: function (e) {
+      mouseleave: function(e) {
         if (e.relatedTarget) {
-          var active = panel.elLk.hoverLabels.filter('.active');
-          
-          if (!active.has(e.relatedTarget).length) {
-            active.removeClass('active').hide();
-          }
-          
+
           if (panel.elLk.navHelptip) {
             panel.elLk.navHelptip.detach();
           }
-          
-          active = null;
+
+        }
+      },
+      click: function (e, e2) {
+        if (panel.clicking) {
+          panel.makeZMenu(e2 || e, panel.getMapCoords(e2 || e));
+        } else {
+          panel.clicking = true;
         }
       }
     });
-    
-    this.elLk.hoverLabels.on('mouseleave', function () {
-      $(this).hide().children('div').hide();
+  },
+  
+  makeHoverLabels: function () {
+    var panel = this;
+
+    this.elLk.labelLayers = $();
+    this.elLk.hoverLayers = $();
+
+    $.each(this.areas, function() {
+
+      if (!this.a) {
+        return;
+      }
+
+      var $a = $(this.a);
+
+      if ($a.hasClass('label')) {
+        var hoverLabel = panel.elLk.hoverLabels.filter('.' + this.a.className.replace(/label /, ''));
+
+        if (hoverLabel.length) {
+
+          // add a div layer over the label, and append the hover menu to the layer. Hover menu toggling is controlled by CSS.
+          panel.elLk.labelLayers = panel.elLk.labelLayers.add(
+            $('<div class="label_layer">').append('<div class="label_layer_bg">').append(hoverLabel).appendTo(document.body).data({area: this})
+          );
+        }
+
+        hoverLabel = null;
+
+      } else if ($a.hasClass('hover')) {
+
+        panel.elLk.hoverLayers = panel.elLk.hoverLayers.add(
+          $('<div class="hover_layer">').appendTo(document.body).data({area: this}).on('click', function(e) {
+            panel.clicking = true;
+            panel.elLk.drag.triggerHandler('click', e);
+          }
+        ));
+      }
+
+      $a = null;
     });
-    
-    this.elLk.hoverLabels.children('img').hoverIntent(
-      function () {
-        var width = $(this).parent().outerWidth();
-        
-        $(this).siblings('div').hide().filter('.' + this.className.replace(/ /g, '.')).show().width(function (i, value) {
-          return value > width && value > 300 ? 300 : value;
-        });
-      },
-      $.noop
-    );
-    
-    $('a.config', this.elLk.hoverLabels).on('click', function () {
-      var config = this.rel;
-      var update = this.href.split(';').reverse()[0].split('='); // update = [ trackId, renderer ]
-      var fav    = '';
-      
-      if ($(this).hasClass('favourite')) {
-        fav = $(this).hasClass('selected') ? 'off' : 'on';
+
+    // apply css positions to the hover layers
+    this.positionLayers();
+
+    this.elLk.hoverLabels.each(function() {
+
+      // position hover menus to the right of the layer and init the tab styled icons inside the hover menus
+      $(this).css('left', function() { return $(this.parentNode).width(); }).find('._hl_icon').tabs($(this).find('._hl_tab'));
+
+    // init config tab, fav icon and close icon
+    }).find('a.config').on('click', function () {
+      var config  = this.rel;
+      var update  = this.href.split(';').reverse()[0].split('='); // update = [ trackId, renderer ]
+      var fav     = '';
+      var $this   = $(this);
+
+      if ($this.hasClass('favourite')) {
+        fav = $this.hasClass('selected') ? 'off' : 'on';
         Ensembl.EventManager.trigger('changeFavourite', update[0], fav === 'on');
       } else {
-        $(this).parents('.hover_label').width(function (i, value) {
-          return value > 100 ? value : 100;
-        }).find('.spinner').show().siblings('div').hide();
+        $this.parents('.label_layer').addClass('hover_label_spinner');
       }
-      
+
       $.ajax({
         url: this.href + fav,
         dataType: 'json',
         success: function (json) {
           if (json.updated) {
-            panel.elLk.hoverLabels.remove(); // Deletes elements moved to body
-            Ensembl.EventManager.trigger('hideHoverLabels'); // Hide labels on other ImageMap panels
             Ensembl.EventManager.triggerSpecific('changeConfiguration', 'modal_config_' + config, update[0], update[1]);
             Ensembl.EventManager.trigger('reloadPage', panel.id);
           }
         }
       });
       
+      $this = null;
+
       return false;
+    }).end().find('input._copy_url').on('click focus blur', function(e) {
+      $(this).val(this.defaultValue).select().parents('.label_layer').toggleClass('hover', e.type !== 'blur');
     });
-    
-    Ensembl.EventManager.register('hideHoverLabels', this, function () { this.elLk.hoverLabels.hide(); });
+  },
+
+  positionLayers: function() {
+    var offset = this.elLk.img.offset();
+    var right  = this.labelRight;
+
+    this.elLk.labelLayers.each(function() {
+      var $this = $(this);
+      var area  = $this.data('area');
+
+      $this.css({
+        left:   offset.left + area.l,
+        top:    offset.top + area.t,
+        height: area.b - area.t,
+        width:  right - area.l
+      });
+
+      area = $this = null;
+    });
+
+    this.elLk.hoverLayers.each(function() {
+      var $this = $(this);
+      var area  = $this.data('area');
+
+      $this.css({
+        left:   offset.left + area.l,
+        top:    offset.top + area.t,
+        height: area.b - area.t,
+        width:  area.r - area.l
+      });
+
+      area = $this = null;
+    });
   },
   
   makeResizable: function () {
@@ -424,144 +470,170 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
     var panel      = this;
     var wrapperTop = $('.boundaries_wrapper', this.el).position().top;
     var ulTop      = this.elLk.boundaries.position().top + wrapperTop - (Ensembl.browser.ie7 ? 3 : 0); // IE7 reports li.position().top as 3 pixels higher than other browsers, so offset that here.
-    var lis        = [];
-    
-    this.dragCursor = Ensembl.browser.mac ? 'move' : 'n-resize';
-    
+    var lis        = []; // just a throwaway list to allocate areas to their respective tracks
+
     this.elLk.boundaries.children().each(function (i) {
-      var li = $(this);
-      var t  = li.position().top + ulTop;
-      
-      li.data({ areas: [], position: i, order: parseFloat(li.children('i')[0].className, 10), top: li.offset().top });
-      
-      lis.push({ top: t, bottom: t + li.height(), areas: li.data('areas') });
-      
+      var li  = $(this);
+      var t   = li.position().top + ulTop;
+      var ref = []; // reference for array containing areas for a track that will be populated later
+
+      li.data({ areas: ref, position: i, top: li.offset().top });
+      lis.push({ top: Math.floor(t), bottom: Math.ceil(t + li.height()), areas: ref });
+
       li = null;
     });
-    
+
     $.each(this.areas, function () {
-      var i = lis.length;
-      
-      while (i--) {
-        if (lis[i].top <= this.t && lis[i].bottom >= this.b) {
-          lis[i].areas.push(this);
-          break;
+
+      assignArea:
+      for (var i = 0; i <= 10; i++) { // this is to overcome an apparent drawing code bug that areas sometimes are not completely enclosed inside a track's li
+        for (var j = lis.length - 1; j >= 0; j--) {
+          if (lis[j].top <= this.t + i && lis[j].bottom >= this.b - i) {
+            lis[j].areas.push(this);
+            break assignArea;
+          }
         }
       }
     });
-    
+
     this.elLk.boundaries.each(function () {
-      $(this).data('updateURL', '/' + this.className.split(' ')[0] + '/Ajax/track_order');
+      $(this).data('species', this.className.split(' ')[0]);
     }).sortable({
       axis:   'y',
-      handle: 'p.handle',
+      handle: 'div.handle',
+      revert: 200,
       helper: 'clone',
-      placeholder: 'tmp',
+      placeholder: 'placeholder',
       start: function (e, ui) {
-        ui.placeholder.css({
-          backgroundImage:     ui.item.css('backgroundImage'),
-          backgroundPosition:  ui.item.css('backgroundPosition'),  // Firefox
-          backgroundPositionY: ui.item.css('backgroundPositionY'), // IE (Chrome works with either)
-          height:              ui.item.height(),
-          opacity:             0.8,
-          visibility:          'visible'
-        }).html(ui.item.html());
-        
-        ui.helper.hide();
-        $(this).find(':not(.tmp) p.handle').addClass('nohover');
-        panel.elLk.drag.css('cursor', panel.dragCursor);
-        panel.dragging = true;
+        panel.sortStart(e, ui);
       },
-      stop: function () {
-        $(this).find('p.nohover').removeClass('nohover');
-        panel.elLk.drag.css('cursor', 'pointer');
-        panel.dragging = false;
+      stop: function (e, ui) {
+        panel.sortStop(e, ui);
       },
       update: function (e, ui) {
-        var order = panel.sortUpdate(ui.item);
-        var track = ui.item[0].className.replace(' ', '.');
-        
-        $.ajax({
-          url: $(this).data('updateURL'),
-          type: 'post',
-          data: {
-            image_config: panel.imageConfig,
-            track: track,
-            order: order
-          }
-        });
-        
-        Ensembl.EventManager.triggerSpecific('changeTrackOrder', 'modal_config_' + panel.id.toLowerCase(), track, order);
+        panel.sortUpdate(e, ui);
       }
-    }).css('visibility', 'visible');
+    }).css('visibility', 'visible').find('div.handle').on({
+      mousedown: function() {
+        $(this.parentNode).stop().animate({opacity: 0.8}, 200);
+      },
+      mouseup: function() {
+        $(this.parentNode).stop().animate({opacity: 1}, 200);
+      }
+    });
   },
-  
-  sortUpdate: function (track, order) {
-    var tracks = this.elLk.boundaries.children();
-    var i, p, n, o, move, li, top;
-    
-    if (typeof track === 'string') {
-      i     = tracks.length;
-      track = tracks.filter('.' + track).detach();
-      
-      if (!track.length) {
-        return;
-      }
-      
-      while (i--) {
-        if ($(tracks[i]).data('order') < order && tracks[i] !== track[0]) {
-          track.insertAfter(tracks[i]);
-          break;
-        }
-      }
-      
-      if (i === -1) {
-        track.insertBefore(tracks[0]);
-      }
-      
-      tracks = this.elLk.boundaries.children();
-    } else {
-      p = track.prev().data('order') || 0;
-      n = track.next().data('order') || 0;
-      o = p || n;
-      
-      if (Math.floor(n) === Math.floor(p)) {
-        order = p + (n - p) / 2;
-      } else {
-        order = o + (p ? 1 : -1) * (Math.round(o) - o || 1) / 2;
+
+  sortStart: function (e, ui) {
+
+    // make the placeholder similar to the actual track but slightly faded so the saturated background colour beneath gives it a highlighted effect
+    ui.placeholder.css({
+      backgroundImage:     ui.item.css('backgroundImage'),
+      backgroundPosition:  ui.item.css('backgroundPosition'),  // Firefox
+      backgroundPositionY: ui.item.css('backgroundPositionY'), // IE (Chrome works with either)
+      height:              ui.item.height(),
+      opacity:             0.8
+    }).html(ui.item.html()).addClass(ui.item.prop('className'));
+
+    // add some transparency to the helper (already a clone of actual track) that moves with the mouse
+    ui.helper.stop().css({opacity: 0.8}).addClass('helper');
+
+    // css deals with the rest of the things
+    $(document.body).addClass('track-reordering');
+
+    this.dragging = true;
+  },
+
+  sortStop: function (e, ui) {
+    ui.item.stop().animate({opacity: 1}, 200);
+    $(document.body).removeClass('track-reordering');
+    this.dragging = false;
+  },
+
+  sortUpdate: function(e, ui) {
+
+    var prev  = (ui.item.prev().prop('className') || '').replace(' ', '.');
+    var track = ui.item.prop('className').replace(' ', '.');
+
+    Ensembl.EventManager.triggerSpecific('changeTrackOrder', 'modal_config_' + this.id.toLowerCase(), track, prev);
+
+    this.afterSort(ui.item.parent().data('species'), track, prev);
+  },
+
+  externalOrder: function(species, trackId, prevTrackIds) {
+    var track = this.elLk.boundaries.find('li.' + trackId);
+    var prev  = [];
+
+    // there is a possibility that immediate previous track according to the config panel is not actually drawn by the drawing code,
+    // in that case, find the next one in the list that's present on the image.
+    for (var i in prevTrackIds) {
+      prev = this.elLk.boundaries.find('li.' + prevTrackIds[i]);
+      if (prev.length) {
+        break;
       }
     }
-    
-    track.data('order', order);
-    
-    tracks.each(function (j) {
-      li = $(this);
-      
-      if (j !== li.data('position')) {
+
+    if (track.length) {
+      if (prev.length) {
+        track.insertAfter(prev);
+      } else {
+        track.parent().prepend(track);
+      }
+    }
+
+    this.afterSort(species, trackId, prevTrackIds[0] || '');
+
+    track = prev = null;
+  },
+
+  afterSort: function(species, track, prev) {
+    this.positionAreas();
+    this.positionLayers();
+    this.removeShare();
+    Ensembl.EventManager.trigger('removeShare');
+
+    this.saveSort(species, track, prev);
+  },
+
+  saveSort: function(species, track, prev) {
+
+    $.ajax({
+      url:  '/' + species + '/Ajax/track_order',
+      type: 'post',
+      data: {
+        image_config: this.imageConfig,
+        track: track,
+        prev: prev
+      }
+    });
+  },
+
+  positionAreas: function () {
+    var tracks = this.elLk.boundaries.children();
+
+    tracks.each(function (i) {
+      var li = $(this);
+      var top, move;
+
+      if (i !== li.data('position')) {
         top  = li.offset().top;
         move = top - li.data('top'); // Up is positive, down is negative
-        
+
         $.each(li.data('areas'), function () {
           this.t += move;
           this.b += move;
         });
-        
-        li.data({ top: top, position: j });
+
+        li.data({ top: top, position: i });
       }
-      
+
       li = null;
     });
-    
-    tracks = track = null;
-    
-    this.removeShare();
-    Ensembl.EventManager.trigger('removeShare');
-    
-    return order;
+
+    tracks = null;
   },
-  
-  changeFavourite: function (trackId) {
-    this.elLk.hoverLabels.filter(function () { return this.className.match(trackId); }).children('a.favourite').toggleClass('selected');
+
+  changeFavourite: function (trackId, on) {
+    this.elLk.hoverLabels.filter('.' + trackId).find('a.favourite').toggleClass('selected', on);
   },
   
   dragStart: function (e) {
@@ -575,7 +647,7 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
     
     if (this.dragRegion) {
       this.mousemove = function (e2) {
-        panel.dragging = e; // store mousedown even
+        panel.dragging = e; // store mousedown event
         panel.drag(e2);
         return false;
       };
