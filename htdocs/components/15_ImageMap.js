@@ -27,6 +27,7 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
     this.draggables       = [];
     this.speciesCount     = 0;
     this.minImageWidth    = 500;
+    this.labelRight       = 0;
     
     function resetOffset() {
       delete this.imgOffset;
@@ -242,7 +243,11 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
         }
       }
     });
-    
+
+    if (this.draggables.length) {
+      this.labelRight = this.draggables[0].l;  // label ends where the drag region starts
+    }
+
     if (Ensembl.images.total) {
       this.highlightAllImages();
     }
@@ -390,7 +395,7 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
 
   positionLayers: function() {
     var offset = this.elLk.img.offset();
-    var right  = this.draggables[0].l; // label ends where the drag region starts
+    var right  = this.labelRight;
 
     this.elLk.labelLayers.each(function() {
       var $this = $(this);
@@ -551,7 +556,7 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
 
     Ensembl.EventManager.triggerSpecific('changeTrackOrder', 'modal_config_' + this.id.toLowerCase(), track, prev);
 
-    this.saveSortOrder(ui.item.parent().data('species'), track, prev);
+    this.afterSort(ui.item.parent().data('species'), track, prev);
   },
 
   externalOrder: function(species, trackId, prevTrackIds) {
@@ -575,16 +580,21 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
       }
     }
 
-    this.saveSortOrder(species, trackId, prevTrackIds[0] || '');
+    this.afterSort(species, trackId, prevTrackIds[0] || '');
 
     track = prev = null;
   },
 
-  saveSortOrder: function(species, track, prev) {
+  afterSort: function(species, track, prev) {
     this.positionAreas();
     this.positionLayers();
     this.removeShare();
     Ensembl.EventManager.trigger('removeShare');
+
+    this.saveSort(species, track, prev);
+  },
+
+  saveSort: function(species, track, prev) {
 
     $.ajax({
       url:  '/' + species + '/Ajax/track_order',
