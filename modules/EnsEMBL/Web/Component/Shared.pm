@@ -222,19 +222,19 @@ sub transcript_table {
 
     my $trans_attribs = {};
     my $trans_gencode = {};
-    my $appris_lookup = EnsEMBL::Web::Constants::APPRIS_CODES;
+    my @appris_codes  = qw(appris_pi appris_ci appris_ci1 appris_ci2 appris_ci3);
 
     foreach my $trans (@$transcripts) {
-      foreach my $attrib_type (qw(CDS_start_NF CDS_end_NF gencode_basic TSL appris)) {
+      foreach my $attrib_type (qw(CDS_start_NF CDS_end_NF gencode_basic TSL), @appris_codes) {
         (my $attrib) = @{$trans->get_all_Attributes($attrib_type)};
-        if($attrib_type eq 'gencode_basic') {
-            if ($attrib && $attrib->value) {
-              $trans_gencode->{$trans->stable_id}{$attrib_type} = $attrib->value;
-            }
-        } elsif ($attrib_type eq 'appris') {
-          if ($attrib && (my $attrib_val = $attrib->value)) {
-            $trans_attribs->{$trans->stable_id}{$attrib_type} = [$attrib_val, $appris_lookup->{ $attrib_val =~ s/\s*\[[^\]]+\]\s*//rg }];
-          }
+        next unless $attrib;
+        if($attrib_type eq 'gencode_basic' && $attrib->value) {
+          $trans_gencode->{$trans->stable_id}{$attrib_type} = $attrib->value;
+        } elsif ($attrib_type =~ /appris/  && $attrib->value) {
+          ## There should only be one APPRIS code per transcript
+          (my $code = $attrib->code) =~ s/appris_//;
+          $trans_attribs->{$trans->stable_id}{'appris'} = [$code, $attrib->name]; 
+          last;
         } else {
           $trans_attribs->{$trans->stable_id}{$attrib_type} = $attrib->value if ($attrib && $attrib->value);
         }
@@ -364,9 +364,10 @@ sub transcript_table {
         }
       }
       if ($trans_attribs->{$tsi}{'appris'}) {
-        my ($text, $code) = @{$trans_attribs->{$tsi}{'appris'}};
+        my ($code, $text) = @{$trans_attribs->{$tsi}{'appris'}};
         my $glossary_url  = $hub->url({'type' => 'Help', 'action' => 'Glossary', 'id' => '493', '__clear' => 1});
         my $appris_link   = $hub->get_ExtURL_link('APPRIS website', 'APPRIS');
+        warn ">>> CODE $code";
         my $class         = $code eq 'pi' ? 'green' : 'yellow';
         push @flags, $code
           ? sprintf('<span class="glossary_mouseover"><span class="appris_%s bold">APPRIS %s</span><span class="floating_popup">%s<br /><a href="%s" class="popup">Glossary entry for APPRIS</a><br />%s</span></span>', $class, uc $code, $text, $glossary_url, $appris_link)
