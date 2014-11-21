@@ -62,7 +62,7 @@ sub new {
 
   my $ua = LWP::UserAgent->new;
   $ua->timeout($settings->{'timeout'});
-  $ua->proxy('http', $settings->{'proxy'}) if $settings->{'proxy'};
+  $ua->proxy([qw/http https/], $settings->{'proxy'}) if $settings->{'proxy'};
 
   my $self = { ua => $ua };
   bless $self, $class;
