@@ -182,6 +182,7 @@ sub get_similarity_links_hash {
    (my $A = $externalDB) =~ s/_predicted//;
 
    $type->{ID} = $primary_id;
+   $type->{GP} = $hub->species_defs->UCSC_GOLDEN_PATH if $A eq 'UCSC';
    $similarity_links{'link'} = $urls->get_url($A, $type) if $urls && $urls->is_linked($A);
 
    $similarity_links{'link_text'} = $A eq 'MARKERSYMBOL' ? " ($primary_id)" : $display_id;
