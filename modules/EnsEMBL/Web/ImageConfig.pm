@@ -339,8 +339,8 @@ sub glyphset_configs {
 
     # Apply user track sorting now
     $pointer = $first_track = $default_order[0];
-    $pointer = $pointer->{'__next'} while $pointer->id =~ /^(draggable|ideogram|info|ruler|scalebar|assembly_exception_core)$/; # these tracks can't be moved from the beginning of the list
-    $pointer = $pointer->{'__prev'}; # point to the last track among all the immovable tracks at beginning of the track list
+    $pointer = $pointer->{'__next'} while $pointer && $pointer->id =~ /^(draggable|ideogram|info|ruler|scalebar|assembly_exception_core)$/; # these tracks can't be moved from the beginning of the list
+    $pointer = $pointer->{'__prev'} || $default_order[-1]; # point to the last track among all the immovable tracks at beginning of the track list
     for (@$track_order) {
       my $track = $lookup{$_->[0]} or next;
       my $prev  = $_->[1] && $lookup{$_->[1]} || $pointer; # pointer (and thus prev) could possibly be undef if there was no immovable track in the beginning
