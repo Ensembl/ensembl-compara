@@ -17,12 +17,13 @@ sub chase_redirects {
   $ua->timeout(10);
   $ua->env_proxy;
   $ua->proxy([qw(http https)], $self->{'hub'}->species_defs->ENSEMBL_WWW_PROXY) || ();
+
   my $response = $ua->head($url);
   if ($response->is_success) {
     return $response->request->uri->as_string;
   }
   else {
-    return {'error' => $response->{'error'}};
+    return {'error' => $response->{'error'} || 'SERVER ERROR: '.$response->code};
   }
 }
 
