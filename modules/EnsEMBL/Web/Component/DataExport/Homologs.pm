@@ -47,7 +47,7 @@ sub content {
                 };
 
   ## Options per format
-  my $fields_by_format = {'OrthoXML' => [['possible_orthologs']]};
+  my $fields_by_format = {'OrthoXML' => []};
 
   ## Add formats output by BioPerl
   foreach ($self->alignment_formats) {
