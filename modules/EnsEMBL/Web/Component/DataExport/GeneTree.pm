@@ -72,9 +72,9 @@ sub content {
 
   ## Options per format
   my $fields_by_format = [{'Tree formats' => {
-                                'Newick'    => [['newick_mode']],
-                                'NHX'       => [['nhx_mode']],
-                                'Text'      => [['scale']],
+                                'Newick'    => ['newick_mode'],
+                                'NHX'       => ['nhx_mode'],
+                                'Text'      => ['scale'],
                                 'OrthoXML'  => [],
                                 'PhyloXML'  => $self->phyloxml_fields, 
                           }}];
@@ -123,7 +123,7 @@ sub phyloxml_settings {
 }
 
 sub phyloxml_fields {
-  return [['cdna'], ['aligned'], ['no_sequences']];
+  return [qw(cdna aligned no_sequences)];
 }
 
 1;
