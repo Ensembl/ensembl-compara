@@ -129,9 +129,7 @@ sub configure_runnable {
 
   my $dbChunkFile = "" . $self->param('target_fa_dir') . "/" . $name . ".fa";
 
-  my $program = $self->param('pair_aligner_exe');
-  throw($program . " is not executable")
-    unless ($program && -x $program);
+  my $program = $self->require_executable('pair_aligner_exe');
 
   $self->delete_fasta_dumps_but_these([$qyChunkFile,$dbChunkFile]);
 

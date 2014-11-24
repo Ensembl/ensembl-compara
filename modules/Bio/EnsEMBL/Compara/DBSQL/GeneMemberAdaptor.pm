@@ -94,6 +94,29 @@ sub fetch_all_homology_orphans_by_GenomeDB {
 }
 
 
+=head2 load_all_from_seq_members
+
+ Arg [1]    : arrayref of Bio::EnsEMBL::Compara::SeqMember
+ Example    : $genemember_adaptor->load_all_from_seq_members($gene_tree->get_all_Members);
+ Description: fetch the gene members for all the SeqMembers, and attach the former to the latter
+ Returntype : none
+ Caller     : general
+
+=cut
+
+sub load_all_from_seq_members {
+    my $self = shift;
+    my $seq_members = shift;
+
+    my %by_gene_member_id = ();
+    foreach my $seq_member (@$seq_members) {
+        push @{$by_gene_member_id{$seq_member->gene_member_id}}, $seq_member;
+    }
+    my $all_gm = $self->fetch_all_by_dbID_list([keys %by_gene_member_id]);
+    foreach my $gm (@$all_gm) {
+        $_->gene_member($gm) for @{$by_gene_member_id{$gm->dbID}};
+    }
+}
 
 #
 # INTERNAL METHODS

@@ -42,7 +42,7 @@ package Bio::EnsEMBL::Compara::PipeConfig::DumpMultiAlign_conf;
 use strict;
 use warnings;
 
-use base ('Bio::EnsEMBL::Hive::PipeConfig::HiveGeneric_conf');  # All Hive databases configuration files should inherit from HiveGeneric, directly or indirectly
+use base ('Bio::EnsEMBL::Hive::PipeConfig::EnsemblGeneric_conf');  # All Hive databases configuration files should inherit from HiveGeneric, directly or indirectly
 
 
 sub default_options {
@@ -121,10 +121,10 @@ sub pipeline_create_commands {
         @{$self->SUPER::pipeline_create_commands},  # inheriting database and hive tables' creation
 
 	#Store DumpMultiAlign other_gab genomic_align_block_ids
-        'mysql ' . $self->dbconn_2_mysql('pipeline_db', 1) . " -e 'CREATE TABLE other_gab (genomic_align_block_id bigint NOT NULL)'",
+        $self->db_cmd('CREATE TABLE other_gab (genomic_align_block_id bigint NOT NULL)'),
 
 	#Store DumpMultiAlign healthcheck results
-        'mysql ' . $self->dbconn_2_mysql('pipeline_db', 1) . " -e 'CREATE TABLE healthcheck (filename VARCHAR(400) NOT NULL, expected INT NOT NULL, dumped INT NOT NULL)'",
+        $self->db_cmd('CREATE TABLE healthcheck (filename VARCHAR(400) NOT NULL, expected INT NOT NULL, dumped INT NOT NULL)'),
 	
 	'mkdir -p '.$self->o('output_dir'), #Make dump_dir directory
     ];

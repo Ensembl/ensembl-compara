@@ -54,17 +54,19 @@ my $master_dba = Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->new(-url=>$master_url)
 # SPECIES TREE
 my $species_tree = Bio::EnsEMBL::Compara::Utils::SpeciesTree->create_species_tree (-compara_dba => $master_dba, -extrataxon_sequenced=>[@taxon_ids]);
 
-my $fmt = '%{-n}%{x-}:%{d}';
-my $sp_tree_string = $species_tree->newick_format('ryo', $fmt);
-
-my $NCBITaxonAdaptor = $master_dba->get_NCBITaxonAdaptor;
-## The cache is clear due to a long-standing bug in the NCBITaxonAdaptor that keeps the tree structure that has been set by Utils::SpeciesTree->create_species_tree
-$NCBITaxonAdaptor->_id_cache->clear_cache();
-
 for my $taxon_id (@taxon_ids) {
-    my $taxon_name = $NCBITaxonAdaptor->fetch_node_by_taxon_id($taxon_id)->scientific_name;
-    $sp_tree_string =~ s/$taxon_name/======>$taxon_name<======/;
+    my $nodes = $species_tree->find_nodes_by_field_value('taxon_id', $taxon_id);
+    die "There should be a node with taxon_id=$taxon_id in the tree !\n" if scalar(@$nodes) == 0;
+    die "There should be a single node with taxon_id=$taxon_id in the tree !\n" if scalar(@$nodes) >= 2;
+    my $new_leaf = $nodes->[0];
+    my $new_internal_node = $new_leaf->parent;
+    my $timetree = Bio::EnsEMBL::Compara::Utils::SpeciesTree->get_timetree_estimate($new_internal_node);
+    $new_leaf->node_name(sprintf('======>New species: taxon_id=%d name="%s"<======', $taxon_id, $new_leaf->node_name));
+    $new_internal_node->node_name(sprintf('======>New ancestor taxon_id=%d name="%s" timetree="%s mya")<======', $new_internal_node->taxon_id, $new_internal_node->node_name, $timetree));
 }
 
 $species_tree->print_tree(0.2);
+
+my $fmt = '%{-n}%{x-}:%{d}';
+my $sp_tree_string = $species_tree->newick_format('ryo', $fmt);
 print $sp_tree_string, "\n";

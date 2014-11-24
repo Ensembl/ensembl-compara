@@ -1,0 +1,451 @@
+diff -rupN pantherScore1.03/lib/Algs/HmmerHit.pm pantherScore1.03_compara/lib/Algs/HmmerHit.pm
+--- pantherScore1.03/lib/Algs/HmmerHit.pm	2010-12-15 18:41:45.000000000 +0000
++++ pantherScore1.03_compara/lib/Algs/HmmerHit.pm	2012-06-06 15:22:08.000000000 +0100
+@@ -183,13 +183,18 @@ sub alignedSequence {
+ sub _parseAlignedSequence {
+   my $self = shift;
+   my $alignmentText = $self->{alignmentText};
+-
+   die "died - Missing alignment text\n" unless ($alignmentText);
+   
+   my @lines = split("\n",$alignmentText);
++
++  # leave out CS or RF lines:
++  ##  If the model had any consensus structure or reference line annotation that it inherited from your multiple
++  ## alignment (#=GC SS cons, #=GC RF annotation in Stockholm files), that information is simply regurgitated
++  ## as CS or RF annotation lines here
++  @lines = grep {$_ !~ /^\s+(CS|RF)\s+/} @lines;
+   my $firstLine = shift @lines;
+   my ($name,$domain,$domainCnt)= $firstLine=~/^(\S+): domain (\d+) of (\d+)/;
+-  
++
+   #validate same as score info
+   if ( ($name != $self->name()) && ($domain != $self->domain()) && ($domain != $self->domainCnt())) {
+     die "Error parsing domains -- died\n";
+@@ -198,7 +203,7 @@ sub _parseAlignedSequence {
+   for (my $i=0; $i<@lines; $i++) {
+     my $consensusLine = $lines[$i];
+     next unless ($consensusLine=~/\S/);
+-    
++
+     $i++;
+     my $matchLine = $lines[$i];
+     $i++;
+@@ -214,7 +219,7 @@ sub _parseAlignedSequence {
+   $consensus=~s/<-\*$//; 
+   $alignment=~s/\s+//g;
+ 
+-  print STDERR "error $name - consensus and alignment lengths not equal\n" unless (length($consensus) eq length($alignment));
++  print STDERR "Warning -- $name - consensus and alignment lengths not equal:\nConsensus: $consensus\nAlignment: $alignment\n\n" unless (length($consensus) eq length($alignment));
+   
+   return $alignment;
+ }
+diff -rupN pantherScore1.03/lib/Blast.pm pantherScore1.03_compara/lib/Blast.pm
+--- pantherScore1.03/lib/Blast.pm	2010-12-15 18:41:44.000000000 +0000
++++ pantherScore1.03_compara/lib/Blast.pm	2012-07-13 12:00:51.000000000 +0100
+@@ -83,14 +83,13 @@ sub run {
+ 
+     # check to see if we have multiple blast runs in one file
+     my @blastFiles = &splitBlast($blastFile, "temp");
+-
+     # create ourselves from this output
+     my @selves;
+     foreach my $bFile (@blastFiles) {
+         my $self = {};
+         bless $self, $class;
+         $self->init($bFile);
+-	push(@selves, $self);
++        push(@selves, $self);
+ 
+         # cleanup
+         unlink($bFile);
+@@ -99,10 +98,10 @@ sub run {
+     # final cleanup
+     if ($args->{saveBlast}) {
+         my $cmd = "cp $blastFile ".$args->{saveBlast};
+-	if (system($cmd)) {  
+-	  print STDERR "FATAL ERROR : $cmd \nSystem command returned error status: ($!)\n";  
+-	  return undef;  
+-	}  
++        if (system($cmd)) {
++            print STDERR "FATAL ERROR : $cmd \nSystem command returned error status: ($!)\n";  
++            return undef;
++        }
+     }
+     unlink($blastFile);
+ 
+@@ -357,7 +356,7 @@ sub runBlast {
+     } elsif ($alg eq "blastpgp") {
+       $blastBinary = $alg;
+     } else {
+-      $blastBinary = "legacy_blast.pl blastall";
++      $blastBinary = "legacy_blast.pl blastall " . ("--path " . $args->{'blastBinPath'}) x!! $args->{'blastBinPath'};
+     }
+ 
+     my $numCpu = 1;
+@@ -408,6 +407,7 @@ sub runBlast {
+     }
+     close (OUT);
+     close (FH);
++    unlink $blastFile;
+ 
+     # return the file
+     return $blastFile1;
+@@ -449,7 +449,6 @@ sub runMask {
+ #         (does not run blast - result file is empty)
+ ###
+ sub makeBlastFiles {
+- 
+     my $seq = shift;
+ 
+     my $seqName = $1 if ($seq =~ />[^\w\d_]*([\w\d_]+)/);
+diff -rupN pantherScore1.03/lib/FamLibBuilder_prod.pm pantherScore1.03_compara/lib/FamLibBuilder_prod.pm
+--- pantherScore1.03/lib/FamLibBuilder_prod.pm	2010-12-15 18:41:45.000000000 +0000
++++ pantherScore1.03_compara/lib/FamLibBuilder_prod.pm	2012-06-18 12:09:05.000000000 +0100
+@@ -719,6 +719,7 @@ FamLibBuilder.
+ =back 
+  
+ =cut 
++
+ sub consensusFasta{
+ my $self = shift;
+ return ($self->globalsDir()."con.Fasta");
+diff -rupN pantherScore1.03/lib/FastaFile.pm pantherScore1.03_compara/lib/FastaFile.pm
+--- pantherScore1.03/lib/FastaFile.pm	2010-12-15 18:41:45.000000000 +0000
++++ pantherScore1.03_compara/lib/FastaFile.pm	2012-07-12 16:54:20.000000000 +0100
+@@ -20,9 +20,16 @@
+ ###########################
+ # Required Module variables
+ 
++package FastaFile;
+ use strict;
++use warnings;
++use Data::Dumper;
++
+ use FileHandle;
+-package FastaFile;
++
++use Exporter;
++use vars qw/@EXPORT/;
++@EXPORT = qw/indexFasta getSeq/;
+ 
+ ####
+ #
+@@ -163,6 +170,54 @@ sub close {
+     $self->{index} = undef;
+ }
+ 
++sub getSeq {
++  my $fh = shift; 
++  my $indexHash = shift;
++  my $id = shift;
++ 
++ my $seekPos = $indexHash->{$id};
++  print STDERR "$id does not exist in sequence index\n" unless (defined($seekPos));
++
++  #go to sequence
++  seek $fh, $seekPos, 0;
++  
++  #grab sequence
++  my @seq;
++
++  #get the first > line
++  my $line = <$fh>;
++  push (@seq, $line);
++  # now read in the sequence
++  while ($line = <$fh>) {
++    last if ($line =~ /^>/);
++    push (@seq, $line);
++  }
++  if (@seq && $seq[0] =~ />.*$id/) {
++#  if (@seq && $seq[0]=~/[>\|]$id[\|\s]/) { 
++    return (join("",@seq)); 
++  } else {
++      print STDERR "Sequence $id has not found in the fasta file\n";
++      return undef;
++  }
++
++}
++
++sub indexFasta {
++  my $fh = shift;
++
++  my %fastaIdx;
++  my $curPos = 0;
++  my $fastaPos = 0; 
++   while (my $line = <$fh>) {
++    $fastaPos = $curPos;
++    $curPos = tell $fh;
++    next unless ($line=~/^>/);
++    my $id = FastaFile::id($line);
++    $fastaIdx{$id} = $fastaPos;
++  }
++  return \%fastaIdx;
++}
++
+ 
+ ###
+ #
+@@ -289,8 +344,8 @@ sub name {
+ # return: the appropriate id of the sequence, or the bare name
+ ####
+ sub id {
+-    my $seq = shift;
+-    my $type = lc(shift);
++    my ($seq, $type) = @_;
++    $type = lc($type);
+     my $name = &name($seq);
+ 
+     # ret name if not NCBI (|) or Celera (/)
+diff -rupN pantherScore1.03/lib/Hit.pm pantherScore1.03_compara/lib/Hit.pm
+--- pantherScore1.03/lib/Hit.pm	2010-12-15 18:41:45.000000000 +0000
++++ pantherScore1.03_compara/lib/Hit.pm	2012-06-06 10:27:07.000000000 +0100
+@@ -48,7 +48,7 @@ sub init {
+ 
+     # find all appropriate values
+     foreach $line (@hitText) {
+-	if ($line =~ /^>([\S]+)/) {
++	if ($line =~ /^>\s*([\S]+)/) {
+ 	  $self->{name} = $1 unless ($self->{name});
+ 	  chomp $line;
+ 	  $self->{desc} = $line;
+@@ -56,7 +56,7 @@ sub init {
+ 	if (($line =~ /Length = ([\d]+)/)) {
+ 	  $self->{length} = $1 unless ($self->{length}); 
+ 	}
+-	if (($line =~ /Expect(\(\d+\))? = (.*)/)) {
++	if (($line =~ /Expect(\(\d+\))? = (\d*\.?\d*e?-?\d*)/)) {  ## RE not fully tested
+ 	  $self->{expect} = $2 unless ($self->{expect}); 
+         }
+ 	if (($line =~ /Score =[\s]+([\d\.]+) bits \(([\d]+)\),/)) {
+diff -rupN pantherScore1.03/pantherScore.pl pantherScore1.03_compara/pantherScore.pl
+--- pantherScore1.03/pantherScore.pl	2010-12-15 18:41:44.000000000 +0000
++++ pantherScore1.03_compara/pantherScore.pl	2014-04-16 16:25:53.000000000 +0100
+@@ -1,4 +1,4 @@
+-#!/usr/bin/perl 
++#!/usr/bin/env perl 
+ 
+ # Copyright (C)) 2005 Applied Biosystems.
+ # This file may be copied and redistributed freely, without advance permission,
+@@ -13,7 +13,7 @@
+ # WARRANTIES OF MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE. APPLIED
+ # BIOSYSTEMS MAKES NO WARRANTY THAT ITS DATA DOES NOT CONTAIN ERRORS.
+ 
+-##### 
++#####
+ #####
+ ##
+ ## pantherHmmScoreBlast.pl - a script to score protein sequences against 
+@@ -28,12 +28,15 @@
+ #####
+ #####
+ 
++use strict;
++use warnings;
++use Data::Dumper;
++
+ # necessary libraries
+ use FamLibBuilder;
+ use Algs::Hmmer;
+ use FastaFile;
+ use Blast;
+-use strict;
+ use FileHandle;
+ 
+ # default values
+@@ -54,7 +57,7 @@ my $famHmmCutoff = 0.1;
+ my $prod = 1;
+ my ($inFile,$outFile,$errFile,$library,$verbose,$userHmmEvalCut,$namesFlag);
+ my ($displayType,$pantherBestHit,$allHits,$iprScanBestHit);
+-my ($blastPath,$hmmsearchPath,$tmpdirPath,$gunzipPath);
++my ($blastPath,$blastSubPath,$hmmsearchPath,$tmpdirPath,$gunzipPath);
+ my $joinAlnFlag = 1;
+ my $numCpu;
+ 
+@@ -81,7 +84,8 @@ $Getopt::Long::ignorecase=0; #case sensi
+  "J=i" => \$joinAlnFlag,    # -J for (J)oin alignment flag
+  "c=i" => \$numCpu,           # -c for num of (c)pu to use for blast/hmmsearch
+  "e=s" => \$errFile,        # -e for (e)rror file (redirect STDERR)
+- "V" => \$verbose           # -v for (v)erbose (debug info to STDERR)
++ "V" => \$verbose,           # -v for (v)erbose (debug info to STDERR)
++ "b=s" => \$blastSubPath,    # -b for passing the --path option to legacy_blast.pl
+ );
+ 
+ &usage("Please specify library\n") unless (-d $library);
+@@ -143,10 +147,10 @@ if ($userHmmEvalCut) {
+   $hmmEvalCut = $closelyHmmCutoff;
+ }
+ 
+-my  $hmmNames = &getHmmNames($flb->namesTab()) if ($namesFlag);
++my $hmmNames = &getHmmNames($flb->namesTab()) if ($namesFlag);
+ 
+ my $fh = new FileHandle($inFile,"r") || die "Cannot create file handle for $inFile\n";
+-my $indexHash = &indexFasta($fh);
++my $indexHash = FastaFile::indexFasta($fh);
+ 
+ #blast sequence against consensus seqs of HMM library to
+ #determine which HMMs to score against
+@@ -162,12 +166,12 @@ foreach my $fam (keys %$selectedFams) {
+   my @seqsForFam = keys %{$selectedFams->{$fam}};
+   my $numSeqsForFam = @seqsForFam;
+ 
+-  print STDERR "RUNNING $numSeqsForFam on $fam\n" if ($verbose);
++  print STDERR "RUNNING $numSeqsForFam sequences on $fam\n" if ($verbose);
+ 
+   my $tmpFile = $tmpDir . "/scorehmm.$fam.$$.fasta";
+   &writeTmpFileViaIndex($tmpFile,\@seqsForFam,$indexHash,$fh);
+ 
+-  #score seqs aginast family HMM, and store scores in our hash
++  #score seqs against family HMM, and store scores in our hash
+   $allScores = &runHmmer($tmpFile,$hmmFile,$allScores,$fam);
+   unlink $tmpFile;
+ 
+@@ -198,23 +202,23 @@ foreach my $seqId (keys %$allScores) {
+     foreach my $hmm (keys %{$allScores->{$seqId}}) { 
+       my $eval = $allScores->{$seqId}{$hmm}{'eval'};
+       next if ($eval > $hmmEvalCut);
+-      &printRes($seqId,$hmm,$eval,$allScores->{$seqId}{$hmm}{'score'},$allScores->{$seqId}{$hmm}{'seqRange'},$hmmNames->{$hmm});
++      &printRes($seqId,$hmm,$eval,$allScores->{$seqId}{$hmm}{'score'},$allScores->{$seqId}{$hmm}{'seqRange'},$hmmNames->{$hmm} || undef);
+     }
+ 
+   } elsif ($pantherBestHit) {
+     my $hmm = &getBestHit($allScores,$seqId,$hmmEvalCut);
+     next unless ($hmm);
+-    &printRes($seqId,$hmm,$allScores->{$seqId}{$hmm}{'eval'},$allScores->{$seqId}{$hmm}{'score'},$allScores->{$seqId}{$hmm}{'seqRange'},$hmmNames->{$hmm}); 
++    &printRes($seqId,$hmm,$allScores->{$seqId}{$hmm}{'eval'},$allScores->{$seqId}{$hmm}{'score'},$allScores->{$seqId}{$hmm}{'seqRange'},$hmmNames->{$hmm} || undef); 
+ 
+   } elsif ($iprScanBestHit) {  
+     my $hmm = &getBestHit($allScores,$seqId,$hmmEvalCut);
+     next unless ($hmm);
+-    &printRes($seqId,$hmm,$allScores->{$seqId}{$hmm}{'eval'},$allScores->{$seqId}{$hmm}{'score'},$allScores->{$seqId}{$hmm}{'seqRange'},$hmmNames->{$hmm},1); 
++    &printRes($seqId,$hmm,$allScores->{$seqId}{$hmm}{'eval'},$allScores->{$seqId}{$hmm}{'score'},$allScores->{$seqId}{$hmm}{'seqRange'},$hmmNames->{$hmm} || undef,1); 
+     my ($fam,$sf) = split(/:/,$hmm);
+     if ($sf) {
+       #if doing ipr scan and have SF hit, get fam info (if fam meet threshold)
+       #get sf score info, and use sf seq range
+-      &printRes($seqId,$fam,$allScores->{$seqId}{$hmm}{'eval'},$allScores->{$seqId}{$hmm}{'score'},$allScores->{$seqId}{$hmm}{'seqRange'},$hmmNames->{$fam},1); 
++      &printRes($seqId,$fam,$allScores->{$seqId}{$hmm}{'eval'},$allScores->{$seqId}{$hmm}{'score'},$allScores->{$seqId}{$hmm}{'seqRange'},$hmmNames->{$fam} || undef,1); 
+     }
+   }
+ }
+@@ -230,7 +234,8 @@ sub printRes {
+   my $splitRanges = shift;
+ 
+   return unless ($seqRange);
+-  my $outStr = "$seqId\t$hmm\t$name\t$eval\t$score";
++  my $outStr = join "\t", $seqId, $hmm, $name || "", $eval, $score;
++#  my $outStr = "$seqId\t$hmm\t$name\t$eval\t$score";
+   if ($splitRanges) {
+     my @ranges = split(/,/,$seqRange);
+     foreach my $range (@ranges) {
+@@ -263,54 +268,6 @@ sub getHmmNames {
+   return(\%namesMap);
+ }
+ 
+-
+-sub getSeq {
+-  my $fh = shift; 
+-  my $indexHash = shift;
+-  my $id = shift;
+- 
+- my $seekPos = $indexHash->{$id};
+-  print STDERR "$id does not exist in sequence index\n" unless (defined($seekPos));
+-
+-  #go to sequence
+-  seek $fh, $seekPos, 0;
+-  
+-  #grab sequence
+-  my @seq;
+-
+-  #get the first > line
+-  my $line = <$fh>;
+-  push (@seq, $line);
+-  # now read in the sequence
+-  while ($line = <$fh>) {
+-    last if ($line =~ /^>/);
+-    push (@seq, $line);
+-  }
+-  if (@seq && $seq[0]=~/[>\|]$id[\|\s]/) { 
+-    return (join("",@seq)); 
+-  } else {
+-    return undef;
+-  }
+-
+-}
+-
+-sub indexFasta {
+-  my $fh = shift;
+-
+-  my %fastaIdx;
+-  my $curPos = 0;
+-  my $fastaPos = 0; 
+-   while (my $line = <$fh>) {
+-    $fastaPos = $curPos;
+-    $curPos = tell $fh;
+-    next unless ($line=~/^>/);
+-    my $id = FastaFile::id($line);
+-    $fastaIdx{$id} = $fastaPos;
+-  }
+-  return \%fastaIdx;
+-}
+-
+-
+ sub getBestHit {
+   my $allScores = shift;
+   my $seqId = shift;
+@@ -347,7 +304,6 @@ sub runHmmer {
+   $args->{'numCpu'} = $numCpu if ($numCpu);
+ 
+   my $hmmerObj = run Hmmer($tmpFile,$hmmFile,$args);
+-
+   if ($hmmerObj) {
+     while (my $hit = $hmmerObj->nextHit()) {
+       my $hitName = $hit->id();
+@@ -376,10 +332,10 @@ sub getHmmsToScoreAgainst {
+     #instanciate blast class
+     my $args = {};
+     $args->{'blastBinary'} = $blastPath if ($blastPath);
++    $args->{'blastBinPath'} = $blastSubPath if ($blastSubPath);
+     $args->{'tmpDir'} = $tmpdirPath if ($tmpdirPath);
+     $args->{'numCpu'} = $numCpu if ($numCpu);
+     my $blastObj = run Blast($searchAlg, $blastDb, $seq,undef,undef,$args);
+-    
+     unless ($blastObj) {
+       print STDERR "Problem with blast on $id\n";
+       next;
+@@ -393,8 +349,8 @@ sub getHmmsToScoreAgainst {
+ 
+       my $subject_id = $hit->id();  # the panther hmm
+       my $eval = $hit->expect();
++      print STDERR "   Hit $hitCnt : $subject_id ($eval)\n" if ($verbose);
+       $eval=~s/^e/1e/;
+-
+       #set first hit as best hit
+       $bestEval = $eval if ($hitCnt == 1);
+ 
+@@ -404,7 +360,7 @@ sub getHmmsToScoreAgainst {
+       #depending on the best score, do the following heuristics
+       if ($bestEval == 0){
+         #if the best hit has an eval of zero, take the top 2 hits with eval>0
+-        last if ($numHitsOverZero > $nonZeroBlastHitLimit);
++        last if (defined $numHitsOverZero and $numHitsOverZero > $nonZeroBlastHitLimit);
+       } elsif ($bestEval < $smallEvalCutoff) {
+         #if the best score is notzero, but really small, take the top 5 hits
+         last if ($hitCnt > $smallEvalCntLimit);
+@@ -439,7 +395,7 @@ sub writeTmpFileViaIndex {
+ 
+   open(TMP, ">$tmpFile") || die "Cannot create $tmpFile\n";
+   foreach my $id (@$seqIds) {
+-    my $seq = &getSeq($fh,$indexHash,$id); 
++    my $seq = FastaFile::getSeq($fh,$indexHash,$id);
+     if ($seq) {
+       print TMP $seq,"\n";
+     } else {
+@@ -505,6 +461,7 @@ Where args are:
+ \t-E user defined hmm (E)value cutoff to over ride default
+ \t\tdefault: depends on display type; determined by PANTHER group
+ \t-B user defined path to (B)last binary
++\t-b argument for the --path legacy_blast.pl option
+ \t\tdefault: blastall binary in \$PATH
+ \t-H user defined path to (H)mmsearch binary
+ \t\tdefault: hmmsearch binary in \$PATH

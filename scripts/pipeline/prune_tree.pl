@@ -50,7 +50,7 @@ if (defined $output_taxon_file) {
     my $species_tree    = Bio::EnsEMBL::Compara::Utils::SpeciesTree::create_species_tree(-COMPARA_DBA => $compara_dba);
 
     open  TF, ">$output_taxon_file" or die "$!";
-    print TF $species_tree->newick_format( 'njtree' );
+    print TF $species_tree->newick_format( 'ncbi_taxon' );
     close TF;
 }
 

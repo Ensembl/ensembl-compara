@@ -134,12 +134,20 @@ my $config = {
                 query => 'SELECT gene_member_id FROM gene_member WHERE genome_db_id = #genome_db_id# AND (dnafrag_id IS NULL OR dnafrag_start IS NULL OR dnafrag_end IS NULL)',
             },
             {
+                description => 'GeneMembers should map to a dnafrag of their own species',
+                query => 'SELECT gene_member_id FROM gene_member LEFT JOIN dnafrag USING (dnafrag_id) WHERE gene_member.genome_db_id = #genome_db_id# AND (dnafrag.dnafrag_id IS NULL OR gene_member.genome_db_id != dnafrag.genome_db_id)',
+            },
+            {
                 description => 'GeneMembers should have the same taxonomy ID as their genomeDB',
                 query => 'SELECT gene_member_id FROM gene_member JOIN genome_db USING (genome_db_id) WHERE genome_db_id = #genome_db_id# AND gene_member.taxon_id != genome_db.taxon_id',
             },
             {
                 description => 'SeqMembers should have chromosome coordinates',
                 query => 'SELECT seq_member_id FROM seq_member WHERE genome_db_id = #genome_db_id# AND (dnafrag_id IS NULL OR dnafrag_start IS NULL OR dnafrag_end IS NULL)',
+            },
+            {
+                description => 'SeqMembers should map to a dnafrag of their own species',
+                query => 'SELECT seq_member_id FROM seq_member LEFT JOIN dnafrag USING (dnafrag_id) WHERE seq_member.genome_db_id = #genome_db_id# AND (dnafrag.dnafrag_id IS NULL OR seq_member.genome_db_id != dnafrag.genome_db_id)',
             },
             {
                 description => 'SeqMembers should have the same taxonomy ID as their genomeDB',
@@ -171,7 +179,7 @@ my $config = {
                              tests => [
                                        {
                                         description => 'All the removed members should not be in the clusters anymore',
-                                        query       => 'SELECT gtn.node_id FROM removed_member JOIN gene_member gene USING(stable_id) JOIN seq_member transc ON(gene.canonical_member_id = transc.seq_member_id) JOIN gene_tree_node gtn ON(transc.seq_member_id=gtn.seq_member_id) WHERE gtn.root_id = #gene_tree_id#;',
+                                        query       => 'SELECT gtn.node_id, gtn.root_id, gtn.seq_member_id, gtb.root_id FROM gene_tree_backup gtb JOIN gene_tree_node gtn USING (seq_member_id) WHERE gtn.root_id = #gene_tree_id# AND is_removed = 1;',
                                        },
                                       ],
                             },
@@ -181,7 +189,7 @@ my $config = {
                              tests => [
                                        {
                                         description => 'We should have removed members on all the low-coverage-assembly species',
-                                        query       => 'SELECT name FROM species_set JOIN genome_db USING(genome_db_id) JOIN species_set_tag USING(species_set_id) WHERE value="low-coverage-assembly" AND name NOT IN(SELECT DISTINCT(name) FROM removed_member JOIN genome_db USING(genome_db_id));',
+                                        query       => 'SELECT name FROM species_set JOIN genome_db USING(genome_db_id) JOIN species_set_tag USING(species_set_id) WHERE value="low-coverage-assembly" AND genome_db_id NOT IN(SELECT DISTINCT(genome_db_id) FROM gene_tree_backup JOIN seq_member USING (seq_member_id) WHERE is_removed = 1);',
                                        },
                                       ],
                             },
@@ -210,7 +218,7 @@ my $config = {
         tests => [
             {
                 description => 'Checks that the tree has not lost any genes since the backup',
-                query => 'SELECT gene_tree_backup.seq_member_id FROM gene_tree_backup JOIN seq_member USING (seq_member_id) LEFT JOIN gene_tree_node USING (root_id, seq_member_id) LEFT JOIN removed_member USING (stable_id) WHERE root_id = #gene_tree_id# AND gene_tree_node.seq_member_id IS NULL AND removed_member.stable_id IS NULL',
+                query => 'SELECT gtb.seq_member_id FROM gene_tree_backup gtb LEFT JOIN gene_tree_node gtn USING (root_id, seq_member_id) WHERE gtb.root_id = #gene_tree_id# AND gtn.seq_member_id IS NULL AND is_removed = 0',
             },
             {
                 description => 'Checks that the tree has not gained any genes since the backup',

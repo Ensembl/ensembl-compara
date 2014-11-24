@@ -62,6 +62,7 @@ sub fetch_input {
     my $self = shift @_;
 
     my $genome_db_adaptor   = $self->compara_dba->get_GenomeDBAdaptor;
+    $genome_db_adaptor->_id_cache->clear_cache();
 
     my $genome_db_id = $self->param('genome_db_id');
     my $genome_db    = $genome_db_adaptor->fetch_by_dbID($genome_db_id) or die "Could not fetch genome_db with genome_db_id='$genome_db_id'";

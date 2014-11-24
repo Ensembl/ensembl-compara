@@ -41,7 +41,7 @@ Supported keys:
     'fasta_dir' => <directory_path>
         Location to write fasta file
 
-    'only_canonical' => 0/1 [default: 0]
+    'only_canonical' => 0/1 [default: 1]
         Do we dump all the members or only the canonical ones ?
 
 =cut
@@ -56,6 +56,14 @@ use Bio::EnsEMBL::Compara::MemberSet;
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
 
+
+sub param_defaults {
+    return {
+        'only_canonical'    => 1,
+    };
+}
+
+
 sub fetch_input {
     my $self = shift @_;
 
@@ -67,13 +75,14 @@ sub fetch_input {
     $fasta_file =~ s/\/\//\//g;  # converts any // in path to /
     $self->param('fasta_file', $fasta_file);
 
-    # write fasta file:
     my $members;
     if ($self->param('only_canonical')) {
         $members = $self->compara_dba->get_SeqMemberAdaptor->fetch_all_canonical_by_GenomeDB($genome_db_id);
     } else {
         $members = $self->compara_dba->get_SeqMemberAdaptor->fetch_all_by_GenomeDB($genome_db_id);
     }
+
+    # write fasta file:
     Bio::EnsEMBL::Compara::MemberSet->new(-members => $members)->print_sequences_to_file($fasta_file);
 }
 

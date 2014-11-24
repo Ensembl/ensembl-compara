@@ -65,12 +65,13 @@ The list of patches to use is given in the output of the find_assembly_patches.p
 
 perl $ENSEMBL_CVS_ROOT_DIR/ensembl-compara/scripts/pipeline/create_patch_pairaligner_conf.pl --master_url mysql://ensro@compara1:3306/sf5_ensembl_compara_master --ref_species homo_sapiens --species rattus_norvegicus,macaca_mulatta,pan_troglodytes,gallus_gallus,ornithorhynchus_anatinus,monodelphis_domestica,pongo_abelii,equus_caballus,bos_taurus,sus_scrofa,gorilla_gorilla,callithrix_jacchus,oryctolagus_cuniculus --ref_url mysql://ensro@ens-staging1:3306/homo_sapiens_core_68_37 --ensembl_version 68 --host ens-livemirror --dump_dir /lustre/scratch109/ensembl/kb3/scratch/hive/release_68/nib_files --patches chromosome:HG1292_PATCH,chromosome:HG1287_PATCH,chromosome:HG1293_PATCH,chromosome:HG1322_PATCH,chromosome:HG1304_PATCH,chromosome:HG1308_PATCH,chromosome:HG962_PATCH,chromosome:HG871_PATCH,chromosome:HG1211_PATCH,chromosome:HG271_PATCH,chromosome:HSCHR3_1_CTG1 > lastz.conf
 
+NOTE: see below for an example of a lastz.conf (lastz_conf.example.humanLastzRef_vs_mouseLastzNonRef) used in e78 for new mouse patches aligned to human (human is the reference in the lastz analysis - but we don't want to include it's patches in the alignments with the mouse patches).
 
 You may get warnings for those pairwise alignments which are still BLASTZ_NET, ie are not yet LASTZ_NET. These can be ignored.
 
 4) Run init_pipeline
 Run the init_pipeline command, setting --conf_file to lastz.conf
-init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::Lastz_conf --dbname hsap_lastz_hap_68 --password <PASSWORD> --reg_conf reg.conf --conf_file lastz.conf --pipeline_name LASTZ_HAP_68 --skip_set_internal_ids 1
+init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::Lastz_conf --dbname hsap_lastz_hap_68 --password <PASSWORD> --reg_conf reg.conf --conf_file lastz.conf --pipeline_name LASTZ_HAP_68 --patch_alignments 1
 
 5) Run the beekeeper
 
@@ -93,3 +94,153 @@ select count(*) FROM genomic_align ga1, genomic_align ga2, genomic_align_block g
 DELETE ga1, ga2, gab FROM genomic_align ga1, genomic_align ga2, genomic_align_block gab WHERE ga1.dnafrag_id=13705533 AND ga1.genomic_align_block_id = ga2.genomic_align_block_id AND ga1.genomic_align_id != ga2.genomic_align_id AND ga1.genomic_align_block_id = gab.genomic_align_block_id;
 
 608*3 = 1824
+
+
+#################### cat lastz_conf.example.humanLastzRef_vs_mouseLastzNonRef
+[
+{TYPE => SPECIES,
+  'abrev'          => 'mus_musculus',
+  'genome_db_id'   => 134,
+  'taxon_id'       => 10090,
+  'phylum'         => 'Vertebrata',
+  'module'         => 'Bio::EnsEMBL::DBSQL::DBAdaptor',
+  'host'           => 'ens-staging2',
+  'port'           => 3306,
+  'user'           => 'ensro',
+  'dbname'         => 'mus_musculus_core_78_38',
+  'species'        => 'mus_musculus',
+},
+{TYPE => SPECIES,
+  'abrev'          => 'homo_sapiens',
+  'genome_db_id'   => 150,
+  'taxon_id'       => 9606,
+  'phylum'         => 'Vertebrata',
+  'module'         => 'Bio::EnsEMBL::DBSQL::DBAdaptor',
+  'host'           => 'ens-livemirror',
+  'port'           => 3306,
+  'user'           => 'ensro',
+  'dbname'         => 'homo_sapiens_core_77_38',
+  'species'        => 'homo_sapiens',
+},
+{TYPE => DNA_COLLECTION,
+ 'collection_name'       => 'mus_musculus exception',
+ 'genome_db_id'          => 134,
+ 'genome_name_assembly'  => 'mus_musculus:GRCm38',
+ 'region'                => 'chromosome:CHR_MG184_PATCH,chromosome:CHR_MG4136_PATCH,chromosome:CHR_MG4212_PATCH,chromosome:CHR_MG4151_PATCH,chromosome:CHR_MG4222_MG3908_PATCH,chromosome:CHR_MG3833_PATCH,chromosome:CHR_MG4180_PATCH,chromosome:CHR_MG4209_PATCH,chromosome:CHR_MG3835_PATCH,chromosome:CHR_MG153_PATCH,chromosome:CHR_MG3829_PATCH,chromosome:CHR_MG4211_PATCH,chromosome:CHR_MG4214_PATCH,chromosome:CHR_MG4237_PATCH,chromosome:CHR_MG4213_PATCH,chromosome:CHR_MMCHR1_CHORI29_IDD5_1,chromosome:CHR_MG132_PATCH',
+ 'chunk_size'            => 30000000,
+ 'overlap'               => 0,
+ 'include_non_reference' => 1,
+ 'masking_options'       => "{default_soft_masking => 1}"
+},
+{TYPE => DNA_COLLECTION,
+ 'collection_name'       => 'mus_musculus mammal',
+ 'genome_db_id'          => 134,
+ 'genome_name_assembly'  => 'mus_musculus:GRCm38',
+ 'region'                => 'chromosome:CHR_MG184_PATCH,chromosome:CHR_MG4136_PATCH,chromosome:CHR_MG4212_PATCH,chromosome:CHR_MG4151_PATCH,chromosome:CHR_MG4222_MG3908_PATCH,chromosome:CHR_MG3833_PATCH,chromosome:CHR_MG4180_PATCH,chromosome:CHR_MG4209_PATCH,chromosome:CHR_MG3835_PATCH,chromosome:CHR_MG153_PATCH,chromosome:CHR_MG3829_PATCH,chromosome:CHR_MG4211_PATCH,chromosome:CHR_MG4214_PATCH,chromosome:CHR_MG4237_PATCH,chromosome:CHR_MG4213_PATCH,chromosome:CHR_MMCHR1_CHORI29_IDD5_1,chromosome:CHR_MG132_PATCH',
+ 'chunk_size'            => 30000000,
+ 'overlap'               => 0,
+ 'include_non_reference' => 1,
+ 'masking_options'       => "{default_soft_masking => 1}"
+},
+{ TYPE => DNA_COLLECTION,
+ 'collection_name'      => 'homo_sapiens all',
+ 'genome_db_id'         => 150,
+ 'genome_name_assembly' => 'homo_sapiens:GRCh38',
+ 'chunk_size'           => 10100000,
+ 'group_set_size'       => 10100000,
+ 'overlap'              => 100000,
+ 'masking_options'      => "{default_soft_masking => 1}",
+},
+{ TYPE => PAIR_ALIGNER,
+ 'logic_name_prefix'             => 'LastZ',
+ 'method_link'                   => [1001, 'LASTZ_RAW'],
+ 'analysis_template'             => {
+    '-program'                   => 'lastz',
+    '-parameters'                => "{method_link=>'LASTZ_RAW',options=>'T=1 K=3000 L=3000 H=2200 O=400 E=30 --ambiguous=iupac'}",
+    '-module'                    => 'Bio::EnsEMBL::Compara::Production::GenomicAlignBlock::LastZ',
+ },
+ 'max_parallel_workers'          => 100,
+ 'batch_size'                    => 10,
+ 'non_reference_collection_name' => 'homo_sapiens all',
+ 'reference_collection_name'     => 'mus_musculus mammal',
+},
+{ TYPE => DNA_COLLECTION,
+ 'collection_name'       => 'mus_musculus for chain',
+ 'genome_db_id'          => 134,
+ 'genome_name_assembly'  => 'mus_musculus:GRCm38',
+ 'region'                => 'chromosome:CHR_MG184_PATCH,chromosome:CHR_MG4136_PATCH,chromosome:CHR_MG4212_PATCH,chromosome:CHR_MG4151_PATCH,chromosome:CHR_MG4222_MG3908_PATCH,chromosome:CHR_MG3833_PATCH,chromosome:CHR_MG4180_PATCH,chromosome:CHR_MG4209_PATCH,chromosome:CHR_MG3835_PATCH,chromosome:CHR_MG153_PATCH,chromosome:CHR_MG3829_PATCH,chromosome:CHR_MG4211_PATCH,chromosome:CHR_MG4214_PATCH,chromosome:CHR_MG4237_PATCH,chromosome:CHR_MG4213_PATCH,chromosome:CHR_MMCHR1_CHORI29_IDD5_1,chromosome:CHR_MG132_PATCH',
+ 'include_non_reference' => 1,
+ 'dump_loc'              => '/lustre/scratch109/ensembl/sf5/Compara78/Patches/nib_files/mus_musculus_nib_for_chain'
+},
+{ TYPE => DNA_COLLECTION,
+ 'collection_name'       => 'homo_sapiens for chain',
+ 'genome_db_id'          => 150,
+ 'genome_name_assembly'  => 'homo_sapiens:GRCh38',
+ 'dump_loc'              => '/lustre/scratch109/ensembl/sf5/Compara78/Patches/nib_files/homo_sapiens_nib_for_chain'
+},
+{TYPE                            => CHAIN_CONFIG,
+ 'input_method_link'             => [1001, 'LASTZ_RAW'],
+ 'output_method_link'            => [1002, 'LASTZ_CHAIN'],
+ 'reference_collection_name'     => 'mus_musculus for chain',
+ 'non_reference_collection_name' => 'homo_sapiens for chain',
+ 'max_gap'                       => 50,
+ 'linear_gap'                    => 'medium'
+},
+{ TYPE                           => NET_CONFIG,
+ 'input_method_link'             => [1002, 'LASTZ_CHAIN'],
+ 'output_method_link'            => [16, 'LASTZ_NET'],
+ 'reference_collection_name'     => 'mus_musculus for chain',
+ 'non_reference_collection_name' => 'homo_sapiens for chain',
+ 'max_gap'                       => 50,
+ 'input_group_type'              => 'chain',
+ 'output_group_type'             => 'default',
+},
+{ TYPE => END }
+]
+#################### command for generating the above output
+
+perl $ENSEMBL_CVS_ROOT_DIR/ensembl-compara/scripts/pipeline/create_patch_pairaligner_conf.pl --master_url mysql://ensro@compara1:3306/sf5_ensembl_compara_master --ref_species homo_sapiens --ref_url "mysql://ensro@ens-staging1:3306/homo_sapiens_core_78_38?group=core&species=homo_sapiens" --ensembl_version 78 --host ens-staging2 --dump_dir /lustre/scratch109/ensembl/sf5/Compara78/Patches/human_vs_mouse/nib_files --non_ref_patches chromosome:CHR_MG184_PATCH,chromosome:CHR_MG4136_PATCH,chromosome:CHR_MG4212_PATCH,chromosome:CHR_MG4151_PATCH,chromosome:CHR_MG4222_MG3908_PATCH,chromosome:CHR_MG3833_PATCH,chromosome:CHR_MG4180_PATCH,chromosome:CHR_MG4209_PATCH,chromosome:CHR_MG3835_PATCH,chromosome:CHR_MG153_PATCH,chromosome:CHR_MG3829_PATCH,chromosome:CHR_MG4211_PATCH,chromosome:CHR_MG4214_PATCH,chromosome:CHR_MG4237_PATCH,chromosome:CHR_MG4213_PATCH,chromosome:CHR_MMCHR1_CHORI29_IDD5_1,chromosome:CHR_MG132_PATCH --ref_include_non_reference 0 --non_ref_include_non_reference 1 > lastz_conf.example.humanLastzRef_vs_mouseLastzNonRef
+
+#################### init_pipeline.pl command for the above output
+
+init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::Lastz_conf --dbname hum_ref_vs_mus_patch1_78 --password $ENSADMIN_PSW --reg_conf reg.conf --conf_file lastz_conf.example.humanLastzRef_vs_mouseLastzNonRef --pipeline_name LASTZ_MUS_VS_HUM_78 --patch_alignments 0
+
+#################### and the reg.conf file
+use strict;
+use Bio::EnsEMBL::Utils::ConfigRegistry;
+use Bio::EnsEMBL::DBSQL::DBAdaptor;
+use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
+use Bio::EnsEMBL::Registry;
+
+#################################################
+new Bio::EnsEMBL::Compara::DBSQL::DBAdaptor(
+    -host => 'compara1',
+    -user => 'ensro',
+    -pass => '', 
+    -species => 'compara_master',
+    -group => 'compara',
+    -dbname => 'sf5_ensembl_compara_master');
+
+######
+new Bio::EnsEMBL::DBSQL::DBAdaptor (
+ -pass => "",
+ -species => "mus_musculus",
+ -port => "3306",
+ -dbname => "mus_musculus_core_78_38",
+ -host => "ens-staging2",
+ -group => "core",
+ -user => "ensro",
+);
+
+######
+new Bio::EnsEMBL::DBSQL::DBAdaptor (
+ -pass => "",
+ -species => "homo_sapiens",
+ -port => "3306",
+ -dbname => "homo_sapiens_core_78_38",
+ -host => "ens-staging1",
+ -group => "core",
+ -user => "ensro",
+);
+
+1;

@@ -47,7 +47,7 @@ sub default_options {
             
             'ensembl_cvs_root_dir' => $ENV{'ENSEMBL_CVS_ROOT_DIR'}, 
             
-            'release'               => '74',
+            'release'               => '78',
             'release_suffix'        => '',    # an empty string by default, a letter otherwise
             'rel_with_suffix'       => $self->o('release').$self->o('release_suffix'),
 
@@ -170,6 +170,7 @@ sub pipeline_analyses {
                                '1' => [ 'build_synteny' ],
                               },
               -hive_capacity => 3, #database intensive
+              -rc_name => '1.8Gb',
             },
             #Build synteny regions
             { -logic_name => 'build_synteny',

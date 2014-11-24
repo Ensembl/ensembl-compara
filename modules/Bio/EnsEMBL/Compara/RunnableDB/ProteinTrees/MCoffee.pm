@@ -66,6 +66,7 @@ sub param_defaults {
         'method'                => 'fmcoffee',              # the style of MCoffee to be run for this alignment
         'options'               => '',
         'cutoff'                => 2,                       # for filtering
+        'check_seq'             => 0,
     };
 }
 

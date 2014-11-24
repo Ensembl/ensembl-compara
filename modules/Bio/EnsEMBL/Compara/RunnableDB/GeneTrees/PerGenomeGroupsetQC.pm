@@ -27,7 +27,7 @@ limitations under the License.
 
 =head1 NAME
 
-Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::PerGenomeGroupsetQC
+Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::PerGenomeGroupsetQC
 
 =head1 DESCRIPTION
 
@@ -38,7 +38,7 @@ cigar_lines for each sequence.
 =head1 SYNOPSIS
 
 my $db           = Bio::EnsEMBL::Compara::DBAdaptor->new($locator);
-my $sillytemplate = Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::PerGenomeGroupsetQC->new
+my $sillytemplate = Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::PerGenomeGroupsetQC->new
   (
    -db         => $db,
    -input_id   => $input_id,
@@ -59,23 +59,29 @@ Internal methods are usually preceded with an underscore (_)
 
 =cut
 
-package Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::PerGenomeGroupsetQC;
+package Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::PerGenomeGroupsetQC;
 
 use strict;
 
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
 
-sub run {
+sub fetch_input {
     my $self = shift @_;
+
     my $genome_db_id            = $self->param_required('genome_db_id');
+    my $this_genome_db          = $self->compara_dba->get_GenomeDBAdaptor->fetch_by_dbID($genome_db_id);
+    my $this_species_tree       = $self->compara_dba->get_SpeciesTreeAdaptor->fetch_by_method_link_species_set_id_label($self->param_required('mlss_id'), 'default');
+    my $this_species_tree_node  = $this_species_tree->root->find_leaves_by_field('genome_db_id', $genome_db_id)->[0];
+
+    $self->param('species_tree_node', $this_species_tree_node);
 
     my $this_orphans            = $self->fetch_gdb_orphan_genes($self->compara_dba, $genome_db_id);
     my $total_orphans_num       = scalar keys (%$this_orphans);
     my $total_num_genes         = scalar @{ $self->compara_dba->get_GeneMemberAdaptor->fetch_all_by_GenomeDB($genome_db_id) };
 
     $self->param('total_orphans_num', $total_orphans_num);
-    $self->param('prop_orphan',       $total_orphans_num/$total_num_genes);
+    $self->param('total_num_genes',   $total_num_genes);
 
     my $reused_species_set = $self->compara_dba()->get_SpeciesSetAdaptor->fetch_by_dbID($self->param('reuse_ss_id'));
     $self->param('reuse_this', $reused_species_set ? scalar(grep {$_->dbID == $genome_db_id} @{$reused_species_set->genome_dbs}) : 0);
@@ -83,8 +89,15 @@ sub run {
 
     my $reuse_db                = $self->param_required('reuse_db');
     my $reuse_compara_dba       = Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->go_figure_compara_dba($reuse_db);    # may die if bad parameters
+    my $old_genome_db;
+    eval {
+        $old_genome_db          = $reuse_compara_dba->get_GenomeDBAdaptor->fetch_by_name_assembly($this_genome_db->name);
+    };
+    return if ($@);
 
-    my $reuse_orphans           = $self->fetch_gdb_orphan_genes($reuse_compara_dba, $genome_db_id);
+    $self->param('reuse_this', 1);
+
+    my $reuse_orphans           = $self->fetch_gdb_orphan_genes($reuse_compara_dba, $old_genome_db->dbID);
     my %common_orphans = ();
     my %new_orphans = ();
     foreach my $this_orphan_id (keys %$this_orphans) {
@@ -96,28 +109,25 @@ sub run {
     }
     $self->param('common_orphans_num', scalar keys (%common_orphans));
     $self->param('new_orphans_num',    scalar keys (%new_orphans));
-
 }
+
+
+# run() is a good place to do some actual QC
 
 sub write_output {
 
     my $self = shift @_;
 
-    my $genome_db_id            = $self->param('genome_db_id');
+    my $species_tree_node       = $self->param('species_tree_node');
 
-    my $sql = "INSERT IGNORE INTO protein_tree_qc (genome_db_id) VALUES (?)";
-    my $sth = $self->compara_dba->dbc->prepare($sql);
-    $sth->execute($genome_db_id);
-
-    $sql = "UPDATE protein_tree_qc SET total_orphans_num=?, prop_orphans=? WHERE genome_db_id=?";
-    $sth = $self->compara_dba->dbc->prepare($sql);
-    $sth->execute($self->param('total_orphans_num'), $self->param('prop_orphan'), $genome_db_id);
+    $species_tree_node->store_tag('nb_genes',               $self->param('total_num_genes'));
+    $species_tree_node->store_tag('nb_genes_in_tree',       $self->param('total_num_genes')-$self->param('total_orphans_num'));
+    $species_tree_node->store_tag('nb_orphan_genes',        $self->param('total_orphans_num'));
 
     return unless $self->param('reuse_this');
 
-    $sql = "UPDATE protein_tree_qc SET common_orphans_num=?, new_orphans_num=? WHERE genome_db_id=?";
-    $sth = $self->compara_dba->dbc->prepare($sql);
-    $sth->execute($self->param('common_orphans_num'), $self->param('new_orphans_num'), $genome_db_id);
+    $species_tree_node->store_tag('nb_new_orphan_genes',    $self->param('new_orphans_num'));
+    $species_tree_node->store_tag('nb_common_orphan_genes', $self->param('common_orphans_num'));
 
 }
 

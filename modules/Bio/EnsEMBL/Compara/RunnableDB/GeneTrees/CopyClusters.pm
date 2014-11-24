@@ -74,7 +74,6 @@ sub run {
 sub write_output {
     my $self = shift @_;
 
-    $self->clear_gene_tree_tables;
     $self->store_clusterset($self->param('target_clusterset_id'), $self->param('allclusters'));
 }
 

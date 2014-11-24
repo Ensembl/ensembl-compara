@@ -42,6 +42,9 @@ package Bio::EnsEMBL::Compara::PipeConfig::BaseAge_conf;
 
 use strict;
 use warnings;
+
+use Bio::EnsEMBL::Hive::Version 2.2;
+
 use base ('Bio::EnsEMBL::Compara::PipeConfig::ComparaGeneric_conf');
 
 sub default_options {
@@ -220,7 +223,7 @@ sub pipeline_analyses {
               -parameters => {
                               'bed_dir' => $self->o('bed_dir'),
                               'chr_sizes_file' => $self->o('chr_sizes_file'),
-                              'cmd' => 'mysql ' . $self->dbconn_2_mysql('pipeline_db', 1) . " -N -e \"SELECT concat('chr',dnafrag.name), length FROM dnafrag JOIN genome_db USING (genome_db_id) WHERE genome_db.name = '" . $self->o('ref_species') . "'" . " AND is_reference = 1 AND coord_system_name = 'chromosome'\" >#bed_dir#/#chr_sizes_file#",
+                              'cmd' => $self->db_cmd() . " --append -N -sql \"SELECT concat('chr',dnafrag.name), length FROM dnafrag JOIN genome_db USING (genome_db_id) WHERE genome_db.name = '" . $self->o('ref_species') . "'" . " AND is_reference = 1 AND coord_system_name = 'chromosome'\" >#bed_dir#/#chr_sizes_file#",
                              },
               -flow_into => {
                              '1' => [ 'base_age_factory' ],

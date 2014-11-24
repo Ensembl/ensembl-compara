@@ -56,7 +56,7 @@ use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
 sub param_defaults {
     return {
-            'newick_format'         => 'njtree',    # the desired output format
+            'newick_format'         => 'ncbi_taxon',    # the desired output format
             'do_transactions'       => 0,
     };
 }
@@ -101,7 +101,7 @@ sub fetch_input {
         my @tree_creation_args = ();
 
         foreach my $config_param
-                (qw(no_previous species_set_id extrataxon_sequenced extrataxon_incomplete multifurcation_deletes_node multifurcation_deletes_all_subnodes)) {
+                (qw(no_previous species_set_id extrataxon_sequenced multifurcation_deletes_node multifurcation_deletes_all_subnodes)) {
 
             if(defined(my $config_value = $self->param($config_param))) {
                 push @tree_creation_args, ("-$config_param", $config_value);
@@ -142,16 +142,9 @@ sub write_output {
     my $speciesTree_adaptor = $self->compara_dba->get_SpeciesTreeAdaptor();
 
     # To make sure we don't leave the database with a half-stored tree
-    if ($self->param('do_transactions')) {
-        my $helper = Bio::EnsEMBL::Utils::SqlHelper->new(-DB_CONNECTION => $self->compara_dba->dbc);
-        $helper->transaction(
-            -CALLBACK => sub {
-                $speciesTree_adaptor->store($species_tree);
-            }
-        );
-    } else {
+    $self->call_within_transaction(sub {
         $speciesTree_adaptor->store($species_tree);
-    }
+    });
 
     $self->dataflow_output_id( {'species_tree_root_id' => $species_tree->root_id}, 2);
 }

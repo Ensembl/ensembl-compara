@@ -42,12 +42,12 @@ sub default_options {
 
         'host'            => 'compara1',    # where the pipeline database will be created
 
-        'pipeline_name'   => 'homology_projections_'.$self->o('ensembl_release'),   # also used to differentiate submitted processes
+        'pipeline_name'   => 'homology_projections_'.$self->o('ensembl_release').'b',   # also used to differentiate submitted processes
 
         # URLs of other databases (from which we inherit the members and sequences, and base objects)
         'master_db'       => 'mysql://ensro@compara1/sf5_ensembl_compara_master',
-        'family_db'       => 'mysql://ensro@compara2/lg4_families_77',
-        'ncrnatrees_db'   => 'mysql://ensro@compara3/mm14_compara_nctrees_77',
+        'family_db'       => 'mysql://ensro@compara2/lg4_families_78',
+        'ncrnatrees_db'   => 'mysql://ensro@compara3/mp12_compara_nctrees_78a',
 
         # Tables to copy and merge
         'tables_from_master'    => [ 'method_link', 'species_set', 'method_link_species_set', 'ncbi_taxa_node', 'ncbi_taxa_name' ],

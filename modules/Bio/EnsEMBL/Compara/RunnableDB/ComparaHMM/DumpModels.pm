@@ -22,7 +22,7 @@ limitations under the License.
 
 =head1 NAME
 
-Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::DumpModels
+Bio::EnsEMBL::Compara::RunnableDB::ComparaHMM::DumpModels
 
 =head1 DESCRIPTION
 
@@ -51,32 +51,27 @@ Internal methods are usually preceded with a _
 =cut
 
 
-package Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::DumpModels;
+package Bio::EnsEMBL::Compara::RunnableDB::ComparaHMM::DumpModels;
 
 use strict;
 use IO::File; ## ??
-use File::Path qw/remove_tree/;
+use File::Path qw/remove_tree make_path/;
 use Time::HiRes qw(time gettimeofday tv_interval);
+use File::Which;
 use LWP::Simple;
 
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
 
-sub param_defaults {
-    return {
-           }
-}
-
 sub fetch_input {
     my ($self) = @_;
 
-    die "blast_bin_dir has to be set\n" if (!defined $self->param('blast_bin_dir'));
-
+    $self->param_required('blast_bin_dir');
     my $pantherScore_path = $self->param_required('pantherScore_path');
 
     push @INC, "$pantherScore_path/lib";
     require FamLibBuilder;
-#    import FamLibBuilder;
+    #import FamLibBuilder;
 
 
     my $basedir = $self->param_required('hmm_library_basedir');
@@ -87,13 +82,11 @@ sub fetch_input {
         $self->throw("Error creating the library!\n");
     }
     if ($code == -1) {
-        $self->input_job->incomplete(0);
-        $self->dataflow_output_id($self->input_job->input_id, 1);
-        die "The library already exists. I will reuse it (but have you set the stripe on it?)\n";
-    }
-    if ($code == 1) {
+        $self->complete_early("The library already exists. I will reuse it (but have you set the stripe on it?)\n");
+    } elsif ($code == 1) {
         print STDERR "OK creating the library\n" if ($self->debug());
 
+      if (which('lfs')) {
         my $book_stripe_cmd = "lfs setstripe " . $hmmLibrary->bookDir() . " -c -1";
         my $global_stripe_cmd = "lfs setstripe " . $hmmLibrary->globalsDir() . " -c -1";
 
@@ -104,21 +97,18 @@ sub fetch_input {
                 $self->throw("Impossible to set stripe on $dir");
             }
         }
+      }
+      $self->param('hmmLibrary', $hmmLibrary);
     }
-
-    $self->param('hmmLibrary', $hmmLibrary);
-    return;
 }
 
 sub run {
     my ($self) = @_;
+    return unless $self->param('hmmLibrary');  # if the library already exists
     $self->dump_models();
     $self->create_blast_db();
 }
 
-sub write_output {
-    my ($self) = @_;
-}
 
 ################################
 ## Internal methods ############
@@ -135,10 +125,11 @@ sub dump_models {
     $sth->execute();
     while (my ($model_id) = $sth->fetchrow) {
         print STDERR "Dumping model_id $model_id into $bookDir/$model_id\n";
-        mkdir "$bookDir/$model_id" or die $!;
-        open my $fh, ">", "$bookDir/$model_id/hmmer.hmm" or die $!;
+        my $path = "$bookDir/$model_id";
+        $path =~ s/:/\//;
+        make_path($path);
+        open my $fh, ">", "$path/hmmer.hmm" or die $!;
         my $hmm_object = $self->compara_dba->get_HMMProfileAdaptor->fetch_all_by_model_id_type($model_id, $self->param('type'))->[0];
-#        my $hmm_object = $self->compara_dba->get_HMMProfileAdaptor->fetch_all_by_model_id_type($model_id);
         print $fh $hmm_object->profile;
         close($fh);
     }

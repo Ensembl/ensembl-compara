@@ -90,12 +90,9 @@ sub fetch_input {
     $nc_tree->species_tree->attach_to_genome_dbs();
     $self->param('nc_tree', $nc_tree);
 
-    my $alignment_id = $self->param('alignment_id');
-    my $aln_seq_type = $self->param('aln_seq_type');
-    $nc_tree->gene_align_id($alignment_id);
-    my $aln = Bio::EnsEMBL::Compara::AlignedMemberSet->new(-seq_type => $aln_seq_type, -dbID => $alignment_id, -adaptor => $self->compara_dba->get_AlignedMemberAdaptor);
+    my $aln = $self->compara_dba->get_GeneAlignAdaptor->fetch_by_dbID($self->param_required('alignment_id'));
     print STDERR scalar (@{$nc_tree->get_all_Members}), "\n";
-    $nc_tree->attach_alignment($aln);
+    $nc_tree->alignment($aln);
 
     if (my $input_aln = $self->_dumpMultipleAlignmentStructToWorkdir($nc_tree) ) {
         $self->param('input_aln', $input_aln);
@@ -158,9 +155,7 @@ sub _run_fasttree {
     my $root_id = $self->param('nc_tree')->root_id;
     my $fasttree_tag = $root_id . ".". $self->worker->process_id . ".fasttree";
 
-    my $fasttree_exe = $self->param_required('fasttree_exe');
-
-    die "Cannot execute '$fasttree_exe'" unless(-x $fasttree_exe);
+    my $fasttree_exe = $self->require_executable('fasttree_exe');
 
     my $fasttree_output = $self->worker_temp_directory . "FastTree.$fasttree_tag";
     my $tag = defined $self->param('fastTreeTag') ? $self->param('fastTreeTag') : 'ft_it_nj';
@@ -190,9 +185,7 @@ sub _run_parsimonator {
     my $root_id = $self->param('nc_tree')->root_id;
     my $parsimonator_tag = $root_id . "." . $self->worker->process_id . ".parsimonator";
 
-    my $parsimonator_exe = $self->param_required('parsimonator_exe');
-
-    die "Cannot execute '$parsimonator_exe'" unless(-x $parsimonator_exe);
+    my $parsimonator_exe = $self->require_executable('parsimonator_exe');
 
     my $cmd = $parsimonator_exe;
     $cmd .= " -s $aln_file";
@@ -219,10 +212,8 @@ sub _run_raxml_light {
 
     my $raxmlight_tag = $root_id . "." . $self->worker->process_id . ".raxmlight";
 
-    my $raxmlLight_exe = $self->param_required('raxmlLight_exe');
+    my $raxmlLight_exe = $self->require_executable('raxmlLight_exe');
     my $raxml_number_of_cores = $self->param('raxml_number_of_cores');
-
-    die "Cannot execute '$raxmlLight_exe'" unless(-x $raxmlLight_exe);
 
     my $tag = defined $self->param('raxmlLightTag') ? $self->param('raxmlLightTag') : 'ft_it_ml';
 #    my $tag = 'ft_it_ml';
@@ -254,9 +245,8 @@ sub _dumpMultipleAlignmentStructToWorkdir {
   my $root_id = $tree->root_id;
   my $leafcount = scalar(@{$tree->get_all_leaves});
   if($leafcount<4) {
-      $self->input_job->incomplete(0);
       $self->input_job->autoflow(0);
-      $self->throw("tree cluster $root_id has <4 proteins - can not build a raxml tree\n");
+      $self->complete_early("tree cluster $root_id has <4 proteins - can not build a raxml tree\n");
   }
 
   my $file_root = $self->worker_temp_directory. "nctree_". $root_id;

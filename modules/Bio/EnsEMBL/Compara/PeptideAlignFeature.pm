@@ -56,8 +56,6 @@ The rest of the documentation details each of the object methods. Internal metho
 
 =cut
 
-my $_paf_build_homology_idx = time(); #global index counter
-
 package Bio::EnsEMBL::Compara::PeptideAlignFeature;
 
 use strict;
@@ -73,32 +71,12 @@ use Bio::EnsEMBL::Compara::Utils::Cigars;
 use base ('Bio::EnsEMBL::Storable');        # inherit dbID(), adaptor() and new() methods
 
 
-sub new {
-  my ($class, @args) = @_;
-
-  my $self = $class->SUPER::new(@args);       # deal with Storable stuff
-
-  $self->query_member(new Bio::EnsEMBL::Compara::Member);
-  $self->hit_member(new Bio::EnsEMBL::Compara::Member);
-  return $self;
-}
-
-
 sub create_homology
 {
   my $self = shift;
 
   # create an Homology object
   my $homology = new Bio::EnsEMBL::Compara::Homology;
-
-  my $stable_id;
-  if($self->query_member->taxon_id < $self->hit_member->taxon_id) {
-    $stable_id = $self->query_member->taxon_id() . "_" . $self->hit_member->taxon_id . "_";
-  } else {
-    $stable_id = $self->hit_member->taxon_id . "_" . $self->query_member->taxon_id . "_";
-  }
-  $stable_id .= sprintf ("%011.0d",$_paf_build_homology_idx++);
-  $homology->stable_id($stable_id);
 
   my $cigar_line = $self->cigar_line;
   $cigar_line =~ s/I/M/g;
@@ -382,34 +360,5 @@ sub get_description {
   return $desc_string;
 }
 
-
-=head2 hash_key
-  Args       : none
-  Example    : $somehash->{$paf->hash_key} = $someValue;
-  Description: used for keeping track of known/stored gene/gene relationships
-  Returntype : string $key
-  Exceptions : none
-  Caller     : general
-=cut
-
-sub hash_key
-{
-  my $self = shift;
-  my $key = '1';
-
-  return $key unless($self->query_member);
-  return $key unless($self->hit_member);
-  my $gene1 = $self->query_member->gene_member;
-  my $gene2 = $self->hit_member->gene_member;
-  $gene1 = $self->query_member unless($gene1);
-  $gene2 = $self->hit_member unless($gene2);
-  if($gene1->genome_db_id > $gene2->genome_db_id) {
-    my $temp = $gene1;
-    $gene1 = $gene2;
-    $gene2 = $temp;
-  }
-  $key = $gene1->stable_id . '_' . $gene2->stable_id;
-  return $key;
-}
 
 1;

@@ -36,7 +36,7 @@ sub fetch_input {
     $nc_tree->gene_align_id($alignment_id);
     print STDERR "ALN INPUT ID: " . $alignment_id . "\n" if ($self->debug);
     my $aln = $self->compara_dba->get_GeneAlignAdaptor->fetch_by_dbID($alignment_id);
-    my $aln_file = $self->dumpTreeMultipleAlignmentToWorkdir($aln);
+    my $aln_file = $self->dumpTreeMultipleAlignmentToWorkdir($aln, 'fasta', {-APPEND_SPECIES_TREE_NODE_ID => 1});
     if (! defined $aln_file) {
         $self->throw("I can not dump the alignment in $alignment_id");
     }
@@ -60,10 +60,9 @@ sub run_ncgenomic_tree {
     my $input_aln = $self->param('aln_input');
     print STDERR "INPUT ALN: $input_aln\n";
     die "$input_aln doesn't exist" unless (-e $input_aln);
-    if ($method eq "phyml" && (scalar $cluster->get_all_leaves < 4)) {
-        $self->input_job->incomplete(0);
+    if ($method eq "phyml" && (scalar(@{$cluster->get_all_leaves}) < 4)) {
         $self->input_job->autoflow(0);
-        die ("tree cluster $nc_tree_id has ".(scalar $cluster->get_all_leaves)." proteins - can not build a phyml tree\n");
+        $self->complete_early(sprintf("tree cluster %d has %d proteins - can not build a phyml tree.\n", $nc_tree_id, scalar(@{$cluster->get_all_leaves})));
     }
 
     my $newick;

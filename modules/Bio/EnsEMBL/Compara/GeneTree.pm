@@ -80,6 +80,7 @@ The additionnal getter / setters are:
  - tree_type()
  - clusterset_id()
  - species_tree()
+ - alignment()
 
 As dbID() can be misleading for composite objects, please refer to:
  - root_id() (for the tree itself)
@@ -88,7 +89,6 @@ As dbID() can be misleading for composite objects, please refer to:
 
 A few methods affect the structure of the nodes:
  - preload()
- - attach_alignment()
  - expand_subtrees()
 
 And finally, GeneTree aliases a few GeneTreeNode methods that actually apply on the root node:
@@ -377,37 +377,36 @@ sub preload {
     }
 
     # Loads all the gene members in one go
-    my %leaves;
-    foreach my $pm (@{$self->root->get_all_leaves}) {
-        $leaves{$pm->gene_member_id} = $pm if UNIVERSAL::isa($pm, 'Bio::EnsEMBL::Compara::GeneTreeMember');
-    }
-    my @m_ids = keys(%leaves);
-    my $all_gm = $self->adaptor->db->get_GeneMemberAdaptor->fetch_all_by_dbID_list(\@m_ids);
-    foreach my $gm (@$all_gm) {
-        $leaves{$gm->dbID}->gene_member($gm);
-    }
+    $self->adaptor->db->get_GeneMemberAdaptor->load_all_from_seq_members( [grep {UNIVERSAL::isa($_, 'Bio::EnsEMBL::Compara::GeneTreeMember')} @{$self->root->get_all_leaves}] );
 }
 
 
-=head2 attach_alignment
+=head2 alignment
 
   Arg [1]     : Bio::EnsEMBL::Compara::AlignedMemberSet $gene_align
   Description : Method to attach another multiple alignment of the
                 same members the current tree.
   Returntype  : GeneTree
-  Example     : $supertree->attach_alignment($filtered_aln);
+  Example     : $supertree->alignment($filtered_aln);
   Caller      : General
 
 =cut
 
-sub attach_alignment {
+sub alignment {
     my $self = shift;
     my $other_gene_align = shift;
+
+    if (not $other_gene_align) {
+        $self->{_alignment} = $self->adaptor->db->get_GeneAlignAdaptor->fetch_by_dbID($self->gene_align_id()) unless $self->{_alignment};
+        return $self->{_alignment};
+    }
 
     assert_ref($other_gene_align, 'Bio::EnsEMBL::Compara::AlignedMemberSet');
 
     $self->preload;
     $self->seq_type($other_gene_align->seq_type);
+    $self->gene_align_id($other_gene_align->dbID);
+    $self->{_alignment} = $other_gene_align;
 
     # Gets the alignment
     my %cigars;
@@ -415,10 +414,11 @@ sub attach_alignment {
         $cigars{$leaf->seq_member_id} = $leaf->cigar_line;
     }
 
-    die "The other alignment has a different size\n" if scalar(keys %cigars) != scalar(@{$self->get_all_Members});
+    my $self_members = $self->get_all_Members;
+    die "The other alignment has a different size\n" if scalar(keys %cigars) != scalar(@$self_members);
 
     # Assigns it
-    foreach my $leaf (@{$self->get_all_Members}) {
+    foreach my $leaf (@$self_members) {
         $leaf->cigar_line($cigars{$leaf->seq_member_id});
     }
 }
@@ -507,7 +507,6 @@ sub _attr_to_copy_list {
 
 =head2 get_all_Members
 
-  Example    :
   Description: Returns the list of all the GeneTreeMember of the tree
   Returntype : array reference of Bio::EnsEMBL::Compara::GeneTreeMember
   Caller     : General
@@ -575,9 +574,9 @@ sub release_tree {
 
 
 
-########
-# Misc #
-########
+##########################
+# GeneTreeNode interface #
+##########################
 
 # These methods used to be automatically created, but were missing from the Doxygen doc
 
@@ -683,7 +682,7 @@ sub find_node_by_name {
   Example     : $gene_tree->newick_format("full");
   Description : Prints this tree in Newick format. Several modes are
                 available: full, display_label_composite, simple, species,
-                species_short_name, ncbi_taxon, ncbi_name, njtree and phylip
+                species_short_name, ncbi_taxon, ncbi_name and phylip
   Returntype  : string
   Exceptions  :
   Caller      : general

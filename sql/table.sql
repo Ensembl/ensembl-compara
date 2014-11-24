@@ -1021,8 +1021,8 @@ CREATE TABLE peptide_align_feature (
   peptide_align_feature_id    bigint  unsigned NOT NULL AUTO_INCREMENT, # unique internal id
   qmember_id                  int(10) unsigned NOT NULL, # FK seq_member.seq_member_id
   hmember_id                  int(10) unsigned NOT NULL, # FK seq_member.seq_member_id
-  qgenome_db_id               int(10) unsigned NOT NULL, # FK genome.genome_id
-  hgenome_db_id               int(10) unsigned NOT NULL, # FK genome.genome_id
+  qgenome_db_id               int(10) unsigned, # FK genome.genome_id
+  hgenome_db_id               int(10) unsigned, # FK genome.genome_id
   qstart                      int(10) DEFAULT 0 NOT NULL,
   qend                        int(10) DEFAULT 0 NOT NULL,
   hstart                      int(11) DEFAULT 0 NOT NULL,
@@ -1348,11 +1348,17 @@ CREATE TABLE gene_tree_node_attr (
 
 @column model_id              Model ID of the profile. Can be the external ID in case of imported models
 @column name                  Name of the model
-@column type                  Short description of the profile
+@column type                  Short description of the origin of the profile
 @column compressed_profile    The HMM profile, compressed with zlib. It can be decompressed with the MySQL function UNCOMPRESS()
 @column consensus             The consensus sequence derived from the profile
 
 */
+
+-- Later
+-- @column hmm_id                The internal numeric ID that uniquely identifies the model in the database
+--  hmm_id                      int(10) unsigned NOT NULL AUTO_INCREMENT, # unique internal id
+--  PRIMARY KEY (hmm_id),
+--  UNIQUE KEY (model_id,type)
 
 CREATE TABLE hmm_profile (
   model_id                    varchar(40) NOT NULL,
@@ -1364,6 +1370,51 @@ CREATE TABLE hmm_profile (
   PRIMARY KEY (model_id,type)
 
 ) COLLATE=latin1_swedish_ci ENGINE=MyISAM;
+
+
+/**
+@table hmm_annot
+@desc  This table stores the HMM annotation of the seq_members
+@colour   #1E90FF
+
+@column seq_member_id         External reference to a seq_member_id in the @link seq_member table
+@column model_id              External reference to the internal numeric ID of a HMM profile in @link hmm_profile
+@column evalue                The e-value of the hit
+
+*/
+
+
+-- Later
+--  @column hmm_id                External reference to the internal numeric ID of a HMM profile in @link hmm_profile
+--   hmm_id                     int(10) unsigned NOT NULL, # FK hmm_profile.hmm_id
+--  FOREIGN KEY (hmm_id)        REFERENCES hmm_profile (hmm_id),
+--   KEY (hmm_id)
+
+CREATE TABLE hmm_annot (
+  seq_member_id              int(10) unsigned NOT NULL, # FK homology.homology_id
+  model_id                   varchar(40) DEFAULT NULL,
+  evalue                     float,
+
+  FOREIGN KEY (seq_member_id) REFERENCES seq_member  (seq_member_id),
+
+  PRIMARY KEY (seq_member_id),
+  KEY (model_id)
+
+) COLLATE=latin1_swedish_ci ENGINE=MyISAM;
+
+
+CREATE TABLE hmm_curated_annot (
+  seq_member_stable_id       varchar(40) NOT NULL,
+  model_id                   varchar(40) DEFAULT NULL,
+  library_version            varchar(40) NOT NULL,
+  annot_date                 TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  reason                     MEDIUMTEXT,
+
+  PRIMARY KEY (seq_member_stable_id),
+  KEY (model_id)
+
+) COLLATE=latin1_swedish_ci ENGINE=MyISAM;
+
 
 /**
 @table homology
@@ -1694,12 +1745,16 @@ CREATE TABLE `CAFE_species_gene` (
 
 # Auto add schema version to database (this will override whatever hive puts there)
 DELETE FROM meta WHERE meta_key='schema_version';
-INSERT INTO meta (species_id, meta_key, meta_value) VALUES (NULL, 'schema_version', '77');
+INSERT INTO meta (species_id, meta_key, meta_value) VALUES (NULL, 'schema_version', '78');
 
 #Add schema type
 INSERT INTO meta (species_id, meta_key, meta_value) VALUES (NULL, 'schema_type', 'compara');
 
 # Patch identifier
 INSERT INTO meta (species_id, meta_key, meta_value)
-  VALUES (NULL, 'patch', 'patch_76_77_a.sql|schema_version');
+  VALUES (NULL, 'patch', 'patch_77_78_a.sql|schema_version');
+INSERT INTO meta (species_id, meta_key, meta_value)
+  VALUES (NULL, 'patch', 'patch_77_78_b.sql|null_paf_genome_db_ids');
+INSERT INTO meta (species_id, meta_key, meta_value)
+  VALUES (NULL, 'patch', 'patch_77_78_c.sql|hmm_tables');
 

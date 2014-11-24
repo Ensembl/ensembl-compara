@@ -1042,7 +1042,7 @@ sub get_taxon_tree {
       
       my $species_tree_adaptor = $self->compara_dba->get_SpeciesTreeAdaptor;
       my $species_tree = $species_tree_adaptor->fetch_by_method_link_species_set_id_label($self->param('mlss_id'));
-      $newick_taxon_tree = $species_tree->root->newick_format("njtree");
+      $newick_taxon_tree = $species_tree->root->newick_format("ncbi_taxon");
       #$newick_taxon_tree = $mlss->get_value_for_tag('taxon_tree');
   }
 

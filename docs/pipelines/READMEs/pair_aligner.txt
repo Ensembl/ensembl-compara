@@ -68,7 +68,7 @@ in bash
 
 Also refer to the following pages for tips about installation and setting up the environment:
 	http://www.ensembl.org/info/docs/api/api_installation.html
-	http://www.ensembl.org/info/docs/eHive/installation.html
+	http://www.ensembl.org/info/docs/eHive.html
 
 
 3- Configuration of the pipeline
@@ -221,10 +221,6 @@ dog vs horse
 dog vs mouse
 horse vs mouse
 Note that it should not matter which species is the reference and which the non-reference since the order cannot be defined.
-
-It is also necessary to skip the automatic setting of the internal ids by setting in the configuration file:
-'skip_set_internal_ids' => 1,
-
 
 4) Using no master and a pairwise alignment configuration file
 This should work with several pairwise analyses in the same database

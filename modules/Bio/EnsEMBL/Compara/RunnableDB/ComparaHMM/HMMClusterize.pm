@@ -22,27 +22,17 @@ limitations under the License.
 
 =head1 NAME
 
-Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::HMMClusterize
-
-=cut
-
-=head1 SYNOPSIS
-
-Blah
-
-=cut
-
-=head1 DESCRIPTION
-
-Blah
+Bio::EnsEMBL::Compara::RunnableDB::ComparaHMM::HMMClusterize
 
 =cut
 
 =head1 CONTACT
 
-  Please email comments or questions to the public Ensembl developers list at <http://lists.ensembl.org/mailman/listinfo/dev>.
+Please email comments or questions to the public Ensembl
+developers list at <http://lists.ensembl.org/mailman/listinfo/dev>.
 
-  Questions may also be sent to the Ensembl help desk at <http://www.ensembl.org/Help/Contact>.
+Questions may also be sent to the Ensembl help desk at
+<http://www.ensembl.org/Help/Contact>.
 
 =cut
 
@@ -53,11 +43,11 @@ Internal methods are usually preceded with a _
 
 =cut
 
-package Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::HMMClusterize;
+package Bio::EnsEMBL::Compara::RunnableDB::ComparaHMM::HMMClusterize;
 
 use strict;
-use Time::HiRes qw(time gettimeofday tv_interval);
-use Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::StoreClusters;
+use warnings;
+
 use Data::Dumper;
 
 use base ('Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::StoreClusters');
@@ -68,12 +58,6 @@ sub param_defaults {
             'immediate_dataflow'    => 1,
             'member_type'           => 'protein',
     };
-}
-
-sub fetch_input {
-    my $self = shift @_;
-
-    $self->param_required('cluster_dir');
 }
 
 
@@ -97,32 +81,26 @@ sub write_output {
 
 sub load_hmmer_classifications {
     my ($self) = @_;
-    my $cluster_dir = $self->param('cluster_dir');
     my $division    = $self->param('division'),
 
     my %allclusters = ();
     $self->param('allclusters', \%allclusters);
-    for my $hmmer_clas_file (<$cluster_dir/*>) {
-        print STDERR "Reading classifications from $hmmer_clas_file\n";
-        open my $hmmer_clas_fh, "<", $hmmer_clas_file or die $!;
-        while (<$hmmer_clas_fh>) {
-            chomp;
-            my ($seq_member_id, $hmm_id, $eval) = split /\t/;
-            next if ($hmm_id =~ /\:SF/); ## Avoid panther sub-families e.g. PTHR11353:SF75
-            $allclusters{$hmm_id}{members}{$seq_member_id} = 1; ## Avoid duplicates
-#            push @{$allclusters{$hmm_id}{members}}, $seq_id;
-        }
+
+    # Get statement handler to query all hmm classifications from 'hmm_annot' table
+    my $sth  = $self->compara_dba->get_HMMAnnotAdaptor->fetch_all_hmm_annot();
+    $sth->execute();
+    while (my $res = $sth->fetchrow_arrayref){
+        push @{$allclusters{$res->[1]}{members}}, $res->[0];
     }
+    $sth->finish;
 
     for my $model_name (keys %allclusters) {
         ## we filter out clusters singleton clusters
-        if (scalar keys %{$allclusters{$model_name}{members}} == 1) {
+        if (scalar @{$allclusters{$model_name}{members}} == 1) {
             delete $allclusters{$model_name};
         } else {
-            print STDERR Dumper $allclusters{$model_name};
-            # We have to transform the hash into an array-ref
-            $allclusters{$model_name}{members} = [keys %{$allclusters{$model_name}{members}}];
             # If it is not a singleton, we add the name of the model to store in the db
+            print STDERR Dumper $allclusters{$model_name};
             $allclusters{$model_name}{model_name} = $model_name;
             $allclusters{$model_name}{division} = $division if $division;
         }

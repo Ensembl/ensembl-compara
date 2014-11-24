@@ -48,7 +48,7 @@ Options
      [-f|--format] => roll-your-own format to output the tree (defaults to '%{n}%{":"d}')
      [-h|--help]   => Prints this document and exits
 
-See the documentation of Bio::EnsEMBL::Compara::FormatTree.pm for details.
+See the documentation of Bio::EnsEMBL::Compara::Utils::FormatTree.pm for details.
 Briefly, allowed one-letter attributes are:
 
 n --> then "name" of the node ($tree->name)

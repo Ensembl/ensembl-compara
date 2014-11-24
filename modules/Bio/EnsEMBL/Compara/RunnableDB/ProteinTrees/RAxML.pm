@@ -38,7 +38,8 @@ sub param_defaults {
     my $self = shift;
     return {
              %{$self->SUPER::param_defaults},
-             'cmd'                        => '#raxml_exe#  -m #best_fit_model# -p 99123746531 -s #alignment_file# -n #gene_tree_id#',
+             'cmd'                        => '#raxml_exe# #extra_raxml_args# -m #best_fit_model# -p 99123746531 -s #alignment_file# -n #gene_tree_id#',
+             'extra_raxml_args'           => '',
              'runtime_tree_tag'           => 'raxml_runtime',
              'remove_columns'             => 1,
              'run_treebest_sdi'           => 1,
@@ -66,6 +67,10 @@ sub run {
 ##########################################
 sub set_raxml_model {
     my $self = shift;
+
+    # For DNA models, we don't have the choice
+    return "GTRGAMMA" if $self->param('cdna');
+
     if ( !$self->param('gene_tree')->has_tag('best_fit_model_family') ) {
 
         # LG was the most common best-model, but we dont have it in RAxML.

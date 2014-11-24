@@ -1,5 +1,5 @@
 1717	1	xref.timestamp	2012-06-20 23:23:29
-1	\N	schema_version	75
+1	\N	schema_version	78
 2	\N	patch	patch_52_53_a.sql|schema_version
 3	\N	patch	patch_52_53_b.sql|external_db_type_enum
 4	\N	patch	patch_52_53_c.sql|identity_xref_rename
@@ -186,3 +186,10 @@
 1742	\N	patch	patch_74_75_c.sql|add_genome_statistics
 1743	\N	patch	patch_74_75_d.sql|default_transcript_source
 1744	\N	patch	patch_74_75_e.sql|unique_attrib_key
+1745	\N	patch	patch_74_75_f.sql|longer_code
+1746	\N	patch	patch_75_76_a.sql|schema_version
+1747	\N	patch	patch_75_76_b.sql|allow_null_karyotype
+1748	\N	patch	patch_75_76_c.sql|remove_alternative_splicing
+1749	\N	patch	patch_76_77_a.sql|schema_version
+1750	\N	patch	patch_77_78_a.sql|schema_version
+1751	\N	patch	patch_77_78_b.sql|source_column_increase

@@ -63,12 +63,15 @@ sub default_options {
         'email'                 => $self->o('ENV', 'USER').'@sanger.ac.uk',
 
     # parameters that are likely to change from execution to another:
-        'rel_with_suffix'       => $self->o('ensembl_release'), # You can add a letter to distinguish this run from other runs on the same release
-        'do_not_reuse_list'     => [ ],     # names of species we don't want to reuse this time
+        # You can add a letter to distinguish this run from other runs on the same release
+        'rel_with_suffix'       => $self->o('ensembl_release'),
+        # names of species we don't want to reuse this time
+        'do_not_reuse_list'     => [ ],
 
     # custom pipeline name, in case you don't like the default one
-        'pipeline_name'         => 'protein_trees_'.$self->o('rel_with_suffix'),   # name the pipeline to differentiate the submitted processes
-        'division'              => 'ensembl',       # Tag attached to every single tree
+        'pipeline_name'         => 'protein_trees_'.$self->o('rel_with_suffix'),
+        # Tag attached to every single tree
+        'division'              => 'ensembl',
 
     # dependent parameters: updating 'work_dir' should be enough
         'work_dir'              => '/lustre/scratch109/ensembl/'.$self->o('ENV', 'USER').'/protein_trees_'.$self->o('rel_with_suffix'),
@@ -78,9 +81,11 @@ sub default_options {
     # blast parameters:
 
     # clustering parameters:
-        'outgroups'                     => { 'saccharomyces_cerevisiae' => 2 },   # affects 'hcluster_dump_input_per_genome'
+        # affects 'hcluster_dump_input_per_genome'
+        'outgroups'                     => { 'saccharomyces_cerevisiae' => 2 },
 
     # tree building parameters:
+        'use_quick_tree_break'      => 0,
         'treebreak_gene_count'      => 40000,     # affects msa_chooser
         'mafft_gene_count'          => 300,     # affects msa_chooser
 
@@ -90,11 +95,15 @@ sub default_options {
         'binary_species_tree_input_file'   => $self->o('ensembl_cvs_root_dir').'/ensembl-compara/scripts/pipeline/species_tree.eukaryotes.topology.nw',
 
     # homology_dnds parameters:
+        # used by 'homology_dNdS'
         'taxlevels'                 => ['Theria', 'Sauria', 'Tetraodontiformes'],
-        'filter_high_coverage'      => 1,   # affects 'group_genomes_under_taxa'
+        # affects 'group_genomes_under_taxa'
+        'filter_high_coverage'      => 1,
 
     # mapping parameters:
+        'do_stable_id_mapping'      => 1,
         'do_treefam_xref'           => 1,
+        # The TreeFam release to map to
         'tf_release'                => '9_69',
 
     # executable locations:
@@ -106,30 +115,39 @@ sub default_options {
         'prottest_jar'              => '/software/ensembl/compara/prottest/prottest-3.4.jar',
         'treebest_exe'              => '/software/ensembl/compara/treebest',
         'raxml_exe'                 => '/software/ensembl/compara/raxml/raxmlHPC-SSE3-8.1.3',
+        'raxml_pthreads_exe'        => '/software/ensembl/compara/raxml/raxmlHPC-PTHREADS-SSE3-8.1.3',
+        'examl_exe_avx'             => 'UNDEF',
+        'examl_exe_sse3'            => 'UNDEF',
+        'parse_examl_exe'           => 'UNDEF',
         'notung_jar'                => '/software/ensembl/compara/notung/Notung-2.6.jar',
         'quicktree_exe'             => '/software/ensembl/compara/quicktree_1.1/bin/quicktree',
-        'buildhmm_exe'              => '/software/ensembl/compara/hmmer-3.1b1/binaries/hmmbuild',
+        'hmmer2_home'               => '/software/ensembl/compara/hmmer-2.3.2/src/',
+        'hmmer3_home'               => '/software/ensembl/compara/hmmer-3.1b1/binaries/',
         'codeml_exe'                => '/software/ensembl/compara/paml43/bin/codeml',
         'ktreedist_exe'             => '/software/ensembl/compara/ktreedist/Ktreedist.pl',
         'blast_bin_dir'             => '/software/ensembl/compara/ncbi-blast-2.2.28+/bin',
+        'pantherScore_path'         => '/software/ensembl/compara/pantherScore1.03',
 
     # HMM specific parameters (set to 0 or undef if not in use)
-        'hmm_clustering'            => 0, ## by default run blastp clustering
-        'cm_file_or_directory'      => undef,
-        'hmm_library_basedir'       => undef,
-        'pantherScore_path'         => undef,
-        'hmmer_path'                => undef,
+       # List of directories that contain Panther-like databases (with books/ and globals/)
+       # It requires two more arguments for each file: the name of the library, and whether subfamilies should be loaded
+
+       # List of MultiHMM files to load (and their names)
+
+       # Dumps coming from InterPro
 
     # hive_capacity values for some analyses:
         'reuse_capacity'            =>   3,
         'blast_factory_capacity'    =>  50,
         'blastp_capacity'           => 900,
+        'blastpu_capacity'          => 700,
         'mcoffee_capacity'          => 600,
         'split_genes_capacity'      => 600,
         'alignment_filtering_capacity'  => 400,
         'prottest_capacity'         => 400,
         'treebest_capacity'         => 400,
         'raxml_capacity'            => 400,
+        'examl_capacity'            => 400,
         'notung_capacity'           => 400,
         'ortho_tree_capacity'       => 200,
         'ortho_tree_annot_capacity' => 300,
@@ -190,7 +208,19 @@ sub default_options {
         #'prev_core_sources_locs'   => [ $self->o('staging_loc1'), $self->o('staging_loc2') ],
 
         # Add the database location of the previous Compara release. Use "undef" if running the pipeline without reuse
-        'prev_rel_db' => 'mysql://ensro@ens-livemirror:3306/ensembl_compara_76',
+        'prev_rel_db' => 'mysql://ensro@ens-livemirror:3306/ensembl_compara_77',
+
+        # How will the pipeline create clusters (families) ?
+        # Possible values: 'blastp' (default), 'hmm', 'hybrid'
+        #   blastp means that the pipeline will run a all-vs-all blastp comparison of the proteins and run hcluster to create clusters. This can take a *lot* of compute
+        #   hmm means that the pipeline will run an HMM classification
+        #   hybrid is like "hmm" except that the unclustered proteins go to a all-vs-all blastp + hcluster stage
+
+        # How much the pipeline will try to reuse from "prev_rel_db"
+        # Possible values: 'clusters' (default), 'blastp', 'members'
+        #   clusters means that the members, the blastp hits and the clusters are copied over. In this case, the blastp hits are actually not copied over if "skip_blast_copy_if_possible" is set
+        #   blastp means that only the members and the blastp hits are copied over
+        #   members means that only the members are copied over
 
         # To run without a master database
         #'master_db'                 => undef,
@@ -198,7 +228,6 @@ sub default_options {
         #'mlss_id'                   => undef,
         #'ncbi_db'                   => 'mysql://ensro@ens-livemirror:3306/ncbi_taxonomy',
         #'prev_rel_db'               => undef,
-
     };
 }
 
@@ -213,33 +242,38 @@ sub resource_classes {
          '1Gb_job'      => {'LSF' => '-C0 -M1000  -R"select[mem>1000]  rusage[mem=1000]"' },
          '2Gb_job'      => {'LSF' => '-C0 -M2000  -R"select[mem>2000]  rusage[mem=2000]"' },
          '4Gb_job'      => {'LSF' => '-C0 -M4000  -R"select[mem>4000]  rusage[mem=4000]"' },
-         '4Gb_8c_job'   => {'LSF' => '-C0 -M4000  -R"select[mem>4000]  rusage[mem=4000]"  -n 8' },
          '8Gb_job'      => {'LSF' => '-C0 -M8000  -R"select[mem>8000]  rusage[mem=8000]"' },
-         '8Gb_8c_job'   => {'LSF' => '-C0 -M8000  -R"select[mem>8000]  rusage[mem=8000]"  -n 8' },
          '16Gb_job'     => {'LSF' => '-C0 -M16000 -R"select[mem>16000] rusage[mem=16000]"' },
-         '16Gb_long_job'=> {'LSF' => '-C0 -M16000 -R"select[mem>16000] rusage[mem=16000]" -q long' },
-         'treebest_job'      => {'LSF' => '-q long -C0 -M8000  -R"select[mem>8000]  rusage[mem=8000]"' },
+         '24Gb_job'     => {'LSF' => '-C0 -M24000 -R"select[mem>24000] rusage[mem=24000]"' },
+         '32Gb_job'     => {'LSF' => '-C0 -M32000 -R"select[mem>32000] rusage[mem=32000]"' },
+         '48Gb_job'     => {'LSF' => '-C0 -M48000 -R"select[mem>48000] rusage[mem=48000]"' },
+         '64Gb_job'     => {'LSF' => '-C0 -M64000 -R"select[mem>64000] rusage[mem=64000]"' },
 
-         'urgent_hcluster'   => {'LSF' => '-C0 -M32000 -R"select[mem>32000] rusage[mem=32000]" -q yesterday' },
+         '16Gb_16c_job' => {'LSF' => '-n 16 -C0 -M16000 -R"select[mem>16000] rusage[mem=16000]"' },
+         '64Gb_16c_job' => {'LSF' => '-n 16 -C0 -M64000 -R"select[mem>64000] rusage[mem=64000]"' },
+
+         '4Gb_64c_mpi'  => {'LSF' => '-q parallel -n 64 -a openmpi -M4000  -R"select[mem>4000]  rusage[mem=4000]  same[model] span[ptile=4]"' },
+         '16Gb_64c_mpi' => {'LSF' => '-q parallel -n 64 -a openmpi -M16000 -R"select[mem>16000] rusage[mem=16000] same[model] span[ptile=4]"' },
+
+         '8Gb_long_job'      => {'LSF' => '-C0 -M8000  -R"select[mem>8000]  rusage[mem=8000]"  -q long' },
+         '32Gb_urgent_job'   => {'LSF' => '-C0 -M32000 -R"select[mem>32000] rusage[mem=32000]" -q yesterday' },
     };
 }
 
-
-sub pipeline_analyses {
+sub tweak_analyses {
     my $self = shift;
-    my $all_analyses = $self->SUPER::pipeline_analyses(@_);
-    my %analyses_by_name = map {$_->{'-logic_name'} => $_} @$all_analyses;
+    my $analyses_by_name = shift;
 
     ## Extend this section to redefine the resource names of some analysis
     my %overriden_rc_names = (
-        'treebest'                  => 'treebest_job',
+        'hcluster_run'              => '32Gb_urgent_job',
+        'treebest_long_himem'       => '8Gb_long_job',
     );
     foreach my $logic_name (keys %overriden_rc_names) {
-        $analyses_by_name{$logic_name}->{'-rc_name'} = $overriden_rc_names{$logic_name};
+        $analyses_by_name->{$logic_name}->{'-rc_name'} = $overriden_rc_names{$logic_name};
     }
-    $analyses_by_name{'mcoffee'}->{'-parameters'}{'cmd_max_runtime'} = 39600;
-    $analyses_by_name{'mcoffee_himem'}->{'-parameters'}{'cmd_max_runtime'} = 39600;
-    return $all_analyses;
+    $analyses_by_name->{'mcoffee'}->{'-parameters'}{'cmd_max_runtime'} = 39600;
+    $analyses_by_name->{'mcoffee_himem'}->{'-parameters'}{'cmd_max_runtime'} = 39600;
 }
 
 1;

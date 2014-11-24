@@ -84,7 +84,7 @@ sub param_defaults {
 
             # only in 'ProteinTree' mode:
         'store_genes'                   => 1,   # whether the genes are also stored as members
-        'allow_pyrrolysine'             => 0,
+        'allow_ambiguity_codes'         => 0,
         'store_related_pep_sequences'   => 0,
         'pseudo_stableID_prefix'        => undef,
         'force_unique_canonical'        => undef,
@@ -326,9 +326,10 @@ sub store_gene_and_all_transcripts {
             $pep_member->gene_member_id($gene_member->dbID);
         }
 
-        if ($pep_member->sequence =~ /O/ and not $self->param('allow_pyrrolysine')) {
+        if ($pep_member->sequence =~ /[OU]/ and not $self->param('allow_ambiguity_codes')) {
             my $seq = $pep_member->sequence;
-            $seq =~ s/O/X/g;
+            $seq =~ s/U/C/g;
+            $seq =~ s/O/K/g;
             $pep_member->sequence($seq);
         }
         $seq_member_adaptor->store($pep_member);

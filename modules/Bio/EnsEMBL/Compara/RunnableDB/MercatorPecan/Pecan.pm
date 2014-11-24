@@ -157,9 +157,7 @@ sub run
   my $fake_analysis     = Bio::EnsEMBL::Analysis->new;
 
   #Check whether can see exonerate to try to prevent errors in java where the autoloader doesn't seem to always work
-  unless (-x $self->param('exonerate')) {
-      throw("Pecan: Unable to execute " . $self->param('exonerate'));
-  }
+  $self->require_executable('exonerate');
 
   $self->compara_dba->dbc->disconnect_when_inactive(1); 
   my $runnable = new Bio::EnsEMBL::Analysis::Runnable::Pecan(

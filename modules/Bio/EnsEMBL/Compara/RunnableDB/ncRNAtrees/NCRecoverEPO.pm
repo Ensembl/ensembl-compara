@@ -289,7 +289,7 @@ sub run_ncrecoverepo {
               }
               my $description = $gene_member->description;
               $description =~ /Acc:(\w+)/;
-              my $acc_description = $1 if (defined($1));
+              my $acc_description = $1 || '';
               my $clustering_id = $self->param('nc_tree')->get_tagvalue('clustering_id');
               my $model_id = $self->param('nc_tree')->get_tagvalue('model_id');
               if ($acc_description eq $clustering_id || $acc_description eq $model_id) {
@@ -481,18 +481,9 @@ sub remove_low_cov_predictions {
   foreach my $leaf (@{$nc_tree->get_all_leaves}) {
     if(my $removed_stable_id = $self->param('low_cov_leaves_to_delete_pmember_id')->{$leaf->seq_member_id}) {
       print STDERR "removing low_cov prediction $removed_stable_id\n" if($self->debug);
-      my $removed_genome_db_id = $leaf->genome_db_id;
-      $leaf->disavow_parent;
-      $self->param('treenode_adaptor')->delete_flattened_leaf($leaf);
-      my $sth = $self->compara_dba->dbc->prepare
-        ("INSERT IGNORE INTO removed_member 
-                           (node_id,
-                            stable_id,
-                            genome_db_id) VALUES (?,?,?)");
-      $sth->execute($root_id,
-                    $removed_stable_id,
-                    $removed_genome_db_id);
-      $sth->finish;
+      $self->call_within_transaction(sub {
+        $self->param('treenode_adaptor')->remove_seq_member($leaf);
+      });
     }
   }
   #calc residue count total
@@ -507,9 +498,8 @@ sub remove_low_cov_predictions {
       ## The problem is that it also prevents adding new members by add_matching_predictions below.
       ## For now, this is not a problem, since add_matching_predictions is not finished, but we may need to
       ## make sure that it is running properly once it is finished.
-      $self->input_job->incomplete(0);
       $self->input_job->autoflow(0);
-      die ("$root_id tree has become too short ($leafcount leaf/ves)\n");
+      $self->complete_early("$root_id tree has become too short ($leafcount leaf/ves)\n");
   }
   $nc_tree->store_tag('gene_count', $leafcount);
 

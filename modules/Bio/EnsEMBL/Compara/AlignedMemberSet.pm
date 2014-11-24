@@ -62,6 +62,7 @@ Global properties of the alignment:
 
 I/O:
  - load_cigars_from_file()
+ - print_alignment_to_file()
  - get_SimpleAlign()
  - get_4D_SimpleAlign()
 
@@ -226,11 +227,17 @@ sub _attr_to_copy_list {
   Arg [-IMPORT_SEQ] : (opt) boolean (default: false)
                Whether the sequences of the members should be reassigned
                using the alignment file
+  Arg [-CHECK_SEQ] : (opt) boolean (default: false)
+               Checks that all the sequences recovered from the alignment file
+               match the data in the Members
   Arg [-FORMAT]     : (opt) string (default: undef)
                The format of the alignment. By default, BioPerl will try to
                guess it from the file extension.  Refer to
                http://www.bioperl.org/wiki/HOWTO:AlignIO_and_SimpleAlign
                for a list of the supported formats.
+  Arg [-ID_TYPE] (opt) string (one of 'STABLE', 'SEQ', 'MEMBER'*)
+                : which identifier should be used as sequence names:
+                  the stable_id, the sequence_id, or the seq_member_id (default)
   Example    : $family->load_cigars_from_file('/tmp/clustalw.aln');
   Description: Parses the multiple alignment fileand sets the cigar lines
                of each of the memebers of this AlignedMemberSet
@@ -246,40 +253,82 @@ sub load_cigars_from_file {
 
     my $format;
     my $import_seq;
+    my $id_type;
+    my $check_seq;
     if (scalar @args) {
-        ($import_seq, $format) =
-            rearrange([qw(IMPORT_SEQ FORMAT)], @args);
+        ($import_seq, $format, $id_type, $check_seq) =
+            rearrange([qw(IMPORT_SEQ FORMAT ID_TYPE CHECK_SEQ)], @args);
     }
 
+    ## First read the alignment file and put the data in a hash
     my $alignio = Bio::AlignIO->new(-file => $file, -format => $format);
-
     my $aln = $alignio->next_aln or die "Bio::AlignIO could not get next_aln() from file '$file'";
-    $self->aln_length($aln->length);
 
-    #place all members in a hash on their member name
-    my %member_hash;
-    foreach my $member (@{$self->get_all_Members}) {
-        $member->cigar_line(undef);
-        $member->sequence(undef) if $import_seq;
-        $member_hash{$member->seq_member_id} = $member;
-    }
-
-    #assign cigar_line to each of the member attribute
+    my $aln_length;
+    my %aln_string_hash;
     foreach my $seq ($aln->each_seq) {
+
         my $id = $seq->display_id;
         $id =~ s/_.*$//;
-        throw("No member for alignment portion: [$id]") unless exists $member_hash{$id};
-
-        my $cigar_line = Bio::EnsEMBL::Compara::Utils::Cigars::cigar_from_alignment_string($seq->seq());
-        $member_hash{$id}->cigar_line($cigar_line);
 
         my $seqseq = $seq->seq();
+        throw("No sequence for alignment portion: [$id]") unless $seqseq;
+
+        $aln_length = length($seqseq) unless $aln_length;
+        throw("While parsing the alignment, [$id] did not return the expected alignment length $aln_length\n") if $aln_length != length($seqseq);
+
+        my $cigar_line = Bio::EnsEMBL::Compara::Utils::Cigars::cigar_from_alignment_string($seqseq);
+        throw("empty cigar_line for [$id]\n") unless length($cigar_line);
+
         $seqseq =~ s/-//g;
+
+        # The following code is disabled because it slows down the method by 10%
+        # We should rather have unit-testing on Bio::EnsEMBL::Compara::Utils::Cigars
+
+        ## Check that the cigar length (Ms) matches the sequence length
+        ## Take the M lengths into an array
+        #my @cigar_match_lengths = map { $_ eq '' ? 1 : $_ } map { $_ =~ /^(\d*)/ } ( $cigar_line =~ /(\d*[M])/g );
+        ## Sum up the M lengths
+        #my $seq_cigar_length; map { $seq_cigar_length += $_ } @cigar_match_lengths;
+        #if ($seq_cigar_length != length($seqseq)) {
+            #warn "$id:$seq_cigar_length:".length($seqseq)."\n$seqseq\n$cigar_line\n".$seq->seq."\n";
+            #$self->throw("While storing the cigar line, the returned cigar length did not match the sequence length\n");
+        #}
+
+        $aln_string_hash{$id} = [$seqseq, $cigar_line];
+    }
+    $self->aln_length($aln_length);
+
+    my %unseen = (map {$_ => 1} (keys %aln_string_hash));
+
+    ## Then we associate each member with its alignment, based on the required $id_type
+    foreach my $member (@{$self->get_all_Members}) {
+
+        my $seqID = $member->seq_member_id;
+        $seqID = $member->sequence_id if $id_type and $id_type =~ m/^SEQ/i;
+        $seqID = $member->stable_id if $id_type and $id_type =~ m/^STA/i;
+
+        throw($member->stable_id." ($seqID) cannot be found in the alignment\n") unless exists $aln_string_hash{$seqID};
+
+        my $seqseq = $aln_string_hash{$seqID}->[0];
+        my $cigar_line = $aln_string_hash{$seqID}->[1];
+
+        $member->cigar_line($cigar_line);
+
         if ($import_seq) {
-            $member_hash{$id}->sequence($seqseq);
-        } else {
-            die "'$id' has a different sequence in the file '$file'" if $member_hash{$id}->sequence ne $seqseq;
+            $member->sequence($seqseq);
+        } elsif ($check_seq) {
+            my $member_sequence = $member->sequence;
+            if ($member_sequence ne $seqseq) {
+                throw($member->stable_id." ($seqID) has a different sequence in the alignment file '$file'");
+            }
         }
+
+        delete $unseen{$seqID} if exists $unseen{$seqID};
+    }
+
+    if (scalar(keys %unseen)) {
+        throw("No member for alignment ids: ".join(", ", keys %unseen));
     }
 }
 
@@ -306,6 +355,9 @@ sub load_cigars_from_file {
     Arg [-SEQ_TYPE] (opt) string
         : which sequence should be used instead of the default one.
         : Can be 'exon_cased' for proteins and ncRNAs, and 'cds' for proteins only
+    Arg [-REMOVED_COLUMNS] (opt) arrayref of arrayrefs of 2 integers
+        : intervals of columns that have to be filtered out from the alignment
+        : Used to remove low-information sites
 
   Example    : $tree->get_SimpleAlign(-SEQ_TYPE => 'cds');
   Description: Returns the alignment as a BioPerl object
@@ -328,9 +380,10 @@ sub get_SimpleAlign {
     my $append_stn_id = 0;
     my $keep_gaps = 0;
     my $seq_type = undef;
+    my $removed_columns = undef;
     if (scalar @args) {
-        ($unique_seqs,  $id_type, $stop2x, $append_taxon_id, $append_sp_short_name, $append_genomedb_id, $append_stn_id, $keep_gaps, $seq_type) =
-            rearrange([qw(UNIQ_SEQ ID_TYPE STOP2X APPEND_TAXON_ID APPEND_SP_SHORT_NAME APPEND_GENOMEDB_ID APPEND_SPECIES_TREE_NODE_ID KEEP_GAPS SEQ_TYPE)], @args);
+        ($unique_seqs,  $id_type, $stop2x, $append_taxon_id, $append_sp_short_name, $append_genomedb_id, $append_stn_id, $keep_gaps, $seq_type, $removed_columns) =
+            rearrange([qw(UNIQ_SEQ ID_TYPE STOP2X APPEND_TAXON_ID APPEND_SP_SHORT_NAME APPEND_GENOMEDB_ID APPEND_SPECIES_TREE_NODE_ID KEEP_GAPS SEQ_TYPE REMOVED_COLUMNS)], @args);
     }
 
     die "-SEQ_TYPE cannot be specified if \$self->seq_type is already defined" if $seq_type and $self->seq_type;
@@ -376,11 +429,11 @@ sub get_SimpleAlign {
 
         # Sequence name
         my $seqID = $member->stable_id;
-        $seqID = $member->sequence_id if $id_type and $id_type eq 'SEQ';
-        $seqID = $member->seq_member_id if $id_type and $id_type eq 'MEMBER';
+        $seqID = $member->sequence_id if $id_type and $id_type =~ m/^SEQ/i;
+        $seqID = $member->seq_member_id if $id_type and $id_type =~ m/^MEM/i;
         $seqID .= "_" . $member->taxon_id if($append_taxon_id);
         $seqID .= "_" . $member->genome_db_id if ($append_genomedb_id);
-        $seqID .= "_" . $member->genome_db->species_tree_node_id if ($append_stn_id);
+        $seqID .= "_" . $member->genome_db->_species_tree_node_id if ($append_stn_id);
 
         ## Append $seqID with species short name, if required
         if ($append_sp_short_name and $member->genome_db_id) {
@@ -418,7 +471,33 @@ sub get_SimpleAlign {
         }
     }
     $sa = $sa->remove_gaps(undef, 1) if UNIVERSAL::can($sa, 'remove_gaps') and not $keep_gaps;
+    $sa = $sa->removed_columns(@$removed_columns) if $removed_columns and scalar(@$removed_columns);
     return $sa;
+}
+
+
+=head2 print_alignment_to_file
+
+  Arg [1]     : scalar (string or file handle) - output file
+  Arg [-FORMAT] : string - format of the output (cf BioPerl capabilities) (example: 'fasta')
+  Arg [...]   : all the other arguments of L<get_SimpleAlign>
+  Example     : $family->print_alignment_to_file(-APPEND_TAXON_ID => 1);
+  Description : Wrapper around get_SimpleAlign to print the alignment to a file (stdout by default)
+  Returntype  : none
+  Exceptions  : none
+  Caller      : general
+  Status      : Stable
+
+=cut
+
+sub print_alignment_to_file {
+    my ($self, $file, @args) = @_;
+    my ($format) = rearrange([qw(FORMAT)], @args);
+
+    my $sa = $self->get_SimpleAlign(@args);    # We assume that none of print_alignment_to_file() arguments clash with get_SimpleAlign()'s
+    $sa->set_displayname_flat(1);
+    my $alignIO = Bio::AlignIO->new( ref($file) ? (-fh => $file) : (-file => ">$file"), -format => $format );
+    $alignIO->write_aln($sa);
 }
 
 
@@ -547,6 +626,8 @@ my %CODONS =   ("ATG" => "Met",
 
 sub get_4D_SimpleAlign {
     my $self = shift;
+    my $keep_gaps = shift;
+    my $aa_must_be_identical = shift;
 
     my $sa = Bio::SimpleAlign->new();
 
@@ -564,7 +645,8 @@ sub get_4D_SimpleAlign {
         my $seqstr = $member->alignment_string('cds');
         next if(!$seqstr);
         #print STDERR $seqstr,"\n";
-        my @tmp_tab = split /\s+/, $seqstr;
+        $seqstr =~ s/(.{3})/$1 /g;
+        my @tmp_tab =  split /\s+/, $seqstr;
         #print STDERR "tnp_tab 0: ", $tmp_tab[0],"\n";
         $member_seqstr{$member->stable_id} = \@tmp_tab;
     }
@@ -586,7 +668,10 @@ sub get_4D_SimpleAlign {
         my $FourD_codon = 1;
         my $FourD_aminoacid;
         foreach my $seqid (keys %member_seqstr) {
-            if (defined $FOURD_CODONS{$member_seqstr{$seqid}->[$i]}) {
+            if (defined $FOURD_CODONS{$member_seqstr{$seqid}->[$i]} or ($keep_gaps and $member_seqstr{$seqid}->[$i] eq '---')) {
+                #print STDERR "YES ",$FOURD_CODONS{$member_seqstr{$seqid}->[$i]}," ",$member_seqstr{$seqid}->[$i],"\n";
+                next unless $aa_must_be_identical;
+
                 if (defined $FourD_aminoacid && $FourD_aminoacid eq $FOURD_CODONS{$member_seqstr{$seqid}->[$i]}) {
                     #print STDERR "YES ",$FOURD_CODONS{$member_seqstr{$seqid}->[$i]}," ",$member_seqstr{$seqid}->[$i],"\n";
                     next;
@@ -627,6 +712,8 @@ sub get_4D_SimpleAlign {
             $sa->add_seq($seq);
         }
     }
+
+    $sa = $sa->remove_gaps(undef, 1) if UNIVERSAL::can($sa, 'remove_gaps');
 
     return $sa;
 }
@@ -704,8 +791,10 @@ X  0 -1 -1 -1 -2 -1 -1 -1 -1 -1 -1 -1 -1 -1 -2  0  0 -2 -1 -1 -1 -1 -1 -4
 
 =head2 update_alignment_stats
 
+  Arg [1]    : (optional) $seq_type
   Example    : my $consensus_cigar = $gene_tree->consensus_cigar_line();
   Description: Update the AlignedMemberSet properties (% identity, % coverage, etc)
+               for the given seq_type (the default sequence is used otherwise)
   Returntype : string
   Caller     : internal
 
@@ -713,6 +802,7 @@ X  0 -1 -1 -1 -2 -1 -1 -1 -1 -1 -1 -1 -1 -1 -2  0  0 -2 -1 -1 -1 -1 -1 -4
 
 sub update_alignment_stats {
     my $self = shift;
+    my $seq_type = shift;
 
     my $genes = $self->get_all_Members;
     my $ngenes = scalar(@$genes);
@@ -723,13 +813,13 @@ sub update_alignment_stats {
         $genes->[$j]->cigar_line($new_cigars[$j]);
     }
 
-    my @aln = map {$_->alignment_string} @$genes;
+    my @aln = map {$_->alignment_string($seq_type)} @$genes;
     my $aln_length = length($aln[0]);
 
     my @seq_length   = (0) x $ngenes;
     my @nmatch_id    = (0) x $ngenes;
     my @nmatch_pos   = (0) x $ngenes;
-    my @nmatch_cov   = (0) x $ngenes;
+    my @nmismatch    = (0) x $ngenes;
 
     if ($ngenes == 2) {
         # This code is >4 times faster with pairs of genes
@@ -746,19 +836,21 @@ sub update_alignment_stats {
             $seq_length[0]++ unless $gap1;
             $seq_length[1]++ unless $gap2;
             if (not $gap1 and not $gap2) {
-                $nmatch_cov[0]++;
                 if ($aln1[$i] eq $aln2[$i]) {
                     $nmatch_id[0]++;
                     $nmatch_pos[0]++;
                 } elsif ($matrix_hash{uc $aln1[$i]}{uc $aln2[$i]} > 0) {
                     $nmatch_pos[0]++;
+                    $nmismatch[0]++;
+                } else {
+                    $nmismatch[0]++;
                 }
             }
         }
 
         $nmatch_id[1] = $nmatch_id[0];
         $nmatch_pos[1] = $nmatch_pos[0];
-        $nmatch_cov[1] = $nmatch_cov[0];
+        $nmismatch[1] = $nmismatch[0];
 
     } else {
 
@@ -790,12 +882,14 @@ sub update_alignment_stats {
             for (my $j=0; $j<$ngenes; $j++) {
                 if ($char_i[$j] ne '-') {
                     $seq_length[$j]++;
-                    $nmatch_cov[$j]++ if $is_cov_match;
                     if ($seen{$char_i[$j]} >= $min_seq) {
                         $nmatch_id[$j]++;
                         $nmatch_pos[$j]++;
                     } elsif (exists $pos_chars{$char_i[$j]}) {
                         $nmatch_pos[$j]++;
+                        $nmismatch[$j]++;
+                    } else {
+                        $nmismatch[$j]++;
                     }
                 }
             }
@@ -804,9 +898,12 @@ sub update_alignment_stats {
 
     for (my $j=0; $j<$ngenes; $j++) {
         if ($seq_length[$j]) {
+            $genes->[$j]->num_matches( $nmatch_id[$j] );
+            $genes->[$j]->num_pos_matches( $nmatch_pos[$j] );
+            $genes->[$j]->num_mismatches( $nmismatch[$j] );
             $genes->[$j]->perc_id( int((100.0 * $nmatch_id[$j] / $seq_length[$j] + 0.5)) );
             $genes->[$j]->perc_pos( int((100.0 * $nmatch_pos[$j] / $seq_length[$j] + 0.5)) );
-            $genes->[$j]->perc_cov( int((100.0 * $nmatch_cov[$j] / $seq_length[$j] + 0.5)) );
+            $genes->[$j]->perc_cov( int((100.0 * ($nmatch_id[$j]+$nmismatch[$j]) / $seq_length[$j] + 0.5)) );
         }
     }
 }

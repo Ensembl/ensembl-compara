@@ -22,14 +22,12 @@ limitations under the License.
 
 =head1 NAME
 
-Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::LoadModels
+Bio::EnsEMBL::Compara::RunnableDB::ComparaHMM::LoadModels
 
 =head1 DESCRIPTION
 
-This Analysis/RunnableDB is designed to fetch the HMM models from
-the Panther ftp site and load them into the database to be used in the
-alignment process.
-
+This Analysis/RunnableDB provides methods to load HMMs into the
+database. It can also download fresh data from suppliers' websites
 
 
 =head1 CONTACT
@@ -51,16 +49,36 @@ Internal methods are usually preceded with a _
 =cut
 
 
-package Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::LoadModels;
+package Bio::EnsEMBL::Compara::RunnableDB::ComparaHMM::LoadModels;
 
 use strict;
-use IO::File; ## ??
+use warnings;
+
 use File::Path qw/remove_tree/;
 use Time::HiRes qw(time gettimeofday tv_interval);
 use LWP::Simple;
 
 use Bio::EnsEMBL::Compara::HMMProfile;
+
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
+
+
+=head2 download_models
+
+    Parameters:
+        url : where to download the data from
+        remote_file : file than can be found at "url"
+        expander : program to expand / uncompress the data
+        expanded_basename : name (once uncompressed)
+        temp_dir (optionnal, defaults to the worker's temp directory) : where to download the data
+
+    Description:
+        Method to download some HMM models from a remote URL.
+        It then sets the following parameters:
+            cm_file_or_directory
+            temp_compressed_file
+
+=cut
 
 sub download_models {
     my ($self) = @_;
@@ -93,8 +111,20 @@ sub download_models {
 
     $self->param('cm_file_or_directory', $expanded_file);
     $self->param('temp_compressed_file', $tmp_file);
-    return;
 }
+
+
+=head2 store_hmmprofile
+
+    Parameters:
+        cm_file_or_directory : HMM file
+        type : value of the "type" field in the hmm_profile table
+        skip_consensus : [Optional] -- If we should skip building the consensus sequence of the HMM
+
+    Description:
+        Reads an HMM file and loads all the HMMs it contains
+
+=cut
 
 sub store_hmmprofile {
     my ($self, $multicm_file, $hmm_name, $consensus) = @_;
@@ -104,6 +134,12 @@ sub store_hmmprofile {
     open MULTICM, $multicm_file or die "$!\n";
     my ($name, $model_id) = ($hmm_name)x2;
     my $profile_content;
+
+    print STDERR "SKIP_CONSENSUS:", $self->param('skip_consensus'), "\n";
+    if ((!$consensus) && (!$self->param('skip_consensus'))) {
+        $consensus = $self->get_consensus_from_HMMs($multicm_file);
+    }
+
     while(my $line = <MULTICM>) {
         $profile_content .= $line;
         if ($line =~ /NAME/) {
@@ -122,8 +158,9 @@ sub store_hmmprofile {
             $hmm_profile->name($name);
             $hmm_profile->type($self->param('type'));
             $hmm_profile->profile($profile_content);
-            $hmm_profile->consensus($consensus);
+            $hmm_profile->consensus($consensus->{$name});
 
+            warn "Storing a new model: $model_id / $name".($hmm_profile->consensus ? " with a consensus sequence\n" : "\n");
             $self->compara_dba->get_HMMProfileAdaptor()->store($hmm_profile);
 
             $model_id = undef;
@@ -133,9 +170,63 @@ sub store_hmmprofile {
     }
 }
 
+
+=head2 get_consensus_from_HMMs
+
+    Parameters:
+        hmmemit_exe : path to hmmemit
+
+    Description:
+        Runs hmmemit on a HMM and returns its consensus sequences
+
+=cut
+
+sub get_consensus_from_HMMs {
+    my ($self, $hmm_file) = @_;
+
+    my $hmmemit_exe = $self->param_required('hmmemit_exe');
+
+    warn "Getting a consensus sequence with: $hmmemit_exe -c $hmm_file\n";
+    open my $pipe, "-|", "$hmmemit_exe -c $hmm_file" or die $!;
+
+    my %consensus;
+    my $header;
+    my $count = 0;
+    my $seq;
+    while (<$pipe>) {
+        chomp;
+        if (/^>/) {
+            $consensus{$header} = $seq if (defined $header);
+            ($header) = $_ =~ /^>(\w+)/;
+            $count++;
+            $seq = "";
+            next;
+        }
+        $seq .= $_ if (defined $header);
+    }
+    $consensus{$header} = $seq;
+    close($pipe);
+    return \%consensus;
+}
+
+
+=head2 clean_directory
+
+    Parameters:
+        temp_compressed_file : downloaded compressed dile
+        cm_file_or_directory : uncompressed file
+
+    Description:
+        Removes the files that have been downloaded
+
+=cut
+
 sub clean_directory {
     my ($self) = @_;
+
+    return unless $self->param('temp_compressed_file');
     unlink ($self->param('temp_compressed_file')); ## In case it has not been already deleted by the expander
+
     my $tmp_file = $self->param('cm_file_or_directory');
     if (-d $tmp_file) {
         my $res;

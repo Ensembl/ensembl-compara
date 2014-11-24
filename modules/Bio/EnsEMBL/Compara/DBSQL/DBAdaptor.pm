@@ -146,7 +146,8 @@ sub get_available_adaptors {
         'SpeciesSet'            => 'Bio::EnsEMBL::Compara::DBSQL::SpeciesSetAdaptor',
         'MethodLinkSpeciesSet'  => 'Bio::EnsEMBL::Compara::DBSQL::MethodLinkSpeciesSetAdaptor',
         'NCBITaxon'             => 'Bio::EnsEMBL::Compara::DBSQL::NCBITaxonAdaptor',
-        'HMMProfile'            => 'Bio::EnsEMBL::Compara::DBSQL::HMMProfileAdaptor',
+        'SpeciesTree'           => 'Bio::EnsEMBL::Compara::DBSQL::SpeciesTreeAdaptor',
+        'SpeciesTreeNode'       => 'Bio::EnsEMBL::Compara::DBSQL::SpeciesTreeNodeAdaptor',
 
             # genomic:
         'DnaFrag'               => 'Bio::EnsEMBL::Compara::DBSQL::DnaFragAdaptor',
@@ -180,9 +181,9 @@ sub get_available_adaptors {
         'GeneTree'              => 'Bio::EnsEMBL::Compara::DBSQL::GeneTreeAdaptor',
         'GeneTreeNode'          => 'Bio::EnsEMBL::Compara::DBSQL::GeneTreeNodeAdaptor',
         'CAFEGeneFamily'        => 'Bio::EnsEMBL::Compara::DBSQL::CAFEGeneFamilyAdaptor',
-        'SpeciesTree'           => 'Bio::EnsEMBL::Compara::DBSQL::SpeciesTreeAdaptor',
-        'SpeciesTreeNode'       => 'Bio::EnsEMBL::Compara::DBSQL::SpeciesTreeNodeAdaptor',
         'CAFEGeneFamilyNode'    => 'Bio::EnsEMBL::Compara::DBSQL::CAFEGeneFamilyNodeAdaptor',
+        'HMMProfile'            => 'Bio::EnsEMBL::Compara::DBSQL::HMMProfileAdaptor',
+        'HMMAnnot'              => 'Bio::EnsEMBL::Compara::DBSQL::HMMAnnotAdaptor',
 
     );
 

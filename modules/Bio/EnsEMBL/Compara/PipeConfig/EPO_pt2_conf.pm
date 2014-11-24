@@ -73,7 +73,7 @@ sub default_options {
 	%{$self->SUPER::default_options},
         'pipeline_name' => 'compara_MapAnchors',
 	   # parameters that are likely to change from execution to another:
-	'release'               => '74',
+	'release'               => '77',
 	'rel_suffix'            => '',    # an empty string by default, a letter otherwise
 	   # dependent parameters:
 	'rel_with_suffix'       => $self->o('release').$self->o('rel_suffix'),
@@ -84,7 +84,7 @@ sub default_options {
 		-port   => 3306,
                 -user   => 'ensadmin',
 		-pass   => $self->o('password'),
-		-dbname => $ENV{'USER'}.'_15mammals_epo_anchor_mappings'.$self->o('rel_with_suffix'),
+		-dbname => $ENV{'USER'}.'_17mammals_epo_anchor_mappings'.$self->o('rel_with_suffix'),
    	},
 	  # database containing the anchors for mapping
 	'compara_anchor_db' => {
@@ -97,10 +97,10 @@ sub default_options {
 		-dbname => 'sf5_TEST_gen_anchors_mammals_cat_100',
 	},
 	  # genome_db_id(s) to which to map the anchors
-	'genome_db_ids_of_species_to_map' => '31,60,61,90,108,117,122,123,125,132,134,135,140,146,139',
+	'genome_db_ids_of_species_to_map' => '147,150,151,153',
 	  # location of species core dbs to map to
-	'core_db_urls' => [ 'mysql://ensro@ensdb-archive.internal.sanger.ac.uk:5304/73','mysql://ensro@compara1:3306/73' ],
-	# 'core_db_urls' => [ 'mysql://ensro@ens-staging1:3306/68', 'mysql://ensro@ens-staging2:3306/68' ],
+	#'core_db_urls' => [ 'mysql://ensro@ensdb-archive.internal.sanger.ac.uk:5304/73','mysql://ensro@compara1:3306/73' ],
+	 'core_db_urls' => [ 'mysql://ensro@ens-staging1:3306/77', 'mysql://ensro@ens-staging2:3306/77' ],
 	'mapping_exe' => "/software/ensembl/compara/exonerate/exonerate",
 	'species_set_id' => 10000, # dummy value - should not need to change
 	'anchors_mlss_id' => 10000, # this should correspond to the mlss_id in the anchor_sequence table of the compara_anchor_db database (from EPO_pt1_conf.pm)
@@ -129,10 +129,10 @@ sub default_options {
 	'compara_master' => {
 		-user => 'ensro',
 		-port => 3306,
-		-host => 'compara3',
+		-host => 'compara1',
 		-driver => 'mysql',
 		-pass => '',
-		-dbname => 'sf5_test_74_mammal_master',
+		-dbname => 'sf5_ensembl_compara_master',
 	},
      };
 }
@@ -149,10 +149,6 @@ sub resource_classes {
     my ($self) = @_; 
     return {
 	%{$self->SUPER::resource_classes},  # inherit 'default' from the parent class
-#	'default' => {'LSF' => '-C0 -M2500000 -R"select[mem>2500] rusage[mem=2500]"' }, # farm2 lsf syntax
-#	'mem3500' => {'LSF' => '-C0 -M3500000 -R"select[mem>3500] rusage[mem=3500]"' },
-#	'mem7500' => {'LSF' => '-C0 -M7500000 -R"select[mem>7500] rusage[mem=7500]"' },
-#	'hugemem' => {'LSF' => '-q hugemem -C0 -M30000000 -R"select[mem>30000] rusage[mem=30000]"' },
 	'default' => {'LSF' => '-C0 -M2500 -R"select[mem>2500] rusage[mem=2500]"' }, # farm3 lsf syntax
 	'mem3500' => {'LSF' => '-C0 -M3500 -R"select[mem>3500] rusage[mem=3500]"' },
 	'mem7500' => {'LSF' => '-C0 -M7500 -R"select[mem>7500] rusage[mem=7500]"' },

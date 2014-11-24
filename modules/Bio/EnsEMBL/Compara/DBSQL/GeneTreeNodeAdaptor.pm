@@ -115,11 +115,6 @@ sub fetch_all_AlignedMember_by_Member {
         $self->bind_param_generic_fetch($clusterset_id, SQL_VARCHAR);
     }
 
-    if (defined $self->_default_member_type) {
-        $constraint .= ' AND (tr.member_type = ?)';
-        $self->bind_param_generic_fetch($self->_default_member_type, SQL_VARCHAR);
-    }
-
     my $join = [[['gene_tree_root', 'tr'], 't.root_id = tr.root_id']];
     return $self->generic_fetch($constraint, $join);
 }
@@ -300,6 +295,17 @@ sub delete_nodes_not_in_tree
 }
 
 
+sub remove_seq_member {
+    my $self = shift;
+    my $leaf = shift;
+    $leaf->disavow_parent;
+    $self->delete_flattened_leaf( $leaf );
+    my $sth = $self->prepare('UPDATE gene_tree_backup SET is_removed = 1 WHERE seq_member_id = ?');
+    $sth->execute($leaf->seq_member_id);
+    $sth->finish;
+}
+
+
 ###################################
 #
 # tagging
@@ -389,12 +395,6 @@ sub init_instance_from_rowhash {
     $node->adaptor($self);
 
     return $node;
-}
-
-
-
-sub _default_member_type {
-    return undef;
 }
 
 

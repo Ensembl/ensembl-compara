@@ -162,7 +162,6 @@ my $use_names = undef;
 my $per_genome = undef;
 my $output_file = undef;
 my $species_tree_file = undef;
-my $species_tree_from_db = undef;
 my $help;
 
 GetOptions(
@@ -177,7 +176,6 @@ GetOptions(
     "per_genome" => \$per_genome,
     "output_file=s" => \$output_file,
     "species_tree_file=s" => \$species_tree_file,
-    "species_tree_from_db!" => \$species_tree_from_db,
   );
 
 # Print Help and exit
@@ -249,13 +247,10 @@ if ($method_link_type) {
 
 #if defined species_tree_file, overwrite the species order given by the config
 #file and use the species tree instead
-if (defined $species_tree_file or $species_tree_from_db) {
+if (defined $species_tree_file) {
     
     my $species_tree;
 
-    if($species_tree_from_db) {
-        $species_tree = $species_tree_adaptor->create_species_tree();
-    } else {
         open(TREE_FILE, $species_tree_file) or throw("Cannot open file ".$species_tree_file);
         my $newick_string = join("", <TREE_FILE>);
         close(TREE_FILE);
@@ -263,7 +258,6 @@ if (defined $species_tree_file or $species_tree_from_db) {
         $newick_string =~ s/\s*$//;
         $newick_string =~ s/[\r\n]//g;
         $species_tree = Bio::EnsEMBL::Compara::Graph::NewickParser::parse_newick_into_tree($newick_string);
-    }
 
     my $all_leaves = $species_tree->get_all_leaves;
     my @top_leaves = ();

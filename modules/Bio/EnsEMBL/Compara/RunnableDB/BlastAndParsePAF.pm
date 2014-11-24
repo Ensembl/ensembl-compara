@@ -45,9 +45,6 @@ eg "seg 'yes' -best_hit_overhang 0.2 -best_hit_score_edge 0.1 -use_sw_tback"
         Species genome db id.
     'reuse_ss_id' => <number>
         Reuse species set id. Normally stored in the meta table. Obligatory.
-    'do_transactions' => <0|1>
-        Whether to do transactions. Default is no.
-
 
 =cut
 
@@ -55,6 +52,8 @@ package Bio::EnsEMBL::Compara::RunnableDB::BlastAndParsePAF;
 
 use strict;
 use warnings;
+
+use File::Basename;
 
 use FileHandle;
 
@@ -65,11 +64,13 @@ use Bio::EnsEMBL::Utils::SqlHelper;
 
 use Bio::EnsEMBL::Compara::Utils::Cigars;
 use Bio::EnsEMBL::Compara::MemberSet;
+use Bio::EnsEMBL::Compara::PeptideAlignFeature;
 
 sub param_defaults {
     return {
             'evalue_limit'  => 1e-5,
             'tophits'       => 20,
+            'no_cigars'     => 0,
             'allow_same_species_hits'  => 0,
     };
 }
@@ -89,10 +90,23 @@ sub fetch_input {
     my $mlss            = $self->compara_dba()->get_MethodLinkSpeciesSetAdaptor->fetch_by_dbID($mlss_id) or die "Could not fetch mlss with dbID=$mlss_id";
     my $species_set     = $mlss->species_set_obj->genome_dbs;
 
-    my $genome_db_list;
+    $self->param('all_blast_db', {});
 
-    # If we restrict the search to one species at a time
-    if ($self->param('target_genome_db_id')) {
+    my $genome_db_list = [];
+
+    if ($self->param('blast_db')) {
+
+        # Target species are all mixed
+        print STDERR "Using the blast database provided: ", $self->param('blast_db'), "\n" if $self->debug;
+        # Loads the files into memory
+        system sprintf('cat %s*', $self->param('blast_db'));
+        #my $tmp_blast_db = $self->worker_temp_directory.(basename $self->param('blast_db'));
+        #system sprintf('cp -a %s* %s', $self->param('blast_db'), $self->worker_temp_directory);
+        $self->param('all_blast_db')->{$self->param('blast_db')} = undef;
+
+    } elsif ($self->param('target_genome_db_id')) {
+
+        # If we restrict the search to one species at a time
         $genome_db_list = [$self->compara_dba()->get_GenomeDBAdaptor->fetch_by_dbID($self->param('target_genome_db_id'))];
 
     } else {
@@ -102,7 +116,8 @@ sub fetch_input {
         my $mlss            = $self->compara_dba()->get_MethodLinkSpeciesSetAdaptor->fetch_by_dbID($mlss_id) or die "Could not fetch mlss with dbID=$mlss_id";
         my $species_set     = $mlss->species_set_obj->genome_dbs;
 
-        $genome_db_list = $species_set;
+        $genome_db_list = [ grep {$_->dbID != $self->param('genome_db_id')} @$species_set ];
+
         # If reusing this genome_db, only need to blast against the 'fresh' genome_dbs
         if ($self->param('reuse_ss_id')) {
             my $reused_species_set = $self->compara_dba()->get_SpeciesSetAdaptor->fetch_by_dbID($self->param('reuse_ss_id'));
@@ -112,26 +127,30 @@ sub fetch_input {
 #            my $reused_genome_dbs = $self->compara_dba()->get_SpeciesSetAdaptor->fetch_by_dbID($self->param('reuse_ss_id'))->genome_dbs;
             my %reuse_ss_hash = ( map { $_->dbID() => 1 } @$reused_genome_dbs );
             if ($reuse_ss_hash{$self->param('genome_db_id')}) {
-                $genome_db_list = [ grep {not $reuse_ss_hash{$_->dbID}} @$species_set ];
+                $genome_db_list = [ grep {not $reuse_ss_hash{$_->dbID}} @$genome_db_list ];
             }
         }
     }
 
     print STDERR "Found ", scalar(@$genome_db_list), " genomes to blast this member against.\n" if ($self->debug);
-    $self->param('genome_db_list', $genome_db_list);
+    my $blastdb_dir = $self->param('fasta_dir');
+    foreach my $genome_db (@$genome_db_list) {
+        my $fastafile = $blastdb_dir . '/' . $genome_db->name() . '_' . $genome_db->assembly() . '.fasta';
+        $fastafile =~ s/\s+/_/g;    # replace whitespace with '_' characters
+        $fastafile =~ s/\/\//\//g;  # converts any // in path to /
+        $self->param('all_blast_db')->{$fastafile} = $genome_db->dbID;
+    }
 
 }
 
 sub parse_blast_table_into_paf {
     my ($self, $filename, $qgenome_db_id, $hgenome_db_id) = @_;
 
-    my $debug                   = $self->debug() || $self->param('debug') || 0;
+    my @features = ();
 
-    my $features;
-
-    open(BLASTTABLE, "<$filename") || die "Could not open the blast table file '$filename'";
+    open(BLASTTABLE, '<', $filename) || die "Could not open the blast table file '$filename'";
     
-    print "blast $qgenome_db_id $hgenome_db_id $filename\n" if $debug;
+    print "blast $qgenome_db_id $hgenome_db_id $filename\n" if $self->debug;
 
     while(my $line = <BLASTTABLE>) {
 
@@ -143,71 +162,37 @@ sub parse_blast_table_into_paf {
                 $cigar_line = Bio::EnsEMBL::Compara::Utils::Cigars::cigar_from_two_alignment_strings($qseq, $sseq);
             }
 
-            my $feature = {
-                    qmember_id        => $qmember_id,
-                    hmember_id        => $hmember_id,
-                    qgenome_db_id     => $qgenome_db_id,
-                    hgenome_db_id     => $hgenome_db_id,
-                    perc_ident        => $pident,
-                    score             => $score,
-                    evalue            => $evalue,
-                    qstart            => $qstart,
-                    qend              => $qend,
-                    hstart            => $hstart,
-                    hend              => $hend,
-                    length            => $length,
-                    perc_ident        => $pident,
-                    identical_matches => $nident,
-                    positive          => $positive,
-                    perc_pos          => $ppos,
-                    cigar_line        => $cigar_line,
-            };
+            my $feature = Bio::EnsEMBL::Compara::PeptideAlignFeature->new_fast({
+                    _query_member_id        => $qmember_id,
+                    _hit_member_id        => $hmember_id,
+                    _query_genome_db_id     => $qgenome_db_id,
+                    _hit_genome_db_id     => $hgenome_db_id,
+                    _score             => $score,
+                    _evalue            => $evalue,
+                    _qstart            => $qstart,
+                    _qend              => $qend,
+                    _hstart            => $hstart,
+                    _hend              => $hend,
+                    _alignment_length            => $length,
+                    _perc_ident        => $pident,
+                    _identical_matches => $nident,
+                    _positive_matches          => $positive,
+                    _perc_pos          => $ppos,
+                    _cigar_line        => $cigar_line,
+            });
 
-            print "feature query $qgenome_db_id $qmember_id hit $hgenome_db_id $hmember_id $hmember_id $qstart $qend $hstart $hend $length $nident $positive\n" if $debug;
-            push @{$features->{$qmember_id}}, $feature;
+            print "feature query $qgenome_db_id $qmember_id hit $hgenome_db_id $hmember_id $hmember_id $qstart $qend $hstart $hend $length $nident $positive\n" if $self->debug;
+            push @features, $feature;
         }
     }
     close BLASTTABLE;
-    if (!defined $features) {
-        return $features;
-    }
-
-    #group together by qmember_id and rank the hits
-    foreach my $qmember_id (keys %$features) {
-        my $qfeatures = $features->{$qmember_id};
-        @$qfeatures = sort sort_by_score_evalue_and_pid @$qfeatures;
-        my $rank=1;
-        my $prevPaf = undef;
-        foreach my $paf (@$qfeatures) {
-            $rank++ if($prevPaf and !pafs_equal($prevPaf, $paf));
-            $paf->{hit_rank} = $rank;
-            $prevPaf = $paf;
-        }
-    }
-    return $features;
+    return \@features;
 }
 
-sub sort_by_score_evalue_and_pid {
-  $b->{score} <=> $a->{score} ||
-    $a->{evalue} <=> $b->{evalue} ||
-      $b->{perc_ident} <=> $a->{perc_ident} ||
-        $b->{perc_pos} <=> $a->{perc_pos};
-}
-
-sub pafs_equal {
-  my ($paf1, $paf2) = @_;
-  return 0 unless($paf1 and $paf2);
-  return 1 if(($paf1->{score} == $paf2->{score}) and
-              ($paf1->{evalue} == $paf2->{evalue}) and
-              ($paf1->{perc_ident} == $paf2->{perc_ident}) and
-              ($paf1->{perc_pos} == $paf2->{perc_pos}));
-  return 0;
-}
 
 sub run {
     my $self = shift @_;
     
-    my $debug                   = $self->debug() || $self->param('debug') || 0;
     my $blastdb_dir             = $self->param('fasta_dir');
     my $blast_bin_dir           = $self->param_required('blast_bin_dir');
     my $blast_params            = $self->param('blast_params')  || '';  # no parameters to C++ binary means having composition stats on and -seg masking off
@@ -219,109 +204,43 @@ sub run {
     my $blast_infile  = $worker_temp_directory . 'blast.in.'.$$;     # only for debugging
     my $blast_outfile = $worker_temp_directory . 'blast.out.'.$$;    # looks like inevitable evil (tried many hairy alternatives and failed)
 
-    if($debug) {
+    if($self->debug) {
         print "blast_infile $blast_infile\n";
-        $self->param('query_set')->print_sequences_to_file(-file => $blast_infile, -format => 'fasta');
+        $self->param('query_set')->print_sequences_to_file($blast_infile, -format => 'fasta');
     }
 
     $self->compara_dba->dbc->disconnect_when_inactive(1); 
 
     my $cross_pafs = [];
-    #my %cross_pafs = ();
-    foreach my $genome_db (@{$self->param('genome_db_list')}) {
-        my $fastafile = $genome_db->name() . '_' . $genome_db->assembly() . '.fasta';
-        $fastafile =~ s/\s+/_/g;    # replace whitespace with '_' characters
-            $fastafile =~ s/\/\//\//g;  # converts any // in path to /
-            my $cross_genome_dbfile = $blastdb_dir . '/' . $fastafile;   # we are always interested in the 'foreign' genome's fasta file, not the member's
+    foreach my $blast_db (keys %{$self->param('all_blast_db')}) {
+        my $target_genome_db_id = $self->param('all_blast_db')->{$blast_db};
 
-            #Don't blast against self if asked
-            if (($genome_db->dbID != $self->param('genome_db_id')) or $self->param('allow_same_species_hits')) {
-                #Run blastp
-                my $cig_cmd = $self->param('no_cigars') ? '' : 'qseq sseq';
-                my $cmd = "${blast_bin_dir}/blastp -db $cross_genome_dbfile $blast_params -evalue $evalue_limit -max_target_seqs $tophits -out $blast_outfile -outfmt '7 qacc sacc evalue score nident pident qstart qend sstart send length positive ppos $cig_cmd'";
-                if($debug) {
-                    warn "CMD:\t$cmd\n";
-                }
-                my $start_time = time();
-                open( BLAST, "| $cmd") || die qq{could not execute "$cmd", returned error code: $!};
-                $self->param('query_set')->print_sequences_to_file(-fh => \*BLAST, -format => 'fasta');
-                close BLAST;
+        my $cig_cmd = $self->param('no_cigars') ? '' : 'qseq sseq';
+        my $cmd = "$blast_bin_dir/blastp -db $blast_db $blast_params -evalue $evalue_limit -max_target_seqs $tophits -out $blast_outfile -outfmt '7 qacc sacc evalue score nident pident qstart qend sstart send length positive ppos $cig_cmd'";
+        warn "CMD:\t$cmd\n" if $self->debug;
 
-                print "Time for blast " . (time() - $start_time) . "\n";
+        my $start_time = time();
+        open( BLAST, "| $cmd") || die qq{could not execute "$cmd", returned error code: $!};
+        $self->param('query_set')->print_sequences_to_file(\*BLAST, -format => 'fasta');
+        close BLAST;
+        print "Time for blast " . (time() - $start_time) . "\n";
 
-                my $features = $self->parse_blast_table_into_paf($blast_outfile, $self->param('genome_db_id'), $genome_db->dbID);
-                if (defined $features) {
-                    foreach my $qmember_id (keys %$features) {
-                        my $qfeatures = $features->{$qmember_id};
-                        push @$cross_pafs, @$qfeatures;
-                        #push @{$cross_pafs{$genome_db->dbID}}, $feature;
-                    }
-                }
-                unless($debug) {
-                    unlink $blast_outfile;
-                }
-            }
+        my $features = $self->parse_blast_table_into_paf($blast_outfile, $self->param('genome_db_id'), $target_genome_db_id);
+        push @$cross_pafs, @$features;
+        unlink $blast_outfile unless $self->debug;
     }
     $self->compara_dba->dbc->disconnect_when_inactive(0); 
 
     $self->param('cross_pafs', $cross_pafs);
-    #$self->param('cross_pafs', \%cross_pafs);
 }
 
 sub write_output {
     my ($self) = @_;
-
-    if ($self->param('do_transactions')) {
-        my $compara_conn = $self->compara_dba->dbc;
-
-        my $compara_helper = Bio::EnsEMBL::Utils::SqlHelper->new(-DB_CONNECTION => $compara_conn);
-        $compara_helper->transaction(-CALLBACK => sub {
-                $self->_write_output;
-                });
-    } else {
-        $self->_write_output;
-    }
-
-}
-
-
-sub _write_output {
-    my $self = shift @_;
-
     my $cross_pafs = $self->param('cross_pafs');
-    #foreach my $genome_db_id (keys %$cross_pafs) {
-    #    $self->compara_dba->get_PeptideAlignFeatureAdaptor->store(@{$cross_pafs->{$genome_db_id}});
-    #}
-    print "numbers pafs " . scalar(@$cross_pafs) . "\n";
-    foreach my $feature (@$cross_pafs) {
-        my $peptide_table = 'peptide_align_feature_'.($feature->{qgenome_db_id});
 
-        #AWFUL HACK to insert into the peptide_align_feature table but without going through the API. Only fill in
-        #some the of fields
-        my $sql = "INSERT INTO $peptide_table (qmember_id, hmember_id, qgenome_db_id, hgenome_db_id, qstart, qend, hstart, hend, score, evalue, hit_rank,identical_matches, perc_ident,align_length,positive_matches, perc_pos, cigar_line) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?, ?,?,?)";
-        my $sth = $self->compara_dba->dbc->prepare( $sql );
-
-        #print "INSERT INTO $peptide_table (qmember_id, hmember_id, qgenome_db_id, hgenome_db_id, qstart, qend, hstart, hend, score, evalue, hit_rank,identical_matches, perc_ident,align_length,positive_matches, perc_pos) VALUES ('" . $feature->{qmember_id} , "','" . $feature->{hmember_id} . "'," . $feature->{qgenome_db_id} . "," . $feature->{hgenome_db_id} . "," . $feature->{qstart} . "," . $feature->{qend} . "," . $feature->{hstart} . "," . $feature->{hend} . "," . $feature->{score} . "," . $feature->{evalue} . "," . $feature->{hit_rank} . "," . $feature->{identical_matches} . "," . $feature->{perc_ident} . "," . $feature->{length} . "," . $feature->{positive} . "," . $feature->{perc_pos} . "\n";
-
-        $sth->execute($feature->{qmember_id},
-                $feature->{hmember_id},
-                $feature->{qgenome_db_id},
-                $feature->{hgenome_db_id},
-                $feature->{qstart},
-                $feature->{qend},
-                $feature->{hstart},
-                $feature->{hend},
-                $feature->{score},
-                $feature->{evalue},
-                $feature->{hit_rank},
-                $feature->{identical_matches},
-                $feature->{perc_ident},
-                $feature->{length},
-                $feature->{positive},
-                $feature->{perc_pos},
-                $feature->{cigar_line},
-                );
-    }
+    $self->call_within_transaction(sub {
+        $self->compara_dba->get_PeptideAlignFeatureAdaptor->rank_and_store_PAFS(@$cross_pafs);
+    });
 }
 
 

@@ -94,22 +94,22 @@ Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->new(
 
 # previous release database on one of Compara servers:
 Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->new(
-    -host => 'ens-livemirror',
-    -user => 'ensadmin',
-    -pass => $ENV{'ENSADMIN_PSW'},
-    -port => 3306,
-    -species => 'compara_prev',
-    -dbname => 'ensembl_compara_76',
-);
-
-# current release database on one of Compara servers:
-Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->new(
     -host => 'compara5',
     -user => 'ensadmin',
     -pass => $ENV{'ENSADMIN_PSW'},
     -port => 3306,
-    -species => 'compara_curr',
+    -species => 'compara_prev',
     -dbname => 'sf5_ensembl_compara_77',
+);
+
+# current release database on one of Compara servers:
+Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->new(
+    -host => 'compara4',
+    -user => 'ensadmin',
+    -pass => $ENV{'ENSADMIN_PSW'},
+    -port => 3306,
+    -species => 'compara_curr',
+    -dbname => 'mp14_ensembl_compara_78',
 );
 
 # previous ancestral database on one of Compara servers:
@@ -119,17 +119,17 @@ Bio::EnsEMBL::DBSQL::DBAdaptor->new(
     -pass => $ENV{'ENSADMIN_PSW'},
     -port => 3306,
     -species => 'ancestral_prev',
-    -dbname => 'ensembl_ancestral_76',
+    -dbname => 'ensembl_ancestral_77',
 );
 
 # current ancestral database on one of Compara servers:
 Bio::EnsEMBL::DBSQL::DBAdaptor->new(
-    -host => 'compara5',
+    -host => 'compara4',
     -user => 'ensadmin',
     -pass => $ENV{'ENSADMIN_PSW'},
     -port => 3306,
     -species => 'ancestral_curr',
-    -dbname => 'sf5_ensembl_ancestral_77',
+    -dbname => 'mp14_ensembl_ancestral_78',
 );
 
 # ensembl production:
@@ -159,7 +159,7 @@ Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->new( ## HAS TO BE CREATED (FINAL DB)
     -pass => $ENV{'ENSADMIN_PSW'},
     -port => 3306,
     -species => 'compara_staging',
-    -dbname => 'ensembl_compara_77',
+    -dbname => 'ensembl_compara_78',
 );
 
 

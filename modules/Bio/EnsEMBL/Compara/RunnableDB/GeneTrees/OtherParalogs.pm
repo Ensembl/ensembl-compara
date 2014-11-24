@@ -70,14 +70,6 @@ use Bio::EnsEMBL::Compara::Graph::Link;
 use base ('Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::OrthoTree');
 
 
-sub param_defaults {
-    return {
-            'tag_split_genes'       => 0,
-            'store_homologies'      => 1,
-            'homoeologous_genome_dbs'  => [],
-    };
-}
-
 sub fetch_input {
     my $self = shift;
     $self->SUPER::fetch_input;
@@ -104,7 +96,7 @@ sub fetch_input {
 
 sub write_output {
     my $self = shift @_;
-
+    $self->run_analysis;
 }
 
 
@@ -120,12 +112,8 @@ sub run_analysis {
     my $starttime = time()*1000;
     my $gene_tree = $self->param('gene_tree');
 
-    print "Calculating ancestor species hash\n" if ($self->debug);
-    $self->get_ancestor_species_hash($gene_tree);
-
     my $tmp_time = time();
     print "build paralogs graph\n" if ($self->debug);
-    $gene_tree->print_tree if $self->debug;
     my $ngenepairlinks = $self->rec_add_paralogs($gene_tree);
     print "$ngenepairlinks pairings\n" if ($self->debug);
 
@@ -162,6 +150,7 @@ sub rec_add_paralogs {
             $ancestor->store_tag('duplication_confidence_score', 0);
         } else {
             $ancestor->store_tag('node_type', 'speciation');
+            $ancestor->delete_tag('duplication_confidence_score');
         }
         print "setting node_type to ", $ancestor->get_tagvalue('node_type'), "\n" if ($self->debug);
     }
@@ -187,6 +176,39 @@ sub rec_add_paralogs {
     $ngenepairlinks += $self->rec_add_paralogs($child2);
     return $ngenepairlinks;
 }
+
+
+=head2 duplication_confidence_score
+
+    Super-trees lack the duplication confidence scores, and we have to compute them here
+
+=cut
+
+sub duplication_confidence_score {
+  my $self = shift;
+  my $ancestor = shift;
+
+  # This assumes bifurcation!!! No multifurcations allowed
+  my ($child_a, $child_b, $dummy) = @{$ancestor->children};
+  $self->throw("tree is multifurcated in duplication_confidence_score\n") if (defined($dummy));
+  my @child_a_gdbs = keys %{$self->get_ancestor_species_hash($child_a)};
+  my @child_b_gdbs = keys %{$self->get_ancestor_species_hash($child_b)};
+  my %seen = ();  my @gdb_a = grep { ! $seen{$_} ++ } @child_a_gdbs;
+     %seen = ();  my @gdb_b = grep { ! $seen{$_} ++ } @child_b_gdbs;
+  my @isect = my @diff = my @union = (); my %count;
+  foreach my $e (@gdb_a, @gdb_b) { $count{$e}++ }
+  foreach my $e (keys %count) {
+    push(@union, $e); push @{ $count{$e} == 2 ? \@isect : \@diff }, $e;
+  }
+
+  my $duplication_confidence_score = 0;
+  my $scalar_isect = scalar(@isect);
+  my $scalar_union = scalar(@union);
+  $duplication_confidence_score = (($scalar_isect)/$scalar_union) unless (0 == $scalar_isect);
+
+  $ancestor->store_tag("duplication_confidence_score", $duplication_confidence_score) unless ($self->param('_readonly'));
+}
+
 
 
 =head2 get_ancestor_species_hash

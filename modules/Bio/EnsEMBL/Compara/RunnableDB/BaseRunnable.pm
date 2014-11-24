@@ -166,6 +166,42 @@ sub _slurp {
 }
 
 
+=head2 require_executable
+
+Checks that the parameter is defined, and that the file is executable
+
+=cut
+
+sub require_executable {
+    my ($self, $param_name) = @_;
+    my $exe = $self->param_required($param_name);
+    die "Cannot execute $param_name: '$exe'" unless(-x $exe);
+    return $exe;
+}
+
+
+=head2 call_within_transaction {
+
+Calls a method within a transaction (if "do_transactions" is set).
+Otherwise, calls it directly.
+
+=cut
+
+sub call_within_transaction {
+    my ($self, $callback, $retry, $pause) = @_;
+
+    # Make sure the same commands are inside and outside of the transaction
+    if ($self->param('do_transactions')) {
+        my $helper = Bio::EnsEMBL::Utils::SqlHelper->new(-DB_CONNECTION => $self->compara_dba->dbc);
+        return $helper->transaction(
+            -RETRY => $retry,
+            -PAUSE => $pause,
+            -CALLBACK => $callback,
+        );
+    } else {
+        return $callback->();
+    }
+}
 
 
 1;

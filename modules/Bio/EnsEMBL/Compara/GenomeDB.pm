@@ -361,19 +361,19 @@ sub taxon {
 }
 
 
-=head2 species_tree_node_id
+=head2 _species_tree_node_id
 
   Arg [1]    : (optional) int
-  Example    : $gdb->species_tree_node_id(9606);
+  Example    : $gdb->_species_tree_node_id(9606);
   Description: Getter/Setter for the ID in the "reference" species-tree of this genome_db
   Returntype : int
   Exceptions : none
-  Caller     : general
-  Status     : Stable
+  Caller     : internal
+  Status     : At risk
 
 =cut
 
-sub species_tree_node_id {
+sub _species_tree_node_id {
   my $self = shift;
   $self->{'species_tree_node_id'} = shift if (@_);
   return $self->{'species_tree_node_id'};

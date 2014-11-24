@@ -160,12 +160,13 @@ sub write_output {
 		}
 
 	    } else {
-		my $dnafrags = $self->compara_dba->get_DnaFragAdaptor->fetch_all_by_GenomeDB_region($non_ref_genome_db, 'chromosome');
-		print "num chr dnafrags for " .$non_ref_genome_db->name . " is " . @$dnafrags . "\n" if ($self->debug);
-		if (@$dnafrags == 0) {
-		    $dna_collections->{$pair_aligner->{'reference_collection_name'}}->{'include_non_reference'} = 0;
-		} else {
+#		my $dnafrags = $self->compara_dba->get_DnaFragAdaptor->fetch_all_by_GenomeDB_region($non_ref_genome_db, 'chromosome');
+#		print "num chr dnafrags for " .$non_ref_genome_db->name . " is " . @$dnafrags . "\n" if ($self->debug);
+#		if (@$dnafrags == 0) {
+		if($non_ref_genome_db->has_karyotype){
 		    $dna_collections->{$pair_aligner->{'reference_collection_name'}}->{'include_non_reference'} = 1;
+		} else {
+		    $dna_collections->{$pair_aligner->{'reference_collection_name'}}->{'include_non_reference'} = 0;
 		}
 	    }
 	}
@@ -1366,7 +1367,6 @@ sub update_dnafrags {
         AND at.code = 'toplevel'
         AND sr.seq_region_id = sra.seq_region_id
         AND sr.coord_system_id = cs.coord_system_id
-        AND cs.name != "lrg"
         AND cs.species_id =?
     };
   my $sth1 = $species_dba->dbc->prepare($sql1);

@@ -108,6 +108,7 @@ sub fetch_input {
   $self->param('inputtrees_unrooted', {});
   $self->param('inputtrees_rooted', {});
   
+  $self->_load_species_tree_string_from_db();
   $self->load_input_trees;
 
 }
@@ -131,11 +132,11 @@ sub run {
     my $input_trees = [map {$self->param('inputtrees_rooted')->{$_}} @{$self->param('ref_support')}];
     my $merged_tree = $self->run_treebest_mmerge($input_trees);
 
-    my $input_aln = $self->dumpTreeMultipleAlignmentToWorkdir($self->param('gene_tree'));
+    my $input_aln = $self->dumpTreeMultipleAlignmentToWorkdir($self->param('gene_tree'), 'fasta', {-APPEND_SPECIES_TREE_NODE_ID => 1});
     my $leafcount = scalar(@{$self->param('gene_tree')->get_all_leaves});
     $merged_tree = $self->run_treebest_branchlength_nj($input_aln, $merged_tree) if ($leafcount >= 3);
     
-    $self->parse_newick_into_tree($merged_tree, $self->param('gene_tree'));
+    $self->parse_newick_into_tree($merged_tree, $self->param('gene_tree'), $self->param('ref_support'));
 }
 
 
@@ -151,10 +152,9 @@ sub run {
 
 
 sub write_output {
-  my ($self) = @_;
+    my ($self) = @_;
 
-  $self->store_genetree($self->param('gene_tree'), $self->param('ref_support')) if (defined($self->param('inputtrees_unrooted')));
-
+    $self->store_genetree($self->param('gene_tree')) if defined $self->param('inputtrees_unrooted');
 }
 
 sub post_cleanup {
@@ -197,11 +197,12 @@ sub load_input_trees {
   for my $other_tree (@{$self->compara_dba->get_GeneTreeAdaptor->fetch_all_linked_trees($tree)}) {
     # horrible hack: we replace taxon_id with species_tree_node_id
     foreach my $leaf (@{$other_tree->get_all_leaves}) {
-        $leaf->taxon_id($leaf->genome_db->species_tree_node_id);
+        $leaf->taxon_id($leaf->genome_db->_species_tree_node_id);
     }
     print STDERR $other_tree->newick_format('ryo','%{-m}%{"_"-x}:%{d}') if ($self->debug);
     my $tag = $other_tree->clusterset_id;
     $self->param('inputtrees_unrooted')->{$tag} = $other_tree->newick_format('ryo','%{-m}%{"_"-x}:%{d}');
+    $other_tree->release_tree;
   }
 }
 

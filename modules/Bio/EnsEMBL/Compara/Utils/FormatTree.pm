@@ -27,7 +27,7 @@ limitations under the License.
 
 =cut
 
-package Bio::EnsEMBL::Compara::FormatTree;
+package Bio::EnsEMBL::Compara::Utils::FormatTree;
 
 use strict;
 use warnings;

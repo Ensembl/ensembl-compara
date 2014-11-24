@@ -73,15 +73,17 @@ sub default_options {
         'email'                 => $self->o('ENV', 'USER').'@ebi.ac.uk',
 
     # parameters that are likely to change from execution to another:
+        # It is very important to check that this value is current (commented out to make it obligatory to specify)
         #mlss_id => 40043,
-        #'do_not_reuse_list' => ['guillardia_theta'], # set this to empty or to the genome db names we should ignore
         'release'               => 10,
         'release_suffix'        => '', # set it to '' for the actual release
         'rel_with_suffix'       => $self->o('release').$self->o('release_suffix'),
 
     # custom pipeline name, in case you don't like the default one
-        'division'               => 'treefam',
-        'pipeline_name'          => $self->o('division').$self->o('rel_with_suffix').'_hom_eg'.$self->o('eg_release').'_e'.$self->o('ensembl_release'),
+		#'pipeline_name'         => $self->o('division').$self->o('rel_with_suffix').'_hom_eg'.$self->o('eg_release').'_e'.$self->o('ensembl_release'),
+		'pipeline_name'         => 'treefam_10_baboon',
+        # Tag attached to every single tree
+        'division'              => 'treefam',
 
     # dependent parameters: updating 'work_dir' should be enough
         'work_dir'              =>  '/nfs/nobackup2/xfam/treefam/ensembl/'.$self->o('ENV', 'USER').'/compara/'.$self->o('pipeline_name'),
@@ -89,19 +91,15 @@ sub default_options {
 
     # "Member" parameters:
         'allow_ambiguity_codes'     => 1,
-        'allow_pyrrolysine'         => 1,
 
     # blast parameters:
 
     # clustering parameters:
-        'outgroups'                     => {},      # affects 'hcluster_dump_input_per_genome'
 
     # tree building parameters:
         'use_raxml'                 => 1,
         'use_notung'                => 1,
         'treebreak_gene_count'      => 100000,     # affects msa_chooser
-        'mafft_gene_count'          => 200,     # affects msa_chooser
-        'mafft_runtime'             => 172800,    # affects msa_chooser
 
     # species tree reconciliation
         # you can define your own species_tree for 'treebest'. It can contain multifurcations
@@ -109,46 +107,51 @@ sub default_options {
         # you can define your own species_tree for 'notung'. It *has* to be binary
 
     # homology_dnds parameters:
-        'codeml_parameters_file'    => $self->o('ensembl_cvs_root_dir').'/ensembl-compara/scripts/homology/codeml.ctl.hash',
-        'taxlevels'                 => [],
-        'filter_high_coverage'      => 0,   # affects 'group_genomes_under_taxa'
 
     # mapping parameters:
 
     # executable locations:
-        hcluster_exe    =>  $self->o('exe_dir').'/hcluster_sg',
-        mcoffee_home    => '/nfs/panda/ensemblgenomes/external/t-coffee',
-        mafft_home      =>  '/nfs/panda/ensemblgenomes/external/mafft',
-        treebest_exe    =>  $self->o('exe_dir').'/treebest',
-        trimal_exe    =>  '/nfs/production/xfam/treefam/software/trimal/source/trimal',
-        noisy_exe     => '/nfs/production/xfam/treefam/software/Noisy-1.5.12/noisy',
-        raxml_exe    =>  '/nfs/production/xfam/treefam/software/RAxML/raxmlHPC-SSE3',
-        prottest_jar => '/nfs/production/xfam/treefam/software/ProtTest/prottest-3.4-20140123/prottest-3.4.jar',
-        quicktree_exe   =>  $self->o('exe_dir').'/quicktree',
-        buildhmm_exe    =>  $self->o('exe_dir').'/hmmbuild',
-        notung_jar    =>  '/nfs/production/xfam/treefam/software/Notung/Notung-2.6/Notung-2.6.jar',
-        codeml_exe      =>  $self->o('exe_dir').'/codeml',
-        ktreedist_exe   =>  $self->o('exe_dir').'/ktreedist',
-        'blast_bin_dir'  => '/nfs/panda/ensemblgenomes/external/ncbi-blast-2+/bin/',
+        'hcluster_exe'              => $self->o('exe_dir').'/hcluster_sg',
+        'mcoffee_home'              => '/nfs/panda/ensemblgenomes/external/t-coffee',
+        'mafft_home'                => '/nfs/panda/ensemblgenomes/external/mafft',
+        'treebest_exe'              => $self->o('exe_dir').'/treebest',
+        'notung_jar'                => '/nfs/production/xfam/treefam/software/Notung/Notung-2.6/Notung-2.6.jar',
+        'quicktree_exe'             => $self->o('exe_dir').'/quicktree',
+        'hmmer2_home'               => '/nfs/panda/ensemblgenomes/external/hmmer-2/bin/',
+        'codeml_exe'                => $self->o('exe_dir').'/codeml',
+        'ktreedist_exe'             => $self->o('exe_dir').'/ktreedist',
+        'blast_bin_dir'             => '/nfs/panda/ensemblgenomes/external/ncbi-blast-2+/bin/',
+        'pantherScore_path'         => '/nfs/production/xfam/treefam/software/pantherScore1.03/',
+        'trimal_exe'                => '/nfs/production/xfam/treefam/software/trimal/source/trimal',
+        'noisy_exe'                 => '/nfs/production/xfam/treefam/software/Noisy-1.5.12/noisy',
+        'raxml_exe'                 => '/nfs/production/xfam/treefam/software/RAxML/raxmlHPC-SSE3',
+        'raxml_pthreads_exe'        => '/nfs/production/xfam/treefam/software/RAxML/raxmlHPC-PTHREADS-SSE3',
+        'examl_exe_avx'             => '/nfs/production/xfam/treefam/software/ExaML/examl',
+        'examl_exe_sse3'            => '/nfs/production/xfam/treefam/software/ExaML/examl',
+        'parse_examl_exe'           => '/nfs/production/xfam/treefam/software/ExaML/parse-examl',
+        'prottest_jar'              => '/nfs/production/xfam/treefam/software/ProtTest/prottest-3.4-20140123/prottest-3.4.jar',
 
     # HMM specific parameters (set to 0 or undef if not in use)
-        'hmm_clustering'            => 1, ## by default run blastp clustering
-        'cm_file_or_directory'      => '/nfs/nobackup2/xfam/treefam/datasets/panhmms/current_release/',
-        'hmm_library_basedir'       => '/nfs/nobackup2/xfam/treefam/datasets/panhmms/current_release/',
-        'pantherScore_path'         => '/nfs/production/xfam/treefam/software/pantherScore1.03/',
-        'hmmer_path'                => '/nfs/production/xfam/treefam/software/hmmer-2.3.2/bin/',
+       # List of directories that contain Panther-like databases (with books/ and globals/)
+       # It requires two more arguments for each file: the name of the library, and whether subfamilies should be loaded
+       'panther_like_databases'  => [ ["/nfs/nobackup2/xfam/treefam/datasets/panhmms/just_panther_treefam/", "just_panther_treefam", 1], ],
 
+       # List of MultiHMM files to load (and their names)
+
+       # Dumps coming from InterPro
 
     # hive_capacity values for some analyses:
-        'reuse_capacity'            =>   4,
+        'reuse_capacity'            =>   3,
         'blast_factory_capacity'    =>  50,
         'blastp_capacity'           => 200,
+        'blastpu_capacity'          => 150,
         'mcoffee_capacity'          => 200,
         'split_genes_capacity'      => 150,
         'alignment_filtering_capacity'  => 200,
         'prottest_capacity'         => 200,
         'treebest_capacity'         => 200,
         'raxml_capacity'            => 200,
+        'examl_capacity'            => 400,
         'notung_capacity'           => 100,
         'ortho_tree_capacity'       => 200,
         'ortho_tree_annot_capacity' => 300,
@@ -261,34 +264,52 @@ sub default_options {
         #'prev_rel_db' => 'mysql://treefam_ro:treefam_ro@mysql-treefam-prod:4401/treefam_production_9_69',
         'prev_rel_db' => 'mysql://admin:'.$self->o('password').'@mysql-treefam-prod:4401/treefam_production_9_69',
 
+        # How will the pipeline create clusters (families) ?
+        # Possible values: 'blastp' (default), 'hmm', 'hybrid'
+        #   blastp means that the pipeline will run a all-vs-all blastp comparison of the proteins and run hcluster to create clusters. This can take a *lot* of compute
+        #   hmm means that the pipeline will run an HMM classification
+        #   hybrid is like "hmm" except that the unclustered proteins go to a all-vs-all blastp + hcluster stage
+        'clustering_mode'           => 'hmm',
+
+        # How much the pipeline will try to reuse from "prev_rel_db"
+        # Possible values: 'clusters' (default), 'blastp', 'members'
+        #   clusters means that the members, the blastp hits and the clusters are copied over. In this case, the blastp hits are actually not copied over if "skip_blast_copy_if_possible" is set
+        #   blastp means that only the members and the blastp hits are copied over
+        #   members means that only the members are copied over
+        # If all the species can be reused, and if the reuse_level is "clusters", do we really want to copy all the peptide_align_feature tables ? They can take a lot of space and are not used in the pipeline
+
     };
 }
 
 
-
 sub resource_classes {
-  my ($self) = @_;
-  return {
-         'default'      => {'LSF' => '-q production-rh6' },
+    my ($self) = @_;
+    return {
+        %{$self->SUPER::resource_classes},  # inherit 'default' from the parent class
+
+         'default'      => {'LSF' => '-q production-rh6 -M100   -R"select[mem>100]   rusage[mem=100]"' },
          '250Mb_job'    => {'LSF' => '-q production-rh6 -M250   -R"select[mem>250]   rusage[mem=250]"' },
          '500Mb_job'    => {'LSF' => '-q production-rh6 -M500   -R"select[mem>500]   rusage[mem=500]"' },
          '1Gb_job'      => {'LSF' => '-q production-rh6 -M1000  -R"select[mem>1000]  rusage[mem=1000]"' },
-         '4Gb_job'      => {'LSF' => '-q production-rh6 -M4000  -R"select[mem>4000]  rusage[mem=4000]"' },
-         '4Gb_16c_job'  => {'LSF' => '-q production-rh6 -M4000  -R"select[mem>4000]  rusage[mem=4000]" -n 16' },
          '2Gb_job'      => {'LSF' => '-q production-rh6 -M2000  -R"select[mem>2000]  rusage[mem=2000]"' },
+         '4Gb_job'      => {'LSF' => '-q production-rh6 -M4000  -R"select[mem>4000]  rusage[mem=4000]"' },
          '8Gb_job'      => {'LSF' => '-q production-rh6 -M8000  -R"select[mem>8000]  rusage[mem=8000]"' },
          '16Gb_job'     => {'LSF' => '-q production-rh6 -M16000 -R"select[mem>16000] rusage[mem=16000]"' },
-         '16Gb_16c_job' => {'LSF' => '-q production-rh6 -M16000 -R"select[mem>16000] rusage[mem=16000]" -n 16' },
          '32Gb_job'     => {'LSF' => '-q production-rh6 -M32000 -R"select[mem>32000] rusage[mem=32000]"' },
          '64Gb_job'     => {'LSF' => '-q production-rh6 -M64000 -R"select[mem>64000] rusage[mem=64000]"' },
-         'urgent_hcluster'     => {'LSF' => '-q production-rh6 -M32000 -R"select[mem>32000] rusage[mem=32000]"' },
+
+         '16Gb_16c_job' => {'LSF' => '-q production-rh6 -n 16 -C0 -M16000 -R"select[mem>16000] rusage[mem=16000]"' },
+         '64Gb_16c_job' => {'LSF' => '-q production-rh6 -n 16 -C0 -M64000 -R"select[mem>64000] rusage[mem=64000]"' },
+
+         '4Gb_64c_mpi'  => {'LSF' => '-q mpi -n 64 -a openmpi -M4000  -R"select[mem>4000]  rusage[mem=4000]  same[model] span[ptile=4]"' },
+         '16Gb_64c_mpi' => {'LSF' => '-q mpi -n 64 -a openmpi -M16000 -R"select[mem>16000] rusage[mem=16000] same[model] span[ptile=4]"' },
   };
 }
 
-sub pipeline_analyses {
+
+sub tweak_analyses {
     my $self = shift;
-    my $all_analyses = $self->SUPER::pipeline_analyses(@_);
-    my %analyses_by_name = map {$_->{'-logic_name'} => $_} @$all_analyses;
+    my $analyses_by_name = shift;
 
     ## Extend this section to redefine the resource names of some analysis
     my %overriden_rc_names = (
@@ -299,10 +320,6 @@ sub pipeline_analyses {
         'split_genes'               => '2Gb_job',
         'split_genes_himem'         => '8Gb_job',
         'trimal'                    => '4Gb_job',
-        'prottest'                  => '4Gb_16c_job',
-        'prottest_himem'            => '16Gb_16c_job',
-        'raxml'                     => '1Gb_job',
-        'raxml_himem'               => '8Gb_job',
         'notung'                    => '4Gb_job',
         'notung_himem'              => '32Gb_job',
         'ortho_tree'                => '2Gb_job',
@@ -316,23 +333,22 @@ sub pipeline_analyses {
         'raxml_epa_longbranches_himem'  => '16Gb_job',
     );
     foreach my $logic_name (keys %overriden_rc_names) {
-        $analyses_by_name{$logic_name}->{'-rc_name'} = $overriden_rc_names{$logic_name};
+        $analyses_by_name->{$logic_name}->{'-rc_name'} = $overriden_rc_names{$logic_name};
     }
 
     # Other parameters that have to be set
-    $analyses_by_name{'notung'}->{'-parameters'}{'notung_memory'} = 3500;
-    $analyses_by_name{'notung_himem'}->{'-parameters'}{'notung_memory'} = 29000;
-    $analyses_by_name{'prottest'}->{'-parameters'}{'prottest_memory'} = 3500;
-    $analyses_by_name{'prottest'}->{'-parameters'}{'n_cores'} = 16;
-    $analyses_by_name{'prottest'}->{'-parameters'}{'java'} = '/usr/bin/java';
-    $analyses_by_name{'prottest_himem'}->{'-parameters'}{'prottest_memory'} = 14500;
-    $analyses_by_name{'prottest_himem'}->{'-parameters'}{'n_cores'} = 16;
-    $analyses_by_name{'prottest_himem'}->{'-parameters'}{'java'} = '/usr/bin/java';
-    $analyses_by_name{'mcoffee'}->{'-parameters'}{'cmd_max_runtime'} = 129600;
-    $analyses_by_name{'mcoffee_himem'}->{'-parameters'}{'cmd_max_runtime'} = 129600;
-
-    return $all_analyses;
+    $analyses_by_name->{'notung'}->{'-parameters'}{'notung_memory'} = 3500;
+    $analyses_by_name->{'notung_himem'}->{'-parameters'}{'notung_memory'} = 29000;
+    $analyses_by_name->{'prottest'}->{'-parameters'}{'prottest_memory'} = 3500;
+    $analyses_by_name->{'prottest'}->{'-parameters'}{'n_cores'} = 16;
+    $analyses_by_name->{'prottest'}->{'-parameters'}{'java'} = '/usr/bin/java';
+    $analyses_by_name->{'prottest_himem'}->{'-parameters'}{'prottest_memory'} = 14500;
+    $analyses_by_name->{'prottest_himem'}->{'-parameters'}{'n_cores'} = 16;
+    $analyses_by_name->{'prottest_himem'}->{'-parameters'}{'java'} = '/usr/bin/java';
+    $analyses_by_name->{'mcoffee'}->{'-parameters'}{'cmd_max_runtime'} = 129600;
+    $analyses_by_name->{'mcoffee_himem'}->{'-parameters'}{'cmd_max_runtime'} = 129600;
 }
 
 
 1;
+

@@ -38,19 +38,6 @@ as input create a HMMER HMM profile
 input_id/parameters format eg: "{'gene_tree_id'=>1234}"
     gene_tree_id : use 'id' to fetch a cluster from the ProteinTree
 
-=head1 SYNOPSIS
-
-my $db           = Bio::EnsEMBL::Compara::DBAdaptor->new($locator);
-my $buildhmm = Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::BuildHMM->new
-  (
-   -db         => $db,
-   -input_id   => $input_id,
-   -analysis   => $analysis
-  );
-$buildhmm->fetch_input(); #reads from DB
-$buildhmm->run();
-$buildhmm->write_output(); #writes to DB
-
 =head1 AUTHORSHIP
 
 Ensembl Team. Individual contributions can be found in the GIT log.
@@ -67,15 +54,20 @@ package Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::BuildHMM;
 use strict;
 
 use Bio::EnsEMBL::Compara::AlignedMemberSet;
-use Bio::EnsEMBL::Compara::HMMProfile;
 
-use base ('Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::StoreTree', 'Bio::EnsEMBL::Compara::RunnableDB::RunCommand');
+use base ('Bio::EnsEMBL::Compara::RunnableDB::ComparaHMM::LoadModels', 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::StoreTree', 'Bio::EnsEMBL::Compara::RunnableDB::RunCommand');
 
 sub param_defaults {
     return {
-            'cdna'                  => 0,
+        'cdna'              => 0,
+
+        'hmmer_version'     => 2,       # 2 or 3
+        'hmmbuild_exe'      => '#hmmer_home#/hmmbuild',
+        'hmmcalibrate_exe'  => '#hmmer_home#/hmmcalibrate',
+        'hmmemit_exe'       => '#hmmer_home#/hmmemit',
     };
 }
+
 
 
 sub fetch_input {
@@ -86,7 +78,9 @@ sub fetch_input {
                                         or die "Could not fetch protein_tree with gene_tree_id='$protein_tree_id'";
     $self->param('protein_tree', $protein_tree);
 
-    my $hmm_type = $self->param('cdna') ? 'dna' : 'aa';
+    my $hmm_type = 'tree_hmm_';
+    $hmm_type .= $self->param('cdna') ? 'dna' : 'aa';
+    $hmm_type .= '_v'.$self->param_required('hmmer_version');
 
     if ($self->param('notaxon')) {
         $hmm_type .= "_notaxon" . "_" . $self->param('notaxon');
@@ -94,9 +88,9 @@ sub fetch_input {
     if ($self->param('taxon_ids')) {
         $hmm_type .= "_" . join(':', @{$self->param('taxon_ids')});
     }
-    $self->param('hmm_type', $hmm_type);
+    $self->param('type', $hmm_type);
 
-    my $members = $self->compara_dba->get_AlignedMemberAdaptor->fetch_all_by_GeneTree($protein_tree);
+    my $members = $protein_tree->alignment->get_all_Members;
     if ($self->param('notaxon')) {
         my $newmembers = [];
         foreach my $member (@$members) {
@@ -118,16 +112,15 @@ sub fetch_input {
     }
 
     if (scalar @$members < 2) {
-        $self->input_job->incomplete(0);
-        die "No HMM will be buid (only ", scalar @$members, ") members\n";
+        $self->complete_early(sprintf('No HMM will be buid (only %d members).', scalar(@$members)));
     }
 
     $self->param('protein_align', Bio::EnsEMBL::Compara::AlignedMemberSet->new(-dbid => $self->param('gene_tree_id'), -members => $members));
 
-    my $buildhmm_exe = $self->param_required('buildhmm_exe');
-    die "Cannot execute '$buildhmm_exe'" unless(-x $buildhmm_exe);
+    $self->require_executable('hmmbuild_exe');
+    $self->require_executable('hmmcalibrate_exe') if $self->param('hmmer_version') eq '2';
+    $self->require_executable('hmmemit_exe');
 
-    return
 }
 
 
@@ -162,21 +155,9 @@ sub run {
 sub write_output {
     my $self = shift @_;
 
-    $self->store_hmmprofile;
+    $self->store_hmmprofile($self->param('hmm_file'), $self->param('gene_tree_id'));
 }
 
-
-sub post_cleanup {
-  my $self = shift;
-
-  if($self->param('protein_tree')) {
-    printf("BuildHMM::post_cleanup  releasing tree\n") if($self->debug);
-    $self->param('protein_tree')->release_tree;
-    $self->param('protein_tree', undef);
-  }
-
-  $self->SUPER::post_cleanup if $self->can("SUPER::post_cleanup");
-}
 
 
 ##########################################
@@ -189,50 +170,56 @@ sub post_cleanup {
 sub run_buildhmm {
     my $self = shift;
 
-    my $stk_file = $self->dumpAlignedMemberSetAsStockholm($self->param('protein_align'));
-    my $hmm_file = $self->param('hmm_file', $stk_file . '_hmmbuild.hmm');
+    my $aln_file = $self->dumpTreeMultipleAlignmentToWorkdir($self->param('protein_align'), $self->param('hmmer_version') == 2 ? 'fasta' : 'stockholm');
+    my $hmm_file = $self->param('hmm_file', $aln_file . '_hmmbuild.hmm');
 
     ## as in treefam
     # $hmmbuild --amino -g -F $file.hmm $file >/dev/null
     my $cmd = join(' ',
-            $self->param('buildhmm_exe'),
-            ($self->param('cdna') ? '--dna' : '--amino'),
+            $self->param('hmmbuild_exe'),
+            ($self->param('cdna') ? ($self->param_required('hmmer_version') eq '2' ? '--nucleic' : '--dna') : '--amino'),
+            $self->param_required('hmmer_version') eq '2' ? '-F' : '',
             $hmm_file,
-            $stk_file
+            $aln_file
     );
     my $cmd_out = $self->run_command($cmd);
-    die 'Could not run $buildhmm_exe: ', $cmd_out->out if ($cmd_out->exit_code);
+    die sprintf("Could not run hmmbuild:\nSTDOUT %s\nSTDERR %s\n", $cmd_out->out, $cmd_out->err) if ($cmd_out->exit_code);
 
-    $self->param('protein_tree')->store_tag('BuildHMM_runtime_msec', $cmd_out->runtime_msec);
+    my $runtime_msec = $cmd_out->runtime_msec;
+    if ($self->param_required('hmmer_version') eq '2') {
+        my $success = 0;
+        my $num;
+        my $use_cpu_option = 1;
+        do {
+            $cmd = join(' ',
+                $self->param('hmmcalibrate_exe'),
+                $use_cpu_option ? '--cpu 1' : '',
+                $num ? sprintf(' --num %d', $num) : '',
+                $hmm_file);
+            my $cmd_out2 = $self->run_command($cmd);
+            if ($cmd_out2->exit_code) {
+                if ($cmd_out2->err =~ /fit failed; --num may be set too small/) {
+                    $num = 5000 unless $num; # default in hmmcalibrate
+                    $num *= 3;
+                    if ($num > 1e8) {
+                        $self->input_job->transient_error(0);
+                        die "Cannot calibrate the HMM (tried --num values up until 1e8)";
+                    }
+                    $self->warning("Increasing --num to $num");
+                } elsif ($cmd_out2->err =~ /Posix threads support is not compiled into HMMER/) {
+                    $use_cpu_option = 0;
+                } else {
+                    die sprintf("Could not run hmmcalibrate\n%s\n%s", $cmd_out2->out, $cmd_out2->err);
+                }
+            } else {
+                $success = 1;
+            }
+            $runtime_msec += $cmd_out2->runtime_msec
+        } until ($success);
+    }
+
+    $self->param('protein_tree')->store_tag('BuildHMM_runtime_msec', $runtime_msec);
 }
 
-
-########################################################
-#
-# ProteinTree input/output section
-#
-########################################################
-
-sub store_hmmprofile {
-  my $self = shift;
-  my $hmm_file =  $self->param('hmm_file');
-
-  #parse hmmer file
-  print("load from file $hmm_file\n") if($self->debug);
-  my $hmm_text = $self->_slurp($hmm_file);
-
-#  my $model_id = sprintf('%d_%s', $self->param('gene_tree_id'), $self->param('hmm_type'));
-  my $model_id = $self->param('gene_tree_id');
-  my $type = "tree_hmm_" . $self->param('hmm_type');
-
-  my $hmmProfile = Bio::EnsEMBL::Compara::HMMProfile->new();
-  $hmmProfile->model_id($model_id);
-  $hmmProfile->name($model_id);
-  $hmmProfile->type($type);
-  $hmmProfile->profile($hmm_text);
-
-  $self->compara_dba->get_HMMProfileAdaptor()->store($hmmProfile);
-
-}
 
 1;

@@ -75,8 +75,6 @@ use strict;
 use IO::File;
 use File::Basename;
 
-use Bio::AlignIO;
-
 use Bio::EnsEMBL::Compara::Graph::NewickParser;
 use Bio::EnsEMBL::Compara::GeneTree;
 use Bio::EnsEMBL::Compara::GeneTreeNode;
@@ -105,8 +103,7 @@ sub fetch_input {
     # We reload the cigar lines in case the subtrees are partially written
     $self->param('cigar_lines', $self->compara_dba->get_AlignedMemberAdaptor->fetch_all_by_gene_align_id($gene_tree->gene_align_id));
 
-    my $exe = $self->param_required('quicktree_exe');
-    die "Cannot execute '$exe'" unless (-x $exe);
+    $self->require_executable('quicktree_exe');
 
     ## 'tags_to_copy' can also be set
 }
@@ -233,7 +230,7 @@ sub post_cleanup {
 sub do_quicktree_loop {
     my $self = shift;
     my $supertree_root = shift;
-    my $input_aln = $self->dumpAlignedMemberSetAsStockholm($supertree_root->children->[0]);
+    my $input_aln = $self->dumpTreeMultipleAlignmentToWorkdir($supertree_root->children->[0]->get_AlignedMemberSet(), 'stockholm');
     my $quicktree_newick_string = $self->run_quicktreebreak($input_aln);
     my $newtree = Bio::EnsEMBL::Compara::Graph::NewickParser::parse_newick_into_tree($quicktree_newick_string);
     my @todo = ();

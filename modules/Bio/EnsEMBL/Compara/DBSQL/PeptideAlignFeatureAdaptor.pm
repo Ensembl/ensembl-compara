@@ -318,43 +318,37 @@ sub fetch_selfhit_by_qmember_id {
 #
 #############################
 
-sub store {
+sub rank_and_store_PAFS {
   my ($self, @features)  = @_;
 
-  my @pafList = ();
-
-  foreach my $feature (@features) {
-    if($feature->isa('Bio::EnsEMBL::BaseAlignFeature')) {
-      #displayHSP_short($feature);
-      my $pepFeature = $self->_create_PAF_from_BaseAlignFeature($feature);
-      #$pepFeature->display_short();
-      push @pafList, $pepFeature;
-    }
-    elsif($feature->isa('Bio::EnsEMBL::Compara::PeptideAlignFeature')) {
-      push @pafList, $feature;
-    }
+  my %by_query = ();
+  foreach my $f (@features) {
+      push @{$by_query{$f->query_genome_db_id}{$f->query_member_id}}, $f;
+  };
+  foreach my $query_genome_db_id (keys %by_query) {
+      foreach my $sub_features (values %{$by_query{$query_genome_db_id}}) {
+          my @pafList = sort sort_by_score_evalue_and_pid @$sub_features;
+          my $rank = 1;
+          my $prevPaf = undef;
+          foreach my $paf (@pafList) {
+              $rank++ if($prevPaf and !pafs_equal($prevPaf, $paf));
+              $paf->hit_rank($rank);
+              $prevPaf = $paf;
+          }
+          $self->store_PAFS(@pafList);
+      }
   }
-
-  @pafList = sort sort_by_score_evalue_and_pid @pafList;
-  my $rank=1;
-  my $prevPaf = undef;
-  foreach my $paf (@pafList) {
-    $rank++ if($prevPaf and !pafs_equal($prevPaf, $paf));
-    $paf->hit_rank($rank);
-    $prevPaf = $paf;
-  }
-
-  $self->_store_PAFS(@pafList);
 }
 
 
-sub _store_PAFS {
-  my ($self, @out)  = @_;
+## WARNING: all the features are supposed to come from the same query_genome_db_id !
+sub store_PAFS {
+  my ($self, @features)  = @_;
 
-  return unless(@out and scalar(@out));
+  return unless(@features);
 
   # Query genome db id should always be the same
-  my $first_qgenome_db_id = $out[0]->query_genome_db_id;
+  my $first_qgenome_db_id = $features[0]->query_genome_db_id;
 
   my $gdb = $self->db->get_GenomeDBAdaptor->fetch_by_dbID($first_qgenome_db_id);
   my $tbl_name = 'peptide_align_feature_'.$first_qgenome_db_id;
@@ -363,23 +357,13 @@ sub _store_PAFS {
   my $query = sprintf('INSERT INTO %s (%s) VALUES (%s)', $tbl_name, join(',', @stored_columns), join(',', map {'?'} @stored_columns) );
   my $sth = $self->prepare($query);
 
-  foreach my $paf (@out) {
-    if($paf->isa('Bio::EnsEMBL::Compara::PeptideAlignFeature')) {
-
+  foreach my $paf (@features) {
       # print STDERR "== ", $paf->query_member_id, " - ", $paf->hit_member_id, "\n";
-      my $qgenome_db_id = $paf->query_genome_db_id;
-      $qgenome_db_id = 0 unless($qgenome_db_id);
-      my $hgenome_db_id = $paf->hit_genome_db_id;
-      $hgenome_db_id = 0 unless($hgenome_db_id);
-      if (not $paf->query_member) { throw("PAF query member undefined\n"); }
-      # Null_cigar option for leaner paf tables
-      $paf->cigar_line('') if (defined $paf->{null_cigar});
 
-      $sth->execute($paf->query_member_id, $paf->hit_member_id, $qgenome_db_id, $hgenome_db_id,
+      $sth->execute($paf->query_member_id, $paf->hit_member_id, $paf->query_genome_db_id, $paf->hit_genome_db_id,
           $paf->qstart, $paf->qend, $paf->hstart, $paf->hend,
           $paf->score, $paf->evalue, $paf->alignment_length,
           $paf->identical_matches, $paf->perc_ident, $paf->positive_matches, $paf->perc_pos, $paf->hit_rank, $paf->cigar_line);
-    }
   }
 }
 
@@ -412,10 +396,10 @@ sub displayHSP {
 
   print("=> $paf\n");
   print("pep_align_feature :\n" .
-    " seqname           : " . $paf->seqname . "\n" .
+    " seq_member_id     : " . $paf->seq_member_id . "\n" .
     " start             : " . $paf->start . "\n" .
     " end               : " . $paf->end . "\n" .
-    " hseqname          : " . $paf->hseqname . "\n" .
+    " hseq_member_id    : " . $paf->hseq_member_id . "\n" .
     " hstart            : " . $paf->hstart . "\n" .
     " hend              : " . $paf->hend . "\n" .
     " score             : " . $paf->score . "\n" .
@@ -439,8 +423,8 @@ sub displayHSP_short {
   my $perc_ident = int($paf->identical_matches*100/$paf->alignment_length);
   my $perc_pos = int($paf->positive_matches*100/$paf->alignment_length);
 
-  print("HSP ".$paf->seqname."(".$paf->start.",".$paf->end.")".
-        "\t" . $paf->hseqname. "(".$paf->hstart.",".$paf->hend.")".
+  print("HSP ".$paf->seq_member_id."(".$paf->start.",".$paf->end.")".
+        "\t" . $paf->hseq_member_id. "(".$paf->hstart.",".$paf->hend.")".
         "\t" . $paf->score .
         "\t" . $paf->alignment_length .
         "\t" . $perc_ident . 

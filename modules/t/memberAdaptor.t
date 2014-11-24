@@ -35,6 +35,10 @@ my $gdba = $compara_dba->get_GenomeDBAdaptor;
 my $hs_gdb = $gdba->fetch_by_name_assembly($ref_species,$human_assembly);
 $hs_gdb->db_adaptor($hs_dba);
 
+is($ref_species, 'homo_sapiens');
+
+=pod
+
 my $ma = $compara_dba->get_MemberAdaptor;
 
 my ($member_id, $stable_id, $version, $source_name, $taxon_id, $genome_db_id, $sequence_id,
@@ -45,7 +49,6 @@ subtest "Test fetch methods", sub {
 
     ok(1);
 
-=pod
 
     my $member = $ma->fetch_by_source_stable_id("ENSEMBLGENE", $stable_id);
     
@@ -109,10 +112,11 @@ subtest "Test fetch methods", sub {
     
     $multi->restore('compara', 'member');
 
-=cut
 
     done_testing();
 };
+
+=cut
 
 done_testing();
 

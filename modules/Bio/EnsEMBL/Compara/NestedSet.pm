@@ -152,7 +152,9 @@ sub release_tree {
 
 
 sub dbID {
-    throw("NestedSet objects do not implement dbID()");
+    my ($self) = @_;
+#    throw("NestedSet objects do not implement dbID()");
+    return $self->node_id;
 }
 
 #################################################
@@ -938,7 +940,7 @@ sub string_node {
             $str .= "DUP ";
         }
        my $sis = $self->get_tagvalue('duplication_confidence_score', 0) * 100;
-       $str .= sprintf('SIS=%d ', $sis);
+       $str .= sprintf('SIS=%.2f ', $sis);
     } elsif ($isdub) {
         $str .= "DD  ";
        $str .= 'SIS=0 ';
@@ -957,7 +959,7 @@ sub string_node {
   Example     : $this_node->newick_format("full");
   Description : Prints this tree in Newick format. Several modes are
                 available: full, display_label_composite, simple, species,
-                species_short_name, ncbi_taxon, ncbi_name, njtree and phylip
+                species_short_name, ncbi_taxon, ncbi_name, phylip
   Returntype  : string
   Exceptions  :
   Caller      : general
@@ -982,7 +984,6 @@ my %ryo_modes = (
     'int_node_id' => '%{-n}%{o-}:%{d}',
     'full_web' => '%{n-}%{-n|p}%{"_"-s"_"}%{":"d}',
     'phylip' => '%21{n,}:%{d}',
-    'njtree' => '%{o}%{-T(is_incomplete)|E"*"}%{-T(is_incomplete,0,*)}',
 );
 
 my $nhx0 = '%{n-_|C(taxonomy_level)}:%{d}';
@@ -1082,8 +1083,8 @@ sub _internal_newick_format_ryo {
     my ($self, $ryo_string) = @_;
     my $newick_str;
     eval {
-        use Bio::EnsEMBL::Compara::FormatTree;
-        my $ryo_formatter = Bio::EnsEMBL::Compara::FormatTree->new($ryo_string);
+        use Bio::EnsEMBL::Compara::Utils::FormatTree;
+        my $ryo_formatter = Bio::EnsEMBL::Compara::Utils::FormatTree->new($ryo_string);
         $newick_str = $ryo_formatter->format_newick($self);
     };
     if ($@) {

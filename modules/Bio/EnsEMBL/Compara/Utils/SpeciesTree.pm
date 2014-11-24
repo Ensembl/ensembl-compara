@@ -48,7 +48,11 @@ package Bio::EnsEMBL::Compara::Utils::SpeciesTree;
 use strict;
 use warnings;
 
+use LWP::Simple;
+use URI::Escape;
+
 use Bio::EnsEMBL::Utils::Argument;
+use Bio::EnsEMBL::Utils::Scalar qw(:assert);
 use Bio::EnsEMBL::Compara::NestedSet;
 use Bio::EnsEMBL::Compara::SpeciesTreeNode;
 
@@ -61,12 +65,13 @@ use Bio::EnsEMBL::Compara::SpeciesTreeNode;
 sub create_species_tree {
     my ($self, @args) = @_;
 
-    my ($compara_dba, $no_previous, $species_set, $extrataxon_sequenced, $extrataxon_incomplete, $multifurcation_deletes_node, $multifurcation_deletes_all_subnodes) =
-        rearrange([qw(COMPARA_DBA NO_PREVIOUS SPECIES_SET EXTRATAXON_SEQUENCED EXTRATAXON_INCOMPLETE MULTIFURCATION_DELETES_NODE MULTIFURCATION_DELETES_ALL_SUBNODES)], @args);
+    my ($compara_dba, $no_previous, $species_set, $extrataxon_sequenced, $multifurcation_deletes_node, $multifurcation_deletes_all_subnodes) =
+        rearrange([qw(COMPARA_DBA NO_PREVIOUS SPECIES_SET EXTRATAXON_SEQUENCED MULTIFURCATION_DELETES_NODE MULTIFURCATION_DELETES_ALL_SUBNODES)], @args);
 
     my $taxon_adaptor = $compara_dba->get_NCBITaxonAdaptor;
     my $root;
     my @taxa_for_tree = ();
+    my %gdbs_by_taxon_id = ();
 
         # loading the initial set of taxa from genome_db:
     if(!$no_previous or $species_set) {
@@ -77,6 +82,7 @@ sub create_species_tree {
             my $taxon_name = $gdb->name;
             next if ($taxon_name =~ /ncestral/);
             push @taxa_for_tree, $gdb->taxon;
+            push @{$gdbs_by_taxon_id{$gdb->taxon_id}}, $gdb;
         }
     }
 
@@ -86,13 +92,6 @@ sub create_species_tree {
         push @taxa_for_tree, $taxon if defined $taxon;
     }
 
-
-        # loading from extrataxon_incomplete:
-    foreach my $extra_taxon (@$extrataxon_incomplete) {
-        my $taxon = $taxon_adaptor->fetch_node_by_taxon_id($extra_taxon);
-        $taxon->add_tag('is_incomplete', '1');
-        push @taxa_for_tree, $taxon;
-    }
 
     # build the tree
     foreach my $taxon (@taxa_for_tree) {
@@ -136,7 +135,29 @@ sub create_species_tree {
         }
     }
 
-    return $root->adaptor->db->get_SpeciesTreeNodeAdaptor->new_from_NestedSet($root);
+    my $stn_root = $root->adaptor->db->get_SpeciesTreeNodeAdaptor->new_from_NestedSet($root);
+
+    # We need to duplicate all the taxa that are supposed in several copies (several genome_dbs sharing the same taxon_id)
+    foreach my $taxon_id (keys %gdbs_by_taxon_id) {
+        next if scalar(@{$gdbs_by_taxon_id{$taxon_id}}) == 1;
+        my $current_nodes = $stn_root->find_nodes_by_field_value('taxon_id', $taxon_id);
+        next if scalar(@$current_nodes) == 0;
+        my %seen_gdb_ids = map {$_->genome_db_id => 1} @$current_nodes;
+        foreach my $genome_db (@{$gdbs_by_taxon_id{$taxon_id}}) {
+            next if $seen_gdb_ids{$genome_db->dbID};
+            my $current_leaf = $current_nodes->[0];
+            my $new_leaf = $current_leaf->copy();
+            $new_leaf->_complete_cast_node($current_leaf);
+            $new_leaf->genome_db_id($genome_db->dbID);
+            my $new_node = $current_leaf->copy();
+            $new_node->_complete_cast_node($current_leaf);
+            $current_leaf->parent->add_child($new_node);
+            $new_node->add_child($new_leaf);
+            $new_node->add_child($current_leaf);
+        }
+    }
+
+    return $stn_root;
 }
 
 
@@ -164,6 +185,43 @@ sub prune_tree {
     }
 
     return $input_tree;
+}
+
+
+=head2 get_timetree_estimate
+
+    Web scraping of the divergence of two taxa from the timetree.org resource.
+    Currently used to get the divergence of a new Ensembl species (see place_species.pl)
+    Do not use this method for large-scale data-mining
+
+=cut
+
+sub get_timetree_estimate {
+    my ($self, $node) = @_;
+
+    assert_ref($node, 'Bio::EnsEMBL::Compara::SpeciesTreeNode');
+    return if $node->is_leaf();
+    my @children = @{$node->children};
+    if (scalar(@children) == 1) {
+        warn sprintf("'%s' has a single child. Cannot estimate the divergence time of a *single* species.\n", $node->name);
+        return;
+    }
+
+    my $url_template = 'http://www.timetree.org/index.php?taxon_a=%s&taxon_b=%s&submit=Search';
+    my $last_page;
+
+    # For multifurcations, if a comparison fails, we can still try the other ones
+    while (my $child1 = shift @children) {
+        foreach my $child2 (@children) {
+            my $url = sprintf($url_template, uri_escape($child1->get_all_leaves()->[0]->node_name), uri_escape($child2->get_all_leaves()->[0]->node_name));
+            my $timetree_page = get($url);
+            $timetree_page =~ /<h1 style="margin-bottom: 0px;">(.*)<\/h1> Million Years Ago/;
+            return $1 if $1;
+            $last_page = $url;
+        }
+    }
+    warn sprintf("Could not get a valid answer from timetree.org for '%s' (see %s).\n", $node->name, $last_page);
+    return;
 }
 
 1;

@@ -95,20 +95,16 @@ sub fetch_input {
   $self->param('gene_tree')->preload();
 
   if ($self->check_members) {
-      $self->input_job->incomplete(0);
-      die "Ktreedist.pm: All members have the same sequence.";
+      $self->complete_early("Ktreedist.pm: All members have the same sequence.");
   }
 
   $self->load_input_trees;
 
   unless (scalar(keys %{$self->param('inputtrees_unrooted')})) {
-    $self->input_job->incomplete(0);
-    die "No trees with non-0 distances. Nothing to compute";
+    $self->complete_early("No trees with non-0 distances. Nothing to compute");
   }
 
-  my $ktreedist_exe = $self->param_required('ktreedist_exe');
-
-  die "Cannot execute '$ktreedist_exe'" unless(-x $ktreedist_exe);
+  $self->require_executable('ktreedist_exe');
 }
 
 
@@ -143,7 +139,9 @@ sub run {
 
 sub write_output {
   my $self = shift;
-  $self->store_ktreedist_score;
+  $self->call_within_transaction( sub {
+    $self->store_ktreedist_score;
+  });
 }
 
 sub post_cleanup {
