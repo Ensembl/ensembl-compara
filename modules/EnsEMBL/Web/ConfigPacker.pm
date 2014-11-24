@@ -1209,7 +1209,9 @@ sub _summarise_compara_db {
 sub _summarise_compara_alignments {
   my ($self, $dbh, $db_name, $constraint) = @_;
   my (%config, $lookup_species, @method_link_species_set_ids);
-  
+
+  my $vega = !(defined $constraint);
+
   if ($constraint) {
     $lookup_species              = join ',', map $dbh->quote($_), sort keys %$constraint;
     @method_link_species_set_ids = map keys %$_, values %$constraint;
@@ -1257,12 +1259,20 @@ sub _summarise_compara_alignments {
   }
   
   # get details of alignments
+  my @where;
+  push @where,"is_reference = 0" unless $vega;
+  if(@method_link_species_set_ids) {
+    my $mlss = join(',',@method_link_species_set_ids);
+    push @where,"ga_ref.method_link_species_set in ($mlss)";
+  }
+  my $where = '';
+  $where = "WHERE ".join(' AND ',@where) if(@where);
   $q = sprintf('
     select genomic_align_block_id, ga.method_link_species_set_id, ga.dnafrag_start, ga.dnafrag_end, ga.dnafrag_id
       from genomic_align ga_ref join dnafrag using (dnafrag_id) join genomic_align ga using (genomic_align_block_id)
-      where is_reference = 0 %s
+      %s
       order by genomic_align_block_id, ga.dnafrag_id',
-      @method_link_species_set_ids ? sprintf 'and ga_ref.method_link_species_set_id in (%s)', join ',', @method_link_species_set_ids : ''
+      $where
   );
   
   $sth = $dbh->prepare($q);
