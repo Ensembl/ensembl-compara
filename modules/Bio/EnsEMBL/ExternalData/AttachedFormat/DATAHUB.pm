@@ -44,7 +44,10 @@ sub check_data {
   my $error;
   
   $url = $self->chase_redirects($url);
-  if (ref($url) eq 'SCALAR') {
+  if (ref($url) eq 'HASH') {
+    return ($url->{'error'});
+  }
+  else {
     # try to open and use the datahub file
     # this checks that the datahub files is present and correct
     my $datahub = $self->{'datahub_adaptor'}->get_hub_info($url);
@@ -55,9 +58,6 @@ sub check_data {
     }
     my @assemblies = keys %{$datahub->{'genomes'}||{}};
     return ($error, { name => $datahub->{'details'}{'shortLabel'}, assemblies => \@assemblies});  
-  }
-  else {
-    return ($url->{'error'});
   }
 }
 
