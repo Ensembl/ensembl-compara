@@ -55,7 +55,7 @@ sub initialize {
   
   $config->{'exon_features'} = $object->Obj->get_all_Exons;
   $config->{'slices'}        = [{ slice => $slice, name => $config->{'species'} }];
-  $config->{'end_number'}    = $config->{'number'} = 1 if $config->{'line_numbering'};
+  $config->{'end_number'}    = $config->{'number'} = 1 if $config->{'line_numbering'} ne 'off';
 
   my ($sequence, $markup) = $self->get_sequence_data($config->{'slices'}, $config,$adorn);
 
@@ -63,7 +63,7 @@ sub initialize {
   if($adorn ne 'none') {
     $self->markup_variation($sequence, $markup, $config) if $config->{'snp_display'};
   }
-  $self->markup_line_numbers($sequence, $config)       if $config->{'line_numbering'};
+  $self->markup_line_numbers($sequence, $config)       if $config->{'line_numbering'} ne 'off';
   
   return ($sequence, $config);
 }

@@ -100,11 +100,11 @@ sub get_sequence_data {
   my $sequence = [];
   my @markup;
  
-  if($config->{'snp_display'} and $adorn eq 'none') {
+  if($config->{'snp_display'} ne 'off' and $adorn eq 'none') {
     push @{$config->{'loading'}||=[]},'variations';
   }
  
-  $self->set_variation_filter($config) if $config->{'snp_display'};
+  $self->set_variation_filter($config) if $config->{'snp_display'} ne 'off';
   
   $config->{'length'} ||= $slices->[0]{'slice'}->length;
   
@@ -121,7 +121,7 @@ sub get_sequence_data {
     $self->set_sequence($config, $sequence, $mk, $seq, $sl->{'name'});
     $self->set_alignments($config, $sl, $mk, $seq)      if $config->{'align'}; # Markup region changes and inserts on comparisons
     if($adorn ne 'none') {
-      $self->set_variations($config, $sl, $mk, $sequence) if $config->{'snp_display'};
+      $self->set_variations($config, $sl, $mk, $sequence) if $config->{'snp_display'} ne 'off';
     }
     $self->set_exons($config, $sl, $mk)                 if $config->{'exon_display'};
     $self->set_codons($config, $sl, $mk)                if $config->{'codons_display'};
