@@ -75,6 +75,7 @@ sub content {
                                 'Newick'    => [['newick_mode']],
                                 'NHX'       => [['nhx_mode']],
                                 'Text'      => [['scale']],
+                                'OrthoXML'  => [],
                                 'PhyloXML'  => $self->phyloxml_fields, 
                           }}];
 

@@ -189,10 +189,10 @@ sub get_export_data {
   my $hub = $self->hub;
 
   ## Fetch explicitly, as we're probably coming from a DataExport URL
-  if ($type && $type eq 'gene') {
+  if ($type && $type eq 'genetree') {
     my $cdb = $hub->param('cdb') || 'compara';
     my $gene = $self->hub->core_object('gene');
-    return $gene->get_GeneTree($cdb);
+    return $gene->get_GeneTree($cdb, 1);
   }
 
   ## ...or get alignment

@@ -93,6 +93,9 @@ sub process {
         elsif (lc($format) eq 'phyloxml') {
           $error = $self->write_phyloxml($component);
         }
+        elsif (lc($format) eq 'orthoxml') {
+          $error = $self->write_orthoxml($component);
+        }
         elsif ($is_tree) {
           $error = $self->write_tree($component);
         }
@@ -505,9 +508,9 @@ sub write_orthoxml {
   my $hub     = $self->hub;
   my $error   = undef;
   my $cdb     = $hub->param('cdb') || 'compara';
-  my $method  = ref($component) eq 'HomologAlignment' ? 'trees' : 'homologies';
+  my $method  = ref($component) =~ /HomologAlignment/ ? 'trees' : 'homologies';
 
-  my ($data)  = $component->get_export_data('gene');
+  my ($data)  = $component->get_export_data('genetree');
 
   my $handle = IO::String->new();
   my $w = Bio::EnsEMBL::Compara::Graph::OrthoXMLWriter->new(
