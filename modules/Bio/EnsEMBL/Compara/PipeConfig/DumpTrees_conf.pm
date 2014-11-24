@@ -183,7 +183,7 @@ sub pipeline_analyses {
                 |,
             },
             -input_ids => [
-                {'cmd' => 'echo "#query#" | db_cmd.pl -url #db_conn# -extra -N -extra -q" > #target_dir#/#file_name#',},
+                {'cmd' => 'echo "#query#" | db_cmd.pl -url #db_conn# -extra -N -extra -q > #target_dir#/#file_name#',},
             ],
             -flow_into => {
                 1 => { 'archive_long_files' => { 'full_name' => '#target_dir#/#file_name#' } },
