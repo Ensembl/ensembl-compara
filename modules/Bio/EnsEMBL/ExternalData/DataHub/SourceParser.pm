@@ -257,7 +257,13 @@ sub parse_file_content {
           $tracks{$id}{'signal_range'} = \@values;
         }
       } elsif ($key eq 'bigDataUrl') {
-        $tracks{$id}{$key} = $value =~ /^(ftp|https?):\/\// ? $value : "$url/$value";
+        if ($value =~ /^\//) { ## path is relative to server, not to hub.txt
+          (my $root = $url) =~ s/^(ftp|https?):\/\/([\w|-|\.]+)//;
+          $tracks{$id}{$key} = $root.$value;
+        }
+        else {
+          $tracks{$id}{$key} = $value =~ /^(ftp|https?):\/\// ? $value : "$url/$value";
+        }
       } else {
         if ($key eq 'parent' || $key =~ /^subGroup[0-9]/) {
           my @values = split /\s+/, $value;
