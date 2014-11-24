@@ -100,47 +100,57 @@ sub process {
       delete $options->{'name'};
 
       $url = $self->chase_redirects($url);
-
-      my $assemblies = $options->{'assemblies'}
+      if (ref($url) eq 'HASH') {
+        $redirect .= 'SelectFile';
+        $session->add_data(
+          type     => 'message',
+          code     => 'AttachURL',
+          message  => $url->{'error'},
+          function => '_error'
+        );
+      }
+      else {
+        my $assemblies = $options->{'assemblies'}
                         || [$hub->species_defs->get_config($hub->data_species, 'ASSEMBLY_VERSION')];
-      my ($code, @ok_assemblies);
-      my %ensembl_assemblies = %{$hub->species_defs->assembly_lookup};
+        my ($code, @ok_assemblies);
+        my %ensembl_assemblies = %{$hub->species_defs->assembly_lookup};
 
-      foreach (@$assemblies) {
+        foreach (@$assemblies) {
 
-        my ($data_species, $assembly) = @{$ensembl_assemblies{$_}||[]};         
-        if ($assembly) {
-          push @ok_assemblies, $assembly;
+          my ($data_species, $assembly) = @{$ensembl_assemblies{$_}||[]};         
+          if ($assembly) {
+            push @ok_assemblies, $assembly;
 
-          my $data = $session->add_data(
-            type        => 'url',
-            code        => join('_', md5_hex($name . $data_species . $assembly . $url), $session->session_id),
-            url         => $url,
-            name        => $name,
-            format      => $format->name,
-            style       => $format->trackline,
-            species     => $data_species,
-            assembly    => $assembly, 
-            timestamp   => time,
-            %$options,
-          );
-          if ($data_species eq $hub->species) {
-            $code = $data->{'code'};
+            my $data = $session->add_data(
+              type        => 'url',
+              code        => join('_', md5_hex($name . $data_species . $assembly . $url), $session->session_id),
+              url         => $url,
+              name        => $name,
+              format      => $format->name,
+              style       => $format->trackline,
+              species     => $data_species,
+              assembly    => $assembly, 
+              timestamp   => time,
+              %$options,
+            );
+            if ($data_species eq $hub->species) {
+              $code = $data->{'code'};
+            }
+      
+            $session->configure_user_data('url', $data);
+      
+            $object->move_to_user(type => 'url', code => $data->{'code'}) if $hub->param('save');
           }
-      
-          $session->configure_user_data('url', $data);
-      
-          $object->move_to_user(type => 'url', code => $data->{'code'}) if $hub->param('save');
-        }
-      }      
-      my $assembly_string = join(', ', @ok_assemblies);
-      %params = (
-        format    => $format->name,
-        type      => 'url',
-        name      => $name,
-        assembly  => $assembly_string,
-        code      => $code,
-      );
+        }       
+        my $assembly_string = join(', ', @ok_assemblies);
+        %params = (
+          format    => $format->name,
+          type      => 'url',
+          name      => $name,
+          assembly  => $assembly_string,
+          code      => $code,
+        );
+      }
     }
   } else {
     $redirect .= 'SelectFile';
