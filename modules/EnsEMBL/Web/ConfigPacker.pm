@@ -1263,7 +1263,7 @@ sub _summarise_compara_alignments {
   push @where,"is_reference = 0" unless $vega;
   if(@method_link_species_set_ids) {
     my $mlss = join(',',@method_link_species_set_ids);
-    push @where,"ga_ref.method_link_species_set in ($mlss)";
+    push @where,"ga_ref.method_link_species_set_id in ($mlss)";
   }
   my $where = '';
   $where = "WHERE ".join(' AND ',@where) if(@where);
