@@ -36,6 +36,12 @@ sub content {
   my $self  = shift;
   my $hub   = $self->hub;
 
+  ## Get user's current settings
+  my $viewconfig  = $hub->get_viewconfig($hub->param('component'), $hub->param('data_type'));
+
+  my $settings = $viewconfig->form_fields('export');
+
+  ## Add export-specific settings
   my $nhx_values = [];
   my $newick_values = [];
 
@@ -49,32 +55,30 @@ sub content {
   } 
 
 
-  my $settings = {
-                  'Hidden' => ['align'],
-                  'nhx_mode' => {
-                                  'type'    => 'DropDown',
-                                  'label'   => 'Mode for NHX tree dumping',
-                                  'values'  => $nhx_values,
-                                  },
-                  'newick_mode' => {
-                                  'type'    => 'DropDown',
-                                  'label'   => 'Mode for Newick tree dumping',
-                                  'values'  => $newick_values,
-                                  },
-                  'scale' => {
-                                  'type'  => 'NonNegInt',
-                                  'label' => 'Scale for text tree dump',
-                                  'value' => '150',
-                                  },
-                  %{$self->phyloxml_settings},
+  $settings->{'Hidden'} = ['align'];
+  $settings->{'nhx_mode'}     = {
+                              'type'    => 'DropDown',
+                              'label'   => 'Mode for NHX tree dumping',
+                              'values'  => $nhx_values,
+                            };
+  $settings->{'newick_mode'}  = {
+                              'type'    => 'DropDown',
+                              'label'   => 'Mode for Newick tree dumping',
+                              'values'  => $newick_values,
+                              };
+  $settings->{'scale'}        = {
+                              'type'  => 'NonNegInt',
+                              'label' => 'Scale for text tree dump',
+                              'value' => '150',
+                              };
 
-                };
 
   ## Options per format
+  my @tree_fields = qw(collapsability clusterset_id super_tree);
   my $fields_by_format = [{'Tree formats' => {
-                                'Newick'    => ['newick_mode'],
-                                'NHX'       => ['nhx_mode'],
-                                'Text'      => ['scale'],
+                                'Newick'    => ['newick_mode', @tree_fields],
+                                'NHX'       => ['nhx_mode', @tree_fields],
+                                'Text'      => ['scale', @tree_fields],
                                 'OrthoXML'  => [],
                                 'PhyloXML'  => $self->phyloxml_fields, 
                           }}];
@@ -100,6 +104,7 @@ sub default_file_name {
 }
 
 sub phyloxml_settings {
+### Needed by child module (SpeciesTree)
   return {
           'cdna' => {
                             'type'    => 'Checkbox',
