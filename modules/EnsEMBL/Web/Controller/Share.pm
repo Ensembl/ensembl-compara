@@ -289,12 +289,14 @@ sub accept {
     my $saved_config;
     my @current_configs = ($hub->config_adaptor->get_config('view_config', $view_config->code),
                             $hub->config_adaptor->get_config('image_config', $ic_type));
+    my $record_type_id  = $hub->user ? $hub->user->id : $session->create_session_id;
+
     if (scalar(@current_configs)) {
       $saved_config = $self->save_config($view_config->code, $ic_type, (
-        record_type    => 'session',
-        record_type_id => $session->create_session_id,
-        name           => $view_config->title . ' - '. $self->pretty_date(time, 'simple_datetime'),
-        description    => 'This configuration was automatically saved when you used a URL to view a shared image. It contains your configuration before you accepted the shared image.',
+        record_type     => 'session',
+        record_type_ids => [$record_type_id], 
+        name            => $view_config->title . ' - '. $self->pretty_date(time, 'simple_datetime'),
+        description     => 'This configuration was automatically saved when you used a URL to view a shared image. It contains your configuration before you accepted the shared image.',
       ));
     }
     
