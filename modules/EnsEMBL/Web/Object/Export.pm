@@ -38,8 +38,6 @@ use IO::String;
 use EnsEMBL::Web::Component::Compara_Alignments;
 use EnsEMBL::Web::Document::Table;
 use EnsEMBL::Web::SeqDumper;
-use Bio::EnsEMBL::Compara::Graph::GeneTreePhyloXMLWriter;
-use Bio::EnsEMBL::Compara::Graph::OrthoXMLWriter;
 
 use base qw(EnsEMBL::Web::Object);
 
@@ -188,32 +186,8 @@ sub config {
         [ 'vista',    'Vista Format' ]
       ]
     },
-    genetree => {
-      label => 'Gene Tree',
-      formats => [
-        [ 'phyloxml',    'PhyloXML from Compara' ],
-        [ 'phylopan',    'PhyloXML from Pan-taxonomic Compara' ]
-      ],
-      params => [
-        [ 'cdna', 'cDNA rather than protein sequence' ],
-        [ 'aligned', 'Aligned sequences with gaps' ],
-        [ 'no_sequences', 'Omit sequences' ],
-      ]
-    },
-    homologies => {
-      label => 'Homologies',
-      formats => [
-        [ 'orthoxml',    'OrthoXML from Compara' ],
-        [ 'orthopan',    'OrthoXML from Pan-taxonomic Compara' ]
-      ],
-    }  
   };
 
-if(! $self->get_object->can('get_GeneTree') ){
-	delete $self->__data->{'config'}{'genetree'};
-	delete $self->__data->{'config'}{'homologies'};
-}
-  
   my $func = sprintf 'modify_%s_options', lc $self->function;
   $self->$func if $self->can($func);
   
@@ -367,55 +341,6 @@ sub process {
   }
   
   return ($string . $html) || 'No data available';
-}
-
-sub phyloxml{
-  my ($self,$cdb) = @_;
-  my $params = $self->params;
-
-  my $object = $self->get_object;
-  return $self->string('no data') unless $object->can('get_GeneTree');
-  my $tree = $object->get_GeneTree($cdb, 1);
-
-  my $handle = IO::String->new();
-  my $w = Bio::EnsEMBL::Compara::Graph::GeneTreePhyloXMLWriter->new(
-          -SOURCE => $cdb eq 'compara' ? $SiteDefs::ENSEMBL_SITETYPE:'Ensembl Genomes',
-          -ALIGNED => $params->{'aligned'},
-          -CDNA => $params->{'cdna'},
-          -NO_SEQUENCES => $params->{'no_sequences'},
-          -HANDLE => $handle
-  ); 
-  $self->writexml($tree, $handle, $w);
-}
-
-sub orthoxml{
-  my ($self,$cdb) = @_;
-  my $params = $self->params;
-
-  my $object = $self->get_object;
-  return $self->string('no data') unless $object->can('get_GeneTree');
-  my $tree = $object->get_GeneTree($cdb);
-
-  my $handle = IO::String->new();
-  my $w = Bio::EnsEMBL::Compara::Graph::OrthoXMLWriter->new(
-          -SOURCE => $cdb eq 'compara' ? $SiteDefs::ENSEMBL_SITETYPE:'Ensembl Genomes',
-	        -SOURCE_VERSION => $SiteDefs::SITE_RELEASE_VERSION, 
-          -HANDLE => $handle,
-  ); 
-  $self->writexml($tree, $handle, $w);
-}
-
-sub writexml{
-  my ($self,$tree,$handle,$w) = @_;
-  my $hub = $self->hub;
-  $w->write_trees($tree);
-  $w->finish();
-  my $out = ${$handle->string_ref()};
-  do{
-     $out =~ s/</&lt\;/g;
-     $out =~ s/>/&gt\;/g;
-  }unless $hub->param('_format') eq 'TextGz';
-  $self->string($out);
 }
 
 sub fasta {

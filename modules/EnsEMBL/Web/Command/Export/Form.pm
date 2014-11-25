@@ -96,10 +96,6 @@ sub get_formats {
       genbank  => 'flat',
       pipmaker => 'pip',
       vista    => 'pip',
-      phyloxml => 'genetree',
-      phylopan => 'genetree',
-      orthoxml => 'homologies',
-      orthopan => 'homologies',
     };
     
     my $key = $map->{$output} || $output;
