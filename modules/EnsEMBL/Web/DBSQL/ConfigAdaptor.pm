@@ -177,7 +177,6 @@ sub save_config {
   my ($self, %args) = @_;
   my $record_id = $args{'record_id'};
   my ($saved, $deleted, $data);
-  #use Data::Dumper; warn '>>> SAVING CONFIG '.Dumper(\%args);
   
   if (scalar keys %{$args{'data'}}) {
     $data = $args{'data'};

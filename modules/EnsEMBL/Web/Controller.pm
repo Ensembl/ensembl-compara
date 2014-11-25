@@ -384,9 +384,6 @@ sub save_config {
     
     foreach (qw(view_config image_config)) {
       ($params{'code'}, $params{'link'}) = $_ eq 'view_config' ? ($view_config, [ 'image_config', $image_config ]) : ($image_config, [ 'view_config', $view_config ]);
-      #my $old_data = $adaptor->get_config($_, $params{'code'});
-      #use Data::Dumper;
-      #warn ">>> $_ (".$params{'code'}.") OLD DATA = ".Dumper($old_data);
  
       my ($saved, $deleted) = $adaptor->save_config(%params, %{$existing{$_} || {}}, type => $_, record_type_id => $record_type_id, data => $adaptor->get_config($_, $params{'code'}));
       
