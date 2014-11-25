@@ -32,10 +32,7 @@ sub init {
     clusterset_id  => 'default',
     colouring      => 'background',
     exons          => 'on',
-    newick_mode    => 'full_web',
-    nhx_mode       => 'full',
     super_tree     => 'off',
-    scale          => 150,
   };
   
   # This config is stored in DEFAULTS.INI

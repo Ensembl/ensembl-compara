@@ -59,17 +59,19 @@ sub content {
   $settings->{'nhx_mode'}     = {
                               'type'    => 'DropDown',
                               'label'   => 'Mode for NHX tree dumping',
+                              'value'   => 'full',
                               'values'  => $nhx_values,
                             };
   $settings->{'newick_mode'}  = {
                               'type'    => 'DropDown',
                               'label'   => 'Mode for Newick tree dumping',
+                              'value'   => 'full_web',
                               'values'  => $newick_values,
                               };
   $settings->{'scale'}        = {
-                              'type'  => 'NonNegInt',
-                              'label' => 'Scale for text tree dump',
-                              'value' => '150',
+                              'type'    => 'NonNegInt',
+                              'label'   => 'Scale for text tree dump',
+                              'value'   => 150,
                               };
 
   ## Add phyloxml settings
