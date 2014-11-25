@@ -15,15 +15,14 @@ sub chase_redirects {
   $max_follow = 10 unless defined $max_follow;
   my $ua = LWP::UserAgent->new( max_redirect => $max_follow );
   $ua->timeout(10);
-  $ua->env_proxy;
-  $ua->proxy([qw(http https)], $self->{'hub'}->species_defs->ENSEMBL_WWW_PROXY) || ();
+  $ua->proxy([qw(http https)], $self->{'hub'}->species_defs->ENSEMBL_WWW_PROXY) if $self->{'hub'}->species_defs->ENSEMBL_WWW_PROXY;
 
   my $response = $ua->head($url);
   if ($response->is_success) {
     return $response->request->uri->as_string;
   }
   else {
-    return {'error' => $response->{'error'} || 'SERVER ERROR: '.$response->code};
+    return {'error' => $response->{'error'} || 'SERVER ERROR: '.$response->status_line};
   }
 }
 
