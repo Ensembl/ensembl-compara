@@ -500,7 +500,7 @@ sub write_phyloxml {
           -NO_SEQUENCES => $hub->param('no_sequences') eq 'on' ? 1 : 0,
           -HANDLE       => $handle,
   );
-  $self->_writexml('tree', $tree, $handle, $w);
+  $self->_writexml('trees', $tree, $handle, $w);
 }
 
 sub write_orthoxml {
