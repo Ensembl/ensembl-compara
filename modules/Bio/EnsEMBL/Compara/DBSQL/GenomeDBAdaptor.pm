@@ -86,7 +86,7 @@ sub object_class {
 =head2 fetch_by_name_assembly
 
   Arg [1]    : string $name
-  Arg [2]    : string $assembly
+  Arg [2]    : string $assembly (optional)
   Example    : $gdb = $gdba->fetch_by_name_assembly("Homo sapiens", 'NCBI36');
   Description: Retrieves a genome db using the name of the species and
                the assembly version.
