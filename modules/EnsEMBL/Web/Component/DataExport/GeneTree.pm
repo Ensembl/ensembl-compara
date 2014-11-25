@@ -72,6 +72,11 @@ sub content {
                               'value' => '150',
                               };
 
+  ## Add phyloxml settings
+  my $hash = $self->phyloxml_settings;
+  while (my ($key, $params) = each (%$hash)) {
+    $settings->{$key} = $params;
+  }
 
   ## Options per format
   my $fields_by_format = [{'Tree formats' => {
