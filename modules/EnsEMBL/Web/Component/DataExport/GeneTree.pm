@@ -74,11 +74,10 @@ sub content {
 
 
   ## Options per format
-  my @tree_fields = qw(collapsability clusterset_id super_tree);
   my $fields_by_format = [{'Tree formats' => {
-                                'Newick'    => ['newick_mode', @tree_fields],
-                                'NHX'       => ['nhx_mode', @tree_fields],
-                                'Text'      => ['scale', @tree_fields],
+                                'Newick'    => [qw(newick_mode clusterset_id)],
+                                'NHX'       => [qw(nhx_mode clusterset_id)],
+                                'Text'      => [qw(scale clusterset_id)],
                                 'OrthoXML'  => [],
                                 'PhyloXML'  => $self->phyloxml_fields, 
                           }}];
