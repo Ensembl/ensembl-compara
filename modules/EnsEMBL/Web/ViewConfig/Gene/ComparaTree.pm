@@ -65,9 +65,8 @@ sub field_order {
 }
 
 sub form_fields {
-  my ($self, $export) = @_;
+  my $self = shift;
   my $fields = {};
-  my $verb = $export ? 'Export' : 'View';
   
   my $function = $self->hub->referer->{'ENSEMBL_FUNCTION'};
  
@@ -75,12 +74,12 @@ sub form_fields {
                                   type   => 'DropDown',
                                   select => 'select',
                                   name   => 'collapsability',
-                                  label  => "$verb options for tree image",
+                                  label  => "Display options for tree image",
                                   values => [ 
-                                              { value => 'gene',         caption => "$verb current gene only" },
-                                              { value => 'paralogs',     caption => "$verb paralogs of current gene" },
-                                              { value => 'duplications', caption => "$verb all duplication nodes" },
-                                              { value => 'all',          caption => "$verb fully expanded tree" }
+                                              { value => 'gene',         caption => "Show current gene only" },
+                                              { value => 'paralogs',     caption => "Show paralogs of current gene" },
+                                              { value => 'duplications', caption => "Show all duplication nodes" },
+                                              { value => 'all',          caption => "Show fully expanded tree" }
                                             ],
                                 };
 
@@ -104,11 +103,9 @@ sub form_fields {
                                           ],
                               };
 
-  $verb = $export ? 'Export' : 'Display';
-
   $fields->{'exons'}        = {
                                 'type'  => 'CheckBox',
-                                'label' => "$verb exon boundaries",
+                                'label' => "Show exon boundaries",
                                 'name'  => 'exons',
                                 'value' => 'on',
                                 'raw'   => 1,
@@ -116,7 +113,7 @@ sub form_fields {
 
   $fields->{'super_tree'}   = {
                                 'type'  => 'CheckBox',
-                                'label' => "$verb super-tree",
+                                'label' => "Show super-tree",
                                 'name'  => 'super_tree',
                                 'value' => 'on',
                               };
@@ -142,7 +139,7 @@ sub form_fields {
                                               type   => 'DropDown', 
                                               select => 'select',
                                               name   => "group_${group}_display",
-                                              label  => "$verb options for ".($self->hub->species_defs->TAXON_LABEL->{$group} || $group),
+                                              label  => "Display options for ".($self->hub->species_defs->TAXON_LABEL->{$group} || $group),
                                               values => [ 
                                                           { value => 'default',  caption => 'Default behaviour' },
                                                           { value => 'hide',     caption => 'Hide genes' },
