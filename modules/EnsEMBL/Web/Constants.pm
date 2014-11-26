@@ -215,7 +215,7 @@ sub MARKUP_OPTIONS {
       'value'   => 'on',
       'checked' => 'checked',
     },
-    'exons_only' = {
+    'exons_only' => {
       type  => 'CheckBox',
       label => 'Show exons only',
       name  => 'exons_only',
