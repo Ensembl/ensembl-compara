@@ -20,7 +20,8 @@ package EnsEMBL::Draw::Output;
 
 ### Base package for drawing a discreet section of a genomic image,
 ### such as a section of assembly, feature track, scalebar or track legend
-### Uses GD and the EnsEMBL::Draw::Glyph codebase
+### Uses GD and the EnsEMBL::Draw::Glyph codebase to render data that's 
+### been passed in from a controller
 
 use strict;
 
@@ -33,3 +34,20 @@ use Ensembl::Draw::Glyph::Circle;
 use Ensembl::Draw::Glyph::Composite;
 use Ensembl::Draw::Glyph::Poly;
 use Ensembl::Draw::Glyph::Triangle;
+
+sub new {
+  my ($class, $data, $config) = @_;
+
+  my $self = {
+              'data' => $data,
+              %$config
+              };
+
+  bless $self, $class;
+  return $self;
+}
+
+sub render {};
+
+1;
+
