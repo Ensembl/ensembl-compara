@@ -32,6 +32,15 @@ use Apache2::Status;
 use Apache2::SizeLimit;
 use Apache2::ServerUtil;
 
+# Alessandro Vullo's XS speedups
+my $using_xs;
+BEGIN {
+  eval {
+    require 'Bio/EnsEMBL/XS.pm';
+    $using_xs = 1 if exists $Bio::EnsEMBL::XS::{'Utils::'}; 
+  };
+}
+
 $Apache2::SizeLimit::MAX_PROCESS_SIZE = 1000000; # Kill httpd over 1000Mb
 
 use CGI qw(-compile :cgi); # Load CGI.pm and call its compile method to precompile its autoloaded routines
@@ -225,6 +234,8 @@ if (Apache2::ServerUtil::restart_count == 1) { # Only parse the config on first 
  CSS file:           %s/%s/%s.css
  JavaScript file:    %s/%s/%s.js
 
+ Using XS:           %s
+
  Plugins installed:  %s
 
 ==============================================================================
@@ -251,6 +262,7 @@ if (Apache2::ServerUtil::restart_count == 1) { # Only parse the config on first 
 
   $conf->ENSEMBL_BASE_URL, $conf->ENSEMBL_JSCSS_TYPE, $conf->ENSEMBL_CSS_NAME,
   $conf->ENSEMBL_BASE_URL, $conf->ENSEMBL_JSCSS_TYPE, $conf->ENSEMBL_JS_NAME,
+  $using_xs?'yes':'no',
   join("\n                     ", grep(/::/, @{$conf->ENSEMBL_PLUGINS || []}), $extra);
 }
 
