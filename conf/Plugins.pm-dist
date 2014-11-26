@@ -26,7 +26,6 @@ $SiteDefs::ENSEMBL_PLUGINS = [
   'EnsEMBL::Genoverse'  => $SiteDefs::ENSEMBL_SERVERROOT.'/public-plugins/genoverse',
 # 'EnsEMBL::Lucene'     => $SiteDefs::ENSEMBL_SERVERROOT.'/public-plugins/genoverse',
 # 'EnsEMBL::Users'      => $SiteDefs::ENSEMBL_SERVERROOT.'/public-plugins/users',
-# 'EnsEMBL::ORM'        => $SiteDefs::ENSEMBL_SERVERROOT.'/public-plugins/orm',
   'EnsEMBL::Ensembl'    => $SiteDefs::ENSEMBL_SERVERROOT.'/public-plugins/ensembl'
 ];
 
