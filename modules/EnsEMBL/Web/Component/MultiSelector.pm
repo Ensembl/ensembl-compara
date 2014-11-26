@@ -68,10 +68,11 @@ sub content_ajax {
   my $select_by    = join '', map sprintf('<option value="%s">%s</option>', @$_), @{$self->{'select_by'} || []};
      $select_by    = qq{<div class="select_by"><h2>Select by type:</h2><select><option value="">----------------------------------------</option>$select_by</select></div>} if $select_by;
   my ($exclude_html,$include_html);
+
   foreach my $category ((@all_categories,undef)) {
     # The data
     my ($include_list,$exclude_list,@all);
-    @all = sort { ($included{$a} <=> $included{$b}) || ($a cmp $b) } keys %all;
+    @all = sort { ($included{$a} <=> $included{$b}) || ($all{$a} cmp $all{$b}) } keys %all;
     foreach my $key (@all) {
       if(defined $category) {
         my $my_category = ($self->{'category_map'}||{})->{$key};
