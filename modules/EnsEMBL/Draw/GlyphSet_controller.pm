@@ -34,9 +34,10 @@ sub new {
     my $self = {
                 container  => $args->{'container'},
                 config     => $args->{'config'},
+                hub        => $args->{'config'}{'hub'},
                 my_config  => $args->{'my_config'},
                 strand     => $args->{'strand'},
-                extras     => $args->{'extra'}   || {}
+                extras     => $args->{'extra'}   || {},
                 highlights => $args->{'highlights'},
                 display    => $args->{'display'} || 'off',
                 legend     => $args->{'legend'}  || {},
@@ -54,17 +55,30 @@ sub render {
 ### This is where we implement the MVC structure!
   my $self = CORE::shift;
 
+  my $track_config = {
+                      container  => $self->{'container'},
+                      config     => $self->{'config'},
+                      hub        => $args->{'config'}{'hub'},
+                      my_config  => $self->{'my_config'},
+                      strand     => $self->{'strand'},
+                      extras     => $self->{'extra'},
+                      highlights => $self->{'highlights'},
+                      display    => $self->{'display'},
+                      };
+
   ## Fetch the data
   my $data_class = 'EnsEMBL::Draw::Data::'.$self->{'my_config'}{'data_type'};
 
-  my $data = $data_class->new($self);
+  my $object  = $data_class->new($track_config);
+  my $data    = $object->get_data;
   return undef unless $data;
 
   ## Render it
   my $style        = $data->select_style($self->{'my_config'}{'style'});
+  return undef unless $style;
   my $output_class = 'EnsEMBL::Draw::Output::'.$style;
 
-  my $track = $output_class->new($data);
+  my $track = $output_class->new($data, $track_config);
 
   ## Pass rendered image back to DrawableContainer
   return $track->render;
