@@ -3091,16 +3091,14 @@ sub add_sequence_variations_default {
   my $sequence_variation = ($menu->get_node('variants')) ? $menu->get_node('variants') : $self->create_submenu('variants', 'Sequence variants');
   my $prefix_caption = 'Variant - ';
 
-  if (!$menu->get_node('variants')) {
-    my $title = 'Sequence variants (all sources)';
+  my $title = 'Sequence variants (all sources)';
 
-    $sequence_variation->append($self->create_track("variation_feature_$key", $title, {
-      %$options,
-      caption     => $prefix_caption.'All sources',
-      sources     => undef,
-      description => 'Sequence variants from all sources',
-    }));
-  }
+  $sequence_variation->append($self->create_track("variation_feature_$key", $title, {
+    %$options,
+    caption     => $prefix_caption.'All sources',
+    sources     => undef,
+    description => 'Sequence variants from all sources',
+  }));
 
   foreach my $key_2 (sort keys %{$hashref->{'source'}{'counts'} || {}}) {
     next unless $hashref->{'source'}{'counts'}{$key_2} > 0;
@@ -3114,7 +3112,7 @@ sub add_sequence_variations_default {
     }));
   }
   
-  $menu->append($sequence_variation) if (!$menu->get_node('variants'));
+  $menu->append($sequence_variation);
 
   # add in variation sets
   if ($hashref->{'variation_set'}{'rows'} > 0 ) {
