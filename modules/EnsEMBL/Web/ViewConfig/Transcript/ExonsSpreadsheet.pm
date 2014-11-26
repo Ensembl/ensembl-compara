@@ -28,12 +28,12 @@ sub init {
   my $self = shift;
 
   $self->set_defaults({
-    sscon            => 25,
-    flanking         => 50,
-    fullseq          => 'off',
-    oexon            => 'off',
-    line_numbering   => 'off',
-    snp_display      => 'off',
+    sscon           => 25,
+    flanking        => 50,
+    fullseq         => 'off',
+    exons_only      => 'off',
+    line_numbering  => 'off',
+    snp_display     => 'off',
   });
 
   $self->title = 'Exons';
@@ -42,7 +42,7 @@ sub init {
 
 sub field_order {
   my $self = shift;
-  return qw(flanking display_width sscon fullseq oexon line_numbering snp_display hide_long_snps consequence_filter);
+  return qw(flanking display_width sscon fullseq exons_only line_numbering snp_display hide_long_snps consequence_filter);
 }
 
 sub form_fields {
@@ -67,13 +67,6 @@ sub form_fields {
     type  => 'CheckBox',
     label => 'Show full intronic sequence',
     name  => 'fullseq',
-    value => 'on',
-  };
-  
-  $markup_options->{'oexon'} = {
-    type  => 'CheckBox',
-    label => 'Show exons only',
-    name  => 'oexon',
     value => 'on',
   };
   

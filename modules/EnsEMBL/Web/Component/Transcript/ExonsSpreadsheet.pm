@@ -25,7 +25,6 @@ use base qw(EnsEMBL::Web::Component::TextSequence EnsEMBL::Web::Component::Trans
 sub initialize {
   my ($self, $export) = @_;
   my $hub        = $self->hub;
-  my $only_exon  = $hub->param('oexon') eq 'yes'; # display only exons
   my $entry_exon = $hub->param('exon');
   my $object     = $self->object || $hub->core_object('transcript');
   my $transcript = $object->Obj;
@@ -39,6 +38,7 @@ sub initialize {
   my $vc = $self->view_config($type);
   
   my $config = {
+    exons_only    => $hub->param('exons_only') || $vc->get('exons_only');
     display_width => $hub->param('display_width') || $vc->get('display_width'),
     sscon         => $hub->param('sscon') || $vc->get('sscon'),   # no of bp to show either side of a splice site
     flanking      => $hub->param('flanking') || $vc->get('flanking'),   # no of bp up/down stream of transcript
@@ -69,7 +69,7 @@ sub initialize {
   }
   
   # Get flanking sequence
-  my ($upstream, $downstream, $offset) = $config->{'flanking'} && !$only_exon ? $self->get_flanking_sequence_data($config, $exons[0], $exons[-1]) : ();
+  my ($upstream, $downstream, $offset) = $config->{'exons_only'} eq 'off' && $config->{'flanking'} ? $self->get_flanking_sequence_data($config, $exons[0], $exons[-1]) : ();
   
   if ($upstream) {
     $self->add_line_numbers('upstream', $config, $config->{'flanking'}, $offset);
@@ -102,7 +102,7 @@ sub initialize {
     };
 
     # Add intronic sequence
-    if ($next_exon && !$only_exon) {
+    if ($exons_only eq 'off' && $next_exon) {
       my ($intron_start, $intron_end) = $strand == 1 ? ($exon_end + 1, $next_exon->start - 1) : ($next_exon->end + 1, $exon_start - 1);
       my $intron_length = $intron_end - $intron_start + 1;
       my $intron_id     = "Intron $i-" . ($i + 1);
