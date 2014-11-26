@@ -42,8 +42,8 @@ sub ICON_MAPPINGS {
     'image'         => { 'file' => 'picture.png',         'alt' => 'image',       'title' => "Export this image"                  },
     'userdata'      => { 'file' => 'page-user.png',       'alt' => 'data',        'title' => "Manage your custom tracks"          },
     'share'         => { 'file' => 'share.png',           'alt' => 'share',       'title' => "Share this $component"              },
-    'config_order'  => { 'file' => 'settings-reset.png',  'alt' => 'reset order', 'title' => "Reset configurations"               },
-    'reset_order'   => { 'file' => 'order-reset.png',     'alt' => 'reset order', 'title' => "Reset track's order"                },
+    'config_order'  => { 'file' => 'settings-reset.png',  'alt' => 'reset order', 'title' => "Reset configuration"               },
+    'reset_order'   => { 'file' => 'order-reset.png',     'alt' => 'reset order', 'title' => "Reset track order"                },
   };
 }
 
