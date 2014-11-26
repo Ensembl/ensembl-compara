@@ -22,6 +22,9 @@ package EnsEMBL::Draw::GlyphSet_controller;
 ### object and passes it to the appropriate EnsEMBL::Web::Draw::Output module,
 ### thus turning the drawing code into something resembling MVC
 
+### All of this functionality could/should eventually be moved into
+### DrawableContainer, which is the real controller
+
 use strict;
 
 use EnsEmBL::Draw::Glyph::Composite;
