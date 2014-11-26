@@ -19,7 +19,7 @@ limitations under the License.
 package EnsEMBL::Draw::GlyphSet_controller;
 
 ### A "dummy" glyphset that gathers data from an EnsEMBL::Web::Draw::Data 
-### object and passes it to the appropriate EnsEMBL::Web::Draw::Render module,
+### object and passes it to the appropriate EnsEMBL::Web::Draw::Output module,
 ### thus turning the drawing code into something resembling MVC
 
 use strict;
@@ -62,9 +62,9 @@ sub render {
 
   ## Render it
   my $style        = $data->select_style($self->{'my_config'}{'style'});
-  my $render_class = 'EnsEMBL::Draw::Render::'.$style;
+  my $output_class = 'EnsEMBL::Draw::Output::'.$style;
 
-  my $track = $render_class->new($data);
+  my $track = $output_class->new($data);
 
   ## Pass rendered image back to DrawableContainer
   return $track->render;
@@ -358,6 +358,8 @@ ech my $word (@words) {
   }
   return (\@split, $text, 0);
 }
+
+## Wrappers around the basic glyphsets, needed for labels
 
 sub Text {
   my $self = CORE::shift; 
