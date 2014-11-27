@@ -16,7 +16,7 @@ limitations under the License.
 
 =cut
 
-package EnsEMBL::Draw::GlyphSet_controller;
+package EnsEMBL::Draw::GlyphSet::controller;
 
 ### A "dummy" glyphset that gathers data from an EnsEMBL::Web::Draw::Data 
 ### object and passes it to the appropriate EnsEMBL::Web::Draw::Output module,
