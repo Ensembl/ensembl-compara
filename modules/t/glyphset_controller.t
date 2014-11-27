@@ -3,9 +3,9 @@ use warnings;
 
 use Test::More;
 
-use EnsEMBL::Draw::GlyphSet_controller;
+use EnsEMBL::Draw::GlyphSet::controller;
 
-my $c = EnsEMBL::Draw::GlyphSet_controller->new();
+my $c = EnsEMBL::Draw::GlyphSet::controller->new();
 
 ok($c, 'Controller module created');
 
