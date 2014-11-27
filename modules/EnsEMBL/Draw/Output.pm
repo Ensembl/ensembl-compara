@@ -47,7 +47,22 @@ sub new {
   return $self;
 }
 
-sub render {};
+sub render {
+### Stub
+### Render data into a track
+  my $self = shift;
+  warn "!!! RENDERING NOT IMPLEMENTED IN ".ref($self);
+};
+
+sub image_config {
+  my $self = shift;
+  return $self->{'config'};
+}
+
+sub track_config {
+  my $self = shift;
+  return $self->{'my_config'};
+}
 
 1;
 
