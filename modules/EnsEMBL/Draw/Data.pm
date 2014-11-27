@@ -45,10 +45,10 @@ sub get_data {
   warn "!!! DATA FETCHING NOT IMPLEMENTED IN $self";
 }
 
-sub select_style {
+sub select_output {
 ### Stub
-### "Translate" the track style (e.g. 'normal', 'collapsed', 'tiling') used in the
+### "Translate" the track renderer (e.g. 'normal', 'collapsed', 'tiling') used in the
 ### main web code into the name of the drowing module which can output that style
   my $self = shift;
-  warn "!!! STYLE SELECTION NOT IMPLEMENTED IN $self";
+  warn "!!! OUTPUT SELECTION NOT IMPLEMENTED IN $self";
 }

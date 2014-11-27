@@ -71,20 +71,25 @@ sub render {
                       display    => $self->{'display'},
                       };
 
-  ## Fetch the data (if any - some tracks are static
-  my $data_class = 'EnsEMBL::Draw::Data::'.$self->{'my_config'}{'data_type'};
-  my $data = [];
+  my $data;
+  my $output_name = $self->{'my_config'}{'style'};
 
-  if ($self->dynamic_use($data_class)) {
-    my $object  = $data_class->new($track_config);
-    $data    = $object->get_data;
+  ## Fetch the data (if any - some tracks are static
+  if ($self->{'my_config'}{'data_type'}) {
+    my $data_class = 'EnsEMBL::Draw::Data::'.$self->{'my_config'}{'data_type'};
+
+    if ($self->dynamic_use($data_class)) {
+      my $object  = $data_class->new($track_config);
+      $data       = $object->get_data;
+      if ($data) {
+        ## Map the renderer name to a real module
+        $output_name = $data->select_output($output_name);
+      }
+    }
   }
 
   ## Render it
-  my $style        = $data->select_style($self->{'my_config'}{'style'});
-  return undef unless $style;
-  my $output_class = 'EnsEMBL::Draw::Output::'.$style;
-
+  my $output_class = 'EnsEMBL::Draw::Output::'.$output_name;
   my $track = $output_class->new($track_config, $data);
 
   ## Pass rendered image back to DrawableContainer
