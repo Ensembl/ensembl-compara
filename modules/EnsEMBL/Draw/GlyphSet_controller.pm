@@ -27,9 +27,8 @@ package EnsEMBL::Draw::GlyphSet_controller;
 
 use strict;
 
-use EnsEmBL::Draw::Glyph::Composite;
-use EnsEmBL::Draw::Glyph::Line;
-use EnsEmBL::Draw::Glyph::Text;
+use EnsEMBL::Draw::Glyph;
+use EnsEMBL::Draw::Glyph::Composite;
 
 sub new {
   my ($class, $args) = @_;
@@ -61,7 +60,7 @@ sub render {
   my $track_config = {
                       container  => $self->{'container'},
                       config     => $self->{'config'},
-                      hub        => $args->{'config'}{'hub'},
+                      hub        => $self->{'config'}{'hub'},
                       my_config  => $self->{'my_config'},
                       strand     => $self->{'strand'},
                       extras     => $self->{'extra'},
@@ -191,6 +190,11 @@ sub transform {
 
 ## Accessors
 
+sub my_config { 
+  my ($self, $param) = @_;
+  return $self->{'my_config'} ? $self->{'my_config'}->get($param) : undef;
+}
+
 sub error { 
   my $self = CORE::shift; 
   $self->{'error'} = @_ if @_; 
@@ -226,6 +230,100 @@ sub section_text {
   my ($self, $text) = @_;
   $self->{'section_text'} = $text if $text;
   return $self->{'section_text'};
+}
+
+sub init_label {
+  my $self = shift;
+
+  return $self->label(undef) if defined $self->{'config'}->{'_no_label'};
+
+  my $text = $self->my_config('caption');
+
+  my $img = $self->my_config('caption_img');
+  $img = undef if $SiteDefs::ENSEMBL_NO_LEGEND_IMAGES;
+  if($img and $img =~ s/^r:// and $self->{'strand'} ==  1) { $img = undef; }
+  if($img and $img =~ s/^f:// and $self->{'strand'} == -1) { $img = undef; }
+
+  return $self->label(undef) unless $text;
+
+  my $config    = $self->{'config'};
+  my $hub       = $config->hub;
+  my $name      = $self->my_config('name');
+  my $desc      = $self->my_config('description');
+  my $style     = $config->species_defs->ENSEMBL_STYLE;
+  my $font      = $style->{'GRAPHIC_FONT'};
+  my $fsze      = $style->{'GRAPHIC_FONTSIZE'} * $style->{'GRAPHIC_LABEL'};
+  my @res       = $self->get_text_width(0, $text, '', font => $font, ptsize => $fsze);
+  my $track     = $self->type;
+  my $node      = $config->get_node($track);
+  my $component = $config->get_parameter('component');
+  my $hover     = $component && !$hub->param('export') && $node->get('menu') ne 'no';
+  my $class     = random_string(8);
+
+  if ($hover) {
+    my $fav       = $config->get_favourite_tracks->{$track};
+    my @renderers = grep !/default/i, @{$node->get('renderers') || []};
+    my $subset    = $node->get('subset');
+    my @r;
+
+    my $url = $hub->url('Config', {
+      species  => $config->species,
+      action   => $component,
+      function => undef,
+      submit   => 1
+    });
+
+    if (scalar @renderers > 4) {
+      while (my ($val, $text) = splice @renderers, 0, 2) {
+        push @r, { url => "$url;$track=$val", val => $val, text => $text, current => $val eq $self->{'display'} };
+      }
+    }
+
+    $config->{'hover_labels'}->{$class} = {
+      header    => $name,
+      desc      => $desc,
+      class     => "$class $track",
+      component => lc($component . ($config->multi_species && $config->species ne $hub->species ? '_' . $config->species : '')),
+      renderers => \@r,
+      fav       => [ $fav, "$url;$track=favourite_" ],
+      off       => "$url;$track=off",
+      conf_url  => $self->species eq $hub->species ? $hub->url($hub->multi_params) . ";$config->{'type'}=$track=$self->{'display'}" : '',
+      subset    => $subset ? [ $subset, $hub->url('Config', { species => $config->species, action => $component, function => undef, __clear => 1 }), lc "modal_config_$component" ] : '',
+    };
+  }
+
+  my $ch = $self->my_config('caption_height') || 0;
+  $self->label($self->Text({
+    text      => $text,
+    font      => $font,
+    ptsize    => $fsze,
+    colour    => $self->{'label_colour'} || 'black',
+    absolutey => 1,
+    height    => $ch || $res[3],
+    class     => "label $class",
+    alt       => $name,
+    hover     => $hover,
+  }));
+
+  if($img) {
+    $img =~ s/^([\d@-]+)://; my $size = $1 || 16;
+    my $offset = 0;
+    $offset = $1 if $size =~ s/@(-?\d+)$//;
+    $self->label_img($self->Sprite({
+        z             => 1000,
+        x             => 0,
+        y             => $offset,
+        sprite        => $img,
+        spritelib     => 'species',
+        width         => $size,
+        height         => $size,
+        absolutex     => 1,
+        absolutey     => 1,
+        absolutewidth => 1,
+        pixperbp      => 1,
+        alt           => '',
+    }));
+  }
 }
 
 sub label {
@@ -350,7 +448,7 @@ sub _split_label {
   my $line_so_far = '';
 
 
-ech my $word (@words) {
+  foreach my $word (@words) {
     my $candidate_line = $line_so_far.$word;
     my $replacement_line = $candidate_line;
     $candidate_line =~ s/^ +//;
@@ -388,9 +486,14 @@ sub Line {
   return EnsEmBL::Draw::Glyph->new(@_);  
 }
 
+sub Sprite {
+  my $self = CORE::shift; 
+  return EnsEmBL::Draw::Glyph->new(@_);  
+}
+
 sub _composite  { 
   my $self = CORE::shift; 
-  return EnsEmBL::Draw::Glyph::Composite->new(@_);  
+  return EnsEMBL::Draw::Glyph::Composite->new(@_);  
 }
 
 sub _colour_background { return 1; }
