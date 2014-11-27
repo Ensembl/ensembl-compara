@@ -93,7 +93,7 @@ sub content {
     label => $object->get_attribute_list
   });
   
-  $self->add_entry({ label_html => 'NOTE: This feature has been projected by the <a href="/info/docs/funcgen/index.html">RegulatoryBuild</a>' }) if $reg_feature->is_projected;
+  $self->add_entry({ label_html => 'NOTE: This feature has been projected by the <a href="/info/genome/funcgen/index.html">RegulatoryBuild</a>' }) if $reg_feature->is_projected;
 
   $self->_add_nav_entries;
 

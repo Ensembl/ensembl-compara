@@ -99,7 +99,7 @@ sub render {
 
   $html .= $table->render;
 
-  $html .= '* For larger datasets we provide an API script that can be downloaded (you will also need to <a href="/info/docs/api/install">install our Perl API</a> to run the script).';
+  $html .= '* For larger datasets we provide an API script that can be downloaded (you will also need to <a href="/info/data/api.html">install our Perl API</a> to run the script).';
 
   ## Table of other tools
 

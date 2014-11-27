@@ -65,7 +65,7 @@ sub content {
     my $summary_url         = $regulation_obj->get_summary_page_url;
     my $feature_id          = $feature->stable_id;
     my $feature_link        = qq(<a href=$summary_url>$feature_id</a>);
-    my $analysis            = qq(<a rel="external" href="/info/docs/funcgen/index.html">Ensembl Regulatory Build</a>);
+    my $analysis            = qq(<a rel="external" href="/info/genome/funcgen/index.html">Ensembl Regulatory Build</a>);
     my $type                = $feature->feature_type->name;
     my ($sequence, $length) = $self->get_sequence($regulation_obj);
 
