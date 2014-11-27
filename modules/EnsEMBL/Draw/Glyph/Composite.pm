@@ -118,9 +118,9 @@ sub _push_unshift {
     #
     unless($glyph->{'absolutex'}) {
       if($glyph->{'absolutewidth'}) {
-	$glyph->{'x'} = $gx - $self->{'x'}+$gw/(2 * $self->{'pixperbp'});
+	      $glyph->{'x'} = $gx - $self->{'x'}+$gw/(2 * $self->{'pixperbp'});
       } else {
-	$glyph->x($gx - $self->{'x'});
+	      $glyph->x($gx - $self->{'x'});
       }
     }
 
