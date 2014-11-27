@@ -716,7 +716,6 @@ sub get_homology_matches {
           description         => $homologue->description       || 'No description',
           display_id          => $homologue->display_label     || 'Novel Ensembl prediction',
           species_tree_node   => $species_tree_node,
-          homology_subtype    => $species_tree_node ? $species_tree_node->node_name() : '',
           spp                 => $display_spp,
           query_perc_id       => $query_perc_id,
           target_perc_id      => $target_perc_id,
