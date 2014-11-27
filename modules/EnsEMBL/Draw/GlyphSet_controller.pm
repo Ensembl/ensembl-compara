@@ -22,6 +22,9 @@ package EnsEMBL::Draw::GlyphSet_controller;
 ### object and passes it to the appropriate EnsEMBL::Web::Draw::Output module,
 ### thus turning the drawing code into something resembling MVC
 
+### Note that we do _not_ subclass EnsEMBL::Draw::GlyphSet, because we want
+### to strip out all the cruft and retain only essential functionality
+
 ### All of this functionality could/should eventually be moved into
 ### DrawableContainer, which is the real controller
 
@@ -68,8 +71,9 @@ sub render {
                       display    => $self->{'display'},
                       };
 
-  ## Fetch the data
+  ## Fetch the data (if any - some tracks are static
   my $data_class = 'EnsEMBL::Draw::Data::'.$self->{'my_config'}{'data_type'};
+
 
   my $object  = $data_class->new($track_config);
   my $data    = $object->get_data;
@@ -85,6 +89,13 @@ sub render {
   ## Pass rendered image back to DrawableContainer
   return $track->render;
 }
+
+##############################################################################################
+
+### All the methods below are required to replicate current GlyphSet behaviour, 
+### and should probably be revisited and refactored if/when we move this 
+### functionality into DrawableContainer
+
 
 ### Override some built-in Perl functions because...well, because we can
 
