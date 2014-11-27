@@ -4,9 +4,22 @@ use warnings;
 use Test::More;
 
 use EnsEMBL::Draw::GlyphSet::controller;
+use EnsEMBL::Web::Tree;
 
-my $c = EnsEMBL::Draw::GlyphSet::controller->new();
+## Create a fake track configuration
+my $tree = EnsEMBL::Web::Tree->new;
+my $config = {
+              'data_type' => 'Test',
+              'style'     => 'normal',
+              };
 
-ok($c, 'Controller module created');
+my $node = $tree->create_node('test', $config);
+my $args = {'my_config' => $node}; 
+
+## Create the controller glyphset
+my $glyphset = EnsEMBL::Draw::GlyphSet::controller->new($args);
+
+## Tests
+ok($glyphset, 'Controller module created');
 
 done_testing();
