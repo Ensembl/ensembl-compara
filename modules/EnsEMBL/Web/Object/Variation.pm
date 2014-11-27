@@ -350,7 +350,7 @@ sub source {
   ### Description: gets the Variation source
   ### Returns String
 
-  $_[0]->vari->source;
+  $_[0]->vari->source_name;
 }
 
 sub source_description {
@@ -385,7 +385,7 @@ sub source_version {
   ### Returns String
 
   my $self    = shift;
-  my $source  = $self->vari->source;
+  my $source  = $self->vari->source_name;
   my $version = $self->vari->adaptor->get_source_version($source);
   return $version;
 }
@@ -1599,7 +1599,7 @@ sub hgvs_url {
   my $p = {
     action => 'Explore',
     db     => 'core',
-    source => $obj->source,
+    source => $obj->source_name,
     v      => $obj->name,
     r      => undef,
   };
