@@ -425,11 +425,6 @@ sub get_SimpleAlign {
             $seqID .= "_" . $species;
         }
 
-        # Sequence length
-        my $true_seq = $seqstr;
-        $true_seq =~ s/-//g;
-        my $aln_end = length($true_seq);
-
         if ($stop2x) {
             $seqstr =~ s/\*/X/g;
             if ($alphabet eq 'protein') {
@@ -442,7 +437,7 @@ sub get_SimpleAlign {
                 -SEQ        => $seqstr,
                 -ALPHABET   => $alphabet,
                 -START      => 1,
-                -END        => $aln_end,
+                -END        => length($member->other_sequence($seq_type)),
                 -ID         => $seqID,
                 -STRAND     => 0
         );
