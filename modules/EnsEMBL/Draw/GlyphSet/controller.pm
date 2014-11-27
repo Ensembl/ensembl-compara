@@ -35,11 +35,10 @@ use EnsEMBL::Draw::Glyph::Composite;
 
 sub new {
   my ($class, $args) = @_;
-
-    my $self = {
+  
+  my $self = {
                 container  => $args->{'container'},
                 config     => $args->{'config'},
-                hub        => $args->{'config'}{'hub'},
                 my_config  => $args->{'my_config'},
                 strand     => $args->{'strand'},
                 extras     => $args->{'extra'}   || {},
@@ -47,7 +46,7 @@ sub new {
                 display    => $args->{'display'} || 'off',
                 legend     => $args->{'legend'}  || {},
                 glyphs     => [],
-              };
+             };
 
   bless $self, $class;
 
@@ -60,26 +59,28 @@ sub render {
 ### This is where we implement the MVC structure!
   my $self = CORE::shift;
 
-  my $track_config = {
-                      container  => $self->{'container'},
-                      config     => $self->{'config'},
-                      hub        => $self->{'config'}{'hub'},
-                      my_config  => $self->{'my_config'},
-                      strand     => $self->{'strand'},
-                      extras     => $self->{'extra'},
-                      highlights => $self->{'highlights'},
-                      display    => $self->{'display'},
-                      };
+  my $args = {
+                container  => $self->{'container'},
+                config     => $self->{'config'},
+                my_config  => $self->{'my_config'},
+                strand     => $self->{'strand'},
+                extras     => $self->{'extra'},
+                highlights => $self->{'highlights'},
+                display    => $self->{'display'},
+             };
 
   my $data;
-  my $output_name = $self->{'my_config'}{'style'};
+  my $output_name = $self->track_config->get('style');
+  my $data_type   = $self->track_config->get('data_type');
 
+  warn ">>> STYLE $output_name";
+  warn "... DATA TYPE $data_type";
   ## Fetch the data (if any - some tracks are static
-  if ($self->{'my_config'}{'data_type'}) {
-    my $data_class = 'EnsEMBL::Draw::Data::'.$self->{'my_config'}{'data_type'};
+  if ($data_type) {
+    my $data_class = 'EnsEMBL::Draw::Data::'.$data_type;
 
     if ($self->dynamic_use($data_class)) {
-      my $object  = $data_class->new($track_config);
+      my $object  = $data_class->new($args);
       $data       = $object->get_data;
       if ($data) {
         ## Map the renderer name to a real module
@@ -90,10 +91,20 @@ sub render {
 
   ## Render it
   my $output_class = 'EnsEMBL::Draw::Output::'.$output_name;
-  my $track = $output_class->new($track_config, $data);
+  my $track = $output_class->new($args, $data);
 
   ## Pass rendered image back to DrawableContainer
   return $track->render;
+}
+
+sub image_config {
+  my $self = CORE::shift;
+  return $self->{'config'}; 
+}
+
+sub track_config {
+  my $self = CORE::shift;
+  return $self->{'my_config'}; 
 }
 
 ##############################################################################################
@@ -209,7 +220,7 @@ sub transform {
 
 sub my_config { 
   my ($self, $param) = @_;
-  return $self->{'my_config'} ? $self->{'my_config'}->get($param) : undef;
+  return $self->{'my_config'} ? $self->track_config->get($param) : undef;
 }
 
 sub error { 
@@ -257,12 +268,11 @@ sub init_label {
   my $text = $self->my_config('caption');
 
   my $img = $self->my_config('caption_img');
-  $img = undef if $SiteDefs::ENSEMBL_NO_LEGEND_IMAGES;
   if($img and $img =~ s/^r:// and $self->{'strand'} ==  1) { $img = undef; }
   if($img and $img =~ s/^f:// and $self->{'strand'} == -1) { $img = undef; }
 
   return $self->label(undef) unless $text;
-
+  
   my $config    = $self->{'config'};
   my $hub       = $config->hub;
   my $name      = $self->my_config('name');
