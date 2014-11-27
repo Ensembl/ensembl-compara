@@ -260,11 +260,11 @@ sub _write_AlignedMemberSets {
   my $list_species = [];
   foreach my $aln_set (@{$alns_sets}) {
     foreach my $member (@{$aln_set->get_all_Members}) {
-      if (not defined ${$hash_members}{$member->genome_db_id}) {
+      if (not exists $hash_members->{$member->genome_db_id}) {
         push @{$list_species}, $member->genome_db;
-        ${$hash_members}{$member->genome_db_id} = [];
+        $hash_members->{$member->genome_db_id} = {};
       }
-      push @{${$hash_members}{$member->genome_db_id}}, $member;
+      $hash_members->{$member->genome_db_id}->{$member->seq_member_id} = $member;
     }
   }
 
@@ -272,7 +272,7 @@ sub _write_AlignedMemberSets {
     $list_species,
     sub {
       my ($species) = @_;
-      return ${$hash_members}{$species->dbID};
+      return [values %{$hash_members->{$species->dbID}}];
     },
     $alns_sets,
   );
