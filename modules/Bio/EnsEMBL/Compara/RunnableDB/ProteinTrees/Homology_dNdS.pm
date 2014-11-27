@@ -155,9 +155,23 @@ sub calc_genetic_distance {
      $codeml->set_parameter($key, $value);
   }
   $codeml->alignment($aln);
-  if (0 != $aln->{_special_codeml_icode}) {
-    $codeml->set_parameter("icode",$aln->{_special_codeml_icode})
+
+  # Select the correct codon table for codeml
+  # default is 0: universal code
+  foreach my $member (@{$self->get_all_Members}) {
+      if ($member->dnafrag_id and $member->dnafrag->name =~ /MT/i) {
+          if (grep {$_->taxon_id == 7742} @{$member->taxon->get_all_ancestors}) {
+              # 1:mamalian mt
+              $codeml->set_parameter("icode", 1);
+              last;
+          } else {
+              # 4:invertebrate mt
+              $codeml->set_parameter("icode", 4);
+              last;
+          }
+      }
   }
+
   my ($rc,$parser) = $codeml->run();
   if($rc == 0) {
     print_simple_align($aln, 80);

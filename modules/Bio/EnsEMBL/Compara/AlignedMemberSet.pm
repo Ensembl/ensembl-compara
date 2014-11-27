@@ -400,23 +400,6 @@ sub get_SimpleAlign {
 
         next if $member->source_name =~ m/^Uniprot/i and $seq_type;
 
-        # The correct codon table
-        if ($member->dnafrag_id and $member->dnafrag->name =~ /MT/i) {
-            # codeml icodes
-            # 0:universal code (default)
-            my $class;
-            eval {$class = $member->taxon->classification;};
-            unless ($@) {
-                if ($class =~ /vertebrata/i) {
-                    # 1:mamalian mt
-                    $sa->{_special_codeml_icode} = 1;
-                } else {
-                    # 4:invertebrate mt
-                    $sa->{_special_codeml_icode} = 4;
-                }
-            }
-        }
-
         my $seqstr = $member->alignment_string($seq_type);
         next unless $seqstr;
 
