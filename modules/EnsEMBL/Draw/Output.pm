@@ -30,13 +30,13 @@ use GD::Simple;
 use URI::Escape qw(uri_escape);
 use POSIX qw(floor ceil);
 
-use Ensembl::Draw::Glyph::Circle;
-use Ensembl::Draw::Glyph::Composite;
-use Ensembl::Draw::Glyph::Poly;
-use Ensembl::Draw::Glyph::Triangle;
+use EnsEMBL::Draw::Glyph::Circle;
+use EnsEMBL::Draw::Glyph::Composite;
+use EnsEMBL::Draw::Glyph::Poly;
+use EnsEMBL::Draw::Glyph::Triangle;
 
 sub new {
-  my ($class, $data, $config) = @_;
+  my ($class, $config, $data) = @_;
 
   my $self = {
               'data' => $data,

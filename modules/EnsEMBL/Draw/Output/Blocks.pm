@@ -22,10 +22,12 @@ package EnsEMBL::Draw::Output::Blocks;
 
 use strict;
 
+use parent qw(EnsEMBL::Draw::Output);
+
 sub render {
   my $self = shift;
   my $colour = $self->track_config->get('colour');
-  foreach my $f (@{$data||[]}) {
+  foreach my $f (@{$self->{'data'}||[]}) {
     warn ">>> FEATURE CHROMOSOME ".$f->{'seq_region'};
     warn "... FEATURE START/END ".$f->{'start'}.' - '.$f->{'end'};
   }

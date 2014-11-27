@@ -27,7 +27,7 @@ use strict;
 use Bio::EnsEMBL::Registry;
 
 sub new {
-  my ($class, config) = @_;
+  my ($class, $config) = @_;
 
   my $self = {
               'features' => [],
@@ -52,3 +52,5 @@ sub select_output {
   my $self = shift;
   warn "!!! OUTPUT SELECTION NOT IMPLEMENTED IN $self";
 }
+
+1;

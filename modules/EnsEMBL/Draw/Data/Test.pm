@@ -23,6 +23,8 @@ package EnsEMBL::Draw::Data::Test;
 
 use strict;
 
+use parent qw(EnsEMBL::Draw::Data);
+
 sub get_data {
 ### Sample data for testing - replace with your own data if required!
 ### @return   Arrayref of "features"
@@ -61,5 +63,7 @@ sub select_output {
   my %lookup = (
                 'normal' => 'Blocks',
                 );
-  return $lookup($style);
+  return $lookup{$style};
 }
+
+1;

@@ -33,6 +33,8 @@ use strict;
 use EnsEMBL::Draw::Glyph;
 use EnsEMBL::Draw::Glyph::Composite;
 
+use parent qw(EnsEMBL::Root);
+
 sub new {
   my ($class, $args) = @_;
   
@@ -84,17 +86,24 @@ sub render {
       $data       = $object->get_data;
       if ($data) {
         ## Map the renderer name to a real module
-        $output_name = $data->select_output($output_name);
+        $output_name = $object->select_output($output_name);
       }
     }
   }
+  warn "... STYLE NOW $output_name";
 
   ## Render it
   my $output_class = 'EnsEMBL::Draw::Output::'.$output_name;
-  my $track = $output_class->new($args, $data);
+  if ($self->dynamic_use($output_class)) {
+    my $track = $output_class->new($args, $data);
 
-  ## Pass rendered image back to DrawableContainer
-  return $track->render;
+    ## Pass rendered image back to DrawableContainer
+    return $track->render;
+  }
+  else {
+    warn "!!! COULDN'T INSTANTIATE OUTPUT MODULE $output_class";
+    return undef;
+  }
 }
 
 sub image_config {
