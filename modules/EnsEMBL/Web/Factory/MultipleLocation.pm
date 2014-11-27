@@ -38,7 +38,7 @@ sub createObjects {
   return unless $object;
   
   # Redirect if we need to generate a new url
-  return if $self->generate_url($object->slice);
+  $self->generate_url($object->slice);
   
   my $hub       = $self->hub;
   my $action_id = $self->param('id');
@@ -134,7 +134,7 @@ sub createObjects {
 sub generate_url {
   my ($self, $slice) = @_;
 
-  my @add = grep { s/^s(\d+)$/$1/ && $self->param("s$_") && !(defined $self->param("r$_") || defined $self->param("g$_")) } $self->param;
+  my @add = grep { s/^s(\d+)$/$1/ && $self->param("s$_")  } $self->param;
   
   $self->add_species($slice, \@add) if scalar @add;
   
