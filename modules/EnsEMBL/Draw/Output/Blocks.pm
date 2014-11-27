@@ -25,11 +25,43 @@ use strict;
 use parent qw(EnsEMBL::Draw::Output);
 
 sub render {
-  my $self = shift;
-  my $colour = $self->track_config->get('colour');
-  foreach my $f (@{$self->{'data'}||[]}) {
-    warn ">>> FEATURE CHROMOSOME ".$f->{'seq_region'};
-    warn "... FEATURE START/END ".$f->{'start'}.' - '.$f->{'end'};
+  my ($self, $options) = @_;
+
+  my $colour  = $self->track_config->get('colour');
+  my $height  = $options->{'height'} || $self->track_config('height') || $self->default_height;
+  my $width   = $self->{'container'}->length;
+  my $depth   = 1;
+  
+  my @features = @{$self->{'data'}||[]}; 
+
+  ## Start position
+  my $position = {
+                    x       => $features[0]->{'start'} > 1 ? $features[0]->{'start'} - 1 : 0,
+                    y       => 0,
+                    width   => 0,
+                    height  => $height,
+                  };
+
+  my $composite;
+
+  if (scalar @features == 1 and !$depth) { #and $config->{'simpleblock_optimise'}) {
+    $composite = $self;
+  } 
+  else {
+    $composite = $self->create_Composite({
+                                          %$position,
+                                          href  => '',
+                                          class => 'group',
+                                        });
+
+    $position = $composite;
+  }
+  foreach my $f (@features) {
+    my ($start, $end) = $self->convert_to_local($f->{'start'}, $f->{'end'});
+
+    my $start   = List::Util::max($start, 1);
+    my $end     = List::Util::min($end, $width);
+    my $cigar   = $f->{'cigar_string'};
   }
 };
 

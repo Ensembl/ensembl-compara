@@ -75,8 +75,6 @@ sub render {
   my $output_name = $self->track_config->get('style');
   my $data_type   = $self->track_config->get('data_type');
 
-  warn ">>> STYLE $output_name";
-  warn "... DATA TYPE $data_type";
   ## Fetch the data (if any - some tracks are static
   if ($data_type) {
     my $data_class = 'EnsEMBL::Draw::Data::'.$data_type;
@@ -90,7 +88,6 @@ sub render {
       }
     }
   }
-  warn "... STYLE NOW $output_name";
 
   ## Render it
   my $output_class = 'EnsEMBL::Draw::Output::'.$output_name;

@@ -29,6 +29,7 @@ sub get_data {
 ### Sample data for testing - replace with your own data if required!
 ### @return   Arrayref of "features"
   my $self = shift;
+  
   return [
           {
             'seq_region'  => '19',
