@@ -365,7 +365,7 @@ sub get_AlignedMemberSet {
 
 sub get_SimpleAlign {
     my $self = shift;
-    return $self->get_AlignedMemberSet->get_SimpleAlign(@_);
+    return $self->get_AlignedMemberSet->get_SimpleAlign(@_, -REMOVE_GAPS => 1);
 }
 
 
