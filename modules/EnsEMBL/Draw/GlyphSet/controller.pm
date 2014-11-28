@@ -36,6 +36,18 @@ use EnsEMBL::Draw::Glyph::Composite;
 use parent qw(EnsEMBL::Root);
 
 sub new {
+### Constructor 
+### @param class String - class name
+### @param args HashRef
+###                     - container API Object on which this image is based (probably a slice)
+###                     - config EnsEMBL::Web::ImageConfig
+###                     - my_config EnsEMBL::Web::Tree::Node - track configuration
+###                     - strand Integer - the strand we're currently drawing
+###                     - extras
+###                     - highlights
+###                     - display String - the renderer for this track
+###                     - legend
+### @return EnsEMBL::Draw::GlyphSet::controller
   my ($class, $args) = @_;
   
   my $self = {
@@ -223,6 +235,12 @@ sub transform {
 }
 
 ## Accessors
+
+sub strand {
+  my ($self, $strand) = @_;
+  $self->{'strand'} = $strand if(defined $strand);
+  return $self->{'strand'};
+}
 
 sub my_config { 
   my ($self, $param) = @_;
