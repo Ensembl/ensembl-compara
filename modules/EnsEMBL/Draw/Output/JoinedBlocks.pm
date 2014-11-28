@@ -16,40 +16,14 @@ limitations under the License.
 
 =cut
 
-package EnsEMBL::Draw::Output::Blocks;
+package EnsEMBL::Draw::Output::JoinedBlocks;
 
-### Simple module to render one or more features as solid blocks
-### e.g. SNPs, constrained elements, simple aligned features with no cigar 
-### (Replacement for the hopelessly over-complicated GlyphSet_simple)
+### Simple module to render one or more features as solid blocks with 
+### straight joins where available (based on GlyphSet::_alignment)
 
 use strict;
 
-use parent qw(EnsEMBL::Draw::Output);
-
-sub _init {
-  my ($self, $no_labels) = @_;
-
-  my $strand      = $self->strand;
-  my $strand_flag = $self->track_config->get('strand');
-
-  ## If only displaying on one strand skip IF not on right strand....
-  return if $strand_flag eq 'r' && $strand != -1;
-  return if $strand_flag eq 'f' && $strand != 1;
-
-  my $slice        = $self->{'container'};
-  my $slice_length = $slice->length;
-  my $max_length   = $self->track_config->get('threshold') || 200000000;
-
-  if ($slice_length > $max_length * 1010) {
-    return $self->errorTrack($self->my_config('caption'). " only displayed for less than $max_length Kb.");
-  }
-
-  my $features = $self->features || [];
-
-  if (!scalar(@$features)) {
-    return $self->no_features;
-  }
-}
+use parent qw(EnsEMBL::Draw::Output::Blocks);
 
 sub render {
   my ($self, $options) = @_;
@@ -66,6 +40,7 @@ sub render {
   my ($fontname, $fontsize);
  
   my $pix_per_bp    = $self->scalex;
+  my $cigar_regexp  = $pix_per_bp > 0.1 ? '\dI' : $pix_per_bp > 0.01 ? '\d\dI' : '\d\d\dI';
 
   my $strand    = $self->strand;
   my @features  = @{$self->{'data'}||[]}; 
@@ -92,6 +67,20 @@ sub render {
   # and width 10 as (100,100)-(110,110), ie actually 11x11. -- ds23
   $y_pos = $y_offset - $row * int($height + 1 + $gap * $label_h) * $strand;
 
+  my $composite;
+
+  if (scalar @features == 1 and !$depth) { #and $config->{'simpleblock_optimise'}) {
+    $composite = $self;
+  } 
+  else {
+    $composite = $self->create_Composite({
+                                          %$position,
+                                          href  => '',
+                                          class => 'group',
+                                        });
+
+  }
+
   foreach my $f (@features) {
     my ($start, $end) = $self->convert_to_local($f->{'start'}, $f->{'end'});
 
@@ -101,7 +90,32 @@ sub render {
     my $feature_colour  = $f->{'colour'} || $self->track_config('colour');
     my $label_colour    = $feature_colour;
 
-    $self->push($self->create_Glyph({
+    my $cigar   = $f->{'cigar_string'};
+
+    if ($cigar && ($self->want_cigar || $cigar =~ /$cigar_regexp/)) {
+      ## Space
+      $composite->push($self->create_Glyph({
+            x         => $start - 1,
+            y         => 0,
+            width     => $end - $start + 1,
+            height    => $height,
+            absolutey => 1,
+      }));
+
+      $self->draw_cigar_feature({
+            composite      => $composite,
+            feature        => $f,
+            height         => $height,
+            feature_colour => $feature_colour,
+            label_colour   => $label_colour,
+            delete_colour  => 'black',
+            scalex         => $pix_per_bp,
+            y              => $strand_y,
+      });
+    } 
+    else {
+      ## Simple rectangle
+      $composite->push($self->create_Glyph({
             x            => $start - 1,
             y            => $strand_y,
             width        => $end - $start + 1,
@@ -109,11 +123,29 @@ sub render {
             colour       => $feature_colour,
             label_colour => $label_colour,
             absolutey    => 1,
-    }));
+      }));
+    }
     $features_drawn = 1;
   }
 
 =pod
+  if ($composite ne $self) {
+    if ($h > 1) {
+      $composite->bordercolour($feature_colour) if $join;
+    } else {
+      $composite->unshift($self->create_Glyph({
+            x         => $composite->{'x'},
+            y         => $composite->{'y'},
+            width     => $composite->{'width'},
+            height    => $h,
+            colour    => $join_colour,
+            absolutey => 1
+      }));
+    }
+
+    $composite->y($composite->y + $y_pos);
+    $self->push($composite);
+  }
 
   if ($self->{'show_labels'}) {
     my $start = $self->{'container'}->start;
@@ -187,6 +219,11 @@ sub render {
 
   $self->errorTrack(sprintf q{No features from '%s' on this strand}, $self->my_config('name')) unless $features_drawn || $on_other_strand || $self->{'no_empty_track_message'} || $self->{'config'}->get_option('opt_empty_tracks') == 0;
   $self->errorTrack(sprintf(q{%s features from '%s' omitted}, $features_bumped, $self->my_config('name')), undef, $y_offset) if $self->get_parameter('opt_show_bumped') && $features_bumped;
+}
+
+sub want_cigar { 
+  my $self = shift;
+  return $self->my_config('force_cigar') eq 'yes' || $self->scalex > 0.2; 
 }
 
 1;
