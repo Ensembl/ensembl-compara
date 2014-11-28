@@ -35,26 +35,31 @@ sub get_data {
             'seq_region'  => '19',
             'start'       => '6511775',
             'end'         => '6705060',
+            'strand'      => 1,
           },
           {
             'seq_region'  => '19',
             'start'       => '6587568',
             'end'         => '6755620',
+            'strand'      => 1,
           },
           {
             'seq_region'  => '19',
             'start'       => '6587641',
             'end'         => '6764481',
+            'strand'      => 1,
           },
           {
             'seq_region'  => '19',
             'start'       => '6603909',
             'end'         => '6764455',
+            'strand'      => 1,
           },
           {
             'seq_region'  => '19',
             'start'       => '6625260',
             'end'         => '6722355',
+            'strand'      => 1,
           },
         ];
 }
