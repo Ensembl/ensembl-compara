@@ -49,6 +49,26 @@ sub _init {
   if (!scalar(@$features)) {
     return $self->no_features;
   }
+
+  my ($font, $fontsize) = $self->get_font_details($self->track_config->get('font') || 'innertext');
+  my $label_overlay     = $self->label_overlay;
+  my $bump_width        = $self->track_config->get('bump_width');
+     $bump_width        = 1 unless defined $bump_width;
+  my $max_length_nav    = $self->my_config('navigation_threshold') || 15000000;
+  my $navigation        = $self->my_config('navigation')           || 'on';
+     $navigation        = $navigation eq 'on' && $slice_length <= $max_length_nav * 1010;
+  my $pix_per_bp        = $self->scalex;
+  my $depth             = $self->depth;
+     $depth             = 1e5 unless defined $depth;
+  my $previous_start    = $slice_length + 1e9;
+  my $previous_end      = -1e9;
+  my $image_end         = $self->get_parameter('image_end');
+  my $optimizable       = $self->my_config('optimizable') && $depth < 1 ; # at the moment can only optimize repeats
+  my $height            = $self->my_config('height') || [$self->get_text_width(0, 'X', '', font => $font, ptsize => $fontsize)]->[3] + 2;
+     $height            = 4 if $depth > 0 && $self->get_parameter('squishable_features') eq 'yes' && $self->my_config('squish');
+     $height            = $self->{'extras'}{'height'} if $self->{'extras'} && $self->{'extras'}{'height'};
+
+  $self->_init_bump(undef, $depth);
 }
 
 sub render {
