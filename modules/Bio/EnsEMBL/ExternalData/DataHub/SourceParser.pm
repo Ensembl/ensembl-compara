@@ -39,7 +39,7 @@ use strict;
 use vars qw(@EXPORT_OK);
 use base qw(Exporter);
 
-use LWP::UserAgent;
+use HTTP::Tiny; 
 
 use EnsEMBL::Web::Tree;
 
@@ -60,11 +60,15 @@ use EnsEMBL::Web::Tree;
 sub new {
   my ($class, $settings) = @_;
 
-  my $ua = LWP::UserAgent->new;
-  $ua->timeout($settings->{'timeout'});
-  $ua->proxy([qw/http https/], $settings->{'proxy'}) if $settings->{'proxy'};
+  my %args = (
+              'timeout'       => $settings->{'timeout'},
+              'http_proxy'    => $settings->{'proxy'},
+              'https_proxy'   => $settings->{'proxy'}, 
+              );
 
-  my $self = { ua => $ua };
+  my $http = HTTP::Tiny->new(%args);
+
+  my $self = { http => $http };
   bless $self, $class;
 
   return $self;
@@ -85,7 +89,7 @@ sub new {
 
 sub get_hub_info {
   my ($self, $url) = @_;
-  my $ua        = $self->{'ua'};
+  my $http = $self->{'http'};
   my @split_url = split '/', $url;
   my $hub_file;
   
@@ -97,25 +101,24 @@ sub get_hub_info {
     $url      =~ s|/$||;
   }
   
-  my $response = $ua->get("$url/$hub_file");
+  my $response = $http->get("$url/$hub_file");
   
-  return { error => [$response->status_line] } unless $response->is_success;
+  return { error => [$self->_http_error($response)] } unless $response->{'success'};
   
   my %hub_details;
   
   ## Get file name for file with genome info
-  foreach (split /\n/, $response->content) {
+  foreach (split /\n/, $response->{'content'}) {
     my @line = split /\s/, $_, 2;
     $hub_details{$line[0]} = $line[1];
   }
-  
   return { error => ['No genomesFile found'] } unless $hub_details{'genomesFile'};
   
-  $response = $ua->get("$url/$hub_details{'genomesFile'}"); ## Now get genomes file and parse
+  $response = $http->get("$url/$hub_details{'genomesFile'}"); ## Now get genomes file and parse
   
-  return { error => ['genomesFile: ' . $response->status_line] } unless $response->is_success;
+  return { error => ['genomesFile: ' . $self->_http_error($response)] } unless $response->{'success'};
   
-  (my $genome_file = $response->content) =~ s/\r//g;
+  (my $genome_file = $response->{'content'}) =~ s/\r//g;
   my %genome_info;
   my @lines = split /\n/, $genome_file;
   my ($genome, $file);
@@ -131,17 +134,20 @@ sub get_hub_info {
     }
   }
   my @track_errors;
-  
+ 
+  ## Check if any of these genomes are available on this site
+
+ 
   ## Parse list of config files
   while (($genome, $file) = each %genome_info) {
-    $response = $ua->get("$url/$file");
+    $response = $http->get("$url/$file");
     
-    if (!$response->is_success) {
-      push @track_errors, "$genome ($url/$file): " . $response->status_line;
+    if (!$response->{'success'}) {
+      push @track_errors, "$genome ($url/$file): " . $self->_http_error($response);
       next;
     }
     
-    (my $content = $response->content) =~ s/\r//g;
+    (my $content = $response->{'content'}) =~ s/\r//g;
     my @track_list;
     
     # Hack here: Assume if file contains one include it only contains includes and no actual data
@@ -187,18 +193,18 @@ sub parse {
     return;
   }
   
-  my $ua   = $self->{'ua'};
+  my $http   = $self->{'http'};
   my $tree = EnsEMBL::Web::Tree->new;
   my $response;
   
   ## Get all the text files in the hub directory
   foreach (@$files) {
-    $response = $ua->get($_);
+    $response = $http->get($_);
     
-    if ($response->is_success) {
-      $self->parse_file_content($tree, $response->content =~ s/\r//gr, $_);
+    if ($response->{'success'}) {
+      $self->parse_file_content($tree, $response->{'content'} =~ s/\r//gr, $_);
     } else {
-      $tree->append($tree->create_node("error_$_", { error => $response->status_line, file => $_ }));
+      $tree->append($tree->create_node("error_$_", { error => $self->_http_error($response), file => $_ }));
     }
   }
   
@@ -423,6 +429,12 @@ sub sort_tree {
   }
   
   $self->sort_tree($_) for @children;
+}
+
+sub _http_error {
+### Helper subroutine for formatting error messages from HTTP::Tiny
+  my ($self, $response) = @_;
+  return $response->{'status'}.': '.$response->{'reason'};
 }
 
 1;
