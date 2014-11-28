@@ -88,7 +88,7 @@ sub new {
 =cut
 
 sub get_hub_info {
-  my ($self, $url) = @_;
+  my ($self, $url, $assembly_lookup) = @_;
   my $http = $self->{'http'};
   my @split_url = split '/', $url;
   my $hub_file;
@@ -121,54 +121,66 @@ sub get_hub_info {
   (my $genome_file = $response->{'content'}) =~ s/\r//g;
   my %genome_info;
   my @lines = split /\n/, $genome_file;
-  my ($genome, $file);
+  my ($genome, $file, %ok_genomes);
   foreach (split /\n/, $genome_file) {
     my ($k, $v) = split(/\s/, $_);
     if ($k =~ /genome/) {
       $genome = $v;
+      ## Check if any of these genomes are available on this site,
+      ## because we don't want to waste time parsing them if not!
+      if ($assembly_lookup && $assembly_lookup->{$genome}) {
+        $ok_genomes{$genome} = 1;
+      }
+      else {
+        $genome = undef;
+      }
     }
-    elsif ($k =~ /trackDb/) {
+    elsif ($genome && $k =~ /trackDb/) {
       $file = $v;
       $genome_info{$genome} = $file;
       ($genome, $file) = (undef, undef);
     }
   }
-  my @track_errors;
- 
-  ## Check if any of these genomes are available on this site
 
- 
-  ## Parse list of config files
-  while (($genome, $file) = each %genome_info) {
-    $response = $http->get("$url/$file");
+  my @errors;
+
+  if (keys %ok_genomes) {
+     ## Parse list of config files
+      foreach my $genome (keys %ok_genomes) {
+      $file = $genome_info{$genome};
+      $response = $http->get("$url/$file");
     
-    if (!$response->{'success'}) {
-      push @track_errors, "$genome ($url/$file): " . $self->_http_error($response);
-      next;
-    }
+      if (!$response->{'success'}) {
+        push @errors, "$genome ($url/$file): " . $self->_http_error($response);
+       next;
+      }
     
-    (my $content = $response->{'content'}) =~ s/\r//g;
-    my @track_list;
+      (my $content = $response->{'content'}) =~ s/\r//g;
+      my @track_list;
     
-    # Hack here: Assume if file contains one include it only contains includes and no actual data
-    # Would be better to resolve all includes (read the files) and pass the complete config data into 
-    # the parsing function rather than the list of file names
-    foreach (split /\n/, $content) {
-      next if /^#/ || !/\w+/ || !/^include/;
+      # Hack here: Assume if file contains one include it only contains includes and no actual data
+      # Would be better to resolve all includes (read the files) and pass the complete config data into 
+      # the parsing function rather than the list of file names
+      foreach (split /\n/, $content) {
+        next if /^#/ || !/\w+/ || !/^include/;
       
-      s/^include //;
-      push @track_list, "$url/$_";
-    }
+        s/^include //;
+        push @track_list, "$url/$_";
+      }
     
-    if (scalar @track_list) {
-      ## replace trackDb file location with list of track files
-      $genome_info{$genome} = \@track_list;
-    } else {
-      $genome_info{$genome} = [ "$url/$file" ];
+      if (scalar @track_list) {
+        ## replace trackDb file location with list of track files
+        $genome_info{$genome} = \@track_list;
+      } else {
+        $genome_info{$genome} = [ "$url/$file" ];
+      }
     }
   }
-  
-  return scalar @track_errors ? { error => \@track_errors } : { details => \%hub_details, genomes => \%genome_info };
+  else {
+    push @errors, "This track hub does not contain any genomes compatible with this website";
+  }
+
+  return scalar @errors ? { error => \@errors } : { details => \%hub_details, genomes => \%genome_info };
 }
 
 =head2 parse

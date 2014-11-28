@@ -79,8 +79,11 @@ sub process {
     } else {
       $format = Bio::EnsEMBL::ExternalData::AttachedFormat->new($self->hub, $format_name, $url, $trackline);
     }
-    
-    my ($error, $options) = $format->check_data;
+   
+    ## For datahubs, pass assembly info so we can check if there's suitable data
+    my $assemblies = $species_defs->assembly_lookup;
+ 
+    my ($error, $options) = $format->check_data($assemblies);
     
     if ($error) {
       $redirect .= 'SelectFile';
