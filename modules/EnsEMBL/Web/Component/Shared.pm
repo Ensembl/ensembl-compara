@@ -367,10 +367,8 @@ sub transcript_table {
         my ($code, $text) = @{$trans_attribs->{$tsi}{'appris'}};
         my $glossary_url  = $hub->url({'type' => 'Help', 'action' => 'Glossary', 'id' => '493', '__clear' => 1});
         my $appris_link   = $hub->get_ExtURL_link('APPRIS website', 'APPRIS');
-        warn ">>> CODE $code";
-        my $class         = $code eq 'pi' ? 'green' : 'yellow';
         push @flags, $code
-          ? sprintf('<span class="glossary_mouseover"><span class="appris_%s bold">APPRIS %s</span><span class="floating_popup">%s<br /><a href="%s" class="popup">Glossary entry for APPRIS</a><br />%s</span></span>', $class, uc $code, $text, $glossary_url, $appris_link)
+          ? sprintf('<span class="glossary_mouseover">APPRIS %s<span class="floating_popup">%s<br /><a href="%s" class="popup">Glossary entry for APPRIS</a><br />%s</span></span>', uc $code, $text, $glossary_url, $appris_link)
           : sprintf('<span class="glossary_mouseover">APPRIS<span class="floating_popup">%s<br />%s</span></span>', $text, $appris_link);
       }
 
