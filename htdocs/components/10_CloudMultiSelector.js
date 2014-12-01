@@ -51,6 +51,12 @@ Ensembl.Panel.CloudMultiSelector = Ensembl.Panel.extend({
       panel.changed = false;
     }
   },
+
+  reset_selection: function () {
+    this.changed = false;
+    delete this.orig_selection;
+    this.set_selection();
+  },
  
   init: function () {
     var panel = this;

@@ -16,6 +16,8 @@
 
 Ensembl.Panel.EvidenceSelector = Ensembl.Panel.CloudMultiSelector.extend({
   updateSelection: function () {
+    var panel = this;
+
     if(!this.changed) { return; }
     
     var evidence = this.urlParam + '=' + this.selection.join(',');
@@ -26,6 +28,7 @@ Ensembl.Panel.EvidenceSelector = Ensembl.Panel.CloudMultiSelector.extend({
         Ensembl.EventManager.triggerSpecific('updatePanel','Buttons',null,null,null,null,{ background: true });
         Ensembl.EventManager.triggerSpecific('updatePanel','FeaturesByCellLine');
         Ensembl.EventManager.triggerSpecific('updatePanel','ViewBottom');
+        panel.reset_selection();
       }
     });
     

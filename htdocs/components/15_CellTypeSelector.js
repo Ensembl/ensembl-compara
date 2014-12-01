@@ -16,6 +16,7 @@
 
 Ensembl.Panel.CellTypeSelector = Ensembl.Panel.CloudMultiSelector.extend({
   updateSelection: function () {
+    var panel = this;
 
     if(!this.changed) { return; }
 
@@ -37,6 +38,7 @@ Ensembl.Panel.CellTypeSelector = Ensembl.Panel.CloudMultiSelector.extend({
         for(var i=0;i<panels.length;i++) {
           Ensembl.EventManager.triggerSpecific('updatePanel',panels[i]);
         }
+        panel.reset_selection();
       }
     });
     
