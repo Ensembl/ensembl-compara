@@ -53,12 +53,99 @@ sub new {
   return $self;
 }
 
+#### BASIC ACCESSORS #################
+
+sub image_config {
+  my $self = shift;
+  return $self->{'config'};
+}
+
+sub track_config {
+  my $self = shift;
+  return $self->{'my_config'};
+}
+
+sub strand {
+  my $self = shift;
+  return $self->{'strand'};
+}
+
+sub cache {
+  my ($self, $key, $value) = @_;
+  return unless $key;
+  $self->{'image_config'}{'_cache'}{$key} = $value if $value;
+  return $self->{'image_config'}{'_cache'}{$key};
+}
+
+#### DRAWING THE TRACK ####################
+
+sub add_glyphs {
+  my ($self, @glyphs) = @_;
+  my ($gx, $gx1, $gy, $gy1);
+    
+  foreach (@glyphs) { 
+    push @{$self->{'glyphs'}}, $_;
+
+    $gx  = $_->x() || 0;
+    $gx1 = $gx + ($_->width() || 0); 
+    $gy  = $_->y() || 0;
+    $gy1 = $gy + ($_->height() || 0);
+    
+    ## track max and min dimensions
+    $self->minx($gx)  unless defined $self->minx && $self->minx < $gx;
+    $self->maxx($gx1) unless defined $self->maxx && $self->maxx > $gx1;
+    $self->miny($gy)  unless defined $self->miny && $self->miny < $gy;
+    $self->maxy($gy1) unless defined $self->maxy && $self->maxy > $gy1;
+  }  
+}
+
 sub render {
 ### Stub
 ### Render data into a track
   my $self = shift;
   warn "!!! RENDERING NOT IMPLEMENTED IN ".ref($self);
 };
+
+#### Manage overall dimensions ####################
+
+sub minx {
+  my ($self, $minx) = @_;
+  $self->{'minx'} = $minx if(defined $minx);
+  return $self->{'minx'};
+}
+
+sub miny {
+  my ($self, $miny) = @_;
+  $self->{'miny'} = $miny if(defined $miny);
+  return $self->{'miny'};
+}
+
+sub maxx {
+  my ($self, $maxx) = @_;
+  $self->{'maxx'} = $maxx if(defined $maxx);
+  return $self->{'maxx'};
+}
+
+sub maxy {
+  my ($self, $maxy) = @_;
+  $self->{'maxy'} = $maxy if(defined $maxy);
+  return $self->{'maxy'};
+};
+
+sub height {
+  my $self = @_;
+  return int(abs($self->output->maxy - $self->output->miny) + 0.5);
+}
+
+sub width {
+  my $self = @_;
+  return abs($self->output->maxx - $self->output->minx);
+}
+
+sub length {
+  my $self = shift;
+  return scalar @{$self->{'glyphs'}};
+}
 
 sub convert_to_local {
 ### Convert genomic/feature coordinates to ones relative to this image
@@ -67,6 +154,289 @@ sub convert_to_local {
   $start = $start - $absolute_start;
   $end   = $end ? $end - $absolute_start : undef;
   return ($start, $end);
+}
+
+#### Labels and stuff #######################
+
+sub error {
+  my $self = shift;
+  $self->{'error'} = @_ if @_;
+  return $self->{'error'};
+}
+
+sub error_track_name {
+  my $self = shift;
+  return $self->track_config->get('caption');
+}
+
+sub label {
+  my ($self, $text) = @_;
+  $self->{'label'} = $text if(defined $text);
+  return $self->{'label'};
+}
+
+sub label_img {
+  my ($self, $text) = @_;
+  $self->{'label_img'} = $text if(defined $text);
+  return $self->{'label_img'};
+}
+
+sub label_text {
+  my $self = shift;
+  return join(' ',map { $_->{'text'} } @{$self->_label_glyphs});
+}
+
+sub max_label_rows { 
+  my $self = shift;
+  return $self->track_config->get('max_label_rows') || 1; 
+}
+
+sub recast_label {
+  # XXX we should see which of these args are used and also pass as hash
+  my ($self, $pixperbp, $width, $rows, $text, $font, $ptsize, $colour) = @_;
+
+  my $caption = $self->output->my_label_caption;
+  $text = $caption if $caption;
+
+  my $n = 0;
+  my ($ov,$text_out);
+  ($rows,$text_out,$ov) = $self->_split_label($text,$width,$font,$ptsize,0);
+  if($ov and $text =~ /\t[<>]/) {
+    $text.="\t<" unless $text =~ /\t[<>]/;
+    $text =~ s/\t>./...\t>/;
+    $text =~ s/.\t</\t<.../;
+    my $ov = 1;
+    my $text_out;
+    my $known_good = length $text;
+    my $known_bad = 0;
+    my $good_rows;
+    foreach my $step ((5,2,1)) {
+      my $n = $known_bad + $step;
+      while($n<$known_good) {
+        ($rows,$text_out,$ov) = $self->_split_label($text,$width,$font,$ptsize,$n);
+        if($ov) { $known_bad = $n; }
+        else    { $known_good = $n; $good_rows = $rows; }
+        $n += $step;
+      }
+    }
+    $rows = $good_rows;
+
+  }
+
+  my $max_width = max(map { $_->[1] } @$rows);
+
+  my $composite = $self->createComposite({
+    halign => 'left',
+    absolutex => 1,
+    absolutewidth => 1,
+    width => $max_width,
+    x => 0,
+    y => 0,
+    class     => $self->label->{'class'},
+    alt       => $self->label->{'alt'},
+    hover     => $self->label->{'hover'},
+  });
+
+  my $y = 0;
+  my $h = $self->track_config->get('caption_height') || $self->label->{'height'};
+  foreach my $row_data (@$rows) {
+    my ($row_text,$row_width) = @$row_data;
+    next unless $row_text;
+    my $pad = 0;
+    $pad = 4 if !$y and @$rows>1;
+    my $row = $self->Text({
+      font => $font,
+      ptsize => $ptsize,
+      text => $row_text,
+      height => $h + $pad,
+      colour    => $colour,
+      y => $y,
+      width => $max_width,
+      halign => 'left',
+    });
+    $composite->push($row);
+    $y += $h + $pad; # The 4 is to add some extra delimiting margin
+  }
+  $self->label($composite);
+}
+
+sub _label_glyphs {
+  my $self = CORE::shift;
+  my $label = $self->label;
+  return [] unless $label;
+
+  my $glyphs = [$label];
+  if ($label->can('glyphs')) {
+    $glyphs = [ $self->{'label'}->glyphs ];
+  }
+  return $glyphs;
+}
+
+sub _split_label {
+### Text wrapping is a job for the human eye. We do the best we can:
+### wrap on word boundaries but don't have <6 trailing characters.
+  my ($self, $text, $width, $font, $ptsize, $chop) = @_;
+
+  for (1..$chop) {
+    $text =~ s/.\t</\t</;
+    $text =~ s/\t>./\t>/;
+  }
+  $text =~ s/\t[<>]//;
+  my $max_rows = $self->max_label_rows;
+  my @words = split(/(?<=[ \-\._])/,$text);
+  while(@words > 1 and length($words[-1]) < 6) {
+    my $tail = pop @words;
+    $words[-1] .= $tail;
+  }
+  my @split;
+  my $line_so_far = '';
+
+  foreach my $word (@words) {
+    my $candidate_line = $line_so_far.$word;
+    my $replacement_line = $candidate_line;
+    $candidate_line =~ s/^ +//;
+    $candidate_line =~ s/ +$//;
+    my @res = $self->get_text_width(undef, $candidate_line, '', font => $font, ptsize => $ptsize);
+    if(!@split or $res[2] > $width) { # CR
+      if(@split == $max_rows) { # No room!
+        my @res = $self->get_text_width($width, $candidate_line, '', ellipsis => 1, font => $font, ptsize => $ptsize);
+        $split[-1][0] = $res[0];
+        $split[-1][1] = $res[2];
+        return (\@split,$text,1);
+        last;
+      }
+      my @res = $self->get_text_width($width, $word, '', ellipsis => 1, font => $font, ptsize => $ptsize);
+      $line_so_far = $res[0];
+      push @split,[$line_so_far,$res[2]];
+    } else {
+      $line_so_far = $replacement_line;
+      $split[-1][0] = $line_so_far;
+      $split[-1][1] = $res[2];
+    }
+  }
+  return (\@split, $text, 0);
+}
+
+
+sub my_label_caption {
+}
+
+sub init_label {
+  my $self = shift;
+
+  return $self->label(undef) if defined $self->{'image_config'}->{'_no_label'};
+
+  my $text = $self->track_config->get('caption');
+
+  my $img = $self->track_config->get('caption_img');
+  if($img and $img =~ s/^r:// and $self->{'strand'} ==  1) { $img = undef; }
+  if($img and $img =~ s/^f:// and $self->{'strand'} == -1) { $img = undef; }
+
+  return $self->label(undef) unless $text;
+
+  my $image_config  = $self->{'image_config'};
+  my $hub           = $image_config->hub;
+  my $name          = $self->track_config->get('name');
+  my $desc          = $self->track_config->get('description');
+  my $style         = $image_config->species_defs->ENSEMBL_STYLE;
+  my $font          = $style->{'GRAPHIC_FONT'};
+  my $fsze          = $style->{'GRAPHIC_FONTSIZE'} * $style->{'GRAPHIC_LABEL'};
+  my @res           = $self->get_text_width(0, $text, '', font => $font, ptsize => $fsze);
+  my $track         = $self->type;
+  ### How is this node different from track_config??
+  my $node          = $image_config->get_node($track);
+  warn ">>> NODE $node";
+  warn ">>> TRACK CONFIG ".$self->track_config;
+  my $component     = $image_config->get_parameter('component');
+  my $hover         = $component && !$hub->param('export') && $node->get('menu') ne 'no';
+  my $class         = random_string(8);
+
+  if ($hover) {
+    my $fav       = $image_config->get_favourite_tracks->{$track};
+    my @renderers = grep !/default/i, @{$node->get('renderers') || []};
+    my $subset    = $node->get('subset');
+    my @r;
+
+    my $url = $hub->url('Config', {
+      species  => $image_config->species,
+      action   => $component,
+      function => undef,
+      submit   => 1
+    });
+
+    if (scalar @renderers > 4) {
+      while (my ($val, $text) = splice @renderers, 0, 2) {
+        push @r, { url => "$url;$track=$val", val => $val, text => $text, current => $val eq $self->{'display'} };
+      }
+    }
+
+    $image_config->{'hover_labels'}->{$class} = {
+      header    => $name,
+      desc      => $desc,
+      class     => "$class $track",
+      component => lc($component . ($image_config->multi_species && $image_config->species ne $hub->species ? '_' . $image_config->species : '')),
+      renderers => \@r,
+      fav       => [ $fav, "$url;$track=favourite_" ],
+      off       => "$url;$track=off",
+      conf_url  => $self->species eq $hub->species ? $hub->url($hub->multi_params) . ";$image_config->{'type'}=$track=$self->{'display'}" : '',
+      subset    => $subset ? [ $subset, $hub->url('Config', { species => $image_config->species, action => $component, function => undef, __clear => 1 }), lc "modal_config_$component" ] : '',
+    };
+  }
+
+  my $ch = $self->track_config->get('caption_height') || 0;
+  $self->label($self->Text({
+    text      => $text,
+    font      => $font,
+    ptsize    => $fsze,
+    colour    => $self->{'label_colour'} || 'black',
+    absolutey => 1,
+    height    => $ch || $res[3],
+    class     => "label $class",
+    alt       => $name,
+    hover     => $hover,
+  }));
+
+  if($img) {
+    $img =~ s/^([\d@-]+)://; my $size = $1 || 16;
+    my $offset = 0;
+    $offset = $1 if $size =~ s/@(-?\d+)$//;
+    $self->label_img($self->Sprite({
+        z             => 1000,
+        x             => 0,
+        y             => $offset,
+        sprite        => $img,
+        spritelib     => 'species',
+        width         => $size,
+        height         => $size,
+        absolutex     => 1,
+        absolutey     => 1,
+        absolutewidth => 1,
+        pixperbp      => 1,
+        alt           => '',
+    }));
+  }
+}
+
+sub label {
+  my ($self, $text) = @_;
+  $self->{'label'} = $text if(defined $text);
+  return $self->{'label'};
+}
+
+sub label_img {
+  my ($self, $text) = @_;
+  $self->{'label_img'} = $text if(defined $text);
+  return $self->{'label_img'};
+}
+
+sub label_text {
+  my $self = shift;
+  return join(' ',map { $_->{'text'} } @{$self->_label_glyphs});
+}
+
+sub max_label_rows {
+  my $self = shift;
+  return $self->track_config->get('max_label_rows') || 1;
 }
 
 sub draw_cigar_feature {
@@ -229,12 +599,12 @@ sub join_tag {
   my ($self, $glyph, $tag, $x_pos, $y_pos, $col, $style, $zindex, $href, $alt, $class) = @_;
 
   if (ref $x_pos eq 'HASH') {
-    CORE::push @{$self->{'tags'}{$tag}}, {
+    push @{$self->{'tags'}{$tag}}, {
       %$x_pos,
       'glyph' => $glyph
     };
   } else {
-    CORE::push @{$self->{'tags'}{$tag}}, {
+    push @{$self->{'tags'}{$tag}}, {
       'glyph' => $glyph,
       'x'     => $x_pos,
       'y'     => $y_pos,
@@ -248,23 +618,6 @@ sub join_tag {
   }
 }
 
-######## MISCELLANEOUS ACCESSORS #################
-
-sub cache {
-  my $self = shift;
-  return $self->{'config'}->hub->cache;
-}
-
-sub image_config {
-  my $self = shift;
-  return $self->{'config'};
-}
-
-sub track_config {
-  my $self = shift;
-  return $self->{'my_config'};
-}
-
 sub default_height { return 8; }
 
 sub track_width {
@@ -274,34 +627,84 @@ sub track_width {
 
 sub scalex { 
   my $self = shift;
-  return $self->{'config'}->transform->{'scalex'};
+  return $self->{'config'}{'transform'}{'scalex'};
 } 
 
 ### Wrappers around low-level drawing code
 
-sub create_Glyph { 
+sub createGlyph { 
   my $self = shift; 
   return EnsEMBL::Draw::Glyph->new(@_);     
 }
 
-sub create_Circle { 
+sub createCircle { 
   my $self = shift; 
   return EnsEMBL::Draw::Glyph::Circle->new(@_);     
 }
 
-sub create_Composite { 
+sub createComposite { 
   my $self = shift; 
   return EnsEMBL::Draw::Glyph::Composite->new(@_);     
 }
 
-sub create_Poly { 
+sub createPoly { 
   my $self = shift; 
   return EnsEMBL::Draw::Glyph::Poly->new(@_);     
 }
 
-sub create_Triangle { 
+sub createTriangle { 
   my $self = shift; 
   return EnsEMBL::Draw::Glyph::Triangle->new(@_);     
+}
+
+#### Drawing-related code from GlyphSet ####
+
+sub get_text_width {
+  my ($self, $width, $text, $short_text, %parameters) = @_;
+
+  ## Adjust the text for courier fonts
+  $text = 'X' if length $text == 1 && $parameters{'font'} =~ /Cour/i;
+
+  ## Look in the cache for a previous entry
+  my $key  = "$width--$text--$short_text--$parameters{'font'}--$parameters{'ptsize'}";
+  my $cached = $self->cache($key);
+  return @{$cached} if ($cached && ref($cached) eq 'ARRAY');
+
+  my $gd = $self->get_gd($parameters{'font'}, $parameters{'ptsize'});
+
+  return unless $gd;
+
+  # Use the text object to determine height/width of the given text;
+  $width ||= 1e6; # Make initial width very big by default
+
+  my ($w, $h) = $gd->stringBounds($text);
+  my @res;
+
+  if ($w < $width) {
+    @res = ($text, 'full', $w, $h);
+  } elsif ($short_text) {
+    ($w, $h) = $gd->stringBounds($text);
+    @res = $w < $width ? ($short_text, 'short', $w, $h) : ('', 'none', 0, 0);
+  } elsif ($parameters{'ellipsis'}) {
+    my $string = $text;
+
+    while ($string) {
+      chop $string;
+
+      ($w, $h) = $gd->stringBounds("$string...");
+
+      if ($w < $width) {
+        @res = ("$string...", 'truncated', $w, $h);
+        last;
+      }
+    }
+  } else {
+    @res = ('', 'none', 0, 0);
+  }
+
+  $self->cache($key, \@res); # Update the cache
+
+  return @res;
 }
 
 #### Bring in some basic drawing functionality from Sanger::Graphics
@@ -352,7 +755,7 @@ sub get_gd {
   my $ptsize   = shift || 10;
   my $font_key = "${font}--${ptsize}";
 
-  return $self->cache->get($font_key) if $self->cache->get($font_key);
+  return $self->cache($font_key) if $self->cache($font_key);
 
   my $fontpath = $self->{'config'}->species_defs->ENSEMBL_STYLE->{'GRAPHIC_TTF_PATH'}. "/$font.ttf";
   my $gd       = GD::Simple->new(400, 400);
@@ -376,7 +779,7 @@ sub get_gd {
 
   warn $@ if $@;
 
-  return $self->cache->get($font_key) = $gd; # Update font cache
+  return $self->cache($font_key, $gd); # Update font cache
 }
 
 
