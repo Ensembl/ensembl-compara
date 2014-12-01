@@ -38,7 +38,7 @@ sub initialize {
   my $vc = $self->view_config($type);
   
   my $config = {
-    exons_only    => $hub->param('exons_only') || $vc->get('exons_only');
+    exons_only    => $hub->param('exons_only') || $vc->get('exons_only'),
     display_width => $hub->param('display_width') || $vc->get('display_width'),
     sscon         => $hub->param('sscon') || $vc->get('sscon'),   # no of bp to show either side of a splice site
     flanking      => $hub->param('flanking') || $vc->get('flanking'),   # no of bp up/down stream of transcript
@@ -102,7 +102,7 @@ sub initialize {
     };
 
     # Add intronic sequence
-    if ($exons_only eq 'off' && $next_exon) {
+    if ($config->{'exons_only'} eq 'off' && $next_exon) {
       my ($intron_start, $intron_end) = $strand == 1 ? ($exon_end + 1, $next_exon->start - 1) : ($next_exon->end + 1, $exon_start - 1);
       my $intron_length = $intron_end - $intron_start + 1;
       my $intron_id     = "Intron $i-" . ($i + 1);
