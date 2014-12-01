@@ -147,10 +147,16 @@ sub cell_type {
   my $image_config_name = $hub->param('image_config') || 'regulation_view';
 
   my $image_config = $hub->get_imageconfig($image_config_name);
-  my %cell;
-  foreach my $cell (split(/,/,uri_unescape($hub->param('cell')))) {
-    $cell{$image_config->tree->clean_id($cell)} = 1;
+  my (%cell,%changed);
+
+  my $target = \%cell;
+  foreach my $key (qw(cell cell_on cell_off)) {
+    foreach my $cell (split(/,/,uri_unescape($hub->param($key)))) {
+      $target->{$image_config->tree->clean_id($cell)} = 1;
+    }
+    $target = \%changed;
   }
+
   foreach my $type (qw(reg_features seg_features reg_feats_core reg_feats_non_core)) {
     my $menu = $image_config->get_node($type);
     next unless $menu;
@@ -165,6 +171,7 @@ sub cell_type {
           $type eq 'seg_features') {
         next;
       }
+      next unless $changed{$cell};
       $image_config->update_track_renderer($node->id,$renderer);
     }
   }
@@ -173,9 +180,17 @@ sub cell_type {
 
 sub evidence {
   my ($self,$hub) = @_;
-  my $evidence = $hub->param('evidence');
 
-  my %evidence = map { $_ => 1 } split(/,/,$hub->param('evidence'));
+  my (%evidence,%changed);
+
+  my $target = \%evidence;
+  foreach my $key (qw(evidence evidence_on evidence_off)) {
+    foreach my $ev (split(/,/,uri_unescape($hub->param($key)))) {
+      $target->{$ev} = 1;
+    }
+    $target = \%changed;
+  }
+
   foreach my $image_config_name (qw(regulation_view reg_summary_page)) {
     my $image_config = $hub->get_imageconfig($image_config_name);
     foreach my $type (qw(reg_feats_core reg_feats_non_core)) {
@@ -189,6 +204,7 @@ sub evidence {
           my $ev = $node2->id;
           $ev =~ s/^${type}_${cell}_//;
           my $renderer = $evidence{$ev} ? 'on' : 'off';
+          next unless $changed{$ev};
           $image_config->update_track_renderer($node2->id,$renderer);
         }
       }

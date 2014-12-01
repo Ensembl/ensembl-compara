@@ -36,16 +36,19 @@ Ensembl.Panel.CloudMultiSelector = Ensembl.Panel.extend({
     );
 
     if(panel.orig_selection) {
-      if(panel.orig_selection.length == panel.selection.length) {
-        panel.changed = false;
-        $.each(panel.selection,function(i,v) {
-          if(v != panel.orig_selection[i]) {
-            panel.changed = true;
-          }
-        });
-      } else {
-        panel.changed = true;
-      }
+      panel.changed_on = [];
+      panel.changed_off = [];
+      var pend = {};
+      $.each(panel.orig_selection,function(i,v) { pend[v] = 1; });
+      $.each(panel.selection,function(i,v) {
+        if(pend[v]) {
+          delete pend[v];
+        } else {
+          panel.changed_on.push(v);
+        }
+      });
+      $.each(pend,function(k,v) { panel.changed_off.push(k); });
+      panel.changed = ( panel.changed_on.length||panel.changed_off.length );
     } else {
       panel.orig_selection = panel.selection;
       panel.changed = false;
@@ -53,7 +56,6 @@ Ensembl.Panel.CloudMultiSelector = Ensembl.Panel.extend({
   },
 
   reset_selection: function () {
-    this.changed = false;
     delete this.orig_selection;
     this.set_selection();
   },
