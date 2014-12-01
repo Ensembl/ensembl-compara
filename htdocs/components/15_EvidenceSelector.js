@@ -16,11 +16,18 @@
 
 Ensembl.Panel.EvidenceSelector = Ensembl.Panel.CloudMultiSelector.extend({
   updateSelection: function () {
+    var panel = this;
+
     if(!this.changed) { return; }
-    
-    var evidence = this.urlParam + '=' + this.selection.join(',');
+
+    var params = {};
+    params[this.urlParam] = encodeURIComponent(this.selection.join(','));
+    params[this.urlParam+'_on'] = encodeURIComponent(this.changed_on.join(','));
+    params[this.urlParam+'_off'] = encodeURIComponent(this.changed_off.join(','));
+    panel.reset_selection();
     $.ajax({
-      url: '/' + Ensembl.species + '/Ajax/evidence?' + evidence,
+      url: '/' + Ensembl.species + '/Ajax/evidence',
+      data: params,
       context: this,
       complete: function() {
         Ensembl.EventManager.triggerSpecific('updatePanel','Buttons',null,null,null,null,{ background: true });
