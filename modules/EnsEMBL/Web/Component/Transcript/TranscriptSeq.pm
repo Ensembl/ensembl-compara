@@ -353,6 +353,7 @@ sub initialize {
   $self->markup_codons($sequence, $markup, $config)    if $config->{'codons'};
   if($adorn ne 'none') {
     $self->markup_variation($sequence, $markup, $config) if $config->{'snp_display'};  
+    push @{$config->{'loaded'}||=[]},'variations';
   } else {
     push @{$config->{'loading'}||=[]},'variations';
   }

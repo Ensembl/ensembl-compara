@@ -100,8 +100,12 @@ sub get_sequence_data {
   my $sequence = [];
   my @markup;
  
-  if($config->{'snp_display'} ne 'off' and $adorn eq 'none') {
-    push @{$config->{'loading'}||=[]},'variations';
+  if($config->{'snp_display'} ne 'off') {
+    if($adorn eq 'none') {
+      push @{$config->{'loading'}||=[]},'variations';
+    } else {
+      push @{$config->{'loaded'}||=[]},'variations';
+    }
   }
  
   $self->set_variation_filter($config) if $config->{'snp_display'} ne 'off';
@@ -1077,6 +1081,7 @@ sub build_sequence {
   if($adorn eq 'only') {
     $key->{$_}||={} for @{$config->{'loading'}||[]};
   }
+  $key->{$_}||={} for @{$config->{'loaded'}||[]};
 
   my $adornment = {
     seq => \@adseq,
