@@ -434,22 +434,6 @@ sub write_alignment {
   my $hub     = $self->hub;
   my $format  = $hub->param('format');
 
-  my $data = $component->get_export_data;
-  my $alignment;
-
-  if (ref($data) =~ 'SimpleAlign') {
-    $alignment = $data;
-  }
-  else {
-    $self->object->{'alignments_function'} = 'get_SimpleAlign';
-
-    $alignment = $self->object->get_alignments({
-        'slice'   => $data->slice,
-        'align'   => $hub->param('align'),
-        'species' => $hub->species,
-      });
-  }
-
   my $export;
 
   my $align_io = Bio::AlignIO->newFh(
@@ -457,7 +441,28 @@ sub write_alignment {
     -format => $format
   );
 
-  print $align_io $alignment;
+  my $data = $component->get_export_data;
+  my $alignment;
+
+  if (ref($data) eq 'ARRAY') {
+    print $align_io $_ for @$data;
+  }
+  else {
+    if (ref($data) =~ 'SimpleAlign') {
+      $alignment = $data;
+    }
+    else {
+      $self->object->{'alignments_function'} = 'get_SimpleAlign';
+
+      $alignment = $self->object->get_alignments({
+          'slice'   => $data->slice,
+          'align'   => $hub->param('align'),
+          'species' => $hub->species,
+        });
+    }
+
+    print $align_io $alignment;
+  }
 
   $self->write_line($export);
 }
