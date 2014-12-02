@@ -65,10 +65,10 @@ sub upload {
     ## Try to guess the format from the extension
     my @parts       = split('\.', $filename);
     my $ext         = $parts[-1] =~ /gz|zip/i ? $parts[-2] : $parts[-1];
-    my $format_info = $hub->species_defs->DATA_FORMAT_INFO;
+    my $format_info = $hub->species_defs->multi_val('DATA_FORMAT_INFO');
     my $extensions;
     
-    foreach (@{$hub->species_defs->UPLOAD_FILE_FORMATS}) {
+    foreach (@{$hub->species_defs->multi_val('UPLOAD_FILE_FORMATS')}) {
       $format = uc $ext if $format_info->{lc($_)}{'ext'} =~ /$ext/i;
     }
   }

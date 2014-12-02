@@ -39,9 +39,9 @@ sub process {
      $url           =~ s/(^\s+|\s+$)//g; # Trim leading and trailing whitespace
   my $filename      = [split '/', $url]->[-1];
   my $chosen_format = $hub->param('format');
-  my $formats       = $species_defs->DATA_FORMAT_INFO;
-  my @small_formats = @{$species_defs->UPLOAD_FILE_FORMATS};
-  my @big_exts      = map $formats->{$_}{'ext'}, @{$species_defs->REMOTE_FILE_FORMATS};
+  my $formats       = $species_defs->multi_val('DATA_FORMAT_INFO');
+  my @small_formats = @{$species_defs->multi_val('UPLOAD_FILE_FORMATS')};
+  my @big_exts      = map $formats->{$_}{'ext'}, @{$species_defs->multi_val('REMOTE_FILE_FORMATS')};
   my @bits          = split /\./, $filename;
   my $extension     = $bits[-1] eq 'gz' ? $bits[-2] : $bits[-1];
   my $pattern       = "^$extension\$";
@@ -51,7 +51,7 @@ sub process {
   ## tries to attach a large format file with a small format selected in the form
   my $format_name = $chosen_format;
   if (grep(/$chosen_format/i, @small_formats) && grep(/$pattern/i, @big_exts)) {
-    my %big_formats = map {$formats->{$_}{'ext'} => $_} @{$species_defs->REMOTE_FILE_FORMATS};
+    my %big_formats = map {$formats->{$_}{'ext'} => $_} @{$species_defs->multi_val('REMOTE_FILE_FORMATS')};
     $format_name = uc($big_formats{$extension});
   }
   elsif ($format_name eq 'VCFI') {

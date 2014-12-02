@@ -1018,7 +1018,7 @@ sub _load_url_feature {
   return unless ($data && $format);
 
   my ($strand, $renderers) = $self->_user_track_settings(undef, $format);
-  my $file_info = $self->hub->species_defs->DATA_FORMAT_INFO;
+  my $file_info = $self->hub->species_defs->multi_val('DATA_FORMAT_INFO');
 
   my $track = $self->create_track('custom_feature', 'Single feature', {
         external    => 'user',
@@ -1363,7 +1363,7 @@ sub update_from_url {
       
       if ($type eq 'url') {
         my $menu_name   = $hub->param('menu');
-        my $all_formats = $hub->species_defs->DATA_FORMAT_INFO;
+        my $all_formats = $hub->species_defs->multi_val('DATA_FORMAT_INFO');
         
         if (!$format) {
           $p = uri_unescape($p);

@@ -57,7 +57,7 @@ sub content_ajax {
   
   my $parser  = EnsEMBL::Web::Text::FeatureParser->new($hub->species_defs, $hub->param('r'), $data->{'species'});
   my $format  = $data->{'format'};
-  my $formats = $hub->species_defs->REMOTE_FILE_FORMATS;
+  my $formats = $hub->species_defs->multi_val('REMOTE_FILE_FORMATS');
   my $html;
   
   unless ($format eq 'DATAHUB' && $hub->param('assembly') !~ $hub->species_defs->get_config($hub->data_species, 'ASSEMBLY_VERSION')) { ## Don't give parsing message if this is a hub and we can't show it!

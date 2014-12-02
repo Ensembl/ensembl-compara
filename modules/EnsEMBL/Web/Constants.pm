@@ -123,15 +123,16 @@ sub GENE_JOIN_TYPES {
 sub ALIGNMENT_FORMATS {
 ### Metadata for alignment export formats
   return (
-    'fasta'    => 'FASTA',
-    'msf'      => 'MSF',
-    'clustalw' => 'CLUSTAL',
-    'selex'    => 'Selex',
-    'pfam'     => 'Pfam',
-    'mega'     => 'Mega',
-    'nexus'    => 'Nexus',
-    'phylip'   => 'Phylip',
-    'psi'      => 'PSI',
+    'fasta'     => 'FASTA',
+    'msf'       => 'MSF',
+    'clustalw'  => 'CLUSTAL',
+    'selex'     => 'Selex',
+    'pfam'      => 'Pfam',
+    'mega'      => 'Mega',
+    'nexus'     => 'Nexus',
+    'phylip'    => 'Phylip',
+    'psi'       => 'PSI',
+    'stockholm' => 'Stockholm',
   );
 }
 sub SIMPLEALIGN_DEFAULT { return 'clustalw'; }

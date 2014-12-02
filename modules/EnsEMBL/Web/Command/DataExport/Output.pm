@@ -51,8 +51,8 @@ sub process {
   }
 
   my ($file, $filename, $random_dir, $extension, $compression);
-  my %data_info = %{$hub->species_defs->DATA_FORMAT_INFO};
-  my $format_info = $hub->species_defs->DATA_FORMAT_INFO->{lc($format)};
+  my %data_info = %{$hub->species_defs->multi_val('DATA_FORMAT_INFO')};
+  my $format_info = $data_info{lc($format)};
  
   ## Make filename safe
   ($filename = $hub->param('name')) =~ s/ |-/_/g;
