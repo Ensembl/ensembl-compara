@@ -73,14 +73,12 @@ sub munge_config_tree {
   $self->_munge_meta;
   $self->_munge_variation;
   $self->_munge_website;
-
-  # get data about file formats from corresponding Perl modules
-  $self->_munge_file_formats;
 }
 
 sub munge_config_tree_multi {
   my $self = shift;
   $self->_munge_website_multi;
+  $self->_munge_file_formats;
 }
 
 # Implemented in plugins
