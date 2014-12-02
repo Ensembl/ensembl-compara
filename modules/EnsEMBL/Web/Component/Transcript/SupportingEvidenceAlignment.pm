@@ -213,7 +213,6 @@ sub get_export_data {
   my @fields = qw(e_alignment t_alignment);
   my $output = [];
   foreach (@fields) {
-    next unless $self->hub->param($_) eq 'on';
     next unless $data->{$_}{'raw'}; ## actual output, not an error message
     push @$output, $data->{$_}{'content'};
   }
