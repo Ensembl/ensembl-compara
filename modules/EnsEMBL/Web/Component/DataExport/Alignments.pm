@@ -66,24 +66,30 @@ sub default_file_name {
   my $cdb          = shift || $self->hub->param('cdb') || 'compara';
   my $alignments   = $db_hash->{'DATABASE_COMPARA' . ($cdb =~ /pan_ensembl/ ? '_PAN_ENSEMBL' : '')}{'ALIGNMENTS'} || {}; # Get the compara database hash
 
-  my $align = $alignments->{$self->hub->param('align')};
-
-  if ($align) {
-    my $align_name;
-    if ($align->{'class'} =~ /pairwise/) {
-      $name = $species_defs->SPECIES_COMMON_NAME;
-      my ($other_species) = grep { $_ ne $self->hub->species } keys %{$align->{'species'}};
-      $name .= '_'.$species_defs->get_config($other_species, 'SPECIES_COMMON_NAME');
-      my $type = lc($align->{'type'});
-      $type =~ s/_net//;
-      $name .= '_'.$type;
-    }
-    else {
-      $name = $align->{'name'};
-    }
-    $name =~ s/ /_/g;  
+  if ($self->hub->param('align') =~ /--/) {
+    ($name = $self->hub->param('align')) =~ s/^(\d+)--/alignment_/;
+    $name =~ s/--/_/g;
   }
+  else {
 
+    my $align = $alignments->{$self->hub->param('align')};
+
+    if ($align) {
+      my $align_name;
+      if ($align->{'class'} =~ /pairwise/) {
+        $name = $species_defs->SPECIES_COMMON_NAME;
+        my ($other_species) = grep { $_ ne $self->hub->species } keys %{$align->{'species'}};
+        $name .= '_'.$species_defs->get_config($other_species, 'SPECIES_COMMON_NAME');
+        my $type = lc($align->{'type'});
+        $type =~ s/_net//;
+        $name .= '_'.$type;
+      }
+      else {
+        $name = $align->{'name'};
+      }
+      $name =~ s/ /_/g;  
+    }
+  }
   return $name;
 }
 
