@@ -225,7 +225,7 @@ sub _init {
         genetree_id => $Config->get_parameter('genetree_id'),
         collapse    => $collapsed_nodes_str
       });
-    } else {
+    } elsif (!$tree->isa('Bio::EnsEMBL::Compara::GenomicAlignTree')) {
       $node_href = $self->_url({ 
         action      => "ComparaTreeNode$skey",
         node        => $f->{'_id'},
