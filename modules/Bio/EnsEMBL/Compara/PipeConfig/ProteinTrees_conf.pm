@@ -262,6 +262,8 @@ sub default_options {
 
         # Add the database location of the previous Compara release. Use "undef" if running the pipeline without reuse
         #'prev_rel_db' => 'mysql://ensro@compara3:3306/mm14_compara_homology_67'
+        # By default, the stable ID mapping is done on the previous release database
+        'mapping_db'  => $self->o('prev_rel_db')
 
         # How will the pipeline create clusters (families) ?
         # Possible values: 'blastp' (default), 'hmm', 'hybrid'
@@ -370,6 +372,7 @@ sub pipeline_wide_parameters {  # these parameter values are visible to all anal
         'master_db'     => $self->o('master_db'),
         'ncbi_db'       => $self->o('ncbi_db'),
         'reuse_db'      => $self->o('prev_rel_db'),
+        'mapping_db'    => $self->o('mapping_db'),
 
         'cluster_dir'   => $self->o('cluster_dir'),
         'fasta_dir'     => $self->o('fasta_dir'),
@@ -2103,7 +2106,7 @@ sub core_pipeline_analyses {
             -logic_name => 'stable_id_mapping',
             -module => 'Bio::EnsEMBL::Compara::RunnableDB::StableIdMapper',
             -parameters => {
-                'prev_rel_db'   => '#reuse_db#',
+                'prev_rel_db'   => '#mapping_db#',
                 'type'          => 't',
             },
             -rc_name => '1Gb_job',
