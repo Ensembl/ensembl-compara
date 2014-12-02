@@ -46,8 +46,8 @@ sub content {
   my @field_order = $viewconfig->field_order;
 
   my $fields_by_format = {
-                            'RTF' => [@field_order],
-                            'FASTA' => [],
+                            'RTF'   => [@field_order],
+                            'FASTA' => [qw(flank_size select_sequence)],
   };
 
   ## Create settings form (comes with some default fields - see parent)

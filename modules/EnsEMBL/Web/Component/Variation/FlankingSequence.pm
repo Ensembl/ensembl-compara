@@ -123,6 +123,11 @@ sub content {
 
 sub export_options { return {'action' => 'FlankingSeq'}; }
 
+sub get_export_data {
+  my $self = shift;
+  return $self->initialize;
+}
+
 sub initialize_export {
   my $self = shift;
   return $self->initialize;
