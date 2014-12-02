@@ -8,6 +8,11 @@ div.export-formats div {
 div.export-formats img {
   height: 150px;
   width: 200px;
+  border: 1px solid [[PANEL_BORDER]];
+}
+
+
+div.export-formats div {
 }
 
 div.export-formats div.selected {
