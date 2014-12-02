@@ -444,10 +444,10 @@ sub write_alignment {
     $self->object->{'alignments_function'} = 'get_SimpleAlign';
 
     $alignment = $self->object->get_alignments({
-                                                'slice'   => $data->slice,
-                                                'align'   => $hub->param('align'),
-                                                'species' => $hub->species,
-                                              });
+        'slice'   => $data->slice,
+        'align'   => $hub->param('align'),
+        'species' => $hub->species,
+      });
   }
 
   my $export;
@@ -473,7 +473,7 @@ sub write_tree {
   my $fn      = $formats{$format}{'method'};
   my @params  = map $hub->param($_), @{$formats{$format}{'parameters'} || []};
   my $string  = $tree->$fn(@params);
-  
+
   if ($formats{$format}{'split'}) {
     my $reg = '([' . quotemeta($formats{$format}{'split'}) . '])';
     $string =~ s/$reg/$1\n/g;
@@ -494,11 +494,11 @@ sub write_phyloxml {
 
   my $handle = IO::String->new();
   my $w = $class->new(
-          -SOURCE       => $cdb eq 'compara' ? $SiteDefs::ENSEMBL_SITETYPE:'Ensembl Genomes',
-          -ALIGNED      => $hub->param('aligned') eq 'on' ? 1 : 0,
-          -CDNA         => $hub->param('cdna') eq 'on' ? 1 : 0,
-          -NO_SEQUENCES => $hub->param('no_sequences') eq 'on' ? 1 : 0,
-          -HANDLE       => $handle,
+    -SOURCE       => $cdb eq 'compara' ? $SiteDefs::ENSEMBL_SITETYPE:'Ensembl Genomes',
+    -ALIGNED      => $hub->param('aligned') eq 'on' ? 1 : 0,
+    -CDNA         => $hub->param('cdna') eq 'on' ? 1 : 0,
+    -NO_SEQUENCES => $hub->param('no_sequences') eq 'on' ? 1 : 0,
+    -HANDLE       => $handle,
   );
   $self->_writexml('trees', $tree, $handle, $w);
 }
@@ -514,10 +514,10 @@ sub write_orthoxml {
 
   my $handle = IO::String->new();
   my $w = Bio::EnsEMBL::Compara::Graph::OrthoXMLWriter->new(
-          -SOURCE => $cdb eq 'compara' ? $hub->species_defs->ENSEMBL_SITETYPE : 'Ensembl Genomes',
-          -SOURCE_VERSION => $hub->species_defs->SITE_RELEASE_VERSION,
-          -HANDLE => $handle,
-          -POSSIBLE_ORTHOLOGS => $hub->param('possible_orthologs'),
+    -SOURCE => $cdb eq 'compara' ? $hub->species_defs->ENSEMBL_SITETYPE : 'Ensembl Genomes',
+    -SOURCE_VERSION => $hub->species_defs->SITE_RELEASE_VERSION,
+    -HANDLE => $handle,
+    -POSSIBLE_ORTHOLOGS => $hub->param('possible_orthologs'),
   );
   $self->_writexml($method, $data, $handle, $w);
 }
