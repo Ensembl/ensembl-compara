@@ -2574,7 +2574,7 @@ sub add_synteny {
       species     => $species_2,
       species_hr  => $species_readable,
       caption     => $caption,
-      description => qq{<a href="/info/docs/compara/analyses.html#synteny" class="cp-external">Synteny regions</a> between $self_label and $label},
+      description => qq{<a href="/info/genome/compara/analyses.html#synteny" class="cp-external">Synteny regions</a> between $self_label and $label},
       colours     => $colours,
       display     => 'off',
       renderers   => [qw(off Off normal On)],
@@ -2595,7 +2595,7 @@ sub add_alignments {
   
   my $alignments = {};
   my $self_label = $species_defs->species_label($species, 'no_formatting');
-  my $static     = $species_defs->ENSEMBL_SITETYPE eq 'Vega' ? '/info/data/comparative_analysis.html' : '/info/docs/compara/analyses.html';
+  my $static     = $species_defs->ENSEMBL_SITETYPE eq 'Vega' ? '/info/data/comparative_analysis.html' : '/info/genome/compara/analyses.html';
  
   foreach my $row (values %{$hashref->{'ALIGNMENTS'}}) {
     next unless $row->{'species'}{$species};
@@ -2659,7 +2659,7 @@ sub add_alignments {
       if ($row->{'conservation_score'}) {
         my ($program) = $hashref->{'CONSERVATION_SCORES'}{$row->{'conservation_score'}}{'type'} =~ /(.+)_CONSERVATION_SCORE/;
         
-        $options{'description'} = qq{<a href="/info/docs/compara/analyses.html#conservation">$program conservation scores</a> based on the $row->{'name'}};
+        $options{'description'} = qq{<a href="/info/genome/compara/analyses.html#conservation">$program conservation scores</a> based on the $row->{'name'}};
         
         $alignments->{'conservation'}{"$row->{'id'}_scores"} = {
           %options,
@@ -2689,7 +2689,7 @@ sub add_alignments {
         order       => sprintf('%12d::%s::%s', 1e12-$n_species*10-1, $row->{'type'}, $row->{'name'}),
         display     => 'off',
         renderers   => [ 'off', 'Off', 'compact', 'On' ],
-        description => qq{<a href="/info/docs/compara/analyses.html#conservation">$n_species way whole-genome multiple alignments</a>.; } . 
+        description => qq{<a href="/info/genome/compara/analyses.html#conservation">$n_species way whole-genome multiple alignments</a>.; } . 
                        join('; ', sort map { $species_defs->species_label($_, 'no_formatting') } grep { $_ ne 'ancestral_sequences' } keys %{$row->{'species'}}),
       };
     } 
