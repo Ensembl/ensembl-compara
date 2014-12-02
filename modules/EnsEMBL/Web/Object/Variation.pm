@@ -737,6 +737,19 @@ sub get_external_data {
   return $self->{'external_data'};
 }
 
+sub slice {
+  my $self = shift;
+  my @vfs = @{$self->Obj->get_all_VariationFeatures};
+  my $feature_slice;
+  return 1 unless $self->hub->param('vf');
+  foreach my $vf (@vfs){
+    if ($vf->dbID == $self->hub->core_param('vf')){
+      $feature_slice = $vf->feature_Slice;
+    }
+  }
+  return $feature_slice;
+}
+
 sub is_somatic_with_different_ref_base {
   my $self = shift;
   return unless $self->Obj->is_somatic;
@@ -1408,9 +1421,6 @@ sub find_location {
   return {} unless $slice;
   return $slice->name;
 }
-
-
-
 
 sub pop_obj_from_id {
 

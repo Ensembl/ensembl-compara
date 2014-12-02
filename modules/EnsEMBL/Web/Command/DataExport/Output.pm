@@ -384,29 +384,33 @@ sub write_fasta {
   my @selected_options = $hub->param('extra');
   my $sequence = grep /sequence/, @selected_options;
 
-  foreach my $transcript (@data) {
-    my $id         = ($stable_id ? "$stable_id:" : '') . $transcript->stable_id;
-    my $type       = $transcript->isa('Bio::EnsEMBL::PredictionTranscript') ? $transcript->analysis->logic_name : $transcript->status . '_' . $transcript->biotype;
+  if (scalar @selected_options) {
+    ## Only applicable to actual transcripts
+    foreach my $transcript (@data) {
+      my $id    = ($stable_id ? "$stable_id:" : '') . $transcript->stable_id;
+      my $type  = $transcript->isa('Bio::EnsEMBL::PredictionTranscript') 
+                      ? $transcript->analysis->logic_name 
+                      : $transcript->status . '_' . $transcript->biotype;
 
-    $intron_id = 1;
+      $intron_id = 1;
 
-    foreach my $opt (sort @selected_options) {
-      next if $opt eq 'sequence';
-      next unless exists $output->{$opt};
+      foreach my $opt (sort @selected_options) {
+        next if $opt eq 'sequence';
+        next unless exists $output->{$opt};
 
-      my $o = $output->{$opt}($transcript, $id, $type);
-      next unless ref $o eq 'ARRAY';
+        my $o = $output->{$opt}($transcript, $id, $type);
+        next unless ref $o eq 'ARRAY';
 
-      foreach (@$o) {
-        $self->write_line(">$_->[0]");
-        $self->write_line($fasta) while $fasta = substr $_->[1], 0, 60, '';
+        foreach (@$o) {
+          $self->write_line(">$_->[0]");
+          $self->write_line($fasta) while $fasta = substr $_->[1], 0, 60, '';
+        }
       }
+      $self->write_line('');
     }
-
-    $self->write_line('');
   }
 
-  if ($sequence) {
+  if ($sequence || $hub->param('select_sequence')) {
     my $mask_flag = $masking eq 'soft_masked' ? 1 : $masking eq 'hard_masked' ? 0 : undef;
     my ($seq, $start, $end, $flank_slice);
 
