@@ -317,12 +317,14 @@ Often, you can re-run the offending job to look at its log: runWorker.pl -url ${
 Executable won't run: wrong location, no permission ? Find the executable that will run and edit the configuration file for your compara run.
 You can also fix the current run by editing the parameters of the failed analysis with guiHive.
 
+
     5.2 Missing parameter
 
 The parameter should be added to the relevant analysis. However, some parameters are supposed to be global and shared across all the analysis (like "mlss_id").
-You can define them on a live database by adding an entry to the "meta" table:
+You can define them on a live database by adding an entry to the "pipeline_wide_parameters" table:
 
-   INSERT INTO meta (meta_key, meta_value) VALUES ("sreformat_exe", "/software/ensembl/compara/sreformat");
+   INSERT INTO pipeline_wide_parameters VALUES ("sreformat_exe", "/software/ensembl/compara/sreformat");
+
 
     5.3 The required assembly_name ('ASM23792v1') is different from the one found in the database ('5.2')
 
@@ -333,11 +335,8 @@ The assembly is "the version of the highest coordinate system": SELECT version F
 Make sure you are using the same version in your master database:
   UPDATE genome_db SET assembly = "5.2" WHERE genome_db_id = 40
 
-    5.4 Analysis "hc_genome_has_members"
 
-Error: At least 0 rows, different than 2 at $ENSEMBL_CVS_ROOT_DIR/ensembl-hive/modules/Bio/EnsEMBL/Hive/RunnableDB/SqlHealthcheck.pm line 72
-
-No genes / proteins have been loaded for this species; a few things may have gone wrong:
+    5.4 Analysis "hc_members_per_genome": No genes / proteins have been loaded for this species; a few things may have gone wrong:
 
  * Check that canonical transcripts have been defined for the genome_db shown in the error. If not, give a go to $ENSEMBL_CVS_ROOT_DIR/ensembl/misc-scripts/canonical_transcripts/set_canonical_transcripts.pl
  * Identify the load_fresh_members job for the problematic genome_id and rerun the job
@@ -347,11 +346,8 @@ No genes / proteins have been loaded for this species; a few things may have gon
     > SELECT source_name, COUNT(*) FROM gene_member WHERE genome_db_id = 40 GROUP BY source_name;
     > SELECT source_name, COUNT(*) FROM seq_member WHERE genome_db_id = 40 GROUP BY source_name;
 
-    5.5 Analysis "hc_peptides_have_cds_sequences"
 
-Error: At least 1 rows, different than 0 at $ENSEMBL_CVS_ROOT_DIR/ensembl-hive/modules/Bio/EnsEMBL/Hive/RunnableDB/SqlHealthcheck.pm line 72.
-
-The error usually comes on species loaded from Fasta files. Make sure that the IDs used in in the "cds_fasta" and in the "prot_fasta" files are the same.
+    5.5 Analysis "hc_members_per_genome": The error usually comes on species loaded from Fasta files. Make sure that the IDs used in in the "cds_fasta" and in the "prot_fasta" files are the same.
 
   # Identify the problematic members
   > SELECT mp.seq_member_id FROM seq_member mp LEFT JOIN other_member_sequence oms ON mp.seq_member_id = oms.seq_member_id AND oms.seq_type = "cds" WHERE genome_db_id = 68 AND (sequence IS NULL OR LENGTH(sequence) = 0);
@@ -372,12 +368,10 @@ The error usually comes on species loaded from Fasta files. Make sure that the I
   # Check that the problem has been fixed
 
 
-    5.6 Analysis "hc_members_have_chrom_coordinates"
+    5.6 "Members should have chromosome coordinates"
 
-Error: At least 1 rows, different than 0 at $ENSEMBL_CVS_ROOT_DIR/ensembl-hive/modules/Bio/EnsEMBL/Hive/RunnableDB/SqlHealthcheck.pm line 72.
-
- - If they correspond to species that come from an Ensembl (Genomes) database, this should not happen.
- - If they come from your core databases, there may be an issue there.
+ - If they correspond to species that come from an Ensembl (Genomes) database, this should not happen. Contact us
+ - If they come from your core databases, there may be an issue there. Check whether the coordinates are set there
  - If they are configured in the JSON file, something is wrong with the gene_coord_gff GFF file. There might be missing entries there, different IDs, or no GFF file at all (you can gorgive the failed job, then).
 
 The coordinates are used when the pipeline tries to detect partial gene models that should be "merged" to produce a full gene model ("split genes").
@@ -409,26 +403,120 @@ By repeating the SQL query, you'll get the offending member_ids. Then:
  > UPDATE sequence SET sequence = "...", length = ... WHERE sequence_id = YYYY;
 
 
-   5.10 "Members should have chromosome coordinates"
-
-That usually happens for species loaded from a FASTA file with no GFF file.
-You have to be aware that the detection of split genes is not possible for such species, but you can still run the pipeline.
-If it is the only failed HC for this species, and if you are happy with the pipeline running without coordinates, you can forgive the job.
-
-
-   5.11 "Peptides should have CDS sequences (which are made of only ACGTN)"
+   5.10 "Peptides should have CDS sequences (which are made of only ACGTN)"
 
 Some CDS sequences are either missing, or not canonical. If they contain some ambiguity bases (like R, Y, etc), you can turn the option "allow_ambiguity_codes" on and restart the HC.
 The pipeline should run fine with such characters, but they'll probably be interpreted as gaps by most of the programs.
 
 
-   5.12 "this algorithm is less useful if only 0 species are matched"
+   5.11 "this algorithm is less useful if only 0 species are matched"
 
 This error message from treebest means that the species tree do not match your set of genome_dbs.
 Make sure that your species tree contains all the species.
 
 
-6. Looking at the results
+6. SQL tricks
+
+The data is exclusively stored in the database, and a good understanding of its schema is necessary to fix some common errors (previous section) and to get basic information / statistics about the pipeline.
+This section lists some common queries that may help in this aspect.
+
+	6.1 Compara (Gene-tree) data
+
+* Count members for a given species:
+ > SELECT COUNT(*) FROM seq_member WHERE genome_db_id=309;
+ > SELECT COUNT(*) FROMde gene_member WHERE genome_db_id=309;
+ > SELECT COUNT(*) FROM seq_member JOIN other_member_sequence USING (seq_member_id) WHERE genome_db_id=309;
+
+* Get dna_frag coordinates for a given species:
+ > SELECT coord_system_name, count(*) FROM dnafrag WHERE genome_db_id=1 GROUP BY coord_system_name;
+
+* Get tree nodes for a given ref_root_id:
+ > SELECT * FROM gene_tree_node WHERE root_id in (SELECT root_id FROM gene_tree_root WHERE ref_root_id=2592155);
+
+* Delete a tree. Use the Perl API !
+ > $gene_tree_adaptor->delete_tree($gene_tree_adaptor->fetch_by_dbID(3));
+
+* Create new tree-tags (alignment length, for instance):
+ > INSERT INTO gene_tree_root_tag (root_id,tag,value) SELECT root_id, "aln_length", aln_length FROM gene_tree_root JOIN gene_align USING (gene_align_id) WHERE root_id IN (SELECT root_id FROM gene_tree_root_tag WHERE clusterset_id = "default”);
+
+* Problems with gene_tree_backup ?  Re-insert all the root_ids:
+ > INSERT IGNORE INTO gene_tree_backup (seq_member_id, root_id) SELECT seq_member_id, root_id FROM gene_tree_node JOIN gene_tree_root USING (root_id) WHERE seq_member_id IS NOT NULL AND clusterset_id = "default”;
+
+* Check if all gene_tree_roots are in backup:
+ > SELECT * from gene_tree_backup RIGHT JOIN gene_tree_root USING (root_id) WHERE clusterset_id = "default" AND gene_tree_backup.root_id IS NULL;
+
+SELECT value FROM gene_tree_root_tag WHERE root_id=458053 AND tag = 'model_name’;
+
+* Count all the trees via gene_root_tag:
+ > SELECT COUNT(DISTINCT root_id) FROM gene_tree_root_tag JOIN gene_tree_root USING (root_id) WHERE tag = 'tree_num_leaves' AND clusterset_id = 'default';
+
+* Get all the nodes that don't have any children (i.e. leaves):
+ > SELECT * FROM gene_tree_node g1 LEFT JOIN gene_tree_node g2 ON g1.node_id = g2.parent_id WHERE g1.root_id = 22365088 AND g1.seq_member_id IS NULL GROUP BY g1.node_id HAVING COUNT(g2.node_id) = 0;
+
+* Flatten a tree:
+ > DELETE homology_member FROM homology JOIN homology_member WHERE gene_tree_root_id = 22365088;
+ > DELETE FROM homology WHERE gene_tree_root_id = 22365088;
+ > UPDATE gene_tree_node SET parent_id = root_id WHERE root_id = 22365088 AND seq_member_id IS NOT NULL;
+ > DELETE gene_tree_node_attr FROM gene_tree_node JOIN gene_tree_node_attr USING (node_id) WHERE root_id = 22365088 AND node_id != root_id AND seq_member_id IS NULL;
+ > DELETE gene_tree_node_tag  FROM gene_tree_node JOIN gene_tree_node_tag  USING (node_id) WHERE root_id = 22365088 AND node_id != root_id AND seq_member_id IS NULL;
+ > UPDATE gene_tree_node      SET parent_id = NULL, root_id = NULL                         WHERE root_id = 22365088 AND node_id != root_id AND seq_member_id IS NULL;
+ > DELETE FROM gene_tree_node WHERE root_id IS NULL;
+ > UPDATE gene_tree_node SET left_index = 0, right_index = 0, distance_to_parent = 0 WHERE root_id = 22365088;
+
+* Update gene_count:
+ > DELETE FROM gene_tree_root_tag WHERE tag = "gene_count";
+ > INSERT INTO gene_tree_root_tag SELECT root_id, "gene_count", COUNT(seq_member_id) FROM gene_tree_node GROUP BY root_id;
+
+* Get alignment length:
+ > SELECT * FROM gene_tree_root JOIN gene_align USING (gene_align_id) WHERE root_id=25381383;
+
+* Check report for an specific analysis:
+ > SELECT * FROM lsf_usage WHERE analysis LIKE "raxml(%"
+
+* Get running times and alignment lengths:
+ > SELECT stable_id, aln_length, runtime_msec FROM gene_tree_root INNER JOIN job ON job.input_id LIKE CONCAT('%', gene_tree_root.root_id, '%') JOIN gene_align USING (gene_align_id) WHERE analysis_id=84 AND status=“DONE”;
+
+
+	6.2 Hive data / edit the pipeline workflow (only if you know you need to do that !)
+
+* Get all jobs working for a given root_id:
+ > SELECT * FROM job WHERE input_id like "%2592155%”;
+
+* Get all the messages for a specific analysis:
+ > SELECT * FROM msg WHERE analysis_id = 47;
+
+* Change the origin of a dataflow:
+ > SELECT * FROM dataflow_rule WHERE from_analysis_id = 18;
+ > UPDATE dataflow_rule SET from_analysis_id = 21 WHERE dataflow_rule_id = 29;
+
+* Clear an specific analysis_id (we take advantage of the ON DELETE CASCADE flag)
+ > DELETE FROM job WHERE analysis_id=85;
+
+* Reset the parent job of some failed jobs
+ > UPDATE job AS t1 INNER JOIN
+   (
+    SELECT prev_job_id
+    FROM job WHERE analysis_id = 84 AND status = "FAILED"
+   ) AS t2 ON (t2.prev_job_id=t1.job_id)
+   SET t1.status = "READY”;
+
+* Create new jobs of analysis_id 72 for trees matching a given tag
+ > INSERT INTO job (analysis_id, input_id) SELECT 72, CONCAT("{'gene_tree_id' => ", root_id, "}") FROM gene_tree_root_tag WHERE value LIKE "PTHR23155_SF%”;
+
+* Create a new job of analysis_id 85 for each gene-tree
+ > INSERT INTO job (analysis_id, input_id) SELECT 85, CONCAT("{'gene_tree_id' => ", root_id, "}") FROM gene_tree_root WHERE clusterset_id="default" AND tree_type="tree";
+
+* Duplicate the jobs of analysis_id 85 to analysis_id 119, with 119 blocking 85 with semaphores
+ > INSERT INTO job (analysis_id, input_id, semaphore_count, semaphored_job_id) SELECT 119, input_id, 0, job_id FROM job WHERE analysis_id=85;
+
+* Create the jobs that would have been created by data flow (on jobs that have failed):
+ > INSERT INTO job (analysis_id, input_id, semaphored_job_id) SELECT 84, REPLACE(input_id, "}", ", 'remove_columns' => 0}"), semaphored_job_id FROM job WHERE analysis_id=82 AND status = "FAILED”;
+
+* Find bogus dataflow rules:
+ > SELECT * FROM dataflow_rule LEFT JOIN analysis_base ON to_analysis_url = logic_name WHERE logic_name IS NULL;
+
+
+7. Looking at the results
 
 The pipeline generates and emails a report with statistics about the gene trees.
 You'll need to use either the PERL API or a REST server to actually connect to the database and study the trees.
