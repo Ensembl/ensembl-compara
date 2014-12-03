@@ -267,7 +267,7 @@ sub content {
   return $html;
 }
 
-sub export_options { return {'action' => 'GeneSeq'}; }
+sub export_options { return {'action' => 'Orthologs'}; }
 
 sub get_export_data {
 ## Get data for export
@@ -276,10 +276,7 @@ sub get_export_data {
   my $object       = $self->object || $hub->core_object('gene');
   my $cdb          = shift || $hub->param('cdb') || 'compara';
 
-  my @data_1 = $object->get_homologies('ENSEMBL_ORTHOLOGUES', undef, undef, $cdb);
-  my @data_2 = $object->get_homologies('ENSEMBL_PARALOGUES', 'possible_ortholog', undef, $cdb);
-
-  my $homologies = [@{$data_1[0]}, @{$data_2[0]}];
+  my ($homologies) = $object->get_homologies('ENSEMBL_ORTHOLOGUES', undef, undef, $cdb);
 
   return $homologies;
 }

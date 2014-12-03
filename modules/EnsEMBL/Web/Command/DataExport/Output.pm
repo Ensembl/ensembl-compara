@@ -526,7 +526,6 @@ sub write_orthoxml {
     -SOURCE => $cdb eq 'compara' ? $hub->species_defs->ENSEMBL_SITETYPE : 'Ensembl Genomes',
     -SOURCE_VERSION => $hub->species_defs->SITE_RELEASE_VERSION,
     -HANDLE => $handle,
-    -POSSIBLE_ORTHOLOGS => $hub->param('possible_orthologs'),
   );
   $self->_writexml($method, $data, $handle, $w);
 }

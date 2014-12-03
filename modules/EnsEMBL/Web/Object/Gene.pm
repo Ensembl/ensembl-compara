@@ -749,13 +749,13 @@ sub get_homologies {
   my $database = $self->database($compara_db);
   my %homologues;
 
-  return {} unless $database;
+  return unless $database;
   
   $self->timer_push('starting to fetch', 6);
 
   my $query_member   = $database->get_GeneMemberAdaptor->fetch_by_stable_id($geneid);
 
-  return {} unless defined $query_member;
+  return unless defined $query_member;
   
   my $homology_adaptor = $database->get_HomologyAdaptor;
   my $homologies_array = $homology_adaptor->fetch_all_by_Member($query_member); # It is faster to get all the Homologues and discard undesired entries than to do fetch_all_by_Member_method_link_type
