@@ -24,6 +24,8 @@ use HTML::Entities qw(encode_entities);
 
 use base qw(EnsEMBL::Web::Component::Gene);
 
+our %button_set = ('download' => 1, 'view' => 0);
+
 sub _init {
   my $self = shift;
   $self->cacheable(1);
@@ -177,16 +179,76 @@ sub content {
   my $html;
   
   if ($alignview && keys %paralogue_list) {
-    $html .= sprintf(
-      '<p><a href="%s">View sequence alignments of all paralogues</a>.</p>', 
-      $hub->url({ action => 'Compara_Paralog', function => 'Alignment' })
-    );
+    $button_set{'view'} = 1;
   }
  
   $html .= $table->render;
  
   return $html;
 }
+
+sub export_options { return {'action' => 'Paralogs'}; }
+
+sub get_export_data {
+## Get data for export
+  my $self = shift;
+  my $hub          = $self->hub;
+  my $object       = $self->object || $hub->core_object('gene');
+  my $cdb          = $hub->param('cdb') || 'compara';
+
+  my ($homologies) = $object->get_homologies('ENSEMBL_PARALOGUES', 'paralog|gene_split', undef, $cdb);
+
+  return $homologies;
+}
+
+sub buttons {
+  my $self    = shift;
+  my $hub     = $self->hub;
+  my @buttons;
+
+  if ($button_set{'download'}) {
+
+    my $gene    =  $self->object->Obj;
+
+    my $dxr  = $gene->can('display_xref') ? $gene->display_xref : undef;
+    my $name = $dxr ? $dxr->display_id : $gene->stable_id;
+
+    my $params  = {
+                  'type'        => 'DataExport',
+                  'action'      => 'Paralogs',
+                  'data_type'   => 'Gene',
+                  'component'   => 'ComparaParalogs',
+                  'data_action' => $hub->action,
+                  'gene_name'   => $name,
+                };
+
+    push @buttons, {
+                    'url'     => $hub->url($params),
+                    'caption' => 'Download paralogues',
+                    'class'   => 'export',
+                    'modal'   => 1
+                    };
+  }
+
+  if ($button_set{'view'}) {
+
+    my $cdb = $hub->param('cdb') || 'compara';
+
+    my $params = {
+                  'action' => 'Compara_Paralog',
+                  'function' => 'Alignment'.($cdb =~ /pan/ ? '_pan_compara' : ''),
+                  };
+
+    push @buttons, {
+                    'url'     => $hub->url($params),
+                    'caption' => 'View sequence alignments',
+                    'class'   => 'view',
+                    'modal'   => 0
+    };
+  }
+  return @buttons;
+}
+
 
 1;
 
