@@ -64,11 +64,11 @@ sub new {
   my ($class, $settings) = @_;
 
   ## HTTP(S)
-  my %args = (
-              'timeout'       => $settings->{'timeout'},
-              'http_proxy'    => $settings->{'proxy'},
-              'https_proxy'   => $settings->{'proxy'}, 
-              );
+  my %args = ('timeout' => $settings->{'timeout'});
+  if ($settings->{'proxy'}) {
+    $args{'http_proxy'}   = $settings->{'proxy'};
+    $args{'https_proxy'}  = $settings->{'proxy'};
+  }
 
   my $http = HTTP::Tiny->new(%args);
 
