@@ -28,10 +28,11 @@ sub chase_redirects {
     my %args = (
               'timeout'       => 10,
               'max_redirect'  => $max_follow,
-              'http_proxy'    => $self->{'hub'}->species_defs->ENSEMBL_WWW_PROXY,
-              'https_proxy'   => $self->{'hub'}->species_defs->ENSEMBL_WWW_PROXY,
               );
-
+    if ($self->{'hub'}->species_defs->ENSEMBL_WWW_PROXY) {
+      $args{'http_proxy'}   = $self->{'hub'}->species_defs->ENSEMBL_WWW_PROXY;
+      $args{'https_proxy'}  = $self->{'hub'}->species_defs->ENSEMBL_WWW_PROXY;
+    }
     my $http = HTTP::Tiny->new(%args);
 
     my $response = $http->request('HEAD', $url);
