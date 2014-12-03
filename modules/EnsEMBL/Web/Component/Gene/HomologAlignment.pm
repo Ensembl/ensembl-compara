@@ -250,7 +250,7 @@ sub buttons {
 
   return {
     'url'     => $hub->url($params),
-    'caption' => 'Download alignment',
+    'caption' => 'Download homology',
     'class'   => 'export',
     'modal'   => 1
   };
