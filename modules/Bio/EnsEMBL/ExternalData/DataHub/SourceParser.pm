@@ -40,6 +40,7 @@ use vars qw(@EXPORT_OK);
 use base qw(Exporter);
 
 use HTTP::Tiny; 
+use LWP::UserAgent;
 
 use EnsEMBL::Web::Tree;
 
@@ -58,8 +59,11 @@ use EnsEMBL::Web::Tree;
 =cut
 
 sub new {
+### We have to use two different modules to ensure
+### support for http, https and ftp
   my ($class, $settings) = @_;
 
+  ## HTTP(S)
   my %args = (
               'timeout'       => $settings->{'timeout'},
               'http_proxy'    => $settings->{'proxy'},
@@ -68,7 +72,12 @@ sub new {
 
   my $http = HTTP::Tiny->new(%args);
 
-  my $self = { http => $http };
+  ## FTP
+  my $ua = LWP::UserAgent->new;
+  $ua->timeout($settings->{'timeout'});
+  $ua->proxy('http', $settings->{'proxy'}) if $settings->{'proxy'};
+
+  my $self = { http => $http, ua => $ua };
   bless $self, $class;
 
   return $self;
@@ -89,7 +98,6 @@ sub new {
 
 sub get_hub_info {
   my ($self, $url, $assembly_lookup) = @_;
-  my $http = $self->{'http'};
   my @split_url = split '/', $url;
   my $hub_file;
   
@@ -100,25 +108,43 @@ sub get_hub_info {
     $hub_file = 'hub.txt';
     $url      =~ s|/$||;
   }
-  
-  my $response = $http->get("$url/$hub_file");
-  
-  return { error => [$self->_http_error($response)] } unless $response->{'success'};
-  
+ 
+  my $ua    = $self->{'ua'};
+  my $http  = $self->{'http'};
+  my ($response, $content);
+
+  if ($url =~ /^ftp/) {
+    $response = $ua->get("$url/$hub_file");
+    return { error => [$response->status_line] } unless $response->is_success;
+    $content = $response->content;
+  }
+  else { 
+    $response = $http->get("$url/$hub_file");
+    return { error => [$self->_http_error($response)] } unless $response->{'success'};
+    $content = $response->{'content'};
+  }
   my %hub_details;
   
   ## Get file name for file with genome info
-  foreach (split /\n/, $response->{'content'}) {
+  foreach (split /\n/, $content) {
     my @line = split /\s/, $_, 2;
     $hub_details{$line[0]} = $line[1];
   }
   return { error => ['No genomesFile found'] } unless $hub_details{'genomesFile'};
-  
-  $response = $http->get("$url/$hub_details{'genomesFile'}"); ## Now get genomes file and parse
-  
-  return { error => ['genomesFile: ' . $self->_http_error($response)] } unless $response->{'success'};
-  
-  (my $genome_file = $response->{'content'}) =~ s/\r//g;
+ 
+  ## Now get genomes file and parse 
+  if ($url =~ /^ftp/) {
+    $response = $ua->get("$url/$hub_details{'genomesFile'}"); 
+    return { error => ['genomesFile: ' . $response->status_line] } unless $response->is_success;
+    $content = $response->content;
+  }
+  else {
+    $response = $http->get("$url/$hub_details{'genomesFile'}");
+    return { error => ['genomesFile: ' . $self->_http_error($response)] } unless $response->{'success'};
+    $content = $response->{'content'};
+  }
+
+  (my $genome_file = $content) =~ s/\r//g;
   my %genome_info;
   my @lines = split /\n/, $genome_file;
   my ($genome, $file, %ok_genomes);
@@ -148,15 +174,25 @@ sub get_hub_info {
      ## Parse list of config files
       foreach my $genome (keys %ok_genomes) {
       $file = $genome_info{$genome};
-      $response = $http->get("$url/$file");
-    
-      if (!$response->{'success'}) {
-        push @errors, "$genome ($url/$file): " . $self->_http_error($response);
-       next;
+  
+      if ($url =~ /^ftp/) {
+        $response = $ua->get("$url/$file");
+        if (!$response->is_success) {
+          push @errors, "$genome ($url/$file): " . $response->status_line;
+          next;
+        }
+        $content = $response->content;
       }
-    
-      (my $content = $response->{'content'}) =~ s/\r//g;
+      else {
+        $response = $http->get("$url/$file");
+        if (!$response->{'success'}) {
+          push @errors, "$genome ($url/$file): " . $self->_http_error($response);
+          next;
+        }
+        $content = $response->{'content'};
+      }
       my @track_list;
+      $content =~ s/\r//g;
     
       # Hack here: Assume if file contains one include it only contains includes and no actual data
       # Would be better to resolve all includes (read the files) and pass the complete config data into 
@@ -205,18 +241,31 @@ sub parse {
     return;
   }
   
-  my $http   = $self->{'http'};
+  my $http  = $self->{'http'};
+  my $ua    = $self->{'ua'};
+
   my $tree = EnsEMBL::Web::Tree->new;
   my $response;
   
   ## Get all the text files in the hub directory
   foreach (@$files) {
-    $response = $http->get($_);
+    if ($_ =~ /^ftp/) {
+      $response = $ua->get($_);
+
+      if ($response->is_success) {
+        $self->parse_file_content($tree, $response->content =~ s/\r//gr, $_);
+      } else {
+        $tree->append($tree->create_node("error_$_", { error => $response->status_line, file => $_ }));
+      }
+    }
+    else {
+      $response = $http->get($_);
     
-    if ($response->{'success'}) {
-      $self->parse_file_content($tree, $response->{'content'} =~ s/\r//gr, $_);
-    } else {
-      $tree->append($tree->create_node("error_$_", { error => $self->_http_error($response), file => $_ }));
+      if ($response->{'success'}) {
+        $self->parse_file_content($tree, $response->{'content'} =~ s/\r//gr, $_);
+      } else {
+        $tree->append($tree->create_node("error_$_", { error => $self->_http_error($response), file => $_ }));
+      }
     }
   }
   
