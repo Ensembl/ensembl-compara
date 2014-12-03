@@ -1762,7 +1762,7 @@ sub _munge_file_formats {
     'mega'      => {'ext' => 'meg',  'label' => 'Mega'},
     'newick'    => {'ext' => 'nh',   'label' => 'Newick'},
     'nexus'     => {'ext' => 'nex',  'label' => 'Nexus'},
-    'nexus'     => {'ext' => 'nhx',  'label' => 'NHX'},
+    'nhx'       => {'ext' => 'nhx',  'label' => 'NHX'},
     'orthoxml'  => {'ext' => 'xml',  'label' => 'OrthoXML'},
     'phylip'    => {'ext' => 'phy',  'label' => 'Phylip'},
     'phyloxml'  => {'ext' => 'xml',  'label' => 'PhyloXML'},
