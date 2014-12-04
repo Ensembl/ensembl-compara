@@ -71,6 +71,6 @@ my $glyphset = EnsEMBL::Draw::GlyphSet::controller->new({
 ## Tests
 ok($glyphset, 'Controller module created');
 
-#my $output = $glyphset->render;
+my $output = $glyphset->render;
 
 done_testing();

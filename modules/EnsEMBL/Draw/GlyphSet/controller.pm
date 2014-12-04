@@ -29,6 +29,7 @@ package EnsEMBL::Draw::GlyphSet::controller;
 ### DrawableContainer, which is the real controller
 
 use strict;
+use warnings;
 
 use parent qw(EnsEMBL::Root);
 
@@ -62,23 +63,7 @@ sub new {
 
   bless $self, $class;
 
-  return $self;
-}
-
-sub render {
-### This is where we implement the MVC structure!
-  my $self = CORE::shift;
-
-  my $args = {
-                container     => $self->{'container'},
-                image_config  => $self->{'image_config'},
-                track_config  => $self->{'track_config'},
-                strand        => $self->{'strand'},
-                extras        => $self->{'extra'},
-                highlights    => $self->{'highlights'},
-                display       => $self->{'display'},
-             };
-
+  ### This is where we implement the MVC structure!
   my $data;
   my $output_name = $self->track_config->get('style');
   my $data_type   = $self->track_config->get('data_type');
@@ -98,20 +83,33 @@ sub render {
     }
   }
 
-  ## Render it
+  ## Create the output object
   my $output_class = 'EnsEMBL::Draw::Output::'.$output_name;
+  warn ">>> RENDERING CLASS $output_class";
   if ($self->dynamic_use($output_class)) {
     my $output = $output_class->new($args, $data);
-    $self->{'output'} = $output;
-    $output->init_label;
+    warn ">>> OUTPUT $output";
+    if ($output) {
+      $self->{'output'} = $output;
+      $output->init_label;
+    }
+    else {
+      warn "!!! COULDN'T INSTANTIATE OUTPUT MODULE $output_class";
+    }
+  }
+  return $self;
+}
 
-    ## Pass rendered image back to DrawableContainer
-    return $output->render;
-  }
-  else {
-    warn "!!! COULDN'T INSTANTIATE OUTPUT MODULE $output_class";
-    return undef;
-  }
+sub render {
+  my $self = CORE::shift;
+  $self->{'glyphs'} = $self->output->render;
+
+  return undef;
+}
+
+sub output {
+  my $self = CORE::shift;
+  return $self->{'output'}; 
 }
 
 sub image_config {
@@ -203,6 +201,7 @@ sub section_text {
 
 sub label {
   my ($self, $text) = @_;
+  warn '>>>> FETCHED OUTPUT '.$self->output;
   $self->output->{'label'} = $text if(defined $text);
   return $self->output->{'label'};
 }

@@ -24,6 +24,7 @@ package EnsEMBL::Draw::Output;
 ### been passed in from a controller
 
 use strict;
+use warnings;
 
 use Carp;
 use GD;
@@ -31,6 +32,8 @@ use GD::Simple;
 use URI::Escape qw(uri_escape);
 use POSIX qw(floor ceil);
 use List::Util qw(min max);
+
+use EnsEMBL::Web::Tools::RandomString qw(random_string);
 
 use EnsEMBL::Draw::Glyph;
 use EnsEMBL::Draw::Glyph::Circle;
@@ -57,12 +60,12 @@ sub new {
 
 sub image_config {
   my $self = shift;
-  return $self->{'config'};
+  return $self->{'image_config'};
 }
 
 sub track_config {
   my $self = shift;
-  return $self->{'my_config'};
+  return $self->{'track_config'};
 }
 
 sub strand {
@@ -335,26 +338,23 @@ sub init_label {
   return $self->label(undef) unless $text;
 
   my $image_config  = $self->{'image_config'};
+  my $track_config  = $self->{'track_config'};
   my $hub           = $image_config->hub;
-  my $name          = $self->track_config->get('name');
-  my $desc          = $self->track_config->get('description');
+  my $track_id      = $track_config->get('id');
+  my $name          = $track_config->get('name');
+  my $desc          = $track_config->get('description');
   my $style         = $image_config->species_defs->ENSEMBL_STYLE;
   my $font          = $style->{'GRAPHIC_FONT'};
   my $fsze          = $style->{'GRAPHIC_FONTSIZE'} * $style->{'GRAPHIC_LABEL'};
   my @res           = $self->get_text_width(0, $text, '', font => $font, ptsize => $fsze);
-  my $track         = $self->type;
-  ### How is this node different from track_config??
-  my $node          = $image_config->get_node($track);
-  warn ">>> NODE $node";
-  warn ">>> TRACK CONFIG ".$self->track_config;
   my $component     = $image_config->get_parameter('component');
-  my $hover         = $component && !$hub->param('export') && $node->get('menu') ne 'no';
+  my $hover         = $component && !$hub->param('export') && $track_config->get('menu') ne 'no';
   my $class         = random_string(8);
 
   if ($hover) {
-    my $fav       = $image_config->get_favourite_tracks->{$track};
-    my @renderers = grep !/default/i, @{$node->get('renderers') || []};
-    my $subset    = $node->get('subset');
+    my $fav       = $image_config->get_favourite_tracks->{$track_id};
+    my @renderers = grep !/default/i, @{$track_config->get('renderers') || []};
+    my $subset    = $track_config->get('subset');
     my @r;
 
     my $url = $hub->url('Config', {
@@ -366,25 +366,26 @@ sub init_label {
 
     if (scalar @renderers > 4) {
       while (my ($val, $text) = splice @renderers, 0, 2) {
-        push @r, { url => "$url;$track=$val", val => $val, text => $text, current => $val eq $self->{'display'} };
+        push @r, { url => "$url;$track_id=$val", val => $val, text => $text, current => $val eq $self->{'display'} };
       }
     }
 
     $image_config->{'hover_labels'}->{$class} = {
       header    => $name,
       desc      => $desc,
-      class     => "$class $track",
+      class     => "$class $track_id",
       component => lc($component . ($image_config->multi_species && $image_config->species ne $hub->species ? '_' . $image_config->species : '')),
       renderers => \@r,
-      fav       => [ $fav, "$url;$track=favourite_" ],
-      off       => "$url;$track=off",
-      conf_url  => $self->species eq $hub->species ? $hub->url($hub->multi_params) . ";$image_config->{'type'}=$track=$self->{'display'}" : '',
+      fav       => [ $fav, "$url;$track_id=favourite_" ],
+      off       => "$url;$track_id=off",
+      conf_url  => $self->species eq $hub->species ? $hub->url($hub->multi_params) . ";$image_config->{'type'}=$track_id=$self->{'display'}" : '',
       subset    => $subset ? [ $subset, $hub->url('Config', { species => $image_config->species, action => $component, function => undef, __clear => 1 }), lc "modal_config_$component" ] : '',
     };
   }
 
   my $ch = $self->track_config->get('caption_height') || 0;
-  $self->label($self->Text({
+  ## Draw label
+  $self->label($self->createGlyph({
     text      => $text,
     font      => $font,
     ptsize    => $fsze,
@@ -757,7 +758,7 @@ sub get_gd {
 
   return $self->cache($font_key) if $self->cache($font_key);
 
-  my $fontpath = $self->{'config'}->species_defs->ENSEMBL_STYLE->{'GRAPHIC_TTF_PATH'}. "/$font.ttf";
+  my $fontpath = $self->{'image_config'}->species_defs->ENSEMBL_STYLE->{'GRAPHIC_TTF_PATH'}. "$font.ttf";
   my $gd       = GD::Simple->new(400, 400);
 
   eval {

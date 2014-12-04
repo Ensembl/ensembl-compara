@@ -121,7 +121,7 @@ sub render {
     my $feature_colour  = $f->{'colour'} || $self->track_config('colour');
     my $label_colour    = $feature_colour;
 
-    $self->push($self->create_Glyph({
+    $self->add_glyphs($self->createGlyph({
             x            => $start - 1,
             y            => $strand_y,
             width        => $end - $start + 1,
@@ -138,7 +138,7 @@ sub render {
   if ($self->{'show_labels'}) {
     my $start = $self->{'container'}->start;
     ## text label
-    $self->push($self->create_Glyph({
+    $self->add_glyphs($self->create_Glyph({
           font      => $fontname,
           colour    => $label_colour,
           height    => $fontsize,
@@ -178,7 +178,7 @@ sub render {
     my $y = $track_height + $fontsize * 2 + 10;
     my $href = $self->_url({'action' => 'ExpandTrack', 'goto' => $self->{'config'}->hub->action, 'count' => $total, 'default' => $default_depth});
     ## Print message
-    $self->push($self->create_Glyph({
+    $self->add_glyphs($self->create_Glyph({
           font      => $fontname,
           colour    => 'black',
           height    => $fontsize,
@@ -193,7 +193,7 @@ sub render {
           href      => $href,
         }));
     ## Space
-    $self->push($self->create_Glyph({
+    $self->add_glyphs($self->create_Glyph({
             x         => 0,
             y         => $y + 5,
             width     => 100,
@@ -203,10 +203,10 @@ sub render {
   }
 =cut
 
-  $self->_render_hidden_bgd($height) if $features_drawn && $self->my_config('addhiddenbgd') && $self->can('href_bgd') && !$depth;
+  $self->_render_hidden_bgd($height) if $features_drawn && $self->track_config('addhiddenbgd') && $self->can('href_bgd') && !$depth;
 
-  $self->errorTrack(sprintf q{No features from '%s' on this strand}, $self->my_config('name')) unless $features_drawn || $on_other_strand || $self->{'no_empty_track_message'} || $self->{'config'}->get_option('opt_empty_tracks') == 0;
-  $self->errorTrack(sprintf(q{%s features from '%s' omitted}, $features_bumped, $self->my_config('name')), undef, $y_offset) if $self->get_parameter('opt_show_bumped') && $features_bumped;
+  $self->errorTrack(sprintf q{No features from '%s' on this strand}, $self->track_config('name')) unless $features_drawn || $on_other_strand || $self->{'no_empty_track_message'} || $self->{'image_config'}->get_option('opt_empty_tracks') == 0;
+  $self->errorTrack(sprintf(q{%s features from '%s' omitted}, $features_bumped, $self->track_config('name')), undef, $y_offset) if $self->image_config->get_parameter('opt_show_bumped') && $features_bumped;
 }
 
 1;
