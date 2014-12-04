@@ -1,0 +1,39 @@
+language: "perl"
+
+perl:
+  - "5.14"
+  - "5.10"
+
+env:
+  - COVERALLS=true
+  - COVERALLS=false
+
+before_install:
+    - sudo apt-get -y update
+    - sudo apt-get -y install unzip
+    - sudo apt-get -y install sendmail
+    - git clone --branch master --depth 1 https://github.com/Ensembl/ensembl-test.git
+    - git clone --branch master --depth 1 https://github.com/Ensembl/ensembl.git
+    - ln -s . ensembl-compara
+    - wget https://github.com/bioperl/bioperl-live/archive/bioperl-release-1-2-3.zip
+    - unzip bioperl-release-1-2-3.zip
+    - echo -e "[server]\nwait_timeout=28000" | sudo tee -a /etc/mysql/my.cnf
+    - sudo service mysql restart
+
+
+install:
+    - cpanm -v --installdeps --with-recommends --notest --cpanfile ensembl/cpanfile .
+    - cpanm -v --installdeps --notest .
+    - cpanm -n Devel::Cover::Report::Coveralls
+    - cp -f travisci/MultiTestDB.conf.travisci  modules/t/MultiTestDB.conf
+
+script: "./travisci/harness.sh"
+
+# Get the matrix to only build coveralls support when on 5.10
+matrix:
+  exclude:
+    - perl: "5.10"
+      env: COVERALLS=false
+    - perl: "5.14"
+      env: COVERALLS=true
+

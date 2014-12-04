@@ -102,6 +102,7 @@ sub fetch_input {
         ];
         foreach my $species (@$sorted_nodes) {
             next unless $species->is_leaf();
+            set_default_value_for_tag($species, 0, qw(nb_genes nb_seq nb_orphan_genes nb_genes_in_tree nb_genes_in_tree_single_species nb_genes_in_tree_multi_species));
             $sums[0] += $species->get_value_for_tag('nb_genes');
             $sums[1] += $species->get_value_for_tag('nb_seq');
             $sums[2] += $species->get_value_for_tag('nb_orphan_genes');
@@ -115,11 +116,11 @@ sub fetch_input {
                 thousandify($species->get_value_for_tag('nb_seq')),
                 thousandify($species->get_value_for_tag('nb_orphan_genes')),
                 thousandify($species->get_value_for_tag('nb_genes_in_tree')),
-                roundperc2($species->get_value_for_tag('nb_genes_in_tree') / $species->get_value_for_tag('nb_genes')),
+                $species->get_value_for_tag('nb_genes') ? roundperc2($species->get_value_for_tag('nb_genes_in_tree') / $species->get_value_for_tag('nb_genes')) : 'NA',
                 thousandify($species->get_value_for_tag('nb_genes_in_tree_single_species')),
-                roundperc2($species->get_value_for_tag('nb_genes_in_tree_single_species') / $species->get_value_for_tag('nb_genes')),
+                $species->get_value_for_tag('nb_genes') ? roundperc2($species->get_value_for_tag('nb_genes_in_tree_single_species') / $species->get_value_for_tag('nb_genes')) : 'NA',
                 thousandify($species->get_value_for_tag('nb_genes_in_tree_multi_species')),
-                roundperc2($species->get_value_for_tag('nb_genes_in_tree_multi_species') / $species->get_value_for_tag('nb_genes')),
+                $species->get_value_for_tag('nb_genes') ? roundperc2($species->get_value_for_tag('nb_genes_in_tree_multi_species') / $species->get_value_for_tag('nb_genes')) : 'NA',
             ];
         }
         push @data1, [
@@ -156,6 +157,7 @@ sub fetch_input {
             'Avg nb of genes per species',
         ];
         foreach my $node (@$sorted_nodes) {
+            set_default_value_for_tag($node, 0, qw(root_nb_trees root_nb_genes root_avg_spec root_avg_gene_per_spec root_min_gene root_min_spec root_max_gene root_max_spec));
             $sums[0] += $node->get_value_for_tag('root_nb_trees');
             $sums[1] += $node->get_value_for_tag('root_nb_genes');
             if ($node->get_value_for_tag('root_nb_trees')) {
@@ -216,6 +218,7 @@ sub fetch_input {
             'Avg confidence score on non-dubious nodes',
         ];
         foreach my $node (@$sorted_nodes) {
+                set_default_value_for_tag($node, 0, qw(nb_nodes nb_dup_nodes nb_gene_splits nb_spec_nodes nb_dubious_nodes avg_dupscore avg_dupscore_nondub));
                 $sums[0] += $node->get_value_for_tag('nb_nodes');
                 $sums[1] += $node->get_value_for_tag('nb_dup_nodes');
                 $sums[2] += $node->get_value_for_tag('nb_gene_splits');
@@ -231,8 +234,8 @@ sub fetch_input {
                     thousandify($node->get_value_for_tag('nb_gene_splits')),
                     thousandify($node->get_value_for_tag('nb_spec_nodes')),
                     thousandify($node->get_value_for_tag('nb_dubious_nodes')),
-                    roundperc2($node->get_value_for_tag('avg_dupscore')),
-                    roundperc2($node->get_value_for_tag('avg_dupscore_nondub')),
+                    ($node->get_value_for_tag('nb_dup_nodes')+$node->get_value_for_tag('nb_dubious_nodes')) ? roundperc2($node->get_value_for_tag('avg_dupscore')) : 'NA',
+                    $node->get_value_for_tag('nb_dup_nodes') ? roundperc2($node->get_value_for_tag('avg_dupscore_nondub')) : 'NA',
                 ]
         }
         push @data3, [
@@ -253,15 +256,21 @@ sub fetch_input {
 
 
 
+sub set_default_value_for_tag {
+    my ($node, $value, @tags) = @_;
+    foreach my $t (@tags) {
+        $node->add_tag($t, $value) if not $node->has_tag($t);
+    };
+}
 
 # Functions to produce some HTML
 
 sub array_to_html_tr {
-    return '<tr>'.join('', map {sprintf('<td>%s</td>', defined $_ ? $_ : '')} @_).'</tr>';
+    return '<tr>'.join('', map {sprintf('<td>%s</td>', defined $_ ? $_ : '')} @_)."</tr>\n";
 }
 
 sub array_arrays_to_html_table {
-    return '<table>'.join('', map {array_to_html_tr(@$_)} @_).'</table>';
+    return '<table>'.join('', map {array_to_html_tr(@$_)} @_)."</table>\n";
 }
 
 

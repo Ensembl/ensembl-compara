@@ -279,6 +279,7 @@ sub _node_body {
     $w->dataElement('type', 'speciation_or_duplication');
     $w->dataElement('duplications', 1);
     $w->endTag();
+    $w->dataElement('confidence', $node->duplication_confidence_score(), 'type' => 'duplication_confidence_score');
   }
 
   if((defined $type) and ($type eq "dubious")) {

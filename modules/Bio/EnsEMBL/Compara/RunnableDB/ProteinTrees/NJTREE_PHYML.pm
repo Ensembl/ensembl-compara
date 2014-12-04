@@ -209,6 +209,7 @@ sub run_njtree_phyml {
 
     my $starttime = time()*1000;
     
+    $self->param('hidden_genes', [] );
     $self->merge_split_genes($gene_tree) if $self->param('check_split_genes');
     my $genes_for_treebest = scalar(@{$gene_tree->get_all_leaves});
 

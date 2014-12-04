@@ -53,6 +53,8 @@ package Bio::EnsEMBL::Compara::PipeConfig::DumpTrees_conf;
 use strict;
 use warnings;
 
+use Bio::EnsEMBL::Hive::Version 2.2;
+
 use base ('Bio::EnsEMBL::Hive::PipeConfig::EnsemblGeneric_conf');   # we don't need Compara tables in this particular case
 
 =head2 default_options
@@ -181,7 +183,7 @@ sub pipeline_analyses {
                 |,
             },
             -input_ids => [
-                {'cmd' => 'echo "#query#" | db_cmd.pl -url #db_conn# -extra "-N -q" > #target_dir#/#file_name#',},
+                {'cmd' => 'echo "#query#" | db_cmd.pl -url #db_conn# -extra -N -extra -q > #target_dir#/#file_name#',},
             ],
             -flow_into => {
                 1 => { 'archive_long_files' => { 'full_name' => '#target_dir#/#file_name#' } },
@@ -236,7 +238,7 @@ sub pipeline_analyses {
             -meadow_type => 'LOCAL',
             -flow_into => {
                 1 => [ 'generate_collations', 'generate_tarjobs', 'remove_hash' ],
-                2 => { 'dump_a_tree'  => { 'tree_id' => '#tree_id#', 'hash_dir' => '#expr(dir_revhash($tree_id))expr#' } },
+                2 => { 'dump_a_tree'  => { 'tree_id' => '#tree_id#', 'hash_dir' => '#expr(dir_revhash(#tree_id#))expr#' } },
             },
         },
 
