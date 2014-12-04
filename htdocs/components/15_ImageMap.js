@@ -333,7 +333,7 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
 
           // add a div layer over the label, and append the hover menu to the layer. Hover menu toggling is controlled by CSS.
           panel.elLk.labelLayers = panel.elLk.labelLayers.add(
-            $('<div class="label_layer">').append('<div class="label_layer_bg">').append(hoverLabel).appendTo(document.body).data({area: this})
+            $('<div class="label_layer">').append('<div class="label_layer_bg">').append(hoverLabel).appendTo(panel.elLk.container).data({area: this})
           );
         }
 
@@ -342,7 +342,7 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
       } else if ($a.hasClass('hover')) {
 
         panel.elLk.hoverLayers = panel.elLk.hoverLayers.add(
-          $('<div class="hover_layer">').appendTo(document.body).data({area: this}).on('click', function(e) {
+          $('<div class="hover_layer">').appendTo(panel.elLk.container).data({area: this}).on('click', function(e) {
             panel.clicking = true;
             panel.elLk.drag.triggerHandler('click', e);
           }
@@ -394,16 +394,19 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
   },
 
   positionLayers: function() {
-    var offset = this.elLk.img.offset();
-    var right  = this.labelRight;
+    var offsetContainer = this.elLk.container.offset();
+    var offsetImg       = this.elLk.img.offset();
+    var top             = offsetImg.top - offsetContainer.top - 1; // 1px border
+    var left            = offsetImg.left - offsetContainer.left - 1;
+    var right           = this.labelRight;
 
     this.elLk.labelLayers.each(function() {
       var $this = $(this);
       var area  = $this.data('area');
 
       $this.css({
-        left:   offset.left + area.l,
-        top:    offset.top + area.t,
+        left:   left + area.l,
+        top:    top + area.t,
         height: area.b - area.t,
         width:  right - area.l
       });
@@ -416,8 +419,8 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
       var area  = $this.data('area');
 
       $this.css({
-        left:   offset.left + area.l,
-        top:    offset.top + area.t,
+        left:   left + area.l,
+        top:    top + area.t,
         height: area.b - area.t,
         width:  area.r - area.l
       });
