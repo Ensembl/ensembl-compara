@@ -260,7 +260,7 @@ sub set_default_value_for_tag {
     my ($node, $value, @tags) = @_;
     return if $node->dbID %2;
     foreach my $t (@tags) {
-        $node->add_tag($t, $value) if $node->has_tag($t);
+        $node->add_tag($t, $value) if not $node->has_tag($t);
     };
 }
 
