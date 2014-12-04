@@ -61,7 +61,7 @@ sub populate_tree {
     { 'availability' => 'gene', 'concise' => 'Supporting evidence' }
   );
 
-  my $caption = $self->object && $self->object->availability->{'has_alt_alleles'} ? 'Gene alleles ([[counts::alternative_alleles]])' : 'Alt. alleles';
+  my $caption = $self->object && $self->object->availability->{'has_alt_alleles'} ? 'Gene alleles ([[counts::alternative_alleles]])' : 'Gene alleles';
   $self->create_node('Alleles', $caption,
                      [qw(alleles EnsEMBL::Web::Component::Gene::Alleles)],
                      { 'availability' => 'core has_alt_alleles', 'concise' => 'Gene Alleles' }
