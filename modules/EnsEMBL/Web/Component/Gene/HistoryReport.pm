@@ -20,7 +20,7 @@ package EnsEMBL::Web::Component::Gene::HistoryReport;
 
 use strict;
 
-use EnsEMBL::Web::DBSQL::WebsiteAdaptor;
+use EnsEMBL::Web::DBSQL::ArchiveAdaptor;
 
 use base qw(EnsEMBL::Web::Component::Gene);
 
@@ -130,7 +130,7 @@ sub _archive_link {
   if ($archive_object->release == $current) {
      $url = $hub->url({ type => $type, action => $action, $p => $name });
   } else {
-    my $adaptor      = EnsEMBL::Web::DBSQL::WebsiteAdaptor->new($hub);
+    my $adaptor      = EnsEMBL::Web::DBSQL::ArchiveAdaptor->new($hub);
     my $release_info = $adaptor->fetch_release($archive_object->release);
     my $archive_site = $release_info->{'archive'};
     $url             = "http://$archive_site.archive.ensembl.org";
