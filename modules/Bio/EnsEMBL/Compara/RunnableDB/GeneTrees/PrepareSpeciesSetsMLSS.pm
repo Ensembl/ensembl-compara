@@ -41,6 +41,7 @@ all the species.
 package Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::PrepareSpeciesSetsMLSS;
 
 use strict;
+use Scalar::Util qw(looks_like_number);
 
 use Bio::EnsEMBL::Compara::SpeciesSet;
 use Bio::EnsEMBL::Compara::MethodLinkSpeciesSet;
@@ -79,7 +80,24 @@ sub fetch_input {
     my $method_adaptor = $self->compara_dba->get_MethodAdaptor;
     $self->param('ml_ortho', $method_adaptor->fetch_by_type('ENSEMBL_ORTHOLOGUES'));
     $self->param('ml_para', $method_adaptor->fetch_by_type('ENSEMBL_PARALOGUES'));
+    $self->param('ml_homoeo', $method_adaptor->fetch_by_type('ENSEMBL_HOMOEOLOGUES'));
     $self->param('ml_genetree', $method_adaptor->fetch_by_type($self->param('tree_method_link')));
+
+    my %homoeologous_groups = ();
+    foreach my $i (1..(scalar(@{$self->param('homoeologous_genome_dbs')}))) {
+        my $group = $self->param('homoeologous_genome_dbs')->[$i-1];
+        foreach my $gdb (@{$group}) {
+            if (looks_like_number($gdb)) {
+                $homoeologous_groups{$gdb} = $i;
+            } elsif (ref $gdb) {
+                $homoeologous_groups{$gdb->dbID} = $i;
+            } else {
+                $gdb = $self->compara_dba->get_GenomeDBAdaptor->fetch_by_name_assembly($gdb);
+                $homoeologous_groups{$gdb->dbID} = $i;
+            }
+        }
+    }
+    $self->param('homoeologous_groups', \%homoeologous_groups);
 
 }
 
@@ -87,8 +105,9 @@ sub fetch_input {
 sub write_output {
     my $self = shift;
 
-    my $ss = $self->_write_ss($ self->param('genome_dbs') );
+    my $ss = $self->_write_ss($self->param('genome_dbs') );
     my $mlss = $self->_write_mlss( $ss, $self->param('ml_genetree') );
+    my $homoeologous_genome_dbs_groups_aref = $self->param('homoeologous_genome_dbs');
     my $hive_pwp_adaptor = $self->db->get_PipelineWideParametersAdaptor;
 
     # Should be a pipeline-wide parameter
@@ -104,6 +123,9 @@ sub write_output {
             my $ss12 = $self->_write_ss( [$genome_db1, $genome_db2] );
             #my $mlss_p12 = $self->_write_mlss( $ss12, $self->param('ml_para') );
             my $mlss_o12 = $self->_write_mlss( $ss12, $self->param('ml_ortho') );
+            if (($self->param('homoeologous_groups')->{$genome_db1->dbID} || -1) == ($self->param('homoeologous_groups')->{$genome_db2->dbID} || -2)) {
+               my $mlss_h12 = $self->_write_mlss( $ss12, $self->param('ml_homoeo') );
+           }
         }
     }
 
