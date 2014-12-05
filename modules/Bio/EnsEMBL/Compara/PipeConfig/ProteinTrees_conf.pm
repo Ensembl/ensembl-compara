@@ -593,6 +593,7 @@ sub core_pipeline_analyses {
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::PrepareSpeciesSetsMLSS',
             -parameters => {
                 'mlss_id'   => $self->o('mlss_id'),
+                'homoeologous_genome_dbs' => $self->o('homoeologous_genome_dbs'),
             },
             -flow_into => [ 'make_treebest_species_tree' ],
         },
