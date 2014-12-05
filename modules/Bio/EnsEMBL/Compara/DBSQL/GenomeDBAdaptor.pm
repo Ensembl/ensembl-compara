@@ -304,6 +304,22 @@ sub fetch_by_core_DBAdaptor {
 }
 
 
+=head2 fetch_all_components_of_genome_db
+
+  Example     : $principal_genome_db->fetch_all_components_of_genome_db();
+  Description : Returns all the component genome_dbs attached to this one
+  Returntype  : Arrayref of Bio::EnsEMBL::Compara::GenomeDB
+  Exceptions  : none
+  Caller      : general
+  Status      : Stable
+
+=cut
+
+sub fetch_all_components_of_genome_db {
+    my ($self, $genome_db) = @_;
+    return $self->_id_cache->get_all_by_additional_lookup('genome_component', sprintf('%s_____%s', lc $genome_db->name, lc $genome_db->assembly));
+}
+
 
 
 ##################
@@ -547,7 +563,7 @@ sub support_additional_lookups {
 sub compute_keys {
     my ($self, $genome_db) = @_;
     return {
-            name_assembly => sprintf('%s_____%s', lc $genome_db->name, lc $genome_db->assembly),
+            ($genome_db->genome_component ? 'genome_component' : 'name_assembly') => sprintf('%s_____%s', lc $genome_db->name, lc $genome_db->assembly), # Should in theory add the genebuild
             $genome_db->taxon_id ? (taxon_id => $genome_db->taxon_id) : (),
             $genome_db->taxon_id ? (taxon_id_assembly => sprintf('%s____%s_', $genome_db->taxon_id, lc $genome_db->assembly)) : (),
             ($genome_db->taxon_id and $genome_db->assembly_default) ? (taxon_id_default_assembly => $genome_db->taxon_id) : (),

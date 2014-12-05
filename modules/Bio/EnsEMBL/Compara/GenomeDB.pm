@@ -443,6 +443,10 @@ sub is_high_coverage {
 }
 
 
+#################################
+# Methods for polyploid genomes #
+#################################
+
 =head2 genome_component
 
   Example     : my $genome_component = $genome_db->genome_component();
@@ -459,6 +463,83 @@ sub genome_component {
     my $self = shift;
     $self->{'_genome_component'} = shift if @_;
     return $self->{'_genome_component'};
+}
+
+
+=head2 make_component_copy
+
+  Arg [1]     : string: the name of the new genome component
+  Example     : my $new_component = $wheat_genome_db->make_component_copy('A');
+  Description : Create a new GenomeDB that is a copy of this one, with the given
+                component name
+  Returntype  : Bio::EnsEMBL::Compara::GenomeDB
+  Exceptions  : none
+  Caller      : general
+  Status      : Stable
+
+=cut
+
+sub make_component_copy {
+    my ($self, $component_name) = @_;
+    my $copy_genome_db = \%{$self};
+    bless $copy_genome_db, 'Bio::EnsEMBL::Compara::GenomeDB';
+    $copy_genome_db->genome_component($component_name);
+    $copy_genome_db->assembly_default(0);
+    $copy_genome_db->dbID(undef);
+    $copy_genome_db->adaptor(undef);
+    push @{$self->{_component_genome_dbs}}, $copy_genome_db;
+    return $copy_genome_db;
+}
+
+
+=head2 principal_genome_db
+
+  Example     : $component_genome_db->principal_genome_db();
+  Description : In case of polyploid genomes, return the main GenomeDB of the species.
+                Returns undef otherwise
+  Returntype  : Bio::EnsEMBL::Compara::GenomeDB
+  Exceptions  : throws if the adaptor isn't defined
+  Caller      : general
+  Status      : Stable
+
+=cut
+
+sub principal_genome_db {
+    my $self = shift;
+
+    return undef unless $self->genome_component;
+
+    if (not $self->{_principal_genome_db}) {
+        if (not $self->adaptor) {
+            throw(sprintf("I need an adaptor to get the principal_genome_db of genome_db_id=%d\n", $self->dbID));
+        }
+        # This method only returns principal GenomeDBs
+        $self->{_principal_genome_db} = $self->adaptor->fetch_by_name_assembly($self->name, $self->assembly);
+    }
+    return $self->{_principal_genome_db};
+
+}
+
+
+=head2 component_genome_dbs
+
+  Example     : $genome_db->component_genome_dbs();
+  Description : On a polyploid genome, returns all the GenomeDBs of its components.
+                Returns an empty list otherwise
+  Returntype  : Arrayref of Bio::EnsEMBL::Compara::GenomeDB
+  Exceptions  : none
+  Caller      : general
+  Status      : Stable
+
+=cut
+
+sub component_genome_dbs {
+    my $self = shift;
+
+    if (not $self->{_component_genome_dbs}) {
+        $self->{_component_genome_dbs} = $self->adaptor->fetch_all_components_of_genome_db($self);
+    }
+    return $self->{_component_genome_dbs};
 }
 
 
