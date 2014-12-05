@@ -40,14 +40,17 @@ sub content {
   
   # Check if a variation database exists for the species.
   if ($hub->database('variation')) {
+    my $no_data = '<p>No phenotypes associated with variants in this gene.</p>';
     # Variation phenotypes
     if ($phenotype) {
       my $table_rows = $self->variation_table($phenotype, $display_name);
       my $table      = $table_rows ? $self->make_table($table_rows, $phenotype) : undef;
 
-      $html .= $self->render_content($table, $phenotype);
+      $html .= $table ? $self->render_content($table, $phenotype) : $no_data;
     } else {
-      $html .= $self->render_content($self->stats_table($display_name)); # no sub-table selected, just show stats
+      # no sub-table selected, just show stats
+      my $table = $self->stats_table($display_name);
+      $html .= $table ? $self->render_content($table) : $no_data; 
     }
   }
   
@@ -180,8 +183,10 @@ sub stats_table {
       mart    => $mart,
     };
   }
-  
-  return $self->new_table($columns, \@rows, { data_table => 'no_col_toggle', data_table_config => {iDisplayLength => 10}, sorting => [ 'type asc' ], exportable => 0 });
+ 
+  if (scalar @rows) { 
+    return $self->new_table($columns, \@rows, { data_table => 'no_col_toggle', data_table_config => {iDisplayLength => 10}, sorting => [ 'type asc' ], exportable => 0 });
+  }
 }
 
 

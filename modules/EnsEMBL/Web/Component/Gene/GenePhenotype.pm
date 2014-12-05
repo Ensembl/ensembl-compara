@@ -49,7 +49,7 @@ sub gene_phenotypes {
   my $hub              = $self->hub;
   my $species          = $hub->species_defs->SPECIES_COMMON_NAME;
   my $g_name           = $obj->stable_id;
-  my $html             = qq{<a id="gene_phenotype"></a><h2>List of phenotype(s) associated with the gene $g_name</h2>};
+  my $html;
   my (@rows, %list, $list_html);
   
   # add rows from Variation DB, PhenotypeFeature
@@ -119,21 +119,28 @@ sub gene_phenotypes {
       }
     }
   }
-  if ($species eq 'Mouse') {
-	return $html . $self->new_table([
-      { key => 'phenotype', align => 'left', title => 'Phenotype' },
-      { key => 'source',    align => 'left', title => 'Source'    },
-      { key => 'strain',    align => 'left', title => 'Strain'    },
-      { key => 'allele',    align => 'left', title => 'Allele'    },
-      { key => 'locations', align => 'left', title => 'Locations' },
-    ], \@rows, { data_table => 'no_sort no_col_toggle', exportable => 1 })->render;
-  } else {  
-      return $html . $self->new_table([ 
-      { key => 'phenotype', align => 'left', title => 'Phenotype'     },
-      { key => 'source',    align => 'left', title => 'Source'        },
-      { key => 'locations', align => 'left', title => 'Locations'     },
-    ], \@rows, { data_table => 'no_sort no_col_toggle', exportable => 1 })->render;
+  if (scalar @rows) {
+    $html = qq{<a id="gene_phenotype"></a><h2>List of phenotype(s) associated with the gene $g_name</h2>};
+    if ($species eq 'Mouse') {
+	    $html .= $self->new_table([
+        { key => 'phenotype', align => 'left', title => 'Phenotype' },
+        { key => 'source',    align => 'left', title => 'Source'    },
+        { key => 'strain',    align => 'left', title => 'Strain'    },
+        { key => 'allele',    align => 'left', title => 'Allele'    },
+        { key => 'locations', align => 'left', title => 'Locations' },
+      ], \@rows, { data_table => 'no_sort no_col_toggle', exportable => 1 })->render;
+    } else {  
+      $html .= $self->new_table([ 
+        { key => 'phenotype', align => 'left', title => 'Phenotype'     },
+        { key => 'source',    align => 'left', title => 'Source'        },
+        { key => 'locations', align => 'left', title => 'Locations'     },
+      ], \@rows, { data_table => 'no_sort no_col_toggle', exportable => 1 })->render;
+    }
   }
+  else {
+    $html = "<p>No phenotypes associated with gene $g_name.</p>";
+  }
+  return $html;
 }
 
 1;

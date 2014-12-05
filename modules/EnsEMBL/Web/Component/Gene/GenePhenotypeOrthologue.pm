@@ -125,15 +125,18 @@ sub content {
 
     }
   }
-  
-  $html = '<h2>Phenotypes associated with the gene orthologues in other species</h2>'.
-    $self->new_table([ 
-      { key => 'species',   align => 'left', title => 'Species'                   },
-      { key => 'gene',      align => 'left', title => 'Gene'                      },
-      { key => 'phenotype', align => 'left', title => 'Phenotype', sort => 'html' },
-      { key => 'source',    align => 'left', title => 'Source'                    },
-    ], \@rows, { data_table => 'no_col_toggle', exportable => 1 })->render if @rows;
-  
+  if (scalar @rows) { 
+    $html .= '<h2>Phenotypes associated with the gene orthologues in other species</h2>'.
+      $self->new_table([ 
+        { key => 'species',   align => 'left', title => 'Species'                   },
+        { key => 'gene',      align => 'left', title => 'Gene'                      },
+        { key => 'phenotype', align => 'left', title => 'Phenotype', sort => 'html' },
+        { key => 'source',    align => 'left', title => 'Source'                    },
+      ], \@rows, { data_table => 'no_col_toggle', exportable => 1 })->render if @rows;
+  }
+  else {
+    $html .= '<p>No phenotypes associated with gene orthologues in other species.</p>';
+  }
   return $html;
 }
 
