@@ -100,21 +100,6 @@ sub config {
   my $self = shift;
   
   $self->__data->{'config'} = {
-    fasta => {
-      label => 'FASTA sequence',
-      formats => [
-        [ 'fasta', 'FASTA sequence' ]
-      ],
-      params => [
-        [ 'cdna',    'cDNA' ],
-        [ 'coding',  'Coding sequence' ],
-        [ 'peptide', 'Peptide sequence' ],
-        [ 'utr5',    "5' UTR" ],
-        [ 'utr3',    "3' UTR" ],
-        [ 'exon',    'Exons' ],
-        [ 'intron',  'Introns' ]
-      ]
-    },
     features => {
       label => 'Feature File',
       formats => [
@@ -152,15 +137,6 @@ sub config {
         [ 'userdata',  'Uploaded Data' ],
       ]
     },
-#     PSL => {
-#       label => 'PSL Format',
-#       formats => [
-#         [ 'PSL',  'PSL Format' ],
-#       ],
-#       params => [
-#           [ 'name',  'Bed Line Name' ],
-#         ]
-#     },
     flat => {
       label => 'Flat File',
       formats => [
@@ -187,6 +163,16 @@ sub config {
       ]
     },
   };
+
+  if ($self->function eq 'Location') {
+    $self->__data->{'config'}{'fasta'} = {
+      label => 'FASTA sequence',
+      formats => [
+        [ 'fasta', 'FASTA sequence' ]
+      ],
+      params => []
+    };
+  }
 
   my $func = sprintf 'modify_%s_options', lc $self->function;
   $self->$func if $self->can($func);

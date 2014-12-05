@@ -336,10 +336,11 @@ sub initialize {
     maintain_colour => 1,
     transcript      => 1,
   };
-  
-  $config->{$_} = $hub->param($_) || $vc->get($_) for qw(display_width exons codons coding_seq translation rna snp_display utr hide_long_snps);
+ 
+  $config->{'display_width'} = $hub->param('display_width') || $vc->get('display_width'); 
+  $config->{$_} = ($hub->param($_) eq 'on' || $vc->get($_) eq 'on') ? 1 : 0 for qw(exons codons coding_seq translation rna snp_display utr hide_long_snps);
   $config->{'codons'}      = $config->{'coding_seq'} = $config->{'translation'} = 0 unless $object->Obj->translation;
-  
+ 
   if ($hub->param('line_numbering') ne 'off') {
     $config->{'line_numbering'} = 'on';
     $config->{'number'}         = 1;

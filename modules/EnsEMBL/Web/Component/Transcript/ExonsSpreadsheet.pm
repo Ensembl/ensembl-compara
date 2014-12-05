@@ -64,7 +64,7 @@ sub initialize {
       $config->{'min_frequency'} = $hub->param('min_frequency');
     }
     
-    $config->{'consequence_filter'} = { map { $_ => 1 } @consequence } if $config->{'snp_display'} && join('', @consequence) ne 'off';
+    $config->{'consequence_filter'} = { map { $_ => 1 } @consequence } if $config->{'snp_display'} ne 'off' && join('', @consequence) ne 'off';
     $config->{'hide_long_snps'}     = $hub->param('hide_long_snps') eq 'yes';
   }
   
@@ -230,8 +230,8 @@ sub get_intron_sequence_data {
       
       $start->{'sequence'} = [ map {{ letter => $_, class => 'e1' }} split '', lc $start->{'slice'}->seq ];
       $end->{'sequence'}   = [ map {{ letter => $_, class => 'e1' }} split '', lc $end->{'slice'}->seq   ];
-      
-      if ($config->{'snp_display'} eq 'yes') {
+     
+      if ($config->{'snp_display'} eq 'on') {
         $self->add_variations($config, $_->{'slice'}, $_->{'sequence'}) for $start, $end;
       }
       
@@ -243,7 +243,7 @@ sub get_intron_sequence_data {
       
       @sequence = map {{ letter => $_, class => 'e1' }} split '', lc $slice->seq;
       
-      $self->add_variations($config, $slice, \@sequence) if $config->{'snp_display'} eq 'yes';
+      $self->add_variations($config, $slice, \@sequence) if $config->{'snp_display'} eq 'on';
       $self->add_line_numbers('intron', $config, $intron_length);
     }
   };
