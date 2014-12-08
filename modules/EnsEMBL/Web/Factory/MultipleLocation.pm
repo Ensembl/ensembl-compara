@@ -36,7 +36,15 @@ sub createObjects {
   my $object = $self->object;
   
   return unless $object;
-  
+
+  # Ignore r parameters if recalculating
+  if($self->hub->script eq 'Page' and $self->param('realign')) {
+    foreach my $p ($self->param) {
+      next unless $p =~ /^r\d+$/;
+      $self->delete_param($p);
+    }
+  }
+
   # Redirect if we need to generate a new url
   return if $self->generate_url($object->slice);
   

@@ -50,7 +50,7 @@ sub content {
   my $object = $self->hub->core_object('Location');
   $length = $object->seq_region_length if $object;
   
-  return $self->navbar($self->ramp($ramp_entries->[0][1],$ramp_entries->[-1][1],$length));
+  return $self->navbar($self->ramp($ramp_entries->[0][1],$ramp_entries->[-1][1],$length),'realign=1');
 }
 
 sub ramp_url { return shift->nav_url(shift, 'resize'); }
