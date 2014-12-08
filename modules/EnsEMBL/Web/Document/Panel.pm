@@ -406,9 +406,20 @@ sub component_content {
       # Without this, ajax panels don't load, or load the wrong content.
       my ($panel_name) = $self =~ /\((.+)\)$/;
       
-      # If there are some params that needs to be a part of the POST request, add them as hidden fields
-      my $ajax_post = ref $ajaxable ? join('', map { my $val = $hub->param($_); $val ? qq(<input class="ajax_post" type="hidden" name="$_" value="$val" />) : '' } @$ajaxable) : '';
-      
+      # If this is going to be a POST request, move all POST and GET params to hidden inputs (this is done because GET params are not read in a post request by hub->param)
+      my $ajax_post = '';
+      if ($ajaxable eq 'post') {
+        my $input = $hub->input;
+        my %inps  = map { $_ => $hub->param($_) } $hub->param; # all params
+        exists $inps{$_} or $inps{$_} = $input->url_param($_) for $input->url_param; # any remaining GET params
+        foreach my $param_name (keys %inps) {
+          $inps{$param_name} = [ $inps{$param_name} ] unless ref $inps{$param_name};
+          for (@{$inps{$param_name}}) {
+            $ajax_post .= qq(<input class="ajax_post" type="hidden" name="$param_name" value="$_" />);
+          }
+        }
+      }
+
       $html .= qq(<div class="ajax $class"><input type="hidden" class="ajax_load" name="$panel_name" value="$url">$ajax_post</div>);
       
     } else {
