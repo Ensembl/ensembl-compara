@@ -36,9 +36,17 @@ sub createObjects {
   my $object = $self->object;
   
   return unless $object;
-  
+
+  # Ignore r parameters if recalculating
+  if($self->hub->script eq 'Page' and $self->param('realign')) {
+    foreach my $p ($self->param) {
+      next unless $p =~ /^r\d+$/;
+      $self->delete_param($p);
+    }
+  }
+
   # Redirect if we need to generate a new url
-  $self->generate_url($object->slice);
+  return if $self->generate_url($object->slice);
   
   my $hub       = $self->hub;
   my $action_id = $self->param('id');
@@ -134,9 +142,7 @@ sub createObjects {
 sub generate_url {
   my ($self, $slice) = @_;
 
-  my @add = grep { s/^s(\d+)$/$1/ && $self->param("s$_") } $self->param;
-  
-  return if $self->param("action");
+  my @add = grep { s/^s(\d+)$/$1/ && $self->param("s$_") && !(defined $self->param("r$_") || defined $self->param("g$_")) } $self->param;
   
   $self->add_species($slice, \@add) if scalar @add;
   
@@ -170,10 +176,10 @@ sub add_species {
     
     my ($species, $seq_region_name) = split '--', $param;
     
-    if ($self->best_guess($slice, $id, $species, $seq_region_name)) {    
+    if ($self->best_guess($slice, $id, $species, $seq_region_name)) {
       $self->param("s$id", $param);
     } else {
-      if ($valid_species{$species}) {            
+      if ($valid_species{$species}) {
         if ($species eq $self->species) {
           $paralogues++ unless $seq_region_name;
         } else {

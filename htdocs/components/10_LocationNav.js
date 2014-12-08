@@ -60,7 +60,11 @@ Ensembl.Panel.LocationNav = Ensembl.Panel.extend({
         new_parts.push(part);
       }
     });
-    return url[0]+"?"+new_parts.join(";");
+    var extra = $('.image_nav .extra-params',this.el).attr('href');
+    if(extra) {
+      extra = ';' + extra.substring(1);
+    }
+    return url[0]+"?"+new_parts.join(";")+extra;
   },
 
   rescale: function(rs,input) {
