@@ -81,6 +81,15 @@ sub fetch_input {
         $self->param('current_gene_tree')->preload();
         $self->param( 'stable_id', $self->param('current_gene_tree')->get_value_for_tag('model_name') );
 
+        #Get copy tree
+        #----------------------------------------------------------------------------------------------------------------------------
+		#Need to get tree with ref_root_id and clusterset_id="copy"
+		my $sth = $self->param('current_gene_tree')->adaptor->db->dbc->prepare('SELECT root_id FROM gene_tree_root where clusterset_id="copy" and ref_root_id=?;');
+		$sth->execute($self->param('gene_tree_id'));
+		$self->param('copy_root_id', $sth->fetchrow_array());
+		$sth->finish;
+        $self->param( 'copy_gene_tree', $self->param('current_tree_adaptor')->fetch_by_dbID( $self->param('copy_root_id') ) );
+        $self->param( 'copy_gene_tree' )->preload();
         #----------------------------------------------------------------------------------------------------------------------------
 
         print "Fetching tree for stable ID/root_id: " . $self->param('stable_id') . "/" . $self->param('gene_tree_id') . "\n" if ( $self->debug );
@@ -103,7 +112,7 @@ sub fetch_input {
             $cigar_lines_reuse_tree{ $member->stable_id } = $member->cigar_line;
         }
 
-        foreach my $current_member ( @{ $self->param('current_gene_tree')->get_all_Members } ) {
+        foreach my $current_member ( @{ $self->param('copy_gene_tree')->get_all_Members } ) {
             if ( defined( $cigar_lines_reuse_tree{ $current_member->stable_id } ) ) {
                 $current_member->cigar_line( $cigar_lines_reuse_tree{ $current_member->stable_id } );
             }
@@ -125,10 +134,10 @@ sub write_output {
     }
 
 	my $reuse_aln = $self->param('reuse_gene_tree')->alignment;
-    $self->param('current_gene_tree')->aln_length($reuse_aln->aln_length);
-    $self->param('current_gene_tree')->aln_method($reuse_aln->aln_method);
+    $self->param('copy_gene_tree')->aln_length($reuse_aln->aln_length);
+    $self->param('copy_gene_tree')->aln_method($reuse_aln->aln_method);
 
-    $self->compara_dba->get_GeneAlignAdaptor->store( $self->param('current_gene_tree') );
+    $self->compara_dba->get_GeneAlignAdaptor->store( $self->param('copy_gene_tree') );
 
 	#If the current tree is not an update tree, we should not flow to mafft_update.
 	#But it must be done after copying the alignment!
@@ -142,16 +151,16 @@ sub _store_aln_tags {
 
 	print "storing_tags ...\n";
     if ( $self->param('reuse_gene_tree')->has_tag('aln_runtime') ) {
-        $self->param('current_gene_tree')->store_tag( "aln_runtime", $self->param('reuse_gene_tree')->get_value_for_tag('aln_runtime') );
+        $self->param('copy_gene_tree')->store_tag( "aln_runtime", $self->param('reuse_gene_tree')->get_value_for_tag('aln_runtime') );
     }
     if ( $self->param('reuse_gene_tree')->has_tag('aln_percent_identity') ) {
-        $self->param('current_gene_tree')->store_tag( "aln_percent_identity", $self->param('reuse_gene_tree')->get_value_for_tag('aln_percent_identity') );
+        $self->param('copy_gene_tree')->store_tag( "aln_percent_identity", $self->param('reuse_gene_tree')->get_value_for_tag('aln_percent_identity') );
     }
     if ( $self->param('reuse_gene_tree')->has_tag('aln_num_residues') ) {
-        $self->param('current_gene_tree')->store_tag( "aln_num_residues", $self->param('reuse_gene_tree')->get_value_for_tag('aln_num_residues') );
+        $self->param('copy_gene_tree')->store_tag( "aln_num_residues", $self->param('reuse_gene_tree')->get_value_for_tag('aln_num_residues') );
     }
     if ( $self->param('reuse_gene_tree')->has_tag('aln_length') ) {
-        $self->param('current_gene_tree')->store_tag( "aln_length", $self->param('reuse_gene_tree')->get_value_for_tag('aln_length') );
+        $self->param('copy_gene_tree')->store_tag( "aln_length", $self->param('reuse_gene_tree')->get_value_for_tag('aln_length') );
     }
 }
 
