@@ -60,7 +60,8 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
     this.elLk.container     = $('.image_container',   this.el);
     this.elLk.drag          = $('.drag_select',       this.elLk.container);
     this.elLk.map           = $('.json_imagemap',     this.elLk.container);
-    this.elLk.areas         = this.loadJSON(this.elLk.map.html());
+    var data                = this.loadJSON(this.elLk.map.html());
+    this.elLk.areas         = data.out;
     this.elLk.exportMenu    = $('.iexport_menu',      this.elLk.container).appendTo('body').css('left', this.el.offset().left);
     this.elLk.resizeMenu    = $('.image_resize_menu', this.elLk.container).appendTo('body').css('left', this.el.offset().left);
     this.elLk.img           = $('img.imagemap',       this.elLk.container);
@@ -70,8 +71,8 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
     this.elLk.popupLinks    = $('a.popup',            this.elLk.toolbars);
 
     this.vertical = this.elLk.img.hasClass('vertical');
-    this.multi    = 0 ;// this.elLk.areas.hasClass('multi'); // XXX
-    this.align    = 0 ;// this.elLk.areas.hasClass('align'); // XXX
+    this.multi    = data.flags.multi;
+    this.align    = data.flags.align;
     
     this.makeImageMap();
     this.makeHoverLabels();
@@ -131,17 +132,21 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
     if(!str) { return []; }
     raw = $.parseJSON(str);
     out = [];
+    flags = {};
     $.each(raw,function(i,val) {
       data = { shape: val[0], coords: val[1], attrs: val[2] };
       klass = {};
       if(data.attrs.klass) {
-        $.each(data.attrs.klass,function(i,x) { klass[x] = 1; });
+        $.each(data.attrs.klass,function(i,x) {
+          klass[x] = 1;
+          flags[x] = 1;
+        });
       }
       data.klass = klass;
       out.push(data);
     });
 
-    return out;
+    return { out: out, flags: flags };
   },
 
   initImageButtons: function() {
@@ -736,7 +741,7 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
       coords.b = this.dragRegion.b;
     }
     
-    this.highlight(coords, 'rubberband', this.dragRegion.a.href.split('|')[3]);
+    this.highlight(coords, 'rubberband', this.dragRegion.a.attrs.href.split('|')[3]);
   },
   
   resize: function (width) {
