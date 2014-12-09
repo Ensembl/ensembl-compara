@@ -59,8 +59,8 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
     
     this.elLk.container     = $('.image_container',   this.el);
     this.elLk.drag          = $('.drag_select',       this.elLk.container);
-    this.elLk.map           = $('map',                this.elLk.container);
-    this.elLk.areas         = $('area',               this.elLk.map);
+    this.elLk.map           = $('.json_imagemap',     this.elLk.container);
+    this.elLk.areas         = this.loadJSON(this.elLk.map.text());
     this.elLk.exportMenu    = $('.iexport_menu',      this.elLk.container).appendTo('body').css('left', this.el.offset().left);
     this.elLk.resizeMenu    = $('.image_resize_menu', this.elLk.container).appendTo('body').css('left', this.el.offset().left);
     this.elLk.img           = $('img.imagemap',       this.elLk.container);
@@ -70,8 +70,8 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
     this.elLk.popupLinks    = $('a.popup',            this.elLk.toolbars);
 
     this.vertical = this.elLk.img.hasClass('vertical');
-    this.multi    = this.elLk.areas.hasClass('multi');
-    this.align    = this.elLk.areas.hasClass('align');
+    this.multi    = 0 ;// this.elLk.areas.hasClass('multi'); // XXX
+    this.align    = 0 ;// this.elLk.areas.hasClass('align'); // XXX
     
     this.makeImageMap();
     this.makeHoverLabels();
@@ -124,6 +124,23 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
       
       return false;
     });
+  },
+
+  loadJSON: function(str) {
+    // this will be more complex when compression is used
+    raw = $.parseJSON(str);
+    out = [];
+    $.each(raw,function(i,val) {
+      data = { shape: val[0], coords: val[1], attrs: val[2] };
+      klass = {};
+      if(data.attrs.klass) {
+        $.each(data.attrs.klass,function(i,x) { klass[x] = 1; });
+      }
+      data.klass = klass;
+      out.push(data);
+    });
+
+    return out;
   },
 
   initImageButtons: function() {
@@ -201,19 +218,19 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
     var rect      = [ 'l', 't', 'r', 'b' ];
     var speciesNumber, c, r, start, end, scale;
     
-    this.elLk.areas.each(function () {
+    $.each(this.elLk.areas,function () {
       c = { a: this };
       
       if (this.shape && this.shape.toLowerCase() !== 'rect') {
         c.c = [];
-        $.each(this.coords.split(/[ ,]/), function () { c.c.push(parseInt(this, 10)); });
+        $.each(this.coords, function () { c.c.push(parseInt(this, 10)); });
       } else {
-        $.each(this.coords.split(/[ ,]/), function (i) { c[rect[i]] = parseInt(this, 10); });
+        $.each(this.coords, function (i) { c[rect[i]] = parseInt(this, 10); });
       }
       
       panel.areas.push(c);
       
-      if (this.className.match(/drag/)) {
+      if (0 && this.className.match(/drag/)) { // XXX
         // r = [ '#drag', image number, species number, species name, region, start, end, strand ]
         r        = c.a.href.split('|');
         start    = parseInt(r[5], 10);
@@ -726,20 +743,20 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
   
   makeZMenu: function (e, coords) {
     var area = coords.r ? this.dragRegion : this.getArea(coords);
-    
-    if (!area || $(area.a).hasClass('label')) {
+   
+    if (!area || $(area.a).hasClass('label')) { // XXX
       return;
     }
     
-    if ($(area.a).hasClass('nav')) {
+    if ($(area.a).hasClass('nav')) { // XXX
       Ensembl.redirect(area.a.href);
       return;
     }
     
-    var id = 'zmenu_' + area.a.coords.replace(/[ ,]/g, '_');
+    var id = 'zmenu_' + area.a.coords.join('_');
     var dragArea, range, location, fuzziness;
     
-    if (e.shiftKey || $(area.a).hasClass('das') || $(area.a).hasClass('group')) {
+    if (e.shiftKey || $(area.a).hasClass('das') || $(area.a).hasClass('group')) { // XXX
       dragArea = this.dragRegion || this.getArea(coords, true);
       range    = dragArea ? dragArea.range : false;
       

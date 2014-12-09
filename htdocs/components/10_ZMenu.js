@@ -17,16 +17,16 @@
 Ensembl.Panel.ZMenu = Ensembl.Panel.extend({
   constructor: function (id, data) {
     this.base(id);
-    
-    var area = $(data.area.a);
+
+    var area = data.area.a;
     var params, n;
     
-    this.drag       = area.hasClass('drag') ? 'drag' : area.hasClass('vdrag') ? 'vdrag' : false;
-    this.align      = area.hasClass('align'); // TODO: implement alignslice menus
-    this.group      = area.hasClass('group') || area.hasClass('pseudogroup');
-    this.coloured   = area.hasClass('coloured');
-    this.href       = area.attr('href');
-    this.title      = area.attr('title') || '';
+    this.drag       = area.klass.drag ? 'drag' : area.klass.vdrag ? 'vdrag' : false;
+    this.align      = area.klass.align; // TODO: implement alignslice menus
+    this.group      = area.klass.group || area.klass.pseudogroup;
+    this.coloured   = area.klass.coloured;
+    this.href       = area.attrs.href;
+    this.title      = area.attrs.title || '';
     this.das        = false;
     this.event      = data.event;
     this.coords     = data.coords || {};
@@ -36,9 +36,14 @@ Ensembl.Panel.ZMenu = Ensembl.Panel.extend({
     this.location   = 0;
     this.helptips   = false;
     
-    if (area.hasClass('das')) {
-      this.das       = area.hasClass('group') ? 'group' : area.hasClass('pseudogroup') ? 'pseudogroup' : 'feature';
-      this.logicName = area.attr('class').replace(/das/, '').replace(/(pseudo)?group/, '').replace(/ /g, '');
+    if (area.klass.das) {
+      this.das       = area.klass.group ? 'group' : area.klass.pseudogroup ? 'pseudogroup' : 'feature';
+      this.logicName = '';
+      $.each(area.attrs,function(k,v) {
+        if(k != 'das' && k != 'pseudogroup' && k != 'group') {
+          this.logicName += k;
+        }
+      });
     }
     
     if (this.drag) {
@@ -51,7 +56,7 @@ Ensembl.Panel.ZMenu = Ensembl.Panel.extend({
       this.start       = parseInt(params[5], 10);
       this.end         = parseInt(params[6], 10);
       this.strand      = parseInt(params[7], 10);
-      this.multi       = area.hasClass('multi') ? n : false;
+      this.multi       = area.klass.multi ? n : false;
       
       if (!this.speciesPath.match(/^\//)) {
         this.speciesPath = '/' + this.speciesPath;

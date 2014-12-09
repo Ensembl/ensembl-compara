@@ -21,6 +21,7 @@ package EnsEMBL::Web::Document::Image;
 use strict;
 
 use POSIX qw(ceil);
+use JSON;
 
 use EnsEMBL::Draw::VDrawableContainer;
 
@@ -426,13 +427,13 @@ sub render_image_button {
 sub render_image_map {
   my ($self, $image) = @_;
 
-  my $imagemap = $self->drawable_container->render('imagemap');
+  my $imagemap = encode_json($self->drawable_container->render('imagemap'));
   my $map_name = $image->token;
-  
+
   my $map = qq(
-    <map name="$map_name">
+    <div class="json_$map_name json_imagemap" style="display: none">
       $imagemap
-    </map>
+    </div>
   );
   
   $map .= '<input type="hidden" class="panel_type" value="ImageMap" />';

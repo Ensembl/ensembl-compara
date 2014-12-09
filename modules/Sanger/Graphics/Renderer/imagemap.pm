@@ -32,11 +32,9 @@ use HTML::Entities qw(encode_entities);
 use base qw(Sanger::Graphics::Renderer);
 
 #########
-# imagemaps are basically strings, so initialise the canvas with ""
-# imagemaps also aren't too fussed about width & height boundaries
-#
 sub init_canvas {
-  shift->canvas('');
+  my $self = shift;
+  $self->canvas([]);
 }
 
 sub add_canvas_frame {
@@ -131,7 +129,7 @@ sub render_area {
 #  Time: 11.040 - slightly faster with '.'s
 #  $self->{canvas} = '<area shape="' . $shape . '" coords="' . $coords. "\"$attrs />\n" . $self->{canvas};
 #  push @{$self->{data}}, '<area shape="' . $shape . '" coords="' . $coords. "\"$attrs />\n";
-  $self->{canvas} .= '<area shape="' . $shape . '" coords="' . $coords. "\"$attrs />\n";
+  push @{$self->canvas},[$shape,[map int, @$points],$attrs];
 }
 
 sub get_attributes {
@@ -145,6 +143,8 @@ sub get_attributes {
     if ($attr) {
       if ($_ eq 'alt' || $_ eq 'title') {
         $actions{$_} = encode_entities($attr);
+      } elsif($_ eq 'class') {
+        $actions{'klass'} = [ split(/ /,$attr) ];
       } else {
         $actions{$_} = $attr;
       }
@@ -153,7 +153,7 @@ sub get_attributes {
   
   return unless $actions{'title'} || $actions{'href'} || $actions{'class'} =~ /label /;
   
-  return join '', map qq{ $_="$actions{$_}"}, keys %actions;
+  return \%actions;
 }
 
 1;
