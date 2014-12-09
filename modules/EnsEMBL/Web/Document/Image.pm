@@ -22,6 +22,7 @@ use strict;
 
 use POSIX qw(ceil);
 use JSON;
+use HTML::Entities qw(encode_entities);
 
 use EnsEMBL::Draw::VDrawableContainer;
 
@@ -427,7 +428,7 @@ sub render_image_button {
 sub render_image_map {
   my ($self, $image) = @_;
 
-  my $imagemap = encode_json($self->drawable_container->render('imagemap'));
+  my $imagemap = encode_entities(encode_json($self->drawable_container->render('imagemap')));
   my $map_name = $image->token;
 
   my $map = qq(
