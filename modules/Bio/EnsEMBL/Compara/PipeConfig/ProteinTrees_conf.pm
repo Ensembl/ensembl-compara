@@ -177,7 +177,7 @@ sub default_options {
         #'notung_jar'                => '/software/ensembl/compara/notung/Notung-2.6.jar',
         #'quicktree_exe'             => '/software/ensembl/compara/quicktree_1.1/bin/quicktree',
         #'hmmer2_home'               => '/software/ensembl/compara/hmmer-2.3.2/src/',
-        #'hmmer3_home'               => '/software/ensembl/compara/hmmer-3.1b1/binaries/',
+        'hmmer3_home'               => '/nfs/panda/ensemblgenomes/external/hmmer-3/bin/',
         #'codeml_exe'                => '/software/ensembl/compara/paml43/bin/codeml',
         #'ktreedist_exe'             => '/software/ensembl/compara/ktreedist/Ktreedist.pl',
         #'blast_bin_dir'             => '/software/ensembl/compara/ncbi-blast-2.2.28+/bin',
@@ -434,7 +434,7 @@ sub core_pipeline_analyses {
 		{   -logic_name => 'update_pipeline_decision',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ConditionalDataFlow',
             -parameters => {
-                'condition'     => '"#clustering_mode#" eq "topup"',
+                'condition'     => '#clustering_mode# eq \"topup\"',
             },
             -hive_capacity  => 100,
             -flow_into  => {
@@ -557,6 +557,7 @@ sub core_pipeline_analyses {
 
                 'fan_branch_code'       => 2,
             },
+            -rc_name => '4Gb_job',
             -flow_into => {
                 '2->A' => [ 'load_genomedb' ],
                 'A->1' => [ 'create_mlss_ss' ],
@@ -571,6 +572,7 @@ sub core_pipeline_analyses {
                 'db_version'    => $self->o('ensembl_release'),
                 'registry_files'    => $self->o('curr_file_sources_locs'),
             },
+            -rc_name => '4Gb_job',
             -flow_into  => [ 'check_reusability' ],
             -analysis_capacity => 1,
         },
@@ -617,6 +619,7 @@ sub core_pipeline_analyses {
             -parameters => {
                 'mlss_id'   => $self->o('mlss_id'),
             },
+            -rc_name => '4Gb_job',
             -flow_into => [ 'make_treebest_species_tree' ],
         },
 
@@ -676,16 +679,15 @@ sub core_pipeline_analyses {
         },
 
         {   -logic_name => 'copy_trees_from_previous_release',
-            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::CopyLocalTree',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::CopyTreesFromDB',
             -parameters => {
                 'input_clusterset_id'   => 'default',
                 'output_clusterset_id'  => 'copy',
-                'escape_branch'         => -3,
-				'treebest_exe'			=> $self->o('treebest_exe'), 
+                'branch_for_new_tree'  => '3',
             },
             -flow_into  => {
                  1 => [ 'copy_alignments_from_previous_release' ],
-                 -3 => [ 'cluster_factory' ],
+                 3 => [ 'alignment_entry_point' ],
             },
             -hive_capacity        => $self->o('copy_trees_capacity'),
             -analysis_capacity 	  => $self->o('copy_trees_capacity'),
@@ -796,6 +798,21 @@ sub core_pipeline_analyses {
             -rc_name => '1Gb_job',
             -flow_into => {
                 2 => [ ':////other_member_sequence' ],
+                1 => [ 'hmm_annot_table_reuse' ],
+            },
+        },
+
+        {   -logic_name => 'hmm_annot_table_reuse',
+            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
+            -parameters => {
+                            'db_conn'    => '#reuse_db#',
+                            'inputquery' => 'SELECT h.* FROM hmm_annot h JOIN seq_member USING (seq_member_id) WHERE genome_db_id = #genome_db_id# AND seq_member_id <= '.$self->o('protein_members_range'),
+                            'fan_branch_code' => 2,
+            },
+            -hive_capacity => $self->o('reuse_capacity'),
+            -rc_name => '1Gb_job',
+            -flow_into => {
+                2 => [ ':////hmm_annot' ],
                 1 => [ 'hc_members_per_genome' ],
             },
         },
@@ -1291,7 +1308,7 @@ sub core_pipeline_analyses {
             -module             => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::CreateClustersets',
             -parameters         => {
                 member_type     => 'protein',
-                'additional_clustersets'    => [qw(treebest phyml-aa phyml-nt nj-dn nj-ds nj-mm raxml raxml_bl notung copy)],
+                'additional_clustersets'    => [qw(treebest phyml-aa phyml-nt nj-dn nj-ds nj-mm raxml raxml_bl notung copy raxml_update)],
             },
             -flow_into          => [ 'run_qc_tests' ],
         },
@@ -1322,6 +1339,7 @@ sub core_pipeline_analyses {
         {   -logic_name => 'per_genome_qc',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::PerGenomeGroupsetQC',
             -hive_capacity => $self->o('qc_capacity'),
+            -rc_name    => '4Gb_job',
         },
 
         {   -logic_name    => 'clusterset_backup',
