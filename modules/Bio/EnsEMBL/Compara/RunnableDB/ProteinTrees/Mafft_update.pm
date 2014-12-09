@@ -51,23 +51,22 @@ package Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::Mafft_update;
 
 use strict;
 use Data::Dumper;
-use base ('Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::MSA');
+use base ( 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::MSA', 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::StoreTree' );
 
 sub param_defaults {
     my $self = shift;
     return {
         %{ $self->SUPER::param_defaults },
-        'mafft_exe'  => '/bin/mafft',                                 # where to find the mafft executable from $mafft_home
-        'mafft_home' => '/nfs/panda/ensemblgenomes/external/mafft',
-        'aln_update' => 1, };
+        'mafft_exe'           => '/bin/mafft',                                 # where to find the mafft executable from $mafft_home
+        'mafft_home'          => '/nfs/panda/ensemblgenomes/external/mafft',
+        'input_clusterset_id' => 'copy',
+        'output_clusterset_id'=> 'default',
+        'aln_update'          => 1,
+        'aln_format'          => 'fasta', };
 }
 
-#
-# Abstract methods from the base class (MSA)
-##############################################
-
-sub get_msa_command_line {
-    my $self = shift;
+sub fetch_input {
+    my ($self) = @_;
 
     #Get adaptors
     #----------------------------------------------------------------------------------------------------------------------------
@@ -79,38 +78,49 @@ sub get_msa_command_line {
     $self->param( 'current_gene_tree', $self->param('current_tree_adaptor')->fetch_by_dbID( $self->param('gene_tree_id') ) ) || die "Could not fetch current_gene_tree";
     $self->param('current_gene_tree')->preload();
 
-    #get alignment members list
-    $self->param( 'aln_object', $self->param('current_gene_tree')->alignment );
+    $self->param( 'tree_adaptor', $self->compara_dba->get_GeneTreeAdaptor );
+    my $gene_tree = $self->param('tree_adaptor')->fetch_by_dbID( $self->param('gene_tree_id') ) or die "Could not fetch gene_tree with gene_tree_id='$self->param('gene_tree_id')'";
+    my $other_trees = $self->param('tree_adaptor')->fetch_all_linked_trees( $self->param('current_gene_tree') );
+    my ($copy_tree) = grep { $_->clusterset_id eq 'copy' } @$other_trees;
+    die sprintf( 'Cannot find a "%s" tree for tree_id=%d', $self->param('input_clusterset_id'), $self->param('gene_tree_id') ) unless $copy_tree;
+	$self->param( 'protein_tree', $self->param('current_gene_tree'));
+
+	my $input_aln = $self->dumpTreeMultipleAlignmentToWorkdir( $copy_tree, $self->param('aln_format'), { -APPEND_SPECIES_TREE_NODE_ID => 0 } ) || die "Could not fetch alignment for ($copy_tree)";
+    $self->param( 'alignment_file', $input_aln );
+} ## end sub fetch_input
+
+#
+# Abstract methods from the base class (MSA)
+##############################################
+
+sub get_msa_command_line {
+    my $self = shift;
 
     my $mafft_home = $self->param_required('mafft_home');
     my $mafft_exe  = $self->param_required('mafft_exe');
 
     #This logic should be replaced by the new method for getting the alignment sequences directly from the adaptor.
     #--------------------------------------------------------------------------------------------------------------
-    my $aln_file     = $self->worker_temp_directory . "/" . $self->param_required('gene_tree_id') . ".fasta";
     my $new_seq_file = $self->worker_temp_directory . "/" . $self->param_required('gene_tree_id') . "_new_seq.fasta";
 
-    use Bio::SeqIO;
-    open my $fh, ">", $aln_file or die "Could not open '$aln_file' for writing : $!";
-    my $sa = $self->param('aln_object')->get_SimpleAlign( -id_type => 'SEQ' );
-    $sa->set_displayname_flat(1);
-    my $alignIO = Bio::AlignIO->newFh( -fh => $fh, -format => "fasta" );
-    print $alignIO $sa;
-    close $fh;
-
-    my $new_seq = Bio::SeqIO->new( -file => ">" . $self->worker_temp_directory . "/" . $self->param_required('gene_tree_id') . "_new_seq.fasta", -format => 'fasta' );
+    my $new_seq = Bio::SeqIO->new( -file => ">" . $new_seq_file, -format => 'fasta' );
     my %members_2_b_updated = map { $_ => 1 } split( /,/, $self->param('current_gene_tree')->get_value_for_tag('updated_genes_list') );
+    my %members_2_b_added = map { $_ => 1 } split( /,/, $self->param('current_gene_tree')->get_value_for_tag('added_genes_list') );
+
+	@members_2_b_updated{keys %members_2_b_added} = values %members_2_b_added;
+
     my %tree_members = ( map { $_->stable_id => $_ } @{ $self->param('current_gene_tree')->get_all_Members } );
     foreach my $updated_member_stable_id ( keys %members_2_b_updated ) {
-		print "updated member\t$updated_member_stable_id\n" if ( $self->debug );
-        my $bioseq = $tree_members{$updated_member_stable_id}->bioseq( -ID_TYPE => 'SEQUENCE' );
+        print "updated member\t$updated_member_stable_id\n" if ( $self->debug );
+        my $bioseq = $tree_members{$updated_member_stable_id}->bioseq();
         $new_seq->write_seq($bioseq);
     }
+
     #--------------------------------------------------------------------------------------------------------------
 
     die "Cannot execute '$mafft_exe' in '$mafft_home'" unless ( -x $mafft_home . '/' . $mafft_exe );
 
-    return sprintf( '%s/%s --add %s --thread 1 %s > %s', $mafft_home, $mafft_exe, $new_seq_file, $aln_file, $self->param('msa_output') );
+    return sprintf( '%s/%s --add %s --thread 1 %s > %s', $mafft_home, $mafft_exe, $new_seq_file, $self->param('alignment_file'), $self->param('msa_output') );
 } ## end sub get_msa_command_line
 
 1;
