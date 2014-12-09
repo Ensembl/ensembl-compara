@@ -71,8 +71,10 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
     this.elLk.popupLinks    = $('a.popup',            this.elLk.toolbars);
 
     this.vertical = this.elLk.img.hasClass('vertical');
-    this.multi    = data.flags.multi;
-    this.align    = data.flags.align;
+    if(data.flags) {
+      this.multi    = data.flags.multi;
+      this.align    = data.flags.align;
+    }
     
     this.makeImageMap();
     this.makeHoverLabels();
@@ -363,7 +365,7 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
 
         hoverLabel = null;
 
-      } else if (this.a.klass.hover) { // XXX how?
+      } else if (this.a.klass.hover) {
 
         panel.elLk.hoverLayers = panel.elLk.hoverLayers.add(
           $('<div class="hover_layer">').appendTo(panel.elLk.container).data({area: this}).on('click', function(e) {
@@ -418,7 +420,7 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
   },
 
   positionLayers: function() {
-    if(!this.elLk.img) { return; }
+    if(!this.elLk.img || !this.elLk.img.length) { return; }
     var offsetContainer = this.elLk.container.offset();
     var offsetImg       = this.elLk.img.offset();
     var top             = offsetImg.top - offsetContainer.top - 1; // 1px border
@@ -764,7 +766,7 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
     var id = 'zmenu_' + area.a.coords.join('_');
     var dragArea, range, location, fuzziness;
     
-    if (e.shiftKey || $(area.a).hasClass('das') || $(area.a).hasClass('group')) { // XXX
+    if (e.shiftKey || area.a.klass.das || area.a.klass.group) {
       dragArea = this.dragRegion || this.getArea(coords, true);
       range    = dragArea ? dragArea.range : false;
       
