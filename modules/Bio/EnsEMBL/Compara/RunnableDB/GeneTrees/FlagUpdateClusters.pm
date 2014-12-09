@@ -57,7 +57,7 @@ sub fetch_input {
     if ( $self->param('reuse_db') ) {
         #get compara_dba adaptor
         $self->param( 'reuse_compara_dba', Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->go_figure_compara_dba( $self->param('reuse_db') ) );
-        $self->param( 'compara_dba', $self->compara_dba);
+        $self->param( 'compara_dba',       $self->compara_dba );
     }
     else {
         $self->warning("reuse_db hash has not been set, so cannot reuse");
@@ -70,9 +70,9 @@ sub run {
     my $self = shift;
 
     #Get list of genes:
-	print "getting prev_hash\n" if ( $self->debug );
+    print "getting prev_hash\n" if ( $self->debug );
     my $prev_hash = hash_all_sequences_from_db( $self->param('reuse_compara_dba') );
-	print "getting curr_hash\n" if ( $self->debug );
+    print "getting curr_hash\n" if ( $self->debug );
     my $curr_hash = hash_all_sequences_from_db( $self->param('compara_dba') );
 
     #---------------------------------------------------------------------------------
@@ -81,65 +81,116 @@ sub run {
     #flag is tha hash used my the module.
     #---------------------------------------------------------------------------------
     my ( %flag, %deleted, %updated, %added );
-	print "flagging members\n" if ( $self->debug );
+    print "flagging members\n" if ( $self->debug );
     check_hash_equals( $prev_hash, $curr_hash, \%flag, \%deleted, \%updated, \%added );
     print "DELETED:|" . keys(%deleted) . "|\tUPDATED:|" . keys(%updated) . "|\tADDED:|" . keys(%added) . "|\n" if ( $self->debug );
 
-	print "undef prev_hash\n" if ( $self->debug );
+    print "undef prev_hash\n" if ( $self->debug );
     undef %$prev_hash;
 
-	print "undef curr_hash\n" if ( $self->debug );
+    print "undef curr_hash\n" if ( $self->debug );
     undef %$curr_hash;
 
     #Get list of root_ids:
-	print "getting list of roots\n" if ( $self->debug );
+    print "getting list of roots\n" if ( $self->debug );
     my $root_ids = get_root_id_list( $self->param('compara_dba') );
 
     my %root_ids_2_update;
     $self->param( 'root_ids_2_update', \%root_ids_2_update );
+    my %root_ids_2_delete;
+    $self->param( 'root_ids_2_delete', \%root_ids_2_delete );
+    my %root_ids_2_add;
+    $self->param( 'root_ids_2_add', \%root_ids_2_add );
 
     #get tree adaptor
     $self->param( 'tree_adaptor', $self->param('compara_dba')->get_GeneTreeAdaptor ) || die "Could not get GeneTreeAdaptor";
 
-	print "looping root_ids\n" if ( $self->debug );
-	#my $count = 0;
+    print "looping root_ids\n" if ( $self->debug );
     foreach my $gene_tree_id ( keys %$root_ids ) {
-
-		#if ( ( $count % 100 ) == 0 ) {
-			#print "$count\n";
-		#}
-		#$count++;
 
         #get gene_tree
         $self->param( 'gene_tree', $self->param('tree_adaptor')->fetch_by_dbID($gene_tree_id) ) or die "Could not fetch gene_tree with gene_tree_id='$gene_tree_id'";
         my @members = @{ $self->param('gene_tree')->get_all_Members };
 
+        #updated:
         foreach my $member (@members) {
-            if ( exists( $flag{ $member->stable_id } ) ) {
+            if ( exists( $updated{ $member->stable_id } ) ) {
                 $root_ids_2_update{$gene_tree_id}{ $member->stable_id } = 1;
             }
         }
-    }
+
+        #deleted
+        foreach my $member (@members) {
+            if ( exists( $deleted{ $member->stable_id } ) ) {
+                $root_ids_2_delete{$gene_tree_id}{ $member->stable_id } = 1;
+            }
+        }
+
+        #added
+        foreach my $member (@members) {
+            if ( exists( $added{ $member->stable_id } ) ) {
+                $root_ids_2_add{$gene_tree_id}{ $member->stable_id } = 1;
+            }
+        }
+    } ## end foreach my $gene_tree_id ( ...)
 } ## end sub run
 
 sub write_output {
     my $self = shift;
 
-	print "writing outs\n" if ( $self->debug );
+    print "writing outs\n" if ( $self->debug );
+
+    my %flagged;
     if ( $self->param('root_ids_2_update') ) {
-        foreach my $gene_tree_id ( keys %{$self->param('root_ids_2_update')} ) {
-
-            my $sql = 'INSERT INTO gene_tree_root_tag (root_id,tag,value) VALUES (?,?,?)';
-            my $sth = $self->param('compara_dba')->dbc->prepare($sql);
-            $sth->execute( $gene_tree_id, "needs_update", 1 ) || die "Could not execute ($sql)";
-            $sth->finish;
-
-            $sql = 'INSERT INTO gene_tree_root_tag (root_id,tag,value) VALUES (?,?,?)';
-            $sth = $self->param('compara_dba')->dbc->prepare($sql);
-            $sth->execute( $gene_tree_id, "updated_genes_list", join( ",", keys( ${$self->param('root_ids_2_update')}{$gene_tree_id} ) ) ) || die "Could not execute ($sql)";
-            $sth->finish;
+        foreach my $gene_tree_id ( keys %{ $self->param('root_ids_2_update') } ) {
+            if ( !$flagged{$gene_tree_id} ) {
+                $self->param('gene_tree')->store_tag( 'needs_update', 1 );
+                $flagged{$gene_tree_id} = 1;
+            }
         }
     }
+
+    if ( $self->param('root_ids_2_delete') ) {
+        foreach my $gene_tree_id ( keys %{ $self->param('root_ids_2_delete') } ) {
+            if ( !$flagged{$gene_tree_id} ) {
+                $self->param('gene_tree')->store_tag( 'needs_update', 1 );
+                $flagged{$gene_tree_id} = 1;
+            }
+        }
+    }
+
+    if ( $self->param('root_ids_2_add') ) {
+        foreach my $gene_tree_id ( keys %{ $self->param('root_ids_2_add') } ) {
+            if ( !$flagged{$gene_tree_id} ) {
+                $self->param('gene_tree')->store_tag( 'needs_update', 1 );
+                $flagged{$gene_tree_id} = 1;
+            }
+        }
+    }
+
+    #updated:
+    if ( $self->param('root_ids_2_update') ) {
+        foreach my $gene_tree_id ( keys %{ $self->param('root_ids_2_update') } ) {
+
+            $self->param('gene_tree')->store_tag( 'updated_genes_list', join( ",", keys( ${ $self->param('root_ids_2_update') }{$gene_tree_id} ) ) );
+        }
+    }
+
+    #deleted
+    if ( $self->param('root_ids_2_delete') ) {
+        foreach my $gene_tree_id ( keys %{ $self->param('root_ids_2_delete') } ) {
+
+            $self->param('gene_tree')->store_tag( 'deleted_genes_list', join( ",", keys( ${ $self->param('root_ids_2_delete') }{$gene_tree_id} ) ) );
+        }
+    }
+
+    #added
+    if ( $self->param('root_ids_2_add') ) {
+        foreach my $gene_tree_id ( keys %{ $self->param('root_ids_2_add') } ) {
+            $self->param('gene_tree')->store_tag( 'added_genes_list', join( ",", keys( ${ $self->param('root_ids_2_add') }{$gene_tree_id} ) ) );
+        }
+    }
+
 } ## end sub write_output
 
 # ------------------------- non-interface subroutines -----------------------------------
@@ -147,21 +198,20 @@ sub write_output {
 sub check_hash_equals {
     my ( $prev_hash, $curr_hash, $flag, $deleted, $updated, $added ) = @_;
 
-    foreach my $stable_id ( sort keys %$curr_hash ) {
+    foreach my $stable_id ( keys %$curr_hash ) {
         if ( !exists( $prev_hash->{$stable_id} ) ) {
             $added->{$stable_id} = 1;
-            $flag->{$stable_id}  = 1;
         }
-        elsif ( $curr_hash->{$stable_id} ne $prev_hash->{$stable_id} ) {
-            $updated->{$stable_id} = 1;
-            $flag->{$stable_id}    = 1;
+        else {
+            if ( $curr_hash->{$stable_id} ne $prev_hash->{$stable_id} ) {
+                $updated->{$stable_id} = 1;
+            }
         }
     }
 
     foreach my $stable_id ( keys %$prev_hash ) {
         if ( !exists( $curr_hash->{$stable_id} ) ) {
             $deleted->{$stable_id} = 1;
-            $flag->{$stable_id}    = 1;
         }
     }
 }
