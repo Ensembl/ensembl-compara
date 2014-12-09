@@ -309,22 +309,22 @@ sub parse_newick_into_tree {
     }
   }
 
-  foreach my $leaf (@{$newroot->get_all_leaves}) {
-    my $seq_member_id = $leaf->name();
-    my $old_leaf = $old_leaves{$seq_member_id};
-    if (not $old_leaf) {
-	  #In case the tree is been updated (copied from previous_db) we need to:
-	  #set the updated node to use the temporary id "0" to avoid dammaging other trees in the database
-	  #We set the children_loaded=1 to tell the API not to load the leaf
-	  #Then we "next" the loop
-      $leaf->print_node;
-	  bless $leaf, 'Bio::EnsEMBL::Compara::GeneTreeMember';
-	  $leaf->node_id(0);
-	  $leaf->seq_member_id($seq_member_id);
-	  $leaf->adaptor($tree->adaptor->db->get_GeneTreeNodeAdaptor);
-	  $leaf->{'_children_loaded'} = 1;
-	  next;
-    }
+	foreach my $leaf (@{$newroot->get_all_leaves}) {
+		my $seq_member_id = $leaf->name();
+		my $old_leaf = $old_leaves{$seq_member_id};
+		if (not $old_leaf) {
+			#In case the tree is been updated (copied from previous_db) we need to:
+			#set the updated node to use the temporary id "0" to avoid dammaging other trees in the database
+			#We set the children_loaded=1 to tell the API not to load the leaf
+			#Then we "next" the loop
+			$leaf->print_node;
+			bless $leaf, 'Bio::EnsEMBL::Compara::GeneTreeMember';
+			$leaf->node_id(0);
+			$leaf->seq_member_id($seq_member_id);
+			$leaf->adaptor($tree->adaptor->db->get_GeneTreeNodeAdaptor);
+			$leaf->{'_children_loaded'} = 1;
+			next;
+		}
     bless $leaf, 'Bio::EnsEMBL::Compara::GeneTreeMember';
     $old_leaf->Bio::EnsEMBL::Compara::AlignedMember::copy($leaf);
     $leaf->node_id($old_leaf->node_id);
