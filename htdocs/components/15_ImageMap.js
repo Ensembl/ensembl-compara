@@ -413,6 +413,7 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
   },
 
   positionLayers: function() {
+    if(!this.elLk.img) { return; }
     var offsetContainer = this.elLk.container.offset();
     var offsetImg       = this.elLk.img.offset();
     var top             = offsetImg.top - offsetContainer.top - 1; // 1px border
