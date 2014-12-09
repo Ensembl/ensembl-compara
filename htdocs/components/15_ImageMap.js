@@ -230,9 +230,9 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
       
       panel.areas.push(c);
       
-      if (0 && this.className.match(/drag/)) { // XXX
+      if (this.klass.drag) {
         // r = [ '#drag', image number, species number, species name, region, start, end, strand ]
-        r        = c.a.href.split('|');
+        r        = c.a.attrs.href.split('|');
         start    = parseInt(r[5], 10);
         end      = parseInt(r[6], 10);
         scale    = (end - start + 1) / (this.vertical ? (c.b - c.t) : (c.r - c.l)); // bps per pixel on image
@@ -242,7 +242,7 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
         panel.draggables.push(c);
         
         if (highlight === true) {
-          r = this.href.split('|');
+          r = this.attrs.href.split('|');
           speciesNumber = parseInt(r[1], 10) - 1;
           
           if (panel.multi || !speciesNumber) {
@@ -288,7 +288,7 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
         var tip;
 
         // change the cursor to pointer for clickable areas
-        $(this).toggleClass('drag_select_pointer', !(!area || $(area.a).hasClass('label') || $(area.a).hasClass('drag') || $(area.a).hasClass('hover')));
+        $(this).toggleClass('drag_select_pointer', !(!area || area.a.klass.label || area.a.klass.drag || area.a.klass.hover));
 
         // Add helptips on navigation controls in multi species view
         if (area && area.a && area.a.klass.nav) {
@@ -336,18 +336,19 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
     this.elLk.hoverLayers = $();
 
     $.each(this.areas, function() {
-
       if (!this.a) {
         return;
       }
-
-      var $a = $(this.a);
-
-      if ($a.hasClass('label')) {
-        var hoverLabel = panel.elLk.hoverLabels.filter('.' + this.a.className.replace(/label /, ''));
+      if (this.a.klass.label) {
+        var hoverLabel = '';
+        $.each(this.a.klass,function(k,v) {
+          if(k != 'label') {
+            hoverLabel += k;
+          }
+        });
+        hoverLabel = panel.elLk.hoverLabels.filter('.' + hoverLabel);
 
         if (hoverLabel.length) {
-
           // add a div layer over the label, and append the hover menu to the layer. Hover menu toggling is controlled by CSS.
           panel.elLk.labelLayers = panel.elLk.labelLayers.add(
             $('<div class="label_layer">').append('<div class="label_layer_bg">').append(hoverLabel).appendTo(panel.elLk.container).data({area: this})
@@ -356,7 +357,7 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
 
         hoverLabel = null;
 
-      } else if ($a.hasClass('hover')) {
+      } else if (this.a.klass.hover) { // XXX how?
 
         panel.elLk.hoverLayers = panel.elLk.hoverLayers.add(
           $('<div class="hover_layer">').appendTo(panel.elLk.container).data({area: this}).on('click', function(e) {
@@ -744,11 +745,11 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
   makeZMenu: function (e, coords) {
     var area = coords.r ? this.dragRegion : this.getArea(coords);
    
-    if (!area || $(area.a).hasClass('label')) { // XXX
+    if (!area || area.a.klass.label) {
       return;
     }
     
-    if ($(area.a).hasClass('nav')) { // XXX
+    if (area.a.klass.nav) {
       Ensembl.redirect(area.a.href);
       return;
     }
@@ -964,7 +965,7 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
   },
   
   getSpecies: function () {
-    var species = $.map(this.draggables, function (el) { return el.a.href.split('|')[3]; });
+    var species = $.map(this.draggables, function (el) { return el.a.attrs.href.split('|')[3]; });
     
     if (species.length) {
       var unique = {};

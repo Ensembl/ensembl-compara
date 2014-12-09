@@ -151,7 +151,7 @@ sub get_attributes {
     }
   }
   
-  return unless $actions{'title'} || $actions{'href'} || $actions{'class'} =~ /label /;
+  return unless $actions{'title'} || $actions{'href'} || grep { $_ eq 'label'  } @{$actions{'klass'}||[]};
   
   return \%actions;
 }
