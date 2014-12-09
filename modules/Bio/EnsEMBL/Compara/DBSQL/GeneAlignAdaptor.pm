@@ -115,11 +115,15 @@ sub _objs_from_sth {
 =cut
 
 sub store {
-    my ($self, $aln) = @_;
+    my ($self, $aln, $update_alignment) = @_;
     assert_ref($aln, 'Bio::EnsEMBL::Compara::AlignedMemberSet');
   
     # dbID for GeneTree is too dodgy
     my $id = $aln->isa('Bio::EnsEMBL::Compara::GeneTree') ? $aln->gene_align_id() : $aln->dbID();
+
+	if ($update_alignment){
+	   $id = 0;
+	}
 
     if ($id) {
         my $sth = $self->prepare('UPDATE gene_align SET seq_type = ?, aln_length = ?, aln_method = ? WHERE gene_align_id = ?');
