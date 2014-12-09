@@ -291,9 +291,9 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
         $(this).toggleClass('drag_select_pointer', !(!area || $(area.a).hasClass('label') || $(area.a).hasClass('drag') || $(area.a).hasClass('hover')));
 
         // Add helptips on navigation controls in multi species view
-        if (area && area.a && $(area.a).hasClass('nav')) {
-          if (tip !== area.a.alt) {
-            tip = area.a.alt;
+        if (area && area.a && area.a.klass.nav) {
+          if (tip !== area.a.attrs.alt) {
+            tip = area.a.attrs.alt;
             
             if (!panel.elLk.navHelptip) {
               panel.elLk.navHelptip = $('<div class="ui-tooltip helptip-bottom"><div class="ui-tooltip-content"></div></div>');
