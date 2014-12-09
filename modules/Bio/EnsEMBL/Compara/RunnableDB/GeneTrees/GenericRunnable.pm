@@ -144,6 +144,7 @@ sub fetch_input {
         die sprintf('Cannot find a "%s" tree for tree_id=%d', $self->param('input_clusterset_id'), $self->param('gene_tree_id')) unless $selected_tree;
         $selected_tree->add_tag('removed_columns', $gene_tree->get_value_for_tag('removed_columns')) if $gene_tree->has_tag('removed_columns');
         $gene_tree = $selected_tree;
+        $self->param('copy_gene_tree', $gene_tree);
     }
     $self->param('gene_tree', $gene_tree);
 
@@ -169,7 +170,14 @@ sub run {
 sub write_output {
     my $self = shift;
 
-    my $target_tree = $self->param('gene_tree');
+	#my $target_tree = $self->param('gene_tree');
+    my $target_tree;
+	if ($self->param('output_clusterset_id') eq "raxml_update"){
+		$target_tree = $self->param('default_gene_tree');
+	}
+	else{
+		$target_tree = $self->param('gene_tree');
+	}
 
     if ($self->param('read_tags')) {
         my $tags = $self->get_tags();
@@ -181,7 +189,7 @@ sub write_output {
 
         if ($self->param('output_clusterset_id') and $self->param('output_clusterset_id') ne 'default') {
             delete $target_tree->{'_member_array'};   # To make sure we use the freshest data
-            $target_tree = $self->store_alternative_tree($self->param('newick_output'), $self->param('output_clusterset_id'), $target_tree, [], 1);
+            $target_tree = $self->store_alternative_tree($self->param('newick_output'), $self->param('output_clusterset_id'), $target_tree, [], 1) || die "Could not store ". $self->param('output_clusterset_id') . " tree.\n";
         } else {
             $target_tree = $self->param('default_gene_tree');
             delete $target_tree->{'_member_array'};   # To make sure we use the freshest data
