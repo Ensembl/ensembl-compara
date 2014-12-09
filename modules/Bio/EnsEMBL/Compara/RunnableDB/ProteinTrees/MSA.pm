@@ -61,7 +61,12 @@ use Bio::EnsEMBL::Compara::Utils::Cigars;
 
 use base ('Bio::EnsEMBL::Compara::RunnableDB::RunCommand');
 
-
+sub param_defaults {
+    my $self = shift;
+    return {
+        'aln_update'          => undef,
+	};
+}
 
 =head2 fetch_input
 
@@ -82,13 +87,12 @@ sub fetch_input {
         $self->complete_early("The MSA failed 3 times. Trying another method.");
     }
 
-
     $self->param('tree_adaptor', $self->compara_dba->get_GeneTreeAdaptor);
     $self->param('protein_tree', $self->param('tree_adaptor')->fetch_by_dbID($self->param_required('gene_tree_id')));
     $self->throw("no input protein_tree") unless $self->param('protein_tree');
     $self->param('protein_tree')->preload();
 
-  print "RETRY COUNT: ".$self->input_job->retry_count()."\n";
+	print "RETRY COUNT: ".$self->input_job->retry_count()."\n" if ($self->debug);
 
     $self->param('input_fasta', $self->dumpProteinTreeToWorkdir($self->param('protein_tree')) );
 
@@ -143,6 +147,7 @@ sub write_output {
     } else {
         my $method = ref($self);
         $method =~ /::([^:]*)$/;
+
         $self->param('protein_tree')->aln_method($1);
 
         my $aln_ok = $self->parse_and_store_alignment_into_proteintree;
@@ -164,7 +169,13 @@ sub write_output {
         }
     }
 
-    $self->compara_dba->get_GeneAlignAdaptor->store($self->param('protein_tree'));
+	if ($self->param('aln_update')){
+		$self->compara_dba->get_GeneAlignAdaptor->store($self->param('protein_tree'),$self->param('aln_update'));
+	}
+	else{
+		$self->compara_dba->get_GeneAlignAdaptor->store($self->param('protein_tree'));
+	}
+
     # Store various alignment tags:
     $self->_store_aln_tags($self->param('protein_tree'));
 
@@ -261,8 +272,12 @@ sub parse_and_store_alignment_into_proteintree {
 
   return 0 unless($msa_output and -e $msa_output);
 
-  $self->param('protein_tree')->load_cigars_from_file($msa_output, -FORMAT => 'fasta', -ID_TYPE => 'SEQUENCE', -CHECK_SEQ => $self->param('check_seq'));
-
+	if ($self->param('aln_update')){
+		$self->param('protein_tree')->load_cigars_from_file($msa_output, -FORMAT => 'fasta', -CHECK_SEQ => $self->param('check_seq'), -UPDATE_ALIGNMENT => $self->param('aln_update'));
+	}
+	else{
+		$self->param('protein_tree')->load_cigars_from_file($msa_output, -FORMAT => 'fasta', -ID_TYPE => 'SEQUENCE', -CHECK_SEQ => $self->param('check_seq'));
+	}
   return 1;
 }
 
