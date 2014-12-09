@@ -148,7 +148,7 @@ sub calculate_stats {
   $tags{'ensembl_release'} = $compara_db->get_MetaContainer->get_schema_version();
   
   my $sql =
-    'INSERT IGNORE INTO method_link_species_set '.
+    'INSERT IGNORE INTO method_link_species_set_tag '.
     '(method_link_species_set_id, tag, value) VALUES (?, ?, ?);';
   my $sth = $compara_db->dbc->prepare($sql);
   
