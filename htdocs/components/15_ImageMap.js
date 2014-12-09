@@ -75,7 +75,7 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
     
     this.makeImageMap();
     this.makeHoverLabels();
-    this.initImageButtons()
+    this.initImageButtons();
     
     if (!this.vertical) {
       this.makeResizable();
@@ -128,6 +128,7 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
 
   loadJSON: function(str) {
     // this will be more complex when compression is used
+    if(!str) { return []; }
     raw = $.parseJSON(str);
     out = [];
     $.each(raw,function(i,val) {
@@ -971,7 +972,7 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
       var unique = {};
       unique[Ensembl.species] = 1;
       $.each(species, function () { unique[this] = 1; });
-      species = $.map(unique, function (i, s) { return s });
+      species = $.map(unique, function (i, s) { return s; });
     }
     
     return species.length > 1 ? species : undefined;
