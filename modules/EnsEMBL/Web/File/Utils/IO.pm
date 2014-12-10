@@ -44,6 +44,7 @@ package EnsEMBL::Web::File::Utils::IO;
 use strict;
 
 use Bio::EnsEMBL::Utils::IO qw/:all/;
+use EnsEMBL::Web::File::Utils::FileSystem qw/create_path/;
 use EnsEMBL::Web::Exceptions;
 
 use Exporter qw(import);
@@ -52,19 +53,21 @@ our %EXPORT_TAGS = (all     => [@EXPORT_OK]);
 
 sub file_exists {
 ### Check if a file of this name exists
-### @param String - full path to file
+### @param File - EnsEMBL::Web::File object or path to file (String)
 ### @return Boolean
-  my $path = shift;
+  my $file = shift;
+  my $path = ref($file) ? $file->location : $file;
   return -e $path && -f $path;
 }
 
 sub fetch_file {
 ### Get raw content of file (e.g. for download, hence ignoring compression)
-### @param Path string
+### @param File - EnsEMBL::Web::File object or path to file (String)
 ### @param Args (optional) Hashref 
 ###         no_exception Boolean - whether to throw an exception
 ### @return String (entire file)
-  my ($path, $args) = @_;
+  my ($file, $args) = @_;
+  my $path = ref($file) ? $file->location : $file;
   my $content;
   eval { $content = slurp($path) }; 
 
@@ -76,12 +79,13 @@ sub fetch_file {
 
 sub read_file {
 ### Get entire content of file, uncompressed
-### @param String - full path to file
+### @param File - EnsEMBL::Web::File object or path to file (String)
 ### @param Args (optional) Hashref 
 ###         compression String - compression type
 ###         no_exception Boolean - whether to throw an exception
 ### @return String (entire file)
-  my ($path, $args) = @_;
+  my ($file, $args) = @_;
+  my $path = ref($file) ? $file->location : $file;
   my $content;
 
   my $compression = defined($args->{'compression'}) || _compression($path);
@@ -99,14 +103,15 @@ sub read_file {
 
 sub read_lines {
 ### Get entire content of file as separate lines
-### @param String - full path to file
+### @param File - EnsEMBL::Web::File object or path to file (String)
 ### @param Args (optional) Hashref 
 ###         compression String - compression type
 ###         no_exception Boolean - whether to throw an exception
 ### @param (optional) String - compression type
 ### @return Arrayref
-  my ($path, $args) = @_;
+  my ($file, $args) = @_;
   my $content = [];
+  my $path = ref($file) ? $file->location : $file;
 
   my $compression = defined($args->{'compression'}) || _compression($path);
   my $method = $compression ? $compression.'_slurp_to_array' : 'slurp_to_array';
@@ -123,13 +128,14 @@ sub read_lines {
 
 sub preview_file {
 ### Get n lines of a file, e.g. for a web preview
-### @param String - full path to file
+### @param File - EnsEMBL::Web::File object or path to file (String)
 ### @param Args (optional) Hashref 
 ###         compression String - compression type
 ###         no_exception Boolean - whether to throw an exception
 ###         limit Integer - number of lines required (defaults to 10)
 ### @return Arrayref (n lines of file)
-  my ($path, $args) = @_;
+  my ($file, $args) = @_;
+  my $path = ref($file) ? $file->location : $file;
   my $limit = $args->{'limit'} || 10;
   my $count = 0;
   my $lines = [];
@@ -161,13 +167,14 @@ sub preview_file {
 
 sub write_file {
 ### Write an entire file in one chunk
-### @param String - full path to file
+### @param File - EnsEMBL::Web::File object or path to file (String)
 ### @param Args Hashref 
 ###         content String - content of file
 ###         compression (optional) String - compression type
 ###         no_exception (optional) Boolean - whether to throw an exception
 ### @return Void 
-  my ($path, $args) = @_;
+  my ($file, $args) = @_;
+  my $path = ref($file) ? $file->location : $file;
 
   my $content = $args->{'content'};
 
@@ -175,26 +182,36 @@ sub write_file {
     throw exception('FileIOException', sprintf qq(No content given for file '%s'.), $path);
     return;
   }
+ 
+  ## Create the directory path if it doesn't exist
+  my $has_path = _check_path($path);
   
-  $args->{'compression'} ||= _compression($path);
-  _write_to_file($path, $args, '>',
-      sub {
-        my ($fh) = @_;
-        print $fh $content;
-        return;
-      }
-  );
+  if ($has_path) { 
+    $args->{'compression'} ||= _compression($path);
+    _write_to_file($path, $args, '>',
+        sub {
+          my ($fh) = @_;
+          print $fh $content;
+          return;
+        }
+    );
+  }
+  else {
+    warn "!!! COULD NOT CREATE PATH $path for writing.";
+  }
 }
 
 sub write_lines {
 ### Write one or more lines to a file
+### @param File - EnsEMBL::Web::File object or path to file (String)
 ### @param String - full path to file
 ### @param Args Hashref 
 ###         lines Arrayref - lines of file
 ###         compression (optional) String - compression type
 ###         no_exception (optional) Boolean - whether to throw an exception
 ### @return Void
-  my ($path, $args) = @_;
+  my ($file, $args) = @_;
+  my $path = ref($file) ? $file->location : $file;
   my $lines = $args->{'lines'};
 
   if (ref($lines) ne 'ARRAY' && !$args->{'no_exception'}) {
@@ -216,13 +233,14 @@ sub write_lines {
 
 sub append_lines {
 ### Append one or more lines to a file
-### @param String - full path to file
+### @param File - EnsEMBL::Web::File object or path to file (String)
 ### @param Args Hashref 
 ###         lines Arrayref - lines of file
 ###         compression (optional) String - compression type
 ###         no_exception (optional) Boolean - whether to throw an exception
 ### @return Void
-  my ($path, $args) = @_;
+  my ($file, $args) = @_;
+  my $path = ref($file) ? $file->location : $file;
   my $lines = $args->{'lines'};
 
   if (ref($lines) ne 'ARRAY' && !$args->{'no_exception'}) {
@@ -240,6 +258,22 @@ sub append_lines {
         return;
       }
   );
+}
+
+sub _check_path {
+### Check if the path you want to write to exists, and create it if not
+  my $path = shift;
+  my @path_elements = split('/', $path);
+  pop @path_elements;
+  my $dir = join ('/', @path_elements);
+
+  if (-e $dir && -d $dir) {
+    return scalar @path_elements;
+  }
+  else {
+    my $dirs = create_path($dir, {'no_exception' => 1});
+    return scalar @$dirs;
+  }
 }
 
 sub _write_to_file {
