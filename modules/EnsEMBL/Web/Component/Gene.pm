@@ -40,7 +40,7 @@ sub draw_structure {
 
   ## Here, we can do the drawing
   my $name      = $display_name.'-'.$self->hub->param('g');
-  my $filename  = $name.($is_thumbnail ? '-thumbnail' : '').'.svg';
+  my $filename  = $name.($is_thumbnail ? '_thumbnail' : '').'.svg';
 
   my $aln_file  = $self->_dump_multiple_alignment($aln_array, $model_name, $ss_cons);
   my ($thumbnail_path, $plot_path) = $self->_create_svg($aln_file, $transcript_stable_id, $model_name, $found_compara ? 1 : 0);
@@ -100,19 +100,22 @@ sub _dump_multiple_alignment {
 
     my $aln_file  = EnsEMBL::Web::File::Dynamic->new(
                                                       hub         => $self->hub,
+                                                      sub_dir     => 'r2r',
                                                       name        => $model_name,
                                                       extension   => "aln",
                                                       compression => 0,
                                                       );
 
-    my $content = "# STOCKHOLM 1.0\n";
-    for my $aln_seq (@$aln_array) {
-      $content .= sprintf ("%-20s %s\n", @$aln_seq);
-    }
-    $content .= sprintf ("%-20s\n", "#=GF R2R keep allpairs");
-    $content .= sprintf ("%-20s %s\n//\n", "#=GC SS_cons", $ss_cons);
+    unless ($aln_file->exists) {
+      my $content = "# STOCKHOLM 1.0\n";
+      for my $aln_seq (@$aln_array) {
+        $content .= sprintf ("%-20s %s\n", @$aln_seq);
+      }
+      $content .= sprintf ("%-20s\n", "#=GF R2R keep allpairs");
+      $content .= sprintf ("%-20s %s\n//\n", "#=GC SS_cons", $ss_cons);
 
-    $aln_file->write($content);
+      $aln_file->write($content);
+    }
     return $aln_file;
 }
 
@@ -128,31 +131,63 @@ sub _create_svg {
     ## For information about these options, check http://breaker.research.yale.edu/R2R/R2R-manual-1.0.3.pdf
     $self->_run_r2r_and_check("--GSC-weighted-consensus", $aln_file->{'location'}, $path, $cons_filename, "3 0.97 0.9 0.75 4 0.97 0.9 0.75 0.5 0.1");
 
-    my $thumbnail = $model_name.'-thumbnail.svg';
-    my $th_meta = EnsEMBL::Web::File::Dynamic->new(
+    my $thumbnail = $model_name.'_thumbnail.svg';
+
+    my $th_file = EnsEMBL::Web::File::Dynamic->new(
                                                   hub         => $self->hub,
-                                                  name        => $model_name.'-thumbnail',
+                                                  sub_dir     => 'r2r',
+                                                  name        => $model_name.'_thumbnail',
+                                                  extension   => "svg",
+                                                  compression => 0,
+                                                  );
+
+    unless ($th_file->exists) {
+
+      my $th_meta = EnsEMBL::Web::File::Dynamic->new(
+                                                  hub         => $self->hub,
+                                                  sub_dir     => 'r2r',
+                                                  name        => $model_name.'_thumbnail',
                                                   extension   => "meta",
                                                   compression => 0,
                                                   );
-    my $th_content = "$path/$cons_filename\tskeleton-with-pairbonds\n";
-    $th_meta->write($th_content);
-    $self->_run_r2r_and_check("", $th_meta->{'location'}, $path, $thumbnail, "");
+      unless ($th_meta->exists) {
+        my $th_content = "$path/$cons_filename\tskeleton-with-pairbonds\n";
+        $th_meta->write($th_content);
+      }
+      $self->_run_r2r_and_check("", $th_meta->location, $path, $thumbnail, "");
+    }
 
-    my $meta_file  = EnsEMBL::Web::File::Dynamic->new(
+    my $plot = $model_name.'.svg';
+
+    my $plot_file = EnsEMBL::Web::File::Dynamic->new(
+                                                  hub         => $self->hub,
+                                                  sub_dir     => 'r2r',
+                                                  name        => $model_name,
+                                                  extension   => "svg",
+                                                  compression => 0,
+                                                  );
+
+    unless ($plot_file->exists) {
+
+      my $plot_meta  = EnsEMBL::Web::File::Dynamic->new(
                                                       hub         => $self->hub,
+                                                      sub_dir     => 'r2r',
                                                       name        => $model_name,
                                                       extension   => "meta",
                                                       compression => 0,
                                                       );
-    my $content = $with_consensus_structure ? "$path/$cons_filename\n" : '';
-    $content .= $aln_file->{'location'}."\toneseq\t$peptide_id\n";
-    $meta_file->write($content);
 
-    my $plot_file = $model_name.'.svg';
-    $self->_run_r2r_and_check("", $meta_file->{'location'}, $path, $plot_file, "");
 
-    return ($path.'/'.$thumbnail, $path.'/'.$plot_file);
+      unless ($plot_meta->exists) {
+        my $content = $with_consensus_structure ? "$path/$cons_filename\n" : '';
+        $content .= $aln_file->{'location'}."\toneseq\t$peptide_id\n";
+        $plot_meta->write($content);
+      }
+
+      $self->_run_r2r_and_check("", $plot_meta->location, $path, $plot, "");
+    }
+
+    return ($th_file->location, $plot_file->location);
 }
 
 sub _run_r2r_and_check {
