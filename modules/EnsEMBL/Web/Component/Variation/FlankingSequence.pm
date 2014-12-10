@@ -27,8 +27,12 @@ sub initialize {
   my $hub               = $self->hub;
   my $object            = $self->object || $hub->core_object('variation');
   my $vf                = $hub->param('vf');
-  my $flanking          = $hub->param('select_sequence') || 'both';
-  my $flank_size        = $hub->param('flank_size') || 400;
+
+  my $type   = $hub->param('data_type') || $hub->type;
+  my $vc = $self->view_config($type);
+
+  my $flanking          = $hub->param('select_sequence') || $vc->get('select_sequence');
+  my $flank_size        = $hub->param('flank_size') || $vc->get('flank_size');
   my @flank             = $flanking eq 'both' ? ($flank_size, $flank_size) : $flanking eq 'up' ? ($flank_size) : (undef, $flank_size);
   my %mappings          = %{$object->variation_feature_mapping}; 
   my $v                 = keys %mappings == 1 ? [ values %mappings ]->[0] : $mappings{$vf};
@@ -48,10 +52,10 @@ sub initialize {
   );
  
   my $config = {
-    display_width  => $hub->param('display_width') || 60,
+    display_width  => $hub->param('display_width') || $vc->get('display_width'),
     species        => $hub->species,
-    snp_display    => $hub->param('snp_display')    =~ /yes|on/,
-    hide_long_snps => $hub->param('hide_long_snps') =~ /yes|on/,
+    snp_display    => $hub->param('snp_display') || $vc->get('snp_display'),
+    hide_long_snps => $hub->param('hide_long_snps') || $vc->get('hide_long_snps'),
     v              => $hub->param('v'),
     focus_variant  => $vf,
     failed_variant => 1,
@@ -118,6 +122,11 @@ sub content {
 }
 
 sub export_options { return {'action' => 'FlankingSeq'}; }
+
+sub get_export_data {
+  my $self = shift;
+  return $self->initialize;
+}
 
 sub initialize_export {
   my $self = shift;

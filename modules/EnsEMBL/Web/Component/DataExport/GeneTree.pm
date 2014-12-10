@@ -36,6 +36,12 @@ sub content {
   my $self  = shift;
   my $hub   = $self->hub;
 
+  ## Get user's current settings
+  my $viewconfig  = $hub->get_viewconfig($hub->param('component'), $hub->param('data_type'));
+
+  my $settings = $viewconfig->form_fields('export');
+
+  ## Add export-specific settings
   my $nhx_values = [];
   my $newick_values = [];
 
@@ -49,32 +55,37 @@ sub content {
   } 
 
 
-  my $settings = {
-                  'Hidden' => ['align'],
-                  'nhx_mode' => {
-                                  'type'    => 'DropDown',
-                                  'label'   => 'Mode for NHX tree dumping',
-                                  'values'  => $nhx_values,
-                                  },
-                  'newick_mode' => {
-                                  'type'    => 'DropDown',
-                                  'label'   => 'Mode for Newick tree dumping',
-                                  'values'  => $newick_values,
-                                  },
-                  'scale' => {
-                                  'type'  => 'NonNegInt',
-                                  'label' => 'Scale for text tree dump',
-                                  'value' => '150',
-                                  },
-                  %{$self->phyloxml_settings},
+  $settings->{'Hidden'} = ['align'];
+  $settings->{'nhx_mode'}     = {
+                              'type'    => 'DropDown',
+                              'label'   => 'Mode for NHX tree dumping',
+                              'value'   => 'full',
+                              'values'  => $nhx_values,
+                            };
+  $settings->{'newick_mode'}  = {
+                              'type'    => 'DropDown',
+                              'label'   => 'Mode for Newick tree dumping',
+                              'value'   => 'full_web',
+                              'values'  => $newick_values,
+                              };
+  $settings->{'scale'}        = {
+                              'type'    => 'NonNegInt',
+                              'label'   => 'Scale for text tree dump',
+                              'value'   => 150,
+                              };
 
-                };
+  ## Add phyloxml settings
+  my $hash = $self->phyloxml_settings;
+  while (my ($key, $params) = each (%$hash)) {
+    $settings->{$key} = $params;
+  }
 
   ## Options per format
   my $fields_by_format = [{'Tree formats' => {
-                                'Newick'    => [['newick_mode']],
-                                'NHX'       => [['nhx_mode']],
-                                'Text'      => [['scale']],
+                                'Newick'    => [qw(newick_mode clusterset_id)],
+                                'NHX'       => [qw(nhx_mode clusterset_id)],
+                                'Text'      => [qw(scale clusterset_id)],
+                                'OrthoXML'  => [],
                                 'PhyloXML'  => $self->phyloxml_fields, 
                           }}];
 
@@ -99,6 +110,7 @@ sub default_file_name {
 }
 
 sub phyloxml_settings {
+### Needed by child module (SpeciesTree)
   return {
           'cdna' => {
                             'type'    => 'Checkbox',
@@ -122,7 +134,7 @@ sub phyloxml_settings {
 }
 
 sub phyloxml_fields {
-  return [['cdna'], ['aligned'], ['no_sequences']];
+  return [qw(cdna aligned no_sequences)];
 }
 
 1;

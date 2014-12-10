@@ -31,8 +31,6 @@ use Sanger::Graphics::TextHelper;
 
 use EnsEMBL::Web::DBSQL::DBConnection;
 use EnsEMBL::Web::Tree;
-use EnsEMBL::Web::DOM;
-use EnsEMBL::Web::Exceptions;
 
 #########
 # 'user' settings are restored from cookie if available
@@ -301,9 +299,9 @@ sub glyphset_configs {
   if (!$self->{'ordered_tracks'}) {
     my @tracks      = $self->get_tracks;
     my $track_order = $self->track_order;
-    my $i           = 1;
-    my @default_order;
-    
+
+    my ($pointer, $first_track, $last_pointer, $i, %lookup, @default_order, @ordered_tracks);
+
     foreach my $track ($self->default_track_order(@tracks)) {
       my $strand = $track->get('strand');
       
@@ -326,21 +324,62 @@ sub glyphset_configs {
     }
     
     if ($self->get_parameter('sortable_tracks')) {
-      $_->set('sortable', 1) for grep !$self->{'unsortable_menus'}->{$_->parent_key}, @default_order;
+
+      # make a 'double linked list' to make it easy to apply user sorting on it
+      for (@default_order) {
+        $_->set('sortable', 1) unless $self->{'unsortable_menus'}->{$_->parent_key};
+        $lookup{ join('.', $_->id, $_->get('drawing_strand') || ()) } = $_;
+        $_->{'__prev'} = $last_pointer if $last_pointer;
+        $last_pointer->{'__next'} = $_ if $last_pointer;
+        $last_pointer = $_;
+      }
+
+      # Apply user track sorting now
+      $pointer = $first_track = $default_order[0];
+      $pointer = $pointer->{'__next'} while $pointer && !$pointer->get('sortable'); # these tracks can't be moved from the beginning of the list
+      $pointer = $pointer->{'__prev'} || $default_order[-1]; # point to the last track among all the immovable tracks at beginning of the track list
+      for (@$track_order) {
+        my $track = $lookup{$_->[0]} or next;
+        my $prev  = $_->[1] && $lookup{$_->[1]} || $pointer; # pointer (and thus prev) could possibly be undef if there was no immovable track in the beginning
+        my $next  = $prev ? $prev->{'__next'} : undef;
+
+        # if $prev is undef, it means $track is supposed to moved to first position in the list, thus $next should be current first track
+        # First track in the list could possibly have changed in the last iteration of this loop, so rewind it before setting $next
+        if (!$prev) {
+          $first_track  = $first_track->{'__prev'} while $first_track->{'__prev'};
+          $next         = $first_track;
+        }
+
+        $track->{'__prev'}{'__next'}  = $track->{'__next'} if $track->{'__prev'};
+        $track->{'__next'}{'__prev'}  = $track->{'__prev'} if $track->{'__next'};
+        $track->{'__prev'}            = $prev;
+        $track->{'__next'}            = $next;
+        $track->{'__prev'}{'__next'}  = $track if $track->{'__prev'};
+        $track->{'__next'}{'__prev'}  = $track if $track->{'__next'};
+      }
+
+      # Get the first track in the list after sorting and create a new ordered list starting from that track
+      $pointer = $pointer->{'__prev'} while $pointer->{'__prev'};
+      delete $pointer->{'__prev'};
+      $pointer->set('order', ++$i);
+      push @ordered_tracks, $pointer;
+
+      while ($pointer = $pointer->{'__next'}) {
+        delete $pointer->{'__prev'}{'__next'};
+        delete $pointer->{'__prev'};
+        $pointer->set('order', ++$i);
+        push @ordered_tracks, $pointer;
+      }
+
+      delete $pointer->{'__next'};
+
+      $self->{'ordered_tracks'} = \@ordered_tracks;
+
+    } else {
+      $self->{'ordered_tracks'} = \@default_order;
     }
-    
-    my @ordered_tracks;
-    my %order     = map { join('.', grep $_, $_->id, $_->get('drawing_strand')) => [ $i++, $_ ] } @default_order;
-    $order{$_}[0] = $track_order->{$_} for grep $order{$_}, keys %$track_order;
-    
-    foreach (sort { $a->[0] <=> $b->[0] } values %order) {
-      $_->[1]->set('order', $_->[0]);
-      push @ordered_tracks, $_->[1];
-    }
-    
-    $self->{'ordered_tracks'} = \@ordered_tracks;
   }
-  
+
   return $self->{'ordered_tracks'};
 }
 
@@ -360,9 +399,11 @@ sub get_favourite_tracks {
 }
 
 sub track_order {
-  my $self = shift;
-  my $node = $self->get_node('track_order');
-  return $node ? $node->get($self->species) || {} : {};
+  my $self  = shift;
+  my $node  = $self->get_node('track_order');
+  my $order = $node && $node->get($self->species) || [];
+
+  return ref $order eq 'ARRAY' ? $order : []; # ignore the older schema track order entry
 }
 
 sub set_user_settings {
@@ -757,10 +798,11 @@ sub _add_datahub {
   return ($menu_name, {}) if $self->{'_attached_datahubs'}{$url};
 
   my $parser   = Bio::EnsEMBL::ExternalData::DataHub::SourceParser->new({ timeout => 10, proxy => $self->hub->species_defs->ENSEMBL_WWW_PROXY });
-  my $hub_info = $parser->get_hub_info($url); ## Do we have data for this species?
+  my $hub_info = $parser->get_hub_info($url, $self->species_defs->assembly_lookup); ## Do we have data for this species?
   
   if ($hub_info->{'error'}) {
-    warn "!!! COULD NOT CONTACT DATAHUB $url: @{$hub_info->{'error'}||{}}";
+    ## Probably couldn't contact the hub
+    push @{$hub_info->{'error'}||[]}, '<br /><br />Please check the source URL in a web browser.';
   } else {
     my $shortLabel = $hub_info->{'details'}{'shortLabel'};
     $menu_name = $shortLabel if $shortLabel and $is_poor_name;
@@ -771,26 +813,29 @@ sub _add_datahub {
                         || $self->hub->species_defs->get_config($self->species, 'ASSEMBLY_VERSION');
     my $source_list = $hub_info->{'genomes'}{$assembly} || [];
    
-    return unless scalar @$source_list;
+    if (scalar @$source_list) {
+      ## Get tracks from hub
+      my $datahub = $parser->parse($source_list);
     
-    ## Get tracks from hub
-    my $datahub = $parser->parse($source_list);
-    
-    foreach my $node (@{$datahub->child_nodes}) {
-      my $data = $node->data;
+      foreach my $node (@{$datahub->child_nodes}) {
+        my $data = $node->data;
       
-      if ($data->{'error'}) {
-        warn "!!! COULD NOT PARSE CONFIG $data->{'file'}: $data->{'error'}";
-      } elsif (!$node->has_child_nodes) {
-        # No inheritance structure - assumes that the top level in the hub contains only tracks
-        $self->_add_datahub_node($node->parent_node, $menu, $menu_name);
-        last;
-      } else {
-        $self->_add_datahub_node($node, $menu, $menu_name);
+        if ($data->{'error'}) {
+          warn "!!! COULD NOT PARSE CONFIG $data->{'file'}: $data->{'error'}";
+        } elsif (!$node->has_child_nodes) {
+          # No inheritance structure - assumes that the top level in the hub contains only tracks
+          $self->_add_datahub_node($node->parent_node, $menu, $menu_name);
+          last;
+        } else {
+          $self->_add_datahub_node($node, $menu, $menu_name);
+        }
       }
-    }
 
-    $self->{'_attached_datahubs'}{$url} = 1;
+      $self->{'_attached_datahubs'}{$url} = 1;
+    }
+    else {
+      $hub_info->{'error'} = ["No sources could be found for assembly $assembly. Please check the hub's genomes.txt file for supported assemblies."];
+    }
   }
   return ($menu_name, $hub_info);
 }
@@ -870,24 +915,10 @@ sub _add_datahub_tracks {
     my $type         = ref $track->{'type'} eq 'HASH' ? uc $track->{'type'}{'format'} : uc $track->{'type'};
     my $squish       = $track->{'visibility'} eq 'squish' || $config->{'visibility'} eq 'squish'; # FIXME: make it inherit correctly
     (my $source_name = $track->{'shortLabel'}) =~ s/_/ /g;
-    my $html_desc    = $track->{'description'} || '';
-
-    if ($html_desc) {
-      my $dom = $self->{'dom'} ||= EnsEMBL::Web::DOM->new;
-      my $div;
-      try {
-        $div = $dom->create_element('div', { 'inner_HTML' => [ $html_desc, 1 ] });          # validates HTML
-        $_->set_attribute('target', '_blank') for @{$div->get_elements_by_tag_name('a')};   # all links in new windows
-      } catch {
-        $div = $dom->create_element('div', { 'inner_HTML' => "Invalid HTML at $track->{'description_url'}"})
-      };
-      $html_desc = $div->render;
-    }
-
     my $source       = {
       name        => $track->{'track'},
       source_name => $source_name,
-      description => "<h1>$track->{'longLabel'}</h1>$html_desc",
+      description => $track->{'longLabel'} . $link,
       source_url  => $track->{'bigDataUrl'},
       colour      => exists $track->{'color'} ? $track->{'color'} : undef,
       no_titles   => $type eq 'BIGWIG', # To improve browser speed don't display a zmenu for bigwigs
@@ -987,7 +1018,7 @@ sub _load_url_feature {
   return unless ($data && $format);
 
   my ($strand, $renderers) = $self->_user_track_settings(undef, $format);
-  my $file_info = $self->hub->species_defs->DATA_FORMAT_INFO;
+  my $file_info = $self->hub->species_defs->multi_val('DATA_FORMAT_INFO');
 
   my $track = $self->create_track('custom_feature', 'Single feature', {
         external    => 'user',
@@ -1332,7 +1363,7 @@ sub update_from_url {
       
       if ($type eq 'url') {
         my $menu_name   = $hub->param('menu');
-        my $all_formats = $hub->species_defs->DATA_FORMAT_INFO;
+        my $all_formats = $hub->species_defs->multi_val('DATA_FORMAT_INFO');
         
         if (!$format) {
           $p = uri_unescape($p);
@@ -1388,29 +1419,28 @@ sub update_from_url {
           next;
         }
 
-        my $found_data = 0;
         # We then have to create a node in the user_config
+        my %ensembl_assemblies = %{$hub->species_defs->assembly_lookup};
+
         if (uc $format eq 'DATAHUB') {
           my $info;
           ($n, $info) = $self->_add_datahub($n, $p,1);
           if ($info->{'error'}) {
-            my @errors = @{$info->{'error'}};
+            my @errors = @{$info->{'error'}||[]};
             $session->add_data(
               type     => 'message',
               function => '_warning',
               code     => 'datahub:' . md5_hex($p),
-              message  => "There was a problem attaching trackhub $n: @errors<br /><br />Please check the source URL in a web browser.",
+              message  => "There was a problem attaching trackhub $n: @errors",
             );
           }
           else {
             my $assemblies = $info->{'genomes'}
                         || {$hub->species => $hub->species_defs->get_config($hub->species, 'ASSEMBLY_VERSION')};
-            my %ensembl_assemblies = %{$hub->species_defs->assembly_lookup};
 
             foreach (keys %$assemblies) {
               my ($data_species, $assembly) = @{$ensembl_assemblies{$_}||[]};
               if ($assembly) {
-                $found_data = 1;
                 my $data = $session->add_data(
                   type        => 'url',
                   url         => $p,
@@ -1425,33 +1455,35 @@ sub update_from_url {
             }
           }
         } else {
-          $found_data = 1;
           $self->_add_flat_file_track(undef, 'url', "url_$code", $n, 
             sprintf('Data retrieved from an external webserver. This data is attached to the %s, and comes from URL: %s', encode_entities($n), encode_entities($p)),
             url   => $p,
             style => $style
           );
 
+          ## Assume the data is for the current assembly
+          my $assembly;
+          while (my($a, $info) = each (%ensembl_assemblies)) {
+            $assembly = $info->[1] if $info->[0] eq $species;
+            last if $assembly;
+          }
+ 
           $self->update_track_renderer("url_$code", $renderer);
           $session->set_data(
-            type    => 'url',
-            url     => $p,
-            species => $species,
-            code    => $code,
-            name    => $n,
-            format  => $format,
-            style   => $style,
+            type      => 'url',
+            url       => $p,
+            species   => $species,
+            code      => $code,
+            name      => $n,
+            format    => $format,
+            style     => $style,
+            assembly  => $assembly,
           );
         }
         # We have to create a URL upload entry in the session
-        my $message;
-        if($found_data) {
-          $message  = sprintf('Data has been attached to your display from the following URL: %s', encode_entities($p));
-          if (uc $format eq 'DATAHUB') {
-            $message .= " Please go to '<b>Configure this page</b>' to choose which tracks to show (we do not turn on tracks automatically in case they overload our server).";
-          }
-        } else {
-          $message = "The URL you provided has been inspected and, while valid, contained <b>no tracks for this assembly</b> (".encode_entities($p).")";
+        my $message  = sprintf('Data has been attached to your display from the following URL: %s', encode_entities($p));
+        if (uc $format eq 'DATAHUB') {
+          $message .= " Please go to '<b>Configure this page</b>' to choose which tracks to show (we do not turn on tracks automatically in case they overload our server).";
         }
         $session->add_data(
           type     => 'message',
@@ -1579,6 +1611,8 @@ sub reset {
     if ($node->{'user_data'}{'track_order'}{$species}) {
       delete $node->{'user_data'}{'track_order'}{$species};
       delete $node->{'user_data'}{'track_order'} unless scalar keys %{$node->{'user_data'}{'track_order'}};
+
+      $self->altered('Track order');
     }
   }
 }
@@ -2549,7 +2583,7 @@ sub add_synteny {
       species     => $species_2,
       species_hr  => $species_readable,
       caption     => $caption,
-      description => qq{<a href="/info/docs/compara/analyses.html#synteny" class="cp-external">Synteny regions</a> between $self_label and $label},
+      description => qq{<a href="/info/genome/compara/analyses.html#synteny" class="cp-external">Synteny regions</a> between $self_label and $label},
       colours     => $colours,
       display     => 'off',
       renderers   => [qw(off Off normal On)],
@@ -2570,7 +2604,7 @@ sub add_alignments {
   
   my $alignments = {};
   my $self_label = $species_defs->species_label($species, 'no_formatting');
-  my $static     = $species_defs->ENSEMBL_SITETYPE eq 'Vega' ? '/info/data/comparative_analysis.html' : '/info/docs/compara/analyses.html';
+  my $static     = $species_defs->ENSEMBL_SITETYPE eq 'Vega' ? '/info/data/comparative_analysis.html' : '/info/genome/compara/analyses.html';
  
   foreach my $row (values %{$hashref->{'ALIGNMENTS'}}) {
     next unless $row->{'species'}{$species};
@@ -2634,7 +2668,7 @@ sub add_alignments {
       if ($row->{'conservation_score'}) {
         my ($program) = $hashref->{'CONSERVATION_SCORES'}{$row->{'conservation_score'}}{'type'} =~ /(.+)_CONSERVATION_SCORE/;
         
-        $options{'description'} = qq{<a href="/info/docs/compara/analyses.html#conservation">$program conservation scores</a> based on the $row->{'name'}};
+        $options{'description'} = qq{<a href="/info/genome/compara/analyses.html#conservation">$program conservation scores</a> based on the $row->{'name'}};
         
         $alignments->{'conservation'}{"$row->{'id'}_scores"} = {
           %options,
@@ -2664,7 +2698,7 @@ sub add_alignments {
         order       => sprintf('%12d::%s::%s', 1e12-$n_species*10-1, $row->{'type'}, $row->{'name'}),
         display     => 'off',
         renderers   => [ 'off', 'Off', 'compact', 'On' ],
-        description => qq{<a href="/info/docs/compara/analyses.html#conservation">$n_species way whole-genome multiple alignments</a>.; } . 
+        description => qq{<a href="/info/genome/compara/analyses.html#conservation">$n_species way whole-genome multiple alignments</a>.; } . 
                        join('; ', sort map { $species_defs->species_label($_, 'no_formatting') } grep { $_ ne 'ancestral_sequences' } keys %{$row->{'species'}}),
       };
     } 
@@ -3003,7 +3037,11 @@ sub add_sequence_variations_meta {
   my ($self, $key, $hashref, $options) = @_;
   my $menu = $self->get_node('variation');
   my $prefix_caption = 'Variant - '; 
- 
+  my $suffix_caption = ' - short variants (SNPs and indels)';
+  my $regexp_suffix_caption = $suffix_caption;
+     $regexp_suffix_caption =~ s/\(/\\\(/;
+     $regexp_suffix_caption =~ s/\)/\\\)/;
+
   foreach my $menu_item (sort {$a->{type} cmp $b->{type} || $a->{parent} cmp $b->{parent}} @{$hashref->{'menu'}}) {
     next if $menu_item->{'type'} =~  /^sv_/; # exclude structural variant items
     
@@ -3014,7 +3052,9 @@ sub add_sequence_variations_meta {
     } elsif ($menu_item->{'type'} eq 'source') { # source type
       (my $temp_name     = $menu_item->{'long_name'}) =~ s/ variants$//;
       my $other_sources = ($menu_item->{'long_name'} =~ /all other sources/);
-      
+
+      $menu_item->{'long_name'} =~ s/ variants$/$suffix_caption/;
+
       $node = $self->create_track($menu_item->{'key'}, $menu_item->{'long_name'}, {
         %$options,
         caption     => $prefix_caption.$menu_item->{'long_name'},
@@ -3022,6 +3062,13 @@ sub add_sequence_variations_meta {
         description => $other_sources ? 'Sequence variants from all sources' : $hashref->{'source'}{'descriptions'}{$temp_name},
       });
     } elsif ($menu_item->{'type'} eq 'set') { # set type
+      if ($menu_item->{'long_name'} =~ / variants$/) {
+        $menu_item->{'long_name'} =~ s/ variants$/$suffix_caption/;
+      }
+      elsif ($menu_item->{'long_name'} !~ /$regexp_suffix_caption$/){# / short variants \(SNPs and indels\)$/){
+        $menu_item->{'long_name'} .= $suffix_caption;
+      }
+
       (my $temp_name = $menu_item->{'key'})       =~ s/^variation_set_//;
       (my $caption   = $menu_item->{'long_name'}) =~ s/1000 Genomes/1KG/;  # shorten name for side of image
       (my $set_name  = $menu_item->{'long_name'}) =~ s/All HapMap/HapMap/; # hack for HapMap set name - remove once variation team fix data for 68
@@ -3053,16 +3100,14 @@ sub add_sequence_variations_default {
   my $sequence_variation = ($menu->get_node('variants')) ? $menu->get_node('variants') : $self->create_submenu('variants', 'Sequence variants');
   my $prefix_caption = 'Variant - ';
 
-  if (!$menu->get_node('variants')) {
-    my $title = 'Sequence variants (all sources)';
+  my $title = 'Sequence variants (all sources)';
 
-    $sequence_variation->append($self->create_track("variation_feature_$key", $title, {
-      %$options,
-      caption     => $prefix_caption.'All sources',
-      sources     => undef,
-      description => 'Sequence variants from all sources',
-    }));
-  }
+  $sequence_variation->append($self->create_track("variation_feature_$key", $title, {
+    %$options,
+    caption     => $prefix_caption.'All sources',
+    sources     => undef,
+    description => 'Sequence variants from all sources',
+  }));
 
   foreach my $key_2 (sort keys %{$hashref->{'source'}{'counts'} || {}}) {
     next unless $hashref->{'source'}{'counts'}{$key_2} > 0;
@@ -3076,7 +3121,7 @@ sub add_sequence_variations_default {
     }));
   }
   
-  $menu->append($sequence_variation) if (!$menu->get_node('variants'));
+  $menu->append($sequence_variation);
 
   # add in variation sets
   if ($hashref->{'variation_set'}{'rows'} > 0 ) {

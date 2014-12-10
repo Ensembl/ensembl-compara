@@ -205,7 +205,7 @@ Ensembl.Panel.ModalContent = Ensembl.Panel.LocalContext.extend({
         $(this).addClass('selected');
       },
       'click': function() {
-        $(this).parent().trigger('deselect').end().trigger('select').data('option').prop('selected', true).parent().selectToToggle('trigger');
+        $(this).parent().trigger('deselect').end().trigger('select').data('option').prop('selected', true).parents('select').selectToToggle('trigger');
       }
     }).each(function() {
       $(this).data('option', panel.elLk.content.find('select._export_formats').on('change', function() {

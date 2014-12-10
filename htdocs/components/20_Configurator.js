@@ -42,6 +42,7 @@ Ensembl.Panel.Configurator = Ensembl.Panel.ModalContent.extend({
     Ensembl.EventManager.register('syncViewConfig',      this, this.syncViewConfig);
     Ensembl.EventManager.register('updateSavedConfig',   this, this.updateSavedConfig);
     Ensembl.EventManager.register('activateConfig',      this, this.activateConfig);
+    Ensembl.EventManager.register('resetConfig',         this, this.externalReset);
   },
   
   init: function () {
@@ -82,7 +83,6 @@ Ensembl.Panel.Configurator = Ensembl.Panel.ModalContent.extend({
     
     this.component          = $('input.component', this.elLk.form).val();
     this.sortable           = !!this.elLk.trackOrder.length;
-    this.trackReorder       = false;
     this.lastQuery          = false;
     this.populated          = {};
     this.favourites         = {};
@@ -860,12 +860,6 @@ Ensembl.Panel.Configurator = Ensembl.Panel.ModalContent.extend({
       }
     });
     
-    if (this.trackReorder !== false) {
-      imageConfig.track_order = this.trackReorder;
-      this.trackReorder = false;
-      diff = true;
-    }
-    
     if (diff === true || typeof saveAs !== 'undefined') {
       $.extend(true, this.imageConfig, imageConfig);
       $.extend(true, this.viewConfig,  viewConfig);
@@ -950,29 +944,12 @@ Ensembl.Panel.Configurator = Ensembl.Panel.ModalContent.extend({
       axis: 'y',
       containment: 'parent',
       update: function (e, ui) {
-        var track = ui.item.data('trackName').replace(' ', '.');
-        var p     = ui.item.prev().data('order') || 0;
-        var n     = ui.item.next().data('order') || 0;
-        var o     = p || n;
-        var order;
-        
-        if (Math.floor(n) === Math.floor(p)) {
-          order = p + (n - p) / 2;
-        } else {
-          order = o + (p ? 1 : -1) * (Math.round(o) - o || 1) / 2;
-        }
-        
-        if (panel.trackReorder === false) {
-          panel.trackReorder = {};
-        }
-        
-        panel.trackReorder[track] = order;
-        
-        ui.item.data('order', order);
-        
-        if (panel.params.reset !== 'track_order') {
-          Ensembl.EventManager.triggerSpecific('changeTrackOrder', panel.component, track, order);
-        }
+        var trackId = ui.item.data('trackName').replace(' ', '.');
+        var prevIds = $.makeArray(ui.item.prevAll().map(function(i, track) {
+          return ($(track).data('trackName') || '').replace(' ', '.');
+        }));
+
+        Ensembl.EventManager.triggerSpecific('changeTrackOrder', panel.component, panel.params.species, trackId, prevIds);
       }
     });
   },
@@ -1205,29 +1182,34 @@ Ensembl.Panel.Configurator = Ensembl.Panel.ModalContent.extend({
   },
   
   // Called when track order is changed on the image
-  externalOrder: function (trackId, order) {
-    var lis = this.elLk.trackOrderList.children();
-    var i   = lis.length;
-    var li;
-    
-    if (i) {
-      li = lis.filter('.' + trackId).detach();
-      
-      while (i--) {
-        if ($(lis[i]).data('order') < order) {
-          li.insertAfter(lis[i]);
-          break;
-        }
-      }
-      
-      if (i === -1) {
-        li.insertBefore(lis[0]);
-      }
-    } else {
-      this.params.order[trackId] = order;
+  externalOrder: function (trackId, prevTrackId) {
+
+    if (!this.elLk.trackOrderList.children().length) {
+      var active = this.elLk.links.filter('.active').children('a')[0].className;
+      this.show('track_order');
+      this.getContent();
+      this.show(active);
     }
-    
-    lis = li = null;
+
+    var track = this.elLk.trackOrderList.find('.' + trackId);
+    var prev  = prevTrackId ? this.elLk.trackOrderList.find('.' + prevTrackId) : false;
+
+    if (!track.length) {
+      return;
+    }
+
+    if (prev && prev.length) {
+      track.insertAfter(prev);
+    } else {
+      track.parent().prepend(track);
+    }
+
+    track = prev = null;
+  },
+
+  // Called when track order or configs are reset on the image
+  externalReset: function() {
+    this.el.empty();
   },
   
   destructor: function () {

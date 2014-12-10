@@ -325,22 +325,24 @@ sub initialize {
   my $self   = shift;
   my $hub    = $self->hub;
   my $object = $self->object || $hub->core_object('transcript');
+
+  my $type   = $hub->param('data_type') || $hub->type;
+  my $vc = $self->view_config($type);
  
   my $adorn = $hub->param('adorn') || 'none';
  
   my $config = { 
-    display_width   => $hub->param('display_width') || 60,
     species         => $hub->species,
     maintain_colour => 1,
     transcript      => 1,
   };
-  
-  $config->{$_}            = $hub->param($_) eq 'yes' ? 1 : 0 for qw(exons codons coding_seq translation rna snp_display utr hide_long_snps);
+ 
+  $config->{'display_width'} = $hub->param('display_width') || $vc->get('display_width'); 
+  $config->{$_} = ($hub->param($_) eq 'on' || $vc->get($_) eq 'on') ? 1 : 0 for qw(exons codons coding_seq translation rna snp_display utr hide_long_snps);
   $config->{'codons'}      = $config->{'coding_seq'} = $config->{'translation'} = 0 unless $object->Obj->translation;
-  $config->{'snp_display'} = 0 unless $hub->species_defs->databases->{'DATABASE_VARIATION'};
-  
+ 
   if ($hub->param('line_numbering') ne 'off') {
-    $config->{'line_numbering'} = 'yes';
+    $config->{'line_numbering'} = 'on';
     $config->{'number'}         = 1;
   }
   
@@ -352,6 +354,7 @@ sub initialize {
   $self->markup_codons($sequence, $markup, $config)    if $config->{'codons'};
   if($adorn ne 'none') {
     $self->markup_variation($sequence, $markup, $config) if $config->{'snp_display'};  
+    push @{$config->{'loaded'}||=[]},'variations';
   } else {
     push @{$config->{'loading'}||=[]},'variations';
   }
@@ -374,14 +377,6 @@ sub export_options { return {'action' => 'Transcript'}; }
 sub initialize_export {
   my $self = shift;
   my $hub = $self->hub;
-  ## Set some CGI parameters from the viewconfig
-  ## (because we don't want to have to set them in DataExport)
-  my $vc = $hub->get_viewconfig('TranscriptSeq', 'Transcript');
-  my @params = qw(exons codons coding_seq translation rna snp_display utr hide_long_snps);
-
-  foreach (@params) {
-    $hub->param($_, $vc->get($_));
-  }
   my ($sequence, $config) = $self->initialize;
   return ($sequence, $config);
 }

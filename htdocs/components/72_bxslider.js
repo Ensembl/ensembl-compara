@@ -19,7 +19,7 @@ $("document").ready(function(){
     randomStart: true,
     infiniteLoop: true,
     auto: true,
-    speed: 5000,
+    speed: 2500,
     autoControls: true
   });
 });

@@ -34,7 +34,31 @@ Ensembl.Panel.CloudMultiSelector = Ensembl.Panel.extend({
         }
       )
     );
-  }, 
+
+    if(panel.orig_selection) {
+      panel.changed_on = [];
+      panel.changed_off = [];
+      var pend = {};
+      $.each(panel.orig_selection,function(i,v) { pend[v] = 1; });
+      $.each(panel.selection,function(i,v) {
+        if(pend[v]) {
+          delete pend[v];
+        } else {
+          panel.changed_on.push(v);
+        }
+      });
+      $.each(pend,function(k,v) { panel.changed_off.push(k); });
+      panel.changed = ( panel.changed_on.length||panel.changed_off.length );
+    } else {
+      panel.orig_selection = panel.selection;
+      panel.changed = false;
+    }
+  },
+
+  reset_selection: function () {
+    delete this.orig_selection;
+    this.set_selection();
+  },
  
   init: function () {
     var panel = this;
@@ -46,7 +70,8 @@ Ensembl.Panel.CloudMultiSelector = Ensembl.Panel.extend({
     this.elLk.clear = $('.cloud_filter_clear',this.el);
     this.elLk.all = $('.all',this.el);
     this.elLk.none = $('.none',this.el);
-    panel.changed = 0;
+
+    panel.set_selection();
     $(panel.el).on('filter',function(e,val) {
       panel.elLk.list.each(function() {
         var $li = $(this);
@@ -63,19 +88,16 @@ Ensembl.Panel.CloudMultiSelector = Ensembl.Panel.extend({
       $(this).toggleClass('off');
       panel.set_selection();
       panel.elLk.filter.focus();
-      panel.changed = 1;
       return false;
     });
     this.elLk.all.click(function() {
       panel.elLk.list.removeClass('off');
       panel.set_selection();
-      panel.changed = 1;
       return false;
     });
     this.elLk.none.click(function() {
       panel.elLk.list.addClass('off');
       panel.set_selection();
-      panel.changed = 1;
       return false;
     });
     this.set_selection();

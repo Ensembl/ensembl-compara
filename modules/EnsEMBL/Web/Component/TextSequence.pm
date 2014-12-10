@@ -61,7 +61,7 @@ sub buttons {
   }
 
   
-  if ($options->{'action'} =~ /Align/ && !$hub->param('align')) {
+  if ($options->{'action'} =~ /Align/ && ($hub->param('need_target_slice_table') || !$hub->param('align'))) {
     return {
       'url'       => undef, 
       'caption'   => $options->{'caption'} || 'Download sequence',
@@ -83,10 +83,13 @@ sub _init {
   my ($self, $subslice_length) = @_;
   $self->cacheable(1);
   $self->ajaxable(1);
+
+  my $type  = $self->hub->param('data_type') || $self->hub->type;
+  my $vc    = $self->view_config($type);
   
   if ($subslice_length) {
     my $hub = $self->hub;
-    $self->{'subslice_length'} = $hub->param('force') || $subslice_length * ($hub->param('display_width') || 60);
+    $self->{'subslice_length'} = $hub->param('force') || $subslice_length * ($hub->param('display_width') || $vc->get('display_width'));
   }
 }
 
@@ -97,11 +100,15 @@ sub get_sequence_data {
   my $sequence = [];
   my @markup;
  
-  if($config->{'snp_display'} and $adorn eq 'none') {
-    push @{$config->{'loading'}||=[]},'variations';
+  if($config->{'snp_display'} ne 'off') {
+    if($adorn eq 'none') {
+      push @{$config->{'loading'}||=[]},'variations';
+    } else {
+      push @{$config->{'loaded'}||=[]},'variations';
+    }
   }
  
-  $self->set_variation_filter($config) if $config->{'snp_display'};
+  $self->set_variation_filter($config) if $config->{'snp_display'} ne 'off';
   
   $config->{'length'} ||= $slices->[0]{'slice'}->length;
   
@@ -118,7 +125,7 @@ sub get_sequence_data {
     $self->set_sequence($config, $sequence, $mk, $seq, $sl->{'name'});
     $self->set_alignments($config, $sl, $mk, $seq)      if $config->{'align'}; # Markup region changes and inserts on comparisons
     if($adorn ne 'none') {
-      $self->set_variations($config, $sl, $mk, $sequence) if $config->{'snp_display'};
+      $self->set_variations($config, $sl, $mk, $sequence) if $config->{'snp_display'} ne 'off';
     }
     $self->set_exons($config, $sl, $mk)                 if $config->{'exon_display'};
     $self->set_codons($config, $sl, $mk)                if $config->{'codons_display'};
@@ -278,7 +285,8 @@ sub set_variations {
     }
     
     # Use the variation from the underlying slice if we have it.
-    my $snp = scalar keys %$u_snps ? $u_snps->{$variation_name} : $_;
+    my $snp = $u_snps->{$variation_name} if scalar keys %$u_snps;
+    $snp ||= $_; 
     
     # Co-ordinates relative to the region - used to determine if the variation is an insert or delete
     my $seq_region_start = $snp->seq_region_start;
@@ -1073,6 +1081,7 @@ sub build_sequence {
   if($adorn eq 'only') {
     $key->{$_}||={} for @{$config->{'loading'}||[]};
   }
+  $key->{$_}||={} for @{$config->{'loaded'}||[]};
 
   my $adornment = {
     seq => \@adseq,

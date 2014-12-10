@@ -344,7 +344,7 @@ sub title {
   my $start  = $self->{'container'}->start + $f->start -1;
   my $end    = $self->{'container'}->end + $f->end;
   my $pos    = 'Chr ' . $f->seq_region_name . ":$start-$end";
-  my $source = $f->source;
+  my $source = $f->source_name;
 
   return "Structural variation: $id; Source: $source; Location: $pos";
 }

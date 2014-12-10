@@ -172,21 +172,19 @@ sub create_form {
     my $settings_fieldset  = $form->add_fieldset({'class' => '_stt_'.$format, 'legend' => $legend});
 
     ## Add custom fields for this data type and format
-    foreach (@$fields) {
-      my ($name, @values) = @$_;
-      next if $name eq 'snp_display' && !$hub->database('variation');
+    foreach my $name (@$fields) {
       ## IMPORTANT - use hashes here, not hashrefs, as Form code does weird stuff 
       ## in background that alters the contents of $settings!
-      my %field_info = %{$settings->{$name}};
+      my %field_info = %{$settings->{$name}||{}};
       next unless keys %field_info;
       ## Reset field name to include format, so we have unique field names
       $name .= '_'.$format;
       $field_info{'name'} = $name;
-      @values = $hub->param($name) if $hub->param($name);
+      my @values = @{$field_info{'values'}||[]};
       ## Deal with multiple values, which have to be passed
       ## to Form::Fieldset as an arrayref
       my $params;
-      if (scalar @values > 1) {
+      if (scalar @values > 1) { ## Dropdown
         if ($field_info{'type'} eq 'Hidden') {
           $params = [];
           foreach my $v (@values) {
@@ -196,12 +194,14 @@ sub create_form {
           }
         }
         else {
-          $field_info{'value'} = \@values if scalar @values;
           $params = \%field_info;
         }
       }
       else {
-        $field_info{'value'} = $values[0] if scalar @values;
+        if ($field_info{'type'} =~ /Checkbox|CheckBox/) {
+          $field_info{'selected'} = 1 if $field_info{'value'} eq 'on';
+          $field_info{'value'} = 'on' if $field_info{'value'} eq 'off'; ## stupid checkboxes are stupid
+        }
         $params = \%field_info;
       }
       ## Add to form

@@ -43,6 +43,7 @@ sub content {
     $self->get_source($source, $object->source_description),
     $self->get_study,
     $self->get_alias,
+    $self->clinical_significance,
     scalar(@$sv_sets) ? ['Present in', sprintf '<p><b>%s</b></p>', join(', ',@$sv_sets)] : (),
     $self->get_strains,
     $self->location($mappings),
@@ -375,6 +376,43 @@ sub get_strains {
   }
 
   return scalar @strain ? ['Strain', join(', ', @strain)] : ();
+}
+
+sub clinical_significance {
+  my $self   = shift;
+  my $object = $self->object;
+  my $hub    = $self->hub;
+  my $clin_sign = $object->clinical_significance;
+
+  return unless (scalar(@$clin_sign));
+
+  my $img = qq{<img src="/i/16/info.png" class="_ht" style="position:relative;top:2px;width:12px;height:12px;margin-left:2px" title="Click to view the explanation (from the ClinVar website)"/>};
+  my $info_link = $hub->get_ExtURL_link($img, "CLIN_SIG", '');
+
+  my %clin_sign_icon;
+  foreach my $cs (@{$clin_sign}) {
+    my $icon_name = $cs;
+    $icon_name =~ s/ /-/g;
+    $clin_sign_icon{$cs} = $icon_name;
+  }
+
+  my $url = $hub->url({
+    type   => 'StructuralVariation',
+    action => 'Evidence',
+    sv     => $object->name,
+    svf    => $hub->param('svf')
+  });
+
+  my $cs_content = join("",
+    map {
+      sprintf(
+        '<a href="%s"><img class="_ht" style="margin-right:6px;margin-bottom:-2px;vertical-align:top" title="%s" src="/i/val/clinsig_%s.png" /></a>',
+        $url, $_, $clin_sign_icon{$_}
+      )
+    } @$clin_sign
+  );
+
+  return [ "Clinical significance $info_link" , $cs_content ];
 }
 
 1;

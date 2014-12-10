@@ -38,21 +38,18 @@ sub content {
   my $hub   = $self->hub;
 
   my $settings = {
-                'possible_orthologs' => {
-                                          'type' => 'Checkbox',
-                                          'label' => 'Treat not-supported duplications as speciations (makes a non species-tree-compliant tree)',       
-                                          'checked' => 1,
-                                        },
                 'Hidden' => ['align', 'g1', 'data_action']
                 };
 
   ## Options per format
-  my $fields_by_format = {'OrthoXML' => [['possible_orthologs']]};
+  my $fields_by_format = [{'Homology formats'  => {'OrthoXML' => []}}];
 
   ## Add formats output by BioPerl
+  my $align_formats = {};
   foreach ($self->alignment_formats) {
-    $fields_by_format->{$_} = [];
+    $align_formats->{$_} = [];
   }
+  push @$fields_by_format, {'Alignment formats' => $align_formats};
 
   ## Create settings form (comes with some default fields - see parent)
   my $form = $self->create_form($settings, $fields_by_format, 1);

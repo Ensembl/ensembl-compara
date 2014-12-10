@@ -16,6 +16,7 @@
 
 Ensembl.Panel.CellTypeSelector = Ensembl.Panel.CloudMultiSelector.extend({
   updateSelection: function () {
+    var panel = this;
 
     if(!this.changed) { return; }
 
@@ -23,6 +24,10 @@ Ensembl.Panel.CellTypeSelector = Ensembl.Panel.CloudMultiSelector.extend({
       image_config: this.params.image_config
     };
     params[this.urlParam] = encodeURIComponent(this.selection.join(','));
+    params[this.urlParam+'_on'] = encodeURIComponent(this.changed_on.join(','));
+    params[this.urlParam+'_off'] = encodeURIComponent(this.changed_off.join(','));
+
+    panel.reset_selection();
     $.ajax({
       url: '/' + Ensembl.species + '/Ajax/cell_type',
       data: params,

@@ -22,5 +22,11 @@ use strict;
 
 use base qw(EnsEMBL::Web::Component::Regulation::CellTypeSelector);
 
+sub object {
+  my $self = shift;
+
+  return $self->{'_reg_object'} ||= $self->new_object('Regulation', {}, $self->SUPER::object->__data);
+}
+
 1;
 

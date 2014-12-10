@@ -42,12 +42,11 @@ sub content {
   if (scalar @$table_array == 1) {
     $html .= $table_array->[0]->[1]->render; # only one table to render (non-human or if no 1KG data)
   } else {
-   
     
     my $species = $self->hub->species;
     my $main_tables_not_empty = 0;
     foreach ( @$table_array) {
-      my ($title, $table) = @$_;
+      my ($title, $table, $pop_url) = @$_;
       my $id;
 
       # hide "other" and "failed" table
@@ -61,6 +60,7 @@ sub content {
         $id = (split(/\(/,$id))[0];
         $html .= $self->toggleable_table($title, $id, $table, 1);
       }
+      $html .= sprintf('<p><a href="%s">More information about these populations &rarr;</a></p>', $pop_url) if $pop_url;
       $main_tables_not_empty = scalar(@{$table->{'rows'}}) if ($main_tables_not_empty == 0);
     }
   }
@@ -85,50 +85,50 @@ sub format_frequencies {
   ## divide into project/ type specific hashes
   ########################################################
 
-    foreach my $pop_id (keys %$freq_data) {
+  foreach my $pop_id (keys %$freq_data) {
 
-      if ($pop_id eq 'no_pop') {
-	  ### variation observation without population or frequency data
-	  $no_pop_data = delete $freq_data->{$pop_id};
-	  next;
-      }
+    if ($pop_id eq 'no_pop') {
+	    ### variation observation without population or frequency data
+      $no_pop_data = delete $freq_data->{$pop_id};
+      next;
+    }
 
-      ### format population name      
-      my $name = $freq_data->{$pop_id}{'pop_info'}{'Name'};
-      if ($name =~ /^.+\:.+$/) {
-        $freq_data->{$pop_id}{'pop_info'}{'Name'} =~ s/\:/\:<b>/;
-        $freq_data->{$pop_id}{'pop_info'}{'Name'} .= '</b>';
-      }
+    ### format population name      
+    my $name = $freq_data->{$pop_id}{'pop_info'}{'Name'};
+    if ($name =~ /^.+\:.+$/) {
+      $freq_data->{$pop_id}{'pop_info'}{'Name'} =~ s/\:/\:<b>/;
+      $freq_data->{$pop_id}{'pop_info'}{'Name'} .= '</b>';
+    }
 
-      ### loop through frequency data for this population putting it in the destination array for display purposes
-      foreach my $ssid (keys %{$freq_data->{$pop_id}{'ssid'}}) {
+    ### loop through frequency data for this population putting it in the destination array for display purposes
+    foreach my $ssid (keys %{$freq_data->{$pop_id}{'ssid'}}) {
 
-	  ## is it a priority project 
-	  my $priority_level =  $freq_data->{$pop_id}{'pop_info'}{'GroupPriority'};
+	    ## is it a priority project 
+	    my $priority_level =  $freq_data->{$pop_id}{'pop_info'}{'GroupPriority'};
 	  
-	  if( defined $priority_level){
+	    if( defined $priority_level){
 
 	      ### store frequency data
 	      $priority_data->{$priority_level}->{$pop_id}{'ssid'}{$ssid} = delete $freq_data->{$pop_id}{'ssid'}{$ssid};
 	      $priority_data->{$priority_level}->{$pop_id}{'pop_info'}    = $freq_data->{$pop_id}{'pop_info'};
 	      ### pull out group display name for the group with this priority to use later
 	      $group_name{$priority_level} = $freq_data->{$pop_id}{'pop_info'}{'PopGroup'} unless defined $group_name{$priority_level};  
-	  }
+	    } 
 	  
 	  
-	  elsif ($freq_data->{$pop_id}{'ssid'}{$ssid}{'failed_desc'}) {
+	    elsif ($freq_data->{$pop_id}{'ssid'}{$ssid}{'failed_desc'}) {
 
 	      ### hold failed data separately to display separately
 	      $fv_data->{$pop_id}{'ssid'}{$ssid} = delete $freq_data->{$pop_id}{'ssid'}{$ssid};
 	      $fv_data->{$pop_id}{'pop_info'}    = $freq_data->{$pop_id}{'pop_info'};
 	      $fv_data->{$pop_id}{'ssid'}{$ssid}{'failed_desc'} =~ s/Variation submission/Variation submission $ssid/;
-        } 
-	  else{
+      } 
+	    else {
 	      $standard_data->{$pop_id}{'ssid'}{$ssid} = delete $freq_data->{$pop_id}{'ssid'}{$ssid};
 	      $standard_data->{$pop_id}{'pop_info'}    = $freq_data->{$pop_id}{'pop_info'};
-	  }
-      }
+	    }
     }
+  }
     
   ##########################################################
   # format the tables storing them in display priority order
@@ -140,8 +140,8 @@ sub format_frequencies {
 
   ## store priority tables first
   foreach my $priority_level (sort(keys %{$priority_data})){    
-      push @table_array,  $self->format_table($priority_data->{$priority_level},  $group_name{$priority_level} );
-      $name_for_standard_data = 'Other frequency data';
+    push @table_array,  $self->format_table($priority_data->{$priority_level},  $group_name{$priority_level} );
+    $name_for_standard_data = 'Other frequency data';
   }
 
   ## non-priority project frequency data
@@ -153,37 +153,80 @@ sub format_frequencies {
 
   # special method for data with no pop/freq data
   if ($no_pop_data) {
-      my $no_pop_table = $self->no_pop_data($no_pop_data);
-      my $count_no_pop_data = scalar(@{$no_pop_table->{'rows'}});
-      push @table_array,  ["Observed variant(s) without frequency or population information ($count_no_pop_data)", $no_pop_table]  if $no_pop_data;
+    my $no_pop_table = $self->no_pop_data($no_pop_data);
+    my $count_no_pop_data = scalar(@{$no_pop_table->{'rows'}});
+    push @table_array,  ["Observed variant(s) without frequency or population information ($count_no_pop_data)", $no_pop_table]  if $no_pop_data;
   }
 
   return \@table_array;
-
 }
     
 
-sub format_table{
+sub format_table {
+  my ($self, $freq_data, $table_header) = @_;
+
+  my $hub        = $self->hub;
+  my $is_somatic = $self->object->Obj->has_somatic_source;
+  my $al_colours = $self->object->get_allele_genotype_colours;
 
 
-    my ($self, $freq_data, $table_header) = @_;
-
-    my $hub        = $self->hub;
-    my $is_somatic = $self->object->Obj->has_somatic_source;
-    my $al_colours = $self->object->get_allele_genotype_colours;
-
-
-    my %columns;
-    my @rows;
+  my %columns;
+  my @rows;
 
   ## group by population 
+
+  ## Sort into super-populations and sub-populations
+  my (%tree, $all, $count);
   foreach my $pop_id (keys %$freq_data) {
+    $count++;
+    my $name  = $freq_data->{$pop_id}{'pop_info'}{'Name'};
+    my $hash  = $freq_data->{$pop_id}{'pop_info'}{'Super-Population'};
+    my ($super) = keys %{$hash||{}};
+
+    if ($name =~ /ALL/) {
+      $all = $pop_id;
+      next;
+    }
+    next unless $super;
+    $tree{$super}{$name} = $pop_id;
+  }
+
+  ## Did we capture all the rows in our tree? If not, just 
+  ## sort the whole lot alphabetically
+  my @ids;
+  if ($count == scalar(keys %$freq_data)) {
+    @ids = ($all);
+    foreach my $super (sort keys %tree) {
+      push @ids, $super;
+      push @ids, $tree{$super}{$_} foreach (sort keys %{$tree{$super}});
+    }
+  }
+  else {
+    @ids = sort {$a->{'Name'} cmp $b->{'Name'}} keys %$freq_data;
+  }
+
+  my $sample_id = $ids[0];
+  my $pop_url = $self->pop_url($freq_data->{$sample_id}{'pop_info'}{'Name'}, $freq_data->{$sample_id}{'pop_info'}{'PopLink'});
+
+  ## Now build table rows
+  foreach my $pop_id (@ids) {
     my $pop_info = $freq_data->{$pop_id}{'pop_info'};
-    
+   
     foreach my $ssid (keys %{$freq_data->{$pop_id}{'ssid'}}) {
       my $data = $freq_data->{$pop_id}{'ssid'}{$ssid};
       my %pop_row;
-      
+      my ($row_class, $group_member);
+      if ($pop_info->{'Name'} =~ /ALL/) {
+        $row_class = 'supergroup';
+      } 
+      elsif ($tree{$pop_id}) {
+        $row_class = 'subgroup';
+      }
+      elsif (scalar keys %tree) {
+        $group_member = 1;
+      }
+      $pop_row{'options'}{'class'} = $row_class if $row_class;
+     
       # SSID + Submitter
       if ($ssid) {
         $pop_row{'ssid'}      = $hub->get_ExtURL_link($ssid, 'DBSNPSS', $ssid) unless $ssid eq 'ss0';
@@ -217,7 +260,10 @@ sub format_table{
       }
       
       $pop_row{'Genotype count'}   = join ' , ', sort {(split /\(|\)/, $a)[1] cmp (split /\(|\)/, $b)[1]} values %{$pop_row{'Genotype count'}} if $pop_row{'Genotype count'};
-      $pop_row{'pop'}              = $self->pop_url($pop_info->{'Name'}, $pop_info->{'PopLink'});
+
+      ## Hacky indent, because overriding table CSS is a pain!
+      $pop_row{'pop'}              = $group_member ? '&nbsp;&nbsp;'.$pop_info->{'Name'} : $pop_info->{'Name'};
+
       $pop_row{'Description'}      = $pop_info->{'Description'} if $is_somatic;
       $pop_row{'failed'}           = $data->{'failed_desc'} if $table_header =~ /Inconsistent/i;
       $pop_row{'Super-Population'} = $self->sort_extra_pops($pop_info->{'Super-Population'});
@@ -245,16 +291,12 @@ sub format_table{
         $pop_row{'Genotype count'} .= qq{<span style="min-width:65px;display:inline-block;text-align:right$padding">$gen_count</span>};
       }
 
-      # force ALL population to be displayed on top
-      if($pop_info->{'Name'} =~ /ALL/) {
-        $pop_row{'pop'} = qq{<span class="hidden">0</span>}.$pop_row{'pop'};
-      }
-
       push @rows, \%pop_row;
       
       $columns{$_} = 1 for grep $pop_row{$_}, keys %pop_row;
     }
   }
+  delete $columns{'options'};
   
   # Format table columns
   my @header_row;
@@ -297,12 +339,11 @@ sub format_table{
 
 
 
-    my $table = $self->new_table([], [], { data_table => 1, sorting => [ 'pop asc', 'submitter asc' ] });
+  my $table = $self->new_table([], [], { data_table => 1 });
   $table->add_columns(@header_row);
   $table->add_rows(@rows);
  
-
-    return [sprintf('%s (%s)', $table_header, scalar @rows), $table];
+  return [sprintf('%s (%s)', $table_header, scalar @rows), $table, $pop_url];
 
 }
 
@@ -348,15 +389,13 @@ sub pop_url {
   my ($self, $pop_name, $pop_dbSNP) = @_;
   
   my $pop_url;
-  my $img_info = qq{<img src="/i/16/info.png" class="_ht" style="float:right;position:relative;top:2px;width:12px;height:12px;margin-left:4px" title="Click to see more information about the population" alt="info" />};
 
   if($pop_name =~ /^1000GENOMES/) {
-    $pop_url = $pop_name.$self->hub->get_ExtURL_link($img_info, '1KG_POP', $pop_name); 
+    $pop_url = $self->hub->get_ExtURL('1KG_POP', $pop_name); 
   }
   else {
-    $pop_url = $pop_dbSNP ? $pop_name.$self->hub->get_ExtURL_link($img_info, 'DBSNPPOP', $pop_dbSNP->[0]) : $pop_name;
+    $pop_url = $pop_dbSNP ? $self->hub->get_ExtURL('DBSNPPOP', $pop_dbSNP->[0]) : undef; 
   }
-  
   return $pop_url;
 }
 

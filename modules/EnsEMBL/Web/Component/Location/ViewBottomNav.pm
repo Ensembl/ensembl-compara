@@ -51,7 +51,7 @@ sub content {
 }
 
 sub navbar {
-  my ($self, $ramp) = @_;
+  my ($self, $ramp,$extra_params) = @_;
   
   my $hub          = $self->hub;
   my $img_url      = $self->img_url;
@@ -61,6 +61,8 @@ sub navbar {
   my $extra_inputs = join '', map { sprintf '<input type="hidden" name="%s" value="%s" />', encode_entities($_), encode_entities($url->[1]{$_}) } keys %{$url->[1] || {}};
   my $g            = $hub->param('g');
   my $g_input      = $g ? qq{<input name="g" value="$g" type="hidden" />} : '';
+  $extra_params = "?$extra_params" if $extra_params;
+  $extra_params ||= '';
   
   return qq(
       <div class="navbar print_hide" style="width:$image_width">
@@ -85,6 +87,7 @@ sub navbar {
           </div>
         </div>
         <div class="image_nav">
+          <a href="$extra_params" style="display:none" class="extra-params">.</a>
           <a href="#" class="move left_2" title="Back 1Mb"></a>
           <a href="#" class="move left_1" title="Back 1 window"></a>
           <a href="#" class="zoom_in" title="Zoom in"></a>

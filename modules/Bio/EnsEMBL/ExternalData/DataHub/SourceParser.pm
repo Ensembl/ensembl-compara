@@ -39,6 +39,7 @@ use strict;
 use vars qw(@EXPORT_OK);
 use base qw(Exporter);
 
+use HTTP::Tiny; 
 use LWP::UserAgent;
 
 use EnsEMBL::Web::Tree;
@@ -58,13 +59,25 @@ use EnsEMBL::Web::Tree;
 =cut
 
 sub new {
+### We have to use two different modules to ensure
+### support for http, https and ftp
   my ($class, $settings) = @_;
 
+  ## HTTP(S)
+  my %args = ('timeout' => $settings->{'timeout'});
+  if ($settings->{'proxy'}) {
+    $args{'http_proxy'}   = $settings->{'proxy'};
+    $args{'https_proxy'}  = $settings->{'proxy'};
+  }
+
+  my $http = HTTP::Tiny->new(%args);
+
+  ## FTP
   my $ua = LWP::UserAgent->new;
   $ua->timeout($settings->{'timeout'});
   $ua->proxy('http', $settings->{'proxy'}) if $settings->{'proxy'};
 
-  my $self = { ua => $ua };
+  my $self = { http => $http, ua => $ua };
   bless $self, $class;
 
   return $self;
@@ -84,8 +97,7 @@ sub new {
 =cut
 
 sub get_hub_info {
-  my ($self, $url) = @_;
-  my $ua        = $self->{'ua'};
+  my ($self, $url, $assembly_lookup) = @_;
   my @split_url = split '/', $url;
   my $hub_file;
   
@@ -96,73 +108,115 @@ sub get_hub_info {
     $hub_file = 'hub.txt';
     $url      =~ s|/$||;
   }
-  
-  my $response = $ua->get("$url/$hub_file");
-  
-  return { error => [$response->status_line] } unless $response->is_success;
-  
+ 
+  my $ua    = $self->{'ua'};
+  my $http  = $self->{'http'};
+  my ($response, $content);
+
+  if ($url =~ /^ftp/) {
+    $response = $ua->get("$url/$hub_file");
+    return { error => [$response->status_line] } unless $response->is_success;
+    $content = $response->content;
+  }
+  else { 
+    $response = $http->get("$url/$hub_file");
+    return { error => [$self->_http_error($response)] } unless $response->{'success'};
+    $content = $response->{'content'};
+  }
   my %hub_details;
   
   ## Get file name for file with genome info
-  foreach (split /\n/, $response->content) {
+  foreach (split /\n/, $content) {
     my @line = split /\s/, $_, 2;
     $hub_details{$line[0]} = $line[1];
   }
-  
   return { error => ['No genomesFile found'] } unless $hub_details{'genomesFile'};
-  
-  $response = $ua->get("$url/$hub_details{'genomesFile'}"); ## Now get genomes file and parse
-  
-  return { error => ['genomesFile: ' . $response->status_line] } unless $response->is_success;
-  
-  (my $genome_file = $response->content) =~ s/\r//g;
+ 
+  ## Now get genomes file and parse 
+  if ($url =~ /^ftp/) {
+    $response = $ua->get("$url/$hub_details{'genomesFile'}"); 
+    return { error => ['genomesFile: ' . $response->status_line] } unless $response->is_success;
+    $content = $response->content;
+  }
+  else {
+    $response = $http->get("$url/$hub_details{'genomesFile'}");
+    return { error => ['genomesFile: ' . $self->_http_error($response)] } unless $response->{'success'};
+    $content = $response->{'content'};
+  }
+
+  (my $genome_file = $content) =~ s/\r//g;
   my %genome_info;
   my @lines = split /\n/, $genome_file;
-  my ($genome, $file);
+  my ($genome, $file, %ok_genomes);
   foreach (split /\n/, $genome_file) {
     my ($k, $v) = split(/\s/, $_);
     if ($k =~ /genome/) {
       $genome = $v;
+      ## Check if any of these genomes are available on this site,
+      ## because we don't want to waste time parsing them if not!
+      if ($assembly_lookup && $assembly_lookup->{$genome}) {
+        $ok_genomes{$genome} = 1;
+      }
+      else {
+        $genome = undef;
+      }
     }
-    elsif ($k =~ /trackDb/) {
+    elsif ($genome && $k =~ /trackDb/) {
       $file = $v;
       $genome_info{$genome} = $file;
       ($genome, $file) = (undef, undef);
     }
   }
-  my @track_errors;
+
+  my @errors;
+
+  if (keys %ok_genomes) {
+     ## Parse list of config files
+      foreach my $genome (keys %ok_genomes) {
+      $file = $genome_info{$genome};
   
-  ## Parse list of config files
-  while (($genome, $file) = each %genome_info) {
-    $response = $ua->get("$url/$file");
+      if ($url =~ /^ftp/) {
+        $response = $ua->get("$url/$file");
+        if (!$response->is_success) {
+          push @errors, "$genome ($url/$file): " . $response->status_line;
+          next;
+        }
+        $content = $response->content;
+      }
+      else {
+        $response = $http->get("$url/$file");
+        if (!$response->{'success'}) {
+          push @errors, "$genome ($url/$file): " . $self->_http_error($response);
+          next;
+        }
+        $content = $response->{'content'};
+      }
+      my @track_list;
+      $content =~ s/\r//g;
     
-    if (!$response->is_success) {
-      push @track_errors, "$genome ($url/$file): " . $response->status_line;
-      next;
-    }
-    
-    (my $content = $response->content) =~ s/\r//g;
-    my @track_list;
-    
-    # Hack here: Assume if file contains one include it only contains includes and no actual data
-    # Would be better to resolve all includes (read the files) and pass the complete config data into 
-    # the parsing function rather than the list of file names
-    foreach (split /\n/, $content) {
-      next if /^#/ || !/\w+/ || !/^include/;
+      # Hack here: Assume if file contains one include it only contains includes and no actual data
+      # Would be better to resolve all includes (read the files) and pass the complete config data into 
+      # the parsing function rather than the list of file names
+      foreach (split /\n/, $content) {
+        next if /^#/ || !/\w+/ || !/^include/;
       
-      s/^include //;
-      push @track_list, "$url/$_";
-    }
+        s/^include //;
+        push @track_list, "$url/$_";
+      }
     
-    if (scalar @track_list) {
-      ## replace trackDb file location with list of track files
-      $genome_info{$genome} = \@track_list;
-    } else {
-      $genome_info{$genome} = [ "$url/$file" ];
+      if (scalar @track_list) {
+        ## replace trackDb file location with list of track files
+        $genome_info{$genome} = \@track_list;
+      } else {
+        $genome_info{$genome} = [ "$url/$file" ];
+      }
     }
   }
-  
-  return scalar @track_errors ? { error => \@track_errors } : { details => \%hub_details, genomes => \%genome_info };
+  else {
+    push @errors, "This track hub does not contain any genomes compatible with this website";
+  }
+
+  return scalar @errors ? { error => \@errors } : { details => \%hub_details, genomes => \%genome_info };
 }
 
 =head2 parse
@@ -187,18 +241,31 @@ sub parse {
     return;
   }
   
-  my $ua   = $self->{'ua'};
+  my $http  = $self->{'http'};
+  my $ua    = $self->{'ua'};
+
   my $tree = EnsEMBL::Web::Tree->new;
   my $response;
   
   ## Get all the text files in the hub directory
   foreach (@$files) {
-    $response = $ua->get($_);
+    if ($_ =~ /^ftp/) {
+      $response = $ua->get($_);
+
+      if ($response->is_success) {
+        $self->parse_file_content($tree, $response->content =~ s/\r//gr, $_);
+      } else {
+        $tree->append($tree->create_node("error_$_", { error => $response->status_line, file => $_ }));
+      }
+    }
+    else {
+      $response = $http->get($_);
     
-    if ($response->is_success) {
-      $self->parse_file_content($tree, $response->content =~ s/\r//gr, $_);
-    } else {
-      $tree->append($tree->create_node("error_$_", { error => $response->status_line, file => $_ }));
+      if ($response->{'success'}) {
+        $self->parse_file_content($tree, $response->{'content'} =~ s/\r//gr, $_);
+      } else {
+        $tree->append($tree->create_node("error_$_", { error => $self->_http_error($response), file => $_ }));
+      }
     }
   }
   
@@ -208,7 +275,6 @@ sub parse {
 sub parse_file_content {
   my ($self, $tree, $content, $file) = @_;
   my %tracks;
-  my $ua       = $self->{'ua'};
   my $url      = $file =~ s|^(.+)/.+|$1|r; # URL relative to the file (up until the last slash before the file name)
   my @contents = split /track /, $content;
   shift @contents;
@@ -258,7 +324,13 @@ sub parse_file_content {
           $tracks{$id}{'signal_range'} = \@values;
         }
       } elsif ($key eq 'bigDataUrl') {
-        $tracks{$id}{$key} = $value =~ /^(ftp|https?):\/\// ? $value : "$url/$value";
+        if ($value =~ /^\//) { ## path is relative to server, not to hub.txt
+          (my $root = $url) =~ s/^(ftp|https?):\/\/([\w|-|\.]+)//;
+          $tracks{$id}{$key} = $root.$value;
+        }
+        else {
+          $tracks{$id}{$key} = $value =~ /^(ftp|https?):\/\// ? $value : "$url/$value";
+        }
       } else {
         if ($key eq 'parent' || $key =~ /^subGroup[0-9]/) {
           my @values = split /\s+/, $value;
@@ -316,14 +388,9 @@ sub parse_file_content {
     
     # any track which doesn't have any of these is definitely invalid
     if ($tracks{$id}{'type'} || $tracks{$id}{'shortLabel'} || $tracks{$id}{'longLabel'}) {
-      $tracks{$id}{'track'} = $id;
-
-      my $response = $ua->get("$url/$id.html");
-      if ($response->is_success) {
-        $tracks{$id}{'description_url'} = "$url/$id.html";
-        $tracks{$id}{'description'} = $response->content =~ s/\R+/ /gr;
-      }
-
+      $tracks{$id}{'track'}           = $id;
+      $tracks{$id}{'description_url'} = "$url/$id.html" unless $tracks{$id}{'parent'};
+      
       if ($tracks{$id}{'dimensions'}) {
         # filthy last-character-of-string hack to support dimensions in the same way as UCSC
         my @dimensions = keys %{$tracks{$id}{'dimensions'}};
@@ -423,6 +490,12 @@ sub sort_tree {
   }
   
   $self->sort_tree($_) for @children;
+}
+
+sub _http_error {
+### Helper subroutine for formatting error messages from HTTP::Tiny
+  my ($self, $response) = @_;
+  return $response->{'status'}.': '.$response->{'reason'};
 }
 
 1;

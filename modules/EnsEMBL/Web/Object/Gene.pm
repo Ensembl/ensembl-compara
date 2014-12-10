@@ -702,7 +702,7 @@ sub get_homology_matches {
       my $order = 0;
       
       foreach my $homology (@{$homologues->{$display_spp}}) { 
-        my ($homologue, $homology_desc, $homology_subtype, $query_perc_id, $target_perc_id, $dnds_ratio, $gene_tree_node_id, $homology_id) = @$homology;
+        my ($homologue, $homology_desc, $species_tree_node, $query_perc_id, $target_perc_id, $dnds_ratio, $gene_tree_node_id, $homology_id) = @$homology;
         
         next unless $homology_desc =~ /$homology_description/;
         next if $disallowed_homology && $homology_desc =~ /$disallowed_homology/;
@@ -715,7 +715,7 @@ sub get_homology_matches {
           homology_desc       => $Bio::EnsEMBL::Compara::Homology::PLAIN_TEXT_WEB_DESCRIPTIONS{$homology_desc} || 'no description',
           description         => $homologue->description       || 'No description',
           display_id          => $homologue->display_label     || 'Novel Ensembl prediction',
-          homology_subtype    => $homology_subtype,
+          species_tree_node   => $species_tree_node,
           spp                 => $display_spp,
           query_perc_id       => $query_perc_id,
           target_perc_id      => $target_perc_id,
@@ -749,13 +749,13 @@ sub get_homologies {
   my $database = $self->database($compara_db);
   my %homologues;
 
-  return {} unless $database;
+  return unless $database;
   
   $self->timer_push('starting to fetch', 6);
 
   my $query_member   = $database->get_GeneMemberAdaptor->fetch_by_stable_id($geneid);
 
-  return {} unless defined $query_member;
+  return unless defined $query_member;
   
   my $homology_adaptor = $database->get_HomologyAdaptor;
   my $homologies_array = $homology_adaptor->fetch_all_by_Member($query_member); # It is faster to get all the Homologues and discard undesired entries than to do fetch_all_by_Member_method_link_type
@@ -816,7 +816,7 @@ sub fetch_homology_species_hash {
     
     # FIXME: ucfirst $genome_db_name is a hack to get species names right for the links in the orthologue/paralogue tables.
     # There should be a way of retrieving this name correctly instead.
-    push @{$homologues{ucfirst $genome_db_name}}, [ $target_member, $homology->description, $homology->taxonomy_level, $query_perc_id, $target_perc_id, $dnds_ratio, $homology->{_gene_tree_node_id}, $homology->dbID ];
+    push @{$homologues{ucfirst $genome_db_name}}, [ $target_member, $homology->description, $homology->species_tree_node(), $query_perc_id, $target_perc_id, $dnds_ratio, $homology->{_gene_tree_node_id}, $homology->dbID ];
   }
   
   $self->timer_push('homologies hacked', 6);

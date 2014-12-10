@@ -127,7 +127,7 @@ sub fetch_features {
       } elsif ($self->my_config('source')) {
         @somatic_mutations = @{$slice->get_all_somatic_VariationFeatures_by_source($self->my_config('source'), undef, $var_db) || []};
       } else { 
-        @somatic_mutations = @{$slice->get_all_somatic_VariationFeatures($var_db) || []};
+        @somatic_mutations = @{$slice->get_all_somatic_VariationFeatures(undef, undef, undef, $var_db) || []};
       }
       
       $self->cache($id, \@somatic_mutations);   

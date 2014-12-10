@@ -1104,7 +1104,10 @@ sub render_genes {
       }
     }
 
+    my %legend_old = @{$self->{'legend'}{'gene_legend'}{$self->type}{'legend'}||[]};
     my %used_colours;
+    $used_colours{$_} = $legend_old{$_} for keys %legend_old;
+
     $self->use_legend(\%used_colours,$_->{'colkey'}) for @genes_to_label;
 
     my @legend = %used_colours;
@@ -1112,7 +1115,7 @@ sub render_genes {
     $self->{'legend'}{'gene_legend'}{$self->type} = {
       priority => $self->_pos,
       legend   => \@legend
-    }
+    };
   } elsif ($config->get_option('opt_empty_tracks') != 0 && !$on_other_strand) {
     $self->no_track_on_strand;
   }

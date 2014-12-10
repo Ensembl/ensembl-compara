@@ -95,6 +95,9 @@ sub content {
   my $is_genetree = $object->isa('EnsEMBL::Web::Object::GeneTree') ? 1 : 0;
   my ($gene, $member, $tree, $node, $test_tree);
 
+  my $type   = $hub->param('data_type') || $hub->type;
+  my $vc = $self->view_config($type);
+
   if ($is_genetree) {
     $tree   = $object->Obj;
     $member = undef;
@@ -112,7 +115,8 @@ sub content {
   my $unhighlight          = $highlight_gene ? $hub->url({ g1 => undef, collapse => $hub->param('collapse') }) : '';
   my $image_width          = $self->image_width       || 800;
   my $colouring            = $hub->param('colouring') || 'background';
-  my $collapsability       = $is_genetree ? '' : $hub->param('collapsability');
+  my $collapsability       = $is_genetree ? '' : ($vc->get('collapsability') || $hub->param('collapsability'));
+  my $clusterset_id        = $vc->get('clusterset_id') || $hub->param('clusterset_id');
   my $show_exons           = $hub->param('exons') eq 'on' ? 1 : 0;
   my $image_config         = $hub->get_imageconfig('genetreeview');
   my @hidden_clades        = grep { $_ =~ /^group_/ && $hub->param($_) eq 'hide'     } $hub->param;
@@ -133,7 +137,7 @@ sub content {
   my $parent      = $tree->tree->{'_supertree'};
   if (defined $parent) {
 
-    if ($hub->param('super_tree') eq 'on') {
+    if ($vc->get('super_tree') eq 'on' || $hub->param('super_tree') eq 'on') {
       my $super_url = $self->ajax_url('sub_supertree',{ cdb => $cdb, update_panel => undef });
       $html .= qq(<div class="ajax"><input type="hidden" class="ajax_load" value="$super_url" /></div>);
     } else {
@@ -149,18 +153,16 @@ sub content {
   }
 
   if ($hub->type eq 'Gene') {
-    if ($tree->tree->clusterset_id ne $object->hub->param('clusterset_id')) {
+    if ($tree->tree->clusterset_id ne $clusterset_id) {
       $html .= $self->_info('Phylogenetic model selection',
         sprintf(
-          'The phylogenetic model <I>%s</I> is not available for this tree. Showing the default (consensus) tree instead.',
-          $object->hub->param('clusterset_id')
+          'The phylogenetic model <I>%s</I> is not available for this tree. Showing the default (consensus) tree instead.', $clusterset_id
           )
       );
-    } elsif ($object->hub->param('clusterset_id') ne 'default') {
+    } elsif ($clusterset_id ne 'default') {
 
       my $text = sprintf(
-          'The tree displayed here has been built with the phylogenetic model <I>%s</I>. It has then been merged with trees built with other models to give the final tree and homologies. Data shown here may be inconsistent with the rest of the comparative analyses, especially homologies.',
-          $object->hub->param('clusterset_id')
+          'The tree displayed here has been built with the phylogenetic model <I>%s</I>. It has then been merged with trees built with other models to give the final tree and homologies. Data shown here may be inconsistent with the rest of the comparative analyses, especially homologies.', $clusterset_id
       );
       my $rank = $tree->tree->get_tagvalue('k_score_rank');
       my $score = $tree->tree->get_tagvalue('k_score');
@@ -525,13 +527,13 @@ sub get_export_data {
   my $cdb   = $hub->param('cdb') || 'compara';
   my $gene  = $hub->core_object('gene');
 
-  if ($type eq 'genetree') {
+  if ($type && $type eq 'genetree') {
     my $object = $hub->core_object('gene');
     return $object->get_GeneTree($cdb, 1);
   }
   else {
     my ($member, $tree) = $self->get_details($cdb, $gene);
-    if ($type eq 'tree') {
+    if ($type && $type eq 'tree') {
       return $tree;
     }
     else {

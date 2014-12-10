@@ -57,28 +57,14 @@ sub content {
   ## Get user's current settings
   my $viewconfig  = $hub->get_viewconfig($hub->param('component'), $hub->param('data_type'));
 
-  my $settings = {
-        'extra' => {
-          'type'      => 'Checklist',
-          'label'     => 'Sequences to export',
-          'values'    => $checklist,
-          'selectall' => 'off',
-        },
-        'flank5_display' => {
-            'label'     => "5' Flanking sequence (upstream)",  
-            'type'      => 'NonNegInt',  
-        },
-        'flank3_display' => { 
-            'label'     => "3' Flanking sequence (downstream)", 
-            'type'      => 'NonNegInt',  
-        },
-        'snp_display' => {
-            'label'   => 'Include sequence variants',
-            'type'    => 'Checkbox',
-            'value'   => 'on',
-            'checked' => $viewconfig->get('snp_display') eq 'off' ? 0 : 1,
-        },
-  };
+  my $settings = $viewconfig->form_fields;
+
+  $settings->{'extra'} = {
+                          'type'      => 'Checklist',
+                          'label'     => 'Sequences to export',
+                          'values'    => $checklist,
+                          'selectall' => 'off',
+                          };
 
   ## Add in transcript IDs
   my %selected       = $component->selected_transcripts; 
@@ -89,22 +75,18 @@ sub content {
       'name'  => $p,
       'value' => $v,
     };
-    push @hidden, [$p];
+    push @hidden, $p;
   }
 
   ## Options per format
+  my @field_order = $viewconfig->field_order;
+  my @rtf_fields = map {$_ if $_ ne 'title_display' && $_ !~ /flank/} @field_order;
+
+  ## Options per format
   my $fields_by_format = {
-    'RTF' => [  
-                ['snp_display'],
-                @hidden,
-              ],  
-    'FASTA' => [
-                ['extra'],
-                ['flank5_display', 0],
-                ['flank3_display', 0],
-                @hidden,
-               ], 
-  };
+                          'RTF'   => [@rtf_fields, @hidden],
+                          'FASTA' => [qw(extra flank5_display flank3_display), @hidden],
+                          };
 
   ## Create settings form (comes with some default fields - see parent)
   my $form = $self->create_form($settings, $fields_by_format, 1);

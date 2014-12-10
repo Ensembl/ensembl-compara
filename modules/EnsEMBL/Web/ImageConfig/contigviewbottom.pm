@@ -164,10 +164,18 @@ sub init {
 #  $self->load_configured_bam;
 
   #switch on some variation tracks by default
-  $self->modify_configs(
-    [ 'variation_set_1kg_com','variation_set_ph_variants', 'sv_set_1kg_hq' ],
-    { display => 'compact' }
-  );
+  if ($self->species_defs->DEFAULT_VARIATION_TRACKS) {
+    while (my ($track, $style) = each (%{$self->species_defs->DEFAULT_VARIATION_TRACKS})) {
+      $self->modify_configs([$track], {display => $style});
+    }
+  }
+  elsif ($self->hub->database('variation')) {
+    my $tracks = [qw(variation_feature_variation)];
+    if ($self->species_defs->databases->{'DATABASE_VARIATION'}{'STRUCTURAL_VARIANT_COUNT'}) {
+      push @$tracks, 'variation_feature_structural_smaller';
+    }
+    $self->modify_configs($tracks, {display => 'compact'});
+  }
 
   # These tracks get added after the "auto-loaded tracks get addded
   if ($self->species_defs->ENSEMBL_MOD) {

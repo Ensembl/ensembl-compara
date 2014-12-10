@@ -33,32 +33,14 @@ sub content {
   ## Get user's current settings
   my $viewconfig  = $hub->get_viewconfig($hub->param('component'), $hub->param('data_type'));
 
-  my $settings = {
-        'Hidden' => ['align'],
-        'flank5_display' => {
-            'label'     => "5' Flanking sequence (upstream)",  
-            'type'      => 'NonNegInt',  
-        },
-        'flank3_display' => { 
-            'label'     => "3' Flanking sequence (downstream)", 
-            'type'      => 'NonNegInt',  
-        },
-        'snp_display' => {
-            'label'   => 'Include sequence variants',
-            'type'    => 'Checkbox',
-            'value'   => 'on',
-            'checked' => $viewconfig->get('snp_display') eq 'off' ? 0 : 1,
-        },
-  };
+  my $settings = $viewconfig->form_fields;
+
+  $settings->{'Hidden'} = ['align'];
 
   ## Options per format
-  my $fields_by_format = {
-    'RTF' => [
-                ['flank5_display',  $viewconfig->get('flank5_display')], 
-                ['flank3_display',  $viewconfig->get('flank3_display')],
-                ['snp_display'],
-              ],  
-  };
+  my @field_order = $viewconfig->field_order;
+  my $fields_by_format = {'RTF' => [@field_order]};
+
   ## Add formats output by BioPerl
   foreach ($self->alignment_formats) {
     $fields_by_format->{$_} = [];

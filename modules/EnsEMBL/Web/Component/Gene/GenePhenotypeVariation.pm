@@ -40,14 +40,17 @@ sub content {
   
   # Check if a variation database exists for the species.
   if ($hub->database('variation')) {
+    my $no_data = '<p>No phenotypes associated with variants in this gene.</p>';
     # Variation phenotypes
     if ($phenotype) {
       my $table_rows = $self->variation_table($phenotype, $display_name);
       my $table      = $table_rows ? $self->make_table($table_rows, $phenotype) : undef;
 
-      $html .= $self->render_content($table, $phenotype);
+      $html .= $table ? $self->render_content($table, $phenotype) : $no_data;
     } else {
-      $html .= $self->render_content($self->stats_table($display_name)); # no sub-table selected, just show stats
+      # no sub-table selected, just show stats
+      my $table = $self->stats_table($display_name);
+      $html .= $table ? $self->render_content($table) : $no_data; 
     }
   }
   
@@ -112,6 +115,7 @@ sub stats_table {
   push @$columns,  { key => 'source',  title => 'Source(s)',  sort => 'string', width => '11%'};
   
   foreach my $pf ($gene_name ? @{$pf_adaptor->fetch_all_by_associated_gene($gene_name)} : ()) {
+    next unless $pf->type eq 'Variation';
     my $var_name   = $pf->object->name;  
     my $phe        = $pf->phenotype->description;
     my $phe_source = $pf->source;
@@ -179,8 +183,10 @@ sub stats_table {
       mart    => $mart,
     };
   }
-  
-  return $self->new_table($columns, \@rows, { data_table => 'no_col_toggle', data_table_config => {iDisplayLength => 10}, sorting => [ 'type asc' ], exportable => 0 });
+ 
+  if (scalar @rows) { 
+    return $self->new_table($columns, \@rows, { data_table => 'no_col_toggle', data_table_config => {iDisplayLength => 10}, sorting => [ 'type asc' ], exportable => 0 });
+  }
 }
 
 
@@ -194,7 +200,9 @@ sub variation_table {
   my $g_end         = $gene_slice->end;
   my $phenotype_sql = $phenotype;
      $phenotype_sql =~ s/'/\\'/; # Escape quote character
-  my $pf_adaptor    = $hub->database('variation')->get_PhenotypeFeatureAdaptor;
+  my $db_adaptor = $hub->database('variation');
+  $db_adaptor->include_failed_variations(1);
+  my $pf_adaptor = $db_adaptor->get_PhenotypeFeatureAdaptor;
   my (@rows, %list_sources, %list_phe, $list_variations);
   
   # create some URLs - quicker than calling the url method for every variation
@@ -208,7 +216,7 @@ sub variation_table {
   
   my $all_flag = ($phenotype eq 'ALL') ? 1 : 0;
       
-  foreach my $pf (@{$pf_adaptor->fetch_all_by_associated_gene($gene_name)}) {
+  foreach my $pf (grep {$_->type eq 'Variation'} @{$pf_adaptor->fetch_all_by_associated_gene($gene_name)}) {
       
     next if ($phenotype ne $pf->phenotype->description && $all_flag == 0);
     

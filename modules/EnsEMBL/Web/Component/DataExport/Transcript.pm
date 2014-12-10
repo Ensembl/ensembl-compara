@@ -37,6 +37,10 @@ sub content {
   my $self  = shift;
   my $hub   = $self->hub;
 
+  ## Get user's current settings
+  my $viewconfig  = $hub->get_viewconfig($hub->param('component'), $hub->param('data_type'));
+  my $settings = $viewconfig->form_fields;
+
   ## Configure sequence options - check if the transcript 
   ## has translations and/or UTRs
   my @fasta_info = $self->configure_fasta; 
@@ -53,30 +57,11 @@ sub content {
     push @$checklist, $_ unless (exists $options->{$_->{'value'}} && $options->{$_->{'value'}} == 0); 
   }
 
-  ## Get user's current settings
-  my $viewconfig  = $hub->get_viewconfig($hub->param('component'), $hub->param('data_type'));
-
-  my $settings = {
-        'extra' => {
-          'type'      => 'Checklist',
-          'label'     => 'Included sequences',
-          'values'    => $checklist,
-          'selectall' => 'on',
-        },
-        'flank5_display' => {
-            'label'     => "5' Flanking sequence (upstream)",  
-            'type'      => 'NonNegInt',  
-        },
-        'flank3_display' => { 
-            'label'     => "3' Flanking sequence (downstream)", 
-            'type'      => 'NonNegInt',  
-        },
-        'snp_display' => {
-            'label'   => 'Include sequence variants',
-            'type'    => 'Checkbox',
-            'value'   => 'on',
-            'checked' => $viewconfig->get('snp_display') eq 'off' ? 0 : 1,
-        },
+  $settings->{'extra'} = {
+                          'type'      => 'Checklist',
+                          'label'     => 'Included sequences',
+                          'values'    => $checklist,
+                          'selectall' => 'on',
   };
 
   ## Options per format
@@ -97,20 +82,11 @@ sub configure_fasta {
 
 sub configure_fields {
   my ($self, $viewconfig) = @_;
+  my @field_order = $viewconfig->field_order;
 
   return {
-    'RTF' => [
-                ['extra'],
-                ['flank5_display', $viewconfig->get('flank5_display')],
-                ['flank3_display', $viewconfig->get('flank3_display')],
-                ['snp_display'],
-               ],
-
-    'FASTA' => [
-                ['extra'],
-                ['flank5_display', $viewconfig->get('flank5_display')],
-                ['flank3_display', $viewconfig->get('flank3_display')],
-               ],
+          'RTF'   => [@field_order],
+          'FASTA' => ['extra'],
   };
 }
 

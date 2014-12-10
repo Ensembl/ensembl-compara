@@ -40,30 +40,14 @@ sub content {
   ## Get user's current settings
   my $viewconfig  = $hub->get_viewconfig($hub->param('component'), $hub->param('data_type'));
 
-  my $settings = {
-        'flank5_display' => {
-            'label'     => "5' Flanking sequence (upstream)",  
-            'type'      => 'NonNegInt',  
-        },
-        'flank3_display' => { 
-            'label'     => "3' Flanking sequence (downstream)", 
-            'type'      => 'NonNegInt',  
-        },
-        'snp_display' => {
-            'label'   => 'Include sequence variants',
-            'type'    => 'Checkbox',
-            'value'   => 'on',
-            'checked' => $viewconfig->get('snp_display') eq 'off' ? 0 : 1,
-        },
-  };
+  my $settings = $viewconfig->form_fields;
 
   ## Options per format
+  my @field_order = $viewconfig->field_order;
+
   my $fields_by_format = {
-    'RTF' => [
-                ['flank5_display',  $viewconfig->get('flank5_display')], 
-                ['flank3_display',  $viewconfig->get('flank3_display')],
-                ['snp_display'],
-              ],  
+                            'RTF'   => [@field_order],
+                            'FASTA' => [qw(flank_size select_sequence)],
   };
 
   ## Create settings form (comes with some default fields - see parent)

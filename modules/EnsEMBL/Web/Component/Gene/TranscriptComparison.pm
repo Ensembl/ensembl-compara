@@ -39,8 +39,11 @@ sub initialize {
     sub_slice_end   => $end
   };
 
+  my $type   = $hub->param('data_type') || $hub->type;
+  my $vc = $self->view_config($type);
+
   for (qw(exons_only snp_display title_display line_numbering hide_long_snps)) {
-    $config->{$_} = $hub->param($_) unless $hub->param($_) eq 'off';
+    $config->{$_} = $hub->param($_) unless ($hub->param($_) eq 'off' || $vc->get($_) eq 'off');
   }
   
   $config->{'snp_display'}        = 0 unless $hub->species_defs->databases->{'DATABASE_VARIATION'};

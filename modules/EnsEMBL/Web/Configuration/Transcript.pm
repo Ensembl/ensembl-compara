@@ -49,7 +49,7 @@ sub populate_tree {
     { 'availability' => 'transcript has_evidence', 'concise' => 'Supporting evidence' }
   );
   
-  $T->append($self->create_subnode('SupportingEvidence/Alignment', '',
+  $T->append($self->create_subnode('SupportingEvidence/Alignment', 'Alignment of Supporting Evidence',
     [qw( alignment EnsEMBL::Web::Component::Transcript::SupportingEvidenceAlignment )],
     { 'no_menu_entry' => 'transcript' }
   ));
@@ -78,7 +78,7 @@ sub populate_tree {
     { 'availability' => 'transcript has_similarity_matches', 'concise' => 'General identifiers' }
   );
   
-  $sim_node->append($self->create_subnode('Similarity/Align', '',
+  $sim_node->append($self->create_subnode('Similarity/Align', 'Alignment of External Feature',
    [qw( alignment EnsEMBL::Web::Component::Transcript::ExternalRecordAlignment )],
     { 'no_menu_entry' => 'transcript' }
   ));

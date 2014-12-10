@@ -127,10 +127,16 @@ sub expand_slice {
   my $lrg_slice;
 
   if ($slice) {
-     my ($flank5, $flank3) = map $self->param($_), qw(flank5_display flank3_display);
-     $slice = $slice->invert if ($hub->param('strand') && $hub->param('strand') eq '-1');
-     return $flank5 || $flank3 ? $slice->expand($flank5, $flank3) : $slice;
-   }
+    my ($flank5, $flank3);
+    if ($self->param('flank_size')) {
+      $flank5 = $flank3 = $self->param('flank_size');
+    } 
+    else {
+      ($flank5, $flank3) = map $self->param($_), qw(flank5_display flank3_display);
+    }
+    $slice = $slice->invert if ($hub->param('strand') && $hub->param('strand') eq '-1');
+    return $flank5 || $flank3 ? $slice->expand($flank5, $flank3) : $slice;
+  }
 
   if ($lrg) {
     eval { $lrg_slice = $hub->get_adaptor('get_SliceAdaptor')->fetch_by_region('LRG', $lrg); };

@@ -113,9 +113,9 @@ sub content {
     $all_alleles->{'action'} = 'Multi';
     $all_alleles->{'r'} = undef;
 
-    $html='<p>The following genes have been identified as alternative alleles:</p>'. $table->render;
+    $html='<p>Genes are annotated on alternate sequences (haplotypes and patches) in addition to the primary genome assembly. These are shown in the table below:</p>'. $table->render;
     my $all_gene_link = $hub->url($all_alleles);
-    $html .= qq(<a href="$all_gene_link">Compare regions for all alleles</a>) if $c > 2;
+    $html .= qq(<a href="$all_gene_link">Compare regions for all gene alleles</a>) if $c > 2;
   }
   else {
     $html = 'No alleles have been curated for this gene';

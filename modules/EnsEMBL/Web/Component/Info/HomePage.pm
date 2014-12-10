@@ -32,6 +32,15 @@ sub _init {
   $self->ajaxable(0);
 }
 
+sub ftp_url {
+### Set this via a function, so it can easily be updated (or 
+### overridden in a plugin)
+  my $self = shift;
+  my $ftp_site = $self->hub->species_defs->ENSEMBL_FTP_URL;
+  return $ftp_site ? sprintf '%s/release-%s', $ftp_site, $self->hub->species_defs->ENSEMBL_VERSION
+                      : undef;
+}
+
 sub content {
   my $self         = shift;
   my $hub          = $self->hub;
@@ -103,7 +112,7 @@ sub assembly_text {
   my $species_defs      = $hub->species_defs;
   my $species           = $hub->species;
   my $sample_data       = $species_defs->SAMPLE_DATA;
-  my $ftp               = $species_defs->ENSEMBL_FTP_URL;
+  my $ftp               = $self->ftp_url;
   my $ensembl_version   = $species_defs->ENSEMBL_VERSION;
   my $assembly          = $species_defs->ASSEMBLY_NAME;
   my $assembly_version  = $species_defs->ASSEMBLY_VERSION;
@@ -147,8 +156,8 @@ sub assembly_text {
     $hub->url({ action => 'Annotation', __clear => 1 }), sprintf($self->{'icon'}, 'info'),
     
     $ftp ? sprintf(
-      '<p><a href="%s/release-%s/fasta/%s/dna/" class="nodeco">%sDownload DNA sequence</a> (FASTA)</p>', ## Link to FTP site
-      $ftp, $ensembl_version, lc $species, sprintf($self->{'icon'}, 'download')
+      '<p><a href="%s/fasta/%s/dna/" class="nodeco">%sDownload DNA sequence</a> (FASTA</p>', ## Link to FTP site
+      $ftp, lc $species, sprintf($self->{'icon'}, 'download')
     ) : '',
     
     $mappings && ref $mappings eq 'ARRAY' ? sprintf(
@@ -166,19 +175,20 @@ sub assembly_text {
   my $previous = $assembly_version;
   foreach my $version (reverse sort {$a <=> $b} keys %$archives) {
     my $archive = $archives->{$version};
-    ## Remove patch sub-versions
-    (my $major_assembly = $archive->{'assembly'}) =~ s/\.p\d+//;
-    next if $version == $ensembl_version || $major_assembly eq $previous;
-    my $desc = $archive->{'description'} || sprintf '(%s release %s)', $species_defs->ENSEMBL_SITETYPE, $version;
-    my $subdomain = ((lc $archive->{'archive'}) =~ /^[a-z]{3}[0-9]{4}$/) 
+    my $archive_assembly = $archive->{'version'};
+    if ($archive_assembly ne $previous && $archive_assembly ne $assembly) {
+      my $desc = $archive->{'description'} 
+                  || sprintf '(%s release %s)', $species_defs->ENSEMBL_SITETYPE, $version;
+      my $subdomain = ((lc $archive->{'archive'}) =~ /^[a-z]{3}[0-9]{4}$/) 
                       ? lc $archive->{'archive'}.'.archive' : lc $archive->{'archive'};
-    push @other_assemblies, {
-      url      => sprintf('http://%s.ensembl.org/%s/', $subdomain, $species),
-      assembly => $major_assembly,
-      release  => $desc,
-    };
+      push @other_assemblies, {
+        url      => sprintf('http://%s.ensembl.org/%s/', $subdomain, $species),
+        assembly => $archive_assembly,
+        release  => $desc,
+      };
+    }
     
-    $previous = $major_assembly;
+    $previous = $archive_assembly;
   }
   
   ## Don't link to pre site on archives, as it changes too often
@@ -205,7 +215,7 @@ sub genebuild_text {
   my $species_defs = $hub->species_defs;
   my $species      = $hub->species;
   my $sample_data  = $species_defs->SAMPLE_DATA;
-  my $ftp          = $species_defs->ENSEMBL_FTP_URL;
+  my $ftp          = $self->ftp_url;
 
   return sprintf('
     <div class="homepage-icon">
@@ -237,8 +247,8 @@ sub genebuild_text {
     $hub->database('rnaseq') ? sprintf(', including <a href="%s" class="nodeco">RNASeq gene expression models</a>', $hub->url({'action' => 'Expression'})) : '',
 
     $ftp ? sprintf(
-      '<p><a href="%s/release-%s/fasta/%s/" class="nodeco">%sDownload genes, cDNAs, ncRNA, proteins</a> (FASTA)</p>', ## Link to FTP site
-      $ftp, $species_defs->ENSEMBL_VERSION, lc $species, sprintf($self->{'icon'}, 'download')
+      '<p><a href="%s/fasta/%s/" class="nodeco">%sDownload genes, cDNAs, ncRNA, proteins</a> (FASTA)</p>', ## Link to FTP site
+      $ftp, lc $species, sprintf($self->{'icon'}, 'download')
     ) : '',
     
     $hub->url({ type => 'UserData', action => 'UploadStableIDs', __clear => 1 }), sprintf($self->{'icon'}, 'tool'),
@@ -256,7 +266,7 @@ sub compara_text {
   my $hub          = $self->hub;
   my $species_defs = $hub->species_defs;
   my $sample_data  = $species_defs->SAMPLE_DATA;
-  my $ftp          = $species_defs->ENSEMBL_FTP_URL;
+  my $ftp          = $self->ftp_url;
   
   return sprintf('
     <div class="homepage-icon">
@@ -276,8 +286,8 @@ sub compara_text {
     sprintf($self->{'icon'}, 'info'),
     
     $ftp ? sprintf(
-      '<p><a href="%s/release-%s/emf/ensembl-compara/" class="nodeco">%sDownload alignments</a> (EMF)</p>', ## Link to FTP site
-      $ftp, $species_defs->ENSEMBL_VERSION, sprintf($self->{'icon'}, 'download')
+      '<p><a href="%s/emf/ensembl-compara/" class="nodeco">%sDownload alignments</a> (EMF)</p>', ## Link to FTP site
+      $ftp, sprintf($self->{'icon'}, 'download')
     ) : ''
   );
 }
@@ -290,7 +300,7 @@ sub variation_text {
 
   if ($hub->database('variation')) {
     my $sample_data  = $species_defs->SAMPLE_DATA;
-    my $ftp          = $species_defs->ENSEMBL_FTP_URL;
+    my $ftp          = $self->ftp_url;
        $html         = sprintf('
       <div class="homepage-icon">
         %s
@@ -325,8 +335,8 @@ sub variation_text {
       sprintf($self->{'icon'}, 'info'), $species_defs->ENSEMBL_SITETYPE,
       
       $ftp ? sprintf(
-        '<p><a href="%s/release-%s/variation/gvf/%s/" class="nodeco">%sDownload all variants</a> (GVF)</p>', ## Link to FTP site
-        $ftp, $species_defs->ENSEMBL_VERSION, lc $hub->species, sprintf($self->{'icon'}, 'download')
+        '<p><a href="%s/variation/gvf/%s/" class="nodeco">%sDownload all variants</a> (GVF)</p>', ## Link to FTP site
+        $ftp, lc $hub->species, sprintf($self->{'icon'}, 'download')
       ) : ''
     );
   } else {
@@ -356,7 +366,7 @@ sub funcgen_text {
   
   if ($sample_data->{'REGULATION_PARAM'}) {
     my $species = $hub->species;
-    my $ftp     = $species_defs->ENSEMBL_FTP_URL;
+    my $ftp     = $self->ftp_url;
     
     return sprintf('
       <div class="homepage-icon">
@@ -381,8 +391,8 @@ sub funcgen_text {
       sprintf($self->{'icon'}, 'info'), $species_defs->ENSEMBL_SITETYPE,
       
       $ftp ? sprintf(
-        '<p><a href="%s/release-%s/regulation/%s/" class="nodeco">%sDownload all regulatory features</a> (GFF)</p>', ## Link to FTP site
-        $ftp, $species_defs->ENSEMBL_VERSION, lc $species, sprintf($self->{'icon'}, 'download')
+        '<p><a href="%s/regulation/%s/" class="nodeco">%sDownload all regulatory features</a> (GFF)</p>', ## Link to FTP site
+        $ftp, lc $species, sprintf($self->{'icon'}, 'download')
       ) : '',
     );
   } else {

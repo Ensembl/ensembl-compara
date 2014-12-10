@@ -39,9 +39,9 @@ sub process {
      $url           =~ s/(^\s+|\s+$)//g; # Trim leading and trailing whitespace
   my $filename      = [split '/', $url]->[-1];
   my $chosen_format = $hub->param('format');
-  my $formats       = $species_defs->DATA_FORMAT_INFO;
-  my @small_formats = @{$species_defs->UPLOAD_FILE_FORMATS};
-  my @big_exts      = map $formats->{$_}{'ext'}, @{$species_defs->REMOTE_FILE_FORMATS};
+  my $formats       = $species_defs->multi_val('DATA_FORMAT_INFO');
+  my @small_formats = @{$species_defs->multi_val('UPLOAD_FILE_FORMATS')};
+  my @big_exts      = map $formats->{$_}{'ext'}, @{$species_defs->multi_val('REMOTE_FILE_FORMATS')};
   my @bits          = split /\./, $filename;
   my $extension     = $bits[-1] eq 'gz' ? $bits[-2] : $bits[-1];
   my $pattern       = "^$extension\$";
@@ -51,7 +51,7 @@ sub process {
   ## tries to attach a large format file with a small format selected in the form
   my $format_name = $chosen_format;
   if (grep(/$chosen_format/i, @small_formats) && grep(/$pattern/i, @big_exts)) {
-    my %big_formats = map {$formats->{$_}{'ext'} => $_} @{$species_defs->REMOTE_FILE_FORMATS};
+    my %big_formats = map {$formats->{$_}{'ext'} => $_} @{$species_defs->multi_val('REMOTE_FILE_FORMATS')};
     $format_name = uc($big_formats{$extension});
   }
   elsif ($format_name eq 'VCFI') {
@@ -79,8 +79,11 @@ sub process {
     } else {
       $format = Bio::EnsEMBL::ExternalData::AttachedFormat->new($self->hub, $format_name, $url, $trackline);
     }
-    
-    my ($error, $options) = $format->check_data;
+   
+    ## For datahubs, pass assembly info so we can check if there's suitable data
+    my $assemblies = $species_defs->assembly_lookup;
+ 
+    my ($error, $options) = $format->check_data($assemblies);
     
     if ($error) {
       $redirect .= 'SelectFile';
@@ -100,47 +103,57 @@ sub process {
       delete $options->{'name'};
 
       $url = $self->chase_redirects($url);
-
-      my $assemblies = $options->{'assemblies'}
+      if (ref($url) eq 'HASH') {
+        $redirect .= 'SelectFile';
+        $session->add_data(
+          type     => 'message',
+          code     => 'AttachURL',
+          message  => $url->{'error'},
+          function => '_error'
+        );
+      }
+      else {
+        my $assemblies = $options->{'assemblies'}
                         || [$hub->species_defs->get_config($hub->data_species, 'ASSEMBLY_VERSION')];
-      my ($code, @ok_assemblies);
-      my %ensembl_assemblies = %{$hub->species_defs->assembly_lookup};
+        my ($code, @ok_assemblies);
+        my %ensembl_assemblies = %{$hub->species_defs->assembly_lookup};
 
-      foreach (@$assemblies) {
+        foreach (@$assemblies) {
 
-        my ($data_species, $assembly) = @{$ensembl_assemblies{$_}||[]};         
-        if ($assembly) {
-          push @ok_assemblies, $assembly;
+          my ($data_species, $assembly) = @{$ensembl_assemblies{$_}||[]};         
+          if ($assembly) {
+            push @ok_assemblies, $assembly;
 
-          my $data = $session->add_data(
-            type        => 'url',
-            code        => join('_', md5_hex($name . $data_species . $assembly . $url), $session->session_id),
-            url         => $url,
-            name        => $name,
-            format      => $format->name,
-            style       => $format->trackline,
-            species     => $data_species,
-            assembly    => $assembly, 
-            timestamp   => time,
-            %$options,
-          );
-          if ($data_species eq $hub->species) {
-            $code = $data->{'code'};
+            my $data = $session->add_data(
+              type        => 'url',
+              code        => join('_', md5_hex($name . $data_species . $assembly . $url), $session->session_id),
+              url         => $url,
+              name        => $name,
+              format      => $format->name,
+              style       => $format->trackline,
+              species     => $data_species,
+              assembly    => $assembly, 
+              timestamp   => time,
+              %$options,
+            );
+            if ($data_species eq $hub->species) {
+              $code = $data->{'code'};
+            }
+      
+            $session->configure_user_data('url', $data);
+      
+            $object->move_to_user(type => 'url', code => $data->{'code'}) if $hub->param('save');
           }
-      
-          $session->configure_user_data('url', $data);
-      
-          $object->move_to_user(type => 'url', code => $data->{'code'}) if $hub->param('save');
-        }
-      }      
-      my $assembly_string = join(', ', @ok_assemblies);
-      %params = (
-        format    => $format->name,
-        type      => 'url',
-        name      => $name,
-        assembly  => $assembly_string,
-        code      => $code,
-      );
+        }       
+        my $assembly_string = join(', ', @ok_assemblies);
+        %params = (
+          format    => $format->name,
+          type      => 'url',
+          name      => $name,
+          assembly  => $assembly_string,
+          code      => $code,
+        );
+      }
     }
   } else {
     $redirect .= 'SelectFile';

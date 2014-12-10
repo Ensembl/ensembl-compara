@@ -32,7 +32,7 @@ use base qw(EnsEMBL::Draw::VRenderer);
 # imagemaps also aren't too fussed about width & height boundaries
 #
 sub init_canvas {
-  shift->canvas('');
+  shift->canvas([]);
 }
 
 sub add_canvas_frame {
@@ -85,7 +85,7 @@ sub render_area {
  
   my $coords = join ',', map int, @$points;
 
-  $self->{'canvas'} = qq{<area shape="$shape" coords="$coords"$attrs />\n$self->{'canvas'}};  
+  push @{$self->canvas},[$shape,[map int, @$points],$attrs];
 }
 
 sub get_attributes {
@@ -98,9 +98,11 @@ sub get_attributes {
     if (defined $attr) {
       if ($_ eq 'alt' || $_ eq 'title') {
         $actions{'title'} = $actions{'alt'} = encode_entities($attr);
+      } elsif ($_ eq 'class') {
+        $actions{'klass'} = [ split(/ /,$attr) ];
       } elsif ($_ eq 'id') {
         $actions{$_} = $attr if($attr);
-      }else {
+      } else {
         $actions{$_} = $attr;
       }
     }
@@ -110,7 +112,7 @@ sub get_attributes {
   
   $actions{'alt'} ||= '';
 
-  return join '', map qq{ $_="$actions{$_}"}, keys %actions;
+  return \%actions;
 }
 
 1;

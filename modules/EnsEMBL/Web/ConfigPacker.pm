@@ -73,14 +73,12 @@ sub munge_config_tree {
   $self->_munge_meta;
   $self->_munge_variation;
   $self->_munge_website;
-
-  # get data about file formats from corresponding Perl modules
-  $self->_munge_file_formats;
 }
 
 sub munge_config_tree_multi {
   my $self = shift;
   $self->_munge_website_multi;
+  $self->_munge_file_formats;
 }
 
 # Implemented in plugins
@@ -382,37 +380,19 @@ sub _summarise_xref_types {
   
   return unless $dbh; 
   my @xref_types;
-  my %xrefs_types_hash;
-
-
-  if($self->db_tree->{'XREF_TYPES'}){
-    @xref_types=  split(/,/, $self->db_tree->{'XREF_TYPES'});
-    foreach(@xref_types){
-      my @type_priority=  split(/=/, $_);
-      $xrefs_types_hash{$type_priority[0]}=$type_priority[1];
-    }
-  }
+  my %xrefs_types_hash = %{$self->db_tree->{'XREF_TYPES'}||{}};
 
   my $aref =  $dbh->selectall_arrayref(qq(
-  SELECT distinct(edb.db_display_name), max(edb.priority) as m
+  SELECT distinct(edb.db_display_name) 
     FROM object_xref ox JOIN xref x ON ox.xref_id =x.xref_id JOIN external_db edb ON x.external_db_id = edb.external_db_id
    WHERE edb.type IN ('MISC', 'LIT')
      AND (ox.ensembl_object_type ='Transcript' OR ox.ensembl_object_type ='Translation' )
-   GROUP BY edb.db_display_name
-   ORDER BY m desc) );
-  foreach my $row (@$aref) {
-    if($xrefs_types_hash{$row->[0]} ){
-      $xrefs_types_hash{$row->[0]}= ($row->[1]>$xrefs_types_hash{$row->[0]})?$row->[1]:$xrefs_types_hash{$row->[0]};
-    }else{
-      $xrefs_types_hash{$row->[0]}=$row->[1];
-    }
+   GROUP BY edb.db_display_name) );
+
+  foreach my $row (@$aref) {    
+    $xrefs_types_hash{$row->[0]} = 1;
   }
-  my $xref_types_string="";
-  for my $key ( keys %xrefs_types_hash ) {
-    my $value = $xrefs_types_hash{$key};
-    $xref_types_string.=$key."=".$value.",";
-  }
-  $self->db_tree->{'XREF_TYPES'} = $xref_types_string;
+  $self->db_tree->{'XREF_TYPES'} = \%xrefs_types_hash;
   $dbh->disconnect();
 }
 
@@ -949,10 +929,10 @@ sub _summarise_archive_db {
   return unless $dbh;
 
   my $t_aref = $dbh->selectall_arrayref(
-    'select s.name, r.release_id, rs.assembly_code, rs.initial_release, rs.last_geneset
+    'select s.name, r.release_id, rs.assembly_version, rs.initial_release, rs.last_geneset
        from species as s, ens_release as r, release_species as rs
       where s.species_id =rs.species_id and r.release_id =rs.release_id
-       and rs.assembly_code != ""'
+       and rs.assembly_version != ""'
   );
   foreach my $row ( @$t_aref ) {
     my @A = @$row;
@@ -1227,7 +1207,9 @@ sub _summarise_compara_db {
 sub _summarise_compara_alignments {
   my ($self, $dbh, $db_name, $constraint) = @_;
   my (%config, $lookup_species, @method_link_species_set_ids);
-  
+
+  my $vega = !(defined $constraint);
+
   if ($constraint) {
     $lookup_species              = join ',', map $dbh->quote($_), sort keys %$constraint;
     @method_link_species_set_ids = map keys %$_, values %$constraint;
@@ -1275,12 +1257,20 @@ sub _summarise_compara_alignments {
   }
   
   # get details of alignments
+  my @where;
+  push @where,"is_reference = 0" unless $vega;
+  if(@method_link_species_set_ids) {
+    my $mlss = join(',',@method_link_species_set_ids);
+    push @where,"ga_ref.method_link_species_set_id in ($mlss)";
+  }
+  my $where = '';
+  $where = "WHERE ".join(' AND ',@where) if(@where);
   $q = sprintf('
     select genomic_align_block_id, ga.method_link_species_set_id, ga.dnafrag_start, ga.dnafrag_end, ga.dnafrag_id
       from genomic_align ga_ref join dnafrag using (dnafrag_id) join genomic_align ga using (genomic_align_block_id)
-      where is_reference = 0 %s
+      %s
       order by genomic_align_block_id, ga.dnafrag_id',
-      @method_link_species_set_ids ? sprintf 'and ga_ref.method_link_species_set_id in (%s)', join ',', @method_link_species_set_ids : ''
+      $where
   );
   
   $sth = $dbh->prepare($q);
@@ -1629,8 +1619,16 @@ sub _munge_meta {
       next unless $meta_hash->{$meta_key};
       
       my $value = scalar @{$meta_hash->{$meta_key}} > 1 ? $meta_hash->{$meta_key} : $meta_hash->{$meta_key}[0]; 
+
+      ## Set version of assembly name that we can use where space is limited 
+      if ($meta_key eq 'assembly.name') {
+        $self->tree->{$species}{'ASSEMBLY_SHORT_NAME'} = (length($value) > 16)
+                  ? $self->db_tree->{'ASSEMBLY_VERSION'} : $value;
+      }
+
       $self->tree->{$species}{$key} = $value;
     }
+
 
     ## Do species group
     my $taxonomy = $meta_hash->{'species.classification'};
@@ -1762,7 +1760,9 @@ sub _munge_file_formats {
     'clustalw'  => {'ext' => 'aln',  'label' => 'CLUSTALW'},
     'msf'       => {'ext' => 'msf',  'label' => 'MSF'},
     'mega'      => {'ext' => 'meg',  'label' => 'Mega'},
+    'newick'    => {'ext' => 'nh',   'label' => 'Newick'},
     'nexus'     => {'ext' => 'nex',  'label' => 'Nexus'},
+    'nhx'       => {'ext' => 'nhx',  'label' => 'NHX'},
     'orthoxml'  => {'ext' => 'xml',  'label' => 'OrthoXML'},
     'phylip'    => {'ext' => 'phy',  'label' => 'Phylip'},
     'phyloxml'  => {'ext' => 'xml',  'label' => 'PhyloXML'},
@@ -1770,6 +1770,7 @@ sub _munge_file_formats {
     'psi'       => {'ext' => 'psi',  'label' => 'PSI'},
     'rtf'       => {'ext' => 'rtf',  'label' => 'RTF'},
     'stockholm' => {'ext' => 'stk',  'label' => 'Stockholm'},
+    'emboss'    => {'ext' => 'txt',  'label' => 'EMBOSS'},
   );
 
   ## Munge into something useful to this website

@@ -169,19 +169,20 @@ sub caption {
  return $caption;
 }
 
-sub name               { my $self = shift; return $self->Obj->variation_name;                                         }
-sub class              { my $self = shift; return $self->Obj->var_class;                                              }
-sub source             { my $self = shift; return $self->Obj->source;                                                 }
-sub source_description { my $self = shift; return $self->Obj->source_description;                                     }
-sub study              { my $self = shift; return $self->Obj->study;                                                  }
-sub study_name         { my $self = shift; return (defined($self->study)) ? $self->study->name : undef;               }                
-sub study_description  { my $self = shift; return (defined($self->study)) ? $self->study->description : undef;        } 
-sub study_url          { my $self = shift; return (defined($self->study)) ? $self->study->url : undef;                }
-sub external_reference { my $self = shift; return (defined($self->study)) ? $self->study->external_reference : undef; }
-sub supporting_sv      { my $self = shift; return $self->Obj->get_all_SupportingStructuralVariants;                   }
-sub is_somatic         { my $self = shift; return $self->Obj->is_somatic;                                             }
-sub default_action     { return 'Explore'; }
-sub max_display_length { return 1000000; }
+sub name                  { my $self = shift; return $self->Obj->variation_name;                                         }
+sub class                 { my $self = shift; return $self->Obj->var_class;                                              }
+sub source                { my $self = shift; return $self->Obj->source;                                                 }
+sub source_description    { my $self = shift; return $self->Obj->source_description;                                     }
+sub study                 { my $self = shift; return $self->Obj->study;                                                  }
+sub study_name            { my $self = shift; return (defined($self->study)) ? $self->study->name : undef;               }
+sub study_description     { my $self = shift; return (defined($self->study)) ? $self->study->description : undef;        }
+sub study_url             { my $self = shift; return (defined($self->study)) ? $self->study->url : undef;                }
+sub external_reference    { my $self = shift; return (defined($self->study)) ? $self->study->external_reference : undef; }
+sub supporting_sv         { my $self = shift; return $self->Obj->get_all_SupportingStructuralVariants;                   }
+sub is_somatic            { my $self = shift; return $self->Obj->is_somatic;                                             }
+sub clinical_significance { my $self = shift; return $self->Obj->get_all_clinical_significance_states;                   }
+sub default_action        { return 'Explore'; }
+sub max_display_length    { return 1000000; }
 
 sub validation_status  { 
   my $self = shift; 

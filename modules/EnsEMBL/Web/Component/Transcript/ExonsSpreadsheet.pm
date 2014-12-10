@@ -25,7 +25,6 @@ use base qw(EnsEMBL::Web::Component::TextSequence EnsEMBL::Web::Component::Trans
 sub initialize {
   my ($self, $export) = @_;
   my $hub        = $self->hub;
-  my $only_exon  = $hub->param('oexon') eq 'yes'; # display only exons
   my $entry_exon = $hub->param('exon');
   my $object     = $self->object || $hub->core_object('transcript');
   my $transcript = $object->Obj;
@@ -34,14 +33,18 @@ sub initialize {
   my $chr_name   = $exons[0]->slice->seq_region_name;
   my $i          = 0;
   my @data;
+
+  my $type   = $hub->param('data_type') || $hub->type;
+  my $vc = $self->view_config($type);
   
   my $config = {
-    display_width => $hub->param('display_width') || 60,
-    sscon         => $hub->param('sscon')             // undef,   # no of bp to show either side of a splice site
-    flanking      => $hub->param('flanking')          // undef,   # no of bp up/down stream of transcript
-    full_seq      => ($hub->param('fullseq') || '') eq 'yes',     # flag to display full sequence (introns and exons)
-    snp_display   => $hub->param('snp_display')       // undef,
-    number        => $hub->param('line_numbering')    // undef,
+    exons_only    => $hub->param('exons_only') || $vc->get('exons_only'),
+    display_width => $hub->param('display_width') || $vc->get('display_width'),
+    sscon         => $hub->param('sscon') || $vc->get('sscon'),   # no of bp to show either side of a splice site
+    flanking      => $hub->param('flanking') || $vc->get('flanking'),   # no of bp up/down stream of transcript
+    full_seq      => $hub->param('fullseq') || $vc->get('fullseq'),     # flag to display full sequence (introns and exons)
+    snp_display   => $hub->param('snp_display') || $vc->get('snp_display'),
+    number        => $hub->param('line_numbering') || $vc->get('line_numbering'),
     coding_start  => $transcript->coding_region_start,
     coding_end    => $transcript->coding_region_end,
     strand        => $strand,
@@ -61,12 +64,12 @@ sub initialize {
       $config->{'min_frequency'} = $hub->param('min_frequency');
     }
     
-    $config->{'consequence_filter'} = { map { $_ => 1 } @consequence } if $config->{'snp_display'} && join('', @consequence) ne 'off';
+    $config->{'consequence_filter'} = { map { $_ => 1 } @consequence } if $config->{'snp_display'} ne 'off' && join('', @consequence) ne 'off';
     $config->{'hide_long_snps'}     = $hub->param('hide_long_snps') eq 'yes';
   }
   
   # Get flanking sequence
-  my ($upstream, $downstream, $offset) = $config->{'flanking'} && !$only_exon ? $self->get_flanking_sequence_data($config, $exons[0], $exons[-1]) : ();
+  my ($upstream, $downstream, $offset) = $config->{'exons_only'} eq 'off' && $config->{'flanking'} ? $self->get_flanking_sequence_data($config, $exons[0], $exons[-1]) : ();
   
   if ($upstream) {
     $self->add_line_numbers('upstream', $config, $config->{'flanking'}, $offset);
@@ -99,7 +102,7 @@ sub initialize {
     };
 
     # Add intronic sequence
-    if ($next_exon && !$only_exon) {
+    if ($config->{'exons_only'} eq 'off' && $next_exon) {
       my ($intron_start, $intron_end) = $strand == 1 ? ($exon_end + 1, $next_exon->start - 1) : ($next_exon->end + 1, $exon_start - 1);
       my $intron_length = $intron_end - $intron_start + 1;
       my $intron_id     = "Intron $i-" . ($i + 1);
@@ -153,13 +156,6 @@ sub export_options { return {'action' => 'ExonSeq'}; }
 sub initialize_export {
   my $self = shift;
   my $hub = $self->hub;
-  ## Set some CGI parameters from the viewconfig
-  ## (because we don't want to have to set them in DataExport)
-  my $vc = $hub->get_viewconfig('ExonsSpreadsheet', 'Transcript');
-  my @params = qw(sscon snp_display flanking line_numbering fullseq);
-  foreach (@params) {
-    $hub->param($_, $vc->get($_));
-  }
   my ($data, $config) = $self->initialize(1);
   $config->{'v_space'} = "\n";
   return ($data, $config, 1);
@@ -228,14 +224,14 @@ sub get_intron_sequence_data {
   my @sequence;
   
   eval {
-    if (!$config->{'full_seq'} && $intron_length > ($sscon * 2)) {
+    if ((!$config->{'full_seq'} || $config->{'full_seq'} eq 'off') && $intron_length > ($sscon * 2)) {
       my $start = { slice => $exon->slice->sub_Slice($intron_start, $intron_start + $sscon - 1, $strand) };
       my $end   = { slice => $next_exon->slice->sub_Slice($intron_end - ($sscon - 1), $intron_end, $strand) };
       
       $start->{'sequence'} = [ map {{ letter => $_, class => 'e1' }} split '', lc $start->{'slice'}->seq ];
       $end->{'sequence'}   = [ map {{ letter => $_, class => 'e1' }} split '', lc $end->{'slice'}->seq   ];
-      
-      if ($config->{'snp_display'} eq 'yes') {
+     
+      if ($config->{'snp_display'} eq 'on') {
         $self->add_variations($config, $_->{'slice'}, $_->{'sequence'}) for $start, $end;
       }
       
@@ -247,7 +243,7 @@ sub get_intron_sequence_data {
       
       @sequence = map {{ letter => $_, class => 'e1' }} split '', lc $slice->seq;
       
-      $self->add_variations($config, $slice, \@sequence) if $config->{'snp_display'} eq 'yes';
+      $self->add_variations($config, $slice, \@sequence) if $config->{'snp_display'} eq 'on';
       $self->add_line_numbers('intron', $config, $intron_length);
     }
   };

@@ -46,29 +46,21 @@ sub content {
   ## Get user's current settings
   my $viewconfig  = $hub->get_viewconfig($hub->param('component'), $hub->param('data_type'));
 
-  my $settings = {
-        'extra' => {
+  my $settings = $viewconfig->form_fields;
+
+  $settings->{'extra'} = {
           'type'      => 'Checklist',
           'label'     => 'Sequences to export',
           'values'    => $checklist,
           'selectall' => 'off',
-        },
-        'snp_display' => {
-            'label'   => 'Include sequence variants',
-            'type'    => 'Checkbox',
-            'value'   => 'on',
-            'checked' => $viewconfig->get('snp_display') eq 'off' ? 0 : 1,
-        },
   };
 
   ## Options per format
+  my @field_order = $viewconfig->field_order;
+
   my $fields_by_format = {
-    'RTF' => [
-                ['snp_display'],
-              ],  
-    'FASTA' => [
-                ['extra'],
-               ], 
+                          'RTF'   => [@field_order],
+                          'FASTA' => ['extra'],
   };
 
   ## Create settings form (comes with some default fields - see parent)

@@ -189,14 +189,14 @@ sub get_export_data {
   my $hub = $self->hub;
 
   ## Fetch explicitly, as we're probably coming from a DataExport URL
-  if ($type && $type eq 'gene') {
+  if ($type && $type eq 'genetree') {
     my $cdb = $hub->param('cdb') || 'compara';
     my $gene = $self->hub->core_object('gene');
-    return $gene->get_GeneTree($cdb);
+    return $gene->get_GeneTree($cdb, 1);
   }
 
   ## ...or get alignment
-  my $simple_alignment;
+  my $simple_alignments = [];
   my $seq           = $hub->param('align');
   my $second_gene   = $hub->param('g1');
   my $homologies = $self->get_homologies;
@@ -218,15 +218,15 @@ sub get_export_data {
     if ($sa) {
       foreach my $peptide (@{$homology->get_all_Members}) {
         my $gene = $peptide->gene_member;
-        if ($gene->stable_id eq $second_gene) {
-          $simple_alignment = $sa;
-          last HOMOLOGY;
+        if (!$second_gene || $second_gene eq $gene->stable_id) {
+          push @$simple_alignments, $sa;
+          last HOMOLOGY if $second_gene;
         }
       }
     }
   }
 
-  return $simple_alignment;
+  return $simple_alignments;
 }
 
 sub buttons {
@@ -250,7 +250,7 @@ sub buttons {
 
   return {
     'url'     => $hub->url($params),
-    'caption' => 'Download alignment',
+    'caption' => 'Download homology',
     'class'   => 'export',
     'modal'   => 1
   };

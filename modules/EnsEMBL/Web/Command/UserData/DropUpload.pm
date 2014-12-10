@@ -43,7 +43,7 @@ sub process {
     my $data    = $session->get_data(code => $upload->{'code'});
     my $parser  = EnsEMBL::Web::Text::FeatureParser->new($species_defs, $hub->referer->{'params'}{'r'}[0], $data->{'species'});
     my $format  = $data->{'format'};
-    my $formats = $hub->species_defs->REMOTE_FILE_FORMATS;
+    my $formats = $hub->species_defs->multi_val('REMOTE_FILE_FORMATS');
 
     return if grep /^$data->{'format'}$/i, @$formats; # large formats aren't parsable
     

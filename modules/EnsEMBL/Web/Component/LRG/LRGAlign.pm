@@ -47,7 +47,10 @@ sub content {
   my $slice       = $lrg->feature_Slice;
 
   my $slice_adaptor = $self->hub->database('core')->get_SliceAdaptor;
-  
+ 
+  my $exons = $lrg->get_all_Exons;
+  my %lrg_exons_start = map { $_->start => $_->end } @{$exons};
+ 
   # Chr slice 
   my $chr    = $slice->seq_region_name;
   my $start  = $self->thousandify($slice->start);
@@ -153,12 +156,17 @@ sub content {
                  'LRG deletion'  => $colours_defs->{delete}->{default}, #'#FF0000',
                  'Substitution'  => $colours_defs->{snp}->{default});   #'#00BB00');
   
-  # Legend               
-  $html .= qq{<table style="background-color:#fffdf7"><tr><td style="padding-left:2px;padding-right:2px;font-size:0.9em"><b>Keys:<b></td>};
+  # Legend
+  my $width = '60px';
+  my $exons_highlight = qq{style="background-color:#ffebcd"};
+  $html .= qq{
+  <div class="adornment-key"><dl>
+    <dt style="width:$width">Exons:</dt><dd style="margin-left:$width"><ul><li><span class="adorn-key-entry" $exons_highlight>LRG exons</span></li></ul></dd>
+    <dt style="width:$width">Differences:</dt><dd style="margin-left:$width"><ul>};
   while (my ($type, $c) = each (%colours)) {
-    $html .= qq{<td style="padding-left:2px;padding-right:2px;border: 1px solid #000000;background-color:$c;color:#FFFFFF;font-size:0.9em">$type</td>};
+    $html .= qq{<li><span class="adorn-key-entry" style="background-color:$c;color:#FFFFFF">$type</span></li>};
   }
-  $html .= qq{</tr></table>};
+  $html .= qq{</ul></dd></dl></div>};
 
 
   $html .= qq{<pre style>};
@@ -177,7 +185,6 @@ sub content {
     }
     $start =~ s/,//g;
     
-    
     # LRG Deletion (<=> Genomic insertion)
     # Reverse strand
     if ($reverse) {
@@ -190,9 +197,11 @@ sub content {
         my $colour = $colours{'LRG deletion'};
         my $gap_slice = $slice_adaptor->fetch_by_region('chromosome', $slice->seq_region_name, $location, $location, $coord->strand);
         my $gap_seq = $gap_slice->seq;
-        
-        $ref_line   .= qq{</span><span style="background-color:$colour;color:#FFFFFF">$gap_seq</span><span>};
-        $lrg_line   .= qq{</span><span style="background-color:$colour;color:#FFFFFF">-</span><span>};
+       
+        my $highlight = qq{style="background-color:$colour;color:#FFFFFF"}; 
+ 
+        $ref_line   .= qq{</span><span $highlight>$gap_seq</span><span>};
+        $lrg_line   .= qq{</span><span $highlight>-</span><span>};
         $vars->{ref_idx} ++;
         $line_count ++;
       
@@ -215,9 +224,11 @@ sub content {
         my $colour = $colours{'LRG deletion'};
         my $gap_slice = $slice_adaptor->fetch_by_region('chromosome', $slice->seq_region_name, $location, $location, $coord->strand);
         my $gap_seq = $gap_slice->seq;
-        
-        $ref_line   .= qq{</span><span style="background-color:$colour;color:#FFFFFF">$gap_seq</span><span>};
-        $lrg_line   .= qq{</span><span style="background-color:$colour;color:#FFFFFF">-</span><span>};
+       
+        my $highlight = qq{style="background-color:$colour;color:#FFFFFF"};
+ 
+        $ref_line   .= qq{</span><span $highlight>$gap_seq</span><span>};
+        $lrg_line   .= qq{</span><span $highlight>-</span><span>};
         $vars->{ref_idx} ++;
         $line_count ++;
       
@@ -246,6 +257,7 @@ sub content {
       my $insert_end;
       if ($gaps->{$align_start+$vars->{lrg_idx}}) {
         my $colour = $colours{'LRG insertion'};
+        my $highlight = qq{style="background-color:$colour;color:#FFFFFF"};
         my $gap_start = $align_start+$vars->{lrg_idx};
         $ref_line .= qq{</span><span id="$gap_start"></span><span>}; # Add an anchor
         while ($gaps->{$gap_start} >= $align_start+$vars->{lrg_idx}) {
@@ -255,28 +267,32 @@ sub content {
             (my $line,$vars,$ref_line,$lrg_line) = $self->print_line($vars,$ref_line,$lrg_line);
             $html .= $line;
             $line_count = 0;
-          }
+          } 
           
-          $ref_line   .= qq{</span><span style="background-color:$colour;color:#FFFFFF">-</span><span>};
+          $ref_line   .= qq{</span><span $highlight>-</span><span>};
           $vars->{lrg_idx} ++;
           $line_count ++;
         }
         my $insert_seq = $lrg_slice->subseq($gap_start,$gaps->{$gap_start},$lrg_slice->strand);
-        $lrg_line .= qq{</span><span style="background-color:$colour;color:#FFFFFF">$insert_seq</span><span>};
+        $lrg_line .= qq{</span><span $highlight>$insert_seq</span><span>};
       }
       
-      # Equal the Ref
+      # Equal the Ref (no "Diffence highlighting")
       if ($ref_nt[$i] eq $lrg_nt[$vars->{lrg_idx}]) {
         $ref_line   .= $ref_nt[$i];
-        $lrg_line   .= $lrg_nt[$vars->{lrg_idx}];
+        my $lrg_pos = $align_start+$vars->{lrg_idx};
+        my @in_exon = grep { $lrg_exons_start{$_} >= $lrg_pos } grep { $_ <= $lrg_pos } sort(keys(%lrg_exons_start));
+        my $lrg_seq = $lrg_nt[$vars->{lrg_idx}];
+        $lrg_line   .= (scalar @in_exon) ? qq{<span $exons_highlight>$lrg_seq</span>} : $lrg_seq;
       }
       # LRG Substitution
       else {
         my $colour = $colours{'Substitution'};
+        my $highlight = qq{style="background-color:$colour;color:#FFFFFF"};
         my $lrg_char = $lrg_nt[$vars->{lrg_idx}];
         my $lrg_location = $align_start+$vars->{lrg_idx};
-        $ref_line   .= qq{</span><span id="$lrg_location" style="background-color:$colour;color:#FFFFFF">$ref_nt[$i]</span><span>};
-        $lrg_line   .= qq{</span><span style="background-color:$colour;color:#FFFFFF">$lrg_char</span><span>};
+        $ref_line   .= qq{</span><span id="$lrg_location" $highlight>$ref_nt[$i]</span><span>};
+        $lrg_line   .= qq{</span><span $highlight>$lrg_char</span><span>};
       }
       $line_count ++;
       $vars->{lrg_idx} ++;

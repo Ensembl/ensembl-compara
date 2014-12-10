@@ -350,7 +350,7 @@ sub source {
   ### Description: gets the Variation source
   ### Returns String
 
-  $_[0]->vari->source;
+  $_[0]->vari->source_name;
 }
 
 sub source_description {
@@ -385,7 +385,7 @@ sub source_version {
   ### Returns String
 
   my $self    = shift;
-  my $source  = $self->vari->source;
+  my $source  = $self->vari->source_name;
   my $version = $self->vari->adaptor->get_source_version($source);
   return $version;
 }
@@ -735,6 +735,19 @@ sub get_external_data {
   my $self = shift;
   $self->{'external_data'} ||= $self->hub->database('variation')->get_PhenotypeFeatureAdaptor->fetch_all_by_Variation($self->vari);
   return $self->{'external_data'};
+}
+
+sub slice {
+  my $self = shift;
+  my @vfs = @{$self->Obj->get_all_VariationFeatures};
+  my $feature_slice;
+  return 1 unless $self->hub->param('vf');
+  foreach my $vf (@vfs){
+    if ($vf->dbID == $self->hub->core_param('vf')){
+      $feature_slice = $vf->feature_Slice;
+    }
+  }
+  return $feature_slice;
 }
 
 sub is_somatic_with_different_ref_base {
@@ -1409,9 +1422,6 @@ sub find_location {
   return $slice->name;
 }
 
-
-
-
 sub pop_obj_from_id {
 
   ### LD
@@ -1599,7 +1609,7 @@ sub hgvs_url {
   my $p = {
     action => 'Explore',
     db     => 'core',
-    source => $obj->source,
+    source => $obj->source_name,
     v      => $obj->name,
     r      => undef,
   };
