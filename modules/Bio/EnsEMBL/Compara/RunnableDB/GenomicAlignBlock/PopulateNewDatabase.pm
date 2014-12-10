@@ -95,6 +95,7 @@ sub run
   $cmd .= " --mlss " . $self->param('mlss_id') if ($self->param('mlss_id'));
   $cmd .= " --reg-conf " . $self->param('reg_conf') if ($self->param('reg_conf'));
   $cmd .= " --collection " . $self->param('collection') if ($self->param('collection'));
+  $cmd .= " --old " . $self->param('old_compara_db') if ($self->param('old_compara_db'));
 
   if($self->debug()) {
       warn qq{cmd = "$cmd"\n};
