@@ -271,7 +271,7 @@ sub update_genome_db {
         "You can use the --force option IF YOU REALLY KNOW WHAT YOU ARE DOING!!";
     }
   } elsif ($force) {
-    print "GenomeDB with this name [$species_name] and the corret assembly".
+    print "GenomeDB with this name [$species_name] and the correct assembly".
         " is not in the compara DB [$compara]\n".
         "You don't need the --force option!!";
     print "Press [Enter] to continue or Ctrl+C to cancel...";
