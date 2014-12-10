@@ -37,7 +37,7 @@ sub new {
   ## to make cleanup easier
   my $sd = $args{'hub'}->species_defs;
   $args{'base_dir'} = $sd->ENSEMBL_TMP_DIR_IMG; 
-  $args{'url_root'} = $sd->ENSEMBL_STATIC_SERVER . $sd->ENSEMBL_TMP_URL_IMG;
+  $args{'base_url'} = $sd->ENSEMBL_STATIC_SERVER . $sd->ENSEMBL_TMP_URL_IMG;
   return $class->SUPER::new(%args);
 }
 
