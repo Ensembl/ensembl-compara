@@ -20,7 +20,7 @@ package EnsEMBL::Web::File;
 
 use strict;
 
-use EnsEMBL::Web::Utils qw(random_string);
+use EnsEMBL::Web::Utils::RandomString qw(random_string);
 
 use EnsEMBL::Web::File::Utils::IO qw/:all/;
 use EnsEMBL::Web::File::Utils::Memcached qw/:all/;

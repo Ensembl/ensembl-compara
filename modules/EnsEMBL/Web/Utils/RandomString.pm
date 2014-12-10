@@ -16,7 +16,7 @@ limitations under the License.
 
 =cut
 
-package EnsEMBL::Web::Utils;
+package EnsEMBL::Web::Utils::RandomString;
 
 use strict;
 use Exporter qw(import);
