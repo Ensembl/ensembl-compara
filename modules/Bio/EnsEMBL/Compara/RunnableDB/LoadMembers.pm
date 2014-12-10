@@ -139,9 +139,13 @@ sub run {
                        [ grep { $_->assembly_exception_type() !~ /PATCH/ } @$slices ]
                        : [ @$slices ];
 
-    if(scalar(@$final_slices)) {
+    my $genomedb_slices = $self->param('genome_db')->genome_component
+        ? [ grep {lc $_->get_all_Attributes('genome_component')->[0]->value eq lc $self->param('genome_db')->genome_component} @$final_slices ]
+        : [ @$final_slices ];
 
-        $self->loadMembersFromCoreSlices( $final_slices );
+    if(scalar(@$genomedb_slices)) {
+
+        $self->loadMembersFromCoreSlices( $genomedb_slices );
 
     } else {
 
