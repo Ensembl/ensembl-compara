@@ -218,7 +218,30 @@ sub fetch_by_Slice {
   }
 
   my $core_dba = $slice->adaptor()->db();
-  return $self->fetch_by_core_DBAdaptor($core_dba);
+  my $gdb = $self->fetch_by_core_DBAdaptor($core_dba);
+  return unless $gdb;
+
+  # We need to return the right genome_db if the slice is from a polyploid
+  # genome. There are several ways of checking that:
+  #  - meta key in the core database
+  #  - slice attribute
+  #  - component genome_dbs in the compara database
+  # I have chosen the latter solution because the information is already in
+  # memory and it saves us from doing another trip to the database
+  my $comp_gdbs = $self->fetch_all_components_of_genome_db($gdb);
+  if (scalar(@$comp_gdbs)) {
+    # That said, we now have to query the database if it is a polyploid genome
+    my $all_comp_attr = $slice->get_all_Attributes('genome_component');
+    throw("No 'genome_component' attribute found\n") unless scalar(@$all_comp_attr);
+    throw("Too many 'genome_component' attributes !\n") if scalar(@$all_comp_attr) > 1;
+    my $comp_name = lc $all_comp_attr->[0]->value;
+    my @matching_gdbs = grep {lc $_->genome_component eq $comp_name} @$comp_gdbs;
+    throw("No genome_db for the component '$comp_name'\n") unless scalar(@matching_gdbs);
+    throw("Too many genome_dbs for the component '$comp_name'\n") if scalar(@matching_gdbs) > 1;
+    return $matching_gdbs[0];
+  } else {
+    return $gdb;
+  }
 }
 
 
