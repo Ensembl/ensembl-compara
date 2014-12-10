@@ -100,7 +100,7 @@ sub _dump_multiple_alignment {
 
     my $aln_file  = EnsEMBL::Web::File::Dynamic->new(
                                                       hub         => $self->hub,
-                                                      sub_dir     => 'r2r',
+                                                      sub_dir     => 'r2r_'.$self->hub->species,
                                                       name        => $model_name,
                                                       extension   => "aln",
                                                       compression => 0,
@@ -125,7 +125,8 @@ sub _create_svg {
     my ($self, $aln_file, $peptide_id, $model_name, $with_consensus_structure) = @_;
 
     ## Path to the files we dumped earlier
-    my $path  = $aln_file->{'base_path'};
+    my $path    = $aln_file->{'base_path'};
+    my $sub_dir = 'r2r_'.$self->hub->species;
 
     my $cons_filename  = $model_name.'.cons';
     ## For information about these options, check http://breaker.research.yale.edu/R2R/R2R-manual-1.0.3.pdf
@@ -135,7 +136,7 @@ sub _create_svg {
 
     my $th_file = EnsEMBL::Web::File::Dynamic->new(
                                                   hub         => $self->hub,
-                                                  sub_dir     => 'r2r',
+                                                  sub_dir     => $sub_dir,
                                                   name        => $model_name.'_thumbnail',
                                                   extension   => "svg",
                                                   compression => 0,
@@ -145,7 +146,7 @@ sub _create_svg {
 
       my $th_meta = EnsEMBL::Web::File::Dynamic->new(
                                                   hub         => $self->hub,
-                                                  sub_dir     => 'r2r',
+                                                  sub_dir     => $sub_dir,
                                                   name        => $model_name.'_thumbnail',
                                                   extension   => "meta",
                                                   compression => 0,
@@ -161,7 +162,7 @@ sub _create_svg {
 
     my $plot_file = EnsEMBL::Web::File::Dynamic->new(
                                                   hub         => $self->hub,
-                                                  sub_dir     => 'r2r',
+                                                  sub_dir     => $sub_dir,
                                                   name        => $model_name,
                                                   extension   => "svg",
                                                   compression => 0,
@@ -171,7 +172,7 @@ sub _create_svg {
 
       my $plot_meta  = EnsEMBL::Web::File::Dynamic->new(
                                                       hub         => $self->hub,
-                                                      sub_dir     => 'r2r',
+                                                      sub_dir     => $sub_dir,
                                                       name        => $model_name,
                                                       extension   => "meta",
                                                       compression => 0,
