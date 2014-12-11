@@ -36,12 +36,8 @@ Anne Parker <ap5@sanger.ac.uk>
 package Bio::EnsEMBL::ExternalData::DataHub::SourceParser;
 
 use strict;
-use vars qw(@EXPORT_OK);
-use base qw(Exporter);
 
-use HTTP::Tiny; 
-use LWP::UserAgent;
-
+use EnsEMBL::Web::File::Utils::URL qw(read_file);
 use EnsEMBL::Web::Tree;
 
 =head1 METHODS
@@ -59,25 +55,9 @@ use EnsEMBL::Web::Tree;
 =cut
 
 sub new {
-### We have to use two different modules to ensure
-### support for http, https and ftp
-  my ($class, $settings) = @_;
+  my ($class, %args) = @_;
 
-  ## HTTP(S)
-  my %args = ('timeout' => $settings->{'timeout'});
-  if ($settings->{'proxy'}) {
-    $args{'http_proxy'}   = $settings->{'proxy'};
-    $args{'https_proxy'}  = $settings->{'proxy'};
-  }
-
-  my $http = HTTP::Tiny->new(%args);
-
-  ## FTP
-  my $ua = LWP::UserAgent->new;
-  $ua->timeout($settings->{'timeout'});
-  $ua->proxy('http', $settings->{'proxy'}) if $settings->{'proxy'};
-
-  my $self = { http => $http, ua => $ua };
+  my $self = \%args;
   bless $self, $class;
 
   return $self;
@@ -108,19 +88,14 @@ sub get_hub_info {
     $hub_file = 'hub.txt';
     $url      =~ s|/$||;
   }
- 
-  my $ua    = $self->{'ua'};
-  my $http  = $self->{'http'};
-  my ($response, $content);
 
-  if ($url =~ /^ftp/) {
-    $response = $ua->get("$url/$hub_file");
-    return { error => [$response->status_line] } unless $response->is_success;
-    $content = $response->content;
+  my $response = read_file("$url/$hub_file", {'hub' => $self->{'hub'}});
+  my $content;
+ 
+  if ($response->{'error'}) {
+    return $response;
   }
-  else { 
-    $response = $http->get("$url/$hub_file");
-    return { error => [$self->_http_error($response)] } unless $response->{'success'};
+  else {
     $content = $response->{'content'};
   }
   my %hub_details;
@@ -133,14 +108,11 @@ sub get_hub_info {
   return { error => ['No genomesFile found'] } unless $hub_details{'genomesFile'};
  
   ## Now get genomes file and parse 
-  if ($url =~ /^ftp/) {
-    $response = $ua->get("$url/$hub_details{'genomesFile'}"); 
-    return { error => ['genomesFile: ' . $response->status_line] } unless $response->is_success;
-    $content = $response->content;
+  $response = read_file("$url/$hub_details{'genomesFile'}", {'hub' => $self->{'hub'}}); 
+  if ($response->{'error'}) {
+    return $response;
   }
   else {
-    $response = $http->get("$url/$hub_details{'genomesFile'}");
-    return { error => ['genomesFile: ' . $self->_http_error($response)] } unless $response->{'success'};
     $content = $response->{'content'};
   }
 
@@ -174,23 +146,16 @@ sub get_hub_info {
      ## Parse list of config files
       foreach my $genome (keys %ok_genomes) {
       $file = $genome_info{$genome};
-  
-      if ($url =~ /^ftp/) {
-        $response = $ua->get("$url/$file");
-        if (!$response->is_success) {
-          push @errors, "$genome ($url/$file): " . $response->status_line;
-          next;
-        }
-        $content = $response->content;
+ 
+      $response = read_file("$url/$file", {'hub' => $self->{'hub'}}); 
+
+      if ($response->{'error'}) {
+        push @errors, "$genome ($url/$file): ".@{$response->{'error'}};
       }
       else {
-        $response = $http->get("$url/$file");
-        if (!$response->{'success'}) {
-          push @errors, "$genome ($url/$file): " . $self->_http_error($response);
-          next;
-        }
         $content = $response->{'content'};
       }
+
       my @track_list;
       $content =~ s/\r//g;
     
@@ -241,31 +206,17 @@ sub parse {
     return;
   }
   
-  my $http  = $self->{'http'};
-  my $ua    = $self->{'ua'};
-
   my $tree = EnsEMBL::Web::Tree->new;
   my $response;
   
   ## Get all the text files in the hub directory
   foreach (@$files) {
-    if ($_ =~ /^ftp/) {
-      $response = $ua->get($_);
+    $response = read_file($_, {'hub' => $self->{'hub'}});
 
-      if ($response->is_success) {
-        $self->parse_file_content($tree, $response->content =~ s/\r//gr, $_);
-      } else {
-        $tree->append($tree->create_node("error_$_", { error => $response->status_line, file => $_ }));
-      }
-    }
-    else {
-      $response = $http->get($_);
-    
-      if ($response->{'success'}) {
-        $self->parse_file_content($tree, $response->{'content'} =~ s/\r//gr, $_);
-      } else {
-        $tree->append($tree->create_node("error_$_", { error => $self->_http_error($response), file => $_ }));
-      }
+    if ($response->{'error'}) {
+      $tree->append($tree->create_node("error_$_", { error => @{$response->{'error'}}, file => $_ }));
+    } else {
+      $self->parse_file_content($tree, $response->{'content'} =~ s/\r//gr, $_);
     }
   }
   
@@ -490,12 +441,6 @@ sub sort_tree {
   }
   
   $self->sort_tree($_) for @children;
-}
-
-sub _http_error {
-### Helper subroutine for formatting error messages from HTTP::Tiny
-  my ($self, $response) = @_;
-  return $response->{'status'}.': '.$response->{'reason'};
 }
 
 1;
