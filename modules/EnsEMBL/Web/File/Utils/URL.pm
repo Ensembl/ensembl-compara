@@ -51,7 +51,7 @@ sub chase_redirects {
     $ua->proxy([qw(http https)], $self->{'hub'}->species_defs->ENSEMBL_WWW_PROXY) || ();
     my $response = $ua->head($url);
     return $response->is_success ? $response->request->uri->as_string
-                                    : {'error' => [$response->status_line]};
+                                    : {'error' => _get_lwp_useragent_error($response)]};
   }
   else {
     my %args = (
@@ -69,7 +69,7 @@ sub chase_redirects {
       return $response->{'url'};
     }
     else {
-      return {'error' => $response->{'status'}.': '.$response->{'reason'}};
+      return {'error' => _get_http_tiny_error($response)};
     }
   }
 }
@@ -101,7 +101,7 @@ sub read_file {
       $content = $response->content;
     }
     else {
-      $error = [$response->status_line];
+      $error = [_get_lwp_useragent_error($response)];
     }
   }
   else {
@@ -120,7 +120,7 @@ sub read_file {
       $content = $response->{'content'};
     }
     else {
-      $error = $response->{'status'}.': '.$response->{'reason'};
+      $error = _get_http_tiny_error($response);
     }
   }
 
@@ -133,6 +133,27 @@ sub read_file {
     return {'content' => $uncomp};
   }
 }
+
+sub _get_lwp_useragent_error {
+  my $response = shift;
+
+  return 'timeout'              unless $response->code;
+  return $response->status_line if     $response->code >= 400;
+  return 'mime'                 if     $response->content_type =~ /HTML/i;
+  return;
+}
+
+sub _get_http_tiny_error {
+  my $response = shift;
+
+  return 'timeout' unless $response->{'code'};
+  if ($response->{'code'} >= 400) {
+    return $response->{'status'}.': '.$response->{'reason'};
+  }
+  return 'mime' if $response->{'content_type'} =~ /HTML/i;
+  return;
+}
+
 
 1;
 
