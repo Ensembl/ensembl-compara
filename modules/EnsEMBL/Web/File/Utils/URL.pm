@@ -19,14 +19,60 @@ limitations under the License.
 package EnsEMBL::Web::File::Utils::URL;
 
 ### Non-OO library for common functions required for handling remote files 
+### Note that we have to use two different Perl modules here, owing to 
+### limitations on support for FTP and proxied HTTPS
 
 use strict;
+
+use HTTP::Tiny;
+use LWP::UserAgent;
 
 use EnsEMBL::Web::Exceptions;
 
 use Exporter qw(import);
-our @EXPORT_OK = qw(file_exists read_file);
+our @EXPORT_OK = qw(chase_redirects file_exists read_file get_filesize style_by_filesize);
 our %EXPORT_TAGS = (all     => [@EXPORT_OK]);
+
+use constant 'MAX_HIGHLIGHT_FILESIZE' => 1048576;  # (bytes) = 1Mb
+
+sub chase_redirects {
+### Deal with files "hidden" behind a URL-shortening service such as tinyurl
+### @param url String - initial URL supplied by the interface
+### @param max_follow Integer - maximum number of redirects to follow
+### @return url String - the actual URL of the file
+  my ($self, $url, $max_follow) = @_;
+
+  $max_follow = 10 unless defined $max_follow;
+
+  if ($url =~ /^ftp/) {
+    my $ua = LWP::UserAgent->new( max_redirect => $max_follow );
+    $ua->timeout(10);
+    $ua->env_proxy;
+    $ua->proxy([qw(http https)], $self->{'hub'}->species_defs->ENSEMBL_WWW_PROXY) || ();
+    my $response = $ua->head($url);
+    return $response->is_success ? $response->request->uri->as_string
+                                    : {'error' => [$response->status_line]};
+  }
+  else {
+    my %args = (
+              'timeout'       => 10,
+              'max_redirect'  => $max_follow,
+              );
+    if ($self->{'hub'}->species_defs->ENSEMBL_WWW_PROXY) {
+      $args{'http_proxy'}   = $self->{'hub'}->species_defs->ENSEMBL_WWW_PROXY;
+      $args{'https_proxy'}  = $self->{'hub'}->species_defs->ENSEMBL_WWW_PROXY;
+    }
+    my $http = HTTP::Tiny->new(%args);
+
+    my $response = $http->request('HEAD', $url);
+    if ($response->{'success'}) {
+      return $response->{'url'};
+    }
+    else {
+      return {'error' => $response->{'status'}.': '.$response->{'reason'}};
+    }
+  }
+}
 
 sub file_exists {
 ### Check if a file of this name exists
@@ -43,14 +89,49 @@ sub read_file {
 ###         no_exception Boolean - whether to throw an exception
 ### @return String (entire file)
   my ($url, $args) = @_;
-  my $content;
+  my ($content, $error);
 
-  my $compression = defined($args->{'compression'}) || _compression($url);
-
-  if ($@ && !$args->{'no_exception'}) {
-    throw exception('UrlException', sprintf qq(Could not read file '%s' due to following errors: \n%s), $url, $@);
+  if ($url =~ /^ftp/) {
+    my $ua = LWP::UserAgent->new( max_redirect => $max_follow );
+    $ua->timeout(10);
+    $ua->env_proxy;
+    $ua->proxy([qw(http https)], $self->{'hub'}->species_defs->ENSEMBL_WWW_PROXY) || ();
+    my $response = $ua->get($url);
+    if ($response->is_success) {
+      $content = $response->content;
+    }
+    else {
+      $error = [$response->status_line];
+    }
   }
-  return $content;
+  else {
+    my %args = (
+              'timeout'       => 10,
+              'max_redirect'  => $max_follow,
+              );
+    if ($self->{'hub'}->species_defs->ENSEMBL_WWW_PROXY) {
+      $args{'http_proxy'}   = $self->{'hub'}->species_defs->ENSEMBL_WWW_PROXY;
+      $args{'https_proxy'}  = $self->{'hub'}->species_defs->ENSEMBL_WWW_PROXY;
+    }
+    my $http = HTTP::Tiny->new(%args);
+
+    my $response = $http->request('GET', $url);
+    if ($response->{'success'}) {
+      $content = $response->{'content'};
+    }
+    else {
+      $error = $response->{'status'}.': '.$response->{'reason'};
+    }
+  }
+
+  if ($error) {
+    return {'error' => $error};
+  }
+  else {
+    my $compression = defined($args->{'compression'}) || check_compression($url);
+    my $uncomp = $compression ? uncompress($content, $compression) : $content;
+    return {'content' => $uncomp};
+  }
 }
 
 1;
