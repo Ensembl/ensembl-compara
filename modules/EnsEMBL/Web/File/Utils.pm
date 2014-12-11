@@ -22,7 +22,7 @@ package EnsEMBL::Web::File::Utils;
 
 use strict;
 
-use Compress::Zlib;
+use Compress::Zlib qw//;
 use Compress::Bzip2;
 use IO::Uncompress::Bunzip2;
 
