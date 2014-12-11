@@ -24,7 +24,7 @@ use Digest::MD5 qw(md5_hex);
 
 use EnsEMBL::Web::Root;
 use Bio::EnsEMBL::ExternalData::AttachedFormat;
-use EnsEMBL::Web::Tools::RemoteURL qw(chase_redirects);
+use EnsEMBL::Web::File::Utils::URL qw(chase_redirects);
 
 use base qw(EnsEMBL::Web::Command);
 

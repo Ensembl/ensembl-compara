@@ -24,7 +24,7 @@ no warnings 'uninitialized';
 
 use base qw(Bio::EnsEMBL::ExternalData::AttachedFormat);
 
-use EnsEMBL::Web::Tools::RemoteURL qw(chase_redirects);
+use EnsEMBL::Web::File::Utils::URL qw(chase_redirects);
 
 sub check_data {
   my ($self) = @_;

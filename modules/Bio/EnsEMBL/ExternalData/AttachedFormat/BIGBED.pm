@@ -26,7 +26,7 @@ use Bio::EnsEMBL::ExternalData::BigFile::BigBedAdaptor;
 
 use base qw(Bio::EnsEMBL::ExternalData::AttachedFormat);
 
-use EnsEMBL::Web::Tools::RemoteURL qw(chase_redirects);
+use EnsEMBL::Web::File::Utils::URL qw(chase_redirects);
 
 sub new {
   my $self = shift->SUPER::new(@_);

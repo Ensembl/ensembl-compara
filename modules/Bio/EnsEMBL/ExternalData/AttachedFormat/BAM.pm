@@ -27,7 +27,7 @@ use File::Basename qw(fileparse);
 use File::Spec;
 use File::stat qw(stat);
 
-use EnsEMBL::Web::Tools::RemoteURL qw(chase_redirects);
+use EnsEMBL::Web::File::Utils::URL qw(chase_redirects);
 
 use base qw(Bio::EnsEMBL::ExternalData::AttachedFormat);
 
