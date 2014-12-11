@@ -24,6 +24,9 @@ use Compress::Bzip2;
 use IO::Uncompress::Bunzip2;
 
 sub uncomp {
+######## DEPRECATED ################
+warn "DEPRECATED METHOD 'uncomp' - please switch to using EnsEMBL::Web::File::Utils::uncompress. This module will be removed in release 80.";
+####################################
   my $content_ref = shift;
   if( ord($$content_ref) == 31 && ord(substr($$content_ref,1)) == 157 ) { ## COMPRESS...
     my $t = Compress::Zlib::uncompress($$content_ref);
