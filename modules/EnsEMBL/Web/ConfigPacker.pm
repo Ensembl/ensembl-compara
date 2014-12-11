@@ -23,7 +23,6 @@ use warnings;
 no warnings qw(uninitialized);
 
 use Bio::EnsEMBL::ExternalData::DAS::SourceParser;
-use Bio::EnsEMBL::ExternalData::DataHub::SourceParser;
 
 use base qw(EnsEMBL::Web::ConfigPacker_base);
 
