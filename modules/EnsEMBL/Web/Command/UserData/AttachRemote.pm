@@ -22,7 +22,6 @@ use strict;
 
 use Digest::MD5 qw(md5_hex);
 
-use EnsEMBL::Web::Root;
 use Bio::EnsEMBL::ExternalData::AttachedFormat;
 use EnsEMBL::Web::File::Utils::URL qw(chase_redirects);
 
@@ -74,7 +73,7 @@ sub process {
     my $trackline      = $self->hub->param('trackline');
     my $format;
     
-    if (EnsEMBL::Web::Root::dynamic_use(undef, $format_package)) {
+    if ($self->dynamic_use($format_package)) {
       $format = $format_package->new($self->hub, $format_name, $url, $trackline);
     } else {
       $format = Bio::EnsEMBL::ExternalData::AttachedFormat->new($self->hub, $format_name, $url, $trackline);
@@ -102,7 +101,7 @@ sub process {
       
       delete $options->{'name'};
 
-      $url = $self->chase_redirects($url);
+      $url = chase_redirects($url, {'hub' => $self->hub});
       if (ref($url) eq 'HASH') {
         $redirect .= 'SelectFile';
         $session->add_data(
