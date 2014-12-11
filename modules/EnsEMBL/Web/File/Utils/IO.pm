@@ -44,7 +44,7 @@ package EnsEMBL::Web::File::Utils::IO;
 use strict;
 
 use Bio::EnsEMBL::Utils::IO qw(:all);
-use EnsEMBL::Web::Utils qw(check_compression);
+use EnsEMBL::Web::File::Utils qw(check_compression);
 use EnsEMBL::Web::File::Utils::FileSystem qw(create_path);
 use EnsEMBL::Web::Exceptions;
 
