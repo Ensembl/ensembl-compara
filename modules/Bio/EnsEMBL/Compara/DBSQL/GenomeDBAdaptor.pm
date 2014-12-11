@@ -329,7 +329,7 @@ sub fetch_by_core_DBAdaptor {
 
 =head2 fetch_all_components_of_genome_db
 
-  Example     : $principal_genome_db->fetch_all_components_of_genome_db();
+  Example     : $genome_db_adaptor->fetch_all_components_of_genome_db();
   Description : Returns all the component genome_dbs attached to this one
   Returntype  : Arrayref of Bio::EnsEMBL::Compara::GenomeDB
   Exceptions  : none
