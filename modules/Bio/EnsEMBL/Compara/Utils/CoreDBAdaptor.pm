@@ -88,7 +88,7 @@ sub is_high_coverage {
     return undef unless $core_dba;
     return undef unless $core_dba->group eq 'core';
 
-    my $coverage_depth = lc $core_dba->get_MetaContainer()->single_value_by_key('assembly.coverage_depth', 1);
+    my $coverage_depth = lc($core_dba->get_MetaContainer()->single_value_by_key('assembly.coverage_depth', 1) || '' );
 
     if ($coverage_depth eq 'high') {
         return 1;
