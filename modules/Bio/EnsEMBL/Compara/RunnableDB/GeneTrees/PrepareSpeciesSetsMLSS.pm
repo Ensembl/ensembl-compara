@@ -83,22 +83,6 @@ sub fetch_input {
     $self->param('ml_homoeo', $method_adaptor->fetch_by_type('ENSEMBL_HOMOEOLOGUES'));
     $self->param('ml_genetree', $method_adaptor->fetch_by_type($self->param('tree_method_link')));
 
-    my %homoeologous_groups = ();
-    foreach my $i (1..(scalar(@{$self->param('homoeologous_genome_dbs')}))) {
-        my $group = $self->param('homoeologous_genome_dbs')->[$i-1];
-        foreach my $gdb (@{$group}) {
-            if (looks_like_number($gdb)) {
-                $homoeologous_groups{$gdb} = $i;
-            } elsif (ref $gdb) {
-                $homoeologous_groups{$gdb->dbID} = $i;
-            } else {
-                $gdb = $self->compara_dba->get_GenomeDBAdaptor->fetch_by_name_assembly($gdb);
-                $homoeologous_groups{$gdb->dbID} = $i;
-            }
-        }
-    }
-    $self->param('homoeologous_groups', \%homoeologous_groups);
-
 }
 
 
@@ -107,7 +91,6 @@ sub write_output {
 
     my $ss = $self->_write_ss($self->param('genome_dbs') );
     my $mlss = $self->_write_mlss( $ss, $self->param('ml_genetree') );
-    my $homoeologous_genome_dbs_groups_aref = $self->param('homoeologous_genome_dbs');
     my $hive_pwp_adaptor = $self->db->get_PipelineWideParametersAdaptor;
 
     # Should be a pipeline-wide parameter
@@ -117,17 +100,17 @@ sub write_output {
     foreach my $genome_db1 (@{$self->param('genome_dbs')}) {
         my $ss1 = $self->_write_ss( [$genome_db1] );
         my $mlss_p1 = $self->_write_mlss( $ss1, $self->param('ml_para') );
-        foreach my $genome_db2 (@{$self->param('genome_dbs')}) {
-            next if $genome_db1->dbID >= $genome_db2->dbID;
 
-            my $ss12 = $self->_write_ss( [$genome_db1, $genome_db2] );
-            #my $mlss_p12 = $self->_write_mlss( $ss12, $self->param('ml_para') );
-            my $mlss_o12 = $self->_write_mlss( $ss12, $self->param('ml_ortho') );
-            if (($self->param('homoeologous_groups')->{$genome_db1->dbID} || -1) == ($self->param('homoeologous_groups')->{$genome_db2->dbID} || -2)) {
-               my $mlss_h12 = $self->_write_mlss( $ss12, $self->param('ml_homoeo') );
-           }
+        my $comp_gdbs = $genome_db1->component_genome_dbs;
+        if (scalar(@$comp_gdbs)) {
+            my $mlss_h1 = $self->_write_mlss( $ss1, $self->param('ml_homoeo') );
+            $self->_write_all_pairs( $self->param('ml_homoeo'), $comp_gdbs );
         }
     }
+
+    ## Since possible_ortholds have been removed, there are no between-species paralogs any more
+    ## In theory, we could skip the orthologs between components of the same polyploid Genome
+    $self->_write_all_pairs( $self->param('ml_ortho'), $self->param('genome_dbs') );
 
     my $gdb_a = $self->compara_dba->get_GenomeDBAdaptor;
 
@@ -144,6 +127,22 @@ sub write_output {
     $hive_pwp_adaptor->store( {'param_name' => 'are_all_species_reused', 'param_value' => (scalar(@nonreuse_gdbs) ? 0 : 1)} );
 }
 
+
+# Write a mlss for each pair of species
+sub _write_all_pairs {
+    my ($self, $ml, $gdbs) = @_;
+    foreach my $g1 (@$gdbs) {
+        foreach my $g2 (@$gdbs) {
+            next if $g1->dbID >= $g2->dbID;
+            my $ss12 = $self->_write_ss( [$g1, $g2] );
+            my $mlss_h12 = $self->_write_mlss($ss12, $ml);
+        }
+    }
+}
+
+
+# Write the species-set of the given genome_dbs
+# Try to reuse the data from the reference db if possible
 sub _write_ss {
     my ($self, $genome_dbs) = @_;
 
@@ -159,6 +158,8 @@ sub _write_ss {
 }
 
 
+# Write the mlss of this species-set and this method
+# Try to reuse the data from the reference db if possible
 sub _write_mlss {
     my ($self, $ss, $method) = @_;
 
