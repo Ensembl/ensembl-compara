@@ -48,7 +48,7 @@ sub width {
 sub height { 
 ### @accessor
   my $self = shift;
-  return $self->{'size'}; 
+  return $self->{'height'}; 
 }
 
 sub size { 
