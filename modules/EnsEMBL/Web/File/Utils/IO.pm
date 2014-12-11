@@ -61,6 +61,15 @@ sub file_exists {
   return -e $path && -f $path;
 }
 
+sub delete_file {
+### Delete a file 
+### @param File - EnsEMBL::Web::File object or path to file (String)
+### @return Boolean
+  my ($file, $args) = @_;
+  my $path = ref($file) ? $file->location : $file;
+  return unlink $path;
+}
+
 sub fetch_file {
 ### Get raw content of file (e.g. for download, hence ignoring compression)
 ### @param File - EnsEMBL::Web::File object or path to file (String)

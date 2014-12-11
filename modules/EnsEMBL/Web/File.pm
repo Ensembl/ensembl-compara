@@ -300,5 +300,20 @@ sub write {
   }
 }
 
+sub delete {
+### Delete file
+### @return Void
+  my $self = shift;
+ 
+  foreach (@{$self->{'drivers'}}) {
+    my $method = 'EnsEMBL::Web::File::Utils::'.$_.'::delete_file'; 
+    eval {
+      no strict 'refs';
+      $success = &$method($self, {'no_exception' => 1});
+    };
+    return 1 if $success;
+  }
+}
+
 1;
 
