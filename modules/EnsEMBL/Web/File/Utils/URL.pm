@@ -30,7 +30,7 @@ use LWP::UserAgent;
 use EnsEMBL::Web::Exceptions;
 
 use Exporter qw(import);
-our @EXPORT_OK = qw(chase_redirects file_exists read_file get_filesize style_by_filesize);
+our @EXPORT_OK = qw(chase_redirects file_exists get_filesize read_file);
 our %EXPORT_TAGS = (all     => [@EXPORT_OK]);
 
 use constant 'MAX_HIGHLIGHT_FILESIZE' => 1048576;  # (bytes) = 1Mb
@@ -51,7 +51,7 @@ sub chase_redirects {
     $ua->proxy([qw(http https)], $self->{'hub'}->species_defs->ENSEMBL_WWW_PROXY) || ();
     my $response = $ua->head($url);
     return $response->is_success ? $response->request->uri->as_string
-                                    : {'error' => _get_lwp_useragent_error($response)]};
+                                    : {'error' => [_get_lwp_useragent_error($response)]};
   }
   else {
     my %args = (
@@ -69,7 +69,7 @@ sub chase_redirects {
       return $response->{'url'};
     }
     else {
-      return {'error' => _get_http_tiny_error($response)};
+      return {'error' => [_get_http_tiny_error($response)]};
     }
   }
 }
@@ -79,6 +79,41 @@ sub file_exists {
 ### @param url - URL of file
 ### @return Boolean
   my $url = shift;
+  my ($success, $error);
+
+  if ($url =~ /^ftp/) {
+    my $ua = LWP::UserAgent->new();
+    $ua->timeout(10);
+    $ua->env_proxy;
+    $ua->proxy([qw(http https)], $self->{'hub'}->species_defs->ENSEMBL_WWW_PROXY) || ();
+    my $response = $ua->head($url);
+    unless ($response->is_success) {
+      $error = _get_lwp_useragent_error($response);
+    }
+  }
+  else {
+    my %args = (
+              'timeout'       => 10,
+              );
+    if ($self->{'hub'}->species_defs->ENSEMBL_WWW_PROXY) {
+      $args{'http_proxy'}   = $self->{'hub'}->species_defs->ENSEMBL_WWW_PROXY;
+      $args{'https_proxy'}  = $self->{'hub'}->species_defs->ENSEMBL_WWW_PROXY;
+    }
+    my $http = HTTP::Tiny->new(%args);
+
+    my $response = $http->request('HEAD', $url);
+    unless ($response->{'success'}) {
+      $error = _get_http_tiny_error($response);
+    }
+  }
+
+  if ($error) {
+    return {'error' => [$error]};
+  }
+  else {
+    return {'success' => 1};
+  }
+}
 }
 
 sub read_file {
@@ -86,13 +121,12 @@ sub read_file {
 ### @param url - URL of file
 ### @param Args (optional) Hashref 
 ###         compression String - compression type
-###         no_exception Boolean - whether to throw an exception
 ### @return String (entire file)
   my ($url, $args) = @_;
   my ($content, $error);
 
   if ($url =~ /^ftp/) {
-    my $ua = LWP::UserAgent->new( max_redirect => $max_follow );
+    my $ua = LWP::UserAgent->new();
     $ua->timeout(10);
     $ua->env_proxy;
     $ua->proxy([qw(http https)], $self->{'hub'}->species_defs->ENSEMBL_WWW_PROXY) || ();
@@ -101,13 +135,12 @@ sub read_file {
       $content = $response->content;
     }
     else {
-      $error = [_get_lwp_useragent_error($response)];
+      $error = _get_lwp_useragent_error($response);
     }
   }
   else {
     my %args = (
               'timeout'       => 10,
-              'max_redirect'  => $max_follow,
               );
     if ($self->{'hub'}->species_defs->ENSEMBL_WWW_PROXY) {
       $args{'http_proxy'}   = $self->{'hub'}->species_defs->ENSEMBL_WWW_PROXY;
@@ -125,7 +158,7 @@ sub read_file {
   }
 
   if ($error) {
-    return {'error' => $error};
+    return {'error' => [$error]};
   }
   else {
     my $compression = defined($args->{'compression'}) || check_compression($url);
@@ -134,23 +167,68 @@ sub read_file {
   }
 }
 
+sub get_filesize {
+### Get size of remote file 
+### @param url - URL of file
+### @param Args (optional) Hashref 
+###         compression String - compression type
+### @return Integer - file size in bytes
+  my ($url, $args) = @_;
+  my ($size, $error);
+
+  if ($url =~ /^ftp/) {
+    ## TODO - support FTP!
+    ## return arbitrary filesize as a stopgap!
+    return {'filesize' => 1000};
+  }
+  else {
+    my %args = (
+              'timeout'       => 10,
+              );
+    if ($self->{'hub'}->species_defs->ENSEMBL_WWW_PROXY) {
+      $args{'http_proxy'}   = $self->{'hub'}->species_defs->ENSEMBL_WWW_PROXY;
+      $args{'https_proxy'}  = $self->{'hub'}->species_defs->ENSEMBL_WWW_PROXY;
+    }
+    my $http = HTTP::Tiny->new(%args);
+
+    my $response = $http->request('HEAD', $url);
+    if ($response->{'success'}) {
+      $size = $response->{'headers'}{'Content-Length'} || 0;
+    }
+    else {
+      $error = _get_http_tiny_error($response);
+    }
+  }
+
+  if ($error) {
+    return {'error' => [$error]};
+  }
+  else {
+    return {'filesize' => $size};
+  }
+}
+
 sub _get_lwp_useragent_error {
+### Convert error responses from LWP::UserAgent into a user-friendly string
+### @param response - HTTP::Response object
+### @return String
   my $response = shift;
 
   return 'timeout'              unless $response->code;
   return $response->status_line if     $response->code >= 400;
-  return 'mime'                 if     $response->content_type =~ /HTML/i;
   return;
 }
 
 sub _get_http_tiny_error {
+### Convert error responses from HTTP::Tiny into a user-friendly string
+### @param response HashRef 
+### @return String
   my $response = shift;
 
-  return 'timeout' unless $response->{'code'};
-  if ($response->{'code'} >= 400) {
+  return 'timeout' unless $response->{'status'};
+  if ($response->{'status'} >= 400) {
     return $response->{'status'}.': '.$response->{'reason'};
   }
-  return 'mime' if $response->{'content_type'} =~ /HTML/i;
   return;
 }
 
