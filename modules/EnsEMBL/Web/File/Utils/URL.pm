@@ -27,6 +27,7 @@ use strict;
 use HTTP::Tiny;
 use LWP::UserAgent;
 
+use EnsEMBL::Web::File::Utils qw(check_compression);
 use EnsEMBL::Web::Exceptions;
 
 use Exporter qw(import);
@@ -40,15 +41,15 @@ sub chase_redirects {
 ### @param url String - initial URL supplied by the interface
 ### @param max_follow Integer - maximum number of redirects to follow
 ### @return url String - the actual URL of the file
-  my ($self, $url, $max_follow) = @_;
+  my ($url, $args) = @_;
 
-  $max_follow = 10 unless defined $max_follow;
+  $args->{'max_follow'} = 10 unless defined $args->{'max_follow'};
 
   if ($url =~ /^ftp/) {
-    my $ua = LWP::UserAgent->new( max_redirect => $max_follow );
+    my $ua = LWP::UserAgent->new( max_redirect => $args->{'max_follow'} );
     $ua->timeout(10);
     $ua->env_proxy;
-    $ua->proxy([qw(http https)], $self->{'hub'}->species_defs->ENSEMBL_WWW_PROXY) || ();
+    $ua->proxy([qw(http https)], $args->{'hub'}->species_defs->ENSEMBL_WWW_PROXY) || ();
     my $response = $ua->head($url);
     return $response->is_success ? $response->request->uri->as_string
                                     : {'error' => [_get_lwp_useragent_error($response)]};
@@ -56,11 +57,11 @@ sub chase_redirects {
   else {
     my %args = (
               'timeout'       => 10,
-              'max_redirect'  => $max_follow,
+              'max_redirect'  => $args->{'max_follow'},
               );
-    if ($self->{'hub'}->species_defs->ENSEMBL_WWW_PROXY) {
-      $args{'http_proxy'}   = $self->{'hub'}->species_defs->ENSEMBL_WWW_PROXY;
-      $args{'https_proxy'}  = $self->{'hub'}->species_defs->ENSEMBL_WWW_PROXY;
+    if ($args->{'hub'}->species_defs->ENSEMBL_WWW_PROXY) {
+      $args{'http_proxy'}   = $args->{'hub'}->species_defs->ENSEMBL_WWW_PROXY;
+      $args{'https_proxy'}  = $args->{'hub'}->species_defs->ENSEMBL_WWW_PROXY;
     }
     my $http = HTTP::Tiny->new(%args);
 
@@ -77,29 +78,29 @@ sub chase_redirects {
 sub file_exists {
 ### Check if a file of this name exists
 ### @param url - URL of file
+### @param Args Hashref 
+###         hub EnsEMBL::Web::Hub
 ### @return Boolean
-  my $url = shift;
+  my ($url, $args) = @_;
   my ($success, $error);
 
   if ($url =~ /^ftp/) {
     my $ua = LWP::UserAgent->new();
     $ua->timeout(10);
     $ua->env_proxy;
-    $ua->proxy([qw(http https)], $self->{'hub'}->species_defs->ENSEMBL_WWW_PROXY) || ();
+    $ua->proxy([qw(http https)], $args->{'hub'}->species_defs->ENSEMBL_WWW_PROXY) || ();
     my $response = $ua->head($url);
     unless ($response->is_success) {
       $error = _get_lwp_useragent_error($response);
     }
   }
   else {
-    my %args = (
-              'timeout'       => 10,
-              );
-    if ($self->{'hub'}->species_defs->ENSEMBL_WWW_PROXY) {
-      $args{'http_proxy'}   = $self->{'hub'}->species_defs->ENSEMBL_WWW_PROXY;
-      $args{'https_proxy'}  = $self->{'hub'}->species_defs->ENSEMBL_WWW_PROXY;
+    my %params = ('timeout'       => 10);
+    if ($args->{'hub'}->species_defs->ENSEMBL_WWW_PROXY) {
+      $params{'http_proxy'}   = $args->{'hub'}->species_defs->ENSEMBL_WWW_PROXY;
+      $params{'https_proxy'}  = $args->{'hub'}->species_defs->ENSEMBL_WWW_PROXY;
     }
-    my $http = HTTP::Tiny->new(%args);
+    my $http = HTTP::Tiny->new(%params);
 
     my $response = $http->request('HEAD', $url);
     unless ($response->{'success'}) {
@@ -114,13 +115,13 @@ sub file_exists {
     return {'success' => 1};
   }
 }
-}
 
 sub read_file {
 ### Get entire content of file
 ### @param url - URL of file
-### @param Args (optional) Hashref 
-###         compression String - compression type
+### @param Args Hashref 
+###         hub EnsEMBL::Web::Hub
+###         compression String (optional) - compression type
 ### @return String (entire file)
   my ($url, $args) = @_;
   my ($content, $error);
@@ -129,7 +130,7 @@ sub read_file {
     my $ua = LWP::UserAgent->new();
     $ua->timeout(10);
     $ua->env_proxy;
-    $ua->proxy([qw(http https)], $self->{'hub'}->species_defs->ENSEMBL_WWW_PROXY) || ();
+    $ua->proxy([qw(http https)], $args->{'hub'}->species_defs->ENSEMBL_WWW_PROXY) || ();
     my $response = $ua->get($url);
     if ($response->is_success) {
       $content = $response->content;
@@ -139,14 +140,12 @@ sub read_file {
     }
   }
   else {
-    my %args = (
-              'timeout'       => 10,
-              );
-    if ($self->{'hub'}->species_defs->ENSEMBL_WWW_PROXY) {
-      $args{'http_proxy'}   = $self->{'hub'}->species_defs->ENSEMBL_WWW_PROXY;
-      $args{'https_proxy'}  = $self->{'hub'}->species_defs->ENSEMBL_WWW_PROXY;
+    my %params = ('timeout'       => 10);
+    if ($args->{'hub'}->species_defs->ENSEMBL_WWW_PROXY) {
+      $params{'http_proxy'}   = $args->{'hub'}->species_defs->ENSEMBL_WWW_PROXY;
+      $params{'https_proxy'}  = $args->{'hub'}->species_defs->ENSEMBL_WWW_PROXY;
     }
-    my $http = HTTP::Tiny->new(%args);
+    my $http = HTTP::Tiny->new(%params);
 
     my $response = $http->request('GET', $url);
     if ($response->{'success'}) {
@@ -170,8 +169,9 @@ sub read_file {
 sub get_filesize {
 ### Get size of remote file 
 ### @param url - URL of file
-### @param Args (optional) Hashref 
-###         compression String - compression type
+### @param Args Hashref 
+###         hub EnsEMBL::Web::Hub
+###         compression String (optional) - compression type
 ### @return Integer - file size in bytes
   my ($url, $args) = @_;
   my ($size, $error);
@@ -182,14 +182,12 @@ sub get_filesize {
     return {'filesize' => 1000};
   }
   else {
-    my %args = (
-              'timeout'       => 10,
-              );
-    if ($self->{'hub'}->species_defs->ENSEMBL_WWW_PROXY) {
-      $args{'http_proxy'}   = $self->{'hub'}->species_defs->ENSEMBL_WWW_PROXY;
-      $args{'https_proxy'}  = $self->{'hub'}->species_defs->ENSEMBL_WWW_PROXY;
+    my %params = ('timeout'       => 10);
+    if ($args->{'hub'}->species_defs->ENSEMBL_WWW_PROXY) {
+      $params{'http_proxy'}   = $args->{'hub'}->species_defs->ENSEMBL_WWW_PROXY;
+      $params{'https_proxy'}  = $args->{'hub'}->species_defs->ENSEMBL_WWW_PROXY;
     }
-    my $http = HTTP::Tiny->new(%args);
+    my $http = HTTP::Tiny->new(%params);
 
     my $response = $http->request('HEAD', $url);
     if ($response->{'success'}) {
