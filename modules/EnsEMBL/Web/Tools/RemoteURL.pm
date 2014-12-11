@@ -11,6 +11,9 @@ use HTTP::Tiny;
 use LWP::UserAgent;
 
 sub chase_redirects {
+######## DEPRECATED ################
+warn "DEPRECATED METHOD 'chase_redirects' - please switch to using EnsEMBL::Web::File::Utils::URL::chase_redirects. This module will be removed in release 80.";
+####################################
   my ($self, $url, $max_follow) = @_;
 
   $max_follow = 10 unless defined $max_follow;
