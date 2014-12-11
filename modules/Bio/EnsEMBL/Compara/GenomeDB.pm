@@ -549,6 +549,9 @@ sub principal_genome_db {
 sub component_genome_dbs {
     my $self = shift;
 
+    # Only principal GenomeDBs can return something
+    return [] if $self->genome_component;
+
     if (not $self->{_component_genome_dbs}) {
         $self->{_component_genome_dbs} = $self->adaptor->fetch_all_components_of_genome_db($self);
     }
