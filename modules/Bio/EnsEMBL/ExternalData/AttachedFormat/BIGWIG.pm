@@ -33,7 +33,7 @@ sub check_data {
   my $error = '';
   require Bio::DB::BigFile;
 
-  $url = $self->chase_redirects($url);
+  $url = chase_redirects($url, {'hub' => $self->{'hub'}});
   if ($url =~ /^ftp:\/\//i && !$self->{'hub'}->species_defs->ALLOW_FTP_BIGWIG) {
     $error = "The BigWig file could not be added - FTP is not supported, please use HTTP.";
   }
