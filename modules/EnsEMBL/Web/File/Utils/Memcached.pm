@@ -29,6 +29,47 @@ use Exporter qw(import);
 our @EXPORT_OK = qw(file_exists read_file write_file delete_file);
 our %EXPORT_TAGS = (all     => [@EXPORT_OK]);
 
+sub file_exists {
+### Check if a file of this name exists
+### @param File - EnsEMBL::Web::File object
+### @param Args (optional) Hashref 
+###         compression String - compression type
+  my ($file, $args) = @_;
+  my $cache = $args->{'hub'}->cache;
+  return 1 if $cache->get($file->url);
+}
+
+sub read_file {
+### Get entire content of file, uncompressed
+### @param File - EnsEMBL::Web::File object
+### @param Args (optional) Hashref 
+###         compression String - compression type
+### @return String (entire file)
+  my ($file, $args) = @_;
+  my $cache = $args->{'hub'}->cache;
+
+  $cache->enable_compress($args->{'compression'} || $file->check_compression);
+  return $cache->get($file->URL);
+}
+
+sub write_file {
+### Write an entire file in one chunk
+### @param File - EnsEMBL::Web::File object
+### @param Args Hashref 
+###         content String - content of file
+###         compression (optional) String - compression type
+### @return Void 
+  my ($file, $args) = @_;
+  my $cache = $args->{'hub'}->cache;
+
+  $cache->enable_compress($args->{'compression'} || $file->check_compression);
+  return $cache->set(
+                      $file->url,
+                      $args->{'content'},
+                      0,
+                      ('TMP', $file->extension, values %{$ENV{'CACHE_TAGS'} || {}}),
+                    );
+}
 
 1;
 
