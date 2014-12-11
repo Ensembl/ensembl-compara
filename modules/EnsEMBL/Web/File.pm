@@ -31,9 +31,9 @@ use EnsEMBL::Web::File::Utils::Memcached qw/:all/;
 ### Data can be written to disk or, if enabled and appropriate, memcached
 ### Note that to aid cleanup, all files written to disk should use a common
 ### path pattern, as follows:
-### /base_dir/timestamp/user_identifier/sub_dir/file_name.ext
+### /base_dir/datestamp/user_identifier/sub_dir/file_name.ext
 ###  - base_dir is set in subclasses - this is the main temporary file location
-###  - timestamp aids in cleaning up older files by date
+###  - datestamp aids in cleaning up older files by date
 ###  - user_identifier is either session id or user id, and 
 ###    helps to ensure that users only see their own data
 ###  - sub_dir is optional - it's used by a few pages to separate content further
@@ -86,7 +86,7 @@ sub new {
 
     ## Parse rest of path
     $self->{'dir_path'}         = join('/', @path); 
-    $self->{'timestamp'}        = shift @path;
+    $self->{'datestamp'}        = shift @path;
     $self->{'user_identifier'}  = shift @path;
     $self->{'sub_dir'}          = shift @path if scalar @path;
   }
@@ -100,7 +100,8 @@ sub new {
     }
     else {
       ## Create a file name if none given
-      $self->{'name'} = random_string;
+      $self->{'name'} = $self->set_timestamp if $args{'name_timestamp'};
+      $self->{'name'} .= random_string;
     }
 
     $self->{'extension'} ||= 'txt';
@@ -120,7 +121,7 @@ sub new {
 
     $self->{'file_name'} = $file_name;
 
-    my @path_elements = ($self->set_timestamp, $self->set_user_identifier);
+    my @path_elements = ($self->set_datestamp, $self->set_user_identifier);
     push @path_elements, $self->{'sub_dir'} if $self->{'sub_dir'};
     $self->{'dir_path'} = join('/', @path_elements); 
 
@@ -158,10 +159,10 @@ sub compress {
   return $self->{'compress'};
 }
 
-sub timestamp {
+sub datestamp {
 ### a
   my $self = shift;
-  return $self->{'timestamp'};
+  return $self->{'datestamp'};
 }
 
 sub user_identifier {
@@ -219,6 +220,19 @@ sub error {
 }
 
 sub set_timestamp {
+### Create a timestamp as part of a filename
+  my $self = shift;
+
+  my @time  = localtime;
+  my $hour  = $time[2];
+  my $min   = $time[1];
+  my $sec   = $time[0];
+
+  $self->{'name'} = sprintf('%s%s%s', $hour, $min, $sec);
+  return $self->{'name'};
+}
+
+sub set_datestamp {
   ### a
   my $self = shift;
   
@@ -227,8 +241,8 @@ sub set_timestamp {
   my $month = $time[4] + 1;
   my $year  = $time[5] + 1900;
 
-  $self->{'timestamp'} = sprintf('%s_%s_%s', $year, $month, $day);
-  return $self->{'timestamp'};
+  $self->{'datestamp'} = sprintf('%s_%s_%s', $year, $month, $day);
+  return $self->{'datestamp'};
 }
 
 sub set_user_identifier {
