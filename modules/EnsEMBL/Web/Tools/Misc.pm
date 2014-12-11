@@ -54,6 +54,9 @@ sub champion(&@) {
 }
 
 sub get_url_content {
+######## DEPRECATED ################
+warn "DEPRECATED METHOD 'get_url_content' - please switch to using EnsEMBL::Web::File::Utils::URL::read_file. This module will be removed in release 80.";
+####################################
   my $url   = shift;
   my $proxy = shift || $EnsEMBL::Web::RegObj::ENSEMBL_WEB_REGISTRY->species_defs->ENSEMBL_WWW_PROXY;
 
