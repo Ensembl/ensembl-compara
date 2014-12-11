@@ -414,7 +414,7 @@ sub save_config {
 }
 
 sub _use {
-  ### Wrapper for EnsEMBL::Web::Root::dynamic_use.
+  ### Wrapper for EnsEMBL::Root::dynamic_use.
   ### Returns either a newly created module or the error detailing why the new function failed.
   ### Skips "Can't locate" errors - these come from trying to use non-existant modules in plugin directories and can be safely ignored.
   

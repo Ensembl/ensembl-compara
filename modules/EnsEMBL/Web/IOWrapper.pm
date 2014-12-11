@@ -38,7 +38,7 @@ sub new {
   my $parser;
   my $parser_formats = EnsEMBL::Web::Constants::PARSER_FORMATS;
   my $parser_class = 'Bio::EnsEMBL::IO::Parser::'.$parser_formats->{lc($args->{'format'})}{'class'};
-  if (EnsEMBL::Web::Root::dynamic_use(undef, $parser_class)) {
+  if (EnsEMBL::Root::dynamic_use($parser_class)) {
     $parser = $parser_class->open($path);
   }
 
