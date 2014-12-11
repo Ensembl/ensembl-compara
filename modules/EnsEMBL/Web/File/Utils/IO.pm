@@ -43,8 +43,9 @@ package EnsEMBL::Web::File::Utils::IO;
 
 use strict;
 
-use Bio::EnsEMBL::Utils::IO qw/:all/;
-use EnsEMBL::Web::File::Utils::FileSystem qw/create_path/;
+use Bio::EnsEMBL::Utils::IO qw(:all);
+use EnsEMBL::Web::Utils qw(check_compression);
+use EnsEMBL::Web::File::Utils::FileSystem qw(create_path);
 use EnsEMBL::Web::Exceptions;
 
 use Exporter qw(import);
@@ -88,7 +89,7 @@ sub read_file {
   my $path = ref($file) ? $file->location : $file;
   my $content;
 
-  my $compression = defined($args->{'compression'}) || _compression($path);
+  my $compression = defined($args->{'compression'}) || check_compression($path);
   my $method = $compression ? $compression.'_slurp' : 'slurp';
   eval { 
     no strict 'refs';
@@ -113,7 +114,7 @@ sub read_lines {
   my $content = [];
   my $path = ref($file) ? $file->location : $file;
 
-  my $compression = defined($args->{'compression'}) || _compression($path);
+  my $compression = defined($args->{'compression'}) || check_compression($path);
   my $method = $compression ? $compression.'_slurp_to_array' : 'slurp_to_array';
   eval { 
     no strict 'refs';
@@ -140,7 +141,7 @@ sub preview_file {
   my $count = 0;
   my $lines = [];
 
-  my $compression = $args->{'compression'} || _compression($path);
+  my $compression = $args->{'compression'} || check_compression($path);
   my $method = $compression ? $compression.'_work_with_file' : 'work_with_file';
 
   eval { 
@@ -187,7 +188,7 @@ sub write_file {
   my $has_path = _check_path($path);
   
   if ($has_path) { 
-    $args->{'compression'} ||= _compression($path);
+    $args->{'compression'} ||= check_compression($path);
     _write_to_file($path, $args, '>',
         sub {
           my ($fh) = @_;
@@ -219,7 +220,7 @@ sub write_lines {
     return;
   }
   
-  $args->{'compression'} ||= _compression($path);
+  $args->{'compression'} ||= check_compression($path);
   _write_to_file($path, $args, '>',
       sub {
         my $fh = shift;
@@ -248,7 +249,7 @@ sub append_lines {
     return;
   }
   
-  $args->{'compression'} ||= _compression($path);
+  $args->{'compression'} ||= check_compression($path);
   _write_to_file($path, $args, '>>',
       sub {
         my $fh = shift;
@@ -288,7 +289,7 @@ sub _write_to_file {
 ### @return Void
   my ($path, $args, @params) = @_;
 
-  my $compression = $args->{'compression'} || _compression($path);
+  my $compression = $args->{'compression'} || check_compression($path);
   my $method = $compression ? $compression.'_work_with_file' : 'work_with_file';
   eval { 
     no strict 'refs';
@@ -303,19 +304,6 @@ sub _write_to_file {
   else {
     return 1;
   }
-}
-
-
-sub _compression {
-### Helper method to check if file is compressed and, if so,
-### what kind of compression appears to have been used.
-### Currently only supports gzip, but should be extended to
-### zip and bzip
-### @private
-### @param String - full path to file
-### @return String - file extention for this type of compression
-  my $path = shift;
-  return $path =~ /\.gz$/ ? 'gz' : undef;
 }
 
 1;
