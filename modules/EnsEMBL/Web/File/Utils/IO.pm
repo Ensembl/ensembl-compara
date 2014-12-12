@@ -446,7 +446,7 @@ sub append_lines {
         return;
       }
     );
-  }
+  };
 
   if ($args->{'raw'}) {
     if ($@) {
