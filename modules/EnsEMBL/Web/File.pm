@@ -251,67 +251,91 @@ sub set_user_identifier {
 
 sub exists {
 ### Check if a file of this name exists
-### @return Boolean
+### @return Hashref
   my $self = shift;
+  my $result = {};
 
   foreach (@{$self->{'input_drivers'}}) {
     my $method = 'EnsEMBL::Web::File::Utils::'.$_.'::file_exists'; 
-    my $exists;
+    my $args = {
+                'hub' => $self->hub,
+                'raw' => 0,
+                };
     eval {
       no strict 'refs';
-      $exists = &$method($self);
+      $result = &$method($self, $args);
     };
-    return $exists if $exists;
+    next if $result->{'error'}; 
   }
+  return $result;
 }
 
 sub read {
 ### Get entire content of file, uncompressed
-### @return String (entire file)
+### @return Hashref 
   my $self = shift;
-  my $content;
+  my $result = {};
 
   foreach (@{$self->{'input_drivers'}}) {
     my $method = 'EnsEMBL::Web::File::Utils::'.$_.'::read_file'; 
+    my $args = {
+                'hub' => $self->hub,
+                'raw' => 0,
+                };
+
     eval {
       no strict 'refs';
-      $content = &$method($self);
+      $result = &$method($self, $args);
     };
-    last if $content;
+    last if $result->{'content'};
   }
-  return $content;
+  return $result;
 }
 
 sub write {
 ### Write entire file
 ### @param Arrayref - lines of file
-### @return 1 or undef
+### @return Hashref 
   my ($self, $content) = @_;
-  my $success;
+  my $result = {};
  
   foreach (@{$self->{'output_drivers'}}) {
     my $method = 'EnsEMBL::Web::File::Utils::'.$_.'::write_file'; 
+    my $args = {
+                'hub'     => $self->hub,
+                'raw'     => 0,
+                'content' => $content,
+                };
+
     eval {
       no strict 'refs';
-      $success = &$method($self, {'content' => $content, 'no_exception' => 1});
+      $result = &$method($self, $args);
     };
-    return 1 if $success;
+    next if $result->{'error'};
   }
+  return $result;
 }
 
 sub delete {
 ### Delete file
-### @return 1 or undef
+### @return Hashref
   my $self = shift;
+  my $result = {};
  
   foreach (@{$self->{'output_drivers'}}) {
     my $method = 'EnsEMBL::Web::File::Utils::'.$_.'::delete_file'; 
+    my $args = {
+                'hub'     => $self->hub,
+                'raw'     => 0,
+                };
+
     eval {
       no strict 'refs';
-      $success = &$method($self, {'no_exception' => 1});
+      $result = &$method($self, $args);
     };
-    return 1 if $success;
+    next if $result->{'error'};
   }
+  return $result;
 }
 
 1;
