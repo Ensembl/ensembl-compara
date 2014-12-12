@@ -60,8 +60,6 @@ sub process {
   ## Compress file by default
   $extension   = $format_info->{'ext'};
   $compression = $hub->param('compression');
-  my $compress    = $compression ? 1 : 0;
-  $extension   .= '.'.$compression if $compress;
 
   if (!$format_info) {
     $error = 'Format not recognised';
@@ -73,7 +71,7 @@ sub process {
     my $component;
     ($component, $error) = $self->object->create_component;
 
-    $file = EnsEMBL::Web::File->new(hub => $hub, name => $filename, extension => $extension, prefix => 'export',  compress => $compress);
+    $file = EnsEMBL::Web::File::User->new(hub => $hub, name => $filename, extension => $extension, compression => $compression);
 
     ## Ugly hack - stuff file into package hash so we can get at it later without passing as argument
     $self->{'__file'} = $file;
@@ -158,7 +156,6 @@ sub write_rtf {
 ### RTF output is atypical, in that it aims to replicate the visual appearance
 ### of the page (a bit like image export) rather than processing data
   my ($self, $component) = @_;
-  my $file = $self->{'__file'};
   my $error;
 
   $self->hub->param('exon_display', 'on'); ## force exon highlighting on
@@ -296,7 +293,7 @@ sub write_rtf {
  
   $rtf->close;
 
-  $file->write_line($string);
+  $self->write_line($string);
 
   return $error || $file->error;
 }
