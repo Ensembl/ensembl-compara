@@ -228,17 +228,14 @@ sub fetch_by_Slice {
   #  - component genome_dbs in the compara database
   # I have chosen the latter solution because the information is already in
   # memory and it saves us from doing another trip to the database
-  my $comp_gdbs = $self->fetch_all_components_of_genome_db($gdb);
-  if (scalar(@$comp_gdbs)) {
+  if ($gdb->is_polyploid) {
     # That said, we now have to query the database if it is a polyploid genome
     my $all_comp_attr = $slice->get_all_Attributes('genome_component');
     throw("No 'genome_component' attribute found\n") unless scalar(@$all_comp_attr);
     throw("Too many 'genome_component' attributes !\n") if scalar(@$all_comp_attr) > 1;
     my $comp_name = lc $all_comp_attr->[0]->value;
-    my @matching_gdbs = grep {lc $_->genome_component eq $comp_name} @$comp_gdbs;
-    throw("No genome_db for the component '$comp_name'\n") unless scalar(@matching_gdbs);
-    throw("Too many genome_dbs for the component '$comp_name'\n") if scalar(@matching_gdbs) > 1;
-    return $matching_gdbs[0];
+    my $comp_gdb = $gdb->component_genome_dbs($comp_name) || throw("No genome_db for the component '$comp_name'\n");
+    return $comp_gdb;
   } else {
     return $gdb;
   }
@@ -314,22 +311,21 @@ sub fetch_by_core_DBAdaptor {
 }
 
 
-=head2 fetch_all_components_of_genome_db
 
-  Example     : $genome_db_adaptor->fetch_all_components_of_genome_db();
-  Description : Returns all the component genome_dbs attached to this one
+=head2 fetch_all_polyploid
+
+  Example     : $polyploid_gdbs = $genome_db_adaptor->fetch_all_polyploid();
+  Description : Returns all the GenomeDBs of polyploid genomes
   Returntype  : Arrayref of Bio::EnsEMBL::Compara::GenomeDB
   Exceptions  : none
   Caller      : general
-  Status      : Stable
 
 =cut
 
-sub fetch_all_components_of_genome_db {
-    my ($self, $genome_db) = @_;
-    return $self->_id_cache->get_all_by_additional_lookup('genome_component', sprintf('%s_____%s', lc $genome_db->name, lc $genome_db->assembly));
+sub fetch_all_polyploid {
+    my $self = shift;
+    return $self->_id_cache->get_all_by_additional_lookup('is_polyploid', 0);
 }
-
 
 
 ##################
@@ -545,6 +541,13 @@ sub _objs_from_sth {
 
         push @genome_db_list, $gdb;
     }
+
+    # Here, we need to connect the genome_dbs for polyploid genomes
+    my %gdb_per_key = map {$_->_get_unique_key => $_} (grep {not $_->genome_component} @genome_db_list);
+    foreach my $gdb (@genome_db_list) {
+        $gdb_per_key{$_->_get_unique_key}->_attach_component_genome_db($gdb) if $gdb->genome_component;
+    }
+
     return \@genome_db_list;
 }
 
@@ -579,6 +582,7 @@ sub compute_keys {
             ($genome_db->taxon_id and $genome_db->assembly_default) ? (
                 taxon_id_default_assembly => $genome_db->taxon_id,
                 is_high_coverage => $genome_db->is_high_coverage,
+                is_polyploid => $genome_db->is_polyploid,
             ) : (),
             $genome_db->assembly_default ? (name_default_assembly => lc $genome_db->name) : (),
            }

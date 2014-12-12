@@ -479,6 +479,23 @@ sub genome_component {
 }
 
 
+=head2 is_polyploid
+
+  Example     : $genome_db->is_polyploid();
+  Description : Returns 1 if this GenomeDB has some component GenomeDBs
+  Returntype  : Boolean
+  Exceptions  : none
+  Caller      : general
+  Status      : Stable
+
+=cut
+
+sub is_polyploid {
+    my $self = shift;
+    return $self->{'_is_polyploid'} || 0;
+}
+
+
 =head2 make_component_copy
 
   Arg [1]     : string: the name of the new genome component
@@ -500,7 +517,7 @@ sub make_component_copy {
     $copy_genome_db->assembly_default(0);
     $copy_genome_db->dbID(undef);
     $copy_genome_db->adaptor(undef);
-    push @{$self->{_component_genome_dbs}}, $copy_genome_db;
+    $self->_attach_component_genome_db($copy_genome_db);
     return $copy_genome_db;
 }
 
@@ -520,17 +537,7 @@ sub make_component_copy {
 sub principal_genome_db {
     my $self = shift;
 
-    return undef unless $self->genome_component;
-
-    if (not $self->{_principal_genome_db}) {
-        if (not $self->adaptor) {
-            throw(sprintf("I need an adaptor to get the principal_genome_db of genome_db_id=%d\n", $self->dbID));
-        }
-        # This method only returns principal GenomeDBs
-        $self->{_principal_genome_db} = $self->adaptor->fetch_by_name_assembly($self->name, $self->assembly);
-    }
     return $self->{_principal_genome_db};
-
 }
 
 
@@ -547,16 +554,34 @@ sub principal_genome_db {
 =cut
 
 sub component_genome_dbs {
-    my $self = shift;
+    my ($self, $component_name) = @_;
 
-    # Only principal GenomeDBs can return something
-    return [] if $self->genome_component;
-
-    if (not $self->{_component_genome_dbs}) {
-        $self->{_component_genome_dbs} = $self->adaptor->fetch_all_components_of_genome_db($self);
+    if ($component_name) {
+        $self->{_component_genome_dbs}->{$component_name} = shift if @_;
+        return $self->{_component_genome_dbs}->{$component_name};
+    } else {
+        return values %{$self->{_component_genome_dbs}};
     }
-    return $self->{_component_genome_dbs};
 }
+
+=head2 _attach_component_genome_db
+
+  Example     : $principal_genome_db->_attach_component_genome_db($component_genome_db);
+  Description : Attach a GenomeDB as a component of this one
+  Returntype  : none
+  Exceptions  : none
+  Caller      : general
+  Status      : Stable
+
+=cut
+
+sub _attach_component_genome_db {
+    my ($self, $component_genome_db) = @_;
+    $self->{_component_genome_dbs}->{$component_genome_db->genome_component} = $component_genome_db;
+    $self->{_is_polyploid} = 1;
+    $component_genome_db->{_principal_genome_db} = $self;
+}
+
 
 
 =head2 toString
@@ -641,6 +666,19 @@ sub sync_with_registry {
 }
 
 
+=head2 _get_unique_key
 
+  Example     : $genome_db->_get_unique_key();
+  Description : On a polyploid genome, returns all the GenomeDBs of its components.
+                Returns an empty list otherwise
+  Returntype  : String
+  Exceptions  : none
+
+=cut
+
+sub _get_unique_key {
+    my $self = shift;
+    return join('_____', lc $self->name, lc $self->assembly, lc $self->genebuild);
+}
 
 1;
