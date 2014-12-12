@@ -251,7 +251,7 @@ sub set_user_identifier {
 
 sub exists {
 ### Check if a file of this name exists
-### @return Hashref
+### @return Boolean
   my $self = shift;
   my $result = {};
 
@@ -267,7 +267,8 @@ sub exists {
     };
     next if $result->{'error'}; 
   }
-  return $result;
+  warn $result->{'error'} if $result->{'error'};
+  return $result->{'error'} ? 0 : 1;
 }
 
 sub read {
