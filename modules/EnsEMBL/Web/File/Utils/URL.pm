@@ -204,7 +204,7 @@ sub write_file {
 ### Returns an error if caller tries to write to remote server!
 ### @param File - EnsEMBL::Web::File object or path to file (String)
 ### @return Zero (raw mode) or Hashref containing error
-  my $file = shift;
+  my ($file, $args) = @_;
   my $url = ref($file) ? $file->location : $file;
   warn "!!! Oops - tried to write to a remote server!";
   if ($args->{'raw'}) {
@@ -220,7 +220,7 @@ sub delete_file {
 ### Returns an error if caller tries to delete file from remote server!
 ### @param File - EnsEMBL::Web::File object or path to file (String)
 ### @return Zero (raw mode) or Hashref containing error (ArrayRef)
-  my $file = shift;
+  my ($file, $args) = @_;
   my $url = ref($file) ? $file->location : $file;
   warn "!!! Oops - tried to delete file from a remote server!";
   if ($args->{'raw'}) {
