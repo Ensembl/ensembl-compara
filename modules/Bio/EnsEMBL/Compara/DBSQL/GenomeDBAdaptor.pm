@@ -279,30 +279,17 @@ sub fetch_all_by_ancestral_taxon_id {
 
 =head2 fetch_all_by_low_coverage
 
-  Example    : $gdb = $gdba->fetch_all_by_low_coverage();
+  Example    : $low_cov_gdbs = $gdba->fetch_all_by_low_coverage();
   Description: Retrieves all the genome dbs that have low coverage
   Returntype : listref of Bio::EnsEMBL::Compara::GenomeDB obejcts
-  Exceptions : thrown if core_db could not be connected to
+  Exceptions : none
   Caller     : general
 
 =cut
 
 sub fetch_all_by_low_coverage {
     my ($self) = @_;
-
-    my $all_genome_dbs = $self->fetch_all();
-
-    my @low_coverage_genome_dbs = ();
-    foreach my $curr_gdb (@$all_genome_dbs) {
-        next if (!$curr_gdb->assembly_default);
-        next if ($curr_gdb->name eq "ancestral_sequences");
-
-        if (not $curr_gdb->is_high_coverage) {
-            push @low_coverage_genome_dbs, $curr_gdb
-        }
-    }
-
-    return \@low_coverage_genome_dbs;
+    return $self->_id_cache->get_all_by_additional_lookup('is_high_coverage', 0);
 }
 
 
@@ -589,7 +576,10 @@ sub compute_keys {
             ($genome_db->genome_component ? 'genome_component' : 'name_assembly') => sprintf('%s_____%s', lc $genome_db->name, lc $genome_db->assembly), # Should in theory add the genebuild
             $genome_db->taxon_id ? (taxon_id => $genome_db->taxon_id) : (),
             $genome_db->taxon_id ? (taxon_id_assembly => sprintf('%s____%s_', $genome_db->taxon_id, lc $genome_db->assembly)) : (),
-            ($genome_db->taxon_id and $genome_db->assembly_default) ? (taxon_id_default_assembly => $genome_db->taxon_id) : (),
+            ($genome_db->taxon_id and $genome_db->assembly_default) ? (
+                taxon_id_default_assembly => $genome_db->taxon_id,
+                is_high_coverage => $genome_db->is_high_coverage,
+            ) : (),
             $genome_db->assembly_default ? (name_default_assembly => lc $genome_db->name) : (),
            }
 }
