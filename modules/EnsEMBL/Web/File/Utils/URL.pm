@@ -22,6 +22,14 @@ package EnsEMBL::Web::File::Utils::URL;
 ### Note that we have to use two different Perl modules here, owing to 
 ### limitations on support for FTP and proxied HTTPS
 
+### File access methods have two modes: raw mode returns 0/1 for failure/success
+### or the expected raw data, and optionally throws exceptions. Non-raw mode is 
+### more suitable for web interfaces, and returns a hashref containing either
+### the raw content or a user-friendly error message (no exceptions are thrown).
+
+### IMPORTANT: You must pass a reference to the Hub to all methods, so that they
+### can access site-wide parameters such as proxies
+
 use strict;
 
 use HTTP::Tiny;
@@ -39,7 +47,9 @@ use constant 'MAX_HIGHLIGHT_FILESIZE' => 1048576;  # (bytes) = 1Mb
 sub chase_redirects {
 ### Deal with files "hidden" behind a URL-shortening service such as tinyurl
 ### @param File - EnsEMBL::Web::File object or path to file (String)
-### @param max_follow Integer - maximum number of redirects to follow
+### @param args Hashref
+###                     hub EnsEMBL::Web::Hub
+###                     max_follow (optional) Integer - maximum number of redirects to follow
 ### @return url (String) or Hashref containing errors (ArrayRef)
   my ($file, $args) = @_;
   my $url = ref($file) ? $file->location : $file;
@@ -81,7 +91,9 @@ sub file_exists {
 ### @param File - EnsEMBL::Web::File object or path to file (String)
 ### @param Args Hashref 
 ###         hub EnsEMBL::Web::Hub
-### @return Hashref containing 'success' (1) or errors (ArrayRef)
+###         raw (optional) Boolean - see introduction
+###         no_exception (optional) Boolean
+### @return Boolean (raw mode) or Hashref 
   my ($file, $args) = @_;
   my $url = ref($file) ? $file->location : $file;
 
@@ -111,11 +123,17 @@ sub file_exists {
     }
   }
 
-  if ($error) {
-    return {'error' => [$error]};
+  if ($args->{'raw'}) {
+    if ($error) {
+      throw exception('URLException', "File $url could not be found: $error") unless $args->{'no_exception'};
+      return 0;
+    }
+    else {
+      return 1;
+    }
   }
   else {
-    return {'success' => 1};
+    return $error ? {'error' => [$error]} : {'success' => 1};
   }
 }
 
@@ -125,7 +143,7 @@ sub read_file {
 ### @param Args Hashref 
 ###         hub EnsEMBL::Web::Hub
 ###         compression String (optional) - compression type
-### @return Hashref containing results (String) or errors (ArrayRef)
+### @return String (in raw mode) or Hashref 
   my ($file, $args) = @_;
   my $url = ref($file) ? $file->location : $file;
 
@@ -162,33 +180,56 @@ sub read_file {
   }
 
   if ($error) {
-    return {'error' => [$error]};
+    if ($args->{'raw'}) {
+      throw exception('URLException', "File $url could not be readd: $error") unless $args->{'no_exception'};
+      return 0;
+    }
+    else {
+      return {'error' => [$error]};
+    }
   }
   else {
     my $compression = defined($args->{'compression'}) || check_compression($url);
     my $uncomp = $compression ? uncompress($content, $compression) : $content;
-    return {'content' => $uncomp};
+    if ($args->{'raw'}) {
+      return $uncomp;
+    }
+    else {
+      return {'content' => $uncomp};
+    }
   }
 }
 
 sub write_file {
 ### Returns an error if caller tries to write to remote server!
 ### @param File - EnsEMBL::Web::File object or path to file (String)
-### @return Hashref containing error (ArrayRef)
+### @return Zero (raw mode) or Hashref containing error
   my $file = shift;
   my $url = ref($file) ? $file->location : $file;
   warn "!!! Oops - tried to write to a remote server!";
-  return {'error' => ["Cannot write to remote file $url. Function not supported"]};
+  if ($args->{'raw'}) {
+    throw exception('URLException', "Writing to remote files not permitted!") unless $args->{'no_exception'};
+    return 0;
+  }
+  else {
+    return {'error' => ["Cannot write to remote file $url. Function not supported"]};
+  }
 }
 
 sub delete_file {
 ### Returns an error if caller tries to delete file from remote server!
 ### @param File - EnsEMBL::Web::File object or path to file (String)
-### @return Hashref containing error (ArrayRef)
+### @return Zero (raw mode) or Hashref containing error (ArrayRef)
   my $file = shift;
   my $url = ref($file) ? $file->location : $file;
   warn "!!! Oops - tried to delete file from a remote server!";
-  return {'error' => ["Cannot delete remote file $url. Function not supported"]};
+  if ($args->{'raw'}) {
+    throw exception('URLException', "Deleting remote files not permitted!") unless $args->{'no_exception'};
+    return 0;
+  }
+  else {
+    return {'error' => ["Cannot delete remote file $url. Function not supported"]};
+  }
 }
 
 sub get_filesize {
