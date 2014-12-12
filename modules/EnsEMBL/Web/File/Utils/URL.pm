@@ -40,7 +40,7 @@ sub chase_redirects {
 ### Deal with files "hidden" behind a URL-shortening service such as tinyurl
 ### @param File - EnsEMBL::Web::File object or path to file (String)
 ### @param max_follow Integer - maximum number of redirects to follow
-### @return url String - the actual URL of the file
+### @return url (String) or Hashref containing errors (ArrayRef)
   my ($file, $args) = @_;
   my $url = ref($file) ? $file->location : $file;
 
@@ -81,7 +81,7 @@ sub file_exists {
 ### @param File - EnsEMBL::Web::File object or path to file (String)
 ### @param Args Hashref 
 ###         hub EnsEMBL::Web::Hub
-### @return Boolean
+### @return Hashref containing 'success' (1) or errors (ArrayRef)
   my ($file, $args) = @_;
   my $url = ref($file) ? $file->location : $file;
 
@@ -125,7 +125,7 @@ sub read_file {
 ### @param Args Hashref 
 ###         hub EnsEMBL::Web::Hub
 ###         compression String (optional) - compression type
-### @return String (entire file)
+### @return Hashref containing results (String) or errors (ArrayRef)
   my ($file, $args) = @_;
   my $url = ref($file) ? $file->location : $file;
 
@@ -174,21 +174,21 @@ sub read_file {
 sub write_file {
 ### Returns an error if caller tries to write to remote server!
 ### @param File - EnsEMBL::Web::File object or path to file (String)
-### @return Hashref containing error
+### @return Hashref containing error (ArrayRef)
   my $file = shift;
   my $url = ref($file) ? $file->location : $file;
   warn "!!! Oops - tried to write to a remote server!";
-  return {'error' => "Cannot write to remote file $url. Function not supported"};
+  return {'error' => ["Cannot write to remote file $url. Function not supported"]};
 }
 
 sub delete_file {
 ### Returns an error if caller tries to delete file from remote server!
 ### @param File - EnsEMBL::Web::File object or path to file (String)
-### @return Hashref containing error
+### @return Hashref containing error (ArrayRef)
   my $file = shift;
   my $url = ref($file) ? $file->location : $file;
   warn "!!! Oops - tried to delete file from a remote server!";
-  return {'error' => "Cannot delete remote file $url. Function not supported"};
+  return {'error' => ["Cannot delete remote file $url. Function not supported"]};
 }
 
 sub get_filesize {
@@ -197,7 +197,7 @@ sub get_filesize {
 ### @param Args Hashref 
 ###         hub EnsEMBL::Web::Hub
 ###         compression String (optional) - compression type
-### @return Integer - file size in bytes
+### @return Hashref containing results (Integer - file size in bytes) or errors (ArrayRef)
   my ($file, $args) = @_;
   my $url = ref($file) ? $file->location : $file;
   my ($size, $error);
