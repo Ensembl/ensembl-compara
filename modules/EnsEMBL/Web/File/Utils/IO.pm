@@ -69,7 +69,7 @@ sub file_exists {
 ###                     raw Boolean - see introduction
 ###                     no_exception Boolean - whether to throw an exception
 ### @return Boolean (raw mode) or Hashref
-  my $file = shift;
+  my ($file, $args) = @_;
   my $path = ref($file) ? $file->location : $file;
   if ($args->{'raw'}) {
     if (-e $path && -f $path) {
