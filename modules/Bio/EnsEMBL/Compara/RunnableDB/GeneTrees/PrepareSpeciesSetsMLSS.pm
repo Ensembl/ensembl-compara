@@ -101,10 +101,9 @@ sub write_output {
         my $ss1 = $self->_write_ss( [$genome_db1] );
         my $mlss_p1 = $self->_write_mlss( $ss1, $self->param('ml_para') );
 
-        my $comp_gdbs = $genome_db1->component_genome_dbs;
-        if (scalar(@$comp_gdbs)) {
+        if ($genome_db1->is_polyploid) {
             my $mlss_h1 = $self->_write_mlss( $ss1, $self->param('ml_homoeo') );
-            $self->_write_all_pairs( $self->param('ml_homoeo'), $comp_gdbs );
+            $self->_write_all_pairs( $self->param('ml_homoeo'), $genome_db1->component_genome_dbs );
         }
     }
 
