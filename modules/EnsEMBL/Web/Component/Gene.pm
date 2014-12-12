@@ -98,12 +98,15 @@ sub _dump_multiple_alignment {
       return undef;
     }
 
+    ## Note - r2r needs a file on disk, so we explicitly set the driver to IO
     my $aln_file  = EnsEMBL::Web::File::Dynamic->new(
-                                                      hub         => $self->hub,
-                                                      sub_dir     => 'r2r_'.$self->hub->species,
-                                                      name        => $model_name,
-                                                      extension   => "aln",
-                                                      compression => 0,
+                                                      hub             => $self->hub,
+                                                      sub_dir         => 'r2r_'.$self->hub->species,
+                                                      name            => $model_name,
+                                                      extension       => "aln",
+                                                      compression     => 0,
+                                                      input_drivers   => ['IO'],
+                                                      output_drivers  => ['IO'],
                                                       );
 
     unless ($aln_file->exists) {
@@ -134,22 +137,27 @@ sub _create_svg {
 
     my $thumbnail = $model_name.'_thumbnail.svg';
 
+    ## Note - r2r needs a file on disk, so we explicitly set the driver to IO
     my $th_file = EnsEMBL::Web::File::Dynamic->new(
-                                                  hub         => $self->hub,
-                                                  sub_dir     => $sub_dir,
-                                                  name        => $model_name.'_thumbnail',
-                                                  extension   => "svg",
-                                                  compression => 0,
+                                                  hub             => $self->hub,
+                                                  sub_dir         => $sub_dir,
+                                                  name            => $model_name.'_thumbnail',
+                                                  extension       => "svg",
+                                                  compression     => 0,
+                                                  input_drivers   => ['IO'],
+                                                  output_drivers  => ['IO'],
                                                   );
 
     unless ($th_file->exists) {
 
       my $th_meta = EnsEMBL::Web::File::Dynamic->new(
-                                                  hub         => $self->hub,
-                                                  sub_dir     => $sub_dir,
-                                                  name        => $model_name.'_thumbnail',
-                                                  extension   => "meta",
-                                                  compression => 0,
+                                                  hub             => $self->hub,
+                                                  sub_dir         => $sub_dir,
+                                                  name            => $model_name.'_thumbnail',
+                                                  extension       => "meta",
+                                                  compression     => 0,
+                                                  input_drivers   => ['IO'],
+                                                  output_drivers  => ['IO'],
                                                   );
       unless ($th_meta->exists) {
         my $th_content = "$path/$cons_filename\tskeleton-with-pairbonds\n";
@@ -160,22 +168,27 @@ sub _create_svg {
 
     my $plot = $model_name.'.svg';
 
+    ## Note - r2r needs a file on disk, so we explicitly set the driver to IO
     my $plot_file = EnsEMBL::Web::File::Dynamic->new(
-                                                  hub         => $self->hub,
-                                                  sub_dir     => $sub_dir,
-                                                  name        => $model_name,
-                                                  extension   => "svg",
-                                                  compression => 0,
+                                                  hub             => $self->hub,
+                                                  sub_dir         => $sub_dir,
+                                                  name            => $model_name,
+                                                  extension       => "svg",
+                                                  compression     => 0,
+                                                  input_drivers   => ['IO'],
+                                                  output_drivers  => ['IO'],
                                                   );
 
     unless ($plot_file->exists) {
 
       my $plot_meta  = EnsEMBL::Web::File::Dynamic->new(
-                                                      hub         => $self->hub,
-                                                      sub_dir     => $sub_dir,
-                                                      name        => $model_name,
-                                                      extension   => "meta",
-                                                      compression => 0,
+                                                      hub             => $self->hub,
+                                                      sub_dir         => $sub_dir,
+                                                      name            => $model_name,
+                                                      extension       => "meta",
+                                                      compression     => 0,
+                                                      input_drivers   => ['IO'],
+                                                      output_drivers  => ['IO'],
                                                       );
 
 
