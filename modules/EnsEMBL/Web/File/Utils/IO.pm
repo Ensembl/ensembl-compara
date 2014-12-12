@@ -23,6 +23,15 @@ package EnsEMBL::Web::File::Utils::IO;
 ### can explicitly pass a compression type (e.g. 'gz'), or 0 for no compression, 
 ### to any appropriate method to bypass internal checking
 
+### For web interfaces, it is recommended that you unset the 'raw' flag in the
+### argument hash in order to return user-friendly error messages and turn off
+### exceptions. The method will return a hashref containing either error messages,
+### a 'success' flag, or some kind of content.
+
+### 'Raw' mode returns less structured data for capture by the calling 
+### script and will also throw exceptions unless the 'no_exception'
+### flag is passed.
+
 ### Examples:
 
 ### use EnsEMBL::Web::File::Utils::IO qw/:all/;
@@ -38,6 +47,7 @@ package EnsEMBL::Web::File::Utils::IO;
 ###   append_lines($output_file, {
 ###                                'lines'       => [$_->stable_id],
 ###                                'compression' => 'gz',
+###                                'raw'     => 0,
 ###                              };                                         
 ### }
 
@@ -55,45 +65,101 @@ our %EXPORT_TAGS = (all     => [@EXPORT_OK]);
 sub file_exists {
 ### Check if a file of this name exists
 ### @param File - EnsEMBL::Web::File object or path to file (String)
-### @return Boolean
+### @param Args (optional) Hashref 
+###                     raw Boolean - see introduction
+###                     no_exception Boolean - whether to throw an exception
+### @return Boolean (raw mode) or Hashref
   my $file = shift;
   my $path = ref($file) ? $file->location : $file;
-  return -e $path && -f $path;
+  if ($args->{'raw'}) {
+    if (-e $path && -f $path) {
+      return 1;
+    }
+    else {
+      throw exception('FileIOException', "File $path could not be found: $!") unless $args->{'no_exception'};
+      return 0;
+    }
+  }
+  else {
+    if (-e $path && -f $path) {
+      return {'success' => 1};
+    }
+    else {
+      my $filename = _get_filename($file);
+      return {'error' => ["Could not find file $filename."]};
+    }
+  }
 }
 
 sub delete_file {
 ### Delete a file 
 ### @param File - EnsEMBL::Web::File object or path to file (String)
-### @return Boolean
+### @param Args (optional) Hashref 
+###                     raw Boolean - see introduction 
+###                     no_exception Boolean - whether to throw an exception
+### @return Boolean (in raw mode) or Hashref
   my ($file, $args) = @_;
   my $path = ref($file) ? $file->location : $file;
-  return unlink $path;
+  if ($args->{'raw'}) {
+    if (unlink $path) {
+      return 1;
+    }
+    else {
+      throw exception('FileIOException', "Error occurred when deleting file $path: $!") unless $args->{'no_exception'};
+      return 0;
+    }
+  }
+  else {
+    if (unlink $path) {
+      return {'success' => 1};
+    }
+    else {
+      my $filename = _get_filename($file);
+      return {'error' => ["Could not delete file $filename: $!"]};
+    }
+  }
 }
 
 sub fetch_file {
 ### Get raw content of file (e.g. for download, hence ignoring compression)
 ### @param File - EnsEMBL::Web::File object or path to file (String)
 ### @param Args (optional) Hashref 
-###         no_exception Boolean - whether to throw an exception
-### @return String (entire file)
+###                     raw Boolean - see introduction 
+###                     no_exception Boolean - whether to throw an exception
+### @return String - entire file (in raw mode) or Hashref
   my ($file, $args) = @_;
   my $path = ref($file) ? $file->location : $file;
   my $content;
   eval { $content = slurp($path) }; 
-
-  if ($@ && !$args->{'no_exception'}) {
-    throw exception('FileIOException', sprintf qq(Could not fetch contents of file '%s' due to following errors: \n%s), $path, $@);
+  if ($args->{'raw'}) {
+    if ($@) {
+      throw exception('FileIOException', sprintf qq(Could not fetch contents of file '%s' due to following errors: \n%s), $path, $@) unless $args->{'no_exception'};
+      return undef;
+    }
+    else {
+      return $content;
+    }
   }
-  return $content;
+  else {
+    if ($@) {
+      warn "!!! COULDN'T FETCH FILE $path: $@";
+      my $filename = _get_filename($file);
+      return {'error' => ["Could not fetch file $filename for downloading."]};
+    }
+    else {
+      return {'content' => $content};
+    }
+  }
 }
 
 sub read_file {
 ### Get entire content of file, uncompressed
 ### @param File - EnsEMBL::Web::File object or path to file (String)
 ### @param Args (optional) Hashref 
-###         compression String - compression type
-###         no_exception Boolean - whether to throw an exception
-### @return String (entire file)
+###                     raw Boolean - see introduction 
+###                     no_exception Boolean - whether to throw an exception
+###                     compression String - compression type
+### @return String - contents of file (in raw mode) or Hashref
   my ($file, $args) = @_;
   my $path = ref($file) ? $file->location : $file;
   my $content;
@@ -105,20 +171,36 @@ sub read_file {
     $content = &$method($path) 
   }; 
 
-  if ($@ && !$args->{'no_exception'}) {
-    throw exception('FileIOException', sprintf qq(Could not read file '%s' due to following errors: \n%s), $path, $@);
+  if ($args->{'raw'}) {
+    if ($@) {
+      throw exception('FileIOException', sprintf qq(Could not read file '%s' due to following errors: \n%s), $path, $@) unless $args->{'no_exception'};
+      return undef;
+    }
+    else {
+      return $content;
+    }
   }
-  return $content;
+  else {
+    if ($@) {
+      warn "!!! COULDN'T READ FILE $path: $@";
+      my $filename = _get_filename($file);
+      return {'error' => ["Could not read file $filename."]};
+    }
+    else {
+      return {'content' => $content};
+    }
+  }
 }
 
 sub read_lines {
 ### Get entire content of file as separate lines
 ### @param File - EnsEMBL::Web::File object or path to file (String)
 ### @param Args (optional) Hashref 
-###         compression String - compression type
-###         no_exception Boolean - whether to throw an exception
+###                     raw Boolean - see introduction 
+###                     no_exception Boolean - whether to throw an exception
+###                     compression String - compression type
 ### @param (optional) String - compression type
-### @return Arrayref
+### @return Arrayref containing lines of file (in raw mode) or Hashref
   my ($file, $args) = @_;
   my $content = [];
   my $path = ref($file) ? $file->location : $file;
@@ -130,20 +212,36 @@ sub read_lines {
     $content = &$method($path) 
   }; 
 
-  if ($@ && !$args->{'no_exception'}) {
-    throw exception('FileIOException', sprintf qq(Could not read lines from  file '%s' due to following errors: \n%s), $path, $@);
+  if ($args->{'raw'}) {
+    if ($@) {
+      throw exception('FileIOException', sprintf qq(Could not read lines from file '%s' due to following errors: \n%s), $path, $@) unless $args->{'no_exception'};
+      return undef;
+    }
+    else {
+      return $content;
+    }
   }
-  return $content;
+  else {
+    if ($@) {
+      warn "!!! COULDN'T READ LINES FROM FILE $path: $@";
+      my $filename = _get_filename($file);
+      return {'error' => ["Could not read file $filename."]};
+    }
+    else {
+      return {'content' => $content};
+    }
+  }
 }
 
 sub preview_file {
 ### Get n lines of a file, e.g. for a web preview
 ### @param File - EnsEMBL::Web::File object or path to file (String)
 ### @param Args (optional) Hashref 
-###         compression String - compression type
-###         no_exception Boolean - whether to throw an exception
-###         limit Integer - number of lines required (defaults to 10)
-### @return Arrayref (n lines of file)
+###                     raw Boolean - see introduction 
+###                     no_exception Boolean - whether to throw an exception
+###                     compression String - compression type
+###                     limit Integer - number of lines required (defaults to 10)
+### @return Arrayref - n lines of file (in raw mode) or Hashref 
   my ($file, $args) = @_;
   my $path = ref($file) ? $file->location : $file;
   my $limit = $args->{'limit'} || 10;
@@ -168,29 +266,50 @@ sub preview_file {
     );
   };
 
-  if ($@ && !$args->{'no_exception'}) {
-    throw exception('FileIOException', sprintf qq(Could not fetch preview of file '%s' due to following errors: \n%s), $path, $@);
-    ## Throw exception 
+  if ($args->{'raw'}) {
+    if ($@) {
+      throw exception('FileIOException', sprintf qq(Could not fetch preview of file '%s' due to following errors: \n%s), $path, $@) unless $args->{'no_exception'};
+      return undef;
+    }
+    else {
+      return $lines;
+    }
   }
-  return $lines; 
+  else {
+    if ($@) {
+      warn "!!! COULDN'T READ PREVIEW FROM FILE $path: $@";
+      my $filename = _get_filename($file);
+      return {'error' => ["Could not read file $filename."]};
+    }
+    else {
+      return {'content' => $lines};
+    }
+  }
 }
 
 sub write_file {
 ### Write an entire file in one chunk
 ### @param File - EnsEMBL::Web::File object or path to file (String)
-### @param Args Hashref 
-###         content String - content of file
-###         compression (optional) String - compression type
-###         no_exception (optional) Boolean - whether to throw an exception
-### @return Void 
+### @param Args (optional) Hashref 
+###                     raw Boolean - see introduction 
+###                     no_exception Boolean - whether to throw an exception
+###                     compression String - compression type
+###                     content String - content of file
+### @return Boolean (in raw mode) or Hashref 
   my ($file, $args) = @_;
   my $path = ref($file) ? $file->location : $file;
 
   my $content = $args->{'content'};
+  my $filename = _get_filename($file);
 
-  if (!$content && !$args->{'no_exception'}) {
-    throw exception('FileIOException', sprintf qq(No content given for file '%s'.), $path);
-    return;
+  if (!$content) {
+    if ($args->{'raw'}) {
+      throw exception('FileIOException', sprintf qq(No content given for file '%s'.), $path) unless $args->{'no_exception'};
+      return 0;
+    }
+    else {
+      return {'error' => ["No content given for file $filename."]};
+    }
   }
  
   ## Create the directory path if it doesn't exist
@@ -198,16 +317,41 @@ sub write_file {
   
   if ($has_path) { 
     $args->{'compression'} ||= check_compression($path);
-    _write_to_file($path, $args, '>',
+    eval {
+      _write_to_file($path, $args, '>',
         sub {
           my ($fh) = @_;
           print $fh $content;
           return;
         }
-    );
+      );
+    };
+    if ($args->{'raw'}) {
+      if ($@) {
+        throw exception('FileIOException', sprintf qq(Could not create path '%s'.), $path) unless $args->{'no_exception'};
+        return 0;
+      }
+      else {
+        return 1;
+      }
+    }
+    else {
+      if ($@) {
+        return {'error' => ["Could not create path for writing file $filename."]};
+      }
+      else {
+        return {'success' => 1};
+      }
+    }
   }
   else {
-    warn "!!! COULD NOT CREATE PATH $path for writing.";
+    if ($args->{'raw'}) {
+      throw exception('FileIOException', sprintf qq(Could not create path '%s'.), $path) unless $args->{'no_exception'};
+      return;
+    }
+    else {
+      return {'error' => ["Could not create path for writing file $filename."]};
+    }
   }
 }
 
@@ -216,50 +360,84 @@ sub write_lines {
 ### @param File - EnsEMBL::Web::File object or path to file (String)
 ### @param String - full path to file
 ### @param Args Hashref 
-###         lines Arrayref - lines of file
-###         compression (optional) String - compression type
-###         no_exception (optional) Boolean - whether to throw an exception
-### @return Void
+### @param Args (optional) Hashref 
+###                     raw Boolean - see introduction 
+###                     no_exception Boolean - whether to throw an exception
+###                     compression String - compression type
+###                     lines Arrayref - lines of file
+### @return Boolean (in raw mode) or Hashref
   my ($file, $args) = @_;
   my $path = ref($file) ? $file->location : $file;
   my $lines = $args->{'lines'};
 
-  if (ref($lines) ne 'ARRAY' && !$args->{'no_exception'}) {
-    throw exception('FileIOException', sprintf qq(Input for '%s' must be an arrayref. Use the write_file method to create a file from a single string.), $path);
-    return;
+  if (ref($lines) ne 'ARRAY') {
+    if ($args->{'raw'}) {
+      throw exception('FileIOException', sprintf qq(Input for '%s' must be an arrayref. Use the write_file method to create a file from a single string.), $path) unless $args->{'no_exception'};
+      return 0;
+    }
+    else {
+      return {'error' => ["Cannot write lines - input must be an arrayref."]};
+    }
   }
   
   $args->{'compression'} ||= check_compression($path);
-  _write_to_file($path, $args, '>',
-      sub {
-        my $fh = shift;
-        foreach (@$lines) {
-          print $fh "$_\n";
+  eval {
+      _write_to_file($path, $args, '>',
+        sub {
+          my $fh = shift;
+          foreach (@$lines) {
+            print $fh "$_\n";
+          }
+          return;
         }
-        return;
-      }
-  );
+      );
+  };
+  if ($args->{'raw'}) {
+    if ($@) {
+      throw exception('FileIOException', sprintf qq(Could not write lines to file '%s'.), $path) unless $args->{'no_exception'};
+      return 0;
+    }
+    else {
+      return 1;
+    }
+  }
+  else {
+    if ($@) {
+      my $filename = _get_filename($file);
+      return {'error' => ["Could not write lines to file $filename."]};
+    }
+    else {
+      return {'success' => 1};
+    }
+  }
 }
 
 sub append_lines {
 ### Append one or more lines to a file
 ### @param File - EnsEMBL::Web::File object or path to file (String)
-### @param Args Hashref 
-###         lines Arrayref - lines of file
-###         compression (optional) String - compression type
-###         no_exception (optional) Boolean - whether to throw an exception
-### @return Void
+### @param Args (optional) Hashref 
+###                     raw Boolean - see introduction 
+###                     no_exception Boolean - whether to throw an exception
+###                     compression String - compression type
+###                     lines Arrayref - lines of file
+### @return Boolean (in raw mode) or Hashref
   my ($file, $args) = @_;
   my $path = ref($file) ? $file->location : $file;
   my $lines = $args->{'lines'};
 
-  if (ref($lines) ne 'ARRAY' && !$args->{'no_exception'}) {
-    throw exception('FileIOException', sprintf qq(Input for '%s' must be an arrayref. Use the write_file method to create a file from a single string.), $path);
-    return;
+  if (ref($lines) ne 'ARRAY') {
+    if ($args->{'raw'}) {
+      throw exception('FileIOException', sprintf qq(Input for '%s' must be an arrayref.), $path) unless $args->{'no_exception'};
+      return 0;
+    }
+    else {
+      return {'error' => ["Cannot write lines - input must be an arrayref."]};
+    }
   }
   
   $args->{'compression'} ||= check_compression($path);
-  _write_to_file($path, $args, '>>',
+  eval {
+    _write_to_file($path, $args, '>>',
       sub {
         my $fh = shift;
         foreach (@$lines) {
@@ -267,7 +445,27 @@ sub append_lines {
         }
         return;
       }
-  );
+    );
+  }
+
+  if ($args->{'raw'}) {
+    if ($@) {
+      throw exception('FileIOException', sprintf qq(Could not append lines to file '%s'.), $path) unless $args->{'no_exception'};
+      return 0;
+    }
+    else {
+      return 1;
+    }
+  }
+  else {
+    if ($@) {
+      my $filename = _get_filename($file);
+      return {'error' => ["Could not append lines to file $filename."]};
+    }
+    else {
+      return {'success' => 1};
+    }
+  }
 }
 
 sub _check_path {
@@ -284,6 +482,20 @@ sub _check_path {
     my $dirs = create_path($dir, {'no_exception' => 1});
     return scalar @$dirs;
   }
+}
+
+sub _get_filename {
+### Get or parse filename, depending on input
+  my $file = shift;
+  my $filename = '';
+  if (ref($file)) {
+    $filename = $file->file_name;
+  }
+  else {
+    my @path = split('/', $file);
+    $filename = $path[-1];
+  }
+  return $filename;
 }
 
 sub _write_to_file {
