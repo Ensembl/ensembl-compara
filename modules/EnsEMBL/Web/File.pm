@@ -285,7 +285,7 @@ sub read {
 sub write {
 ### Write entire file
 ### @param Arrayref - lines of file
-### @return Void
+### @return 1 or undef
   my ($self, $content) = @_;
   my $success;
  
@@ -301,7 +301,7 @@ sub write {
 
 sub delete {
 ### Delete file
-### @return Void
+### @return 1 or undef
   my $self = shift;
  
   foreach (@{$self->{'output_drivers'}}) {

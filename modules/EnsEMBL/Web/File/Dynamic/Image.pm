@@ -32,33 +32,34 @@ use parent qw(EnsEMBL::Web::File::Dynamic);
 sub new {
 ### @constructor
   my ($class, %args) = @_;
-  ## If writing to disk, use the same directory for images and related content,
-  ## to make cleanup easier
-  $args{'extension'}  = 'png';
-  $args{'drivers'}    = [qw(Memcached IO)]; 
+  $args{'extension'} ||= 'png';
   return $class->SUPER::new(%args);
 }
 
 sub width { 
-### @accessor
+### @getter
+### @return Integer - width of image in pixels
   my $self = shift;
   return $self->{'width'}; 
 }
 
 sub height { 
-### @accessor
+### @getter
+### @return Integer - height of image in pixels
   my $self = shift;
-  return $self->{'size'}; 
+  return $self->{'height'}; 
 }
 
 sub size { 
-### @accessor
+### @getter
+### @return Integer - size of image in bytes
   my $self = shift;
   return $self->{'size'}; 
 }
 
 sub read {
-### Read  the contents of an image file and set dimensions
+### Read the contents of an image file and set dimensions
+### @return data String - contents of image file
   my $self = shift;
 
   my $data = $self->SUPER::read();
@@ -70,8 +71,7 @@ sub read {
 
 sub write {
 ### Determine the dimensions of an image and then write to disk/memory
-### Tip: call this directly to save a rendered image, instead of 
-### creating the content, adding to the object and finally saving!
+### @param data String - rendered image
   my ($self, $data) = @_;
 
   if ($data) {
@@ -81,6 +81,9 @@ sub write {
 }
 
 sub _set_image_params {
+### Determine the dimensions of an image once it's been created
+### @param data String - rendered image
+### @return Void
   my ($self, $data) = @_;
   return unless $data;
 
