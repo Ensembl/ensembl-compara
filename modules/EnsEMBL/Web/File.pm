@@ -57,8 +57,9 @@ sub new {
   $args{'base_dir'} ||= $self->{'hub'}->species_defs->ENSEMBL_TMP_DIR;
   $args{'base_url'} ||= $self->{'hub'}->species_defs->ENSEMBL_TMP_URL;
 
-  ## Set default driver (disk only)
-  $args{'drivers'} ||= ['IO'];
+  ## Set default drivers (disk only)
+  $args{'input_drivers'} ||= ['IO'];
+  $args{'output_drivers'} ||= ['IO'];
 
   $self->{'error'} = undef;
   bless $self, $class;
@@ -246,16 +247,14 @@ sub set_user_identifier {
   return $self->{'user_identifier'};
 }
 
-### Wrappers around E::W::File::Utils::IO methods
-### N.B. this parent class only includes methods that are supported
-### by all drivers
+### Wrappers around E::W::File::Utils::* methods
 
 sub exists {
 ### Check if a file of this name exists
 ### @return Boolean
   my $self = shift;
 
-  foreach (@{$self->{'drivers'}}) {
+  foreach (@{$self->{'input_drivers'}}) {
     my $method = 'EnsEMBL::Web::File::Utils::'.$_.'::file_exists'; 
     my $exists;
     eval {
@@ -272,7 +271,7 @@ sub read {
   my $self = shift;
   my $content;
 
-  foreach (@{$self->{'drivers'}}) {
+  foreach (@{$self->{'input_drivers'}}) {
     my $method = 'EnsEMBL::Web::File::Utils::'.$_.'::read_file'; 
     eval {
       no strict 'refs';
@@ -290,7 +289,7 @@ sub write {
   my ($self, $content) = @_;
   my $success;
  
-  foreach (@{$self->{'drivers'}}) {
+  foreach (@{$self->{'output_drivers'}}) {
     my $method = 'EnsEMBL::Web::File::Utils::'.$_.'::write_file'; 
     eval {
       no strict 'refs';
@@ -305,7 +304,7 @@ sub delete {
 ### @return Void
   my $self = shift;
  
-  foreach (@{$self->{'drivers'}}) {
+  foreach (@{$self->{'output_drivers'}}) {
     my $method = 'EnsEMBL::Web::File::Utils::'.$_.'::delete_file'; 
     eval {
       no strict 'refs';
