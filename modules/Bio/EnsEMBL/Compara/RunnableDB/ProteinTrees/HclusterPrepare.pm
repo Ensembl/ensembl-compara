@@ -31,7 +31,7 @@ Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::HclusterPrepare
 my $aa = $sdba->get_AnalysisAdaptor;
 my $analysis = $aa->fetch_by_logic_name('HclusterPrepare');
 my $rdb = new Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::HclusterPrepare(
-                         -input_id   => "{'mlss_id'=>40069,'genome_db_id'=>90}",
+                         -input_id   => "{'ss_id'=>40069,'genome_db_id'=>90}",
                          -analysis   => $analysis);
 
 $rdb->fetch_input
@@ -66,8 +66,6 @@ use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
 sub fetch_input {
     my $self = shift @_;
-
-    my $mlss_id      = $self->param_required('mlss_id');
 
     my $genome_db_id = $self->param_required('genome_db_id');
     my $genome_db    = $self->compara_dba->get_GenomeDBAdaptor->fetch_by_dbID($genome_db_id) or die "no genome_db for id='$genome_db_id'";
@@ -129,7 +127,7 @@ sub fetch_distances {
 
   my $table_name        = $self->param('table_name');
   my $genome_db_id      = $self->param('genome_db_id');
-  my $mlss_id           = $self->param('mlss_id');
+  my $ss_id             = $self->param('ss_id');
 
   my $starttime = time();
 
@@ -137,9 +135,8 @@ sub fetch_distances {
     SELECT concat(qmember_id,'_',qgenome_db_id),
            concat(hmember_id,'_',hgenome_db_id),
            IF(evalue<1e-199,100,ROUND(-log10(evalue)/2))
-      FROM $table_name paf, species_set ss, method_link_species_set mlss
-     WHERE mlss.method_link_species_set_id=$mlss_id
-       AND mlss.species_set_id=ss.species_set_id
+      FROM $table_name paf, species_set ss
+     WHERE ss.species_set_id=$ss_id
        AND ss.genome_db_id=paf.hgenome_db_id
        AND paf.qgenome_db_id=$genome_db_id
   };

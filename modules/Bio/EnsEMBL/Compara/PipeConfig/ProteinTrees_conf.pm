@@ -518,7 +518,17 @@ sub core_pipeline_analyses {
                 'filter_cmd'    => 'sed "s/ENGINE=MyISAM/ENGINE=InnoDB/"',
                 'table'         => 'method_link',
             },
-            -analysis_capacity  => 1,
+            -flow_into      => [ 'offset_tables' ],
+        },
+
+        {   -logic_name => 'offset_tables',
+            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::SqlCmd',
+            -parameters => {
+                'sql'   => [
+                    'ALTER TABLE species_set             AUTO_INCREMENT=10000001',
+                    'ALTER TABLE method_link_species_set AUTO_INCREMENT=10000001',
+                ],
+            },
             -flow_into      => [ 'load_genomedb_factory' ],
         },
 
@@ -1175,6 +1185,7 @@ sub core_pipeline_analyses {
         {   -logic_name => 'hcluster_dump_input_per_genome',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::HclusterPrepare',
             -parameters => {
+                'ss_id'         => '#all_nopolyploid_ss_id#',
                 'outgroups'     => $self->o('outgroups'),
             },
             -hive_capacity => $self->o('reuse_capacity'),
@@ -2123,6 +2134,7 @@ sub core_pipeline_analyses {
         {   -logic_name => 'group_genomes_under_taxa',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::GroupGenomesUnderTaxa',
             -parameters => {
+                'ss_id'                 => '#all_nopolyploid_ss_id#',
                 'taxlevels'             => $self->o('taxlevels'),
                 'filter_high_coverage'  => $self->o('filter_high_coverage'),
             },

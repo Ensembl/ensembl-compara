@@ -82,50 +82,59 @@ sub fetch_input {
     $self->param('ml_para', $method_adaptor->fetch_by_type('ENSEMBL_PARALOGUES'));
     $self->param('ml_homoeo', $method_adaptor->fetch_by_type('ENSEMBL_HOMOEOLOGUES'));
     $self->param('ml_genetree', $method_adaptor->fetch_by_type($self->param('tree_method_link')));
-
 }
 
 
 sub write_output {
     my $self = shift;
 
-    my $ss = $self->_write_ss($self->param('genome_dbs') );
+    my $all_gdbs = $self->param('genome_dbs');
+    my $ss = $self->_write_shared_ss('all', $all_gdbs);
+    $self->_write_shared_ss('all_polyploid', [grep {$_->is_polyploid} @$all_gdbs]);
+    my $ss_nopoly = $self->_write_shared_ss('all_nopolyploid', [grep {not $_->is_polyploid} @$all_gdbs]);
+
     my $mlss = $self->_write_mlss( $ss, $self->param('ml_genetree') );
-    my $hive_pwp_adaptor = $self->db->get_PipelineWideParametersAdaptor;
+    $self->db->get_PipelineWideParametersAdaptor->store( {'param_name' => 'mlss_id', 'param_value' => $mlss->dbID} );
 
-    # Should be a pipeline-wide parameter
-    $hive_pwp_adaptor->store( {'param_name' => 'mlss_id', 'param_value' => $mlss->dbID} );
-    $hive_pwp_adaptor->store( {'param_name' => 'species_count', 'param_value' => scalar(@{$self->param('genome_dbs')})} );
+    $self->db->get_PipelineWideParametersAdaptor->store( {'param_name' => 'species_count', 'param_value' => scalar(@{$ss_nopoly->genome_dbs})});
 
-    foreach my $genome_db1 (@{$self->param('genome_dbs')}) {
-        my $ss1 = $self->_write_ss( [$genome_db1] );
-        my $mlss_p1 = $self->_write_mlss( $ss1, $self->param('ml_para') );
+    foreach my $genome_db (@$all_gdbs) {
+        my $ssg = $self->_write_ss( [$genome_db] );
+        my $mlss_pg = $self->_write_mlss( $ssg, $self->param('ml_para') );
 
-        if ($genome_db1->is_polyploid) {
-            my $mlss_h1 = $self->_write_mlss( $ss1, $self->param('ml_homoeo') );
-            $self->_write_all_pairs( $self->param('ml_homoeo'), $genome_db1->component_genome_dbs );
+        if ($genome_db->is_polyploid) {
+            my $mlss_hg = $self->_write_mlss( $ssg, $self->param('ml_homoeo') );
+            $self->_write_all_pairs( $self->param('ml_homoeo'), $genome_db->component_genome_dbs );
         }
     }
 
     ## Since possible_ortholds have been removed, there are no between-species paralogs any more
     ## In theory, we could skip the orthologs between components of the same polyploid Genome
-    $self->_write_all_pairs( $self->param('ml_ortho'), $self->param('genome_dbs') );
+    $self->_write_all_pairs( $self->param('ml_ortho'), $all_gdbs );
 
     my $gdb_a = $self->compara_dba->get_GenomeDBAdaptor;
 
     my @reuse_gdbs = map {$gdb_a->fetch_by_dbID($_)} @{$self->param('reused_gdb_ids')};
-    my $reuse_ss = $self->_write_ss( \@reuse_gdbs );
-    $hive_pwp_adaptor->store( {'param_name' => 'reuse_ss_id', 'param_value' => $reuse_ss->dbID} );
-    $hive_pwp_adaptor->store( {'param_name' => 'reuse_ss_csv', 'param_value' => join(',', -1, @{$self->param('reused_gdb_ids')}) } );
+    $self->_write_shared_ss('reuse', \@reuse_gdbs);
+    $self->_write_shared_ss('reuse_polyploid', [grep {$_->is_polyploid} @reuse_gdbs]);
+    $self->_write_shared_ss('reuse_nopolyploid', [grep {not $_->is_polyploid} @reuse_gdbs]);
 
     my @nonreuse_gdbs = map {$gdb_a->fetch_by_dbID($_)} @{$self->param('nonreused_gdb_ids')};
-    my $nonreuse_ss = $self->_write_ss( \@nonreuse_gdbs );
-    $hive_pwp_adaptor->store( {'param_name' => 'nonreuse_ss_id', 'param_value' => $nonreuse_ss->dbID} );
-    $hive_pwp_adaptor->store( {'param_name' => 'nonreuse_ss_csv', 'param_value' => join(',', -1, @{$self->param('nonreused_gdb_ids')})} );
+    $self->_write_shared_ss('nonreuse', \@nonreuse_gdbs);
+    $self->_write_shared_ss('nonreuse_polyploid', [grep {$_->is_polyploid} @nonreuse_gdbs]);
+    $self->_write_shared_ss('nonreuse_nopolyploid', [grep {not $_->is_polyploid} @nonreuse_gdbs]);
+
     # Whether all the species are reused
-    $hive_pwp_adaptor->store( {'param_name' => 'are_all_species_reused', 'param_value' => (scalar(@nonreuse_gdbs) ? 0 : 1)} );
+    $self->db->get_PipelineWideParametersAdaptor->store( {'param_name' => 'are_all_species_reused', 'param_value' => (scalar(@nonreuse_gdbs) ? 0 : 1)} );
 }
 
+sub _write_shared_ss {
+    my ($self, $name, $gdbs) = @_;
+    my $ss = $self->_write_ss($gdbs);
+    $self->param('hive_pwp_adaptor')->store( {'param_name' => $name.'_ss_id', 'param_value' => $ss->dbID} );
+    $self->param('hive_pwp_adaptor')->store( {'param_name' => $name.'_ss_csv', 'param_value' => join(',', -1, map {$_->dbID} @$gdbs)} );
+    return $ss;
+}
 
 # Write a mlss for each pair of species
 sub _write_all_pairs {
