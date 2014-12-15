@@ -106,6 +106,7 @@ sub _objs_from_sth {
 =head2 store
 
  Arg [1]    : Bio::EnsEMBL::Compara::AlignedMemberSet $aln
+ Arg [2]    : Boolean $force_new_alignment: whether to force a new gene_align entry to be created
  Example    : $AlignedMemberAdaptor->store($fam)
  Description: Stores an AlignedMemberSet object into a Compara database
  Returntype : none
@@ -115,17 +116,13 @@ sub _objs_from_sth {
 =cut
 
 sub store {
-    my ($self, $aln, $update_alignment) = @_;
+    my ($self, $aln, $force_new_alignment) = @_;
     assert_ref($aln, 'Bio::EnsEMBL::Compara::AlignedMemberSet');
   
-    # dbID for GeneTree is too dodgy
+    # dbID for GeneTree is too dodgy, so we need to use gene_align_id
     my $id = $aln->isa('Bio::EnsEMBL::Compara::GeneTree') ? $aln->gene_align_id() : $aln->dbID();
 
-	if ($update_alignment){
-	   $id = 0;
-	}
-
-    if ($id) {
+    if ($id and not $force_new_alignment) {
         my $sth = $self->prepare('UPDATE gene_align SET seq_type = ?, aln_length = ?, aln_method = ? WHERE gene_align_id = ?');
         $sth->execute($aln->seq_type, $aln->aln_length, $aln->aln_method, $id);
     } else {
