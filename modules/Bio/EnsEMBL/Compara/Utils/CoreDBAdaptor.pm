@@ -104,23 +104,4 @@ sub locator {
 }
 
 
-=head2 component_names
-
-  Arg [1]    : Bio::EnsEMBL::DBSQL::DBAdaptor
-  Example    : my $component_names = $genome_db->db_adaptor->component_names;
-  Description: Returns the list of all the genome-component names (for polyploid genomes)
-  Returntype : arrayref of string
-
-=cut
-
-sub component_names {
-    my $core_dba = shift;
-
-    return undef unless $core_dba;
-
-    my $sql = 'SELECT DISTINCT value FROM seq_region_attrib JOIN attrib_type USING (attrib_type_id) WHERE code = "genome_component"';
-    my $names = $core_dba->dbc->db_handle->selectall_arrayref($sql);
-    return [map {$_->[0]} @$names];
-}
-
 1;
