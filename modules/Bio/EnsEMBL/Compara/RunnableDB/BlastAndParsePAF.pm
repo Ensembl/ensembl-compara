@@ -159,6 +159,8 @@ sub parse_blast_table_into_paf {
 
             my $cigar_line;
             unless ($self->param('no_cigars')) {
+                $qseq =~ s/ /-/g;
+                $sseq =~ s/ /-/g;
                 $cigar_line = Bio::EnsEMBL::Compara::Utils::Cigars::cigar_from_two_alignment_strings($qseq, $sseq);
             }
 
