@@ -51,7 +51,7 @@ sub preview {
     my $method = 'EnsEMBL::Web::File::Utils::'.$_.'::preview_file';
     my $args = {
                 'hub'     => $self->hub,
-                'raw'     => 0,
+                'nice'    => 1,
                 'limit'   => $limit,
                 };
 
@@ -76,7 +76,7 @@ sub write_line {
     my $method = 'EnsEMBL::Web::File::Utils::'.$_.'::append_lines';
     my $args = {
                 'hub'     => $self->hub,
-                'raw'     => 0,
+                'nice'    => 1,
                 'lines'   => [$line],
                 };
 

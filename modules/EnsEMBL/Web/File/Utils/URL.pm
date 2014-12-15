@@ -22,10 +22,11 @@ package EnsEMBL::Web::File::Utils::URL;
 ### Note that we have to use two different Perl modules here, owing to 
 ### limitations on support for FTP and proxied HTTPS
 
-### File access methods have two modes: raw mode returns 0/1 for failure/success
-### or the expected raw data, and optionally throws exceptions. Non-raw mode is 
-### more suitable for web interfaces, and returns a hashref containing either
-### the raw content or a user-friendly error message (no exceptions are thrown).
+### File access methods have two modes: "nice" mode is most suitable for
+### web interfaces, and returns a hashref containing either the raw content
+### or a user-friendly error message (no exceptions are thrown). "Non-nice" 
+### or raw mode returns 0/1 for failure/success or the expected raw data, 
+### and optionally throws exceptions.
 
 ### IMPORTANT: You must pass a reference to the Hub to all methods, so that they
 ### can access site-wide parameters such as proxies
@@ -91,9 +92,9 @@ sub file_exists {
 ### @param File - EnsEMBL::Web::File object or path to file (String)
 ### @param Args Hashref 
 ###         hub EnsEMBL::Web::Hub
-###         raw (optional) Boolean - see introduction
+###         nice (optional) Boolean - see introduction
 ###         no_exception (optional) Boolean
-### @return Boolean (raw mode) or Hashref 
+### @return Hashref (nice mode) or Boolean 
   my ($file, $args) = @_;
   my $url = ref($file) ? $file->location : $file;
 
@@ -123,7 +124,10 @@ sub file_exists {
     }
   }
 
-  if ($args->{'raw'}) {
+  if ($args->{'nice'}) {
+    return $error ? {'error' => [$error]} : {'success' => 1};
+  }
+  else {
     if ($error) {
       throw exception('URLException', "File $url could not be found: $error") unless $args->{'no_exception'};
       return 0;
@@ -132,9 +136,6 @@ sub file_exists {
       return 1;
     }
   }
-  else {
-    return $error ? {'error' => [$error]} : {'success' => 1};
-  }
 }
 
 sub read_file {
@@ -142,8 +143,9 @@ sub read_file {
 ### @param File - EnsEMBL::Web::File object or path to file (String)
 ### @param Args Hashref 
 ###         hub EnsEMBL::Web::Hub
+###         nice (optional) Boolean - see introduction
 ###         compression String (optional) - compression type
-### @return String (in raw mode) or Hashref 
+### @return Hashref (in nice mode) or String - contents of file
   my ($file, $args) = @_;
   my $url = ref($file) ? $file->location : $file;
 
@@ -180,7 +182,7 @@ sub read_file {
   }
 
   if ($error) {
-    if ($args->{'raw'}) {
+    if ($args->{'nice'}) {
       throw exception('URLException', "File $url could not be readd: $error") unless $args->{'no_exception'};
       return 0;
     }
@@ -191,7 +193,7 @@ sub read_file {
   else {
     my $compression = defined($args->{'compression'}) || check_compression($url);
     my $uncomp = $compression ? uncompress($content, $compression) : $content;
-    if ($args->{'raw'}) {
+    if ($args->{'nice'}) {
       return $uncomp;
     }
     else {
@@ -203,32 +205,36 @@ sub read_file {
 sub write_file {
 ### Returns an error if caller tries to write to remote server!
 ### @param File - EnsEMBL::Web::File object or path to file (String)
-### @return Zero (raw mode) or Hashref containing error
+### @param Args Hashref 
+###         nice (optional) Boolean - see introduction
+### @return Zero (nice mode) or Hashref containing error
   my ($file, $args) = @_;
   my $url = ref($file) ? $file->location : $file;
   warn "!!! Oops - tried to write to a remote server!";
-  if ($args->{'raw'}) {
-    throw exception('URLException', "Writing to remote files not permitted!") unless $args->{'no_exception'};
-    return 0;
+  if ($args->{'nice'}) {
+    return {'error' => ["Cannot write to remote file $url. Function not supported"]};
   }
   else {
-    return {'error' => ["Cannot write to remote file $url. Function not supported"]};
+    throw exception('URLException', "Writing to remote files not permitted!") unless $args->{'no_exception'};
+    return 0;
   }
 }
 
 sub delete_file {
 ### Returns an error if caller tries to delete file from remote server!
 ### @param File - EnsEMBL::Web::File object or path to file (String)
-### @return Zero (raw mode) or Hashref containing error (ArrayRef)
+### @param Args Hashref 
+###         nice (optional) Boolean - see introduction
+### @return Zero (nice mode) or Hashref containing error (ArrayRef)
   my ($file, $args) = @_;
   my $url = ref($file) ? $file->location : $file;
   warn "!!! Oops - tried to delete file from a remote server!";
-  if ($args->{'raw'}) {
-    throw exception('URLException', "Deleting remote files not permitted!") unless $args->{'no_exception'};
-    return 0;
+  if ($args->{'nice'}) {
+    return {'error' => ["Cannot delete remote file $url. Function not supported"]};
   }
   else {
-    return {'error' => ["Cannot delete remote file $url. Function not supported"]};
+    throw exception('URLException', "Deleting remote files not permitted!") unless $args->{'no_exception'};
+    return 0;
   }
 }
 
@@ -237,6 +243,7 @@ sub get_filesize {
 ### @param url - URL of file
 ### @param Args Hashref 
 ###         hub EnsEMBL::Web::Hub
+###         nice (optional) Boolean - see introduction
 ###         compression String (optional) - compression type
 ### @return Hashref containing results (Integer - file size in bytes) or errors (ArrayRef)
   my ($file, $args) = @_;
@@ -246,7 +253,7 @@ sub get_filesize {
   if ($url =~ /^ftp/) {
     ## TODO - support FTP!
     ## return arbitrary filesize as a stopgap!
-    return {'filesize' => 1000};
+    $size = 1000;
   }
   else {
     my %params = ('timeout'       => 10);
@@ -265,11 +272,17 @@ sub get_filesize {
     }
   }
 
-  if ($error) {
-    return {'error' => [$error]};
+  if ($args->{'nice'}) {
+    return $error ? {'error' => [$error]} : {'filesize' => $size};
   }
   else {
-    return {'filesize' => $size};
+    if ($error) {
+      throw exception('URLException', "Could not determine file size.") unless $args->{'no_exception'};
+      return 0;
+    }
+    else {
+      return $size;
+    }
   }
 }
 
