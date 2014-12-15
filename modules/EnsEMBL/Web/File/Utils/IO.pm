@@ -303,11 +303,11 @@ sub write_file {
 
   if (!$content) {
     if ($args->{'nice'}) {
-      throw exception('FileIOException', sprintf qq(No content given for file '%s'.), $path) unless $args->{'no_exception'};
-      return 0;
+      return {'error' => ["No content given for file $filename."]};
     }
     else {
-      return {'error' => ["No content given for file $filename."]};
+      throw exception('FileIOException', sprintf qq(No content given for file '%s'.), $path) unless $args->{'no_exception'};
+      return 0;
     }
   }
  

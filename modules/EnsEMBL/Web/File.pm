@@ -258,8 +258,8 @@ sub exists {
   foreach (@{$self->{'input_drivers'}}) {
     my $method = 'EnsEMBL::Web::File::Utils::'.$_.'::file_exists'; 
     my $args = {
-                'hub' => $self->hub,
-                'raw' => 0,
+                'hub'   => $self->hub,
+                'nice'  => 1,
                 };
     eval {
       no strict 'refs';
@@ -280,8 +280,8 @@ sub read {
   foreach (@{$self->{'input_drivers'}}) {
     my $method = 'EnsEMBL::Web::File::Utils::'.$_.'::read_file'; 
     my $args = {
-                'hub' => $self->hub,
-                'raw' => 0,
+                'hub'   => $self->hub,
+                'nice'  => 1,
                 };
 
     eval {
@@ -304,7 +304,7 @@ sub write {
     my $method = 'EnsEMBL::Web::File::Utils::'.$_.'::write_file'; 
     my $args = {
                 'hub'     => $self->hub,
-                'raw'     => 0,
+                'nice'    => 1,
                 'content' => $content,
                 };
 
@@ -327,7 +327,7 @@ sub delete {
     my $method = 'EnsEMBL::Web::File::Utils::'.$_.'::delete_file'; 
     my $args = {
                 'hub'     => $self->hub,
-                'raw'     => 0,
+                'nice'    => 1,
                 };
 
     eval {
