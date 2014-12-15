@@ -125,6 +125,18 @@ sub store {
     if ($id and not $force_new_alignment) {
         my $sth = $self->prepare('UPDATE gene_align SET seq_type = ?, aln_length = ?, aln_method = ? WHERE gene_align_id = ?');
         $sth->execute($aln->seq_type, $aln->aln_length, $aln->aln_method, $id);
+
+        # We need to remove the gene_align_member entries that are not in the aligment any more
+        my $all_ids = $self->dbc->db_handle->selectall_arrayref('SELECT seq_member_id FROM gene_align_member WHERE gene_align_id = ?', undef, $id);
+        my %hash_ids_in_db = map {$_->[0] => 1} @$all_ids;
+        foreach my $member (@{$aln->get_all_Members}) {
+            delete $hash_ids_in_db{$member->seq_member_id};
+        }
+        $sth = $self->prepare('DELETE FROM gene_align_member WHERE gene_align_id = ? AND seq_member_id = ?');
+        foreach my $seq_member_id (keys %hash_ids_in_db) {
+            $sth->execute($id, $seq_member_id);
+        }
+
     } else {
         my $sth = $self->prepare('INSERT INTO gene_align (seq_type, aln_length, aln_method) VALUES (?,?,?)');
         $sth->execute($aln->seq_type, $aln->aln_length, $aln->aln_method);
