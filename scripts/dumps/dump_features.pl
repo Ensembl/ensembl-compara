@@ -243,7 +243,8 @@ foreach my $slice (sort {
         $a->seq_region_name cmp $b->seq_region_name}}
             @$all_slices) {
   # print STDERR $slice->name, "\n";
-  my $name = "chr".$slice->seq_region_name;
+  my $name = $slice->seq_region_name;
+  $name = 'chr'.$name if $slice->is_chromosome;
 
   if (defined($from)) {
     if ($slice->seq_region_name eq $from) {
