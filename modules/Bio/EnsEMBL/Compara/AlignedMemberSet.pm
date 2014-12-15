@@ -255,10 +255,9 @@ sub load_cigars_from_file {
     my $import_seq;
     my $id_type;
     my $check_seq;
-	my $update_alignment;
     if (scalar @args) {
-		($import_seq, $format, $id_type, $check_seq, $update_alignment) =
-            rearrange([qw(IMPORT_SEQ FORMAT ID_TYPE CHECK_SEQ UPDATE_ALIGNMENT)], @args);
+        ($import_seq, $format, $id_type, $check_seq) =
+            rearrange([qw(IMPORT_SEQ FORMAT ID_TYPE CHECK_SEQ)], @args);
     }
 
     ## First read the alignment file and put the data in a hash

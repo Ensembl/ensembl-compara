@@ -273,7 +273,7 @@ sub parse_and_store_alignment_into_proteintree {
   return 0 unless($msa_output and -e $msa_output);
 
 	if ($self->param('aln_update')){
-		$self->param('protein_tree')->load_cigars_from_file($msa_output, -FORMAT => 'fasta', -CHECK_SEQ => $self->param('check_seq'), -UPDATE_ALIGNMENT => $self->param('aln_update'));
+		$self->param('protein_tree')->load_cigars_from_file($msa_output, -FORMAT => 'fasta', -CHECK_SEQ => $self->param('check_seq'));
 	}
 	else{
 		$self->param('protein_tree')->load_cigars_from_file($msa_output, -FORMAT => 'fasta', -ID_TYPE => 'SEQUENCE', -CHECK_SEQ => $self->param('check_seq'));
