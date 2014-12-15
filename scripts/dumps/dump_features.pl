@@ -548,8 +548,10 @@ sub get_Slices_from_BED_file {
   while (<REGIONS>) {
     next if (/^#/ or /^track/);
     my ($chr, $start0, $end) = split("\t", $_);
-    $chr =~ s/^chr//;
     my $slice = $slice_adaptor->fetch_by_region(undef, $chr, $start0+1, $end);
+    if (!$slice and ($slice =~ m/^chr(.*)/)) {
+        $slice = $slice_adaptor->fetch_by_region(undef, $1, $start0+1, $end);
+    }
     die "Cannot get Slice for $chr - $start0 - $end\n" if (!$slice);
     push(@$slices, $slice);
   }
