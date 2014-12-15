@@ -120,9 +120,9 @@ sub fetch_input {
 
         # If reusing this genome_db, only need to blast against the 'fresh' genome_dbs
         if ($self->param('reuse_ss_id')) {
-            my $reused_species_set = $self->compara_dba()->get_SpeciesSetAdaptor->fetch_by_dbID($self->param('reuse_ss_id'));
+            my $reused_species_set = $self->compara_dba()->get_SpeciesSetAdaptor->fetch_by_dbID($self->param('reuse_ss_id')) or die $self->param('reuse_ss_id')." is not a valid species_set_id\n";
             #Check if species_set contains any species
-            my $reused_genome_dbs = $reused_species_set->genome_dbs if ($reused_species_set);
+            my $reused_genome_dbs = $reused_species_set->genome_dbs;
 
 #            my $reused_genome_dbs = $self->compara_dba()->get_SpeciesSetAdaptor->fetch_by_dbID($self->param('reuse_ss_id'))->genome_dbs;
             my %reuse_ss_hash = ( map { $_->dbID() => 1 } @$reused_genome_dbs );
