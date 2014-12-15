@@ -149,7 +149,7 @@ $feature = shift(@ARGV) if (@ARGV and !$feature);
 $extra = shift(@ARGV) if (@ARGV and !$extra);
 
 my $mlss;
-my $dnafrag_adaptor = $compara_dba->get_DnaFragAdaptor if ($compara_dba);
+my $dnafrag_adaptor = $compara_dba ? $compara_dba->get_DnaFragAdaptor : undef;
 my $track_name;
 my $description;
 my $version = $reg->get_adaptor($species_name, "core", "MetaContainer")->get_schema_version();
