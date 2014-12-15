@@ -181,7 +181,7 @@ sub pvalue_lim {
 
 sub is_node_significant {
     my ($self) = @_;
-    return $self->pvalue < $self->pvalue_lim;
+    return (defined $self->pvalue) && ($self->pvalue < $self->pvalue_lim);
 }
 
 =head2 is_expansion
