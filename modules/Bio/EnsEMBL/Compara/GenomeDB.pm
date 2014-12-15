@@ -117,7 +117,7 @@ sub new {
             [ 'genebuild', \$genebuild, $meta_container->get_genebuild() ],
             [ 'name', \$name, $meta_container->get_production_name() ],
             [ 'has_karyotype', \$has_karyotype, $meta_container->has_karyotype() ],
-            [ 'is_high_coverage', \$is_high_coverage, $db_adaptor->is_high_coverage() ],
+            [ 'is_high_coverage', \$is_high_coverage, $meta_container->is_high_coverage() ],
         );
 
         foreach my $test (@parameters) {

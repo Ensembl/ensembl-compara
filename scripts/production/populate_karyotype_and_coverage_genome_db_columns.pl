@@ -105,7 +105,7 @@ foreach my $genome_db (@{$adaptor->fetch_all}) {
     next unless defined $has_karyotype;
     printf("has_karyotype=%d for %s/%s\n", $has_karyotype, $genome_db->name, $genome_db->assembly);
 
-    my $is_high_coverage = $genome_db->db_adaptor->is_high_coverage;
+    my $is_high_coverage = $meta_container->is_high_coverage;
     next unless defined $is_high_coverage;
     printf("is_high_coverage=%d for %s/%s\n", $is_high_coverage, $genome_db->name, $genome_db->assembly);
 
