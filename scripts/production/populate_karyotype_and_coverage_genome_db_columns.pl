@@ -99,8 +99,9 @@ my $adaptor = $compara_dba->get_GenomeDBAdaptor;
 foreach my $genome_db (@{$adaptor->fetch_all}) {
     next unless $genome_db->assembly_default;
     next unless $genome_db->db_adaptor;
+    my $meta_container = $genome_db->db_adaptor->get_MetaContainer;
 
-    my $has_karyotype = $genome_db->db_adaptor->has_karyotype;
+    my $has_karyotype = $meta_container->has_karyotype;
     next unless defined $has_karyotype;
     printf("has_karyotype=%d for %s/%s\n", $has_karyotype, $genome_db->name, $genome_db->assembly);
 

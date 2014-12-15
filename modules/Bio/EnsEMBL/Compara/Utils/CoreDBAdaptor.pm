@@ -51,27 +51,6 @@ use warnings;
 package Bio::EnsEMBL::DBSQL::DBAdaptor;
 
 
-=head2 has_karyotype
-
-  Arg [1]    : Bio::EnsEMBL::DBSQL::DBAdaptor
-  Example    : my $has_karyotype = $genome_db->db_adaptor->has_karyotype;
-  Description: Tests whether a karyotype is defined for this species
-  Returntype : boolean
-
-=cut
-
-sub has_karyotype {
-    my $core_dba = shift;
-
-    return undef unless $core_dba;
-    return undef unless $core_dba->group eq 'core';
-
-    my $count = scalar(@{$core_dba->get_SliceAdaptor->fetch_all_karyotype()});
-
-    return $count ? 1 : 0;
-}
-
-
 =head2 is_high_coverage
 
   Arg [1]    : Bio::EnsEMBL::DBSQL::DBAdaptor

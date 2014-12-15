@@ -116,7 +116,7 @@ sub new {
             [ 'taxon_id', \$taxon_id, $meta_container->get_taxonomy_id() ],
             [ 'genebuild', \$genebuild, $meta_container->get_genebuild() ],
             [ 'name', \$name, $meta_container->get_production_name() ],
-            [ 'has_karyotype', \$has_karyotype, $db_adaptor->has_karyotype() ],
+            [ 'has_karyotype', \$has_karyotype, $meta_container->has_karyotype() ],
             [ 'is_high_coverage', \$is_high_coverage, $db_adaptor->is_high_coverage() ],
         );
 
@@ -172,7 +172,7 @@ sub db_adaptor {
             $self->assembly( $self->{'_db_adaptor'}->assembly_name );
             $self->taxon_id( $self->{'_db_adaptor'}->get_MetaContainer->get_taxonomy_id );
             $self->genebuild( $self->{'_db_adaptor'}->get_MetaContainer->get_genebuild );
-            $self->has_karyotype( $self->{'_db_adaptor'}->has_karyotype );
+            $self->has_karyotype( $self->{'_db_adaptor'}->get_MetaContainer->has_karyotype );
 	    $self->{'_db_adaptor'}{_dbc}->disconnect_if_idle;
         }
     }
