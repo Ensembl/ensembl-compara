@@ -42,7 +42,7 @@ sub param_defaults {
         # Most of the parameters are identical to the super-class: RAxML
 			'cmd'					=> '#raxml_exe# -m #best_fit_model# -p 99123746531 -r #gene_tree_file# -s #alignment_file# -n #gene_tree_id#;',
 			'input_clusterset_id'	=> 'copy',
-			'tree_update'			=> 1,
+            'aln_clusterset_id'     => 'default',
             'runtime_tree_tag'      => 'raxml_update_runtime',
             'remove_columns'        => 1,
             'run_treebest_sdi'      => 1,

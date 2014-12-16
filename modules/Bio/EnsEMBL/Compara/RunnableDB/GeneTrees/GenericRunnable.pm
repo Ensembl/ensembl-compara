@@ -69,6 +69,7 @@ Other parameters:
  - reroot_with_sdi: should "treebest sdi" also reroot the tree
  - output_clusterset_id: alternative clusterset_id to store the result gene tree
  - aln_format: (default: "fasta"). In which format the alignment should be dumped
+ - aln_clusterset_id: clusterset_id of the tree that provides the alignment. Default is undef, which means the tree that is used for input in the runnable
 
 Branch events:
  - #1: autoflow on success
@@ -226,12 +227,18 @@ sub run_generic_command {
     $self->param('species_tree_file', $self->get_species_tree_file());
     $self->merge_split_genes($gene_tree) if $self->param('check_split_genes');
 
-    my $input_aln;
-    if ($self->param('tree_update')){
-        $input_aln = $self->dumpTreeMultipleAlignmentToWorkdir($self->param('default_gene_tree'), $self->param('aln_format'), {-APPEND_SPECIES_TREE_NODE_ID => 1}) || die "Could not fetch alignment for ($self->param('default_gene_tree'))";
-    } else{
-        $input_aln = $self->dumpTreeMultipleAlignmentToWorkdir($gene_tree, $self->param('aln_format'), {-APPEND_SPECIES_TREE_NODE_ID => 1}) || die "Could not fetch alignment for ($gene_tree)";
+    # The alignment can come from yet another tree
+    my $aln_tree;
+    if ($self->param('aln_clusterset_id')) {
+        if ($self->param('aln_clusterset_id') eq 'default') {
+            $aln_tree = $self->param('default_gene_tree');
+        } else {
+            $aln_tree = $self->param('default_gene_tree')->alternative_trees->{$self->param('aln_clusterset_id')};
+        }
+    } else {
+        $aln_tree = $gene_tree;
     }
+    my $input_aln = $self->dumpTreeMultipleAlignmentToWorkdir($aln_tree, $self->param('aln_format'), {-APPEND_SPECIES_TREE_NODE_ID => 1}) || die "Could not fetch alignment for ($aln_tree)";
     $self->param('alignment_file', $input_aln);
 
     $self->param('gene_tree_file', $self->get_gene_tree_file($gene_tree->root));
