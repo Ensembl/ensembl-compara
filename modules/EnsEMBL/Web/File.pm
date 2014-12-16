@@ -70,8 +70,10 @@ sub new {
     ## DEALING WITH AN EXISTING FILE
    
     ## Clean up the path
-    $file_path =~ s/$self->{'hub'}->species_defs->ENSEMBL_TMP_DIR//;
-    $file_path =~ s/$self->{'hub'}->species_defs->ENSEMBL_TMP_URL//;
+    my $tmp = $self->{'hub'}->species_defs->ENSEMBL_TMP_DIR;
+    $file_path =~ s/$tmp//;
+    $tmp = $self->{'hub'}->species_defs->ENSEMBL_TMP_URL;
+    $file_path =~ s/$tmp//;
     $self->{'file_path'} = $file_path;
 
     my @path = grep length, split('/', $file_path);
@@ -267,8 +269,29 @@ sub exists {
     };
     next if $result->{'error'}; 
   }
-  warn $result->{'error'} if $result->{'error'};
   return $result->{'error'} ? 0 : 1;
+}
+
+sub fetch {
+### Get file uncompressed, e.g. for downloading
+### @return Hashref 
+  my $self = shift;
+  my $result = {};
+
+  foreach (@{$self->{'input_drivers'}}) {
+    my $method = 'EnsEMBL::Web::File::Utils::'.$_.'::fetch_file';
+    my $args = {
+                'hub'   => $self->hub,
+                'nice'  => 1,
+                };
+
+    eval {
+      no strict 'refs';
+      $result = &$method($self, $args);
+    };
+    last if $result->{'content'};
+  }
+  return $result;
 }
 
 sub read {
@@ -302,6 +325,31 @@ sub write {
  
   foreach (@{$self->{'output_drivers'}}) {
     my $method = 'EnsEMBL::Web::File::Utils::'.$_.'::write_file'; 
+    my $args = {
+                'hub'     => $self->hub,
+                'nice'    => 1,
+                'content' => $content,
+                };
+
+    eval {
+      no strict 'refs';
+      $result = &$method($self, $args);
+    };
+    next if $result->{'error'};
+  }
+  return $result;
+}
+
+sub write_line {
+### Write content to a new file, or append single line to an existing file  
+### @param String
+### @return Hashref 
+  my ($self, $content) = @_;
+  my $result = {};
+  $content = [$content] unless ref($content) eq 'ARRAY';
+ 
+  foreach (@{$self->{'output_drivers'}}) {
+    my $method = 'EnsEMBL::Web::File::Utils::'.$_.'::append_lines'; 
     my $args = {
                 'hub'     => $self->hub,
                 'nice'    => 1,
