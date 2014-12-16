@@ -39,8 +39,9 @@ sub render {
   my $adaptor       = EnsEMBL::Web::DBSQL::ArchiveAdaptor->new($hub);
   my $release       = $adaptor->fetch_release($release_id);
   my $release_date  = $release->{'date'};
+  my $species_name  = $hub->species ? $hub->species_defs->SPECIES_COMMON_NAME : '';
 
-  $html .= sprintf('<h1>%s News for Release %s', $site_type, $release_id);
+  $html .= sprintf('<h1>%s News for %s Release %s', $site_type, $species_name, $release_id);
   $html .= sprintf(' (%s)', $release_date) if $release_date;
   $html .= '</h1>';
 
@@ -168,7 +169,10 @@ sub render {
           my @species = @{$record->{'species'}}; 
           my $sp_text;
   
-          if (!@species || !$species[0]) {
+          if ($species_name && $species_name eq $species[0]->{'web_name'}) {
+            $sp_text = '';
+          }
+          elsif (!@species || !$species[0]) {
             $sp_text = 'all species';
           }
           elsif (@species > 5) {
@@ -186,7 +190,8 @@ sub render {
             }
             $sp_text = join(', ', @names);
           }
-          $html .= " ($sp_text)</h$header_level>\n";
+          $html .= " ($sp_text)" if $sp_text;
+          $html .= "\n</h$header_level>\n";
           my $content = $record->{'content'};
           $html .= $content."\n\n";
         }
