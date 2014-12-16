@@ -127,7 +127,7 @@ sub get_sequence_data {
     if($adorn ne 'none') {
       $self->set_variations($config, $sl, $mk, $sequence) if $config->{'snp_display'} ne 'off';
     }
-    $self->set_exons($config, $sl, $mk)                 if $config->{'exon_display'};
+    $self->set_exons($config, $sl, $mk)                 if $config->{'exon_display'} ne 'off';
     $self->set_codons($config, $sl, $mk)                if $config->{'codons_display'};
     
     push @markup, $mk;
