@@ -229,14 +229,13 @@ sub run_generic_command {
     $self->param('species_tree_file', $self->get_species_tree_file());
     $self->merge_split_genes($gene_tree) if $self->param('check_split_genes');
 
-	if ($self->param('tree_update')){
-		my $input_aln = $self->dumpTreeMultipleAlignmentToWorkdir($self->param('default_gene_tree'), $self->param('aln_format'), {-APPEND_SPECIES_TREE_NODE_ID => 1}) || die "Could not fetch alignment for ($self->param('default_gene_tree'))";
-		$self->param('alignment_file', $input_aln);
-	}
-	else{
-		my $input_aln = $self->dumpTreeMultipleAlignmentToWorkdir($gene_tree, $self->param('aln_format'), {-APPEND_SPECIES_TREE_NODE_ID => 1}) || die "Could not fetch alignment for ($gene_tree)";
-		$self->param('alignment_file', $input_aln);
-	}
+    my $input_aln;
+    if ($self->param('tree_update')){
+        $input_aln = $self->dumpTreeMultipleAlignmentToWorkdir($self->param('default_gene_tree'), $self->param('aln_format'), {-APPEND_SPECIES_TREE_NODE_ID => 1}) || die "Could not fetch alignment for ($self->param('default_gene_tree'))";
+    } else{
+        $input_aln = $self->dumpTreeMultipleAlignmentToWorkdir($gene_tree, $self->param('aln_format'), {-APPEND_SPECIES_TREE_NODE_ID => 1}) || die "Could not fetch alignment for ($gene_tree)";
+    }
+    $self->param('alignment_file', $input_aln);
 
     $self->param('gene_tree_file', $self->get_gene_tree_file($gene_tree->root));
 
