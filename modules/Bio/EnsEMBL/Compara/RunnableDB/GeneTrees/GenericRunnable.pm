@@ -195,9 +195,6 @@ sub write_output {
             $self->store_genetree($target_tree);
         }
 
-		#We minimize the trees here in order to remove parents of disavowed members.
-		$target_tree->{'_root'} = $target_tree->root->minimize_tree;
-
         # check that the tree is binary
         foreach my $node (@{$target_tree->get_all_nodes}) {
             next if $node->is_leaf;
