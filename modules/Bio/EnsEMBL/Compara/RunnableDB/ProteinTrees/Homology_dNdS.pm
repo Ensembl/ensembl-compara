@@ -98,11 +98,7 @@ sub run {
         next if ($homology->s or $homology->n);
 
         # Compute ds
-        eval { $self->calc_genetic_distance($homology, $codeml_parameters); };
-        if ($@) {
-            $self->warning($@);
-            warn $@;
-        }
+        $self->calc_genetic_distance($homology, $codeml_parameters);
         push @updated_homologies, $homology if $homology->s or $homology->n;
 
         # To save memory
