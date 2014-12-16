@@ -101,8 +101,7 @@ sub populate_tree {
   $stats_menu->append($self->create_node('IPtop500', 'Top 500 InterPro hits',
     [qw(ip500 EnsEMBL::Web::Component::Info::IPtop500)]
   ));
-  my $version = $species_defs->ENSEMBL_VERSION;
-  $self->create_node('WhatsNew', "What's New in Release $version",
+  $self->create_node('WhatsNew', '',
     [qw(whatsnew EnsEMBL::Web::Component::Info::WhatsNew)]
   );
 
