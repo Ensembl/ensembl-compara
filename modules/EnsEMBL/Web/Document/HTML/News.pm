@@ -60,7 +60,7 @@ sub render {
     my $adaptor = EnsEMBL::Web::DBSQL::ProductionAdaptor->new($hub);
     my @changes = ();
     if ($adaptor) {
-      my $params = {'release' => $release_id, 'site_type' => lc($hub->species_defs->ENSEMBL_SITETYPE)};
+      my $params = {'release' => $release_id};
       if ($hub->species) {
         $params->{'species'} = $hub->species;
         @changes = @{$adaptor->fetch_changelog($params)};
