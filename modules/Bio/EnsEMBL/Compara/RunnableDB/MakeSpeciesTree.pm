@@ -80,35 +80,29 @@ sub fetch_input {
         $species_tree_root = $species_tree_root->minimize_tree;     # The user-defined trees may have some 1-child nodes
 
         # Let's try to find genome_dbs and ncbi taxa
+        my $gdb_a = $self->compara_dba->get_GenomeDBAdaptor;
+
+        # We need to build a hash locally because # $gdb_a->fetch_by_name_assembly()
+        # doesn't return non-default assemblies, which can be the case !
+        my %all_genome_dbs = map {$_->name => $_} (grep {not $_->genome_component} @{$gdb_a->fetch_all});
 
         # First, we remove the extra species that the tree may contain
-        my $gdb_a = $self->compara_dba->get_GenomeDBAdaptor;
         foreach my $node (@{$species_tree_root->get_all_leaves}) {
-            eval {
-                my $gdb = $gdb_a->fetch_by_name_assembly($node->name) or die $node->name." is not a valid GenomeDB name";
+            my $gdb = $all_genome_dbs{$node->name};
+            if ((not $gdb) and ($node->name =~ m/^(.*)_([^_]*)$/)) {
+                # Perhaps the node represents the component of a polyploid genome
+                my $pgdb = $all_genome_dbs{$1};
+                die "$1 is not a polyploid genome\n" unless $pgdb->is_polyploid;
+                $gdb = $pgdb->component_genome_dbs($2) or die "No component named '$2' in '$1'\n";
+            }
+            if ($gdb) {
                 $node->genome_db_id($gdb->dbID);
                 $node->taxon_id($gdb->taxon_id);
                 $node->node_name($gdb->taxon->name);
                 $node->{_tmp_gdb} = $gdb;
-            };
-            if ($@ and $@ =~ /No matches found for name/) {
-                # Perhaps the node represents the component of a polyploid genome
-                eval {
-                    if (not $node->name =~ m/^(.*)_([^_]*)$/) {
-                        die "No matches found for name";
-                    }
-                    my $gdb = $gdb_a->fetch_by_name_assembly($1) or die "$1 is not a valid GenomeDB name";
-                    die "$1 is not a polyploid genome. No matches found for name" unless $gdb->is_polyploid;
-                    $gdb = $gdb->component_genome_dbs($2) || die "No component named '$2' in '$1'. No matches found for name";
-                    $node->genome_db_id($gdb->dbID);
-                    $node->taxon_id($gdb->taxon_id);
-                    $node->node_name($gdb->taxon->name);
-                    $node->{_tmp_gdb} = $gdb;
-                };
-                if ($@ and $@ =~ /No matches found for name/) {
-                    $node->disavow_parent();
-                    $species_tree_root = $species_tree_root->minimize_tree;
-                }
+            } else {
+                $node->disavow_parent();
+                $species_tree_root = $species_tree_root->minimize_tree;
             }
         }
 
