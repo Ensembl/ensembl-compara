@@ -131,8 +131,8 @@ sub write_output {
 sub _write_shared_ss {
     my ($self, $name, $gdbs) = @_;
     my $ss = $self->_write_ss($gdbs);
-    $self->param('hive_pwp_adaptor')->store( {'param_name' => $name.'_ss_id', 'param_value' => $ss->dbID} );
-    $self->param('hive_pwp_adaptor')->store( {'param_name' => $name.'_ss_csv', 'param_value' => join(',', -1, map {$_->dbID} @$gdbs)} );
+    $self->db->get_PipelineWideParametersAdaptor->store( {'param_name' => $name.'_ss_id', 'param_value' => $ss->dbID} );
+    $self->db->get_PipelineWideParametersAdaptor->store( {'param_name' => $name.'_ss_csv', 'param_value' => join(',', -1, map {$_->dbID} @$gdbs)} );
     return $ss;
 }
 
