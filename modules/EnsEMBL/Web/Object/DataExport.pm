@@ -30,7 +30,7 @@ package EnsEMBL::Web::Object::DataExport;
 
 use EnsEMBL::Web::Controller;
 use EnsEMBL::Web::Builder;
-use EnsEMBL::Web::File;
+use EnsEMBL::Web::File::User;
 
 use strict;
 use warnings;
@@ -79,8 +79,8 @@ sub handle_download {
   my ($self, $r) = @_;
   my $hub = $self->hub;
 
-  my $filename    = $hub->param('filename');
-  my $path        = $hub->param('path');
+  my $filename    = $hub->param('name');
+  my $path        = $hub->param('file_path');
   my $format      = $hub->param('format');
   my $compression = $hub->param('compression');
   
@@ -96,25 +96,32 @@ sub handle_download {
         'zip'   => 'application/zip',
   );
   my $mime_type = $mime_types{$compression} || $mime_types{$format} || 'text/plain';
-  my $compress = $compression ? 1 : 0;
 
-  my %params = (hub => $hub, path => $path);
-  if ($compress) {
-    $params{'compress'} = $compress;
-    $params{'get_compressed'} = 1;
-  }
-  my $tmpfile = EnsEMBL::Web::File->new(%params);
+  my %params = (hub => $hub, file_path => $path);
+  my $tmpfile = EnsEMBL::Web::File::User->new(%params);
+  my $error;
 
   if ($tmpfile->exists) {
-    my $content = $tmpfile->fetch;
+    my $result = $tmpfile->fetch;
+    my $content = $result->{'content'};
+    if ($content) {
 
-    $r->headers_out->add('Content-Type'         => $mime_type);
-    $r->headers_out->add('Content-Length'       => length $content);
-    $r->headers_out->add('Content-Disposition'  => sprintf 'attachment; filename=%s', $filename);
+      $r->headers_out->add('Content-Type'         => $mime_type);
+      $r->headers_out->add('Content-Length'       => length $content);
+      $r->headers_out->add('Content-Disposition'  => sprintf 'attachment; filename=%s', $filename);
 
-    print $content;
+      print $content;
+    }
+    else {
+      $error = $result->{'error'};
+    }
   }
-  else { warn ">>> PATH NOT RECOGNISED"; }
+  else { 
+    $error =  ["Sorry, could not find download file $filename."]; 
+  }
+
+  if ($error) {
+  }
 }
 
 sub expand_slice {

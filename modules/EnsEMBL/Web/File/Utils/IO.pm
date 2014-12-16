@@ -379,6 +379,9 @@ sub write_lines {
     }
   }
   
+  ## Create the directory path if it doesn't exist
+  my $has_path = _check_path($path);
+  
   $args->{'compression'} ||= check_compression($path);
   eval {
       _write_to_file($path, $args, '>',
@@ -433,6 +436,9 @@ sub append_lines {
       return 0;
     }
   }
+  
+  ## Create the directory path if it doesn't exist
+  my $has_path = _check_path($path);
   
   $args->{'compression'} ||= check_compression($path);
   eval {
