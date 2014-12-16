@@ -1,4 +1,3 @@
-#!/usr/local/bin/perl
 =head1 LICENSE
 
 Copyright [1999-2014] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
