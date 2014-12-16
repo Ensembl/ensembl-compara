@@ -517,7 +517,7 @@ sub make_component_copy {
     $copy_genome_db->assembly_default(0);
     $copy_genome_db->dbID(undef);
     $copy_genome_db->adaptor(undef);
-    $self->_attach_component_genome_db($copy_genome_db);
+    $self->component_genome_dbs($component_name, $copy_genome_db);
     return $copy_genome_db;
 }
 
@@ -543,6 +543,8 @@ sub principal_genome_db {
 
 =head2 component_genome_dbs
 
+  Arg [1]     : string (optional): the name of the genome component
+  Arg [2]     : GenomeDB (optional): the new value for this component
   Example     : $genome_db->component_genome_dbs();
   Description : On a polyploid genome, returns all the GenomeDBs of its components.
                 Returns an empty list otherwise
@@ -554,34 +556,19 @@ sub principal_genome_db {
 =cut
 
 sub component_genome_dbs {
-    my ($self, $component_name) = @_;
+    my ($self, $component_name, $new_gdb) = @_;
 
     if ($component_name) {
-        $self->{_component_genome_dbs}->{$component_name} = shift if @_;
+        if ($new_gdb) {
+            $self->{_component_genome_dbs}->{$component_name} = $new_gdb;
+            $self->{_is_polyploid} = 1;
+            $new_gdb->{_principal_genome_db} = $self;
+        }
         return $self->{_component_genome_dbs}->{$component_name};
     } else {
-        return values %{$self->{_component_genome_dbs}};
+        return [values %{$self->{_component_genome_dbs}}];
     }
 }
-
-=head2 _attach_component_genome_db
-
-  Example     : $principal_genome_db->_attach_component_genome_db($component_genome_db);
-  Description : Attach a GenomeDB as a component of this one
-  Returntype  : none
-  Exceptions  : none
-  Caller      : general
-  Status      : Stable
-
-=cut
-
-sub _attach_component_genome_db {
-    my ($self, $component_genome_db) = @_;
-    $self->{_component_genome_dbs}->{$component_genome_db->genome_component} = $component_genome_db;
-    $self->{_is_polyploid} = 1;
-    $component_genome_db->{_principal_genome_db} = $self;
-}
-
 
 
 =head2 toString

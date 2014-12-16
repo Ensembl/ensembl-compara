@@ -545,7 +545,9 @@ sub _objs_from_sth {
     # Here, we need to connect the genome_dbs for polyploid genomes
     my %gdb_per_key = map {$_->_get_unique_key => $_} (grep {not $_->genome_component} @genome_db_list);
     foreach my $gdb (@genome_db_list) {
-        $gdb_per_key{$_->_get_unique_key}->_attach_component_genome_db($gdb) if $gdb->genome_component;
+        next unless $gdb->genome_component;
+        my $key = $gdb->_get_unique_key;
+        $gdb_per_key{$key}->component_genome_dbs($gdb->genome_component, $gdb) if $gdb_per_key{$key};
     }
 
     return \@genome_db_list;
