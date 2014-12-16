@@ -351,6 +351,7 @@ sub root {
 sub preload {
     my $self = shift;
     return unless defined $self->adaptor;
+    return if $self->{_preloaded};
 
     if (not defined $self->{'_root'} and defined $self->{'_root_id'}) {
         my $gtn_adaptor = $self->adaptor->db->get_GeneTreeNodeAdaptor;
@@ -378,6 +379,7 @@ sub preload {
 
     # Loads all the gene members in one go
     $self->adaptor->db->get_GeneMemberAdaptor->load_all_from_seq_members( [grep {UNIVERSAL::isa($_, 'Bio::EnsEMBL::Compara::GeneTreeMember')} @{$self->root->get_all_leaves}] );
+    $self->{_preloaded} = 1;
 }
 
 
