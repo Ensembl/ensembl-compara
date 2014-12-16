@@ -80,6 +80,11 @@ sub fetch_changelog {
     $filter .= ') AND ';
   }
 
+  if ($criteria->{'site_type'}) {
+    push @args, $criteria->{'site_type'};
+    $filter .= ' c.site_type = ? AND ';
+  }
+
   $order .= 'c.priority DESC ';
 
   if ($criteria->{'limit'}) {
