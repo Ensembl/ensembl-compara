@@ -169,8 +169,7 @@ sub write_output {
     my $self = shift;
 
     if ($self->param('read_tags')) {
-        #FIXME: tags should be stored in the output_clusterset_id tree
-        my $target_tree = $self->param('default_gene_tree');
+        my $target_tree = $self->param('default_gene_tree')->alternative_trees->{$self->param('output_clusterset_id')};
         my $tags = $self->get_tags();
         while ( my ($tag, $value) = each %$tags ) {
             $target_tree->store_tag($tag, $value);
