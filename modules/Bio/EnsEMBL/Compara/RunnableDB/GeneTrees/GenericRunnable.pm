@@ -168,16 +168,9 @@ sub run {
 sub write_output {
     my $self = shift;
 
-	#my $target_tree = $self->param('gene_tree');
-    my $target_tree;
-	if ($self->param('output_clusterset_id') eq "raxml_update"){
-		$target_tree = $self->param('default_gene_tree');
-	}
-	else{
-		$target_tree = $self->param('gene_tree');
-	}
-
     if ($self->param('read_tags')) {
+        #FIXME: tags should be stored in the output_clusterset_id tree
+        my $target_tree = $self->param('default_gene_tree');
         my $tags = $self->get_tags();
         while ( my ($tag, $value) = each %$tags ) {
             $target_tree->store_tag($tag, $value);
@@ -185,12 +178,13 @@ sub write_output {
 
     } else {
 
+        my $target_tree;
+        delete $self->param('default_gene_tree')->{'_member_array'};   # To make sure we use the freshest data
+
         if ($self->param('output_clusterset_id') and $self->param('output_clusterset_id') ne 'default') {
-            delete $target_tree->{'_member_array'};   # To make sure we use the freshest data
-            $target_tree = $self->store_alternative_tree($self->param('newick_output'), $self->param('output_clusterset_id'), $target_tree, [], 1) || die "Could not store ". $self->param('output_clusterset_id') . " tree.\n";
+            $target_tree = $self->store_alternative_tree($self->param('newick_output'), $self->param('output_clusterset_id'), $self->param('default_gene_tree'), [], 1) || die "Could not store ". $self->param('output_clusterset_id') . " tree.\n";
         } else {
             $target_tree = $self->param('default_gene_tree');
-            delete $target_tree->{'_member_array'};   # To make sure we use the freshest data
             $self->parse_newick_into_tree($self->param('newick_output'), $target_tree, []);
             $self->store_genetree($target_tree);
         }
@@ -200,9 +194,9 @@ sub write_output {
             next if $node->is_leaf;
             die "The tree should be binary" if scalar(@{$node->children}) != 2;
         }
+        $target_tree->release_tree();
     }
     $self->param('default_gene_tree')->store_tag($self->param('runtime_tree_tag'), $self->param('runtime_msec')) if $self->param('runtime_tree_tag');
-    $target_tree->release_tree();
 }
 
 
@@ -210,6 +204,7 @@ sub post_cleanup {
     my $self = shift;
 
     $self->param('gene_tree')->release_tree() if $self->param('gene_tree');
+    $self->param('default_gene_tree')->release_tree() if $self->param('default_gene_tree');
     $self->SUPER::post_cleanup if $self->can("SUPER::post_cleanup");
 }
 

@@ -1879,7 +1879,7 @@ sub core_pipeline_analyses {
             -parameters => {
                 'raxml_exe'                 => $self->o('raxml_exe'),
                 'treebest_exe'              => $self->o('treebest_exe'),
-                'output_clusterset_id'      => $self->o('use_notung') ? 'raxml_update' : 'default',
+                'output_clusterset_id'      => 'default',
             },
             -hive_capacity        => $self->o('raxml_update_capacity'),
             -analysis_capacity 	  => $self->o('raxml_update_capacity'),
