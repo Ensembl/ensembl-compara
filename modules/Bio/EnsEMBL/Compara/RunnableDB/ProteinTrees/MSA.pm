@@ -169,12 +169,9 @@ sub write_output {
         }
     }
 
-	if ($self->param('aln_update')){
-		$self->compara_dba->get_GeneAlignAdaptor->store($self->param('protein_tree'),$self->param('aln_update'));
-	}
-	else{
-		$self->compara_dba->get_GeneAlignAdaptor->store($self->param('protein_tree'));
-	}
+    # The second parameter is 1 to make sure we don't have "leftovers" from
+    # previous runs
+    $self->compara_dba->get_GeneAlignAdaptor->store($self->param('protein_tree'), 1);
 
     # Store various alignment tags:
     $self->_store_aln_tags($self->param('protein_tree'));
