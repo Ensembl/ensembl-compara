@@ -114,13 +114,29 @@ sub render {
                       'other'       => 'Other updates',
                       );
 
+      my %team_lookup = (
+                        'Funcgen'   => 'Regulation',
+                        );
+
       ## TOC
       $html .= qq(<h2>News categories</h2>
                 <ul>\n);
       foreach my $header (@order) {
         next unless $headers{$header};
         my $title   = $has_cats ? $cat_lookup{$header} : ucfirst($header);
-        $html .= sprintf '<li><a href="#cat-%s">%s</a></li>', $header, $title;
+        $html .= sprintf '<li><a href="#cat-%s">%s</a>', $header, $title;
+        if ($has_cats && $header eq 'other') {
+          my @teams = sort keys %$sorted_teams;
+          if (scalar @teams) {
+            $html .= '<ul>';
+            foreach my $team (@teams) {
+              my $team_name = $team_lookup{$team} || ucfirst($team);
+              $html .= sprintf '<li><a href="#team-%s">%s</a>', $team, $team_name;
+            }
+            $html .= '</ul>';
+          }
+        }
+        $html .= '</li>';
       }
       $html .= "</ul>\n\n";
 
@@ -130,8 +146,25 @@ sub render {
         my @records = @{$sorted->{$header}||[]};  
         my $title   = $has_cats ? $cat_lookup{$header} : ucfirst($header);
         $html .= sprintf '<h2 id="cat-%s" class="news-category">%s</h2>', $header, $title;
+        my $header_level = 3;
+        if ($has_cats && $header eq 'other') {
+          $header_level = 4; 
+          @records = sort {$a->{'team'} cmp $b->{'team'}} @records;
+        } 
+        my $previous_team;
+      
+     
         foreach my $record (@records) {
-          $html .= '<h3 id="change_'.$record->{'id'}.'">'.$record->{'title'};
+          if ($has_cats && $header eq 'other') {
+            my $team = $record->{'team'};
+            if ($team && $team ne $previous_team) {
+              my $team_name = $team_lookup{$team} || ucfirst($team);
+              $html .= sprintf '<h3 id="team-%s" class="news-category">%s</h3>', $team, $team_name;
+            }
+            $previous_team = $team;
+          }
+          $html .= sprintf('<h%s id="change_%s">%s', $header_level, $record->{'id'}, $record->{'title'});
+
           my @species = @{$record->{'species'}}; 
           my $sp_text;
   
@@ -153,7 +186,7 @@ sub render {
             }
             $sp_text = join(', ', @names);
           }
-          $html .= " ($sp_text)</h3>\n";
+          $html .= " ($sp_text)</h$header_level>\n";
           my $content = $record->{'content'};
           $html .= $content."\n\n";
         }
