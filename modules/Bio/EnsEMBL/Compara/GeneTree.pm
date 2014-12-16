@@ -426,6 +426,41 @@ sub alignment {
 }
 
 
+=head2 alternative_trees
+
+  Example     : $gene_tree->alternative_trees();
+  Description : Returns all the alternative trees of the current tree
+  Returntype  : Hashref of strings (clusterset_id) => Bio::EnsEMBL::Compara::GeneTree
+  Exceptions  : none
+  Caller      : general
+  Status      : Stable
+
+=cut
+
+sub alternative_trees {
+    my $self = shift;
+
+    if (not $self->{_alternative_trees}) {
+        # Fetch all the other trees
+        my $other_trees = $self->adaptor->fetch_all_linked_trees($self);
+        # Make the hash for ourselves
+        my $hash_trees = {};
+        foreach my $t (@$other_trees) {
+            $hash_trees->{$t->clusterset_id} = $t;
+        }
+        $self->{_alternative_trees} = \%{$hash_trees};
+        # And for every other tree
+        $hash_trees->{$self->clusterset_id} = $self;
+        foreach my $t (@$other_trees) {
+            delete $hash_trees->{$t->clusterset_id};
+            $t->{_alternative_trees} = \%{$hash_trees};
+            $hash_trees->{$t->clusterset_id} = $t;
+        }
+    }
+    return $self->{_alternative_trees};
+}
+
+
 =head2 expand_subtrees
 
   Description : Method to fetch the subtrees of the current tree
@@ -571,6 +606,13 @@ sub release_tree {
     $self->root->release_tree;
     foreach my $member (@{$self->{'_member_array'}}) {
         delete $member->{'_tree'};
+    }
+
+    # Let's now release the alternative trees if they've been loaded
+    return unless $self->{_alternative_trees};
+    foreach my $other_tree (values %{$self->{_alternative_trees}}) {
+        delete $other_tree->{_alternative_trees};
+        $other_tree->release_tree;
     }
 }
 

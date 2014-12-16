@@ -138,8 +138,7 @@ sub fetch_input {
 
     if ($self->param('input_clusterset_id') and $self->param('input_clusterset_id') ne 'default') {
         print STDERR "getting the tree '".$self->param('input_clusterset_id')."'\n";
-        my $other_trees = $self->param('tree_adaptor')->fetch_all_linked_trees($gene_tree);
-        my ($selected_tree) = grep {$_->clusterset_id eq $self->param('input_clusterset_id')} @$other_trees;
+        my $selected_tree = $gene_tree->alternative_trees->{$self->param('input_clusterset_id')};
         die sprintf('Cannot find a "%s" tree for tree_id=%d', $self->param('input_clusterset_id'), $self->param('gene_tree_id')) unless $selected_tree;
         $selected_tree->add_tag('removed_columns', $gene_tree->get_value_for_tag('removed_columns')) if $gene_tree->has_tag('removed_columns');
         $gene_tree = $selected_tree;
@@ -194,7 +193,6 @@ sub write_output {
             next if $node->is_leaf;
             die "The tree should be binary" if scalar(@{$node->children}) != 2;
         }
-        $target_tree->release_tree();
     }
     $self->param('default_gene_tree')->store_tag($self->param('runtime_tree_tag'), $self->param('runtime_msec')) if $self->param('runtime_tree_tag');
 }
@@ -204,7 +202,6 @@ sub post_cleanup {
     my $self = shift;
 
     $self->param('gene_tree')->release_tree() if $self->param('gene_tree');
-    $self->param('default_gene_tree')->release_tree() if $self->param('default_gene_tree');
     $self->SUPER::post_cleanup if $self->can("SUPER::post_cleanup");
 }
 

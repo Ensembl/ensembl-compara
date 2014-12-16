@@ -194,7 +194,8 @@ sub load_input_trees {
   my $self = shift;
   my $tree = $self->param('gene_tree');
 
-  for my $other_tree (@{$self->compara_dba->get_GeneTreeAdaptor->fetch_all_linked_trees($tree)}) {
+  for my $other_tree (values %{$tree->alternative_trees}) {
+    $other_tree->preload();
     # horrible hack: we replace taxon_id with species_tree_node_id
     foreach my $leaf (@{$other_tree->get_all_leaves}) {
         $leaf->taxon_id($leaf->genome_db->_species_tree_node_id);
