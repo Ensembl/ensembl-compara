@@ -91,32 +91,7 @@ sub content {
     slice_number    => '1|1',
     cdb             => $cdb
   });
-# code to have the background colours on the tree but not sure if this is applicable to the species tree as all the nodes are aligned  
-#   my $coloured_nodes;
-#   
-#   if ($colouring =~ /^(back|fore)ground$/) {
-#     my $mode   = $1 eq 'back' ? 'bg' : 'fg';
-#     my @clades = grep { $_ =~ /^group_.+_${mode}colour/ } $hub->param;
-# 
-#     # Get all the genome_db_ids in each clade
-#     my $genome_db_ids_by_clade;
-#     
-#     foreach my $clade (@clades) {
-#       my ($clade_name) = $clade =~ /group_(.+)_${mode}colour/;
-#       $genome_db_ids_by_clade->{$clade_name} = [ split '_', $hub->param("group_${clade_name}_genome_db_ids") ];
-#     }
-# 
-#     # Sort the clades by the number of genome_db_ids. First the largest clades,
-#     # so they can be overwritten later (see ensembl-webcode/modules/EnsEMBL/Draw/GlyphSet/genetree.pm)
-#     foreach my $clade_name (sort { scalar @{$genome_db_ids_by_clade->{$b}} <=> scalar @{$genome_db_ids_by_clade->{$a}} } keys %$genome_db_ids_by_clade) {
-#       my $genome_db_ids = $genome_db_ids_by_clade->{$clade_name};
-#       my $colour        = $hub->param("group_${clade_name}_${mode}colour") || 'magenta';          
-#       
-#       #Get node_ids in  nodes hash
-#       #my $node_id = $tree->get_node_with_genome_db_id(134)->node_id();
-#       #push @$coloured_nodes, { clade => $clade_name,  colour => $colour, mode => $mode, node_ids => $node_id};
-#     }
-#   }
+
   my $image = $self->new_image($tree, $image_config, \@highlights);
 
   return $html if $self->_export_image($image, 'no_text');
