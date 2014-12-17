@@ -29,9 +29,17 @@ use IO::Uncompress::Bunzip2;
 use EnsEMBL::Web::Exceptions;
 
 use Exporter qw(import);
-our @EXPORT_OK = qw(get_filename get_extension get_compression uncompress);
-our %EXPORT_TAGS = (all     => [@EXPORT_OK]);
+our @EXPORT_OK = qw(sanitise_filename get_filename get_extension get_compression uncompress);
+our %EXPORT_TAGS = (all => [@EXPORT_OK]);
 
+sub sanitise_filename {
+### Users often break the rules for safe, Unix-friendly filenames
+### so clean up input
+  my $file_name = shift;
+  $file_name =~ s/[^\w]/_/g;
+  $file_name =~ s/\W//g;
+  return $file_name;
+}
 
 sub get_filename {
 ### Get filename from an object or parse it from a path, depending on input
