@@ -362,13 +362,26 @@ sub update_configs {
           $data->{$_}{'display'} = $old_track->{'display'} for @$new_tracks;
           
           foreach my $species (keys %{$data->{'track_order'} || {}}) {
-            foreach my $strand ('', '.f', '.r') {
-              my $order = delete $data->{'track_order'}{$species}{"$key$strand"};
-              
-              if ($order) {
-                $data->{'track_order'}{$species}{"$_$strand"} = $order for @$new_tracks;
+
+            my $new_track_order = [];
+
+            foreach my $order (@{$data->{'track_order'}{$species}}) {
+              my $track_regexp = qr/^$key(\.(r|f))?$/;
+
+              if ($order->[0] =~ $track_regexp) {
+                for (@$new_tracks) {
+                  push @$new_track_order, [ "$_$1", $order->[1] ];
+                }
+              } elsif ($order->[1] =~ $track_regexp) {
+                for (reverse @$new_tracks) {
+                  push @$new_track_order, [ $order->[0], "$_$1" ];
+                }
+              } else {
+                push @$new_track_order, $order;
               }
             }
+
+            $data->{'track_order'}{$species} = $new_track_order;
           }
           
           $update  = 1;
