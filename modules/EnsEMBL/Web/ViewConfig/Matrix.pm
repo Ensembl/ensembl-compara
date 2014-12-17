@@ -240,7 +240,7 @@ sub form {
     video     => sprintf('<a href="%s" class="popup">Click to view a tutorial video</a>', $hub->url({ type => 'Help', action => 'View', id => $help{'Config/Matrix'}, __clear => 1 })),
   );
   
-  $tutorials{$_} = qq(<b class="tutorial $_">$tutorials{$_}</b>) for keys %tutorials;
+  $tutorials{$_} = qq(<b class="tutorial $_"><span class="close"></span>$tutorials{$_}</b>) for keys %tutorials;
   
   if ($tutorial_row < 3) {
     my $margin = $tutorial_row == 0 ? 70 : 60;
