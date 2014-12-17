@@ -68,7 +68,7 @@ sub default_options {
         'division'              => 'pan',
 
     # dependent parameters: updating 'work_dir' should be enough
-        'work_dir'              => '/nfs/nobackup2/ensembl/'.$self->o('ENV', 'USER').'/protein_trees_'.$self->o('rel_with_suffix'),
+        'work_dir'              => '/panfs/nobackup/production/ensembl/'.$self->o('ENV', 'USER').'/protein_trees_'.$self->o('rel_with_suffix'),
         'exe_dir'               =>  '/nfs/panda/ensemblgenomes/production/compara/binaries',
 
     # "Member" parameters:
