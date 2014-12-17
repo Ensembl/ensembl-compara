@@ -139,9 +139,18 @@ sub run {
                        [ grep { $_->assembly_exception_type() !~ /PATCH/ } @$slices ]
                        : [ @$slices ];
 
-    my $genomedb_slices = $self->param('genome_db')->genome_component
-        ? [ grep {lc $_->get_all_Attributes('genome_component')->[0]->value eq lc $self->param('genome_db')->genome_component} @$final_slices ]
-        : [ @$final_slices ];
+    #use fetch_all_by_genome_component ?
+    my $genomedb_slices = $final_slices;
+    if ($self->param('genome_db')->genome_component) {
+        my $g = lc $self->param('genome_db')->genome_component;
+        $genomedb_slices = [];
+        foreach my $s (@$final_slices) {
+            my $a = $s->get_all_Attributes('genome_component')->[0];
+            if ($a and (lc $a->value eq $g)) {
+                push @$genomedb_slices, $s;
+            }
+        }
+    }
 
     if(scalar(@$genomedb_slices)) {
 
