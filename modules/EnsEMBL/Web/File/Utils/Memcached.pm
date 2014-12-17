@@ -40,6 +40,10 @@ sub file_exists {
   my ($file, $args) = @_;
   my $path = ref($file) ? $file->url : $file;
   my $cache = $args->{'hub'}->cache;
+  if (!$cache) {
+    return $args->{'nice'} ? {'error' => ['No cache found!']} : 0;
+  }
+
   my $result = $cache->get($path);
   if ($args->{'nice'}) {
     return $result ? {'success' => 1} : {'error' => ["Could not located cached file $path"]};
@@ -63,6 +67,9 @@ sub read_file {
   my ($file, $args) = @_;
   my $path = ref($file) ? $file->url : $file;
   my $cache = $args->{'hub'}->cache;
+  if (!$cache) {
+    return $args->{'nice'} ? {'error' => ['No cache found!']} : 0;
+  }
 
   $cache->enable_compress($args->{'compression'} || get_compression($path));
 
@@ -102,6 +109,9 @@ sub write_file {
   my ($file, $args) = @_;
   my $path = ref($file) ? $file->url : $file;
   my $cache = $args->{'hub'}->cache;
+  if (!$cache) {
+    return $args->{'nice'} ? {'error' => ['No cache found!']} : 0;
+  }
 
   $cache->enable_compress($args->{'compression'} || get_compression($path));
   my $result = $cache->set(
@@ -141,6 +151,9 @@ sub delete_file {
   my ($file, $args) = @_;
   my $path = ref($file) ? $file->location : $file;
   my $cache = $args->{'hub'}->cache;
+  if (!$cache) {
+    return $args->{'nice'} ? {'error' => ['No cache found!']} : 0;
+  }
 
   my $result = $cache->delete($path);
 
