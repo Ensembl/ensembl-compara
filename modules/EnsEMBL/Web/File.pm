@@ -106,6 +106,9 @@ sub new {
       $self->{'user_identifier'}  = shift @path;
       $self->{'read_sub_dir'}     = shift @path if scalar @path;
     }
+    $self->{'base_read_path'}    = $self->{'base_dir'}.'/'.$self->{'read_dir_path'}; 
+    $self->{'read_location'}     = $self->{'base_dir'}.'/'.$self->{'read_path'}; 
+    $self->{'read_url'}          = $self->{'base_url'}.'/'.$self->{'read_path'}; 
   }
   else {
     ## CREATING A NEW FILE (or trying to...)
@@ -151,14 +154,11 @@ sub new {
 
     push @path_elements, $file_name;
     $self->{'write_path'} = join('/', @path_elements); 
-  }
 
-  $self->{'base_read_path'}    = $self->{'base_dir'}.'/'.$self->{'read_dir_path'}; 
-  $self->{'base_write_path'}   = $self->{'base_dir'}.'/'.$self->{'write_dir_path'}; 
-  $self->{'read_location'}     = $self->{'base_dir'}.'/'.$self->{'read_path'}; 
-  $self->{'write_location'}    = $self->{'base_dir'}.'/'.$self->{'write_path'}; 
-  $self->{'read_url'}          = $self->{'base_url'}.'/'.$self->{'read_path'}; 
-  $self->{'write_url'}         = $self->{'base_url'}.'/'.$self->{'write_path'}; 
+    $self->{'base_write_path'}   = $self->{'base_dir'}.'/'.$self->{'write_dir_path'}; 
+    $self->{'write_location'}    = $self->{'base_dir'}.'/'.$self->{'write_path'}; 
+    $self->{'write_url'}         = $self->{'base_url'}.'/'.$self->{'write_path'}; 
+  }
 
   return $self;
 }
@@ -475,7 +475,6 @@ sub write {
       no strict 'refs';
       $result = &$method($self, $args);
     };
-    warn "!!! ".$result->{'error'} if $result->{'error'};
     last unless $result->{'error'};
   }
   return $result;
