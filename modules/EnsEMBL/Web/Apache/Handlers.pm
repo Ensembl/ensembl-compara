@@ -179,9 +179,7 @@ sub redirect_to_nearest_mirror {
 
     # Redirect if the destination mirror is up
     if (grep { $_ eq $destination } @SiteDefs::ENSEMBL_MIRRORS_UP) { # ENSEMBL_MIRRORS_UP contains a list of mirrors that are currently up
-      $unparsed_uri   =~ s/(\&|\;)?redirect\=(force|no)//;
-      $unparsed_uri  .= $unparsed_uri =~ /\?/ ? ';redirect=no' : '?redirect=no';
-      $redirect_cookie->value(sprintf '%s|%s|http://%1$s%s', $destination, $species_defs->ENSEMBL_MIRRORS_REDIRECT_TIME || 9, $unparsed_uri);
+      $redirect_cookie->value(sprintf '%s|%s', $destination, $species_defs->ENSEMBL_MIRRORS_REDIRECT_TIME || 9);
       $redirect_cookie->bake;
     }
   }

@@ -27,7 +27,7 @@ use Bio::EnsEMBL::Compara::Graph::OrthoXMLWriter;
 use Bio::EnsEMBL::Compara::Graph::GeneTreePhyloXMLWriter;
 use Bio::EnsEMBL::Compara::Graph::CAFETreePhyloXMLWriter;
 
-use EnsEMBL::Web::File;
+use EnsEMBL::Web::File::User;
 use EnsEMBL::Web::Constants;
 
 use base qw(EnsEMBL::Web::Command);
@@ -50,7 +50,7 @@ sub process {
     }
   }
 
-  my ($file, $filename, $random_dir, $extension, $compression);
+  my ($file, $filename, $extension, $compression);
   my %data_info = %{$hub->species_defs->multi_val('DATA_FORMAT_INFO')};
   my $format_info = $data_info{lc($format)};
  
@@ -60,8 +60,6 @@ sub process {
   ## Compress file by default
   $extension   = $format_info->{'ext'};
   $compression = $hub->param('compression');
-  my $compress    = $compression ? 1 : 0;
-  $extension   .= '.'.$compression if $compress;
 
   if (!$format_info) {
     $error = 'Format not recognised';
@@ -73,7 +71,7 @@ sub process {
     my $component;
     ($component, $error) = $self->object->create_component;
 
-    $file = EnsEMBL::Web::File->new(hub => $hub, name => $filename, extension => $extension, prefix => 'export',  compress => $compress);
+    $file = EnsEMBL::Web::File::User->new(hub => $hub, name => $filename, extension => $extension, compression => $compression);
 
     ## Ugly hack - stuff file into package hash so we can get at it later without passing as argument
     $self->{'__file'} = $file;
@@ -123,9 +121,9 @@ sub process {
     ## Parameters for file download
     $controller                     = 'Download';
     $url_params->{'action'}         = '';
-    $url_params->{'filename'}       = $file->filename;
+    $url_params->{'filename'}       = $file->file_name;
     $url_params->{'format'}         = $format;
-    $url_params->{'path'}          .= '/export/'.$file->random_path.$file->filename;
+    $url_params->{'file_path'}      = $file->location;
     $url_params->{'compression'}    = $compression;
     ## Pass parameters needed for Back button to work
     my @core_params = keys %{$hub->core_object('parameters')};
@@ -158,8 +156,6 @@ sub write_rtf {
 ### RTF output is atypical, in that it aims to replicate the visual appearance
 ### of the page (a bit like image export) rather than processing data
   my ($self, $component) = @_;
-  my $file = $self->{'__file'};
-  my $error;
 
   $self->hub->param('exon_display', 'on'); ## force exon highlighting on
   my ($sequence, $config, $block_mode) = $component->initialize_export; 
@@ -296,9 +292,8 @@ sub write_rtf {
  
   $rtf->close;
 
-  $file->write_line($string);
-
-  return $error || $file->error;
+  my $result = $self->write_line($string);
+  return $result->{'error'} || undef;
 }
 
 sub _class_to_style {
@@ -351,7 +346,6 @@ sub _class_to_style {
 sub write_fasta {
   my ($self, $component) = @_;
   my $hub     = $self->hub;
-  my $error   = undef;
 
   my $data_type   = $hub->param('data_type');
   my $data_object = $hub->core_object($data_type);
@@ -383,6 +377,7 @@ sub write_fasta {
   my $options = EnsEMBL::Web::Constants::FASTA_OPTIONS;
   my @selected_options = $hub->param('extra');
   my $sequence = grep /sequence/, @selected_options;
+  my ($result, @errors);
 
   if (scalar @selected_options) {
     ## Only applicable to actual transcripts
@@ -402,11 +397,14 @@ sub write_fasta {
         next unless ref $o eq 'ARRAY';
 
         foreach (@$o) {
-          $self->write_line(">$_->[0]");
-          $self->write_line($fasta) while $fasta = substr $_->[1], 0, 60, '';
+          $result = $self->write_line(">$_->[0]");
+          push @errors, @{$result->{'error'}||[]};
+          $result = $self->write_line($fasta) while $fasta = substr $_->[1], 0, 60, '';
+          push @errors, @{$result->{'error'}||[]};
         }
       }
-      $self->write_line('');
+      $result = $self->write_line('');
+      push @errors, @{$result->{'error'}||[]};
     }
   }
 
@@ -415,22 +413,26 @@ sub write_fasta {
     my ($seq, $start, $end, $flank_slice);
 
     $seq = defined $masking ? $slice->get_repeatmasked_seq(undef, $mask_flag)->seq : $slice->seq;
-    $self->write_line(">$seq_region_name dna:$seq_region_type $slice_name");
-    $self->write_line($fasta) while $fasta = substr $seq, 0, 60, '';
+    $result = $self->write_line(">$seq_region_name dna:$seq_region_type $slice_name");
+    push @errors, @{$result->{'error'}||[]};
+    $result = $self->write_line($fasta) while $fasta = substr $seq, 0, 60, '';
+    push @errors, @{$result->{'error'}||[]};
   }
 
-  my $file = $self->{'__file'};
-  return $error || $file->error;
+  return join('; ', @errors) || undef;
 }
 
 sub write_emboss {
   my ($self, $component) = @_;
 
   my $data = $component->get_export_data;
+  my ($result, @errors);
 
   foreach (@$data) {
-    $self->write_line($_);
+    my $result = $self->write_line($_);
+    push @errors, @{$result->{'error'}||[]};
   }
+  return join('; ', @errors) || undef;
 }
 
 sub write_alignment {
@@ -468,7 +470,8 @@ sub write_alignment {
     print $align_io $alignment;
   }
 
-  $self->write_line($export);
+  my $result = $self->write_line($export);
+  return $result->{'error'} || undef;
 }
 
 sub write_tree {
@@ -488,7 +491,8 @@ sub write_tree {
     $string =~ s/$reg/$1\n/g;
   }
 
-  $self->write_line($string);
+  my $result = $self->write_line($string);
+  return $result->{'error'} || undef;
 }
 
 sub write_phyloxml {
@@ -515,7 +519,6 @@ sub write_phyloxml {
 sub write_orthoxml {
   my ($self, $component) = @_;
   my $hub     = $self->hub;
-  my $error   = undef;
   my $cdb     = $hub->param('cdb') || 'compara';
   my $method  = ref($component) =~ /HomologAlignment/ ? 'trees' : 'homologies';
 
@@ -538,13 +541,14 @@ sub _writexml{
   $w->finish();
 
   my $out = ${$handle->string_ref()};
-  $self->write_line($out);
+  my $result = $self->write_line($out);
+  return $result->{'error'} || undef;
 }
 
 sub write_line { 
   my ($self, $string) = @_;
   my $file = $self->{'__file'};
-  $file->write_line("$string\r\n");
+  return $file->write_line("$string\r\n");
 }
 
 1;

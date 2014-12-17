@@ -40,39 +40,54 @@ sub new {
 
 ### Wrappers around E::W::File::Utils::IO methods
 
-sub fetch {
-### Get raw content of file (e.g. for download, hence not uncompressed)
-### @return String (entire file)
-  my $self = shift;
-
-  return EnsEMBL::Web::File::Utils::IO::fetch_file();
-}
-
-sub read_lines {
-### Get entire content of file as separate lines
-### @return Arrayref
-  my $self = shift;
-
-  return EnsEMBL::Web::File::Utils::IO::read_lines();
-}
-
 sub preview {
 ### Get n lines of a file, e.g. for a web preview
 ### @param Integer - number of lines required (default is 10)
 ### @return Arrayref (n lines of file)
   my ($self, $limit) = @_;
+  my $result = {};
 
-  return EnsEMBL::Web::File::Utils::IO::preview_file();
+  foreach (@{$self->{'output_drivers'}}) {
+    my $method = 'EnsEMBL::Web::File::Utils::'.$_.'::preview_file';
+    my $args = {
+                'hub'     => $self->hub,
+                'nice'    => 1,
+                'limit'   => $limit,
+                };
+
+    eval {
+      no strict 'refs';
+      $result = &$method($self, $args);
+    };
+    next if $result->{'error'};
+  }
+  return $result;
 }
 
 sub write_line {
 ### Write (append) a single line to a file
 ### @param String
-### @return Void 
+### @return Hashref
   my ($self, $line) = @_;
 
-}
+  my $result = {};
 
+  foreach (@{$self->{'output_drivers'}}) {
+    my $method = 'EnsEMBL::Web::File::Utils::'.$_.'::append_lines';
+    my $args = {
+                'hub'     => $self->hub,
+                'nice'    => 1,
+                'lines'   => [$line],
+                };
+
+    eval {
+      no strict 'refs';
+      $result = &$method($self, $args);
+    };
+    next if $result->{'error'};
+  }
+  return $result;
+}
 
 1;
 

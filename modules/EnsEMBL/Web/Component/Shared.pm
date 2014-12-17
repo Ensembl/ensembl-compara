@@ -67,7 +67,7 @@ sub colour_biotype {
   my $colours       = $self->hub->species_defs->colour('gene');
   my $key = $transcript->biotype;
   $key = 'merged' if $transcript->analysis->logic_name =~ /ensembl_havana/;
-  my $colour = ($colours->{$key}||{})->{'default'};
+  my $colour = ($colours->{lc($key)}||{})->{'default'};
   my $hex = $self->hub->colourmap->hex_by_name($colour);
   return $self->coltab($html,$hex,$title);
 }
@@ -373,6 +373,12 @@ sub transcript_table {
       }
 
       (my $biotype_text = $_->biotype) =~ s/_/ /g;
+      if ($biotype_text =~ /rna/i) {
+        $biotype_text =~ s/rna/RNA/;
+      }
+      else {
+        $biotype_text = ucfirst($biotype_text);
+      } 
       my $merged = '';
       $merged .= " Merged Ensembl/Havana gene." if $_->analysis->logic_name =~ /ensembl_havana/;
       $extras{$_} ||= '-' for(keys %extra_links);
@@ -383,7 +389,7 @@ sub transcript_table {
         protein    => ($protein_length ne '-') ?
                           sprintf('<a href="%s" title="View protein">%s</a>', $protein_url, $protein_length.' aa') 
                           : $protein,
-        biotype    => $self->colour_biotype($self->glossary_mouseover(ucfirst $biotype_text,undef,$merged),$_),
+        biotype    => $self->colour_biotype($self->glossary_mouseover($biotype_text,undef,$merged),$_),
         ccds       => $ccds,
         %extras,
         has_ccds   => $ccds eq '-' ? 0 : 1,
@@ -394,7 +400,7 @@ sub transcript_table {
         evidence => join('', @evidence),
       };
       
-      $biotype_text = '.' if $biotype_text eq 'protein coding';
+      $biotype_text = '.' if $biotype_text eq 'Protein coding';
       $biotype_rows{$biotype_text} = [] unless exists $biotype_rows{$biotype_text};
       push @{$biotype_rows{$biotype_text}}, $row;
     }

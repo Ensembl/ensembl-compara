@@ -28,13 +28,13 @@ use parent qw(EnsEMBL::Web::File);
 
 ### Data can be written to disk or, if enabled and appropriate, memcached
 
-### Path structure: /base_dir/YYYY-MM-DD/user_identifier/XXXXXXXXXXXXXXX/filename.ext
+### Path structure: /base_dir/YYYY-MM-DD/user_identifier/XXXXXXXX/filename.ext
 
 sub new {
 ### @constructor
   my ($class, %args) = @_;
-  ## If writing to disk, use the same locations for images and related content,
-  ## to make cleanup easier
+  $args{'input_drivers'}  ||= [qw(Memcached IO)];
+  $args{'output_drivers'} ||= [qw(Memcached IO)];
   my $sd = $args{'hub'}->species_defs;
   $args{'base_dir'} = $sd->ENSEMBL_TMP_DIR_IMG; 
   $args{'base_url'} = $sd->ENSEMBL_STATIC_SERVER . $sd->ENSEMBL_TMP_URL_IMG;

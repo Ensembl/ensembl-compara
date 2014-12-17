@@ -22,6 +22,15 @@ package EnsEMBL::Web::File::Utils::URL;
 ### Note that we have to use two different Perl modules here, owing to 
 ### limitations on support for FTP and proxied HTTPS
 
+### File access methods have two modes: "nice" mode is most suitable for
+### web interfaces, and returns a hashref containing either the raw content
+### or a user-friendly error message (no exceptions are thrown). "Non-nice" 
+### or raw mode returns 0/1 for failure/success or the expected raw data, 
+### and optionally throws exceptions.
+
+### IMPORTANT: You must pass a reference to the Hub to all methods, so that they
+### can access site-wide parameters such as proxies
+
 use strict;
 
 use HTTP::Tiny;
@@ -31,17 +40,20 @@ use EnsEMBL::Web::File::Utils qw(check_compression);
 use EnsEMBL::Web::Exceptions;
 
 use Exporter qw(import);
-our @EXPORT_OK = qw(chase_redirects file_exists get_filesize read_file);
+our @EXPORT_OK = qw(chase_redirects file_exists read_file write_file delete_file get_filesize);
 our %EXPORT_TAGS = (all     => [@EXPORT_OK]);
 
 use constant 'MAX_HIGHLIGHT_FILESIZE' => 1048576;  # (bytes) = 1Mb
 
 sub chase_redirects {
 ### Deal with files "hidden" behind a URL-shortening service such as tinyurl
-### @param url String - initial URL supplied by the interface
-### @param max_follow Integer - maximum number of redirects to follow
-### @return url String - the actual URL of the file
-  my ($url, $args) = @_;
+### @param File - EnsEMBL::Web::File object or path to file (String)
+### @param args Hashref
+###                     hub EnsEMBL::Web::Hub
+###                     max_follow (optional) Integer - maximum number of redirects to follow
+### @return url (String) or Hashref containing errors (ArrayRef)
+  my ($file, $args) = @_;
+  my $url = ref($file) ? $file->location : $file;
 
   $args->{'max_follow'} = 10 unless defined $args->{'max_follow'};
 
@@ -77,11 +89,15 @@ sub chase_redirects {
 
 sub file_exists {
 ### Check if a file of this name exists
-### @param url - URL of file
+### @param File - EnsEMBL::Web::File object or path to file (String)
 ### @param Args Hashref 
 ###         hub EnsEMBL::Web::Hub
-### @return Boolean
-  my ($url, $args) = @_;
+###         nice (optional) Boolean - see introduction
+###         no_exception (optional) Boolean
+### @return Hashref (nice mode) or Boolean 
+  my ($file, $args) = @_;
+  my $url = ref($file) ? $file->location : $file;
+
   my ($success, $error);
 
   if ($url =~ /^ftp/) {
@@ -108,22 +124,31 @@ sub file_exists {
     }
   }
 
-  if ($error) {
-    return {'error' => [$error]};
+  if ($args->{'nice'}) {
+    return $error ? {'error' => [$error]} : {'success' => 1};
   }
   else {
-    return {'success' => 1};
+    if ($error) {
+      throw exception('URLException', "File $url could not be found: $error") unless $args->{'no_exception'};
+      return 0;
+    }
+    else {
+      return 1;
+    }
   }
 }
 
 sub read_file {
 ### Get entire content of file
-### @param url - URL of file
+### @param File - EnsEMBL::Web::File object or path to file (String)
 ### @param Args Hashref 
 ###         hub EnsEMBL::Web::Hub
+###         nice (optional) Boolean - see introduction
 ###         compression String (optional) - compression type
-### @return String (entire file)
-  my ($url, $args) = @_;
+### @return Hashref (in nice mode) or String - contents of file
+  my ($file, $args) = @_;
+  my $url = ref($file) ? $file->location : $file;
+
   my ($content, $error);
 
   if ($url =~ /^ftp/) {
@@ -157,12 +182,59 @@ sub read_file {
   }
 
   if ($error) {
-    return {'error' => [$error]};
+    if ($args->{'nice'}) {
+      throw exception('URLException', "File $url could not be readd: $error") unless $args->{'no_exception'};
+      return 0;
+    }
+    else {
+      return {'error' => [$error]};
+    }
   }
   else {
     my $compression = defined($args->{'compression'}) || check_compression($url);
     my $uncomp = $compression ? uncompress($content, $compression) : $content;
-    return {'content' => $uncomp};
+    if ($args->{'nice'}) {
+      return $uncomp;
+    }
+    else {
+      return {'content' => $uncomp};
+    }
+  }
+}
+
+sub write_file {
+### Returns an error if caller tries to write to remote server!
+### @param File - EnsEMBL::Web::File object or path to file (String)
+### @param Args Hashref 
+###         nice (optional) Boolean - see introduction
+### @return Zero (nice mode) or Hashref containing error
+  my ($file, $args) = @_;
+  my $url = ref($file) ? $file->location : $file;
+  warn "!!! Oops - tried to write to a remote server!";
+  if ($args->{'nice'}) {
+    return {'error' => ["Cannot write to remote file $url. Function not supported"]};
+  }
+  else {
+    throw exception('URLException', "Writing to remote files not permitted!") unless $args->{'no_exception'};
+    return 0;
+  }
+}
+
+sub delete_file {
+### Returns an error if caller tries to delete file from remote server!
+### @param File - EnsEMBL::Web::File object or path to file (String)
+### @param Args Hashref 
+###         nice (optional) Boolean - see introduction
+### @return Zero (nice mode) or Hashref containing error (ArrayRef)
+  my ($file, $args) = @_;
+  my $url = ref($file) ? $file->location : $file;
+  warn "!!! Oops - tried to delete file from a remote server!";
+  if ($args->{'nice'}) {
+    return {'error' => ["Cannot delete remote file $url. Function not supported"]};
+  }
+  else {
+    throw exception('URLException', "Deleting remote files not permitted!") unless $args->{'no_exception'};
+    return 0;
   }
 }
 
@@ -171,15 +243,17 @@ sub get_filesize {
 ### @param url - URL of file
 ### @param Args Hashref 
 ###         hub EnsEMBL::Web::Hub
+###         nice (optional) Boolean - see introduction
 ###         compression String (optional) - compression type
-### @return Integer - file size in bytes
-  my ($url, $args) = @_;
+### @return Hashref containing results (Integer - file size in bytes) or errors (ArrayRef)
+  my ($file, $args) = @_;
+  my $url = ref($file) ? $file->location : $file;
   my ($size, $error);
 
   if ($url =~ /^ftp/) {
     ## TODO - support FTP!
     ## return arbitrary filesize as a stopgap!
-    return {'filesize' => 1000};
+    $size = 1000;
   }
   else {
     my %params = ('timeout'       => 10);
@@ -198,11 +272,17 @@ sub get_filesize {
     }
   }
 
-  if ($error) {
-    return {'error' => [$error]};
+  if ($args->{'nice'}) {
+    return $error ? {'error' => [$error]} : {'filesize' => $size};
   }
   else {
-    return {'filesize' => $size};
+    if ($error) {
+      throw exception('URLException', "Could not determine file size.") unless $args->{'no_exception'};
+      return 0;
+    }
+    else {
+      return $size;
+    }
   }
 }
 

@@ -246,15 +246,24 @@ Ensembl.LayoutManager.extend({
   
   handleMirrorRedirect: function() {
     
-    var redirectCode = unescape(Ensembl.cookie.get('redirect_mirror'));
+    var redirectCode  = unescape(Ensembl.cookie.get('redirect_mirror'));
+    var redirectURI   = unescape(Ensembl.cookie.get('redirect_mirror_url'));
+
+    Ensembl.cookie.set('redirect_mirror_url');
+
+    var noRedirectURI = function(uri) {
+      uri = uri.replace(/(\&|\;)?redirect=[^\&\;]+/, '').replace(/(\&|\;)?debugip=[^\&\;]+/, '').replace(/\?[\;\&]+/, '?').replace(/\?$/, '');
+      uri = uri + (uri.match(/\?/) ? ';redirect=no' : '?redirect=no');
+      return uri;
+    };
 
     if (redirectCode && redirectCode !== 'no') {
       redirectCode      = redirectCode.split(/\|/);
       if (redirectCode.length >= 2) {
-        var currentURI    = window.location.href.replace(/(\&|\;)?redirect=[^\&\;]+/, '').replace(/(\&|\;)?debugip=[^\&\;]+/, '').replace(/\?[\;\&]+/, '?').replace(/\?$/, '');
+        var currentURI    = noRedirectURI(window.location.href);
         var mirrorName    = redirectCode.shift();
         var remainingTime = parseInt(redirectCode.shift());
-        var mirrorURI     = currentURI.replace(window.location.host, mirrorName);
+        var mirrorURI     = (redirectURI ? noRedirectURI($('<a>').attr('href', redirectURI).prop('href')) : currentURI).replace(window.location.host, mirrorName);
         var messageDiv    = $([
           '<div class="redirect-message hidden">',
           ' <p>You are being redirected to <b><a href="' + mirrorURI + '">', mirrorName, '</a></b> <span class="_redirect_countdown">in ', remainingTime, ' seconds</span>. Click <a class="_redirect_no" href="#">here</a> if you don\'t wish to be redirected.</p>',

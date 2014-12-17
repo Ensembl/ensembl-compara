@@ -21,7 +21,7 @@ package EnsEMBL::Web::Component::DataExport::Results;
 use strict;
 use warnings;
 
-use EnsEMBL::Web::File;
+use EnsEMBL::Web::File::User;
 
 use base qw(EnsEMBL::Web::Component::DataExport);
 
@@ -36,9 +36,9 @@ sub content {
   my $self  = shift;
   my $hub   = $self->hub;
 
-  my $filename    = $hub->param('filename');
+  my $filename    = $hub->param('name');
   my $format      = $hub->param('format');
-  my $path        = $hub->param('path');
+  my $path        = $hub->param('file_path');
   my $compression = $hub->param('compression');
   my $html;
 
@@ -89,7 +89,7 @@ sub content {
   $html .= $form->render;
 
   unless ($format eq 'RTF' || $compression) {
-    my $file = EnsEMBL::Web::File->new(hub => $hub, path => $path);
+    my $file = EnsEMBL::Web::File::User->new(hub => $hub, file_path => $path);
     if ($file) {
       $html .= '<h2 style="margin-top:1em">File preview</h2><div class="code"><pre style="color:#333">';
       $html .= $file->read;

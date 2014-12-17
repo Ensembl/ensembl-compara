@@ -32,6 +32,7 @@ sub new {
   my ($class, $hub) = @_;
 
     my $self = {
+    'SITE' => lc($hub->species_defs->ENSEMBL_SITETYPE),
     'NAME' => $hub->species_defs->multidb->{'DATABASE_PRODUCTION'}{'NAME'},
     'HOST' => $hub->species_defs->multidb->{'DATABASE_PRODUCTION'}{'HOST'},
     'PORT' => $hub->species_defs->multidb->{'DATABASE_PRODUCTION'}{'PORT'},
@@ -59,11 +60,36 @@ sub fetch_changelog {
   return [] unless $self->db;
   my ($sql, $sql2, @args, $filter);
 
+  ## By default, only fetch news for this site
+  my $site_override = $criteria->{'site_type'};
+  if ($site_override) {
+    unless ($site_override eq 'all') {
+      if (ref($site_override) eq 'ARRAY') {
+        $filter = '(';
+        my @types;
+        foreach (@$site_override) {
+          push @args, lc($_);
+          push @types, ' c.site_type = ? ';
+        }
+        $filter .= join(' OR ', @types);
+        $filter = ')';
+      }
+      else {
+        push @args, lc($site_override); 
+        $filter = ' c.site_type = ? AND ';
+      }
+    }
+  }
+  else {
+    push @args, $self->{'SITE'}; 
+    $filter = ' c.site_type = ? AND ';
+  }
+
   my $order = 'ORDER BY ';
   $order .= $criteria->{'species'}  ? ' s.species_id DESC, ' : '';
 
   if ($criteria->{'release'}) {
-    @args = ($criteria->{'release'});
+    push @args, $criteria->{'release'};
     $filter .= ' c.release_id = ? AND ';
   }
   else {
@@ -79,6 +105,7 @@ sub fetch_changelog {
     $filter .= ' c.team = ? ' if $criteria->{'team'};
     $filter .= ') AND ';
   }
+
 
   $order .= 'c.priority DESC ';
 
