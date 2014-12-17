@@ -97,8 +97,10 @@ sub new {
     ## TODO Remove after TmpFile modules are removed
     if ($self->{'prefix'}) {
       ## These values are slightly bogus, but will work with old filepaths
+      $self->{'read_path'} = $self->{'prefix'}.'/'.$self->{'read_path'};
+      delete $self->{'prefix'};
       $self->{'read_datestamp'} = $self->{'prefix'};
-      $self->{'user_identifier'}  = shift @path;
+      $self->{'user_identifier'}  = shift @path if scalar @path;
       $self->{'read_sub_dir'}     = join('/', @path) if scalar @path;
     }
     else {
