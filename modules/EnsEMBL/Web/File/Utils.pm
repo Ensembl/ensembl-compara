@@ -29,10 +29,44 @@ use IO::Uncompress::Bunzip2;
 use EnsEMBL::Web::Exceptions;
 
 use Exporter qw(import);
-our @EXPORT_OK = qw(check_compression uncompress);
+our @EXPORT_OK = qw(get_filename get_extension get_compression uncompress);
 our %EXPORT_TAGS = (all     => [@EXPORT_OK]);
 
-sub check_compression {
+
+sub get_filename {
+### Get filename from an object or parse it from a path, depending on input
+  my $file = shift;
+  my $filename = '';
+  if (ref($file)) {
+    $filename = $file->file_name;
+  }
+  else {
+    my @path = split('/', $file);
+    $filename = $path[-1];
+  }
+  return $filename;
+}
+
+sub get_extension {
+### Get file extension from an object or parse it from a path, depending on input
+### Note that the returned string does not include any compression extension
+  my $file = shift;
+  my $extension = '';
+  if (ref($file)) {
+    $extension = $file->extension;
+  }
+  else {
+    my $filename = get_filename($file);
+    my @parts = split(/\./, $filename);
+    $extension = pop @parts;
+    if ($extension =~ /zip|gz|bz/) {
+      $extension = pop @parts;
+    }
+  }
+  return $extension;
+}
+
+sub get_compression {
 ### Helper method to check if file is compressed and, if so,
 ### what kind of compression appears to have been used.
 ### @param String - full path to file
