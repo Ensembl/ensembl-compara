@@ -55,6 +55,9 @@ sub default_options {
     return {
         %{$self->SUPER::default_options},   # inherit the generic ones
 
+    # User details
+        'email'                 => $self->o('ENV', 'USER').'@sanger.ac.uk',
+
     # parameters that are likely to change from execution to another:
         # You can add a letter to distinguish this run from other runs on the same release
         'rel_with_suffix'       => $self->o('ensembl_release')."_bp",
@@ -101,6 +104,11 @@ sub default_options {
         'codeml_exe'                => $self->o('exe_dir').'/codeml',
         'ktreedist_exe'             => $self->o('exe_dir').'/ktreedist',
         'blast_bin_dir'             => '/nfs/panda/ensemblgenomes/external/ncbi-blast-2+/bin/',
+        'raxml_pthreads_exe'        => 'UNDEF',
+        'examl_exe_avx'             => 'UNDEF',
+        'examl_exe_sse3'            => 'UNDEF',
+        'parse_examl_exe'           => 'UNDEF',
+        'hmmer3_home'               => 'UNDEF',
 
         # The following ones are currently installed by TreeFam, but should
         # also be under /nfs/panda/ensemblgenomes/external/
@@ -132,6 +140,7 @@ sub default_options {
         'prottest_capacity'         => 200,
         'treebest_capacity'         => 400,
         'raxml_capacity'            => 200,
+        'examl_capacity'            => 400,
         'notung_capacity'           => 200,
         'ortho_tree_capacity'       => 250,
         'ortho_tree_annot_capacity' => 300,
