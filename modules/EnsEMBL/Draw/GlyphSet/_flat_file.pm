@@ -83,7 +83,7 @@ sub features {
     $parser->parse($self->my_config('data'), $self->my_config('format'));
   }
   else {
-    my %args = ('hub' => $self->{'config'}->hub, 'prefix' => 'user_upload');
+    my %args = ('hub' => $self->{'config'}->hub);
 
     if ($sub_type eq 'url') {
       $args{'file_path'} = $self->my_config('url');
@@ -91,6 +91,9 @@ sub features {
     }
     else {
       $args{'file_path'} = $self->my_config('file');
+      if ($args{'file_path'} !~ /\//) { ## TmpFile upload
+        $args{'prefix'} = 'user_upload';
+      }
     }
 
     my $file = EnsEMBL::Web::File::User->new(%args);
