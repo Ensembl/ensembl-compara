@@ -843,11 +843,12 @@ sub core_pipeline_analyses {
 # ---------------------------------------------[create and populate blast analyses]--------------------------------------------------
 
         {   -logic_name => 'reusedspecies_factory',
-            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GenomeDBFactory',
             -parameters => {
-                '_force_blast_run'   => $self->o('reuse_level') eq 'members' ? 1 : 0,
-                'inputquery'        => 'SELECT genome_db_id, name FROM species_set JOIN genome_db USING (genome_db_id) WHERE species_set_id = #reuse_ss_id# AND NOT #_force_blast_run#',
-                'fan_branch_code'   => 2,
+                'polyploid_genomes' => 0,
+                'component_genomes' => $self->o('reuse_level') eq 'members' ? 0 : 1,
+                'normal_genomes'    => $self->o('reuse_level') eq 'members' ? 0 : 1,
+                'species_set_id'    => '#reuse_ss_id#',
             },
             -flow_into => {
                 2 => [ 'paf_table_reuse' ],
@@ -858,9 +859,8 @@ sub core_pipeline_analyses {
         {   -logic_name => 'nonreusedspecies_factory',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
             -parameters => {
-                '_force_blast_run'   => $self->o('reuse_level') eq 'members' ? 1 : 0,
-                'inputquery'        => 'SELECT genome_db_id, name FROM species_set JOIN genome_db USING (genome_db_id) WHERE species_set_id = #nonreuse_ss_id# OR #_force_blast_run#',
-                'fan_branch_code'   => 2,
+                'polyploid_genomes' => 0,
+                'species_set_id'    => $self->o('reuse_level') eq 'members' ? undef : '#nonreuse_ss_id#',
             },
             -flow_into => {
                 2 => [ 'paf_create_empty_table' ],
@@ -1075,12 +1075,9 @@ sub core_pipeline_analyses {
 # ---------------------------------------------[create and populate blast analyses]--------------------------------------------------
 
         {   -logic_name => 'blastdb_factory',
-            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ObjectFactory',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GenomeDBFactory',
             -parameters => {
-                'call_list'             => [ 'compara_dba', 'get_GenomeDBAdaptor', 'fetch_all'],
-                'column_names2getters'  => { 'genome_db_id' => 'dbID' },
-
-                'fan_branch_code'       => 2,
+                'polyploid_genomes' => 0,
             },
             -flow_into  => {
                 '2->A'  => [ 'dump_canonical_members' ],
@@ -1169,12 +1166,9 @@ sub core_pipeline_analyses {
         },
 
         {   -logic_name => 'hcluster_dump_factory',
-            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ObjectFactory',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GenomeDBFactory',
             -parameters => {
-                'call_list'             => [ 'compara_dba', 'get_GenomeDBAdaptor', 'fetch_all'],
-                'column_names2getters'  => { 'genome_db_id' => 'dbID' },
-
-                'fan_branch_code'       => 2,
+                'polyploid_genomes' => 0,
             },
             -flow_into  => {
                 '2->A' => [ 'hcluster_dump_input_per_genome' ],
@@ -1260,11 +1254,9 @@ sub core_pipeline_analyses {
 # ---------------------------------------------[Pluggable QC step]----------------------------------------------------------
 
         {   -logic_name => 'run_qc_tests',
-            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ObjectFactory',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GenomeDBFactory',
             -parameters => {
-                'call_list'             => [ 'compara_dba', 'get_GenomeDBAdaptor', 'fetch_all'],
-                'column_names2getters'  => { 'genome_db_id' => 'dbID' },
-                'fan_branch_code'       => 2,
+                'polyploid_genomes' => 0,
             },
             -flow_into => {
                 '2->A' => [ 'per_genome_qc' ],
