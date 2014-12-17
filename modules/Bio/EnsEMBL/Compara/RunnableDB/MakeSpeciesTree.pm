@@ -98,7 +98,7 @@ sub fetch_input {
             if ($gdb) {
                 $node->genome_db_id($gdb->dbID);
                 $node->taxon_id($gdb->taxon_id);
-                $node->node_name($gdb->taxon->name);
+                $node->node_name($gdb->taxon->name . ( $gdb->principal_genome_db ? sprintf(' (component %s)', $gdb->genome_component) : ''));
                 $node->{_tmp_gdb} = $gdb;
             } else {
                 $node->disavow_parent();
