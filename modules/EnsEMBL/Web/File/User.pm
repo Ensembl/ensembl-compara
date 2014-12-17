@@ -59,7 +59,7 @@ sub preview {
       no strict 'refs';
       $result = &$method($self, $args);
     };
-    next if $result->{'error'};
+    last unless $result->{'error'};
   }
   return $result;
 }
@@ -84,7 +84,7 @@ sub write_line {
       no strict 'refs';
       $result = &$method($self, $args);
     };
-    next if $result->{'error'};
+    last unless $result->{'error'};
   }
   return $result;
 }

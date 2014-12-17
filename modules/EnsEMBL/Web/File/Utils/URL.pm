@@ -36,7 +36,7 @@ use strict;
 use HTTP::Tiny;
 use LWP::UserAgent;
 
-use EnsEMBL::Web::File::Utils qw(check_compression);
+use EnsEMBL::Web::File::Utils qw(get_compression);
 use EnsEMBL::Web::Exceptions;
 
 use Exporter qw(import);
@@ -183,7 +183,7 @@ sub read_file {
 
   if ($error) {
     if ($args->{'nice'}) {
-      throw exception('URLException', "File $url could not be readd: $error") unless $args->{'no_exception'};
+      throw exception('URLException', "File $url could not be read: $error") unless $args->{'no_exception'};
       return 0;
     }
     else {
@@ -191,7 +191,7 @@ sub read_file {
     }
   }
   else {
-    my $compression = defined($args->{'compression'}) || check_compression($url);
+    my $compression = defined($args->{'compression'}) || get_compression($url);
     my $uncomp = $compression ? uncompress($content, $compression) : $content;
     if ($args->{'nice'}) {
       return $uncomp;

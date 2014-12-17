@@ -1,12 +1,32 @@
-package EnsEMBL::Web::Tools::OntologyVisualisation;
+=head1 LICENSE
+
+Copyright [1999-2014] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+     http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+
+=cut
+
+package EnsEMBL::Document::OntologyVisualisation;
+
 use strict;
 use warnings;
+no warnings "uninitialized";
+
 use URI::Escape;
 use GraphViz;
 use Bio::EnsEMBL::DBSQL::OntologyTermAdaptor;
-use EnsEMBL::Web::TmpFile::Image;
+use EnsEMBL::Web::File::Dynamic::Image;
 
-no warnings "uninitialized";
 
 =head1 NAME
 
@@ -47,22 +67,6 @@ example:
   $ontovis->highlighted_term_accessions(keys %$go_slim_hash);
   
   $html= $ontovis->render;
-
-=head1 LICENSE
-
-Copyright [1999-2014] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
-
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-     http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
 
 =head1 AUTHOR
 
@@ -113,13 +117,14 @@ Post questions to the EnsEMBL development list dev@ensembl.org
                  $get_relation_type_colour
                );
  Description : creates a ne OntologyVisualisation object
- Return type : EnsEMBL::Web::Tools::OntologyVisualisation
+ Return type : EnsEMBL::Document::OntologyVisualisation
 
 =cut
 
 sub new {
   my $class = shift;
   my $self;
+  $self->{hub} = shift;
   $self->{_ontology_term_adaptor}= shift;
   $self->{_img_base_dir}= shift;
   $self->{_img_base_url}= shift;
@@ -579,10 +584,13 @@ sub render{
   foreach(keys %{$self->{_clusters}}){
     my $cluster=$self->{_clusters}->{$_};
     
-    my $image = EnsEMBL::Web::TmpFile::Image->new( $self->{'species_defs'} );
+    my $image = EnsEMBL::Web::File::Dynamic::Image->new(
+                                                        'hub'             => $self->{'hub'},
+                                                        'name_timestamp'  => 1,
+                                                        'extension'       => 'png',
+                                                        );
 
-    $image->content($cluster->as_png);
-    $image->save;    
+    $image->write($cluster->as_png);
   
     my $image_map = $cluster->as_cmapx;
     $image_map =~ s/title="([^"]*)" alt=""/ title="$self->{_node_descriptions}->{$1}" alt="$self->{_node_descriptions}->{$1}"/g;

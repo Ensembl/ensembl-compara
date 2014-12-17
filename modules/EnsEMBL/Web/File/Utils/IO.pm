@@ -53,7 +53,7 @@ package EnsEMBL::Web::File::Utils::IO;
 use strict;
 
 use Bio::EnsEMBL::Utils::IO qw(:all);
-use EnsEMBL::Web::File::Utils qw(check_compression);
+use EnsEMBL::Web::File::Utils qw(get_filename get_compression);
 use EnsEMBL::Web::File::Utils::FileSystem qw(create_path);
 use EnsEMBL::Web::Exceptions;
 
@@ -75,7 +75,7 @@ sub file_exists {
       return {'success' => 1};
     }
     else {
-      my $filename = _get_filename($file);
+      my $filename = get_filename($file);
       return {'error' => ["Could not find file $filename."]};
     }
   }
@@ -104,7 +104,7 @@ sub delete_file {
       return {'success' => 1};
     }
     else {
-      my $filename = _get_filename($file);
+      my $filename = get_filename($file);
       return {'error' => ["Could not delete file $filename: $!"]};
     }
   }
@@ -133,7 +133,7 @@ sub fetch_file {
   if ($args->{'nice'}) {
     if ($@) {
       warn "!!! COULDN'T FETCH FILE $path: $@";
-      my $filename = _get_filename($file);
+      my $filename = get_filename($file);
       return {'error' => ["Could not fetch file $filename for downloading."]};
     }
     else {
@@ -163,7 +163,7 @@ sub read_file {
   my $path = ref($file) ? $file->location : $file;
   my $content;
 
-  my $compression = defined($args->{'compression'}) || check_compression($path);
+  my $compression = defined($args->{'compression'}) || get_compression($path);
   my $method = $compression ? $compression.'_slurp' : 'slurp';
   eval { 
     no strict 'refs';
@@ -173,7 +173,7 @@ sub read_file {
   if ($args->{'nice'}) {
     if ($@) {
       warn "!!! COULDN'T READ FILE $path: $@";
-      my $filename = _get_filename($file);
+      my $filename = get_filename($file);
       return {'error' => ["Could not read file $filename."]};
     }
     else {
@@ -204,7 +204,7 @@ sub read_lines {
   my $content = [];
   my $path = ref($file) ? $file->location : $file;
 
-  my $compression = defined($args->{'compression'}) || check_compression($path);
+  my $compression = defined($args->{'compression'}) || get_compression($path);
   my $method = $compression ? $compression.'_slurp_to_array' : 'slurp_to_array';
   eval { 
     no strict 'refs';
@@ -214,7 +214,7 @@ sub read_lines {
   if ($args->{'nice'}) {
     if ($@) {
       warn "!!! COULDN'T READ LINES FROM FILE $path: $@";
-      my $filename = _get_filename($file);
+      my $filename = get_filename($file);
       return {'error' => ["Could not read file $filename."]};
     }
     else {
@@ -247,7 +247,7 @@ sub preview_file {
   my $count = 0;
   my $lines = [];
 
-  my $compression = $args->{'compression'} || check_compression($path);
+  my $compression = $args->{'compression'} || get_compression($path);
   my $method = $compression ? $compression.'_work_with_file' : 'work_with_file';
 
   eval { 
@@ -268,7 +268,7 @@ sub preview_file {
   if ($args->{'nice'}) {
     if ($@) {
       warn "!!! COULDN'T READ PREVIEW FROM FILE $path: $@";
-      my $filename = _get_filename($file);
+      my $filename = get_filename($file);
       return {'error' => ["Could not read file $filename."]};
     }
     else {
@@ -299,7 +299,7 @@ sub write_file {
   my $path = ref($file) ? $file->location : $file;
 
   my $content = $args->{'content'};
-  my $filename = _get_filename($file);
+  my $filename = get_filename($file);
 
   if (!$content) {
     if ($args->{'nice'}) {
@@ -315,7 +315,7 @@ sub write_file {
   my $has_path = _check_path($path);
   
   if ($has_path) { 
-    $args->{'compression'} ||= check_compression($path);
+    $args->{'compression'} ||= get_compression($path);
     eval {
       _write_to_file($path, $args, '>',
         sub {
@@ -382,7 +382,7 @@ sub write_lines {
   ## Create the directory path if it doesn't exist
   my $has_path = _check_path($path);
   
-  $args->{'compression'} ||= check_compression($path);
+  $args->{'compression'} ||= get_compression($path);
   eval {
       _write_to_file($path, $args, '>',
         sub {
@@ -396,7 +396,7 @@ sub write_lines {
   };
   if ($args->{'nice'}) {
     if ($@) {
-      my $filename = _get_filename($file);
+      my $filename = get_filename($file);
       return {'error' => ["Could not write lines to file $filename."]};
     }
     else {
@@ -440,7 +440,7 @@ sub append_lines {
   ## Create the directory path if it doesn't exist
   my $has_path = _check_path($path);
   
-  $args->{'compression'} ||= check_compression($path);
+  $args->{'compression'} ||= get_compression($path);
   eval {
     _write_to_file($path, $args, '>>',
       sub {
@@ -455,7 +455,7 @@ sub append_lines {
 
   if ($args->{'nice'}) {
     if ($@) {
-      my $filename = _get_filename($file);
+      my $filename = get_filename($file);
       return {'error' => ["Could not append lines to file $filename."]};
     }
     else {
@@ -489,20 +489,6 @@ sub _check_path {
   }
 }
 
-sub _get_filename {
-### Get or parse filename, depending on input
-  my $file = shift;
-  my $filename = '';
-  if (ref($file)) {
-    $filename = $file->file_name;
-  }
-  else {
-    my @path = split('/', $file);
-    $filename = $path[-1];
-  }
-  return $filename;
-}
-
 sub _write_to_file {
 ### Generic method for file-writing
 ### @private
@@ -515,7 +501,7 @@ sub _write_to_file {
 ### @return Void
   my ($path, $args, @params) = @_;
 
-  my $compression = $args->{'compression'} || check_compression($path);
+  my $compression = $args->{'compression'} || get_compression($path);
   my $method = $compression ? $compression.'_work_with_file' : 'work_with_file';
   eval { 
     no strict 'refs';

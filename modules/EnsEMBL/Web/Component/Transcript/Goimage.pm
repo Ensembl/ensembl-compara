@@ -20,7 +20,7 @@ package EnsEMBL::Web::Component::Transcript::Goimage;
 
 use strict;
 
-use EnsEMBL::Web::Tools::OntologyVisualisation;
+use EnsEMBL::Web::Document::OntologyVisualisation;
 use Bio::EnsEMBL::DBSQL::OntologyTermAdaptor;
 
 use base qw(EnsEMBL::Web::Component::Transcript);
@@ -61,6 +61,7 @@ sub content {
   $goslim_goa_fill_text           =~ s/_/ /g;
   
   my $ontovis = EnsEMBL::Web::Tools::OntologyVisualisation->new(
+    $hub,
     $ontology_term_adaptor,
     $go_dir,
     $go_url,
