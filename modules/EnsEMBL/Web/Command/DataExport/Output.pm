@@ -121,9 +121,9 @@ sub process {
     ## Parameters for file download
     $controller                     = 'Download';
     $url_params->{'action'}         = '';
-    $url_params->{'filename'}       = $file->file_name;
+    $url_params->{'filename'}       = $file->read_name;
     $url_params->{'format'}         = $format;
-    $url_params->{'file_path'}      = $file->location;
+    $url_params->{'file_path'}      = $file->read_location;
     $url_params->{'compression'}    = $compression;
     ## Pass parameters needed for Back button to work
     my @core_params = keys %{$hub->core_object('parameters')};
