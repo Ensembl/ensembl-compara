@@ -80,27 +80,40 @@ sub new {
     my @path = grep length, split('/', $file_path);
 
     ## Parse filename
-    my read_name = pop @path;
+    my read_name = sanitise_filename(pop @path);
     my ($name, $extension, $compression) = split(/\./, $read_name);
     $compression =~ s/2$//; ## We use 'bz' internally, not 'bz2'
-    $self->{'read_name'}        = $name;
+    $self->{'read_name'}        = $read_name;
     $self->{'read_ext'}         = $extension;
     $self->{'read_compression'} = $compression;
     $self->{'read_compress'}    = $self->{'read_compression'} ? 1 : 0;
 
     ## Parse rest of path
     $self->{'read_dir_path'}    = join('/', @path); 
-    $self->{'read_datestamp'}   = shift @path;
-    $self->{'user_identifier'}  = shift @path;
-    $self->{'read_sub_dir'}     = shift @path if scalar @path;
+    
+    ## Backwards compatibility with TmpFile paths
+    ## TODO Remove after TmpFile modules are removed
+    if ($self->{'prefix'}) {
+      ## These values are slightly bogus, but will work with old filepaths
+      $self->{'read_datestamp'} = $self->{'prefix'};
+      $self->{'user_identifier'}  = shift @path;
+      $self->{'read_sub_dir'}     = join('/', @path) if scalar @path;
+    }
+    else {
+      $self->{'read_datestamp'}   = shift @path;
+      $self->{'user_identifier'}  = shift @path;
+      $self->{'read_sub_dir'}     = shift @path if scalar @path;
+    }
   }
   else {
     ## CREATING A NEW FILE (or trying to...)
-    if ($self->{'name'}) {
-      ## Make sure it's a valid file name!
-      (my $name = $self->{'name'}) =~ s/[^\w]/_/g;
-      $self->{'write_name'} = $name;
+    ## Note that we allow generic parameter names here
+
+    if ($self->{'name'} || $self->{'write_name'}) {
+      my $name = $self->{'name'} || $self->{'write_name'};
+      $self->{'write_name'} = sanitise_filename($name);
       ## Set a random path in case we have multiple files with this name
+      $self->{'write_sub_dir'} ||= $self->{'sub_dir'};
       $self->{'write_sub_dir'} ||= random_string;
     }
     else {
@@ -109,6 +122,10 @@ sub new {
       $self->{'write_name'} .= random_string;
     }
 
+    if ($self->{'extension'}) {
+      $self->{'write_ext'} = $self->{'extension'};
+      delete $self->{'extension'};
+    }
     $self->{'write_ext'} ||= 'txt';
     ## Allow for atypical file extensions such as gff3 or bedGraph
     (my $extension  = $self->{'write_ext'}) =~ s/^\.?(\w+)(\.gz)?$/$1/;
@@ -116,23 +133,24 @@ sub new {
 
     my $file_name           = $self->{'write_name'}.'.'.$extension;
 
-    if ($self->{'compress'}) {
-      unless ($self->{'write_compression'}) {
-        ## Default to gzip
-        $self->{'write_compression'} = 'gz';
-      }
+    if ($self->{'compress'} || $self->{'compression'} || $self->{'write_compression'}) {
+      $self->{'write_compression'} ||= $self->{'compression'};
+      ## Default to gzip
+      $self->{'write_compression'} ||= 'gz';
       $file_name .= '.'.$self->{'write_compression'};
     }
 
     $self->{'write_name'} = $file_name;
 
     my @path_elements = ($self->set_datestamp, $self->set_user_identifier);
+    $self->{'write_sub_dir'} ||= $self->{'sub_dir'};
     push @path_elements, $self->{'write_sub_dir'} if $self->{'write_sub_dir'};
     $self->{'write_dir_path'} = join('/', @path_elements); 
 
     push @path_elements, $file_name;
     $self->{'write_path'} = join('/', @path_elements); 
   }
+
   $self->{'base_read_path'}    = $self->{'base_dir'}.'/'.$self->{'read_dir_path'}; 
   $self->{'base_write_path'}   = $self->{'base_dir'}.'/'.$self->{'write_dir_path'}; 
   $self->{'read_location'}     = $self->{'base_dir'}.'/'.$self->{'read_path'}; 
