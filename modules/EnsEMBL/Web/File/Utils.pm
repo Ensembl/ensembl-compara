@@ -48,7 +48,7 @@ sub get_filename {
   my ($file, $mode) = @_;
   my $filename = '';
   if (ref($file)) {
-    $filename = $mode eq 'write' ? $file->write_name || $file->read_name;
+    $filename = $mode eq 'write' ? $file->write_name : $file->read_name;
   }
   else {
     my @path = split('/', $file);
@@ -66,7 +66,7 @@ sub get_extension {
   my $extension = '';
 
   if (ref($file)) {
-    $extension = $mode eq 'write' ? $file->write_ext || $file->read_ext;
+    $extension = $mode eq 'write' ? $file->write_ext : $file->read_ext;
   }
   else {
     my $filename = get_filename($file);
@@ -89,7 +89,7 @@ sub get_compression {
   my $compression;
 
   if (ref($file)) {
-    $compression = $mode eq 'write' ? $file->write_compression || $file->read_compression;
+    $compression = $mode eq 'write' ? $file->write_compression : $file->read_compression;
     return $compression;
   }
   else {

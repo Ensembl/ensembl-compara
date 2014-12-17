@@ -72,15 +72,15 @@ sub new {
    
     ## Clean up the path
     my $tmp = $self->{'hub'}->species_defs->ENSEMBL_TMP_DIR;
-    $file_path =~ s/$tmp//;
+    $read_path =~ s/$tmp//;
     $tmp = $self->{'hub'}->species_defs->ENSEMBL_TMP_URL;
-    $file_path =~ s/$tmp//;
-    $self->{'read_path'} = $file_path;
+    $read_path =~ s/$tmp//;
+    $self->{'read_path'} = $read_path;
 
-    my @path = grep length, split('/', $file_path);
+    my @path = grep length, split('/', $read_path);
 
     ## Parse filename
-    my read_name = sanitise_filename(pop @path);
+    my $read_name = sanitise_filename(pop @path);
     my ($name, $extension, $compression) = split(/\./, $read_name);
     $compression =~ s/2$//; ## We use 'bz' internally, not 'bz2'
     $self->{'read_name'}        = $read_name;
