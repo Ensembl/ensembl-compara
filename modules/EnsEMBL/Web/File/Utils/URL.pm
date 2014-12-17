@@ -53,7 +53,7 @@ sub chase_redirects {
 ###                     max_follow (optional) Integer - maximum number of redirects to follow
 ### @return url (String) or Hashref containing errors (ArrayRef)
   my ($file, $args) = @_;
-  my $url = ref($file) ? $file->location : $file;
+  my $url = ref($file) ? $file->read_url : $file;
 
   $args->{'max_follow'} = 10 unless defined $args->{'max_follow'};
 
@@ -96,7 +96,7 @@ sub file_exists {
 ###         no_exception (optional) Boolean
 ### @return Hashref (nice mode) or Boolean 
   my ($file, $args) = @_;
-  my $url = ref($file) ? $file->location : $file;
+  my $url = ref($file) ? $file->read_url : $file;
 
   my ($success, $error);
 
@@ -147,7 +147,7 @@ sub read_file {
 ###         compression String (optional) - compression type
 ### @return Hashref (in nice mode) or String - contents of file
   my ($file, $args) = @_;
-  my $url = ref($file) ? $file->location : $file;
+  my $url = ref($file) ? $file->read_url : $file;
 
   my ($content, $error);
 
@@ -209,7 +209,7 @@ sub write_file {
 ###         nice (optional) Boolean - see introduction
 ### @return Zero (nice mode) or Hashref containing error
   my ($file, $args) = @_;
-  my $url = ref($file) ? $file->location : $file;
+  my $url = ref($file) ? $file->write_url : $file;
   warn "!!! Oops - tried to write to a remote server!";
   if ($args->{'nice'}) {
     return {'error' => ["Cannot write to remote file $url. Function not supported"]};
@@ -227,7 +227,7 @@ sub delete_file {
 ###         nice (optional) Boolean - see introduction
 ### @return Zero (nice mode) or Hashref containing error (ArrayRef)
   my ($file, $args) = @_;
-  my $url = ref($file) ? $file->location : $file;
+  my $url = ref($file) ? $file->write_url : $file;
   warn "!!! Oops - tried to delete file from a remote server!";
   if ($args->{'nice'}) {
     return {'error' => ["Cannot delete remote file $url. Function not supported"]};
@@ -247,7 +247,7 @@ sub get_filesize {
 ###         compression String (optional) - compression type
 ### @return Hashref containing results (Integer - file size in bytes) or errors (ArrayRef)
   my ($file, $args) = @_;
-  my $url = ref($file) ? $file->location : $file;
+  my $url = ref($file) ? $file->read_url : $file;
   my ($size, $error);
 
   if ($url =~ /^ftp/) {

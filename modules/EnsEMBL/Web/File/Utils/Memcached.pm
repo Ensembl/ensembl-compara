@@ -38,7 +38,7 @@ sub file_exists {
 ###                     no_exception Boolean - whether to throw an exception
 ### @return Hashref (nice mode) or Boolean
   my ($file, $args) = @_;
-  my $path = ref($file) ? $file->url : $file;
+  my $path = ref($file) ? $file->read_url : $file;
   my $cache = $args->{'hub'}->cache;
   if (!$cache) {
     return $args->{'nice'} ? {'error' => ['No cache found!']} : 0;
@@ -62,10 +62,10 @@ sub read_file {
 ### @param Args (optional) Hashref 
 ###                     nice Boolean - see introduction 
 ###                     no_exception Boolean - whether to throw an exception
-###                     compression String - compression type
+###                     read_compression String - compression type
 ### @return Hashref (in nice mode) or String - contents of file
   my ($file, $args) = @_;
-  my $path = ref($file) ? $file->url : $file;
+  my $path = ref($file) ? $file->read_url : $file;
   my $cache = $args->{'hub'}->cache;
   if (!$cache) {
     return $args->{'nice'} ? {'error' => ['No cache found!']} : 0;
@@ -107,13 +107,13 @@ sub write_file {
 ###                     content String - content of file
 ### @return Hashref (in nice mode) or Boolean 
   my ($file, $args) = @_;
-  my $path = ref($file) ? $file->url : $file;
+  my $path = ref($file) ? $file->write_url : $file;
   my $cache = $args->{'hub'}->cache;
   if (!$cache) {
     return $args->{'nice'} ? {'error' => ['No cache found!']} : 0;
   }
 
-  $cache->enable_compress($args->{'compression'} || get_compression($path));
+  $cache->enable_compress($args->{'write_compression'} || get_compression($file, 'write'));
   my $result = $cache->set(
                       $path,
                       $args->{'content'},
@@ -126,7 +126,7 @@ sub write_file {
       return {'success' => 1};
     }
     else {
-      my $filename = get_filename($file);
+      my $filename = get_filename($file, 'write');
       return {'error' => ["Could not write file $filename to memory."]};
     }
   }
@@ -149,7 +149,7 @@ sub delete_file {
 ###                     no_exception Boolean - whether to throw an exception
 ### @return Hashref (in nice mode) or Boolean
   my ($file, $args) = @_;
-  my $path = ref($file) ? $file->location : $file;
+  my $path = ref($file) ? $file->write_url : $file;
   my $cache = $args->{'hub'}->cache;
   if (!$cache) {
     return $args->{'nice'} ? {'error' => ['No cache found!']} : 0;
@@ -162,7 +162,7 @@ sub delete_file {
       return {'success' => 1};
     }
     else {
-      my $filename = get_filename($file);
+      my $filename = get_filename($file, 'write');
       return {'error' => ["Could not delete file $filename from memory."]};
     }
   }

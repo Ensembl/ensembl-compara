@@ -44,9 +44,9 @@ package EnsEMBL::Web::File::Utils::IO;
 ### foreach (@features) {
 ###   # Write one line per feature
 ###   append_lines($output_file, {
-###                                'lines'       => [$_->stable_id],
-###                                'compression' => 'gz',
-###                                'nice'        => 0,
+###                                'lines'              => [$_->stable_id],
+###                                'write_compression'  => 'gz',
+###                                'nice'               => 0,
 ###                              };                                         
 ### }
 
@@ -69,7 +69,7 @@ sub file_exists {
 ###                     no_exception Boolean - whether to throw an exception
 ### @return Hashref (nice mode) or Boolean
   my ($file, $args) = @_;
-  my $path = ref($file) ? $file->location : $file;
+  my $path = ref($file) ? $file->read_location : $file;
   if ($args->{'nice'}) {
     if (-e $path && -f $path) {
       return {'success' => 1};
@@ -98,7 +98,7 @@ sub delete_file {
 ###                     no_exception Boolean - whether to throw an exception
 ### @return Hashref (in nice mode) or Boolean
   my ($file, $args) = @_;
-  my $path = ref($file) ? $file->location : $file;
+  my $path = ref($file) ? $file->write_location : $file;
   if ($args->{'nice'}) {
     if (unlink $path) {
       return {'success' => 1};
@@ -127,7 +127,7 @@ sub fetch_file {
 ###                     no_exception Boolean - whether to throw an exception
 ### @return Hashref (in nice mode) or String - entire file
   my ($file, $args) = @_;
-  my $path = ref($file) ? $file->location : $file;
+  my $path = ref($file) ? $file->read_location : $file;
   my $content;
   eval { $content = slurp($path) }; 
   if ($args->{'nice'}) {
@@ -160,10 +160,10 @@ sub read_file {
 ###                     compression String - compression type
 ### @return Hashref (in nice mode) or String - contents of file
   my ($file, $args) = @_;
-  my $path = ref($file) ? $file->location : $file;
+  my $path = ref($file) ? $file->read_location : $file;
   my $content;
 
-  my $compression = defined($args->{'compression'}) || get_compression($path);
+  my $compression = defined($args->{'read_compression'}) || get_compression($path);
   my $method = $compression ? $compression.'_slurp' : 'slurp';
   eval { 
     no strict 'refs';
@@ -202,9 +202,9 @@ sub read_lines {
 ### @return Hashref (in nice mode) or Arrayref containing lines of file 
   my ($file, $args) = @_;
   my $content = [];
-  my $path = ref($file) ? $file->location : $file;
+  my $path = ref($file) ? $file->read_location : $file;
 
-  my $compression = defined($args->{'compression'}) || get_compression($path);
+  my $compression = defined($args->{'read_compression'}) || get_compression($file);
   my $method = $compression ? $compression.'_slurp_to_array' : 'slurp_to_array';
   eval { 
     no strict 'refs';
@@ -238,16 +238,16 @@ sub preview_file {
 ### @param Args (optional) Hashref 
 ###                     nice Boolean - see introduction 
 ###                     no_exception Boolean - whether to throw an exception
-###                     compression String - compression type
+###                     read_compression String - compression type
 ###                     limit Integer - number of lines required (defaults to 10)
 ### @return Hashref (in nice mode) or Arrayref - n lines of file
   my ($file, $args) = @_;
-  my $path = ref($file) ? $file->location : $file;
+  my $path = ref($file) ? $file->read_location : $file;
   my $limit = $args->{'limit'} || 10;
   my $count = 0;
   my $lines = [];
 
-  my $compression = $args->{'compression'} || get_compression($path);
+  my $compression = $args->{'read_compression'} || get_compression($file);
   my $method = $compression ? $compression.'_work_with_file' : 'work_with_file';
 
   eval { 
@@ -292,14 +292,14 @@ sub write_file {
 ### @param Args (optional) Hashref 
 ###                     nice Boolean - see introduction 
 ###                     no_exception Boolean - whether to throw an exception
-###                     compression String - compression type
+###                     write_compression String - compression type
 ###                     content String - content of file
 ### @return Hashref (in nice mode) or Boolean 
   my ($file, $args) = @_;
-  my $path = ref($file) ? $file->location : $file;
+  my $path = ref($file) ? $file->write_location : $file;
 
   my $content = $args->{'content'};
-  my $filename = get_filename($file);
+  my $filename = get_filename($file, 'write');
 
   if (!$content) {
     if ($args->{'nice'}) {
@@ -315,7 +315,7 @@ sub write_file {
   my $has_path = _check_path($path);
   
   if ($has_path) { 
-    $args->{'compression'} ||= get_compression($path);
+    $args->{'write_compression'} ||= get_compression($file, 'write');
     eval {
       _write_to_file($path, $args, '>',
         sub {
@@ -362,11 +362,11 @@ sub write_lines {
 ### @param Args (optional) Hashref 
 ###                     nice Boolean - see introduction 
 ###                     no_exception Boolean - whether to throw an exception
-###                     compression String - compression type
+###                     write_compression String - compression type
 ###                     lines Arrayref - lines of file
 ### @return Hashref (in nice mode) or Boolean
   my ($file, $args) = @_;
-  my $path = ref($file) ? $file->location : $file;
+  my $path = ref($file) ? $file->write_location : $file;
   my $lines = $args->{'lines'};
 
   if (ref($lines) ne 'ARRAY') {
@@ -382,7 +382,7 @@ sub write_lines {
   ## Create the directory path if it doesn't exist
   my $has_path = _check_path($path);
   
-  $args->{'compression'} ||= get_compression($path);
+  $args->{'write_compression'} ||= get_compression($path, 'write');
   eval {
       _write_to_file($path, $args, '>',
         sub {
@@ -420,11 +420,11 @@ sub append_lines {
 ### @param Args (optional) Hashref 
 ###                     nice Boolean - see introduction 
 ###                     no_exception Boolean - whether to throw an exception
-###                     compression String - compression type
+###                     write_compression String - compression type
 ###                     lines Arrayref - lines of file
 ### @return Hashref (in nice mode) or Boolean
   my ($file, $args) = @_;
-  my $path = ref($file) ? $file->location : $file;
+  my $path = ref($file) ? $file->write_location : $file;
   my $lines = $args->{'lines'};
 
   if (ref($lines) ne 'ARRAY') {
@@ -440,7 +440,7 @@ sub append_lines {
   ## Create the directory path if it doesn't exist
   my $has_path = _check_path($path);
   
-  $args->{'compression'} ||= get_compression($path);
+  $args->{'write_compression'} ||= get_compression($file, 'write');
   eval {
     _write_to_file($path, $args, '>>',
       sub {
@@ -455,7 +455,7 @@ sub append_lines {
 
   if ($args->{'nice'}) {
     if ($@) {
-      my $filename = get_filename($file);
+      my $filename = get_filename($file, 'write');
       return {'error' => ["Could not append lines to file $filename."]};
     }
     else {
@@ -494,14 +494,14 @@ sub _write_to_file {
 ### @private
 ### @param String - full path to file
 ### @param Args Hashref 
-###         compression (optional) String - compression type
+###         write_compression (optional) String - compression type
 ###         no_exception (optional) Boolean - whether to throw an exception
 ### @param write mode String - parameter to pass to API method
 ### @param Coderef - parameter to pass to API method
 ### @return Void
   my ($path, $args, @params) = @_;
 
-  my $compression = $args->{'compression'} || get_compression($path);
+  my $compression = $args->{'write_compression'} || get_compression($path);
   my $method = $compression ? $compression.'_work_with_file' : 'work_with_file';
   eval { 
     no strict 'refs';

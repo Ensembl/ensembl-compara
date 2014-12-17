@@ -35,10 +35,12 @@ our %EXPORT_TAGS = (all     => [@EXPORT_OK]);
 
 sub get_filename {
 ### Get filename from an object or parse it from a path, depending on input
-  my $file = shift;
+### @param file - EnsEMBL::Web::File object or string
+### @param mode (optional) - String, either 'read' or 'write' 
+  my ($file, $mode) = @_;
   my $filename = '';
   if (ref($file)) {
-    $filename = $file->file_name;
+    $filename = $mode eq 'write' ? $file->write_name || $file->read_name;
   }
   else {
     my @path = split('/', $file);
@@ -50,10 +52,13 @@ sub get_filename {
 sub get_extension {
 ### Get file extension from an object or parse it from a path, depending on input
 ### Note that the returned string does not include any compression extension
-  my $file = shift;
+### @param file - EnsEMBL::Web::File object or string
+### @param mode (optional) - String, either 'read' or 'write' 
+  my ($file, $mode) = @_;
   my $extension = '';
+
   if (ref($file)) {
-    $extension = $file->extension;
+    $extension = $mode eq 'write' ? $file->write_ext || $file->read_ext;
   }
   else {
     my $filename = get_filename($file);
@@ -69,13 +74,22 @@ sub get_extension {
 sub get_compression {
 ### Helper method to check if file is compressed and, if so,
 ### what kind of compression appears to have been used.
-### @param String - full path to file
-### @return String - compression type 
-  my $path = shift;
-  return 'gz'   if $path =~ /\.gz$/;
-  return 'zip'  if $path =~ /\.zip$/;
-  return 'bz'   if $path =~ /\.bz2?$/;
-  return undef;
+### @param file - EnsEMBL::Web::File object or string
+### @param mode (optional) - String, either 'read' or 'write' 
+### @return compression type - String
+  my ($file, $mode) = @_;
+  my $compression;
+
+  if (ref($file)) {
+    $compression = $mode eq 'write' ? $file->write_compression || $file->read_compression;
+    return $compression;
+  }
+  else {
+    return 'gz'   if $file =~ /\.gz$/;
+    return 'zip'  if $file =~ /\.zip$/;
+    return 'bz'   if $file =~ /\.bz2?$/;
+    return undef;
+  }
 }
 
 sub uncompress {

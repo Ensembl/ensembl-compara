@@ -64,9 +64,10 @@ sub new {
   $self->{'error'} = undef;
   bless $self, $class;
 
-  my $file_path = $self->{'file_path'};
+  my $read_path   = $self->{'read_path'} || $self->{'file_path'};
+  my $write_path  = $self->{'write_path'} || $self->{'file_path'};
 
-  if ($file_path) {
+  if ($read_path) {
     ## DEALING WITH AN EXISTING FILE
    
     ## Clean up the path
@@ -74,140 +75,225 @@ sub new {
     $file_path =~ s/$tmp//;
     $tmp = $self->{'hub'}->species_defs->ENSEMBL_TMP_URL;
     $file_path =~ s/$tmp//;
-    $self->{'file_path'} = $file_path;
+    $self->{'read_path'} = $file_path;
 
     my @path = grep length, split('/', $file_path);
 
     ## Parse filename
-    $self->{'file_name'}     = pop @path;
-    my ($name, $extension, $compression) = split(/\./, $self->{'file_name'});
+    my read_name = pop @path;
+    my ($name, $extension, $compression) = split(/\./, $read_name);
     $compression =~ s/2$//; ## We use 'bz' internally, not 'bz2'
-    $self->{'name'}         = $name;
-    $self->{'extension'}    = $extension;
-    $self->{'compression'}  = $compression;
-    $self->{'compress'}     = $self->{'compression'} ? 1 : 0;
+    $self->{'read_name'}        = $name;
+    $self->{'read_ext'}         = $extension;
+    $self->{'read_compression'} = $compression;
+    $self->{'read_compress'}    = $self->{'read_compression'} ? 1 : 0;
 
     ## Parse rest of path
-    $self->{'dir_path'}         = join('/', @path); 
-    $self->{'datestamp'}        = shift @path;
+    $self->{'read_dir_path'}    = join('/', @path); 
+    $self->{'read_datestamp'}   = shift @path;
     $self->{'user_identifier'}  = shift @path;
-    $self->{'sub_dir'}          = shift @path if scalar @path;
+    $self->{'read_sub_dir'}     = shift @path if scalar @path;
   }
   else {
     ## CREATING A NEW FILE (or trying to...)
     if ($self->{'name'}) {
       ## Make sure it's a valid file name!
-      $self->{'name'} =~ s/[^\w]/_/g;
+      (my $name = $self->{'name'}) =~ s/[^\w]/_/g;
+      $self->{'write_name'} = $name;
       ## Set a random path in case we have multiple files with this name
-      $self->{'sub_dir'} ||= random_string;
+      $self->{'write_sub_dir'} ||= random_string;
     }
     else {
       ## Create a file name if none given
-      $self->{'name'} = $self->set_timestamp if $args{'name_timestamp'};
-      $self->{'name'} .= random_string;
+      $self->{'write_name'} = $self->set_timestamp if $args{'name_timestamp'};
+      $self->{'write_name'} .= random_string;
     }
 
-    $self->{'extension'} ||= 'txt';
+    $self->{'write_ext'} ||= 'txt';
     ## Allow for atypical file extensions such as gff3 or bedGraph
-    (my $extension          = $self->{'extension'}) =~ s/^\.?(\w+)(\.gz)?$/$1/;
-    $self->{'extension'}    = $extension;
+    (my $extension  = $self->{'write_ext'}) =~ s/^\.?(\w+)(\.gz)?$/$1/;
+    $self->{'write_ext'}    = $extension;
 
-    my $file_name            = $self->{'name'}.'.'.$extension;
+    my $file_name           = $self->{'write_name'}.'.'.$extension;
 
     if ($self->{'compress'}) {
-      unless ($self->{'compression'}) {
+      unless ($self->{'write_compression'}) {
         ## Default to gzip
-        $self->{'compression'} = 'gz';
+        $self->{'write_compression'} = 'gz';
       }
-      $file_name .= '.'.$self->{'compression'};
+      $file_name .= '.'.$self->{'write_compression'};
     }
 
-    $self->{'file_name'} = $file_name;
+    $self->{'write_name'} = $file_name;
 
     my @path_elements = ($self->set_datestamp, $self->set_user_identifier);
-    push @path_elements, $self->{'sub_dir'} if $self->{'sub_dir'};
-    $self->{'dir_path'} = join('/', @path_elements); 
+    push @path_elements, $self->{'write_sub_dir'} if $self->{'write_sub_dir'};
+    $self->{'write_dir_path'} = join('/', @path_elements); 
 
     push @path_elements, $file_name;
-    $self->{'file_path'} = join('/', @path_elements); 
+    $self->{'write_path'} = join('/', @path_elements); 
   }
-  $self->{'base_path'}    = $self->{'base_dir'}.'/'.$self->{'dir_path'}; 
-  $self->{'location'}     = $self->{'base_dir'}.'/'.$self->{'file_path'}; 
-  $self->{'url'}          = $self->{'base_url'}.'/'.$self->{'file_path'}; 
+  $self->{'base_read_path'}    = $self->{'base_dir'}.'/'.$self->{'read_dir_path'}; 
+  $self->{'base_write_path'}   = $self->{'base_dir'}.'/'.$self->{'write_dir_path'}; 
+  $self->{'read_location'}     = $self->{'base_dir'}.'/'.$self->{'read_path'}; 
+  $self->{'write_location'}    = $self->{'base_dir'}.'/'.$self->{'write_path'}; 
+  $self->{'read_url'}          = $self->{'base_url'}.'/'.$self->{'read_path'}; 
+  $self->{'write_url'}         = $self->{'base_url'}.'/'.$self->{'write_path'}; 
 
   return $self;
 }
 
-sub file_name {
+sub read_name {
 ### a
   my $self = shift;
-  return $self->{'file_name'};
+  return $self->{'read_name'};
 }
 
-sub extension {
+sub write_name {
 ### a
+### Assume that we write back to the same file unless 
+### write parameters have been set
   my $self = shift;
-  return $self->{'extension'};
+  return $self->{'write_name'} || $self->{'read_name'};
 }
 
-sub compression {
+sub read_ext {
 ### a
   my $self = shift;
-  return $self->{'compression'};
+  return $self->{'read_ext'};
+}
+
+sub write_ext {
+### a
+### Assume extension is same unless set otherwise
+  my $self = shift;
+  return $self->{'write_ext'};
+}
+
+sub read_compression {
+### a
+  my $self = shift;
+  return $self->{'read_compression'};
+}
+
+sub write_compression {
+### a
+  my $self = shift;
+  return $self->{'write_compression'};
 }
 
 sub compress {
 ### a
+### N.B. this only applies to writing files
   my $self = shift;
   return $self->{'compress'};
 }
 
-sub datestamp {
+sub read_datestamp {
 ### a
   my $self = shift;
-  return $self->{'datestamp'};
+  return $self->{'read_datestamp'};
+}
+
+sub write_datestamp {
+### a
+### Assume that we write back to the same file unless 
+### write parameters have been set
+  my $self = shift;
+  return $self->{'write_datestamp'} || $self->{'read_datestamp'};
 }
 
 sub user_identifier {
 ### a
+### This should be the same for both reading and writing
   my $self = shift;
   return $self->{'user_identifier'};
 }
 
-sub file_path {
+sub read_path {
 ### a
   my $self = shift;
-  return $self->{'file_path'};
+  return $self->{'read_path'};
 }
 
-sub sub_dir {
+sub write_path {
 ### a
+### Assume that we write back to the same file unless 
+### write parameters have been set
   my $self = shift;
-  return $self->{'sub_dir'};
+  return $self->{'write_path'} || $self->{'read_path'};
 }
 
-sub base_path {
+sub read_sub_dir {
 ### a
   my $self = shift;
-  return $self->{'base_path'};
+  return $self->{'read_sub_dir'};
 }
 
-sub base_dir {
+sub write_sub_dir {
 ### a
+### Assume that we write back to the same file unless 
+### write parameters have been set
   my $self = shift;
-  return $self->{'base_dir'};
+  return $self->{'write_sub_dir'} || $self->{'read_sub_dir'};
 }
 
-sub location {
+sub base_read_path {
 ### a
   my $self = shift;
-  return $self->{'location'};
+  return $self->{'base_read_path'};
 }
 
-sub url {
+sub base_write_path {
+### a
+### Assume that we write back to the same file unless 
+### write parameters have been set
+  my $self = shift;
+  return $self->{'base_write_path'};
+}
+
+sub base_read_dir {
 ### a
   my $self = shift;
-  return $self->{'url'};
+  return $self->{'base_read_dir'};
+}
+
+sub base_write_dir {
+### a
+### Assume that we write back to the same file unless 
+### write parameters have been set
+  my $self = shift;
+  return $self->{'base_write_dir'};
+}
+
+sub read_location {
+### a
+  my $self = shift;
+  return $self->{'read_location'};
+}
+
+sub write_location {
+### a
+### Assume that we write back to the same file unless 
+### write parameters have been set
+  my $self = shift;
+  return $self->{'write_location'} || $self->{'read_location'};
+}
+
+sub read_url {
+### a
+  my $self = shift;
+  return $self->{'read_url'};
+}
+
+sub write_url {
+### a
+### Assume that we write back to the same file unless 
+### write parameters have been set
+### N.B. whilst we don't literally write to a url, memcached
+### uses this method to create a virtual path to a saved file
+  my $self = shift;
+  return $self->{'write_url'};
 }
 
 sub hub {
@@ -231,8 +317,8 @@ sub set_timestamp {
   my $min   = $time[1];
   my $sec   = $time[0];
 
-  $self->{'name'} = sprintf('%s%s%s', $hour, $min, $sec);
-  return $self->{'name'};
+  $self->{'write_name'} = sprintf('%s%s%s', $hour, $min, $sec);
+  return $self->{'write_name'};
 }
 
 sub set_datestamp {
@@ -244,8 +330,8 @@ sub set_datestamp {
   my $month = $time[4] + 1;
   my $year  = $time[5] + 1900;
 
-  $self->{'datestamp'} = sprintf('%s_%s_%s', $year, $month, $day);
-  return $self->{'datestamp'};
+  $self->{'read_datestamp'} = sprintf('%s_%s_%s', $year, $month, $day);
+  return $self->{'read_datestamp'};
 }
 
 sub set_user_identifier {
