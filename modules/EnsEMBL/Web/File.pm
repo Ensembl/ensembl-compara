@@ -22,7 +22,9 @@ use strict;
 
 use EnsEMBL::Web::Utils::RandomString qw(random_string);
 
+use EnsEMBL::Web::File::Utils qw/sanitise_filename/;
 use EnsEMBL::Web::File::Utils::IO qw/:all/;
+use EnsEMBL::Web::File::Utils::URL qw/:all/;
 use EnsEMBL::Web::File::Utils::Memcached qw/:all/;
 
 ### Replacement for EnsEMBL::Web::TmpFile, using the file-handling
@@ -163,8 +165,10 @@ sub new {
 
 sub read_name {
 ### a
+### Assume that we read back from the same file we wrote to
+### unless read parameters were set separately
   my $self = shift;
-  return $self->{'read_name'};
+  return $self->{'read_name'} || $self->{'write_name'};
 }
 
 sub write_name {
@@ -177,27 +181,31 @@ sub write_name {
 
 sub read_ext {
 ### a
+### Assume that we read back from the same file we wrote to
+### unless read parameters were set separately
   my $self = shift;
-  return $self->{'read_ext'};
+  return $self->{'read_ext'} || $self->{'write_ext'};
 }
 
 sub write_ext {
 ### a
 ### Assume extension is same unless set otherwise
   my $self = shift;
-  return $self->{'write_ext'};
+  return $self->{'write_ext'} || $self->{'read_ext'};
 }
 
 sub read_compression {
 ### a
+### Assume that we read back from the same file we wrote to
+### unless read parameters were set separately
   my $self = shift;
-  return $self->{'read_compression'};
+  return $self->{'read_compression'} || $self->{'write_compression'};
 }
 
 sub write_compression {
 ### a
   my $self = shift;
-  return $self->{'write_compression'};
+  return $self->{'write_compression'} || $self->{'read_compression'};
 }
 
 sub compress {
@@ -209,8 +217,10 @@ sub compress {
 
 sub read_datestamp {
 ### a
+### Assume that we read back from the same file we wrote to
+### unless read parameters were set separately
   my $self = shift;
-  return $self->{'read_datestamp'};
+  return $self->{'read_datestamp'} || $self->{'write_datestamp'};
 }
 
 sub write_datestamp {
@@ -230,8 +240,10 @@ sub user_identifier {
 
 sub read_path {
 ### a
+### Assume that we read back from the same file we wrote to
+### unless read parameters were set separately
   my $self = shift;
-  return $self->{'read_path'};
+  return $self->{'read_path'} || $self->{'write_path'};
 }
 
 sub write_path {
@@ -244,8 +256,10 @@ sub write_path {
 
 sub read_sub_dir {
 ### a
+### Assume that we read back from the same file we wrote to
+### unless read parameters were set separately
   my $self = shift;
-  return $self->{'read_sub_dir'};
+  return $self->{'read_sub_dir'} || $self->{'read_sub_dir'};
 }
 
 sub write_sub_dir {
@@ -258,8 +272,10 @@ sub write_sub_dir {
 
 sub base_read_path {
 ### a
+### Assume that we read back from the same file we wrote to
+### unless read parameters were set separately
   my $self = shift;
-  return $self->{'base_read_path'};
+  return $self->{'base_read_path'} || $self->{'base_write_path'};
 }
 
 sub base_write_path {
@@ -267,13 +283,15 @@ sub base_write_path {
 ### Assume that we write back to the same file unless 
 ### write parameters have been set
   my $self = shift;
-  return $self->{'base_write_path'};
+  return $self->{'base_write_path'} || $self->{'base_read_path'};
 }
 
 sub base_read_dir {
 ### a
+### Assume that we read back from the same file we wrote to
+### unless read parameters were set separately
   my $self = shift;
-  return $self->{'base_read_dir'};
+  return $self->{'base_read_dir'} || $self->{'base_write_dir'};
 }
 
 sub base_write_dir {
@@ -281,13 +299,15 @@ sub base_write_dir {
 ### Assume that we write back to the same file unless 
 ### write parameters have been set
   my $self = shift;
-  return $self->{'base_write_dir'};
+  return $self->{'base_write_dir'} || $self->{'base_read_dir'};
 }
 
 sub read_location {
 ### a
+### Assume that we read back from the same file we wrote to
+### unless read parameters were set separately
   my $self = shift;
-  return $self->{'read_location'};
+  return $self->{'read_location'} || $self->{'write_location'};
 }
 
 sub write_location {
@@ -300,8 +320,10 @@ sub write_location {
 
 sub read_url {
 ### a
+### Assume that we read back from the same file we wrote to
+### unless read parameters were set separately
   my $self = shift;
-  return $self->{'read_url'};
+  return $self->{'read_url'} || $self->{'write_url'};
 }
 
 sub write_url {
@@ -311,7 +333,7 @@ sub write_url {
 ### N.B. whilst we don't literally write to a url, memcached
 ### uses this method to create a virtual path to a saved file
   my $self = shift;
-  return $self->{'write_url'};
+  return $self->{'write_url'} || $self->{'read_url'};
 }
 
 sub hub {
