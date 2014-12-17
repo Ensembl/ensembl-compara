@@ -26,8 +26,7 @@ use strict;
 use List::Util qw(reduce);
 
 use EnsEMBL::Web::Text::FeatureParser;
-use EnsEMBL::Web::TmpFile::Text;
-use EnsEMBL::Web::Tools::Misc;
+use EnsEMBL::Web::File::User;
 use Bio::EnsEMBL::Variation::Utils::Constants;
 
 use base qw(EnsEMBL::Draw::GlyphSet::_alignment EnsEMBL::Draw::GlyphSet_wiggle_and_block);
@@ -83,25 +82,29 @@ sub features {
   if ($sub_type eq 'single_feature') {
     $parser->parse($self->my_config('data'), $self->my_config('format'));
   }
-  elsif ($sub_type eq 'url') {
-    my $response = EnsEMBL::Web::Tools::Misc::get_url_content($self->my_config('url'));
+  else {
+    my %args = ('hub' => $self->{'config'}->hub, 'prefix' => 'user_upload');
+
+    if ($sub_type eq 'url') {
+      $args{'file_path'} = $self->my_config('url');
+      $args{'input_drivers'} = ['URL']; 
+    }
+    else {
+      $args{'file_path'} = $self->my_config('file');
+    }
+
+    my $file = EnsEMBL::Web::File::User->new(%args);
+
+    return $self->errorTrack(sprintf 'The file %s could not be found', $self->my_config('caption')) if !$file->exists;
+
+    my $response = $file->read;
 
     if (my $data = $response->{'content'}) {
       $parser->parse($data, $self->my_config('format'));
     } else {
       warn "!!! $response->{'error'}";
     }
-  } else {
-    my $file = EnsEMBL::Web::TmpFile::Text->new(filename => $self->my_config('file'));
-
-    return $self->errorTrack(sprintf 'The file %s could not be found', $self->my_config('caption')) if !$file->exists;
-
-    my $data = $file->retrieve;
-
-    return [] unless $data;
-
-    $parser->parse($data, $self->my_config('format'));
-  }
+  } 
 
   ## Now we translate all the features to their rightful co-ordinates
   while (my ($key, $T) = each (%{$parser->{'tracks'}})) {
