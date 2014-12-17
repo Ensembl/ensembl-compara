@@ -70,6 +70,12 @@ sub content {
     link  => $hub->url({ type => 'Transcript', action => 'Summary' })
   });
   
+  $self->add_entry({
+    type  => 'cDNA',
+    label => 'Sequence',
+    link  => $hub->url({ type => 'Transcript', action => 'Sequence_cDNA' })
+  });  
+  
   # Protein coding transcripts only
   if ($translation) {
     $self->add_entry({
@@ -77,6 +83,12 @@ sub content {
       label => $translation->stable_id || $stable_id,
       link  => $self->hub->url({ type => 'Transcript', action => 'ProteinSummary' }),
     });
+    
+    $self->add_entry({
+      type  => ' ',
+      label => 'Protein Variations',
+      link  => $self->hub->url({ type => 'Transcript', action => 'ProtVariations' }),
+    });    
   }
   
   # Only if there is a gene (not Prediction transcripts)
@@ -136,13 +148,8 @@ sub content {
   if ($object->analysis) {
     my $label = $transcript->analysis->display_label . ' Transcript';
     $self->add_entry({
-      type  => 'Analysis',
+      type  => 'Source',
       label => $label
-    });
-
-    $self->add_entry({
-      type  => 'Prediction method',
-      label_html => $transcript->analysis->description
     });
   }
 }
