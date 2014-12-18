@@ -100,6 +100,15 @@ sub run {
     map {$_->{is_reused} = 1} @reused_gdbs;
     map {$_->{is_reused} = 0} @nonreused_gdbs;
 
+    foreach my $gdb (@{$self->param('genome_dbs')}) {
+        next unless $gdb->is_polyploid;
+
+        # If component genomes are used, they must *all* be there
+        my $components_in_core_db = $gdb->db_adaptor->get_GenomeContainer->get_genome_components;
+        my $components_in_compara = $gdb->component_genome_dbs;
+        die sprintf("Some %s genome components are missing from the species set !\n", $gdb->name) if scalar(@$components_in_core_db) != scalar(@$components_in_compara);
+    }
+
     die "Some genome_dbs are missing from reused_gdb_ids and nonreused_gdb_ids\n" if grep {not defined $_->{is_reused}} @{$self->param('genome_dbs')};
 }
 
