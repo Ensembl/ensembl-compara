@@ -22,8 +22,7 @@ use strict;
 
 use HTML::Entities qw(encode_entities);
 
-use EnsEMBL::Web::TmpFile::Text;
-use EnsEMBL::Web::Tools::Misc qw(get_url_content);
+use EnsEMBL::Web::File::User;
 
 use base qw(EnsEMBL::Web::Command);
 
@@ -75,74 +74,68 @@ sub upload {
   
   $params->{'format'} = $format;
 
-  ## Set up parameters for file-writing
-  if ($method eq 'url') {
-    my $url = $hub->param('url');
-    $url    =~ s/^\s+//;
-    $url    =~ s/\s+$//;
+  my %args = (hub => $self->hub);
+  my $result;
 
-    ## Needs full URL to work, including protocol
-    unless ($url =~ /^http/ || $url =~ /^ftp:/) {
-      $url = ($url =~ /^ftp/) ? "ftp://$url" : "http://$url";
-    }
-    my $response = get_url_content($url);
-    
-    $error           = $response->{'error'};
-    $args{'content'} = $response->{'content'};
-  } elsif ($method eq 'text') {
+  if ($method eq 'url') {
+    $args{'input_drivers'} = ['URL'];
+  } 
+  elsif ($method eq 'text') {
+    ## Get content straight from CGI, since there's no input file
     my $text = $hub->param('text');
     if ($type eq 'coords') {
       $text =~ s/\s/\n/g;
     }
-    $args{'content'} = $text;
-  } else {
-    $args{'tmp_filename'} = $hub->input->tmpFileName($hub->param($method));
+    $result = {'content' => $text};
+  }
+  else { 
+    $args{'file_path'} = $hub->input->tmpFileName($hub->param($method));
+    $args{'cgi'}       = 1;
   }
 
+  my $file = EnsEMBL::Web::File::User->new(%args);
+  $result ||= $file->read;
+
   ## Add upload to session
-  if ($error) {
+  if ($result->{'error'}) {
     $params->{'filter_module'} = 'Data';
     $params->{'filter_code'}   = 'no_response';
   } else {
-    my $file = EnsEMBL::Web::TmpFile::Text->new(prefix => 'user_upload', %args);
+    my $response = $file->write($result->{'content'});
   
-    if ($file->content) {
-      if ($file->save) {
-        my $session = $hub->session;
-        my $code    = join '_', $file->md5, $session->session_id;
-        my $format  = $hub->param('format');
-           $format  = 'BED' if $format =~ /bedgraph/i;
-        my %inputs  = map $_->[1] ? @$_ : (), map [ $_, $hub->param($_) ], qw(filetype ftype style assembly nonpositional assembly);
+    if ($response->{'success'}) {
+      my $session = $hub->session;
+      my $md5     = $file->md5($result->{'content'});
+      my $code    = join '_', $md5, $session->session_id;
+      my $format  = $hub->param('format');
+      $format     = 'BED' if $format =~ /bedgraph/i;
+      my %inputs  = map $_->[1] ? @$_ : (), map [ $_, $hub->param($_) ], qw(filetype ftype style assembly nonpositional assembly);
         
-        $inputs{'format'}    = $format if $format;
-        $params->{'species'} = $hub->param('species') || $hub->species;
+      $inputs{'format'}    = $format if $format;
+      $params->{'species'} = $hub->param('species') || $hub->species;
         
-        ## Attach data species to session
-        my $data = $session->add_data(
-          type      => 'upload',
-          filename  => $file->filename,
-          filesize  => length($file->content),
-          code      => $code,
-          md5       => $file->md5,
-          name      => $name,
-          species   => $params->{'species'},
-          format    => $format,
-          no_attach => $no_attach,
-          timestamp => time,
-          assembly  => $hub->species_defs->get_config($params->{'species'}, 'ASSEMBLY_VERSION'),
-          %inputs
-        );
+      ## Attach data species to session
+      my $data = $session->add_data(
+                                    type      => 'upload',
+                                    filename  => $file->read_name,
+                                    filesize  => length($result->{'content'}),
+                                    code      => $code,
+                                    md5       => $md5,
+                                    name      => $name,
+                                    species   => $params->{'species'},
+                                    format    => $format,
+                                    no_attach => $no_attach,
+                                    timestamp => time,
+                                    assembly  => $hub->species_defs->get_config($params->{'species'}, 'ASSEMBLY_VERSION'),
+                                    %inputs
+                                    );
         
-        $session->configure_user_data('upload', $data);
+      $session->configure_user_data('upload', $data);
         
-        $params->{'code'} = $code;
-      } else {
-        $params->{'filter_module'} = 'Data';
-        $params->{'filter_code'}   = 'no_save';
-      }
+      $params->{'code'} = $code;
     } else {
       $params->{'filter_module'} = 'Data';
-      $params->{'filter_code'}   = 'empty';
+      $params->{'filter_code'}   = 'no_save';
     }
   }
   
