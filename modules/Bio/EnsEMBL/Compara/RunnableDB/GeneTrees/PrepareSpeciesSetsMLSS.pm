@@ -78,6 +78,30 @@ sub fetch_input {
     $self->param('ml_genetree', $method_adaptor->fetch_by_type($self->param('tree_method_link')));
 }
 
+sub _has_duplicates {
+    my $a = shift;
+    my %seen = ();
+    map {$seen{$_}++} @$a;
+    return scalar(keys %seen) != scalar(@$a) ? 1 : 0;
+}
+
+sub run {
+    my $self = shift;
+
+    # Here we check that the data is consistent
+
+    die "Duplicates in reused_gdb_ids\n" if _has_duplicates($self->param('reused_gdb_ids'));
+    die "Duplicates in nonreused_gdb_ids\n" if _has_duplicates($self->param('nonreused_gdb_ids'));
+
+    my %all_gdbs = map {$_->dbID => $_} @{$self->param('genome_dbs')};
+    my @reused_gdbs = map {$all_gdbs{$_} || die "Invalid genome_db_id $_ in 'reused_gdb_ids'\n"} @{$self->param('reused_gdb_ids')};
+    my @nonreused_gdbs = map {$all_gdbs{$_} || die "Invalid genome_db_id $_ in 'nonreused_gdb_ids'\n"} @{$self->param('nonreused_gdb_ids')};
+
+    map {$_->{is_reused} = 1} @reused_gdbs;
+    map {$_->{is_reused} = 0} @nonreused_gdbs;
+
+    die "Some genome_dbs are missing from reused_gdb_ids and nonreused_gdb_ids\n" if grep {not defined $_->{is_reused}} @{$self->param('genome_dbs')};
+}
 
 sub write_output {
     my $self = shift;
@@ -103,23 +127,14 @@ sub write_output {
     }
 
     ## Since possible_ortholds have been removed, there are no between-species paralogs any more
-    ## In theory, we could skip the orthologs between components of the same polyploid Genome
+    ## Also, not that in theory, we could skip the orthologs between components of the same polyploid Genome
     $self->_write_all_pairs( $self->param('ml_ortho'), $all_gdbs );
 
-    my $gdb_a = $self->compara_dba->get_GenomeDBAdaptor;
-
-    my @reuse_gdbs = map {$gdb_a->fetch_by_dbID($_)} @{$self->param('reused_gdb_ids')};
-    $self->_write_shared_ss('reuse', \@reuse_gdbs);
-    $self->_write_shared_ss('reuse_polyploid', [grep {$_->is_polyploid} @reuse_gdbs]);
-    $self->_write_shared_ss('reuse_nopolyploid', [grep {not $_->is_polyploid} @reuse_gdbs]);
-
-    my @nonreuse_gdbs = map {$gdb_a->fetch_by_dbID($_)} @{$self->param('nonreused_gdb_ids')};
-    $self->_write_shared_ss('nonreuse', \@nonreuse_gdbs);
-    $self->_write_shared_ss('nonreuse_polyploid', [grep {$_->is_polyploid} @nonreuse_gdbs]);
-    $self->_write_shared_ss('nonreuse_nopolyploid', [grep {not $_->is_polyploid} @nonreuse_gdbs]);
+    $self->_write_shared_ss('reuse', [grep {$_->{is_reused}} @{$self->param('genome_dbs')}] );
+    $self->_write_shared_ss('nonreuse', [grep {not $_->{is_reused}} @{$self->param('genome_dbs')}] );
 
     # Whether all the species are reused
-    $self->db->get_PipelineWideParametersAdaptor->store( {'param_name' => 'are_all_species_reused', 'param_value' => (scalar(@nonreuse_gdbs) ? 0 : 1)} );
+    $self->db->get_PipelineWideParametersAdaptor->store( {'param_name' => 'are_all_species_reused', 'param_value' => ((grep {not $_->{is_reused}} @{$self->param('genome_dbs')}) ? 0 : 1)} );
 }
 
 sub _write_shared_ss {
