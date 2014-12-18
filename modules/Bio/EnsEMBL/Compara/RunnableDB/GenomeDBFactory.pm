@@ -60,6 +60,8 @@ sub param_defaults {
         'component_genomes' => 1,
         'normal_genomes'    => 1,
 
+        'extra_parameters'  => [],
+
         'fan_branch_code'   => 2,
     }
 }
@@ -101,7 +103,11 @@ sub write_output {
 
     # Dataflow the GenomeDBs
     foreach my $gdb (@{$self->param('genome_dbs')}) {
-        $self->dataflow_output_id( { 'genome_db_id' => $gdb->dbID }, $self->param('fan_branch_code'));
+        my $h = { 'genome_db_id' => $gdb->dbID };
+        foreach my $p (@{$self->param('extra_parameters')}) {
+            $h->{$p} = $gdb->$p;
+        }
+        $self->dataflow_output_id($h, $self->param('fan_branch_code'));
     }
 }
 
