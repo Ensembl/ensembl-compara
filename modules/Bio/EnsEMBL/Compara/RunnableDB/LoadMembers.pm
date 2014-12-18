@@ -128,7 +128,9 @@ sub run {
     $compara_dba->dbc->disconnect_when_inactive(0);
     $core_dba->dbc->disconnect_when_inactive(0);
 
-    my $unfiltered_slices = $core_dba->get_SliceAdaptor->fetch_all('toplevel', $self->param('include_nonreference') ? (undef, 1, undef, 1) : ());
+    my $unfiltered_slices = $self->param('genome_db')->genome_component
+        ? $core_dba->get_SliceAdaptor->fetch_all_by_genome_component($self->param('genome_db')->genome_component)
+        : $core_dba->get_SliceAdaptor->fetch_all('toplevel', $self->param('include_nonreference') ? (undef, 1, undef, 1) : ());
     die "Could not fetch any toplevel slices from ".$core_dba->dbc->dbname() unless(scalar(@$unfiltered_slices));
 
     my $slices = $self->param('include_reference')
@@ -139,22 +141,9 @@ sub run {
                        [ grep { $_->assembly_exception_type() !~ /PATCH/ } @$slices ]
                        : [ @$slices ];
 
-    #use fetch_all_by_genome_component ?
-    my $genomedb_slices = $final_slices;
-    if ($self->param('genome_db')->genome_component) {
-        my $g = lc $self->param('genome_db')->genome_component;
-        $genomedb_slices = [];
-        foreach my $s (@$final_slices) {
-            my $a = $s->get_all_Attributes('genome_component')->[0];
-            if ($a and (lc $a->value eq $g)) {
-                push @$genomedb_slices, $s;
-            }
-        }
-    }
+    if(scalar(@$final_slices)) {
 
-    if(scalar(@$genomedb_slices)) {
-
-        $self->loadMembersFromCoreSlices( $genomedb_slices );
+        $self->loadMembersFromCoreSlices( $final_slices );
 
     } else {
 
