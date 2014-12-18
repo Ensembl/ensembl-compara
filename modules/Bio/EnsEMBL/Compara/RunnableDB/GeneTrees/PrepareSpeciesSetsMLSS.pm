@@ -103,6 +103,9 @@ sub run {
     foreach my $gdb (@{$self->param('genome_dbs')}) {
         next unless $gdb->is_polyploid;
 
+        # Component GenomeDBs are missing, we need to add them
+        map {$_->{is_reused} = $gdb->{is_reused}} @{$gdb->component_genome_dbs};
+
         # If component genomes are used, they must *all* be there
         my $components_in_core_db = $gdb->db_adaptor->get_GenomeContainer->get_genome_components;
         my $components_in_compara = $gdb->component_genome_dbs;
