@@ -20,8 +20,9 @@ package EnsEMBL::Web::File;
 
 use strict;
 
-use EnsEMBL::Web::Utils::RandomString qw(random_string);
+use Digest::MD5 qw(md5_hex);
 
+use EnsEMBL::Web::Utils::RandomString qw(random_string);
 use EnsEMBL::Web::File::Utils qw/sanitise_filename/;
 use EnsEMBL::Web::File::Utils::IO qw/:all/;
 use EnsEMBL::Web::File::Utils::URL qw/:all/;
@@ -59,6 +60,18 @@ sub new {
   $args{'base_dir'} ||= $self->{'hub'}->species_defs->ENSEMBL_TMP_DIR;
   $args{'base_url'} ||= $self->{'hub'}->species_defs->ENSEMBL_TMP_URL;
 
+  if ($args{'cgi'}) { 
+    ## We need to read the data from the system's CGI location
+    ## but otherwise treat this as a new file
+    my @cgi_path = split('/', $args{'file_path'});
+    delete $args{'file_path'};
+    $self->{'read_name'}        = pop @cgi_path;
+    $self->{'read_ext'}         = '';
+    $self->{'read_compression'} = '';
+    $self->{'base_read_path'}   = join('/', @cgi_path);
+    $self->{'read_location'}    = $self->{'base_read_path'}.'/'.$self->{'read_name'}; 
+  }
+
   ## Set default drivers (disk only)
   $args{'input_drivers'} ||= ['IO'];
   $args{'output_drivers'} ||= ['IO'];
@@ -67,16 +80,17 @@ sub new {
   bless $self, $class;
 
   my $read_path   = $self->{'read_path'} || $self->{'file_path'};
-  my $write_path  = $self->{'write_path'} || $self->{'file_path'};
 
-  if ($read_path) {
+  if ($read_path && !$args{'cgi'}) {
     ## DEALING WITH AN EXISTING FILE
    
     ## Clean up the path
-    my $tmp = $self->{'hub'}->species_defs->ENSEMBL_TMP_DIR;
-    $read_path =~ s/$tmp//;
-    $tmp = $self->{'hub'}->species_defs->ENSEMBL_TMP_URL;
-    $read_path =~ s/$tmp//;
+    $read_path  =~ s/^\s+//;
+    $read_path  =~ s/\s+$//;
+    my $tmp     = $self->{'hub'}->species_defs->ENSEMBL_TMP_DIR;
+    $read_path  =~ s/$tmp//;
+    $tmp        = $self->{'hub'}->species_defs->ENSEMBL_TMP_URL;
+    $read_path  =~ s/$tmp//;
     $self->{'read_path'} = $read_path;
 
     my @path = grep length, split('/', $read_path);
@@ -116,8 +130,7 @@ sub new {
     ## CREATING A NEW FILE (or trying to...)
     ## Note that we allow generic parameter names here
 
-    if ($self->{'name'} || $self->{'write_name'}) {
-      my $name = $self->{'name'} || $self->{'write_name'};
+    if (my $name = $self->{'name'} || $self->{'write_name'}) {
       $self->{'write_name'} = sanitise_filename($name);
       ## Set a random path in case we have multiple files with this name
       $self->{'write_sub_dir'} ||= $self->{'sub_dir'};
@@ -390,6 +403,23 @@ sub set_user_identifier {
 
   return $self->{'user_identifier'};
 }
+
+
+sub md5 {
+  my ($self, $content) = @_;
+  unless ($content) {
+    my $result = $self->read;
+    $content = $result->{'content'};
+  }
+  if ($content) {
+    $self->{'md5'} ||= md5_hex($self->read_name . $content);
+    return $self->{'md5'};
+  }
+  else {
+    return undef;
+  }
+}
+
 
 ### Wrappers around E::W::File::Utils::* methods
 
