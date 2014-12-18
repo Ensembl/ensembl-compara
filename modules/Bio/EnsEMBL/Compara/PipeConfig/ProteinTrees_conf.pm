@@ -535,17 +535,16 @@ sub core_pipeline_analyses {
 # ---------------------------------------------[load GenomeDB entries from master+cores]---------------------------------------------
 
         {   -logic_name => 'load_genomedb_factory',
-            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ObjectFactory',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GenomeDBFactory',
             -parameters => {
-                'compara_db'            => '#master_db#',   # that's where genome_db_ids come from
-
-                'call_list'             => [ 'compara_dba', 'get_MethodLinkSpeciesSetAdaptor', ['fetch_by_dbID', $self->o('mlss_id')], 'species_set_obj', 'genome_dbs'],
-                'column_names2getters'  => { 'master_dbID' => 'dbID', 'locator' => 'locator', 'genome_component' => 'genome_component' },
-
-                'fan_branch_code'       => 2,
+                'compara_db'        => '#master_db#',   # that's where genome_db_ids come from
+                'mlss_id'           => $self->o('mlss_id'),
+                'extra_parameters'  => [ 'locator' ],
             },
             -flow_into => {
-                '2->A' => [ 'load_genomedb' ],
+                '2->A' => {
+                    'load_genomedb' => { 'master_dbID' => '#genome_db_id#', 'locator' => '#locator#' },
+                },
                 'A->1' => [ 'create_mlss_ss' ],
             },
         },

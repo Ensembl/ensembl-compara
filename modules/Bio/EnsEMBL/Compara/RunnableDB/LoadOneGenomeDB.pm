@@ -130,6 +130,7 @@ sub fetch_input {
         $self->param('species_name', $master_genome_db->name);
         $self->param('genebuild', $master_genome_db->genebuild);
         $self->param('assembly_name', $master_genome_db->assembly);
+        $self->param('genome_component', $master_genome_db->genome_component);
     }
 
     if( $self->param('species_name') ) {    # perform our tricky multiregistry search: find the last one still suitable
