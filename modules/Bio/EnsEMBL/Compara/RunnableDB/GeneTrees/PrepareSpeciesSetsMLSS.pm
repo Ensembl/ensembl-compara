@@ -32,7 +32,7 @@ Used to create all the species set / MLSS objects needed for a gene-tree pipelin
  - all the pairwise orthologues MLSS
  - two empty species sets for reuse / nonreuse lists
 
-If the master_db and mlss_id parameters, the Runnable will copy over the MLSS
+If the master_db parameter is set, the Runnable will copy over the MLSS
 from the master database. Otherwise, it will create new ones from the list of
 all the species.
 
@@ -69,13 +69,7 @@ sub fetch_input {
         warn "Storing without a reference_db\n" if($self->debug());
     }
 
-    if ($self->param('mlss_id')) {
-        my $mlss_id = $self->param('mlss_id');
-        my $mlss = $self->param('reference_dba')->get_MethodLinkSpeciesSetAdaptor->fetch_by_dbID($mlss_id);
-        $self->param('genome_dbs', $mlss->species_set_obj->genome_dbs);
-    } else {
-        $self->param('genome_dbs', $self->compara_dba->get_GenomeDBAdaptor->fetch_all());
-    }
+    $self->param('genome_dbs', $self->compara_dba->get_GenomeDBAdaptor->fetch_all());
 
     my $method_adaptor = $self->compara_dba->get_MethodAdaptor;
     $self->param('ml_ortho', $method_adaptor->fetch_by_type('ENSEMBL_ORTHOLOGUES'));
