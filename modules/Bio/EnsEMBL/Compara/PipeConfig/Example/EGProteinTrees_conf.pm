@@ -105,13 +105,6 @@ sub default_options {
         'species_tree_input_file'   =>  $self->o('tree_dir').'/'.$self->o('division').'.peptide.nh',
         # you can define your own species_tree for 'notung'. It *has* to be binary
 
-
-    # homology assignment for polyploid genomes
-        # This parameter is an array of groups of genome_db names / IDs.
-        # Each group represents the components of a polyploid genome
-        # e.g. bread wheat for the "plants" division
-        'homoeologous_genome_dbs'   => $self->o('division') eq 'plants' ? [ [ 'triticum_aestivum_a', 'triticum_aestivum_b', 'triticum_aestivum_d' ] ] : [],
-
     # homology_dnds parameters:
         # used by 'homology_dNdS'
         'codeml_parameters_file'    => $self->o('ensembl_cvs_root_dir').'/ensembl-compara/scripts/homology/codeml.ctl.hash',

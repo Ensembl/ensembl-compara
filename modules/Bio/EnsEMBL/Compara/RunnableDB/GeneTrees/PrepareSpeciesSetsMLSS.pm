@@ -120,13 +120,10 @@ sub write_output {
 
     my $all_gdbs = $self->param('genome_dbs');
     my $ss = $self->_write_shared_ss('all', $all_gdbs);
-    $self->_write_shared_ss('all_polyploid', [grep {$_->is_polyploid} @$all_gdbs]);
-    my $ss_nopoly = $self->_write_shared_ss('all_nopolyploid', [grep {not $_->is_polyploid} @$all_gdbs]);
-
     my $mlss = $self->_write_mlss( $ss, $self->param('ml_genetree') );
     $self->db->get_PipelineWideParametersAdaptor->store( {'param_name' => 'mlss_id', 'param_value' => $mlss->dbID} );
 
-    $self->db->get_PipelineWideParametersAdaptor->store( {'param_name' => 'species_count', 'param_value' => scalar(@{$ss_nopoly->genome_dbs})});
+    $self->db->get_PipelineWideParametersAdaptor->store( {'param_name' => 'species_count', 'param_value' => scalar(grep {not $_->is_polyploid} @$all_gdbs)} );
 
     foreach my $genome_db (@$all_gdbs) {
         my $ssg = $self->_write_ss( [$genome_db] );
@@ -134,13 +131,12 @@ sub write_output {
 
         if ($genome_db->is_polyploid) {
             my $mlss_hg = $self->_write_mlss( $ssg, $self->param('ml_homoeo') );
-            $self->_write_all_pairs( $self->param('ml_homoeo'), $genome_db->component_genome_dbs );
         }
     }
 
     ## Since possible_ortholds have been removed, there are no between-species paralogs any more
     ## Also, not that in theory, we could skip the orthologs between components of the same polyploid Genome
-    $self->_write_all_pairs( $self->param('ml_ortho'), $all_gdbs );
+    $self->_write_all_pairs( $self->param('ml_ortho'), [grep {not $_->genome_component} @$all_gdbs] );
 
     $self->_write_shared_ss('reuse', [grep {$_->{is_reused}} @{$self->param('genome_dbs')}] );
     $self->_write_shared_ss('nonreuse', [grep {not $_->{is_reused}} @{$self->param('genome_dbs')}] );

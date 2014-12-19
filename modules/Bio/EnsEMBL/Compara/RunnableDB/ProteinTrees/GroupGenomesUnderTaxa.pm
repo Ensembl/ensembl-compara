@@ -30,10 +30,10 @@ and in the output maps each of the input taxonomic nodes onto a list of high cov
 
 The format of the input_id follows the format of a Perl hash reference.
 Example:
-    { 'ss_id' => 40069, 'taxlevels' => ['Theria', 'Sauria', 'Tetraodontiformes'] }
+    { 'mlss_id' => 40069, 'taxlevels' => ['Theria', 'Sauria', 'Tetraodontiformes'] }
 
 supported keys:
-    'ss_id'                 => <number>
+    'mlss_id'               => <number>
 
     'taxlevels'             => <list-of-names>
 
@@ -52,15 +52,17 @@ use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 sub fetch_input {
     my $self = shift @_;
 
-    my $ss_id       = $self->param_required('ss_id');
-    my $ss          = $self->compara_dba()->get_SpeciesSetAdaptor->fetch_by_dbID($ss_id) or die "Could not fetch mlss with dbID=$ss_id";
-    my $genome_dbs  = $ss->genome_dbs();
+    my $mlss_id     = $self->param_required('mlss_id');
+
+    my $mlss        = $self->compara_dba()->get_MethodLinkSpeciesSetAdaptor->fetch_by_dbID($mlss_id) or die "Could not fetch mlss with dbID=$mlss_id";
+    my $genome_dbs  = $mlss->species_set_obj->genome_dbs();
 
     my $filter_high_coverage = $self->param('filter_high_coverage');
 
     my %selected_gdb_ids = ();
 
     foreach my $genome_db (@$genome_dbs) {
+        next if $genome_db->genome_component;
         if($filter_high_coverage) {
             if ($genome_db->is_high_coverage) {
                 $selected_gdb_ids{$genome_db->dbID} = 1;

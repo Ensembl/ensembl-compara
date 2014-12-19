@@ -92,7 +92,6 @@ sub param_defaults {
             'tree_scale'            => 1,
             'store_homologies'      => 1,
             'no_between'            => 0.25, # dont store all possible_orthologs
-            'homoeologous_genome_dbs'  => [],
             '_readonly'             => 0,
             'tag_split_genes'       => 0,
     };
@@ -132,22 +131,6 @@ sub fetch_input {
     $self->param('has_match', {});
     $self->param('orthotree_homology_counts', {});
     $self->param('n_stored_homologies', 0);
-
-    my %homoeologous_groups = ();
-    foreach my $i (1..(scalar(@{$self->param('homoeologous_genome_dbs')}))) {
-        my $group = $self->param('homoeologous_genome_dbs')->[$i-1];
-        foreach my $gdb (@{$group}) {
-            if (looks_like_number($gdb)) {
-                $homoeologous_groups{$gdb} = $i;
-            } elsif (ref $gdb) {
-                $homoeologous_groups{$gdb->dbID} = $i;
-            } else {
-                $gdb = $self->compara_dba->get_GenomeDBAdaptor->fetch_by_name_assembly($gdb);
-                $homoeologous_groups{$gdb->dbID} = $i;
-            }
-        }
-    }
-    $self->param('homoeologous_groups', \%homoeologous_groups);
 }
 
 
@@ -481,28 +464,30 @@ sub store_gene_link_as_homology {
 
   # get the mlss from the database
   my $mlss_type;
+  my $gdbs;
+  my $gdb1 = $gene1->genome_db;
+  $gdb1 = $gdb1->principal_genome_db if $gdb1->genome_component;
+  # Here, we need to be smart about choosing the mlss and the homology type
   if ($type =~ /^ortholog/) {
-      my $gdb1 = $gene1->genome_db_id;
-      my $gdb2 = $gene2->genome_db_id;
-      if (($self->param('homoeologous_groups')->{$gdb1} || -1) == ($self->param('homoeologous_groups')->{$gdb2} || -2)) {
+      my $gdb2 = $gene2->genome_db;
+      $gdb2 = $gdb2->principal_genome_db if $gdb2->genome_component;
+      if ($gdb1->is_polyploid and $gdb2->is_polyploid and ($gdb1->dbID == $gdb2->dbID)) {
           $mlss_type = 'ENSEMBL_HOMOEOLOGUES';
           $type      =~ s/ortholog/homoeolog/;
+          $gdbs      = [$gdb1];
       } else {
           $mlss_type = 'ENSEMBL_ORTHOLOGUES';
+          $gdbs      = [$gdb1, $gdb2];
       }
 
   } elsif ($type eq 'alt_allele') {
       $mlss_type = 'ENSEMBL_PROJECTIONS';
+      $gdbs      = [$gdb1];
   } else {
       $mlss_type = 'ENSEMBL_PARALOGUES';
+      $gdbs      = [$gdb1];
   }
 
-  my $gdbs;
-  if ($gene1->genome_db->dbID == $gene2->genome_db->dbID) {
-      $gdbs = [$gene1->genome_db];
-  } else {
-      $gdbs = [$gene1->genome_db, $gene2->genome_db];
-  }
   my $mlss = $self->compara_dba->get_MethodLinkSpeciesSetAdaptor->fetch_by_method_link_type_GenomeDBs($mlss_type, $gdbs);
 
   # create an Homology object
