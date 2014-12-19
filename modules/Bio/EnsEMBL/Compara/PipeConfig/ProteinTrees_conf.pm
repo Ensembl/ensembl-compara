@@ -1174,7 +1174,6 @@ sub core_pipeline_analyses {
         {   -logic_name => 'hcluster_dump_input_per_genome',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::HclusterPrepare',
             -parameters => {
-                'ss_id'         => '#all_nopolyploid_ss_id#',
                 'outgroups'     => $self->o('outgroups'),
             },
             -hive_capacity => $self->o('reuse_capacity'),
