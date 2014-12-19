@@ -55,10 +55,8 @@ use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 sub param_defaults {
     return {
         'sqls'   => [
-            'UPDATE dnafrag d1 JOIN gene_member gm USING (genome_db_id) JOIN dnafrag d2 USING (name) WHERE gm.genome_db_id = #source_gdb_id# AND d2.genome_db_id = #target_gdb_id#',
-            'UPDATE dnafrag d1 JOIN  seq_member sm USING (genome_db_id) JOIN dnafrag d2 USING (name) WHERE sm.genome_db_id = #source_gdb_id# AND d2.genome_db_id = #target_gdb_id#',
-            'UPDATE gene_member SET genome_db_id = #target_gdb_id# WHERE genome_db_id = #source_gdb_id#',
-            'UPDATE  seq_member SET genome_db_id = #target_gdb_id# WHERE genome_db_id = #source_gdb_id#',
+            'UPDATE dnafrag d1 JOIN gene_member gm USING (dnafrag_id) JOIN dnafrag d2 USING (name) SET gm.genome_db_id = #target_gdb_id#, gm.dnafrag_id = d2.dnafrag_id WHERE gm.genome_db_id = #source_gdb_id# AND d2.genome_db_id = #target_gdb_id#',
+            'UPDATE dnafrag d1 JOIN  seq_member sm USING (dnafrag_id) JOIN dnafrag d2 USING (name) SET sm.genome_db_id = #target_gdb_id#, sm.dnafrag_id = d2.dnafrag_id WHERE sm.genome_db_id = #source_gdb_id# AND d2.genome_db_id = #target_gdb_id#',
         ],
     };
 }
