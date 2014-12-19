@@ -464,7 +464,7 @@ sub variation_table {
           my $variation_name       = $snp->variation_name;
           my $var_class            = $snp->var_class;
           my $translation_start    = $transcript_variation->translation_start;
-          my $source               = $snp->source;
+          my $source               = $snp->source_name;
           my ($aachange, $aacoord) = $translation_start ? ($tva->pep_allele_string, $translation_start) : ('-', '-');
           my $url                  = "$base_url;v=$variation_name;vf=$raw_id;source=$source";
           my $trans_url            = "$base_trans_url;$url_transcript_prefix=$transcript_stable_id";
