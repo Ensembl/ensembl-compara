@@ -594,7 +594,19 @@ sub core_pipeline_analyses {
 
         {   -logic_name => 'create_mlss_ss',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::PrepareSpeciesSetsMLSS',
-            -flow_into => [ 'make_treebest_species_tree' ],
+            -flow_into => {
+                1 => [ 'make_treebest_species_tree' ],
+                2 => [ 'check_reuse_db_is_myisam' ],
+            },
+        },
+
+        {   -logic_name => 'check_reuse_db_is_myisam',
+            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::SqlHealthcheck',
+            -parameters => {
+                'description'   => 'The pipeline can only reuse the "other_member_sequence" table if it is in MyISAM',
+                'query'         => 'SELECT * FROM information_schema.TABLES WHERE ENGINE NOT LIKE "MyISAM" AND TABLE_NAME = "other_member_sequence" AND TABLE_SCHEMA = "#db_name#"',
+                'db_name'       => '#expr( Bio::EnsEMBL::Hive::DBSQL::DBConnection->new( -url => #reuse_db#)->dbname  )expr#',
+            },
         },
 
 
