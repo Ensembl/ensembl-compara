@@ -662,17 +662,66 @@ sub core_pipeline_analyses {
 # ---------------------------------------------[reuse members]-----------------------------------------------------------------------
 
         {   -logic_name => 'genome_reuse_factory',
-            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
-            -parameters => {
-                'inputquery'        => 'SELECT genome_db_id, name FROM species_set JOIN genome_db USING (genome_db_id) WHERE species_set_id = #reuse_ss_id#',
-                'fan_branch_code'   => 2,
-            },
+            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
             -flow_into => {
-                '2->A' => [ 'sequence_table_reuse' ],
+                '1->A' => [ 'dnafrag_reuse_factory' ],
                 'A->1' => [ 'load_fresh_members_factory' ],
             },
         },
 
+        {   -logic_name => 'dnafrag_reuse_factory',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GenomeDBFactory',
+            -parameters => {
+                'species_set_id'    => '#reuse_ss_id#',
+            },
+            -flow_into => {
+                '2->A' => [ 'dnafrag_table_reuse' ],
+                'A->1' => [ 'normal_genome_reuse_factory' ],
+            },
+        },
+
+        {   -logic_name => 'normal_genome_reuse_factory',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GenomeDBFactory',
+            -parameters => {
+                'polyploid_genomes' => 0,
+                'component_genomes' => 0,
+                'species_set_id'    => '#reuse_ss_id#',
+            },
+            -flow_into => {
+                '2->A' => [ 'sequence_table_reuse' ],
+                'A->1' => [ 'polyploid_genome_reuse_factory' ],
+            },
+        },
+
+        {   -logic_name => 'polyploid_genome_reuse_factory',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GenomeDBFactory',
+            -parameters => {
+                'component_genomes' => 0,
+                'normal_genomes'    => 0,
+                'species_set_id'    => '#reuse_ss_id#',
+            },
+            -flow_into => {
+                2 => [ 'component_genome_dbs_move_factory' ],
+            },
+        },
+
+        {   -logic_name => 'component_genome_dbs_move_factory',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::ComponentGenomeDBFactory',
+            -flow_into => {
+                2 => {
+                    'move_component_genes' => { 'source_gdb_id' => '#principal_genome_db_id#', 'target_gdb_id' => '#component_genome_db_id#'}
+                },
+            },
+        },
+
+        {   -logic_name => 'move_component_genes',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::MoveComponentGenes',
+            -flow_into => {
+                1 => {
+                    'hc_members_per_genome' => { 'genome_db_id' => '#target_gdb_id#' },
+                },
+            },
+        },
 
         {   -logic_name => 'sequence_table_reuse',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
@@ -685,7 +734,7 @@ sub core_pipeline_analyses {
             -rc_name => '500Mb_job',
             -flow_into => {
                 2 => [ ':////sequence' ],
-                1 => [ 'dnafrag_table_reuse' ],
+                1 => [ 'seq_member_table_reuse' ],
             },
         },
 
@@ -698,9 +747,6 @@ sub core_pipeline_analyses {
                 'mode'          => 'insertignore',
             },
             -hive_capacity => $self->o('reuse_capacity'),
-            -flow_into => {
-                1 => [ 'seq_member_table_reuse' ],
-            },
         },
 
         {   -logic_name => 'seq_member_table_reuse',
@@ -770,14 +816,36 @@ sub core_pipeline_analyses {
 # ---------------------------------------------[load the rest of members]------------------------------------------------------------
 
         {   -logic_name => 'load_fresh_members_factory',
-            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
+            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
+            -flow_into => {
+                '1->A' => [ 'normal_genome_load_fresh_factory' ],
+                'A->1' => [ 'hc_members_globally' ],
+            },
+        },
+
+        {   -logic_name => 'normal_genome_load_fresh_factory',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GenomeDBFactory',
             -parameters => {
-                'inputquery'        => 'SELECT genome_db_id, name, locator FROM species_set JOIN genome_db USING (genome_db_id) WHERE species_set_id = #nonreuse_ss_id#',
-                'fan_branch_code'   => 2,
+                'polyploid_genomes' => 0,
+                'species_set_id'    => '#nonreuse_ss_id#',
+                'extra_parameters'  => [ 'locator' ],
             },
             -flow_into => {
                 '2->A' => [ 'test_is_genome_in_core_db' ],
-                'A->1' => [ 'hc_members_globally' ],
+                'A->1' => [ 'polyploid_genome_load_fresh_factory' ],
+            },
+        },
+
+        {   -logic_name => 'polyploid_genome_load_fresh_factory',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GenomeDBFactory',
+            -parameters => {
+                'component_genomes' => 0,
+                'normal_genomes'    => 0,
+                'species_set_id'    => '#nonreuse_ss_id#',
+                'extra_parameters'  => [ 'locator' ],
+            },
+            -flow_into => {
+                2 => [ 'test_is_polyploid_in_core_db' ],
             },
         },
 
@@ -791,6 +859,47 @@ sub core_pipeline_analyses {
                 3 => [ 'load_fresh_members_from_file' ],
             },
         },
+
+        {   -logic_name => 'test_is_polyploid_in_core_db',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ConditionalDataFlow',
+            -parameters    => {
+                'condition'     => '"#locator#" =~ /^Bio::EnsEMBL::DBSQL::DBAdaptor/',
+            },
+            -flow_into => {
+                2 => [ $self->o('master_db') ? ('copy_dnafrags_from_master_no_flow') : () ],
+                3 => [ 'component_genome_dbs_duplicate_factory' ],
+            },
+        },
+
+        {   -logic_name => 'component_genome_dbs_duplicate_factory',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::ComponentGenomeDBFactory',
+            -flow_into => {
+                2 => {
+                    'duplicate_component_dnafrags' => { 'source_gdb_id' => '#principal_genome_db_id#', 'target_gdb_id' => '#component_genome_db_id#'}
+                },
+            },
+        },
+
+        {   -logic_name => 'duplicate_component_dnafrags',
+            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::SqlCmd',
+            -parameters => {
+                'sql' => [
+                    'INSERT INTO dnafrag (length, name, genome_db_id, coord_system_name, is_reference) SELECT length, name, #principal_genome_db_id#, coord_system_name, is_reference FROM dnafrag WHERE genome_db_id = #principal_genome_db_id#',
+                ],
+            },
+        },
+
+        {   -logic_name => 'copy_dnafrags_from_master_no_flow',
+            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::MySQLTransfer',
+            -parameters => {
+                'src_db_conn'   => '#master_db#',
+                'table'         => 'dnafrag',
+                'where'         => 'genome_db_id = #genome_db_id#',
+                'mode'          => 'insertignore',
+            },
+            -hive_capacity => $self->o('reuse_capacity'),
+        },
+
 
         {   -logic_name => 'copy_dnafrags_from_master',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::MySQLTransfer',
