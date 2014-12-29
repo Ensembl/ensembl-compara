@@ -32,7 +32,7 @@ Bio::EnsEMBL::Compara::GeneTreeMember
 =head1 DESCRIPTION
 
 Currently the GeneTreeMember objects are used to represent the leaves of
-the gene trees (whether they contain proteins or non-coding RNas).
+the gene trees (whether they contain proteins or non-coding RNAs).
 
 Each GeneTreeMember object is simultaneously a tree node (inherits from
 GeneTreeNode) and an aligned member (inherits from AlignedMember).
