@@ -76,7 +76,7 @@ sub content {
   if (scalar @Uniprot) {
     my %temp = map { $_->primary_id, 1 } @Uniprot;
     @Uniprot = sort keys %temp;
-    $table->add_row('UniprotKB', sprintf('<p>This gene has proteins that correspond to the following Uniprot identifiers: %s</p>', join ', ', map $hub->get_ExtURL_link($_, 'Uniprot/SWISSPROT', $_), @Uniprot));
+    $table->add_row('UniProtKB', sprintf('<p>This gene has proteins that correspond to the following Uniprot identifiers: %s</p>', join ', ', map $hub->get_ExtURL_link($_, 'Uniprot/SWISSPROT', $_), @Uniprot));
   }
 
   ## add RefSeq match info where appropriate
