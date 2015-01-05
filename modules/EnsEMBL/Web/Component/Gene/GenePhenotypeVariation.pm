@@ -200,8 +200,6 @@ sub variation_table {
   my $g_end         = $gene_slice->end;
   my $phenotype_sql = $phenotype;
      $phenotype_sql =~ s/'/\\'/; # Escape quote character
-  my $db_adaptor = $hub->database('variation');
-  $db_adaptor->include_failed_variations(1);
   my $pf_adaptor = $db_adaptor->get_PhenotypeFeatureAdaptor;
   my (@rows, %list_sources, %list_phe, $list_variations);
   
