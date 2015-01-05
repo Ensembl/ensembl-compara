@@ -124,6 +124,9 @@ sub calculate_stats {
   
   my %tags;
   my $prefix = '';
+  
+  $tags{'num_blocks'} = scalar(keys %syntenic_regions);
+  
   foreach my $species (sort keys %syntenic_regions) {
     my $coding_overlap;
     
