@@ -528,8 +528,7 @@ sub get_export_data {
   my $gene  = $hub->core_object('gene');
 
   if ($type && $type eq 'genetree') {
-    my $object = $hub->core_object('gene');
-    return $object->get_GeneTree($cdb, 1);
+    return $gene->get_GeneTree($cdb, 1);
   }
   else {
     my ($member, $tree) = $self->get_details($cdb, $gene);
