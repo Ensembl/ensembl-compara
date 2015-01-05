@@ -67,13 +67,21 @@ sub content {
     
     if ($sa) {
       my $data = [];
+      my $flag = !$second_gene;
       
       foreach my $peptide (@{$homology->get_all_Members}) {
-        
         my $gene = $peptide->gene_member;
+        $flag = 1 if $gene->stable_id eq $second_gene; 
+
         my $member_species = ucfirst $peptide->genome_db->name;
         my $location       = sprintf '%s:%d-%d', $gene->dnafrag->name, $gene->dnafrag_start, $gene->dnafrag_end;
-        
+       
+        if (!$second_gene && $member_species ne $species && $hub->param('species_' . lc $member_species) eq 'off') {
+          $flag = 0;
+          $skipped{$species_defs->species_label($member_species)}++;
+          next;
+        }
+
         if ($gene->stable_id eq $gene_id) {
           push @$data, [
             $species_defs->species_label($member_species),
@@ -105,7 +113,9 @@ sub content {
           ];
         }
       }
-      
+     
+      next unless $flag;
+ 
       my $homology_desc_mapped = $Bio::EnsEMBL::Compara::Homology::PLAIN_TEXT_DESCRIPTIONS{$homology->{'_description'}} || $homology->{'_description'} || 'no description';
 
       $html .= "<h2>Type: $homology_desc_mapped</h2>";
