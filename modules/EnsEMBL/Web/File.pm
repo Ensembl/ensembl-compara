@@ -349,7 +349,6 @@ sub write {
       no strict 'refs';
       $result = &$method($self, $args);
     };
-    warn "!!! ".$result->{'error'} if $result->{'error'};
     last unless $result->{'error'};
   }
   return $result;
