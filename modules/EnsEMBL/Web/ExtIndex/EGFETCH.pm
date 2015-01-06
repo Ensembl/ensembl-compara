@@ -35,6 +35,7 @@ my $DB_NAMES = {
   'protein_id'          => 'emblcds',
   'refseq'              => 'refseq',
   'refseq_dna'          => 'refseq',
+  'refseq_mrna'         => 'refseq',
   'refseq_peptide'      => 'refseq',
   'swiss-2dpage'        => 'uniprotkb',
   'uniprot'             => 'uniprotkb',
