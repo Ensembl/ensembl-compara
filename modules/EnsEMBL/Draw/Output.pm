@@ -33,7 +33,7 @@ use URI::Escape qw(uri_escape);
 use POSIX qw(floor ceil);
 use List::Util qw(min max);
 
-use EnsEMBL::Web::Tools::RandomString qw(random_string);
+use EnsEMBL::Web::Utils::RandomString qw(random_string);
 
 use EnsEMBL::Draw::Glyph;
 use EnsEMBL::Draw::Glyph::Circle;

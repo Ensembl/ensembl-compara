@@ -24,7 +24,7 @@ use RTF::Writer;
 
 use EnsEMBL::Web::Fake;
 use EnsEMBL::Web::TmpFile::Text;
-use EnsEMBL::Web::Tools::RandomString qw(random_string);
+use EnsEMBL::Web::Utils::RandomString qw(random_string);
 use HTML::Entities        qw(encode_entities);
 
 use Sanger::Graphics::ColourMap;
