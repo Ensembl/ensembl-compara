@@ -155,7 +155,7 @@
     var otag = "span";
     var ctag = "span";
     if(group.href) {
-      otag = "a class='sequence_info'";
+      otag = "a class='sequence_info' draggable='false'";
       ctag = "a";
     }
     if(group.tag) {
