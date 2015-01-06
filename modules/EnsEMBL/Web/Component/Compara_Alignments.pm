@@ -334,26 +334,19 @@ sub draw_tree {
 
     #Restrict the tree by looking at the species in the AlignSlice
     $restricted_tree = $gab->get_GenomicAlignTree;
-    my $num_slices = @$slices;
-    my $cnt =0;
+  }
 
-    foreach my $this_node (@{$restricted_tree->get_all_sorted_genomic_align_nodes()}) {
+    # Remove the leaves (and their parents) from the tree if the species is
+    # hidden by the current configuration (i.e. is not in $slices)
+    my %slice_ok = map {(lc $_->{name}) => 1} @$slices;
+    foreach my $this_node (@{$restricted_tree->get_all_leaves}) {
       my $genomic_align_group = $this_node->genomic_align_group;
       next if (!$genomic_align_group);
       my $node_name = $genomic_align_group->genome_db->name;
-      my $this_slice = $slices->[$cnt];
-      if ($cnt < $num_slices && lc($slices->[$cnt]->{name}) eq $node_name) {
-        #if need to distinguish between nodes of the same name, maybe try checking that the
-        #genomic_aligns in the slice and group are identical
-        #my $slice_gas = $this_slice->{genomic_align_ids}; #hash
-        #my $tree_gas = $genomic_align_group->{genomic_align_array};
-        $cnt++;
-      } else {
-        $this_node->disavow_parent;
-        $restricted_tree = $restricted_tree->minimize_tree;
-      }
+      next if $slice_ok{$node_name};
+      $this_node->disavow_parent;
+      $restricted_tree = $restricted_tree->minimize_tree;
     }
-  }
 
   #Get cigar lines from each Slice which will be passed to the genetree.pm drawing code
   my $slice_cigar_lines;
