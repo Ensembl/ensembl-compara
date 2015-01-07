@@ -25,8 +25,6 @@ Bio::EnsEMBL::Compara::PipeConfig::EPO_pt1_conf
 
     #1. Update ensembl-hive, ensembl and ensembl-compara GIT repositories before each new release
 
-    #2. You may need to update 'schema_version' in meta table to the current release number in ensembl-hive/sql/tables.sql
-
     #3. Check all default_options, you will probably need to change the following :
         pipeline_db (-host)
         resource_classes 
@@ -46,6 +44,7 @@ Bio::EnsEMBL::Compara::PipeConfig::EPO_pt1_conf
     #5. Run the "beekeeper.pl ... -sync" and then " -loop" command suggested by init_pipeline.pl
 
     #6. Fix the code when it crashes
+
 =head1 DESCRIPTION  
 
     This configuaration file gives defaults for the first part of the EPO pipeline (this part generates the anchors from pairwise alignments). 

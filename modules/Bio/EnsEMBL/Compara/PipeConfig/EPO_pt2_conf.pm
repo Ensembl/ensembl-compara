@@ -24,8 +24,6 @@ Bio::EnsEMBL::Compara::PipeConfig::EPO_pt2_conf
 
     #1. Update ensembl-hive, ensembl and ensembl-compara GIT repositories before each new release
 
-    #2. You may need to update 'schema_version' in meta table to the current release number in ensembl-hive/sql/tables.sql
-
     #3. Check all default_options, you will probably need to change the following :
         pipeline_db (-host)
         resource_classes 

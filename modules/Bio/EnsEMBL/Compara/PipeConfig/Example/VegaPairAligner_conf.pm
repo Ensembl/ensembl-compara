@@ -24,8 +24,6 @@ Bio::EnsEMBL::Compara::PipeConfig::Example::VegaPairAligner_conf
 
     #1. Update ensembl-hive, ensembl and ensembl-compara GIT repositories before each new release
 
-    #2. You may need to update 'schema_version' in meta table to the current release number in ensembl-hive/sql/tables.sql
-
     #3. Make sure that all default_options are set correctly, especially:
         pipeline_db (-host)
         resource_classes 

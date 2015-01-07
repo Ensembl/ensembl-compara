@@ -33,8 +33,6 @@ limitations under the License.
 
     #1. update ensembl-hive, ensembl and ensembl-compara GIT repositories before each new release
 
-    #2. you may need to update 'schema_version' in meta table to the current release number in ensembl-hive/sql/tables.sql
-
     #3. make sure that all default_options are set correctly
 
     #4. Run init_pipeline.pl script:
