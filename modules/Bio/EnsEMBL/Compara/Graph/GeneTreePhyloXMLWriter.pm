@@ -232,6 +232,7 @@ sub dispatch_tag {
 sub dispatch_body {
   my ($self, $node) = @_;
   if(check_ref($node, 'Bio::EnsEMBL::Compara::GeneTreeMember')) {
+    $self->_node_body($node , 1); #Used to defer taxonomy writing
     $self->_member_body($node);
     return;
   }
@@ -302,7 +303,6 @@ sub _member_body {
   my ($self, $protein) = @_;
 
   my $w = $self->_writer();
-  $self->_node_body($protein , 1); #Used to defer taxonomy writing
 
   my $gene = $protein->gene_member();
   my $taxon = $protein->taxon();
