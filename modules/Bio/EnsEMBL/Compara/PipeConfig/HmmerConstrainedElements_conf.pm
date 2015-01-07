@@ -28,7 +28,6 @@ sub default_options {
 
     return {
         'pipeline_name' => 'compara_hmmer_ces',
-        'ensembl_cvs_root_dir' => $ENV{'ENSEMBL_CVS_ROOT_DIR'},
            # parameters that are likely to change from execution to another:
         'release'               => '82',
         'rel_suffix'            => '',    # an empty string by default, a letter otherwise

@@ -62,7 +62,6 @@ use base ('Bio::EnsEMBL::Compara::PipeConfig::ComparaGeneric_conf');
 sub default_options {
     my ($self) = @_;
     return {
-        'ensembl_cvs_root_dir' => $ENV{'ENSEMBL_CVS_ROOT_DIR'},
 
         'pipeline_name' => 'myisamise_compara_release',            # name used by the beekeeper to prefix job names on the farm
 

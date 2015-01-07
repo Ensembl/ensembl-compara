@@ -51,7 +51,6 @@ sub default_options {
     my ($self) = @_;
     return {
         %{$self->SUPER::default_options},
-            'ensembl_cvs_root_dir' => $ENV{'ENSEMBL_CVS_ROOT_DIR'}, 
 
             'ref_species' => 'homo_sapiens',
             'release_suffix'=> '', # set it to '' for the actual release

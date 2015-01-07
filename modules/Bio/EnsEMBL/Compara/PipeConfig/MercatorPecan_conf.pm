@@ -75,7 +75,6 @@ sub default_options {
 #       'cs_mlss_id'            => 50029, # it is very important to check that this value is current (commented out to make it obligatory to specify)
         'release'               => '74',
         'release_suffix'        => '',    # an empty string by default, a letter otherwise
-        'ensembl_cvs_root_dir'  => $ENV{'ENSEMBL_CVS_ROOT_DIR'},
 	'dbname'                => $ENV{USER}.'_pecan_21way_'.$self->o('release').$self->o('release_suffix'),
         'work_dir'              => '/lustre/scratch109/ensembl/' . $ENV{'USER'} . '/scratch/hive/release_' . $self->o('rel_with_suffix') . '/' . $self->o('dbname'),
 #	'do_not_reuse_list'     => [ ],     # genome_db_ids of species we don't want to reuse this time. This is normally done automatically, so only need to set this if we think that this will not be picked up automatically.

@@ -93,7 +93,6 @@ sub default_options {
     my ($self) = @_;
     return {
         %{$self->SUPER::default_options},
-            'ensembl_cvs_root_dir' => $ENV{'HOME'}.'/src/ensembl_main/',    
             'db_version' => 73, #ensembl version (to load core dbs)
 
             'pipeline_name' => 'ancestral_' . $self->o('db_version'),

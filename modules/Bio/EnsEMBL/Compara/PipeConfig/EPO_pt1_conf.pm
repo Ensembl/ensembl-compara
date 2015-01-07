@@ -32,7 +32,6 @@ Bio::EnsEMBL::Compara::PipeConfig::EPO_pt1_conf
         pipeline_db (-host)
         resource_classes 
 
-	'ensembl_cvs_root_dir' - the path to the compara/hive/ensembl checkouts - set as an environment variable in your shell
         'password' - your mysql password
 	'compara_pairwise_db' - I'm assuiming that all of your pairwise alignments are in one compara db
 	'reference_genome_db_id' - the genome_db_id (ie the species) which is in all your pairwise alignments
@@ -75,7 +74,6 @@ sub default_options {
     return {
 	%{$self->SUPER::default_options},
         'pipeline_name' => 'compara_GenerateAnchors',
-	'ensembl_cvs_root_dir' => $self->o('ENV', 'ENSEMBL_CVS_ROOT_DIR'),
 	'species_tree_file' => $self->o('ensembl_cvs_root_dir').'/ensembl-compara/scripts/pipeline/species_tree_blength.nh',
 	   # parameters that are likely to change from execution to another:
 	'release'               => '74',
