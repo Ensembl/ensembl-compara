@@ -95,9 +95,7 @@ sub default_options {
     'master_db' => 'mysql://ottro@vegabuild:5304/vega_compara_master',
 
     # switch off the reuse:
-#    'prev_core_sources_locs'    => [ ],
-    'prev_release'              => 0,   # 0 is the default and it means "take current release number and subtract 1"
-    'reuse_from_prev_rel_db'    => 0,
+    'prev_rel_db'               => undef,
     'do_stable_id_mapping'      => 0,
 
     # we're not interested in treefam
