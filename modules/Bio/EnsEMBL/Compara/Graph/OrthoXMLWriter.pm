@@ -328,6 +328,7 @@ sub _write_data {
   $w->emptyTag("scoreDef", "id" => "ds", "desc" => "Rate of synonymous mutations");
   $w->emptyTag("scoreDef", "id" => "lnl", "desc" => "Likelihood of the n/s scores");
   $w->emptyTag("scoreDef", "id" => "dnds_ratio", "desc" => "dN/dS ratio");
+  $w->emptyTag("scoreDef", "id" => "perc_identity", "desc" => "Percentage of identity of this protein to the alignment");
   $w->endTag("scores");
 
   # Prints each tree
@@ -462,7 +463,9 @@ sub _homology_body {
     }
 
     foreach my $member (@{$homology->get_all_Members}) {
-        $w->emptyTag("geneRef", "id" => $member->seq_member_id);
+        $w->startTag("geneRef", "id" => $member->seq_member_id);
+        $w->emptyTag('score', 'id' => 'perc_identity', 'value' => $member->perc_id);
+        $w->endTag('geneRef');
     }
 
     return $w->endTag($tagname);

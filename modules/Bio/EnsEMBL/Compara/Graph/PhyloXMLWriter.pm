@@ -316,6 +316,14 @@ sub _write_seq_member {
     'applies_to' => 'clade'
   );
 
+  if (not $protein->isa('Bio::EnsEMBL::Compara::GeneTreeMember')) {
+      $w->dataElement('property', $protein->perc_id,
+          'datatype' => 'xsd:float',
+          'ref' => 'Compara_homology:perc_identity',
+          'applies_to' => 'clade',
+      );
+  }
+
   return;
 }
 
