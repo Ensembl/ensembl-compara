@@ -233,7 +233,7 @@ sub dispatch_body {
   my ($self, $node) = @_;
   if(check_ref($node, 'Bio::EnsEMBL::Compara::GeneTreeMember')) {
     $self->_node_body($node , 1); #Used to defer taxonomy writing
-    $self->_member_body($node);
+    $self->_write_seq_member($node);
     return;
   }
   elsif(check_ref($node, 'Bio::EnsEMBL::Compara::GeneTreeNode')) {
@@ -297,53 +297,6 @@ sub _node_body {
 sub _member_tag {
   my ($self, $node) = @_;
   return $self->_node_tag($node);
-}
-
-sub _member_body {
-  my ($self, $protein) = @_;
-
-  my $w = $self->_writer();
-
-  my $gene = $protein->gene_member();
-  my $taxon = $protein->taxon();
-
-  #Stable IDs
-  $w->dataElement('name', $gene->stable_id());
-
-  #Taxon
-  $self->_write_taxonomy($taxon->taxon_id(), $taxon->name());
-
-  #Dealing with Sequence
-  $w->startTag('sequence');
-  $w->startTag('accession', 'source' => $self->source());
-  $w->characters($protein->stable_id());
-  $w->endTag();
-  $w->dataElement('name', $protein->display_label()) if $protein->display_label();
-  my $location = sprintf('%s:%d-%d',$gene->dnafrag()->name(), $gene->dnafrag_start(), $gene->dnafrag_end());
-  $w->dataElement('location', $location);
-
-  if(!$self->no_sequences()) {
-    my $mol_seq;
-    if($self->aligned()) {
-      $mol_seq = ($self->cdna()) ? $protein->alignment_string('cds') : $protein->alignment_string();
-    }
-    else {
-      $mol_seq = ($self->cdna()) ? $protein->other_sequence('cds') : $protein->sequence();
-    }
-
-    $w->dataElement('mol_seq', $mol_seq, 'is_aligned' => ($self->aligned() || 0));
-  }
-
-  $w->endTag('sequence');
-
-  #Adding GenomeDB
-  $w->dataElement('property', $protein->genome_db()->name(),
-    'datatype' => 'xsd:string',
-    'ref' => 'Compara:genome_db_name',
-    'applies_to' => 'clade'
-  );
-
-  return;
 }
 
 sub tree_type {
