@@ -3,9 +3,14 @@ use warnings;
 
 use Test::More;
 
+use FindBin qw($Bin);
+use File::Basename qw( dirname );
+
 use EnsEMBL::Web::File::Utils::IO qw/:all/;
 
-my $test_file = "modules/t/data.bed";
+my $SERVERROOT = dirname( $Bin );
+
+my $test_file = $SERVERROOT."/t/data.bed";
 
 ok(file_exists($test_file), 'Test file exists');
 ## Read one line of file

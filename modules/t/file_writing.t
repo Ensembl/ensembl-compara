@@ -2,10 +2,14 @@ use strict;
 use warnings;
 
 use Test::More;
+use FindBin qw($Bin);
+use File::Basename qw( dirname );
 
 use EnsEMBL::Web::File::Utils::IO qw/:all/;
 
-my $test_file = "modules/t/output.txt";
+my $SERVERROOT = dirname( $Bin );
+
+my $test_file = $SERVERROOT."/t/output.txt";
 
 ## Read one line of file
 my $input = [
