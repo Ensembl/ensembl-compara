@@ -67,7 +67,6 @@ sub default_options {
             #'email'                 => 'john.smith@example.com',
 
             # dependent parameters ('work_dir' should be defined)
-            'rel_with_suffix'       => '',
             'pipeline_basename'     => 'NC',
             'pipeline_name'         => $self->o('pipeline_basename'),
             'dump_dir'              => $self->o('work_dir') . '/dumps',

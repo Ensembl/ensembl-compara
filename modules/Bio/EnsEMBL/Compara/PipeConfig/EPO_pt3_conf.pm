@@ -79,8 +79,6 @@ sub default_options {
   %{$self->SUPER::default_options},
 
   'pipeline_name' => '4reptiles_EPOpt3pt2',
-  'core_db_version' => 74,
-  'rel_with_suffix' => 74,
   'mapping_mlssid' => 11000, # method_link_species_set_id of the final (2bp) mapped anchors
   'epo_mlss_id' => 647, # method_link_species_set_id of the ortheus alignments which will be generated
 #  'gerp_ce_mlss_id' => 648,
@@ -154,7 +152,7 @@ sub default_options {
 			-port => 3306,
 			-host => 'ens-staging1',
 			-dbname => '',
-			-db_version => $self->o('core_db_version'),
+			-db_version => $self->o('ensembl_version'),
 		},
 		{
 			-driver => 'mysql',
@@ -162,7 +160,7 @@ sub default_options {
 			-port => 3306,
 			-host => 'ens-staging2',
 			-dbname => '',
-			-db_version => $self->o('core_db_version'),
+			-db_version => $self->o('ensembl_version'),
 		},
                
 	

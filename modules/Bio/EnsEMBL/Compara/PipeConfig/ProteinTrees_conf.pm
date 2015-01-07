@@ -81,8 +81,10 @@ sub default_options {
         #'mlss_id'               => 40077,
         # It defaults to Bio::EnsEMBL::ApiVersion::software_version(): you're unlikely to change the value
         #'ensembl_release'       => 68,
-        # You can add a letter to distinguish this run from other runs on the same release
-        'rel_with_suffix'       => $self->o('ensembl_release')."",
+        # Change this one to allow multiple runs
+        #'rel_suffix'            => 'b',
+        # 'rel_with_suffix' is automatically built from the two above parameters
+
         # names of species we don't want to reuse this time
         'do_not_reuse_list'     => [ ],
         'method_link_dump_file' => $self->o('ensembl_cvs_root_dir').'/ensembl-compara/sql/method_link.txt',

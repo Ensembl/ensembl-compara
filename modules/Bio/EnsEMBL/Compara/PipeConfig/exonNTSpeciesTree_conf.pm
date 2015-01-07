@@ -30,7 +30,6 @@ sub default_options {
  return {
   %{$self->SUPER::default_options},
   'pipeline_name' => 'MakeNTSpeciesTree2',
-  'rel_suffix' => 74,
   'db_suffix' => '_new_ExonSpeciesTree_',
 # previous release db with alignments
   'previous_release_version' => '74',
@@ -52,7 +51,7 @@ sub default_options {
     -port   => 3306,
     -user   => 'ensadmin',
     -pass   => $self->o('password'),
-    -dbname => $self->o('ENV', 'USER').$self->o('db_suffix').$self->o('rel_suffix'),
+    -dbname => $self->o('ENV', 'USER').$self->o('db_suffix').$self->o('rel_with_suffix'),
   },
 
   'core_dbs' => [

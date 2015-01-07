@@ -50,10 +50,9 @@ sub default_options {
     return {
 	%{$self->SUPER::default_options},   # inherit the generic ones
 
-	'release'       => 74,
-        'pipeline_name' => 'DUMP_'.$self->o('release'),  # name used by the beekeeper to prefix job names on the farm
+        'pipeline_name' => 'DUMP_'.$self->o('ensembl_release'),  # name used by the beekeeper to prefix job names on the farm
 
-        'dbname' => 'dumpMultiAlign'.$self->o('release'),  # database suffix (without user name prepended)
+        'dbname' => 'dumpMultiAlign'.$self->o('ensembl_release'),  # database suffix (without user name prepended)
 
         'pipeline_db' => {                               # connection parameters
             -driver => 'mysql',
@@ -70,7 +69,7 @@ sub default_options {
             -user   => 'ensro',
             -pass   => '',
 	    -driver => 'mysql',
-	    -dbname => $self->o('release'),
+	    -dbname => $self->o('ensembl_release'),
         },
 
         'staging_loc2' => {                     # general location of the other half of the current release core databases
@@ -79,7 +78,7 @@ sub default_options {
             -user   => 'ensro',
             -pass   => '',
 	    -driver => 'mysql',
-	    -dbname => $self->o('release'),
+	    -dbname => $self->o('ensembl_release'),
         },
 
         'livemirror_loc' => {                   # general location of the previous release core databases (for checking their reusability)

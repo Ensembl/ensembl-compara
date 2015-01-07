@@ -28,7 +28,6 @@ Bio::EnsEMBL::Compara::PipeConfig::EPO_pt1_conf
     #2. You may need to update 'schema_version' in meta table to the current release number in ensembl-hive/sql/tables.sql
 
     #3. Check all default_options, you will probably need to change the following :
-        release
         pipeline_db (-host)
         resource_classes 
 
@@ -76,12 +75,7 @@ sub default_options {
         'pipeline_name' => 'compara_GenerateAnchors',
 	'species_tree_file' => $self->o('ensembl_cvs_root_dir').'/ensembl-compara/scripts/pipeline/species_tree_blength.nh',
 	   # parameters that are likely to change from execution to another:
-	'release'               => '74',
-	'rel_suffix'            => '',    # an empty string by default, a letter otherwise
 	'core_db_version' => 74, # version of the dbs from which to get the pairwise alignments
-	   # dependent parameters:
-	'rel_with_suffix'       => $self->o('release').$self->o('rel_suffix'),
-	'password' 		=> $ENV{'ENSADMIN_PSW'},
 	   # connection parameters to various databases:
 	'pipeline_db' => { # the production database itself (will be created)
 		-host   => 'compara4',

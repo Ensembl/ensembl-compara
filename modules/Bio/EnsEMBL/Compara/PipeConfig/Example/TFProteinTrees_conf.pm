@@ -75,9 +75,9 @@ sub default_options {
     # parameters that are likely to change from execution to another:
         # It is very important to check that this value is current (commented out to make it obligatory to specify)
         #mlss_id => 40043,
-        'release'               => 10,
-        'release_suffix'        => '', # set it to '' for the actual release
-        'rel_with_suffix'       => $self->o('release').$self->o('release_suffix'),
+        'treefam_release'               => 10,
+        'rel_suffix'        => '', # set it to '' for the actual release
+        'rel_with_suffix'       => $self->o('treefam_release').$self->o('rel_suffix'),
 
     # custom pipeline name, in case you don't like the default one
 		#'pipeline_name'         => $self->o('division').$self->o('rel_with_suffix').'_hom_eg'.$self->o('eg_release').'_e'.$self->o('ensembl_release'),
@@ -187,7 +187,7 @@ sub default_options {
       -port   => 4401,
       -user   => 'admin',
       -pass   => $self->o('password'),
-	  #-dbname => 'TreeFam'.$self->o('release').$self->o('release_suffix'),
+	  #-dbname => 'TreeFam'.$self->o('treefam_release').$self->o('rel_suffix'),
       -dbname => 'treefam_10_baboon',
 	  -driver => 'mysql',
       #-db_version => $self->o('ensembl_release')

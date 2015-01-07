@@ -27,7 +27,6 @@ Bio::EnsEMBL::Compara::PipeConfig::EPO_pt2_conf
     #2. You may need to update 'schema_version' in meta table to the current release number in ensembl-hive/sql/tables.sql
 
     #3. Check all default_options, you will probably need to change the following :
-        release
         pipeline_db (-host)
         resource_classes 
 
@@ -72,11 +71,7 @@ sub default_options {
     return {
 	%{$self->SUPER::default_options},
         'pipeline_name' => 'compara_MapAnchors',
-	   # parameters that are likely to change from execution to another:
-	'release'               => '77',
-	'rel_suffix'            => '',    # an empty string by default, a letter otherwise
-	   # dependent parameters:
-	'rel_with_suffix'       => $self->o('release').$self->o('rel_suffix'),
+
 	   # connection parameters to various databases:
 	'pipeline_db' => { # the production database itself (will be created)
 		-driver => 'mysql',
@@ -109,7 +104,7 @@ sub default_options {
 	'mapping_mlssid' => 10000, # dummy value - should not need to change
 	'trimmed_mapping_mlssid' => 11000, # dummy value - should not need to change
 	 # place to dump the genome sequences
-	'seq_dump_loc' => '/data/blastdb/Ensembl/' . 'compara_genomes_test_' . $self->o('release'),
+	'seq_dump_loc' => '/data/blastdb/Ensembl/' . 'compara_genomes_test_' . $self->o('ensembl_release'),
 	 # dont overwrite genome_db row if locator field is filled 
 	'dont_change_if_locator' => 1, 
 	 # dont dump the MT sequence for mapping

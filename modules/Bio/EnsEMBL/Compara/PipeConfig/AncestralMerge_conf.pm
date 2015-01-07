@@ -58,10 +58,6 @@ sub default_options {
     return {
          %{$self->SUPER::default_options},
 
-            'ensembl_release' => 77,
-        'rel_suffix'        => '',                                                  # empty string by default
-        'rel_with_suffix'   => $self->o('ensembl_release').$self->o('rel_suffix'),  # for convenience
-
         'pipeline_name' => 'ensembl_ancestral_'.$self->o('rel_with_suffix'),        # name used by the beekeeper to prefix job names on the farm
 
         'pipeline_db' => { # the production database itself (will be created)

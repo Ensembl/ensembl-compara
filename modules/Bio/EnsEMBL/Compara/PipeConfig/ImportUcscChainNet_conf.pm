@@ -42,7 +42,6 @@ Bio::EnsEMBL::Compara::PipeConfig::ImportUcscChainNet_conf
           wget http://hgdownload.cse.ucsc.edu/goldenPath/hg19/database/ctgPos.txt.gz
 
     #4. Make sure that all default_options are set correctly, especially:
-        release
         pipeline_db (-host)
         resource_classes 
         ref_species (if not homo_sapiens)
@@ -80,12 +79,10 @@ sub default_options {
     return {
 	%{$self->SUPER::default_options},   # inherit the generic ones
 
-	'release'               => '69',
         'release_suffix'        => '',    # an empty string by default, a letter otherwise
-	'dbname'               => 'ucsc_import_'.$self->o('release').$self->o('release_suffix'), #It is recommended this is set on the command line to allow more meaningful database naming
+	'dbname'               => 'ucsc_import_'.$self->o('enembl_release').$self->o('release_suffix'), #It is recommended this is set on the command line to allow more meaningful database naming
 
          # dependent parameters:
-        'rel_with_suffix'       => $self->o('release').$self->o('release_suffix'),
         'pipeline_name'         => 'UCSC_'.$self->o('rel_with_suffix'),   # name the pipeline to differentiate the submitted processes
 
         'pipeline_db' => {                                  # connection parameters
@@ -278,7 +275,7 @@ sub pipeline_analyses {
 		-module     => 'Bio::EnsEMBL::Compara::RunnableDB::LoadOneGenomeDB',
 		-parameters => {
 				'registry_dbs'  => $self->o('curr_core_sources_locs'),
-                                'db_version'    => $self->o('release'),
+                                'db_version'    => $self->o('ensembl_release'),
 			       },
 		-hive_capacity => 1,    # they are all short jobs, no point doing them in parallel
                 -rc_name => '100Mb',
@@ -412,7 +409,7 @@ sub pipeline_analyses {
  	      -module => 'Bio::EnsEMBL::Compara::RunnableDB::HealthCheck',
  	      -parameters => {
  			      'previous_db' => $self->o('previous_db'),
- 			      'ensembl_release' => $self->o('release'),
+ 			      'ensembl_release' => $self->o('ensembl_release'),
  			      'prev_release' => $self->o('prev_release'),
  			      'max_percent_diff' => $self->o('max_percent_diff'),
  			     },
@@ -431,7 +428,7 @@ sub pipeline_analyses {
 			      'compare_beds' => $self->o('compare_beds_exe'),
 			      'create_pair_aligner_page' => $self->o('create_pair_aligner_page_exe'),
 			      'bed_dir' => $self->o('bed_dir'),
-			      'ensembl_release' => $self->o('release'),
+			      'ensembl_release' => $self->o('ensembl_release'),
 			      'reg_conf' => $self->o('reg_conf'),
 			      'output_dir' => $self->o('output_dir'),
                               'ucsc_url' => $self->o('ucsc_url'),

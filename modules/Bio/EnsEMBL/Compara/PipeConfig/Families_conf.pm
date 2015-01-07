@@ -73,8 +73,6 @@ sub default_options {
 
 #       'mlss_id'         => 30045,         # it is very important to check that this value is current (commented out to make it obligatory to specify)
         'host'            => 'compara2',    # where the pipeline database will be created
-        'rel_suffix'      => '',            # an empty string by default, a letter otherwise
-        'rel_with_suffix' => $self->o('ensembl_release').$self->o('rel_suffix'),
         'file_basename'   => 'metazoa_families_'.$self->o('rel_with_suffix'),
 
         'email'           => $self->o('ENV', 'USER').'@ebi.ac.uk',    # NB: your EBI address may differ from the Sanger one!

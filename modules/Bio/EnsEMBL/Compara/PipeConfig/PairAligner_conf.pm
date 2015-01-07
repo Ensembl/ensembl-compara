@@ -27,7 +27,6 @@ Bio::EnsEMBL::Compara::PipeConfig::PairAligner_conf
     #2. You may need to update 'schema_version' in meta table to the current release number in ensembl-hive/sql/tables.sql
 
     #3. Make sure that all default_options are set correctly, especially:
-        release
         pipeline_db (-host)
         resource_classes 
         ref_species (if not homo_sapiens)
@@ -75,12 +74,9 @@ sub default_options {
     return {
 	%{$self->SUPER::default_options},   # inherit the generic ones
 
-	'release'               => '74',
-        'release_suffix'        => '',    # an empty string by default, a letter otherwise
 	#'dbname'               => '', #Define on the command line. Compara database name eg hsap_ggor_lastz_64
 
          # dependent parameters:
-        'rel_with_suffix'       => $self->o('release').$self->o('release_suffix'),
         'pipeline_name'         => 'LASTZ_'.$self->o('rel_with_suffix'),   # name the pipeline to differentiate the submitted processes
 
         'host'        => 'compara1',                        #separate parameter to use the resources aswell
@@ -736,7 +732,7 @@ sub pipeline_analyses {
 	      -module => 'Bio::EnsEMBL::Compara::RunnableDB::HealthCheck',
 	      -parameters => {
 			      'previous_db' => $self->o('previous_db'),
-			      'ensembl_release' => $self->o('release'),
+			      'ensembl_release' => $self->o('ensembl_release'),
 			      'prev_release' => $self->o('prev_release'),
 			      'max_percent_diff' => $self->o('max_percent_diff'),
 			     },
@@ -751,7 +747,7 @@ sub pipeline_analyses {
 			      'compare_beds' => $self->o('compare_beds_exe'),
 			      'create_pair_aligner_page' => $self->o('create_pair_aligner_page_exe'),
 			      'bed_dir' => $self->o('bed_dir'),
-			      'ensembl_release' => $self->o('release'),
+			      'ensembl_release' => $self->o('ensembl_release'),
 			      'reg_conf' => $self->o('reg_conf'),
 			      'output_dir' => $self->o('output_dir'),
 			     },

@@ -28,12 +28,7 @@ sub default_options {
 
     return {
         'pipeline_name' => 'compara_hmmer_ces',
-           # parameters that are likely to change from execution to another:
-        'release'               => '82',
-        'rel_suffix'            => '',    # an empty string by default, a letter otherwise
-           # dependent parameters:
-        'rel_with_suffix'       => $self->o('release').$self->o('rel_suffix'),
-        'password'              => $ENV{'ENSADMIN_PSW'},
+
            # connection parameters to various databases:
         'pipeline_db' => { # the production database itself (will be created)
                 -host   => 'compara1',

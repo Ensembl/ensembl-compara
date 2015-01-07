@@ -45,10 +45,6 @@ sub default_options {
     return {
             %{$self->SUPER::default_options},   # inherit the generic ones
             
-            'release'               => '78',
-            'release_suffix'        => '',    # an empty string by default, a letter otherwise
-            'rel_with_suffix'       => $self->o('release').$self->o('release_suffix'),
-
             'pipeline_name'         => 'SYNTENY_'.$self->o('mlss_id')."_".$self->o('rel_with_suffix'),   # name the pipeline to differentiate the submitted processes
             'dbname'               => $self->o('pipeline_name'), #pipeline database name
 

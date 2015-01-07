@@ -29,11 +29,8 @@ sub default_options {
     return {
 	%{$self->SUPER::default_options},   # inherit the generic ones
 
-	'release'       => 77,
 	'prev_release'  => 76,
-        'release_suffix'=> '', # set it to '' for the actual release
-        'rel_with_suffix'       => $self->o('release').$self->o('release_suffix'),
-        'pipeline_name' => 'TestEPO_low_'.$self->o('release').$self->o('release_suffix'), # name used by the beekeeper to prefix job names on the farm
+        'pipeline_name' => 'TestEPO_low_'.$self->o('ensembl_release').$self->o('rel_suffix'), # name used by the beekeeper to prefix job names on the farm
 
 	#location of new pairwise mlss if not in the pairwise_default_location eg:
 	'pairwise_exception_location' => { },
@@ -45,7 +42,7 @@ sub default_options {
             -port   => 3306,
             -user   => 'ensadmin',
             -pass   => $self->o('password'),
-            -dbname => $ENV{USER}.'_TestEPO_low_'.$self->o('release').$self->o('release_suffix'),
+            -dbname => $ENV{USER}.'_TestEPO_low_'.$self->o('ensembl_release').$self->o('rel_suffix'),
 	    -driver => 'mysql',
         },
 
@@ -78,14 +75,14 @@ sub default_options {
             -port   => 3306,
             -user   => 'ensro',
             -pass   => '',
-	    -db_version => $self->o('release'),
+	    -db_version => $self->o('ensembl_release'),
         },
         'staging_loc2' => {
             -host   => 'ens-staging2',
             -port   => 3306,
             -user   => 'ensro',
             -pass   => '',
-	    -db_version => $self->o('release'),
+	    -db_version => $self->o('ensembl_release'),
         },  
 	'livemirror_loc' => {
             -host   => 'ens-livemirror',
@@ -460,7 +457,7 @@ sub pipeline_analyses {
 			      'dump_features' => $self->o('dump_features_exe'),
 			      'compare_beds' => $self->o('compare_beds_exe'),
 			      'bed_dir' => $self->o('bed_dir'),
-			      'ensembl_release' => $self->o('release'),
+			      'ensembl_release' => $self->o('ensembl_release'),
 			      'output_dir' => $self->o('output_dir'),
                               'mlss_id'   => $self->o('low_epo_mlss_id'),
 			     },

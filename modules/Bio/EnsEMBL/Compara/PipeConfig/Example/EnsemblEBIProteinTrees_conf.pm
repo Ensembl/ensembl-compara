@@ -55,10 +55,6 @@ sub default_options {
     return {
         %{$self->SUPER::default_options},   # inherit the generic ones
 
-    # parameters that are likely to change from execution to another:
-        # You can add a letter to distinguish this run from other runs on the same release
-        'rel_with_suffix'       => $self->o('ensembl_release')."_bp",
-
     # custom pipeline name, in case you don't like the default one
         'pipeline_name'         => 'protein_trees_'.$self->o('rel_with_suffix'),
         # Tag attached to every single tree

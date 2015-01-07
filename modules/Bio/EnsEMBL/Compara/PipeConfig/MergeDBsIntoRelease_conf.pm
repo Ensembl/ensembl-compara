@@ -54,9 +54,7 @@ sub default_options {
         %{$self->SUPER::default_options},
 
         'host'            => 'compara5',    # where the pipeline database will be created
-        'rel_suffix'      => '',            # an empty string by default, a letter otherwise
 
-        'rel_with_suffix' => $self->o('ensembl_release').$self->o('rel_suffix'),
         'pipeline_name'   => 'pipeline_dbmerge_'.$self->o('rel_with_suffix'),   # also used to differentiate submitted processes
 
         'copying_capacity'  => 10,                                  # how many tables can be dumped and re-created in parallel (too many will slow the process down)

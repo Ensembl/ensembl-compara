@@ -73,7 +73,6 @@ sub default_options {
                                '/nc_trees_' .
                                $self->o('rel_with_suffix'),
 
-            'rel_with_suffix'  => $self->o('ensembl_release').$self->o('rel_suffix'),
             'pipeline_name'    => $self->o('pipeline_basename') . '_' . $self->o('rel_with_suffix'),
 
 

@@ -65,7 +65,7 @@ sub resource_classes {
 }
 
 
-# each run you will need to edit and uncomment: version, mlss_id, (release) and maybe work_dir
+# each run you will need to edit and uncomment: version, mlss_id and maybe work_dir
 sub default_options {
   my ($self) = @_;
 
@@ -75,7 +75,6 @@ sub default_options {
 
     # parameters that are likely to change from execution to another:
     'mlss_id'               => '100032',   # equivalent to mlss_id for PROTEIN_TREES in the db (commented out to make it obligatory to specify)
-    'release'               => '76',
 
     'pipeline_name'         => 'vega_genetree_20140905_76_new', #edit this each time
 
