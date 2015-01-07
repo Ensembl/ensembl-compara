@@ -185,7 +185,7 @@ sub _node_body {
 
   my $w = $self->_writer();
 
-  $w->dataElement('confidence', $pvalue, 'type' => 'pvalue');
+  $w->dataElement('confidence', $pvalue, 'type' => 'pvalue') if defined $pvalue;
 
   #Taxon
   $self->_write_taxonomy($taxon_id, $taxon->name);
