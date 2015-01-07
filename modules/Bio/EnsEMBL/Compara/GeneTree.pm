@@ -472,6 +472,22 @@ sub expand_subtrees {
 }
 
 
+=head2 minimize_tree
+
+  Example     : $tree->minimize_tree();
+  Description : Minimizes the tree, i.e. removes the nodes that have a single child
+  Returntype  : None
+  Exceptions  : none
+  Caller      : general
+
+=cut
+
+sub minimize_tree {
+    my $self = shift;
+    $self->{'_root'} = $self->{'_root'}->minimize_tree;
+}
+
+
 #######################
 # MemberSet interface #
 #######################

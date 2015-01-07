@@ -98,9 +98,7 @@ sub merge_split_genes {
       $protein1->{'alignment_string'.($seq_type || '')} = $cdna;
     }
 
-    if (scalar(keys %split_genes)) {
-        $gene_tree->{'_root'} = $gene_tree->root->minimize_tree;
-    }
+    $gene_tree->minimize_tree if keys %split_genes;
 
     # Removing duplicate sequences of split genes
     print STDERR "split_genes list: ", Dumper(\%split_genes), "\n" if $self->debug;

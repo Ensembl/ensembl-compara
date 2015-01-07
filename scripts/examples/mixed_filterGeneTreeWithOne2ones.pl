@@ -67,7 +67,7 @@ foreach my $gene (@$genes) {
   }
 
   # Fetch the gene tree
-  my $genetree = $genetree_adaptor->fetch_all_by_Member($member)->[0];
+  my $genetree = $genetree_adaptor->fetch_default_for_Member($member);
 
   # Delete the part that is not one2one wrt the human gene
   foreach my $leaf (@{$genetree->get_all_leaves}) {
@@ -76,13 +76,13 @@ foreach my $gene (@$genes) {
       $leaf->disavow_parent;
     }
   }
-  $genetree = $genetree->minimize_tree;
+  $genetree->minimize_tree;
 
   # Print the minimized tree
   $genetree->print_tree;
 
   # Obtain the MSA for human and all one2ones
-  my $protein_align = $genetree->root->get_SimpleAlign;
+  my $protein_align = $genetree->get_SimpleAlign;
   print $stdout_alignio $protein_align;
   $genetree->release_tree;
 }
