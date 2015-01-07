@@ -262,25 +262,31 @@ sub _node_body {
   my ($self, $node, $defer_taxonomy) = @_;
 
   my $type  = $node->node_type();
+  my $is_dup = ((defined $type) and ($type eq "duplication" || $type eq "dubious")) ? 1 : 0;
   my $boot  = $node->bootstrap();
   my $stn   = $node->species_tree_node();
 
   my $w = $self->_writer();
 
+  # The elements must be in the same order as in the .xsd !!
+
   if($boot) {
     $w->dataElement('confidence', $boot, 'type' => 'bootstrap');
+  }
+
+  if ($is_dup) {
+    $w->dataElement('confidence', $node->duplication_confidence_score(), 'type' => 'duplication_confidence_score');
   }
 
   if(!$defer_taxonomy && $stn) {
     $self->_write_species_tree_node($stn);
   }
 
-  if((defined $type) and ($type eq "duplication" || $type eq "dubious")) {
+  if ($is_dup) {
     $w->startTag('events');
     $w->dataElement('type', 'speciation_or_duplication');
     $w->dataElement('duplications', 1);
     $w->endTag();
-    $w->dataElement('confidence', $node->duplication_confidence_score(), 'type' => 'duplication_confidence_score');
   }
 
   if((defined $type) and ($type eq "dubious")) {
