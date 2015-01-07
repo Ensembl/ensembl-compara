@@ -263,7 +263,7 @@ sub default_options {
         # Add the database location of the previous Compara release. Use "undef" if running the pipeline without reuse
         #'prev_rel_db' => 'mysql://ensro@compara3:3306/mm14_compara_homology_67'
         # By default, the stable ID mapping is done on the previous release database
-        'mapping_db'  => $self->o('prev_rel_db')
+        'mapping_db'  => $self->o('prev_rel_db'),
 
         # How will the pipeline create clusters (families) ?
         # Possible values: 'blastp' (default), 'hmm', 'hybrid'
