@@ -109,6 +109,7 @@ sub new {
         $self->db_adaptor($db_adaptor);
 
         my $meta_container      = $db_adaptor->get_MetaContainer;
+        my $genome_container    = $db_adaptor->get_GenomeContainer;
 
         # We check that the asked parameters are the same as in the core database
         my @parameters = (
@@ -116,8 +117,8 @@ sub new {
             [ 'taxon_id', \$taxon_id, $meta_container->get_taxonomy_id() ],
             [ 'genebuild', \$genebuild, $meta_container->get_genebuild() ],
             [ 'name', \$name, $meta_container->get_production_name() ],
-            [ 'has_karyotype', \$has_karyotype, $meta_container->has_karyotype() ],
-            [ 'is_high_coverage', \$is_high_coverage, $meta_container->is_high_coverage() ],
+            [ 'has_karyotype', \$has_karyotype, $genome_container->has_karyotype() ],
+            [ 'is_high_coverage', \$is_high_coverage, $genome_container->is_high_coverage() ],
         );
 
         foreach my $test (@parameters) {
