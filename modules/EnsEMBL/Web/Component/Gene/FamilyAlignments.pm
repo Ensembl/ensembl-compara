@@ -26,7 +26,7 @@ no warnings "uninitialized";
 
 
 use EnsEMBL::Web::Constants;
-use EnsEMBL::Web::TmpFile::Text;
+use EnsEMBL::Web::File::Dynamic;
 
 use base qw(EnsEMBL::Web::Component::Gene);
 
@@ -62,26 +62,32 @@ sub _embed_jalview {
   my $outcount = 0;
   return unless $count;
   
-  my $BASE = $object->species_defs->ENSEMBL_BASE_URL;
-  my $file = EnsEMBL::Web::TmpFile::Text->new(extension => 'fa', prefix => 'family_alignment');
-  my $URL  = $file->URL;
+  my $file = EnsEMBL::Web::File::Dynamic->new(
+                                              hub             => $self->hub,
+                                              extension       => 'fa',
+                                              input_drivers   => ['IO'],
+                                              output_drivers  => ['IO'],
+                                              );
 
   foreach my $member (@$refs) {
     my $align;
     eval { $align = $member->alignment_string; };
     unless ($@) {
       if($member->alignment_string) {
-        print $file ">".$member->stable_id."\n";
-        print $file $member->alignment_string."\n";
+        $file->write_line([
+                            $member->stable_id,
+                            $member->alignment_string,
+                          ]);
         $outcount++;
       }
     }
   }
-  $file->save;
   
   return unless $outcount;
 
-    #<applet archive="$BASE/jalview/jalview.jar"
+  my $BASE = $object->species_defs->ENSEMBL_BASE_URL;
+  my $URL  = $file->read_url;
+
   return qq(
   <p class="space-below">$count $type members of this family:
     <applet archive="$BASE/jalview/jalviewApplet.jar"
