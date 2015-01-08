@@ -441,14 +441,18 @@ sub get_all_Slices {
   my $slices = [];
 
   if (@species_names) {
+
+    #Substitute _ for spaces & check if the current GenomeDB matches with any of them
+    my %species_to_keep = ();
+    foreach my $this_species_name (@species_names) {
+      ( my $space_species_name = $this_species_name ) =~ s/_/ /g;
+      $species_to_keep{$this_species_name} = 1;
+      $species_to_keep{$space_species_name} = 1;
+    }
+
     foreach my $slice ( @{ $self->{_slices} } ) {
-      #Substitute _ for spaces & check if the current GenomeDB matches with 
-      #or without them
-      foreach my $this_species_name (@species_names) {
-        ( my $space_species_name = $this_species_name ) =~ s/_/ /g;
-        push( @$slices, $slice )
-          if ( ( $this_species_name eq $slice->genome_db->name )
-          || ( $space_species_name eq $slice->genome_db->name ) );
+      if ($species_to_keep{$slice->genome_db->name}) {
+        push @$slices, $slice;
       }
     }
   }
