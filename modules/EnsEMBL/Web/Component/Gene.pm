@@ -104,7 +104,6 @@ sub _dump_multiple_alignment {
                                                       sub_dir         => 'r2r_'.$self->hub->species,
                                                       name            => $model_name,
                                                       extension       => "aln",
-                                                      compression     => 0,
                                                       input_drivers   => ['IO'],
                                                       output_drivers  => ['IO'],
                                                       );
@@ -142,7 +141,6 @@ sub _create_svg {
                                                   sub_dir         => $sub_dir,
                                                   name            => $model_name.'_thumbnail',
                                                   extension       => "svg",
-                                                  compression     => 0,
                                                   input_drivers   => ['IO'],
                                                   output_drivers  => ['IO'],
                                                   );
@@ -154,7 +152,6 @@ sub _create_svg {
                                                   sub_dir         => $sub_dir,
                                                   name            => $model_name.'_thumbnail',
                                                   extension       => "meta",
-                                                  compression     => 0,
                                                   input_drivers   => ['IO'],
                                                   output_drivers  => ['IO'],
                                                   );
@@ -173,7 +170,6 @@ sub _create_svg {
                                                   sub_dir         => $sub_dir,
                                                   name            => $model_name,
                                                   extension       => "svg",
-                                                  compression     => 0,
                                                   input_drivers   => ['IO'],
                                                   output_drivers  => ['IO'],
                                                   );
@@ -185,7 +181,6 @@ sub _create_svg {
                                                       sub_dir         => $sub_dir,
                                                       name            => $model_name,
                                                       extension       => "meta",
-                                                      compression     => 0,
                                                       input_drivers   => ['IO'],
                                                       output_drivers  => ['IO'],
                                                       );
