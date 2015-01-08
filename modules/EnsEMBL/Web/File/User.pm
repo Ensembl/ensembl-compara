@@ -34,9 +34,7 @@ sub new {
 ### @constructor
   my ($class, %args) = @_;
 
-  $args{'drivers'}  = ['IO']; ## Always write to disk
-  $args{'base_dir'} =  $args{'hub'}->species_defs->ENSEMBL_TMP_DIR; 
-  $args{'url_root'} = ''; 
+  $args{'output_drivers'} = ['IO']; ## Always write to disk
   return $class->SUPER::new(%args);
 }
 
