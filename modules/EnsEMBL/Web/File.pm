@@ -113,11 +113,11 @@ sub new {
       ## These values are slightly bogus, but will work with old filepaths
       $self->{'read_path'} = $self->{'prefix'}.'/'.$self->{'read_path'};
       delete $self->{'prefix'};
-      $self->{'read_datestamp'} = $self->{'prefix'};
+      $self->{'read_datestamp'}   = $self->{'prefix'};
       $self->{'user_identifier'}  = shift @path if scalar @path;
       $self->{'read_sub_dir'}     = join('/', @path) if scalar @path;
     }
-    else {
+    elsif ($self->{'read_dir_path'}) { 
       $self->{'read_datestamp'}   = shift @path;
       $self->{'user_identifier'}  = shift @path;
       $self->{'read_sub_dir'}     = shift @path if scalar @path;
@@ -175,6 +175,10 @@ sub new {
     $self->{'base_write_path'}   = $self->{'base_dir'}.'/'.$self->{'write_dir_path'}; 
     $self->{'write_location'}    = $self->{'base_dir'}.'/'.$self->{'write_path'}; 
     $self->{'write_url'}         = $self->{'base_url'}.'/'.$self->{'write_path'}; 
+  }
+  warn ">>> FILE OBJECT:";
+  while (my($k, $v) = each (%$self)) {
+    warn "... $k = $v";
   }
 
   return $self;
@@ -381,6 +385,7 @@ sub set_timestamp {
 sub set_datestamp {
   ### a
   my $self = shift;
+  return $self->{'read_datestamp'} if $self->{'read_datestamp'};
   
   my @time  = localtime;
   my $day   = $time[3];
