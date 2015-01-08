@@ -55,6 +55,11 @@ sub new {
 ### @return EnsEMBL::Web::File
   my ($class, %args) = @_;
   my $self = \%args;
+  #use Carp qw(cluck); cluck 'CREATING NEW FILE OBJECT';
+  warn '!!! CREATING NEW FILE OBJECT';
+  while (my($k, $v) = each(%args)) {
+    warn "@@@ ARG $k = $v";
+  }
 
   ## Set base locations
   $args{'base_dir'} ||= $self->{'hub'}->species_defs->ENSEMBL_TMP_DIR;
@@ -164,7 +169,9 @@ sub new {
 
     $self->{'write_name'} = $file_name;
 
-    my @path_elements = ($self->set_datestamp, $self->set_user_identifier);
+    my $datestamp = $self->{'datestamp'} || $self->set_datestamp;
+    my $user_id   = $self->{'user_identifier'} || $self->set_user_identifier;
+    my @path_elements = ($datestamp, $user_id);
     $self->{'write_sub_dir'} ||= $self->{'sub_dir'};
     push @path_elements, $self->{'write_sub_dir'} if $self->{'write_sub_dir'};
     $self->{'write_dir_path'} = join('/', @path_elements); 
@@ -176,10 +183,10 @@ sub new {
     $self->{'write_location'}    = $self->{'base_dir'}.'/'.$self->{'write_path'}; 
     $self->{'write_url'}         = $self->{'base_url'}.'/'.$self->{'write_path'}; 
   }
-  warn ">>> FILE OBJECT:";
-  while (my($k, $v) = each (%$self)) {
-    warn "... $k = $v";
-  }
+  #warn ">>> FILE OBJECT:";
+  #while (my($k, $v) = each (%$self)) {
+  #  warn "... SET $k = $v";
+  #}
 
   return $self;
 }
@@ -392,7 +399,7 @@ sub set_datestamp {
   my $month = $time[4] + 1;
   my $year  = $time[5] + 1900;
 
-  $self->{'read_datestamp'} = sprintf('%s_%s_%s', $year, $month, $day);
+  $self->{'read_datestamp'} = sprintf('%s_%02d_%02d', $year, $month, $day);
   return $self->{'read_datestamp'};
 }
 
