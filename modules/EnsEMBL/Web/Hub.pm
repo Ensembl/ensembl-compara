@@ -803,32 +803,41 @@ sub get_data_from_session {
   my $species  = $self->param('species') || $self->species;
   my $tempdata = $self->session->get_data(type => $type, code => $code);
   my $name     = $tempdata->{'name'};
-  my $format;
 
   # NB this used to be new EnsEMBL::Web... etc but this does not work with the
   # FeatureParser module for some reason, so have to use FeatureParser->new()
   my $parser = EnsEMBL::Web::Text::FeatureParser->new($self->species_defs, undef, $species);
  
-  my $file_params = {
+  my %file_params = (
                       'hub' => $self,
-                    };
+                    );
  
+  ## Build in some backwards compatiblity with old file paths
   if ($type eq 'url') {
-    $file_params->{'input_drivers'} = ['URL'];
-    $file_params->{'read_path'}     = $tempdata->{'url'};
+    $file_params{'input_drivers'} = ['URL'];
+    $file_params{'read_path'}     = $tempdata->{'read_path'} || $tempdata->{'url'};
   }
   else {
-    $file_params->{'read_path'} = $tempdata->{'filename'};
+    $file_params{'read_path'} = $tempdata->{'read_path'};
+    unless ($file_params{'read_path'}) {
+      $file_params{'read_path'} = join('/', $tempdata->{'prefix'}, $tempdata->{'filename'});
+    }
   }
 
-  my $file = EnsEMBL::Web::File::User->new($file_params);
-  my $content = $file->read;
+  my $file = EnsEMBL::Web::File::User->new(%file_params);
+  my $result = $file->read;
+  if ($result->{'error'}) {
+    ## TODO - do something useful with the error!
+    warn ">>> ERROR READING FILE: ".$result->{'error'};
+    return {};
+  }
+  else {
+    my $content = $result->{'content'};
 
-  return {} unless $content;
-   
-  $parser->parse($content, $tempdata->{'format'});
+    $parser->parse($content, $tempdata->{'format'});
 
-  return { parser => $parser, name => $name };
+    return { parser => $parser, name => $name };
+  }
 }
 
 sub get_favourite_species {
