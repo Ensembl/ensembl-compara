@@ -118,6 +118,7 @@ sub upload {
       my $data = $session->add_data(
                                     type      => 'upload',
                                     filename  => $file->read_name,
+                                    datestamp => $file->read_datestamp,
                                     filesize  => length($result->{'content'}),
                                     code      => $code,
                                     md5       => $md5,
