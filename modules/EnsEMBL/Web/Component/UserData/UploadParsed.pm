@@ -20,10 +20,6 @@ package EnsEMBL::Web::Component::UserData::UploadParsed;
 
 use strict;
 
-use EnsEMBL::Web::Text::FeatureParser;
-use EnsEMBL::Web::TmpFile::Text;
-use EnsEMBL::Web::Tools::Misc qw(get_url_content);
-
 use base qw(EnsEMBL::Web::Component::UserData);
 
 sub _init {
@@ -55,7 +51,6 @@ sub content_ajax {
   
   return unless $data;
   
-  my $parser  = EnsEMBL::Web::Text::FeatureParser->new($hub->species_defs, $hub->param('r'), $data->{'species'});
   my $format  = $data->{'format'};
   my $formats = $hub->species_defs->multi_val('REMOTE_FILE_FORMATS');
   my $html;
@@ -71,18 +66,12 @@ sub content_ajax {
         $html .= "<p>Your uncompressed file is over $size MB, which may be very slow to parse and load. Please consider using a smaller dataset.</p>";
       } 
       else {
-        my $content;
-      
-        if ($type eq 'url') {
-          $content = get_url_content($data->{'url'})->{'content'};
-        }  
-        elsif ($type eq 'upload') {
-          $content = EnsEMBL::Web::TmpFile::Text->new(filename => $data->{'filename'}, extension => $data->{'extension'})->retrieve;
-        }
-
-        if ($content) {      
-          my $error   = $parser->parse($content, $data->{'format'});
+        my $session_data = $hub->get_data_from_session($type, $hub->param('code'));
+        my $parser = $session_data->{'parser'};
+        my $error;
+        if ($parser) {
           my $nearest = $parser->nearest;
+          warn ">>> NEAREST $nearest";
           $nearest = undef if $nearest && !$hub->get_adaptor('get_SliceAdaptor')->fetch_by_region('toplevel', split /[^\w|\.]/, $nearest); # Make sure we have a valid location
         
           if ($nearest) {
