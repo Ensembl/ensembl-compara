@@ -196,6 +196,8 @@ package Bio::EnsEMBL::Compara::AlignSlice;
 use strict;
 use warnings;
 
+use Scalar::Util qw(weaken);
+
 use Bio::EnsEMBL::Utils::Argument qw(rearrange);
 use Bio::EnsEMBL::Utils::Exception qw(throw warning info verbose);
 use Bio::EnsEMBL::Compara::AlignSlice::Exon;
@@ -1246,6 +1248,8 @@ sub _add_GenomicAlign_to_a_Slice {
           $simple_tree =~ s/\_[^\_]+\_\d+\_\d+\[[\+\-]\]//g;
           $simple_tree =~ s/\:[\d\.]+//g;
           $this_core_slice->{_tree} = $simple_tree;
+          $this_core_slice->{_node_in_tree} = $genomic_align_node;
+          weaken($this_core_slice->{_node_in_tree});
           last;
         }
       }
