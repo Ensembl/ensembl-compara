@@ -1,4 +1,4 @@
-1	\N	schema_version	78
+1	\N	schema_version	79
 2	\N	patch	patch_46_47_a.sql|schema_version
 3	\N	patch	patch_46_47_b.sql|new_align_columns
 4	\N	patch	patch_46_47_c.sql|extend_db_release
@@ -193,3 +193,5 @@
 1314	\N	patch	patch_76_77_a.sql|schema_version
 1315	\N	patch	patch_77_78_a.sql|schema_version
 1316	\N	patch	patch_77_78_b.sql|source_column_increase
+1317	\N	patch	patch_77_78_c.sql|Change unmapped_reason_id from smallint to int
+1318	\N	patch	patch_78_79_a.sql|schema_version
