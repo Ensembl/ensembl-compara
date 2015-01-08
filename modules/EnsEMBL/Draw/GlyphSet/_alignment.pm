@@ -244,7 +244,7 @@ sub render_normal {
     $depth = 0 unless $overlap;
   }
 
-  my ($track_height,$on_screen,$off_screen,$on_other_strand) = (0,0,0,0);
+  my ($track_height,$total,$on_screen,$off_screen,$on_other_strand) = (0,0,0,0,0);
 
   foreach my $feature_key (@sorted) {
     ## Fix for userdata with per-track config
@@ -319,6 +319,7 @@ sub render_normal {
          $bump_end   = max($bump_end, $bump_start + 1 + [ $self->get_text_width(0, $self->feature_label($feat[0][2], $db_name), '', ptsize => $fontsize, font => $fontname) ]->[2]) if $self->{'show_labels'};
       my $x          = -1e8;
       my $row        = 0;
+      $total++;
       
       if ($depth > 0) {
         $row = $self->bump_row($bump_start, $bump_end);
@@ -478,9 +479,10 @@ sub render_normal {
     }
     $y_offset -= $strand * ($self->_max_bump_row * ($h + $gap + $label_h) + 6);
   }
+
   if ($off_screen) {
     my $default = $depth == $default_depth ? 'by default' : '';
-    my $text = "Showing $on_screen of $off_screen features, due to track being limited to $depth rows $default - click to show more";
+    my $text = "Showing $on_screen of $total features, due to track being limited to $depth rows $default - click to show more";
     my $y = $track_height + $fontsize * 2 + 10;
     my $href = $self->_url({'action' => 'ExpandTrack', 'goto' => $self->{'config'}->hub->action, 'count' => $on_screen+$off_screen, 'default' => $default_depth}); 
     $self->push($self->Text({

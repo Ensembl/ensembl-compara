@@ -494,10 +494,10 @@ Ensembl.Panel.ConfigMatrix = Ensembl.Panel.Configurator.extend({
       this.elLk.tutorial.css('display', 'block');
     }
     
-    this.elLk.tutorialToggle = this.el.children('.toggle_tutorial').on('click', function () {
+    this.elLk.tutorialToggle = this.el.find('.toggle_tutorial, span.close').on('click', function () {
       panel.showTutorial = !panel.showTutorial;
       panel.elLk.tutorial.css('display', panel.showTutorial ? 'block' : 'none');
-      $(this)[panel.showTutorial ? 'addClass' : 'removeClass']('on');
+      panel.el.find('.toggle_tutorial')[panel.showTutorial ? 'addClass' : 'removeClass']('on');
       Ensembl.cookie.set('config_matrix_tutorial', panel.showTutorial ? 'on' : 'off');
       
       return false;

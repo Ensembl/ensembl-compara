@@ -20,6 +20,8 @@ package EnsEMBL::Web::File::User;
 
 use strict;
 
+use Archive::Tar;
+
 use parent qw(EnsEMBL::Web::File);
 
 ### Replacement for EnsEMBL::Web::TmpFile::Text, specifically for
@@ -86,6 +88,35 @@ sub write_line {
     };
     last unless $result->{'error'};
   }
+  return $result;
+}
+
+sub write_tarball {
+### Write an array of file contents to disk as a tarball
+### N.B. Unlike other methods, this does not use the drivers
+### TODO - this method has not been tested!
+### @param content ArrayRef
+### @param use_short_names Boolean
+### @return HashRef
+  my ($self, $content, $use_short_names) = @_;
+  my $result = {};
+
+  my $tar = Archive::Tar->new;
+  foreach (@$content) {
+    $tar->add_data(
+      ($use_short_names ? $_->{'shortname'} : $_->{'filename'}), 
+      $_->{'content'},
+    );
+  }
+
+  my %compression_flags = (
+                          'gz' => 'COMPRESS_GZIP',
+                          'bz' => 'COMPRESS_BZIP',
+                          );
+
+
+  $tar->write($self->file_name, $compression_flags{$self->compression}, $self->base_path);
+
   return $result;
 }
 

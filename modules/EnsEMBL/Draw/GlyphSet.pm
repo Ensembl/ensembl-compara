@@ -45,7 +45,7 @@ use Sanger::Graphics::Glyph::Text;
 
 use Bio::EnsEMBL::Registry;
 
-use EnsEMBL::Web::Tools::RandomString qw(random_string);
+use EnsEMBL::Web::Utils::RandomString qw(random_string);
 
 use base qw(Sanger::Graphics::GlyphSet);
 

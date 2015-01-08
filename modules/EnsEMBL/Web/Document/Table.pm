@@ -55,7 +55,6 @@ sub new {
 sub session    :lvalue { $_[0]{'session'};    }
 sub code       :lvalue { $_[0]{'code'}        }
 sub format     :lvalue { $_[0]{'format'};     }
-sub export_url :lvalue { $_[0]{'export_url'}; }
 sub filename   :lvalue { $_[0]{'filename'};   }
 
 sub has_rows { return ! !@{$_[0]{'rows'}}; }
@@ -233,13 +232,6 @@ sub render {
     };
   }
    
-  if ($self->export_url) {
-    $table .= sprintf(
-      '<div class="other_tool"><p><a class="export" href="%s;filename=%s;_format=Excel" title="Download all tables as CSV">Download view as CSV</a></p></div>',
-      $self->export_url, $self->filename
-    );
-  }
-  
   # A wrapper div is needed for data tables so that export and config forms can be found by checking the table's siblings
   if ($data_table) {
     $wrapper = qq{ class="$wrapper"} if $wrapper; 

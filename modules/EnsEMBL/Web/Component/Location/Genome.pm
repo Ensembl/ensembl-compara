@@ -336,7 +336,7 @@ sub _render_features {
 
   }
 
-  unless (keys %$features || keys %$user_features) {
+  unless (keys %$features || keys %$user_features || ($species_defs->ENSEMBL_SITETYPE =~ /Pre|Vega/)) {
     $html .= $self->species_stats; 
   }
 

@@ -139,6 +139,9 @@ sub get_databases_species {
   for my $database (@databases){
     unless( defined($self->{'_dbs'}->{$species}->{$database}) ) {
       my $dba = $reg->get_DBAdaptor( $species, $database );
+      if($database eq 'variation') {
+        $dba->include_failed_variations(1);
+      }
       if (!defined($dba) || $database eq 'glovar'){
         $self->_get_databases_common( $species, $database );
       } else{

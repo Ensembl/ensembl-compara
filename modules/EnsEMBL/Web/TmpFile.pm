@@ -35,7 +35,7 @@ use LWP::UserAgent;
 use Digest::MD5 qw(md5_hex);
 
 use EnsEMBL::Web::SpeciesDefs;
-use EnsEMBL::Web::Tools::RandomString qw(random_ticket);
+use EnsEMBL::Web::Utils::RandomString qw(random_ticket);
 use EnsEMBL::Web::TmpFile::Driver::Disk;
 use EnsEMBL::Web::TmpFile::Driver::Memcached;
 
@@ -186,7 +186,7 @@ sub fix_filename {
 
 
 ## Creates unique random-ish filename
-## have a look at EnsEMBL::Web::Tools::RandomString::random_ticket() if you curious about "random-ish"
+## have a look at EnsEMBL::Web::Utils::RandomString::random_ticket() if you curious about "random-ish"
 ## -> nothing
 ## <- always true
 sub generate_filename {

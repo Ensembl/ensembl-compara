@@ -375,6 +375,7 @@ sub component_content {
   my $base_url     = $hub->species_defs->ENSEMBL_BASE_URL;
   my $function     = $hub->function;
   my $is_html      = ($hub->param('_format') || 'HTML') eq 'HTML';
+  my $table_count  = 0;
   
   foreach my $entry (map @{$self->{'components'}->{$_} || []}, $self->components) {
     my ($module_name, $content_function) = split /\//, $entry;
@@ -394,6 +395,7 @@ sub component_content {
       $html .= $self->component_failure($self->dynamic_use_failure($module_name), $entry, $module_name);
       next;
     }
+
     ### If this component is configured to be loaded by an AJAX request, print just the div which the content will be loaded into
     my $ajaxable = $component->ajaxable;
     if ($ajaxable && !$ajax_request && $is_html) {
@@ -449,8 +451,22 @@ sub component_content {
         $html .= $content;
       }
     }
+
+    ## Does this component have any tables?
+    if ($component && $component->{'_table_count'}) {
+      $table_count += $component->{'_table_count'};
+    }    
+
   }
-  
+
+  if ($table_count > 1) {
+    my $button = sprintf(
+      '<div class="component_tools tool_buttons"><p style="display:inline-block"><a class="export" href="%s;filename=%s;_format=Excel" title="Download all tables as CSV">Download all tables as CSV</a></p></div>',
+      $hub->url, $hub->filename
+    );
+    $html = $button.$html;
+  }
+
   $html .= sprintf '<div class="more"><a href="%s">more about %s ...</a></div>', $self->{'link'}, encode_entities($self->parse($self->{'caption'})) if $self->{'link'};
   
   return $html;

@@ -211,10 +211,6 @@ sub database {
 
   if ($_[0] =~ /compara/) {
     return Bio::EnsEMBL::Registry->get_DBAdaptor('multi', $_[0], 1);
-  } elsif ($_[0] =~ /variation/) {
-    my $dba = $self->databases->get_DBAdaptor(@_);
-    $dba->include_failed_variations(1) if $dba; # Force to display failed variants
-    return $dba;
   } else {
     return $self->databases->get_DBAdaptor(@_);
   }

@@ -26,7 +26,7 @@ use Data::Dumper;
 
 use EnsEMBL::Web::DOM;
 use EnsEMBL::Web::Exceptions;
-use EnsEMBL::Web::Tools::RandomString qw(random_string);
+use EnsEMBL::Web::Utils::RandomString qw(random_string);
 
 use constant {
   ELEMENT_NODE                 => 1,

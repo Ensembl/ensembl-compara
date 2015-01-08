@@ -643,10 +643,10 @@ sub new_table {
   my $table    = EnsEMBL::Web::Document::Table->new(@_);
   my $filename = $hub->filename($self->object);
   my $options  = $_[2];
+  $self->{'_table_count'}++;
   
   $table->session    = $hub->session;
   $table->format     = $self->format;
-  $table->export_url = $hub->url unless defined $options->{'exportable'} || $self->{'_table_count'}++;
   $table->filename   = join '-', $self->id, $filename;
   $table->code       = $self->id . '::' . ($options->{'id'} || $self->{'_table_count'});
   
