@@ -450,9 +450,13 @@ sub get_all_Slices {
       $species_to_keep{$space_species_name} = 1;
     }
 
+    my %removed_species = ();
+    $self->{_removed_species} = \%removed_species;
     foreach my $slice ( @{ $self->{_slices} } ) {
       if ($species_to_keep{$slice->genome_db->name}) {
         push @$slices, $slice;
+      } else {
+        $removed_species{$slice->genome_db->name} = 1;
       }
     }
   }
