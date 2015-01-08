@@ -24,7 +24,7 @@ use Digest::MD5 qw(md5_hex);
 use URI::Escape qw(uri_escape);
 
 use EnsEMBL::Web::Data::Session;
-use EnsEMBL::Web::TmpFile::Text;
+use EnsEMBL::Web::File::User;
 
 use base qw(EnsEMBL::Web::Component::UserData);
 
@@ -73,12 +73,26 @@ sub content {
       my $user_record = ref($file) =~ /Record/;
       my $sharers     = $file->{'code'} =~ /_$session_id$/ ? EnsEMBL::Web::Data::Session->count(code => $file->{'code'}, type => $file->{'type'}) : 0;
          $sharers-- if $sharers && !$file->{'user_id'}; # Take one off for the original user
-      
-      if ($file->{'filename'} && !EnsEMBL::Web::TmpFile::Text->new(filename => $file->{'filename'}, $file->{'prefix'} ? (prefix => $file->{'prefix'}) : (), extension => $file->{'extension'})->exists) {
-        $file->{'name'} .= ' (File could not be found)';
-        $not_found++;
+     
+      if ($file->{'filename'}) {
+        my %args = (
+                    'hub'             => $hub, 
+                    'name'            => $file->{'filename'}, 
+                    'extension'       =>  $file->{'extension'}
+                    );
+        if ($file->{'prefix'}) {
+          $args{'prefix'} = $file->{'prefix'};
+        }
+        else {
+          $args{'read_datestamp'} = $file->{'datestamp'};
+        }
+        my $user_file = EnsEMBL::Web::File::User->new(%args);
+        if (!$user_file->exists) {
+          $file->{'name'} .= ' (File could not be found)';
+          $not_found++;
+        }
       }
-      
+
       my $row = ref($file) =~ /DAS/ || $user_record && $file->type eq 'das' ? $self->table_row_das($file, $user_record) : $self->table_row($file, $sharers);
       
       my ($type, $id) = $file->{'analyses'} =~ /^(session|user)_(\d+)_/;
