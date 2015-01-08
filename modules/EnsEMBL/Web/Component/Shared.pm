@@ -40,7 +40,6 @@ use EnsEMBL::Web::DOM;
 use EnsEMBL::Web::Form;
 use EnsEMBL::Web::Form::ModalForm;
 use EnsEMBL::Web::RegObj;
-use EnsEMBL::Web::TmpFile::Text;
 
 ######### USED ON VARIOUS PAGES ###########
 
