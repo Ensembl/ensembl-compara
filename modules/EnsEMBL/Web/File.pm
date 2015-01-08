@@ -56,10 +56,10 @@ sub new {
   my ($class, %args) = @_;
   my $self = \%args;
   #use Carp qw(cluck); cluck 'CREATING NEW FILE OBJECT';
-  warn '!!! CREATING NEW FILE OBJECT';
-  while (my($k, $v) = each(%args)) {
-    warn "@@@ ARG $k = $v";
-  }
+  #warn '!!! CREATING NEW FILE OBJECT';
+  #while (my($k, $v) = each(%args)) {
+  #  warn "@@@ ARG $k = $v";
+  #}
 
   ## Set base locations
   $args{'base_dir'} ||= $self->{'hub'}->species_defs->ENSEMBL_TMP_DIR;
@@ -143,7 +143,7 @@ sub new {
     }
     else {
       ## Create a file name if none given
-      $self->{'write_name'} = $self->set_timestamp if $args{'name_timestamp'};
+      $self->{'write_name'} = $self->set_timestamp if $args{'timestamp_name'};
       $self->{'write_name'} .= random_string;
     }
 
