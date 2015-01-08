@@ -48,7 +48,7 @@ use EnsEMBL::Web::RegObj;
 use EnsEMBL::Web::Session;
 use EnsEMBL::Web::SpeciesDefs;
 use EnsEMBL::Web::Text::FeatureParser;
-use EnsEMBL::Web::TmpFile::Text;
+use EnsEMBL::Web::File::User;
 use EnsEMBL::Web::ViewConfig;
 use EnsEMBL::Web::Tools::Misc qw(get_url_content);
 
@@ -803,21 +803,28 @@ sub get_data_from_session {
   my $species  = $self->param('species') || $self->species;
   my $tempdata = $self->session->get_data(type => $type, code => $code);
   my $name     = $tempdata->{'name'};
-  my ($content, $format);
+  my $format;
 
   # NB this used to be new EnsEMBL::Web... etc but this does not work with the
   # FeatureParser module for some reason, so have to use FeatureParser->new()
   my $parser = EnsEMBL::Web::Text::FeatureParser->new($self->species_defs, undef, $species);
-  
+ 
+  my $file_params = {
+                      'hub' => $self,
+                    };
+ 
   if ($type eq 'url') {
-    my $response = EnsEMBL::Web::Tools::Misc::get_url_content($tempdata->{'url'});
-       $content  = $response->{'content'};
-  } else {
-    my $file    = EnsEMBL::Web::TmpFile::Text->new(filename => $tempdata->{'filename'});
-       $content = $file->retrieve;
-    
-    return {} unless $content;
+    $file_params->{'input_drivers'} = ['URL'];
+    $file_params->{'read_path'}     = $tempdata->{'url'};
   }
+  else {
+    $file_params->{'read_path'} = $tempdata->{'filename'};
+  }
+
+  my $file = EnsEMBL::Web::File::User->new($file_params);
+  my $content = $file->read;
+
+  return {} unless $content;
    
   $parser->parse($content, $tempdata->{'format'});
 
