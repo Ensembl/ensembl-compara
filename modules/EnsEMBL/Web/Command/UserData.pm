@@ -44,12 +44,14 @@ sub upload {
   my ($error, $format, $full_ext, %args);
   
   ## Need the filename (for handling zipped files)
-  if ($method eq 'text') {
-    $name = 'Data' unless $name;
-  } else {
-    my @orig_path = split('/', $hub->param($method));
-    $args{'filename'} = $orig_path[-1];
-    $name ||= $args{'filename'};
+  unless ($name) {
+    if ($method eq 'text') {
+      $name = 'Data';
+    } else {
+      my @orig_path = split('/', $hub->param($method));
+      $args{'filename'} = $orig_path[-1];
+      $name = $args{'filename'};
+    }
   }
   
   $params->{'name'} = $name;
@@ -115,10 +117,12 @@ sub upload {
       $params->{'species'} = $hub->param('species') || $hub->species;
         
       ## Attach data species to session
+      ## N.B. Use 'write' locations, since uploads are read from the
+      ## system's CGI directory
       my $data = $session->add_data(
                                     type      => 'upload',
-                                    filename  => $file->read_name,
-                                    datestamp => $file->read_datestamp,
+                                    filename  => $file->write_name,
+                                    datestamp => $file->write_datestamp,
                                     filesize  => length($result->{'content'}),
                                     code      => $code,
                                     md5       => $md5,
