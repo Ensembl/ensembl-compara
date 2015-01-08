@@ -76,7 +76,10 @@ sub upload {
   
   $params->{'format'} = $format;
 
-  my %args = (hub => $self->hub);
+  my %args = (
+              'hub'             => $self->hub,
+              'timestamp_name'  => 1,
+            );
   my $result;
 
   if ($method eq 'url') {
@@ -122,6 +125,7 @@ sub upload {
       my $data = $session->add_data(
                                     type      => 'upload',
                                     filename  => $file->write_name,
+                                    read_path => $file->write_path,
                                     datestamp => $file->write_datestamp,
                                     filesize  => length($result->{'content'}),
                                     code      => $code,
