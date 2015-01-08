@@ -49,7 +49,6 @@ use EnsEMBL::Web::DOM;
 use EnsEMBL::Web::Form;
 use EnsEMBL::Web::Form::ModalForm;
 use EnsEMBL::Web::RegObj;
-use EnsEMBL::Web::TmpFile::Text;
 
 sub new {
   my $class = shift;
@@ -326,16 +325,6 @@ sub content_buttons {
     <div class="component-navs nav_buttons $class">$nav_html</div>
   ) if $nav_html;
   return $nav_html.$blue_html;
-}
-
-sub cache {
-warn "###############\n!!! DEPRECATED - will be removed in release 79\n################";
-  my ($panel, $obj, $type, $name) = @_;
-  my $cache = EnsEMBL::Web::TmpFile::Text->new(
-    prefix   => $type,
-    filename => $name,
-  );
-  return $cache;
 }
 
 sub set_cache_params {

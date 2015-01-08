@@ -79,7 +79,7 @@ sub handle_download {
   my ($self, $r) = @_;
   my $hub = $self->hub;
 
-  my $filename    = $hub->param('name');
+  my $filename    = $hub->param('filename');
   my $path        = $hub->param('file_path');
   my $format      = $hub->param('format');
   my $compression = $hub->param('compression');

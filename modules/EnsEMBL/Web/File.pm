@@ -156,7 +156,9 @@ sub new {
     if ($self->{'compress'} || $self->{'compression'} || $self->{'write_compression'}) {
       $self->{'write_compression'} ||= $self->{'compression'};
       ## Default to gzip
-      $self->{'write_compression'} ||= 'gz';
+      unless ($self->{'write_compression'} && $self->{'write_compression'} =~ /gz|bz|zip/) {
+        $self->{'write_compression'} = 'gz';
+      }
       $file_name .= '.'.$self->{'write_compression'};
     }
 
