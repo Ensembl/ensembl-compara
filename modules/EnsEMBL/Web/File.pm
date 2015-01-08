@@ -114,8 +114,8 @@ sub new {
 
     my $file_name            = $self->{'name'}.'.'.$extension;
 
-    if ($self->{'compress'}) {
-      unless ($self->{'compression'}) {
+    if ($self->{'compress'} || $self->{'compression'}) {
+      unless ($self->{'compression'} && $self->{'compression'} =~ /gz|bz|zip/) {
         ## Default to gzip
         $self->{'compression'} = 'gz';
       }
