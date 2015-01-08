@@ -18,6 +18,8 @@ limitations under the License.
 
 package EnsEMBL::Web::Command::UserData::DropUpload;
 
+### Called by JavaScript only - see method dropFileUpload in 15_ImageMap.js
+
 use strict;
 
 use EnsEMBL::Web::Text::FeatureParser;
