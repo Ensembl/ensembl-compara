@@ -40,6 +40,13 @@ sub convert_to_drawing_parameters {
   
   my $self     = shift;
   my $data     = $self->data_objects;
+
+  # Skip the Supporting Structural Variation phenotype features
+  if ($data && scalar(@$data)!=0) {
+    my @filtered_data = grep {$_->type ne 'SupportingStructuralVariation'} @{$data};
+    $data = (@filtered_data && scalar(@filtered_data)!=0) ? \@filtered_data : ();
+  }
+
   my $hub      = $self->hub;
   my @phen_ids = $hub->param('ph');
   my $ga       = $hub->database('core')->get_adaptor('Gene');
