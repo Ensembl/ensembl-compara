@@ -334,33 +334,34 @@ sub draw_tree {
 
     #Restrict the tree by looking at the species in the AlignSlice
     $restricted_tree = $gab->get_GenomicAlignTree;
-    my $num_slices = @$slices;
-    my $cnt =0;
+  }
 
-    foreach my $this_node (@{$restricted_tree->get_all_sorted_genomic_align_nodes()}) {
+    # Remove the leaves (and their parents) from the tree if the species is
+    # hidden by the current configuration (i.e. is not in $slices)
+    my %slice_ok = map {(lc $_->{name}) => 1} @$slices;
+    foreach my $this_node (@{$restricted_tree->get_all_leaves}) {
       my $genomic_align_group = $this_node->genomic_align_group;
       next if (!$genomic_align_group);
       my $node_name = $genomic_align_group->genome_db->name;
-      my $this_slice = $slices->[$cnt];
-      if ($cnt < $num_slices && lc($slices->[$cnt]->{name}) eq $node_name) {
-        #if need to distinguish between nodes of the same name, maybe try checking that the
-        #genomic_aligns in the slice and group are identical
-        #my $slice_gas = $this_slice->{genomic_align_ids}; #hash
-        #my $tree_gas = $genomic_align_group->{genomic_align_array};
-        $cnt++;
-      } else {
-        $this_node->disavow_parent;
-        $restricted_tree = $restricted_tree->minimize_tree;
-      }
+      next if $slice_ok{$node_name};
+      $this_node->disavow_parent;
+      $restricted_tree = $restricted_tree->minimize_tree;
     }
-  }
 
   #Get cigar lines from each Slice which will be passed to the genetree.pm drawing code
   my $slice_cigar_lines;
 
+  # The nodes should be in the same order as the slices, so we can match
+  # the internal nodes to the ancestral slices
+  my @internal_nodes = grep {not $_->is_leaf} @{$restricted_tree->get_all_sorted_genomic_align_nodes};
   foreach my $this_slice (@$slices) {
-    next if (lc($this_slice->{name}) eq "ancestral_sequences"); #skip cigar lines for ancestral seqs
-    push @$slice_cigar_lines, $this_slice->{cigar_line};
+    if (lc($this_slice->{name}) eq "ancestral_sequences") {
+      #skip cigar lines for ancestral seqs and transfer the counter_position flag
+      my $ga_node = shift @internal_nodes;
+      $ga_node->{_counter_position} = $this_slice->{_counter_position};
+    } else {
+      push @$slice_cigar_lines, $this_slice->{cigar_line};
+    }
   }
 
   #Get low coverage species from the EPO_LOW_COVERAGE species set
@@ -431,7 +432,7 @@ sub get_slice_table {
         $number_padding = length $end    if length $end    > $number_padding;
       }
       
-      if ($species eq 'Ancestral sequences') {
+      if ($species =~ /^Ancestral sequences/) {
         $table_rows .= $slice->{'_tree'};
         $ancestral_sequences = 1;
       } else {
