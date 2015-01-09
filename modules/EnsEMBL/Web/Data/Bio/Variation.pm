@@ -39,14 +39,7 @@ sub convert_to_drawing_parameters {
   ### for use by drawing code and HTML components
   
   my $self     = shift;
-  my $data     = $self->data_objects;
-
-  # Skip the Supporting Structural Variation phenotype features
-  if ($data && scalar(@$data)!=0) {
-    my @filtered_data = grep {$_->type ne 'SupportingStructuralVariation'} @{$data};
-    $data = (@filtered_data && scalar(@filtered_data)!=0) ? \@filtered_data : ();
-  }
-
+  my @data     = grep {$_->type ne 'SupportingStructuralVariation'} @{$self->data_objects || []}; # Skip the Supporting Structural Variation phenotype features
   my $hub      = $self->hub;
   my @phen_ids = $hub->param('ph');
   my $ga       = $hub->database('core')->get_adaptor('Gene');
@@ -54,14 +47,14 @@ sub convert_to_drawing_parameters {
 
   # Threshold to display the variations on the karyotype view. Use BioMart instead.
   my $max_features    = 1000;
-  my $count_features  = scalar(@$data);
+  my $count_features  = scalar @data;
 
   if ($count_features > $max_features) {
     throw exception('TooManyFeatures', qq(There are <b>$count_features</b> genomic locations associated with this phenotype. Please, use <a href="/biomart/martview/">BioMart</a> to retrieve a table of all the variants associated with this phenotype instead as there are too many to display on a karyotype.));
   }
 
   # getting associated phenotypes and associated genes
-  foreach my $pf (@{$data || []}) {
+  foreach my $pf (@data) {
     my $object_id   = $pf->object_id;
     my $source_name = $pf->source;
        $source_name =~ s/_/ /g;
@@ -95,7 +88,7 @@ sub convert_to_drawing_parameters {
   
   my %seen;
   
-  foreach my $pf (@$data) {
+  foreach my $pf (@data) {
     if (ref($pf) =~ /UnmappedObject/) {
       push @results, $self->unmapped_object($pf);
       next;
