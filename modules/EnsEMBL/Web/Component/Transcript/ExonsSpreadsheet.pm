@@ -400,7 +400,7 @@ sub add_line_numbers {
 
 sub build_sequence {
   my ($self, $sequence, $config) = @_;
-  $config->{'html_template'} = '<pre class="exon_sequence">%s</pre>';
+  $config->{'html_template'} = '<pre class="text_sequence exon_sequence">%s</pre>';
   return $self->SUPER::build_sequence([ $sequence ], $config,1);
 }
 
