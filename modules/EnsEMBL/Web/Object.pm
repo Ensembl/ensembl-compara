@@ -418,8 +418,18 @@ sub get_slices {
     };
     if ($name eq 'Ancestral_sequences') {
         $counter++;
-        $formatted_slices[-1]->{_counter_position} = $counter;
-        $formatted_slices[-1]->{display_name} .= " $counter";
+        my $ga_node = $formatted_slices[-1]->{underlying_slices}->[0]->{_node_in_tree};
+        my $removed_species = $_->{_align_slice}->{_removed_species};
+        # The current slice has to be discarded if it is an ancestral node
+        # that fully maps to hidden species on one of its sides
+        my $c1 = scalar(grep {not $removed_species->{$_->genomic_align_group->genome_db->name} } @{$ga_node->children->[0]->get_all_leaves});
+        my $c2 = scalar(grep {not $removed_species->{$_->genomic_align_group->genome_db->name} } @{$ga_node->children->[1]->get_all_leaves});
+        if ($c1 and $c2) {
+          $formatted_slices[-1]->{_counter_position} = $counter;
+          $formatted_slices[-1]->{display_name} .= " $counter";
+        } else {
+          pop @formatted_slices;
+        }
     }
 
     $length ||= $_->length; # Set the slice length value for the reference slice only
