@@ -351,9 +351,17 @@ sub draw_tree {
   #Get cigar lines from each Slice which will be passed to the genetree.pm drawing code
   my $slice_cigar_lines;
 
+  # The nodes should be in the same order as the slices, so we can match
+  # the internal nodes to the ancestral slices
+  my @internal_nodes = grep {not $_->is_leaf} @{$restricted_tree->get_all_sorted_genomic_align_nodes};
   foreach my $this_slice (@$slices) {
-    next if (lc($this_slice->{name}) eq "ancestral_sequences"); #skip cigar lines for ancestral seqs
-    push @$slice_cigar_lines, $this_slice->{cigar_line};
+    if (lc($this_slice->{name}) eq "ancestral_sequences") {
+      #skip cigar lines for ancestral seqs and transfer the counter_position flag
+      my $ga_node = shift @internal_nodes;
+      $ga_node->{_counter_position} = $this_slice->{_counter_position};
+    } else {
+      push @$slice_cigar_lines, $this_slice->{cigar_line};
+    }
   }
 
   #Get low coverage species from the EPO_LOW_COVERAGE species set
@@ -424,7 +432,7 @@ sub get_slice_table {
         $number_padding = length $end    if length $end    > $number_padding;
       }
       
-      if ($species eq 'Ancestral sequences') {
+      if ($species =~ /^Ancestral sequences/) {
         $table_rows .= $slice->{'_tree'};
         $ancestral_sequences = 1;
       } else {

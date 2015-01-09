@@ -655,6 +655,7 @@ sub features {
   my @features;
   my $n_members = ($tree->isa('Bio::EnsEMBL::Compara::CAFEGeneFamilyNode'))? $tree->n_members : '';
   $cut = 0 if ($tree->isa('Bio::EnsEMBL::Compara::CAFEGeneFamilyNode')); #only for cafe tree, cut is 0 so that the branch are single blue line (no dotted or other colours)
+  $n_members = $tree->{_counter_position} if $tree->isa('Bio::EnsEMBL::Compara::GenomicAlignTree');
 
   my $f = {
     _distance    => $distance,
