@@ -44,7 +44,7 @@ sub ICON_MAPPINGS {
     'share'         => { 'file' => 'share.png',           'alt' => 'share',       'title' => "Share this $component"              },
     'reset_config'  => { 'file' => 'settings-reset.png',  'alt' => 'reset config', 'title' => "Reset configuration"               },
     'reset_order'   => { 'file' => 'order-reset.png',     'alt' => 'reset order', 'title' => "Reset track order"                },
-    'resize'        => { 'file' => 'image_resize.png',    'alt' => 'resize image', 'title' => "Resize this image""                },
+    'resize'        => { 'file' => 'image_resize.png',    'alt' => 'resize image', 'title' => "Resize this image"                },
   };
 }
 
