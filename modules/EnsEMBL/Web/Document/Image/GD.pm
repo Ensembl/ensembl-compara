@@ -80,7 +80,9 @@ sub image_width         { return $_[0]->{'image_configs'}[0]->get_parameter('ima
 sub has_moveable_tracks { return $_[0]->drawable_container->{'config'}->get_parameter('sortable_tracks') eq 'drag'; }
 
 sub render_toolbar {
-  my ($self, $height) = @_;
+### Build the standard toolbar for a dynamic image and then render it
+### @return Array (two strings of HTML for top and bottom toolbars)
+  my $self = shift;
 
   ## Add icons specific to our standard dynamic images
   my $hub         = $self->hub;
@@ -123,10 +125,12 @@ sub render_toolbar {
     push @$icons, $self->add_order_reset_icon;
   }
 
-  $self->_render_toolbars($icons, $extra_html);
+  return $self->_render_toolbars($icons, $extra_html);
 }
 
 sub add_resize_icon {
+### Configure icon for image resizing
+### @return Hashref of icon parameters
   my $self = shift;
   my $hub  = $self->hub;
   return {
@@ -137,6 +141,8 @@ sub add_resize_icon {
 }
 
 sub add_resize_menu {
+### Create HTML for image resize popup menu 
+### @return String
   my $self = shift;
   my $hub  = $self->hub;
     
@@ -160,16 +166,20 @@ sub add_resize_menu {
 }
 
 sub add_image_export_icon {
+### Configure icon for image export
+### @return Hashref of icon parameters
   my $self = shift;
   my $hub  = $self->hub;
   return {
           'href'      => $self->_export_url.'pdf',
           'class'     => 'export popup '.$self->{'export'},,
-          'icon_key'  => 'resize',
+          'icon_key'  => 'image',
           };
 }
 
 sub _export_url {
+### Helper function to build export URL
+### @return String
   my $self = shift;
   my $url  = $ENV{'REQUEST_URI'};
   $url  =~ s/;$//;
@@ -178,7 +188,8 @@ sub _export_url {
 }
 
 sub add_image_export_menu {
-  ## Image export popup menu
+### Create HTML for image export popup menu 
+### @return String
   my $self = shift;
   my $hub  = $self->hub;
   return unless $self->{'export'};
@@ -241,6 +252,8 @@ sub add_image_export_menu {
 }
 
 sub add_config_reset_icon {
+### Configure icon for resetting track configuration
+### @return Hashref of icon parameters
   my $self = shift;
   my $hub  = $self->hub;
   my $url = $hub->url({qw(type Ajax action config_reset __clear 1)});
@@ -251,6 +264,8 @@ sub add_config_reset_icon {
           };
 }
 sub add_order_reset_icon {
+### Configure icon for resetting track order
+### @return Hashref of icon parameters
   my $self = shift;
   my $hub  = $self->hub;
   my $url = $hub->url({qw(type Ajax action order_reset __clear 1)});

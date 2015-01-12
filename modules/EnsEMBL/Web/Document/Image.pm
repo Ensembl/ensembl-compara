@@ -28,6 +28,7 @@ package EnsEMBL::Web::Document::Image;
 use strict;
 
 sub new {
+### Generic constructor
   my ($class, $hub, $component, $args) = @_;
 
   my $self = {
@@ -41,13 +42,17 @@ sub new {
   return $self;
 }
 
-sub hub                :lvalue { $_[0]->{'hub'};                }
-sub component          :lvalue { $_[0]->{'component'};          }
+sub hub                { my $self = shift; return self->{'hub'};  }
+sub component          { my $self = shift; return $self->{'component'}; }
 sub height             :lvalue { $_[0]->{'height'};            }
 sub format             :lvalue { $_[0]->{'format'};             }
 sub toolbars           :lvalue { $_[0]->{'toolbars'};           }
 
-sub has_toolbars        { return 1 if ($_[0]->{'toolbars'}{'top'} || $_[0]->{'toolbars'}{'bottom'}); }
+sub has_toolbars  { 
+### Checks if toolbars are wanted for this image
+### @return Boolean
+  return ($_[0]->{'toolbars'}{'top'} || $_[0]->{'toolbars'}{'bottom'}) ? 1 : 0; 
+}
 
 sub render_toolbar {} ## Stub - implement in children using methods below
 
@@ -83,6 +88,8 @@ sub _render_toolbars {
 }
 
 sub add_config_icon {
+### Configure icon for track configuration
+### @return Hashref of icon parameters
   my $self = shift;
   my $hub         = $self->hub;
   my $component   = $self->component;
@@ -91,11 +98,13 @@ sub add_config_icon {
           'href'      => $config_url,
           'class'     => 'config modal_link force',
           'icon_key'  => 'config',
-          'rel'       => 'modal_config_'.lc component,
+          'rel'       => 'modal_config_'.lc($component), 
           };
 }
 
 sub add_userdata_icon {
+### Configure icon for userdata interface 
+### @return Hashref of icon parameters
   my $self = shift;
   my $hub       = $self->hub;
   my $data_url  = $hub->url({ type => 'UserData', action => 'ManageData', function => undef });
@@ -108,6 +117,8 @@ sub add_userdata_icon {
 }
 
 sub add_share_icon {
+### Configure icon for share link popup 
+### @return Hashref of icon parameters
   my $self = shift;
   my $hub        = $self->hub;
   my $component   = $self->component;
@@ -120,6 +131,8 @@ sub add_share_icon {
 }
 
 sub add_export_icon {
+### Configure icon for data export 
+### @return Hashref of icon parameters
   my $self = shift;
   my $hub        = $self->hub;
   my $component   = $self->component;
@@ -141,7 +154,7 @@ sub add_export_icon {
   return {
           'href'      => $hub->url($params),
           'class'     => 'download modal_link',
-          'icon_key'  => 'export',
+          'icon_key'  => 'download',
           };
 }
 
