@@ -72,6 +72,8 @@ sub has_toolbars  {
   return ($_[0]->{'toolbars'}{'top'} || $_[0]->{'toolbars'}{'bottom'}) ? 1 : 0; 
 }
 
+sub render {} ## Stub - must be implemented in a child module
+
 sub render_toolbar {
 ### Build the standard toolbar for a dynamic image and then render it
 ### @return Array (two strings of HTML for top and bottom toolbars)
@@ -80,7 +82,8 @@ sub render_toolbar {
   ## Add icons specific to our standard dynamic images
   my $hub         = $self->hub;
   my $component   = $self->component;
-  my $viewconfig  = $hub->get_viewconfig($component);
+  my $component_name = ref($component) ? $component->id : $component;
+  my $viewconfig  = $hub->get_viewconfig($component_name);
 
   my $icons  = [];
   my $extra_html;
