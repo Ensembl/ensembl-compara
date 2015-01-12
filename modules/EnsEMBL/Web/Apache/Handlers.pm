@@ -275,6 +275,12 @@ sub handler {
     $redirect = 1;
   }  
 
+  ## Redirect to blog from /jobs
+  if ($raw_path[0] eq 'jobs') {
+    $r->uri('http://www.ensembl.info/blog/category/jobs/');
+    $redirect = 1;
+  }
+
   ## Simple redirect to VEP
 
   if ($SiteDefs::ENSEMBL_SUBTYPE eq 'Pre' && $file =~ /\/vep/i) { ## Pre has no VEP, so redirect to tools page
