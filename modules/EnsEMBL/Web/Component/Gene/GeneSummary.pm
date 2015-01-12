@@ -20,6 +20,8 @@ package EnsEMBL::Web::Component::Gene::GeneSummary;
 
 use strict;
 
+use EnsEMBL::Web::Document::Image::R2R;
+
 use base qw(EnsEMBL::Web::Component::Gene);
 
 sub _init {
@@ -253,7 +255,8 @@ sub content {
 
   ## Secondary structure (currently only non-coding RNAs)
   if ($self->hub->database('compara') && $object->availability->{'has_2ndary'}) {
-    my $svg_path = $self->draw_structure($display_name, 1);
+    my $image = EnsEMBL::Web::Document::Image::R2R->new($self->hub, $self, {});
+    my $svg_path = $image->render($display_name, 1);
     my $html;
     if ($svg_path) {
       my $fullsize = $self->hub->url({'action' => 'SecondaryStructure'});
