@@ -16,7 +16,7 @@ limitations under the License.
 
 =cut
 
-package EnsEMBL::Document::OntologyVisualisation;
+package EnsEMBL::Web::Document::Image::Ontology;
 
 use strict;
 use warnings;
@@ -27,6 +27,7 @@ use GraphViz;
 use Bio::EnsEMBL::DBSQL::OntologyTermAdaptor;
 use EnsEMBL::Web::File::Dynamic::Image;
 
+use parent qw(EnsEMBL::Web::Document::Image);
 
 =head1 NAME
 
@@ -42,21 +43,7 @@ The module generates images + image map htmlscript to restart an Ensembl server.
 
 example:
   my $ontovis = EnsEMBL::Web::Tools::OntologyVisualisation->new(
-    $ontology_term_adaptor,
-    $go_dir,
-    $go_url,
-    $go_id_url,
-    $image_background_colour,
-    $node_fill_colour,
-    $node_font_colour,
-    $node_border_colour,
-    $non_highlight_fill_colour,
-    $non_highlight_font_colour,
-    $non_highlight_border_colour,
-    $goslim_goa_fill,
-    $goslim_goa_font,
-    $goslim_goa_border,
-    $get_relation_type_colour
+    
   );
   
   $ontovis->add_cluster_by_parent_accession('GO:0005575');
@@ -82,79 +69,48 @@ Post questions to the EnsEMBL development list dev@ensembl.org
 
  Colours are in hex format may be preceeded by #, alternatively 'transparent' is allowed for a transparant "colour"
  Arg[1]      : A Bio::EnsEMBL::DBSQL::OntologyTermAdaptor to access the ontology API
- Arg[2]      : The base dir on the local file system, where the generated images can be stored
- Arg[3]      : The external base url to the base dir (arg[2])
- Arg[4]      : the default base url that nodes should lik to, ###ID### will be replaced by the term accession, these can also be set on a per cluster basis
- Arg[5]      : the background colour for the images (optional)
- Arg[6]      : the fill colour for normal (non highlighted and non generated) nodes (optional)
- Arg[7]      : the font colour for normal (non highlighted and non generated) nodes (optional)
- Arg[8]      : the border colour for normal (non highlighted and non generated) nodes (optional)
- Arg[9]      : the fill colour for non highlighted nodes (optional)
- Arg[10]     : the font colour for non highlighted nodes (optional)
- Arg[11]     : the border colour for non highlighted nodes (optional)
- Arg[12]     : the fill colour for highlighted nodes (optional)
- Arg[13]     : the font colour for highlighted nodes (optional)
- Arg[14]     : the border colour for highlighted nodes (optional)
- Arg[15]     : Either of the following: (optional)
-                    the colour for all relationshp arrows & labels
-                    a function f(x::relation_name)->colour
  
  Example     : my $ontovis = EnsEMBL::Web::Tools::OntologyVisualisation->new(
-                 $ontology_term_adaptor,
-                 $go_dir,
-                 $go_url,
-                 $go_id_url,
-                 $image_background_colour,
-                 $node_fill_colour,
-                 $node_font_colour,
-                 $node_border_colour,
-                 $non_highlight_fill_colour,
-                 $non_highlight_font_colour,
-                 $non_highlight_border_colour,
-                 $goslim_goa_fill,
-                 $goslim_goa_font,
-                 $goslim_goa_border,
-                 $get_relation_type_colour
                );
- Description : creates a ne OntologyVisualisation object
- Return type : EnsEMBL::Document::OntologyVisualisation
+ Description : creates a new Ontology object
+ Return type : EnsEMBL::Document::Image::Ontology
 
 =cut
 
 sub new {
-  my $class = shift;
-  my $self;
-  $self->{hub} = shift;
-  $self->{_ontology_term_adaptor}= shift;
-  $self->{_img_base_dir}= shift;
-  $self->{_img_base_url}= shift;
-  $self->{_idurl}= shift;
-  $self->{_image_background_colour}=_format_colour_code(shift,'transparent');
-  $self->{_node_fill_colour}=_format_colour_code(shift,'transparent');
-  $self->{_node_font_colour}=_format_colour_code(shift,'000000');
-  $self->{_node_border_colour}=_format_colour_code(shift,'000000');
-  $self->{_non_highlight_fill_colour}=_format_colour_code(shift,'transparent');
-  $self->{_non_highlight_font_colour}=_format_colour_code(shift,'000000');
-  $self->{_non_highlight_border_colour}=_format_colour_code(shift,'000000');
-  $self->{_highlighted_fill_colour}=_format_colour_code(shift,'transparent');
-  $self->{_highlighted_font_colour}=_format_colour_code(shift,'000000');
-  $self->{_highlighted_border_colour}=_format_colour_code(shift,'000000');
-  $self->{_get_relation_type_colour}=shift;
+  my ($class, $hub, $component, $args) = @_;
+
+  my $species_defs = $hub->species_defs;
+  my @array = ();
+
+  my $self = {
+    hub                           => $hub,
+    component                     => $component,
+    toolbars                      => {'top' => 0, 'bottom' => 0},
+    _existing_terms               => {},
+    _node_descriptions            => {},
+    _existing_edges               => {},
+    _clusters                     => {},
+    _idurl_per_cluster            => {},
+    _normal_term_accessions       => \@array,
+    _highlighted_term_accessions  => \@array,
+    _highlighted_subsets          => \@array,
+    %$args,
+  };
   
-  $self->{_existing_terms}={};
-  $self->{_node_descriptions}={};
-  $self->{_existing_edges}={};
-  my @array=();
-  $self->{_normal_term_accessions}=\@array;
-  $self->{_highlighted_term_accessions}=\@array;
-  $self->{_highlighted_subsets}=\@array;
-  $self->{_clusters}={};
-  $self->{_idurl_per_cluster}= {};
-  
-  if(defined($self->{_get_relation_type_colour}) && ref $self->{_get_relation_type_colour} ne "CODE"){
-    $self->{_get_relation_type_colour}=_format_colour_code($self->{_get_relation_type_colour},'000000');
-  }
   bless $self, $class;
+
+  $self->{'_image_background_colour'}      = $self->colour_code('image_background','transparent');
+  $self->{'_node_fill_colour'}             = $self->colour_code('node_fill','transparent');
+  $self->{'_node_font_colour'}             = $self->colour_code('node_font','000000');
+  $self->{'_node_border_colour'}           = $self->colour_code('node_border','000000');
+  $self->{'_non_highlight_fill_colour'}    = $self->colour_code('non_highlight_fill','transparent');
+  $self->{'_non_highlight_font_colour'}    = $self->colour_code('non_highlight_font','000000');
+  $self->{'_non_highlight_border_colour'}  = $self->colour_code('non_highlight_border','000000');
+  $self->{'_highlighted_fill_colour'}      = $self->colour_code('goslim_goa_fill','transparent');
+  $self->{'_highlighted_font_colour'}      = $self->colour_code('goslim_goa_font','000000');
+  $self->{'_highlighted_border_colour'}    = $self->colour_code('goslim_goa_border','000000');
+
   return $self;
 }
 
@@ -578,15 +534,14 @@ sub render{
     $self->_add_parents($term,$ontology_term_adaptor,$added);
   }
 
-  my $return_html='';
-  my $images_html='';
-  mkdir($self->img_base_dir);
-  foreach(keys %{$self->{_clusters}}){
+  my $return_html = '';
+  my $images_html = '';
+  foreach (keys %{$self->{_clusters}}) {
     my $cluster=$self->{_clusters}->{$_};
     
     my $image = EnsEMBL::Web::File::Dynamic::Image->new(
                                                         'hub'             => $self->{'hub'},
-                                                        'name_timestamp'  => 1,
+                                                        'sub_dir'         => 'GO',
                                                         'extension'       => 'png',
                                                         );
 
@@ -595,9 +550,8 @@ sub render{
     my $image_map = $cluster->as_cmapx;
     $image_map =~ s/title="([^"]*)" alt=""/ title="$self->{_node_descriptions}->{$1}" alt="$self->{_node_descriptions}->{$1}"/g;
 	  $image_map =~ s/id="test" name="test"/id="$_" name="$_"/g;
-	  $return_html.=$image_map;
-    #$images_html.=qq(<img style="float:none;" usemap="#).$_.qq(" src=").$self->img_base_url.$file.qq(" border="0">);
-    $images_html.=qq(<img style="float:none;" usemap="#).$_.qq(" src=").$image->URL.qq(" border="0">);
+	  $return_html .= $image_map;
+    $images_html .= qq(<img style="float:none;" usemap="#).$_.qq(" src=").$image->location.qq(" border="0">);
   }
   return $return_html.$images_html;
 }
@@ -646,7 +600,6 @@ sub _add_parents{
   my $term = shift;
   my $ontology_term_adaptor = shift;
   my $added = shift || {};
-  my $edge_colour_function = $self->{_get_relation_type_colour};
 
   return if exists $added->{$term->accession};
   $added->{$term->accession} = undef;
@@ -670,12 +623,7 @@ sub _add_parents{
       }
       if(! $self->existing_edges->{$term->accession.$trm->accession.$relation}){
         $self->existing_edges->{$term->accession.$trm->accession.$relation}=1;
-        my $edge_colour;
-        if(ref $edge_colour_function eq 'CODE'){
-          $edge_colour = _format_colour_code(&$edge_colour_function($relation),'000000');
-        }else{
-          $edge_colour = _format_colour_code($edge_colour_function,'000000');
-        }
+        my $edge_colour = $self->colour_code($relation,'000000');
         $cluster->add_edge($self->_format_node_name($trm)=>$self->_format_node_name($term), label=>$relation, color=>$edge_colour, fontcolor=>
         $edge_colour, dir=>'back', fontsize => '8pt'); #since we want a bottom-up tree, we add the link in the opposite direction and then set the directed option to backward.
       }
@@ -753,12 +701,14 @@ sub _random_image_name {
   return $image_name;
 }
 
-sub _format_colour_code{
-  my $colour_code=shift;
-  my $default = shift;
-  if(defined($colour_code)){
-    $colour_code='#'.$colour_code if ($colour_code ne 'transparent' && (substr($colour_code,0,1) ne '#'));  
-  }else{
+sub colour_code {
+  my ($self, $key, $default) = @_;
+
+  my $colour_code = $self->hub->species_defs->colour('goimage', $key);
+
+  if (defined($colour_code)) {
+    $colour_code = '#'.$colour_code if ($colour_code ne 'transparent' && (substr($colour_code,0,1) ne '#'));  
+  } else {
     $colour_code = $default;
   }
   $colour_code =~ s/_/ /g;
