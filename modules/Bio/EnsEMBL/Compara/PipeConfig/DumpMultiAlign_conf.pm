@@ -101,6 +101,7 @@ sub default_options {
 	'species'  => "human",
         'coord_system_name1' => "chromosome",
         'coord_system_name2' => "supercontig",
+        #'coord_system_name2' => "scaffold",
 	'split_size' => 200,
 	'masked_seq' => 1,
         'format' => 'emf',
@@ -248,6 +249,7 @@ sub pipeline_analyses {
             ],
 	   -can_be_empty  => 1,
 	   -hive_capacity => 200,
+	   -rc_name => '2GbMem',
 	   -flow_into => {
 	       2 => [ 'compress' ],
            }
