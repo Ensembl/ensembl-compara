@@ -1343,8 +1343,18 @@ sub core_pipeline_analyses {
                 'write_stn_tags',
                 $self->o('do_stable_id_mapping') ? 'stable_id_mapping' : (),
                 $self->o('do_treefam_xref') ? 'treefam_xref_idmap' : (),
+                'write_member_counts',
             ],
             %hc_analysis_params,
+        },
+
+        {   -logic_name     => 'write_member_counts',
+            -module         => 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
+            -parameters     => {
+                'member_count_sql'  => $self->o('ensembl_cvs_root_dir').'/ensembl-compara/scripts/production/populate_member_production_counts_table.sql',
+                'db_cmd'            => $self->db_cmd(),
+                'cmd'               => '#db_cmd# < #member_count_sql#',
+            },
         },
 
         {   -logic_name     => 'write_stn_tags',

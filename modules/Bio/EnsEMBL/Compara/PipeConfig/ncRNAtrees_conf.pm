@@ -439,13 +439,22 @@ sub pipeline_analyses {
                 'db_cmd'            => $self->db_cmd(),
                 'cmd'               => '#db_cmd# < #stnt_sql_script#',
             },
-            -flow_into      => [ 'email_tree_stats_report' ],
+            -flow_into      => [ 'email_tree_stats_report', 'write_member_counts' ],
         },
 
         {   -logic_name     => 'email_tree_stats_report',
             -module         => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::HTMLReport',
             -parameters     => {
                 'email' => $self->o('email'),
+            },
+        },
+
+        {   -logic_name     => 'write_member_counts',
+            -module         => 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
+            -parameters     => {
+                'member_count_sql'  => $self->o('ensembl_cvs_root_dir').'/ensembl-compara/scripts/production/populate_member_production_counts_table.sql',
+                'db_cmd'            => $self->db_cmd(),
+                'cmd'               => '#db_cmd# < #member_count_sql#',
             },
         },
 

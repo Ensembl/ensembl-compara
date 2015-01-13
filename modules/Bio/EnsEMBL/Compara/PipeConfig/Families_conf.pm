@@ -620,11 +620,21 @@ sub pipeline_analyses {
                 'release'     => $self->o('ensembl_release'),
             },
             -flow_into => {
-                1 => [ 'notify_pipeline_completed' ],
+                1 => [ 'write_member_counts' ],
             },
             -rc_name => '4GigMem',    # NB: make sure you give it enough memory or it will crash
         },
         
+        {   -logic_name     => 'write_member_counts',
+            -module         => 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
+            -parameters     => {
+                'member_count_sql'  => $self->o('ensembl_cvs_root_dir').'/ensembl-compara/scripts/production/populate_member_production_counts_table.sql',
+                'db_cmd'            => $self->db_cmd(),
+                'cmd'               => '#db_cmd# < #member_count_sql#',
+            },
+            -flow_into => [ 'notify_pipeline_completed' ],
+        },
+
         {   -logic_name => 'notify_pipeline_completed',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::NotifyByEmail',
             -parameters => {
