@@ -70,6 +70,12 @@ use strict;
 
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
+sub param_defaults {
+    return {
+        'discard_methods'   => [],
+        'only_methods'      => [],
+    }
+}
 
 sub fetch_input {
     my $self = shift @_;
@@ -77,18 +83,36 @@ sub fetch_input {
     my $species_set       = $self->param_required('species_set');
     my $mlss_adaptor = $self->compara_dba->get_MethodLinkSpeciesSetAdaptor;
 
+    my %ok_methods  = ();
+    if ($self->param('only_methods') and scalar(@{$self->param('only_methods')})) {
+        map {$ok_methods{$_} = 1} @{$self->param('only_methods')};
+    } else {
+        map {$ok_methods{$_->type} = 1} @{$self->compara_dba->get_MethodAdaptor->fetch_all};
+    }
+    if ($self->param('discard_methods') and scalar(@{$self->param('discard_methods')})) {
+        map {delete $ok_methods{$_}} @{$self->param('discard_methods')};
+    }
+
     my @mlss_ids = ();
     while (my $genome_db_id1 = shift @{$species_set}) {
-        push @mlss_ids, $mlss_adaptor->fetch_by_method_link_type_genome_db_ids('ENSEMBL_PARALOGUES', [$genome_db_id1])->dbID;
+        if ($ok_methods{'ENSEMBL_PARALOGUES'}) {
+            push @mlss_ids, $mlss_adaptor->fetch_by_method_link_type_genome_db_ids('ENSEMBL_PARALOGUES', [$genome_db_id1])->dbID;
+        }
 
-        my $mlss = $mlss_adaptor->fetch_by_method_link_type_genome_db_ids('ENSEMBL_HOMOEOLOGUES', [$genome_db_id1]);
-        push @mlss_ids, $mlss->dbID if defined $mlss;
+        if ($ok_methods{'ENSEMBL_HOMOEOLOGUES'}) {
+            my $mlss = $mlss_adaptor->fetch_by_method_link_type_genome_db_ids('ENSEMBL_HOMOEOLOGUES', [$genome_db_id1]);
+            push @mlss_ids, $mlss->dbID if defined $mlss;
+        }
         
         foreach my $genome_db_id2 (@{$species_set}) {
-            push @mlss_ids, $mlss_adaptor->fetch_by_method_link_type_genome_db_ids('ENSEMBL_ORTHOLOGUES', [$genome_db_id1, $genome_db_id2])->dbID;
+            if ($ok_methods{'ENSEMBL_ORTHOLOGUES'}) {
+                push @mlss_ids, $mlss_adaptor->fetch_by_method_link_type_genome_db_ids('ENSEMBL_ORTHOLOGUES', [$genome_db_id1, $genome_db_id2])->dbID;
+            }
 
-            $mlss = $mlss_adaptor->fetch_by_method_link_type_genome_db_ids('ENSEMBL_HOMOEOLOGUES', [$genome_db_id1, $genome_db_id2]);
-            push @mlss_ids, $mlss->dbID if defined $mlss;
+            if ($ok_methods{'ENSEMBL_HOMOEOLOGUES'}) {
+                my $mlss = $mlss_adaptor->fetch_by_method_link_type_genome_db_ids('ENSEMBL_HOMOEOLOGUES', [$genome_db_id1, $genome_db_id2]);
+                push @mlss_ids, $mlss->dbID if defined $mlss;
+            }
         }
     }
 
