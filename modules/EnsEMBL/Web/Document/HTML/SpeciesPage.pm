@@ -37,12 +37,8 @@ sub render {
 
   ## Get current Ensembl species
   my @valid_species = $species_defs->valid_species;
-  my $species_check;
-  foreach my $sp (@valid_species) {
-    $species_check->{$sp}++;
-  }
-
   my %species;
+
   foreach my $sp (@valid_species) {
     my $info    = {
         'dir'         => $sp,
