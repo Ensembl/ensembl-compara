@@ -2140,7 +2140,8 @@ sub core_pipeline_analyses {
                 'filter_high_coverage'  => $self->o('filter_high_coverage'),
             },
             -flow_into => {
-                2 => [ 'mlss_factory' ],
+                '2->A' => [ 'mlss_factory' ],
+                'A->1' => [ 'mlss_stats_factory' ],
             },
         },
 
@@ -2182,6 +2183,58 @@ sub core_pipeline_analyses {
         {   -logic_name => 'threshold_on_dS',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::Threshold_on_dS',
             -hive_capacity => $self->o('homology_dNdS_capacity'),
+        },
+
+        {   -logic_name => 'mlss_stats_factory',
+            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
+            -flow_into  => {
+                '1->A'  => [ 'genome_db_lister' ],
+                'A->1'  => [ 'orthology_stats_factory' ],
+            },
+        },
+
+        {   -logic_name => 'genome_db_lister',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ObjectFactory',
+            -parameters => {
+                'call_list'             => [ 'compara_dba', 'get_GenomeDBAdaptor', 'fetch_all'],
+                'column_names2getters'  => { 'genome_db_id' => 'dbID' },
+
+                'fan_branch_code'       => 2,
+            },
+            -flow_into  => {
+                '2' => { ':////accu?species_set=[]' => { 'species_set' => '#genome_db_id#'} },
+            },
+        },
+
+        {   -logic_name => 'orthology_stats_factory',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::MLSSIDFactory',
+            -parameters => {
+                'discard_methods'   => [ 'ENSEMBL_PARALOGUES' ],
+            },
+            -flow_into => {
+                2 => [ 'orthology_stats' ],
+                1 => [ 'paralogy_stats_factory' ],
+            },
+        },
+
+        {   -logic_name => 'paralogy_stats_factory',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::MLSSIDFactory',
+            -parameters => {
+                'only_methods'      => [ 'ENSEMBL_PARALOGUES' ],
+            },
+            -flow_into => {
+                2 => [ 'paralogy_stats' ],
+            },
+        },
+
+        {   -logic_name => 'orthology_stats',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::OrthologyStats',
+            -hive_capacity => 10,
+        },
+
+        {   -logic_name => 'paralogy_stats',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::ParalogyStats',
+            -hive_capacity => 10,
         },
 
     ];
