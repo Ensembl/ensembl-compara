@@ -58,7 +58,7 @@ sub new {
   #use Carp qw(cluck); cluck 'CREATING NEW FILE OBJECT';
   #warn '!!! CREATING NEW FILE OBJECT';
   #while (my($k, $v) = each(%args)) {
-  #  warn "@@@ ARG $k = $v";
+  #warn "@@@ ARG $k = $v";
   #}
 
   ## Set base locations
@@ -84,7 +84,7 @@ sub new {
   $self->{'error'} = undef;
   bless $self, $class;
 
-  my $read_path   = $self->{'read_path'} || $self->{'file_path'};
+  my $read_path = $self->{'read_path'} || $self->{'file_path'} || $self->{'file_name'};
 
   if ($read_path && !$args{'cgi'}) {
     ## DEALING WITH AN EXISTING FILE
@@ -127,6 +127,13 @@ sub new {
       $self->{'user_identifier'}  = shift @path;
       $self->{'read_sub_dir'}     = shift @path if scalar @path;
     }
+    else {
+      $self->{'read_datestamp'}   = $self->set_datestamp;
+      $self->{'user_identifier'}  = $self->set_user_identifier;
+      $self->{'read_dir_path'}    = $self->{'read_datestamp'}.'/'.$self->{'user_identifier'};
+      $self->{'read_path'}        = $self->{'read_dir_path'}.'/'.$self->{'file_name'};
+    }
+
     $self->{'base_read_path'}    = $self->{'base_dir'}.'/'.$self->{'read_dir_path'}; 
     $self->{'read_location'}     = $self->{'base_dir'}.'/'.$self->{'read_path'}; 
     $self->{'read_url'}          = $self->{'base_url'}.'/'.$self->{'read_path'}; 
@@ -385,7 +392,7 @@ sub set_timestamp {
   my $min   = $time[1];
   my $sec   = $time[0];
 
-  $self->{'write_name'} = sprintf('%s%s%s', $hour, $min, $sec);
+  $self->{'write_name'} = sprintf('%02d%02d%02d', $hour, $min, $sec);
   return $self->{'write_name'};
 }
 
