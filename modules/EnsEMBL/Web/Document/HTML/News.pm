@@ -41,7 +41,7 @@ sub render {
   my $release_date  = $release->{'date'};
   my $species_name  = $hub->species ? $hub->species_defs->SPECIES_COMMON_NAME : '';
 
-  $html .= sprintf('<h1>%s News for %s Release %s', $site_type, $species_name, $release_id);
+  $html .= sprintf('<h1>News for %s %s', $species_name, $self->news_header($hub, $release_id));
   $html .= sprintf(' (%s)', $release_date) if $release_date;
   $html .= '</h1>';
 
@@ -55,7 +55,7 @@ sub render {
 
   my $first_production = $hub->species_defs->get_config('MULTI', 'FIRST_PRODUCTION_RELEASE');
 
-  if ($hub->species_defs->multidb->{'DATABASE_PRODUCTION'}{'NAME'} && $first_production && $release_id > $first_production) {
+  if ($hub->species_defs->multidb->{'DATABASE_PRODUCTION'}{'NAME'} && $first_production && $release_id >= $first_production) {
     ## get news changes
     my $adaptor = EnsEMBL::Web::DBSQL::ProductionAdaptor->new($hub);
     my @changes = ();
@@ -195,64 +195,6 @@ sub render {
           my $content = $record->{'content'};
           $html .= $content."\n\n";
         }
-      }
-    }
-    else {
-      $html .= qq(<p>No changelog is currently available for release $release_id.</p>\n);
-    }
-  }
-  elsif ($hub->species_defs->multidb->{'DATABASE_WEBSITE'}{'NAME'}) {
-    ## get news stories
-    my $adaptor = EnsEMBL::Web::DBSQL::WebsiteAdaptor->new($hub);
-    my @stories;
-
-    if ($adaptor) {
-      @stories = @{$adaptor->fetch_news({'release' => $release_id})};
-    }
-
-    if (scalar(@stories) > 0) {
-
-      my $prev_cat = 0;
-      ## format news stories
-      foreach my $item (@stories) {
-
-        ## is it a new category?
-        if ($release_id < 59 && $prev_cat != $item->{'category_id'}) {
-          $html .= "<h2>".$item->{'category_name'}."</h2>\n";
-        }
-        $html .= '<h3 id="news_'.$item->{'id'}.'">'.$item->{'title'};
-
-        ## sort out species names
-        my @species = @{$item->{'species'}};
-        my $sp_text;
-
-        if (!@species || !$species[0]) {
-          $sp_text = 'all species';
-        }
-        elsif (@species > 5) {
-          $sp_text = 'multiple species';
-        }
-        else { 
-          my @names;
-          foreach my $sp (@species) {
-            next unless $sp->{'id'} > 0;
-            if ($sp->{'common_name'} =~ /\./) { ## No common name, only Latin
-              push @names, '<i>'.$sp->{'common_name'}.'</i>';
-            }
-            else {
-              push @names, $sp->{'common_name'};
-            }
-          }
-          $sp_text = join(', ', @names);
-        }
-        $html .= " ($sp_text)</h3>\n";
-        my $content = $item->{'content'};
-        if ($content !~ /^</) { ## wrap bare content in a <p> tag
-          $content = "<p>$content</p>";
-        }
-        $html .= $content."\n\n";
-
-        $prev_cat = $item->{'category_id'};
       }
     }
     else {
