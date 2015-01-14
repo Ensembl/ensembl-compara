@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2014] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -32,7 +32,7 @@ sub new {
   my ($class, $hub) = @_;
 
     my $self = {
-    'SITE' => lc($hub->species_defs->ENSEMBL_SITETYPE),
+    'SITE' => lc($hub->species_defs->ENSEMBL_SUBTYPE || $hub->species_defs->ENSEMBL_SITETYPE),
     'NAME' => $hub->species_defs->multidb->{'DATABASE_PRODUCTION'}{'NAME'},
     'HOST' => $hub->species_defs->multidb->{'DATABASE_PRODUCTION'}{'HOST'},
     'PORT' => $hub->species_defs->multidb->{'DATABASE_PRODUCTION'}{'PORT'},
@@ -51,6 +51,42 @@ sub db {
       $self->{'USER'}, "$self->{'PASS'}"
   );
   return $self->{'dbh'};
+}
+
+sub fetch_headlines {
+  my ($self, $criteria) = @_;
+  my $changes = [];
+  return [] unless $self->db;
+
+  my $limit = $criteria->{'limit'};
+
+  my $sql = qq(
+      SELECT
+        changelog_id, title
+      FROM
+        changelog
+      WHERE 
+        release_id = ?
+        AND site_type = ?
+        AND status = 'handed_over'
+        AND category != 'other'
+      ORDER BY priority
+      LIMIT $limit
+  );
+  my @args = ($criteria->{'release'}, $self->{'SITE'});
+
+  my $sth = $self->db->prepare($sql);
+  $sth->execute(@args);
+
+  while (my @data = $sth->fetchrow_array()) {
+    my $record = {
+      'id'            => $data[0],
+      'title'         => $data[1],
+    };
+    push @$changes, $record;
+  }
+
+  return $changes;
 }
 
 sub fetch_changelog {
@@ -106,7 +142,6 @@ sub fetch_changelog {
     $filter .= ') AND ';
   }
 
-
   $order .= 'c.priority DESC ';
 
   if ($criteria->{'limit'}) {
@@ -116,7 +151,8 @@ sub fetch_changelog {
   if ($criteria->{'species'}) {
     $sql = qq(
       SELECT
-        c.changelog_id, c.title, c.content, c.team, c.category, s.species_id, c.release_id
+        c.changelog_id, c.title, c.content, c.team, c.category, 
+        c.release_id, c.site_type, s.species_id
       FROM
         changelog as c
       LEFT JOIN 
@@ -138,7 +174,8 @@ sub fetch_changelog {
   else {
     $sql = qq(
       SELECT
-        c.changelog_id, c.title, c.content, c.team, c.category, c.release_id
+        c.changelog_id, c.title, c.content, c.team, c.category, 
+        c.release_id, c.site_type
       FROM
         changelog as c
       WHERE 
@@ -184,7 +221,7 @@ sub fetch_changelog {
     my $arg2;
     if ($criteria->{'species'}) {
       ## Only get species info if this is in fact a species-specific record!
-      if ($data[4]) {
+      if ($data[7]) {
         $arg2 = $criteria->{'species'};
       }
     }
@@ -209,6 +246,7 @@ sub fetch_changelog {
       'team'          => $data[3],
       'category'      => $data[4],
       'release'       => $data[5],
+      'site_type'     => $data[6],
       'species'       => $species,
     };
     push @$changes, $record;

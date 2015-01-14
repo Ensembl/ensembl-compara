@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2014] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -655,6 +655,7 @@ sub features {
   my @features;
   my $n_members = ($tree->isa('Bio::EnsEMBL::Compara::CAFEGeneFamilyNode'))? $tree->n_members : '';
   $cut = 0 if ($tree->isa('Bio::EnsEMBL::Compara::CAFEGeneFamilyNode')); #only for cafe tree, cut is 0 so that the branch are single blue line (no dotted or other colours)
+  $n_members = $tree->{_counter_position} if $tree->isa('Bio::EnsEMBL::Compara::GenomicAlignTree');
 
   my $f = {
     _distance    => $distance,

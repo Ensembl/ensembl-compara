@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2014] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -19,6 +19,8 @@ limitations under the License.
 package EnsEMBL::Web::Component::Gene::RnaSecondaryStructure;
 
 use strict;
+
+use EnsEMBL::Web::Document::Image::R2R;
 
 use base qw(EnsEMBL::Web::Component::Gene);
 
@@ -39,7 +41,9 @@ sub content {
 
   my ($display_name) = $object->display_xref;
 
-  my $svg_path = $self->draw_structure($display_name);
+  my $image = EnsEMBL::Web::Document::Image::R2R->new($self->hub, $self, {});
+  my $svg_path = $image->render($display_name);
+
   if ($svg_path) {
     $html .= qq(<object data="$svg_path" type="image/svg+xml"></object>);
   }

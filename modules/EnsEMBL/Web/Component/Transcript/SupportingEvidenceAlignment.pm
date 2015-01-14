@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2014] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -222,7 +222,7 @@ sub get_export_data {
 sub buttons {
   my $self = shift;
   my $hub = $self->hub;
-
+  return unless ($hub->param('has_e_alignment') && $hub->param('has_t_alignment'));
   my $params  = {
                   'type'        => 'DataExport',
                   'action'      => 'Emboss',
@@ -234,9 +234,7 @@ sub buttons {
                   'has_e_alignment' => $hub->param('has_e_alignment'), 
                   'has_t_alignment' => $hub->param('has_t_alignment'), 
               };
-
   my $plural = ($hub->param('e_alignment') && $hub->param('t_alignment')) ? 's' : '';
-
   return {
     'url'     => $hub->url($params),
     'caption' => "Download alignment$plural",

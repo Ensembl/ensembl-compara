@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2014] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -20,10 +20,9 @@ package EnsEMBL::Web::Component::Gene;
 
 use strict;
 
-use EnsEMBL::Web::File::Dynamic;
-
 use base qw(EnsEMBL::Web::Component::Shared);
 
+<<<<<<< HEAD
 sub draw_structure {
   my ($self, $display_name, $is_thumbnail) = @_;
 
@@ -216,5 +215,7 @@ sub _run_r2r_and_check {
 }
 
 
+=======
+>>>>>>> master
 1;
 

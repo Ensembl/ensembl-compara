@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2014] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -37,12 +37,8 @@ sub render {
 
   ## Get current Ensembl species
   my @valid_species = $species_defs->valid_species;
-  my $species_check;
-  foreach my $sp (@valid_species) {
-    $species_check->{$sp}++;
-  }
-
   my %species;
+
   foreach my $sp (@valid_species) {
     my $info    = {
         'dir'         => $sp,

@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2014] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -200,6 +200,7 @@ sub variation_table {
   my $g_end         = $gene_slice->end;
   my $phenotype_sql = $phenotype;
      $phenotype_sql =~ s/'/\\'/; # Escape quote character
+  my $db_adaptor = $hub->database('variation');
   my $pf_adaptor = $db_adaptor->get_PhenotypeFeatureAdaptor;
   my (@rows, %list_sources, %list_phe, $list_variations);
   

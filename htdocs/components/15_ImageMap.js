@@ -1,5 +1,5 @@
 /*
- * Copyright [1999-2014] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+ * Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -361,6 +361,10 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
           panel.elLk.labelLayers = panel.elLk.labelLayers.add(
             $('<div class="label_layer">').append('<div class="label_layer_bg">').append(hoverLabel).appendTo(panel.elLk.container).data({area: this})
           );
+        }
+
+        if (panel.labelRight < this.a.coords[2] + 5) {
+          panel.labelRight = this.a.coords[2] + 5;
         }
 
         hoverLabel = null;

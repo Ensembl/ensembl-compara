@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2014] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -18,8 +18,8 @@ limitations under the License.
 
 package EnsEMBL::Web::Document::HTML::WhatsNew;
 
-### This module outputs a selection of news headlines from either 
-### a static HTML file or a database (ensembl_website or ensembl_production) 
+### This module outputs a selection of news headlines from  
+### the ensembl_production database
 ### If a blog URL is configured, it will also try to pull in the RSS feed
 
 use strict;
@@ -27,7 +27,6 @@ use strict;
 use Encode          qw(encode_utf8 decode_utf8);
 use HTML::Entities  qw(encode_entities);
 
-use EnsEMBL::Web::Controller::SSI;
 use EnsEMBL::Web::DBSQL::ArchiveAdaptor;
 use EnsEMBL::Web::DBSQL::ProductionAdaptor;
 use EnsEMBL::Web::Cache;
@@ -44,90 +43,52 @@ sub render {
   my $hub          = $self->hub;
   my $species_defs = $hub->species_defs;
   my $html;
+  my $has_news = 0;
 
-  my $release_id = $hub->param('id') || $hub->param('release_id') || $hub->species_defs->ENSEMBL_VERSION;
-  return unless $release_id;
+  my $release_id = $hub->species_defs->ENSEMBL_VERSION;
 
-  my $adaptor = EnsEMBL::Web::DBSQL::ArchiveAdaptor->new($hub);
-  my $release      = $adaptor->fetch_release($release_id);
-  my $release_date = $release->{'date'};
-  my $html = qq{<h2 class="box-header"><img src="/i/24/announcement.png" style="vertical-align:middle" /> What's New in Release $release_id ($release_date)</h2>};
+  my $header_text = $self->news_header($hub, $release_id);
+  my $html = qq{<h2 class="box-header"><img src="/i/24/announcement.png" style="vertical-align:middle" /> What's New in $header_text</h2>};
 
-  ## Are we using static news content output from a script?
-  my $file         = '/ssi/whatsnew.html';
-  my $include = EnsEMBL::Web::Controller::SSI::template_INCLUDE(undef, $file);
-  if ($include) {
-    ## Only use static page with current release!
-    if ($release_id == $hub->species_defs->ENSEMBL_VERSION && $include) {
-      $html .= $include;
+  my $news_url     = '/info/website/news.html?id='.$release_id;
+  my @items = ();
+  my $add_all_link = 0;
+
+  my $first_production = $hub->species_defs->get_config('MULTI', 'FIRST_PRODUCTION_RELEASE');
+
+  if ($hub->species_defs->multidb->{'DATABASE_PRODUCTION'}{'NAME'}
+      && $first_production && $release_id >= $first_production) {
+    my $adaptor = EnsEMBL::Web::DBSQL::ProductionAdaptor->new($hub);
+    if ($adaptor) {
+      @items = @{$adaptor->fetch_headlines({'release' => $release_id, limit => 3})};
+      $add_all_link = 1;
+    }   
+  }
+
+  if (scalar @items > 0) {
+    $has_news = 1;
+    $html .= "<ul>\n";
+
+    ## format news headlines
+    foreach my $item (@items) {
+      $html .= qq|<li><strong><a href="$news_url#news_$item->{'id'}" style="text-decoration:none">$item->{'title'}</a></strong></li>\n|;
     }
+    $html .= "</ul>\n";
+    $html .= qq(<p style="text-align:right"><a href="/info/website/news.html">Full details</a>);
+
   }
   else {
-    ## Return dynamic content from the ensembl_website database
-    my $news_url     = '/info/website/news.html?id='.$release_id;
-    my @items = ();
-
-    my $first_production = $hub->species_defs->get_config('MULTI', 'FIRST_PRODUCTION_RELEASE');
-
-    if ($hub->species_defs->multidb->{'DATABASE_PRODUCTION'}{'NAME'}
-        && $first_production && $release_id > $first_production) {
-      ## TODO - implement way of selecting interesting news stories
-      #my $p_adaptor = EnsEMBL::Web::DBSQL::ProductionAdaptor->new($hub);
-      #if ($p_adaptor) {
-      #  @items = @{$p_adaptor->fetch_changelog({'release' => $release_id, order_by => 'priority', limit => 5})};
-      #}   
-    }
-    elsif ($hub->species_defs->multidb->{'DATABASE_WEBSITE'}{'NAME'}) { 
-      @items    = @{$adaptor->fetch_news({ release => $release_id, order_by => 'priority', limit => 5 })};
-    } 
-
-    if (scalar @items > 0) {
-      $html .= "<ul>\n";
-
-      ## format news headlines
-      foreach my $item (@items) {
-        my @species = @{$item->{'species'}};
-        my (@sp_ids, $sp_id, $sp_name, $sp_count);
-      
-        if (!scalar(@species) || !$species[0]) {
-          $sp_name = 'all species';
-        } 
-        elsif (scalar(@species) > 5) {
-          $sp_name = 'multiple species';
-        } 
-        else {
-          my @names;
-        
-          foreach my $sp (@species) {
-            if ($sp->{'common_name'} =~ /\./) {
-              push @names, '<i>'.$sp->{'common_name'}.'</i>';
-            } 
-            else {
-              push @names, $sp->{'common_name'};
-            } 
-          }
-        
-          $sp_name = join ', ', @names;
-        }
-      
-        ## generate HTML
-        $html .= qq|<li><strong><a href="$news_url#news_$item->{'id'}" style="text-decoration:none">$item->{'title'}</a></strong> ($sp_name)</li>\n|;
-      }
-      $html .= "</ul>\n";
-    }
-    else {
-      $html .= "<p>No news is currently available for release $release_id.</p>\n";
-    }
+    $html .= "<p>No news is currently available for release $release_id.</p>\n";
   }
 
-  $html .= qq(<p style="text-align:right"><a href="/info/website/news.html">Full details</a>);
-
-  if ($hub->species_defs->multidb->{'DATABASE_PRODUCTION'}{'NAME'}) {
-    $html .= qq( | <a href="/info/website/news_by_topic.html?topic=web">All web updates, by release</a>);
+  if ($add_all_link) {
+    $html .= ' | ' if $has_news; 
+    $html .= qq(<a href="/info/website/news_by_topic.html?topic=web">All web updates, by release</a>);
   }
 
   if ($species_defs->ENSEMBL_BLOG_URL) {
-    $html .= qq( | <a href="http://www.ensembl.info/blog/category/releases/">More news on our blog</a></p>);
+    $html .= ' | ' if $add_all_link;
+    $html .= qq(<a href="http://www.ensembl.info/blog/category/releases/">More news on our blog</a></p>);
     $html .= $self->_include_blog($hub);
   }
   else {

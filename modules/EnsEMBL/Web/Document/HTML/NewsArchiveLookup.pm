@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2014] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -33,6 +33,8 @@ sub render {
   my $hub             = $self->hub;
   my $id              = $hub->param('id');
   my $ensembl_version = $hub->species_defs->ENSEMBL_VERSION;
+  return unless $hub->species_defs->get_config('MULTI', 'FIRST_PRODUCTION_RELEASE') < $ensembl_version;
+
   my $adaptor         = EnsEMBL::Web::DBSQL::ArchiveAdaptor->new($hub);
   my @releases;
   if (! $adaptor->fetch_releases) {
@@ -42,6 +44,7 @@ sub render {
   my $html;
 
   if (@releases) {
+    $html = '<h2 id="archive_lookup">Archive of previous news</h2>';
     $html .= $self->format_release($_, $id) for @releases;
     $html  = qq{
       <form action="/info/website/news.html" method="get">

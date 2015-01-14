@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2014] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -34,7 +34,6 @@ sub render {
   my $hub           = $self->hub;
   my $html;
 
-  my $release_id    = $hub->param('id') || $hub->species_defs->ENSEMBL_VERSION;
   my $site_type     = $hub->species_defs->ENSEMBL_SITETYPE;
 
   if ($hub->species_defs->multidb->{'DATABASE_PRODUCTION'}{'NAME'}) {
@@ -76,7 +75,7 @@ sub render {
       my $adaptor = EnsEMBL::Web::DBSQL::ProductionAdaptor->new($hub);
 
       ## News items
-      my @changes = @{$adaptor->fetch_changelog({'category' => $cat, 'team' => $team_lookup{$cat}})};
+      my @changes = @{$adaptor->fetch_changelog({'category' => $cat, 'team' => $team_lookup{$cat}}, 'site_type' => 'all')};
       my (%seen, @ok_changes);
       
       ## Dedupe records
@@ -122,7 +121,10 @@ sub render {
             }
             $sp_text = join(', ', @names);
           }
-          $html .= " ($sp_text)</h3>\n";
+          $html .= " ($sp_text)";
+          my $site = $record->{'site_type'};
+          $html .= sprintf(' - %s.ensembl.org', $site) if $site ne 'ensembl';
+          $html .= "</h3>\n";
           my $content = $record->{'content'};
           $html .= $content."\n\n";
         }

@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2014] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -42,8 +42,9 @@ sub ICON_MAPPINGS {
     'image'         => { 'file' => 'picture.png',         'alt' => 'image',       'title' => "Export this image"                  },
     'userdata'      => { 'file' => 'page-user.png',       'alt' => 'data',        'title' => "Manage your custom tracks"          },
     'share'         => { 'file' => 'share.png',           'alt' => 'share',       'title' => "Share this $component"              },
-    'config_order'  => { 'file' => 'settings-reset.png',  'alt' => 'reset order', 'title' => "Reset configuration"               },
+    'reset_config'  => { 'file' => 'settings-reset.png',  'alt' => 'reset config', 'title' => "Reset configuration"               },
     'reset_order'   => { 'file' => 'order-reset.png',     'alt' => 'reset order', 'title' => "Reset track order"                },
+    'resize'        => { 'file' => 'image_resize.png',    'alt' => 'resize image', 'title' => "Resize this image"                },
   };
 }
 

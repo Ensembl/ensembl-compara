@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2014] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -826,6 +826,7 @@ sub _sort_similarity_links {
     next if $externalDB eq 'Vega_translation';
     next if $externalDB eq 'OTTP' && $display_id =~ /^\d+$/;    # don't show vega translation internal IDs
     next if $externalDB eq 'shares_CDS_with_ENST';
+    next if $externalDB =~ /^Uniprot_/;
 
     if ($externalDB =~ /^($ontologies)$/) {
       push @{$object->__data->{'links'}{'go'}}, $display_id;

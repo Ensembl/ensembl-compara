@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2014] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -41,7 +41,7 @@ use List::MoreUtils qw(uniq);
 use EnsEMBL::Draw::DrawableContainer;
 use EnsEMBL::Draw::VDrawableContainer;
 
-use EnsEMBL::Web::Document::Image;
+use EnsEMBL::Web::Document::Image::GD;
 use EnsEMBL::Web::Document::Table;
 use EnsEMBL::Web::Document::TwoCol;
 use EnsEMBL::Web::Constants;
@@ -602,7 +602,7 @@ sub new_image {
   
   $_->set_parameter('component', $id) for grep $_->{'type'} eq $config_type, @image_configs;
  
-  my $image = EnsEMBL::Web::Document::Image->new($hub, $self->id, \@image_configs);
+  my $image = EnsEMBL::Web::Document::Image::GD->new($hub, $self->id, \@image_configs);
   $image->drawable_container = EnsEMBL::Draw::DrawableContainer->new(@_) if $self->html_format;
   
   return $image;
@@ -612,7 +612,7 @@ sub new_vimage {
   my $self  = shift;
   my @image_config = $_[1];
   
-  my $image = EnsEMBL::Web::Document::Image->new($self->hub, $self->id, \@image_config);
+  my $image = EnsEMBL::Web::Document::Image::GD->new($self->hub, $self->id, \@image_config);
   $image->drawable_container = EnsEMBL::Draw::VDrawableContainer->new(@_) if $self->html_format;
   
   return $image;
@@ -620,7 +620,7 @@ sub new_vimage {
 
 sub new_karyotype_image {
   my ($self, $image_config) = @_;  
-  my $image = EnsEMBL::Web::Document::Image->new($self->hub, $self->id, $image_config ? [ $image_config ] : undef);
+  my $image = EnsEMBL::Web::Document::Image::GD->new($self->hub, $self->id, $image_config ? [ $image_config ] : undef);
   $image->{'object'} = $self->object;
   
   return $image;
