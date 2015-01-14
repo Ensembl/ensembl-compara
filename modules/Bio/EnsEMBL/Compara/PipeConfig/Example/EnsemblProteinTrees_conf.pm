@@ -73,7 +73,8 @@ sub default_options {
         # Tag attached to every single tree
         'division'              => 'ensembl',
 
-    # dependent parameters: updating 'work_dir' should be enough
+    # dependent parameters: updating 'base_dir' should be enough
+        'base_dir'              => '/lustre/scratch109/ensembl/'.$self->o('ENV', 'USER').'/',
 
     # "Member" parameters:
 
