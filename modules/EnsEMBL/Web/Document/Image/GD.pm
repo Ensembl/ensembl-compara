@@ -219,7 +219,7 @@ sub extra_style {
 sub render_image_tag {
   my ($self, $image) = @_;
   
-  my $url    = $image->url;
+  my $url    = $image->read_url;
   my $width  = $image->width;
   my $height = $image->height;
   my $html;
@@ -403,7 +403,7 @@ sub moveable_tracks {
   return unless $self->has_moveable_tracks;
   
   my $species = $config->species;
-  my $url     = $image->url;
+  my $url     = $image->read_url;
   my ($top, $html);
   
   foreach (@{$self->track_boundaries}) {
