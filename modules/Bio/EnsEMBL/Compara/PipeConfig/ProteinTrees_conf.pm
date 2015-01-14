@@ -713,9 +713,10 @@ sub core_pipeline_analyses {
         {   -logic_name => 'component_genome_dbs_move_factory',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::ComponentGenomeDBFactory',
             -flow_into => {
-                2 => {
+                '2->A' => {
                     'move_component_genes' => { 'source_gdb_id' => '#principal_genome_db_id#', 'target_gdb_id' => '#component_genome_db_id#'}
                 },
+                'A->1' => [ 'hc_polyploid_genes' ],
             },
         },
 
@@ -727,6 +728,15 @@ sub core_pipeline_analyses {
                 },
             },
         },
+
+        {   -logic_name => 'hc_polyploid_genes',
+            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::SqlHealthcheck',
+            -parameters => {
+                'description'   => 'All the genes of the polyploid species should be moved to the component genomes',
+                'query'         => 'SELECT * FROM gene_member WHERE genome_db_id = #principal_genome_db_id#',
+            },
+        },
+
 
         {   -logic_name => 'sequence_table_reuse',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
