@@ -33,6 +33,7 @@ sub render {
   my $hub             = $self->hub;
   my $id              = $hub->param('id');
   my $ensembl_version = $hub->species_defs->ENSEMBL_VERSION;
+  return unless $hub->species_defs->get_config('MULTI', 'FIRST_PRODUCTION_RELEASE') < $ensembl_version;
   my $adaptor         = EnsEMBL::Web::DBSQL::ArchiveAdaptor->new($hub);
   my @releases;
   if (! $adaptor->fetch_releases) {
