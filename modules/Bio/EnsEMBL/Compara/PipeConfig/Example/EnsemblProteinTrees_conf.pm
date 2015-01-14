@@ -74,7 +74,6 @@ sub default_options {
         'division'              => 'ensembl',
 
     # dependent parameters: updating 'work_dir' should be enough
-        'work_dir'              => '/lustre/scratch109/ensembl/'.$self->o('ENV', 'USER').'/protein_trees_'.$self->o('rel_with_suffix'),
 
     # "Member" parameters:
 

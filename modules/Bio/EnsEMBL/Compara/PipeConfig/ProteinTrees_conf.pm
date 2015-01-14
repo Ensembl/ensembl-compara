@@ -92,8 +92,10 @@ sub default_options {
         # Tag attached to every single tree
         'division'              => undef,
 
-    # dependent parameters: updating 'work_dir' should be enough
-        #'work_dir'              => '/lustre/scratch101/ensembl/'.$self->o('ENV', 'USER').'/protein_trees_'.$self->o('rel_with_suffix'),
+    # dependent parameters: updating 'base_dir' should be enough
+        # Note that you can omit the trailing / in base_dir
+        #'base_dir'              => '/lustre/scratch101/ensembl/'.$self->o('ENV', 'USER').'/',
+        'work_dir'              => $self->o('base_dir') . $self->o('pipeline_name'),
         'fasta_dir'             => $self->o('work_dir') . '/blast_db',  # affects 'dump_subset_create_blastdb' and 'blastp'
         'cluster_dir'           => $self->o('work_dir') . '/cluster',
         'dump_dir'              => $self->o('work_dir') . '/dumps',

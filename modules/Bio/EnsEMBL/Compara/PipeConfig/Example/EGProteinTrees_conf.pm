@@ -87,7 +87,7 @@ sub default_options {
         pipeline_name => $self->o('division').'_hom_'.$self->o('eg_release').'_'.$self->o('ensembl_release'),
 
     # dependent parameters: updating 'work_dir' should be enough
-        'work_dir'              =>  '/nfs/nobackup/ensemblgenomes/'.$self->o('ENV', 'USER').'/compara/ensembl_compara_'.$self->o('pipeline_name'),
+        'base_dir'              =>  '/nfs/nobackup/ensemblgenomes/'.$self->o('ENV', 'USER').'/compara/ensembl_compara_',
         'exe_dir'               =>  '/nfs/panda/ensemblgenomes/production/compara/binaries',
 
     # "Member" parameters:
