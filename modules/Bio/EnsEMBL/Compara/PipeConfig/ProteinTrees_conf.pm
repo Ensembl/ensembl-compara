@@ -892,6 +892,7 @@ sub core_pipeline_analyses {
                     'INSERT INTO dnafrag (length, name, genome_db_id, coord_system_name, is_reference) SELECT length, name, #principal_genome_db_id#, coord_system_name, is_reference FROM dnafrag WHERE genome_db_id = #principal_genome_db_id#',
                 ],
             },
+            -flow_into  => [ 'hc_component_dnafrags' ],
         },
 
         {   -logic_name => 'copy_polyploid_dnafrags_from_master',
@@ -903,8 +904,23 @@ sub core_pipeline_analyses {
                 'mode'          => 'insertignore',
             },
             -hive_capacity => $self->o('reuse_capacity'),
+            -flow_into  => [ 'component_dnafrags_hc_factory' ],
         },
 
+        {   -logic_name => 'component_dnafrags_hc_factory',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::ComponentGenomeDBFactory',
+            -flow_into => {
+                2 => [ 'hc_component_dnafrags' ],
+            },
+        },
+
+        {   -logic_name => 'hc_component_dnafrags',
+            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::SqlHealthcheck',
+            -parameters => {
+                'description'   => 'All the component dnafrags must be in the principal genome',
+                'query'         => 'SELECT d1.* FROM dnafrag d1 LEFT JOIN dnafrag d2 ON d2.genome_db_id = #principal_genome_db_id# AND d1.name = d2.name WHERE d1.genome_db_id = #component_genome_db_id# AND d2.dnafrag_id IS NULL',
+            },
+        },
 
         {   -logic_name => 'copy_dnafrags_from_master',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::MySQLTransfer',
