@@ -871,7 +871,7 @@ sub core_pipeline_analyses {
                 'condition'     => '"#locator#" =~ /^Bio::EnsEMBL::DBSQL::DBAdaptor/',
             },
             -flow_into => {
-                2 => [ $self->o('master_db') ? ('copy_dnafrags_from_master_no_flow') : () ],
+                2 => [ $self->o('master_db') ? ('copy_polyploid_dnafrags_from_master') : () ],
                 3 => [ 'component_genome_dbs_duplicate_factory' ],
             },
         },
@@ -894,7 +894,7 @@ sub core_pipeline_analyses {
             },
         },
 
-        {   -logic_name => 'copy_dnafrags_from_master_no_flow',
+        {   -logic_name => 'copy_polyploid_dnafrags_from_master',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::MySQLTransfer',
             -parameters => {
                 'src_db_conn'   => '#master_db#',
