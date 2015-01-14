@@ -84,7 +84,8 @@ sub default_options {
 
     # custom pipeline name, in case you don't like the default one
         # Used to prefix the database name (in HiveGeneric_conf)
-        pipeline_name => $self->o('division').'_hom_'.$self->o('eg_release').'_'.$self->o('ensembl_release'),
+        # Define rel_suffix for re-runs of the pipeline
+        pipeline_name => $self->o('division').'_hom_'.$self->o('eg_release').'_'.$self->o('ensembl_release').$self->o('rel_suffix'),
 
     # dependent parameters: updating 'work_dir' should be enough
         'base_dir'              =>  '/nfs/nobackup/ensemblgenomes/'.$self->o('ENV', 'USER').'/compara/ensembl_compara_',

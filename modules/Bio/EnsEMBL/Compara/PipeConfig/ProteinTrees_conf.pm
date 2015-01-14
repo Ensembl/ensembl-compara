@@ -76,15 +76,22 @@ sub default_options {
     # User details
         #'email'                 => 'john.smith@example.com',
 
+    # parameters inherited from EnsemblGeneric_conf and unlikely to be redefined:
+        # It defaults to Bio::EnsEMBL::ApiVersion::software_version(): you're unlikely to change the value
+        # 'ensembl_release'       => 68,
+        # Automatically concatenates 'ensembl_release' and 'rel_suffix'.
+        # 'rel_with_suffix'       => $self->o('ensembl_release').$self->o('rel_suffix'),
+
     # parameters that are likely to change from execution to another:
         # It is very important to check that this value is current (commented out to make it obligatory to specify)
-        #'mlss_id'               => 40077,
-        # It defaults to Bio::EnsEMBL::ApiVersion::software_version(): you're unlikely to change the value
-        #'ensembl_release'       => 68,
+        # 'mlss_id'               => 40077,
         # You can add a letter to distinguish this run from other runs on the same release
-        'rel_with_suffix'       => $self->o('ensembl_release')."",
+        # 'rel_suffix'            => '',
+
         # names of species we don't want to reuse this time
         'do_not_reuse_list'     => [ ],
+
+        # where to find the list of Compara methods. Unlikely to be changed
         'method_link_dump_file' => $self->o('ensembl_cvs_root_dir').'/ensembl-compara/sql/method_link.txt',
 
     # custom pipeline name, in case you don't like the default one
