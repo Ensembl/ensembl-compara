@@ -144,7 +144,7 @@ sub write_output {
     # Whether all the species are reused
     $self->db->get_PipelineWideParametersAdaptor->store( {'param_name' => 'are_all_species_reused', 'param_value' => ((grep {not $_->{is_reused}} @{$self->param('genome_dbs')}) ? 0 : 1)} );
 
-    $self->dataflow_output_id($self->input_id, 2) if grep {$_->is_reused} @{$self->param('genome_dbs')};
+    $self->dataflow_output_id($self->input_id, 2) if grep {$_->{is_reused}} @{$self->param('genome_dbs')};
 }
 
 sub _write_shared_ss {
