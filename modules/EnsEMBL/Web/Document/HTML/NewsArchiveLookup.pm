@@ -34,6 +34,7 @@ sub render {
   my $id              = $hub->param('id');
   my $ensembl_version = $hub->species_defs->ENSEMBL_VERSION;
   return unless $hub->species_defs->get_config('MULTI', 'FIRST_PRODUCTION_RELEASE') < $ensembl_version;
+
   my $adaptor         = EnsEMBL::Web::DBSQL::ArchiveAdaptor->new($hub);
   my @releases;
   if (! $adaptor->fetch_releases) {
@@ -43,6 +44,7 @@ sub render {
   my $html;
 
   if (@releases) {
+    $html = '<h2 id="archive_lookup">Archive of previous news</h2>';
     $html .= $self->format_release($_, $id) for @releases;
     $html  = qq{
       <form action="/info/website/news.html" method="get">
