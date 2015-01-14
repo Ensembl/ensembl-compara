@@ -682,14 +682,13 @@ sub core_pipeline_analyses {
             },
             -flow_into => {
                 '2->A' => [ 'dnafrag_table_reuse' ],
-                'A->1' => [ 'normal_genome_reuse_factory' ],
+                'A->1' => [ 'nonpolyploid_genome_reuse_factory' ],
             },
         },
 
-        {   -logic_name => 'normal_genome_reuse_factory',
+        {   -logic_name => 'nonpolyploid_genome_reuse_factory',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GenomeDBFactory',
             -parameters => {
-                'polyploid_genomes' => 0,
                 'component_genomes' => 0,
                 'species_set_id'    => '#reuse_ss_id#',
             },
@@ -824,12 +823,12 @@ sub core_pipeline_analyses {
         {   -logic_name => 'load_fresh_members_factory',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
             -flow_into => {
-                '1->A' => [ 'normal_genome_load_fresh_factory' ],
+                '1->A' => [ 'nonpolyploid_genome_load_fresh_factory' ],
                 'A->1' => [ 'hc_members_globally' ],
             },
         },
 
-        {   -logic_name => 'normal_genome_load_fresh_factory',
+        {   -logic_name => 'nonpolyploid_genome_load_fresh_factory',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GenomeDBFactory',
             -parameters => {
                 'polyploid_genomes' => 0,
