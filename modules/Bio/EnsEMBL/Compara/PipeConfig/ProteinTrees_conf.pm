@@ -872,11 +872,11 @@ sub core_pipeline_analyses {
             },
             -flow_into => {
                 2 => [ $self->o('master_db') ? ('copy_polyploid_dnafrags_from_master') : () ],
-                3 => [ 'component_genome_dbs_duplicate_factory' ],
+                3 => [ 'component_dnafrags_duplicate_factory' ],
             },
         },
 
-        {   -logic_name => 'component_genome_dbs_duplicate_factory',
+        {   -logic_name => 'component_dnafrags_duplicate_factory',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::ComponentGenomeDBFactory',
             -flow_into => {
                 2 => {
