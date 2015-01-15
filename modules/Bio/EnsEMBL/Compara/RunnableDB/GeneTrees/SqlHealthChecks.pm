@@ -320,11 +320,6 @@ my $config = {
                 description => 'Checks that the seq_member_id column of the homology_member table only links to canonical peptides',
                 query => 'SELECT * FROM homology JOIN homology_member hm USING (homology_id) JOIN gene_member gm USING (gene_member_id) WHERE gene_tree_root_id = #gene_tree_id# AND gm.canonical_member_id != hm.seq_member_id',
             },
-            {
-                description => 'Checks that the members involved in one2one orthologies are not involved in any other orthologies',
-                query => 'SELECT method_link_species_set_id, hm.gene_member_id FROM homology h JOIN homology_member hm USING (homology_id) WHERE gene_tree_root_id = #gene_tree_id# GROUP BY method_link_species_set_id, hm.gene_member_id HAVING COUNT(*)>1 AND GROUP_CONCAT(h.description) LIKE "%one2one%"',
-            },
-
         ],
     },
 
