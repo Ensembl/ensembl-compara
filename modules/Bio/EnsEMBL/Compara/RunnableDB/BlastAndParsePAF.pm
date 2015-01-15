@@ -135,7 +135,7 @@ sub fetch_input {
     print STDERR "Found ", scalar(@$genome_db_list), " genomes to blast this member against.\n" if ($self->debug);
     my $blastdb_dir = $self->param('fasta_dir');
     foreach my $genome_db (@$genome_db_list) {
-        my $fastafile = $blastdb_dir . '/' . $genome_db->name() . '_' . $genome_db->assembly() . '.fasta';
+        my $fastafile = $blastdb_dir . '/' . $genome_db->name() . '_' . $genome_db->assembly() . ($genome_db->genome_component ? '_comp_'.$genome_db->genome_component : '') . '.fasta';
         $fastafile =~ s/\s+/_/g;    # replace whitespace with '_' characters
         $fastafile =~ s/\/\//\//g;  # converts any // in path to /
         $self->param('all_blast_db')->{$fastafile} = $genome_db->dbID;
