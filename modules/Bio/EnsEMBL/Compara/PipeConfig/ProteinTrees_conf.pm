@@ -1001,7 +1001,7 @@ sub core_pipeline_analyses {
         },
 
         {   -logic_name => 'nonreusedspecies_factory',
-            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GenomeDBFactory',
             -parameters => {
                 'polyploid_genomes' => 0,
                 'species_set_id'    => $self->o('reuse_level') eq 'members' ? undef : '#nonreuse_ss_id#',
