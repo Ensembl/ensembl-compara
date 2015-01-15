@@ -36,13 +36,9 @@ sub render {
   my $hub           = $self->hub;
   my $release_id    = $hub->param('id') || $hub->species_defs->ENSEMBL_VERSION;
   my $site_type     = $hub->species_defs->ENSEMBL_SITETYPE;
-  my $adaptor       = EnsEMBL::Web::DBSQL::ArchiveAdaptor->new($hub);
-  my $release       = $adaptor->fetch_release($release_id);
-  my $release_date  = $release->{'date'};
   my $species_name  = $hub->species ? $hub->species_defs->SPECIES_COMMON_NAME : '';
 
   $html .= sprintf('<h1>News for %s %s', $species_name, $self->news_header($hub, $release_id));
-  $html .= sprintf(' (%s)', $release_date) if $release_date;
   $html .= '</h1>';
 
   ## Are we using static news content output from a script?
@@ -72,7 +68,7 @@ sub render {
         foreach my $subsection (@{$section->{'subsections'}}) {
           $toc .= sprintf '<li><a href="#%s">%s</a>', 
                   $subsection->{'header'}{'id'}, $subsection->{'header'}{'text'};
-          $full .= sprintf '<h3 id="%s">%s</h3>', 
+          $full .= sprintf '<h3 id="%s" class="news-subcategory">%s</h3>', 
                           $subsection->{'header'}{'id'}, $subsection->{'header'}{'text'};
           $full .= $self->_format_items($subsection->{'items'});
   
