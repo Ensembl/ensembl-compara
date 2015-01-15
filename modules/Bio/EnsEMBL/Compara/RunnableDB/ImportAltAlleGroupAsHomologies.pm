@@ -44,7 +44,7 @@ use Bio::EnsEMBL::Compara::GeneTree;
 use Bio::EnsEMBL::Compara::Homology;
 use Bio::EnsEMBL::Compara::RunnableDB::LoadMembers;
 
-use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable', 'Bio::EnsEMBL::Compara::RunnableDB::RunCommand');
+use base ('Bio::EnsEMBL::Compara::RunnableDB::RunCommand');
 
 
 sub param_defaults {

@@ -78,7 +78,7 @@ use Bio::EnsEMBL::BaseAlignFeature;
 use Bio::EnsEMBL::Compara::HMMProfile;
 use Bio::EnsEMBL::Compara::Utils::Cigars;
 
-use base ('Bio::EnsEMBL::Compara::RunnableDB::RunCommand', 'Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
+use base ('Bio::EnsEMBL::Compara::RunnableDB::RunCommand');
 
 
 sub param_defaults {
