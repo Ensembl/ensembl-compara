@@ -127,7 +127,9 @@ sub write_output {
 
     foreach my $genome_db (@$all_gdbs) {
         my $ssg = $self->_write_ss( [$genome_db] );
-        my $mlss_pg = $self->_write_mlss( $ssg, $self->param('ml_para') );
+        unless ($genome_db->genome_component) {
+            my $mlss_pg = $self->_write_mlss( $ssg, $self->param('ml_para') );
+        }
 
         if ($genome_db->is_polyploid) {
             my $mlss_hg = $self->_write_mlss( $ssg, $self->param('ml_homoeo') );
