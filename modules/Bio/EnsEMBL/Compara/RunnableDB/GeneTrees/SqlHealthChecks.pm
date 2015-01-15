@@ -205,6 +205,10 @@ my $config = {
                 query => 'SELECT DISTINCT hgenome_db_id FROM peptide_align_feature_#genome_db_id#',
                 expected_size => '= #species_count#',
             },
+            {
+                description => 'Each target member must be associated to a single target species',
+                query => 'SELECT hmember_id FROM peptide_align_feature_#genome_db_id# GROUP BY hmember_id HAVING COUNT(DISTINCT hgenome_db_id) > 1',
+            }
         ],
     },
 
