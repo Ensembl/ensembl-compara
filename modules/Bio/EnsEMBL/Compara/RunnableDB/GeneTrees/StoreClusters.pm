@@ -90,6 +90,7 @@ sub store_clusterset {
     } else {
         @cluster_list = keys %$allclusters;
     }
+    warn scalar(@cluster_list), " clusters to add\n";
 
     my @allcluster_ids;
     foreach my $cluster_name (@cluster_list) {
