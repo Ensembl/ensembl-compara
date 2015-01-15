@@ -53,12 +53,73 @@ sub render {
     $html .= '<h2>Headlines</h2>'.$include;
   }
 
+  my @news = $self->get_news($release_id);
+
+  if (@news) {
+  
+    my $toc .= qq(<h2>News categories</h2>\n<ul>);
+    my $full;
+
+    foreach my $section (@news) {
+    
+      $toc .= sprintf '<li><a href="#%s">%s</a>', 
+                  $section->{'header'}{'id'}, $section->{'header'}{'text'};
+      $full .= sprintf '<h2 id="%s" class="news-category">%s</h2>', 
+                          $section->{'header'}{'id'}, $section->{'header'}{'text'};
+
+      if ($section->{'subsections'}) {
+        $toc .= '<ul>';
+        foreach my $subsection (@{$section->{'subsections'}}) {
+          $toc .= sprintf '<li><a href="#%s">%s</a>', 
+                  $subsection->{'header'}{'id'}, $subsection->{'header'}{'text'};
+          $full .= sprintf '<h3 id="%s">%s</h3>', 
+                          $subsection->{'header'}{'id'}, $subsection->{'header'}{'text'};
+          $full .= $self->_format_items($subsection->{'items'});
+  
+        }
+        $toc .= '</ul>';
+      }
+      else {
+        $full .= $self->_format_items($section->{'items'});
+      }
+      $toc .= '</li>';
+    }
+    $toc .= "</ul>\n\n";
+
+    $html .= $toc.$full;
+  }
+  else {
+    $html .= qq(<p>No news is currently available for release $release_id.</p>\n);
+  }
+  return $html;
+}
+
+sub _format_items {
+  my ($self, $items) = @_;
+  return unless scalar @{$items||[]};
+  my $html;
+
+  foreach my $item (@$items) {      
+    my $header = $item->{'header'};
+    $html .= sprintf('<h%s id="%s">%s%s</h%s><p>%s</p>', 
+                              $header->{'level'}, $header->{'id'}, 
+                              $header->{'text'}, $header->{'species'},
+                              $header->{'level'}, $item->{'content'},
+                    ); 
+  }
+  return $html;
+}
+
+sub get_news {
+  my ($self, $release_id) = @_;
+  my $hub           = $self->hub;
+  my (@news, @changes);
+
   my $first_production = $hub->species_defs->get_config('MULTI', 'FIRST_PRODUCTION_RELEASE');
 
   if ($hub->species_defs->multidb->{'DATABASE_PRODUCTION'}{'NAME'} && $first_production && $release_id >= $first_production) {
     ## get news changes
     my $adaptor = EnsEMBL::Web::DBSQL::ProductionAdaptor->new($hub);
-    my @changes = ();
     if ($adaptor) {
       my $params = {'release' => $release_id};
       if ($hub->species) {
@@ -103,7 +164,6 @@ sub render {
 
     if (scalar(@changes) > 0) {
 
-      my $record;
       my @order = $has_cats ? qw(web genebuild variation regulation alignment schema other) : sort keys %ok_teams;
       my %cat_lookup = (
                       'web'         => 'New web displays and tools',
@@ -119,93 +179,92 @@ sub render {
                         'Funcgen'   => 'Regulation',
                         );
 
-      ## TOC
-      $html .= qq(<h2>News categories</h2>
-                <ul>\n);
-      foreach my $header (@order) {
-        next unless $headers{$header};
-        my $title   = $has_cats ? $cat_lookup{$header} : ucfirst($header);
-        $html .= sprintf '<li><a href="#cat-%s">%s</a>', $header, $title;
-        if ($has_cats && $header eq 'other') {
-          my @teams = sort keys %$sorted_teams;
-          if (scalar @teams) {
-            $html .= '<ul>';
-            foreach my $team (@teams) {
-              my $team_name = $team_lookup{$team} || ucfirst($team);
-              $html .= sprintf '<li><a href="#team-%s">%s</a>', $team, $team_name;
-            }
-            $html .= '</ul>';
-          }
-        }
-        $html .= '</li>';
-      }
-      $html .= "</ul>\n\n";
-
-      ## format news changes
       foreach my $header (@order) {
         next unless $headers{$header};
         my @records = @{$sorted->{$header}||[]};  
+        next unless scalar @records;
+
+        my $section = {};
         my $title   = $has_cats ? $cat_lookup{$header} : ucfirst($header);
-        $html .= sprintf '<h2 id="cat-%s" class="news-category">%s</h2>', $header, $title;
-        my $header_level = 3;
+        $section->{'header'} = {'id' => 'cat-'.$header, 'text' => $title};
+
+        my $header_level;
         if ($has_cats && $header eq 'other') {
           $header_level = 4; 
           @records = sort {$a->{'team'} cmp $b->{'team'}} @records;
-        } 
-        my $previous_team;
-      
-     
-        foreach my $record (@records) {
-          if ($has_cats && $header eq 'other') {
-            my $team = $record->{'team'};
-            if ($team && $team ne $previous_team) {
-              my $team_name = $team_lookup{$team} || ucfirst($team);
-              $html .= sprintf '<h3 id="team-%s" class="news-category">%s</h3>', $team, $team_name;
-            }
-            $previous_team = $team;
-          }
-          $html .= sprintf('<h%s id="change_%s">%s', $header_level, $record->{'id'}, $record->{'title'});
+          $section->{'subsections'} = [];
 
-          my @species = @{$record->{'species'}}; 
-          my $sp_text;
-  
-          if ($species_name && $species_name eq $species[0]->{'web_name'}) {
-            $sp_text = '';
-          }
-          elsif (!@species || !$species[0]) {
-            $sp_text = 'all species';
-          }
-          elsif (@species > 5) {
-            $sp_text = 'multiple species';
-          }
-          else {
-            my @names;
-            foreach my $sp (@species) {
-              if ($sp->{'web_name'} =~ /\./) {
-                push @names, '<i>'.$sp->{'web_name'}.'</i>';
-              }
-              else {
-                push @names, $sp->{'web_name'};
-              }  
+          ## Compile subsections
+          my $team_sections = {};
+          foreach my $record (@records) {
+            my $team = $record->{'team'};
+            if (!$team_sections->{$team}) {
+              my $team_name = $team_lookup{$team} || ucfirst($team);
+              $team_sections->{$team} = {
+                                        'header' => {'id' => 'team-'.$team, 'text' => $team_name}, 
+                                        'items' => [],
+                                      };
             }
-            $sp_text = join(', ', @names);
+            push @{$team_sections->{$team}{'items'}}, $self->_build_item($record, $header_level); 
           }
-          $html .= " ($sp_text)" if $sp_text;
-          $html .= "\n</h$header_level>\n";
-          my $content = $record->{'content'};
-          $html .= $content."\n\n";
+
+          ## Put subsections in correct order
+          my @teams = sort keys %$sorted_teams;
+          foreach my $team (@teams) {
+            push @{$section->{'subsections'}}, $team_sections->{$team};
+          }
         }
+        else {
+          $header_level = 3;
+          foreach my $record (@records) {
+            push @{$section->{'items'}}, $self->_build_item($record, $header_level); 
+          }
+        }
+        push @news, $section;
       }
     }
-    else {
-      $html .= qq(<p>No news is currently available for release $release_id.</p>\n);
-    }
+  }
+  return @news;
+}
+  
+sub _build_item {
+  my ($self, $record, $header_level) = @_;
+  my $species_name  = $self->hub->species ? $self->hub->species_defs->SPECIES_COMMON_NAME : '';
+  my $item;      
+     
+  $item->{'header'} = {
+                      'level' => $header_level, 
+                      'id'    => 'change_'.$record->{'id'}, 
+                      'text' => $record->{'title'},
+                      }; 
+
+  my @species = @{$record->{'species'}}; 
+  my $sp_text;
+  
+  if ($species_name && $species_name eq $species[0]->{'web_name'}) {
+    $sp_text = '';
+  }
+  elsif (!@species || !$species[0]) {
+    $sp_text = 'all species';
+  }
+  elsif (@species > 5) {
+    $sp_text = 'multiple species';
   }
   else {
-    $html .= '<p>No news is available for this release</p>';
+    my @names;
+    foreach my $sp (@species) {
+      if ($sp->{'web_name'} =~ /\./) {
+        push @names, '<i>'.$sp->{'web_name'}.'</i>';
+      }
+      else {
+        push @names, $sp->{'web_name'};
+      }  
+    }
+    $sp_text = join(', ', @names);
   }
-
-  return $html;
+  $item->{'header'}{'species'} = " ($sp_text)" if $sp_text;
+  $item->{'content'} = $record->{'content'};
+  return $item;
 }
 
 1;
