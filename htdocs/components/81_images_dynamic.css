@@ -178,7 +178,7 @@ div.icon                      { padding: 4px 8px 4px 0; }
 .sprite:hover                 { background-position: 0 -18px; }
 .sprite_disabled,
 .sprite_disabled.sprite:hover { background-position: 0 -36px; cursor: default; }
-span.sprite                   { float: left; width: 16px; margin: 2px 4px 0 4px; }
+.sprite                       { float: left; width: 16px; margin: 2px 4px 0 4px; }
 .sprites-nowrap               { white-space: nowrap; }
 .sprites-nowrap .sprite       { float:none; }
 
