@@ -71,124 +71,100 @@ sub new {
 
   bless $self, $class;
 
-  if ($args{'cgi'}) { 
-    ## We need to read the data from the system's CGI location
-    ## but otherwise treat this as a new file
-    my @cgi_path = split('/', $args{'file'});
-    delete $args{'file'};
-    $self->{'read_name'}        = pop @cgi_path;
-    $self->{'read_ext'}         = '';
-    $self->{'read_compression'} = '';
-    $self->{'base_read_path'}   = join('/', @cgi_path);
-    $self->{'read_location'}    = $self->{'base_read_path'}.'/'.$self->{'read_name'}; 
-  }
+  my $read_path = $self->{'file'};
 
-  my $read_path = $self->{'read_path'} || $self->{'file'} || $self->{'file_name'};
+  ## Existing file or user upload
+  if ($read_path) {
+    $self->{'read_location'} = $read_path;
 
-  if ($read_path && !$args{'cgi'}) {
-    ## DEALING WITH AN EXISTING FILE
-   
-    ## Clean up the path
+    ## Clean up the path before processing further
     $read_path  =~ s/^\s+//;
     $read_path  =~ s/\s+$//;
     my $tmp     = $self->{'hub'}->species_defs->ENSEMBL_TMP_DIR;
     $read_path  =~ s/$tmp//;
     $tmp        = $self->{'hub'}->species_defs->ENSEMBL_TMP_URL;
     $read_path  =~ s/$tmp//;
-    $self->{'read_path'} = $read_path;
 
-    my @path = grep length, split('/', $read_path);
+    my $read_name;
+    if ($args{'cgi'}) {
+      $read_name = $args{'name'};
+    }
+    else {
+      ## Backwards compatibility with previously uploaded TmpFile paths
+      ## TODO Remove if block, once TmpFile modules are removed
+      if ($self->{'prefix'}) {
+        $self->{'read_location'} = join('/', $self->{'base_dir'}, $args{'prefix'}, $read_path);
+        $read_name = $read_path;
+      }
+      else {
+        my @path = grep length, split('/', $read_path);
+        $read_name = sanitise_filename(pop @path);
+      }
+    }
 
-    ## Parse filename
-    my $read_name = sanitise_filename(pop @path);
     my ($name, $extension, $compression) = split(/\./, $read_name);
     $compression =~ s/2$//; ## We use 'bz' internally, not 'bz2'
+
     $self->{'read_name'}        = $read_name;
     $self->{'read_ext'}         = $extension;
     $self->{'read_compression'} = $compression;
     $self->{'read_compress'}    = $self->{'read_compression'} ? 1 : 0;
-
-    ## Parse rest of path
-    $self->{'read_dir_path'}    = join('/', @path); 
-    
-    ## Backwards compatibility with TmpFile paths
-    ## TODO Remove after TmpFile modules are removed
-    if ($self->{'prefix'}) {
-      ## These values are slightly bogus, but will work with old filepaths
-      $self->{'read_path'} = $self->{'prefix'}.'/'.$self->{'read_path'};
-      delete $self->{'prefix'};
-      $self->{'read_datestamp'}   = $self->{'prefix'};
-      $self->{'user_identifier'}  = shift @path if scalar @path;
-      $self->{'read_sub_dir'}     = join('/', @path) if scalar @path;
-    }
-    elsif ($self->{'read_dir_path'}) { 
-      $self->{'read_datestamp'}   = shift @path;
-      $self->{'user_identifier'}  = shift @path;
-      $self->{'read_sub_dir'}     = shift @path if scalar @path;
-    }
-    else {
-      $self->{'read_datestamp'}   = $self->set_datestamp;
-      $self->{'user_identifier'}  = $self->set_user_identifier;
-      $self->{'read_dir_path'}    = $self->{'read_datestamp'}.'/'.$self->{'user_identifier'};
-      $self->{'read_path'}        = $self->{'read_dir_path'}.'/'.$self->{'file_name'};
-    }
-
-    $self->{'base_read_path'}    = $self->{'base_dir'}.'/'.$self->{'read_dir_path'}; 
-    $self->{'read_location'}     = $self->{'base_dir'}.'/'.$self->{'read_path'}; 
-    $self->{'read_url'}          = $self->{'base_url'}.'/'.$self->{'read_path'}; 
   }
-  else {
-    ## CREATING A NEW FILE (or trying to...)
-    ## Note that we allow generic parameter names here
+  elsif ($args{'content'}) {
+    ## Creating a new file from form input
+    $self->{'content'} = $args{'content'};
+  }
 
-    if (my $name = $self->{'name'} || $self->{'write_name'}) {
-      $self->{'write_name'} = sanitise_filename($name);
+  ## Prepare to write new local file
+  ## N.B. We need to allow for user-supplied names with and without extensions
+  my ($name, $extension, $compression);
+  my $sub_dir = $args{'sub_dir'};
+
+  if ($args{'cgi'} || !$read_path) {
+    my $filename = $args{'name'};
+    if ($filename) {
+      $filename = sanitise_filename($filename);
+      ($name, $extension, $compression) = split(/\./, $filename);
+      $compression =~ s/2$//; ## We use 'bz' internally, not 'bz2'
+
       ## Set a random path in case we have multiple files with this name
-      $self->{'write_sub_dir'} ||= $self->{'sub_dir'};
-      $self->{'write_sub_dir'} ||= random_string;
+      $sub_dir ||= random_string;
     }
     else {
       ## Create a file name if none given
-      $self->{'write_name'} = $self->set_timestamp if $args{'timestamp_name'};
-      $self->{'write_name'} .= random_string;
+      $name = $self->set_timestamp if $args{'timestamp_name'};
+      $name .= random_string;
     }
 
-    if ($self->{'extension'}) {
-      $self->{'write_ext'} = $self->{'extension'};
-      delete $self->{'extension'};
+    if (!$extension) {
+      $extension = $args{'extension'} || 'txt';
     }
-    $self->{'write_ext'} ||= 'txt';
-    ## Allow for atypical file extensions such as gff3 or bedGraph
-    (my $extension  = $self->{'write_ext'}) =~ s/^\.?(\w+)(\.gz)?$/$1/;
-    $self->{'write_ext'}    = $extension;
-
-    my $file_name           = $self->{'write_name'}.'.'.$extension;
-
-    if ($self->{'compress'} || $self->{'compression'} || $self->{'write_compression'}) {
-      $self->{'write_compression'} ||= $self->{'compression'};
+    if (!$compression) {
+      $compression = $args{'compression'} || 0;
       ## Default to gzip
-      unless ($self->{'write_compression'} && $self->{'write_compression'} =~ /gz|bz|zip/) {
-        $self->{'write_compression'} = 'gz';
+      if (($args{'compress'} && !$compression) || ($compression && $compression !~ /gz|bz|zip/)) {
+        $compression = 'gz';
       }
-      $file_name .= '.'.$self->{'write_compression'};
     }
 
-    $self->{'write_name'} = $file_name;
+    $self->{'write_ext'} = $extension;
+    $self->{'write_name'} = $name.'.'.$extension;
 
-    my $datestamp = $self->{'datestamp'} || $self->set_datestamp;
-    my $user_id   = $self->{'user_identifier'} || $self->set_user_identifier;
+    $self->{'write_compression'} = $compression;
+    $self->{'write_name'} .= '.'.$compression if $compression;
+
+    ## Now determine where to write the file to
+    my $datestamp = $args{'datestamp'} || $self->set_datestamp;
+    my $user_id   = $args{'user_identifier'} || $self->set_user_identifier;
+
     my @path_elements = ($datestamp, $user_id);
-    $self->{'write_sub_dir'} ||= $self->{'sub_dir'};
-    push @path_elements, $self->{'write_sub_dir'} if $self->{'write_sub_dir'};
-    $self->{'write_dir_path'} = join('/', @path_elements); 
+    push @path_elements, $sub_dir if $sub_dir;
+    push @path_elements, $self->{'write_name'};
 
-    push @path_elements, $file_name;
-    $self->{'write_path'} = join('/', @path_elements); 
+    $self->{'write_location'} = join('/', $self->{'base_dir'}, @path_elements); 
+    $self->{'write_url'}      = join('/', $self->{'base_url'}, @path_elements); 
+  } 
 
-    $self->{'base_write_path'}   = $self->{'base_dir'}.'/'.$self->{'write_dir_path'}; 
-    $self->{'write_location'}    = $self->{'base_dir'}.'/'.$self->{'write_path'}; 
-    $self->{'write_url'}         = $self->{'base_url'}.'/'.$self->{'write_path'}; 
-  }
   #warn ">>> FILE OBJECT:";
   #while (my($k, $v) = each (%$self)) {
   #  warn "... SET $k = $v";
@@ -201,6 +177,7 @@ sub read_name {
 ### a
 ### Assume that we read back from the same file we wrote to
 ### unless read parameters were set separately
+### N.B. This is the full name with extensions
   my $self = shift;
   return $self->{'read_name'} || $self->{'write_name'};
 }
@@ -209,6 +186,7 @@ sub write_name {
 ### a
 ### Assume that we write back to the same file unless 
 ### write parameters have been set
+### N.B. This is the full name with extensions
   my $self = shift;
   return $self->{'write_name'} || $self->{'read_name'};
 }
@@ -249,92 +227,6 @@ sub compress {
   return $self->{'compress'};
 }
 
-sub read_datestamp {
-### a
-### Assume that we read back from the same file we wrote to
-### unless read parameters were set separately
-  my $self = shift;
-  return $self->{'read_datestamp'} || $self->{'write_datestamp'};
-}
-
-sub write_datestamp {
-### a
-### Assume that we write back to the same file unless 
-### write parameters have been set
-  my $self = shift;
-  return $self->{'write_datestamp'} || $self->{'read_datestamp'};
-}
-
-sub user_identifier {
-### a
-### This should be the same for both reading and writing
-  my $self = shift;
-  return $self->{'user_identifier'};
-}
-
-sub read_path {
-### a
-### Assume that we read back from the same file we wrote to
-### unless read parameters were set separately
-  my $self = shift;
-  return $self->{'read_path'} || $self->{'write_path'};
-}
-
-sub write_path {
-### a
-### Assume that we write back to the same file unless 
-### write parameters have been set
-  my $self = shift;
-  return $self->{'write_path'} || $self->{'read_path'};
-}
-
-sub read_sub_dir {
-### a
-### Assume that we read back from the same file we wrote to
-### unless read parameters were set separately
-  my $self = shift;
-  return $self->{'read_sub_dir'} || $self->{'read_sub_dir'};
-}
-
-sub write_sub_dir {
-### a
-### Assume that we write back to the same file unless 
-### write parameters have been set
-  my $self = shift;
-  return $self->{'write_sub_dir'} || $self->{'read_sub_dir'};
-}
-
-sub base_read_path {
-### a
-### Assume that we read back from the same file we wrote to
-### unless read parameters were set separately
-  my $self = shift;
-  return $self->{'base_read_path'} || $self->{'base_write_path'};
-}
-
-sub base_write_path {
-### a
-### Assume that we write back to the same file unless 
-### write parameters have been set
-  my $self = shift;
-  return $self->{'base_write_path'} || $self->{'base_read_path'};
-}
-
-sub base_read_dir {
-### a
-### Assume that we read back from the same file we wrote to
-### unless read parameters were set separately
-  my $self = shift;
-  return $self->{'base_read_dir'} || $self->{'base_write_dir'};
-}
-
-sub base_write_dir {
-### a
-### Assume that we write back to the same file unless 
-### write parameters have been set
-  my $self = shift;
-  return $self->{'base_write_dir'} || $self->{'base_read_dir'};
-}
 
 sub read_location {
 ### a
@@ -490,8 +382,12 @@ sub read {
 ### Get entire content of file, uncompressed
 ### @return Hashref 
   my $self = shift;
-  my $result = {};
 
+  ## Don't access source again if we've already fetched the contents
+  my $content = $self->{'content'};
+  return {'content' => $content} if $content;
+
+  my $result = {};
   foreach (@{$self->{'input_drivers'}}) {
     my $method = 'EnsEMBL::Web::File::Utils::'.$_.'::read_file'; 
     my $args = {
