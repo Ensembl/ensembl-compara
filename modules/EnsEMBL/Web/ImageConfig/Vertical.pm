@@ -21,8 +21,7 @@ package EnsEMBL::Web::ImageConfig::Vertical;
 use strict;
 
 use EnsEMBL::Web::Text::FeatureParser;
-use EnsEMBL::Web::TmpFile::Text;
-use EnsEMBL::Web::Tools::Misc;
+use EnsEMBL::Web::File::User;
 
 use base qw(EnsEMBL::Web::ImageConfig);
 
@@ -167,12 +166,14 @@ sub get_dna_align_features {
 
 sub get_parsed_features {
   my ($self, $track, $parser, $bins, $colours) = @_;
-  my $url     = $track->get('url');
-  my $content = $url ? EnsEMBL::Web::Tools::Misc::get_url_content($url)->{'content'} : EnsEMBL::Web::TmpFile::Text->new(filename => $track->get('file'))->retrieve;
+  my $file_path = $track->get('url') || $track->get('file');
+  my %args = ('hub' => $self->hub, 'file' => $file_path);
+  my $file = EnsEMBL::Web::File::User->new(%args);
+  my $result = $file->read;
   
-  return undef unless $content;
+  return undef unless $result->{'content'};
   
-  $parser->parse($content, $track->get('format'));
+  $parser->parse($result->{'content'}, $track->get('format'));
   
   my $max_values = $parser->max_values;
   my $sort       = 0;

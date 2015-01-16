@@ -57,8 +57,7 @@ use EnsEMBL::Web::Data::Session;
 use EnsEMBL::Web::Document::Table;
 use EnsEMBL::Web::Text::Feature::VEP_OUTPUT;
 use EnsEMBL::Web::Text::FeatureParser;
-use EnsEMBL::Web::TmpFile::Text;
-use EnsEMBL::Web::Tools::Misc qw(get_url_filesize);
+use EnsEMBL::Web::File::User;
 
 use base qw(EnsEMBL::Web::Object);
 
@@ -100,11 +99,12 @@ sub save_to_db {
   my $user     = $hub->user;
   my $tmpdata  = $session->get_data(%args);
   my $assembly = $tmpdata->{'assembly'};
-  my $file     = EnsEMBL::Web::TmpFile::Text->new(filename => $tmpdata->{'filename'}); ## TODO: proper error exceptions !!!!!
+  my $file     = EnsEMBL::Web::File::User->new(hub => $hub, file => $tmpdata->{'file'}); 
   
   return unless $file->exists;
-  
-  my $data   = $file->retrieve or die "Can't get data out of the file $tmpdata->{'filename'}";
+  my $result = $file->read;
+
+  my $data   = $result->{'content'} or die "Can't get data out of the file $tmpdata->{'filename'}";
   my $format = $tmpdata->{'format'};
   my $parser = EnsEMBL::Web::Text::FeatureParser->new($self->species_defs);
   my (@analyses, @messages, @errors);
@@ -198,8 +198,11 @@ sub store_data {
     warn Dumper($report->{'errors'});
     return undef;
   }
-  
-  EnsEMBL::Web::TmpFile::Text->new(filename => $tmp_data->{'filename'})->delete if $tmp_data->{'filename'}; ## Delete cached file
+
+  if ($tmp_data->{'filename'}) { ## Delete cached file
+    my $file = EnsEMBL::Web::File::User->new(hub => $hub, file => $tmp_data->{'file'});
+    $file->delete;
+  }
   
   ## logic names
   my $analyses    = $report->{'analyses'};
@@ -278,7 +281,9 @@ sub delete_upload {
     
     if ($upload->{'filename'}) {
       push @track_names, "upload_$code";
-      EnsEMBL::Web::TmpFile::Text->new(filename => $upload->{'filename'})->delete if $owner;
+      if ($owner) {
+        my $file = EnsEMBL::Web::File::User->new(hub => $hub, file => $upload->{'file'});
+        $file->delete;
     } else {
       my @analyses = split ', ', $upload->{'analyses'};
       push @track_names, @analyses;

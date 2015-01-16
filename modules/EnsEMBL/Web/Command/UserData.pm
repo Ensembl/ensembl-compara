@@ -82,7 +82,6 @@ sub upload {
             );
 
   if ($method eq 'url') {
-    $args{'input_drivers'} = ['URL'];
     $args{'file'}          = $hub->param($method);
     $args{'upload'}        = 'url';
   } 
