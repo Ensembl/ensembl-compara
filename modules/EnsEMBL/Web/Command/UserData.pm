@@ -84,6 +84,7 @@ sub upload {
   if ($method eq 'url') {
     $args{'input_drivers'} = ['URL'];
     $args{'file'}          = $hub->param($method);
+    $args{'upload'}        = 'url';
   } 
   elsif ($method eq 'text') {
     ## Get content straight from CGI, since there's no input file
@@ -94,9 +95,9 @@ sub upload {
     $args{'content'} = $text;
   }
   else { 
-    $args{'file'} = $hub->input->tmpFileName($hub->param($method));
-    $args{'name'} = $hub->param($method);
-    $args{'cgi'}  = 1;
+    $args{'file'}   = $hub->input->tmpFileName($hub->param($method));
+    $args{'name'}   = $hub->param($method);
+    $args{'upload'} = 'cgi';
   }
 
   my $file = EnsEMBL::Web::File::User->new(%args);

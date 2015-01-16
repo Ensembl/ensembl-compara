@@ -72,6 +72,7 @@ sub new {
   bless $self, $class;
 
   my $read_path = $args{'file'};
+  my $bare_name;
 
   ## Existing file or user upload
   if ($read_path) {
@@ -86,13 +87,13 @@ sub new {
     $read_path  =~ s/$tmp//;
 
     my $read_name;
-    if ($args{'cgi'}) {
+    if ($args{'upload'} && $args{'upload'} eq 'cgi') {
       $read_name = $args{'name'};
     }
     else {
       ## Backwards compatibility with previously uploaded TmpFile paths
       ## TODO Remove if block, once TmpFile modules are removed
-      if ($self->{'prefix'}) {
+      if ($args{'prefix'}) {
         $self->{'read_location'} = join('/', $self->{'base_dir'}, $args{'prefix'}, $read_path);
         $read_name = $read_path;
       }
@@ -105,6 +106,7 @@ sub new {
     my ($name, $extension, $compression) = split(/\./, $read_name);
     $compression =~ s/2$//; ## We use 'bz' internally, not 'bz2'
 
+    $bare_name                  = $name;
     $self->{'read_name'}        = $read_name;
     $self->{'read_ext'}         = $extension;
     $self->{'read_compression'} = $compression;
@@ -120,13 +122,21 @@ sub new {
   my ($name, $extension, $compression);
   my $sub_dir = $args{'sub_dir'};
 
-  if ($args{'cgi'} || !$read_path) {
+  if ($args{'upload'} || !$read_path) {
     my $filename = $args{'name'};
     if ($filename) {
       $filename = sanitise_filename($filename);
       ($name, $extension, $compression) = split(/\./, $filename);
       $compression =~ s/2$//; ## We use 'bz' internally, not 'bz2'
 
+      ## Set a random path in case we have multiple files with this name
+      $sub_dir ||= random_string;
+    }
+    elsif ($self->{'read_name'}) { 
+      ## Uploaded file, so keep original name but save uncompressed
+      $name = $bare_name;
+      $extension = $self->{'read_ext'};
+      $compression = 0;
       ## Set a random path in case we have multiple files with this name
       $sub_dir ||= random_string;
     }
