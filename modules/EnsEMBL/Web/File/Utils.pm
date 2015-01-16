@@ -36,8 +36,7 @@ sub sanitise_filename {
 ### Users often break the rules for safe, Unix-friendly filenames
 ### so clean up input
   my $file_name = shift;
-  $file_name =~ s/[^\w]/_/g;
-  $file_name =~ s/\W//g;
+  $file_name =~ s/[^\w\.]/_/g;
   return $file_name;
 }
 
