@@ -80,10 +80,10 @@ sub upload {
               'hub'             => $self->hub,
               'timestamp_name'  => 1,
             );
-  my $result;
 
   if ($method eq 'url') {
     $args{'input_drivers'} = ['URL'];
+    $args{'file'}          = $hub->param($method);
   } 
   elsif ($method eq 'text') {
     ## Get content straight from CGI, since there's no input file
@@ -91,15 +91,16 @@ sub upload {
     if ($type eq 'coords') {
       $text =~ s/\s/\n/g;
     }
-    $result = {'content' => $text};
+    $args{'content'} = $text;
   }
   else { 
     $args{'file'} = $hub->input->tmpFileName($hub->param($method));
-    $args{'cgi'}       = 1;
+    $args{'name'} = $hub->param($method);
+    $args{'cgi'}  = 1;
   }
 
   my $file = EnsEMBL::Web::File::User->new(%args);
-  $result ||= $file->read;
+  my $result = $file->read;
 
   ## Add upload to session
   if ($result->{'error'}) {
@@ -124,9 +125,7 @@ sub upload {
       ## system's CGI directory
       my $data = $session->add_data(
                                     type      => 'upload',
-                                    filename  => $file->write_name,
-                                    file      => $file->write_path,
-                                    datestamp => $file->write_datestamp,
+                                    file      => $file->write_location,
                                     filesize  => length($result->{'content'}),
                                     code      => $code,
                                     md5       => $md5,
