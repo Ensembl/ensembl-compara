@@ -88,7 +88,7 @@ sub fetch_input {
     $self->throw("no input protein_tree") unless $self->param('protein_tree');
     $self->param('protein_tree')->preload();
 
-  print "RETRY COUNT: ".$self->input_job->retry_count()."\n";
+    print "RETRY COUNT: ".$self->input_job->retry_count()."\n" if ($self->debug);
 
     $self->param('input_fasta', $self->dumpProteinTreeToWorkdir($self->param('protein_tree')) );
 
@@ -164,7 +164,10 @@ sub write_output {
         }
     }
 
-    $self->compara_dba->get_GeneAlignAdaptor->store($self->param('protein_tree'));
+    # The second parameter is 1 to make sure we don't have "leftovers" from
+    # previous runs
+    $self->compara_dba->get_GeneAlignAdaptor->store($self->param('protein_tree'), 1);
+
     # Store various alignment tags:
     $self->_store_aln_tags($self->param('protein_tree'));
 
