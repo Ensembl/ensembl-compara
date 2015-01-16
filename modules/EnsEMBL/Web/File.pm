@@ -71,7 +71,7 @@ sub new {
 
   bless $self, $class;
 
-  my $read_path = $self->{'file'};
+  my $read_path = $args{'file'};
 
   ## Existing file or user upload
   if ($read_path) {
