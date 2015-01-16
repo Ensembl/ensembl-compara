@@ -86,12 +86,12 @@ sub features {
     my %args = ('hub' => $self->{'config'}->hub);
 
     if ($sub_type eq 'url') {
-      $args{'file_path'} = $self->my_config('url');
+      $args{'file'} = $self->my_config('url');
       $args{'input_drivers'} = ['URL']; 
     }
     else {
-      $args{'file_path'} = $self->my_config('file');
-      if ($args{'file_path'} !~ /\//) { ## TmpFile upload
+      $args{'file'} = $self->my_config('file');
+      if ($args{'file'} !~ /\//) { ## TmpFile upload
         $args{'prefix'} = 'user_upload';
       }
     }

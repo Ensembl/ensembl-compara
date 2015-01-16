@@ -678,7 +678,7 @@ sub load_user_tracks {
         glyphset    => '_flat_file',
         colourset   => 'classes',
         sub_type    => 'tmp',
-        file        => $entry->{'filename'},
+        file        => $entry->{'file'},
         format      => $entry->{'format'},
         caption     => $entry->{'name'},
         renderers   => $renderers,
