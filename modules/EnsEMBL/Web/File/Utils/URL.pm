@@ -183,21 +183,21 @@ sub read_file {
 
   if ($error) {
     if ($args->{'nice'}) {
-      throw exception('URLException', "File $url could not be read: $error") unless $args->{'no_exception'};
-      return 0;
+      return {'error' => [$error]};
     }
     else {
-      return {'error' => [$error]};
+      throw exception('URLException', "File $url could not be read: $error") unless $args->{'no_exception'};
+      return 0;
     }
   }
   else {
     my $compression = defined($args->{'compression'}) || get_compression($url);
     my $uncomp = $compression ? uncompress($content, $compression) : $content;
     if ($args->{'nice'}) {
-      return $uncomp;
+      return {'content' => $uncomp};
     }
     else {
-      return {'content' => $uncomp};
+      return $uncomp;
     }
   }
 }
