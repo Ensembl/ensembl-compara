@@ -88,8 +88,9 @@ sub get_hub_info {
     $hub_file = 'hub.txt';
     $url      =~ s|/$||;
   }
+  my $file_args = {'hub' => $self->{'hub'}, 'nice' => 1}; 
 
-  my $response = read_file("$url/$hub_file", {'hub' => $self->{'hub'}});
+  my $response = read_file("$url/$hub_file", $file_args);
   my $content;
  
   if ($response->{'error'}) {
@@ -108,7 +109,7 @@ sub get_hub_info {
   return { error => ['No genomesFile found'] } unless $hub_details{'genomesFile'};
  
   ## Now get genomes file and parse 
-  $response = read_file("$url/$hub_details{'genomesFile'}", {'hub' => $self->{'hub'}}); 
+  $response = read_file("$url/$hub_details{'genomesFile'}", $file_args); 
   if ($response->{'error'}) {
     return $response;
   }
@@ -147,7 +148,7 @@ sub get_hub_info {
       foreach my $genome (keys %ok_genomes) {
       $file = $genome_info{$genome};
  
-      $response = read_file("$url/$file", {'hub' => $self->{'hub'}}); 
+      $response = read_file("$url/$file", $file_args); 
 
       if ($response->{'error'}) {
         push @errors, "$genome ($url/$file): ".@{$response->{'error'}};
@@ -211,7 +212,7 @@ sub parse {
   
   ## Get all the text files in the hub directory
   foreach (@$files) {
-    $response = read_file($_, {'hub' => $self->{'hub'}});
+    $response = read_file($_, {'hub' => $self->{'hub'}, 'nice' => 1});
 
     if ($response->{'error'}) {
       $tree->append($tree->create_node("error_$_", { error => @{$response->{'error'}}, file => $_ }));
