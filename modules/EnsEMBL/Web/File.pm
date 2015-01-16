@@ -54,16 +54,22 @@ sub new {
 ###  - compression String (optional) String
 ### @return EnsEMBL::Web::File
   my ($class, %args) = @_;
-  my $self = \%args;
   #use Carp qw(cluck); cluck 'CREATING NEW FILE OBJECT';
   #warn '!!! CREATING NEW FILE OBJECT';
   #while (my($k, $v) = each(%args)) {
   #warn "@@@ ARG $k = $v";
   #}
+  my $hub = $args{'hub'};
+  my $self = {
+              'hub'             => $args{'hub'},
+              'base_dir'        => $args{'base_dir'} || $hub->species_defs->ENSEMBL_TMP_DIR,
+              'base_url'        => $args{'base_url'} || $hub->species_defs->ENSEMBL_TMP_URL,
+              'input_drivers'   => $args{'input_drivers'} || ['IO'], 
+              'output_drivers'  => $args{'output_drivers'} || ['IO'], 
+              'error'           => undef,
+              };
 
-  ## Set base locations
-  $args{'base_dir'} ||= $self->{'hub'}->species_defs->ENSEMBL_TMP_DIR;
-  $args{'base_url'} ||= $self->{'hub'}->species_defs->ENSEMBL_TMP_URL;
+  bless $self, $class;
 
   if ($args{'cgi'}) { 
     ## We need to read the data from the system's CGI location
@@ -76,13 +82,6 @@ sub new {
     $self->{'base_read_path'}   = join('/', @cgi_path);
     $self->{'read_location'}    = $self->{'base_read_path'}.'/'.$self->{'read_name'}; 
   }
-
-  ## Set default drivers (disk only)
-  $args{'input_drivers'} ||= ['IO'];
-  $args{'output_drivers'} ||= ['IO'];
-
-  $self->{'error'} = undef;
-  bless $self, $class;
 
   my $read_path = $self->{'read_path'} || $self->{'file'} || $self->{'file_name'};
 
