@@ -38,7 +38,7 @@ sub content {
 
   my $filename    = $hub->param('name');
   my $format      = $hub->param('format');
-  my $path        = $hub->param('file_path');
+  my $path        = $hub->param('url');
   my $compression = $hub->param('compression');
   my $html;
 
@@ -89,7 +89,7 @@ sub content {
   $html .= $form->render;
 
   unless ($format eq 'RTF' || $compression) {
-    my $file = EnsEMBL::Web::File::User->new(hub => $hub, file_path => $path);
+    my $file = EnsEMBL::Web::File::User->new(hub => $hub, file => $path);
     if ($file) {
       $html .= '<h2 style="margin-top:1em">File preview</h2><div class="code"><pre style="color:#333">';
       $html .= $file->read;

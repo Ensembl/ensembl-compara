@@ -815,12 +815,12 @@ sub get_data_from_session {
   ## Build in some backwards compatiblity with old file paths
   if ($type eq 'url') {
     $file_params{'input_drivers'} = ['URL'];
-    $file_params{'read_path'}     = $tempdata->{'read_path'} || $tempdata->{'url'};
+    $file_params{'file'} = $tempdata->{'file'} || $tempdata->{'url'};
   }
   else {
-    $file_params{'read_path'} = $tempdata->{'read_path'};
-    unless ($file_params{'read_path'}) {
-      $file_params{'read_path'} = join('/', $tempdata->{'prefix'}, $tempdata->{'filename'});
+    $file_params{'file'} = $tempdata->{'file'};
+    unless ($file_params{'file'}) {
+      $file_params{'file'} = join('/', $tempdata->{'prefix'}, $tempdata->{'filename'});
     }
   }
 

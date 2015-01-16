@@ -47,11 +47,11 @@ sub new {
 ### N.B. You need either the path (to an existing file) or
 ### the name and extension (for new files)
 ### @param Hash of arguments 
-###  - hub - for getting TMP_DIR location, etc
-###  - file_path - full path to file (optional)
-###  - name (optional) String - not including file extension
-###  - extension (optional) String
-###  - compression (optional) String
+###  - hub Object - for getting TMP_DIR location, etc
+###  - file String - full path to file (optional)
+###  - name String (optional) String - not including file extension
+###  - extension String (optional) String
+###  - compression String (optional) String
 ### @return EnsEMBL::Web::File
   my ($class, %args) = @_;
   my $self = \%args;
@@ -68,8 +68,8 @@ sub new {
   if ($args{'cgi'}) { 
     ## We need to read the data from the system's CGI location
     ## but otherwise treat this as a new file
-    my @cgi_path = split('/', $args{'file_path'});
-    delete $args{'file_path'};
+    my @cgi_path = split('/', $args{'file'});
+    delete $args{'file'};
     $self->{'read_name'}        = pop @cgi_path;
     $self->{'read_ext'}         = '';
     $self->{'read_compression'} = '';
@@ -84,7 +84,7 @@ sub new {
   $self->{'error'} = undef;
   bless $self, $class;
 
-  my $read_path = $self->{'read_path'} || $self->{'file_path'} || $self->{'file_name'};
+  my $read_path = $self->{'read_path'} || $self->{'file'} || $self->{'file_name'};
 
   if ($read_path && !$args{'cgi'}) {
     ## DEALING WITH AN EXISTING FILE

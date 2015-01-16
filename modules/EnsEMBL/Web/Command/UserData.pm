@@ -94,7 +94,7 @@ sub upload {
     $result = {'content' => $text};
   }
   else { 
-    $args{'file_path'} = $hub->input->tmpFileName($hub->param($method));
+    $args{'file'} = $hub->input->tmpFileName($hub->param($method));
     $args{'cgi'}       = 1;
   }
 
@@ -125,7 +125,7 @@ sub upload {
       my $data = $session->add_data(
                                     type      => 'upload',
                                     filename  => $file->write_name,
-                                    read_path => $file->write_path,
+                                    file      => $file->write_path,
                                     datestamp => $file->write_datestamp,
                                     filesize  => length($result->{'content'}),
                                     code      => $code,

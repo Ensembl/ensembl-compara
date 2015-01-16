@@ -77,7 +77,7 @@ sub content {
       if ($file->{'filename'}) {
         my %args = (
                     'hub'             => $hub, 
-                    'file_name'       => $file->{'filename'}, 
+                    'file'            => $file->{'file'}, 
                     'extension'       => $file->{'extension'}
                     );
         if ($file->{'prefix'}) {
