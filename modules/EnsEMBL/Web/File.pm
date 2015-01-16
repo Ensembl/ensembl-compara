@@ -60,11 +60,12 @@ sub new {
   #warn "@@@ ARG $k = $v";
   #}
   my $hub = $args{'hub'};
+  my $input_drivers = ($args->{'file'} && $args->{'file'} =~ /^[http|ftp]/) ? ['URL'] : ['IO'];
   my $self = {
               'hub'             => $args{'hub'},
               'base_dir'        => $args{'base_dir'} || $hub->species_defs->ENSEMBL_TMP_DIR,
               'base_url'        => $args{'base_url'} || $hub->species_defs->ENSEMBL_TMP_URL,
-              'input_drivers'   => $args{'input_drivers'} || ['IO'], 
+              'input_drivers'   => $args{'input_drivers'} || $input_drivers, 
               'output_drivers'  => $args{'output_drivers'} || ['IO'], 
               'error'           => undef,
               };
