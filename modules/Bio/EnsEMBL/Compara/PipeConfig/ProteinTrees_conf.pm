@@ -742,7 +742,7 @@ sub core_pipeline_analyses {
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::SqlHealthcheck',
             -parameters => {
                 'description'   => 'All the genes of the polyploid species should be moved to the component genomes',
-                'query'         => 'SELECT * FROM gene_member WHERE genome_db_id = #principal_genome_db_id#',
+                'query'         => 'SELECT * FROM gene_member WHERE genome_db_id = #genome_db_id#',
             },
         },
 
