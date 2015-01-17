@@ -119,7 +119,7 @@ sub write_output {
     my $self = shift;
 
     my $all_gdbs = $self->param('genome_dbs');
-    my $ss = $self->_write_shared_ss('all', $all_gdbs);
+    my $ss = $self->_write_ss($all_gdbs);
     my $mlss = $self->_write_mlss( $ss, $self->param('ml_genetree') );
     $self->db->get_PipelineWideParametersAdaptor->store( {'param_name' => 'mlss_id', 'param_value' => $mlss->dbID} );
 
