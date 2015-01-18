@@ -593,7 +593,7 @@ sub toString {
         ."', taxon_id='".$self->taxon_id
         ."', karyotype='".$self->has_karyotype
         ."', high_coverage='".$self->is_high_coverage
-        ."', genome_component='".$self->genome_component if $self->genome_component
+        .($self->genome_component ? "', genome_component='".$self->genome_component : '')
         ."', locator='".$self->locator
         ."'";
 }
