@@ -312,10 +312,7 @@ sub update_genome_db {
     #New ID search if $offset is true
 
     if($offset) {
-    	my $sth = $compara_dba->dbc->prepare('select max(genome_db_id) from genome_db where genome_db_id > ?');
-    	$sth->execute($offset);
-    	my ($max_id) = $sth->fetchrow_array();
-    	$sth->finish();
+        my ($max_id) = $compara_dba->dbc->db_handle->selectrow_array('select max(genome_db_id) from genome_db where genome_db_id > ?', undef, $offset);
     	if(!$max_id) {
     		$max_id = $offset;
     	}
