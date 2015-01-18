@@ -479,7 +479,7 @@ sub core_pipeline_analyses {
                 'filename'      => 'snapshot_5_before_dnds',
             },
             -flow_into  => {
-                '1->A'  => [ 'group_genomes_under_taxa' ],
+                '1->A'  => [ 'polyploid_move_back_factory' ],
                 'A->1'  => [ 'backbone_pipeline_finished' ],
             },
         },
@@ -2263,6 +2263,31 @@ sub core_pipeline_analyses {
         },
 
 # ---------------------------------------------[homology step]-----------------------------------------------------------------------
+
+        {   -logic_name => 'polyploid_move_back_factory',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GenomeDBFactory',
+            -parameters => {
+                'component_genomes' => 0,
+                'normal_genomes'    => 0,
+            },
+            -flow_into => {
+                '2->A' => [ 'component_genome_dbs_move_back_factory' ],
+                'A->1' => [ 'group_genomes_under_taxa' ],
+            },
+        },
+
+        {   -logic_name => 'component_genome_dbs_move_back_factory',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::ComponentGenomeDBFactory',
+            -flow_into => {
+                2 => {
+                    'move_back_component_genes' => { 'source_gdb_id' => '#component_genome_db_id#', 'target_gdb_id' => '#principal_genome_db_id#'},
+                },
+            },
+        },
+
+        {   -logic_name => 'move_back_component_genes',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::MoveComponentGenes',
+        },
 
         {   -logic_name => 'group_genomes_under_taxa',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::GroupGenomesUnderTaxa',
