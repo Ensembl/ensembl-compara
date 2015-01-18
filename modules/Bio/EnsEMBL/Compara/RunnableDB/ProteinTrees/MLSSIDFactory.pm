@@ -100,18 +100,14 @@ sub fetch_input {
         }
 
         if ($ok_methods{'ENSEMBL_HOMOEOLOGUES'}) {
-            my $mlss = $mlss_adaptor->fetch_by_method_link_type_genome_db_ids('ENSEMBL_HOMOEOLOGUES', [$genome_db_id1]);
-            push @mlss_ids, $mlss->dbID if defined $mlss;
+            if ($self->compara_dba->get_GenomeDBAdaptor->fetch_by_dbID($genome_db_id1)->is_polyploid) {
+                push @mlss_ids, $mlss_adaptor->fetch_by_method_link_type_genome_db_ids('ENSEMBL_HOMOEOLOGUES', [$genome_db_id1])->dbID;
+            }
         }
         
         foreach my $genome_db_id2 (@{$species_set}) {
             if ($ok_methods{'ENSEMBL_ORTHOLOGUES'}) {
                 push @mlss_ids, $mlss_adaptor->fetch_by_method_link_type_genome_db_ids('ENSEMBL_ORTHOLOGUES', [$genome_db_id1, $genome_db_id2])->dbID;
-            }
-
-            if ($ok_methods{'ENSEMBL_HOMOEOLOGUES'}) {
-                my $mlss = $mlss_adaptor->fetch_by_method_link_type_genome_db_ids('ENSEMBL_HOMOEOLOGUES', [$genome_db_id1, $genome_db_id2]);
-                push @mlss_ids, $mlss->dbID if defined $mlss;
             }
         }
     }

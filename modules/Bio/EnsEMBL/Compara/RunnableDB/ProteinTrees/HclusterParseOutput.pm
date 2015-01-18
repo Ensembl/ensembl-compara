@@ -120,6 +120,7 @@ sub parse_hclusteroutput {
         $allclusters{$cluster_id}->{'division'} = $division if $division;
     }
     close FILE;
+    warn scalar(keys %allclusters), " clusters loaded\n";
 
 }
 

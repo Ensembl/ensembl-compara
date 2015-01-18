@@ -116,20 +116,34 @@ sub fetch_input {
 
             $self->param('locator', $core_dba->locator($suffix_separator) );  # substitute the given locator by one in conventional format
         }
+        $self->param('core_dba', $core_dba);
+        return;
+    }
 
-    } elsif( $self->param('species_name') ) {    # perform our tricky multiregistry search: find the last one still suitable
+    if ($self->param('master_dbID')) {
+        $self->param('master_dba', Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->go_figure_compara_dba( $self->param_required('master_db') ) );
+        my $master_genome_db = $self->param('master_dba')->get_GenomeDBAdaptor->fetch_by_dbID($self->param('master_dbID'));
+        $self->param('master_genome_db', $master_genome_db);
+        die sprintf("Could not find the genome_db_id %d in the master database\n", $self->param('master_dbID')) if not $master_genome_db;
+
+        # Let's give all the parameters that should uniquely map
+        $self->param('species_name', $master_genome_db->name);
+        $self->param('genebuild', $master_genome_db->genebuild);
+        $self->param('assembly_name', $master_genome_db->assembly);
+        $self->param('genome_component', $master_genome_db->genome_component);
+    }
+
+    if( $self->param('species_name') ) {    # perform our tricky multiregistry search: find the last one still suitable
 
         foreach my $this_core_dba (@{$self->iterate_through_registered_species}) {
 
             my $this_assembly = $this_core_dba->assembly_name();
             my $this_start_date = $this_core_dba->get_MetaContainer->get_genebuild();
-            my $this_taxon_id = $this_core_dba->get_MetaContainer->get_taxonomy_id();
 
             my $genebuild = $self->param('genebuild') || $this_start_date;
             my $assembly_name = $self->param('assembly_name') || $this_assembly;
-            my $taxon_id = $self->param('taxon_id') || $this_taxon_id;
 
-            if($this_assembly eq $assembly_name && $this_start_date eq $genebuild && $this_taxon_id eq $taxon_id) {
+            if($this_assembly eq $assembly_name && $this_start_date eq $genebuild) {
                 $core_dba = $this_core_dba;
                 $self->param('assembly_name', $assembly_name);
 
@@ -137,7 +151,7 @@ sub fetch_input {
                     last;
                 }
             } else {
-                warn "Found assembly '$this_assembly' when looking for '$assembly_name', or '$this_start_date' when looking for '$genebuild', or '$this_taxon_id' when looking for '$taxon_id'";
+                warn "Found assembly '$this_assembly' when looking for '$assembly_name', or '$this_start_date' when looking for '$genebuild'\n";
             }
 
         } # try next registry server
@@ -153,7 +167,7 @@ sub fetch_input {
 sub run {
     my $self = shift @_;
 
-    my $genome_db = $self->create_genome_db($self->param('core_dba'), $self->param('genome_db_id'), $self->param('assembly_name'), $self->param('taxon_id'), $self->param('locator'), $self->param('has_karyotype'), $self->param('is_high_coverage'));
+    my $genome_db = $self->create_genome_db($self->param('core_dba'), $self->param('genome_db_id'), $self->param('locator'), $self->param('genome_component'), $self->param('master_genome_db'));
 
     $self->param('genome_db', $genome_db);
 }
@@ -167,19 +181,21 @@ sub write_output {      # store the genome_db and dataflow
 # ------------------------- non-interface subroutines -----------------------------------
 
 sub create_genome_db {
-    my ($self, $core_dba, $asked_genome_db_id, $asked_assembly_name, $asked_taxon_id, $asked_locator, $asked_has_karyotype, $asked_is_high_coverage) = @_;
+    my ($self, $core_dba, $asked_genome_db_id, $asked_locator, $asked_genome_component, $master_object) = @_;
 
     my $locator         = $asked_locator || $core_dba->locator($suffix_separator);
 
     my $genome_db       = Bio::EnsEMBL::Compara::GenomeDB->new(
         -DB_ADAPTOR => $core_dba,
-
-        -TAXON_ID => $asked_taxon_id,
-        -ASSEMBLY => $asked_assembly_name,
-        -HAS_KARYOTYPE => $asked_has_karyotype,
-        -IS_HIGH_COVERAGE => $asked_is_high_coverage,
+        # Extra arguments that cannot be guessed from the core database
+        -GENOME_COMPONENT => $asked_genome_component,
     );
-    $genome_db->dbID( $asked_genome_db_id ) if $asked_genome_db_id;
+    if ($master_object) {
+        $genome_db->_check_equals($master_object);
+        $genome_db->dbID($master_object->dbID);
+    } elsif ($asked_genome_db_id) {
+        $genome_db->dbID( $asked_genome_db_id );
+    }
     $genome_db->locator( $locator );
 
     return $genome_db;
@@ -218,7 +234,9 @@ sub iterate_through_registered_species {
     }
 
     for(my $r_ind=0; $r_ind<scalar(@$registry_dbs); $r_ind++) {
-        Bio::EnsEMBL::Registry->load_registry_from_db( %{ $registry_dbs->[$r_ind] }, -species_suffix => $suffix_separator.$r_ind, -db_version => $self->param('db_version'), -verbose => $self->debug );
+        my %reg_params = %{ $registry_dbs->[$r_ind] };
+        $reg_params{'-db_version'} = $self->param('db_version') if $self->param('db_version') and not $reg_params{'-db_version'};
+        Bio::EnsEMBL::Registry->load_registry_from_db( %reg_params, -species_suffix => $suffix_separator.$r_ind, -verbose => $self->debug );
 
         my $no_alias_check = 1;
         my $this_core_dba = Bio::EnsEMBL::Registry->get_DBAdaptor($self->param('species_name').$suffix_separator.$r_ind, 'core', $no_alias_check) || next;

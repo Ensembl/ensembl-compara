@@ -63,6 +63,8 @@ sub default_options {
         'email'                 => $self->o('ENV', 'USER').'@sanger.ac.uk',
 
     # parameters that are likely to change from execution to another:
+        # You can add a letter to distinguish this run from other runs on the same release
+        'rel_suffix'            => '',
         # names of species we don't want to reuse this time
         'do_not_reuse_list'     => [ ],
 
@@ -71,8 +73,8 @@ sub default_options {
         # Tag attached to every single tree
         'division'              => 'ensembl',
 
-    # dependent parameters: updating 'work_dir' should be enough
-        'work_dir'              => '/lustre/scratch109/ensembl/'.$self->o('ENV', 'USER').'/protein_trees_'.$self->o('rel_with_suffix'),
+    # dependent parameters: updating 'base_dir' should be enough
+        'base_dir'              => '/lustre/scratch109/ensembl/'.$self->o('ENV', 'USER').'/',
 
     # "Member" parameters:
 

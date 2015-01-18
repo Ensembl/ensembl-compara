@@ -32,7 +32,7 @@ Used to create all the species set / MLSS objects needed for a gene-tree pipelin
  - all the pairwise orthologues MLSS
  - two empty species sets for reuse / nonreuse lists
 
-If the master_db and mlss_id parameters, the Runnable will copy over the MLSS
+If the master_db parameter is set, the Runnable will copy over the MLSS
 from the master database. Otherwise, it will create new ones from the list of
 all the species.
 
@@ -69,81 +69,109 @@ sub fetch_input {
         warn "Storing without a reference_db\n" if($self->debug());
     }
 
-    if ($self->param('mlss_id')) {
-        my $mlss_id = $self->param('mlss_id');
-        my $mlss = $self->param('reference_dba')->get_MethodLinkSpeciesSetAdaptor->fetch_by_dbID($mlss_id);
-        $self->param('genome_dbs', $mlss->species_set_obj->genome_dbs);
-    } else {
-        $self->param('genome_dbs', $self->compara_dba->get_GenomeDBAdaptor->fetch_all());
-    }
+    $self->param('genome_dbs', $self->compara_dba->get_GenomeDBAdaptor->fetch_all());
 
     my $method_adaptor = $self->compara_dba->get_MethodAdaptor;
     $self->param('ml_ortho', $method_adaptor->fetch_by_type('ENSEMBL_ORTHOLOGUES'));
     $self->param('ml_para', $method_adaptor->fetch_by_type('ENSEMBL_PARALOGUES'));
     $self->param('ml_homoeo', $method_adaptor->fetch_by_type('ENSEMBL_HOMOEOLOGUES'));
     $self->param('ml_genetree', $method_adaptor->fetch_by_type($self->param('tree_method_link')));
-
-    my %homoeologous_groups = ();
-    foreach my $i (1..(scalar(@{$self->param('homoeologous_genome_dbs')}))) {
-        my $group = $self->param('homoeologous_genome_dbs')->[$i-1];
-        foreach my $gdb (@{$group}) {
-            if (looks_like_number($gdb)) {
-                $homoeologous_groups{$gdb} = $i;
-            } elsif (ref $gdb) {
-                $homoeologous_groups{$gdb->dbID} = $i;
-            } else {
-                $gdb = $self->compara_dba->get_GenomeDBAdaptor->fetch_by_name_assembly($gdb);
-                $homoeologous_groups{$gdb->dbID} = $i;
-            }
-        }
-    }
-    $self->param('homoeologous_groups', \%homoeologous_groups);
-
 }
 
+sub _has_duplicates {
+    my $a = shift;
+    my %seen = ();
+    map {$seen{$_}++} @$a;
+    return scalar(keys %seen) != scalar(@$a) ? 1 : 0;
+}
+
+sub run {
+    my $self = shift;
+
+    # Here we check that the data is consistent
+
+    die "Duplicates in reused_gdb_ids\n" if _has_duplicates($self->param('reused_gdb_ids'));
+    die "Duplicates in nonreused_gdb_ids\n" if _has_duplicates($self->param('nonreused_gdb_ids'));
+
+    my %all_gdbs = map {$_->dbID => $_} @{$self->param('genome_dbs')};
+    my @reused_gdbs = map {$all_gdbs{$_} || die "Invalid genome_db_id $_ in 'reused_gdb_ids'\n"} @{$self->param('reused_gdb_ids')};
+    my @nonreused_gdbs = map {$all_gdbs{$_} || die "Invalid genome_db_id $_ in 'nonreused_gdb_ids'\n"} @{$self->param('nonreused_gdb_ids')};
+
+    map {$_->{is_reused} = 1} @reused_gdbs;
+    map {$_->{is_reused} = 0} @nonreused_gdbs;
+
+    foreach my $gdb (@{$self->param('genome_dbs')}) {
+        next unless $gdb->is_polyploid;
+
+        # Component GenomeDBs are missing, we need to add them
+        map {$_->{is_reused} = $gdb->{is_reused}} @{$gdb->component_genome_dbs};
+
+        # If component genomes are used, they must *all* be there
+        my $components_in_core_db = $gdb->db_adaptor->get_GenomeContainer->get_genome_components;
+        my $components_in_compara = $gdb->component_genome_dbs;
+        die sprintf("Some %s genome components are missing from the species set !\n", $gdb->name) if scalar(@$components_in_core_db) != scalar(@$components_in_compara);
+    }
+
+    die "Some genome_dbs are missing from reused_gdb_ids and nonreused_gdb_ids\n" if grep {not defined $_->{is_reused}} @{$self->param('genome_dbs')};
+}
 
 sub write_output {
     my $self = shift;
 
-    my $ss = $self->_write_ss($self->param('genome_dbs') );
+    my $all_gdbs = $self->param('genome_dbs');
+    my $ss = $self->_write_ss($all_gdbs);
     my $mlss = $self->_write_mlss( $ss, $self->param('ml_genetree') );
-    my $homoeologous_genome_dbs_groups_aref = $self->param('homoeologous_genome_dbs');
-    my $hive_pwp_adaptor = $self->db->get_PipelineWideParametersAdaptor;
+    $self->db->get_PipelineWideParametersAdaptor->store( {'param_name' => 'mlss_id', 'param_value' => $mlss->dbID} );
 
-    # Should be a pipeline-wide parameter
-    $hive_pwp_adaptor->store( {'param_name' => 'mlss_id', 'param_value' => $mlss->dbID} );
-    $hive_pwp_adaptor->store( {'param_name' => 'species_count', 'param_value' => scalar(@{$self->param('genome_dbs')})} );
+    $self->db->get_PipelineWideParametersAdaptor->store( {'param_name' => 'species_count', 'param_value' => scalar(grep {not $_->is_polyploid} @$all_gdbs)} );
 
-    foreach my $genome_db1 (@{$self->param('genome_dbs')}) {
-        my $ss1 = $self->_write_ss( [$genome_db1] );
-        my $mlss_p1 = $self->_write_mlss( $ss1, $self->param('ml_para') );
-        foreach my $genome_db2 (@{$self->param('genome_dbs')}) {
-            next if $genome_db1->dbID >= $genome_db2->dbID;
+    my @noncomponent_gdbs = grep {not $_->genome_component} @$all_gdbs;
+    foreach my $genome_db (@noncomponent_gdbs) {
 
-            my $ss12 = $self->_write_ss( [$genome_db1, $genome_db2] );
-            #my $mlss_p12 = $self->_write_mlss( $ss12, $self->param('ml_para') );
-            my $mlss_o12 = $self->_write_mlss( $ss12, $self->param('ml_ortho') );
-            if (($self->param('homoeologous_groups')->{$genome_db1->dbID} || -1) == ($self->param('homoeologous_groups')->{$genome_db2->dbID} || -2)) {
-               my $mlss_h12 = $self->_write_mlss( $ss12, $self->param('ml_homoeo') );
-           }
+        my $ssg = $self->_write_ss( [$genome_db] );
+        my $mlss_pg = $self->_write_mlss( $ssg, $self->param('ml_para') );
+
+        if ($genome_db->is_polyploid) {
+            my $mlss_hg = $self->_write_mlss( $ssg, $self->param('ml_homoeo') );
         }
     }
 
-    my $gdb_a = $self->compara_dba->get_GenomeDBAdaptor;
+    ## Since possible_ortholds have been removed, there are no between-species paralogs any more
+    ## Also, not that in theory, we could skip the orthologs between components of the same polyploid Genome
+    $self->_write_all_pairs( $self->param('ml_ortho'), [@noncomponent_gdbs]);
 
-    my @reuse_gdbs = map {$gdb_a->fetch_by_dbID($_)} @{$self->param('reused_gdb_ids')};
-    my $reuse_ss = $self->_write_ss( \@reuse_gdbs );
-    $hive_pwp_adaptor->store( {'param_name' => 'reuse_ss_id', 'param_value' => $reuse_ss->dbID} );
-    $hive_pwp_adaptor->store( {'param_name' => 'reuse_ss_csv', 'param_value' => join(',', -1, @{$self->param('reused_gdb_ids')}) } );
+    $self->_write_shared_ss('reuse', [grep {$_->{is_reused}} @{$self->param('genome_dbs')}] );
+    $self->_write_shared_ss('nonreuse', [grep {not $_->{is_reused}} @{$self->param('genome_dbs')}] );
 
-    my @nonreuse_gdbs = map {$gdb_a->fetch_by_dbID($_)} @{$self->param('nonreused_gdb_ids')};
-    my $nonreuse_ss = $self->_write_ss( \@nonreuse_gdbs );
-    $hive_pwp_adaptor->store( {'param_name' => 'nonreuse_ss_id', 'param_value' => $nonreuse_ss->dbID} );
-    $hive_pwp_adaptor->store( {'param_name' => 'nonreuse_ss_csv', 'param_value' => join(',', -1, @{$self->param('nonreused_gdb_ids')})} );
     # Whether all the species are reused
-    $hive_pwp_adaptor->store( {'param_name' => 'are_all_species_reused', 'param_value' => (scalar(@nonreuse_gdbs) ? 0 : 1)} );
+    $self->db->get_PipelineWideParametersAdaptor->store( {'param_name' => 'are_all_species_reused', 'param_value' => ((grep {not $_->{is_reused}} @{$self->param('genome_dbs')}) ? 0 : 1)} );
+
+    $self->dataflow_output_id($self->input_id, 2) if grep {$_->{is_reused}} @{$self->param('genome_dbs')};
 }
 
+sub _write_shared_ss {
+    my ($self, $name, $gdbs) = @_;
+    my $ss = $self->_write_ss($gdbs);
+    $self->db->get_PipelineWideParametersAdaptor->store( {'param_name' => $name.'_ss_id', 'param_value' => $ss->dbID} );
+    $self->db->get_PipelineWideParametersAdaptor->store( {'param_name' => $name.'_ss_csv', 'param_value' => join(',', -1, map {$_->dbID} @$gdbs)} );
+    return $ss;
+}
+
+# Write a mlss for each pair of species
+sub _write_all_pairs {
+    my ($self, $ml, $gdbs) = @_;
+    foreach my $g1 (@$gdbs) {
+        foreach my $g2 (@$gdbs) {
+            next if $g1->dbID >= $g2->dbID;
+            my $ss12 = $self->_write_ss( [$g1, $g2] );
+            my $mlss_h12 = $self->_write_mlss($ss12, $ml);
+        }
+    }
+}
+
+
+# Write the species-set of the given genome_dbs
+# Try to reuse the data from the reference db if possible
 sub _write_ss {
     my ($self, $genome_dbs) = @_;
 
@@ -159,6 +187,8 @@ sub _write_ss {
 }
 
 
+# Write the mlss of this species-set and this method
+# Try to reuse the data from the reference db if possible
 sub _write_mlss {
     my ($self, $ss, $method) = @_;
 

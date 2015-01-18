@@ -74,6 +74,12 @@ sub default_options {
     # User details
         #'email'                 => 'john.smith@example.com',
 
+    # parameters inherited from EnsemblGeneric_conf and unlikely to be redefined:
+        # It defaults to Bio::EnsEMBL::ApiVersion::software_version(): you're unlikely to change the value
+        # 'ensembl_release'       => 68,
+        # Automatically concatenates 'ensembl_release' and 'rel_suffix'.
+        # 'rel_with_suffix'       => $self->o('ensembl_release').$self->o('rel_suffix'),
+
     # parameters that are likely to change from execution to another:
         # It is very important to check that this value is current (commented out to make it obligatory to specify)
         #'mlss_id'               => 40077,
@@ -85,6 +91,8 @@ sub default_options {
 
         # names of species we don't want to reuse this time
         'do_not_reuse_list'     => [ ],
+
+        # where to find the list of Compara methods. Unlikely to be changed
         'method_link_dump_file' => $self->o('ensembl_cvs_root_dir').'/ensembl-compara/sql/method_link.txt',
 
     # custom pipeline name, in case you don't like the default one
@@ -92,8 +100,10 @@ sub default_options {
         # Tag attached to every single tree
         'division'              => undef,
 
-    # dependent parameters: updating 'work_dir' should be enough
-        #'work_dir'              => '/lustre/scratch101/ensembl/'.$self->o('ENV', 'USER').'/protein_trees_'.$self->o('rel_with_suffix'),
+    # dependent parameters: updating 'base_dir' should be enough
+        # Note that you can omit the trailing / in base_dir
+        #'base_dir'              => '/lustre/scratch101/ensembl/'.$self->o('ENV', 'USER').'/',
+        'work_dir'              => $self->o('base_dir') . $self->o('pipeline_name'),
         'fasta_dir'             => $self->o('work_dir') . '/blast_db',  # affects 'dump_subset_create_blastdb' and 'blastp'
         'cluster_dir'           => $self->o('work_dir') . '/cluster',
         'dump_dir'              => $self->o('work_dir') . '/dumps',
@@ -145,12 +155,6 @@ sub default_options {
         'species_tree_input_file'   => undef,
         # you can define your own species_tree for 'notung'. It *has* to be binary
         'binary_species_tree_input_file'   => undef,
-
-    # homology assignment for polyploid genomes
-        # This parameter is an array of groups of genome_db names / IDs.
-        # Each group represents the components of a polyploid genome
-        'homoeologous_genome_dbs'   => [],
-
 
     # homology_dnds parameters:
         # used by 'homology_dNdS'
@@ -502,7 +506,7 @@ sub core_pipeline_analyses {
                 'filename'      => 'snapshot_5_before_dnds',
             },
             -flow_into  => {
-                '1->A'  => [ 'group_genomes_under_taxa' ],
+                '1->A'  => [ 'polyploid_move_back_factory' ],
                 'A->1'  => [ 'backbone_pipeline_finished' ],
             },
         },
@@ -544,25 +548,34 @@ sub core_pipeline_analyses {
                 'filter_cmd'    => 'sed "s/ENGINE=MyISAM/ENGINE=InnoDB/"',
                 'table'         => 'method_link',
             },
-            -analysis_capacity  => 1,
+            -flow_into      => [ 'offset_tables' ],
+        },
+
+        {   -logic_name => 'offset_tables',
+            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::SqlCmd',
+            -parameters => {
+                'sql'   => [
+                    'ALTER TABLE species_set             AUTO_INCREMENT=10000001',
+                    'ALTER TABLE method_link_species_set AUTO_INCREMENT=10000001',
+                ],
+            },
             -flow_into      => [ 'load_genomedb_factory' ],
         },
 
 # ---------------------------------------------[load GenomeDB entries from master+cores]---------------------------------------------
 
         {   -logic_name => 'load_genomedb_factory',
-            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ObjectFactory',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GenomeDBFactory',
             -parameters => {
-                'compara_db'            => '#master_db#',   # that's where genome_db_ids come from
-
-                'call_list'             => [ 'compara_dba', 'get_MethodLinkSpeciesSetAdaptor', ['fetch_by_dbID', $self->o('mlss_id')], 'species_set_obj', 'genome_dbs'],
-                'column_names2getters'  => { 'genome_db_id' => 'dbID', 'species_name' => 'name', 'assembly_name' => 'assembly', 'genebuild' => 'genebuild', 'locator' => 'locator', 'has_karyotype' => 'has_karyotype', 'is_high_coverage' => 'is_high_coverage' },
-
-                'fan_branch_code'       => 2,
+                'compara_db'        => '#master_db#',   # that's where genome_db_ids come from
+                'mlss_id'           => $self->o('mlss_id'),
+                'extra_parameters'  => [ 'locator' ],
             },
             -rc_name => '4Gb_job',
             -flow_into => {
-                '2->A' => [ 'load_genomedb' ],
+                '2->A' => {
+                    'load_genomedb' => { 'master_dbID' => '#genome_db_id#', 'locator' => '#locator#' },
+                },
                 'A->1' => [ 'create_mlss_ss' ],
             },
         },
@@ -619,12 +632,19 @@ sub core_pipeline_analyses {
 
         {   -logic_name => 'create_mlss_ss',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::PrepareSpeciesSetsMLSS',
-            -parameters => {
-                'mlss_id'   => $self->o('mlss_id'),
-                'homoeologous_genome_dbs' => $self->o('homoeologous_genome_dbs'),
+            -flow_into => {
+                1 => [ 'make_treebest_species_tree' ],
+                2 => [ 'check_reuse_db_is_myisam' ],
             },
-            -rc_name => '4Gb_job',
-            -flow_into => [ 'make_treebest_species_tree' ],
+        },
+
+        {   -logic_name => 'check_reuse_db_is_myisam',
+            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::SqlHealthcheck',
+            -parameters => {
+                'description'   => 'The pipeline can only reuse the "other_member_sequence" table if it is in MyISAM',
+                'query'         => 'SELECT * FROM information_schema.TABLES WHERE ENGINE NOT LIKE "MyISAM" AND TABLE_NAME = "other_member_sequence" AND TABLE_SCHEMA = "#db_name#"',
+                'db_name'       => '#expr( Bio::EnsEMBL::Hive::DBSQL::DBConnection->new( -url => #reuse_db#)->dbname  )expr#',
+            },
         },
 
 
@@ -711,14 +731,72 @@ sub core_pipeline_analyses {
 # ---------------------------------------------[reuse members]-----------------------------------------------------------------------
 
         {   -logic_name => 'genome_reuse_factory',
-            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
+            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
+            -flow_into => {
+                '1->A' => [ 'dnafrag_reuse_factory' ],
+                'A->1' => [ 'load_fresh_members_factory' ],
+            },
+        },
+
+        {   -logic_name => 'dnafrag_reuse_factory',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GenomeDBFactory',
             -parameters => {
-                'inputquery'        => 'SELECT genome_db_id, name FROM species_set JOIN genome_db USING (genome_db_id) WHERE species_set_id = #reuse_ss_id#',
-                'fan_branch_code'   => 2,
+                'species_set_id'    => '#reuse_ss_id#',
+            },
+            -flow_into => {
+                '2->A' => [ 'dnafrag_table_reuse' ],
+                'A->1' => [ 'nonpolyploid_genome_reuse_factory' ],
+            },
+        },
+
+        {   -logic_name => 'nonpolyploid_genome_reuse_factory',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GenomeDBFactory',
+            -parameters => {
+                'component_genomes' => 0,
+                'species_set_id'    => '#reuse_ss_id#',
             },
             -flow_into => {
                 '2->A' => [ 'sequence_table_reuse' ],
-                'A->1' => [ 'load_fresh_members_factory' ],
+                'A->1' => [ 'polyploid_genome_reuse_factory' ],
+            },
+        },
+
+        {   -logic_name => 'polyploid_genome_reuse_factory',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GenomeDBFactory',
+            -parameters => {
+                'component_genomes' => 0,
+                'normal_genomes'    => 0,
+                'species_set_id'    => '#reuse_ss_id#',
+            },
+            -flow_into => {
+                2 => [ 'component_genome_dbs_move_factory' ],
+            },
+        },
+
+        {   -logic_name => 'component_genome_dbs_move_factory',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::ComponentGenomeDBFactory',
+            -flow_into => {
+                '2->A' => {
+                    'move_component_genes' => { 'source_gdb_id' => '#principal_genome_db_id#', 'target_gdb_id' => '#component_genome_db_id#'}
+                },
+                'A->1' => [ 'hc_polyploid_genes' ],
+            },
+        },
+
+        {   -logic_name => 'move_component_genes',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::MoveComponentGenes',
+            -flow_into => {
+                1 => {
+                    'hc_members_per_genome' => { 'genome_db_id' => '#target_gdb_id#' },
+                },
+            },
+        },
+
+        {   -logic_name => 'hc_polyploid_genes',
+            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::SqlHealthcheck',
+            -parameters => {
+                'description'   => 'All the genes of the polyploid species should be moved to the component genomes',
+                'query'         => 'SELECT * FROM gene_member WHERE genome_db_id = #genome_db_id#',
             },
         },
 
@@ -734,7 +812,7 @@ sub core_pipeline_analyses {
             -rc_name => '500Mb_job',
             -flow_into => {
                 2 => [ ':////sequence' ],
-                1 => [ 'dnafrag_table_reuse' ],
+                1 => [ 'seq_member_table_reuse' ],
             },
         },
 
@@ -747,9 +825,6 @@ sub core_pipeline_analyses {
                 'mode'          => 'insertignore',
             },
             -hive_capacity => $self->o('reuse_capacity'),
-            -flow_into => {
-                1 => [ 'seq_member_table_reuse' ],
-            },
         },
 
         {   -logic_name => 'seq_member_table_reuse',
@@ -834,14 +909,36 @@ sub core_pipeline_analyses {
 # ---------------------------------------------[load the rest of members]------------------------------------------------------------
 
         {   -logic_name => 'load_fresh_members_factory',
-            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
+            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
+            -flow_into => {
+                '1->A' => [ 'nonpolyploid_genome_load_fresh_factory' ],
+                'A->1' => [ 'hc_members_globally' ],
+            },
+        },
+
+        {   -logic_name => 'nonpolyploid_genome_load_fresh_factory',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GenomeDBFactory',
             -parameters => {
-                'inputquery'        => 'SELECT genome_db_id, name, locator FROM species_set JOIN genome_db USING (genome_db_id) WHERE species_set_id = #nonreuse_ss_id#',
-                'fan_branch_code'   => 2,
+                'polyploid_genomes' => 0,
+                'species_set_id'    => '#nonreuse_ss_id#',
+                'extra_parameters'  => [ 'locator' ],
             },
             -flow_into => {
                 '2->A' => [ 'test_is_genome_in_core_db' ],
-                'A->1' => [ 'hc_members_globally' ],
+                'A->1' => [ 'polyploid_genome_load_fresh_factory' ],
+            },
+        },
+
+        {   -logic_name => 'polyploid_genome_load_fresh_factory',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GenomeDBFactory',
+            -parameters => {
+                'component_genomes' => 0,
+                'normal_genomes'    => 0,
+                'species_set_id'    => '#nonreuse_ss_id#',
+                'extra_parameters'  => [ 'locator' ],
+            },
+            -flow_into => {
+                2 => [ 'test_is_polyploid_in_core_db' ],
             },
         },
 
@@ -853,6 +950,63 @@ sub core_pipeline_analyses {
             -flow_into => {
                 2 => [ $self->o('master_db') ? 'copy_dnafrags_from_master' : 'load_fresh_members_from_db' ],
                 3 => [ 'load_fresh_members_from_file' ],
+            },
+        },
+
+        {   -logic_name => 'test_is_polyploid_in_core_db',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ConditionalDataFlow',
+            -parameters    => {
+                'condition'     => '"#locator#" =~ /^Bio::EnsEMBL::DBSQL::DBAdaptor/',
+            },
+            -flow_into => {
+                2 => [ $self->o('master_db') ? ('copy_polyploid_dnafrags_from_master') : () ],
+                3 => [ 'component_dnafrags_duplicate_factory' ],
+            },
+        },
+
+        {   -logic_name => 'component_dnafrags_duplicate_factory',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::ComponentGenomeDBFactory',
+            -flow_into => {
+                2 => {
+                    'duplicate_component_dnafrags' => { 'source_gdb_id' => '#principal_genome_db_id#', 'target_gdb_id' => '#component_genome_db_id#'}
+                },
+            },
+        },
+
+        {   -logic_name => 'duplicate_component_dnafrags',
+            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::SqlCmd',
+            -parameters => {
+                'sql' => [
+                    'INSERT INTO dnafrag (length, name, genome_db_id, coord_system_name, is_reference) SELECT length, name, #principal_genome_db_id#, coord_system_name, is_reference FROM dnafrag WHERE genome_db_id = #principal_genome_db_id#',
+                ],
+            },
+            -flow_into  => [ 'hc_component_dnafrags' ],
+        },
+
+        {   -logic_name => 'copy_polyploid_dnafrags_from_master',
+            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::MySQLTransfer',
+            -parameters => {
+                'src_db_conn'   => '#master_db#',
+                'table'         => 'dnafrag',
+                'where'         => 'genome_db_id = #genome_db_id#',
+                'mode'          => 'insertignore',
+            },
+            -hive_capacity => $self->o('reuse_capacity'),
+            -flow_into  => [ 'component_dnafrags_hc_factory' ],
+        },
+
+        {   -logic_name => 'component_dnafrags_hc_factory',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::ComponentGenomeDBFactory',
+            -flow_into => {
+                2 => [ 'hc_component_dnafrags' ],
+            },
+        },
+
+        {   -logic_name => 'hc_component_dnafrags',
+            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::SqlHealthcheck',
+            -parameters => {
+                'description'   => 'All the component dnafrags must be in the principal genome',
+                'query'         => 'SELECT d1.* FROM dnafrag d1 LEFT JOIN dnafrag d2 ON d2.genome_db_id = #principal_genome_db_id# AND d1.name = d2.name WHERE d1.genome_db_id = #component_genome_db_id# AND d2.dnafrag_id IS NULL',
             },
         },
 
@@ -902,11 +1056,12 @@ sub core_pipeline_analyses {
 # ---------------------------------------------[create and populate blast analyses]--------------------------------------------------
 
         {   -logic_name => 'reusedspecies_factory',
-            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GenomeDBFactory',
             -parameters => {
-                '_force_blast_run'   => $self->o('reuse_level') eq 'members' ? 1 : 0,
-                'inputquery'        => 'SELECT genome_db_id, name FROM species_set JOIN genome_db USING (genome_db_id) WHERE species_set_id = #reuse_ss_id# AND NOT #_force_blast_run#',
-                'fan_branch_code'   => 2,
+                'polyploid_genomes' => 0,
+                'component_genomes' => $self->o('reuse_level') eq 'members' ? 0 : 1,
+                'normal_genomes'    => $self->o('reuse_level') eq 'members' ? 0 : 1,
+                'species_set_id'    => '#reuse_ss_id#',
             },
             -flow_into => {
                 2 => [ 'paf_table_reuse' ],
@@ -915,11 +1070,10 @@ sub core_pipeline_analyses {
         },
 
         {   -logic_name => 'nonreusedspecies_factory',
-            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GenomeDBFactory',
             -parameters => {
-                '_force_blast_run'   => $self->o('reuse_level') eq 'members' ? 1 : 0,
-                'inputquery'        => 'SELECT genome_db_id, name FROM species_set JOIN genome_db USING (genome_db_id) WHERE species_set_id = #nonreuse_ss_id# OR #_force_blast_run#',
-                'fan_branch_code'   => 2,
+                'polyploid_genomes' => 0,
+                'species_set_id'    => $self->o('reuse_level') eq 'members' ? undef : '#nonreuse_ss_id#',
             },
             -flow_into => {
                 2 => [ 'paf_create_empty_table' ],
@@ -1137,12 +1291,9 @@ sub core_pipeline_analyses {
 # ---------------------------------------------[create and populate blast analyses]--------------------------------------------------
 
         {   -logic_name => 'blastdb_factory',
-            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ObjectFactory',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GenomeDBFactory',
             -parameters => {
-                'call_list'             => [ 'compara_dba', 'get_GenomeDBAdaptor', 'fetch_all'],
-                'column_names2getters'  => { 'genome_db_id' => 'dbID' },
-
-                'fan_branch_code'       => 2,
+                'polyploid_genomes' => 0,
             },
             -flow_into  => {
                 '2->A'  => [ 'dump_canonical_members' ],
@@ -1231,12 +1382,9 @@ sub core_pipeline_analyses {
         },
 
         {   -logic_name => 'hcluster_dump_factory',
-            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ObjectFactory',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GenomeDBFactory',
             -parameters => {
-                'call_list'             => [ 'compara_dba', 'get_GenomeDBAdaptor', 'fetch_all'],
-                'column_names2getters'  => { 'genome_db_id' => 'dbID' },
-
-                'fan_branch_code'       => 2,
+                'polyploid_genomes' => 0,
             },
             -flow_into  => {
                 '2->A' => [ 'hcluster_dump_input_per_genome' ],
@@ -1321,11 +1469,9 @@ sub core_pipeline_analyses {
 # ---------------------------------------------[Pluggable QC step]----------------------------------------------------------
 
         {   -logic_name => 'run_qc_tests',
-            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ObjectFactory',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GenomeDBFactory',
             -parameters => {
-                'call_list'             => [ 'compara_dba', 'get_GenomeDBAdaptor', 'fetch_all'],
-                'column_names2getters'  => { 'genome_db_id' => 'dbID' },
-                'fan_branch_code'       => 2,
+                'polyploid_genomes' => 0,
             },
             -flow_into => {
                 '2->A' => [ 'per_genome_qc' ],
@@ -2037,7 +2183,6 @@ sub core_pipeline_analyses {
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::OrthoTree',
             -parameters => {
                 'tag_split_genes'   => 1,
-                'homoeologous_genome_dbs' => $self->o('homoeologous_genome_dbs'),
             },
             -hive_capacity  => $self->o('ortho_tree_capacity'),
             -rc_name        => '250Mb_job',
@@ -2051,7 +2196,6 @@ sub core_pipeline_analyses {
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::OrthoTree',
             -parameters => {
                 'tag_split_genes'   => 1,
-                'homoeologous_genome_dbs' => $self->o('homoeologous_genome_dbs'),
             },
             -hive_capacity  => $self->o('ortho_tree_capacity'),
             -rc_name        => '4Gb_job',
@@ -2237,6 +2381,31 @@ sub core_pipeline_analyses {
         },
 
 # ---------------------------------------------[homology step]-----------------------------------------------------------------------
+
+        {   -logic_name => 'polyploid_move_back_factory',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GenomeDBFactory',
+            -parameters => {
+                'component_genomes' => 0,
+                'normal_genomes'    => 0,
+            },
+            -flow_into => {
+                '2->A' => [ 'component_genome_dbs_move_back_factory' ],
+                'A->1' => [ 'group_genomes_under_taxa' ],
+            },
+        },
+
+        {   -logic_name => 'component_genome_dbs_move_back_factory',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::ComponentGenomeDBFactory',
+            -flow_into => {
+                2 => {
+                    'move_back_component_genes' => { 'source_gdb_id' => '#component_genome_db_id#', 'target_gdb_id' => '#principal_genome_db_id#'},
+                },
+            },
+        },
+
+        {   -logic_name => 'move_back_component_genes',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::MoveComponentGenes',
+        },
 
         {   -logic_name => 'group_genomes_under_taxa',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::GroupGenomesUnderTaxa',

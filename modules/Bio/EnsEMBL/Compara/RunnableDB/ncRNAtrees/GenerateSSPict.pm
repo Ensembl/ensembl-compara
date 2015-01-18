@@ -53,7 +53,7 @@ use strict;
 use warnings;
 use Data::Dumper;
 
-use base ('Bio::EnsEMBL::Compara::RunnableDB::RunCommand', 'Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
+use base ('Bio::EnsEMBL::Compara::RunnableDB::RunCommand');
 
 
 sub fetch_input {
