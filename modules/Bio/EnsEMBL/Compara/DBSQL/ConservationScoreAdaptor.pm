@@ -187,7 +187,6 @@ sub delete_by_genomic_align_block_id {
 sub fetch_all_by_MethodLinkSpeciesSet_Slice {
     my ($self, $method_link_species_set, $orig_slice, $display_size, $display_type, $window_size) = @_;
 
-
     my $scores = [];
 
     #need to convert conservation score mlss to the corresponding multiple 
@@ -196,7 +195,7 @@ sub fetch_all_by_MethodLinkSpeciesSet_Slice {
     my $ma_mlss_id = $method_link_species_set->get_value_for_tag('msa_mlss_id');
     my $ma_mlss;
     if ($ma_mlss_id) {
-        $ma_mlss = $self->db->get_MethodLinkSpeciesSet->fetch_by_dbID($ma_mlss_id);
+	$ma_mlss = $self->db->get_MethodLinkSpeciesSet->fetch_by_dbID($ma_mlss_id);
     } else {
 	return $scores;
     }
@@ -287,8 +286,8 @@ sub fetch_all_by_MethodLinkSpeciesSet_Slice {
                 next;
             }
             
-    #reset _score_index for new conservation_scores
-    $_score_index = 0;
+            #reset _score_index for new conservation_scores
+            $_score_index = 0;
             
             #print "slice start " . $slice->start . " " . $slice->end . " " . $slice->strand . " strand $dnafrag_strand cigar " . substr($cigar_line,0, 10) . "\n";
             
@@ -306,22 +305,15 @@ sub fetch_all_by_MethodLinkSpeciesSet_Slice {
             #doesn't bother with any binning
             if ($window_size == 1 && ($display_size == ($slice->end - $slice->start + 1))) {
                 $these_scores = _get_aligned_scores_from_cigar_line_fast($self, $cigar_line, $dnafrag_start, $dnafrag_end, $slice->start, $slice->end, $conservation_scores, $genomic_align_block_id, $gab_length, $display_type, $these_scores);
-            } elsif($display_size != $slice->end - $slice->start + 1) {
+            } else {
                 $these_scores = _get_aligned_scores_from_cigar_line($self, $cigar_line, $dnafrag_start, $dnafrag_end, $slice->start, $slice->end, $conservation_scores, $genomic_align_block_id, $gab_length, $display_type, $window_size, $these_scores);
-               unless(scalar(@$these_scores)){ 
-                # recursive hack
-                my $new_display_size = $slice->end - $slice->start + 1;
-                my $new_display_type = "AVERAGE";
-                $these_scores = $self->fetch_all_by_MethodLinkSpeciesSet_Slice(
-                 $method_link_species_set, $orig_slice, $new_display_size, $new_display_type, 1);
-                return _average_scores($these_scores, $display_size, $display_type);
-                # end hack
-             }
+                
             } 
         }
         
-        if (scalar(@$these_scores) == 0 ){
-          next;
+        if (scalar(@$these_scores) == 0) {
+            #return $scores;
+            next;
         }
         
         #need to reverse scores
@@ -1864,40 +1856,6 @@ sub count_by_mlss_id {
     return $count;
 }
 
-sub _average_scores {
- my ($scores, $display_size, $display_type) = @_;
- if($display_size > scalar @$scores){ # avoid bin size of 0
-  $display_size = scalar @$scores;
- }
- my $bin_size = int( @$scores / $display_size );
- my ($ind2keep,$new_scores) = ({},[]);
- for(my$j=0;$j<@$scores;$j+=$bin_size){
-  my ($bin_sum,$bin_tot,$max_score) = (0,0,-100);
-  for(my$i=0;$i<$bin_size;$i++){ # for each bin, sum the individual values
-   next unless($scores->[$j+$i]);
-   $max_score = $max_score < $scores->[$j+$i]->diff_score ? $scores->[$j+$i]->diff_score : $max_score; 
-   $bin_sum += $scores->[$j+$i]->diff_score;
-   $bin_tot++;
-   if(($i+1)%$bin_size == 0){
-    $ind2keep->{$j} = $display_type eq "AVERAGE" ? $bin_sum / $bin_tot : $max_score; # $j is the index of the score to keep and modify
-   }
-  }
- }
- my ($min,$max) = (100,-100);
- foreach my $index(sort {$a<=>$b} keys %$ind2keep){ # interate over the index values
-  my $mod_sc = $scores->[$index];
-  # set the diff_score equal to the average
-  $mod_sc->{'diff_score'} = $ind2keep->{$index};
-  # for y-axis scaling
-  $min = $ind2keep->{$index} < $min ? $ind2keep->{$index} : $min;
-  $max = $ind2keep->{$index} > $max ? $ind2keep->{$index} : $max;
-  push(@$new_scores, $mod_sc);
- }
- $new_scores->[0]->{'y_axis_max'} = $max if (@$new_scores);
- $new_scores->[0]->{'y_axis_min'} = $min if (@$new_scores);
- return $new_scores; 
-}
- 
 
 1;
 
