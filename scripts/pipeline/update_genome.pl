@@ -232,10 +232,14 @@ $helper->transaction( -CALLBACK => sub {
         return;
     }
     my $genome_db = update_genome_db($species_db, $compara_db, $force);
-    add_to_collections($compara_db, [$genome_db], \@collection);
     #delete_genomic_align_data($compara_db, $genome_db);
     #delete_syntenic_data($compara_db, $genome_db);
     update_dnafrags($compara_db, $genome_db, $species_db);
+    my $component_genome_dbs = update_component_genome_dbs($genome_db, $species_db, $compara_db);
+    foreach my $component_gdb (@$component_genome_dbs) {
+        update_dnafrags($compara_db, $component_gdb, $species_db);
+    }
+    add_to_collections($compara_db, [$genome_db, @$component_genome_dbs], \@collection);
     print_method_link_species_sets_to_update($compara_db, $genome_db);
 } );
 
@@ -326,6 +330,30 @@ sub update_genome_db {
   }
   return $genome_db;
 }
+
+
+=head2 update_component_genome_dbs
+
+  Description : Updates all the genome components (only for polyploid genomes)
+  Returns     : -none-
+  Exceptions  : none
+
+=cut
+
+sub update_component_genome_dbs {
+    my ($principal_genome_db, $species_dba, $compara_dba) = @_;
+
+    my @gdbs = ();
+    my $genome_db_adaptor = $compara_dba->get_GenomeDBAdaptor();
+    foreach my $c (@{$species_dba->get_GenomeContainer->get_genome_components}) {
+        my $copy_genome_db = $principal_genome_db->make_component_copy($c);
+        $genome_db_adaptor->store($copy_genome_db);
+        push @gdbs, $copy_genome_db;
+        print "Component '$c' genome_db: ", $copy_genome_db->toString(), "\n";
+    }
+    return \@gdbs;
+}
+
 
 =head2 add_to_collections
 
@@ -504,7 +532,9 @@ sub update_dnafrags {
     $old_dnafrags_by_id->{$old_dnafrag->dbID} = $old_dnafrag;
   }
 
-  my $gdb_slices = $species_dba->get_SliceAdaptor->fetch_all('toplevel', undef, 1, 1, 1);
+  my $gdb_slices = $genome_db->genome_component
+    ? $species_dba->get_SliceAdaptor->fetch_all_by_genome_component($genome_db->genome_component)
+    : $species_dba->get_SliceAdaptor->fetch_all('toplevel', undef, 1, 1, 1);
   die "Could not fetch any toplevel slices from ".$genome_db->name() unless(scalar(@$gdb_slices));
 
   my $current_verbose = verbose();
