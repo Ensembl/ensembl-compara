@@ -1033,14 +1033,15 @@ sub _get_aligned_scores_from_cigar_line {
     #fill in region between previous alignment and this alignment with uncalled values
 
     #08.06.07 don't need to add bucket->{cnt} here
-    #my $prev_chr_pos = $_bucket->{start_seq_region_pos}+$_bucket->{cnt};
-    my $prev_chr_pos = $_bucket->{start_seq_region_pos};
+    #2015-01-19 it looks like we are calling _add_to_bucket too often. Reverting to the original values
+    my $prev_chr_pos = $_bucket->{start_seq_region_pos}+$_bucket->{cnt};
+    #my $prev_chr_pos = $_bucket->{start_seq_region_pos};
 
     #08.06.07 Fixed bug: need to add missing values only from
     #the next position to chr_start otherwise you use prev_chr_pos twice.
-    #for (my $i = $prev_chr_pos; $i < $chr_start; $i+=$win_size) {
-
-    for (my $i = $prev_chr_pos+$win_size; $i < $chr_start; $i+=$win_size) {
+    #2015-01-19 it looks like we are calling _add_to_bucket too often. Reverting to the original values
+    for (my $i = $prev_chr_pos; $i < $chr_start; $i+=$win_size) {
+    #for (my $i = $prev_chr_pos+$win_size; $i < $chr_start; $i+=$win_size) {
 	$aligned_score = _add_to_bucket($self, $display_type, $_no_score_value, $_no_score_value, $i, $start_slice, scalar(@$aligned_scores), $genomic_align_block_id, $win_size);
 	if ($aligned_score) {
 	    #need this to ensure that the aligned_scores array is the 
