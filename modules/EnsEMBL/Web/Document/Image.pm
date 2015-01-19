@@ -49,6 +49,7 @@ sub format             :lvalue { $_[0]->{'format'};             }
 sub toolbars           :lvalue { $_[0]->{'toolbars'};           }
 sub centred            :lvalue { $_[0]->{'centred'};            } 
 sub image_name         :lvalue { $_[0]->{'image_name'};         }
+sub image_type         :lvalue { $_[0]->{'image_type'};         }
 sub introduction       :lvalue { $_[0]->{'introduction'};       }
 sub tailnote           :lvalue { $_[0]->{'tailnote'};           }
 sub caption            :lvalue { $_[0]->{'caption'};            }
