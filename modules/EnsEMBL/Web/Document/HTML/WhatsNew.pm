@@ -43,57 +43,22 @@ sub render {
   my $hub          = $self->hub;
   my $species_defs = $hub->species_defs;
   my $html;
-  my $has_news = 0;
 
-  my $release_id = $hub->species_defs->ENSEMBL_VERSION;
-
-  my $header_text = $self->news_header($hub, $release_id);
-  my $html = qq{<h2 class="box-header"><img src="/i/24/announcement.png" style="vertical-align:middle" /> What's New in $header_text</h2>};
-
-  my $news_url     = '/info/website/news.html?id='.$release_id;
-  my @items = ();
-  my $add_all_link = 0;
-
-  my $first_production = $hub->species_defs->get_config('MULTI', 'FIRST_PRODUCTION_RELEASE');
-
-  if ($hub->species_defs->multidb->{'DATABASE_PRODUCTION'}{'NAME'}
-      && $first_production && $release_id >= $first_production) {
-    my $adaptor = EnsEMBL::Web::DBSQL::ProductionAdaptor->new($hub);
-    if ($adaptor) {
-      @items = @{$adaptor->fetch_headlines({'release' => $release_id, limit => 3})};
-      $add_all_link = 1;
-    }   
+  my ($headlines, @links, $blog);
+  if ($hub->species_defs->multidb->{'DATABASE_PRODUCTION'}{'NAME'}) {
+    ($headlines, @links) = $self->show_headlines;
   }
 
-  if (scalar @items > 0) {
-    $has_news = 1;
-    $html .= "<ul>\n";
-
-    ## format news headlines
-    foreach my $item (@items) {
-      $html .= qq|<li><strong><a href="$news_url#news_$item->{'id'}" style="text-decoration:none">$item->{'title'}</a></strong></li>\n|;
-    }
-    $html .= "</ul>\n";
-    $html .= qq(<p style="text-align:right"><a href="/info/website/news.html">Full details</a>);
-
-  }
-  else {
-    $html .= "<p>No news is currently available for release $release_id.</p>\n";
-  }
-
-  if ($add_all_link) {
-    $html .= ' | ' if $has_news; 
-    $html .= qq(<a href="/info/website/news_by_topic.html?topic=web">All web updates, by release</a>);
-  }
+  $html .= $headlines if $headlines;
 
   if ($species_defs->ENSEMBL_BLOG_URL) {
-    $html .= ' | ' if $add_all_link;
-    $html .= qq(<a href="http://www.ensembl.info/blog/category/releases/">More news on our blog</a></p>);
-    $html .= $self->_include_blog($hub);
+    push @links, qq(<a href="http://www.ensembl.info/blog/category/releases/">More news on our blog</a></p>);
+    $blog = $self->_include_blog($hub);
   }
-  else {
-    $html .= '</p>';
+  if (scalar(@links)) {
+    $html .= sprintf('<p>%s</p>', join(' | ', @links));
   }
+  $html .= $blog if $blog;
 
   my $twitter_user = $species_defs->ENSEMBL_TWITTER_ACCOUNT;
   my $widget_id    = $species_defs->TWITTER_FEED_WIDGET_ID;
@@ -106,6 +71,55 @@ sub render {
   return $html;
 }
 
+sub show_headlines {
+  my $self         = shift;
+  my $hub          = $self->hub;
+  my $species_defs = $hub->species_defs;
+  my ($headlines, @links);
+
+  my $release_id = $hub->species_defs->ENSEMBL_VERSION;
+
+  my $header_text = $self->news_header($hub, $release_id);
+  my $headlines   = qq{<h2 class="box-header"><img src="/i/24/announcement.png" style="vertical-align:middle" /> What's New in $header_text</h2>};
+
+  my $first_production = $hub->species_defs->get_config('MULTI', 'FIRST_PRODUCTION_RELEASE');
+
+  if ($first_production) {
+    if ($release_id >= $first_production) {
+
+      my $news_url     = '/info/website/news.html?id='.$release_id;
+      my @items = ();
+
+      my $adaptor = EnsEMBL::Web::DBSQL::ProductionAdaptor->new($hub);
+      if ($adaptor) {
+        @items = @{$adaptor->fetch_headlines({'release' => $release_id, limit => 3})};
+      }   
+
+      if (scalar @items > 0) {
+        $headlines .= "<ul>\n";
+
+        ## format news headlines
+        foreach my $item (@items) {
+          $headlines .= qq|<li><strong><a href="$news_url#news_$item->{'id'}" style="text-decoration:none">$item->{'title'}</a></strong></li>\n|;
+        }
+        $headlines .= "</ul>\n";
+        push @links, qq(<p style="text-align:right"><a href="/info/website/news.html">Full details</a>);
+
+      }
+      else {
+        $headlines .= "<p>No news is currently available for release $release_id.</p>\n";
+      }
+    }
+
+    if ($release_id > $first_production) {
+      push @links, qq(<a href="/info/website/news_by_topic.html?topic=web">All web updates, by release</a>);
+    }
+  }
+  else {
+    $headlines .= "<p>No news is currently available for release $release_id.</p>\n";
+  }
+  return ($headlines, @links);
+}
 
 sub _include_blog {
   my ($self, $hub) = @_;

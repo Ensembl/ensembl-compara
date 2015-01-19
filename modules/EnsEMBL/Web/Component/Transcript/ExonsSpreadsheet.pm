@@ -286,7 +286,7 @@ sub get_flanking_sequence_data {
   $upstream->{'sequence'}   = [ map {{ letter => $_, class => 'ef' }} split '', lc $upstream->{'seq'}   ];
   $downstream->{'sequence'} = [ map {{ letter => $_, class => 'ef' }} split '', lc $downstream->{'seq'} ];
   
-  if ($config->{'snp_display'} eq 'yes') {
+  if ($config->{'snp_display'} eq 'on') {
     $self->add_variations($config, $_->{'slice'}, $_->{'sequence'}) for $upstream, $downstream;
   }
   

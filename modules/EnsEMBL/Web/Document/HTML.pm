@@ -109,10 +109,11 @@ sub news_header {
     $header_text = 'Ensembl GRCh37';
   }
   else {
+    my $sitename = join(' ', $hub->species_defs->ENSEMBL_SITETYPE, $hub->species_defs->ENSEMBL_SUBTYPE);
     my $adaptor = EnsEMBL::Web::DBSQL::ArchiveAdaptor->new($hub);
     my $release      = $adaptor->fetch_release($release_id);
     my $release_date = $release->{'date'};
-    $header_text = sprintf('Release %s (%s)', $release_id, $release_date);
+    $header_text = sprintf('%s Release %s (%s)', $sitename, $release_id, $release_date);
   }
   return $header_text;
 }
