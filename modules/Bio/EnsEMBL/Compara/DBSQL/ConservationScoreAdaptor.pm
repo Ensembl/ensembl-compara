@@ -304,9 +304,9 @@ sub fetch_all_by_MethodLinkSpeciesSet_Slice {
             #if want one score per base in the alignment, use faster method 
             #doesn't bother with any binning
             if ($window_size == 1 && ($display_size == ($slice->end - $slice->start + 1))) {
-                $these_scores = _get_aligned_scores_from_cigar_line_fast($self, $cigar_line, $dnafrag_start, $dnafrag_end, $slice->start, $slice->end, $conservation_scores, $genomic_align_block_id, $gab_length, $display_type, $these_scores);
+                _get_aligned_scores_from_cigar_line_fast($self, $cigar_line, $dnafrag_start, $dnafrag_end, $slice->start, $slice->end, $conservation_scores, $genomic_align_block_id, $gab_length, $display_type, $these_scores);
             } else {
-                $these_scores = _get_aligned_scores_from_cigar_line($self, $cigar_line, $dnafrag_start, $dnafrag_end, $slice->start, $slice->end, $conservation_scores, $genomic_align_block_id, $gab_length, $display_type, $window_size, $these_scores);
+                _get_aligned_scores_from_cigar_line($self, $cigar_line, $dnafrag_start, $dnafrag_end, $slice->start, $slice->end, $conservation_scores, $genomic_align_block_id, $gab_length, $display_type, $window_size, $these_scores);
                 
             } 
         }
@@ -956,11 +956,11 @@ sub _print_scores {
   Arg  8     : int $genomic_align_block_length (length of current alignment block)
   Arg  9     : string $display_type (either AVERAGE or MAX (plot average or max value))
   Arg 10     : int $win_size (window size used)
-  Arg 11     : listref of Bio::EnsEMBL::Compara::ConservationScore objects $scores in slice coords
+  Arg 11     : listref of Bio::EnsEMBL::Compara::ConservationScore objects $aligned_scores in slice coords
 
   Example    : $scores = $self->_get_aligned_scores_from_cigar_line($genomic_align->cigar_line, $genomic_align->dnafrag_start, $genomic_align->dnafrag_end, $slice->start, $slice->end, $conservation_scores, $genomic_align_block->dbID, $genomic_align_block->length, $display_type, $window_size, $scores);
   Description: Convert conservation scores from alignment coordinates into species specific chromosome (slice) coordinates for an alignment genomic_align_block
-  Returntype : listref of Bio::EnsEMBL::Compara::ConservationScore objects $scores
+  Returntype : none, the scores are appended to $aligned_scores
   Exceptions : none
   Caller     : general
   Status     : At risk
@@ -1165,8 +1165,6 @@ sub _get_aligned_scores_from_cigar_line {
 	}
 	$prev_position = $chr_pos;
     }
-
-    return $aligned_scores;
 }
 
 =head2 _get_aligned_scores_from_cigar_line_fast
@@ -1180,13 +1178,13 @@ sub _get_aligned_scores_from_cigar_line {
   Arg  7     : int $genomic_align_block_id (genomic align block id of current alignment block)
   Arg  8     : int $genomic_align_block_length (length of current alignment block)
   Arg  9     : string $display_type (either AVERAGE or MAX (plot average or max value))
-  Arg 10     : listref of Bio::EnsEMBL::Compara::ConservationScore objects $scores in slice coords
+  Arg 10     : listref of Bio::EnsEMBL::Compara::ConservationScore objects $aligned_scores in slice coords
 
   Example    : $scores = $self->_get_aligned_scores_from_cigar_line_fast($genomic_align->cigar_line, $genomic_align->dnafrag_start, $genomic_align->dnafrag_end, $slice->start, $slice->end, $conservation_scores, $genomic_align_block->dbID, $genomic_align_block->length, $display_type, $scores);
   Description: Faster method to than _get_aligned_scores_from_cigar_line. This
                method does not bin the scores and can be used if only require
                one score per base in the alignment
-  Returntype : listref of Bio::EnsEMBL::Compara::ConservationScore objects $scores
+  Returntype : none, the scores are appended to $aligned_scores
   Exceptions : none
   Caller     : general
   Status     : At risk
@@ -1398,8 +1396,6 @@ sub _get_aligned_scores_from_cigar_line_fast {
 	}
 	$prev_position = $chr_pos;
     }
-
-    return $aligned_scores;
 }
 
 =head2 _get_alignment_scores
