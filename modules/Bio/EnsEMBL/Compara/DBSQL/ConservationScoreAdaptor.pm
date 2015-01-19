@@ -311,6 +311,25 @@ sub fetch_all_by_MethodLinkSpeciesSet_Slice {
             } 
         }
         
+        ## True if there are some values in the bucket that haven't been transformed into a score
+        if ($_bucket->{called}) {
+
+            my $genomic_align_block_id = $light_genomic_aligns->[-1]->{genomic_align_block_id};
+
+            # This code is adapted from _get_aligned_scores_from_cigar_line
+            # Again, we restore the values as they were before Kathryn's change in 2007
+            my $prev_chr_pos = $_bucket->{start_seq_region_pos}+$_bucket->{cnt};
+
+            for (my $i = $prev_chr_pos; $i <= $_bucket->{end_seq_region_pos}; $i+=$window_size) {
+                my $aligned_score = _add_to_bucket($self, $display_type, $_no_score_value, $_no_score_value, $i, $slice->start, scalar(@$these_scores), $genomic_align_block_id, $window_size);
+                if ($aligned_score) {
+                    #need this to ensure that the aligned_scores array is the
+                    #correct size (passed into _add_to_bucket)
+                    push(@$these_scores, $aligned_score);
+                }
+            }
+        }
+
         if (scalar(@$these_scores) == 0) {
             #return $scores;
             next;
