@@ -23,7 +23,7 @@ use strict;
 use URI::Escape qw(uri_escape);
 use IO::String;
 use Bio::AlignIO;
-use EnsEMBL::Web::TmpFile::Text;
+use EnsEMBL::Web::File::Dynamic;
 
 use base qw(EnsEMBL::Web::ZMenu);
 
@@ -396,21 +396,27 @@ sub dump_tree_as_text {
   my $tree = shift || die 'Need a ProteinTree object';
   
   my $var;
-  my $file_fa = EnsEMBL::Web::TmpFile::Text->new(extension => 'fa', prefix => 'gene_tree');
-  my $file_nh = EnsEMBL::Web::TmpFile::Text->new(extension => 'nh', prefix => 'gene_tree');
+
+  my %args = (
+                'hub'             => $self->hub,
+                'sub_dir'         => 'gene_tree',
+                'input_drivers'   => ['IO'],
+                'output_drivers'  => ['IO'],
+              );
+
+  my $file_fa = EnsEMBL::Web::File::Dynamic->new(extension => 'fa', %args);
+  my $file_nh = EnsEMBL::Web::File::Dynamic->new(extension => 'nh', %args);
+
   my $format  = 'fasta';
   my $align   = $tree->get_SimpleAlign(-APPEND_SP_SHORT_NAME => 1);
   my $aio     = Bio::AlignIO->new(-format => $format, -fh => IO::String->new($var));
   
   $aio->write_aln($align); # Write the fasta alignment using BioPerl
   
-  print $file_fa $var;
-  print $file_nh $tree->newick_format('full_web');
+  $file_fa->write($var);
+  $file_nh->write($tree->newick_format('full_web'));
   
-  $file_fa->save;
-  $file_nh->save;
-
-  return ($file_fa->URL, $file_nh->URL);
+  return ($file_fa->read_url, $file_nh->read_url);
 }
 
 1;
