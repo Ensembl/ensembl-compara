@@ -359,6 +359,13 @@ foreach my $genome_db_ids (@new_input_genome_db_ids) {
   }
   ##
   #################################################
+  # Simple check to allow running create_mlss for homoeologues on the whole
+  # collection
+  if (($method_link_type eq 'ENSEMBL_HOMOEOLOGUES') and (not $all_genome_dbs->[0]->is_polyploid)) {
+    print "Skipping this MLSS because ENSEMBL_HOMOEOLOGUES only applies to polyploid species\n";
+    next;
+  }
+
   print "You are about to store the following MethodLinkSpeciesSet\n  $method_link_type: ",
     join(" - ", map {$_->name."(".$_->assembly.")"} @$all_genome_dbs), "\n",
       "  Name: $name\n",
