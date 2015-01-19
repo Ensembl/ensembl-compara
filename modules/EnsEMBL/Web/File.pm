@@ -60,7 +60,7 @@ sub new {
   #warn "@@@ ARG $k = $v";
   #}
   my $hub = $args{'hub'};
-  my $input_drivers = ($args->{'file'} && $args->{'file'} =~ /^[http|ftp]/) ? ['URL'] : ['IO'];
+  my $input_drivers = ($args{'file'} && $args{'file'} =~ /^[http|ftp]/) ? ['URL'] : ['IO'];
   my $self = {
               'hub'             => $args{'hub'},
               'base_dir'        => $args{'base_dir'} || $hub->species_defs->ENSEMBL_TMP_DIR,
