@@ -512,7 +512,7 @@ sub is_polyploid {
 
 sub make_component_copy {
     my ($self, $component_name) = @_;
-    my $copy_genome_db = \%{$self};
+    my $copy_genome_db = { %{$self} };
     bless $copy_genome_db, 'Bio::EnsEMBL::Compara::GenomeDB';
     $copy_genome_db->genome_component($component_name);
     $copy_genome_db->assembly_default(0);

@@ -227,15 +227,19 @@ $helper->transaction( -CALLBACK => sub {
         } elsif ($action_remove_from_collection) {
             remove_species_from_collections($compara_db, $genome_db, \@collection);
         } else {
-            add_to_collections($compara_db, $genome_db, \@collection);
+            add_to_collections($compara_db, [$genome_db], \@collection);
         }
         return;
     }
     my $genome_db = update_genome_db($species_db, $compara_db, $force);
-    add_to_collections($compara_db, $genome_db, \@collection);
     #delete_genomic_align_data($compara_db, $genome_db);
     #delete_syntenic_data($compara_db, $genome_db);
     update_dnafrags($compara_db, $genome_db, $species_db);
+    my $component_genome_dbs = update_component_genome_dbs($genome_db, $species_db, $compara_db);
+    foreach my $component_gdb (@$component_genome_dbs) {
+        update_dnafrags($compara_db, $component_gdb, $species_db);
+    }
+    add_to_collections($compara_db, [$genome_db, @$component_genome_dbs], \@collection);
     print_method_link_species_sets_to_update($compara_db, $genome_db);
 } );
 
@@ -327,34 +331,59 @@ sub update_genome_db {
   return $genome_db;
 }
 
+
+=head2 update_component_genome_dbs
+
+  Description : Updates all the genome components (only for polyploid genomes)
+  Returns     : -none-
+  Exceptions  : none
+
+=cut
+
+sub update_component_genome_dbs {
+    my ($principal_genome_db, $species_dba, $compara_dba) = @_;
+
+    my @gdbs = ();
+    my $genome_db_adaptor = $compara_dba->get_GenomeDBAdaptor();
+    foreach my $c (@{$species_dba->get_GenomeContainer->get_genome_components}) {
+        my $copy_genome_db = $principal_genome_db->make_component_copy($c);
+        $genome_db_adaptor->store($copy_genome_db);
+        push @gdbs, $copy_genome_db;
+        print "Component '$c' genome_db: ", $copy_genome_db->toString(), "\n";
+    }
+    return \@gdbs;
+}
+
+
 =head2 add_to_collections
 
   Arg[1]      : Bio::EnsEMBL::Compara::DBSQL::DBAdaptor $compara_dba
-  Arg[2]      : Bio::EnsEMBL::Compara::GenomeDB $genome_db
+  Arg[2]      : Arrayref of Bio::EnsEMBL::Compara::GenomeDB $genome_db
   Arg[3]      : Array reference of strings (the collections to add the species to)
   Description : This method updates all the collection species sets to
-                include the new genome_db
+                include the new genome_dbs (they are supposed to all have the same name)
   Returns     : -none-
   Exceptions  : throw if any SQL statment fails
 
 =cut
 
 sub add_to_collections {
-  my ($compara_dba, $genome_db, $all_collections) = @_;
+  my ($compara_dba, $genome_dbs, $all_collections) = @_;
 
+  my $gdb_name = $genome_dbs->[0]->name;
   # Gets all the collections with that genome_db
   my $ssa = $compara_dba->get_SpeciesSetAdaptor;
-  my $sss = $ssa->fetch_all_collections_by_genome($genome_db->name);
+  my $sss = $ssa->fetch_all_collections_by_genome($gdb_name);
   push @$sss, @{_fetch_all_collections_by_name($ssa, $all_collections)};
 
   my %seen = ();
   foreach my $ss (@$sss) {
       next if $seen{$ss->dbID};
       $seen{$ss->dbID} = 1;
-      my $new_genome_dbs = [grep {$_->name ne $genome_db->name} @{$ss->genome_dbs}];
-      push @$new_genome_dbs, $genome_db;
+      my $new_genome_dbs = [grep {$_->name ne $gdb_name} @{$ss->genome_dbs}];
+      push @$new_genome_dbs, @$genome_dbs;
       my $new_ss = $ssa->update_collection($ss, $new_genome_dbs);
-      printf("%s added to the collection '%s' (species_set_id=%d)\n", $genome_db->name, $ss->get_value_for_tag('name'), $new_ss->dbID);
+      printf("%s added to the collection '%s' (species_set_id=%d)\n", $gdb_name, $ss->get_value_for_tag('name'), $new_ss->dbID);
   }
 }
 
@@ -503,7 +532,9 @@ sub update_dnafrags {
     $old_dnafrags_by_id->{$old_dnafrag->dbID} = $old_dnafrag;
   }
 
-  my $gdb_slices = $species_dba->get_SliceAdaptor->fetch_all('toplevel', undef, 1, 1, 1);
+  my $gdb_slices = $genome_db->genome_component
+    ? $species_dba->get_SliceAdaptor->fetch_all_by_genome_component($genome_db->genome_component)
+    : $species_dba->get_SliceAdaptor->fetch_all('toplevel', undef, 1, 1, 1);
   die "Could not fetch any toplevel slices from ".$genome_db->name() unless(scalar(@$gdb_slices));
 
   my $current_verbose = verbose();
