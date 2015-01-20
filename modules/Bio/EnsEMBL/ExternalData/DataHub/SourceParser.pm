@@ -230,7 +230,13 @@ sub parse_file_content {
   my $url      = $file =~ s|^(.+)/.+|$1|r; # URL relative to the file (up until the last slash before the file name)
   my @contents = split /track /, $content;
   shift @contents;
-  
+ 
+  ## Some hubs don't set the track type, so...
+  my %format_lookup = (
+                      'bb' => 'bigBed',
+                      'bw' => 'bigWig',
+                      );
+ 
   foreach (@contents) {
     my @lines = split /\n/;
     my (@track, $multi_line);
@@ -255,7 +261,7 @@ sub parse_file_content {
     next unless defined $id;
     
     $id = 'Unnamed' if $id eq '';
-    
+   
     foreach (@track) {
       my ($key, $value) = split /\s+/, $_, 2;
       
@@ -337,11 +343,18 @@ sub parse_file_content {
     
     # filthy hack to support superTrack setting being used as parent, because hubs are incorrect.
     $tracks{$id}{'parent'} = delete $tracks{$id}{'superTrack'} if $tracks{$id}{'superTrack'} && $tracks{$id}{'superTrack'} !~ /^on/ && !$tracks{$id}{'parent'};
-    
+
+
     # any track which doesn't have any of these is definitely invalid
     if ($tracks{$id}{'type'} || $tracks{$id}{'shortLabel'} || $tracks{$id}{'longLabel'}) {
       $tracks{$id}{'track'}           = $id;
       $tracks{$id}{'description_url'} = "$url/$id.html" unless $tracks{$id}{'parent'};
+      
+      unless ($tracks{$id}{'type'}) {
+        ## Set type based on file extension
+        my @path = split(/\./, $tracks{$id}{'bigDataUrl'});
+        $tracks{$id}{'type'} = $format_lookup{$path[-1]};
+      }
       
       if ($tracks{$id}{'dimensions'}) {
         # filthy last-character-of-string hack to support dimensions in the same way as UCSC
