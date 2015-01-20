@@ -336,7 +336,7 @@ sub parse_file_content {
     }
     
     # filthy hack to support superTrack setting being used as parent, because hubs are incorrect.
-    $tracks{$id}{'parent'} = delete $tracks{$id}{'superTrack'} if $tracks{$id}{'superTrack'} && $tracks{$id}{'superTrack'} ne 'on' && !$tracks{$id}{'parent'};
+    $tracks{$id}{'parent'} = delete $tracks{$id}{'superTrack'} if $tracks{$id}{'superTrack'} && $tracks{$id}{'superTrack'} !~ /^on/ && !$tracks{$id}{'parent'};
     
     # any track which doesn't have any of these is definitely invalid
     if ($tracks{$id}{'type'} || $tracks{$id}{'shortLabel'} || $tracks{$id}{'longLabel'}) {
