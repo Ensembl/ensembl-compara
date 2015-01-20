@@ -817,18 +817,33 @@ sub _add_datahub {
     if (scalar @$source_list) {
       ## Get tracks from hub
       my $datahub = $parser->parse($source_list);
-    
+   
+      ## First check if we have at least some nodes with children
+      my $has_hierarchy = 0;
+      foreach my $node (@{$datahub->child_nodes}) {
+        if ($node->has_child_nodes) {
+          $has_hierarchy = 1;
+          last;
+        }
+      }
+ 
       foreach my $node (@{$datahub->child_nodes}) {
         my $data = $node->data;
       
         if ($data->{'error'}) {
           warn "!!! COULD NOT PARSE CONFIG $data->{'file'}: $data->{'error'}";
-        } elsif (!$node->has_child_nodes) {
-          # No inheritance structure - assumes that the top level in the hub contains only tracks
-          $self->_add_datahub_node($node->parent_node, $menu, $menu_name);
-          last;
-        } else {
+        } elsif ($node->has_child_nodes) {
           $self->_add_datahub_node($node, $menu, $menu_name);
+        } else {
+          if ($has_hierarchy) {
+            ## Mixed structure - some supertracks and some (like this one) top level tracks
+            $self->_add_datahub_tracks($node, {}, $menu, $menu_name);
+          }
+          else {
+            # No inheritance structure - the top level in the hub contains only tracks
+            $self->_add_datahub_node($node->parent_node, $menu, $menu_name);
+            last;
+          }
         }
       }
 
@@ -867,7 +882,7 @@ sub _add_datahub_tracks {
   my $link   = $config->{'description_url'} ? qq(<br /><a href="$config->{'description_url'}" rel="external">Go to track description on trackhub</a>) : '';
   my $info   = $config->{'longLabel'} . $link;
   my %tracks;
-  
+ 
   my %options = (
     menu_key     => $name,
     menu_name    => $name,
@@ -875,7 +890,7 @@ sub _add_datahub_tracks {
     submenu_name => $data->{'shortLabel'},
     datahub      => 1,
   );
-  
+
   if ($matrix) {
     $options{'matrix_url'} = $hub->url('Config', { action => 'Matrix', function => $hub->action, partial => 1, menu => $options{'submenu_key'} });
     
