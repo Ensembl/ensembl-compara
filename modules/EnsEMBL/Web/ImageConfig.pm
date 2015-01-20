@@ -817,35 +817,8 @@ sub _add_datahub {
     if (scalar @$source_list) {
       ## Get tracks from hub
       my $datahub = $parser->parse($source_list);
-   
-      ## First check if we have at least some nodes with children
-      my $has_hierarchy = 0;
-      foreach my $node (@{$datahub->child_nodes}) {
-        if ($node->has_child_nodes) {
-          $has_hierarchy = 1;
-          last;
-        }
-      }
- 
-      foreach my $node (@{$datahub->child_nodes}) {
-        my $data = $node->data;
-      
-        if ($data->{'error'}) {
-          warn "!!! COULD NOT PARSE CONFIG $data->{'file'}: $data->{'error'}";
-        } elsif ($node->has_child_nodes) {
-          $self->_add_datahub_node($node, $menu, $menu_name);
-        } else {
-          if ($has_hierarchy) {
-            ## Mixed structure - some supertracks and some (like this one) top level tracks
-            $self->_add_datahub_tracks($node, {}, $menu, $menu_name);
-          }
-          else {
-            # No inheritance structure - the top level in the hub contains only tracks
-            $self->_add_datahub_node($node->parent_node, $menu, $menu_name);
-            last;
-          }
-        }
-      }
+  
+      $self->_add_datahub_node($datahub, $menu, $menu_name);
 
       $self->{'_attached_datahubs'}{$url} = 1;
     }
@@ -859,23 +832,42 @@ sub _add_datahub {
 sub _add_datahub_node {
   my ($self, $node, $menu, $name) = @_;
   
-  if ($node->has_child_nodes && $node->first_child->has_child_nodes) {
-    $self->_add_datahub_node($_, $menu, $name) for @{$node->child_nodes};
-  } else {
-    my $config = {};
-    my $n      = $node;
-    
-    do {
-      my $data = $n->data;
+  my (@next_level, @childless);
+  if ($node->has_child_nodes) {
+    foreach my $child (@{$node->child_nodes}) {
+      if ($child->has_child_nodes) {
+        push @next_level, $child;
+      }
+      else {
+        push @childless, $child;
+      }
+    }
+  }
+
+  if (scalar(@next_level)) {
+    $self->_add_datahub_node($_, $menu, $name) for @next_level;
+  } 
+
+  if (scalar(@childless)) {
+    my $n       = $node;
+    my $data    = $n->data;
+    my $config  = {};
+    unless ($data->{'superTrack'} && $data->{'superTrack'} =~ /^on/) {
+      $config->{$_} = $data->{$_} for keys %$data;
+    }
+
+    while ($n = $n->parent_node) {
+      $data = $n->data;
+      last if $data->{'superTrack'} && $data->{'superTrack'} =~ /^on/;
       $config->{$_} ||= $data->{$_} for keys %$data;
-    } while $n = $n->parent_node;
+    };
     
-    $self->_add_datahub_tracks($node, $config, $menu, $name);
+    $self->_add_datahub_tracks($node, \@childless, $config, $menu, $name);
   }
 }
 
 sub _add_datahub_tracks {
-  my ($self, $parent, $config, $menu, $name) = @_;
+  my ($self, $parent, $children, $config, $menu, $name) = @_;
   my $hub    = $self->hub;
   my $data   = $parent->data;
   my $matrix = $config->{'dimensions'}{'x'} && $config->{'dimensions'}{'y'};
@@ -926,7 +918,7 @@ sub _add_datahub_tracks {
   
   $self->alphabetise_tracks($submenu, $menu);
   
-  foreach (@{$parent->child_nodes}) {
+  foreach (@{$children||[]}) {
     my $track        = $_->data;
     my $type         = ref $track->{'type'} eq 'HASH' ? uc $track->{'type'}{'format'} : uc $track->{'type'};
     my $squish       = $track->{'visibility'} eq 'squish' || $config->{'visibility'} eq 'squish'; # FIXME: make it inherit correctly
