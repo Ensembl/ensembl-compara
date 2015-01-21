@@ -445,8 +445,8 @@ sub pipeline_analyses {
 	       -hive_capacity => 10,
  	       -wait_for => [ 'store_sequence', 'store_sequence_again', 'chunk_and_group_dna', 'dump_dna_factory', 'dump_dna'  ],
 	       -flow_into => {
-			       'A->1' => [ 'remove_inconsistencies_after_pairaligner' ],
-			       '2->A' => [ $self->o('pair_aligner_logic_name')  ],
+			       1 => [ 'remove_inconsistencies_after_pairaligner' ],
+			       2 => [ $self->o('pair_aligner_logic_name')  ],
 			   },
 	       -rc_name => '1Gb',
  	    },
@@ -470,11 +470,13 @@ sub pipeline_analyses {
 			      },
  	       -batch_size => $self->o('pair_aligner_batch_size'),
  	       -program    => $self->o('pair_aligner_program'), 
+	       -can_be_empty  => 1, 
 	       -rc_name => '3.6Gb',
 	    },
 	    {  -logic_name => 'remove_inconsistencies_after_pairaligner',
                -module     => 'Bio::EnsEMBL::Compara::RunnableDB::PairAligner::RemoveAlignmentDataInconsistencies',
 	       -parameters => { },
+ 	       -wait_for =>  [ $self->o('pair_aligner_logic_name'), $self->o('pair_aligner_logic_name') . "_himem1" ],
 	       -flow_into => {
 			      1 => [ 'update_max_alignment_length_before_FD' ],
 			     },
@@ -589,8 +591,8 @@ sub pipeline_analyses {
 		-parameters => { }, 
 		-flow_into => {
 #			      1 => [ 'update_max_alignment_length_after_chain' ],
-			      'A->1' => [ 'remove_inconsistencies_after_chain' ],
-			      '2->A' => [ 'alignment_chains' ],
+			      1 => [ 'remove_inconsistencies_after_chain' ],
+			      2 => [ 'alignment_chains' ],
 			     },
  	       -wait_for => [ 'no_chunk_and_group_dna', 'dump_large_nib_for_chains_factory', 'dump_large_nib_for_chains', 'dump_large_nib_for_chains_himem' ],
 	       -rc_name => '1Gb',
@@ -610,6 +612,7 @@ sub pipeline_analyses {
  	       -batch_size => $self->o('chain_batch_size'),
  	       -module     => 'Bio::EnsEMBL::Compara::RunnableDB::PairAligner::AlignmentChains',
  	       -parameters => $self->o('chain_parameters'),
+	       -can_be_empty  => 1, 
 	       -rc_name => '3.6Gb',
  	    },
 	    {
@@ -618,6 +621,7 @@ sub pipeline_analyses {
 	     -flow_into => {
 			      1 => [ 'update_max_alignment_length_after_chain' ],
 			   },
+	     -wait_for =>  [ 'alignment_chains', 'alignment_chains_himem' ],
 	     -rc_name => '100Mb',
 	    },
 	    {  -logic_name => 'update_max_alignment_length_after_chain',

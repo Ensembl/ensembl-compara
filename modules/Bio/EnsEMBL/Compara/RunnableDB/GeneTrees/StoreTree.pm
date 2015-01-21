@@ -311,22 +311,20 @@ sub parse_newick_into_tree {
     my $seq_member_id = $leaf->name();
     my $old_leaf = $old_leaves{$seq_member_id};
     if (not $old_leaf) {
-	  #In case the tree is been updated (copied from previous_db) we need to:
-	  #set the updated node to use the temporary id "0" to avoid dammaging other trees in the database
-	  #We set the children_loaded=1 to tell the API not to load the leaf
-	  #Then we "next" the loop
-      $leaf->print_node;
-	  bless $leaf, 'Bio::EnsEMBL::Compara::GeneTreeMember';
-	  $leaf->node_id(0);
-	  $leaf->seq_member_id($seq_member_id);
-	  $leaf->adaptor($tree->adaptor->db->get_GeneTreeNodeAdaptor);
-	  $leaf->{'_children_loaded'} = 1;
-	  next;
+      #In case the tree is been updated (copied from previous_db) we need to:
+      #set the updated node to use the temporary id "0" to avoid dammaging other trees in the database
+      #We set the children_loaded=1 to tell the API not to load the leaf
+      #Then we "next" the loop
+      $leaf->print_node if $self->debug;
+      $leaf->node_id(0);
+      $leaf->seq_member_id($seq_member_id);
+      $leaf->adaptor($tree->adaptor->db->get_GeneTreeNodeAdaptor);
+    } else {
+      $old_leaf->Bio::EnsEMBL::Compara::AlignedMember::copy($leaf);
+      $leaf->node_id($old_leaf->node_id);
+      $leaf->adaptor($old_leaf->adaptor);
     }
     bless $leaf, 'Bio::EnsEMBL::Compara::GeneTreeMember';
-    $old_leaf->Bio::EnsEMBL::Compara::AlignedMember::copy($leaf);
-    $leaf->node_id($old_leaf->node_id);
-    $leaf->adaptor($old_leaf->adaptor);
     $leaf->{'_children_loaded'} = 1;
   }
   print  "Tree with GeneTreeNode objects:\n";
@@ -423,22 +421,15 @@ sub store_tree_into_clusterset {
 sub fetch_or_create_other_tree {
     my ($self, $clusterset, $tree, $remove_previous_copy) = @_;
 
-    if (not defined $self->param('other_trees')) {
-        my %other_trees;
-        foreach my $other_tree (@{$tree->adaptor->fetch_all_linked_trees($tree)}) {
-            $other_tree->preload();
-            $other_trees{$other_tree->clusterset_id} = $other_tree;
-        }
-        $self->param('other_trees', \%other_trees);
+    my $other_trees = $tree->alternative_trees;
+
+    if ($remove_previous_copy and exists $other_trees->{$clusterset->clusterset_id}) {
+        warn "deleting the previous tree\n";
+        $tree->adaptor->delete_tree($other_trees->{$clusterset->clusterset_id});
+        delete $other_trees->{$clusterset->clusterset_id};
     }
 
-    if ($remove_previous_copy and exists ${$self->param('other_trees')}{$clusterset->clusterset_id}) {
-		warn "deleting the previous tree\n";
-		$tree->adaptor->delete_tree(${$self->param('other_trees')}{$clusterset->clusterset_id});
-		delete ${$self->param('other_trees')}{$clusterset->clusterset_id};
-	}
-
-    if (not exists ${$self->param('other_trees')}{$clusterset->clusterset_id}) {
+    if (not exists $other_trees->{$clusterset->clusterset_id}) {
         my $newtree = $tree->deep_copy();
         $newtree->stable_id(undef);
         # Reformat things
@@ -448,10 +439,16 @@ sub fetch_or_create_other_tree {
         }
         $newtree->ref_root_id($tree->ref_root_id || $tree->root_id);
         $self->store_tree_into_clusterset($newtree, $clusterset);
-        ${$self->param('other_trees')}{$clusterset->clusterset_id} = $newtree;
+        # We need to add the new tree to all the alternative trees
+        $other_trees->{$clusterset->clusterset_id} = $newtree;
+        foreach my $ot (values %$other_trees) {
+            $ot->{_alternative_trees}->{$clusterset->clusterset_id} = $newtree;
+        }
     }
 
-    return ${$self->param('other_trees')}{$clusterset->clusterset_id};
+    $other_trees->{$clusterset->clusterset_id}->preload();
+
+    return $other_trees->{$clusterset->clusterset_id};
 }
 
 sub store_alternative_tree {

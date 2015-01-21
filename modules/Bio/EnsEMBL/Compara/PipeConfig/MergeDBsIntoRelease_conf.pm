@@ -94,6 +94,9 @@ sub default_options {
         'ignored_tables'    => {
         },
 
+        'extra_sql_cmds'    => [
+            $self->o('ensembl_cvs_root_dir').'/ensembl-compara/scripts/production/populate_member_production_counts_table.sql',
+        ],
    };
 }
 
@@ -201,6 +204,7 @@ sub pipeline_analyses {
                 'sql'       => 'DROP TABLE DBMERGEBACKUP_#table#',
             },
             -hive_capacity => $self->o('copying_capacity'),       # allow several workers to perform identical tasks in parallel
+            -wait_for => [ 'extra_cmd_run' ],
         },
 
         {   -logic_name => 'analyze_optimize',
@@ -213,6 +217,30 @@ sub pipeline_analyses {
                 ]
             },
             -hive_capacity => $self->o('copying_capacity'),       # allow several workers to perform identical tasks in parallel
+            -wait_for => [ 'extra_cmd_run' ],
+        },
+
+        {   -logic_name => 'extra_cmd_list',
+            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
+            -parameters => {
+                'column_names' => [ 'sql_file' ],
+            },
+            -input_ids => [
+                { 'inputlist' => $self->o('extra_sql_cmds') },
+            ],
+            -flow_into => {
+                2 => [ 'extra_cmd_run' ],
+            },
+        },
+
+
+        {   -logic_name     => 'extra_cmd_run',
+            -module         => 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
+            -parameters     => {
+                'db_cmd'            => $self->db_cmd(undef, ref($self->o('urls')) ? $self->o('urls')->{'curr_rel_db'} : undef),
+                'cmd'               => '#db_cmd# < #sql_file#',
+            },
+            -wait_for => [ 'generate_job_list', 'copy_table', 'check_size' ],
         },
 
     ];

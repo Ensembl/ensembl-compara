@@ -69,6 +69,7 @@ Other parameters:
  - reroot_with_sdi: should "treebest sdi" also reroot the tree
  - output_clusterset_id: alternative clusterset_id to store the result gene tree
  - aln_format: (default: "fasta"). In which format the alignment should be dumped
+ - aln_clusterset_id: clusterset_id of the tree that provides the alignment. Default is undef, which means the tree that is used for input in the runnable
 
 Branch events:
  - #1: autoflow on success
@@ -138,8 +139,7 @@ sub fetch_input {
 
     if ($self->param('input_clusterset_id') and $self->param('input_clusterset_id') ne 'default') {
         print STDERR "getting the tree '".$self->param('input_clusterset_id')."'\n";
-        my $other_trees = $self->param('tree_adaptor')->fetch_all_linked_trees($gene_tree);
-        my ($selected_tree) = grep {$_->clusterset_id eq $self->param('input_clusterset_id')} @$other_trees;
+        my $selected_tree = $gene_tree->alternative_trees->{$self->param('input_clusterset_id')};
         die sprintf('Cannot find a "%s" tree for tree_id=%d', $self->param('input_clusterset_id'), $self->param('gene_tree_id')) unless $selected_tree;
         $selected_tree->add_tag('removed_columns', $gene_tree->get_value_for_tag('removed_columns')) if $gene_tree->has_tag('removed_columns');
         $gene_tree = $selected_tree;
@@ -168,9 +168,8 @@ sub run {
 sub write_output {
     my $self = shift;
 
-    my $target_tree = $self->param('gene_tree');
-
     if ($self->param('read_tags')) {
+        my $target_tree = $self->param('default_gene_tree')->alternative_trees->{$self->param('output_clusterset_id')};
         my $tags = $self->get_tags();
         while ( my ($tag, $value) = each %$tags ) {
             $target_tree->store_tag($tag, $value);
@@ -178,12 +177,13 @@ sub write_output {
 
     } else {
 
+        my $target_tree;
+        delete $self->param('default_gene_tree')->{'_member_array'};   # To make sure we use the freshest data
+
         if ($self->param('output_clusterset_id') and $self->param('output_clusterset_id') ne 'default') {
-            delete $target_tree->{'_member_array'};   # To make sure we use the freshest data
-            $target_tree = $self->store_alternative_tree($self->param('newick_output'), $self->param('output_clusterset_id'), $target_tree, [], 1);
+            $target_tree = $self->store_alternative_tree($self->param('newick_output'), $self->param('output_clusterset_id'), $self->param('default_gene_tree'), [], 1) || die "Could not store ". $self->param('output_clusterset_id') . " tree.\n";
         } else {
             $target_tree = $self->param('default_gene_tree');
-            delete $target_tree->{'_member_array'};   # To make sure we use the freshest data
             $self->parse_newick_into_tree($self->param('newick_output'), $target_tree, []);
             $self->store_genetree($target_tree);
         }
@@ -195,7 +195,6 @@ sub write_output {
         }
     }
     $self->param('default_gene_tree')->store_tag($self->param('runtime_tree_tag'), $self->param('runtime_msec')) if $self->param('runtime_tree_tag');
-    $target_tree->release_tree();
 }
 
 
@@ -227,7 +226,18 @@ sub run_generic_command {
     $self->param('species_tree_file', $self->get_species_tree_file());
     $self->merge_split_genes($gene_tree) if $self->param('check_split_genes');
 
-    my $input_aln = $self->dumpTreeMultipleAlignmentToWorkdir($gene_tree, $self->param('aln_format'), {-APPEND_SPECIES_TREE_NODE_ID => 1}) || die "Could not fetch alignment for ($gene_tree)";
+    # The alignment can come from yet another tree
+    my $aln_tree;
+    if ($self->param('aln_clusterset_id')) {
+        if ($self->param('aln_clusterset_id') eq 'default') {
+            $aln_tree = $self->param('default_gene_tree');
+        } else {
+            $aln_tree = $self->param('default_gene_tree')->alternative_trees->{$self->param('aln_clusterset_id')};
+        }
+    } else {
+        $aln_tree = $gene_tree;
+    }
+    my $input_aln = $self->dumpTreeMultipleAlignmentToWorkdir($aln_tree, $self->param('aln_format'), {-APPEND_SPECIES_TREE_NODE_ID => 1}) || die "Could not fetch alignment for ($aln_tree)";
     $self->param('alignment_file', $input_aln);
 
     $self->param('gene_tree_file', $self->get_gene_tree_file($gene_tree->root));
