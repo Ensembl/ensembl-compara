@@ -280,7 +280,12 @@ sub render_normal {
       
       push @{$id{$fgroup_name}}, [ $s, $e, $f, int($s * $pix_per_bp), int($e * $pix_per_bp), $db_name ];
     }
-    
+    my %idl;
+    foreach my $k (keys %id) {
+      $idl{$k} = $strand * ( max(map { $_->[1] } @{$id{$k}}) -
+                             min(map { $_->[0] } @{$id{$k}}));
+    }
+
     next unless keys %id;
     
     my $colour_key     = $self->colour_key($feature_key);
@@ -309,7 +314,7 @@ sub render_normal {
     
     my $greyscale_max = $config && exists $config->{'greyscale_max'} && $config->{'greyscale_max'} > 0 ? $config->{'greyscale_max'} : 1000;
     
-    foreach my $i (sort { $id{$a}[0][3] <=> $id{$b}[0][3] || $id{$b}[-1][4] <=> $id{$a}[-1][4] } keys %id) {
+    foreach my $i (sort { $idl{$a} <=> $idl{$b} } keys %id) {
       my @feat       = @{$id{$i}};
       my $db_name    = $feat[0][5];
       my $feat_from  = max(min(map { $_->[0] } @feat),1);
