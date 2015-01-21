@@ -431,19 +431,7 @@ sub core_pipeline_analyses {
             },
         },
 
-		{   -logic_name => 'update_pipeline_decision',
-            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ConditionalDataFlow',
-            -parameters => {
-                'condition'     => '#clustering_mode# eq \"topup\"',
-            },
-            -hive_capacity  => 100,
-            -flow_into  => {
-                2 => [ 'backbone_update_trees' ],
-                3 => [ 'backbone_fire_tree_building' ],
-            },
-        },
-
-		{   -logic_name => 'backbone_update_trees',
+        {   -logic_name => 'backbone_update_trees',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::DatabaseDumper',
             -parameters => {
                 'filename'      => 'snapshot_6_before_updating_pipeline',
@@ -474,7 +462,7 @@ sub core_pipeline_analyses {
             },
             -flow_into  => {
                 '1->A'  => [ 'test_whether_can_copy_clusters' ],
-                'A->1'  => [ 'update_pipeline_decision' ],
+                'A->1'  => [ $self->o('clustering_mode') eq 'topup' ? 'backbone_update_trees' : 'backbone_fire_tree_building' ],
             },
         },
 
