@@ -161,6 +161,11 @@ sub default_options {
         'hc_capacity'               =>   4,
         'HMMer_classify_capacity'   => 100,
         'loadmembers_capacity'      =>  30,
+        'HMMer_classifyPantherScore_capacity'   => 1000,
+        'copy_trees_capacity'       => 50,
+        'copy_alignments_capacity'  => 50,
+        'mafft_update_capacity'     => 50,
+        'raxml_update_capacity'     => 50,
 
     # hive priority for non-LOCAL health_check analysis:
 
