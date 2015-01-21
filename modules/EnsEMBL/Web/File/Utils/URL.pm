@@ -177,6 +177,7 @@ sub read_file {
       $content = $response->{'content'};
     }
     else {
+      warn "!!! ERROR FETCHING FILE $url";
       $error = _get_http_tiny_error($response);
     }
   }
@@ -238,22 +239,21 @@ sub delete_file {
   }
 }
 
-sub get_filesize {
-### Get size of remote file 
+sub get_headers {
+### Get one or all headers from a remote file 
 ### @param url - URL of file
 ### @param Args Hashref 
+###         header (optional) String - name of header
 ###         hub EnsEMBL::Web::Hub
 ###         nice (optional) Boolean - see introduction
 ###         compression String (optional) - compression type
-### @return Hashref containing results (Integer - file size in bytes) or errors (ArrayRef)
+### @return Hashref containing results (single header or hashref of headers) or errors (ArrayRef)
   my ($file, $args) = @_;
-  my $url = ref($file) ? $file->read_url : $file;
-  my ($size, $error);
+  my $url = ref($file) ? $file->location : $file;
+  my ($all_headers, $result, $error);
 
   if ($url =~ /^ftp/) {
     ## TODO - support FTP!
-    ## return arbitrary filesize as a stopgap!
-    $size = 1000;
   }
   else {
     my %params = ('timeout'       => 10);
@@ -265,25 +265,40 @@ sub get_filesize {
 
     my $response = $http->request('HEAD', $url);
     if ($response->{'success'}) {
-      $size = $response->{'headers'}{'Content-Length'} || 0;
+      $all_headers = $response->{'headers'};
     }
     else {
       $error = _get_http_tiny_error($response);
     }
   }
 
+  $result = $args->{'header'} ? $all_headers->{$args->{'header'}} : $all_headers;
+
   if ($args->{'nice'}) {
-    return $error ? {'error' => [$error]} : {'filesize' => $size};
+    return $error ? {'error' => [$error]} : {'headers' => $result};
   }
   else {
     if ($error) {
-      throw exception('URLException', "Could not determine file size.") unless $args->{'no_exception'};
+      throw exception('URLException', "Could not get headers.") unless $args->{'no_exception'};
       return 0;
     }
     else {
-      return $size;
+      return $result;
     }
   }
+}
+
+sub get_filesize {
+### Get size of remote file 
+### @param url - URL of file
+### @param Args Hashref 
+###         hub EnsEMBL::Web::Hub
+###         nice (optional) Boolean - see introduction
+###         compression String (optional) - compression type
+### @return Hashref containing results (Integer - file size in bytes) or errors (ArrayRef)
+  my ($file, $args) = @_;
+  $args->{'header'} = 'Content-Length';
+  return get_headers($file, $args);
 }
 
 sub _get_lwp_useragent_error {
