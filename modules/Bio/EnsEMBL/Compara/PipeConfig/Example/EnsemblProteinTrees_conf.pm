@@ -202,6 +202,13 @@ sub default_options {
             -pass   => '',
         },
 
+        'eg_live' => {
+            -host => 'mysql-eg-publicsql.ebi.ac.uk',
+            -port => 4157,
+            -user => 'anonymous',
+            -db_version => 78,
+        },
+
         # NOTE: The databases referenced in the following arrays have to be hashes (not URLs)
         # Add the database entries for the current core databases and link 'curr_core_sources_locs' to them
         'curr_core_sources_locs'    => [ $self->o('staging_loc1'), $self->o('staging_loc2') ],
