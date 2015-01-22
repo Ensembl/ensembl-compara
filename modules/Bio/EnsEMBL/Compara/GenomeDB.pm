@@ -169,7 +169,7 @@ sub db_adaptor {
             $self->assembly( $self->{'_db_adaptor'}->assembly_name );
             $self->taxon_id( $self->{'_db_adaptor'}->get_MetaContainer->get_taxonomy_id );
             $self->genebuild( $self->{'_db_adaptor'}->get_MetaContainer->get_genebuild );
-            $self->has_karyotype( $self->{'_db_adaptor'}->get_MetaContainer->has_karyotype );
+            $self->has_karyotype( $self->{'_db_adaptor'}->get_GenomeContainer->has_karyotype );
 	    $self->{'_db_adaptor'}{_dbc}->disconnect_if_idle;
         }
     }
