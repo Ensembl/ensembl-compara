@@ -2482,24 +2482,17 @@ sub core_pipeline_analyses {
             },
         },
 
-        {   -logic_name => 'orthology_stats_factory',
+        {   -logic_name => 'homology_stats_factory',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::MLSSIDFactory',
             -parameters => {
-                'discard_methods'   => [ 'ENSEMBL_PARALOGUES' ],
+                'methods'   => {
+                    'ENSEMBL_ORTHOLOGUES'   => 2,
+                    'ENSEMBL_PARALOGUES'    => 3,
+                },
             },
             -flow_into => {
                 2 => [ 'orthology_stats' ],
-                1 => [ 'paralogy_stats_factory' ],
-            },
-        },
-
-        {   -logic_name => 'paralogy_stats_factory',
-            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::MLSSIDFactory',
-            -parameters => {
-                'only_methods'      => [ 'ENSEMBL_PARALOGUES' ],
-            },
-            -flow_into => {
-                2 => [ 'paralogy_stats' ],
+                3 => [ 'paralogy_stats' ],
             },
         },
 

@@ -76,11 +76,11 @@ $sql_paralogies_taxon =~ s/description/description, species_tree_node_id/g;
 sub fetch_input {
     my $self = shift @_;
 
-    my $mlss_id      = $self->param_required('mlss_id');
+    my $mlss_id      = $self->param_required('homo_mlss_id');
     my $mlss         = $self->compara_dba->get_MethodLinkSpeciesSetAdaptor->fetch_by_dbID($mlss_id);
     my $genome_dbs   = $mlss->species_set_obj->genome_dbs;
 
-    my $species_tree = $self->compara_dba->get_SpeciesTreeAdaptor->fetch_by_method_link_species_set_id_label($mlss_id, 'default');
+    my $species_tree = $self->compara_dba->get_SpeciesTreeAdaptor->fetch_by_method_link_species_set_id_label($self->param('mlss_id'), 'default');
     my %hash_stn_id  = map {$_->dbID => $_} @{$species_tree->root->get_all_nodes()};
 
     my $data1 = $self->compara_dba->dbc->db_handle->selectall_arrayref($sql_paralogies, undef, $mlss_id);

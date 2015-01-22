@@ -78,7 +78,7 @@ FROM (
 sub fetch_input {
     my $self = shift @_;
 
-    my $mlss_id      = $self->param_required('mlss_id');
+    my $mlss_id      = $self->param_required('homo_mlss_id');
     my $mlss         = $self->compara_dba->get_MethodLinkSpeciesSetAdaptor->fetch_by_dbID($mlss_id);
     my $genome_dbs   = $mlss->species_set_obj->genome_dbs;
 
