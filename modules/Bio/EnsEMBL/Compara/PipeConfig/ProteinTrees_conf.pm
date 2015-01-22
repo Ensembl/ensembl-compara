@@ -2473,12 +2473,9 @@ sub core_pipeline_analyses {
         },
 
         {   -logic_name => 'genome_db_lister',
-            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ObjectFactory',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GenomeDBFactory',
             -parameters => {
-                'call_list'             => [ 'compara_dba', 'get_GenomeDBAdaptor', 'fetch_all'],
-                'column_names2getters'  => { 'genome_db_id' => 'dbID' },
-
-                'fan_branch_code'       => 2,
+                'component_genomes' => 0,
             },
             -flow_into  => {
                 '2' => { ':////accu?species_set=[]' => { 'species_set' => '#genome_db_id#'} },
