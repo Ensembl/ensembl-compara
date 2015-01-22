@@ -2468,7 +2468,7 @@ sub core_pipeline_analyses {
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
             -flow_into  => {
                 '1->A'  => [ 'genome_db_lister' ],
-                'A->1'  => [ 'orthology_stats_factory' ],
+                'A->1'  => [ 'homology_stats_factory' ],
             },
         },
 
