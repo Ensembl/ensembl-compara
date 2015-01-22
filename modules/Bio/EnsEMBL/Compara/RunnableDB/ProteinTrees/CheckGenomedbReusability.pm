@@ -113,10 +113,12 @@ sub fetch_input {
         eval {
             $reuse_genome_db = $reuse_genome_db_adaptor->fetch_by_name_assembly($species_name, $genome_db->assembly);
         };
-        unless($reuse_genome_db) {
+        if (not $reuse_genome_db and ($@ and $@ =~ /No matches found for name/)) {
             $self->warning("Could not fetch genome_db object for name='$species_name' and assembly='".$genome_db->assembly."' from reuse_db");
             $self->param('reuse_this', 0);
             return;
+        } elsif ($@) {
+            die $@;
         }
         my $reuse_genome_db_id = $reuse_genome_db->dbID();
 
