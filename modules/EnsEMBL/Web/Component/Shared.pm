@@ -27,7 +27,7 @@ use base qw(EnsEMBL::Web::Component);
 
 use HTML::Entities  qw(encode_entities);
 use Text::Wrap      qw(wrap);
-use List::MoreUtils qw(uniq);
+use List::MoreUtils qw(uniq first_index);
 
 use EnsEMBL::Draw::DrawableContainer;
 use EnsEMBL::Draw::VDrawableContainer;
@@ -468,37 +468,64 @@ sub get_synonyms {
   $syns = $ids if $ids =~ /^\w/;
   return $syns;
 }
+
+# Utility method to wrap HTML in a glossary
+sub glossary {
+  my %glossary = $_[0]->multiX('ENSEMBL_GLOSSARY');
+  my $entry = $glossary{$_[1]};
+
+  return $_[2] unless defined $entry;
+  return qq(<span class="glossary_mouseover">$_[2]<span class="floating_popup">$entry</span></span>);
+}
   
 sub _add_gene_counts {
-  my ($self,$genome_container,$glossary,$glossary_lookup,$cols,$options,
-      $name_tmpl,$method_tmpl,$rmethod_tmpl,$tail) = @_;
+  my ($self,$genome_container,$sd,$cols,$options,$tail,$our_type) = @_;
+
+  my @order = qw(
+    coding_cnt noncoding_cnt noncoding_cnt/s noncoding_cnt/l noncoding_cnt/m
+    pseudogene_cnt transcript
+  );
+  my @suffixes = (['','~'],
+                  ['r',' (incl ~ '.glossary($sd,'Readthrough','readthrough').')']);
+  my %glossary_lookup   = (
+      'coding_cnt'          => 'Protein coding',
+      'noncoding_cnt/s'     => 'Small non coding gene',
+      'noncoding_cnt/l'     => 'Long non coding gene',
+      'pseudogene_cnt'      => 'Pseudogene',
+      'transcript'          => 'Transcript',
+    );
+
+  my @data;
+  foreach my $attrib (@{$genome_container->get_all_counts()}) {
+    my ($name,$inner,$type) = ($attrib,'','');
+    if($name =~ s/^(.*?)_(r?)(a?)cnt(_(.*))?$/$1_cnt/) {
+      ($inner,$type) = ($2,$3);
+      $name .= "/$5" if $5;
+    }
+    next unless $type eq $our_type;
+    my $i = first_index { $name eq $_ } @order;
+    next if $i == -1;
+    ($data[$i]||={})->{$inner} = $self->object->thousandify($genome_container->get_count($attrib));
+    $data[$i]->{'_key'} = $name;
+    $data[$i]->{'_name'} = $genome_container->get_attrib($attrib)->name() if $inner eq '';
+    $data[$i]->{'_sub'} = ($name =~ m!/!);
+  } 
 
   my $counts = EnsEMBL::Web::Document::Table->new($cols, [], $options);
-  my @stats = qw(coding snoncoding lnoncoding pseudogene transcript);
-
-  foreach (@stats) {
-    my $name = $name_tmpl;
-    $name =~ s/~/$_/g;
-    my $method = $method_tmpl;
-    $method =~ s/~/$_/g;
-    my $title = $genome_container->get_attrib($name)->name();
-    my $term = $glossary_lookup->{$_};
-    my $header = $term ? qq(<span class="glossary_mouseover">$title<span class="floating_popup">$glossary->{$term}</span></span>) : $title;
-    my $stat = $self->thousandify($genome_container->$method);
-    unless ($_ eq 'transcript') {
-      my $rmethod = $rmethod_tmpl;
-      $rmethod =~ s/~/$_/g;
-      my $readthrough = $genome_container->$rmethod;
-      if ($readthrough) {
-        $stat .= ' (incl. '.$self->thousandify($readthrough).' <span class="glossary_mouseover">readthrough<span class="floating_popup">'.$glossary->{'Readthrough'}.'</span></span>)';
-      }
+  foreach my $d (@data) {
+    my $value = '';
+    foreach my $s (@suffixes) {
+      next unless $d->{$s->[0]};
+      $value .= $s->[1];
+      $value =~ s/~/$d->{$s->[0]}/g;
     }
-    $counts->add_row({
-      'name' => "<b>$header</b>",
-      'stat' => $stat,
-    }) if $stat;
-  }
-
+    next unless $value;
+    my $class = '';
+    $class = 'row-sub' if $d->{'_sub'};
+    my $key = $d->{'_name'};
+    $key = glossary($sd,$glossary_lookup{$d->{'_key'}},"<b>$d->{'_name'}</b>");
+    $counts->add_row({ name => $key, stat => $value, options => { class => $class }});
+  } 
   return "<h3>Gene counts$tail</h3>".$counts->render;
 }
   
@@ -512,14 +539,6 @@ sub species_stats {
   my $genome_container = $db_adaptor->get_GenomeContainer();
 
   my %glossary          = $sd->multiX('ENSEMBL_GLOSSARY');
-  my %glossary_lookup   = (
-      'coding'              => 'Protein coding',
-      'snoncoding'          => 'Small non coding gene',
-      'lnoncoding'          => 'Long non coding gene',
-      'pseudogene'          => 'Pseudogene',
-      'transcript'          => 'Transcript',
-    );
-
 
   my $cols = [
     { key => 'name', title => '', width => '30%', align => 'left' },
@@ -595,10 +614,10 @@ sub species_stats {
   ## GENE COUNTS
   my $has_alt = $genome_container->get_alt_coding_count();
   if($has_alt) {
-    $html .= $self->_add_gene_counts($genome_container,\%glossary,\%glossary_lookup,$cols,$options,'~_cnt','get_~_count','get_r~_count',' (Primary assembly)');
-    $html .= $self->_add_gene_counts($genome_container,\%glossary,\%glossary_lookup,$cols,$options,'~_acnt','get_alt_~_count','get_alt_r~_count',' (Alternative sequence)');
+    $html .= $self->_add_gene_counts($genome_container,$sd,$cols,$options,' (Primary assembly)','');
+    $html .= $self->_add_gene_counts($genome_container,$sd,$cols,$options,' (Alternative sequence)','a');
   } else {
-    $html .= $self->_add_gene_counts($genome_container,\%glossary,\%glossary_lookup,$cols,$options,'~_cnt','get_~_count','get_r~_count','');
+    $html .= $self->_add_gene_counts($genome_container,$sd,$cols,$options,'','');
   }
   
   ## OTHER STATS
