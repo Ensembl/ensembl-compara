@@ -338,7 +338,7 @@ sub recast_label {
         $n += $step;
       }
     }
-    $rows = $good_rows;
+    $rows = $good_rows if defined $good_rows;
   }
 
   my $max_width = max(map { $_->[1] } @$rows);
