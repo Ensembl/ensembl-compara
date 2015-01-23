@@ -284,6 +284,7 @@ sub delete_upload {
       if ($owner) {
         my $file = EnsEMBL::Web::File::User->new(hub => $hub, file => $upload->{'file'});
         $file->delete;
+      }
     } else {
       my @analyses = split ', ', $upload->{'analyses'};
       push @track_names, @analyses;
