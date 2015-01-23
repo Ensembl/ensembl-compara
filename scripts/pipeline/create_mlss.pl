@@ -240,7 +240,7 @@ if ($collection) {
   } elsif (scalar(@$ss) > 1) {
     die "There are multiple collections '$collection'";
   }
-  @input_genome_db_ids = map {$_->dbID} @{$ss->[0]->genome_dbs};
+  @input_genome_db_ids = map {$_->dbID} (grep {not $_->genome_component}  @{$ss->[0]->genome_dbs});
 }
 
 my @new_input_genome_db_ids;
