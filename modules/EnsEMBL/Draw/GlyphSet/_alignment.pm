@@ -259,8 +259,10 @@ sub render_normal {
 
     if (ref $tmp[0] eq 'ARRAY') {
       @features = @{$tmp[0]};
-      $config   = $tmp[1];
-      $depth  //= $tmp[1]{'dep'};
+      if (ref $tmp[1] eq 'HASH') {
+        $config   = $tmp[1];
+        $depth  //= $tmp[1]{'dep'};
+      }
     } else {
       @features = @tmp;
     }
