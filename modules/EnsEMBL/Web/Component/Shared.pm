@@ -594,7 +594,6 @@ sub species_stats {
 
   ## GENE COUNTS
   my $has_alt = $genome_container->get_alt_coding_count();
-  $tail = " (Primary assembly)" if $has_alt;
   if($has_alt) {
     $html .= $self->_add_gene_counts($genome_container,\%glossary,\%glossary_lookup,$cols,$options,'~_cnt','get_~_count','get_r~_count',' (Primary assembly)');
     $html .= $self->_add_gene_counts($genome_container,\%glossary,\%glossary_lookup,$cols,$options,'~_acnt','get_alt_~_count','get_alt_r~_count',' (Alternative sequence)');
