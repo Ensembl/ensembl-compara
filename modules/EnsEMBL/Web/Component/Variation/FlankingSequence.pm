@@ -73,7 +73,7 @@ sub initialize {
       my $markup = {};
          $seq    = [ map {{ letter => $_ }} split '', $slice->seq ];
       
-      if ($config->{'snp_display'}) {
+      if ($config->{'snp_display'} eq 'on') {
         $self->set_variations($config, { name => $config->{'species'}, slice => $slice }, $markup);
         $self->markup_variation($seq, $markup, $config);
       }
