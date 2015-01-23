@@ -52,7 +52,6 @@ sub add_variation_options {
   my $markup  = shift || EnsEMBL::Web::Constants::MARKUP_OPTIONS();
   my $options = shift || {};
   my $hub     = $self->hub;
-  my @order   = $self->variation_fields($options);
   my $fields;
 
   ## Tweak standard markup 
