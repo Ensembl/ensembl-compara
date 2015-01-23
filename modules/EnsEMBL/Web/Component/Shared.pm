@@ -468,7 +468,40 @@ sub get_synonyms {
   $syns = $ids if $ids =~ /^\w/;
   return $syns;
 }
+  
+sub _add_gene_counts {
+  my ($self,$genome_container,$glossary,$glossary_lookup,$cols,$options,
+      $name_tmpl,$method_tmpl,$rmethod_tmpl,$tail) = @_;
 
+  my $counts = EnsEMBL::Web::Document::Table->new($cols, [], $options);
+  my @stats = qw(coding snoncoding lnoncoding pseudogene transcript);
+
+  foreach (@stats) {
+    my $name = $name_tmpl;
+    $name =~ s/~/$_/g;
+    my $method = $method_tmpl;
+    $method =~ s/~/$_/g;
+    my $title = $genome_container->get_attrib($name)->name();
+    my $term = $glossary_lookup->{$_};
+    my $header = $term ? qq(<span class="glossary_mouseover">$title<span class="floating_popup">$glossary->{$term}</span></span>) : $title;
+    my $stat = $self->thousandify($genome_container->$method);
+    unless ($_ eq 'transcript') {
+      my $rmethod = $rmethod_tmpl;
+      $rmethod =~ s/~/$_/g;
+      my $readthrough = $genome_container->$rmethod;
+      if ($readthrough) {
+        $stat .= ' (incl. '.$self->thousandify($readthrough).' <span class="glossary_mouseover">readthrough<span class="floating_popup">'.$glossary->{'Readthrough'}.'</span></span>)';
+      }
+    }
+    $counts->add_row({
+      'name' => "<b>$header</b>",
+      'stat' => $stat,
+    }) if $stat;
+  }
+
+  return "<h3>Gene counts$tail</h3>".$counts->render;
+}
+  
 sub species_stats {
   my $self = shift;
   my $sd = $self->hub->species_defs;
@@ -558,61 +591,17 @@ sub species_stats {
   }
 
   $html .= $summary->render;
-  ## GENE COUNTS (FOR PRIMARY ASSEMBLY)
-  my $counts = EnsEMBL::Web::Document::Table->new($cols, [], $options);
-  my @stats = qw(coding snoncoding lnoncoding pseudogene transcript);
+
+  ## GENE COUNTS
   my $has_alt = $genome_container->get_alt_coding_count();
-
-  my $primary = $has_alt ? ' (Primary assembly)' : '';
-  $html .= "<h3>Gene counts$primary</h3>";
-
-  foreach (@stats) {
-    my $name = $_.'_cnt';
-    my $method = 'get_'.$_.'_count';
-    my $title = $genome_container->get_attrib($name)->name();
-    my $term = $glossary_lookup{$_};
-    my $header = $term ? qq(<span class="glossary_mouseover">$title<span class="floating_popup">$glossary{$term}</span></span>) : $title;
-    my $stat = $self->thousandify($genome_container->$method);
-    unless ($_ eq 'transcript') {
-      my $rmethod = 'get_r'.$_.'_count';
-      my $readthrough = $genome_container->$rmethod;
-      if ($readthrough) {
-        $stat .= ' (incl. '.$self->thousandify($readthrough).' <span class="glossary_mouseover">readthrough<span class="floating_popup">'.$glossary{'Readthrough'}.'</span></span>)';
-      }
-    }
-    $counts->add_row({
-      'name' => "<b>$header</b>",
-      'stat' => $stat,
-    }) if $stat;
+  $tail = " (Primary assembly)" if $has_alt;
+  if($has_alt) {
+    $html .= $self->_add_gene_counts($genome_container,\%glossary,\%glossary_lookup,$cols,$options,'~_cnt','get_~_count','get_r~_count',' (Primary assembly)');
+    $html .= $self->_add_gene_counts($genome_container,\%glossary,\%glossary_lookup,$cols,$options,'~_acnt','get_alt_~_count','get_alt_r~_count',' (Alternative sequence)');
+  } else {
+    $html .= $self->_add_gene_counts($genome_container,\%glossary,\%glossary_lookup,$cols,$options,'~_cnt','get_~_count','get_r~_count','');
   }
-
-  $html .= $counts->render;
-
-  ## GENE COUNTS FOR ALTERNATIVE ASSEMBLY
-  if ($has_alt) {
-    $html .= "<h3>Gene counts (Alternative sequence)</h3>";
-    my $alt_counts = EnsEMBL::Web::Document::Table->new($cols, [], $options);
-    foreach (@stats) {
-      my $name = $_.'_acnt';
-      my $method = 'get_alt_'.$_.'_count';
-      my $title = $genome_container->get_attrib($name)->name();
-      my $term = $glossary_lookup{$_};
-      my $header = $term ? qq(<span class="glossary_mouseover">$title<span class="floating_popup">$glossary{$term}</span></span>) : $title;
-      my $stat = $self->thousandify($genome_container->$method);
-      unless ($_ eq 'transcript') {
-        my $rmethod = 'get_alt_r'.$_.'_count';
-        my $readthrough = $genome_container->$rmethod;
-        if ($readthrough) {
-          $stat .= ' (incl. '.$self->thousandify($readthrough).' <span class="glossary_mouseover">readthrough<span class="floating_popup">'.$glossary{'Readthrough'}.'</span></span>)';
-        }
-      }
-      $alt_counts->add_row({
-        'name' => "<b>$header</b>",
-        'stat' => $stat,
-      }) if $stat;
-    }
-    $html .= $alt_counts->render;
-  }
+  
   ## OTHER STATS
   my $rows = [];
   ## Prediction transcripts
