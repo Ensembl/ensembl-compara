@@ -30,7 +30,7 @@ sub init {
   
   $self->set_defaults({
     flank_size      => 400,
-    snp_display     => 'yes',
+    snp_display     => 'on',
     select_sequence => 'both',
   });
 
@@ -39,7 +39,8 @@ sub init {
 
 sub field_order {
   my $self = shift;
-  my @order = qw(flank_size select_sequence snp_display hide_long_snps);
+  my @order = qw(flank_size select_sequence);
+  push @order, $self->variation_fields;
   return @order;
 }
 
@@ -75,7 +76,10 @@ sub form_fields {
     ]
   };
   
-  $markup_options->{'snp_display'}{'label'} = 'Show variations in flanking sequence';
+  $self->add_variation_options($markup_options, 
+                                {'label' => 'Show variations in flanking sequence',
+                                 'snp_link' => 'no'}
+                              ); 
   
   foreach ($self->field_order) {
     $fields->{$_} = $markup_options->{$_};
