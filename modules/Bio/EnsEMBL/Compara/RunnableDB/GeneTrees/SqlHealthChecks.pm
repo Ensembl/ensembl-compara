@@ -372,11 +372,11 @@ my $config = {
     #########################
 
     homology_dnds => {
-        params => [ 'mlss_id' ],
+        params => [ 'homo_mlss_id' ],
         tests => [
             {
                 description => 'In the homology table, each method_link_species_set_id should have some entries with values of "n" and "s"',
-                query => 'SELECT * FROM homology WHERE method_link_species_set_id = #mlss_id# AND n IS NOT NULL AND s IS NOT NULL',
+                query => 'SELECT * FROM homology WHERE method_link_species_set_id = #homo_mlss_id# AND n IS NOT NULL AND s IS NOT NULL',
                 expected_size => '> 0',
             },
         ],
