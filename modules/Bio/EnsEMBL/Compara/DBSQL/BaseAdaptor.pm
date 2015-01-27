@@ -269,8 +269,12 @@ sub _synchronise {
     my @unique_key_check  = ();
 
     foreach my $attr ($self->_unique_attributes) {
-        push @unique_data_check, $object->$attr;
-        push @unique_key_check,  "$attr = ?";
+        if (defined $object->$attr) {
+            push @unique_data_check, $object->$attr;
+            push @unique_key_check,  "$attr = ?";
+        } else {
+            push @unique_key_check,  "$attr IS NULL";
+        }
     }
 
     my ($table) = $self->_tables();
