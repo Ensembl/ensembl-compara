@@ -238,7 +238,7 @@ my $config = {
             },
             {
                 description => 'Checks that the alignment has not lost any genes since the backup',
-                query => 'SELECT gene_tree_backup.seq_member_id FROM gene_tree_backup JOIN gene_tree_root USING (root_id) LEFT JOIN gene_align_member USING (gene_align_id, seq_member_id) WHERE root_id = #gene_tree_id# AND gene_align_member.seq_member_id IS NULL',
+                query => 'SELECT gene_tree_backup.seq_member_id FROM gene_tree_backup JOIN gene_tree_root USING (root_id) LEFT JOIN gene_align_member USING (gene_align_id, seq_member_id) WHERE root_id = #gene_tree_id# AND gene_align_member.seq_member_id IS NULL AND is_removed = 0',
             },
             {
                 description => 'Checks that the alignment has not gained any genes since the backup',
