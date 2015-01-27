@@ -169,7 +169,7 @@ my $name_cb = sub {
 
 my $distance_to_parent_cb = sub {
   my ($self) = @_;
-  my $dtp = $self->{tree}->distance_to_parent();
+  my $dtp = $self->{tree}->distance_to_parent()+0;
   return "$dtp";
 };
 
