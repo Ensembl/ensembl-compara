@@ -129,6 +129,7 @@ sub _create_svg {
     ## Path to the files we dumped earlier
     my $path    = $aln_file->base_read_path;
 
+    my $sub_dir = 'r2r_'.$self->hub->species;
     my $cons_filename  = $model_name.'.cons';
     ## For information about these options, check http://breaker.research.yale.edu/R2R/R2R-manual-1.0.3.pdf
     $self->_run_r2r_and_check("--GSC-weighted-consensus", $aln_file->write_location, $path, $cons_filename, "3 0.97 0.9 0.75 4 0.97 0.9 0.75 0.5 0.1");
