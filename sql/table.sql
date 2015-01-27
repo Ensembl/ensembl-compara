@@ -139,6 +139,7 @@ CREATE TABLE ncbi_taxa_name (
 @column genebuild         Version of the genebuild
 @column has_karyotype     Whether the genome has a karyotype
 @column is_high_coverage  Whether the assembly coverage depth is high enough
+@column genome_component  Only used for polyploid genomes: the name of the genome component
 @column locator           Used for production purposes or for user configuration in in-house installation.
 
 */
@@ -152,12 +153,13 @@ CREATE TABLE genome_db (
   genebuild                   varchar(100) DEFAULT '' NOT NULL,
   has_karyotype			tinyint(1) NOT NULL DEFAULT 0,
   is_high_coverage            tinyint(1) NOT NULL DEFAULT 0,
+  genome_component            varchar(5) DEFAULT NULL,
   locator                     varchar(400),
 
   FOREIGN KEY (taxon_id) REFERENCES ncbi_taxa_node(taxon_id),
 
   PRIMARY KEY (genome_db_id),
-  UNIQUE name (name,assembly,genebuild)
+  UNIQUE name (name,assembly,genebuild,genome_component)
 
 ) COLLATE=latin1_swedish_ci ENGINE=MyISAM;
 
@@ -1745,16 +1747,14 @@ CREATE TABLE `CAFE_species_gene` (
 
 # Auto add schema version to database (this will override whatever hive puts there)
 DELETE FROM meta WHERE meta_key='schema_version';
-INSERT INTO meta (species_id, meta_key, meta_value) VALUES (NULL, 'schema_version', '78');
+INSERT INTO meta (species_id, meta_key, meta_value) VALUES (NULL, 'schema_version', '79');
 
 #Add schema type
 INSERT INTO meta (species_id, meta_key, meta_value) VALUES (NULL, 'schema_type', 'compara');
 
 # Patch identifier
 INSERT INTO meta (species_id, meta_key, meta_value)
-  VALUES (NULL, 'patch', 'patch_77_78_a.sql|schema_version');
+  VALUES (NULL, 'patch', 'patch_78_79_a.sql|schema_version');
 INSERT INTO meta (species_id, meta_key, meta_value)
-  VALUES (NULL, 'patch', 'patch_77_78_b.sql|null_paf_genome_db_ids');
-INSERT INTO meta (species_id, meta_key, meta_value)
-  VALUES (NULL, 'patch', 'patch_77_78_c.sql|hmm_tables');
+  VALUES (NULL, 'patch', 'patch_78_79_b.sql|genome_component');
 

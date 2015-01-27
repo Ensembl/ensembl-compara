@@ -63,6 +63,8 @@ sub default_options {
         'email'                 => $self->o('ENV', 'USER').'@sanger.ac.uk',
 
     # parameters that are likely to change from execution to another:
+        # You can add a letter to distinguish this run from other runs on the same release
+        'rel_suffix'            => '',
         # names of species we don't want to reuse this time
         'do_not_reuse_list'     => [ ],
 
@@ -71,8 +73,8 @@ sub default_options {
         # Tag attached to every single tree
         'division'              => 'ensembl',
 
-    # dependent parameters: updating 'work_dir' should be enough
-        'work_dir'              => '/lustre/scratch109/ensembl/'.$self->o('ENV', 'USER').'/protein_trees_'.$self->o('rel_with_suffix'),
+    # dependent parameters: updating 'base_dir' should be enough
+        'base_dir'              => '/lustre/scratch109/ensembl/'.$self->o('ENV', 'USER').'/',
 
     # "Member" parameters:
 
@@ -159,6 +161,11 @@ sub default_options {
         'hc_capacity'               =>   4,
         'HMMer_classify_capacity'   => 100,
         'loadmembers_capacity'      =>  30,
+        'HMMer_classifyPantherScore_capacity'   => 1000,
+        'copy_trees_capacity'       => 50,
+        'copy_alignments_capacity'  => 50,
+        'mafft_update_capacity'     => 50,
+        'raxml_update_capacity'     => 50,
 
     # hive priority for non-LOCAL health_check analysis:
 
@@ -195,6 +202,13 @@ sub default_options {
             -pass   => '',
         },
 
+        'eg_live' => {
+            -host => 'mysql-eg-publicsql.ebi.ac.uk',
+            -port => 4157,
+            -user => 'anonymous',
+            -db_version => 78,
+        },
+
         # NOTE: The databases referenced in the following arrays have to be hashes (not URLs)
         # Add the database entries for the current core databases and link 'curr_core_sources_locs' to them
         'curr_core_sources_locs'    => [ $self->o('staging_loc1'), $self->o('staging_loc2') ],
@@ -206,7 +220,7 @@ sub default_options {
         #'prev_core_sources_locs'   => [ $self->o('staging_loc1'), $self->o('staging_loc2') ],
 
         # Add the database location of the previous Compara release. Use "undef" if running the pipeline without reuse
-        'prev_rel_db' => 'mysql://ensro@ens-livemirror:3306/ensembl_compara_77',
+        'prev_rel_db' => 'mysql://ensro@compara4:3306/mp14_ensembl_compara_78',
 
         # How will the pipeline create clusters (families) ?
         # Possible values: 'blastp' (default), 'hmm', 'hybrid'

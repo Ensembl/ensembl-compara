@@ -62,6 +62,7 @@ sub fetch_input {
     my %selected_gdb_ids = ();
 
     foreach my $genome_db (@$genome_dbs) {
+        next if $genome_db->genome_component;
         if($filter_high_coverage) {
             if ($genome_db->is_high_coverage) {
                 $selected_gdb_ids{$genome_db->dbID} = 1;

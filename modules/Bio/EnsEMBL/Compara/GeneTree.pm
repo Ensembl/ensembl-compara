@@ -448,12 +448,12 @@ sub alternative_trees {
         foreach my $t (@$other_trees) {
             $hash_trees->{$t->clusterset_id} = $t;
         }
-        $self->{_alternative_trees} = \%{$hash_trees};
+        $self->{_alternative_trees} = { %$hash_trees };
         # And for every other tree
         $hash_trees->{$self->clusterset_id} = $self;
         foreach my $t (@$other_trees) {
             delete $hash_trees->{$t->clusterset_id};
-            $t->{_alternative_trees} = \%{$hash_trees};
+            $t->{_alternative_trees} = { %$hash_trees };
             $hash_trees->{$t->clusterset_id} = $t;
         }
     }

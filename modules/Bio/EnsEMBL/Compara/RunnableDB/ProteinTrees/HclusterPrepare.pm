@@ -72,6 +72,10 @@ sub fetch_input {
     my $genome_db_id = $self->param_required('genome_db_id');
     my $genome_db    = $self->compara_dba->get_GenomeDBAdaptor->fetch_by_dbID($genome_db_id) or die "no genome_db for id='$genome_db_id'";
 
+    if ($genome_db->is_polyploid) {
+        $self->complete_early("Polyploid genomes don't have blastp hits attached to them\n");
+    }
+
     my $table_name  = 'peptide_align_feature_' . $genome_db_id;
     $self->param('table_name', $table_name);
 

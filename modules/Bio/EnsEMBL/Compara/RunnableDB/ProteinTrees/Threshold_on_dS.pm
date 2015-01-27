@@ -58,7 +58,7 @@ use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
 sub fetch_input {
     my $self = shift @_;
-    my $mlss_id = $self->param_required('mlss_id');
+    my $mlss_id = $self->param_required('homo_mlss_id');
 
     my $stats = new Statistics::Descriptive::Full;
 
@@ -82,7 +82,7 @@ sub run {
     my $self = shift @_;
 
     my $stats = $self->param('stats');
-    my $mlss_id = $self->param('mlss_id');
+    my $mlss_id = $self->param('homo_mlss_id');
 
     # Finds the right threshold from the median
     if ($stats->count) {
@@ -107,7 +107,7 @@ sub write_output {
     my $self = shift @_;
 
     # Updates the tag
-    my $mlss = $self->compara_dba->get_MethodLinkSpeciesSetAdaptor->fetch_by_dbID($self->param('mlss_id'));
+    my $mlss = $self->compara_dba->get_MethodLinkSpeciesSetAdaptor->fetch_by_dbID($self->param('homo_mlss_id'));
     $mlss->store_tag('threshold_on_ds', $self->param('threshold'));
 }
 

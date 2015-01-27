@@ -81,7 +81,7 @@ sub param_defaults {
 sub fetch_input {
     my $self = shift @_;
 
-    my $mlss_id = $self->param_required('mlss_id');
+    my $mlss_id = $self->param_required('homo_mlss_id');
 
     my $sql = 'SELECT homology_id FROM homology WHERE method_link_species_set_id = ? AND description != "gene_split" ORDER BY homology_id';
     my $sth = $self->compara_dba->dbc->prepare($sql);
@@ -106,7 +106,7 @@ sub write_output {
 
     while (@$inputlist) {
         my @job_array = splice(@$inputlist, 0, $group_size);
-        $self->dataflow_output_id( { 'mlss_id' => $self->param('mlss_id'), 'min_homology_id' => $job_array[0], 'max_homology_id' => $job_array[-1] }, 2);
+        $self->dataflow_output_id( { 'mlss_id' => $self->param('homo_mlss_id'), 'min_homology_id' => $job_array[0], 'max_homology_id' => $job_array[-1] }, 2);
     }
 }
 

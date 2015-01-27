@@ -111,7 +111,7 @@ sub fetch_input {
             $sums[5] += $species->get_value_for_tag('nb_genes_in_tree_multi_species');
             push @data1, [
                 $species->taxon_id,
-                $species->taxon->scientific_name,
+                $species->node_name,
                 thousandify($species->get_value_for_tag('nb_genes')),
                 thousandify($species->get_value_for_tag('nb_seq')),
                 thousandify($species->get_value_for_tag('nb_orphan_genes')),
@@ -169,7 +169,7 @@ sub fetch_input {
                 $maxs[1] = $node->get_value_for_tag('root_max_spec') if $node->get_value_for_tag('root_max_spec') > $maxs[1];
                 push @data2, [
                     $node->taxon_id,
-                    $node->taxon->scientific_name,
+                    $node->node_name,
                     thousandify($node->get_value_for_tag('root_nb_trees')),
                     thousandify($node->get_value_for_tag('root_nb_genes')),
                     round2($node->get_value_for_tag('root_avg_gene')),
@@ -183,7 +183,7 @@ sub fetch_input {
             } else {
                 push @data2, [
                     $node->taxon_id,
-                    $node->taxon->scientific_name,
+                    $node->node_name,
                     0, 0, ('NA') x 7,
                 ];
             }
@@ -228,7 +228,7 @@ sub fetch_input {
                 $sums[6] += $node->get_value_for_tag('avg_dupscore_nondub') * $node->get_value_for_tag('nb_dup_nodes');
                 push @data3, [
                     $node->taxon_id,
-                    $node->taxon->scientific_name,
+                    $node->node_name,
                     thousandify($node->get_value_for_tag('nb_nodes')),
                     thousandify($node->get_value_for_tag('nb_dup_nodes')),
                     thousandify($node->get_value_for_tag('nb_gene_splits')),

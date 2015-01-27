@@ -68,6 +68,21 @@ sub fetch_input {
     my $genome_db    = $genome_db_adaptor->fetch_by_dbID($genome_db_id) or die "Could not fetch genome_db with genome_db_id='$genome_db_id'";
     my $species_name = $self->param('species_name', $genome_db->name());
 
+    # For polyploid genomes, the reusability is only assessed on the principal genome
+    if ($genome_db->genome_component) {
+        # -1 means that we haven't checked the species
+        $self->param('reuse_this', -1);
+        return;
+
+    # But in fact, we can't assess the reusability of a polyploid genomes
+    # that comes from files. This is because we would have to read the
+    # files of the components, which shouldn't be done in this module (this
+    # module only deals with *1* genome at a time)
+    } elsif ($genome_db->is_polyploid and not comes_from_core_database($genome_db)) {
+        $self->param('reuse_this', 0);
+        return;
+    }
+
     return if(defined($self->param('reuse_this')));  # bypass fetch_input() and run() in case 'reuse_this' has already been passed
 
 
@@ -98,10 +113,12 @@ sub fetch_input {
         eval {
             $reuse_genome_db = $reuse_genome_db_adaptor->fetch_by_name_assembly($species_name, $genome_db->assembly);
         };
-        unless($reuse_genome_db) {
+        if (not $reuse_genome_db and ($@ and $@ =~ /No matches found for name/)) {
             $self->warning("Could not fetch genome_db object for name='$species_name' and assembly='".$genome_db->assembly."' from reuse_db");
             $self->param('reuse_this', 0);
             return;
+        } elsif ($@) {
+            die $@;
         }
         my $reuse_genome_db_id = $reuse_genome_db->dbID();
 
@@ -208,7 +225,8 @@ sub write_output {      # store the genome_db and dataflow
     $self->dataflow_output_id( $output_hash, 1);
 
         # in addition, the flow is split between branches 2 and 3 depending on $reuse_this:
-    $self->dataflow_output_id( $output_hash, $reuse_this ? 2 : 3);
+        # reuse_this=-1 is ignored
+    $self->dataflow_output_id( $output_hash, $reuse_this ? 2 : 3) if $reuse_this >= 0;
 }
 
 
