@@ -318,10 +318,10 @@ return
 	-parameters => {
 	'epo_mlssid' => $self->o('epo_mlss_id'),
 		'sql'   => [
-		  'ALTER TABLE genomic_align_block AUTO_INCREMENT=#expr(($epo_mlss_id * 10**10) + 1)expr#',
-		  'ALTER TABLE genomic_align AUTO_INCREMENT=#expr(($epo_mlss_id * 10**10) + 1)expr#',
-		  'ALTER TABLE genomic_align_tree AUTO_INCREMENT=#expr(($epo_mlss_id * 10**10) + 1)expr#',
-		  'ALTER TABLE dnafrag AUTO_INCREMENT=#expr(($epo_mlss_id * 10**10) + 1)expr#',
+		  'ALTER TABLE genomic_align_block AUTO_INCREMENT=#expr((#epo_mlss_id# * 10**10) + 1)expr#',
+		  'ALTER TABLE genomic_align AUTO_INCREMENT=#expr((#epo_mlss_id# * 10**10) + 1)expr#',
+		  'ALTER TABLE genomic_align_tree AUTO_INCREMENT=#expr((#epo_mlss_id# * 10**10) + 1)expr#',
+		  'ALTER TABLE dnafrag AUTO_INCREMENT=#expr((#epo_mlss_id# * 10**10) + 1)expr#',
 		],
         },
 },
