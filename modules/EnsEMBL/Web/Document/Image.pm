@@ -338,15 +338,15 @@ sub add_image_export_menu {
           </div>
       );
     }
+  }
 
-    $menu = qq(
+  $menu = qq(
       <div class="toggle iexport_menu">
         <div class="header">Export as:</div>
         $menu
       </div>
-    );
+  );
 
-  }
   return $menu;
 }
 
