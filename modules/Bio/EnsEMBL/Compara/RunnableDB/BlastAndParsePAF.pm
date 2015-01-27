@@ -139,6 +139,8 @@ sub fetch_input {
         $fastafile =~ s/\s+/_/g;    # replace whitespace with '_' characters
         $fastafile =~ s/\/\//\//g;  # converts any // in path to /
         $self->param('all_blast_db')->{$fastafile} = $genome_db->dbID;
+        die "Missing blast fasta: $fastafile\n" unless -e $fastafile and -s $fastafile;
+        die "Missing blast index: $fastafile.psq\n" unless -e "$fastafile.psq" and -s "$fastafile.psq";
     }
 
 }
