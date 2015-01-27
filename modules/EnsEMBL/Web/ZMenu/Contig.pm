@@ -36,7 +36,7 @@ sub content {
   $self->caption($slice_name);
   
   $self->add_entry({
-    label => "Center on $slice_type $slice_name",
+    label => "Centre on $slice_type $slice_name",
     link  => $hub->url({ 
       type   => 'Location', 
       action => $action, 
@@ -72,7 +72,7 @@ sub content {
     $action = $new_slice_length > $threshold ? 'Overview' : 'View';
     
     $self->add_entry({
-      label => "Center on $new_slice_type $new_slice_name",
+      label => "Centre on $new_slice_type $new_slice_name",
       link  => $hub->url({
         type   => 'Location', 
         action => $action, 

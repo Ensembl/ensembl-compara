@@ -90,7 +90,7 @@ sub content {
   }
   
   $self->add_entry({
-    label => "Center on $caption",
+    label => "Centre on $caption",
     link  => $hub->url({
       type   => 'Location', 
       action => 'View'
