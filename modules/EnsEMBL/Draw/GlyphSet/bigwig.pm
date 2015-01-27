@@ -28,6 +28,8 @@ use List::Util qw(min max);
 use Bio::EnsEMBL::Analysis;
 use Bio::EnsEMBL::ExternalData::BigFile::BigWigAdaptor;
 
+use EnsEMBL::Web::File::Utils::URL;
+
 use base qw(EnsEMBL::Draw::GlyphSet::_alignment EnsEMBL::Draw::GlyphSet_wiggle_and_block);
 
 sub href_bgd       { return $_[0]->_url({ action => 'UserData' }); }
@@ -36,8 +38,30 @@ sub bigwig_adaptor {
   my $self = shift;
 
   my $url = $self->my_config('url');
+  my $error;
   if ($url) { ## remote bigwig file
-    $self->{_cache}->{_bigwig_adaptor} ||= Bio::EnsEMBL::ExternalData::BigFile::BigWigAdaptor->new($url);
+    unless ($self->{'_cache'}->{'_bigwig_adaptor'}) {
+      ## Check file is available before trying to load it 
+      ## (Bio::DB::BigFile does not catch C exceptions)
+      my $headers = EnsEMBL::Web::File::Utils::URL::get_headers($url, {
+                                                                    'hub' => $self->{'config'}->hub, 
+                                                                    'no_exception' => 1
+                                                            });
+      if ($headers) {
+        if ($headers->{'Content-Type'} =~ 'application/octet-stream') {
+          $self->{'_cache'}->{'_bigwig_adaptor'} = Bio::EnsEMBL::ExternalData::BigFile::BigWigAdaptor->new($url);
+        }
+        else {
+          $error = "File at URL $url does not appear to be of type BigWig; returned MIME type ".$headers->{'Content-Type'};
+        }
+      }
+      else {
+        $error = "No HTTP headers returned by URL $url";
+      }
+    }
+    $self->errorTrack('Could not retrieve file from trackhub') if $error;
+    warn "!!! BIGWIG ERROR: $error";
+    return $self->{'_cache'}->{'_bigwig_adaptor'};
   }
   else { ## local bigwig file
     my $config    = $self->{'config'};
@@ -152,7 +176,9 @@ sub wiggle_features {
   
   if (!$self->{'_cache'}{'wiggle_features'}) {
     my $slice     = $self->{'container'};
-    my $summary   = $self->bigwig_adaptor->fetch_extended_summary_array($slice->seq_region_name, $slice->start, $slice->end, $bins, $has_chrs);
+    my $adaptor   = $self->bigwig_adaptor;
+    return [] unless $adaptor;
+    my $summary   = $adaptor->fetch_extended_summary_array($slice->seq_region_name, $slice->start, $slice->end, $bins, $has_chrs);
     my $bin_width = $slice->length / $bins;
     my $flip      = $slice->strand == -1 ? $slice->length + 1 : undef;
     my @features;
