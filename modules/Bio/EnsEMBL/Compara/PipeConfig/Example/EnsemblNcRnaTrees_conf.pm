@@ -64,7 +64,7 @@ sub default_options {
             # User details
             'email'                 => $self->o('ENV', 'USER').'@sanger.ac.uk',
 
-            'mlss_id'          => 40098,
+            'mlss_id'          => 40100,
             # Found automatically if the Core API is in PERL5LIB
             #'ensembl_release'          => '76',
             'rel_suffix'       => 'b',
@@ -159,11 +159,11 @@ sub default_options {
                            },
 
             'epo_db' => {   # ideally, the current release database with epo pipeline results already loaded
-                         -host   => 'compara5',
+                         -host   => 'compara4',
                          -port   => 3306,
                          -user   => 'ensro',
                          -pass   => '',
-                         -dbname => 'sf5_epoLc_39mammals_77',
+                         -dbname => 'mp14_ensembl_compara_78',
                         },
 
 
