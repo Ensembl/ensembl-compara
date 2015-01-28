@@ -188,7 +188,8 @@ sub render_normal {
      $depth           = 0 if $strand_bump || $self->my_config('nobump');
   ## User setting overrides everything else
   my $default_depth   = $depth;
-  my $user_depth = $self->{'config'}->hub->param($self->type);
+  my $user_depth      = $self->my_config('userdepth');
+  
      $depth           = $user_depth if $user_depth and !$explicit_zero;
   my $gap             = $h < 2 ? 1 : 2;   
   my $strand          = $self->strand;
