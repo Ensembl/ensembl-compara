@@ -46,6 +46,12 @@ sub bigwig_open {
   return $self->{_cache}->{_bigwig_handle};
 }
 
+sub check {
+  my $self = shift;
+
+  my $bw = $self->bigwig_open;
+  return defined $bw;
+}
 
 # UCSC prepend 'chr' on human chr ids. These are in some of the BigWig
 # files. This method returns a possibly modified chr_id after

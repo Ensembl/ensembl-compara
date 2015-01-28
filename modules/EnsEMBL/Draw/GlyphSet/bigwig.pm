@@ -49,7 +49,9 @@ sub bigwig_adaptor {
                                                             });
       if ($headers) {
         if ($headers->{'Content-Type'} !~ 'text/html') { ## Not being redirected to a webpage, so chance it!
-          $self->{'_cache'}->{'_bigwig_adaptor'} = Bio::EnsEMBL::ExternalData::BigFile::BigWigAdaptor->new($url);
+          my $ad = Bio::EnsEMBL::ExternalData::BigFile::BigWigAdaptor->new($url);
+          $error = "Bad BigWIG data" unless $ad->check;
+          $self->{'_cache'}->{'_bigwig_adaptor'} = $ad;
         }
         else {
           $error = "File at URL $url does not appear to be of type BigWig; returned MIME type ".$headers->{'Content-Type'};

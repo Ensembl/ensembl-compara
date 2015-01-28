@@ -58,14 +58,16 @@ sub bigbed_adaptor {
                                                             });
     if ($headers) {
       if ($headers->{'Content-Type'} !~ 'text/html') { ## Not being redirected to a webpage, so chance it!
-        $self->{'_cache'}->{'_bigbed_adaptor'} = Bio::EnsEMBL::ExternalData::BigFile::BigBedAdaptor->new($self->my_config('url'));
+        my $ad = Bio::EnsEMBL::ExternalData::BigFile::BigBedAdaptor->new($self->my_config('url'));
+        $error = "Broken bigbed file" unless $ad->check;
+        $self->{'_cache'}->{'_bigbed_adaptor'} = $ad;
       }
       else {
-        $error = "File at URL $url does not appear to be of type BigBed; returned MIME type ".$headers->{'Content-Type'};
+        $error = "File at URL ".$self->my_config('url')." does not appear to be of type BigBed; returned MIME type ".$headers->{'Content-Type'};
       }
     }
     else {
-      $error = "No HTTP headers returned by URL $url";
+      $error = "No HTTP headers returned by URL ".$self->my_config('url');
     }
   }
   $self->errorTrack("Could not retrieve file from trackhub") if $error;
