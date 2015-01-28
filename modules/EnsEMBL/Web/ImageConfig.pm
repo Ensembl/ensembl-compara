@@ -1325,9 +1325,15 @@ sub update_from_input {
     foreach my $p ($input->param) {
       my $val = $input->param($p);
       
-      if ($val =~ /favourite_(on|off)/) {
+      if ($p eq 'track') {
+        my $node = $self->get_node($val);
+        $node->set_user('userdepth', $input->param('depth')) if $node;
+        $self->altered($val);
+      }
+      elsif ($val =~ /favourite_(on|off)/) {
         $favourites{$p} = { favourite => $1 eq 'on' ? 1 : 0 };
-      } else {
+      } 
+      elsif ($p ne 'depth') {
         $self->update_track_renderer($p, $val);
       }
     }
@@ -1365,7 +1371,7 @@ sub update_from_url {
         $renderer = 'normal';
       }
     }
-    
+   
     if ($key =~ /^(\w+)[\.:](.*)$/) {
       my ($type, $p) = ($1, $2);
       

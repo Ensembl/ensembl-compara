@@ -87,7 +87,7 @@ sub update_configuration_from_url {
     $input->delete('share_ref');
     $new_url = 1;
   }
-  
+  $hub->get_viewconfig(@{$components[$_]})->update_from_input($r, $_ == $#components) for 0..$#components;
   $new_url += $hub->get_viewconfig(@{$components[$_]})->update_from_url($r, $_ == $#components) for 0..$#components; # This should push a message onto the message queue
   
   if ($new_url) {
