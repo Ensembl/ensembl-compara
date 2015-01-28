@@ -259,17 +259,23 @@ sub get_config {
 }
 
 sub set_config {
-  ### Overrides the config value for a given species and a given config key 
-  ### (use with care!)
-  ### Arguments: species name (string), parameter name (string), parameter value (any)
-  ### Returns: boolean
-  
+  ## Overrides the config value for a given config key
+  ## @param Key name (string)
+  ## @param Value (any)
+  my ($self, $key, $value) = @_;
+
+  $CONF->{'_storage'}{$key} = $value || undef if defined $CONF->{'_storage'};
+}
+
+sub set_species_config {
+  ## Overrides the config value for a given species and a given config key
+  ## @param species name (string)
+  ## @param Key name (string)
+  ## @param Value (any)
   my ($self, $species, $key, $value) = @_;
   $value ||= undef;
   
   $CONF->{'_storage'}{$species}{$key} = $value if defined $CONF->{'_storage'} && exists $CONF->{'_storage'}{$species};
-  
-  return 1;
 }
 
 sub retrieve {
