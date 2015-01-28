@@ -128,6 +128,7 @@ sub _create_svg {
 
     ## Path to the files we dumped earlier
     my $path    = $aln_file->base_read_path;
+    my $sub_dir = 'r2r_'.$self->hub->species;
 
     my $sub_dir = 'r2r_'.$self->hub->species;
     my $cons_filename  = $model_name.'.cons';

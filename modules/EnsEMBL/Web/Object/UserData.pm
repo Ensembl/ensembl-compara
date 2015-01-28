@@ -1265,7 +1265,7 @@ sub render_sift_polyphen {
     $rank_str = "($score)";
   }
   
-  return qq{$type=<span style="color:$colours{$pred}">$pred$rank_str</span>};
+  return qq($type=<span style="color:$colours{$pred}">$pred$rank_str</span>);
 }
 
 sub configure_vep {

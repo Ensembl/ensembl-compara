@@ -44,7 +44,7 @@ sub file_get_contents {
 sub file_put_contents {
   ## Write the content to the file
   ## Creates a new file if not existing one
-  ## Overrites any existing content if file existing
+  ## Overwrites any existing content if file existing
   ## @param  File location
   ## @params List of text to be written
   my $file_handle = get_file_handle(shift, 'w');
