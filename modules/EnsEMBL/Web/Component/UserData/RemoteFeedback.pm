@@ -47,16 +47,17 @@ sub content {
     my $current_assembly  = $hub->species_defs->get_config($hub->data_species, 'ASSEMBLY_VERSION');
     if ($assembly_string !~ $current_assembly) {
       ## No match to current assembly
-      $message = '<p><strong>Your hub contains no data on the current assembly and cannot be displayed.';
+      my $url = sprintf('/%s/UserData/ManageData', $hub->data_species);
+      $message = sprintf('<p><strong>Your hub contains no data on the current assembly and cannot be displayed on this species</strong>. Please check the <a href="%s" class="modal_link">Manage Data</a> page for other species supported by this hub.</p>', $url);
       my $archive_assembly = $hub->species_defs->get_config($hub->data_species, 'SWITCH_ASSEMBLY');
       my $archive = $hub->species_defs->get_config($hub->data_species, 'SWITCH_ARCHIVE_URL');
       if ($archive && $assembly_string =~ $archive_assembly) {
-        $message .= sprintf(' Please use archive site <a href="http://%s/%s">%s</a>.', 
+        $message .= sprintf('<p>If you wish to view data on this species, please use archive site <a href="http://%s/%s">%s</a>.</p>', 
                             $archive, $hub->data_species, $archive,
                     );
       }
       else {
-        $message .= ' Please check for an <a href="/info/website/archives/">appropriate archive site</a>.';
+        $message .= '<p>If you wish to view data on this species, please check for an <a href="/info/website/archives/">appropriate archive site</a>.</p>';
       }
       $message .= '</p>';
     }
