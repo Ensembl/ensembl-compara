@@ -657,8 +657,9 @@ sub getAllelesConsequencesOnSlice {
   my $valids = $self->valids;  
 
   # Get all features on slice
-  my $allele_features = $sample_slice->get_all_AlleleFeatures_Slice(1) || []; 
-  return ([], []) unless @$allele_features;
+  ## Don't assume that a sample ID taken from CGI input is actually present in this species!
+  my $allele_features = eval {$sample_slice->get_all_AlleleFeatures_Slice(1) || []}; 
+  return ([], []) if $@ || !@$allele_features;
 
   my @filtered_af =
     sort { $a->[2]->start <=> $b->[2]->start }
