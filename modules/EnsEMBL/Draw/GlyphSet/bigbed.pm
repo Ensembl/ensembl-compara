@@ -57,7 +57,7 @@ sub bigbed_adaptor {
                                                                     'no_exception' => 1
                                                             });
     if ($headers) {
-      if ($headers->{'Content-Type'} eq 'application/octet-stream') {
+      if ($headers->{'Content-Type'} !~ 'text/html') { ## Not being redirected to a webpage, so chance it!
         $self->{'_cache'}->{'_bigbed_adaptor'} = Bio::EnsEMBL::ExternalData::BigFile::BigBedAdaptor->new($self->my_config('url'));
       }
       else {
@@ -68,7 +68,7 @@ sub bigbed_adaptor {
       $error = "No HTTP headers returned by URL $url";
     }
   }
-  $self->errorTrack('Could not retrieve file from trackhub') if $error;
+  $self->errorTrack("Could not retrieve file from trackhub") if $error;
   warn "!!! BIGBED ERROR: $error";
   return $self->{'_cache'}->{'_bigbed_adaptor'};
 }

@@ -48,7 +48,7 @@ sub bigwig_adaptor {
                                                                     'no_exception' => 1
                                                             });
       if ($headers) {
-        if ($headers->{'Content-Type'} =~ 'application/octet-stream') {
+        if ($headers->{'Content-Type'} !~ 'text/html') { ## Not being redirected to a webpage, so chance it!
           $self->{'_cache'}->{'_bigwig_adaptor'} = Bio::EnsEMBL::ExternalData::BigFile::BigWigAdaptor->new($url);
         }
         else {
