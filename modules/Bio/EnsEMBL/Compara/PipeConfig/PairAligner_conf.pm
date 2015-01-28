@@ -384,7 +384,7 @@ sub pipeline_analyses {
 			       8 => [ 'healthcheck' ],
 			       9 => [ 'dump_dna_factory' ],
 			      },
-	       -rc_name => '100Mb',
+	       -rc_name => '1Gb',
   	    },
 
  	    {  -logic_name => 'chunk_and_group_dna',
@@ -480,7 +480,7 @@ sub pipeline_analyses {
 	       -flow_into => {
 			      1 => [ 'update_max_alignment_length_before_FD' ],
 			     },
-	       -rc_name => '100Mb',
+	       -rc_name => '1Gb',
 	    },
  	    {  -logic_name => 'update_max_alignment_length_before_FD',
  	       -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GenomicAlignBlock::UpdateMaxAlignmentLength',
@@ -490,7 +490,7 @@ sub pipeline_analyses {
 	       -flow_into => {
 			      1 => [ 'update_max_alignment_length_after_FD' ],
 			     },
-	       -rc_name => '100Mb',
+	       -rc_name => '1Gb',
  	    },
  	    {  -logic_name => 'create_filter_duplicates_jobs', #factory
  	       -module     => 'Bio::EnsEMBL::Compara::RunnableDB::PairAligner::CreateFilterDuplicatesJobs',
@@ -529,7 +529,7 @@ sub pipeline_analyses {
 			       'quick' => $self->o('quick'),
 			      },
  	       -wait_for =>  [ 'filter_duplicates', 'filter_duplicates_himem' ],
-	       -rc_name => '100Mb',
+	       -rc_name => '1Gb',
  	    },
 #
 #Second half of the pipeline
@@ -622,14 +622,14 @@ sub pipeline_analyses {
 			      1 => [ 'update_max_alignment_length_after_chain' ],
 			   },
 	     -wait_for =>  [ 'alignment_chains', 'alignment_chains_himem' ],
-	     -rc_name => '100Mb',
+	     -rc_name => '1Gb',
 	    },
 	    {  -logic_name => 'update_max_alignment_length_after_chain',
  	       -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GenomicAlignBlock::UpdateMaxAlignmentLength',
  	       -parameters => { 
 			       'quick' => $self->o('quick'),
 			      },
-	       -rc_name => '100Mb',
+	       -rc_name => '1Gb',
  	    },
  	    {  -logic_name => 'create_alignment_nets_jobs',
  	       -module     => 'Bio::EnsEMBL::Compara::RunnableDB::PairAligner::CreateAlignmentNetsJobs',
@@ -676,7 +676,7 @@ sub pipeline_analyses {
 			       1 => [ 'update_max_alignment_length_after_net' ],
 			   },
  	       -wait_for =>  [ 'alignment_nets', 'alignment_nets_himem' ],
-	       -rc_name => '100Mb',
+	       -rc_name => '1Gb',
 	    },
  	    {  -logic_name => 'create_filter_duplicates_net_jobs', #factory
                -module     => 'Bio::EnsEMBL::Compara::RunnableDB::PairAligner::CreateFilterDuplicatesJobs',
@@ -718,7 +718,7 @@ sub pipeline_analyses {
 # 	       -parameters => { 
 #			       'quick' => $self->o('quick'),
 #			      },
-	      -rc_name => '100Mb',
+	      -rc_name => '1Gb',
 	      -wait_for =>  [ 'filter_duplicates_net', 'filter_duplicates_net_himem' ],
               -flow_into => [ 'set_internal_ids_collection' ],
  	    },
@@ -739,7 +739,7 @@ sub pipeline_analyses {
 			      'max_percent_diff' => $self->o('max_percent_diff'),
 			     },
 	      -wait_for => [ 'update_max_alignment_length_after_net' ],
-	      -rc_name => '100Mb',
+	      -rc_name => '1Gb',
 	    },
 	    { -logic_name => 'pairaligner_stats',
 	      -module => 'Bio::EnsEMBL::Compara::RunnableDB::PairAligner::PairAlignerStats',
