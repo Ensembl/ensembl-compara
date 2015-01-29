@@ -174,10 +174,17 @@ sub format_table {
   my @rows;
 
   ## Sort into super-populations and sub-populations
-  my ($tree, $all, $has_super);
+  ## and get links
+  my ($tree, $all, $has_super, %pop_urls, $unique_urls, %urls_seen, $generic_pop_url);
   foreach my $pop_id (keys %$freq_data) {
-
     my $name  = $freq_data->{$pop_id}{'pop_info'}{'Name'};
+
+    ## Get URL
+    my $url = $self->pop_url($name, $freq_data->{$pop_id}{'pop_info'}{'PopLink'});
+    $pop_urls{$pop_id} = $url;
+    $urls_seen{$url}++;
+
+    ## Make the tree
     if ($name =~ /ALL/) {
       $all = $pop_id;
       next;
@@ -199,14 +206,13 @@ sub format_table {
   my @super_order = sort {$tree->{$a}{'name'} cmp $tree->{$b}{'name'}} keys (%$tree);
   foreach my $super (@super_order) {
     push @ids, $super;
-    my $hash = $tree->{$super}{'children'};
-    if (ref($hash) eq 'HASH') {
-      push @ids, sort {$hash->{$a} cmp $hash->{$b}} keys (%$hash);
-    }
+    my $hash = $tree->{$super}{'children'} || {};
+    push @ids, sort {$hash->{$a} cmp $hash->{$b}} keys (%$hash);
   }
 
-  my $sample_id = $ids[0];
-  my $pop_url = $self->pop_url($freq_data->{$sample_id}{'pop_info'}{'Name'}, $freq_data->{$sample_id}{'pop_info'}{'PopLink'});
+  if (scalar(keys %urls_seen) < 2) {
+    $generic_pop_url = $pop_urls{$ids[0]};
+  }
 
   ## Now build table rows
   foreach my $pop_id (@ids) {
@@ -261,8 +267,10 @@ sub format_table {
       
       $pop_row{'Genotype count'}   = join ' , ', sort {(split /\(|\)/, $a)[1] cmp (split /\(|\)/, $b)[1]} values %{$pop_row{'Genotype count'}} if $pop_row{'Genotype count'};
 
+      ## Only link on the population name if there's more than one URL for this table
+      my $pop_url                  = scalar(keys %urls_seen) > 1 ? sprintf('<a href="%s">%s</a>', $pop_urls{$pop_id}, $pop_info->{'Name'}) : $pop_info->{'Name'};
       ## Hacky indent, because overriding table CSS is a pain!
-      $pop_row{'pop'}              = $group_member ? '&nbsp;&nbsp;'.$pop_info->{'Name'} : $pop_info->{'Name'};
+      $pop_row{'pop'}              = $group_member ? '&nbsp;&nbsp;'.$pop_url : $pop_url;
 
       $pop_row{'Description'}      = $pop_info->{'Description'} if $is_somatic;
       $pop_row{'failed'}           = $data->{'failed_desc'} if $table_header =~ /Inconsistent/i;
@@ -340,7 +348,7 @@ sub format_table {
   $table->add_columns(@header_row);
   $table->add_rows(@rows);
  
-  return [sprintf('%s (%s)', $table_header, scalar @rows), $table, $pop_url];
+  return [sprintf('%s (%s)', $table_header, scalar @rows), $table, $generic_pop_url];
 
 }
 
