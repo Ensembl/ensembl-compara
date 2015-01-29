@@ -169,40 +169,40 @@ sub format_table {
   my $is_somatic = $self->object->Obj->has_somatic_source;
   my $al_colours = $self->object->get_allele_genotype_colours;
 
-
   my %columns;
+  my @header_row;
   my @rows;
 
-  ## group by population 
-
   ## Sort into super-populations and sub-populations
-  my (%tree, $all, $count);
+  my ($tree, $all, $has_super);
   foreach my $pop_id (keys %$freq_data) {
-    $count++;
-    my $name  = $freq_data->{$pop_id}{'pop_info'}{'Name'};
-    my $hash  = $freq_data->{$pop_id}{'pop_info'}{'Super-Population'};
-    my ($super) = keys %{$hash||{}};
 
+    my $name  = $freq_data->{$pop_id}{'pop_info'}{'Name'};
     if ($name =~ /ALL/) {
       $all = $pop_id;
       next;
     }
-    next unless $super;
-    $tree{$super}{$name} = $pop_id;
-  }
 
-  ## Did we capture all the rows in our tree? If not, just 
-  ## sort the whole lot alphabetically
-  my @ids;
-  if ($count == scalar(keys %$freq_data)) {
-    @ids = ($all);
-    foreach my $super (sort keys %tree) {
-      push @ids, $super;
-      push @ids, $tree{$super}{$_} foreach (sort keys %{$tree{$super}});
+    my $hash  = $freq_data->{$pop_id}{'pop_info'}{'Super-Population'};
+    my ($super) = keys %{$hash||{}};
+    if ($super) {
+      $tree->{$super}{'children'}{$pop_id} = $name;
+      $has_super++;
+    }
+    else {
+      $tree->{$pop_id}{'name'} = $name;
     }
   }
-  else {
-    @ids = sort {$a->{'Name'} cmp $b->{'Name'}} keys %$freq_data;
+
+  my @ids;
+  push @ids, $all if $all;
+  my @super_order = sort {$tree->{$a}{'name'} cmp $tree->{$b}{'name'}} keys (%$tree);
+  foreach my $super (@super_order) {
+    push @ids, $super;
+    my $hash = $tree->{$super}{'children'};
+    if (ref($hash) eq 'HASH') {
+      push @ids, sort {$hash->{$a} cmp $hash->{$b}} keys (%$hash);
+    }
   }
 
   my $sample_id = $ids[0];
@@ -219,10 +219,10 @@ sub format_table {
       if ($pop_info->{'Name'} =~ /ALL/) {
         $row_class = 'supergroup';
       } 
-      elsif ($tree{$pop_id}) {
+      elsif ($tree->{$pop_id}{'children'}) {
         $row_class = 'subgroup';
       }
-      elsif (scalar keys %tree) {
+      elsif (scalar keys %$tree) {
         $group_member = 1;
       }
       $pop_row{'options'}{'class'} = $row_class if $row_class;
@@ -299,7 +299,6 @@ sub format_table {
   delete $columns{'options'};
   
   # Format table columns
-  my @header_row;
   
   # Allele frequency columns
   foreach my $col (sort { $a cmp $b } keys %columns) {
@@ -336,8 +335,6 @@ sub format_table {
   push    @header_row, { key => 'Genotype count', align => 'left', label => 'Genotype count',                        sort => 'none'   } if exists $columns{'Genotype count'};
   push    @header_row, { key => 'detail',         align => 'left', label => 'Genotype detail',                       sort => 'none'   } if $self->object->counts->{'individuals'};
   push    @header_row, { key => 'failed',         align => 'left', label => 'Comment', width => '25%',               sort => 'string' } if $columns{'failed'};
-
-
 
   my $table = $self->new_table([], [], { data_table => 1 });
   $table->add_columns(@header_row);
