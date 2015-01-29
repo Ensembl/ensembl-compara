@@ -47,10 +47,12 @@ sub file_put_contents {
   ## Overwrites any existing content if file existing
   ## @param  File location
   ## @params List of text to be written
+  ## @return 1 if successful
   my $file_handle = get_file_handle(shift, 'w');
-
-  $file_handle->print(@_);
+  my $return      = $file_handle->print(@_);
   $file_handle->close;
+
+  return $return;
 }
 
 sub file_append_contents {
@@ -58,10 +60,12 @@ sub file_append_contents {
   ## Creates a new file if not existing one
   ## @param  File location
   ## @params List of lines of text to be appended
+  ## @return 1 if successful
   my $file_handle = get_file_handle(shift, 'a');
-
-  $file_handle->print(@_);
+  my $return      = $file_handle->print(@_);
   $file_handle->close;
+
+  return $return;
 }
 
 sub get_file_handle {
@@ -70,7 +74,7 @@ sub get_file_handle {
   my ($file, $arg) = @_;
 
   my $file_handle = FileHandle->new;
-  $file_handle->open($file, $arg);
+  $file_handle->open($file, $arg) or throw exception('FileNotOpened', "File $file could not be opened");
   return $file_handle;
 }
 
