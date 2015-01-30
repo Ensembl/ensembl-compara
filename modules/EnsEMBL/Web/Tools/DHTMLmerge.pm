@@ -114,7 +114,7 @@ sub new {
     my ($url_path) = map { $abs_path =~ m/^$_(.+)$/ ? $1 : () } @htdocs_dirs; # there will only be one match
 
     $files{$url_path} = {
-      'order'         => $files{$url_path} && $files{$url_path}{'order'} // defined $order ? $order++ : undef, # if overwriting a file, keep the order as the original one
+      'order'         => $files{$url_path} && $files{$url_path}{'order'} // (defined $order ? $order++ : undef), # if overwriting a file, keep the order as the original one
       'absolute_path' => $abs_path,
       'url_path'      => $url_path
     };
