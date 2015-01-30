@@ -231,8 +231,8 @@ if (Apache2::ServerUtil::restart_count == 1) { # Only parse the config on first 
  Access logs:        %s
  Error logs:         %s
 
- CSS file:           %s/%s/%s.css
- JavaScript file:    %s/%s/%s.js
+ CSS file(s):        %s
+ JavaScript file(s): %s
 
  Using XS:           %s
 
@@ -260,8 +260,8 @@ if (Apache2::ServerUtil::restart_count == 1) { # Only parse the config on first 
   $conf->ENSEMBL_CUSTOMLOG,
   $conf->ENSEMBL_ERRORLOG,
 
-  $conf->ENSEMBL_BASE_URL, $conf->ENSEMBL_JSCSS_TYPE, $conf->ENSEMBL_CSS_NAME,
-  $conf->ENSEMBL_BASE_URL, $conf->ENSEMBL_JSCSS_TYPE, $conf->ENSEMBL_JS_NAME,
+  map(join("\n".(' ' x 21), map { sprintf '%-15s %s%s', $_->name.':', $conf->ENSEMBL_BASE_URL, $_->minified_url_path } @{$conf->ENSEMBL_JSCSS_FILES->{$_} || []}) || 'None', qw(css js)),
+
   $using_xs?'yes':'no',
   join("\n                     ", grep(/::/, @{$conf->ENSEMBL_PLUGINS || []}), $extra);
 }
