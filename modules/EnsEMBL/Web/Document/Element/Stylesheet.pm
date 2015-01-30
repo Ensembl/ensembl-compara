@@ -48,7 +48,6 @@ sub content {
 
 sub add_sheet {
   my ($self, $sheet) = @_;
-warn $sheet;
   push @{$self->{'_sheets'}}, $sheet unless grep { $sheet eq $_ } @{$self->{'_sheets'}};
 }
 
