@@ -247,11 +247,6 @@ sub new {
   return bless $self, $class;
 }
 
-sub type {
-  ## @return Type of the file (ie. css or js)
-  return shift->{'type'};
-}
-
 sub absolute_path {
   ## @return Absolute path of the file
   return shift->{'absolute_path'};
