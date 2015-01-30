@@ -395,6 +395,8 @@ sub get_SimpleAlign {
     #Check to see if the method is called 'addSeq' or 'add_seq'
     my $bio07 = ($sa->can('add_seq') ? 0 : 1);
 
+    $self->_load_all_missing_sequences($seq_type);
+
     my $seq_hash = {};
     foreach my $member (@{$self->get_all_Members}) {
 
