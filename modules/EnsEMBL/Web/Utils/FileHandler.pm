@@ -33,7 +33,7 @@ sub file_get_contents {
   ## @return List of lines of files
   my $filename    = shift;
 
-  throw exception('FileNotFound', "File $filename could not be found") if !-e $filename || -d $filename;
+  throw exception('FileHandlerException', "File $filename could not be found") if !-e $filename || -d $filename;
 
   my $file_handle = get_file_handle($filename, 'r');
   my @lines       = $file_handle->getlines;
@@ -74,7 +74,7 @@ sub get_file_handle {
   my ($file, $arg) = @_;
 
   my $file_handle = FileHandle->new;
-  $file_handle->open($file, $arg) or throw exception('FileNotOpened', "File $file could not be opened");
+  $file_handle->open($file, $arg) or throw exception('FileHandlerException', "File $file could not be opened");
   return $file_handle;
 }
 
