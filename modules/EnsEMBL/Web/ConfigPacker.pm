@@ -582,17 +582,19 @@ sub _summarise_variation_db {
   $self->db_details($db_name)->{'tables'}{'variation_set'}{'descriptions'} = \%set_descriptions;
   
 #--------- Add in phenotype information
-  my $pf_aref = $dbh->selectall_arrayref(qq{
-    SELECT pf.type, GROUP_CONCAT(DISTINCT s.name), count(pf.phenotype_feature_id)
-    FROM phenotype_feature pf, source s
-    WHERE pf.source_id=s.source_id AND pf.is_significant=1 AND pf.type!='SupportingStructuralVariation'
-    GROUP BY pf.type
-  });
-  
-  for(@$pf_aref) {
-    $self->db_details($db_name)->{'tables'}{'phenotypes'}{'rows'} += $_->[2];
-    $self->db_details($db_name)->{'tables'}{'phenotypes'}{'types'}{$_->[0]}{'count'} = $_->[2];
-    $self->db_details($db_name)->{'tables'}{'phenotypes'}{'types'}{$_->[0]}{'sources'} = $_->[1];
+  if ($code !~ /variation_private/i) {
+    my $pf_aref = $dbh->selectall_arrayref(qq{
+      SELECT pf.type, GROUP_CONCAT(DISTINCT s.name), count(pf.phenotype_feature_id)
+      FROM phenotype_feature pf, source s
+      WHERE pf.source_id=s.source_id AND pf.is_significant=1 AND pf.type!='SupportingStructuralVariation'
+      GROUP BY pf.type
+    });
+
+    for(@$pf_aref) {
+      $self->db_details($db_name)->{'tables'}{'phenotypes'}{'rows'} += $_->[2];
+      $self->db_details($db_name)->{'tables'}{'phenotypes'}{'types'}{$_->[0]}{'count'} = $_->[2];
+      $self->db_details($db_name)->{'tables'}{'phenotypes'}{'types'}{$_->[0]}{'sources'} = $_->[1];
+    }
   }
 
 #--------- Add in somatic mutation information
