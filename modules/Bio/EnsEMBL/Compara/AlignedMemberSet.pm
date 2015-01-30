@@ -435,14 +435,13 @@ sub get_SimpleAlign {
             }
         }
 
-        my $seq_from_aln = $seqstr;
-        $seq_from_aln =~ s/-//g;
+        my $n_gaps = ($seqstr =~ tr/-/-/);
 
         my $seq = Bio::LocatableSeq->new(
                 -SEQ        => $seqstr,
                 -ALPHABET   => $alphabet,
                 -START      => 1,
-                -END        => length($seq_from_aln),
+                -END        => length($seqstr)-$n_gaps,
                 -ID         => $seqID,
                 -STRAND     => 0
         );
