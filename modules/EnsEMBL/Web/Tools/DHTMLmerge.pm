@@ -22,6 +22,7 @@ use strict;
 use warnings;
 
 use EnsEMBL::Web::Utils::FileSystem qw(list_dir_contents);
+use EnsEMBL::Web::Exceptions;
 
 sub get_filegroups {
   ## Gets a datastructure of lists of grouped files for the given type that are served to the frontend
@@ -46,12 +47,17 @@ sub merge_all {
   my $species_defs  = shift;
   my $configs       = {};
 
-  foreach my $type (qw(js css)) {
-    $configs->{$type} = [ map { EnsEMBL::Web::Tools::DHTMLmerge::FileGroup->new($species_defs, $type, $_) } get_filegroups($species_defs, $type) ];
-  }
+  try {
+    foreach my $type (qw(js css)) {
+      $configs->{$type} = [ map { EnsEMBL::Web::Tools::DHTMLmerge::FileGroup->new($species_defs, $type, $_) } get_filegroups($species_defs, $type) ];
+    }
 
-  $species_defs->set_config('ENSEMBL_JSCSS_FILES', $configs);
-  $species_defs->store;
+    $species_defs->set_config('ENSEMBL_JSCSS_FILES', $configs);
+    $species_defs->store;
+  } catch {
+    warn $_;
+    throw $_;
+  };
 }
 
 sub get_files_from_dir {
