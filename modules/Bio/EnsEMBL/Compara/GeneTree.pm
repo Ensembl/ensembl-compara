@@ -358,6 +358,7 @@ sub preload {
         $self->{'_root'} = $gtn_adaptor->fetch_tree_by_root_id($self->{'_root_id'});
         delete $gtn_adaptor->{'_ref_tree'};
     }
+    $self->clear;
 
     my $all_nodes = $self->root->get_all_nodes;
 
@@ -522,12 +523,7 @@ sub get_all_Members {
     my ($self) = @_;
 
     unless (defined $self->{'_member_array'}) {
-
-        $self->{'_member_array'} = [];
-        $self->{'_members_by_source'} = {};
-        $self->{'_members_by_source_taxon'} = {};
-        $self->{'_members_by_source_genome_db'} = {};
-        $self->{'_members_by_genome_db'} = {};
+        $self->clear;
         foreach my $leaf (@{$self->root->get_all_leaves}) {
             $self->SUPER::add_Member($leaf) if UNIVERSAL::isa($leaf, 'Bio::EnsEMBL::Compara::GeneTreeMember');
         }
