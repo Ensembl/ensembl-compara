@@ -246,6 +246,8 @@ our $OBJECT_TO_SCRIPT = {
   UserConfig          => 'Modal',
   UserData            => 'Modal',
   Help                => 'Modal',  
+
+  CSS                 => 'CSS',
 };
 
 ## Set log directory and files
