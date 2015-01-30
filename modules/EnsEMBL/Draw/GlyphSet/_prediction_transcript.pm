@@ -50,6 +50,8 @@ sub features {
 sub href {
   my ($self, $gene, $transcript) = @_;
   
+  return $self->SUPER::href($gene) unless $transcript;
+  
   return $self->_url({
     type   => 'Transcript',
     action => 'Summary',
