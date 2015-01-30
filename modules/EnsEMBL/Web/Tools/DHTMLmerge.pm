@@ -49,7 +49,7 @@ sub merge_all {
 
   try {
     foreach my $type (qw(js css)) {
-      $configs->{$type} = [ map { EnsEMBL::Web::Tools::DHTMLmerge::FileGroup->new($species_defs, $type, $_) } get_filegroups($species_defs, $type) ];
+      push @{$configs->{$type}}, map { EnsEMBL::Web::Tools::DHTMLmerge::FileGroup->new($species_defs, $type, $_) } get_filegroups($species_defs, $type);
     }
 
     $species_defs->set_config('ENSEMBL_JSCSS_FILES', $configs);
@@ -68,16 +68,13 @@ sub get_files_from_dir {
   ## @return Arrayref of absolute file names
   my ($species_defs, $type, $dir) = @_;
 
-  my @files = map _get_files_from_dir($species_defs, $type, "$_/$dir"), grep { !m/biomart/ && -d "$_/$dir" } reverse @{$species_defs->ENSEMBL_HTDOCS_DIRS || []};
+  my @files;
+
+  foreach my $htdocs_dir (grep { !m/biomart/ && -d "$_/$dir" } reverse @{$species_defs->ENSEMBL_HTDOCS_DIRS || []}) {
+    push @files, map "$htdocs_dir/$dir/$_", grep m/\.$type$/, @{list_dir_contents("$htdocs_dir/$dir", {'recursive' => 1})};
+  }
 
   return \@files;
-}
-
-sub _get_files_from_dir {
-  ## @private
-  my ($species_defs, $type, $dir) = @_;
-
-  return map { !-d "$dir/$_" ? m/\.$type$/ ? "$dir/$_" : () : _get_files_from_dir($species_defs, $type, "$dir/$_") } @{list_dir_contents($dir)};
 }
 
 ###################################################
