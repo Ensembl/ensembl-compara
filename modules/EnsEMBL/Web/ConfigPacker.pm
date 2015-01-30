@@ -47,6 +47,7 @@ sub munge_databases {
   $self->_summarise_variation_db('variation_private', 'DATABASE_VARIATION_PRIVATE');
   $self->_summarise_funcgen_db('funcgen', 'DATABASE_FUNCGEN');
   $self->_compare_update_db('vega_update','DATABASE_VEGA_UPDATE');
+  $self->_munge_chainfiles;
 }
 
 # creates das.packed
@@ -1724,6 +1725,17 @@ sub _munge_website {
 
   ## Release info for ID history etc
   $self->tree->{'ASSEMBLIES'}       = $self->db_multi_tree->{'ASSEMBLIES'}{$self->{_species}};
+}
+
+sub _munge_chainfiles {
+  my $self = shift;
+  my $chainfile_dir = $SiteDefs::ENSEMBL_CHAIN_FILE_DIR;
+
+  ## Get chainfile information for this species
+  my $chainfiles = [];
+
+
+  $self->tree->{'CHAINFILES'} = $chainfiles;
 }
 
 sub _munge_website_multi {
