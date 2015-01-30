@@ -359,12 +359,17 @@ sub preload {
         delete $gtn_adaptor->{'_ref_tree'};
     }
 
+    my $all_nodes = $self->root->get_all_nodes;
+
     # Loads all the tags in one go
-    $self->adaptor->db->get_GeneTreeNodeAdaptor->_load_tagvalues_multiple( $self->root->get_all_nodes );
+    $self->adaptor->db->get_GeneTreeNodeAdaptor->_load_tagvalues_multiple( $all_nodes );
 
     # For retro-compatibility, we need to fill in taxon_id and taxon_name
     my %cache_stns = ();
-    foreach my $node (@{$self->root->get_all_nodes}) {
+    foreach my $node (@$all_nodes) {
+        if ($node->is_leaf) {
+            $self->SUPER::add_Member($node) if UNIVERSAL::isa($node, 'Bio::EnsEMBL::Compara::GeneTreeMember');
+        }
         next unless $node->has_tag('species_tree_node_id');
         my $stn_id = $node->get_value_for_tag('species_tree_node_id');
         if (exists $cache_stns{$stn_id}) {
@@ -377,7 +382,7 @@ sub preload {
     }
 
     # Loads all the gene members in one go
-    $self->adaptor->db->get_GeneMemberAdaptor->load_all_from_seq_members( [grep {UNIVERSAL::isa($_, 'Bio::EnsEMBL::Compara::GeneTreeMember')} @{$self->root->get_all_leaves}] );
+    $self->adaptor->db->get_GeneMemberAdaptor->load_all_from_seq_members( $self->get_all_Members );
 }
 
 
