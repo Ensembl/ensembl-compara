@@ -497,6 +497,44 @@ sub print_sequences_to_file {
     return scalar(keys %seq_hash);
 }
 
+sub _load_all_missing_sequences {
+    my ($self, $seq_type) = @_;
+
+    if ($seq_type) {
+
+        my $key = "_sequence_$seq_type";
+
+        my %member_id2member = ();
+        foreach my $member (@{$self->get_all_Members}) {
+            next unless $member->isa('Bio::EnsEMBL::Compara::SeqMember');
+            next if $member->{$key};
+            $member_id2member{$member->seq_member_id} = $member if $member->seq_member_id;
+        }
+        my @member_ids = keys %member_id2member;
+        my $seqs = $self->adaptor->db->get_SequenceAdaptor->fetch_other_sequences_by_member_ids_type(\@member_ids, $seq_type);
+        while (my ($id, $seq) = each %$seqs) {
+            $member_id2member{$id}->{$key} = $seq;
+        }
+
+    } else {
+
+        my %seq_id2member = ();
+        foreach my $member (@{$self->get_all_Members}) {
+            next unless $member->isa('Bio::EnsEMBL::Compara::SeqMember');
+            next if $member->{'_sequence'};
+            my $seq_id = $member->{'_sequence_id'};
+            push @{$seq_id2member{$seq_id}}, $member if $seq_id;
+        }
+
+        my @seq_ids = keys %seq_id2member;
+        my $seqs = $self->adaptor->db->get_SequenceAdaptor->fetch_by_dbIDs(\@seq_ids);
+        while (@$seqs) {
+            my $seq_id = shift @seq_ids;
+            my $seq = shift @$seqs;
+            $_->{'_sequence'} = $seq for @{$seq_id2member{$seq_id}};
+        }
+    }
+}
 
 
 #################################
