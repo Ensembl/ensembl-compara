@@ -233,10 +233,12 @@ sub consensus_cigar_line {
    # Itterate through each character of the expanded cigars.
    # If there is a 'D' at a given location in any cigar,
    # set the consensus to 'D', otherwise assume an 'M'.
-   # TODO: Fix assumption that cigar strings are always the same length,
-   # and start at the same point.
 
+   my %cigar_lens = ();
+   $cigar_lens{length($_)}++ for @expanded_cigars;
+   throw("Not all the cigars have the same length !\n") if scalar(keys %cigar_lens) > 1;
    my $cigar_len = length( $expanded_cigars[0] );
+
    my $cons_cigar;
    for( my $i=0; $i<$cigar_len; $i++ ){
        my $num_deletions = 0;
