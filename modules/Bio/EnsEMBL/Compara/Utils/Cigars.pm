@@ -91,7 +91,7 @@ use Data::Dumper;
 
 sub compose_sequence_with_cigar {
     my $sequence = shift;
-    my $cigar_line = shift;
+    my $cigar_line = uc shift;
     my $expansion_factor = shift || 1;
 
     my $seq_has_spaces = ($sequence =~ tr/ //);
@@ -171,7 +171,7 @@ sub expand_cigar {
     my $cigar = shift;
     my $expanded_cigar = '';
     #$cigar =~ s/(\d*)([A-Z])/$2 x ($1||1)/ge; #Expand
-    while ($cigar =~ /(\d*)([A-Z])/g) {
+    while ($cigar =~ /(\d*)([A-Za-z])/g) {
         $expanded_cigar .= $2 x ($1 || 1);
     }
     return $expanded_cigar;
