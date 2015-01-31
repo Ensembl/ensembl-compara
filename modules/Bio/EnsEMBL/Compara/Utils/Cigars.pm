@@ -119,6 +119,7 @@ sub compose_sequence_with_cigar {
                 $length += $nsp;
             }
             if (length($substring) < $length) {
+                # Some codons may be incomplete
                 $substring .= ('N' x ($length - length($substring)));
             }
             $alignment_string .= $substring if ($char eq 'M');
@@ -128,6 +129,14 @@ sub compose_sequence_with_cigar {
             throw("'$char' characters in cigar lines are not currently handled. But perhaps they should :)\n");
         }
     }
+
+    # NOTE: It would be good to check that the length of the cigar line
+    # matches the length of the sequence but it is unfortunately not
+    # possible when applying a protein cigar to its cds. In Ensembl, there
+    # is often a slight difference at the last nucleotides. There are even
+    # cases (d.melanogaster) where the difference is hundreds of
+    # nucleotides.
+
     return $alignment_string;
 }
 
