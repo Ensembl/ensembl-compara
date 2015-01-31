@@ -120,6 +120,8 @@ sub compose_sequence_with_cigar {
             $alignment_string .= $substring if ($char eq 'M');
             $seq_start += $length;
 
+        } else {
+            die "'$char' characters in cigar lines are not currently handled. But perhaps they should :)\n";
         }
     }
     return $alignment_string;
