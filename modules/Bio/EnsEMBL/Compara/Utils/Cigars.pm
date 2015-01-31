@@ -94,6 +94,7 @@ sub compose_sequence_with_cigar {
     my $cigar_line = shift;
     my $expansion_factor = shift || 1;
 
+    my $seq_has_spaces = ($sequence =~ tr/ //);
     my $alignment_string = "";
     my $seq_start = 0;
 
@@ -109,10 +110,13 @@ sub compose_sequence_with_cigar {
         } elsif ($char eq 'M' or $char eq 'I') {
 
             my $substring = substr($sequence, $seq_start, $length);
-            if ($substring =~ /\ /) {
-                my $num_boundaries = $substring =~ s/(\ )/$1/g;
-                $length += $num_boundaries;
-                $substring = substr($sequence,$seq_start,$length);
+            if ($seq_has_spaces) {
+                my $nsp = 0;
+                while ((my $nsp2 = ($substring =~ tr/ //)) != $nsp) {
+                    $substring = substr($sequence, $seq_start, $length+$nsp2);
+                    $nsp = $nsp2;
+                }
+                $length += $nsp;
             }
             if (length($substring) < $length) {
                 $substring .= ('N' x ($length - length($substring)));
