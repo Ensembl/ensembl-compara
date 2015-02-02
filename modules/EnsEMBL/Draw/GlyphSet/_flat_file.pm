@@ -116,6 +116,14 @@ sub features {
     ## Set track depth a bit higher if there are lots of user features
     $T->{'config'}{'dep'} = scalar @{$T->{'features'}} > 20 ? 20 : scalar @{$T->{'features'}};
 
+    ## Quick'n'dirty BED hack
+    foreach (@{$T->{'features'}}) {
+      if ($_->external_data && $_->external_data->{'BlockCount'}) {
+        $self->{'my_config'}->set('has_blocks', 1);
+        last;
+      }
+    }
+
     ### ensure the display of the VEP features using colours corresponding to their consequence
     if ($self->my_config('format') eq 'VEP_OUTPUT') {
       my %overlap_cons = %Bio::EnsEMBL::Variation::Utils::Constants::OVERLAP_CONSEQUENCES;      

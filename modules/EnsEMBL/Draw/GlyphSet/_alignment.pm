@@ -435,7 +435,17 @@ sub render_normal {
       }
       
       if ($composite ne $self) {
-        if ($h > 1) {
+        if ($self->my_config('has_blocks')) {
+          $composite->unshift($self->Intron({
+            x         => $composite->{'x'},
+            y         => $composite->{'y'},
+            width     => $composite->{'width'},
+            height    => $h,
+            colour    => $join_colour,
+            absolutey => 1,
+          }));
+        }
+        elsif ($h > 1) {
           $composite->bordercolour($feature_colour) if $join;
         } else {
           $composite->unshift($self->Rect({
