@@ -192,7 +192,7 @@ sub init {
       $panel_content = qq{\n<div id="$id">$html</div>};
     }
     
-    $self->add_panel(EnsEMBL::Web::Document::Panel->new(raw => $panel_content));
+    $self->add_panel(EnsEMBL::Web::Document::Panel->new(raw => $panel_content, hub => $self->hub));
   } else {
     my $input  = $self->{'input'};
     my $hub    = $controller->hub;
@@ -281,6 +281,7 @@ sub add_error_panels {
     
     $self->add_panel_first(
       EnsEMBL::Web::Document::Panel->new(
+        hub     => $self->hub,
         caption => $problem->name,
         content => qq{
           $desc
