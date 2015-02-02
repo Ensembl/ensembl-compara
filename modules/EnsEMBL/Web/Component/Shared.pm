@@ -496,8 +496,8 @@ sub _add_gene_counts {
     );
 
   my @data;
-  foreach my $attrib (@{$genome_container->get_all_counts()}) {
-    my ($name,$inner,$type) = ($attrib,'','');
+  foreach my $statistic (@{$genome_container->fetch_all_statistics()}) {
+    my ($name,$inner,$type) = ($statistic->statistic,'','');
     if($name =~ s/^(.*?)_(r?)(a?)cnt(_(.*))?$/$1_cnt/) {
       ($inner,$type) = ($2,$3);
       $name .= "/$5" if $5;
@@ -505,9 +505,9 @@ sub _add_gene_counts {
     next unless $type eq $our_type;
     my $i = first_index { $name eq $_ } @order;
     next if $i == -1;
-    ($data[$i]||={})->{$inner} = $self->object->thousandify($genome_container->get_count($attrib));
+    ($data[$i]||={})->{$inner} = $self->thousandify($statistic->value);
     $data[$i]->{'_key'} = $name;
-    $data[$i]->{'_name'} = $genome_container->get_attrib($attrib)->name() if $inner eq '';
+    $data[$i]->{'_name'} = $statistic->name if $inner eq '';
     $data[$i]->{'_sub'} = ($name =~ m!/!);
   } 
 
@@ -625,29 +625,26 @@ sub species_stats {
   ## Prediction transcripts
   my $analysis_adaptor = $db_adaptor->get_AnalysisAdaptor();
   my $attribute_adaptor = $db_adaptor->get_AttributeAdaptor();
-  my @analyses = @{ $analysis_adaptor->fetch_all_by_feature_class('PredictionTranscript') };
+  my @analyses = @{ $analysis_adaptor->
+                      fetch_all_by_feature_class('PredictionTranscript') };
   foreach my $analysis (@analyses) {
     my $logic_name = $analysis->logic_name;
-    my $stat = $genome_container->get_prediction_count($logic_name);
-    my $name = $attribute_adaptor->fetch_by_code($logic_name)->[2];
+    my $stat = $genome_container->fetch_by_statistic(
+                                      'PredictionTranscript',$logic_name); 
     push @$rows, {
-      'name' => "<b>$name</b>",
-      'stat' => $self->thousandify($stat),
-    } if $stat;
+      'name' => "<b>".$stat->name."</b>",
+      'stat' => $self->thousandify($stat->value),
+    } if $stat and $stat->name;
   }
   ## Variants
   if ($self->hub->database('variation')) {
-    my @other_stats = (
-      {'name' => 'SNPCount', 'method' => 'get_short_variation_count'},
-      {'name' => 'struct_var', 'method' => 'get_structural_variation_count'}
-    );
-    foreach (@other_stats) {
-      my $method = $_->{'method'};
-      my $stat = $self->thousandify($genome_container->$method);
+    my @other_stats = qw(SNPCount struct_var);
+    foreach my $name (@other_stats) {
+      my $stat = $genome_container->fetch_by_statistic($name);
       push @$rows, {
-        'name' => '<b>'.$genome_container->get_attrib($_->{'name'})->name().'</b>',
-        'stat' => $stat,
-      } if $stat;
+        'name' => '<b>'.$stat->name.'</b>',
+        'stat' => $stat->value
+      } if $stat and $stat->name;
     }
   }
   if (scalar(@$rows)) {
