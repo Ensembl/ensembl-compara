@@ -648,7 +648,9 @@ sub push_script_line {
   my $prefix = shift || 'SCRIPT';
   my $extra  = shift;
   my @X      = localtime;
-  
+
+  return if $r->subprocess_env->{'REQUEST_URI'} =~ /^\/CSS\?/;
+
   warn sprintf(
     "%s: %s%9d %04d-%02d-%02d %02d:%02d:%02d %s %s\n",
     $prefix, hostname, $$,
