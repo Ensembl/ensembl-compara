@@ -92,6 +92,7 @@ use CSS::Minifier;
 use JavaScript::Minifier;
 
 use EnsEMBL::Web::Utils::FileHandler qw(file_put_contents file_get_contents);
+use EnsEMBL::Web::Utils::FileSystem qw(create_path);
 
 sub new {
   ## @constructor
@@ -210,6 +211,10 @@ sub _minify_content {
   my ($species_defs, $type, $abs_path, $content) = @_;
   my $compression_dir = sprintf '%s/utils/compression/', $species_defs->ENSEMBL_WEBROOT;
   my $tmp_filename    = "$abs_path.tmp";
+  my $abs_path_dir    = $abs_path =~ s/\/[^\/]+$//r;
+
+  # create the dir if it doesn't already exist
+  create_path($abs_path_dir) unless -d $abs_path_dir;
 
   if ($type eq 'js') { # wrap javascript for extra compression
     $content = sprintf '(function($,window,document,undefined){%s})(jQuery,this,document)', $content;
