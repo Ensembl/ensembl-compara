@@ -494,26 +494,9 @@ sub handler {
   my $path = join '/', $species || (), $script || (), $path_info || ();
   
   $r->uri("/$path");
-  
-  my $filename = $MEMD ? $MEMD->get("::STATIC::$path") : '';
-  
-  # Search the htdocs dirs for a file to return
-  # Exclude static files (and no, html is not a static file in ensembl)
-  if ($path !~ /\.(\w{2,3})$/) {
-    if (!$filename) {
-      foreach my $dir (grep { -d $_ && -r $_ } @SiteDefs::ENSEMBL_HTDOCS_DIRS) {
-        my $f = "$dir/$path";
-        
-        if (-d $f || -r $f) {
-          $filename = -d $f ? '! ' . $f : $f;
-          $MEMD->set("::STATIC::$path", $filename, undef, 'STATIC') if $MEMD;
-          
-          last;
-        }
-      }
-    }
-  }
-  
+
+  my $filename = get_static_file_for_path($r, $path);
+
   if ($filename =~ /^! (.*)$/) {
     $r->uri($r->uri . ($r->uri      =~ /\/$/ ? '' : '/') . 'index.html');
     $r->filename($1 . ($r->filename =~ /\/$/ ? '' : '/') . 'index.html');
@@ -659,6 +642,31 @@ sub push_script_line {
   );
   
   $r->subprocess_env->{'LOG_TIME'} = time;
+}
+
+sub get_static_file_for_path {
+  my ($r, $path) = @_;
+
+  my $filename = $MEMD ? $MEMD->get("::STATIC::$path") : '';
+  
+  # Search the htdocs dirs for a file to return
+  # Exclude static files (and no, html is not a static file in ensembl)
+  if ($path !~ /\.(\w{2,3})$/) {
+    if (!$filename) {
+      foreach my $dir (grep { -d $_ && -r $_ } @SiteDefs::ENSEMBL_HTDOCS_DIRS) {
+        my $f = "$dir/$path";
+        
+        if (-d $f || -r $f) {
+          $filename = -d $f ? '! ' . $f : $f;
+          $MEMD->set("::STATIC::$path", $filename, undef, 'STATIC') if $MEMD;
+          
+          last;
+        }
+      }
+    }
+  }
+
+  return $filename;
 }
 
 sub  _load_command_null {
