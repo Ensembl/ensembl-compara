@@ -262,7 +262,7 @@ sub render_Arc {
   my $filled         = $glyph->filled();
   my ($cx, $cy)      = $glyph->pixelcentre();
 
-  $canvas->setThickness(2);
+  $canvas->setThickness($glyph->{'thickness'});
 
   my $method = $filled ? 'filledArc' : 'arc';
   $canvas->$method(
@@ -274,6 +274,7 @@ sub render_Arc {
     $self->{sf} *  $glyph->{'end_point'},
     $colour
    );
+
   ## Reset brush thickness
   $canvas->setThickness(1);
 }
