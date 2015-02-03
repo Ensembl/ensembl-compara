@@ -668,6 +668,139 @@ sub render_ungrouped {
   $self->errorTrack(sprintf q{No features from '%s' on this strand}, $self->my_config('name')) unless $features_drawn || ($on_this_strand == scalar(@ok_features)) || $self->{'no_empty_track_message'} || $self->{'config'}->get_option('opt_empty_tracks') == 0;
 }
 
+sub render_interaction {
+## Draw paired features joined by an arc
+  my $self = shift;
+
+  return $self->render_text if $self->{'text_export'};
+
+  my $h               = @_ ? shift : ($self->my_config('height') || 8);
+     $h               = $self->{'extras'}{'height'} if $self->{'extras'} && $self->{'extras'}{'height'};
+  my $gap             = $h < 2 ? 1 : 2;
+  my $strand          = $self->strand;
+  my $strand_flag     = $self->my_config('strand');
+  my $length          = $self->{'container'}->length;
+  my $pix_per_bp      = $self->scalex;
+  my $y_offset        = 0;
+
+  my %features        = $self->features;
+
+  ## NB We need fontsize for the track expansion text, even if there are no labels
+  my $label_h;
+  my ($fontname, $fontsize) = $self->get_font_details('outertext');
+  if ($self->{'show_labels'}) {
+    $label_h = [ $self->get_text_width(0, 'X', '', ptsize => $fontsize, font => $fontname) ]->[3];
+  }
+
+  foreach my $feature_key (sort keys %features) {
+    my ($config, @features);
+
+    $self->{'track_key'} = $feature_key;
+
+    next unless $features{$feature_key};
+
+    my $colour_key     = $self->colour_key($feature_key);
+    my $feature_colour = $self->my_colour($colour_key);
+    my $join_colour    = $self->my_colour($colour_key, 'join');
+    my $label_colour   = $feature_colour;
+    my $max_score      = $config->{'max_score'} || 1000;
+    my $min_score      = $config->{'min_score'} || 0;
+    my $y_pos;
+
+    my @features = @{$features{$feature_key}->[0]};
+
+    my %id;
+    foreach (sort { $a->[0] <=> $b->[0] }  map [ $_->start_1, $_->end_1, $_->start_2, $_->end_2, $_ ], @features) {
+      my ($s1, $e1, $s2, $e2, $f) = @$_;
+
+      my $fgroup_name = $self->feature_group($f);
+
+      push @{$id{$fgroup_name}}, [ $s1, $e1, $s2, $e2, $f,
+                                    int($s1 * $pix_per_bp), int($e1 * $pix_per_bp),
+                                    int($s2 * $pix_per_bp), int($e2 * $pix_per_bp),
+                                    undef ];
+    }
+
+    my %idl;
+    foreach my $k (keys %id) {
+      $idl{$k} = $strand * ( max(map { $_->[1] } @{$id{$k}}) -
+                             min(map { $_->[0] } @{$id{$k}}));
+    }
+
+    next unless keys %id;
+
+    foreach my $i (sort { $idl{$a} <=> $idl{$b} } keys %id) {
+      my @feat          = @{$id{$i}};
+      my $db_name       = $feat[0][9];
+      my $feat_1_from   = max(min(map { $_->[0] } @feat),1);
+      my $feat_1_to     = min(max(map { $_->[1] } @feat),$length);
+      my $feat_2_from   = max(min(map { $_->[2] } @feat),1);
+      my $feat_2_to     = min(max(map { $_->[3] } @feat),$length);
+
+      my $bump_start = int($pix_per_bp * $feat_1_from) - 1;
+      my $bump_end   = int($pix_per_bp * $feat_1_to);
+         $bump_end   = max($bump_end, $bump_start + 1 + [ $self->get_text_width(0, $self->feature_label($feat[0][4], $db_name), '', ptsize => $fontsize, font => $fontname) ]->[2]) if $self->{'show_labels'};
+      my $x          = -1e8;
+      my $row        = 0;
+
+      $y_pos = $y_offset - $row * int($h + 1 + $gap * $label_h) * $strand;
+
+      my $strand_y = 0;
+      my $position = {
+        x      => $feat[0][0] > 1 ? $feat[0][0] - 1 : 0,
+        y      => 0,
+        width  => 0,
+        height => $h,
+      };
+
+      foreach (@feat) {
+        my ($s1, $e1, $s2, $e2, $f) = @$_;
+
+        next if int($e2 * $pix_per_bp) <= int($x * $pix_per_bp);
+
+        my $feature_object  = ref $f ne 'HASH';
+        my $start_1         = max($s1, 1);
+        my $start_2         = max($s2, 1);
+        my $end_1           = min($e1, $length);
+        my $end_2           = min($e2, $length);
+
+        ## First feature of pair
+        $self->push($self->Rect({
+            x            => $start_1 - 1,
+            y            => 0,
+            width        => $end_1 - $start_1 + 1,
+            height       => $h,
+            colour       => $feature_colour,
+            label_colour => $label_colour,
+            absolutey    => 1,
+          }));
+
+        ## Arc between features
+        $self->push($self->Intron({
+            x         => $end_1,
+            y         => 0,
+            width     => $start_2 - $end_1,
+            height    => $f->score * 10,
+            colour    => $join_colour,
+            absolutey => 1,
+          }));
+
+        ## Second feature of pair
+        $self->push($self->Rect({
+            x            => $start_2 - 1,
+            y            => 0,
+            width        => $end_2 - $start_2 + 1,
+            height       => $h,
+            colour       => $feature_colour,
+            label_colour => $label_colour,
+            absolutey    => 1,
+          }));
+
+      }
+    }
+  }
+}
+
 sub render_text {
   my $self     = shift;
   my $strand   = $self->strand;
