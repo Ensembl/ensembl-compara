@@ -709,11 +709,12 @@ sub render_interaction {
 
     my @features = @{$features{$feature_key}->[0]};
 
-    my (%id, $max_score);
+    my %id;
     foreach (sort { $a->[0] <=> $b->[0] }  map [ $_->start_1, $_->end_1, $_->start_2, $_->end_2, $_ ], @features) {
       my ($s1, $e1, $s2, $e2, $f) = @$_;
 
       $max_score = $f->score if $f->score > $max_score;
+      $min_score = $f->score if $f->score < $min_score;
 
       my $fgroup_name = $self->feature_group($f);
 
@@ -732,28 +733,8 @@ sub render_interaction {
     next unless keys %id;
 
     foreach my $i (sort { $idl{$a} <=> $idl{$b} } keys %id) {
-      my @feat          = @{$id{$i}};
-      my $db_name       = $feat[0][9];
-      my $feat_1_from   = max(min(map { $_->[0] } @feat),1);
-      my $feat_1_to     = min(max(map { $_->[1] } @feat),$length);
-      my $feat_2_from   = max(min(map { $_->[2] } @feat),1);
-      my $feat_2_to     = min(max(map { $_->[3] } @feat),$length);
-
-      my $bump_start = int($pix_per_bp * $feat_1_from) - 1;
-      my $bump_end   = int($pix_per_bp * $feat_1_to);
-         $bump_end   = max($bump_end, $bump_start + 1 + [ $self->get_text_width(0, $self->feature_label($feat[0][4], $db_name), '', ptsize => $fontsize, font => $fontname) ]->[2]) if $self->{'show_labels'};
-      my $x          = -1e8;
-      my $row        = 0;
-
-      $y_pos = $y_offset - $row * int($h + 1 + $gap * $label_h) * $strand;
-
-      my $strand_y = 0;
-      my $position = {
-        x      => $feat[0][0] > 1 ? $feat[0][0] - 1 : 0,
-        y      => 0,
-        width  => 0,
-        height => $h,
-      };
+      my @feat  = @{$id{$i}};
+      my $x     = -1e8;
 
       foreach (@feat) {
         my ($s1, $e1, $s2, $e2, $f) = @$_;
@@ -768,40 +749,39 @@ sub render_interaction {
 
         ## First feature of pair
         $self->push($self->Rect({
-            x            => $start_1 - 1,
-            y            => 0,
-            width        => $end_1 - $start_1 + 1,
-            height       => $h,
-            colour       => $feature_colour,
-            label_colour => $label_colour,
-            absolutey    => 1,
-          }));
+              x            => $start_1 - 1,
+              y            => 0,
+              width        => $end_1 - $start_1 + 1,
+              height       => $h,
+              colour       => $feature_colour,
+              label_colour => $label_colour,
+              absolutey    => 1,
+            }));
 
         ## Arc between features
         my $arc_width = ($start_2 - $end_1) * $pix_per_bp;
         $self->push($self->Arc({
-            x             => $start_2,
-            y             => $h * 2,
-            width         => $arc_width,
-            height        => 10,
-            start_point   => 0,
-            end_point     => 180,
-            colour        => $join_colour,
-            filled        => 0,
-            thickness     => int($f->score / $max_score * 10),
-            absolutewidth => 1,
-          }));
+              x             => $start_2,
+              y             => $arc_width / 2,
+              width         => $arc_width,
+              start_point   => 0,
+              end_point     => 180,
+              colour        => $join_colour,
+              filled        => 0,
+              thickness     => int($f->score / $max_score * 10),
+              absolutewidth => 1,
+            }));
 
         ## Second feature of pair
         $self->push($self->Rect({
-            x            => $start_2 - 1,
-            y            => 0,
-            width        => $end_2 - $start_2 + 1,
-            height       => $h,
-            colour       => $feature_colour,
-            label_colour => $label_colour,
-            absolutey    => 1,
-          }));
+              x            => $start_2 - 1,
+              y            => 0,
+              width        => $end_2 - $start_2 + 1,
+              height       => $h,
+              colour       => $feature_colour,
+              label_colour => $label_colour,
+              absolutey    => 1,
+            }));
 
       }
     }
@@ -814,7 +794,7 @@ sub render_text {
   my %features = $self->features;
   my $method   = $self->can('export_feature') ? 'export_feature' : '_render_text';
   my $export;
-  
+
   foreach my $feature_key ($strand < 0 ? sort keys %features : reverse sort keys %features) {
     foreach my $f (@{$features{$feature_key}}) {
       foreach (map { $_->[2] } sort { $a->[0] <=> $b->[0] } map { [ $_->start, $_->end, $_ ] } @{$f || []}) {
@@ -822,7 +802,7 @@ sub render_text {
       }
     }
   }
-  
+
   return $export;
 }
 
