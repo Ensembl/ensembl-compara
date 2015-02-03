@@ -49,7 +49,7 @@ sub content {
 
   # Clinical significance
   if ($column_flags->{'clin_sign'}) {
-   push(@$columns,{ key => 'clin_sign', title => 'Clinical significance',  ialign => 'left', sort => 'hidden_string' });
+   push(@$columns,{ key => 'clin_sign', title => 'Clinical significance',  align => 'left', sort => 'hidden_string' });
   }
 
   push(@$columns,{ key => 's_evidence', title => 'Supporting evidence(s)', align => 'left', sort => 'html' });
