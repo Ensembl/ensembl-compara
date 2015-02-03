@@ -41,6 +41,7 @@ use EnsEMBL::Draw::Glyph::Rect;
 use EnsEMBL::Draw::Glyph::Space;
 use EnsEMBL::Draw::Glyph::Sprite;
 use EnsEMBL::Draw::Glyph::Text;
+use EnsEMBL::Draw::Glyph::Arc;
 
 use Bio::EnsEMBL::Registry;
 use Bio::EnsEMBL::DnaDnaAlignFeature;
@@ -240,6 +241,7 @@ sub Space      { my $self = shift; return EnsEMBL::Draw::Glyph::Space->new(@_); 
 sub Sprite     { my $self = shift; return EnsEMBL::Draw::Glyph::Sprite->new(@_);     }
 sub Text       { my $self = shift; return EnsEMBL::Draw::Glyph::Text->new(@_);       }
 sub Triangle   { my $self = shift; return EnsEMBL::Draw::Glyph::Triangle->new(@_);   }
+sub Arc        { my $self = shift; return EnsEMBL::Draw::Glyph::Arc->new(@_);   }
 
 sub _init {
 ### _init creates masses of Glyphs from a data source.
