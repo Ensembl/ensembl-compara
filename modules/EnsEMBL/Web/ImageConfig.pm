@@ -1274,7 +1274,11 @@ sub _user_track_settings {
   my ($self, $style, $format) = @_;
   my ($strand, @user_renderers);
 
-  if ($style =~ /^(wiggle|WIG)$/) {
+  if (lc($format) eq 'interaction') {
+    $strand         = 'f';
+    @user_renderers = ('off', 'Off', 'interaction', 'Interaction');
+  }
+  elsif ($style =~ /^(wiggle|WIG)$/) {
     $strand         = 'r';
     @user_renderers = ('off', 'Off', 'tiling', 'Wiggle plot');
   }
