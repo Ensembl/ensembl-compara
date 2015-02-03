@@ -118,7 +118,7 @@ sub features {
 
     ## Quick'n'dirty BED hack
     foreach (@{$T->{'features'}}) {
-      if ($_->external_data && $_->external_data->{'BlockCount'}) {
+      if ($_->can('external_data') && $_->external_data && $_->external_data->{'BlockCount'}) {
         $self->{'my_config'}->set('has_blocks', 1);
         last;
       }
