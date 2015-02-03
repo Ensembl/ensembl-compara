@@ -776,13 +776,18 @@ sub render_interaction {
           }));
 
         ## Arc between features
-        $self->push($self->Intron({
-            x         => $end_1,
-            y         => 0,
-            width     => $start_2 - $end_1,
-            height    => $f->score * 10,
-            colour    => $join_colour,
-            absolutey => 1,
+        my $arc_width = ($start_2 - $end_1) * $pix_per_bp;
+        my $arc_height = $f->score * 2;
+        $self->push($self->Arc({
+            x             => $start_2,
+            y             => $h * 2,
+            width         => $arc_width,
+            height        => 10,
+            start_point   => 0,
+            end_point     => 180,
+            colour        => $join_colour,
+            filled        => 0,
+            absolutewidth => 1,
           }));
 
         ## Second feature of pair
