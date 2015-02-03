@@ -395,6 +395,8 @@ sub get_SimpleAlign {
     #Check to see if the method is called 'addSeq' or 'add_seq'
     my $bio07 = ($sa->can('add_seq') ? 0 : 1);
 
+    $self->_load_all_missing_sequences($seq_type);
+
     my $seq_hash = {};
     foreach my $member (@{$self->get_all_Members}) {
 
@@ -433,14 +435,13 @@ sub get_SimpleAlign {
             }
         }
 
-        my $seq_from_aln = $seqstr;
-        $seq_from_aln =~ s/-//g;
+        my $n_gaps = ($seqstr =~ tr/-/-/);
 
         my $seq = Bio::LocatableSeq->new(
                 -SEQ        => $seqstr,
                 -ALPHABET   => $alphabet,
                 -START      => 1,
-                -END        => length($seq_from_aln),
+                -END        => length($seqstr)-$n_gaps,
                 -ID         => $seqID,
                 -STRAND     => 0
         );
