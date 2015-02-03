@@ -68,7 +68,7 @@ Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->new(
     -pass => $ENV{'ENSADMIN_PSW'},
     -port => 3306,
     -species => 'compara_nctrees',
-    -dbname => 'mm14_compara_nctrees_79',
+    -dbname => 'mm14_compara_nctrees_79b',
 );
 
 # Individual pipeline database for Families:
@@ -104,7 +104,7 @@ Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->new(
 
 # current release database on one of Compara servers:
 Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->new(
-    -host => 'compara4',
+    -host => 'compara5',
     -user => 'ensadmin',
     -pass => $ENV{'ENSADMIN_PSW'},
     -port => 3306,
@@ -124,7 +124,7 @@ Bio::EnsEMBL::DBSQL::DBAdaptor->new(
 
 # current ancestral database on one of Compara servers:
 Bio::EnsEMBL::DBSQL::DBAdaptor->new(
-    -host => 'compara4',
+    -host => 'compara5',
     -user => 'ensadmin',
     -pass => $ENV{'ENSADMIN_PSW'},
     -port => 3306,
