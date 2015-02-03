@@ -254,7 +254,6 @@ sub render_Ellipse {
 
 sub render_Arc {
   my ($self, $glyph) = @_;
-  warn "@@@ RENDERING ARC $glyph";
 
   my $canvas         = $self->{'canvas'};
   my $gcolour        = $glyph->{'colour'};
