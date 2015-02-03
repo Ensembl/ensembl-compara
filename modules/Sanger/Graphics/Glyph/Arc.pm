@@ -40,6 +40,7 @@ sub new {
   my $self = $class->SUPER::new($params_ref);
 
   $self->{'absoluteheight'} = $self->{'absolutewidth'};
+  $self->{'thickness'} ||= 2;
 
   return $self;
 }
