@@ -94,6 +94,9 @@ init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::CAFE_conf -password <your_pa
   ncRNAtrees:
   init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::CAFE_conf -mlss_id 40098 -wait_for backbone_fire_db_prepare -per_family_table 0 -type nc -pipeline_url mysql://ensadmin:ensembl@compara3/mp12_compara_nctrees_78a -cafe_species "['danio.rerio', 'taeniopygia.guttata', 'callithrix.jacchus', 'pan.troglodytes', 'homo.sapiens', 'mus.musculus']"
 
+  Release 79:
+  init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::CAFE_conf -mlss_id 40100 -work_dir scratch/109/cafe_nctrees_79 -wait_for backbone_fire_db_prepare -per_family_table 0 -type nc -pipeline_url mysql://ensadmin:ensembl@compara3/mm14_compara_nctrees_79b -cafe_species "['danio.rerio', 'taeniopygia.guttata', 'callithrix.jacchus', 'pan.troglodytes', 'homo.sapiens', 'mus.musculus']" -hive_no_init 1
+  init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::CAFE_conf -mlss_id 40099 -work_dir scratch/109/cafe_proteintrees_79 -wait_for backbone_fire_dnds -per_family_table 1 -type prot -pipeline_url mysql://ensadmin:ensembl@compara1/mm14_protein_trees_79 -cafe_species [] -hive_no_init 1
 
 =head1 CONTACT
 
