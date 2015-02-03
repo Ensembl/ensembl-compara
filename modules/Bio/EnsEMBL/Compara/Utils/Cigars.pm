@@ -109,7 +109,7 @@ sub compose_sequence_with_cigar {
 
         } elsif ($char eq 'M' or $char eq 'I') {
 
-            my $substring = substr($sequence, $seq_start, $length);
+            my $substring = substr($sequence, $seq_start, $length) || '';
             if ($seq_has_spaces) {
                 my $nsp = 0;
                 while ((my $nsp2 = ($substring =~ tr/ //)) != $nsp) {
