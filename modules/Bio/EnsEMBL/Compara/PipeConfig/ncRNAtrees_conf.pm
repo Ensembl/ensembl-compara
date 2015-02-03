@@ -266,9 +266,17 @@ sub pipeline_analyses {
                 mode            => 'members_per_genome',
                 allow_ambiguity_codes => $self->o('allow_ambiguity_codes'),
             },
+            -flow_into  => [ 'per_genome_qc' ],
             %hc_params,
         },
 
+        {   -logic_name => 'per_genome_qc',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::PerGenomeGroupsetQC',
+            -parameters => {
+                'mlss_id'   => $self->o('mlss_id'),
+            },
+            -rc_name    => '4Gb_job',
+        },
 
         {   -logic_name => 'load_genomedb_funnel',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::SqlCmd',
@@ -446,6 +454,7 @@ sub pipeline_analyses {
             -module         => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::HTMLReport',
             -parameters     => {
                 'email' => $self->o('email'),
+                'mlss_id' => $self->o('mlss_id'),
             },
         },
 
