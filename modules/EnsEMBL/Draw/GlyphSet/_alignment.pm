@@ -703,8 +703,8 @@ sub render_interaction {
     my $feature_colour = $self->my_colour($colour_key);
     my $join_colour    = $self->my_colour($colour_key, 'join');
     my $label_colour   = $feature_colour;
-    my $max_score      = $config->{'max_score'} || 1000;
-    my $min_score      = $config->{'min_score'} || 0;
+    my $max_score      = $config->{'max_score'};
+    my $min_score      = $config->{'min_score'};
     my $y_pos;
 
     my @features = @{$features{$feature_key}->[0]};
@@ -760,15 +760,16 @@ sub render_interaction {
 
         ## Arc between features
         my $arc_width = ($start_2 - $end_1) * $pix_per_bp;
-        $self->push($self->Arc({
+        my $thickness = int($f->score / $max_score * 10);
+        $self->unshift($self->Arc({
               x             => $start_2,
-              y             => $arc_width / 2,
-              width         => $arc_width,
+              y             => ($arc_width / 2) + $thickness + ($h / 2),
+              width         => $arc_width + $thickness,
               start_point   => 0,
               end_point     => 180,
               colour        => $join_colour,
               filled        => 0,
-              thickness     => int($f->score / $max_score * 10),
+              thickness     => $thickness,
               absolutewidth => 1,
             }));
 
