@@ -38,24 +38,28 @@ sub feature_2 {
 
 sub start_1 {
   my $self = shift; 
+  return $self->{'start_1'} if $self->{'start_1'};
   my @coords = $self->_split_coords($self->{'__raw__'}[0]);
   return $coords[1]; 
 }
 
 sub end_1 {
   my $self = shift; 
+  return $self->{'end_1'} if $self->{'end_1'};
   my @coords = $self->_split_coords($self->{'__raw__'}[0]);
   return $coords[2]; 
 }
 
 sub start_2 {
   my $self = shift; 
+  return $self->{'start_2'} if $self->{'start_2'};
   my @coords = $self->_split_coords($self->{'__raw__'}[1]);
   return $coords[1]; 
 }
 
 sub end_2 {
   my $self = shift; 
+  return $self->{'end_2'} if $self->{'end_2'};
   my @coords = $self->_split_coords($self->{'__raw__'}[1]);
   return $coords[2]; 
 }
@@ -64,6 +68,16 @@ sub _seqname {
   my $self = shift; 
   my @coords = $self->_split_coords($self->{'__raw__'}[0]);
   return $coords[0]; 
+}
+
+sub rawstart {
+  my $self = shift; 
+  return $self->start;
+}
+
+sub rawend {
+  my $self = shift; 
+  return $self->end;
 }
 
 sub start {
@@ -80,8 +94,8 @@ sub end {
 
 sub coords {
 ## If seeking a generic location, return first feature
-  my $self = shift; 
-  my @coords = $self->_split_coords($self->{'__raw__'}[0]);
+  my ($self, $data) = @_; 
+  my @coords = $self->_split_coords($data->[0]);
   $coords[0] =~ s/chr//;
   return @coords; 
 }
@@ -101,5 +115,35 @@ sub score {
   $self->{'score'} = $self->_raw_score unless exists $self->{'score'};
   return $self->{'score'};
 }
+
+sub map {
+  my( $self, $slice ) = @_;
+  my $chr = $self->seqname();
+  $chr=~s/^chr//;
+  return () unless $chr eq $slice->seq_region_name;
+  my $slice_end = $slice->end();
+  return () unless $self->start_1 <= $slice_end;
+  my $slice_start = $slice->start();
+  return () unless $slice_start <= $self->end_2;
+  $self->slide( 1 - $slice_start );
+
+  if ($slice->strand == -1) {
+    my $flip = $slice->length + 1;
+    ($self->{'start_1'}, $self->{'end_1'}) = ($flip - $self->{'end_1'}, $flip - $self->{'start_1'});
+    ($self->{'start_2'}, $self->{'end_2'}) = ($flip - $self->{'end_2'}, $flip - $self->{'start_2'});
+  }
+ 
+  return $self;
+}
+
+sub slide    {
+  my $self = shift;
+  my $offset = shift;
+  $self->{'start_1'} = $self->start_1 + $offset;
+  $self->{'end_1'}   = $self->end_1 + $offset;
+  $self->{'start_2'} = $self->start_2 + $offset;
+  $self->{'end_2'}   = $self->end_2 + $offset;
+}
+
 
 1;
