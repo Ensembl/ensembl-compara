@@ -709,9 +709,11 @@ sub render_interaction {
 
     my @features = @{$features{$feature_key}->[0]};
 
-    my %id;
+    my (%id, $max_score);
     foreach (sort { $a->[0] <=> $b->[0] }  map [ $_->start_1, $_->end_1, $_->start_2, $_->end_2, $_ ], @features) {
       my ($s1, $e1, $s2, $e2, $f) = @$_;
+
+      $max_score = $f->score if $f->score > $max_score;
 
       my $fgroup_name = $self->feature_group($f);
 
@@ -777,7 +779,6 @@ sub render_interaction {
 
         ## Arc between features
         my $arc_width = ($start_2 - $end_1) * $pix_per_bp;
-        my $arc_height = $f->score * 2;
         $self->push($self->Arc({
             x             => $start_2,
             y             => $h * 2,
@@ -787,6 +788,7 @@ sub render_interaction {
             end_point     => 180,
             colour        => $join_colour,
             filled        => 0,
+            thickness     => int($f->score / $max_score * 10),
             absolutewidth => 1,
           }));
 
