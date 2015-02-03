@@ -313,8 +313,7 @@ sub glyphset_configs {
           push @default_order, $track;
         }
       } else {
-        my $clone = $self->tree->create_node($track->id . '_tmp'); # Id is replaced in the for loop below
-        $clone->{$_} = $_ eq 'data' ? { %{$track->{'data'}} } : $track->{$_} for keys %$track; # Make a new hash for data, so that drawing_strand can differ
+        my $clone = $self->_clone_track($track);
         
         $clone->set('drawing_strand', 'f');
         $track->set('drawing_strand', 'r');
@@ -3585,6 +3584,16 @@ sub share {
   delete $user_settings->{'track_order'}{$_} for grep $_ ne $species, keys %{$user_settings->{'track_order'}};
   
   return $user_settings;
+}
+
+sub _clone_track {
+  my ($self, $track, $id) = @_;
+
+  my $clone       = $self->tree->create_node;
+  $clone->{$_}    = $_ eq 'data' ? { %{$track->{'data'}} } : $track->{$_} for keys %$track; # Make a new hash for data, so keys can differ
+  $clone->{'id'}  = $id if $id;
+
+  return $clone;
 }
 
 1;
