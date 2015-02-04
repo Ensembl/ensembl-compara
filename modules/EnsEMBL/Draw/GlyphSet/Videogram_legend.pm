@@ -26,8 +26,6 @@ package EnsEMBL::Draw::GlyphSet::Videogram_legend;
 
 use strict;
 
-use Sanger::Graphics::Bump;
-
 use base qw(EnsEMBL::Draw::GlyphSet);
 
 sub _init {

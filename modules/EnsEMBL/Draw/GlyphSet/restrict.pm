@@ -23,6 +23,8 @@ package EnsEMBL::Draw::GlyphSet::restrict;
 
 use strict;
 
+use EnsEMBL::Draw::Utils::Bump;
+
 use base qw(EnsEMBL::Draw::GlyphSet);
 
 sub _init {
@@ -249,7 +251,7 @@ sub _init {
        $bump_start--; 
        $bump_start = 0 if $bump_start < 0;
        $bump_end   = $bitmap_length if $bump_end > $bitmap_length;
-    my $row = & Sanger::Graphics::Bump::bump_row(
+    my $row = & EnsEMBL::Draw::Utils::Bump::bump_row(
        $bump_start,  $bump_end,  $bitmap_length,  \@bitmap
     );
     push @glyphs, [ $Composite, $row ];

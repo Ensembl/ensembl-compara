@@ -25,8 +25,6 @@ use strict;
 
 use Time::HiRes qw(time);
 
-use Sanger::Graphics::Bump;
-
 use Bio::EnsEMBL::DnaDnaAlignFeature;
 use Bio::EnsEMBL::Compara::MethodLinkSpeciesSet;
 

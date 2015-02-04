@@ -22,7 +22,6 @@ package EnsEMBL::Draw::GlyphSet_simple;
 
 use strict;
 
-use Sanger::Graphics::Bump;
 use Bio::EnsEMBL::Feature;
 
 use base qw(EnsEMBL::Draw::GlyphSet);

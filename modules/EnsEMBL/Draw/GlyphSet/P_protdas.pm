@@ -24,8 +24,6 @@ package EnsEMBL::Draw::GlyphSet::P_protdas;
 use strict;
 
 use Sanger::Graphics::ColourMap;
-use Sanger::Graphics::Bump;
-#use Bio::EnsEMBL::Glyph::Symbol::box; 
 use POSIX; #floor
 
 use base qw(EnsEMBL::Draw::GlyphSet);

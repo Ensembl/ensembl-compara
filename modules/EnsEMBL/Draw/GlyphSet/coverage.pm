@@ -23,7 +23,6 @@ package EnsEMBL::Draw::GlyphSet::coverage;
 
 use strict;
 
-use Sanger::Graphics::Bump;
 use Bio::EnsEMBL::Variation::Utils::Sequence qw(ambiguity_code variation_class);
 
 use base  qw(EnsEMBL::Draw::GlyphSet);
