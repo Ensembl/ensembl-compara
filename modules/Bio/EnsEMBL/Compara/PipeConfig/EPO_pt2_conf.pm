@@ -169,7 +169,7 @@ sub pipeline_analyses {
 	    {   -logic_name     => 'load_genome_db_from_anchor_db',
 		-module     => 'Bio::EnsEMBL::Hive::RunnableDB::MySQLTransfer',
 		-parameters => {
-			'src_db_conn'   => $self->o('compara_anchor_db'),
+			'src_db_conn'   => '#compara_anchor_db#',
 			'table'         => 'genome_db',
 		},
 		-input_ids => [{}],
@@ -192,7 +192,7 @@ sub pipeline_analyses {
 	    {    -logic_name     => 'load_dnafrag_from_anchor_db',
 		 -module     => 'Bio::EnsEMBL::Hive::RunnableDB::MySQLTransfer',
 		 -parameters => {
-			'src_db_conn'   => $self->o('compara_anchor_db'),
+			'src_db_conn'   => '#compara_anchor_db#',
 			'table'         => 'dnafrag',
 		},
 		-flow_into => {
@@ -240,10 +240,8 @@ sub pipeline_analyses {
 		-parameters => {
 			'sql' => [
 				# ml and mlss entries for the overlaps, pecan and gerp
-				'REPLACE INTO method_link (method_link_id, type) VALUES('. 
-				$self->o('mapping_method_link_id') . ',"' . $self->o('mapping_method_link_name')  . '")',
-				'REPLACE INTO method_link_species_set (method_link_species_set_id, method_link_id, species_set_id) VALUES('.
-				$self->o('mapping_mlssid') . ',' . $self->o('mapping_method_link_id') . ',' . $self->o('species_set_id') . ')',	
+				'REPLACE INTO method_link (method_link_id, type) VALUES(#mapping_method_link_id#, "#mapping_method_link_name#")',
+				'REPLACE INTO method_link_species_set (method_link_species_set_id, method_link_id, species_set_id) VALUES(#mapping_mlssid#, #mapping_method_link_id#, #species_set_id#)',
 			],
 		},
 		 -flow_into => {
@@ -316,8 +314,8 @@ sub pipeline_analyses {
 	    {   -logic_name => 'trim_anchor_align',			
 		-module     => 'Bio::EnsEMBL::Compara::Production::EPOanchors::TrimAnchorAlign',
 		-parameters => {
-				'input_method_link_species_set_id' => $self->o('mapping_mlssid'),
-				'output_method_link_species_set_id' => $self->o('trimmed_mapping_mlssid'),
+				'input_method_link_species_set_id' => '#mapping_mlssid#',
+				'output_method_link_species_set_id' => '#trimmed_mapping_mlssid#',
 			},
 		-failed_job_tolerance => 10,
 		-hive_capacity => 200,
