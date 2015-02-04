@@ -1267,4 +1267,11 @@ sub check {
 
     
 
+sub acos_in_degrees {
+  my ($self, $x) = @_;
+  my $pi   = 4*atan2(1,1);
+  my $acos = atan2(sqrt(1 - $x * $x), $x);
+  return int($acos/$pi * 180);
+}
+
 1;

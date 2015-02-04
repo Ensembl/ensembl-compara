@@ -706,7 +706,17 @@ sub render_interaction {
     my $min_score       = $config->{'min_score'} || 0;
     my $greyscale_max   = $config && exists $config->{'greyscale_max'} && $config->{'greyscale_max'} > 0 ? $config->{'greyscale_max'} : 1000;
 
-    my @features = @{$features{$feature_key}->[0]};
+    my @tmp = @{$features{$feature_key}};
+    my %id;
+
+    if (ref $tmp[0] eq 'ARRAY') {
+      @features = @{$tmp[0]};
+      if (ref $tmp[1] eq 'HASH') {
+        $config   = $tmp[1];
+      }
+    } else {
+      @features = @tmp;
+    }
 
     my (%id, $y_pos);
     foreach (sort { $a->[0] <=> $b->[0] }  map [ $_->start_1, $_->end_1, $_->start_2, $_->end_2, $_ ], @features) {
@@ -735,8 +745,6 @@ sub render_interaction {
       foreach (@feat) {
         my ($s1, $e1, $s2, $e2, $f) = @$_;
 
-        next if int($e2 * $pix_per_bp) <= int($x * $pix_per_bp);
-
         my $feature_colour;
 
         if ($config->{'itemRgb'} =~ /on/i) {
@@ -750,9 +758,14 @@ sub render_interaction {
         my $label_colour   = $feature_colour;
 
         my $start_1         = max($s1, 1);
-        my $start_2         = max($s2, 1);
-        my $end_1           = min($e1, $length);
+        my $start_2         = max($s2, 2);
+        my $end_1           = min($e1, $length - 1);
         my $end_2           = min($e2, $length);
+
+        warn ">>> FULL COORDS = ($s1 - $e1), ($s2, $e2)";
+        warn "... CONSTRAINED = ($start_1 - $end_1), ($start_2 - $end_2)";
+
+        ## Unlike other tracks, we need to show partial features that are outside this slice
 
         ## First feature of pair
         $self->push($self->Rect({
@@ -763,17 +776,31 @@ sub render_interaction {
               colour       => $feature_colour,
               label_colour => $label_colour,
               absolutey    => 1,
-            }));
+            })) unless $e1 < $length;
 
         ## Arc between features
         ## Note: modify dimensions to allow for 2-pixel width of brush
-        my $arc_width = ($start_2 - $end_1) * $pix_per_bp;
+        ## and also cut curve off at edge of track
+        my $diameter    = ($start_2 - $end_1) * $pix_per_bp;
+        my $radius      = $diameter / 2;
+        my $start_point = 0; ## righthand end of arc
+        my $end_point   = 180; ### lefthand end of arc
+
+        if ($e1 < 0) {
+          my $cos = ($radius + $e1 * $pix_per_bp)/$radius;
+          $end_point -= $self->acos_in_degrees($cos);
+        }
+        elsif ($s2 > $length) {
+          my $cos = ($radius - (($s2 - $length) * $pix_per_bp))/$radius;
+          $start_point = $self->acos_in_degrees($cos);
+        }
+
         $self->unshift($self->Arc({
               x             => $start_2,
-              y             => ($arc_width / 2) + ($h / 2) + 2,
-              width         => $arc_width + 4,
-              start_point   => 0,
-              end_point     => 180,
+              y             => ($diameter / 2) + ($h / 2) + 2,
+              width         => $diameter + 4,
+              start_point   => $start_point,
+              end_point     => $end_point,
               colour        => $join_colour,
               filled        => 0,
               thickness     => 2,
@@ -789,7 +816,7 @@ sub render_interaction {
               colour       => $feature_colour,
               label_colour => $label_colour,
               absolutey    => 1,
-            }));
+            })) unless $s2 > $length;
 
       }
     }
