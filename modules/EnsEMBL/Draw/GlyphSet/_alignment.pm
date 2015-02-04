@@ -773,7 +773,7 @@ sub render_interaction {
               colour       => $feature_colour,
               label_colour => $label_colour,
               absolutey    => 1,
-            })) unless $e1 < $length;
+            })) unless $e1 < 0;
 
         ## Arc between features
         ## Note: modify dimensions to allow for 2-pixel width of brush
