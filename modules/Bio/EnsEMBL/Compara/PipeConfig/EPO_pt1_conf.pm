@@ -321,7 +321,8 @@ return [
   'java_options' => '-server -Xmx1000M',
    },
  -flow_into      => {
-		-1 => [ 'pecan_high_mem' ],
+		2 => [ 'pecan_high_mem' ],  # Pecan complained
+		-1 => [ 'pecan_high_mem' ],  # LSF killed because of MEMLIMIT
 		1 => [ 'gerp_constrained_element' ],
    },
  -hive_capacity => 50,
