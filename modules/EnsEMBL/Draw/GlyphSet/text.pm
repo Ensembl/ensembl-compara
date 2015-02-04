@@ -38,7 +38,7 @@ sub _init {
 
   my $text = $self->my_config('text');
   unless ($text)  {  $text =  $self->{'config'}->{'text'}; }
-  $self->push( Sanger::Graphics::Glyph::Text->new({
+  $self->push( EnsEMBL::Draw::Glyph::Text->new({
     'x'         => 1, 
     'y'         => 2,
     'height'    => $h,

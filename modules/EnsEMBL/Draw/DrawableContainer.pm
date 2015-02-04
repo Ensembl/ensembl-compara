@@ -274,7 +274,7 @@ sub new {
 
         if ($bgcolour_flag && $glyphset->_colour_background) {
           ## colour the area behind this strip
-          my $background = Sanger::Graphics::Glyph::Rect->new({
+          my $background = EnsEMBL::Draw::Glyph::Rect->new({
             x             => -$label_width - $padding - $margin * 3/2,
             y             => $gminy - $padding,
             z             => -100,
@@ -459,12 +459,3 @@ sub storage {
 }
 1;
 
-=head1 RELATED MODULES
-
-See also: Sanger::Graphics::GlyphSet Sanger::Graphics::Glyph
-
-=head1 AUTHOR - Roger Pettett
-
-Email - rmp@sanger.ac.uk
-
-=cut

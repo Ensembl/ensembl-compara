@@ -28,7 +28,7 @@ package EnsEMBL::Draw::Glyph::Triangle;
 
 use strict;
 
-use EnsEMBL::Draw::Glyph;
+use EnsEMBL::Draw::Glyph::Rect;
 
 use base qw(EnsEMBL::Draw::Glyph::Poly);
 
@@ -55,7 +55,7 @@ sub new {
     ($args->{'height'}, $args->{'width'}) = ($args->{'width'}, $args->{'height'}) if $direction =~ /^(left|right)$/;
     
     # Make an invisible rectangle to go on top of the triangle to make clicking for z-menus easier
-    $rectangle = EnsEMBL::Draw::Glyph->new({ %$args, %$rect, bordercolour => undef, colour => undef });
+    $rectangle = EnsEMBL::Draw::Glyph::Rect->new({ %$args, %$rect, bordercolour => undef, colour => undef });
   }
   
   $args->{'points'} = [ $x, $y, @$points ];
