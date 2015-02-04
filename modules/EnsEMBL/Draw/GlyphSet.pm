@@ -20,7 +20,7 @@ package EnsEMBL::Draw::GlyphSet;
 
 ### Base package for drawing a discreet section of a genomic image,
 ### such as a section of assembly, feature track, scalebar or track legend
-### Uses GD and the Sanger::Graphics::Glyph codebase
+### Uses GD and the EnsEMBL::Draw::Glyph codebase
 
 use strict;
 
@@ -29,19 +29,16 @@ use GD::Simple;
 use URI::Escape qw(uri_escape);
 use POSIX qw(floor ceil);
 
-use Sanger::Graphics::Glyph::Bezier;
-use Sanger::Graphics::Glyph::Circle;
-use Sanger::Graphics::Glyph::Composite;
-use Sanger::Graphics::Glyph::Diagnostic;
-use Sanger::Graphics::Glyph::Ellipse;
-use Sanger::Graphics::Glyph::Intron;
-use Sanger::Graphics::Glyph::Line;
-use Sanger::Graphics::Glyph::Poly;
-use Sanger::Graphics::Glyph::Triangle;
-use Sanger::Graphics::Glyph::Rect;
-use Sanger::Graphics::Glyph::Space;
-use Sanger::Graphics::Glyph::Sprite;
-use Sanger::Graphics::Glyph::Text;
+use EnsEMBL::Draw::Glyph::Circle;
+use EnsEMBL::Draw::Glyph::Composite;
+use EnsEMBL::Draw::Glyph::Intron;
+use EnsEMBL::Draw::Glyph::Line;
+use EnsEMBL::Draw::Glyph::Poly;
+use EnsEMBL::Draw::Glyph::Triangle;
+use EnsEMBL::Draw::Glyph::Rect;
+use EnsEMBL::Draw::Glyph::Space;
+use EnsEMBL::Draw::Glyph::Sprite;
+use EnsEMBL::Draw::Glyph::Text;
 
 use Bio::EnsEMBL::Registry;
 
@@ -118,19 +115,16 @@ sub tag                { return ();                                             
 sub label_overlay      { return undef;                                                                                                                           }
 
 ### Helper functions to wrap round Glyphs
-sub Bezier     { my $self = shift; return Sanger::Graphics::Glyph::Bezier->new(@_);     }
-sub Circle     { my $self = shift; return Sanger::Graphics::Glyph::Circle->new(@_);     }
-sub Composite  { my $self = shift; return Sanger::Graphics::Glyph::Composite->new(@_);  }
-sub Diagnostic { my $self = shift; return Sanger::Graphics::Glyph::Diagnostic->new(@_); }
-sub Ellipse    { my $self = shift; return Sanger::Graphics::Glyph::Ellipse->new(@_);    }
-sub Intron     { my $self = shift; return Sanger::Graphics::Glyph::Intron->new(@_);     }
-sub Line       { my $self = shift; return Sanger::Graphics::Glyph::Line->new(@_);       }
-sub Poly       { my $self = shift; return Sanger::Graphics::Glyph::Poly->new(@_);       }
-sub Rect       { my $self = shift; return Sanger::Graphics::Glyph::Rect->new(@_);       }
-sub Space      { my $self = shift; return Sanger::Graphics::Glyph::Space->new(@_);      }
-sub Sprite     { my $self = shift; return Sanger::Graphics::Glyph::Sprite->new(@_);     }
-sub Text       { my $self = shift; return Sanger::Graphics::Glyph::Text->new(@_);       }
-sub Triangle   { my $self = shift; return Sanger::Graphics::Glyph::Triangle->new(@_);   }
+sub Circle     { my $self = shift; return EnsEMBL::Draw::Glyph::Circle->new(@_);     }
+sub Composite  { my $self = shift; return EnsEMBL::Draw::Glyph::Composite->new(@_);  }
+sub Intron     { my $self = shift; return EnsEMBL::Draw::Glyph::Intron->new(@_);     }
+sub Line       { my $self = shift; return EnsEMBL::Draw::Glyph::Line->new(@_);       }
+sub Poly       { my $self = shift; return EnsEMBL::Draw::Glyph::Poly->new(@_);       }
+sub Rect       { my $self = shift; return EnsEMBL::Draw::Glyph::Rect->new(@_);       }
+sub Space      { my $self = shift; return EnsEMBL::Draw::Glyph::Space->new(@_);      }
+sub Sprite     { my $self = shift; return EnsEMBL::Draw::Glyph::Sprite->new(@_);     }
+sub Text       { my $self = shift; return EnsEMBL::Draw::Glyph::Text->new(@_);       }
+sub Triangle   { my $self = shift; return EnsEMBL::Draw::Glyph::Triangle->new(@_);   }
 
 sub render {
   my $self   = shift;
