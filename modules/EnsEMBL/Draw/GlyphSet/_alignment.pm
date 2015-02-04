@@ -676,7 +676,6 @@ sub render_interaction {
 
   my $h               = @_ ? shift : ($self->my_config('height') || 8);
      $h               = $self->{'extras'}{'height'} if $self->{'extras'} && $self->{'extras'}{'height'};
-  my $gap             = $h < 2 ? 1 : 2;
   my $strand          = $self->strand;
   my $strand_flag     = $self->my_config('strand');
   my $length          = $self->{'container'}->length;
@@ -692,6 +691,10 @@ sub render_interaction {
     $label_h = [ $self->get_text_width(0, 'X', '', ptsize => $fontsize, font => $fontname) ]->[3];
   }
 
+  ## Default colours for features (greyscale is exaggerated towards ends to compensate for limitations of human vision)
+  my @greyscale       = qw(cccccc aaaaaa 999999 888888 7777777 666666 555555 444444 333333 222222 000000);
+  my $ngreyscale      = scalar @greyscale;
+
   foreach my $feature_key (sort keys %features) {
     my ($config, @features);
 
@@ -699,22 +702,15 @@ sub render_interaction {
 
     next unless $features{$feature_key};
 
-    my $colour_key     = $self->colour_key($feature_key);
-    my $feature_colour = $self->my_colour($colour_key);
-    my $join_colour    = $self->my_colour($colour_key, 'join');
-    my $label_colour   = $feature_colour;
-    my $max_score      = $config->{'max_score'};
-    my $min_score      = $config->{'min_score'};
-    my $y_pos;
+    my $max_score       = $config->{'max_score'} || 1000;
+    my $min_score       = $config->{'min_score'} || 0;
+    my $greyscale_max   = $config && exists $config->{'greyscale_max'} && $config->{'greyscale_max'} > 0 ? $config->{'greyscale_max'} : 1000;
 
     my @features = @{$features{$feature_key}->[0]};
 
-    my %id;
+    my (%id, $y_pos);
     foreach (sort { $a->[0] <=> $b->[0] }  map [ $_->start_1, $_->end_1, $_->start_2, $_->end_2, $_ ], @features) {
       my ($s1, $e1, $s2, $e2, $f) = @$_;
-
-      $max_score = $f->score if $f->score > $max_score;
-      $min_score = $f->score if $f->score < $min_score;
 
       my $fgroup_name = $self->feature_group($f);
 
@@ -741,7 +737,18 @@ sub render_interaction {
 
         next if int($e2 * $pix_per_bp) <= int($x * $pix_per_bp);
 
-        my $feature_object  = ref $f ne 'HASH';
+        my $feature_colour;
+
+        if ($config->{'itemRgb'} =~ /on/i) {
+          $feature_colour = $f->external_data->{'item_colour'}[0];
+        }
+        else {
+          $feature_colour = $greyscale[min($ngreyscale - 1, int(($f->score * $ngreyscale) / $greyscale_max))];
+        }
+
+        my $join_colour    = $feature_colour;
+        my $label_colour   = $feature_colour;
+
         my $start_1         = max($s1, 1);
         my $start_2         = max($s2, 1);
         my $end_1           = min($e1, $length);
@@ -759,17 +766,17 @@ sub render_interaction {
             }));
 
         ## Arc between features
+        ## Note: modify dimensions to allow for 2-pixel width of brush
         my $arc_width = ($start_2 - $end_1) * $pix_per_bp;
-        my $thickness = int($f->score / $max_score * 10);
         $self->unshift($self->Arc({
               x             => $start_2,
-              y             => ($arc_width / 2) + $thickness + ($h / 2),
-              width         => $arc_width + $thickness,
+              y             => ($arc_width / 2) + ($h / 2) + 2,
+              width         => $arc_width + 4,
               start_point   => 0,
               end_point     => 180,
               colour        => $join_colour,
               filled        => 0,
-              thickness     => $thickness,
+              thickness     => 2,
               absolutewidth => 1,
             }));
 
