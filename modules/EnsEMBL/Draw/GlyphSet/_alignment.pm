@@ -794,7 +794,7 @@ sub render_interaction {
         }
 
         $self->unshift($self->Arc({
-              x             => $start_2 + 20,
+              x             => $start_2 + ($h * $h),
               y             => ($minor_axis / 2) + $h,
               width         => $major_axis + 4,
               height        => $minor_axis + 4,
