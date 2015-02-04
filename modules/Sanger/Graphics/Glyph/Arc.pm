@@ -64,10 +64,10 @@ sub transform {
 sub height {
   my ($self) = @_;
 
-  if($self->{'absolutewidth'}) {
-    return $self->{'width'};
+  if($self->{'absoluteheight'}) {
+    return $self->{'height'};
   } else {
-    return $self->{'width'} * ($self->{'pixperbp'} || 1);
+    return $self->{'height'} * ($self->{'pixperbp'} || 1);
   }
 }
 
