@@ -780,7 +780,7 @@ sub render_interaction {
         ## and also cut curve off at edge of track
         my $major_axis  = ($start_2 - $end_1) * $pix_per_bp;
         my $radius      = $major_axis / 2;
-        my $minor_axis  = $radius;
+        my $minor_axis  = $major_axis * 0.65;
         my $start_point = 0; ## righthand end of arc
         my $end_point   = 180; ### lefthand end of arc
 
@@ -794,10 +794,10 @@ sub render_interaction {
         }
 
         $self->unshift($self->Arc({
-              x             => $start_2,
-              y             => ($minor_axis / 2) + $h + 2,
+              x             => $start_2 + 20,
+              y             => ($minor_axis / 2) + $h,
               width         => $major_axis + 4,
-              height        => $minor_axis,
+              height        => $minor_axis + 4,
               start_point   => $start_point,
               end_point     => $end_point,
               colour        => $join_colour,
