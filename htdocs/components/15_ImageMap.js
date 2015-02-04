@@ -19,6 +19,7 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
     this.base(id, params);
     
     this.dragging         = false;
+    this.scrolling        = true;
     this.clicking         = true;
     this.dragCoords       = {};
     this.dragRegion       = {};
@@ -691,7 +692,7 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
   },
   
   dragStop: function (e) {
-    var diff, range;
+    var diff, range, match;
     
     if (this.mousemove) {
       this.elLk.drag.off('mousemove', this.mousemove);
@@ -699,21 +700,34 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
     }
     
     if (this.dragging !== false) {
-      diff = { 
-        x: e.pageX - this.dragCoords.page.x, 
-        y: e.pageY - this.dragCoords.page.y
-      };
-      
-      // Set a limit below which we consider the event to be a click rather than a drag
-      if (Math.abs(diff.x) < 3 && Math.abs(diff.y) < 3) {
-        this.clicking = true; // Chrome fires mousemove even when there has been no movement, so catch clicks here
-      } else {
-        range = this.vertical ? { r: diff.y, s: this.dragCoords.map.y } : { r: diff.x, s: this.dragCoords.map.x };
-        
-        this.makeZMenu(e, range);
-        
+      if (this.scrolling) {
+
+        diff  = Math.ceil(this.dragRegion.range.scale * (e.pageX - this.dragging.pageX) - 0.5);
+        match = Ensembl.coreParams.r.match(/(.+):(\d+)-(\d+)/);
+
         this.dragging = false;
         this.clicking = false;
+
+        Ensembl.updateLocation(match[1] + ':' + (parseInt(match[2]) - diff) + '-' + (parseInt(match[3]) - diff));
+
+      } else {
+
+        diff = {
+          x: e.pageX - this.dragCoords.page.x,
+          y: e.pageY - this.dragCoords.page.y
+        };
+        
+        // Set a limit below which we consider the event to be a click rather than a drag
+        if (Math.abs(diff.x) < 3 && Math.abs(diff.y) < 3) {
+          this.clicking = true; // Chrome fires mousemove even when there has been no movement, so catch clicks here
+        } else {
+          range = this.vertical ? { r: diff.y, s: this.dragCoords.map.y } : { r: diff.x, s: this.dragCoords.map.x };
+          
+          this.makeZMenu(e, range);
+          
+          this.dragging = false;
+          this.clicking = false;
+        }
       }
     }
   },
@@ -746,8 +760,10 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
     if (!this.vertical || y > this.dragRegion.b) {
       coords.b = this.dragRegion.b;
     }
-    
-    this.highlight(coords, 'rubberband', this.dragRegion.a.attrs.href.split('|')[3]);
+
+    if (!this.scrolling) {
+      this.highlight(coords, 'rubberband', this.dragRegion.a.attrs.href.split('|')[3]);
+    }
   },
   
   resize: function (width) {
