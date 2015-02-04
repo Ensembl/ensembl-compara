@@ -111,14 +111,6 @@ sub default_options {
 	'anchor_batch_size' => 10,
 	 # max number of sequences to allow in an anchor
 	'anc_seq_count_cut_off' => 15,
-	 # db to transfer the raw mappings to - unused at the moment 
-	'compara_mapping_db' => {
-		-user => 'ensadmin',
-		-host   => 'compara4',
-		-driver => 'mysql',
-		-port   => 3306,
-		-pass   => $self->o('password'),
-	},
 	'compara_master' => {
 		-user => 'ensro',
 		-port => 3306,
