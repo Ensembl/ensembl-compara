@@ -197,7 +197,7 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
     }
   },
   
-  getContent: function () {
+  getContent: function (url, el, params, newContent, attrs) {
     // If the panel contains an ajax loaded sub-panel, this function will be reached before ImageMap.init has been completed.
     // Make sure that this doesn't cause an error.
     if (this.imageConfig) {
@@ -210,7 +210,12 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
       this.removeShare();
     }
     
-    this.base.apply(this, arguments);
+    if (this.elLk.boundariesPanning) {
+      attrs = attrs || {};
+      attrs.background = true;
+    }
+
+    this.base.call(this, url, el, params, newContent, attrs);
     
     this.xhr.done(function (html) {
       if (!html) {
@@ -702,10 +707,7 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
     if (this.dragging !== false) {
       if (this.scrolling) {
 
-        if (this.elLk.boundariesPanning) {
-          this.elLk.boundariesPanning.parent().remove();
-          this.elLk.boundariesPanning = false;
-        }
+        this.elLk.boundariesPanning.parent().append('<div class="spinner">');
 
         diff  = Math.ceil(this.dragRegion.range.scale * (e.pageX - this.dragging.pageX) - 0.5);
         match = Ensembl.coreParams.r.match(/(.+):(\d+)-(\d+)/);
