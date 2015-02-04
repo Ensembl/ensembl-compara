@@ -762,9 +762,6 @@ sub render_interaction {
         my $end_1           = min($e1, $length - 1);
         my $end_2           = min($e2, $length);
 
-        warn ">>> FULL COORDS = ($s1 - $e1), ($s2, $e2)";
-        warn "... CONSTRAINED = ($start_1 - $end_1), ($start_2 - $end_2)";
-
         ## Unlike other tracks, we need to show partial features that are outside this slice
 
         ## First feature of pair
@@ -781,8 +778,9 @@ sub render_interaction {
         ## Arc between features
         ## Note: modify dimensions to allow for 2-pixel width of brush
         ## and also cut curve off at edge of track
-        my $diameter    = ($start_2 - $end_1) * $pix_per_bp;
-        my $radius      = $diameter / 2;
+        my $major_axis  = ($start_2 - $end_1) * $pix_per_bp;
+        my $radius      = $major_axis / 2;
+        my $minor_axis  = $radius;
         my $start_point = 0; ## righthand end of arc
         my $end_point   = 180; ### lefthand end of arc
 
@@ -797,8 +795,9 @@ sub render_interaction {
 
         $self->unshift($self->Arc({
               x             => $start_2,
-              y             => ($diameter / 2) + ($h / 2) + 2,
-              width         => $diameter + 4,
+              y             => ($minor_axis / 2) + $h + 2,
+              width         => $major_axis + 4,
+              height        => $minor_axis,
               start_point   => $start_point,
               end_point     => $end_point,
               colour        => $join_colour,
