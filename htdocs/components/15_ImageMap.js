@@ -702,6 +702,11 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
     if (this.dragging !== false) {
       if (this.scrolling) {
 
+        if (this.elLk.boundariesPanning) {
+          this.elLk.boundariesPanning.parent().remove();
+          this.elLk.boundariesPanning = false;
+        }
+
         diff  = Math.ceil(this.dragRegion.range.scale * (e.pageX - this.dragging.pageX) - 0.5);
         match = Ensembl.coreParams.r.match(/(.+):(\d+)-(\d+)/);
 
@@ -761,9 +766,29 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
       coords.b = this.dragRegion.b;
     }
 
-    if (!this.scrolling) {
+    if (this.scrolling) {
+      this.panImage(e);
+    } else {
       this.highlight(coords, 'rubberband', this.dragRegion.a.attrs.href.split('|')[3]);
     }
+  },
+
+  panImage: function(e) {
+    var diff  = e.pageX - this.dragging.pageX;
+    var right = 4;
+    var left  = this.labelRight;
+
+    if (!this.elLk.boundariesPanning) {
+
+      this.elLk.boundariesPanning = $('<div class="boundaries_panning">')
+        .appendTo(this.elLk.boundaries.parent())
+        .append(this.elLk.boundaries.clone())
+        .css({ left: left, right: right })
+        .find('ul').find('li').css('marginLeft', -1 * left)
+        .end();
+    }
+
+    this.elLk.boundariesPanning.css('left', diff + 'px');
   },
   
   resize: function (width) {

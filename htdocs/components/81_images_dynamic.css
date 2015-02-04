@@ -116,6 +116,10 @@ body.ie7 div.boundaries_wrapper ul.f li:first-child { margin-top: 0; }
 body.ie7 div.boundaries_wrapper ul li div           { position: absolute; left: 0; }
 body.mac div.boundaries_wrapper ul li div.handle    { cursor: ns-resize; }
 
+/* Image panning */
+div.boundaries_wrapper div.boundaries_panning     { position: absolute; top: 0; background-image: url(/i/no_bg.png); height: 100%; overflow: hidden; }
+div.boundaries_wrapper div.boundaries_panning ul  { overflow: hidden; }
+
 @media print {
   div.boundaries_wrapper { display: none; }
 }
