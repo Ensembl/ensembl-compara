@@ -50,7 +50,7 @@ package Bio::EnsEMBL::Compara::PipeConfig::AncestralMerge_conf;
 use strict;
 use warnings;
 
-use base ('Bio::EnsEMBL::Hive::PipeConfig::HiveGeneric_conf');   # instead of Compara tables we actually want Core tables
+use base ('Bio::EnsEMBL::Hive::PipeConfig::EnsemblGeneric_conf');
 
 
 sub default_options {
