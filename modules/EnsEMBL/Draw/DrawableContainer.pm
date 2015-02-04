@@ -26,7 +26,7 @@ package EnsEMBL::Draw::DrawableContainer;
 
 use strict;
 
-use Sanger::Graphics::Glyph::Rect;
+use EnsEMBL::Draw::Glyph::Rect;
 
 use base qw(Sanger::Graphics::Root);
 
