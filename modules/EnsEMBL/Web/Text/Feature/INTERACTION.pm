@@ -93,11 +93,11 @@ sub end {
 }
 
 sub coords {
-## If seeking a generic location, return first feature
+## Return coordinates of the entire location
   my ($self, $data) = @_; 
-  my @coords = $self->_split_coords($data->[0]);
-  $coords[0] =~ s/chr//;
-  return @coords; 
+  my @coords_1 = $self->_split_coords($data->[0]);
+  my @coords_2 = $self->_split_coords($data->[1]);
+  return ($coords_1[0], $coords_1[1], $coords_2[2]); 
 }
 
 sub _split_coords {
