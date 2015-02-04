@@ -392,6 +392,22 @@ return [
  -failed_job_tolerance => 10,
  -hive_capacity => 200,
  -batch_size    => 10,
+ -flow_into     => {
+     -1 => [ 'trim_anchor_align_himem' ],
+ }
+},
+
+{ # finds the best cut position within an anchor and trims the anchor positions down to 2 base pairs - it populates the anchor_align table with these trimmed anchors
+ -logic_name => 'trim_anchor_align_himem',
+ -module     => 'Bio::EnsEMBL::Compara::Production::EPOanchors::TrimAnchorAlign',
+ -parameters => {
+    'input_method_link_species_set_id' => '#gerp_ce_mlssid#',
+    'output_method_link_species_set_id' => '#overlaps_mlssid#',
+  },
+ -rc_name => 'mem7500',
+ -failed_job_tolerance => 10,
+ -hive_capacity => 200,
+ -batch_size    => 10,
 },
 
 { 
@@ -403,7 +419,7 @@ return [
  -flow_into => {
 	2 => [ 'load_anchor_sequence' ],	
   }, 
-  -wait_for => [ 'trim_anchor_align' ],
+  -wait_for => [ 'trim_anchor_align', 'trim_anchor_align_himem' ],
 },	
 
 { # using the anchor positions from 'trim_anchor_align' it populates the anchor_sequence table with anchor sequences between min_ce_length and max_anchor_seq_len (using the 2bp trim coord as a mid-point 
