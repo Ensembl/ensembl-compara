@@ -28,25 +28,27 @@ sub new {
 
   bless $self, $class;
 
-  ## Add drawing code colours from Ensembl "stylesheet"
-  my %ensembl_colours = qw(
-    CONTRAST_BORDER   background0
-    CONTRAST_BG       background3
+  if ($species_defs) {
+    ## Optionally, add drawing code colours from Ensembl "stylesheet"
+    my %ensembl_colours = qw(
+      CONTRAST_BORDER   background0
+      CONTRAST_BG       background3
 
-    IMAGE_BG1         background1
-    IMAGE_BG2         background2
+      IMAGE_BG1         background1
+      IMAGE_BG2         background2
 
-    CONTIGBLUE1       contigblue1
-    CONTIGBLUE2       contigblue2
+      CONTIGBLUE1       contigblue1
+      CONTIGBLUE2       contigblue2
 
-    HIGHLIGHT1        highlight1
-    HIGHLIGHT2        highlight2
-  );
+      HIGHLIGHT1        highlight1
+      HIGHLIGHT2        highlight2
+    );
 
-  while(my($k,$v) = each %{$species_defs->ENSEMBL_STYLE||{}} ) {
-    my $k2 = $ensembl_colours{ $k };
-    next unless $k2;
-    $self->{$k2} = $v;
+    while (my($k,$v) = each %{$species_defs->ENSEMBL_STYLE||{}} ) {
+      my $k2 = $ensembl_colours{ $k };
+      next unless $k2;
+      $self->{$k2} = $v;
+    }
   }
 
   return $self;
