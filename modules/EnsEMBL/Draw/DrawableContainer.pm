@@ -28,7 +28,7 @@ use strict;
 
 use EnsEMBL::Draw::Glyph::Rect;
 
-use base qw(Sanger::Graphics::Root);
+use base qw(EnsEMBL::Root);
 
 use JSON qw(to_json);
 
@@ -428,7 +428,7 @@ sub render {
   my ($self, $type) = @_;
   
   ## build the name/type of render object we want
-  my $renderer_type = qq(Sanger::Graphics::Renderer::$type);
+  my $renderer_type = qq(EnsEMBL::Draw::Renderer::$type);
   $self->dynamic_use( $renderer_type );
   ## big, shiny, rendering 'GO' button
   my $renderer = $renderer_type->new(
