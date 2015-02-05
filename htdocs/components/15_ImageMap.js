@@ -705,9 +705,9 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
     }
     
     if (this.dragging !== false) {
-      if (this.scrolling) {
+      if (this.elLk.boundariesPanning) {
 
-        diff = Math.ceil(this.dragRegion.range.scale * (e.pageX - this.dragging.pageX) - 0.5);
+        diff = Math.round(this.dragRegion.range.scale * (e.pageX - this.dragCoords.page.x));
 
         this.dragging = false;
         this.clicking = false;
@@ -721,7 +721,6 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
         match = Ensembl.coreParams.r.match(/(.+):(\d+)-(\d+)/);
 
         this.elLk.boundariesPanning.parent().append('<div class="spinner">');
-
 
         Ensembl.updateLocation(match[1] + ':' + (parseInt(match[2]) - diff) + '-' + (parseInt(match[3]) - diff));
 
@@ -784,7 +783,7 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
   },
 
   panImage: function(e) {
-    var diff  = e.pageX - this.dragging.pageX;
+    var diff  = e.pageX - this.dragCoords.page.x;
     var right = 4;
     var left  = this.labelRight;
     var scale = this.dragRegion.range.scale;
