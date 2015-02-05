@@ -633,6 +633,7 @@ sub get_text_width {
   my ($self, $width, $text, $short_text, %parameters) = @_;
      $text = 'X' if length $text == 1 && $parameters{'font'} =~ /Cour/i;               # Adjust the text for courier fonts
   my $key  = "$width--$text--$short_text--$parameters{'font'}--$parameters{'ptsize'}"; # Look in the cache for a previous entry 
+  #warn ">>> KEY $key";
   
   return @{$cache{$key}} if exists $cache{$key};
 
@@ -1195,28 +1196,6 @@ sub join_tag {
       'class' => $class
     };
   }
-}
-
-sub errorTrack {
-  my ($self, $message, $x, $y) = @_;
-  my $length = $self->{'config'}->image_width();
-  my $w    = $self->{'config'}->texthelper()->width('Tiny');
-  my $h    = $self->{'config'}->texthelper()->height('Tiny');
-  my $h2   = $self->{'config'}->texthelper()->height('Small');
-  $self->push( EnsEMBL::Draw::Glyph::Text->new({
-      'x'     => $x || int( ($length - $w * CORE::length($message))/2 ),
-    'y'     => $y || int( ($h2-$h)/2 ),
-      'height'  => $h2,
-    'font'    => 'Tiny',
-    'colour'  => "red",
-    'text'    => $message,
-    'absolutey' => 1,
-    'absolutex' => 1,
-    'absolutewidth' => 1,
-    'pixperbp'  => $self->{'config'}->{'transform'}->{'scalex'} ,
-  }) );
-
-  return;
 }
 
 sub commify { CORE::shift; local $_ = reverse $_[0]; s/(\d\d\d)(?=\d)(?!\d*\.)/$1,/g; return scalar reverse $_; }
