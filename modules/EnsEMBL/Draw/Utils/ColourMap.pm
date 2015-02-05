@@ -21,8 +21,13 @@ use strict;
 
 use EnsEMBL::Draw::Utils::NamedColours;
 
+### Store errors outside the object, which contains only a colour hash
+our $errors;
+
 sub new {
   my ($class, $species_defs) = @_;
+
+  $errors = {};
 
   my $self = EnsEMBL::Draw::Utils::NamedColours::named_colours;
 
@@ -70,15 +75,19 @@ sub hex_by_name {
 sub rgb_by_name {
   my ($self, $name, $flag) = @_;
   $name = lc($name);
-  if (!$self->{$name}) {
-    warn "Unknown colour name $name";
-    return $flag ? () : (0,0,0);
-  }
   my $hex = $self->{$name};
   $hex = $1 if !$hex && $name=~/^#?([0-9a-f]{6})$/;
   $hex = sprintf( '%02x%02x%02x', split /,/, $1 ) if ! $hex && $name =~ /(\d+,\d+,\d+)/;
+  unless( $hex ) {
+    #use Carp qw(cluck);
+    #cluck "Unknown colour name {$name}" unless $errors->{$name};
+    warn "Unknown colour name {$name}" unless $errors->{$name};
+    $errors->{$name} = 1;
+    return $flag ? () : (0,0,0);
+  }
   return $self->rgb_by_hex($hex) if $hex;
 }
+
 
 sub names {
     my ($self) = @_;
