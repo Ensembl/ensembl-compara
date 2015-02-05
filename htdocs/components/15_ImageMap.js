@@ -784,6 +784,7 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
     var diff  = e.pageX - this.dragging.pageX;
     var right = 4;
     var left  = this.labelRight;
+    var scale = this.dragRegion.range.scale;
 
     if (!this.elLk.boundariesPanning) {
 
@@ -795,7 +796,7 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
         .end();
     }
 
-    this.elLk.boundariesPanning.css('left', diff + 'px');
+    this.elLk.boundariesPanning.css('left', (scale <= 1 ? Math.round(diff * scale) / scale  :  diff ) + 'px');
   },
   
   resize: function (width) {
