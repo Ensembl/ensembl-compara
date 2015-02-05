@@ -707,10 +707,15 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
     if (this.dragging !== false) {
       if (this.scrolling) {
 
-        this.elLk.boundariesPanning.parent().append('<div class="spinner">');
+        diff = Math.ceil(this.dragRegion.range.scale * (e.pageX - this.dragging.pageX) - 0.5);
 
-        diff  = Math.ceil(this.dragRegion.range.scale * (e.pageX - this.dragging.pageX) - 0.5);
+        if (diff == 0) {
+          return;
+        }
+
         match = Ensembl.coreParams.r.match(/(.+):(\d+)-(\d+)/);
+
+        this.elLk.boundariesPanning.parent().append('<div class="spinner">');
 
         this.dragging = false;
         this.clicking = false;
