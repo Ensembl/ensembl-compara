@@ -709,7 +709,7 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
   },
   
   dragStop: function (e) {
-    var diff, range, match;
+    var diff, range;
     
     if (this.mousemove) {
       this.elLk.drag.off('mousemove', this.mousemove);
@@ -719,22 +719,18 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
     if (this.dragging !== false) {
       if (this.elLk.boundariesPanning) {
 
-        diff = Math.round(this.dragRegion.range.scale * (e.pageX - this.dragCoords.page.x));
-
         this.dragging = false;
         this.clicking = false;
 
-        if (diff == 0) {
+        if (this.locationDisplacement == 0) {
           this.elLk.boundariesPanning.parent().remove();
           this.elLk.boundariesPanning = false;
           return;
         }
 
-        match = Ensembl.coreParams.r.match(/(.+):(\d+)-(\d+)/);
-
         this.elLk.boundariesPanning.parent().append('<div class="spinner">');
 
-        Ensembl.updateLocation(match[1] + ':' + (parseInt(match[2]) - diff) + '-' + (parseInt(match[3]) - diff));
+        Ensembl.updateLocation(this.dragRegion.range.chr + ':' + (this.dragRegion.range.start - this.locationDisplacement) + '-' + (this.dragRegion.range.end - this.locationDisplacement));
 
       } else {
 
@@ -795,22 +791,20 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
   },
 
   panImage: function(e) {
-    var diff  = e.pageX - this.dragCoords.page.x;
-    var right = 4;
-    var left  = this.labelRight;
-    var scale = this.dragRegion.range.scale;
 
     if (!this.elLk.boundariesPanning) {
 
       this.elLk.boundariesPanning = $('<div class="boundaries_panning">')
         .appendTo(this.elLk.boundaries.parent())
         .append(this.elLk.boundaries.clone())
-        .css({ left: left, right: right })
-        .find('ul').find('li').css('marginLeft', -1 * left)
+        .css({ left: this.labelRight, right: 4 })
+        .find('ul').find('li').css('marginLeft', -1 * this.labelRight)
         .end();
     }
 
-    this.elLk.boundariesPanning.css('left', (scale <= 1 ? Math.round(diff * scale) / scale  :  diff ) + 'px');
+    this.locationDisplacement = Math.min(this.dragRegion.range.start - 1, Math.round((e.pageX - this.dragCoords.page.x) * this.dragRegion.range.scale));
+
+    this.elLk.boundariesPanning.css('left', this.locationDisplacement / this.dragRegion.range.scale + 'px');
   },
   
   resize: function (width) {
