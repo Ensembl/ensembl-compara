@@ -35,11 +35,16 @@ use List::Util qw(min max);
 
 use EnsEMBL::Web::Utils::RandomString qw(random_string);
 
-use EnsEMBL::Draw::Glyph;
 use EnsEMBL::Draw::Glyph::Circle;
 use EnsEMBL::Draw::Glyph::Composite;
+use EnsEMBL::Draw::Glyph::Intron;
+use EnsEMBL::Draw::Glyph::Line;
 use EnsEMBL::Draw::Glyph::Poly;
 use EnsEMBL::Draw::Glyph::Triangle;
+use EnsEMBL::Draw::Glyph::Rect;
+use EnsEMBL::Draw::Glyph::Space;
+use EnsEMBL::Draw::Glyph::Sprite;
+use EnsEMBL::Draw::Glyph::Text;
 
 use parent qw(EnsEMBL::Root);
 
@@ -633,31 +638,17 @@ sub scalex {
 
 ### Wrappers around low-level drawing code
 
-sub createGlyph { 
-  my $self = shift; 
-  return EnsEMBL::Draw::Glyph->new(@_);     
-}
-
-sub createCircle { 
-  my $self = shift; 
-  return EnsEMBL::Draw::Glyph::Circle->new(@_);     
-}
-
-sub createComposite { 
-  my $self = shift; 
-  return EnsEMBL::Draw::Glyph::Composite->new(@_);     
-}
-
-sub createPoly { 
-  my $self = shift; 
-  return EnsEMBL::Draw::Glyph::Poly->new(@_);     
-}
-
-sub createTriangle { 
-  my $self = shift; 
-  return EnsEMBL::Draw::Glyph::Triangle->new(@_);     
-}
-
+sub Circle     { my $self = shift; return EnsEMBL::Draw::Glyph::Circle->new(@_);     }
+sub Composite  { my $self = shift; return EnsEMBL::Draw::Glyph::Composite->new(@_);  }
+sub Intron     { my $self = shift; return EnsEMBL::Draw::Glyph::Intron->new(@_);     }
+sub Line       { my $self = shift; return EnsEMBL::Draw::Glyph::Line->new(@_);       }
+sub Poly       { my $self = shift; return EnsEMBL::Draw::Glyph::Poly->new(@_);       }
+sub Rect       { my $self = shift; return EnsEMBL::Draw::Glyph::Rect->new(@_);       }
+sub Space      { my $self = shift; return EnsEMBL::Draw::Glyph::Space->new(@_);      }
+sub Sprite     { my $self = shift; return EnsEMBL::Draw::Glyph::Sprite->new(@_);     }
+sub Text       { my $self = shift; return EnsEMBL::Draw::Glyph::Text->new(@_);       }
+sub Triangle   { my $self = shift; return EnsEMBL::Draw::Glyph::Triangle->new(@_);   }
+ 
 #### Drawing-related code from GlyphSet ####
 
 sub get_text_width {
@@ -782,7 +773,6 @@ sub get_gd {
 
   return $self->cache($font_key, $gd); # Update font cache
 }
-
 
 1;
 

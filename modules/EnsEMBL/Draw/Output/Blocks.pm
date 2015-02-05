@@ -121,7 +121,7 @@ sub render {
     my $feature_colour  = $f->{'colour'} || $self->track_config('colour');
     my $label_colour    = $feature_colour;
 
-    $self->add_glyphs($self->createGlyph({
+    $self->add_glyphs($self->Rect({
             x            => $start - 1,
             y            => $strand_y,
             width        => $end - $start + 1,
@@ -138,7 +138,7 @@ sub render {
   if ($self->{'show_labels'}) {
     my $start = $self->{'container'}->start;
     ## text label
-    $self->add_glyphs($self->create_Glyph({
+    $self->add_glyphs($self->Text({
           font      => $fontname,
           colour    => $label_colour,
           height    => $fontsize,
@@ -159,7 +159,7 @@ sub render {
 
   if ($self->{'config'}->get_option('opt_highlight_feature') != 0 && exists $highlights{$i}) {
     ## Add highlight rectangle
-    $self->unshift($self->create_Glyph({
+    $self->unshift($self->Rect({
           x         => $position->{'x'} - 1 / $pix_per_bp,
           y         => $position->{'y'} - 1,
           width     => $position->{'width'} + 2 / $pix_per_bp,
@@ -178,7 +178,7 @@ sub render {
     my $y = $track_height + $fontsize * 2 + 10;
     my $href = $self->_url({'action' => 'ExpandTrack', 'goto' => $self->{'config'}->hub->action, 'count' => $total, 'default' => $default_depth});
     ## Print message
-    $self->add_glyphs($self->create_Glyph({
+    $self->add_glyphs($self->Text({
           font      => $fontname,
           colour    => 'black',
           height    => $fontsize,
@@ -193,7 +193,7 @@ sub render {
           href      => $href,
         }));
     ## Space
-    $self->add_glyphs($self->create_Glyph({
+    $self->add_glyphs($self->Space({
             x         => 0,
             y         => $y + 5,
             width     => 100,

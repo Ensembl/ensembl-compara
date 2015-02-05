@@ -73,11 +73,11 @@ sub render {
     $composite = $self;
   } 
   else {
-    $composite = $self->create_Composite({
-                                          %$position,
-                                          href  => '',
-                                          class => 'group',
-                                        });
+    $composite = $self->Composite({
+                                    %$position,
+                                    href  => '',
+                                    class => 'group',
+                                  });
 
   }
 
@@ -94,7 +94,7 @@ sub render {
 
     if ($cigar && ($self->want_cigar || $cigar =~ /$cigar_regexp/)) {
       ## Space
-      $composite->push($self->create_Glyph({
+      $composite->push($self->Space({
             x         => $start - 1,
             y         => 0,
             width     => $end - $start + 1,
@@ -115,7 +115,7 @@ sub render {
     } 
     else {
       ## Simple rectangle
-      $composite->push($self->create_Glyph({
+      $composite->push($self->Rect({
             x            => $start - 1,
             y            => $strand_y,
             width        => $end - $start + 1,
@@ -133,7 +133,7 @@ sub render {
     if ($h > 1) {
       $composite->bordercolour($feature_colour) if $join;
     } else {
-      $composite->unshift($self->create_Glyph({
+      $composite->unshift($self->Rect({
             x         => $composite->{'x'},
             y         => $composite->{'y'},
             width     => $composite->{'width'},
@@ -150,7 +150,7 @@ sub render {
   if ($self->{'show_labels'}) {
     my $start = $self->{'container'}->start;
     ## text label
-    $self->push($self->create_Glyph({
+    $self->push($self->Text({
           font      => $fontname,
           colour    => $label_colour,
           height    => $fontsize,
@@ -171,7 +171,7 @@ sub render {
 
   if ($self->{'config'}->get_option('opt_highlight_feature') != 0 && exists $highlights{$i}) {
     ## Add highlight rectangle
-    $self->unshift($self->create_Glyph({
+    $self->unshift($self->Rect({
           x         => $position->{'x'} - 1 / $pix_per_bp,
           y         => $position->{'y'} - 1,
           width     => $position->{'width'} + 2 / $pix_per_bp,
@@ -190,7 +190,7 @@ sub render {
     my $y = $track_height + $fontsize * 2 + 10;
     my $href = $self->_url({'action' => 'ExpandTrack', 'goto' => $self->{'config'}->hub->action, 'count' => $total, 'default' => $default_depth});
     ## Print message
-    $self->push($self->create_Glyph({
+    $self->push($self->Text({
           font      => $fontname,
           colour    => 'black',
           height    => $fontsize,
@@ -205,7 +205,7 @@ sub render {
           href      => $href,
         }));
     ## Space
-    $self->push($self->create_Glyph({
+    $self->push($self->Space({
             x         => 0,
             y         => $y + 5,
             width     => 100,
