@@ -22,7 +22,7 @@ use strict;
 
 use Digest::MD5 qw(md5_hex);
 
-use Sanger::Graphics::ColourMap;
+use EnsEMBL::Draw::Utils::ColourMap;
 
 use base qw(EnsEMBL::Web::Component::Shared);
 
@@ -153,7 +153,7 @@ sub configure_UserData_key {
     my $label  = $_->get('caption');
     
     if ($colour =~ /,/) {
-      $colour = '#' . Sanger::Graphics::ColourMap::hex_by_rgb(undef, [ split ',', $colour ]); ## Convert RGB colours to hex, because rgb attributes getting stripped out of HTML
+      $colour = '#' . EnsEMBL::Draw::Utils::ColourMap::hex_by_rgb(undef, [ split ',', $colour ]); ## Convert RGB colours to hex, because rgb attributes getting stripped out of HTML
     } elsif ($colour =~ /^[0-9a-f]{6}$/i) { 
       $colour = "#$colour"; ## Hex with no initial hash symbol
     }

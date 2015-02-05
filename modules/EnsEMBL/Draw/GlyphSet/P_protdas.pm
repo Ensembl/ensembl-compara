@@ -23,7 +23,7 @@ package EnsEMBL::Draw::GlyphSet::P_protdas;
 
 use strict;
 
-use Sanger::Graphics::ColourMap;
+use EnsEMBL::Draw::Utils::ColourMap;
 use POSIX; #floor
 
 use base qw(EnsEMBL::Draw::GlyphSet);
@@ -354,7 +354,7 @@ sub render_colourgradient {
 
   my $score_range = $max_value - $min_value;
   my $score_per_grade =  ($max_score - $min_score)/ $configuration->{'fg_grades'};
-  my $cm = Sanger::Graphics::ColourMap->new;
+  my $cm = EnsEMBL::Draw::Utils::ColourMap->new;
   my @cg = $cm->build_linear_gradient($configuration->{'fg_grades'}, ['yellow', 'green', 'blue']);
   my $style;
  

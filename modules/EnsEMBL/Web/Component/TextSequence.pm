@@ -26,7 +26,7 @@ use EnsEMBL::Web::Fake;
 use EnsEMBL::Web::Utils::RandomString qw(random_string);
 use HTML::Entities        qw(encode_entities);
 
-use Sanger::Graphics::ColourMap;
+use EnsEMBL::Draw::Utils::ColourMap;
 
 use base qw(EnsEMBL::Web::Component::Shared);
 
@@ -1265,7 +1265,7 @@ sub class_to_style {
   return $self->{'class_to_style'};
 }
 
-my $cm = Sanger::Graphics::ColourMap->new();
+my $cm = EnsEMBL::Draw::Utils::ColourMap->new();
 
 sub col_to_hex {
   my ($col) = @_;

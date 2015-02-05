@@ -24,7 +24,7 @@ use JSON qw(from_json);
 use Scalar::Util qw(looks_like_number);
 use HTML::Entities qw(encode_entities);
 
-use Sanger::Graphics::ColourMap;
+use EnsEMBL::Draw::Utils::ColourMap;
 
 use base qw(EnsEMBL::Web::Root);
 
@@ -364,7 +364,7 @@ sub process {
   my (@head, @body, $colourmap, @gradient);
   
   if ($heatmap) {
-    $colourmap = Sanger::Graphics::ColourMap->new;
+    $colourmap = EnsEMBL::Draw::Utils::ColourMap->new;
     @gradient  = $colourmap->build_linear_gradient(@{$heatmap->{'settings'}});
   } 
   

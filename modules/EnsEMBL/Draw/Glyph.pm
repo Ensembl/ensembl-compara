@@ -25,7 +25,7 @@ use strict;
 use warnings;
 no warnings qw(uninitialized);
 
-use EnsEMBL::Draw::ColourMap;
+use EnsEMBL::Draw::Utils::ColourMap;
 use vars qw($AUTOLOAD);
 
 #########
