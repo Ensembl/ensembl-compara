@@ -140,6 +140,8 @@ div.image_toolbar a.resize        { background-image: url(/i/16/rev/image_resize
 div.image_toolbar a.share         { background-image: url(/i/16/rev/share.png);         }
 div.image_toolbar a.order-reset   { background-image: url(/i/16/rev/order-reset.png);   }
 div.image_toolbar a.config-reset  { background-image: url(/i/16/rev/setting-reset.png); }
+div.image_toolbar div.scroll-switch         { float: right; }
+div.image_toolbar div.scroll-switch select  { margin: 0 4px; }
 
 /* Image exporting */
 

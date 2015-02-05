@@ -19,7 +19,7 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
     this.base(id, params);
     
     this.dragging         = false;
-    this.scrolling        = true;
+    this.scrolling        = false;
     this.clicking         = true;
     this.dragCoords       = {};
     this.dragRegion       = {};
@@ -128,6 +128,18 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
       
       return false;
     });
+
+    if (this.elLk.boundaries.length && this.draggables.length) {
+      this.scrolling = Ensembl.cookie.get('ENSEMBL_REGION_PAN') === '1';
+      this.elLk.toolbars.append('<div class="scroll-switch"><label>Drag/Select:<select><option>Select</option><option>Drag</option></select></label>').find('select').on('change', function() {
+        var flag = $(this).find('option:selected').html() == 'Drag';
+        if (flag !== panel.scrolling) {
+          panel.scrolling = flag;
+          Ensembl.cookie.set('ENSEMBL_REGION_PAN', flag ? '1' : '0');
+        }
+      }).find('option:contains("' + (panel.scrolling ? 'Drag' : 'Select') + '")').prop('selected', true);
+    }
+
   },
 
   loadJSON: function(str) {
