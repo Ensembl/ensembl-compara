@@ -20,6 +20,7 @@ package EnsEMBL::Draw::Renderer::gif;
 
 use strict;
 use warnings;
+no warnings "uninitialized";
 
 use GD;
 
