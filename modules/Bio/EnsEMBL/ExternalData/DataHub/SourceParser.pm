@@ -37,6 +37,8 @@ package Bio::EnsEMBL::ExternalData::DataHub::SourceParser;
 
 use strict;
 
+use Digest::MD5 qw(md5_hex);
+
 use EnsEMBL::Web::File::Utils::URL qw(read_file);
 use EnsEMBL::Web::Tree;
 
@@ -63,6 +65,18 @@ sub new {
   return $self;
 }
 
+sub web_hub {
+## Gets EnsEMBL::Web::Hub (not to be confused with track hub!)
+  my $self = shift;
+  return $self->{'hub'};
+}
+
+sub url {
+  my ($self, $url) = @_;
+  $self->{'url'} = $url if $url;
+  return $self->{'url'};
+}
+
 =head2 get_hub_info
 
   Arg [1]    : URL of datahub
@@ -78,6 +92,18 @@ sub new {
 
 sub get_hub_info {
   my ($self, $url, $assembly_lookup) = @_;
+
+  $self->url($url);
+
+  my $cache = $self->web_hub ? $self->web_hub->cache : undef;
+  my $cache_key = 'trackhub_'.md5_hex($url);
+  my $hub_info;
+
+  if ($cache) {
+    $hub_info = $cache->get($cache_key);
+    return $hub_info if $hub_info;
+  }
+
   my @split_url = split '/', $url;
   my $hub_file;
   
@@ -100,7 +126,7 @@ sub get_hub_info {
     $content = $response->{'content'};
   }
   my %hub_details;
-  
+
   ## Get file name for file with genome info
   foreach (split /\n/, $content) {
     my @line = split /\s/, $_, 2;
@@ -182,7 +208,16 @@ sub get_hub_info {
     push @errors, "This track hub does not contain any genomes compatible with this website";
   }
 
-  return scalar @errors ? { error => \@errors } : { details => \%hub_details, genomes => \%genome_info };
+  if (scalar @errors) {
+    return { error => \@errors };
+  }
+  else {
+    my $hub_info = { details => \%hub_details, genomes => \%genome_info };
+    if ($cache) {
+      $cache->set($cache_key, $hub_info, 60*60*24*7, 'TRACKHUBS');
+    }
+    return $hub_info;
+  }
 }
 
 =head2 parse
@@ -201,12 +236,29 @@ sub get_hub_info {
 
 sub parse {
   my ($self, $files) = @_;
-  
-  if (!$files && !scalar @$files) {
-    warn 'No datahub URL specified!';
+ 
+  ## Get the hub URL and check the cache 
+  my $url = shift || $self->url;
+  if (!$url) {
+    warn 'No URL specified!';
     return;
   }
-  
+
+  my $cache = $self->web_hub ? $self->web_hub->cache : undef;
+  my $cache_key = 'trackhub_'.md5_hex($url);
+  my $hub_info;
+
+  if ($cache) {
+    $hub_info = $cache->get($cache_key);
+    return $hub_info->{'tree'} if $hub_info;
+  }
+
+  ## Nothing cached, so parse the files
+  if (!$files && !scalar @$files) {
+    warn 'No datahub files specified!';
+    return;
+  }
+ 
   my $tree = EnsEMBL::Web::Tree->new;
   my $response;
   
@@ -221,8 +273,16 @@ sub parse {
     }
   }
   
+  ## Update cache
+  if ($hub_info) {
+    $hub_info->{'tree'} = $tree;
+    $cache->set($cache_key, $hub_info, 60*60*24*7, 'TRACKHUBS');
+  }
+
   return $tree;
 }
+
+####### HELPER METHODS ######
 
 sub parse_file_content {
   my ($self, $tree, $content, $file) = @_;
