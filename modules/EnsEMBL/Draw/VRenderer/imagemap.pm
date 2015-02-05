@@ -19,7 +19,7 @@ limitations under the License.
 package EnsEMBL::Draw::VRenderer::imagemap;
 
 ### Renders vertical ideograms as an imagemap
-### Modeled on Sanger::Graphics::Renderer::imagemap
+### Modeled on EnsEMBL::Draw::Renderer::imagemap
 
 use strict;
 

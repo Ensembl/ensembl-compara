@@ -19,7 +19,7 @@ limitations under the License.
 package EnsEMBL::Draw::VRenderer::gif;
 
 ### Renders vertical ideograms in GIF format using GD::Image
-### Modeled on Sanger::Graphics::Renderer::gif
+### Modeled on EnsEMBL::Draw::Renderer::gif
 
 use strict;
 use GD;

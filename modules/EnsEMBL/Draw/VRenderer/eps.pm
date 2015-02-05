@@ -19,7 +19,7 @@ limitations under the License.
 package EnsEMBL::Draw::VRenderer::eps;
 
 ### Renders vertical ideograms in EPS format
-### Modeled on Sanger::Graphics::Renderer::eps
+### Modeled on EnsEMBL::Draw::Renderer::eps
 
 use strict;
 
@@ -38,9 +38,7 @@ sub init_canvas {
 
   my $canvas = qq(%!PS-Adobe-3.0 EPSF-3.0
 %%BoundingBox: 0 0 $im_width $im_height
-% Created by Sanger::Graphics::Renderer::eps
-%  Contact http://www.ensembl.org/
-%  Author: js5\@sanger.ac.uk
+% Created by EnsEMBL::Draw::VRenderer::eps
 %%%%%%%%%
 % set default font
 %

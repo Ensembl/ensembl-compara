@@ -708,7 +708,7 @@ sub get_text_width {
   return @res;
 }
 
-#### Bring in some basic drawing functionality from Sanger::Graphics
+#### Bring in some basic drawing functionality
 
 sub bump_row {
 ### Bumping code. 
