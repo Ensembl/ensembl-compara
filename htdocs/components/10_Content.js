@@ -24,14 +24,14 @@ Ensembl.Panel.Content = Ensembl.Panel.extend({
       ajaxLoad:         $('.ajax', this.el),
       hideHints:        $('.hint', this.el),
       glossary:         $('.glossary_mouseover', this.el),
-      dataTable:        $('table.data_table', this.el),
       helpTips:         $('._ht', this.el),
       wrapping:         $('table.cellwrap_inside, table.heightwrap_inside', this.el),
       selectToToggle:   $('._stt', this.el),
       selectAll:        $('input._selectall', this.el),
       filterable:       $('._fd', this.el),
       speciesDropdown:  $('._sdd', this.el),
-      toggleButtons:    $('.tool_buttons a.togglebutton', this.el)
+      toggleButtons:    $('.tool_buttons a.togglebutton', this.el),
+      dataTable:        $('table.data_table', this.el)
     };
     
     if (this.el.hasClass('ajax')) {
