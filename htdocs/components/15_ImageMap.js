@@ -709,7 +709,12 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
 
         diff = Math.ceil(this.dragRegion.range.scale * (e.pageX - this.dragging.pageX) - 0.5);
 
+        this.dragging = false;
+        this.clicking = false;
+
         if (diff == 0) {
+          this.elLk.boundariesPanning.parent().remove();
+          this.elLk.boundariesPanning = false;
           return;
         }
 
@@ -717,8 +722,6 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
 
         this.elLk.boundariesPanning.parent().append('<div class="spinner">');
 
-        this.dragging = false;
-        this.clicking = false;
 
         Ensembl.updateLocation(match[1] + ':' + (parseInt(match[2]) - diff) + '-' + (parseInt(match[3]) - diff));
 
