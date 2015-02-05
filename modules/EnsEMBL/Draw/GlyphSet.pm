@@ -27,6 +27,7 @@ use strict;
 use GD;
 use GD::Simple;
 use URI::Escape qw(uri_escape);
+use List::Util qw(max min);
 use POSIX qw(floor ceil);
 
 use EnsEMBL::Draw::Glyph::Circle;
@@ -44,7 +45,7 @@ use Bio::EnsEMBL::Registry;
 
 use EnsEMBL::Web::Utils::RandomString qw(random_string);
 
-use base qw(Sanger::Graphics::GlyphSet);
+use parent qw(EnsEMBL::Root);
 
 our %cache;
 
@@ -88,21 +89,16 @@ sub new {
   return $self;
 }
 
+########## read-only getters
 sub species            { return $_[0]->{'config'}{'species'} || $_[0]->{'container'}{'web_species'};                                                             }
 sub species_defs       { return $_[0]->{'config'}->species_defs;                                                                                                 }
 sub get_parameter      { return $_[0]->{'config'}->get_parameter($_[1]);                                                                                         }
 sub core               { return $_[0]->{'config'}->hub->core_params->{$_[1]};                                                                                    }
 sub scalex             { return $_[0]->{'config'}->transform->{'scalex'};                                                                                        }
-sub image_width        { return $_[0]->{'config'}->get_parameter('panel_width') || $_[0]->{'config'}->image_width;                                               }
-sub timer_push         { return shift->{'config'}->species_defs->timer->push(shift, shift || 3, shift || 'draw');                                                }
-sub dbadaptor          { shift; return Bio::EnsEMBL::Registry->get_DBAdaptor(@_);                                                                                }
-sub error              { my $self = shift; $self->{'error'} = @_ if @_; return $self->{'error'};                                                                 }
 sub error_track_name   { return $_[0]->my_config('caption');                                                                                                     }
 sub my_label           { return $_[0]->my_config('caption');                                                                                                     }
 sub my_label_caption   { return $_[0]->my_config('labelcaption');                                                                                                }
 sub depth              { return $_[0]->my_config('depth');                                                                                                       }
-sub get_colour         { my $self = shift; return $self->my_colour($self->colour_key(shift), @_);                                                                }
-sub _url               { my $self = shift; return $self->{'config'}->hub->url('ZMenu', { %{$_[0]}, config => $self->{'config'}{'type'}, track => $self->type }); }
 sub my_config          { return $_[0]->{'my_config'}->get($_[1]);                                                                                                }
 sub type               { return $_[0]->{'my_config'}{'id'};                                                                                                      }
 sub _pos               { return $_[0]->{'config'}{'_pos'}++;                                                                                                     }
@@ -113,6 +109,122 @@ sub title              { return '';                                             
 sub href               { return undef;                                                                                                                           }
 sub tag                { return ();                                                                                                                              }
 sub label_overlay      { return undef;                                                                                                                           }
+sub get_colour         { my $self = shift; return $self->my_colour($self->colour_key(shift), @_);                                                                }
+sub _url               { my $self = shift; return $self->{'config'}->hub->url('ZMenu', { %{$_[0]}, config => $self->{'config'}{'type'}, track => $self->type }); }
+
+sub image_width        { return $_[0]->{'config'}->get_parameter('panel_width') || $_[0]->{'config'}->image_width;                                               }
+sub timer_push         { return shift->{'config'}->species_defs->timer->push(shift, shift || 3, shift || 'draw');                                                }
+sub dbadaptor          { shift; return Bio::EnsEMBL::Registry->get_DBAdaptor(@_);                                                                                }
+sub x {
+  my ($self) = @_;
+  return $self->{'x'};
+}
+
+sub y {
+  my ($self) = @_;
+  return $self->{'y'};
+}
+
+sub highlights {
+  my ($self) = @_;
+  return defined $self->{'highlights'} ? @{$self->{'highlights'}} : ();
+}
+
+########## read-write get/setters...
+
+sub error              { my $self = shift; $self->{'error'} = @_ if @_; return $self->{'error'};                                                                 }
+sub minx {
+  my ($self, $minx) = @_;
+  $self->{'minx'} = $minx if(defined $minx);
+  return $self->{'minx'};
+}
+
+sub miny {
+  my ($self, $miny) = @_;
+  $self->{'miny'} = $miny if(defined $miny);
+  return $self->{'miny'};
+}
+
+sub maxx {
+  my ($self, $maxx) = @_;
+  $self->{'maxx'} = $maxx if(defined $maxx);
+  return $self->{'maxx'};
+}
+
+sub maxy {
+  my ($self, $maxy) = @_;
+  $self->{'maxy'} = $maxy if(defined $maxy);
+  return $self->{'maxy'};
+};
+
+sub strand {
+  my ($self, $strand) = @_;
+  $self->{'strand'} = $strand if(defined $strand);
+  return $self->{'strand'};
+}
+
+############# GLYPHS ######################
+
+sub glyphs {
+### return our list of glyphs
+  my ($self) = @_;
+  return @{$self->{'glyphs'}};
+}
+
+sub push {
+### push either a Glyph or a GlyphSet on to our list
+  my $self = CORE::shift;
+  my ($gx, $gx1, $gy, $gy1);
+
+  foreach my $Glyph (@_) {
+      CORE::push @{$self->{'glyphs'}}, $Glyph;
+
+      $gx  =     $Glyph->x() || 0;
+      $gx1 = $gx + ($Glyph->width() || 0);
+    $gy  =     $Glyph->y() || 0;
+      $gy1 = $gy + ($Glyph->height() || 0);
+
+  ######### track max and min dimensions
+    $self->minx($gx)  unless defined $self->minx && $self->minx < $gx;
+    $self->maxx($gx1) unless defined $self->maxx && $self->maxx > $gx1;
+    $self->miny($gy)  unless defined $self->miny && $self->miny < $gy;
+    $self->maxy($gy1) unless defined $self->maxy && $self->maxy > $gy1;
+  }
+}
+
+sub unshift {
+### unshift a Glyph or GlyphSet onto our list
+  my $self = CORE::shift;
+
+  my ($gx, $gx1, $gy, $gy1);
+
+  foreach my $Glyph (reverse @_) {
+    CORE::unshift @{$self->{'glyphs'}}, $Glyph;
+
+        $gx  =     $Glyph->x();
+         $gx1 = $gx + $Glyph->width();
+    $gy  =     $Glyph->y();
+         $gy1 = $gy + $Glyph->height();
+
+    $self->minx($gx)  unless defined $self->minx && $self->minx < $gx;
+    $self->maxx($gx1) unless defined $self->maxx && $self->maxx > $gx1;
+    $self->miny($gy)  unless defined $self->miny && $self->miny < $gy;
+    $self->maxy($gy1) unless defined $self->maxy && $self->maxy > $gy1;
+  }
+}
+
+sub pop {
+### pop a Glyph or GlyphSet off of our list
+  my ($self) = @_;
+  return CORE::pop @{$self->{'glyphs'}};
+}
+
+sub shift {
+### shift a Glyph or GlyphSet off of our list
+  my ($self) = @_;
+  return CORE::shift @{$self->{'glyphs'}};
+}
+
 
 ### Helper functions to wrap round Glyphs
 sub Circle     { my $self = shift; return EnsEMBL::Draw::Glyph::Circle->new(@_);     }
@@ -125,6 +237,48 @@ sub Space      { my $self = shift; return EnsEMBL::Draw::Glyph::Space->new(@_); 
 sub Sprite     { my $self = shift; return EnsEMBL::Draw::Glyph::Sprite->new(@_);     }
 sub Text       { my $self = shift; return EnsEMBL::Draw::Glyph::Text->new(@_);       }
 sub Triangle   { my $self = shift; return EnsEMBL::Draw::Glyph::Triangle->new(@_);   }
+
+sub _init {
+### _init creates masses of Glyphs from a data source.
+### It should executes bumping and globbing on the fly and also
+### keep track of x,y,width,height as it goes.
+  my ($self) = @_;
+  print STDERR qq($self unimplemented\n);
+}
+
+sub bumped {
+  my ($self, $val) = @_;
+  $self->{'bumped'} = $val if(defined $val);
+  return $self->{'bumped'};
+}
+
+## additional derived functions
+
+sub height {
+  my ($self) = @_;
+  return int(abs($self->{'maxy'}-$self->{'miny'}) + 0.5);
+}
+
+sub width {
+  my ($self) = @_;
+  return abs($self->{'maxx'}-$self->{'minx'});
+}
+
+sub length {
+  my ($self) = @_;
+  return scalar @{$self->{'glyphs'}};
+}
+
+sub transform {
+  my ($self) = @_;
+  my $T = $self->{'config'}->{'transform'};
+  foreach( @{$self->{'glyphs'}} ) {
+    $_->transform($T);
+  }
+}
+
+
+############### GENERIC RENDERING ####################
 
 sub render {
   my $self   = shift;
@@ -208,6 +362,39 @@ sub _render_text {
   
   return $header . join ("\t", @results) . "\r\n";
 }
+
+################### LABELS ##########################
+
+sub label {
+  my ($self, $val) = @_;
+  $self->{'label'} = $val if(defined $val);
+  return $self->{'label'};
+}
+
+sub label_img {
+  my ($self, $val) = @_;
+  $self->{'label_img'} = $val if(defined $val);
+  return $self->{'label_img'};
+}
+
+sub _label_glyphs {
+  my ($self) = @_;
+
+  my $label = $self->label;
+  return [] unless $label;
+  my $glyphs = [$label];
+  if($label->can('glyphs')) {
+    $glyphs = [ $self->{'label'}->glyphs ];
+  }
+  return $glyphs;
+}
+
+sub label_text {
+  my ($self) = @_;
+
+  return join(' ',map { $_->{'text'} } @{$self->_label_glyphs});
+}
+
 
 sub init_label {
   my $self = shift;
@@ -300,6 +487,118 @@ sub init_label {
         alt           => '',
     }));
   }
+}
+
+sub _split_label {
+# Text wrapping is a job for the human eye. We do the best we can:
+# wrap on word boundaries but don't have <6 trailing characters.
+  my ($self,$text,$width,$font,$ptsize,$chop) = @_;
+
+  for (1..$chop) {
+    $text =~ s/.\t</\t</;
+    $text =~ s/\t>./\t>/;
+  }
+  $text =~ s/\t[<>]//;
+  my $max_rows = $self->max_label_rows;
+  my @words = split(/(?<=[ \-\._])/,$text);
+  while(@words > 1 and length($words[-1]) < 6) {
+    my $tail = pop @words;
+    $words[-1] .= $tail;
+  }
+  my @split;
+  my $line_so_far = '';
+  foreach my $word (@words) {
+    my $candidate_line = $line_so_far.$word;
+    my $replacement_line = $candidate_line;
+    $candidate_line =~ s/^ +//;
+    $candidate_line =~ s/ +$//;
+    my @res = $self->get_text_width(undef, $candidate_line, '', font => $font, ptsize => $ptsize);
+    if(!@split or $res[2] > $width) { # CR
+      if(@split == $max_rows) { # No room!
+        my @res = $self->get_text_width($width, $candidate_line, '', ellipsis => 1, font => $font, ptsize => $ptsize);
+        $split[-1][0] = $res[0];
+        $split[-1][1] = $res[2];
+        return (\@split,$text,1);
+        last;
+      }
+      my @res = $self->get_text_width($width, $word, '', ellipsis => 1, font => $font, ptsize => $ptsize);
+      $line_so_far = $res[0];
+      push @split,[$line_so_far,$res[2]];
+    } else {
+      $line_so_far = $replacement_line;
+      $split[-1][0] = $line_so_far;
+      $split[-1][1] = $res[2];
+    }
+  }
+  return (\@split,$text,0);
+}
+
+sub recast_label {
+  # XXX we should see which of these args are used and also pass as hash
+  my ($self,$pixperbp,$width,$rows,$text,$font,$ptsize,$colour) = @_;
+
+  my $caption = $self->my_label_caption;
+  $text = $caption if $caption;
+
+  my $n = 0;
+  my ($ov,$text_out);
+  ($rows,$text_out,$ov) = $self->_split_label($text,$width,$font,$ptsize,0);
+  if($ov and $text =~ /\t[<>]/) {
+    $text.="\t<" unless $text =~ /\t[<>]/;
+    $text =~ s/\t>./...\t>/;
+    $text =~ s/.\t</\t<.../;
+    my $ov = 1;
+    my $text_out;
+    my $known_good = length $text;
+    my $known_bad = 0;
+    my $good_rows;
+    foreach my $step ((5,2,1)) {
+      my $n = $known_bad + $step;
+      while($n<$known_good) {
+        ($rows,$text_out,$ov) = $self->_split_label($text,$width,$font,$ptsize,$n);
+        if($ov) { $known_bad = $n; }
+        else    { $known_good = $n; $good_rows = $rows; }
+        $n += $step;
+      }
+    }
+    $rows = $good_rows if defined $good_rows;
+  }
+
+  my $max_width = max(map { $_->[1] } @$rows);
+
+  my $composite = $self->Composite({
+    halign => 'left',
+    absolutex => 1,
+    absolutewidth => 1,
+    width => $max_width,
+    x => 0,
+    y => 0,
+    class     => $self->label->{'class'},
+    alt       => $self->label->{'alt'},
+    hover     => $self->label->{'hover'},
+  });
+
+  my $y = 0;
+  my $h = $self->my_config('caption_height') || $self->label->{'height'};
+  foreach my $row_data (@$rows) {
+    my ($row_text,$row_width) = @$row_data;
+    next unless $row_text;
+    my $pad = 0;
+    $pad = 4 if !$y and @$rows>1;
+    my $row = $self->Text({
+      font => $font,
+      ptsize => $ptsize,
+      text => $row_text,
+      height => $h + $pad,
+      colour    => $colour,
+      y => $y,
+      width => $max_width,
+      halign => 'left',
+    });
+    $composite->push($row);
+    $y += $h + $pad; # The 4 is to add some extra delimiting margin
+  }
+  $self->label($composite);
 }
 
 sub get_text_simple {
@@ -843,5 +1142,91 @@ sub bump_sorted_row {
 }
 
 sub max_label_rows { return $_[0]->my_config('max_label_rows') || 1; }
+
+sub section {
+  my $self = CORE::shift;
+
+  return $self->my_config('section') || '';
+}
+
+sub section_zmenu { $_[0]->my_config('section_zmenu'); }
+sub section_no_text { $_[0]->my_config('no_section_text'); }
+
+sub section_text {
+  $_[0]->{'section_text'} = $_[1] if @_>1;
+  return $_[0]->{'section_text'};
+}
+
+sub section_height {
+  return 0 unless $_[0]->{'section_text'};
+  return 24;
+}
+
+
+sub join_tag {
+### join_tag joins between glyphsets in different tracks
+### @param glyph          - glyph you've drawn...
+### @param key            - Key for glyph
+### @param x_pos          - X position in glyph (0-1)
+### @param y_pos          - Y position in glyph (0-1) 0 nearest contigs
+### @param $col           - colour to draw shape
+### @param style String   - whether to fill or draw line
+### @param z-index 
+### @param href
+### @param alt
+### @param class
+  my ($self, $glyph, $tag, $x_pos, $y_pos, $col, $style, $zindex, $href, $alt, $class) = @_;
+
+  if (ref $x_pos eq 'HASH') {
+    CORE::push @{$self->{'tags'}{$tag}}, {
+      %$x_pos,
+      'glyph' => $glyph
+    };
+  } else {
+    CORE::push @{$self->{'tags'}{$tag}}, {
+      'glyph' => $glyph,
+      'x'     => $x_pos,
+      'y'     => $y_pos,
+      'col'   => $col,
+      'style' => $style,
+      'z'     => $zindex,
+      'href'  => $href,
+      'alt'   => $alt,
+      'class' => $class
+    };
+  }
+}
+
+sub errorTrack {
+  my ($self, $message, $x, $y) = @_;
+  my $length = $self->{'config'}->image_width();
+  my $w    = $self->{'config'}->texthelper()->width('Tiny');
+  my $h    = $self->{'config'}->texthelper()->height('Tiny');
+  my $h2   = $self->{'config'}->texthelper()->height('Small');
+  $self->push( EnsEMBL::Draw::Glyph::Text->new({
+      'x'     => $x || int( ($length - $w * CORE::length($message))/2 ),
+    'y'     => $y || int( ($h2-$h)/2 ),
+      'height'  => $h2,
+    'font'    => 'Tiny',
+    'colour'  => "red",
+    'text'    => $message,
+    'absolutey' => 1,
+    'absolutex' => 1,
+    'absolutewidth' => 1,
+    'pixperbp'  => $self->{'config'}->{'transform'}->{'scalex'} ,
+  }) );
+
+  return;
+}
+
+sub commify { CORE::shift; local $_ = reverse $_[0]; s/(\d\d\d)(?=\d)(?!\d*\.)/$1,/g; return scalar reverse $_; }
+
+sub check {
+  my $self   = CORE::shift;
+  my ($name) = ref($self) =~ /::([^:]+)$/;
+  return $name;
+}
+
+    
 
 1;
