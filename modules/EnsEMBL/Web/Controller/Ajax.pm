@@ -254,7 +254,7 @@ sub data_table_config {
   my %data;
   
   $data{'sorting'}        = "[$sorting]" if length $sorting;
-  $data{'hidden_columns'} = "[$hidden]"  if length $hidden;
+  $data{'hidden_columns'} = "[$hidden]";
   
   $session->purge_data(%args);
   $session->set_data(%args, %data) if scalar keys %data;
