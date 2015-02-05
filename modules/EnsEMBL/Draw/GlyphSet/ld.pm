@@ -80,7 +80,7 @@ sub _init {
     # Print GlyphSet::variation type bars above ld triangle
     foreach my $snp ( @snps ) {
        my $type =  lc ($snp->[1]->display_consequence);
-       $self->push( EnsEMBL::Draw::Glyph::Rect->new({
+       $self->push($self->Rect({
         'title'     => $snp->[1]->variation_name,
         'height'    => $TAG_LENGTH,
         'x'         => $snp->[1]->start - $offset,
@@ -107,7 +107,7 @@ sub _init {
       push @points,  ($first_start + $last_start)/2 - $offset,
                       2 + ($last_start - $first_start)/2 * $height_ppb + $yoffset
     }
-    $self->push( EnsEMBL::Draw::Glyph::Poly->new({
+    $self->push($self->Poly({
       'points' => \@points,
       'colour'  => 'grey',
     }));
@@ -118,7 +118,7 @@ sub _init {
     my $name    = "LD($key): $pop_name";
     $name   .= '   ('.(join ', ', map { ucfirst(lc($_->name)) } @{$parents} ).')' if @$parents;
     $name   .= "   $number_of_snps SNPs";
-    $self->push( EnsEMBL::Draw::Glyph::Text->new({
+    $self->push($self->Text({
       'x'         => 0,
       'y'         => $yoffset - $h - $TAG_LENGTH,
       'height'    => $h,
@@ -155,7 +155,7 @@ sub _init {
         my $colour = defined($value) ? $colour_gradient[POSIX::floor(40 * $value)] : "white";
         my $snp_names = $data->{'variationFeatures'}{$snp_m->[0]}->variation_name;
         $snp_names.= "-".$data->{'variationFeatures'}{$snp_n->[0]}->variation_name;
-        $self->push( EnsEMBL::Draw::Glyph::Poly->new({
+        $self->push($self->Poly({
           'title'  => "$snp_names: ". ($value || "n/a"),
           'alt'  => "$snp_names: ". ($value || "n/a"),
           'points' => \@p2,

@@ -241,8 +241,7 @@ sub _init {
       my $height = $f->{y_to} - $f->{y_from} - 1;
       my $x = $f->{x};
       my $width = $bitmap_width - $x - 5;
-      push @bg_glyphs, EnsEMBL::Draw::Glyph::Rect->new
-          ({
+      push @bg_glyphs, $self->Rect({
             'x'      => $x,
             'y'      => $y,
             'width'  => $width,
@@ -257,8 +256,7 @@ sub _init {
       my $x = $f->{x} + 2;
       $collapsed_xoffset = $width;
 
-      push @node_glyphs, EnsEMBL::Draw::Glyph::Poly->new
-          ({
+      push @node_glyphs, $self->Poly({
             'points' => [ $x, $y,
                           $x + $width, $y - ($height / 2 ),
                           $x + $width, $y + ($height / 2 ) ],
@@ -267,8 +265,7 @@ sub _init {
             'href'   => $node_href,
           });
 
-      my $node_glyph = EnsEMBL::Draw::Glyph::Rect->new
-          ({
+      my $node_glyph = $self->Rect({
             'x'      => $f->{x},
             'y'      => $f->{y},
             'width'  => 5,
@@ -278,8 +275,7 @@ sub _init {
           });
       push @node_glyphs, $node_glyph;
       if ($f->{_node_type} eq 'gene_split') {
-        push @node_glyphs, EnsEMBL::Draw::Glyph::Rect->new
-            ({
+        push @node_glyphs, $self->Rect({
               'x'         => $f->{x},
               'y'         => $f->{y},
               'width'     => 5,
@@ -309,8 +305,7 @@ sub _init {
       push(@labels, $nodes_label);
       
       # Add a 'collapse' href
-      my $node_glyph = EnsEMBL::Draw::Glyph::Rect->new
-          ({
+      my $node_glyph = $self->Rect({
             'x'         => $f->{x} - $bold,
             'y'         => $f->{y} - $bold,
             'width'     => 5 + 2 * $bold,
@@ -322,8 +317,7 @@ sub _init {
           });
       push @node_glyphs, $node_glyph;
       if ($bold) {
-        my $node_glyph = EnsEMBL::Draw::Glyph::Rect->new
-            ({
+        my $node_glyph = $self->Rect({
               'x'         => $f->{x},
               'y'         => $f->{y},
               'width'     => 5,
@@ -335,8 +329,7 @@ sub _init {
         push @node_glyphs, $node_glyph;
       }
       if ($f->{_node_type} eq 'gene_split') {
-        push @node_glyphs, EnsEMBL::Draw::Glyph::Rect->new
-            ({
+        push @node_glyphs, $self->Rect({
               'x'         => $f->{x},
               'y'         => $f->{y},
               'width'     => 5,
@@ -354,8 +347,7 @@ sub _init {
     my $colour = $tree->isa('Bio::EnsEMBL::Compara::CAFEGeneFamilyNode') ? $node_colour : '';
     my $bordercolour = $tree->isa('Bio::EnsEMBL::Compara::CAFEGeneFamilyNode') ? "black" : $node_colour;
     
-      push @node_glyphs, EnsEMBL::Draw::Glyph::Rect->new
-          ({
+      push @node_glyphs, $self->Rect({
             'x'         => $f->{x},
             'y'         => $f->{y},
             'width'     => 5,

@@ -107,7 +107,7 @@ sub _init {
       next if $x < 0 || $x > $len;
               
       my $type =  lc ($snp->[1]->display_consequence);
-      $self->push( EnsEMBL::Draw::Glyph::Rect->new({
+      $self->push($self->Rect({
         'title'     => $snp->[1]->variation_name,
         'height'    => $TAG_LENGTH,
         'x'         => $x,
@@ -124,7 +124,7 @@ sub _init {
     my $name    = "LD($key): $pop_name";
     $name   .= '   ('.(join ', ', map { ucfirst(lc($_->name)) } @{$parents} ).')' if @$parents;
     $name   .= "   $number_of_snps SNPs";
-    $self->push( EnsEMBL::Draw::Glyph::Text->new({
+    $self->push($self->Text({
       'x'         => 0,
       'y'         => $yoffset - $h - $TAG_LENGTH,
       'height'    => $h,
@@ -170,7 +170,7 @@ warn " [[[ $value, $value1 ]]] ";
         my $colour = defined($value) ? $colour_gradient[POSIX::floor(40 * $value)] : "blue";
         my $snp_names = $snp_m->[1]->variation_name;
         $snp_names.= "-".$snp_n->[1]->variation_name;
-        $self->push( EnsEMBL::Draw::Glyph::Poly->new({
+        $self->push($self->Poly({
           'alt'  => "$snp_names: ". ($value || "n/a"),
           'points' => \@p2,
           'colour' => $colour,

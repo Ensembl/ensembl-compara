@@ -38,7 +38,7 @@ sub _init {
 
   my $text = $self->my_config('text');
   unless ($text)  {  $text =  $self->{'config'}->{'text'}; }
-  $self->push( EnsEMBL::Draw::Glyph::Text->new({
+  $self->push($self->Text({
     'x'         => 1, 
     'y'         => 2,
     'height'    => $h,
