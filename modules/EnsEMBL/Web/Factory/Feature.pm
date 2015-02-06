@@ -494,30 +494,33 @@ sub _generic_create {
     foreach my $fid (split /\s+/, $id) { 
       my $t_features;
       
-      ## Check for gene stable IDs
-      my $gene_stable_id = 0;
-      if ($object_type eq 'Gene') {
-        my ($species, $obj_type) = Bio::EnsEMBL::Registry->get_species_and_object_type($fid); 
-        $gene_stable_id = 1 if ($species && $obj_type && $obj_type eq 'Gene');
-      }
-      
       if ($xref_db) { 
         eval {
          $t_features = [$db_adaptor->$adaptor_name->$accessor($xref_db, $fid)];
         };
-      } elsif ($gene_stable_id) { ## Hack to get gene stable IDs to work
-        $accessor = 'fetch_by_stable_id';
-        eval {
-          $t_features = [ $db_adaptor->$adaptor_name->$accessor($fid) ];
-        };
       } elsif ($subtype) {
-         eval {
+        eval {
          $t_features = $db_adaptor->$adaptor_name->$accessor($fid, $subtype);
         };
-      } else { 
-        eval {
-         $t_features = $db_adaptor->$adaptor_name->$accessor($fid);
-        };
+      } else {
+
+        ## Check for gene stable IDs
+        my $gene_stable_id = 0;
+        if ($object_type eq 'Gene') {
+          my ($species, $obj_type) = Bio::EnsEMBL::Registry->get_species_and_object_type($fid); 
+          $gene_stable_id = 1 if ($species && $obj_type && $obj_type eq 'Gene');
+        }
+
+        if ($gene_stable_id) { ## Hack to get gene stable IDs to work
+          $accessor = 'fetch_by_stable_id';
+          eval {
+            $t_features = [ $db_adaptor->$adaptor_name->$accessor($fid) ];
+          };
+        } else { 
+          eval {
+           $t_features = $db_adaptor->$adaptor_name->$accessor($fid);
+          };
+        }
       }
       
       ## if no result, check for unmapped features
