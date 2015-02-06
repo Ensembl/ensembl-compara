@@ -416,6 +416,13 @@ sub read {
   return $result;
 }
 
+sub read_lines {
+### Get entire content of file, uncompressed and in an arrayref
+### @return Hashref 
+  my $self = shift;
+  return $self->read('read_lines');
+}
+
 sub write {
 ### Write entire file
 ### @param Arrayref - lines of file
