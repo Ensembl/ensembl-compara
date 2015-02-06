@@ -100,6 +100,6 @@ Ensembl.Panel.TextSequence = Ensembl.Panel.Content.extend({
   },
   
   makeZMenu: function (e, el) {
-    Ensembl.EventManager.trigger('makeZMenu', el.data('menuId'), { event: e, area: { a: el } });
+    Ensembl.EventManager.trigger('makeZMenu', el.data('menuId'), { event: e, area: { link: el } });
   }
 });

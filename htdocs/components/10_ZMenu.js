@@ -20,6 +20,10 @@ Ensembl.Panel.ZMenu = Ensembl.Panel.extend({
 
     var area = data.area.a;
     var params, n;
+
+    if (data.area.link) {
+      area = { klass:{}, attrs: { href: data.area.link.attr('href'), title: data.area.link.attr('title') } };
+    }
     
     this.drag       = area.klass.drag ? 'drag' : area.klass.vdrag ? 'vdrag' : false;
     this.align      = area.klass.align; // TODO: implement alignslice menus
