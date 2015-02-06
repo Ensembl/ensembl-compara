@@ -32,7 +32,7 @@ sub content {
   my $tree     = $object->isa('EnsEMBL::Web::Object::GeneTree') ? $object->tree : $object->get_SpeciesTree($cdb);
   die 'No tree for gene' unless $tree;
   my $node_id  = $hub->param('node')                   || die 'No node value in params';  
-  my $node     = $tree->find_node_by_node_id($node_id) || die "No node_id $node_id in ProteinTree";    
+  my $node     = $tree->root->find_node_by_node_id($node_id) || die "No node_id $node_id in ProteinTree";
   my $ta       = $c_db->get_NCBITaxonAdaptor();  
   my $taxon    = $ta->fetch_node_by_taxon_id($node->{_taxon_id});
   

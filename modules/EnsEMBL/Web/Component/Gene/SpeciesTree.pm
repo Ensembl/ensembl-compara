@@ -47,7 +47,7 @@ sub get_details {
 
   return (undef, '<strong>Gene is not in a compara tree</strong>') unless $tree;
 
-  my $node = $tree->get_all_nodes;
+  my $node = $tree->root->get_all_nodes;
   return (undef, '<strong>Gene is not in the compara tree</strong>') unless $node;
   
   return ($member, $tree, $node);

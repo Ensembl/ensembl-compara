@@ -914,10 +914,8 @@ sub get_SpeciesTree {
     my $geneTree = $geneTree_Adaptor->fetch_default_for_Member($member) || return;
     my $cafeTree = $cafeTree_Adaptor->fetch_by_GeneTree($geneTree) || return;		   
     
-    $cafeTree->multifurcate_tree();    
-    my $lca_id   = $cafeTree->lca_id;
-    $cafeTree    = $cafeTree->root;
-    $cafeTree    = $cafeTree->lca_reroot($lca_id) if($collapsability eq 'part');     
+    $cafeTree->multifurcate_tree();
+    $cafeTree    = $cafeTree->root($cafeTree->root->lca_reroot($cafeTree->lca_id)) if($collapsability eq 'part');     
       
     $self->{$cache_key} = $cafeTree;
   }
