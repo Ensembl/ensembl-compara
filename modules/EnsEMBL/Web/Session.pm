@@ -486,63 +486,41 @@ sub add_das {
 }
 
 sub add_das_from_string {
-  my $self    = shift;
-  my $string  = shift;
-  my @existing = $self->hub->get_all_das;
-  my $parser   = $self->das_parser;
-  my ($server, $identifier) = $parser->parse_das_string($string);
-  $identifier = uri_unescape($identifier); # parse_das_string returns URI escaped identifier
-  my $error;
-  
-  # If we couldn't reliably parse an identifier (i.e. string is not a URL),
-  # assume it is a registry ID
-  if (!$identifier) {
-    $identifier = $string;
-    $server     = $self->hub->species_defs->DAS_REGISTRY_URL;
-  }
+  my $self      = shift;
+  my $string    = shift;
+  my @existing  = $self->hub->get_all_das;
+  my $parser    = $self->das_parser;
 
-  # Check if the source has already been added, otherwise add it
-  my $source = $existing[0]->{$identifier} || $existing[1]->{"$server/$identifier"};
-  
+  my ($source, $error);
+
+  # string could be logic name or uri of existing DAS sources
+  $source = $existing[0]->{$string} || $existing[1]->{$string};
+
+  # string could contain both url and dsn
   if (!$source) {
-    # If not, parse the DAS server to get a list of sources...
-    eval {
-      foreach (@{$parser->fetch_Sources( -location => $server )}) { 
-        # ... and look for one with a matcing URI or DSN
-        if ($_->logic_name eq $identifier || $_->dsn eq $identifier) { 
-        
-          if (!@{$_->coord_systems}) { 
-            $error = "Unable to add DAS source $identifier as it does not provide any details of its coordinate systems";
-            return;  
-          }
-          
-          $source = EnsEMBL::Web::DASConfig->new_from_hashref($_); 
-          $self->add_das($source);
-          last;
-        }
-      }
-    };
-    
-    $error = "DAS error: $@" if $@;
+    my ($url, $dsn) = $parser->parse_das_string($string);
+    $dsn = uri_unescape($dsn || '');
+
+    $source = $existing[0]->{$dsn} || $existing[1]->{"$url/$dsn"};
   }
 
   if ($source) {
     # so long as the source is 'suitable' for this view, turn it on
-    $self->configure_das_views($source, @_) unless $error;
-  } else { 
-    $error ||= "Unable to find a DAS source named $identifier on $server";
+    $self->configure_das_views($source, @_);
+  } else {
+    $error = "Unable to find a DAS source for $string";
   }
-  
+
   if ($error) {
     $self->add_data(
       type     => 'message',
       function => '_warning',
       code     => 'das:' . md5_hex($string),
-      message  => sprintf('You attempted to attach a DAS source with DSN: %s, unfortunately we were unable to attach this source (%s).', encode_entities($string), encode_entities($error))
+      message  => sprintf('You attempted to attach a DAS source: %s, unfortunately we were unable to attach this source (%s).', encode_entities($string), encode_entities($error))
     );
   }
-  
-  return $source ? $source->logic_name : undef;
+
+  return $source && $source->{'logic_name'};
 }
 
 # Switch on a DAS source for the current view/image (if it is suitable)
