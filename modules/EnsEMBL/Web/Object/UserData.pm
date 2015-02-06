@@ -1091,34 +1091,8 @@ sub consequence_table {
 sub get_das_servers {
 ### Returns a hash ref of pre-configured DAS servers
   my $self = shift;
-  
-  my @domains = ();
-  my @urls    = ();
 
-  my $reg_url  = $self->species_defs->get_config('MULTI', 'DAS_REGISTRY_URL');
-  my $reg_name = $self->species_defs->get_config('MULTI', 'DAS_REGISTRY_NAME') || $reg_url;
-
-  push( @domains, {'caption'  => $reg_name, 'value' => $reg_url} );
-  my @extras = @{$self->species_defs->get_config('MULTI', 'ENSEMBL_DAS_SERVERS')};
-  foreach my $e (@extras) {
-    push( @domains, {'caption' => $e, 'value' => $e} );
-  }
-  #push( @domains, {'caption' => $self->param('preconf_das'), 'value' => $self->param('preconf_das')} );
-
-  # Ensure servers are proper URLs, and omit duplicate domains
-  my %known_domains = ();
-  foreach my $server (@domains) {
-    my $url = $server->{'value'};
-    next unless $url;
-    next if $known_domains{$url};
-    $known_domains{$url}++;
-    $url = "http://$url" if ($url !~ m!^\w+://!);
-    $url .= "/das" if ($url !~ /\/das1?$/);
-    $server->{'caption'} = $url if ( $server->{'caption'} eq $server->{'value'});
-    $server->{'value'}   = $url;
-  }
-
-  return @domains;
+  return map {'caption' => $_, 'value' => $_}, @{$self->species_defs->get_config('MULTI', 'ENSEMBL_DAS_SERVERS')};
 }
 
 # Returns an arrayref of DAS sources for the selected server and species
