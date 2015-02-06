@@ -68,7 +68,7 @@ sub feature_content {
   my $chr           = $feature->seq_region_name;
   my $name          = $feature->variation_name;
   my $dbID          = $feature->dbID;
-  my $source        = $feature->source;
+  my $source        = $feature->source_name;
   my $bp            = "$chr:$chr_start";
   my $types         = $hub->species_defs->colour('variation');
   my $type          = $consequence && !($snp_fake || $var_box) ? $consequence : $feature->display_consequence;
