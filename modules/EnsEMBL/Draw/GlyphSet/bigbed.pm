@@ -71,7 +71,6 @@ sub bigbed_adaptor {
     }
   }
   $self->errorTrack("Could not retrieve file from trackhub") if $error;
-  warn "!!! BIGBED ERROR: $error";
   return $self->{'_cache'}->{'_bigbed_adaptor'};
 }
 
