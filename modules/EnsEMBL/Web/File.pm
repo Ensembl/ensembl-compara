@@ -392,7 +392,8 @@ sub fetch {
 sub read {
 ### Get entire content of file, uncompressed
 ### @return Hashref 
-  my $self = shift;
+  my ($self, $mode) = @_;
+  $mode ||= 'read_file';
 
   ## Don't access source again if we've already fetched the contents
   my $content = $self->{'content'};
@@ -400,7 +401,7 @@ sub read {
 
   my $result = {};
   foreach (@{$self->{'input_drivers'}}) {
-    my $method = 'EnsEMBL::Web::File::Utils::'.$_.'::read_file'; 
+    my $method = 'EnsEMBL::Web::File::Utils::'.$_.'::'.$mode; 
     my $args = {
                 'hub'   => $self->hub,
                 'nice'  => 1,
