@@ -114,43 +114,81 @@ sub process {
       else {
         my $assemblies = $options->{'assemblies'}
                         || [$hub->species_defs->get_config($hub->data_species, 'ASSEMBLY_VERSION')];
-        my ($code, @ok_assemblies);
         my %ensembl_assemblies = %{$hub->species_defs->assembly_lookup};
+
+        my ($flag_info, $code); 
 
         foreach (@$assemblies) {
 
-          my ($data_species, $assembly) = @{$ensembl_assemblies{$_}||[]};         
-          if ($assembly) {
-            push @ok_assemblies, $assembly;
+          my ($current_species, $assembly, $is_old) = @{$ensembl_assemblies{$_}||[]};         
 
-            my $data = $session->add_data(
-              type        => 'url',
-              code        => join('_', md5_hex($name . $data_species . $assembly . $url), $session->session_id),
-              url         => $url,
-              name        => $name,
-              format      => $format->name,
-              style       => $format->trackline,
-              species     => $data_species,
-              assembly    => $assembly, 
-              timestamp   => time,
-              %$options,
-            );
-            if ($data_species eq $hub->species) {
-              $code = $data->{'code'};
+          ## This is a bit messy, but there are so many permutations!
+          if ($assembly) {
+            if ($current_species eq $hub->param('species')) {
+              $flag_info->{'species'}{'this'} = 1;
+              if ($is_old) {
+                $flag_info->{'assembly'}{'this_old'} = 1;
+              }
+              else {
+                $flag_info->{'assembly'}{'this_new'} = 1;
+              }
             }
+            else {
+              $flag_info->{'species'}{'other'}++;
+              if ($is_old) {
+                $flag_info->{'assembly'}{'other_old'} = 1;
+              }
+              else {
+                $flag_info->{'assembly'}{'other_new'} = 1;
+              }
+            }
+            
+            unless ($is_old) {
+              my $data = $session->add_data(
+                type        => 'url',
+                code        => join('_', md5_hex($name . $current_species . $assembly . $url), $session->session_id),
+                url         => $url,
+                name        => $name,
+                format      => $format->name,
+                style       => $format->trackline,
+                species     => $current_species,
+                assembly    => $assembly, 
+                timestamp   => time,
+                %$options,
+              );
       
-            $session->configure_user_data('url', $data);
+              $session->configure_user_data('url', $data);
+    
+              if ($current_species eq $hub->param('species')) {
+                $code = $data->{'code'};
+              }
       
-            $object->move_to_user(type => 'url', code => $data->{'code'}) if $hub->param('save');
+              $object->move_to_user(type => 'url', code => $data->{'code'}) if $hub->param('save');
+            }
           }
-        }       
-        my $assembly_string = join(', ', @ok_assemblies);
+        }    
+
+        ## For datahubs, work out what feedback we need to give the user
+        my ($species_flag, $assembly_flag); 
+        if ($flag_info->{'species'}{'other'} && !$flag_info->{'species'}{'this'}) {
+          $species_flag = 'other_only';
+        }
+
+        if ($flag_info->{'assembly'}{'this_new'} && $flag_info->{'assembly'}{'this_old'}) {
+          $assembly_flag = 'old_and_new';
+        }
+        elsif (!$flag_info->{'assembly'}{'this_new'} && !$flag_info->{'assembly'}{'other_new'}) {
+          $assembly_flag = 'old_only';
+        }
+        
         %params = (
-          format    => $format->name,
-          type      => 'url',
-          name      => $name,
-          assembly  => $assembly_string,
-          code      => $code,
+          format          => $format->name,
+          type            => 'url',
+          name            => $name,
+          species         => $hub->param('species'),
+          species_flag    => $species_flag,
+          assembly_flag   => $assembly_flag,
+          code            => $code,
         );
       }
     }

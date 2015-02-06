@@ -40,48 +40,10 @@ sub content {
   my $hub = $self->hub;
   
   my $form = $self->new_form({'id' => 'url_feedback', 'method' => 'post'});
-
   my $message;
+
   if ($hub->param('format') eq 'DATAHUB') {
-    my $assembly_string   = $hub->param('assembly');
-    my $current_assembly  = $hub->species_defs->get_config($hub->data_species, 'ASSEMBLY_VERSION');
-    if ($assembly_string !~ $current_assembly) {
-      ## No match to current assembly
-      my $url = sprintf('/%s/UserData/ManageData', $hub->data_species);
-      $message = sprintf('<p><strong>Your hub contains no data on the current assembly and cannot be displayed on this species</strong>. Please check the <a href="%s" class="modal_link">Manage Data</a> page for other species supported by this hub.</p>', $url);
-      my $archive_assembly = $hub->species_defs->get_config($hub->data_species, 'SWITCH_ASSEMBLY');
-      my $archive = $hub->species_defs->get_config($hub->data_species, 'SWITCH_ARCHIVE_URL');
-      if ($archive && $assembly_string =~ $archive_assembly) {
-        $message .= sprintf('<p>If you wish to view data on this species, please use archive site <a href="http://%s/%s">%s</a>.</p>', 
-                            $archive, $hub->data_species, $archive,
-                    );
-      }
-      else {
-        $message .= '<p>If you wish to view data on this species, please check for an <a href="/info/website/archives/">appropriate archive site</a>.</p>';
-      }
-      $message .= '</p>';
-    }
-    else {
-      my $sample_data = $hub->species_defs->get_config($hub->data_species, 'SAMPLE_DATA') || {};
-      my $default_loc = $sample_data->{'LOCATION_PARAM'};
-      my $template;
-      if ($assembly_string ne $hub->species_defs->get_config($hub->data_species, 'ASSEMBLY_VERSION')) {
-        ## Not exact match -> multiple assemblies
-        $template = '<p class="space-below"><strong>Your hub includes multiple assemblies, so not all features will be shown. Alternative assemblies may available on archive sites.</strong></p>';
-      }
-      $template .= '<p class="space-below"><a href="%s#modal_config_viewbottom-%s">Configure your hub</a></p>';
-      (my $menu_name = $hub->param('name')) =~ s/ /_/g;
-      $message = sprintf($template,
-                    $hub->url({
-                              species   => $hub->data_species,
-                              type      => 'Location',
-                              action    => 'View',
-                              function  => undef,
-                              r         => $hub->param('r') || $default_loc,
-                    }),
-                    $menu_name,
-      );
-    }
+    $message = $self->get_message($hub->param('species_flag'), $hub->param('assembly_flag'));
   }
   else {
     $message = qq(Thank you - your remote data was successfully attached. Close this Control Panel to view your data);
@@ -89,11 +51,65 @@ sub content {
 
   $form->add_element(
       type  => 'Information',
-      value => $message, 
+      value => '<p>'.$message.'</p>', 
     );
   $form->add_element( 'type' => 'ForceReload' );
 
   return $form->render;
+}
+
+sub get_message {
+  my ($self, $species_flag, $assembly_flag) = @_;
+  my $hub         = $self->hub;
+  my $species     = $hub->param('species');
+  my $trackhub_ok = 0;
+  my $try_archive = 0;
+  my $message     = '';
+
+  if ($assembly_flag eq 'old_only') {
+    $message = 'This hub contains no data on any current assemblies. Please check our <a href="/info/website/archives/">archive list</a> for alternative sites.';
+    $try_archive = 1;
+  }
+  elsif ($assembly_flag eq 'old_and_new') {
+    ## Multiple assemblies for the chosen species (usually only seen for human)
+    $message = '<strong>Your hub includes multiple assemblies, so not all features will be shown. Alternative assemblies may available on archive sites.</strong>';
+    $trackhub_ok = 1;
+    $try_archive = 1;
+  }
+  elsif ($species_flag eq 'other_only') {
+    my $url = sprintf('/%s/UserData/ManageData', $species);
+    $message = sprintf('<strong>Your hub contains no data on the chosen species</strong>. Please check the <a href="%s" class="modal_link">Manage Data</a> page for other species supported by this hub.</p>', $url);
+  }
+  else {
+    $message = 'Your hub attached successfully.';
+    $trackhub_ok = 1;
+  }
+
+  if ($trackhub_ok) {
+    (my $menu_name = $hub->param('name')) =~ s/ /_/g;
+    my $sample_data = $hub->species_defs->get_config($species, 'SAMPLE_DATA') || {};
+    my $default_loc = $sample_data->{'LOCATION_PARAM'};
+    my $url = $hub->url({
+                          species   => $species,
+                          type      => 'Location',
+                          action    => 'View',
+                          function  => undef,
+                          r         => $hub->param('r') || $default_loc,
+              });
+    $message .= sprintf('</p><p><a href="%s#modal_config_viewbottom-%s">Configure your hub</a>', $url, $menu_name);
+  }
+
+  if ($try_archive) {
+    my $archive_site = $hub->species_defs->get_config($species, 'SWITCH_ARCHIVE_URL');
+    if ($archive_site) {
+      my $assembly = $hub->species_defs->get_config($species, 'SWITCH_ASSEMBLY');
+      $message .= sprintf('</p><p>If you wish to view data on assembly %s, please use archive site <a href="http://%s/%s">%s</a>.</p>', 
+                            $assembly, $archive_site, $species, $archive_site,
+                    );
+    }
+  }
+
+  return $message;
 }
 
 1;
