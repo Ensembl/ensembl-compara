@@ -530,7 +530,6 @@ sub _get_das_coords {
 }
 
 sub publish_multi_species_sources {
-    return;
 # Now Multi species sources, e.g EnsemblGene Id etc
     my $sp = $species_defs->ENSEMBL_PRIMARY_SPECIES;
 
