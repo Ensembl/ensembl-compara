@@ -253,7 +253,8 @@ sub get_headers {
   my ($all_headers, $result, $error);
 
   if ($url =~ /^ftp/) {
-    ## TODO - support FTP!
+    ## TODO - support FTP properly!
+    return {'Content-Type' => 1};
   }
   else {
     my %params = ('timeout'       => 10);
