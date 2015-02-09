@@ -28,6 +28,7 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
     this.speciesCount     = 0;
     this.minImageWidth    = 500;
     this.labelRight       = 0;
+    this.boxCoords        = {}; // only passed to the backend as GET param when downloading the image to embed the red highlight box into the image itself
     
     function resetOffset() {
       delete this.imgOffset;
@@ -873,6 +874,7 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
       
       // Highlight unless it's the bottom image on the page
       if (this.params.highlight) {
+        this.updateExportMenu(coords, speciesNumber, imageNumber);
         this.highlight(coords, 'redbox2', speciesNumber, i);
       }
     }
@@ -916,7 +918,26 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
     
     els = null;
   },
-  
+
+  updateExportMenu: function(coords, speciesNumber, imageNumber) {
+    var panel = this;
+
+    if (this.imageNumber === imageNumber) {
+
+      this.boxCoords[speciesNumber] = coords;
+
+      this.elLk.exportMenu.find('a').each(function() {
+        var href = $(this).data('href');
+        if (!href) {
+          $(this).data('href', this.href);
+          href = this.href;
+        }
+
+        this.href = href + ';box=' + encodeURIComponent(JSON.stringify(panel.boxCoords));
+      });
+    }
+  },
+
   getMapCoords: function (e) {
     this.imgOffset = this.imgOffset || this.elLk.img.offset();
     

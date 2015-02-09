@@ -85,7 +85,7 @@ our $patterns = {
 };
 
 sub new {
-  my ($class, $config, $extra_spacing, $glyphsets_ref) = @_;
+  my ($class, $config, $extra_spacing, $glyphsets_ref, $boxes) = @_;
   
   my $self = {
     'glyphsets'     => $glyphsets_ref,
@@ -93,6 +93,7 @@ sub new {
     'colourmap'     => $config->colourmap,
     'config'        => $config,
     'extra_spacing' => $extra_spacing,
+    'boxes'         => $boxes || {},
     'spacing'       => $config->get_parameter('spacing') || 2,
     'margin'        => $config->get_parameter('margin') || 5,
     'sf'            => $config->get_parameter('sf') || 1
@@ -208,6 +209,16 @@ sub render {
     }
     
     push @{$layers{$_->{'z'}||0}}, $_ for @{$glyphset->{'glyphs'}};
+  }
+
+  # add the highlight boxes
+  my ($top_layer) = sort { $b <=> $a } keys %layers;
+  for (sort keys %{$self->{'boxes'}}) {
+    push @{$layers{$top_layer + 1}},
+      EnsEMBL::Draw::Glyph::Line->new({colour => 'red', pixelx => $self->{'boxes'}{$_}{'l'}, pixely => $self->{'boxes'}{$_}{'t'}, pixelwidth => $self->{'boxes'}{$_}{'r'} - $self->{'boxes'}{$_}{'l'}, pixelheight => 0 }),
+      EnsEMBL::Draw::Glyph::Line->new({colour => 'red', pixelx => $self->{'boxes'}{$_}{'r'}, pixely => $self->{'boxes'}{$_}{'t'}, pixelwidth => 0, pixelheight => $self->{'boxes'}{$_}{'b'} - $self->{'boxes'}{$_}{'t'} }),
+      EnsEMBL::Draw::Glyph::Line->new({colour => 'red', pixelx => $self->{'boxes'}{$_}{'l'}, pixely => $self->{'boxes'}{$_}{'b'}, pixelwidth => $self->{'boxes'}{$_}{'r'} - $self->{'boxes'}{$_}{'l'}, pixelheight => 0 }),
+      EnsEMBL::Draw::Glyph::Line->new({colour => 'red', pixelx => $self->{'boxes'}{$_}{'l'}, pixely => $self->{'boxes'}{$_}{'t'}, pixelwidth => 0, pixelheight => $self->{'boxes'}{$_}{'b'} - $self->{'boxes'}{$_}{'t'} });
   }
 
   my %M;

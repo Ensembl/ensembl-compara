@@ -425,7 +425,7 @@ sub timer_push {
 ## render does clever drawing things
 
 sub render {
-  my ($self, $type) = @_;
+  my ($self, $type, $boxes) = @_;
   
   ## build the name/type of render object we want
   my $renderer_type = qq(EnsEMBL::Draw::Renderer::$type);
@@ -434,7 +434,8 @@ sub render {
   my $renderer = $renderer_type->new(
     $self->{'config'},
     $self->{'__extra_block_spacing__'},
-    $self->{'glyphsets'}
+    $self->{'glyphsets'},
+    $boxes
   );
   my $canvas = $renderer->canvas();
   $self->timer_push("DrawableContainer->render ending $type",1);

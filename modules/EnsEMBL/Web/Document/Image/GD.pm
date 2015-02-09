@@ -432,7 +432,7 @@ sub render {
   return unless $self->drawable_container;
 
   if ($format) {
-    print $self->drawable_container->render($format);
+    print $self->drawable_container->render($format, from_json($self->hub->param('box') || "{}"));
     return;
   }
 
