@@ -268,6 +268,8 @@ sub table_export {
     my ($str,$opts) = @_;
     # Remove summaries, ugh.
     $str =~ s!<span class="toggle_summary[^"]*">.*?</span>!!g;
+    # Remove hidden spans
+    $str =~ s!<span class="hidden">[^\<]*</span>!!g;
     # split multiline columns
     for (2..$opts->{'split_newline'}) {
       unless($str =~ s/<br.*?>/\0/) {
