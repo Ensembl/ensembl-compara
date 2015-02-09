@@ -62,7 +62,7 @@ sub pipeline_wide_parameters {
   return {
     %{ $self->SUPER::pipeline_wide_parameters() },
     division => $self->o('division'),
-    registry      => '/nfs/users/nfs_s/sf5/compara79/SyntenyStats/reg_conf.pl',
+    reg_conf => $self->o('reg_conf'),
   };
 }
 
