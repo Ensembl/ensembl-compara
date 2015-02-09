@@ -38,7 +38,7 @@ package Bio::EnsEMBL::Compara::RunnableDB::SyntenyStats::FetchMLSS;
 
 use strict;
 use warnings;
-use base ('Bio::EnsEMBL::EGPipeline::Common::RunnableDB::Base');
+use base ('Bio::EnsEMBL::Hive::Process');
 use Bio::EnsEMBL::Registry;
 
 sub write_output {

@@ -39,7 +39,7 @@ package Bio::EnsEMBL::Compara::RunnableDB::SyntenyStats::SyntenyStats;
 
 use strict;
 use warnings;
-use base ('Bio::EnsEMBL::EGPipeline::Common::RunnableDB::Base');
+use base ('Bio::EnsEMBL::Hive::Process');
 use Bio::EnsEMBL::Registry;
 
 sub run {
