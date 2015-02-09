@@ -31,8 +31,7 @@ package Bio::EnsEMBL::Compara::PipeConfig::SyntenyStats_conf;
 use strict;
 use warnings;
 
-use base ('Bio::EnsEMBL::Compara::PipeConfig::EGGeneric_conf');
-use File::Spec::Functions qw(catdir);
+use base ('Bio::EnsEMBL::Hive::PipeConfig::EnsemblGeneric_conf');
 
 sub default_options {
   my ($self) = @_;
