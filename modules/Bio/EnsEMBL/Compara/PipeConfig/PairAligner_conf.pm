@@ -751,8 +751,8 @@ sub pipeline_analyses {
 			     },
 	      -wait_for =>  [ 'healthcheck' ],
               -flow_into => {
-                              1 => [ 'coding_exon_stats_summary' ],
-			      2 => [ 'coding_exon_stats' ],
+                  'A->1' => [ 'coding_exon_stats_summary' ],
+                  '2->A' => [ 'coding_exon_stats' ],
 			     },
 	      -rc_name => '1Gb',
 	    },
@@ -764,7 +764,6 @@ sub pipeline_analyses {
             {   -logic_name => 'coding_exon_stats_summary',
                 -module     => 'Bio::EnsEMBL::Compara::RunnableDB::PairAligner::PairAlignerCodingExonSummary',
                 -rc_name => '1Gb',
-                -wait_for =>  [ 'coding_exon_stats' ],
             },
 	   ];
 }
