@@ -40,6 +40,7 @@ package Bio::EnsEMBL::Compara::RunnableDB::SyntenyStats::SyntenyStats;
 use strict;
 use warnings;
 use base ('Bio::EnsEMBL::EGPipeline::Common::RunnableDB::Base');
+use Bio::EnsEMBL::Registry;
 
 sub run {
   my ($self) = @_;
@@ -53,7 +54,7 @@ sub syntenic_regions {
   my ($self) = @_;
   my $division = $self->param_required('division');
   my $mlss_id  = $self->param_required('mlss_id');
-  
+  Bio::EnsEMBL::Registry->load_all( $self->param("reg_conf") ); 
   my $mlssa = Bio::EnsEMBL::Registry->get_adaptor($division, 'compara', 'MethodLinkSpeciesSet');
   my $sra = Bio::EnsEMBL::Registry->get_adaptor($division, 'compara', 'SyntenyRegion');
   
@@ -125,13 +126,13 @@ sub calculate_stats {
   my %tags;
   my $prefix = '';
   
-  $tags{'num_blocks'} = scalar(keys %syntenic_regions);
   
   foreach my $species (sort keys %syntenic_regions) {
     my $coding_overlap;
     
     foreach my $sr_name (keys $syntenic_regions{$species}) {
       foreach my $syntenic_coords (@{$syntenic_regions{$species}{$sr_name}}) {
+       $tags{'num_blocks'}++;
         foreach my $coding_coords (@{$coding_regions{$species}{$sr_name}}) {
           $coding_overlap += $self->coord_intersection($syntenic_coords, $coding_coords);
         }
@@ -156,7 +157,7 @@ sub calculate_stats {
   my $sth = $compara_db->dbc->prepare($sql);
   
   foreach my $tag (sort keys %tags) {
-    #$self->warning("$sql ($mlss_id, $tag, ".$tags{$tag}.")");
+    $self->warning("$sql ($mlss_id, $tag, ".$tags{$tag}.")");
     $sth->execute($mlss_id, $tag, $tags{$tag});
   }
 }

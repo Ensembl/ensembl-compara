@@ -39,13 +39,14 @@ package Bio::EnsEMBL::Compara::RunnableDB::SyntenyStats::FetchMLSS;
 use strict;
 use warnings;
 use base ('Bio::EnsEMBL::EGPipeline::Common::RunnableDB::Base');
+use Bio::EnsEMBL::Registry;
 
 sub write_output {
   my ($self) = @_;
   
   my $division = $self->param_required('division');
   my $mlss_id  = $self->param('mlss_id');
-  
+  Bio::EnsEMBL::Registry->load_all( $self->param("reg_conf") );  
   my $mlssa = Bio::EnsEMBL::Registry->get_adaptor($division, 'compara', 'MethodLinkSpeciesSet');
   my @mlss = @{$mlssa->fetch_all_by_method_link_type("SYNTENY")};
   

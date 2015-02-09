@@ -40,7 +40,7 @@ sub default_options {
     %{$self->SUPER::default_options},
     
     pipeline_name => 'synteny_stats_'.$self->o('ensembl_release'),
-    division      => undef,
+    division      => 'Multi',
     mlss_id       => undef,
   };
 }
@@ -51,7 +51,7 @@ sub beekeeper_extra_cmdline_options {
   
   my $options = join(' ',
     $self->SUPER::beekeeper_extra_cmdline_options,
-    "-reg_conf ".$self->o('registry')
+    'reg_conf' => $self->o('reg_conf'),
   );
   
   return $options;
@@ -62,6 +62,7 @@ sub pipeline_wide_parameters {
   return {
     %{ $self->SUPER::pipeline_wide_parameters() },
     division => $self->o('division'),
+    registry      => '/nfs/users/nfs_s/sf5/compara79/SyntenyStats/reg_conf.pl',
   };
 }
 
@@ -77,7 +78,6 @@ sub pipeline_analyses {
                             mlss_id  => $self->o('mlss_id'),
                           },
       -input_ids       => [ {} ],
-      -rc_name         => 'normal',
       -flow_into       => ['SyntenyStats'],
     },
     
@@ -85,7 +85,6 @@ sub pipeline_analyses {
       -logic_name      => 'SyntenyStats',
       -module          => 'Bio::EnsEMBL::Compara::RunnableDB::SyntenyStats::SyntenyStats',
       -max_retry_count => 0,
-      -rc_name         => 'normal',
     },
     
   ];
