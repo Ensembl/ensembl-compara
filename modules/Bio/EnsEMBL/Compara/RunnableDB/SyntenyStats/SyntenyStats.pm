@@ -73,6 +73,7 @@ sub syntenic_regions {
     }
   }
   
+  $self->param('mlss', $mlss);
   $self->param('compara_db', $sra->db);
   $self->param('syntenic_regions', \%syntenic_regions);
   $self->param('syntenic_lengths', \%syntenic_lengths);
@@ -116,6 +117,7 @@ sub coding_regions {
 sub calculate_stats {
 	my ($self) = @_;
   
+  my $mlss             = $self->param_required('mlss');
   my $mlss_id          = $self->param_required('mlss_id');
   my %syntenic_regions = %{$self->param('syntenic_regions')};
   my %coding_regions   = %{$self->param('coding_regions')};
@@ -151,14 +153,9 @@ sub calculate_stats {
   my $compara_db = $self->param('compara_db');
   $tags{'ensembl_release'} = $compara_db->get_MetaContainer->get_schema_version();
   
-  my $sql =
-    'INSERT IGNORE INTO method_link_species_set_tag '.
-    '(method_link_species_set_id, tag, value) VALUES (?, ?, ?);';
-  my $sth = $compara_db->dbc->prepare($sql);
-  
   foreach my $tag (sort keys %tags) {
-    $self->warning("$sql ($mlss_id, $tag, ".$tags{$tag}.")");
-    $sth->execute($mlss_id, $tag, $tags{$tag});
+    $self->warning("store_tag($mlss_id, $tag, ".$tags{$tag}.")");
+    $mlss->store_tag($tag, $tags{$tag});
   }
 }
 
