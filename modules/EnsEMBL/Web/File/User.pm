@@ -89,6 +89,121 @@ sub write_line {
   return $result;
 }
 
+sub upload {
+### Upload data from a form and save it to a file
+  my ($self, $args) = @_;
+  my $hub       = $self->hub;
+
+  my ($method)  = $args->{'method'} || grep $hub->param($_), qw(file url text);
+  my $type      = $args->{'type'};
+
+  my @orig_path = split '/', $hub->param($method);
+  my $filename  = $orig_path[-1];
+  my $name      = $hub->param('name');
+  my $f_param   = $hub->param('format');
+  my ($error, $format, $full_ext, %args);
+
+  ## Need the filename (for handling zipped files)
+  unless ($name) {
+    if ($method eq 'text') {
+      $name = 'Data';
+    } else {
+      my @orig_path = split('/', $hub->param($method));
+      $args{'filename'} = $orig_path[-1];
+      $name = $args{'filename'};
+    }
+  }
+
+  ## Some uploads shouldn't be viewable as tracks, e.g. assembly converter input
+  my $no_attach = $type eq 'no_attach' ? 1 : 0;
+
+  ## Has the user specified a format?
+  if ($f_param) {
+    $format = $f_param;
+  } elsif ($method ne 'text') {
+    ## Try to guess the format from the extension
+    my @parts       = split('\.', $filename);
+    my $ext         = $parts[-1] =~ /gz|zip/i ? $parts[-2] : $parts[-1];
+    my $format_info = $hub->species_defs->multi_val('DATA_FORMAT_INFO');
+    my $extensions;
+
+    foreach (@{$hub->species_defs->multi_val('UPLOAD_FILE_FORMATS')}) {
+      $format = uc $ext if $format_info->{lc($_)}{'ext'} =~ /$ext/i;
+    }
+  }
+ 
+  my %args = (
+              'hub'             => $self->hub,
+              'timestamp_name'  => 1,
+            );
+
+  if ($method eq 'url') {
+    $args{'file'}          = $hub->param($method);
+    $args{'upload'}        = 'url';
+  }
+  elsif ($method eq 'text') {
+    ## Get content straight from CGI, since there's no input file
+    my $text = $hub->param('text');
+    if ($type eq 'coords') {
+      $text =~ s/\s/\n/g;
+    }
+    $args{'content'} = $text;
+  }
+  else {
+    $args{'file'}   = $hub->input->tmpFileName($hub->param($method));
+    $args{'name'}   = $hub->param($method);
+    $args{'upload'} = 'cgi';
+  }
+
+  ## Now we know where the data is coming from, initialise the object and read the data
+  $self->init(%args);
+  my $result = $self->read;
+
+  ## Add upload to session
+  if ($result->{'error'}) {
+    $error = $result->{'error'};
+  }
+  else {
+    my $response = $self->write($result->{'content'});
+
+    if ($response->{'success'}) {
+      my $session = $hub->session;
+      my $md5     = $self->md5($result->{'content'});
+      my $code    = join '_', $md5, $session->session_id;
+      my $format  = $hub->param('format');
+      $format     = 'BED' if $format =~ /bedgraph/i;
+      my %inputs  = map $_->[1] ? @$_ : (), map [ $_, $hub->param($_) ], qw(filetype ftype style assembly nonpositional assembly);
+
+      $inputs{'format'}    = $format if $format;
+      my species = $hub->param('species') || $hub->species;
+
+      ## Attach data species to session
+      ## N.B. Use 'write' locations, since uploads are read from the
+      ## system's CGI directory
+      my $data = $session->add_data(
+                                    type      => 'upload',
+                                    file      => $file->write_location,
+                                    filesize  => length($result->{'content'}),
+                                    code      => $code,
+                                    md5       => $md5,
+                                    name      => $name,
+                                    species   => $species,
+                                    format    => $format,
+                                    no_attach => $no_attach,
+                                    timestamp => time,
+                                    assembly  => $hub->species_defs->get_config($species, 'ASSEMBLY_VERSION'),
+                                    %inputs
+                                    );
+
+      $session->configure_user_data('upload', $data);
+    }
+    else {
+      $error = $response->{'error'};
+    }
+  }
+  return $error;
+}
+
 sub write_tarball {
 ### Write an array of file contents to disk as a tarball
 ### N.B. Unlike other methods, this does not use the drivers
