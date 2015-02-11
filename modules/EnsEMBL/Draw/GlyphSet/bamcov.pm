@@ -16,7 +16,7 @@ limitations under the License.
 
 =cut
 
-package EnsEMBL::Draw::GlyphSet::bam_and_bigwig;
+package EnsEMBL::Draw::GlyphSet::bamcov;
 
 ### Module for drawing data in either BAM or BigWig format 
 ### (initially only for internal data sources where we can

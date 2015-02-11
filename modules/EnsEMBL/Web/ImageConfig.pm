@@ -2109,13 +2109,12 @@ sub add_data_files {
   
   foreach (@$keys) {
     my $glyphset = $data->{$_}{'format'} || '_alignment';
-    $glyphset = 'bam_and_bigwig' if $glyphset eq 'bam';
 
     my $renderers;
-    if ($glyphset eq 'bam_and_bigwig') {
+    if ($glyphset eq 'bamcov') {
       $renderers = [
                     'off',       'Off',
-                    'tiling', 'Coverage (BigWig)',
+                    'tiling',    'Coverage (BigWig)',
                     'normal',    'Normal',
                     'unlimited', 'Unlimited',
                     ];

@@ -62,8 +62,6 @@ sub bigwig_adaptor {
       }
     }
     $self->errorTrack('Could not retrieve file from trackhub') if $error;
-    warn "!!! BIGWIG ERROR: $error";
-    return $self->{'_cache'}->{'_bigwig_adaptor'};
   }
   else { ## local bigwig file
     my $config    = $self->{'config'};
@@ -74,14 +72,9 @@ sub bigwig_adaptor {
       my $dfa = $dba->get_DataFileAdaptor();
       $dfa->global_base_path($hub->species_defs->DATAFILE_BASE_PATH);
       my ($logic_name) = @{$self->my_config('logic_names')||[]};
-      my $datafiles = $dfa->fetch_all_by_logic_name($logic_name);
-      ## Alter datafile objects to point to bigwig files instead of bam files
-      foreach (@$datafiles) {
-        $_->file_type('BIGWIG');
-      }
-      my ($df) = @{$datafiles};
+      my ($df) = @{$dfa->fetch_all_by_logic_name($logic_name)||[]};
 
-      $self->{_cache}->{_bigwig_adaptor} ||= $df->get_ExternalAdaptor();
+      $self->{_cache}->{_bigwig_adaptor} ||= $df->get_ExternalAdaptor(undef, 'BIGWIG');
     }
   }
   return $self->{_cache}->{_bigwig_adaptor};

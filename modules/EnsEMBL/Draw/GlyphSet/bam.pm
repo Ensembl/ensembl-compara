@@ -133,7 +133,7 @@ sub bam_adaptor {
       my $datafiles = $dfa->fetch_all_by_logic_name($logic_name);
       my ($df) = @{$datafiles};
 
-      $self->{_cache}->{_bam_adaptor} ||= $df->get_ExternalAdaptor();
+      $self->{_cache}->{_bam_adaptor} ||= $df->get_ExternalAdaptor(undef, 'BAM');
     }
   }
    
