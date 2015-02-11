@@ -175,14 +175,14 @@ sub upload {
       my %inputs  = map $_->[1] ? @$_ : (), map [ $_, $hub->param($_) ], qw(filetype ftype style assembly nonpositional assembly);
 
       $inputs{'format'}    = $format if $format;
-      my species = $hub->param('species') || $hub->species;
+      my $species = $hub->param('species') || $hub->species;
 
       ## Attach data species to session
       ## N.B. Use 'write' locations, since uploads are read from the
       ## system's CGI directory
       my $data = $session->add_data(
                                     type      => 'upload',
-                                    file      => $file->write_location,
+                                    file      => $self->write_location,
                                     filesize  => length($result->{'content'}),
                                     code      => $code,
                                     md5       => $md5,
