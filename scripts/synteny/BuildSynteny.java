@@ -14,16 +14,16 @@
  * limitations under the License.
  */
 
-
-import java.util.*;
-import apollo.datamodel.*; //for FeatureSet and FeatureSetI
-import apollo.seq.io.*; //for GFFFile
-import apollo.util.*; //for QuickSort
+import java.util.Vector;
+import apollo.datamodel.FeaturePair;
+import apollo.datamodel.SeqFeature;
+import apollo.seq.io.GFFFile;
+import apollo.util.QuickSort;
 
 public class BuildSynteny {
 
     public static void main (String[] args) {
-	FeatureSet fset = null;
+	Vector<FeaturePair> fset = new Vector<FeaturePair>();
 	
         if (args.length < 3 || args.length > 6) {
             System.err.println("Usage: BuildSynteny <gff file> <maxDist> <minSize> [orientFlag]");
@@ -61,11 +61,9 @@ public class BuildSynteny {
 	try {
 	    GFFFile gff = new GFFFile(args[0],"File");
 	    
-	    fset = new FeatureSet();
-	    
 	    for (int i = 0; i < gff.seqs.size(); i++) {
-		if (gff.seqs.elementAt(i) instanceof FeaturePairI) {
-		    fset.addFeature((SeqFeatureI)gff.seqs.elementAt(i));
+		if (gff.seqs.elementAt(i) instanceof FeaturePair) {
+		    fset.addElement((FeaturePair)gff.seqs.elementAt(i));
 		}
 	    }
 	    
@@ -78,12 +76,12 @@ public class BuildSynteny {
     }
 
 
-    public static FeatureSetI groupLinks (FeatureSetI fset, int maxDist1, int minSize1, int maxDist2, int minSize2, boolean orientFlag) {
+    public static void groupLinks (Vector<FeaturePair> fset, int maxDist1, int minSize1, int maxDist2, int minSize2, boolean orientFlag) {
 	
-	FeatureSet newfset = new FeatureSet();
+	Vector<FeaturePair> newfset = new Vector<FeaturePair>();
 
 	if ((maxDist1 == 0) || (maxDist2 == 0)) {
-	    return fset;
+	    return;
 	}
 
 	// First sort the links by start coordinate on the query (main) species
@@ -93,7 +91,7 @@ public class BuildSynteny {
 	FeaturePair[] feat = new FeaturePair[fset.size()];
 	
 	for (int i = 0; i < fset.size(); i++) {
-	    FeaturePair sf = (FeaturePair)fset.getFeatureAt(i);
+	    FeaturePair sf = fset.get(i);
 	    feat[i] = sf;
 	    featStart[i] = sf.getLow();
 	}
@@ -111,7 +109,7 @@ public class BuildSynteny {
 	long forwardCount = 0;
 	long reverseCount = 0;
 	
-	Vector featHolder = new Vector();
+	Vector<FeaturePair> featHolder = new Vector<FeaturePair>();
 	
 	//=================================================================
 	// FIRST LOOP: group links. maxDist is twice original maxDist
@@ -163,7 +161,7 @@ public class BuildSynteny {
 			
 			FeaturePair fp = new FeaturePair(sf1,sf2);
 			
-			newfset.addFeature(fp);
+			newfset.addElement(fp);
 		    }
 		    
 		    prev = null;
@@ -176,7 +174,7 @@ public class BuildSynteny {
 		    forwardCount = 0;
 		    reverseCount = 0;
 		    
-		    featHolder = new Vector();
+		    featHolder = new Vector<FeaturePair>();
 		    
 		    // System.out.println("Starting new block " + feat[i].getName());
 		} else if (!feat[i].getHname().equals(prev.getHname()))  {
@@ -242,11 +240,11 @@ public class BuildSynteny {
 	    }
 	    
 	    FeaturePair fp = new FeaturePair(sf1,sf2);
-	    newfset.addFeature(fp);
+	    newfset.addElement(fp);
 	}
 	
 	if (newfset.size() == 0) {
-	    return newfset;
+	    return;
 	}
 	//=================================================================
 	// SECOND LOOP: group previous groups. maxDist is 30x the original maxDist
@@ -254,12 +252,8 @@ public class BuildSynteny {
 	//=================================================================
 	// System.out.println("Grouping groups");
 	
-	FeatureSet tmpfset = new FeatureSet();
-	FeaturePair[] farr = new FeaturePair[newfset.size()];
-	
-	for (int i = 0; i < newfset.size(); i++) {
-	    farr[i] = (FeaturePair)newfset.getFeatureAt(i);
-	}
+	Vector<FeaturePair> tmpfset = new Vector<FeaturePair>();
+	FeaturePair[] farr = newfset.toArray(new FeaturePair[newfset.size()]);
 	
 	minStart  = 1000000000;
 	minHStart = 1000000000;
@@ -271,7 +265,7 @@ public class BuildSynteny {
         String curHname = null;
 	
 	for (int i=0; i < newfset.size(); i++) {
-	    FeaturePair fp = (FeaturePair)newfset.getFeatureAt(i);
+	    FeaturePair fp = newfset.get(i);
 //             System.out.println("Processing feature " + fp.getHname() + " " + 
 //                                 fp.getLow() + " " + fp.getHigh() + " - " + 
 //                                 fp.getHlow() + " " + fp.getHhigh());
@@ -310,7 +304,7 @@ public class BuildSynteny {
 		    // System.out.println("Setting group strand " + prev.getStrand());
 		    
 		    newfp.setStrand(prev.getStrand());
-		    tmpfset.addFeature(newfp);
+		    tmpfset.addElement(newfp);
 		    
 		    minStart  = 1000000000;
 		    minHStart = 1000000000;
@@ -347,10 +341,10 @@ public class BuildSynteny {
 	
 	FeaturePair newfp = new FeaturePair(sf1,sf2);
 	newfp.setStrand(prev.getStrand());
-	tmpfset.addFeature(newfp);
+	tmpfset.addElement(newfp);
 	
 	for (int i=0; i < tmpfset.size(); i++) {
-	    FeaturePair fp = (FeaturePair)tmpfset.getFeatureAt(i);
+	    FeaturePair fp = tmpfset.get(i);
 	    if (Math.abs(fp.getHigh() - fp.getLow()) > minSize1) {
 		System.out.println(fp.getName() + "\tcluster\tsimilarity\t" +
 				   fp.getLow() + "\t" +
@@ -361,7 +355,7 @@ public class BuildSynteny {
 				   fp.getHhigh());
 	    }
 	}
-	return tmpfset;
+	return;
     }
 
 
