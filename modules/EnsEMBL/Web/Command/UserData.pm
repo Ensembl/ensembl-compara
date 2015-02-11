@@ -33,7 +33,9 @@ sub ajax_redirect {
 }
 
 sub upload {
-## Separate out the upload, to make code reuse easier
+### Separate out the upload, to make code reuse easier
+### TODO refactor this method as a wrapper around E::W::File::User::upload
+### - all it needs to do is return the required parameters
   my ($self, $method, $type) = @_;
   my $hub       = $self->hub;
   my $params    = {};
