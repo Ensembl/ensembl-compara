@@ -221,7 +221,7 @@ sub transcript_table {
 
     my $trans_attribs = {};
     my $trans_gencode = {};
-    my @appris_codes  = qw(appris_pi appris_ci appris_ci1 appris_ci2 appris_ci3);
+    my @appris_codes  = qw(appris_pi1 appris_pi2 appris_pi3 appris_pi4 appris_pi5 appris_alt1 appris_alt2);
 
     foreach my $trans (@$transcripts) {
       foreach my $attrib_type (qw(CDS_start_NF CDS_end_NF gencode_basic TSL), @appris_codes) {
