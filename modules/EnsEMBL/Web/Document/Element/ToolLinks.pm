@@ -52,7 +52,7 @@ sub content {
     $menu .= sprintf '<li%s>%s</li>', @$links ? '' : ' class="last"', $link;
   }
 
-  return qq(<ul class="tools">$menu</ul><div class="more"></div>);
+  return qq(<ul class="tools">$menu</ul><div class="more"><a href="#">More <span class="arrow">&#9660;</span></a></div>);
 }
 
 1;
