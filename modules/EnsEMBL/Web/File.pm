@@ -286,6 +286,13 @@ sub hub {
   return $self->{'hub'};
 }
 
+sub code {
+### a
+### Session code for fetching this file
+  my $self = shift;
+  return $self->{'code'};
+}
+
 sub error {
 ### a
   my $self = shift;
