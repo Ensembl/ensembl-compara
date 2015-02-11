@@ -191,6 +191,8 @@ sub upload {
                                     );
 
       $session->configure_user_data('upload', $data);
+      ## Store the session code so we can access it later
+      $self->{'code'} = $code;
     }
     else {
       $error = $response->{'error'};
