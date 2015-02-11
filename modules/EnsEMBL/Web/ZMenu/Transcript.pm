@@ -24,6 +24,10 @@ use Bio::EnsEMBL::SubSlicedFeature;
 
 use base qw(EnsEMBL::Web::ZMenu);
 
+sub exon_count {
+  return shift->{'_exon_count'};
+}
+
 sub content {
   my $self        = shift;
   my $hub         = $self->hub;
@@ -51,14 +55,15 @@ sub content {
       }
     }
     
-    ## Only link to an individual exon if the user has clicked squarely 
+    ## Only link to individual exons if the user has clicked squarely
     ## on an exon (i.e. ignore when zoomed out or exons are tiny)
-    if (scalar @exons == 1) {
+    for (@exons) {
       $self->add_entry({
         type  => 'Exon',
-        label => $exons[0],
-        link  => $hub->url({ type => 'Transcript', action => 'Exons', exon => $exons[0] })
+        label => $_,
+        link  => $hub->url({ type => 'Transcript', action => 'Exons', exon => $_ })
       });
+      $self->{'_exon_count'}++;
     }
   }
   

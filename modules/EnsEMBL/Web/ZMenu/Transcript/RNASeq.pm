@@ -48,7 +48,7 @@ sub content {
       type     => 'Transcript',
       action   => 'SupportingEvidence',
       }),
-    position => 2,
+    position => $self->exon_count + 1,
   });
 
   # add new entries for attributes
