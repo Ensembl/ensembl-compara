@@ -91,26 +91,25 @@ sub write_line {
 
 sub upload {
 ### Upload data from a form and save it to a file
-  my ($self, $args) = @_;
+  my ($self, %args) = @_;
   my $hub       = $self->hub;
 
-  my ($method)  = $args->{'method'} || grep $hub->param($_), qw(file url text);
-  my $type      = $args->{'type'};
+  my ($method)  = $args{'method'} || grep $hub->param($_), qw(file url text);
+  my $type      = $args{'type'};
 
   my @orig_path = split '/', $hub->param($method);
   my $filename  = $orig_path[-1];
   my $name      = $hub->param('name');
   my $f_param   = $hub->param('format');
-  my ($error, $format, $full_ext, %args);
+  my ($error, $format, $full_ext);
 
   ## Need the filename (for handling zipped files)
   unless ($name) {
     if ($method eq 'text') {
-      $name = 'Data';
+      $args{'name'} = 'Data';
     } else {
       my @orig_path = split('/', $hub->param($method));
-      $args{'filename'} = $orig_path[-1];
-      $name = $args{'filename'};
+      $args{'name'} = $orig_path[-1];
     }
   }
 
@@ -132,10 +131,7 @@ sub upload {
     }
   }
  
-  my %args = (
-              'hub'             => $self->hub,
-              'timestamp_name'  => 1,
-            );
+  $args{'timestamp_name'}  = 1;
 
   if ($method eq 'url') {
     $args{'file'}          = $hub->param($method);
@@ -151,7 +147,6 @@ sub upload {
   }
   else {
     $args{'file'}   = $hub->input->tmpFileName($hub->param($method));
-    $args{'name'}   = $hub->param($method);
     $args{'upload'} = 'cgi';
   }
 
