@@ -72,6 +72,14 @@ sub new {
 
   bless $self, $class;
 
+  ## Add in read/write file paths, etc (if we have them at time of object creation)
+  $self->init(%args) if $args{'file'};
+
+  return $self;
+}
+
+sub init {
+  my ($self, %args) = @_;
   my $read_path = $args{'file'};
   my $bare_name;
 
@@ -82,9 +90,9 @@ sub new {
     ## Clean up the path before processing further
     $read_path  =~ s/^\s+//;
     $read_path  =~ s/\s+$//;
-    my $tmp     = $self->{'hub'}->species_defs->ENSEMBL_TMP_DIR;
+    my $tmp     = $self->{'base_dir'};
     $read_path  =~ s/$tmp//;
-    $tmp        = $self->{'hub'}->species_defs->ENSEMBL_TMP_URL;
+    $tmp        = $self->{'base_url'};
     $read_path  =~ s/$tmp//;
 
     my $read_name;
@@ -181,7 +189,6 @@ sub new {
   #  warn "... SET $k = $v";
   #}
 
-  return $self;
 }
 
 sub read_name {
