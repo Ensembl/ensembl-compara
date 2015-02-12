@@ -98,7 +98,10 @@ sub merge_split_genes {
       $protein1->{'alignment_string'.($seq_type || '')} = $cdna;
     }
 
-    $gene_tree->minimize_tree if keys %split_genes;
+    if (scalar(keys %split_genes)) {
+        $gene_tree->minimize_tree;
+        delete $gene_tree->{_member_array}; # It could have been established by preload(), so we need to clear it
+    }
 
     # Removing duplicate sequences of split genes
     print STDERR "split_genes list: ", Dumper(\%split_genes), "\n" if $self->debug;
