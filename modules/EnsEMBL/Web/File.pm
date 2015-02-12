@@ -72,8 +72,8 @@ sub new {
 
   bless $self, $class;
 
-  ## Add in read/write file paths, etc (if we have them at time of object creation)
-  $self->init(%args) if $args{'file'};
+  ## Option to create an "empty" object with minimal information 
+  $self->init(%args) unless $args{'empty'};
 
   return $self;
 }
