@@ -81,6 +81,7 @@ sub handle_download {
 
   my $filename    = $hub->param('filename');
   my $format      = $hub->param('format');
+  my $path        = $hub->param('file');
   my $compression = $hub->param('compression');
   
   ## Strip double dots to prevent downloading of files outside tmp directory
@@ -96,7 +97,7 @@ sub handle_download {
   );
   my $mime_type = $mime_types{$compression} || $mime_types{$format} || 'text/plain';
 
-  my %params = (hub => $hub, file => $hub->param('file'));
+  my %params = (hub => $hub, file => $path);
   my $file = EnsEMBL::Web::File::User->new(%params);
   my $error;
 
