@@ -89,22 +89,19 @@ sub content {
 
   $html .= $form->render;
 
-  unless ($format eq 'RTF' || $compression) {
-    my $file = EnsEMBL::Web::File::User->new(hub => $hub, file => $path);
-    if ($file) {
-      my $read = $file->read;
-      if ($read->{'content'}) {
-        $html .= '<h2 style="margin-top:1em">File preview</h2><div class="code"><pre style="color:#333">';
-        $html .= $read->{'content'};
-        $html .= '</pre>';
-      }
+  my $file = EnsEMBL::Web::File::User->new(hub => $hub, file => $path);
+  if ($file) {
+    my $read = $file->read;
+    if ($read->{'content'}) {
+      $html .= '<h2 style="margin-top:1em">File preview</h2><div class="code"><pre style="color:#333">';
+      $html .= $read->{'content'};
+      $html .= '</pre>';
     }
-    else {
-      $html = "<p>Could not fetch file preview</p>";
-    }
-    $html .= '</div>';
-    
   }
+  else {
+    $html = "<p>Could not fetch file preview</p>";
+  }
+  $html .= '</div>';
 
   return $html;
 }

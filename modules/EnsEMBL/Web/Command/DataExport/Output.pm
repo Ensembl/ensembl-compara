@@ -119,8 +119,8 @@ sub process {
   }
   else {
     ## Parameters for file download
-    $controller                     = 'Download' if $compression;    # if uncompressed format, user should be able to preview the file
-    $url_params->{'action'}         = $compression ? '' : 'Results'; # same as above
+    $controller                     = 'Download' if $compression || $format eq 'RTF';    # if uncompressed format, user should be able to preview the file
+    $url_params->{'action'}         = $compression || $format eq 'RTF' ? '' : 'Results'; # same as above
     $url_params->{'filename'}       = $file->read_name;
     $url_params->{'format'}         = $format;
     $url_params->{'file'}           = $file->read_location;

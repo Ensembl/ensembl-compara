@@ -26,7 +26,7 @@ Ensembl.Panel.DataExport = Ensembl.Panel.extend({
     this.elLk.dropdown  = this.elLk.form.find('select._export_formats').on('change', function() { panel.selectOption(this.value, true); });
 
     // change the button text for compressed and uncompressed formats
-    this.elLk.form.find('input[name=compression]').on('change', function() {
+    this.elLk.compression = this.elLk.form.find('input[name=compression]').on('change', function() {
       panel.changeButtonVal(!!this.value && this.checked ? 'Download' : 'Preview');
     }).trigger('change');
   },
@@ -35,6 +35,11 @@ Ensembl.Panel.DataExport = Ensembl.Panel.extend({
     this.elLk.images.removeClass('selected').filter(function() { return this.firstChild.innerHTML == val; }).addClass('selected');
     if (!dropdown) {
       this.elLk.dropdown.find('option[value=' + val + ']').prop('selected', true).end().selectToToggle('trigger');
+    }
+    if (val === 'RTF') {
+      this.changeButtonVal('Download');
+    } else {
+      this.elLk.compression.trigger('change');
     }
   },
 
