@@ -119,12 +119,13 @@ sub process {
   }
   else {
     ## Parameters for file download
-    $controller                     = 'Download';
-    $url_params->{'action'}         = '';
+    $controller                     = 'Download' if $compression;    # if uncompressed format, user should be able to preview the file
+    $url_params->{'action'}         = $compression ? '' : 'Results'; # same as above
     $url_params->{'filename'}       = $file->read_name;
     $url_params->{'format'}         = $format;
     $url_params->{'file'}           = $file->read_location;
     $url_params->{'compression'}    = $compression;
+    $url_params->{'__clear'}        = 1;
     ## Pass parameters needed for Back button to work
     my @core_params = keys %{$hub->core_object('parameters')};
     push @core_params, qw(export_action data_type component align);
@@ -133,8 +134,7 @@ sub process {
       my @values = $hub->param($_);
       $url_params->{$_} = scalar @values > 1 ? \@values : $values[0];
     }
-  }  
-  my $url = $hub->url($url_params);
+  }
 
   $self->ajax_redirect($hub->url($controller || (), $url_params), $controller ? (undef, undef, 'download') : ());
 }
