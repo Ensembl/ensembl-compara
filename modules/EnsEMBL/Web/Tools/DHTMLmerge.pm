@@ -273,7 +273,7 @@ sub get_contents {
   ## @param Type of the file (css or js)
   ## @return File contents (string)
   my ($self, $species_defs, $type) = @_;
-  my $content = join "\n", file_get_contents($self->{'absolute_path'});
+  my $content = join '', file_get_contents($self->{'absolute_path'});
 
   # For css file, convert style placeholders to actual colours
   if ($type eq 'css') {
