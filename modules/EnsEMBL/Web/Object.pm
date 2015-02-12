@@ -252,7 +252,7 @@ sub get_alt_allele_link {
   if ($reference) {
     ## Link to Alt Allele page, since there could be several
     $alt_link = sprintf('View <a href="%s">alleles</a> of this gene on alternate assemblies',
-                                  $hub->url({'action' => 'Alleles'}));
+                                  $hub->url({'type' => 'Gene','action' => 'Alleles'}));
   }
   else {
     ## Link to reference gene

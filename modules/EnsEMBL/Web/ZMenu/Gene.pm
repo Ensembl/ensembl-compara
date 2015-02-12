@@ -91,7 +91,7 @@ sub _content {
 
   my $alt_allele_link = $object->get_alt_allele_link('Location');
   $self->add_entry({
-                    'type'       => 'Alt. alleles',
+                    'type'       => 'Gene alleles',
                     'label_html' => $alt_allele_link,
                   }) 
     if $alt_allele_link;

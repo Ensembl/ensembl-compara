@@ -89,7 +89,7 @@ sub content {
       label => $object->gene->stable_id,
       link  => $hub->url({ type => 'Gene', action => 'Summary' })
     });
-    
+
     $self->add_entry({
       type  => 'Location',
       label => sprintf(
@@ -151,6 +151,12 @@ sub content {
       label => $label
     });
   }
+  my $alt_allele_link = $object->get_alt_allele_link('Location');
+  $self->add_entry({
+                    'type'       => 'Gene alleles',
+                    'label_html' => $alt_allele_link,
+                  }) 
+    if $alt_allele_link;
 }
 
 1;
