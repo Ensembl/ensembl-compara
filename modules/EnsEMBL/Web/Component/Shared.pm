@@ -420,24 +420,13 @@ sub transcript_table {
     # Add rows to transcript table
     push @rows, @{$biotype_rows{$_}} for sort keys %biotype_rows; 
 
-    my @hidecols;
-    foreach my $id (keys %extra_links) {
-      foreach my $i (0..$#columns) {
-        if($columns[$i]->{'key'} eq $id and $extra_links{$id}->{'hidden'}) {
-          push @hidecols,$i;
-          last;
-        }
-      }
-    }
-
     $transc_table = $self->new_table(\@columns, \@rows, {
       data_table        => 1,
       data_table_config => { asStripClasses => [ '', '' ], oSearch => { sSearch => '', bRegex => 'false', bSmart => 'false' } },
       toggleable        => 1,
       class             => 'fixed_width' . ($show ? '' : ' hide'),
       id                => 'transcripts_table',
-      exportable        => 1,
-      hidden_columns    => \@hidecols,
+      exportable        => 1
     });
   }
 
