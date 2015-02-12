@@ -91,10 +91,18 @@ sub content {
   unless ($format eq 'RTF' || $compression) {
     my $file = EnsEMBL::Web::File::User->new(hub => $hub, file => $path);
     if ($file) {
-      $html .= '<h2 style="margin-top:1em">File preview</h2><div class="code"><pre style="color:#333">';
-      $html .= $file->read;
-      $html .= '</pre></div>';
+      my $read = $file->read;
+      if ($read->{'content'}) {
+        $html .= '<h2 style="margin-top:1em">File preview</h2><div class="code"><pre style="color:#333">';
+        $html .= $read->{'content'};
+        $html .= '</pre>';
+      }
     }
+    else {
+      $html = "<p>Could not fetch file preview</p>";
+    }
+    $html .= '</div>';
+    
   }
 
   return $html;
