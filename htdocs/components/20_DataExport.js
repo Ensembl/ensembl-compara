@@ -22,13 +22,11 @@ Ensembl.Panel.DataExport = Ensembl.Panel.extend({
     this.base();
 
     this.elLk.form      = this.el.find('form').first();
-    this.elLk.images    = this.elLk.form.find('div._export_formats div').on('click', function() { panel.selectOption(this.firstChild.innerHTML); });
-    this.elLk.dropdown  = this.elLk.form.find('select._export_formats').on('change', function() { panel.selectOption(this.value, true); });
+    this.elLk.images    = this.elLk.form.find('div._export_formats div').on('click',  function() { panel.selectOption(this.firstChild.innerHTML); });
+    this.elLk.dropdown  = this.elLk.form.find('select._export_formats').on('change',  function() { panel.selectOption(this.value, true); });
+    this.elLk.cSwitch   = this.elLk.form.find('input[name=compression]').on('change', function() { panel.resetButtonVal(); });
 
-    // change the button text for compressed and uncompressed formats
-    this.elLk.compression = this.elLk.form.find('input[name=compression]').on('change', function() {
-      panel.changeButtonVal(!!this.value && this.checked ? 'Download' : 'Preview');
-    }).trigger('change');
+    this.resetButtonVal();
   },
 
   selectOption: function(val, dropdown) {
@@ -36,14 +34,11 @@ Ensembl.Panel.DataExport = Ensembl.Panel.extend({
     if (!dropdown) {
       this.elLk.dropdown.find('option[value=' + val + ']').prop('selected', true).end().selectToToggle('trigger');
     }
-    if (val === 'RTF') {
-      this.changeButtonVal('Download');
-    } else {
-      this.elLk.compression.trigger('change');
-    }
+
+    this.resetButtonVal();
   },
 
-  changeButtonVal: function(val) {
-    this.elLk.form.find('input[type=submit]').val(val);
+  resetButtonVal: function() {
+    this.elLk.form.find('input[type=submit]').val(this.elLk.cSwitch.filter(':checked').val() || this.elLk.dropdown.find('option:selected').val() === 'RTF' ? 'Download' : 'Preview');
   }
 });
