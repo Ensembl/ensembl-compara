@@ -519,6 +519,7 @@ sub _load_all_missing_sequences {
     } else {
 
         my %seq_id2member = ();
+        my $db_adaptor = $self->adaptor ? $self->adaptor->db : $self->get_all_Members->[0]->adaptor->db;
         foreach my $member (@{$self->get_all_Members}) {
             next unless $member->isa('Bio::EnsEMBL::Compara::SeqMember');
             next if $member->{'_sequence'};
@@ -527,7 +528,7 @@ sub _load_all_missing_sequences {
         }
 
         my @seq_ids = keys %seq_id2member;
-        my $seqs = $self->adaptor->db->get_SequenceAdaptor->fetch_by_dbIDs(\@seq_ids);
+        my $seqs = $db_adaptor->get_SequenceAdaptor->fetch_by_dbIDs(\@seq_ids);
         while (@$seqs) {
             my $seq_id = shift @seq_ids;
             my $seq = shift @$seqs;
