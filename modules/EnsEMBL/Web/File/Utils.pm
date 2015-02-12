@@ -29,8 +29,40 @@ use IO::Uncompress::Bunzip2;
 use EnsEMBL::Web::Exceptions;
 
 use Exporter qw(import);
-our @EXPORT_OK = qw(sanitise_filename get_filename get_extension get_compression uncompress);
+our @EXPORT_OK = qw(sanitise_path sanitise_filename get_filename get_extension get_compression uncompress);
 our %EXPORT_TAGS = (all => [@EXPORT_OK]);
+
+sub sanitise_path {
+### Clean up a given file path to prevent access to non-permitted files
+### @param path String - the path you want to sanitise
+### @param species_defs EnsEMBL::Web::SpeciesDefs (optional) - allows you 
+###        to remove the SERVERROOT and TMP directories from an absolute path
+### @return path String
+  my ($path, $species_defs) = @_;
+
+  ## Tread carefully with absolute paths!
+  if ($path =~ /\//) {
+    if ($species_defs) {
+      foreach ($species_defs->ENSEMBL_TMP_DIR, 
+                $species_defs->ENSEMBL_TMP_DIR_IMG, 
+                $species_defs->ENSEMBL_TMP_DIR_TOOLS) {
+        $path =~ s/$_//;
+      }
+    }
+    else {
+      return undef;
+    }
+  }
+
+  ## Strip double dots to prevent downloading of files outside permitted directories
+  $path =~ s/\.\.//g;
+  ## Strip beginning dots to prevent downloading of hidden files
+  $path =~ s/^\.//g;
+  ## Remove any remaining illegal characters
+  $path =~ s/[^\w|-|\.|\/]//g;
+
+  return $path;
+}
 
 sub sanitise_filename {
 ### Users often break the rules for safe, Unix-friendly filenames
