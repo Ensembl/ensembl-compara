@@ -69,7 +69,7 @@ sub fetch_by_dbIDs {
   my ($self, $sequence_ids, $batch_size) = @_;
 
   #Fetch in batches of batch_size
-  my $sequences;
+  my $sequences = [];
   $batch_size = 1000 unless (defined $batch_size);
 
   #Get sequences from database in batches of $batch_size. Store in a hash based on sequence_id rather than an array
