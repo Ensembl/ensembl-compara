@@ -21,7 +21,9 @@ Ensembl.Panel.DataExport = Ensembl.Panel.extend({
 
     this.base();
 
-    this.el.find('form').first().find('input[name=compression]').on('change', function() {
+    this.elLk.form = this.el.find('form').first();
+
+    this.elLk.form.find('input[name=compression]').on('change', function() {
       panel.elLk.form.find('input[type=submit]').val(!!this.value && this.checked ? 'Download' : 'Preview');
     }).trigger('change');
   }
