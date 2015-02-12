@@ -64,7 +64,6 @@ Ensembl.Panel.ModalContent = Ensembl.Panel.LocalContext.extend({
   initialize: function () {
     this.addSubPanel();
     this.setSelectAll();
-    this.initSeqExport();
     
     this.elLk.dataTable = $('table.data_table', this.el);
     
@@ -193,25 +192,6 @@ Ensembl.Panel.ModalContent = Ensembl.Panel.LocalContext.extend({
     });
     this.elLk.content.find('input._selectall').on('change', function() {
       $(this).parents('div._selectall').find('input[type=checkbox]').prop('checked', this.checked);
-    });
-  },
-
-  initSeqExport: function() {
-    var panel = this;
-    this.elLk.content.find('div._export_formats').on('deselect', function() {
-      $(this).find('div').removeClass('selected');
-    }).find('div').on({
-      'select': function() {
-        $(this).addClass('selected');
-      },
-      'click': function() {
-        $(this).parent().trigger('deselect').end().trigger('select').data('option').prop('selected', true).parents('select').selectToToggle('trigger');
-      }
-    }).each(function() {
-      $(this).data('option', panel.elLk.content.find('select._export_formats').on('change', function() {
-        panel.elLk.content.find('div._export_formats').trigger('deselect');
-        $($(this).find('option:selected').data('image')).trigger('select');
-      }).find('option[value=' + this.firstChild.innerHTML + ']').data('image', this));
     });
   },
 
