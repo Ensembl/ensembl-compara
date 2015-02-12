@@ -39,17 +39,18 @@ sub content {
   my $filename    = $hub->param('filename');
   my $format      = $hub->param('format');
   my $path        = $hub->param('file');
-  my $compression = $hub->param('compression');
   my $html;
 
-  $html .= sprintf(
-            '<h2>Download</h2><a href="/Download/DataExport?filename=%s;format=%s;path=%s;compression=%s">Download your %s file</a>', 
-              $filename, lc($format), $path, $compression, $format,
-            );
+  $html .= sprintf '<h2>Download</h2><a href="%s">Download your %s file</a>', $hub->url('Download', {
+    'action'      => '',
+    'function'    => '',
+    'filename'    => $filename,
+    'file'        => $path,
+    'compression' => ''
+  }), $format;
 
   ## Hidden form taking you back to the beginning
-  my $form_url  = sprintf('/%s/DataExport/%s', $hub->species, $hub->param('export_action'));
-  my $form      = $self->new_form({'id' => 'export', 'action' => $form_url, 'method' => 'post'});
+  my $form      = $self->new_form({'id' => 'export', 'action' => $hub->url({'action' => $hub->param('export_action')}), 'method' => 'post'});
   my $fieldset  = $form->add_fieldset;
 
   foreach ($hub->param) {
