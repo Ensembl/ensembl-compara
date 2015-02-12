@@ -21,12 +21,7 @@ Ensembl.Panel.DataExport = Ensembl.Panel.extend({
 
     this.base();
 
-    this.elLk.form    = this.el.find('form').first();
-    this.downloadURL  = this.elLk.form.find('input[name=download_url]').remove().val();
-    this.previewURL   = this.elLk.form.find('input[name=preview_url]').remove().val();
-
-    this.elLk.form.find('input[name=compression]').on('change', function() {
-      panel.elLk.form.attr('action', this.value === 'gz' && this.checked ? panel.downloadURL : panel.previewURL);
+    this.el.find('form').first().find('input[name=compression]').on('change', function() {
       panel.elLk.form.find('input[type=submit]').val(!!this.value && this.checked ? 'Download' : 'Preview');
     }).trigger('change');
   }

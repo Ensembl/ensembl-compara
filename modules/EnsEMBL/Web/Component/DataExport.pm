@@ -45,14 +45,10 @@ sub create_form {
     'FASTA' => 'FASTA',
   };
 
-  my $form = $self->new_form({'id' => 'export', 'action' => '#', 'method' => 'post'});
+  my $form = $self->new_form({'id' => 'export', 'action' => $hub->url({'action' => 'Output',  'function' => '', '__clear' => 1}), 'method' => 'post'});
 
   ## Generic fields
   my $fieldset = $form->add_fieldset;
-
-  ## form's action url is set by JavaScript
-  $form->add_hidden({'name' => 'download_url', 'value' => $hub->url({'action' => 'Output',  'function' => '', '__clear' => 1})});
-  $form->add_hidden({'name' => 'preview_url',  'value' => $hub->url({'action' => 'Results', 'function' => '', '__clear' => 1})});
 
   my $filename = $hub->param('filename') || $self->default_file_name;
   $filename =~ s/\.[\w|\.]+//;
