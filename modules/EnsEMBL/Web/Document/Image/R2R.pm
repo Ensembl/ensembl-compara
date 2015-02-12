@@ -190,14 +190,14 @@ sub _create_svg {
 
       unless ($plot_meta->exists) {
         my $content = $with_consensus_structure ? "$path/$cons_filename\n" : '';
-        $content .= $aln_file->read_location."\toneseq\t$peptide_id\n";
+        $content .= $aln_file->absolute_read_path."\toneseq\t$peptide_id\n";
         $plot_meta->write($content);
       }
 
-      $self->_run_r2r_and_check("", $plot_meta->read_location, $path, $plot, "");
+      $self->_run_r2r_and_check("", $plot_meta->absolute_read_path, $path, $plot, "");
     }
 
-    return ($th_file->read_location, $plot_file->read_location);
+    return ($th_file->absolute_read_path, $plot_file->absolute_read_path);
 }
 
 sub _run_r2r_and_check {

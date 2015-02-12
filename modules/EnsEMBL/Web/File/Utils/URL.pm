@@ -96,7 +96,7 @@ sub file_exists {
 ###         no_exception (optional) Boolean
 ### @return Hashref (nice mode) or Boolean 
   my ($file, $args) = @_;
-  my $url = ref($file) ? $file->read_location : $file;
+  my $url = ref($file) ? $file->absolute_read_path : $file;
 
   my ($success, $error);
 
@@ -147,7 +147,7 @@ sub read_file {
 ###         compression String (optional) - compression type
 ### @return Hashref (in nice mode) or String - contents of file
   my ($file, $args) = @_;
-  my $url = ref($file) ? $file->read_location : $file;
+  my $url = ref($file) ? $file->absolute_read_path : $file;
 
   my ($content, $error);
 

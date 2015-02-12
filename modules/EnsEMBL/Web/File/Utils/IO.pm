@@ -69,7 +69,7 @@ sub file_exists {
 ###                     no_exception Boolean - whether to throw an exception
 ### @return Hashref (nice mode) or Boolean
   my ($file, $args) = @_;
-  my $path = ref($file) ? $file->read_location : $file;
+  my $path = ref($file) ? $file->absolute_read_path : $file;
   if ($args->{'nice'}) {
     if (-e $path && -f $path) {
       return {'success' => 1};
@@ -127,7 +127,7 @@ sub fetch_file {
 ###                     no_exception Boolean - whether to throw an exception
 ### @return Hashref (in nice mode) or String - entire file
   my ($file, $args) = @_;
-  my $path = ref($file) ? $file->read_location : $file;
+  my $path = ref($file) ? $file->absolute_read_path : $file;
   my $content;
   eval { $content = slurp($path) }; 
   if ($args->{'nice'}) {
@@ -160,7 +160,7 @@ sub read_file {
 ###                     compression String - compression type
 ### @return Hashref (in nice mode) or String - contents of file
   my ($file, $args) = @_;
-  my $path = ref($file) ? $file->read_location : $file;
+  my $path = ref($file) ? $file->absolute_read_path : $file;
   my $content;
 
   my $compression = defined($args->{'read_compression'}) || get_compression($path);
@@ -202,7 +202,7 @@ sub read_lines {
 ### @return Hashref (in nice mode) or Arrayref containing lines of file 
   my ($file, $args) = @_;
   my $content = [];
-  my $path = ref($file) ? $file->read_location : $file;
+  my $path = ref($file) ? $file->absolute_read_path : $file;
 
   my $compression = defined($args->{'read_compression'}) || get_compression($file);
   my $method = $compression ? $compression.'_slurp_to_array' : 'slurp_to_array';
@@ -242,7 +242,7 @@ sub preview_file {
 ###                     limit Integer - number of lines required (defaults to 10)
 ### @return Hashref (in nice mode) or Arrayref - n lines of file
   my ($file, $args) = @_;
-  my $path = ref($file) ? $file->read_location : $file;
+  my $path = ref($file) ? $file->absolute_read_path : $file;
   my $limit = $args->{'limit'} || 10;
   my $count = 0;
   my $lines = [];
