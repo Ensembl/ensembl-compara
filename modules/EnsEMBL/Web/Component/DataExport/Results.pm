@@ -36,9 +36,9 @@ sub content {
   my $self  = shift;
   my $hub   = $self->hub;
 
-  my $filename    = $hub->param('name');
+  my $filename    = $hub->param('filename');
   my $format      = $hub->param('format');
-  my $path        = $hub->param('url');
+  my $path        = $hub->param('file');
   my $compression = $hub->param('compression');
   my $html;
 
