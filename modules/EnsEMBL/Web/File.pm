@@ -34,13 +34,23 @@ use EnsEMBL::Web::File::Utils::Memcached qw/:all/;
 ### Data can be written to disk or, if enabled and appropriate, memcached
 ### Note that to aid cleanup, all files written to disk should use a common
 ### path pattern, as follows:
-### /base_dir/datestamp/user_identifier/sub_dir/file_name.ext
-###  - base_dir is set in subclasses - this is the main temporary file location
+### base_dir/subcategory/datestamp/user_identifier/sub_dir/file_name.ext
+###  - base_dir can be set in subclasses - this is the main temporary file location
+###    N.B. we store a key to the path_map and look up the absolute path only when
+###    needed, so as to avoid exposing URLs to the user
+###  - base_extra is an optional directory (or directories) - mainly included for
+###    backwards compatibility with the Tools code
 ###  - datestamp aids in cleaning up older files by date
 ###  - user_identifier is either session id or user id, and 
 ###    helps to ensure that users only see their own data
 ###  - sub_dir is optional - it's used by a few pages to separate content further
 ###  - file_name may be auto-generated, or set by the user
+
+our %path_map = (
+                'user'  => ['ENSEMBL_TMP_DIR', 'ENSEMBL_TMP_URL'],
+                'image' => ['ENSEMBL_TMP_DIR_IMG', 'ENSEMBL_TMP_URL_IMG'],
+                'tools' => ['ENSEMBL_TMP_DIR_TOOLS'],
+                );
 
 sub new {
 ### @constructor
@@ -63,8 +73,8 @@ sub new {
   my $input_drivers = ($args{'file'} && $args{'file'} =~ /^[http|ftp]/) ? ['URL'] : ['IO'];
   my $self = {
               'hub'             => $args{'hub'},
-              'base_dir'        => $args{'base_dir'} || $hub->species_defs->ENSEMBL_TMP_DIR,
-              'base_url'        => $args{'base_url'} || $hub->species_defs->ENSEMBL_TMP_URL,
+              'base_dir'        => $args{'base_dir'} || 'user',
+              'base_extra'      => $args{'base_extra'},
               'input_drivers'   => $args{'input_drivers'} || $input_drivers, 
               'output_drivers'  => $args{'output_drivers'} || ['IO'], 
               'error'           => undef,
@@ -90,10 +100,6 @@ sub init {
     ## Clean up the path before processing further
     $read_path  =~ s/^\s+//;
     $read_path  =~ s/\s+$//;
-    my $tmp     = $self->{'base_dir'};
-    $read_path  =~ s/$tmp//;
-    $tmp        = $self->{'base_url'};
-    $read_path  =~ s/$tmp//;
 
     my $read_name;
     if ($args{'upload'} && $args{'upload'} eq 'cgi') {
@@ -103,7 +109,7 @@ sub init {
       ## Backwards compatibility with previously uploaded TmpFile paths
       ## TODO Remove if block, once TmpFile modules are removed
       if ($args{'prefix'}) {
-        $self->{'read_location'} = join('/', $self->{'base_dir'}, $args{'prefix'}, $read_path);
+        $self->{'read_location'} = join('/', $args{'prefix'}, $read_path);
         $read_name = $read_path;
       }
       else {
@@ -179,10 +185,13 @@ sub init {
     my @path_elements = ($datestamp, $user_id);
     push @path_elements, $sub_dir if $sub_dir;
     push @path_elements, $self->{'write_name'};
+    unshift @path_elements, $args{'base_extra'} if $args{'base_extra'};
 
-    $self->{'write_location'} = join('/', $self->{'base_dir'}, @path_elements); 
-    $self->{'write_url'}      = join('/', $self->{'base_url'}, @path_elements); 
+    $self->{'write_location'} = join('/', @path_elements); 
   } 
+
+  ## Is this a temporary or "saved" file?
+  $self->{'status'} = $args{'status'};
 
   #warn ">>> FILE OBJECT:";
   #while (my($k, $v) = each (%$self)) {
@@ -262,12 +271,28 @@ sub write_location {
   return $self->{'write_location'} || $self->{'read_location'};
 }
 
+sub absolute_read_path {
+  my $self = shift;
+  my $constant = $path_map{$self->{'base_dir'}}->[0];
+  my $absolute_path = $self->hub->species_defs->$constant;
+  return join('/', $absolute_path, $self->read_location);
+}
+
+sub absolute_write_path {
+  my $self = shift;
+  my $constant = $path_map{$self->{'base_dir'}}->[0];
+  my $absolute_path = $self->hub->species_defs->$constant;
+  return join('/', $absolute_path, $self->write_location);
+}
+
 sub read_url {
 ### a
 ### Assume that we read back from the same file we wrote to
 ### unless read parameters were set separately
   my $self = shift;
-  return $self->{'read_url'} || $self->{'write_url'};
+  my $constant = $path_map{$self->{'base_dir'}}->[1];
+  my $base_url = $self->hub->species_defs->$constant;
+  return join('/', $base_url, $self->read_location);
 }
 
 sub write_url {
@@ -277,7 +302,9 @@ sub write_url {
 ### N.B. whilst we don't literally write to a url, memcached
 ### uses this method to create a virtual path to a saved file
   my $self = shift;
-  return $self->{'write_url'} || $self->{'read_url'};
+  my $constant = $path_map{$self->{'base_dir'}}->[1];
+  my $base_url = $self->hub->species_defs->$constant;
+  return join('/', $base_url, $self->write_location);
 }
 
 sub hub {
