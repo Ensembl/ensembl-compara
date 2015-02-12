@@ -35,9 +35,7 @@ sub new {
   my ($class, %args) = @_;
   $args{'input_drivers'}  ||= [qw(Memcached IO)];
   $args{'output_drivers'} ||= [qw(Memcached IO)];
-  my $sd = $args{'hub'}->species_defs;
-  $args{'base_dir'} = $sd->ENSEMBL_TMP_DIR_IMG; 
-  $args{'base_url'} = $sd->ENSEMBL_STATIC_SERVER . $sd->ENSEMBL_TMP_URL_IMG;
+  $args{'base_dir'} = 'image'; 
   return $class->SUPER::new(%args);
 }
 
