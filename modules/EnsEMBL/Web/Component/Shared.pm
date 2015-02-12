@@ -284,6 +284,7 @@ sub transcript_table {
        { key => 'transcript', sort => 'html',    title => 'Transcript ID' },
        { key => 'bp_length',  sort => 'numeric', label => 'bp', title => 'Length in base pairs'},
        { key => 'protein',    sort => 'html',    label => 'Protein', title => 'Protein length in amino acids' },
+       { key => 'translation',sort => 'html',    title => 'Translation ID', 'hidden' => 1 },
        { key => 'biotype',    sort => 'html',    title => 'Biotype', align => 'left' },
     );
 
@@ -300,7 +301,8 @@ sub transcript_table {
     foreach (map { $_->[2] } sort { $a->[0] cmp $b->[0] || $a->[1] cmp $b->[1] } map { [ $_->external_name, $_->stable_id, $_ ] } @$transcripts) {
       my $transcript_length = $_->length;
       my $tsi               = $_->stable_id;
-      my $protein           = 'No protein';
+      my $protein           = '';
+      my $translation_id    = '';
       my $protein_url       = '';
       my $protein_length    = '-';
       my $ccds              = '-';
@@ -310,14 +312,10 @@ sub transcript_table {
       my $url               = $hub->url({ %url_params, t => $tsi });
       my (@flags, @evidence);
       
-      if ($_->translation) {
-        $protein_url = $hub->url({
-                          type   => 'Transcript',
-                          action => 'ProteinSummary',
-                          t      => $tsi
-                        });
-        
-        $protein_length = $_->translation->length;
+      if (my $translation = $_->translation) {
+        $protein_url    = $hub->url({ type => 'Transcript', action => 'ProteinSummary', t => $tsi });
+        $translation_id = $translation->stable_id;
+        $protein_length = $translation->length;
       }
 
       my $dblinks = $_->get_all_DBLinks;
@@ -382,14 +380,13 @@ sub transcript_table {
       $merged .= " Merged Ensembl/Havana gene." if $_->analysis->logic_name =~ /ensembl_havana/;
       $extras{$_} ||= '-' for(keys %extra_links);
       my $row = {
-        name       => { value => $_->display_xref ? $_->display_xref->display_id : 'Novel', class => 'bold' },
-        transcript => sprintf('<a href="%s">%s</a>', $url, $tsi),
-        bp_length  => $transcript_length,
-        protein    => ($protein_length ne '-') ?
-                          sprintf('<a href="%s" title="View protein">%s</a>', $protein_url, $protein_length.' aa') 
-                          : $protein,
-        biotype    => $self->colour_biotype($self->glossary_mouseover($biotype_text,undef,$merged),$_),
-        ccds       => $ccds,
+        name        => { value => $_->display_xref ? $_->display_xref->display_id : 'Novel', class => 'bold' },
+        transcript  => sprintf('<a href="%s">%s</a>', $url, $tsi),
+        bp_length   => $transcript_length,
+        protein     => $protein_url ? sprintf '<a href="%s" title="View protein">%saa</a>', $protein_url, $protein_length : 'No protein',
+        translation => $protein_url ? sprintf '<a href="%s" title="View protein">%s</a>', $protein_url, $translation_id : '-',
+        biotype     => $self->colour_biotype($self->glossary_mouseover($biotype_text,undef,$merged),$_),
+        ccds        => $ccds,
         %extras,
         has_ccds   => $ccds eq '-' ? 0 : 1,
         cds_tag    => $cds_tag,
