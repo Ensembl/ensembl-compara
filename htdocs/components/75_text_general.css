@@ -171,7 +171,7 @@ ul.no-bullet, ul.no-bullet li   { list-style-image: none; list-style: none; }
 
 code { font: 1em andale mono, sans-serif; font-weight: bold; }
 
-.code     { border: 1px solid [[NEUTRAL_BORDER]]; background: [[NEUTRAL_BG]]; padding: 8px !important; }
+.code     { border: 1px solid [[NEUTRAL_BORDER]]; background: [[NEUTRAL_BG]]; padding: 8px !important; overflow: auto; }
 
 .code pre { margin: 0.5em 0 1.5em 0; font: 0.8em andale mono, sans-serif; color: [[CONTRAST_BG]] }
 .code pre:after { content: "."; display: block; height: 0; clear: both; visibility: hidden; }
