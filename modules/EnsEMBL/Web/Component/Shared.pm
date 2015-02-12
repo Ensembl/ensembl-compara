@@ -443,16 +443,16 @@ sub transcript_table {
 
 sub get_synonyms {
   my ($self, $match_id, @matches) = @_;
-  my $ids;
+  my @ids;
   foreach my $m (@matches) {
     my $dbname = $m->db_display_name;
     my $disp_id = $m->display_id;
     if ( $disp_id eq $match_id) {
       my $synonyms = $m->get_all_synonyms;
-      $ids = $ids . ', ' . (ref $_ eq 'ARRAY' ? "@$_" : $_) for @$synonyms;
+      push @ids, (ref $_ eq 'ARRAY' ? "@$_" : $_) for @$synonyms;
     }
   }
-  return $ids;
+  return join ', ', @ids;
 }
 
 # Utility method to wrap HTML in a glossary
