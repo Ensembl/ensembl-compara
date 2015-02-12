@@ -101,7 +101,7 @@ sub default_options {
 
     # species tree reconciliation
         # you can define your own species_tree for 'treebest'. It can contain multifurcations
-        'species_tree_input_file'   => $self->o('ensembl_cvs_root_dir').'/ensembl-compara/scripts/pipeline/tf10_347_species.nh',
+        'species_tree_input_file'   => $self->o('ensembl_cvs_root_dir').'/ensembl-compara/scripts/pipeline/species_tree.treefam.topology.nw',
         # you can define your own species_tree for 'notung'. It *has* to be binary
 
     # homology_dnds parameters:
