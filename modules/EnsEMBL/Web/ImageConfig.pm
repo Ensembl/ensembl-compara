@@ -1094,7 +1094,8 @@ sub load_file_format {
         $self->_add_datahub($source->{'source_name'}, $source->{'url'}, undef, $menu);
       }
       else { 
-        $self->$function(key => $source_name, menu => $menu, source => $source, description => $source->{'description'}, internal => $internal, view => $view);
+        my $is_internal = $source->{'source_url'} ? 0 : $internal;
+        $self->$function(key => $source_name, menu => $menu, source => $source, description => $source->{'description'}, internal => $is_internal, view => $view);
       }
     }
   }
