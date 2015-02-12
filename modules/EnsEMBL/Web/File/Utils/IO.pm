@@ -98,7 +98,7 @@ sub delete_file {
 ###                     no_exception Boolean - whether to throw an exception
 ### @return Hashref (in nice mode) or Boolean
   my ($file, $args) = @_;
-  my $path = ref($file) ? $file->write_location : $file;
+  my $path = ref($file) ? $file->absolute_write_path : $file;
   if ($args->{'nice'}) {
     if (unlink $path) {
       return {'success' => 1};
@@ -296,7 +296,7 @@ sub write_file {
 ###                     content String - content of file
 ### @return Hashref (in nice mode) or Boolean 
   my ($file, $args) = @_;
-  my $path = ref($file) ? $file->write_location : $file;
+  my $path = ref($file) ? $file->absolute_write_path : $file;
 
   my $content = $args->{'content'};
   my $filename = get_filename($file, 'write');
@@ -366,7 +366,7 @@ sub write_lines {
 ###                     lines Arrayref - lines of file
 ### @return Hashref (in nice mode) or Boolean
   my ($file, $args) = @_;
-  my $path = ref($file) ? $file->write_location : $file;
+  my $path = ref($file) ? $file->absolute_write_path : $file;
   my $lines = $args->{'lines'};
 
   if (ref($lines) ne 'ARRAY') {
@@ -424,7 +424,7 @@ sub append_lines {
 ###                     lines Arrayref - lines of file
 ### @return Hashref (in nice mode) or Boolean
   my ($file, $args) = @_;
-  my $path = ref($file) ? $file->write_location : $file;
+  my $path = ref($file) ? $file->absolute_write_path : $file;
   my $lines = $args->{'lines'};
 
   if (ref($lines) ne 'ARRAY') {
