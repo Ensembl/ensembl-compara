@@ -80,7 +80,6 @@ sub handle_download {
   my $hub = $self->hub;
 
   my $filename    = $hub->param('filename');
-  my $path        = $hub->param('path');
   my $format      = $hub->param('format');
   my $compression = $hub->param('compression');
   
@@ -97,7 +96,7 @@ sub handle_download {
   );
   my $mime_type = $mime_types{$compression} || $mime_types{$format} || 'text/plain';
 
-  my %params = (hub => $hub, file => $path);
+  my %params = (hub => $hub, file => $hub->param('file'));
   my $file = EnsEMBL::Web::File::User->new(%params);
   my $error;
 
@@ -121,6 +120,7 @@ sub handle_download {
   }
 
   if ($error) {
+    warn ">>> DOWNLOAD ERROR: @$error";
   }
 }
 
