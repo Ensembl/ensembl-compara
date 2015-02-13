@@ -1,3 +1,4 @@
+
 =head1 LICENSE
 
 Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
@@ -36,14 +37,22 @@ sub content {
   my $vf                 = $hub->param('vf');
   my $variation_features = $variation->get_all_VariationFeatures;
   my ($feature_slice)    = map { $_->dbID == $vf ? $_->feature_Slice : () } @$variation_features; # get slice for variation feature
+  my $avail              = $object->availability;  
 
-  my $info_box;
+  my ($info_box, $extra_description);
   if ($variation->failed_description || (scalar keys %{$object->variation_feature_mapping} > 1)) { 
     ## warn if variation has been failed
     $info_box = $self->multiple_locations($feature_slice, $variation->failed_description); 
   }
+ 
+  $extra_description .= qq{is associated with $avail->{has_transcripts} genes, } if($avail->{has_transcripts});
+  $extra_description .= qq{$avail->{has_individuals} individual genotypes, } if($avail->{has_individuals});
+  $extra_description .= qq{$avail->{has_ega} phenotypes} if($avail->{has_ega});  
+  $extra_description .= qq{ and is mentioned in $avail->{has_citation} citations.} if($avail->{has_citation});
+  
+  $extra_description  =~ s/citations/citation/gi if($avail->{has_citation} eq '1');  
 
-  my $summary_table = $self->new_twocol(
+  my $summary_table = $self->new_twocol(    
     $self->variation_source,
     $self->alleles($feature_slice),
     $self->location,
@@ -54,7 +63,8 @@ sub content {
     $self->clinical_significance,
     $self->synonyms,
     $self->hgvs,
-    $self->sets
+    $self->sets,
+    ['Summary', "This variant $extra_description"]
   );
 
   return sprintf qq{<div class="summary_panel">$info_box%s</div>}, $summary_table->render;

@@ -73,6 +73,7 @@ sub availability {
       $availability->{'regulation'}           = !!$funcgen_res; 
       $availability->{'has_species_tree'}     = $member ? $member->has_GeneGainLossTree : 0;
       $availability->{'family'}               = !!$counts->{families};
+      $availability->{'family_count'}         = $counts->{families};
       $availability->{'not_rnaseq'}           = $self->get_db eq 'rnaseq' ? 0 : 1;
       $availability->{"has_$_"}               = $counts->{$_} for qw(transcripts alignments paralogs orthologs similarity_matches operons structural_variation pairwise_alignments);
       $availability->{'multiple_transcripts'} = $counts->{'transcripts'} > 1;

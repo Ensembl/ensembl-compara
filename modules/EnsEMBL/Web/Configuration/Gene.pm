@@ -43,7 +43,7 @@ sub populate_tree {
     { 'availability' => 'gene' }
   );
 
-  $self->create_node('Splice', 'Splice variants ([[counts::transcripts]])',
+  $self->create_node('Splice', 'Splice variants',
     [qw( image EnsEMBL::Web::Component::Gene::SpliceImage )],
     { 'availability' => 'gene has_transcripts', 'concise' => 'Splice variants' }
   );
@@ -61,8 +61,7 @@ sub populate_tree {
     { 'availability' => 'gene', 'concise' => 'Supporting evidence' }
   );
 
-  my $caption = $self->object && $self->object->availability->{'has_alt_alleles'} ? 'Gene alleles ([[counts::alternative_alleles]])' : 'Gene alleles';
-  $self->create_node('Alleles', $caption,
+  $self->create_node('Alleles', 'Gene alleles',
                      [qw(alleles EnsEMBL::Web::Component::Gene::Alleles)],
                      { 'availability' => 'core has_alt_alleles', 'concise' => 'Gene Alleles' }
                    );
@@ -115,7 +114,7 @@ sub populate_tree {
       { 'availability' => 'gene database:compara core has_species_tree' }
     ));
     
-  my $ol_node = $self->create_node('Compara_Ortholog', 'Orthologues ([[counts::orthologs]])',
+  my $ol_node = $self->create_node('Compara_Ortholog', 'Orthologues',
     [qw( orthologues EnsEMBL::Web::Component::Gene::ComparaOrthologs )],
     { 'availability' => 'gene database:compara core has_orthologs', 'concise' => 'Orthologues' }
   );
@@ -127,7 +126,7 @@ sub populate_tree {
   
   $compara_menu->append($ol_node);
   
-  my $pl_node = $self->create_node('Compara_Paralog', 'Paralogues ([[counts::paralogs]])',
+  my $pl_node = $self->create_node('Compara_Paralog', 'Paralogues',
     [qw(paralogues EnsEMBL::Web::Component::Gene::ComparaParalogs)],
     { 'availability' => 'gene database:compara core has_paralogs', 'concise' => 'Paralogues' }
   );
@@ -139,7 +138,7 @@ sub populate_tree {
   
   $compara_menu->append($pl_node);
   
-  my $fam_node = $self->create_node('Family', 'Ensembl protein families ([[counts::families]])',
+  my $fam_node = $self->create_node('Family', 'Ensembl protein families',
     [qw( family EnsEMBL::Web::Component::Gene::Family )],
     { 'availability' => 'family', 'concise' => 'Ensembl protein families' }
   );

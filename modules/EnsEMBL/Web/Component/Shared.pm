@@ -75,11 +75,18 @@ sub transcript_table {
   my $self        = shift;
   my $hub         = $self->hub;
   my $object      = $self->object;
+  my $avail       = $object->availability;
   my $species     = $hub->species;
   my $table       = $self->new_twocol;
   my $page_type   = ref($self) =~ /::Gene\b/ ? 'gene' : 'transcript';
   my $description = $object->gene_description;
      $description = '' if $description eq 'No description';
+  my $show        = $hub->get_cookie_value('toggle_transcripts_table') eq 'open';
+  my $button      = sprintf('<a rel="transcripts_table" class="button toggle no_img _slide_toggle set_cookie %s" href="#" title="Click to toggle the transcript table">
+    <span class="closed">Show transcript table</span><span class="open">Hide transcript table</span>
+    </a>',
+    $show ? 'open' : 'closed'
+  ); 
 
   if ($description) {
 
@@ -90,7 +97,7 @@ sub transcript_table {
       $link         = $link->{'link'} =~ s/\[LINK\]/$link_id/r;
       $description  =~ s/$link_id/$link/;
     }
-
+    
     $table->add_row('Description', $description);
   }
 
@@ -197,7 +204,7 @@ sub transcript_table {
   my $trans_5_desc = "5' truncation in transcript evidence prevents annotation of the start of the CDS.";
   my $trans_3_desc = "3' truncation in transcript evidence prevents annotation of the end of the CDS.";
   my %glossary     = $hub->species_defs->multiX('ENSEMBL_GLOSSARY');
-  my $gene_html    = '';
+  my $gene_html    = '';  
   my $transc_table;
 
   if ($gene) {
@@ -237,8 +244,8 @@ sub transcript_table {
     if ($count == 1) { 
       $plural =~ s/s$//;
       $splices =~ s/s$//;
-    }
-
+    }   
+    
     if ($page_type eq 'transcript') {
       my $gene_id  = $gene->stable_id;
       my $gene_url = $hub->url({
@@ -246,7 +253,11 @@ sub transcript_table {
         action => 'Summary',
         g      => $gene_id
       });
-      $gene_html .= qq(<p>This transcript is a product of gene <a href="$gene_url">$gene_id</a></p>);
+      $gene_html .= sprintf('<p>This transcript is a product of gene <a href="%s">%s</a> %s',
+        $gene_url,
+        $gene_id,
+        $button
+      );
     }
    
     ## Link to other haplotype genes
@@ -255,19 +266,7 @@ sub transcript_table {
       if ($page_type eq 'gene') {
         $location_html .= "<p>$alt_link</p>";
       }
-    }
-
-    my $show    = $hub->get_cookie_value('toggle_transcripts_table') eq 'open';
-
-    $gene_html .= sprintf('<p>This gene has %s %s (%s)
-      <a rel="transcripts_table" class="button toggle no_img _slide_toggle set_cookie %s" href="#" title="Click to toggle the transcript table">
-      <span class="closed">Show transcript table</span><span class="open">Hide transcript table</span>
-      </a></p>',
-      $count,
-      $plural,
-      $splices,
-      $show ? 'open' : 'closed'
-    );
+    }   
 
     my @columns = (
        { key => 'name',       sort => 'string',  title => 'Name'          },
@@ -419,10 +418,34 @@ sub transcript_table {
 
   $table->add_row('Location', $location_html);
 
-  my $insdc_accession;
+  my ($insdc_accession,$counts_summary);
   $insdc_accession = $self->object->insdc_accession if $self->object->can('insdc_accession');
   $table->add_row('INSDC coordinates',$insdc_accession) if $insdc_accession;
+  
+  # since counts form left nav is gone, we are adding it in the description
+  if($page_type eq 'gene') {
+    $counts_summary = qq{$avail->{has_transcripts} transcripts(splice variants), } if($avail->{has_transcripts});
+    $counts_summary .= qq{$avail->{has_alt_alleles} gene alleles, } if($avail->{has_alt_alleles});
+    $counts_summary .= qq{$avail->{has_orthologs} orthologues, } if($avail->{has_orthologs});
+    $counts_summary .= qq{$avail->{has_paralogs} paralogues } if($avail->{has_paralogs});
+    $counts_summary .= qq{and is a member of $avail->{family_count} Ensembl protein families} if($avail->{family_count});
+    
+    $counts_summary  = qq{This gene has $counts_summary. $button} if($counts_summary);    
+  }    
+  if($page_type eq 'transcript') {
+    $counts_summary = qq{$avail->{has_evidence} supporting evidence, } if($avail->{has_evidence});
+    $counts_summary .= qq{lies on $avail->{has_exons} exons, } if($avail->{has_exons});
+    $counts_summary .= qq{corresponds to $avail->{has_similarity_matches} database identifiers with $avail->{has_oligos} oligo probes, } if($avail->{has_similarity_matches});
+    $counts_summary .= qq{is present on $avail->{has_domains} domain and features } if(0);#$avail->{has_domains});
+    $counts_summary .= qq{and is associated with $avail->{has_variations} variations} if(0);#$avail->{has_variations});
+    
+    $counts_summary  = "<p>This transcript has $counts_summary.</p>" if($counts_summary);
+  }
+  
+  $counts_summary =~ s/,(\s)and/ and/gi;  
+  $counts_summary =~ s/,\s\./\./gi;  
 
+  $table->add_row('Summary',$counts_summary) if $counts_summary;
   $table->add_row($page_type eq 'gene' ? 'Transcripts' : 'Gene', $gene_html) if $gene_html;
 
   return sprintf '<div class="summary_panel">%s%s</div>', $table->render, $transc_table ? $transc_table->render : '';
@@ -1074,8 +1097,8 @@ sub structural_variation_table {
       type   => 'Location',
       action => 'View',
       r      => $loc_string,
-    });
-      
+    });      
+    
     my %row = (
       id          => qq{<a href="$sv_link">$name</a>},
       location    => qq{<a href="$loc_link">$loc_string</a>},
