@@ -29,6 +29,10 @@ Bio::EnsEMBL::Compara::RunnableDB::SyntenyStats::SyntenyStats
 
 Calculate overall and coding coverage statistics for synteny.
 
+=head1 SYNOPSIS
+
+ $ standaloneJob.pl Bio::EnsEMBL::Compara::RunnableDB::SyntenyStats::SyntenyStats -division compara_curr -mlss_id 10104 -reg_conf ${ENSEMBL_CVS_ROOT_DIR}/ensembl-compara/scripts/pipeline/production_reg_conf.pl
+
 =head1 Author
 
 James Allen

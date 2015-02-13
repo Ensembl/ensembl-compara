@@ -24,6 +24,10 @@ Bio::EnsEMBL::Compara::PipeConfig::SyntenyStats_conf
 
 Calculate synteny coverage statistics.
 
+=head1 SYNOPSIS
+
+ $ init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::SyntenyStats_conf -reg_conf ${ENSEMBL_CVS_ROOT_DIR}/ensembl-compara/scripts/pipeline/production_reg_conf.pl -host compara1 -division compara_prev
+
 =cut
 
 package Bio::EnsEMBL::Compara::PipeConfig::SyntenyStats_conf;
