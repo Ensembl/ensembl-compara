@@ -29,8 +29,6 @@ use URI::Escape qw(uri_escape);
 
 use EnsEMBL::Web::Hub;
 
-#use Data::Dumper;
-
 use base qw(EnsEMBL::Web::Controller);
 
 sub new {
@@ -130,6 +128,17 @@ sub psychic {
 
   ## If we have a species and a location can we jump directly to that page ?
   if ($species || $query_species ) {
+
+    if ($query =~ /^rs\d+$/) {
+
+      return $hub->redirect($site.$hub->url({
+        'species'   => $species || $query_species,
+        'type'      => 'Variation',
+        'action'    => 'Explore',
+        'v'         => $query
+      }));
+    }
+
     my $real_chrs = $hub->species_defs->ENSEMBL_CHROMOSOMES;
     my $jump_query = $query;
     if ($query_species) {
