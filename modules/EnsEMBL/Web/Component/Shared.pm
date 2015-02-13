@@ -82,23 +82,13 @@ sub transcript_table {
      $description = '' if $description eq 'No description';
 
   if ($description) {
-    my ($edb, $acc);
-    
-    if ($object->get_db eq 'vega') {
-      $edb = 'Vega';
-      $acc = $object->Obj->stable_id;
-      $description .= sprintf ' <span class="small">%s</span>', $hub->get_ExtURL_link("Source: $edb", $edb . '_' . lc $page_type, $acc);
-    } else {
-      $description =~ s/EC\s+([-*\d]+\.[-*\d]+\.[-*\d]+\.[-*\d]+)/$self->EC_URL($1)/e;
-      $description =~ s/\[\w+:([-\w\/\_]+)\;\w+:([\w\.]+)\]//g;
-      ($edb, $acc) = ($1, $2);
 
-      my $l1   =  $hub->get_ExtURL($edb, $acc);
-      $l1      =~ s/\&amp\;/\&/g;
-      my $t1   = "Source: $edb $acc";
-      my $link = $l1 ? qq(<a href="$l1">$t1</a>) : $t1;
+    my $link = $self->get_gene_display_link('[LINK]'); # [LINK] will get replaced by the external id later on
 
-      $description .= qq( <span class="small">@{[ $link ]}</span>) if $acc && $acc ne 'content';
+    if ($link) {
+      my $link_id   = $link->{'id'};
+      $link         = $link->{'link'} =~ s/\[LINK\]/$link_id/r;
+      $description  =~ s/$link_id/$link/;
     }
 
     $table->add_row('Description', $description);
@@ -436,6 +426,32 @@ sub transcript_table {
   $table->add_row($page_type eq 'gene' ? 'Transcripts' : 'Gene', $gene_html) if $gene_html;
 
   return sprintf '<div class="summary_panel">%s%s</div>', $table->render, $transc_table ? $transc_table->render : '';
+}
+
+sub get_gene_display_link {
+  my ($self, $caption) = @_;
+
+  my $hub           = $self->hub;
+  my $gene          = $self->object->gene;
+  my $xref          = $gene->display_xref or return;
+  my $display_name  = $xref->display_id;
+  my $display_db    = $xref->db_display_name;
+  my $external_id   = $xref->primary_id;
+  my $prefix        = '';
+
+  # remove prefix from the URL for Vega External Genes
+  if ($hub->species eq 'Mus_musculus' && $gene->source eq 'vega_external') {
+    ($prefix, $display_name) = split ':', $display_name;
+  }
+
+  my $link = $hub->get_ExtURL_link($caption || $display_name, $xref->dbname, $external_id);
+
+  return unless $link;
+
+  $link = sprintf '%s:%s', $prefix, $link if $prefix;
+  $link = $caption || $display_name if $display_db =~ /^Projected/; # just return the caption in this case
+
+  return { 'link' => $link, 'dbname' => $display_db, 'id' => $external_id };
 }
 
 sub get_synonyms {

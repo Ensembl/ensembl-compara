@@ -30,42 +30,21 @@ sub _init {
   $self->ajaxable(1);
 }
 
-# Uses SQL wildcards
-my @SYNONYM_PATTERNS = qw(%HGNC% %ZFIN%);
-
 sub content {
-  my $self         = shift;
-  my $hub          = $self->hub;
-  my $object       = $self->object;
-  my $species_defs = $hub->species_defs;
-  my $table        = $self->new_twocol;
-  my $location     = $hub->param('r') || sprintf '%s:%s-%s', $object->seq_region_name, $object->seq_region_start, $object->seq_region_end;
-  my $site_type    = $species_defs->ENSEMBL_SITETYPE;
-  my @syn_matches;
-  push @syn_matches,@{$object->get_database_matches($_)} for @SYNONYM_PATTERNS;
-  my @CCDS         = @{$object->Obj->get_all_DBLinks('CCDS')};
-  my @Uniprot      = @{$object->Obj->get_all_DBLinks('Uniprot/SWISSPROT')};
-  my $db           = $object->get_db;
-  my $alt_genes    = $self->_matches('alternative_genes', 'Alternative Genes', 'ALT_GENE', 'show_version'); #gets all xrefs, sorts them and stores them on the object. Returns HTML only for ALT_GENES
-  my @RefSeqMatches  = @{$object->gene->get_all_Attributes('refseq_compare')};
+  my $self          = shift;
+  my $hub           = $self->hub;
+  my $object        = $self->object;
+  my $species_defs  = $hub->species_defs;
+  my $table         = $self->new_twocol;
+  my $site_type     = $species_defs->ENSEMBL_SITETYPE;
+  my @CCDS          = @{$object->Obj->get_all_DBLinks('CCDS')};
+  my @Uniprot       = @{$object->Obj->get_all_DBLinks('Uniprot/SWISSPROT')};
+  my $db            = $object->get_db;
+  my $alt_genes     = $self->_matches('alternative_genes', 'Alternative Genes', 'ALT_GENE', 'show_version'); #gets all xrefs, sorts them and stores them on the object. Returns HTML only for ALT_GENES
+  my @RefSeqMatches = @{$object->gene->get_all_Attributes('refseq_compare')};
+  my $display_link  = $self->get_gene_display_link;
 
-  my $disp_syn     = 0;
-
-  my ($display_name, $dbname, $ext_id, $dbname_disp, $info_text) = $object->display_xref;
-  my ($prefix, $name, $disp_id_table, $HGNC_table, %syns, %text_info, $syns_html);
-
-  # remove prefix from the URL for Vega External Genes
-  if ($hub->species eq 'Mus_musculus' && $object->source eq 'vega_external') {
-    ($prefix, $name) = split ':', $display_name;
-    $display_name = $name;
-  }
-
-  my $linked_display_name = $hub->get_ExtURL_link($display_name, $dbname, $ext_id);
-  $linked_display_name = $prefix . ':' . $linked_display_name if $prefix;
-  $linked_display_name = $display_name if $dbname_disp =~ /^Projected/; # i.e. don't have a hyperlink
-  $info_text = '';
-
-  $table->add_row('Name', qq{<p>$linked_display_name ($dbname_disp) $info_text</p>}) if $linked_display_name;
+  $table->add_row('Name', qq|<p>$display_link->{'link'} ($display_link->{'dbname'})</p>|) if $display_link;
 
   # add CCDS info
   if (scalar @CCDS) {
@@ -254,12 +233,13 @@ sub content {
   }
 
   ## Secondary structure (currently only non-coding RNAs)
-  if ($self->hub->database('compara') && $object->availability->{'has_2ndary'}) {
-    my $image = EnsEMBL::Web::Document::Image::R2R->new($self->hub, $self, {});
-    my $svg_path = $image->render($display_name, 1);
+  if ($hub->database('compara') && $object->availability->{'has_2ndary'}) {
+    my $image           = EnsEMBL::Web::Document::Image::R2R->new($hub, $self, {});
+    my ($display_name)  = $object->display_xref;
+    my $svg_path        = $image->render($display_name, 1);
     my $html;
     if ($svg_path) {
-      my $fullsize = $self->hub->url({'action' => 'SecondaryStructure'});
+      my $fullsize = $hub->url({'action' => 'SecondaryStructure'});
       $html = qq(<object data="$svg_path" type="image/svg+xml"></object>
 <br /><a href="$fullsize">[click to enlarge]</a>);
       $table->add_row('Secondary structure', $html);
