@@ -86,7 +86,8 @@ sub transcript_table {
     <span class="closed">Show transcript table</span><span class="open">Hide transcript table</span>
     </a>',
     $show ? 'open' : 'closed'
-  ); 
+  );
+  
 
   if ($description) {
 
@@ -105,7 +106,7 @@ sub transcript_table {
 
   my $site_type         = $hub->species_defs->ENSEMBL_SITETYPE; 
   my @SYNONYM_PATTERNS  = qw(%HGNC% %ZFIN%);
-  my (@syn_matches, $syns_html);
+  my (@syn_matches, $syns_html, $counts_summary);
   push @syn_matches,@{$object->get_database_matches($_)} for @SYNONYM_PATTERNS;
 
   my $gene = $page_type eq 'gene' ? $object->Obj : $object->gene;
@@ -414,39 +415,63 @@ sub transcript_table {
       id                => 'transcripts_table',
       exportable        => 1
     });
+    
+  # since counts form left nav is gone, we are adding it in the description  
+  if($page_type eq 'gene') {
+    my @str_array;
+    my $ortholog_url = $hub->url({
+      type   => 'Gene',
+      action => 'Compara_Ortholog',
+      g      => $gene->stable_id
+    });
+    
+    my $paralog_url = $hub->url({
+      type   => 'Gene',
+      action => 'Compara_Paralog',
+      g      => $gene->stable_id
+    });
+    
+    my $protein_url = $hub->url({
+      type   => 'Gene',
+      action => 'Family',
+      g      => $gene->stable_id
+    });
+
+    my $phenotype_url = $hub->url({
+      type   => 'Gene',
+      action => 'Phenotype',
+      g      => $gene->stable_id
+    });    
+    
+    push @str_array, qq{$avail->{has_transcripts} transcripts (splice variants)} if($avail->{has_transcripts});
+    push @str_array, qq{$avail->{has_alt_alleles} gene alleles} if($avail->{has_alt_alleles});
+    push @str_array, qq{<a href="$ortholog_url">$avail->{has_orthologs} orthologues</a>} if($avail->{has_orthologs});
+    push @str_array, qq{<a href="$paralog_url">$avail->{has_paralogs} paralogues</a>} if($avail->{has_paralogs});    
+    push @str_array, qq{is a member of <a href="$protein_url">$avail->{family_count} Ensembl protein families</a>} if($avail->{family_count});
+    push @str_array, qq{is associated with <a href="$phenotype_url">$avail->{has_phenotypes} phenotypes</a>} if($avail->{has_phenotypes});
+   
+    $counts_summary  = sprintf('This gene has %s.',$self->join_with_and(@str_array));    
+    $gene_html      .= $button;
+  } 
+  
+  if($page_type eq 'transcript') {    
+    my @str_array;
+    push @str_array, qq{$avail->{has_evidence} supporting evidence} if($avail->{has_evidence});
+    push @str_array, qq{lies on $avail->{has_exons} exons} if($avail->{has_exons});
+    push @str_array, qq{corresponds to $avail->{has_similarity_matches} database identifiers with $avail->{has_oligos} oligo probes} if($avail->{has_similarity_matches});
+    push @str_array, qq{is present on $avail->{has_domains} domain and features} if($avail->{has_domains});
+    push @str_array, qq{is associated with $avail->{has_variations} variations} if($avail->{has_variations});
+    
+    $counts_summary  = sprintf('<p>This transcript has %s.</p>', $self->join_with_and(@str_array));  
+  }    
   }
 
   $table->add_row('Location', $location_html);
 
-  my ($insdc_accession,$counts_summary);
+  my $insdc_accession;
   $insdc_accession = $self->object->insdc_accession if $self->object->can('insdc_accession');
   $table->add_row('INSDC coordinates',$insdc_accession) if $insdc_accession;
   
-  # since counts form left nav is gone, we are adding it in the description
-  if($page_type eq 'gene') {
-    $counts_summary = qq{$avail->{has_transcripts} transcripts (splice variants), } if($avail->{has_transcripts});
-    $counts_summary .= qq{$avail->{has_alt_alleles} gene alleles, } if($avail->{has_alt_alleles});
-    $counts_summary .= qq{$avail->{has_orthologs} orthologues, } if($avail->{has_orthologs});
-    $counts_summary .= qq{$avail->{has_paralogs} paralogues } if($avail->{has_paralogs});
-    $counts_summary .= qq{$avail->{has_phenotypes} phenotypes } if($avail->{has_phenotypes});
-    $counts_summary .= qq{and is a member of $avail->{family_count} Ensembl protein families} if($avail->{family_count});
-    
-    $counts_summary  = qq{This gene has $counts_summary.} if($counts_summary);
-    $gene_html      .= $button;
-  }    
-  if($page_type eq 'transcript') {
-    $counts_summary = qq{$avail->{has_evidence} supporting evidence, } if($avail->{has_evidence});
-    $counts_summary .= qq{lies on $avail->{has_exons} exons, } if($avail->{has_exons});
-    $counts_summary .= qq{corresponds to $avail->{has_similarity_matches} database identifiers with $avail->{has_oligos} oligo probes, } if($avail->{has_similarity_matches});
-    $counts_summary .= qq{is present on $avail->{has_domains} domain and features } if(0);#$avail->{has_domains});
-    $counts_summary .= qq{and is associated with $avail->{has_variations} variations} if(0);#$avail->{has_variations});
-    
-    $counts_summary  = "<p>This transcript has $counts_summary.</p>" if($counts_summary);
-  }
-  
-  $counts_summary =~ s/,(\s)and/ and/gi;  
-  $counts_summary =~ s/,\s\./\./gi;  
-
   $table->add_row('Summary',$counts_summary) if $counts_summary;
   $table->add_row($page_type eq 'gene' ? 'Transcripts' : 'Gene', $gene_html) if $gene_html;
 
