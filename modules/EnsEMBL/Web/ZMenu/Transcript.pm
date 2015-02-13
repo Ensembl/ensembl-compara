@@ -35,12 +35,14 @@ sub content {
   my $stable_id   = $object->stable_id;
   my $transcript  = $object->Obj;
   my $translation = $transcript->translation;
+  my $gene        = $object->gene;
+  my $gene_desc   = $gene ? $object->gene_description =~ s/No description//r =~ s/\[.+\]\s*$//r : '';
   my @xref        = $object->display_xref;
   my @click       = $self->click_location;
   
   $translation = undef if $transcript->isa('Bio::EnsEMBL::PredictionTranscript'); 
 
-  $self->caption($xref[0] ? "$xref[3]: $xref[0]" : !$object->gene ? $stable_id : 'Novel transcript');
+  $self->caption($xref[0] ? "$xref[3]: $xref[0]" : !$gene ? $stable_id : 'Novel transcript');
   
   if (scalar @click) {
     ## Has user clicked on an exon (or exons)?
@@ -83,10 +85,10 @@ sub content {
   }
   
   # Only if there is a gene (not Prediction transcripts)
-  if ($object->gene) {
+  if ($gene) {
     $self->add_entry({
       type  => 'Gene',
-      label => $object->gene->stable_id,
+      label => $gene->stable_id,
       link  => $hub->url({ type => 'Gene', action => 'Summary' })
     });
 
@@ -112,12 +114,20 @@ sub content {
     link  => $hub->url({ type => 'Transcript', action => 'Sequence_cDNA' })
   });
 
-  $self->add_entry({
-    type  => ' ',
-    label => 'Protein Variations',
-    link  => $self->hub->url({ type => 'Transcript', action => 'ProtVariations' }),
-  }) if($translation);
+  if ($translation) {
+    $self->add_entry({
+      type  => ' ',
+      label => 'Protein Variations',
+      link  => $self->hub->url({ type => 'Transcript', action => 'ProtVariations' }),
+    });
+  }
 
+  if ($gene_desc) {
+    $self->add_entry({
+      type  => 'Gene description',
+      label => $gene_desc
+    });
+  }
   
   if ($object->transcript_type) {
     $self->add_entry({
