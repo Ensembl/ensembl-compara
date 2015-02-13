@@ -59,7 +59,7 @@ sub content {
     ## on an exon (i.e. ignore when zoomed out or exons are tiny)
     for (@exons) {
       $self->add_entry({
-        type  => 'Exon',
+        type  => !$self->{'_exon_count'} ? @exons > 1 ? 'Exons' : 'Exon' : ' ',
         label => $_,
         link  => $hub->url({ type => 'Transcript', action => 'Exons', exon => $_ })
       });
