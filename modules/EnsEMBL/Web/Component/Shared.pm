@@ -428,6 +428,7 @@ sub transcript_table {
     $counts_summary .= qq{$avail->{has_alt_alleles} gene alleles, } if($avail->{has_alt_alleles});
     $counts_summary .= qq{$avail->{has_orthologs} orthologues, } if($avail->{has_orthologs});
     $counts_summary .= qq{$avail->{has_paralogs} paralogues } if($avail->{has_paralogs});
+    $counts_summary .= qq{$avail->{has_phenotypes} phenotypes } if($avail->{has_phenotypes});
     $counts_summary .= qq{and is a member of $avail->{family_count} Ensembl protein families} if($avail->{family_count});
     
     $counts_summary  = qq{This gene has $counts_summary.} if($counts_summary);

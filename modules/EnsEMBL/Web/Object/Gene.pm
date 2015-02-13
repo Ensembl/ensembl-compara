@@ -80,25 +80,21 @@ sub availability {
       $availability->{'not_patch'}            = $obj->stable_id =~ /^ASMPATCH/ ? 0 : 1; ## TODO - hack - may need rewriting for subsequent releases
       $availability->{'has_alt_alleles'} =  scalar @{$self->get_alt_alleles};
       
-      my $phen_avail = 0;
       if ($self->database('variation')) {
-        my $pfa = Bio::EnsEMBL::Registry->get_adaptor($self->species, 'variation', 'PhenotypeFeature');
-        $phen_avail = $pfa->count_all_by_Gene($self->Obj) ? 1 : 0;
-        
-        if(!$phen_avail) {
-          my $hgncs =  $obj->get_all_DBEntries('hgnc') || [];
-          
+        my $phen_count  = 0;
+        my $pfa         = Bio::EnsEMBL::Registry->get_adaptor($self->species, 'variation', 'PhenotypeFeature');
+        $phen_count     = $pfa->count_all_by_Gene($self->Obj);
+
+        if (!$phen_count) {
+          my $hgncs = $obj->get_all_DBEntries('hgnc') || [];
+
           if(scalar @$hgncs && $hgncs->[0]) {
             my $hgnc_name = $hgncs->[0]->display_id;
-            if ($hgnc_name) {
-              
-              # this method is super-fast as it uses some direct SQL on a nicely indexed table
-              $phen_avail = ($pfa->_check_gene_by_HGNC($hgnc_name)) ? 1 : 0;
-            }
+            $phen_count   = $pfa->_check_gene_by_HGNC($hgnc_name) if $hgnc_name; # this method is super-fast as it uses some direct SQL on a nicely indexed table
           }
         }
+        $availability->{'has_phenotypes'} = $phen_count;
       }
-      $availability->{'phenotype'} = $phen_avail;
 
       if ($self->database('compara_pan_ensembl')) {
         $availability->{'family_pan_ensembl'} = !!$counts->{families_pan};
