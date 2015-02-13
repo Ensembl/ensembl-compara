@@ -96,24 +96,25 @@ sub render_content {
 }
 
 sub stats_table {
-  my ($self, $gene_name) = @_;  
-  my $hub        = $self->hub;
-  my $pf_adaptor = $self->hub->database('variation')->get_PhenotypeFeatureAdaptor;
+  my ($self, $gene_name) = @_;
+  my $hub           = $self->hub;
+  my $species_defs  = $hub->species_defs;
+  my $pf_adaptor    = $self->hub->database('variation')->get_PhenotypeFeatureAdaptor;
   my ($total_counts, %phenotypes, @va_ids);
-  
+
   my $columns = [
-    { key => 'count',   title => 'Number of variants', sort => 'numeric_hidden', width => '10%', align => 'right'  },   
-    { key => 'view',    title => 'Show/hide details', sort => 'none',           width => '10%',  align => 'center' },
-    { key => 'phen',    title => 'Phenotype',          sort => 'string',         width => '38%' },
+    { key => 'phen',    title => 'Phenotype', sort => 'string', width => '38%'  },
+    { key => 'source',  title => 'Source(s)', sort => 'string', width => '11%'  },
+    $species_defs->ENSEMBL_CHROMOSOMES
+    ? { key => 'loc',   title => 'Locations', sort => 'none',   width => '13%'  }
+    : (),
+    $species_defs->ENSEMBL_MART_ENABLED
+    ? { key => 'mart',  title => 'Biomart',   sort => 'none',   width => '13%'  }
+    : (),
+    { key => 'count',   title => 'Number of variants',  sort => 'numeric_hidden', width => '10%',   align => 'right'  },
+    { key => 'view',    title => 'Show/hide details',   sort => 'none',           width => '10%',   align => 'center' }
   ];
-  if ($hub->species_defs->ENSEMBL_CHROMOSOMES) {
-    push @$columns, { key => 'loc',   title => 'Locations',   sort => 'none', width => '13%'};
-  }
-  if ($hub->species_defs->ENSEMBL_MART_ENABLED) {
-    push @$columns, { key => 'mart',   title => 'Biomart',    sort => 'none',  width => '13%'};
-  }
-  push @$columns,  { key => 'source',  title => 'Source(s)',  sort => 'string', width => '11%'};
-  
+
   foreach my $pf ($gene_name ? @{$pf_adaptor->fetch_all_by_associated_gene($gene_name)} : ()) {
     next unless $pf->type eq 'Variation';
     my $var_name   = $pf->object->name;  

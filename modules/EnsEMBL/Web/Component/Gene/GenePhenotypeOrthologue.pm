@@ -128,10 +128,10 @@ sub content {
   if (scalar @rows) { 
     $html .= '<h2>Phenotypes associated with the gene orthologues in other species</h2>'.
       $self->new_table([ 
-        { key => 'species',   align => 'left', title => 'Species'                   },
-        { key => 'gene',      align => 'left', title => 'Gene'                      },
         { key => 'phenotype', align => 'left', title => 'Phenotype', sort => 'html' },
         { key => 'source',    align => 'left', title => 'Source'                    },
+        { key => 'species',   align => 'left', title => 'Species'                   },
+        { key => 'gene',      align => 'left', title => 'Gene'                      },
       ], \@rows, { data_table => 'no_col_toggle', exportable => 1 })->render if @rows;
   }
   else {
