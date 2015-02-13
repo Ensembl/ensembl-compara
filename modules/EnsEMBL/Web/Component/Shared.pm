@@ -424,13 +424,14 @@ sub transcript_table {
   
   # since counts form left nav is gone, we are adding it in the description
   if($page_type eq 'gene') {
-    $counts_summary = qq{$avail->{has_transcripts} transcripts(splice variants), } if($avail->{has_transcripts});
+    $counts_summary = qq{$avail->{has_transcripts} transcripts (splice variants), } if($avail->{has_transcripts});
     $counts_summary .= qq{$avail->{has_alt_alleles} gene alleles, } if($avail->{has_alt_alleles});
     $counts_summary .= qq{$avail->{has_orthologs} orthologues, } if($avail->{has_orthologs});
     $counts_summary .= qq{$avail->{has_paralogs} paralogues } if($avail->{has_paralogs});
     $counts_summary .= qq{and is a member of $avail->{family_count} Ensembl protein families} if($avail->{family_count});
     
-    $counts_summary  = qq{This gene has $counts_summary. $button} if($counts_summary);    
+    $counts_summary  = qq{This gene has $counts_summary.} if($counts_summary);
+    $gene_html      .= $button;
   }    
   if($page_type eq 'transcript') {
     $counts_summary = qq{$avail->{has_evidence} supporting evidence, } if($avail->{has_evidence});
