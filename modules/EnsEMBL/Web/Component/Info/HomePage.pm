@@ -135,7 +135,7 @@ sub assembly_text {
       %s
     </div>
     <h2>Genome assembly: %s%s</h2>
-    <p><a href="%s#assembly" class="nodeco">%sMore information and statistics</a></p>
+    <p><a href="%s" class="nodeco">%sMore information and statistics</a></p>
     %s
     %s
     <p><a href="%s" class="modal_link nodeco" rel="modal_user_data">%sDisplay your data in %s</a></p>',
@@ -224,7 +224,7 @@ sub genebuild_text {
     </div>
     <h2>Gene annotation</h2>
     <p><strong>What can I find?</strong> Protein-coding and non-coding genes, splice variants, cDNA and protein sequences, non-coding RNAs.</p>
-    <p><a href="%s#genebuild" class="nodeco">%sMore about this genebuild</a>%s</p>
+    <p><a href="%s" class="nodeco">%sMore about this genebuild</a>%s</p>
     %s
     <p><a href="%s" class="modal_link nodeco" rel="modal_user_data">%sUpdate your old Ensembl IDs</a></p>
     %s
