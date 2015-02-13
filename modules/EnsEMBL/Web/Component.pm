@@ -704,11 +704,11 @@ sub toggleable_table {
   
   return sprintf('
     <div class="toggleable_table">
+      %s
       <h2><a rel="%s_table" class="toggle _slide_toggle %s" href="#%s_table">%s</a></h2>
       %s
-      %s
     </div>',
-    $id, $state[1], $id, $title, $extra_html, $table->render
+    $extra_html, $id, $state[1], $id, $title, $table->render
   ); 
 }
 
