@@ -119,7 +119,7 @@ sub stats_table {
     next unless $pf->type eq 'Variation';
     my $var_name   = $pf->object->name;  
     my $phe        = $pf->phenotype->description;
-    my $phe_source = $pf->source;
+    my $phe_source = $pf->source_name;
    
     $phenotypes{$phe} ||= { id => $pf->{'_phenotype_id'} , name => $pf->{'_phenotype_name'}};
     push @{$phenotypes{$phe}{'count'}},  $var_name   unless grep $var_name   eq $_, @{$phenotypes{$phe}{'count'}};
@@ -257,7 +257,7 @@ sub variation_table {
     }
       
     # List the phenotype sources for the variation
-    my $phe_source = $pf->source;
+    my $phe_source = $pf->source_name;
     my $ref_source = $pf->external_reference;
     
     $list_phe{$var_name}{$pf->phenotype->description} = 1 if ($all_flag == 1);
