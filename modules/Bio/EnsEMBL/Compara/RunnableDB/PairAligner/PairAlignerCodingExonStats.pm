@@ -55,8 +55,9 @@ Internal methods are usually preceded with a _
 package Bio::EnsEMBL::Compara::RunnableDB::PairAligner::PairAlignerCodingExonStats;
 
 use strict;
+use warnings;
+
 use Bio::EnsEMBL::Hive::Utils 'stringify';  # import 'stringify()'
-use Bio::EnsEMBL::Utils::Exception;
 
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
@@ -105,15 +106,14 @@ sub run {
   my $mlss_id = $self->param('mlss_id');
   my $mlss = $mlss_adaptor->fetch_by_dbID($mlss_id);
 
-  my $slice_adaptor = $reg->get_adaptor($ref_species, 'core', 'Slice');
-  throw("Registry configuration file has no data for connecting to <$ref_species>") if (!$slice_adaptor);
+  my $genome_db = $genome_db_adaptor->fetch_by_registry_name($ref_species);
+  my $dnafrag = $dnafrag_adaptor->fetch_by_GenomeDB_and_name($genome_db, $seq_region);
+
+  my $slice_adaptor = $genome_db->db_adaptor->get_SliceAdaptor();
 
   #Necessary to get unique bits of Y
   my $slices = $slice_adaptor->fetch_by_region_unique('toplevel', $seq_region);
 
-  my $genome_db = $genome_db_adaptor->fetch_by_registry_name($ref_species);
-  my $dnafrag = $dnafrag_adaptor->fetch_by_GenomeDB_and_name($genome_db, $seq_region);
-  
   my $coding_exons = [];
   foreach my $slice (@$slices) {
       $coding_exons = get_coding_exon_regions($slice, $coding_exons);
