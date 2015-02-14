@@ -331,11 +331,12 @@ sub write_output {
 
     while ( my ($table, $dbs) = each(%{$self->param('merge')}) ) {
         my $n_total_rows = $table_size->{$curr_rel_name}->{$table} || 0;
+        my @inputlist = ();
         foreach my $db (@$dbs) {
-            $self->dataflow_output_id( {'src_db_conn' => "#$db#", 'table' => $table}, 3);
+            push @inputlist, [ "#$db#" ];
             $n_total_rows += $table_size->{$db}->{$table};
         }
-        $self->dataflow_output_id( {'table' => $table, 'n_total_rows' => $n_total_rows, 'key' => $primary_keys->{$table}}, 4);
+        $self->dataflow_output_id( {'table' => $table, 'inputlist' => \@inputlist, 'n_total_rows' => $n_total_rows, 'key' => $primary_keys->{$table}}, 3);
     }
 
 }

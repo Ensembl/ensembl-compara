@@ -114,6 +114,14 @@ sub pipeline_wide_parameters {
 }
 
 
+sub hive_meta_table {
+    my ($self) = @_;
+    return {
+        %{$self->SUPER::hive_meta_table},       # here we inherit anything from the base class
+        'hive_use_param_stack'  => 1,           # switch on the new param_stack mechanism
+    }
+}
+
 
 =head2 pipeline_analyses
 
@@ -131,6 +139,15 @@ sub pipeline_analyses {
     my ($self) = @_;
     return [
 
+        {   -logic_name => 'pipeline_start',
+            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
+            -input_ids  => [ {} ],
+            -flow_into  => {
+                '1->A' => [ 'generate_job_list' ],
+                'A->1' => [ 'extra_cmd_list' ],
+            },
+        },
+
         {   -logic_name => 'generate_job_list',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::DBMergeCheck',
             -parameters => {
@@ -139,12 +156,9 @@ sub pipeline_analyses {
                 'only_tables'       => $self->o('only_tables'),
                 'db_aliases'        => [ref($self->o('urls')) ? keys %{$self->o('urls')} : ()],
             },
-            -input_ids  => [ {} ],
             -flow_into  => {
                 2      => [ 'copy_table'  ],
-                '3->A' => [ 'merge_table' ],
-                $self->o('backup_tables') ? ('4->A' => [ 'backup_table' ]) : (),
-                'A->4' => [ 'check_size' ],
+                3      => [ $self->o('backup_tables') ? 'backup_table' : 'merge_factory' ],
             },
         },
 
@@ -159,6 +173,16 @@ sub pipeline_analyses {
             -flow_into     => [ $self->o('analyze_optimize') ? ('analyze_optimize') : () ],
         },
 
+        {   -logic_name => 'merge_factory',
+            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
+            -parameters => {
+                'column_names'  => [ 'src_db_conn' ],
+            },
+            -flow_into  => {
+                '2->A' => [ 'merge_table' ],
+                'A->1' => [ 'check_size' ],
+            },
+        },
         {   -logic_name    => 'merge_table',
             -module        => 'Bio::EnsEMBL::Hive::RunnableDB::MySQLTransfer',
             -parameters    => {
@@ -167,8 +191,6 @@ sub pipeline_analyses {
             },
             -analysis_capacity => 1,                              # we can only have one worker of this kind to avoid conflicts of DISABLE KEYS / ENABLE KEYS / INSERT
             -hive_capacity => $self->o('copying_capacity'),       # allow several workers to perform identical tasks in parallel
-            # we're waiting for all the backups to complete (even though we only need to wait for one of them)
-            $self->o('backup_tables') ? (-wait_for => [ 'backup_table' ]) : (),
         },
 
         {   -logic_name => 'check_size',
@@ -194,6 +216,7 @@ sub pipeline_analyses {
                     'INSERT INTO DBMERGEBACKUP_#table# SELECT * FROM #table#',
                 ]
             },
+            -flow_into  => [ 'merge_factory' ],
             -hive_capacity => $self->o('copying_capacity'),       # allow several workers to perform identical tasks in parallel
         },
 
@@ -204,7 +227,6 @@ sub pipeline_analyses {
                 'sql'       => 'DROP TABLE DBMERGEBACKUP_#table#',
             },
             -hive_capacity => $self->o('copying_capacity'),       # allow several workers to perform identical tasks in parallel
-            -wait_for => [ 'extra_cmd_run' ],
         },
 
         {   -logic_name => 'analyze_optimize',
@@ -217,17 +239,14 @@ sub pipeline_analyses {
                 ]
             },
             -hive_capacity => $self->o('copying_capacity'),       # allow several workers to perform identical tasks in parallel
-            -wait_for => [ 'extra_cmd_run' ],
         },
 
         {   -logic_name => 'extra_cmd_list',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
             -parameters => {
                 'column_names' => [ 'sql_file' ],
+                'inputlist'    => $self->o('extra_sql_cmds'),
             },
-            -input_ids => [
-                { 'inputlist' => $self->o('extra_sql_cmds') },
-            ],
             -flow_into => {
                 2 => [ 'extra_cmd_run' ],
             },
@@ -240,7 +259,6 @@ sub pipeline_analyses {
                 'db_cmd'            => $self->db_cmd(undef, ref($self->o('urls')) ? $self->o('urls')->{'curr_rel_db'} : undef),
                 'cmd'               => '#db_cmd# < #sql_file#',
             },
-            -wait_for => [ 'generate_job_list', 'copy_table', 'check_size' ],
         },
 
     ];
