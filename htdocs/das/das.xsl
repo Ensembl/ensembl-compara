@@ -821,7 +821,7 @@ table.das tr.ref_bg td { background-color:#fed }
       </xsl:element></li>
     </xsl:if>
       <li><xsl:element name="a">
-      <xsl:attribute name="href">/<xsl:value-of select="$species" />/Location/View?l=<xsl:value-of select="../@id" />:<xsl:value-of select="START" />-<xsl:value-of select="END" /></xsl:attribute>Location View
+      <xsl:attribute name="href">/<xsl:value-of select="$species" />/Location/View?r=<xsl:value-of select="../@id" />:<xsl:value-of select="START" />-<xsl:value-of select="END" /></xsl:attribute>Location View
     </xsl:element></li>
     <xsl:apply-templates select="LINK"/>
     <xsl:apply-templates select="GROUP/LINK"/>
