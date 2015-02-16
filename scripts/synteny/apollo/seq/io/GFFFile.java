@@ -47,24 +47,24 @@ public class GFFFile extends FileParse {
     seqs   = new Vector<SeqFeature>();
 
     //Read lines from file
-    System.out.println("Reading Ensembl-style GFF file " + inFile + "....");
+    System.err.println("Reading Ensembl-style GFF file " + inFile + "....");
     start = System.currentTimeMillis();
     readLines();
     end = System.currentTimeMillis();
-    //    System.out.println("done");
-    //System.out.println("Total time taken = " + (end-start) + "ms");
+    //    System.err.println("done");
+    //System.err.println("Total time taken = " + (end-start) + "ms");
 
-    //    System.out.println("Parsing file....");
+    //    System.err.println("Parsing file....");
     start = System.currentTimeMillis();
 	parse();
   }
 
   public void parse() {
 
-	//System.out.println("parse");
+	//System.err.println("parse");
     for (int i = 0; i < lineArray.size(); i++) {
       String line = lineArray.elementAt(i);
-		//System.out.println("LINE " + line);
+		//System.err.println("LINE " + line);
 
       if (line.indexOf("#") == -1 ) {
 
@@ -86,7 +86,7 @@ public class GFFFile extends FileParse {
             try {
               score  = (Double.valueOf(st.nextToken())).doubleValue();
             } catch (Exception e) {
-              System.out.println("Error parsing score : " + e);
+              System.err.println("Error parsing score : " + e);
             }
             String strand = st.nextToken();
             String frame  = st.nextToken();
@@ -115,7 +115,7 @@ public class GFFFile extends FileParse {
                 // SMJS Get remainder of string by setting
                 // delimiter to nothing ("")
                 String htok   = st.nextToken("");
-                // System.out.println("htok = " + htok);
+                // System.err.println("htok = " + htok);
                 // SMJS Setup a new tokenizer which doesn't require tabs
                 StringTokenizer sth = new StringTokenizer(htok);
   
@@ -141,7 +141,7 @@ public class GFFFile extends FileParse {
   
                 seqs.addElement(fp);
               } catch (Exception e) {
-                System.out.println("Can't add line - " + line + " " + e);
+                System.err.println("Can't add line - " + line + " " + e);
               }
             } else if (st.hasMoreTokens() && prim.equals("exon")) {
 
@@ -161,8 +161,8 @@ public class GFFFile extends FileParse {
             }
 
           } catch (NumberFormatException nfe) {
-            System.out.println("NumberFormatException " + nfe);
-            System.out.println("ERROR: parsing line " + line);
+            System.err.println("NumberFormatException " + nfe);
+            System.err.println("ERROR: parsing line " + line);
           }
         }
       }

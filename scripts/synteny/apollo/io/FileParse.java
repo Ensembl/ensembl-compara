@@ -54,14 +54,14 @@ public class FileParse {
   public FileParse() {}
   public FileParse(String fileStr, String type) throws MalformedURLException, IOException {
     this.inType = type;
-    //System.out.println("Input type = " + type);
-    //System.out.println("Input name = " + fileStr);
+    //System.err.println("Input type = " + type);
+    //System.err.println("Input name = " + fileStr);
     if (type.equals("File")) {
       this.inFile = new File(fileStr);
       this.fileSize = (int)inFile.length();
 
-      //      System.out.println("File: " + inFile);
-      //      System.out.println("Bytes: " + fileSize);
+      //      System.err.println("File: " + inFile);
+      //      System.err.println("Bytes: " + fileSize);
     }
     if (type.equals("URL")) {
       url = new URL(fileStr);
@@ -108,9 +108,9 @@ public class FileParse {
 
     char prev_char = '\n';
 
-    //System.out.println("\nBefore loop");
-    //    System.out.println("line " + line + "\nsplitChar :" + splitChar + ":");
-    //System.out.println(line.length());
+    //System.err.println("\nBefore loop");
+    //    System.err.println("line " + line + "\nsplitChar :" + splitChar + ":");
+    //System.err.println(line.length());
 
     for (i = 0; i < line.length() ; i++ ) {
       if (charArray[i] != splitChar) {
@@ -124,7 +124,7 @@ public class FileParse {
           word = null;
           word = new char[line.length()];
           prev_char = charArray[i];
-          //	  System.out.println("word: " + wordVector.lastElement() + ":");
+          //	  System.err.println("word: " + wordVector.lastElement() + ":");
         }
 
       }

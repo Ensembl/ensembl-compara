@@ -190,17 +190,17 @@ public class FeaturePair extends SeqFeature {
     sf1.setName("query");
     sf2.setName("hit");
 
-    System.out.println("Features " + sf1);
-    System.out.println("Features " + sf2);
+    System.err.println("Features " + sf1);
+    System.err.println("Features " + sf2);
     FeaturePair fp = new FeaturePair(sf1,sf2);
-    System.out.println("Feature is " + fp);
-    System.out.println("Left/right overlaps " + fp.getLeftOverlap(sf1) + " " + fp.getRightOverlap(sf1));
-    System.out.println("Overlap " + fp.isExactOverlap(sf1) + " " + fp.isExactOverlap(sf2));
+    System.err.println("Feature is " + fp);
+    System.err.println("Left/right overlaps " + fp.getLeftOverlap(sf1) + " " + fp.getRightOverlap(sf1));
+    System.err.println("Overlap " + fp.isExactOverlap(sf1) + " " + fp.isExactOverlap(sf2));
 
     //fp.invert();
-    System.out.println("Feature is " + fp);
+    System.err.println("Feature is " + fp);
 
-    System.out.println("Overlap " + fp.isExactOverlap(sf1) + " " + fp.isExactOverlap(sf2));
+    System.err.println("Overlap " + fp.isExactOverlap(sf1) + " " + fp.isExactOverlap(sf2));
   }*/
 
   private boolean isEmptyOrNull(String s) {

@@ -118,7 +118,7 @@ public class BuildSynteny {
 
 	for (int i= 0; i < feat.length; i++) {
 	    
-	// System.out.println("Feature is " + feat[i].getName() + " " + feat[i].getLow() + " " + feat[i].getHigh()
+	// System.err.println("Feature is " + feat[i].getName() + " " + feat[i].getLow() + " " + feat[i].getHigh()
 	//     + " " + feat[i].getHname() + " " + feat[i].getHlow() + " " + feat[i].getHhigh());
 	    if (prev != null) {
 		
@@ -127,7 +127,7 @@ public class BuildSynteny {
 		// dist2 is the distance between this feature and the previous one on the target (secondary) species.
 		double dist2 = (1.0*Math.abs(feat[i].getHlow() - prev.getHlow()));
 		
-		// System.out.println("Dist is " + feat[i].getHname() + " " +  dist1 + " " + dist2);
+		// System.err.println("Dist is " + feat[i].getHname() + " " +  dist1 + " " + dist2);
 		
 		// We've reached the end of a block
 		if ((dist1 > maxDist1*2) || (dist2 > maxDist2*2) || !feat[i].getHname().equals(prev.getHname())) {
@@ -176,9 +176,9 @@ public class BuildSynteny {
 		    
 		    featHolder = new Vector<FeaturePair>();
 		    
-		    // System.out.println("Starting new block " + feat[i].getName());
+		    // System.err.println("Starting new block " + feat[i].getName());
 		} else if (!feat[i].getHname().equals(prev.getHname()))  {
-                    System.out.println("ERROR: Should have switched from " + prev.getHname() + " to " + feat[i].getHname());
+                    System.err.println("ERROR: Should have switched from " + prev.getHname() + " to " + feat[i].getHname());
                 }
 	    }
 	    
@@ -199,7 +199,7 @@ public class BuildSynteny {
 		maxHStart = feat[i].getHhigh();
 	    }
 	    
-	    // System.out.println("New region bounds " + minStart + " " + maxStart + " " + minHStart + " " + maxHStart);
+	    // System.err.println("New region bounds " + minStart + " " + maxStart + " " + minHStart + " " + maxHStart);
 	    
 	    if (prev != null) {
 		if ((feat[i].getStart() - prev.getEnd())*(feat[i].getHstart() - prev.getHend()) < 0) {
@@ -208,7 +208,7 @@ public class BuildSynteny {
 		    forwardCount++;
 		}
 	    }
-	// System.out.println("minStart = " + minStart + "; minHStart = " + minHStart + "; maxStart = " + maxStart + "; maxHStart " + maxHStart + " fwdCnt = " + forwardCount + " rvsCnt = " + reverseCount);
+	// System.err.println("minStart = " + minStart + "; minHStart = " + minHStart + "; maxStart = " + maxStart + "; maxHStart " + maxHStart + " fwdCnt = " + forwardCount + " rvsCnt = " + reverseCount);
 	    featHolder.addElement(feat[i]);
 	    
 	    prev = feat[i];
@@ -225,7 +225,7 @@ public class BuildSynteny {
 	    sf1.setName(feat[feat.length-1].getName());
 	    sf2.setName(feat[feat.length-1].getHname());
 	    
-	    // System.out.println("ForwardCount = " + forwardCount + " ReverseCount = " + reverseCount);
+	    // System.err.println("ForwardCount = " + forwardCount + " ReverseCount = " + reverseCount);
 	    if (forwardCount > 0 || reverseCount > 0) {
 		if (forwardCount > reverseCount) {
 		    sf1.setStrand(1);
@@ -250,7 +250,7 @@ public class BuildSynteny {
 	// SECOND LOOP: group previous groups. maxDist is 30x the original maxDist
 	//  newfset -> tmpfset
 	//=================================================================
-	// System.out.println("Grouping groups");
+	// System.err.println("Grouping groups");
 	
 	Vector<FeaturePair> tmpfset = new Vector<FeaturePair>();
 	FeaturePair[] farr = newfset.toArray(new FeaturePair[newfset.size()]);
@@ -266,7 +266,7 @@ public class BuildSynteny {
 	
 	for (int i=0; i < newfset.size(); i++) {
 	    FeaturePair fp = newfset.get(i);
-//             System.out.println("Processing feature " + fp.getHname() + " " + 
+//             System.err.println("Processing feature " + fp.getHname() + " " + 
 //                                 fp.getLow() + " " + fp.getHigh() + " - " + 
 //                                 fp.getHlow() + " " + fp.getHhigh());
 	    
@@ -282,15 +282,15 @@ public class BuildSynteny {
 		    dist2 = Math.abs(fp.getHhigh() - prev.getHlow());
 		}
 		
-		// System.out.println("Distances " + dist1 + " " + dist2 + " " + (Math.abs(dist1 - dist2)));
-		// System.out.println("Pog " + internum + " " + ori);
+		// System.err.println("Distances " + dist1 + " " + dist2 + " " + (Math.abs(dist1 - dist2)));
+		// System.err.println("Pog " + internum + " " + ori);
 		
 		if (! curHname.equals(fp.getHname()) || 
                       dist1 > maxDist1*30 || 
                       dist2 > maxDist2*30 || 
                       find_internum(fp,prev,farr) > 2 || (orientFlag && ori == -1)) { // No ori check in old code
 		    
-		    // System.out.println("New block " + Math.abs(dist1 - dist2) + " " + minStart + " " + prev.getHname());
+		    // System.err.println("New block " + Math.abs(dist1 - dist2) + " " + minStart + " " + prev.getHname());
 		    
 		    SeqFeature sf1 = new SeqFeature(minStart ,maxStart ,"synten");
 		    SeqFeature sf2 = new SeqFeature(minHStart,maxHStart,"synten");
@@ -301,7 +301,7 @@ public class BuildSynteny {
 		    
 		    FeaturePair newfp = new FeaturePair(sf1,sf2);
 		    
-		    // System.out.println("Setting group strand " + prev.getStrand());
+		    // System.err.println("Setting group strand " + prev.getStrand());
 		    
 		    newfp.setStrand(prev.getStrand());
 		    tmpfset.addElement(newfp);
@@ -370,7 +370,7 @@ public class BuildSynteny {
 	
 	int count = 0;
 	
-	//System.out.println("Feature start end " + start + " " + end);
+	//System.err.println("Feature start end " + start + " " + end);
 	
 	if (f1.getHlow() < prev.getHhigh()) {
 	    start = prev.getHlow();
