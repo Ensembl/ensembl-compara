@@ -430,7 +430,7 @@ sub _internal_format_newick {
                     #print Dumper($token);
                     if (exists $token->{modifier}) {
                         if ($token->{modifier} eq 'comma') {
-                            $itemstr =~ s/[,(:)]//g;
+                            $itemstr =~ s/[,(:)+]//g;
                         } elsif ($token->{modifier} eq 'dot') {
                             $itemstr =~ s/\,//g;
                             $itemstr =~ s/\ /\./g;

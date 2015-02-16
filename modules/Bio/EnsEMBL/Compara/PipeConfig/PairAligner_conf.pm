@@ -719,7 +719,7 @@ sub pipeline_analyses {
 #			       'quick' => $self->o('quick'),
 #			      },
 	      -rc_name => '1Gb',
-	      -wait_for =>  [ 'filter_duplicates_net', 'filter_duplicates_net_himem' ],
+	      -wait_for =>  [ 'create_filter_duplicates_net_jobs', 'filter_duplicates_net', 'filter_duplicates_net_himem' ],
               -flow_into => [ 'set_internal_ids_collection' ],
  	    },
           {  -logic_name => 'set_internal_ids_collection',
