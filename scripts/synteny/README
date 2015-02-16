@@ -78,7 +78,7 @@ mysql -h compara1 -u ensro -N jh7_ensembl_Hsap_Cfam_42 |grep -v -e NT -e DR -e c
 Run the dump in sequential order, one at a time to avoid overloading the DB:
 
 cat Hsap_chr_names | while read i; do \
-echo "~/src/ensembl_main/ensembl-compara/scripts/synteny/DumpGFFAlignmentsForSynteny.pl \
+echo "${BASEDIR}/ensembl-compara/scripts/synteny/DumpGFFAlignmentsForSynteny.pl \
  --reg_conf ../reg.conf --dbname ensemblHsapCfam --qy 'Homo sapiens' \
  --tg 'Canis familiaris' --seq_region $i"; \
 done > run.me
@@ -120,7 +120,7 @@ Eg-1:
 Dumping the orthologs_one2one from the compara database v.45 
 with Drosophila melanogaster as the reference genome and Anopheles gambiae as the secondary genome:
 
-perl ~/src_2/api_branch45/ensembl-compara/scripts/synteny/DumpGFFOrthologForSynteny.pl 
+perl ${BASEDIR}/ensembl-compara/scripts/synteny/DumpGFFOrthologForSynteny.pl \
 --dbname Compara_45 --tg "Anopheles gambiae" --qy "Drosophila melanogaster" \
 --ortholog_type ortholog_one2one --reg_conf ~/.ensembl_init
 
@@ -129,7 +129,7 @@ Eg-2:
 Dumping the orthologs_one2one, one2many and many2many from the compara database v.45 
 with Drosophila melanogaster as the reference genome and Anopheles gambiae as the secondary genome:
 
-perl ~/src_2/api_branch45/ensembl-compara/scripts/synteny/DumpGFFOrthologForSynteny.pl 
+perl ${BASEDIR}/ensembl-compara/scripts/synteny/DumpGFFOrthologForSynteny.pl \
 --dbname Compara_45 --tg "Anopheles gambiae" --qy "Drosophila melanogaster" \
 --ortholog_type ortholog_one2one,ortholog_one2many,ortholog_many2many, --reg_conf ~/.ensembl_init
 
@@ -162,7 +162,8 @@ PATH=/usr/opt/java/bin/:$PATH
 Now build the synteny regions for each chromosome.
 
 ls *.syten.gff | sed "s/\.syten\.gff//" | \
- while read i; do echo "java -Xmx3000M \
+ while read i; do echo "java -Xmx3000M -classpath \
+ ${BASEDIR}/ensembl-compara/scripts/synteny/BuildSynteny.jar \
  BuildSynteny $i.syten.gff 100000 100000 false \
  > $i.100000.100000.BuildSynteny.out 2> $i.100000.100000.BuildSynteny.err"; done > run
 
@@ -203,9 +204,16 @@ ensembl-compara/scripts/synteny/LoadSyntenyData.pl --dbname jh7_ensembl_compara_
 Compiling BuildSynteny.java
 ===========================
 
+NOTE: not important for production, it is just to know how to create the BuildSynteny.jar file from
+BuildSynteny.java
+
 It should be as simple as:
+$ cd ${BASEDIR}/ensembl-compara/scripts/synteny/
 $ javac BuildSynteny.java
+$ jar cfm BuildSynteny.jar SyntenyManifest.txt BuildSynteny.class `find apollo -iname "*.class"`
 
 The code used to depend on modules from Apollof (http://www.gmod.org/) but the relevant modules
 have been extracted and edited so that there is no dependency any more.
+
+javac is used to compile the modules, and jar to package everything.
 
