@@ -45,7 +45,7 @@ sub default_options {
     return {
             %{$self->SUPER::default_options},   # inherit the generic ones
             
-            'pipeline_name'         => 'SYNTENY_'.$self->o('mlss_id')."_".$self->o('rel_with_suffix'),   # name the pipeline to differentiate the submitted processes
+            'pipeline_name'         => 'SYNTENY_'.$self->o('synteny_mlss_id')."_".$self->o('rel_with_suffix'),   # name the pipeline to differentiate the submitted processes
             'dbname'               => $self->o('pipeline_name'), #pipeline database name
 
             'host'        => 'compara5',                        #host name
@@ -57,8 +57,8 @@ sub default_options {
                               -dbname => $ENV{USER}.'_'.$self->o('dbname'),
                               -driver => 'mysql',
                              },
-
-            'synteny_dir' => '/lustre/scratch110/ensembl/' . $ENV{USER} . '/synteny/' . 'release_' . $self->o('rel_with_suffix') . '/' . $self->o('mlss_id') . '/',
+	    'master_db' => 'mysql://ensro@compara1/sf5_ensembl_compara_master',
+            'synteny_dir' => '/lustre/scratch109/ensembl/' . $ENV{USER} . '/synteny/' . 'release_' . $self->o('rel_with_suffix') . '/' . $self->o('synteny_mlss_id') . '/',
 
             'compara_url' => undef, #pairwise database to calculate the syntenies from
             'ref_species' => undef, #reference species
@@ -152,13 +152,13 @@ sub pipeline_analyses {
                               'compara_url' => $self->o('compara_url'),
                               'query_name' => $self->o('ref_species'),
                               'method_link_type' => $self->o('method_link_type'),
-                              'mlss_id'    => $self->o('mlss_id'),
+                              'pairwise_mlss_id'    => $self->o('pairwise_mlss_id'),
                               'level'      => $self->o('level'),
                               'force'      => $self->o('force'),
                               'output_dir' => $self->o('synteny_dir') . "/",
                               'ref_coord_system_name' => $self->o('ref_coord_system_name'),
                               'non_ref_coord_system_name' => $self->o('non_ref_coord_system_name'),
-                              'cmd' => "#program# --dbname #compara_url# --qy #query_name# --ref_coord_system_name #ref_coord_system_name# --non_ref_coord_system_name #non_ref_coord_system_name# --method_link_species_set #mlss_id# --seq_region #seq_region# --force #force# --output_dir #output_dir#",
+                              'cmd' => "#program# --dbname #compara_url# --qy #query_name# --ref_coord_system_name #ref_coord_system_name# --non_ref_coord_system_name #non_ref_coord_system_name# --method_link_species_set #pairwise_mlss_id# --seq_region #seq_region# --force #force# --output_dir #output_dir#",
                               },
                 -flow_into => {
                                '1' => [ 'build_synteny' ],
@@ -191,6 +191,62 @@ sub pipeline_analyses {
                               'minSize' => $self->o('minSize1'),
                               'output_file' => '#output_dir#all.#maxDist#.#minSize#.BuildSynteny',
                               'cmd' => 'cat #output_dir#*.BuildSynteny.out | grep cluster > #output_file#',
+                             },
+             -flow_into => { 
+                              '1' => [ 'copy_tables_factory' ],
+                           },
+              
+            },
+            { -logic_name => 'copy_tables_factory',
+              -module     => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
+              -parameters => {
+                             'db_conn' => $self->o('compara_url'),
+                             'inputlist'    => [ 'genome_db', 'dnafrag', 'method_link', 'method_link_species_set', 'species_set'],
+			     'column_names' => [ 'table' ],
+                             },
+              -flow_into => {
+                             '2->A' => [ 'copy_tables_from_pairwise_db' ],
+                             'A->1' => [ 'copy_mlssid_from_master' ],
+                            },
+            },              
+            { -logic_name => 'copy_tables_from_pairwise_db',
+              -module        => 'Bio::EnsEMBL::Hive::RunnableDB::MySQLTransfer',
+              -parameters    => {
+                                 'src_db_conn'   => $self->o('compara_url'),
+                                 'dest_db_conn'  => $self->o('pipeline_db'),
+                                 'mode'          => 'overwrite',
+                                 'filter_cmd'    => 'sed "s/ENGINE=MyISAM/ENGINE=InnoDB/"',
+                                },
+            
+            },
+            { -logic_name => 'copy_mlssid_from_master',
+              -module        => 'Bio::EnsEMBL::Hive::RunnableDB::MySQLTransfer',
+              -parameters    => {
+                                 'src_db_conn'   => $self->o('compara_url'),
+                                 'dest_db_conn'  => $self->o('pipeline_db'),
+                                 'synteny_mlss_id' => $self->o('synteny_mlss_id'),
+                                 'mode'          => 'overwrite',
+                                 'table'         => 'method_link_species_set',
+                                 'where'         => 'method_link_species_set_id = #synteny_mlss_id#',
+                                },
+              -flow_into => {
+                              1 => [ 'load_dnafrag_regions' ],
+                            },
+            },
+            { -logic_name => 'load_dnafrag_regions',
+              -module     => 'Bio::EnsEMBL::Compara::RunnableDB::Synteny::LoadDnafragRegions',
+              -parameters => { 
+                              'input_file' => '#output_dir#all.#maxDist#.#minSize#.BuildSynteny',
+                              'pairwise_mlss_id'    => $self->o('pairwise_mlss_id'), 
+                              'synteny_mlss_id' => $self->o('synteny_mlss_id'),
+                              'ref_species' => $self->o('ref_species'),
+                              'master_db' => $self->o('master_db'),
+                              'pipeline_db' => $self->o('pipeline_db'),
+                              'compara_url' => $self->o('compara_url'),
+                              'output_dir' => $self->o('synteny_dir'),
+                              'maxDist' => $self->o('maxDist1'),
+                              'minSize' => $self->o('minSize1'),
+                              'output_file' => '#output_dir#all.#maxDist#.#minSize#.BuildSynteny',
                              },
             },
            ];
