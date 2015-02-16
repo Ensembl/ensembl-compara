@@ -112,29 +112,30 @@ sub new {
   my $order = $params->{'ordered'} ? 0 : undef;
   foreach my $abs_path (@{$params->{'files'}}) {
 
-    my ($url_path) = map { $abs_path =~ m/^$_(.+)$/ ? $1 : () } @htdocs_dirs; # there will only be one match
+    my ($url_path, $plugin_order) = map { $abs_path =~ m/^$htdocs_dirs[$_](.+)$/ ? ($1, $_) : () } 0..$#htdocs_dirs; # there will only be one match
 
     $files{$url_path} = {
       'order'         => $files{$url_path} && $files{$url_path}{'order'} // (defined $order ? $order++ : undef), # if overwriting a file, keep the order as the original one
       'absolute_path' => $abs_path,
-      'url_path'      => $url_path
+      'url_path'      => $url_path,
+      'plugin_order'  => $files{$url_path} && $files{$url_path}{'plugin_order'} // $plugin_order, # if overwriting a file, keep the plugin order as the original one
     };
   }
 
   # sort the files according to original order if asked for, or give priority to the .min.js or .min.css among the files with same prefix if files are not sorted already
   my $sort_files = $params->{'ordered'}
-    ? sub { $a->{'order'} <=> $b->{'order'} }
+    ? sub { $a->{'plugin_order'} <=> $b->{'plugin_order'} || $a->{'order'} <=> $b->{'order'} }
     : sub {
       my $x = { 'a' => $a, 'b' => $b };
 
       for (qw(a b)) {
         $x->{$_}{'url_path'} =~ /^(.*)\/(([0-9]{2})_[^\/]+)$/;
-        $x->{$_} = { 'd' => $1, 'f' => $2, 'n' => $3, 'u' => $x->{$_}{'url_path'} };
+        $x->{$_} = { 'd' => $1, 'f' => $2, 'n' => $3, 'u' => $x->{$_}{'url_path'}, 'p' => $x->{$_}{'plugin_order'} };
       }
 
       defined $x->{a}{d} && $x->{a}{d} eq $x->{b}{d} && $x->{a}{n} == $x->{b}{n} && ($x->{a}{f} =~ /\.min\./ xor $x->{b}{f} =~ /\.min\./)
         ? $x->{a}{f} =~ /\.min\./ ? -1 : 1
-        : $a->{'url_path'} cmp $b->{'url_path'}
+        : $x->{a}{p} <=> $x->{b}{p} || $x->{a}{u} cmp $x->{b}{u}
       ;
     };
 
