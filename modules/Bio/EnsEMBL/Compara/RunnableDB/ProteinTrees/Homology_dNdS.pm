@@ -225,20 +225,15 @@ sub calc_genetic_distance {
   $homology->ds($MLmatrix->[0]->[1]->{'dS'});
   $homology->lnl($MLmatrix->[0]->[1]->{'lnL'});
 
-  if ($homology->get_all_Members->[0]->other_sequence('cds') eq $homology->get_all_Members->[1]->other_sequence('cds')) {
+  $homology->update_alignment_stats;
+
+  if (not ($homology->get_all_Members->[0]->num_mismatches or $homology->get_all_Members->[1]->num_mismatches) ) {
     # Bug 2015-01-26: Can't take log of 0 at [...]/bioperl-live/Bio/Align/DNAStatistics.pm line 1461,
     # No such case reported, but in case it happens ... Identical sequences
     # should lead to dn=ds=0
+    # Bug 2015-02-16: Illegal division by zero at [...]/bioperl-live/Bio/Align/DNAStatistics.pm line 1403
     $homology->dn(0);
     $homology->ds(0);
-
-  } elsif ($homology->get_all_Members->[0]->sequence eq $homology->get_all_Members->[1]->sequence) {
-    # Bug 2015-01-26: Can't take log of 0 at [...]/bioperl-live/Bio/Align/DNAStatistics.pm line 1461,
-    # In this case, all the subsitutions are synonymous (i.e. the protein sequences are identical),
-    # so we set dn to 0
-    $homology->dn(0);
-
-
 
   # REF1
   # We check that the sequences differ to avoid the dS=0.000N0 codeml
