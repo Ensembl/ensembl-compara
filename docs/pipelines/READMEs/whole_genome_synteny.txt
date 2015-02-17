@@ -35,13 +35,12 @@ all.100000.100000.BuildSynteny.
 
 1.4 Loading the data into a compara database
 
-The final file is loaded into the compara datbase using the script $ENSEMBL_CVS_ROOT_DIR/ensembl-compara/scripts/synteny/LoadSyntenyData.pl
+The concatenated file is loaded into the synteny_region and dnafrag_region table of the pipeline_db.
 
-For example:
+1.5 Coverage statistics are calculated on the synteny data.
 
-perl $ENSEMBL_CVS_ROOT_DIR/ensembl-compara/scripts/synteny/LoadSyntenyData.pl --reg_conf $ENSEMBL_CVS_ROOT_DIR/ensembl-compara/scripts/pipeline/production_reg_conf.pl \
-    --dbname compara_curr -ref "Homo sapiens" -nonref "Callithrix jacchus" -mlss_id 10052 \
-     all.100000.100000.BuildSynteny
+The results are stored in the method_link_species_set_tag table.
+
 
 2- code API needed 
    ~~~~~~~~~~~~~~~
@@ -75,13 +74,14 @@ release     => ensembl release
 host        => mysql server name
 synteny_dir => location of directory to write output files
 compara_url => url of the pairwise database
-mlss_id     => method_link_species_set id of the LASTZ_NET alignment
+pairwise_mlss_id  => method_link_species_set id of the LASTZ_NET alignment
+synteny_mlss_id   => method_link_species_set id of the SYNTENY data which will be generated.
 ref_species => reference species of the LASTZ_NET alignment
 
 4- Run init_pipeline.pl
 ~~~~~~~~~~~~~~~~~~~~~~~
 For example:
-init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::Synteny_conf --password <your_password> --ref_species <reference species> --mlss_id <mlss_id> --compara_url <"mysql://user@host:3306/dbname"> 
+init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::Synteny_conf --password <your_password> --ref_species oryzias_latipes  --pairwise_mlss_id 764 --synteny_mlss_id 10109  --compara_url "mysql://ensro@compara4:3306/sf5_olat_tnig_lastz_80"
 
 Make sure you have either your JAVA_HOME variable set
 
