@@ -19,7 +19,7 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
     this.base(id, params);
     
     this.dragging         = false;
-    this.scrolling        = false;
+    this.panning          = false;
     this.clicking         = true;
     this.dragCoords       = {};
     this.dragRegion       = {};
@@ -130,14 +130,14 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
     });
 
     if (this.elLk.boundaries.length && this.draggables.length) {
-      this.scrolling = Ensembl.cookie.get('ENSEMBL_REGION_PAN') === '1';
+      this.panning = Ensembl.cookie.get('ENSEMBL_REGION_PAN') === '1';
       this.elLk.toolbars.append('<div class="scroll-switch"><label>Drag/Select:<select><option>Select</option><option>Drag</option></select></label>').find('select').on('change', function() {
         var flag = $(this).find('option:selected').html() == 'Drag';
-        if (flag !== panel.scrolling) {
-          panel.scrolling = flag;
+        if (flag !== panel.panning) {
+          panel.panning = flag;
           Ensembl.cookie.set('ENSEMBL_REGION_PAN', flag ? '1' : '0');
         }
-      }).find('option:contains("' + (panel.scrolling ? 'Drag' : 'Select') + '")').prop('selected', true);
+      }).find('option:contains("' + (panel.panning ? 'Drag' : 'Select') + '")').prop('selected', true);
     }
 
   },
@@ -783,7 +783,7 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
       coords.b = this.dragRegion.b;
     }
 
-    if (this.scrolling) {
+    if (this.panning) {
       this.panImage(e);
     } else {
       this.highlight(coords, 'rubberband', this.dragRegion.a.attrs.href.split('|')[3]);
