@@ -259,8 +259,9 @@ sub render_Intron {
   $yend    = $ystart;
   $ymiddle = $ystart + $self->{sf} * ( $strand == 1 ? -1 : 1 ) * $glyph->{'pixelheight'} * 3/8;
 
-  $self->{'canvas'}->line($xstart, $ystart, $xmiddle, $ymiddle, $colour);
-  $self->{'canvas'}->line($xmiddle, $ymiddle, $xend, $yend, $colour);
+  $self->{'canvas'}->setAntiAliased($colour);
+  $self->{'canvas'}->line($xstart, $ystart, $xmiddle, $ymiddle, gdAntiAliased);
+  $self->{'canvas'}->line($xmiddle, $ymiddle, $xend, $yend, gdAntiAliased);
 }
 
 sub render_Line {
@@ -276,7 +277,8 @@ sub render_Line {
     $self->{'canvas'}->setStyle($glyph->dotted eq 'small' ? (gdTransparent, $colour, $colour) : (gdTransparent, gdTransparent, gdTransparent, $colour, $colour, $colour));
     $self->{'canvas'}->line($x1, $y1, $x2, $y2, gdStyled);
   } else {
-    $self->{'canvas'}->line($x1, $y1, $x2, $y2, $colour);
+    $self->{'canvas'}->setAntiAliased($colour);
+    $self->{'canvas'}->line($x1, $y1, $x2, $y2, gdAntiAliased);
   }
 
   if($glyph->chevron()) {
@@ -321,7 +323,8 @@ sub render_Poly {
   }
 
   if($glyph->{colour}) {
-    $canvas->filledPolygon($poly, $colour);
+    $canvas->setAntiAliased($colour);
+    $canvas->filledPolygon($poly, gdAntiAliased);
   }
 
   if($glyph->{'pattern'}) {
@@ -330,7 +333,8 @@ sub render_Poly {
   }
 
   if($glyph->{bordercolour}) {
-    $canvas->polygon($poly, $bordercolour);
+    $canvas->setAntiAliased($bordercolour);
+    $canvas->polygon($poly, gdAntiAliased);
   }
 }
 
