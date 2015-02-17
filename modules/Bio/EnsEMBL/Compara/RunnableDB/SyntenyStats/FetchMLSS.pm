@@ -40,14 +40,20 @@ use strict;
 use warnings;
 use base ('Bio::EnsEMBL::Hive::Process');
 use Bio::EnsEMBL::Registry;
+use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
 
 sub write_output {
   my ($self) = @_;
   
   my $division = $self->param_required('division');
   my $mlss_id  = $self->param('mlss_id');
-  Bio::EnsEMBL::Registry->load_all( $self->param("reg_conf") );  
-  my $mlssa = Bio::EnsEMBL::Registry->get_adaptor($division, 'compara', 'MethodLinkSpeciesSet');
+  my $reg = 'Bio::EnsEMBL::Registry';
+  if( $self->param("reg_conf") ){
+   $reg->load_all( $self->param("reg_conf") );
+  } elsif ( $self->param("store_in_pipeline_db") ){
+   my $pipe_db = Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->new( %{ $self->param('pipeline_db') });
+  }
+  my $mlssa = $reg->get_adaptor($division, 'compara', 'MethodLinkSpeciesSet');
   my @mlss = @{$mlssa->fetch_all_by_method_link_type("SYNTENY")};
   
   if (defined $mlss_id) {
