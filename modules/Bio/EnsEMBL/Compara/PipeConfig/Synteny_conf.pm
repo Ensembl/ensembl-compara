@@ -50,6 +50,7 @@ sub default_options {
 
             'host'        => 'compara5',                        #host name
             'pipeline_db' => {                                  # connection parameters
+                              -species => 'Multi',
                               -host   => $self->o('host'),
                               -port   => 3306,
                               -user   => 'ensadmin',
@@ -57,6 +58,8 @@ sub default_options {
                               -dbname => $ENV{USER}.'_'.$self->o('dbname'),
                               -driver => 'mysql',
                              },
+            'division'      => 'Multi', # Stats 
+            'store_in_pipeline_db' => 1, # Stats
 	    'master_db' => 'mysql://ensro@compara1/sf5_ensembl_compara_master',
             'synteny_dir' => '/lustre/scratch109/ensembl/' . $ENV{USER} . '/synteny/' . 'release_' . $self->o('rel_with_suffix') . '/' . $self->o('synteny_mlss_id') . '/',
 
@@ -222,10 +225,10 @@ sub pipeline_analyses {
             { -logic_name => 'copy_mlssid_from_master',
               -module        => 'Bio::EnsEMBL::Hive::RunnableDB::MySQLTransfer',
               -parameters    => {
-                                 'src_db_conn'   => $self->o('compara_url'),
+                                 'src_db_conn'   => $self->o('master_db'),
                                  'dest_db_conn'  => $self->o('pipeline_db'),
                                  'synteny_mlss_id' => $self->o('synteny_mlss_id'),
-                                 'mode'          => 'overwrite',
+                                 'mode'          => 'replace',
                                  'table'         => 'method_link_species_set',
                                  'where'         => 'method_link_species_set_id = #synteny_mlss_id#',
                                 },
@@ -248,8 +251,35 @@ sub pipeline_analyses {
                               'minSize' => $self->o('minSize1'),
                               'output_file' => '#output_dir#all.#maxDist#.#minSize#.BuildSynteny',
                              },
+              -flow_into => ['FetchMLSS'],
             },
-           ];
+            { -logic_name      => 'FetchMLSS',
+              -module          => 'Bio::EnsEMBL::Compara::RunnableDB::SyntenyStats::FetchMLSS',
+              -max_retry_count => 0,
+              -parameters      => {
+                                     division => $self->o('division'),
+                                     store_in_pipeline_db => $self->o('store_in_pipeline_db'),
+                                     pipeline_db => $self->o('pipeline_db'),
+                                     mlss_id  => $self->o('synteny_mlss_id'),
+                                  },
+              -flow_into       => {
+                                    1 => ['SyntenyStats'],
+                                  },
+            },
+    
+            {   
+              -logic_name      => 'SyntenyStats',
+              -module          => 'Bio::EnsEMBL::Compara::RunnableDB::SyntenyStats::SyntenyStats',
+              -parameters      => {
+                                   division => $self->o('division'),
+                                   store_in_pipeline_db => $self->o('store_in_pipeline_db'),
+                                   pipeline_db => $self->o('pipeline_db'),
+                                   mlss_id  => $self->o('synteny_mlss_id'),
+                                  },
+              -max_retry_count => 0,
+              -rc_name => '3.6Gb',
+            },
+   ];
 }
 
 1;
