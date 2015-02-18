@@ -722,7 +722,9 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
         this.dragging = false;
         this.clicking = false;
 
-        if (this.locationDisplacement == 0) {
+        this.elLk.boundariesPanning.helptip('destroy');
+
+        if (!this.newLocation) {
           this.elLk.boundariesPanning.parent().remove();
           this.elLk.boundariesPanning = false;
           return;
@@ -730,7 +732,7 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
 
         this.elLk.boundariesPanning.parent().append('<div class="spinner">');
 
-        Ensembl.updateLocation(this.dragRegion.range.chr + ':' + (this.dragRegion.range.start - this.locationDisplacement) + '-' + (this.dragRegion.range.end - this.locationDisplacement));
+        Ensembl.updateLocation(this.newLocation);
 
       } else {
 
@@ -799,12 +801,20 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
         .append(this.elLk.boundaries.clone())
         .css({ left: this.labelRight, right: 4 })
         .find('ul').find('li').css('marginLeft', -1 * this.labelRight)
-        .end();
+        .end().helptip({delay: 500, position: { at: 'center', of: this.el }});
     }
 
-    this.locationDisplacement = Math.min(this.dragRegion.range.start - 1, Math.round((e.pageX - this.dragCoords.page.x) * this.dragRegion.range.scale));
+    var locationDisplacement = Math.min(this.dragRegion.range.start - 1, Math.round((e.pageX - this.dragCoords.page.x) * this.dragRegion.range.scale));
 
-    this.elLk.boundariesPanning.css('left', this.locationDisplacement / this.dragRegion.range.scale + 'px');
+    if (locationDisplacement) {
+      this.newLocation = this.dragRegion.range.chr + ':' + (this.dragRegion.range.start - locationDisplacement) + '-' + (this.dragRegion.range.end - locationDisplacement);
+      this.elLk.boundariesPanning.helptip('option', 'content', this.newLocation).helptip('open');
+    } else {
+      this.newLocation = false;
+      this.elLk.boundariesPanning.helptip('close');
+    }
+
+    this.elLk.boundariesPanning.css('left', locationDisplacement / this.dragRegion.range.scale + 'px');
   },
   
   resize: function (width) {
