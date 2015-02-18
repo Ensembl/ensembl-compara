@@ -46,16 +46,25 @@ sub content {
   
   # Only if there is a gene (not Prediction transcripts)
   if ($gene) {
-    $self->add_entry({
-      type  => 'Gene',
-      label => $gene_desc
-    });
-    
-    $self->add_entry({
-      type  => ' ',
-      label => $gene->stable_id,
-      link  => $hub->url({ type => 'Gene', action => 'Summary' })
-    }); 
+  
+    if($gene_desc) {
+      $self->add_entry({
+        type  => 'Gene',
+        label => $gene_desc
+      });
+      
+      $self->add_entry({
+        type  => ' ',
+        label => $gene->stable_id,
+        link  => $hub->url({ type => 'Gene', action => 'Summary' })
+      }); 
+    } else {
+      $self->add_entry({
+        type  => 'Gene',
+        label => $gene->stable_id,
+        link  => $hub->url({ type => 'Gene', action => 'Summary' })
+      });     
+    }
     
     $self->add_entry({
       type  => 'Location',
@@ -126,6 +135,19 @@ sub content {
       $self->{'_exon_count'}++;
     }
   }  
+
+  $self->add_entry({
+      type  => 'Gene type',
+      label => $object->gene_stat_and_biotype
+  }) if ($gene);
+ 
+  
+  if ($object->transcript_type) {
+    $self->add_entry({
+      type  => 'Transcript type',
+      label => $object->transcript_type
+    });
+  }
   
   $self->add_entry({
     type  => 'Strand',
