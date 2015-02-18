@@ -103,11 +103,11 @@ sub content {
     if ($url) {      
       my $padding = ($button->{'count'} && $button->{'count'} > 99) ? '' : ($button->{'count'} > 9) ? ' 4px' : ' 6px';
       my $b_count = qq{<span class="counts">$button->{'count'}</span>} if ($button->{'count'});
-      $html      .= qq(<div class="container"><a href="$url" style="text-decoration:none"><img src="/i/96/${img}.png" class="portal _ht var_icon" alt="$title" title="$title" />$b_count</a></div>);
+      $html      .= qq(<div class="icon-container"><a href="$url" style="text-decoration:none"><img src="/i/96/${img}.png" class="portal _ht var_icon" alt="$title" title="$title" />$b_count</a></div>);
     }
     else {
       $title .= ' (NOT AVAILABLE)';
-      $html  .= qq(<div class="container"><img src="/i/96/${img}_off.png" class="portal _ht" alt="$title" title="$title" /></div>);
+      $html  .= qq(<div class="icon-container"><img src="/i/96/${img}_off.png" class="portal _ht" alt="$title" title="$title" /></div>);
     }
   }
 
