@@ -44,22 +44,23 @@ sub content {
   my $phenotype_url   = $hub->url({ action => "StructuralVariation", action => "Phenotype",   sv => $object->name });  
  
   my @str_array;
-  push @str_array, sprintf('overlaps <a href="%s">%s %s</a>', 
+  push @str_array, sprintf('is associated with <a href="%s">%s %s</a>', 
                       $transcript_url, 
                       $avail->{has_transcripts}, 
                       $avail->{has_transcripts} eq "1" ? "transcript" : "transcripts"
                   ) if($avail->{has_transcripts});
                   
-  push @str_array, sprintf('has <a href="%s">%s supporting %s</a>', 
-                      $evidence_url, 
-                      $avail->{has_supporting_structural_variation}, 
-                      $avail->{has_supporting_structural_variation} eq "1" ? "evidence" : "evidences" 
-                  )if($avail->{has_supporting_structural_variation});
   push @str_array, sprintf('<a href="%s">%s %s</a>', 
                       $phenotype_url, 
                       $avail->{has_phenotypes}, 
                       $avail->{has_phenotypes} eq "1" ? "phenotype" : "phenotypes"
                   ) if($avail->{has_phenotypes});
+
+  push @str_array, sprintf('has <a href="%s">%s supporting %s</a>', 
+                      $evidence_url, 
+                      $avail->{has_supporting_structural_variation}, 
+                      $avail->{has_supporting_structural_variation} eq "1" ? "evidence" : "evidences" 
+                  )if($avail->{has_supporting_structural_variation});                  
                   
   return sprintf qq{<div class="summary_panel">$failed%s</div>}, $self->new_twocol(
     $self->variation_class,
