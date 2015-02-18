@@ -133,7 +133,7 @@ sub copy_dir_contents {
         }
 
       } else {
-        throw exception('FileSystemException', "An error occoured while copying $source_dir/$content: $!") unless copy("$source_dir/$content", "$dest_dir/$content");
+        throw exception('FileSystemException', "An error occurred while copying $source_dir/$content: $!") unless copy("$source_dir/$content", "$dest_dir/$content");
         push @$contents, "$dest_dir/$content";
       }
     } catch {
@@ -164,7 +164,7 @@ sub copy_files {
     push @copied, $files->{$_};
     unless (copy($_, $files->{$_})) {
       unlink @copied; #rollback
-      throw exception('FileSystemException', "An error occoured while copying $_: $!") unless $params->{'no_exception'};
+      throw exception('FileSystemException', "An error occurred while copying $_: $!") unless $params->{'no_exception'};
       return;
     }
   }
@@ -186,7 +186,7 @@ sub list_dir_contents {
   my $dh    = DirHandle->new($dir);
 
   if (!$dh) {
-    throw exception('FileSystemException', "An error occoured while reading the directory $dir: $!") unless $params->{'no_exception'};
+    throw exception('FileSystemException', "An error occurred while reading the directory $dir: $!") unless $params->{'no_exception'};
     return undef;
   }
 
