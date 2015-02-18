@@ -53,7 +53,7 @@ sub chase_redirects {
 ###                     max_follow (optional) Integer - maximum number of redirects to follow
 ### @return url (String) or Hashref containing errors (ArrayRef)
   my ($file, $args) = @_;
-  my $url = ref($file) ? $file->read_url : $file;
+  my $url = ref($file) ? $file->read_location : $file;
 
   $args->{'max_follow'} = 10 unless defined $args->{'max_follow'};
 
@@ -147,7 +147,7 @@ sub read_file {
 ###         compression String (optional) - compression type
 ### @return Hashref (in nice mode) or String - contents of file
   my ($file, $args) = @_;
-  my $url = ref($file) ? $file->absolute_read_path : $file;
+  my $url = ref($file) ? $file->read_location : $file;
 
   my ($content, $error);
 
@@ -177,8 +177,8 @@ sub read_file {
       $content = $response->{'content'};
     }
     else {
-      warn "!!! ERROR FETCHING FILE $url";
       $error = _get_http_tiny_error($response);
+      warn "!!! ERROR FETCHING FILE $url: $error";
     }
   }
 
@@ -249,7 +249,7 @@ sub get_headers {
 ###         compression String (optional) - compression type
 ### @return Hashref containing results (single header or hashref of headers) or errors (ArrayRef)
   my ($file, $args) = @_;
-  my $url = ref($file) ? $file->location : $file;
+  my $url = ref($file) ? $file->read_location : $file;
   my ($all_headers, $result, $error);
 
   if ($url =~ /^ftp/) {
