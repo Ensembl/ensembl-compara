@@ -257,6 +257,8 @@ sub compress {
 
 sub read_location {
 ### a
+### Relative path to directory we want to read from
+### N.B. Use this method anywhere that URLs might be exposed to the browser
 ### Assume that we read back from the same file we wrote to
 ### unless read parameters were set separately
   my $self = shift;
@@ -265,6 +267,8 @@ sub read_location {
 
 sub write_location {
 ### a
+### Relative path to directory we want to write to 
+### N.B. Use this method anywhere that URLs might be exposed to the browser
 ### Assume that we write back to the same file unless 
 ### write parameters have been set
   my $self = shift;
@@ -272,12 +276,17 @@ sub write_location {
 }
 
 sub base_read_path {
+### a
+### Full standard path to file, omitting file-specific subdirectory
   my $self = shift;
   my $constant = $path_map{$self->{'base_dir'}}->[0];
   return join('/', $self->hub->species_defs->$constant, $self->get_datestamp, $self->get_user_identifier);
 }
 
 sub absolute_read_path {
+### a
+### Absolute path to a file we want to read from
+### IMPORTANT: Do not use this value anywhere that might be exposed to the browser!
   my $self = shift;
   my $constant = $path_map{$self->{'base_dir'}}->[0];
   my $absolute_path = $self->hub->species_defs->$constant;
@@ -285,6 +294,9 @@ sub absolute_read_path {
 }
 
 sub absolute_write_path {
+### a
+### Absolute path to a file we want to write to
+### IMPORTANT: Do not use this value anywhere that might be exposed to the browser!
   my $self = shift;
   my $constant = $path_map{$self->{'base_dir'}}->[0];
   my $absolute_path = $self->hub->species_defs->$constant;
@@ -293,6 +305,8 @@ sub absolute_write_path {
 
 sub read_url {
 ### a
+### Absolute path to a file we want to read from
+### IMPORTANT: Do not use this value anywhere that might be exposed to the browser!
 ### Assume that we read back from the same file we wrote to
 ### unless read parameters were set separately
   my $self = shift;
@@ -303,6 +317,8 @@ sub read_url {
 
 sub write_url {
 ### a
+### Absolute path to a file we want to write to 
+### IMPORTANT: Do not use this value anywhere that might be exposed to the browser!
 ### Assume that we write back to the same file unless 
 ### write parameters have been set
 ### N.B. whilst we don't literally write to a url, memcached
