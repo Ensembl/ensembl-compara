@@ -29,33 +29,37 @@ sub _init {
 }
 
 sub content {
-  my $self               = shift;
-  my $hub                = $self->hub;
-  my $object             = $self->object;
-  my $variation          = $object->Obj;
-  my $species            = $hub->species;
+  my $self      = shift;
+  my $hub       = $self->hub;
+  my $object    = $self->object;
+  my $variation = $object->Obj;
+  my $species   = $hub->species;
 
-  my $avail    = $self->object->availability;
+  my $avail     = $self->object->availability;
 
   my ($gt_url, $context_url, $pheno_url, $supp_url);
+  my ($gt_count, $supp_count, $pheno_count);
   $context_url = $hub->url({'action' => 'Context'});
   if ($avail->{'has_transcripts'}) {
-    $gt_url    = $hub->url({'action' => 'Mappings'});
+    $gt_url   = $hub->url({'action' => 'Mappings'});
+    $gt_count = $avail->{'has_transcripts'};
   }
-  if ($avail->{'has_transcripts'}) {
+  if ($avail->{'has_transcripts'} || $avail->{'has_phenotypes'}) {
     $pheno_url = $hub->url({'action' => 'Phenotype'});
+    $pheno_count = $avail->{'has_phenotypes'} if ($avail->{'has_phenotypes'});
   }
   if ($avail->{'has_supporting_structural_variation'}) {
-    $supp_url  = $hub->url({'action' => 'Evidence'});
+    $supp_url   = $hub->url({'action' => 'Evidence'});
+    $supp_count = $avail->{'has_supporting_structural_variation'};
   }
   
-
+  my $supp_title = 'Sample level variant data used to define the structural variant';
+ 
   my @buttons = (
     {'title' => 'Graphical neighbourhood region', 'img' => 'genomic_context',        'url' => $context_url},
-    {'title' => 'Consequences (e.g. missense)',   'img' => 'gene_transcript',        'url' => $gt_url},
-    {'title' => 'Sample level variant data used to define the structural variant', 
-                                                  'img' => 'supporting_evidence',    'url' => $supp_url},
-    {'title' => 'Diseases and traits',            'img' => 'phenotype_data',         'url' => $pheno_url},
+    {'title' => 'Consequences (e.g. missense)',   'img' => 'gene_transcript',        'url' => $gt_url   ,  'count' => $gt_count},
+    {'title' => $supp_title,                      'img' => 'supporting_evidence',    'url' => $supp_url ,  'count' => $supp_count},
+    {'title' => 'Diseases and traits',            'img' => 'phenotype_data',         'url' => $pheno_url , 'count' => $pheno_count},
   );
 
   my $html = '<div class="icon-holder">';
@@ -65,14 +69,16 @@ sub content {
     my $img   = 'var_'.$button->{'img'};
     my $url   = $button->{'url'};
     if ($url) {
-      $html .= qq(<a href="$url"><img src="/i/96/${img}.png" class="portal _ht" alt="$title" title="$title" /></a>);
+      my $b_count = qq{<span class="counts">$button->{'count'}</span>} if ($button->{'count'});
+      $html      .= qq(<div class="icon-container"><a href="$url" style="text-decoration:none"><img src="/i/96/${img}.png" class="portal _ht" alt="$title" title="$title" />$b_count</a></div>);
     }
     else {
       $title .= ' (NOT AVAILABLE)';
-      $html  .= qq(<img src="/i/96/${img}_off.png" class="portal _ht" alt="$title" title="$title" />);
+      $html  .= qq(<div class="icon-container"><img src="/i/96/${img}_off.png" class="portal _ht" alt="$title" title="$title" /></div>);
     }
   }
 
+  $html .= '<div style="clear:both"></div>';
   $html .= '</div>';
 
   ## Structural variation documentation links
