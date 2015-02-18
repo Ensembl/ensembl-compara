@@ -116,6 +116,11 @@ body.ie7 div.boundaries_wrapper ul.f li:first-child { margin-top: 0; }
 body.ie7 div.boundaries_wrapper ul li div           { position: absolute; left: 0; }
 body.mac div.boundaries_wrapper ul li div.handle    { cursor: ns-resize; }
 
+/* Image panning */
+div.boundaries_wrapper div.boundaries_panning             { position: absolute; top: 0; background-color: #fffdf8; height: 100%; overflow: hidden; cursor: move; }
+div.boundaries_wrapper div.boundaries_panning ul          { overflow: hidden; }
+div.boundaries_wrapper div.boundaries_panning div.spinner { position: absolute; opacity: 0.5; border: none; background-position: center center; background-color: #fff; width: 100%; height: 100%; top: 0; }
+
 @media print {
   div.boundaries_wrapper { display: none; }
 }
@@ -135,6 +140,8 @@ div.image_toolbar a.resize        { background-image: url(/i/16/rev/image_resize
 div.image_toolbar a.share         { background-image: url(/i/16/rev/share.png);         }
 div.image_toolbar a.order-reset   { background-image: url(/i/16/rev/order-reset.png);   }
 div.image_toolbar a.config-reset  { background-image: url(/i/16/rev/setting-reset.png); }
+div.image_toolbar div.scroll-switch         { float: right; }
+div.image_toolbar div.scroll-switch select  { margin: 0 4px; }
 
 /* Image exporting */
 
