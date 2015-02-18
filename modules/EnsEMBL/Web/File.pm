@@ -271,6 +271,12 @@ sub write_location {
   return $self->{'write_location'} || $self->{'read_location'};
 }
 
+sub base_read_path {
+  my $self = shift;
+  my $constant = $path_map{$self->{'base_dir'}}->[0];
+  return join('/', $self->hub->species_defs->$constant, $self->get_datestamp, $self->get_user_identifier);
+}
+
 sub absolute_read_path {
   my $self = shift;
   my $constant = $path_map{$self->{'base_dir'}}->[0];
@@ -353,6 +359,12 @@ sub set_datestamp {
   return $self->{'read_datestamp'};
 }
 
+sub get_datestamp {
+  ### a
+  my $self = shift;
+  return $self->{'read_datestamp'};
+}
+
 sub set_user_identifier {
   ### a
   my $self = shift;
@@ -368,6 +380,11 @@ sub set_user_identifier {
   return $self->{'user_identifier'};
 }
 
+sub get_user_identifier {
+  ### a
+  my $self = shift;
+  return $self->{'user_identifier'};
+}
 
 sub md5 {
   my ($self, $content) = @_;
