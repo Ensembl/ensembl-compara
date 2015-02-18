@@ -131,13 +131,13 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
 
     if (this.elLk.boundaries.length && this.draggables.length) {
       this.panning = Ensembl.cookie.get('ENSEMBL_REGION_PAN') === '1';
-      this.elLk.toolbars.append('<div class="scroll-switch"><label>Drag/Select:<select><option>Select</option><option>Drag</option></select></label>').find('select').on('change', function() {
-        var flag = $(this).find('option:selected').html() == 'Drag';
+      this.elLk.toolbars.append('<div class="scroll-switch"><label>Move/Select:<select><option>Select</option><option>Move</option></select></label>').find('select').on('change', function() {
+        var flag = $(this).find('option:selected').html() == 'Move';
         if (flag !== panel.panning) {
           panel.panning = flag;
           Ensembl.cookie.set('ENSEMBL_REGION_PAN', flag ? '1' : '0');
         }
-      }).find('option:contains("' + (panel.panning ? 'Drag' : 'Select') + '")').prop('selected', true);
+      }).find('option:contains("' + (panel.panning ? 'Move' : 'Select') + '")').prop('selected', true);
     }
 
   },
