@@ -64,7 +64,7 @@ sub content {
   push @str_array, sprintf('<a href="%s">%s %s</a>', 
                       $phenotype_url, 
                       $avail->{has_ega}, 
-                      $avail->{has_ega} eq "1" ? "phenotyp" : "phenotypes"
+                      $avail->{has_ega} eq "1" ? "phenotype" : "phenotypes"
                   ) if($avail->{has_ega});  
   push @str_array, sprintf('is mentioned in <a href="%s">%s %s', 
                       $citation_url, 
@@ -84,7 +84,7 @@ sub content {
     $self->synonyms,
     $self->hgvs,
     $self->sets,
-    ['Summary', sprintf('This variant %s', $self->join_with_and(@str_array))]
+    ['Summary', sprintf('This variant %s.', $self->join_with_and(@str_array))]
   );
 
   return sprintf qq{<div class="summary_panel">$info_box%s</div>}, $summary_table->render;
