@@ -49,7 +49,7 @@ sub populate_tree {
     { 'availability' => 'has_transcripts', 'concise' => 'Genes and regulation' }
   ));
   
-  $self->create_node('Evidence', 'Supporting evidence ([[counts::supporting_structural_variation]])',
+  $self->create_node('Evidence', 'Supporting evidence',
     [qw( evidence  EnsEMBL::Web::Component::StructuralVariation::SupportingEvidence)],
     { 'availability' => 'has_supporting_structural_variation', 'concise' => 'Supporting evidence' }
   );
