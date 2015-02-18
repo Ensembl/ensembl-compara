@@ -58,7 +58,7 @@ sub availability {
       
       $availability->{'structural_variation'} = 1;
     
-      $availability->{"has_$_"} = $counts->{$_} for qw(transcripts supporting_structural_variation);
+      $availability->{"has_$_"} = $counts->{$_} for qw(transcripts supporting_structural_variation phenotypes);
       
       $availability->{'has_phenotype'} = 1 if ($self->has_phenotype || $availability->{'has_transcripts'});
  
@@ -87,9 +87,22 @@ sub counts {
     $counts = {};
     $counts->{'transcripts'} = $self->count_transcripts;
     $counts->{'supporting_structural_variation'} = $self->count_supporting_structural_variation;
-    
+    $counts->{'phenotypes'} = $self->count_phenotypes;    
+
     $MEMD->set($key, $counts, undef, 'COUNTS') if $MEMD;
     $self->{'_counts'} = $counts;
+  }
+
+  return $counts;
+}
+
+sub count_phenotypes {
+  my $self = shift;
+
+  my $counts = 0;
+  my $pf_objects = $self->hub->database('variation')->get_PhenotypeFeatureAdaptor->fetch_all_by_StructuralVariation($self->Obj);
+  if ($pf_objects) {
+    $counts = scalar @$pf_objects;
   }
 
   return $counts;
