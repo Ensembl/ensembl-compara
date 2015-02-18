@@ -44,6 +44,64 @@ sub content {
 
   $self->caption($xref[0] ? "$xref[3]: $xref[0]" : !$gene ? $stable_id : 'Novel transcript');
   
+  # Only if there is a gene (not Prediction transcripts)
+  if ($gene) {
+    $self->add_entry({
+      type  => 'Gene',
+      label => $gene_desc
+    });
+    
+    $self->add_entry({
+      type  => ' ',
+      label => $gene->stable_id,
+      link  => $hub->url({ type => 'Gene', action => 'Summary' })
+    }); 
+    
+    $self->add_entry({
+      type  => 'Location',
+      label => sprintf(
+        '%s: %s-%s',
+        $self->neat_sr_name($object->seq_region_type, $object->seq_region_name),
+        $self->thousandify($object->seq_region_start),
+        $self->thousandify($object->seq_region_end)
+      ),
+      link  => $hub->url({
+        type   => 'Location',
+        action => 'View',
+        r      => $object->seq_region_name . ':' . $object->seq_region_start . '-' . $object->seq_region_end
+      })
+    });
+  }   
+  
+  $self->add_entry({
+    type  => 'Transcript',
+    label => $stable_id, 
+    link  => $hub->url({ type => 'Transcript', action => 'Summary' })
+  });
+  
+  $self->add_entry({
+    type  => ' ',
+    label => 'cDNA Sequence',
+    link  => $hub->url({ type => 'Transcript', action => 'Sequence_cDNA' })
+  });  
+  
+  # Protein coding transcripts only
+  if ($translation) {
+    $self->add_entry({
+      type  => 'Protein',
+      label => $translation->stable_id || $stable_id,
+      link  => $self->hub->url({ type => 'Transcript', action => 'ProteinSummary' }),
+    });
+  }
+  
+  if ($translation) {
+    $self->add_entry({
+      type  => ' ',
+      label => 'Protein Variations',
+      link  => $self->hub->url({ type => 'Transcript', action => 'ProtVariations' }),
+    });
+  }  
+
   if (scalar @click) {
     ## Has user clicked on an exon (or exons)?
     my @exons;
@@ -67,74 +125,7 @@ sub content {
       });
       $self->{'_exon_count'}++;
     }
-  }
-  
-  $self->add_entry({
-    type  => 'Transcript',
-    label => $stable_id, 
-    link  => $hub->url({ type => 'Transcript', action => 'Summary' })
-  });
-  
-  # Protein coding transcripts only
-  if ($translation) {
-    $self->add_entry({
-      type  => 'Protein',
-      label => $translation->stable_id || $stable_id,
-      link  => $self->hub->url({ type => 'Transcript', action => 'ProteinSummary' }),
-    });
-  }
-  
-  # Only if there is a gene (not Prediction transcripts)
-  if ($gene) {
-    $self->add_entry({
-      type  => 'Gene',
-      label => $gene->stable_id,
-      link  => $hub->url({ type => 'Gene', action => 'Summary' })
-    });
-
-    $self->add_entry({
-      type  => 'Location',
-      label => sprintf(
-        '%s: %s-%s',
-        $self->neat_sr_name($object->seq_region_type, $object->seq_region_name),
-        $self->thousandify($object->seq_region_start),
-        $self->thousandify($object->seq_region_end)
-      ),
-      link  => $hub->url({
-        type   => 'Location',
-        action => 'View',
-        r      => $object->seq_region_name . ':' . $object->seq_region_start . '-' . $object->seq_region_end
-      })
-    });
-  }
-
-  $self->add_entry({
-    type  => ' ',
-    label => 'cDNA Sequence',
-    link  => $hub->url({ type => 'Transcript', action => 'Sequence_cDNA' })
-  });
-
-  if ($translation) {
-    $self->add_entry({
-      type  => ' ',
-      label => 'Protein Variations',
-      link  => $self->hub->url({ type => 'Transcript', action => 'ProtVariations' }),
-    });
-  }
-
-  if ($gene_desc) {
-    $self->add_entry({
-      type  => 'Gene description',
-      label => $gene_desc
-    });
-  }
-  
-  if ($object->transcript_type) {
-    $self->add_entry({
-      type  => 'Transcript type',
-      label => $object->transcript_type
-    });
-  }
+  }  
   
   $self->add_entry({
     type  => 'Strand',
