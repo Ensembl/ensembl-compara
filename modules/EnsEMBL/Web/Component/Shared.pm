@@ -513,10 +513,10 @@ sub transcript_table {
       g      => $gene->stable_id
     });     
     
-    push @str_array, sprintf('<a href="%s">%s supporting %s</a>', 
+    push @str_array, sprintf('<a href="%s">%s %s</a>', 
                         $evidence_url, 
                         $avail->{has_evidence}, 
-                        $avail->{has_evidence} eq "1" ? "evidence" : "evidences"
+                        $avail->{has_evidence} eq "1" ? "piece of supporting evidence" : "pieces supporting of evidences"
                       ) if($avail->{has_evidence});
     push @str_array, sprintf('has <a href="%s">%s %s</a>', 
                         $exon_url, $avail->{has_exons}, 
@@ -529,7 +529,7 @@ sub transcript_table {
                         $oligo_url, $avail->{has_oligos}, 
                         $avail->{has_oligos} eq "1" ? "probe" : "probes"
                       ) if($avail->{has_similarity_matches});
-    push @str_array, sprintf('is present on <a href="%s">%s %s</a>', 
+    push @str_array, sprintf('is annotated with <a href="%s">%s %s</a>', 
                         $domain_url, $avail->{has_domains}, 
                         $avail->{has_domains} eq "1" ? "domain and feature" : "domains and features"
                       ) if($avail->{has_domains});
