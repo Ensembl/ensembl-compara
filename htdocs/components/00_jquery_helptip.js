@@ -73,7 +73,7 @@
           hide:     false,
           items:    '*',
           open:     function(e, ui) {
-            if (e.originalEvent.type === 'focusin' && !$(e.originalEvent.currentTarget).is('input,textarea')) {
+            if (e.originalEvent && e.originalEvent.type === 'focusin' && !$(e.originalEvent.currentTarget).is('input,textarea')) {
               ui.tooltip.remove();
               return false;
             }
