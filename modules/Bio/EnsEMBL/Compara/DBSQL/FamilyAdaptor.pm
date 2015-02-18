@@ -282,7 +282,7 @@ sub store {
     $sql = "INSERT INTO family (stable_id, version, method_link_species_set_id, description, description_score) VALUES (?,?,?,?,?)";
     $sth = $self->prepare($sql);
     $sth->execute($fam->stable_id, $fam->version, $fam->method_link_species_set_id, $fam->description, $fam->description_score);
-    $fam->dbID($sth->{'mysql_insertid'});
+    $fam->dbID( $self->dbc->last_insert_id(undef, undef, 'family', 'family_id') );
   }
 
   $sql = "INSERT IGNORE INTO family_member (family_id, seq_member_id, cigar_line) VALUES (?,?,?)";
