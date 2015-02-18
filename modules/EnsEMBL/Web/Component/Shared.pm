@@ -443,12 +443,33 @@ sub transcript_table {
       g      => $gene->stable_id
     });    
     
-    push @str_array, qq{$avail->{has_transcripts} transcripts (splice variants)} if($avail->{has_transcripts});
-    push @str_array, qq{$avail->{has_alt_alleles} gene alleles} if($avail->{has_alt_alleles});
-    push @str_array, qq{<a href="$ortholog_url">$avail->{has_orthologs} orthologues</a>} if($avail->{has_orthologs});
-    push @str_array, qq{<a href="$paralog_url">$avail->{has_paralogs} paralogues</a>} if($avail->{has_paralogs});    
-    push @str_array, qq{is a member of <a href="$protein_url">$avail->{family_count} Ensembl protein families</a>} if($avail->{family_count});
-    push @str_array, qq{is associated with <a href="$phenotype_url">$avail->{has_phenotypes} phenotypes</a>} if($avail->{has_phenotypes});
+    push @str_array, sprintf('%s %s', 
+                        $avail->{has_transcripts}, 
+                        $avail->{has_transcripts} eq "1" ? "transcript (splice variant)" : "transcripts (splice variants)"
+                    ) if($avail->{has_transcripts});
+    push @str_array, sprintf('%s gene %s', 
+                        $avail->{has_alt_alleles}, 
+                        $avail->{has_alt_alleles} eq "1" ? "allele" : "alleles"
+                    ) if($avail->{has_alt_alleles});
+    push @str_array, sprintf('<a href="%s">%s %s</a>', 
+                        $ortholog_url, 
+                        $avail->{has_orthologs}, 
+                        $avail->{has_orthologs} eq "1" ? "orthologue" : "orthologues"
+                    ) if($avail->{has_orthologs});
+    push @str_array, sprintf('<a href="%s">%s %s</a>',
+                        $paralog_url, 
+                        $avail->{has_paralogs}, 
+                        $avail->{has_paralogs} eq "1" ? "paralogue" : "paralogues"
+                    ) if($avail->{has_paralogs});    
+    push @str_array, sprintf('is a member of <a href="%s">%s Ensembl protein %s</a>', $protein_url, 
+                        $avail->{family_count}, 
+                        $avail->{family_count} eq "1" ? "family" : "families"
+                    ) if($avail->{family_count});
+    push @str_array, sprintf('is associated with <a href="%s">%s %s</a>', 
+                        $phenotype_url, 
+                        $avail->{has_phenotypes}, 
+                        $avail->{has_phenotypes} eq "1" ? "phenotype" : "phenotypes"
+                    ) if($avail->{has_phenotypes});
    
     $counts_summary  = sprintf('This gene has %s.',$self->join_with_and(@str_array));    
     $gene_html      .= $button;
@@ -456,11 +477,67 @@ sub transcript_table {
   
   if($page_type eq 'transcript') {    
     my @str_array;
-    push @str_array, qq{$avail->{has_evidence} supporting evidence} if($avail->{has_evidence});
-    push @str_array, qq{lies on $avail->{has_exons} exons} if($avail->{has_exons});
-    push @str_array, qq{corresponds to $avail->{has_similarity_matches} database identifiers with $avail->{has_oligos} oligo probes} if($avail->{has_similarity_matches});
-    push @str_array, qq{is present on $avail->{has_domains} domain and features} if($avail->{has_domains});
-    push @str_array, qq{is associated with $avail->{has_variations} variations} if($avail->{has_variations});
+    my $evidence_url = $hub->url({
+      type   => 'Transcript',
+      action => 'SupportingEvidence',
+      g      => $gene->stable_id
+    });    
+    
+    my $exon_url = $hub->url({
+      type   => 'Transcript',
+      action => 'Exons',
+      g      => $gene->stable_id
+    }); 
+    
+    my $similarity_url = $hub->url({
+      type   => 'Transcript',
+      action => 'Similarity',
+      g      => $gene->stable_id
+    }); 
+    
+    my $oligo_url = $hub->url({
+      type   => 'Transcript',
+      action => 'Oligos',
+      g      => $gene->stable_id
+    });     
+
+    my $domain_url = $hub->url({
+      type   => 'Transcript',
+      action => 'Domains',
+      g      => $gene->stable_id
+    });
+    
+    my $variation_url = $hub->url({
+      type   => 'Transcript',
+      action => 'Variations',
+      g      => $gene->stable_id
+    });     
+    
+    push @str_array, sprintf('<a href="%s">%s supporting %s</a>', 
+                        $evidence_url, 
+                        $avail->{has_evidence}, 
+                        $avail->{has_evidence} eq "1" ? "evidence" : "evidences"
+                      ) if($avail->{has_evidence});
+    push @str_array, sprintf('has <a href="%s">%s %s</a>', 
+                        $exon_url, $avail->{has_exons}, 
+                        $avail->{has_exons} eq "1" ? "exon" : "exons"
+                      ) if($avail->{has_exons});
+    push @str_array, sprintf('corresponds to <a href="%s">%s database %s</a> with <a href="%s">%s oligo %s</a>', 
+                        $similarity_url, 
+                        $avail->{has_similarity_matches}, 
+                        $avail->{has_similarity_matches} eq "1" ? "identifier" : "identifiers", 
+                        $oligo_url, $avail->{has_oligos}, 
+                        $avail->{has_oligos} eq "1" ? "probe" : "probes"
+                      ) if($avail->{has_similarity_matches});
+    push @str_array, sprintf('is present on <a href="%s">%s %s</a>', 
+                        $domain_url, $avail->{has_domains}, 
+                        $avail->{has_domains} eq "1" ? "domain and feature" : "domains and features"
+                      ) if($avail->{has_domains});
+    push @str_array, sprintf('is associated with <a href="%s">%s %s</a>', 
+                        $variation_url, 
+                        $avail->{has_variations}, 
+                        $avail->{has_variations} eq "1" ? "variation" : "variations"
+                      ) if($avail->{has_variations});
     
     $counts_summary  = sprintf('<p>This transcript has %s.</p>', $self->join_with_and(@str_array));  
   }    
