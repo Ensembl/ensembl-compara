@@ -84,7 +84,7 @@ sub populate_tree {
     { 'availability' => 'database:compara' }
   );
   
-  $align_menu->append($self->create_node('Compara_Alignments/Image', 'Alignments (image) ([[counts::alignments]])', 
+  $align_menu->append($self->create_node('Compara_Alignments/Image', 'Alignments (image)', 
     [qw(
       summary  EnsEMBL::Web::Component::Location::Summary
       top      EnsEMBL::Web::Component::Location::ViewTop
@@ -95,7 +95,7 @@ sub populate_tree {
     { 'availability' => 'slice database:compara has_alignments', 'concise' => 'Alignments (image)' }
   ));
   
-  $align_menu->append($self->create_node('Compara_Alignments', 'Alignments (text) ([[counts::alignments]])',
+  $align_menu->append($self->create_node('Compara_Alignments', 'Alignments (text)',
     [qw(
       summary    EnsEMBL::Web::Component::Location::Summary
       selector   EnsEMBL::Web::Component::Compara_AlignSliceSelector
@@ -105,7 +105,7 @@ sub populate_tree {
     { 'availability' => 'slice database:compara has_alignments', 'concise' => 'Alignments (text)' }
   ));
   
-  $align_menu->append($self->create_node('Multi', 'Region Comparison ([[counts::pairwise_alignments]])',
+  $align_menu->append($self->create_node('Multi', 'Region Comparison',
     [qw(
       summary  EnsEMBL::Web::Component::Location::MultiIdeogram
       selector EnsEMBL::Web::Component::Location::MultiSpeciesSelector
@@ -120,7 +120,7 @@ sub populate_tree {
     [qw( gen_alignment EnsEMBL::Web::Component::Location::ComparaGenomicAlignment )]
   ));
   
-  $align_menu->append($self->create_node('Synteny', 'Synteny ([[counts::synteny]])',
+  $align_menu->append($self->create_node('Synteny', 'Synteny',
     [qw(
       summary  EnsEMBL::Web::Component::Location::Summary
       image    EnsEMBL::Web::Component::Location::SyntenyImage
@@ -132,7 +132,7 @@ sub populate_tree {
   
   my $variation_menu = $self->create_submenu( 'Variation', 'Genetic Variation' );
   
-  $variation_menu->append($self->create_node('SequenceAlignment', 'Resequencing ([[counts::reseq_strains]])',
+  $variation_menu->append($self->create_node('SequenceAlignment', 'Resequencing',
     [qw(
       summary EnsEMBL::Web::Component::Location::Summary
       botnav  EnsEMBL::Web::Component::Location::ViewBottomNav
