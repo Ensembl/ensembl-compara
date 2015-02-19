@@ -73,19 +73,35 @@ sub hex_by_name {
 }
 
 sub rgb_by_name {
-  my ($self, $name, $flag) = @_;
-  $name = lc($name);
-  my $hex = $self->{$name};
-  $hex = $1 if !$hex && $name=~/^#?([0-9a-f]{6})$/;
-  $hex = sprintf( '%02x%02x%02x', split /,/, $1 ) if ! $hex && $name =~ /(\d+,\d+,\d+)/;
-  unless( $hex ) {
-    #use Carp qw(cluck);
-    #cluck "Unknown colour name {$name}" unless $errors->{$name};
-    warn "Unknown colour name {$name}" unless $errors->{$name};
-    $errors->{$name} = 1;
+### Convert the provided colour to RGB
+### Note that despite the method name, it can accept a colour in hex format
+### or stringified RGB, as well as by Unix colour name
+### @param colour String - colour to be converted 
+### @param flag Boolean - ??
+### @return Array - RGB values
+  my ($self, $colour, $flag) = @_;
+  $colour = lc($colour);
+  my $hex;
+  
+  if ($colour =~ /(\d+,\d+,\d+)/) { ## RGB
+    return sprintf( '%02x%02x%02x', split /,/, $1);
+  }
+  elsif ($colour =~ /^#?([0-9a-f]{6})$/) { ## Hex
+    $hex = $1;
+  }
+  else { ## Colour name - look up from list
+    $hex = $self->{$colour};
+  }
+
+  if ($hex) {
+    return $self->rgb_by_hex($hex);
+  }
+  else {
+    warn "Unknown colour name {$colour}" unless $errors->{$colour};
+    $errors->{$colour} = 1;
     return $flag ? () : (0,0,0);
   }
-  return $self->rgb_by_hex($hex) if $hex;
+
 }
 
 
