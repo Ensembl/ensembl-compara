@@ -286,7 +286,7 @@ sub load_compara_ncs {
 }
 
 sub store_map {
-    my ($self, $map, $dbh) = @_;
+    my ($self, $map, $dbc) = @_;
 
     my $step = 3000;
 
@@ -299,7 +299,7 @@ sub store_map {
     ? qq{
         UPDATE gene_tree_root SET stable_id=?, version=? WHERE root_id=?
     } : die "Cannot store mapping in database. Type must be either 'f' or 't'";
-    my $sth = $dbh->prepare($sql);
+    my $sth = $dbc->prepare($sql);
 
     my $counter = 0;
     foreach my $clid (@{ $map->get_all_clids }) {
@@ -316,14 +316,14 @@ sub store_map {
 }
 
 sub store_history {
-    my ($self, $ncsl, $dbh, $timestamp, $master_dbh) = @_;
+    my ($self, $ncsl, $dbc, $timestamp, $master_dbc) = @_;
     
-    my $mapping_session_id = $self->_get_mapping_session_id($ncsl, $timestamp, $dbh, $master_dbh);
+    my $mapping_session_id = $self->_get_mapping_session_id($ncsl, $timestamp, $dbc, $master_dbc);
     
     my $step = 2000;
     my $counter = 0;
 
-    my $sth = $dbh->prepare(
+    my $sth = $dbc->prepare(
         "INSERT INTO stable_id_history(mapping_session_id, stable_id_from, version_from, stable_id_to, version_to, contribution) VALUES (?, ?, ?, ?, ?, ?)"
     );
 
@@ -378,10 +378,10 @@ sub store_history {
 }
 
 sub _get_mapping_session_id {
-  my ($self, $ncsl, $timestamp, $dbh, $master_dbh) = @_;
+  my ($self, $ncsl, $timestamp, $dbc, $master_dbc) = @_;
   
   $timestamp  ||= time();
-  $master_dbh ||= $dbh;       # in case no master was given (so please provide the $master_dbh to avoid doing unnecessary work afterwards)
+  $master_dbc ||= $dbc;       # in case no master was given (so please provide the $master_dbc to avoid doing unnecessary work afterwards)
   
   my $type = $ncsl->to->type();
   my $fulltype = { 'f' => 'family', 't' => 'tree' }->{$type} || die "Cannot store history for type '$type'";
@@ -397,7 +397,7 @@ sub _get_mapping_session_id {
   my $prefix_to_remove = { f => 'FM', t => 'GT' }->{$type} || die "Do not know the extension for type '${type}'";
   $prefix =~ s/$prefix_to_remove \Z//xms;
 
-  my $ms_sth = $master_dbh->prepare( "SELECT mapping_session_id FROM mapping_session WHERE type = ? AND rel_from = ? AND rel_to = ? AND prefix = ?" );
+  my $ms_sth = $master_dbc->prepare( "SELECT mapping_session_id FROM mapping_session WHERE type = ? AND rel_from = ? AND rel_to = ? AND prefix = ?" );
   $ms_sth->execute($fulltype, $ncsl->from->release(), $ncsl->to->release(), $prefix);
   my ($mapping_session_id) = $ms_sth->fetchrow_array();
   $ms_sth->finish();
@@ -406,15 +406,15 @@ sub _get_mapping_session_id {
     warn "reusing previously generated mapping_session_id = '$mapping_session_id' for prefix '${prefix}'\n";
 
   } else {
-    $ms_sth = $master_dbh->prepare( "INSERT INTO mapping_session(type, rel_from, rel_to, when_mapped, prefix) VALUES (?, ?, ?, FROM_UNIXTIME(?), ?)" );
+    $ms_sth = $master_dbc->prepare( "INSERT INTO mapping_session(type, rel_from, rel_to, when_mapped, prefix) VALUES (?, ?, ?, FROM_UNIXTIME(?), ?)" );
     $ms_sth->execute($fulltype, $ncsl->from->release(), $ncsl->to->release(), $timestamp, $prefix);
-    $mapping_session_id = $ms_sth->{'mysql_insertid'};
+    $mapping_session_id = $master_dbc->db_handle->last_insert_id(undef, undef, 'mapping_session', 'mapping_session_id');
     warn "newly generated mapping_session_id = '$mapping_session_id' for prefix '${prefix}'\n";
     $ms_sth->finish();
   }
 
-  if($dbh != $master_dbh) {   # replicate it in the release database:
-      my $ms_sth2 = $dbh->prepare( "INSERT INTO mapping_session(mapping_session_id, type, rel_from, rel_to, when_mapped, prefix) VALUES (?, ?, ?, ?, FROM_UNIXTIME(?), ?)" );
+  if($dbc != $master_dbc) {   # replicate it in the release database:
+      my $ms_sth2 = $dbc->prepare( "INSERT INTO mapping_session(mapping_session_id, type, rel_from, rel_to, when_mapped, prefix) VALUES (?, ?, ?, ?, FROM_UNIXTIME(?), ?)" );
       $ms_sth2->execute($mapping_session_id, $fulltype, $ncsl->from->release(), $ncsl->to->release(), $timestamp, $prefix);
       $ms_sth2->finish();
   }

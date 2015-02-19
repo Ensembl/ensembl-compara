@@ -324,7 +324,7 @@ sub store {
                   $member->display_label);
   if($insertCount>0) {
     #sucessful insert
-    $member->dbID( $sth->{'mysql_insertid'} );
+    $member->dbID( $self->dbc->db_handle->last_insert_id(undef, undef, 'seq_member', 'seq_member_id') );
     $sth->finish;
   } else {
     $sth->finish;

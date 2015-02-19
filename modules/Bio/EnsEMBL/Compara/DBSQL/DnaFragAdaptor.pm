@@ -418,7 +418,7 @@ sub store {
    my $rows_inserted = $sth->execute($gid, $type, $name, $dnafrag->length, $dnafrag->is_reference);
    
    if ($rows_inserted > 0) {
-     $stored_id = $sth->{'mysql_insertid'};
+     $stored_id = $self->dbc->db_handle->last_insert_id(undef, undef, 'dnafrag', 'dnafrag_id');
    } else {
      # entry was already stored by another process
      my $sth2 = $self->prepare("

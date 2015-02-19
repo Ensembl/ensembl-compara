@@ -273,12 +273,12 @@ sub store_split_genes {
         my $node1 = $link->get_neighbor($holding_node);
         print STDERR "node1 $node1->node_id\n" if $self->debug;
         $sth1->execute($node1->node_id);
-        my $split_gene_id = $sth1->{'mysql_insertid'};
+        my $gene_split_id = $self->dbc->db_handle->last_insert_id(undef, undef, 'split_genes', 'gene_split_id');
 
         foreach my $node2 (@{$node1->all_nodes_in_graph}) {
             print STDERR "node2 $node2->node_id\n" if $self->debug;
             next if $node2->node_id eq $node1->node_id;
-            $sth2->execute($node2->node_id, $split_gene_id);
+            $sth2->execute($node2->node_id, $gene_split_id);
         }
     }
     $sth1->finish;

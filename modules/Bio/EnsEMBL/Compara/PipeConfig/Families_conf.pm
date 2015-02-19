@@ -60,7 +60,7 @@ package Bio::EnsEMBL::Compara::PipeConfig::Families_conf;
 use strict;
 use warnings;
 
-use Bio::EnsEMBL::Hive::Version 2.2;
+use Bio::EnsEMBL::Hive::Version 2.3;
 
 use base ('Bio::EnsEMBL::Compara::PipeConfig::ComparaGeneric_conf');
 
@@ -69,7 +69,7 @@ sub default_options {
     return {
         %{$self->SUPER::default_options},
 
-#       'mlss_id'         => 30045,         # it is very important to check that this value is current (commented out to make it obligatory to specify)
+#       'mlss_id'         => 30046,         # it is very important to check that this value is current (commented out to make it obligatory to specify)
         'host'            => 'compara2',    # where the pipeline database will be created
         'file_basename'   => 'metazoa_families_'.$self->o('rel_with_suffix'),
 
@@ -100,12 +100,12 @@ sub default_options {
             # resource requirements:
         'blast_gigs'      =>  2,
         'blast_hm_gigs'   =>  4,
-        'mcl_gigs'        => 60,
+        'mcl_gigs'        => 64,
         'mcl_procs'       =>  4,
         'lomafft_gigs'    =>  4,
         'himafft_gigs'    => 14,
-        'dbresource'      => 'my'.$self->o('host'),                 # will work for compara1..compara4, but will have to be set manually otherwise
-        'blast_capacity'  => 2000,                                  # work both as hive_capacity and resource-level throttle
+        'dbresource'      => 'my'.$self->o('host'),                 # will work for compara1..compara5, but will have to be set manually otherwise
+        'blast_capacity'  => 3000,                                  # work both as hive_capacity and resource-level throttle
         'mafft_capacity'  =>  400,
         'cons_capacity'   =>  400,
         'HMMer_classify_capacity' => 100,
@@ -116,7 +116,7 @@ sub default_options {
 #        'protein_trees_db'  => 'mysql://ensro@compara3/mm14_protein_trees_'.$self->o('rel_with_suffix'),
 
             # used by the StableIdMapper as the reference:
-        'prev_rel_db' => 'mysql://ensadmin:'.$self->o('password').'@compara5/sf5_ensembl_compara_77',
+        'prev_rel_db' => 'mysql://ensadmin:'.$self->o('password').'@compara4/mp14_ensembl_compara_78',
 
             # used by the StableIdMapper as the location of the master 'mapping_session' table:
         'master_db' => 'mysql://ensadmin:'.$self->o('password').'@compara1/sf5_ensembl_compara_master',    
@@ -331,7 +331,7 @@ sub pipeline_analyses {
             -flow_into => {
                 1 => [ 'make_blastdb' ],
             },
-            -rc_name => '4GigMem',    # NB: now needs more memory than what is given by default (actually, 2G RAM & 2G SWAP). Does the code need checking for leaks?
+            -rc_name => 'BigMafft',    # NB: now needs more memory than what is given by default (actually, 2G RAM & 2G SWAP). Does the code need checking for leaks?
         },
 
         {   -logic_name => 'make_blastdb',
@@ -355,7 +355,7 @@ sub pipeline_analyses {
                 '2->A' => { 'blast' => { 'sequence_id' => '#_start_seqid#', 'minibatch' => '#_range_count#' } },
                 'A->1' => [ 'snapshot_after_blast' ],
             },
-            -rc_name => '2GigMem',
+            -rc_name => '4GigMem',
         },
 
         {   -logic_name    => 'blast',
@@ -622,7 +622,7 @@ sub pipeline_analyses {
             -flow_into => {
                 1 => [ 'write_member_counts' ],
             },
-            -rc_name => '4GigMem',    # NB: make sure you give it enough memory or it will crash
+            -rc_name => 'BigMafft',    # NB: make sure you give it enough memory or it will crash
         },
         
         {   -logic_name     => 'write_member_counts',
@@ -654,6 +654,25 @@ sub pipeline_analyses {
 
 =head1 STATS and TIMING
 
+=head2 rel.79 stats
+
+    sequences to cluster:           6,968,981       [ SELECT count(*) from sequence; ] -- took 1.5m to run
+    distances by Blast:         1,338,935,992       [ SELECT count(*) from mcl_sparse_matrix; ] -- took 37m20 to run
+
+    non-reference genes:         2851               [ SELECT count(*) FROM gene_member WHERE gene_member_id>=200000001 AND source_name='ENSEMBLGENE'; ]
+    non-reference peps:          8074               [ SELECT count(*) FROM seq_member WHERE seq_member_id>=200000001 AND source_name='ENSEMBLPEP'; ]
+
+    uniprot loading method:     { 20 x pfetch }
+
+    total running time:          ?                  [ call time_analysis('%'); ]
+    uniprot_loading time:        5.6h               [ call time_analysis('load_uniprot%'); ]    # Sun-Mon overnight
+    blasting time:               6.8d +++           [ call time_analysis('blast%'); ]           # Estimate is wrong. Had to be stopped, topped-up and restarted.
+    mcxload running time:       31.7h               [ call time_analysis('mcxload_matrix'); ]
+    mcl running time:           32.4h               [ call time_analysis('mcl'); ]
+
+    memory used by mcxload:     35.5G               [ SELECT mem_megs, swap_megs FROM analysis_base JOIN role USING(analysis_id) JOIN worker_resource_usage USING(worker_id) WHERE logic_name='mcxload_matrix'; ]
+    memory used by mcl:         53.3G               [ SELECT mem_megs, swap_megs FROM analysis_base JOIN role USING(analysis_id) JOIN worker_resource_usage USING(worker_id) WHERE logic_name='mcl'; ]
+
 =head2 rel.78 stats
 
     sequences to cluster:           6,801,213       [ SELECT count(*) from sequence; ] -- took a few seconds to run
@@ -671,7 +690,7 @@ sub pipeline_analyses {
     mcl running time:           11.7h               [ call time_analysis('mcl'); ]
 
     memory used by mcxload:     34.6G               [ SELECT mem_megs, swap_megs FROM analysis_base JOIN role USING(analysis_id) JOIN worker_resource_usage USING(worker_id) WHERE logic_name='mcxload_matrix'; ]
-    memory used by mcl:         52.0G               [ SELECT mem_megs, swap_megs FROM analysis_base JOIN worker USING(analysis_id) JOIN worker_resource_usage USING(process_id) WHERE logic_name='mcl'; ]
+    memory used by mcl:         52.0G               [ SELECT mem_megs, swap_megs FROM analysis_base JOIN role USING(analysis_id) JOIN worker_resource_usage USING(worker_id) WHERE logic_name='mcl'; ]
 
 =head2 rel.77 stats
 
@@ -690,7 +709,7 @@ sub pipeline_analyses {
     mcl running time:           10.9h               [ call time_analysis('mcl'); ]
 
     memory used by mcxload:     33.2G               [ SELECT mem_megs, swap_megs FROM analysis_base JOIN role USING(analysis_id) JOIN worker_resource_usage USING(worker_id) WHERE logic_name='mcxload_matrix'; ]
-    memory used by mcl:         50.0G               [ SELECT mem_megs, swap_megs FROM analysis_base JOIN worker USING(analysis_id) JOIN worker_resource_usage USING(process_id) WHERE logic_name='mcl'; ]
+    memory used by mcl:         50.0G               [ SELECT mem_megs, swap_megs FROM analysis_base JOIN role USING(analysis_id) JOIN worker_resource_usage USING(worker_id) WHERE logic_name='mcl'; ]
 
 =head2 rel.76 stats
 
@@ -709,7 +728,7 @@ sub pipeline_analyses {
     mcl running time:           15.8h               [ call time_analysis('mcl'); ]
 
     memory used by mcxload:     32.5G               [ SELECT mem_megs, swap_megs FROM analysis_base JOIN role USING(analysis_id) JOIN worker_resource_usage USING(worker_id) WHERE logic_name='mcxload_matrix'; ]
-    memory used by mcl:         48.2G               [ SELECT mem_megs, swap_megs FROM analysis_base JOIN worker USING(analysis_id) JOIN worker_resource_usage USING(process_id) WHERE logic_name='mcl'; ]
+    memory used by mcl:         48.2G               [ SELECT mem_megs, swap_megs FROM analysis_base JOIN role USING(analysis_id) JOIN worker_resource_usage USING(worker_id) WHERE logic_name='mcl'; ]
 
 =head2 rel.75 stats
 

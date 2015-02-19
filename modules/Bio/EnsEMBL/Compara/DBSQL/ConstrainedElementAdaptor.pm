@@ -83,7 +83,7 @@ sub store {
     
     foreach my $constrained_element_group (@$constrained_elements) {
 	$ce_id_sth->execute();
-	my $constrained_element_id = $ce_id_sth->{'mysql_insertid'};
+	my $constrained_element_id = $self->dbc->db_handle->last_insert_id(undef, undef, 'constrained_element', 'constrained_element_id');
 	if ($constrained_element_id < $mlssid * 10000000000 || 
 	    $constrained_element_id > ($mlssid+1) * 10000000000) {
 	    $constrained_element_id = $mlssid * 10000000000 + $constrained_element_id;

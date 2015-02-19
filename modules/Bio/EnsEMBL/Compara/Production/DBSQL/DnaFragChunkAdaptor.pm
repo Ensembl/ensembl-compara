@@ -81,7 +81,7 @@ sub store {
                    $dfc->seq_start, $dfc->seq_end, $dfc->dnafrag_chunk_set_id);
   if($insertCount>0) {
     #sucessful insert
-    $dfc->dbID( $sth->{'mysql_insertid'} );
+    $dfc->dbID( $self->dbc->db_handle->last_insert_id(undef, undef, 'dnafrag_chunk', 'dnafrag_chunk_id') );
     $sth->finish;
   } else {
     $sth->finish;

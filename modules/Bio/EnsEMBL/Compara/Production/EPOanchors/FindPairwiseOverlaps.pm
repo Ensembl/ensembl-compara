@@ -140,7 +140,7 @@ sub run {
 		# get a unique id for the synteny_region
 		my $sth = $self->dbc->prepare("INSERT INTO synteny_region (method_link_species_set_id) VALUES (?)");
 		$sth->execute( $overlaps_mlssid );
-		my $synteny_region_id = $sth->{'mysql_insertid'};
+		my $synteny_region_id = $self->dbc->db_handle->last_insert_id(undef, undef, 'synteny_region', 'synteny_region_id');
 		push @$synteny_region_jobs, { 'synteny_region_id' => $synteny_region_id };
 		foreach my $mlss( @{ $self->param('mlss') } ){
 			my $gabs = $genomic_align_block_adaptor->fetch_all_by_MethodLinkSpeciesSet_Slice($mlss, $ref_sub_slice);
