@@ -150,15 +150,17 @@ sub add_pointers {
   my $config_name = $extra->{'config_name'};
   my @data        = @{$extra->{'features'}};
   my $species     = $hub->species;
-  my $color       = lc($extra->{'color'} || $hub->param('col'))   || 'red';     # set sensible defaults
   my $style       = lc($extra->{'style'} || $hub->param('style')) || 'rharrow'; # set style before doing chromosome layout, as layout may need tweaking for some pointer styles
   my $high        = { style => $style };
-  my ($p_value_sorted, $def_colour, $max);
+  my $default_colour = lc($extra->{'color'} || $hub->param('col'))   || 'red';     # set sensible defaults
+  my ($p_value_sorted, $max);
   my $i = 1;
   
   # colour gradient 
   my @gradient = @{$extra->{'gradient'} || []};
-  if ($color eq 'gradient' && scalar @gradient) {
+  if ($default_colour eq 'gradient' && scalar @gradient) {
+    $default_colour = 'black';
+
     my @colour_scale = $hub->colourmap->build_linear_gradient(@gradient); # making an array of the colour scale
 
     foreach my $colour (@colour_scale) {
@@ -167,11 +169,13 @@ sub add_pointers {
       $i = sprintf("%.1f", $i + 0.1);
     }
     
-    $def_colour = 'black';
   }
 
   foreach my $row (@data) {
     my $chr         = $row->{'chr'} || $row->{'region'};
+    ## Stringify any RGB colour arrays
+    my $item_colour = ref($row->{'item_colour'}) eq 'ARRAY' 
+                        ? join(',', @{$row->{'item_colour'}}) : $row->{'item_colour'};
     my $grad_colour = $row->{'p_value'} > 10 
                     ? $p_value_sorted->{$max}
                     : $p_value_sorted->{sprintf("%.1f", $row->{'p_value'})};
@@ -179,7 +183,7 @@ sub add_pointers {
       start     => $row->{'start'},
       end       => $row->{'end'},
       id        => $row->{'label'},
-      col       => $grad_colour || $def_colour || $color,
+      col       => $item_colour || $grad_colour || $default_colour,
       href      => $row->{'href'},
       html_id   => $row->{'html_id'} || '',
     };

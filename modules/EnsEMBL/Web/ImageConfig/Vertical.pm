@@ -215,7 +215,6 @@ sub create_user_features {
     if ($parser) {
       while (my ($type, $track) = each %{$parser->get_all_tracks}) {
         my @rows;
-        
         foreach my $feature (@{$track->{'features'}}) {
           push @rows, {
             chr     => $feature->seqname || $feature->slice->name,
