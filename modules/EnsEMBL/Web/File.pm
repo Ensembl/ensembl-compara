@@ -66,13 +66,15 @@ sub new {
   my ($class, %args) = @_;
   #use Carp qw(cluck); cluck 'CREATING NEW FILE OBJECT';
   #warn '!!! CREATING NEW FILE OBJECT';
-  #while (my($k, $v) = each(%args)) {
-  #warn "@@@ ARG $k = $v";
+  #foreach (sort keys %args) {
+  #  warn "@@@ ARG $_ = ".$args{$_};
   #}
   my $hub = $args{'hub'};
   my $input_drivers = ($args{'file'} && $args{'file'} =~ /^[http|ftp]/) ? ['URL'] : ['IO'];
+  my $absolute = $args{'url'} || ($args{'upload'} && ($args{upload} eq 'cgi' || $args{upload} eq 'url')) ? 1 : 0;
   my $self = {
               'hub'             => $args{'hub'},
+              'absolute'        => $absolute,
               'base_dir'        => $args{'base_dir'} || 'user',
               'base_extra'      => $args{'base_extra'},
               'input_drivers'   => $args{'input_drivers'} || $input_drivers, 
@@ -279,18 +281,23 @@ sub base_read_path {
 ### a
 ### Full standard path to file, omitting file-specific subdirectory
   my $self = shift;
-  my $constant = $path_map{$self->{'base_dir'}}->[0];
-  return join('/', $self->hub->species_defs->$constant, $self->get_datestamp, $self->get_user_identifier);
+  my $dir_key = $path_map{$self->{'base_dir'}}->[0];
+  return join('/', $self->hub->species_defs->$dir_key, $self->get_datestamp, $self->get_user_identifier);
 }
 
 sub absolute_read_path {
 ### a
 ### Absolute path to a file we want to read from
-### IMPORTANT: Do not use this value anywhere that might be exposed to the browser!
+### IMPORTANT: For local files, do not use this value anywhere that might be exposed to the browser!
   my $self = shift;
-  my $constant = $path_map{$self->{'base_dir'}}->[0];
-  my $absolute_path = $self->hub->species_defs->$constant;
-  return join('/', $absolute_path, $self->read_location);
+  if ($self->{'absolute'}) {
+    return $self->read_location;
+  }
+  else {
+    my $dir_key = $path_map{$self->{'base_dir'}}->[0];
+    my $absolute_path = $self->hub->species_defs->$dir_key;
+    return join('/', $absolute_path, $self->read_location);
+  }
 }
 
 sub absolute_write_path {
@@ -298,8 +305,8 @@ sub absolute_write_path {
 ### Absolute path to a file we want to write to
 ### IMPORTANT: Do not use this value anywhere that might be exposed to the browser!
   my $self = shift;
-  my $constant = $path_map{$self->{'base_dir'}}->[0];
-  my $absolute_path = $self->hub->species_defs->$constant;
+  my $dir_key = $path_map{$self->{'base_dir'}}->[0];
+  my $absolute_path = $self->hub->species_defs->$dir_key;
   return join('/', $absolute_path, $self->write_location);
 }
 
@@ -310,9 +317,14 @@ sub read_url {
 ### Assume that we read back from the same file we wrote to
 ### unless read parameters were set separately
   my $self = shift;
-  my $constant = $path_map{$self->{'base_dir'}}->[1];
-  my $base_url = $self->hub->species_defs->$constant;
-  return join('/', $base_url, $self->read_location);
+  if ($self->{'absolute'}) {
+    return $self->read_location;
+  }
+  else {
+    my $dir_key = $path_map{$self->{'base_dir'}}->[1];
+    my $base_url = $self->hub->species_defs->$dir_key;
+    return join('/', $base_url, $self->read_location);
+  }
 }
 
 sub write_url {
@@ -324,8 +336,8 @@ sub write_url {
 ### N.B. whilst we don't literally write to a url, memcached
 ### uses this method to create a virtual path to a saved file
   my $self = shift;
-  my $constant = $path_map{$self->{'base_dir'}}->[1];
-  my $base_url = $self->hub->species_defs->$constant;
+  my $dir_key = $path_map{$self->{'base_dir'}}->[1];
+  my $base_url = $self->hub->species_defs->$dir_key;
   return join('/', $base_url, $self->write_location);
 }
 

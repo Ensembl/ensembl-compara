@@ -147,7 +147,7 @@ sub read_file {
 ###         compression String (optional) - compression type
 ### @return Hashref (in nice mode) or String - contents of file
   my ($file, $args) = @_;
-  my $url = ref($file) ? $file->read_location : $file;
+  my $url = ref($file) ? $file->absolute_read_path : $file;
 
   my ($content, $error);
 
@@ -249,7 +249,7 @@ sub get_headers {
 ###         compression String (optional) - compression type
 ### @return Hashref containing results (single header or hashref of headers) or errors (ArrayRef)
   my ($file, $args) = @_;
-  my $url = ref($file) ? $file->read_location : $file;
+  my $url = ref($file) ? $file->absolute_read_path : $file;
   my ($all_headers, $result, $error);
 
   if ($url =~ /^ftp/) {
