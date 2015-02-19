@@ -84,7 +84,7 @@ sub rgb_by_name {
   my $hex;
   
   if ($colour =~ /(\d+,\d+,\d+)/) { ## RGB
-    return sprintf( '%02x%02x%02x', split /,/, $1);
+    return split(/,/, $1);
   }
   elsif ($colour =~ /^#?([0-9a-f]{6})$/) { ## Hex
     $hex = $1;
