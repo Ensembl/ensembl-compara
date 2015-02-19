@@ -670,6 +670,20 @@ insert into ncbi_taxa_name select @this_taxon_id,@this_value,@this_name_class fr
 
 -- </rel.76>
 
+-- <rel.79>
+
+SET @this_taxon_id=1437010;
+SET @this_value='Placental mammals';
+SET @this_name_class='ensembl alias name';
+insert into ncbi_taxa_name select @this_taxon_id,@this_value,@this_name_class from ncbi_taxa_name WHERE taxon_id=@this_taxon_id and name_class=@this_name_class having count(*)=0;
+
+SET @this_taxon_id=1549675;
+SET @this_value='Fowls';
+SET @this_name_class='ensembl alias name';
+insert into ncbi_taxa_name select @this_taxon_id,@this_value,@this_name_class from ncbi_taxa_name WHERE taxon_id=@this_taxon_id and name_class=@this_name_class having count(*)=0;
+
+-- </rel.79>
+
 -- -- Use these to ADD new internal node aliases
 
 -- SET @this_taxon_id=;
