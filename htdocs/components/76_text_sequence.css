@@ -5,5 +5,4 @@
 .adornment-key dl li span { display: inline-block; margin: 0 4px; padding: 0 4px; }
 .adornment-key dt { float: left; width: 100px; text-align: right; padding: 0; clear: both; line-height: 28px; }
 .adornment-key dd { width: 100%; margin: 0 0 0 110px; padding: 0; }
-.adornment-key h4 { font-size: 16px; margin: 8px; color: #999; }
 .adornment-key .ad-loading { background: url("/i/loading-tiny.gif") no-repeat scroll 0 0 rgba(0, 0, 0, 0); display: inline-block; height: 20px; line-height: 20px; padding-left: 24px; text-align: center; }
