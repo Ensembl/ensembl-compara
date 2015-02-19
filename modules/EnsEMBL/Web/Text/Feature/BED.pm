@@ -90,6 +90,8 @@ sub score {
 
 sub external_data { my $self = shift; return $self->{'__extra__'} ? $self->{'__extra__'} : undef ; }
 
+sub attribs { my $self = shift; return $self->{'__extra__'} ? $self->{'__extra__'} : {} ; }
+
 sub cigar_string {
   my $self = shift;
   return $self->{'_cigar'} if $self->{'_cigar'};
