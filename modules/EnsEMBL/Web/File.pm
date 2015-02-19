@@ -69,9 +69,17 @@ sub new {
   #foreach (sort keys %args) {
   #  warn "@@@ ARG $_ = ".$args{$_};
   #}
-  my $hub = $args{'hub'};
-  my $input_drivers = ($args{'file'} && $args{'file'} =~ /^[http|ftp]/) ? ['URL'] : ['IO'];
-  my $absolute = $args{'url'} || ($args{'upload'} && ($args{upload} eq 'cgi' || $args{upload} eq 'url')) ? 1 : 0;
+
+  my $input_drivers = ['IO'];
+  my $absolute = 0;
+  if ($args{'file'} && $args{'file'} =~ /^[http|ftp]/) {
+    $absolute = 1;
+    $input_drivers = ['URL'];
+  }
+  elsif ($args{'upload'}) {
+    $absolute = 1;
+  }
+
   my $self = {
               'hub'             => $args{'hub'},
               'absolute'        => $absolute,
