@@ -306,7 +306,7 @@ Ensembl.Panel.ZMenu = Ensembl.Panel.extend({
     function notLocation() {
       var view = end - start + 1 > Ensembl.maxRegionLength ? 'Overview' : 'View';
           url  = url.replace(/.+\?/, '?');
-          menu = [ '<a href="' + panel.speciesPath + '/Location/' + view + url + '">Jump to location ' + view.toLowerCase() + '</a>' ];
+          menu = [ '<a href="' + panel.speciesPath + '/Location/' + view + url + '">Jump to region ' + view.toLowerCase() + '</a>' ];
       
       if (!window.location.pathname.match('/Chromosome')) {
         menu.push('<a href="' + panel.speciesPath + '/Location/Chromosome' + url + '">Chromosome summary</a>');
@@ -458,7 +458,7 @@ Ensembl.Panel.ZMenu = Ensembl.Panel.extend({
     }
     
     url  = this.baseURL.replace(/.+\?/, '?').replace(/%s/, this.chr + ':' + start + '-' + end);
-    menu = [ '<a href="' + this.speciesPath + '/Location/' + view + url + '">Jump to location ' + view.toLowerCase() + '</a>' ];
+    menu = [ '<a href="' + this.speciesPath + '/Location/' + view + url + '">Jump to region ' + view.toLowerCase() + '</a>' ];
     
     if (!window.location.pathname.match('/Chromosome')) {
       menu.push('<a href="' + this.speciesPath + '/Location/Chromosome' + url + '">Chromosome summary</a>');

@@ -65,7 +65,7 @@ sub chromosome_form {
   my $form          = $self->new_form({ id => 'change_chr', action => $hub->url({ __clear => 1 }), method => 'get', class => 'autocenter', style => $vwidth ? sprintf "width:${vwidth}px" : undef });
 
   $form->add_field({
-    'label'       => 'Change Chromosome',
+    'label'       => 'Change chromosome',
     'inline'      => 1,
     'elements'    => [{
       'type'        => 'dropdown',
