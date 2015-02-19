@@ -42,6 +42,9 @@ use Digest::MD5 qw(md5_hex);
 use EnsEMBL::Web::File::Utils::URL qw(read_file);
 use EnsEMBL::Web::Tree;
 
+## Force refresh of hub files
+our $headers = {'If-Modified-Since' => 'Thu, 1 Jan 1970 00:00:00 GMT'};
+
 =head1 METHODS
 
 =head2 new
@@ -114,7 +117,7 @@ sub get_hub_info {
     $hub_file = 'hub.txt';
     $url      =~ s|/$||;
   }
-  my $file_args = {'hub' => $self->{'hub'}, 'nice' => 1}; 
+  my $file_args = {'hub' => $self->{'hub'}, 'nice' => 1, 'headers' => $headers}; 
 
   my $response = read_file("$url/$hub_file", $file_args);
   my $content;
@@ -129,6 +132,7 @@ sub get_hub_info {
 
   ## Get file name for file with genome info
   foreach (split /\n/, $content) {
+    $_ =~ s/\s+$//;
     my @line = split /\s/, $_, 2;
     $hub_details{$line[0]} = $line[1];
   }
@@ -195,7 +199,7 @@ sub get_hub_info {
         s/^include //;
         push @track_list, "$url/$_";
       }
-    
+
       if (scalar @track_list) {
         ## replace trackDb file location with list of track files
         $genome_info{$genome} = \@track_list;
@@ -264,7 +268,7 @@ sub parse {
   
   ## Get all the text files in the hub directory
   foreach (@$files) {
-    $response = read_file($_, {'hub' => $self->{'hub'}, 'nice' => 1});
+    $response = read_file($_, {'hub' => $self->{'hub'}, 'nice' => 1, 'headers' => $headers});
 
     if ($response->{'error'}) {
       $tree->append($tree->create_node("error_$_", { error => @{$response->{'error'}}, file => $_ }));
