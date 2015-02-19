@@ -74,7 +74,7 @@ sub store {
   $sth->finish;
 
   if($insertCount>0) {
-    $chunkSet->dbID( $sth->{'mysql_insertid'} );
+    $chunkSet->dbID( $self->dbc->db_handle->last_insert_id(undef, undef, 'dnafrag_chunk_set', 'dnafrag_chunk_set_id') );
   }
 
   return $chunkSet->dbID;

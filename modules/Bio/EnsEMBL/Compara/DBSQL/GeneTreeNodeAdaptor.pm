@@ -206,7 +206,7 @@ sub store_node {
     if (not($node->adaptor and $node->adaptor->isa('Bio::EnsEMBL::Compara::DBSQL::GeneTreeNodeAdaptor') and $node->adaptor eq $self)) {
         my $sth = $self->prepare("INSERT INTO gene_tree_node VALUES ()");
         $sth->execute();
-        $node->node_id( $sth->{'mysql_insertid'} );
+        $node->node_id( $self->dbc->db_handle->last_insert_id(undef, undef, 'gene_tree_node', 'node_id') );
     }
 
     my $parent_id = undef;

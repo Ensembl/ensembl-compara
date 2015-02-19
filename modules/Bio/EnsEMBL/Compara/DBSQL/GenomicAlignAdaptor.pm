@@ -222,7 +222,7 @@ sub store {
       $self->dbc->do("UNLOCK TABLES");
     }
     if (!$ga->dbID) {
-      $ga->dbID($genomic_align_sth->{'mysql_insertid'});
+      $ga->dbID( $self->dbc->db_handle->last_insert_id(undef, undef, 'genomic_align', 'genomic_align_id') );
     }
 
     info("Stored Bio::EnsEMBL::Compara::GenomicAlign ".
