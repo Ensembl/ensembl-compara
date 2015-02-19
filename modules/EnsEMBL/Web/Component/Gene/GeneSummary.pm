@@ -48,7 +48,7 @@ sub content {
 
   # add CCDS info
   if (scalar @CCDS) {
-    my %temp = map { $_->primary_id, 1 } @CCDS;
+    my %temp = map { $_->display_id, 1 } @CCDS;
     @CCDS = sort keys %temp;
     $table->add_row('CCDS', sprintf('<p>This gene is a member of the %s CCDS set: %s</p>', $species_defs->DISPLAY_NAME, join ', ', map $hub->get_ExtURL_link($_, 'CCDS', $_), @CCDS));
   }
