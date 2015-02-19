@@ -16,8 +16,8 @@
 
 /**
  * keepOnPage
- * A very small jQuery plugin to keep an element always on the page when page scrolled vertically
- * Not yet tested in all scenarios, but works for Ensembl Admin Healthcheck pages where required
+ * jQuery plugin to keep an element always on the page when page scrolled vertically
+ * Not yet tested in all scenarios
  */
 
 (function($) {
@@ -26,13 +26,15 @@
     /* options
      *  marginTop: Margin to be kept on top when fixing the element to the top
      *  spaced: Flag if true, will keep the actual space of the element clear while its fixed to the top
+     *  onfix: Function to be called when element's position is set 'fixed'
+     *  onreset: Function to be called when element's position is reverted back to original
      */
 
     el = $(el);
 
     if (!el.data('keepOnTop')) {
 
-      el.css('width', el.css('width')).data('keepOnTop', true);
+      el.css('width', el.css('width')).data('keepOnTop', {fixed: false});
 
       $(window).on('load.keepOnTop scroll.keepOnTop', {
         el        : el,
@@ -43,8 +45,15 @@
           position  : el.css('position')
       }}, function (e) {
         var fixed = e.data.defaults.top - e.data.options.marginTop <= $(window).scrollTop();
+        if (e.data.el.data('keepOnTop').fixed === fixed) {
+          return;
+        }
+        e.data.el.data('keepOnTop', {fixed: fixed});
         e.data.el.css(fixed ? { position: 'fixed', top: e.data.options.marginTop } : { position: e.data.defaults.position, top: e.data.defaults.top });
-        if (e.data.clone) e.data.clone.toggle(fixed);
+        if (e.data.clone) {
+          e.data.clone.toggle(fixed);
+        }
+        ((fixed ? e.data.options.onfix : e.data.options.onreset) || $.noop).apply(e.data.el[0]);
       });
     }
   };
