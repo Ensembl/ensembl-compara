@@ -125,7 +125,7 @@ sub gene_phenotypes {
 	    $html .= $self->new_table([
         { key => 'phenotype', align => 'left', title => 'Phenotype' },
         { key => 'source',    align => 'left', title => 'Source'    },
-        { key => 'locations', align => 'left', title => 'Locations' },
+        { key => 'locations', align => 'left', title => 'Genomic Locations' },
         { key => 'strain',    align => 'left', title => 'Strain'    },
         { key => 'allele',    align => 'left', title => 'Allele'    },
       ], \@rows, { data_table => 'no_sort no_col_toggle', exportable => 1 })->render;
@@ -133,7 +133,7 @@ sub gene_phenotypes {
       $html .= $self->new_table([ 
         { key => 'phenotype', align => 'left', title => 'Phenotype'     },
         { key => 'source',    align => 'left', title => 'Source'        },
-        { key => 'locations', align => 'left', title => 'Locations'     },
+        { key => 'locations', align => 'left', title => 'Genomic locations'     },
       ], \@rows, { data_table => 'no_sort no_col_toggle', exportable => 1 })->render;
     }
   }

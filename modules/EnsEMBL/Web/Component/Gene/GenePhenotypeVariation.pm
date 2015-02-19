@@ -106,7 +106,7 @@ sub stats_table {
     { key => 'phen',    title => 'Phenotype', sort => 'string', width => '38%'  },
     { key => 'source',  title => 'Source(s)', sort => 'string', width => '11%'  },
     $species_defs->ENSEMBL_CHROMOSOMES
-    ? { key => 'loc',   title => 'Locations', sort => 'none',   width => '13%'  }
+    ? { key => 'loc',   title => 'Genomic locations', sort => 'none',   width => '13%'  }
     : (),
     $species_defs->ENSEMBL_MART_ENABLED
     ? { key => 'mart',  title => 'Biomart',   sort => 'none',   width => '13%'  }
