@@ -79,7 +79,7 @@ sub content {
       )
     ); 
   } elsif ($length >= $self->{'subslice_length'}) {
-    $html .= '<div class="adornment-key"></div>' . $self->chunked_content($length, $self->{'subslice_length'}, { length => $length });
+    $html .= '<div class="_adornment_key adornment-key"></div>' . $self->chunked_content($length, $self->{'subslice_length'}, { length => $length });
   } else {
     $html .= $self->content_sub_slice; # Direct call if the sequence length is short enough
   }

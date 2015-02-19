@@ -183,7 +183,7 @@
   }
 
   function add_legend($outer,legend,loading) {
-    var $key = $outer.parents('.js_panel').find('.adornment-key');
+    var $key = $outer.parents('.js_panel').find('._adornment_key');
     // Add new legend to data
     var data = $key.data('data');
     if(!data) { data = {}; }

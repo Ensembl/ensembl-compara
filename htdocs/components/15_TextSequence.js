@@ -82,7 +82,7 @@ Ensembl.Panel.TextSequence = Ensembl.Panel.Content.extend({
   },
 
   fixKey: function(el) {
-    el.parents('.js_panel').find('.adornment-key').keepOnPage({marginTop: 10, spaced: true});
+    el.parents('.js_panel').find('._adornment_key').first().keepOnPage({marginTop: 10, spaced: true});
   },
 
   requestKey: function(el) {

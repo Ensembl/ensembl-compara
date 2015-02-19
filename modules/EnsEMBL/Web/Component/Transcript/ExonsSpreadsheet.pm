@@ -148,7 +148,7 @@ sub content {
     { data_table => 'no_sort', exportable => 1 }
   );
 
-  return sprintf '<div class="adornment-key"></div><div class="adornment-load">'.$table->render."</div>";
+  return sprintf '<div class="_adornment_key adornment-key"></div><div class="adornment-load">'.$table->render."</div>";
 }
 
 sub export_options { return {'action' => 'ExonSeq'}; }

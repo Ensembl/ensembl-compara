@@ -160,7 +160,7 @@ sub content {
   my $width = '60px';
   my $exons_highlight = qq{style="background-color:#ffebcd"};
   $html .= qq{
-  <div class="adornment-key"><dl>
+  <div class="_adornment_key adornment-key"><dl>
     <dt style="width:$width">Exons:</dt><dd style="margin-left:$width"><ul><li><span class="adorn-key-entry" $exons_highlight>LRG exons</span></li></ul></dd>
     <dt style="width:$width">Differences:</dt><dd style="margin-left:$width"><ul>};
   while (my ($type, $c) = each (%colours)) {
