@@ -43,7 +43,10 @@ use EnsEMBL::Web::File::Utils::URL qw(read_file);
 use EnsEMBL::Web::Tree;
 
 ## Force refresh of hub files
-our $headers = {'If-Modified-Since' => 'Thu, 1 Jan 1970 00:00:00 GMT'};
+our $headers = {
+                'Cache-Control'     => 'no-cache',
+                'If-Modified-Since' => 'Thu, 1 Jan 1970 00:00:00 GMT',
+                };
 
 =head1 METHODS
 
