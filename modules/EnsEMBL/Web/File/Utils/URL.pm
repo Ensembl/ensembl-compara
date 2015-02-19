@@ -156,7 +156,7 @@ sub read_file {
     $ua->timeout(10);
     $ua->env_proxy;
     $ua->proxy([qw(http https)], $args->{'hub'}->species_defs->ENSEMBL_WWW_PROXY) || ();
-    my $response = $ua->get($url);
+    my $response = $ua->get($url, %{$args->{'headers'}});
     if ($response->is_success) {
       $content = $response->content;
     }
@@ -172,7 +172,7 @@ sub read_file {
     }
     my $http = HTTP::Tiny->new(%params);
 
-    my $response = $http->request('GET', $url);
+    my $response = $http->request('GET', $url, $args->{'headers'});
     if ($response->{'success'}) {
       $content = $response->{'content'};
     }
