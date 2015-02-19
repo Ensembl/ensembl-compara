@@ -56,10 +56,10 @@ sub content {
                       $avail->{has_phenotypes} eq "1" ? "phenotype" : "phenotypes"
                   ) if($avail->{has_phenotypes});
 
-  push @str_array, sprintf('has <a href="%s">%s supporting %s</a>', 
+  push @str_array, sprintf('supported by <a href="%s">%s %s of evidence</a>', 
                       $evidence_url, 
                       $avail->{has_supporting_structural_variation}, 
-                      $avail->{has_supporting_structural_variation} eq "1" ? "evidence" : "evidences" 
+                      $avail->{has_supporting_structural_variation} eq "1" ? "piece" : "pieces" 
                   )if($avail->{has_supporting_structural_variation});                  
                   
   return sprintf qq{<div class="summary_panel">$failed%s</div>}, $self->new_twocol(
