@@ -39,14 +39,14 @@ Bio::EnsEMBL::Registry->load_registry_from_url(
 
 # Extra core databases that live on genebuilders' servers:
 
-#Bio::EnsEMBL::DBSQL::DBAdaptor->new(
-#    -host => 'genebuild1',
-#    -user => 'ensro',
-#    -port => 3306,
-#    -species => 'gorilla_gorilla',
-#    -group => 'core',
-#    -dbname => 'ba1_gorilla31_new',
-#);
+Bio::EnsEMBL::DBSQL::DBAdaptor->new(
+    -host => 'compara1',
+    -user => 'ensro',
+    -port => 3306,
+    -species => 'rattus_norvegicus',
+    -group => 'core',
+    -dbname => 'db8_rat6_ref',
+);
 
 
 # ------------------------- COMPARA DATABASES: -----------------------------------
