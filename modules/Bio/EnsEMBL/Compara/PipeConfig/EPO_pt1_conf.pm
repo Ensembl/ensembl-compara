@@ -294,8 +294,8 @@ return [
    'chunk_size' => $self->o('chunk_size'),
  },
  -flow_into	=> {
-	2 => [ 'find_pairwise_overlaps' ],
-	1 => [ 'transfer_ce_data_to_anchor_align' ],
+	'2->A' => [ 'find_pairwise_overlaps' ],
+	'A->1' => [ 'transfer_ce_data_to_anchor_align' ],
   },
 },
 
@@ -366,7 +366,6 @@ return [
 		'constrained_element WHERE (dnafrag_end - dnafrag_start + 1) >= '. $self->o('min_ce_length') .' ORDER BY constrained_element_id',
 	],
   },
- -wait_for => [ 'gerp_constrained_element' ],
  -flow_into      => { 1 => 'trim_anchor_align_factory' },
 },
 
@@ -377,8 +376,8 @@ return [
     'inputquery'      => "SELECT DISTINCT(anchor_id) AS anchor_id FROM anchor_align",
  },  
  -flow_into => {
-    2 => [ 'trim_anchor_align' ],
-    1 => [ 'load_anchor_sequence_factory' ],
+    '2->A' => [ 'trim_anchor_align' ],
+    'A->1' => [ 'load_anchor_sequence_factory' ],
  },  
 },  
 
@@ -419,7 +418,6 @@ return [
  -flow_into => {
 	2 => [ 'load_anchor_sequence' ],	
   }, 
-  -wait_for => [ 'trim_anchor_align', 'trim_anchor_align_himem' ],
 },	
 
 { # using the anchor positions from 'trim_anchor_align' it populates the anchor_sequence table with anchor sequences between min_ce_length and max_anchor_seq_len (using the 2bp trim coord as a mid-point 
