@@ -145,7 +145,7 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
 
   loadJSON: function(str) {
     // this will be more complex when compression is used
-    if(!str) { return []; }
+    if(!str) { return { out: [], flags: {} }; }
     raw = $.parseJSON(str);
     out = [];
     flags = {};
