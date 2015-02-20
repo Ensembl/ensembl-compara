@@ -72,6 +72,11 @@ sub default_options {
     return {
 	%{$self->SUPER::default_options},   # inherit the generic ones
 
+        #'ensembl_cvs_root_dir' => $ENV{'HOME'}.'/src/ensembl_main/', 
+        'ensembl_cvs_root_dir' => $ENV{'ENSEMBL_CVS_ROOT_DIR'}, 
+
+	'release'               => '80',
+        'release_suffix'        => '',    # an empty string by default, a letter otherwise
 	#'dbname'               => '', #Define on the command line. Compara database name eg hsap_ggor_lastz_64
 
          # dependent parameters:
@@ -140,7 +145,7 @@ sub default_options {
         'ref_species' => undef,
 
 	#directory to dump nib files
-	'dump_dir' => '/lustre/scratch110/ensembl/' . $ENV{USER} . '/pair_aligner/nib_files/' . 'release_' . $self->o('rel_with_suffix') . '/',
+	'dump_dir' => '/lustre/scratch109/ensembl/' . $ENV{USER} . '/pair_aligner/nib_files/' . 'release_' . $self->o('rel_with_suffix') . '/',
 
         #include MT chromosomes if set to 1 ie MT vs MT only else avoid any MT alignments if set to 0
         'include_MT' => 1,
@@ -245,8 +250,8 @@ sub default_options {
 	#
 	'skip_pairaligner_stats' => 0, #skip this module if set to 1
 #	'bed_dir' => '/nfs/ensembl/compara/dumps/bed/',
-	'bed_dir' => '/lustre/scratch110/ensembl/' . $ENV{USER} . '/pair_aligner/bed_dir/' . 'release_' . $self->o('rel_with_suffix') . '/',
-	'output_dir' => '/lustre/scratch110/ensembl/' . $ENV{USER} . '/pair_aligner/feature_dumps/' . 'release_' . $self->o('rel_with_suffix') . '/',
+	'bed_dir' => '/lustre/scratch109/ensembl/' . $ENV{USER} . '/pair_aligner/bed_dir/' . 'release_' . $self->o('rel_with_suffix') . '/',
+	'output_dir' => '/lustre/scratch109/ensembl/' . $ENV{USER} . '/pair_aligner/feature_dumps/' . 'release_' . $self->o('rel_with_suffix') . '/',
             
         #
         #Resource requirements
@@ -325,7 +330,7 @@ sub pipeline_analyses {
 		-flow_into      => {
 				    1 => ['populate_new_database'],
 				   },
-	       -rc_name => '100Mb',
+	       -rc_name => '1Gb',
 	    },
 
 # ---------------------------------------------[Run poplulate_new_database.pl script ]---------------------------------------------------
@@ -648,7 +653,7 @@ sub pipeline_analyses {
 			       'tables' => [ 'genomic_align_block', 'genomic_align' ],
 			       'skip' => $self->o('patch_alignments'),
 			      },
-	       -rc_name => '100Mb',
+	       -rc_name => '1Gb',
  	    },
  	    {  -logic_name => 'alignment_nets',
  	       -hive_capacity => $self->o('net_hive_capacity'),
@@ -722,14 +727,6 @@ sub pipeline_analyses {
 	      -wait_for =>  [ 'create_filter_duplicates_net_jobs', 'filter_duplicates_net', 'filter_duplicates_net_himem' ],
               -flow_into => [ 'set_internal_ids_collection' ],
  	    },
-          {  -logic_name => 'set_internal_ids_collection',
-              -module     => 'Bio::EnsEMBL::Compara::RunnableDB::PairAligner::SetInternalIdsCollection',
-              -parameters => {
-                  'skip' => $self->o('patch_alignments'),
-              },
-              -analysis_capacity => 1,
-              -rc_name => '100Mb',
-          },
 	    { -logic_name => 'healthcheck',
 	      -module => 'Bio::EnsEMBL::Compara::RunnableDB::HealthCheck',
 	      -parameters => {
