@@ -398,7 +398,6 @@ return
 		bl2seq => $self->o('bl2seq'),
 		bl2seq_file => $self->o('bl2seq_file_stem'),
 	},
-	-can_be_empty => 1,
 	-rc_name => 'mem3500',
 	-flow_into => {
 		2 => 'ortheus',
@@ -431,7 +430,6 @@ return
 		jar_file => $self->o('jar_file'),
 		ortheus_mlssid => $self->o('epo_mlss_id'),
 	},
-	-can_be_empty => 1,
 	-module => 'Bio::EnsEMBL::Compara::RunnableDB::Ortheus',
 	-rc_name => 'mem7500',
 	-max_retry_count => 2,
