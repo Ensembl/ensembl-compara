@@ -20,6 +20,9 @@ package EnsEMBL::Web::ImageConfig::Vertical;
 
 use strict;
 
+use List::Util qw(sum);
+
+use Bio::EnsEMBL::ExternalData::BigFile::BigWigAdaptor;
 use EnsEMBL::Web::Text::FeatureParser;
 use EnsEMBL::Web::File::User;
 
@@ -39,12 +42,13 @@ sub load_user_tracks {
   
   my $width              = $self->get_parameter('all_chromosomes') eq 'yes' ? 10 : 60;
   my %remote_formats     = map { lc $_ => 1 } @{$self->hub->species_defs->multi_val('REMOTE_FILE_FORMATS')||[]};
-  my (undef, $renderers) = $self->_user_track_settings;
   
   foreach ($menu->nodes) {
-    if ($remote_formats{lc $_->get('format')}) {
+    my $format = $_->get('format');
+    if ($remote_formats{lc $format} && lc $format ne 'bigwig') {
       $_->remove;
     } else {
+      my (undef, $renderers) = $self->_user_track_settings($format);
       $_->set('renderers', $renderers);
       $_->set('glyphset',  'Vuserdata');
       $_->set('colourset', 'densities');
@@ -56,17 +60,26 @@ sub load_user_tracks {
 }
 
 sub _user_track_settings {
-  return ('b', [
-    'off',                'Off',
-    'highlight_lharrow',  'Arrow on lefthand side',
-    'highlight_rharrow',  'Arrow on righthand side',
-    'highlight_bowtie',   'Arrows on both sides',
-    'highlight_wideline', 'Line',
-    'highlight_widebox',  'Box',
+  my ($self, $format) = @_;
+
+  my $renderers = [
     'density_line',       'Density plot - line graph',
     'density_bar',        'Density plot - filled bar chart',
     'density_outline',    'Density plot - outline bar chart',
-  ]);
+                  ];
+
+  unless (lc $format eq 'bigwig') {
+    unshift @$renderers, (
+      'highlight_lharrow',  'Arrow on lefthand side',
+      'highlight_rharrow',  'Arrow on righthand side',
+      'highlight_bowtie',   'Arrows on both sides',
+      'highlight_wideline', 'Line',
+      'highlight_widebox',  'Box',
+    );
+  }
+
+  unshift @$renderers, ('off', 'Off');
+  return ('b', $renderers);
 }
 
 sub load_user_track_data {
@@ -90,23 +103,32 @@ sub load_user_track_data {
     my $max_value;
     
     unshift @$colour, 'black' if $display eq 'density_graph'; 
-    
+   
     if ($logic_name) {
       $feature_adaptor ||= $hub->get_adaptor('get_DnaAlignFeatureAdaptor', 'userdata');
       $slice_adaptor   ||= $hub->get_adaptor('get_SliceAdaptor');
       
       ($data{$track->id}, $max_value) = $self->get_dna_align_features($logic_name, $feature_adaptor, $slice_adaptor, $bins, $bin_size, $chromosomes, $colour->[0]);
-    } else {
-      if ($parser) {
-        $parser->reset;
-      } else {
-        $parser = EnsEMBL::Web::Text::FeatureParser->new($species_defs);
-        $parser->no_of_bins($bins);
-        $parser->bin_size($bin_size);
-        $parser->filter($chromosomes->[0]) if scalar @$chromosomes == 1;
+    } 
+    else {
+      if (lc $track->get('format') eq 'bigwig') {
+        ### Use the glyphset, because it already has data-checking
+        my $track_data = $track->{'data'};
+        my $adaptor = Bio::EnsEMBL::ExternalData::BigFile::BigWigAdaptor->new($track_data->{'url'}); 
+        ($data{$track->id}, $max_value) = $self->get_bigwig_features($adaptor, $track_data->{'name'}, $bins, $bin_size); 
       }
+      else {
+        if ($parser) {
+          $parser->reset;
+        } else {
+          $parser = EnsEMBL::Web::Text::FeatureParser->new($species_defs);
+          $parser->no_of_bins($bins);
+          $parser->bin_size($bin_size);
+          $parser->filter($chromosomes->[0]) if scalar @$chromosomes == 1;
+        }
       
-      ($data{$track->id}, $max_value) = $self->get_parsed_features($track, $parser, $bins, $colour);
+        ( $data{$track->id}, $max_value) = $self->get_parsed_features($track, $parser, $bins, $colour);
+      }
     }
     
     $max = $max_value if $max_value > $max;
@@ -196,6 +218,52 @@ sub get_parsed_features {
     $sort++;
   }
   
+  return (\%data, $max);
+}
+
+sub get_bigwig_features {
+  my ($self, $adaptor, $name, $bins, $bin_size) = @_;
+  my (%data, $max);  
+  return ({}, undef) unless $adaptor->check;
+  $name ||= 'BigWig';
+
+  my $bw = $adaptor->bigwig_open;
+  if ($bw) { 
+    my $chrs = $bw->chromList;
+    my $chr = $chrs->head;
+    while ($chr) {
+      my @scores;
+      my $start = 0;
+      my ($end, $previous_start, $previous_end);
+      
+      for (my $i = 0; $i < $bins; $i++) {
+        last if $previous_end == $chr->size;
+        $start  = $previous_end + 1;
+        $end    = $start + $bin_size;
+        $end    = $chr->size if $end > $chr->size;
+        
+        my $summary = $bw->bigWigSingleSummary($chr->name, $start, $end, 'bbiSumMean');
+        push @scores, sprintf('%.2f', $summary);
+
+        my $bin_max = sprintf('%.2f', $bw->bigWigSingleSummary($chr->name, $start, $end, 'bbiSumMax'));
+        $max = $bin_max if $max < $bin_max;
+ 
+        $previous_start = $start;
+        $previous_end   = $end;
+      }
+      #warn ">>> SCORES FOR ".$chr->name." = @scores";
+
+      $data{$chr->name}{$name} = {
+                                      'scores' => \@scores,
+                                      'colour' => 'red',
+                                      'sort'   => 0,
+                                      };
+
+      $chr = $chr->next;
+    }
+  }
+  #warn ">>> MAX SCORE = $max";
+
   return (\%data, $max);
 }
 
