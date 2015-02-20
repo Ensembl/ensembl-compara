@@ -95,12 +95,7 @@ sub build_tracks {
   
   ## Add max/min lines if required
   if ($display eq '_line' && $track_config->get('maxmin') && scalar @settings) {
-    my $label2        = $track_config->get( 'labels' );
-    $self->label2( $self->Text({
-       'text'      => 'Min:'.$chr_min_data.' Max:'.$chr_max_data,
-       'font'      => 'Tiny',
-       'absolutey' => 1,
-    }) ); 
+    $self->label2('Min:'.$chr_min_data.' Max:'.$chr_max_data); 
     $self->push( $self->Space( {
       'x' => 1, 'width' => 3, 'height' => $width, 'y' => 0, 'absolutey'=>1 
     } ));

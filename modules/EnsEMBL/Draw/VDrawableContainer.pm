@@ -193,7 +193,7 @@ sub new {
       my $feature_type_1 = $glyphset->my_config('feature_type')   || ($glyphset->my_config('keys') ? $glyphset->my_config('keys')->[0] : undef);
       my $feature_type_2 = $glyphset->my_config('feature_type_2') || ($glyphset->my_config('keys') ? $glyphset->my_config('keys')->[1] : undef);
       my $label_1        = $glyphset->my_config('label')          || ($feature_type_1 ? $glyphset->my_colour($feature_type_1, 'text')  : undef);
-      my $label_2        = $glyphset->my_config('label_2')        || ($feature_type_2 ? $glyphset->my_colour($feature_type_2, 'text')  : undef);
+      my $label_2        = $glyphset->label2 || $glyphset->my_config('label_2') || ($feature_type_2 ? $glyphset->my_colour($feature_type_2, 'text')  : undef);
       
       $label_1 = $glyphset->{'chr'} if $glyphset->{'my_config'}->id eq 'Videogram' && $flag;
       
