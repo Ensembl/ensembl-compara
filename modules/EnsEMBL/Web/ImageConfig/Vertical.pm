@@ -138,12 +138,9 @@ sub load_user_track_data {
   }
   
   if ($max) {
-    my $scale = $track_width / $max;
-    
     foreach my $id (keys %data) {
       foreach my $chr (keys %{$data{$id}}) {
         foreach my $track_data (values %{$data{$id}{$chr}}) {
-          $_ *= $scale for @{$track_data->{'scores'} || []};
           $self->get_node($id)->set('colour', $track_data->{'colour'});
         }
       }

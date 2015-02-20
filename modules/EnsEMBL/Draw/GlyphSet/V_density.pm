@@ -79,17 +79,22 @@ sub build_tracks {
     $T->{'style'}     = $info->{'display'} || $display;
     $T->{'histogram'} = $info->{'histogram'} || $histogram;
     $T->{'width'}     = $width;
-    $T->{'scores'}    = $scores;
     $T->{'colour'}    = $info->{'colour'};
     $T->{'max_data'}  = $max_data;
     $T->{'max_len'}   = $max_len;
     $T->{'bin_size'}  = $bin_size;
     $T->{'v_offset'}  = $v_offset;
 
+    my $scaled_scores = [];
     foreach(@$scores) { 
-		  $chr_min_data = $_ if ($_<$chr_min_data || $chr_min_data eq undef); 
-		  $chr_max_data = $_ if $_>$chr_max_data; 
+      ## Use real values for max/min labels
+		  $chr_min_data = $_ if ($_ < $chr_min_data || $chr_min_data eq undef); 
+		  $chr_max_data = $_ if $_ > $chr_max_data;
+      ## Scale data for actual display
+      my $max = $chr_max_data || 1; 
+      push @$scaled_scores, $_/$max * $width;
 	  }
+    $T->{'scores'} = $scaled_scores;
     push @settings, $T;
   }
   
