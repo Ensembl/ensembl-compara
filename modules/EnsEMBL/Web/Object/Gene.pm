@@ -497,6 +497,7 @@ sub get_all_transcripts {
       my $transcriptObj = $self->new_object(
         'Transcript', $transcript, $self->__data
       );
+      warn  $transcriptObj;
       $transcriptObj->gene($self->gene);
       push @{$self->{'data'}{'_transcripts'}} , $transcriptObj;
     }
@@ -1163,10 +1164,10 @@ sub store_TransformedDomains {
     next unless $transcript->translation; 
     foreach my $pf ( @{$transcript->translation->get_all_ProteinFeatures( lc($key) )} ) { 
 ## rach entry is an arry containing the actual pfam hit, and mapped start and end co-ordinates
-      if (exists $seen{$pf->id}{$pf->start}){ 
+      if (exists $seen{$pf->display_id}{$pf->start}){
         next;
       } else {
-        $seen{$pf->id}->{$pf->start} =1; 
+        $seen{$pf->display_id}->{$pf->start} =1;
         my @A = ($pf);  
         foreach( $transcript->pep2genomic( $pf->start, $pf->end ) ) {
           my $O = $self->munge_gaps( 'transcripts', $_->start - $offset, $_->end - $offset) - $offset; 
