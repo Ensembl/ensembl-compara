@@ -115,7 +115,7 @@ sub load_user_track_data {
         ### Use the glyphset, because it already has data-checking
         my $track_data = $track->{'data'};
         my $adaptor = Bio::EnsEMBL::ExternalData::BigFile::BigWigAdaptor->new($track_data->{'url'}); 
-        ($data{$track->id}, $max_value) = $self->get_bigwig_features($adaptor, $track_data->{'name'}, $chromosomes, $bins, $bin_size); 
+        ($data{$track->id}, $max_value) = $self->get_bigwig_features($adaptor, $track_data->{'name'}, $chromosomes, $bins, $bin_size, $track_data->{'colour'}); 
       }
       else {
         if ($parser) {
@@ -222,7 +222,7 @@ sub get_parsed_features {
 }
 
 sub get_bigwig_features {
-  my ($self, $adaptor, $name, $chromosomes, $bins, $bin_size) = @_;
+  my ($self, $adaptor, $name, $chromosomes, $bins, $bin_size, $colour) = @_;
   my (%data, $max);  
   return ({}, undef) unless $adaptor->check;
   $name ||= 'BigWig';
@@ -268,7 +268,7 @@ sub get_bigwig_features {
         $chr_name = 'MT' if $chr_name eq 'M';
         $data{$chr_name}{$name} = {
                                     'scores' => \@scores,
-                                    'colour' => 'red',
+                                    'colour' => $colour,
                                     'sort'   => 0,
                                   };
 
