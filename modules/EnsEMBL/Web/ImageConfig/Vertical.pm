@@ -115,7 +115,7 @@ sub load_user_track_data {
         ### Use the glyphset, because it already has data-checking
         my $track_data = $track->{'data'};
         my $adaptor = Bio::EnsEMBL::ExternalData::BigFile::BigWigAdaptor->new($track_data->{'url'}); 
-        ($data{$track->id}, $max_value) = $self->get_bigwig_features($adaptor, $track_data->{'name'}, $bins, $bin_size); 
+        ($data{$track->id}, $max_value) = $self->get_bigwig_features($adaptor, $track_data->{'name'}, $chromosomes, $bins, $bin_size); 
       }
       else {
         if ($parser) {
@@ -222,48 +222,57 @@ sub get_parsed_features {
 }
 
 sub get_bigwig_features {
-  my ($self, $adaptor, $name, $bins, $bin_size) = @_;
+  my ($self, $adaptor, $name, $chromosomes, $bins, $bin_size) = @_;
+  warn ">>> CHROMOSOMES @$chromosomes";
   my (%data, $max);  
   return ({}, undef) unless $adaptor->check;
   $name ||= 'BigWig';
 
   my $bw = $adaptor->bigwig_open;
   if ($bw) { 
+    ## If we're on a single-chromosome page, we want to filter the BigWig data
+    my %chr_check;
+    foreach (@{$chromosomes||[]}) {
+      my $chr_name = 'chr'.$_;
+      $chr_name = 'chrM' if $chr_name eq 'chrMT';
+      $chr_check{$chr_name} = 1;
+    }
     my $chrs = $bw->chromList;
     my $chr = $chrs->head;
     while ($chr) {
-      my @scores;
-      my $start = 0;
-      my ($end, $previous_start, $previous_end);
+      if (!$chromosomes || $chr_check{$chr->name}) {
+        my @scores;
+        my $start = 0;
+        my ($end, $previous_start, $previous_end);
       
-      for (my $i = 0; $i < $bins; $i++) {
-        last if $previous_end == $chr->size;
-        $start  = $previous_end + 1;
-        $end    = $start + $bin_size;
-        $end    = $chr->size if $end > $chr->size;
+        for (my $i = 0; $i < $bins; $i++) {
+          last if $previous_end == $chr->size;
+          $start  = $previous_end + 1;
+          $end    = $start + $bin_size;
+          $end    = $chr->size if $end > $chr->size;
         
-        my $summary = $bw->bigWigSingleSummary($chr->name, $start, $end, 'bbiSumMean');
-        push @scores, sprintf('%.2f', $summary);
+          my $summary = $bw->bigWigSingleSummary($chr->name, $start, $end, 'bbiSumMean');
+          push @scores, sprintf('%.2f', $summary);
 
-        my $bin_max = sprintf('%.2f', $bw->bigWigSingleSummary($chr->name, $start, $end, 'bbiSumMax'));
-        $max = $bin_max if $max < $bin_max;
+          my $bin_max = sprintf('%.2f', $bw->bigWigSingleSummary($chr->name, $start, $end, 'bbiSumMax'));
+          $max = $bin_max if $max < $bin_max;
  
-        $previous_start = $start;
-        $previous_end   = $end;
+          $previous_start = $start;
+          $previous_end   = $end;
+        }
+        ## Translate chromosome name from its UCSC equivalent
+        (my $chr_name = $chr->name) =~ s/chr//;
+        $chr_name = 'MT' if $chr_name eq 'M';
+        $data{$chr_name}{$name} = {
+                                    'scores' => \@scores,
+                                    'colour' => 'red',
+                                    'sort'   => 0,
+                                  };
+
       }
-      #warn ">>> SCORES FOR ".$chr->name." = @scores";
-
-      $data{$chr->name}{$name} = {
-                                      'scores' => \@scores,
-                                      'colour' => 'red',
-                                      'sort'   => 0,
-                                      };
-
       $chr = $chr->next;
     }
   }
-  #warn ">>> MAX SCORE = $max";
-
   return (\%data, $max);
 }
 
