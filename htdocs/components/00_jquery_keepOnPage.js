@@ -32,9 +32,14 @@
 
     el = $(el);
 
-    if (!el.data('keepOnTop')) {
+    if (el.data('keepOnTop')) {
 
-      el.data('keepOnTop', {fixed: false});
+      if (options === 'trigger') {
+        $(window).triggerHandler('scroll.keepOnTop', true);
+      }
+    } else {
+
+      el.data('keepOnTop', {});
 
       $(window).on('load.keepOnTop scroll.keepOnTop', {
         el        : el,
@@ -43,9 +48,9 @@
         defaults  : {
           top       : el.offset().top,
           position  : el.css('position')
-      }}, function (e) {
+      }}, function (e, force) {
         var fixed = e.data.defaults.top - e.data.options.marginTop <= $(window).scrollTop();
-        if (e.data.el.data('keepOnTop').fixed === fixed) {
+        if (!force && e.data.el.data('keepOnTop').fixed === fixed) {
           return;
         }
         e.data.el.data('keepOnTop', {fixed: fixed});
