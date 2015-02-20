@@ -139,6 +139,15 @@ sub default_options {
            };
 }
 
+sub pipeline_wide_parameters {  # these parameter values are visible to all analyses, can be overridden by parameters{} and input_id{}
+    my ($self) = @_;
+    return {
+        %{$self->SUPER::pipeline_wide_parameters},          # here we inherit anything from the base class
+
+        'mlss_id'       => $self->o('mlss_id'),
+    }
+}
+
 sub pipeline_analyses {
     my ($self) = @_;
     return [
@@ -147,7 +156,6 @@ sub pipeline_analyses {
              -module => 'Bio::EnsEMBL::Compara::RunnableDB::MakeSpeciesTree',
              -input_ids => [{}],
              -parameters => {
-                             'mlss_id'  => $self->o('mlss_id'),
                              'label'    => $self->o('full_species_tree_label'),
                             },
              -wait_for => [$self->o('wait_for')],
@@ -162,7 +170,6 @@ sub pipeline_analyses {
              -module => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::CAFESpeciesTree',
              -parameters => {
                              'cafe_species' => $self->o('cafe_species'),
-                             'mlss_id'      => $self->o('mlss_id'),
                              'label'        => $self->o('full_species_tree_label')
                             },
              -flow_into => {
@@ -175,7 +182,6 @@ sub pipeline_analyses {
 #             -logic_name => 'BadiRate',
 #             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::BadiRate',
 #             -parameters => {
-#                             'mlss_id'               => $self->o('mlss_id'),
 #                             'species_tree_meta_key' => $self->o('species_tree_meta_key'),
 #                             'badiRate_exe'          => $self->o('badiRate_exe'),
 #                            }
@@ -186,10 +192,8 @@ sub pipeline_analyses {
              -module => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::CAFETable',
              -parameters => {
                              'cafe_species' => $self->o('cafe_species'),
-                             'mlss_id'      => $self->o('mlss_id'),
                              'type'         => $self->o('type'),   # [nc|prot]
                              'perFamTable'  => $self->o('per_family_table'),
-                             'mlss_id'      => $self->o('mlss_id'),
                              'cafe_shell'   => $self->o('cafe_shell'),
                             },
              -rc_name => '1Gb_job',
@@ -206,7 +210,6 @@ sub pipeline_analyses {
 #                             'cafe_lambdas'         => $self->o('cafe_lambdas'),
 #                             'cafe_struct_taxons'  => $self->o('cafe_'),
                              'cafe_struct_tree_str' => $self->o('cafe_struct_tree_str'),
-                             'mlss_id'              => $self->o('mlss_id'),
                              'cafe_shell'           => $self->o('cafe_shell'),
                             },
              -rc_name => '1Gb_job',
