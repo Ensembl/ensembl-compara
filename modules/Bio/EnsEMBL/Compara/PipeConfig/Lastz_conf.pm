@@ -70,42 +70,42 @@ sub default_options {
 	    'pipeline_name'         => 'LASTZ_'.$self->o('rel_with_suffix'),   # name the pipeline to differentiate the submitted processes
 
 	    #Define location of core databases separately (over-ride curr_core_sources_locs in Pairwise_conf.pm)
-	    #'reference' => {
-	    #	-host           => "host_name",
-	    #	-port           => port,
-	    #	-user           => "user_name",
-	    #	-dbname         => "my_human_database",
-	    #	-species        => "homo_sapiens"
-	    #   },
-            #'non_reference' => {
-	    #	    -host           => "host_name",
-	    #	    -port           => port,
-	    #	    -user           => "user_name",
-	    #	    -dbname         => "my_bushbaby_database",
-	    #	    -species        => "otolemur_garnettii"
-	    #	  },
+	    'reference' => {
+	    	-host           => "ens-livemirror",
+	    	-port           => 3306,
+	    	-user           => "ensro",
+	    	-dbname         => "mus_musculus_core_78_38",
+	    	-species        => "mus_musculus"
+	       },
+            'non_reference' => {
+	    	    -host           => "compara1",
+	    	    -port           => 3306,
+	    	    -user           => "ensro",
+	    	    -dbname         => "mm14_db8_rat6_ref",
+	    	    -species        => "rattus_norvegicus"
+	    	  },
 	    
-	    #'curr_core_dbs_locs'    => [ $self->o('reference'), $self->o('non_reference') ],
-	    #'curr_core_sources_locs'=> '',
+	    'curr_core_dbs_locs'    => [ $self->o('reference'), $self->o('non_reference') ],
+	    'curr_core_sources_locs'=> '',
 
 	    #Reference species
-	    'ref_species' => 'homo_sapiens',
+	    'ref_species' => 'mus_musculus',
 
 	    #Define chunking
 	    'default_chunks' => {#human example
-			     'reference'   => {'chunk_size' => 30000000,
-					       'overlap'    => 0,
-					       'include_non_reference' => -1, #1  => include non_reference regions (eg human assembly patches)
+			     #'reference'   => {'chunk_size' => 30000000,
+			#		       'overlap'    => 0,
+			#		       'include_non_reference' => -1, #1  => include non_reference regions (eg human assembly patches)
 					                                      #0  => do not include non_reference regions
 					                                      #-1 => auto-detect (only include non_reference regions if the non-reference species is high-coverage 
 					                                      #ie has chromosomes since these analyses are the only ones we keep up-to-date with the patches-pipeline)
 
 #Should use this for human vs non-primate
-					       'masking_options_file' => $self->o('ensembl_cvs_root_dir') . "/ensembl-compara/scripts/pipeline/human36.spec"},
+			#		       'masking_options_file' => $self->o('ensembl_cvs_root_dir') . "/ensembl-compara/scripts/pipeline/human36.spec"},
 			     #non human example
-#   			    'reference'     => {'chunk_size'      => 10000000,
-#   						'overlap'         => 0,
-#   						'masking_options' => '{default_soft_masking => 1}'},
+   			    'reference'     => {'chunk_size'      => 10000000,
+   						'overlap'         => 0,
+   						'masking_options' => '{default_soft_masking => 1}'},
    			    'non_reference' => {'chunk_size'      => 10100000,
    						'group_set_size'  => 10100000,
    						'overlap'         => 100000,
