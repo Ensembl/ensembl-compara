@@ -112,8 +112,12 @@ sub load_user_track_data {
     } 
     else {
       if (lc $track->get('format') eq 'bigwig') {
-        ### Use the glyphset, because it already has data-checking
         my $track_data = $track->{'data'};
+        my $short_name = $track_data->{'caption'};
+        $short_name = substr($short_name, 0, 17).'...' if length($short_name) > 20;
+        $track->set('label', 'BigWig file');
+        $track->set('label_2', $short_name);
+
         my $adaptor = Bio::EnsEMBL::ExternalData::BigFile::BigWigAdaptor->new($track_data->{'url'}); 
         ($data{$track->id}, $max_value) = $self->get_bigwig_features($adaptor, $track_data->{'name'}, $chromosomes, $bins, $bin_size, $track_data->{'colour'}); 
       }
