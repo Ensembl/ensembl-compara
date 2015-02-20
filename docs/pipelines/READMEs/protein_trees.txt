@@ -12,8 +12,8 @@ This document describes how to run ensembl-compara ProteinTrees pipeline.
 EnsEMBL and BioPerl software:
 	* bioperl-live (version 1.6.9)               - Base of the BioPerl distribution. Mainly needed to provide I/O for alignments
 	* bioperl-run (version 1.6.9)                - Needed for the CodeML runnable/parser
-	* ensembl ("release/78" branch)              - Core API on which the rest of ensembl APIs are based
-	* ensembl-compara ("release/78" branch)      - Compara API (data objects, db adaptors, pipeline runnables, pipeline configuration)
+	* ensembl ("release/79" branch)              - Core API on which the rest of ensembl APIs are based
+	* ensembl-compara ("release/79" branch)      - Compara API (data objects, db adaptors, pipeline runnables, pipeline configuration)
 	* ensembl-hive ("version/2.2" branch)        - The system to run pipelines.
 
 Refer to the following pages for tips about installation and setting up the environment:
@@ -52,13 +52,16 @@ Except for CodeML, more recent versions probably still work (as long as the comm
 
    1.2 Data prerequisites
 
-All the Ensembl "core" databases must have canonical transcripts defined (if not, refer to ensembl/misc-scripts/canonical_transcripts/set_canonical_transcripts.pl)
+You obviously need to know which species to include in the trees. Genomes can be in either Ensembl "core" databases or in Fasta files.
+
+All the Ensembl "core" databases must have canonical transcripts defined (if not, refer to ensembl/misc-scripts/canonical_transcripts/set_canonical_transcripts.pl).
+If you define some genomes with Fasta files of protein and transcript entries, make sure they are using one-column headers, the same identifier in each, and no splice variants.
+
+The pipeline needs a species tree to guide the reconstructions. By default, the NCBI taxonomy will be used, but you can also define your own (rooted) tree.
 
 All NCBI taxon_ids must be public and in the NCBI tables (ncbi_taxa_node) in the master database. Although Ensembl updates the tables several times a year, the taxon_id of your favorite species may still be missing.
 If it is the case, you can probably use the taxon_id of a species that has the same position in the taxonomy *relatively to the other species*.
 If the NCBI taxonomy cannot be used (too many unresolved nodes), you can skip the taxon_id definition of that species. You'll also have to use a custom species-tree to guide the reconstruction.
-
-If you define some genomes with Fasta files of protein and transcript entries, make sure they are using one-column headers, the same identifier in each, and no splice variants.
 
 
 2. General structure of the pipeline
@@ -66,7 +69,9 @@ If you define some genomes with Fasta files of protein and transcript entries, m
 You can refer to docs/pipeline_diagrams/ProteinTrees.png for a visual description of the pipeline.
 
 The main structure is given by some backbone analysis. Each one of them will dump the current state of the database (for a backup) and 
-fire the next step of the pipeline. The pipeline also contains numerous health-check analysis (named hc_*) that should detect as early as possible any error.
+fire the next step of the pipeline. The backups can be used to restore the database if things go very wrong (let's hope they don't :) ).
+
+The pipeline also contains numerous health-check analysis (named hc_*) that should detect as early as possible any error.
 The pipeline will follow one of the two paths (A or B). 'A' is a clustering based on all-vs-all blastp. 'B' is a HMM-based clustering.
 The option is selected by the hmm_clustering flag.
 
@@ -279,7 +284,7 @@ linked to 'reuse_db'. Again, on Ensembl data, you can define: 'prev_core_sources
    The pipeline will create there 3 folders:
     - blast_db: the blast databases for the all-vs-all blastp
     - cluster: files used by hcluster_sg
-    - dumps: SQL dumps (checkpoints) of the database
+    - dumps: backups (checkpoints) of the database (make sure you have enough space available !)
 
  - outgroups: the list of outgroup species (genome_db names)
    This is used by hcluster_sg to produce more relevant clusters. It allows two levels of outgroups (named as "2" and "4", "4" being the most out)
@@ -289,6 +294,10 @@ linked to 'reuse_db'. Again, on Ensembl data, you can define: 'prev_core_sources
    Those values are only available for close enough species and it is generally not a good idea to use very large clades (like the animal kingdom.
    The parameter is a list of taxa (given by their names in the NCBI taxonomy). The list can be empty to skip this step of the pipeline.
    In Ensembl, we only use mammals, some birds and some fish, in the config file this is shown as ['Theria', 'Sauria', 'Tetraodontiformes']
+
+ - filter_high_coverage: only compute dN/dS values on "high coverage" species, i.e. the species that have the "is_high_coverage" flag set to 1 in
+   the genome_db table. The parameter is used by the "group_genomes_under_taxa" analysis, so as long as it hasn't yet run, you can sill modify
+   the parameter in the analysis.
 
    3.4. beekeeper parameters
 

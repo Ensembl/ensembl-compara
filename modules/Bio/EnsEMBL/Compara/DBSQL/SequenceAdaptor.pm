@@ -183,7 +183,7 @@ sub store {
 
     my $sth2 = $self->prepare("INSERT INTO sequence (sequence, length) VALUES (?,?)");
     $sth2->execute($sequence, $length);
-    $seqID = $sth2->{'mysql_insertid'};
+    $seqID = $self->dbc->db_handle->last_insert_id(undef, undef, 'sequence', 'sequence_id');
     $sth2->finish;
   }
 

@@ -89,7 +89,7 @@ sub store {
         );
   if($insertCount>0) {
     #sucessful insert
-    $anchor_align->dbID( $sth->{'mysql_insertid'} );
+    $anchor_align->dbID( $self->dbc->db_handle->last_insert_id(undef, undef, 'anchor_align', 'anchor_align_id') );
     $sth->finish;
   }
 

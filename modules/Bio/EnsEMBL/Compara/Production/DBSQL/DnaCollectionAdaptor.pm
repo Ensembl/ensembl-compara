@@ -100,7 +100,7 @@ sub store {
     $insertCount = $sth->execute($description, $dump_loc, $masking_options);
     
     if($insertCount>0) {
-        $collection->dbID( $sth->{'mysql_insertid'} );
+        $collection->dbID( $self->dbc->db_handle->last_insert_id(undef, undef, 'dna_collection', 'dna_collection_id') );
         $sth->finish;
     } else {
         #INSERT ignore has failed on UNIQUE description

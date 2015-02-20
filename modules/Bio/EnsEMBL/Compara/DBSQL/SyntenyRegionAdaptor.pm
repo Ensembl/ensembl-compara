@@ -187,7 +187,7 @@ sub store {
    my $sth = $self->prepare("insert into synteny_region (method_link_species_set_id) VALUES (?)");
 
    $sth->execute($sr->method_link_species_set_id);
-   my $synteny_region_id = $sth->{'mysql_insertid'};
+   my $synteny_region_id = $self->dbc->db_handle->last_insert_id(undef, undef, 'synteny_region', 'synteny_region_id');
    $sr->dbID($synteny_region_id);
    $sr->adaptor($self);
 

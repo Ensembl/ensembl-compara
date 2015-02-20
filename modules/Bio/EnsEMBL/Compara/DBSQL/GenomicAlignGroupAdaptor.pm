@@ -188,7 +188,7 @@ sub store {
                   ($node_id or "NULL"),
                   $genomic_align->dbID
           );
-    if (!$node_id) {$node_id = $sth->{'mysql_insertid'};}
+    if (!$node_id) { $node_id = $self->dbc->db_handle->last_insert_id(undef, undef, 'genomic_align_group', 'node_id'); }
 
     info("Stored Bio::EnsEMBL::Compara::GenomicAlignGroup ".
           "(".($i+1)."/".scalar(@$all_genomic_aligns).") ".

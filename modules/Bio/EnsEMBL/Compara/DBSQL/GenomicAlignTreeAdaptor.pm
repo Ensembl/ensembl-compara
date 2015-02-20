@@ -742,8 +742,8 @@ sub store_node {
                               right_index,
                               distance_to_parent)  VALUES (?,?,?,?,?,?)");
   $sth->execute(undef, $parent_id, $root_id, $node->left_index, $node->right_index, $node->distance_to_parent);
-  #print STDERR "LAST ID: ", $sth->{'mysql_insertid'}, "\n";
-  $node->node_id($sth->{'mysql_insertid'});
+  #print STDERR "LAST ID: ", $self->dbc->db_handle->last_insert_id(undef, undef, 'genomic_align_tree', 'node_id'), "\n";
+  $node->node_id( $self->dbc->db_handle->last_insert_id(undef, undef, 'genomic_align_tree', 'node_id') );
   $sth->finish;
 
   #set root_id to be node_id for the root node.

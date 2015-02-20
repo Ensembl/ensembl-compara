@@ -188,7 +188,7 @@ sub store {
                     WHERE method_link_species_set_id BETWEEN $min_mlss_id AND $max_mlss_id
                     ");
                 my $r = $sth2->execute(@mlss_data);
-                $dbID = $sth2->{'mysql_insertid'};
+                $dbID = $self->dbc->db_handle->last_insert_id(undef, undef, 'method_link_species_set', 'method_link_species_set_id');
                 $sth2->finish();
                 return $r;
             }

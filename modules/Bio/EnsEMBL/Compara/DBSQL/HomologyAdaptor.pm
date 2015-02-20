@@ -608,7 +608,7 @@ sub store {
     my $sql = 'INSERT INTO homology (method_link_species_set_id, description, is_tree_compliant, species_tree_node_id, gene_tree_node_id, gene_tree_root_id) VALUES (?,?,?,?,?,?)';
     my $sth = $self->prepare($sql);
     $sth->execute($hom->method_link_species_set_id, $hom->description, $hom->is_tree_compliant, $hom->{_species_tree_node_id}, $hom->{_gene_tree_node_id}, $hom->{_gene_tree_root_id});
-    $hom->dbID($sth->{'mysql_insertid'});
+    $hom->dbID( $self->dbc->db_handle->last_insert_id(undef, undef, 'homology', 'homology_id') );
   }
 
   my $sql = 'INSERT IGNORE INTO homology_member (homology_id, gene_member_id, seq_member_id, cigar_line, perc_id, perc_pos, perc_cov) VALUES (?,?,?,?,?,?,?)';
