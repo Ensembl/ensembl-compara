@@ -117,7 +117,7 @@ sub content {
     while (my ($stable_id, $data) = each %genes) {
       my $gene      = $data->{'gene'};
       my $dxr       = $gene->can('display_xref') ? $gene->display_xref : undef;
-      my $gene_name = ($dxr->display_id) ? $dxr->display_id : '-';
+      my $gene_name = ($dxr && $dxr->display_id) ? $dxr->display_id : '-';
       my $params    = {
         db     => 'core',
         r      => undef,
