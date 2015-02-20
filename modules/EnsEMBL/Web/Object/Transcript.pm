@@ -31,7 +31,6 @@ package EnsEMBL::Web::Object::Transcript;
 
 use strict;
 
-use Bio::EnsEMBL::Utils::TranscriptAlleles qw(get_all_ConsequenceType);
 use Bio::EnsEMBL::Variation::Utils::Sequence qw(ambiguity_code variation_class);
 
 use EnsEMBL::Web::Cache;
