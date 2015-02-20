@@ -59,7 +59,6 @@ my $genomic_align_adaptor = $compara_db_adaptor->get_GenomicAlignAdaptor();
 my $genomic_align_block_adaptor = $compara_db_adaptor->get_GenomicAlignBlockAdaptor();
 my $method_link_species_set_adaptor = $compara_db_adaptor->get_MethodLinkSpeciesSetAdaptor();
 my $dnafrag_adaptor = $compara_db_adaptor->get_DnaFragAdaptor();
-my $genomic_align_group_adaptor = $compara_db_adaptor->get_GenomicAlignGroupAdaptor();
 my $genomeDB_adaptor = $compara_db_adaptor->get_GenomeDBAdaptor();
 my $fail;
 

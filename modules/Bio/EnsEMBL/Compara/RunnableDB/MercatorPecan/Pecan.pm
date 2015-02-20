@@ -232,8 +232,6 @@ sub _write_output {
   my $gaba = $self->compara_dba->get_GenomicAlignBlockAdaptor;
   my $gaa = $self->compara_dba->get_GenomicAlignAdaptor;
 
-  my $gaga = $self->compara_dba->get_GenomicAlignGroupAdaptor;
-
   foreach my $gab (@{$self->param('runnable')->output}) {
       foreach my $ga (@{$gab->genomic_align_array}) {
 	  $ga->adaptor($gaa);
