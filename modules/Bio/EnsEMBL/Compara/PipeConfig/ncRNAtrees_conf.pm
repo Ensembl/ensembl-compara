@@ -103,6 +103,15 @@ sub pipeline_create_commands {
 }
 
 
+sub pipeline_wide_parameters {  # these parameter values are visible to all analyses, can be overridden by parameters{} and input_id{}
+    my ($self) = @_;
+    return {
+        %{$self->SUPER::pipeline_wide_parameters},          # here we inherit anything from the base class
+
+        'mlss_id'       => $self->o('mlss_id'),
+    }
+}
+
 
 sub pipeline_analyses {
     my ($self) = @_;
@@ -236,7 +245,6 @@ sub pipeline_analyses {
                 -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ObjectFactory',
                 -parameters => {
                                 'compara_db'            => $self->o('master_db'),   # that's where genome_db_ids come from
-                                'mlss_id'               => $self->o('mlss_id'),
                                 'call_list'             => [ 'compara_dba', 'get_MethodLinkSpeciesSetAdaptor', ['fetch_by_dbID', '#mlss_id#'], 'species_set_obj', 'genome_dbs' ],
                                 'column_names2getters'  => { 'genome_db_id' => 'dbID', 'species_name' => 'name', 'assembly_name' => 'assembly', 'genebuild' => 'genebuild', 'locator' => 'locator', 'has_karyotype', 'has_karyotype', 'is_high_coverage' => 'is_high_coverage' },
                                },
@@ -272,9 +280,6 @@ sub pipeline_analyses {
 
         {   -logic_name => 'per_genome_qc',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::PerGenomeGroupsetQC',
-            -parameters => {
-                'mlss_id'   => $self->o('mlss_id'),
-            },
             -rc_name    => '4Gb_job',
         },
 
@@ -309,7 +314,6 @@ sub pipeline_analyses {
                 'species_tree_input_file'               => $self->o('species_tree_input_file'),   # empty by default, but if nonempty this file will be used instead of tree generation from genome_db
                 'multifurcation_deletes_node'           => [ 314146, 1489913 ], # 33316 and 129949 has been removed from NCBI taxonomy
                 'multifurcation_deletes_all_subnodes'   => [  9347, 186625,  32561 ],
-                'mlss_id'                               => $self->o('mlss_id'),
             },
         },
 
@@ -379,9 +383,6 @@ sub pipeline_analyses {
 
             {   -logic_name    => 'rfam_classify',
                 -module        => 'Bio::EnsEMBL::Compara::RunnableDB::ncRNAtrees::RFAMClassify',
-                -parameters    => {
-                                   'mlss_id' => $self->o('mlss_id'),
-                                  },
                 -flow_into     => {
                                    '1->A' => ['create_additional_clustersets'],
                                    'A->1' => ['clusters_factory'],
@@ -394,7 +395,6 @@ sub pipeline_analyses {
                 -module        => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::CreateClustersets',
                 -parameters    => {
                                    'member_type'            => 'ncrna',
-                                   'mlss_id'                => $self->o('mlss_id'),
                                    'additional_clustersets' => [qw(pg_it_nj ml_it_10 pg_it_phyml ss_it_s16 ss_it_s6a ss_it_s16a ss_it_s6b ss_it_s16b ss_it_s6c ss_it_s6d ss_it_s6e ss_it_s7a ss_it_s7b ss_it_s7c ss_it_s7d ss_it_s7e ss_it_s7f ft_it_ml ft_it_nj ftga_it_ml ftga_it_nj)],
                                   },
                 -rc_name       => 'default',
@@ -454,7 +454,6 @@ sub pipeline_analyses {
             -module         => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::HTMLReport',
             -parameters     => {
                 'email' => $self->o('email'),
-                'mlss_id' => $self->o('mlss_id'),
             },
         },
 
@@ -481,7 +480,6 @@ sub pipeline_analyses {
             {   -logic_name    => 'recover_epo',
                 -module        => 'Bio::EnsEMBL::Compara::RunnableDB::ncRNAtrees::NCRecoverEPO',
                 -parameters    => {
-                                   'mlss_id'        => $self->o('mlss_id'),
                                    'epo_db'         => $self->o('epo_db'),
                                   },
                 -analysis_capacity => $self->o('recover_capacity'),
@@ -540,7 +538,6 @@ sub pipeline_analyses {
             {   -logic_name => 'quick_tree_break',
                 -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::QuickTreeBreak',
                 -parameters => {
-                                'mlss_id'           => $self->o('mlss_id'),
                                 'quicktree_exe'     => $self->o('quicktree_exe'),
                                 'tags_to_copy'      => $self->o('treebreak_tags_to_copy'),
                                 'treebreak_gene_count'  => $self->o('treebreak_gene_count'),
@@ -555,7 +552,6 @@ sub pipeline_analyses {
                 -module         => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::OtherParalogs',
                 -parameters     => {
                                     'dataflow_subclusters' => 1,
-                                    'mlss_id'              => $self->o('mlss_id'),
                                    },
                 -analysis_capacity  => $self->o('other_paralogs_capacity'),
                 -rc_name            => '1Gb_job',
@@ -612,7 +608,6 @@ sub pipeline_analyses {
              -parameters => {
                              'raxml_exe'             => $self->o('raxml_exe'),
                              'raxml_number_of_cores' => $self->o('raxml_number_of_cores'),
-                             'mlss_id'               => $self->o('mlss_id'),
                             },
              -flow_into => {
                             2 => [ 'sec_struct_model_tree'],
@@ -626,7 +621,6 @@ sub pipeline_analyses {
             -parameters => {
                             'raxml_exe'             => $self->o('raxml_exe'),
                             'raxml_number_of_cores' => $self->o('raxml_number_of_cores'),
-                            'mlss_id'               => $self->o('mlss_id'),
                            },
             -rc_name => '2Gb_basement_ncores_job',
         },
@@ -660,7 +654,6 @@ sub pipeline_analyses {
                              'parsimonator_exe'      => $self->o('parsimonator_exe'),
                              'raxmlLight_exe'        => $self->o('raxmlLight_exe'),
                              'raxml_number_of_cores' => $self->o('raxml_number_of_cores'),
-                             'mlss_id'               => $self->o('mlss_id'),
                             },
              -can_be_empty => 1,
              -rc_name => '8Gb_basement_ncores_job',
@@ -691,7 +684,6 @@ sub pipeline_analyses {
              -analysis_capacity => $self->o('genomic_tree_capacity'),
              -parameters => {
                              'treebest_exe' => $self->o('treebest_exe'),
-                             'mlss_id' => $self->o('mlss_id'),
                             },
              -flow_into => {
                             -2 => ['genomic_tree_himem'],
@@ -706,7 +698,6 @@ sub pipeline_analyses {
              -analysis_capacity => $self->o('genomic_tree_capacity'),
              -parameters => {
                              'treebest_exe' => $self->o('treebest_exe'),
-                             'mlss_id' => $self->o('mlss_id'),
                             },
              -can_be_empty => 1,
              -rc_name => '4Gb_job',
@@ -717,7 +708,6 @@ sub pipeline_analyses {
             -analysis_capacity => $self->o('treebest_capacity'),
             -parameters => {
                             'treebest_exe' => $self->o('treebest_exe'),
-                            'mlss_id' => $self->o('mlss_id'),
                            },
             -flow_into => {
                            '1->A' =>  {
@@ -752,7 +742,6 @@ sub pipeline_analyses {
             -analysis_capacity => $self->o('orthotree_capacity'),
             -parameters => {
                             'tag_split_genes'   => 0,
-                            'mlss_id' => $self->o('mlss_id'),
             },
             -flow_into  => [ 'hc_tree_attributes', 'hc_tree_homologies' ],
            -rc_name => 'default',
@@ -763,7 +752,6 @@ sub pipeline_analyses {
             -parameters => {
                             'treebest_exe'  => $self->o('treebest_exe'),
                             'ktreedist_exe' => $self->o('ktreedist_exe'),
-                            'mlss_id' => $self->o('mlss_id'),
                            },
             -rc_name => 'default',
         },
