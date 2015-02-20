@@ -257,7 +257,7 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
       
       panel.areas.push(c);
       
-      if (this.klass.drag) {
+      if (this.klass.drag || this.klass.vdrag) {
         // r = [ '#drag', image number, species number, species name, region, start, end, strand ]
         r        = c.a.attrs.href.split('|');
         start    = parseInt(r[5], 10);
@@ -315,7 +315,7 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
         var tip;
 
         // change the cursor to pointer for clickable areas
-        $(this).toggleClass('drag_select_pointer', !(!area || area.a.klass.label || area.a.klass.drag || area.a.klass.hover));
+        $(this).toggleClass('drag_select_pointer', !(!area || area.a.klass.label || area.a.klass.drag || area.a.klass.vdrag || area.a.klass.hover));
 
         // Add helptips on navigation controls in multi species view
         if (area && area.a && area.a.klass.nav) {
