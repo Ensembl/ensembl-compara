@@ -62,14 +62,8 @@ sub content {
   $image->{'panel_number'} = 'translation';
   $image->set_button('drag', 'title' => 'Drag to select region');
 
-  my $external_name = $transcript->Obj->external_name;
-  my $display_id = ($external_name && $external_name ne '') ? $external_name : $transcript->Obj->stable_id;
-
-  my $html = ($translation ? sprintf '<h2>Protein ID: %s</h2><h3>(Transcript ID: %s)</h3>', $translation->Obj->display_id, $display_id : '');
-  
-  return $html.$image->render;
+  return sprintf '<h2>Protein ID: %s</h2><h3>(Transcript ID: %s)</h3>%s', $peptidie->display_id, $peptide->external_name || $peptide->stable_id, $image->render;
 }
-
 
 sub get_lrg_transcript {
   my $self        = shift;
