@@ -523,7 +523,7 @@ CREATE TABLE dnafrag_region (
 @column perc_id                      Used for pairwise comparison. Defines the percentage of identity between both sequences
 @column length                       Total length of the alignment
 @column group_id                     Used to group alignments
-@column level_id                     Level of orhologous layer. 1 corresponds to the first layer of orthologous sequences found, 2 and over are addiotional layers. Use for building the syntenies (based on level_id = 1 only)
+@column level_id                     Level of orthologous layer. 1 corresponds to the principal layer of orthologous sequences found (the largest), 2 and over are additional layers. Use for building the syntenies (based on level_id = 1 only). Note that level_ids are not computed on whole chromosomes but rather on chunks. This means that level_ids can be inconsistent within an alignment-net.
 
 @see method_link_species_set
 @see genomic_align_tree
