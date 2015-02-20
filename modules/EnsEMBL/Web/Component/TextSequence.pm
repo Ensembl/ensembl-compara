@@ -1151,7 +1151,7 @@ sub build_sequence {
 
   my $key_html = '';
   unless($exclude_key) {
-    $key_html = qq(<div class="adornment-key"></div>);
+    $key_html = qq(<div class="_adornment_key adornment-key"></div>);
   }
 
   my $id = $self->id;

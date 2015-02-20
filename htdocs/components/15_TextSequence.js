@@ -39,6 +39,7 @@ Ensembl.Panel.TextSequence = Ensembl.Panel.Content.extend({
         var $outer = $(outer);
         panel.initPopups($outer);
         panel.updateKey($outer);
+        panel.fixKey($outer);
         if(!$('.ajax_pending',this.el).length &&
             !$('.ajax_load',this.el).length &&
             !$('.sequence_key img',this.el).length) {
@@ -78,6 +79,10 @@ Ensembl.Panel.TextSequence = Ensembl.Panel.Content.extend({
     var url = this.params.updateURL.replace(/sub_slice\?/,'key?'+';');
     url += params.join(';');
     $key.data('url',url);
+  },
+
+  fixKey: function(el) {
+    el.parents('.js_panel').find('._adornment_key').first().keepOnPage({marginTop: 10, spaced: true});
   },
 
   requestKey: function(el) {
