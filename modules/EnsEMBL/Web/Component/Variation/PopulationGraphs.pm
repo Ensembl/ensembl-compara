@@ -52,9 +52,9 @@ sub content {
   # Get alleles list
   my $project_name;
   foreach my $pop_name (sort keys %$pop_freq) {
-    my $values   = '';
-    my $p_name   = (split ':', $pop_name)[1];
-       $pop_tree = $self->update_pop_tree($pop_tree, $pop_name, $pop_freq->{$pop_name}{'sub_pop'}) if defined $pop_freq->{$pop_name}{'sub_pop'};
+    my $values = '';
+
+    $pop_tree = $self->update_pop_tree($pop_tree, $pop_name, $pop_freq->{$pop_name}{'sub_pop'}) if defined $pop_freq->{$pop_name}{'sub_pop'};
 
     $project_name = $pop_freq->{$pop_name}{'group'} if (!$project_name);
 
@@ -78,13 +78,8 @@ sub content {
   
   # Create graphs
   foreach my $pop_name (sort { ($a !~ /ALL/ cmp $b !~ /ALL/) || $a cmp $b } keys %$pop_freq) {
-    my $values    = '';
-    my @pop_names = split ':', $pop_name;
-    
-    shift @pop_names if (scalar @pop_names > 1);
-    
-    my $p_name     = join ':', @pop_names;
-    my $short_name = $self->get_short_name($p_name);
+    my $values     = '';
+    my $short_name = $self->get_short_name($pop_name);
     my $pop_desc   = $pop_freq->{$pop_name}{'desc'};
     
     # Constructs the array for the pie charts: [allele,frequency]
@@ -113,8 +108,10 @@ sub content {
     if ($short_name =~ /ALL/ || scalar(keys(%$pop_tree)) == 0) {
       push @graphs, sprintf('
         <div class="pie_chart_holder">
-          <div class="pie_chart%s _ht" title="%s">
-            <h4>%s</h4>
+          <div class="pie_chart%s">
+            <div style="margin:4px">
+              <span class="_ht conhelp" style="font-size:1em;font-weight:bold" title="%s">%s</span>
+            </div>
             <div id="graphHolder%s" style="width:%ipx;height:%ipx"></div>
           </div>
         </div>
@@ -124,8 +121,10 @@ sub content {
     elsif ($pop_tree->{$short_name}) {
       push @graphs, sprintf('
         <div class="pie_chart_holder">
-          <div class="pie_chart _ht" title="%s">
-            <h4>%s</h4>
+          <div class="pie_chart">
+            <div style="margin:4px">
+              <span class="_ht conhelp" style="font-size:1em;font-weight:bold" title="%s">%s</span>
+            </div>
             <div id="graphHolder%s" style="width:%ipx;height:%ipx"></div>
           </div>
           <a class="toggle %s _slide_toggle set_cookie" href="#" style="margin-left:5px" rel="population_freq_%s" title="Click to toggle sub-population frequencies">Sub-populations</a>
@@ -137,8 +136,10 @@ sub content {
       foreach (grep $pop_tree->{$_}{$short_name}, keys %$pop_tree) {
         push @{$sub_pops{$_}}, sprintf('
           <div class="pie_chart_holder">
-            <div class="pie_chart _ht" title="%s">
-              <h4>%s</h4>
+            <div class="pie_chart">
+              <div style="margin:4px">
+                <span class="_ht conhelp" style="font-size:1em;font-weight:bold" title="%s">%s</span>
+              </div>
               <div id="graphHolder%s" style="width:%ipx;height:%ipx"></div>
             </div>
           </div>
@@ -245,9 +246,14 @@ sub update_pop_tree {
 sub get_short_name {
   my $self   = shift;
   my $p_name = shift;
-     $p_name =~ /phase_\d_(.+)/; # Gets a shorter name for the display
-  
-  return $1 || $p_name;
+  my @composed_name = split(':', $p_name);
+  my $short_name = $composed_name[$#composed_name]; 
+
+  if ($short_name =~ /phase_\d+_(.+)$/) {
+    $short_name = $1;
+  }
+
+  return $short_name;
 }
 
 1;
