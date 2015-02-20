@@ -178,6 +178,7 @@ sub _write_ss {
     my $ss;
     if ($self->param('reference_dba')) {
         $ss = $self->param('reference_dba')->get_SpeciesSetAdaptor->fetch_by_GenomeDBs($genome_dbs);
+        $ss or die sprintf("The %s species-set could not be found in the master database\n", join('/', map {$_->name} @$genome_dbs));
     }
     unless ($ss) {
         $ss = Bio::EnsEMBL::Compara::SpeciesSet->new( -genome_dbs => $genome_dbs );
@@ -195,6 +196,7 @@ sub _write_mlss {
     my $mlss;
     if ($self->param('reference_dba')) {
         $mlss = $self->param('reference_dba')->get_MethodLinkSpeciesSetAdaptor->fetch_by_method_link_id_species_set_id($method->dbID, $ss->dbID);
+        $mlss or die sprintf("The %s / %s MethodLinkSpeciesSet could not be found in the master database\n", $method->toString, $ss->toString);
     }
     unless ($mlss) {
         $mlss = Bio::EnsEMBL::Compara::MethodLinkSpeciesSet->new( -method => $method, -species_set_obj => $ss);
