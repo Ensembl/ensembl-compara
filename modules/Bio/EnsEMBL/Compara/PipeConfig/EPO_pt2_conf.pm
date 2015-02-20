@@ -174,7 +174,8 @@ sub pipeline_analyses {
 		},
 		-input_ids => [{}],
 		-flow_into => {
-			1 => [ 'import_genome_dbs' ],
+			'1->A' => [ 'import_genome_dbs' ],
+                        'A->1' => [ 'dump_genome_sequence_factory' ],
 		},
 	    },
 	    {   -logic_name => 'import_genome_dbs',
@@ -244,10 +245,6 @@ sub pipeline_analyses {
 				'REPLACE INTO method_link_species_set (method_link_species_set_id, method_link_id, species_set_id) VALUES(#mapping_mlssid#, #mapping_method_link_id#, #species_set_id#)',
 			],
 		},
-		 -flow_into => {
-			1 => [ 'dump_genome_sequence_factory' ],
-		},
-			
 	    },
 
 	    {	-logic_name     => 'dump_genome_sequence_factory',
@@ -258,7 +255,8 @@ sub pipeline_analyses {
 			'fan_branch_code' => 2,
 		},
 		-flow_into => {
-			2  => [ 'dump_genome_sequence' ],
+                    '2->A'  => [ 'dump_genome_sequence' ],
+                    'A->1'  => [ 'remove_overlaps' ],
 		},
 	    },
 
@@ -273,7 +271,6 @@ sub pipeline_analyses {
 		-flow_into => {
 			2 => [ 'map_anchors' ],
 		},
-		-wait_for  => [ 'import_dnafrags' ],
 		-rc_name => 'mem7500',
 		-hive_capacity => 2,
 		-max_retry_count => 3,
@@ -292,8 +289,6 @@ sub pipeline_analyses {
 	    {	-logic_name     => 'remove_overlaps',
 		-module         => 'Bio::EnsEMBL::Compara::Production::EPOanchors::RemoveAnchorOverlaps',
 		-rc_name => 'hugemem',
-		-wait_for  => [ 'map_anchors' ],
-		-input_ids  => [{}],
 		-flow_into => {
 			1 => [ 'trim_anchor_align_factory' ],
 		},
