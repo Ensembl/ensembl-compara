@@ -223,7 +223,6 @@ sub get_parsed_features {
 
 sub get_bigwig_features {
   my ($self, $adaptor, $name, $chromosomes, $bins, $bin_size) = @_;
-  warn ">>> CHROMOSOMES @$chromosomes";
   my (%data, $max);  
   return ({}, undef) unless $adaptor->check;
   $name ||= 'BigWig';
@@ -233,6 +232,8 @@ sub get_bigwig_features {
     ## If we're on a single-chromosome page, we want to filter the BigWig data
     my %chr_check;
     foreach (@{$chromosomes||[]}) {
+      $chr_check{$_} = 1;
+      ## Also convert our chromosome names into UCSC equivalents
       my $chr_name = 'chr'.$_;
       $chr_name = 'chrM' if $chr_name eq 'chrMT';
       $chr_check{$chr_name} = 1;
@@ -254,13 +255,15 @@ sub get_bigwig_features {
           my $summary = $bw->bigWigSingleSummary($chr->name, $start, $end, 'bbiSumMean');
           push @scores, sprintf('%.2f', $summary);
 
+          ## Get the maximum via each bin rather than for the entire dataset, 
+          ## so we can scale nicely on single-chromosome pages
           my $bin_max = sprintf('%.2f', $bw->bigWigSingleSummary($chr->name, $start, $end, 'bbiSumMax'));
           $max = $bin_max if $max < $bin_max;
  
           $previous_start = $start;
           $previous_end   = $end;
         }
-        ## Translate chromosome name from its UCSC equivalent
+        ## Translate chromosome name back from its UCSC equivalent
         (my $chr_name = $chr->name) =~ s/chr//;
         $chr_name = 'MT' if $chr_name eq 'M';
         $data{$chr_name}{$name} = {
