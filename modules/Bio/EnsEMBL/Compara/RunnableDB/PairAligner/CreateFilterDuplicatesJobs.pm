@@ -114,9 +114,9 @@ sub print_params {
   printf("   logic_name : %s\n", $self->param('logic_name'));
   printf("   collection           : (%d) %s\n", 
          $self->param('collection')->dbID, $self->param('collection')->description);
-  if (defined $self->param('region')) {
-    printf("   region          : %s\n", $self->param('region'));
-  }
+  #if (defined $self->param('region')) {
+    #printf("   region          : %s\n", $self->param('region'));
+  #}
   if (defined $self->param('method_link_species_set_id')) {
     printf("   method_link_species_set_id          : %s\n", $self->param('method_link_species_set_id'));
   }
@@ -129,7 +129,7 @@ sub createFilterDuplicatesJobs
 
   my $dna_collection  = $self->param('collection');
   my $analysis = $self->param('filter_duplicates_analysis');
-  my $region = $self->param('region');
+  #my $region = $self->param('region');
   my $mlss_id = $self->param('method_link_species_set_id');
   my $chunk_size = $self->param('chunk_size');
   my $overlap = $self->param('overlap');
