@@ -89,12 +89,19 @@ sub colour_key { return $_[0]->my_config('colour_key') || $_[0]->my_config('sub_
 # features...
 #==============================================================================
 
-sub render_unlimited        { $_[0]->render_normal(1, 1000);                                 }
-sub render_stack            { $_[0]->render_normal(1, 40);                                   }
-sub render_simple           { $_[0]->render_normal;                                          }
-sub render_half_height      { $_[0]->render_normal($_[0]->my_config('height') / 2 || 4, 20); }
-sub render_labels           { $_[0]->{'show_labels'} = 1; $_[0]->render_normal;              }
-sub render_ungrouped_labels { $_[0]->{'show_labels'} = 1; $_[0]->render_ungrouped;           }
+sub render_unlimited          { $_[0]->render_as_alignment_nolabel({'height' => 1, 'depth' => 1000});       }
+sub render_stack              { $_[0]->render_as_alignment_nolabel({'height' => 1, 'depth' => 40});         }
+sub render_simple             { $_[0]->render_as_alignment_nolabel;                                         }
+sub render_half_height        { $_[0]->render_as_alignment_nolabel({
+                                                            'height' => $_[0]->my_config('height') / 2 || 4, 
+                                                            'depth'   => 20
+                                                            });                                             }
+sub render_as_alignment_label { $_[0]->{'show_labels'} = 1; $_[0]->render_as_alignment_nolabel;             }
+sub render_ungrouped_labels   { $_[0]->{'show_labels'} = 1; $_[0]->render_ungrouped;                        }
+
+sub render_as_transcript_nolabel {$_[0]->render_as_alignment_nolabel({'structure' => 1});                   }
+sub render_as_transcript_label   {$_[0]->{'show_labels'} = 1; 
+                                              $_[0]->render_as_alignment_nolabel({'structure' => 1});       }
 
 # variable height renderer
 sub render_histogram {
@@ -175,17 +182,18 @@ sub _render_hidden_bgd {
   }
 }
 
-sub render_normal {
-  my $self = shift;
+sub render_as_alignment_nolabel {
+  my ($self, $args) = @_;
   
   return $self->render_text if $self->{'text_export'};
   
-  my $h               = @_ ? shift : ($self->my_config('height') || 8);
+  my $h               = $args->{'height'} || $self->my_config('height') || 8;
      $h               = $self->{'extras'}{'height'} if $self->{'extras'} && $self->{'extras'}{'height'};
   my $strand_bump     = $self->my_config('strandbump');
   my $explicit_zero   = (defined $_[0] and !$_[0]); # arg of 0 means 0
-  my $depth           = @_ ? shift : ($self->my_config('dep') || 6);
+  my $depth           = $args->{'depth'} || $self->my_config('dep') || 6;
      $depth           = 0 if $strand_bump || $self->my_config('nobump');
+  my $show_structure  = $args->{'structure'} || 0;
   ## User setting overrides everything else
   my $default_depth   = $depth;
   my $user_depth      = $self->my_config('userdepth');
@@ -435,7 +443,7 @@ sub render_normal {
       }
       
       if ($composite ne $self) {
-        if ($self->my_config('has_blocks')) {
+        if ($self->my_config('has_blocks') && $show_structure) {
           $composite->unshift($self->Intron({
             x         => $composite->{'x'},
             y         => $composite->{'y'},
