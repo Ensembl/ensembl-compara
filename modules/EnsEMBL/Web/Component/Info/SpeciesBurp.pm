@@ -36,7 +36,10 @@ sub content {
   my %error_messages = EnsEMBL::Web::Constants::ERROR_MESSAGES;
   my $error_text     = $error_messages{$self->hub->function};
 
-  return sprintf '<div class="error"><h3>%s</h3><div class="error-pad"><p>%s</p>%s</div></div>',
+  my $img #; = $self->hub->function eq '404' ? '<img src="/i/monster.png" class="float-right" alt="Here Be Monsters" title="A monster from a 17th century bestiary" />' : '';
+
+  return sprintf '%s<h3>%s</h3><p>%s</p>%s',
+    $img,
     $error_text->[0],
     $error_text->[1],
     EnsEMBL::Web::Controller::SSI::template_INCLUDE($self, '/ssi/species/ERROR_4xx.html')
