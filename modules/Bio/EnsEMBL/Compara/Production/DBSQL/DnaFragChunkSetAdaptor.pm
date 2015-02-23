@@ -251,22 +251,15 @@ sub _columns {
 sub _objs_from_sth {
   my ($self, $sth) = @_;
   
-  my %column;
-  $sth->bind_columns( \( @column{ @{$sth->{NAME_lc} } } ));
-
   my @sets = ();
-  my %setNames;
-  my %setDnaFragChunkIds;
 
-  while ($sth->fetch()) {
-    my ($dna_collection_id, $dnafrag_chunk_set_id);
-    $dna_collection_id = $column{'dna_collection_id'};
-    $dnafrag_chunk_set_id = $column{'dnafrag_chunk_set_id'};
+  while( my $row_hashref = $sth->fetchrow_hashref()) {
 
-    my $chunkSet = new Bio::EnsEMBL::Compara::Production::DnaFragChunkSet
-                       -dbid => $dnafrag_chunk_set_id,
-                       -adaptor => $self,
-                       -dna_collection_id => $dna_collection_id;
+    my $chunkSet = Bio::EnsEMBL::Compara::Production::DnaFragChunkSet->new(
+                       -adaptor             => $self,
+                       -dbid                => $row_hashref->{'dnafrag_chunk_set_id'},
+                       -dna_collection_id   => $row_hashref->{'dna_collection_id'},
+    );
 
     push @sets, $chunkSet;
 

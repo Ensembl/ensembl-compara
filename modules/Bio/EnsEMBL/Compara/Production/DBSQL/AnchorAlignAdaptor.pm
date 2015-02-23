@@ -660,34 +660,29 @@ sub _final_clause {
 sub _objs_from_sth {
   my ($self, $sth) = @_;
 
-  my %column;
-  $sth->bind_columns( \( @column{ @{$sth->{NAME_lc} } } ));
+  my @anchor_aligns = ();
 
-  my $anchor_aligns = [];
-
-  while ($sth->fetch()) {
-    my $this_anchor_align;
-
-    $this_anchor_align = Bio::EnsEMBL::Compara::Production::EPOanchors::AnchorAlign->new();
+  while( my $row_hashref = $sth->fetchrow_hashref()) {
+    my $this_anchor_align = Bio::EnsEMBL::Compara::Production::EPOanchors::AnchorAlign->new();
 
     $this_anchor_align->adaptor($self);
-    $this_anchor_align->dbID($column{'anchor_align_id'});
-    $this_anchor_align->method_link_species_set_id($column{'method_link_species_set_id'});
-    $this_anchor_align->anchor_id($column{'anchor_id'});
-    $this_anchor_align->dnafrag_id($column{'dnafrag_id'});
-    $this_anchor_align->dnafrag_start($column{'dnafrag_start'});
-    $this_anchor_align->dnafrag_end($column{'dnafrag_end'});
-    $this_anchor_align->dnafrag_strand($column{'dnafrag_strand'});
-    $this_anchor_align->score($column{'score'});
-    $this_anchor_align->num_of_organisms($column{'num_of_organisms'});
-    $this_anchor_align->num_of_sequences($column{'num_of_sequences'});
-    $this_anchor_align->anchor_status($column{'anchor_status'});
+    $this_anchor_align->dbID($row_hashref->{'anchor_align_id'});
+    $this_anchor_align->method_link_species_set_id($row_hashref->{'method_link_species_set_id'});
+    $this_anchor_align->anchor_id($row_hashref->{'anchor_id'});
+    $this_anchor_align->dnafrag_id($row_hashref->{'dnafrag_id'});
+    $this_anchor_align->dnafrag_start($row_hashref->{'dnafrag_start'});
+    $this_anchor_align->dnafrag_end($row_hashref->{'dnafrag_end'});
+    $this_anchor_align->dnafrag_strand($row_hashref->{'dnafrag_strand'});
+    $this_anchor_align->score($row_hashref->{'score'});
+    $this_anchor_align->num_of_organisms($row_hashref->{'num_of_organisms'});
+    $this_anchor_align->num_of_sequences($row_hashref->{'num_of_sequences'});
+    $this_anchor_align->anchor_status($row_hashref->{'anchor_status'});
 
-    push(@$anchor_aligns, $this_anchor_align);
+    push @anchor_aligns, $this_anchor_align;
   }
   $sth->finish;
 
-  return $anchor_aligns;
+  return @anchor_aligns;
 }
 
 
