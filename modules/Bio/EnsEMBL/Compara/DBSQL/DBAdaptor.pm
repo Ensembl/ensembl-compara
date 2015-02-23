@@ -156,7 +156,6 @@ sub get_available_adaptors {
         'DnaAlignFeature'       => 'Bio::EnsEMBL::Compara::DBSQL::DnaAlignFeatureAdaptor',
         'GenomicAlignBlock'     => 'Bio::EnsEMBL::Compara::DBSQL::GenomicAlignBlockAdaptor',
         'GenomicAlign'          => 'Bio::EnsEMBL::Compara::DBSQL::GenomicAlignAdaptor',
-        'GenomicAlignGroup'     => 'Bio::EnsEMBL::Compara::DBSQL::GenomicAlignGroupAdaptor',
         'GenomicAlignTree'      => 'Bio::EnsEMBL::Compara::DBSQL::GenomicAlignTreeAdaptor',
         'ConservationScore'     => 'Bio::EnsEMBL::Compara::DBSQL::ConservationScoreAdaptor',
         'ConstrainedElement'    => 'Bio::EnsEMBL::Compara::DBSQL::ConstrainedElementAdaptor',
