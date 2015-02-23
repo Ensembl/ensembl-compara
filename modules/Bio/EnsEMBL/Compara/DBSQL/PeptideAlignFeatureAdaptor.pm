@@ -473,45 +473,40 @@ sub _columns {
 sub _objs_from_sth {
   my ($self, $sth) = @_;
 
-  my %column;
-  $sth->bind_columns( \( @column{ @{$sth->{NAME_lc} } } ));
-
   my @pafs = ();
 
-  while ($sth->fetch()) {
-    my $paf;
+  while( my $row_hashref = $sth->fetchrow_hashref()) {
 
-    $paf = Bio::EnsEMBL::Compara::PeptideAlignFeature->new();
+    my $paf = Bio::EnsEMBL::Compara::PeptideAlignFeature->new();
 
-    $paf->dbID($column{'peptide_align_feature_id'});
+    $paf->dbID($row_hashref->{'peptide_align_feature_id'});
     $paf->adaptor($self);
-    $paf->qstart($column{'qstart'});
-    $paf->qend($column{'qend'});
-    $paf->hstart($column{'hstart'});
-    $paf->hend($column{'hend'});
-    $paf->score($column{'score'});
-    $paf->evalue($column{'evalue'});
-    $paf->alignment_length($column{'align_length'});
-    $paf->identical_matches($column{'identical_matches'});
-    $paf->perc_ident($column{'perc_ident'});
-    $paf->positive_matches($column{'positive_matches'});
-    $paf->perc_pos($column{'perc_pos'});
-    $paf->hit_rank($column{'hit_rank'});
-    $paf->cigar_line($column{'cigar_line'});
-    $paf->rhit_dbID($column{'pafid2'});
+    $paf->qstart($row_hashref->{'qstart'});
+    $paf->qend($row_hashref->{'qend'});
+    $paf->hstart($row_hashref->{'hstart'});
+    $paf->hend($row_hashref->{'hend'});
+    $paf->score($row_hashref->{'score'});
+    $paf->evalue($row_hashref->{'evalue'});
+    $paf->alignment_length($row_hashref->{'align_length'});
+    $paf->identical_matches($row_hashref->{'identical_matches'});
+    $paf->perc_ident($row_hashref->{'perc_ident'});
+    $paf->positive_matches($row_hashref->{'positive_matches'});
+    $paf->perc_pos($row_hashref->{'perc_pos'});
+    $paf->hit_rank($row_hashref->{'hit_rank'});
+    $paf->cigar_line($row_hashref->{'cigar_line'});
+    $paf->rhit_dbID($row_hashref->{'pafid2'});
 
     my $memberDBA = $self->db->get_SeqMemberAdaptor;
-    if($column{'qmember_id'} and $memberDBA) {
-      $paf->query_member($memberDBA->fetch_by_dbID($column{'qmember_id'}));
+    if($row_hashref->{'qmember_id'} and $memberDBA) {
+      $paf->query_member($memberDBA->fetch_by_dbID($row_hashref->{'qmember_id'}));
     }
-    if($column{'hmember_id'} and $memberDBA) {
-      $paf->hit_member($memberDBA->fetch_by_dbID($column{'hmember_id'}));
+    if($row_hashref->{'hmember_id'} and $memberDBA) {
+      $paf->hit_member($memberDBA->fetch_by_dbID($row_hashref->{'hmember_id'}));
     }
   
     #$paf->display_short();
     
     push @pafs, $paf;
-
   }
   $sth->finish;
 

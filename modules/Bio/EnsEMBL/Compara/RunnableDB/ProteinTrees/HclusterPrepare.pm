@@ -148,8 +148,7 @@ sub fetch_distances {
        AND paf.qgenome_db_id=$genome_db_id
   };
   print +("$sql\n") if ($self->debug);
-  my $sth = $self->compara_dba->dbc->prepare($sql);
-  $sth->{mysql_use_result} = 1;
+  my $sth = $self->compara_dba->dbc->prepare($sql, { 'mysql_use_result' => 1 });
   $sth->execute();
   printf("%1.3f secs to execute\n", (time()-$starttime));
 
@@ -179,8 +178,7 @@ sub fetch_categories {
             "qmember_id ".
              "FROM $table_name WHERE qgenome_db_id=$genome_db_id;";
   print +("$sql\n") if ($self->debug);
-  my $sth = $self->compara_dba->dbc->prepare($sql);
-  $sth->{mysql_use_result} = 1;
+  my $sth = $self->compara_dba->dbc->prepare($sql, { 'mysql_use_result' => 1 });
   $sth->execute();
   printf("%1.3f secs to execute\n", (time()-$starttime));
 

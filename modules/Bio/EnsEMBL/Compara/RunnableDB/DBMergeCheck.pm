@@ -291,8 +291,7 @@ sub run {
                     $sql = "SELECT DISTINCT $key FROM $table";
                     my %all_values = ();
                     foreach my $db (@dbs) {
-                        my $sth = $dbconnections->{$db}->prepare($sql);
-                        $sth->{mysql_use_result} = 1;
+                        my $sth = $dbconnections->{$db}->prepare($sql, { 'mysql_use_result' => 1 });
                         $sth->execute;
                         my $value;
                         $sth->bind_columns(\$value);

@@ -212,8 +212,6 @@ sub _write_output {
   my $gaba = $self->compara_dba->get_GenomicAlignBlockAdaptor;
   my $gaa = $self->compara_dba->get_GenomicAlignAdaptor;
   
-  my $gaga = $self->compara_dba->get_GenomicAlignGroupAdaptor;
-  
   my $gata = $self->compara_dba->get_GenomicAlignTreeAdaptor;
 
   foreach my $genomic_align_tree (@{$self->param('runnable')->output}) {

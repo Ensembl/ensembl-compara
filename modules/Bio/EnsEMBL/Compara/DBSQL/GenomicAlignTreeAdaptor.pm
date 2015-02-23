@@ -1242,7 +1242,6 @@ sub _create_GenomicAlignGroup_object_from_rowhash {
 
   my $genomic_align_group = new Bio::EnsEMBL::Compara::GenomicAlignGroup;
   $genomic_align_group->dbID($rowhash->{node_id});
-  $genomic_align_group->adaptor($self->db->get_GenomicAlignGroupAdaptor);
 
   return $genomic_align_group;
 }

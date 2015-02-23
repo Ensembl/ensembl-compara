@@ -96,7 +96,7 @@ sub run {
     print $HANDLE "<orthoXML xmlns=\"http://orthoXML.org/2011/\" origin=\"Ensembl Compara\" version=\"0.3\" originVersion=\"$version\">\n";
 
     my $sql = 'SELECT seq_member.taxon_id, name, seq_member_id, seq_member.stable_id, assembly, genebuild,source_name FROM gene_tree_root JOIN gene_tree_node USING (root_id) JOIN seq_member USING (seq_member_id) JOIN genome_db USING (genome_db_id) WHERE clusterset_id = "default" GROUP BY taxon_id, seq_member_id';
-    my $sth = $self->compara_dba->dbc->prepare($sql, {mysql_use_result=>1});
+    my $sth = $self->compara_dba->dbc->prepare($sql, { 'mysql_use_result' => 1 });
     $sth->execute;
     my $last;
     while(my $rowhash = $sth->fetchrow_hashref) {
@@ -119,7 +119,7 @@ sub run {
     if ($self->param('strict_orthologies')) {
         $sql .= " AND is_tree_compliant = 1";
     }
-    $sth = $self->compara_dba->dbc->prepare($sql, {mysql_use_result=>1});
+    $sth = $self->compara_dba->dbc->prepare($sql, { 'mysql_use_result' => 1 });
 
     $sth->execute;
     my %seen;

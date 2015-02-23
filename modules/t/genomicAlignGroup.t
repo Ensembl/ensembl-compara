@@ -34,7 +34,6 @@ my $multi = Bio::EnsEMBL::Test::MultiTestDB->new( "multi" );
 my $compara_db_adaptor = $multi->get_DBAdaptor( "compara" );
 
 my $genomic_align_group;
-my $genomic_align_group_adaptor = $compara_db_adaptor->get_GenomicAlignGroupAdaptor;
 my $genomic_align_adaptor = $compara_db_adaptor->get_GenomicAlignAdaptor;
 
 my $dnafrag_id = 4671099; #cat GeneScaffold_4790 (probably should do this better)
@@ -98,12 +97,10 @@ subtest "Test Bio::EnsEMBL::Compara::GenomicAlignGroup::new(void) method", sub {
 subtest "Test Bio::EnsEMBL::Compara::GenomicAlignGroup::new(ALL) method", sub {
     my $genomic_align_group_id = 123;
     $genomic_align_group = new Bio::EnsEMBL::Compara::GenomicAlignGroup(
-                                                                        -adaptor => $genomic_align_group_adaptor,
                                                                         -dbID    => $genomic_align_group_id,
                                                                         -genomic_align_array => $genomic_align_array
                                                                        );
     isa_ok($genomic_align_group, "Bio::EnsEMBL::Compara::GenomicAlignGroup");
-    is($genomic_align_group->adaptor, $genomic_align_group_adaptor);
     is($genomic_align_group->dbID, $genomic_align_group_id);
     is(scalar(@{$genomic_align_group->genomic_align_array}), scalar(@{$genomic_align_array}));
     is_deeply($genomic_align_group->genomic_align_array, $genomic_align_array);
@@ -114,11 +111,9 @@ subtest "Test Bio::EnsEMBL::Compara::GenomicAlignGroup::new(ALL) method", sub {
 subtest "Test getter/setter Bio::EnsEMBL::Compara::GenomicAlignGroup methods", sub {
     my $genomic_align_group_id = 123;
     $genomic_align_group = new Bio::EnsEMBL::Compara::GenomicAlignGroup(
-                                                                        -adaptor => $genomic_align_group_adaptor,
                                                                         -dbID    => $genomic_align_group_id,
                                                                         -genomic_align_array => $genomic_align_array
                                                                        );
-    ok(test_getter_setter($genomic_align_group, "adaptor", $genomic_align_group_adaptor));
     ok(test_getter_setter($genomic_align_group, "dbID", $genomic_align_group_id));
 
     is_deeply($genomic_align_group->genomic_align_array, $genomic_align_array);
@@ -128,7 +123,6 @@ subtest "Test getter/setter Bio::EnsEMBL::Compara::GenomicAlignGroup methods", s
 subtest "Test getter/setter Bio::EnsEMBL::Compara::GenomicAlignGroup get_all_sorted_GenomicAligns", sub {
     my $genomic_align_group_id = 123;
     my $genomic_align_group = new Bio::EnsEMBL::Compara::GenomicAlignGroup(
-                                                                           -adaptor => $genomic_align_group_adaptor,
                                                                            -dbID    => $genomic_align_group_id,
                                                                            -genomic_align_array => $genomic_align_array
                                                                        );
@@ -139,7 +133,6 @@ subtest "Test getter/setter Bio::EnsEMBL::Compara::GenomicAlignGroup get_all_sor
 subtest "Test getter/setter Bio::EnsEMBL::Compara::GenomicAlignGroup cigar_line", sub {
     my $genomic_align_group_id = 123;
     my $genomic_align_group = new Bio::EnsEMBL::Compara::GenomicAlignGroup(
-                                                                           -adaptor => $genomic_align_group_adaptor,
                                                                            -dbID    => $genomic_align_group_id,
                                                                            -genomic_align_array => $genomic_align_array
                                                                        );
@@ -150,7 +143,6 @@ subtest "Test getter/setter Bio::EnsEMBL::Compara::GenomicAlignGroup cigar_line"
 subtest "Test getter/setter Bio::EnsEMBL::Compara::GenomicAlignGroup original_sequence", sub {
     my $genomic_align_group_id = 123;
     my $genomic_align_group = new Bio::EnsEMBL::Compara::GenomicAlignGroup(
-                                                                           -adaptor => $genomic_align_group_adaptor,
                                                                            -dbID    => $genomic_align_group_id,
                                                                            -genomic_align_array => $genomic_align_array
                                                                        );
