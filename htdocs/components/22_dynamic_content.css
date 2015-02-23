@@ -175,3 +175,8 @@ div.redirect-message-padding  { height: 40px; }
 div.redirect-message          { position: fixed; z-index: 999999999999; left: 0; top: 0; height: 40px; width: 100%; color: #fff; background-color: #000; }
 div.redirect-message p        { margin: 0; line-height: 40px; text-align: center; }
 div.redirect-message p a      { color: inherit; font-weight: bold; }
+
+/* cookie message */
+div.cookie-message          { position: fixed; z-index: 999999999999; left: 0; top: 0; height: 40px; width: 100%; color: #fff; background-color: #000; }
+div.cookie-message p        { margin: 0; line-height: 40px; text-align: center; }
+div.cookie-message p button { margin-left: 16px; }

@@ -144,7 +144,9 @@ Ensembl.LayoutManager.extend({
       'popstate.ensembl'  : $.proxy(this.popState, this)
     });
 
-    this.handleMirrorRedirect();
+    if (!this.showCookieMessage()) {
+      this.handleMirrorRedirect();
+    }
   },
   
   reloadPage: function (args, url) {
@@ -288,5 +290,22 @@ Ensembl.LayoutManager.extend({
         });
       }
     }
+  },
+
+  showCookieMessage: function() {
+    var manager = this;
+    var cookiesAccepted = Ensembl.cookie.get('cookies_ok');
+
+    if (!cookiesAccepted) {
+      $('<div class="cookie-message hidden"><p>We use cookies to enhance the usability of our website. If you continue, we\'ll assume that you are happy to receive all cookies.<button>OK</button></p></div>')
+        .prependTo(document.body).slideDown().find('button').on('click', function (e) {
+          Ensembl.cookie.set('cookies_ok', 'yes');
+          $(this).parents('div').first().slideUp();
+          manager.handleMirrorRedirect();
+      });
+      return true;
+    }
+
+    return false;
   }
 });
