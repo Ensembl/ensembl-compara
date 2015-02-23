@@ -47,16 +47,18 @@
       $.each(raw_input,function(a,b) { input.push([a,b]); });
       d = $.Deferred().resolve(input);
       var output = [];
-      for(var i=0;i<input.length;i+=group) {
-        d = beat(d.then(function(j) {
-          for(j=0;j<group && i+j<input.length;j++) {
-            var c = fn(input[i+j][0],input[i+j][1]);
-            if(c !== undefined) {
-              output.push(c);
+      for(var ii=0;ii<input.length;ii+=group) {
+        (function(i) {
+          d = beat(d.then(function(j) {
+            for(j=0;j<group && i+j<input.length;j++) {
+              var c = fn(input[i+j][0],input[i+j][1]);
+              if(c !== undefined) {
+                output.push(c);
+              }
             }
-          }
-          return $.Deferred().resolve(output);
-        }));
+            return $.Deferred().resolve(output);
+          }));
+        })(ii);
       }
       return d;
     });
