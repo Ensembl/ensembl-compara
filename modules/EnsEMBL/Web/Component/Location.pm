@@ -143,15 +143,45 @@ sub create_user_pointers {
 }
 
 sub configure_UserData_key {
-  my ($self, $image_config) = @_;
+  my ($self, $image_config, $features) = @_;
   my $header       = 'Key to user tracks';
   my $column_order = [qw(colour track)];
-  my @rows;
-  
+  my (@rows, %labels);
+
   foreach (grep $_->get('display') ne 'off', $image_config->get_node('user_data')->nodes) {
-    my $colour = $_->get('colour');
-    my $label  = $_->get('caption');
-    
+    my $id;
+
+    ## Check for individual feature colours
+    while (my($key, $data) = each(%{$_->{'user_data'}||{}})) {
+      next unless $key eq $_->id;
+      $id = $key;
+      last;
+    }
+    if ($id) {
+      my $data = $features->{$id};
+      while (my($name, $track) = each (%$data)) {
+        if ($track->{'config'} && $track->{'config'}{'itemRgb'} =~ /on/i) {
+          foreach my $f (@{$track->{'features'}}) {
+            my $colour = join(',', @{$f->{'item_colour'}});
+            if ($labels{$colour}) {
+              $labels{$colour} .= ', '.$f->{'label'};
+            }
+            else {
+              $labels{$colour} = $f->{'label'};
+            }
+          }
+        }
+      }
+    }
+
+    ## Fall back to main config settings
+    unless (scalar keys %labels) {
+      $labels{$_->get('colour')} = $_->get('caption');
+    }
+  }
+
+  foreach my $colour (sort {$labels{$a} cmp $labels{$b}} keys %labels) {
+    my $label = $labels{$colour};
     if ($colour =~ /,/) {
       $colour = '#' . EnsEMBL::Draw::Utils::ColourMap::hex_by_rgb(undef, [ split ',', $colour ]); ## Convert RGB colours to hex, because rgb attributes getting stripped out of HTML
     } elsif ($colour =~ /^[0-9a-f]{6}$/i) { 
@@ -162,7 +192,7 @@ sub configure_UserData_key {
       
     push @rows, {
       colour => { value => $swatch },
-      track  => { value => $label  },
+      track  => { value => $label },
     };
   }
   

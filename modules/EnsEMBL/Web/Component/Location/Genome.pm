@@ -305,7 +305,7 @@ sub _render_features {
   ## User tables
   if (keys %$user_features) {
     ## Colour key
-    my $table_info  = $self->configure_UserData_key($image_config);
+    my $table_info  = $self->configure_UserData_key($image_config, $user_features);
     my $column_info = $default_column_info;
     my $columns     = [];
     my $col;
