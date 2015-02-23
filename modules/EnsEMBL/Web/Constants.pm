@@ -651,6 +651,7 @@ sub ERROR_MESSAGES {
   return (
     404 => [
       'Page not found' ,
+      #'Much like this creature, the page you requested could not be found.',
       'Sorry, the page you requested was not found on this server.',
     ], 
     400 => [
@@ -663,7 +664,7 @@ sub ERROR_MESSAGES {
     ], 
     401 => [
       'Not authorised',
-      'You were not authorised to view that page, an username and password is required',
+      'You were not authorised to view that page, a username and password is required',
     ]
   );
 }
