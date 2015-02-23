@@ -155,6 +155,8 @@ div.config_wrapper .config_menu .tiling_feature          { background-image: url
 div.config_wrapper .config_menu .signal_map,
 div.config_wrapper .config_menu .wiggle,
 div.config_wrapper .config_menu .tiling                  { background-image: url(/i/render/wiggle.gif); }
+div.config_wrapper .config_menu .as_alignment_label      { background-image: url(/i/render/as_alignment_label.gif); }
+div.config_wrapper .config_menu .as_alignment_nolabel    { background-image: url(/i/render/as_alignment_nolabel.gif); }
 
 /* image config notes */
 
