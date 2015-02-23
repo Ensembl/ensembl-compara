@@ -90,8 +90,9 @@ foreach my $dataset (@ARGV ? @ARGV : @$SiteDefs::ENSEMBL_DATASETS) {
     $sth = $adaptor->prepare(
       'SELECT ad.analysis_id, ad.web_data 
         FROM analysis_description ad, analysis a 
-        WHERE a.analysis_id = ad.analysis_id AND 
-              a.logic_name != "estgene"      AND 
+        WHERE a.analysis_id = ad.analysis_id      AND 
+              a.logic_name != "estgene"           AND 
+              a.logic_name NOT LIKE "%refseq%"    AND 
               ad.displayable = 1'
     );
     
