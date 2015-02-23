@@ -38,7 +38,7 @@ sub param_defaults {
     my $self = shift;
     return {
         %{ $self->SUPER::param_defaults },
-        'cmd'               => '#java# -jar #prottest_jar# -Xmx#prottest_memory#M -threads #n_cores# -i #alignment_file# -o #output_file# -all-distributions -F -all -AIC -AICC -BIC -DT -s BEST -t1',
+        'cmd'               => '#java# -Xmx#prottest_memory#M -jar #prottest_jar# -threads #n_cores# -i #alignment_file# -o #output_file# -all-distributions -F -all -AIC -AICC -BIC -DT -s BEST -t1',
         'java'              => 'java',  # Can be redefined to /usr/bin/java for instance
         'runtime_tree_tag'  => 'prottest_runtime',
         'remove_columns'    => 1,
