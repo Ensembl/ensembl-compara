@@ -1612,7 +1612,20 @@ sub core_pipeline_analyses {
             -hive_capacity  => $self->o('alignment_filtering_capacity'),
             -rc_name    	=> '4Gb_job',
             -batch_size     => 5,
-            -flow_into      => [ 'prottest' ],
+            -flow_into      => [ 'small_trees_go_to_treebest' ],
+        },
+
+# ---------------------------------------------[small trees decision]-------------------------------------------------------------
+
+        {   -logic_name => 'small_trees_go_to_treebest',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::GeneTreeConditionalDataFlow',
+            -parameters => {
+                'condition'             => '#tree_gene_count# < 4',
+            },
+            -flow_into  => {
+                2  => [ 'treebest_small_families' ],
+                3  => [ 'prottest' ],
+            },
         },
 
 # ---------------------------------------------[model test]-------------------------------------------------------------
@@ -1625,8 +1638,9 @@ sub core_pipeline_analyses {
                 'escape_branch'         => -1,
                 'n_cores'               => 8,
             },
-            -hive_capacity        => $self->o('prottest_capacity'),
-            -rc_name    => '16Gb_16c_job',
+            -hive_capacity				=> $self->o('prottest_capacity'),
+            -rc_name    				=> '16Gb_16c_job',
+            -max_retry_count			=> 0,
             -flow_into  => {
                 -1 => [ 'prottest_himem' ],
                 1 => [ 'raxml_decision' ],
@@ -1641,8 +1655,9 @@ sub core_pipeline_analyses {
                 'escape_branch'         => -1,      # RAxML will use a default model, anyway
                 'n_cores'               => 8,
             },
-            -hive_capacity        => $self->o('prottest_capacity'),
-            -rc_name    => '64Gb_16c_job',
+            -hive_capacity				=> $self->o('prottest_capacity'),
+            -rc_name					=> '64Gb_16c_job',
+            -max_retry_count 			=> 0,
             -flow_into  => [ 'raxml_decision' ],
         },
 
