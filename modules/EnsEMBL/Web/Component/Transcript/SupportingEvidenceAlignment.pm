@@ -107,8 +107,14 @@ sub get_data {
     my $txt = "$hit_url ($hit_db_name)";
     $txt   .= ", length = $ext_seq_length $label" if $ext_seq_length;
     $data->{'external_record'}{'content'} = $txt;
-  } else {
-    $data->{'external_record'}{'content'} => "Unable to fetch sequence for $hit_id from the $hit_db_name database at this time.";
+  }
+  else {
+    if ($hit_db_name) {
+      $data->{'external_record'}{'content'} = "Unable to fetch sequence for $hit_id ($hit_db_name) at this time.";
+    }
+    else {
+      $data->{'external_record'}{'content'} = "Unable to fetch sequence for $hit_id at this time.";
+    }
   }
 
   if ($seq_type eq 'PEP' && $translation) {
@@ -205,6 +211,7 @@ sub get_data {
   else {
     $data->{'t_alignment'}{'content'} = "Unable to show alignment";
   }
+
   return $data;
 }
 
