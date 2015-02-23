@@ -87,13 +87,13 @@ sub new {
       other       => 1,
     },
     alignment_renderers => [
-      'off',         'Off',
-      'normal',      'Normal',
-      'labels',      'Labels',
-      'half_height', 'Half height',
-      'stack',       'Stacked',
-      'unlimited',   'Stacked unlimited',
-      'ungrouped',   'Ungrouped',
+      'off',                  'Off',
+      'as_alignment_nolabel', 'Normal',
+      'as_alignment_label',   'Labels',
+      'half_height',          'Half height',
+      'stack',                'Stacked',
+      'unlimited',            'Stacked unlimited',
+      'ungrouped',            'Ungrouped',
     ],
   };
   
@@ -1279,7 +1279,13 @@ sub _user_track_settings {
   if ($style =~ /^(wiggle|WIG)$/) {
     $strand         = 'r';
     @user_renderers = ('off', 'Off', 'tiling', 'Wiggle plot');
-  } else {
+  }
+  elsif (uc $format =~ /BED/) {
+    $strand = 'b';
+    @user_renderers = @{$self->{'alignment_renderers'}};
+    splice @user_renderers, 6, 0, 'as_transcript_nolabel', 'Structure', 'as_transcript_label', 'Structure with labels'; 
+  } 
+  else {
     $strand         = (uc($format) eq 'VEP_INPUT' || uc($format) eq 'VCF') ? 'f' : 'b';
     @user_renderers = (@{$self->{'alignment_renderers'}}, 'difference', 'Differences');
   }
