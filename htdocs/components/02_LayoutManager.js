@@ -297,7 +297,11 @@ Ensembl.LayoutManager.extend({
     var cookiesAccepted = Ensembl.cookie.get('cookies_ok');
 
     if (!cookiesAccepted) {
-      $('<div class="cookie-message hidden"><p>We use cookies to enhance the usability of our website. If you continue, we\'ll assume that you are happy to receive all cookies.<button>OK</button></p></div>')
+      $(['<div class="cookie-message hidden">',
+        '<p>We use cookies to enhance the usability of our website. If you continue, we\'ll assume that you are happy to receive all cookies.<button>OK</button></p>',
+        '<p>Further details about our privacy and cookie policy can be found <a href="/info/about/legal/privacy.html">here</a></p>',
+        '</div>'
+      ].join(''))
         .prependTo(document.body).slideDown().find('button').on('click', function (e) {
           Ensembl.cookie.set('cookies_ok', 'yes');
           $(this).parents('div').first().slideUp();
