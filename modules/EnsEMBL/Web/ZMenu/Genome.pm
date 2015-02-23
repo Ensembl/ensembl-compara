@@ -36,13 +36,13 @@ sub content {
 
   my $features      = $feat_adap->can('fetch_all_by_hit_name')
     ? $feat_adap->fetch_all_by_hit_name($id)
-    : $feat_adap->can('fetch_all_by_probeset_name')
-      ? $feat_adap->fetch_all_by_probeset_name($id)
-      : []
-  ;
+      : $feat_adap->can('fetch_all_by_probeset_name')
+        ? $feat_adap->fetch_all_by_probeset_name($id)
+          : []
+            ;
 
   my $external_db_id  = $features->[0] && $features->[0]->can('external_db_id') ? $features->[0]->external_db_id : '';
-  my $extdbs          = $external_db_id ? $hub->species_defs->databases->{'DATABASE_CORE'}{'tables'}{'external_db'}{'entries'} : {};
+                                        my $extdbs          = $external_db_id ? $hub->species_defs->databases->{'DATABASE_CORE'}{'tables'}{'external_db'}{'entries'} : {};
   my $hit_db_name     = $extdbs->{$external_db_id}->{'db_name'} || 'External Feature';
 
   my $logic_name      = $features->[0] ? $features->[0]->analysis->logic_name : undef;
@@ -54,6 +54,10 @@ sub content {
   my ($desc)          = $hit_db_name =~ /CCDS/ ? () : split("\n", $hub->get_ext_seq($hit_db_name, {'id' => $id, 'translation' => 1})->{'sequence'} || ''); # don't show EMBL desc for CCDS
 
   $self->add_entry({ label => $desc }) if $desc && $desc =~ s/^>//;
+
+  if ($hit_db_name =~ /^Uniprot/){
+    $id =~ s/(\w*)\.\d+/$1/;
+  }
 
   $self->add_entry({
     'label' => $hit_db_name eq 'TRACE' ? 'View Trace archive' : $id,

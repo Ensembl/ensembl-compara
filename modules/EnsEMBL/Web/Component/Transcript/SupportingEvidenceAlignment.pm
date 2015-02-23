@@ -99,6 +99,10 @@ sub get_data {
   $data->{'external_record'} = {'label' => 'External record'};
 
   if ($ext_seq) {
+    #Uniprot can't deal with versions in accessions
+    if ($hit_db_name =~ /^Uniprot/){
+      $hit_id =~ s/(\w*)\.\d+/$1/;
+    }
     my $hit_url = $hub->get_ExtURL_link($hit_id, $hit_db_name, $hit_id);
     my $txt = "$hit_url ($hit_db_name)";
     $txt   .= ", length = $ext_seq_length $label" if $ext_seq_length;
