@@ -196,7 +196,9 @@ sub get_sequence_data {
     for my $exon (@exons) {
       my $exon_id = $exon->stable_id;
       my ($s, $e) = map $_ - $start, $exon->start, $exon->end;
-      
+
+      my $utr_type = $exon->coding_region_start($transcript) ? 'eu' : 'exon0'; # if coding_region_start returns unded, it a non-coding exon
+
       if ($strand == -1) {
         $_ = $length - $_ - 1, for $s, $e;
         ($s, $e) = ($e, $s);
@@ -224,14 +226,14 @@ sub get_sequence_data {
       }
       
       if ($exon->phase == -1) {
-        $type = 'eu';
+        $type = $utr_type;
       } elsif ($exon->end_phase == -1) {
         $type = 'exon1';
       }
       
       for ($s..$e) {
         push @{$mk->{'exons'}{$_}{'type'}}, $type;
-        $type = $type eq 'exon1' ? 'eu' : 'exon1' if $_ == $crs || $_ == $cre;
+        $type = $type eq 'exon1' ? $utr_type : 'exon1' if $_ == $crs || $_ == $cre;
         
         $mk->{'exons'}{$_}{'id'} .= ($mk->{'exons'}{$_}{'id'} ? "\n" : '') . $exon_id unless $mk->{'exons'}{$_}{'id'} =~ /$exon_id/;
       }
@@ -326,6 +328,7 @@ sub get_key {
       exon1           => { class => 'e1',     text => 'Translated sequence'  },
       eu              => { class => 'eu',     text => 'UTR'                  },
       intron          => { class => 'ei',     text => 'Intron'               },
+      exon0           => { class => 'e0',     text => 'Non-coding exon'      },
       gene            => { class => 'eg',     text => 'Gene sequence'        },
     }
   }, $_[2]);
