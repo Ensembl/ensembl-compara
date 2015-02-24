@@ -58,7 +58,8 @@ sub render_normal {
       my $t_url = $self->_url({
         type   => 'Transcript',
         action => 'Evidence',
-        t      => $tsi
+        t      => $tsi,
+        exon   => $obj->[2]->stable_id
       });
 
       my $col1 = $self->my_colour('noncoding_join', 'join');
