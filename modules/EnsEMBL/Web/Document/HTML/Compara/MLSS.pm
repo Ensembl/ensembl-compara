@@ -218,7 +218,7 @@ sub-chain is chosen in each region on the reference species.</p>',
       my $percent  = round($coverage/$total * 100);
       my $invperc  = 100 - $percent;
       $html .= qq{
-          <input class="graph_data" type="hidden" value="[[$invperc,'Uncovered'],[$percent, 'Covered']]" />
+          <input class="graph_data" type="hidden" value="[[$invperc||.001,'Uncovered'],[$percent||.001, 'Covered']]" />
       };
     }
     $i++;
@@ -261,7 +261,7 @@ sub-chain is chosen in each region on the reference species.</p>',
       my $uncov_pc  = 100 - ($match_pc + $mis_pc + $ins_pc); 
 
       $html .= qq{
-          <input class="graph_data" type="hidden" value="[[$uncov_pc,'Uncovered'],[$match_pc, 'Matches'],[$mis_pc,'Mismatches'],[$ins_pc,'Insertions']]" />
+          <input class="graph_data" type="hidden" value="[[$uncov_pc||.001,'Uncovered'],[$match_pc||.001, 'Matches'],[$mis_pc||.001,'Mismatches'],[$ins_pc||.001,'Insertions']]" />
       };
     }
     $i++;
