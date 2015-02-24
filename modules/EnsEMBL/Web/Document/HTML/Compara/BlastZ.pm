@@ -38,7 +38,7 @@ sub render {
   ## Output data
   foreach my $sp (@$species_order) {
     next unless $sp && $data->{$sp};
-    $html .= sprintf '<h4>%s</h4><ul>', $info->{$sp}{'long_name'};
+    $html .= sprintf('<h4>%s (%s)</h4><ul>', $info->{$sp}{'common_name'}, $info->{$sp}{'long_name'});
 
     foreach my $other (@$species_order) {
       my $values = $data->{$sp}{$other};
