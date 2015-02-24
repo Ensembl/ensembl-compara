@@ -165,11 +165,11 @@ sub mlss_data {
           # Alignment between 2+ species
           foreach my $nonref_db (@non_ref_genome_dbs) {
             $species->{ucfirst($nonref_db->name)}++;
-            $data->{$ref_name}{ucfirst($nonref_db->name)} = [$method, $mlss->dbID, $mlss->has_tag('ref_mis_matches')];
+            $data->{$ref_name}{ucfirst($nonref_db->name)} = [$method, $mlss->dbID, $mlss->has_tag('ensembl_release')];
           }
         } else {
             # Self-alignment. No need to increment $species->{$ref_name} as it has been done earlier
-            $data->{$ref_name}{$ref_name} = [$method, $mlss->dbID, $mlss->has_tag('ref_mis_matches')];
+            $data->{$ref_name}{$ref_name} = [$method, $mlss->dbID, $mlss->has_tag('ensembl_release')];
         }
       }
     }
@@ -281,7 +281,7 @@ sub draw_stepped_table {
       my $content = '-';
 
       if ($mlss_id) {
-        if (($method eq 'SYNTENY') or not $with_extra_info) {
+        if (not $with_extra_info) {
           $content = '<b>YES</b>';
         }
         else {
