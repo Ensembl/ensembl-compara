@@ -1886,7 +1886,7 @@ sub _merge {
     next if exists $sub_tree->{'web'}{$sub_type}{'do_not_display'};
     
     my $key = $sub_tree->{'web'}{'key'} || $analysis;
-    
+
     foreach (grep $_ ne 'desc', keys %{$sub_tree->{'web'} || {}}) {
       if ($_ eq 'default') {
         $data->{$key}{'display'} ||= ref $sub_tree->{'web'}{$_} eq 'HASH' ? $sub_tree->{'web'}{$_}{$config_name} : $sub_tree->{'web'}{$_};
@@ -2055,7 +2055,7 @@ sub add_das_tracks {
 sub add_dna_align_features {
   my ($self, $key, $hashref) = @_;
   
-  return unless $self->get_node('dna_align_cdna');
+  return unless $self->get_node('dna_align_cdna') || $key eq 'rnaseq'; 
   
   my ($keys, $data) = $self->_merge($hashref->{'dna_align_feature'}, 'dna_align_feature');
   
