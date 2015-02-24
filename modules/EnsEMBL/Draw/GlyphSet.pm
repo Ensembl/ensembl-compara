@@ -113,7 +113,7 @@ sub get_colour         { my $self = shift; return $self->my_colour($self->colour
 sub _url               { my $self = shift; return $self->{'config'}->hub->url('ZMenu', { %{$_[0]}, config => $self->{'config'}{'type'}, track => $self->type }); }
 
 sub image_width        { return $_[0]->{'config'}->get_parameter('panel_width') || $_[0]->{'config'}->image_width;                                               }
-sub timer_push         { return shift->{'config'}->species_defs->timer->push(shift, shift || 3, shift || 'draw');                                                }
+sub timer_push         { return shift->{'config'}->species_defs->timer->CORE::push(shift, shift || 3, shift || 'draw');                                                }
 sub dbadaptor          { shift; return Bio::EnsEMBL::Registry->get_DBAdaptor(@_);                                                                                }
 sub x {
   my ($self) = @_;
@@ -352,12 +352,12 @@ sub _render_text {
     my @ex;
     
     for (0..scalar @{$extra->{'headers'}}-1) {
-      push @ex, "$extra->{'headers'}->[$_]=$extra->{'values'}->[$_]" if $extra->{'values'}->[$_];
+      CORE::push @ex, "$extra->{'headers'}->[$_]=$extra->{'values'}->[$_]" if $extra->{'values'}->[$_];
     }
     
-    push @results, join '; ', @ex;
+    CORE::push @results, join '; ', @ex;
   } else {
-    push @results, @{$extra->{'values'}};
+    CORE::push @results, @{$extra->{'values'}};
   }
   
   return $header . join ("\t", @results) . "\r\n";
@@ -439,7 +439,7 @@ sub init_label {
     
     if (scalar @renderers > 4) {
       while (my ($val, $text) = splice @renderers, 0, 2) {
-        push @r, { url => "$url;$track=$val", val => $val, text => $text, current => $val eq $self->{'display'} };
+        CORE::push @r, { url => "$url;$track=$val", val => $val, text => $text, current => $val eq $self->{'display'} };
       }
     }
     
@@ -523,7 +523,7 @@ sub _split_label {
       }
       my @res = $self->get_text_width($width, $word, '', ellipsis => 1, font => $font, ptsize => $ptsize);
       $line_so_far = $res[0];
-      push @split,[$line_so_far,$res[2]];
+      CORE::push @split,[$line_so_far,$res[2]];
     } else {
       $line_so_far = $replacement_line;
       $split[-1][0] = $line_so_far;
@@ -963,7 +963,7 @@ sub draw_cigar_feature {
 #      next if $e < 1 || $s > $length || $params->{'scalex'} < 1 ;  # Skip if all outside box
       next if $e < 1 || $s > $length;  # Skip if all outside box
       
-      push @delete, $e;
+      CORE::push @delete, $e;
     }
   }
 
