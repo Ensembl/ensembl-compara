@@ -142,15 +142,12 @@ sub-chain is chosen in each region on the reference species.</p>',
 
   ## CHUNKING TABLE
   if ($ref_dna_collection_config->{'chunk_size'}) {
-    $html .= qq{
-      <h2>Chunking parameters</h2>
-      <table style="width:80%">
-        <tr>
-          <th style="width:20%;padding:0 1em"></th>
-          <th style="width:40%;padding:0 1em">$ref_common</th>
-          <th style="width:40%;padding:0 1em">$nonref_common</th>
-        </tr>
-    };
+    my @rows;
+    my @columns = (
+      { key => 'param',        title => 'Parameter'    },
+      { key => 'value_ref',    title => $ref_common    },
+      { key => 'value_nonref', title => $nonref_common },
+    );
 
     my @params = qw(chunk_size overlap group_set_size masking_options);
 
@@ -167,16 +164,11 @@ sub-chain is chosen in each region on the reference species.</p>',
         $value_2 = $self->thousandify($non_ref_dna_collection_config->{$param}) || 0;
       }
       
-      $html .= qq{
-        <tr>
-          <th style="padding:1em">$header</th>
-          <td style="padding:1em">$value_1</td>
-          <td style="padding:1em">$value_2</td>
-        </tr>
-      };
+      push @rows, { param => $header, value_ref => $value_1, value_nonref => $value_2 };
     } 
 
-    $html .= '</table>';
+    $html .= '<h2>Chunking parameters</h2>';
+    $html .= EnsEMBL::Web::Document::Table->new(\@columns, \@rows)->render;
   }
 
   my $blocks = $self->thousandify($alignment_results->{'num_blocks'});
