@@ -240,7 +240,12 @@ sub get_sequence_data {
     if ($config->{'exons_only'}) {
       $seq[$_]{'letter'} = '-' for grep !$mk->{'exons'}{$_}, 0..$#seq;
     }
-    
+
+    # finally mark anything left as introns
+    for (0..$#seq) {
+      $mk->{'exons'}{$_}{'type'} ||= ['intron'];
+    }
+
     $self->set_variations($config, $slice, $mk, $transcript, \@seq) if $config->{'snp_display'};
     
     push @sequence, \@seq;
@@ -320,9 +325,8 @@ sub get_key {
     'exons/Introns' => {
       exon1           => { class => 'e1',     text => 'Translated sequence'  },
       eu              => { class => 'eu',     text => 'UTR'                  },
-      intron          => { class => 'intron', text => 'Intron'               },
+      intron          => { class => 'ei',     text => 'Intron'               },
       gene            => { class => 'eg',     text => 'Gene sequence'        },
-
     }
   }, $_[2]);
 }

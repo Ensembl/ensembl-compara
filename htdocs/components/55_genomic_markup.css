@@ -33,6 +33,7 @@ span.eu { color: [[SEQ_EXONUTR]] }
 span.ef { color: [[SEQ_EXONFLANK]] }
 span.eo { background-color: [[SEQ_EXONOTHER]] }
 span.eg { color: [[SEQ_EXONGENE]]; font-weight: bold }
+span.ei { color: [[SEQ_INTRON]]; }
 
 /* Codon colours */
 span.c0 { background-color: [[SEQ_CODONC0]] }
