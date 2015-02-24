@@ -325,10 +325,10 @@ sub-chain is chosen in each region on the reference species.</p>',
         </td>
       </tr>
     </table>',
-    $ref_sp, 
+    $ref_common,
     $graph_style, $key->{'ref'}{'genome'}, 
     $graph_style, $key->{'ref'}{'exon'}, 
-    $nonref_sp, 
+    $nonref_common,
     $graph_style, $key->{'non_ref'}{'genome'}, 
     $graph_style, $key->{'non_ref'}{'exon'}, 
   );
