@@ -37,7 +37,7 @@ sub content {
     label    => $stable_id,
     link     => $self->hub->get_ExtURL_link($stable_id, 'CCDS', $stable_id),
     abs_url  => 1,
-    position => $self->exon_count + 1,
+    position => 1,
   });
   
   $self->delete_entry_by_type($_) for ('Transcript', 'Protein', 'Gene type', 'Gene');

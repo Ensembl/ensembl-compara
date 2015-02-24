@@ -40,7 +40,7 @@ sub content {
     label    => $gene_id,
     link     => $hub->get_ExtURL_link($gene_id, 'REFSEQ_GENEIMP', $gene_id),
     abs_url  => 1,
-    position => $self->exon_count + 1,
+    position => 1,
   });
 
   my $biotype = ucfirst lc $gene->biotype;
@@ -62,7 +62,7 @@ sub content {
       label    => $translation_id,
       link     => $hub->get_ExtURL_link($translation_id, 'REFSEQ_PROTIMP', $translation_id),
       abs_url  => 1,
-      position => $self->exon_count + 2
+      position => 2
     });
   }
 

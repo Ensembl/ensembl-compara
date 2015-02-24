@@ -24,10 +24,6 @@ use Bio::EnsEMBL::SubSlicedFeature;
 
 use base qw(EnsEMBL::Web::ZMenu);
 
-sub exon_count {
-  return shift->{'_exon_count'};
-}
-
 sub content {
   my $self        = shift;
   my $hub         = $self->hub;
