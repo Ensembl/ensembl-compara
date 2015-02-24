@@ -113,7 +113,7 @@ sub get_colour         { my $self = shift; return $self->my_colour($self->colour
 sub _url               { my $self = shift; return $self->{'config'}->hub->url('ZMenu', { %{$_[0]}, config => $self->{'config'}{'type'}, track => $self->type }); }
 
 sub image_width        { return $_[0]->{'config'}->get_parameter('panel_width') || $_[0]->{'config'}->image_width;                                               }
-sub timer_push         { return shift->{'config'}->species_defs->timer->CORE::push(shift, shift || 3, shift || 'draw');                                                }
+sub timer_push         { return shift->{'config'}->species_defs->timer->push(shift, shift || 3, shift || 'draw');                                                }
 sub dbadaptor          { shift; return Bio::EnsEMBL::Registry->get_DBAdaptor(@_);                                                                                }
 sub x {
   my ($self) = @_;
