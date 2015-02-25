@@ -60,7 +60,13 @@ sub content {
         $id = (split(/\(/,$id))[0];
         $html .= $self->toggleable_table($title, $id, $table, 1);
       }
-      $html .= sprintf('<p><a href="%s">More information about these populations &rarr;</a></p>', $pop_url) if $pop_url;
+
+      if ($pop_url) {
+        $title =~ /^(.+)\s*\(\d+\)/;
+        my $project_name = ($1) ? $1 : $title;
+           $project_name = ($project_name =~ /project/i) ? "<b>$project_name</b>" : ' ';
+        $html .= sprintf('<div style="clear:both"></div><p><a href="%s" rel="external">More information about the %s populations &rarr;</a></p>', $pop_url, $project_name);
+      }
       $main_tables_not_empty = scalar(@{$table->{'rows'}}) if ($main_tables_not_empty == 0);
     }
   }
@@ -88,16 +94,18 @@ sub format_frequencies {
   foreach my $pop_id (keys %$freq_data) {
 
     if ($pop_id eq 'no_pop') {
-	    ### variation observation without population or frequency data
+      ### variation observation without population or frequency data
       $no_pop_data = delete $freq_data->{$pop_id};
       next;
     }
 
     ### format population name      
     my $name = $freq_data->{$pop_id}{'pop_info'}{'Name'};
+    # Display the last part of the population name in bold
     if ($name =~ /^.+\:.+$/) {
-      $freq_data->{$pop_id}{'pop_info'}{'Name'} =~ s/\:/\:<b>/;
-      $freq_data->{$pop_id}{'pop_info'}{'Name'} .= '</b>';
+      my @composed_name = split(':', $name);
+      $composed_name[$#composed_name] = '<b>'.$composed_name[$#composed_name].'</b>';
+      $freq_data->{$pop_id}{'pop_info'}{'Name'} = join(':',@composed_name);
     }
 
     ### loop through frequency data for this population putting it in the destination array for display purposes
@@ -169,6 +177,8 @@ sub format_table {
   my $is_somatic = $self->object->Obj->has_somatic_source;
   my $al_colours = $self->object->get_allele_genotype_colours;
 
+  my $sortable = ($table_header =~ /1000 genomes/i) ? 0 : 1;
+
   my %columns;
   my @header_row;
   my @rows;
@@ -185,7 +195,7 @@ sub format_table {
     $urls_seen{$url}++;
 
     ## Make the tree
-    if ($name =~ /ALL/) {
+    if ($name =~ /_ALL/) {
       $all = $pop_id;
       next;
     }
@@ -194,6 +204,7 @@ sub format_table {
     my ($super) = keys %{$hash||{}};
     if ($super) {
       $tree->{$super}{'children'}{$pop_id} = $name;
+      $tree->{$super}{'name'} = $freq_data->{$super}{'pop_info'}{'Name'} if (!$tree->{$super}{'name'});
       $has_super++;
     }
     else {
@@ -205,9 +216,10 @@ sub format_table {
   push @ids, $all if $all;
   my @super_order = sort {$tree->{$a}{'name'} cmp $tree->{$b}{'name'}} keys (%$tree);
   foreach my $super (@super_order) {
+    next if ($all && $super == $all); # Skip the 3 layers structure, which leads to duplicated rows
     push @ids, $super;
-    my $hash = $tree->{$super}{'children'} || {};
-    push @ids, sort {$hash->{$a} cmp $hash->{$b}} keys (%$hash);
+    my $children = $tree->{$super}{'children'} || {};
+    push @ids, sort {$children->{$a} cmp $children->{$b}} keys (%$children);
   }
 
   if (scalar(keys %urls_seen) < 2) {
@@ -217,20 +229,21 @@ sub format_table {
   ## Now build table rows
   foreach my $pop_id (@ids) {
     my $pop_info = $freq_data->{$pop_id}{'pop_info'};
-   
+
+    my ($row_class, $group_member);
+    if ($pop_info->{'Name'} =~ /_ALL/) {
+      $row_class = 'supergroup';
+    }
+    elsif ($tree->{$pop_id}{'children'}) {
+      $row_class = 'subgroup';
+    }
+    elsif (scalar keys %$tree) {
+      $group_member = 1;
+    }
+
     foreach my $ssid (keys %{$freq_data->{$pop_id}{'ssid'}}) {
       my $data = $freq_data->{$pop_id}{'ssid'}{$ssid};
       my %pop_row;
-      my ($row_class, $group_member);
-      if ($pop_info->{'Name'} =~ /ALL/) {
-        $row_class = 'supergroup';
-      } 
-      elsif ($tree->{$pop_id}{'children'}) {
-        $row_class = 'subgroup';
-      }
-      elsif (scalar keys %$tree) {
-        $group_member = 1;
-      }
       $pop_row{'options'}{'class'} = $row_class if $row_class;
      
       # SSID + Submitter
@@ -268,7 +281,7 @@ sub format_table {
       $pop_row{'Genotype count'}   = join ' , ', sort {(split /\(|\)/, $a)[1] cmp (split /\(|\)/, $b)[1]} values %{$pop_row{'Genotype count'}} if $pop_row{'Genotype count'};
 
       ## Only link on the population name if there's more than one URL for this table
-      my $pop_url                  = scalar(keys %urls_seen) > 1 ? sprintf('<a href="%s">%s</a>', $pop_urls{$pop_id}, $pop_info->{'Name'}) : $pop_info->{'Name'};
+      my $pop_url                  = scalar(keys %urls_seen) > 1 ? sprintf('<a href="%s" rel="external">%s</a>', $pop_urls{$pop_id}, $pop_info->{'Name'}) : $pop_info->{'Name'};
       ## Hacky indent, because overriding table CSS is a pain!
       $pop_row{'pop'}              = $group_member ? '&nbsp;&nbsp;'.$pop_url : $pop_url;
 
@@ -316,7 +329,7 @@ sub format_table {
       $al_gen =~ s/$al/$al_colours->{$al}/g;
     }
     my $coloured_col = "$type $al_gen";
-    push @header_row, { key => $col, align => 'left', label => $coloured_col, sort => 'numeric' };
+    push @header_row, { key => $col, align => 'left', label => $coloured_col, sort => ($sortable) ? 'numeric' : 'none' };
   }
   
   if (exists $columns{'ssid'}) {
@@ -324,9 +337,9 @@ sub format_table {
     unshift @header_row, { key => 'ssid',      align => 'left', label => 'ssID',      sort => 'string' };
   }
   
-  unshift @header_row, { key => 'Description',    align => 'left', label => 'Description',                           sort => 'none'   } if exists $columns{'Description'};
-  unshift @header_row, { key => 'pop',            align => 'left', label => ($is_somatic ? 'Sample' : 'Population'), sort => 'html'   };
-  push    @header_row, { key => 'Allele count',   align => 'left', label => 'Allele count',                          sort => 'none'   } if exists $columns{'Allele count'};
+  unshift @header_row, { key => 'Description',    align => 'left', label => 'Description',                           sort => 'none' } if exists $columns{'Description'};
+  unshift @header_row, { key => 'pop',            align => 'left', label => ($is_somatic ? 'Sample' : 'Population'), sort => ($sortable) ? 'html' : 'none'   };
+  push    @header_row, { key => 'Allele count',   align => 'left', label => 'Allele count',                          sort => 'none' } if exists $columns{'Allele count'};
   
 
   # Genotype frequency columns
@@ -337,12 +350,12 @@ sub format_table {
       $al_gen =~ s/$al/$al_colours->{$al}/g;
     }
     my $coloured_col = "$type $al_gen"; 
-    push @header_row, { key => $col, align => 'left', label => $coloured_col, sort => 'numeric' };
+    push @header_row, { key => $col, align => 'left', label => $coloured_col, sort => ($sortable) ? 'numeric' : 'none' };
   }
 
-  push    @header_row, { key => 'Genotype count', align => 'left', label => 'Genotype count',                        sort => 'none'   } if exists $columns{'Genotype count'};
-  push    @header_row, { key => 'detail',         align => 'left', label => 'Genotype detail',                       sort => 'none'   } if $self->object->counts->{'individuals'};
-  push    @header_row, { key => 'failed',         align => 'left', label => 'Comment', width => '25%',               sort => 'string' } if $columns{'failed'};
+  push    @header_row, { key => 'Genotype count', align => 'left', label => 'Genotype count',                        sort => 'none' } if exists $columns{'Genotype count'};
+  push    @header_row, { key => 'detail',         align => 'left', label => 'Genotype detail',                       sort => 'none' } if $self->object->counts->{'individuals'};
+  push    @header_row, { key => 'failed',         align => 'left', label => 'Comment', width => '25%',               sort => ($sortable) ? 'string' : 'none' } if $columns{'failed'};
 
   my $table = $self->new_table([], [], { data_table => 1 });
   $table->add_columns(@header_row);
@@ -397,6 +410,9 @@ sub pop_url {
 
   if($pop_name =~ /^1000GENOMES/) {
     $pop_url = $self->hub->get_ExtURL('1KG_POP', $pop_name); 
+  }
+  elsif ($pop_name =~ /^NextGen/i) {
+    $pop_url = $self->hub->get_ExtURL('NEXTGEN_POP');
   }
   else {
     $pop_url = $pop_dbSNP ? $self->hub->get_ExtURL('DBSNPPOP', $pop_dbSNP->[0]) : undef; 
