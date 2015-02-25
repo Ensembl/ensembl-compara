@@ -134,6 +134,8 @@ sub create_user_pointers {
           features    => $track->{'features'},          
           color       => $colour,
           style       => $style,
+          zmenu       => 'VUserData',
+          track       => $key,
         });
       }
     }
