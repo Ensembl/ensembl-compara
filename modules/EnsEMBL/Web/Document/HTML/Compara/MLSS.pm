@@ -63,6 +63,7 @@ our %pretty_method = (
   BLASTZ_NET          => 'BlastZ',
   LASTZ_NET           => 'LastZ',
   TRANSLATED_BLAT_NET => 'Translated Blat',
+  SYNTENY             => 'Synteny',
 );
 
 our $references = {
@@ -95,7 +96,7 @@ sub render {
   my $type            = $pretty_method{$pair_aligner_config->{'method_link_type'}};
 
   ## HEADER AND INTRO
-  $html .= sprintf('<h1>%s vs %s %s alignments</h1>',
+  $html .= sprintf('<h1>%s vs %s %s Results</h1>',
                         $ref_common, $nonref_common, $type,
             );
 
@@ -104,7 +105,14 @@ sub render {
     $html .= qq{<p>$ref_common (<i>$ref_sp</i>, $ref_assembly) and $nonref_common (<i>$nonref_sp</i>, $nonref_assembly)
 alignments were downloaded from <a href="$ucsc">UCSC</a> in $site release $release.</p>};
   }
-  else {
+  elsif ($type eq 'Synteny') {
+    $html .= sprintf '<p>The syntenic regions between %s (<i>%s</i>, %s) and %s (<i>%s</i>, %s) were extracted from their pairwise alignment in %s release %s.
+    We look for stretches where the alignment blocks are in synteny. The search is run in two phases.
+    In the first one, syntenic alignments that are closer than 200 kbp are grouped.
+    In the second phase, the groups that are in synteny are linked provided that no more than 2 non-syntenic groups are found between them and they are less than 3Mbp apart.</p>',
+              $ref_common, $ref_sp, $ref_assembly, $nonref_common, $nonref_sp, $nonref_assembly,
+              $site, $release;
+  } else {
     $html .= sprintf '<p>%s (<i>%s</i>, %s) and %s (<i>%s</i>, %s) were aligned using the %s alignment algorithm (%s)
 in %s release %s. %s was used as the reference species. After running %s, the raw %s alignment blocks
 are chained according to their location in both genomes. During the final netting process, the best
@@ -142,15 +150,12 @@ sub-chain is chosen in each region on the reference species.</p>',
 
   ## CHUNKING TABLE
   if ($ref_dna_collection_config->{'chunk_size'}) {
-    $html .= qq{
-      <h2>Chunking parameters</h2>
-      <table style="width:80%">
-        <tr>
-          <th style="width:20%;padding:0 1em"></th>
-          <th style="width:40%;padding:0 1em">$ref_common</th>
-          <th style="width:40%;padding:0 1em">$nonref_common</th>
-        </tr>
-    };
+    my @rows;
+    my @columns = (
+      { key => 'param',        title => 'Parameter'    },
+      { key => 'value_ref',    title => $ref_common    },
+      { key => 'value_nonref', title => $nonref_common },
+    );
 
     my @params = qw(chunk_size overlap group_set_size masking_options);
 
@@ -167,22 +172,17 @@ sub-chain is chosen in each region on the reference species.</p>',
         $value_2 = $self->thousandify($non_ref_dna_collection_config->{$param}) || 0;
       }
       
-      $html .= qq{
-        <tr>
-          <th style="padding:1em">$header</th>
-          <td style="padding:1em">$value_1</td>
-          <td style="padding:1em">$value_2</td>
-        </tr>
-      };
+      push @rows, { param => $header, value_ref => $value_1, value_nonref => $value_2 };
     } 
 
-    $html .= '</table>';
+    $html .= '<h2>Chunking parameters</h2>';
+    $html .= EnsEMBL::Web::Document::Table->new(\@columns, \@rows)->render;
   }
 
   my $blocks = $self->thousandify($alignment_results->{'num_blocks'});
+  my $block_type = $type eq 'Synteny' ? 'synteny' : 'alignment';
   $html .= qq{
-    <h2>Results</h2>
-    <p>Number of alignment blocks: $blocks</p>
+    <h2>Statistics over $blocks $block_type blocks</h2>
     };
 
   ## PIE CHARTS
@@ -226,7 +226,7 @@ sub-chain is chosen in each region on the reference species.</p>',
       my $percent  = round($coverage/$total * 100);
       my $invperc  = 100 - $percent;
       $html .= qq{
-          <input class="graph_data" type="hidden" value="[[$invperc,'Uncovered'],[$percent, 'Covered']]" />
+          <input class="graph_data" type="hidden" value="[[$invperc||.001,'Uncovered'],[$percent||.001, 'Covered']]" />
       };
     }
     $i++;
@@ -249,28 +249,49 @@ sub-chain is chosen in each region on the reference species.</p>',
       my $matches     = $results->{'matches'};
       my $mismatches  = $results->{'mis-matches'};
       my $insertions  = $results->{'insertions'};
+      my $covered     = $results->{'covered'};
       my $uncovered   = $results->{'uncovered'};
 
-      $key->{$sp_type}{'exon'} = sprintf('<p>
-                                            <b>Uncovered</b>: %s out of %s<br />
-                                            <b>Matches</b>: %s out of %s<br />
-                                            <b>Mismatches</b>: %s out of %s<br />
-                                            <b>Insertions</b>: %s out of %s
-                                          </p>',
-                                $self->thousandify($uncovered), $self->thousandify($total),
-                                $self->thousandify($matches), $self->thousandify($total),
-                                $self->thousandify($mismatches), $self->thousandify($total),
-                                $self->thousandify($insertions), $self->thousandify($total),
-                                );
+      if ($type eq 'Synteny') {
+        $key->{$sp_type}{'exon'} = sprintf(
+          '<p>
+            <b>Uncovered</b>: %s out of %s<br />
+            <b>Covered</b>: %s out of %s<br />
+          </p>',
+          $self->thousandify($uncovered), $self->thousandify($total),
+          $self->thousandify($covered), $self->thousandify($total),
+        );
 
-      my $match_pc  = round($matches/$total * 100); 
-      my $mis_pc    = round($mismatches/$total * 100); 
-      my $ins_pc    = round($insertions/$total * 100); 
-      my $uncov_pc  = 100 - ($match_pc + $mis_pc + $ins_pc); 
+        my $cov_pc  = round($covered/$total * 100);
+        my $uncov_pc  = 100 - $cov_pc;
 
-      $html .= qq{
-          <input class="graph_data" type="hidden" value="[[$uncov_pc,'Uncovered'],[$match_pc, 'Matches'],[$mis_pc,'Mismatches'],[$ins_pc,'Insertions']]" />
-      };
+        $html .= qq{
+            <input class="graph_data" type="hidden" value="[[$uncov_pc||.001,'Uncovered'],[$cov_pc||.001, 'Covered'],]" />
+        };
+      } else {
+
+        $key->{$sp_type}{'exon'} = sprintf(
+          '<p>
+            <b>Uncovered</b>: %s out of %s<br />
+            <b>Matches</b>: %s out of %s<br />
+            <b>Mismatches</b>: %s out of %s<br />
+            <b>Insertions</b>: %s out of %s
+          </p>',
+          $self->thousandify($uncovered), $self->thousandify($total),
+          $self->thousandify($matches), $self->thousandify($total),
+          $self->thousandify($mismatches), $self->thousandify($total),
+          $self->thousandify($insertions), $self->thousandify($total),
+        );
+
+        my $match_pc  = round($matches/$total * 100);
+        my $mis_pc    = round($mismatches/$total * 100);
+        my $ins_pc    = round($insertions/$total * 100);
+        my $uncov_pc  = 100 - ($match_pc + $mis_pc + $ins_pc);
+
+        $html .= qq{
+          <input class="graph_data" type="hidden" value="[[$uncov_pc||.001,'Uncovered'],[$match_pc||.001, 'Matches'],[$mis_pc||.001,'Mismatches'],[$ins_pc||.001,'Insertions']]" />
+        };
+      }
     }
     $i++;
   }
@@ -304,10 +325,10 @@ sub-chain is chosen in each region on the reference species.</p>',
         </td>
       </tr>
     </table>',
-    $ref_sp, 
+    $ref_common,
     $graph_style, $key->{'ref'}{'genome'}, 
     $graph_style, $key->{'ref'}{'exon'}, 
-    $nonref_sp, 
+    $nonref_common,
     $graph_style, $key->{'non_ref'}{'genome'}, 
     $graph_style, $key->{'non_ref'}{'exon'}, 
   );
@@ -360,7 +381,8 @@ sub fetch_input {
     $ref_results->{'matches'}                 = $mlss->get_value_for_tag('ref_matches');
     $ref_results->{'mis-matches'}             = $mlss->get_value_for_tag('ref_mis_matches');
     $ref_results->{'insertions'}              = $mlss->get_value_for_tag('ref_insertions');
-    $ref_results->{'uncovered'}                 = $mlss->get_value_for_tag('ref_uncovered');
+    $ref_results->{'covered'}                 = $mlss->get_value_for_tag('ref_covered');
+    $ref_results->{'uncovered'}               = $mlss->get_value_for_tag('ref_uncovered');
 
     
     $non_ref_results->{'name'}                    = $non_ref_genome_db->name;
@@ -371,6 +393,7 @@ sub fetch_input {
     $non_ref_results->{'matches'}                 = $mlss->get_value_for_tag('non_ref_matches');
     $non_ref_results->{'mis-matches'}             = $mlss->get_value_for_tag('non_ref_mis_matches');
     $non_ref_results->{'insertions'}              = $mlss->get_value_for_tag('non_ref_insertions');
+    $non_ref_results->{'covered'}                 = $mlss->get_value_for_tag('non_ref_covered');
     $non_ref_results->{'uncovered'}               = $mlss->get_value_for_tag('non_ref_uncovered');
 
     $pair_aligner_config->{'method_link_type'} = $mlss->method->type;
@@ -389,7 +412,7 @@ sub fetch_input {
         $p =~ s/-//;
         $tblat_parameters->{$p} = $v;
       }
-    } else {
+    } elsif ($mlss->method->type =~ /LASTZ_NET/) {
       foreach my $param (split ' ', $pairwise_params) {
         my ($p, $v) = split '=', $param;
         
