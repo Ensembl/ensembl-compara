@@ -1423,19 +1423,13 @@ sub pops_for_slice {
 
 sub get_source {
   my $self = shift;
-  my $default = shift;
+
   my $vari_adaptor = $self->database('variation')->get_db_adaptor('variation');
   unless ($vari_adaptor) {
     warn "ERROR: Can't get variation adaptor";
     return ();
   }
-
-  if ($default) {
-    return  $vari_adaptor->get_VariationAdaptor->get_default_source();
-  }
-  else {
-    return $vari_adaptor->get_VariationAdaptor->get_all_sources();
-  }
+  return $vari_adaptor->get_VariationAdaptor->get_all_sources();
 }
 
 sub get_all_misc_sets {
