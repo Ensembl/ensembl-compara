@@ -164,6 +164,12 @@ sub _pf_link {
     if ($type eq 'Gene') {
       $display_label = $self->object->get_gene_display_label($f->{'label'});
       $display_label = " ($display_label)" if $display_label;
+
+      # LRG
+      if ($f->{'label'} =~ /(LRG)_\d+$/) {
+        $type = $1;
+        $id_param = lc($type);
+      }
     }
 
     my $params = {
