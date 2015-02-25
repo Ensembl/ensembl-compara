@@ -65,9 +65,8 @@ sub content {
 
   ## add TSL info
   if ($tsl && ($tsl = $tsl->value)) {
-    $table->add_row('Transcript Support Level', sprintf('<p>%s</p>', $tsl =~ s/^tsl([^\s]+).*$/$1/gr));
+    $table->add_row('Transcript Support Level (TSL)', sprintf('<span class="ts_flag"><span class="glossary_mouseover">%s</span></span>', $tsl =~ s/^tsl([^\s]+).*$/TSL:$1/gr));
   }
-
   $table->add_row('Ensembl version', $object->stable_id.'.'.$object->version);
 
   ## add some Vega info
