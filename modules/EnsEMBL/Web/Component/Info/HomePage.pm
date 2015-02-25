@@ -156,7 +156,7 @@ sub assembly_text {
     $hub->url({ action => 'Annotation', __clear => 1 }), sprintf($self->{'icon'}, 'info'),
     
     $ftp ? sprintf(
-      '<p><a href="%s/fasta/%s/dna/" class="nodeco">%sDownload DNA sequence</a> (FASTA</p>', ## Link to FTP site
+      '<p><a href="%s/fasta/%s/dna/" class="nodeco">%sDownload DNA sequence</a> (FASTA)</p>', ## Link to FTP site
       $ftp, lc $species, sprintf($self->{'icon'}, 'download')
     ) : '',
     
