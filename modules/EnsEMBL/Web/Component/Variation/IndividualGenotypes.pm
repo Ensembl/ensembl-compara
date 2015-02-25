@@ -40,11 +40,16 @@ sub content {
 
   return sprintf '<h3>No individual genotypes for this SNP%s %s</h3>', $selected_pop ? ' in population' : '', $pop_obj->name unless %ind_data;
 
-  my (%rows, %all_pops, %pop_names);
+  my (%rows, %pop_names);
   my $flag_children = 0;
   my $allele_string = $self->object->alleles;
   my $al_colours = $self->object->get_allele_genotype_colours;
-  
+
+  my %group_name;
+  my %priority_data;
+  my %other_pop_data;
+  my %other_ind_data;
+
   foreach my $ind_id (sort { $ind_data{$a}{'Name'} cmp $ind_data{$b}{'Name'} } keys %ind_data) {
     my $data     = $ind_data{$ind_id};
     my $genotype = $data->{'Genotypes'};
@@ -64,11 +69,20 @@ sub content {
       
       if ($pop->{'Size'} == 1) {
         $other_ind = 1;
+        $other_ind_data{$pop_id} = 1;
       }
       else {
         $populations{$pop_id} = 1;
-        $all_pops{$pop_id}    = $self->pop_url($pop->{'Name'}, $pop->{'Link'});
-        $pop_names{$pop_id}   = $pop->{'Name'};
+        $pop_names{$pop_id} = $pop->{'Name'};
+
+        my $priority_level = $pop->{'Priority'};
+        if ($priority_level) {
+          $group_name{$priority_level} = $pop->{'Group'} unless defined $group_name{$priority_level};
+          $priority_data{$priority_level}{$pop_id} = {'name' => $pop->{'Name'}, 'link' => $pop->{'Link'}};
+        }
+        else {
+          $other_pop_data{$pop_id} = {'name' => $pop->{'Name'}, 'link' => $pop->{'Link'}};
+        }
       }
     }
     
@@ -115,39 +129,86 @@ sub content {
       "Genotypes for $pop_names{$selected_pop}", $selected_pop, 
       $self->new_table($columns, $rows{$selected_pop}, { data_table => 1, sorting => [ 'Individual asc' ] }),
       1,
-      qq{<span style="float:right"><a href="#$self->{'id'}_top">[back to top]</a></span><br />}
+      qq{<span style="float:right"><a href="#}.$self->{'id'}.qq{_top">[back to top]</a></span><br />}
     );
   }
   
-  return $self->summary_tables(\%all_pops, \%rows, $columns);
+  return $self->summary_tables(\%rows, \%priority_data, \%other_pop_data, \%other_ind_data, \%group_name, $columns);
 }
 
 sub summary_tables {
-  my ($self, $all_pops, $rows, $ind_columns) = @_;
-  my $hub          = $self->hub;
-  my $od_table     = $self->new_table([], [], { data_table => 1, download_table => 1, sorting => [ 'Population asc' ] });
-  my $hm_table     = $self->new_table([], [], { data_table => 1, download_table => 1, sorting => [ 'Population asc' ] });
-  my $tg_table     = $self->new_table([], [], { data_table => 1, download_table => 1, sorting => [ 'Population asc' ] });
-  my $mgp_table    = $self->new_table([], [], { data_table => 1, download_table => 1, sorting => [ 'Population asc' ] });
-  my $ind_table    = $self->new_table([], [], { data_table => 1, download_table => 1, sorting => [ 'Individual asc' ] });
-  my %descriptions = map { $_->dbID => $_->description } @{$hub->get_adaptor('get_PopulationAdaptor', 'variation')->fetch_all_by_dbID_list([ keys %$all_pops ])};
-  my ($other_row_count, $html);
+  my ($self, $rows, $priority_data, $other_pop_data, $other_ind_data, $group_name, $ind_columns) = @_;
+  my $html; 
+
+  $html .= qq{<a id="}.$self->{'id'}.qq{_top"></a>};
   
-  foreach ($od_table, $hm_table, $tg_table, $mgp_table) {
-    $_->add_columns(
-      { key => 'count',       title => 'Number of genotypes', width => '15%', sort => 'numeric', align => 'right'  },
-      { key => 'view',        title => '',                    width => '5%',  sort => 'none',    align => 'center' },
-      { key => 'Population',  title => 'Population',          width => '25%', sort => 'html'                       },
-      { key => 'Description', title => 'Description',         width => '55%', sort => 'html'                       },
-    );
+  # Population groups
+  foreach my $priority_level (sort(keys %{$priority_data})){
+    $html .= $self->format_table($rows, $priority_data->{$priority_level}, $group_name->{$priority_level} );
   }
 
-  foreach my $pop (sort { ($a !~ /ALL/ cmp $b !~ /ALL/) || $a cmp $b } keys %$all_pops) {
-    my $row_count   = scalar @{$rows->{$pop}};
-    my $pop_name    = $all_pops->{$pop} || 'Other individuals';
-    my $description = $descriptions{$pop} || '';
+  # Other populations 
+  my $other_pop = (scalar(keys($priority_data)) > 0) ? 'Other populations' : 'Summary of genotypes by population';
+  my $display_count = (scalar(keys($priority_data)) > 0) ? 1 : 0;
+  $html .= $self->format_table($rows, $other_pop_data, $other_pop, $display_count )  if scalar(keys(%$other_pop_data)) > 0;
+
+  # Other individuals
+  $html .= $self->format_other_individuals_table($rows, 'Other individuals', $ind_columns ) if $rows->{'other_ind'};
+ 
+  return $html;
+}
+
+
+sub format_table {
+  my ($self, $rows, $pop_list, $table_header, $display_count) = @_;
+  my (%pop_urls, $unique_urls, %urls_seen, $generic_pop_url);
+  my $hub = $self->hub;
+  my $html;
+
+  my $table = $self->new_table([], [], { data_table => 1, download_table => 1 });
+
+  $table->add_columns(
+    { key => 'count',       title => 'Number of genotypes', width => '15%', sort => 'numeric', align => 'right'  },
+    { key => 'view',        title => '',                    width => '5%',  sort => 'none',    align => 'center' },
+    { key => 'Population',  title => 'Population',          width => '25%', sort => 'html'                       },
+    { key => 'Description', title => 'Description',         width => '55%', sort => 'html'                       },
+  );
+
+  my $table_id = $table_header;
+  $table_id =~ s/ /_/g;
+  $table->add_option('id', $table_id);
+
+  my %descriptions = map { $_->dbID => $_->description } @{$hub->get_adaptor('get_PopulationAdaptor', 'variation')->fetch_all_by_dbID_list([ keys %$pop_list ])};
+
+  my $pop_count = (defined($display_count)) ? scalar(keys(%$pop_list)) : undef;
+
+  # Get URLs
+  foreach my $pop_id (keys %$pop_list) {
+    my $url = $self->pop_url($pop_list->{$pop_id}{'name'}, $pop_list->{$pop_id}{'link'});
+    $pop_urls{$pop_id} = $url;
+    $urls_seen{$url}++;
+  }
+
+  if (scalar(keys %urls_seen) < 2) {
+    my $key = (keys(%pop_urls))[0];
+    $generic_pop_url = $pop_urls{$key};
+  }
+
+  # Get Rows
+  foreach my $pop_id (sort { ($pop_list->{$a}{'name'} !~ /ALL/ cmp $pop_list->{$b}{'name'} !~ /ALL/) || $pop_list->{$a}{'name'} cmp $pop_list->{$b}{'name'} } keys %$pop_list) {
+    my $row_count   = scalar @{$rows->{$pop_id}};
+    my $pop_name    = $pop_list->{$pop_id}{'name'} || 'Other individuals';
+    my $description = $descriptions{$pop_id} || '';
     my $full_desc   = $self->strip_HTML($description);
-    
+
+    if ($pop_name =~ /^.+\:.+$/) {
+      my @composed_name = split(':', $pop_name);
+      $composed_name[$#composed_name] = '<b>'.$composed_name[$#composed_name].'</b>';
+      $pop_name = join(':',@composed_name);
+    }
+
+    $pop_name = scalar(keys %urls_seen) > 1 ? sprintf('<a href="%s" rel="external">%s</a>', $pop_urls{$pop_id}, $pop_name) : $pop_name; 
+
     if (length $description > 75 && $self->html_format) {
       while ($description =~ m/^.{75}.*?(\s|\,|\.)/g) {
         my $extra_desc =  substr($description, (pos $description));
@@ -157,98 +218,72 @@ sub summary_tables {
         last;
       }
     }
-    
-    my $table;
-    
-    
-    if ($pop_name =~ /cshl-hapmap/i) {        
-      $table = $hm_table;
-    } elsif($pop_name =~ /1000genomes/i) {        
-      $table = $tg_table;
-    } elsif($pop_name =~ /Mouse_Genomes_Project/i) {        
-      $table = $mgp_table;
-    } else {
-      $table = $od_table;
-      $other_row_count++;
-    }
 
-    if ($pop_name =~ /^.+\:.+$/) {
-      $pop_name =~ s/\:/\:<b>/;
-      $pop_name .= '</b>';
-    }
-    
     $table->add_row({
       Population  => $pop_name,
       Description => $description,
       count       => $row_count,
-      view        => $self->ajax_add($self->ajax_url(undef, { pop => $pop, update_panel => 1 }), $pop),
+      view        => $self->ajax_add($self->ajax_url(undef, { pop => $pop_id, update_panel => 1 }), $pop_id),
     });
   }    
-  
-  $html .= qq{<a id="$self->{'id'}_top"></a>};
-  
-  if ($tg_table->has_rows) {
-    my $tg_id = '1000genomes_table';
-    $tg_table->add_option('id', $tg_id);
-    $html .= $self->toggleable_table('1000 Genomes', $tg_id, $tg_table, 1);      
-  }
-  
-  if ($hm_table->has_rows) {
-    my $hm_id = 'hapmap_table';
-    $hm_table->add_option('id', $hm_id);
-    $html .= $self->toggleable_table('HapMap', $hm_id, $hm_table, 1);
+
+  $table_header .= " ($pop_count)" if (defined($display_count));
+  $html .= $self->toggleable_table($table_header, $table_id, $table, 1);
+
+  if ($generic_pop_url) {
+    my $project_name = ($table_header =~ /project/i) ? "<b>$table_header</b>" : ' ';
+    $html .= sprintf('<div style="clear:both"></div><p><a href="%s" rel="external">More information about the %s populations &rarr;</a></p>', $generic_pop_url, $project_name);
   }
 
-  if ($mgp_table->has_rows) {
-    my $mgp_id = 'mouse_genomes_table';
-    $mgp_table->add_option('id', $mgp_id);
-    $html .= $self->toggleable_table('Mouse Genomes Project', $mgp_id, $mgp_table, 1);
-  }
-  
-  if ($od_table->has_rows && ($hm_table->has_rows || $tg_table->has_rows)) {
-    if ($self->html_format) {
-      $html .= $self->toggleable_table("Other populations ($other_row_count)", 'other', $od_table, 1);
-    } else {
-      $html .= '<h2>Other populations</h2>' . $od_table->render;
-    }
-  } else {     
-    $html .= '<h2>Summary of genotypes by population</h2>' . $od_table->render;
-  }
-  
-  # Other individuals table
-  if ($rows->{'other_ind'}) {
-    my $ind_count = scalar @{$rows->{'other_ind'}};
+  return $html;
+}
+
+sub format_other_individuals_table {
+  my ($self, $rows, $table_header, $ind_columns) = @_;
+  my $html;
     
-    $html .= $self->toggleable_table(
-      "Other individuals ($ind_count)",'other_ind', 
-      $self->new_table($ind_columns, $rows->{'other_ind'}, { data_table => 1, sorting => [ 'Individual asc' ] }), 
-      0,
-      qq{<span style="float:right"><a href="#$self->{'id'}_top">[back to top]</a></span><br />}
-    );
-  }
+  my $ind_count = scalar @{$rows->{'other_ind'}};
+
+  $html .= $self->toggleable_table(
+    "$table_header ($ind_count)",'other_ind',
+    $self->new_table($ind_columns, $rows->{'other_ind'}, { data_table => 1, sorting => [ 'Individual asc' ] }),
+    0,
+    qq{<span style="float:right"><a href="#}.$self->{'id'}.qq{_top">[back to top]</a></span><br />}
+  );  
   
   return $html;
 }
+
 
 sub format_parent {
   my ($self, $parent_data) = @_;
   return ($parent_data && $parent_data->{'Name'}) ? $parent_data->{'Name'} : '-';
 }
 
+
 sub pop_url {
+   ### Arg1        : Population name (to be displayed)
+   ### Arg2        : dbSNP population ID (variable to be linked to)
+   ### Example     : $self->pop_url($pop_name, $pop_dbSNPID);
+   ### Description : makes pop_name into a link
+   ### Returns  string
+
   my ($self, $pop_name, $pop_dbSNP) = @_;
-  
-  my $img_info = qq{<img src="/i/16/info.png" class="_ht" style="float:right;position:relative;top:2px;width:12px;height:12px;margin-left:4px" title="Click to see more information about the population" alt="i    nfo" />};
+
   my $pop_url;
+
   if($pop_name =~ /^1000GENOMES/) {
-    $pop_url = $pop_name.$self->hub->get_ExtURL_link($img_info, '1KG_POP', $pop_name);
+    $pop_url = $self->hub->get_ExtURL('1KG_POP', $pop_name);
+  }
+  elsif ($pop_name =~ /^NextGen/i) {
+    $pop_url = $self->hub->get_ExtURL('NEXTGEN_POP');
   }
   else {
-    $pop_url = $pop_dbSNP ? $pop_name.$self->hub->get_ExtURL_link($img_info, 'DBSNPPOP', $pop_dbSNP->[0]) : $pop_name;
+    $pop_url = $pop_dbSNP ? $self->hub->get_ExtURL('DBSNPPOP', $pop_dbSNP->[0]) : undef;
   }
-  
   return $pop_url;
 }
+
 
 sub get_table_headings {
   return [
@@ -260,6 +295,5 @@ sub get_table_headings {
   ];
 }
     
-
 
 1;
