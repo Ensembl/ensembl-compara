@@ -19,6 +19,7 @@ limitations under the License.
 package EnsEMBL::Web::Component::Transcript::TranscriptSummary;
 
 use strict;
+use HTML::Entities  qw(encode_entities);
 
 use base qw(EnsEMBL::Web::Component::Transcript);
 
@@ -47,6 +48,7 @@ sub content {
   my ($tsl)        = @{$transcript->get_all_Attributes('TSL')};
   my $html         = "<strong>Exons:</strong> $exons <strong>Coding exons:</strong> $coding_exons <strong>Transcript length:</strong> $basepairs bps";
   $html           .= " <strong>Translation length:</strong> $residues residues" if $residues;
+  my %glossary     = $hub->species_defs->multiX('ENSEMBL_GLOSSARY');
 
   $table->add_row('Statistics', $html);
 
@@ -64,8 +66,9 @@ sub content {
   }
 
   ## add TSL info
-  if ($tsl && ($tsl = $tsl->value)) {
-    $table->add_row('Transcript Support Level (TSL)', sprintf('<span class="ts_flag"><span class="glossary_mouseover">%s</span></span>', $tsl =~ s/^tsl([^\s]+).*$/TSL:$1/gr));
+  if ($tsl && ($tsl = $tsl->value)) {  
+    my $key = $tsl =~ s/^tsl([^\s]+).*$/TSL$1/gr;     
+    $table->add_row('Transcript Support Level (TSL)', sprintf('<span class="ts_flag _ht"><span class="glossary_mouseover" title="%s">%s</span></span>', encode_entities($glossary{$key}), $key =~ s/TSL/TSL\:/gr));
   }
   $table->add_row('Ensembl version', $object->stable_id.'.'.$object->version);
 
