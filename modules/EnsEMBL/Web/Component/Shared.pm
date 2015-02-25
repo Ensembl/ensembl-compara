@@ -442,10 +442,16 @@ sub transcript_table {
         action => 'Phenotype',
         g      => $gene->stable_id
       });    
+
+      my $splice_url = $hub->url({
+        type   => 'Gene',
+        action => 'Splice',
+        g      => $gene->stable_id
+      });        
       
       push @str_array, sprintf('%s %s', 
                           $avail->{has_transcripts}, 
-                          $avail->{has_transcripts} eq "1" ? "transcript (splice variant)" : "transcripts (splice variants)"
+                          $avail->{has_transcripts} eq "1" ? "transcript (<a href='$splice_url'>splice variant</a>)" : "transcripts (<a href='$splice_url'>splice variants)</a>"
                       ) if($avail->{has_transcripts});
       push @str_array, sprintf('%s gene %s', 
                           $avail->{has_alt_alleles}, 
