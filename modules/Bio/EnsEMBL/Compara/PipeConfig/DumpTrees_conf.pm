@@ -89,26 +89,6 @@ sub default_options {
     };
 }
 
-=head2 pipeline_create_commands
-
-    Description : Implements pipeline_create_commands() interface method of Bio::EnsEMBL::Hive::PipeConfig::HiveGeneric_conf that lists the commands that will create and set up the Hive database.
-                  In addition to the standard creation of the database and populating it with Hive tables and procedures it also creates directories for storing the output.
-
-=cut
-
-sub pipeline_create_commands {
-    my ($self) = @_;
-    return [
-        @{$self->SUPER::pipeline_create_commands},  # inheriting database and hive tables' creation
-
-        'mkdir -p '.$self->o('target_dir'),
-        'mkdir -p '.$self->o('target_dir').'/emf',
-        'mkdir -p '.$self->o('target_dir').'/xml',
-        'mkdir -p '.$self->o('work_dir'),
-    ];
-}
-
-
 sub resource_classes {
     my ($self) = @_;
     return {
@@ -141,7 +121,7 @@ sub pipeline_wide_parameters {  # these parameter values are visible to all anal
     Description : Implements pipeline_analyses() interface method of Bio::EnsEMBL::Hive::PipeConfig::HiveGeneric_conf that defines the structure of the pipeline: analyses, jobs, rules, etc.
                   Here it defines seven analyses:
 
-                    * 'generate_tree_ids'   generates a list of tree_ids to be dumped
+                    * 'create_dump_jobs'   generates a list of tree_ids to be dumped
 
                     * 'dump_a_tree'         dumps one tree in multiple formats
 
@@ -162,12 +142,34 @@ sub pipeline_analyses {
     my ($self) = @_;
     return [
 
-        ($self->o('member_type') eq 'protein' ?
+        {   -logic_name => 'pipeline_start',
+            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
+            -parameters => {
+                'cmd'   => 'mkdir -p #work_dir#; mkdir -p #target_dir#/xml; mkdir -p #target_dir#/emf',
+            },
+            -input_ids  => [ {} ],
+            -flow_into  => {
+                '1->A' => [ 'create_dump_jobs' ],
+                'A->1' => [ 'generate_prepare_dir' ],
+            },
+        },
+
+        {   -logic_name => 'test_dump_for_uniprot',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ConditionalDataFlow',
+            -parameters => {
+                'condition' => '"#member_type#" eq "protein"',
+            },
+            -flow_into => {
+                2 => [ 'dump_for_uniprot' ],
+            },
+        },
+
           { -logic_name => 'dump_for_uniprot',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
             -parameters => {
                 'db_conn'       => '#rel_db#',
-                'file_name'     => sprintf('ensembl.GeneTree_content.e%d.txt', $self->o('ensembl_release')),
+                'file_name'     => sprintf('ensembl.GeneTree_content.e%s.txt', $self->o('ensembl_release')),
+                'cmd'           => 'echo "#query#" | db_cmd.pl -url #db_conn# -extra -N -extra -q > #target_dir#/#file_name#',
                 'query'         => sprintf q|
                     SELECT 
                         gtr.stable_id AS GeneTreeStableID, 
@@ -185,14 +187,10 @@ sub pipeline_analyses {
                         AND gtr.clusterset_id = 'default'
                 |,
             },
-            -input_ids => [
-                {'cmd' => 'echo "#query#" | db_cmd.pl -url #db_conn# -extra -N -extra -q > #target_dir#/#file_name#',},
-            ],
             -flow_into => {
                 1 => { 'archive_long_files' => { 'full_name' => '#target_dir#/#file_name#' } },
             },
-          }
-        : () ),
+          },
 
         {   -logic_name => 'dump_all_homologies',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::DumpAllHomologiesOrthoXML',
@@ -200,11 +198,8 @@ sub pipeline_analyses {
                 'compara_db'            => '#rel_db#',
                 'protein_tree_range'    => '0-99999999',
                 'ncrna_tree_range'      => '100000000-199999999',
+                'idrange'               => '#expr( $self->param(#member_type#."_tree_range") )expr#',
             },
-            -input_ids => [
-                {'id_range' => '#'.$self->o('member_type').'_tree_range#', 'file' => '#target_dir#/xml/#name_root#.allhomologies.orthoxml.xml'},
-                {'id_range' => '#'.$self->o('member_type').'_tree_range#', 'file' => '#target_dir#/xml/#name_root#.allhomologies_strict.orthoxml.xml', 'strict_orthologies' => 1},
-            ],
             -flow_into => {
                 1 => {
                     'archive_long_files' => { 'full_name' => '#file#', },
@@ -218,9 +213,6 @@ sub pipeline_analyses {
                 'compara_db'            => '#rel_db#',
                 'tree_type'             => 'tree',
             },
-            -input_ids => [
-                {'file' => '#target_dir#/xml/#name_root#.alltrees.orthoxml.xml',}
-            ],
             -rc_name => '1Gb_job',
             -flow_into => {
                 1 => {
@@ -229,19 +221,24 @@ sub pipeline_analyses {
             },
         },
 
-        {   -logic_name => 'generate_tree_ids',
+        {   -logic_name => 'create_dump_jobs',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
             -parameters => {
                 'db_conn'               => '#rel_db#',
                 'inputquery'            => 'SELECT root_id AS tree_id FROM gene_tree_root WHERE tree_type = "tree" AND clusterset_id = "default" AND member_type = "#member_type#"',
             },
-            -input_ids => [
-                {},
-            ],
             -meadow_type => 'LOCAL',
             -flow_into => {
-                1 => [ 'generate_collations', 'generate_tarjobs', 'remove_hash' ],
-                2 => { 'dump_a_tree'  => { 'tree_id' => '#tree_id#', 'hash_dir' => '#expr(dir_revhash(#tree_id#))expr#' } },
+                'A->1' => 'generate_collations',
+                '2->A' => { 'dump_a_tree'  => { 'tree_id' => '#tree_id#', 'hash_dir' => '#expr(dir_revhash(#tree_id#))expr#' } },
+                1 => {
+                    'test_dump_for_uniprot' => undef,
+                    'dump_all_trees' => { 'file' => '#target_dir#/xml/#name_root#.alltrees.orthoxml.xml', },
+                    'dump_all_homologies' => [
+                        {'file' => '#target_dir#/xml/#name_root#.allhomologies.orthoxml.xml'},
+                        {'file' => '#target_dir#/xml/#name_root#.allhomologies_strict.orthoxml.xml', 'strict_orthologies' => 1},
+                    ],
+                },
             },
         },
 
@@ -252,7 +249,8 @@ sub pipeline_analyses {
                 'dump_script'       => $self->o('dump_script'),
                 'protein_tree_args' => '-nh 1 -a 1 -nhx 1 -f 1 -fc 1 -oxml 1 -pxml 1 -cafe 1',
                 'ncrna_tree_args'   => '-nh 1 -a 1 -nhx 1 -f 1 -oxml 1 -pxml 1 -cafe 1',
-                'cmd'               => '#dump_script# --url #db_url# --dirpath #work_dir#/#hash_dir# --tree_id #tree_id# #'.$self->o('member_type').'_tree_args#',
+                'tree_args'         => '#expr( $self->param(#member_type#."_tree_args") )expr#',
+                'cmd'               => '#dump_script# --url #db_url# --dirpath #work_dir#/#hash_dir# --tree_id #tree_id# #tree_args#',
             },
             -hive_capacity => $self->o('capacity'),       # allow several workers to perform identical tasks in parallel
             -batch_size    => $self->o('batch_size'),
@@ -264,13 +262,14 @@ sub pipeline_analyses {
             -parameters => {
                 'protein_tree_list' => [ 'aln.emf', 'nh.emf', 'nhx.emf', 'aa.fasta', 'cds.fasta' ],
                 'ncrna_tree_list'   => [ 'aln.emf', 'nh.emf', 'nhx.emf', 'nt.fasta' ],
-                'inputlist'         => '#'.$self->o('member_type').'_tree_list#',
+                'inputlist'         => '#expr( $self->param(#member_type#."_tree_list") )expr#',
                 'column_names'      => [ 'extension' ],
             },
-            -wait_for => [ 'dump_a_tree' ],
             -meadow_type => 'LOCAL',
             -flow_into => {
-                2 => { 'collate_dumps'  => { 'extension' => '#extension#', 'dump_file_name' => '#name_root#.#extension#'} },
+                '1->A' => [ 'generate_tarjobs' ],
+                '2->A' => { 'collate_dumps'  => { 'extension' => '#extension#', 'dump_file_name' => '#name_root#.#extension#'} },
+                'A->1' => 'remove_hash',
             },
         },
 
@@ -290,10 +289,9 @@ sub pipeline_analyses {
             -parameters => {
                 'protein_tree_list' => [ 'orthoxml.xml', 'phyloxml.xml', 'cafe_phyloxml.xml' ],
                 'ncrna_tree_list'   => [ 'orthoxml.xml', 'phyloxml.xml', 'cafe_phyloxml.xml' ],
-                'inputlist'         => '#'.$self->o('member_type').'_tree_list#',
+                'inputlist'         => '#expr( $self->param(#member_type#."_tree_list") )expr#',
                 'column_names'      => [ 'extension' ],
             },
-            -wait_for => [ 'dump_a_tree' ],
             -meadow_type => 'LOCAL',
             -flow_into => {
                 2 => { 'tar_dumps'  => { 'extension' => '#extension#', 'dump_file_name' => '#name_root#.tree.#extension#'} },
@@ -315,10 +313,6 @@ sub pipeline_analyses {
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
             -parameters => {
                 'cmd'         => 'rm -rf #work_dir#',
-            },
-            -wait_for => [ 'collate_dumps', 'tar_dumps' ],
-            -flow_into => {
-                1 => [ 'generate_prepare_dir' ],
             },
         },
 
@@ -343,7 +337,6 @@ sub pipeline_analyses {
                 ],
                 'column_names'      => [ 'cmd' ],
             },
-            -wait_for => [ 'archive_long_files', 'dump_all_homologies', 'dump_all_trees'],
             -meadow_type => 'LOCAL',
             -flow_into => {
                 '2->A' => [ 'prepare_dir' ],
