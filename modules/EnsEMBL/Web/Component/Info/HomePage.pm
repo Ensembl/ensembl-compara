@@ -22,9 +22,8 @@ use strict;
 
 use EnsEMBL::Web::Document::HTML::HomeSearch;
 use EnsEMBL::Web::DBSQL::ProductionAdaptor;
-use EnsEMBL::Web::DBSQL::ArchiveAdaptor;
 
-use base qw(EnsEMBL::Web::Component);
+use parent qw(EnsEMBL::Web::Component::Info);
 
 sub _init {
   my $self = shift;
@@ -113,13 +112,10 @@ sub assembly_text {
   my $species           = $hub->species;
   my $sample_data       = $species_defs->SAMPLE_DATA;
   my $ftp               = $self->ftp_url;
-  my $ensembl_version   = $species_defs->ENSEMBL_VERSION;
   my $assembly          = $species_defs->ASSEMBLY_NAME;
   my $assembly_version  = $species_defs->ASSEMBLY_VERSION;
   my $mappings          = $species_defs->ASSEMBLY_MAPPINGS;
   my $gca               = $species_defs->ASSEMBLY_ACCESSION;
-  my $pre_species       = $species_defs->get_config('MULTI', 'PRE_SPECIES');
-  my @other_assemblies;
  
   my $ac_link;
   if ($species_defs->ENSEMBL_AC_ENABLED) {
@@ -169,41 +165,8 @@ sub assembly_text {
   );
   
   ## Insert dropdown list of other assemblies
-  my $adaptor  = EnsEMBL::Web::DBSQL::ArchiveAdaptor->new($hub);
-  my $archives = $adaptor->fetch_archives_by_species($hub->species);
-
-  my $previous = $assembly_version;
-  foreach my $version (reverse sort {$a <=> $b} keys %$archives) {
-    my $archive = $archives->{$version};
-    my $archive_assembly = $archive->{'version'};
-    if ($archive_assembly ne $previous && $archive_assembly ne $assembly) {
-      my $desc = $archive->{'description'} 
-                  || sprintf '(%s release %s)', $species_defs->ENSEMBL_SITETYPE, $version;
-      my $subdomain = ((lc $archive->{'archive'}) =~ /^[a-z]{3}[0-9]{4}$/) 
-                      ? lc $archive->{'archive'}.'.archive' : lc $archive->{'archive'};
-      push @other_assemblies, {
-        url      => sprintf('http://%s.ensembl.org/%s/', $subdomain, $species),
-        assembly => $archive_assembly,
-        release  => $desc,
-      };
-    }
-    
-    $previous = $archive_assembly;
-  }
-  
-  ## Don't link to pre site on archives, as it changes too often
-  push @other_assemblies, { url => "http://pre.ensembl.org/$species/", assembly => $pre_species->{$species}[1], release => '(Ensembl pre)' } if ($pre_species->{$species} && $species_defs->ENSEMBL_SITETYPE !~ /archive/i);
-
-  if (scalar @other_assemblies) {
-    $html .= '<h3 style="color:#808080;padding-top:8px">Other assemblies</h3>';
-    
-    if (scalar @other_assemblies > 1) {
-      $html .= qq(<form action="/$species/redirect" method="get"><select name="url">);
-      $html .= qq(<option value="$_->{'url'}">$_->{'assembly'} $_->{'release'}</option>) for @other_assemblies;
-      $html .= '</select> <input type="submit" name="submit" class="fbutton" value="Go" /></form>';
-    } else { 
-      $html .= qq(<ul><li><a href="$other_assemblies[0]{'url'}" class="nodeco">$other_assemblies[0]{'assembly'}</a> $other_assemblies[0]{'release'}</li></ul>);
-    }
+  if (my $assembly_dropdown = $self->assembly_dropodown) {
+    $html .= '<h3 style="color:#808080;padding-top:8px">Other assemblies</h3>'.$assembly_dropdown;
   }
 
   return $html;
