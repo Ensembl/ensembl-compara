@@ -497,7 +497,6 @@ sub get_all_transcripts {
       my $transcriptObj = $self->new_object(
         'Transcript', $transcript, $self->__data
       );
-      warn  $transcriptObj;
       $transcriptObj->gene($self->gene);
       push @{$self->{'data'}{'_transcripts'}} , $transcriptObj;
     }
