@@ -127,6 +127,8 @@ sub pipeline_wide_parameters {  # these parameter values are visible to all anal
         'member_type'   => $self->o('member_type'),
 
         'name_root'     => $self->o('name_root'),
+
+        'rel_db'        => $self->o('rel_db'),
     };
 }
 
@@ -161,7 +163,7 @@ sub pipeline_analyses {
           { -logic_name => 'dump_for_uniprot',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
             -parameters => {
-                'db_conn'       => $self->o('rel_db'),
+                'db_conn'       => '#rel_db#',
                 'file_name'     => sprintf('ensembl.GeneTree_content.e%d.txt', $self->o('ensembl_release')),
                 'query'         => sprintf q|
                     SELECT 
@@ -192,7 +194,7 @@ sub pipeline_analyses {
         {   -logic_name => 'dump_all_homologies',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::DumpAllHomologiesOrthoXML',
             -parameters => {
-                'compara_db'            => $self->o('rel_db'),
+                'compara_db'            => '#rel_db#',
                 'protein_tree_range'    => '0-99999999',
                 'ncrna_tree_range'      => '100000000-199999999',
             },
@@ -210,7 +212,7 @@ sub pipeline_analyses {
         {   -logic_name => 'dump_all_trees',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::DumpAllTreesOrthoXML',
             -parameters => {
-                'compara_db'            => $self->o('rel_db'),
+                'compara_db'            => '#rel_db#',
                 'tree_type'             => 'tree',
             },
             -input_ids => [
@@ -227,7 +229,7 @@ sub pipeline_analyses {
         {   -logic_name => 'generate_tree_ids',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
             -parameters => {
-                'db_conn'               => $self->o('rel_db'),
+                'db_conn'               => '#rel_db#',
                 'inputquery'            => 'SELECT root_id AS tree_id FROM gene_tree_root WHERE tree_type = "tree" AND clusterset_id = "default" AND member_type = "#member_type#"',
             },
             -input_ids => [
@@ -243,7 +245,7 @@ sub pipeline_analyses {
         {   -logic_name    => 'dump_a_tree',
             -module        => 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
             -parameters    => {
-                'db_url'            => $self->o('rel_db'),
+                'db_url'            => '#rel_db#',
                 'dump_script'       => $self->o('dump_script'),
                 'protein_tree_args' => '-nh 1 -a 1 -nhx 1 -f 1 -fc 1 -oxml 1 -pxml 1 -cafe 1',
                 'ncrna_tree_args'   => '-nh 1 -a 1 -nhx 1 -f 1 -oxml 1 -pxml 1 -cafe 1',
