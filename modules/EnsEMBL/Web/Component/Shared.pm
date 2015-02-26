@@ -29,18 +29,6 @@ use HTML::Entities  qw(encode_entities);
 use Text::Wrap      qw(wrap);
 use List::MoreUtils qw(uniq first_index);
 
-use EnsEMBL::Draw::DrawableContainer;
-use EnsEMBL::Draw::VDrawableContainer;
-
-use EnsEMBL::Web::Document::Image;
-use EnsEMBL::Web::Document::Table;
-use EnsEMBL::Web::Document::TwoCol;
-use EnsEMBL::Web::Constants;
-use EnsEMBL::Web::DOM;
-use EnsEMBL::Web::Form;
-use EnsEMBL::Web::Form::ModalForm;
-use EnsEMBL::Web::RegObj;
-
 ######### USED ON VARIOUS PAGES ###########
 
 sub coltab {
@@ -634,7 +622,7 @@ sub _add_gene_counts {
     $data[$i]->{'_sub'} = ($name =~ m!/!);
   } 
 
-  my $counts = EnsEMBL::Web::Document::Table->new($cols, [], $options);
+  my $counts = $self->new_table($cols, [], $options);
   foreach my $d (@data) {
     my $value = '';
     foreach my $s (@suffixes) {
@@ -670,7 +658,7 @@ sub species_stats {
   my $options = {'header' => 'no', 'rows' => ['bg3', 'bg1']};
 
   ## SUMMARY STATS
-  my $summary = EnsEMBL::Web::Document::Table->new($cols, [], $options);
+  my $summary = $self->new_table($cols, [], $options);
 
   my( $a_id ) = ( @{$meta_container->list_value_by_key('assembly.name')},
                     @{$meta_container->list_value_by_key('assembly.default')});
@@ -772,7 +760,7 @@ sub species_stats {
   }
   if (scalar(@$rows)) {
     $html .= '<h3>Other</h3>';
-    my $other = EnsEMBL::Web::Document::Table->new($cols, $rows, $options);
+    my $other = $self->new_table($cols, $rows, $options);
     $html .= $other->render;
   }
 
