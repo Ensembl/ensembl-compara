@@ -632,7 +632,7 @@ sub new_table {
   my $table    = EnsEMBL::Web::Document::Table->new(@_);
   my $filename = $hub->filename($self->object);
   my $options  = $_[2];
-  $self->{'_table_count'}++;
+  $self->{'_table_count'}++ if $options->{'exportable'};
   
   $table->session    = $hub->session;
   $table->format     = $self->format;
