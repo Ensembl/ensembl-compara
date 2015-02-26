@@ -1494,7 +1494,7 @@ sub _summarise_dasregistry {
         }
 
       } else {
-        warn "Skipping DAS source $key - unable to find 'url' or 'dsn' property in the INI file";
+#        warn "Skipping DAS source $key - unable to find 'url' or 'dsn' property in the INI file";
         next;
       }
 
