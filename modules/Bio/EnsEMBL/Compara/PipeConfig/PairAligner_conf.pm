@@ -727,6 +727,14 @@ sub pipeline_analyses {
 	      -wait_for =>  [ 'create_filter_duplicates_net_jobs', 'filter_duplicates_net', 'filter_duplicates_net_himem' ],
               -flow_into => [ 'set_internal_ids_collection' ],
  	    },
+          {  -logic_name => 'set_internal_ids_collection',
+              -module     => 'Bio::EnsEMBL::Compara::RunnableDB::PairAligner::SetInternalIdsCollection',
+              -parameters => {
+                  'skip' => $self->o('patch_alignments'),
+              },
+              -analysis_capacity => 1,
+              -rc_name => '100Mb',
+          },
 	    { -logic_name => 'healthcheck',
 	      -module => 'Bio::EnsEMBL::Compara::RunnableDB::HealthCheck',
 	      -parameters => {
