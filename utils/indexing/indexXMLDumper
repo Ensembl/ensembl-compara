@@ -179,10 +179,18 @@ my $input_c = @species;
 if( $species_list eq 'ALL' ) {
   @species = ();
   my %ignored;
-  @ignored{@ignore_species} = ();
+  foreach my $ig (@ignore_species) {
+    my $val = 0;
+    $val = -1  if($ig =~ s!^<!!);
+    $val = 1 if($ig =~ s!^>!!);
+    @ignored{grep { ($_ cmp $ig) == $val } @{$SD->ENSEMBL_DATASETS}} = ();
+  }
   foreach my $sp (@{$SD->ENSEMBL_DATASETS}) {
     push @species,$sp unless exists $ignored{$sp};
   }
+  use Data::Dumper;
+  warn Dumper(\%ignored,\@species);
+  die;
 }
 else {
   @species = grep {$_} map { $X{lc($_)} } @species;
@@ -1458,7 +1466,7 @@ sub DomainLine {
                     $acc);
   $species =~ s/_/ /;
   my $ids = join ',', @$IDS;
-  my $description = "$desc $count associated external database identifiers: $ids";
+  my $description = &clean($desc)." $count associated external database identifiers: $ids";
   my $xml = qq(
 <doc>
   <field name="id">$acc</field>
