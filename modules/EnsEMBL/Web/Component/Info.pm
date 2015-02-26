@@ -23,7 +23,7 @@ use warnings;
 
 use EnsEMBL::Web::DBSQL::ArchiveAdaptor;
 
-use parent qw(EnsEMBL::Web::Component);
+use parent qw(EnsEMBL::Web::Component::Shared);
 
 sub assembly_dropodown {
   my $self              = shift;

@@ -23,7 +23,7 @@ use strict;
 use EnsEMBL::Web::Controller::SSI;
 use EnsEMBL::Web::Document::Table;
 
-use base qw(EnsEMBL::Web::Component::Shared);
+use base qw(EnsEMBL::Web::Component::Info);
 
 
 sub _init {
@@ -63,6 +63,10 @@ sub content {
   $html .= EnsEMBL::Web::Controller::SSI::template_INCLUDE($self, "/ssi/species/${species}_assembly.html");
 
   $html .= sprintf '<p>The genome assembly represented here corresponds to %s %s</p>', $source_type, $hub->get_ExtURL_link($accession, "ASSEMBLY_ACCESSION_SOURCE_$source", $accession) if $accession; ## Add in GCA link
+
+  if (my $assembly_dropdown = $self->assembly_dropodown) {
+    $html .= "<h2>Other assemblies</h2>$assembly_dropdown";
+  }
   
   $html .= '<h2 id="genebuild">Gene annotation</h2>';
   $html .= EnsEMBL::Web::Controller::SSI::template_INCLUDE($self, "/ssi/species/${species}_annotation.html");
