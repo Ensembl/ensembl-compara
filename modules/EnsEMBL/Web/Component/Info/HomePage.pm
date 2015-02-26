@@ -166,7 +166,7 @@ sub assembly_text {
   
   ## Insert dropdown list of other assemblies
   if (my $assembly_dropdown = $self->assembly_dropodown) {
-    $html .= '<h3 style="color:#808080;padding-top:8px">Other assemblies</h3>'.$assembly_dropdown;
+    $html .= '<h3 class="light top-margin">Other assemblies</h3>'.$assembly_dropdown;
   }
 
   return $html;
