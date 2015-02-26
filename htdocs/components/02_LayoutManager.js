@@ -298,7 +298,7 @@ Ensembl.LayoutManager.extend({
 
     if (!cookiesAccepted) {
       $(['<div class="cookie-message hidden">',
-        '<p>We use cookies to enhance the usability of our website. If you continue, we\'ll assume that you are happy to receive all cookies.<button>OK</button></p>',
+        '<p>We use cookies to enhance the usability of our website. If you continue, we\'ll assume that you are happy to receive all cookies.<button>Don\'t show this again</button></p>',
         '<p>Further details about our privacy and cookie policy can be found <a href="/info/about/legal/privacy.html">here</a></p>',
         '</div>'
       ].join(''))
