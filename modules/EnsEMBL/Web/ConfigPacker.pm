@@ -1469,41 +1469,44 @@ sub _summarise_dasregistry {
     $cfg->{'homepage'}    ||= $cfg->{'authority'};
     $cfg->{'coords'}        = [ $cfg->{'coords'} ] if $cfg->{'coords'} && !ref $cfg->{'coords'}; # Make sure 'coords' is an array
 
-    my $src;
+    if (!delete $cfg->{'no_parsing'}) {
 
-    # Try the server URL if it's provided
-    if ($cfg->{'url'} && $cfg->{'dsn'}) {
+      my $src;
 
-      my $full_url = $cfg->{'url'} . '/' . $cfg->{'dsn'};
+      # Try the server URL if it's provided
+      if ($cfg->{'url'} && $cfg->{'dsn'}) {
 
-      eval {
-        my %server_url = map {$_->full_url => $_} @{ $self->_parse_das_server($full_url) };
-        $src = $server_url{$full_url};
-      };
+        my $full_url = $cfg->{'url'} . '/' . $cfg->{'dsn'};
 
-      if ($@) {
-        warn "Skipping DAS source $key - unable to reach source at $full_url";
+        eval {
+          my %server_url = map {$_->full_url => $_} @{ $self->_parse_das_server($full_url) };
+          $src = $server_url{$full_url};
+        };
+
+        if ($@) {
+          warn "Skipping DAS source $key - unable to reach source at $full_url";
+          next;
+        }
+
+        if (!$src) {
+          warn "Skipping DAS source $key - unable to parse source at $full_url";
+          next;
+        }
+
+      } else {
+        warn "Skipping DAS source $key - unable to find 'url' or 'dsn' property in the INI file";
         next;
       }
 
-      if (!$src) {
-        warn "Skipping DAS source $key - unable to parse source at $full_url";
-        next;
-      }
-
-    } else {
-      warn "Skipping DAS source $key - unable to find 'url' or 'dsn' property in the INI file";
-      next;
+      # fill in any extra info obtained from the das server (data from ini files takes precedence)
+      $cfg->{'label'}       ||= $src->label;
+      $cfg->{'description'} ||= $src->description;
+      $cfg->{'maintainer'}  ||= $src->maintainer;
+      $cfg->{'homepage'}    ||= $src->homepage;
+      $cfg->{'url'}         ||= $src->url;
+      $cfg->{'dsn'}         ||= $src->dsn;
+      $cfg->{'coords'}      ||= [map { $_->to_string } @{ $src->coord_systems }];
     }
-
-    # fill in any extra info obtained from the das server (data from ini files takes precedence)
-    $cfg->{'label'}       ||= $src->label;
-    $cfg->{'description'} ||= $src->description;
-    $cfg->{'maintainer'}  ||= $src->maintainer;
-    $cfg->{'homepage'}    ||= $src->homepage;
-    $cfg->{'url'}         ||= $src->url;
-    $cfg->{'dsn'}         ||= $src->dsn;
-    $cfg->{'coords'}      ||= [map { $_->to_string } @{ $src->coord_systems }];
 
     # Add the final config hash to the das packed tree
     $self->das_tree->{'ENSEMBL_INTERNAL_DAS_CONFIGS'}{$key} = $cfg;
