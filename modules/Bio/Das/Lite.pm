@@ -805,7 +805,7 @@ sub __clean_vals {
     my $ref = ref $object;
 
     if (!$ref) {
-      $object =~ s/^[\R\s]*|[\R\s]*$//g;
+      $object =~ s/^[\n\r\t\s]*|[\n\r\t\s]*$//g;
     } elsif ($ref eq 'ARRAY') {
       $object->[$_] = __clean_vals($object->[$_]) for 0..$#$object;
     } elsif ($ref eq 'HASH') {
