@@ -359,7 +359,7 @@ sub add_config_reset_icon {
   return {
           'href'      => $url,
           'class'     => 'config-reset _reset',
-          'icon_key'  => 'config_reset',
+          'icon_key'  => 'reset_config',
           };
 }
 sub add_order_reset_icon {
@@ -371,7 +371,7 @@ sub add_order_reset_icon {
   return {
           'href'      => $url,
           'class'     => 'order-reset _reset',
-          'icon_key'  => 'resize',
+          'icon_key'  => 'reset_order',
           };
 }
 
