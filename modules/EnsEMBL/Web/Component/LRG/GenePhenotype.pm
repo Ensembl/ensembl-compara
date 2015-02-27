@@ -79,12 +79,12 @@ sub gene_phenotypes {
           $source = $hub->get_ExtURL_link($source, $source, { ID => $ext_id, TAX => $tax});
         }
         my $locs = sprintf(
-            '<a href="%s">View on Karyotype</a>',
+            '<a href="%s" class="karyotype-link">View on Karyotype</a>',
             $hub->url({
               type    => 'Phenotype',
               action  => 'Locations',
               ph      => $pf->phenotype->dbID
-             })
+             }),
         );
         # display one row for phenotype associated with male and female strain
         my $pf_id = $pf->id;
@@ -114,12 +114,12 @@ sub gene_phenotypes {
         }
         
         my $locs = sprintf(
-          '<a href="%s">View on Karyotype</a>',
+          '<a href="%s" class="karyotype_link">View on Karyotype</a>',
           $hub->url({
             type    => 'Phenotype',
             action  => 'Locations',
             ph      => $pf->phenotype->dbID
-          })
+          }),
         );
       
         push @rows, { source => $source, phenotype => $phen, locations =>  $locs};

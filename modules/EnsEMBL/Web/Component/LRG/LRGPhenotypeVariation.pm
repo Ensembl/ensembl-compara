@@ -171,7 +171,7 @@ sub stats_table {
     }
     # Karyotype link
     if ($hub->species_defs->ENSEMBL_CHROMOSOMES) {
-      $loc = sprintf '<a href="%s">View on Karyotype</a>', $hub->url({ type => 'Phenotype', action => 'Locations', ph => $phenotype->{'id'}, name => $_ }) unless /HGMD/;
+      $loc = sprintf '<a href="%s" class="karyotype_link">View on Karyotype</a>', $hub->url({ type => 'Phenotype', action => 'Locations', ph => $phenotype->{'id'}, name => $_ }) unless /HGMD/;
     }
        
     push @rows, {
