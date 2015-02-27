@@ -281,6 +281,12 @@ sub handler {
     $redirect = 1;
   }
 
+  ## Fix for moved eHive documentation
+  if ($file =~ /info\/docs\/eHive\//) {
+    $r->uri('/info/docs/eHive.html');
+    $redirect = 1;
+  }
+
   ## Simple redirect to VEP
 
   if ($SiteDefs::ENSEMBL_SUBTYPE eq 'Pre' && $file =~ /\/vep/i) { ## Pre has no VEP, so redirect to tools page
