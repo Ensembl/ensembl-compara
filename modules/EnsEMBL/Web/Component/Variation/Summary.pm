@@ -66,7 +66,7 @@ sub content {
                       $avail->{has_ega}, 
                       $avail->{has_ega} eq "1" ? "phenotype" : "phenotypes"
                   ) if($avail->{has_ega});  
-  push @str_array, sprintf('is mentioned in <a href="%s">%s %s', 
+  push @str_array, sprintf('is mentioned in <a href="%s">%s %s</a>', 
                       $citation_url, 
                       $avail->{has_citation}, 
                       $avail->{has_citation} eq "1" ? "citation" : "citations" 
