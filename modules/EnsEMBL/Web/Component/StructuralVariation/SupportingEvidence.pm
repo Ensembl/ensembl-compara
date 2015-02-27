@@ -44,12 +44,11 @@ sub supporting_evidence_table {
   my $ssvs     = shift;
   my $hub      = $self->hub;
   my $object   = $self->object;
-  my $title    = 'Supporting evidence';
   my $table_id = 'evidence';
   
   my $columns = [
-     { key => 'ssv',    sort => 'string',        title => 'Supporting evidence'   },
-     { key => 'pos',    sort => 'position_html', title => 'Chr:bp (strand)'       }, 
+     { key => 'ssv', sort => 'string',        title => 'Supporting evidence' },
+     { key => 'pos', sort => 'position_html', title => 'Chr:bp (strand)'     }, 
   ];
   my $sorting = 'pos';
 
@@ -58,16 +57,7 @@ sub supporting_evidence_table {
   
   # Supporting evidences list
   if (scalar @{$ssvs}) {
-    my $ssv_names = {};
-    foreach my $ssv (@$ssvs){
-      my $name = $ssv->variation_name;
-      $name =~ /(\d+)$/;
-      my $ssv_nb = $1;
-      $ssv_names->{$1} = $ssv;
-    }
-   
-    foreach my $ssv_n (sort {$a <=> $b} (keys(%$ssv_names))) {
-      my $ssv_obj = $ssv_names->{$ssv_n};
+    foreach my $ssv_obj (@{$ssvs}) {
       my $name = $ssv_obj->variation_name;
       my $loc;
       my $bp_order;
@@ -139,9 +129,12 @@ sub supporting_evidence_table {
   
       # Class + class colour
       my $colour = $object->get_class_colour($ssv_obj->class_SO_term);
-      my $sv_class = sprintf('<span class="hidden export">%s</span><div><div style="float:left;background-color:%s;padding:5px;margin-top:4px"></div> <div style="float:left;margin-left:5px">%s</div></div>', $ssv_obj->var_class, $colour, $ssv_obj->var_class);
-       
-      # Annotation(s)
+      my $sv_class = sprintf('<span class="hidden export">%s</span><span class="structural-variation-allele" style="background-color:%s"></span><span style="margin-bottom:2px">%s</span>', $ssv_obj->var_class, $colour, $ssv_obj->var_class);
+
+
+      ## Annotation(s) ##
+
+      # Clinical significance
       my %clin_sign_icon;
       my $clin;
 
@@ -171,12 +164,14 @@ sub supporting_evidence_table {
       my ($indiv, $strain, $phen);
       my ($indivs, $strains, $phens);
       
+      # Phenotype
       foreach my $pf (sort {$a->seq_region_start <=> $b->seq_region_start} @{$ssv_obj->get_all_PhenotypeFeatures}) {
         my $a_phen = $pf->phenotype->description;
         $phens->{$a_phen} = 1;
         $has_data{'phen'} = 1;
       }
       
+      # Individual/strain
       foreach my $svs (@{$ssv_obj->get_all_StructuralVariationSamples}) {
         
         my $a_indiv  = ($svs->individual) ? $svs->individual->name : undef;
@@ -192,8 +187,6 @@ sub supporting_evidence_table {
         }
       }
      
-      
- 
       $indiv  = join(';<br />', sort (keys(%$indivs)));
       $strain = join(';<br />', sort (keys(%$strains)));
       $phen   = join(';<br />', sort (keys(%$phens)));
@@ -240,7 +233,10 @@ sub supporting_evidence_table {
      push(@$columns,{ key => 'strain', sort => 'string', title => 'Strain' });
     };
 
-    return $self->new_table($columns, $rows, { data_table => 1, sorting => [ "$sorting asc" ] })->render;
+    my $ssv_count   = scalar(@{$ssvs});
+    my $sub_header  = $object->name." has ".$self->thousandify($ssv_count)." supporting evidence";
+       $sub_header .= 's' if ($ssv_count > 1);
+    return "<h4>$sub_header</h4>".$self->new_table($columns, $rows, { data_table => 1, sorting => [ "$sorting asc" ] })->render;
   }
 }
 1;
