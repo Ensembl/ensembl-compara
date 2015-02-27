@@ -47,8 +47,6 @@ sub content {
 
       $html .= $self->render_content($table, $phenotype);
     } else {
-#      my $chr_slice = $object->Obj->feature_Slice->expand(0,0);# $object->get_slice_object();
-#      $html .= $self->render_content($self->stats_table($chr_slice)); # no sub-table selected, just show stats
       $html .= $self->render_content($self->stats_table($lrg_slice)); # no sub-table selected, just show stats
     }
   }
@@ -96,29 +94,31 @@ sub render_content {
 
 sub stats_table {
   my ($self, $obj_slice) = @_;  
-  my $hub        = $self->hub;
-  my $pf_adaptor = $self->hub->database('variation')->get_PhenotypeFeatureAdaptor;
+  my $hub          = $self->hub;
+  my $species_defs = $hub->species_defs;
+  my $pf_adaptor   = $self->hub->database('variation')->get_PhenotypeFeatureAdaptor;
   my ($total_counts, %phenotypes, @va_ids);
-  
+
   my $columns = [
-    { key => 'count',   title => 'Number of variants', sort => 'numeric_hidden', width => '10%', align => 'right'  },   
-    { key => 'view',    title => 'Show/hide details', sort => 'none',           width => '10%',  align => 'center' },
-    { key => 'phen',    title => 'Phenotype',          sort => 'string',         width => '38%' },
+    { key => 'phen',    title => 'Phenotype', sort => 'string', width => '38%'  },
+    { key => 'source',  title => 'Source(s)', sort => 'string', width => '11%'  },
+    $species_defs->ENSEMBL_CHROMOSOMES
+    ? { key => 'loc',   title => 'Genomic locations', sort => 'none',   width => '13%'  }
+    : (),
+    $species_defs->ENSEMBL_MART_ENABLED
+    ? { key => 'mart',  title => 'Biomart',   sort => 'none',   width => '13%'  }
+    : (),
+    { key => 'count',   title => 'Number of variants',  sort => 'numeric_hidden', width => '10%',   align => 'right'  },
+    { key => 'view',    title => 'Show/hide details',   sort => 'none',           width => '10%',   align => 'center' }
   ];
-  if ($hub->species_defs->ENSEMBL_CHROMOSOMES) {
-    push @$columns, { key => 'loc',   title => 'Locations',   sort => 'none', width => '13%'};
-  }
-  if ($hub->species_defs->ENSEMBL_MART_ENABLED) {
-    push @$columns, { key => 'mart',   title => 'Biomart',    sort => 'none',  width => '13%'};
-  }
-  push @$columns,  { key => 'source',  title => 'Source(s)',  sort => 'string', width => '11%'};
+
  
   foreach my $pf ($obj_slice ? @{$pf_adaptor->fetch_all_by_Slice_type($obj_slice,'Variation')} : ()) {
     next unless ($pf->is_significant);
 
     my $var_name   = $pf->object->name;  
     my $phe        = $pf->phenotype->description;
-    my $phe_source = $pf->source;
+    my $phe_source = $pf->source_name;
    
     $phenotypes{$phe} ||= { id => $pf->{'_phenotype_id'} , name => $pf->{'_phenotype_name'}};
     push @{$phenotypes{$phe}{'count'}},  $var_name   unless grep $var_name   eq $_, @{$phenotypes{$phe}{'count'}};
@@ -230,27 +230,14 @@ sub variation_table {
 
       my $location = "$pf_region:$pf_start" . ($pf_start == $pf_end ? '' : "-$pf_end");
  
-      #my $location;
       my $allele;
       foreach my $vf (@{$var->get_all_VariationFeatures()}) {
-        #my $vf_region = $vf->seq_region_name;
-        #my $vf_start  = $vf->start;
-        #my $vf_end    = $vf->end;
         my $vf_allele = $vf->allele_string;
         
         $vf_allele =~ s/(.{20})/$1\n/g;
         
-        #$location .= '<br />' if ($location);
-        #$allele   .= '<br />' if ($allele);
-        #if ($vf_region eq $g_region && $vf_start >= $g_start && $vf_end <= $g_end) {
-        #  $location = "$vf_region:$vf_start" . ($vf_start == $vf_end ? '' : "-$vf_end");
-          $allele   = $vf_allele;
-          last;
-        #}
-        #else {
-        #  $location .= "$vf_region:$vf_start" . ($vf_start == $vf_end ? '' : "-$vf_end");
-        #  $allele   .= $vf_allele;
-        #}
+        $allele = $vf_allele;
+        last;
       }
     
       $list_variations->{$var_name} = { 'class'      => $var->var_class,
@@ -260,7 +247,7 @@ sub variation_table {
     }
       
     # List the phenotype sources for the variation
-    my $phe_source = $pf->source;
+    my $phe_source = $pf->source_name;
     my $ref_source = $pf->external_reference;
     
     $list_phe{$var_name}{$pf->phenotype->description} = 1 if ($all_flag == 1);
@@ -355,13 +342,13 @@ sub source_link {
     } 
     elsif ($url =~/cosmic/) {
       if ($vname) {
-	      my $cname = ($vname =~ /^COSM(\d+)/) ? $1 : $vname;
-			  $url =~ s/###ID###/$cname/;
+        my $cname = ($vname =~ /^COSM(\d+)/) ? $1 : $vname;
+        $url =~ s/###ID###/$cname/;
       }
       else {
-			  $url =~ s/###ID###/$gname/;
-      } 
-		} 
+        $url =~ s/###ID###/$gname/;
+      }
+    }
     else {
       $url =~ s/###ID###/$vname/;
     }
