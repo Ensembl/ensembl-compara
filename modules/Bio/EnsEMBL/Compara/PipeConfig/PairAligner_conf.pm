@@ -34,7 +34,7 @@ Bio::EnsEMBL::Compara::PipeConfig::PairAligner_conf
 
     #4. Run init_pipeline.pl script:
         Using command line arguments:
-        init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::PairAligner_conf --dbname hsap_ggor_lastz_64 --password <your_password) --mlss_id 536 --dump_dir /lustre/scratch103/ensembl/kb3/scratch/hive/release_64/hsap_ggor_nib_files/ --pair_aligner_options "T=1 K=5000 L=5000 H=3000 M=10 O=400 E=30 Q=/nfs/users/nfs_k/kb3/work/hive/data/primate.matrix --ambiguous=iupac" --bed_dir /nfs/ensembl/compara/dumps/bed/
+        init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::PairAligner_conf --pipeline_name hsap_ggor_lastz_64 --password <your_password) --mlss_id 536 --dump_dir /lustre/scratch103/ensembl/kb3/scratch/hive/release_64/hsap_ggor_nib_files/ --pair_aligner_options "T=1 K=5000 L=5000 H=3000 M=10 O=400 E=30 Q=/nfs/users/nfs_k/kb3/work/hive/data/primate.matrix --ambiguous=iupac" --bed_dir /nfs/ensembl/compara/dumps/bed/
 
         Using a configuration file:
         init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::PairAligner_conf --password <your_password> --reg_conf reg.conf --conf_file input.conf --config_url mysql://user:pass\@host:port/db_name
@@ -48,7 +48,7 @@ Bio::EnsEMBL::Compara::PipeConfig::PairAligner_conf
 
     You may need to provide a registry configuration file if the core databases have not been added to staging (--reg_conf).
 
-    A single pair of species can be run either by using a configuration file or by providing specific parameters on the command line and using the default values set in this file. On the command line, you must provide the LASTZ_NET mlss which should have been added to the master database (--mlss_id). The directory to which the nib files will be dumped can be specified using --dump_dir or the default location will be used. All the necessary directories are automatically created if they do not already exist. It may be necessary to change the pair_aligner_options default if, for example, doing primate-primate alignments. It is recommended that you provide a meaningful database name (--dbname). The username is automatically prefixed to this, ie -dbname hsap_ggor_lastz_64 will become kb3_hsap_ggor_lastz_64. A basic healthcheck is run and output is written to the job_message table. To write to the pairwise configuration database, you must provide the correct config_url. Even if no config_url is given, the statistics are written to the job_message table.
+    A single pair of species can be run either by using a configuration file or by providing specific parameters on the command line and using the default values set in this file. On the command line, you must provide the LASTZ_NET mlss which should have been added to the master database (--mlss_id). The directory to which the nib files will be dumped can be specified using --dump_dir or the default location will be used. All the necessary directories are automatically created if they do not already exist. It may be necessary to change the pair_aligner_options default if, for example, doing primate-primate alignments. It is recommended that you provide a meaningful pipeline name (--pipeline_name). The username is automatically prefixed to this, ie --pipeline_name hsap_ggor_lastz_64 will create kb3_hsap_ggor_lastz_64 database. A basic healthcheck is run and output is written to the job_message table. To write to the pairwise configuration database, you must provide the correct config_url. Even if no config_url is given, the statistics are written to the job_message table.
 
 
 =head1 CONTACT
@@ -70,31 +70,17 @@ use base ('Bio::EnsEMBL::Compara::PipeConfig::ComparaGeneric_conf');  # All Hive
 sub default_options {
     my ($self) = @_;
     return {
-	%{$self->SUPER::default_options},   # inherit the generic ones
+        %{$self->SUPER::default_options},   # inherit the generic ones
 
         #'ensembl_cvs_root_dir' => $ENV{'HOME'}.'/src/ensembl_main/', 
         'ensembl_cvs_root_dir' => $ENV{'ENSEMBL_CVS_ROOT_DIR'}, 
 
-	'release'               => '80',
-        'release_suffix'        => '',    # an empty string by default, a letter otherwise
-	#'dbname'               => '', #Define on the command line. Compara database name eg hsap_ggor_lastz_64
-
-         # dependent parameters:
-        'pipeline_name'         => 'LASTZ_'.$self->o('rel_with_suffix'),   # name the pipeline to differentiate the submitted processes
-
+             # dependent parameters:
         'host'        => 'compara1',                        #separate parameter to use the resources aswell
-        'pipeline_db' => {                                  # connection parameters
-            -host   => $self->o('host'),
-            -port   => 3306,
-            -user   => 'ensadmin',
-            -pass   => $self->o('password'), 
-            -dbname => $ENV{USER}.'_'.$self->o('dbname'),
-            -driver => 'mysql',
-        },
 
-	'master_db' => 'mysql://ensro@compara1/sf5_ensembl_compara_master',
+	    'master_db' => 'mysql://ensro@compara1/sf5_ensembl_compara_master',
 
-	'staging_loc1' => {
+	    'staging_loc1' => {
             -host   => 'ens-staging1',
             -port   => 3306,
             -user   => 'ensro',
@@ -106,31 +92,31 @@ sub default_options {
             -user   => 'ensro',
             -pass   => '',
         },  
-	 'livemirror_loc' => {
+	    'livemirror_loc' => {
             -host   => 'ens-livemirror',
             -port   => 3306,
             -user   => 'ensro',
             -pass   => '',
-	    -db_version => 71,
+	        -db_version => 71,
         },
 
-	'curr_core_sources_locs'    => [ $self->o('staging_loc1'), $self->o('staging_loc2'), ],
-	#'curr_core_sources_locs'    => [ $self->o('livemirror_loc') ],
-	'curr_core_dbs_locs'        => '', #if defining core dbs with config file. Define in Lastz_conf.pm or TBlat_conf.pm
+        'curr_core_sources_locs'    => [ $self->o('staging_loc1'), $self->o('staging_loc2'), ],
+        #'curr_core_sources_locs'    => [ $self->o('livemirror_loc') ],
+        'curr_core_dbs_locs'        => '', #if defining core dbs with config file. Define in Lastz_conf.pm or TBlat_conf.pm
 
-	# executable locations:
-	'populate_new_database_exe' => $self->o('ensembl_cvs_root_dir')."/ensembl-compara/scripts/pipeline/populate_new_database.pl",
-	'dump_features_exe' => $self->o('ensembl_cvs_root_dir')."/ensembl-compara/scripts/dumps/dump_features.pl",
-	'compare_beds_exe' => $self->o('ensembl_cvs_root_dir')."/ensembl-compara/scripts/pipeline/compare_beds.pl",
-	'update_config_database_exe' => $self->o('ensembl_cvs_root_dir')."/ensembl-compara/scripts/pipeline/update_config_database.pl",
-	'create_pair_aligner_page_exe' => $self->o('ensembl_cvs_root_dir')."/ensembl-compara/scripts/pipeline/create_pair_aligner_page.pl",
-	'faToNib_exe' => '/software/ensembl/compara/bin/faToNib',
-	'lavToAxt_exe' => '/software/ensembl/compara/bin/lavToAxt',
-	'axtChain_exe' => '/software/ensembl/compara/bin/axtChain',
-	'chainNet_exe' => '/software/ensembl/compara/bin/chainNet',
+            # executable locations:
+        'populate_new_database_exe' => $self->o('ensembl_cvs_root_dir')."/ensembl-compara/scripts/pipeline/populate_new_database.pl",
+        'dump_features_exe' => $self->o('ensembl_cvs_root_dir')."/ensembl-compara/scripts/dumps/dump_features.pl",
+        'compare_beds_exe' => $self->o('ensembl_cvs_root_dir')."/ensembl-compara/scripts/pipeline/compare_beds.pl",
+        'update_config_database_exe' => $self->o('ensembl_cvs_root_dir')."/ensembl-compara/scripts/pipeline/update_config_database.pl",
+        'create_pair_aligner_page_exe' => $self->o('ensembl_cvs_root_dir')."/ensembl-compara/scripts/pipeline/create_pair_aligner_page.pl",
+        'faToNib_exe' => '/software/ensembl/compara/bin/faToNib',
+        'lavToAxt_exe' => '/software/ensembl/compara/bin/lavToAxt',
+        'axtChain_exe' => '/software/ensembl/compara/bin/axtChain',
+        'chainNet_exe' => '/software/ensembl/compara/bin/chainNet',
 
-	#Set for single pairwise mode
-	'mlss_id' => '',
+            #Set for single pairwise mode
+        'mlss_id' => '',
 
         #Collection name 
         'collection' => '',
@@ -294,7 +280,6 @@ sub pipeline_wide_parameters {  # these parameter values are visible to all anal
 
     return {
             %{$self->SUPER::pipeline_wide_parameters},          # here we inherit anything from the base class
-	    'pipeline_name' => $self->o('pipeline_name'), #This must be defined for the beekeeper to work properly
 	    'do_transactions' => $self->o('do_transactions'),
     };
 }
@@ -306,8 +291,12 @@ sub resource_classes {
             %{$self->SUPER::resource_classes},  # inherit 'default' from the parent class
             '100Mb' => { 'LSF' => '-C0 -M100' . $self->o('memory_suffix') .' -R"select[mem>100] rusage[mem=100]"' },
             '1Gb'   => { 'LSF' => '-C0 -M1000' . $self->o('memory_suffix') .' -R"select[mem>1000] rusage[mem=1000]"' },
+                # if running on one of compara1..5 servers that support my+$SERVERHOSTNAME resources:
             '1.8Gb' => { 'LSF' => '-C0 -M1800' . $self->o('memory_suffix') .' -R"select[mem>1800 && '.$self->o('dbresource').'<'.$self->o('aligner_capacity').'] rusage[mem=1800,'.$self->o('dbresource').'=10:duration=3]"' },
             '3.6Gb' => { 'LSF' => '-C0 -M3600' . $self->o('memory_suffix') .' -R"select[mem>3600 && '.$self->o('dbresource').'<'.$self->o('aligner_capacity').'] rusage[mem=3600,'.$self->o('dbresource').'=10:duration=3]"' },
+                # if running on any other server:
+#            '1.8Gb' => { 'LSF' => '-C0 -M1800' . $self->o('memory_suffix') .' -R"select[mem>1800] rusage[mem=1800]"' },
+#            '3.6Gb' => { 'LSF' => '-C0 -M3600' . $self->o('memory_suffix') .' -R"select[mem>3600] rusage[mem=3600]"' },
     };
 }
 
