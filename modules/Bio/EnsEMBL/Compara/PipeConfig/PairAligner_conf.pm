@@ -180,7 +180,7 @@ sub default_options {
         #'window_size' => 1000000,
         'window_size' => 10000,
 	'filter_duplicates_rc_name' => '1Gb',
-	'filter_duplicates_himem_rc_name' => '3.6Gb',
+	'filter_duplicates_himem_rc_name' => 'crowd_himem',
 
 	#
 	#Default pair_aligner
@@ -292,11 +292,11 @@ sub resource_classes {
             '100Mb' => { 'LSF' => '-C0 -M100' . $self->o('memory_suffix') .' -R"select[mem>100] rusage[mem=100]"' },
             '1Gb'   => { 'LSF' => '-C0 -M1000' . $self->o('memory_suffix') .' -R"select[mem>1000] rusage[mem=1000]"' },
                 # if running on one of compara1..5 servers that support my+$SERVERHOSTNAME resources:
-            '1.8Gb' => { 'LSF' => '-C0 -M1800' . $self->o('memory_suffix') .' -R"select[mem>1800 && '.$self->o('dbresource').'<'.$self->o('aligner_capacity').'] rusage[mem=1800,'.$self->o('dbresource').'=10:duration=3]"' },
-            '3.6Gb' => { 'LSF' => '-C0 -M3600' . $self->o('memory_suffix') .' -R"select[mem>3600 && '.$self->o('dbresource').'<'.$self->o('aligner_capacity').'] rusage[mem=3600,'.$self->o('dbresource').'=10:duration=3]"' },
+            'crowd' => { 'LSF' => '-C0 -M1800' . $self->o('memory_suffix') .' -R"select[mem>1800 && '.$self->o('dbresource').'<'.$self->o('aligner_capacity').'] rusage[mem=1800,'.$self->o('dbresource').'=10:duration=3]"' },
+            'crowd_himem' => { 'LSF' => '-C0 -M6000' . $self->o('memory_suffix') .' -R"select[mem>6000 && '.$self->o('dbresource').'<'.$self->o('aligner_capacity').'] rusage[mem=6000,'.$self->o('dbresource').'=10:duration=3]"' },
                 # if running on any other server:
-#            '1.8Gb' => { 'LSF' => '-C0 -M1800' . $self->o('memory_suffix') .' -R"select[mem>1800] rusage[mem=1800]"' },
-#            '3.6Gb' => { 'LSF' => '-C0 -M3600' . $self->o('memory_suffix') .' -R"select[mem>3600] rusage[mem=3600]"' },
+#            'crowd' => { 'LSF' => '-C0 -M1800' . $self->o('memory_suffix') .' -R"select[mem>1800] rusage[mem=1800]"' },
+#            'crowd_himem' => { 'LSF' => '-C0 -M6000' . $self->o('memory_suffix') .' -R"select[mem>6000] rusage[mem=6000]"' },
     };
 }
 
@@ -390,7 +390,7 @@ sub pipeline_analyses {
  	       -flow_into => {
  	          2 => [ 'store_sequence' ],
  	       },
-	       -rc_name => '1.8Gb',
+	       -rc_name => 'crowd',
  	    },
  	    {  -logic_name => 'store_sequence',
  	       -hive_capacity => 50,
@@ -399,7 +399,7 @@ sub pipeline_analyses {
 	       -flow_into => {
  	          -1 => [ 'store_sequence_again' ],
  	       },
-	       -rc_name => '1.8Gb',
+	       -rc_name => 'crowd',
   	    },
 	    #If fail due to MEMLIMIT, probably due to memory leak, and rerunning with the default memory should be fine.
  	    {  -logic_name => 'store_sequence_again',
@@ -407,7 +407,7 @@ sub pipeline_analyses {
  	       -module     => 'Bio::EnsEMBL::Compara::RunnableDB::PairAligner::StoreSequence',
  	       -parameters => { }, 
 	       -can_be_empty  => 1, 
-	       -rc_name => '1.8Gb',
+	       -rc_name => 'crowd',
   	    },
 	    {  -logic_name => 'dump_dna_factory',
 	       -module     => 'Bio::EnsEMBL::Compara::RunnableDB::PairAligner::DumpDnaCollectionFactory',
@@ -454,7 +454,7 @@ sub pipeline_analyses {
 	       -flow_into => {
 			      -1 => [ $self->o('pair_aligner_logic_name') . '_himem1' ],  # MEMLIMIT
 			     },
-	       -rc_name => '1.8Gb',
+	       -rc_name => 'crowd',
 	    },
 	    {  -logic_name => $self->o('pair_aligner_logic_name') . "_himem1",
  	       -module     => $self->o('pair_aligner_module'),
@@ -465,7 +465,7 @@ sub pipeline_analyses {
  	       -batch_size => $self->o('pair_aligner_batch_size'),
  	       -program    => $self->o('pair_aligner_program'), 
 	       -can_be_empty  => 1, 
-	       -rc_name => '3.6Gb',
+	       -rc_name => 'crowd_himem',
 	    },
 	    {  -logic_name => 'remove_inconsistencies_after_pairaligner',
                -module     => 'Bio::EnsEMBL::Compara::RunnableDB::PairAligner::RemoveAlignmentDataInconsistencies',
@@ -539,7 +539,7 @@ sub pipeline_analyses {
 			      1 => [ 'dump_large_nib_for_chains_factory' ],
 			     },
 	       -wait_for  => ['update_max_alignment_length_after_FD' ],
-	       -rc_name => '1.8Gb',
+	       -rc_name => 'crowd',
  	    },
  	    {  -logic_name => 'dump_large_nib_for_chains_factory',
  	       -module     => 'Bio::EnsEMBL::Compara::RunnableDB::PairAligner::DumpDnaCollectionFactory',
@@ -567,7 +567,7 @@ sub pipeline_analyses {
 	       -flow_into => {
 			      -1 => [ 'dump_large_nib_for_chains_himem' ],  # MEMLIMIT
 			     },
-	       -rc_name => '1.8Gb',
+	       -rc_name => 'crowd',
  	    },
 	    {  -logic_name => 'dump_large_nib_for_chains_himem',
  	       -module     => 'Bio::EnsEMBL::Compara::RunnableDB::PairAligner::DumpDnaCollection',
@@ -578,7 +578,7 @@ sub pipeline_analyses {
 			      },
 	       -hive_capacity => 10,
 	       -can_be_empty  => 1, 
-	       -rc_name => '3.6Gb',
+	       -rc_name => 'crowd_himem',
  	    },
  	    {  -logic_name => 'create_alignment_chains_jobs',
 		-module     => 'Bio::EnsEMBL::Compara::RunnableDB::PairAligner::CreateAlignmentChainsJobs',
@@ -599,7 +599,7 @@ sub pipeline_analyses {
 	       -flow_into => {
 			      -1 => [ 'alignment_chains_himem' ],  # MEMLIMIT
 			     },
-	       -rc_name => '1.8Gb',
+	       -rc_name => 'crowd',
  	    },
 	    {  -logic_name => 'alignment_chains_himem',
  	       -hive_capacity => $self->o('chain_hive_capacity'),
@@ -607,7 +607,7 @@ sub pipeline_analyses {
  	       -module     => 'Bio::EnsEMBL::Compara::RunnableDB::PairAligner::AlignmentChains',
  	       -parameters => $self->o('chain_parameters'),
 	       -can_be_empty  => 1, 
-	       -rc_name => '3.6Gb',
+	       -rc_name => 'crowd_himem',
  	    },
 	    {
 	     -logic_name => 'remove_inconsistencies_after_chain',
@@ -661,7 +661,7 @@ sub pipeline_analyses {
  	       -module     => 'Bio::EnsEMBL::Compara::RunnableDB::PairAligner::AlignmentNets',
  	       -parameters => $self->o('net_parameters'),
 	       -can_be_empty  => 1, 
-	       -rc_name => '1.8Gb',
+	       -rc_name => 'crowd',
  	    },
  	    {
 	       -logic_name => 'remove_inconsistencies_after_net',
@@ -680,7 +680,7 @@ sub pipeline_analyses {
                               2 => [ 'filter_duplicates_net' ], 
                             },
                -can_be_empty  => 1,
-               -rc_name => '1.8Gb',
+               -rc_name => 'crowd',
            },
            {  -logic_name   => 'filter_duplicates_net',
               -module        => 'Bio::EnsEMBL::Compara::RunnableDB::PairAligner::FilterDuplicates',
