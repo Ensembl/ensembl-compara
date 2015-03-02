@@ -82,10 +82,16 @@ sub canvas {
 # GD can only store 256 colours, so need to cache the ones we colorAllocate. (Doh!)
 #
 sub colour {
-  my ($self, $id) = @_;
+  my ($self, $id, $alpha) = @_;
   $id           ||= 'black';
-  $self->{'_GDColourCache'}->{$id} ||= $self->{'canvas'}->colorAllocate($self->{'colourmap'}->rgb_by_name($id));
-  return $self->{'_GDColourCache'}->{$id};
+
+  if ($alpha) {
+    $self->{'_GDColourCacheAlpha'}->{$id}{$alpha} ||= $self->{'canvas'}->colorAllocateAlpha($self->{'colourmap'}->rgb_by_name($id), int(127 * $alpha));
+    return $self->{'_GDColourCacheAlpha'}->{$id}{$alpha};
+  } else {
+    $self->{'_GDColourCache'}->{$id} ||= $self->{'canvas'}->colorAllocate($self->{'colourmap'}->rgb_by_name($id));
+    return $self->{'_GDColourCache'}->{$id};
+  }
 }
 
 #########
@@ -126,6 +132,7 @@ sub render_Rect {
   my $canvas         = $self->{'canvas'};
   my $gcolour        = $glyph->{'colour'};
   my $gbordercolour  = $glyph->{'bordercolour'};
+  my $alpha          = $glyph->{'alpha'};
 
   # (avc)
   # this is a no-op to let us define transparent glyphs
@@ -136,13 +143,15 @@ sub render_Rect {
     return;
   }
 
-  my $bordercolour  = $self->colour($gbordercolour);
-  my $colour        = $self->colour($gcolour);
+  my $bordercolour  = $self->colour($gbordercolour, $alpha);
+  my $colour        = $self->colour($gcolour, $alpha);
 
   my $x1 = $self->{sf} *   $glyph->{'pixelx'};
   my $x2 = $self->{sf} * ( $glyph->{'pixelx'} + $glyph->{'pixelwidth'} );
   my $y1 = $self->{sf} *   $glyph->{'pixely'};
   my $y2 = $self->{sf} * ( $glyph->{'pixely'} + $glyph->{'pixelheight'} );
+
+  $canvas->alphaBlending(1) if $alpha;
 
   $canvas->filledRectangle($x1, $y1, $x2, $y2, $colour) if(defined $gcolour);
   if($glyph->{'pattern'}) {
