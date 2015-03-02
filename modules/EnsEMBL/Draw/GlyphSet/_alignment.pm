@@ -149,6 +149,7 @@ sub render_histogram {
       score_colour         => $feature_colour,
       no_axis              => 1,
       axis_label           => 'off',
+      bumped               => 1,
       hrefs                => $hrefs,
       non_can_score_colour => $non_can_feature_colour,
     });
