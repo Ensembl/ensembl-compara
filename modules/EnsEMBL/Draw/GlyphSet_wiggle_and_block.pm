@@ -414,7 +414,7 @@ sub draw_wiggle_points {
   
   foreach my $f (@$features) {
     my ($start, $end, $score, $min_score, $height, $width, $x);
-    my $href        = ref $f ne 'HASH' && $f->can('id') ? $hrefs->{$f->id} : '';
+    my $href        = ref $f ne 'HASH' && $f->can('display_id') ? $hrefs->{$f->display_id} : '';
     my $this_colour = $colour;
     
     if ($parameters->{'use_feature_colours'} && $f->can('external_data')) {
