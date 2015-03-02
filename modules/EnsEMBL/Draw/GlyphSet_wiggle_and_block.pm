@@ -460,6 +460,7 @@ sub draw_wiggle_points {
         width     => $width,
         absolutey => 1,
         colour    => $_->[1],
+        alpha     => $parameters->{'use_alpha'} ? 0.5 : 0,
         title     => $parameters->{'no_titles'} ? undef : sprintf('%.2f', $_->[0]),
         href      => $href,
       }));
