@@ -100,7 +100,7 @@ sub content {
     $table->add_row('Type', $type) if $type;
   }
   ## add prediction method
-  my $label = ($db eq 'vega' || $species_defs->ENSEMBL_SITETYPE eq 'Vega' ? 'Curation' : 'Prediction') . ' Method';
+  my $label = ($db eq 'vega' || $species_defs->ENSEMBL_SITETYPE eq 'Vega' ? 'Curation' : 'Annotation') . ' Method';
   my $text  = "No $label defined in database";
 
   eval {

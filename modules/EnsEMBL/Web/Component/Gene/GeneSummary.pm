@@ -207,7 +207,7 @@ sub content {
 
   eval {
     # add prediction method
-    my $label = ($db eq 'vega' || $site_type eq 'Vega' ? 'Curation' : 'Prediction') . ' Method';
+    my $label = ($db eq 'vega' || $site_type eq 'Vega' ? 'Curation' : 'Annotation') . ' Method';
     my $text  = "<p>No $label defined in database</p>";
     my $o     = $object->Obj;
 
