@@ -3256,7 +3256,7 @@ sub add_phenotypes {
 #    description => 'Phenotype annotations on '.(join ", ", map {$_.'s'} keys %{$hashref->{'phenotypes'}{'types'}}),
 #  }));
  
-  foreach my $type( sort {$a cmp $b} keys %{$hashref->{'phenotypes'}{'types'}}) {
+  foreach my $type( sort {$a cmp $b} keys %{$hashref->{'phenotypes'}{'types'}}) {  
     next unless ref $hashref->{'phenotypes'}{'types'}{$type} eq 'HASH';
     my $pf_sources = $hashref->{'phenotypes'}{'types'}{$type}{'sources'};
     $pf_menu->prepend($self->create_track('phenotype_'.lc($type), 'Phenotype annotations ('.$type.'s)', {
@@ -3273,8 +3273,7 @@ sub add_phenotypes {
     type => undef,
     description => 'Phenotype annotations on '.(join ", ", map {$_.'s'} keys %{$hashref->{'phenotypes'}{'types'}}),
   }));
-
-  $p_menu->prepend($pf_menu);
+  $p_menu->append($pf_menu);
 }
 
 sub add_structural_variations {
