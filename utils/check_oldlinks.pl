@@ -41,7 +41,7 @@ BEGIN {
   unshift @INC, $_ for @SiteDefs::ENSEMBL_LIB_DIRS;
 }
 
-use EnsEMBL::Web::Root;
+use EnsEMBL::Root;
 use EnsEMBL::Web::Tree;
 use EnsEMBL::Web::Hub;
 use EnsEMBL::Web::Builder;
@@ -63,7 +63,7 @@ while (my ($k, $v) = each (%EnsEMBL::Web::OldLinks::mapping)) {
 foreach my $type (@object_types) {
   my $conf_module = "EnsEMBL::Web::Configuration::$type";
   
-  if (EnsEMBL::Web::Root::dynamic_use(undef, $conf_module)) {
+  if (EnsEMBL::Root::dynamic_use(undef, $conf_module)) {
     ## We need to fake a web page so that we can get the LH menu
     my $page = EnsEMBL::Web::Document::Page::Dynamic->new({
       hub          => $hub,
