@@ -234,7 +234,7 @@ if (0) {
 
 	  if ($cmpdb && ($slabel !~ /Bacteria/) ) { # bacteria is a special case - we do not build bacterial compara because there are too many of them 
 	      my %homologues;
-	      my $query_member = $cmpdb->get_adaptor('GeneMember')->fetch_by_source_stable_id("ENSEMBLGENE",$gene_id);
+	      my $query_member = $cmpdb->get_adaptor('GeneMember')->fetch_by_stable_id($gene_id);
 	      next unless defined $query_member ;
 	      my $compara_name = $slabel;
 	      my $olink = 'Ortholog';
@@ -278,7 +278,7 @@ if (0) {
 
 	  if ($cmpdb) {
 	      my %homologues;
-	      my $query_member = $cmpdb->get_adaptor('GeneMember')->fetch_by_source_stable_id("ENSEMBLGENE",$gene_id);
+	      my $query_member = $cmpdb->get_adaptor('GeneMember')->fetch_by_stable_id($gene_id);
 	      next unless defined $query_member ;
 	      my $homology_adaptor = $cmpdb->get_adaptor('Homology');
 	      my $compara_name = 'Ensembl Genomes';

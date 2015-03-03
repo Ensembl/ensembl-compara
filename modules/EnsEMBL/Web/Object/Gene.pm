@@ -53,7 +53,7 @@ sub availability {
       $availability->{'history'} = 1;
     } elsif ($obj->isa('Bio::EnsEMBL::Gene')) {
       my $member      = $self->database('compara') ? $self->database('compara')->get_GeneMemberAdaptor->fetch_by_stable_id($obj->stable_id) : undef;
-      my $pan_member  = $self->database('compara_pan_ensembl') ? $self->database('compara_pan_ensembl')->get_GeneMemberAdaptor->fetch_by_source_stable_id('ENSEMBLGENE', $obj->stable_id) : undef;
+      my $pan_member  = $self->database('compara_pan_ensembl') ? $self->database('compara_pan_ensembl')->get_GeneMemberAdaptor->fetch_by_stable_id($obj->stable_id) : undef;
       my $counts      = $self->counts($member, $pan_member);
       my $rows        = $self->table_info($self->get_db, 'stable_id_event')->{'rows'};
       my $funcgen_res = $self->database('funcgen') ? $self->table_info('funcgen', 'feature_set')->{'rows'} ? 1 : 0 : 0;
@@ -831,7 +831,7 @@ sub get_compara_Member {
   if (!$self->{$cache_key}) {
     my $compara_dba = $self->database($compara_db)              || return;
     my $adaptor     = $compara_dba->get_adaptor('GeneMember')   || return;
-    my $member      = $adaptor->fetch_by_source_stable_id('ENSEMBLGENE', $self->stable_id);
+    my $member      = $adaptor->fetch_by_stable_id($self->stable_id);
     
     $self->{$cache_key} = $member if $member;
   }

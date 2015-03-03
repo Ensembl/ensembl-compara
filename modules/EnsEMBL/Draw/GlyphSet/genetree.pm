@@ -771,9 +771,9 @@ sub features {
 
     if (my $member = $tree->gene_member) {
       my $stable_id = $member->stable_id;
-      my $chr_name  = $member->chr_name;
-      my $chr_start = $member->chr_start;
-      my $chr_end   = $member->chr_end;
+      my $chr_name  = $member->dnafrag->name;
+      my $chr_start = $member->dnafrag_start;
+      my $chr_end   = $member->dnafrag_end;
       
       $f->{'_gene'} = $stable_id;
       $f->{'_genes'} ||= {};
