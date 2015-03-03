@@ -100,7 +100,7 @@ sub show_headlines {
 
         ## format news headlines
         foreach my $item (@items) {
-          $headlines .= qq|<li><strong><a href="$news_url#news_$item->{'id'}" style="text-decoration:none">$item->{'title'}</a></strong></li>\n|;
+          $headlines .= qq|<li><strong><a href="$news_url#change_$item->{'id'}" style="text-decoration:none">$item->{'title'}</a></strong></li>\n|;
         }
         $headlines .= "</ul>\n";
         push @links, qq(<p style="text-align:right"><a href="/info/website/news.html">Full details</a>);
