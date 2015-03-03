@@ -70,7 +70,7 @@ sub fetch_headlines {
         AND site_type = ?
         AND status = 'handed_over'
         AND category != 'other'
-      ORDER BY priority
+      ORDER BY priority DESC
       LIMIT $limit
   );
   my @args = ($criteria->{'release'}, $self->{'SITE'});
