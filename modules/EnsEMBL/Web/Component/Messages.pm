@@ -57,7 +57,7 @@ sub content {
   
   $session->purge_data(type => 'message', code => $_->{'code'}) for @data;
   
-  return qq{<div class="session_messages">$html</div>};
+  return qq{<div class="session_messages js_panel"><input type="hidden" class="panel_type" value="Message">$html</div>};
 }
 
 1;
