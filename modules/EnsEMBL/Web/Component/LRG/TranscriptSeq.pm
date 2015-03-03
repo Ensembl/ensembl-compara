@@ -37,7 +37,8 @@ sub object {
 sub get_transcript {
 	my $self        = shift;
 	my $param       = $self->hub->param('lrgt');
-	my $transcripts = $self->builder->object->get_all_transcripts;
+  my $object      = $self->hub->core_object('LRG');
+	my $transcripts = $object->get_all_transcripts;
   return $param ? grep $_->stable_id eq $param, @$transcripts : $transcripts->[0];
 }
 
@@ -47,5 +48,13 @@ sub content {
   my $display_id = ($external_name && $external_name ne '') ? $external_name : $self->object->Obj->stable_id;
   return sprintf '<h2>Transcript ID: %s</h2>%s', $display_id, $self->SUPER::content;
 }
+
+sub get_export_data {
+  my $self = shift;
+  my ($t) = $self->get_transcript;
+  return $t->Obj;
+}
+
+sub export_options { return {'action' => 'Transcript', 'params' => ['lrgt']}; }
 
 1;
