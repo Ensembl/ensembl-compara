@@ -100,6 +100,21 @@ sub config {
   my $self = shift;
   
   $self->__data->{'config'} = {
+    fasta => {
+      label => 'FASTA sequence',
+      formats => [
+        [ 'fasta', 'FASTA sequence' ]
+      ],
+      params => [
+        [ 'cdna',    'cDNA' ],
+        [ 'coding',  'Coding sequence' ],
+        [ 'peptide', 'Peptide sequence' ],
+        [ 'utr5',    "5' UTR" ],
+        [ 'utr3',    "3' UTR" ],
+        [ 'exon',    'Exons' ],
+        [ 'intron',  'Introns' ]
+      ]
+    },
     features => {
       label => 'Feature File',
       formats => [
