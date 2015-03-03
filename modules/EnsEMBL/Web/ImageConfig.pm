@@ -2647,7 +2647,7 @@ sub add_alignments {
       } else {
         $type        = ucfirst lc $row->{'type'};
         $type        =~ s/\W/ /g;
-        $menu_key    = 'pairwise_align';
+        $menu_key    = 'pairwise_other';
         $description = 'Pairwise alignments';
       }
       
