@@ -534,7 +534,7 @@ sub transcript_table {
   $insdc_accession = $self->object->insdc_accession if $self->object->can('insdc_accession');
   $table->add_row('INSDC coordinates',$insdc_accession) if $insdc_accession;
   
-  $table->add_row('Summary',$counts_summary) if $counts_summary;
+  $table->add_row( $page_type eq 'gene' ? 'About this gene' : 'About this transcript',$counts_summary) if $counts_summary;
   $table->add_row($page_type eq 'gene' ? 'Transcripts' : 'Gene', $gene_html) if $gene_html;
 
   return sprintf '<div class="summary_panel">%s%s</div>', $table->render, $transc_table ? $transc_table->render : '';
