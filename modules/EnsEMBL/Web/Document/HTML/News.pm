@@ -160,7 +160,7 @@ sub get_news {
 
     if (scalar(@changes) > 0) {
 
-      my @order = $has_cats ? qw(web genebuild variation regulation alignment schema other) : sort keys %ok_teams;
+      my @order = $has_cats ? qw(web genebuild variation regulation alignment schema retired other) : sort keys %ok_teams;
       my %cat_lookup = (
                       'web'         => 'New web displays and tools',
                       'genebuild'   => 'New species, assemblies and genebuilds',
@@ -168,6 +168,7 @@ sub get_news {
                       'regulation'  => 'New regulation data',
                       'alignment'   => 'New alignments',
                       'schema'      => 'API and schema changes',
+                      'retired'     => 'Retired data',
                       'other'       => 'Other updates',
                       );
 
