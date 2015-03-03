@@ -69,8 +69,9 @@ div#doc_search .button  { vertical-align:middle; }
   border-radius:8px; -moz-border-radius: 8px; -webkit-border-radius: 8px;}
 
 div.species-news p.headline { margin:0; padding:4px 0; font-size:110%; min-height:40px; }
-h2.news-category { margin-top:2em; color:[[MH_BORDER]]!important; }
+h2.news-category { margin-top:1em; color:[[MH_BORDER]]!important; }
 h3.news-subcategory { color:[[MH_BORDER]]!important; }
+div.news-item { margin-bottom:3em; }
 
 ul#favourites_list li, ul#species_list li { cursor:move; }
 

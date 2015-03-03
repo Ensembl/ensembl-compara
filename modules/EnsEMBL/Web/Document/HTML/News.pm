@@ -97,7 +97,7 @@ sub _format_items {
 
   foreach my $item (@$items) {      
     my $header = $item->{'header'};
-    $html .= sprintf('<h%s id="%s">%s%s</h%s><p>%s</p>', 
+    $html .= sprintf('<div class="news-item"><h%s id="%s">%s%s</h%s>%s</div>', 
                               $header->{'level'}, $header->{'id'}, 
                               $header->{'text'}, $header->{'species'},
                               $header->{'level'}, $item->{'content'},
