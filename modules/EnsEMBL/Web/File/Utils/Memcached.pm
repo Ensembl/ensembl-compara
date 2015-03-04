@@ -39,6 +39,8 @@ sub file_exists {
 ### @return Hashref (nice mode) or Boolean
   my ($file, $args) = @_;
   my $path = ref($file) ? $file->read_url : $file;
+  my $static = $args->{'hub'}->species_defs->ENSEMBL_STATIC_SERVER || '';
+  $path = $static.$path;
   my $cache = $args->{'hub'}->cache;
   if (!$cache) {
     return $args->{'nice'} ? {'error' => ['No cache found!']} : 0;
@@ -66,6 +68,8 @@ sub read_file {
 ### @return Hashref (in nice mode) or String - contents of file
   my ($file, $args) = @_;
   my $path = ref($file) ? $file->read_url : $file;
+  my $static = $args->{'hub'}->species_defs->ENSEMBL_STATIC_SERVER || '';
+  $path = $static.$path;
   my $cache = $args->{'hub'}->cache;
   if (!$cache) {
     return $args->{'nice'} ? {'error' => ['No cache found!']} : 0;
@@ -108,6 +112,8 @@ sub write_file {
 ### @return Hashref (in nice mode) or Boolean 
   my ($file, $args) = @_;
   my $path = ref($file) ? $file->write_url : $file;
+  my $static = $args->{'hub'}->species_defs->ENSEMBL_STATIC_SERVER || '';
+  $path = $static.$path;
   my $cache = $args->{'hub'}->cache;
   if (!$cache) {
     return $args->{'nice'} ? {'error' => ['No cache found!']} : 0;
@@ -150,6 +156,8 @@ sub delete_file {
 ### @return Hashref (in nice mode) or Boolean
   my ($file, $args) = @_;
   my $path = ref($file) ? $file->write_url : $file;
+  my $static = $args->{'hub'}->species_defs->ENSEMBL_STATIC_SERVER || '';
+  $path = $static.$path;
   my $cache = $args->{'hub'}->cache;
   if (!$cache) {
     return $args->{'nice'} ? {'error' => ['No cache found!']} : 0;
