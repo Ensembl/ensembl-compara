@@ -35,6 +35,7 @@ sub new {
     hub                => $hub,
     component          => $component,
     toolbars           => {},
+    static             => $hub->species_defs->ENSEMBL_STATIC_SERVER || '',
     %$args,
   };
 

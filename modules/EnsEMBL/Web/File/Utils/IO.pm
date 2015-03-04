@@ -70,8 +70,6 @@ sub file_exists {
 ### @return Hashref (nice mode) or Boolean
   my ($file, $args) = @_;
   my $path = ref($file) ? $file->absolute_read_path : $file;
-  my $static = $args->{'hub'} ? $args->{'hub'}->species_defs->ENSEMBL_STATIC_SERVER : '';
-  $path = $static.$path;
   if ($args->{'nice'}) {
     if (-e $path && -f $path) {
       return {'success' => 1};
@@ -101,8 +99,6 @@ sub delete_file {
 ### @return Hashref (in nice mode) or Boolean
   my ($file, $args) = @_;
   my $path = ref($file) ? $file->absolute_write_path : $file;
-  my $static = $args->{'hub'} ? $args->{'hub'}->species_defs->ENSEMBL_STATIC_SERVER : '';
-  $path = $static.$path;
   if ($args->{'nice'}) {
     if (unlink $path) {
       return {'success' => 1};
@@ -132,8 +128,6 @@ sub fetch_file {
 ### @return Hashref (in nice mode) or String - entire file
   my ($file, $args) = @_;
   my $path = ref($file) ? $file->absolute_read_path : $file;
-  my $static = $args->{'hub'} ? $args->{'hub'}->species_defs->ENSEMBL_STATIC_SERVER : '';
-  $path = $static.$path;
   my $content;
   eval { $content = slurp($path) }; 
   if ($args->{'nice'}) {
@@ -167,8 +161,6 @@ sub read_file {
 ### @return Hashref (in nice mode) or String - contents of file
   my ($file, $args) = @_;
   my $path = ref($file) ? $file->absolute_read_path : $file;
-  my $static = $args->{'hub'} ? $args->{'hub'}->species_defs->ENSEMBL_STATIC_SERVER : '';
-  $path = $static.$path;
   my $content;
 
   my $compression = defined($args->{'read_compression'}) || get_compression($path);
@@ -211,8 +203,6 @@ sub read_lines {
   my ($file, $args) = @_;
   my $content = [];
   my $path = ref($file) ? $file->absolute_read_path : $file;
-  my $static = $args->{'hub'} ? $args->{'hub'}->species_defs->ENSEMBL_STATIC_SERVER : '';
-  $path = $static.$path;
 
   my $compression = defined($args->{'read_compression'}) || get_compression($file);
   my $method = $compression ? $compression.'_slurp_to_array' : 'slurp_to_array';
@@ -253,8 +243,6 @@ sub preview_file {
 ### @return Hashref (in nice mode) or Arrayref - n lines of file
   my ($file, $args) = @_;
   my $path = ref($file) ? $file->absolute_read_path : $file;
-  my $static = $args->{'hub'} ? $args->{'hub'}->species_defs->ENSEMBL_STATIC_SERVER : '';
-  $path = $static.$path;
   my $limit = $args->{'limit'} || 10;
   my $count = 0;
   my $lines = [];
@@ -309,8 +297,6 @@ sub write_file {
 ### @return Hashref (in nice mode) or Boolean 
   my ($file, $args) = @_;
   my $path = ref($file) ? $file->absolute_write_path : $file;
-  my $static = $args->{'hub'} ? $args->{'hub'}->species_defs->ENSEMBL_STATIC_SERVER : '';
-  $path = $static.$path;
 
   my $content = $args->{'content'};
   my $filename = get_filename($file, 'write');
@@ -381,8 +367,6 @@ sub write_lines {
 ### @return Hashref (in nice mode) or Boolean
   my ($file, $args) = @_;
   my $path = ref($file) ? $file->absolute_write_path : $file;
-  my $static = $args->{'hub'} ? $args->{'hub'}->species_defs->ENSEMBL_STATIC_SERVER : '';
-  $path = $static.$path;
   my $lines = $args->{'lines'};
 
   if (ref($lines) ne 'ARRAY') {
@@ -441,8 +425,6 @@ sub append_lines {
 ### @return Hashref (in nice mode) or Boolean
   my ($file, $args) = @_;
   my $path = ref($file) ? $file->absolute_write_path : $file;
-  my $static = $args->{'hub'} ? $args->{'hub'}->species_defs->ENSEMBL_STATIC_SERVER : '';
-  $path = $static.$path;
   my $lines = $args->{'lines'};
 
   if (ref($lines) ne 'ARRAY') {
