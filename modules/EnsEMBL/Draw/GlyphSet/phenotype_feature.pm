@@ -99,7 +99,7 @@ sub href {
   
   # link to ext DB for QTL
   elsif($type eq 'QTL') {
-    my $source = $f->source;
+    my $source = $f->source_name;
     my $species = uc(join("", map {substr($_,0,1)} split(/\_/, $hub->species)));
     
     $link = $hub->get_ExtURL(
