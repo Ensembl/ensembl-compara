@@ -72,7 +72,7 @@ sub process {
             $ddaf->end($_->rawend);
             $ddaf->strand($_->strand);
             $ddaf->seqname($_->seqname);
-            $ddaf->score($_->external_data->{'score'}[0]);
+            $ddaf->score(exists $_->external_data->{'score'} ? $_->external_data->{'score'}[0] : undef);
             $ddaf->extra_data($_->external_data);
             $ddaf->{'gff_attribs'}=$_->attribs;
             
@@ -132,8 +132,8 @@ sub process {
         $f->start($new->start);
         $f->end($new->end);
 
-        my $feature_type = $f->extra_data->{'feature_type'}[0];
-        my $source       = $f->extra_data->{'source'}[0];
+        my $feature_type = exists $f->extra_data->{'feature_type'} ? $f->extra_data->{'feature_type'}[0] : undef;
+        my $source       = exists $f->extra_data->{'source'} ? $f->extra_data->{'source'}[0] : undef;
         my $extra        = $f->{'gff_attribs'};
         my $other        = [];
         
