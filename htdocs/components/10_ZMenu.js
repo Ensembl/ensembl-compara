@@ -628,6 +628,7 @@ Ensembl.Panel.ZMenu = Ensembl.Panel.extend({
   },
   
   row: function (cell1, cell2, cls, childOf) {
+    cell2 = $('<span/>').html(cell2).text(); // Unescape HTML
     return (
       '<tr' + (cls || childOf ? ' class="' + (cls || childOf).replace(/\W/g, '_') + (childOf ? ' child' : '') + '"' : '') + '>' + 
         (cell1 && cell2 ? '<th>' + cell1 + '</th><td>' + cell2 + '</td>' : '<td colspan="2">' + (cell1 || cell2) + '</td>') +
