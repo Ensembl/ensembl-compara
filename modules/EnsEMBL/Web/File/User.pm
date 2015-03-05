@@ -135,6 +135,8 @@ sub upload {
   }
  
   $args{'timestamp_name'}  = 1;
+  ## Save files in uncompressed form
+  $args{'uncompress'} = 1;
 
   if ($method eq 'url') {
     $args{'file'}          = $hub->param($method);

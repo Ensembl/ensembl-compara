@@ -174,7 +174,11 @@ sub init {
     if (!$extension) {
       $extension = $args{'extension'} || 'txt';
     }
-    if (!$compression) {
+
+    if ($args{'uncompress'}) {
+      $compression = 0;
+    }
+    elsif (!$compression) {
       $compression = $args{'compression'} || 0;
       ## Default to gzip
       if (($args{'compress'} && !$compression) || ($compression && $compression !~ /gz|bz|zip/)) {
