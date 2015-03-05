@@ -21,6 +21,8 @@ package EnsEMBL::Web::Component::DataExport::Results;
 use strict;
 use warnings;
 
+use HTML::Entities qw(encode_entities);
+
 use EnsEMBL::Web::File::User;
 
 use base qw(EnsEMBL::Web::Component::DataExport);
@@ -94,7 +96,7 @@ sub content {
     my $read = $file->read;
     if ($read->{'content'}) {
       $html .= '<h2 style="margin-top:1em">File preview</h2><div class="code"><pre style="color:#333">';
-      $html .= $read->{'content'};
+      $html .= encode_entities($read->{'content'});
       $html .= '</pre>';
     }
   }
