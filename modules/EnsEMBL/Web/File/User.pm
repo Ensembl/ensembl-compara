@@ -94,6 +94,9 @@ sub upload {
   my ($self, %args) = @_;
   my $hub       = $self->hub;
 
+  ## Always get from absolute input path
+  $self->{'absolute'} = 1;
+
   my ($method)  = $args{'method'} || grep $hub->param($_), qw(file url text);
   my $type      = $args{'type'};
 
