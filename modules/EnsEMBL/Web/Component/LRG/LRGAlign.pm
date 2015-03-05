@@ -157,12 +157,11 @@ sub content {
                  'Substitution'  => $colours_defs->{snp}->{default});   #'#00BB00');
   
   # Legend
-  my $width = '60px';
   my $exons_highlight = qq{style="background-color:#ffebcd"};
   $html .= qq{
   <div class="_adornment_key adornment-key"><dl>
-    <dt style="width:$width">Exons:</dt><dd style="margin-left:$width"><ul><li><span class="adorn-key-entry" $exons_highlight>LRG exons</span></li></ul></dd>
-    <dt style="width:$width">Differences:</dt><dd style="margin-left:$width"><ul>};
+    <dt>Exons:</dt><dd><ul><li><span class="adorn-key-entry" $exons_highlight>LRG exons</span></li></ul></dd>
+    <dt>Differences:</dt><dd><ul>};
   while (my ($type, $c) = each (%colours)) {
     $html .= qq{<li><span class="adorn-key-entry" style="background-color:$c;color:#FFFFFF">$type</span></li>};
   }
