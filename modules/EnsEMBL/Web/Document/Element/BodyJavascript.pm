@@ -43,13 +43,21 @@ sub init {
 sub content {
   my $self = shift;
 
-  return join '', map sprintf(qq(<script type="text/javascript" src="%s%s"></script>\n), $self->static_server, $_), @{$self->{'_sources'} || []};
+  return join '',
+    map(sprintf(qq(<script type="text/javascript" src="%s%s"></script>\n), $self->static_server, $_), @{$self->{'_sources'} || []}),
+    map(sprintf(qq(<script type="text/javascript">%s</script>), $_), @{$self->{'_inline'} || []});
 }
 
 sub add_script {
   my ($self, $src) = @_;
 
   push @{$self->{'_sources'}}, $src unless grep { $src eq $_ } @{$self->{'_sources'}};
+}
+
+sub add_inlinejs {
+  my ($self, $code) = @_;
+
+  push @{$self->{'_inline'}}, $code;
 }
 
 1;
