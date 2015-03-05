@@ -72,7 +72,7 @@ sub find_ss_in_compara {
 
 sub find_ss_in_core {
     my ($self) = @_;
-    my $gene        = $self->object->gene;
+    my $gene        = $self->hub->core_object('gene')->Obj;
     my $transcript  = $gene->canonical_transcript;
     if ($transcript) {
       my $model_name  = $gene->display_xref->display_id;
