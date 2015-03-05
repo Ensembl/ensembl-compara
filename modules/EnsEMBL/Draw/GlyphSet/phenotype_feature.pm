@@ -133,7 +133,7 @@ sub title {
   my ($self, $f) = @_;
   my $id     = $f->object_id;
   my $phen   = $f->phenotype->description;
-  my $source = $f->source;
+  my $source = $f->source_name;
   my $type   = $f->type;
   my $loc    = $f->seq_region_name.":".$f->seq_region_start."-".$f->seq_region_end;
   my $hub    = $self->{'config'}->hub;
