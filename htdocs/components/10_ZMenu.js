@@ -500,8 +500,9 @@ Ensembl.Panel.ZMenu = Ensembl.Panel.extend({
           body.push('<tr>' + row + '</tr>');
         }
       } else {
-        menu = content[i].split(': ');  
-        body.unshift(this.row.apply(this, menu.length > 1 ? [ menu.shift(), menu.join(': ') ] : [ content[i] ]));
+        var kv = $('<span/>').html(content[i]).text(); // Unescape HTML
+        menu = kv.split(': ');  
+        body.unshift(this.row.apply(this, menu.length > 1 ? [ menu.shift(), menu.join(': ') ] : [ kv ]));
       }
     }
     
@@ -628,7 +629,6 @@ Ensembl.Panel.ZMenu = Ensembl.Panel.extend({
   },
   
   row: function (cell1, cell2, cls, childOf) {
-    cell2 = $('<span/>').html(cell2).text(); // Unescape HTML
     return (
       '<tr' + (cls || childOf ? ' class="' + (cls || childOf).replace(/\W/g, '_') + (childOf ? ' child' : '') + '"' : '') + '>' + 
         (cell1 && cell2 ? '<th>' + cell1 + '</th><td>' + cell2 + '</td>' : '<td colspan="2">' + (cell1 || cell2) + '</td>') +
