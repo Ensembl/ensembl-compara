@@ -809,7 +809,7 @@ sub feature {
     @mapping_result = qw(seqid source type start end score strand phase);
   }
   %vals = (%vals, (
-     type   => $type || ($feature->can('primary_tag') ? $feature->primary_tag : '.sdf'),
+     type   => $type || ($feature->can('primary_tag') ? $feature->primary_tag : 'sequence_feature'),
      source => $feature->can('source_tag') ? $feature->source_tag  : $feature->can('source') ? $feature->source : 'Ensembl',
      score  => $feature->can('score') ? $feature->score : '.',
      phase  => '.'
