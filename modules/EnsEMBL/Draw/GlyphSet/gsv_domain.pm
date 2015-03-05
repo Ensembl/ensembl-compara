@@ -22,6 +22,8 @@ package EnsEMBL::Draw::GlyphSet::gsv_domain;
 
 use strict;
 
+use EnsEMBL::Draw::Utils::Bump;
+
 use base qw(EnsEMBL::Draw::GlyphSet);
 
 sub _init {
