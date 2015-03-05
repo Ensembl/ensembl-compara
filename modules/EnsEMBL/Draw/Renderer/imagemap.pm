@@ -22,8 +22,6 @@ use strict;
 use warnings;
 no warnings 'uninitialized';
 
-use HTML::Entities qw(encode_entities);
-
 use base qw(EnsEMBL::Draw::Renderer);
 
 #########
@@ -136,9 +134,7 @@ sub get_attributes {
     my $attr = $glyph->$_;
     
     if ($attr) {
-      if ($_ eq 'alt' || $_ eq 'title') {
-        $actions{$_} = encode_entities($attr);
-      } elsif($_ eq 'class') {
+      if ($_ eq 'class') {
         $actions{'klass'} = [ split(/ /,$attr) ];
       } else {
         $actions{$_} = $attr;
