@@ -81,6 +81,7 @@ sub upload {
   my %args = (
               'hub'             => $self->hub,
               'timestamp_name'  => 1,
+              'absolute'        => 1,
             );
 
   if ($method eq 'url') {
