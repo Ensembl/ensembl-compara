@@ -55,6 +55,7 @@ sub content {
 
   $self->add_entry({ label => $desc }) if $desc && $desc =~ s/^>//;
 
+  #Uniprot can't deal with versions in accessions
   if ($hit_db_name =~ /^Uniprot/){
     $id =~ s/(\w*)\.\d+/$1/;
   }
