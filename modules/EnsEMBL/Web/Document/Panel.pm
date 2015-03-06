@@ -442,7 +442,7 @@ sub component_content {
           my $panel_type = $modal || $content =~ /panel_type/ ? '' : '<input type="hidden" class="panel_type" value="Content" />';
           
           # Only add the wrapper if $content is html, and the update_panel parameter isn't present
-          $content = qq{<div class="js_panel __h __h_comp_$id" id="$id">$panel_type$content</div>} if !$hub->param('update_panel') && $content =~ /^\s*<.+>\s*$/s;
+          $content = qq{<div class="js_panel" id="$id">$panel_type$content</div>} if !$hub->param('update_panel') && $content =~ /^\s*<.+>\s*$/s;
         } else {
           my $caption = $component->caption;
           $html .= sprintf '<h2>%s</h2>', encode_entities($caption) if $caption;

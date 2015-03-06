@@ -192,12 +192,12 @@ sub get_sequence_data {
     }
     
     $crs--;
-    
+
+    my $utr_type = defined $transcript->coding_region_start ? 'eu' : 'exon0'; # if coding_region_start returns unded, exons are marked non-coding
+
     for my $exon (@exons) {
       my $exon_id = $exon->stable_id;
       my ($s, $e) = map $_ - $start, $exon->start, $exon->end;
-
-      my $utr_type = $exon->coding_region_start($transcript) ? 'eu' : 'exon0'; # if coding_region_start returns unded, it a non-coding exon
 
       if ($strand == -1) {
         $_ = $length - $_ - 1, for $s, $e;

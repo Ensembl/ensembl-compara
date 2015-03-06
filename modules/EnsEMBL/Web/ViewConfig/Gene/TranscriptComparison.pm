@@ -34,6 +34,8 @@ sub init {
     exons_only     => 'off',
     snp_display    => 'on',
     line_numbering => 'sequence',
+    flank3_display => 0,
+    flank5_display => 0,
   });
 
   $self->title = 'Transcript comparison';

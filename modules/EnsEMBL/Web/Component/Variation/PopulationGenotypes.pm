@@ -203,8 +203,10 @@ sub format_table {
 
     ## Get URL
     my $url = $self->pop_url($name, $freq_data->{$pop_id}{'pop_info'}{'PopLink'});
-    $pop_urls{$pop_id} = $url;
-    $urls_seen{$url}++;
+    if ($url) {
+      $pop_urls{$pop_id} = $url;
+      $urls_seen{$url}++;
+    }
 
     ## Make the tree
     if ($name =~ /_ALL/) {

@@ -88,8 +88,6 @@ sub initialize {
 
     $exon_id = "<strong>$exon_id</strong>" if $entry_exon && $entry_exon eq $exon_id;
 
-    $config->{'is_coding_exon'} = $exon->coding_region_start($transcript);
-    
     my $exon_seq = $self->get_exon_sequence_data($config, $exon);
     
     push @data, $export ? $exon_seq : {
@@ -165,7 +163,6 @@ sub initialize_export {
 
 sub get_exon_sequence_data {
   my ($self, $config, $exon) = @_;
-  my $coding_exon  = $config->{'is_coding_exon'};
   my $coding_start = $config->{'coding_start'};
   my $coding_end   = $config->{'coding_end'};
   my $strand       = $config->{'strand'};
@@ -175,9 +172,9 @@ sub get_exon_sequence_data {
   my $exon_end     = $exon->end;
   my $utr_start    = $coding_start && $coding_start > $exon_start; # exon starts with UTR
   my $utr_end      = $coding_end   && $coding_end   < $exon_end;   # exon ends with UTR
-  my $class        = $coding_exon ? 'e1' : 'e0';
-  my $utr_class    = $coding_exon ? 'eu' : 'e0';
-  my $utr_key      = $coding_exon ? 'utr' : 'exon0';
+  my $class        = defined $coding_start ? 'e1' : 'e0';
+  my $utr_class    = defined $coding_start ? 'eu' : 'e0';
+  my $utr_key      = defined $coding_start ? 'utr' : 'exon0';
   my @sequence     = map {{ letter => $_, class => $class }} split '', $seq;
   my ($coding_length, $utr_length);
   
