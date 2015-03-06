@@ -551,7 +551,7 @@ sub render{
     $image_map =~ s/title="([^"]*)" alt=""/ title="$self->{_node_descriptions}->{$1}" alt="$self->{_node_descriptions}->{$1}"/g;
 	  $image_map =~ s/id="test" name="test"/id="$_" name="$_"/g;
 	  $return_html .= $image_map;
-    $images_html .= qq(<img style="float:none;" usemap="#).$_.qq(" src=").$image->location.qq(" border="0">);
+    $images_html .= qq(<img style="float:none;" usemap="#).$_.qq(" src=").$image->read_url.qq(" border="0">);
   }
   return $return_html.$images_html;
 }
