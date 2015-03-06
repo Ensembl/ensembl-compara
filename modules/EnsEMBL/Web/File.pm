@@ -23,7 +23,7 @@ use strict;
 use Digest::MD5 qw(md5_hex);
 
 use EnsEMBL::Web::Utils::RandomString qw(random_string);
-use EnsEMBL::Web::File::Utils qw/sanitise_filename/;
+use EnsEMBL::Web::File::Utils qw/sanitise_filename get_extension get_compression/;
 use EnsEMBL::Web::File::Utils::IO qw/:all/;
 use EnsEMBL::Web::File::Utils::URL qw/:all/;
 use EnsEMBL::Web::File::Utils::Memcached qw/:all/;
@@ -128,8 +128,7 @@ sub init {
       }
     }
 
-    my ($name, $extension, $compression) = split(/\./, $read_name);
-    $compression =~ s/2$//; ## We use 'bz' internally, not 'bz2'
+    my ($name, $extension, $compression) = _parse_filename($read_name);
 
     $bare_name                  = $name;
     $self->{'read_name'}        = $read_name;
@@ -150,9 +149,8 @@ sub init {
   if ($args{'upload'} || !$read_path) {
     my $filename = $args{'name'};
     if ($filename) {
-      $filename = sanitise_filename($filename);
-      ($name, $extension, $compression) = split(/\./, $filename);
-      $compression =~ s/2$//; ## We use 'bz' internally, not 'bz2'
+
+      ($name, $extension, $compression) = _parse_filename(sanitise_filename($filename));
 
       ## Set a random path in case we have multiple files with this name
       $sub_dir ||= random_string;
@@ -593,5 +591,15 @@ sub delete {
   return $result;
 }
 
-1;
+sub _parse_filename {
+  ## @private
+  my $filename = shift;
 
+  my $compression = get_compression($filename);
+  my $extension   = get_extension($filename);
+  my $name        = scalar reverse [ reverse split /\./, (scalar reverse $filename), 2 + (!!$compression || 0) ]->[0];
+
+  return $name, $extension, $compression;
+}
+
+1;
