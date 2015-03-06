@@ -29,6 +29,11 @@ use strict;
 
 use base qw(EnsEMBL::Web::Component);
 
+sub id {
+  my $id = shift->SUPER::id(@_);
+  return "DataExport_$id";
+}
+
 sub create_form {
 ### Builds the input form used by DataExport
 ### Note that the form consists of a generic section (file name, format)
