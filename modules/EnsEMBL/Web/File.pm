@@ -258,7 +258,7 @@ sub read_compression {
 sub write_compression {
 ### a
   my $self = shift;
-  return $self->{'write_compression'} || $self->{'read_compression'};
+  return $self->{'write_compression'};
 }
 
 sub compress {
@@ -501,8 +501,9 @@ sub read {
   foreach (@{$self->{'input_drivers'}}) {
     my $method = 'EnsEMBL::Web::File::Utils::'.$_.'::'.$mode; 
     my $args = {
-                'hub'   => $self->hub,
-                'nice'  => 1,
+                'hub'         => $self->hub,
+                'nice'        => 1,
+                'compression' => 1
                 };
 
     eval {
