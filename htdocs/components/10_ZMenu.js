@@ -167,7 +167,7 @@ Ensembl.Panel.ZMenu = Ensembl.Panel.extend({
     var menu    = this.title.split('; ');
     var caption = menu.shift();
     
-    this.buildMenu(menu, caption, link, extra);
+    this.buildMenu(menu, caption, link, extra, true);
   },
   
   populateDas: function () {
@@ -467,7 +467,7 @@ Ensembl.Panel.ZMenu = Ensembl.Panel.extend({
     this.buildMenu(menu, caption);
   },
   
-  buildMenu: function (content, caption, link, extra) {
+  buildMenu: function (content, caption, link, extra, decodeHTML) {
     var body = [];
     var i    = content.length;
     var menu, title, parse, j, row;
@@ -500,7 +500,7 @@ Ensembl.Panel.ZMenu = Ensembl.Panel.extend({
           body.push('<tr>' + row + '</tr>');
         }
       } else {
-        var kv = $('<span/>').html(content[i]).text(); // Unescape HTML
+        var kv = decodeHTML ? $('<span/>').html(content[i]).text() : content[i]; // Unescape HTML if needed
         menu = kv.split(': ');  
         body.unshift(this.row.apply(this, menu.length > 1 ? [ menu.shift(), menu.join(': ') ] : [ kv ]));
       }
