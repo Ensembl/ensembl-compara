@@ -832,7 +832,7 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
     }
     
     if (area.a.klass.nav) {
-      Ensembl.redirect(area.a.href);
+      Ensembl.redirect(area.a.attrs.href);
       return;
     }
     
