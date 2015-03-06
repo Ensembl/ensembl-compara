@@ -31,7 +31,7 @@ sub _init {
 sub content {
   my $self   = shift;
   my $object = $self->object;
-
+  my $is_somatic = $object->Obj->has_somatic_source;
   my $freq_data = $object->freqs;
   
   return $self->_info('Variation: ' . $object->name, '<p>No genotypes for this variation</p>') unless %$freq_data;
@@ -39,7 +39,10 @@ sub content {
   my $table_array = $self->format_frequencies($freq_data);
   my $html        = '<a id="IndividualGenotypesPanel_top"></a>';
   
-  if (scalar @$table_array == 1) {
+  if (scalar @$table_array == 1 && $is_somatic) {
+    $html .= $table_array->[0]->[1]->render;
+  }
+  elsif (scalar @$table_array == 1) {
     my ($title, $table, $pop_url) = @{$table_array->[0]};
     my $id;
     if ($title =~ /other|inconsistent|population/i) {
@@ -289,8 +292,15 @@ sub format_table {
       
       $pop_row{'Genotype count'}   = join ' , ', sort {(split /\(|\)/, $a)[1] cmp (split /\(|\)/, $b)[1]} values %{$pop_row{'Genotype count'}} if $pop_row{'Genotype count'};
 
+      ## Add the population description: this will appear when the user move the mouse on the population name
+      my $pop_name = $pop_info->{'Name'};
+      if (!$is_somatic && $pop_info->{'Description'}) {
+       $pop_name = qq{<span class="_ht" title="}.$self->strip_HTML($pop_info->{'Description'}).qq{">$pop_name</span>};
+      }
+
       ## Only link on the population name if there's more than one URL for this table
-      my $pop_url                  = (scalar(keys %urls_seen) > 1 || scalar(keys %pop_urls) == 1 ) ? sprintf('<a href="%s" rel="external">%s</a>', $pop_urls{$pop_id}, $pop_info->{'Name'}) : $pop_info->{'Name'};
+      my $pop_url                  = (scalar(keys %urls_seen) > 1 || scalar(keys %pop_urls) == 1 ) ? sprintf('<a href="%s" rel="external">%s</a>', $pop_urls{$pop_id}, $pop_name) : $pop_name;
+
       ## Hacky indent, because overriding table CSS is a pain!
       $pop_row{'pop'}              = $group_member ? '&nbsp;&nbsp;'.$pop_url : $pop_url;
 
