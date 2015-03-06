@@ -57,7 +57,9 @@ sub content {
   
   $session->purge_data(type => 'message', code => $_->{'code'}) for @data;
   
-  return qq{<div class="session_messages js_panel"><input type="hidden" class="panel_type" value="Message">$html</div>};
+  return $self->renderer->{'_modal_dialog_'}
+    ? qq(<div class="session_messages">$html</div>)
+    : qq(<div class="session_messages js_panel"><input type="hidden" class="panel_type" value="Message">$html</div>);
 }
 
 1;
