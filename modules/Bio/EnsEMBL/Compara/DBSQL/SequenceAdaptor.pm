@@ -143,6 +143,7 @@ sub fetch_other_sequence_by_member_id_type {
 sub fetch_other_sequences_by_member_ids_type {
   my ($self, $seq_member_ids, $type) = @_;
 
+  return {} unless scalar(@$seq_member_ids);
   my $ids_in_str = join(',', @$seq_member_ids);
   my $sql = "SELECT seq_member_id, sequence FROM other_member_sequence WHERE seq_member_id IN ($ids_in_str) AND seq_type = ?";
   my $res = $self->dbc->db_handle->selectall_arrayref($sql, undef, $type);
