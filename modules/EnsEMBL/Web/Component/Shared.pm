@@ -749,12 +749,12 @@ sub species_stats {
   }
   ## Variants
   if ($self->hub->database('variation')) {
-    my @other_stats = qw(SNPCount struct_var);
+    my @other_stats = qw(SNPCount StructuralVariation);
     foreach my $name (@other_stats) {
       my $stat = $genome_container->fetch_by_statistic($name);
       push @$rows, {
         'name' => '<b>'.$stat->name.'</b>',
-        'stat' => $stat->value
+        'stat' => $self->thousandify($stat->value)
       } if $stat and $stat->name;
     }
   }
