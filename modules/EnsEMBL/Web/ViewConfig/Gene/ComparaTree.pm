@@ -136,7 +136,7 @@ sub form_fields {
                                               type   => 'DropDown', 
                                               select => 'select',
                                               name   => "group_${group}_display",
-                                              label  => "Display options for ".($self->hub->species_defs->TAXON_LABEL->{$group} || $group),
+                                              label  => "Display options for ".($self->hub->species_defs->TAXON_LABEL ? $self->hub->species_defs->TAXON_LABEL->{$group} || $group : $group),
                                               values => [ 
                                                           { value => 'default',  caption => 'Default behaviour' },
                                                           { value => 'hide',     caption => 'Hide genes' },
