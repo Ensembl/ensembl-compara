@@ -20,22 +20,13 @@ package EnsEMBL::Web::Controller::Doxygen;
 
 use strict;
 
+use EnsEMBL::Web::Utils::FileHandler qw(file_get_contents);
+
 use base qw(EnsEMBL::Web::Controller::SSI);
 
 sub content {
   my $self = shift;
-  
-  if (!$self->{'content'}) {
-    # Read html file into memory
-    {
-      local($/) = undef;
-      open FH, $self->r->filename;
-      $self->{'content'} = <FH>;
-      close FH;
-    }
-  }
-  
-  return $self->{'content'};
+  return $self->{'content'} ||= join '', file_get_contents($self->r->filename);
 }
 
 sub render_page {
@@ -52,8 +43,8 @@ sub render_page {
     $module->init($self) if $module->can('init');
   }
   
-  $elements->{'body_javascript'}->add_source('/info/docs/Doxygen/doxygen.js');
-  $elements->{'stylesheet'}{'media'}{'all'} = [ grep /^\//, @{$elements->{'stylesheet'}{'media'}{'all'}} ];
+  $elements->{'body_javascript'}->add_script('/info/docs/Doxygen/doxygen.js');
+  $elements->{'stylesheet'}->add_sheet('/info/docs/Doxygen/doxygen.css');
   
   foreach my $element (@order) {
     my $module = $elements->{$element};
