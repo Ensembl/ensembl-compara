@@ -208,6 +208,7 @@ my $node_id_cb = sub {  ## only if we are in a leaf? ... if ($self->{tree}->is_l
 my $label_cb = sub { ## only if we are in a leaf? ... if ($self->{tree}->is_leaf);
   my ($self) = @_;
   my $display_label = $self->{tree}->gene_member->display_label;
+  $display_label =~ s/\;//g;
   return $display_label;
 };
 
@@ -219,6 +220,7 @@ my $label_ext_cb = sub {
         my $display_xref = $self->{tree}->gene_member->get_Gene->display_xref;
         $display_label = $display_xref->display_id if (defined($display_xref));
     }    
+    $display_label =~ s/\;//g if $display_label;
     if (defined($display_label) && $display_label =~ /^\w+$/) {
         return $display_label;
     }
