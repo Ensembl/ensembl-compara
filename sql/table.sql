@@ -1405,6 +1405,20 @@ CREATE TABLE hmm_annot (
 ) COLLATE=latin1_swedish_ci ENGINE=MyISAM;
 
 
+
+/**
+@table hmm_curated_annot
+@desc  This table stores the curated / forced HMM annotation of the seq_members
+@colour   #1E90FF
+
+@column seq_member_stable_id  External reference to a seq_member_id in the @link seq_member table
+@column model_id              External reference to the internal numeric ID of a HMM profile in @link hmm_profile
+@column library_version       Name of the HMM library against the curation has been done
+@column annot_date            When did the curation happened
+@column reason                Why are we forcing this curation
+
+*/
+
 CREATE TABLE hmm_curated_annot (
   seq_member_stable_id       varchar(40) NOT NULL,
   model_id                   varchar(40) DEFAULT NULL,
@@ -1430,11 +1444,11 @@ CREATE TABLE hmm_curated_annot (
 @column method_link_species_set_id     External reference to method_link_species_set_id in the @link method_link_species_set table
 @column description                    A normalized, short description of the homology relationship
 @column is_tree_compliant              Whether the homology is fully compliant with the tree and the definition of orthology / paralogy
-@column dn                             The dn score
-@column ds                             The ds score
-@column n
-@column s
-@column lnl
+@column dn                             The non-synonymous mutation rate
+@column ds                             The synonymous mutation rate
+@column n                              The estimated number of non-synonymous mutations
+@column s                              The estimated number of synonymous mutations
+@column lnl                            The negative log likelihood of the estimation
 @column species_tree_node_id           The node_id of the species-tree node to which the homology is attached
 @column gene_tree_node_id              The node_id of the gene-tree node from which the homology is derived
 @column gene_tree_root_id              The root_id of the gene tree from which the homology is derived
@@ -1668,6 +1682,13 @@ CREATE TABLE mapping_session (
 @table stable_id_history
 @desc  This table keeps the history of stable_id changes from one release to another. The primary key 'object' describes a set of members migrating from stable_id_from to stable_id_to. Their volume (related to the 'shared_size' of the new class) is reflected by the fractional 'contribution' field. Since both stable_ids are listed in the primary key, they are not allowed to be NULLs. We shall treat empty strings as NULLs. If stable_id_from is empty, it means these members are newcomers into the new release. If stable_id_to is empty, it means these previously known members are disappearing in the new release. If both neither stable_id_from nor stable_id_to is empty, these members are truly migrating.
 @colour   #1E90FF
+
+@column mapping_session_id    Reference to mapping_session.mapping_session_id. All the stable_ids of a given mapping should have the same session_id
+@column stable_id_from        The previous stable ID
+@column version_from          The version number of the previous stable ID (specific to each stable ID; not to be confused with the release number)
+@column stable_id_to          The new stable ID
+@column version_to            The new version number
+@column contribution          Percentage of of the new object (tree / family) that comes from the previous one
 */
 
 CREATE TABLE stable_id_history (
