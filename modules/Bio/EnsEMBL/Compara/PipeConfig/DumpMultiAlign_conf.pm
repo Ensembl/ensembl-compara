@@ -97,7 +97,6 @@ sub default_options {
 	'maf_output_dir' => "",
 	'species_tree_file' => $self->o('ensembl_cvs_root_dir')."/ensembl-compara/scripts/pipeline/species_tree_blength.nh",
 	'high_coverage_mlss_id' => "",
-        'memory_suffix' => "", #temporary fix to define the memory requirements in resource_classes
 
     };
 }
@@ -123,7 +122,7 @@ sub resource_classes {
 
     return {
             %{$self->SUPER::resource_classes},  # inherit 'default' from the parent class
-            '2GbMem' => { 'LSF' => '-C0 -M2000' . $self->o('memory_suffix') .' -R"select[mem>2000] rusage[mem=2000]"' },  
+            '2GbMem' => { 'LSF' => '-C0 -M2000 -R"select[mem>2000] rusage[mem=2000]"' },
     };
 }
 
