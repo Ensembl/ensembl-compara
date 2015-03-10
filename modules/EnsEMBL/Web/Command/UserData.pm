@@ -98,7 +98,7 @@ sub upload {
   }
   else { 
     $args{'file'}   = $hub->input->tmpFileName($hub->param($method));
-    $args{'name'}   = $hub->param($method);
+    $args{'name'}   = "".$hub->param($method); # stringify the filehandle
     $args{'upload'} = 'cgi';
   }
 
