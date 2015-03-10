@@ -135,8 +135,6 @@ sub pipeline_analyses {
 			    'dump_mlss_id' => $self->o('mlss_id'),
 			    'output_dir' => $self->o('output_dir'),
 			    'compara_db' => $self->o('compara_db'),
-			    'db_url'    =>  $self->o('db_urls'),
-			    'reg_conf' => $self->o('reg_conf'),
 			    'maf_output_dir' => $self->o('maf_output_dir'), #define if want to run emf2maf 
 			   },
             -input_ids => [ {} ],
@@ -151,8 +149,6 @@ sub pipeline_analyses {
             -parameters    => {'coord_system_name' => $self->o('coord_system_name1'),
 			       'format' => $self->o('format'),
 			       'compara_db' => $self->o('compara_db'),
-			       'db_url'    =>  $self->o('db_urls'),
-			       'reg_conf' => $self->o('reg_conf'),
 			       'split_size' => $self->o('split_size'),
 			      },
 	    -flow_into => {
@@ -165,8 +161,6 @@ sub pipeline_analyses {
                                'format' => $self->o('format'),
 			       'output_dir' => $self->o('output_dir'),
 			       'compara_db' => $self->o('compara_db'),
-			       'db_url'    =>  $self->o('db_urls'),
-			       'reg_conf' => $self->o('reg_conf'),
 			      },
 	    -flow_into => {
 	       2 => [ 'dumpMultiAlign' ]
@@ -177,8 +171,6 @@ sub pipeline_analyses {
             -parameters    => {'species' => $self->o('species'),
 			       'format' => $self->o('format'),
 			       'compara_db' => $self->o('compara_db'),
-			       'reg_conf' => $self->o('reg_conf'),
-			       'db_url'    =>  $self->o('db_urls'),
 			       'split_size' => $self->o('split_size'),
 			      },
 	   -rc_name => '2GbMem',
@@ -231,8 +223,6 @@ sub pipeline_analyses {
             -module        => 'Bio::EnsEMBL::Compara::RunnableDB::DumpMultiAlign::Readme',
             -parameters    => {'format' => $self->o('format'),
 			       'compara_db' => $self->o('compara_db'),
-			       'reg_conf' => $self->o('reg_conf'),
-			       'db_url'    =>  $self->o('db_urls'),
 			       'mlss_id' => $self->o('mlss_id'),
 			       'output_dir' => $self->o('output_dir'),
 			       'split_size' => $self->o('split_size'),

@@ -47,10 +47,6 @@ use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
 use Cwd;
 
-sub fetch_input {
-    my $self = shift;
-
-}
 
 sub run {
     my $self = shift;
@@ -79,14 +75,6 @@ sub run {
 
 }
 
-=head2 write_output
-
-=cut
-
-sub write_output {
-    my $self = shift @_;
-
-}
 
 #
 #Internal methods
@@ -111,7 +99,7 @@ sub _create_specific_readme {
 	Bio::EnsEMBL::Registry->load_all();
     }
 
-    #Note this is using the database set in $self->param('compara_db') rather than the underlying compara database.
+    #Note this is using the database set in $self->param('compara_db').
     my $compara_dba = $self->compara_dba;
 
     #Get meta_container adaptor
@@ -210,6 +198,10 @@ sub _create_specific_epo_readme {
     my $species = $self->param('species');
     my @tree_list = split(//, $newick_species_tree);
 
+    my $genome_db_adaptor = $compara_dba->get_GenomeDBAdaptor;
+    my $genome_db = $genome_db_adaptor->fetch_by_name_assembly($species);
+    my $common_species_name = $genome_db->db_adaptor->get_MetaContainer->get_common_name;
+
     open FILE, ">$filename" || die ("Cannot open $filename");
     print FILE "This directory contains all the " . @$species_set . " way Enredo-Pecan-Ortheus (EPO) multiple
 alignments corresponding to the Release " . $schema_version . " of Ensembl (see
@@ -248,8 +240,8 @@ alignments. The main contribution of Ortheus is the use of a phylogenetic
 model incorporating gaps to infer insertion and deletion events.
 Read more about Ortheus: http://github.com/benedictpaten/ortheus
 
-Alignments are grouped by $species chromosome. Each file contains up to " . $self->param('split_size') . " alignments. The file named *.others_*." . $self->param('format') . ".gz contain alignments that do not
-include any $species region. Alignments containing duplications in $species are
+Alignments are grouped by $common_species_name chromosome. Each file contains up to " . $self->param('split_size') . " alignments. The file named *.others_*." . $self->param('format') . ".gz contain alignments that do not
+include any $common_species_name region. Alignments containing duplications in $common_species_name are
 dumped once per duplicated segment.\n";
 
     if ($self->param('format') eq "emf") {

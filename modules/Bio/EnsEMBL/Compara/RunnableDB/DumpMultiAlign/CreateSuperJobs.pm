@@ -48,33 +48,10 @@ use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
 use POSIX qw(ceil);
 
-sub fetch_input {
-    my $self = shift;
-}
-
-
-sub run {
-    my $self = shift;
-}
-
 sub write_output {
     my $self = shift @_;
 
-    #
-    #Load registry and get compara database adaptor
-    #
-    if ($self->param('reg_conf')) {
-	Bio::EnsEMBL::Registry->load_all($self->param('reg_conf'),1);
-    } elsif ($self->param('db_url')) {
-	my $db_urls = $self->param('db_url');
-	foreach my $db_url (@$db_urls) {
-	    Bio::EnsEMBL::Registry->load_registry_from_url($db_url);
-	}
-    } else {
-	Bio::EnsEMBL::Registry->load_all();
-    }
-
-    #Note this is using the database set in $self->param('compara_db') rather than the underlying compara database.
+    #Note this is using the database set in $self->param('compara_db').
     my $compara_dba = $self->compara_dba;
 
     #

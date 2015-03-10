@@ -70,11 +70,11 @@ sub fetch_input {
 	Bio::EnsEMBL::Registry->load_all();
     }
 
-    #Note this is using the database set in $self->param('compara_db') rather than the underlying compara database.
+    #Note this is using the database set in $self->param('compara_db').
     my $compara_dba = $self->compara_dba;
 
     my $genome_db_adaptor = $compara_dba->get_GenomeDBAdaptor;
-    my $genome_db = $genome_db_adaptor->fetch_by_registry_name($self->param('species'));
+    my $genome_db = $genome_db_adaptor->fetch_by_name_assembly($self->param('species'));
     $self->param('genome_db_id', $genome_db->dbID);
 
     #

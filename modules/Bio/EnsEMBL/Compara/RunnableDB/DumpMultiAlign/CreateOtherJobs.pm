@@ -49,36 +49,11 @@ use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
 use POSIX qw(ceil);
 
-sub fetch_input {
-    my $self = shift;
-}
-
-
-sub run {
-    my $self = shift;
-    
-
-}
 
 sub write_output {
     my $self = shift @_;
-    my $reg = "Bio::EnsEMBL::Registry";
 
-    #
-    #Load registry and get compara database adaptor
-    #
-    if ($self->param('reg_conf')) {
-	Bio::EnsEMBL::Registry->load_all($self->param('reg_conf'),1);
-    } elsif ($self->param('db_url')) {
-	my $db_urls = $self->param('db_url');
-	foreach my $db_url (@$db_urls) {
-	    Bio::EnsEMBL::Registry->load_registry_from_url($db_url);
-	}
-    } else {
-	Bio::EnsEMBL::Registry->load_all();
-    }
-
-    #Note this is using the database set in $self->param('compara_db') rather than the underlying compara database.
+    #Note this is using the database set in $self->param('compara_db').
     my $compara_dba = $self->compara_dba;
 
     my $tag = "other";
@@ -94,7 +69,7 @@ sub write_output {
     my $genome_db_adaptor = $compara_dba->get_GenomeDBAdaptor;
     my $gab_adaptor = $compara_dba->get_GenomicAlignBlockAdaptor;
 
-    my $genome_db = $genome_db_adaptor->fetch_by_registry_name($self->param('species'));
+    my $genome_db = $genome_db_adaptor->fetch_by_name_assembly($self->param('species'));
     my $species_name = $genome_db->name;
 
     my $mlss = $mlss_adaptor->fetch_by_dbID($self->param('mlss_id'));
