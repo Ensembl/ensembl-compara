@@ -141,10 +141,8 @@ sub pipeline_analyses {
 			   },
             -input_ids => [ {} ],
             -flow_into => {
-                2 => [ 'createChrJobs' ],   
-                3 => [ 'createSuperJobs'  ],  
-		4 => [ 'createOtherJobs' ],
-		1 => [ 'md5sum'],
+                '2->A' => [ 'createChrJobs', 'createSuperJobs', 'createOtherJobs' ],
+		'A->1' => [ 'md5sum'],
 		5 => [ 'md5sum'], #if defined maf_output_dir
             },
         },
@@ -225,7 +223,6 @@ sub pipeline_analyses {
 			       "maf_output_dir" => $self->o('maf_output_dir')},
             -input_ids     => [
             ],
-	   -can_be_empty  => 1,
 	   -hive_capacity => 200,
 	   -rc_name => '2GbMem',
 	   -flow_into => {
@@ -244,7 +241,6 @@ sub pipeline_analyses {
             -parameters    => {'output_dir' => $self->o('output_dir'),},
             -input_ids     => [
             ],
-	    -wait_for => [ 'dumpMultiAlign', 'compress' ],
         },
 	{  -logic_name    => 'readme',
             -module        => 'Bio::EnsEMBL::Compara::RunnableDB::DumpMultiAlign::Readme',
