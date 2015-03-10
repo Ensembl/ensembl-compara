@@ -69,6 +69,9 @@ sub write_output {
     my $sth = $compara_dba->dbc->prepare($sql);
     $sth->execute($self->param('coord_system_name'),$self->param('genome_db_id'), $self->param('mlss_id'));
     my ($total_blocks) = $sth->fetchrow_array;
+
+    # exit if there is nothing to dump
+    return unless $total_blocks;
     
     my $tag = $self->param('coord_system_name');
     #my $output_file = $self->param('output_dir') ."/" . $self->param('filename') . "." . $tag . "." . $self->param('format');
