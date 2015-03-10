@@ -155,8 +155,6 @@ sub pipeline_analyses {
 			       'reg_conf' => $self->o('reg_conf'),
 			       'split_size' => $self->o('split_size'),
 			      },
-            -input_ids     => [
-			      ],
 	    -flow_into => {
 	       2 => [ 'dumpMultiAlign' ] #must be on branch2 incase there are no results
             }	    
@@ -170,8 +168,6 @@ sub pipeline_analyses {
 			       'db_url'    =>  $self->o('db_urls'),
 			       'reg_conf' => $self->o('reg_conf'),
 			      },
-            -input_ids     => [
-            ],
 	    -flow_into => {
 	       2 => [ 'dumpMultiAlign' ]
             }
@@ -185,8 +181,6 @@ sub pipeline_analyses {
 			       'db_url'    =>  $self->o('db_urls'),
 			       'split_size' => $self->o('split_size'),
 			      },
-            -input_ids     => [
-            ],
 	   -rc_name => '2GbMem',
 	   -hive_capacity => 10, #make this large to allow any dumpMultiAlign jobs to start
 	    -flow_into => {
@@ -207,8 +201,6 @@ sub pipeline_analyses {
 			       "format" => $self->o('format'), 
 			       "maf_output_dir" => $self->o('maf_output_dir'),
 			      },
-            -input_ids     => [
-            ],
 	   -hive_capacity => 15,
 	   -rc_name => '2GbMem',
 	    -flow_into => {
@@ -221,8 +213,6 @@ sub pipeline_analyses {
             -parameters    => {"output_dir"=> $self->o('output_dir'), 
 			       "emf2maf_program" => $self->o('emf2maf_program'), 
 			       "maf_output_dir" => $self->o('maf_output_dir')},
-            -input_ids     => [
-            ],
 	   -hive_capacity => 200,
 	   -rc_name => '2GbMem',
 	   -flow_into => {
@@ -232,15 +222,11 @@ sub pipeline_analyses {
 	{  -logic_name    => 'compress',
             -module        => 'Bio::EnsEMBL::Compara::RunnableDB::DumpMultiAlign::Compress',
             -parameters    => {"output_dir"=> $self->o('output_dir')},
-            -input_ids     => [
-            ],
 	   -hive_capacity => 200,
         },
 	{  -logic_name    => 'md5sum',
             -module        => 'Bio::EnsEMBL::Compara::RunnableDB::DumpMultiAlign::MD5SUM',
             -parameters    => {'output_dir' => $self->o('output_dir'),},
-            -input_ids     => [
-            ],
         },
 	{  -logic_name    => 'readme',
             -module        => 'Bio::EnsEMBL::Compara::RunnableDB::DumpMultiAlign::Readme',
