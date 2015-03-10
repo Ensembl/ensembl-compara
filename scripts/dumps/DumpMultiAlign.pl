@@ -878,6 +878,9 @@ sub print_my_emf {
 	  undef($this_genomic_align->{original_sequence});
 	  undef($this_genomic_align->{aligned_sequence});
       }
+    if (not $aligned_sequence) {
+        die "Could not retrieve the aligned sequence for the genomic_align dbID=$this_genomic_align->{dbID} on $seq_name\n";
+    }
     for (my $i = 0; $i<length($aligned_sequence); $i++) {
       $aligned_seqs->[$i] .= substr($aligned_sequence, $i, 1);
     }
