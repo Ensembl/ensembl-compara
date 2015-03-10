@@ -194,8 +194,8 @@ sub pipeline_analyses {
 	   -hive_capacity => 15,
 	   -rc_name => '2GbMem',
 	    -flow_into => {
-	       2 => [ 'emf2maf' ],
-	       1 => [ 'compress' ]
+	       '2->A' => [ 'emf2maf' ],
+	       'A->1' => [ 'compress' ]
             }
         },
 	{  -logic_name    => 'emf2maf',
