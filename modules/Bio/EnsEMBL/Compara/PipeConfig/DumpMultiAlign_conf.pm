@@ -50,19 +50,6 @@ sub default_options {
     return {
 	%{$self->SUPER::default_options},   # inherit the generic ones
 
-        'pipeline_name' => 'DUMP_'.$self->o('ensembl_release'),  # name used by the beekeeper to prefix job names on the farm
-
-        'dbname' => 'dumpMultiAlign'.$self->o('ensembl_release'),  # database suffix (without user name prepended)
-
-        'pipeline_db' => {                               # connection parameters
-            -driver => 'mysql',
-            -host   => 'compara4',
-            -port   => 3306,
-            -user   => 'ensadmin',
-            -pass   => $self->o('password'),
-            -dbname => $self->o('ENV', 'USER').'_'.$self->o('dbname'),
-        },
-
         'staging_loc1' => {                     # general location of half of the current release core databases
             -host   => 'ens-staging1',
             -port   => 3306,
@@ -128,14 +115,6 @@ sub pipeline_create_commands {
 	
 	'mkdir -p '.$self->o('output_dir'), #Make dump_dir directory
     ];
-}
-
-sub pipeline_wide_parameters {  # these parameter values are visible to all analyses, can be overridden by parameters{} and input_id{}
-    my ($self) = @_;
-    return {
-            %{$self->SUPER::pipeline_wide_parameters},          # here we inherit anything from the base class
-	    'pipeline_name' => $self->o('pipeline_name'), #This must be defined for the beekeeper to work properly
-    };
 }
 
 
