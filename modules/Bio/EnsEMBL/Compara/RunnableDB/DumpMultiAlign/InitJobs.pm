@@ -75,6 +75,9 @@ sub fetch_input {
 
     my $genome_db_adaptor = $compara_dba->get_GenomeDBAdaptor;
     my $genome_db = $genome_db_adaptor->fetch_by_name_assembly($self->param('species'));
+    my $coord_systems = $genome_db->db_adaptor->get_CoordSystemAdaptor->fetch_all_by_attrib('default_version');;
+
+    $self->param('coord_systems', [map {$_->name} @$coord_systems]);
     $self->param('genome_db_id', $genome_db->dbID);
 
     #
@@ -95,10 +98,6 @@ sub fetch_input {
     $self->param('filename', $filename);
 }
 
-sub run {
-    my $self = shift;
-
-}
 
 sub write_output {
     my $self = shift @_;
@@ -114,8 +113,18 @@ sub write_output {
         filename        => $self->param('filename'),
     };
 
-    #Set up chromosome, supercontig and other job
-    $self->dataflow_output_id($output_ids, 2);
+    my @all_cs = @{$self->param('coord_systems')};
+    #Set up chromosome job
+    my $cs = shift @all_cs;
+    $self->dataflow_output_id( {%$output_ids, 'coord_system_name' => $cs}, 2);
+
+    #Set up supercontig job
+    foreach my $other_cs (@all_cs) {
+        $self->dataflow_output_id( {%$output_ids, 'coord_system_name' => $other_cs}, 3);
+    }
+
+    #Set up other job
+    $self->dataflow_output_id($output_ids, 4);
 
     #Automatic flow through to md5sum for emf files on branch 1
     #Needs to be here and not after Compress because need one md5sum per

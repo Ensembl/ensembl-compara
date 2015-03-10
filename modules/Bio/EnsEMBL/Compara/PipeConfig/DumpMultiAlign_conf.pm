@@ -86,9 +86,6 @@ sub default_options {
 	'compara_db' => 'Multi',
 
 	'species'  => "human",
-        'coord_system_name1' => "chromosome",
-        'coord_system_name2' => "supercontig",
-        #'coord_system_name2' => "scaffold",
 	'split_size' => 200,
 	'masked_seq' => 1,
         'format' => 'emf',
@@ -139,14 +136,16 @@ sub pipeline_analyses {
 			   },
             -input_ids => [ {} ],
             -flow_into => {
-                '2->A' => [ 'createChrJobs', 'createSuperJobs', 'createOtherJobs' ],
+                '2->A' => [ 'createChrJobs' ],
+                '3->A' => [ 'createSuperJobs' ],
+                '4->A' => [ 'createOtherJobs' ],
 		'A->1' => [ 'md5sum'],
 		5 => [ 'md5sum'], #if defined maf_output_dir
             },
         },
 	 {  -logic_name    => 'createChrJobs',
             -module        => 'Bio::EnsEMBL::Compara::RunnableDB::DumpMultiAlign::CreateChrJobs',
-            -parameters    => {'coord_system_name' => $self->o('coord_system_name1'),
+            -parameters    => {
 			       'format' => $self->o('format'),
 			       'compara_db' => $self->o('compara_db'),
 			       'split_size' => $self->o('split_size'),
@@ -157,7 +156,7 @@ sub pipeline_analyses {
         },
 	{  -logic_name    => 'createSuperJobs',
             -module        => 'Bio::EnsEMBL::Compara::RunnableDB::DumpMultiAlign::CreateSuperJobs',
-            -parameters    => {'coord_system_name' => $self->o('coord_system_name2'),
+            -parameters    => {
                                'format' => $self->o('format'),
 			       'output_dir' => $self->o('output_dir'),
 			       'compara_db' => $self->o('compara_db'),
