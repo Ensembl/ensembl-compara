@@ -44,17 +44,16 @@ supercontigs 3) gabs without $species (others)
 package Bio::EnsEMBL::Compara::RunnableDB::DumpMultiAlign::InitJobs;
 
 use strict;
+use warnings;
+
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
-use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
 use Bio::EnsEMBL::Registry;
-use Bio::EnsEMBL::Utils::Exception qw(throw);
 
 sub fetch_input {
     my $self = shift;
 
     my $file_prefix = "Compara";
-    my $reg = "Bio::EnsEMBL::Registry";
 
     #
     #Load registry and get compara database adaptor
@@ -66,9 +65,7 @@ sub fetch_input {
 	foreach my $db_url (@$db_urls) {
 	    Bio::EnsEMBL::Registry->load_registry_from_url($db_url);
 	}
-    } else {
-	Bio::EnsEMBL::Registry->load_all();
-    }
+    } # By default, we expect the genome_dbs to have a locator
 
     #Note this is using the database set in $self->param('compara_db').
     my $compara_dba = $self->compara_dba;

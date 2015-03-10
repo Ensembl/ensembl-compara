@@ -76,14 +76,20 @@ sub default_options {
             -driver => 'mysql',
         },
 
+        # By default, the pipeline will follow the "locator" of each
+        # genome_db. You only have to set db_urls or reg_conf if the
+        # locators are missing.
+
 	#Location of core and, optionally, compara db
-	'db_urls' => [ $self->dbconn_2_url('staging_loc1'), $self->dbconn_2_url('staging_loc2') ],
+	#'db_urls' => [ $self->dbconn_2_url('staging_loc1'), $self->dbconn_2_url('staging_loc2') ],
+	'db_urls' => [],
 
 	#Alternative method of defining location of dbs
 	'reg_conf' => '',
 
-	#Default compara. Can be the database name (if loading via db_urls) or the url
-	'compara_db' => 'Multi',
+	#Compara reference to dump. Can be the "species" name (if loading via db_urls) or the url
+        # Intentionally left empty
+	#'compara_db' => 'Multi',
 
 	'species'  => "human",
 	'split_size' => 200,
