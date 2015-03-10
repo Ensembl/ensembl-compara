@@ -558,6 +558,7 @@ sub modal_form {
   $params->{'current'}  = $hub->action;
   $params->{'name'}     = $name;
   $params->{$_}         = $options->{$_} for qw(class method wizard label no_back_button no_button buttons_on_top buttons_align skip_validation enctype);
+  $params->{'enctype'}  = 'multipart/form-data' if !$self->renderer->{'_modal_dialog_'};
 
   if ($options->{'wizard'}) {
     my $species = $hub->type eq 'UserData' ? $hub->data_species : $hub->species;
