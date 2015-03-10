@@ -60,6 +60,8 @@ sub render {
   }
   $html .= $blog if $blog;
 
+  return if ($species_defs->ENSEMBL_SITETYPE eq 'Archive');
+
   my $twitter_user = $species_defs->ENSEMBL_TWITTER_ACCOUNT;
   my $widget_id    = $species_defs->TWITTER_FEED_WIDGET_ID;
   if ($twitter_user && $widget_id) {
