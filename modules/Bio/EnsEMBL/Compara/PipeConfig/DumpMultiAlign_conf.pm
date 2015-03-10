@@ -182,7 +182,6 @@ sub pipeline_analyses {
 			       'split_size' => $self->o('split_size'),
 			      },
 	   -rc_name => '2GbMem',
-	   -hive_capacity => 10, #make this large to allow any dumpMultiAlign jobs to start
 	    -flow_into => {
 	       2 => [ 'dumpMultiAlign' ]
             }
