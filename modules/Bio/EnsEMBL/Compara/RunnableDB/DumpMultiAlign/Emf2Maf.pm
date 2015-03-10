@@ -97,11 +97,10 @@ sub write_output {
     my $maf_file = $self->param('output_file');
     $maf_file =~ s/\.emf$/.maf/;
 
-    my $output_ids = "{\"output_file\"=>\"" . $maf_file . "\"";
+    my $output_ids = { "output_file" => $maf_file };
     if ($self->param('maf_output_dir')) {
-	$output_ids .= ",\"maf_output_dir\" => \"" . $self->param('maf_output_dir') . "\"";
+	$output_ids->{maf_output_dir} = $self->param('maf_output_dir');
     }
-    $output_ids .= "}";
 
     $self->dataflow_output_id($output_ids, 2);
 

@@ -107,24 +107,15 @@ sub write_output {
     #Pass on input_id and add on new parameters: multi-align mlss_id, filename,
     #emf2maf
     #
-    #my $output_ids = $self->input_id;
-    my $output_ids;
-    #my $extra_args = ",\"mlss_id\" => \"". $self->param('mlss_id') . "\"";
-    my $extra_args = "\"mlss_id\" => \"". $self->param('mlss_id') . "\"";
-    $extra_args .= ",\"genome_db_id\" => \"". $self->param('genome_db_id') . "\"";
-    $extra_args .= ",\"filename\" => \"". $self->param('filename') ."\"";
 
-    #$output_ids =~ s/}$/$extra_args}/;
-    $output_ids = "{$extra_args}";
+    my $output_ids = {
+        mlss_id         => $self->param('mlss_id'),
+        genome_db_id    => $self->param('genome_db_id'),
+        filename        => $self->param('filename'),
+    };
 
-    #Set up chromosome job
+    #Set up chromosome, supercontig and other job
     $self->dataflow_output_id($output_ids, 2);
-
-    #Set up supercontig job
-    $self->dataflow_output_id($output_ids, 3);
-
-    #Set up other job
-    $self->dataflow_output_id($output_ids, 4);
 
     #Automatic flow through to md5sum for emf files on branch 1
     #Needs to be here and not after Compress because need one md5sum per
@@ -132,7 +123,7 @@ sub write_output {
 
     #Set up md5sum for emf2maf if necessary
     if ($self->param('maf_output_dir') ne "") {
-	my $md5sum_output_ids = "{\"output_dir\"=>\"" . $self->param('maf_output_dir') . "\"}";
+	my $md5sum_output_ids = {"output_dir" => $self->param('maf_output_dir') };
 	$self->dataflow_output_id($md5sum_output_ids, 5);
     }
 

@@ -150,9 +150,14 @@ sub write_output {
 
 	    #Write out cmd for DumpMultiAlign and a few other parameters 
 	    #used in downstream analyses 
-	    my $output_ids = "{\"coord_system\"=> \"$coord_system_name\", \"output_file\"=> \"$output_file\", \"extra_args\"=> \"--seq_region $name --chunk_num $chunk\", \"num_blocks\"=> $this_num_blocks, \"dumped_output_file\"=> \"$dump_output_file\", \"format\"=> \"$format\"}";
-
-	    #print "$output_ids\n";
+	    my $output_ids = {
+                coord_system => $coord_system_name,
+                output_file => $output_file,
+                extra_args => "--seq_region $name --chunk_num $chunk",
+                num_blocks => $this_num_blocks,
+                dumped_output_file => $dump_output_file,
+                format => $format
+            };
 	    
 	    $self->dataflow_output_id($output_ids, 2);
 	}
