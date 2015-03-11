@@ -32,7 +32,7 @@ Ensembl.Panel.PopulationGraph = Ensembl.Panel.Piechart.extend({
   toggleContent: function (el) {
     if (el.hasClass('closed') && !el.data('done')) {
       this.base(el);
-      this.makeGraphs($('.pie_chart > div', '.' + el.attr('rel')).map(function () { return this.id.replace('graphHolder', ''); }).toArray());
+      this.makeGraphs(this.el.find('.' + el.attr('rel') + ' .pie_chart > div[id^=graphHolder]').map(function() { return this.id.match(/\d+/).pop() }).toArray());
       el.data('done', true);
     } else {
       this.base(el);
