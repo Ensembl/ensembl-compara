@@ -92,6 +92,8 @@ img.species-img,
 div.species-box img { display: block; height: 48px; width: 48px; border-radius: 7px; -moz-border-radius: 7px; -webkit-border-radius: 7px; }
 div.species-box span.sp-img { float: left; padding: 0; margin-right: 8px; border: [[PANEL_BORDER]] solid 1px; border-radius: 8px; -moz-border-radius: 8px; -webkit-border-radius: 8px; background-color: [[PANEL_BORDER]]; }
 
+div.annotation-stats  { margin-left:16px; }
+
 /*----------------------------------------------------------------------
   Species homepages
 ----------------------------------------------------------------------*/
