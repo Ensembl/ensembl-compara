@@ -193,7 +193,6 @@ sub pipeline_analyses {
 			       "num_blocks"=> "#num_blocks#",
 			       "output_dir"=> $self->o('output_dir'),
 			       "output_file"=>"#output_file#" , 
-			       "dumped_output_file"=>"#dumped_output_file#" , 
 			       "format" => $self->o('format'), 
 			       "maf_output_dir" => $self->o('maf_output_dir'),
 			      },
