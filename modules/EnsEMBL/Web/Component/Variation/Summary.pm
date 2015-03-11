@@ -84,7 +84,7 @@ sub content {
     $self->synonyms,
     $self->hgvs,
     $self->sets,
-    ['About this variant', sprintf('This variant %s.', $self->join_with_and(@str_array))]
+    @str_array ? ['About this variant', sprintf('This variant %s.', $self->join_with_and(@str_array))] : ()
   );
 
   return sprintf qq{<div class="summary_panel">$info_box%s</div>}, $summary_table->render;
