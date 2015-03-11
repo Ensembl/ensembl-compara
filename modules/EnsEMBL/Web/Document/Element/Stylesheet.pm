@@ -43,7 +43,7 @@ sub init {
 sub content {
   my $self = shift;
 
-  return join '', map sprintf(qq(<link rel="stylesheet" type="text/css" media="all" href="%s%s" />\n), $self->static_server, $_), @{$self->{'_sheets'} || []};
+  return join '', map sprintf(qq(<link rel="stylesheet" type="text/css" media="all" href="%s%s" />\n), $_ =~ /^\// ? $self->static_server : '', $_), @{$self->{'_sheets'} || []};
 }
 
 sub add_sheet {
