@@ -139,13 +139,7 @@ sub fetch_by_GenomeDB_and_name {
 
   $self->bind_param_generic_fetch($genome_db_id, SQL_INTEGER);
   $self->bind_param_generic_fetch($name, SQL_VARCHAR);
-  $dnafrag = $self->generic_fetch_one('df.genome_db_id = ? AND df.name = ?');
-
-  if (!$dnafrag) {
-    $genome_db = sprintf('%s (%s)', $genome_db->name, $genome_db->assembly) if ref($genome_db);
-#    warning("No Bio::EnsEMBL::Compara::DnaFrag found for $genome_db and chromosome $name");
-  }
-  return $dnafrag;
+  return $self->generic_fetch_one('df.genome_db_id = ? AND df.name = ?');
 }
 
 
