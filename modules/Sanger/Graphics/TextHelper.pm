@@ -30,6 +30,7 @@ use strict;
 #
 sub new {
     my ($class, $transform_ref) = @_;
+    warn "########### Module $class is deprecated and will be removed in release 82. Please update your code to use EnsEMBL::Draw::Utils::TextHelper instead";
     my $this = {
 	'_scalex' => $$transform_ref{'scalex'} || 1,
 	'_scaley' => $$transform_ref{'scaley'} || 1,

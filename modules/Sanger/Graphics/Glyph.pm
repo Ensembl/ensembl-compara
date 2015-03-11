@@ -34,6 +34,9 @@ use vars qw($AUTOLOAD);
 #
 sub new {
   my ($class, $params_ref) = @_;
+  my @namespace = split('::', $class);
+  my $module = $namespace[-1];
+  warn "########### Module $class is deprecated and will be removed in release 82. Please update your code to use EnsEMBL::Draw::Glyph::$module instead";
   my $self = {
 	      'background' => 'transparent',
 	      'composite'  => undef,          # arrayref for Glyph::Composite to store other glyphs in
