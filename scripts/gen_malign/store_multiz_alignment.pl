@@ -257,10 +257,10 @@ foreach my $this_species (@species) {
   }
 #   print STDERR "get $this_species name " . $ucsc_2_ensembl->{$this_species}->{'name'} . " assem " . $ucsc_2_ensembl->{$this_species}->{'assembly'} . "\n";										
 
-  $genome_db->{$this_species} = eval{$genome_db_adaptor->fetch_by_name_assembly(
+  $genome_db->{$this_species} = $genome_db_adaptor->fetch_by_name_assembly(
       $ucsc_2_ensembl->{$this_species}->{'name'},
       $ucsc_2_ensembl->{$this_species}->{'assembly'}
-      );};
+  );
   if (!$genome_db->{$this_species}) {
     warning("Assembly ".$ucsc_2_ensembl->{$this_species}->{'assembly'}." of species [$this_species] is not loaded!");
     print "Do you want to continue with the remaining species? ";

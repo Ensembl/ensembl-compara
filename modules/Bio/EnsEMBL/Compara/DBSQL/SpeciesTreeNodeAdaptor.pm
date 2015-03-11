@@ -90,13 +90,9 @@ sub new_from_NestedSet {
 
             my $genomeDB;
             if (defined $node->taxon_id) {
-                eval {
-                    $genomeDB = $genomeDB_Adaptor->fetch_all_by_taxon_id_assembly($node->taxon_id)->[0];
-                };
+                $genomeDB = $genomeDB_Adaptor->fetch_all_by_taxon_id_assembly($node->taxon_id)->[0];
             } elsif (defined $node->node_name) {
-                eval {
-                    $genomeDB = $genomeDB_Adaptor->fetch_by_name_assembly($node->node_name);
-                };
+                $genomeDB = $genomeDB_Adaptor->fetch_by_name_assembly($node->node_name);
             }
             if (defined $genomeDB) {
                 $node->genome_db_id($genomeDB->dbID);

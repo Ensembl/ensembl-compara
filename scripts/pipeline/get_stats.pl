@@ -233,15 +233,15 @@ sub get_all_mlss_from_species_and_type {
     
     my $mlss_by_dbID;
   
-    my $genome_db = (eval{$genome_db_adaptor->fetch_by_name_assembly($species->[0])} or
-        eval{$genome_db_adaptor->fetch_by_registry_name($species->[0])});
+    my $genome_db = $genome_db_adaptor->fetch_by_name_assembly($species->[0]) or
+        $genome_db_adaptor->fetch_by_registry_name($species->[0]);
     throw("Cannot find species <$species->[0]>") if (!$genome_db);
     $method_link_species_sets = $method_link_species_set_adaptor->fetch_all_by_GenomeDB($genome_db);
     $mlss_by_dbID = {map {$_->dbID, $_} @{$method_link_species_sets}};
 
     for (my $i=1; $i<@$species; $i++) {
-      my $genome_db = (eval{$genome_db_adaptor->fetch_by_name_assembly($species->[$i])} or
-          eval{$genome_db_adaptor->fetch_by_registry_name($species->[$i])});
+      my $genome_db = $genome_db_adaptor->fetch_by_name_assembly($species->[$i]) or
+          $genome_db_adaptor->fetch_by_registry_name($species->[$i]);
       $genome_db_adaptor->fetch_by_registry_name($species->[$i]);
       throw("Cannot find species <$species->[$i]>") if (!$genome_db);
       $method_link_species_sets = $method_link_species_set_adaptor->fetch_all_by_GenomeDB($genome_db);

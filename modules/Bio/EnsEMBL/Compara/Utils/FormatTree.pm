@@ -282,14 +282,8 @@ my $sp_name_cb = sub {
   } elsif ($self->{tree}->can('taxon_id')) {
       my $taxon_id = $self->{tree}->taxon_id();
       my $genome_db_adaptor = $self->{tree}->adaptor->db->get_GenomeDBAdaptor;
-      my $genome_db;
-      eval {
-          $genome_db = $genome_db_adaptor->fetch_by_taxon_id($taxon_id);
-      };
-      if ($@) {
-          return $taxon_id;
-      }
-      return $genome_db->name();
+      my $genome_db = $genome_db_adaptor->fetch_by_taxon_id($taxon_id);
+      return $genome_db ? $genome_db->name() : $taxon_id;
   }
   return undef;
 };

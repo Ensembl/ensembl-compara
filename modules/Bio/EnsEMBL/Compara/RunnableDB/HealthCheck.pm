@@ -534,7 +534,7 @@ sub _run_compare_to_previous_db_test {
       foreach my $g_db_id (@$current_genome_db_ids) {
 	  my $g_db = $current_genome_db_adaptor->fetch_by_dbID($g_db_id);
 
-	  my $previous_gdb = eval{$previous_genome_db_adaptor->fetch_by_name_assembly($g_db->name)};
+	  my $previous_gdb = $previous_genome_db_adaptor->fetch_by_name_assembly($g_db->name);
 	  if (!$previous_gdb) {
 	      $self->warning($g_db->name, " does not exist in the previous database (" . $previous_compara_dba->dbc->dbname . ")");
 	      return;

@@ -123,9 +123,9 @@ sub fetch_all_by_Member_paired_species {
   my $gdb1 = $member->genome_db;
 
   my $gdb_a = $self->db->get_GenomeDBAdaptor();
-  my $gdb2 = eval {$gdb_a->fetch_by_registry_name($species)};
+  my $gdb2 = $gdb_a->fetch_by_registry_name($species);
   if(!defined $gdb2) {
-      $gdb2 = eval {$gdb_a->fetch_by_name_assembly($species)};
+      $gdb2 = $gdb_a->fetch_by_name_assembly($species);
       if(!defined $gdb2) {
           throw("No GenomeDB found with name '$species'");
       }

@@ -89,11 +89,8 @@ sub fetch_input {
 
     my $reuse_db                = $self->param_required('reuse_db');
     my $reuse_compara_dba       = Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->go_figure_compara_dba($reuse_db);    # may die if bad parameters
-    my $old_genome_db;
-    eval {
-        $old_genome_db          = $reuse_compara_dba->get_GenomeDBAdaptor->fetch_by_name_assembly($this_genome_db->name);
-    };
-    return if ($@);
+    my $old_genome_db           = $reuse_compara_dba->get_GenomeDBAdaptor->fetch_by_name_assembly($this_genome_db->name);
+    return if not $old_genome_db;
 
     $self->param('reuse_this', 1);
 

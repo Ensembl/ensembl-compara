@@ -105,8 +105,6 @@ sub fetch_by_name_assembly {
         $self->_id_cache->get_by_additional_lookup('name_assembly', sprintf('%s_____%s', lc $name, lc $assembly))
         : $self->_id_cache->get_by_additional_lookup('name_default_assembly', lc $name);
     
-    throw("No matches found for name '$name' and assembly '".($assembly||'--undef--')."'") unless($found_gdb);
-
     return $found_gdb;
 }
 
@@ -134,8 +132,6 @@ sub fetch_all_by_taxon_id_assembly {
         $self->_id_cache->get_all_by_additional_lookup('taxon_id_assembly', sprintf('%s____%s_', $taxon_id, lc $assembly))
             : $self->_id_cache->get_all_by_additional_lookup('taxon_id_default_assembly', $taxon_id);
 
-    throw("No matches found for taxon_id '$taxon_id' and assembly '".($assembly||'--undef--')."'") unless($found_gdbs);
-
     return $found_gdbs;
 }
 
@@ -159,8 +155,6 @@ sub fetch_by_taxon_id {
     throw("taxon_id argument is required") unless($taxon_id);
 
     my $found_gdbs = $self->_id_cache->get_all_by_additional_lookup('taxon_id', $taxon_id);
-
-    throw("No matches found for taxon_id '$taxon_id'") unless($found_gdbs);
 
     return $found_gdbs->[0];
 }
@@ -465,10 +459,8 @@ sub _find_missing_DBAdaptors {
         my $that_assembly = $db_adaptor->assembly_name();
         $db_adaptor->dbc->disconnect_if_idle();
 
-        eval {
-            my $that_gdb = $self->fetch_by_name_assembly($that_species, $that_assembly);
-            $that_gdb->db_adaptor($db_adaptor) if $that_gdb and not $that_gdb->{_db_adaptor};
-        }
+        my $that_gdb = $self->fetch_by_name_assembly($that_species, $that_assembly);
+        $that_gdb->db_adaptor($db_adaptor) if $that_gdb and not $that_gdb->{_db_adaptor};
     }
 
     my @missing = ();

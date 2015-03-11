@@ -109,16 +109,11 @@ sub fetch_input {
             # Need to check that the genome_db_id has not changed (treat the opposite as a signal not to reuse) :
         my $reuse_compara_dba       = Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->go_figure_compara_dba($reuse_db);    # may die if bad parameters
         my $reuse_genome_db_adaptor = $reuse_compara_dba->get_GenomeDBAdaptor();
-        my $reuse_genome_db;
-        eval {
-            $reuse_genome_db = $reuse_genome_db_adaptor->fetch_by_name_assembly($species_name, $genome_db->assembly);
-        };
-        if (not $reuse_genome_db and ($@ and $@ =~ /No matches found for name/)) {
+        my $reuse_genome_db = $reuse_genome_db_adaptor->fetch_by_name_assembly($species_name, $genome_db->assembly);
+        if (not $reuse_genome_db) {
             $self->warning("Could not fetch genome_db object for name='$species_name' and assembly='".$genome_db->assembly."' from reuse_db");
             $self->param('reuse_this', 0);
             return;
-        } elsif ($@) {
-            die $@;
         }
         my $reuse_genome_db_id = $reuse_genome_db->dbID();
 

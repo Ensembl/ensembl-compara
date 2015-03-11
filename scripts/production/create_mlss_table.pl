@@ -282,11 +282,8 @@ if (defined $species_tree_file) {
         $name =~ tr/ /_/d;
 
         # not all species in the species tree are in the compara database so need to check
-        my $genome_db;
-        eval {
-            $genome_db = $genome_db_adaptor->fetch_by_name_assembly($name);
-        };
-        unless ($@) {
+        my $genome_db = $genome_db_adaptor->fetch_by_name_assembly($name);
+        if ($genome_db) {
             $spp->{short_name} = substr($genome_db->get_short_name, 0, 1) . "." . substr($genome_db->get_short_name, 1);
         }
         push @$species, $spp;
