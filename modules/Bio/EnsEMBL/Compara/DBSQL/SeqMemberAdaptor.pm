@@ -196,7 +196,7 @@ sub fetch_all_canonical_by_GenomeDB {
 sub fetch_canonical_for_gene_member_id {
     my ($self, $gene_member_id) = @_;
 
-    throw() unless (defined $gene_member_id);
+    throw('No gene_member_id given') unless (defined $gene_member_id);
 
     my $constraint = 'mg.gene_member_id = ?';
     my $join = [[['gene_member', 'mg'], 'm.seq_member_id = mg.canonical_member_id']];
