@@ -96,11 +96,11 @@ sub content {
           '<a href="%s">%s</a>',
           $phen_link,
           $pf->phenotype->description,
-          $pf->source
+          $pf->source_name
         );
         
         # source
-        my $source = $pf->source;
+        my $source = $pf->source_name;
         my $ext_id = $pf->external_id;
         my $tax = $species_defs->get_config($species, 'TAXONOMY_ID');
       

@@ -100,7 +100,7 @@ sub gene_phenotypes {
       foreach my $pf(@{$pfa->fetch_all_by_Gene($obj)}) {
         my $phen   = $pf->phenotype->description;
         my $ext_id = $pf->external_id;
-        my $source = $pf->source;
+        my $source = $pf->source_name;
       
         if($ext_id && $source) {
           $source = $hub->get_ExtURL_link($source, $source, { ID => $ext_id, TAX => $tax});
