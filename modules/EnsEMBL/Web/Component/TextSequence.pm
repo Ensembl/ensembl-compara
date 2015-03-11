@@ -223,7 +223,7 @@ sub set_variations {
   my $focus  = $name eq $config->{'species'} ? $config->{'focus_variant'} : undef;
   my $snps   = [];
   my $u_snps = {};
-  my ($adaptor, $include_failed);
+  my $adaptor;
   
   if ($focus_snp_only) {
     push @$snps, $focus_snp_only;
@@ -384,8 +384,6 @@ sub set_variations {
     
     $config->{'focus_position'} = [ $s..$e ] if $dbID eq $config->{'focus_variant'};
   }
-  
-  $adaptor->db->include_failed_variations($include_failed) if $adaptor && defined $include_failed;
 }
 
 sub set_exons {

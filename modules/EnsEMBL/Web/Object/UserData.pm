@@ -751,9 +751,6 @@ sub calculate_consequence_data {
       foreach my $type (keys %{$track}) { 
         my $features = $parser->fetch_features_by_tracktype($type);
         
-        # include failed variations
-        $vep_config->{vfa}->db->include_failed_variations(1) if defined($vep_config->{vfa}->db) && $vep_config->{vfa}->db->can('include_failed_variations');
-        
         while ( $f = shift @{$features}){
           $file_count++;
           next if $feature_count >= $size_limit; # $size_limit is max number of v to process, if hit max continue counting v's in file but do not process them
