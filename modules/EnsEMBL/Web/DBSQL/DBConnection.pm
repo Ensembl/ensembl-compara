@@ -142,7 +142,6 @@ sub get_databases_species {
       if (!defined($dba) || $database eq 'glovar'){
         $self->_get_databases_common( $species, $database );
       } else{
-        $dba->include_failed_variations(1) if $database eq 'variation';
         $self->{'_dbs'}->{$species}->{$database} = $dba;
       }
     }

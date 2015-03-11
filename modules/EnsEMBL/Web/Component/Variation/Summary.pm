@@ -259,7 +259,7 @@ sub co_located {
       my $alleles   = ' ('.$_->allele_string.')' if $_->allele_string =~ /\//;
       my $variation = qq{<a href="$link">$v_name</a>$alleles};
       
-      push @{$by_source{$_->source}}, $variation;
+      push @{$by_source{$_->source_name}}, $variation;
     }
     
     if (scalar keys %by_source) {

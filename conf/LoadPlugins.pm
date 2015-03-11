@@ -83,7 +83,7 @@ sub import {
       local $SIG{'__WARN__'} = sub { warn $_[0] unless $_[0]=~ /Subroutine .+ redefined/; };
 
       # Load the core file first, then all the existing plugin files
-      for (@lib_dirs, @plugins) {
+      for (reverse(@lib_dirs), @plugins) {
         my $filename = "$_->[1]/$filename" =~ s/\/+/\//gr;
         if (-e $filename) {
           eval "require '$filename'";
