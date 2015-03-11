@@ -262,7 +262,7 @@ sub _create_specific_epo_low_coverage_readme {
 
     my $species = $self->param('species');
     my @tree_list = split(//, $newick_species_tree);
-    my $high_coverage_mlss = $mlss_adaptor->fetch_by_dbID($self->param('high_coverage_mlss_id'));
+    my $high_coverage_mlss = $mlss_adaptor->fetch_by_dbID($mlss->get_value_for_tag('high_coverage_mlss_id'));
     my $high_coverage_species_set = $high_coverage_mlss->species_set_obj->genome_dbs;
 
     my %high_coverage_species;

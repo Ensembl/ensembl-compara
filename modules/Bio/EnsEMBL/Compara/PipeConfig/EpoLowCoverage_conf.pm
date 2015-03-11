@@ -214,7 +214,10 @@ sub pipeline_analyses {
             { -logic_name => 'set_mlss_tag',
               -module     => 'Bio::EnsEMBL::Hive::RunnableDB::SqlCmd',
               -parameters => {
-                              'sql' => [ 'INSERT INTO method_link_species_set_tag (method_link_species_set_id, tag, value) VALUES (' . $self->o('cs_mlss_id') . ', "msa_mlss_id", ' . $self->o('low_epo_mlss_id') . ')' ],
+                              'sql' => [
+                                  'INSERT INTO method_link_species_set_tag (method_link_species_set_id, tag, value) VALUES (' . $self->o('cs_mlss_id') . ', "msa_mlss_id", ' . $self->o('low_epo_mlss_id') . ')',
+                                  'INSERT INTO method_link_species_set_tag (method_link_species_set_id, tag, value) VALUES (' . $self->o('low_epo_mlss_id') . ', "high_coverage_mlss_id", ' . $self->o('high_epo_mlss_id') . ')'
+                              ],
                              },
               -flow_into => {
                              1 => [ 'set_internal_ids' ],

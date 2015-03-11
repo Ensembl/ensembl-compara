@@ -94,7 +94,6 @@ sub default_options {
         'emf2maf_program' => $self->o('ensembl_cvs_root_dir')."/ensembl-compara/scripts/dumps/emf2maf.pl",
 	'maf_output_dir' => "",
 	'species_tree_file' => $self->o('ensembl_cvs_root_dir')."/ensembl-compara/scripts/pipeline/species_tree.ensembl.topology.nw",
-	'high_coverage_mlss_id' => "",
 
     };
 }
@@ -227,7 +226,6 @@ sub pipeline_analyses {
 			       'split_size' => $self->o('split_size'),
 			       'species_tree_file' => $self->o('species_tree_file'),
 			       'species' => $self->o('species'),
-			       'high_coverage_mlss_id' =>$self->o('high_coverage_mlss_id') ,
 			      },
             -input_ids     =>[ 
 		  {
