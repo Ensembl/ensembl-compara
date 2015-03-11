@@ -1,0 +1,18 @@
+
+Plenty of scripts there ...
+
+
+Here follows the list of scripts that have been removed. This list aims at keeping an historical record in case those files are needed one day
+
+* hcr/
+
+     scripts/hcr/CleanLSFHeaders.pl
+     scripts/hcr/README
+     scripts/hcr/subsetAxtFromAndToCompara.pl
+     scripts/hcr/tight.mat
+
+This folder used to contain a script to extract the alignments of highly-conserved regions
+
+tags: HCR, axt, 34 bp minimum length, 3400 minimum score
+
+
