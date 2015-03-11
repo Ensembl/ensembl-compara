@@ -209,7 +209,7 @@ sub format_table {
     }
 
     ## Make the tree
-    if ($name =~ /_ALL/) {
+    if ($name =~ /(\W+|_)ALL/) {
       $all = $pop_id;
       next;
     }
@@ -245,7 +245,7 @@ sub format_table {
     my $pop_info = $freq_data->{$pop_id}{'pop_info'};
 
     my ($row_class, $group_member);
-    if ($pop_info->{'Name'} =~ /_ALL/) {
+    if ($pop_info->{'Name'} =~ /(\W+|_)ALL/) {
       $row_class = 'supergroup';
     }
     elsif ($tree->{$pop_id}{'children'}) {
