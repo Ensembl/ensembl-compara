@@ -64,7 +64,7 @@ sub content {
 
   $html .= sprintf '<p>The genome assembly represented here corresponds to %s %s</p>', $source_type, $hub->get_ExtURL_link($accession, "ASSEMBLY_ACCESSION_SOURCE_$source", $accession) if $accession; ## Add in GCA link
 
-  if (my $assembly_dropdown = $self->assembly_dropodown) {
+  if (my $assembly_dropdown = $self->assembly_dropdown) {
     $html .= "<h2>Other assemblies</h2>$assembly_dropdown";
   }
   
@@ -78,7 +78,7 @@ sub content {
     </div>
   </div>
   <div class="column-two">
-    <div class="column-padding" style="margin-left:16px">';
+    <div class="column-padding" class="annotation-stats">';
     
   ## ASSEMBLY STATS 
   my $file = '/ssi/species/stats_' . $self->hub->species . '.html';

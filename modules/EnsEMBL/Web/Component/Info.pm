@@ -25,7 +25,7 @@ use EnsEMBL::Web::DBSQL::ArchiveAdaptor;
 
 use parent qw(EnsEMBL::Web::Component::Shared);
 
-sub assembly_dropodown {
+sub assembly_dropdown {
   my $self              = shift;
   my $hub               = $self->hub;
   my $adaptor           = EnsEMBL::Web::DBSQL::ArchiveAdaptor->new($hub);
