@@ -16,26 +16,21 @@ limitations under the License.
 
 =cut
 
-##
-## Configuration file for DumpMultiAlign pipeline
-#Release 65
-#
-#epo 6 way
-#init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::DumpMultiAlign_conf --password **** --mlss_id 548 --output_dir /lustre/scratch101/ensembl/kb3/scratch/hive/release_65/emf_dumps/epo_6_primate --species human -dbname dumpMultiAlign_6way_primate_65 -pipeline_name DUMP_6_65
-#3.4 hours
-#
-#epo 12 way
-#init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::DumpMultiAlign_conf --password **** --mlss_id 547 --output_dir /lustre/scratch101/ensembl/kb3/scratch/hive/release_65/emf_dumps/epo_12_eutherian --species human -dbname dumpMultiAlign_12way_eutherian_65 -pipeline_name DUMP_12_65
-#2.7 hours
-#
-#mercator/pecan 19 way
-#init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::DumpMultiAlign_conf --password **** --mlss_id 50035 --output_dir /lustre/scratch101/ensembl/kb3/scratch/hive/release_65/emf_dumps/pecan_19_amniota --species human -dbname dumpMultiAlign_19way_amniota_65 -pipeline_name DUMP_19_65
-#5.5 hours
-#
-#low coverage epo 35 way
-#init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::DumpMultiAlign_conf --password **** --mlss_id 50036 --output_dir /lustre/scratch101/ensembl/kb3/scratch/hive/release_65/emf_dumps/epo_35_eutherian --species human --high_coverage_mlss_id 547 -dbname dumpMultiAlign_35way_eutherian_65 -pipeline_name DUMP_35_65
-#43 hours (1.8 days)
-#
+=head1 SYNOPSIS
+
+Initialise the pipeline on comparaY, grouping the alignment blocks
+according to their "homo_sapiens" chromosome
+
+  init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::DumpMultiAlign_conf --mlss_id 548 --compara_db mysql://ensro@comparaX/msa_db_to_dump --output_dir /path/to/dumps/ --species homo_sapiens --host comparaY
+
+Release 65
+
+epo 6 way: 3.4 hours
+epo 12 way: 2.7 hours
+mercator/pecan 19 way: 5.5 hours
+low coverage epo 35 way: 43 hours (1.8 days)
+
+=cut
 
 package Bio::EnsEMBL::Compara::PipeConfig::DumpMultiAlign_conf;
 
