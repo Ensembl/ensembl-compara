@@ -132,15 +132,20 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
 
     if (this.elLk.boundaries.length && this.draggables.length) {
       this.panning = Ensembl.cookie.get('ENSEMBL_REGION_PAN') === '1';
-      this.elLk.toolbars.append('<div class="scroll-switch"><label>Move/Select:<select><option>Select</option><option>Move</option></select></label>').find('select').on('change', function() {
-        var flag = $(this).find('option:selected').html() == 'Move';
+      this.elLk.toolbars.first().append([
+        '<div class="scroll-switch">',
+          '<span>Drag/Select:</span>',
+          '<div><button title="Scroll to a region" class="dragging on"></button></div>',
+          '<div class="last"><button title="Select a region" class="dragging"></button></div>',
+        '</div>'].join('')).find('button').helptip().on('click', function() {
+        var flag = $(this).hasClass('on');
         if (flag !== panel.panning) {
+          $(this).parent().parent().find('div').toggleClass('selected');
           panel.panning = flag;
           Ensembl.cookie.set('ENSEMBL_REGION_PAN', flag ? '1' : '0');
         }
-      }).find('option:contains("' + (panel.panning ? 'Move' : 'Select') + '")').prop('selected', true);
+      }).filter(panel.panning ? '.on' : ':not(.on)').parent().addClass('selected');
     }
-
   },
 
   loadJSON: function(str) {
