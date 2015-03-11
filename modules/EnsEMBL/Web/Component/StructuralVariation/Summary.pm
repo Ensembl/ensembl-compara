@@ -74,7 +74,7 @@ sub content {
     $self->location($mappings),
     $self->size($mappings),
     $validation ? ['Validation status', $validation] : (),
-    ["About this structural variant", sprintf('This structural variant %s.', $self->join_with_and(@str_array))]
+    @str_array ? ["About this structural variant", sprintf('This structural variant %s.', $self->join_with_and(@str_array))] : ()
   )->render;
 }
 
