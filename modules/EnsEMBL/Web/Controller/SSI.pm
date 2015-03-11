@@ -227,7 +227,7 @@ sub add_JSCSS {
 
   my $head        = $self->content =~ /<head>(.*?)<\/head>/sm ? $1 : '';
   my $stylesheets = $page->elements->{'stylesheet'};
-  my $javascript  = $page->elements->{'body_javascript'};
+  my $javascript  = $page->elements->{'javascript'};
 
   while ($head =~ s/<style(.*?)>(.*?)<\/style>//sm) {
     my ($attr, $cont) = ($1, $2);
@@ -249,9 +249,9 @@ sub add_JSCSS {
     next unless $attr =~ /text\/javascript/;
 
     if ($attr =~ /src="(.*?)"/) {
-      $javascript->add_script($1);
+      $javascript->add_source($1);
     } else {
-      $javascript->add_inlinejs($cont);
+      $javascript->add_script($cont);
     }
   }
 
