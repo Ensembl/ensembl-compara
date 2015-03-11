@@ -99,8 +99,8 @@ sub content {
     'name'    => 'submit',
     'value'   => 'Send',
   });
-  
-  $_->set_attribute('data-role', 'none') for @{$fieldset->get_elements_by_tag_name('input')};
+
+  $_->set_attribute('data-role', 'none') for @{$fieldset->get_elements_by_tag_name([qw(input select textarea)])};
 
   return $form->render;
 }
