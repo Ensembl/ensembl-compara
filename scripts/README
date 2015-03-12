@@ -16,3 +16,11 @@ This folder used to contain a script to extract the alignments of highly-conserv
 tags: HCR, axt, 34 bp minimum length, 3400 minimum score
 
 
+* misc/
+     scripts/misc/ConvertChimpCoordsScaffold2Chromosome.pl
+     scripts/misc/all.agp
+
+Script to concert the coordinates on scaffolds to coordinates on chromosomes, following an AGP file
+
+tags: AGP, coordinates, assembly, scaffolds, chromosomes, chimpanzee
+
