@@ -654,18 +654,30 @@ sub _get_low_coverage_genome_db_sets {
   return $low_coverage_species;
 }
 
-sub export_options { return {
-                              'action'  => 'TextAlignments', 
-                              'params'  => ['align'], 
-                              'caption' => 'Download alignment',
-                              }; 
+sub export_options { 
+  my $self = shift;
+  my $hub = $self->hub;
+  my @selected_species;
+  my $align = $hub->param('align');
+  my $species = $hub->species;
+  foreach (grep { /species_$align/ } $hub->param) {
+    if ($hub->param($_) eq 'yes') {
+      /species_${align}_(.+)/;
+      push @selected_species, $1 unless $1 =~ /$species/i;  
+    }
+  }
+  return {
+          'action'  => 'TextAlignments', 
+          'params'  => ['align', @selected_species], 
+          'caption' => 'Download alignment',
+        }; 
 }
 
 sub get_export_data {
 ## Get data for export
   my $self = shift;
   my $hub = $self->hub;
-  ## Fetch explicitly, as we're probably coming from a DataExport URL
+  ## Fetch object explicitly, as we're probably coming from a DataExport URL
   my $obj = $hub->core_object($hub->param('data_type'));
   return $obj;
 }
