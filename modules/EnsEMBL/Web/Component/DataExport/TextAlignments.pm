@@ -35,7 +35,14 @@ sub content {
 
   my $settings = $viewconfig->form_fields;
 
-  $settings->{'Hidden'} = ['align'];
+  ## Pass species selection to output
+  my @species_options;
+  my $align = $hub->param('align');
+  foreach (grep { /species_$align/ } $hub->param) {
+    push @species_options, $_;
+  }
+
+  $settings->{'Hidden'} = ['align', @species_options];
 
   ## Options per format
   my @field_order = $viewconfig->field_order;
