@@ -663,7 +663,7 @@ sub export_options {
   foreach (grep { /species_$align/ } $hub->param) {
     if ($hub->param($_) eq 'yes') {
       /species_${align}_(.+)/;
-      push @selected_species, $1 unless $1 =~ /$species/i;  
+      push @selected_species, $_ unless $1 =~ /$species/i;  
     }
   }
   return {
