@@ -33,11 +33,18 @@ sub _init {
 }
 
 sub content {
-  ### N.B. There currently are no additional options for alignment export
   my $self  = shift;
   my $hub   = $self->hub;
 
   my $settings = {};
+
+  ## Pass species selection to output
+  #my $species_options = [];
+  #foreach (grep { /^species_/ } $hub->param) {
+  #  push @$species_options, $_;
+  #}
+
+  #$settings->{'Hidden'} = $species_options;
 
   ## Options per format
   my $fields_by_format = {'OrthoXML' => []};

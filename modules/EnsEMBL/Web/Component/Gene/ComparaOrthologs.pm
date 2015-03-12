@@ -277,8 +277,21 @@ sub get_export_data {
   my $cdb          = shift || $hub->param('cdb') || 'compara';
 
   my ($homologies) = $object->get_homologies('ENSEMBL_ORTHOLOGUES', undef, undef, $cdb);
-
   return $homologies;
+=pod
+  my $ok_homologies = [];
+
+  foreach my $homology (@$homologies) {
+    foreach my $member (@{$homology->get_all_Members}) {
+      if ($hub->param('species_'.$member->genome_db->name) eq 'yes') {
+        push @$ok_homologies, $homology;
+        last;
+      }
+    }
+  }
+
+  return $ok_homologies;
+=cut
 }
 
 sub buttons {
@@ -301,6 +314,11 @@ sub buttons {
                   'data_action' => $hub->action,
                   'gene_name'   => $name,
                 };
+
+    ## Add any species settings
+    #foreach (grep { /^species_/ } $hub->param) {
+    #  $params->{$_} = $hub->param($_);
+    #}
 
     push @buttons, {
                     'url'     => $hub->url($params),
