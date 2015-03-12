@@ -657,18 +657,14 @@ sub _get_low_coverage_genome_db_sets {
 sub export_options { 
   my $self = shift;
   my $hub = $self->hub;
-  my @selected_species;
+  my @species_options;
   my $align = $hub->param('align');
-  my $species = $hub->species;
   foreach (grep { /species_$align/ } $hub->param) {
-    if ($hub->param($_) eq 'yes') {
-      /species_${align}_(.+)/;
-      push @selected_species, $_ unless $1 =~ /$species/i;  
-    }
+    push @species_options, $_;  
   }
   return {
           'action'  => 'TextAlignments', 
-          'params'  => ['align', @selected_species], 
+          'params'  => ['align', @species_options], 
           'caption' => 'Download alignment',
         }; 
 }
