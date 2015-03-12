@@ -454,7 +454,7 @@ sub render_as_alignment_nolabel {
             y         => $composite->{'y'},
             width     => $composite->{'width'},
             height    => $h,
-            colour    => $join_colour,
+            colour    => $feature_colour,
             absolutey => 1,
           }));
         }

@@ -214,8 +214,11 @@ sub features {
     } else {
       $default_rgb_string = $self->my_config('colour') || '0,0,0';
     }
-    
+   
     foreach (@$features) {
+      if ($_->external_data->{'BlockCount'}) {
+        $self->{'my_config'}->set('has_blocks', 1);
+      }
       my $colour = $_->external_data->{'item_colour'};
       next if defined $colour && $colour->[0] =~ /^\d+,\d+,\d+$/;
       $_->external_data->{'item_colour'}[0] = $default_rgb_string;
@@ -240,6 +243,7 @@ sub draw_features {
   return join ' or ', @error;
 }
 
+=pod
 sub render_normal {
   my $self = shift;
   $self->SUPER::render_normal(8, 20);  
@@ -256,6 +260,7 @@ sub render_labels {
   $self->{'show_labels'} = 1;
   $self->render_normal(@_);
 }
+=cut
 
 sub render_text { warn "No text renderer for bigbed\n"; return ''; }
 

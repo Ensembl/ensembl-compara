@@ -29,11 +29,11 @@ sub new {
 
   unless(defined $extra) {
     $extra = {};
-    my @default_extras = qw(thick_start thick_end item_colour
+  }
+  my @default_extras = qw(thick_start thick_end item_colour
                             BlockCount BlockSizes BlockStart);
-    foreach my $i (0..$#default_extras) {
-      $extra->{$default_extras[$i]}=$args->[$i+6] if defined $args->[$i+6];
-    }
+  foreach my $i (0..$#default_extras) {
+    $extra->{$default_extras[$i]}=$args->[$i+6] if defined $args->[$i+6];
   }
   my $more = { map { $_ => [$extra->{$_}] } keys %$extra };
 

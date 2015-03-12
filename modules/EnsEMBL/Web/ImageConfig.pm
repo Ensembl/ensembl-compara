@@ -1129,17 +1129,17 @@ sub _add_bam_track {
 sub _add_bigbed_track {
   my ($self, %args) = @_;
  
-  my $renderers = $args{'source'}{'renderers'} || [
-    'off',     'Off', 
-    'normal',  'Normal', 
-    'labels',  'Labels',
-    'compact', 'Compact',
-  ];
-
+  my $renderers = $args{'source'}{'renderers'};
+  my $strand    = 'b';
+  unless ($renderers) {
+    ($strand, $renderers) = $self->_user_track_settings($args{'source'}{'style'}, 'BIGBED');
+  }
+  
   my $options = {
     external     => 'external',
     sub_type     => 'url',
     colourset    => 'feature',
+    strand       => $strand,
     style        => $args{'source'}{'style'},
     addhiddenbgd => 1,
     max_label_rows => 2,
@@ -1147,15 +1147,13 @@ sub _add_bigbed_track {
 
   if ($args{'view'} && $args{'view'} =~ /peaks/i) {
     $options->{'join'} = 'off';  
-  } else {
-    push @$renderers, ('tiling', 'Wiggle plot');
   } 
   
   $self->_add_file_format_track(
-    format => 'BigBed',
+    format      => 'BigBed',
     description => 'Bigbed file',
-    renderers => $renderers,
-    options => $options,
+    renderers   => $renderers,
+    options     => $options,
     %args,
   );
 }
