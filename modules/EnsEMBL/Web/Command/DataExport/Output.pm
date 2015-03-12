@@ -438,39 +438,45 @@ sub write_emboss {
 sub write_alignment {
   my ($self, $component) = @_;
   my $hub     = $self->hub;
-  my $format  = $hub->param('format');
-
-  my $export;
-
-  my $align_io = Bio::AlignIO->newFh(
-    -fh     => IO::String->new($export),
-    -format => $format
-  );
-
+  my $align = $hub->param('align');
+  #foreach (grep { /species_$align/ } $hub->param) {
+  #  warn ">>> PARAM $_ = ".$hub->param($_);
+  #}
+  my ($alignment, $result);
   my $data = $component->get_export_data;
-  my $alignment;
-
-  if (ref($data) eq 'ARRAY') {
-    print $align_io $_ for @$data;
+  if (!$data) {
+    $result->{'error'} = ['No data returned'];
   }
   else {
-    if (ref($data) =~ 'SimpleAlign') {
-      $alignment = $data;
+    my $export;
+    my $format  = $hub->param('format');
+    my $align_io = Bio::AlignIO->newFh(
+      -fh     => IO::String->new($export),
+      -format => $format
+    );
+
+    if (ref($data) eq 'ARRAY') {
+      print $align_io $_ for @$data;
     }
     else {
-      $self->object->{'alignments_function'} = 'get_SimpleAlign';
+      if (ref($data) =~ 'SimpleAlign') {
+        $alignment = $data;
+      }
+      else {
+        $self->object->{'alignments_function'} = 'get_SimpleAlign';
 
-      $alignment = $self->object->get_alignments({
+        $alignment = $self->object->get_alignments({
           'slice'   => $data->slice,
           'align'   => $hub->param('align'),
           'species' => $hub->species,
         });
+      }
+
+      print $align_io $alignment;
     }
 
-    print $align_io $alignment;
+    $result = $self->write_line($export);
   }
-
-  my $result = $self->write_line($export);
   return $result->{'error'} || undef;
 }
 
