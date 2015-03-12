@@ -664,10 +664,13 @@ sub get_SimpleAlign {
     my $seq = Bio::LocatableSeq->new(
             -SEQ    => $slice->seq,
             -START  => $slice->start,
-            -END    => $slice->end,
+            #-END    => $slice->end,
             -ID     => $slice->genome_db->name.($genome_db_name_counter->{$slice->genome_db->name} or ""),
             -STRAND => $slice->strand
         );
+    # Avoid warning in BioPerl about len(seq) != end-start+1
+    $seq->{end} = $slice->end;
+
     ## This allows to have several sequences for the same species. Bio::SimpleAlign complains
     ## about having the same ID, START and END for two sequences...
     if (!defined($genome_db_name_counter->{$slice->genome_db->name})) {
