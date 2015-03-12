@@ -1,6 +1,0 @@
-#
-# The Families' pipeline configuration has moved into the module
-#       Bio/EnsEMBL/Compara/PipeConfig/Families_conf.pm
-#
-# which is driven by ensembl-hive/scripts/init_pipeline.pl script.
-#
