@@ -330,7 +330,7 @@ sub accept {
     if ($image_config && scalar keys %{$config->{'image_config'}}) {
       my @changes;
       foreach (keys %{$config->{'image_config'}}) {
-        my $node = $image_config->get_node($_);
+        my $node = $image_config->get_node($_) or next;
         my $track_name = $node->data->{'name'} || $node->data->{'coption'};
         push @changes, $track_name if $track_name;
       }
