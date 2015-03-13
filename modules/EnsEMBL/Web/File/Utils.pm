@@ -102,9 +102,9 @@ sub get_extension {
   else {
     my $filename = get_filename($file);
     my @parts = split(/\./, $filename);
-    $extension = pop @parts;
+    $extension = @parts > 1 ? pop @parts : '';
     if ($extension =~ /zip|gz|bz/) {
-      $extension = pop @parts;
+      $extension = @parts > 1 ? pop @parts : '';
     }
   }
   return $extension;
