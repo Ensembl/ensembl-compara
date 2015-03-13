@@ -39,18 +39,6 @@ sub new {
   return $class->SUPER::new(%args);
 }
 
-sub absolute_read_path {
-  my $self = shift;
-  my $path = $self->SUPER::absolute_read_path(@_);
-  return $self->{'absolute'} ? $path : $self->hub->species_defs->ENSEMBL_STATIC_SERVER.$path;
-}
-
-sub absolute_write_path {
-  my $self = shift;
-  my $path = $self->SUPER::absolute_write_path(@_);
-  return $self->{'absolute'} ? $path : $self->hub->species_defs->ENSEMBL_STATIC_SERVER.$path;
-}
-
 sub read_url {
   my $self = shift;
   my $path = $self->SUPER::read_url(@_);
