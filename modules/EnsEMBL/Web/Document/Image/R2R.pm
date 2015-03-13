@@ -102,8 +102,7 @@ sub _dump_multiple_alignment {
     my $aln_file  = EnsEMBL::Web::File::Dynamic->new(
                                                       hub             => $self->hub,
                                                       sub_dir         => 'r2r_'.$self->hub->species,
-                                                      name            => $model_name,
-                                                      extension       => "aln",
+                                                      name            => $model_name.'.aln',
                                                       input_drivers   => ['IO'],
                                                       output_drivers  => ['IO'],
                                                       );
@@ -132,7 +131,7 @@ sub _create_svg {
 
     my $cons_filename  = $model_name.'.cons';
     ## For information about these options, check http://breaker.research.yale.edu/R2R/R2R-manual-1.0.3.pdf
-    $self->_run_r2r_and_check("--GSC-weighted-consensus", $aln_file->absolute_write_path, $path, $cons_filename, "3 0.97 0.9 0.75 4 0.97 0.9 0.75 0.5 0.1");
+    $self->_run_r2r_and_check("--GSC-weighted-consensus", $aln_file->absolute_read_path, $path, $cons_filename, "3 0.97 0.9 0.75 4 0.97 0.9 0.75 0.5 0.1");
 
     my $thumbnail = $model_name.'_thumbnail.svg';
 
@@ -140,8 +139,7 @@ sub _create_svg {
     my $th_file = EnsEMBL::Web::File::Dynamic->new(
                                                   hub             => $self->hub,
                                                   sub_dir         => $sub_dir,
-                                                  name            => $model_name.'_thumbnail',
-                                                  extension       => "svg",
+                                                  name            => $thumbnail,
                                                   input_drivers   => ['IO'],
                                                   output_drivers  => ['IO'],
                                                   );
@@ -151,8 +149,7 @@ sub _create_svg {
       my $th_meta = EnsEMBL::Web::File::Dynamic->new(
                                                   hub             => $self->hub,
                                                   sub_dir         => $sub_dir,
-                                                  name            => $model_name.'_thumbnail',
-                                                  extension       => "meta",
+                                                  name            => $model_name.'_thumbnail.meta',
                                                   input_drivers   => ['IO'],
                                                   output_drivers  => ['IO'],
                                                   );
@@ -160,7 +157,7 @@ sub _create_svg {
         my $th_content = "$path/$cons_filename\tskeleton-with-pairbonds\n";
         $th_meta->write($th_content);
       }
-      $self->_run_r2r_and_check("", $th_meta->absolute_write_path, $path, $thumbnail, "");
+      $self->_run_r2r_and_check("", $th_meta->absolute_read_path, $path, $thumbnail, "");
     }
 
     my $plot = $model_name.'.svg';
@@ -169,8 +166,7 @@ sub _create_svg {
     my $plot_file = EnsEMBL::Web::File::Dynamic->new(
                                                   hub             => $self->hub,
                                                   sub_dir         => $sub_dir,
-                                                  name            => $model_name,
-                                                  extension       => "svg",
+                                                  name            => $plot,
                                                   input_drivers   => ['IO'],
                                                   output_drivers  => ['IO'],
                                                   );
@@ -180,8 +176,7 @@ sub _create_svg {
       my $plot_meta  = EnsEMBL::Web::File::Dynamic->new(
                                                       hub             => $self->hub,
                                                       sub_dir         => $sub_dir,
-                                                      name            => $model_name,
-                                                      extension       => "meta",
+                                                      name            => $model_name.'.meta',
                                                       input_drivers   => ['IO'],
                                                       output_drivers  => ['IO'],
                                                       );
@@ -196,7 +191,7 @@ sub _create_svg {
       $self->_run_r2r_and_check("", $plot_meta->absolute_read_path, $path, $plot, "");
     }
 
-    return ($th_file->absolute_read_path, $plot_file->absolute_read_path);
+    return ($th_file->read_url, $plot_file->read_url);
 }
 
 sub _run_r2r_and_check {

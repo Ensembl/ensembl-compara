@@ -93,6 +93,8 @@ sub handler {
       }
     }
 
+    return DECLINED if $file eq $uri; # absolute file path provided via url
+
     if (-e $file) {
       ## Send 2MB+ files without caching them
       $r->headers_out->set('Cache-Control'  => 'max-age=' . 60*60*24*30);
