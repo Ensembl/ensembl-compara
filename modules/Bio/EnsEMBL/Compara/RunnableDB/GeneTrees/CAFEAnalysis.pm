@@ -163,12 +163,11 @@ sub run_cafe_script {
 
     chmod 0755, $script_file;
 
-    $self->compara_dba->dbc->disconnect_when_inactive(0);
-
-    unless ((my $err = system($script_file)) == 4096) {
+    my $run_cmd = $self->run_command($script_file);
+    my $err = $run_cmd->exit_code;
+    unless ($err == 4096) {
         print STDERR "CAFE returning error $err\n";
     }
-    $self->compara_dba->dbc->disconnect_when_inactive(1);
     return;
 }
 
