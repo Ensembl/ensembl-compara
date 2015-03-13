@@ -37,7 +37,7 @@ sub content {
   my $species_defs = $hub->species_defs;
   my $html;
 
-  $html .= '<h4>Key</h4><img src="/img/r2r_legend.png" /><br />' if $object->availability->{'has_2ndary_cons'};
+  $html .= sprintf '<h4>Key</h4><p><img src="%s/img/r2r_legend.png" /></p>', $self->static_server if $object->availability->{'has_2ndary_cons'};
 
   my ($display_name) = $object->display_xref;
 
