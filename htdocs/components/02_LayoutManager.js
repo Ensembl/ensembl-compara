@@ -143,7 +143,8 @@ Ensembl.LayoutManager.extend({
       'hashchange.ensembl': $.proxy(this.popState, this),
       'popstate.ensembl'  : $.proxy(this.popState, this)
     });
-
+    
+    this.showMobileMessage();
     if (!this.showCookieMessage()) {
       this.handleMirrorRedirect();
     }
@@ -311,5 +312,8 @@ Ensembl.LayoutManager.extend({
     }
 
     return false;
-  }
+  },
+
+  showMobileMessage: function() { }
+
 });
