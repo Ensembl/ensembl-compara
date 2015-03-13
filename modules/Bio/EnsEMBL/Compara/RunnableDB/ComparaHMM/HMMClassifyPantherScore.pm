@@ -50,7 +50,7 @@ use Data::Dumper;
 
 use Bio::EnsEMBL::Compara::MemberSet;
 
-use base ('Bio::EnsEMBL::Compara::RunnableDB::RunCommand');
+use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
 sub param_defaults {
     return {

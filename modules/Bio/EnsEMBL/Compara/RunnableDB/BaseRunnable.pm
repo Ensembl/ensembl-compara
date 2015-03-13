@@ -44,9 +44,14 @@ Please refer to Bio::EnsEMBL::Hive::Process documentation to understand the basi
 package Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable;
 
 use strict;
+use warnings;
+
 use Carp;
-use Bio::EnsEMBL::Hive::Utils ('stringify');
+
 use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;    # to use go_figure_compara_dba() and other things
+use Bio::EnsEMBL::Compara::Utils::RunCommand;
+
+use Bio::EnsEMBL::Hive::Utils ('stringify');
 
 use base ('Bio::EnsEMBL::Hive::Process');
 
@@ -201,6 +206,21 @@ sub call_within_transaction {
     } else {
         return $callback->();
     }
+}
+
+
+sub run_command {
+    my ($self, $cmd, $timeout) = @_;
+
+    print STDERR "COMMAND: $cmd\n" if ($self->debug);
+    print STDERR "TIMEOUT: $timeout\n" if ($timeout and $self->debug);
+    my $runCmd = Bio::EnsEMBL::Compara::Utils::RunCommand->new($cmd, $timeout);
+    $self->compara_dba->dbc->disconnect_when_inactive(1);
+    $runCmd->run();
+    $self->compara_dba->dbc->disconnect_when_inactive(0);
+    print STDERR "OUTPUT: ", $runCmd->out, "\n" if ($self->debug);
+    print STDERR "ERROR : ", $runCmd->err, "\n\n" if ($self->debug);
+    return $runCmd;
 }
 
 

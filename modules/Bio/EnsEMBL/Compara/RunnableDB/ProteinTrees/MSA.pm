@@ -59,7 +59,7 @@ use Time::HiRes qw(time gettimeofday tv_interval);
 
 use Bio::EnsEMBL::Compara::Utils::Cigars;
 
-use base ('Bio::EnsEMBL::Compara::RunnableDB::RunCommand');
+use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
 
 

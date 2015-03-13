@@ -57,7 +57,7 @@ package Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::TreeBest;
 
 use strict;
 
-use base ('Bio::EnsEMBL::Compara::RunnableDB::RunCommand');
+use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
 # First of all, we need a tree of node_ids, since our foreign keys are based on that
 

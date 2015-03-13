@@ -64,7 +64,7 @@ package Bio::EnsEMBL::Compara::RunnableDB::ncRNAtrees::NCFastTrees;
 
 use strict;
 use Bio::EnsEMBL::Compara::Graph::NewickParser;
-use base ('Bio::EnsEMBL::Compara::RunnableDB::RunCommand', 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::StoreTree');
+use base ('Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::StoreTree');
 
 =head2 fetch_input
 

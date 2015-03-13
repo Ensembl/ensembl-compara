@@ -76,7 +76,7 @@ package Bio::EnsEMBL::Compara::RunnableDB::Synteny::BuildSynteny;
 use strict;
 use warnings;
 
-use base ('Bio::EnsEMBL::Compara::RunnableDB::RunCommand', 'Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
+use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
 =head2 fetch_input
 

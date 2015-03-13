@@ -27,7 +27,7 @@ use Bio::EnsEMBL::Compara::AlignedMemberSet;
 use Bio::EnsEMBL::Compara::Graph::NewickParser;
 use Bio::EnsEMBL::Utils::Sequence qw(reverse_comp);
 
-use base ('Bio::EnsEMBL::Compara::RunnableDB::RunCommand');
+use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
 # We should receive:
 # gene_tree_id

@@ -27,43 +27,26 @@ limitations under the License.
 
 =head1 NAME
 
-Bio::EnsEMBL::Compara::RunnableDB::RunCommand
+Bio::EnsEMBL::Compara::Utils::RunCommand
 
 =head1 DESCRIPTION
 
-This module acts as a layer between the Hive system and running external tools.
+This module is a wrapper around open3() that captures the standard output,
+the standard error, the error code, and the running time.
+It is used to run external commands in the Compara pipelines.
 
 =head1 APPENDIX
 
-The rest of the documentation details each of the object methods. 
+The rest of the documentation details each of the object methods.
 Internal methods are usually preceded with a _
 
 =cut
 
-package Bio::EnsEMBL::Compara::RunnableDB::RunCommand;
-use strict;
-use warnings;
-use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
-
-sub run_command {
-    my ($self, $cmd, $timeout) = @_;
-
-    print STDERR "COMMAND: $cmd\n" if ($self->debug);
-    print STDERR "TIMEOUT: $timeout\n" if ($timeout and $self->debug);
-    my $runCmd = Command->new($cmd, $timeout);
-    $self->compara_dba->dbc->disconnect_when_inactive(1);
-    $runCmd->run();
-    $self->compara_dba->dbc->disconnect_when_inactive(0);
-    print STDERR "OUTPUT: ", $runCmd->out, "\n" if ($self->debug);
-    print STDERR "ERROR : ", $runCmd->err, "\n\n" if ($self->debug);
-    return $runCmd;
-}
-
-
-package Command;
+package Bio::EnsEMBL::Compara::Utils::RunCommand;
 
 use strict;
 use warnings;
+
 use IO::File;
 use Symbol qw/gensym/;
 use IPC::Open3;
