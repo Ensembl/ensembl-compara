@@ -73,7 +73,10 @@ sub run{
   my ($self) = @_;
 
   my $runnable = $self->param('runnable');
+
+  $self->compara_dba->dbc->disconnect_if_idle();    # this one should disconnect only if there are no active kids
   $runnable->run;
+
   my $converted_chains = $self->convert_output($runnable->output);
   $self->param('chains', $converted_chains);
   rmdir($runnable->workdir) if (defined $runnable->workdir);

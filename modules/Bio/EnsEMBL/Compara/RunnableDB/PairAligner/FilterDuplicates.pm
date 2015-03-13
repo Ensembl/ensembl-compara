@@ -84,9 +84,6 @@ sub fetch_input {
   throw("Window size (".$self->param('window_size').")must be > 0") if (!$self->param('window_size') or $self->param('window_size') <= 0);
   $self->print_params;
 
-  $self->compara_dba->dbc->disconnect_when_inactive(0);
-    
-  return 1;
 }
 
 
@@ -94,7 +91,6 @@ sub run
 {
   my $self = shift;
   $self->filter_duplicates;
-  return 1;
 }
 
 
@@ -106,7 +102,6 @@ sub write_output
 
   print("output_id = $output_id\n");
   #$self->input_id($output_id);
-  return 1;
 }
 
 
