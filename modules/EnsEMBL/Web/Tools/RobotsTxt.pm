@@ -32,7 +32,7 @@ sub create {
   my $root    = $sd->ENSEMBL_WEBROOT . '/htdocs';
   my @lines;
 
-  warn _box("Placing robots.txt into $root");
+  warn _box(sprintf 'Placing robots.txt into %s (Searchable: %s)', $root, $sd->ENSEMBL_EXTERNAL_SEARCHABLE ? 'Yes' : 'No');
 
   if ($sd->ENSEMBL_EXTERNAL_SEARCHABLE) {
 
