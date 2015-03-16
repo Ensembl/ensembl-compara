@@ -1823,7 +1823,10 @@ sub core_pipeline_analyses {
             -hive_capacity				=> $self->o('prottest_capacity'),
             -rc_name					=> '64Gb_16c_job',
             -max_retry_count 			=> 0,
-            -flow_into  => [ 'raxml_decision' ],
+            -flow_into  => {
+                -1 => [ 'raxml_decision' ],
+                1 => [ 'raxml_decision' ],
+			}
         },
 
 # ---------------------------------------------[tree building with treebest]-------------------------------------------------------------
