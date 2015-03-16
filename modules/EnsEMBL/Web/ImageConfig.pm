@@ -28,7 +28,7 @@ use URI::Escape qw(uri_unescape);
 use Bio::EnsEMBL::ExternalData::DAS::Coordinator;
 use Bio::EnsEMBL::ExternalData::DataHub::SourceParser;
 
-use Sanger::Graphics::TextHelper;
+use EnsEMBL::Draw::Utils::TextHelper;
 
 use EnsEMBL::Web::DBSQL::DBConnection;
 use EnsEMBL::Web::Tree;
@@ -54,7 +54,7 @@ sub new {
     hub              => $hub,
     _font_face       => $style->{'GRAPHIC_FONT'} || 'Arial',
     _font_size       => ($style->{'GRAPHIC_FONTSIZE'} * $style->{'GRAPHIC_LABEL'}) || 20,
-    _texthelper      => Sanger::Graphics::TextHelper->new,
+    _texthelper      => EnsEMBL::Draw::Utils::TextHelper->new,
     code             => $code,
     type             => $type,
     species          => $species,
