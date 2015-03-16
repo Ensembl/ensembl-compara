@@ -249,8 +249,9 @@ sub fasta_description {
             # $self->throw("unexpected ncRNA (" . $transcript->stable_id  . ") with more than one exon") if (scalar @$exons > 1);
             my $exon = $exons->[0];
             my $supporting_features = $exon->get_all_supporting_features;
-            my $supporting_feature = $supporting_features->[0] if (scalar @$supporting_features);
-            eval { $acc = $supporting_feature->hseqname; };
+            if (scalar @$supporting_features) {
+                eval { $acc = $supporting_features->[0]->hseqname; };
+            }
         } elsif ($biotype =~ /snoRNA/) {
             my $exons  = $transcript->get_all_Exons;
             # if (scalar @$exons > 1) {
