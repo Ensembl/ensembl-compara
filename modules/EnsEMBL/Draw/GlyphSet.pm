@@ -42,6 +42,7 @@ use EnsEMBL::Draw::Glyph::Sprite;
 use EnsEMBL::Draw::Glyph::Text;
 
 use Bio::EnsEMBL::Registry;
+use Bio::EnsEMBL::DnaDnaAlignFeature;
 
 use EnsEMBL::Web::Utils::RandomString qw(random_string);
 
