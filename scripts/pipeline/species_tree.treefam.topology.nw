@@ -61,7 +61,7 @@
 	     (plasmodium_vivax,plasmodium_knowlesi),plasmodium_falciparum),toxoplasma_gondii),
 	   (paramecium_tetraurelia,tetrahymena_thermophila)),
 	  ((thalassiosira_pseudonana,phaeodactylum_tricornutum),
-	   (((phytophthora_sojae,phytophthora_ramorum,phytophthora_infestans),hyaloperonospora_arabidopsidis),
+	   (((phytophthora_sojae,phytophthora_ramorum,phytophthora_infestans,phytophthora_kernoviae,phytophthora_lateralis,phytophthora_parasitica),hyaloperonospora_arabidopsidis),
 	    (pythium_ultimum,pythium_irregulare,pythium_vexans,pythium_aphanidermatum,pythium_arrhenomanes,pythium_iwayamai),albugo_laibachii)),
 	  (trypanosoma_brucei,leishmania_major),bigelowiella_natans,guillardia_theta,emiliania_huxleyi,giardia_lamblia),
 	  ((((clostridium_difficile_630,clostridium_botulinum_a_str_hall),moorella_thermoacetica_atcc_39073),
