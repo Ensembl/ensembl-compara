@@ -53,7 +53,7 @@ package Bio::EnsEMBL::Compara::PipeConfig::DumpTrees_conf;
 use strict;
 use warnings;
 
-use Bio::EnsEMBL::Hive::Version 2.2;
+use Bio::EnsEMBL::Hive::Version 2.3;
 
 use base ('Bio::EnsEMBL::Hive::PipeConfig::EnsemblGeneric_conf');   # we don't need Compara tables in this particular case
 
@@ -165,12 +165,12 @@ sub pipeline_analyses {
         },
 
           { -logic_name => 'dump_for_uniprot',
-            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
+            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::DbCmd',
             -parameters => {
                 'db_conn'       => '#rel_db#',
-                'file_name'     => sprintf('ensembl.GeneTree_content.e%s.txt', $self->o('ensembl_release')),
-                'cmd'           => 'echo "#query#" | db_cmd.pl -url #db_conn# -extra -N -extra -q > #target_dir#/#file_name#',
-                'query'         => sprintf q|
+                'output_file'   => sprintf('#target_dir#/ensembl.GeneTree_content.e%s.txt', $self->o('ensembl_release')),
+                'append'        => [qw(-N -q)],
+                'input_query'   => sprintf q|
                     SELECT 
                         gtr.stable_id AS GeneTreeStableID, 
                         pm.stable_id AS EnsPeptideStableID,

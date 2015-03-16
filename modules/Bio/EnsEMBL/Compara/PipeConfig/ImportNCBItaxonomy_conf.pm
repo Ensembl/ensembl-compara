@@ -47,6 +47,8 @@ package Bio::EnsEMBL::Compara::PipeConfig::ImportNCBItaxonomy_conf;
 use strict;
 use warnings;
 
+use Bio::EnsEMBL::Hive::Version 2.3;
+
 use base ('Bio::EnsEMBL::Hive::PipeConfig::HiveGeneric_conf');      # we want to treat it as a 'pure' Hive pipeline
 
 
@@ -237,9 +239,9 @@ sub pipeline_analyses {
         },
 
         {   -logic_name    => 'web_name_patches',
-            -module        => 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
+            -module        => 'Bio::EnsEMBL::Hive::RunnableDB::DbCmd',
             -parameters    => {
-                'cmd'       => $self->db_cmd().' <'.$self->o('ensembl_cvs_root_dir').'/ensembl-compara/scripts/taxonomy/web_name_patches.sql',
+                'input_file'    => $self->o('ensembl_cvs_root_dir').'/ensembl-compara/scripts/taxonomy/web_name_patches.sql',
             },
             -hive_capacity  => 10,  # to allow parallel branches
             -flow_into => {

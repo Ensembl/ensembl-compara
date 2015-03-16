@@ -458,10 +458,11 @@ sub pipeline_analyses {
 
 
         {   -logic_name => 'mcxload_matrix',
-            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
+            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::DbCmd',
             -parameters => {
-                'db_cmd'   => $self->db_cmd(), # to conserve the valuable input_id space
-                'cmd'      => "#db_cmd# --append -N --append -q -sql 'select * from mcl_sparse_matrix' | #mcl_bin_dir#/mcxload -abc - -ri max -o #work_dir#/#file_basename#.tcx -write-tab #work_dir#/#file_basename#.itab",
+                'append'        => [qw(-N -q)],
+                'input_query'   => 'select * from mcl_sparse_matrix',
+                'command_out'   => [qw(#mcl_bin_dir#/mcxload -abc - -ri max -o #work_dir#/#file_basename#.tcx -write-tab #work_dir#/#file_basename#.itab)],
             },
             -flow_into => {
                 1 => [ 'mcl' ],
@@ -626,11 +627,9 @@ sub pipeline_analyses {
         },
         
         {   -logic_name     => 'write_member_counts',
-            -module         => 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
+            -module         => 'Bio::EnsEMBL::Hive::RunnableDB::DbCmd',
             -parameters     => {
-                'member_count_sql'  => $self->o('ensembl_cvs_root_dir').'/ensembl-compara/scripts/production/populate_member_production_counts_table.sql',
-                'db_cmd'            => $self->db_cmd(),
-                'cmd'               => '#db_cmd# < #member_count_sql#',
+                'input_file'    => $self->o('ensembl_cvs_root_dir').'/ensembl-compara/scripts/production/populate_member_production_counts_table.sql',
             },
             -flow_into => [ 'notify_pipeline_completed' ],
         },

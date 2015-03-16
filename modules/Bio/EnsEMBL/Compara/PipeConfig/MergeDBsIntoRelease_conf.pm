@@ -44,6 +44,8 @@ package Bio::EnsEMBL::Compara::PipeConfig::MergeDBsIntoRelease_conf;
 use strict;
 use warnings;
 
+use Bio::EnsEMBL::Hive::Version 2.3;
+
 use base ('Bio::EnsEMBL::Hive::PipeConfig::EnsemblGeneric_conf');
 
 
@@ -266,10 +268,10 @@ sub pipeline_analyses {
 
 
         {   -logic_name     => 'extra_cmd_run',
-            -module         => 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
+            -module         => 'Bio::EnsEMBL::Hive::RunnableDB::DbCmd',
             -parameters     => {
-                'db_cmd'            => $self->db_cmd(undef, ref($self->o('urls')) ? $self->o('urls')->{'curr_rel_db'} : undef),
-                'cmd'               => '#db_cmd# < #sql_file#',
+                'db_conn'       => ref($self->o('urls')) ? $self->o('urls')->{'curr_rel_db'} : undef,
+                'input_file'    => '#sql_file#',
             },
         },
 
