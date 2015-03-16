@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2014] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -26,8 +26,6 @@ Bio::EnsEMBL::Compara::PipeConfig::Example::VegaProteinTrees_conf
 =head1 SYNOPSIS
 
     #1. update ensembl-hive, ensembl and ensembl-compara GIT repositories before each new release
-
-    #2. you may need to update 'schema_version' in meta table to the current release number in ensembl-hive/sql/tables.sql
 
     #3. make sure that all default_options are set correctly
 
@@ -65,7 +63,7 @@ sub resource_classes {
 }
 
 
-# each run you will need to edit and uncomment: version, mlss_id, (release) and maybe work_dir
+# each run you will need to edit and uncomment: version, mlss_id and maybe work_dir
 sub default_options {
   my ($self) = @_;
 
@@ -75,7 +73,6 @@ sub default_options {
 
     # parameters that are likely to change from execution to another:
     'mlss_id'               => '100032',   # equivalent to mlss_id for PROTEIN_TREES in the db (commented out to make it obligatory to specify)
-    'release'               => '76',
 
     'pipeline_name'         => 'vega_genetree_20140905_76_new', #edit this each time
 
@@ -98,9 +95,7 @@ sub default_options {
     'master_db' => 'mysql://ottro@vegabuild:5304/vega_compara_master',
 
     # switch off the reuse:
-#    'prev_core_sources_locs'    => [ ],
-    'prev_release'              => 0,   # 0 is the default and it means "take current release number and subtract 1"
-    'reuse_from_prev_rel_db'    => 0,
+    'prev_rel_db'               => undef,
     'do_stable_id_mapping'      => 0,
 
     # we're not interested in treefam

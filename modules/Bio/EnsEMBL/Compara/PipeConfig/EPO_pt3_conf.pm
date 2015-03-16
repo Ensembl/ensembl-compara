@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2014] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -42,8 +42,6 @@ Bio::EnsEMBL::Compara::PipeConfig::EPO_pt3_conf
 =head1 SYNOPSIS
 
     #1. update ensembl-hive, ensembl and ensembl-compara GIT repositories before each new release
-
-    #2. you may need to update 'schema_version' in meta table to the current release number in ensembl-hive/sql/tables.sql
 
     #3. make sure that all default_options are set correctly
 
@@ -93,7 +91,7 @@ sub default_options {
 	'--min-regions 2 --min-anchors 3 --max-ratio 3 --simplify-graph 7 --bridges -o ',
   'enredo_output_file_name' => 'enredo_'.$self->o('epo_mlss_id').'.out',
   'enredo_output_file' => $self->o('dump_dir').$self->o('enredo_output_file_name'),
-  'db_suffix' => '_epo_4sauropsids_',
+  'db_suffix' => '_epo_17mammals_',
   'ancestral_sequences_name' => 'ancestral_sequences',
   'dump_dir' => $self->o('ENV', 'EPO_DUMP_PATH').'epo_'.$self->o('rel_with_suffix')."/dumps".$self->o('db_suffix').$self->o('rel_with_suffix')."/",
   'bed_dir' => $self->o('dump_dir').'bed_dir',
@@ -103,7 +101,8 @@ sub default_options {
   'cvs_dir' => $self->o('ENV', 'ENSEMBL_CVS_ROOT_DIR'), 
   'ancestral_db_cmd' => "mysql -u".$self->o('ancestral_db', '-user')." -P".$self->o('ancestral_db', '-port').
 	" -h".$self->o('ancestral_db', '-host')." -p".$self->o('ancestral_db', '-pass'),
-  'species_tree_file' => $self->o('cvs_dir').'/ensembl-compara/scripts/pipeline/species_tree_blength.nh',
+  'species_tree_file' => $self->o('cvs_dir').'/ensembl-compara/scripts/pipeline/species_tree.39mammals.branch_len.nw',
+  #'species_tree_file' => $self->o('cvs_dir').'/ensembl-compara/scripts/pipeline/species_tree_blength.nh',
   # add MT dnafrags separately (1) or not (0) to the dnafrag_region table
   'addMT' => 1,
   'jar_file' => '/software/ensembl/compara/pecan/pecan_v0.8.jar',
@@ -154,7 +153,7 @@ sub default_options {
 			-port => 3306,
 			-host => 'ens-staging1',
 			-dbname => '',
-			-db_version => $self->o('core_db_version'),
+			-db_version => $self->o('ensembl_version'),
 		},
 		{
 			-driver => 'mysql',
@@ -162,7 +161,7 @@ sub default_options {
 			-port => 3306,
 			-host => 'ens-staging2',
 			-dbname => '',
-			-db_version => $self->o('core_db_version'),
+			-db_version => $self->o('ensembl_version'),
 		},
                
 	
@@ -170,6 +169,7 @@ sub default_options {
 	# any additional core dbs
 	'additional_core_db_urls' => { 
 #		'ovis_aries' => 'mysql://ensro@compara1:3306/ovis_aries_core_73_1',
+		'rattus_norvegicus' => 'mysql://ensro@compara1:3306/mm14_db8_rat6_ref',
 	},
 	# anchor mappings
 	'compara_mapped_anchor_db' => {
@@ -177,9 +177,10 @@ sub default_options {
 		-user => 'ensro',
 		-port => 3306,
 		-pass => '',
-		-host => 'compara2',
+		-host => 'compara3',
 	#	-dbname => 'sf5_bird_lizard_epo_anchor_mappings74',
-		-dbname => 'sf5_bird_lizard_epo_anchor_mappings74',
+#		-dbname => 'sf5_bird_lizard_epo_anchor_mappings74',
+		-dbname => 'sf5_17mammals_epo_anchor_mappings77',
 #		-dbname => 'sf5_13_mammal_anchor_mappings69',
 	},
 
@@ -248,7 +249,7 @@ return
  -logic_name => 'dump_mappings_to_file',
  -module     => 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
  -parameters => {
-  'db_cmd' => $self->db_cmd(),
+  'db_cmd' => $self->db_cmd("","mysql://ensadmin:".$self->o('password')."\@compara3:3306/sf5_17mammals_epo_anchor_mappings77"),
   'enredo_mapping_file' => $self->o('enredo_mapping_file'),
   'cmd' => "#db_cmd# --append -N --append -B -sql \'SELECT aa.anchor_id, gdb.name, df.name, aa.dnafrag_start, aa.dnafrag_end, CASE ".
   "aa.dnafrag_strand WHEN 1 THEN \"+\" ELSE \"-\" END, aa.num_of_organisms, aa.score FROM anchor_align aa INNER JOIN ".
@@ -322,10 +323,10 @@ return
 	-parameters => {
 	'epo_mlssid' => $self->o('epo_mlss_id'),
 		'sql'   => [
-		  'ALTER TABLE genomic_align_block AUTO_INCREMENT=#expr(($epo_mlss_id * 10**10) + 1)expr#',
-		  'ALTER TABLE genomic_align AUTO_INCREMENT=#expr(($epo_mlss_id * 10**10) + 1)expr#',
-		  'ALTER TABLE genomic_align_tree AUTO_INCREMENT=#expr(($epo_mlss_id * 10**10) + 1)expr#',
-		  'ALTER TABLE dnafrag AUTO_INCREMENT=#expr(($epo_mlss_id * 10**10) + 1)expr#',
+		  'ALTER TABLE genomic_align_block AUTO_INCREMENT=#expr((#epo_mlss_id# * 10**10) + 1)expr#',
+		  'ALTER TABLE genomic_align AUTO_INCREMENT=#expr((#epo_mlss_id# * 10**10) + 1)expr#',
+		  'ALTER TABLE genomic_align_tree AUTO_INCREMENT=#expr((#epo_mlss_id# * 10**10) + 1)expr#',
+		  'ALTER TABLE dnafrag AUTO_INCREMENT=#expr((#epo_mlss_id# * 10**10) + 1)expr#',
 		],
         },
 },
@@ -348,6 +349,7 @@ return
 	-parameters => {
 		'cmd' => $self->o('enredo_bin_dir').'enredo '.$self->o('enredo_params')." ".$self->o('enredo_output_file')." ".$self->o('enredo_mapping_file'),
 	},
+	-rc_name => 'mem7500',
 },
 
 #{   -logic_name => 'dump_before_ldr',

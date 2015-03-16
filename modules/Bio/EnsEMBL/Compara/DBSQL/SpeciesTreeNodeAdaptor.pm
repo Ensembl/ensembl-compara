@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2014] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -147,7 +147,7 @@ sub store_node {
         if ($count_current_rows) {
             my $sth1 = $self->prepare("INSERT INTO species_tree_node VALUES ()");
             $sth1->execute();
-            $node_id = $sth1->{'mysql_insertid'};
+            $node_id = $self->dbc->db_handle->last_insert_id(undef, undef, 'species_tree_node', 'node_id');
             $sth1->finish();
 
         } else {

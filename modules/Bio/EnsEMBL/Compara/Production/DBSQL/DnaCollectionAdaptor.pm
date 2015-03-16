@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2014] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -46,6 +46,7 @@ The rest of the documentation details each of the object methods. Internal metho
 package Bio::EnsEMBL::Compara::Production::DBSQL::DnaCollectionAdaptor;
 
 use strict;
+use warnings;
 use Bio::EnsEMBL::Compara::Production::DnaCollection;
 use Bio::EnsEMBL::Compara::Production::DnaFragChunk;
 use Bio::EnsEMBL::Compara::Production::DnaFragChunkSet;
@@ -100,7 +101,7 @@ sub store {
     $insertCount = $sth->execute($description, $dump_loc, $masking_options);
     
     if($insertCount>0) {
-        $collection->dbID( $sth->{'mysql_insertid'} );
+        $collection->dbID( $self->dbc->db_handle->last_insert_id(undef, undef, 'dna_collection', 'dna_collection_id') );
         $sth->finish;
     } else {
         #INSERT ignore has failed on UNIQUE description
@@ -283,39 +284,37 @@ sub _generic_fetch {
 sub _objs_from_sth {
   my ($self, $sth) = @_;
   
-  my %column;
-  $sth->bind_columns( \( @column{ @{$sth->{NAME_lc} } } ));
+  my %collections_hash = ();
 
-  my $collections_hash = {};
-  my $chunkDBA = $self->db->get_DnaFragChunkAdaptor;
-  my $chunkSetDBA = $self->db->get_DnaFragChunkSetAdaptor;
+  while( my $row_hashref = $sth->fetchrow_hashref()) {
 
-  while ($sth->fetch()) {
-    my $collection = $collections_hash->{$column{'dna_collection_id'}};
+    my $collection = $collections_hash{$row_hashref->{'dna_collection_id'}};
     
     unless($collection) {
-      $collection = new Bio::EnsEMBL::Compara::Production::DnaCollection
-                -dbid            => $column{'dna_collection_id'},
-                -description     => $column{'description'},
-                -dump_loc        => $column{'dump_loc'},
-                -masking_options => $column{'masking_options'},
-                -adaptor     => $self;
-      $collections_hash->{$collection->dbID} = $collection;
+      $collection = Bio::EnsEMBL::Compara::Production::DnaCollection->new(
+                -dbid            => $row_hashref->{'dna_collection_id'},
+                -description     => $row_hashref->{'description'},
+                -dump_loc        => $row_hashref->{'dump_loc'},
+                -masking_options => $row_hashref->{'masking_options'},
+                -adaptor         => $self
+      );
+
+      $collections_hash{$collection->dbID} = $collection;
     }
 
-    if (defined($column{'description'})) {
-      $collection->description($column{'description'});
+    if (defined($row_hashref->{'description'})) {
+      $collection->description($row_hashref->{'description'});
     }
-    if (defined($column{'dump_loc'})) {
-      $collection->dump_loc($column{'dump_loc'});
+    if (defined($row_hashref->{'dump_loc'})) {
+      $collection->dump_loc($row_hashref->{'dump_loc'});
     }
-    if (defined($column{'masking_options'})) {
-      $collection->masking_options($column{'masking_options'});
+    if (defined($row_hashref->{'masking_options'})) {
+      $collection->masking_options($row_hashref->{'masking_options'});
     }
   }
   $sth->finish;
 
-  my @collections = values(%{$collections_hash});
+  my @collections = values( %collections_hash );
 
   return \@collections;
 }

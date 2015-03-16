@@ -1,5 +1,5 @@
 #!/usr/bin/env perl
-# Copyright [1999-2014] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+# Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 # 
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -203,7 +203,10 @@ my %unique_genome_dbs;
 #If a set of species is set, use these else automatically determine which species to use depending on whether they
 #are have chromosomes.
 if ($species && @$species > 0) {
+    my @species_with_comma = grep {$_ =~ /,/} @$species;
+    push @$species, split(/,/, $_) for @species_with_comma;
     foreach my $spp (@$species) {
+        next if $spp =~ /,/;
         my $genome_db = $genome_db_adaptor->fetch_by_name_assembly($spp);
         $unique_genome_dbs{$genome_db->name} = $genome_db;
     }

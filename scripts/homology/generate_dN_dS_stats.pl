@@ -1,5 +1,5 @@
 #!/usr/bin/env perl
-# Copyright [1999-2014] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+# Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 # 
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -97,17 +97,17 @@ foreach my $cat (@desc) {
 
 sub calculate_average_and_other_things {
   my ($db, $sql) = @_;
+
   my $sth = $db->dbc->prepare($sql);
   $sth->execute;
 
-  my %column;
-  $sth->bind_columns( \( @column{ @{$sth->{NAME_lc} } } ));
+  my @stats = ();
 
-  my @stats;
-  while ($sth->fetch()) {
-    push @stats, [$column{'description'}, $column{'min'}, $column{'max'}, $column{'mean'}, $column{'count'}];
+  while( my $row_hashref = $sth->fetchrow_hashref()) {
+    push @stats, [$row_hashref->{'description'}, $row_hashref->{'min'}, $row_hashref->{'max'}, $row_hashref->{'mean'}, $row_hashref->{'count'}];
   }
   $sth->finish;
+
   return \@stats;
 }
 
@@ -117,14 +117,11 @@ sub calculate_median {
   my $sth = $db->dbc->prepare($sql);
   $sth->execute;
   
-  my %column;
-  $sth->bind_columns( \( @column{ @{$sth->{NAME_lc} } } ));
+  my @ds_values = ();
 
-  my @ds_values;
-  while ($sth->fetch()) {
-    push @ds_values, $column{'ds'};
+  while( my $row_hashref = $sth->fetchrow_hashref()) {
+    push @ds_values, $row_hashref->{'ds'};
   }
-  
   $sth->finish;
   
   my $median;

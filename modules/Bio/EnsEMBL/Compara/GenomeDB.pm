@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2014] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -40,6 +40,7 @@ The end-user is probably only interested in the following methods:
  - genebuild()
  - has_karyotype()
  - is_high_coverage()
+ - genome_component()
  - db_adaptor() (returns a Bio::EnsEMBL::DBSQL::DBAdaptor for this species)
  - toString()
 
@@ -101,35 +102,28 @@ sub new {
 
     my $self = $class->SUPER::new(@_);       # deal with Storable stuff
 
-    my($db_adaptor, $name, $assembly, $taxon_id,  $genebuild, $has_karyotype, $is_high_coverage) =
-        rearrange([qw(DB_ADAPTOR NAME ASSEMBLY TAXON_ID GENEBUILD HAS_KARYOTYPE IS_HIGH_COVERAGE)], @_);
+    my($db_adaptor, $name, $assembly, $taxon_id,  $genebuild, $has_karyotype, $genome_component, $is_high_coverage) =
+        rearrange([qw(DB_ADAPTOR NAME ASSEMBLY TAXON_ID GENEBUILD HAS_KARYOTYPE GENOME_COMPONENT IS_HIGH_COVERAGE)], @_);
 
-    # If there is a Core DBAdaptor, we can get most of the info from there
+    # If there is a Core DBAdaptor, we can get most of the info from there,
+    # but we'll have to check it is consistent with the required attributes
+    my $core_genome_db = undef;
     if ($db_adaptor) {
-        $self->db_adaptor($db_adaptor);
-
         my $meta_container      = $db_adaptor->get_MetaContainer;
+        my $genome_container    = $db_adaptor->get_GenomeContainer;
 
-        # We check that the asked parameters are the same as in the core database
-        my @parameters = (
-            [ 'assembly_name', \$assembly, $db_adaptor->assembly_name() ],
-            [ 'taxon_id', \$taxon_id, $meta_container->get_taxonomy_id() ],
-            [ 'genebuild', \$genebuild, $meta_container->get_genebuild() ],
-            [ 'name', \$name, $meta_container->get_production_name() ],
-            [ 'has_karyotype', \$has_karyotype, $db_adaptor->has_karyotype() ],
-            [ 'is_high_coverage', \$is_high_coverage, $db_adaptor->is_high_coverage() ],
-        );
+        $self->db_adaptor($db_adaptor);
+        $self->name( $meta_container->get_production_name() );
+        $self->assembly( $db_adaptor->assembly_name() );
+        $self->taxon_id( $meta_container->get_taxonomy_id() );
+        $self->genebuild( $meta_container->get_genebuild() );
+        $self->has_karyotype( $genome_container->has_karyotype() );
+        $self->is_high_coverage( $genome_container->is_high_coverage() );
 
-        foreach my $test (@parameters) {
-            if (not defined $test->[2]) {
-                warn "'$test->[0]' cannot be defined from the core database\n";
-                next;
-            }
-            if (defined ${$test->[1]} and (${$test->[1]} ne $test->[2])) {
-                die "The required $test->[0] ('${$test->[1]}') is different from the one found in the database ('$test->[2]'), please investigate\n";
-            }
-            ${$test->[1]} = $test->[2];
+        if ($genome_component and not scalar(grep {$_ eq $genome_component} @{$genome_container->get_genome_components})) {
+            die "The required genome component '$genome_component' cannot be found in the database, please investigate\n";
         }
+        $core_genome_db = bless \%{$self}, 'Bio::EnsEMBL::Compara::GenomeDB';
     }
 
     $name         && $self->name($name);
@@ -137,7 +131,10 @@ sub new {
     $taxon_id     && $self->taxon_id($taxon_id);
     $genebuild    && $self->genebuild($genebuild);
     defined $has_karyotype      && $self->has_karyotype($has_karyotype);
+    defined $genome_component   && $self->genome_component($genome_component);
     defined $is_high_coverage   && $self->is_high_coverage($is_high_coverage);
+
+    $self->_check_equals($core_genome_db) if $core_genome_db;
 
     return $self;
 }
@@ -172,7 +169,7 @@ sub db_adaptor {
             $self->assembly( $self->{'_db_adaptor'}->assembly_name );
             $self->taxon_id( $self->{'_db_adaptor'}->get_MetaContainer->get_taxonomy_id );
             $self->genebuild( $self->{'_db_adaptor'}->get_MetaContainer->get_genebuild );
-            $self->has_karyotype( $self->{'_db_adaptor'}->has_karyotype );
+            $self->has_karyotype( $self->{'_db_adaptor'}->get_GenomeContainer->has_karyotype );
 	    $self->{'_db_adaptor'}{_dbc}->disconnect_if_idle;
         }
     }
@@ -189,6 +186,28 @@ sub db_adaptor {
     return $self->{'_db_adaptor'};
 }
 
+
+=head2 _check_equals
+
+  Example     : $genome_db->_check_equals($ref_genome_db);
+  Description : Check that all the fields are the same as in the other object
+                This is used to compare the fields automatically populated from
+                the core database with the GenomeDB object preent in the Compara
+                master database
+  Returntype  : none
+  Exceptions  : Throws if there are discrepancies
+
+=cut
+
+sub _check_equals {
+    my ($self, $ref_genome_db) = @_;
+
+    foreach my $field (qw(assembly taxon_id genebuild name has_karyotype is_high_coverage)) {
+        if ($self->$field() ne $ref_genome_db->$field()) {
+            die sprintf("%s differs between this GenomeDB (%s) and the reference one (%s)\n", $field, $self->$field(), $ref_genome_db->$field());
+        }
+    }
+}
 
 
 =head2 name
@@ -438,6 +457,121 @@ sub is_high_coverage {
 }
 
 
+#################################
+# Methods for polyploid genomes #
+#################################
+
+=head2 genome_component
+
+  Example     : my $genome_component = $genome_db->genome_component();
+  Example     : $genome_db->genome_component($genome_component);
+  Description : For polyploid genomes, the name of the sub-component.
+  Returntype  : string
+  Exceptions  : none
+  Caller      : general
+  Status      : Stable
+
+=cut
+
+sub genome_component {
+    my $self = shift;
+    $self->{'_genome_component'} = shift if @_;
+    return $self->{'_genome_component'};
+}
+
+
+=head2 is_polyploid
+
+  Example     : $genome_db->is_polyploid();
+  Description : Returns 1 if this GenomeDB has some component GenomeDBs
+  Returntype  : Boolean
+  Exceptions  : none
+  Caller      : general
+  Status      : Stable
+
+=cut
+
+sub is_polyploid {
+    my $self = shift;
+    return $self->{'_is_polyploid'} || 0;
+}
+
+
+=head2 make_component_copy
+
+  Arg [1]     : string: the name of the new genome component
+  Example     : my $new_component = $wheat_genome_db->make_component_copy('A');
+  Description : Create a new GenomeDB that is a copy of this one, with the given
+                component name
+  Returntype  : Bio::EnsEMBL::Compara::GenomeDB
+  Exceptions  : none
+  Caller      : general
+  Status      : Stable
+
+=cut
+
+sub make_component_copy {
+    my ($self, $component_name) = @_;
+    my $copy_genome_db = { %{$self} };
+    bless $copy_genome_db, 'Bio::EnsEMBL::Compara::GenomeDB';
+    $copy_genome_db->genome_component($component_name);
+    $copy_genome_db->assembly_default(0);
+    $copy_genome_db->dbID(undef);
+    $copy_genome_db->adaptor(undef);
+    $self->component_genome_dbs($component_name, $copy_genome_db);
+    return $copy_genome_db;
+}
+
+
+=head2 principal_genome_db
+
+  Example     : $component_genome_db->principal_genome_db();
+  Description : In case of polyploid genomes, return the main GenomeDB of the species.
+                Returns undef otherwise
+  Returntype  : Bio::EnsEMBL::Compara::GenomeDB
+  Exceptions  : throws if the adaptor isn't defined
+  Caller      : general
+  Status      : Stable
+
+=cut
+
+sub principal_genome_db {
+    my $self = shift;
+
+    return $self->{_principal_genome_db};
+}
+
+
+=head2 component_genome_dbs
+
+  Arg [1]     : string (optional): the name of the genome component
+  Arg [2]     : GenomeDB (optional): the new value for this component
+  Example     : $genome_db->component_genome_dbs();
+  Description : On a polyploid genome, returns all the GenomeDBs of its components.
+                Returns an empty list otherwise
+  Returntype  : Arrayref of Bio::EnsEMBL::Compara::GenomeDB
+  Exceptions  : none
+  Caller      : general
+  Status      : Stable
+
+=cut
+
+sub component_genome_dbs {
+    my ($self, $component_name, $new_gdb) = @_;
+
+    if ($component_name) {
+        if ($new_gdb) {
+            $self->{_component_genome_dbs}->{$component_name} = $new_gdb;
+            $self->{_is_polyploid} = 1;
+            $new_gdb->{_principal_genome_db} = $self;
+        }
+        return $self->{_component_genome_dbs}->{$component_name};
+    } else {
+        return [values %{$self->{_component_genome_dbs}}];
+    }
+}
+
+
 =head2 toString
 
   Example    : print $dbID->toString()."\n";
@@ -460,6 +594,7 @@ sub toString {
         ."', taxon_id='".$self->taxon_id
         ."', karyotype='".$self->has_karyotype
         ."', high_coverage='".$self->is_high_coverage
+        .($self->genome_component ? "', genome_component='".$self->genome_component : '')
         ."', locator='".$self->locator
         ."'";
 }
@@ -519,6 +654,19 @@ sub sync_with_registry {
 }
 
 
+=head2 _get_unique_key
 
+  Example     : $genome_db->_get_unique_key();
+  Description : On a polyploid genome, returns all the GenomeDBs of its components.
+                Returns an empty list otherwise
+  Returntype  : String
+  Exceptions  : none
+
+=cut
+
+sub _get_unique_key {
+    my $self = shift;
+    return join('_____', lc $self->name, lc $self->assembly, lc $self->genebuild);
+}
 
 1;

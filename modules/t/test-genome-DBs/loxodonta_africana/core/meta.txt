@@ -1,4 +1,4 @@
-1	\N	schema_version	78
+1	\N	schema_version	79
 2	\N	patch	patch_53_54_a.sql|schema_version
 3	\N	patch	patch_53_54_b.sql|widen_columns
 4	\N	patch	patch_53_54_c.sql|identity_object_analysis_move
@@ -166,3 +166,5 @@
 1031	\N	patch	patch_76_77_a.sql|schema_version
 1032	\N	patch	patch_77_78_a.sql|schema_version
 1033	\N	patch	patch_77_78_b.sql|source_column_increase
+1034	\N	patch	patch_77_78_c.sql|Change unmapped_reason_id from smallint to int
+1035	\N	patch	patch_78_79_a.sql|schema_version

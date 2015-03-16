@@ -1,4 +1,4 @@
--- Copyright [1999-2014] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+-- Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 -- 
 -- Licensed under the Apache License, Version 2.0 (the "License");
 -- you may not use this file except in compliance with the License.
@@ -20,8 +20,6 @@
 	  temporary tables / keys
 
 */
-
-TRUNCATE species_tree_node_tag;
 
 
 CREATE TEMPORARY TABLE tmp_ngenes
@@ -117,6 +115,7 @@ GROUP BY species_tree_node_id
 ;
 
 
+DELETE FROM species_tree_node_tag WHERE tag IN ('nb_seq', 'nb_genes_in_tree_single_species', 'nb_genes_in_tree_multi_species', 'root_nb_trees', 'root_nb_genes', 'root_avg_gene', 'root_min_gene', 'root_max_gene', 'root_avg_spec', 'root_min_spec', 'root_max_spec', 'root_avg_gene_per_spec', 'nb_nodes', 'nb_dup_nodes', 'nb_gene_splits', 'nb_spec_nodes', 'nb_dubious_nodes', 'avg_dupscore', 'avg_dupscore_nondub');
 
 INSERT INTO species_tree_node_tag SELECT node_id, "nb_seq", nb_seq FROM tmp_stats_per_genome;
 INSERT INTO species_tree_node_tag SELECT node_id, "nb_genes_in_tree_single_species", nb_genes_in_tree_single_species FROM tmp_stats_per_genome;

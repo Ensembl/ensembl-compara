@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2014] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -153,7 +153,7 @@ sub write_output {
     my $sth = $self->compara_dba->dbc->prepare($sql);
 
     $sth->execute($output->{'seq_region'}, $output->{'seq_region_start'},  $output->{'seq_region_end'}, $output->{'total_bases'}, $output->{'all_N'},$output->{'count_low_complexity'}, $output->{'multiple_gats'},$output->{'no_gat'},$output->{'insufficient_gat'},$output->{'long_alignment'},$output->{'align_all_N'},$output->{'num_bases_analysed'});
-    my $statistics_id = $sth->{'mysql_insertid'};
+    my $statistics_id = $self->dbc->db_handle->last_insert_id(undef, undef, 'statistics', 'statistics_id');
     $sth->finish;
 
     $sql = "INSERT INTO event (statistics_id, indel, type, detail, detail1, improvement, detail2, count) VALUES (?,?,?,?,?,?,?,?)";

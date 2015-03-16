@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2014] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -742,8 +742,8 @@ sub store_node {
                               right_index,
                               distance_to_parent)  VALUES (?,?,?,?,?,?)");
   $sth->execute(undef, $parent_id, $root_id, $node->left_index, $node->right_index, $node->distance_to_parent);
-  #print STDERR "LAST ID: ", $sth->{'mysql_insertid'}, "\n";
-  $node->node_id($sth->{'mysql_insertid'});
+  #print STDERR "LAST ID: ", $self->dbc->db_handle->last_insert_id(undef, undef, 'genomic_align_tree', 'node_id'), "\n";
+  $node->node_id( $self->dbc->db_handle->last_insert_id(undef, undef, 'genomic_align_tree', 'node_id') );
   $sth->finish;
 
   #set root_id to be node_id for the root node.
@@ -1242,7 +1242,6 @@ sub _create_GenomicAlignGroup_object_from_rowhash {
 
   my $genomic_align_group = new Bio::EnsEMBL::Compara::GenomicAlignGroup;
   $genomic_align_group->dbID($rowhash->{node_id});
-  $genomic_align_group->adaptor($self->db->get_GenomicAlignGroupAdaptor);
 
   return $genomic_align_group;
 }

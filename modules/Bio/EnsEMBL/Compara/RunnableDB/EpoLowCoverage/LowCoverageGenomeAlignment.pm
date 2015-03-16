@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2014] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -211,8 +211,6 @@ sub _write_output {
   my $dnafrag_adaptor = $self->compara_dba->get_DnaFragAdaptor;
   my $gaba = $self->compara_dba->get_GenomicAlignBlockAdaptor;
   my $gaa = $self->compara_dba->get_GenomicAlignAdaptor;
-  
-  my $gaga = $self->compara_dba->get_GenomicAlignGroupAdaptor;
   
   my $gata = $self->compara_dba->get_GenomicAlignTreeAdaptor;
 

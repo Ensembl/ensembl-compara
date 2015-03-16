@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2014] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -81,7 +81,7 @@ sub store {
                    $dfc->seq_start, $dfc->seq_end, $dfc->dnafrag_chunk_set_id);
   if($insertCount>0) {
     #sucessful insert
-    $dfc->dbID( $sth->{'mysql_insertid'} );
+    $dfc->dbID( $self->dbc->db_handle->last_insert_id(undef, undef, 'dnafrag_chunk', 'dnafrag_chunk_id') );
     $sth->finish;
   } else {
     $sth->finish;
@@ -251,28 +251,25 @@ sub _final_clause {
 sub _objs_from_sth {
   my ($self, $sth) = @_;
 
-  my %column;
-  $sth->bind_columns( \( @column{ @{$sth->{NAME_lc} } } ));
-
   my @chunks = ();
 
-  while ($sth->fetch()) {
-    my $dfc;
+  while( my $row_hashref = $sth->fetchrow_hashref()) {
 
-    $dfc = Bio::EnsEMBL::Compara::Production::DnaFragChunk->new();
+    my $dfc = Bio::EnsEMBL::Compara::Production::DnaFragChunk->new();
 
     $dfc->adaptor($self);
-    $dfc->dbID($column{'dnafrag_chunk_id'});
-    $dfc->seq_start($column{'seq_start'});
-    $dfc->seq_end($column{'seq_end'});
-    $dfc->sequence_id($column{'sequence_id'});
-    $dfc->dnafrag_id($column{'dnafrag_id'});
-    $dfc->dnafrag_chunk_set_id($column{'dnafrag_chunk_set_id'}),
+    $dfc->dbID($row_hashref->{'dnafrag_chunk_id'});
+    $dfc->seq_start($row_hashref->{'seq_start'});
+    $dfc->seq_end($row_hashref->{'seq_end'});
+    $dfc->sequence_id($row_hashref->{'sequence_id'});
+    $dfc->dnafrag_id($row_hashref->{'dnafrag_id'});
+    $dfc->dnafrag_chunk_set_id($row_hashref->{'dnafrag_chunk_set_id'}),
 
     push @chunks, $dfc;
 
   }
   $sth->finish;
+
   return \@chunks
 }
 

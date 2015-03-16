@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2014] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -50,10 +50,9 @@ sub default_options {
     return {
 	%{$self->SUPER::default_options},   # inherit the generic ones
 
-	'release'       => 74,
-        'pipeline_name' => 'DUMP_'.$self->o('release'),  # name used by the beekeeper to prefix job names on the farm
+        'pipeline_name' => 'DUMP_'.$self->o('ensembl_release'),  # name used by the beekeeper to prefix job names on the farm
 
-        'dbname' => 'dumpMultiAlign'.$self->o('release'),  # database suffix (without user name prepended)
+        'dbname' => 'dumpMultiAlign'.$self->o('ensembl_release'),  # database suffix (without user name prepended)
 
         'pipeline_db' => {                               # connection parameters
             -driver => 'mysql',
@@ -70,7 +69,7 @@ sub default_options {
             -user   => 'ensro',
             -pass   => '',
 	    -driver => 'mysql',
-	    -dbname => $self->o('release'),
+	    -dbname => $self->o('ensembl_release'),
         },
 
         'staging_loc2' => {                     # general location of the other half of the current release core databases
@@ -79,7 +78,7 @@ sub default_options {
             -user   => 'ensro',
             -pass   => '',
 	    -driver => 'mysql',
-	    -dbname => $self->o('release'),
+	    -dbname => $self->o('ensembl_release'),
         },
 
         'livemirror_loc' => {                   # general location of the previous release core databases (for checking their reusability)
@@ -102,6 +101,7 @@ sub default_options {
 	'species'  => "human",
         'coord_system_name1' => "chromosome",
         'coord_system_name2' => "supercontig",
+        #'coord_system_name2' => "scaffold",
 	'split_size' => 200,
 	'masked_seq' => 1,
         'format' => 'emf',
@@ -249,6 +249,7 @@ sub pipeline_analyses {
             ],
 	   -can_be_empty  => 1,
 	   -hive_capacity => 200,
+	   -rc_name => '2GbMem',
 	   -flow_into => {
 	       2 => [ 'compress' ],
            }

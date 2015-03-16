@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2014] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -291,8 +291,7 @@ sub run {
                     $sql = "SELECT DISTINCT $key FROM $table";
                     my %all_values = ();
                     foreach my $db (@dbs) {
-                        my $sth = $dbconnections->{$db}->prepare($sql);
-                        $sth->{mysql_use_result} = 1;
+                        my $sth = $dbconnections->{$db}->prepare($sql, { 'mysql_use_result' => 1 });
                         $sth->execute;
                         my $value;
                         $sth->bind_columns(\$value);
@@ -331,11 +330,12 @@ sub write_output {
 
     while ( my ($table, $dbs) = each(%{$self->param('merge')}) ) {
         my $n_total_rows = $table_size->{$curr_rel_name}->{$table} || 0;
+        my @inputlist = ();
         foreach my $db (@$dbs) {
-            $self->dataflow_output_id( {'src_db_conn' => "#$db#", 'table' => $table}, 3);
+            push @inputlist, [ "#$db#" ];
             $n_total_rows += $table_size->{$db}->{$table};
         }
-        $self->dataflow_output_id( {'table' => $table, 'n_total_rows' => $n_total_rows, 'key' => $primary_keys->{$table}}, 4);
+        $self->dataflow_output_id( {'table' => $table, 'inputlist' => \@inputlist, 'n_total_rows' => $n_total_rows, 'key' => $primary_keys->{$table}}, 3);
     }
 
 }

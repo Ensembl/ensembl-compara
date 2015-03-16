@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2014] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -26,8 +26,6 @@ Bio::EnsEMBL::Compara::PipeConfig::MercatorPecan_conf
 =head1 SYNOPSIS
 
     #1. update ensembl-hive, ensembl and ensembl-compara GIT repositories before each new release
-
-    #2. you may need to update 'schema_version' in meta table to the current release number in ensembl-hive/sql/tables.sql
 
     #3. make sure that all default_options are set correctly
 
@@ -73,10 +71,7 @@ sub default_options {
 #       'ce_mlss_id'            => 523,   # it is very important to check that this value is current (commented out to make it obligatory to specify)
 	#conservation score mlss_id
 #       'cs_mlss_id'            => 50029, # it is very important to check that this value is current (commented out to make it obligatory to specify)
-        'release'               => '74',
-        'release_suffix'        => '',    # an empty string by default, a letter otherwise
-        'ensembl_cvs_root_dir'  => $ENV{'ENSEMBL_CVS_ROOT_DIR'},
-	'dbname'                => $ENV{USER}.'_pecan_21way_'.$self->o('release').$self->o('release_suffix'),
+	'dbname'                => $ENV{USER}.'_pecan_21way_'.$self->o('rel_with_suffix'),
         'work_dir'              => '/lustre/scratch109/ensembl/' . $ENV{'USER'} . '/scratch/hive/release_' . $self->o('rel_with_suffix') . '/' . $self->o('dbname'),
 #	'do_not_reuse_list'     => [ ],     # genome_db_ids of species we don't want to reuse this time. This is normally done automatically, so only need to set this if we think that this will not be picked up automatically.
 	'do_not_reuse_list'     => [ 142 ],     # names of species we don't want to reuse this time. This is normally done automatically, so only need to set this if we think that this will not be picked up automatically.
@@ -84,7 +79,6 @@ sub default_options {
         'species_set' => undef, 
 
     # dependent parameters:
-        'rel_with_suffix'       => $self->o('release').$self->o('release_suffix'),
         'pipeline_name'         => 'PECAN_'.$self->o('rel_with_suffix'),   # name the pipeline to differentiate the submitted processes
         'blastdb_dir'           => $self->o('work_dir') . '/blast_db',  
         'mercator_dir'          => $self->o('work_dir') . '/mercator',  
@@ -364,7 +358,7 @@ sub pipeline_analyses {
             -parameters => {
 		'reuse_db'      => $self->o('reuse_db'),
                 'registry_dbs'  => $self->o('reuse_core_sources_locs'),
-                'release'       => $self->o('release'),
+                'release'       => $self->o('ensembl_release'),
 		'do_not_reuse_list' => $self->o('do_not_reuse_list'),
             },
             -hive_capacity => 10,    # allow for parallel execution
@@ -801,7 +795,7 @@ sub pipeline_analyses {
 			      'dump_features' => $self->o('dump_features_exe'),
 			      'compare_beds' => $self->o('compare_beds_exe'),
 			      'bed_dir' => $self->o('bed_dir'),
-			      'ensembl_release' => $self->o('release'),
+			      'ensembl_release' => $self->o('ensembl_release'),
 			      'output_dir' => $self->o('output_dir'),
                               'mlss_id'   => $self->o('mlss_id'),
 			     },

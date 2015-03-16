@@ -1,5 +1,5 @@
 #!/usr/bin/env perl
-# Copyright [1999-2014] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+# Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 # 
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -240,7 +240,7 @@ if ($collection) {
   } elsif (scalar(@$ss) > 1) {
     die "There are multiple collections '$collection'";
   }
-  @input_genome_db_ids = map {$_->dbID} @{$ss->[0]->genome_dbs};
+  @input_genome_db_ids = map {$_->dbID} (grep {not $_->genome_component}  @{$ss->[0]->genome_dbs});
 }
 
 my @new_input_genome_db_ids;
@@ -359,6 +359,13 @@ foreach my $genome_db_ids (@new_input_genome_db_ids) {
   }
   ##
   #################################################
+  # Simple check to allow running create_mlss for homoeologues on the whole
+  # collection
+  if (($method_link_type eq 'ENSEMBL_HOMOEOLOGUES') and (not $all_genome_dbs->[0]->is_polyploid)) {
+    print "Skipping this MLSS because ENSEMBL_HOMOEOLOGUES only applies to polyploid species\n";
+    next;
+  }
+
   print "You are about to store the following MethodLinkSpeciesSet\n  $method_link_type: ",
     join(" - ", map {$_->name."(".$_->assembly.")"} @$all_genome_dbs), "\n",
       "  Name: $name\n",

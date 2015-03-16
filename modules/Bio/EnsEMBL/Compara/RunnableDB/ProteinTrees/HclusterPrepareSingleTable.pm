@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2014] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -102,8 +102,7 @@ sub fetch_distances {
       FROM peptide_align_feature paf
   };
   print +("$sql\n") if ($self->debug);
-  my $sth = $self->compara_dba->dbc->prepare($sql);
-  $sth->{mysql_use_result} = 1;
+  my $sth = $self->compara_dba->dbc->prepare($sql, {'mysql_use_result' => 1});
   $sth->execute();
   printf("%1.3f secs to execute\n", (time()-$starttime));
 
@@ -130,8 +129,8 @@ sub fetch_categories {
 
   my $sql = "SELECT canonical_member_id, genome_db_id FROM gene_member WHERE canonical_member_id IS NOT NULL";
   print +("$sql\n") if ($self->debug);
+  #my $sth = $self->compara_dba->dbc->prepare($sql, {'mysql_use_result' => 1});
   my $sth = $self->compara_dba->dbc->prepare($sql);
-  #$sth->{mysql_use_result} = 1;
   $sth->execute();
   printf("%1.3f secs to execute\n", (time()-$starttime));
 

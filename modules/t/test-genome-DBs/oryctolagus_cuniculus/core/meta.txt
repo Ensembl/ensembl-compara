@@ -1,4 +1,4 @@
-1	\N	schema_version	78
+1	\N	schema_version	79
 2	\N	patch	patch_56_57_a.sql|schema_version
 3	\N	patch	patch_56_57_b.sql|affy_analysis_tidy
 4	\N	patch	patch_56_57_c.sql|external_db_type_enum
@@ -152,3 +152,5 @@
 907	\N	patch	patch_76_77_a.sql|schema_version
 908	\N	patch	patch_77_78_a.sql|schema_version
 909	\N	patch	patch_77_78_b.sql|source_column_increase
+910	\N	patch	patch_77_78_c.sql|Change unmapped_reason_id from smallint to int
+911	\N	patch	patch_78_79_a.sql|schema_version

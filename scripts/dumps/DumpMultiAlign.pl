@@ -1,5 +1,5 @@
 #!/usr/bin/env perl -w
-# Copyright [1999-2014] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+# Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 # 
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -1071,12 +1071,13 @@ sub get_coordinates {
   my $species_name = $this_genomic_align->genome_db->name;
   if ($this_genomic_align->can("get_all_GenomicAligns") and @{$this_genomic_align->get_all_GenomicAligns} > 1) {
     ## This is a composite segment.
-    ## We need to fix the name and the length
     my @names;
     $dnafrag_length = 0;
     foreach my $this_composite_genomic_align (@{$this_genomic_align->get_all_GenomicAligns}) {
       push(@names, $this_composite_genomic_align->get_Slice->name);
-      $dnafrag_length += $this_composite_genomic_align->length;
+      my $aligned_seq = $this_composite_genomic_align->aligned_sequence;
+      $aligned_seq=~s/[-\.]//g; #remove the gaps and padding
+      $dnafrag_length += length($aligned_seq);
     }
     my $dbID;
     if ($this_genomic_align->dbID) {

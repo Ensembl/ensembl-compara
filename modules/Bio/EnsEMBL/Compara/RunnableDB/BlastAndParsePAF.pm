@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2014] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -120,9 +120,9 @@ sub fetch_input {
 
         # If reusing this genome_db, only need to blast against the 'fresh' genome_dbs
         if ($self->param('reuse_ss_id')) {
-            my $reused_species_set = $self->compara_dba()->get_SpeciesSetAdaptor->fetch_by_dbID($self->param('reuse_ss_id'));
+            my $reused_species_set = $self->compara_dba()->get_SpeciesSetAdaptor->fetch_by_dbID($self->param('reuse_ss_id')) or die $self->param('reuse_ss_id')." is not a valid species_set_id\n";
             #Check if species_set contains any species
-            my $reused_genome_dbs = $reused_species_set->genome_dbs if ($reused_species_set);
+            my $reused_genome_dbs = $reused_species_set->genome_dbs;
 
 #            my $reused_genome_dbs = $self->compara_dba()->get_SpeciesSetAdaptor->fetch_by_dbID($self->param('reuse_ss_id'))->genome_dbs;
             my %reuse_ss_hash = ( map { $_->dbID() => 1 } @$reused_genome_dbs );
@@ -135,10 +135,12 @@ sub fetch_input {
     print STDERR "Found ", scalar(@$genome_db_list), " genomes to blast this member against.\n" if ($self->debug);
     my $blastdb_dir = $self->param('fasta_dir');
     foreach my $genome_db (@$genome_db_list) {
-        my $fastafile = $blastdb_dir . '/' . $genome_db->name() . '_' . $genome_db->assembly() . '.fasta';
+        my $fastafile = $blastdb_dir . '/' . $genome_db->name() . '_' . $genome_db->assembly() . ($genome_db->genome_component ? '_comp_'.$genome_db->genome_component : '') . '.fasta';
         $fastafile =~ s/\s+/_/g;    # replace whitespace with '_' characters
         $fastafile =~ s/\/\//\//g;  # converts any // in path to /
         $self->param('all_blast_db')->{$fastafile} = $genome_db->dbID;
+        die "Missing blast fasta: $fastafile\n" unless -e $fastafile and -s $fastafile;
+        die "Missing blast index: $fastafile.psq\n" unless -e "$fastafile.psq" and -s "$fastafile.psq";
     }
 
 }
@@ -159,6 +161,8 @@ sub parse_blast_table_into_paf {
 
             my $cigar_line;
             unless ($self->param('no_cigars')) {
+                $qseq =~ s/ /-/g;
+                $sseq =~ s/ /-/g;
                 $cigar_line = Bio::EnsEMBL::Compara::Utils::Cigars::cigar_from_two_alignment_strings($qseq, $sseq);
             }
 

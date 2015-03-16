@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2014] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -99,7 +99,8 @@ sub merge_split_genes {
     }
 
     if (scalar(keys %split_genes)) {
-        $gene_tree->{'_root'} = $gene_tree->root->minimize_tree;
+        $gene_tree->minimize_tree;
+        delete $gene_tree->{_member_array}; # It could have been established by preload(), so we need to clear it
     }
 
     # Removing duplicate sequences of split genes

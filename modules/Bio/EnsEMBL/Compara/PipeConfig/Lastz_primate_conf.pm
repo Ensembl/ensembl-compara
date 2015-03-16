@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2014] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -23,8 +23,6 @@ Bio::EnsEMBL::Compara::PipeConfig::Lastz_primate_conf
 =head1 SYNOPSIS
 
     #1. Update ensembl-hive, ensembl and ensembl-compara GIT repositories before each new release
-
-    #2. You may need to update 'schema_version' in meta table to the current release number in ensembl-hive/sql/tables.sql
 
     #3. Check all default_options in PairAligner_conf.pm, especically:
         release

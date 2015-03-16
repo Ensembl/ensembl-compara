@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2014] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -59,10 +59,6 @@ The GenomicAlignGroup object defines groups of alignments.
 =item dbID
 
 corresponds to genomic_align_group.node_id
-
-=item adaptor
-
-Bio::EnsEMBL::Compara::DBSQL::GenomicAlignGroupAdaptor object to access DB
 
 =item genomic_align_array
 
@@ -182,21 +178,13 @@ sub genomic_align_array {
     my $genomic_align_adaptor;
 
     if (defined $genomic_align_array) {
-	foreach my $genomic_align (@$genomic_align_array) {
-	    throw("$genomic_align is not a Bio::EnsEMBL::Compara::GenomicAlign object") unless ($genomic_align->isa("Bio::EnsEMBL::Compara::GenomicAlign"));
-	}
-	$self->{'genomic_align_array'} = $genomic_align_array;
+        foreach my $genomic_align (@$genomic_align_array) {
+            throw("$genomic_align is not a Bio::EnsEMBL::Compara::GenomicAlign object") unless ($genomic_align->isa("Bio::EnsEMBL::Compara::GenomicAlign"));
+        }
+        $self->{'genomic_align_array'} = $genomic_align_array;
     } elsif (!defined $self->{'genomic_align_array'}) {
-	# Try to get genomic_align_array from other sources
-	if (defined($self->{'adaptor'}) and defined($self->{'dbID'})) {
-	    my $genomic_align_group_adaptor = $self->adaptor->db->get_GenomicAlignGroupAdaptor;
-	    my $gag = $genomic_align_group_adaptor->fetch_by_dbID($self->{'dbID'});
-	    $self->{'genomic_align_array'} = $gag->{'genomic_align_array'};
-	} else {
-	    warning("Fail to get data from other sources in Bio::EnsEMBL::Compara::GenomicAlignGroup->genomic_align_array".
-		    " You either have to specify more information (see perldoc for".
-		    " Bio::EnsEMBL::Compara::GenomicAlign) or to set it up directly");
-	}
+	    warning("Fail to get data from other sources in Bio::EnsEMBL::Compara::GenomicAlignGroup->genomic_align_array."
+            ." You have to set it up directly");
     }
 
     return $self->{'genomic_align_array'};

@@ -37,7 +37,3 @@ matrix:
     - perl: "5.14"
       env: COVERALLS=true
 
-notifications:
-  email:
-    on_success: always
-    on_failure: always

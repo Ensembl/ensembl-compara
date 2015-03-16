@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2014] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -22,6 +22,7 @@ use strict;
 use FileHandle;
 
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
+
 
 sub load_fasta_sequences_from_db {
     my ($self, $start_seq_id, $minibatch) = @_;
@@ -54,10 +55,10 @@ sub load_fasta_sequences_from_db {
                                 : ">$stable_id sequence_id=$seq_id\n$seq\n") ;
     }
     $sth->finish();
-    $self->compara_dba->dbc->disconnect_when_inactive(1);
 
     return \@fasta_list;
 }
+
 
 sub load_name2index_mapping_from_db {
     my ($self) = @_;
@@ -77,10 +78,10 @@ sub load_name2index_mapping_from_db {
         $name2index{$stable_id} = $seq_id;
     }
     $sth->finish();
-    $self->compara_dba->dbc->disconnect_when_inactive(1);
 
     return \%name2index;
 }
+
 
 sub name2index { # can load the name2index mapping from db/file if necessary
     my ($self, $name) = @_;
@@ -93,6 +94,7 @@ sub name2index { # can load the name2index mapping from db/file if necessary
         return $name2index->{$name};
     }
 }
+
 
 sub fetch_input {
     my $self = shift @_;
@@ -113,6 +115,7 @@ sub fetch_input {
 
     $self->param('fasta_list', $fasta_list);
 }
+
 
 sub parse_blast_table_into_matrix_hash {
     my ($self, $filename, $min_self_similarity) = @_;
@@ -156,6 +159,7 @@ sub parse_blast_table_into_matrix_hash {
     return \%matrix_hash;
 }
 
+
 sub run {
     my $self = shift @_;
 
@@ -198,9 +202,11 @@ sub run {
         warn "CMD:\t$cmd\n";
     }
 
+    $self->compara_dba->dbc->disconnect_when_inactive(1);
     open( BLAST, "| $cmd") || die qq{could not execute "${cmd}", returned error code: $!};
     print BLAST @$fasta_list;
     close BLAST;
+    $self->compara_dba->dbc->disconnect_when_inactive(0);
 
     my $matrix_hash = $self->parse_blast_table_into_matrix_hash($blast_outfile, -log($evalue_limit)/log(10) );
 
@@ -217,6 +223,7 @@ sub run {
     }
 }
 
+
 sub write_output {
     my $self = shift @_;
 
@@ -232,4 +239,3 @@ sub write_output {
 }
 
 1;
-

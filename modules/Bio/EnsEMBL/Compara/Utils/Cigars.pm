@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2014] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -71,9 +71,7 @@ use strict;
 use warnings;
 no warnings ('substr');
 
-use Bio::EnsEMBL::Utils::Exception;
-
-use Data::Dumper;
+use Bio::EnsEMBL::Utils::Exception qw(throw);
 
 
 =head2 compose_sequence_with_cigar
@@ -91,11 +89,14 @@ use Data::Dumper;
 
 sub compose_sequence_with_cigar {
     my $sequence = shift;
-    my $cigar_line = shift;
+    my $cigar_line = uc shift;
     my $expansion_factor = shift || 1;
 
+    my $seq_has_spaces = ($sequence =~ tr/ //);
     my $alignment_string = "";
     my $seq_start = 0;
+
+    throw("Invalid cigar_line '$cigar_line'\n") if $cigar_line !~ /^[0-9A-Z]*$/;
 
     while ($cigar_line =~ /(\d*)([A-Z])/g) {
 
@@ -108,20 +109,34 @@ sub compose_sequence_with_cigar {
 
         } elsif ($char eq 'M' or $char eq 'I') {
 
-            my $substring = substr($sequence, $seq_start, $length);
-            if ($substring =~ /\ /) {
-                my $num_boundaries = $substring =~ s/(\ )/$1/g;
-                $length += $num_boundaries;
-                $substring = substr($sequence,$seq_start,$length);
+            my $substring = substr($sequence, $seq_start, $length) || '';
+            if ($seq_has_spaces) {
+                my $nsp = 0;
+                while ((my $nsp2 = ($substring =~ tr/ //)) != $nsp) {
+                    $substring = substr($sequence, $seq_start, $length+$nsp2);
+                    $nsp = $nsp2;
+                }
+                $length += $nsp;
             }
             if (length($substring) < $length) {
+                # Some codons may be incomplete
                 $substring .= ('N' x ($length - length($substring)));
             }
             $alignment_string .= $substring if ($char eq 'M');
             $seq_start += $length;
 
+        } else {
+            throw("'$char' characters in cigar lines are not currently handled. But perhaps they should :)\n");
         }
     }
+
+    # NOTE: It would be good to check that the length of the cigar line
+    # matches the length of the sequence but it is unfortunately not
+    # possible when applying a protein cigar to its cds. In Ensembl, there
+    # is often a slight difference at the last nucleotides. There are even
+    # cases (d.melanogaster) where the difference is hundreds of
+    # nucleotides.
+
     return $alignment_string;
 }
 
@@ -165,7 +180,7 @@ sub expand_cigar {
     my $cigar = shift;
     my $expanded_cigar = '';
     #$cigar =~ s/(\d*)([A-Z])/$2 x ($1||1)/ge; #Expand
-    while ($cigar =~ /(\d*)([A-Z])/g) {
+    while ($cigar =~ /(\d*)([A-Za-z])/g) {
         $expanded_cigar .= $2 x ($1 || 1);
     }
     return $expanded_cigar;
@@ -218,10 +233,12 @@ sub consensus_cigar_line {
    # Itterate through each character of the expanded cigars.
    # If there is a 'D' at a given location in any cigar,
    # set the consensus to 'D', otherwise assume an 'M'.
-   # TODO: Fix assumption that cigar strings are always the same length,
-   # and start at the same point.
 
+   my %cigar_lens = ();
+   $cigar_lens{length($_)}++ for @expanded_cigars;
+   throw("Not all the cigars have the same length !\n") if scalar(keys %cigar_lens) > 1;
    my $cigar_len = length( $expanded_cigars[0] );
+
    my $cons_cigar;
    for( my $i=0; $i<$cigar_len; $i++ ){
        my $num_deletions = 0;

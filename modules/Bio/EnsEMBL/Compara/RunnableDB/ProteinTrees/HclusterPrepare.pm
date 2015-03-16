@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2014] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -71,6 +71,10 @@ sub fetch_input {
 
     my $genome_db_id = $self->param_required('genome_db_id');
     my $genome_db    = $self->compara_dba->get_GenomeDBAdaptor->fetch_by_dbID($genome_db_id) or die "no genome_db for id='$genome_db_id'";
+
+    if ($genome_db->is_polyploid) {
+        $self->complete_early("Polyploid genomes don't have blastp hits attached to them\n");
+    }
 
     my $table_name  = 'peptide_align_feature_' . $genome_db_id;
     $self->param('table_name', $table_name);
@@ -144,8 +148,7 @@ sub fetch_distances {
        AND paf.qgenome_db_id=$genome_db_id
   };
   print +("$sql\n") if ($self->debug);
-  my $sth = $self->compara_dba->dbc->prepare($sql);
-  $sth->{mysql_use_result} = 1;
+  my $sth = $self->compara_dba->dbc->prepare($sql, { 'mysql_use_result' => 1 });
   $sth->execute();
   printf("%1.3f secs to execute\n", (time()-$starttime));
 
@@ -175,8 +178,7 @@ sub fetch_categories {
             "qmember_id ".
              "FROM $table_name WHERE qgenome_db_id=$genome_db_id;";
   print +("$sql\n") if ($self->debug);
-  my $sth = $self->compara_dba->dbc->prepare($sql);
-  $sth->{mysql_use_result} = 1;
+  my $sth = $self->compara_dba->dbc->prepare($sql, { 'mysql_use_result' => 1 });
   $sth->execute();
   printf("%1.3f secs to execute\n", (time()-$starttime));
 

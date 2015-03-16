@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2014] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -260,11 +260,11 @@ sub _write_AlignedMemberSets {
   my $list_species = [];
   foreach my $aln_set (@{$alns_sets}) {
     foreach my $member (@{$aln_set->get_all_Members}) {
-      if (not defined ${$hash_members}{$member->genome_db_id}) {
+      if (not exists $hash_members->{$member->genome_db_id}) {
         push @{$list_species}, $member->genome_db;
-        ${$hash_members}{$member->genome_db_id} = [];
+        $hash_members->{$member->genome_db_id} = {};
       }
-      push @{${$hash_members}{$member->genome_db_id}}, $member;
+      $hash_members->{$member->genome_db_id}->{$member->seq_member_id} = $member;
     }
   }
 
@@ -272,7 +272,7 @@ sub _write_AlignedMemberSets {
     $list_species,
     sub {
       my ($species) = @_;
-      return ${$hash_members}{$species->dbID};
+      return [values %{$hash_members->{$species->dbID}}];
     },
     $alns_sets,
   );
@@ -328,6 +328,7 @@ sub _write_data {
   $w->emptyTag("scoreDef", "id" => "ds", "desc" => "Rate of synonymous mutations");
   $w->emptyTag("scoreDef", "id" => "lnl", "desc" => "Likelihood of the n/s scores");
   $w->emptyTag("scoreDef", "id" => "dnds_ratio", "desc" => "dN/dS ratio");
+  $w->emptyTag("scoreDef", "id" => "perc_identity", "desc" => "Percentage of identity of this protein to the alignment");
   $w->endTag("scores");
 
   # Prints each tree
@@ -462,7 +463,9 @@ sub _homology_body {
     }
 
     foreach my $member (@{$homology->get_all_Members}) {
-        $w->emptyTag("geneRef", "id" => $member->seq_member_id);
+        $w->startTag("geneRef", "id" => $member->seq_member_id);
+        $w->emptyTag('score', 'id' => 'perc_identity', 'value' => $member->perc_id);
+        $w->endTag('geneRef');
     }
 
     return $w->endTag($tagname);

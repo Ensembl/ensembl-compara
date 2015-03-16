@@ -1,5 +1,6 @@
 25th October 2004
 Update 20th July 2007
+Update 11th July 2015
 ---------------------
 
 Generating synteny blocks:
@@ -77,7 +78,7 @@ mysql -h compara1 -u ensro -N jh7_ensembl_Hsap_Cfam_42 |grep -v -e NT -e DR -e c
 Run the dump in sequential order, one at a time to avoid overloading the DB:
 
 cat Hsap_chr_names | while read i; do \
-echo "~/src/ensembl_main/ensembl-compara/scripts/synteny/DumpGFFAlignmentsForSynteny.pl \
+echo "${BASEDIR}/ensembl-compara/scripts/synteny/DumpGFFAlignmentsForSynteny.pl \
  --reg_conf ../reg.conf --dbname ensemblHsapCfam --qy 'Homo sapiens' \
  --tg 'Canis familiaris' --seq_region $i"; \
 done > run.me
@@ -119,7 +120,7 @@ Eg-1:
 Dumping the orthologs_one2one from the compara database v.45 
 with Drosophila melanogaster as the reference genome and Anopheles gambiae as the secondary genome:
 
-perl ~/src_2/api_branch45/ensembl-compara/scripts/synteny/DumpGFFOrthologForSynteny.pl 
+perl ${BASEDIR}/ensembl-compara/scripts/synteny/DumpGFFOrthologForSynteny.pl \
 --dbname Compara_45 --tg "Anopheles gambiae" --qy "Drosophila melanogaster" \
 --ortholog_type ortholog_one2one --reg_conf ~/.ensembl_init
 
@@ -128,7 +129,7 @@ Eg-2:
 Dumping the orthologs_one2one, one2many and many2many from the compara database v.45 
 with Drosophila melanogaster as the reference genome and Anopheles gambiae as the secondary genome:
 
-perl ~/src_2/api_branch45/ensembl-compara/scripts/synteny/DumpGFFOrthologForSynteny.pl 
+perl ${BASEDIR}/ensembl-compara/scripts/synteny/DumpGFFOrthologForSynteny.pl \
 --dbname Compara_45 --tg "Anopheles gambiae" --qy "Drosophila melanogaster" \
 --ortholog_type ortholog_one2one,ortholog_one2many,ortholog_many2many, --reg_conf ~/.ensembl_init
 
@@ -162,7 +163,7 @@ Now build the synteny regions for each chromosome.
 
 ls *.syten.gff | sed "s/\.syten\.gff//" | \
  while read i; do echo "java -Xmx3000M -classpath \
- ~/src/ensembl_main/ensembl-compara/scripts/synteny/BuildSynteny.jar \
+ ${BASEDIR}/ensembl-compara/scripts/synteny/BuildSynteny.jar \
  BuildSynteny $i.syten.gff 100000 100000 false \
  > $i.100000.100000.BuildSynteny.out 2> $i.100000.100000.BuildSynteny.err"; done > run
 
@@ -206,35 +207,13 @@ Compiling BuildSynteny.java
 NOTE: not important for production, it is just to know how to create the BuildSynteny.jar file from
 BuildSynteny.java
 
-BuildSynteny.java has still dependancies on apollo code, basically those
+It should be as simple as:
+$ cd ${BASEDIR}/ensembl-compara/scripts/synteny/
+$ javac BuildSynteny.java
+$ jar cfm BuildSynteny.jar SyntenyManifest.txt BuildSynteny.class `find apollo -iname "*.class"`
 
-import apollo.datamodel.*; //for FeatureSet and FeatureSetI
-import apollo.seq.io.*; //for GFFFile
-import apollo.util.*; //for QuickSort
+The code used to depend on modules from Apollof (http://www.gmod.org/) but the relevant modules
+have been extracted and edited so that there is no dependency any more.
 
-Better to do all the following on a PC linux box, either yours or one of the rlx blades. That because
-apollo does not compile properly on alpha, Don't ask me why...I've used j2sdk1.4.1_02 from sun.
+javac is used to compile the modules, and jar to package everything.
 
-1- get the apollo source code
-
- http://gmod.sourceforge.net/cvs.shtml
-
-2- compile apollo.
-
- See the README
-
-3- Compile BuildSynteny.java
-
- if your apollo classfiles directory is ~/src/apollo/src/java/classfiles/, then
-
- javac -classpath ~/src/apollo/src/java/classfiles/ BuildSynteny.java
-
-4- Create the first part of BuildSynteny.jar
-
- jar cvf BuildSynteny.jar -C ~/src/apollo/src/java/classfiles/ apollo
-
-5- Then integrate BuildSynteny.class in it
-
- jar uvf BuildSynteny.jar BuildSynteny.class
-
-And that should be all :)

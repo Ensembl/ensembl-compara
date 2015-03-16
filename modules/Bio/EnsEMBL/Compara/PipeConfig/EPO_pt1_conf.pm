@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2014] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -25,14 +25,10 @@ Bio::EnsEMBL::Compara::PipeConfig::EPO_pt1_conf
 
     #1. Update ensembl-hive, ensembl and ensembl-compara GIT repositories before each new release
 
-    #2. You may need to update 'schema_version' in meta table to the current release number in ensembl-hive/sql/tables.sql
-
     #3. Check all default_options, you will probably need to change the following :
-        release
         pipeline_db (-host)
         resource_classes 
 
-	'ensembl_cvs_root_dir' - the path to the compara/hive/ensembl checkouts - set as an environment variable in your shell
         'password' - your mysql password
 	'compara_pairwise_db' - I'm assuiming that all of your pairwise alignments are in one compara db
 	'reference_genome_db_id' - the genome_db_id (ie the species) which is in all your pairwise alignments
@@ -48,6 +44,7 @@ Bio::EnsEMBL::Compara::PipeConfig::EPO_pt1_conf
     #5. Run the "beekeeper.pl ... -sync" and then " -loop" command suggested by init_pipeline.pl
 
     #6. Fix the code when it crashes
+
 =head1 DESCRIPTION  
 
     This configuaration file gives defaults for the first part of the EPO pipeline (this part generates the anchors from pairwise alignments). 
@@ -75,15 +72,9 @@ sub default_options {
     return {
 	%{$self->SUPER::default_options},
         'pipeline_name' => 'compara_GenerateAnchors',
-	'ensembl_cvs_root_dir' => $self->o('ENV', 'ENSEMBL_CVS_ROOT_DIR'),
 	'species_tree_file' => $self->o('ensembl_cvs_root_dir').'/ensembl-compara/scripts/pipeline/species_tree_blength.nh',
 	   # parameters that are likely to change from execution to another:
-	'release'               => '74',
-	'rel_suffix'            => '',    # an empty string by default, a letter otherwise
 	'core_db_version' => 74, # version of the dbs from which to get the pairwise alignments
-	   # dependent parameters:
-	'rel_with_suffix'       => $self->o('release').$self->o('rel_suffix'),
-	'password' 		=> $ENV{'ENSADMIN_PSW'},
 	   # connection parameters to various databases:
 	'pipeline_db' => { # the production database itself (will be created)
 		-host   => 'compara4',

@@ -1,5 +1,5 @@
 #!/usr/bin/env perl
-# Copyright [1999-2014] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+# Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 # 
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -109,7 +109,7 @@ while (defined (my $line = <>) ) {
 # print STDERR "1: $qy_chr, 2: $tg_chr, qy_end: " .$qy_dnafrag->end.", tg_end: ". $tg_dnafrag->end."\n";
   
     $sth_synteny_region->execute($mlss->dbID);
-    my $synteny_region_id = $sth_synteny_region->{'mysql_insertid'};
+    my $synteny_region_id = $dbc->db_handle->last_insert_id(undef, undef, 'synteny_region', 'synteny_region_id');
     $sth_dnafrag_region->execute($synteny_region_id, $qy_dnafrag->dbID, $qy_start, $qy_end, 1);
     $sth_dnafrag_region->execute($synteny_region_id, $tg_dnafrag->dbID, $tg_start, $tg_end, $rel);
     print STDERR "synteny region line number $line_number loaded\n";

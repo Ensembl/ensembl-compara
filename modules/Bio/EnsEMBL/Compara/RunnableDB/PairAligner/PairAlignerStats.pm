@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2014] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -216,13 +216,12 @@ sub dump_bed_file {
     if (-e $genome_bed_file && !(-z $genome_bed_file)) {
 	print "$genome_bed_file already exists and not empty. Not overwriting.\n";
     } else {
-	#Need to dump toplevel features
-	my $compara_url = $self->compara_dba->dbc->url;
-	my $cmd = $self->param('dump_features') . " --url $dbc_url --species $name --feature toplevel > $genome_bed_file";
+        #Need to dump toplevel features
+        my $cmd = $self->param('dump_features') . " --url $dbc_url --species $name --feature toplevel > $genome_bed_file";
 
-	unless (system($cmd) == 0) {
-	    die("$cmd execution failed\n");
-	}
+        unless (system($cmd) == 0) {
+            die("$cmd execution failed\n");
+        }
     }
 
     return ($genome_bed_file);
@@ -302,9 +301,10 @@ sub calc_stats {
     my $feature = "mlss_" . $self->param('mlss_id');
     my $alignment_bed = $self->param('output_dir') . "/" . $feature . "." . $species . ".bed";
     my $dump_features = $self->param('dump_features');
+    my $cmd = "$dump_features --url $dbc_url --compara_url '$compara_url' --species $species --feature $feature > $alignment_bed";
 
-    unless (system("$dump_features --url $dbc_url --compara_url $compara_url --species $species --feature $feature > $alignment_bed") == 0) {
-	throw("$dump_features --url $dbc_url --compara_url $compara_url --species $species --feature $feature execution failed\n");
+    unless (system($cmd) == 0) {
+        die("$cmd execution failed\n");
     }
 
     #Run compare_beds.pl

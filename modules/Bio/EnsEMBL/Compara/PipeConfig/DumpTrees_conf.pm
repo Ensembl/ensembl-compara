@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2014] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -53,6 +53,8 @@ package Bio::EnsEMBL::Compara::PipeConfig::DumpTrees_conf;
 use strict;
 use warnings;
 
+use Bio::EnsEMBL::Hive::Version 2.2;
+
 use base ('Bio::EnsEMBL::Hive::PipeConfig::EnsemblGeneric_conf');   # we don't need Compara tables in this particular case
 
 =head2 default_options
@@ -66,8 +68,6 @@ sub default_options {
     return {
         %{ $self->SUPER::default_options() },               # inherit other stuff from the base class
 
-        'rel_suffix'        => '',                                              # empty string by default
-        'rel_with_suffix'   => $self->o('ensembl_release').$self->o('rel_suffix'),          # for convenience
         'rel_coord'         => $self->o('ENV', 'USER'),                         # by default, the release coordinator is doing the dumps
         # Commented out to make sure people define it on the command line
         'member_type'       => 'protein',                                       # either 'protein' or 'ncrna'
@@ -84,6 +84,8 @@ sub default_options {
         'readme_dir'  => $self->o('ensembl_cvs_root_dir').'/ensembl-compara/docs/pipelines/READMEs',                    # where the template README files are
         'target_dir'  => '/lustre/scratch110/ensembl/'.$self->o('ENV', 'USER').'/'.$self->o('pipeline_name'),           # where the final dumps will be stored
         'work_dir'    => $self->o('target_dir').'/dump_hash',                                                           # where directory hash is created and maintained
+
+        'ftp_dir'     => '/nfs/ensembl/ensembl/ftp_ensembl/release-'.$self->o('ensembl_release').'/',
     };
 }
 
@@ -123,10 +125,13 @@ sub pipeline_wide_parameters {  # these parameter values are visible to all anal
 
         'target_dir'    => $self->o('target_dir'),
         'work_dir'      => $self->o('work_dir'),
+        'ftp_dir'       => $self->o('ftp_dir'),
 
         'member_type'   => $self->o('member_type'),
 
         'name_root'     => $self->o('name_root'),
+
+        'rel_db'        => $self->o('rel_db'),
     };
 }
 
@@ -161,7 +166,7 @@ sub pipeline_analyses {
           { -logic_name => 'dump_for_uniprot',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
             -parameters => {
-                'db_conn'       => $self->o('rel_db'),
+                'db_conn'       => '#rel_db#',
                 'file_name'     => sprintf('ensembl.GeneTree_content.e%d.txt', $self->o('ensembl_release')),
                 'query'         => sprintf q|
                     SELECT 
@@ -181,7 +186,7 @@ sub pipeline_analyses {
                 |,
             },
             -input_ids => [
-                {'cmd' => 'echo "#query#" | db_cmd.pl -url #db_conn# -extra "-N -q" > #target_dir#/#file_name#',},
+                {'cmd' => 'echo "#query#" | db_cmd.pl -url #db_conn# -extra -N -extra -q > #target_dir#/#file_name#',},
             ],
             -flow_into => {
                 1 => { 'archive_long_files' => { 'full_name' => '#target_dir#/#file_name#' } },
@@ -192,7 +197,7 @@ sub pipeline_analyses {
         {   -logic_name => 'dump_all_homologies',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::DumpAllHomologiesOrthoXML',
             -parameters => {
-                'compara_db'            => $self->o('rel_db'),
+                'compara_db'            => '#rel_db#',
                 'protein_tree_range'    => '0-99999999',
                 'ncrna_tree_range'      => '100000000-199999999',
             },
@@ -210,7 +215,7 @@ sub pipeline_analyses {
         {   -logic_name => 'dump_all_trees',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::DumpAllTreesOrthoXML',
             -parameters => {
-                'compara_db'            => $self->o('rel_db'),
+                'compara_db'            => '#rel_db#',
                 'tree_type'             => 'tree',
             },
             -input_ids => [
@@ -227,7 +232,7 @@ sub pipeline_analyses {
         {   -logic_name => 'generate_tree_ids',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
             -parameters => {
-                'db_conn'               => $self->o('rel_db'),
+                'db_conn'               => '#rel_db#',
                 'inputquery'            => 'SELECT root_id AS tree_id FROM gene_tree_root WHERE tree_type = "tree" AND clusterset_id = "default" AND member_type = "#member_type#"',
             },
             -input_ids => [
@@ -236,14 +241,14 @@ sub pipeline_analyses {
             -meadow_type => 'LOCAL',
             -flow_into => {
                 1 => [ 'generate_collations', 'generate_tarjobs', 'remove_hash' ],
-                2 => { 'dump_a_tree'  => { 'tree_id' => '#tree_id#', 'hash_dir' => '#expr(dir_revhash($tree_id))expr#' } },
+                2 => { 'dump_a_tree'  => { 'tree_id' => '#tree_id#', 'hash_dir' => '#expr(dir_revhash(#tree_id#))expr#' } },
             },
         },
 
         {   -logic_name    => 'dump_a_tree',
             -module        => 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
             -parameters    => {
-                'db_url'            => $self->o('rel_db'),
+                'db_url'            => '#rel_db#',
                 'dump_script'       => $self->o('dump_script'),
                 'protein_tree_args' => '-nh 1 -a 1 -nhx 1 -f 1 -fc 1 -oxml 1 -pxml 1 -cafe 1',
                 'ncrna_tree_args'   => '-nh 1 -a 1 -nhx 1 -f 1 -oxml 1 -pxml 1 -cafe 1',
@@ -333,19 +338,30 @@ sub pipeline_analyses {
                     ['cd #target_dir#/xml ; md5sum *.gz >MD5SUM.#member_type#_trees'],
                     ['sed "s/{release}/'.($self->o('ensembl_release')).'/" #readme_dir#/#member_type#_trees.dumps.txt     > #target_dir#/emf/README.#member_type#_trees.dumps.txt'],
                     ['sed "s/{release}/'.($self->o('ensembl_release')).'/" #readme_dir#/#member_type#_trees.xml_dumps.txt > #target_dir#/xml/README.#member_type#_trees.xml_dumps.txt'],
+                    ['mkdir -p #ftp_dir#/emf/ensembl-compara/homologies'],
+                    ['mkdir -p #ftp_dir#/xml/ensembl-compara/homologies'],
                 ],
                 'column_names'      => [ 'cmd' ],
             },
             -wait_for => [ 'archive_long_files', 'dump_all_homologies', 'dump_all_trees'],
             -meadow_type => 'LOCAL',
             -flow_into => {
-                2 => [ 'prepare_dir' ],
+                '2->A' => [ 'prepare_dir' ],
+                'A->1' => 'copy_to_ensembl_ftp',
             },
         },
 
         {   -logic_name => 'prepare_dir',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
             -parameters => {
+            },
+            -meadow_type => 'LOCAL',
+        },
+
+        {   -logic_name => 'copy_to_ensembl_ftp',
+            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
+            -parameters => {
+                'cmd' => 'cp -a #target_dir#/emf/* #ftp_dir#/emf/ensembl-compara/homologies; cp -a #target_dir#/xml/* #ftp_dir#/xml/ensembl-compara/homologies',
             },
             -meadow_type => 'LOCAL',
         },

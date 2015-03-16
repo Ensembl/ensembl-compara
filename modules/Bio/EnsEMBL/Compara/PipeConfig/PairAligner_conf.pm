@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2014] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -24,10 +24,7 @@ Bio::EnsEMBL::Compara::PipeConfig::PairAligner_conf
 
     #1. Update ensembl-hive, ensembl and ensembl-compara GIT repositories before each new release
 
-    #2. You may need to update 'schema_version' in meta table to the current release number in ensembl-hive/sql/tables.sql
-
     #3. Make sure that all default_options are set correctly, especially:
-        release
         pipeline_db (-host)
         resource_classes 
         ref_species (if not homo_sapiens)
@@ -37,7 +34,7 @@ Bio::EnsEMBL::Compara::PipeConfig::PairAligner_conf
 
     #4. Run init_pipeline.pl script:
         Using command line arguments:
-        init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::PairAligner_conf --dbname hsap_ggor_lastz_64 --password <your_password) --mlss_id 536 --dump_dir /lustre/scratch103/ensembl/kb3/scratch/hive/release_64/hsap_ggor_nib_files/ --pair_aligner_options "T=1 K=5000 L=5000 H=3000 M=10 O=400 E=30 Q=/nfs/users/nfs_k/kb3/work/hive/data/primate.matrix --ambiguous=iupac" --bed_dir /nfs/ensembl/compara/dumps/bed/
+        init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::PairAligner_conf --pipeline_name hsap_ggor_lastz_64 --password <your_password) --mlss_id 536 --dump_dir /lustre/scratch103/ensembl/kb3/scratch/hive/release_64/hsap_ggor_nib_files/ --pair_aligner_options "T=1 K=5000 L=5000 H=3000 M=10 O=400 E=30 Q=/nfs/users/nfs_k/kb3/work/hive/data/primate.matrix --ambiguous=iupac" --bed_dir /nfs/ensembl/compara/dumps/bed/
 
         Using a configuration file:
         init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::PairAligner_conf --password <your_password> --reg_conf reg.conf --conf_file input.conf --config_url mysql://user:pass\@host:port/db_name
@@ -51,7 +48,7 @@ Bio::EnsEMBL::Compara::PipeConfig::PairAligner_conf
 
     You may need to provide a registry configuration file if the core databases have not been added to staging (--reg_conf).
 
-    A single pair of species can be run either by using a configuration file or by providing specific parameters on the command line and using the default values set in this file. On the command line, you must provide the LASTZ_NET mlss which should have been added to the master database (--mlss_id). The directory to which the nib files will be dumped can be specified using --dump_dir or the default location will be used. All the necessary directories are automatically created if they do not already exist. It may be necessary to change the pair_aligner_options default if, for example, doing primate-primate alignments. It is recommended that you provide a meaningful database name (--dbname). The username is automatically prefixed to this, ie -dbname hsap_ggor_lastz_64 will become kb3_hsap_ggor_lastz_64. A basic healthcheck is run and output is written to the job_message table. To write to the pairwise configuration database, you must provide the correct config_url. Even if no config_url is given, the statistics are written to the job_message table.
+    A single pair of species can be run either by using a configuration file or by providing specific parameters on the command line and using the default values set in this file. On the command line, you must provide the LASTZ_NET mlss which should have been added to the master database (--mlss_id). The directory to which the nib files will be dumped can be specified using --dump_dir or the default location will be used. All the necessary directories are automatically created if they do not already exist. It may be necessary to change the pair_aligner_options default if, for example, doing primate-primate alignments. It is recommended that you provide a meaningful pipeline name (--pipeline_name). The username is automatically prefixed to this, ie --pipeline_name hsap_ggor_lastz_64 will create kb3_hsap_ggor_lastz_64 database. A basic healthcheck is run and output is written to the job_message table. To write to the pairwise configuration database, you must provide the correct config_url. Even if no config_url is given, the statistics are written to the job_message table.
 
 
 =head1 CONTACT
@@ -73,32 +70,17 @@ use base ('Bio::EnsEMBL::Compara::PipeConfig::ComparaGeneric_conf');  # All Hive
 sub default_options {
     my ($self) = @_;
     return {
-	%{$self->SUPER::default_options},   # inherit the generic ones
+        %{$self->SUPER::default_options},   # inherit the generic ones
 
         #'ensembl_cvs_root_dir' => $ENV{'HOME'}.'/src/ensembl_main/', 
         'ensembl_cvs_root_dir' => $ENV{'ENSEMBL_CVS_ROOT_DIR'}, 
 
-	'release'               => '74',
-        'release_suffix'        => '',    # an empty string by default, a letter otherwise
-	#'dbname'               => '', #Define on the command line. Compara database name eg hsap_ggor_lastz_64
-
-         # dependent parameters:
-        'rel_with_suffix'       => $self->o('release').$self->o('release_suffix'),
-        'pipeline_name'         => 'LASTZ_'.$self->o('rel_with_suffix'),   # name the pipeline to differentiate the submitted processes
-
+             # dependent parameters:
         'host'        => 'compara1',                        #separate parameter to use the resources aswell
-        'pipeline_db' => {                                  # connection parameters
-            -host   => $self->o('host'),
-            -port   => 3306,
-            -user   => 'ensadmin',
-            -pass   => $self->o('password'), 
-            -dbname => $ENV{USER}.'_'.$self->o('dbname'),
-            -driver => 'mysql',
-        },
 
-	'master_db' => 'mysql://ensro@compara1/sf5_ensembl_compara_master',
+	    'master_db' => 'mysql://ensro@compara1/sf5_ensembl_compara_master',
 
-	'staging_loc1' => {
+	    'staging_loc1' => {
             -host   => 'ens-staging1',
             -port   => 3306,
             -user   => 'ensro',
@@ -110,31 +92,31 @@ sub default_options {
             -user   => 'ensro',
             -pass   => '',
         },  
-	 'livemirror_loc' => {
+	    'livemirror_loc' => {
             -host   => 'ens-livemirror',
             -port   => 3306,
             -user   => 'ensro',
             -pass   => '',
-	    -db_version => 71,
+	        -db_version => 71,
         },
 
-	'curr_core_sources_locs'    => [ $self->o('staging_loc1'), $self->o('staging_loc2'), ],
-	#'curr_core_sources_locs'    => [ $self->o('livemirror_loc') ],
-	'curr_core_dbs_locs'        => '', #if defining core dbs with config file. Define in Lastz_conf.pm or TBlat_conf.pm
+        'curr_core_sources_locs'    => [ $self->o('staging_loc1'), $self->o('staging_loc2'), ],
+        #'curr_core_sources_locs'    => [ $self->o('livemirror_loc') ],
+        'curr_core_dbs_locs'        => '', #if defining core dbs with config file. Define in Lastz_conf.pm or TBlat_conf.pm
 
-	# executable locations:
-	'populate_new_database_exe' => $self->o('ensembl_cvs_root_dir')."/ensembl-compara/scripts/pipeline/populate_new_database.pl",
-	'dump_features_exe' => $self->o('ensembl_cvs_root_dir')."/ensembl-compara/scripts/dumps/dump_features.pl",
-	'compare_beds_exe' => $self->o('ensembl_cvs_root_dir')."/ensembl-compara/scripts/pipeline/compare_beds.pl",
-	'update_config_database_exe' => $self->o('ensembl_cvs_root_dir')."/ensembl-compara/scripts/pipeline/update_config_database.pl",
-	'create_pair_aligner_page_exe' => $self->o('ensembl_cvs_root_dir')."/ensembl-compara/scripts/pipeline/create_pair_aligner_page.pl",
-	'faToNib_exe' => '/software/ensembl/compara/bin/faToNib',
-	'lavToAxt_exe' => '/software/ensembl/compara/bin/lavToAxt',
-	'axtChain_exe' => '/software/ensembl/compara/bin/axtChain',
-	'chainNet_exe' => '/software/ensembl/compara/bin/chainNet',
+            # executable locations:
+        'populate_new_database_exe' => $self->o('ensembl_cvs_root_dir')."/ensembl-compara/scripts/pipeline/populate_new_database.pl",
+        'dump_features_exe' => $self->o('ensembl_cvs_root_dir')."/ensembl-compara/scripts/dumps/dump_features.pl",
+        'compare_beds_exe' => $self->o('ensembl_cvs_root_dir')."/ensembl-compara/scripts/pipeline/compare_beds.pl",
+        'update_config_database_exe' => $self->o('ensembl_cvs_root_dir')."/ensembl-compara/scripts/pipeline/update_config_database.pl",
+        'create_pair_aligner_page_exe' => $self->o('ensembl_cvs_root_dir')."/ensembl-compara/scripts/pipeline/create_pair_aligner_page.pl",
+        'faToNib_exe' => '/software/ensembl/compara/bin/faToNib',
+        'lavToAxt_exe' => '/software/ensembl/compara/bin/lavToAxt',
+        'axtChain_exe' => '/software/ensembl/compara/bin/axtChain',
+        'chainNet_exe' => '/software/ensembl/compara/bin/chainNet',
 
-	#Set for single pairwise mode
-	'mlss_id' => '',
+            #Set for single pairwise mode
+        'mlss_id' => '',
 
         #Collection name 
         'collection' => '',
@@ -149,7 +131,7 @@ sub default_options {
         'ref_species' => undef,
 
 	#directory to dump nib files
-	'dump_dir' => '/lustre/scratch110/ensembl/' . $ENV{USER} . '/pair_aligner/nib_files/' . 'release_' . $self->o('rel_with_suffix') . '/',
+	'dump_dir' => '/lustre/scratch109/ensembl/' . $ENV{USER} . '/pair_aligner/nib_files/' . 'release_' . $self->o('rel_with_suffix') . '/',
 
         #include MT chromosomes if set to 1 ie MT vs MT only else avoid any MT alignments if set to 0
         'include_MT' => 1,
@@ -198,7 +180,7 @@ sub default_options {
         #'window_size' => 1000000,
         'window_size' => 10000,
 	'filter_duplicates_rc_name' => '1Gb',
-	'filter_duplicates_himem_rc_name' => '3.6Gb',
+	'filter_duplicates_himem_rc_name' => 'crowd_himem',
 
 	#
 	#Default pair_aligner
@@ -254,8 +236,8 @@ sub default_options {
 	#
 	'skip_pairaligner_stats' => 0, #skip this module if set to 1
 #	'bed_dir' => '/nfs/ensembl/compara/dumps/bed/',
-	'bed_dir' => '/lustre/scratch110/ensembl/' . $ENV{USER} . '/pair_aligner/bed_dir/' . 'release_' . $self->o('rel_with_suffix') . '/',
-	'output_dir' => '/lustre/scratch110/ensembl/' . $ENV{USER} . '/pair_aligner/feature_dumps/' . 'release_' . $self->o('rel_with_suffix') . '/',
+	'bed_dir' => '/lustre/scratch109/ensembl/' . $ENV{USER} . '/pair_aligner/bed_dir/' . 'release_' . $self->o('rel_with_suffix') . '/',
+	'output_dir' => '/lustre/scratch109/ensembl/' . $ENV{USER} . '/pair_aligner/feature_dumps/' . 'release_' . $self->o('rel_with_suffix') . '/',
             
         #
         #Resource requirements
@@ -298,7 +280,6 @@ sub pipeline_wide_parameters {  # these parameter values are visible to all anal
 
     return {
             %{$self->SUPER::pipeline_wide_parameters},          # here we inherit anything from the base class
-	    'pipeline_name' => $self->o('pipeline_name'), #This must be defined for the beekeeper to work properly
 	    'do_transactions' => $self->o('do_transactions'),
     };
 }
@@ -310,8 +291,12 @@ sub resource_classes {
             %{$self->SUPER::resource_classes},  # inherit 'default' from the parent class
             '100Mb' => { 'LSF' => '-C0 -M100' . $self->o('memory_suffix') .' -R"select[mem>100] rusage[mem=100]"' },
             '1Gb'   => { 'LSF' => '-C0 -M1000' . $self->o('memory_suffix') .' -R"select[mem>1000] rusage[mem=1000]"' },
-            '1.8Gb' => { 'LSF' => '-C0 -M1800' . $self->o('memory_suffix') .' -R"select[mem>1800 && '.$self->o('dbresource').'<'.$self->o('aligner_capacity').'] rusage[mem=1800,'.$self->o('dbresource').'=10:duration=3]"' },
-            '3.6Gb' => { 'LSF' => '-C0 -M3600' . $self->o('memory_suffix') .' -R"select[mem>3600 && '.$self->o('dbresource').'<'.$self->o('aligner_capacity').'] rusage[mem=3600,'.$self->o('dbresource').'=10:duration=3]"' },
+                # if running on one of compara1..5 servers that support my+$SERVERHOSTNAME resources:
+            'crowd' => { 'LSF' => '-C0 -M1800' . $self->o('memory_suffix') .' -R"select[mem>1800 && '.$self->o('dbresource').'<'.$self->o('aligner_capacity').'] rusage[mem=1800,'.$self->o('dbresource').'=10:duration=3]"' },
+            'crowd_himem' => { 'LSF' => '-C0 -M6000' . $self->o('memory_suffix') .' -R"select[mem>6000 && '.$self->o('dbresource').'<'.$self->o('aligner_capacity').'] rusage[mem=6000,'.$self->o('dbresource').'=10:duration=3]"' },
+                # if running on any other server:
+#            'crowd' => { 'LSF' => '-C0 -M1800' . $self->o('memory_suffix') .' -R"select[mem>1800] rusage[mem=1800]"' },
+#            'crowd_himem' => { 'LSF' => '-C0 -M6000' . $self->o('memory_suffix') .' -R"select[mem>6000] rusage[mem=6000]"' },
     };
 }
 
@@ -334,7 +319,7 @@ sub pipeline_analyses {
 		-flow_into      => {
 				    1 => ['populate_new_database'],
 				   },
-	       -rc_name => '100Mb',
+	       -rc_name => '1Gb',
 	    },
 
 # ---------------------------------------------[Run poplulate_new_database.pl script ]---------------------------------------------------
@@ -393,7 +378,7 @@ sub pipeline_analyses {
 			       8 => [ 'healthcheck' ],
 			       9 => [ 'dump_dna_factory' ],
 			      },
-	       -rc_name => '100Mb',
+	       -rc_name => '1Gb',
   	    },
 
  	    {  -logic_name => 'chunk_and_group_dna',
@@ -405,7 +390,7 @@ sub pipeline_analyses {
  	       -flow_into => {
  	          2 => [ 'store_sequence' ],
  	       },
-	       -rc_name => '1.8Gb',
+	       -rc_name => 'crowd',
  	    },
  	    {  -logic_name => 'store_sequence',
  	       -hive_capacity => 50,
@@ -414,7 +399,7 @@ sub pipeline_analyses {
 	       -flow_into => {
  	          -1 => [ 'store_sequence_again' ],
  	       },
-	       -rc_name => '1.8Gb',
+	       -rc_name => 'crowd',
   	    },
 	    #If fail due to MEMLIMIT, probably due to memory leak, and rerunning with the default memory should be fine.
  	    {  -logic_name => 'store_sequence_again',
@@ -422,7 +407,7 @@ sub pipeline_analyses {
  	       -module     => 'Bio::EnsEMBL::Compara::RunnableDB::PairAligner::StoreSequence',
  	       -parameters => { }, 
 	       -can_be_empty  => 1, 
-	       -rc_name => '1.8Gb',
+	       -rc_name => 'crowd',
   	    },
 	    {  -logic_name => 'dump_dna_factory',
 	       -module     => 'Bio::EnsEMBL::Compara::RunnableDB::PairAligner::DumpDnaCollectionFactory',
@@ -454,8 +439,8 @@ sub pipeline_analyses {
 	       -hive_capacity => 10,
  	       -wait_for => [ 'store_sequence', 'store_sequence_again', 'chunk_and_group_dna', 'dump_dna_factory', 'dump_dna'  ],
 	       -flow_into => {
-			       'A->1' => [ 'remove_inconsistencies_after_pairaligner' ],
-			       '2->A' => [ $self->o('pair_aligner_logic_name')  ],
+			       1 => [ 'remove_inconsistencies_after_pairaligner' ],
+			       2 => [ $self->o('pair_aligner_logic_name')  ],
 			   },
 	       -rc_name => '1Gb',
  	    },
@@ -469,7 +454,7 @@ sub pipeline_analyses {
 	       -flow_into => {
 			      -1 => [ $self->o('pair_aligner_logic_name') . '_himem1' ],  # MEMLIMIT
 			     },
-	       -rc_name => '1.8Gb',
+	       -rc_name => 'crowd',
 	    },
 	    {  -logic_name => $self->o('pair_aligner_logic_name') . "_himem1",
  	       -module     => $self->o('pair_aligner_module'),
@@ -479,15 +464,17 @@ sub pipeline_analyses {
 			      },
  	       -batch_size => $self->o('pair_aligner_batch_size'),
  	       -program    => $self->o('pair_aligner_program'), 
-	       -rc_name => '3.6Gb',
+	       -can_be_empty  => 1, 
+	       -rc_name => 'crowd_himem',
 	    },
 	    {  -logic_name => 'remove_inconsistencies_after_pairaligner',
                -module     => 'Bio::EnsEMBL::Compara::RunnableDB::PairAligner::RemoveAlignmentDataInconsistencies',
 	       -parameters => { },
+ 	       -wait_for =>  [ $self->o('pair_aligner_logic_name'), $self->o('pair_aligner_logic_name') . "_himem1" ],
 	       -flow_into => {
 			      1 => [ 'update_max_alignment_length_before_FD' ],
 			     },
-	       -rc_name => '100Mb',
+	       -rc_name => '1Gb',
 	    },
  	    {  -logic_name => 'update_max_alignment_length_before_FD',
  	       -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GenomicAlignBlock::UpdateMaxAlignmentLength',
@@ -497,7 +484,7 @@ sub pipeline_analyses {
 	       -flow_into => {
 			      1 => [ 'update_max_alignment_length_after_FD' ],
 			     },
-	       -rc_name => '100Mb',
+	       -rc_name => '1Gb',
  	    },
  	    {  -logic_name => 'create_filter_duplicates_jobs', #factory
  	       -module     => 'Bio::EnsEMBL::Compara::RunnableDB::PairAligner::CreateFilterDuplicatesJobs',
@@ -536,7 +523,7 @@ sub pipeline_analyses {
 			       'quick' => $self->o('quick'),
 			      },
  	       -wait_for =>  [ 'filter_duplicates', 'filter_duplicates_himem' ],
-	       -rc_name => '100Mb',
+	       -rc_name => '1Gb',
  	    },
 #
 #Second half of the pipeline
@@ -552,7 +539,7 @@ sub pipeline_analyses {
 			      1 => [ 'dump_large_nib_for_chains_factory' ],
 			     },
 	       -wait_for  => ['update_max_alignment_length_after_FD' ],
-	       -rc_name => '1.8Gb',
+	       -rc_name => 'crowd',
  	    },
  	    {  -logic_name => 'dump_large_nib_for_chains_factory',
  	       -module     => 'Bio::EnsEMBL::Compara::RunnableDB::PairAligner::DumpDnaCollectionFactory',
@@ -580,7 +567,7 @@ sub pipeline_analyses {
 	       -flow_into => {
 			      -1 => [ 'dump_large_nib_for_chains_himem' ],  # MEMLIMIT
 			     },
-	       -rc_name => '1.8Gb',
+	       -rc_name => 'crowd',
  	    },
 	    {  -logic_name => 'dump_large_nib_for_chains_himem',
  	       -module     => 'Bio::EnsEMBL::Compara::RunnableDB::PairAligner::DumpDnaCollection',
@@ -591,15 +578,15 @@ sub pipeline_analyses {
 			      },
 	       -hive_capacity => 10,
 	       -can_be_empty  => 1, 
-	       -rc_name => '3.6Gb',
+	       -rc_name => 'crowd_himem',
  	    },
  	    {  -logic_name => 'create_alignment_chains_jobs',
 		-module     => 'Bio::EnsEMBL::Compara::RunnableDB::PairAligner::CreateAlignmentChainsJobs',
 		-parameters => { }, 
 		-flow_into => {
 #			      1 => [ 'update_max_alignment_length_after_chain' ],
-			      'A->1' => [ 'remove_inconsistencies_after_chain' ],
-			      '2->A' => [ 'alignment_chains' ],
+			      1 => [ 'remove_inconsistencies_after_chain' ],
+			      2 => [ 'alignment_chains' ],
 			     },
  	       -wait_for => [ 'no_chunk_and_group_dna', 'dump_large_nib_for_chains_factory', 'dump_large_nib_for_chains', 'dump_large_nib_for_chains_himem' ],
 	       -rc_name => '1Gb',
@@ -612,14 +599,15 @@ sub pipeline_analyses {
 	       -flow_into => {
 			      -1 => [ 'alignment_chains_himem' ],  # MEMLIMIT
 			     },
-	       -rc_name => '1.8Gb',
+	       -rc_name => 'crowd',
  	    },
 	    {  -logic_name => 'alignment_chains_himem',
  	       -hive_capacity => $self->o('chain_hive_capacity'),
  	       -batch_size => $self->o('chain_batch_size'),
  	       -module     => 'Bio::EnsEMBL::Compara::RunnableDB::PairAligner::AlignmentChains',
  	       -parameters => $self->o('chain_parameters'),
-	       -rc_name => '3.6Gb',
+	       -can_be_empty  => 1, 
+	       -rc_name => 'crowd_himem',
  	    },
 	    {
 	     -logic_name => 'remove_inconsistencies_after_chain',
@@ -627,14 +615,15 @@ sub pipeline_analyses {
 	     -flow_into => {
 			      1 => [ 'update_max_alignment_length_after_chain' ],
 			   },
-	     -rc_name => '100Mb',
+	     -wait_for =>  [ 'alignment_chains', 'alignment_chains_himem' ],
+	     -rc_name => '1Gb',
 	    },
 	    {  -logic_name => 'update_max_alignment_length_after_chain',
  	       -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GenomicAlignBlock::UpdateMaxAlignmentLength',
  	       -parameters => { 
 			       'quick' => $self->o('quick'),
 			      },
-	       -rc_name => '100Mb',
+	       -rc_name => '1Gb',
  	    },
  	    {  -logic_name => 'create_alignment_nets_jobs',
  	       -module     => 'Bio::EnsEMBL::Compara::RunnableDB::PairAligner::CreateAlignmentNetsJobs',
@@ -653,7 +642,7 @@ sub pipeline_analyses {
 			       'tables' => [ 'genomic_align_block', 'genomic_align' ],
 			       'skip' => $self->o('patch_alignments'),
 			      },
-	       -rc_name => '100Mb',
+	       -rc_name => '1Gb',
  	    },
  	    {  -logic_name => 'alignment_nets',
  	       -hive_capacity => $self->o('net_hive_capacity'),
@@ -672,7 +661,7 @@ sub pipeline_analyses {
  	       -module     => 'Bio::EnsEMBL::Compara::RunnableDB::PairAligner::AlignmentNets',
  	       -parameters => $self->o('net_parameters'),
 	       -can_be_empty  => 1, 
-	       -rc_name => '1.8Gb',
+	       -rc_name => 'crowd',
  	    },
  	    {
 	       -logic_name => 'remove_inconsistencies_after_net',
@@ -681,7 +670,7 @@ sub pipeline_analyses {
 			       1 => [ 'update_max_alignment_length_after_net' ],
 			   },
  	       -wait_for =>  [ 'alignment_nets', 'alignment_nets_himem' ],
-	       -rc_name => '100Mb',
+	       -rc_name => '1Gb',
 	    },
  	    {  -logic_name => 'create_filter_duplicates_net_jobs', #factory
                -module     => 'Bio::EnsEMBL::Compara::RunnableDB::PairAligner::CreateFilterDuplicatesJobs',
@@ -691,7 +680,7 @@ sub pipeline_analyses {
                               2 => [ 'filter_duplicates_net' ], 
                             },
                -can_be_empty  => 1,
-               -rc_name => '1.8Gb',
+               -rc_name => 'crowd',
            },
            {  -logic_name   => 'filter_duplicates_net',
               -module        => 'Bio::EnsEMBL::Compara::RunnableDB::PairAligner::FilterDuplicates',
@@ -723,8 +712,8 @@ sub pipeline_analyses {
 # 	       -parameters => { 
 #			       'quick' => $self->o('quick'),
 #			      },
-	      -rc_name => '100Mb',
-	      -wait_for =>  [ 'filter_duplicates_net', 'filter_duplicates_net_himem' ],
+	      -rc_name => '1Gb',
+	      -wait_for =>  [ 'create_filter_duplicates_net_jobs', 'filter_duplicates_net', 'filter_duplicates_net_himem' ],
               -flow_into => [ 'set_internal_ids_collection' ],
  	    },
           {  -logic_name => 'set_internal_ids_collection',
@@ -739,12 +728,12 @@ sub pipeline_analyses {
 	      -module => 'Bio::EnsEMBL::Compara::RunnableDB::HealthCheck',
 	      -parameters => {
 			      'previous_db' => $self->o('previous_db'),
-			      'ensembl_release' => $self->o('release'),
+			      'ensembl_release' => $self->o('ensembl_release'),
 			      'prev_release' => $self->o('prev_release'),
 			      'max_percent_diff' => $self->o('max_percent_diff'),
 			     },
 	      -wait_for => [ 'update_max_alignment_length_after_net' ],
-	      -rc_name => '100Mb',
+	      -rc_name => '1Gb',
 	    },
 	    { -logic_name => 'pairaligner_stats',
 	      -module => 'Bio::EnsEMBL::Compara::RunnableDB::PairAligner::PairAlignerStats',
@@ -754,7 +743,7 @@ sub pipeline_analyses {
 			      'compare_beds' => $self->o('compare_beds_exe'),
 			      'create_pair_aligner_page' => $self->o('create_pair_aligner_page_exe'),
 			      'bed_dir' => $self->o('bed_dir'),
-			      'ensembl_release' => $self->o('release'),
+			      'ensembl_release' => $self->o('ensembl_release'),
 			      'reg_conf' => $self->o('reg_conf'),
 			      'output_dir' => $self->o('output_dir'),
 			     },

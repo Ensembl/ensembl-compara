@@ -1,5 +1,5 @@
 #!/usr/bin/env perl
-# Copyright [1999-2014] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+# Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 # 
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -149,7 +149,7 @@ $feature = shift(@ARGV) if (@ARGV and !$feature);
 $extra = shift(@ARGV) if (@ARGV and !$extra);
 
 my $mlss;
-my $dnafrag_adaptor = $compara_dba->get_DnaFragAdaptor if ($compara_dba);
+my $dnafrag_adaptor = $compara_dba ? $compara_dba->get_DnaFragAdaptor : undef;
 my $track_name;
 my $description;
 my $version = $reg->get_adaptor($species_name, "core", "MetaContainer")->get_schema_version();
@@ -243,7 +243,8 @@ foreach my $slice (sort {
         $a->seq_region_name cmp $b->seq_region_name}}
             @$all_slices) {
   # print STDERR $slice->name, "\n";
-  my $name = "chr".$slice->seq_region_name;
+  my $name = $slice->seq_region_name;
+  $name = 'chr'.$name if $slice->is_chromosome;
 
   if (defined($from)) {
     if ($slice->seq_region_name eq $from) {
@@ -547,8 +548,10 @@ sub get_Slices_from_BED_file {
   while (<REGIONS>) {
     next if (/^#/ or /^track/);
     my ($chr, $start0, $end) = split("\t", $_);
-    $chr =~ s/^chr//;
     my $slice = $slice_adaptor->fetch_by_region(undef, $chr, $start0+1, $end);
+    if (!$slice and ($slice =~ m/^chr(.*)/)) {
+        $slice = $slice_adaptor->fetch_by_region(undef, $1, $start0+1, $end);
+    }
     die "Cannot get Slice for $chr - $start0 - $end\n" if (!$slice);
     push(@$slices, $slice);
   }

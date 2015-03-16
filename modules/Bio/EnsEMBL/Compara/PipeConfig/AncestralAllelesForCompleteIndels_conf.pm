@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2014] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -93,7 +93,6 @@ sub default_options {
     my ($self) = @_;
     return {
         %{$self->SUPER::default_options},
-            'ensembl_cvs_root_dir' => $ENV{'HOME'}.'/src/ensembl_main/',    
             'db_version' => 73, #ensembl version (to load core dbs)
 
             'pipeline_name' => 'ancestral_' . $self->o('db_version'),

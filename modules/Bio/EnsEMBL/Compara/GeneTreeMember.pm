@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2014] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -32,7 +32,7 @@ Bio::EnsEMBL::Compara::GeneTreeMember
 =head1 DESCRIPTION
 
 Currently the GeneTreeMember objects are used to represent the leaves of
-the gene trees (whether they contain proteins or non-coding RNas).
+the gene trees (whether they contain proteins or non-coding RNAs).
 
 Each GeneTreeMember object is simultaneously a tree node (inherits from
 GeneTreeNode) and an aligned member (inherits from AlignedMember).

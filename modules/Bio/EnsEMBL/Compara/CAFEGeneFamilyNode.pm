@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2014] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -181,7 +181,7 @@ sub pvalue_lim {
 
 sub is_node_significant {
     my ($self) = @_;
-    return $self->pvalue < $self->pvalue_lim;
+    return (defined $self->pvalue) && ($self->pvalue < $self->pvalue_lim);
 }
 
 =head2 is_expansion

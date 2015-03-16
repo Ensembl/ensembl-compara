@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2014] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -74,7 +74,7 @@ sub store {
   $sth->finish;
 
   if($insertCount>0) {
-    $chunkSet->dbID( $sth->{'mysql_insertid'} );
+    $chunkSet->dbID( $self->dbc->db_handle->last_insert_id(undef, undef, 'dnafrag_chunk_set', 'dnafrag_chunk_set_id') );
   }
 
   return $chunkSet->dbID;
@@ -251,22 +251,15 @@ sub _columns {
 sub _objs_from_sth {
   my ($self, $sth) = @_;
   
-  my %column;
-  $sth->bind_columns( \( @column{ @{$sth->{NAME_lc} } } ));
-
   my @sets = ();
-  my %setNames;
-  my %setDnaFragChunkIds;
 
-  while ($sth->fetch()) {
-    my ($dna_collection_id, $dnafrag_chunk_set_id);
-    $dna_collection_id = $column{'dna_collection_id'};
-    $dnafrag_chunk_set_id = $column{'dnafrag_chunk_set_id'};
+  while( my $row_hashref = $sth->fetchrow_hashref()) {
 
-    my $chunkSet = new Bio::EnsEMBL::Compara::Production::DnaFragChunkSet
-                       -dbid => $dnafrag_chunk_set_id,
-                       -adaptor => $self,
-                       -dna_collection_id => $dna_collection_id;
+    my $chunkSet = Bio::EnsEMBL::Compara::Production::DnaFragChunkSet->new(
+                       -adaptor             => $self,
+                       -dbid                => $row_hashref->{'dnafrag_chunk_set_id'},
+                       -dna_collection_id   => $row_hashref->{'dna_collection_id'},
+    );
 
     push @sets, $chunkSet;
 

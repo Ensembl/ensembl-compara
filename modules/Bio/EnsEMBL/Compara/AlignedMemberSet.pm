@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2014] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -350,8 +350,8 @@ sub load_cigars_from_file {
         : whether the genome_db_id should be added to the sequence names
     Arg [-APPEND_SPECIES_TREE_NODE_ID] (opt) boolean (default: false)
         : whether the reference species_tree_node_id should be added to the sequence names
-    Arg [-KEEP_GAPS] (opt) boolean (default: false)
-        : whether columns that only contain gaps should be kept in the alignment
+    Arg [-REMOVE_GAP_COLUMNS] (opt) boolean (default: false)
+        : whether columns that only contain gaps should be removed from the alignment
     Arg [-SEQ_TYPE] (opt) string
         : which sequence should be used instead of the default one.
         : Can be 'exon_cased' for proteins and ncRNAs, and 'cds' for proteins only
@@ -378,12 +378,12 @@ sub get_SimpleAlign {
     my $append_sp_short_name = 0;
     my $append_genomedb_id = 0;
     my $append_stn_id = 0;
-    my $keep_gaps = 0;
+    my $remove_gaps = 0;
     my $seq_type = undef;
     my $removed_columns = undef;
     if (scalar @args) {
-        ($unique_seqs,  $id_type, $stop2x, $append_taxon_id, $append_sp_short_name, $append_genomedb_id, $append_stn_id, $keep_gaps, $seq_type, $removed_columns) =
-            rearrange([qw(UNIQ_SEQ ID_TYPE STOP2X APPEND_TAXON_ID APPEND_SP_SHORT_NAME APPEND_GENOMEDB_ID APPEND_SPECIES_TREE_NODE_ID KEEP_GAPS SEQ_TYPE REMOVED_COLUMNS)], @args);
+        ($unique_seqs,  $id_type, $stop2x, $append_taxon_id, $append_sp_short_name, $append_genomedb_id, $append_stn_id, $remove_gaps, $seq_type, $removed_columns) =
+            rearrange([qw(UNIQ_SEQ ID_TYPE STOP2X APPEND_TAXON_ID APPEND_SP_SHORT_NAME APPEND_GENOMEDB_ID APPEND_SPECIES_TREE_NODE_ID REMOVE_GAPS SEQ_TYPE REMOVED_COLUMNS)], @args);
     }
 
     die "-SEQ_TYPE cannot be specified if \$self->seq_type is already defined" if $seq_type and $self->seq_type;
@@ -395,27 +395,12 @@ sub get_SimpleAlign {
     #Check to see if the method is called 'addSeq' or 'add_seq'
     my $bio07 = ($sa->can('add_seq') ? 0 : 1);
 
+    $self->_load_all_missing_sequences($seq_type);
+
     my $seq_hash = {};
     foreach my $member (@{$self->get_all_Members}) {
 
         next if $member->source_name =~ m/^Uniprot/i and $seq_type;
-
-        # The correct codon table
-        if ($member->dnafrag_id and $member->dnafrag->name =~ /MT/i) {
-            # codeml icodes
-            # 0:universal code (default)
-            my $class;
-            eval {$class = $member->taxon->classification;};
-            unless ($@) {
-                if ($class =~ /vertebrata/i) {
-                    # 1:mamalian mt
-                    $sa->{_special_codeml_icode} = 1;
-                } else {
-                    # 4:invertebrate mt
-                    $sa->{_special_codeml_icode} = 4;
-                }
-            }
-        }
 
         my $seqstr = $member->alignment_string($seq_type);
         next unless $seqstr;
@@ -442,11 +427,6 @@ sub get_SimpleAlign {
             $seqID .= "_" . $species;
         }
 
-        # Sequence length
-        my $true_seq = $seqstr;
-        $true_seq =~ s/-//g;
-        my $aln_end = length($true_seq);
-
         if ($stop2x) {
             $seqstr =~ s/\*/X/g;
             if ($alphabet eq 'protein') {
@@ -455,11 +435,13 @@ sub get_SimpleAlign {
             }
         }
 
+        my $n_gaps = ($seqstr =~ tr/-/-/);
+
         my $seq = Bio::LocatableSeq->new(
                 -SEQ        => $seqstr,
                 -ALPHABET   => $alphabet,
                 -START      => 1,
-                -END        => $aln_end,
+                -END        => length($seqstr)-$n_gaps,
                 -ID         => $seqID,
                 -STRAND     => 0
         );
@@ -470,7 +452,7 @@ sub get_SimpleAlign {
             $sa->add_seq($seq);
         }
     }
-    $sa = $sa->remove_gaps(undef, 1) if UNIVERSAL::can($sa, 'remove_gaps') and not $keep_gaps;
+    $sa = $sa->remove_gaps(undef, 1) if UNIVERSAL::can($sa, 'remove_gaps') and ($remove_gaps or scalar(@{$self->get_all_Members}) != $sa->num_sequences());
     $sa = $sa->removed_columns(@$removed_columns) if $removed_columns and scalar(@$removed_columns);
     return $sa;
 }

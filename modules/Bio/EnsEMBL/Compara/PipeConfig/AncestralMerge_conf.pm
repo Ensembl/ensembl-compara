@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2014] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -50,17 +50,13 @@ package Bio::EnsEMBL::Compara::PipeConfig::AncestralMerge_conf;
 use strict;
 use warnings;
 
-use base ('Bio::EnsEMBL::Hive::PipeConfig::HiveGeneric_conf');   # instead of Compara tables we actually want Core tables
+use base ('Bio::EnsEMBL::Hive::PipeConfig::EnsemblGeneric_conf');
 
 
 sub default_options {
     my ($self) = @_;
     return {
          %{$self->SUPER::default_options},
-
-            'ensembl_release' => 77,
-        'rel_suffix'        => '',                                                  # empty string by default
-        'rel_with_suffix'   => $self->o('ensembl_release').$self->o('rel_suffix'),  # for convenience
 
         'pipeline_name' => 'ensembl_ancestral_'.$self->o('rel_with_suffix'),        # name used by the beekeeper to prefix job names on the farm
 
@@ -75,7 +71,7 @@ sub default_options {
 
         'merge_script'  => $self->o('ensembl_cvs_root_dir').'/ensembl-compara/scripts/pipeline/copy_ancestral_core.pl',
 
-        'prev_ancestral_db' => 'mysql://ensadmin:' . $self->o('password') . '@ens-livemirror/ensembl_ancestral_76',
+        'prev_ancestral_db' => 'mysql://ensadmin:' . $self->o('password') . '@ens-livemirror/ensembl_ancestral_78',
 
         'reservation_sfx' => '',    # set to '000' for farm2, to '' for farm3 and EBI
     };
@@ -125,13 +121,13 @@ sub pipeline_analyses {
                 'inputlist'         => [        # this table needs to be edited prior to running the pipeline:
                         # copying from previous release:
                                         [ '528' => $self->o('prev_ancestral_db'), ],     # 5 teleost fish
-                                      # [ '548' => $self->o('prev_ancestral_db'), ],     # 6 primates
                                         [ '647' => $self->o('prev_ancestral_db'), ],     # 4 sauropsids
-                                      # [ '654' => $self->o('prev_ancestral_db'), ],     # 16 eutherian mammals
+                                        [ '755' => $self->o('prev_ancestral_db'), ],     # 17 eutherian mammals
+                                        [ '756' => $self->o('prev_ancestral_db'), ],     # 8 primates
 
                         # copying from new sources:
-                     [ '756' => 'mysql://ensadmin:'.$self->o('password').'@compara5/sf5_epo_8primates_ancestral_core_77' ],   # 8-way primates
-                     [ '755' => 'mysql://ensadmin:'.$self->o('password').'@compara4/sf5_epo_17mammals_ancestral_core_77' ],   # 17-way mammals
+                     #[ '756' => 'mysql://ensadmin:'.$self->o('password').'@compara5/sf5_epo_8primates_ancestral_core_77' ],   # 8-way primates
+                     #[ '755' => 'mysql://ensadmin:'.$self->o('password').'@compara4/sf5_epo_17mammals_ancestral_core_77' ],   # 17-way mammals
                 ],
             },
             -flow_into => {

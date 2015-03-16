@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2014] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -970,7 +970,7 @@ sub string_node {
 my %ryo_modes = (
     'member_id' => '%{^-m}:%{d}',
     'member_id_taxon_id' => '%{-m}%{"_"-x}:%{d}',
-    'display_label_composite' => '%{-l"_"}%{n}%{"_"-s}:%{d}',
+    'display_label_composite' => '%{-l,"_"}%{n}%{"_"-s}:%{d}',
     'full_common' => '%{n}%{" "-c.^}%{"."-g}%{"_"-t"_MYA"}:%{d}',
     'gene_stable_id_composite' => '%{-i"_"}%{n}%{"_"-s}:%{d}',
     'gene_stable_id' => '%{-i}:%{d}',
@@ -986,7 +986,7 @@ my %ryo_modes = (
     'phylip' => '%21{n,}:%{d}',
 );
 
-my $nhx0 = '%{n-_|C(taxonomy_level)}:%{d}';
+my $nhx0 = '%{n-,|C(taxonomy_level)}:%{d}';
 my $nhx1 = ':%{-E"D=N"}%{C(_newick_dup_code)-}%{":B="C(bootstrap)}';
 my $nhx2 = ':T=%{-x}%{C(species_tree_node,taxon_id)-}';
 
@@ -997,8 +997,8 @@ my %nhx_ryo_modes_1 = (
     'gene_id' => '%{-i}'.$nhx0,
     'full' => $nhx0,
     'full_web' => $nhx0,
-    'display_label' => '%{-L|i}%{"_"-s}'.$nhx0,
-    'display_label_composite' => '%{-L"_"}%{-i}%{"_"-s}'.$nhx0,
+    'display_label' => '%{-l,|i}%{"_"-s}'.$nhx0,
+    'display_label_composite' => '%{-l,"_"}%{-i}%{"_"-s}'.$nhx0,
     'treebest_ortho' => '%{-m}%{"_"-x}'.$nhx0,
     'simple' => $ryo_modes{'simple'},
     'phylip' => $ryo_modes{'phylip'},

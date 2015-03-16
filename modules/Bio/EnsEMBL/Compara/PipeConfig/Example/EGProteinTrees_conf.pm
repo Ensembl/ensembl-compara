@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2014] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -32,8 +32,6 @@ Bio::EnsEMBL::Compara::PipeConfig::Example::EGProteinTrees_conf
 =head1 SYNOPSIS
 
     #1. update ensembl-hive, ensembl and ensembl-compara GIT repositories before each new release
-
-    #2. you may need to update 'schema_version' in meta table to the current release number in ensembl-hive/sql/tables.sql
 
     #3. make sure that all default_options are set correctly
 
@@ -84,10 +82,11 @@ sub default_options {
 
     # custom pipeline name, in case you don't like the default one
         # Used to prefix the database name (in HiveGeneric_conf)
-        pipeline_name => $self->o('division').'_hom_'.$self->o('eg_release').'_'.$self->o('ensembl_release'),
+        # Define rel_suffix for re-runs of the pipeline
+        pipeline_name => $self->o('division').'_hom_'.$self->o('eg_release').'_'.$self->o('ensembl_release').$self->o('rel_suffix'),
 
-    # dependent parameters: updating 'work_dir' should be enough
-        'work_dir'              =>  '/nfs/nobackup2/ensemblgenomes/'.$self->o('ENV', 'USER').'/compara/ensembl_compara_'.$self->o('pipeline_name'),
+    # dependent parameters: updating 'base_dir' should be enough
+        'base_dir'              =>  '/nfs/nobackup/ensemblgenomes/'.$self->o('ENV', 'USER').'/compara/ensembl_compara_',
         'exe_dir'               =>  '/nfs/panda/ensemblgenomes/production/compara/binaries',
 
     # "Member" parameters:
@@ -104,13 +103,6 @@ sub default_options {
         'tree_dir'                  =>  $self->o('ensembl_cvs_root_dir').'/ensembl_genomes/EGCompara/config/prod/trees/Version'.$self->o('eg_release').'Trees',
         'species_tree_input_file'   =>  $self->o('tree_dir').'/'.$self->o('division').'.peptide.nh',
         # you can define your own species_tree for 'notung'. It *has* to be binary
-
-
-    # homology assignment for polyploid genomes
-        # This parameter is an array of groups of genome_db names / IDs.
-        # Each group represents the components of a polyploid genome
-        # e.g. bread wheat for the "plants" division
-        'homoeologous_genome_dbs'   => $self->o('division') eq 'plants' ? [ [ 'triticum_aestivum_a', 'triticum_aestivum_b', 'triticum_aestivum_d' ] ] : [],
 
     # homology_dnds parameters:
         # used by 'homology_dNdS'

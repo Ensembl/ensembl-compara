@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2014] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -195,6 +195,8 @@ package Bio::EnsEMBL::Compara::AlignSlice;
 
 use strict;
 use warnings;
+
+use Scalar::Util qw(weaken);
 
 use Bio::EnsEMBL::Utils::Argument qw(rearrange);
 use Bio::EnsEMBL::Utils::Exception qw(throw warning info verbose);
@@ -441,14 +443,22 @@ sub get_all_Slices {
   my $slices = [];
 
   if (@species_names) {
+
+    #Substitute _ for spaces & check if the current GenomeDB matches with any of them
+    my %species_to_keep = ();
+    foreach my $this_species_name (@species_names) {
+      ( my $space_species_name = $this_species_name ) =~ s/_/ /g;
+      $species_to_keep{$this_species_name} = 1;
+      $species_to_keep{$space_species_name} = 1;
+    }
+
+    my %removed_species = ();
+    $self->{_removed_species} = \%removed_species;
     foreach my $slice ( @{ $self->{_slices} } ) {
-      #Substitute _ for spaces & check if the current GenomeDB matches with 
-      #or without them
-      foreach my $this_species_name (@species_names) {
-        ( my $space_species_name = $this_species_name ) =~ s/_/ /g;
-        push( @$slices, $slice )
-          if ( ( $this_species_name eq $slice->genome_db->name )
-          || ( $space_species_name eq $slice->genome_db->name ) );
+      if ($species_to_keep{$slice->genome_db->name}) {
+        push @$slices, $slice;
+      } else {
+        $removed_species{$slice->genome_db->name} = 1;
       }
     }
   }
@@ -654,10 +664,13 @@ sub get_SimpleAlign {
     my $seq = Bio::LocatableSeq->new(
             -SEQ    => $slice->seq,
             -START  => $slice->start,
-            -END    => $slice->end,
+            #-END    => $slice->end,
             -ID     => $slice->genome_db->name.($genome_db_name_counter->{$slice->genome_db->name} or ""),
             -STRAND => $slice->strand
         );
+    # Avoid warning in BioPerl about len(seq) != end-start+1
+    $seq->{end} = $slice->end;
+
     ## This allows to have several sequences for the same species. Bio::SimpleAlign complains
     ## about having the same ID, START and END for two sequences...
     if (!defined($genome_db_name_counter->{$slice->genome_db->name})) {
@@ -1238,6 +1251,8 @@ sub _add_GenomicAlign_to_a_Slice {
           $simple_tree =~ s/\_[^\_]+\_\d+\_\d+\[[\+\-]\]//g;
           $simple_tree =~ s/\:[\d\.]+//g;
           $this_core_slice->{_tree} = $simple_tree;
+          $this_core_slice->{_node_in_tree} = $genomic_align_node;
+          weaken($this_core_slice->{_node_in_tree});
           last;
         }
       }

@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2014] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -542,9 +542,11 @@ sub get_SimpleAlign {
 		my $loc_seq = Bio::LocatableSeq->new(
 			-SEQ    => $uc ? uc $alignSeq : lc $alignSeq,
 			-START  => $genomic_align->dnafrag_start,
-			-END    => $genomic_align->dnafrag_end,
+			#-END    => $genomic_align->dnafrag_end,
 			-ID     => $genomic_align->dnafrag->genome_db->name . "/" . $genomic_align->dnafrag->name,
 			-STRAND => $genomic_align->dnafrag_strand);
+                # Avoid warning in BioPerl about len(seq) != end-start+1
+                $loc_seq->{end} = $genomic_align->dnafrag_end;
 
 		if($bio07) { 
 			$sa->addSeq($loc_seq); 

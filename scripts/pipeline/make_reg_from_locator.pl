@@ -1,5 +1,5 @@
 #!/usr/bin/env perl
-# Copyright [1999-2014] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+# Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 # 
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -26,7 +26,8 @@ use Data::Dumper;
 my $usage = " 
 This script will create a registry file from the locator field in the genome_db table of the
  compara db url provided (if assembly_default = 1, then only get current assemblies), or 
- directly from the server for a particular release version.
+ directly from the server for a particular release version. If no_print_ret = 1, you can append 
+ to the file.
 
 $0 -url mysql://user:pass\@server:port/db_name|release_version -assembly_default 1
 
@@ -36,11 +37,12 @@ $0 -url mysql://user:pass\@server:port/77 # get all 77 core dbs from server
 
 ";
 
-my ($help, $url, $assembly_default);
+my ($help, $url, $assembly_default, $no_print_ret);
 
 GetOptions(
  'help'   => \$help,
  'assembly_default=i' => \$assembly_default,    
+ 'no_print_ret=i' => \$no_print_ret, # dont print the 1 return value at the end of the module.
  'url=s' => \$url);
 
 if ($help) {
@@ -124,9 +126,13 @@ sub print_con {
   print "\n######\nnew $con_hash->{'adaptor'} (\n";
   delete($con_hash->{'adaptor'});
   foreach my $key(keys %$con_hash){
-   print " -$key => \"", $con_hash->{$key}, "\",\n";
+   if($con_hash->{$key}){
+    print " -$key => \"", $con_hash->{$key}, "\",\n";
+   }
   }
   print ");\n";
  }
- print "\n1;\n";
+ unless($no_print_ret){
+  print "\n1;\n";
+ }
 }

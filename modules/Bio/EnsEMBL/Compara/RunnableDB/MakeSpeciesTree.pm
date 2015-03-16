@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2014] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -81,15 +81,38 @@ sub fetch_input {
 
         # Let's try to find genome_dbs and ncbi taxa
         my $gdb_a = $self->compara_dba->get_GenomeDBAdaptor;
-        my $ncbi_taxa_a = $self->compara_dba->get_NCBITaxonAdaptor;
-        foreach my $node (reverse @{$species_tree_root->get_all_nodes}) {
-            if ($node->is_leaf) {
-                my $gdb = $gdb_a->fetch_by_name_assembly($node->name) or die $node->name." is not a valid GenomeDB name";
+
+        # We need to build a hash locally because # $gdb_a->fetch_by_name_assembly()
+        # doesn't return non-default assemblies, which can be the case !
+        my %all_genome_dbs = map {(lc $_->name) => $_} (grep {not $_->genome_component} @{$gdb_a->fetch_all});
+
+        # First, we remove the extra species that the tree may contain
+        foreach my $node (@{$species_tree_root->get_all_leaves}) {
+            my $gdb = $all_genome_dbs{lc $node->name};
+            if ((not $gdb) and ($node->name =~ m/^(.*)_([^_]*)$/)) {
+                # Perhaps the node represents the component of a polyploid genome
+                my $pgdb = $all_genome_dbs{lc $1};
+                if ($pgdb) {
+                    die "$1 is not a polyploid genome\n" unless $pgdb->is_polyploid;
+                    $gdb = $pgdb->component_genome_dbs($2) or die "No component named '$2' in '$1'\n";
+                }
+            }
+            if ($gdb) {
                 $node->genome_db_id($gdb->dbID);
                 $node->taxon_id($gdb->taxon_id);
-                $node->node_name($gdb->taxon->name);
+                $node->node_name($gdb->taxon->name . ( $gdb->principal_genome_db ? sprintf(' (component %s)', $gdb->genome_component) : ''));
                 $node->{_tmp_gdb} = $gdb;
             } else {
+                warn $node->name, " not found in the genome_db table";
+                $node->disavow_parent();
+                $species_tree_root = $species_tree_root->minimize_tree;
+            }
+        }
+
+        # Secondly, we can search the LCAs in the NCBI tree
+        my $ncbi_taxa_a = $self->compara_dba->get_NCBITaxonAdaptor;
+        foreach my $node (reverse @{$species_tree_root->get_all_nodes}) {
+            if (not $node->is_leaf) {
                 my $int_taxon = $ncbi_taxa_a->fetch_first_shared_ancestor_indexed(map {$_->{_tmp_gdb}->taxon} @{$node->get_all_leaves});
                 $node->taxon_id($int_taxon->taxon_id);
                 $node->node_name($int_taxon->name) unless $node->name;

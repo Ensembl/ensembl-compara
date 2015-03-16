@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2014] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -52,6 +52,7 @@ package Bio::EnsEMBL::Compara::RunnableDB::LoadMembersFromFiles;
 use strict;
 use warnings;
 
+use Bio::EnsEMBL::Compara::DnaFrag;
 use Bio::EnsEMBL::Compara::SeqMember;
 use Bio::EnsEMBL::Compara::GeneMember;
 
@@ -86,10 +87,7 @@ sub write_output {
       my $cds_coordinates = $self->param('genome_content')->get_cds_coordinates;
       my $taxon_id = $self->param('genome_content')->get_taxonomy_id;
 
-      my %cached_dnafrags;
-      foreach my $dnafrag (@{$compara_dba->get_DnaFragAdaptor()->fetch_all_by_GenomeDB_region($self->param('genome_db'))}) {
-        $cached_dnafrags{$dnafrag->name} = $dnafrag;
-      }
+      my %cached_dnafrags = ();
 
 	my $count = 0;
       foreach my $gene_name (keys %$prot_seq) {
@@ -112,6 +110,9 @@ sub write_output {
 		$gene_member->display_label($sequence->id);
             if (exists $gene_coordinates->{$sequence->id}) {
                 my $coord = $gene_coordinates->{$sequence->id};
+                if (not $cached_dnafrags{$coord->[0]}) {
+                    $cached_dnafrags{$coord->[0]} = Bio::EnsEMBL::Compara::DnaFrag->new(-GENOME_DB => $self->param('genome_db'), -NAME => $coord->[0]);
+                }
                 $gene_member->dnafrag($cached_dnafrags{$coord->[0]});
                 $gene_member->dnafrag_start($coord->[1]);
                 $gene_member->dnafrag_end($coord->[2]);
@@ -134,6 +135,9 @@ sub write_output {
             $pep_member->gene_member_id($gene_member->dbID);
             if (exists $cds_coordinates->{$sequence->id}) {
                 my $coord = $cds_coordinates->{$sequence->id};
+                if (not $cached_dnafrags{$coord->[0]}) {
+                    $cached_dnafrags{$coord->[0]} = Bio::EnsEMBL::Compara::DnaFrag->new(-GENOME_DB => $self->param('genome_db'), -NAME => $coord->[0]);
+                }
                 $pep_member->dnafrag($cached_dnafrags{$coord->[0]});
                 $pep_member->dnafrag_start($coord->[1]);
                 $pep_member->dnafrag_end($coord->[2]);

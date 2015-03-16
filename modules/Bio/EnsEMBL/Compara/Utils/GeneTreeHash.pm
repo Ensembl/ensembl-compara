@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2014] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -145,6 +145,7 @@ sub _convert_node {
 
   my $type  = $node->get_tagvalue('node_type');
   my $boot  = $node->get_tagvalue('bootstrap');
+  my $dcs   = $node->duplication_confidence_score();
   my $tax   = $node->species_tree_node();
 
   $hash->{branch_length} = $node->distance_to_parent() + 0;
@@ -158,8 +159,12 @@ sub _convert_node {
 	$hash->{taxonomy}{timetree_mya} = $taxon->get_tagvalue('ensembl timetree mya') || 0 + 0;
       }
   }
-  if($boot) {
-    $hash->{confidence} = { type => "boostrap", value => $boot + 0 };
+  $hash->{confidence} = {};
+  if ($boot) {
+    $hash->{confidence}{boostrap} = $boot + 0;
+  }
+  if ($dcs) {
+    $hash->{confidence}{duplication_confidence_score} = $dcs + 0;
   }
   if($type) { # && $type ~~ [qw/duplication dubious/]) {
     $hash->{events} = { type => $type };

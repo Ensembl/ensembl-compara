@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2014] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -169,7 +169,7 @@ my $name_cb = sub {
 
 my $distance_to_parent_cb = sub {
   my ($self) = @_;
-  my $dtp = $self->{tree}->distance_to_parent();
+  my $dtp = $self->{tree}->distance_to_parent()+0;
   return "$dtp";
 };
 
@@ -208,6 +208,7 @@ my $node_id_cb = sub {  ## only if we are in a leaf? ... if ($self->{tree}->is_l
 my $label_cb = sub { ## only if we are in a leaf? ... if ($self->{tree}->is_leaf);
   my ($self) = @_;
   my $display_label = $self->{tree}->gene_member->display_label;
+  $display_label =~ s/\;//g;
   return $display_label;
 };
 
@@ -219,6 +220,7 @@ my $label_ext_cb = sub {
         my $display_xref = $self->{tree}->gene_member->get_Gene->display_xref;
         $display_label = $display_xref->display_id if (defined($display_xref));
     }    
+    $display_label =~ s/\;//g if $display_label;
     if (defined($display_label) && $display_label =~ /^\w+$/) {
         return $display_label;
     }
@@ -430,7 +432,7 @@ sub _internal_format_newick {
                     #print Dumper($token);
                     if (exists $token->{modifier}) {
                         if ($token->{modifier} eq 'comma') {
-                            $itemstr =~ s/[,(:)]//g;
+                            $itemstr =~ s/[,(:)+]//g;
                         } elsif ($token->{modifier} eq 'dot') {
                             $itemstr =~ s/\,//g;
                             $itemstr =~ s/\ /\./g;

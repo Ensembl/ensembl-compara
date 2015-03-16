@@ -1,5 +1,5 @@
 #!/usr/bin/env perl
-# Copyright [1999-2014] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+# Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 # 
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -16,7 +16,7 @@
 
 =head1 LICENSE
 
-Copyright [1999-2014] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -99,12 +99,13 @@ my $adaptor = $compara_dba->get_GenomeDBAdaptor;
 foreach my $genome_db (@{$adaptor->fetch_all}) {
     next unless $genome_db->assembly_default;
     next unless $genome_db->db_adaptor;
+    my $meta_container = $genome_db->db_adaptor->get_MetaContainer;
 
-    my $has_karyotype = $genome_db->db_adaptor->has_karyotype;
+    my $has_karyotype = $meta_container->has_karyotype;
     next unless defined $has_karyotype;
     printf("has_karyotype=%d for %s/%s\n", $has_karyotype, $genome_db->name, $genome_db->assembly);
 
-    my $is_high_coverage = $genome_db->db_adaptor->is_high_coverage;
+    my $is_high_coverage = $meta_container->is_high_coverage;
     next unless defined $is_high_coverage;
     printf("is_high_coverage=%d for %s/%s\n", $is_high_coverage, $genome_db->name, $genome_db->assembly);
 

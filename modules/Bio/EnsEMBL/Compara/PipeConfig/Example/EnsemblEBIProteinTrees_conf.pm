@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2014] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -55,6 +55,9 @@ sub default_options {
     return {
         %{$self->SUPER::default_options},   # inherit the generic ones
 
+    # User details
+        'email'                 => $self->o('ENV', 'USER').'@sanger.ac.uk',
+
     # parameters that are likely to change from execution to another:
         # You can add a letter to distinguish this run from other runs on the same release
         'rel_with_suffix'       => $self->o('ensembl_release')."_bp",
@@ -65,7 +68,7 @@ sub default_options {
         'division'              => 'pan',
 
     # dependent parameters: updating 'work_dir' should be enough
-        'work_dir'              => '/nfs/nobackup2/ensembl/'.$self->o('ENV', 'USER').'/protein_trees_'.$self->o('rel_with_suffix'),
+        'work_dir'              => '/panfs/nobackup/production/ensembl/'.$self->o('ENV', 'USER').'/protein_trees_'.$self->o('rel_with_suffix'),
         'exe_dir'               =>  '/nfs/panda/ensemblgenomes/production/compara/binaries',
 
     # "Member" parameters:
@@ -101,6 +104,11 @@ sub default_options {
         'codeml_exe'                => $self->o('exe_dir').'/codeml',
         'ktreedist_exe'             => $self->o('exe_dir').'/ktreedist',
         'blast_bin_dir'             => '/nfs/panda/ensemblgenomes/external/ncbi-blast-2+/bin/',
+        'raxml_pthreads_exe'        => 'UNDEF',
+        'examl_exe_avx'             => 'UNDEF',
+        'examl_exe_sse3'            => 'UNDEF',
+        'parse_examl_exe'           => 'UNDEF',
+        'hmmer3_home'               => 'UNDEF',
 
         # The following ones are currently installed by TreeFam, but should
         # also be under /nfs/panda/ensemblgenomes/external/
@@ -132,6 +140,7 @@ sub default_options {
         'prottest_capacity'         => 200,
         'treebest_capacity'         => 400,
         'raxml_capacity'            => 200,
+        'examl_capacity'            => 400,
         'notung_capacity'           => 200,
         'ortho_tree_capacity'       => 250,
         'ortho_tree_annot_capacity' => 300,

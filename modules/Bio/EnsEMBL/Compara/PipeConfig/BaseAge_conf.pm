@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2014] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -51,11 +51,8 @@ sub default_options {
     my ($self) = @_;
     return {
         %{$self->SUPER::default_options},
-            'ensembl_cvs_root_dir' => $ENV{'ENSEMBL_CVS_ROOT_DIR'}, 
 
             'ref_species' => 'homo_sapiens',
-            'release_suffix'=> '', # set it to '' for the actual release
-            'rel_with_suffix'       => $self->o('ensembl_release').$self->o('release_suffix'),
             'pipeline_name' => $self->o('ref_species').'_base_age_'.$self->o('rel_with_suffix'), # name used by the beekeeper to prefix job names on the farm
 
             #Write either the node name or node_id in "name" field of the bed file

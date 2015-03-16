@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2014] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -359,13 +359,19 @@ sub preload {
         $self->{'_root'} = $gtn_adaptor->fetch_tree_by_root_id($self->{'_root_id'});
         delete $gtn_adaptor->{'_ref_tree'};
     }
+    $self->clear;
+
+    my $all_nodes = $self->root->get_all_nodes;
 
     # Loads all the tags in one go
-    $self->adaptor->db->get_GeneTreeNodeAdaptor->_load_tagvalues_multiple( $self->root->get_all_nodes );
+    $self->adaptor->db->get_GeneTreeNodeAdaptor->_load_tagvalues_multiple( $all_nodes );
 
     # For retro-compatibility, we need to fill in taxon_id and taxon_name
     my %cache_stns = ();
-    foreach my $node (@{$self->root->get_all_nodes}) {
+    foreach my $node (@$all_nodes) {
+        if ($node->is_leaf) {
+            $self->SUPER::add_Member($node) if UNIVERSAL::isa($node, 'Bio::EnsEMBL::Compara::GeneTreeMember');
+        }
         next unless $node->has_tag('species_tree_node_id');
         my $stn_id = $node->get_value_for_tag('species_tree_node_id');
         if (exists $cache_stns{$stn_id}) {
@@ -378,7 +384,7 @@ sub preload {
     }
 
     # Loads all the gene members in one go
-    $self->adaptor->db->get_GeneMemberAdaptor->load_all_from_seq_members( [grep {UNIVERSAL::isa($_, 'Bio::EnsEMBL::Compara::GeneTreeMember')} @{$self->root->get_all_leaves}] );
+    $self->adaptor->db->get_GeneMemberAdaptor->load_all_from_seq_members( $self->get_all_Members );
     $self->{_preloaded} = 1;
 }
 
@@ -448,12 +454,12 @@ sub alternative_trees {
         foreach my $t (@$other_trees) {
             $hash_trees->{$t->clusterset_id} = $t;
         }
-        $self->{_alternative_trees} = \%{$hash_trees};
+        $self->{_alternative_trees} = { %$hash_trees };
         # And for every other tree
         $hash_trees->{$self->clusterset_id} = $self;
         foreach my $t (@$other_trees) {
             delete $hash_trees->{$t->clusterset_id};
-            $t->{_alternative_trees} = \%{$hash_trees};
+            $t->{_alternative_trees} = { %$hash_trees };
             $hash_trees->{$t->clusterset_id} = $t;
         }
     }
@@ -509,6 +515,22 @@ sub expand_subtrees {
 }
 
 
+=head2 minimize_tree
+
+  Example     : $tree->minimize_tree();
+  Description : Minimizes the tree, i.e. removes the nodes that have a single child
+  Returntype  : None
+  Exceptions  : none
+  Caller      : general
+
+=cut
+
+sub minimize_tree {
+    my $self = shift;
+    $self->{'_root'} = $self->{'_root'}->minimize_tree;
+}
+
+
 #######################
 # MemberSet interface #
 #######################
@@ -554,12 +576,7 @@ sub get_all_Members {
     my ($self) = @_;
 
     unless (defined $self->{'_member_array'}) {
-
-        $self->{'_member_array'} = [];
-        $self->{'_members_by_source'} = {};
-        $self->{'_members_by_source_taxon'} = {};
-        $self->{'_members_by_source_genome_db'} = {};
-        $self->{'_members_by_genome_db'} = {};
+        $self->clear;
         foreach my $leaf (@{$self->root->get_all_leaves}) {
             $self->SUPER::add_Member($leaf) if UNIVERSAL::isa($leaf, 'Bio::EnsEMBL::Compara::GeneTreeMember');
         }

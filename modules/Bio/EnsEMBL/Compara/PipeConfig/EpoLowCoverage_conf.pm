@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2014] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -29,41 +29,39 @@ sub default_options {
     return {
 	%{$self->SUPER::default_options},   # inherit the generic ones
 
-        'ensembl_cvs_root_dir' => $ENV{'ENSEMBL_CVS_ROOT_DIR'},
-
-	'release'       => 77,
-	'prev_release'  => 76,
-        'release_suffix'=> '', # set it to '' for the actual release
-        'rel_with_suffix'       => $self->o('release').$self->o('release_suffix'),
-        'pipeline_name' => 'TestEPO_low_'.$self->o('release').$self->o('release_suffix'), # name used by the beekeeper to prefix job names on the farm
+	'rel_suffix'	=> 80,
+	'prev_release'  => 78,
+        'pipeline_name' => 'EPO_low_'.$self->o('ensembl_release').$self->o('rel_suffix'), # name used by the beekeeper to prefix job names on the farm
 
 	#location of new pairwise mlss if not in the pairwise_default_location eg:
 	'pairwise_exception_location' => { },
-	#'pairwise_exception_location' => { 649 => 'mysql://ensro@compara5/kb3_olat_amex_lastz_74', 
-		#			653 => 'mysql://ensro@compara5/kb3_olat_locu_lastz_74',},
-        'host' => 'compara5',
+	#'pairwise_exception_location' => { 765 => 'mysql://ensro@compara5/mp14_hsap_rnor_lastz_80', 
+	#								   766 => 'mysql://ensro@compara5/mp14_mmus_rnor_lastz_80',},
+        'host' => 'compara4',
         'pipeline_db' => {
             -host   => $self->o('host'),
             -port   => 3306,
             -user   => 'ensadmin',
             -pass   => $self->o('password'),
-            -dbname => $ENV{USER}.'_TestEPO_low_'.$self->o('release').$self->o('release_suffix'),
+            -dbname => $ENV{USER}.'_EPO_low_'.$self->o('rel_suffix'),
 	    -driver => 'mysql',
         },
 
 	#Location of compara db containing most pairwise mlss ie previous compara
 	'live_compara_db' => {
-            -host   => 'ens-livemirror',
+		#	-host   => 'ens-livemirror',
+            -host   => 'compara4',
             -port   => 3306,
             -user   => 'ensro',
             -pass   => '',
-	    -dbname => 'ensembl_compara_76',
-#	    -dbname => 'ensembl_compara_' . $self->o('prev_release'),
+		#	-dbname => 'ensembl_compara_76',
+		#-dbname => 'ensembl_compara_' . $self->o('prev_release'),
+	    -dbname => 'mp14_ensembl_compara_78',
 	    -driver => 'mysql',
         },
 
 	#Location of compara db containing the high coverage alignments
-	'epo_db' => 'mysql://ensro@compara4:3306/sf5_epo_17mammals_77',
+	'epo_db' => 'mysql://ensro@compara4:3306/mp14_epo_17mammals_80',
 
 	master_db => { 
             -host   => 'compara1',
@@ -80,14 +78,14 @@ sub default_options {
             -port   => 3306,
             -user   => 'ensro',
             -pass   => '',
-	    -db_version => $self->o('release'),
+	    -db_version => $self->o('ensembl_release'),
         },
         'staging_loc2' => {
             -host   => 'ens-staging2',
             -port   => 3306,
             -user   => 'ensro',
             -pass   => '',
-	    -db_version => $self->o('release'),
+	    -db_version => $self->o('ensembl_release'),
         },  
 	'livemirror_loc' => {
             -host   => 'ens-livemirror',
@@ -96,6 +94,21 @@ sub default_options {
             -pass   => '',
 	    -db_version => $self->o('prev_release'),
         },
+
+		'additional_core_db_urls' => { },
+
+		#If we declare things like this, it will FAIL!
+		#We should include the locator on the master_db
+		#'additional_core_db_urls' => {
+			#-host => 'compara1',
+			#-user => 'ensro',
+			#-port => 3306,
+            #-pass   => '',
+			#-species => 'rattus_norvegicus',
+			#-group => 'core',
+			#-dbname => 'mm14_db8_rat6_ref',
+	    	#-db_version => 76,
+		#},
 
 	'low_epo_mlss_id' => $self->o('low_epo_mlss_id'),   #mlss_id for low coverage epo alignment
 	'high_epo_mlss_id' => $self->o('high_epo_mlss_id'), #mlss_id for high coverage epo alignment
@@ -215,9 +228,9 @@ sub pipeline_analyses {
 		-parameters => {
 				'low_epo_mlss_id' => $self->o('low_epo_mlss_id'),
 				'sql'   => [
-					    'ALTER TABLE genomic_align_block AUTO_INCREMENT=#expr(($low_epo_mlss_id * 10**10) + 1)expr#',
-					    'ALTER TABLE genomic_align AUTO_INCREMENT=#expr(($low_epo_mlss_id * 10**10) + 1)expr#',
-					    'ALTER TABLE genomic_align_tree AUTO_INCREMENT=#expr(($low_epo_mlss_id * 10**10) + 1)expr#',
+					    'ALTER TABLE genomic_align_block AUTO_INCREMENT=#expr((#low_epo_mlss_id# * 10**10) + 1)expr#',
+					    'ALTER TABLE genomic_align AUTO_INCREMENT=#expr((#low_epo_mlss_id# * 10**10) + 1)expr#',
+					    'ALTER TABLE genomic_align_tree AUTO_INCREMENT=#expr((#low_epo_mlss_id# * 10**10) + 1)expr#',
 					   ],
 			       },
 		-flow_into => {
@@ -247,7 +260,7 @@ sub pipeline_analyses {
 	    {   -logic_name => 'load_genomedb',
 		-module     => 'Bio::EnsEMBL::Compara::RunnableDB::LoadOneGenomeDB',
 		-parameters => {
-				'registry_dbs'  => [ $self->o('staging_loc1'), $self->o('staging_loc2'), $self->o('livemirror_loc')],
+			'registry_dbs'  => [ $self->o('staging_loc1'), $self->o('staging_loc2'), $self->o('livemirror_loc')],
 			       },
 		-hive_capacity => 1,    # they are all short jobs, no point doing them in parallel
 		-rc_name => '100Mb',
@@ -462,7 +475,7 @@ sub pipeline_analyses {
 			      'dump_features' => $self->o('dump_features_exe'),
 			      'compare_beds' => $self->o('compare_beds_exe'),
 			      'bed_dir' => $self->o('bed_dir'),
-			      'ensembl_release' => $self->o('release'),
+			      'ensembl_release' => $self->o('ensembl_release'),
 			      'output_dir' => $self->o('output_dir'),
                               'mlss_id'   => $self->o('low_epo_mlss_id'),
 			     },

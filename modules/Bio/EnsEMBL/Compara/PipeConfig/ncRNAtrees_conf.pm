@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2014] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -67,7 +67,6 @@ sub default_options {
             #'email'                 => 'john.smith@example.com',
 
             # dependent parameters ('work_dir' should be defined)
-            'rel_with_suffix'       => '',
             'pipeline_basename'     => 'NC',
             'pipeline_name'         => $self->o('pipeline_basename'),
             'dump_dir'              => $self->o('work_dir') . '/dumps',
@@ -267,9 +266,17 @@ sub pipeline_analyses {
                 mode            => 'members_per_genome',
                 allow_ambiguity_codes => $self->o('allow_ambiguity_codes'),
             },
+            -flow_into  => [ 'per_genome_qc' ],
             %hc_params,
         },
 
+        {   -logic_name => 'per_genome_qc',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::PerGenomeGroupsetQC',
+            -parameters => {
+                'mlss_id'   => $self->o('mlss_id'),
+            },
+            -rc_name    => '4Gb_job',
+        },
 
         {   -logic_name => 'load_genomedb_funnel',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::SqlCmd',
@@ -401,7 +408,7 @@ sub pipeline_analyses {
                                },
                 -rc_name       => 'default',
                 -flow_into     => {
-                                   '2->A' => [ $self->o('skip_epo') ? 'clusterset_backup' : 'recover_epo' ],
+                                   '2->A' => ['clusterset_backup'],
                                    'A->1' => [ 'hc_tree_final_checks' ],
                                   },
                 -meadow_type   => 'LOCAL',
@@ -440,15 +447,36 @@ sub pipeline_analyses {
                 'db_cmd'            => $self->db_cmd(),
                 'cmd'               => '#db_cmd# < #stnt_sql_script#',
             },
-            -flow_into      => [ 'email_tree_stats_report' ],
+            -flow_into      => [ 'email_tree_stats_report', 'write_member_counts' ],
         },
 
         {   -logic_name     => 'email_tree_stats_report',
             -module         => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::HTMLReport',
             -parameters     => {
                 'email' => $self->o('email'),
+                'mlss_id' => $self->o('mlss_id'),
             },
         },
+
+        {   -logic_name     => 'write_member_counts',
+            -module         => 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
+            -parameters     => {
+                'member_count_sql'  => $self->o('ensembl_cvs_root_dir').'/ensembl-compara/scripts/production/populate_member_production_counts_table.sql',
+                'db_cmd'            => $self->db_cmd(),
+                'cmd'               => '#db_cmd# < #member_count_sql#',
+            },
+        },
+
+            {   -logic_name    => 'clusterset_backup',
+                -module        => 'Bio::EnsEMBL::Hive::RunnableDB::SqlCmd',
+                -parameters    => {
+                                   'sql'         => 'INSERT INTO gene_tree_backup (seq_member_id, root_id) SELECT seq_member_id, root_id FROM gene_tree_node WHERE seq_member_id IS NOT NULL AND root_id = #gene_tree_id#',
+                                  },
+                -analysis_capacity => 1,
+                -flow_into      => [ $self->o('skip_epo') ? 'msa_chooser' : 'recover_epo' ],
+                -meadow_type    => 'LOCAL',
+            },
+
 
             {   -logic_name    => 'recover_epo',
                 -module        => 'Bio::EnsEMBL::Compara::RunnableDB::ncRNAtrees::NCRecoverEPO',
@@ -466,18 +494,8 @@ sub pipeline_analyses {
                -parameters        => {
                                       mode => 'epo_removed_members',
                                      },
-               -flow_into         => [ 'clusterset_backup' ],
+               -flow_into         => [ 'msa_chooser' ],
                %hc_params,
-            },
-
-            {   -logic_name    => 'clusterset_backup',
-                -module        => 'Bio::EnsEMBL::Hive::RunnableDB::SqlCmd',
-                -parameters    => {
-                                   'sql'         => 'INSERT INTO gene_tree_backup (seq_member_id, root_id) SELECT seq_member_id, root_id FROM gene_tree_node WHERE seq_member_id IS NOT NULL AND root_id = #gene_tree_id#',
-                                  },
-                -analysis_capacity => 1,
-                -flow_into     => [ 'msa_chooser' ],
-                -meadow_type    => 'LOCAL',
             },
 
             {   -logic_name    => 'msa_chooser',

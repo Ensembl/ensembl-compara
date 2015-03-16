@@ -1,4 +1,4 @@
-1	\N	schema_version	78
+1	\N	schema_version	79
 2	\N	patch	patch_55_56_a.sql|schema_version
 3	\N	patch	patch_55_56_b.sql|add_index_names
 4	\N	patch	patch_55_56_c.sql|drop_oligo_tables_and_xrefs
@@ -163,3 +163,5 @@
 862	\N	patch	patch_76_77_a.sql|schema_version
 863	\N	patch	patch_77_78_a.sql|schema_version
 864	\N	patch	patch_77_78_b.sql|source_column_increase
+865	\N	patch	patch_77_78_c.sql|Change unmapped_reason_id from smallint to int
+866	\N	patch	patch_78_79_a.sql|schema_version

@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2014] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -49,58 +49,6 @@ use warnings;
 
 # We pretend that all the methods are directly accessible on DBAdaptor
 package Bio::EnsEMBL::DBSQL::DBAdaptor;
-
-
-=head2 has_karyotype
-
-  Arg [1]    : Bio::EnsEMBL::DBSQL::DBAdaptor
-  Example    : my $has_karyotype = $genome_db->db_adaptor->has_karyotype;
-  Description: Tests whether a karyotype is defined for this species
-  Returntype : boolean
-
-=cut
-
-sub has_karyotype {
-    my $core_dba = shift;
-
-    return undef unless $core_dba;
-    return undef unless $core_dba->group eq 'core';
-
-    my $count = scalar(@{$core_dba->get_SliceAdaptor->fetch_all_karyotype()});
-
-    return $count ? 1 : 0;
-}
-
-
-=head2 is_high_coverage
-
-  Arg [1]    : Bio::EnsEMBL::DBSQL::DBAdaptor
-  Example    : my $is_high_coverage = $genome_db->db_adaptor->is_high_coverage;
-  Description: Tests whether the species has a high coverage genome
-  Returntype : boolean
-  Exceptions : if the information from the meta table cannot be interpreted
-
-=cut
-
-sub is_high_coverage {
-    my $core_dba = shift;
-
-    return undef unless $core_dba;
-    return undef unless $core_dba->group eq 'core';
-
-    my $coverage_depth = lc $core_dba->get_MetaContainer()->single_value_by_key('assembly.coverage_depth', 1);
-
-    if ($coverage_depth eq 'high') {
-        return 1;
-    } elsif (($coverage_depth eq 'low') or ($coverage_depth eq 'medium')) {
-        return 0;
-    } elsif ($coverage_depth =~ /^([0-9]+)x$/) {
-        return $1<6 ? 0 : 1;
-    } else {
-        warn "Cannot interpret '$coverage_depth' as 'assembly.coverage_depth' for '".($core_dba->dbc->dbname)."'. Assuming the species is low-coverage.\n";
-        return 0;
-    }
-}
 
 
 =head2 assembly_name
@@ -155,24 +103,5 @@ sub locator {
     );
 }
 
-
-=head2 component_names
-
-  Arg [1]    : Bio::EnsEMBL::DBSQL::DBAdaptor
-  Example    : my $component_names = $genome_db->db_adaptor->component_names;
-  Description: Returns the list of all the genome-component names (for polyploid genomes)
-  Returntype : arrayref of string
-
-=cut
-
-sub component_names {
-    my $core_dba = shift;
-
-    return undef unless $core_dba;
-
-    my $sql = 'SELECT DISTINCT value FROM seq_region_attrib JOIN attrib_type USING (attrib_type_id) WHERE code = "genome_component"';
-    my $names = $core_dba->dbc->db_handle->selectall_arrayref($sql);
-    return [map {$_->[0]} @$names];
-}
 
 1;

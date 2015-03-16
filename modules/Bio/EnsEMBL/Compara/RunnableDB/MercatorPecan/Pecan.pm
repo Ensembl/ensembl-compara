@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2014] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -231,8 +231,6 @@ sub _write_output {
   my $mlss = $mlssa->fetch_by_dbID($self->param('mlss_id'));
   my $gaba = $self->compara_dba->get_GenomicAlignBlockAdaptor;
   my $gaa = $self->compara_dba->get_GenomicAlignAdaptor;
-
-  my $gaga = $self->compara_dba->get_GenomicAlignGroupAdaptor;
 
   foreach my $gab (@{$self->param('runnable')->output}) {
       foreach my $ga (@{$gab->genomic_align_array}) {

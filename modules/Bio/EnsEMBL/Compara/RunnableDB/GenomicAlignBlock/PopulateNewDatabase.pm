@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2014] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -95,6 +95,7 @@ sub run
   $cmd .= " --mlss " . $self->param('mlss_id') if ($self->param('mlss_id'));
   $cmd .= " --reg-conf " . $self->param('reg_conf') if ($self->param('reg_conf'));
   $cmd .= " --collection " . $self->param('collection') if ($self->param('collection'));
+  $cmd .= " --old " . $self->param('old_compara_db') if ($self->param('old_compara_db'));
 
   if($self->debug()) {
       warn qq{cmd = "$cmd"\n};

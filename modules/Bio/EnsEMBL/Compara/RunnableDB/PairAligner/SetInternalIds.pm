@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2014] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -125,7 +125,7 @@ sub setInternalIds {
 	throw ("Unable to find method_link_species_set_id");
     }
 
-    my $gdbs = $dba->get_GeneomeDBAdaptor->fetch_all();
+    my $gdbs = $dba->get_GenomeDBAdaptor->fetch_all();
     if (scalar(@$gdbs) > 2) {
         $self->warning('The AUTO_INCREMENT method does not work for collections. IDs will be restored later by "set_internal_ids_collection".');
         return;

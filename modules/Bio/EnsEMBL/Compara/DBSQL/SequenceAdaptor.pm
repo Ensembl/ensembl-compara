@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2014] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -69,7 +69,7 @@ sub fetch_by_dbIDs {
   my ($self, $sequence_ids, $batch_size) = @_;
 
   #Fetch in batches of batch_size
-  my $sequences;
+  my $sequences = [];
   $batch_size = 1000 unless (defined $batch_size);
 
   #Get sequences from database in batches of $batch_size. Store in a hash based on sequence_id rather than an array
@@ -140,6 +140,17 @@ sub fetch_other_sequence_by_member_id_type {
   return $seq;
 }
 
+sub fetch_other_sequences_by_member_ids_type {
+  my ($self, $seq_member_ids, $type) = @_;
+
+  return {} unless scalar(@$seq_member_ids);
+  my $ids_in_str = join(',', @$seq_member_ids);
+  my $sql = "SELECT seq_member_id, sequence FROM other_member_sequence WHERE seq_member_id IN ($ids_in_str) AND seq_type = ?";
+  my $res = $self->dbc->db_handle->selectall_arrayref($sql, undef, $type);
+  my %seqs = (map {$_->[0] => $_->[1]} @$res);
+  return \%seqs;
+}
+
 
 #
 # STORE METHODS
@@ -173,7 +184,7 @@ sub store {
 
     my $sth2 = $self->prepare("INSERT INTO sequence (sequence, length) VALUES (?,?)");
     $sth2->execute($sequence, $length);
-    $seqID = $sth2->{'mysql_insertid'};
+    $seqID = $self->dbc->db_handle->last_insert_id(undef, undef, 'sequence', 'sequence_id');
     $sth2->finish;
   }
 

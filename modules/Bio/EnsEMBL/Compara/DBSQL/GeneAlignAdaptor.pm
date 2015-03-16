@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2014] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -140,7 +140,7 @@ sub store {
     } else {
         my $sth = $self->prepare('INSERT INTO gene_align (seq_type, aln_length, aln_method) VALUES (?,?,?)');
         $sth->execute($aln->seq_type, $aln->aln_length, $aln->aln_method);
-        $id = $sth->{'mysql_insertid'};
+        $id = $self->dbc->db_handle->last_insert_id(undef, undef, 'gene_align', 'gene_align_id');
 
         if ($aln->isa('Bio::EnsEMBL::Compara::GeneTree')) {
             $aln->gene_align_id($id);

@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2014] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -267,6 +267,63 @@ sub _write_species_tree_node {
   $w->dataElement('id', $stn->taxon_id) if $stn->taxon_id;
   $w->dataElement('scientific_name', $stn->node_name);
   $w->endTag();
+  return;
+}
+
+# NB: this methods relies on parameters that *must* be defined in self:
+#     no_sequences(), cdna(), and is_aligned()
+sub _write_seq_member {
+  my ($self, $protein) = @_;
+
+  my $w = $self->_writer();
+
+  my $gene = $protein->gene_member();
+  my $taxon = $protein->taxon();
+
+  #Stable IDs
+  $w->dataElement('name', $gene->stable_id());
+
+  #Taxon
+  $self->_write_taxonomy($taxon->taxon_id(), $taxon->name());
+
+  #Dealing with Sequence
+  $w->startTag('sequence');
+  $w->startTag('accession', 'source' => $self->source());
+  $w->characters($protein->stable_id());
+  $w->endTag();
+  $w->dataElement('name', $protein->display_label()) if $protein->display_label();
+  my $location = sprintf('%s:%d-%d',$gene->dnafrag()->name(), $gene->dnafrag_start(), $gene->dnafrag_end());
+  $w->dataElement('location', $location);
+
+  if(!$self->no_sequences()) {
+    my $mol_seq;
+    if($self->aligned()) {
+      $mol_seq = ($self->cdna()) ? $protein->alignment_string('cds') : $protein->alignment_string();
+    }
+    else {
+      $mol_seq = ($self->cdna()) ? $protein->other_sequence('cds') : $protein->sequence();
+    }
+
+    $w->dataElement('mol_seq', $mol_seq, 'is_aligned' => ($self->aligned() || 0));
+  }
+
+  $w->endTag('sequence');
+
+  #Adding GenomeDB
+  $w->dataElement('property', $protein->genome_db()->name(),
+    'datatype' => 'xsd:string',
+    'ref' => 'Compara:genome_db_name',
+    'applies_to' => 'clade'
+  );
+
+  if (not $protein->isa('Bio::EnsEMBL::Compara::GeneTreeMember')) {
+      $w->dataElement('property', $protein->perc_id,
+          'datatype' => 'xsd:float',
+          'ref' => 'Compara_homology:perc_identity',
+          'applies_to' => 'clade',
+      );
+  }
+
   return;
 }
 

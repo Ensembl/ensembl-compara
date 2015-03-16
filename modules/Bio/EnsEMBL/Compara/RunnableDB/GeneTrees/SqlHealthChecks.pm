@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2014] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -119,7 +119,7 @@ my $config = {
             },
             {
                 description => 'Peptides should have CDS sequences (which are made of only ACGTN). Ambiguity codes have to be explicitely switched on.',
-                query => 'SELECT mp.seq_member_id FROM seq_member mp LEFT JOIN other_member_sequence oms ON mp.seq_member_id = oms.seq_member_id AND oms.seq_type = "cds" WHERE genome_db_id = #genome_db_id# AND source_name LIKE "%PEP" AND (sequence IS NULL OR LENGTH(sequence) = 0 OR (sequence REGEXP "[^ACGTN]" AND NOT #allow_ambiguity_codes#) OR (sequence REGEXP "[^ACGTNKMRSWY]"))',
+                query => 'SELECT mp.seq_member_id FROM seq_member mp LEFT JOIN other_member_sequence oms ON mp.seq_member_id = oms.seq_member_id AND oms.seq_type = "cds" WHERE genome_db_id = #genome_db_id# AND source_name LIKE "%PEP" AND (sequence IS NULL OR LENGTH(sequence) = 0 OR (sequence REGEXP "[^ACGTN]" AND NOT #allow_ambiguity_codes#) OR (sequence REGEXP "[^ACGTNKMRSWYVHDB]"))',
             },
             {
                 description => 'The protein sequences should not be only ACGTN (unless 5aa-long, for an immunoglobulin gene)',
@@ -205,6 +205,10 @@ my $config = {
                 query => 'SELECT DISTINCT hgenome_db_id FROM peptide_align_feature_#genome_db_id#',
                 expected_size => '= #species_count#',
             },
+            {
+                description => 'Each target member must be associated to a single target species',
+                query => 'SELECT hmember_id FROM peptide_align_feature_#genome_db_id# GROUP BY hmember_id HAVING COUNT(DISTINCT hgenome_db_id) > 1',
+            }
         ],
     },
 
@@ -234,7 +238,7 @@ my $config = {
             },
             {
                 description => 'Checks that the alignment has not lost any genes since the backup',
-                query => 'SELECT gene_tree_backup.seq_member_id FROM gene_tree_backup JOIN gene_tree_root USING (root_id) LEFT JOIN gene_align_member USING (gene_align_id, seq_member_id) WHERE root_id = #gene_tree_id# AND gene_align_member.seq_member_id IS NULL',
+                query => 'SELECT gene_tree_backup.seq_member_id FROM gene_tree_backup JOIN gene_tree_root USING (root_id) LEFT JOIN gene_align_member USING (gene_align_id, seq_member_id) WHERE root_id = #gene_tree_id# AND gene_align_member.seq_member_id IS NULL AND is_removed = 0',
             },
             {
                 description => 'Checks that the alignment has not gained any genes since the backup',
@@ -316,11 +320,6 @@ my $config = {
                 description => 'Checks that the seq_member_id column of the homology_member table only links to canonical peptides',
                 query => 'SELECT * FROM homology JOIN homology_member hm USING (homology_id) JOIN gene_member gm USING (gene_member_id) WHERE gene_tree_root_id = #gene_tree_id# AND gm.canonical_member_id != hm.seq_member_id',
             },
-            {
-                description => 'Checks that the members involved in one2one orthologies are not involved in any other orthologies',
-                query => 'SELECT method_link_species_set_id, hm.gene_member_id FROM homology h JOIN homology_member hm USING (homology_id) WHERE gene_tree_root_id = #gene_tree_id# GROUP BY method_link_species_set_id, hm.gene_member_id HAVING COUNT(*)>1 AND GROUP_CONCAT(h.description) LIKE "%one2one%"',
-            },
-
         ],
     },
 
@@ -373,11 +372,11 @@ my $config = {
     #########################
 
     homology_dnds => {
-        params => [ 'mlss_id' ],
+        params => [ 'homo_mlss_id' ],
         tests => [
             {
                 description => 'In the homology table, each method_link_species_set_id should have some entries with values of "n" and "s"',
-                query => 'SELECT * FROM homology WHERE method_link_species_set_id = #mlss_id# AND n IS NOT NULL AND s IS NOT NULL',
+                query => 'SELECT * FROM homology WHERE method_link_species_set_id = #homo_mlss_id# AND n IS NOT NULL AND s IS NOT NULL',
                 expected_size => '> 0',
             },
         ],

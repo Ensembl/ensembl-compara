@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2014] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -232,7 +232,8 @@ sub dispatch_tag {
 sub dispatch_body {
   my ($self, $node) = @_;
   if(check_ref($node, 'Bio::EnsEMBL::Compara::GeneTreeMember')) {
-    $self->_member_body($node);
+    $self->_node_body($node , 1); #Used to defer taxonomy writing
+    $self->_write_seq_member($node);
     return;
   }
   elsif(check_ref($node, 'Bio::EnsEMBL::Compara::GeneTreeNode')) {
@@ -261,20 +262,27 @@ sub _node_body {
   my ($self, $node, $defer_taxonomy) = @_;
 
   my $type  = $node->node_type();
+  my $is_dup = ((defined $type) and ($type eq "duplication" || $type eq "dubious")) ? 1 : 0;
   my $boot  = $node->bootstrap();
   my $stn   = $node->species_tree_node();
 
   my $w = $self->_writer();
 
+  # The elements must be in the same order as in the .xsd !!
+
   if($boot) {
     $w->dataElement('confidence', $boot, 'type' => 'bootstrap');
+  }
+
+  if ($is_dup) {
+    $w->dataElement('confidence', $node->duplication_confidence_score(), 'type' => 'duplication_confidence_score');
   }
 
   if(!$defer_taxonomy && $stn) {
     $self->_write_species_tree_node($stn);
   }
 
-  if((defined $type) and ($type eq "duplication" || $type eq "dubious")) {
+  if ($is_dup) {
     $w->startTag('events');
     $w->dataElement('type', 'speciation_or_duplication');
     $w->dataElement('duplications', 1);
@@ -295,54 +303,6 @@ sub _node_body {
 sub _member_tag {
   my ($self, $node) = @_;
   return $self->_node_tag($node);
-}
-
-sub _member_body {
-  my ($self, $protein) = @_;
-
-  my $w = $self->_writer();
-  $self->_node_body($protein , 1); #Used to defer taxonomy writing
-
-  my $gene = $protein->gene_member();
-  my $taxon = $protein->taxon();
-
-  #Stable IDs
-  $w->dataElement('name', $gene->stable_id());
-
-  #Taxon
-  $self->_write_taxonomy($taxon->taxon_id(), $taxon->name());
-
-  #Dealing with Sequence
-  $w->startTag('sequence');
-  $w->startTag('accession', 'source' => $self->source());
-  $w->characters($protein->stable_id());
-  $w->endTag();
-  $w->dataElement('name', $protein->display_label()) if $protein->display_label();
-  my $location = sprintf('%s:%d-%d',$gene->dnafrag()->name(), $gene->dnafrag_start(), $gene->dnafrag_end());
-  $w->dataElement('location', $location);
-
-  if(!$self->no_sequences()) {
-    my $mol_seq;
-    if($self->aligned()) {
-      $mol_seq = ($self->cdna()) ? $protein->alignment_string('cds') : $protein->alignment_string();
-    }
-    else {
-      $mol_seq = ($self->cdna()) ? $protein->other_sequence('cds') : $protein->sequence();
-    }
-
-    $w->dataElement('mol_seq', $mol_seq, 'is_aligned' => ($self->aligned() || 0));
-  }
-
-  $w->endTag('sequence');
-
-  #Adding GenomeDB
-  $w->dataElement('property', $protein->genome_db()->name(),
-    'datatype' => 'xsd:string',
-    'ref' => 'Compara:genome_db_name',
-    'applies_to' => 'clade'
-  );
-
-  return;
 }
 
 sub tree_type {

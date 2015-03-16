@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2014] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -42,12 +42,12 @@ sub default_options {
 
         'host'            => 'compara1',    # where the pipeline database will be created
 
-        'pipeline_name'   => 'homology_projections_'.$self->o('ensembl_release').'b',   # also used to differentiate submitted processes
+        'pipeline_name'   => 'homology_projections_'.$self->o('rel_with_suffix'),   # also used to differentiate submitted processes
 
         # URLs of other databases (from which we inherit the members and sequences, and base objects)
         'master_db'       => 'mysql://ensro@compara1/sf5_ensembl_compara_master',
-        'family_db'       => 'mysql://ensro@compara2/lg4_families_78',
-        'ncrnatrees_db'   => 'mysql://ensro@compara3/mp12_compara_nctrees_78a',
+        'family_db'       => 'mysql://ensro@compara2/lg4_families_79',
+        'ncrnatrees_db'   => 'mysql://ensro@compara3/mm14_compara_nctrees_79b',
 
         # Tables to copy and merge
         'tables_from_master'    => [ 'method_link', 'species_set', 'method_link_species_set', 'ncbi_taxa_node', 'ncbi_taxa_name' ],

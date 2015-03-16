@@ -1,5 +1,5 @@
 #!/usr/bin/env perl
-# Copyright [1999-2014] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+# Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 # 
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -75,7 +75,7 @@ sub get_interpro_alignment {
   my ($peptide_member, $start, $end) = @_;
 
   ## Trim the tree and leave only proteins of interest (human, mouse, rat, dog, fruitfly)
-  my $tree = $gene_tree_adaptor->fetch_default_for_Member($peptide_member)->root;
+  my $tree = $gene_tree_adaptor->fetch_default_for_Member($peptide_member);
   foreach my $this_leaf (@{$tree->get_all_leaves}) {
     if ($this_leaf->genome_db->name ne "homo_sapiens" and
         $this_leaf->genome_db->name ne "mus_musculus" and
@@ -85,7 +85,7 @@ sub get_interpro_alignment {
       ## This unlinks the leave
       $this_leaf->disavow_parent();
       ## This simplifies the tree (removes resulting nodes with 1 child only)
-      $tree = $tree->minimize_tree();
+      $tree->minimize_tree();
     }
   }
   $tree->print_tree(50);

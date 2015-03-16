@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2014] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -64,16 +64,15 @@ sub default_options {
             # User details
             'email'                 => $self->o('ENV', 'USER').'@sanger.ac.uk',
 
-            'mlss_id'          => 40098,
+            'mlss_id'          => 40100,
             # Found automatically if the Core API is in PERL5LIB
             #'ensembl_release'          => '76',
-            'rel_suffix'       => 'a',
+            'rel_suffix'       => 'b',
             'work_dir'         => '/lustre/scratch110/ensembl/' .
                                $self->o('ENV', 'USER') .
                                '/nc_trees_' .
                                $self->o('rel_with_suffix'),
 
-            'rel_with_suffix'  => $self->o('ensembl_release').$self->o('rel_suffix'),
             'pipeline_name'    => $self->o('pipeline_basename') . '_' . $self->o('rel_with_suffix'),
 
 
@@ -160,11 +159,11 @@ sub default_options {
                            },
 
             'epo_db' => {   # ideally, the current release database with epo pipeline results already loaded
-                         -host   => 'compara5',
+                         -host   => 'compara4',
                          -port   => 3306,
                          -user   => 'ensro',
                          -pass   => '',
-                         -dbname => 'sf5_epoLc_39mammals_77',
+                         -dbname => 'mp14_ensembl_compara_78',
                         },
 
 

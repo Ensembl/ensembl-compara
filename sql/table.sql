@@ -1,4 +1,4 @@
--- Copyright [1999-2014] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+-- Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 -- 
 -- Licensed under the Apache License, Version 2.0 (the "License");
 -- you may not use this file except in compliance with the License.
@@ -139,6 +139,7 @@ CREATE TABLE ncbi_taxa_name (
 @column genebuild         Version of the genebuild
 @column has_karyotype     Whether the genome has a karyotype
 @column is_high_coverage  Whether the assembly coverage depth is high enough
+@column genome_component  Only used for polyploid genomes: the name of the genome component
 @column locator           Used for production purposes or for user configuration in in-house installation.
 
 */
@@ -152,12 +153,13 @@ CREATE TABLE genome_db (
   genebuild                   varchar(100) DEFAULT '' NOT NULL,
   has_karyotype			tinyint(1) NOT NULL DEFAULT 0,
   is_high_coverage            tinyint(1) NOT NULL DEFAULT 0,
+  genome_component            varchar(5) DEFAULT NULL,
   locator                     varchar(400),
 
   FOREIGN KEY (taxon_id) REFERENCES ncbi_taxa_node(taxon_id),
 
   PRIMARY KEY (genome_db_id),
-  UNIQUE name (name,assembly,genebuild)
+  UNIQUE name (name,assembly,genebuild,genome_component)
 
 ) COLLATE=latin1_swedish_ci ENGINE=MyISAM;
 
@@ -521,7 +523,7 @@ CREATE TABLE dnafrag_region (
 @column perc_id                      Used for pairwise comparison. Defines the percentage of identity between both sequences
 @column length                       Total length of the alignment
 @column group_id                     Used to group alignments
-@column level_id                     Level of orhologous layer. 1 corresponds to the first layer of orthologous sequences found, 2 and over are addiotional layers. Use for building the syntenies (based on level_id = 1 only)
+@column level_id                     Level of orthologous layer. 1 corresponds to the principal layer of orthologous sequences found (the largest), 2 and over are additional layers. Use for building the syntenies (based on level_id = 1 only). Note that level_ids are not computed on whole chromosomes but rather on chunks. This means that level_ids can be inconsistent within an alignment-net.
 
 @see method_link_species_set
 @see genomic_align_tree
@@ -988,9 +990,9 @@ CREATE TABLE other_member_sequence (
 @colour   #1E90FF
 
 @example    Example of peptide_align_feature entry:
-     @sql                              SELECT * FROM peptide_align_feature_91 WHERE peptide_align_feature_id = 9100000001;
+     @sql                              SELECT * FROM peptide_align_feature_150 WHERE hgenome_db_id = 111 LIMIT 1;
 @example    The following query corresponds to a particular hit found between a Homo sapiens protein and a Anolis carolinensis protein:
-     @sql                              SELECT g1.name as qgenome, m1.stable_id as qstable_id, g2.name as hgenome, m2.stable_id as hstable_id, score, evalue FROM peptide_align_feature_91 LEFT JOIN seq_member m1 ON (qmember_id = m1.seq_member_id) LEFT JOIN seq_member m2 ON (hmember_id = m2.seq_member_id) LEFT JOIN genome_db g1 ON (qgenome_db_id = g1.genome_db_id) LEFT JOIN genome_db g2 ON (hgenome_db_id = g2.genome_db_id) WHERE peptide_align_feature_id = 9100000001;
+     @sql                              SELECT g1.name as qgenome, m1.stable_id as qstable_id, g2.name as hgenome, m2.stable_id as hstable_id, score, evalue FROM peptide_align_feature_150 JOIN seq_member m1 ON (qmember_id = m1.seq_member_id) JOIN seq_member m2 ON (hmember_id = m2.seq_member_id) JOIN genome_db g1 ON (qgenome_db_id = g1.genome_db_id) JOIN genome_db g2 ON (hgenome_db_id = g2.genome_db_id) WHERE hgenome_db_id = 111 LIMIT 1;
 
 
 @column peptide_align_feature_id  Internal unique ID
@@ -1403,6 +1405,20 @@ CREATE TABLE hmm_annot (
 ) COLLATE=latin1_swedish_ci ENGINE=MyISAM;
 
 
+
+/**
+@table hmm_curated_annot
+@desc  This table stores the curated / forced HMM annotation of the seq_members
+@colour   #1E90FF
+
+@column seq_member_stable_id  External reference to a seq_member_id in the @link seq_member table
+@column model_id              External reference to the internal numeric ID of a HMM profile in @link hmm_profile
+@column library_version       Name of the HMM library against the curation has been done
+@column annot_date            When did the curation happened
+@column reason                Why are we forcing this curation
+
+*/
+
 CREATE TABLE hmm_curated_annot (
   seq_member_stable_id       varchar(40) NOT NULL,
   model_id                   varchar(40) DEFAULT NULL,
@@ -1428,11 +1444,11 @@ CREATE TABLE hmm_curated_annot (
 @column method_link_species_set_id     External reference to method_link_species_set_id in the @link method_link_species_set table
 @column description                    A normalized, short description of the homology relationship
 @column is_tree_compliant              Whether the homology is fully compliant with the tree and the definition of orthology / paralogy
-@column dn                             The dn score
-@column ds                             The ds score
-@column n
-@column s
-@column lnl
+@column dn                             The non-synonymous mutation rate
+@column ds                             The synonymous mutation rate
+@column n                              The estimated number of non-synonymous mutations
+@column s                              The estimated number of synonymous mutations
+@column lnl                            The negative log likelihood of the estimation
 @column species_tree_node_id           The node_id of the species-tree node to which the homology is attached
 @column gene_tree_node_id              The node_id of the gene-tree node from which the homology is derived
 @column gene_tree_root_id              The root_id of the gene tree from which the homology is derived
@@ -1666,6 +1682,13 @@ CREATE TABLE mapping_session (
 @table stable_id_history
 @desc  This table keeps the history of stable_id changes from one release to another. The primary key 'object' describes a set of members migrating from stable_id_from to stable_id_to. Their volume (related to the 'shared_size' of the new class) is reflected by the fractional 'contribution' field. Since both stable_ids are listed in the primary key, they are not allowed to be NULLs. We shall treat empty strings as NULLs. If stable_id_from is empty, it means these members are newcomers into the new release. If stable_id_to is empty, it means these previously known members are disappearing in the new release. If both neither stable_id_from nor stable_id_to is empty, these members are truly migrating.
 @colour   #1E90FF
+
+@column mapping_session_id    Reference to mapping_session.mapping_session_id. All the stable_ids of a given mapping should have the same session_id
+@column stable_id_from        The previous stable ID
+@column version_from          The version number of the previous stable ID (specific to each stable ID; not to be confused with the release number)
+@column stable_id_to          The new stable ID
+@column version_to            The new version number
+@column contribution          Percentage of of the new object (tree / family) that comes from the previous one
 */
 
 CREATE TABLE stable_id_history (
@@ -1745,16 +1768,14 @@ CREATE TABLE `CAFE_species_gene` (
 
 # Auto add schema version to database (this will override whatever hive puts there)
 DELETE FROM meta WHERE meta_key='schema_version';
-INSERT INTO meta (species_id, meta_key, meta_value) VALUES (NULL, 'schema_version', '78');
+INSERT INTO meta (species_id, meta_key, meta_value) VALUES (NULL, 'schema_version', '79');
 
 #Add schema type
 INSERT INTO meta (species_id, meta_key, meta_value) VALUES (NULL, 'schema_type', 'compara');
 
 # Patch identifier
 INSERT INTO meta (species_id, meta_key, meta_value)
-  VALUES (NULL, 'patch', 'patch_77_78_a.sql|schema_version');
+  VALUES (NULL, 'patch', 'patch_78_79_a.sql|schema_version');
 INSERT INTO meta (species_id, meta_key, meta_value)
-  VALUES (NULL, 'patch', 'patch_77_78_b.sql|null_paf_genome_db_ids');
-INSERT INTO meta (species_id, meta_key, meta_value)
-  VALUES (NULL, 'patch', 'patch_77_78_c.sql|hmm_tables');
+  VALUES (NULL, 'patch', 'patch_78_79_b.sql|genome_component');
 

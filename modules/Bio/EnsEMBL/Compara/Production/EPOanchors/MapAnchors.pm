@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2014] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -116,6 +116,12 @@ while(my $mapping = <$exo_fh>){
 		push(@{$hits->{$anchor_name}{$targ_info}}, [ $targ_from, $targ_to, $targ_strand, $score, $anc_org ]);
 		$target2dnafrag->{$targ_info}++;
 	}
+
+	if (!$hits) {
+		$self->warning("Exonerate didn't find any hits");
+		return;
+	}
+
 	foreach my $target_info (sort keys %{$target2dnafrag}) {
 		my($coord_sys, $dnafrag_name) = (split(":", $target_info))[0,2];
 		$target2dnafrag->{$target_info} = $anchor_align_adaptor->fetch_dnafrag_id(

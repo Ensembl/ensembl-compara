@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2014] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -26,8 +26,6 @@ Bio::EnsEMBL::Compara::PipeConfig::Example::WormProteinTrees_conf
 =head1 SYNOPSIS
 
     #1. update ensembl-hive, ensembl and ensembl-compara GIT repositories before each new release
-
-    #2. you may need to update 'schema_version' in meta table to the current release number in ensembl-hive/sql/tables.sql
 
     #3. make sure that all default_options are set correctly
 
@@ -61,7 +59,6 @@ sub default_options {
 
     # parameters that are likely to change from execution to another:
 #       'mlss_id'               => 10,   # it is very important to check that this value is current (commented out to make it obligatory to specify)
-#       'release'               => '63', # the ensembl release number
 
         'rel_suffix'            => 'WS' . $self->o('ENV', 'WORMBASE_RELEASE'),    # this WormBase Build
         'work_dir'              => '/lustre/scratch101/ensembl/wormpipe/tmp/'.$self->o('ENV', 'USER').'/protein_trees_'.$self->o('rel_with_suffix'),

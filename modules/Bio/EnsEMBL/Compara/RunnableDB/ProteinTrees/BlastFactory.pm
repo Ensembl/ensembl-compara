@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2014] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -68,7 +68,8 @@ sub fetch_input {
 
     my $species_set_id = $self->param('species_set_id');
     my $target_genome_dbs = $species_set_id ? $self->compara_dba->get_SpeciesSetAdaptor->fetch_by_dbID($species_set_id)->genome_dbs : $self->compara_dba->get_GenomeDBAdaptor->fetch_all;
-    $self->param('target_genome_dbs', $target_genome_dbs);
+    # Polyploids have no genes, and hence no blastp database
+    $self->param('target_genome_dbs', [grep {not $_->is_polyploid} @$target_genome_dbs]);
 
     my $all_canonical = $self->compara_dba->get_SeqMemberAdaptor->fetch_all_canonical_by_GenomeDB($genome_db_id);
     $self->param('query_members', $all_canonical);

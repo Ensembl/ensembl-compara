@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2014] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -70,40 +70,41 @@ use strict;
 
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
+sub param_defaults {
+    return {
+        'methods'       => {
+            'ENSEMBL_PARALOGUES'    => 2,
+            'ENSEMBL_ORTHOLOGUES'   => 2,
+            'ENSEMBL_HOMOEOLOGUES'  => 2,
+        },
+    }
+}
 
 sub fetch_input {
     my $self = shift @_;
 
-    my $species_set       = $self->param_required('species_set');
-    my $mlss_adaptor = $self->compara_dba->get_MethodLinkSpeciesSetAdaptor;
+    my $species_set     = $self->param_required('species_set');
 
-    my @mlss_ids = ();
     while (my $genome_db_id1 = shift @{$species_set}) {
-        push @mlss_ids, $mlss_adaptor->fetch_by_method_link_type_genome_db_ids('ENSEMBL_PARALOGUES', [$genome_db_id1])->dbID;
+        $self->make_dataflow_if_needed('ENSEMBL_PARALOGUES', [$genome_db_id1]);
 
-        my $mlss = $mlss_adaptor->fetch_by_method_link_type_genome_db_ids('ENSEMBL_HOMOEOLOGUES', [$genome_db_id1]);
-        push @mlss_ids, $mlss->dbID if defined $mlss;
+        if ($self->compara_dba->get_GenomeDBAdaptor->fetch_by_dbID($genome_db_id1)->is_polyploid) {
+            $self->make_dataflow_if_needed('ENSEMBL_HOMOEOLOGUES', [$genome_db_id1]);
+        }
         
         foreach my $genome_db_id2 (@{$species_set}) {
-            push @mlss_ids, $mlss_adaptor->fetch_by_method_link_type_genome_db_ids('ENSEMBL_ORTHOLOGUES', [$genome_db_id1, $genome_db_id2])->dbID;
-
-            $mlss = $mlss_adaptor->fetch_by_method_link_type_genome_db_ids('ENSEMBL_HOMOEOLOGUES', [$genome_db_id1, $genome_db_id2]);
-            push @mlss_ids, $mlss->dbID if defined $mlss;
+            $self->make_dataflow_if_needed('ENSEMBL_ORTHOLOGUES', [$genome_db_id1, $genome_db_id2]);
         }
     }
-
-    $self->param('inputlist', \@mlss_ids);
 }
 
+sub make_dataflow_if_needed {
+    my ($self, $method, $genome_db_ids) = @_;
+    return unless $self->param('methods')->{$method};
 
-sub write_output {
-    my $self = shift @_;
-
-    my $inputlist  = $self->param('inputlist');
-
-    while (@$inputlist) {
-        $self->dataflow_output_id( { 'mlss_id' => shift @$inputlist }, 2);
-    }
+    my $mlss_adaptor = $self->compara_dba->get_MethodLinkSpeciesSetAdaptor;
+    my $mlss = $mlss_adaptor->fetch_by_method_link_type_genome_db_ids($method, $genome_db_ids);
+    $self->dataflow_output_id( { 'homo_mlss_id' => $mlss->dbID }, $self->param('methods')->{$method});
 }
 
 1;

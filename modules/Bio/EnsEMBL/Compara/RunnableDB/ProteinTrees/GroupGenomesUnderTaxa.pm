@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2014] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -62,6 +62,7 @@ sub fetch_input {
     my %selected_gdb_ids = ();
 
     foreach my $genome_db (@$genome_dbs) {
+        next if $genome_db->genome_component;
         if($filter_high_coverage) {
             if ($genome_db->is_high_coverage) {
                 $selected_gdb_ids{$genome_db->dbID} = 1;
