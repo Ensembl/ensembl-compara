@@ -1055,7 +1055,7 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
       }).end();
     }
 
-    this.elLk.selector.css({ left: coords.l, top: coords.t, width: coords.r - coords.l + 1, height: coords.b - coords.t + 1 }).show();
+    this.elLk.selector.css({ left: coords.l, top: coords.t, width: coords.r - coords.l + 1, height: coords.b - coords.t - 1 }).show();
   },
 
   updateExportMenu: function(coords, speciesNumber, imageNumber) {
