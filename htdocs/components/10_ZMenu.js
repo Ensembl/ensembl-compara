@@ -35,6 +35,8 @@ Ensembl.Panel.ZMenu = Ensembl.Panel.extend({
     this.event      = data.event;
     this.coords     = data.coords || {};
     this.imageId    = data.imageId;
+    this.onclose    = data.onclose; // to be triggered when the zmenu is closed
+    this.context    = data.context; // context to call the 'onclose' on (defaults to the zmenu panel itself)
     this.relatedEl  = data.relatedEl;
     this.areaCoords = $.extend({}, data.area);
     this.location   = 0;
@@ -101,6 +103,9 @@ Ensembl.Panel.ZMenu = Ensembl.Panel.extend({
     
     $('.close', this.el).on('click', function () { 
       panel.hide();
+      if (panel.onclose) {
+        panel.onclose.call(panel.context || panel);
+      }
     });
     
     // The location parameter that is due to be changed has its value replaced with %s
