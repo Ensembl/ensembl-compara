@@ -151,7 +151,7 @@ sub write_output {
 
 sub _write_shared_ss {
     my ($self, $name, $gdbs) = @_;
-    my $ss = $self->_write_ss($gdbs);
+    my $ss = $self->_write_ss($gdbs, 1);
     $self->db->get_PipelineWideParametersAdaptor->store( {'param_name' => $name.'_ss_id', 'param_value' => $ss->dbID} );
     $self->db->get_PipelineWideParametersAdaptor->store( {'param_name' => $name.'_ss_csv', 'param_value' => join(',', -1, map {$_->dbID} @$gdbs)} );
     return $ss;
@@ -173,12 +173,14 @@ sub _write_all_pairs {
 # Write the species-set of the given genome_dbs
 # Try to reuse the data from the reference db if possible
 sub _write_ss {
-    my ($self, $genome_dbs) = @_;
+    my ($self, $genome_dbs, $is_local_ss) = @_;
 
     my $ss;
     if ($self->param('reference_dba')) {
         $ss = $self->param('reference_dba')->get_SpeciesSetAdaptor->fetch_by_GenomeDBs($genome_dbs);
-        $ss or die sprintf("The %s species-set could not be found in the master database\n", join('/', map {$_->name} @$genome_dbs));
+        if ((not $is_local_ss) and (not $ss)) {
+            die sprintf("The %s species-set could not be found in the master database\n", join('/', map {$_->name} @$genome_dbs));
+        }
     }
     unless ($ss) {
         $ss = Bio::EnsEMBL::Compara::SpeciesSet->new( -genome_dbs => $genome_dbs );
