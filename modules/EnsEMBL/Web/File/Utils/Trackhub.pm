@@ -30,11 +30,19 @@ use EnsEMBL::Bio::ExternalData::DataHub::SourceParser;
 use EnsEMBL::Web::File::Utils::URL qw(read_file);
 use EnsEMBL::Web::Tree;
 
-## Force refresh of hub files
+### Because the Sanger web proxy caches hub files aggressively,
+### users cannot easily refresh a trackhub that has changed.
+### Thus we need to work around this by forcing no caching in the proxy
+### and instead caching the files in memcached for a sensible period
+
+### Headers to send to proxy
 our $headers = {
                 'Cache-Control'     => 'no-cache',
                 'If-Modified-Since' => 'Thu, 1 Jan 1970 00:00:00 GMT',
                 };
+
+### Memcached refresh period
+our $cache_timeout = 60*60*24*7;
 
 sub new {
 ### c
@@ -153,7 +161,7 @@ sub get_hub {
   else {
     my $hub_info = { details => \%hub_info, genomes => \%genome_info };
     if ($cache) {
-      $cache->set($cache_key, $hub_info, 60*60*24*7, 'TRACKHUBS');
+      $cache->set($cache_key, $hub_info, $cache_timeout, 'TRACKHUBS');
     }
     return $hub_info;
   }
@@ -210,7 +218,7 @@ sub get_track_info {
   ## Update cache
   if ($hub_info) {
     $hub_info->{'tree'} = $tree;
-    $cache->set($cache_key, $hub_info, 60*60*24*7, 'TRACKHUBS');
+    $cache->set($cache_key, $hub_info, $cache_timeout, 'TRACKHUBS');
   }
   
   return $tree;
