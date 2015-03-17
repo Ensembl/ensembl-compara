@@ -1015,6 +1015,7 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
         $(document).off('.selectbox');
       }).on('mousedown', {panel: this}, function(e) {
         e.stopPropagation();
+        e.preventDefault();
 
         $(document).on('mousemove.selectbox', {
           action  : e.target !== e.currentTarget ? e.target.className.match(/left/) ? 'left' : 'right' : 'move',
