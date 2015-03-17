@@ -82,6 +82,7 @@ sub get_hub {
 ### Fetch metadata about the hub and (optionally) its tracks
 ### @param parse_tracks Boolean (optional)               
   my ($self, $parse_tracks) = @_;
+  warn "!!! GETTING HUB FROM ".$self->url;
 
   ## First check the cache
   my $cache = $self->web_hub ? $self->web_hub->cache : undef;
@@ -107,8 +108,10 @@ sub get_hub {
   else {
     $content = $response->{'content'};
   }
+  warn ">>> HUB.TXT $content";
 
   my $hub_info = $parser->get_hub_info($content);
+  use Data::Dumper; warn Dumper($hub_info);
 
   return { error => ['No genomesFile found'] } unless $hub_info->{'genomesFile'}; 
  
