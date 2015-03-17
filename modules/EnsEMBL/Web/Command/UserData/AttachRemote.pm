@@ -22,7 +22,7 @@ use strict;
 
 use Digest::MD5 qw(md5_hex);
 
-use Bio::EnsEMBL::ExternalData::AttachedFormat;
+use EnsEMBL::Web::File::AttachedFormat;
 use EnsEMBL::Web::File::Utils::URL qw(chase_redirects);
 
 use base qw(EnsEMBL::Web::Command);
@@ -69,14 +69,14 @@ sub process {
   }
 
   if ($url) {
-    my $format_package = 'Bio::EnsEMBL::ExternalData::AttachedFormat::' . uc $format_name;
+    my $format_package = 'EnsEMBL::Web::File::AttachedFormat::' . uc $format_name;
     my $trackline      = $self->hub->param('trackline');
     my $format;
     
     if ($self->dynamic_use($format_package)) {
       $format = $format_package->new($self->hub, $format_name, $url, $trackline);
     } else {
-      $format = Bio::EnsEMBL::ExternalData::AttachedFormat->new($self->hub, $format_name, $url, $trackline);
+      $format = EnsEMBL::Web::File::AttachedFormat->new($self->hub, $format_name, $url, $trackline);
     }
    
     ## For datahubs, pass assembly info so we can check if there's suitable data
