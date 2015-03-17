@@ -69,7 +69,7 @@ sub get_hub_info {
     if ($line[0] eq 'genomesFile' && $line[1] !~ /^[http|ftp]/) {
       $line[1] = $self->{'base_url'}.'/'.$line[1];
     }
-    $hub_info{$line[0]} = $line[1];
+    $hub_info->{$line[0]} = $line[1];
   }
   return $hub_info;
 }
@@ -101,7 +101,7 @@ sub get_genome_info {
       if ($k =~ /trackDb|htmlPath/ && $v !~ /^[http|ftp]/) {
         $v = $self->{'base_url'}.'/'.$v;
       }
-      $genome_info{$genome}{$k} = $v;
+      $genome_info->{$genome}{$k} = $v;
     }
   }
 
