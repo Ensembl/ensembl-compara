@@ -806,8 +806,8 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
       this.elLk.boundariesPanning = $('<div class="boundaries_panning">')
         .appendTo(this.elLk.boundaries.parent())
         .append(this.elLk.boundaries.clone())
-        .css({ left: this.labelRight, right: 4 })
-        .find('ul').find('li').css('marginLeft', -1 * this.labelRight)
+        .css({ left: this.dragRegion.l, width: this.dragRegion.r - this.dragRegion.l })
+        .find('ul').find('li').css('marginLeft', -1 * this.dragRegion.l)
         .end().helptip({delay: 500, position: { at: 'center', of: this.el }});
     }
 
