@@ -1009,7 +1009,8 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
     }
 
     if (!this.elLk.selector || !this.elLk.selector.length) {
-      this.elLk.selector = $('<div class="_selector selector"><div class="left-border"></div><div class="right-border"></div></div>').insertAfter(this.elLk.img).on('click', function(e) {
+      this.elLk.selector = $('<div class="_selector selector"></div>').insertAfter(this.elLk.img).toggleClass('vertical', this.vertical).filter(':not(.vertical)')
+      .append('<div class="left-border"></div><div class="right-border"></div>').on('click', function(e) {
         e.stopPropagation();
         $(document).off('.selectbox');
       }).on('mousedown', {panel: this}, function(e) {
@@ -1050,8 +1051,8 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
 
         }).on('mouseup.selectbox click.selectbox', function(e) {
           $(this).off('.selectbox');
-        });
-      });
+        })
+      }).end();
     }
 
     this.elLk.selector.css({ left: coords.l, top: coords.t, width: coords.r - coords.l + 1, height: coords.b - coords.t + 1 }).show();
