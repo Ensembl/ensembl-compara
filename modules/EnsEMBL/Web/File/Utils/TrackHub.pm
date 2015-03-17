@@ -50,7 +50,7 @@ sub new {
 
   ## TODO - replace with Bio::EnsEMBL::IO version when it's ready
   unless ($args{'parser'}) {
-    $args{'parser'} = Bio::EnsEMBL::ExternalData::DataHub::SourceParser->new('url' => $args{$url});
+    $args{'parser'} = Bio::EnsEMBL::ExternalData::DataHub::SourceParser->new('url' => $args{'url'});
   }
 
   my $self = \%args;
@@ -90,11 +90,11 @@ sub get_hub {
   ## First check the cache
   my $cache = $self->web_hub ? $self->web_hub->cache : undef;
   my $cache_key = 'trackhub_'.md5_hex($self->url);
-  my $hub_info;
+  my $trackhub;
 
   if ($cache) {
-    $hub_info = $cache->get($cache_key);
-    return $hub_info if $hub_info;
+    $trackhub = $cache->get($cache_key);
+    return $trackhub if $trackhub;
   }
 
   ## Prepare to parse!
@@ -103,7 +103,7 @@ sub get_hub {
 
   ## First read the hub.txt file and get the hub's metadata
   my $response = read_file($parser->hub_file_path, $file_args);
-  my $content;
+  my ($content, @errors);
  
   if ($response->{'error'}) {
     return $response;
@@ -127,13 +127,13 @@ sub get_hub {
     $content = $response->{'content'};
   }
 
-  my %genome_info = $parser->get_genome_info($content, $args->{'assembly_lookup'});
+  my $genome_info = $parser->get_genome_info($content, $args->{'assembly_lookup'});
 
-  if (keys %genome_info) {
+  if (keys %$genome_info) {
     ## Only get track information if it's requested, as there can
     ## be thousands of the darned things!
     if ($args->{'parse_tracks'}) {
-      while (my($genome, $info) = each (%genome_info)) {
+      while (my($genome, $info) = each (%$genome_info)) {
  
         my $tree = EnsEMBL::Web::Tree->new;
         my $file = $info->{'trackDb'};
@@ -165,11 +165,11 @@ sub get_hub {
     return { error => \@errors };
   }
   else {
-    my $hub_info = { details => \%hub_info, genomes => \%genome_info };
+    my $trackhub = { details => $hub_info, genomes => $genome_info };
     if ($cache) {
-      $cache->set($cache_key, $hub_info, $cache_timeout, 'TRACKHUBS');
+      $cache->set($cache_key, $trackhub, $cache_timeout, 'TRACKHUBS');
     }
-    return $hub_info;
+    return $trackhub;
   }
 }
 
@@ -179,28 +179,26 @@ sub get_track_info {
 ### @return tree EnsEMBL::Web::Tree
   my ($self, $args) = @_;
 
+  my $tree = $args->{'tree'};
   return $tree unless ($args->{'genome'} || $args->{'content'});
  
-  unless ($args->{'check_cache'} eq 'no') {
+  my $url       = $self->url;
+  my $cache_key = 'trackhub_'.md5_hex($url);
+  my $cache     = $self->web_hub ? $self->web_hub->cache : undef;
+  my $trackhub;
+
+  if ($cache && (!$args->{'check_cache'} || $args->{'check_cache'} ne 'no')) {
     ## Get the hub URL and check the cache 
-    my $url = shift || $self->url;
     if (!$url) {
       warn 'No URL specified!';
       return;
     }
 
-    my $cache = $self->web_hub ? $self->web_hub->cache : undef;
-    my $cache_key = 'trackhub_'.md5_hex($url);
-    my $hub_info;
-
-    if ($cache) {
-      $hub_info = $cache->get($cache_key);
-      return $hub_info->{'genomes'}{$args->{'genome'}}{'tree'} if $hub_info;
-    }
+    $trackhub = $cache->get($cache_key);
+    return $trackhub->{'genomes'}{$args->{'genome'}}{'tree'} if $trackhub;
   }
   
   my $parser  = $self->parser;
-  my $tree    = $args->{'tree'};
   my $response;
 
   ## Parse the file content
@@ -212,7 +210,7 @@ sub get_track_info {
       return $tree->append($tree->create_node(
                                         'error_missing_parent', 
                                         {'error' => "Parent track $_->{'parent'} is missing", 
-                                         'file' => $file }
+                                         'file'  => $args->{'file'} }
                                       ));
     }
   }
@@ -222,9 +220,12 @@ sub get_track_info {
   $self->sort_tree($tree);
 
   ## Update cache
-  if ($hub_info) {
-    $hub_info->{'tree'} = $tree;
-    $cache->set($cache_key, $hub_info, $cache_timeout, 'TRACKHUBS');
+  if ($cache) {
+    $trackhub = $cache->get($cache_key);
+    if ($trackhub) {
+      $trackhub->{'genomes'}{$args->{'genome'}}{'tree'} = $tree;
+      $cache->set($cache_key, $trackhub, $cache_timeout, 'TRACKHUBS');
+    }
   }
   
   return $tree;
