@@ -60,7 +60,7 @@ sub get_hub_info {
 ### @param data String - file contents
 ### @return Hashref
   my ($self, $data) = @_;
-  my $hub_info;
+  my $hub_info = {};
 
   foreach (split /\n/, $data) {
     $_ =~ s/\s+$//;
@@ -80,7 +80,8 @@ sub get_genome_info {
 ### @param assembly_lookup Hashref (optional) - assemblies to include
 ### @return Hashref
   my ($self, $data, $assembly_lookup) = @_;
-  my ($genome_info, $genome);
+  my $genome_info = {};
+  my $genome;
 
   (my $genome_file = $data) =~ s/\r//g;
 
