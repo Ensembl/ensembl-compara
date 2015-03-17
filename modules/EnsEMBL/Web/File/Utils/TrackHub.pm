@@ -85,7 +85,6 @@ sub get_hub {
 ###                     - assembly_lookup Hashref
 ### @return Hashref               
   my ($self, $args) = @_;
-  warn "!!! GETTING HUB FROM ".$self->url;
 
   ## First check the cache
   my $cache = $self->web_hub ? $self->web_hub->cache : undef;
@@ -111,10 +110,8 @@ sub get_hub {
   else {
     $content = $response->{'content'};
   }
-  warn ">>> HUB.TXT $content";
 
   my $hub_info = $parser->get_hub_info($content);
-  use Data::Dumper; warn Dumper($hub_info);
 
   return { error => ['No genomesFile found'] } unless $hub_info->{'genomesFile'}; 
  
@@ -136,24 +133,29 @@ sub get_hub {
       while (my($genome, $info) = each (%$genome_info)) {
  
         my $tree = EnsEMBL::Web::Tree->new;
-        my $file = $info->{'trackDb'};
+        my $options = {'tree' => $tree};
 
-        $response = read_file($file, $file_args); 
-
-        if ($response->{'error'}) {
-          push @errors, "$genome ($file): ".@{$response->{'error'}};
-          $tree->append($tree->create_node("error_$genome", { error => @{$response->{'error'}}, file => $file }));
+        if ($args->{'genome'} && $args->{'genome'} eq $genome) {
+          $options->{'genome'} = $args->{'genome'};
         }
         else {
-          $content = $response->{'content'};
+          my $file = $info->{'trackDb'};
+          $options->{'file'} = $file;
+
+          $response = read_file($file, $file_args); 
+
+          if ($response->{'error'}) {
+            push @errors, "$genome ($file): ".@{$response->{'error'}};
+            $tree->append($tree->create_node("error_$genome", { error => @{$response->{'error'}}, file => $file }));
+          }
+          else {
+            $options->{'content'} = $response->{'content'};
+          }
         }
 
-        $genome_info->{$genome}{'tree'} = $self->get_track_info({
-                                                                  'tree' => $tree,
-                                                                  'file' => $file,
-                                                                  'data' => $content, 
-                                                                  'check_cache' => 'no',
-                                                                });
+        if ($options->{'genome'} || $options->{'content'}) {
+          $genome_info->{$genome}{'tree'} = $self->get_track_info($options);
+        }
       }
     }
   }
@@ -179,29 +181,26 @@ sub get_track_info {
 ### @return tree EnsEMBL::Web::Tree
   my ($self, $args) = @_;
 
-  my $tree = $args->{'tree'};
-  return $tree unless ($args->{'genome'} || $args->{'content'});
- 
+  ## Get data from cache if available
+  my $cache = $self->web_hub ? $self->web_hub->cache : undef;
   my $url       = $self->url;
   my $cache_key = 'trackhub_'.md5_hex($url);
-  my $cache     = $self->web_hub ? $self->web_hub->cache : undef;
   my $trackhub;
 
-  if ($cache && (!$args->{'check_cache'} || $args->{'check_cache'} ne 'no')) {
-    ## Get the hub URL and check the cache 
-    if (!$url) {
-      warn 'No URL specified!';
-      return;
-    }
-
+  if ($cache && $args->{'genome'}) {
     $trackhub = $cache->get($cache_key);
-    return $trackhub->{'genomes'}{$args->{'genome'}}{'tree'} if $trackhub;
+    if ($trackhub) {
+      my $tree = $trackhub->{'genomes'}{$args->{'genome'}}{'tree'};
+      return $tree if $tree;
+    }
   }
-  
-  my $parser  = $self->parser;
-  my $response;
 
-  ## Parse the file content
+  ## Return tree as-is, if we have no file to parse
+  my $tree = $args->{'tree'};
+  return $tree unless $args->{'content'};
+  
+  ## OK, parse the file content
+  my $parser  = $self->parser;
   my %tracks = $parser->get_tracks($args->{'content'}, $args->{'file'});
   
   # Make sure the track hierarchy is ok before trying to make the tree
