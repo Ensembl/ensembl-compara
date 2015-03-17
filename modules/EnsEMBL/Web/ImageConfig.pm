@@ -811,13 +811,10 @@ sub _add_datahub {
 
     my $assembly = $self->hub->species_defs->get_config($self->species, 'UCSC_GOLDEN_PATH')
                         || $self->hub->species_defs->get_config($self->species, 'ASSEMBLY_VERSION');
-    my $source_list = $hub_info->{'genomes'}{$assembly} || [];
+    my $node = $hub_info->{'genomes'}{$assembly}{'tree'};
    
-    if (scalar @$source_list) {
-      ## Get tracks from hub
-      my $datahub = $parser->parse($source_list);
-  
-      $self->_add_datahub_node($datahub, $menu, $menu_name);
+    if ($node) {
+      $self->_add_datahub_node($node, $menu, $menu_name);
 
       $self->{'_attached_datahubs'}{$url} = 1;
     }
