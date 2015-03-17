@@ -26,10 +26,9 @@ use JSON qw(from_json);
 use URI::Escape qw(uri_unescape);
 
 use Bio::EnsEMBL::ExternalData::DAS::Coordinator;
-use Bio::EnsEMBL::ExternalData::DataHub::SourceParser;
 
 use EnsEMBL::Draw::Utils::TextHelper;
-
+use EnsEMBL::Web::File::Utils::TrackHub;
 use EnsEMBL::Web::DBSQL::DBConnection;
 use EnsEMBL::Web::Tree;
 
@@ -797,8 +796,9 @@ sub _add_datahub {
 
   return ($menu_name, {}) if $self->{'_attached_datahubs'}{$url};
 
-  my $parser   = Bio::EnsEMBL::ExternalData::DataHub::SourceParser->new('hub' => $self->hub);
-  my $hub_info = $parser->get_hub_info($url, $self->species_defs->assembly_lookup); ## Do we have data for this species?
+  my $trackhub  = EnsEMBL::Web::File::Utils::TrackHub->new('hub' => $self->hub, 'url' => $url);
+  my $hub_info = $trackhub->get_hub({'assembly_lookup' => $self->species_defs->assembly_lookup, 
+                                      'parse_tracks' => 1}); ## Do we have data for this species?
   
   if ($hub_info->{'error'}) {
     ## Probably couldn't contact the hub
