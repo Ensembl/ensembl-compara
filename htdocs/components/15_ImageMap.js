@@ -1019,7 +1019,6 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
 
         $(document).on('mousemove.selectbox', {
           action  : e.target !== e.currentTarget ? e.target.className.match(/left/) ? 'left' : 'right' : 'move',
-          redbox  : e.data.panel.highlightRegions[0][0].region,
           x       : e.pageX,
           panel   : e.data.panel,
           width   : parseInt(e.data.panel.elLk.selector.css('width')),
@@ -1030,8 +1029,8 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
           var disp   = e.pageX - e.data.x;
           var coords = { left: e.data.left, width: e.data.width };
 
-          disp = Math.max(disp, e.data.redbox.l + 1 - coords.left);
-          disp = Math.min(e.data.redbox.r - coords.left - coords.width + 1, disp);
+          disp = Math.max(disp, e.data.panel.dragRegion.l + 1 - coords.left);
+          disp = Math.min(e.data.panel.dragRegion.r - coords.left - coords.width + 1, disp);
 
           switch (e.data.action) {
             case 'left':
