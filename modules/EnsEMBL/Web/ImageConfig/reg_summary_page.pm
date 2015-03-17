@@ -29,7 +29,9 @@ sub init {
   $self->SUPER::init(@_);
  
   foreach my $type (qw(seg_features reg_feats_core reg_feats_non_core)) { 
-    foreach my $node (@{$self->get_node($type)->child_nodes}) {
+    my $submenu = $self->get_node($type);
+    next unless $submenu;
+    foreach my $node (@{$submenu->child_nodes}) {
       $self->modify_configs([$node->id],{ display => 'off' });  
     }
   }
