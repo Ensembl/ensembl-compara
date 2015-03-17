@@ -754,7 +754,7 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
         } else {
           range = this.vertical ? { r: diff.y, s: this.dragCoords.map.y } : { r: diff.x, s: this.dragCoords.map.x };
           
-          this.makeZMenu(e, range);
+          this.makeZMenu(e, range, { onclose: function() { this.selectArea(false); }, context: this });
           
           this.dragging = false;
           this.clicking = false;
@@ -802,7 +802,7 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
     this.getContent();
   },
   
-  makeZMenu: function (e, coords) {
+  makeZMenu: function (e, coords, params) {
     var area = coords.r ? this.dragRegion : this.getArea(coords);
    
     if (!area || area.a.klass.label) {
@@ -835,7 +835,7 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
       dragArea = null;
     }
     
-    Ensembl.EventManager.trigger('makeZMenu', id, { event: e, coords: coords, area: area, imageId: this.id, relatedEl: area.a.id ? $('.' + area.a.id, this.el) : false });
+    Ensembl.EventManager.trigger('makeZMenu', id, $.extend({ event: e, coords: coords, area: area, imageId: this.id, relatedEl: area.a.id ? $('.' + area.a.id, this.el) : false }, params));
     
     this.zMenus[id] = 1;
   },
