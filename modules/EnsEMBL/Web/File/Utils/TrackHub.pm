@@ -25,7 +25,7 @@ use strict;
 
 use Digest::MD5 qw(md5_hex);
 
-use EnsEMBL::Bio::ExternalData::DataHub::SourceParser;
+use Bio::EnsEMBL::ExternalData::DataHub::SourceParser;
 
 use EnsEMBL::Web::File::Utils::URL qw(read_file);
 use EnsEMBL::Web::Tree;
@@ -50,7 +50,7 @@ sub new {
 
   ## TODO - replace with Bio::EnsEMBL::IO version when it's ready
   unless ($args{'parser'}) {
-    $args{'parser'} = EnsEMBL::Bio::ExternalData::DataHub::SourceParser->new('url' => $args{$url});
+    $args{'parser'} = Bio::EnsEMBL::ExternalData::DataHub::SourceParser->new('url' => $args{$url});
   }
 
   my $self = \%args;
