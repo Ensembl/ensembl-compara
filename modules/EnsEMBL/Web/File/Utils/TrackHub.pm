@@ -16,7 +16,7 @@ limitations under the License.
 
 =cut
 
-package EnsEMBL::Web::File::Utils::Trackhub;
+package EnsEMBL::Web::File::Utils::TrackHub;
 
 ### Wrapper around Bio::EnsEMBL::IO::Parser::TrackHubParser 
 ### which also fetches each file in the trackhub configuration
