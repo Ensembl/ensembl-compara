@@ -80,8 +80,11 @@ sub url {
 
 sub get_hub {
 ### Fetch metadata about the hub and (optionally) its tracks
-### @param parse_tracks Boolean (optional)               
-  my ($self, $parse_tracks) = @_;
+### @param args Hashref (optional) 
+###                     - parse_tracks Boolean
+###                     - assembly_lookup Hashref
+### @return Hashref               
+  my ($self, $args) = @_;
   warn "!!! GETTING HUB FROM ".$self->url;
 
   ## First check the cache
