@@ -28,7 +28,7 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
     this.draggables       = [];
     this.speciesCount     = 0;
     this.minImageWidth    = 500;
-    this.labelRight       = 0;
+    this.labelWidth       = 0;
     this.boxCoords        = {}; // only passed to the backend as GET param when downloading the image to embed the red highlight box into the image itself
     
     function resetOffset() {
@@ -294,10 +294,6 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
       }
     });
 
-    if (this.draggables.length) {
-      this.labelRight = this.draggables[0].l;  // label ends where the drag region starts
-    }
-
     if (Ensembl.images.total) {
       this.highlightAllImages();
     }
@@ -388,9 +384,7 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
           );
         }
 
-        if (panel.labelRight < this.a.coords[2] + 5) {
-          panel.labelRight = this.a.coords[2] + 5;
-        }
+        panel.labelWidth = Math.max(panel.labelWidth, this.a.coords[2]);
 
         hoverLabel = null;
 
@@ -454,7 +448,7 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
     var offsetImg       = this.elLk.img.offset();
     var top             = offsetImg.top - offsetContainer.top - 1; // 1px border
     var left            = offsetImg.left - offsetContainer.left - 1;
-    var right           = this.labelRight;
+    var right           = this.labelWidth;
 
     this.elLk.labelLayers.each(function() {
       var $this = $(this);
