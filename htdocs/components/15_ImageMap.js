@@ -143,6 +143,10 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
           $(this).parent().parent().find('div').toggleClass('selected');
           panel.panning = flag;
           Ensembl.cookie.set('ENSEMBL_REGION_PAN', flag ? '1' : '0');
+          if (flag) {
+            panel.selectArea(false);
+            panel.removeZMenus();
+          }
         }
       }).filter(panel.panning ? '.on' : ':not(.on)').parent().addClass('selected');
     }
@@ -221,11 +225,8 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
     // Make sure that this doesn't cause an error.
     if (this.imageConfig) {
       this.elLk.exportMenu.add(this.elLk.labelLayers).add(this.elLk.hoverLayers).add(this.elLk.resizeMenu).remove();
-    
-      for (var id in this.zMenus) {
-        Ensembl.EventManager.trigger('destroyPanel', id);
-      }
-   
+
+      this.removeZMenus();
       this.removeShare();
     }
     
@@ -838,6 +839,13 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
     Ensembl.EventManager.trigger('makeZMenu', id, $.extend({ event: e, coords: coords, area: area, imageId: this.id, relatedEl: area.a.id ? $('.' + area.a.id, this.el) : false }, params));
     
     this.zMenus[id] = 1;
+  },
+
+  removeZMenus: function() {
+
+    for (var id in this.zMenus) {
+      Ensembl.EventManager.trigger('destroyPanel', id);
+    }
   },
   
   /**
