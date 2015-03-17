@@ -764,38 +764,11 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
   },
   
   drag: function (e) {
-    var x      = e.pageX - this.dragCoords.offset.x;
-    var y      = e.pageY - this.dragCoords.offset.y;
-    var coords = {};
-    
-    switch (x < this.dragCoords.map.x) {
-      case true:  coords.l = x; coords.r = this.dragCoords.map.x; break;
-      case false: coords.r = x; coords.l = this.dragCoords.map.x; break;
-    }
-    
-    switch (y < this.dragCoords.map.y) {
-      case true:  coords.t = y; coords.b = this.dragCoords.map.y; break;
-      case false: coords.b = y; coords.t = this.dragCoords.map.y; break;
-    }
-    
-    if (this.vertical || x < this.dragRegion.l) {
-      coords.l = this.dragRegion.l;
-    }
-    if (this.vertical || x > this.dragRegion.r) {
-      coords.r = this.dragRegion.r;
-    }
-    
-    if (!this.vertical || y < this.dragRegion.t) {
-      coords.t = this.dragRegion.t;
-    }
-    if (!this.vertical || y > this.dragRegion.b) {
-      coords.b = this.dragRegion.b;
-    }
 
     if (this.panning) {
       this.panImage(e);
     } else {
-      this.highlight(coords, 'rubberband', this.dragRegion.a.attrs.href.split('|')[3]);
+      this.selectArea(e);
     }
   },
 
@@ -990,6 +963,90 @@ Ensembl.Panel.ImageMap = Ensembl.Panel.Content.extend({
     }
     
     els = null;
+  },
+
+  selectArea: function(e) {
+
+    if (e === false) {
+      this.elLk.selector && this.elLk.selector.hide();
+      return;
+    }
+
+    var coords  = {};
+    var x       = e.pageX - this.dragCoords.offset.x;
+    var y       = e.pageY - this.dragCoords.offset.y;
+
+    switch (x < this.dragCoords.map.x) {
+      case true:  coords.l = x; coords.r = this.dragCoords.map.x; break;
+      case false: coords.r = x; coords.l = this.dragCoords.map.x; break;
+    }
+
+    switch (y < this.dragCoords.map.y) {
+      case true:  coords.t = y; coords.b = this.dragCoords.map.y; break;
+      case false: coords.b = y; coords.t = this.dragCoords.map.y; break;
+    }
+
+    if (this.vertical || x < this.dragRegion.l) {
+      coords.l = this.dragRegion.l;
+    }
+    if (this.vertical || x > this.dragRegion.r) {
+      coords.r = this.dragRegion.r;
+    }
+
+    if (!this.vertical || y < this.dragRegion.t) {
+      coords.t = this.dragRegion.t;
+    }
+    if (!this.vertical || y > this.dragRegion.b) {
+      coords.b = this.dragRegion.b;
+    }
+
+    if (!this.elLk.selector || !this.elLk.selector.length) {
+      this.elLk.selector = $('<div class="_selector selector"><div class="left-border"></div><div class="right-border"></div></div>').insertAfter(this.elLk.img).on('click', function(e) {
+        e.stopPropagation();
+        $(document).off('.selectbox');
+      }).on('mousedown', {panel: this}, function(e) {
+        e.stopPropagation();
+
+        $(document).on('mousemove.selectbox', {
+          action  : e.target !== e.currentTarget ? e.target.className.match(/left/) ? 'left' : 'right' : 'move',
+          redbox  : e.data.panel.highlightRegions[0][0].region,
+          x       : e.pageX,
+          panel   : e.data.panel,
+          width   : parseInt(e.data.panel.elLk.selector.css('width')),
+          left    : parseInt(e.data.panel.elLk.selector.css('left'))
+        }, function(e) {
+          e.stopPropagation();
+
+          var disp   = e.pageX - e.data.x;
+          var coords = { left: e.data.left, width: e.data.width };
+
+          disp = Math.max(disp, e.data.redbox.l + 1 - coords.left);
+          disp = Math.min(e.data.redbox.r - coords.left - coords.width + 1, disp);
+
+          switch (e.data.action) {
+            case 'left':
+              disp = Math.min(coords.width - 6, disp);
+              coords.left = coords.left + disp;
+              coords.width = coords.width - disp;
+            break;
+            case 'right':
+              coords.width = Math.max(coords.width + disp, 6);
+            break;
+            case 'move':
+              coords.left = coords.left + disp;
+            break;
+          }
+
+          e.data.panel.elLk.selector.css(coords);
+          e.data.panel.makeZMenu(e, { s: coords.left, r: coords.width });
+
+        }).on('mouseup.selectbox click.selectbox', function(e) {
+          $(this).off('.selectbox');
+        });
+      });
+    }
+
+    this.elLk.selector.css({ left: coords.l, top: coords.t, width: coords.r - coords.l + 1, height: coords.b - coords.t + 1 }).show();
   },
 
   updateExportMenu: function(coords, speciesNumber, imageNumber) {
