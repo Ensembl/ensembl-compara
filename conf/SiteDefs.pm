@@ -333,6 +333,7 @@ sub update_conf {
     $BIOPERL_DIR,
     "$ENSEMBL_SERVERROOT/biomart-perl/lib",
     "$ENSEMBL_SERVERROOT/ensembl-orm/modules",
+    "$ENSEMBL_SERVERROOT/ensembl-io/modules",
     "$ENSEMBL_SERVERROOT/ensembl-funcgen/modules",
     "$ENSEMBL_SERVERROOT/ensembl-variation/modules",
     "$ENSEMBL_SERVERROOT/ensembl-compara/modules",
