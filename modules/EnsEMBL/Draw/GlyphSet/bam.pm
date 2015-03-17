@@ -27,7 +27,7 @@ use base qw(EnsEMBL::Draw::GlyphSet::sequence);
 
 use EnsEMBL::Draw::GlyphSet;
 
-use Bio::EnsEMBL::ExternalData::BAM::BAMAdaptor;
+use Bio::EnsEMBL::IO::Adaptor::BAMAdaptor;
 use Bio::EnsEMBL::DBSQL::DataFileAdaptor;
 use Data::Dumper;
 
@@ -119,7 +119,7 @@ sub bam_adaptor {
       my $region = $self->{'container'}->seq_region_name;
       $url =~ s/\#\#\#CHR\#\#\#/$region/g;
     }
-    $self->{_cache}->{_bam_adaptor} ||= Bio::EnsEMBL::ExternalData::BAM::BAMAdaptor->new($url);
+    $self->{_cache}->{_bam_adaptor} ||= Bio::EnsEMBL::IO::Adaptor::BAMAdaptor->new($url);
   }
   else { ## Local bam file
     my $config    = $self->{'config'};

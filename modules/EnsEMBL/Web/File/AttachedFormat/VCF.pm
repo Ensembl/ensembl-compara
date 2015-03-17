@@ -16,13 +16,13 @@ limitations under the License.
 
 =cut
 
-package Bio::EnsEMBL::ExternalData::AttachedFormat::VCF;
+package EnsEMBL::Web::File::AttachedFormat::VCF;
 
 use strict;
 use warnings;
 no warnings 'uninitialized';
 
-use base qw(Bio::EnsEMBL::ExternalData::AttachedFormat);
+use base qw(EnsEMBL::Web::File::AttachedFormat);
 
 use EnsEMBL::Web::File::Utils::URL qw(chase_redirects);
 

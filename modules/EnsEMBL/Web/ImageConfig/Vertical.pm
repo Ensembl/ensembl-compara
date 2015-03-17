@@ -22,7 +22,7 @@ use strict;
 
 use List::Util qw(sum);
 
-use Bio::EnsEMBL::ExternalData::BigFile::BigWigAdaptor;
+use Bio::EnsEMBL::IO::Adaptor::BigWigAdaptor;
 use EnsEMBL::Web::Text::FeatureParser;
 use EnsEMBL::Web::File::User;
 
@@ -117,7 +117,7 @@ sub load_user_track_data {
         $short_name = substr($short_name, 0, 17).'...' if length($short_name) > 20;
         $track->set('label', $short_name);
 
-        my $adaptor = Bio::EnsEMBL::ExternalData::BigFile::BigWigAdaptor->new($track_data->{'url'}); 
+        my $adaptor = Bio::EnsEMBL::IO::Adaptor::BigWigAdaptor->new($track_data->{'url'}); 
         ($data{$track->id}, $max_value) = $self->get_bigwig_features($adaptor, $track_data->{'name'}, $chromosomes, $bins, $bin_size, $track_data->{'colour'}); 
       }
       else {

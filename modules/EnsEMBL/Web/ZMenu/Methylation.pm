@@ -24,7 +24,7 @@ use List::Util qw(min max);
 
 use base qw(EnsEMBL::Web::ZMenu);
 
-use Bio::EnsEMBL::ExternalData::BigFile::BigBedAdaptor;
+use Bio::EnsEMBL::IO::Adaptor::BigBedAdaptor;
 
 sub summary_zmenu {
   # Way too many args, make OO.
@@ -187,7 +187,7 @@ sub bigbed {
                           @parts[-5..-1]);
 
   return ( $self->{'_cache'}->{'bigbed_adaptor'}->{$bigbed_file} ||=
-    Bio::EnsEMBL::ExternalData::BigFile::BigBedAdaptor->new($bigbed_file)
+    Bio::EnsEMBL::IO::Adaptor::BigBedAdaptor->new($bigbed_file)
   );
 }
 

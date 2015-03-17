@@ -63,7 +63,7 @@ sub features {
   
   return $self->SUPER::features({
     style   => 'colouredscore',
-    adaptor => $slice->{'_cache'}{'bigbed_adaptor'}{$bigbed_file} ||= $self->bigbed_adaptor(Bio::EnsEMBL::ExternalData::BigFile::BigBedAdaptor->new($bigbed_file)),
+    adaptor => $slice->{'_cache'}{'bigbed_adaptor'}{$bigbed_file} ||= $self->bigbed_adaptor(Bio::EnsEMBL::IO::Adaptor::BigBedAdaptor->new($bigbed_file)),
   });
 }
 

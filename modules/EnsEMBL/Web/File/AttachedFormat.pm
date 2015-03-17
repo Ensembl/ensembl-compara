@@ -16,7 +16,7 @@ limitations under the License.
 
 =cut
 
-package Bio::EnsEMBL::ExternalData::AttachedFormat;
+package EnsEMBL::Web::File::AttachedFormat;
 
 use strict;
 use warnings;

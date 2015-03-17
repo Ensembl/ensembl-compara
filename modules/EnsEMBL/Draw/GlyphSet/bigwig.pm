@@ -26,7 +26,7 @@ use strict;
 use List::Util qw(min max);
 
 use Bio::EnsEMBL::Analysis;
-use Bio::EnsEMBL::ExternalData::BigFile::BigWigAdaptor;
+use Bio::EnsEMBL::IO::Adaptor::BigWigAdaptor;
 
 use EnsEMBL::Web::File::Utils::URL;
 
@@ -49,7 +49,7 @@ sub bigwig_adaptor {
                                                             });
       if ($headers) {
         if ($headers->{'Content-Type'} !~ 'text/html') { ## Not being redirected to a webpage, so chance it!
-          my $ad = Bio::EnsEMBL::ExternalData::BigFile::BigWigAdaptor->new($url);
+          my $ad = Bio::EnsEMBL::IO::Adaptor::BigWigAdaptor->new($url);
           $error = "Bad BigWIG data" unless $ad->check;
           $self->{'_cache'}->{'_bigwig_adaptor'} = $ad;
         }
