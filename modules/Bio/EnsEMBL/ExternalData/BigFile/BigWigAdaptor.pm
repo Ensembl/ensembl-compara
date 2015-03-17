@@ -27,7 +27,9 @@ my $DEBUG = 0;
 
 sub new {
   my ($class, $url) = @_;
-  
+ 
+  warn "######## DEPRECATED MODULE - please use Bio::EnsEMBL::IO::Adaptor::BigWigAdaptor instead";
+ 
   my $self = bless {
     _cache => {},
     _url => $url,

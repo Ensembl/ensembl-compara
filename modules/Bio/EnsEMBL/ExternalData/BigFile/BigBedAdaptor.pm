@@ -53,6 +53,8 @@ my %global_name_map = (
 sub new {
   my ($class, $url) = @_;
 
+  warn "######## DEPRECATED MODULE - please use Bio::EnsEMBL::IO::Adaptor::BigBedAdaptor instead";
+
   my $self = bless {
     _cache => {},
     _url => $url,

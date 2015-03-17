@@ -43,6 +43,8 @@ my $snpCode = {
 sub new {
   my ($class, $url) = @_;
 
+  warn "######## DEPRECATED MODULE - please use Bio::EnsEMBL::IO::Adaptor::BamAdaptor instead";
+
   my $self = bless {
     _cache => {},
     _url => $url,

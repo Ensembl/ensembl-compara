@@ -29,6 +29,11 @@ use EnsEMBL::Web::File::Utils::URL qw(get_filesize);
 sub new {
   my ($proto,$hub,$format,$url,$trackline) = @_;
   my $class = ref($proto) || $proto;
+
+  (my $new_class = $class) =~ s/ExternalData/Web::File/;
+  $new_class =~ s/Bio:://;
+  warn "######## DEPRECATED MODULE - please use $new_class instead";
+
   my $self = {
     format => $format,
     hub => $hub,
