@@ -311,15 +311,6 @@ sub _get_db_with_dnadb {
   }
 }
 
-sub _get_fasta_database{
-    my $self = shift;
-    my $db_info =  $self->_get_database_info( shift, 'DATABASE_FASTA' ) ||
-        die( "No fasta database for this species" );
-    my $adpt =  $self->_get_database( $db_info, 'Bio::EnsEMBL::DBSQL::DBAdaptor' );
-    $self->dynamic_use('Bio::EnsEMBL::ExternalData::FASTA::FASTAAdaptor');
-    return Bio::EnsEMBL::ExternalData::FASTA::FASTAAdaptor->new($adpt);
-}
-
 =head2 _get_userupload_database
 
  Arg[1]      : String  
