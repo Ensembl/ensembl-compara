@@ -109,6 +109,9 @@ sub upload {
   if ($result->{'error'}) {
     $params->{'filter_module'} = 'Data';
     $params->{'filter_code'}   = 'no_response';
+  } elsif (!$result->{'content'}) {
+    $params->{'filter_module'} = 'Data';
+    $params->{'filter_code'}   = 'empty';
   } else {
     my $response = $file->write($result->{'content'});
   
