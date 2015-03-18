@@ -501,7 +501,6 @@ sub read {
     my $args = {
                 'hub'         => $self->hub,
                 'nice'        => 1,
-                'compression' => 1
                 };
 
     eval {
