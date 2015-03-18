@@ -163,7 +163,7 @@ sub read_file {
   my $path = ref($file) ? $file->absolute_read_path : $file;
   my $content;
 
-  my $compression = $args->{'compression'} && get_compression($file);
+  my $compression = $args->{'compression'} || get_compression($file);
   my $method      = $compression ? $compression.'_slurp' : 'slurp';
   eval {
     no strict 'refs';

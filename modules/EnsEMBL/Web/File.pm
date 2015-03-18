@@ -103,6 +103,11 @@ sub init {
   my $read_path = $args{'file'};
   my $bare_name;
 
+  ## Override default input drivers if reading from URL
+  if ($read_path =~ /^[http|ftp]/) {
+    $self->{'input_drivers'} = ['URL'];
+  }
+
   ## Existing file or user upload
   if ($read_path) {
     $self->{'read_location'} = $read_path;
@@ -501,7 +506,6 @@ sub read {
     my $args = {
                 'hub'         => $self->hub,
                 'nice'        => 1,
-                'compression' => 1
                 };
 
     eval {
