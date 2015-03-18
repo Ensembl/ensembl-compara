@@ -36,7 +36,7 @@ use strict;
 use HTTP::Tiny;
 use LWP::UserAgent;
 
-use EnsEMBL::Web::File::Utils qw(get_compression);
+use EnsEMBL::Web::File::Utils qw(get_compression uncompress);
 use EnsEMBL::Web::Exceptions;
 
 use Exporter qw(import);
@@ -162,6 +162,7 @@ sub read_file {
     }
     else {
       $error = _get_lwp_useragent_error($response);
+      warn "!!! ERROR FETCHING FILE $url: $error";
     }
   }
   else {
@@ -195,12 +196,17 @@ sub read_file {
   }
   else {
     my $compression = defined($args->{'compression'}) || get_compression($url);
-    my $uncomp = $compression ? uncompress($content, $compression) : $content;
+    warn "!!! COMPRESSION $compression";
+    warn ">>> COMPRESSED: ".substr($content, 0, 100);
+    if ($compression) {
+      uncompress(\$content, $compression);
+    }
+    warn "... UNCOMPRESSED: ".substr($content, 0, 100);
     if ($args->{'nice'}) {
-      return {'content' => $uncomp};
+      return {'content' => $content};
     }
     else {
-      return $uncomp;
+      return $content;
     }
   }
 }
