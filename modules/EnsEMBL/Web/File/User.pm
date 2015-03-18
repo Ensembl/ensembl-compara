@@ -161,7 +161,7 @@ sub upload {
 
   ## Add upload to session
   if ($result->{'error'}) {
-    $error = $result->{'error'};
+    $error = $result->{'error'}[0];
   }
   else {
     my $response = $self->write($result->{'content'});
@@ -200,7 +200,7 @@ sub upload {
       $self->{'code'} = $code;
     }
     else {
-      $error = $response->{'error'};
+      $error = $response->{'error'}[0];
     }
   }
   return $error;
