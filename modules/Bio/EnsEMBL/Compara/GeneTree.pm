@@ -538,9 +538,11 @@ sub minimize_tree {
   Arg [2]     : String $method_link_type (optional). By default, the method uses all the
                 homologues. Use this argument to restrict the list to ENSEMBL_ORTHOLOGUES,
                 ENSEMBL_PARALOGUES, or ENSEMBL_HOMEOELOGUES
+  Arg [3]     : Arrayref of strings $species. The list of species to keep in the alignment
   Example     : $gene_tree->get_alignment_of_homologues($brca2_gene_member);
   Description : Creates a new instance of AlignedMemberSet that is the pruned version
-                of the tree's alignment, but restricted to the homologues of a query gene
+                of the tree's alignment, but restricted to the homologues of a query gene.
+                The alignment can be further restricted to a list of species.
   Returntype  : Bio::EnsEMBL::Compara::AlignedMemberSet
   Exceptions  : none
   Caller      : general
@@ -549,13 +551,30 @@ sub minimize_tree {
 =cut
 
 sub get_alignment_of_homologues {
-    my ($self, $query_gene, $method_link_type) = @_;
+    my ($self, $query_gene, $method_link_type, $species) = @_;
 
     assert_ref($query_gene, 'Bio::EnsEMBL::Compara::Member', 'query_gene');
+    assert_ref($species, 'ARRAY') if $species;
 
     # List the homologues
-    my $homologues = $self->adaptor->db->get_HomologyAdaptor->fetch_all_by_Member($query_gene, -METHOD_LINK_TYPE => $method_link_type);
-    my %members_to_keep = map {$_->get_all_Members()->[1]->dbID => 1} @$homologues;
+    my $homologies = $self->adaptor->db->get_HomologyAdaptor->fetch_all_by_Member($query_gene, -METHOD_LINK_TYPE => $method_link_type);
+    my @homologous_genes = map {$_->get_all_Members()->[1]} @$homologies;
+
+    if ($species) {
+        my $genome_db_adaptor = $self->adaptor->db->get_GenomeDBAdaptor;
+        my %genome_db_ids = ();
+        foreach my $s (@$species) {
+            my $gdb = $genome_db_adaptor->fetch_by_name_assembly($s) || $genome_db_adaptor->fetch_by_registry_name($s);
+            if ($gdb) {
+                $genome_db_ids{$gdb->dbID} = 1;
+            } else {
+                warn "$s could not be found in the GenomeDB entries\n";
+            }
+        }
+        @homologous_genes = grep {$genome_db_ids{$_->genome_db_id}} @homologous_genes;
+    }
+
+    my %members_to_keep = map {$_->dbID => 1} @homologous_genes;
     $members_to_keep{$query_gene->isa('Bio::EnsEMBL::Compara::GeneMember') ? $query_gene->canonical_member_id : $query_gene->dbID} = 1;
 
     # Create a new AlignedMemberSet object with the same properties
