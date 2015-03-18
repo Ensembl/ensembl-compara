@@ -129,6 +129,7 @@ package Bio::EnsEMBL::Compara::GeneTree;
 
 use Bio::EnsEMBL::Utils::Argument;
 use Bio::EnsEMBL::Utils::Scalar qw(:assert);
+use Bio::EnsEMBL::Utils::Exception qw(throw);
 
 use Bio::EnsEMBL::Compara::GeneTreeNode;
 use Bio::EnsEMBL::Compara::GeneTreeMember;
@@ -528,6 +529,49 @@ sub expand_subtrees {
 sub minimize_tree {
     my $self = shift;
     $self->{'_root'} = $self->{'_root'}->minimize_tree;
+}
+
+
+=head2 get_alignment_of_homologues
+
+  Arg [1]     : Bio::EnsEMBL::Compara::Member $query_gene
+  Arg [2]     : String $method_link_type (optional). By default, the method uses all the
+                homologues. Use this argument to restrict the list to ENSEMBL_ORTHOLOGUES,
+                ENSEMBL_PARALOGUES, or ENSEMBL_HOMEOELOGUES
+  Example     : $gene_tree->get_alignment_of_homologues($brca2_gene_member);
+  Description : Creates a new instance of AlignedMemberSet that is the pruned version
+                of the tree's alignment, but restricted to the homologues of a query gene
+  Returntype  : Bio::EnsEMBL::Compara::AlignedMemberSet
+  Exceptions  : none
+  Caller      : general
+  Status      : Stable
+
+=cut
+
+sub get_alignment_of_homologues {
+    my ($self, $query_gene, $method_link_type) = @_;
+
+    assert_ref($query_gene, 'Bio::EnsEMBL::Compara::Member', 'query_gene');
+
+    # List the homologues
+    my $homologues = $self->adaptor->db->get_HomologyAdaptor->fetch_all_by_Member($query_gene, -METHOD_LINK_TYPE => $method_link_type);
+    my %members_to_keep = map {$_->get_all_Members()->[1]->dbID => 1} @$homologues;
+    $members_to_keep{$query_gene->isa('Bio::EnsEMBL::Compara::GeneMember') ? $query_gene->canonical_member_id : $query_gene->dbID} = 1;
+
+    # Create a new AlignedMemberSet object with the same properties
+    my $alignment = $self->alignment;
+
+    my $new_aligment = new Bio::EnsEMBL::Compara::AlignedMemberSet();
+    foreach my $attr ($alignment->_attr_to_copy_list) {
+        $new_aligment->{$attr} = $alignment->{$attr};
+    }
+
+    # Add the relevant members
+    foreach my $member (@{$alignment->get_all_Members()}) {
+        $new_aligment->add_Member($member) if $members_to_keep{$member->dbID};
+    }
+
+    return $new_aligment;
 }
 
 
