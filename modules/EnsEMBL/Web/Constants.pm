@@ -341,6 +341,16 @@ sub MARKUP_OPTIONS {
         { 'value' => 'off', 'caption' => 'No'  },
       ],
     },
+    'seq_type' => {
+      'type'    => 'RadioList',
+      'name'    => 'seq_type',
+      'label'   => 'Sequence to export',
+      'values' => [
+        { 'value' => 'dna', 'caption' => 'cDNA' },
+        { 'value' => 'pep', 'caption' => 'Protein' },
+      ],
+      'value'   => 'dna',
+    }, 
   };
 }
 
