@@ -196,12 +196,9 @@ sub read_file {
   }
   else {
     my $compression = defined($args->{'compression'}) || get_compression($url);
-    warn "!!! COMPRESSION $compression";
-    warn ">>> COMPRESSED: ".substr($content, 0, 100);
     if ($compression) {
       uncompress(\$content, $compression);
     }
-    warn "... UNCOMPRESSED: ".substr($content, 0, 100);
     if ($args->{'nice'}) {
       return {'content' => $content};
     }
