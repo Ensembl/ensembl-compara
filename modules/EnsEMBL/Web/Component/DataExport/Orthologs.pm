@@ -54,7 +54,8 @@ sub content {
 
   ## Add formats output by BioPerl
   foreach ($self->alignment_formats) {
-    $fields_by_format->{$_} = ['seq_type'];
+    my $field = $_ eq 'FASTA' ? 'seq_type' : undef;
+    $fields_by_format->{$_} = [$field];
   }
 
   ## Create settings form (comes with some default fields - see parent)

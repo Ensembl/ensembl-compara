@@ -101,9 +101,10 @@ sub process {
           $error = 'Output not implemented for format '.$format;
         }
       }
-      elsif ($hub->param('seq_type') && $in_bioperl) {
-        $error = $hub->param('seq_type') eq 'msa' ? $self->write_alignment($component)
-                                                  : $self->write_homlogue_seq($component);
+      elsif ($in_bioperl) {
+        $error = (!$hub->param('seq_type') || $hub->param('seq_type') eq 'msa') 
+                    ? $self->write_alignment($component)
+                    : $self->write_homologue_seq($component);
       }
       else {
         my $write_method = 'write_'.lc($format);
