@@ -42,12 +42,12 @@ sub content {
   my $settings = {'seq_type' => $markup_options->{'seq_type'}};
 
   ## Pass species selection to output
-  #my $species_options = [];
-  #foreach (grep { /^species_/ } $hub->param) {
-  #  push @$species_options, $_;
-  #}
+  my $species_options = [];
+  foreach (grep { /^species_/ } $hub->param) {
+    push @$species_options, $_;
+  }
 
-  #$settings->{'Hidden'} = $species_options;
+  $settings->{'Hidden'} = $species_options;
 
   ## Options per format
   my $fields_by_format = {'OrthoXML' => []};
