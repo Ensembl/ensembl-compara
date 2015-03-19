@@ -84,12 +84,6 @@ sub default_options {
  };
 }   
   
-sub pipeline_create_commands {
- my ($self) = @_;
- return [ 
-  @{$self->SUPER::pipeline_create_commands},
- ];
-}
 
 sub pipeline_wide_parameters {
  my $self = shift @_;

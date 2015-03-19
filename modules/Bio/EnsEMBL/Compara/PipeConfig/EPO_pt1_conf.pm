@@ -138,12 +138,6 @@ sub default_options {
      };
 }
 
-sub pipeline_create_commands {
-    my ($self) = @_; 
-    return [
-        @{$self->SUPER::pipeline_create_commands},  # inheriting database and hive tables' creation
-           ];  
-}
 
 sub resource_classes {
     my ($self) = @_; 

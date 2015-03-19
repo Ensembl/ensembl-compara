@@ -85,20 +85,6 @@ sub default_options {
     };
 }
 
-=head2 pipeline_create_commands
-
-    Description : Implements pipeline_create_commands() interface method of Bio::EnsEMBL::Hive::PipeConfig::HiveGeneric_conf that lists the commands that will create and set up the Hive database.
-                  In addition to the standard creation of the database and populating it with Hive tables and procedures it also creates a directory for storing the output.
-
-=cut
-
-sub pipeline_create_commands {
-    my ($self) = @_;
-    return [
-        @{$self->SUPER::pipeline_create_commands},  # inheriting database and hive tables' creation
-    ];
-}
-
 =head2 pipeline_analyses
 
     Description : Implements pipeline_analyses() interface method of Bio::EnsEMBL::Hive::PipeConfig::HiveGeneric_conf that defines the structure of the pipeline: analyses, jobs, rules, etc.
