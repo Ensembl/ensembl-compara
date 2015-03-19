@@ -573,6 +573,28 @@ sub write_line {
   return $result;
 }
 
+sub touch {
+### Touch file, i.e. create it (empty) if it doesn't exist
+### @return Hashref
+  my $self = shift;
+  my $result = {};
+ 
+  foreach (@{$self->{'output_drivers'}}) {
+    my $method = 'EnsEMBL::Web::File::Utils::'.$_.'::touch_file'; 
+    my $args = {
+                'hub'     => $self->hub,
+                'nice'    => 1,
+                };
+
+    eval {
+      no strict 'refs';
+      $result = &$method($self, $args);
+    };
+    last unless $result->{'error'};
+  }
+  return $result;
+}
+
 sub delete {
 ### Delete file
 ### @return Hashref
