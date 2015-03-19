@@ -271,27 +271,18 @@ sub export_options { return {'action' => 'Orthologs'}; }
 
 sub get_export_data {
 ## Get data for export
-  my $self = shift;
+  my ($self, $flag) = @_;
   my $hub          = $self->hub;
   my $object       = $self->object || $hub->core_object('gene');
-  my $cdb          = shift || $hub->param('cdb') || 'compara';
 
-  my ($homologies) = $object->get_homologies('ENSEMBL_ORTHOLOGUES', undef, undef, $cdb);
-  return $homologies;
-=pod
-  my $ok_homologies = [];
-
-  foreach my $homology (@$homologies) {
-    foreach my $member (@{$homology->get_all_Members}) {
-      if ($hub->param('species_'.$member->genome_db->name) eq 'yes') {
-        push @$ok_homologies, $homology;
-        last;
-      }
-    }
+  if ($flag eq 'sequence') {
+    return $object->get_homologue_alignments;
   }
-
-  return $ok_homologies;
-=cut
+  else {
+    my $cdb = $flag || $hub->param('cdb') || 'compara';
+    my ($homologies) = $object->get_homologies('ENSEMBL_ORTHOLOGUES', undef, undef, $cdb);
+    return $homologies;
+  }
 }
 
 sub buttons {
