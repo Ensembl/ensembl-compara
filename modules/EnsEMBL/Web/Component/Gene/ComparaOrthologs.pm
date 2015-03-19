@@ -307,9 +307,9 @@ sub buttons {
                 };
 
     ## Add any species settings
-    #foreach (grep { /^species_/ } $hub->param) {
-    #  $params->{$_} = $hub->param($_);
-    #}
+    foreach (grep { /^species_/ } $hub->param) {
+      $params->{$_} = $hub->param($_);
+    }
 
     push @buttons, {
                     'url'     => $hub->url($params),
