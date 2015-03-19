@@ -79,10 +79,10 @@ sub process {
     unless ($error) {
       ## Write data to output file in desired format
 
+      my %align_formats = EnsEMBL::Web::Constants::ALIGNMENT_FORMATS;
+      my $in_bioperl    = grep { lc($_) eq lc($format) } keys %align_formats;
       ## Alignments and trees are handled by external writers
       if ($hub->param('align') && lc($format) ne 'rtf') {
-        my %align_formats = EnsEMBL::Web::Constants::ALIGNMENT_FORMATS;
-        my $in_bioperl    = grep { lc($_) eq lc($format) } keys %align_formats;
         my %tree_formats  = EnsEMBL::Web::Constants::TREE_FORMATS;
         my $is_tree       = grep { lc($_) eq lc($format) } keys %tree_formats;
         if ($in_bioperl) {
@@ -100,6 +100,9 @@ sub process {
         else {
           $error = 'Output not implemented for format '.$format;
         }
+      }
+      elsif ($hub->param('seq_type') && $in_bioperl) {
+        $error = $self->write_seq_alignment($component);
       }
       else {
         my $write_method = 'write_'.lc($format);
@@ -477,6 +480,27 @@ sub write_alignment {
 
     $result = $self->write_line($export);
   }
+  return $result->{'error'} || undef;
+}
+
+sub write_seq_alignment {
+  my ($self, $component) = @_;
+  my $hub     = $self->hub;
+  my $result;
+
+  my $data = $component->get_export_data('sequence');
+  if ($data) {
+    my $format    = lc($hub->param('format'));
+    my $file      = $self->{'__file'};
+    my $file_path = $file->absolute_write_path;
+    $file->touch;
+    $data->print_sequences_to_file($file_path, $format);
+    $result = {'content' => $file->read};
+  }
+  else {
+    $result = {'error' => ['No data returned by API']};
+  } 
+ 
   return $result->{'error'} || undef;
 }
 
