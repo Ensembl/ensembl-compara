@@ -203,14 +203,6 @@ sub pipeline_create_commands {
     ];
 }
 
-sub pipeline_wide_parameters {  # these parameter values are visible to all analyses, can be overridden by parameters{} and input_id{}
-    my ($self) = @_;
-
-    return {
-	    'pipeline_name' => $self->o('pipeline_name'), #This must be defined for the beekeeper to work properly
-    };
-}
-
 sub resource_classes {
     my ($self) = @_;
     return {

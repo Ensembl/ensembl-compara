@@ -189,7 +189,6 @@ sub pipeline_wide_parameters {  # these parameter values are visible to all anal
     my ($self) = @_;
 
     return {
-	    'pipeline_name' => $self->o('pipeline_name'), #This must be defined for the beekeeper to work properly
 	    'do_transactions' => $self->o('do_transactions'),
     };
 }
