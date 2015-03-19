@@ -346,10 +346,11 @@ sub MARKUP_OPTIONS {
       'name'    => 'seq_type',
       'label'   => 'Sequence to export',
       'values' => [
-        { 'value' => 'dna', 'caption' => 'cDNA' },
-        { 'value' => 'pep', 'caption' => 'Protein' },
+        { 'value' => 'msa', 'caption' => 'Alignments' },
+        { 'value' => 'dna', 'caption' => 'Unaligned cDNAs' },
+        { 'value' => 'pep', 'caption' => 'Unaligned proteins' },
       ],
-      'value'   => 'dna',
+      'value'   => 'msa',
     }, 
   };
 }

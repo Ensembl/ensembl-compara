@@ -102,7 +102,8 @@ sub process {
         }
       }
       elsif ($hub->param('seq_type') && $in_bioperl) {
-        $error = $self->write_seq_alignment($component);
+        $error = $hub->param('seq_type') eq 'msa' ? $self->write_alignment($component)
+                                                  : $self->write_homlogue_seq($component);
       }
       else {
         my $write_method = 'write_'.lc($format);
@@ -446,7 +447,8 @@ sub write_alignment {
   #  warn ">>> PARAM $_ = ".$hub->param($_);
   #}
   my ($alignment, $result);
-  my $data = $component->get_export_data;
+  my $flag = $align ? undef : 'sequence';
+  my $data = $component->get_export_data($flag);
   if (!$data) {
     $result->{'error'} = ['No data returned'];
   }
@@ -462,6 +464,9 @@ sub write_alignment {
       print $align_io $_ for @$data;
     }
     else {
+      if (ref($data) =~ 'AlignedMemberSet') {
+        $data = $data->get_SimpleAlign;
+      }
       if (ref($data) =~ 'SimpleAlign') {
         $alignment = $data;
       }
@@ -483,7 +488,7 @@ sub write_alignment {
   return $result->{'error'} || undef;
 }
 
-sub write_seq_alignment {
+sub write_homologue_seq {
   my ($self, $component) = @_;
   my $hub     = $self->hub;
   my $result;
