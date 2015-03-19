@@ -823,6 +823,20 @@ sub fetch_homology_species_hash {
   return \%homologues;
 }
 
+sub get_homologue_alignments {
+  my $self        = shift;
+  my $compara_db  = shift || 'compara';
+  my $database    = $self->database($compara_db);
+  my $msa;
+
+  if ($database) {  
+    my $member  = $database->get_GeneMemberAdaptor->fetch_by_stable_id($self->Obj->stable_id);
+    my $tree    = $database->get_GeneTreeAdaptor->fetch_default_for_Member($member);
+    $msa        = $tree->get_alignment_of_homologues($member);
+  }
+  return $msa;
+}
+
 sub get_compara_Member {
   my $self       = shift;
   my $compara_db = shift || 'compara';
