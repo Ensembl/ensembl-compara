@@ -107,8 +107,8 @@ sub render {
 
   $table = EnsEMBL::Web::Document::Table->new([
       { key => 'name', title => 'Name', width => '20%', align => 'left' },
-      { key => 'desc', title => 'Description', width => '50%', align => 'left' },
-      { key => 'from', title => 'Get it from:', width => '10%', align => 'center' },
+      { key => 'desc', title => 'Description', width => '30%', align => 'left' },
+      { key => 'from', title => 'Get it from:', width => '30%', align => 'center' },
       { key => 'docs', title => 'Documentation', width => '10%', align => 'center' },
     ], [], { cellpadding => 4 }
   );
@@ -127,7 +127,7 @@ sub render {
   $table->add_row({
     'name' => '<b>Ensembl Perl API</b>',
     'desc' => 'Programmatic access to all Ensembl data using simple Perl scripts',
-    'from' => qq(<a href="ftp://ftp.ensembl.org/pub/ensembl-api.tar.gz" rel="external">FTP download</a> (gzipped tarball) or <a href="https://github.com/Ensembl">GitHub</a>),
+    'from' => qq(<a href="ftp://ftp.ensembl.org/pub/ensembl-api.tar.gz" rel="external">FTP download</a> (current release only) or <a href="https://github.com/Ensembl">GitHub</a>),
     'docs' => sprintf('<a href="/info/docs/api/"><img src="%s16/info.png" alt="Documentation" /></a>', $img_url)
   });
 
