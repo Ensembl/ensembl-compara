@@ -500,8 +500,16 @@ sub write_homologue_seq {
     my $file      = $self->{'__file'};
     my $file_path = $file->absolute_write_path;
     $file->touch;
-    $data->print_sequences_to_file($file_path, $format);
-    $result = {'content' => $file->read};
+    eval {
+      $data->print_sequences_to_file($file_path, $format);
+    };
+    if ($@) {
+      $result = {'error' => ['Error writing sequences to file']};
+      warn ">>> ERROR THROWN BY print_sequences_to_file: $@";
+    }
+    else {
+      $result = {'content' => $file->read};
+    }
   }
   else {
     $result = {'error' => ['No data returned by API']};
