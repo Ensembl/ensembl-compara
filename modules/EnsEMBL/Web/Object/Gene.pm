@@ -841,6 +841,7 @@ sub get_homologue_alignments {
     }
     push @params, $species if scalar @$species;
     $msa        = $tree->get_alignment_of_homologues(@params);
+    $tree->release_tree;
   }
   return $msa;
 }
