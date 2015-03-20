@@ -124,8 +124,8 @@ sub munge_chr_id {
   my $ret_id;
   
   do {
-    $ret_id = $head->name if $head->name =~ /^(chr)?$chr_id$/ && $head->size; # Check we get values back for seq region. Maybe need to add 'chr' 
-  } while (!$ret_id && ($head = $head->next));
+    $ret_id = $head->name if $head && $head->name =~ /^(chr)?$chr_id$/ && $head->size; # Check we get values back for seq region. Maybe need to add 'chr' 
+  } while (!$ret_id && $head && ($head = $head->next));
   
   warn " *** could not find region $chr_id in BigBed file" unless $ret_id;
   
