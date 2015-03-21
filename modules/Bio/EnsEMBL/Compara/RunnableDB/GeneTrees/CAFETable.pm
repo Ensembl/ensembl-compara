@@ -87,8 +87,6 @@ sub fetch_input {
         die ('cafe_shell is mandatory if lambda is not provided');
     }
 
-    $self->param_required('type');
-
     $self->param('adaptor', $self->compara_dba->get_GeneTreeAdaptor);
 
     if ($self->param('perFamTable')) {
@@ -280,17 +278,6 @@ sub get_leaf {
         }
     }
     return undef;
-}
-
-sub get_name {
-    my ($self, $tree) = @_;
-    my $name;
-    if ($self->param('type') eq 'nc') {
-        $name = $tree->root_id();
-    } else {
-        $name = $tree->root_id();
-    }
-    return $name;
 }
 
 sub is_in {

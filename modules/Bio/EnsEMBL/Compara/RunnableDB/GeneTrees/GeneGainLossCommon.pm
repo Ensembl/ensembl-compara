@@ -221,18 +221,6 @@ sub get_normalized_table {
     return;
 }
 
-
-sub get_name {
-    my ($self, $tree) = @_;
-    my $name;
-    if ($self->param('type') eq 'nc') {
-        $name = $tree->root_id();
-    } else {
-        $name = $tree->root_id();
-    }
-    return $name;
-}
-
 sub mean {
     my (@items) = @_;
     return sum(@items) / (scalar @items);

@@ -183,7 +183,6 @@ sub pipeline_analyses {
              -module => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::CAFETable',
              -parameters => {
                              'cafe_species' => $self->o('cafe_species'),
-                             'type'         => $self->o('type'),   # [nc|prot]
                              'perFamTable'  => $self->o('per_family_table'),
                              'cafe_shell'   => $self->o('cafe_shell'),
                             },
