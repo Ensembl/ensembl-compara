@@ -139,15 +139,6 @@ sub default_options {
            };
 }
 
-sub pipeline_wide_parameters {  # these parameter values are visible to all analyses, can be overridden by parameters{} and input_id{}
-    my ($self) = @_;
-    return {
-        %{$self->SUPER::pipeline_wide_parameters},          # here we inherit anything from the base class
-
-        'mlss_id'       => $self->o('mlss_id'),
-    }
-}
-
 sub pipeline_analyses {
     my ($self) = @_;
     return [
