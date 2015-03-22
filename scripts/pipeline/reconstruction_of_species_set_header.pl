@@ -138,7 +138,7 @@ sub main {
         my $names = $master_contents->{$set_id}{'names'};
 
         my $ss_name = 'UNKNOWN';
-        if($set_size==1 and $names=~/^(\w\.\w\w\w) paralogues$/) {
+        if($set_size==1 and $names=~/(^|,)(\w\.\w\w\w) paralogues/) {
             $ss_name = $master_name->{$genome_dbs[0]};
         } elsif($set_size==2 and $names=~/(\w\.\w\w\w-\w\.\w\w\w) (paralogues|orthologues)/) {
             $ss_name = join('-', sort map { $master_name->{$_} } @genome_dbs);
