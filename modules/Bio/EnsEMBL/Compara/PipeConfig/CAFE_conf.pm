@@ -141,15 +141,25 @@ sub default_options {
 
 sub pipeline_analyses {
     my ($self) = @_;
+    # Get the two parts
+    my $analyses_species_tree = $self->pipeline_analyses_species_tree();
+    my $analyses_cafe = $self->pipeline_analyses_cafe();
+    # And connect them
+    $analyses_species_tree->[0]->{-input_ids} = [ {} ],
+    $analyses_species_tree->[0]->{-wait_for}  = [ $self->o('wait_for') ];
+    $analyses_species_tree->[1]->{-flow_into} = [ 'CAFE_table' ];
+    return [@$analyses_species_tree, @$analyses_cafe];
+}
+
+sub pipeline_analyses_species_tree {
+    my ($self) = @_;
     return [
             {
              -logic_name => 'make_full_species_tree',
              -module => 'Bio::EnsEMBL::Compara::RunnableDB::MakeSpeciesTree',
-             -input_ids => [{}],
              -parameters => {
                              'label'    => $self->o('full_species_tree_label'),
                             },
-             -wait_for => [$self->o('wait_for')],
              -flow_into  => {
                              # 3 => { 'mysql:////meta' => { 'meta_key' => $self->o('species_tree_meta_key'), 'meta_value' => '#species_tree_string#' } },
                              1 => ['CAFE_species_tree'],
@@ -163,12 +173,13 @@ sub pipeline_analyses {
                              'cafe_species' => $self->o('cafe_species'),
                              'label'        => $self->o('full_species_tree_label')
                             },
-             -flow_into => {
-#                            '1->A' => ['BadiRate'],
-                            1 => ['CAFE_table'],
-                           },
             },
+    ];
+}
 
+sub pipeline_analyses_cafe {
+    my ($self) = @_;
+    return [
 #            {
 #             -logic_name => 'BadiRate',
 #             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::BadiRate',
