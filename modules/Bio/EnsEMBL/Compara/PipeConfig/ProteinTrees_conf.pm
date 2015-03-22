@@ -180,16 +180,19 @@ sub default_options {
         #'prottest_jar'              => '/software/ensembl/compara/prottest/prottest-3.4.jar',
         #'treebest_exe'              => '/software/ensembl/compara/treebest',
         #'raxml_exe'                 => '/software/ensembl/compara/raxml/raxmlHPC-SSE3-8.1.3',
+        #'raxml_pthreads_exe'        => '/software/ensembl/compara/raxml/raxmlHPC-PTHREADS-SSE3-8.1.3',
+        #'examl_exe_avx'             => 'UNDEF',
+        #'examl_exe_sse3'            => 'UNDEF',
+        #'parse_examl_exe'           => 'UNDEF',
         #'notung_jar'                => '/software/ensembl/compara/notung/Notung-2.6.jar',
         #'quicktree_exe'             => '/software/ensembl/compara/quicktree_1.1/bin/quicktree',
         #'hmmer2_home'               => '/software/ensembl/compara/hmmer-2.3.2/src/',
-        'hmmer3_home'               => '/nfs/panda/ensemblgenomes/external/hmmer-3/bin/',
+        #'hmmer3_home'               => '/software/ensembl/compara/hmmer-3.1b1/binaries/',
         #'codeml_exe'                => '/software/ensembl/compara/paml43/bin/codeml',
         #'ktreedist_exe'             => '/software/ensembl/compara/ktreedist/Ktreedist.pl',
         #'blast_bin_dir'             => '/software/ensembl/compara/ncbi-blast-2.2.28+/bin',
         #'pantherScore_path'         => '/software/ensembl/compara/pantherScore1.03',
-        #'trimal_exe'                => '/software/ensembl/compara/src/trimAl/source/trimal',
-        #'raxml_exe'                 => '/software/ensembl/compara/raxml/standard-RAxML-8.0.19/raxmlHPC-SSE3',
+        #'cafe_shell'                => '/software/ensembl/compara/cafe/cafe.2.2/cafe/bin/shell',
 
     # HMM specific parameters (set to 0 or undef if not in use)
        # The location of the HMM library. If the directory is empty, it will be populated with the HMMs found in 'panther_like_databases' and 'multihmm_files'
@@ -307,7 +310,6 @@ sub default_options {
             # Data needed for CAFE
             'cafe_lambdas'             => '',  # For now, we don't supply lambdas
             'cafe_struct_tree_str'     => '',  # Not set by default
-            'cafe_shell'               => '/software/ensembl/compara/cafe/cafe.2.2/cafe/bin/shell',
             'full_species_tree_label'  => 'default',
             'per_family_table'         => 1,
             'cafe_species'             => [],

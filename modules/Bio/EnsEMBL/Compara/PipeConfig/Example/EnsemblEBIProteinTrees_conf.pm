@@ -109,6 +109,7 @@ sub default_options {
         'examl_exe_sse3'            => 'UNDEF',
         'parse_examl_exe'           => 'UNDEF',
         'hmmer3_home'               => 'UNDEF',
+        'cafe_shell'                => 'UNDEF',
 
         # The following ones are currently installed by TreeFam, but should
         # also be under /nfs/panda/ensemblgenomes/external/

@@ -101,6 +101,9 @@ sub default_options {
     # we're not interested in treefam
     'do_treefam_xref'           => 0,
 
+    # neither in CAFE:
+    'initialise_cafe_pipeline'  => 0,
+
     # hive_capacity values for some analyses:
     'store_sequences_capacity'  => 50,
     'blastp_capacity'           => 450,

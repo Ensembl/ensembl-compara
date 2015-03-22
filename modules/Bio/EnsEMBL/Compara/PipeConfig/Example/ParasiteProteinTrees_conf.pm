@@ -141,6 +141,9 @@ sub default_options {
         # Add the database location of the previous Compara release. Use "undef" if running the pipeline without reuse
         'prev_rel_db' => undef,
 
+        # Do we want to initialise the CAFE part now ?
+        'initialise_cafe_pipeline'  => 0,
+
     };
 }
 

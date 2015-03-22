@@ -127,6 +127,7 @@ sub default_options {
         'ktreedist_exe'             => '/software/ensembl/compara/ktreedist/Ktreedist.pl',
         'blast_bin_dir'             => '/software/ensembl/compara/ncbi-blast-2.2.28+/bin',
         'pantherScore_path'         => '/software/ensembl/compara/pantherScore1.03',
+        'cafe_shell'                => '/software/ensembl/compara/cafe/cafe.2.2/cafe/bin/shell',
 
     # HMM specific parameters (set to 0 or undef if not in use)
        # List of directories that contain Panther-like databases (with books/ and globals/)
@@ -240,6 +241,10 @@ sub default_options {
         #'mlss_id'                   => undef,
         #'ncbi_db'                   => 'mysql://ensro@ens-livemirror:3306/ncbi_taxonomy',
         #'prev_rel_db'               => undef,
+
+        # Do we want to initialise the CAFE part now ?
+        'initialise_cafe_pipeline'  => 1,
+
     };
 }
 

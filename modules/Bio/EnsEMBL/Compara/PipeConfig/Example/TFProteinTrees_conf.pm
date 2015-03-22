@@ -128,6 +128,7 @@ sub default_options {
         'examl_exe_sse3'            => '/nfs/production/xfam/treefam/software/ExaML/examl',
         'parse_examl_exe'           => '/nfs/production/xfam/treefam/software/ExaML/parse-examl',
         'prottest_jar'              => '/nfs/production/xfam/treefam/software/ProtTest/prottest-3.4-20140123/prottest-3.4.jar',
+        'cafe_shell'                => 'UNDEF',
 
     # HMM specific parameters (set to 0 or undef if not in use)
        # List of directories that contain Panther-like databases (with books/ and globals/)

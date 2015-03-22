@@ -80,6 +80,10 @@ sub default_options {
     # switch off the reuse:
         'reuse_core_sources_locs'   => [ ],
         'reuse_db'                  => undef,
+
+    # switch off CAFE:
+        'initialise_cafe_pipeline'  => 0,
+
     };
 }
 

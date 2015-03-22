@@ -116,12 +116,17 @@ sub default_options {
             'treebest_exe'          => '/software/ensembl/compara/treebest',
             'quicktree_exe'         => '/software/ensembl/compara/quicktree_1.1/bin/quicktree',
             'r2r_exe'               => '/software/ensembl/compara/R2R-1.0.3/src/r2r',
+            'cafe_shell'            => '/software/ensembl/compara/cafe/cafe.2.2/cafe/bin/shell',
 
             # RFAM parameters
             'rfam_ftp_url'           => 'ftp://ftp.sanger.ac.uk/pub/databases/Rfam/11.0/',
             'rfam_remote_file'       => 'Rfam.cm.gz',
             'rfam_expanded_basename' => 'Rfam.cm',
             'rfam_expander'          => 'gunzip ',
+
+            # CAFE parameters
+            'initialise_cafe_pipeline'  => 1,
+            'cafe_species'          => ['danio.rerio', 'taeniopygia.guttata', 'callithrix.jacchus', 'pan.troglodytes', 'homo.sapiens', 'mus.musculus'],
 
             # Other parameters
             'raxml_number_of_cores' => 2,

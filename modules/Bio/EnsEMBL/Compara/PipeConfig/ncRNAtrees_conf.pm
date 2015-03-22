@@ -90,16 +90,14 @@ sub default_options {
             # ambiguity codes
             'allow_ambiguity_codes'    => 0,
 
-        # Do we want to initialise the CAFE part now ?
-        'initialise_cafe_pipeline'  => undef,
-
+            # Do we want to initialise the CAFE part now ?
+            'initialise_cafe_pipeline'  => undef,
             # Data needed for CAFE
             'cafe_lambdas'             => '',  # For now, we don't supply lambdas
             'cafe_struct_tree_str'     => '',  # Not set by default
-            'cafe_shell'               => '/software/ensembl/compara/cafe/cafe.2.2/cafe/bin/shell',
-            'full_species_tree_label'  => 'default',
+            'full_species_tree_label'  => 'full_species_tree',
             'per_family_table'         => 0,
-            'cafe_species'             => ['danio.rerio', 'taeniopygia.guttata', 'callithrix.jacchus', 'pan.troglodytes', 'homo.sapiens', 'mus.musculus'],
+            'cafe_species'             => [],
 
            };
 }
