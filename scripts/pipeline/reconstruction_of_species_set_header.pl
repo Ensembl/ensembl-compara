@@ -148,6 +148,8 @@ sub main {
             $ss_name = $1;
         } elsif($set_size>2 and $names=~/^(protein trees|families)/) {
             $ss_name = 'all species';
+        } else {
+            die "Unknown combination of size=$set_size and name=$names\n";
         }
         
         print "REPLACE INTO $header_table_name (species_set_id, name, set_size, first_release, last_release) VALUES ($set_id, '$ss_name', $set_size, $first_rel_present, $last_rel_present);\n";
