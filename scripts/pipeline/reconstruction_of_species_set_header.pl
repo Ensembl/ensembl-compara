@@ -24,7 +24,7 @@ use Data::Dumper;
 use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
 
 my $starting_from_rel = 49;     # 49 is the earliest
-my $current_rel       = 62;     # 62 is the current
+my $current_rel       = 79;     # 79 is the current
 my $header_table_name = 'species_set_header';
 
 sub get_compara_url {
@@ -35,9 +35,9 @@ sub get_compara_url {
 #    } elsif($rel == 61) {
 #        return "mysql://ensro\@compara1/sf5_ensembl_compara_61";
     } elsif((48<=$rel) and ($rel<=$current_rel)) {
-        return "mysql://ensro\@ensdb-archive:5304/ensembl_compara_$rel";
+        return "mysql://anonymous\@ensembldb.ensembl.org:5306/ensembl_compara_$rel";
     } elsif((29<=$rel) and ($rel<=47)) {
-        return "mysql://ensro\@ensdb-archive:3304/ensembl_compara_$rel";
+        return "mysql://anonymous\@ensembldb.ensembl.org:4306/ensembl_compara_$rel";
     }
 
     return 'mysql://ensro@compara1/sf5_ensembl_compara_master';
