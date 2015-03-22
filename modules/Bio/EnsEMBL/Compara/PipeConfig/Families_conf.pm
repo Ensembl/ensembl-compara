@@ -144,6 +144,7 @@ sub pipeline_wide_parameters {  # these parameter values are visible to all anal
         %{$self->SUPER::pipeline_wide_parameters},          # here we inherit anything from the base class
 
         'email'             => $self->o('email'),                   # for automatic notifications (may be unsupported by your Meadows)
+        'mlss_id'           => $self->o('mlss_id'),
 
         'work_dir'          => $self->o('work_dir'),                # data directories and filenames
         'blastdb_dir'       => $self->o('blastdb_dir'),
@@ -235,7 +236,6 @@ sub pipeline_analyses {
         {   -logic_name => 'genomedb_factory',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ObjectFactory',
             -parameters => {
-                'mlss_id'               => $self->o('mlss_id'),
                 'call_list'             => [ 'compara_dba', 'get_MethodLinkSpeciesSetAdaptor', [ 'fetch_by_dbID', '#mlss_id#'], 'species_set_obj', 'genome_dbs' ],
                 'column_names2getters'  => { 'genome_db_id' => 'dbID' },
             },
@@ -285,7 +285,7 @@ sub pipeline_analyses {
             },
             -flow_into => {
                 '2->A' => [ 'load_uniprot_factory' ],
-                'A->1' => [ 'snapshot_after_load_uniprot' ],
+                'A->1' => [ 'register_mlss' ],
             },
             -rc_name => 'urgent',
         },
@@ -310,6 +310,11 @@ sub pipeline_analyses {
             -analysis_capacity => 20,
             -batch_size    => 100,
             -rc_name => '2GigMem',
+        },
+
+        {   -logic_name => 'register_mlss',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::RegisterMLSS',
+            -flow_into  => [ 'snapshot_after_load_uniprot' ],
         },
 
         {   -logic_name => 'snapshot_after_load_uniprot',

@@ -120,6 +120,7 @@ sub pipeline_wide_parameters {  # these parameter values are visible to all anal
         %{$self->SUPER::pipeline_wide_parameters},          # here we inherit anything from the base class
 
         'mlss_id'       => $self->o('mlss_id'),
+        'master_db'     => $self->o('master_db'),
     }
 }
 
@@ -192,7 +193,7 @@ sub pipeline_analyses {
         {   -logic_name => 'copy_table_factory',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
             -parameters => {
-                'db_conn'   => $self->o('master_db'),
+                'db_conn'   => '#master_db#',
                 'inputlist' => [ 'method_link', 'species_set', 'method_link_species_set', 'ncbi_taxa_name', 'ncbi_taxa_node', 'dnafrag' ],
                 'column_names' => [ 'table' ],
             },
@@ -258,7 +259,7 @@ sub pipeline_analyses {
             {   -logic_name => 'load_genomedb_factory',
                 -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ObjectFactory',
                 -parameters => {
-                                'compara_db'            => $self->o('master_db'),   # that's where genome_db_ids come from
+                                'compara_db'            => '#master_db#',   # that's where genome_db_ids come from
                                 'call_list'             => [ 'compara_dba', 'get_MethodLinkSpeciesSetAdaptor', ['fetch_by_dbID', '#mlss_id#'], 'species_set_obj', 'genome_dbs' ],
                                 'column_names2getters'  => { 'genome_db_id' => 'dbID', 'species_name' => 'name', 'assembly_name' => 'assembly', 'genebuild' => 'genebuild', 'locator' => 'locator', 'has_karyotype', 'has_karyotype', 'is_high_coverage' => 'is_high_coverage' },
                                },
@@ -315,7 +316,12 @@ sub pipeline_analyses {
                 mode            => 'members_globally',
             },
             %hc_params,
-            -flow_into  => ['make_species_tree', $self->o('initialise_cafe_pipeline') ? ('make_full_species_tree') : (), $self->o('skip_epo') ? () : ('create_lca_species_set') ],
+            -flow_into  => ['make_species_tree', $self->o('initialise_cafe_pipeline') ? ('make_full_species_tree') : (), $self->o('skip_epo') ? () : ('create_lca_species_set'), 'register_mlss' ],
+        },
+
+
+        {   -logic_name         => 'register_mlss',
+            -module             => 'Bio::EnsEMBL::Compara::RunnableDB::RegisterMLSS',
         },
 
 # ---------------------------------------------[load species tree]-------------------------------------------------------------------
