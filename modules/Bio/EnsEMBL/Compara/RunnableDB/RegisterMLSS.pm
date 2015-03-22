@@ -25,7 +25,18 @@ Bio::EnsEMBL::Compara::RunnableDB::RegisterMLSS
 
 =head1 DESCRIPTION
 
-This Runnable register the current database to the MLSS record in the master database
+This Runnable register the current database to the MLSS record in the master database.
+
+Parameters:
+ - master_db: location of the master database. If associated to the "ensro" user,
+              the runnable will try to upgrade the connection to "ensadmin", using
+              the password given by "master_password", or the environment variable
+              ENSADMIN_PSW otherwise.
+ - master_password: password of the "ensadmin" user. see above
+ - mlss_id: dbID of the MethodLinkSpeciesSet of the pipeline
+
+ - allow_reregistration: boolean. see below
+ - allow_overwrite_other_database: boolean. see below
 
 =cut
 
