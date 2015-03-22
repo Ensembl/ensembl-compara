@@ -62,6 +62,8 @@ use warnings;
 
 use Bio::EnsEMBL::Hive::Version 2.3;
 
+use Bio::EnsEMBL::Compara::PipeConfig::CAFE_conf;
+
 use base ('Bio::EnsEMBL::Compara::PipeConfig::ComparaGeneric_conf');
 
 
@@ -274,6 +276,8 @@ sub default_options {
         # By default, the stable ID mapping is done on the previous release database
         'mapping_db'  => $self->o('prev_rel_db'),
 
+    # Configuration of the pipeline worklow
+
         # How will the pipeline create clusters (families) ?
         # Possible values: 'blastp' (default), 'hmm', 'hybrid'
         #   'blastp' means that the pipeline will run a all-vs-all blastp comparison of the proteins and run hcluster to create clusters. This can take a *lot* of compute
@@ -296,6 +300,17 @@ sub default_options {
 
         # If all the species can be reused, and if the reuse_level is "clusters" or above, do we really want to copy all the peptide_align_feature / hmm_profile tables ? They can take a lot of space and are not used in the pipeline
         'quick_reuse'   => 1,
+
+        # Do we want to initialise the CAFE part now ?
+        'initialise_cafe_pipeline'  => undef,
+
+            # Data needed for CAFE
+            'cafe_lambdas'             => '',  # For now, we don't supply lambdas
+            'cafe_struct_tree_str'     => '',  # Not set by default
+            'cafe_shell'               => '/software/ensembl/compara/cafe/cafe.2.2/cafe/bin/shell',
+            'full_species_tree_label'  => 'default',
+            'per_family_table'         => 1,
+            'cafe_species'             => [],
 
     };
 }
@@ -659,7 +674,7 @@ sub core_pipeline_analyses {
                 mode            => 'species_tree',
                 binary          => 0,
             },
-            -flow_into  => [ $self->o('use_notung') ? ( $self->o('binary_species_tree_input_file') ? 'load_binary_species_tree' : 'make_binary_species_tree' ) : () ],
+            -flow_into  => [ $self->o('use_notung') ? ( $self->o('binary_species_tree_input_file') ? 'load_binary_species_tree' : 'make_binary_species_tree' ) : ($self->o('initialise_cafe_pipeline') ? 'CAFE_species_tree' : ()) ],
             %hc_analysis_params,
         },
 
@@ -693,6 +708,7 @@ sub core_pipeline_analyses {
                 binary          => 1,
             },
             %hc_analysis_params,
+            -flow_into  => [ $self->o('initialise_cafe_pipeline') ? 'CAFE_species_tree' : () ],
         },
 
         {   -logic_name => 'copy_trees_from_previous_release',
@@ -1565,6 +1581,7 @@ sub core_pipeline_analyses {
                 $self->o('do_stable_id_mapping') ? 'stable_id_mapping' : (),
                 $self->o('do_treefam_xref') ? 'treefam_xref_idmap' : (),
                 'write_member_counts',
+                $self->o('initialise_cafe_pipeline') ? 'CAFE_table' : (),
             ],
             %hc_analysis_params,
         },
@@ -2558,6 +2575,11 @@ sub filter_analyses {
 ## The following methods can be redefined to add more analysis and change the parameters of some core ones
 sub extra_analyses {
     my $self = shift;
+    if ($self->o('initialise_cafe_pipeline')) {
+        my $analyses_species_tree = Bio::EnsEMBL::Compara::PipeConfig::CAFE_conf::pipeline_analyses_species_tree($self);
+        my $analyses_cafe = Bio::EnsEMBL::Compara::PipeConfig::CAFE_conf::pipeline_analyses_cafe($self);
+        return [@$analyses_species_tree, @$analyses_cafe];
+    }
     return [
     ];
 }

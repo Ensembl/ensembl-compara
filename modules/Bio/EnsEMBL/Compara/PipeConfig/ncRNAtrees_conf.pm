@@ -56,6 +56,8 @@ use warnings;
 
 use Bio::EnsEMBL::Hive::Version 2.3;
 
+use Bio::EnsEMBL::Compara::PipeConfig::CAFE_conf;
+
 use base ('Bio::EnsEMBL::Compara::PipeConfig::ComparaGeneric_conf');
 
 sub default_options {
@@ -87,6 +89,17 @@ sub default_options {
 
             # ambiguity codes
             'allow_ambiguity_codes'    => 0,
+
+        # Do we want to initialise the CAFE part now ?
+        'initialise_cafe_pipeline'  => undef,
+
+            # Data needed for CAFE
+            'cafe_lambdas'             => '',  # For now, we don't supply lambdas
+            'cafe_struct_tree_str'     => '',  # Not set by default
+            'cafe_shell'               => '/software/ensembl/compara/cafe/cafe.2.2/cafe/bin/shell',
+            'full_species_tree_label'  => 'default',
+            'per_family_table'         => 0,
+            'cafe_species'             => ['danio.rerio', 'taeniopygia.guttata', 'callithrix.jacchus', 'pan.troglodytes', 'homo.sapiens', 'mus.musculus'],
 
            };
 }
@@ -125,6 +138,9 @@ sub pipeline_analyses {
     my %backbone_params = (
                            -meadow_type       => 'LOCAL',
                           );
+
+    my $analyses_species_tree = Bio::EnsEMBL::Compara::PipeConfig::CAFE_conf::pipeline_analyses_species_tree($self);
+    my $analyses_cafe = Bio::EnsEMBL::Compara::PipeConfig::CAFE_conf::pipeline_analyses_cafe($self);
 
     return [
 
@@ -292,9 +308,7 @@ sub pipeline_analyses {
                                        'DELETE species_set FROM species_set JOIN tmp_ss USING (species_set_id)',
                                      ]
                            },
-            -flow_into => {
-                           1 => ['make_species_tree', 'hc_members_globally', $self->o('skip_epo') ? () : ('create_lca_species_set') ],
-            },
+            -flow_into  => [ 'hc_members_globally' ],
         },
 
         {   -logic_name         => 'hc_members_globally',
@@ -303,6 +317,7 @@ sub pipeline_analyses {
                 mode            => 'members_globally',
             },
             %hc_params,
+            -flow_into  => ['make_species_tree', $self->o('initialise_cafe_pipeline') ? ('make_full_species_tree') : (), $self->o('skip_epo') ? () : ('create_lca_species_set') ],
         },
 
 # ---------------------------------------------[load species tree]-------------------------------------------------------------------
@@ -445,7 +460,7 @@ sub pipeline_analyses {
             -parameters     => {
                 'input_file'    => $self->o('ensembl_cvs_root_dir').'/ensembl-compara/sql/tree-stats-as-stn_tags.sql',
             },
-            -flow_into      => [ 'email_tree_stats_report', 'write_member_counts' ],
+            -flow_into      => [ 'email_tree_stats_report', 'write_member_counts', $self->o('initialise_cafe_pipeline') ? ('CAFE_table') : () ],
         },
 
         {   -logic_name     => 'email_tree_stats_report',
@@ -768,6 +783,8 @@ sub pipeline_analyses {
             %hc_params,
         },
 
+        @$analyses_species_tree,
+        @$analyses_cafe,
     ];
 }
 
