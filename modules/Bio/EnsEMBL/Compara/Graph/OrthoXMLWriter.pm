@@ -250,6 +250,25 @@ sub write_trees {
 }
 
 
+=head2 write_subtrees()
+
+  Arg[0]      : The tree nodes to write. Can be a single GeneTreeNode or an ArrayRef
+  Description : Writes a subtree into the backing document representation
+  Returntype  : None
+  Exceptions  : Possible if there is an issue with retrieving data from the tree
+  instance
+  Example     : $writer->write_subtrees($tree_node);
+  Status      : Stable
+
+=cut
+
+sub write_subtrees {
+    my ($self, $tree_nodes) = @_;
+
+    return $self->_write_AlignedMemberSets('Bio::EnsEMBL::Compara::GeneTreeNode', $tree_nodes);
+}
+
+
 sub _write_AlignedMemberSets {
   my ($self, $type, $alns_sets) = @_;
 
@@ -261,7 +280,8 @@ sub _write_AlignedMemberSets {
   my $hash_members = {};
   my $list_species = [];
   foreach my $aln_set (@{$alns_sets}) {
-    foreach my $member (@{$aln_set->get_all_Members}) {
+    my $all_members = $aln_set->isa('Bio::EnsEMBL::Compara::GeneTreeNode') ? $aln_set->get_all_leaves() : $aln_set->get_all_Members();
+    foreach my $member (@$all_members) {
       if (not exists $hash_members->{$member->genome_db_id}) {
         push @{$list_species}, $member->genome_db;
         $hash_members->{$member->genome_db_id} = {};
@@ -339,6 +359,8 @@ sub _write_data {
     if ($object->isa('Bio::EnsEMBL::Compara::GeneTree')) {
       $self->_find_valid_genetree_roots($object->root);
       $object->root->release_tree() if ! $self->no_release_trees;
+    } elsif ($object->isa('Bio::EnsEMBL::Compara::GeneTreeNode')) {
+      $self->_find_valid_genetree_roots($object);
     } elsif ($object->isa('Bio::EnsEMBL::Compara::Homology')) {
       $self->_homology_body($object);
     } else {
