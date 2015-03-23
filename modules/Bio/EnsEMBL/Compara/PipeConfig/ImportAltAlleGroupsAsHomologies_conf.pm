@@ -174,7 +174,6 @@ sub pipeline_analyses {
             -flow_into => {
                 2   => [ 'altallegroup_factory' ],
             },
-            -meadow_type    => 'LOCAL',
         },
 
         {
@@ -188,7 +187,6 @@ sub pipeline_analyses {
                 '2->A' => [ 'import_altalleles_as_homologies' ],
                 'A->1' => [ 'update_member_display_labels' ],
             },
-            -meadow_type    => 'LOCAL',
         },
 
 
