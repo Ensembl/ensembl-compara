@@ -61,21 +61,28 @@ sub load_user_tracks {
 
 sub _user_track_settings {
   my ($self, $format) = @_;
+  my $renderers;
 
-  my $renderers = [
-    'density_line',       'Density plot - line graph',
-    'density_bar',        'Density plot - filled bar chart',
-    'density_outline',    'Density plot - outline bar chart',
+  if (lc $format eq 'bigwig') {
+    $renderers = [
+                  'density_line',       'Line graph - mean',
+                  'density_whiskers',   'Line graph - mean with whiskers',
+                  'density_bar',        'Histogram, filled - mean',
+                  'density_outline',    'Histogram, outline - mean',
+                  ];
+  }
+  else {
+    $renderers = [
+                  'highlight_lharrow',  'Arrow on lefthand side',
+                  'highlight_rharrow',  'Arrow on righthand side',
+                  'highlight_bowtie',   'Arrows on both sides',
+                  'highlight_wideline', 'Line',
+                  'highlight_widebox',  'Box',
+                  'density_line',       'Density plot - line graph',
+                  'density_bar',        'Density plot - filled bar chart',
+                  'density_outline',    'Density plot - outline bar chart',
                   ];
 
-  unless (lc $format eq 'bigwig') {
-    unshift @$renderers, (
-      'highlight_lharrow',  'Arrow on lefthand side',
-      'highlight_rharrow',  'Arrow on righthand side',
-      'highlight_bowtie',   'Arrows on both sides',
-      'highlight_wideline', 'Line',
-      'highlight_widebox',  'Box',
-    );
   }
 
   unshift @$renderers, ('off', 'Off');
