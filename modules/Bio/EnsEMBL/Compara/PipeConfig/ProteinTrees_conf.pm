@@ -2514,6 +2514,10 @@ sub core_pipeline_analyses {
             -hive_capacity => 10,
         },
 
+        $self->o('initialise_cafe_pipeline') ? (
+            @{ Bio::EnsEMBL::Compara::PipeConfig::CAFE_conf::pipeline_analyses_species_tree($self) },
+            @{ Bio::EnsEMBL::Compara::PipeConfig::CAFE_conf::pipeline_analyses_cafe($self) },
+        ) : (),
     ];
 }
 
@@ -2582,11 +2586,6 @@ sub filter_analyses {
 ## The following methods can be redefined to add more analysis and change the parameters of some core ones
 sub extra_analyses {
     my $self = shift;
-    if ($self->o('initialise_cafe_pipeline')) {
-        my $analyses_species_tree = Bio::EnsEMBL::Compara::PipeConfig::CAFE_conf::pipeline_analyses_species_tree($self);
-        my $analyses_cafe = Bio::EnsEMBL::Compara::PipeConfig::CAFE_conf::pipeline_analyses_cafe($self);
-        return [@$analyses_species_tree, @$analyses_cafe];
-    }
     return [
     ];
 }
