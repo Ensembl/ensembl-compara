@@ -44,10 +44,8 @@ sub default_options {
 
         'pipeline_name'   => 'homology_projections_'.$self->o('rel_with_suffix'),   # also used to differentiate submitted processes
 
-        # URLs of other databases (from which we inherit the members and sequences, and base objects)
+        'division'        => 'ensembl',     # used to find the species set and the family / ncRNA-tree databases
         'master_db'       => 'mysql://ensro@compara1/sf5_ensembl_compara_master',
-        'family_db'       => 'mysql://ensro@compara2/lg4_families_79',
-        'ncrnatrees_db'   => 'mysql://ensro@compara3/mm14_compara_nctrees_79b',
 
         # Tables to copy and merge
         'tables_from_master'    => [ 'method_link', 'species_set', 'method_link_species_set', 'ncbi_taxa_node', 'ncbi_taxa_name' ],
@@ -80,9 +78,14 @@ sub pipeline_analyses {
     my ($self) = @_;
     return [
 
-        {   -logic_name => 'pipeline_start_analysis',
-            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
-            -input_ids => [ { }, ],
+        {   -logic_name => 'find_other_mlss',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::FindMLSS',
+            -input_ids => [ {
+                method_links => {
+                    FAMILY => 'family_db',
+                    NC_TREES => 'ncrnatrees_db',
+                },
+            } ],
             -flow_into => {
                 '1->A' => [ 'copy_from_master_factory', 'copy_from_familydb_factory', 'merge_tables_factory' ],
                 'A->1' => [ 'offset_tables' ],
@@ -134,7 +137,7 @@ sub pipeline_analyses {
         {   -logic_name    => 'topup_table_from_family_db',
             -module        => 'Bio::EnsEMBL::Hive::RunnableDB::MySQLTransfer',
             -parameters    => {
-                'src_db_conn'   => $self->o('family_db'),
+                'src_db_conn'   => '#family_db#',
                 'mode'          => 'topup',
             },
         },
@@ -142,7 +145,7 @@ sub pipeline_analyses {
         {   -logic_name    => 'topup_table_from_ncrna_db',
             -module        => 'Bio::EnsEMBL::Hive::RunnableDB::MySQLTransfer',
             -parameters    => {
-                'src_db_conn'   => $self->o('ncrnatrees_db'),
+                'src_db_conn'   => '#ncrnatrees_db#',
                 'mode'          => 'topup',
             },
             -flow_into      => [ 'topup_table_from_family_db' ],
