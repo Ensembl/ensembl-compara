@@ -500,8 +500,12 @@ sub write_homologue_seq {
     my $file      = $self->{'__file'};
     my $file_path = $file->absolute_write_path;
     $file->touch;
+    my %params = (-format => $format, -ID_TYPE=>'STABLE_ID');
+    if ($hub->param('seq_type') eq 'dna') {
+      $params{'-SEQ_TYPE'} = 'cds';
+    }
     eval {
-      $data->print_sequences_to_file($file_path, -format => $format, -ID_TYPE=>'STABLE_ID');
+      $data->print_sequences_to_file($file_path, %params);
     };
     if ($@) {
       $result = {'error' => ['Error writing sequences to file']};
