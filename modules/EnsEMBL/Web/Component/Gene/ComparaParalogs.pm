@@ -191,14 +191,18 @@ sub export_options { return {'action' => 'Paralogs'}; }
 
 sub get_export_data {
 ## Get data for export
-  my $self = shift;
+  my ($self, $flag) = @_;
   my $hub          = $self->hub;
   my $object       = $self->object || $hub->core_object('gene');
-  my $cdb          = $hub->param('cdb') || 'compara';
 
-  my ($homologies) = $object->get_homologies('ENSEMBL_PARALOGUES', 'paralog|gene_split', undef, $cdb);
-
-  return $homologies;
+  if ($flag eq 'sequence') {
+    return $object->get_homologue_alignments;
+  }
+  else {
+    my $cdb = $flag || $hub->param('cdb') || 'compara';
+    my ($homologies) = $object->get_homologies('ENSEMBL_PARALOGUES', 'paralog|gene_split', undef, $cdb);
+    return $homologies;
+  }
 }
 
 sub buttons {
@@ -221,6 +225,11 @@ sub buttons {
                   'data_action' => $hub->action,
                   'gene_name'   => $name,
                 };
+
+    ## Add any species settings
+    foreach (grep { /^species_/ } $hub->param) {
+      $params->{$_} = $hub->param($_);
+    }
 
     push @buttons, {
                     'url'     => $hub->url($params),
