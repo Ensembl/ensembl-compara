@@ -87,7 +87,7 @@ use base qw(Bio::EnsEMBL::Compara::Graph::BaseXMLWriter);
 
 use Bio::EnsEMBL::Utils::Argument qw(rearrange);
 use Bio::EnsEMBL::Utils::Exception qw(throw warning);
-use Bio::EnsEMBL::Utils::Scalar qw(check_ref wrap_array);
+use Bio::EnsEMBL::Utils::Scalar qw(check_ref wrap_array check_array_contents);
 
 my $ortho_uri = 'http://orthoXML.org';
 
@@ -223,7 +223,7 @@ sub source_version {
 sub write_homologies {
     my ($self, $homologies) = @_;
 
-    return $self->_write_AlignedMemberSets($homologies);
+    return $self->_write_AlignedMemberSets('Bio::EnsEMBL::Compara::Homology', $homologies);
 }
 
 
@@ -246,14 +246,16 @@ sub write_homologies {
 sub write_trees {
     my ($self, $trees) = @_;
 
-    return $self->_write_AlignedMemberSets($trees);
+    return $self->_write_AlignedMemberSets('Bio::EnsEMBL::Compara::GeneTree', $trees);
 }
 
 
 sub _write_AlignedMemberSets {
-  my ($self, $alns_sets) = @_;
+  my ($self, $type, $alns_sets) = @_;
 
   $alns_sets = wrap_array($alns_sets);
+
+  throw("Not all the arguments are of type '$type'") unless check_array_contents($alns_sets, $type);
 
   # Create a list of all members, grouped by species
   my $hash_members = {};
@@ -340,7 +342,7 @@ sub _write_data {
     } elsif ($object->isa('Bio::EnsEMBL::Compara::Homology')) {
       $self->_homology_body($object);
     } else {
-      die "Cannot handle ".ref($object)."\n";
+      throw("Cannot handle ".ref($object)."\n");
     }
   }
   $w->endTag("groups");
