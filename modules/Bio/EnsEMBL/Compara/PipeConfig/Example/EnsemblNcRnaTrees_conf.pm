@@ -73,7 +73,7 @@ sub default_options {
                                '/nc_trees_' .
                                $self->o('rel_with_suffix'),
 
-            'pipeline_name'    => $self->o('pipeline_basename') . '_' . $self->o('rel_with_suffix'),
+            'pipeline_name'    => 'compara_nctrees_'.$self->o('rel_with_suffix'),
 
 
             # tree break
@@ -132,14 +132,11 @@ sub default_options {
             'raxml_number_of_cores' => 2,
 
             # connection parameters
-            'pipeline_db' => {
-                              -driver => 'mysql',
-                              -host   => 'compara3',
-                              -port   => 3306,
-                              -user   => 'ensadmin',
-                              -pass   => $self->o('password'),
-                              -dbname => $ENV{'USER'}.'_compara_nctrees_'.$self->o('rel_with_suffix'),
-                             },
+
+            # the production database itself (will be created)
+            # it inherits most of the properties from EnsemblGeneric, we usually only need to redefine the host, but you may want to also redefine 'port'
+            'host' => 'compara3',
+
 
             'reg1' => {
                        -host   => 'ens-staging',
