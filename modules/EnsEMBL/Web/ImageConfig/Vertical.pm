@@ -247,7 +247,7 @@ sub create_user_features {
   return $tracks unless $menu;
   
   foreach ($menu->nodes) {
-    next if $_->get('format') =~ /bigwig/i;
+    next if $_->get('display') =~ /density/;
     next unless $_->get('display') ne 'off';
     my $data   = $hub->fetch_userdata_by_id($_->id);
     my $parser = $data->{'parser'};
