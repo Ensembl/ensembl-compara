@@ -526,19 +526,34 @@ sub get_export_data {
   my $hub   = $self->hub;
   my $cdb   = $hub->param('cdb') || 'compara';
   my $gene  = $hub->core_object('gene');
+  my ($tree, $node, $member);
 
+  ## First, get tree
   if ($type && $type eq 'genetree') {
-    return $gene->get_GeneTree($cdb, 1);
+    $tree = $gene->get_GeneTree($cdb, 1);
   }
   else {
-    my ($member, $tree) = $self->get_details($cdb, $gene);
-    if ($type && $type eq 'tree') {
-      return $tree;
+    ($member, $tree) = $self->get_details($cdb, $gene);
+  }
+
+  ## Get node if required
+  if ($hub->param('node')) {
+    $node = $tree->find_node_by_node_id($hub->param('node'))
+  }
+
+  ## Finally return correct object type
+  if ($type) {
+    if ($type eq 'genetree') {
+      return $node ? $node->get_AlignedMemberSet : $tree;
     }
     else {
-      return $tree->get_SimpleAlign;
+      return $node ? $node : $tree;
     }
-  } 
+  }
+  else {
+    return $node ? $node->get_SimpleAlign(-APPEND_SP_SHORT_NAME => 1) 
+                 : $tree->get_SimpleAlign;
+  }
 }
 
 1;
