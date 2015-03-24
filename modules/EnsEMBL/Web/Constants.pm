@@ -347,8 +347,8 @@ sub MARKUP_OPTIONS {
       'label'   => 'Sequence to export',
       'values' => [
         { 'value' => 'msa', 'caption' => 'Alignments' },
-        { 'value' => 'dna', 'caption' => 'Unaligned cDNAs' },
-        { 'value' => 'pep', 'caption' => 'Unaligned proteins' },
+        { 'value' => 'dna', 'caption' => 'CDS' },
+        { 'value' => 'pep', 'caption' => 'Proteins' },
       ],
       'value'   => 'msa',
     }, 
