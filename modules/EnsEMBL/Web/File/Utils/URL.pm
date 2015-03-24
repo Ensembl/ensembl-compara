@@ -282,12 +282,15 @@ sub get_headers {
 
   if ($args->{'nice'}) {
     if ($error) {
-      ## Some servers reject the HEAD request, but that may not be a problem
-      ## so don't pass the error back to the browser
-      warn "!!! HEADER REQUEST ERROR: $error";
-      $result = '';
+      if ($error =~ /405/) {
+        ## Some servers don't accept header requests, which is annoying but not fatal
+        $error = 'denied';
+      }
+      return {'error' => [$error]};
     }
-    return {'headers' => $result};
+    else {
+      return {'headers' => $result};
+    }
   }
   else {
     if ($error) {

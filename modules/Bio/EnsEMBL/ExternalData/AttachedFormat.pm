@@ -46,20 +46,23 @@ sub extra_config_page { return undef; }
 
 sub check_data {
   my ($self) = @_;
-  my $error = '';
+  my $error_message = '';
   my $options = {};
 
   my $url = $self->{'url'};
   $url = "http://$url" unless $url =~ /^http|^ftp/;
 
   ## Check file size
-  my $feedback = get_filesize($url, {'hub' => $self->{'hub'}});
-
-  if ($feedback->{'error'}) {
-    if ($feedback->{'error'} eq 'timeout') {
-      $error = 'No response from remote server';
-    } elsif ($feedback->{'error'} eq 'mime') {
-      $error = 'Invalid mime type';
+  my $feedback = get_filesize($url, {'hub' => $self->{'hub'}, 'nice' => 1});
+  my $error = $feedback->{'error'}[0];
+  if ($error) {
+    if ($error eq 'timeout') {
+      $error_message = 'No response from remote server';
+    } elsif ($error eq 'mime') {
+      $error_message = 'Invalid mime type';
+    } elsif ($error eq 'denied') {
+      ## Server is refusing header requests, so do nothing
+      $options = {'filesize' => 1};
     } else {
       $error = "Unable to access file. Server response: $feedback->{'error'}";
     }
