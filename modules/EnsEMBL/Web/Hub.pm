@@ -804,10 +804,6 @@ sub get_data_from_session {
   my $tempdata = $self->session->get_data(type => $type, code => $code);
   my $name     = $tempdata->{'name'};
 
-  # NB this used to be new EnsEMBL::Web... etc but this does not work with the
-  # FeatureParser module for some reason, so have to use FeatureParser->new()
-  my $parser = EnsEMBL::Web::Text::FeatureParser->new($self->species_defs, undef, $species);
- 
   my %file_params = (
                       'hub' => $self,
                     );
@@ -832,9 +828,9 @@ sub get_data_from_session {
     return {};
   }
   else {
-    my $content = $result->{'content'};
+    my $parser = EnsEMBL::Web::Text::FeatureParser->new($self->species_defs, undef, $species);
 
-    $parser->parse($content, $tempdata->{'format'});
+    $parser->parse($result->{'content'}, $tempdata->{'format'});
 
     return { parser => $parser, name => $name };
   }
