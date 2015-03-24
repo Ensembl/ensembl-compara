@@ -245,7 +245,12 @@ sub draw_wiggle_plot {
   my $label         = $parameters->{'description'}   || $self->my_colour('score', 'text');
      $label         =~ s/\[\[name\]\]/$name/;
   my $textheight    = [ $self->get_text_width(0, $label, '', %font) ]->[3];  
-  my $pix_per_score = $max_score == $min_score ? $self->label->height : $row_height / max($max_score - $min_score, 1);
+  my $pix_per_score = 8; # If all else fails, ie no data and no label
+  if($max_score == $min_score) {
+    $pix_per_score = $self->label->height if $self->label;
+  } else {
+    $pix_per_score = $row_height / ($max_score-$min_score);
+  }
   my $top_offset    = 0;
   my $initial_offset= $self->_offset;
   my $bottom_offset = $max_score == $min_score ? 0 : (($max_score - ($min_score > 0 ? $min_score : 0)) || 1) * $pix_per_score;
