@@ -43,6 +43,16 @@ sub Accessor {
   }
 }
 
+sub Getter {
+  ## Attribute to declare a getter method
+  ## @param Key name to get value for
+  my ($package, $code, $glob, $method, $key) = @_;
+  *{$glob} = sub {
+    my $object = shift;
+    return $object->{$key};
+  }
+}
+
 sub Abstract {
   ## Attribute to declare an abstract method
   ## This will modify the subroutine to throw an exception if an accidental call is made to this method
