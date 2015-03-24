@@ -632,10 +632,7 @@ sub load_user_tracks {
     $self->add_das_tracks('user_data', $source);
   }
 
-  # Get the tracks that are temporarily stored - as "files" not in the DB....
-  # Firstly "upload data" not yet committed to the database...
-  # Then those attached as URLs to either the session or the User
-  # Now we deal with the url sources... again flat file
+  ## Data attached via URL
   foreach my $entry ($session->get_data(type => 'url')) {
     next if $entry->{'no_attach'};
     next unless $entry->{'species'} eq $self->{'species'};
@@ -652,7 +649,8 @@ sub load_user_tracks {
       timestamp   => $entry->{'timestamp'} || time,
     };
   }
-  
+ 
+  ## Data uploaded but not saved
   foreach my $entry ($session->get_data(type => 'upload')) {
     next unless $entry->{'species'} eq $self->{'species'};
    
@@ -686,10 +684,12 @@ sub load_user_tracks {
       }));
     }
   }
-  
+
+  ## Data saved by the user  
   if ($user) {
     my @groups = $user->get_groups;
 
+    ## URL attached data
     foreach my $entry (grep $_->species eq $self->{'species'}, $user->get_records('urls'), map $user->get_group_records($_, 'urls'), @groups) {
       $url_sources{'url_' . $entry->code} = {
         source_name => $entry->name || $entry->url,
@@ -704,6 +704,7 @@ sub load_user_tracks {
       };
     }
     
+    ## Uploads that have been saved to the userdata database
     foreach my $entry (grep $_->species eq $self->{'species'}, $user->get_records('uploads'), map $user->get_group_records($_, 'uploads'), @groups) {
       my ($name, $assembly) = ($entry->name, $entry->assembly);
       
@@ -720,6 +721,7 @@ sub load_user_tracks {
     }
   }
   
+  ## Now we can add all remote (URL) data sources
   foreach my $code (sort { $url_sources{$a}{'source_name'} cmp $url_sources{$b}{'source_name'} } keys %url_sources) {
     my $add_method = lc "_add_$url_sources{$code}{'format'}_track";
     
@@ -746,7 +748,7 @@ sub load_user_tracks {
     }
   }
   
-  # We now need to get a userdata adaptor to get the analysis info
+  ## And finally any saved uploads
   if (keys %upload_sources) {
     my $dbs        = EnsEMBL::Web::DBSQL::DBConnection->new($self->{'species'});
     my $dba        = $dbs->get_DBAdaptor('userdata');
