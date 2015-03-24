@@ -62,7 +62,7 @@ sub chase_redirects {
     $ua->timeout(10);
     $ua->env_proxy;
     $ua->proxy([qw(http https)], $args->{'hub'}->species_defs->ENSEMBL_WWW_PROXY) || ();
-    my $response = $ua->head($url);
+    my $response = $ua->get($url);
     return $response->is_success ? $response->request->uri->as_string
                                     : {'error' => [_get_lwp_useragent_error($response)]};
   }
@@ -77,7 +77,7 @@ sub chase_redirects {
     }
     my $http = HTTP::Tiny->new(%args);
 
-    my $response = $http->request('HEAD', $url);
+    my $response = $http->request('GET', $url);
     if ($response->{'success'}) {
       return $response->{'url'};
     }
@@ -281,7 +281,16 @@ sub get_headers {
   $result = $args->{'header'} ? $all_headers->{$args->{'header'}} : $all_headers;
 
   if ($args->{'nice'}) {
-    return $error ? {'error' => [$error]} : {'headers' => $result};
+    if ($error) {
+      if ($error =~ /405/) {
+        ## Some servers don't accept header requests, which is annoying but not fatal
+        $error = 'denied';
+      }
+      return {'error' => [$error]};
+    }
+    else {
+      return {'headers' => $result};
+    }
   }
   else {
     if ($error) {
