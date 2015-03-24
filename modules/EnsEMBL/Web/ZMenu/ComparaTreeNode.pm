@@ -352,29 +352,35 @@ sub content {
         order => 13
       });
     }
+  
+    ## Build URL for data export 
+    my $gene_name;
+    my $gene = $self->object->Obj;
+    my $dxr    = $gene->can('display_xref') ? $gene->display_xref : undef;
+    my $gene_name = $dxr ? $dxr->display_id : $gene->stable_id;
     
-    # Subtree dumps
-    my ($url_align, $url_tree) = $self->dump_tree_as_text($node);
-    
+    my $params = {
+                'type'      => 'DataExport',
+                'action'    => 'GeneTree',
+                'data_type' => 'Gene',
+                'component' => 'ComparaTree',
+                'gene_name' => $gene_name,
+                'align'     => 'tree',
+                'node'      => $node_id,
+                };
+
     $self->add_entry({
-      type     => 'View Sub-tree',
-      label    => 'Alignment: FASTA',
-      link     => $url_align,
-      external => 1 ,
-      order    => 14
+      type        => 'Export sub-tree',
+      label       => 'Tree or Alignment',
+      link        => $hub->url($params),
+      link_class  => 'modal_link',
+      order       => 14,
     });
-    
-    $self->add_entry({
-      type     => 'View Sub-tree',
-      label    => 'Tree: New Hampshire',
-      link     => $url_tree,
-      external => 1,
-      order    => 15
-    });
-    
+
     # Jalview
+    my ($url_align, $url_tree) = $self->dump_tree_as_text($node);
     $self->add_entry({
-      type       => 'View Sub-tree',
+      type       => 'View sub-tree',
       label      => 'Expand for Jalview',
       link_class => 'expand',
       order      => 16,
