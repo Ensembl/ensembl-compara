@@ -62,6 +62,7 @@ sub check_data {
       $error_message = 'Invalid mime type';
     } elsif ($error eq 'denied') {
       ## Server is refusing header requests, so do nothing
+      $error = undef;
       $options = {'filesize' => 1};
     } else {
       $error = "Unable to access file. Server response: $feedback->{'error'}";
