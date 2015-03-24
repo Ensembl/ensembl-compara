@@ -247,10 +247,11 @@ sub create_user_features {
   return $tracks unless $menu;
   
   foreach ($menu->nodes) {
-    next unless $_->get('display') ne 'off'; 
+    next if $_->get('display') =~ /density/;
+    next unless $_->get('display') ne 'off';
     my $data   = $hub->fetch_userdata_by_id($_->id);
     my $parser = $data->{'parser'};
-    
+
     if ($parser) {
       while (my ($type, $track) = each %{$parser->get_all_tracks}) {
         my @rows;
