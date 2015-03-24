@@ -112,7 +112,7 @@ sub get_feature_view_link {
   my $feature_id  = $feature->display_label;
   my $feature_set = $feature->feature_set->name;
   
-  return if $feature_set =~ /cisRED|CRM/i;
+  return if $feature_set =~ /cisRED|CRM|FANTOM/i;
   
   my $link = $self->hub->url({
     type   => 'Location',
