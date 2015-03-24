@@ -11,7 +11,7 @@
 	  ((arabidopsis_thaliana,arabidopsis_lyrata),(brassica_oleracea,brassica_rapa)),vitis_vinifera)),
 	((((((triticum_aestivum,(triticum_urartu,triticum_aestivum_A),triticum_aestivum_B,(aegilops_tauschii,triticum_aestivum_D)),hordeum_vulgare),brachypodium_distachyon),
           (leersia_perrieri,(oryza_brachyantha,(oryza_punctata,(oryza_meridionalis,oryza_longistaminata,oryza_glumaepatula,((oryza_glaberrima,oryza_barthii),((oryza_sativa,oryza_rufipogon),(oryza_indica,oryza_nivara))))))))
-	  ((zea_mays,sorghum_bicolor),setaria_italica))),musa_acuminata)),amborella_trichopoda),selaginella_moellendorffii),physcomitrella_patens),(ostreococcus_lucimarinus,chlamydomonas_reinhardtii),cyanidioschyzon_merolae),
+	  (((zea_mays,sorghum_bicolor),setaria_italica))),musa_acuminata)),amborella_trichopoda),selaginella_moellendorffii),physcomitrella_patens),(ostreococcus_lucimarinus,chlamydomonas_reinhardtii)),cyanidioschyzon_merolae),
   ((((((((((botrytis_cinerea,sclerotinia_sclerotiorum),blumeria_graminis),
 	  ((((magnaporthe_poae,magnaporthe_oryzae),gaeumannomyces_graminis),neurospora_crassa),
            (((colletotrichum_higginsianum,colletotrichum_orbiculare,colletotrichum_graminicola,colletotrichum_gloeosporioides),(verticillium_dahliae,verticillium_dahliaejr2)),
