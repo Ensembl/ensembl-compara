@@ -149,7 +149,8 @@ sub _line {
   my $old_y = undef;
   for(my $x = $T->{'v_offset'} - $T->{'bin_size'}; $x < $T->{'max_len'}; $x += $T->{'bin_size'}) {
     my $datum = shift @data;
-    my $new_y = $datum; # / $T->{'max_data'} * $T->{'width'} ;
+    my $scale = $T->{'max_data'} ? $T->{'width'} / $T->{'max_data'} : $T->{'width'};
+    my $new_y = $datum * $scale;
    
     if(defined $old_y) {
       
