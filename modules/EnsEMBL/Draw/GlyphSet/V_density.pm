@@ -180,7 +180,6 @@ sub _line {
     my $datum       = shift @scores;
     my $max_value   = $T->{'max_value'} || 1;
     my $max_mean    = $T->{'max_mean'} || 1;
-    warn ">>> MAX MEAN $max_mean";
     my $scale       = $scale_to_mean ? $T->{'width'} / $max_mean
                                      : $T->{'width'} / $max_value;
     my $new_y       = $datum * $scale;
@@ -197,7 +196,7 @@ sub _line {
  	      'absolutey' => 1,
       }) );			
     }
-     if ($draw_whiskers && $min_whisker && $max_whisker) {
+    if ($draw_whiskers && $min_whisker && $max_whisker) {
       my $whisker_len = $T->{'bin_size'};
       ## NOTE These x coordinates are based more on trial-and-error
       ## than on maths - I'm not sure how correct they are! 

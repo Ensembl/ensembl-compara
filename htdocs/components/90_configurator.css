@@ -115,6 +115,7 @@ div.config_wrapper .config_menu .density_graph           { background-image: url
 div.config_wrapper .config_menu .density_line            { background-image: url(/i/render/density_line.gif); }
 div.config_wrapper .config_menu .density_raw             { background-image: url(/i/render/density_raw.gif); }
 div.config_wrapper .config_menu .density_whiskers        { background-image: url(/i/render/density_whiskers.gif); }
+div.config_wrapper .config_menu .density_raw             { background-image: url(/i/render/density_raw.gif); }
 div.config_wrapper .config_menu .density_mixed           { background-image: url(/i/render/density_mixed.gif); }
 div.config_wrapper .config_menu .density_outline         { background-image: url(/i/render/density_outline.gif); }
 div.config_wrapper .config_menu .difference              { background-image: url(/i/render/difference.gif); }
