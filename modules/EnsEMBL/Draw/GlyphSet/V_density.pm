@@ -27,6 +27,8 @@ use Data::Dumper;
 ### Accepts a data hash in the format:
 ### $data = {
 ###     'scores'    => [],
+###     'mins'      => [], #optional
+###     'maxs'      => [], #optional
 ###     'display    => '_method',   # optional
 ###     'histogram' => 'bar_style', # optional
 ###     'colour'    => '',
@@ -86,15 +88,25 @@ sub build_tracks {
     $T->{'v_offset'}  = $v_offset;
 
     my $scaled_scores = [];
+    my $mins          = [];
+    my $maxs          = [];
     foreach(@$scores) { 
+      my $mean = $_;
+      if (ref($_) eq 'HASH') {
+        $mean = $_->{'mean'};
+        push $mins, $_->{'min'};
+        push $maxs, $_->{'max'};
+      } 
       ## Use real values for max/min labels
-		  $chr_min_data = $_ if ($_ < $chr_min_data || $chr_min_data eq undef); 
-		  $chr_max_data = $_ if $_ > $chr_max_data;
+		  $chr_min_data = $mean if ($mean < $chr_min_data || $chr_min_data eq undef); 
+		  $chr_max_data = $mean if $mean > $chr_max_data;
       ## Scale data for actual display
       my $max = $chr_max_data || 1; 
-      push @$scaled_scores, $_/$max * $width;
+      push @$scaled_scores, $mean/$max * $width;
 	  }
     $T->{'scores'} = $scaled_scores;
+    $T->{'mins'}   = $mins;
+    $T->{'maxs'}   = $maxs;
     push @settings, $T;
   }
   
@@ -142,15 +154,24 @@ sub build_tracks {
   } 
 }
 
-sub _line {
+sub _whiskers {
   my ($self, $T) = @_;
-  my @data =  @{$T->{'scores'}};
+  $self->_line($T, 1);
+}
+
+sub _line {
+  my ($self, $T, $draw_whiskers) = @_;
+  my @scores  =  @{$T->{'scores'}};
+  my @mins    =  @{$T->{'mins'}};
+  my @maxs    =  @{$T->{'maxs'}};
 
   my $old_y = undef;
   for(my $x = $T->{'v_offset'} - $T->{'bin_size'}; $x < $T->{'max_len'}; $x += $T->{'bin_size'}) {
-    my $datum = shift @data;
-    my $new_y = $datum; # / $T->{'max_data'} * $T->{'width'} ;
-   
+    my $datum       = shift @scores;
+    my $scale       = $T->{'width'} / $T->{'max_data'};
+    my $new_y       = $datum * $scale;
+    my $min_whisker = (shift @mins) * $scale;
+    my $max_whisker = (shift @maxs) * $scale;
     if(defined $old_y) {
       
       $self->push( $self->Line({
@@ -161,6 +182,38 @@ sub _line {
  	      'colour' => $T->{'colour'},
  	      'absolutey' => 1,
       }) );			
+    }
+     if ($draw_whiskers && $min_whisker && $max_whisker) {
+      my $whisker_len = $T->{'bin_size'};
+      ## NOTE These x coordinates are based more on trial-and-error
+      ## than on maths - I'm not sure how correct they are! 
+      ## Main whisker line (min to max)
+      $self->push( $self->Line({
+        'x'      => $x + ($whisker_len * 2), 
+        'y'      => $min_whisker,
+        'width'  => 0,
+ 	      'height' => $max_whisker,
+ 	      'colour' => 'black',
+ 	      'absolutey' => 1,
+      }) );
+      ## Min whisker end
+      $self->push( $self->Line({
+        'x'      => $x + ($whisker_len * 1.5), 
+        'y'      => $min_whisker,
+	      'width'  => $whisker_len,
+ 	      'height' => 0, 
+ 	      'colour' => 'black',
+ 	      'absolutey' => 1,
+      }) );
+      ## Max whisker end
+      $self->push( $self->Line({
+        'x'      => $x + ($whisker_len * 1.5), 
+        'y'      => $max_whisker,
+	      'width'  => $whisker_len,
+ 	      'height' => 0, 
+ 	      'colour' => 'black',
+ 	      'absolutey' => 1,
+      }) );
     }
     $old_y = $new_y;
   }
