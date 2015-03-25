@@ -65,7 +65,8 @@ sub build_tracks {
   my $chr_max_data  = 0;
 	my $slice			    = $self->{'container'}->{'sa'}->fetch_by_region(undef, $chr);
   my $width         = $image_config->get_parameter( 'width') || 80;
-  my $max_data      = $image_config->get_parameter( 'max_value' ) || 1;
+  my $max_value     = $image_config->get_parameter( 'max_value' ) || 1;
+  my $max_mean      = $image_config->get_parameter( 'max_mean' ) || 1;
   my $bins          = $image_config->get_parameter('bins') || 150;
   my $max_len       = $image_config->container_width();
   my $bin_size      = int($max_len/$bins);
@@ -82,7 +83,8 @@ sub build_tracks {
     $T->{'histogram'} = $info->{'histogram'} || $histogram;
     $T->{'width'}     = $width;
     $T->{'colour'}    = $info->{'colour'};
-    $T->{'max_data'}  = $max_data;
+    $T->{'max_value'} = $max_value;
+    $T->{'max_mean'}  = $max_mean;
     $T->{'max_len'}   = $max_len;
     $T->{'bin_size'}  = $bin_size;
     $T->{'v_offset'}  = $v_offset;
@@ -156,19 +158,31 @@ sub build_tracks {
 
 sub _whiskers {
   my ($self, $T) = @_;
-  $self->_line($T, 1);
+  $self->_line($T, {'whiskers' => 1});
+}
+
+sub _raw {
+  my ($self, $T) = @_;
+  $self->_line($T, {'scale_to_mean' => 1});
 }
 
 sub _line {
-  my ($self, $T, $draw_whiskers) = @_;
+  my ($self, $T, $options) = @_;
   my @scores  =  @{$T->{'scores'}};
   my @mins    =  @{$T->{'mins'}};
   my @maxs    =  @{$T->{'maxs'}};
+  ## These two options are mutually exclusive
+  my $draw_whiskers = $options->{'whiskers'};
+  my $scale_to_mean  = $draw_whiskers ? 0 : $options->{'scale_to_mean'};
 
   my $old_y = undef;
   for(my $x = $T->{'v_offset'} - $T->{'bin_size'}; $x < $T->{'max_len'}; $x += $T->{'bin_size'}) {
     my $datum       = shift @scores;
-    my $scale       = $T->{'width'} / $T->{'max_data'};
+    my $max_value   = $T->{'max_value'} || 1;
+    my $max_mean    = $T->{'max_mean'} || 1;
+    warn ">>> MAX MEAN $max_mean";
+    my $scale       = $scale_to_mean ? $T->{'width'} / $max_mean
+                                     : $T->{'width'} / $max_value;
     my $new_y       = $datum * $scale;
     my $min_whisker = (shift @mins) * $scale;
     my $max_whisker = (shift @maxs) * $scale;
@@ -229,7 +243,7 @@ sub _histogram {
   my $old_y;
   for(my $x = $T->{'v_offset'}; $x < $T->{'max_len'}; $x += $T->{'bin_size'}) {
     my $datum = shift @data;
-    my $new_y = $datum / $T->{'max_data'} * $T->{'width'};
+    my $new_y = $datum / $T->{'max_value'} * $T->{'width'};
 
     if(defined $old_y) {
       $self->push( $self->Rect({
