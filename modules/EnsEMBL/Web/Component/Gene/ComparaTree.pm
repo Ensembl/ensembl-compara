@@ -543,12 +543,7 @@ sub get_export_data {
 
   ## Finally return correct object type
   if ($type) {
-    if ($type eq 'genetree') {
-      return $node ? $node->get_AlignedMemberSet : $tree;
-    }
-    else {
-      return $node ? $node : $tree;
-    }
+    return $node ? $node : $tree;
   }
   else {
     return $node ? $node->get_SimpleAlign(-APPEND_SP_SHORT_NAME => 1) 

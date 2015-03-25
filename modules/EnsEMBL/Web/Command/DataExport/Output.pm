@@ -25,6 +25,7 @@ use Bio::AlignIO;
 use IO::String;
 use Bio::EnsEMBL::Compara::Graph::OrthoXMLWriter;
 use Bio::EnsEMBL::Compara::Graph::GeneTreePhyloXMLWriter;
+use Bio::EnsEMBL::Compara::Graph::GeneTreeNodePhyloXMLWriter;
 use Bio::EnsEMBL::Compara::Graph::CAFETreePhyloXMLWriter;
 
 use EnsEMBL::Web::File::User;
@@ -444,9 +445,6 @@ sub write_alignment {
   my ($self, $component) = @_;
   my $hub     = $self->hub;
   my $align = $hub->param('align');
-  #foreach (grep { /species_$align/ } $hub->param) {
-  #  warn ">>> PARAM $_ = ".$hub->param($_);
-  #}
   my ($alignment, $result);
   my $flag = $align ? undef : 'sequence';
   my $data = $component->get_export_data($flag);
@@ -551,7 +549,9 @@ sub write_phyloxml {
   my $tree = $component->get_export_data('genetree');
 
   my $type = ref($component) =~ /SpeciesTree/ ? 'CAFE' : 'Gene';
-  my $class = sprintf('Bio::EnsEMBL::Compara::Graph::%sTreePhyloXMLWriter', $type);
+  $type .= 'Tree';
+  $type .= 'Node' if ref($tree) =~ /Node/;
+  my $class = sprintf('Bio::EnsEMBL::Compara::Graph::%sPhyloXMLWriter', $type);
 
   my $handle = IO::String->new();
   my $w = $class->new(
@@ -568,7 +568,11 @@ sub write_orthoxml {
   my ($self, $component) = @_;
   my $hub     = $self->hub;
   my $cdb     = $hub->param('cdb') || 'compara';
-  my $method  = ref($component) =~ /HomologAlignment/ ? 'trees' : 'homologies';
+  my $method  = ref($component) =~ /HomologAlignment/ 
+                          ? 'trees'
+                          : ref($component) =~ /ComparaTree/ 
+                          ? 'subtrees' 
+                          : 'homologies';
 
   my ($data)  = $component->get_export_data('genetree');
 
