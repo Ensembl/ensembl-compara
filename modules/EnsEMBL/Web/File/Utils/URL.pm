@@ -105,7 +105,7 @@ sub file_exists {
     $ua->timeout(10);
     $ua->env_proxy;
     $ua->proxy([qw(http https)], $args->{'hub'}->species_defs->ENSEMBL_WWW_PROXY) || ();
-    my $response = $ua->head($url);
+    my $response = $ua->get($url);
     unless ($response->is_success) {
       $error = _get_lwp_useragent_error($response);
     }
@@ -118,7 +118,7 @@ sub file_exists {
     }
     my $http = HTTP::Tiny->new(%params);
 
-    my $response = $http->request('HEAD', $url);
+    my $response = $http->request('GET', $url);
     unless ($response->{'success'}) {
       $error = _get_http_tiny_error($response);
     }
