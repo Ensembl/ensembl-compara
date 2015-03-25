@@ -74,7 +74,7 @@ sub check_data {
       }
     }
   }
-  return $error;
+  return ($url, $error);
 }
 
 # Ensure there is no out-of-date cached BAM index by deleting the local 

@@ -34,6 +34,7 @@ sub check_data {
   require Bio::DB::BigFile;
 
   $url = chase_redirects($url, {'hub' => $self->{'hub'}});
+
   if ($url =~ /^ftp:\/\//i && !$self->{'hub'}->species_defs->ALLOW_FTP_BIGWIG) {
     $error = "The BigWig file could not be added - FTP is not supported, please use HTTP.";
   }
@@ -44,7 +45,6 @@ sub check_data {
     eval {
       Bio::DB::BigFile->set_udc_defaults;
       $bigwig = Bio::DB::BigFile->bigWigFileOpen($url);
-      my $chromosome_list = $bigwig->chromList;
     };
     warn $@ if $@;
     warn "Failed to open BigWig " . $url unless $bigwig;
@@ -53,7 +53,7 @@ sub check_data {
       $error = "Unable to open remote BigWig file: $url<br>Ensure that your web/ftp server is accessible to the Ensembl site";
     }
   }
-  return $error;
+  return ($url, $error);
 }
 
 
