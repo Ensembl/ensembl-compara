@@ -66,7 +66,6 @@ sub default_options {
             'compara_url' => undef, #pairwise database to calculate the syntenies from
             'ref_species' => undef, #reference species
             'method_link_type' => 'LASTZ_NET', #pairwise alignment type
-            'ref_coord_system_name' => 'chromosome', #which seq_regions to run syntenies on
             'non_ref_coord_system_name' => 'chromosome', #which seq_regions to run syntenies on
 
             #DumpGFFAlignmentsForSynteny parameters
@@ -125,11 +124,10 @@ sub pipeline_analyses {
     return [
             #dump chr names
             {   -logic_name => 'chr_name_factory',
-                -module     => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
+                -module     => 'Bio::EnsEMBL::Compara::RunnableDB::Synteny::ListChromosomes',
                 -parameters => {
-                                'db_conn'    => $self->o('compara_url'),
-                                'inputquery' => 'SELECT DISTINCT(dnafrag.name) AS seq_region FROM dnafrag LEFT JOIN genome_db USING (genome_db_id) WHERE genome_db.name = "' . $self->o('ref_species') . '" AND coord_system_name= "'. $self->o('ref_coord_system_name') . '" AND is_reference = 1 ORDER BY seq_region',
-                                'fan_branch_code'   => 2,
+                                'compara_db'            => $self->o('compara_url'),
+                                'include_non_karyotype' => $self->o('force'),
                                },
                 -input_ids => [{}],
                 -flow_into => {
@@ -150,9 +148,8 @@ sub pipeline_analyses {
                               'level'      => $self->o('level'),
                               'force'      => $self->o('force'),
                               'output_dir' => $self->o('synteny_dir') . "/",
-                              'ref_coord_system_name' => $self->o('ref_coord_system_name'),
                               'non_ref_coord_system_name' => $self->o('non_ref_coord_system_name'),
-                              'cmd' => "#program# --dbname #compara_url# --qy #query_name# --ref_coord_system_name #ref_coord_system_name# --non_ref_coord_system_name #non_ref_coord_system_name# --method_link_species_set #pairwise_mlss_id# --seq_region #seq_region# --force #force# --output_dir #output_dir#",
+                              'cmd' => "#program# --dbname #compara_url# --qy #query_name# --non_ref_coord_system_name #non_ref_coord_system_name# --method_link_species_set #pairwise_mlss_id# --seq_region #seq_region# --force #force# --output_dir #output_dir#",
                               },
                 -flow_into => {
                                '1' => [ 'build_synteny' ],
