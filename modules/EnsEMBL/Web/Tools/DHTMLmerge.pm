@@ -145,7 +145,7 @@ sub new {
     'condition'   => $params->{'condition'} && ref $params->{'condition'} eq 'CODE' ? B::Deparse->new->coderef2text($params->{'condition'}) : undef
   }, $class;
 
-  warn "Merging $self->{'group_name'} $type files\n";
+  warn " Merging $self->{'group_name'} $type files\n";
   $self->{'minified_url_path'} = _merge_files($species_defs, $type, $self->{'files'});
 
   return $self;
