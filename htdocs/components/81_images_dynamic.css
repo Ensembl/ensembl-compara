@@ -41,6 +41,14 @@ body.ie6 div.image_container { background-color: [[BUTTON_BG]]; }
 .drag_select                              { cursor: default; position: relative; }
 .drag_select.drag_select_pointer          { cursor: pointer; }
 
+.drag_select .selector                    { background-color: rgba(229, 121, 5, 0.1); position: absolute; z-index: 99; border: 1px dashed red; border-width: 1px 0; }
+.drag_select .selector.vertical           { border-width: 1px; }
+.drag_select .selector .left-border,
+.drag_select .selector .right-border      { width: 4px; position: absolute; height: 100%; left: 0; border: 1px dashed red; border-width: 0 0 0 1px; cursor: ew-resize; }
+.drag_select .selector .right-border      { left: auto; right: 0; border-width: 0 1px 0 0; }
+.drag_select .selector .left-border:hover,
+.drag_select .selector .right-border:hover{ background-color: rgba(255, 0, 0, 0.4); border: none; width: 5px; }
+
 /* Hover menus */
 
 .hover_layer                              { position: absolute; opacity: 0.1; cursor: pointer; }
