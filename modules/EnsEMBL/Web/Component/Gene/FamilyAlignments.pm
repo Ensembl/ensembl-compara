@@ -67,6 +67,7 @@ sub _embed_jalview {
                                               extension       => 'fa',
                                               input_drivers   => ['IO'],
                                               output_drivers  => ['IO'],
+                                              base_dir        => 'image',
                                               );
 
   foreach my $member (@$refs) {
@@ -75,7 +76,7 @@ sub _embed_jalview {
     unless ($@) {
       if($member->alignment_string) {
         $file->write_line([
-                            $member->stable_id,
+                            '>'.$member->stable_id,
                             $member->alignment_string,
                           ]);
         $outcount++;
@@ -94,7 +95,7 @@ sub _embed_jalview {
         code="jalview.bin.JalviewLite" width="100" height="35" style="border:0"
         alt = "[Java must be enabled to view alignments]">
 
-      <param name="file" value="$BASE$URL" />
+      <param name="file" value="$URL" />
       <param name="showFullId" value="false" />
       <param name="defaultColour" value="clustal" />
       <param name="showSequenceLogo" value="true" />
