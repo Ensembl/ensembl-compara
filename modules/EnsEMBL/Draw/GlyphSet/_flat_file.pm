@@ -38,7 +38,8 @@ sub draw_features {
   my ($self, $wiggle) = @_; 
   my %data = $self->features;
   
-  return 0 unless keys %data;
+  ## Value to drop into error message
+  return $self->my_config('format').' features' unless keys %data;
   
   if ($wiggle) {
     foreach my $key ($self->sort_features_by_priority(%data)) {
@@ -61,7 +62,7 @@ sub draw_features {
     }
   }
   
-  return 1;
+  return 0;
 }
 
 sub features {
