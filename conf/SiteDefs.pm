@@ -116,9 +116,11 @@ foreach (@$ENSEMBL_DEBUG_FLAG_NAMES) {
   no strict 'refs';
   
   my $variable_name = "SiteDefs::ENSEMBL_DEBUG_$_";
-    $$variable_name = 1 << ($i++);
+    $$variable_name = 1 << ($i++)
+    ;
     
-  $ENSEMBL_DEBUG_VERBOSE_ERRORS <<= 1;
+  $ENSEMBL_DEBUG_VERBOSE_ERRORS <<= 1
+  ;
   $ENSEMBL_DEBUG_VERBOSE_ERRORS  += 1;
 }
 
@@ -213,8 +215,10 @@ our $ENSEMBL_ENCRYPT_REFRESH  = 30;       # Refresh cookies with less than 30 da
 ###############################################################################
 
 our $ENSEMBL_CONFIG_FILENAME     = 'config.packed';
+our $ENSEMBL_HTTPD_CONFIG_FILE   = "$ENSEMBL_WEBROOT/conf/httpd.conf";
 our $ENSEMBL_CONFIG_BUILD        = 0; # Build config on server startup? Setting to 0 will try to recover from $ENSEMBL_CONFIG_FILENAME on startup
 our $ENSEMBL_LONGPROCESS_MINTIME = 10;
+our $APACHE_DEFINE               = undef; # command line arguments for httpd command
 
 ## ALLOWABLE DATA OBJECTS
 our $OBJECT_TO_SCRIPT = {
