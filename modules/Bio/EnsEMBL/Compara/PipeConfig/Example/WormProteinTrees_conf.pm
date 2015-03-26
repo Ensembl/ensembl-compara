@@ -58,7 +58,8 @@ sub default_options {
         %{$self->SUPER::default_options},   # inherit the generic ones
 
     # parameters that are likely to change from execution to another:
-#       'mlss_id'               => 10,   # it is very important to check that this value is current (commented out to make it obligatory to specify)
+        # It is very important to check that this value is current (commented out to make it obligatory to specify)
+        #'mlss_id'               => 10,
 
         'rel_suffix'            => 'WS' . $self->o('ENV', 'WORMBASE_RELEASE'),    # this WormBase Build
         'work_dir'              => '/lustre/scratch101/ensembl/wormpipe/tmp/'.$self->o('ENV', 'USER').'/protein_trees_'.$self->o('rel_with_suffix'),

@@ -93,6 +93,10 @@ sub default_options {
     # tree building parameters:
         'species_tree_input_file'   =>  '/nfs/panda/ensemblgenomes/wormbase/parasite/config/compara_guide_tree.wbparasite.tre',
 
+    # alignment filtering options
+
+    # species tree reconciliation
+
     # homology_dnds parameters:
 
     # mapping parameters:
@@ -106,8 +110,6 @@ sub default_options {
     # hive priority for non-LOCAL health_check analysis:
 
     # connection parameters to various databases:
-
-        # Uncomment and update the database locations
 
         # the production database itself (will be created)
         # it inherits most of the properties from HiveGeneric, we usually only need to redefine the host, but you may want to also redefine 'port'
