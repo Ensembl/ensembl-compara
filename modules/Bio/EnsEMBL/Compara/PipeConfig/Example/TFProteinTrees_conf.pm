@@ -99,6 +99,8 @@ sub default_options {
         'use_notung'                => 1,
         'treebreak_gene_count'      => 100000,     # affects msa_chooser
 
+    # alignment filtering options
+
     # species tree reconciliation
         # you can define your own species_tree for 'treebest'. It can contain multifurcations
         'species_tree_input_file'   => $self->o('ensembl_cvs_root_dir').'/ensembl-compara/scripts/pipeline/species_tree.treefam.topology.nw',
@@ -130,13 +132,24 @@ sub default_options {
         'prottest_jar'              => '/nfs/production/xfam/treefam/software/ProtTest/prottest-3.4-20140123/prottest-3.4.jar',
 
     # HMM specific parameters (set to 0 or undef if not in use)
-       # List of directories that contain Panther-like databases (with books/ and globals/)
-       # It requires two more arguments for each file: the name of the library, and whether subfamilies should be loaded
+       # The location of the HMM library. If the directory is empty, it will be populated with the HMMs found in 'panther_like_databases' and 'multihmm_files'
        'hmm_library_basedir'     => "/gpfs/nobackup/ensembl/muffato/mateus/TF10",
 
+       # List of directories that contain Panther-like databases (with books/ and globals/)
+       # It requires two more arguments for each file: the name of the library, and whether subfamilies should be loaded
+       'panther_like_databases'  => [],
+       #'panther_like_databases'  => [ ["/lustre/scratch110/ensembl/mp12/panther_hmms/PANTHER7.2_ascii", "PANTHER7.2", 1] ],
+
        # List of MultiHMM files to load (and their names)
+       #'multihmm_files'          => [ ["/lustre/scratch110/ensembl/mp12/pfamA_HMM_fs.txt", "PFAM"] ],
+       'multihmm_files'          => [],
 
        # Dumps coming from InterPro
+       'panther_annotation_file'    => '/dev/null',
+       #'panther_annotation_file' => '/nfs/nobackup2/ensemblgenomes/ckong/workspace/buildhmmprofiles/panther_Interpro_annot_v8_1/loose_dummy.txt',
+
+       # A file that holds additional tags we want to add to the HMM clusters (for instance: Best-fit models)
+        'extra_model_tags_file'     => undef,
 
     # hive_capacity values for some analyses:
         'reuse_capacity'            =>   3,
@@ -172,8 +185,6 @@ sub default_options {
     # hive priority for non-LOCAL health_check analysis:
 
     # connection parameters to various databases:
-
-        # Uncomment and update the database locations
 
         # the production database itself (will be created)
         # it inherits most of the properties from HiveGeneric, we usually only need to redefine the host, but you may want to also redefine 'port'
@@ -269,18 +280,26 @@ sub default_options {
 
         # How will the pipeline create clusters (families) ?
         # Possible values: 'blastp' (default), 'hmm', 'hybrid'
-        #   blastp means that the pipeline will run a all-vs-all blastp comparison of the proteins and run hcluster to create clusters. This can take a *lot* of compute
-        #   hmm means that the pipeline will run an HMM classification
-        #   hybrid is like "hmm" except that the unclustered proteins go to a all-vs-all blastp + hcluster stage
+        #   'blastp' means that the pipeline will run a all-vs-all blastp comparison of the proteins and run hcluster to create clusters. This can take a *lot* of compute
+        #   'hmm' means that the pipeline will run an HMM classification
+        #   'hybrid' is like "hmm" except that the unclustered proteins go to a all-vs-all blastp + hcluster stage
+        #   'topup' means that the HMM classification is reused from prev_rel_db, and topped-up with the updated / new species  >> UNIMPLEMENTED <<
 		#'clustering_mode'           => 'hmm',
         'clustering_mode'           => 'topup',
 
         # How much the pipeline will try to reuse from "prev_rel_db"
         # Possible values: 'clusters' (default), 'blastp', 'members'
-        #   clusters means that the members, the blastp hits and the clusters are copied over. In this case, the blastp hits are actually not copied over if "skip_blast_copy_if_possible" is set
-        #   blastp means that only the members and the blastp hits are copied over
-        #   members means that only the members are copied over
-        # If all the species can be reused, and if the reuse_level is "clusters", do we really want to copy all the peptide_align_feature tables ? They can take a lot of space and are not used in the pipeline
+        #   'members' means that only the members are copied over, and the rest will be re-computed
+        #   'hmms' is like 'members', but also copies the HMM profiles. It requires that the clustering mode is not 'blastp'  >> UNIMPLEMENTED <<
+        #   'hmm_hits' is like 'hmms', but also copies the HMM hits  >> UNIMPLEMENTED <<
+        #   'blastp' is like 'members', but also copies the blastp hits. It requires that the clustering mode is 'blastp'
+        #   'clusters' is like 'hmm_hits' or 'blastp' (depending on the clustering mode), but also copies the clusters
+        #   'alignments' is like 'clusters', but also copies the alignments  >> UNIMPLEMENTED <<
+        #   'trees' is like 'alignments', but also copies the trees  >> UNIMPLEMENTED <<
+        #   'homologies is like 'trees', but also copies the homologies  >> UNIMPLEMENTED <<
+
+        # Do we want to initialise the CAFE part now ?
+        'initialise_cafe_pipeline'  => undef,
 
     };
 }
