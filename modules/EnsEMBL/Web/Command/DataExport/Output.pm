@@ -19,6 +19,8 @@ limitations under the License.
 package EnsEMBL::Web::Command::DataExport::Output;
 
 use strict;
+use warnings;
+no warnings 'uninitialized';
 
 use RTF::Writer;
 use Bio::AlignIO;
@@ -103,7 +105,7 @@ sub process {
         }
       }
       elsif ($in_bioperl) {
-        $error = (!$hub->param('seq_type') || $hub->param('seq_type') eq 'msa') 
+        $error = ($hub->param('align_type') || $hub->param('seq_type') =~ /msa/) 
                     ? $self->write_alignment($component)
                     : $self->write_homologue_seq($component);
       }
@@ -451,6 +453,7 @@ sub write_alignment {
   my ($alignment, $result);
   my $flag = $align ? undef : 'sequence';
   my $data = $component->get_export_data($flag);
+  warn ">>> DATA $data";
   if (!$data) {
     $result->{'error'} = ['No data returned'];
   }
@@ -467,7 +470,12 @@ sub write_alignment {
     }
     else {
       if (ref($data) =~ 'AlignedMemberSet') {
-        $data = $data->get_SimpleAlign;
+        if ($hub->param('align_type') eq 'msa_dna' || $hub->param('seq_type') =~ /dna/) {
+          $data = $data->get_SimpleAlign(-SEQ_TYPE => 'cds');
+        }
+        else {
+          $data = $data->get_SimpleAlign;
+        }
       }
       if (ref($data) =~ 'SimpleAlign') {
         $alignment = $data;
@@ -502,7 +510,7 @@ sub write_homologue_seq {
     my $file_path = $file->absolute_write_path;
     $file->touch;
     my %params = (-format => $format, -ID_TYPE=>'STABLE_ID');
-    if ($hub->param('seq_type') eq 'dna') {
+    if ($hub->param('seq_type') =~ /_dna/ || $hub->param('align_type') eq 'msa_dna') {
       $params{'-SEQ_TYPE'} = 'cds';
     }
     eval {
