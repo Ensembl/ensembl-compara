@@ -64,7 +64,8 @@ sub default_options {
             # User details
             'email'                 => $self->o('ENV', 'USER').'@sanger.ac.uk',
 
-            'mlss_id'          => 40100,
+            # Must be given on the command line
+            #'mlss_id'          => 40100,
             # Found automatically if the Core API is in PERL5LIB
             #'ensembl_release'          => '76',
             'rel_suffix'       => 'b',
