@@ -153,6 +153,8 @@ sub pipeline_wide_parameters {  # these parameter values are visible to all anal
         'blast_bin_dir'     => $self->o('blast_bin_dir'),           # binary & script directories
         'mcl_bin_dir'       => $self->o('mcl_bin_dir'),
         'mafft_root_dir'    => $self->o('mafft_root_dir'),
+
+        'master_db'         => $self->o('master_db'),               # databases
     };
 }
 
@@ -188,16 +190,15 @@ sub pipeline_analyses {
                                         [ $self->o('protein_trees_db')   => 'gene_member' ],
                                         [ $self->o('protein_trees_db')   => 'hmm_annot' ],
                                         [ $self->o('protein_trees_db')   => 'hmm_curated_annot' ],
-                                        [ $self->o('master_db')     => 'ncbi_taxa_node' ],
-                                        [ $self->o('master_db')     => 'ncbi_taxa_name' ],
-                                        [ $self->o('master_db')     => 'method_link' ],
-                                        [ $self->o('master_db')     => 'species_set' ],
-                                        [ $self->o('master_db')     => 'method_link_species_set' ],
-                                        [ $self->o('master_db')     => 'dnafrag' ],
+                                        [ '#master_db#'     => 'ncbi_taxa_node' ],
+                                        [ '#master_db#'     => 'ncbi_taxa_name' ],
+                                        [ '#master_db#'     => 'method_link' ],
+                                        [ '#master_db#'     => 'species_set' ],
+                                        [ '#master_db#'     => 'method_link_species_set' ],
+                                        [ '#master_db#'     => 'dnafrag' ],
                                     ],
                 'column_names'  => [ 'src_db_conn', 'table' ],
             },
-            -input_ids => [ { }, ],
             -flow_into => {
                 '2->A' => [ 'copy_table' ],
                 'A->1' => [ 'offset_and_innodbise_tables' ],  # backbone
@@ -620,7 +621,6 @@ sub pipeline_analyses {
         {   -logic_name    => 'stable_id_map',
             -module        => 'Bio::EnsEMBL::Compara::RunnableDB::StableIdMapper',
             -parameters    => {
-                'master_db'   => $self->o('master_db'),
                 'prev_rel_db' => $self->o('prev_rel_db'),
                 'type'        => 'f',
                 'release'     => $self->o('ensembl_release'),
