@@ -80,11 +80,14 @@ sub pipeline_analyses {
 
         {   -logic_name => 'find_other_mlss',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::FindMLSS',
-            -input_ids => [ {
+            -parameters => {
                 method_links => {
                     FAMILY => 'family_db',
                     NC_TREES => 'ncrnatrees_db',
                 },
+            },
+            -input_ids  => [ {
+                species_set_name => "collection-".$self->o('division'),
             } ],
             -flow_into => {
                 '1->A' => [ 'copy_from_master_factory', 'copy_from_familydb_factory', 'merge_tables_factory' ],
