@@ -111,10 +111,6 @@ sub default_options {
         'HMMer_classify_capacity' => 100,
         'reservation_sfx' => '',    # set to '000' for farm2, to '' for farm3 and EBI
 
-            # homology database connection parameters (we inherit half of the members and sequences from there):
-        'protein_trees_db'  => 'mysql://ensro@compara1/mm14_protein_trees_'.$self->o('ensembl_release'),
-#        'protein_trees_db'  => 'mysql://ensro@compara3/mm14_protein_trees_'.$self->o('rel_with_suffix'),
-
             # used by the StableIdMapper as the reference:
         'prev_rel_db' => 'mysql://ensadmin:'.$self->o('password').'@compara4/mp14_ensembl_compara_78',
 
@@ -180,16 +176,26 @@ sub pipeline_analyses {
     my ($self) = @_;
     return [
 
+        {   -logic_name => 'find_other_mlss',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::FindMLSS',
+            -input_ids => [ {
+                method_links => {
+                    PROTEIN_TREES => 'protein_trees_db',
+                },
+            } ],
+            -flow_into => [ 'copy_table_factory' ],
+        },
+
         {   -logic_name => 'copy_table_factory',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
             -parameters => {
                 'inputlist'     => [
-                                        [ $self->o('protein_trees_db')   => 'genome_db' ],       # we need them in "located" state
-                                        [ $self->o('protein_trees_db')   => 'sequence' ],
-                                        [ $self->o('protein_trees_db')   => 'seq_member' ],
-                                        [ $self->o('protein_trees_db')   => 'gene_member' ],
-                                        [ $self->o('protein_trees_db')   => 'hmm_annot' ],
-                                        [ $self->o('protein_trees_db')   => 'hmm_curated_annot' ],
+                                        [ '#protein_trees_db#'   => 'genome_db' ],       # we need them in "located" state
+                                        [ '#protein_trees_db#'   => 'sequence' ],
+                                        [ '#protein_trees_db#'   => 'seq_member' ],
+                                        [ '#protein_trees_db#'   => 'gene_member' ],
+                                        [ '#protein_trees_db#'   => 'hmm_annot' ],
+                                        [ '#protein_trees_db#'   => 'hmm_curated_annot' ],
                                         [ '#master_db#'     => 'ncbi_taxa_node' ],
                                         [ '#master_db#'     => 'ncbi_taxa_name' ],
                                         [ '#master_db#'     => 'method_link' ],
