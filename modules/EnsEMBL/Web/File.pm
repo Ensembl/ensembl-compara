@@ -536,7 +536,7 @@ sub write {
     my $args = {
                 'hub'     => $self->hub,
                 'nice'    => 1,
-                'lines'   => $content,
+                'content' => $content,
                 };
 
     eval {
@@ -561,7 +561,7 @@ sub write_line {
     my $args = {
                 'hub'     => $self->hub,
                 'nice'    => 1,
-                'lines'   => $content,
+                'content' => $content,
                 };
 
     eval {
