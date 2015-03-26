@@ -130,6 +130,7 @@ sub default_options {
 
             # Other parameters
             'raxml_number_of_cores' => 2,
+            'epo_species_set_name'  => 'mammals',
 
             # connection parameters
 
@@ -159,15 +160,6 @@ sub default_options {
                             -pass   => '',
                             -dbname => 'sf5_ensembl_compara_master', # 'sf5_ensembl_compara_master',
                            },
-
-            'epo_db' => {   # ideally, the current release database with epo pipeline results already loaded
-                         -host   => 'compara4',
-                         -port   => 3306,
-                         -user   => 'ensro',
-                         -pass   => '',
-                         -dbname => 'mp14_ensembl_compara_78',
-                        },
-
 
            };
 }

@@ -316,7 +316,7 @@ sub pipeline_analyses {
                 mode            => 'members_globally',
             },
             %hc_params,
-            -flow_into  => ['make_species_tree', $self->o('initialise_cafe_pipeline') ? ('make_full_species_tree') : (), $self->o('skip_epo') ? () : ('create_lca_species_set'), 'register_mlss' ],
+            -flow_into  => ['make_species_tree', $self->o('initialise_cafe_pipeline') ? ('make_full_species_tree') : (), $self->o('skip_epo') ? () : ('find_epo_database'), 'register_mlss' ],
         },
 
 
@@ -339,6 +339,17 @@ sub pipeline_analyses {
 
 # ---------------------------------------------[create the low-coverage-assembly species set]-----------------------------------------
 
+        {   -logic_name => 'find_epo_database',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::FindMLSS',
+            -parameters => {
+                method_links => {
+                    EPO_LOW_COVERAGE => 'epo_db',
+                },
+                species_set_name => $self->o('epo_species_set_name'),
+            },
+            -flow_into => [ 'create_lca_species_set' ],
+        },
+
         {   -logic_name => 'create_lca_species_set',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ObjectStore',
             -parameters => {
@@ -356,7 +367,7 @@ sub pipeline_analyses {
         {   -logic_name => 'generate_pre_species_set',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',    # another non-stardard use of JobFactory for iterative insertion
             -parameters => {
-                'db_conn'         => $self->o('epo_db'),
+                'db_conn'         => '#epo_db#',
                 'inputquery'      => "SELECT #lca_species_set_id# as lca_species_set_id, GROUP_CONCAT(DISTINCT g.genome_db_id) as pre_species_set FROM genome_db g JOIN species_set ss USING(genome_db_id) JOIN method_link_species_set mlss USING(species_set_id) WHERE assembly_default AND mlss.name LIKE '%EPO_LOW_COVERAGE%' AND g.genome_db_id NOT IN (SELECT DISTINCT(g2.genome_db_id) FROM genome_db g2 JOIN species_set ss2 USING(genome_db_id) JOIN method_link_species_set mlss2 USING(species_set_id) WHERE assembly_default AND mlss2.name LIKE '%EPO')",
                 # 'fan_branch_code' => 2,
             },
@@ -494,9 +505,6 @@ sub pipeline_analyses {
 
             {   -logic_name    => 'recover_epo',
                 -module        => 'Bio::EnsEMBL::Compara::RunnableDB::ncRNAtrees::NCRecoverEPO',
-                -parameters    => {
-                                   'epo_db'         => $self->o('epo_db'),
-                                  },
                 -analysis_capacity => $self->o('recover_capacity'),
                 -flow_into => [ 'hc_epo_removed_members' ],
                 -rc_name => 'default',
