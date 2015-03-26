@@ -62,9 +62,26 @@ sub chase_redirects {
     $ua->timeout(10);
     $ua->env_proxy;
     $ua->proxy([qw(http https)], $args->{'hub'}->species_defs->ENSEMBL_WWW_PROXY) || ();
-    my $response = $ua->get($url);
-    return $response->is_success ? $response->request->uri->as_string
-                                    : {'error' => [_get_lwp_useragent_error($response)]};
+    my $response = $ua->head($url);
+    if ($response->is_success) {
+      return $response->request->uri->as_string;
+    }
+    else {
+      my $error = _get_lwp_useragent_error($response);
+      if ($error =~ /405/) {
+        ## Try a GET request, if the server is misconfigured
+        $response = $ua->get($url);
+        if ($response->is_success) {
+          return $response->request->uri->as_string;
+        }
+        else {
+          return {'error' => [_get_lwp_useragent_error($response)]};
+        }
+      }
+      else {
+        return {'error' => [$error]};
+      }
+    }
   }
   else {
     my %args = (
@@ -77,12 +94,25 @@ sub chase_redirects {
     }
     my $http = HTTP::Tiny->new(%args);
 
-    my $response = $http->request('GET', $url);
+    my $response = $http->request('HEAD', $url);
     if ($response->{'success'}) {
       return $response->{'url'};
     }
     else {
-      return {'error' => [_get_http_tiny_error($response)]};
+      my $error = _get_http_tiny_error($response);
+      if ($error =~ /405/) {
+        ## Try a GET request, if the server is misconfigured
+        $response = $http->request('GET', $url);
+        if ($response->{'success'}) {
+          return $response->{'url'};
+        }
+        else {
+          return {'error' => [_get_http_tiny_error($response)]};
+        }
+      }
+      else {
+        return {'error' => [$error]};
+      }
     }
   }
 }
@@ -105,9 +135,17 @@ sub file_exists {
     $ua->timeout(10);
     $ua->env_proxy;
     $ua->proxy([qw(http https)], $args->{'hub'}->species_defs->ENSEMBL_WWW_PROXY) || ();
-    my $response = $ua->get($url);
+    my $response = $ua->head($url);
     unless ($response->is_success) {
       $error = _get_lwp_useragent_error($response);
+      if ($error =~ /405/) {
+        ## Try a GET request, if the server is misconfigured
+        $error = undef;
+        $response = $ua->get($url);
+        unless ($response->is_success) {
+          $error = _get_lwp_useragent_error($response);
+        }  
+      }
     }
   }
   else {
@@ -121,6 +159,14 @@ sub file_exists {
     my $response = $http->request('GET', $url);
     unless ($response->{'success'}) {
       $error = _get_http_tiny_error($response);
+      if ($error =~ /405/) {
+        ## Try a GET request, if the server is misconfigured
+        $error = undef;
+        $response = $http->request('GET', $url);
+        unless ($response->{'success'}) {
+          $error = _get_http_tiny_error($response);
+        }  
+      }
     }
   }
 

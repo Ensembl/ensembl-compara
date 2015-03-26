@@ -82,7 +82,7 @@ sub process {
     ## For datahubs, pass assembly info so we can check if there's suitable data
     my $assemblies = $species_defs->assembly_lookup;
  
-    my ($url, $error) = $format->check_data($assemblies);
+    my ($url, $error, $options) = $format->check_data($assemblies);
     
     if ($error) {
       $redirect .= 'SelectFile';
@@ -96,10 +96,12 @@ sub process {
     } else {
       ## This next bit is a hack - we need to implement userdata configuration properly! 
       my $extra_config_page = $format->extra_config_page;
-      my $name              = $hub->param('name') || $filename;
+      my $name              = $hub->param('name') || $options->{'name'} || $filename;
          $redirect         .= $extra_config_page || 'RemoteFeedback';
-      
-      my $assemblies = [$hub->species_defs->get_config($hub->data_species, 'ASSEMBLY_VERSION')];
+     
+      delete $options->{'name'};
+ 
+      my $assemblies = $options->{'assemblies'} || [$hub->species_defs->get_config($hub->data_species, 'ASSEMBLY_VERSION')];
       my %ensembl_assemblies = %{$hub->species_defs->assembly_lookup};
 
       my ($flag_info, $code); 
@@ -140,6 +142,7 @@ sub process {
               species     => $current_species,
               assembly    => $assembly, 
               timestamp   => time,
+              %$options,
             );
     
             $session->configure_user_data('url', $data);
