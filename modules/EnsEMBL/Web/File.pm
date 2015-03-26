@@ -561,7 +561,7 @@ sub write_line {
     my $args = {
                 'hub'     => $self->hub,
                 'nice'    => 1,
-                'content' => $content,
+                'lines'   => $content,
                 };
 
     eval {
