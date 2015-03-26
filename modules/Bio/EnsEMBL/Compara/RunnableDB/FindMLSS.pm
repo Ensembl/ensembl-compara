@@ -34,7 +34,7 @@ Parameters:
  # Here are multiple ways of defining a species-set 
  - species_set_id:
  - mlss_id:
- - division:
+ - species_set_name:
 
  - method_links: hash that maps method_link types to variable names. The Runnable
                  will find the MLSSs that match each method_link and the species-set
@@ -79,16 +79,16 @@ sub fetch_input {
         $species_set_id = $mlss->species_set_obj->dbID;
     }
 
-    if (not $species_set_id and (my $division = $self->param('division'))) {
-        my $ss = $master_dba->get_SpeciesSetAdaptor->fetch_collection_by_name($division)
-            or die "Could not find the collection named '$division' in the master database\n";
+    if (not $species_set_id and (my $species_set_name = $self->param('species_set_name'))) {
+        my $ss = $master_dba->get_SpeciesSetAdaptor->fetch_all_by_tag_value('name', $species_set_name)->[0]
+            or die "Could not find the collection named '$species_set_name' in the master database\n";
         $species_set_id = $ss->dbID;
     }
 
     if ($species_set_id) {
         warn "Found the species-set dbID=$species_set_id\n" if $self->debug;
     } else {
-        die "It was not possible to identify a species-set. Tried 'species_set_id', 'mlss_id', and 'division'\n";
+        die "It was not possible to identify a species-set. Tried 'species_set_id', 'mlss_id', and 'species_set_name'\n";
     }
 
     $self->param('species_set_id', $species_set_id);
