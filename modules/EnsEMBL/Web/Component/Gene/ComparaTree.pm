@@ -536,7 +536,7 @@ sub get_export_data {
       return $tree;
     }
     else {
-      return $tree->get_SimpleAlign;
+      return $tree->tree->get_SimpleAlign;
     }
   } 
 }
