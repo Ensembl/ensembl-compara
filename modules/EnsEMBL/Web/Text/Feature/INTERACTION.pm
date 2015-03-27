@@ -110,6 +110,11 @@ sub _raw_score    {
   return $self->{'__raw__'}[2];
 }
 
+sub id {
+  my $self = shift;
+  return $self->{'score'};
+}
+
 sub score {
   my $self = shift;
   $self->{'score'} = $self->_raw_score unless exists $self->{'score'};
