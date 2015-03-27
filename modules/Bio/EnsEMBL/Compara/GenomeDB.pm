@@ -134,7 +134,7 @@ sub new {
     defined $genome_component   && $self->genome_component($genome_component);
     defined $is_high_coverage   && $self->is_high_coverage($is_high_coverage);
 
-    $self->_check_equals($core_genome_db) if $core_genome_db;
+    $self->_assert_equals($core_genome_db) if $core_genome_db;
 
     return $self;
 }
@@ -194,19 +194,37 @@ sub db_adaptor {
                 This is used to compare the fields automatically populated from
                 the core database with the GenomeDB object preent in the Compara
                 master database
-  Returntype  : none
-  Exceptions  : Throws if there are discrepancies
+  Returntype  : String: all the differences found between the two genome_dbs
+  Exceptions  : none
 
 =cut
 
 sub _check_equals {
     my ($self, $ref_genome_db) = @_;
 
+    my $diffs = '';
     foreach my $field (qw(assembly taxon_id genebuild name has_karyotype is_high_coverage)) {
         if ($self->$field() ne $ref_genome_db->$field()) {
-            die sprintf("%s differs between this GenomeDB (%s) and the reference one (%s)\n", $field, $self->$field(), $ref_genome_db->$field());
+            $diffs .= sprintf("%s differs between this GenomeDB (%s) and the reference one (%s)\n", $field, $self->$field(), $ref_genome_db->$field());
         }
     }
+    return $diffs;
+}
+
+
+=head2 _assert_equals
+
+  Example     : $genome_db->_assert_equals($ref_genome_db);
+  Description : Wrapper around _check_equals() that will throw if the GenomeDBs are different
+  Returntype  : none
+  Exceptions  : Throws if there are discrepancies
+
+=cut
+
+sub _assert_equals {
+    my $self = shift;
+    my $diffs = $self->_check_equals(@_);
+    throw($diffs) if $diffs;
 }
 
 
