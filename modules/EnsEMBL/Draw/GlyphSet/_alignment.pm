@@ -104,8 +104,8 @@ sub render_as_transcript_label   {$_[0]->{'show_labels'} = 1;
                                               $_[0]->render_as_alignment_nolabel({'structure' => 1});       }
 
 ## Backwards compatibility
-sub render_normal { $_[0]->render_as_alignment_nolabel; }
-sub render_labels { $_[0]->render_as_alignment_label; }
+sub render_normal { $_[0]->render_as_alignment_nolabel($_[1]); }
+sub render_labels { $_[0]->render_as_alignment_label($_[1]); }
 
 # variable height renderer
 sub render_histogram {
