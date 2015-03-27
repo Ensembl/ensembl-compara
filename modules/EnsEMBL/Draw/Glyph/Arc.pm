@@ -58,18 +58,17 @@ sub centre {
 sub transform {
   my ($self, @args) = @_;
   $self->SUPER::transform(@args);
-  #$self->{'pixelheight'} = $self->{'pixelwidth'};
 }
 
 sub height {
   my ($self) = @_;
   my $n = $self->{'end_point'} > 180 ? 1 : 2;
 
-  if($self->{'absoluteheight'}) {
-    return $self->{'height'}/$n;
-  } else {
+  #if($self->{'absoluteheight'}) {
+  #  return $self->{'height'}/$n;
+  #} else {
     return ($self->{'height'} / $n) * ($self->{'pixperbp'} || 1);
-  }
+  #}
 }
 
 sub x {

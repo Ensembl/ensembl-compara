@@ -208,11 +208,13 @@ sub unshift {
          $gx1 = $gx + $Glyph->width();
     $gy  =     $Glyph->y();
          $gy1 = $gy + $Glyph->height();
+      warn ">>> GY = $gy, GY1 = $gy1";
 
     $self->minx($gx)  unless defined $self->minx && $self->minx < $gx;
     $self->maxx($gx1) unless defined $self->maxx && $self->maxx > $gx1;
     $self->miny($gy)  unless defined $self->miny && $self->miny < $gy;
     $self->maxy($gy1) unless defined $self->maxy && $self->maxy > $gy1;
+    warn "... SET MAX Y to ".$self->maxy;
   }
 }
 

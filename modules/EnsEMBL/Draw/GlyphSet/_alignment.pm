@@ -24,6 +24,7 @@ package EnsEMBL::Draw::GlyphSet::_alignment;
 use strict;
 
 use List::Util qw(min max);
+use POSIX qw(floor ceil);
 
 use base qw(EnsEMBL::Draw::GlyphSet_wiggle_and_block EnsEMBL::Draw::GlyphSet::_difference);
 
@@ -672,8 +673,6 @@ sub render_interaction {
 ## Draw paired features joined by an arc
   my $self = shift;
 
-  return $self->render_text if $self->{'text_export'};
-
   my $h               = @_ ? shift : ($self->my_config('height') || 8);
      $h               = $self->{'extras'}{'height'} if $self->{'extras'} && $self->{'extras'}{'height'};
   my $strand          = $self->strand;
@@ -776,14 +775,22 @@ sub render_interaction {
             })) unless $e1 < 0;
 
         ## Arc between features
-        ## Note: modify dimensions to allow for 2-pixel width of brush
-        ## and also cut curve off at edge of track
-        my $major_axis  = ($start_2 - $end_1) * $pix_per_bp;
+        my $major_axis  = ceil(($start_2 - $end_1) * $pix_per_bp);
         my $radius      = $major_axis / 2;
-        my $minor_axis  = $major_axis * 0.65;
+
+        ## Height of track needs to be proportional, or it becomes enormous at high zoom levels! 
+        ## Use double the image width as the maximum arc length, so that we get some information
+        ## about off-screen features without the track getting crazy proportions
+        my $track_depth = $self->image_width; ## Generous default
+        my $max_width   = ceil($self->image_width * 2);
+        my $cutoff      = $major_axis > $max_width ? $max_width : $major_axis;
+        my $minor_axis  = ceil(($cutoff / $max_width) * $track_depth);
+        warn ">>> MINOR AXIS $minor_axis";
+
         my $start_point = 0; ## righthand end of arc
         my $end_point   = 180; ### lefthand end of arc
 
+        ## Cut curve off at edge of track if ends lie outside the current window
         if ($e1 < 0) {
           my $cos = ($radius + $e1 * $pix_per_bp)/$radius;
           $end_point -= $self->acos_in_degrees($cos);
@@ -793,8 +800,9 @@ sub render_interaction {
           $start_point = $self->acos_in_degrees($cos);
         }
 
-        $self->unshift($self->Arc({
-              x             => $start_2 + ($h * $h),
+        ## modify dimensions to allow for 2-pixel width of brush
+        $self->push($self->Arc({
+              x             => $start_2 + ($h),
               y             => ($minor_axis / 2) + $h,
               width         => $major_axis + 4,
               height        => $minor_axis + 4,
