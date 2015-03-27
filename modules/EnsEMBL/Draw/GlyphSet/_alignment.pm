@@ -669,11 +669,13 @@ sub render_ungrouped {
   $self->errorTrack(sprintf q{No features from '%s' on this strand}, $self->my_config('name')) unless $features_drawn || ($on_this_strand == scalar(@ok_features)) || $self->{'no_empty_track_message'} || $self->{'config'}->get_option('opt_empty_tracks') == 0;
 }
 
+sub render_interaction_label { $_[0]->{'show_labels'} = 1; $_[0]->render_interaction($_[1]); }
+
 sub render_interaction {
 ## Draw paired features joined by an arc
-  my $self = shift;
+  my ($self, $args) = @_;
 
-  my $h               = @_ ? shift : ($self->my_config('height') || 8);
+  my $h               = $args->{'height'} || $self->my_config('height') || 8;
      $h               = $self->{'extras'}{'height'} if $self->{'extras'} && $self->{'extras'}{'height'};
   my $strand          = $self->strand;
   my $strand_flag     = $self->my_config('strand');
@@ -719,7 +721,7 @@ sub render_interaction {
     }
 
     my (%id, $y_pos);
-    foreach (sort { $a->[0] <=> $b->[0] }  map [ $_->start_1, $_->end_1, $_->start_2, $_->end_2, $_ ], @features) {
+    foreach (sort { $a->[0] <=> $b->[0] }  map [ $_->start_1, $_->end_1, $_->start_2, $_->end_2, $_], @features) {
       my ($s1, $e1, $s2, $e2, $f) = @$_;
 
       my $fgroup_name = $self->feature_group($f);
@@ -727,7 +729,7 @@ sub render_interaction {
       push @{$id{$fgroup_name}}, [ $s1, $e1, $s2, $e2, $f,
                                     int($s1 * $pix_per_bp), int($e1 * $pix_per_bp),
                                     int($s2 * $pix_per_bp), int($e2 * $pix_per_bp),
-                                    undef ];
+                                  ];
     }
 
     my %idl;
@@ -833,6 +835,8 @@ sub render_interaction {
             }));
 
         ## Second feature of pair
+        my $x = $start_2 - 1;
+        warn ">>> BOX 2 $start_2";
         $self->push($self->Rect({
               x            => $start_2 - 1,
               y            => 0,
@@ -843,11 +847,34 @@ sub render_interaction {
               absolutey    => 1,
             })) unless $s2 > $length;
 
+        if ($self->{'show_labels'}) {
+          my $label = $self->feature_label($f);
+          my (undef, undef, $text_width, $text_height) = $self->get_text_width(0, $label, '', font => $fontname, ptsize => $fontsize);
+          my $x = $has_end ? $start_2 - (($start_2 - $start_1) / 2) : $length / 2;
+          $x -= $text_width;
+          $self->push($self->Text({
+            font      => $fontname,
+            colour    => 'black',
+            height    => $fontsize,
+            ptsize    => $fontsize,
+            text      => $label,
+            title     => $self->feature_title($f),
+            x         => $x,
+            y         => $minor_axis / 2 + $label_h,
+            width     => $text_width,
+            height    => $label_h,
+            absolutey => 1,
+            href      => '', 
+            class     => 'group', # for click_start/end on labels
+          }));
+      }
+
+
       }
     }
   }
   ## Limit track height to that of biggest arc
-  $self->{'maxy'} = ($max_arc / 2) + 10;
+  $self->{'maxy'} = ($max_arc / 2) + $label_h + 10;
 }
 
 sub render_text {
