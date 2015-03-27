@@ -199,44 +199,48 @@ sub get_export_data {
   my $hub = $self->hub;
 
   ## Fetch explicitly, as we're probably coming from a DataExport URL
-  if ($type && $type eq 'genetree') {
-    my $cdb = $hub->param('cdb') || 'compara';
-    my $gene = $self->hub->core_object('gene');
-    return $gene->get_GeneTree($cdb, 1);
-  }
-
-  ## ...or get alignment
-  my $simple_alignments = [];
-  my $seq           = $hub->param('align');
-  my $second_gene   = $hub->param('g1');
   my $homologies = $self->get_homologies;
+  my $second_gene   = $hub->param('g1');
+  my $data          = [];
 
   HOMOLOGY:
   foreach my $homology (@{$homologies}) {
 
-    my $sa;
-    
-    eval {
-      if($seq eq 'cDNA') {
-        $sa = $homology->get_SimpleAlign(-SEQ_TYPE => 'cds');
-      } else {
-        $sa = $homology->get_SimpleAlign;
+    if ($type && $type eq 'genetree') {
+      my $cdb = $hub->param('cdb') || 'compara';
+      foreach my $homology (@{$homologies}) {
+        foreach my $peptide (@{$homology->get_all_Members}) {
+          next unless $peptide->gene_member->stable_id eq $second_gene;
+          push @$data, $homology; 
+          last HOMOLOGY;
+        }
       }
-    };
-    warn $@ if $@;
+    }
+    else { ## ...or get alignment
+      my $seq = $hub->param('align');
+      my $sa;
+    
+      eval {
+        if($seq eq 'cDNA') {
+          $sa = $homology->get_SimpleAlign(-SEQ_TYPE => 'cds');
+        } else {
+          $sa = $homology->get_SimpleAlign;
+        }
+      };
+      warn $@ if $@;
 
-    if ($sa) {
-      foreach my $peptide (@{$homology->get_all_Members}) {
-        my $gene = $peptide->gene_member;
-        if (!$second_gene || $second_gene eq $gene->stable_id) {
-          push @$simple_alignments, $sa;
-          last HOMOLOGY if $second_gene;
+      if ($sa) {
+        foreach my $peptide (@{$homology->get_all_Members}) {
+          my $gene = $peptide->gene_member;
+          if (!$second_gene || $second_gene eq $gene->stable_id) {
+            push @$data, $sa;
+            last HOMOLOGY if $second_gene;
+          }
         }
       }
     }
   }
-
-  return $simple_alignments;
+  return $data;
 }
 
 sub buttons {
