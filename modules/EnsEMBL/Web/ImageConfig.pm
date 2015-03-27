@@ -1276,7 +1276,8 @@ sub _user_track_settings {
 
   if (lc($format) eq 'interaction') {
     $strand         = 'f';
-    @user_renderers = ('off', 'Off', 'interaction', 'Interaction');
+    @user_renderers = ('off', 'Off', 'interaction', 'Interaction',
+                        'interaction_label', 'Interaction with labels');
   }
   elsif ($style =~ /^(wiggle|WIG)$/) {
     $strand         = 'r';
