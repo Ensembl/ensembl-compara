@@ -808,14 +808,18 @@ sub render_interaction {
           $right_height = abs(sin(180 - $start_point) * $radius); 
         }
 
+        ## Are one or both ends of this interaction visible?
+        my $end = {};
+        $end->{'left'} = 1 if $e1 > 0;
+        $end->{'right'} = 1 if $s2 < $length;
+
         ## Keep track of the maximum visible arc height, to save us a lot of grief
         ## trying to get rid of white space below the arcs
-        my $has_end = $e1 > 0 || $s2 < $length;
         ## Only use arc cutoff if there's a feature at one end of it
         ## otherwise we end up with no track height at all!
-        if ($has_end && ($end_point < 180 || $start_point > 0)) {
-          $max_arc = $left_height if ($end_point < 180 && $left_height > $max_arc);
-          $max_arc = $right_height if ($start_point > 0 && $right_height > $max_arc);
+        if (keys %$end == 1) {
+          $max_arc = $left_height if (!$end->{'left'} && $left_height > $max_arc);
+          $max_arc = $right_height if (!$end->{'right'} && $right_height > $max_arc);
         }
         else {
           $max_arc = $minor_axis if $minor_axis > $max_arc;
@@ -835,8 +839,6 @@ sub render_interaction {
             }));
 
         ## Second feature of pair
-        my $x = $start_2 - 1;
-        warn ">>> BOX 2 $start_2";
         $self->push($self->Rect({
               x            => $start_2 - 1,
               y            => 0,
@@ -850,8 +852,27 @@ sub render_interaction {
         if ($self->{'show_labels'}) {
           my $label = $self->feature_label($f);
           my (undef, undef, $text_width, $text_height) = $self->get_text_width(0, $label, '', font => $fontname, ptsize => $fontsize);
-          my $x = $has_end ? $start_2 - (($start_2 - $start_1) / 2) : $length / 2;
-          $x -= $text_width;
+          ## Work out where to place the label, based on the visible arc
+          my ($x, $y);
+          if (keys %$end == 2) { ## All on-screen
+            $x = $start_2 - ($start_2 - $start_1) / 2;
+            $x -= $text_width;
+            $y = $minor_axis / 2 + $label_h;
+          }
+          elsif (!keys %$end) { ## Just an arc with no end-points
+            $x = $length / 2 - $text_width;
+            $y = $minor_axis / 2 + $label_h;
+          }
+          else { ## Partial arc
+            if ($end->{'right'}) {
+              $x = 2;
+              $y = $left_height;
+            }
+            else {
+              $x = $length - $text_width / $pix_per_bp;
+              $y = $right_height / 2;
+            }
+          }
           $self->push($self->Text({
             font      => $fontname,
             colour    => 'black',
@@ -860,7 +881,7 @@ sub render_interaction {
             text      => $label,
             title     => $self->feature_title($f),
             x         => $x,
-            y         => $minor_axis / 2 + $label_h,
+            y         => $y,
             width     => $text_width,
             height    => $label_h,
             absolutey => 1,
