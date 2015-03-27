@@ -680,6 +680,7 @@ sub render_interaction {
   my $length          = $self->{'container'}->length;
   my $pix_per_bp      = $self->scalex;
   my $y_offset        = 0;
+  my $max_arc         = 0;
 
   my %features        = $self->features;
 
@@ -785,21 +786,38 @@ sub render_interaction {
         my $max_width   = ceil($self->image_width * 2);
         my $cutoff      = $major_axis > $max_width ? $max_width : $major_axis;
         my $minor_axis  = ceil(($cutoff / $max_width) * $track_depth);
-        warn ">>> MINOR AXIS $minor_axis";
 
-        my $start_point = 0; ## righthand end of arc
-        my $end_point   = 180; ### lefthand end of arc
+        my $start_point   = 0; ## righthand end of arc
+        my $end_point     = 180; ### lefthand end of arc
+        my $left_height   = $minor_axis; ## height of curve at left of image
+        my $right_height  = $minor_axis; ## height of curve at right of image
 
         ## Cut curve off at edge of track if ends lie outside the current window
         if ($e1 < 0) {
           my $cos = ($radius + $e1 * $pix_per_bp)/$radius;
-          $end_point -= $self->acos_in_degrees($cos);
+          ## For some reason, unless one degree is added here, the left end
+          ## of the arc overlaps the track name column 
+          $end_point -= $self->acos_in_degrees($cos) + 1;
+          $left_height = abs(sin($end_point) * $radius); 
         }
         elsif ($s2 > $length) {
           my $cos = ($radius - (($s2 - $length) * $pix_per_bp))/$radius;
           $start_point = $self->acos_in_degrees($cos);
+          $right_height = abs(sin(180 - $start_point) * $radius); 
         }
 
+        ## Keep track of the maximum visible arc height, to save us a lot of grief
+        ## trying to get rid of white space below the arcs
+        my $has_end = $e1 > 0 || $s2 < $length;
+        ## Only use arc cutoff if there's a feature at one end of it
+        ## otherwise we end up with no track height at all!
+        if ($has_end && ($end_point < 180 || $start_point > 0)) {
+          $max_arc = $left_height if ($end_point < 180 && $left_height > $max_arc);
+          $max_arc = $right_height if ($start_point > 0 && $right_height > $max_arc);
+        }
+        else {
+          $max_arc = $minor_axis if $minor_axis > $max_arc;
+        }
         ## modify dimensions to allow for 2-pixel width of brush
         $self->push($self->Arc({
               x             => $start_2 + ($h),
@@ -828,6 +846,8 @@ sub render_interaction {
       }
     }
   }
+  ## Limit track height to that of biggest arc
+  $self->{'maxy'} = ($max_arc / 2) + 10;
 }
 
 sub render_text {
