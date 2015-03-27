@@ -243,24 +243,26 @@ sub draw_features {
   return join ' or ', @error;
 }
 
-=pod
-sub render_normal {
+sub render_as_alignment_nolabel {
   my $self = shift;
-  $self->SUPER::render_normal(8, 20);  
+  $self->SUPER::render_as_alignment_nolabel({'height' => 8, 'depth' => 20});  
 }
 
 sub render_compact {
   my $self = shift;
   $self->{'renderer_no_join'} = 1;
-  $self->SUPER::render_normal(8, 0);  
+  $self->SUPER::render_as_alignment_nolabel({'height' => 8, 'depth' => 0});  
 }
 
-sub render_labels {
+sub render_as_alignment_label {
   my $self = shift;
   $self->{'show_labels'} = 1;
-  $self->render_normal(@_);
+  $self->SUPER::render_as_alignment_label(@_);
 }
-=cut
+
+## Backwards compatibility
+sub render_normal { $_[0]->render_as_alignment_nolabel; }
+sub render_labels { $_[0]->render_as_alignment_label; }
 
 sub render_text { warn "No text renderer for bigbed\n"; return ''; }
 
