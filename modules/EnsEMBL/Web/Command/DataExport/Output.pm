@@ -579,13 +579,15 @@ sub write_orthoxml {
   my ($self, $component) = @_;
   my $hub     = $self->hub;
   my $cdb     = $hub->param('cdb') || 'compara';
-  my $method  = ref($component) =~ /HomologAlignment/ 
-                          ? 'trees'
-                          : ref($component) =~ /ComparaTree/ 
-                          ? 'subtrees' 
-                          : 'homologies';
-
   my ($data)  = $component->get_export_data('genetree');
+
+  my $method_type;
+  if (ref($component) =~ /ComparaTree/) {
+    $method_type = ref($data) =~ /Node/ ? 'subtrees' : 'trees';     
+  }
+  else {
+    $method_type = 'homologies';
+  }
 
   my $handle = IO::String->new();
   my $w = Bio::EnsEMBL::Compara::Graph::OrthoXMLWriter->new(
@@ -593,13 +595,13 @@ sub write_orthoxml {
     -SOURCE_VERSION => $hub->species_defs->SITE_RELEASE_VERSION,
     -HANDLE => $handle,
   );
-  $self->_writexml($method, $data, $handle, $w);
+  $self->_writexml($method_type, $data, $handle, $w);
 }
 
 sub _writexml{
-  my ($self, $method, $data, $handle, $w) = @_;
+  my ($self, $method_type, $data, $handle, $w) = @_;
   my $hub = $self->hub;
-  my $method = 'write_'.$method;
+  my $method = 'write_'.$method_type;
   $w->$method($data);
   $w->finish();
 
