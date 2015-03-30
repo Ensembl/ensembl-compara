@@ -45,7 +45,7 @@ to allow it to update the master database to make it match the core databases.
     --reg_conf registry_configuration_file
     --compara compara_db_name_or_alias
     [--division ensembl_genomes_division]
-    [--[no]check_species_missing_from_compara]
+    [--[no]check_species_with_no_core] [--[no]check_species_missing_from_compara]
     [--[no]dry-run]
 
 =head1 OPTIONS
@@ -90,6 +90,11 @@ species than that division.
 Boolean (default: true).
 Reports all the species that have a core database but not a GenomeDB entry
 
+=item B<[--check_species_with_no_core]>
+
+Boolean (default: true).
+Reports all the (assembly_default) GenomeDB entries that don't have a core database.
+
 =item B<[--[no]dry-run]>
 
 In dry-run mode (the default), the script does not write into the master
@@ -110,6 +115,7 @@ my $compara;
 my $force = 0;
 my $dry_run = 1;
 my $check_species_missing_from_compara = 1;
+my $check_species_with_no_core = 1;
 my $division = undef;
 
 GetOptions(
@@ -119,6 +125,7 @@ GetOptions(
     "division=s" => \$division,
     "dry_run|dry-run" => \$dry_run,
     "check_species_missing_from_compara" => \$check_species_missing_from_compara,
+    "check_species_with_no_core" => \$check_species_with_no_core,
   );
 
 $| = 0;
@@ -133,6 +140,7 @@ Bio::EnsEMBL::Registry->load_all($reg_conf);
 
 my $compara_db = Bio::EnsEMBL::Registry->get_DBAdaptor($compara, "compara");
 my $genome_db_adaptor = $compara_db->get_GenomeDBAdaptor();
+my %found_genome_db_ids = ();
 
 foreach my $db_adaptor (@{Bio::EnsEMBL::Registry->get_all_DBAdaptors(-GROUP => 'core')}) {
 
@@ -149,6 +157,7 @@ foreach my $db_adaptor (@{Bio::EnsEMBL::Registry->get_all_DBAdaptors(-GROUP => '
 
     # Time to test !
     if ($master_genome_db) {
+        $found_genome_db_ids{$master_genome_db->dbID} = 1;
         # Make a new one with the core db information
         my $proper_genome_db = Bio::EnsEMBL::Compara::GenomeDB->new( -DB_ADAPTOR => $db_adaptor );
         my $diffs = $proper_genome_db->_check_equals($master_genome_db);
@@ -168,6 +177,19 @@ foreach my $db_adaptor (@{Bio::EnsEMBL::Registry->get_all_DBAdaptors(-GROUP => '
     
     # Don't keep all the connections open
     $db_adaptor->dbc->disconnect_if_idle();
+}
+
+if ($check_species_with_no_core) {
+    foreach my $master_genome_db (@{$genome_db_adaptor->fetch_all}) {
+        next if $master_genome_db->name eq 'ancestral_sequences';
+        if ($master_genome_db->assembly_default and not $found_genome_db_ids{$master_genome_db->dbID}) {
+            if ($master_genome_db->locator) {
+                warn "> The following genome_db entry has a locator in the master database. You should check that it really needs it.\n";
+            } else {
+                warn "> The following genome_db entry has the assembly_default flag on but cannot be found in the core databases.\n\t".($master_genome_db->toString)."\n";
+            }
+        }
+    }
 }
 
 
