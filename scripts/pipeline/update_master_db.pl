@@ -45,6 +45,7 @@ to allow it to update the master database to make it match the core databases.
     --reg_conf registry_configuration_file
     --compara compara_db_name_or_alias
     [--division ensembl_genomes_division]
+    [--[no]check_species_missing_from_compara]
     [--[no]dry-run]
 
 =head1 OPTIONS
@@ -59,15 +60,13 @@ Prints help message and exits.
 
 =back
 
-=head2 GENERAL CONFIGURATION
+=head2 DATABASE CONFIGURATION
 
 =over
 
-=item B<[--reg_conf registry_configuration_file]>
+=item B<--reg_conf registry_configuration_file>
 
-The Bio::EnsEMBL::Registry configuration file. If none given,
-the one set in ENSEMBL_REGISTRY will be used if defined, if not
-~/.ensembl_init will be used.
+The Bio::EnsEMBL::Registry configuration file.
 
 =item B<--compara compara_db_name_or_alias>
 
@@ -80,14 +79,23 @@ Restrict the search to a given division of Ensembl Genomes. You may consider
 setting --check_species_with_no_core to 1 if your master database contains more
 species than that division.
 
+=back
+
+=head2 REPORTING
+
+=over
+
+=item B<[--check_species_missing_from_compara]>
+
+Boolean (default: true).
+Reports all the species that have a core database but not a GenomeDB entry
+
 =item B<[--[no]dry-run]>
 
 In dry-run mode (the default), the script does not write into the master
 database (and would be happy with a read-only connection).
 
 =back
-
-=head1 INTERNAL METHODS
 
 =cut
 
@@ -101,6 +109,7 @@ my $reg_conf;
 my $compara;
 my $force = 0;
 my $dry_run = 1;
+my $check_species_missing_from_compara = 1;
 my $division = undef;
 
 GetOptions(
@@ -109,6 +118,7 @@ GetOptions(
     "compara=s" => \$compara,
     "division=s" => \$division,
     "dry_run|dry-run" => \$dry_run,
+    "check_species_missing_from_compara" => \$check_species_missing_from_compara,
   );
 
 $| = 0;
@@ -132,7 +142,7 @@ foreach my $db_adaptor (@{Bio::EnsEMBL::Registry->get_all_DBAdaptors(-GROUP => '
     my $that_species = $mc->get_production_name();
     my $that_assembly = $db_adaptor->assembly_name();
     unless ($that_species) {
-        warn sprintf("Skipping %s (no species name found.\n", $db_adaptor->dbc->locator);
+        warn sprintf("Skipping %s (no species name found: a compara_ancestral database ?).\n", $db_adaptor->dbc->locator);
         next;
     }
     my $master_genome_db = $genome_db_adaptor->fetch_by_name_assembly($that_species, $that_assembly);
@@ -152,7 +162,7 @@ foreach my $db_adaptor (@{Bio::EnsEMBL::Registry->get_all_DBAdaptors(-GROUP => '
         } else {
             print "> '$that_species' (assembly '$that_assembly') OK\n";
         }
-    } else {
+    } elsif ($check_species_missing_from_compara) {
         warn "> Could not find the species '$that_species' (assembly '$that_assembly') in the genome_db table. You should probably add it.\n";
     }
     
