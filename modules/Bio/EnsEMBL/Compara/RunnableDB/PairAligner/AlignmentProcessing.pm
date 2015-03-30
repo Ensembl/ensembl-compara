@@ -39,7 +39,7 @@ package Bio::EnsEMBL::Compara::RunnableDB::PairAligner::AlignmentProcessing;
 
 use strict;
 
-use Bio::EnsEMBL::Utils::Exception qw(throw warning);
+use Bio::EnsEMBL::Utils::Exception qw(throw);
 use Bio::EnsEMBL::Utils::SqlHelper;
 use Bio::EnsEMBL::Compara::GenomicAlignBlock;
 

@@ -48,7 +48,7 @@ use Bio::EnsEMBL::Compara::RunnableDB::PairAligner::AlignmentProcessing;
 use Bio::EnsEMBL::Analysis::Runnable::AlignmentChains;
 use Bio::EnsEMBL::Compara::MethodLinkSpeciesSet;
 use Bio::EnsEMBL::DnaDnaAlignFeature;
-use Bio::EnsEMBL::Utils::Exception qw(throw warning);
+use Bio::EnsEMBL::Utils::Exception qw(throw );
 
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
