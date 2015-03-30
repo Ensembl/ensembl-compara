@@ -47,14 +47,14 @@ my $gdb1 =  new Bio::EnsEMBL::Compara::GenomeDB(
            -name => "homo_sapiensa",       
            -assembly => "NCBI361",
            -taxon_id => "9606",
-           -genbuild => "2006-08-Ensembl");  
+           -genebuild => "2006-08-Ensembl");
 
 my $gdb2 =  new Bio::EnsEMBL::Compara::GenomeDB(
            -db_adaptor => undef,
            -name => "mus_musculusa",       
            -assembly => "NCBIM361",
            -taxon_id => "10090",
-           -genebuild => "2006-04-Ensembl");  
+           -genebuild => "2006-04-Ensembl");
 
 my $gdbs;
 @$gdbs = ($gdb1, $gdb2);
