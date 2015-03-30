@@ -159,7 +159,7 @@ CREATE TABLE genome_db (
   FOREIGN KEY (taxon_id) REFERENCES ncbi_taxa_node(taxon_id),
 
   PRIMARY KEY (genome_db_id),
-  UNIQUE name (name,assembly,genebuild,genome_component)
+  UNIQUE name (name,assembly,genome_component)
 
 ) COLLATE=latin1_swedish_ci ENGINE=MyISAM;
 

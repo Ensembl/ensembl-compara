@@ -87,7 +87,7 @@ sub genome_dbs {
                 $gdb = $self->adaptor->get_GenomeDBAdaptor->fetch_by_dbID($gdb) or die "Could not automagicallycreate a GenomeDB from '$gdb'\n";
             }
 
-            my $hash_key = join('--', $gdb->name, $gdb->assembly, $gdb->genebuild, $gdb->genome_component || '' );
+            my $hash_key = join('--', $gdb->name, $gdb->assembly, $gdb->genome_component || '' );
         
             if($hashed_genome_dbs->{ $hash_key }) {
                 warn("GenomeDB with hash key '$hash_key' appears twice in this Bio::EnsEMBL::Compara::SpeciesSet(".($self->dbID ? 'dbID='.$self->dbID : 'no dbID').")\n");

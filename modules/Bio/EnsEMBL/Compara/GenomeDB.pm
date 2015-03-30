@@ -675,8 +675,7 @@ sub sync_with_registry {
 =head2 _get_unique_key
 
   Example     : $genome_db->_get_unique_key();
-  Description : On a polyploid genome, returns all the GenomeDBs of its components.
-                Returns an empty list otherwise
+  Description : Returns a composite key that maps the UNIQUE KEY constraint of the genome_db table
   Returntype  : String
   Exceptions  : none
 
@@ -684,7 +683,7 @@ sub sync_with_registry {
 
 sub _get_unique_key {
     my $self = shift;
-    return join('_____', lc $self->name, lc $self->assembly, lc $self->genebuild);
+    return join('_____', lc $self->name, lc $self->assembly);
 }
 
 1;

@@ -506,7 +506,6 @@ sub _unique_attributes {
     return qw(
         name
         assembly
-        genebuild
         genome_component
     )
 }
@@ -575,7 +574,7 @@ sub support_additional_lookups {
 sub compute_keys {
     my ($self, $genome_db) = @_;
     return {
-            ($genome_db->genome_component ? 'genome_component' : 'name_assembly') => sprintf('%s_____%s', lc $genome_db->name, lc $genome_db->assembly), # Should in theory add the genebuild
+            ($genome_db->genome_component ? 'genome_component' : 'name_assembly') => $genome_db->_get_unique_key,
             $genome_db->taxon_id ? (taxon_id => $genome_db->taxon_id) : (),
             $genome_db->taxon_id ? (taxon_id_assembly => sprintf('%s____%s_', $genome_db->taxon_id, lc $genome_db->assembly)) : (),
             ($genome_db->taxon_id and $genome_db->assembly_default) ? (

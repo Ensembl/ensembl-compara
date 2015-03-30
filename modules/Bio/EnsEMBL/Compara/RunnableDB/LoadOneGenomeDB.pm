@@ -128,7 +128,6 @@ sub fetch_input {
 
         # Let's give all the parameters that should uniquely map
         $self->param('species_name', $master_genome_db->name);
-        $self->param('genebuild', $master_genome_db->genebuild);
         $self->param('assembly_name', $master_genome_db->assembly);
         $self->param('genome_component', $master_genome_db->genome_component);
     }
@@ -138,12 +137,9 @@ sub fetch_input {
         foreach my $this_core_dba (@{$self->iterate_through_registered_species}) {
 
             my $this_assembly = $this_core_dba->assembly_name();
-            my $this_start_date = $this_core_dba->get_MetaContainer->get_genebuild();
-
-            my $genebuild = $self->param('genebuild') || $this_start_date;
             my $assembly_name = $self->param('assembly_name') || $this_assembly;
 
-            if($this_assembly eq $assembly_name && $this_start_date eq $genebuild) {
+            if($this_assembly eq $assembly_name) {
                 $core_dba = $this_core_dba;
                 $self->param('assembly_name', $assembly_name);
 
@@ -151,7 +147,7 @@ sub fetch_input {
                     last;
                 }
             } else {
-                warn "Found assembly '$this_assembly' when looking for '$assembly_name', or '$this_start_date' when looking for '$genebuild'\n";
+                warn "Found assembly '$this_assembly' when looking for '$assembly_name'\n";
             }
 
         } # try next registry server
