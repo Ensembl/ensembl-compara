@@ -56,19 +56,14 @@ sub default_options {
         %{$self->SUPER::default_options},   # inherit the generic ones
 
     # User details
-        'email'                 => $self->o('ENV', 'USER').'@sanger.ac.uk',
+        'email'                 => $self->o('ENV', 'USER').'@ebi.ac.uk',
 
     # parameters that are likely to change from execution to another:
-        # You can add a letter to distinguish this run from other runs on the same release
-        'rel_with_suffix'       => $self->o('ensembl_release')."_bp",
 
     # custom pipeline name, in case you don't like the default one
-        'pipeline_name'         => 'protein_trees_'.$self->o('rel_with_suffix'),
-        # Tag attached to every single tree
-        'division'              => 'pan',
 
-    # dependent parameters: updating 'work_dir' should be enough
-        'work_dir'              => '/panfs/nobackup/production/ensembl/'.$self->o('ENV', 'USER').'/protein_trees_'.$self->o('rel_with_suffix'),
+    # dependent parameters: updating 'base_dir' should be enough
+        'base_dir'              => '/panfs/nobackup/production/ensembl/'.$self->o('ENV', 'USER').'/',
         'exe_dir'               =>  '/nfs/panda/ensemblgenomes/production/compara/binaries',
 
     # "Member" parameters:
@@ -83,6 +78,8 @@ sub default_options {
 
     # tree building parameters:
         'use_notung'                => 1,
+
+    # alignment filtering options
 
     # species tree reconciliation
         # you can define your own species_tree for 'treebest'. It can contain multifurcations
@@ -128,6 +125,8 @@ sub default_options {
        # List of MultiHMM files to load (and their names)
 
        # Dumps coming from InterPro
+
+       # A file that holds additional tags we want to add to the HMM clusters (for instance: Best-fit models)
 
     # hive_capacity values for some analyses:
         'reuse_capacity'            =>   3,
@@ -205,17 +204,24 @@ sub default_options {
 
         # How will the pipeline create clusters (families) ?
         # Possible values: 'blastp' (default), 'hmm', 'hybrid'
-        #   blastp means that the pipeline will run a all-vs-all blastp comparison of the proteins and run hcluster to create clusters. This can take a *lot* of compute
-        #   hmm means that the pipeline will run an HMM classification
-        #   hybrid is like "hmm" except that the unclustered proteins go to a all-vs-all blastp + hcluster stage
+        #   'blastp' means that the pipeline will run a all-vs-all blastp comparison of the proteins and run hcluster to create clusters. This can take a *lot* of compute
+        #   'hmm' means that the pipeline will run an HMM classification
+        #   'hybrid' is like "hmm" except that the unclustered proteins go to a all-vs-all blastp + hcluster stage
+        #   'topup' means that the HMM classification is reused from prev_rel_db, and topped-up with the updated / new species  >> UNIMPLEMENTED <<
         'clustering_mode'           => 'hybrid',
 
         # How much the pipeline will try to reuse from "prev_rel_db"
         # Possible values: 'clusters' (default), 'blastp', 'members'
-        #   clusters means that the members, the blastp hits and the clusters are copied over. In this case, the blastp hits are actually not copied over if "skip_blast_copy_if_possible" is set
-        #   blastp means that only the members and the blastp hits are copied over
-        #   members means that only the members are copied over
-        # If all the species can be reused, and if the reuse_level is "clusters", do we really want to copy all the peptide_align_feature tables ? They can take a lot of space and are not used in the pipeline
+        #   'members' means that only the members are copied over, and the rest will be re-computed
+        #   'hmms' is like 'members', but also copies the HMM profiles. It requires that the clustering mode is not 'blastp'  >> UNIMPLEMENTED <<
+        #   'hmm_hits' is like 'hmms', but also copies the HMM hits  >> UNIMPLEMENTED <<
+        #   'blastp' is like 'members', but also copies the blastp hits. It requires that the clustering mode is 'blastp'
+        #   'clusters' is like 'hmm_hits' or 'blastp' (depending on the clustering mode), but also copies the clusters
+        #   'alignments' is like 'clusters', but also copies the alignments  >> UNIMPLEMENTED <<
+        #   'trees' is like 'alignments', but also copies the trees  >> UNIMPLEMENTED <<
+        #   'homologies is like 'trees', but also copies the homologies  >> UNIMPLEMENTED <<
+
+        # Do we want to initialise the CAFE part now ?
 
     };
 }
