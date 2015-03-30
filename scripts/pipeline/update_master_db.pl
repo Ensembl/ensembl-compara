@@ -44,6 +44,7 @@ to allow it to update the master database to make it match the core databases.
   perl update_master_db.pl
     --reg_conf registry_configuration_file
     --compara compara_db_name_or_alias
+    [--division ensembl_genomes_division]
     [--[no]dry-run]
 
 =head1 OPTIONS
@@ -73,6 +74,12 @@ the one set in ENSEMBL_REGISTRY will be used if defined, if not
 The compara database to update. You can use either the original name or any of the
 aliases given in the registry_configuration_file
 
+=item B<[--division ensembl_genomes_division]>
+
+Restrict the search to a given division of Ensembl Genomes. You may consider
+setting --check_species_with_no_core to 1 if your master database contains more
+species than that division.
+
 =item B<[--[no]dry-run]>
 
 In dry-run mode (the default), the script does not write into the master
@@ -94,11 +101,13 @@ my $reg_conf;
 my $compara;
 my $force = 0;
 my $dry_run = 1;
+my $division = undef;
 
 GetOptions(
     "help" => \$help,
     "reg_conf=s" => \$reg_conf,
     "compara=s" => \$compara,
+    "division=s" => \$division,
     "dry_run|dry-run" => \$dry_run,
   );
 
@@ -119,6 +128,7 @@ foreach my $db_adaptor (@{Bio::EnsEMBL::Registry->get_all_DBAdaptors(-GROUP => '
 
     # Get the production name and assembly to fetch our GenomeDBs
     my $mc = $db_adaptor->get_MetaContainer();
+    next if $division and $mc->get_division and $mc->get_division ne $division;
     my $that_species = $mc->get_production_name();
     my $that_assembly = $db_adaptor->assembly_name();
     unless ($that_species) {
