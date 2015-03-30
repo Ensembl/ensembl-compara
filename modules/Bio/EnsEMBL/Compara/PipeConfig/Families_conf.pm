@@ -241,11 +241,7 @@ sub pipeline_analyses {
         },
 
         {   -logic_name => 'genomedb_factory',
-            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ObjectFactory',
-            -parameters => {
-                'call_list'             => [ 'compara_dba', 'get_MethodLinkSpeciesSetAdaptor', [ 'fetch_by_dbID', '#mlss_id#'], 'species_set_obj', 'genome_dbs' ],
-                'column_names2getters'  => { 'genome_db_id' => 'dbID' },
-            },
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GenomeDBFactory',
             -flow_into => {
                 '2->A' => [ 'load_nonref_members' ],
                 'A->1' => [ 'hc_nonref_members' ],

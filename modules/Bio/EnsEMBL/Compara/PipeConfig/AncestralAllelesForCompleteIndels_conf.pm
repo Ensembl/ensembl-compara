@@ -234,18 +234,14 @@ sub pipeline_analyses {
 	     -rc_name => '100Mb',
 	    },
 	    {   -logic_name => 'load_genomedb_factory',
-		-module     => 'Bio::EnsEMBL::Compara::RunnableDB::ObjectFactory',
+                -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GenomeDBFactory',
 		-parameters => {
 				'compara_db'    => $self->o('master_db'),   # that's where genome_db_ids come from
 				'mlss_id'       => $self->o('mlss_id'),
-				
-				'call_list'             => [ 'compara_dba', 'get_MethodLinkSpeciesSetAdaptor', ['fetch_by_dbID', '#mlss_id#'], 'species_set_obj', 'genome_dbs'],
-				'column_names2getters'  => { 'genome_db_id' => 'dbID', 'species_name' => 'name', 'assembly_name' => 'assembly', 'genebuild' => 'genebuild', 'locator' => 'locator', 'has_karyotype' => 'has_karyotype', 'is_high_coverage' => 'is_high_coverage' },
-				
-				'fan_branch_code'       => 2,
+                                'extra_parameters'      => [ 'locator' ],
 			       },
 		-flow_into => {
-			       '2->A' => [ 'load_genomedb' ],
+                               '2->A' => { 'load_genomedb' => { 'master_dbID' => '#genome_db_id#', 'locator' => '#locator#' }, },
 			       'A->1' => [ 'load_genomedb_funnel' ],    # backbone
 			      },
 		-rc_name => '100Mb',

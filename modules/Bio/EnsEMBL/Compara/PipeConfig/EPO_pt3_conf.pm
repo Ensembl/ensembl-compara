@@ -540,13 +540,7 @@ return
 #            },
 
             {   -logic_name => 'stats_factory',
-                -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ObjectFactory',
-                -parameters => {
-                                'call_list'             => [ 'compara_dba', 'get_GenomeDBAdaptor', 'fetch_all'],
-                                'column_names2getters'  => { 'genome_db_id' => 'dbID' },
-
-                                'fan_branch_code'       => 2,
-                               },
+                -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GenomeDBFactory',
                 -flow_into  => {
                                 2 => [ 'multiplealigner_stats' ],
                                },
