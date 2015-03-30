@@ -70,16 +70,31 @@ sub fetch_input {
 =cut
 
 sub run{
-  my ($self) = @_;
+    my ($self) = @_;
 
-  my $runnable = $self->param('runnable');
+    my $runnable = $self->param('runnable');
 
-  $self->compara_dba->dbc->disconnect_if_idle();    # this one should disconnect only if there are no active kids
-  $runnable->run;
+    $self->compara_dba->dbc->disconnect_if_idle();    # this one should disconnect only if there are no active kids
+    eval {
+        $runnable->run;
+        1;
+    } or do {
+        my $msg = $@;
+        if($@ =~ /Something went wrong with axtChain/s) {   # Add other termination signals here (different for different Runnables)
+            # Probably an ongoing MEMLIMIT
+            # Let's wait a bit to let LSF kill the worker as it should
+            sleep(30);
+        }
 
-  my $converted_chains = $self->convert_output($runnable->output);
-  $self->param('chains', $converted_chains);
-  rmdir($runnable->workdir) if (defined $runnable->workdir);
+        # If we're still there, there is something weird going on.
+        # Perhaps not a MEMLIMIT, after all. Let's die and hope that
+        # next run will be better
+        die $@;
+    };
+
+    my $converted_chains = $self->convert_output($runnable->output);
+    $self->param('chains', $converted_chains);
+    rmdir($runnable->workdir) if (defined $runnable->workdir);
 }
 
 
