@@ -168,7 +168,6 @@ sub write_output {
   #
   #Create jobs for 'coding_exon_stats' on branch 2
   #
-  my $output_hash = {};
 
   my $dnafrag_adaptor = $self->compara_dba->get_DnaFragAdaptor;
 
@@ -178,7 +177,7 @@ sub write_output {
   my $ref_dnafrags = $dnafrag_adaptor->fetch_all_by_GenomeDB_region($ref_genome_db, undef, undef, 1);
   my $non_ref_dnafrags = $dnafrag_adaptor->fetch_all_by_GenomeDB_region($non_ref_genome_db, undef, undef, 1);
 
-  my $output_hash;
+  my $output_hash = {};
   foreach my $dnafrag (@$ref_dnafrags) {
       %$output_hash = ('mlss_id' => $mlss_id,
                        'seq_region' => $dnafrag->name,
@@ -280,6 +279,22 @@ sub write_pairaligner_statistics {
     $method_link_species_set->store_tag("non_ref_genome_coverage", $non_ref_coverage->{both});
     $method_link_species_set->store_tag("non_ref_genome_length", $non_ref_coverage->{total});
 
+    # Distribution of the block sizes
+    my $sql_nets = 'SELECT POW(10,FLOOR(LOG10(tot_length))) AS rounded_length, COUNT(*), SUM(tot_length) FROM ( SELECT SUM(length) AS tot_length FROM genomic_align_block WHERE method_link_species_set_id = ? GROUP BY group_id) t GROUP BY rounded_length;';
+    my $sql_chains = 'SELECT POW(10,FLOOR(LOG10(length))) AS rounded_length, COUNT(*), SUM(length) FROM genomic_align_block WHERE method_link_species_set_id = ? GROUP BY rounded_length;';
+
+    $self->store_mlss_tag_block_size($method_link_species_set, 'chains', $sql_chains);
+    $self->store_mlss_tag_block_size($method_link_species_set, 'nets', $sql_nets);
+
+}
+
+sub store_mlss_tag_block_size {
+    my ($self, $mlss, $block_type, $query) = @_;
+    my $data = $self->compara_dba->dbc->db_handle->selectrow_array($query, undef, $self->param('mlss_id'));
+    foreach my $r (@$data) {
+        $mlss->store_tag("num_${block_type}_blocks_$r->[0]", $r->[1]);
+        $mlss->store_tag("totlength_${block_type}_blocks_$r->[0]", $r->[2]);
+    }
 }
 
 #

@@ -24,7 +24,7 @@ use Data::Dumper;
 use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
 
 my $starting_from_rel = 49;     # 49 is the earliest
-my $current_rel       = 62;     # 62 is the current
+my $current_rel       = 79;     # 79 is the current
 my $header_table_name = 'species_set_header';
 
 sub get_compara_url {
@@ -35,9 +35,9 @@ sub get_compara_url {
 #    } elsif($rel == 61) {
 #        return "mysql://ensro\@compara1/sf5_ensembl_compara_61";
     } elsif((48<=$rel) and ($rel<=$current_rel)) {
-        return "mysql://ensro\@ensdb-archive:5304/ensembl_compara_$rel";
+        return "mysql://anonymous\@ensembldb.ensembl.org:5306/ensembl_compara_$rel";
     } elsif((29<=$rel) and ($rel<=47)) {
-        return "mysql://ensro\@ensdb-archive:3304/ensembl_compara_$rel";
+        return "mysql://anonymous\@ensembldb.ensembl.org:4306/ensembl_compara_$rel";
     }
 
     return 'mysql://ensro@compara1/sf5_ensembl_compara_master';
@@ -138,7 +138,7 @@ sub main {
         my $names = $master_contents->{$set_id}{'names'};
 
         my $ss_name = 'UNKNOWN';
-        if($set_size==1 and $names=~/^(\w\.\w\w\w) paralogues$/) {
+        if($set_size==1 and $names=~/(^|,)(\w\.\w\w\w) paralogues/) {
             $ss_name = $master_name->{$genome_dbs[0]};
         } elsif($set_size==2 and $names=~/(\w\.\w\w\w-\w\.\w\w\w) (paralogues|orthologues)/) {
             $ss_name = join('-', sort map { $master_name->{$_} } @genome_dbs);
@@ -148,6 +148,8 @@ sub main {
             $ss_name = $1;
         } elsif($set_size>2 and $names=~/^(protein trees|families)/) {
             $ss_name = 'all species';
+        } else {
+            die "Unknown combination of size=$set_size and name=$names\n";
         }
         
         print "REPLACE INTO $header_table_name (species_set_id, name, set_size, first_release, last_release) VALUES ($set_id, '$ss_name', $set_size, $first_rel_present, $last_rel_present);\n";

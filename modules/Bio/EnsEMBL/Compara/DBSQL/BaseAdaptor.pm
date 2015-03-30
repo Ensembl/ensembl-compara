@@ -141,12 +141,14 @@ sub construct_sql_query {
 
 
 =head2 generic_fetch
+
   Arguments  : Same arguments as construct_sql_query()
   Example    : $arrayref = $a->generic_fetch($constraint, $join, $final_clause);
   Description: Performs a database fetch and returns the newly created objects
   Returntype : arrayref of objects
   Exceptions : none
   Caller     : various adaptors' specific fetch_ subroutines
+
 =cut
 
 sub generic_fetch {
@@ -177,12 +179,14 @@ sub generic_fetch {
 
 
 =head2 generic_fetch_one
+
   Arguments  : Same arguments as construct_sql_query()
   Example    : $obj = $a->generic_fetch_one($constraint, $join, $final_clause);
   Description: Performs a database fetch and returns the first newly created object
   Returntype : object
   Exceptions : none
   Caller     : various adaptors' specific fetch_ subroutines
+
 =cut
 
 sub generic_fetch_one {
@@ -204,6 +208,7 @@ sub generic_fetch_one {
 
 
 =head2 generic_fetch_Iterator
+
   Arg [1]    : (optional) integer $cache_size
                The number of dbIDs in each chunk (default: 1000)
   Arg [1]    : (optional) string $constraint
@@ -214,6 +219,7 @@ sub generic_fetch_one {
   Returntype : Bio::EnsEMBL::Utils::Iterator
   Exceptions : none
   Caller     : various adaptors' specific fetch_ subroutines
+
 =cut
 
 sub generic_fetch_Iterator {

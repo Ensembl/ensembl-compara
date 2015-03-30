@@ -181,6 +181,8 @@ sub default_options {
         'window_size' => 10000,
 	'filter_duplicates_rc_name' => '1Gb',
 	'filter_duplicates_himem_rc_name' => 'crowd_himem',
+        'filter_duplicates_hive_capacity' => 50,
+        'filter_duplicates_batch_size' => 3,
 
 	#
 	#Default pair_aligner
@@ -500,8 +502,8 @@ sub pipeline_analyses {
  	       -parameters    => { 
 				  'window_size' => $self->o('window_size') 
 				 },
-	       -hive_capacity => 50,
-	       -batch_size    => 3,
+	       -hive_capacity => $self->o('filter_duplicates_hive_capacity'),
+	       -batch_size    => $self->o('filter_duplicates_batch_size'),
 	       -flow_into => {
 			       -1 => [ 'filter_duplicates_himem' ], # MEMLIMIT
 			     },
@@ -512,8 +514,8 @@ sub pipeline_analyses {
  	       -parameters    => { 
 				  'window_size' => $self->o('window_size') 
 				 },
-	       -hive_capacity => 50,
-	       -batch_size    => 3,
+	       -hive_capacity => $self->o('filter_duplicates_hive_capacity'),
+	       -batch_size    => $self->o('filter_duplicates_batch_size'),
 	       -can_be_empty  => 1, 
 	       -rc_name => $self->o('filter_duplicates_himem_rc_name'),
  	    },
@@ -688,8 +690,8 @@ sub pipeline_analyses {
                                  'window_size' => $self->o('window_size'),
                                  'filter_duplicates_net' => 1,
                                 },
-              -hive_capacity => 50,
-              -batch_size    => 3,
+              -hive_capacity => $self->o('filter_duplicates_hive_capacity'),
+              -batch_size    => $self->o('filter_duplicates_batch_size'),
               -flow_into => {
                               -1 => [ 'filter_duplicates_net_himem' ], # MEMLIMIT
                             },
@@ -702,8 +704,8 @@ sub pipeline_analyses {
                                  'window_size' => $self->o('window_size'),
                                  'filter_duplicates_net' => 1,
                                 },
-              -hive_capacity => 50,
-              -batch_size    => 3,
+              -hive_capacity => $self->o('filter_duplicates_hive_capacity'),
+              -batch_size    => $self->o('filter_duplicates_batch_size'),
               -can_be_empty  => 1,
               -rc_name => $self->o('filter_duplicates_himem_rc_name'),
            },
@@ -749,8 +751,8 @@ sub pipeline_analyses {
 			     },
 	      -wait_for =>  [ 'healthcheck' ],
               -flow_into => {
-                              1 => [ 'coding_exon_stats_summary' ],
-			      2 => [ 'coding_exon_stats' ],
+                  'A->1' => [ 'coding_exon_stats_summary' ],
+                  '2->A' => [ 'coding_exon_stats' ],
 			     },
 	      -rc_name => '1Gb',
 	    },
@@ -762,7 +764,6 @@ sub pipeline_analyses {
             {   -logic_name => 'coding_exon_stats_summary',
                 -module     => 'Bio::EnsEMBL::Compara::RunnableDB::PairAligner::PairAlignerCodingExonSummary',
                 -rc_name => '1Gb',
-                -wait_for =>  [ 'coding_exon_stats' ],
             },
 	   ];
 }

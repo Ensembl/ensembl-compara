@@ -87,7 +87,7 @@ use base qw(Bio::EnsEMBL::Compara::Graph::BaseXMLWriter);
 
 use Bio::EnsEMBL::Utils::Argument qw(rearrange);
 use Bio::EnsEMBL::Utils::Exception qw(throw warning);
-use Bio::EnsEMBL::Utils::Scalar qw(check_ref wrap_array);
+use Bio::EnsEMBL::Utils::Scalar qw(check_ref wrap_array check_array_contents);
 
 my $ortho_uri = 'http://orthoXML.org';
 
@@ -223,7 +223,7 @@ sub source_version {
 sub write_homologies {
     my ($self, $homologies) = @_;
 
-    return $self->_write_AlignedMemberSets($homologies);
+    return $self->_write_AlignedMemberSets('Bio::EnsEMBL::Compara::Homology', $homologies);
 }
 
 
@@ -246,20 +246,42 @@ sub write_homologies {
 sub write_trees {
     my ($self, $trees) = @_;
 
-    return $self->_write_AlignedMemberSets($trees);
+    return $self->_write_AlignedMemberSets('Bio::EnsEMBL::Compara::GeneTree', $trees);
+}
+
+
+=head2 write_subtrees()
+
+  Arg[0]      : The tree nodes to write. Can be a single GeneTreeNode or an ArrayRef
+  Description : Writes a subtree into the backing document representation
+  Returntype  : None
+  Exceptions  : Possible if there is an issue with retrieving data from the tree
+  instance
+  Example     : $writer->write_subtrees($tree_node);
+  Status      : Stable
+
+=cut
+
+sub write_subtrees {
+    my ($self, $tree_nodes) = @_;
+
+    return $self->_write_AlignedMemberSets('Bio::EnsEMBL::Compara::GeneTreeNode', $tree_nodes);
 }
 
 
 sub _write_AlignedMemberSets {
-  my ($self, $alns_sets) = @_;
+  my ($self, $type, $alns_sets) = @_;
 
   $alns_sets = wrap_array($alns_sets);
+
+  throw("Not all the arguments are of type '$type'") unless check_array_contents($alns_sets, $type);
 
   # Create a list of all members, grouped by species
   my $hash_members = {};
   my $list_species = [];
   foreach my $aln_set (@{$alns_sets}) {
-    foreach my $member (@{$aln_set->get_all_Members}) {
+    my $all_members = $aln_set->isa('Bio::EnsEMBL::Compara::GeneTreeNode') ? $aln_set->get_all_leaves() : $aln_set->get_all_Members();
+    foreach my $member (@$all_members) {
       if (not exists $hash_members->{$member->genome_db_id}) {
         push @{$list_species}, $member->genome_db;
         $hash_members->{$member->genome_db_id} = {};
@@ -337,10 +359,12 @@ sub _write_data {
     if ($object->isa('Bio::EnsEMBL::Compara::GeneTree')) {
       $self->_find_valid_genetree_roots($object->root);
       $object->root->release_tree() if ! $self->no_release_trees;
+    } elsif ($object->isa('Bio::EnsEMBL::Compara::GeneTreeNode')) {
+      $self->_find_valid_genetree_roots($object);
     } elsif ($object->isa('Bio::EnsEMBL::Compara::Homology')) {
       $self->_homology_body($object);
     } else {
-      die "Cannot handle ".ref($object)."\n";
+      throw("Cannot handle ".ref($object)."\n");
     }
   }
   $w->endTag("groups");

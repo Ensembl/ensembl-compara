@@ -111,14 +111,6 @@ sub default_options {
 	'anchor_batch_size' => 10,
 	 # max number of sequences to allow in an anchor
 	'anc_seq_count_cut_off' => 15,
-	 # db to transfer the raw mappings to - unused at the moment 
-	'compara_mapping_db' => {
-		-user => 'ensadmin',
-		-host   => 'compara4',
-		-driver => 'mysql',
-		-port   => 3306,
-		-pass   => $self->o('password'),
-	},
 	'compara_master' => {
 		-user => 'ensro',
 		-port => 3306,
@@ -177,12 +169,13 @@ sub pipeline_analyses {
 	    {   -logic_name     => 'load_genome_db_from_anchor_db',
 		-module     => 'Bio::EnsEMBL::Hive::RunnableDB::MySQLTransfer',
 		-parameters => {
-			'src_db_conn'   => $self->o('compara_anchor_db'),
+			'src_db_conn'   => '#compara_anchor_db#',
 			'table'         => 'genome_db',
 		},
 		-input_ids => [{}],
 		-flow_into => {
-			1 => [ 'import_genome_dbs' ],
+			'1->A' => [ 'import_genome_dbs' ],
+                        'A->1' => [ 'dump_genome_sequence_factory' ],
 		},
 	    },
 	    {   -logic_name => 'import_genome_dbs',
@@ -200,7 +193,7 @@ sub pipeline_analyses {
 	    {    -logic_name     => 'load_dnafrag_from_anchor_db',
 		 -module     => 'Bio::EnsEMBL::Hive::RunnableDB::MySQLTransfer',
 		 -parameters => {
-			'src_db_conn'   => $self->o('compara_anchor_db'),
+			'src_db_conn'   => '#compara_anchor_db#',
 			'table'         => 'dnafrag',
 		},
 		-flow_into => {
@@ -248,16 +241,10 @@ sub pipeline_analyses {
 		-parameters => {
 			'sql' => [
 				# ml and mlss entries for the overlaps, pecan and gerp
-				'REPLACE INTO method_link (method_link_id, type) VALUES('. 
-				$self->o('mapping_method_link_id') . ',"' . $self->o('mapping_method_link_name')  . '")',
-				'REPLACE INTO method_link_species_set (method_link_species_set_id, method_link_id, species_set_id) VALUES('.
-				$self->o('mapping_mlssid') . ',' . $self->o('mapping_method_link_id') . ',' . $self->o('species_set_id') . ')',	
+				'REPLACE INTO method_link (method_link_id, type) VALUES(#mapping_method_link_id#, "#mapping_method_link_name#")',
+				'REPLACE INTO method_link_species_set (method_link_species_set_id, method_link_id, species_set_id) VALUES(#mapping_mlssid#, #mapping_method_link_id#, #species_set_id#)',
 			],
 		},
-		 -flow_into => {
-			1 => [ 'dump_genome_sequence_factory' ],
-		},
-			
 	    },
 
 	    {	-logic_name     => 'dump_genome_sequence_factory',
@@ -268,7 +255,8 @@ sub pipeline_analyses {
 			'fan_branch_code' => 2,
 		},
 		-flow_into => {
-			2  => [ 'dump_genome_sequence' ],
+                    '2->A'  => [ 'dump_genome_sequence' ],
+                    'A->1'  => [ 'remove_overlaps' ],
 		},
 	    },
 
@@ -283,7 +271,6 @@ sub pipeline_analyses {
 		-flow_into => {
 			2 => [ 'map_anchors' ],
 		},
-		-wait_for  => [ 'import_dnafrags' ],
 		-rc_name => 'mem7500',
 		-hive_capacity => 2,
 		-max_retry_count => 3,
@@ -302,8 +289,6 @@ sub pipeline_analyses {
 	    {	-logic_name     => 'remove_overlaps',
 		-module         => 'Bio::EnsEMBL::Compara::Production::EPOanchors::RemoveAnchorOverlaps',
 		-rc_name => 'hugemem',
-		-wait_for  => [ 'map_anchors' ],
-		-input_ids  => [{}],
 		-flow_into => {
 			1 => [ 'trim_anchor_align_factory' ],
 		},
@@ -324,8 +309,8 @@ sub pipeline_analyses {
 	    {   -logic_name => 'trim_anchor_align',			
 		-module     => 'Bio::EnsEMBL::Compara::Production::EPOanchors::TrimAnchorAlign',
 		-parameters => {
-				'input_method_link_species_set_id' => $self->o('mapping_mlssid'),
-				'output_method_link_species_set_id' => $self->o('trimmed_mapping_mlssid'),
+				'input_method_link_species_set_id' => '#mapping_mlssid#',
+				'output_method_link_species_set_id' => '#trimmed_mapping_mlssid#',
 			},
 		-failed_job_tolerance => 10,
 		-hive_capacity => 200,

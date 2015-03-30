@@ -213,7 +213,12 @@ sub fetch_by_Slice {
 
   my $core_dba = $slice->adaptor()->db();
   my $gdb = $self->fetch_by_core_DBAdaptor($core_dba);
-  return unless $gdb;
+
+  # 2015-03-18: the code below is greedy: it tries to find the component
+  # genome_db that matches the slice instead of returning the principal
+  # genome_db. It seems that we currently don't need to return component
+  # genome_dbs here, so let's just skip this part for now.
+  return $gdb;
 
   # We need to return the right genome_db if the slice is from a polyploid
   # genome. There are several ways of checking that:
@@ -227,7 +232,7 @@ sub fetch_by_Slice {
     my $all_comp_attr = $slice->get_all_Attributes('genome_component');
     throw("No 'genome_component' attribute found\n") unless scalar(@$all_comp_attr);
     throw("Too many 'genome_component' attributes !\n") if scalar(@$all_comp_attr) > 1;
-    my $comp_name = lc $all_comp_attr->[0]->value;
+    my $comp_name = $all_comp_attr->[0]->value;
     my $comp_gdb = $gdb->component_genome_dbs($comp_name) || throw("No genome_db for the component '$comp_name'\n");
     return $comp_gdb;
   } else {

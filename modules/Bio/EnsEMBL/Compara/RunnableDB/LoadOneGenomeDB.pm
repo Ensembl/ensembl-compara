@@ -191,7 +191,7 @@ sub create_genome_db {
         -GENOME_COMPONENT => $asked_genome_component,
     );
     if ($master_object) {
-        $genome_db->_check_equals($master_object);
+        $genome_db->_assert_equals($master_object);
         $genome_db->dbID($master_object->dbID);
     } elsif ($asked_genome_db_id) {
         $genome_db->dbID( $asked_genome_db_id );
