@@ -34,8 +34,8 @@ Questions may also be sent to the Ensembl help desk at
 This script will check that all the species found in the Registry are
 in the compara database, and with up-to-date meta-information (such as
 the genebuild, etc).
-In dry-run mode, the script only does the comparison. In default mode,
-it will update the master database to make it match the core databases.
+By default, the script only does the comparison. You need to add --nodry-run
+to allow it to update the master database to make it match the core databases.
 
 =head1 SYNOPSIS
 
@@ -75,8 +75,8 @@ aliases given in the registry_configuration_file
 
 =item B<[--[no]dry-run]>
 
-In dry-run mode, the script does not write into the master
-database, and would be happy with a read-only connection.
+In dry-run mode (the default), the script does not write into the master
+database (and would be happy with a read-only connection).
 
 =back
 
@@ -93,7 +93,7 @@ my $help;
 my $reg_conf;
 my $compara;
 my $force = 0;
-my $dry_run = 0;
+my $dry_run = 1;
 
 GetOptions(
     "help" => \$help,
