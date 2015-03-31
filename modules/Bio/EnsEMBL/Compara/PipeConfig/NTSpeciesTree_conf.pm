@@ -170,8 +170,8 @@ sub pipeline_analyses {
     },
     -module     => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
     -flow_into => { 
-      2 => [ 'phylofit_factory' ],
-      1 => [ 'merge_msa_trees' ],
+      '2->A' => [ 'phylofit_factory' ],
+      'A->1' => [ 'merge_msa_trees' ],
     },  
     -meadow_type=> 'LOCAL',
   },
@@ -222,7 +222,6 @@ sub pipeline_analyses {
    -module     => 'Bio::EnsEMBL::Compara::RunnableDB::MakeNTSpeciesTree::MergeMSATrees',
    -parameters => {'species_tree_bl' => $self->o('species_tree_bl'),},
    -max_retry_count => 1,
-   -wait_for => [ 'run_phylofit' ],
   },
 
  ];
