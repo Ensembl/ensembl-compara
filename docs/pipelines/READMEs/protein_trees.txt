@@ -193,7 +193,7 @@ meta data for each species and should have the following format:
 
 All the parameters are mandatory, except "gene_coord_gff".
 The SQL INSERT will then look like:
-   INSERT INTO genome_db (taxon_id, name, assembly, assembly_default, genebuild) VALUES (61853, "nomascus_leucogenys", "Nleu2.0", 1, "2011-05");
+   INSERT INTO genome_db (taxon_id, name, assembly, genebuild) VALUES (61853, "nomascus_leucogenys", "Nleu2.0", "2011-05");
 Make sure that you are using the same values as in the JSON file
 
 		3.2.1.2 SpeciesSet and MethodLinkSpeciesSet
