@@ -135,12 +135,13 @@ CREATE TABLE ncbi_taxa_name (
 @column taxon_id          External reference to taxon_id in the @link ncbi_taxa_node table
 @column name              Species name
 @column assembly          Assembly version of the genome
-@column assembly_default  Boolean value describing if this assembly is the default one or not, so that we can handle more than one assembly version for a given species.
 @column genebuild         Version of the genebuild
 @column has_karyotype     Whether the genome has a karyotype
 @column is_high_coverage  Whether the assembly coverage depth is high enough
 @column genome_component  Only used for polyploid genomes: the name of the genome component
 @column locator           Used for production purposes or for user configuration in in-house installation.
+@column first_release     The first release this genome was present in
+@column last_release      The last release this genome was present in, or NULL if it is still current
 
 */
 
@@ -149,12 +150,13 @@ CREATE TABLE genome_db (
   taxon_id                    int(10) unsigned DEFAULT NULL, # KF taxon.taxon_id
   name                        varchar(128) DEFAULT '' NOT NULL,
   assembly                    varchar(100) DEFAULT '' NOT NULL,
-  assembly_default            tinyint(1) DEFAULT 1,
   genebuild                   varchar(100) DEFAULT '' NOT NULL,
   has_karyotype			tinyint(1) NOT NULL DEFAULT 0,
   is_high_coverage            tinyint(1) NOT NULL DEFAULT 0,
   genome_component            varchar(5) DEFAULT NULL,
   locator                     varchar(400),
+  first_release               smallint,
+  last_release                smallint,
 
   FOREIGN KEY (taxon_id) REFERENCES ncbi_taxa_node(taxon_id),
 

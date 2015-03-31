@@ -62,7 +62,7 @@ use Bio::EnsEMBL::Compara::GenomeDB;
 use Bio::EnsEMBL::Utils::Exception;
 use Bio::EnsEMBL::Utils::Scalar qw(:assert);
 
-use base ('Bio::EnsEMBL::Compara::DBSQL::BaseFullCacheAdaptor');
+use base ('Bio::EnsEMBL::Compara::DBSQL::BaseReleaseHistoryAdaptor');
 
 
 
@@ -240,7 +240,6 @@ sub fetch_by_Slice {
 =head2 fetch_all_by_ancestral_taxon_id
 
   Arg [1]    : int $ancestral_taxon_id
-  Arg [2]    : (optional) bool $assembly_default_only
   Example    : $gdb = $gdba->fetch_all_by_ancestral_taxon_id(1234);
   Description: Retrieves all the genome dbs derived from that NCBI taxon_id.
   Note       : This method uses the ncbi_taxa_node table
@@ -252,7 +251,7 @@ sub fetch_by_Slice {
 =cut
 
 sub fetch_all_by_ancestral_taxon_id {
-  my ($self, $taxon_id, $assembly_default_only) = @_;
+  my ($self, $taxon_id) = @_;
 
   unless($taxon_id) {
     throw('taxon_id argument is required');
@@ -261,9 +260,6 @@ sub fetch_all_by_ancestral_taxon_id {
   my $sql = "SELECT genome_db_id FROM ncbi_taxa_node ntn1, ncbi_taxa_node ntn2, genome_db gdb
     WHERE ntn1.taxon_id = ? AND ntn1.left_index < ntn2.left_index AND ntn1.right_index > ntn2.left_index
     AND ntn2.taxon_id = gdb.taxon_id";
-  if ($assembly_default_only) {
-    $sql .= " AND gdb.assembly_default = 1";
-  }
 
   return $self->_id_cache->get_by_sql($sql, [$taxon_id]);
 }
@@ -351,15 +347,16 @@ sub store {
     if($self->_synchronise($gdb)) {
         return $self->update($gdb);
     } else {
-        my $sql = 'INSERT INTO genome_db (genome_db_id, name, assembly, genebuild, has_karyotype, is_high_coverage, taxon_id, assembly_default, genome_component, locator) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)';
+        my $sql = 'INSERT INTO genome_db (genome_db_id, name, assembly, genebuild, has_karyotype, is_high_coverage, taxon_id, genome_component, locator, first_release, last_release) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)';
         my $sth= $self->prepare( $sql ) or die "Could not prepare '$sql'\n";
-        my $return_code = $sth->execute( $gdb->dbID, $gdb->name, $gdb->assembly, $gdb->genebuild, $gdb->has_karyotype, $gdb->is_high_coverage, $gdb->taxon_id, $gdb->assembly_default, $gdb->genome_component, $gdb->locator )
+        my $return_code = $sth->execute( $gdb->dbID, $gdb->name, $gdb->assembly, $gdb->genebuild, $gdb->has_karyotype, $gdb->is_high_coverage, $gdb->taxon_id, $gdb->genome_component, $gdb->locator, $gdb->first_release, $gdb->last_release )
             or die "Could not store gdb(name='".$gdb->name."', assembly='".$gdb->assembly."', genebuild='".$gdb->genebuild."')\n";
 
         $self->attach($gdb, $self->dbc->db_handle->last_insert_id(undef, undef, 'genome_db', 'genome_db_id') );
         $sth->finish();
     }
 
+    # FIXME
     if ($gdb->assembly_default) {
         # Let's now un-default the other genome_dbs
         my $sth = $self->prepare('UPDATE genome_db SET assembly_default = 0 WHERE name = ? AND genome_db_id != ?');
@@ -399,9 +396,9 @@ sub update {
         $reference_dba->get_GenomeDBAdaptor->update( $gdb );
     }
 
-    my $sql = 'UPDATE genome_db SET name=?, assembly=?, genebuild=?, taxon_id=?, assembly_default=?, genome_component=?, locator=? WHERE genome_db_id=?';
+    my $sql = 'UPDATE genome_db SET name=?, assembly=?, genebuild=?, taxon_id=?, genome_component=?, locator=?, first_release=?, last_release=? WHERE genome_db_id=?';
     my $sth = $self->prepare( $sql ) or die "Could not prepare '$sql'\n";
-    $sth->execute( $gdb->name, $gdb->assembly, $gdb->genebuild, $gdb->taxon_id, $gdb->assembly_default, $gdb->genome_component, $gdb->locator, $gdb->dbID );
+    $sth->execute( $gdb->name, $gdb->assembly, $gdb->genebuild, $gdb->taxon_id, $gdb->genome_component, $gdb->locator, $gdb->first_release, $gdb->last_release, $gdb->dbID );
 
     $self->attach($gdb, $gdb->dbID() );     # make sure it is (re)attached to the "$self" adaptor in case it got stuck to the $reference_dba
     $self->_id_cache->remove($gdb->dbID);
@@ -427,6 +424,7 @@ sub set_non_default {
     my ($self, $gdb) = @_;
 
     assert_ref($gdb, 'Bio::EnsEMBL::Compara::GenomeDB');
+    # FIXME
 
     die "This GenomeDB is already non-default\n" unless $gdb->assembly_default;
     my $sth = $self->prepare('UPDATE genome_db SET assembly_default = 0 WHERE genome_db_id = ?');
@@ -488,12 +486,13 @@ sub _columns {
         g.name
         g.assembly
         g.taxon_id
-        g.assembly_default
         g.genebuild
         g.has_karyotype
         g.is_high_coverage
         g.genome_component
         g.locator
+        g.first_release
+        g.last_release
     )
 }
 
@@ -511,8 +510,8 @@ sub _objs_from_sth {
     my ($self, $sth) = @_;
     my @genome_db_list = ();
 
-    my ($dbid, $name, $assembly, $taxon_id, $assembly_default, $genebuild, $has_karyotype, $is_high_coverage, $genome_component, $locator);
-    $sth->bind_columns(\$dbid, \$name, \$assembly, \$taxon_id, \$assembly_default, \$genebuild, \$has_karyotype, \$is_high_coverage, \$genome_component, \$locator);
+    my ($dbid, $name, $assembly, $taxon_id, $genebuild, $has_karyotype, $is_high_coverage, $genome_component, $locator, $first_release, $last_release);
+    $sth->bind_columns(\$dbid, \$name, \$assembly, \$taxon_id, \$genebuild, \$has_karyotype, \$is_high_coverage, \$genome_component, \$locator, \$first_release, \$last_release);
     while ($sth->fetch()) {
 
         my $gdb = Bio::EnsEMBL::Compara::GenomeDB->new_fast( {
@@ -520,13 +519,14 @@ sub _objs_from_sth {
             'dbID'      => $dbid,           # field name in sync with Bio::EnsEMBL::Storable
             'name'      => $name,
             'assembly'  => $assembly,
-            'assembly_default' => $assembly_default,
             'genebuild' => $genebuild,
             'has_karyotype' => $has_karyotype,
             'is_high_coverage' => $is_high_coverage,
             'taxon_id'  => $taxon_id,
             '_genome_component'  => $genome_component,
             'locator'   => $locator,
+            '_first_release' => $first_release,
+            '_last_release' => $last_release,
         } );
 
         $gdb->sync_with_registry();
@@ -558,27 +558,34 @@ sub _build_id_cache {
 
 package Bio::EnsEMBL::Compara::DBSQL::Cache::GenomeDB;
 
-
-use base qw/Bio::EnsEMBL::DBSQL::Support::FullIdCache/;
+use base qw/Bio::EnsEMBL::Compara::DBSQL::Cache::WithReleaseHistory/;
 use strict;
 use warnings;
-
-sub support_additional_lookups {
-    return 1;
-}
 
 sub compute_keys {
     my ($self, $genome_db) = @_;
     return {
             ($genome_db->genome_component ? 'genome_component' : 'name_assembly') => $genome_db->_get_unique_key,
-            $genome_db->taxon_id ? (taxon_id => $genome_db->taxon_id) : (),
-            $genome_db->taxon_id ? (taxon_id_assembly => sprintf('%s____%s_', $genome_db->taxon_id, lc $genome_db->assembly)) : (),
-            ($genome_db->taxon_id and $genome_db->assembly_default) ? (
+
+            # The extant species
+            $genome_db->taxon_id ? (
+                taxon_id => $genome_db->taxon_id,
+                taxon_id_assembly => sprintf('%s____%s_', $genome_db->taxon_id, lc $genome_db->assembly),
+            ) : (),
+
+            # The extant species that are current
+            ($genome_db->taxon_id and $genome_db->is_current) ? (
                 taxon_id_default_assembly => $genome_db->taxon_id,
                 is_high_coverage => $genome_db->is_high_coverage,
                 is_polyploid => $genome_db->is_polyploid,
             ) : (),
-            $genome_db->assembly_default ? (name_default_assembly => lc $genome_db->name) : (),
+
+            # All the species that are current
+            $genome_db->is_current ? (
+                name_default_assembly => lc $genome_db->name
+            ) : (),
+
+            %{$self->SUPER::compute_keys($genome_db)},
            }
 }
 
