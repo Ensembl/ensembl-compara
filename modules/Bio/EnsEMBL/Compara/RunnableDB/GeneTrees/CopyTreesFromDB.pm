@@ -68,8 +68,8 @@ sub fetch_input {
         #get reuse compara_dba adaptor
         $self->param( 'reuse_compara_dba', Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->go_figure_compara_dba( $self->param('reuse_db') ) );
 
-        print Dumper $self->param('compara_dba')       if ( $self->debug );
-        print Dumper $self->param('reuse_compara_dba') if ( $self->debug );
+        #print Dumper $self->param('compara_dba')       if ( $self->debug );
+        #print Dumper $self->param('reuse_compara_dba') if ( $self->debug );
 
         #get reuse tree adaptor
         $self->param( 'reuse_tree_adaptor', $self->param('reuse_compara_dba')->get_GeneTreeAdaptor );
@@ -169,18 +169,50 @@ sub write_output {
 
                 my $new_root_node = $self->param('reuse_gene_tree')->root->minimize_tree;
                 $self->param('reuse_gene_tree')->{'_root'} = $new_root_node;
-                $self->param('reuse_gene_tree')->print_tree(10);
+
+                #$self->param('reuse_gene_tree')->print_tree(10);
             }
         }
 
-        #Copy tree to the DB
-        my $target_tree = $self->store_alternative_tree( $self->param('reuse_gene_tree')->newick_format( 'ryo', '%{-m}%{"_"-x}:%{d}' ),
-                                                         $self->param('output_clusterset_id'),
-                                                         $self->param('current_gene_tree'),
-                                                         undef, 1 );
+        #------------------------------------------------------------------------------------
+        #If all leaves are deleted we need to:
+        #	Construct newick with leftovers (new members that will be added)
+        #		It must follow the patther seq_member_id _ taxon_id
+        #------------------------------------------------------------------------------------
+        if ( scalar( keys %members_2_b_updated ) >= scalar( @{$all_leaves} ) ) {
+            my $scrap_newick = "(";
+            foreach my $this_leaf ( @{ $self->param('reuse_gene_tree')->get_all_leaves } ) {
+                $scrap_newick .= $this_leaf->dbID . "_" . $this_leaf->taxon_id . ":0,";
+            }
+            my $seq_member_adaptor = $self->compara_dba->get_SeqMemberAdaptor;
+            my @add;
+            foreach my $add ( keys(%members_2_b_added) ) {
+                my $seq_member = $seq_member_adaptor->fetch_by_stable_id($add);
+                push( @add, $seq_member->dbID . "_" . $seq_member->taxon_id . ":0" );
+            }
+            my $addstr = join( ',', @add );
+            $scrap_newick .= $addstr . ");";
+
+            print $scrap_newick."\n" if ( $self->debug );
+
+            my $target_tree = $self->store_alternative_tree( $scrap_newick, $self->param('output_clusterset_id'), $self->param('current_gene_tree'), undef, 1 );
+
+            $self->dataflow_output_id( $self->input_id, $self->param('branch_for_wiped_out_trees') );
+            $self->input_job->autoflow(0);
+            $self->complete_early("This tree is brand new, it didnt exist before. So it needs to go to the cluster_factory.");
+        }
+        else {
+
+            #Copy tree to the DB
+            my $target_tree = $self->store_alternative_tree( $self->param('reuse_gene_tree')->newick_format( 'ryo', '%{-m}%{"_"-x}:%{d}' ),
+                                                             $self->param('output_clusterset_id'),
+                                                             $self->param('current_gene_tree'),
+                                                             undef, 1 );
+        }
 
     } ## end if ( ( $self->param('current_gene_tree'...)))
     else {
+
         #Get previous tree
         print "Just copy over trees\n" if ( $self->debug );
 
