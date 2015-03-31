@@ -209,7 +209,6 @@ sub pipeline_analyses {
                                    'filter_cmd'    => 'sed "s/ENGINE=MyISAM/ENGINE=InnoDB/"',
                                   },
                 -analysis_capacity => 10,
-                -can_be_empty => 1,
             },
 
         {   -logic_name => 'offset_tables',
@@ -249,7 +248,6 @@ sub pipeline_analyses {
                 'sql'         => "ALTER TABLE #table_name# ENGINE=InnoDB",
             },
             -analysis_capacity => 10,
-            -can_be_empty => 1,
         },
 
 # ---------------------------------------------[load GenomeDB entries from master+cores]---------------------------------------------
@@ -675,7 +673,6 @@ sub pipeline_analyses {
                              'raxmlLight_exe'        => $self->o('raxmlLight_exe'),
                              'raxml_number_of_cores' => $self->o('raxml_number_of_cores'),
                             },
-             -can_be_empty => 1,
              -rc_name => '8Gb_basement_ncores_job',
             },
 
@@ -690,7 +687,6 @@ sub pipeline_analyses {
                             'raxml_exe' => $self->o('raxml_exe'),
                             'prank_exe' => $self->o('prank_exe'),
                            },
-         -can_be_empty => 1,
          -rc_name => '8Gb_basement_ncores_job',
          -flow_into => {
                         1 => [ 'hc_alignment' ],
@@ -719,7 +715,6 @@ sub pipeline_analyses {
              -parameters => {
                              'treebest_exe' => $self->o('treebest_exe'),
                             },
-             -can_be_empty => 1,
              -rc_name => '4Gb_job',
             },
 
