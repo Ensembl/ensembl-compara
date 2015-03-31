@@ -42,7 +42,7 @@ in production phase and update it in several steps:
  - It updates all the collections for the given genome_db
 
 It can also edit a few properties like:
- - Turn assembly_default to 0 for a genome_db
+ - Change the last release of a genome_db
  - Add a genome_db to a collection species set
  - Remove a genome_db from a collection species set
 
@@ -149,6 +149,7 @@ species as non-default
 =cut
 
 use Bio::EnsEMBL::Registry;
+use Bio::EnsEMBL::ApiVersion;
 use Bio::EnsEMBL::Utils::Exception qw(throw warning verbose);
 use Bio::EnsEMBL::Utils::SqlHelper;
 
@@ -287,7 +288,7 @@ sub update_genome_db {
 
     # Get fresher information from the core database
     $genome_db->db_adaptor($species_dba, 1);
-    $genome_db->assembly_default(1);
+    $genome_db->last_release(undef);
 
     # And store it back in Compara
     $genome_db_adaptor->update($genome_db);
@@ -303,6 +304,7 @@ sub update_genome_db {
 
         -TAXON_ID   => $taxon_id,
         -NAME       => $species_name,
+        -FIRST_RELEASE => software_version(),
     );
 
     if (!defined($genome_db->taxon_id)) {
