@@ -123,9 +123,9 @@ GetOptions(
     "reg_conf=s" => \$reg_conf,
     "compara=s" => \$compara,
     "division=s" => \$division,
-    "dry_run|dry-run" => \$dry_run,
-    "check_species_missing_from_compara" => \$check_species_missing_from_compara,
-    "check_species_with_no_core" => \$check_species_with_no_core,
+    "dry_run|dry-run!" => \$dry_run,
+    "check_species_missing_from_compara!" => \$check_species_missing_from_compara,
+    "check_species_with_no_core!" => \$check_species_with_no_core,
   );
 
 $| = 0;
