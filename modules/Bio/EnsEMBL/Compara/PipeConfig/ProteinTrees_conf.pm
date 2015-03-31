@@ -583,7 +583,7 @@ sub core_pipeline_analyses {
             },
             -rc_name => '4Gb_job',
             -flow_into  => [ 'check_reusability' ],
-            -analysis_capacity => 1,
+            -analysis_capacity => 5,
         },
 
         {   -logic_name     => 'populate_method_links_from_file',
@@ -625,6 +625,7 @@ sub core_pipeline_analyses {
 
         {   -logic_name => 'create_mlss_ss',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::PrepareSpeciesSetsMLSS',
+            -rc_name => '2Gb_job',
             -flow_into => {
                 1 => [ 'make_treebest_species_tree' ],
                 2 => [ 'check_reuse_db_is_myisam' ],
@@ -701,10 +702,12 @@ sub core_pipeline_analyses {
                 'input_clusterset_id'   => 'default',
                 'output_clusterset_id'  => 'copy',
                 'branch_for_new_tree'  => '3',
+                'branch_for_wiped_out_trees'  => '4',
             },
             -flow_into  => {
                  1 => [ 'copy_alignments_from_previous_release' ],
                  3 => [ 'alignment_entry_point' ],
+                 4 => [ 'alignment_entry_point' ],
             },
             -hive_capacity        => $self->o('copy_trees_capacity'),
             -analysis_capacity 	  => $self->o('copy_trees_capacity'),
@@ -1360,6 +1363,7 @@ sub core_pipeline_analyses {
             -parameters    => {
                 'condition'     => '#are_all_species_reused#',
             },
+            -rc_name => '4Gb_job_gpfs',
             -flow_into => {
                 '2->A' => [ 'copy_clusters' ],
                 '3->A' => [
