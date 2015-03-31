@@ -7,11 +7,11 @@
    (methanobrevibacter_smithii_atcc_35061,methanobacterium_formicicum_dsm_3637,methanothermobacter_thermautotrophicus_str_delta_h),
    (haloferax_volcanii_ds2_asm2568v1,haloarcula_marismortui_atcc_43049,natronomonas_pharaonis_dsm_2160,halobacterium_salinarum_r1),methanopyrus_kandleri_av19,thermoplasma_acidophilum_dsm_1728,archaeoglobus_fulgidus_dsm_4304),candidatus_korarchaeum_cryptofilum_opf8,nanoarchaeum_equitans_kin4_m),
  (((((((((solanum_tuberosum,solanum_lycopersicum),
-	 ((((glycine_max,medicago_truncatula),prunus_persica),populus_trichocarpa),
-	  ((arabidopsis_thaliana,arabidopsis_lyrata),brassica_rapa),vitis_vinifera)),
+	 (theobroma_cacao,(((glycine_max,medicago_truncatula),prunus_persica),populus_trichocarpa),
+	  ((arabidopsis_thaliana,arabidopsis_lyrata),(brassica_oleracea,brassica_rapa)),vitis_vinifera)),
 	((((((triticum_aestivum,(triticum_urartu,triticum_aestivum_A),triticum_aestivum_B,(aegilops_tauschii,triticum_aestivum_D)),hordeum_vulgare),brachypodium_distachyon),
-	   ((oryza_sativa,oryza_indica),oryza_glaberrima,oryza_brachyantha,oryza_punctata,oryza_meridionalis,oryza_barthii,oryza_glumaepatula,oryza_nivara)),
-	  ((zea_mays,sorghum_bicolor),setaria_italica)),musa_acuminata)),amborella_trichopoda),selaginella_moellendorffii),physcomitrella_patens),chlamydomonas_reinhardtii),cyanidioschyzon_merolae),
+          (leersia_perrieri,(oryza_brachyantha,(oryza_punctata,(oryza_meridionalis,oryza_longistaminata,oryza_glumaepatula,((oryza_glaberrima,oryza_barthii),((oryza_sativa,oryza_rufipogon),(oryza_indica,oryza_nivara))))))))
+	  (((zea_mays,sorghum_bicolor),setaria_italica))),musa_acuminata)),amborella_trichopoda),selaginella_moellendorffii),physcomitrella_patens),(ostreococcus_lucimarinus,chlamydomonas_reinhardtii)),cyanidioschyzon_merolae),
   ((((((((((botrytis_cinerea,sclerotinia_sclerotiorum),blumeria_graminis),
 	  ((((magnaporthe_poae,magnaporthe_oryzae),gaeumannomyces_graminis),neurospora_crassa),
            (((colletotrichum_higginsianum,colletotrichum_orbiculare,colletotrichum_graminicola,colletotrichum_gloeosporioides),(verticillium_dahliae,verticillium_dahliaejr2)),
@@ -87,4 +87,3 @@
 	     (aggregatibacter_actinomycetemcomitans_d11s_1,haemophilus_influenzae_rd_kw20,actinobacillus_pleuropneumoniae_serovar_5b_str_l20,pasteurella_multocida_subsp_multocida_str_pm70,mannheimia_haemolytica_serotype_a2_str_ovine),
 	     (citrobacter_freundii_4_7_47cfaa,shigella_dysenteriae_sd197,proteus_mirabilis_hi4320,buchnera_aphidicola_str_aps_acyrthosiphon_pisum_,escherichia_coli_str_k_12_substr_mg1655,klebsiella_pneumoniae_subsp_pneumoniae_mgh_78578,yersinia_pestis_biovar_microtus_str_91001,enterobacter_cloacae_subsp_cloacae_atcc_13047,salmonella_enterica_subsp_enterica_serovar_typhimurium_str_lt2),shewanella_oneidensis_mr_1,francisella_tularensis_subsp_tularensis_schu_s4,aeromonas_hydrophila_subsp_hydrophila_atcc_7966)),
 	   ((synechocystis_sp_pcc_6803_asm972v1,microcystis_aeruginosa_nies_843,thermosynechococcus_elongatus_bp_1),nostoc_punctiforme_pcc_73102,gloeobacter_violaceus_pcc_7421,prochlorococcus_marinus_subsp_marinus_str_ccmp1375),candidatus_koribacter_versatilis_ellin345,aquifex_aeolicus_vf5,dictyoglomus_turgidum_dsm_6724,thermodesulfovibrio_yellowstonii_dsm_11347,thermanaerovibrio_acidaminovorans_dsm_6589,thermotoga_maritima_msb8_asm854v1,chloroflexus_aurantiacus_j_10_fl,rhodopirellula_baltica_sh_1,fusobacterium_nucleatum_subsp_nucleatum_atcc_25586,chlamydia_trachomatis_d_uw_3_cx));
-
