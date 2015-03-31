@@ -209,6 +209,7 @@ sub pipeline_analyses {
                                    'filter_cmd'    => 'sed "s/ENGINE=MyISAM/ENGINE=InnoDB/"',
                                   },
                 -analysis_capacity => 10,
+                -flow_into         => [ 'innodbise_table' ],
             },
 
         {   -logic_name => 'offset_tables',
@@ -225,27 +226,14 @@ sub pipeline_analyses {
                     'ALTER TABLE CAFE_species_gene AUTO_INCREMENT=100000001',
                 ],
             },
-            -flow_into => {
-                1 => [ 'innodbise_table_factory' ],
-            },
         },
 
-# ---------------------------------------------[turn all tables except 'genome_db' to InnoDB]---------------------------------------------
-
-        {   -logic_name => 'innodbise_table_factory',
-            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
-            -parameters => {
-                'inputquery'      => "SELECT table_name FROM information_schema.tables WHERE table_schema ='".$self->o('pipeline_db','-dbname')."' AND table_name!='meta' AND engine='MyISAM' ",
-            },
-            -flow_into => {
-                2 => [ 'innodbise_table'  ],
-            },
-        },
+# ---------------------------------------------[turn all tables to InnoDB]---------------------------------------------
 
         {   -logic_name    => 'innodbise_table',
             -module        => 'Bio::EnsEMBL::Hive::RunnableDB::SqlCmd',
             -parameters    => {
-                'sql'         => "ALTER TABLE #table_name# ENGINE=InnoDB",
+                'sql'         => "ALTER TABLE #table# ENGINE=InnoDB",
             },
             -analysis_capacity => 10,
         },
