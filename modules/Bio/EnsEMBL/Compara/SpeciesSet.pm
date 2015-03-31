@@ -27,7 +27,6 @@ use Bio::EnsEMBL::Utils::Exception qw(warning deprecate throw);
 use Bio::EnsEMBL::Utils::Argument qw(rearrange);
 use Bio::EnsEMBL::Compara::GenomeDB;
 
-# FIXME: add throw not implemented for those not tag related?
 use base (  'Bio::EnsEMBL::Storable',           # inherit dbID(), adaptor() and new() methods
             'Bio::EnsEMBL::Compara::Taggable'   # inherit everything related to tagability
          );

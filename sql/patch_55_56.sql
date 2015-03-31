@@ -21,9 +21,6 @@ alter table constrained_element add column dnafrag_strand int(2);
 
 
 -- Adding lr_index_offset if not already there (introduced into 55 post release).
---
--- FIXME: this change is not in the rel.56 database for some reason. Should it be?
---
 CREATE TABLE IF NOT EXISTS lr_index_offset (
 	table_name  varchar(64) NOT NULL,
 	lr_index    int(10) unsigned NOT NULL,
@@ -55,9 +52,4 @@ CREATE TABLE `protein_tree_hmmprofile` (
 CREATE TABLE super_protein_tree_node LIKE protein_tree_node;
 CREATE TABLE super_protein_tree_member LIKE protein_tree_member;
 CREATE TABLE super_protein_tree_tag LIKE protein_tree_tag;
-
-
--- FIXME: pending a reply from ensembl-compara whether this was deliberate or accidental:
---
--- RENAME TABLE peptide_align_feature TO peptide_align_feature_orig;
 
