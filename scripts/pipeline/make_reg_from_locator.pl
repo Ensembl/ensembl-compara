@@ -25,11 +25,11 @@ use Data::Dumper;
 
 my $usage = " 
 This script will create a registry file from the locator field in the genome_db table of the
- compara db url provided (if assembly_default = 1, then only get current assemblies), or 
+ compara db url provided (if only_current = 1, then only get current assemblies), or 
  directly from the server for a particular release version. If no_print_ret = 1, you can append 
  to the file.
 
-$0 -url mysql://user:pass\@server:port/db_name|release_version -assembly_default 1
+$0 -url mysql://user:pass\@server:port/db_name|release_version -only_current 1
 
 eg.
 $0 -url mysql://user:pass\@server:port/compara_db_name # get db list from compara genome_db locator field
@@ -37,11 +37,11 @@ $0 -url mysql://user:pass\@server:port/77 # get all 77 core dbs from server
 
 ";
 
-my ($help, $url, $assembly_default, $no_print_ret);
+my ($help, $url, $only_current, $no_print_ret);
 
 GetOptions(
  'help'   => \$help,
- 'assembly_default=i' => \$assembly_default,    
+ 'only_current=i' => \$only_current,
  'no_print_ret=i' => \$no_print_ret, # dont print the 1 return value at the end of the module.
  'url=s' => \$url);
 
@@ -96,8 +96,8 @@ elsif($db_name=~/\w+/){
  my $genome_db_adaptor = $compara_db_adaptor->get_adaptor("GenomeDB");
  my @locator_strings;
  foreach my $genome_db( @{ $genome_db_adaptor->fetch_all }){ 
-  if($assembly_default){
-   push @locator_strings, $genome_db->locator if ( $genome_db->assembly_default && $genome_db->locator );
+  if($only_current){
+   push @locator_strings, $genome_db->locator if ( $genome_db->is_current && $genome_db->locator );
   } else {
    push @locator_strings, $genome_db->locator if $genome_db->locator;
   }

@@ -496,7 +496,7 @@ sub get_all_default_genome_dbs {
   }
 
   my $all_genome_dbs = $genome_db_adaptor->fetch_all();
-  $all_genome_dbs = [sort {$a->dbID <=> $b->dbID} grep {$_->assembly_default} @$all_genome_dbs];
+  $all_genome_dbs = [sort {$a->dbID <=> $b->dbID} grep {$_->is_current} @$all_genome_dbs];
   if (@$species_names) {
     for (my $i = 0; $i < @$all_genome_dbs; $i++) {
       my $this_genome_db_name = $all_genome_dbs->[$i]->name;

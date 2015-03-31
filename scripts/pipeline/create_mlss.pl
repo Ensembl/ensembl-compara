@@ -460,13 +460,13 @@ sub ask_for_genome_dbs {
   do {
     print "\n";
     foreach my $this_genome_db (sort {
-        ($a->assembly_default <=> $b->assembly_default)
+        ($a->is_current <=> $b->is_current)
           or
         ($a->name cmp $b->name)} values %$genome_dbs_out) {
       my $dbID = $this_genome_db->dbID;
       my $name = $this_genome_db->name;
       my $assembly = $this_genome_db->assembly;
-      if ($this_genome_db->assembly_default) {
+      if ($this_genome_db->is_current) {
         printf " %3d. $name $assembly\n", $dbID;
       } else {
         printf " %3d. ($name $assembly)\n", $dbID;

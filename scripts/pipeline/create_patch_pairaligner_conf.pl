@@ -219,7 +219,7 @@ if ($species && @$species > 0) {
             #find non-reference species
             if ($genome_db->name ne $ref_genome_db->name) {
                 #skip anything that isn't current
-                next unless ($genome_db->assembly_default);
+                next unless ($genome_db->is_current);
                 my $dnafrags = $dnafrag_adaptor->fetch_all_by_GenomeDB_region($genome_db, 'chromosome');
                 if (@$dnafrags > 1) {
                     #print "   found " . @$dnafrags . " chromosomes in " . $genome_db->name . "\n";
