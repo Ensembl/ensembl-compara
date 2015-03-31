@@ -77,19 +77,9 @@ sub default_options {
     return {
 	%{$self->SUPER::default_options},   # inherit the generic ones
 
-        'release_suffix'        => '',    # an empty string by default, a letter otherwise
-	'dbname'               => 'ucsc_import_'.$self->o('enembl_release').$self->o('release_suffix'), #It is recommended this is set on the command line to allow more meaningful database naming
+        'rel_suffix'            => '',    # an empty string by default, a letter otherwise
+	'pipeline_name'         => 'ucsc_import_'.$self->o('rel_with_suffix'),
 
-         # dependent parameters:
-        'pipeline_name'         => 'UCSC_'.$self->o('rel_with_suffix'),   # name the pipeline to differentiate the submitted processes
-
-        'pipeline_db' => {                                  # connection parameters
-            -host   => 'compara1',
-            -port   => 3306,
-            -user   => 'ensadmin',
-            -pass   => $self->o('password'), 
-            -dbname => $ENV{USER}.'_'.$self->o('dbname'),    
-        },
 	master_db => {
             -host   => 'compara1',
             -port   => 3306,
