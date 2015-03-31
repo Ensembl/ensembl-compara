@@ -270,7 +270,7 @@ sub new {
         ## remove any whitespace at the top of this row
         my $gminy = $glyphset->miny;
       
-        $config->{'transform'}->{'translatey'} = -$gminy + $yoffset + $glyphset->section_height;
+        $config->{'transform'}->{'translatey'} = -$gminy + $yoffset + $glyphset->section_height + $glyphset->subtitle_height;
 
         if ($bgcolour_flag && $glyphset->_colour_background) {
           ## colour the area behind this strip
@@ -292,42 +292,19 @@ sub new {
           $iteration++;
         }
       
-        ## set up the "bumping button" label for this strip
-        if ($glyphset->label && $show_labels eq 'yes') {
-          my $gh = $glyphset->label->height || $config->texthelper->height($glyphset->label->font);
-
-          my ($miny,$maxy) = ($glyphset->miny,$glyphset->maxy);
-          my $liney;
-          if($maxy-$miny < $gh) {
-            # Very narrow track, align with centre and hope for the best
-            $glyphset->label->y(($miny+$maxy-$gh)/2);
-            $liney = ($miny+$maxy+$gh)/2 + 1;
-          } else {
-            # Almost all tracks
-            $glyphset->label->y($gminy + $glyphset->{'label_y_offset'});
-            $liney = $gminy+$gh+1+$glyphset->{'label_y_offset'};
-          }
-          $glyphset->label->height($gh);
-          $glyphset->push($glyphset->label);
-          if($glyphset->label_img) {
-            my ($miny,$maxy) = ($glyphset->miny,$glyphset->maxy);
-            $glyphset->push($glyphset->label_img);
-            $glyphset->miny($miny);
-            $glyphset->maxy($maxy);
-          }
-
-          if ($glyphset->label->{'hover'}) {
-            $glyphset->push($glyphset->Line({
-              absolutex     => 1,
-              absolutey     => 1,
-              absolutewidth => 1,
-              width         => $glyphset->label->width,
-              x             => $glyphset->label->x,
-              y             => $liney,
-              colour        => '#336699',
-              dotted        => 'small'
-            }));
-          }
+        my $sh = $glyphset->subtitle_height();
+        if($glyphset->use_subtitles) {
+          $glyphset->push($glyphset->Text({
+            font => 'Arial',
+            text => $glyphset->subtitle_text(),
+            ptsize => 8,
+            height => 8,
+            colour    => $glyphset->subtitle_colour(),
+            x => 2,
+            y => $glyphset->miny - $sh,
+            halign => 'left',
+            absolutex => 1,
+          }));
         }
 
         if($glyphset->section_text) {
@@ -359,12 +336,51 @@ sub new {
             absolutewidth => 1,
             href => $url,
           }));
+          $sh = 0; # sections /and/ subtitles!
+        }
+
+        ## set up the "bumping button" label for this strip
+        if ($glyphset->label && $show_labels eq 'yes') {
+          my $gh = $glyphset->label->height || $config->texthelper->height($glyphset->label->font);
+
+          my ($miny,$maxy) = ($glyphset->miny,$glyphset->maxy);
+          my $liney;
+          if($maxy-$miny < $gh) {
+            # Very narrow track, align with centre and hope for the best
+            $glyphset->label->y(($miny+$maxy-$gh+$sh)/2);
+            $liney = ($miny+$maxy+$gh+$sh)/2 + 1;
+          } else {
+            # Almost all tracks
+            $glyphset->label->y($gminy + $glyphset->{'label_y_offset'}-$sh);
+            $liney = $gminy+$gh+1+$glyphset->{'label_y_offset'}-$sh;
+          }
+          $glyphset->label->height($gh);
+          $glyphset->push($glyphset->label);
+          if($glyphset->label_img) {
+            my ($miny,$maxy) = ($glyphset->miny,$glyphset->maxy);
+            $glyphset->push($glyphset->label_img);
+            $glyphset->miny($miny);
+            $glyphset->maxy($maxy);
+          }
+
+          if ($glyphset->label->{'hover'}) {
+            $glyphset->push($glyphset->Line({
+              absolutex     => 1,
+              absolutey     => 1,
+              absolutewidth => 1,
+              width         => $glyphset->label->width,
+              x             => $glyphset->label->x,
+              y             => $liney,
+              colour        => '#336699',
+              dotted        => 'small'
+            }));
+          }
         }
 
         $glyphset->transform;
       
         ## translate the top of the next row to the bottom of this one
-        $yoffset += $glyphset->height + $trackspacing + $glyphset->section_height;
+        $yoffset += $glyphset->subtitle_height + $glyphset->height + $trackspacing + $glyphset->section_height;
         $self->timer_push('track finished', 3);
         $self->timer_push(sprintf("INIT: [X] $name '%s'", $glyphset->{'my_config'}->get('name')), 2);
       }

@@ -364,6 +364,36 @@ sub _render_text {
   return $header . join ("\t", @results) . "\r\n";
 }
 
+################# SUBTITLES #########################
+
+sub subtitle_text {
+  my ($self) = @_;
+
+  return $self->my_config('subtitle') || $self->my_config('caption');
+}
+
+sub use_subtitles {
+  my ($self) = @_;
+
+  return $self->supports_subtitles && $self->subtitle_text;
+}
+
+sub subtitle_height {
+  my ($self) = @_;
+
+  return ($self->subtitle_text?12:0);
+}
+
+sub subtitle_colour {
+  my ($self) = @_;
+
+  return 'slategray';
+}
+
+sub supports_subtitles {
+  return 0;
+}
+
 ################### LABELS ##########################
 
 sub label {
