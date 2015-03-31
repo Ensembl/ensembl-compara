@@ -198,30 +198,6 @@ sub pipeline_analyses {
     print "pipeline_analyses\n";
 
     return [
-	    # ---------------------------------------------[Turn all tables except 'genome_db' to InnoDB]---------------------------------------------
-	    {   -logic_name => 'innodbise_table_factory',
-		-module     => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
-		-parameters => {
-				'inputquery'      => "SELECT table_name FROM information_schema.tables WHERE table_schema ='".$self->o('pipeline_db','-dbname')."' AND table_name!='meta' AND engine='MyISAM' ",
-				'fan_branch_code' => 2,
-			       },
-		-input_ids => [{}],
-		-flow_into => {
-			       2 => [ 'innodbise_table'  ],
-			       1 => [ 'populate_new_database' ],
-			      },
-                -rc_name => '100Mb',
-	    },
-
-	    {   -logic_name    => 'innodbise_table',
-		-module        => 'Bio::EnsEMBL::Hive::RunnableDB::SqlCmd',
-		-parameters    => {
-				   'sql'         => "ALTER TABLE #table_name# ENGINE='InnoDB'",
-				  },
-		-hive_capacity => 1,
-		-can_be_empty  => 1,
-                -rc_name => '100Mb',
-	    },
 
 # ---------------------------------------------[Run poplulate_new_database.pl script ]---------------------------------------------------
 	    {  -logic_name => 'populate_new_database',
@@ -236,7 +212,7 @@ sub pipeline_analyses {
 	       -flow_into => {
 			      1 => [ 'load_genomedb_factory' ],
 			     },
-	       -wait_for => [ 'innodbise_table' ],
+	       -input_ids => [{}],
                -rc_name => '1Gb',
 	    },
 	    {   -logic_name => 'load_genomedb_factory',
