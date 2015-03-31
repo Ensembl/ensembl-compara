@@ -256,8 +256,8 @@ sub pipeline_analyses {
 				'column_names' => [ 'species', 'chromInfo_file', 'ucsc_map'],
 		},
 		-flow_into => {
-			       2 => [ 'ucsc_to_ensembl_mapping' ],
-			       1 => [ 'chain_factory' ],
+			       '2->A' => [ 'ucsc_to_ensembl_mapping' ],
+			       'A->1' => [ 'chain_factory' ],
 		},
                 -rc_name => '100Mb',
 	    },
@@ -273,10 +273,9 @@ sub pipeline_analyses {
 				'step' => 200000,
 				'chain_file'  => $self->o('chain_file'),
 			       },
-		-wait_for => [ 'ucsc_to_ensembl_mapping' ],
 		-flow_into => {
-			       2 => [ 'import_chains' ],
-			       1 => [ 'net_factory'],
+			       '2->A' => [ 'import_chains' ],
+			       'A->1' => [ 'set_internal_ids' ],
 			      },
                 -rc_name => '100Mb',
 	    },
@@ -299,10 +298,9 @@ sub pipeline_analyses {
 			       'inputquery'    => "SELECT dnafrag_id FROM dnafrag join genome_db using (genome_db_id) WHERE genome_db.name='".$self->o('ref_species')."' AND assembly_default=1",
 				'fan_branch_code' => 2,
 			       },
-	       -wait_for => [ 'import_chains' ],
 		-flow_into => {
-			       2 => [ 'import_nets'  ],
-			       1 => [ 'set_internal_ids', 'update_max_alignment_length_after_net' ],
+			       '2->A' => [ 'import_nets'  ],
+			       'A->1' => [ 'update_max_alignment_length_after_net' ],
 			      },
                -rc_name => '100Mb',
 	    },
@@ -313,6 +311,7 @@ sub pipeline_analyses {
 			       'method_link_species_set_id' => $self->o('mlss_id'),
 			      },
                -rc_name => '100Mb',
+               -flow_into  => [ 'net_factory' ],
  	    },
  	    {  -logic_name => 'import_nets',
  	       -hive_capacity => 20,
@@ -325,7 +324,6 @@ sub pipeline_analyses {
 			       'input_method_link_type' => $self->o('chain_method_link_type'),
 			       'output_method_link_type' => $self->o('net_method_link_type'),
 			      },
-	       -wait_for => [ 'set_internal_ids' ],
 	       -flow_into => {
 			      -1 => [ 'import_nets_himem' ],
 			     },
@@ -343,7 +341,6 @@ sub pipeline_analyses {
 			       'output_method_link_type' => $self->o('net_method_link_type'),
 			      },
                -rc_name => '3.6Gb',
-	       -can_be_empty => 1,
  	    },
   	    {  -logic_name => 'update_max_alignment_length_after_net',
   	       -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GenomicAlignBlock::UpdateMaxAlignmentLength',
@@ -351,7 +348,6 @@ sub pipeline_analyses {
  			       'quick' => $self->o('quick'),
 			       'method_link_species_set_id' => $self->o('mlss_id'),
  			      },
-  	       -wait_for =>  [ 'import_nets', 'import_nets_himem' ],
 		-flow_into => {
 			       1 => { 'healthcheck' => [
 							{ 'test' => 'pairwise_gabs', 'mlss_id' => $self->o('mlss_id') },
