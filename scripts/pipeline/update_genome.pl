@@ -59,7 +59,7 @@ It can also edit a few properties like:
     [--[no]force]
     [--offset 1000]
     [--collection "collection name"]
-    [--remove_from_collection | --add_to_collection | --set_non_default]
+    [--remove_from_collection | --add_to_collection | --set_last_release release_number]
 
 =head1 OPTIONS
 
@@ -136,11 +136,10 @@ offset+1
 Adds the new / updated genome_db_id to the collection. This option
 can be used multiple times
 
-=item B<[--remove_from_collection | --add_to_collection || --set_non_default]>
+=item B<[--remove_from_collection | --add_to_collection | --set_last_release release_number]>
 
 (exclusive) options to respectively remove the species from its
-collections, add the species to more collections, and set the
-species as non-default
+collections, add the species to more collections, and change the last_release
 
 =back
 
@@ -168,7 +167,7 @@ my $offset = 0;
 my @collection = ();
 my $action_remove_from_collection = 0;
 my $action_add_to_collection = 0;
-my $action_set_non_default = 0;
+my $action_set_last_release = 0;
 
 GetOptions(
     "help" => \$help,
@@ -182,7 +181,7 @@ GetOptions(
     "collection=s@" => \@collection,
     "remove_from_collection!" => \$action_remove_from_collection,
     "add_to_collection!" => \$action_add_to_collection,
-    "set_non_default!" => \$action_set_non_default,
+    "set_last_release=i" => \$action_set_last_release,
   );
 
 $| = 0;
@@ -193,8 +192,8 @@ if ($help or !$species or !$compara) {
     pod2usage({-exitvalue => 0, -verbose => 2});
 }
 
-die "'remove_from_collection', 'add_to_collection', and 'set_non_default' are exclusive options\n" if
-    ($action_set_non_default and ($action_remove_from_collection or $action_add_to_collection))
+die "'remove_from_collection', 'add_to_collection', and 'set_last_release' are exclusive options\n" if
+    ($action_set_last_release and ($action_remove_from_collection or $action_add_to_collection))
     or ($action_remove_from_collection and $action_add_to_collection);
 
 my $species_no_underscores = $species;
@@ -218,12 +217,13 @@ throw ("Cannot connect to database [$compara]") if (!$compara_db);
 my $helper = Bio::EnsEMBL::Utils::SqlHelper->new(-DB_CONNECTION => $compara_db->dbc);
 
 $helper->transaction( -CALLBACK => sub {
-    if ($action_set_non_default or $action_remove_from_collection or $action_add_to_collection) {
+    if ($action_set_last_release or $action_remove_from_collection or $action_add_to_collection) {
         my $genome_db_adaptor = $compara_db->get_GenomeDBAdaptor();
         my $genome_db = $genome_db_adaptor->fetch_by_core_DBAdaptor($species_db);
 
-        if ($action_set_non_default) {
-            $genome_db_adaptor->set_non_default($genome_db);
+        if ($action_set_last_release) {
+            $genome_db->last_release($action_set_last_release);
+            $genome_db_adaptor->update($genome_db);
             remove_species_from_collections($compara_db, $genome_db, \@collection);
         } elsif ($action_remove_from_collection) {
             remove_species_from_collections($compara_db, $genome_db, \@collection);
