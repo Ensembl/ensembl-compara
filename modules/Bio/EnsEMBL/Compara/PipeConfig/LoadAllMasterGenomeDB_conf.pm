@@ -93,7 +93,6 @@ sub pipeline_analyses {
             -flow_into => {
                 2 => [ 'load_genomedb' ],
             },
-            -rc_id => 1,
         },
 
         {   -logic_name => 'load_genomedb',

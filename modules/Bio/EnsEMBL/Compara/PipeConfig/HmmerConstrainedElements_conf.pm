@@ -27,6 +27,8 @@ sub default_options {
     my ($self) = @_; 
 
     return {
+        %{$self->SUPER::default_options},
+
         'pipeline_name' => 'compara_hmmer_ces',
 
            # connection parameters to various databases:
@@ -65,11 +67,8 @@ sub default_options {
 sub resource_classes {
     my ($self) = @_; 
     return {
-         0 => { -desc => 'default',  'LSF' => '' },
-         1 => { -desc => 'mem3500',  'LSF' => '-C0 -M3500000 -R"select[mem>3500] rusage[mem=3500]"' },
-         2 => { -desc => 'mem7500',  'LSF' => '-C0 -M7500000 -R"select[mem>7500] rusage[mem=7500]"' },  
-         3 => { -desc => 'mem11400', 'LSF' => '-C0 -M11400000 -R"select[mem>11400] rusage[mem=11400]"' },  
-         4 => { -desc => 'mem14000', 'LSF' => '-C0 -M14000000 -R"select[mem>14000] rusage[mem=14000]"' },  
+         'mem7500'  => { 'LSF' => '-C0 -M7500000 -R"select[mem>7500] rusage[mem=7500]"' },
+         'mem11400' => { 'LSF' => '-C0 -M11400000 -R"select[mem>11400] rusage[mem=11400]"' },
     };  
 }
 
@@ -161,7 +160,7 @@ sub pipeline_analyses {
 		-logic_name    => 'dump_genome_repeats',
 		-module        => 'Bio::EnsEMBL::Compara::Production::EPOanchors::HMMer::DumpRepeats',
 		-hive_capacity  => 20,	
-		-rc_id => 2,
+		-rc_name        => 'mem7500',
 		-wait_for => 'import_genome_dbs_and_dnafrags',
 	   },
 	   {   -logic_name      => 'load_cons_eles',
@@ -174,7 +173,7 @@ sub pipeline_analyses {
 	   {
 		-logic_name     => 'find_repeat_gabs',
 		-module         => 'Bio::EnsEMBL::Compara::Production::EPOanchors::HMMer::FindRepeatGabs',
-		-rc_id          => 2,
+		-rc_name        => 'mem7500',
 		-wait_for       => [ 'load_cons_eles' ],
 		-hive_capacity  => 20,
 	  },
@@ -186,7 +185,7 @@ sub pipeline_analyses {
                                    'inputquery' => "SELECT genomic_align_block_id gab_id FROM genomic_align_block WHERE score IS NULL",
                                   },  
 		-wait_for       => [ 'find_repeat_gabs', ],
-		-rc_id          => 3,
+		-rc_name        => 'mem11400',
 		-flow_into	=> {
 			2 => [ 'hmm_search' ],
 		},
