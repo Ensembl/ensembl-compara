@@ -170,7 +170,8 @@ sub pipeline_analyses {
             },
             -hive_capacity  => 10,  # to allow parallel branches
             -flow_into => {
-                1 => [ 'load_nodes', 'load_names' ],
+                '1->A' => [ 'load_nodes', 'load_names' ],
+                'A->1' => [ 'build_left_right_indices' ],
             },
         },
 
@@ -194,9 +195,6 @@ sub pipeline_analyses {
                 'sql'         => "update ncbi_taxa_node set parent_id=0 where parent_id=taxon_id",
             },
             -hive_capacity  => 10,  # to allow parallel branches
-            -flow_into => {
-                1 => [ 'build_left_right_indices' ],
-            },
         },
 
         {   -logic_name    => 'build_left_right_indices',
@@ -205,8 +203,10 @@ sub pipeline_analyses {
                 'cmd'       => $self->o('ensembl_cvs_root_dir').'/ensembl-compara/scripts/taxonomy/taxonTreeTool.pl -url '.$self->pipeline_url().' -index',
             },
             -hive_capacity  => 10,  # to allow parallel branches
-            -wait_for => ['load_names'],
             -rc_name => 'highmem',
+            -flow_into => {
+                1 => [ 'add_import_date' ],
+            },
         },
 
 
@@ -244,9 +244,6 @@ sub pipeline_analyses {
                 'input_file'    => $self->o('ensembl_cvs_root_dir').'/ensembl-compara/scripts/taxonomy/web_name_patches.sql',
             },
             -hive_capacity  => 10,  # to allow parallel branches
-            -flow_into => {
-                1 => [ 'add_import_date' ],
-            },
         },
 
         {   -logic_name => 'add_import_date',
@@ -254,7 +251,6 @@ sub pipeline_analyses {
             -parameters => {
                 'sql'   => 'INSERT INTO ncbi_taxa_name (taxon_id, name_class, name) SELECT taxon_id, "import date", CURRENT_TIMESTAMP FROM ncbi_taxa_node WHERE parent_id=0 GROUP BY taxon_id',
             },
-            -wait_for => [ 'build_left_right_indices' ],
             -hive_capacity  => 10,  # to allow parallel branches
             -flow_into => {
                 1 => [ 'cleanup' ],
