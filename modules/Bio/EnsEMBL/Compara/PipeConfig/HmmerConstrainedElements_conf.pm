@@ -96,34 +96,13 @@ sub pipeline_analyses {
         print "pipeline_analyses\n";
 
     return [
-# Turn all tables except 'genome_db' to InnoDB
-            {   -logic_name => 'innodbise_table_factory',
-                -module     => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
-                -parameters => {
-                                'inputquery'      => "SELECT table_name FROM information_schema.tables WHERE table_schema ='" . 
-                                                $self->o('pipeline_db','-dbname') .
-                                                "' AND table_name!='genome_db' AND engine='MyISAM' ",
-                                'fan_branch_code' => 2,
-                               },  
-                -input_ids => [{}],
-                -flow_into => {
-                               2 => [ 'innodbise_table' ],
-                              },  
-            },  
-            {   -logic_name    => 'innodbise_table',
-                -module        => 'Bio::EnsEMBL::Hive::RunnableDB::SqlCmd',
-                -parameters    => {
-                                   'sql'         => "ALTER TABLE #table_name# ENGINE=InnoDB",
-                                  },  
-            }, 
 	    {
 		-logic_name    => 'drop_dnafrag_index_on_genomic_align',
 		-module        => 'Bio::EnsEMBL::Hive::RunnableDB::SqlCmd',
 		-parameters    => {
 					'sql' => "DROP INDEX dnafrag ON genomic_align",
 				},
-		-input_ids => [{}],
-		-wait_for       => [ 'innodbise_table' ],
+                -flow_into     => [ 'add_dnafrag_index_on_genomic_align' ],
 	   },
 	   {
 		-logic_name    => 'add_dnafrag_index_on_genomic_align',
@@ -131,14 +110,11 @@ sub pipeline_analyses {
 		-parameters    => {
 					'sql' => "CREATE INDEX dnafrag_id_idx ON genomic_align (dnafrag_id)",
 				},
-		-input_ids => [{}],
-		-wait_for       => [ 'drop_dnafrag_index_on_genomic_align' ],
+                -flow_into     => [ 'split_constrained_element_ids' ],
 	   },
 	   {
 		-logic_name    => 'split_constrained_element_ids',
 		-module         => 'Bio::EnsEMBL::Compara::Production::EPOanchors::HMMer::SplitCeIds',
-		-wait_for       => [ 'innodbise_table' ],
-		-input_ids => [{}],
 		-parameters     => {ce_batch_size => $self->o('ce_batch_size'),},
 		-flow_into      => {
 					1 => 'load_cons_eles',
@@ -167,7 +143,6 @@ sub pipeline_analyses {
                 -module         => 'Bio::EnsEMBL::Compara::Production::EPOanchors::HMMer::LoadConsEles',
 		-wait_for       => [ 'dump_genome_repeats' ],
                 -parameters     => {},
-		-wait_for       => [ 'add_dnafrag_index_on_genomic_align' ],
 		-hive_capacity  => 200,
            },
 	   {
