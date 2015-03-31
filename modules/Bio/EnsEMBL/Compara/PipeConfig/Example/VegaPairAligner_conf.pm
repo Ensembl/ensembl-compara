@@ -240,7 +240,6 @@ sub e_analyses {
                      pairaligner_stats
                      alignment_chains
                      remove_inconsistencies_after_chain
-                     innodbise_table_factory
                      create_alignment_nets_jobs
                      alignment_nets_himem
                      update_max_alignment_length_after_FD
@@ -269,7 +268,6 @@ sub e_analyses {
                      subst pair_aligner_logic_name
                      dump_large_nib_for_chains_factory
                      filter_duplicates_himem
-                     innodbise_table
                      coding_exon_stats
                      coding_exon_stats_summary
                      store_sequence)];
