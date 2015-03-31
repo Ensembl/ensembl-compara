@@ -299,7 +299,6 @@ sub pipeline_analyses {
 			       'inputquery'    => "SELECT dnafrag_id FROM dnafrag join genome_db using (genome_db_id) WHERE genome_db.name='".$self->o('ref_species')."' AND assembly_default=1",
 				'fan_branch_code' => 2,
 			       },
-		-input_ids => [{}],
 	       -wait_for => [ 'import_chains' ],
 		-flow_into => {
 			       2 => [ 'import_nets'  ],
