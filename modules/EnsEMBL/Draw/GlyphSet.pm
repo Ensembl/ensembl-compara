@@ -381,7 +381,7 @@ sub use_subtitles {
 sub subtitle_height {
   my ($self) = @_;
 
-  return ($self->use_subtitles?12:0);
+  return ($self->use_subtitles?15:0);
 }
 
 sub subtitle_colour {

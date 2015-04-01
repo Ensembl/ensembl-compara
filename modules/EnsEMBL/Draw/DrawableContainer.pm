@@ -301,7 +301,7 @@ sub new {
             height => 8,
             colour    => $glyphset->subtitle_colour(),
             x => 2,
-            y => $glyphset->miny - $sh,
+            y => $glyphset->miny - $sh + 6,
             halign => 'left',
             absolutex => 1,
           }));
@@ -347,12 +347,12 @@ sub new {
           my $liney;
           if($maxy-$miny < $gh) {
             # Very narrow track, align with centre and hope for the best
-            $glyphset->label->y(($miny+$maxy-$gh+$sh)/2);
-            $liney = ($miny+$maxy+$gh+$sh)/2 + 1;
+            $glyphset->label->y(($miny+$maxy-$gh)/2);
+            $liney = ($miny+$maxy+$gh)/2 + 1;
           } else {
             # Almost all tracks
-            $glyphset->label->y($gminy + $glyphset->{'label_y_offset'}-$sh);
-            $liney = $gminy+$gh+1+$glyphset->{'label_y_offset'}-$sh;
+            $glyphset->label->y($gminy + $glyphset->{'label_y_offset'});
+            $liney = $gminy+$gh+1+$glyphset->{'label_y_offset'};
           }
           $glyphset->label->height($gh);
           $glyphset->push($glyphset->label);
@@ -380,7 +380,7 @@ sub new {
         $glyphset->transform;
       
         ## translate the top of the next row to the bottom of this one
-        $yoffset += $glyphset->subtitle_height + $glyphset->height + $trackspacing + $glyphset->section_height;
+        $yoffset += $glyphset->height + $trackspacing + $glyphset->section_height;
         $self->timer_push('track finished', 3);
         $self->timer_push(sprintf("INIT: [X] $name '%s'", $glyphset->{'my_config'}->get('name')), 2);
       }
