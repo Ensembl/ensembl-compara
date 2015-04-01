@@ -600,7 +600,7 @@ sub core_pipeline_analyses {
             },
             -rc_name => '4Gb_job',
             -flow_into  => [ 'check_reusability' ],
-            -analysis_capacity => 1,
+            -analysis_capacity => 5,
         },
 
         {   -logic_name     => 'populate_method_links_from_file',
@@ -642,6 +642,7 @@ sub core_pipeline_analyses {
 
         {   -logic_name => 'create_mlss_ss',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::PrepareSpeciesSetsMLSS',
+            -rc_name => '2Gb_job',
             -flow_into => {
                 1 => [ 'make_treebest_species_tree' ],
                 2 => [ 'check_reuse_db_is_myisam' ],
@@ -719,10 +720,12 @@ sub core_pipeline_analyses {
                 'input_clusterset_id'   => 'default',
                 'output_clusterset_id'  => 'copy',
                 'branch_for_new_tree'  => '3',
+                'branch_for_wiped_out_trees'  => '4',
             },
             -flow_into  => {
                  1 => [ 'copy_alignments_from_previous_release' ],
                  3 => [ 'alignment_entry_point' ],
+                 4 => [ 'alignment_entry_point' ],
             },
             -hive_capacity        => $self->o('copy_trees_capacity'),
             -analysis_capacity 	  => $self->o('copy_trees_capacity'),
@@ -1383,6 +1386,7 @@ sub core_pipeline_analyses {
             -parameters    => {
                 'condition'     => '#are_all_species_reused#',
             },
+            -rc_name => '4Gb_job_gpfs',
             -flow_into => {
                 '2->A' => [ 'copy_clusters' ],
                 '3->A' => [
@@ -1797,7 +1801,20 @@ sub core_pipeline_analyses {
             -hive_capacity  => $self->o('alignment_filtering_capacity'),
             -rc_name    	=> '4Gb_job',
             -batch_size     => 5,
-            -flow_into      => [ 'prottest' ],
+            -flow_into      => [ 'small_trees_go_to_treebest' ],
+        },
+
+# ---------------------------------------------[small trees decision]-------------------------------------------------------------
+
+        {   -logic_name => 'small_trees_go_to_treebest',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::GeneTreeConditionalDataFlow',
+            -parameters => {
+                'condition'             => '#tree_gene_count# < 4',
+            },
+            -flow_into  => {
+                2  => [ 'treebest_small_families' ],
+                3  => [ 'prottest' ],
+            },
         },
 
 # ---------------------------------------------[model test]-------------------------------------------------------------
@@ -1810,8 +1827,9 @@ sub core_pipeline_analyses {
                 'escape_branch'         => -1,
                 'n_cores'               => 8,
             },
-            -hive_capacity        => $self->o('prottest_capacity'),
-            -rc_name    => '16Gb_16c_job',
+            -hive_capacity				=> $self->o('prottest_capacity'),
+            -rc_name    				=> '16Gb_16c_job',
+            -max_retry_count			=> 0,
             -flow_into  => {
                 -1 => [ 'prottest_himem' ],
                 1 => [ 'raxml_decision' ],
@@ -1826,9 +1844,13 @@ sub core_pipeline_analyses {
                 'escape_branch'         => -1,      # RAxML will use a default model, anyway
                 'n_cores'               => 8,
             },
-            -hive_capacity        => $self->o('prottest_capacity'),
-            -rc_name    => '64Gb_16c_job',
-            -flow_into  => [ 'raxml_decision' ],
+            -hive_capacity				=> $self->o('prottest_capacity'),
+            -rc_name					=> '64Gb_16c_job',
+            -max_retry_count 			=> 0,
+            -flow_into  => {
+                -1 => [ 'raxml_decision' ],
+                1 => [ 'raxml_decision' ],
+			}
         },
 
 # ---------------------------------------------[tree building with treebest]-------------------------------------------------------------
