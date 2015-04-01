@@ -1173,7 +1173,12 @@ sub bump_sorted_row {
   return 1e9; # If we get to this point we can't draw the feature so return a very large number!
 }
 
-sub max_label_rows { return $_[0]->my_config('max_label_rows') || 1; }
+sub max_label_rows {
+  my $out = $_[0]->my_config('max_label_rows');
+  return $out if $out;
+  $out = $_[0]->supports_subtitles?2:1;
+  return $out;
+}
 
 sub section {
   my $self = CORE::shift;
