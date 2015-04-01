@@ -3054,6 +3054,7 @@ sub add_sequence_variations_meta {
   my $menu = $self->get_node('variation');
   my $prefix_caption = 'Variant - '; 
   my $suffix_caption = ' - short variants (SNPs and indels)';
+  my $short_suffix_caption = ' SNPs/indels';
   my $regexp_suffix_caption = $suffix_caption;
      $regexp_suffix_caption =~ s/\(/\\\(/;
      $regexp_suffix_caption =~ s/\)/\\\)/;
@@ -3097,10 +3098,12 @@ sub add_sequence_variations_meta {
       my $other_sources = ($menu_item->{'long_name'} =~ /all other sources/);
 
       $menu_item->{'long_name'} =~ s/ variants$/$suffix_caption/;
+      $menu_item->{'short_name'} =~ s/ variants$/$short_suffix_caption/;
 
       $node = $self->create_track($menu_item->{'key'}, $menu_item->{'long_name'}, {
         %$options,
         caption     => $prefix_caption.$menu_item->{'long_name'},
+        labelcaption => $menu_item->{'short_name'},
         sources     => $other_sources ? undef : [ $temp_name ],
         description => $other_sources ? 'Sequence variants from all sources' : $hashref->{'source'}{'descriptions'}{$temp_name},
       });
@@ -3113,12 +3116,15 @@ sub add_sequence_variations_meta {
       }
 
       (my $temp_name = $menu_item->{'key'})       =~ s/^variation_set_//;
-      (my $caption   = $menu_item->{'long_name'}) =~ s/1000 Genomes/1KG/;  # shorten name for side of image
+      (my $caption   = $menu_item->{'long_name'});
+      (my $label_caption   = $menu_item->{'short_name'}) =~ s/1000 Genomes/1KG/;  # shorten name for side of image
+      $label_caption .= $short_suffix_caption;
       (my $set_name  = $menu_item->{'long_name'}) =~ s/All HapMap/HapMap/; # hack for HapMap set name - remove once variation team fix data for 68
       
       $node = $self->create_track($menu_item->{'key'}, $menu_item->{'long_name'}, {
         %$options,
         caption     => $prefix_caption.$caption,
+        labelcaption => $label_caption,
         sources     => undef,
         sets        => [ $temp_name ],
         set_name    => $set_name,
