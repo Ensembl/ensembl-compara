@@ -80,7 +80,7 @@ sub run{
         1;
     } or do {
         my $msg = $@;
-        if($@ =~ /Something went wrong with axtChain/s) {   # Add other termination signals here (different for different Runnables)
+        if($@ =~ /Something went wrong with/s) {   # Add other termination signals here (different for different Runnables)
             # Probably an ongoing MEMLIMIT
             # Let's wait a bit to let LSF kill the worker as it should
             sleep(30);
