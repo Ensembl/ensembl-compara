@@ -34,15 +34,17 @@ sub new {
   
   $data_species ||= $ENV{'ENSEMBL_SPECIES'};
   
-  my $drawn_chrs   = $species_defs->get_config($data_species, 'ENSEMBL_CHROMOSOMES');
-  my $all_chrs     = $species_defs->get_config($data_species, 'ALL_CHROMOSOMES');
-  my $colourlist   = $species_defs->TRACK_COLOUR_ARRAY || [qw(black red blue green)];
+  my $drawn_chrs          = $species_defs->get_config($data_species, 'ENSEMBL_CHROMOSOMES');
+  my $all_chrs            = $species_defs->get_config($data_species, 'ALL_CHROMOSOMES');
+  my $colourlist          = $species_defs->TRACK_COLOUR_ARRAY || [qw(black red blue green)];
+  my $nearest_window_size = 100000 * ($species_defs->get_config($data_species, 'ENSEMBL_GENOME_SIZE') || 1);  
   
   my $self = {
-    current_location => $location,
-    drawn_chrs       => $drawn_chrs,
-    colourlist       => $colourlist,
-    colourmap        => { map { $_ => 0 } @$colourlist },
+    current_location    => $location,
+    drawn_chrs          => $drawn_chrs,
+    colourlist          => $colourlist,
+    colourmap           => { map { $_ => 0 } @$colourlist },
+    nearest_window_size => $nearest_window_size,
   };
   
   bless $self, $class;
@@ -276,8 +278,9 @@ sub parse {
       my $midpoint = int(abs($self->{'_find_nearest'}{'nearest_start'} 
                               - $self->{'_find_nearest'}{'nearest_end'})/2) 
                               + $self->{'_find_nearest'}{'nearest_start'};
-      my $start = $midpoint < 50000 ? 0 : ($midpoint - 50000);
-      my $end = $start + 100000;
+      my $half_window = $self->{'nearest_window_size'} / 2;
+      my $start = $midpoint < $half_window ? 0 : ($midpoint - $half_window);
+      my $end = $start + $self->{'nearest_window_size'};
       $self->{'nearest'} = $self->{'_find_nearest'}{'nearest_region'}.':'.$start.'-'.$end;
     }
   }
