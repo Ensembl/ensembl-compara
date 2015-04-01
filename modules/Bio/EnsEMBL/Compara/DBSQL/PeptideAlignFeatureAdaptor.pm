@@ -350,8 +350,11 @@ sub store_PAFS {
   # Query genome db id should always be the same
   my $first_qgenome_db_id = $features[0]->query_genome_db_id;
 
-  my $gdb = $self->db->get_GenomeDBAdaptor->fetch_by_dbID($first_qgenome_db_id);
-  my $tbl_name = 'peptide_align_feature_'.$first_qgenome_db_id;
+  my $tbl_name = 'peptide_align_feature';
+  if ($first_qgenome_db_id){
+  	my $gdb = $self->db->get_GenomeDBAdaptor->fetch_by_dbID($first_qgenome_db_id);
+  	$tbl_name .= "_$first_qgenome_db_id";
+  }
 
   my @stored_columns = qw(qmember_id hmember_id qgenome_db_id hgenome_db_id qstart qend hstart hend score evalue align_length identical_matches perc_ident positive_matches perc_pos hit_rank cigar_line);
   my $query = sprintf('INSERT INTO %s (%s) VALUES (%s)', $tbl_name, join(',', @stored_columns), join(',', map {'?'} @stored_columns) );
