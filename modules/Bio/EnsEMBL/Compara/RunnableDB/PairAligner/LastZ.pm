@@ -59,7 +59,7 @@ use Bio::EnsEMBL::Analysis::Runnable::Lastz;
 use Bio::EnsEMBL::Analysis;
 
 use Bio::EnsEMBL::Compara::RunnableDB::PairAligner::PairAligner;
-use Bio::EnsEMBL::Utils::Exception qw(throw warning verbose);
+use Bio::EnsEMBL::Utils::Exception qw(throw verbose);
 
 our @ISA = qw(Bio::EnsEMBL::Compara::RunnableDB::PairAligner::PairAligner);
 
@@ -95,8 +95,7 @@ sub configure_runnable {
   }
 
   if (@db_chunk_files > 1) {
-    warning("you have given a chunkset for the database; dumping individual chunks\n" .
-            "and creating a runnable for each one");
+    $self->warning("you have given a chunkset for the database; dumping individual chunks and creating a runnable for each one");
   }
 
   my $program = $self->require_executable('pair_aligner_exe');

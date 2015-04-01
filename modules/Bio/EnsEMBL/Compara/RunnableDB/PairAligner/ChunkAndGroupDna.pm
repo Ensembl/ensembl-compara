@@ -63,7 +63,7 @@ package Bio::EnsEMBL::Compara::RunnableDB::PairAligner::ChunkAndGroupDna;
 
 use strict;
 use Time::HiRes qw(time gettimeofday tv_interval);
-use Bio::EnsEMBL::Utils::Exception qw( throw warning verbose );
+use Bio::EnsEMBL::Utils::Exception qw( throw verbose );
 use Bio::EnsEMBL::Analysis::RunnableDB;
 use Bio::EnsEMBL::Compara::Production::DnaFragChunk;
 use Bio::EnsEMBL::Compara::Production::DnaFragChunkSet;

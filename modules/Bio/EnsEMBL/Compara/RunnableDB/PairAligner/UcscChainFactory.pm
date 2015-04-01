@@ -38,7 +38,7 @@ Effectively splits a UCSC chain file into smaller bits by using a seek position 
 package Bio::EnsEMBL::Compara::RunnableDB::PairAligner::UcscChainFactory;
 
 use strict;
-use Bio::EnsEMBL::Utils::Exception qw(throw warning);
+use Bio::EnsEMBL::Utils::Exception qw(throw);
 
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 

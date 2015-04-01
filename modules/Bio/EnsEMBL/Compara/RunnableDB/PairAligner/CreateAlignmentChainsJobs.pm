@@ -58,7 +58,7 @@ package Bio::EnsEMBL::Compara::RunnableDB::PairAligner::CreateAlignmentChainsJob
 
 use strict;
 
-use Bio::EnsEMBL::Utils::Exception qw(throw warning);
+use Bio::EnsEMBL::Utils::Exception qw(throw);
 
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 

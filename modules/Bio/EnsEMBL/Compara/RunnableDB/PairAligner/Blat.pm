@@ -66,7 +66,7 @@ package Bio::EnsEMBL::Compara::RunnableDB::PairAligner::Blat;
 
 use strict;
 use Bio::EnsEMBL::Analysis::Runnable::Blat;
-use Bio::EnsEMBL::Utils::Exception qw(throw warning);
+use Bio::EnsEMBL::Utils::Exception qw(throw);
 
 use Bio::EnsEMBL::Compara::RunnableDB::PairAligner::PairAligner;
 our @ISA = qw(Bio::EnsEMBL::Compara::RunnableDB::PairAligner::PairAligner);
