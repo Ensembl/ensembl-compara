@@ -90,6 +90,7 @@ foreach my $stable_id (keys %$present_in_all) {
     $stable_ids->{$stable_id} = 1;
     foreach my $name (@list) {
       foreach my $id (keys %{$present_in_all->{$stable_id}{$name}}) {
+        $tagged_stable_id->{$id} = 1;
         $stable_ids->{$id} = 1;
       }
     }
