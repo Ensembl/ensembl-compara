@@ -290,8 +290,8 @@ sub write_pairaligner_statistics {
 
 sub store_mlss_tag_block_size {
     my ($self, $mlss, $block_type, $query) = @_;
-    my $data = $self->compara_dba->dbc->db_handle->selectrow_array($query, undef, $self->param('mlss_id'));
-    foreach my $r (@$data) {
+    my ($array_ref) = $self->compara_dba->dbc->db_handle->selectall_arrayref($query, undef, $self->param('mlss_id'));
+    foreach my $r (@$array_ref) {
         $mlss->store_tag("num_${block_type}_blocks_$r->[0]", $r->[1]);
         $mlss->store_tag("totlength_${block_type}_blocks_$r->[0]", $r->[2]);
     }
