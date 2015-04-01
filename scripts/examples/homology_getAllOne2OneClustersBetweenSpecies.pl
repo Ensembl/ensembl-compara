@@ -50,12 +50,10 @@ my $present_in_all = undef;
 while (my $sp1_gdb = shift @gdbs) {
   foreach my $sp2_gdb (@gdbs) {
     print STDERR "# Fetching for ", $sp1_gdb->name, " - ", $sp2_gdb->name, "\n";
-    my $mlss_orth = $mlss_adaptor->fetch_by_method_link_type_GenomeDBs
-      ('ENSEMBL_ORTHOLOGUES', [$sp1_gdb, $sp2_gdb]);
-    my @orthologies = @{$homology_adaptor->fetch_all_by_MethodLinkSpeciesSet($mlss_orth)};
-    my $count = 0; my $total_count = scalar @orthologies;
-    foreach my $ortholog (@orthologies) {
-      next unless ($ortholog->description =~ /one2one/);
+    my $mlss_orth = $mlss_adaptor->fetch_by_method_link_type_GenomeDBs('ENSEMBL_ORTHOLOGUES', [$sp1_gdb, $sp2_gdb]);
+    my @one2one_orthologies = @{$homology_adaptor->fetch_all_by_MethodLinkSpeciesSet($mlss_orth, -ORTHOLOGY_TYPE => 'ortholog_one2one')};
+    my $count = 0; my $total_count = scalar @one2one_orthologies;
+    foreach my $ortholog (@one2one_orthologies) {
       # Create a hash of stable_id pairs with genome name as subkey
       my ($gene1,$gene2) = @{$ortholog->gene_list};
       $count++;
