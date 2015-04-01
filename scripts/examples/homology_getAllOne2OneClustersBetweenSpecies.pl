@@ -36,6 +36,7 @@ $reg->load_registry_from_db(
 my $homology_adaptor = $reg->get_adaptor("Multi", "compara", "Homology");
 my $mlss_adaptor = $reg->get_adaptor("Multi", "compara", "MethodLinkSpeciesSet");
 my $genomedb_adaptor = $reg->get_adaptor("Multi", "compara", "GenomeDB");
+my $gene_member_adaptor = $reg->get_adaptor("Multi", "compara", "GeneMember");
 
 my @list_of_species = ("homo_sapiens","pan_troglodytes","macaca_mulatta");
 #my @list_of_species = ("homo_sapiens","pan_troglodytes","macaca_mulatta","mus_musculus","rattus_norvegicus","canis_familiaris","bos_taurus","sus_scrofa","monodelphis_domestica","ornithorhynchus_anatinus","gallus_gallus","danio_rerio");
@@ -55,21 +56,25 @@ while (my $sp1_gdb = shift @gdbs) {
     my $count = 0; my $total_count = scalar @one2one_orthologies;
     foreach my $ortholog (@one2one_orthologies) {
       # Create a hash of stable_id pairs with genome name as subkey
-      my ($gene1,$gene2) = @{$ortholog->gene_list};
+      my ($gene1,$gene2) = @{$ortholog->get_all_Members};
       $count++;
       print STDERR "[$count/$total_count]\n" if (0 == $count % 100);
-      $present_in_all->{$gene1->stable_id}{$sp1_gdb->name}{$gene2->stable_id} = 1;
-      $present_in_all->{$gene1->stable_id}{$sp2_gdb->name}{$gene1->stable_id} = 1;
-      $present_in_all->{$gene2->stable_id}{$sp1_gdb->name}{$gene2->stable_id} = 1;
-      $present_in_all->{$gene2->stable_id}{$sp2_gdb->name}{$gene1->stable_id} = 1;
+      $present_in_all->{$gene1->gene_member_id}{$sp1_gdb->name}{$gene2->gene_member_id} = 1;
+      $present_in_all->{$gene1->gene_member_id}{$sp2_gdb->name}{$gene1->gene_member_id} = 1;
+      $present_in_all->{$gene2->gene_member_id}{$sp1_gdb->name}{$gene2->gene_member_id} = 1;
+      $present_in_all->{$gene2->gene_member_id}{$sp2_gdb->name}{$gene1->gene_member_id} = 1;
     }
   }
 }
 
+print STDERR "Loading the gene names\n";
+my %gene_member_id_2_stable_id = map {$_->dbID => $_->stable_id} @{$gene_member_adaptor->fetch_all_by_dbID_list([keys %$present_in_all])};
+
 # This code below is optional and is only to sort out cases where all
 # genomes are in the list and print the list of ids if it is the case
-my @list = keys %$hash_of_species; my $set_num = scalar @list;
+my @list = keys %$hash_of_species;
 my $tagged_stable_id;
+print STDERR "Printing the orthology groups\n";
 foreach my $stable_id (keys %$present_in_all) {
   my @set = $present_in_all->{$stable_id};
   my $present;
@@ -78,11 +83,9 @@ foreach my $stable_id (keys %$present_in_all) {
       $present->{$name} = 1 if (defined($element->{$name}));
     }
   }
-  my $output_string;
   if (scalar keys %$present == scalar @list) {
     next if (defined($tagged_stable_id->{$stable_id})); #Print only once
     $tagged_stable_id->{$stable_id} = 1;
-    $output_string = "$stable_id";
     my $stable_ids;
     $stable_ids->{$stable_id} = 1;
     foreach my $name (@list) {
@@ -90,7 +93,7 @@ foreach my $stable_id (keys %$present_in_all) {
         $stable_ids->{$id} = 1;
       }
     }
-    print join(",", keys %$stable_ids), "\n";
+    print join(",", map {$gene_member_id_2_stable_id{$_}} keys %$stable_ids), "\n";
   }
 }
 
