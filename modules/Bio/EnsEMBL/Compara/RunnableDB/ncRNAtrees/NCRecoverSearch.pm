@@ -70,8 +70,7 @@ Internal methods are usually preceded with a _
 package Bio::EnsEMBL::Compara::RunnableDB::ncRNAtrees::NCRecoverSearch;
 
 use strict;
-use Time::HiRes qw(time gettimeofday tv_interval);
-use Bio::EnsEMBL::Registry;
+use warnings;
 
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
@@ -183,9 +182,9 @@ sub run_ncrecoversearch {
   close FILE;
 
   my $model_id = $self->param('model_id');
-  my $ret1 = $self->dump_model('model_id', $model_id);
-  my $ret2 = $self->dump_model('name',     $model_id) if (1 == $ret1);
-  if (1 == $ret2) {
+  my $not_found = $self->dump_model('model_id', $model_id);
+     $not_found = $self->dump_model('name',     $model_id) if $not_found;
+  if ($not_found) {
     $self->input_job->transient_error(0);
     die "Failed to find '$model_id' both in 'model_id' and 'name' fields of 'hmm_profile' table";
   }
@@ -249,7 +248,7 @@ sub dump_model {
 #   $sth->execute();
 #  my $nc_profile  = $sth->fetchrow;
   unless (defined($nc_profile)) {
-    return 1;
+    return 0;
   }
   my $profile_file = $self->worker_temp_directory . $model_id . "_profile.cm";
   open FILE, ">$profile_file" or die "$!";
@@ -257,7 +256,7 @@ sub dump_model {
   close FILE;
 
   $self->param('profile_file', $profile_file);
-  return 0;
+  return 1;
 }
 
 sub fetch_recovered_member_entries {
