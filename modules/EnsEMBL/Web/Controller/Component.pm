@@ -24,24 +24,34 @@ use strict;
 
 use base qw(EnsEMBL::Web::Controller);
 
-sub page_type { return 'Component'; }
-sub cacheable { return 1;           }
+sub parse_path_segments {
+  ## @override
+  my $self = shift;
+
+  my $package_path;
+
+  ($self->{'type'}, $package_path, $self->{'action'}, $self->{'function'}) = (@{$self->path_segments}, '', '', '', '');
+
+  # Set action of component to be the same as the action of the referer page for view configs
+#  my $referer = $self->referer;
+
+#  $self->{'action'}     = $self->query_param('force_action')    || $referer->{'ENSEMBL_ACTION'};
+#  $self->{'function'}   = $self->query_param('force_function')  || $self->{'function'} || $referer->{'ENSEMBL_FUNCTION'};
+
+#  $self->{'component'} = join('::', grep $_, 'EnsEMBL', $package_path, 'Component', $self->{'type'}, $self->{'action'}, $self->{'function'}) =~ s/__/::/gr;
+  $self->{'component'} = join('::', grep $_, 'EnsEMBL', $package_path, 'Component', $self->{'type'}, $self->{'action'}) =~ s/__/::/gr;
+}
+
+sub component { shift->{'component'}; }
+sub page_type { return 'Component';   }
+sub cacheable { return 1;             }
 sub request   { return $_[0]{'request'} ||= $_[0]->species_defs->OBJECT_TO_SCRIPT->{$_[0]->hub->type} eq 'Modal' ? 'modal' : undef; }
 
 sub init {
-  my $self = shift;
-  my $hub     = $self->hub;
+  my $self  = shift;
+  my $hub   = $self->hub;
  
   return if ($hub->function ne 'Export' && $self->get_cached_content('component')); # Page retrieved from cache
-  
-  my $referer = $hub->referer;
-  
-  # Set action of component to be the same as the action of the referer page - needed for view configs to be correctly created
-  $hub->action = $ENV{'ENSEMBL_ACTION'} = $hub->param('force_action') || $referer->{'ENSEMBL_ACTION'};
-  
-  if (!$ENV{'ENSEMBL_FUNCTION'}) {
-    $hub->function = $ENV{'ENSEMBL_FUNCTION'} = $hub->param('force_function') || $referer->{'ENSEMBL_FUNCTION'};
-  }
   
   $self->builder->create_objects;
   $self->page->initialize; # Adds the components to be rendered to the page module
@@ -49,8 +59,8 @@ sub init {
   my $object = $self->object;
   
   if ($object) {
-    $object->__data->{'_action'}   = $ENV{'ENSEMBL_ACTION'};
-    $object->__data->{'_function'} = $ENV{'ENSEMBL_FUNCTION'};
+    $object->__data->{'_action'}   = $self->action;
+    $object->__data->{'_function'} = $self->function;
   }
   
   if ($hub->user) {
