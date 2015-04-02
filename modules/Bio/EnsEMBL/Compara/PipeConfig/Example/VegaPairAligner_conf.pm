@@ -78,7 +78,8 @@ sub default_options {
     'pipeline_name'         => 'LASTZ_'.$self->o('rel_with_suffix'),   # name the pipeline to differentiate the submitted processes
 
     'pipeline_db' => {                                  # connection parameters
-      -host   => 'vegabuild',
+      -driver => 'mysql',
+      -host   => 'vegp-db',
       -port   => 5304,
       -user   => 'ottadmin',
       -pass   => $self->o('password'), 
