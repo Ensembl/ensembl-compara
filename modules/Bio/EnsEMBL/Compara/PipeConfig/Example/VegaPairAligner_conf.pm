@@ -82,7 +82,7 @@ sub default_options {
       -port   => 5304,
       -user   => 'ottadmin',
       -pass   => $self->o('password'), 
-      -dbname => $self->o('ENV', 'USER').'_vega_ga_20130722_73',
+      -dbname => $self->o('ENV', 'USER').'_vega_ga_20150402_79',
     },
 
     #need to overwrite the value from ../Lastz_conf.pm
@@ -152,11 +152,15 @@ sub pipeline_analyses {
                                               remove_inconsistencies_after_chain
                                               update_max_alignment_length_after_chain
                                               create_alignment_nets_jobs
+                                              filter_duplicates_net
+                                              create_filter_duplicates_net_jobs
+                                              filter_duplicates_new_himem
                                               set_internal_ids
                                               alignment_nets
                                               alignment_nets_himem
                                               remove_inconsistencies_after_net
                                               update_max_alignment_length_after_net
+                                              set_internal_ids_collection
                                               healthcheck
                                               pairaligner_stats
                                               master_db
@@ -194,7 +198,7 @@ sub pipeline_analyses {
         print "Vega fix - removed parameter for $_\n";
         delete $analyses->[$i]{'-parameters'}{$_};
       }
-      my @unwanted_flows = qw(create_alignment_nets_jobs healthcheck create_alignment_chains_jobs no_chunk_and_group_dna pairaligner_stats);
+      my @unwanted_flows = qw(create_alignment_nets_jobs healthcheck create_alignment_chains_jobs no_chunk_and_group_dna pairaligner_stats create_filter_duplicates_net_jobs);
       foreach my $flow (keys %{$analyses->[$i]{'-flow_into'}}) {
         if (grep {$analyses->[$i]{'-flow_into'}{$flow}[0] eq $_} @unwanted_flows) {
           print "Vega fix - removed flow control rule for ".$analyses->[$i]{'-flow_into'}{$flow}[0] . "\n";
@@ -251,6 +255,9 @@ sub e_analyses {
                      populate_new_database
                      dump_large_nib_for_chains
                      filter_duplicates
+                     filter_duplicates_net
+                     filter_duplicates_net_himem
+                     create_filter_duplicates_net_jobs
                      parse_pair_aligner_conf
                      alignment_chains_himem
                      remove_inconsistencies_after_net
@@ -258,6 +265,7 @@ sub e_analyses {
                      remove_inconsistencies_after_pairaligner
                      get_species_list
                      set_internal_ids
+                     set_internal_ids_collection
                      store_sequence_again
                      dump_dna_factory
                      create_filter_duplicates_jobs
