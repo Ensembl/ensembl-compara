@@ -643,6 +643,9 @@ sub core_pipeline_analyses {
         {   -logic_name => 'create_mlss_ss',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::PrepareSpeciesSetsMLSS',
             -rc_name => '2Gb_job',
+            -parameters => {
+              'master_create_missing' => $self->o('master_create_missing'),
+            },
             -flow_into => {
                 1 => [ 'make_treebest_species_tree' ],
                 2 => [ 'check_reuse_db_is_myisam' ],
