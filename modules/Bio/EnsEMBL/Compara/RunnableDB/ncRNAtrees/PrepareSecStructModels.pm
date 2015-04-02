@@ -218,14 +218,13 @@ sub _run_bootstrap_raxml {
   $cmd .= " -n $raxml_tag.$bootstrap_num";
 
   my $worker_temp_directory = $self->worker_temp_directory;
-  $self->compara_dba->dbc->disconnect_when_inactive(1);
   print "$cmd\n" if($self->debug);
   my $bootstrap_starttime = time()*1000;
 
-  unless(system("cd $worker_temp_directory; $cmd") == 0) {
-    $self->throw("error running raxml\ncd $worker_temp_directory; $cmd\n $!\n");
+  my $run_cmd = $self->run_command("cd $worker_temp_directory; $cmd");
+  if ($run_cmd->exit_code) {
+    $self->throw("error running raxml\ncd $worker_temp_directory; $cmd\n".$run_cmd->err);
   }
-  $self->compara_dba->dbc->disconnect_when_inactive(0);
   my $bootstrap_msec = int(time()*1000-$bootstrap_starttime);
 
   my $ideal_msec = 30000; # 5 minutes

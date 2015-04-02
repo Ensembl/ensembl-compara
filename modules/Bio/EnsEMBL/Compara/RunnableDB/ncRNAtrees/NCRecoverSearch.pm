@@ -200,12 +200,10 @@ sub run_ncrecoversearch {
   $cmd .= " " . $self->param('profile_file');
   $cmd .= " " . $input_fasta;
 
-  $self->compara_dba->dbc->disconnect_when_inactive(1);
-  print("$cmd\n") if($self->debug);
-  unless(system($cmd) == 0) {
-    $self->throw("error running cmsearch, $!\n");
+  my $run_cmd = $self->run_command($cmd);
+  if ($run_cmd->exit_code) {
+    $self->throw("error running cmsearch:\n".$run_cmd->err);
   }
-  $self->compara_dba->dbc->disconnect_when_inactive(0);
 
   open TABFILE,"$tabfilename" or die "$!\n";
   while (<TABFILE>) {
