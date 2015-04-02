@@ -81,8 +81,6 @@ sub fetch_input {
   my $to_ncs    = $adaptor->fetch_ncs($curr_release, $type, $self->compara_dba->dbc());
   my $ncsl      = Bio::EnsEMBL::Compara::StableId::NamedClusterSetLink->new(-FROM => $from_ncs, -TO => $to_ncs);
 
-  $self->compara_dba()->dbc()->disconnect_when_inactive(1);
-
   $self->param('adaptor', $adaptor);
   $self->param('ncsl', $ncsl);
   $self->param('prev_release', $prev_release); #replace it with whatever it is now
@@ -94,7 +92,7 @@ sub run {
   
   return if ! $self->param('prev_rel_db'); #bail out early
 
-  my $type         = $self->param('type');
+  $self->compara_dba()->dbc()->disconnect_if_idle();
 
   my $ncsl = $self->param('ncsl');
   my $postmap = $ncsl->maximum_name_reuse();

@@ -213,7 +213,7 @@ sub run {
         $self->param('query_set')->print_sequences_to_file($blast_infile, -format => 'fasta');
     }
 
-    $self->compara_dba->dbc->disconnect_when_inactive(1); 
+    $self->compara_dba->dbc->disconnect_if_idle();
 
     my $cross_pafs = [];
     foreach my $blast_db (keys %{$self->param('all_blast_db')}) {
@@ -233,7 +233,6 @@ sub run {
         push @$cross_pafs, @$features;
         unlink $blast_outfile unless $self->debug;
     }
-    $self->compara_dba->dbc->disconnect_when_inactive(0); 
 
     $self->param('cross_pafs', $cross_pafs);
 }

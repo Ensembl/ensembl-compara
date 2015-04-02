@@ -136,8 +136,6 @@ sub calc_genetic_distance {
   
   my $aln = $homology->get_SimpleAlign(-seq_type => 'cds', -ID_TYPE => 'member');
 
-  $self->compara_dba->dbc->disconnect_when_inactive(1);
-  
   my $codeml = new Bio::Tools::Run::Phylo::PAML::Codeml();
 
   my $possible_exe = $self->param('codeml_exe');
@@ -168,6 +166,8 @@ sub calc_genetic_distance {
           }
       }
   }
+
+  $self->compara_dba->dbc->disconnect_if_idle();
 
   my ($rc,$parser) = $codeml->run();
   if($rc == 0) {
@@ -263,8 +263,6 @@ sub calc_genetic_distance {
       }
     }
   }
-
-  $self->compara_dba->dbc->disconnect_when_inactive(0);
 
   return $homology;
 }

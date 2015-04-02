@@ -75,8 +75,6 @@ sub fetch_input {
     my $to_ncs   = $adaptor->fetch_ncs($release,    't',     $self->compara_dba->dbc);
     my $ncsl     = Bio::EnsEMBL::Compara::StableId::NamedClusterSetLink->new(-FROM => $from_ncs, -TO => $to_ncs);
 
-    $self->compara_dba->dbc->disconnect_when_inactive(1);
-
     $self->param('adaptor', $adaptor);
     $self->param('ncsl', $ncsl);
 
@@ -85,6 +83,8 @@ sub fetch_input {
 
 sub run {
     my $self = shift @_;
+
+    $self->compara_dba->dbc->disconnect_if_idle();
 
     my $ncsl = $self->param('ncsl');
     my $accu = $ncsl->mnr_lite();
