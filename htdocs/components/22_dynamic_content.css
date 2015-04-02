@@ -178,7 +178,7 @@ div.redirect-message p        { margin: 0; line-height: 40px; text-align: center
 div.redirect-message p a      { color: inherit; font-weight: bold; }
 
 /* cookie message */
-div.cookie-message          { height: 60px; width: 100%; color: #fff; background-color: #000; padding: 10px 0; }
+div.cookie-message          { background-color: [[MH_BG]]; border-radius: 10px; bottom: 20px; color: #fff; left: 20px; padding: 20px; position: fixed; width: 300px; z-index: 1000; box-shadow: 5px 5px 15px #666; }
+div.cookie-message div      { position: absolute; top: -10px; right: -10px; height: 22px; width: 22px; background-image: url(/i/cp_close.png); cursor: pointer; }
 div.cookie-message p        { margin: 0; line-height: 30px; text-align: center; }
-div.cookie-message p button { margin-left: 16px; }
 div.cookie-message p a      { color: inherit; font-weight: bold; }
