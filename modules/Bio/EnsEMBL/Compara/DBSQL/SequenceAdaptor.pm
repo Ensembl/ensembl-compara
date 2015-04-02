@@ -155,10 +155,28 @@ sub fetch_other_sequences_by_member_ids_type {
 #
 # STORE METHODS
 #
+# Check redundancy is now optional -- for genomic alignments it's
+# faster to store redundant sequences than check for their
+# existance, but for the GeneTrees we keep the sequences
+# non-redundant
+#
 ################
 
 sub store {
-  my ($self, $sequence, $check_redundancy) = @_;
+    my ($self, $sequence) = @_;
+
+    return 0 unless($sequence);
+
+    my $sth = $self->prepare("INSERT INTO sequence (sequence, length) VALUES (?,?)");
+    $sth->execute($sequence, length($sequence));
+    my $seqID = $self->dbc->db_handle->last_insert_id(undef, undef, 'sequence', 'sequence_id');
+    $sth->finish;
+
+    return $seqID;
+}
+
+sub store_no_redundancy {
+  my ($self, $sequence) = @_;
   my $seqID;
 
   return 0 unless($sequence);
@@ -168,24 +186,13 @@ sub store {
 
   $self->dbc->do("LOCK TABLE sequence WRITE");
 
-  # Check redundancy is now optional -- for genomic alignments it's
-  # faster to store redundant sequences than check for their
-  # existance, but for the GeneTrees we keep the sequences
-  # non-redundant
-  if ($check_redundancy) {
     my $sth = $self->prepare("SELECT sequence_id FROM sequence WHERE sequence = ?");
     $sth->execute($sequence);
     ($seqID) = $sth->fetchrow_array();
     $sth->finish;
-  }
 
   if(!$seqID) {
-    my $length = length($sequence);
-
-    my $sth2 = $self->prepare("INSERT INTO sequence (sequence, length) VALUES (?,?)");
-    $sth2->execute($sequence, $length);
-    $seqID = $self->dbc->db_handle->last_insert_id(undef, undef, 'sequence', 'sequence_id');
-    $sth2->finish;
+    $seqID = $self->store($sequence);
   }
 
   $self->dbc->do("UNLOCK TABLES");
