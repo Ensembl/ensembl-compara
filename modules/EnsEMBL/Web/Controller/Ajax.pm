@@ -20,36 +20,22 @@ package EnsEMBL::Web::Controller::Ajax;
 
 use strict;
 
-use Apache2::RequestUtil;
 use HTML::Entities  qw(decode_entities);
 use JSON            qw(from_json);
 use URI::Escape     qw(uri_unescape);
 
 use EnsEMBL::Web::ViewConfig::Regulation::Page;
 use EnsEMBL::Web::DBSQL::WebsiteAdaptor;
-use EnsEMBL::Web::Hub;
 
 use base qw(EnsEMBL::Web::Controller);
 
-sub new {
-  my $class = shift;
-  my $r     = shift || Apache2::RequestUtil->can('request') ? Apache2::RequestUtil->request : undef;
-  my $args  = shift || {};
-  my $self  = {};
-  
-  my $hub = EnsEMBL::Web::Hub->new({
-    apache_handle  => $r,
-    session_cookie => $args->{'session_cookie'},
-    user_cookie    => $args->{'user_cookie'},
-  });
-  
-  my $func = $hub->action;
-  
-  bless $self, $class;
-  
-  $self->$func($hub) if $self->can($func);
-  
-  return $self;
+sub process {
+  my $self  = shift;
+  my $func  = $self->action;
+
+  if ($func = $self->can($func)) {
+    $func->($self, $self->hub);
+  }
 }
 
 sub autocomplete {
