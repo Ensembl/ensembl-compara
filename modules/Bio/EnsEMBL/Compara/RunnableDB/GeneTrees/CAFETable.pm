@@ -307,7 +307,7 @@ LABEL:    while (1) {
         print STDERR "Table file is:  $table_file\n" if ($self->debug());
         print STDERR "Script file is: $script\n" if ($self->debug());
         chmod 0755, $script;
-        $self->compara_dba->dbc->disconnect_when_inactive(0);
+        $self->compara_dba->dbc->disconnect_if_idle();
         open my $cafe_proc, "-|", $script or die $!;  ## clean after! (cafe leaves output files)
         my $inf;
         my $inf_in_row;
