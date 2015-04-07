@@ -12,6 +12,8 @@ $registry->load_registry_from_db(
     -user => 'anonymous'
     );
 
+die "Usage: $0 path/to/alignment.hal\n" unless $ARGV[0];
+
 my $halAdaptor = Bio::EnsEMBL::Compara::HAL::HALAdaptor->new($ARGV[0]);
 print "Hal genomes:\n";
 foreach my $genome ($halAdaptor->genomes()) {
