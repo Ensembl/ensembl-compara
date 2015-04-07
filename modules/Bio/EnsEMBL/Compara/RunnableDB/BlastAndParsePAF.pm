@@ -99,7 +99,7 @@ sub fetch_input {
         # Target species are all mixed
         print STDERR "Using the blast database provided: ", $self->param('blast_db'), "\n" if $self->debug;
         # Loads the files into memory
-        system sprintf('cat %s*', $self->param('blast_db'));
+        system sprintf('cat %s* > /dev/null', $self->param('blast_db'));
         #my $tmp_blast_db = $self->worker_temp_directory.(basename $self->param('blast_db'));
         #system sprintf('cp -a %s* %s', $self->param('blast_db'), $self->worker_temp_directory);
         $self->param('all_blast_db')->{$self->param('blast_db')} = undef;
@@ -141,6 +141,8 @@ sub fetch_input {
         $self->param('all_blast_db')->{$fastafile} = $genome_db->dbID;
         die "Missing blast fasta: $fastafile\n" unless -e $fastafile and -s $fastafile;
         die "Missing blast index: $fastafile.psq\n" unless -e "$fastafile.psq" and -s "$fastafile.psq";
+        die "Missing blast index: $fastafile.phr\n" unless -e "$fastafile.phr" and -s "$fastafile.phr";
+        die "Missing blast index: $fastafile.pin\n" unless -e "$fastafile.pin" and -s "$fastafile.pin";
     }
 
 }
