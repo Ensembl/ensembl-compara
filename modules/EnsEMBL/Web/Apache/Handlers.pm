@@ -199,6 +199,35 @@ sub map_to_file {
   return undef;
 }
 
+sub get_sub_handler {
+  ## Finds out the sub handler that should handle this request
+  ## @param Apache2::RequestRec request object
+  ## @param Species name (string)
+  ## @param Arrayref of path segments
+  ## @return List containing handler (possibly undef if no sub handler maps to this requests), species (possibly modified) and arrayref of path segments (possibly modified)
+  my ($r, $species, $path_seg) = @_;
+
+  my $handler;
+
+  # Try DasHandler if first segment of path is 'das'
+  if (!$species && $path_seg->[0] eq 'das') {
+
+    shift @$path_seg; # remove 'das'
+
+    ($species)  = split '.', $path_seg->[0] // '';
+    $handler    = 'EnsEMBL::Web::Apache::DasHandler';
+
+  # Try SpeciesHandler in all other cases if species is present or the file path is not an explicit .html path
+  } elsif ($species || $path_seg->[-1] !~ /\.html$/) {
+
+    $species  ||= 'Multi';
+    $species    = 'Multi' if $species eq 'common';
+    $handler    = 'EnsEMBL::Web::Apache::SpeciesHandler';
+  }
+
+  return ($handler, $species, $path_seg);
+}
+
 sub http_redirect {
   ## Perform an http redirect
   ## @param Apache2::RequestRec request object
@@ -300,38 +329,22 @@ sub handler {
   my $species   = $r->subprocess_env('ENSEMBL_SPECIES');
   my $path      = $r->subprocess_env('ENSEMBL_PATH');
   my $query     = $r->subprocess_env('ENSEMBL_QUERY');
-  my @path_seg  = grep { $_ ne '' } split '/', $path;
+  my $path_seg  = [ grep { $_ ne '' } split '/', $path ];
 
   # other species-like path segments
-  if (!$species && grep /$path_seg[0]/, qw(Multi common)) {
-    $species = shift @path_seg;
+  if (!$species && grep /$path_seg->[0]/, qw(Multi common)) {
+    $species = shift @$path_seg;
   }
 
   # find the appropriate handler according to species and path
-  my ($handler, $response_code);
-
-  # Try DasHandler if first segment of path is 'das'
-  if (!$species && $path_seg[0] eq 'das') {
-
-    shift @path_seg; # remove 'das'
-
-    ($species)  = split '.', $path_seg[0] // '';
-    $handler    = 'EnsEMBL::Web::Apache::DasHandler';
-
-  # Try SpeciesHandler in all other cases if species is present or the file path is not an explicit .html path
-  } elsif ($species || $path !~ /\.html$/) {
-
-    $species  ||= 'Multi';
-    $species    = 'Multi' if $species eq 'common';
-    $handler    = 'EnsEMBL::Web::Apache::SpeciesHandler';
-  }
+  (my $handler, $species, $path_seg) = get_sub_handler($r, $species, $path_seg);
 
   # there is a possibility ENSEMBL_SPECIES and ENSEMBL_PATH need to be updated
   $r->subprocess_env('ENSEMBL_SPECIES', $species);
-  $r->subprocess_env('ENSEMBL_PATH',    '/'.join('/', @path_seg));
+  $r->subprocess_env('ENSEMBL_PATH',    '/'.join('/', @$path_seg));
 
   # delegate request to the required handler and get the response status code
-  $response_code = $handler->can('handler')->($r, $species_defs) if $handler;
+  my $response_code = $handler ? $handler->can('handler')->($r, $species_defs) : undef;
 
   # check for any redirects requested by the code
   if (my $redirect = $r->subprocess_env('ENSEMBL_REDIRECT')) {
