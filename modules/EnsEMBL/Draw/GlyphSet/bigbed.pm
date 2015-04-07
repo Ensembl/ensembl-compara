@@ -50,27 +50,35 @@ sub bigbed_adaptor {
  
   my $error;
   unless ($self->{'_cache'}->{'_bigbed_adaptor'}) { 
-    ## Check file is available before trying to load it 
-    ## (Bio::DB::BigFile does not catch C exceptions)
-    my $headers = EnsEMBL::Web::File::Utils::URL::get_headers($self->my_config('url'), {
+    my $url = $self->my_config('url');
+    if ($url && $url =~ /^(http|ftp)/) { ## Actually a URL, not a local file
+      ## Check file is available before trying to load it 
+      ## (Bio::DB::BigFile does not catch C exceptions)
+      my $headers = EnsEMBL::Web::File::Utils::URL::get_headers($self->my_config('url'), {
                                                                     'hub' => $self->{'config'}->hub, 
                                                                     'no_exception' => 1
                                                             });
-    if ($headers) {
-      if ($headers->{'Content-Type'} !~ 'text/html') { ## Not being redirected to a webpage, so chance it!
-        my $ad = Bio::EnsEMBL::ExternalData::BigFile::BigBedAdaptor->new($self->my_config('url'));
-        $error = "Broken bigbed file" unless $ad->check;
-        $self->{'_cache'}->{'_bigbed_adaptor'} = $ad;
+      if ($headers) {
+        if ($headers->{'Content-Type'} !~ 'text/html') { ## Not being redirected to a webpage, so chance it!
+          my $ad = Bio::EnsEMBL::ExternalData::BigFile::BigBedAdaptor->new($self->my_config('url'));
+          $error = "Broken bigbed file" unless $ad->check;
+          $self->{'_cache'}->{'_bigbed_adaptor'} = $ad;
+        }
+        else {
+          $error = "File at URL ".$self->my_config('url')." does not appear to be of type BigBed; returned MIME type ".$headers->{'Content-Type'};
+        }
       }
       else {
-        $error = "File at URL ".$self->my_config('url')." does not appear to be of type BigBed; returned MIME type ".$headers->{'Content-Type'};
+        $error = "No HTTP headers returned by URL ".$self->my_config('url');
       }
     }
     else {
-      $error = "No HTTP headers returned by URL ".$self->my_config('url');
+      my $ad = Bio::EnsEMBL::ExternalData::BigFile::BigBedAdaptor->new($self->my_config('url'));
+      $error = "Missing bigbed file" unless $ad->check;
+      $self->{'_cache'}->{'_bigbed_adaptor'} = $ad;
     }
   }
-  $self->errorTrack("Could not retrieve file from trackhub") if $error;
+  $self->errorTrack("Could not retrieve file") if $error;
   return $self->{'_cache'}->{'_bigbed_adaptor'};
 }
 
