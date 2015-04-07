@@ -41,26 +41,28 @@ sub species_defs  { return shift->{'species_defs'};   }
 sub species       { return shift->{'species'};        }
 sub path_segments { return shift->{'path_segments'};  }
 sub query         { return shift->{'query'};          }
+sub filename      { return shift->{'filename'};       }
 
 sub new {
   ## @constructor
   ## @param Apache2::RequestRec object
   ## @param SpeciesDefs object
-  ## @param Species name (string)
-  ## @param Arrayref of path segments
-  ## @param Query part of the url (string)
-  my ($class, $r, $species_defs, $species, $path_segments, $query) = @_;
+  ## @param Hashref with following keys (as required by the sub classes being instantiated)
+  ##  - species       : Species name (string)
+  ##  - path_segments : Arrayref of path segments
+  ##  - query         : Query part of the url (string)
+  ##  - filename      : Name of the file to be served
+  my ($class, $r, $species_defs, $params) = @_;
 
   my $self = bless {
     r             => $r,
     species_defs  => $species_defs,
-    species       => $species,
-    path_segments => $path_segments,
-    query         => $query,
     page_type     => 'Dynamic',
     renderer_type	=> 'String',
     errors        => []
   }, $class;
+
+  $self->{$_} = $params->{$_} for qw(species path_segments query filename);
 
   $self->parse_path_segments;
 

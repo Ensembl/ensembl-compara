@@ -91,7 +91,11 @@ sub handler {
   # let the next handler handle it if the URL does not map to any Controller
   return unless $controller;
 
-  dynamic_require($controller)->new($r, $species_defs, $species, \@path_segments, $query)->process;
+  dynamic_require($controller)->new($r, $species_defs, {
+    'species'       => $species,
+    'path_segments' => \@path_segments,
+    'query'         => $query
+  })->process;
 
   return OK;
 }
