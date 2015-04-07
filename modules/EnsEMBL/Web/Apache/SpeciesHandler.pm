@@ -26,7 +26,7 @@ use Apache2::Const qw(:common :http :methods);
 use EnsEMBL::Web::OldLinks qw(get_redirect);
 use EnsEMBL::Web::Utils::DynamicLoader qw(dynamic_require);
 
-sub parse_url_for_controller {
+sub get_controller {
   ## Gets the required controller package name needed for the request and modifies the passed path array to remove any segments related to the Controller
   ## @param Species name
   ## @param Arrayref of path segments
@@ -86,7 +86,7 @@ sub handler {
   }
 
   # get controller
-  my $controller = parse_url_for_controller($species, \@path_segments, $query);
+  my $controller = get_controller($species, \@path_segments, $query);
 
   # let the next handler handle it if the URL does not map to any Controller
   return unless $controller;
