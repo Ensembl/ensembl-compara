@@ -149,6 +149,9 @@ sub parse_uri {
   my $uri_path    = $parsed_uri->path // '';
   my $uri_query   = $parsed_uri->query // '';
 
+  # if there's nothing to parse, it's a homepage request - redirect to index.html in that case
+  return join '?', '/index.html', $uri_query || () if $uri_path eq '/';
+
   my $species_alias_map = $species_defs->multi_val('ENSEMBL_SPECIES_URL_MAP') || {};
   my %valid_species_map = map { $_ => 1 } $species_defs->valid_species;
 
@@ -308,11 +311,11 @@ sub handler {
   my ($handler, $response_code);
 
   # Try DasHandler if first segment of path is 'das'
-  if ($path_seg[0] eq 'das') {
+  if (!$species && $path_seg[0] eq 'das') {
 
     shift @path_seg; # remove 'das'
 
-    ($species)  = split '.', $path_seg[0];
+    ($species)  = split '.', $path_seg[0] // '';
     $handler    = 'EnsEMBL::Web::Apache::DasHandler';
 
   # Try SpeciesHandler in all other cases if species is present or the file path is not an explicit .html path
