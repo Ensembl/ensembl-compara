@@ -3052,7 +3052,6 @@ sub add_sequence_variations {
 sub add_sequence_variations_meta {
   my ($self, $key, $hashref, $options) = @_;
   my $menu = $self->get_node('variation');
-  my $prefix_caption = 'Variant - '; 
   my $suffix_caption = ' - short variants (SNPs and indels)';
   my $short_suffix_caption = ' SNPs/indels';
   my $regexp_suffix_caption = $suffix_caption;
@@ -3102,7 +3101,7 @@ sub add_sequence_variations_meta {
 
       $node = $self->create_track($menu_item->{'key'}, $menu_item->{'long_name'}, {
         %$options,
-        caption     => $prefix_caption.$menu_item->{'long_name'},
+        caption     => $menu_item->{'long_name'},
         labelcaption => $menu_item->{'short_name'},
         sources     => $other_sources ? undef : [ $temp_name ],
         description => $other_sources ? 'Sequence variants from all sources' : $hashref->{'source'}{'descriptions'}{$temp_name},
@@ -3123,7 +3122,7 @@ sub add_sequence_variations_meta {
       
       $node = $self->create_track($menu_item->{'key'}, $menu_item->{'long_name'}, {
         %$options,
-        caption     => $prefix_caption.$caption,
+        caption     => $caption,
         labelcaption => $label_caption,
         sources     => undef,
         sets        => [ $temp_name ],
