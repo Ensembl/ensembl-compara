@@ -36,7 +36,7 @@ sub parse_url_for_controller {
 
   # extract Controller if it's present among the ones allowed to be passed via URL
   my %allowed     = map { $_ => 1} @{$SiteDefs::ALLOWED_URL_CONTROLLERS};
-  my $controller  = $allowed{$path_segments->[0]} ? shift @$path_segments : undef;
+  my $controller  = @$path_segments && $allowed{$path_segments->[0]} ? shift @$path_segments : undef;
 
   # if not, get controller from OBJECT_TO_SCRIPT
   $controller ||= $SiteDefs::OBJECT_TO_SCRIPT->{$path_segments->[0]} if @$path_segments && $path_segments->[0];
@@ -53,7 +53,7 @@ sub get_redirect_uri {
   my ($species, $path_segments, $query) = @_;
 
   # old species home page redirect
-  return $species eq 'Multi' ? '/index.html' : "/$species/Info/Index" if $path_segments->[0] eq 'index.html';
+  return $species eq 'Multi' ? '/index.html' : "/$species/Info/Index" if !@$path_segments || $path_segments->[0] eq 'index.html';
 
   # other old redirects
   if (my $redirect = get_redirect($path_segments->[0])) {
