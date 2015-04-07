@@ -79,7 +79,9 @@ sub populate_tree {
   ));
 
   $self->create_node('Matches', 'External references',
-    [qw( matches EnsEMBL::Web::Component::Gene::SimilarityMatches )],
+    [qw( 
+      matches EnsEMBL::Web::Component::Gene::SimilarityMatches 
+    )],
     { 'availability' => 'gene has_similarity_matches', 'concise' => 'External references' }
   );
 
@@ -189,6 +191,12 @@ sub populate_tree {
     [qw( external EnsEMBL::Web::Component::Gene::ExternalData )],
     { 'availability' => 'gene' }
   );
+
+  $external->append($self->create_subnode('ExpressionAtlas', 'Gene expression atlas',
+    [qw( atlas EnsEMBL::Web::Component::Gene::ExpressionAtlas )],
+    { 'availability'  => 'gene' }
+  ));
+
   
   if ($hub->users_available) {
     $external->append($self->create_node('UserAnnotation', 'Personal annotation',
