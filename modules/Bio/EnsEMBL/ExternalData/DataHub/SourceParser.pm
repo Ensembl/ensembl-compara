@@ -99,7 +99,7 @@ sub get_genome_info {
     }
     else {
       ## TrackDb file path is usually given relative to hub.txt
-      if ($k =~ /trackDb|htmlPath/ && $v !~ /^[http|ftp]/) {
+      if ($k =~ /trackDb|htmlPath/ && $v !~ /^(http|ftp)/) {
         $v = $self->{'base_url'}.'/'.$v;
       }
       $genome_info->{$genome}{$k} = $v;
