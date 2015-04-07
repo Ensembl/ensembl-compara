@@ -66,7 +66,10 @@ void _get_pairwise_blocks(int fileHandle, char *querySpecies, char *targetSpecie
     Inline_Stack_Reset;
     // We should be asking for target dups but this is simpler for now.
     char *errStr = NULL;
-    struct hal_block_results_t *results = halGetBlocksInTargetRange(fileHandle, querySpecies, targetSpecies, targetChrom, targetStart, targetEnd, 0, HAL_FORCE_LOD0_SEQUENCE, HAL_QUERY_DUPS, 0, &errStr);
+    // Last parameter (0 or 1) controls the inclusion of overlapping blocks
+    struct hal_block_results_t *results = halGetBlocksInTargetRange(fileHandle, querySpecies, targetSpecies, targetChrom, targetStart, targetEnd, 0, HAL_FORCE_LOD0_SEQUENCE, HAL_QUERY_DUPS, 1, NULL, &errStr);
+    // To enable the snake track
+    /*struct hal_block_results_t *results = halGetBlocksInTargetRange(fileHandle, querySpecies, targetSpecies, targetChrom, targetStart, targetEnd, 0, HAL_FORCE_LOD0_SEQUENCE, HAL_QUERY_AND_TARGET_DUPS, 1, NULL, &errStr);*/
     if (errStr != NULL) {
       croak(errStr);
     }
