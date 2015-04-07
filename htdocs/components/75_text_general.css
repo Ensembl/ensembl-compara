@@ -46,6 +46,7 @@ a.bigtext     { text-decoration: none;                        }
 .clear-right        { clear: right; }
 .nodeco             { text-decoration: none; }
 .spaced             { line-height: 20px !important; }
+.space-above        { margin-top: 2em; }
 pre.wrap            { white-space: pre-wrap; }
 
 /*----------------------------------------------------------------------
