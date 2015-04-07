@@ -170,7 +170,7 @@ sub parse_uri {
 }
 
 sub map_to_file {
-  ## Find out the file that maps to a url and calls Apache2::RequestRec->filename to save it
+  ## Finds out the file that maps to a url and saves it as ENSEMBL_FILENAME entry in subprocess_env
   ## @param Apache2::RequestRec request object
   ## @return URL string if a redirect is needed, undef otherwise, irrespective of whether the file was found or not (If file is not found filename is not set)
   my $r     = shift;
@@ -178,14 +178,16 @@ sub map_to_file {
 
   if ($path =~ /\.html$/ || $path =~ /\/[^\.]+$/) { # path to .html file or a folder
 
-    foreach my $dir (grep { -d $_ && -r $_ } @SiteDefs::ENSEMBL_HTDOCS_DIRS) {
-      my $filename = File::Spec->catfile($dir, grep { $_ ne '' } split '/', $path);
+    my @path_seg = grep { $_ ne '' } split '/', $path;
 
-      if (-d $filename || -r $filename) {
+    foreach my $dir (@SiteDefs::ENSEMBL_HTDOCS_DIRS) {
 
-        return "$path/index.html" if -d $filename;
-        $r->filename($filename)   if -r $filename;
+      my $filename = File::Spec->catfile($dir, @path_seg);
 
+      return "$path/index.html" if -d $filename;
+
+      if (-r $filename) {
+        $r->subprocess_env('ENSEMBL_FILENAME', $filename);
         last;
       }
     }
