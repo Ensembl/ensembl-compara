@@ -218,12 +218,12 @@ sub time_str {
 }
 
 sub request_start_hook {
-  ## Subroutined hooked to be called when the request handling starts
+  ## Subroutine hook to be called when the request handling starts
   ## @param Apache2::RequestRec request object
   ## In a plugin, use this function with PREV to plugin some code to be run before the request is handled
 }
 sub request_end_hook {
-  ## Subroutined hooked to be called when the request handling finishes
+  ## Subroutine hook to be called when the request handling finishes
   ## @param Apache2::RequestRec request object
   ## In a plugin, use this function with PREV to plugin some code to be run after the request is served
 }
@@ -341,13 +341,13 @@ sub handler {
   # if no response code returned by the called handler, try the SSI handler
   if (!defined $response_code) {
 
-    # Populate request 'filename' or perform redirect if static file location is changed
+    # Populate ENSEMBL_FILENAME or perform redirect if static file location is changed
     if (my $redirect = map_to_file($r)) {
       return http_redirect($r, $redirect);
     }
 
     # SSI handler (.html files) (Note: Other static file requests should not reach this handler anyway.)
-    $response_code = EnsEMBL::Web::Apache::SSI::handler($r, $species_defs) if $r->filename;
+    $response_code = EnsEMBL::Web::Apache::SSI::handler($r, $species_defs) if $r->subprocess_env('ENSEMBL_FILENAME');
   }
 
   # give up if no response code was set by any of the handlers
