@@ -305,6 +305,8 @@ sub new {
             halign => 'left',
             absolutex => 1,
           }));
+          $glyphset->miny($glyphset->miny-$sh+6);
+          $gminy = $glyphset->miny;
         }
 
         if($glyphset->section_text) {
@@ -351,8 +353,8 @@ sub new {
             $liney = ($miny+$maxy+$gh)/2 + 1;
           } else {
             # Almost all tracks
-            $glyphset->label->y($gminy + $glyphset->{'label_y_offset'});
-            $liney = $gminy+$gh+1+$glyphset->{'label_y_offset'};
+            $glyphset->label->y($gminy + ($glyphset->{'label_y_offset'}||2));
+            $liney = $gminy+$gh+1+($glyphset->{'label_y_offset'}||2);
           }
           $glyphset->label->height($gh);
           $glyphset->push($glyphset->label);
