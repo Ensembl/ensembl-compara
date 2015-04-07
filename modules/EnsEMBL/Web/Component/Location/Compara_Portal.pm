@@ -37,7 +37,7 @@ sub content {
     { title => 'Synteny',            img => 'compara_syn',   url => $availability->{'chromosome'} && $availability->{'has_synteny'} ? $hub->url({ action => 'Synteny'                                 }) : '' },
   ];
 
-  my $html  = $self->SUPER::content;
+  my $html  = $self->SUPER::content('portal-small');
      $html .= '<p>';
   
   if ($gene) {
