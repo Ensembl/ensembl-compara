@@ -40,7 +40,7 @@ sub _init {
   
   my %labels = %Bio::EnsEMBL::Variation::Utils::Constants::VARIATION_CLASSES;
   
-  $self->init_legend(3);
+  $self->init_legend();
   
   foreach (sort { $labels{$a}{'display_term'} cmp $labels{$b}{'display_term'} } keys %$features) {
     $self->add_to_legend({
