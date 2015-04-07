@@ -169,7 +169,7 @@ sub write_output {
     my $self = shift;
 
     if ($self->param('read_tags')) {
-        my $target_tree = $self->param('default_gene_tree')->alternative_trees->{$self->param('output_clusterset_id')};
+    	my $target_tree = $self->param('default_gene_tree') || die "Couldn't get default tree";
         my $tags = $self->get_tags();
         while ( my ($tag, $value) = each %$tags ) {
             $target_tree->store_tag($tag, $value);
