@@ -149,15 +149,19 @@ sub pipeline_analyses {
       $analyses->[$i]{'-flow_into'} = [];
     }
 
-    #include non-reference slices
-    if ($name eq 'load_fresh_members_from_db') {
-      $analyses->[$i]{'-parameters'}{'include_nonreference'} = 1;
-      $analyses->[$i]{'-parameters'}{'include_reference'} = 1;
-      $analyses->[$i]{'-parameters'}{'store_missing_dnafrags'} = 1;
-      $analyses->[$i]{'-parameters'}{'force_unique_canonical'} = 1;
-    }
   }
   return $analyses;
+}
+
+sub tweak_analyses {
+    my $self = shift;
+    my $analyses_by_name = shift;
+
+    #include non-reference slices
+    $analyses_by_name->{'load_fresh_members_from_db'}->{'-parameters'}{'include_nonreference'} = 1;
+    $analyses_by_name->{'load_fresh_members_from_db'}->{'-parameters'}{'include_reference'} = 1;
+    $analyses_by_name->{'load_fresh_members_from_db'}->{'-parameters'}{'store_missing_dnafrags'} = 1;
+    $analyses_by_name->{'load_fresh_members_from_db'}->{'-parameters'}{'force_unique_canonical'} = 1;
 }
 
 1;
