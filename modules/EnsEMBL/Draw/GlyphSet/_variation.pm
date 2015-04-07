@@ -390,4 +390,6 @@ sub export_feature {
   });
 }
 
+sub supports_subtitles { return 1; }
+
 1;

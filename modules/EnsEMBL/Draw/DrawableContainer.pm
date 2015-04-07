@@ -270,7 +270,7 @@ sub new {
         ## remove any whitespace at the top of this row
         my $gminy = $glyphset->miny;
       
-        $config->{'transform'}->{'translatey'} = -$gminy + $yoffset + $glyphset->section_height;
+        $config->{'transform'}->{'translatey'} = -$gminy + $yoffset + $glyphset->section_height + $glyphset->subtitle_height;
 
         if ($bgcolour_flag && $glyphset->_colour_background) {
           ## colour the area behind this strip
@@ -292,6 +292,53 @@ sub new {
           $iteration++;
         }
       
+        my $sh = $glyphset->subtitle_height();
+        if($glyphset->use_subtitles) {
+          $glyphset->push($glyphset->Text({
+            font => 'Arial',
+            text => $glyphset->subtitle_text(),
+            ptsize => 8,
+            height => 8,
+            colour    => $glyphset->subtitle_colour(),
+            x => 2,
+            y => $glyphset->miny - $sh + 6,
+            halign => 'left',
+            absolutex => 1,
+          }));
+        }
+
+        if($glyphset->section_text) {
+          my $section = $glyphset->section_text;
+          my $zmdata = $section_label_data{$section};
+          my $url;
+          if($zmdata) {
+            $url = $self->{'config'}->hub->url({
+              type => 'ZMenu',
+              action => 'Label',
+              section => $section,
+              zmdata => to_json($zmdata),
+              zmcontext => to_json({
+                image_config => $self->{'config'}->type,
+              }),
+            });
+          }
+          $glyphset->push($glyphset->Text({
+            font => 'Arial',
+            ptsize => 12,
+            text => $section,
+            height => 16,
+            colour    => 'black',
+            x => -$label_width - $margin,
+            y => -$glyphset->section_height + 4,
+            width => $label_width,
+            halign => 'left',
+            absolutex => 1,
+            absolutewidth => 1,
+            href => $url,
+          }));
+          $sh = 0; # sections /and/ subtitles!
+        }
+
         ## set up the "bumping button" label for this strip
         if ($glyphset->label && $show_labels eq 'yes') {
           my $gh = $glyphset->label->height || $config->texthelper->height($glyphset->label->font);
@@ -328,37 +375,6 @@ sub new {
               dotted        => 'small'
             }));
           }
-        }
-
-        if($glyphset->section_text) {
-          my $section = $glyphset->section_text;
-          my $zmdata = $section_label_data{$section};
-          my $url;
-          if($zmdata) {
-            $url = $self->{'config'}->hub->url({
-              type => 'ZMenu',
-              action => 'Label',
-              section => $section,
-              zmdata => to_json($zmdata),
-              zmcontext => to_json({
-                image_config => $self->{'config'}->type,
-              }),
-            });
-          }
-          $glyphset->push($glyphset->Text({
-            font => 'Arial',
-            ptsize => 12,
-            text => $section,
-            height => 16,
-            colour    => 'black',
-            x => -$label_width - $margin,
-            y => -$glyphset->section_height + 4,
-            width => $label_width,
-            halign => 'left',
-            absolutex => 1,
-            absolutewidth => 1,
-            href => $url,
-          }));
         }
 
         $glyphset->transform;

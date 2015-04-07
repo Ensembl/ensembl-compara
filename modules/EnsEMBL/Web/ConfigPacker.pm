@@ -404,9 +404,13 @@ sub _summarise_variation_db {
   foreach my $row(@$v_conf_aref) {
     my ($type, $long_name, $key, $parent) = split /\#/, $row->[0];
   
+    my $short_name = $long_name;
+    $short_name = $1 if $long_name =~ s/\s*{(.*?)}\s*$//;
+
     push @{$self->db_details($db_name)->{'tables'}{'menu'}}, {
       type       => $type,
       long_name  => $long_name,
+      short_name => $short_name,
       key        => $key,
       parent     => $parent
     };

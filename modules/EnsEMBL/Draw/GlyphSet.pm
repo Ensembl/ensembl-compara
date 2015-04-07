@@ -364,6 +364,36 @@ sub _render_text {
   return $header . join ("\t", @results) . "\r\n";
 }
 
+################# SUBTITLES #########################
+
+sub subtitle_text {
+  my ($self) = @_;
+
+  return $self->my_config('subtitle') || $self->my_config('caption');
+}
+
+sub use_subtitles {
+  my ($self) = @_;
+
+  return $self->supports_subtitles && $self->subtitle_text;
+}
+
+sub subtitle_height {
+  my ($self) = @_;
+
+  return ($self->use_subtitles?15:0);
+}
+
+sub subtitle_colour {
+  my ($self) = @_;
+
+  return 'slategray';
+}
+
+sub supports_subtitles {
+  return 0;
+}
+
 ################### LABELS ##########################
 
 sub label {
@@ -1143,7 +1173,12 @@ sub bump_sorted_row {
   return 1e9; # If we get to this point we can't draw the feature so return a very large number!
 }
 
-sub max_label_rows { return $_[0]->my_config('max_label_rows') || 1; }
+sub max_label_rows {
+  my $out = $_[0]->my_config('max_label_rows');
+  return $out if $out;
+  $out = $_[0]->supports_subtitles?2:1;
+  return $out;
+}
 
 sub section {
   my $self = CORE::shift;
