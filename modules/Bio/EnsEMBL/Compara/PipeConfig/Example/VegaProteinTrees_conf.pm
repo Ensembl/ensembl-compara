@@ -122,35 +122,11 @@ sub default_options {
 
 #
 # Rather than maintain our own analysis pipeline just want to alter the existing one
+# Fortunately, the base config has slots to do that
 #
 
-sub pipeline_analyses {
-  my ($self) = @_;
-
-  #not needed for Vega
-  my %analyses_to_ignore = map { $_ => 1 } qw(overall_qc email_tree_stats_report);
-
-  my $analyses = $self->SUPER::pipeline_analyses;
-  for (my $i = @$analyses; $i >= 0; --$i) {
-    my $analysis = $analyses->[$i];
-    my $name = $analysis->{'-logic_name'};
-    next unless $name;
-    if ($analyses_to_ignore{$name}) {
-      splice @$analyses, $i, 1;
-    }
-
-    if ($name eq 'run_qc_tests') {
-      if (grep {$_ eq 'overall_qc'} @{$analyses->[$i]{'-flow_into'}{'1->A'}}) {
-         print "Vega fix - removed flow control rule from run_qc_tests to overall_qc\n";
-         delete $analyses->[$i]{'-flow_into'}{'1->A'};
-       }
-    }
-    if($name eq 'write_stn_tags') {
-      $analyses->[$i]{'-flow_into'} = [];
-    }
-
-  }
-  return $analyses;
+sub analyses_to_remove {
+    return [qw(overall_qc email_tree_stats_report)];
 }
 
 sub tweak_analyses {
