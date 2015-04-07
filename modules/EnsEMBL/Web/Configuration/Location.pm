@@ -250,11 +250,16 @@ sub add_archive_link {
   my $alt_release = $hub->species_defs->SWITCH_VERSION;
   my $site = 'http://'.$hub->species_defs->SWITCH_ARCHIVE_URL;
   my $external = 1;
-  my ($link, $title, $class);
+  #my ($link, $title, $class);
 
   if ($current_assembly ne $alt_assembly ) {
-  ## get coordinates on other assembly if available
+    my $title = $hub->species_defs->ENSEMBL_SITETYPE.' '.$alt_assembly;
+    my $link  = $self->hub->url({ type => 'Help', action => 'ListMappings', alt_assembly => $alt_assembly });
+    $self->get_other_browsers_menu->append($self->create_node($title, $title, [], { availability => 1, url => $link, raw => 1, external => 0, class => 'modal_link' }));
+  }
 
+=pod
+  ## get coordinates on other assembly if available
     if ($self->object && $self->object->slice) {
       if (my @mappings = @{$hub->species_defs->get_config($hub->species, 'ASSEMBLY_MAPPINGS')||[]}) {
         my $mapping;
@@ -299,9 +304,11 @@ sub add_archive_link {
             );
     $title = $hub->species_defs->ENSEMBL_SITETYPE.' '.$alt_assembly
   }
+
   if ($link) {
     $self->get_other_browsers_menu->append($self->create_node($title, $title, [], { availability => 1, url => $link, raw => 1, external => $external, class => $class }));
   }
+=cut
 }
 
 sub add_vega_link {
