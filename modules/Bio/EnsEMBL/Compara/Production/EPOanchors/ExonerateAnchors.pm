@@ -70,8 +70,8 @@ sub param_defaults {
 sub fetch_input {
 	my ($self) = @_;
 
-    $self->param('exonerate_options', $self->analysis->parameters
-        ? eval($self->analysis->parameters)
+    $self->param('exonerate_options', $self->input_job->analysis->parameters
+        ? eval($self->input_job->analysis->parameters)
         : { bestn=>11, gappedextension=>'no', softmasktarget=>'no', percent=>75, showalignment=>'no', model=>'affine:local' }
     );
 

@@ -153,7 +153,7 @@ sub configure_runnable {
   throw("Unable to find options in method_link_species_set_tag table or in $self->param('options') ") unless (defined $options);
 
   if($self->debug) {
-    print("running with analysis '".$self->analysis->logic_name."'\n");
+    print("running with analysis '".$self->input_job->analysis->logic_name."'\n");
     print("  options : ", $options, "\n");
     print("  program : $program\n");
   }

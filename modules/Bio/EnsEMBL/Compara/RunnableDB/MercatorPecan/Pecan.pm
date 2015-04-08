@@ -199,7 +199,7 @@ sub write_output {
 
 	#Check if any jobs created (if none, then know that no flow was defined on this branch ie got to last pecan_mem(
 	if (@$num_jobs == 0) {
-	    throw("Pecan ". $self->analysis->logic_name . " still failed due to insufficient heap space");
+	    throw("Pecan ". $self->input_job->analysis->logic_name . " still failed due to insufficient heap space");
 	}
 
 	#Don't want to flow to gerp jobs here
