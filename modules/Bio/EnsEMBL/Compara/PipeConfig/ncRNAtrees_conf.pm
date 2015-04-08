@@ -488,9 +488,22 @@ sub pipeline_analyses {
 
             {   -logic_name    => 'recover_epo',
                 -module        => 'Bio::EnsEMBL::Compara::RunnableDB::ncRNAtrees::NCRecoverEPO',
+                -parameters    => {
+                    'max_members'   => 10000,
+                },
+                -analysis_capacity => $self->o('recover_capacity'),
+                -flow_into => {
+                    1 => 'hc_epo_removed_members',
+                    -1 => 'recover_epo_himem',
+                },
+                -rc_name => 'default',
+            },
+
+            {   -logic_name    => 'recover_epo_himem',
+                -module        => 'Bio::EnsEMBL::Compara::RunnableDB::ncRNAtrees::NCRecoverEPO',
                 -analysis_capacity => $self->o('recover_capacity'),
                 -flow_into => [ 'hc_epo_removed_members' ],
-                -rc_name => 'default',
+                -rc_name => '8Gb_job',
             },
 
             {  -logic_name        => 'hc_epo_removed_members',
@@ -618,7 +631,7 @@ sub pipeline_analyses {
              -flow_into => {
                             2 => [ 'sec_struct_model_tree'],
                            },
-             -rc_name => '2Gb_basement_ncores_job',
+             -rc_name => '2Gb_ncores_job',
             },
 
         {   -logic_name    => 'sec_struct_model_tree', ## sec_struct_model_tree
@@ -628,7 +641,7 @@ sub pipeline_analyses {
                             'raxml_exe'             => $self->o('raxml_exe'),
                             'raxml_number_of_cores' => $self->o('raxml_number_of_cores'),
                            },
-            -rc_name => '2Gb_basement_ncores_job',
+            -rc_name => '2Gb_ncores_job',
         },
 
         {   -logic_name    => 'genomic_alignment',

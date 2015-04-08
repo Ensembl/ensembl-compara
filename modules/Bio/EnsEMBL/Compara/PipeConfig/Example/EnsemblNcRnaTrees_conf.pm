@@ -172,10 +172,10 @@ sub resource_classes {
             'default_2cores'          => { 'LSF' => '-C0 -n'. $self->o('raxml_number_of_cores') .' -M2000 -R"span[hosts=1] select[mem>2000] rusage[mem=2000]"' },
             '1Gb_job'                 => { 'LSF' => '-C0 -M1000  -R"select[mem>1000]  rusage[mem=1000]"' },
             '4Gb_job'                 => { 'LSF' => '-C0 -M4000  -R"select[mem>4000]  rusage[mem=4000]"' },
+            '8Gb_job'                 => { 'LSF' => '-C0 -M8000  -R"select[mem>8000]  rusage[mem=8000]"' },
             '4Gb_long_job'            => { 'LSF' => '-C0 -q long -M4000 -R"select[mem>4000]  rusage[mem=4000]"' },
-            '1Gb_long_job'            => { 'LSF' => '-C0 -q long -M1000  -R"select[mem>1000]  rusage[mem=1000]"' },
-            '2Gb_basement_ncores_job' => { 'LSF' => '-C0 -q basement -n'. $self->o('raxml_number_of_cores') . ' -M2000 -R"span[hosts=1] select[mem>2000] rusage[mem=2000]"'},
-            '4Gb_basement_ncores_job' => { 'LSF' => '-C0 -q basement -n'. $self->o('raxml_number_of_cores') . ' -M4000 -R"span[hosts=1] select[mem>4000] rusage[mem=4000]"'},
+            '1Gb_long_job'            => { 'LSF' => '-C0 -q long -M1000 -R"select[mem>1000]  rusage[mem=1000]"' },
+            '2Gb_ncores_job'          => { 'LSF' => '-C0 -n'. $self->o('raxml_number_of_cores') . ' -M2000 -R"span[hosts=1] select[mem>2000] rusage[mem=2000]"'},
             '8Gb_basement_ncores_job' => { 'LSF' => '-C0 -q basement -n'. $self->o('raxml_number_of_cores') . ' -M8000 -R"span[hosts=1] select[mem>8000] rusage[mem=8000]"'}
            };
 }
