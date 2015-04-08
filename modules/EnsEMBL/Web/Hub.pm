@@ -149,6 +149,8 @@ sub get_problem_type   { return @{$_[0]{'_problem'}{$_[1]}||[]}; }
 sub clear_problem_type { delete $_[0]{'_problem'}{$_[1]}; }
 sub clear_problems     { $_[0]{'_problem'} = {}; }
 
+sub is_mobile_request  { }; #this is implemented in the mobile plugin
+
 
 ## Cookie methods
 sub get_cookie_value {
