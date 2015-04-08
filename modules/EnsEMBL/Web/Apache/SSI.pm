@@ -21,7 +21,7 @@ package EnsEMBL::Web::Apache::SSI;
 use strict;
 use warnings;
 
-use Apache2::Const qw(:common :methods :http);
+use Apache2::Const qw(:methods :http);
 
 use EnsEMBL::Web::Controller::Doxygen;
 use EnsEMBL::Web::Controller::SSI;
@@ -41,21 +41,10 @@ sub handler {
   ## @return One of the Apache2::Const constants or undef in case this handler can not handle this request
   my ($r, $species_defs) = @_;
 
-  # if client is just messing around
-  my $method_number = $r->method_number;
-  my $method_error;
-  if ($method_number == M_OPTIONS) {
-    $method_error = DECLINED;
-  } elsif ($method_number == M_INVALID) {
-    $method_error = HTTP_NOT_IMPLEMENTED;
-  } elsif ($method_number != M_GET) {
-    $method_error = HTTP_METHOD_NOT_ALLOWED;
-  }
-
-  # leave a warning in the logs and return error code
-  if (defined $method_error) {
+  # html files can only be requested via GET
+  if ($r->method_number != M_GET) {
     $r->log->error('Invalid method in request ', $r->the_request);
-    return $method_error;
+    return HTTP_METHOD_NOT_ALLOWED;
   }
 
   # get filename as parsed and validated by parent handler
