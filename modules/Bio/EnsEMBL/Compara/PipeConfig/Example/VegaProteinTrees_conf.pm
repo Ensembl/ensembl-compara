@@ -99,7 +99,6 @@ sub default_options {
     reuse_db                    => 0,
     'prev_rel_db'               => undef,
     'do_stable_id_mapping'      => 0,
-    master_create_missing       => 1,
 
     # we're not interested in treefam
     'do_treefam_xref'           => 0,
