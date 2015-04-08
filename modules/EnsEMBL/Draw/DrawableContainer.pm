@@ -31,6 +31,15 @@ use EnsEMBL::Draw::Glyph::Rect;
 use base qw(EnsEMBL::Root);
 
 use JSON qw(to_json);
+use List::Util qw(min);
+
+# These colours from www.ColorBrewer.org -- 12 colour divergent
+# by Cynthia A. Brewer, Geography, Pennsylvania State University.
+# Copyright (c) 2002 Cynthia Brewer, Mark Harrower, and The Pennsylvania
+# State University.
+# Apache 2 license
+my @section_colours = qw(#a6cee3 #1f78b4 #b2df8a #33a02c #fb9a99 #e31a1c
+                         #fdbf6f #ff7f00 #cab2d6 #6a3d9a #ffff99 #b15928);
 
 sub new {
   my $class           = shift;
@@ -210,25 +219,8 @@ sub new {
 
       my $section = '';
       my (%section_label_data,%section_label_dedup,$section_title_pending);
+      my (%section_colour);
       foreach my $glyphset (@glyphsets) {
-        my $new_section = $glyphset->section;
-        my $section_zmenu = $glyphset->section_zmenu;
-        if($new_section and $section_zmenu) {
-          my $id = $section_zmenu->{'_id'};
-          unless($id and $section_label_dedup{$id}) {
-            $section_label_data{$new_section} ||= [];
-            push @{$section_label_data{$new_section}},$section_zmenu;
-            $section_label_dedup{$id} = 1 if $id;
-          }
-        }
-        if($section ne $new_section) {
-          $section = $new_section;
-          $section_title_pending = $section;
-        }
-        if($section_title_pending and not $glyphset->section_no_text) {
-          $glyphset->section_text($section_title_pending);
-          $section_title_pending = undef;
-        }
         next unless defined $glyphset->label;
         my $img = $glyphset->label_img;
         my $img_width = 0;
@@ -237,7 +229,7 @@ sub new {
 
         my $text = $glyphset->label_text;
         $glyphset->recast_label(
-            $x_scale,$label_width-$img_width,$glyphset->max_label_rows,
+            $label_width-$img_width,$glyphset->max_label_rows,
             $text,$config->{'_font_face'} || 'arial',
             $config->{'_font_size'} || 100,
             $colours->{lc $glyphset->{'my_config'}->get('_class')}
@@ -259,13 +251,32 @@ sub new {
 
       ## go ahead and do all the database work
       $self->timer_push('GlyphSet list prepared for config ' . ref($config), 1);
-    
+
+      my $next_section_col = 0;
       foreach my $glyphset (@glyphsets) {
         ## load everything from the database
         my $name         = $glyphset->{'my_config'}->id;
         my $ref_glyphset = ref $glyphset;
         $glyphset->render;
         next if scalar @{$glyphset->{'glyphs'}} == 0;
+        my $new_section = $glyphset->section;
+        my $section_zmenu = $glyphset->section_zmenu;
+        if($new_section and $section_zmenu) {
+          my $id = $section_zmenu->{'_id'};
+          unless($id and $section_label_dedup{$id}) {
+            $section_label_data{$new_section} ||= [];
+            push @{$section_label_data{$new_section}},$section_zmenu;
+            $section_label_dedup{$id} = 1 if $id;
+          }
+        }
+        if($section ne $new_section) {
+          $section = $new_section;
+          $section_title_pending = $section;
+        }
+        if($section_title_pending and not $glyphset->section_no_text) {
+          $glyphset->section_text($section_title_pending);
+          $section_title_pending = undef;
+        }
       
         ## remove any whitespace at the top of this row
         my $gminy = $glyphset->miny;
@@ -308,7 +319,8 @@ sub new {
           $glyphset->miny($glyphset->miny-$sh+6);
           $gminy = $glyphset->miny;
         }
-
+        my $sx = -$label_width - $margin;
+        my $sy = -$glyphset->section_height + 2;
         if($glyphset->section_text) {
           my $section = $glyphset->section_text;
           my $zmdata = $section_label_data{$section};
@@ -324,21 +336,45 @@ sub new {
               }),
             });
           }
-          $glyphset->push($glyphset->Text({
-            font => 'Arial',
-            ptsize => 12,
-            text => $section,
-            height => 16,
-            colour    => 'black',
-            x => -$label_width - $margin,
-            y => -$glyphset->section_height + 4,
-            width => $label_width,
-            halign => 'left',
+          my @texts = @{$glyphset->wrap($section,$label_width,'Arial',8)};
+          @texts = @texts[0..1] if @texts>2;
+
+          my $sec_colour = $section_colour{$section};
+          unless($sec_colour) {
+            $sec_colour = $section_colours[$next_section_col];
+            $section_colour{$section} = $sec_colour;
+            $next_section_col = ($next_section_col+1) % @section_colours;
+          }
+          my $sec_off = -4;
+          unshift @texts,'' while @texts < 2;
+          unshift @texts,''; # top blank
+          foreach my $i (0..min(scalar(@texts)-1,2)) {
+            $glyphset->push($glyphset->Text({
+              font => 'Arial',
+              ptsize => 8,
+              height => 8,
+              text => $texts[$i],
+              colour    => 'black',
+              x => -$label_width - $margin -4,
+              y => -$glyphset->section_height + $sec_off ,
+              width => $label_width,
+              halign => 'left',
+              absolutex => 1,
+              absolutewidth => 1,
+              href => $url,
+            }));
+            $sec_off += 12;
+          }
+          $glyphset->push($glyphset->Rect({
+            x => $sx -4,
+            y => $sy + $sec_off - 4,
+            width => $label_width - 4,
+            height => 2,
             absolutex => 1,
+            absolutey => 1,
             absolutewidth => 1,
-            href => $url,
+            colour => $sec_colour,
           }));
-          $sh = 0; # sections /and/ subtitles!
         }
 
         ## set up the "bumping button" label for this strip
@@ -347,15 +383,8 @@ sub new {
 
           my ($miny,$maxy) = ($glyphset->miny,$glyphset->maxy);
           my $liney;
-          if($maxy-$miny < $gh) {
-            # Very narrow track, align with centre and hope for the best
-            $glyphset->label->y(($miny+$maxy-$gh)/2);
-            $liney = ($miny+$maxy+$gh)/2 + 1;
-          } else {
-            # Almost all tracks
-            $glyphset->label->y($gminy + ($glyphset->{'label_y_offset'}||2));
-            $liney = $gminy+$gh+1+($glyphset->{'label_y_offset'}||2);
-          }
+          $glyphset->label->y($gminy + ($glyphset->{'label_y_offset'}||0));
+          $liney = $gminy+$gh+1+($glyphset->{'label_y_offset'}||0);
           $glyphset->label->height($gh);
           $glyphset->push($glyphset->label);
           if($glyphset->label_img) {
@@ -377,12 +406,25 @@ sub new {
               dotted        => 'small'
             }));
           }
+          if($glyphset->section) {
+            my $sec_colour = $section_colour{$glyphset->section};
+            $glyphset->push($glyphset->Rect({
+              x => $glyphset->label->x - 4,
+              y => $glyphset->label->y + 2,
+              width => 2,
+              height => $glyphset->label->height,
+              absolutex => 1,
+              absolutewidth => 1,
+              absolutey => 1,
+              colour => $sec_colour,
+            }));
+          }
         }
 
         $glyphset->transform;
       
         ## translate the top of the next row to the bottom of this one
-        $yoffset += $glyphset->height + $trackspacing + $glyphset->section_height;
+        $yoffset += $glyphset->height + $trackspacing;
         $self->timer_push('track finished', 3);
         $self->timer_push(sprintf("INIT: [X] $name '%s'", $glyphset->{'my_config'}->get('name')), 2);
       }

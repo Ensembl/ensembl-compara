@@ -949,9 +949,7 @@ sub _add_datahub_tracks {
     
     if ($matrix) {
       my $caption = $track->{'shortLabel'};
-      if($parent->data->{'shortLabel'}) {
-        $caption .= " (\t>".$parent->data->{'shortLabel'}.")";
-      }
+      $source->{'section'} = $parent->data->{'shortLabel'};
       ($source->{'source_name'} = $track->{'longLabel'}) =~ s/_/ /g;
       $source->{'labelcaption'} = $caption;
      
@@ -1263,6 +1261,7 @@ sub _add_file_format_track {
     name        => $args{'source'}{'source_name'},
     caption     => exists($args{'source'}{'caption'}) ? $args{'source'}{'caption'} : $args{'source'}{'source_name'},
     labelcaption => $args{'source'}{'labelcaption'},
+    section     => $args{'source'}{'section'},
     url         => $url || $args{'source'}{'source_url'},
     description => $desc,
     %{$args{'options'}}

@@ -374,12 +374,11 @@ sub track_boundaries {
   foreach my $glyphset (@{$container->{'glyphsets'}}) {
     next unless scalar @{$glyphset->{'glyphs'}};
 
-    my $height = $glyphset->height + $spacing + $glyphset->section_height;
+    my $height = $glyphset->height + $spacing;
     my $type   = $glyphset->type;
     my $node;  
     
     my $collapse = 0;
-    my $this_section = $glyphset->section;
       
     if ($track_ids{$type}) {
       while (scalar @sortable_tracks) {
@@ -394,15 +393,10 @@ sub track_boundaries {
     }
     
     if($node && $node->get('sortable') && !scalar keys %{$glyphset->{'tags'}}) {
-      if(!$this_section or !$prev_section or $this_section ne $prev_section) {
-        push @boundaries, [ $top, $height, $type, $node->get('drawing_strand'), $node->get('order') ];
-      } else {
-        $boundaries[-1]->[1] += $height;
-      }
+      push @boundaries, [ $top, $height, $type, $node->get('drawing_strand'), $node->get('order') ];
     }
     
     $top += $height;
-    $prev_section = $this_section;
   }
 
   return [ sort { ($a->[4] || 0) <=> ($b->[4] || 0) } @boundaries ];
