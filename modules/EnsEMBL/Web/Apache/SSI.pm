@@ -19,65 +19,54 @@ limitations under the License.
 package EnsEMBL::Web::Apache::SSI;
 
 use strict;
+use warnings;
 
 use Apache2::Const qw(:common :methods :http);
-use Compress::Zlib;
 
 use EnsEMBL::Web::Controller::Doxygen;
 use EnsEMBL::Web::Controller::SSI;
 
-#############################################################
-# Mod_perl request handler all /htdocs pages
-#############################################################
+sub get_controller {
+  ## Gets the controller class name that should server the given file
+  ## @param Absolute path of the file to be served
+  ## @return Package name of the required controller
+  my $filename = shift;
+  return $filename =~ /\/Doxygen\// ? 'EnsEMBL::Web::Controller::Doxygen' : 'EnsEMBL::Web::Controller::SSI';
+}
+
 sub handler {
-  my ($r, $cookies) = @_;
-  my $i = 0;
-  ## First of all check that we should be doing something with the page...
-  
-  ## Pick up DAS entry points requests and
-  ## uncompress them dynamically
-  
-  if (-e $r->filename && -r $r->filename) {
-    if ($r->filename =~ /\/entry_points$/) {
-      my $gz      = gzopen($r->filename, 'rb');
-      my $buffer  = 0;
-      my $content = '';
-      $content   .= $buffer while $gz->gzread($buffer) > 0;
-      
-      $gz->gzclose; 
-      
-      if ($ENV{'PERL_SEND_HEADER'}) {
-        print "Content-type: text/xml; charset=utf-8";
-      } else {
-        $r->content_type('text/xml; charset=utf-8');
-      }
-      
-      $r->print($content);
-      
-      return OK;
-    } elsif ($r->filename =~ /\/Doxygen\/(?!index.html)/ || $r->filename =~ /\/edoc\/index.html/) {
-      return EnsEMBL::Web::Controller::Doxygen->new($r, $cookies)->status;
-    }
+  ## Actual handler called by EnsEMBL::Web::Apache::Handlers for .html files (optionally with 'server side includes')
+  ## @param Apache2::RequestRec request object
+  ## @param SpeciesDefs object
+  ## @return One of the Apache2::Const constants or undef in case this handler can not handle this request
+  my ($r, $species_defs) = @_;
+
+  # if client is just messing around
+  my $method_number = $r->method_number;
+  my $method_error;
+  if ($method_number == M_OPTIONS) {
+    $method_error = DECLINED;
+  } elsif ($method_number == M_INVALID) {
+    $method_error = HTTP_NOT_IMPLEMENTED;
+  } elsif ($method_number != M_GET) {
+    $method_error = HTTP_METHOD_NOT_ALLOWED;
   }
 
-  $r->err_headers_out->{'Ensembl-Error' => 'Problem in module EnsEMBL::Web::Apache::SSI'};
-  $r->custom_response(SERVER_ERROR, '/Crash');
-
-  return DECLINED if $r->content_type ne 'text/html';
-
-  my $rc = $r->discard_request_body;
-  
-  return $rc unless $rc == OK;
-  
-  if ($r->method_number == M_INVALID) {
+  # leave a warning in the logs and return error code
+  if (defined $method_error) {
     $r->log->error('Invalid method in request ', $r->the_request);
-    return HTTP_NOT_IMPLEMENTED;
+    return $method_error;
   }
-   
-  return DECLINED                if $r->method_number == M_OPTIONS;
-  return HTTP_METHOD_NOT_ALLOWED if $r->method_number != M_GET;
-  return DECLINED                if -d $r->filename;
-  return EnsEMBL::Web::Controller::SSI->new($r, $cookies)->status;
+
+  # get filename as parsed and validated by parent handler
+  my $filename = $r->subprocess_env('ENSEMBL_FILENAME');
+
+  # get appropriate controller to serve this request
+  my $controller = get_controller($filename)->new($r, $species_defs, {'filename' => $filename});
+
+  $controller->process;
+
+  return $controller->status;
 }
 
 1;
