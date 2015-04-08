@@ -142,15 +142,14 @@ foreach my $name (keys %$new_patches) {
 
 print "CHANGED patches\n";
 my @dnafrags;
-my $delete_str = "(";
-my $dnafrag_str = "(";
+my @delete_names = ();
 foreach my $name (keys %$changed_patches) {
     my ($new, $prev) = @{$changed_patches->{$name}};
     my $dnafrag = get_dnafrag($compara_url, $new_species, $name);
     print "  $name new=" . $new->{seq_region_id} . " " . $new->{date} . "\t";
     print "prev=" . $prev->{seq_region_id} . " " . $prev->{date} . "\t";
     print "dnafrag_id=" . $dnafrag->dbID . "\n";
-    $delete_str .= "\"$name\",";
+    push @delete_names, "\"$name\"";
     push @dnafrags, $dnafrag->dbID;
 }
 
@@ -159,23 +158,20 @@ foreach my $name (keys %$deleted_patches) {
     my $dnafrag = get_dnafrag($compara_url, $new_species, $name);
     print "  $name " . $deleted_patches->{$name}->{seq_region_id} . " " . $deleted_patches->{$name}->{date} . "\t";
     print "dnafrag_id=" . $dnafrag->dbID . "\n";
-    $delete_str .= "\"$name\",";
+    push @delete_names, "\"$name\"";
     push @dnafrags, $dnafrag->dbID;
 }
-chop $delete_str; #remove final ,
-$delete_str .= ")";
 
-$dnafrag_str = "(";
-$dnafrag_str .= join ",", @dnafrags;
-$dnafrag_str .= ")";
-
+my $delete_str = @delete_names ? "(".(join ",", @delete_names).")" : "";
+my $dnafrag_str = @dnafrags ? "(".(join ",", @dnafrags).")" : "";
 print "\nPatches to delete: $delete_str\n";
 print "Dnafrags to delete: $dnafrag_str\n";
 
-print "Input for create_patch_pairaligner_conf.pl:\n";
-chop $patch_names;
-print "--patches $patch_names\n";
-
+if ($patch_names) {
+    print "Input for create_patch_pairaligner_conf.pl:\n";
+    chop $patch_names;
+    print "--patches $patch_names\n";
+}
 
 sub get_patches {
     my ($core) = @_;
