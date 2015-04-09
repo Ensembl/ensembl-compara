@@ -213,6 +213,7 @@ sub run {
         $self->param('query_set')->print_sequences_to_file($blast_infile, -format => 'fasta');
     }
 
+    $self->param('query_set')->_load_all_missing_sequences();
     $self->compara_dba->dbc->disconnect_if_idle();
 
     my $cross_pafs = [];
