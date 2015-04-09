@@ -74,9 +74,9 @@ sub _setInternalIds {
 
     my $mlss_id = $self->param('method_link_species_set_id');
     my $gdbs = $self->compara_dba->get_GenomeDBAdaptor->fetch_all();
-    if (scalar(@$gdbs) <= 2) {
-        $self->warning('AUTO_INCREMENT should have been set earlier by "set_internal_ids". Nothing to do now');
-    }
+#    if (scalar(@$gdbs) <= 2) {
+#        $self->warning('AUTO_INCREMENT should have been set earlier by "set_internal_ids". Nothing to do now');
+#    }
 
 
     # Write new blocks in the correct range

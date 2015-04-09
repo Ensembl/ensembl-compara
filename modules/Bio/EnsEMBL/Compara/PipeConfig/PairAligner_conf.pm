@@ -181,8 +181,8 @@ sub default_options {
         'window_size' => 10000,
 	'filter_duplicates_rc_name' => '1Gb',
 	'filter_duplicates_himem_rc_name' => 'crowd_himem',
-        'filter_duplicates_hive_capacity' => 50,
-        'filter_duplicates_batch_size' => 3,
+    'filter_duplicates_hive_capacity' => 200,
+    'filter_duplicates_batch_size' => 5,
 
 	#
 	#Default pair_aligner
@@ -192,8 +192,8 @@ sub default_options {
 	'pair_aligner_program' => 'lastz',
 	'pair_aligner_module' => 'Bio::EnsEMBL::Compara::RunnableDB::PairAligner::LastZ',
 	'pair_aligner_options' => 'T=1 K=3000 L=3000 H=2200 O=400 E=30 --ambiguous=iupac', #hsap vs mammal
-	'pair_aligner_hive_capacity' => 100,
-	'pair_aligner_batch_size' => 3,
+	'pair_aligner_analysis_capacity' => 700,
+	'pair_aligner_batch_size' => 40,
 
         #
         #Default chain
@@ -205,8 +205,8 @@ sub default_options {
 	'linear_gap' => 'medium',
 
   	'chain_parameters' => {'max_gap'=>'50','linear_gap'=> $self->o('linear_gap'), 'faToNib' => $self->o('faToNib_exe'), 'lavToAxt'=> $self->o('lavToAxt_exe'), 'axtChain'=>$self->o('axtChain_exe')}, 
-  	'chain_batch_size' => 1,
-  	'chain_hive_capacity' => 20,
+    'chain_hive_capacity' => 200,
+    'chain_batch_size' => 10,
 
 	#
         #Default patch_alignments
@@ -220,8 +220,8 @@ sub default_options {
         'net_output_method_link' => [16, 'LASTZ_NET'],
         'net_ref_species' => $self->o('ref_species'),  #default to ref_species
   	'net_parameters' => {'max_gap'=>'50', 'chainNet'=>$self->o('chainNet_exe')},
-  	'net_batch_size' => 1,
-  	'net_hive_capacity' => 20,
+    'net_hive_capacity' => 300,
+    'net_batch_size' => 10,
   	'bidirectional' => 0,
 
 	#
@@ -247,7 +247,6 @@ sub default_options {
         'memory_suffix' => "",                    #temporary fix to define the memory requirements in resource_classes
         'dbresource'    => 'my'.$self->o('host'), # will work for compara1..compara4, but will have to be set manually otherwise
         'aligner_capacity' => 2000,
-
     };
 }
 
@@ -297,6 +296,7 @@ sub resource_classes {
             'crowd' => { 'LSF' => '-C0 -M1800' . $self->o('memory_suffix') .' -R"select[mem>1800 && '.$self->o('dbresource').'<'.$self->o('aligner_capacity').'] rusage[mem=1800,'.$self->o('dbresource').'=10:duration=3]"' },
             'crowd_himem' => { 'LSF' => '-C0 -M6000' . $self->o('memory_suffix') .' -R"select[mem>6000 && '.$self->o('dbresource').'<'.$self->o('aligner_capacity').'] rusage[mem=6000,'.$self->o('dbresource').'=10:duration=3]"' },
                 # if running on any other server:
+#            '1Gb_core'   => { 'LSF' => '-C0 -M1000' . $self->o('memory_suffix') .' -R"select[mem>1000] rusage[mem=1000,myens_livemirrortok=1000:duration=3]"' },
 #            'crowd' => { 'LSF' => '-C0 -M1800' . $self->o('memory_suffix') .' -R"select[mem>1800] rusage[mem=1800]"' },
 #            'crowd_himem' => { 'LSF' => '-C0 -M6000' . $self->o('memory_suffix') .' -R"select[mem>6000] rusage[mem=6000]"' },
     };
@@ -395,7 +395,7 @@ sub pipeline_analyses {
 	       -rc_name => 'crowd',
  	    },
  	    {  -logic_name => 'store_sequence',
- 	       -hive_capacity => 50,
+ 	       -hive_capacity => 100,
  	       -module     => 'Bio::EnsEMBL::Compara::RunnableDB::PairAligner::StoreSequence',
  	       -parameters => { },
 	       -flow_into => {
@@ -408,7 +408,7 @@ sub pipeline_analyses {
  	       -hive_capacity => 100,
  	       -module     => 'Bio::EnsEMBL::Compara::RunnableDB::PairAligner::StoreSequence',
  	       -parameters => { }, 
-	       -can_be_empty  => 1, 
+	       -can_be_empty  => 1,
 	       -rc_name => 'crowd',
   	    },
 	    {  -logic_name => 'dump_dna_factory',
@@ -417,7 +417,7 @@ sub pipeline_analyses {
 			       'dump_dna'=>1,
 			       'dump_min_size'=>1,
 			       },
-	       -can_be_empty  => 1, 
+	       -can_be_empty  => 1,
 	       -wait_for => [ 'store_sequence', 'store_sequence_again' ],
 	       -rc_name => '1Gb',
 	       -flow_into => {
@@ -429,7 +429,7 @@ sub pipeline_analyses {
 	       -parameters => {
 			       'dump_dna'=>1,
 			       },
-	       -can_be_empty  => 1, 
+	       -can_be_empty  => 1,
 	       -hive_capacity => 10,
 	       -rc_name => '1Gb',
 	    },
@@ -448,7 +448,7 @@ sub pipeline_analyses {
  	    },
  	    {  -logic_name => $self->o('pair_aligner_logic_name'),
  	       -module     => $self->o('pair_aligner_module'),
- 	       -hive_capacity => $self->o('pair_aligner_hive_capacity'),
+ 	       -analysis_capacity => $self->o('pair_aligner_analysis_capacity'),
  	       -batch_size => $self->o('pair_aligner_batch_size'),
 	       -parameters => { 
 			       'pair_aligner_exe' => $self->o('pair_aligner_exe'),
@@ -460,13 +460,13 @@ sub pipeline_analyses {
 	    },
 	    {  -logic_name => $self->o('pair_aligner_logic_name') . "_himem1",
  	       -module     => $self->o('pair_aligner_module'),
- 	       -hive_capacity => $self->o('pair_aligner_hive_capacity'),
+ 	       -analysis_capacity => $self->o('pair_aligner_analysis_capacity'),
 	       -parameters => { 
 			       'pair_aligner_exe' => $self->o('pair_aligner_exe'),
 			      },
  	       -batch_size => $self->o('pair_aligner_batch_size'),
  	       -program    => $self->o('pair_aligner_program'), 
-	       -can_be_empty  => 1, 
+	       -can_be_empty  => 1,
 	       -rc_name => 'crowd_himem',
 	    },
 	    {  -logic_name => 'remove_inconsistencies_after_pairaligner',
@@ -516,7 +516,7 @@ sub pipeline_analyses {
 				 },
 	       -hive_capacity => $self->o('filter_duplicates_hive_capacity'),
 	       -batch_size    => $self->o('filter_duplicates_batch_size'),
-	       -can_be_empty  => 1, 
+	       -can_be_empty  => 1,
 	       -rc_name => $self->o('filter_duplicates_himem_rc_name'),
  	    },
  	    {  -logic_name => 'update_max_alignment_length_after_FD',
@@ -564,7 +564,7 @@ sub pipeline_analyses {
 			       'dump_nib'=>1,
                                'overwrite'=>1,
 			      },
-	       -can_be_empty  => 1, 
+	       -can_be_empty  => 1,
 	       -hive_capacity => 10,
 	       -flow_into => {
 			      -1 => [ 'dump_large_nib_for_chains_himem' ],  # MEMLIMIT
@@ -579,7 +579,7 @@ sub pipeline_analyses {
                                'overwrite'=>1,
 			      },
 	       -hive_capacity => 10,
-	       -can_be_empty  => 1, 
+	       -can_be_empty  => 1,
 	       -rc_name => 'crowd_himem',
  	    },
  	    {  -logic_name => 'create_alignment_chains_jobs',
@@ -598,18 +598,22 @@ sub pipeline_analyses {
  	       -batch_size => $self->o('chain_batch_size'),
  	       -module     => 'Bio::EnsEMBL::Compara::RunnableDB::PairAligner::AlignmentChains',
  	       -parameters => $self->o('chain_parameters'),
+           -max_retry_count => 10,
 	       -flow_into => {
 			      -1 => [ 'alignment_chains_himem' ],  # MEMLIMIT
 			     },
 	       -rc_name => 'crowd',
  	    },
 	    {  -logic_name => 'alignment_chains_himem',
- 	       -hive_capacity => $self->o('chain_hive_capacity'),
- 	       -batch_size => $self->o('chain_batch_size'),
+ 	       -hive_capacity => 5,
+ 	       -batch_size => 1,
  	       -module     => 'Bio::EnsEMBL::Compara::RunnableDB::PairAligner::AlignmentChains',
  	       -parameters => $self->o('chain_parameters'),
-	       -can_be_empty  => 1, 
+	       -can_be_empty  => 1,
+           -max_retry_count => 10,
 	       -rc_name => 'crowd_himem',
+           -wait_for => ['alignment_chains'],
+	       -can_be_empty  => 1,
  	    },
 	    {
 	     -logic_name => 'remove_inconsistencies_after_chain',
@@ -632,7 +636,8 @@ sub pipeline_analyses {
  	       -parameters => { },
 		-flow_into => {
 #			       1 => [ 'set_internal_ids', 'update_max_alignment_length_after_net' ],
-			       1 => [ 'set_internal_ids', 'remove_inconsistencies_after_net' ],
+#			       1 => [ 'set_internal_ids', 'remove_inconsistencies_after_net' ], # lg4, 1Apr2015: skipping set_internal_ids to see if set_internal_ids_collection is any faster
+			       1 => [ 'remove_inconsistencies_after_net' ],                     # lg4, 1Apr2015: skipping set_internal_ids to see if set_internal_ids_collection is any faster
 			       2 => [ 'alignment_nets' ],
 			      },
  	       -wait_for => [ 'update_max_alignment_length_after_chain' ],
@@ -654,7 +659,7 @@ sub pipeline_analyses {
 	       -flow_into => {
 			      -1 => [ 'alignment_nets_himem' ],  # MEMLIMIT
 			     },
-	       -wait_for => [ 'set_internal_ids' ],
+#	       -wait_for => [ 'set_internal_ids' ],                                     # lg4, 1Apr2015: skipping set_internal_ids to see if set_internal_ids_collection is any faster
 	       -rc_name => '1Gb',
  	    },
 	    {  -logic_name => 'alignment_nets_himem',
@@ -662,7 +667,7 @@ sub pipeline_analyses {
  	       -batch_size => $self->o('net_batch_size'),
  	       -module     => 'Bio::EnsEMBL::Compara::RunnableDB::PairAligner::AlignmentNets',
  	       -parameters => $self->o('net_parameters'),
-	       -can_be_empty  => 1, 
+	       -can_be_empty  => 1,
 	       -rc_name => 'crowd',
  	    },
  	    {
@@ -695,7 +700,7 @@ sub pipeline_analyses {
               -flow_into => {
                               -1 => [ 'filter_duplicates_net_himem' ], # MEMLIMIT
                             },
-              -can_be_empty  => 1, 
+              -can_be_empty  => 1,
               -rc_name => $self->o('filter_duplicates_rc_name'),
            },
            {  -logic_name   => 'filter_duplicates_net_himem',
@@ -734,7 +739,7 @@ sub pipeline_analyses {
 			      'prev_release' => $self->o('prev_release'),
 			      'max_percent_diff' => $self->o('max_percent_diff'),
 			     },
-	      -wait_for => [ 'update_max_alignment_length_after_net' ],
+	      -wait_for => [ 'set_internal_ids_collection' ],
 	      -rc_name => '1Gb',
 	    },
 	    { -logic_name => 'pairaligner_stats',
@@ -758,8 +763,9 @@ sub pipeline_analyses {
 	    },
             {   -logic_name => 'coding_exon_stats',
                 -module     => 'Bio::EnsEMBL::Compara::RunnableDB::PairAligner::PairAlignerCodingExonStats',
-                -hive_capacity => 10,
+                -hive_capacity => 5,
                 -rc_name => '1Gb',
+#                -rc_name => '1Gb_core',
             },
             {   -logic_name => 'coding_exon_stats_summary',
                 -module     => 'Bio::EnsEMBL::Compara::RunnableDB::PairAligner::PairAlignerCodingExonSummary',
