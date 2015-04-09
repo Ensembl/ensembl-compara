@@ -56,6 +56,8 @@ sub load_fasta_sequences_from_db {
     }
     $sth->finish();
 
+    $self->compara_dba->dbc->disconnect_when_inactive(1);
+
     return \@fasta_list;
 }
 
@@ -78,6 +80,8 @@ sub load_name2index_mapping_from_db {
         $name2index{$stable_id} = $seq_id;
     }
     $sth->finish();
+
+    $self->compara_dba->dbc->disconnect_when_inactive(1);
 
     return \%name2index;
 }
@@ -202,11 +206,17 @@ sub run {
         warn "CMD:\t$cmd\n";
     }
 
-    $self->compara_dba->dbc->disconnect_when_inactive(1);
     open( BLAST, "| $cmd") || die qq{could not execute "${cmd}", returned error code: $!};
     print BLAST @$fasta_list;
-    close BLAST;
-    $self->compara_dba->dbc->disconnect_when_inactive(0);
+    my $peaceful_close = close BLAST;
+
+    unless($peaceful_close) {
+        # Possibly an ongoing MEMLIMIT
+        # Let's wait a bit to let LSF kill the worker as it should
+        sleep(30);
+        #
+        die "Error caught when closing the pipe to Blast, the child probably killed";
+    }
 
     my $matrix_hash = $self->parse_blast_table_into_matrix_hash($blast_outfile, -log($evalue_limit)/log(10) );
 
