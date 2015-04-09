@@ -71,7 +71,6 @@ sub content_ajax {
         my $error;
         if ($parser) {
           my $nearest = $parser->nearest;
-          warn ">>> NEAREST $nearest";
           $nearest = undef if $nearest && !$hub->get_adaptor('get_SliceAdaptor')->fetch_by_region('toplevel', split /[^\w|\.]/, $nearest); # Make sure we have a valid location
         
           if ($nearest) {
