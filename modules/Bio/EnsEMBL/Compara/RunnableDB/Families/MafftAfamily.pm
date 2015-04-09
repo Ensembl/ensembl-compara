@@ -23,6 +23,7 @@ use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
 
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
+
 sub param_defaults {
     return {
             # --anysymbol helps when Uniprot sequence contains 'U' or other funny aminoacid codes
@@ -85,9 +86,8 @@ sub fetch_input {
         # if these two parameters are set, run() will need to actually execute mafft
     $self->param('pep_file', $pep_file);
     $self->param('mafft_file', $mafft_file);
-
-    $self->dbc->disconnect_when_inactive(1);
 }
+
 
 sub run {
     my $self = shift @_;
@@ -105,7 +105,13 @@ sub run {
         warn "About to execute: $cmd_line\n";
     }
 
+    $self->dbc->disconnect_if_idle();
+
     if(system($cmd_line)) {
+        # Possibly an ongoing MEMLIMIT
+        # Let's wait a bit to let LSF kill the worker as it should
+        sleep(30);
+        #
         die "running mafft on family $family_id failed, because: $! ";
     } elsif(-z $mafft_file) {
         die "running mafft on family $family_id produced zero-length output";
@@ -116,6 +122,7 @@ sub run {
         unlink $pep_file;
     }
 }
+
 
 sub write_output {
     my $self = shift @_;
