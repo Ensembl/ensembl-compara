@@ -58,9 +58,11 @@ package Bio::EnsEMBL::Compara::StorableWithReleaseHistory;
 use strict;
 use warnings;
 
+use Scalar::Util qw(looks_like_number);
+
 use Bio::EnsEMBL::ApiVersion;
 use Bio::EnsEMBL::Utils::Argument qw(rearrange);
-
+use Bio::EnsEMBL::Utils::Exception qw(throw);
 
 use base ('Bio::EnsEMBL::Storable');
 
@@ -149,6 +151,34 @@ sub has_been_released {
 }
 
 
+=head2 is_in_release
+
+  Arg[1]      : Integer: the release number to check this object against
+  Example     : my $is_in_release_73 = $gdb->is_in_release(73);
+  Description : Tells whether the object existed in that release
+  Returntype  : Boolean
+  Exceptions  : none
+  Caller      : general
+  Status      : Stable
+
+=cut
+
+sub is_in_release {
+    my $self = shift;
+    my $release_number = shift;
+    looks_like_number($release_number) || throw("A release number must be given (got '$release_number')");
+    if ($self->has_been_released) {
+        if ($self->last_release) {
+            return $self->last_release >= $release_number;
+        } else {
+            return 1;
+        }
+    } else {
+        return 0;
+    }
+}
+
+
 =head2 is_current
 
   Example     : my $is_current = $gdb->is_current();
@@ -162,9 +192,7 @@ sub has_been_released {
 
 sub is_current {
     my $self = shift;
-    return 0 if not $self->first_release;
-    return 1 if not $self->last_release;
-    return $self->last_release >= software_version();
+    return $self->is_in_release(software_version());
 }
 
 
