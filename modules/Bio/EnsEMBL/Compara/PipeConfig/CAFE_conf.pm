@@ -162,9 +162,18 @@ sub pipeline_analyses_species_tree {
                             },
              -flow_into  => {
                              # 3 => { 'mysql:////meta' => { 'meta_key' => $self->o('species_tree_meta_key'), 'meta_value' => '#species_tree_string#' } },
-                             1 => ['CAFE_species_tree'],
+                             2 => [ 'hc_full_species_tree' ],
                             },
             },
+
+        {   -logic_name         => 'hc_full_species_tree',
+            -module             => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::SqlHealthChecks',
+            -parameters         => {
+                mode            => 'species_tree',
+                binary          => 0,
+            },
+            -flow_into          => [ 'CAFE_species_tree' ],
+        },
 
             {
              -logic_name => 'CAFE_species_tree',
@@ -173,7 +182,18 @@ sub pipeline_analyses_species_tree {
                              'cafe_species' => $self->o('cafe_species'),
                              'label'        => $self->o('full_species_tree_label')
                             },
+             -flow_into     => {
+                 2 => [ 'hc_cafe_species_tree' ],
+             }
             },
+
+        {   -logic_name         => 'hc_cafe_species_tree',
+            -module             => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::SqlHealthChecks',
+            -parameters         => {
+                mode            => 'species_tree',
+                binary          => 1,
+            },
+        },
     ];
 }
 
