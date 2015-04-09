@@ -93,6 +93,50 @@ sub file_exists {
   }
 }
 
+sub touch_file {
+### Create an empty file if it doesn't exist
+### @param File - EnsEMBL::Web::File object or path to file (String)
+### @param Args (optional) Hashref 
+###                     nice Boolean - see introduction
+###                     no_exception Boolean - whether to throw an exception
+### @return Hashref (nice mode) or Boolean
+  my ($file, $args) = @_;
+  my $path = ref($file) ? $file->absolute_read_path : $file;
+  my ($success, $error, $exception);
+
+
+  if (-e $path && -f $path) {
+    $success = 1;
+  }
+  else {
+    ## Create the directory path if it doesn't exist
+    my $has_path = _check_path($path);
+    my $fh;
+    open($fh, '>', $path);
+    if ($!) {
+      $exception = $!;
+      $error = 'Could not create file $path';
+    }
+    else {
+      $success = 1;
+    }
+    close($fh);
+  }
+
+  if ($args->{'nice'}) {
+    return $success ? {'success' => 1} : {'error' => [$error]};
+  }
+  else {
+    if ($success) {
+      return 1;
+    }
+    else {
+      throw exception('FileIOException', "File $path could not be created: $exception") unless $args->{'no_exception'};
+      return 0;
+    }
+  }
+} 
+
 sub delete_file {
 ### Delete a file 
 ### @param File - EnsEMBL::Web::File object or path to file (String)
