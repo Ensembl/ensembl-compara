@@ -109,12 +109,12 @@ sub _objs_from_sth {
     my @methods = ();
 
     while ( my ($dbID, $type, $class) = $sth->fetchrow() ) {
-        push @methods, Bio::EnsEMBL::Compara::Method->new(
-            -dbID => $dbID,
-            -type => $type,
-            -class => $class,
-            -adaptor => $self,
-        );
+        push @methods, Bio::EnsEMBL::Compara::Method->new_fast( {
+            dbID    => $dbID,
+            adaptor => $self,
+            _type   => $type,
+            _class  => $class,
+        } );
     }
 
     return \@methods;

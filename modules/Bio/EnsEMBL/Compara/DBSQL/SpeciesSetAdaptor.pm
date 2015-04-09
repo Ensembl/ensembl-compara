@@ -188,11 +188,11 @@ sub _objs_from_sth {
     my @ss_list;
     while (my ($species_set_id, $species_set_contents) = each %ss_content_hash) {
         unless($ss_incomplete{$species_set_id}) {
-            push @ss_list, Bio::EnsEMBL::Compara::SpeciesSet->new(
-                -genome_dbs => $species_set_contents,
-                -dbID       => $species_set_id,
-                -adaptor    => $self,
-            );
+            push @ss_list, Bio::EnsEMBL::Compara::SpeciesSet->new_fast( {
+                genome_dbs => $species_set_contents,
+                dbID       => $species_set_id,
+                adaptor    => $self,
+            } );
         }
     }
 
