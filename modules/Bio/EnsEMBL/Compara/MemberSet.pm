@@ -484,6 +484,9 @@ sub print_sequences_to_file {
 
     my $seqio = Bio::SeqIO->new( ref($file) ? (-fh => $file) : (-file => ">$file"), -format => $format );
 
+    # FIXME: should extract $seq_type from @args and do this:
+    #$self->_load_all_missing_sequences($seq_type);
+
     my %seq_hash = ();
     foreach my $member (@{$self->get_all_Members}) {
         next unless $member->isa('Bio::EnsEMBL::Compara::SeqMember');
