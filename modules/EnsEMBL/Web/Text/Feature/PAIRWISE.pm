@@ -16,9 +16,9 @@ limitations under the License.
 
 =cut
 
-package EnsEMBL::Web::Text::Feature::INTERACTION;
+package EnsEMBL::Web::Text::Feature::PAIRWISE;
 
-### Pair of features in a long-range interaction file
+### Pair of features in a pairwise interaction file
 
 use strict;
 use warnings;
