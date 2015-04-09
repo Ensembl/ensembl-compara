@@ -645,12 +645,15 @@ sub _add_gene_counts {
 sub species_stats {
   my $self = shift;
   my $sd = $self->hub->species_defs;
-  my $html = '<h3>Summary</h3>';
-
+  my $html;
   my $db_adaptor = $self->hub->database('core');
   my $meta_container = $db_adaptor->get_MetaContainer();
   my $genome_container = $db_adaptor->get_GenomeContainer();
 
+  #deal with databases that don't have species_stats
+  return $html if $genome_container->is_empty;
+
+  $html = '<h3>Summary</h3>';
   my %glossary          = $sd->multiX('ENSEMBL_GLOSSARY');
 
   my $cols = [
