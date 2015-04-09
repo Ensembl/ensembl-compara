@@ -1274,10 +1274,10 @@ sub _user_track_settings {
   my ($self, $style, $format) = @_;
   my ($strand, @user_renderers);
 
-  if (lc($format) eq 'interaction') {
+  if (lc($format) eq 'pairwise') {
     $strand         = 'f';
-    @user_renderers = ('off', 'Off', 'interaction', 'Interaction',
-                        'interaction_label', 'Interaction with labels');
+    @user_renderers = ('off', 'Off', 'interaction', 'Pairwise interaction',
+                        'interaction_label', 'Pairwise interaction with labels');
   }
   elsif ($style =~ /^(wiggle|WIG)$/) {
     $strand         = 'r';
