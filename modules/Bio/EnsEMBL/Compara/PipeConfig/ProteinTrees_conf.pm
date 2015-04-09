@@ -1386,7 +1386,6 @@ sub core_pipeline_analyses {
             -parameters    => {
                 'condition'     => '#are_all_species_reused#',
             },
-            -rc_name => '4Gb_job_gpfs',
             -flow_into => {
                 '2->A' => [ 'copy_clusters' ],
                 '3->A' => [
