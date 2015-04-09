@@ -272,6 +272,14 @@ sub pipeline_analyses {
             %hc_params,
         },
 
+        {   -logic_name => 'load_members_factory',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GenomeDBFactory',
+            -flow_into  => {
+                '1->A' => 'load_members',
+                'A->1' => [ 'hc_members_globally' ],
+            },
+        },
+
         {   -logic_name => 'per_genome_qc',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::PerGenomeGroupsetQC',
             -rc_name    => '4Gb_job',
@@ -286,7 +294,7 @@ sub pipeline_analyses {
                                        'DELETE species_set FROM species_set JOIN tmp_ss USING (species_set_id)',
                                      ]
                            },
-            -flow_into  => [ 'hc_members_globally' ],
+            -flow_into  => [ 'make_species_tree' ],
         },
 
         {   -logic_name         => 'hc_members_globally',
@@ -295,7 +303,6 @@ sub pipeline_analyses {
                 mode            => 'members_globally',
             },
             %hc_params,
-            -flow_into  => ['make_species_tree', $self->o('initialise_cafe_pipeline') ? ('make_full_species_tree') : (), $self->o('skip_epo') ? () : ('find_epo_database'), 'register_mlss' ],
         },
 
 
@@ -324,6 +331,7 @@ sub pipeline_analyses {
                 mode            => 'species_tree',
                 binary          => 0,
             },
+            -flow_into          => [ 'load_members_factory', $self->o('initialise_cafe_pipeline') ? ('make_full_species_tree') : (), $self->o('skip_epo') ? () : ('find_epo_database'), 'register_mlss' ],
             %hc_params,
         },
 
