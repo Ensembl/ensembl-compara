@@ -259,10 +259,6 @@ sub pipeline_analyses {
                             'registry_dbs'   => [ $self->o('reg1'), $self->o('reg2') ],
             },
             -analysis_capacity => 10,
-            -flow_into => {
-                '1->A' => [ 'load_members' ],   # each will flow into another one
-                'A->1' => [ 'hc_members_per_genome' ],
-            },
         },
 
 
@@ -386,6 +382,7 @@ sub pipeline_analyses {
             -module            => 'Bio::EnsEMBL::Compara::RunnableDB::ncRNAtrees::GenomeStoreNCMembers',
             -analysis_capacity => 10,
             -rc_name           => 'default',
+            -flow_into         => [ 'hc_members_per_genome' ],
         },
 
 # ---------------------------------------------[load RFAM models]---------------------------------------------------------------------
