@@ -71,7 +71,7 @@ sub default_options {
 #       'ce_mlss_id'            => 523,   # it is very important to check that this value is current (commented out to make it obligatory to specify)
 	#conservation score mlss_id
 #       'cs_mlss_id'            => 50029, # it is very important to check that this value is current (commented out to make it obligatory to specify)
-	'dbname'                => $ENV{USER}.'_pecan_21way_'.$self->o('rel_with_suffix'),
+	'dbname'                => $ENV{USER}.'_pecan_23way_'.$self->o('rel_with_suffix'),
         'work_dir'              => '/lustre/scratch109/ensembl/' . $ENV{'USER'} . '/scratch/hive/release_' . $self->o('rel_with_suffix') . '/' . $self->o('dbname'),
 #	'do_not_reuse_list'     => [ ],     # genome_db_ids of species we don't want to reuse this time. This is normally done automatically, so only need to set this if we think that this will not be picked up automatically.
 	'do_not_reuse_list'     => [ 142 ],     # names of species we don't want to reuse this time. This is normally done automatically, so only need to set this if we think that this will not be picked up automatically.
@@ -86,6 +86,7 @@ sub default_options {
     # blast parameters:
 	'blast_params'          => "-seg 'yes' -best_hit_overhang 0.2 -best_hit_score_edge 0.1 -use_sw_tback",
         'blast_capacity'        => 100,
+        'reuse_capacity'        => 100,
 
     #location of full species tree, will be pruned
         'species_tree_file'     => $self->o('ensembl_cvs_root_dir').'/ensembl-compara/scripts/pipeline/species_tree_blength.nh', 
@@ -141,13 +142,13 @@ sub default_options {
 
     # connection parameters to various databases:
 
-        'host'        => 'compara5',            #separate parameter to use the resources aswell
+        'host'        => 'compara4',            #separate parameter to use the resources aswell
         'pipeline_db' => {                      # the production database itself (will be created)
             -host   => $self->o('host'),
             -port   => 3306,
             -user   => 'ensadmin',
             -pass   => $self->o('password'),                    
-            -dbname => $ENV{'USER'}.'_pecan_21way_'.$self->o('rel_with_suffix'),
+            -dbname => $ENV{'USER'}.'_pecan_23way_'.$self->o('rel_with_suffix'),
 	    -driver => 'mysql',
         },
 
@@ -185,11 +186,11 @@ sub default_options {
        'curr_core_sources_locs'    => [ $self->o('staging_loc1'), $self->o('staging_loc2'), ],
 
        'reuse_db' => {   # usually previous pecan production database
-           -host   => 'compara3',
+           -host   => 'compara5',
            -port   => 3306,
            -user   => 'ensro',
            -pass   => '',
-           -dbname => 'kb3_pecan_20way_71',
+           -dbname => 'sf5_pecan_23way_pt2_77',
 	   -driver => 'mysql',
         },
 
@@ -199,7 +200,7 @@ sub default_options {
             -port   => 5304,
             -user   => 'ensro',
             -pass   => '',
-            -db_version => '61'
+            -db_version => '78'
         },
 
         'curr_loc' => {                   # general location of the current release core databases (for checking their reusability)
@@ -207,7 +208,7 @@ sub default_options {
             -port   => 3306,
             -user   => 'ensro',
             -pass   => '',
-            -db_version => '62'
+            -db_version => '79'
         },
 #        'reuse_core_sources_locs'   => [ $self->o('reuse_loc') ],
 #        'curr_core_sources_locs'    => [ $self->o('curr_loc'), ],
@@ -340,8 +341,9 @@ sub pipeline_analyses {
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::LoadOneGenomeDB',
             -parameters => {
                 'registry_dbs'  => $self->o('curr_core_sources_locs'),
+                'master_db' => $self->o('master_db'),
             },
-            -hive_capacity => 1,    # they are all short jobs, no point doing them in parallel
+            -hive_capacity => 5,    # they are all short jobs, no point doing them in parallel
             -flow_into => {
                 1 => [ 'check_reusability' ],   # each will flow into another one
             },
