@@ -126,7 +126,7 @@ sub render {
             scalar @{$glyphset->{'glyphs'}} == 1 && ref($glyphset->{'glyphs'}[0]) =~ /Diagnostic/;
     
     my $fntheight = defined $glyphset->label ? $config->texthelper->height($glyphset->label->font) : 0;
-    my $gstheight = $glyphset->height + $glyphset->section_height;
+    my $gstheight = $glyphset->height;
     
     if ($gstheight > $fntheight) {
       $im_height += $gstheight + $spacing;

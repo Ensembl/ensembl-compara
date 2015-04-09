@@ -564,9 +564,27 @@ sub _split_label {
   return (\@split,$text,0);
 }
 
+sub wrap {
+  my ($self,$text,$width,$font,$ptsize) = @_;
+
+  my ($split,$x,$trunc) = $self->_split_label($text,$width,$font,$ptsize);
+  return [ map { $_->[0] } @$split ] unless $trunc;
+  # Split naively
+  # XXX probably slow: should do binary search
+  my @out = ('');
+  foreach my $t (split(//,$text)) {
+    my @sizes = $self->get_text_width(0,$out[-1].$t,'',font => $font, ptsize => $ptsize);
+    if($sizes[2]>$width) {
+      push @out,'';
+    }
+    $out[-1].=$t;
+  }
+  return \@out;
+}
+
 sub recast_label {
   # XXX we should see which of these args are used and also pass as hash
-  my ($self,$pixperbp,$width,$rows,$text,$font,$ptsize,$colour) = @_;
+  my ($self,$width,$rows,$text,$font,$ptsize,$colour) = @_;
 
   my $caption = $self->my_label_caption;
   $text = $caption if $caption;
@@ -601,6 +619,7 @@ sub recast_label {
     halign => 'left',
     absolutex => 1,
     absolutewidth => 1,
+    absolutey => 1,
     width => $max_width,
     x => 0,
     y => 0,
@@ -1196,7 +1215,7 @@ sub section_text {
 
 sub section_height {
   return 0 unless $_[0]->{'section_text'};
-  return 24;
+  return 32;
 }
 
 
