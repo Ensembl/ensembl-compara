@@ -68,6 +68,11 @@ sub content {
 
   $self->delete_entry_by_type('Gene');
   $self->delete_entry_by_type('Transcript');
+  $self->delete_entry_by_type('Exons');
+  $self->delete_entry_by_type('Exon');
+  $self->delete_entry_by_value('cDNA Sequence');
+  $self->delete_entry_by_value('Protein Variations');
+
 }
 
 1;

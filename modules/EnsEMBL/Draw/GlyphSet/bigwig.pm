@@ -39,7 +39,7 @@ sub bigwig_adaptor {
 
   my $url = $self->my_config('url');
   my $error;
-  if ($url) { ## remote bigwig file
+  if ($url && $url =~ /^(http|ftp)/) { ## remote bigwig file
     unless ($self->{'_cache'}->{'_bigwig_adaptor'}) {
       ## Check file is available before trying to load it 
       ## (Bio::DB::BigFile does not catch C exceptions)

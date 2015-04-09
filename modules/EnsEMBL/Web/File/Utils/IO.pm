@@ -316,6 +316,7 @@ sub preview_file {
   else {
     $method = 'work_with_file';
   }
+
   eval { 
     no strict 'refs';
     &$method($path, 'r',
