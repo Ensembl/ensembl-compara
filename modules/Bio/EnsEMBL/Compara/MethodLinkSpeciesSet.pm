@@ -77,7 +77,7 @@ use Bio::EnsEMBL::Utils::Scalar qw(:assert);
 use Bio::EnsEMBL::Compara::Method;
 use Bio::EnsEMBL::Compara::SpeciesSet;
 
-use base (  'Bio::EnsEMBL::Storable',           # inherit dbID(), adaptor() and new() methods
+use base (  'Bio::EnsEMBL::Compara::StorableWithReleaseHistory',           # inherit dbID(), adaptor() and new() methods, and first_release() and last_release()
             'Bio::EnsEMBL::Compara::Taggable'   # inherit everything related to tagability
          );
 

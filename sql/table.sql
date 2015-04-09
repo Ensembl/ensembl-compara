@@ -262,6 +262,8 @@ CREATE TABLE method_link (
 @column name                          Human-readable description for this method_link_species_set
 @column source                        Source of the data. Currently either "ensembl" or "ucsc" if data were imported from UCSC
 @column url                           A URL where you can find the orignal data if they were imported
+@column first_release     The first release this genome was present in
+@column last_release      The last release this genome was present in, or NULL if it is still current
 
 @see method_link
 @see species_set
@@ -274,6 +276,8 @@ CREATE TABLE method_link_species_set (
   name                        varchar(255) NOT NULL default '',
   source                      varchar(255) NOT NULL default 'ensembl',
   url                         varchar(255) NOT NULL default '',
+  first_release               smallint,
+  last_release                smallint,
 
   FOREIGN KEY (method_link_id) REFERENCES method_link(method_link_id),
   ## NB: species_set_id is not unique so cannot be used as a foreign key

@@ -30,6 +30,17 @@ UPDATE genome_db SET last_release = 79 WHERE assembly_default=0;
 
 ALTER TABLE genome_db DROP COLUMN assembly_default;
 
+
+-- the method_link_species_set table
+CREATE TEMPORARY TABLE method_link_species_set_time AS
+	SELECT method_link_species_set_id, IF(SUM(first_release IS NULL)>0, NULL, MAX(first_release)) AS fr, IF(SUM(last_release IS NOT NULL)>0, MIN(last_release), NULL) AS lr
+	FROM method_link_species_set JOIN species_set_header USING (species_set_id)
+	GROUP BY method_link_species_set_id;
+
+ALTER TABLE method_link_species_set ADD COLUMN first_release smallint unsigned, ADD COLUMN last_release smallint unsigned;
+UPDATE method_link_species_set JOIN method_link_species_set_time USING (method_link_species_set_id) SET first_release = fr, last_release = lr;
+
+
 # Patch identifier
 INSERT INTO meta (species_id, meta_key, meta_value)
   VALUES (NULL, 'patch', 'patch_79_80_c.sql|first_last_release');
