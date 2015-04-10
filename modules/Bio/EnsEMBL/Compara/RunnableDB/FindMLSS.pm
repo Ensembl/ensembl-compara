@@ -73,16 +73,17 @@ sub fetch_input {
             or die "Could not find the species-set dbID=$species_set_id in the master database\n";
     }
 
-    if (not $species_set_id and (my $mlss_id = $self->param('mlss_id'))) {
-        my $mlss = $master_dba->get_MethodLinkSpeciesSetAdaptor->fetch_by_dbID($mlss_id)
-            or die "Could not find the MLSS dbID=$mlss_id in the master database\n";
-        $species_set_id = $mlss->species_set_obj->dbID;
-    }
-
+    # FIXME: there can be multiple species sets with the same name !
     if (not $species_set_id and (my $species_set_name = $self->param('species_set_name'))) {
         my $ss = $master_dba->get_SpeciesSetAdaptor->fetch_all_by_tag_value('name', $species_set_name)->[0]
             or die "Could not find the collection named '$species_set_name' in the master database\n";
         $species_set_id = $ss->dbID;
+    }
+
+    if (not $species_set_id and (my $mlss_id = $self->param('mlss_id'))) {
+        my $mlss = $master_dba->get_MethodLinkSpeciesSetAdaptor->fetch_by_dbID($mlss_id)
+            or die "Could not find the MLSS dbID=$mlss_id in the master database\n";
+        $species_set_id = $mlss->species_set_obj->dbID;
     }
 
     if ($species_set_id) {
