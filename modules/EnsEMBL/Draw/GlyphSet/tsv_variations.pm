@@ -139,7 +139,7 @@ sub _init {
       $bump_start = 0 if ($bump_start < 0);
       my $bump_end = $bump_start + int($bglyph->width()*$pix_per_bp) +1;
       $bump_end = $bitmap_length if ($bump_end > $bitmap_length);
-      my $row = & EnsEMBL::Draw::Utils::bump_row( $bump_start, $bump_end, $bitmap_length, \@bitmap );
+      my $row = & EnsEMBL::Draw::Utils::Bump::bump_row( $bump_start, $bump_end, $bitmap_length, \@bitmap );
       $bglyph->y( $voffset + $bglyph->{'y'} + ( $row * (2+$height) ) + 1 );
       $self->push( $bglyph );
       next;
