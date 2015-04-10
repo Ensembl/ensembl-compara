@@ -806,6 +806,7 @@ sub core_pipeline_analyses {
 
         {   -logic_name => 'move_component_genes',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::MoveComponentGenes',
+            -hive_capacity => $self->o('reuse_capacity'),
             -flow_into => {
                 1 => {
                     'hc_members_per_genome' => { 'genome_db_id' => '#target_gdb_id#' },
@@ -1342,6 +1343,7 @@ sub core_pipeline_analyses {
                 'blast_bin_dir' => $self->o('blast_bin_dir'),
                 'cmd' => '#blast_bin_dir#/makeblastdb -dbtype prot -parse_seqids -logfile #fasta_name#.blastdb_log -in #fasta_name#',
             },
+            -hive_capacity => $self->o('reuse_capacity'),
         },
 
         {   -logic_name => 'members_against_allspecies_factory',
@@ -2468,6 +2470,7 @@ sub core_pipeline_analyses {
 
         {   -logic_name => 'move_back_component_genes',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::MoveComponentGenes',
+            -hive_capacity => $self->o('reuse_capacity'),
         },
 
         {   -logic_name => 'group_genomes_under_taxa',
