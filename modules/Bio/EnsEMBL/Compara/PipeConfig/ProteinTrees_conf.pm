@@ -813,6 +813,7 @@ sub core_pipeline_analyses {
                 'description'   => 'All the genes of the polyploid species should be moved to the component genomes',
                 'query'         => 'SELECT * FROM gene_member WHERE genome_db_id = #genome_db_id#',
             },
+            %hc_analysis_params,
         },
 
 
@@ -1023,6 +1024,7 @@ sub core_pipeline_analyses {
                 'description'   => 'All the component dnafrags must be in the principal genome',
                 'query'         => 'SELECT d1.* FROM dnafrag d1 LEFT JOIN dnafrag d2 ON d2.genome_db_id = #principal_genome_db_id# AND d1.name = d2.name WHERE d1.genome_db_id = #component_genome_db_id# AND d2.dnafrag_id IS NULL',
             },
+            %hc_analysis_params,
         },
 
         {   -logic_name => 'copy_dnafrags_from_master',
@@ -2206,6 +2208,7 @@ sub core_pipeline_analyses {
                  '1->A' => [ 'hc_alignment_post_tree', 'hc_tree_structure', 'hc_tree_attributes' ],
                  'A->1' => 'ortho_tree',
             },
+            %hc_analysis_params,
         },
 
         {   -logic_name         => 'hc_alignment_post_tree',
