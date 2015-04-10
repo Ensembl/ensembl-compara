@@ -32,13 +32,21 @@ use Apache2::Status;
 use Apache2::SizeLimit;
 use Apache2::ServerUtil;
 
-# Alessandro Vullo's XS speedups
-my $using_xs;
-BEGIN {
-  eval {
-    require 'Bio/EnsEMBL/XS.pm';
-    $using_xs = 1 if exists $Bio::EnsEMBL::XS::{'Utils::'}; 
-  };
+my @xs_modules = qw(Bio::EnsEMBL::XS);
+my @xs_provides = qw(Bio::EnsEMBL::XS::Utils);
+
+foreach my $xs_module (@xs_modules) {
+  my $require = "$xs_module.pm";
+  $require =~ s!::!/!g;
+  eval { require $require; };
+}
+
+my @xs_enabled;
+foreach my $xs_provides (@xs_provides) {
+  no strict;
+  $xs_provides =~ /^(.*)::(.*?)$/;
+  my ($root,$rest) = ($1,$2);
+  push @xs_enabled,$xs_provides if exists ${"${root}::"}{"${rest}::"};
 }
 
 $Apache2::SizeLimit::MAX_PROCESS_SIZE = 1000000; # Kill httpd over 1000Mb
@@ -262,7 +270,7 @@ if (Apache2::ServerUtil::restart_count == 1) { # Only parse the config on first 
 
   map(join("\n".(' ' x 21), map { sprintf '%-15s %s%s', $_->name.':', $conf->ENSEMBL_BASE_URL, $_->minified_url_path } @{$conf->ENSEMBL_JSCSS_FILES->{$_} || []}) || 'None', qw(css js)),
 
-  $using_xs?'yes':'no',
+  @xs_enabled?join("\n".(' ' x 21),@xs_enabled):'- none -',
   join("\n                     ", grep(/::/, @{$conf->ENSEMBL_PLUGINS || []}), $extra);
 }
 
