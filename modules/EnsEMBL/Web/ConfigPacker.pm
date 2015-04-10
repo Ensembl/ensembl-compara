@@ -1759,7 +1759,7 @@ sub _munge_file_formats {
     'emboss'    => {'ext' => 'txt',  'label' => 'EMBOSS'},
     ## WashU formats
     'pairwise'  => {'ext' => 'txt', 'label' => 'Pairwise interactions', 'display' => 'feature'},
-    'pair_long' => {'ext' => 'txt', 'label' => 'Pairwise interactions (indexed)', 'display' => 'feature', 'indexed' => 1},
+    'pairwise_tabix' => {'ext' => 'txt', 'label' => 'Pairwise interactions (indexed)', 'display' => 'feature', 'indexed' => 1},
   );
 
   ## Munge into something useful to this website
