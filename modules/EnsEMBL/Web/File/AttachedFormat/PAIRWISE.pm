@@ -28,6 +28,16 @@ use Bio::EnsEMBL::IO::Adaptor::PairwiseAdaptor;
 
 use EnsEMBL::Web::File::Utils::URL qw(chase_redirects);
 
+sub _pairwise_adaptor {
+  my ($self,$pwa) = @_;
+  if (defined($pwa)) {
+    $self->{'_cache'}->{'pairwise_adaptor'} = $pwa;
+  } elsif (!$self->{'_cache'}->{'pairwise_adaptor'}) {
+    $self->{'_cache'}->{'pairwise_adaptor'} = Bio::EnsEMBL::IO::Adaptor::PairwiseAdaptor->new($self->{'url'});
+  }
+  return $self->{'_cache'}->{'pairwise_adaptor'};
+}
+
 sub check_data {
   my ($self) = @_;
   my $url = $self->{'url'};
@@ -58,7 +68,7 @@ sub check_data {
       };
     }
   }
-  return $error;
+  return ($url, $error);
 }
 
 1;
