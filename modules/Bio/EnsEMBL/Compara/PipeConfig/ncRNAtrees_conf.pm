@@ -580,8 +580,17 @@ sub pipeline_analyses {
                 -analysis_capacity  => $self->o('quick_tree_break_capacity'),
                 -rc_name        => '4Gb_long_job',
                 -priority       => 50,
-                -flow_into      => [ 'other_paralogs' ],
+                -flow_into      => [ 'hc_supertrees' ],
             },
+
+        {   -logic_name         => 'hc_supertrees',
+            -module             => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::SqlHealthChecks',
+            -parameters         => {
+                mode            => 'supertrees',
+            },
+            -flow_into          => [ 'other_paralogs' ],
+            %hc_params,
+        },
 
             {   -logic_name     => 'other_paralogs',
                 -module         => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::OtherParalogs',

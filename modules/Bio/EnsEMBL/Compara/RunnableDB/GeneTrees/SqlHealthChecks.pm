@@ -300,7 +300,18 @@ my $config = {
         ],
     },
 
+    ### Supertrees
+    ################
 
+    supertrees => {
+        params => [ 'gene_tree_id' ],
+        tests => [
+            {
+                description => 'The "gene_count" tags must sum-up to the super-tree\'s',
+                query => 'SELECT COUNT(*), gtrt1.value, SUM(gtrt2.value) FROM (gene_tree_node gtn1 JOIN gene_tree_root_tag gtrt1 ON gtrt1.root_id=gtn1.root_id AND tag = "gene_count")  JOIN gene_tree_node gtn2 ON gtn2.parent_id = gtn1.node_id AND gtn2.root_id != gtn1.root_id JOIN gene_tree_root_tag gtrt2 ON gtrt2.root_id=gtn2.root_id AND gtrt2.tag="gene_count" WHERE gtn1.root_id = #gene_tree_id# HAVING gtrt1.value != SUM(gtrt2.value)',
+            },
+        ],
+    },
 
     ### Homologies derived from the trees
     #######################################
@@ -364,6 +375,10 @@ my $config = {
                 query => 'SELECT gtr1.root_id, gtr2.root_id FROM gene_tree_root gtr1 JOIN gene_tree_node gtn1 USING (root_id) JOIN gene_tree_node gtn2 ON gtn1.node_id = gtn2.parent_id JOIN gene_tree_root gtr2 ON gtr2.root_id = gtn2.root_id WHERE gtr1.root_id != gtr2.root_id AND (gtr1.clusterset_id != gtr2.clusterset_id OR gtr1.member_type != gtr2.member_type OR gtr1.method_link_species_set_id != gtr2.method_link_species_set_id OR NOT ( (gtr1.tree_type = "clusterset" AND gtr2.tree_type = "supertree") OR (gtr1.tree_type = "supertree" AND gtr2.tree_type = "tree") OR (gtr1.tree_type = "clusterset" AND gtr2.tree_type = "tree") ))'
             },
 
+            {
+                description => 'The "gene_count" tags of sub-trees must sum-up to their super-tree\'s gene count',
+                query => 'SELECT gtr1.root_id, COUNT(*), gtrt1.value, SUM(gtrt2.value) FROM (gene_tree_root gtr1 JOIN gene_tree_node gtn1 USING (root_id) JOIN gene_tree_root_tag gtrt1 ON gtrt1.root_id=gtr1.root_id AND tag = "gene_count")  JOIN gene_tree_node gtn2 ON gtn2.parent_id = gtn1.node_id AND gtn2.root_id != gtn1.root_id JOIN gene_tree_root_tag gtrt2 ON gtrt2.root_id=gtn2.root_id AND gtrt2.tag="gene_count" WHERE tree_type = "supertree" AND clusterset_id = "default" GROUP BY gtr1.root_id HAVING gtrt1.value != SUM(gtrt2.value)',
+            },
         ],
     },
 
