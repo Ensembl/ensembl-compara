@@ -116,9 +116,9 @@ sub features {
   my $feature_objects;
   foreach (@$features) {
     my $f = EnsEMBL::Draw::Utils::PairedFeature->new($_);
-    $_->map($slice);
-    $max_score = max($max_score, $_->score);
-    push @$feature_objects, $_;
+    $f->map($slice);
+    $max_score = max($max_score, $f->score);
+    push @$feature_objects, $f;
   }
   
   return ($key => [ $feature_objects, { %$config, %{$format->parse_trackline($format->trackline)} } ]);
