@@ -237,6 +237,7 @@ sub default_options {
         #'homology_dNdS_capacity'    => 200,
         #'qc_capacity'               =>   4,
         #'hc_capacity'               =>   4,
+        #'decision_capacity'         =>   4,
         #'HMMer_classify_capacity'   => 400,
         #'loadmembers_capacity'      =>  30,
         #'HMMer_classifyPantherScore_capacity'   => 1000,
@@ -1567,6 +1568,7 @@ sub core_pipeline_analyses {
                 'mafft_himem_gene_count'    => $self->o('mafft_himem_gene_count'),
                 'mafft_runtime'             => $self->o('mafft_runtime'),
             },
+            -analysis_capacity  => $self->o('decision_capacity'),
             -flow_into  => {
                 2 => [ 'mcoffee' ],
                 3 => [ 'mcoffee_himem' ],
@@ -1757,6 +1759,7 @@ sub core_pipeline_analyses {
                 'threshold_n_genes_large'      => $self->o('threshold_n_genes_large'),
                 'threshold_aln_len_large'      => $self->o('threshold_aln_len_large'),
             },
+            -analysis_capacity  => $self->o('decision_capacity'),
             -flow_into  => {
                 2 => [ 'aln_filtering_tagging' ],
                 3 => [ 'noisy' ],
@@ -1816,6 +1819,7 @@ sub core_pipeline_analyses {
             -parameters => {
                 'condition'             => '#tree_gene_count# < 4',
             },
+            -analysis_capacity  => $self->o('decision_capacity'),
             -flow_into  => {
                 2  => [ 'treebest_small_families' ],
                 3  => [ 'prottest' ],
@@ -1871,6 +1875,7 @@ sub core_pipeline_analyses {
                 'treebest_threshold_n_residues'      => $self->o('treebest_threshold_n_residues'),
                 'treebest_threshold_n_genes'      => $self->o('treebest_threshold_n_genes'),
             },
+            -analysis_capacity  => $self->o('decision_capacity'),
             -flow_into  => {
                 2 => [ 'treebest_short' ],
                 3 => [ 'treebest' ],
@@ -2018,7 +2023,7 @@ sub core_pipeline_analyses {
                 'threshold_n_genes_large'      => $self->o('threshold_n_genes_large'),
                 'threshold_aln_len_large'      => $self->o('threshold_aln_len_large'),
             },
-            -hive_capacity  => 100,
+            -analysis_capacity  => $self->o('decision_capacity'),
             -flow_into  => {
                 2 => [ 'raxml' ],
                 3 => [ 'raxml_multi_core' ],

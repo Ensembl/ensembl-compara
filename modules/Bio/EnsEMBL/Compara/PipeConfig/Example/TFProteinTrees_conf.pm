@@ -175,6 +175,7 @@ sub default_options {
         'homology_dNdS_capacity'    => 200,
         'qc_capacity'               =>   4,
         'hc_capacity'               =>   4,
+        'decision_capacity'         =>   4,
         'HMMer_classify_capacity'   => 400,
 		'HMMer_classifyPantherScore_capacity'=> 1000,
         'loadmembers_capacity'      => 30,
