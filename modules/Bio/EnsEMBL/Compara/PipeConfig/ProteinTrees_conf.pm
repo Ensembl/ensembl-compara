@@ -421,6 +421,12 @@ sub core_pipeline_analyses {
             -batch_size         => 20,
             -max_retry_count    => 1,
     );
+    my %decision_analysis_params = (
+            -analysis_capacity  => $self->o('decision_capacity'),
+            -priority           => $self->o('hc_priority'),
+            -batch_size         => 20,
+            -max_retry_count    => 1,
+    );
 
     return [
 
@@ -1570,13 +1576,13 @@ sub core_pipeline_analyses {
                 'mafft_himem_gene_count'    => $self->o('mafft_himem_gene_count'),
                 'mafft_runtime'             => $self->o('mafft_runtime'),
             },
-            -analysis_capacity  => $self->o('decision_capacity'),
             -flow_into  => {
                 2 => [ 'mcoffee' ],
                 3 => [ 'mcoffee_himem' ],
                 4 => [ 'mafft' ],
                 5 => [ 'mafft_himem' ],
             },
+            %decision_analysis_params,
         },
 
         {   -logic_name => 'test_very_large_clusters_go_to_qtb',
@@ -1761,13 +1767,13 @@ sub core_pipeline_analyses {
                 'threshold_n_genes_large'      => $self->o('threshold_n_genes_large'),
                 'threshold_aln_len_large'      => $self->o('threshold_aln_len_large'),
             },
-            -analysis_capacity  => $self->o('decision_capacity'),
             -flow_into  => {
                 2 => [ 'aln_filtering_tagging' ],
                 3 => [ 'noisy' ],
                 4 => [ 'noisy_large' ],
                 5 => [ 'trimal' ], # Not actually used
             },
+            %decision_analysis_params,
         },
 
         {   -logic_name     => 'noisy',
@@ -1821,11 +1827,11 @@ sub core_pipeline_analyses {
             -parameters => {
                 'condition'             => '#tree_gene_count# < 4',
             },
-            -analysis_capacity  => $self->o('decision_capacity'),
             -flow_into  => {
                 2  => [ 'treebest_small_families' ],
                 3  => [ 'prottest' ],
             },
+            %decision_analysis_params,
         },
 
 # ---------------------------------------------[model test]-------------------------------------------------------------
@@ -1877,12 +1883,12 @@ sub core_pipeline_analyses {
                 'treebest_threshold_n_residues'      => $self->o('treebest_threshold_n_residues'),
                 'treebest_threshold_n_genes'      => $self->o('treebest_threshold_n_genes'),
             },
-            -analysis_capacity  => $self->o('decision_capacity'),
             -flow_into  => {
                 2 => [ 'treebest_short' ],
                 3 => [ 'treebest' ],
                 4 => [ 'treebest_long_himem' ],
             },
+            %decision_analysis_params,
         },
 
         {   -logic_name => 'treebest_short',
@@ -2025,12 +2031,12 @@ sub core_pipeline_analyses {
                 'threshold_n_genes_large'      => $self->o('threshold_n_genes_large'),
                 'threshold_aln_len_large'      => $self->o('threshold_aln_len_large'),
             },
-            -analysis_capacity  => $self->o('decision_capacity'),
             -flow_into  => {
                 2 => [ 'raxml' ],
                 3 => [ 'raxml_multi_core' ],
                 4 => [ 'examl' ],
             },
+            %decision_analysis_params,
         },
 
         {   -logic_name => 'examl',
