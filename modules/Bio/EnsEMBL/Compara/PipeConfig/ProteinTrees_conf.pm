@@ -1501,12 +1501,18 @@ sub core_pipeline_analyses {
 
         {   -logic_name => 'overall_qc',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::OverallGroupsetQC',
+            -parameters => {
+                'reuse_db'  => '#mapping_db#',
+            },
             -hive_capacity  => $self->o('qc_capacity'),
             -rc_name    => '2Gb_job',
         },
 
         {   -logic_name => 'per_genome_qc',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::PerGenomeGroupsetQC',
+            -parameters => {
+                'reuse_db'  => '#mapping_db#',
+            },
             -hive_capacity => $self->o('qc_capacity'),
             -rc_name    => '4Gb_job',
         },
