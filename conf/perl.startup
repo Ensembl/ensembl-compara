@@ -32,21 +32,11 @@ use Apache2::Status;
 use Apache2::SizeLimit;
 use Apache2::ServerUtil;
 
-my @xs_modules = qw(Bio::EnsEMBL::XS);
-my @xs_provides = qw(Bio::EnsEMBL::XS::Utils);
-
-foreach my $xs_module (@xs_modules) {
-  my $require = "$xs_module.pm";
-  $require =~ s!::!/!g;
-  eval { require $require; };
-}
+use EnsEMBL::Web::Startup::XS;
 
 my @xs_enabled;
-foreach my $xs_provides (@xs_provides) {
-  no strict;
-  $xs_provides =~ /^(.*)::(.*?)$/;
-  my ($root,$rest) = ($1,$2);
-  push @xs_enabled,$xs_provides if exists ${"${root}::"}{"${rest}::"};
+BEGIN {
+  @xs_enabled = @{EnsEMBL::Web::Startup::XS::bootstrap_begin()};
 }
 
 $Apache2::SizeLimit::MAX_PROCESS_SIZE = 1000000; # Kill httpd over 1000Mb
