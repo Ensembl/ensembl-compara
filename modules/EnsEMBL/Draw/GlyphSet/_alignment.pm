@@ -746,6 +746,7 @@ sub render_interaction {
 
       foreach (@feat) {
         my ($s1, $e1, $s2, $e2, $f) = @$_;
+        #warn "@@@ FEATURE @$_";
 
         my $feature_colour;
 
@@ -778,16 +779,18 @@ sub render_interaction {
             })) unless $e1 < 0;
 
         ## Arc between features
-        my $major_axis  = ceil(($start_2 - $end_1) * $pix_per_bp);
-        my $radius      = $major_axis / 2;
 
         ## Height of track needs to be proportional, or it becomes enormous at high zoom levels! 
         ## Use double the image width as the maximum arc length, so that we get some information
         ## about off-screen features without the track getting crazy proportions
+        my $distance    = ceil(($start_2 - $end_1) * $pix_per_bp);
         my $track_depth = $self->image_width; ## Generous default
         my $max_width   = ceil($self->image_width * 2);
+        my $major_axis  = $distance > $max_width ? $max_width : $distance;
         my $cutoff      = $major_axis > $max_width ? $max_width : $major_axis;
         my $minor_axis  = ceil(($cutoff / $max_width) * $track_depth);
+        my $radius      = $major_axis / 2;
+        #warn ">>> MAJOR $major_axis, MINOR $minor_axis";
 
         my $start_point   = 0; ## righthand end of arc
         my $end_point     = 180; ### lefthand end of arc
@@ -796,14 +799,22 @@ sub render_interaction {
 
         ## Cut curve off at edge of track if ends lie outside the current window
         if ($e1 < 0) {
-          my $cos = ($radius + $e1 * $pix_per_bp)/$radius;
+          ## Compensate for truncated distances
+          my $off_screen = $distance > $max_width ? ($s2 - $major_axis / $pix_per_bp) : $e1;
+          #warn ">>> DISTANCE OFF-SCREEN $off_screen";
+          my $cos = ($radius + $off_screen * $pix_per_bp)/$radius;
+          #warn ">>> LEFT COS $cos";
           ## For some reason, unless one degree is added here, the left end
           ## of the arc overlaps the track name column 
           $end_point -= $self->acos_in_degrees($cos) + 1;
           $left_height = abs(sin($end_point) * $radius); 
         }
         elsif ($s2 > $length) {
-          my $cos = ($radius - (($s2 - $length) * $pix_per_bp))/$radius;
+          ## Compensate for truncated distances
+          my $off_screen = $distance > $max_width ? ($e1 + $major_axis / $pix_per_bp) : $s2;
+          #warn ">>> DISTANCE OFF-SCREEN $off_screen";
+          my $cos = ($radius - (($off_screen - $length) * $pix_per_bp))/$radius;
+          #warn ">>> RIGHT COS $cos";
           $start_point = $self->acos_in_degrees($cos);
           $right_height = abs(sin(180 - $start_point) * $radius); 
         }
