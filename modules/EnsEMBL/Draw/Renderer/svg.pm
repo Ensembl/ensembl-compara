@@ -89,8 +89,8 @@ sub class {
     return qq(class="$class");
 }
 sub style {
-    my ($self, $glyph) = @_;
-    my $gcolour       = $glyph->colour();
+    my ($self, $glyph,$colour) = @_;
+    my $gcolour       = $colour || $glyph->colour();
     my $gbordercolour = $glyph->bordercolour();
 
     my $style = 
@@ -135,6 +135,30 @@ sub render_Rect {
     $y = sprintf("%0.3f",$y*$self->{sf});
     $h = sprintf("%0.3f",($h+1)*$self->{sf});
     $self->add_string(qq(<rect x="$x" y="$y" width="$w" height="$h" $style />\n)); 
+}
+
+sub render_Barcode {
+  my ($self, $glyph) = @_;
+
+  my $colours        = $self->{'colours'};
+
+  my $points = $glyph->{'pixelpoints'};
+  return unless defined $points;
+
+  my $x1 = $self->{'sf'} *   $glyph->{'pixelx'};
+  my $x2 = $self->{'sf'} * ( $glyph->{'pixelx'} + $glyph->{'pixelunit'} );
+  my $y1 = $self->{'sf'} *   $glyph->{'pixely'};
+  my $y2 = $self->{'sf'} * ( $glyph->{'pixely'} + $glyph->{'pixelheight'} );
+  my @colours = @{$glyph->{'colours'}};
+  my $max = $glyph->{'max'} || 1000;
+  my $fmt = '<rect x="%0.3f" y="%0.3f" width="%0.3f" height="%0.3f" %s />';
+  foreach my $p (@$points) {
+    my $colour = $colours[int($p * scalar @colours / $max)] || 'black';
+    my $style = $self->style($glyph,$colour);
+    $self->add_string(sprintf($fmt,$x1,$y1,$x2-$x1+1,$y2-$y1+1,$style));
+    $x1 += $glyph->{'pixelunit'} * $self->{'sf'};
+    $x2 += $glyph->{'pixelunit'} * $self->{'sf'};
+  }
 }
 
 sub render_Text {

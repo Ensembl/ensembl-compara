@@ -312,6 +312,30 @@ sub render_Line {
   }
 }
 
+sub render_Barcode {
+  my ($self, $glyph) = @_;
+
+  my $canvas         = $self->{'canvas'};
+  my $colours        = $self->{'colours'};
+
+  my $points = $glyph->{'pixelpoints'};
+  return unless defined $points;
+
+  my $x1 = $self->{'sf'} *   $glyph->{'pixelx'};
+  my $x2 = $self->{'sf'} * ( $glyph->{'pixelx'} + $glyph->{'pixelunit'} );
+  my $y1 = $self->{'sf'} *   $glyph->{'pixely'};
+  my $y2 = $self->{'sf'} * ( $glyph->{'pixely'} + $glyph->{'pixelheight'} );
+  my @colours = map { $self->colour($_) } @{$glyph->{'colours'}};
+
+  my $max = $glyph->{'max'} || 1000;
+  foreach my $p (@$points) {
+    my $colour = $colours[int($p * scalar @colours / $max)] || '000000';
+    $canvas->filledRectangle($x1,$y1,$x2,$y2,$colour);
+    $x1 += $glyph->{'pixelunit'} * $self->{'sf'};
+    $x2 += $glyph->{'pixelunit'} * $self->{'sf'};
+  }
+}
+
 sub render_Poly {
   my ($self, $glyph) = @_;
 

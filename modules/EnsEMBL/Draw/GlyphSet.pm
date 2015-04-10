@@ -35,6 +35,7 @@ use EnsEMBL::Draw::Glyph::Composite;
 use EnsEMBL::Draw::Glyph::Intron;
 use EnsEMBL::Draw::Glyph::Line;
 use EnsEMBL::Draw::Glyph::Poly;
+use EnsEMBL::Draw::Glyph::Barcode;
 use EnsEMBL::Draw::Glyph::Triangle;
 use EnsEMBL::Draw::Glyph::Rect;
 use EnsEMBL::Draw::Glyph::Space;
@@ -233,6 +234,7 @@ sub Composite  { my $self = shift; return EnsEMBL::Draw::Glyph::Composite->new(@
 sub Intron     { my $self = shift; return EnsEMBL::Draw::Glyph::Intron->new(@_);     }
 sub Line       { my $self = shift; return EnsEMBL::Draw::Glyph::Line->new(@_);       }
 sub Poly       { my $self = shift; return EnsEMBL::Draw::Glyph::Poly->new(@_);       }
+sub Barcode    { my $self = shift; return EnsEMBL::Draw::Glyph::Barcode->new(@_);       }
 sub Rect       { my $self = shift; return EnsEMBL::Draw::Glyph::Rect->new(@_);       }
 sub Space      { my $self = shift; return EnsEMBL::Draw::Glyph::Space->new(@_);      }
 sub Sprite     { my $self = shift; return EnsEMBL::Draw::Glyph::Sprite->new(@_);     }

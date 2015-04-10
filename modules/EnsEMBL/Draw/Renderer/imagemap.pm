@@ -76,6 +76,28 @@ sub render_Circle {
   $self->render_area('circle', [ $x, $y, $r ], $attrs);
 }
 
+sub render_Barcode {
+  my ($self, $glyph) = @_;
+
+  my $attrs = $self->get_attributes($glyph);
+  return unless $attrs;
+
+  my $x1 = $glyph->{'pixelx'};
+  my $x2 = $glyph->{'pixelx'} + $glyph->{'pixelwidth'};
+  my $y1 = $glyph->{'pixely'};
+  my $y2 = $glyph->{'pixely'} + $glyph->{'pixelheight'};
+
+  $x1 = 0 if $x1 < 0;
+  $x2 = 0 if $x2 < 0;
+  $y1 = 0 if $y1 < 0;
+  $y2 = 0 if $y2 < 0;
+
+  $y2++;
+  $x2++;
+
+  $self->render_area('rect', [ $x1, $y1, $x2, $y2 ], $attrs);
+}
+
 sub render_Poly {
   my ($self, $glyph) = @_;
   my $attrs = $self->get_attributes($glyph);
@@ -117,11 +139,6 @@ sub render_area {
   
   my $coords = join ',', map int, @$points;
 
-#  Time: 11.303
-#  $self->{'canvas'} = qq{<area shape="$shape" coords="$coords"$attrs />\n$self->{'canvas'}};
-#  Time: 11.040 - slightly faster with '.'s
-#  $self->{canvas} = '<area shape="' . $shape . '" coords="' . $coords. "\"$attrs />\n" . $self->{canvas};
-#  push @{$self->{data}}, '<area shape="' . $shape . '" coords="' . $coords. "\"$attrs />\n";
   push @{$self->canvas},[$shape,[map int, @$points],$attrs];
 }
 

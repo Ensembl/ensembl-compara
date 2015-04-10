@@ -162,6 +162,30 @@ sub render_Rect {
   }
 }
 
+sub render_Barcode {
+  my ($self, $glyph) = @_;
+
+  my $colours        = $self->{'colours'};
+
+  my $points = $glyph->{'pixelpoints'};
+  return unless defined $points;
+
+  my $x1 = $self->{'sf'} *   $glyph->{'pixelx'};
+  my $x2 = $self->{'sf'} * ( $glyph->{'pixelx'} + $glyph->{'pixelunit'} );
+  my $y1 = $self->{'sf'} *   $glyph->{'pixely'};
+  my $y2 = $self->{'sf'} * ( $glyph->{'pixely'} + $glyph->{'pixelheight'} );
+  my @colours = @{$glyph->{'colours'}};
+  my $max = $glyph->{'max'} || 1000;
+  my $fmt = "_%s %f %f %f %f r fi\n";
+  foreach my $p (@$points) {
+    my $colour = $colours[int($p * scalar @colours / $max)] || 'black';
+    $self->_colour($colour);
+    $self->add_string(sprintf($fmt,$colour,$x1,$y1,$x2-$x1+1,$y2-$y1+1));
+    $x1 += $glyph->{'pixelunit'} * $self->{'sf'};
+    $x2 += $glyph->{'pixelunit'} * $self->{'sf'};
+  }
+}
+
 sub render_Text {
   my ($self, $glyph) = @_;
   my $font = $glyph->font();
