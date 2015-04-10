@@ -751,13 +751,10 @@ sub pipeline_analyses {
                             'treebest_exe' => $self->o('treebest_exe'),
                            },
             -flow_into => {
-                           '1->A' =>  {
-                                       'hc_alignment_post_tree' => {'gene_tree_id' => '#gene_tree_id#', 'post_treebest' => 1},
-                                       'hc_tree_structure' => undef,
-                                      },
+                           '1->A' =>  [ 'hc_alignment_post_tree', 'hc_tree_structure' ],
                            'A->1' => [ 'orthotree' ],
                            1 => [ 'ktreedist' ],
-                           2 => [ 'hc_tree_structure' ],
+                           '2->A' => [ 'hc_tree_structure' ],
             },
             -rc_name => 'default',
         },
