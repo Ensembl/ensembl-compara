@@ -73,6 +73,10 @@ sub render {
 
   my @tips_to_show = map {[$categories{'new'}, $_->{'content'}]} @{$tips->{'new'}};
 
+  # On a mirror installation we probably don't have or want an ENSEMBL_TIPS_RSS setting, and                                                                                                                         
+  # so don't want to return an empty 'did-you-know' class html div, so return here.                                                                                                                                  
+  return unless @tips_to_show;
+  
   ## Random did-you-knows
   my $to_add = $limit - scalar(@tips_to_show);
   srand;
