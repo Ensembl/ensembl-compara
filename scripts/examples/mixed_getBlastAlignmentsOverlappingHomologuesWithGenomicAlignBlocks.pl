@@ -22,7 +22,7 @@ use Bio::AlignIO;
 
 
 #
-# This script gets all the BLASTZ alignments covering the orthologues
+# This script gets all the LASTZ alignments covering the orthologues
 # between human and mouse (via GenomicAlignBlocks)
 #
 
@@ -43,9 +43,9 @@ my $human_gdb_id = $humanGDB->dbID;
 my $mouseGDB = $comparaDBA->get_GenomeDBAdaptor->fetch_by_registry_name("mouse");
 my $mouse_gdb_id = $mouseGDB->dbID;
 
-# get MethodLinkSpeciesSet for BLASTZ_NET alignments between human and mouse
+# get MethodLinkSpeciesSet for LASTZ_NET alignments between human and mouse
 my $blastz_mlss = $comparaDBA->get_MethodLinkSpeciesSetAdaptor->
-    fetch_by_method_link_type_GenomeDBs("BLASTZ_NET", [$humanGDB, $mouseGDB]);
+    fetch_by_method_link_type_GenomeDBs("LASTZ_NET", [$humanGDB, $mouseGDB]);
 
 my $homology_mlss = $comparaDBA->get_MethodLinkSpeciesSetAdaptor->
     fetch_by_method_link_type_genome_db_ids('ENSEMBL_ORTHOLOGUES',[$human_gdb_id,$mouse_gdb_id]);

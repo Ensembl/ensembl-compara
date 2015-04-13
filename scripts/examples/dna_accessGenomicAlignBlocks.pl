@@ -40,9 +40,9 @@ my $comparaDBA = Bio::EnsEMBL::Registry->get_DBAdaptor('Multi', 'compara');
 my $humanGDB = $comparaDBA->get_GenomeDBAdaptor->fetch_by_registry_name("human");
 my $mouseGDB = $comparaDBA->get_GenomeDBAdaptor->fetch_by_registry_name("mouse");
 
-# get MethodLinkSpeciesSet for BLASTZ_NET alignments between human and mouse
+# get MethodLinkSpeciesSet for LASTZ_NET alignments between human and mouse
 my $method_link_species_set = $comparaDBA->get_MethodLinkSpeciesSetAdaptor->
-     fetch_by_method_link_type_GenomeDBs("BLASTZ_NET", [$humanGDB, $mouseGDB]);
+     fetch_by_method_link_type_GenomeDBs("LASTZ_NET", [$humanGDB, $mouseGDB]);
 
 # get dnafrag for human chr 18
 my $dnafrag = $comparaDBA->get_DnaFragAdaptor->fetch_by_GenomeDB_and_name($humanGDB, '18');
