@@ -280,8 +280,8 @@ sub resource_classes {
             '100Mb' => { 'LSF' => '-q production-rh6 -M100' .' -R" rusage[mem=100]"' },
 	    '500Mb' => { 'LSF' => '-q production-rh6 -M500' .' -R" rusage[mem=500]"' },
             '1Gb'   => { 'LSF' => '-q production-rh6 -M1000' .' -R" rusage[mem=1000]"' },
-            '1.8Gb' => { 'LSF' => '-q production-rh6 -M1800' .' -R" rusage[mem=1800]"' },
-            '3.6Gb' => { 'LSF' => '-q production-rh6 -M3600' .' -R"rusage[mem=3600]"' },
+            'crowd' => { 'LSF' => '-q production-rh6 -M1800' .' -R" rusage[mem=1800]"' },
+            'crowd_himem' => { 'LSF' => '-q production-rh6 -M3600' .' -R"rusage[mem=3600]"' },
 	    '4.2Gb' => { 'LSF' => '-q production-rh6 -M4200' .' -R"rusage[mem=4200]"' },
 	    '8.4Gb' => { 'LSF' => '-q production-rh6 -M8400' .' -R"rusage[mem=8400]"' },
     };
@@ -295,20 +295,20 @@ sub pipeline_analyses {
 
     ## Extend this section to redefine the resource names of some analysis
     my %overriden_rc_names = (
-        'pairaligner_stats'         => '1.8Gb',
-        'alignment_nets'            => '1.8Gb',
-        'alignment_nets_himem'      => '3.6Gb',
-        'create_alignment_nets_jobs'=> '1.8Gb',
+        'pairaligner_stats'         => 'crowd',
+        'alignment_nets'            => 'crowd',
+        'alignment_nets_himem'      => 'crowd_himem',
+        'create_alignment_nets_jobs'=> 'crowd',
         'alignment_chains'          => '1Gb',
-        'create_alignment_chains_jobs'  => '3.6Gb',
-        'dump_large_nib_for_chains_factory' => '1.8Gb',
-        'create_filter_duplicates_jobs'     => '1.8Gb',
-        'create_pair_aligner_jobs'  => '1.8Gb',
-        'populate_new_database' => '1.8Gb',
+        'create_alignment_chains_jobs'  => 'crowd_himem',
+        'dump_large_nib_for_chains_factory' => 'crowd',
+        'create_filter_duplicates_jobs'     => 'crowd',
+        'create_pair_aligner_jobs'  => 'crowd',
+        'populate_new_database' => 'crowd',
         'parse_pair_aligner_conf' => '1Gb',
         'store_sequence'        => '1Gb',
-        'store_sequence_again'  => '3.6Gb',
-        $self->o('pair_aligner_logic_name') => '3.6Gb',
+        'store_sequence_again'  => 'crowd_himem',
+        $self->o('pair_aligner_logic_name') => 'crowd_himem',
         $self->o('pair_aligner_logic_name')."_himem1" => '8.4Gb',
     );
     foreach my $logic_name (keys %overriden_rc_names) {
