@@ -149,16 +149,10 @@ sub wiggle_aggregate {
     my $bins      = min($self->{'config'}->image_width, $slice->length);
     my $adaptor   = $self->bigwig_adaptor;
     return [] unless $adaptor;
-    my $summary   = $adaptor->fetch_extended_summary_array($slice->seq_region_name, $slice->start, $slice->end, $bins, $has_chrs);
+    my $values   = $adaptor->fetch_summary_array($slice->seq_region_name, $slice->start, $slice->end, $bins, $has_chrs);
     my $bin_width = $slice->length / $bins;
     my $flip      = $slice->strand == -1 ? $slice->length + 1 : undef;
 
-    my $values = [ map {
-        if($_->{'validCount'}) {
-          $_->{'sumData'} / $_->{'validCount'};
-        }
-      } @$summary
-    ];
     $self->{'_cache'}{'wiggle_aggregate'} = {
       unit => $bin_width,
       length => $slice->length,
