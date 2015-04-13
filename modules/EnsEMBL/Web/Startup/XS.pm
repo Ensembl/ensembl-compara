@@ -8,23 +8,43 @@ use Config;
 
 use JSON qw(from_json);
 
+use Exporter 'import';
+our @EXPORT_OK = qw(using_xs fake_if_missing);
+
+my %using;
+
 sub load_exs {
   my ($exs) = @_;
 
-  my $module = $exs->{'module'};
-  my $path = "$module.pm";
-  $path =~ s!::!/!g;
-  require $path;
-  $path->import();
-  if($exs->{'test'}) {
-    no strict;
-    my $test = $exs->{'test'};
-    $test =~ /^(.*)::(.*?)$/;
-    my ($root,$rest) = ($1,$2);
-    die "Test $root/$rest failed" unless exists ${"${root}::"}{"${rest}::"};
-  } 
-  return "$exs->{'name'}: $exs->{'purpose'}";
+  eval {
+    my $module = $exs->{'module'};
+    my $path = "$module.pm";
+    $path =~ s!::!/!g;
+    require $path;
+    $path->import();
+    if($exs->{'test'}) {
+      no strict;
+      my $test = $exs->{'test'};
+      $test =~ /^(.*)::(.*?)$/;
+      my ($root,$rest) = ($1,$2);
+      die "Test $root/$rest failed"
+        unless exists ${"${root}::"}{"${rest}::"};
+    }
+    $using{$exs->{'module'}} = 1;
+  };
+  if($using{$exs->{'module'}}) {
+    return "$exs->{'name'}: $exs->{'purpose'}";
+  } else {
+    use_if_exists($exs->{'module'});
+    die "Load failed: $@";
+  }
 }
+
+sub fake_if_missing {
+  eval "package $_[0]; 1;";
+}
+
+sub using_xs { return $using{$_[0]}; }
 
 sub bootstrap_begin {
   my @found;
