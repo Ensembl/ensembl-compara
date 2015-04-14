@@ -65,7 +65,7 @@ sub content {
   
   foreach (qw(DEFAULT_STRAINS DISPLAY_STRAINS)) {
     foreach my $ind (@{$var_db->{$_}}) {
-      push @individuals, $ind if $hub->param($ind) eq 'yes';
+      push @individuals, $ind if $hub->param($ind) eq 'on';
     }
   }
   
@@ -128,7 +128,7 @@ sub get_slices {
     
     foreach (qw(DEFAULT_STRAINS DISPLAY_STRAINS DISPLAYBLE)) {
       foreach my $ind (@{$var_db->{$_}}) {
-        push @$individuals, $ind if $hub->param($ind) eq 'yes';
+        push @$individuals, $ind if $hub->param($ind) eq 'on';
       }
     }
   }
