@@ -31,8 +31,9 @@ sub process {
   
   return $self->set_format if $hub->function eq 'set_format';
  
-  my ($method)  = first { $hub->param($_) } qw(url file text);
-  my $format    = $hub->param('format');
+  my ($method)    = first { $hub->param($_) } qw(url file text);
+  my $format      = $hub->param('format');
+  my $url_params  = {};
 
   if ($method eq 'url') {
     ## Attach the file from the remote URL
