@@ -94,22 +94,22 @@ sub content {
       'name'        => 'assembly_name',
       'value'       => $assembly_names,
       'no_input'    => 1,
-      'is_html'     => 1
+      'is_html'     => 1,
     });
   }
 
-  $self->add_file_format_dropdown($form, '', 1);
+  $self->add_file_format_dropdown($form);
 
-  $fieldset->add_field({ 'type' => 'Text', 'name' => 'text', 'required' => 1, 'label' => 'Paste data' });
-  $fieldset->add_field({ 'type' => 'File', 'name' => 'file', 'required' => 1, 'label' => "Or upload file (max $max_upload_size)" });
+  $fieldset->add_field({ 'type' => 'Text', 'name' => 'text', 'label' => 'Paste data'});
+  $fieldset->add_field({ 'type' => 'File', 'name' => 'file', 'label' => "Or upload file (max $max_upload_size)", 'required' => 1 });
   $fieldset->add_field({
     'type'        => 'URL',
     'name'        => 'url',
-    'required'    => 1,
     'label'       => 'Or provide file URL',
-    'size'        => 30
+    'size'        => 30,
+    #'required'    => 1, 
   });
-  $fieldset->add_button({ 'field_class' => 'hidden _stt_remote1', 'name' => 'submit_button', 'value' => 'Attach' });
+  $fieldset->add_button({'type' => 'Submit', 'name' => 'submit_button', 'value' => 'Add data' });
 
   return sprintf '<input type="hidden" class="subpanel_type" value="UserData" /><h2>Add a custom track</h2>%s', $form->render;
 }
