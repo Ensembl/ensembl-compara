@@ -1734,14 +1734,15 @@ sub _munge_file_formats {
     'gff'       => {'ext' => 'gff', 'label' => 'GFF',       'display' => 'feature'},
     'gtf'       => {'ext' => 'gtf', 'label' => 'GTF',       'display' => 'feature'},
     'psl'       => {'ext' => 'psl', 'label' => 'PSL',       'display' => 'feature'},
+    'vcf'       => {'ext' => 'vcf', 'label' => 'VCF',       'display' => 'graph'},
     'vep_input' => {'ext' => 'txt', 'label' => 'VEP',       'display' => 'feature'},
     'wig'       => {'ext' => 'wig', 'label' => 'WIG',       'display' => 'graph'},
-    'bam'       => {'ext' => 'bam', 'label' => 'BAM',       'display' => 'graph', 'indexed' => 1},
-    'bigwig'    => {'ext' => 'bw',  'label' => 'BigWig',    'display' => 'graph', 'indexed' => 1},
-    'bigbed'    => {'ext' => 'bb',  'label' => 'BigBed',    'display' => 'graph', 'indexed' => 1},
-    'datahub'   => {'ext' => 'txt', 'label' => 'TrackHub',  'display' => 'graph', 'indexed' => 1},
-    'vcf'       => {'ext' => 'vcf', 'label' => 'VCF',       'display' => 'graph'},
-    'vcfi'      => {'ext' => 'vcf', 'label' => 'VCF (indexed)', 'display' => 'graph', 'indexed' => 1},
+    ## Remote only - cannot be uploaded
+    'bam'       => {'ext' => 'bam', 'label' => 'BAM',       'display' => 'graph', 'remote' => 1},
+    'bigwig'    => {'ext' => 'bw',  'label' => 'BigWig',    'display' => 'graph', 'remote' => 1},
+    'bigbed'    => {'ext' => 'bb',  'label' => 'BigBed',    'display' => 'graph', 'remote' => 1},
+    'trackhub'  => {'ext' => 'txt', 'label' => 'TrackHub',  'display' => 'graph', 'remote' => 1},
+    ## Export only
     'fasta'     => {'ext' => 'fa',   'label' => 'FASTA'},
     'clustalw'  => {'ext' => 'aln',  'label' => 'CLUSTALW'},
     'msf'       => {'ext' => 'msf',  'label' => 'MSF'},
@@ -1766,7 +1767,7 @@ sub _munge_file_formats {
       delete $formats{$format};
       next;
     }
-    if ($details->{'indexed'}) {
+    if ($details->{'remote'}) {
       push @remote, $format;
     }
     elsif ($details->{'display'}) {
