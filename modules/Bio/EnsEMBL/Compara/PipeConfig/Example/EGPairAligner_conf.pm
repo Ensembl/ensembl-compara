@@ -273,7 +273,6 @@ sub default_options {
 sub resource_classes {
     my ($self) = @_;
 
-    my $host = $self->o('pipeline_db')->{host};
     return {
             #%{$self->SUPER::resource_classes},  # inherit 'default' from the parent class
 	    'default' => {'LSF' => '-q production-rh6'},
