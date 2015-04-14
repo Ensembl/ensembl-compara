@@ -215,11 +215,11 @@ sub variation_table {
   });
   
   my $all_flag = ($phenotype eq 'ALL') ? 1 : 0;
-      
-  foreach my $pf (grep {$_->type eq 'Variation'} @{$pf_adaptor->fetch_all_by_associated_gene($gene_name)}) {
-      
-    next if ($phenotype ne $pf->phenotype->description && $all_flag == 0);
-    
+
+  my $pf_list = ($all_flag == 0) ? $pf_adaptor->fetch_all_by_associated_gene_phenotype_description($gene_name,$phenotype) : $pf_adaptor->fetch_all_by_associated_gene($gene_name);
+
+  foreach my $pf (grep {$_->type eq 'Variation'} @$pf_list) {
+
     #### Phenotype ####
     my $var        = $pf->object;
     my $var_name   = $var->name;
