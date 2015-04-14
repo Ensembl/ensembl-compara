@@ -328,11 +328,13 @@ sub render_Barcode {
   my @colours = map { $self->colour($_) } @{$glyph->{'colours'}};
 
   my $max = $glyph->{'max'} || 1000;
+  my $step = $glyph->{'pixelunit'} * $self->{'sf'};
+  my $mul =  scalar(@colours) / $max;
   foreach my $p (@$points) {
-    my $colour = $colours[int($p * scalar @colours / $max)] || '000000';
+    my $colour = $colours[int($p * $mul)] || '000000';
     $canvas->filledRectangle($x1,$y1,$x2,$y2,$colour);
-    $x1 += $glyph->{'pixelunit'} * $self->{'sf'};
-    $x2 += $glyph->{'pixelunit'} * $self->{'sf'};
+    $x1 += $step;
+    $x2 += $step;
   }
 }
 
