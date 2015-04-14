@@ -200,7 +200,7 @@ sub default_options {
         #'window_size' => 1000000,
         'window_size' => 10000,
 	'filter_duplicates_rc_name' => '1Gb',
-	'filter_duplicates_himem_rc_name' => '3.6Gb',
+	'filter_duplicates_himem_rc_name' => 'crowd_himem',
 
 	#
 	#Default pair_aligner
