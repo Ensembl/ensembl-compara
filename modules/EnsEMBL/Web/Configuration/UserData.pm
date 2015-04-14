@@ -45,8 +45,9 @@ sub populate_tree {
   $data_menu->append($self->create_node('SelectShare',    '',              [qw(select_share EnsEMBL::Web::Component::UserData::SelectShare)], { filters => [ 'Shareable' ] }));
   $data_menu->append($self->create_node('ShareURL',       '',              [qw(share_url    EnsEMBL::Web::Component::UserData::ShareURL)]));
   
-  $data_menu->append($self->create_node('UploadFile',   '', [], { command => 'EnsEMBL::Web::Command::UserData::UploadFile'   }));
-  $data_menu->append($self->create_node('AttachRemote', '', [], { command => 'EnsEMBL::Web::Command::UserData::AttachRemote' }));
+  #$data_menu->append($self->create_node('UploadFile',   '', [], { command => 'EnsEMBL::Web::Command::UserData::UploadFile'   }));
+  $data_menu->append($self->create_node('AddFile',   '', [], { command => 'EnsEMBL::Web::Command::UserData::AddFile'   }));
+  #$data_menu->append($self->create_node('AttachRemote', '', [], { command => 'EnsEMBL::Web::Command::UserData::AttachRemote' }));
   $data_menu->append($self->create_node('CheckShare',   '', [], { command => 'EnsEMBL::Web::Command::UserData::CheckShare'   }));
   
   ## Attach DAS "wizard"
