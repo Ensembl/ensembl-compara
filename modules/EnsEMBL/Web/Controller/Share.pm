@@ -278,30 +278,35 @@ sub accept {
   my %custom_das   = map { $_->{'dsn'}  => 1 } $session->get_data(type => 'das'), $user ? $user->get_records('dases') : ();
      $data         = from_json($data);
   my @view_configs = $configuration ? map { $hub->get_viewconfig(@$_) || () } @{$configuration->new_for_components($hub, split '/', $action, 2)} : $hub->get_viewconfig(keys %$data);
-  my (@revert, $manage);
+  my (@revert, $manage,%saveds);
  
   my @altered; 
   foreach my $view_config (@view_configs) {
     my $config       = $data->{$view_config->component};
     my $ic_type      = $view_config->image_config;
-    my $image_config = $ic_type ? $hub->get_imageconfig($ic_type) : undef;
     ## Save current config for this component (if any)
-    my $saved_config;
     my @current_configs = ($hub->config_adaptor->get_config('view_config', $view_config->code),
                             $hub->config_adaptor->get_config('image_config', $ic_type));
     my $record_type_id  = $hub->user ? $hub->user->id : $session->create_session_id;
 
     if (scalar(@current_configs)) {
-      $saved_config = $self->save_config($view_config->code, $ic_type, (
-        record_type     => 'session',
-        record_type_ids => [$record_type_id], 
-        name            => $view_config->title . ' - '. $self->pretty_date(time, 'simple_datetime'),
-        description     => 'This configuration was automatically saved when you used a URL to view a shared image. It contains your configuration before you accepted the shared image.',
-      ));
+      $saveds{$view_config->component} =
+        $self->save_config($view_config->code, $ic_type, (
+          record_type     => 'session',
+          record_type_ids => [$record_type_id],
+          name            => $view_config->title . ' - '. $self->pretty_date(time, 'simple_datetime'),
+          description     => 'This configuration was automatically saved when you used a URL to view a shared image. It contains your configuration before you accepted the shared image.',
+        ));
     }
     
     $session->receive_shared_data(grep !$custom_data{$_}, @{$config->{'shared_data'}}) if $config->{'shared_data'};
-    
+  }
+  foreach my $view_config (@view_configs) {
+    my $config       = $data->{$view_config->component};
+    my $ic_type      = $view_config->image_config;
+    my $image_config = $ic_type ? $hub->get_imageconfig($ic_type) : undef;
+
+
     if ($config->{'shared_das'}) {
       my @das_sources;
       
@@ -331,7 +336,7 @@ sub accept {
       my @changes;
       foreach (keys %{$config->{'image_config'}}) {
         my $node = $image_config->get_node($_) or next;
-        my $track_name = $node->data->{'name'} || $node->data->{'coption'};
+        my $track_name = $node->data->{'name'} || $node->data->{'caption'};
         push @changes, $track_name if $track_name;
       }
       $image_config->set_user_settings($config->{'image_config'});
@@ -345,6 +350,7 @@ sub accept {
     }
     
     if (scalar $view_config->altered || ($image_config && $image_config->is_altered)) {
+      my $saved_config = $saveds{$view_config->component};
       push @revert, [ sprintf('
         <a class="update_panel config-reset" rel="%s" href="%s">Revert to previous configuration%%s</a>',
         $view_config->component,
