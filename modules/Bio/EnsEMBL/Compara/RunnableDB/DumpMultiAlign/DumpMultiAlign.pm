@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2013] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -20,10 +20,10 @@ limitations under the License.
 =head1 CONTACT
 
   Please email comments or questions to the public Ensembl
-  developers list at <dev@ensembl.org>.
+  developers list at <http://lists.ensembl.org/mailman/listinfo/dev>.
 
   Questions may also be sent to the Ensembl help desk at
-  <helpdesk@ensembl.org>.
+  <http://www.ensembl.org/Help/Contact>.
 
 =head1 NAME
 
@@ -62,7 +62,6 @@ sub run {
     if ($self->param('start') && $self->param('end')) {
         my $tmp_file = $self->_write_gab_file();
         $cmd .= " --file_of_genomic_align_block_ids " . $tmp_file;
-
         $self->param('tmp_file', $tmp_file);
     }
 
@@ -83,19 +82,23 @@ sub run {
 	$cmd .= " --reg_conf " . $self->param('reg_conf');
     }
 
-    #print "cmd $cmd \n";
-
     #
     #Run DumpMultiAlign cmd
     #
+    $self->compara_dba->dbc->disconnect_when_inactive(1);
+
     if(my $return_value = system($cmd)) {
         $return_value >>= 8;
         die "system( $cmd ) failed: $return_value";
     }
+
+    $self->compara_dba->dbc->disconnect_if_idle() if $self->compara_dba->dbc->connected();
+    
     #
     #Check number of genomic_align_blocks written is correct
     # 
-    $self->_healthcheck();
+    my $num_blocks = $self->_healthcheck();
+    $self->param('num_blocks', $num_blocks);
 }
 
 sub write_output {
@@ -107,28 +110,12 @@ sub write_output {
     #
     #Create emf2maf job if necesary
     #
-    if ($self->param('maf_output_dir')) {
+    if ($self->param('num_blocks') != 0) {
 	my $output_ids = {'output_file'=>$self->param('dumped_output_file'),
 			  'num_blocks' =>$self->param('num_blocks')};
 
 	$self->dataflow_output_id($output_ids, 2);
-
-    } else {
-	#Send dummy jobs to emf2maf
-	#$self->dataflow_output_id("{}", 2);
-
-	#Send to compress
-	my $output_ids = {"output_file"=>$self->param('dumped_output_file')};
-	$self->dataflow_output_id($output_ids, 1);
-	
     }
-
-    #
-    #Create Compress jobs - could this be put in the else and then emf2maf calls compress with both emf and maf?
-    #
-
-    #my $output_ids = "{\"output_file\"=>\"" . $self->param('dumped_output_file') . "\"}";
-    #$self->dataflow_output_id($output_ids, 1);
 }
 
 #
@@ -138,11 +125,12 @@ sub _healthcheck {
     my ($self) = @_;
     
     #Find out if split into several files
-    my $dump_cmd = $self->param('extra_args');
-    my $chunk_num = $dump_cmd =~ /chunk_num/;
+    my $dump_cmd    = $self->param('extra_args');
+    my $chunk_num   = $dump_cmd =~ /chunk_num/;
     my $output_file = $self->param('output_dir') . "/" . $self->param('output_file');
 
     #not split by chunk eg supercontigs so need to check all supercontig* files
+=pod
     if (!$chunk_num) {
 	if ($output_file =~ /\.[^\.]+$/) {
 	    $output_file =~ s/(\.[^\.]+)$/_*$1/;
@@ -151,6 +139,7 @@ sub _healthcheck {
 	#Have chunk number in filename
 	$output_file = $self->param('output_dir') . "/" . $self->param('dumped_output_file');
     }
+=cut
 
     my $cmd;
     if ($self->param('format') eq "emf") {
@@ -162,7 +151,8 @@ sub _healthcheck {
     my $num_blocks = `$cmd`;
     chomp $num_blocks;
     if ($num_blocks != $self->param('num_blocks')) {
-	die("Number of block dumped is $num_blocks but should be " . $self->param('num_blocks'));
+	warn("Number of block dumped is $num_blocks but should be " . $self->param('num_blocks'));
+	#die("Number of block dumped is $num_blocks but should be " . $self->param('num_blocks'));
     } else {
 	print "Wrote " . $self->param('num_blocks') . " blocks\n";
 	#Store results in table. Not really necessary but good to have 
@@ -172,6 +162,8 @@ sub _healthcheck {
 	$sth->execute($self->param('output_file'), $self->param('num_blocks'), $num_blocks);
 	$sth->finish();
     }
+
+return $num_blocks;
 }
 
 #
