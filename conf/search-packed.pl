@@ -72,7 +72,7 @@ foreach my $s (@s) {
   } else {
     my $v = $s->[1];
     $v = 'undef' unless defined $v;
-    print join('/',@{$s->[0]})." v $v\n";
+    print join('/',@{$s->[0]})."\tv\t$v\n";
   }
 }
 
