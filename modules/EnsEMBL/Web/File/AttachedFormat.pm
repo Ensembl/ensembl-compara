@@ -39,7 +39,8 @@ sub new {
   return $self;
 }
 
-sub name  { shift->{'format'} }
+sub url       { return shift->{'url'} }
+sub name      { shift->{'format'} }
 sub trackline { shift->{'trackline'} }
 
 sub extra_config_page { return undef; }
