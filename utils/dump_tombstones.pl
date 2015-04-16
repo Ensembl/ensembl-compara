@@ -68,13 +68,14 @@ foreach my $t (@tombstones) {
   $t->{'epoch'} = strftime("%s",@{$t->{'gmtime'}});
 }
 @tombstones = sort { $a->{'epoch'} <=> $b->{'epoch'} } @tombstones;
-@tombstones = reverse @tombstones if $reverse;
 
 my $truncated = 0;
 if(@tombstones > $MAXLEN) {
-  @tombstones = splice(@tombstones,0,$MAXLEN);
+  @tombstones = splice(@tombstones,-$MAXLEN,$MAXLEN);
   $truncated = 1;
 }
+
+@tombstones = reverse @tombstones if $reverse;
 
 my %fmt = (
   text => "  %23s (tombstone: %10s %10s)\n    %s\n    %s:%s\n    %s\n\n",
