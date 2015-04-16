@@ -121,8 +121,8 @@ sub stats_table {
     my $phe_source = $pf->source_name;
    
     $phenotypes{$phe} ||= { id => $pf->{'_phenotype_id'} , name => $pf->{'_phenotype_name'}};
-    push @{$phenotypes{$phe}{'count'}},  $var_name   unless grep $var_name   eq $_, @{$phenotypes{$phe}{'count'}};
-    push @{$phenotypes{$phe}{'source'}}, $phe_source unless grep $phe_source eq $_, @{$phenotypes{$phe}{'source'}};
+    $phenotypes{$phe}{'count'}{$var_name} = 1;
+    $phenotypes{$phe}{'source'}{$phe_source} = 1;
     
     $total_counts->{$var_name} = 1;
   }  
@@ -151,18 +151,19 @@ sub stats_table {
     };
   }
   
-  foreach (sort keys %phenotypes) {
+  foreach (sort { ($b !~ /COSMIC/ cmp $a !~ /COSMIC/) || $a cmp $b} keys %phenotypes) {
     my $phenotype    = $phenotypes{$_};
-    my $table_id     = $_;
+    my $phe_desc     = $_;
+    my $table_id     = $phe_desc;
        $table_id     =~ s/[^\w]/_/g;
-    my $phe_count    = scalar @{$phenotype->{'count'}};
+    my $phe_count    = scalar (keys(%{$phenotype->{'count'}}));
     my $warning      = $phe_count > $max_lines ? $warning_text : '';
-    my $sources_list = join ', ', map $self->source_link($_, undef, undef, undef), @{$phenotype->{'source'}};
+    my $sources_list = join ', ', map $self->source_link($_, undef, undef, undef, $phe_desc), sort {$a cmp $b} keys(%{$phenotype->{'source'}});
     my $loc          = '-';
     my $mart         = '-';
     
     # BioMart link
-    if ($hub->species_defs->ENSEMBL_MART_ENABLED && grep {$_ eq 'COSMIC'} @{$phenotype->{source}}) {
+    if ($mart_somatic_url && $phenotype->{source}{'COSMIC'}) {
       if ($pf_adaptor->count_all_by_phenotype_id($phenotype->{'id'}) > 250) {
         my $mart_phe_url = $mart_somatic_url;
         $mart_phe_url =~ s/###PHE###/$_/;
@@ -307,30 +308,25 @@ sub variation_table {
 
 
 sub source_link {
-  my ($self, $source, $ext_id, $vname, $gname) = @_;
+  my ($self, $source, $ext_id, $vname, $gname, $phenotype) = @_;
   
   my $source_uc = uc $source;
-  $source_uc    = 'OPEN_ACCESS_GWAS_DATABASE' if $source_uc =~ /OPEN/;
-  
+     $source_uc =~ s/\s/_/g;
+
   if ($ext_id) {
     $source_uc .= '_ID' if $source_uc =~ /COSMIC/;
     $source_uc  = $1 if $source_uc =~ /(HGMD)/;
   }
   my $url = $self->hub->species_defs->ENSEMBL_EXTERNAL_URLS->{$source_uc};
 
-  if ($ext_id && $ext_id ne 'no-ref') {
-    if ($url =~/gwastudies/) {
-      $ext_id =~ s/pubmed\///; 
-      $url    =~ s/###ID###/$ext_id/;
-    } 
-    elsif ($url =~ /omim/) {
-      $ext_id    =~ s/MIM\://; 
-      $url =~ s/###ID###/$ext_id/;
-    } 
-    else {
-      $url =~ s/###ID###/$ext_id/;
-    }
-  } 
+  if ($url =~/ebi\.ac\.uk\/gwas/) {
+    my $search = ($vname) ? $vname : $phenotype;
+    $url =~ s/###ID###/$search/;
+  }
+  elsif ($url =~ /omim/ && $ext_id && $ext_id ne 'no-ref') {
+    $ext_id =~ s/MIM\://;
+    $url =~ s/###ID###/$ext_id/;
+  }
   elsif ($vname || $gname) {
     if ($url =~ /omim/) {
         my $search = "search?search=".($vname || $gname);
@@ -368,7 +364,13 @@ sub external_reference_link {
   my $hub = $self->hub;
   
   if ($study =~ /pubmed/) {
-    return qq{<a rel="external" href="http://www.ncbi.nlm.nih.gov/$study">$study</a>};
+    my $study_id = $study;
+       $study_id =~ s/pubmed\///;
+    my $link = $self->hub->species_defs->ENSEMBL_EXTERNAL_URLS->{'EPMC_MED'};
+       $link =~ s/###ID###/$study_id/;
+    $study =~ s/\//:/g;
+    $study =~ s/pubmed/PMID/;
+    return qq{<a rel="external" href="$link">$study</a>};
   }
   elsif ($study =~ /^MIM\:/) {
     my $id = (split /\:/, $study)[-1];
