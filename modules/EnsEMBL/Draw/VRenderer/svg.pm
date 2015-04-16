@@ -34,8 +34,6 @@ use base qw(EnsEMBL::Draw::VRenderer);
 
 sub init_canvas {
   my ($self, $config, $im_width, $im_height) = @_;
-  # we separate out postscript commands from header so that we can
-  # do EPS at some future time.
   $im_height = int($im_height * $self->{sf});
   $im_width  = int($im_width  * $self->{sf});
 
@@ -164,11 +162,11 @@ sub render_Text {
 }
 
 sub render_Circle {
-#    die "Not implemented in postscript yet!";
+#    die "Not implemented in svg yet!";
 }
 
 sub render_Ellipse {
-#    die "Not implemented in postscript yet!";
+#    die "Not implemented in svg yet!";
 }
 
 sub render_Intron {
