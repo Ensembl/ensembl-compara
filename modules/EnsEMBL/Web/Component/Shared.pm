@@ -340,11 +340,13 @@ sub transcript_table {
       }
       if ($trans_attribs->{$tsi}{'appris'}) {
         my ($code, $text) = @{$trans_attribs->{$tsi}{'appris'}};
+        my $short_code = $code ? ' '.uc($code) : '';
+        my $appris_popup  = sprintf('<span class="glossary_mouseover">APPRIS%s<span class="floating_popup">%s', $short_code, $text);
+
         my $glossary_url  = $hub->url({'type' => 'Help', 'action' => 'Glossary', 'id' => '521', '__clear' => 1});
-        my $appris_link   = $hub->get_ExtURL_link('APPRIS website', 'APPRIS');
-        push @flags, $code
-          ? sprintf('<span class="glossary_mouseover">APPRIS %s<span class="floating_popup">%s<br /><a href="%s" class="popup">Glossary entry for APPRIS</a><br />%s</span></span>', uc $code, $text, $glossary_url, $appris_link)
-          : sprintf('<span class="glossary_mouseover">APPRIS<span class="floating_popup">%s<br />%s</span></span>', $text, $appris_link);
+        $appris_popup .= sprintf('<br/><br/><a href="%s" class="popup">APPRIS</a> is a system to annotate alternatively spliced transcripts based on a range of computational methods.</span></span>', $glossary_url);
+
+        push @flags, $appris_popup;
       }
 
       (my $biotype_text = $_->biotype) =~ s/_/ /g;
