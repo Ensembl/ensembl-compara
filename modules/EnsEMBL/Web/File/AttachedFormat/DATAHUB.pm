@@ -54,7 +54,7 @@ sub check_data {
                 ? @{$hub_info->{'error'}} : $hub_info->{'error'};
   }
   my @assemblies = keys %{$hub_info->{'genomes'}||{}};
-  return ($error, { name => $hub_info->{'details'}{'shortLabel'}, assemblies => \@assemblies});  
+  return ($self->url, $error, { name => $hub_info->{'details'}{'shortLabel'}, assemblies => \@assemblies});  
 }
 
 sub style {

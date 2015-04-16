@@ -69,7 +69,7 @@ sub check_data {
   else {
     $options = {'filesize' => $feedback->{'filesize'}};
   }
-  return ($error, $options);
+  return ($url, $error, $options);
 }
 
 sub parse_trackline {
