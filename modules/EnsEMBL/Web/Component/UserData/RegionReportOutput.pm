@@ -18,6 +18,11 @@ limitations under the License.
 
 package EnsEMBL::Web::Component::UserData::RegionReportOutput;
 
+############# DEPRECATED #################
+## This tool is no longer in use and will
+## be removed in release 81
+##########################################
+
 use strict;
 use warnings;
 no warnings "uninitialized";
