@@ -139,6 +139,7 @@ our $ENSEMBL_TMP_TMP        = '/tmp';
 our $ENSEMBL_TMP_URL        = '/tmp';
 our $ENSEMBL_TMP_URL_IMG    = '/img-tmp';
 our $ENSEMBL_TMP_URL_CACHE  = '/img-cache';
+our $TRACKHUB_TIMEOUT       = 60*60*24;
 
 our ($ENSEMBL_REGISTRY);
 
