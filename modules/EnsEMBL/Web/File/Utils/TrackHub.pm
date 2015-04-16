@@ -41,12 +41,12 @@ our $headers = {
                 'If-Modified-Since' => 'Thu, 1 Jan 1970 00:00:00 GMT',
                 };
 
-### Memcached refresh period
-our $cache_timeout = 60*60*24*7;
-
 sub new {
 ### c
   my ($class, %args) = @_;
+
+  my $hub = $args{'hub'};
+  $args{'timeout'} = $hub->param('udcTimeout') || $hub->species_defs->TRACKHUB_TIMEOUT;
 
   ## TODO - replace with Bio::EnsEMBL::IO version when it's ready
   unless ($args{'parser'}) {
@@ -169,7 +169,7 @@ sub get_hub {
   else {
     my $trackhub = { details => $hub_info, genomes => $genome_info };
     if ($cache) {
-      $cache->set($cache_key, $trackhub, $cache_timeout, 'TRACKHUBS');
+      $cache->set($cache_key, $trackhub, $self->{'timeout'}, 'TRACKHUBS');
     }
     return $trackhub;
   }
