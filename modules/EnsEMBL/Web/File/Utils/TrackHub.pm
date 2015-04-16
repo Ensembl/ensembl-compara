@@ -223,7 +223,7 @@ sub get_track_info {
     $trackhub = $cache->get($cache_key);
     if ($trackhub) {
       $trackhub->{'genomes'}{$args->{'genome'}}{'tree'} = $tree;
-      $cache->set($cache_key, $trackhub, $cache_timeout, 'TRACKHUBS');
+      $cache->set($cache_key, $trackhub, $self->{'timeout'}, 'TRACKHUBS');
     }
   }
   
