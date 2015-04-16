@@ -547,7 +547,7 @@ sub get_export_data {
   }
   else {
     return $node ? $node->get_SimpleAlign(-APPEND_SP_SHORT_NAME => 1) 
-                 : $tree->tree->get_SimpleAlign;
+                 : $tree->tree->get_SimpleAlign(-APPEND_SP_SHORT_NAME => 1);
   }
 }
 

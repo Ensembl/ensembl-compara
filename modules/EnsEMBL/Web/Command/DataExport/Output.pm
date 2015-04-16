@@ -453,7 +453,6 @@ sub write_alignment {
   my ($alignment, $result);
   my $flag = $align ? undef : 'sequence';
   my $data = $component->get_export_data($flag);
-  warn ">>> DATA $data";
   if (!$data) {
     $result->{'error'} = ['No data returned'];
   }
@@ -471,10 +470,10 @@ sub write_alignment {
     else {
       if (ref($data) =~ 'AlignedMemberSet') {
         if ($hub->param('align_type') eq 'msa_dna' || $hub->param('seq_type') =~ /dna/) {
-          $data = $data->get_SimpleAlign(-SEQ_TYPE => 'cds');
+          $data = $data->get_SimpleAlign(-SEQ_TYPE => 'cds', -APPEND_SP_SHORT_NAME => 1);
         }
         else {
-          $data = $data->get_SimpleAlign;
+          $data = $data->get_SimpleAlign(-APPEND_SP_SHORT_NAME => 1);
         }
       }
       if (ref($data) =~ 'SimpleAlign') {

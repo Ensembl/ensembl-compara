@@ -222,9 +222,9 @@ sub get_export_data {
     
       eval {
         if($seq eq 'cDNA') {
-          $sa = $homology->get_SimpleAlign(-SEQ_TYPE => 'cds');
+          $sa = $homology->get_SimpleAlign(-APPEND_SP_SHORT_NAME => 1, -SEQ_TYPE => 'cds');
         } else {
-          $sa = $homology->get_SimpleAlign;
+          $sa = $homology->get_SimpleAlign(-APPEND_SP_SHORT_NAME => 1);
         }
       };
       warn $@ if $@;
