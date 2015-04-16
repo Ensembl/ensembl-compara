@@ -103,8 +103,8 @@ sub build_tracks {
 		  $chr_min_data = $mean if ($mean < $chr_min_data || $chr_min_data eq undef); 
 		  $chr_max_data = $mean if $mean > $chr_max_data;
       ## Scale data for actual display
-      my $max = $chr_max_data || 1; 
-      push @$scaled_scores, $mean/$max * $width;
+      my $max = $max_data || $chr_max_data || 1; 
+      push @$scaled_scores, $_/$max * $width;
 	  }
     $T->{'scores'} = $scaled_scores;
     $T->{'mins'}   = $mins;
@@ -256,6 +256,11 @@ sub _histogram {
     }
     $old_y = $new_y;
   }
+}
+
+sub _set_scale {
+  my ($self, $T) = @_;
+  return $T->{'max_data'} ? $T->{'width'} / $T->{'max_data'} : $T->{'width'};
 }
 
 1;
