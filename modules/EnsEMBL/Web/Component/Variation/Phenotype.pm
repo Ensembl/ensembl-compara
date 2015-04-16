@@ -365,7 +365,8 @@ sub external_reference_link {
   my ($self, $study, $allele) = @_;
   my $link;
   if($study =~ /pubmed/) {
-    $link = qq{http://www.ncbi.nlm.nih.gov/$study};
+    $study =~ s/pubmed\///;
+    $link = qq{http://europepmc.org/abstract/MED/$study};
     $study =~ s/\//:/g;
     return qq{<a rel="external" href="$link">$study</a>};
   }
