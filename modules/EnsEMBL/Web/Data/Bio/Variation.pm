@@ -195,8 +195,12 @@ sub _pf_external_reference_link {
   foreach my $xref (sort keys(%$xrefs)) {
     my $link;
     if($xref =~ /pubmed/) {
-      $link = qq{http://www.ncbi.nlm.nih.gov/$xref};
+      my $xref_id = $xref;
+         $xref_id =~ s/pubmed\///;
+      $link = $self->hub->species_defs->ENSEMBL_EXTERNAL_URLS->{'EPMC_MED'};
+      $link =~ s/###ID###/$xref_id/;
       $xref =~ s/\//:/g;
+      $xref =~ s/pubmed/PMID/;
       $html .= qq{<a rel="external" href="$link">$xref</a>; };
     }
     elsif($xref =~ /^MIM\:/) {
@@ -233,27 +237,19 @@ sub _pf_source_link {
   }
   
   my $source_uc = uc $source;
-     $source_uc = 'OPEN_ACCESS_GWAS_DATABASE' if $source_uc =~ /OPEN/;
      $source_uc =~ s/\s/_/g;
   my $url       = $self->hub->species_defs->ENSEMBL_EXTERNAL_URLS->{$source_uc};
   my $label     = $source;
   my $name;
-  if ($url =~ /gwastudies/) {
-    $ext_ref_id =~ s/pubmed\///; 
-    $name = $ext_ref_id;
+  if ($url =~/ebi\.ac\.uk\/gwas/) {
+    $name = $obj_name;
   } 
   elsif ($url =~ /clinvar/) {
     $ext_id =~ /^(.+)\.\d+$/;
     $name = ($1) ? $1 : $ext_id;
   } 
   elsif ($url =~ /omim/) {
-  #  if ($code) {
-     $name = "search?search=".($ext_id || $obj_name);
-  #  }
-  #  else {
-  #    $ext_ref_id =~ s/MIM\://; 
-  #    $name = $ext_ref_id;
-  #  }     
+    $name = "search?search=".($ext_id || $obj_name);
   } else {
     $name = $ext_id || $obj_name;
   }
