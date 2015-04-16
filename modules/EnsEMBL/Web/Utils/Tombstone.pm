@@ -39,8 +39,9 @@ use warnings;
 
 use Devel::StackTrace;
 use JSON qw(to_json);
+use Fcntl qw(:flock);
 
-use Exporter qw(tombstone);
+use Exporter qw(import);
 our @EXPORT_OK = qw(tombstone);
 
 use SiteDefs;
@@ -57,19 +58,19 @@ sub tombstone {
 
   ## Create/open individual log file for this user and date
   my $log_dir   = $SiteDefs::ENSEMBL_LOGDIR;
+  $log_dir =~ s|(?<!/)$|/|;
   my $log_file  = $log_dir.sprintf('tombstone_%s_%s.log', $username, $date);
   my $log       = open(LOG, ">>$log_file") or do { 
                     warn "!!! Couldn't open tombstone log $log_file: $!"; 
                     return; 
                   }; 
-
   ## Check we haven't exceeded the file allocation for this tombstone
   my $current_size  = tell(LOG);
   my $max_size      = $SiteDefs::MAX_TOMBSTONE_LOG_SIZE || 10 * 1024 * 1024; ## 10MB
   if ($current_size == -1) {
     warn "!!! Tombstone tell failed: $!";
     return;
-  elsif ($current_size >= $max_size) {
+  } elsif ($current_size >= $max_size) {
     warn "!!! Tombstone log size exceeded!";
     return;
   }
@@ -84,16 +85,16 @@ sub tombstone {
 
   ## Turn the information into a JSON string and write it to the log
   my $log_entry = {
-                    gmtime      => [@now],
+                    gmtime      => [gmtime],
                     stack_trace => $StackTrace->as_string(),
-                    author      => $author,
+                    author      => $username,
                     rip         => $date,
                     filename    => $FirstFrame->filename,
                     line        => $FirstFrame->line,
                     subroutine  => $SecondFrame->subroutine,
                   };
   my $eval_log = eval {
-                        my $string = to_json($log_entry);
+                        my $string = to_json($log_entry)."\n";
                         print LOG $string 
                             or warn "Could not print to '$log_file': $!";
                         1;
