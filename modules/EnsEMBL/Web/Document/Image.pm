@@ -298,7 +298,6 @@ sub add_image_export_menu {
   my @formats = (
       { f => 'pdf',     label => 'PDF'},
       { f => 'svg',     label => 'SVG' },
-      { f => 'eps',     label => 'PostScript' },
       { f => 'png-5',   label => 'PNG (x5)' },
       { f => 'png-2',   label => 'PNG (x2)' },
       { f => 'png',     label => 'PNG' },
