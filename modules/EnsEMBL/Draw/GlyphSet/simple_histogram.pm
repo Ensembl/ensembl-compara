@@ -30,6 +30,13 @@ package EnsEMBL::Draw::GlyphSet::simple_histogram;
 use strict;
 
 use base qw(EnsEMBL::Draw::GlyphSet_wiggle_and_block);
+use EnsEMBL::Web::Utils::Tombstone qw(tombstone);
+
+sub new {
+  my $self = shift;
+  tombstone('2015-04-16','ds23');
+  $self->SUPER::new(@_);
+}
 
 sub draw_features  {
   my ($self, $wiggle) = @_;

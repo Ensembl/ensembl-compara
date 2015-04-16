@@ -30,6 +30,14 @@ use strict;
 
 use base qw(EnsEMBL::Draw::GlyphSet);
 
+use EnsEMBL::Web::Utils::Tombstone qw(tombstone);
+
+sub new {
+  my $self = shift;
+  tombstone('2015-04-16','ds23');
+  $self->SUPER::new(@_);
+}
+
 sub _init {
   my ($self) = @_;
   return unless ($self->strand() == -1);

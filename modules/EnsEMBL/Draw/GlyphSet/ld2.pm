@@ -31,6 +31,13 @@ use strict;
 use POSIX;
 
 use base qw(EnsEMBL::Draw::GlyphSet);
+use EnsEMBL::Web::Utils::Tombstone qw(tombstone);
+
+sub new {
+  my $self = shift;
+  tombstone('2015-04-16','ds23');
+  $self->SUPER::new(@_);
+}
 
 sub _key { return $_[0]->my_config('key') || 'r2'; }
 

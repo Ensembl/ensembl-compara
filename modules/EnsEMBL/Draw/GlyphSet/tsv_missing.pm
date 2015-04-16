@@ -29,7 +29,13 @@ package EnsEMBL::Draw::GlyphSet::tsv_missing;
 use strict;
 
 use base qw(EnsEMBL::Draw::GlyphSet);
+use EnsEMBL::Web::Utils::Tombstone qw(tombstone);
 
+sub new {
+  my $self = shift;
+  tombstone('2015-04-16','ds23');
+  $self->SUPER::new(@_);
+}
 
 # The filter message refers to the number of SNPs removed from the 'snp_fake' track
 # i.e. the number will not change if you filter on SARA SNPs

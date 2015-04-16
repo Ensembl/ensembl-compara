@@ -31,7 +31,13 @@ use strict;
 use EnsEMBL::Draw::Utils::Bump;
 
 use base qw(EnsEMBL::Draw::GlyphSet);
+use EnsEMBL::Web::Utils::Tombstone qw(tombstone);
 
+sub new {
+  my $self = shift;
+  tombstone('2015-04-16','ds23');
+  $self->SUPER::new(@_);
+}
 
 sub _init {
   my ($self) = @_; 

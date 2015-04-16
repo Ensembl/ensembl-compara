@@ -28,3 +28,9 @@ package EnsEMBL::Draw::GlyphSet_feature;
 
 use strict;
 use base qw(EnsEMBL::Draw::GlyphSet);
+
+sub new {
+  my $self = shift;
+  tombstone('2015-04-16','ds23');
+  $self->SUPER::new(@_);
+}

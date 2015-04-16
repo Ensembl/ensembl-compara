@@ -29,9 +29,16 @@ package EnsEMBL::Draw::GlyphSet::ctcf;
 
 use strict;
 
+use EnsEMBL::Web::Utils::Tombstone qw(tombstone);
 use base qw(EnsEMBL::Draw::GlyphSet_wiggle_and_block);
 
 sub my_helplink { return "ctcf"; }
+
+sub new {
+  my $self = shift;
+  tombstone('2015-04-16','ds23');
+  $self->SUPER::new(@_);
+}
 
 sub get_block_features {
   ### block_features
