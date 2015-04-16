@@ -23,6 +23,9 @@ use strict;
 use base qw(EnsEMBL::Draw::Renderer);
 
 sub init_canvas {
+######## DEPRECATED ################
+warn "DEPRECATED MODULE - will be removed in release 81.";
+####################################
   my ($self, $config, $im_width, $im_height) = @_;
 
   $self->{'colours'} = {};
