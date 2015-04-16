@@ -82,7 +82,7 @@ my %fmt = (
   full => "  %23s (tombstone: %10s %10s)\n    %s\n    %s:%s\n    %s\n\n%s\n\n",
   html => q(
     <div style="margin: 8px; padding: 8px; border: 1px solid #cccccc;">
-      <h2>%s %s %s</h2>
+      <h2>%s (%s %s)</h2>
       <dl>
         <dt>SERVER_ROOT</dt>
         <dd>%s</dd>
