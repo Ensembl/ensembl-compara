@@ -79,9 +79,9 @@ sub tombstone {
   flock(LOG, LOCK_EX | LOCK_NB) or return; 
 
   ## Get the stacktrace for the method call
-  my $StackTrace  = Devel::StackTrace->new(skip_frames => 1, no_args => 1);
-  my $FirstFrame  = $StackTrace->frame(0);
-  my $SecondFrame = $StackTrace->frame(1) || $StackTrace->frame(0);
+  my $StackTrace  = Devel::StackTrace->new(no_args => 1);
+  my $FirstFrame  = $StackTrace->frame(1);
+  my $SecondFrame = $StackTrace->frame(2) || $StackTrace->frame(1);
 
   ## Turn the information into a JSON string and write it to the log
   my $log_entry = {
