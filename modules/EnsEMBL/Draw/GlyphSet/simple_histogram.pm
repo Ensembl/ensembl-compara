@@ -16,6 +16,12 @@ limitations under the License.
 
 =cut
 
+### MODULE AT RISK OF DELETION ##
+# This module is unused in the core Ensembl code, and is at risk of
+# deletion. If you have use for this module, please contact the
+# Ensembl team.
+### MODULE AT RISK OF DELETION ##
+
 package EnsEMBL::Draw::GlyphSet::simple_histogram;
 
 ### Draws data stored as simple features in a histogram style track
