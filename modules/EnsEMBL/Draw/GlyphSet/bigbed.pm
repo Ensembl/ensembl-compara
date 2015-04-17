@@ -73,13 +73,8 @@ sub bigbed_adaptor {
       }
     } 
     else {
-<<<<<<< HEAD
       my $ad = Bio::EnsEMBL::IO::Adaptor::BigBedAdaptor->new($self->my_config('url'));
       $error = "Broken bigbed file" unless $ad->check;
-=======
-      my $ad = Bio::EnsEMBL::ExternalData::BigFile::BigBedAdaptor->new($self->my_config('url'));
-      $error = "Missing bigbed file" unless $ad->check;
->>>>>>> postreleasefix/79
       $self->{'_cache'}->{'_bigbed_adaptor'} = $ad;
     }
   }
