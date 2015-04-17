@@ -723,7 +723,8 @@ sub render_interaction {
     my (%id, $y_pos);
     foreach (sort { $a->[0] <=> $b->[0] }  map [ $_->start_1, $_->end_1, $_->start_2, $_->end_2, $_], @features) {
       my ($s1, $e1, $s2, $e2, $f) = @$_;
-
+      next unless ($e1 > 0 && $s2 < $length); ## Skip off-screen features
+  
       my $fgroup_name = $self->feature_group($f);
 
       push @{$id{$fgroup_name}}, [ $s1, $e1, $s2, $e2, $f,
@@ -746,7 +747,7 @@ sub render_interaction {
 
       foreach (@feat) {
         my ($s1, $e1, $s2, $e2, $f) = @$_;
-        #warn "@@@ FEATURE @$_";
+        warn "@@@ FEATURE @$_";
 
         my $feature_colour;
 
@@ -780,30 +781,41 @@ sub render_interaction {
 
         ## Arc between features
 
+        ## This track is best viewed at low zoom levels, as interactions are often very far 
+        ## apart.
+        my $max_depth = $self->image_width; ## Generous default
+
+        ## Start with a basic circular arc, assuming both features are within the slice
+        my $major_axis    = abs(ceil(($start_2 - $end_1) * $pix_per_bp));
+        my $minor_axis    = $major_axis;
+        my $start_point   = 0; ## righthand end of arc
+        my $end_point     = 180; ### lefthand end of arc
+        my $left_height   = $minor_axis; ## height of curve at left of image
+        my $right_height  = $minor_axis; ## height of curve at right of image
+        warn "... ARC $major_axis x $minor_axis, from $start_point to $end_point";
+
+
+=pod
         ## Height of track needs to be proportional, or it becomes enormous at high zoom levels! 
         ## Use double the image width as the maximum arc length, so that we get some information
         ## about off-screen features without the track getting crazy proportions
         my $distance    = ceil(($start_2 - $end_1) * $pix_per_bp);
-        my $track_depth = $self->image_width; ## Generous default
         my $max_width   = ceil($self->image_width * 2);
         my $major_axis  = $distance > $max_width ? $max_width : $distance;
         my $cutoff      = $major_axis > $max_width ? $max_width : $major_axis;
         my $minor_axis  = ceil(($cutoff / $max_width) * $track_depth);
         my $radius      = $major_axis / 2;
-        #warn ">>> MAJOR $major_axis, MINOR $minor_axis";
+        warn ">>> MAJOR $major_axis, MINOR $minor_axis";
 
-        my $start_point   = 0; ## righthand end of arc
-        my $end_point     = 180; ### lefthand end of arc
-        my $left_height   = $minor_axis; ## height of curve at left of image
-        my $right_height  = $minor_axis; ## height of curve at right of image
 
         ## Cut curve off at edge of track if ends lie outside the current window
+        my $radius  = $major_axis / 2;
         if ($e1 < 0) {
           ## Compensate for truncated distances
           my $off_screen = $distance > $max_width ? ($s2 - $major_axis / $pix_per_bp) : $e1;
-          #warn ">>> DISTANCE OFF-SCREEN $off_screen";
+          warn ">>> DISTANCE OFF-SCREEN $off_screen";
           my $cos = ($radius + $off_screen * $pix_per_bp)/$radius;
-          #warn ">>> LEFT COS $cos";
+          warn ">>> LEFT COS $cos";
           ## For some reason, unless one degree is added here, the left end
           ## of the arc overlaps the track name column 
           $end_point -= $self->acos_in_degrees($cos) + 1;
@@ -812,9 +824,9 @@ sub render_interaction {
         elsif ($s2 > $length) {
           ## Compensate for truncated distances
           my $off_screen = $distance > $max_width ? ($e1 + $major_axis / $pix_per_bp) : $s2;
-          #warn ">>> DISTANCE OFF-SCREEN $off_screen";
+          warn ">>> DISTANCE OFF-SCREEN $off_screen";
           my $cos = ($radius - (($off_screen - $length) * $pix_per_bp))/$radius;
-          #warn ">>> RIGHT COS $cos";
+          warn ">>> RIGHT COS $cos";
           $start_point = $self->acos_in_degrees($cos);
           $right_height = abs(sin(180 - $start_point) * $radius); 
         }
@@ -835,6 +847,8 @@ sub render_interaction {
         else {
           $max_arc = $minor_axis if $minor_axis > $max_arc;
         }
+=cut
+        $max_arc = $minor_axis if $minor_axis > $max_arc;
         ## modify dimensions to allow for 2-pixel width of brush
         $self->push($self->Arc({
               x             => $start_2 + ($h),
@@ -848,7 +862,6 @@ sub render_interaction {
               thickness     => 2,
               absolutewidth => 1,
             }));
-
         ## Second feature of pair
         $self->push($self->Rect({
               x            => $start_2 - 1,
@@ -859,7 +872,7 @@ sub render_interaction {
               label_colour => $label_colour,
               absolutey    => 1,
             })) unless $s2 > $length;
-
+=pod
         if ($self->{'show_labels'}) {
           my $label = $self->feature_label($f);
           my (undef, undef, $text_width, $text_height) = $self->get_text_width(0, $label, '', font => $fontname, ptsize => $fontsize);
@@ -900,7 +913,7 @@ sub render_interaction {
             class     => 'group', # for click_start/end on labels
           }));
       }
-
+=cut
 
       }
     }
