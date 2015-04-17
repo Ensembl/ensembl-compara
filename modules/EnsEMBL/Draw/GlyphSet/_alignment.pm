@@ -723,7 +723,6 @@ sub render_interaction {
     my (%id, $y_pos);
     foreach (sort { $a->[0] <=> $b->[0] }  map [ $_->start_1, $_->end_1, $_->start_2, $_->end_2, $_], @features) {
       my ($s1, $e1, $s2, $e2, $f) = @$_;
-      next unless ($e1 > 0 && $s2 < $length); ## Skip off-screen features
   
       my $fgroup_name = $self->feature_group($f);
 
@@ -747,7 +746,6 @@ sub render_interaction {
 
       foreach (@feat) {
         my ($s1, $e1, $s2, $e2, $f) = @$_;
-        warn "@@@ FEATURE @$_";
 
         my $feature_colour;
 
@@ -781,13 +779,16 @@ sub render_interaction {
 
         ## Arc between features
 
-        ## This track is best viewed at low zoom levels, as interactions are often very far 
-        ## apart.
-        my $max_depth = $self->image_width; ## Generous default
+        ## Set some sensible limits
+        my $max_width = $self->image_width;
+        my $max_depth = 250; 
 
-        ## Start with a basic circular arc, assuming both features are within the slice
+        ## Start with a basic circular arc, then constrain to above limits
         my $major_axis    = abs(ceil(($start_2 - $end_1) * $pix_per_bp));
         my $minor_axis    = $major_axis;
+        $major_axis       = $max_width if $major_axis > $max_width; 
+        $minor_axis       = $max_depth if $minor_axis > $max_depth; 
+        
         my $start_point   = 0; ## righthand end of arc
         my $end_point     = 180; ### lefthand end of arc
         my $left_height   = $minor_axis; ## height of curve at left of image
