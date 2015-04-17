@@ -52,7 +52,11 @@ Ensembl.Panel.Configurator = Ensembl.Panel.ModalContent.extend({
     this.base();
     
     if (this.params.hash) {
-      this.elLk.links.removeClass('active').children('.' + this.params.hash).parent().addClass('active');
+      var new_active = this.elLk.links.children('.' + this.params.hash);
+      if(new_active.length) {
+        this.elLk.links.removeClass('active');
+        new_active.parent().addClass('active');
+      }
       delete this.params.hash;
     }
     
