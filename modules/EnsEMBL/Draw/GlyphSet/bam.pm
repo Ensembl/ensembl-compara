@@ -27,8 +27,17 @@ use base qw(EnsEMBL::Draw::GlyphSet::sequence);
 
 use EnsEMBL::Draw::GlyphSet;
 
-use Bio::EnsEMBL::IO::Adaptor::BAMAdaptor;
+# There are still references to it in the core API and they're used
+#   here via a few intermediary calls. It's very wierd, maybe Core
+#   know what' going on. Obviously it should go long term, but in
+#   the meantime, this must stay so that Zebrafish BWA's still work.
+#
+#   Spooky.
+#   dps  2015-04-17
+use Bio::EnsEMBL::ExternalData::BAM::BAMAdaptor;
+
 use Bio::EnsEMBL::DBSQL::DataFileAdaptor;
+use Bio::EnsEMBL::IO::Adaptor::BAMAdaptor;
 use Data::Dumper;
 
 sub errorTrack {
