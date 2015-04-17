@@ -1144,7 +1144,9 @@ sub _add_bigbed_track {
 
   if ($args{'view'} && $args{'view'} =~ /peaks/i) {
     $options->{'join'} = 'off';  
-  } 
+  } else {
+    push @$renderers, ('tiling', 'Wiggle plot');
+  }
   
   $self->_add_file_format_track(
     format      => 'BigBed',
