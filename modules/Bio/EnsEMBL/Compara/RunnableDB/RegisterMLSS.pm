@@ -65,14 +65,7 @@ sub fetch_input {
     my $master_dba = Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->go_figure_compara_dba( $self->param_required('master_db') );
 
     # Trick to elevate the privileges on this session only
-    if ($master_dba->dbc->username eq 'ensro') {
-        my $new_password = $self->param('master_password') || $ENV{ENSADMIN_PSW};
-        unless ($new_password) {
-            $self->complete_early("Cannot find the password of the master database. Skipping the registration of the database");
-        }
-        $master_dba->dbc->username('ensadmin');
-        $master_dba->dbc->password($new_password);
-    }
+    $self->elevate_privileges($master_dba->dbc);
     $self->param('master_dbc', $master_dba->dbc);
     warn "master: ", $master_dba->dbc->locator, "\n" if $self->debug;
 

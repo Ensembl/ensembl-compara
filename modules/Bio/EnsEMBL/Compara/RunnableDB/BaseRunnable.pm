@@ -223,4 +223,30 @@ sub run_command {
 }
 
 
+=head2 elevate_privileges
+
+  Arg[1]      : Bio::EnsEMBL::DBSQL::DBConnection
+  Example     : $self->elevate_privileges();
+  Description : Upgrades the DBConnection's user to "ensadmin" if it is on "ensro".
+                it needs the ENSADMIN_PSW environment variable to be defined, or the
+                parameter 'master_password' otherwise
+  Returntype  : None
+  Caller      : internal
+
+=cut
+
+sub elevate_privileges {
+    my $self = shift;
+    my $dbc = shift;
+
+    if ($dbc->username eq 'ensro') {
+        my $new_password = $self->param('master_password') || $ENV{ENSADMIN_PSW};
+        $self->throw("Cannot guess the password for 'ensadmin'\n") unless $new_password;
+        $dbc->username('ensadmin');
+        $dbc->password($new_password);
+    }
+}
+
+
+
 1;
