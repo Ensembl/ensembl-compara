@@ -319,6 +319,9 @@ sub fetch_all_by_GenomeDB {
 }
 
 
+#TODO fetch_all_by_Slice($slice)
+#TODO fetch_all_by_Locus($locus, -expand_both, -expand_5, -expand_3, -limit
+
 sub _fetch_all_by_dnafrag_id_start_end_strand_limit {
   my ($self,$dnafrag_id,$dnafrag_start,$dnafrag_end,$dnafrag_strand,$limit) = @_;
 

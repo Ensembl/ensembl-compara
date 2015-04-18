@@ -213,6 +213,53 @@ sub fetch_canonical_member_for_gene_member_id { ## DEPRECATED
 }
 
 
+=head2 fetch_by_Translation
+
+  Arg[1]      : Bio::EnsEMBL::Translation
+  Arg[2]      : (opt) boolean: $verbose
+  Example     : my $seq_member = $seqmember_adaptor->fetch_by_Translation($translation);
+  Description : Returns the SeqMember equivalent of the given Translation object
+                If $verbose is switched on and the translation is not in Compara, prints a warning.
+  Returntype  : Bio::EnsEMBL::Compara::SeqMember
+  Exceptions  : none
+  Caller      : general
+  Status      : Stable
+
+=cut
+
+sub fetch_by_Translation {
+    my ($self, $translation, $verbose) = @_;
+
+    assert_ref($translation, 'Bio::EnsEMBL::Translation', 'translation');
+    my $seq_member = $self->fetch_by_stable_id($translation->stable_id);
+    warn $translation->stable_id." does not exist in the Compara database\n" if $verbose and not $seq_member;
+    return $seq_member;
+}
+
+
+=head2 fetch_by_Transcript
+
+  Arg[1]      : Bio::EnsEMBL::Transcript
+  Arg[2]      : (opt) boolean: $verbose
+  Example     : my $seq_member = $seqmember_adaptor->fetch_by_Transcript($transcript);
+  Description : Returns the SeqMember equivalent of the given Transcript object
+                If $verbose is switched on and the transcript is not in Compara, prints a warning.
+  Returntype  : Bio::EnsEMBL::Compara::SeqMember
+  Exceptions  : none
+  Caller      : general
+  Status      : Stable
+
+=cut
+
+sub fetch_by_Transcript {
+    my ($self, $transcript, $verbose) = @_;
+
+    assert_ref($transcript, 'Bio::EnsEMBL::Transcript', 'transcript');
+    my $stable_id_for_compara = $transcript->translation ? $transcript->translation->stable_id : $transcript->stable_id;
+    my $seq_member = $self->fetch_by_stable_id($stable_id_for_compara);
+    warn $stable_id_for_compara." does not exist in the Compara database\n" if $verbose and not $seq_member;
+    return $seq_member;
+}
 
 
 #

@@ -118,6 +118,31 @@ sub load_all_from_seq_members {
     }
 }
 
+
+=head2 fetch_by_Gene
+
+  Arg[1]      : Bio::EnsEMBL::Gene $gene
+  Arg[2]      : (opt) boolean: $verbose
+  Example     : my $gene_member = $genemember_adaptor->fetch_by_Gene($gene);
+  Description : Returns the GeneMember equivalent of the given Gene object.
+                If $verbose is switched on and the gene is not in Compara, prints a warning.
+  Returntype  : Bio::EnsEMBL::Compara::GeneMember
+  Exceptions  : none
+  Caller      : general
+  Status      : Stable
+
+=cut
+
+sub fetch_by_Gene {
+    my ($self, $gene, $verbose) = @_;
+
+    assert_ref($gene, 'Bio::EnsEMBL::Gene', 'gene');
+    my $gene_member = $self->fetch_by_stable_id($gene->stable_id);
+    warn $gene->stable_id." does not exist in the Compara database\n" if $verbose and not $gene_member;
+    return $gene_member;
+}
+
+
 #
 # INTERNAL METHODS
 #

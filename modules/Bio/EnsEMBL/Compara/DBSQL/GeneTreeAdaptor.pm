@@ -271,6 +271,26 @@ sub fetch_default_for_Member {
 }
 
 
+=head2 fetch_by_Gene
+
+  Arg[1]     : Bio::EnsEMBL::Gene $gene
+  Example    : $tree = $genetree_adaptor->fetch_by_Gene($gene);
+  Description: Fetches from the database the default gene tree that contains this gene
+  Returntype : Bio::EnsEMBL::Compara::GeneTree
+  Exceptions : none
+  Caller     : general
+
+=cut
+
+sub fetch_by_Gene {
+    my ($self, $gene) = @_;
+
+    assert_ref($gene, 'Bio::EnsEMBL::Gene', 'gene');
+    my $gene_member = $self->db->get_GeneMemberAdaptor->fetch_by_Gene($gene);
+    return $gene_member ? $self->fetch_default_for_Member($gene_member) : undef;
+}
+
+
 =head2 fetch_parent_tree
 
   Arg[1]     : GeneTree $tree or its root_id

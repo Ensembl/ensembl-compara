@@ -35,6 +35,43 @@ our @ISA = qw(Bio::EnsEMBL::Compara::DBSQL::BaseRelationAdaptor);
 
 our %single_species_ml = ('ENSEMBL_PARALOGUES' => 1, 'ENSEMBL_HOMOEOLOGUES' => 1, 'ENSEMBL_ORTHOLOGUES' => 0, 'ENSEMBL_PROJECTIONS' => 0);
 
+
+=head2 fetch_all_by_Gene
+
+  Arg [1]     : Bio::EnsEMBL::Gene $gene
+  Arg [-METHOD_LINK_TYPE] (opt)
+              : string: the method_link_type of the homologies to return. By
+                default, no filter is applied. You may want to use
+                ENSEMBL_ORTHOLOGUES or ENSEMBL_PARALOGUES
+  Arg [-TARGET_SPECIES] (opt)
+              : string: the species to find homologues with. By default, no
+                filter is applied. You can use any of the aliases recognised
+                by the Registry
+  Example     : my $all_homologues = $homology_adaptor->fetch_all_by_Gene($gene, -TARGET_SPECIES => 'rabbit');
+  Description : fetch the homology relationships where the given gene is implicated
+  Returntype  : arrayref of Bio::EnsEMBL::Compara::Homology
+  Exceptions  : none
+  Caller      : general
+
+=cut
+
+sub fetch_all_by_Gene {
+    my ($self, $gene, @args) = @_;
+
+    my ($method_link_type, $target_species) =
+        rearrange([qw(METHOD_LINK_TYPE TARGET_SPECIES)], @args);
+
+    my $gene_member = $self->db->get_GeneMemberAdaptor->fetch_by_Gene($gene, 1);
+    if (not $gene_member) {
+        return [];
+    } elsif ($target_species) {
+        return $self->fetch_all_by_Member_paired_species($gene_member, $target_species, $method_link_type ? [$method_link_type] : undef);
+    } else {
+        return $self->fetch_all_by_Member($gene_member, -METHOD_LINK_TYPE => $method_link_type);
+    }
+}
+
+
 =head2 fetch_all_by_Member
 
   Arg [1]    : Bio::EnsEMBL::Compara::Member $member
@@ -122,6 +159,7 @@ sub fetch_all_by_Member_paired_species {
 
   my $gdb1 = $member->genome_db;
 
+  throw("\$species should be string, not a ".ref($species)) if ref($species);
   my $gdb_a = $self->db->get_GenomeDBAdaptor();
   my $gdb2 = $gdb_a->fetch_by_registry_name($species);
   if(!defined $gdb2) {

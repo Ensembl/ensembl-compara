@@ -122,6 +122,26 @@ sub fetch_all_by_GeneMember {
 }
 
 
+=head2 fetch_all_by_Gene
+
+ Arg [1]    : Bio::EnsEMBL::Gene $gene
+ Example    : $families = $FamilyAdaptor->fetch_all_by_Gene($gene);
+ Description: find the families to which the given gene belongs to
+ Returntype : an array reference of Bio::EnsEMBL::Compara::Family objects
+ Exceptions : when missing arguments
+ Caller     : general
+
+=cut
+
+sub fetch_all_by_Gene {
+    my ($self, $gene) = @_;
+
+    assert_ref($gene, 'Bio::EnsEMBL::Gene', 'gene');
+    my $gene_member = $self->db->get_GeneMemberAdaptor->fetch_by_Gene($gene, 1);
+    return $gene_member ? $self->fetch_all_by_GeneMember($gene_member) : [];
+}
+
+
 =head2 fetch_by_SeqMember
 
  Arg [1]    : Bio::EnsEMBL::Compara::SeqMember $member
@@ -143,6 +163,26 @@ sub fetch_by_SeqMember {
 
   $self->bind_param_generic_fetch($seq_member->dbID, SQL_INTEGER);
   return $self->generic_fetch_one($constraint, $join);
+}
+
+
+=head2 fetch_by_Translation
+
+ Arg [1]    : Bio::EnsEMBL::Translation $translation
+ Example    : $family = $FamilyAdaptor->fetch_by_Translation($translation);
+ Description: find the family to which the given peptide belongs to
+ Returntype : Bio::EnsEMBL::Compara::Family or undef
+ Exceptions : when missing arguments
+ Caller     : general
+
+=cut
+
+sub fetch_by_Translation {
+    my ($self, $translation) = @_;
+
+    assert_ref($translation, 'Bio::EnsEMBL::Translation', 'translation');
+    my $seq_member = $self->db->get_SeqMemberAdaptor->fetch_by_Translation($translation, 1);
+    return $seq_member ? $self->fetch_by_SeqMember($seq_member) : undef;
 }
 
 
