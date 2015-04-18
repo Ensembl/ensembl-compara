@@ -87,8 +87,7 @@ use base ('Bio::EnsEMBL::Compara::DBSQL::BaseAdaptor', 'Bio::EnsEMBL::Compara::D
   Arg [-CLUSTERSET_ID] (opt)
              : string: the name of the clusterset (use "default" to get the default
                trees). Currently, there is a clusterset for the default trees, one for
-               each phylogenetic model used in the protein tree pipeline, and one for
-               the multiple alignment of super-trees.
+               each phylogenetic model used in the protein tree pipeline
   Example    : $all_trees = $genetree_adaptor->fetch_all();
   Description: Fetches from the database all the gene trees
   Returntype : arrayref of Bio::EnsEMBL::Compara::GeneTree
@@ -211,7 +210,7 @@ sub fetch_by_node_id {
 
 =head2 fetch_all_by_Member
 
-  Arg[1]     : Member or member_id
+  Arg[1]     : GeneMember, SeqMember or seq_member_id
   Arg [-METHOD_LINK_SPECIES_SET] (opt)
              : MethodLinkSpeciesSet or int: either the object or its dbID
   Arg [-CLUSTERSET_ID] (opt)
@@ -234,8 +233,8 @@ sub fetch_all_by_Member {
     my $join = [[['gene_tree_node', 'gtn'], 'gtn.root_id = gtr.root_id']];
     my $constraint = '(gtn.seq_member_id = ?)';
     
-    my $member_id = (ref($member) ? ($member->isa('Bio::EnsEMBL::Compara::GeneMember') ? $member->canonical_member_id : $member->dbID) : $member);
-    $self->bind_param_generic_fetch($member_id, SQL_INTEGER);
+    my $seq_member_id = (ref($member) ? ($member->isa('Bio::EnsEMBL::Compara::GeneMember') ? $member->canonical_member_id : $member->dbID) : $member);
+    $self->bind_param_generic_fetch($seq_member_id, SQL_INTEGER);
     
     if (defined $mlss) {
         assert_ref_or_dbID($mlss, 'Bio::EnsEMBL::Compara::MethodLinkSpeciesSet', 'mlss');
@@ -254,7 +253,7 @@ sub fetch_all_by_Member {
 
 =head2 fetch_default_for_Member
 
-  Arg[1]     : Member or member_id
+  Arg[1]     : GeneMember, SeqMember or seq_member_id
   Example    : $trees = $genetree_adaptor->fetch_default_for_Member($member);
   Description: Fetches from the database the default gene tree that contains this member
                If the member is a non-canonical SeqMember, returns undef
