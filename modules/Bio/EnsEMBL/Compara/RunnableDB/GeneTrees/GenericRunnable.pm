@@ -169,7 +169,11 @@ sub write_output {
     my $self = shift;
 
     if ($self->param('read_tags')) {
-        my $target_tree = $self->param('default_gene_tree')->alternative_trees->{$self->param('output_clusterset_id')};
+        my $target_tree = $self->param('default_gene_tree');
+        if ($self->param('output_clusterset_id') and $self->param('output_clusterset_id') ne 'default') {
+            $target_tree = $self->param('default_gene_tree')->alternative_trees->{$self->param('output_clusterset_id')};
+            die sprintf('Cannot find a "%s" tree for tree_id=%d', $self->param('output_clusterset_id'), $self->param('gene_tree_id')) unless $target_tree;
+        }
         my $tags = $self->get_tags();
         while ( my ($tag, $value) = each %$tags ) {
             $target_tree->store_tag($tag, $value);
@@ -233,6 +237,7 @@ sub run_generic_command {
             $aln_tree = $self->param('default_gene_tree');
         } else {
             $aln_tree = $self->param('default_gene_tree')->alternative_trees->{$self->param('aln_clusterset_id')};
+            die sprintf('Cannot find a "%s" tree for tree_id=%d', $self->param('aln_clusterset_id'), $self->param('gene_tree_id')) unless $aln_tree;
         }
     } else {
         $aln_tree = $gene_tree;
