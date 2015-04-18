@@ -47,7 +47,6 @@ sub param_defaults {
         'minimum_genes'     => 4,
         'criteria'          => 'AIC',
         'n_cores'           => 1,
-		'output_clusterset_id' => 'default',
     };
 }
 
