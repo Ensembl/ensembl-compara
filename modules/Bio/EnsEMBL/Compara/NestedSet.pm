@@ -976,8 +976,8 @@ my %ryo_modes = (
     'gene_stable_id' => '%{-i}:%{d}',
     'ncbi_taxon' => '%{o}',
     'ncbi_name' => '%{n}',
-    'simple' => '%{^-n}:%{d}',
-    'full' => '%{n}:%{d}',
+    'simple' => '%{^-n|i}:%{d}',
+    'full' => '%{n|i}:%{d}',
     'species' => '%{^-S|p}',
     'species_short_name' => '%{^-s|p}',
     'otu_id' => '%{-s"|"}%{-l"|"}%{n}:%{d}',
@@ -986,7 +986,7 @@ my %ryo_modes = (
     'phylip' => '%21{n,}:%{d}',
 );
 
-my $nhx0 = '%{n-,|C(taxonomy_level)}:%{d}';
+my $nhx0 = '%{-n,|i|C(taxonomy_level)}:%{d}';
 my $nhx1 = ':%{-E"D=N"}%{C(_newick_dup_code)-}%{":B="C(bootstrap)}';
 my $nhx2 = ':T=%{-x}%{C(species_tree_node,taxon_id)-}';
 

@@ -73,14 +73,14 @@ foreach my $homology (@{$homology_list}) {
             $mouse_gene->genome_db->name, $mouse_gene->genome_db->assembly,
             $human_gene->genome_db->name, $human_gene->genome_db->assembly,
             $mouse_gene->dnafrag->name, $mouse_gene->dnafrag_start, $mouse_gene->dnafrag_end,
-            'BLASTZ_NET');
+            'LASTZ_NET');
 
 
     my $dnafeatures = $comparaDBA->get_DnaAlignFeatureAdaptor->fetch_all_by_species_region(
             $mouse_gene->genome_db->name, $mouse_gene->genome_db->assembly,
             $human_gene->genome_db->name, $human_gene->genome_db->assembly,
             $mouse_gene->dnafrag->name, $mouse_gene->dnafrag_start, $mouse_gene->dnafrag_end,
-            'BLASTZ_NET');
+            'LASTZ_NET');
 
     foreach my $ddaf (@{$dnafeatures}) {
         next unless (($mouse_gene->dnafrag->name eq $ddaf->seqname) and ($human_gene->dnafrag->name eq $ddaf->hseqname));
