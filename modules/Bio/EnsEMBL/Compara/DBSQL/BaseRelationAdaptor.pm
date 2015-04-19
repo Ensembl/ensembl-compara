@@ -84,8 +84,8 @@ sub fetch_all_by_method_link_type {
     my @tabs = $self->_tables;
     my ($name, $syn) = @{$tabs[0]};
 
-    my $join = [ [['method_link_species_set', 'mlss'], "mlss.method_link_species_set_id = $syn.method_link_species_set_id"], [['method'], 'method.method_link_id = mlss.method_link_id'] ];
-    my $constraint = 'method.type = ?';
+    my $join = [ [['method_link_species_set', 'mlss'], "mlss.method_link_species_set_id = $syn.method_link_species_set_id"], [['method_link'], 'method_link.method_link_id = mlss.method_link_id'] ];
+    my $constraint = 'method_link.type = ?';
 
     $self->bind_param_generic_fetch($method_link_type, SQL_VARCHAR);
 
