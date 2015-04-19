@@ -199,6 +199,34 @@ sub fetch_by_Member_source_stable_id { ## DEPRECATED
 }
 
 
+=head2 fetch_by_stable_id
+
+  Arg [1]    : string $stable_id
+               the unique database identifier for the Family to be obtained
+  Example    : $family = $adaptor->fetch_by_stable_id('ENSFM00300000084926')
+  Description: Returns the Family created from the database and defined by the
+               the stable id $stable_id.
+  Returntype : Bio::EnsEMBL::Compara::Family
+  Exceptions : thrown if $stable_id is not defined
+  Caller     : general
+
+=cut
+
+sub fetch_by_stable_id {
+    my ($self, $stable_id) = @_;
+
+    unless(defined $stable_id) {
+        $self->throw("fetch_by_stable_id must have an stable_id");
+    }
+
+    my $constraint = 'f.stable_id = ?';
+
+    $self->bind_param_generic_fetch($stable_id, SQL_VARCHAR);
+
+    return $self->generic_fetch_one($constraint)
+}
+
+
 =head2 fetch_by_description_with_wildcards
 
  Arg [1]    : string $description

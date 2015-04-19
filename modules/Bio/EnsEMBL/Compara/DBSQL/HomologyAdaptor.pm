@@ -547,9 +547,6 @@ sub _recursive_get_orthocluster {
   printf("done with search query %s\n", $gene->stable_id) if($debug);
 }
 
-sub fetch_by_stable_id {
-    throw('Stable IDs are not implemented for homologies');
-}
 
 #
 # internal methods
