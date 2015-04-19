@@ -299,19 +299,6 @@ sub fetch_all_by_MethodLinkSpeciesSet_DnaFrag {
 	return \@constrained_elements;
 }
 
-=head2 fetch_all_by_MethodLinkSpeciesSet_Dnafrag
-
-DEPRECATED: Use fetch_all_by_MethodLinkSpeciesSet_DnaFrag instead
-
-=cut
-
-sub fetch_all_by_MethodLinkSpeciesSet_Dnafrag {
-    my ($self, $mlss_obj, $dnafrag_obj, $dnafrag_start, $dnafrag_end) = @_;
-
-     deprecate('fetch_all_by_MethodLinkSpeciesSet_Dnafrag is deprecated and will be removed in e78. Use fetch_all_by_MethodLinkSpeciesSet_DnaFrag instead.');
-
-    return $self->fetch_all_by_MethodLinkSpeciesSet_DnaFrag($mlss_obj, $dnafrag_obj, $dnafrag_start, $dnafrag_end);
-}
 
 sub _fetch_all_ConstrainedElements {#used when getting constrained elements by slice or dnafrag
 	my ($self) = shift;
