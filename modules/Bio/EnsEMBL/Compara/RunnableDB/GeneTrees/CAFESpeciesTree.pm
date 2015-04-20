@@ -96,7 +96,11 @@ sub fetch_input {
     my $full_species_tree = $self->compara_dba->get_SpeciesTreeAdaptor->fetch_by_method_link_species_set_id_label($self->param('mlss_id'), $self->param('label'));
     $self->param('full_species_tree', $full_species_tree); ## This is the full tree, not the string
 
-    my $cafe_species = eval $self->param('cafe_species');
+    my $cafe_species = $self->param('cafe_species');
+    if (defined $cafe_species and not ref($cafe_species)) {
+        # Probably a string that we need to eval()
+        $cafe_species = eval $self->param('cafe_species');
+    }
     $self->param('cafe_species', $cafe_species);
     if ((not defined $cafe_species) or ($cafe_species eq '') or (scalar(@{$cafe_species}) == 0)) {  # No species for the tree. Make a full tree
         print STDERR "No species provided for the CAFE tree. I will take them all\n" if ($self->debug());
