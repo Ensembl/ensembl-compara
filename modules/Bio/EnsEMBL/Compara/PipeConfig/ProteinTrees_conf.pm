@@ -1922,7 +1922,7 @@ sub core_pipeline_analyses {
                 'output_clusterset_id'      => $self->o('use_raxml_epa_on_treebest') ? 'treebest' : 'default',
             },
             -hive_capacity        => $self->o('treebest_capacity'),
-            -rc_name    => '4Gb_job',
+            -rc_name    => '2Gb_job',
             -flow_into  => {
                 -1 => 'treebest_long_himem',
                 -2 => 'treebest_long_himem',
@@ -2254,7 +2254,7 @@ sub core_pipeline_analyses {
                 'tag_split_genes'   => 1,
             },
             -hive_capacity  => $self->o('ortho_tree_capacity'),
-            -rc_name        => '4Gb_job',
+            -rc_name        => '2Gb_job',
             -flow_into      => [ 'hc_tree_homologies' ],
         },
 
