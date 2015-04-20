@@ -252,34 +252,61 @@ sub do_draw_wiggle {
   return $offset - $initial_offset;
 }
 
-## Given a feature, extract x and y values for plot
-sub _feature_values {
-  my ($self,$f,$slice_length) = @_;
+## Does feature need special colour handling? These are all hacks.
+sub _special_colour {
+  my ($self,$f,$parameters) = @_;
 
-  my ($start,$end,$score,$min_score);
-
-  if (ref $f eq 'HASH') {
-    $start = $f->{'start'} < 1 ? 1 : $f->{'start'};
-    $end   = $f->{'end'}   > $slice_length  ? $slice_length : $f->{'end'};
-    $score = $f->{'score'};
-  } else {
-    $start = $f->start < 1 ? 1 : $f->start;
-    $end   = $f->end   > $slice_length ? $slice_length : $f->end;
-
-    if ($f->isa('Bio::EnsEMBL::Variation::ReadCoverageCollection')) {
-      $score     = $f->read_coverage_max;
-      $min_score = $f->read_coverage_min;
-    } else {
-      $score = $f->can('score') ? $f->score || 0 : $f->can('scores') ? $f->scores->[0] : 0;
+  # Old-style rnaseq, the kind in otherfeatures databases rather than
+  #   rnaseq ones and without bamcov. eg Taz. In that case non-canonical
+  #   introns are a speical colour.
+  if(ref $f ne 'HASH' and $f->can('display_id') and
+     $f->can('analysis') and $f->analysis and
+     $f->analysis->logic_name =~ /_intron/) {
+    my $can_type    = [ split /:/, $f->display_id ]->[-1];
+    if($can_type and length $can_type > 3 and
+       substr('non canonical', 0, length $can_type) eq $can_type) {
+      return $parameters->{'non_can_score_colour'};
     }
   }
-  return ($start,$end,$score,$min_score);
+  # Not a special colour
+  return undef;
+}
+
+## Given a feature, extract coords, value and colour for this point
+sub _feature_values {
+  my ($self,$f,$slice_length,$colour,$parameters) = @_;
+
+  my $this_colour = $self->_special_colour($f,$parameters) || $colour;
+  my @out;
+  my ($start,$end,$score);
+  if (ref $f eq 'HASH') {
+    # A simple HASH value
+    ($start,$end,$score) = ($f->{'start'},$f->{'end'},$f->{'score'});
+  } else {
+    # A proper feature
+    ($start,$end,$score) = ($f->start,$f->end,0);
+    if($f->can('score')) {
+      $score = $f->score || 0;
+    } elsif($f->can('scores')) {
+      $score = $f->scores->[0] || 0;
+    }
+  }
+  $start = max($start,1);
+  $end = min($end,$slice_length);
+  if(ref($f) ne 'HASH' and
+     $f->isa('Bio::EnsEMBL::Variation::ReadCoverageCollection')) {
+    push @out,{ colour => $this_colour, score => $f->read_coverage_max },
+              { colour => 'steelblue',  score => $f->read_coverage_min };
+  } else {
+    push @out,{ colour => $this_colour, score => $score };
+  }
+  return ($start,$end,\@out);
 }
 
 sub draw_wiggle_points {
   my ($self, $features, $slice, $parameters, $top_offset, $pix_per_score, $colour, $zero_offset) = @_;
   my $hrefs     = $parameters->{'hrefs'};
-  my $points    = $parameters->{'graph_type'} eq 'points';
+  my $use_points    = $parameters->{'graph_type'} eq 'points';
   my $max_score = max($parameters->{'max_score'}, 0);
   my $zero      = $top_offset + $zero_offset;
   my $slice_length = $slice->length;
@@ -294,21 +321,15 @@ sub draw_wiggle_points {
          $this_colour = $data->{'item_colour'}[0] if $data && $data->{'item_colour'} && ref($data->{'item_colour'}) eq 'ARRAY';
     }
 
-    my ($start,$end,$score,$min_score) = $self->_feature_values($f,$slice_length);
-
-    # alter colour if the intron supporting feature has a name of non_canonical
-    if (ref $f ne 'HASH' && $f->can('display_id') && $f->can('analysis') && $f->analysis && $f->analysis->logic_name =~ /_intron/) {
-      my $can_type    = [ split /:/, $f->display_id ]->[-1];
-         $this_colour = $parameters->{'non_can_score_colour'} || $colour if $can_type && length $can_type > 3 && substr('non canonical', 0, length $can_type) eq $can_type;
-    }
+    my ($start,$end,$points) = $self->_feature_values($f,$slice_length,$this_colour,$parameters);
 
     $x     = $start - 1;
     $width = $end - $start + 1;
 
-    foreach ([ $score, $this_colour ], $min_score ? [ $min_score, 'steelblue' ] : ()) {
-      $height = ($max_score ? min($_->[0], $max_score) : $_->[0]) * $pix_per_score;
+    foreach my $p (@$points) {
+      $height = ($max_score ? min($p->{'score'}, $max_score) : $p->{'score'}) * $pix_per_score;
       $y      = $zero - max($height, 0);
-      $height = $points ? 0 : abs $height;
+      $height = $use_points ? 0 : abs $height;
 
       $self->push($self->Rect({
         y         => $y,
@@ -316,7 +337,7 @@ sub draw_wiggle_points {
         x         => $x,
         width     => $width,
         absolutey => 1,
-        colour    => $_->[1],
+        colour    => $p->{'colour'},
         alpha     => $parameters->{'use_alpha'} ? 0.5 : 0,
         title     => $parameters->{'no_titles'} ? undef : sprintf('%.2f', $_->[0]),
         href      => $href,
