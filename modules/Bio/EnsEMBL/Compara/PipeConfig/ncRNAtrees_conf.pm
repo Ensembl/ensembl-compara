@@ -72,11 +72,6 @@ sub default_options {
             'dump_dir'              => $self->o('work_dir') . '/dumps',
             'ss_picts_dir'          => $self->o('work_dir') . '/ss_picts/',
 
-            # dump parameters:
-            'dump_table_list'       => '',  # probably either '#updated_tables#' or '' (to dump everything)
-            'dump_exclude_ehive'    => 0,
-
-
             # tree break
             'treebreak_tags_to_copy'   => ['clustering_id', 'model_name'],
 
@@ -144,10 +139,7 @@ sub pipeline_analyses {
 # --------------------------------------------- [ backbone ]-----------------------------------------------------------------------------
             {   -logic_name => 'backbone_fire_db_prepare',
                 -module     => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
-                -input_ids  => [ {
-                                  'table_list'    => $self->o('dump_table_list'),
-                                  'exclude_ehive' => $self->o('dump_exclude_ehive'),
-                                 } ],
+                -input_ids  => [ {} ],
                 -flow_into  => {
                                 '1->A'  => [ 'copy_table_factory' ],
                                 'A->1'  => [ 'backbone_fire_load' ],
@@ -158,7 +150,6 @@ sub pipeline_analyses {
             {   -logic_name => 'backbone_fire_load',
                 -module     => 'Bio::EnsEMBL::Hive::RunnableDB::DatabaseDumper',
                 -parameters  => {
-                                  'table_list'        => '',
                                   'output_file'          => $self->o('dump_dir').'/snapshot_before_load.sql',
                                 },
                 -flow_into  => {
@@ -171,7 +162,6 @@ sub pipeline_analyses {
             {   -logic_name => 'backbone_fire_tree_building',
                 -module     => 'Bio::EnsEMBL::Hive::RunnableDB::DatabaseDumper',
                 -parameters  => {
-                                  'table_list'        => '', 
                                   'output_file'          => $self->o('dump_dir').'/snapshot_before_tree_building.sql',
                                  },
                 -flow_into  => {

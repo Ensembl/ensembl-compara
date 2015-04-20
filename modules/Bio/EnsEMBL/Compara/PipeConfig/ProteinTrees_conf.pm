@@ -434,9 +434,7 @@ sub core_pipeline_analyses {
 
         {   -logic_name => 'backbone_fire_db_prepare',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
-            -input_ids  => [ {
-                'output_file'   => '#dump_dir#/#filename#.sql.gz',
-            } ],
+            -input_ids  => [ { } ],
             -flow_into  => {
                 '1->A'  => [ 'copy_ncbi_tables_factory' ],
                 'A->1'  => [ 'backbone_fire_genome_load' ],
@@ -446,8 +444,7 @@ sub core_pipeline_analyses {
         {   -logic_name => 'backbone_fire_genome_load',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::DatabaseDumper',
             -parameters => {
-                'table_list'        => '',
-                'filename'          => 'snapshot_1_before_genome_load',
+                'output_file'   => '#dump_dir#/snapshot_1_before_genome_load.sql.gz',
             },
             -flow_into  => {
                 '1->A'  => [ 'genome_reuse_factory' ],
@@ -470,7 +467,7 @@ sub core_pipeline_analyses {
         {   -logic_name => 'backbone_update_trees',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::DatabaseDumper',
             -parameters => {
-                'filename'      => 'snapshot_6_before_updating_pipeline',
+                'output_file'   => '#dump_dir#/snapshot_6_before_updating_pipeline.sql.gz',
             },
             -flow_into  => {
                 '1->A'  => [ 'update_job_factory' ],
@@ -481,8 +478,7 @@ sub core_pipeline_analyses {
         {   -logic_name => 'backbone_fire_allvsallblast',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::DatabaseDumper',
             -parameters => {
-                'table_list'    => '',
-                'filename'      => 'snapshot_2_before_allvsallblast',
+                'output_file'   => '#dump_dir#/snapshot_2_before_allvsallblast.sql.gz',
             },
             -flow_into  => {
                 '1->A'  => [ 'blastdb_factory' ],
@@ -493,8 +489,7 @@ sub core_pipeline_analyses {
         {   -logic_name => 'backbone_fire_clustering',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::DatabaseDumper',
             -parameters => {
-                'table_list'    => '',
-                'filename'      => 'snapshot_3_before_clustering',
+                'output_file'   => '#dump_dir#/snapshot_3_before_clustering.sql.gz',
             },
             -flow_into  => {
                 '1->A'  => [ 'test_whether_can_copy_clusters' ],
@@ -507,7 +502,7 @@ sub core_pipeline_analyses {
             -parameters => {
                 'table_list'    => 'peptide_align_feature_%',
                 'exclude_list'  => 1,
-                'filename'      => 'snapshot_4_before_tree_building',
+                'output_file'   => '#dump_dir#/snapshot_4_before_tree_building.sql.gz',
             },
             -flow_into  => {
                 '1->A'  => [ 'cluster_factory' ],
@@ -520,7 +515,7 @@ sub core_pipeline_analyses {
             -parameters => {
                 'table_list'    => 'peptide_align_feature_%',
                 'exclude_list'  => 1,
-                'filename'      => 'snapshot_5_before_dnds',
+                'output_file'   => '#dump_dir#/snapshot_5_before_dnds.sql.gz',
             },
             -flow_into  => {
                 '1->A'  => [ 'polyploid_move_back_factory' ],
