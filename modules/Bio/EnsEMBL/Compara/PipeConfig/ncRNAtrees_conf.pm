@@ -390,7 +390,7 @@ sub pipeline_analyses {
         {   -logic_name        => 'load_members',
             -module            => 'Bio::EnsEMBL::Compara::RunnableDB::ncRNAtrees::GenomeStoreNCMembers',
             -analysis_capacity => 10,
-            -rc_name           => 'default',
+            -rc_name           => '2Gb_job',
             -flow_into         => [ 'hc_members_per_genome' ],
         },
 
@@ -406,7 +406,6 @@ sub pipeline_analyses {
                                'type'              => 'infernal',
                                'skip_consensus'    => 1,
                               },
-            -rc_name => 'default',
         },
 
 # ---------------------------------------------[run RFAM classification]--------------------------------------------------------------
@@ -417,7 +416,7 @@ sub pipeline_analyses {
                                    '1->A' => ['create_additional_clustersets'],
                                    'A->1' => ['clusters_factory'],
                                   },
-                -rc_name       => 'default',
+                -rc_name       => '1Gb_job',
             },
 
 
@@ -427,7 +426,6 @@ sub pipeline_analyses {
                                    'member_type'            => 'ncrna',
                                    'additional_clustersets' => [qw(pg_it_nj ml_it_10 pg_it_phyml ss_it_s16 ss_it_s6a ss_it_s16a ss_it_s6b ss_it_s16b ss_it_s6c ss_it_s6d ss_it_s6e ss_it_s7a ss_it_s7b ss_it_s7c ss_it_s7d ss_it_s7e ss_it_s7f ft_it_ml ft_it_nj ftga_it_ml ftga_it_nj)],
                                   },
-                -rc_name       => 'default',
             },
 
 
@@ -436,12 +434,10 @@ sub pipeline_analyses {
                 -parameters => {
                                 'inputquery'      => 'SELECT root_id AS gene_tree_id FROM gene_tree_root JOIN gene_tree_node USING (root_id) WHERE tree_type = "tree" GROUP BY root_id ORDER BY COUNT(*) DESC, root_id ASC',
                                },
-                -rc_name       => 'default',
                 -flow_into     => {
                                    '2->A' => ['clusterset_backup'],
                                    'A->1' => [ 'hc_tree_final_checks' ],
                                   },
-                -meadow_type   => 'LOCAL',
             },
 
 
@@ -499,7 +495,6 @@ sub pipeline_analyses {
                                   },
                 -analysis_capacity => 1,
                 -flow_into      => [ $self->o('skip_epo') ? 'msa_chooser' : 'recover_epo' ],
-                -meadow_type    => 'LOCAL',
             },
 
 
@@ -513,14 +508,14 @@ sub pipeline_analyses {
                     1 => 'hc_epo_removed_members',
                     -1 => 'recover_epo_himem',
                 },
-                -rc_name => 'default',
+                -rc_name => '2Gb_job',
             },
 
             {   -logic_name    => 'recover_epo_himem',
                 -module        => 'Bio::EnsEMBL::Compara::RunnableDB::ncRNAtrees::NCRecoverEPO',
                 -analysis_capacity => $self->o('recover_capacity'),
                 -flow_into => [ 'hc_epo_removed_members' ],
-                -rc_name => '8Gb_job',
+                -rc_name => '8Gb_long_job',
             },
 
             {  -logic_name        => 'hc_epo_removed_members',
@@ -559,7 +554,7 @@ sub pipeline_analyses {
                 -flow_into    => {
                                   1 => [ 'hc_alignment' ],
                                  },
-                -rc_name => 'default',
+                -rc_name => '2Gb_job',
             },
 
 
@@ -579,7 +574,7 @@ sub pipeline_analyses {
                                 'treebreak_gene_count'  => $self->o('treebreak_gene_count'),
                                },
                 -analysis_capacity  => $self->o('quick_tree_break_capacity'),
-                -rc_name        => '4Gb_long_job',
+                -rc_name        => '4Gb_job',
                 -priority       => 50,
                 -flow_into      => [ 'hc_supertrees' ],
             },
@@ -617,7 +612,7 @@ sub pipeline_analyses {
                                    1 => ['pre_sec_struct_tree', 'hc_alignment' ],
                                    3 => $self->o('create_ss_pics') ? ['create_ss_picts'] : [],
                                   },
-                -rc_name       => 'default',
+                -rc_name       => '2Gb_job',
             },
 
             {   -logic_name    => 'tree_backup',
@@ -630,7 +625,6 @@ sub pipeline_analyses {
                                'A->1' => [ 'treebest_mmerge' ],
                               },
                 -analysis_capacity => 1,
-                -meadow_type   => 'LOCAL',
             },
 
             $self->o('create_ss_pics') ? (
@@ -642,7 +636,7 @@ sub pipeline_analyses {
                                    'r2r_exe'       => $self->o('r2r_exe'),
                                   },
                 -failed_job_tolerance =>  30,
-                -rc_name       => 'default',
+                -rc_name       => '2Gb_job',
             },
                                          ) : (), # do not include the ss_pics analysis if the opt is off
 
@@ -687,7 +681,7 @@ sub pipeline_analyses {
                            3  => ['fast_trees'],
                            2  => ['genomic_tree'],
                           },
-            -rc_name => 'default_2cores',
+            -rc_name => '2Gb_ncores_job',
         },
 
             {
@@ -732,7 +726,7 @@ sub pipeline_analyses {
                             -2 => ['genomic_tree_himem'],
                             -1 => ['genomic_tree_himem'],
                            },
-             -rc_name => 'default',
+             -rc_name => '2Gb_job',
             },
 
             {
@@ -757,7 +751,7 @@ sub pipeline_analyses {
                            1 => [ 'ktreedist' ],
                            '2->A' => [ 'hc_tree_structure' ],
             },
-            -rc_name => 'default',
+            -rc_name => '2Gb_job',
         },
 
         {   -logic_name         => 'hc_alignment_post_tree',
@@ -783,7 +777,7 @@ sub pipeline_analyses {
                             'tag_split_genes'   => 0,
             },
             -flow_into  => [ 'hc_tree_attributes', 'hc_tree_homologies' ],
-           -rc_name => 'default',
+           -rc_name => '1Gb_job',
         },
 
         {   -logic_name    => 'ktreedist',
@@ -792,7 +786,7 @@ sub pipeline_analyses {
                             'treebest_exe'  => $self->o('treebest_exe'),
                             'ktreedist_exe' => $self->o('ktreedist_exe'),
                            },
-            -rc_name => 'default',
+            -rc_name => '2Gb_job',
         },
 
         {   -logic_name         => 'hc_tree_attributes',
