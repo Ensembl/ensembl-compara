@@ -220,8 +220,9 @@ sub pipeline_analyses_cafe {
              -rc_name => '1Gb_job',
              -meadow_type => 'LSF',
              -flow_into => {
-                            2 => ['CAFE_analysis'],
-                           },
+                 '2->A' => [ 'CAFE_analysis' ],
+                 'A->1' => [ 'hc_cafe_results' ],
+             },
             },
 
             {
@@ -237,6 +238,15 @@ sub pipeline_analyses_cafe {
              -meadow_type => 'LSF',
              -priority => 10,
             },
+
+        {   -logic_name         => 'hc_cafe_results',
+            -module             => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::SqlHealthChecks',
+            -parameters         => {
+                mode            => 'cafe',
+                cafe_tree_label => 'cafe',
+            },
+        },
+
            ]
 }
 

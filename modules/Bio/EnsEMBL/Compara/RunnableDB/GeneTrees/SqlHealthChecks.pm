@@ -397,6 +397,65 @@ my $config = {
         ],
     },
 
+
+    ### CAFE's output
+    ###################
+
+    cafe => {
+        params => [ 'cafe_tree_label' ],
+        tests => [
+            {
+                description => 'There are some CAFE families',
+                query => 'SELECT * FROM CAFE_gene_family',
+                expected_size => '> 0',
+            },
+
+            {
+                description => 'CAFE_gene_family.root_id links to a tree with the correct label',
+                query => 'SELECT * FROM CAFE_gene_family JOIN species_tree_root USING (root_id) WHERE label != "#cafe_tree_label#"',
+            },
+
+            {
+                description => 'CAFE_gene_family.lca_id links to a node of its tree',
+                query => 'SELECT * FROM CAFE_gene_family JOIN species_tree_node ON lca_id = node_id  WHERE CAFE_gene_family.root_id != species_tree_node.root_id',
+            },
+
+            {
+                description => 'All the trees have at least one pvalue',
+                query => 'SELECT * FROM CAFE_species_gene GROUP BY cafe_gene_family_id HAVING COUNT(pvalue) = 0',
+            },
+
+            {
+                description => 'There are some (very) significant p-values',
+                query => 'SELECT * FROM CAFE_species_gene WHERE pvalue IS NOT NULL ANd pvalue < 0.001',
+                expected_size => '> 0',
+            },
+
+            {
+                description => 'There are some non-significant p-values',
+                query => 'SELECT * FROM CAFE_species_gene WHERE pvalue IS NOT NULL ANd pvalue >= 0.05',
+                expected_size => '> 0',
+            },
+
+            {
+                description => 'All the trees have at least one node with a non-zero member count',
+                query => 'SELECT * FROM CAFE_species_gene GROUP BY cafe_gene_family_id HAVING SUM(n_members > 0) = 0',
+            },
+
+            {
+                description => 'Some nodes have n_members=0',
+                query => 'SELECT * FROM CAFE_species_gene WHERE n_members = 0',
+                expected_size => '> 0',
+            },
+
+            {
+                description => 'All the combinations of (CAFE_gene_family.cafe_gene_family_id,species_tree_node.node_id) are in CAFE_species_gene',
+                query => 'SELECT * FROM CAFE_gene_family JOIN species_tree_node USING (root_id) LEFT JOIN CAFE_species_gene USING (cafe_gene_family_id,node_id) WHERE CAFE_species_gene.cafe_gene_family_id IS NULL;',
+            },
+
+        ],
+    },
+
 };
 
 
