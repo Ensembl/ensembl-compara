@@ -28,6 +28,9 @@ use List::Util qw(min max);
 use Bio::EnsEMBL::Analysis;
 use Bio::EnsEMBL::IO::Adaptor::BigWigAdaptor;
 
+# Temporary hack while dependencies are fixes, 2015-04-20
+use Bio::EnsEMBL::ExternalData::BigFile::BigWigAdaptor;
+
 use EnsEMBL::Web::File::Utils::URL;
 
 use base qw(EnsEMBL::Draw::GlyphSet::_alignment EnsEMBL::Draw::GlyphSet_wiggle_and_block);
