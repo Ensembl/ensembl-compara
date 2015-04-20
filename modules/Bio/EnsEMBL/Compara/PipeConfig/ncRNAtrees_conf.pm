@@ -303,6 +303,7 @@ sub pipeline_analyses {
                 mode            => 'members_globally',
             },
             %hc_params,
+            -flow_into  => [ 'register_mlss' ],
         },
 
 
@@ -331,7 +332,7 @@ sub pipeline_analyses {
                 mode            => 'species_tree',
                 binary          => 0,
             },
-            -flow_into          => [ 'load_members_factory', $self->o('initialise_cafe_pipeline') ? ('make_full_species_tree') : (), $self->o('skip_epo') ? () : ('find_epo_database'), 'register_mlss' ],
+            -flow_into          => [ 'load_members_factory', $self->o('initialise_cafe_pipeline') ? ('make_full_species_tree') : (), $self->o('skip_epo') ? () : ('find_epo_database') ],
             %hc_params,
         },
 
