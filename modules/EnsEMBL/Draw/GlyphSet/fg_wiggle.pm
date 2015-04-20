@@ -31,6 +31,16 @@ use strict;
 use base qw(EnsEMBL::Draw::GlyphSet_wiggle_and_block);
 use EnsEMBL::Web::Utils::Tombstone qw(tombstone);
 
+# Lazy evaluation
+sub data_by_cell_line {
+  my ($self,$config) = @_;
+
+  my $data = $config->{'data_by_cell_line'};
+  $data = $data->() if ref($data) eq 'CODE';
+  $config->{'data_by_cell_line'} = $data;
+  return $data||{};
+}
+
 sub new {
   my $self = shift;
   tombstone('2015-04-16','ds23');
@@ -41,12 +51,31 @@ sub draw_features {
   my ($self, $wiggle) = @_;
   my $config  = $self->{'config'};
   my $colours = $self->get_colours($config->{'evidence'}->{'data'}->{'all_features'});
- 
-  if ($config->{'focus'}) {
+
+  my $data             = $self->data_by_cell_line($config);
+  if ($data) {
     # first draw wiggle if data
-    if ($config->{'focus'}->{'data'}->{'wiggle_features'}) {
-      my $feature_set_data = $config->{'focus'}->{'data'}->{'wiggle_features'};
-      $self->process_wiggle_data($feature_set_data);  
+    if ($data->{'wiggle_data'}) {
+      my $features = $data->{'wiggle_data'};
+      $features = [values %$features]->[0][0];
+      my @out;
+      foreach my $score (@{$features->{'scores'}}) {
+        my $rf = bless {
+          start => $features->{'start'},
+          end => $features->{'end'},
+          strand => $features->{'strand'},
+          score => $score,
+          probe => $features->{'probe'},
+          result_set_id => $features->{'result_set_id'},
+          window_size => $features->{'window_size'},
+          analysis => $features->analysis,
+        },"Bio::EnsEMBL::Funcgen::ResultFeature";
+
+        push @out,$rf;
+      }
+      $features = \@out;
+
+      $self->process_wiggle_data({ x => $features });
     }
     
     # draw block features data if any

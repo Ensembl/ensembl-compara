@@ -74,7 +74,7 @@ sub draw_features  {
 sub features  {
   my $self = shift;
   my $call     = 'get_all_' . ($self->my_config('type') || 'SimpleFeatures');
-  my $db_type       = $self->my_config('db');
+  my $db_type       = $self->my_config('db') || 'core';
   my @features = map @{$self->{'container'}->$call($_, undef, $db_type)||[]}, @{$self->my_config('logic_names')||[]};
   
   return \@features;
