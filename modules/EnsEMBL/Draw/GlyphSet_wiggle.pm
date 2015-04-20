@@ -252,7 +252,7 @@ sub do_draw_wiggle {
   return $offset - $initial_offset;
 }
 
-## Does feature need special colour handling? These are all hacks.
+## Does feature need special colour handling?
 sub _special_colour {
   my ($self,$f,$parameters) = @_;
 
@@ -266,6 +266,15 @@ sub _special_colour {
     if($can_type and length $can_type > 3 and
        substr('non canonical', 0, length $can_type) eq $can_type) {
       return $parameters->{'non_can_score_colour'};
+    }
+  }
+    
+  # Use colours supplied in external_data if configured to do so.
+  if ($parameters->{'use_feature_colours'} and $f->can('external_data')) {
+    my $data        = $f->external_data;
+    if($data and $data->{'item_colour'} and
+       ref($data->{'item_colour'}) eq 'ARRAY') {
+      return $data->{'item_colour'}[0];
     }
   }
   # Not a special colour
@@ -314,14 +323,8 @@ sub draw_wiggle_points {
   foreach my $f (@$features) {
     my ($height, $width, $x, $y);
     my $href        = ref $f ne 'HASH' && $f->can('display_id') ? $hrefs->{$f->display_id} : '';
-    my $this_colour = $colour;
 
-    if ($parameters->{'use_feature_colours'} && $f->can('external_data')) {
-      my $data        = $f->external_data;
-         $this_colour = $data->{'item_colour'}[0] if $data && $data->{'item_colour'} && ref($data->{'item_colour'}) eq 'ARRAY';
-    }
-
-    my ($start,$end,$points) = $self->_feature_values($f,$slice_length,$this_colour,$parameters);
+    my ($start,$end,$points) = $self->_feature_values($f,$slice_length,$colour,$parameters);
 
     $x     = $start - 1;
     $width = $end - $start + 1;
@@ -339,7 +342,7 @@ sub draw_wiggle_points {
         absolutey => 1,
         colour    => $p->{'colour'},
         alpha     => $parameters->{'use_alpha'} ? 0.5 : 0,
-        title     => $parameters->{'no_titles'} ? undef : sprintf('%.2f', $_->[0]),
+        title     => $parameters->{'no_titles'} ? undef : sprintf('%.2f', $p->{'score'}),
         href      => $href,
       }));
     }
