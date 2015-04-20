@@ -252,15 +252,40 @@ sub do_draw_wiggle {
   return $offset - $initial_offset;
 }
 
+## Given a feature, extract x and y values for plot
+sub _feature_values {
+  my ($self,$f,$slice_length) = @_;
+
+  my ($start,$end,$score,$min_score);
+
+  if (ref $f eq 'HASH') {
+    $start = $f->{'start'} < 1 ? 1 : $f->{'start'};
+    $end   = $f->{'end'}   > $slice_length  ? $slice_length : $f->{'end'};
+    $score = $f->{'score'};
+  } else {
+    $start = $f->start < 1 ? 1 : $f->start;
+    $end   = $f->end   > $slice_length ? $slice_length : $f->end;
+
+    if ($f->isa('Bio::EnsEMBL::Variation::ReadCoverageCollection')) {
+      $score     = $f->read_coverage_max;
+      $min_score = $f->read_coverage_min;
+    } else {
+      $score = $f->can('score') ? $f->score || 0 : $f->can('scores') ? $f->scores->[0] : 0;
+    }
+  }
+  return ($start,$end,$score,$min_score);
+}
+
 sub draw_wiggle_points {
   my ($self, $features, $slice, $parameters, $top_offset, $pix_per_score, $colour, $zero_offset) = @_;
   my $hrefs     = $parameters->{'hrefs'};
   my $points    = $parameters->{'graph_type'} eq 'points';
   my $max_score = max($parameters->{'max_score'}, 0);
   my $zero      = $top_offset + $zero_offset;
+  my $slice_length = $slice->length;
 
   foreach my $f (@$features) {
-    my ($start, $end, $score, $min_score, $height, $width, $x, $y);
+    my ($height, $width, $x, $y);
     my $href        = ref $f ne 'HASH' && $f->can('display_id') ? $hrefs->{$f->display_id} : '';
     my $this_colour = $colour;
 
@@ -269,22 +294,7 @@ sub draw_wiggle_points {
          $this_colour = $data->{'item_colour'}[0] if $data && $data->{'item_colour'} && ref($data->{'item_colour'}) eq 'ARRAY';
     }
 
-    # Data is from a Funcgen result set collection, windowsize > 0
-    if (ref $f eq 'HASH') {
-      $start = $f->{'start'} < 1 ? 1 : $f->{'start'};
-      $end   = $f->{'end'}   > $slice->length  ? $slice->length : $f->{'end'};
-      $score = $f->{'score'};
-    } else {
-      $start = $f->start < 1 ? 1 : $f->start;
-      $end   = $f->end   > $slice->length ? $slice->length : $f->end;
-
-      if ($f->isa('Bio::EnsEMBL::Variation::ReadCoverageCollection')) {
-        $score     = $f->read_coverage_max;
-        $min_score = $f->read_coverage_min;
-      } else {
-        $score = $f->can('score') ? $f->score || 0 : $f->can('scores') ? $f->scores->[0] : 0;
-      }
-    }
+    my ($start,$end,$score,$min_score) = $self->_feature_values($f,$slice_length);
 
     # alter colour if the intron supporting feature has a name of non_canonical
     if (ref $f ne 'HASH' && $f->can('display_id') && $f->can('analysis') && $f->analysis && $f->analysis->logic_name =~ /_intron/) {
@@ -325,7 +335,6 @@ sub draw_wiggle_points_as_line {
   my ($self, $features, $slice, $parameters, $top_offset, $pix_per_score, $colour, $zero_offset) = @_;
   my $slice          = $self->{'container'};
   my $vclen          = $slice->length;
-  my $im_width       = $self->{'config'}->image_width;
   my $window_size    = ref $features->[0] eq 'HASH' ? 10 : $features->[0]->window_size;
      $features       = [ sort { $a->start <=> $b->start } @$features ] if $window_size == 0;
   my $previous_f     = $features->[0];
