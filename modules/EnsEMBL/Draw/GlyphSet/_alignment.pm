@@ -852,9 +852,9 @@ sub render_interaction {
               label_colour => $label_colour,
               absolutey    => 1,
             })) unless $s2 > $length;
-=pod
+
         if ($self->{'show_labels'}) {
-          my $label = $self->feature_label($f);
+          my $label = $f->score;
           my (undef, undef, $text_width, $text_height) = $self->get_text_width(0, $label, '', font => $fontname, ptsize => $fontsize);
           ## Work out where to place the label, based on the visible arc
           my ($x, $y);
@@ -892,14 +892,14 @@ sub render_interaction {
             href      => '', 
             class     => 'group', # for click_start/end on labels
           }));
-      }
-=cut
-
+        }
       }
     }
   }
   ## Limit track height to that of biggest arc
-  $self->{'maxy'} = ($max_arc / 2) + $label_h + 10;
+  my $track_height = $max_arc / 2 + 10;
+  $track_height   .= $label_h if $self->{'show_labels'};
+  $self->{'maxy'}  = $track_height;
 }
 
 sub render_text {
