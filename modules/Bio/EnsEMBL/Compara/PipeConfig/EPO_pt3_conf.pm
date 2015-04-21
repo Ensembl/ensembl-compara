@@ -99,8 +99,6 @@ sub default_options {
   'enredo_mapping_file_name' => 'enredo_friendly.mlssid_'.$self->o('epo_mlss_id')."_".$self->o('rel_with_suffix'), 
   'enredo_mapping_file' => $self->o('dump_dir').$self->o('enredo_mapping_file_name'),
   'cvs_dir' => $self->o('ENV', 'ENSEMBL_CVS_ROOT_DIR'), 
-  'ancestral_db_cmd' => "mysql -u".$self->o('ancestral_db', '-user')." -P".$self->o('ancestral_db', '-port').
-	" -h".$self->o('ancestral_db', '-host')." -p".$self->o('ancestral_db', '-pass'),
   'species_tree_file' => $self->o('cvs_dir').'/ensembl-compara/scripts/pipeline/species_tree.39mammals.branch_len.nw',
   #'species_tree_file' => $self->o('cvs_dir').'/ensembl-compara/scripts/pipeline/species_tree_blength.nh',
   # add MT dnafrags separately (1) or not (0) to the dnafrag_region table
@@ -218,7 +216,6 @@ sub pipeline_wide_parameters {
 		'main_core_dbs' => $self->o('main_core_dbs'),
 		'compara_mapped_anchor_db' => $self->o('compara_mapped_anchor_db'),
  		'mapping_mlssid' => $self->o('mapping_mlssid'),
-		'ancestral_db' => $self->o('ancestral_db'),
 		'additional_core_db_urls' => $self->o('additional_core_db_urls'),
 		'epo_mlss_id' => $self->o('epo_mlss_id'),
 #		'gerp_ce_mlss_id' => $self->o('gerp_ce_mlss_id'),
@@ -237,10 +234,19 @@ return
 {
  -logic_name => 'create_ancestral_db',
  -input_ids  => [{}],
- -module     => 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
+ -module     => 'Bio::EnsEMBL::Hive::RunnableDB::DbCmd',
  -parameters => {
-  'cmd' => $self->o('ancestral_db_cmd')." -e\"CREATE DATABASE ".$self->o('ancestral_db', '-dbname')."\";".
-  $self->o('ancestral_db_cmd')." -D".$self->o('ancestral_db', '-dbname')." <".$self->o('cvs_dir')."/ensembl/sql/table.sql",
+  'db_conn' => $self->o('ancestral_db'),
+  'input_query' => 'CREATE DATABASE',
+  },
+  -flow_into => { 1 => 'create_tables_in_ancestral_db' },
+},
+{
+ -logic_name => 'create_tables_in_ancestral_db',
+ -module     => 'Bio::EnsEMBL::Hive::RunnableDB::DbCmd',
+ -parameters => {
+  'db_conn' => $self->o('ancestral_db'),
+  'input_file' => $self->o('cvs_dir')."/ensembl/sql/table.sql",
   },
   -flow_into => { 1 => 'dump_mappings_to_file' },
 },
