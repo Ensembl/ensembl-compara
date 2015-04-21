@@ -25,7 +25,7 @@ Bio::EnsEMBL::Compara::PipeConfig::MyISAMiseTables_conf
 
 =head1 SYNOPSIS
 
-    init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::MyISAMiseTables_conf -password <your_password>
+    init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::MyISAMiseTables_conf -pipeline_url db://hive@database/to_track_jobs -db_to_myisamise db://to/turn_into_mysam
 
 =head1 DESCRIPTION  
 
@@ -46,40 +46,20 @@ package Bio::EnsEMBL::Compara::PipeConfig::MyISAMiseTables_conf;
 use strict;
 use warnings;
 
-use base ('Bio::EnsEMBL::Compara::PipeConfig::ComparaGeneric_conf');
+use base ('Bio::EnsEMBL::Hive::PipeConfig::HiveGeneric_conf');
 
 =head2 default_options
 
     Description : Implements default_options() interface method of Bio::EnsEMBL::Hive::PipeConfig::HiveGeneric_conf that is used to initialize default options.
                   In addition to the standard things it defines four options:
                     o('fixing_capacity')   defines how many tables can be worked on in parallel
-                
-                  There are rules dependent on two options that do not have defaults (this makes them mandatory):
-                    o('password')       your read-write password for creation and maintenance of the hive database
 
 =cut
 
 sub default_options {
     my ($self) = @_;
     return {
-
-        'pipeline_name' => 'myisamise_compara_release',            # name used by the beekeeper to prefix job names on the farm
-
-        'pipeline_db' => {
-            -host   => 'compara2',
-            -port   => 3306,
-            -user   => 'ensadmin',
-            -pass   => $self->o('password'),
-            -dbname => $ENV{USER}.'_'.$self->o('pipeline_name'),
-        },
-
-        'rel_db' => {
-            -host   => 'compara1',
-            -port   => 3306,
-            -user   => 'ensadmin',
-            -pass   => $self->o('password'),
-            -dbname => 'kb3_ensembl_compara_59',
-        },
+        %{$self->SUPER::default_options(@_)},
 
         'fixing_capacity'  => 10,                                  # how many tables can be worked on in parallel (too many will slow the process down)
     };
@@ -102,7 +82,7 @@ sub pipeline_analyses {
         {   -logic_name => 'generate_job_list',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
             -parameters => {
-                'db_conn'         => $self->o('rel_db'),
+                'db_conn'         => $self->o('db_to_myisamise'),
                 'inputquery'      => "SHOW TABLE STATUS WHERE Engine = 'InnoDB'",
                 'fan_branch_code' => 2,
             },
@@ -115,7 +95,7 @@ sub pipeline_analyses {
         {   -logic_name    => 'myisamise_table',
             -module        => 'Bio::EnsEMBL::Hive::RunnableDB::SqlCmd',
             -parameters    => {
-                'db_conn'     => $self->o('rel_db'),
+                'db_conn'     => $self->o('db_to_myisamise'),
                 'sql'         => "ALTER TABLE #table_name# ENGINE=MyISAM",
             },
             -hive_capacity => $self->o('fixing_capacity'),       # allow several workers to perform identical tasks in parallel
