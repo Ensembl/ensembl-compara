@@ -104,7 +104,7 @@ sub build_tracks {
 		  $chr_max_data = $mean if $mean > $chr_max_data;
       ## Scale data for actual display
       my $max = $max_data || $chr_max_data || 1; 
-      push @$scaled_scores, $_/$max * $width;
+      push @$scaled_scores, $mean/$max * $width;
 	  }
     $T->{'scores'} = $scaled_scores;
     $T->{'mins'}   = $mins;
