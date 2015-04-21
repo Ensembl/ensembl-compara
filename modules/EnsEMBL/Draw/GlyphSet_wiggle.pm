@@ -252,24 +252,26 @@ sub do_draw_wiggle {
   return $offset - $initial_offset;
 }
 
-## Does feature need special colour handling?
-sub _special_colour {
+# eg. Sarcophilus harrisii as of e80
+sub _is_old_style_rnaseq {
+  my ($self,$f) = @_;
+
+  return (ref $f ne 'HASH' and $f->can('display_id') and
+    $f->can('analysis') and $f->analysis and
+    $f->analysis->logic_name =~ /_intron/);
+}
+
+sub _old_rnaseq_is_non_canonical {
+  my ($self,$f) = @_;
+
+  my $can_type = [ split /:/, $f->display_id ]->[-1];
+  return ($can_type and length $can_type > 3 and
+    substr('non canonical', 0, length $can_type) eq $can_type);
+}
+
+sub _use_this_feature_colour {
   my ($self,$f,$parameters) = @_;
 
-  # Old-style rnaseq, the kind in otherfeatures databases rather than
-  #   rnaseq ones and without bamcov. eg Taz. In that case non-canonical
-  #   introns are a speical colour.
-  if(ref $f ne 'HASH' and $f->can('display_id') and
-     $f->can('analysis') and $f->analysis and
-     $f->analysis->logic_name =~ /_intron/) {
-    my $can_type    = [ split /:/, $f->display_id ]->[-1];
-    if($can_type and length $can_type > 3 and
-       substr('non canonical', 0, length $can_type) eq $can_type) {
-      return $parameters->{'non_can_score_colour'};
-    }
-  }
-    
-  # Use colours supplied in external_data if configured to do so.
   if ($parameters->{'use_feature_colours'} and $f->can('external_data')) {
     my $data        = $f->external_data;
     if($data and $data->{'item_colour'} and
@@ -277,11 +279,26 @@ sub _special_colour {
       return $data->{'item_colour'}[0];
     }
   }
-  # Not a special colour
   return undef;
 }
 
-## Given a feature, extract coords, value and colour for this point
+## Does feature need special colour handling?
+sub _special_colour {
+  my ($self,$f,$parameters) = @_;
+
+  if($self->_is_old_style_rnaseq($f) and
+     $self->_old_rnaseq_is_non_canonical($f)) {
+    return $parameters->{'non_can_score_colour'};
+  }
+
+  my $feature_colour = $self->_use_this_feature_colour($f,$parameters);
+  return $feature_colour if defined $feature_colour;
+
+  # No special colour
+  return undef;
+}
+
+## Given a feature, extract coords, value, and colour for this point
 sub _feature_values {
   my ($self,$f,$slice_length,$colour,$parameters) = @_;
 
@@ -302,6 +319,7 @@ sub _feature_values {
   }
   $start = max($start,1);
   $end = min($end,$slice_length);
+  # Special case for ReadCoverageCollection
   if(ref($f) ne 'HASH' and
      $f->isa('Bio::EnsEMBL::Variation::ReadCoverageCollection')) {
     push @out,{ colour => $this_colour, score => $f->read_coverage_max },
