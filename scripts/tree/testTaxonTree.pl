@@ -1,5 +1,5 @@
 #!/usr/bin/env perl
-# Copyright [1999-2013] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+# Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 # 
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -38,7 +38,6 @@ $self->{'cdna'} = 0;
 $self->{'scale'} = 10;
 $self->{'drawtree'} = 0;
 $self->{'extrataxon_sequenced'} = undef;
-$self->{'extrataxon_incomplete'} = undef;
 $self->{'multifurcation_deletes_node'} = undef;
 $self->{'multifurcation_deletes_all_subnodes'} = undef;
 $self->{'njtree_output_filename'} = undef;
@@ -65,7 +64,6 @@ GetOptions('help'        => \$help,
 
            'create_species_tree'     => \$self->{'create_species_tree'},
            'extrataxon_sequenced=s'  => \$self->{'extrataxon_sequenced'},
-           'extrataxon_incomplete=s' => \$self->{'extrataxon_incomplete'},
            'multifurcation_deletes_node=s' => \$self->{'multifurcation_deletes_node'},
            'multifurcation_deletes_all_subnodes=s' => \$self->{'multifurcation_deletes_all_subnodes'},
            'njtree_output_filename=s'   => \$self->{'njtree_output_filename'},  # we need to be able to feed the filename from outside to make some automation possible
@@ -135,7 +133,6 @@ if($self->{'stats'}) {
 switch($state) {
   case 1 { fetch_protein_tree($self, $self->{'tree_id'}); }
   case 2 { create_taxon_tree($self); }
-  case 3 { fetch_primate_ncbi_taxa($self); }
   case 4 { fetch_compara_ncbi_taxa($self); }
   case 5 { fetch_protein_tree_with_gene($self, $self->{'gene_stable_id'}); }
   case 6 { parse_newick($self); }
@@ -178,29 +175,6 @@ sub usage {
 }
 
 
-sub fetch_primate_ncbi_taxa {
-  my $self = shift;
-
-  my $taxonDBA = $self->{'comparaDBA'}->get_NCBITaxonAdaptor;
-
-  my $marmoset = $taxonDBA->fetch_node_by_taxon_id(9483);
-  my $root = $marmoset->root;
-  $root->merge_node_via_shared_ancestor($taxonDBA->fetch_node_by_taxon_id(9544));
-  $root->merge_node_via_shared_ancestor($taxonDBA->fetch_node_by_taxon_id(9490));
-  $root->merge_node_via_shared_ancestor($taxonDBA->fetch_node_by_taxon_id(9516));
-  $root->merge_node_via_shared_ancestor($taxonDBA->fetch_node_by_taxon_id(9500));
-  $root->merge_node_via_shared_ancestor($taxonDBA->fetch_node_by_taxon_id(9511));
-  $root->merge_node_via_shared_ancestor($taxonDBA->fetch_node_by_taxon_id(9606));
-  $root->merge_node_via_shared_ancestor($taxonDBA->fetch_node_by_taxon_id(9598));
-  $root->merge_node_via_shared_ancestor($taxonDBA->fetch_node_by_taxon_id(9600));
-  $root->merge_node_via_shared_ancestor($taxonDBA->fetch_node_by_taxon_id(9581));
-  $root->print_tree($self->{'scale'});
-
-  $root->flatten_tree->print_tree($self->{'scale'});
-
-  $self->{'root'} = $root;
-}
-
 
 sub fetch_compara_ncbi_taxa {
   my $self = shift;
@@ -234,11 +208,6 @@ sub create_species_tree {
   if($self->{'extrataxon_sequenced'}) { 
     my $temp = $self->{'extrataxon_sequenced'};
     @extrataxon_sequenced = split ('_',$temp);
-  }
-  my @extrataxon_incomplete;
-  if($self->{'extrataxon_incomplete'}) { 
-    my $temp = $self->{'extrataxon_incomplete'};
-    @extrataxon_incomplete = split ('_',$temp);
   }
   my @multifurcation_deletes_node;
   if($self->{'multifurcation_deletes_node'}) { 
@@ -281,18 +250,6 @@ sub create_species_tree {
 
     $root = $taxon->root unless($root);
     $root->merge_node_via_shared_ancestor($taxon);
-  }
-  warn "Loading taxa from extrataxon_incomplete...\n" if (0 != scalar(@extrataxon_incomplete));
-  foreach my $extra_taxon (@extrataxon_incomplete) {
-    my $taxon = $taxonDBA->fetch_node_by_taxon_id($extra_taxon);
-    my $taxon_name = $taxon->name;
-    my $taxon_id = $taxon->taxon_id;
-    warn "  $taxon_name [$taxon_id]\n";
-    $taxon->release_children;
-
-    $root = $taxon->root unless($root);
-    $root->merge_node_via_shared_ancestor($taxon);
-    $taxon->add_tag("is_incomplete", '1');
   }
 
   #$root = $root->minimize_tree if($self->{'minimize_tree'});
@@ -392,7 +349,7 @@ unless($self->{'no_print_tree'}) {
         close T;
     }
 
-  my $njtree_tree = $root->newick_format('njtree');
+  my $njtree_tree = $root->newick_format('ncbi_taxon');
   warn "==== Your njtree file njtree.$outname.nh ====\n";
   warn "$njtree_tree\n\n";
 
@@ -426,7 +383,7 @@ sub fetch_protein_tree {
   $tree->print_tree($self->{'scale'});
   warn("%d proteins\n", scalar(@{$tree->get_all_leaves}));
   
-  my $newick = $tree->newick_simple_format;
+  my $newick = $tree->newick_format('simple');
   warn("$newick\n");
 
 }
@@ -450,7 +407,7 @@ sub fetch_protein_tree_with_gene {
   my $self = shift;
   my $gene_stable_id = shift;
 
-  my $member = $self->{'comparaDBA'}->get_GeneMemberAdaptor->fetch_by_source_stable_id('ENSEMBLGENE', $gene_stable_id);
+  my $member = $self->{'comparaDBA'}->get_GeneMemberAdaptor->fetch_by_stable_id($gene_stable_id);
   $member->print_member;
   $member->get_canonical_SeqMember->print_member;
 
@@ -593,7 +550,7 @@ sub dumpTreeAsNewick
   
   warn("missing tree\n") unless($tree);
 
-  my $newick = $tree->newick_simple_format;
+  my $newick = $tree->newick_format('simple');
 
   if($self->{'dump'}) {
     my $aln_file = "proteintree_". $tree->node_id;
@@ -620,7 +577,6 @@ sub dumpTreeAsNHX
   
   warn("missing tree\n") unless($tree);
 
-  # newick_simple_format is a synonymous of newick_format method
   my $nhx;
   if ($self->{'nhx_gene_id'}) {
     $nhx = $tree->nhx_format("gene_id");

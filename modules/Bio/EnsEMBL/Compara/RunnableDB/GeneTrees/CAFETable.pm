@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2013] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -20,18 +20,16 @@ limitations under the License.
 =head1 CONTACT
 
   Please email comments or questions to the public Ensembl
-  developers list at <dev@ensembl.org>.
+  developers list at <http://lists.ensembl.org/mailman/listinfo/dev>.
 
   Questions may also be sent to the Ensembl help desk at
-  <helpdesk@ensembl.org>.
+  <http://www.ensembl.org/Help/Contact>.
 
 =cut
 
 =head1 NAME
 
 Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::CAFETable
-
-=head1 SYNOPSIS
 
 =head1 DESCRIPTION
 
@@ -242,7 +240,7 @@ sub get_per_family_cafe_table_from_db {
             my $sp = $sp_node->name();
             push @flds, ($species{$sp} || 0);
         }
-        $fam_table .= join ("\t", @flds), "\n";
+        $fam_table .= join("\t", @flds). "\n";
         print STDERR "TABLE FOR THIS FAM:\n$fam_table\n" if ($self->debug());
         $ok_fams++;
         my $sth = $self->compara_dba->dbc->prepare("INSERT INTO CAFE_data (fam_id, tree, tabledata) VALUES (?,?,?);");
@@ -348,6 +346,7 @@ LABEL:    while (1) {
         }
         last LABEL;
     }
+    die "lambda cannot be 0 !\n" unless $lambda;
     return $lambda;
 }
 
@@ -424,7 +423,7 @@ sub get_script {
     open my $sf, ">", $script_file or die "$!: $script_file\n";
     print $sf '#!' . $cafe_shell . "\n\n";
     print $sf "tree $cafe_tree_string\n\n";
-    print $sf "load -i $table_file\n\n";
+    print $sf "load -i $table_file -t 1\n\n";
     print $sf "lambda -s\n";
     close ($sf);
 

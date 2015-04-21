@@ -1,5 +1,5 @@
 #!/usr/bin/env perl
-# Copyright [1999-2013] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+# Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 # 
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -72,18 +72,18 @@ foreach my $homology (@{$homology_list}) {
     printf("fetch_all_by_species_region(%s,%s,%s,%s,%d,%d,%s)\n", 
             $mouse_gene->genome_db->name, $mouse_gene->genome_db->assembly,
             $human_gene->genome_db->name, $human_gene->genome_db->assembly,
-            $mouse_gene->chr_name, $mouse_gene->dnafrag_start, $mouse_gene->dnafrag_end,
-            'BLASTZ_NET');
+            $mouse_gene->dnafrag->name, $mouse_gene->dnafrag_start, $mouse_gene->dnafrag_end,
+            'LASTZ_NET');
 
 
     my $dnafeatures = $comparaDBA->get_DnaAlignFeatureAdaptor->fetch_all_by_species_region(
             $mouse_gene->genome_db->name, $mouse_gene->genome_db->assembly,
             $human_gene->genome_db->name, $human_gene->genome_db->assembly,
-            $mouse_gene->chr_name, $mouse_gene->dnafrag_start, $mouse_gene->dnafrag_end,
-            'BLASTZ_NET');
+            $mouse_gene->dnafrag->name, $mouse_gene->dnafrag_start, $mouse_gene->dnafrag_end,
+            'LASTZ_NET');
 
     foreach my $ddaf (@{$dnafeatures}) {
-        next unless (($mouse_gene->chr_name eq $ddaf->seqname) and ($human_gene->chr_name eq $ddaf->hseqname));
+        next unless (($mouse_gene->dnafrag->name eq $ddaf->seqname) and ($human_gene->dnafrag->name eq $ddaf->hseqname));
 
         print "=====================================================\n";
         print " length: ", $ddaf->alignment_length, "; score: ", $ddaf->score, "\n";

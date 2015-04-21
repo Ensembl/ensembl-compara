@@ -38,7 +38,7 @@ And it is done.
 
 Compiling subsetAxt.c
 =====================
-It is a C executable from UCSC. The C source code is available vi cvs 
+It is a C executable from UCSC. The C source code is available via cvs
 
 mkdir ~/src
 cd ~/src

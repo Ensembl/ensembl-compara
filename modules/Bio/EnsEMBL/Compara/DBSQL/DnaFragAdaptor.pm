@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2013] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -20,10 +20,10 @@ limitations under the License.
 =head1 CONTACT
 
   Please email comments or questions to the public Ensembl
-  developers list at <dev@ensembl.org>.
+  developers list at <http://lists.ensembl.org/mailman/listinfo/dev>.
 
   Questions may also be sent to the Ensembl help desk at
-  <helpdesk@ensembl.org>.
+  <http://www.ensembl.org/Help/Contact>.
 
 =head1 NAME
 
@@ -142,8 +142,8 @@ sub fetch_by_GenomeDB_and_name {
   $dnafrag = $self->generic_fetch_one('df.genome_db_id = ? AND df.name = ?');
 
   if (!$dnafrag) {
-    warning("No Bio::EnsEMBL::Compara::DnaFrag found for ".$genome_db->name."(".$genome_db->assembly."),".
-        " chromosome $name");
+    $genome_db = sprintf('%s (%s)', $genome_db->name, $genome_db->assembly) if ref($genome_db);
+#    warning("No Bio::EnsEMBL::Compara::DnaFrag found for $genome_db and chromosome $name");
   }
   return $dnafrag;
 }
@@ -190,8 +190,10 @@ sub fetch_all_by_GenomeDB_region {
   $self->bind_param_generic_fetch($gdb_id, SQL_INTEGER);
 
   if(defined $coord_system_name) {
+   unless ($coord_system_name eq "toplevel"){
     $sql .= ' AND df.coord_system_name = ?';
     $self->bind_param_generic_fetch($coord_system_name, SQL_VARCHAR);
+   }
   }
 
   if(defined $name) {
@@ -416,7 +418,7 @@ sub store {
    my $rows_inserted = $sth->execute($gid, $type, $name, $dnafrag->length, $dnafrag->is_reference);
    
    if ($rows_inserted > 0) {
-     $stored_id = $sth->{'mysql_insertid'};
+     $stored_id = $self->dbc->db_handle->last_insert_id(undef, undef, 'dnafrag', 'dnafrag_id');
    } else {
      # entry was already stored by another process
      my $sth2 = $self->prepare("

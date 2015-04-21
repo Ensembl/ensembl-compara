@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2013] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -20,10 +20,10 @@ limitations under the License.
 =head1 CONTACT
 
   Please email comments or questions to the public Ensembl
-  developers list at <dev@ensembl.org>.
+  developers list at <http://lists.ensembl.org/mailman/listinfo/dev>.
 
   Questions may also be sent to the Ensembl help desk at
-  <helpdesk@ensembl.org>.
+  <http://www.ensembl.org/Help/Contact>.
 
 =head1 NAME
 
@@ -33,19 +33,9 @@ Bio::EnsEMBL::Compara::DBSQL::NestedSetAdaptor
 
 Base adaptor for objects inheriting from NestedSet
 
-=head1 INHERITANCE TREE
-
 =head1 AUTHORSHIP
 
-Ensembl Team. Individual contributions can be found in the CVS log.
-
-=head1 MAINTAINER
-
-$Author$
-
-=head VERSION
-
-$Revision$
+Ensembl Team. Individual contributions can be found in the GIT log.
 
 =head1 APPENDIX
 
@@ -60,7 +50,7 @@ use strict;
 use warnings;
 
 use Bio::EnsEMBL::DBSQL::DBConnection;
-use Bio::EnsEMBL::Utils::Exception qw(throw warning deprecate);
+use Bio::EnsEMBL::Utils::Exception qw(throw warning);
 use Bio::EnsEMBL::Utils::SqlHelper;
 use Bio::EnsEMBL::Utils::Scalar qw(:assert);
 
@@ -229,6 +219,7 @@ sub fetch_tree_by_root_id {
   Caller     : $nested_set->root
 
 =cut
+
 sub fetch_root_by_node {
   my ($self, $node) = @_;
 
@@ -259,6 +250,7 @@ sub fetch_root_by_node {
   Exceptions : thrown if the nodes don't share the same root_id
 
 =cut
+
 sub fetch_first_shared_ancestor_indexed {
   my $self = shift;
   

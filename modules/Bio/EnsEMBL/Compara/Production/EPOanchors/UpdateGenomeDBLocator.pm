@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2013] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -35,14 +35,14 @@ a locator string for the core db of the species
 
 This modules is part of the Ensembl project http://www.ensembl.org
 
-Email dev@ensembl.org
+Email http://lists.ensembl.org/mailman/listinfo/dev
 
 =head1 CONTACT
 
 This modules is part of the EnsEMBL project (http://www.ensembl.org)
 
 Questions can be posted to the ensembl-dev mailing list:
-dev@ensembl.org
+http://lists.ensembl.org/mailman/listinfo/dev
 
 
 =head1 APPENDIX
@@ -51,7 +51,7 @@ The rest of the documentation details each of the object methods.
 Internal methods are usually preceded with a _
 
 =cut
-#
+
 package Bio::EnsEMBL::Compara::Production::EPOanchors::UpdateGenomeDBLocator;
 
 use strict;
@@ -68,11 +68,11 @@ sub fetch_input {
  my $species_name = $self->param('species_loc_name');
 
 # load the species db into the registry
- if($species_name eq "ancestral_sequences"){
+ if($species_name eq "ancestral_sequences" && not $self->param('no_ancestral_sequences')){
   my $species_dba = Bio::EnsEMBL::DBSQL::DBAdaptor->new( %{ $self->param('ancestral_db') } );
   throw('no ancestral_db found') unless $species_dba;
   Bio::EnsEMBL::Registry->add_DBAdaptor( "$species_name", "core", $species_dba);
- } elsif(exists($self->param('additional_core_db_urls')->{"$species_name"})){
+ } elsif($self->param('additional_core_db_urls') && exists($self->param('additional_core_db_urls')->{"$species_name"})){
    my $species_url = $self->param('additional_core_db_urls')->{"$species_name"};
    $species_url .= "?group=core&species=$species_name";
    if(Bio::EnsEMBL::Registry->get_alias("$species_name")){ # need to remove if species already added from main_core_dbs 

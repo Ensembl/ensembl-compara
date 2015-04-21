@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2013] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -20,14 +20,12 @@ limitations under the License.
 
 =head1 NAME
 
-  Bio::EnsEMBL::Compara::StableId::Map
-
-=head1 SYNOPSIS
+Bio::EnsEMBL::Compara::StableId::Map
 
 =head1 DESCRIPTION
 
-    A smart container object that maintains clusterid-2-clustername and clusterid-2-mappingscore relationships,
-    can load from file or save to file.
+A smart container object that maintains clusterid-2-clustername and clusterid-2-mappingscore relationships,
+can load from file or save to file.
 
 =cut
 

@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2013] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -16,19 +16,9 @@ limitations under the License.
 
 =cut
 
-# 
-# BioPerl module for Bio::EnsEMBL::Compara::DBSQL::FamilyAdaptor
-# 
-# Initially cared for by Philip Lijnzaad <lijnzaad@ebi.ac.uk> and Elia Stupka <elia@tll.org.sg>
-# Now cared by Abel Ureta-Vidal <abel@ebi.ac.uk>
-#
-# POD documentation - main docs before the code
-
 =head1 NAME
 
-FamilyAdaptor - DESCRIPTION of Object
-
-  This object represents a family coming from a database of protein families.
+FamilyAdaptor - This object represents a family coming from a database of protein families.
 
 =head1 SYNOPSIS
 
@@ -42,11 +32,10 @@ FamilyAdaptor - DESCRIPTION of Object
   my $fam = $fa->fetch_by_stable_id('ENSF000013034');
 
   my $ma = $db->get_SeqMemberAdaptor;
-  my $member = $ma->fetch_by_source_stable_id('Uniprot/SWISSPROT', 'YSV4_CAEEL')};
-  my @fam = @{$fa->fetch_all_by_Member($member)};
+  my $member = $ma->fetch_by_stable_id('YSV4_CAEEL')};   # This is UniProt accession symbol
+  my $fam = $fa->fetch_by_SeqMember($member);
 
   @fam = @{$fa->fetch_by_description_with_wildcards('interleukin',1)};
-  @fam = @{$fa->fetch_all};
 
 =head1 DESCRIPTION
 
@@ -61,7 +50,11 @@ For more info, see ensembl-doc/family.txt
 
 =head1 CONTACT
 
- Able Ureta-Vidal <abel@ebi.ac.uk>
+Please email comments or questions to the public Ensembl
+developers list at <http://lists.ensembl.org/mailman/listinfo/dev>.
+
+Questions may also be sent to the Ensembl help desk at
+<http://www.ensembl.org/Help/Contact>.
 
 =head1 APPENDIX
 
@@ -78,7 +71,8 @@ use warnings;
 use Bio::EnsEMBL::Compara::Family;
 use Bio::EnsEMBL::Compara::DBSQL::BaseRelationAdaptor;
 
-use Bio::EnsEMBL::Utils::Scalar qw(:assert);
+use Bio::EnsEMBL::Utils::Scalar qw(:assert :check);
+use Bio::EnsEMBL::Utils::Exception qw(throw warning stack_trace_dump deprecate);
 
 use DBI qw(:sql_types);
 
@@ -87,73 +81,83 @@ our @ISA = qw(Bio::EnsEMBL::Compara::DBSQL::BaseRelationAdaptor);
 
 =head2 fetch_all_by_Member
 
- Arg [1]    : Bio::EnsEMBL::Compara::Member $member
+ Description: DEPRECATED (will be removed in e79). Please use fetch_all_by_GeneMember() or fetch_by_SeqMember() instead
+
+=cut
+
+sub fetch_all_by_Member { ## DEPRECATED
+  my ($self, $member) = @_;
+
+  assert_ref($member, 'Bio::EnsEMBL::Compara::Member');
+  deprecate('FamilyAdaptor::fetch_all_by_Member() is deprecated and will be removed in e79. Please use fetch_all_by_GeneMember() or fetch_by_SeqMember() instead');
+  if (check_ref($member, 'Bio::EnsEMBL::Compara::SeqMember')) {
+      my $f = $self->fetch_by_SeqMember($member);
+      return $f ? [$f] : [];
+  }
+  return $self->fetch_all_by_GeneMember($member);
+}
+
+
+=head2 fetch_all_by_GeneMember
+
+ Arg [1]    : Bio::EnsEMBL::Compara::GeneMember $member
  Example    : $families = $FamilyAdaptor->fetch_all_by_Member($member);
  Description: find the families to which the given member belongs to
  Returntype : an array reference of Bio::EnsEMBL::Compara::Family objects
-              (could be empty or contain more than one Family in the case of ENSEMBLGENE only)
  Exceptions : when missing arguments
  Caller     : general
 
 =cut
 
-sub fetch_all_by_Member {
-  my ($self, $member) = @_;
+sub fetch_all_by_GeneMember {
+  my ($self, $gene_member) = @_;
 
-  assert_ref($member, 'Bio::EnsEMBL::Compara::Member');
+  assert_ref($gene_member, 'Bio::EnsEMBL::Compara::GeneMember');
 
-  my $join = [[['family_member', 'fm'], 'f.family_id = fm.family_id']];
-  my $constraint = 'fm.member_id = ?';
+  my $join = [[['family_member', 'fm'], 'f.family_id = fm.family_id'], [['seq_member', 'sm'], 'fm.seq_member_id = sm.seq_member_id'] ];
+  my $constraint = 'sm.gene_member_id = ?';
 
-  $self->bind_param_generic_fetch($member->dbID, SQL_INTEGER);
-  return $self->generic_fetch($constraint, $join);
+  $self->bind_param_generic_fetch($gene_member->dbID, SQL_INTEGER);
+  return $self->generic_fetch($constraint, $join, 'GROUP BY fm.family_id');
 }
 
 
-sub fetch_by_Member_source_stable_id {
+=head2 fetch_by_SeqMember
+
+ Arg [1]    : Bio::EnsEMBL::Compara::SeqMember $member
+ Example    : $family = $FamilyAdaptor->fetch_by_SeqMember($member);
+ Description: find the family to which the given member belongs to
+ Returntype : Bio::EnsEMBL::Compara::Family or undef
+ Exceptions : when missing arguments
+ Caller     : general
+
+=cut
+
+sub fetch_by_SeqMember {
+  my ($self, $seq_member) = @_;
+
+  assert_ref($seq_member, 'Bio::EnsEMBL::Compara::SeqMember');
+
+  my $join = [[['family_member', 'fm'], 'f.family_id = fm.family_id']];
+  my $constraint = 'fm.seq_member_id = ?';
+
+  $self->bind_param_generic_fetch($seq_member->dbID, SQL_INTEGER);
+  return $self->generic_fetch_one($constraint, $join);
+}
+
+
+sub fetch_by_Member_source_stable_id { ## DEPRECATED
   my ($self, $source_name, $member_stable_id) = @_;
 
-  unless (defined $source_name && defined $member_stable_id) {
-    $self->throw("The source_name and member_stable_id arguments must be defined");
-  }
+  deprecate('FamilyAdaptor::fetch_by_Member_source_stable_id() is deprecated and will be removed in e79. Please use fetch_all_by_GeneMember() or fetch_by_SeqMember() instead');
+  my $m = $self->db->get_GeneMemberAdaptor->fetch_by_source_stable_id($source_name, $member_stable_id);
+  return $self->fetch_all_by_GeneMember($m) if $m;
 
-  my $join = [[['family_member', 'fm'], 'f.family_id = fm.family_id'],
-              [['member', 'm'], 'fm.member_id = m.member_id']];
-
-  my $constraint = 'm.stable_id = ? AND m.source_name = ?';
-
-  $self->bind_param_generic_fetch($member_stable_id, SQL_VARCHAR);
-  $self->bind_param_generic_fetch($source_name, SQL_VARCHAR);
-  return $self->generic_fetch($constraint, $join);
+  $m = $self->db->get_SeqMemberAdaptor->fetch_by_source_stable_id($source_name, $member_stable_id);
+  my $f = $self->fetch_by_SeqMember($m);
+  return $f ? [$f] : [];
 }
 
-# maybe a useful method in case more than one kind of family data is stored in the db.
-
-
-sub fetch_all_by_Member_method_link_type {
-  my ($self, $member, $method_link_type) = @_;
-
-  assert_ref($member, 'Bio::EnsEMBL::Compara::Member');
-
-  $self->throw("method_link_type arg is required\n")
-    unless ($method_link_type);
-  
-  my $mlssa = $self->db->get_MethodLinkSpeciesSetAdaptor;
-  my $mlss_arrayref = $mlssa->fetch_all_by_method_link_type_GenomeDB($method_link_type,$member->genome_db);
-  
-  unless (scalar @{$mlss_arrayref}) {
-    warning("There is no $method_link_type data stored in the database for " . $member->genome_db->name . "\n");
-    return [];
-  }
-  
-  my $join = [[['family_member', 'fm'], 'f.family_id = fm.family_id']];
-  
-  my $constraint =  " f.method_link_species_set_id in (". join (",", (map {$_->dbID} @{$mlss_arrayref})) . ")";
-
-  $constraint .= " AND fm.member_id = " . $member->dbID;
-
-  return $self->generic_fetch($constraint, $join);
-}
 
 =head2 fetch_by_description_with_wildcards
 
@@ -162,8 +166,7 @@ sub fetch_all_by_Member_method_link_type {
               if set to 1, wildcards are added and the search is a slower LIKE search
  Example    : $fams = $FamilyAdaptor->fetch_by_description_with_wildcards('REDUCTASE',1);
  Description: simplistic substring searching on the description to get the families
-              matching the description. (The search is currently case-insensitive;
-              this may change if SPTR changes to case-preservation)
+              matching the description. The search is currently case-insensitive.
  Returntype : an array reference of Bio::EnsEMBL::Compara::Family objects
  Exceptions : none
  Caller     : general
@@ -176,10 +179,12 @@ sub fetch_by_description_with_wildcards{
     my $constraint;
 
     if ($wildcard) {
-      $constraint = "f.description LIKE '"."%"."\U$desc"."%"."'";
+      $constraint = 'f.description LIKE ?';
+      $self->bind_param_generic_fetch(sprintf('%%%s%%',$desc), SQL_VARCHAR);
     }
     else {
-      $constraint = "f.description = '$desc'";
+      $constraint = 'f.description = ?';
+      $self->bind_param_generic_fetch($desc, SQL_VARCHAR);
     }
 
     return $self->generic_fetch($constraint);
@@ -217,8 +222,8 @@ sub _objs_from_sth {
   
   while ($sth->fetch()) {
     push @families, Bio::EnsEMBL::Compara::Family->new_fast({
-            '_adaptor'                      => $self,       # field name NOT in sync with Bio::EnsEMBL::Storable
-            '_dbID'                         => $family_id,  # field name NOT in sync with Bio::EnsEMBL::Storable
+            'adaptor'                       => $self,
+            'dbID'                          => $family_id,
             '_stable_id'                    => $stable_id,
             '_version'                      => $version,
             '_description'                  => $description,
@@ -277,19 +282,15 @@ sub store {
     $sql = "INSERT INTO family (stable_id, version, method_link_species_set_id, description, description_score) VALUES (?,?,?,?,?)";
     $sth = $self->prepare($sql);
     $sth->execute($fam->stable_id, $fam->version, $fam->method_link_species_set_id, $fam->description, $fam->description_score);
-    $fam->dbID($sth->{'mysql_insertid'});
+    $fam->dbID( $self->dbc->db_handle->last_insert_id(undef, undef, 'family', 'family_id') );
   }
 
-  $sql = "INSERT IGNORE INTO family_member (family_id, member_id, cigar_line) VALUES (?,?,?)";
+  $sql = "INSERT IGNORE INTO family_member (family_id, seq_member_id, cigar_line) VALUES (?,?,?)";
   $sth = $self->prepare($sql);
   foreach my $member (@{$fam->get_all_Members}) {   
     # Stores the member if not yet stored
     unless (defined $member->dbID) {
-        if ($member->source_name eq 'ENSEMBLGENE') {
-            $self->db->get_GeneMemberAdaptor->store($member);
-        } else {
-            $self->db->get_SeqMemberAdaptor->store($member);
-        }
+        $self->db->get_SeqMemberAdaptor->store($member);
     }
     $sth->execute($member->set->dbID, $member->dbID, $member->cigar_line);
   }
@@ -309,7 +310,7 @@ sub update {
     $sth->execute($fam->stable_id, $fam->version, $fam->method_link_species_set_id, $fam->description, $fam->description_score, $fam->dbID);
   }
 
-  my $sql = 'UPDATE family_member SET cigar_line = ? WHERE family_id = ? AND member_id = ?';
+  my $sql = 'UPDATE family_member SET cigar_line = ? WHERE family_id = ? AND seq_member_id = ?';
   my $sth = $self->prepare($sql);
   foreach my $member (@{$fam->get_all_Members}) {   
     $sth->execute($member->cigar_line, $member->set->dbID, $member->dbID);

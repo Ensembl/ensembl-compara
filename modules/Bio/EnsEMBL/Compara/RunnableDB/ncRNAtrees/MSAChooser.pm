@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2013] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -20,10 +20,10 @@ limitations under the License.
 =head1 CONTACT
 
   Please email comments or questions to the public Ensembl
-  developers list at <dev@ensembl.org>.
+  developers list at <http://lists.ensembl.org/mailman/listinfo/dev>.
 
   Questions may also be sent to the Ensembl help desk at
-  <helpdesk@ensembl.org>.
+  <http://www.ensembl.org/Help/Contact>.
 
 =head1 NAME
 
@@ -52,15 +52,7 @@ $mcoffee->write_output(); #writes to DB
 
 =head1 AUTHORSHIP
 
-Ensembl Team. Individual contributions can be found in the CVS log.
-
-=head1 MAINTAINER
-
-$Author$
-
-=head VERSION
-
-$Revision$
+Ensembl Team. Individual contributions can be found in the GIT log.
 
 =head1 APPENDIX
 
@@ -105,12 +97,14 @@ sub fetch_input {
     my $gene_count = scalar(@{$tree->get_all_Members});
     die "Unfetchable leaves root_id=$nc_tree_id\n" unless $gene_count;
 
+    $tree->release_tree();   # To free up the memory
+
     if ($gene_count > $self->param('treebreak_gene_count')) {
         # Create an alignment job and the waiting quicktree break job
         $self->dataflow_output_id($self->input_id, 3);
         $self->dataflow_output_id($self->input_id, 4);
-        $self->input_job->incomplete(0);
-        die "Cluster root_id=$nc_tree_id over threshold (gene_count=$gene_count > ".($self->param('treebreak_gene_count'))."), dataflowing to QuickTreeBreak\n";
+        $self->input_job->autoflow(0);
+        $self->complete_early("Cluster root_id=$nc_tree_id over threshold (gene_count=$gene_count > ".($self->param('treebreak_gene_count'))."), dataflowing to QuickTreeBreak\n");
     }
 
     # The tree follows the "normal" path: create an alignment job

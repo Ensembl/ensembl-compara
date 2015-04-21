@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2013] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -20,17 +20,14 @@ limitations under the License.
 =head1 CONTACT
 
   Please email comments or questions to the public Ensembl
-  developers list at <dev@ensembl.org>.
+  developers list at <http://lists.ensembl.org/mailman/listinfo/dev>.
 
   Questions may also be sent to the Ensembl help desk at
-  <helpdesk@ensembl.org>.
+  <http://www.ensembl.org/Help/Contact>.
 
 =head1 NAME
 
 Bio::EnsEMBL::Compara::RunnableDB::DumpMembersIntoFasta
-
-=head1 SYNOPSIS
-
 
 =head1 DESCRIPTION
 
@@ -44,7 +41,7 @@ Supported keys:
     'fasta_dir' => <directory_path>
         Location to write fasta file
 
-    'only_canonical' => 0/1 [default: 0]
+    'only_canonical' => 0/1 [default: 1]
         Do we dump all the members or only the canonical ones ?
 
 =cut
@@ -59,24 +56,33 @@ use Bio::EnsEMBL::Compara::MemberSet;
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
 
+
+sub param_defaults {
+    return {
+        'only_canonical'    => 1,
+    };
+}
+
+
 sub fetch_input {
     my $self = shift @_;
 
     my $genome_db_id = $self->param_required('genome_db_id');
     my $genome_db = $self->compara_dba->get_GenomeDBAdaptor->fetch_by_dbID($genome_db_id) or die "cannot fetch GenomeDB with id '$genome_db_id'";
 
-    my $fasta_file = $self->param('fasta_dir') . '/' . $genome_db->name() . '_' . $genome_db->assembly() . '.fasta';
+    my $fasta_file = $self->param('fasta_dir') . '/' . $genome_db->name() . '_' . $genome_db->assembly() . ($genome_db->genome_component ? '_comp_'.$genome_db->genome_component : '') . '.fasta';
     $fasta_file =~ s/\s+/_/g;    # replace whitespace with '_' characters
     $fasta_file =~ s/\/\//\//g;  # converts any // in path to /
     $self->param('fasta_file', $fasta_file);
 
-    # write fasta file:
     my $members;
     if ($self->param('only_canonical')) {
-        $members = $self->compara_dba->get_SeqMemberAdaptor->fetch_all_canonical_by_source_genome_db_id('ENSEMBLPEP', $genome_db_id);
+        $members = $self->compara_dba->get_SeqMemberAdaptor->fetch_all_canonical_by_GenomeDB($genome_db_id);
     } else {
-        $members = $self->compara_dba->get_SeqMemberAdaptor->fetch_all_by_source_genome_db_id('ENSEMBLPEP', $genome_db_id);
+        $members = $self->compara_dba->get_SeqMemberAdaptor->fetch_all_by_GenomeDB($genome_db_id);
     }
+
+    # write fasta file:
     Bio::EnsEMBL::Compara::MemberSet->new(-members => $members)->print_sequences_to_file($fasta_file);
 }
 

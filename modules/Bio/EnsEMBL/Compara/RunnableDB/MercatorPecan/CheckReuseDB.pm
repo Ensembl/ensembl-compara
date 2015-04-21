@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2013] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -79,7 +79,7 @@ sub run {
 	 if ($self->debug) {
 	     foreach my $dnafrag (keys %$old_names) {
 		 print "UPDATE dnafrag SET name = '" . $new_names->{$dnafrag} . "' WHERE name='" . $old_names->{$dnafrag} . "';\n";
-		 print "UPDATE member SET chr_name = '" . $new_names->{$dnafrag} . "' WHERE chr_name='" . $old_names->{$dnafrag} . "';\n";
+             # There used to be some code to update chr_name in gene_member and seq_member, but it seems that we don't need it anymore with dnafrag_id
 	     }
              foreach my $dnafrag (keys %$new_names) {
                  print "Added " . $dnafrag . " " . $new_names->{$dnafrag} . "\n";

@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2013] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -41,7 +41,11 @@ Removes the minimum number of overlappping anchors.
 
 =head1 CONTACT
 
-ensembl-compara@ebi.ac.uk
+Please email comments or questions to the public Ensembl
+developers list at <http://lists.ensembl.org/mailman/listinfo/dev>.
+
+Questions may also be sent to the Ensembl help desk at
+<http://www.ensembl.org/Help/Contact>.
 
 =cut
 
@@ -61,6 +65,12 @@ use Bio::EnsEMBL::Utils::Exception qw(throw warning);
 
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
+
+sub param_defaults {
+	return {
+		'overlapping_id' => 3333, # unique id for overlapping anchors
+	};
+}
 
 sub run {
 	my ($self) = @_;
@@ -124,7 +134,7 @@ sub write_output {
 	my ($self) = @_;
 	my $anchor_align_adaptor = $self->compara_dba()->get_adaptor("AnchorAlign");
 	my $Anchors_2_remove = $self->param('overlapping_ancs_to_remove'); 
-	$anchor_align_adaptor->update_failed_anchor($Anchors_2_remove, $self->analysis->dbID, $self->param('mapping_mlssid'));	
+	$anchor_align_adaptor->update_failed_anchor($Anchors_2_remove, $self->param('overlapping_id'), $self->param('mapping_mlssid'));	
 }
 
 1;

@@ -1,5 +1,5 @@
 #!/usr/bin/env perl
-# Copyright [1999-2013] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+# Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 # 
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -79,11 +79,11 @@ c --> the common name (\$tree->get_tagvalue('genbank common name'))
 g --> gdb_id (\$tree->adaptor->db->get_GenomeDBAdaptor->fetch_by_taxon_id(\$tree->taxon_id)->dbID)
 t --> timetree (\$tree->get_tagvalue('ensembl timetree mya')
 l --> display_label (\$tree->gene_member->display_label)
-s --> genome short name (\$tree->genome_db->short_name)
+s --> genome short name (\$tree->genome_db->get_short_name)
 i --> stable_id (\$tree->gene_member->stable_id)
 p --> peptide Member (\$tree->get_canonical_SeqMember->stable_id)
 x --> taxon_id (\$tree->taxon_id)
-m --> member_id (\$tree->member_id)
+m --> seq_member_id (\$tree->seq_member_id)
 o --> node_id (\$tree->node_id)
 S --> species_name (\$tree->genome_db->name)
 
@@ -193,8 +193,6 @@ print "All examples run successfully\n\n";
 
 #my $newick_tree = $tree->newick_format("ncbi_name");
 #my $newick_tree = $tree->newick_format("ryo",'%{^n}');
-
-#my $newick_tree = $tree->newick_format("njtree");
 
 #my $newick_tree = $tree->newick_format("phylip");
 

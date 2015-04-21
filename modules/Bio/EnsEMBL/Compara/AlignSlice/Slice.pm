@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2013] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -20,10 +20,10 @@ limitations under the License.
 =head1 CONTACT
 
   Please email comments or questions to the public Ensembl
-  developers list at <dev@ensembl.org>.
+  developers list at <http://lists.ensembl.org/mailman/listinfo/dev>.
 
   Questions may also be sent to the Ensembl help desk at
-  <helpdesk@ensembl.org>.
+  <http://www.ensembl.org/Help/Contact>.
 
 =head1 NAME
 
@@ -33,13 +33,6 @@ for mapping features through genomic alignments
 =head1 INHERITING
 
 This module inherits methods and attributes from Bio::EnsEMBL::Slice module.
-
-=head1 SYNOPSIS
-  
-
-SET VALUES
-
-GET VALUES
 
 =head1 OBJECT ATTRIBUTES
 
@@ -1713,6 +1706,8 @@ sub get_all_underlying_Slices {
           );
       $this_underlying_slice->{seq} = $self->subseq($start_position, $end_position, $strand);
       $this_underlying_slice->{_tree} = $this_slice->{_tree} if (defined($this_slice->{_tree}));
+      $this_underlying_slice->{_node_in_tree} = $this_slice->{_node_in_tree} if (defined($this_slice->{_node_in_tree}));
+      weaken($this_underlying_slice->{_node_in_tree});
     }
 #     if ($strand == 1) {
       push(@$underlying_slices, $this_underlying_slice);

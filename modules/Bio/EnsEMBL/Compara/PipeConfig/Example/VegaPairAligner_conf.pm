@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2013] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -18,16 +18,13 @@ limitations under the License.
 
 =head1 NAME
 
- Bio::EnsEMBL::Compara::PipeConfig::Example::VegaPairAligner_conf
+Bio::EnsEMBL::Compara::PipeConfig::Example::VegaPairAligner_conf
 
 =head1 SYNOPSIS
 
-    #1. Update ensembl-hive, ensembl and ensembl-compara CVS repositories before each new release
-
-    #2. You may need to update 'schema_version' in meta table to the current release number in ensembl-hive/sql/tables.sql
+    #1. Update ensembl-hive, ensembl and ensembl-compara GIT repositories before each new release
 
     #3. Make sure that all default_options are set correctly, especially:
-        release
         pipeline_db (-host)
         resource_classes 
         ref_species (if not homo_sapiens)
@@ -56,7 +53,11 @@ limitations under the License.
 
 =head1 CONTACT
 
-  Please contact ehive-users@ebi.ac.uk mailing list with questions/suggestions.
+Please email comments or questions to the public Ensembl
+developers list at <http://lists.ensembl.org/mailman/listinfo/dev>.
+
+Questions may also be sent to the Ensembl help desk at
+<http://www.ensembl.org/Help/Contact>.
 
 =cut
 
@@ -71,11 +72,9 @@ sub default_options {
   return {
     %{$self->SUPER::default_options},   # inherit the generic ones
 
-    'release'               => '73',
     #'dbname'               => '', #Define on the command line via the conf_file
 
     # dependent parameters:
-    'rel_with_suffix'       => $self->o('release').$self->o('release_suffix'),
     'pipeline_name'         => 'LASTZ_'.$self->o('rel_with_suffix'),   # name the pipeline to differentiate the submitted processes
 
     'pipeline_db' => {                                  # connection parameters
@@ -121,8 +120,8 @@ sub default_options {
 	#Default pairaligner config
 	#
 #    'skip_pairaligner_stats' => 0, #skip this module if set to 1
-    'output_dir' => '/lustre/scratch109/ensembl/' . $ENV{USER} . '/vega_ga_20130722_'.$self->o('release'),
-    'bed_dir' => '/lustre/scratch109/ensembl/' . $ENV{USER} . '/vega_ga_20130722_'.$self->o('release') .'/bed_dir',
+    'output_dir' => '/lustre/scratch109/ensembl/' . $ENV{USER} . '/vega_ga_20130722_'.$self->o('ensembl_release'),
+    'bed_dir' => '/lustre/scratch109/ensembl/' . $ENV{USER} . '/vega_ga_20130722_'.$self->o('ensembl_release') .'/bed_dir',
     };
 }
 

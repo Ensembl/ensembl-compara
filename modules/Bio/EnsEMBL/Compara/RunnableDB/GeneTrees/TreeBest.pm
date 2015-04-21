@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2013] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -20,10 +20,10 @@ limitations under the License.
 =head1 CONTACT
 
   Please email comments or questions to the public Ensembl
-  developers list at <dev@ensembl.org>.
+  developers list at <http://lists.ensembl.org/mailman/listinfo/dev>.
 
   Questions may also be sent to the Ensembl help desk at
-  <helpdesk@ensembl.org>.
+  <http://www.ensembl.org/Help/Contact>.
 
 =head1 NAME
 
@@ -39,17 +39,12 @@ Perl strings.
 - The parameter treebest_exe must be set.
 - An alignment filtering method can be defined via the parameter filt_cmdline
 
+PS:
+Until e75, RunnableDB/GeneTrees/ReconcileTree.pm was able to reconcile a tree *in place*
+
 =head1 AUTHORSHIP
 
-Ensembl Team. Individual contributions can be found in the CVS log.
-
-=head1 MAINTAINER
-
-$Author$
-
-=head VERSION
-
-$Revision$
+Ensembl Team. Individual contributions can be found in the GIT log.
 
 =head1 APPENDIX
 
@@ -66,10 +61,10 @@ use base ('Bio::EnsEMBL::Compara::RunnableDB::RunCommand');
 
 # First of all, we need a tree of node_ids, since our foreign keys are based on that
 
-sub load_species_tree_from_db {
+sub _load_species_tree_string_from_db {
     my ($self) = @_;
-    my $mlss_id = $self->param_required('mlss_id');
-    my $species_tree = $self->compara_dba->get_SpeciesTreeAdaptor->fetch_by_method_link_species_set_id_label($mlss_id, 'default');
+    my $species_tree = $self->param('gene_tree')->species_tree();
+    $species_tree->attach_to_genome_dbs();
     $self->param('species_tree_string', $species_tree->root->newick_format('ryo', '%{o}%{-E"*"}'))
 }
 
@@ -89,10 +84,11 @@ sub load_species_tree_from_db {
 =cut
 
 sub run_treebest_best {
-    my ($self, $input_aln) = @_;
+    my ($self, $input_aln, $lk_scale) = @_;
 
     my $species_tree_file = $self->get_species_tree_file();
     my $max_diff_lk;
+    my $filtering_cutoff;
 
     while (1) {
 
@@ -103,9 +99,13 @@ sub run_treebest_best {
         $args .= sprintf(' -p %s', $self->param('intermediate_prefix')) if $self->param('intermediate_prefix');
         $args .= sprintf(' %s', $self->param('extra_args')) if $self->param('extra_args');
         $args .= sprintf(' -Z %f', $max_diff_lk) if $max_diff_lk;
+        $args .= sprintf(' -X %f', $lk_scale) if $lk_scale;
+        $args .= ' -D';
+        $args .= sprintf(' -F %d', $filtering_cutoff) if $filtering_cutoff;
 
         my $cmd = $self->_get_alignment_filtering_cmd($args, $input_aln);
         my $run_cmd = $self->run_command($cmd);
+        $self->param('treebest_stderr', $run_cmd->err);
         return $run_cmd->out unless ($run_cmd->exit_code);
 
         my $full_cmd = $run_cmd->cmd;
@@ -120,6 +120,12 @@ sub run_treebest_best {
             $max_diff_lk = 1e-5 unless $max_diff_lk;
             $max_diff_lk *= 10;
             $self->warning("Lowering max_diff_lk to $max_diff_lk");
+        } elsif ($logfile =~ /The filtered alignment has 0 columns. Cannot build a tree/ and not ($self->param('extra_args') and $self->param('extra_args') =~ /-F /)) {
+            # Decrease the cutoff to remove columns (only in auto mode, i.e. when the user hasn't given a -F option)
+            # Although the default value in treebest is 11, we start directly at 6, and reduce by 1 at each iteration
+            $filtering_cutoff = 7 unless $filtering_cutoff;
+            $filtering_cutoff--;
+            $self->warning("Lowering filtering_cutoff to $filtering_cutoff");
         } else {
             $self->throw(sprintf("error running treebest [%s]: %d\n%s", $run_cmd->cmd, $run_cmd->exit_code, $logfile));
         }
@@ -278,10 +284,7 @@ sub _get_alignment_filtering_cmd {
 sub _get_treebest_cmd {
     my ($self, $args) = @_;
 
-    my $treebest_exe = $self->param_required('treebest_exe');
-    die "Cannot execute '$treebest_exe'" unless (-x $treebest_exe);
-
-    return sprintf('%s %s', $treebest_exe, $args);
+    return sprintf('%s %s', $self->require_executable('treebest_exe'), $args);
 }
 
 
@@ -312,9 +315,9 @@ sub _write_temp_tree_file {
     my ($self, $tree_name, $tree_content) = @_;
 
     my $filename = $self->worker_temp_directory . $tree_name;
-    open FILE,">$filename" or die $!;
-    print FILE $tree_content;
-    close FILE;
+    open my $fh, ">", $filename or die $!;
+    print $fh $tree_content;
+    close $fh;
 
     return $filename;
 }

@@ -1,5 +1,5 @@
 #!/usr/bin/env perl
-# Copyright [1999-2013] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+# Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 # 
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -43,17 +43,15 @@ my $homology_adaptor = $comparaDBA->get_HomologyAdaptor;
 my $genes = $human_gene_adaptor->fetch_all_by_external_name('CTDP1');
 
 foreach my $gene (@$genes) {
-  my $member = $gene_member_adaptor->
-  fetch_by_source_stable_id("ENSEMBLGENE",$gene->stable_id);
+  my $member = $gene_member_adaptor->fetch_by_stable_id($gene->stable_id);
   my $all_homologies = $homology_adaptor->fetch_all_by_Member($member);
 
   foreach my $this_homology (@$all_homologies) {
     my $description = $this_homology->description;
     next unless ($description =~ /one2one/); # if only one2one wanted
-    my $first_found = 0;
     foreach my $member (@{$this_homology->get_all_GeneMembers}) {
       my $label = $member->display_label || $member->stable_id;
-      print $member->genome_db->short_name, ",", $label, "\t";
+      print $member->genome_db->get_short_name, ",", $label, "\t";
     }
     my $pairwise_alignment_from_multiple = $this_homology->get_SimpleAlign;
     my $overall_pid = $pairwise_alignment_from_multiple->overall_percentage_identity;

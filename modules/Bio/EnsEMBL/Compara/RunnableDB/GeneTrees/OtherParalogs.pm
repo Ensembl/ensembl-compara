@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2013] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -20,10 +20,10 @@ limitations under the License.
 =head1 CONTACT
 
   Please email comments or questions to the public Ensembl
-  developers list at <dev@ensembl.org>.
+  developers list at <http://lists.ensembl.org/mailman/listinfo/dev>.
 
   Questions may also be sent to the Ensembl help desk at
-  <helpdesk@ensembl.org>.
+  <http://www.ensembl.org/Help/Contact>.
 
 =head1 NAME
 
@@ -49,15 +49,7 @@ $otherparalogs->write_output(); #writes to DB
 
 =head1 AUTHORSHIP
 
-Ensembl Team. Individual contributions can be found in the CVS log.
-
-=head1 MAINTAINER
-
-$Author$
-
-=head VERSION
-
-$Revision$
+Ensembl Team. Individual contributions can be found in the GIT log.
 
 =head1 APPENDIX
 
@@ -78,13 +70,6 @@ use Bio::EnsEMBL::Compara::Graph::Link;
 use base ('Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::OrthoTree');
 
 
-sub param_defaults {
-    return {
-            'tag_split_genes'       => 0,
-            'store_homologies'      => 1,
-    };
-}
-
 sub fetch_input {
     my $self = shift;
     $self->SUPER::fetch_input;
@@ -95,17 +80,15 @@ sub fetch_input {
     my %super_align;
     foreach my $member (@{$aln->get_all_Members}) {
         bless $member, 'Bio::EnsEMBL::Compara::GeneTreeMember';
-        $super_align{$member->member_id} = $member;
+        $super_align{$member->seq_member_id} = $member;
     }
     $self->param('super_align', \%super_align);
     $self->param('homology_consistency', {});
     $self->param('homology_links', []);
     $self->delete_old_homologies;
 
-    my $mlss_id = $self->param_required('mlss_id');
-    my $species_tree = $self->compara_dba->get_SpeciesTreeAdaptor->fetch_by_method_link_species_set_id_label($mlss_id, 'default');
     my %gdb_id2stn = ();
-    foreach my $taxon (@{$species_tree->root->get_all_leaves}) {
+    foreach my $taxon (@{$self->param('gene_tree')->tree->species_tree->root->get_all_leaves}) {
         $gdb_id2stn{$taxon->genome_db_id} = $taxon;
     }
     $self->param('gdb_id2stn', \%gdb_id2stn);
@@ -113,7 +96,7 @@ sub fetch_input {
 
 sub write_output {
     my $self = shift @_;
-
+    $self->run_analysis;
 }
 
 
@@ -122,18 +105,15 @@ sub write_output {
     This function will create all the links between two genes from two different sub-trees, and from the same species
 
 =cut
+
 sub run_analysis {
     my $self = shift;
 
     my $starttime = time()*1000;
     my $gene_tree = $self->param('gene_tree');
 
-    print "Calculating ancestor species hash\n" if ($self->debug);
-    $self->get_ancestor_species_hash($gene_tree);
-
     my $tmp_time = time();
     print "build paralogs graph\n" if ($self->debug);
-    $gene_tree->print_tree if $self->debug;
     my $ngenepairlinks = $self->rec_add_paralogs($gene_tree);
     print "$ngenepairlinks pairings\n" if ($self->debug);
 
@@ -170,6 +150,7 @@ sub rec_add_paralogs {
             $ancestor->store_tag('duplication_confidence_score', 0);
         } else {
             $ancestor->store_tag('node_type', 'speciation');
+            $ancestor->delete_tag('duplication_confidence_score');
         }
         print "setting node_type to ", $ancestor->get_tagvalue('node_type'), "\n" if ($self->debug);
     }
@@ -197,6 +178,39 @@ sub rec_add_paralogs {
 }
 
 
+=head2 duplication_confidence_score
+
+    Super-trees lack the duplication confidence scores, and we have to compute them here
+
+=cut
+
+sub duplication_confidence_score {
+  my $self = shift;
+  my $ancestor = shift;
+
+  # This assumes bifurcation!!! No multifurcations allowed
+  my ($child_a, $child_b, $dummy) = @{$ancestor->children};
+  $self->throw("tree is multifurcated in duplication_confidence_score\n") if (defined($dummy));
+  my @child_a_gdbs = keys %{$self->get_ancestor_species_hash($child_a)};
+  my @child_b_gdbs = keys %{$self->get_ancestor_species_hash($child_b)};
+  my %seen = ();  my @gdb_a = grep { ! $seen{$_} ++ } @child_a_gdbs;
+     %seen = ();  my @gdb_b = grep { ! $seen{$_} ++ } @child_b_gdbs;
+  my @isect = my @diff = my @union = (); my %count;
+  foreach my $e (@gdb_a, @gdb_b) { $count{$e}++ }
+  foreach my $e (keys %count) {
+    push(@union, $e); push @{ $count{$e} == 2 ? \@isect : \@diff }, $e;
+  }
+
+  my $duplication_confidence_score = 0;
+  my $scalar_isect = scalar(@isect);
+  my $scalar_union = scalar(@union);
+  $duplication_confidence_score = (($scalar_isect)/$scalar_union) unless (0 == $scalar_isect);
+
+  $ancestor->store_tag("duplication_confidence_score", $duplication_confidence_score) unless ($self->param('_readonly'));
+}
+
+
+
 =head2 get_ancestor_species_hash
 
     This function is optimized for super-trees:
@@ -205,6 +219,7 @@ sub rec_add_paralogs {
      - It stores the list of all the leaves to save DB queries
 
 =cut
+
 sub get_ancestor_species_hash
 {
     my $self = shift;
@@ -233,7 +248,7 @@ sub get_ancestor_species_hash
             $leaf->print_member if ($self->debug);
             $species_hash->{$leaf->genome_db_id} = 1 + ($species_hash->{$leaf->genome_db_id} || 0);
             push @sub_taxa, $self->param('gdb_id2stn')->{$leaf->genome_db_id};
-            push @{$gene_hash->{$leaf->genome_db_id}}, $self->param('super_align')->{$leaf->member_id};
+            push @{$gene_hash->{$leaf->genome_db_id}}, $self->param('super_align')->{$leaf->seq_member_id};
         }
    
     } else {

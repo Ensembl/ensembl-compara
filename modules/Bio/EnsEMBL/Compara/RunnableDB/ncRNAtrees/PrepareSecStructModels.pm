@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2013] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -20,10 +20,10 @@ limitations under the License.
 =head1 CONTACT
 
   Please email comments or questions to the public Ensembl
-  developers list at <dev@ensembl.org>.
+  developers list at <http://lists.ensembl.org/mailman/listinfo/dev>.
 
   Questions may also be sent to the Ensembl help desk at
-  <helpdesk@ensembl.org>.
+  <http://www.ensembl.org/Help/Contact>.
 
 =cut
 
@@ -93,16 +93,15 @@ sub fetch_input {
     my $nc_tree_id = $self->param_required('gene_tree_id');
 
     my $nc_tree = $self->compara_dba->get_GeneTreeAdaptor->fetch_by_dbID($nc_tree_id) or $self->throw("Could not fetch nc_tree with id=$nc_tree_id");
+    $nc_tree->species_tree->attach_to_genome_dbs();
     $self->param('gene_tree', $nc_tree);
 
-    my $alignment_id = $self->param('alignment_id');
-    $self->throw("alignment_id has to be defined\n") unless(defined $alignment_id);
+    my $alignment_id = $self->param_required('alignment_id');
     $nc_tree->gene_align_id($alignment_id);
     print STDERR "ALN INPUT ID: $alignment_id\n" if ($self->debug);
-    my $aln_seq_type = 'filtered';
-    $self->param('aln_seq_type', $aln_seq_type);
-    my $aln = Bio::EnsEMBL::Compara::AlignedMemberSet->new(-seq_type => $aln_seq_type, -dbID => $alignment_id, -adaptor => $self->compara_dba->get_AlignedMemberAdaptor);
-    $nc_tree->attach_alignment($aln);
+    my $aln = $self->compara_dba->get_GeneAlignAdaptor->fetch_by_dbID($alignment_id);
+    print STDERR scalar (@{$nc_tree->get_all_Members}), "\n";
+    $nc_tree->alignment($aln);
 
 ### !! Struct files are not used in this first tree!!
     if(my $input_aln = $self->_dumpMultipleAlignmentStructToWorkdir() ) {
@@ -135,8 +134,8 @@ sub run {
 #                                    }, -1
 #                                   );
 #         # We die here. Nothing more to do in the Runnable
-#         $self->input_job->incomplete(0);
-#         die "$nc_tree_id family is too big. Only fast trees will be computed\n";
+#         $self->input_job->autoflow(0);
+#         $self->complete_early("$nc_tree_id family is too big. Only fast trees will be computed\n");
 #     } else {
     # Run RAxML without any structure info first
         $self->_run_bootstrap_raxml;
@@ -190,9 +189,7 @@ sub _run_bootstrap_raxml {
 
     my $raxml_tag = $self->param('gene_tree')->root_id . "." . $self->worker->process_id . ".raxml";
 
-    my $raxml_exe = $self->param_required('raxml_exe');
-
-    die "Cannot execute '$raxml_exe'" unless(-x $raxml_exe);
+    my $raxml_exe = $self->require_executable('raxml_exe');
 
     my $bootstrap_num = 10;
     my $tag = 'ml_it_' . $bootstrap_num;
@@ -260,9 +257,8 @@ sub _dumpMultipleAlignmentStructToWorkdir {
 
     my $leafcount = scalar(@{$tree->get_all_leaves});
     if($leafcount<4) {
-        $self->input_job->incomplete(0);
-        my $tree_id = $tree->root_id;
-        die "tree cluster $tree_id has <4 proteins -- can not build a raxml tree\n";
+        $self->input_job->autoflow(0);
+        $self->complete_early(sprintf("tree cluster %d has <4 proteins -- can not build a raxml tree\n", $tree->root_id));
     }
 
     my $file_root = $self->worker_temp_directory. "nctree_". $tree->root_id;
@@ -273,8 +269,7 @@ sub _dumpMultipleAlignmentStructToWorkdir {
     open(OUTSEQ, ">$aln_file")
         or $self->throw("Error opening $aln_file for write");
 
-    $self->prepareTemporaryMemberNames($tree);
-    my $sa = $tree->get_SimpleAlign(-id_type => 'TMP');
+    my $sa = $tree->get_SimpleAlign(-APPEND_SPECIES_TREE_NODE_ID => 1, -ID_TYPE => 'MEMBER');
     $sa->set_displayname_flat(1);
 
     # Phylip header

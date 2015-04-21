@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2013] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -27,7 +27,7 @@ use Bio::EnsEMBL::Compara::AlignedMemberSet;
 use Bio::EnsEMBL::Compara::Graph::NewickParser;
 use Bio::EnsEMBL::Utils::Sequence qw(reverse_comp);
 
-use base ('Bio::EnsEMBL::Compara::RunnableDB::RunCommand', 'Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
+use base ('Bio::EnsEMBL::Compara::RunnableDB::RunCommand');
 
 # We should receive:
 # gene_tree_id
@@ -49,14 +49,13 @@ sub run {
     my ($self) = @_;
     my $nc_tree_id = $self->param('gene_tree_id');
     if ($self->param('single_peptide_tree')) {
-        $self->input_job->incomplete(0);
-        die "single peptide tree\n";
+        $self->input_job->autoflow(0);
+        $self->complete_early("single peptide tree\n");
     }
 
     if ($self->param('tag_gene_count') > 1000) { ## Too much
-        my $tag_gene_count = $self->param('tag_gene_count');
-        $self->input_job->incomplete(0);
-        die "family $nc_tree_id has too many member ($tag_gene_count). No genomic alignments will be computed\n";
+        $self->input_job->autoflow(0);
+        $self->complete_early(sprintf("family %d has too many members (%s). No genomic alignments will be computed\n", $nc_tree_id, $self->param('tag_gene_count')));
     }
 
     if ($self->param('tag_residue_count') > 150000) {  ## Likely to take too long
@@ -73,10 +72,8 @@ sub run {
                                     'aln_seq_type' => $self->param('aln_seq_type'),
                                    },3
                                   );
-
-        $self->input_job->incomplete(0);
-        my $tag_residue_count = $self->param('tag_residue_count');
-        die "Family too big for normal branch ($tag_residue_count bps) -- Only FastTrees will be generated\n";
+        $self->input_job->autoflow(0);
+        $self->complete_early(sprintf("Family too big for normal branch (%s bps) -- Only FastTrees will be generated\n", $self->param('tag_residue_count')));
     }
     if (($self->param('tag_residue_count') > 40000) && $self->param('inhugemem') != 1) { ## Big family -- queue in hugemem
         $self->dataflow_output_id (
@@ -87,9 +84,8 @@ sub run {
                                    }, -1
                                   );
         # Should we die here? Nothing more to do in the Runnable?
-        my $tag_residue_count = $self->param('tag_residue_count');
-        $self->input_job->incomplete(0);
-        die "Re-scheduled in hugemem queue ($tag_residue_count bps)\n";
+        $self->input_job->autoflow(0);
+        $self->complete_early(sprintf("Re-scheduled in hugemem queue (%s bps)\n", $self->param('tag_residue_count')));
 
     }
 
@@ -135,7 +131,7 @@ sub dump_sequences_to_workdir {
     my $count = 0;
     foreach my $member (@{$member_list}) {
         my $gene_member = $member->gene_member;
-        $self->throw("Error fetching gene member") unless (defined $gene_member) ;
+        $self->throw("Error fetching gene_member") unless (defined $gene_member) ;
         my $gene = $gene_member -> get_Gene;
         $self->throw("Error fetching gene") unless (defined $gene);
         my $slice = $gene->slice->adaptor->fetch_by_Feature($gene, '500%');
@@ -150,7 +146,7 @@ sub dump_sequences_to_workdir {
         chomp $seq;
         $count++;
         print STDERR $member->stable_id. "\n" if ($self->debug);
-        print OUTSEQ ">" . $member->member_id . "\n$seq\n";
+        print OUTSEQ ">" . $member->seq_member_id . "\n$seq\n";
         print STDERR "sequences $count\n" if ($count % 50 == 0);
     }
     close OUTSEQ;
@@ -186,10 +182,7 @@ sub run_mafft {
     my $mafft_output = $self->worker_temp_directory . "/mafft_".$nc_tree_id . ".msa";
     $self->param('mafft_output',$mafft_output);
 
-    my $mafft_exe      = $self->param_required('mafft_exe');
-
-    die "Cannot execute '$mafft_exe'" unless(-x $mafft_exe);
-
+    my $mafft_exe      = $self->require_executable('mafft_exe');
     my $mafft_binaries = $self->param_required('mafft_binaries');
 
     $ENV{MAFFT_BINARIES} = $mafft_binaries;
@@ -217,9 +210,7 @@ sub run_RAxML {
 
     $self->param('raxml_output',"$raxml_outdir/RAxML_bestTree.$raxml_outfile");
 
-    my $raxml_exe = $self->param_required('raxml_exe');
-
-    die "Cannot execute '$raxml_exe'" unless(-x $raxml_exe);
+    my $raxml_exe = $self->require_executable('raxml_exe');
 
     my $bootstrap_num = 10;  ## Should be soft-coded?
     my $raxml_number_of_cores = $self->param('raxml_number_of_cores');
@@ -241,8 +232,8 @@ sub run_RAxML {
                                         'gene_tree_id' => $self->param('gene_tree_id'),
                                        }, -1
                                       );
-            $self->input_job->incomplete(0);
-            die "RAXML ERROR: Problem allocating memory. Re-scheduled with more memory";
+            $self->input_job->autoflow(0);
+            $self->complete_early("RAXML ERROR: Problem allocating memory. Re-scheduled with more memory");
         }
         die "RAXML ERROR: ", $command->err, "\n";
     }
@@ -283,9 +274,7 @@ sub run_prank {
     # For now, we will be using #1
     my $prank_output = $self->worker_temp_directory . "/prank_${nc_tree_id}.prank";
 
-    my $prank_exe = $self->param_required('prank_exe');
-
-    die "Cannot execute '$prank_exe'" unless(-x $prank_exe);
+    my $prank_exe = $self->require_executable('prank_exe');
 
     my $cmd = $prank_exe;
     # /software/ensembl/compara/prank/090707/src/prank -noxml -notree -f=Fasta -o=/tmp/worker.904/cluster_17438.mfa -d=/tmp/worker.904/cluster_17438.fast -t=/tmp/worker.904/cluster17438/RAxML.tree
@@ -353,7 +342,7 @@ sub store_fasta_alignment {
     bless $aln, 'Bio::EnsEMBL::Compara::AlignedMemberSet';
     $aln->seq_type($aln_seq_type);
     $aln->aln_method('prank');
-    $aln->load_cigars_from_fasta($aln_file, 1);
+    $aln->load_cigars_from_file($aln_file, -format => 'fasta', -import_seq => 1);
 
     my $sequence_adaptor = $self->compara_dba->get_SequenceAdaptor;
     foreach my $member (@{$aln->get_all_Members}) {

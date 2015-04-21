@@ -1,5 +1,5 @@
 #!/usr/bin/env perl
-# Copyright [1999-2013] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+# Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 # 
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -20,7 +20,7 @@ my $description = q{
 ## PROGRAM create_mlss_table.pl
 ##
 ## AUTHORS
-##    Javier Herrero (jherrero@ebi.ac.uk)
+##    Javier Herrero
 ##
 ## DESCRIPTION
 ##    This script creates an HTML table from the information in the
@@ -37,8 +37,15 @@ create_mlss_table.pl
 
 =head1 AUTHORS
 
- Javier Herrero (jherrero@ebi.ac.uk)
+ Javier Herrero
 
+=head1 CONTACT
+
+Please email comments or questions to the public Ensembl
+developers list at <http://lists.ensembl.org/mailman/listinfo/dev>.
+
+Questions may also be sent to the Ensembl help desk at
+<http://www.ensembl.org/Help/Contact>.
 
 =head1 DESCRIPTION
 
@@ -76,7 +83,7 @@ the one set in ENSEMBL_REGISTRY will be used if defined, if not
 ~/.ensembl_init will be used.
 
 =item B<[--reg_alias compara_db_name]>
-  
+
 the name of compara DB in the registry_configuration_file or any
 of its aliases. Uses "compara" by default.
 
@@ -87,7 +94,7 @@ of its aliases. Uses "compara" by default.
 =over
 
 =item B<[--output_file filename]>
-  
+
 The name of the output file. By default the output is the
 standard output
 
@@ -155,7 +162,6 @@ my $use_names = undef;
 my $per_genome = undef;
 my $output_file = undef;
 my $species_tree_file = undef;
-my $species_tree_from_db = undef;
 my $help;
 
 GetOptions(
@@ -170,7 +176,6 @@ GetOptions(
     "per_genome" => \$per_genome,
     "output_file=s" => \$output_file,
     "species_tree_file=s" => \$species_tree_file,
-    "species_tree_from_db!" => \$species_tree_from_db,
   );
 
 # Print Help and exit
@@ -242,13 +247,10 @@ if ($method_link_type) {
 
 #if defined species_tree_file, overwrite the species order given by the config
 #file and use the species tree instead
-if (defined $species_tree_file or $species_tree_from_db) {
+if (defined $species_tree_file) {
     
     my $species_tree;
 
-    if($species_tree_from_db) {
-        $species_tree = $species_tree_adaptor->create_species_tree();
-    } else {
         open(TREE_FILE, $species_tree_file) or throw("Cannot open file ".$species_tree_file);
         my $newick_string = join("", <TREE_FILE>);
         close(TREE_FILE);
@@ -256,7 +258,6 @@ if (defined $species_tree_file or $species_tree_from_db) {
         $newick_string =~ s/\s*$//;
         $newick_string =~ s/[\r\n]//g;
         $species_tree = Bio::EnsEMBL::Compara::Graph::NewickParser::parse_newick_into_tree($newick_string);
-    }
 
     my $all_leaves = $species_tree->get_all_leaves;
     my @top_leaves = ();
@@ -286,7 +287,7 @@ if (defined $species_tree_file or $species_tree_from_db) {
             $genome_db = $genome_db_adaptor->fetch_by_name_assembly($name);
         };
         unless ($@) {
-            $spp->{short_name} = substr($genome_db->short_name, 0, 1) . "." . substr($genome_db->short_name, 1);
+            $spp->{short_name} = substr($genome_db->get_short_name, 0, 1) . "." . substr($genome_db->get_short_name, 1);
         }
         push @$species, $spp;
     }
@@ -419,7 +420,7 @@ sub findGenomeDBFromShortName {
     my $all_genome_dbs = $genome_db_adaptor->fetch_all;
     $short_name =~ tr/\.//d;
     foreach my $genome_db (@$all_genome_dbs) {
-        if ($genome_db->short_name eq $short_name) {
+        if ($genome_db->get_short_name eq $short_name) {
             return $genome_db;
         }
     }

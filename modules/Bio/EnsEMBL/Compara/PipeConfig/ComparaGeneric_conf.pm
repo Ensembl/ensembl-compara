@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2013] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -22,7 +22,7 @@ package Bio::EnsEMBL::Compara::PipeConfig::ComparaGeneric_conf;
 
 use strict;
 use warnings;
-use base ('Bio::EnsEMBL::Hive::PipeConfig::HiveGeneric_conf');
+use base ('Bio::EnsEMBL::Hive::PipeConfig::EnsemblGeneric_conf');
 
 
 sub default_options {
@@ -31,7 +31,6 @@ sub default_options {
     return {
         %{$self->SUPER::default_options},
 
-        'pipeline_name'         => 'compara_generic',
         'compara_innodb_schema' => 1,
     };
 }
@@ -57,6 +56,9 @@ sub pipeline_create_commands {
             # Compara 'pipeline' tables are already InnoDB, but can be turned to MyISAM if needed:
         ($self->o('compara_innodb_schema') ? 'cat ' : "sed 's/ENGINE=InnoDB/ENGINE=MyISAM/g' ")
             . $self->o('ensembl_cvs_root_dir').'/ensembl-compara/sql/pipeline-tables.sql | '.$self->db_cmd(),
+
+            # MySQL specific procedures
+            $driver eq 'mysql' ? ($self->db_cmd().' < '.$self->o('ensembl_cvs_root_dir').'/ensembl-compara/sql/procedures.'.$driver) : (),
     ];
 }
 

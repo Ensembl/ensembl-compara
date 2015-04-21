@@ -1,5 +1,5 @@
 #!/usr/bin/env perl
-# Copyright [1999-2013] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+# Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 # 
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -23,7 +23,7 @@ my $description = q{
 ## PROGRAM populate_new_database.pl
 ##
 ## AUTHORS
-##    Javier Herrero (jherrero@ebi.ac.uk)
+##    Javier Herrero
 ##
 ## DESCRIPTION
 ##    This script creates a new database based on the default assemblies
@@ -39,8 +39,15 @@ populate_new_database.pl
 
 =head1 AUTHORS
 
- Javier Herrero (jherrero@ebi.ac.uk)
+ Javier Herrero
 
+=head1 CONTACT
+
+Please email comments or questions to the public Ensembl
+developers list at <http://lists.ensembl.org/mailman/listinfo/dev>.
+
+Questions may also be sent to the Ensembl help desk at
+<http://www.ensembl.org/Help/Contact>.
 
 =head1 DESCRIPTION
 
@@ -735,7 +742,7 @@ sub copy_all_mlss_tags {
   my $dbname = $new_dba->dbc->dbname;
 
   my $mlss_tag_fetch_sth = $from_dba->dbc->prepare("SELECT * FROM method_link_species_set_tag".
-      " WHERE method_link_species_set_id = ?");
+      " WHERE method_link_species_set_id = ? AND tag != 'threshold_on_ds'");
   foreach my $this_mlss (@$mlsss) {
     $mlss_tag_fetch_sth->execute($this_mlss->dbID);
     my $all_rows = $mlss_tag_fetch_sth->fetchall_arrayref;

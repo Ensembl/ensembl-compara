@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2013] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -20,14 +20,14 @@ limitations under the License.
 =head1 CONTACT
 
 Please email comments or questions to the public Ensembl
-developers list at <dev@ensembl.org>.
+developers list at <http://lists.ensembl.org/mailman/listinfo/dev>.
 
 Questions may also be sent to the Ensembl help desk at
-<helpdesk@ensembl.org>.
+<http://www.ensembl.org/Help/Contact>.
 
 =head1 AUTHORSHIP
 
-Ensembl Team. Individual contributions can be found in the CVS log.
+Ensembl Team. Individual contributions can be found in the GIT log.
 
 =head1 DESCRIPTION
 
@@ -71,9 +71,7 @@ use strict;
 use warnings;
 no warnings ('substr');
 
-use Bio::EnsEMBL::Utils::Exception;
-
-use Data::Dumper;
+use Bio::EnsEMBL::Utils::Exception qw(throw);
 
 
 =head2 compose_sequence_with_cigar
@@ -91,11 +89,14 @@ use Data::Dumper;
 
 sub compose_sequence_with_cigar {
     my $sequence = shift;
-    my $cigar_line = shift;
+    my $cigar_line = uc shift;
     my $expansion_factor = shift || 1;
 
+    my $seq_has_spaces = ($sequence =~ tr/ //);
     my $alignment_string = "";
     my $seq_start = 0;
+
+    throw("Invalid cigar_line '$cigar_line'\n") if $cigar_line !~ /^[0-9A-Z]*$/;
 
     while ($cigar_line =~ /(\d*)([A-Z])/g) {
 
@@ -108,20 +109,34 @@ sub compose_sequence_with_cigar {
 
         } elsif ($char eq 'M' or $char eq 'I') {
 
-            my $substring = substr($sequence, $seq_start, $length);
-            if ($substring =~ /\ /) {
-                my $num_boundaries = $substring =~ s/(\ )/$1/g;
-                $length += $num_boundaries;
-                $substring = substr($sequence,$seq_start,$length);
+            my $substring = substr($sequence, $seq_start, $length) || '';
+            if ($seq_has_spaces) {
+                my $nsp = 0;
+                while ((my $nsp2 = ($substring =~ tr/ //)) != $nsp) {
+                    $substring = substr($sequence, $seq_start, $length+$nsp2);
+                    $nsp = $nsp2;
+                }
+                $length += $nsp;
             }
             if (length($substring) < $length) {
+                # Some codons may be incomplete
                 $substring .= ('N' x ($length - length($substring)));
             }
             $alignment_string .= $substring if ($char eq 'M');
             $seq_start += $length;
 
+        } else {
+            throw("'$char' characters in cigar lines are not currently handled. But perhaps they should :)\n");
         }
     }
+
+    # NOTE: It would be good to check that the length of the cigar line
+    # matches the length of the sequence but it is unfortunately not
+    # possible when applying a protein cigar to its cds. In Ensembl, there
+    # is often a slight difference at the last nucleotides. There are even
+    # cases (d.melanogaster) where the difference is hundreds of
+    # nucleotides.
+
     return $alignment_string;
 }
 
@@ -144,7 +159,7 @@ sub cigar_from_alignment_string {
 
     my $cigar_line = '';
     while($alignment_string=~/(?:\b|^)(.)(.*?)(?:\b|$)/g) {
-        $cigar_line .= ($2 ? length($2)+1 : '').(($1 eq '-') ? 'D' : 'M');
+        $cigar_line .= ($2 ? length($2)+1 : '').(($1 eq '-') ? 'D' : ($1 eq '.' ? 'X' : 'M'));
     }
 
     return $cigar_line;
@@ -165,7 +180,7 @@ sub expand_cigar {
     my $cigar = shift;
     my $expanded_cigar = '';
     #$cigar =~ s/(\d*)([A-Z])/$2 x ($1||1)/ge; #Expand
-    while ($cigar =~ /(\d*)([A-Z])/g) {
+    while ($cigar =~ /(\d*)([A-Za-z])/g) {
         $expanded_cigar .= $2 x ($1 || 1);
     }
     return $expanded_cigar;
@@ -218,10 +233,12 @@ sub consensus_cigar_line {
    # Itterate through each character of the expanded cigars.
    # If there is a 'D' at a given location in any cigar,
    # set the consensus to 'D', otherwise assume an 'M'.
-   # TODO: Fix assumption that cigar strings are always the same length,
-   # and start at the same point.
 
+   my %cigar_lens = ();
+   $cigar_lens{length($_)}++ for @expanded_cigars;
+   throw("Not all the cigars have the same length !\n") if scalar(keys %cigar_lens) > 1;
    my $cigar_len = length( $expanded_cigars[0] );
+
    my $cons_cigar;
    for( my $i=0; $i<$cigar_len; $i++ ){
        my $num_deletions = 0;
@@ -262,6 +279,9 @@ sub cigar_from_two_alignment_strings {
     my @chunks1;
     my @chunks2;
 
+    $seq1 =~ s/\*/X/g;
+    $seq2 =~ s/\*/X/g;
+
     while($seq1=~/(?:\b|^)(.)(.*?)(?:\b|$)/g) {
         push @chunks1, [($1 eq '-'), ($2 ? length($2)+1 : 1)];
     }
@@ -279,6 +299,15 @@ sub cigar_from_two_alignment_strings {
         ($gap1, $len1) = @{shift @chunks1} unless $len1;
         ($gap2, $len2) = @{shift @chunks2} unless $len2;
         die "Double gaps are not allowed in '$seq1' / '$seq2'" if $gap1 and $gap2;
+        #if ($gap1 and $gap2) {
+        #    if ($gap1 < $gap2) {
+        #        $gap2 -= $gap1;
+        #        $gap1 = 0;
+        #    } else {
+        #        $gap1 -= $gap2;
+        #        $gap2 = 0;
+        #    }
+        #}
 
         my $minlen = $len1 <= $len2 ? $len1 : $len2;
         $cigar_line .= ($minlen > 1 ? $minlen : '').($gap1 ? 'D' : ($gap2 ? 'I' : 'M'));
@@ -324,9 +353,10 @@ sub minimize_cigars {
 
 =head2 identify_removed_columns
 
-  Arg [1]    : Arrayref of the initial alignment strings
-  Arg [2]    : Arrayref of the filtered alignment strings (in the same order)
-  Example    : my $removed_columns = identify_removed_columns([$aln1, $aln2], [$fil1, $fil2]);
+  Arg [1]    : Hashref of the initial alignment strings
+  Arg [2]    : Hashref of the filtered alignment strings
+  Arg [3]    : "scaling" integer (default 1). Use 3 to scale cDNA alignments to protein-space coordinates
+  Example    : my $removed_columns = identify_removed_columns({'seq1' => $aln1, 'seq2' => $aln2}, {'seq1' => $fil1, 'seq2' => $fil2});
   Description: Compares each alignment string to its filtered version
                and compiles a list of kept / discarded columns.
                The return string is like "[0,0],[6,8]". Here, two regions
@@ -340,8 +370,10 @@ sub identify_removed_columns {
 
     my $initial_strings  = shift;
     my $filtered_strings = shift;
+    my $cdna             = shift;
 
     #print STDERR Dumper($initial_strings, $filtered_strings);
+    die sprintf("The number of sequences do not match: initial=%d filtered=%d\n", scalar(keys %$initial_strings), scalar(keys %$filtered_strings)) if scalar(keys %$initial_strings) != scalar(keys %$filtered_strings);
 
     my $start_segment = undef;
     my @filt_segments = ();
@@ -368,7 +400,7 @@ sub identify_removed_columns {
             $j++;
             $next_filt_column = undef;
             if (defined $start_segment) {
-                push @filt_segments, sprintf('[%d,%d]', $start_segment, $i-1);
+                push @filt_segments, [$start_segment, $i-1];
                 $start_segment = undef;
             }
         } else {
@@ -380,10 +412,18 @@ sub identify_removed_columns {
     die "Could not match alignments" if $j+1 < $filt_length;
 
     if (defined $start_segment) {
-        push @filt_segments, sprintf('[%d,%d]', $start_segment, $ini_length-1);
+        push @filt_segments, [$start_segment, $ini_length-1];
     }
 
-    return join(',', @filt_segments);
+    if ($cdna) {
+        # the coordinates are for the CDNA alignments
+        foreach my $x (@filt_segments) {
+            $x->[0] /= 3;
+            $x->[1] = ($x->[1]-2)/3;
+        }
+    }
+
+    return join(',', map {sprintf('[%d,%d]', @$_)} @filt_segments);
 }
 
 1;

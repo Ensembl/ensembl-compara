@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2013] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -20,16 +20,14 @@ limitations under the License.
 =head1 CONTACT
 
   Please email comments or questions to the public Ensembl
-  developers list at <dev@ensembl.org>.
+  developers list at <http://lists.ensembl.org/mailman/listinfo/dev>.
 
   Questions may also be sent to the Ensembl help desk at
-  <helpdesk@ensembl.org>.
+  <http://www.ensembl.org/Help/Contact>.
 
-=head1 NAME - Bio::EnsEMBL::Compara::Production::DnaFragChunk
+=head1 NAME
 
-=head1 SYNOPSIS
-
-=head1 DESCRIPTION
+Bio::EnsEMBL::Compara::Production::DnaFragChunk
 
 =head1 APPENDIX
 
@@ -46,13 +44,17 @@ use Bio::EnsEMBL::Utils::Exception;
 use Bio::Seq;
 use Bio::SeqIO;
 
-
 use Time::HiRes qw(time gettimeofday tv_interval);
+
+
+use base ('Bio::EnsEMBL::Storable');        # inherit dbID(), adaptor() and new() methods
+
 
 sub new {
   my ($class, $dnafrag, $start, $end, $dnafrag_chunk_set_id) = @_;
+
   my $self = {};
-  bless $self,$class;
+  bless $self, $class;
 
   $self->dnafrag($dnafrag)                     if($dnafrag);
   $self->seq_start($start)                     if($start);
@@ -250,18 +252,6 @@ sub bioseq {
 # getter/setter methods of data which is stored in database
 #
 ##########################
-
-sub adaptor {
-  my $self = shift;
-  $self->{'_adaptor'} = shift if(@_);
-  return $self->{'_adaptor'};
-}
-
-sub dbID {
-  my $self = shift;
-  $self->{'_dbID'} = shift if(@_);
-  return $self->{'_dbID'};
-}
 
 sub dnafrag {
   my ($self,$dnafrag) = @_;

@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2013] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -20,16 +20,14 @@ limitations under the License.
 =head1 CONTACT
 
   Please email comments or questions to the public Ensembl
-  developers list at <dev@ensembl.org>.
+  developers list at <http://lists.ensembl.org/mailman/listinfo/dev>.
 
   Questions may also be sent to the Ensembl help desk at
-  <helpdesk@ensembl.org>.
+  <http://www.ensembl.org/Help/Contact>.
 
 =head1 NAME
 
 GenomicAlignTreeAdaptor - Object used to store and retrieve GenomicAlignTrees to/from the databases
-
-=head1 SYNOPSIS
 
 =head1 DESCRIPTION
 
@@ -496,7 +494,15 @@ sub _fetch_by_genomic_align_block {
   my $genomic_align_tree = $genomic_align_trees->[0];
 
   if ($genomic_align_block->reference_genomic_align) {
-    my $ref_genomic_align = $genomic_align_block->reference_genomic_align;
+    my $ref_genomic_align;
+    if ($genomic_align_block->reference_genomic_align->dbID) {
+      $ref_genomic_align = $genomic_align_block->reference_genomic_align;
+    } else {
+      #May have been restricted. Get original GenomicAlign
+      my $genomic_align_adaptor = $self->db->get_GenomicAlignAdaptor();
+      my $this_genomic_align_id = $genomic_align_block->reference_genomic_align->original_dbID;
+      $ref_genomic_align = $genomic_align_adaptor->fetch_by_dbID($this_genomic_align_id);
+    }
     LEAF: foreach my $this_leaf (@{$genomic_align_tree->get_all_leaves}) {
       foreach my $this_genomic_align (@{$this_leaf->get_all_genomic_aligns_for_node}) {
         if ($this_genomic_align->genome_db->name eq $ref_genomic_align->genome_db->name and
@@ -736,8 +742,8 @@ sub store_node {
                               right_index,
                               distance_to_parent)  VALUES (?,?,?,?,?,?)");
   $sth->execute(undef, $parent_id, $root_id, $node->left_index, $node->right_index, $node->distance_to_parent);
-  #print STDERR "LAST ID: ", $sth->{'mysql_insertid'}, "\n";
-  $node->node_id($sth->{'mysql_insertid'});
+  #print STDERR "LAST ID: ", $self->dbc->db_handle->last_insert_id(undef, undef, 'genomic_align_tree', 'node_id'), "\n";
+  $node->node_id( $self->dbc->db_handle->last_insert_id(undef, undef, 'genomic_align_tree', 'node_id') );
   $sth->finish;
 
   #set root_id to be node_id for the root node.
@@ -853,6 +859,7 @@ sub update_neighbourhood_data {
   Status     : At risk
 
 =cut
+
 sub set_neighbour_nodes_for_leaf {
   my ($self, $node, $set_flanking) = @_;
   my $flanking = 1000;
@@ -1235,7 +1242,6 @@ sub _create_GenomicAlignGroup_object_from_rowhash {
 
   my $genomic_align_group = new Bio::EnsEMBL::Compara::GenomicAlignGroup;
   $genomic_align_group->dbID($rowhash->{node_id});
-  $genomic_align_group->adaptor($self->db->get_GenomicAlignGroupAdaptor);
 
   return $genomic_align_group;
 }

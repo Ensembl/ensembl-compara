@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2013] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -18,13 +18,11 @@ limitations under the License.
 
 =head1 NAME
 
-HMMProfile
+Bio::EnsEMBL::Compara::HMMProfile
 
 =head1 DESCRIPTION
 
 An object that holds the full description of an HMM profile stored in the database.
-
-=head1 CONTACT
 
 =head1 APPENDIX
 
@@ -38,15 +36,8 @@ package Bio::EnsEMBL::Compara::HMMProfile;
 use strict;
 use warnings;
 
-use Data::Dumper;
 
-sub new {
-    my ($class) = @_;
-
-    my $self = bless {}, $class;
-
-    return $self;
-}
+use base qw(Bio::EnsEMBL::Storable);
 
 
 

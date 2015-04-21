@@ -1,5 +1,5 @@
 #!/usr/bin/env perl
-# Copyright [1999-2013] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+# Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 # 
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -40,11 +40,11 @@ my $homologyDBA = $comparaDBA->get_HomologyAdaptor;
 # get GenomeDB for human
 my $ratGDB = $comparaDBA->get_GenomeDBAdaptor->fetch_by_registry_name("rat");
 
-my $members = $comparaDBA->get_SeqMemberAdaptor->fetch_all_by_source_taxon(
-  'ENSEMBLPEP', $ratGDB->taxon_id);
+my $members = $comparaDBA->get_SeqMemberAdaptor->fetch_all_by_source_taxon( 'ENSEMBLPEP', $ratGDB->taxon_id);
+my $rat_dnafrag = $comparaDBA->get_DnaFragAdaptor->fetch_by_GenomeDB_and_name($ratGDB, 2);
 
 foreach my $pep (@{$members}) {
-  next unless($pep->chr_name eq '2');
+  next unless($pep->dnafrag_id == $rat_dnafrag->dbID);
   next unless($pep->dnafrag_start < 10000000);
   if($pep->get_Transcript->five_prime_utr) {
     $pep->gene_member->print_member;

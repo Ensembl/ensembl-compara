@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2013] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -20,17 +20,14 @@ limitations under the License.
 =head1 CONTACT
 
   Please email comments or questions to the public Ensembl
-  developers list at <dev@ensembl.org>.
+  developers list at <http://lists.ensembl.org/mailman/listinfo/dev>.
 
   Questions may also be sent to the Ensembl help desk at
-  <helpdesk@ensembl.org>
+  <http://www.ensembl.org/Help/Contact>
 
 =head1 NAME
 
 Bio::EnsEMBL::Compara::CAFEGeneFamilyNode
-
-=head1 SYNOPSIS
-
 
 =head1 DESCRIPTION
 
@@ -60,10 +57,24 @@ sub find_nodes_by_taxon_id_or_species_name {
     my $genomeDBAdaptor = $self->adaptor->db->get_GenomeDBAdaptor();
     if ($is_leaf) {
         my $taxon_id = $genomeDBAdaptor->fetch_by_name_assembly($val)->taxon_id();
-        print STDERR "$self->find_node_by_field_value(taxon_id, $taxon_id)\n";
         return $self->find_nodes_by_field_value('taxon_id', $taxon_id);
     }
     return $self->find_nodes_by_field_value('taxon_id', $val);
+}
+
+sub find_nodes_by_name {
+    my ($self, $val, $is_leaf) = @_;
+    my $genomeDBAdaptor = $self->adaptor->db->get_GenomeDBAdaptor();
+    my $NCBITaxonAdaptor = $self->adaptor->db->get_NCBITaxonAdaptor();
+    my $taxon_id;
+    if ($is_leaf) {
+        $taxon_id = $genomeDBAdaptor->fetch_by_name_assembly($val)->taxon_id();
+    } else {
+        # We make sure we don't have a dup node
+        $val =~ s/_dup\d+//;
+        $taxon_id = $NCBITaxonAdaptor->fetch_node_by_name($val)->taxon_id();
+    }
+    return $self->find_nodes_by_field_value('taxon_id', $taxon_id);
 }
 
 # For now, lambdas are fetched from the root table.
@@ -170,7 +181,7 @@ sub pvalue_lim {
 
 sub is_node_significant {
     my ($self) = @_;
-    return $self->pvalue < $self->pvalue_lim;
+    return (defined $self->pvalue) && ($self->pvalue < $self->pvalue_lim);
 }
 
 =head2 is_expansion

@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2013] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -53,8 +53,11 @@ cigar_lines for each sequence.
 
 =head1 CONTACT
 
-  Contact Albert Vilella on module implementation/design detail: avilella@ebi.ac.uk
-  Contact Ewan Birney on EnsEMBL in general: birney@sanger.ac.uk
+Please email comments or questions to the public Ensembl
+developers list at <http://lists.ensembl.org/mailman/listinfo/dev>.
+
+Questions may also be sent to the Ensembl help desk at
+<http://www.ensembl.org/Help/Contact>.
 
 =cut
 
@@ -98,13 +101,14 @@ sub param_defaults {
 sub fetch_input {
   my( $self) = @_;
 
-  my $nc_tree = $self->compara_dba->get_GeneTreeAdaptor->fetch_by_dbID($self->param('gene_tree_id'));
+  my $gene_tree = $self->compara_dba->get_GeneTreeAdaptor->fetch_by_dbID($self->param('gene_tree_id'));
 
-  $self->param('nc_tree', $nc_tree);
+  $self->param('gene_tree', $gene_tree);
 
   $self->param('inputtrees_unrooted', {});
   $self->param('inputtrees_rooted', {});
   
+  $self->_load_species_tree_string_from_db();
   $self->load_input_trees;
 
 }
@@ -128,11 +132,11 @@ sub run {
     my $input_trees = [map {$self->param('inputtrees_rooted')->{$_}} @{$self->param('ref_support')}];
     my $merged_tree = $self->run_treebest_mmerge($input_trees);
 
-    my $input_aln = $self->dumpTreeMultipleAlignmentToWorkdir($self->param('nc_tree'));
-    my $leafcount = scalar(@{$self->param('nc_tree')->get_all_leaves});
+    my $input_aln = $self->dumpTreeMultipleAlignmentToWorkdir($self->param('gene_tree'), 'fasta', {-APPEND_SPECIES_TREE_NODE_ID => 1});
+    my $leafcount = scalar(@{$self->param('gene_tree')->get_all_leaves});
     $merged_tree = $self->run_treebest_branchlength_nj($input_aln, $merged_tree) if ($leafcount >= 3);
     
-    $self->parse_newick_into_tree($merged_tree, $self->param('nc_tree'));
+    $self->parse_newick_into_tree($merged_tree, $self->param('gene_tree'), $self->param('ref_support'));
 }
 
 
@@ -148,19 +152,18 @@ sub run {
 
 
 sub write_output {
-  my ($self) = @_;
+    my ($self) = @_;
 
-  $self->store_genetree($self->param('nc_tree'), $self->param('ref_support')) if (defined($self->param('inputtrees_unrooted')));
-
+    $self->store_genetree($self->param('gene_tree')) if defined $self->param('inputtrees_unrooted');
 }
 
 sub post_cleanup {
   my $self = shift;
 
-  if($self->param('nc_tree')) {
+  if($self->param('gene_tree')) {
     printf("NctreeBestMMerge::post_cleanup  releasing tree\n") if($self->debug);
-    $self->param('nc_tree')->release_tree;
-    $self->param('nc_tree', undef);
+    $self->param('gene_tree')->release_tree;
+    $self->param('gene_tree', undef);
   }
 
   $self->SUPER::post_cleanup if $self->can("SUPER::post_cleanup");
@@ -189,14 +192,13 @@ sub reroot_inputtrees {
 
 sub load_input_trees {
   my $self = shift;
-  my $tree = $self->param('nc_tree');
+  my $tree = $self->param('gene_tree');
 
-  my $lookup = eval($self->compara_dba->get_MethodLinkSpeciesSetAdaptor->fetch_by_dbID($self->param_required('mlss_id'))->get_value_for_tag('gdb2stn'));
-
-  for my $other_tree (@{$self->compara_dba->get_GeneTreeAdaptor->fetch_all_linked_trees($tree)}) {
+  for my $other_tree (values %{$tree->alternative_trees}) {
+    $other_tree->preload();
     # horrible hack: we replace taxon_id with species_tree_node_id
     foreach my $leaf (@{$other_tree->get_all_leaves}) {
-        $leaf->taxon_id($lookup->{$leaf->genome_db_id});
+        $leaf->taxon_id($leaf->genome_db->_species_tree_node_id);
     }
     print STDERR $other_tree->newick_format('ryo','%{-m}%{"_"-x}:%{d}') if ($self->debug);
     my $tag = $other_tree->clusterset_id;

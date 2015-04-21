@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2013] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -19,11 +19,11 @@ limitations under the License.
 
 =head1 CONTACT
 
-  Please email comments or questions to the public Ensembl
-  developers list at <dev@ensembl.org>.
+Please email comments or questions to the public Ensembl
+developers list at <http://lists.ensembl.org/mailman/listinfo/dev>.
 
-  Questions may also be sent to the Ensembl help desk at
-  <helpdesk@ensembl.org>.
+Questions may also be sent to the Ensembl help desk at
+<http://www.ensembl.org/Help/Contact>.
 
 =cut
 
@@ -49,17 +49,12 @@ $rfamclassify->write_output(); #writes to DB
 =head1 DESCRIPTION
 
 This Analysis/RunnableDB is designed to take the descriptions of each
-ncrna member and classify them into the respective cluster according
+ncrna and classify them into the respective cluster according
 to their RFAM id. It also takes into account information from mirBase.
 
 =cut
 
 
-=head1 CONTACT
-
-  Contact the Ensembl Compara Team on module implementation and design detail: ensembl-compara@ebi.ac.uk
-
-=cut
 
 
 =head1 APPENDIX
@@ -185,9 +180,9 @@ sub build_hash_models {
 
   while (my $gene = $all_genes_Iterator->next) {
       my $transc = $gene->get_canonical_SeqMember;
-      my $gene_member_id = $gene->member_id;
+      my $gene_member_id = $gene->gene_member_id;
       my $gene_description = $gene->description;
-      my $transcript_member_id = $transc->member_id;
+      my $transcript_member_id = $transc->seq_member_id;
       my $transcript_description = $transc->description;
 
     $transcript_description =~ /Acc:(\w+)/;
@@ -235,7 +230,7 @@ sub build_hash_cms {
 
   my $ids = $self->compara_dba->get_HMMProfileAdaptor()->fetch_all_by_column_names([$field],'infernal');
   for my $id (@$ids) {
-      $self->param('rfamcms')->{$field}{$id->{$field}} = 1;
+      $self->param('rfamcms')->{$field}{$id->[0]} = 1;
   }
 
 }
@@ -249,8 +244,8 @@ sub load_names_model_id {
 
   my $ids = $self->compara_dba->get_HMMProfileAdaptor()->fetch_all_by_column_names(['model_id', 'name'],'infernal');
   for my $id (@$ids) {
-      $self->param('model_id_names')->{$id->{model_id}} = $id->{name};
-      $self->param('model_name_ids')->{$id->{name}} = $id->{model_id};
+      $self->param('model_id_names')->{$id->[0]} = $id->[1];
+      $self->param('model_name_ids')->{$id->[1]} = $id->[0];
   }
 
 }
@@ -314,17 +309,10 @@ sub tag_assembly_coverage_depth {
   my @high_coverage = ();
 
   foreach my $gdb (@{$self->param('cluster_mlss')->species_set_obj->genome_dbs()}) {
-    my $name = $gdb->name;
-    my $coreDBA = $gdb->db_adaptor;
-    my $metaDBA = $coreDBA->get_MetaContainerAdaptor;
-    my $assembly_coverage_depth = $metaDBA->list_value_by_key('assembly.coverage_depth')->[0];
-    next unless (defined($assembly_coverage_depth) || $assembly_coverage_depth ne '');
-    if ($assembly_coverage_depth eq 'low' || $assembly_coverage_depth eq '2x') {
-      push @low_coverage, $gdb;
-    } elsif ($assembly_coverage_depth eq 'high' || $assembly_coverage_depth eq '6x' || $assembly_coverage_depth >= 6) {
+    if ($gdb->is_high_coverage) {
       push @high_coverage, $gdb;
     } else {
-      $self->throw("Unrecognised assembly.coverage_depth value in core meta table: $assembly_coverage_depth [$name]\n");
+      push @low_coverage, $gdb;
     }
   }
   return undef unless(scalar(@low_coverage));

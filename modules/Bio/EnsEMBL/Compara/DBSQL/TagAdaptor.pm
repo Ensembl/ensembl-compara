@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2013] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -20,10 +20,10 @@ limitations under the License.
 =head1 CONTACT
 
   Please email comments or questions to the public Ensembl
-  developers list at <dev@ensembl.org>.
+  developers list at <http://lists.ensembl.org/mailman/listinfo/dev>.
 
   Questions may also be sent to the Ensembl help desk at
-  <helpdesk@ensembl.org>.
+  <http://www.ensembl.org/Help/Contact>.
 
 =head1 NAME
 
@@ -34,14 +34,6 @@ Bio::EnsEMBL::Compara::DBSQL::TagAdaptor
 Generic adaptor that gives a database backend for tags / attributes (to
 use with Bio::EnsEMBL::Compara::Taggable). There can be any number of
 values for tags, but at most one for each attribute.
-
-=head1 MAINTAINER
-
-$Author$
-
-=head VERSION
-
-$Revision$
 
 =head1 APPENDIX
 
@@ -201,6 +193,7 @@ sub _load_tagvalues_multiple {
 sub _read_attr_list {
     my $self = shift;
     my $db_attrtable = shift;
+    my $db_keyname = shift;
 
     # No table provided
     return if not defined $db_attrtable;
@@ -212,8 +205,10 @@ sub _read_attr_list {
         my $sth = $self->dbc->db_handle->column_info(undef, undef, $db_attrtable, '%');
         $sth->execute();
         while (my $row = $sth->fetchrow_hashref()) {
-            ${$self->{"_attr_list_$db_attrtable"}}{${$row}{'COLUMN_NAME'}} = 1;
-            #print STDERR "adding ", ${$row}{'COLUMN_NAME'}, " to the attribute list $db_attrtable of adaptor $self\n";
+            my $this_column = ${$row}{'COLUMN_NAME'};
+            next if $this_column eq $db_keyname;
+            ${$self->{"_attr_list_$db_attrtable"}}{$this_column} = 1;
+            #print STDERR "adding $this_column to the attribute list $db_attrtable of adaptor $self\n";
         }
         $sth->finish;
     };
@@ -245,7 +240,7 @@ sub _store_tagvalue {
     my $allow_overloading = shift;
     
     my ($db_tagtable, $db_attrtable, $db_keyname, $perl_keyname) = $self->_tag_capabilities($object);
-    $self->_read_attr_list($db_attrtable);
+    $self->_read_attr_list($db_attrtable, $db_keyname);
     #print STDERR "CALL _store_tagvalue $self/$object/$tag/$value/$allow_overloading: attr=", join("/", keys %{$self->{"_attr_list_$db_attrtable"}}), "\n";
   
     if (defined $db_attrtable && exists $self->{"_attr_list_$db_attrtable"}->{$tag}) {
@@ -315,7 +310,7 @@ sub _delete_tagvalue {
     my $value = shift;
     
     my ($db_tagtable, $db_attrtable, $db_keyname, $perl_keyname) = $self->_tag_capabilities($object);
-    $self->_read_attr_list($db_attrtable);
+    $self->_read_attr_list($db_attrtable, $db_keyname);
     #print STDERR "CALL _delete_tagvalue $self/$object/$tag/$value: attr=", join("/", keys %{$self->{"_attr_list_$db_attrtable"}}), "\n";
   
     if (exists $self->{"_attr_list_$db_attrtable"}->{$tag}) {
@@ -406,5 +401,103 @@ sub sync_tags_to_database {
         }
     }
 }
+
+
+=head2 _wipe_all_tags
+
+  Arg [1]     : <scalar or arrayref> object(s)
+  Arg [2]     : <boolean> should attributes be excluded (i.e. not deleted) (default: 0)
+  Arg [3]     : <boolean> should tags be excluded (i.e. not deleted) (default: 0)
+  Example     : $gene_tree_node_adaptor->_wipe_all_tags($gene_tree->get_all_nodes);
+  Description : Deletes all the tags from the database for those objects
+  Returntype  : none
+  Exceptions  : none
+  Caller      : internal
+
+=cut
+
+sub _wipe_all_tags {
+    my ($self, $objects, $exclude_attr, $exclude_tags) = @_;
+
+    $objects = [$objects] if ref($objects) ne 'ARRAY';
+
+    my ($db_tagtable, $db_attrtable, $db_keyname, $perl_keyname) = $self->_tag_capabilities($objects->[0]);
+    $self->_read_attr_list($db_attrtable, $db_keyname);
+    #print STDERR "CALL _wipe_all_tags $self/$exclude_attr/$exclude_tags: attr=", join("/", keys %{$self->{"_attr_list_$db_attrtable"}}), "\n";
+
+    unless ($exclude_attr) {
+        my $sth = $self->prepare("DELETE FROM $db_attrtable WHERE $db_keyname=?");
+        foreach my $object (@$objects) {
+            $sth->execute($object->$perl_keyname);
+        }
+        $sth->finish;
+
+    }
+
+    unless ($exclude_tags) {
+        my $sth = $self->prepare("DELETE FROM $db_tagtable WHERE $db_keyname=?");
+        foreach my $object (@$objects) {
+            $sth->execute($object->$perl_keyname);
+        }
+        $sth->finish;
+    }
+}
+
+
+=head2 _store_all_tags
+
+  Arg [1]     : <scalar or arrayref> object(s)
+  Example     : $gene_tree_node_attr->_store_all($gene_tree->get_all_nodes);
+  Description : Store all the tags / attributes for all the objects. The
+                method assumes that the database doesn't contain any data.
+  Returntype  : none
+  Exceptions  : Database errors like duplicated entries
+  Caller      : internal
+
+=cut
+
+sub _store_all_tags {
+    my ($self, $objects) = @_;
+
+    $objects = [$objects] if ref($objects) ne 'ARRAY';
+
+    my ($db_tagtable, $db_attrtable, $db_keyname, $perl_keyname) = $self->_tag_capabilities($objects->[0]);
+    $self->_read_attr_list($db_attrtable, $db_keyname);
+    #print STDERR "CALL _store_all $self/$object/$tag/$value/$allow_overloading: attr=", join("/", keys %{$self->{"_attr_list_$db_attrtable"}}), "\n";
+
+    # First the attributes
+    if (defined $db_attrtable) {
+        my @attr_names = keys %{$self->{"_attr_list_$db_attrtable"}};
+        my $sql = "INSERT INTO $db_attrtable ($db_keyname, ".join(", ", @attr_names).") VALUES (?".(",?" x scalar(@attr_names)).")";
+        my $sth = $self->prepare($sql);
+        foreach my $object (@$objects) {
+            my $tag_hash = $object->get_tagvalue_hash;
+            my @defined_attrs = grep {$tag_hash->{$_}} @attr_names;
+            if (scalar(@defined_attrs)) {
+                $sth->execute($object->$perl_keyname, map {$tag_hash->{$_}} @attr_names);
+            }
+        }
+        $sth->finish;
+    }
+
+    # And then the tags
+    my $sth = $self->prepare("INSERT INTO $db_tagtable ($db_keyname, tag, value) VALUES (?, ?, ?)");
+    foreach my $object (@$objects) {
+        my $tag_hash = $object->get_tagvalue_hash;
+        my $object_key = $object->$perl_keyname;
+        foreach my $tag (keys %$tag_hash) {
+            next if exists $self->{"_attr_list_$db_attrtable"}->{$tag};
+            if (ref($tag_hash->{$tag}) eq 'ARRAY') {
+                foreach my $value (@{$tag_hash->{$tag}}) {
+                    $sth->execute($object_key, $tag, $value);
+                }
+            } else {
+                $sth->execute($object_key, $tag, $tag_hash->{$tag});
+            }
+        }
+    }
+    $sth->finish;
+}
+
 
 1;

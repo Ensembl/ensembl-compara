@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2013] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -20,10 +20,10 @@ limitations under the License.
 =head1 CONTACT
 
   Please email comments or questions to the public Ensembl
-  developers list at <dev@ensembl.org>.
+  developers list at <http://lists.ensembl.org/mailman/listinfo/dev>.
 
   Questions may also be sent to the Ensembl help desk at
-  <helpdesk@ensembl.org>.
+  <http://www.ensembl.org/Help/Contact>.
 
 =head1 NAME
 
@@ -231,7 +231,6 @@ sub delete_fasta_dumps_but_these {
 
 sub write_output {
   my( $self) = @_;
-
   my $starttime = time();
 
   #since the Blast runnable takes in analysis parameters rather than an
@@ -304,21 +303,38 @@ sub dumpChunkSetToWorkdir
 
   my $chunk_array = $chunkSet->get_all_DnaFragChunks;
   if($self->debug){printf("dumpChunkSetToWorkdir : %s : %d chunks\n", $fastafile, $chunkSet->count());}
-  
+
+  #Load all sequences in a dnafrag_chunk_set and set masking options
+  my $sequence_ids;
   foreach my $chunk (@$chunk_array) {
     $chunk->masking_options($dna_collection->masking_options);
+  }
+
+  my $sequences = $self->compara_dba->get_SequenceAdaptor->fetch_all_by_chunk_set_id($chunkSet->dbID);
+
+  foreach my $chunk (@$chunk_array) {
+    #only have sequences for chunks with sequence_id > 0 - but this resets the sequence_id to 0. Why?
+
+    my $this_seq_id = $chunk->sequence_id; #save seq_id
+
+    $chunk->sequence($sequences->{$this_seq_id}) if ($chunk->sequence_id > 0); #this sets $chunk->sequence_id=0
+    $chunk->sequence_id($this_seq_id); #reset seq_id
+
+    #Retrieve sequences with sequence_id=0 (ie too big to store in the sequence table)
     my $bioseq = $chunk->bioseq;
+
+    # This may not be necessary now as already have all the sequences in the sequence table
     if($chunk->sequence_id==0) {
-      $self->compara_dba->get_DnaFragChunkAdaptor->update_sequence($chunk);
+      my $this_seq_id = $self->compara_dba->get_DnaFragChunkAdaptor->update_sequence($chunk);
     }
 
     $output_seq->write_seq($bioseq);
   }
+
   close OUTSEQ;
   if($self->debug){printf("  %1.3f secs to dump\n", (time()-$starttime));}
   return $fastafile
 }
-
 
 sub dumpChunkToWorkdir
 {

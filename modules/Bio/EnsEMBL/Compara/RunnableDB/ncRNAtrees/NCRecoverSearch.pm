@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2013] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -50,8 +50,11 @@ $ncrecoversearch->write_output(); #writes to DB
 
 =head1 CONTACT
 
-  Contact Albert Vilella on module implementation/design detail: avilella@ebi.ac.uk
-  Contact Ewan Birney on EnsEMBL in general: birney@sanger.ac.uk
+Please email comments or questions to the public Ensembl
+developers list at <http://lists.ensembl.org/mailman/listinfo/dev>.
+
+Questions may also be sent to the Ensembl help desk at
+<http://www.ensembl.org/Help/Contact>.
 
 =cut
 
@@ -150,9 +153,7 @@ sub run_ncrecoversearch {
 
   next unless(keys %{$self->param('recovered_members')});
 
-  my $cmsearch_exe = $self->param_required('cmsearch_exe');
-
-  die "Cannot execute '$cmsearch_exe'" unless(-x $cmsearch_exe);
+  my $cmsearch_exe = $self->require_executable('cmsearch_exe');
 
   my $worker_temp_directory = $self->worker_temp_directory;
   my $root_id = $self->param('gene_tree_id');
@@ -272,7 +273,7 @@ sub fetch_recovered_member_entries {
     "FROM recovered_member rcm ".
     "WHERE rcm.node_id=\"$root_id\" AND ".
     "rcm.stable_id not in ".
-    "(SELECT stable_id FROM member WHERE source_name='ENSEMBLGENE' AND genome_db_id=rcm.genome_db_id)";
+    "(SELECT stable_id FROM gene_member WHERE source_name='ENSEMBLGENE' AND genome_db_id=rcm.genome_db_id)";
   my $sth = $self->compara_dba->dbc->prepare($sql);
   $sth->execute();
   while ( my $ref  = $sth->fetchrow_arrayref() ) {

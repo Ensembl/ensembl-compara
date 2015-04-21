@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2013] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -18,16 +18,15 @@ limitations under the License.
 
 =head1 NAME
 
-NestedSetAdaptor - DESCRIPTION of Object
-
-=head1 SYNOPSIS
-
-=head1 DESCRIPTION
+Bio::EnsEMBL::Compara::DBSQL::NCBITaxonAdaptor
 
 =head1 CONTACT
 
-  Contact Jessica Severin on implemetation/design detail: jessica@ebi.ac.uk
-  Contact Ewan Birney on EnsEMBL in general: birney@sanger.ac.uk
+Please email comments or questions to the public Ensembl
+developers list at <http://lists.ensembl.org/mailman/listinfo/dev>.
+
+Questions may also be sent to the Ensembl help desk at
+<http://www.ensembl.org/Help/Contact>.
 
 =head1 APPENDIX
 
@@ -41,7 +40,7 @@ use strict;
 use warnings;
 
 use Bio::EnsEMBL::Utils::Scalar qw(:assert);
-use Bio::EnsEMBL::Utils::Exception qw(throw warning deprecate);
+use Bio::EnsEMBL::Utils::Exception qw(throw warning);
 use Bio::EnsEMBL::Compara::NCBITaxon;
 
 use Bio::EnsEMBL::DBSQL::Support::LruIdCache;
@@ -258,7 +257,7 @@ sub _default_where_clause {
 sub create_instance_from_rowhash {
   my $self = shift;
   my $rowhash = shift;
-  
+
   my $node = $self->_id_cache->cache->{$rowhash->{'node_id'}};
   return $node if($node);
   
@@ -277,7 +276,7 @@ sub init_instance_from_rowhash {
   my $self = shift;
   my $node = shift;
   my $rowhash = shift;
-  
+
   $self->SUPER::init_instance_from_rowhash($node, $rowhash);
 
   $node->name($rowhash->{'name'});

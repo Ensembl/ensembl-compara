@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2013] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -20,11 +20,13 @@ limitations under the License.
 
 Bio::EnsEMBL::Compara::Production::DBSQL::AnchorAlignAdaptor
 
-=head1 SYNOPSIS
-
 =head1 CONTACT
 
-Jessica Severin : jessica@ebi.ac.uk
+Please email comments or questions to the public Ensembl
+developers list at <http://lists.ensembl.org/mailman/listinfo/dev>.
+
+Questions may also be sent to the Ensembl help desk at
+<http://www.ensembl.org/Help/Contact>.
 
 =head1 APPENDIX
 
@@ -87,7 +89,7 @@ sub store {
         );
   if($insertCount>0) {
     #sucessful insert
-    $anchor_align->dbID( $sth->{'mysql_insertid'} );
+    $anchor_align->dbID( $self->dbc->db_handle->last_insert_id(undef, undef, 'anchor_align', 'anchor_align_id') );
     $sth->finish;
   }
 
@@ -520,7 +522,7 @@ sub fetch_all_anchors_by_dnafrag_id_and_test_mlssid {
 	$sth->execute($dnafrag_id, $test_mlssid) or die $self->errstr;
 	return $sth->fetchall_arrayref();
 }
- 
+
 =head2 fetch_all_filtered_anchors
 
   Args       : none
@@ -658,34 +660,29 @@ sub _final_clause {
 sub _objs_from_sth {
   my ($self, $sth) = @_;
 
-  my %column;
-  $sth->bind_columns( \( @column{ @{$sth->{NAME_lc} } } ));
+  my @anchor_aligns = ();
 
-  my $anchor_aligns = [];
-
-  while ($sth->fetch()) {
-    my $this_anchor_align;
-
-    $this_anchor_align = Bio::EnsEMBL::Compara::Production::EPOanchors::AnchorAlign->new();
+  while( my $row_hashref = $sth->fetchrow_hashref()) {
+    my $this_anchor_align = Bio::EnsEMBL::Compara::Production::EPOanchors::AnchorAlign->new();
 
     $this_anchor_align->adaptor($self);
-    $this_anchor_align->dbID($column{'anchor_align_id'});
-    $this_anchor_align->method_link_species_set_id($column{'method_link_species_set_id'});
-    $this_anchor_align->anchor_id($column{'anchor_id'});
-    $this_anchor_align->dnafrag_id($column{'dnafrag_id'});
-    $this_anchor_align->dnafrag_start($column{'dnafrag_start'});
-    $this_anchor_align->dnafrag_end($column{'dnafrag_end'});
-    $this_anchor_align->dnafrag_strand($column{'dnafrag_strand'});
-    $this_anchor_align->score($column{'score'});
-    $this_anchor_align->num_of_organisms($column{'num_of_organisms'});
-    $this_anchor_align->num_of_sequences($column{'num_of_sequences'});
-    $this_anchor_align->anchor_status($column{'anchor_status'});
+    $this_anchor_align->dbID($row_hashref->{'anchor_align_id'});
+    $this_anchor_align->method_link_species_set_id($row_hashref->{'method_link_species_set_id'});
+    $this_anchor_align->anchor_id($row_hashref->{'anchor_id'});
+    $this_anchor_align->dnafrag_id($row_hashref->{'dnafrag_id'});
+    $this_anchor_align->dnafrag_start($row_hashref->{'dnafrag_start'});
+    $this_anchor_align->dnafrag_end($row_hashref->{'dnafrag_end'});
+    $this_anchor_align->dnafrag_strand($row_hashref->{'dnafrag_strand'});
+    $this_anchor_align->score($row_hashref->{'score'});
+    $this_anchor_align->num_of_organisms($row_hashref->{'num_of_organisms'});
+    $this_anchor_align->num_of_sequences($row_hashref->{'num_of_sequences'});
+    $this_anchor_align->anchor_status($row_hashref->{'anchor_status'});
 
-    push(@$anchor_aligns, $this_anchor_align);
+    push @anchor_aligns, $this_anchor_align;
   }
   $sth->finish;
 
-  return $anchor_aligns;
+  return @anchor_aligns;
 }
 
 

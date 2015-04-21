@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2013] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -20,10 +20,10 @@ limitations under the License.
 =head1 CONTACT
 
   Please email comments or questions to the public Ensembl
-  developers list at <dev@ensembl.org>.
+  developers list at <http://lists.ensembl.org/mailman/listinfo/dev>.
 
   Questions may also be sent to the Ensembl help desk at
-  <helpdesk@ensembl.org>.
+  <http://www.ensembl.org/Help/Contact>.
 
 =head1 NAME
 
@@ -31,7 +31,7 @@ Bio::EnsEMBL::Compara::RunnableDB::ImportAltAlleGroupAsHomologies
 
 =head1 AUTHORSHIP
 
-Ensembl Team. Individual contributions can be found in the CVS log.
+Ensembl Team. Individual contributions can be found in the GIT log.
 
 =cut
 
@@ -44,7 +44,7 @@ use Bio::EnsEMBL::Compara::GeneTree;
 use Bio::EnsEMBL::Compara::Homology;
 use Bio::EnsEMBL::Compara::RunnableDB::LoadMembers;
 
-use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable', 'Bio::EnsEMBL::Compara::RunnableDB::RunCommand');
+use base ('Bio::EnsEMBL::Compara::RunnableDB::RunCommand');
 
 
 sub param_defaults {
@@ -82,11 +82,11 @@ sub fetch_or_store_gene {
     my $translate = shift;
 
     # Gene Member
-    my $gene_member = $self->param('gene_member_adaptor')->fetch_by_source_stable_id('ENSEMBLGENE', $gene->stable_id);
+    my $gene_member = $self->param('gene_member_adaptor')->fetch_by_stable_id($gene->stable_id);
     if (defined $gene_member) {
         if ($self->debug) {print "REUSE: $gene_member "; $gene_member->print_member();}
     } else {
-        $gene_member = Bio::EnsEMBL::Compara::GeneMember->new_from_gene(-gene=>$gene, -genome_db=>$self->param('genome_db'));
+        $gene_member = Bio::EnsEMBL::Compara::GeneMember->new_from_Gene(-gene=>$gene, -genome_db=>$self->param('genome_db'));
         $self->param('gene_member_adaptor')->store($gene_member) unless $self->param('dry_run');
         if ($self->debug) {print "NEW: $gene_member "; $gene_member->print_member();}
     }
@@ -97,10 +97,9 @@ sub fetch_or_store_gene {
         if ($self->debug) {print "REUSE: $trans_member"; $trans_member->print_member();}
     } else {
         my $transcript = $gene->canonical_transcript;
-        $trans_member = Bio::EnsEMBL::Compara::SeqMember->new_from_transcript(
+        $trans_member = Bio::EnsEMBL::Compara::SeqMember->new_from_Transcript(
                 -transcript     => $transcript,
                 -genome_db      => $self->param('genome_db'),
-                -description    => Bio::EnsEMBL::Compara::RunnableDB::LoadMembers::fasta_description(undef, $gene, $transcript),
                 -translate      => $translate,
                 );
         $trans_member->gene_member_id($gene_member->dbID);
@@ -124,13 +123,13 @@ sub run {
     die if scalar(@refs) > 1;
     my @canon_transcripts = map {$_->canonical_transcript} @genes;
 
-    my $translate = scalar(grep {not defined $_->translation} @canon_transcripts) ? 'ncrna' : 'yes';
+    my $translate = scalar(grep {not defined $_->translation} @canon_transcripts) ? 0 : 1;
 
     my @seq_members = map {$self->fetch_or_store_gene($_, $translate)} @genes;
     map {bless $_, 'Bio::EnsEMBL::Compara::AlignedMember'} @seq_members;
     if ($self->param('dry_run')) {
         foreach my $i (1..scalar(@seq_members)) {
-            $seq_members[$i-1]->{_dbID} = $i;
+            $seq_members[$i-1]->dbID($i);
         }
     }
 
@@ -139,7 +138,7 @@ sub run {
 
     my $tempdir = $self->worker_temp_directory;
     my $fastafile = "$tempdir/alt_alleles.fa";
-    $set->print_sequences_to_file(-file => $fastafile, -id_type => 'MEMBER');
+    $set->print_sequences_to_file($fastafile, -id_type => 'MEMBER');
 
     my $msa_output = "$tempdir/output.fa";
 

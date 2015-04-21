@@ -1,5 +1,5 @@
 #!/usr/bin/env perl
-# Copyright [1999-2013] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+# Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 # 
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -43,8 +43,7 @@ my $genetree_adaptor = $comparaDBA->get_GeneTreeAdaptor;
 my $genes = $human_gene_adaptor->fetch_all_by_external_name('BRCA2');
 
 foreach my $gene (@$genes) {
-  my $member = $gene_member_adaptor->
-    fetch_by_source_stable_id("ENSEMBLGENE",$gene->stable_id);
+  my $member = $gene_member_adaptor->fetch_by_stable_id($gene->stable_id);
   die "no members" unless (defined $member);
 
   # Fetch the tree

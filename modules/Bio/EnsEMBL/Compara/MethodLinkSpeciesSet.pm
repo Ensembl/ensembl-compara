@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2013] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -20,10 +20,10 @@ limitations under the License.
 =head1 CONTACT
 
   Please email comments or questions to the public Ensembl
-  developers list at <dev@ensembl.org>.
+  developers list at <http://lists.ensembl.org/mailman/listinfo/dev>.
 
   Questions may also be sent to the Ensembl help desk at
-  <helpdesk@ensembl.org>.
+  <http://www.ensembl.org/Help/Contact>.
 
 =head1 NAME
 
@@ -143,16 +143,9 @@ sub new {
 }
 
 
-sub new_fast {
-  my $class = shift;
-  my $hashref = shift;
-
-  return bless $hashref, $class;
-}
-
 
 =head2 method
- 
+
   Arg [1]    : (opt.) Bio::EnsEMBL::Compara::Method object
   Example    : my $method_object = $method_link_species_set->method();
   Example    : $method_link_species_set->method( $method_object );
@@ -160,7 +153,7 @@ sub new_fast {
   Returntype : Bio::EnsEMBL::Compara::Method
   Exceptions : none
   Caller     : general
- 
+
 =cut
 
 sub method {
@@ -322,7 +315,7 @@ sub get_common_classification {
 
 
 =head2 max_alignment_length
- 
+
   Arg [1]    : (opt.) int $max_alignment_length
   Example    : my $max_alignment_length = $method_link_species_set->
                    max_alignment_length();
@@ -331,7 +324,7 @@ sub get_common_classification {
   Returntype : integer
   Exceptions : 
   Caller     : general
- 
+
 =cut
 
 sub max_alignment_length {

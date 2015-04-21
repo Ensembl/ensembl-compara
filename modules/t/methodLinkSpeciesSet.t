@@ -1,5 +1,5 @@
 #!/usr/bin/env perl
-# Copyright [1999-2013] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+# Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 # 
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -99,7 +99,7 @@ subtest "Test Bio::EnsEMBL::Compara::DBSQL::MethodLinkSpeciesSet::new(ALL)", sub
     is($this_method->type, "BLASTZ_NET");
     is($this_method->class, "GenomicAlignBlock.pairwise_alignment");
 
-    my $species = join(" - ", map {$_->name} sort {$a cmp $b} @{$method_link_species_set->species_set_obj->genome_dbs});
+    my $species = join(" - ", sort {$a cmp $b} map {$_->name} @{$method_link_species_set->species_set_obj->genome_dbs});
     is($species, "homo_sapiens - mus_musculus");
     
     is ($method_link_species_set->name, $mlss_name);

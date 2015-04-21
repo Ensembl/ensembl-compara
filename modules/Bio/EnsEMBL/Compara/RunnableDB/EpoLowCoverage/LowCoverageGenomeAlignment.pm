@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2013] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -20,16 +20,14 @@ limitations under the License.
 =head1 CONTACT
 
   Please email comments or questions to the public Ensembl
-  developers list at <dev@ensembl.org>.
+  developers list at <http://lists.ensembl.org/mailman/listinfo/dev>.
 
   Questions may also be sent to the Ensembl help desk at
-  <helpdesk@ensembl.org>.
+  <http://www.ensembl.org/Help/Contact>.
 
 =head1 NAME
 
 Bio::EnsEMBL::Compara::Runnable::EpoLowCoverage::LowCoverageGenomeAlignment
-
-=head1 SYNOPSIS
 
 =head1 DESCRIPTION
 
@@ -168,6 +166,7 @@ sub run
     Status     : At risk
 
 =cut
+
 sub write_output {
     my ($self) = @_;
 
@@ -212,8 +211,6 @@ sub _write_output {
   my $dnafrag_adaptor = $self->compara_dba->get_DnaFragAdaptor;
   my $gaba = $self->compara_dba->get_GenomicAlignBlockAdaptor;
   my $gaa = $self->compara_dba->get_GenomicAlignAdaptor;
-  
-  my $gaga = $self->compara_dba->get_GenomicAlignGroupAdaptor;
   
   my $gata = $self->compara_dba->get_GenomicAlignTreeAdaptor;
 
@@ -1043,7 +1040,7 @@ sub get_taxon_tree {
       
       my $species_tree_adaptor = $self->compara_dba->get_SpeciesTreeAdaptor;
       my $species_tree = $species_tree_adaptor->fetch_by_method_link_species_set_id_label($self->param('mlss_id'));
-      $newick_taxon_tree = $species_tree->root->newick_format("njtree");
+      $newick_taxon_tree = $species_tree->root->newick_format("ncbi_taxon");
       #$newick_taxon_tree = $mlss->get_value_for_tag('taxon_tree');
   }
 
@@ -1409,6 +1406,7 @@ sub _construct_pairwise_locations {
   Warning    :
 
 =cut
+
 sub _dump_fasta_and_mfa {
   my $self = shift;
   my $all_genomic_aligns = $self->param('genomic_aligns');

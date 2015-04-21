@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2013] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -49,8 +49,11 @@ $ktreedist->write_output(); #writes to DB
 
 =head1 CONTACT
 
-  Contact Albert Vilella on module implementation/design detail: avilella@ebi.ac.uk
-  Contact Ewan Birney on EnsEMBL in general: birney@sanger.ac.uk
+Please email comments or questions to the public Ensembl
+developers list at <http://lists.ensembl.org/mailman/listinfo/dev>.
+
+Questions may also be sent to the Ensembl help desk at
+<http://www.ensembl.org/Help/Contact>.
 
 =cut
 
@@ -69,7 +72,7 @@ use strict;
 use Data::Dumper;
 use Bio::EnsEMBL::Compara::Graph::NewickParser;
 
-use base ('Bio::EnsEMBL::Compara::RunnableDB::RunCommand', 'Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable', 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::TreeBest');
+use base ('Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::TreeBest');
 
 
 =head2 fetch_input
@@ -86,26 +89,21 @@ use base ('Bio::EnsEMBL::Compara::RunnableDB::RunCommand', 'Bio::EnsEMBL::Compar
 sub fetch_input {
   my( $self) = @_;
 
-  $self->param('linked_trees', []);
     # Fetch sequences:
   $self->param('gene_tree', $self->compara_dba->get_GeneTreeAdaptor->fetch_by_dbID($self->param('gene_tree_id')) );
   $self->param('gene_tree')->preload();
 
   if ($self->check_members) {
-      $self->input_job->incomplete(0);
-      die "Ktreedist.pm: All members have the same sequence.";
+      $self->complete_early("Ktreedist.pm: All members have the same sequence.");
   }
 
   $self->load_input_trees;
 
   unless (scalar(keys %{$self->param('inputtrees_unrooted')})) {
-    $self->input_job->incomplete(0);
-    die "No trees with non-0 distances. Nothing to compute";
+    $self->complete_early("No trees with non-0 distances. Nothing to compute");
   }
 
-  my $ktreedist_exe = $self->param_required('ktreedist_exe');
-
-  die "Cannot execute '$ktreedist_exe'" unless(-x $ktreedist_exe);
+  $self->require_executable('ktreedist_exe');
 }
 
 
@@ -140,7 +138,9 @@ sub run {
 
 sub write_output {
   my $self = shift;
-  $self->store_ktreedist_score;
+  $self->call_within_transaction( sub {
+    $self->store_ktreedist_score;
+  });
 }
 
 sub post_cleanup {
@@ -149,9 +149,6 @@ sub post_cleanup {
   if(my $gene_tree = $self->param('gene_tree')) {
     $gene_tree->release_tree;
     $self->param('gene_tree', undef);
-  }
-  foreach my $gene_tree (@{$self->param('linked_trees')}) {
-    $gene_tree->release_tree;
   }
 
   $self->SUPER::post_cleanup if $self->can("SUPER::post_cleanup");
@@ -237,12 +234,11 @@ sub load_input_trees {
     my ($self) = @_;
     my $tree = $self->param('gene_tree');
     $self->param('inputtrees_unrooted', {});
-    for my $other_tree (@{$self->compara_dba->get_GeneTreeAdaptor->fetch_all_linked_trees($tree)}) {
+    for my $other_tree (values %{$tree->alternative_trees}) {
         $other_tree->preload();
         print STDERR $other_tree->newick_format('ryo','%{-m}%{"_"-x}:%{d}') if ($self->debug);
         my $tag = $other_tree->clusterset_id;
         $self->param('inputtrees_unrooted')->{$tag} = $other_tree->newick_format('ryo','%{-m}%{"_"-x}:%{d}') if ($self->check_distances_to_parent($other_tree));
-        push @{$self->param('linked_trees')}, $other_tree;
     }
     return 1;
 }
@@ -270,6 +266,13 @@ sub reroot_inputtrees {
     # Parse the rooted tree string
     my $rootedstring = $self->run_treebest_sdi($inputtree, 1);
 
+    # The string may be empty if the bison parser couldn't parse the tree
+    # due to memory exhaustion
+    if (not $rootedstring) {
+        $self->warning(sprintf("Treebest could not root the '%s' tree due probably to memory exhaustion\n", $method));
+        next;
+    }
+
     $self->param('inputtrees_rooted')->{$method} = $rootedstring;
   }
 }
@@ -277,13 +280,7 @@ sub reroot_inputtrees {
 sub store_ktreedist_score {
     my ($self) = @_;
     my $root_id = $self->param('gene_tree')->root_id;
-    my $tree = $self->param('gene_tree'),
-
-    my %other_trees;
-    for my $other_tree (@{$self->param('linked_trees')}) {
-        print STDERR "OTHER TREE FOUND: ", $other_tree->root_id, "WITH CLUSTERSET_ID", $other_tree->clusterset_id, "\n" if ($self->debug());
-        $other_trees{$other_tree->clusterset_id} = $other_tree;
-    }
+    my $other_trees = $self->param('gene_tree')->alternative_trees;
 
     my $sth = $self->compara_dba->dbc->prepare
         ("INSERT IGNORE INTO ktreedist_score
@@ -300,8 +297,8 @@ sub store_ktreedist_score {
     for my $k_score_as_rank (sort {$a <=> $b} keys %$ktreedist_score_root_id) {
         for my $tag (keys %{$ktreedist_score_root_id->{$k_score_as_rank}{_tag}}) {
             print STDERR "TAG: $tag\n" if ($self->debug);
-            $other_trees{$tag}->store_tag('k_score', $ktreedist_score_root_id->{$k_score_as_rank}{_tag}{$tag}{k_score});
-            $other_trees{$tag}->store_tag('k_score_rank', $count);
+            $other_trees->{$tag}->store_tag('k_score', $ktreedist_score_root_id->{$k_score_as_rank}{_tag}{$tag}{k_score});
+            $other_trees->{$tag}->store_tag('k_score_rank', $count);
 
             my $k_score         = $ktreedist_score_root_id->{$k_score_as_rank}{_tag}{$tag}{k_score};
             my $scale_factor    = $ktreedist_score_root_id->{$k_score_as_rank}{_tag}{$tag}{scale_factor};

@@ -1,5 +1,5 @@
 #!/usr/bin/env perl
-# Copyright [1999-2013] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+# Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 # 
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -34,10 +34,10 @@ my $description = q{
 =head1 CONTACT
 
   Please email comments or questions to the public Ensembl
-  developers list at <dev@ensembl.org>.
+  developers list at <http://lists.ensembl.org/mailman/listinfo/dev>.
 
   Questions may also be sent to the Ensembl help desk at
-  <helpdesk@ensembl.org>.
+  <http://www.ensembl.org/Help/Contact>.
 
 =head1 NAME
 
@@ -99,7 +99,7 @@ the one set in ENSEMBL_REGISTRY will be used if defined, if not
 ~/.ensembl_init will be used.
 
 =item B<[--dbname compara_db_name]>
-  
+
 the name of compara DB in the registry_configuration_file or any
 of its aliases. Uses "compara" by default.
 
@@ -110,15 +110,15 @@ of its aliases. Uses "compara" by default.
 =over
 
 =item B<[--species query_species]>
-  
+
 Query species. Default is "human"
 
 =item B<[--coord_system coordinates_name]>
-  
+
 Query coordinate system. Default is "chromosome"
 
 =item B<--seq_region region_name>
-  
+
 Query region name, i.e. the chromosome name
 
 =item B<--seq_region_start start>
@@ -136,11 +136,11 @@ The strand of the query. It can be either +1 or -1. Default is -1.
 =over
 
 =item B<[--alignment_type method_link_name]>
-  
+
 The type of alignment. Default is "BLASTZ_NET"
 
 =item B<[--set_of_species species1:species2:species3:...]>
-  
+
 The list of other species used to fetch original pairwise alignments
 and build fake multiple one. Default is "mouse:rat". The names
 should correspond to the name of the core database in the
@@ -183,11 +183,11 @@ SNPs will be represented by the alternative nucleotide. All other types of
 variations are represented by a "*".
 
 =item B<[--output_format clustalw|fasta|...]>
-  
+
 The type of output you want. "clustalw" is the default.
 
 =item B<[--output_file filename]>
-  
+
 The name of the output file. By default the output is the
 standard output
 

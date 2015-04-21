@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2013] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -20,16 +20,14 @@ limitations under the License.
 =head1 CONTACT
 
   Please email comments or questions to the public Ensembl
-  developers list at <dev@ensembl.org>.
+  developers list at <http://lists.ensembl.org/mailman/listinfo/dev>.
 
   Questions may also be sent to the Ensembl help desk at
-  <helpdesk@ensembl.org>.
+  <http://www.ensembl.org/Help/Contact>.
 
 =head1 NAME
 
 Bio::EnsEMBL::Compara::Production::DnaFragChunkSet
-
-=head1 SYNOPSIS
 
 =head1 DESCRIPTION
 
@@ -50,60 +48,25 @@ use Bio::EnsEMBL::Utils::Exception;
 use Bio::EnsEMBL::Utils::Argument;
 use Time::HiRes qw(time gettimeofday tv_interval);
 
+use base ('Bio::EnsEMBL::Storable');        # inherit dbID(), adaptor() and new() methods
+
+
 sub new {
   my ($class, @args) = @_;
 
-  my $self = {};
-  bless $self,$class;
+  my $self = $class->SUPER::new(@args);       # deal with Storable stuff
 
   $self->{'_cached_chunk_list'} = undef;
   $self->{'_total_basepairs'} = 0;
 
   if (scalar @args) {
     #do this explicitly.
-    my ($dbid, $description, $adaptor, $dna_collection_id) = rearrange([qw(DBID NAME ADAPTOR DNA_COLLECTION_ID)], @args);
+    my ($description, $dna_collection_id) = rearrange([qw(NAME DNA_COLLECTION_ID)], @args);
 
-    $self->dbID($dbid)                           if($dbid);
     $self->description($description)             if($description);
-    $self->adaptor($adaptor)                     if($adaptor);
     $self->dna_collection_id($dna_collection_id) if($dna_collection_id);
   }
   return $self;
-}
-
-=head2 adaptor
-
- Title   : adaptor
- Usage   :
- Function: getter/setter of the adaptor for this object
- Example :
- Returns :
- Args    :
-
-=cut
-
-sub adaptor {
-  my $self = shift;
-  $self->{'_adaptor'} = shift if(@_);
-  return $self->{'_adaptor'};
-}
-
-
-=head2 dbID
-
-  Arg [1]    : int $dbID (optional)
-  Example    :
-  Description:
-  Returntype :
-  Exceptions :
-  Caller     :
-
-=cut
-
-sub dbID {
-  my $self = shift;
-  $self->{'_dbID'} = shift if(@_);
-  return $self->{'_dbID'};
 }
 
 =head2 description
@@ -141,7 +104,7 @@ sub dna_collection {
       $self->{'_dna_collection'} = $dna_collection;
   } elsif (!defined ($self->{'_dna_collection'})) {
       #Try to get from other sources...
-      if (defined ($self->{'_adaptor'}) and defined($self->{'_dna_collection_id'})) {
+      if (defined ($self->{'adaptor'}) and defined($self->{'_dna_collection_id'})) {
           $self->{'_dna_collection'} = $self->adaptor->db->get_DnaCollectionAdaptor->fetch_by_dbID($self->dna_collection_id);
       }
   }

@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2013] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -20,10 +20,10 @@ limitations under the License.
 =head1 CONTACT
 
   Please email comments or questions to the public Ensembl
-  developers list at <dev@ensembl.org>.
+  developers list at <http://lists.ensembl.org/mailman/listinfo/dev>.
 
   Questions may also be sent to the Ensembl help desk at
-  <helpdesk@ensembl.org>.
+  <http://www.ensembl.org/Help/Contact>.
 
 =head1 NAME
 
@@ -33,9 +33,8 @@ Bio::EnsEMBL::Compara::RunnableDB::PairAligner::AlignmentProcessing
 
 Abstract base class of AlignmentChains and AlignmentNets
 
-=head1 DESCRIPTION
-
 =cut
+
 package Bio::EnsEMBL::Compara::RunnableDB::PairAligner::AlignmentProcessing;
 
 use strict;
@@ -550,7 +549,7 @@ sub delete_alignments {
     my $sql_ga_to_exec1 = $sql_ga . "(" . join(",", @ga1_ids) . ")";
     my $sql_ga_to_exec2 = $sql_ga . "(" . join(",", @ga2_ids) . ")";
 
-    foreach my $sql ($sql_gab_to_exec,$sql_ga_to_exec1,$sql_ga_to_exec2) {
+    foreach my $sql ($sql_ga_to_exec1,$sql_ga_to_exec2,$sql_gab_to_exec) {
       my $sth = $dbc->prepare($sql);
       $sth->execute;
       $sth->finish;

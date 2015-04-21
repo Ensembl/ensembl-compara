@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2013] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -20,18 +20,16 @@ limitations under the License.
 =head1 CONTACT
 
   Please email comments or questions to the public Ensembl
-  developers list at <dev@ensembl.org>.
+  developers list at <http://lists.ensembl.org/mailman/listinfo/dev>.
 
   Questions may also be sent to the Ensembl help desk at
-  <helpdesk@ensembl.org>.
+  <http://www.ensembl.org/Help/Contact>.
 
 =cut
 
 =head1 NAME
 
 Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::CAFESpeciesTree
-
-=head1 SYNOPSIS
 
 =head1 DESCRIPTION
 
@@ -62,6 +60,7 @@ sub param_defaults {
             'tree_fmt'   => '%{n}%{":"d}',
             'pvalue_lim' => 0.01,
             'label'      => 'full_species_tree',
+            'new_label'  => 'cafe',
            };
 }
 
@@ -96,8 +95,6 @@ sub fetch_input {
 #    my $full_species_tree = $self->get_species_tree_string($label); ## Now in Runnable::BaseRunnable
     my $full_species_tree = $self->compara_dba->get_SpeciesTreeAdaptor->fetch_by_method_link_species_set_id_label($self->param('mlss_id'), $self->param('label'));
     $self->param('full_species_tree', $full_species_tree); ## This is the full tree, not the string
-
-    $self->param('tree_fmt', '%{n}%{":"d}'); # format for the tree
 
     my $cafe_species = eval $self->param('cafe_species');
     $self->param('cafe_species', $cafe_species);
@@ -138,6 +135,7 @@ sub run {
     if ($self->debug) {
         $self->check_tree($cafe_tree_root);
     }
+    $cafe_tree_root->build_leftright_indexing();
 
     ## The modified tree is put back in the species tree object
     $species_tree->root($cafe_tree_root);
@@ -150,13 +148,14 @@ sub run {
 
 
     $species_tree->species_tree($cafe_tree_str);
-    $species_tree->label('cafe');
+    $species_tree->label($self->param_required('new_label'));
     $speciesTree_Adaptor->store($species_tree);
 
 }
 
 sub write_output {
     my ($self) = @_;
+    $self->dataflow_output_id( {'species_tree_root_id' => $self->param('full_species_tree')->root_id}, 2);
 }
 
 
@@ -320,7 +319,10 @@ sub _binarize {
         $newNode->taxon_id($child->taxon_id);
         $taxon_ids->{$child->parent->taxon_id}++;
         $newNode->genome_db_id($child->genome_db_id);
-        $newNode->name($child->name() || $child->taxon_id); 
+        # We make sure that we don't have spaces in the names of internal nodes (for example Testudines + Archosauria group)
+        my $name = $child->name() || $child->taxon_id;
+        $name =~ s/\ /./g;
+        $newNode->name($name);
         $newNode->node_id($child->node_id());
         $newNode->distance_to_parent($child->distance_to_parent()); # no parent!!
         $newNode->node_name($child->name);

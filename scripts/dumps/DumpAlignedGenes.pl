@@ -1,5 +1,5 @@
 #!/usr/bin/env perl
-# Copyright [1999-2013] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+# Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 # 
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -23,7 +23,7 @@ my $description = q{
 ## PROGRAM DumpAlignedGenes.pl
 ##
 ## AUTHORS
-##    Javier Herrero (jherrero@ebi.ac.uk)
+##    Javier Herrero
 ##
 ## DESCRIPTION
 ##    This script dumps aligned genes. Genes are aligned using the either
@@ -39,8 +39,15 @@ DumpAlignedGenes.pl
 
 =head1 AUTHORS
 
- Javier Herrero (jherrero@ebi.ac.uk)
+ Javier Herrero
 
+=head1 CONTACT
+
+Please email comments or questions to the public Ensembl
+developers list at <http://lists.ensembl.org/mailman/listinfo/dev>.
+
+Questions may also be sent to the Ensembl help desk at
+<http://www.ensembl.org/Help/Contact>.
 
 =head1 DESCRIPTION
 
@@ -96,7 +103,7 @@ the one set in ENSEMBL_REGISTRY will be used if defined, if not
 ~/.ensembl_init will be used.
 
 =item B<[--dbname compara_db_name]>
-  
+
 the name of compara DB in the registry_configuration_file or any
 of its aliases. Uses "compara" by default.
 
@@ -107,15 +114,15 @@ of its aliases. Uses "compara" by default.
 =over
 
 =item B<[--species species]>
-  
+
 Query species. Default is "human"
 
 =item B<[--coord_system coordinates_name]>
-  
+
 Query coordinate system. Default is "chromosome"
 
 =item B<--seq_region region_name>
-  
+
 Query region name, i.e. the chromosome name
 
 =item B<--seq_region_start start>
@@ -151,10 +158,10 @@ them is not larger than 100000 bp. Setting this to -1 disable any
 linking event.
 
 =item B<[--[no]strict_order_of_exon_pieces]>
-        
+
 Do not [or do] merge two pieces of an exon if they are not in the
 right order after mapping
-    
+
 =item B<[--[no]strict_order_of_exons]>
 
 Do not [or do] link two exons if they are not in the right order
@@ -167,11 +174,11 @@ after mapping
 =over
 
 =item B<[--alignment_type method_link_name]>
-  
+
 The type of alignment. Default is "BLASTZ_NET"
 
 =item B<[--set_of_species species1:species2:species3:...]>
-  
+
 The list of species used to get those alignments. Default is
 "human:mouse". The names should correspond to the name of the
 core database in the registry_configuration_file or any of its
@@ -183,7 +190,7 @@ If working with multiple alignments use the species_set_name flag eg.
 "mammals" or "fish". By default it is set to undef. 
 
 =item B<[--expanded]>
-  
+
 By default the genes are aligned on the original query species.
 In the expanded mode, the deletions in the query species are taken
 into account and represented in the output. Default is "condensed"
@@ -196,7 +203,7 @@ mode.
 =over
 
 =item B<[--output_file filename]>
-  
+
 The name of the output file. By default the output is the
 standard output
 
@@ -215,7 +222,7 @@ my $usage = qq{
 perl DumpAlignedGenes.pl
   Getting help:
     [--help]
-  
+
   General configuration:
     [--reg_conf registry_configuration_file]
         the Bio::EnsEMBL::Registry configuration file. If none given,

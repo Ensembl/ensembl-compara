@@ -1,5 +1,5 @@
 #!/usr/bin/env perl
-# Copyright [1999-2013] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+# Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 # 
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -40,7 +40,7 @@ my $gene_member_adaptor = $reg->get_adaptor ("Multi", "compara", "GeneMember");
 my $gene_tree_adaptor   = $reg->get_adaptor ("Multi", "compara", "GeneTree");
 my $cafe_tree_adaptor   = $reg->get_adaptor ("Multi", "compara", "CAFEGeneFamily");
 
-my $member = $gene_member_adaptor->fetch_by_source_stable_id(undef, $gene_stable_id);
+my $member = $gene_member_adaptor->fetch_by_stable_id($gene_stable_id);
 my $gene_tree = $gene_tree_adaptor->fetch_default_for_Member($member);
 my $cafe_tree = $cafe_tree_adaptor->fetch_by_GeneTree($gene_tree);
 
@@ -55,7 +55,7 @@ print $cafe_tree->root->newick_format('ryo', $tree_fmt), "\t";
 print $cafe_tree->pvalue_avg, "\n";
 
 for my $node (@{$cafe_tree->root->get_all_nodes}) {
-  my $node_name = $node->is_leaf ? $node->genome_db->short_name : $node->taxon_id;
+  my $node_name = $node->is_leaf ? $node->genome_db->get_short_name : $node->taxon_id;
   my $node_n_members = $node->n_members;
   my $node_pvalue = $node->pvalue || "birth";
   my $dynamics = "[no change]";

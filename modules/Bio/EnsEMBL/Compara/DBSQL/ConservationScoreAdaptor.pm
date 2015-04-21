@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2013] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -20,10 +20,10 @@ limitations under the License.
 =head1 CONTACT
 
   Please email comments or questions to the public Ensembl
-  developers list at <dev@ensembl.org>.
+  developers list at <http://lists.ensembl.org/mailman/listinfo/dev>.
 
   Questions may also be sent to the Ensembl help desk at
-  <helpdesk@ensembl.org>.
+  <http://www.ensembl.org/Help/Contact>.
 
 =head1 NAME
 
@@ -84,7 +84,7 @@ use POSIX qw(floor);
 
 use Bio::EnsEMBL::DBSQL::BaseAdaptor;
 use Bio::EnsEMBL::Compara::ConservationScore;
-use Bio::EnsEMBL::Utils::Exception qw(throw warning info deprecate);
+use Bio::EnsEMBL::Utils::Exception qw(throw warning info);
 use Config;
 
 #global variables
@@ -304,13 +304,32 @@ sub fetch_all_by_MethodLinkSpeciesSet_Slice {
             #if want one score per base in the alignment, use faster method 
             #doesn't bother with any binning
             if ($window_size == 1 && ($display_size == ($slice->end - $slice->start + 1))) {
-                $these_scores = _get_aligned_scores_from_cigar_line_fast($self, $cigar_line, $dnafrag_start, $dnafrag_end, $slice->start, $slice->end, $conservation_scores, $genomic_align_block_id, $gab_length, $display_type, $these_scores);
+                _get_aligned_scores_from_cigar_line_fast($self, $cigar_line, $dnafrag_start, $dnafrag_end, $slice->start, $slice->end, $conservation_scores, $genomic_align_block_id, $gab_length, $display_type, $these_scores);
             } else {
-                $these_scores = _get_aligned_scores_from_cigar_line($self, $cigar_line, $dnafrag_start, $dnafrag_end, $slice->start, $slice->end, $conservation_scores, $genomic_align_block_id, $gab_length, $display_type, $window_size, $these_scores);
+                _get_aligned_scores_from_cigar_line($self, $cigar_line, $dnafrag_start, $dnafrag_end, $slice->start, $slice->end, $conservation_scores, $genomic_align_block_id, $gab_length, $display_type, $window_size, $these_scores);
                 
             } 
         }
         
+        ## True if there are some values in the bucket that haven't been transformed into a score
+        if ($_bucket->{called}) {
+
+            my $genomic_align_block_id = $light_genomic_aligns->[-1]->{genomic_align_block_id};
+
+            # This code is adapted from _get_aligned_scores_from_cigar_line
+            # Again, we restore the values as they were before Kathryn's change in 2007
+            my $prev_chr_pos = $_bucket->{start_seq_region_pos}+$_bucket->{cnt};
+
+            for (my $i = $prev_chr_pos; $i <= $_bucket->{end_seq_region_pos}; $i+=$window_size) {
+                my $aligned_score = _add_to_bucket($self, $display_type, $_no_score_value, $_no_score_value, $i, $slice->start, scalar(@$these_scores), $genomic_align_block_id, $window_size);
+                if ($aligned_score) {
+                    #need this to ensure that the aligned_scores array is the
+                    #correct size (passed into _add_to_bucket)
+                    push(@$these_scores, $aligned_score);
+                }
+            }
+        }
+
         if (scalar(@$these_scores) == 0) {
             #return $scores;
             next;
@@ -411,6 +430,7 @@ sub fetch_all_by_MethodLinkSpeciesSet_Slice {
   Status     : At risk
 
 =cut
+
 sub fetch_all_by_GenomicAlignBlock {
     my ($self, $genomic_align_block, $start, $end, $slice_length,
 	$display_size, $display_type, $window_size) = @_;
@@ -955,11 +975,11 @@ sub _print_scores {
   Arg  8     : int $genomic_align_block_length (length of current alignment block)
   Arg  9     : string $display_type (either AVERAGE or MAX (plot average or max value))
   Arg 10     : int $win_size (window size used)
-  Arg 11     : listref of Bio::EnsEMBL::Compara::ConservationScore objects $scores in slice coords
+  Arg 11     : listref of Bio::EnsEMBL::Compara::ConservationScore objects $aligned_scores in slice coords
 
   Example    : $scores = $self->_get_aligned_scores_from_cigar_line($genomic_align->cigar_line, $genomic_align->dnafrag_start, $genomic_align->dnafrag_end, $slice->start, $slice->end, $conservation_scores, $genomic_align_block->dbID, $genomic_align_block->length, $display_type, $window_size, $scores);
   Description: Convert conservation scores from alignment coordinates into species specific chromosome (slice) coordinates for an alignment genomic_align_block
-  Returntype : listref of Bio::EnsEMBL::Compara::ConservationScore objects $scores
+  Returntype : none, the scores are appended to $aligned_scores
   Exceptions : none
   Caller     : general
   Status     : At risk
@@ -1032,14 +1052,15 @@ sub _get_aligned_scores_from_cigar_line {
     #fill in region between previous alignment and this alignment with uncalled values
 
     #08.06.07 don't need to add bucket->{cnt} here
-    #my $prev_chr_pos = $_bucket->{start_seq_region_pos}+$_bucket->{cnt};
-    my $prev_chr_pos = $_bucket->{start_seq_region_pos};
+    #2015-01-19 it looks like we are calling _add_to_bucket too often. Reverting to the original values
+    my $prev_chr_pos = $_bucket->{start_seq_region_pos}+$_bucket->{cnt};
+    #my $prev_chr_pos = $_bucket->{start_seq_region_pos};
 
     #08.06.07 Fixed bug: need to add missing values only from
     #the next position to chr_start otherwise you use prev_chr_pos twice.
-    #for (my $i = $prev_chr_pos; $i < $chr_start; $i+=$win_size) {
-
-    for (my $i = $prev_chr_pos+$win_size; $i < $chr_start; $i+=$win_size) {
+    #2015-01-19 it looks like we are calling _add_to_bucket too often. Reverting to the original values
+    for (my $i = $prev_chr_pos; $i < $chr_start; $i+=$win_size) {
+    #for (my $i = $prev_chr_pos+$win_size; $i < $chr_start; $i+=$win_size) {
 	$aligned_score = _add_to_bucket($self, $display_type, $_no_score_value, $_no_score_value, $i, $start_slice, scalar(@$aligned_scores), $genomic_align_block_id, $win_size);
 	if ($aligned_score) {
 	    #need this to ensure that the aligned_scores array is the 
@@ -1164,8 +1185,6 @@ sub _get_aligned_scores_from_cigar_line {
 	}
 	$prev_position = $chr_pos;
     }
-
-    return $aligned_scores;
 }
 
 =head2 _get_aligned_scores_from_cigar_line_fast
@@ -1179,13 +1198,13 @@ sub _get_aligned_scores_from_cigar_line {
   Arg  7     : int $genomic_align_block_id (genomic align block id of current alignment block)
   Arg  8     : int $genomic_align_block_length (length of current alignment block)
   Arg  9     : string $display_type (either AVERAGE or MAX (plot average or max value))
-  Arg 10     : listref of Bio::EnsEMBL::Compara::ConservationScore objects $scores in slice coords
+  Arg 10     : listref of Bio::EnsEMBL::Compara::ConservationScore objects $aligned_scores in slice coords
 
   Example    : $scores = $self->_get_aligned_scores_from_cigar_line_fast($genomic_align->cigar_line, $genomic_align->dnafrag_start, $genomic_align->dnafrag_end, $slice->start, $slice->end, $conservation_scores, $genomic_align_block->dbID, $genomic_align_block->length, $display_type, $scores);
   Description: Faster method to than _get_aligned_scores_from_cigar_line. This
                method does not bin the scores and can be used if only require
                one score per base in the alignment
-  Returntype : listref of Bio::EnsEMBL::Compara::ConservationScore objects $scores
+  Returntype : none, the scores are appended to $aligned_scores
   Exceptions : none
   Caller     : general
   Status     : At risk
@@ -1397,8 +1416,6 @@ sub _get_aligned_scores_from_cigar_line_fast {
 	}
 	$prev_position = $chr_pos;
     }
-
-    return $aligned_scores;
 }
 
 =head2 _get_alignment_scores
@@ -1792,18 +1809,8 @@ sub _get_all_ref_genomic_aligns {
 	return $light_genomic_aligns;
     }
 
-    my $gdb_a = $self->db->get_GenomeDBAdaptor();
-    my $meta_container = $slice->adaptor->db->get_MetaContainer();
-    my $primary_species_name = $meta_container->get_production_name();
-    my ($highest_cs) = @{$slice_adaptor->db->get_CoordSystemAdaptor->fetch_all()};
-    my $primary_species_assembly = $highest_cs->version();
-    my $genome_db_adaptor = $self->db->get_GenomeDBAdaptor;
-    my $genome_db = $genome_db_adaptor->fetch_by_name_assembly(
-		        $primary_species_name,
-                        $primary_species_assembly);
     my $dnafrag_adaptor = $self->db->get_DnaFragAdaptor;
-    my $dnafrag = $dnafrag_adaptor->fetch_by_GenomeDB_and_name(
-			    $genome_db, $slice->seq_region_name);
+    my $dnafrag = $dnafrag_adaptor->fetch_by_Slice($slice);
     next if (!$dnafrag);
 
     my $max_alignment_length = $mlss->max_alignment_length;

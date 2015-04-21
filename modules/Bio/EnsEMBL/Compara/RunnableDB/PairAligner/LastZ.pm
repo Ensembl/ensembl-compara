@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2013] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -20,10 +20,10 @@ limitations under the License.
 =head1 CONTACT
 
   Please email comments or questions to the public Ensembl
-  developers list at <dev@ensembl.org>.
+  developers list at <http://lists.ensembl.org/mailman/listinfo/dev>.
 
   Questions may also be sent to the Ensembl help desk at
-  <helpdesk@ensembl.org>.
+  <http://www.ensembl.org/Help/Contact>.
 
 =head1 NAME
 
@@ -99,10 +99,7 @@ sub configure_runnable {
             "and creating a runnable for each one");
   }
 
-  my $program = $self->param('pair_aligner_exe');
-  throw($program . " is not executable")
-    unless ($program && -x $program);
-
+  my $program = $self->require_executable('pair_aligner_exe');
   my $mlss = $self->param('method_link_species_set');
   my $options = $mlss->get_value_for_tag("param");
 

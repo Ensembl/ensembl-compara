@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2013] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -94,9 +94,7 @@ sub get_species_tree_file {
 
     unless( $self->param('species_tree_file') ) {
 
-        $self->load_species_tree_from_db unless $self->param('species_tree_string');
-
-        my $species_tree_string = $self->param('species_tree_string');
+        my $species_tree_string = $self->get_species_tree_string();
         eval {
             use Bio::EnsEMBL::Compara::Graph::NewickParser;
             my $eval_species_tree = Bio::EnsEMBL::Compara::Graph::NewickParser::parse_newick_into_tree($species_tree_string);
@@ -117,7 +115,7 @@ sub get_species_tree_file {
     return $self->param('species_tree_file');
 }
 
-sub load_species_tree_from_db {
+sub _load_species_tree_string_from_db {
     my ($self) = @_;
 
     my $mlss_id = $self->param_required('mlss_id');
@@ -142,7 +140,7 @@ sub get_species_tree_string {
         if( my $species_tree_file = $self->param('species_tree_file') ) {
             $self->param('species_tree_string', $self->_slurp( $species_tree_file ));
         } else {
-            $self->load_species_tree_from_db;
+            $self->_load_species_tree_string_from_db;
         }
     }
     return  $self->param('species_tree_string');
@@ -168,6 +166,42 @@ sub _slurp {
 }
 
 
+=head2 require_executable
+
+Checks that the parameter is defined, and that the file is executable
+
+=cut
+
+sub require_executable {
+    my ($self, $param_name) = @_;
+    my $exe = $self->param_required($param_name);
+    die "Cannot execute $param_name: '$exe'" unless(-x $exe);
+    return $exe;
+}
+
+
+=head2 call_within_transaction {
+
+Calls a method within a transaction (if "do_transactions" is set).
+Otherwise, calls it directly.
+
+=cut
+
+sub call_within_transaction {
+    my ($self, $callback, $retry, $pause) = @_;
+
+    # Make sure the same commands are inside and outside of the transaction
+    if ($self->param('do_transactions')) {
+        my $helper = Bio::EnsEMBL::Utils::SqlHelper->new(-DB_CONNECTION => $self->compara_dba->dbc);
+        return $helper->transaction(
+            -RETRY => $retry,
+            -PAUSE => $pause,
+            -CALLBACK => $callback,
+        );
+    } else {
+        return $callback->();
+    }
+}
 
 
 1;

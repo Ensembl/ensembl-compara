@@ -1,5 +1,5 @@
 #!/usr/bin/env perl
-# Copyright [1999-2013] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+# Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 # 
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -48,8 +48,7 @@ foreach my $id (@list) {
 }
 
 foreach my $gene (@$genes) {
-  my $member = $gene_member_adaptor->
-    fetch_by_source_stable_id("ENSEMBLGENE",$gene->stable_id);
+  my $member = $gene_member_adaptor->fetch_by_stable_id($gene->stable_id);
   die "no members" unless (defined $member);
 
   # Fetch the gene tree
@@ -65,7 +64,7 @@ foreach my $gene (@$genes) {
   }
 
   # Compute the new tree
-  my $ret_tree = $genetree->remove_nodes(\@discarded_nodes);
+  my $ret_tree = $genetree->root->remove_nodes(\@discarded_nodes);
 
   # Print it
   $ret_tree->print_tree(10);

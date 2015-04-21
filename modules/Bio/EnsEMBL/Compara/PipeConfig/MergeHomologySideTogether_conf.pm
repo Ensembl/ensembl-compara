@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2013] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -21,7 +21,7 @@ limitations under the License.
 
 =head1 NAME
 
-  Bio::EnsEMBL::Compara::PipeConfig::MergeHomologySideTogether_conf
+Bio::EnsEMBL::Compara::PipeConfig::MergeHomologySideTogether_conf
 
 =head1 SYNOPSIS
 
@@ -40,7 +40,11 @@ limitations under the License.
 
 =head1 CONTACT
 
-  Please contact ehive-users@ebi.ac.uk mailing list with questions/suggestions.
+Please email comments or questions to the public Ensembl
+developers list at <http://lists.ensembl.org/mailman/listinfo/dev>.
+
+Questions may also be sent to the Ensembl help desk at
+<http://www.ensembl.org/Help/Contact>.
 
 =cut
 
@@ -78,22 +82,22 @@ sub default_options {
         },
 
         'master_db' => 'mysql://ensro@compara1/sf5_ensembl_compara_master',
-        'master_copy_tables' => [ 'genome_db', 'species_set', 'method_link', 'method_link_species_set', 'mapping_session', 'ncbi_taxa_name', 'ncbi_taxa_node', 'species_set_tag' ],
+        'master_copy_tables' => [ 'genome_db', 'species_set', 'method_link', 'method_link_species_set', 'mapping_session', 'ncbi_taxa_name', 'ncbi_taxa_node', 'species_set_tag', 'dnafrag' ],
 
         'prevrel_db' => 'mysql://ensro@compara3/kb3_ensembl_compara_71',
         'prevrel_merge_tables' => [ 'stable_id_history' ],
 
-        'genetrees_db' => 'mysql://ensro@compara3/mp12_compara_homology_72',
-        'genetrees_copy_tables'  => [  ],
-        'genetrees_merge_tables' => [ 'stable_id_history', 'method_link_species_set_tag', 'other_member_sequence', 'hmm_profile', 'CAFE_gene_family', 'CAFE_species_gene' ],
+        'proteintrees_db' => 'mysql://ensro@compara3/mp12_compara_homology_72',
+        'proteintrees_copy_tables'  => [  ],
+        'proteintrees_merge_tables' => [ 'stable_id_history', 'method_link_species_set_tag', 'other_member_sequence', 'hmm_profile', 'CAFE_gene_family', 'CAFE_species_gene' ],
 
         'families_db' => 'mysql://ensro@compara4/lg4_compara_families_7204',
         'families_copy_tables'  => [ 'family', 'family_member' ],
-        'families_merge_tables' => [ 'member', 'sequence', 'stable_id_history' ],
+        'families_merge_tables' => [ 'seq_member', 'gene_member', 'sequence', 'stable_id_history' ],
 
         'nctrees_db' => 'mysql://ensro@compara2/mp12_compara_nctrees_72',
         'nctrees_copy_tables'  => [ ],
-        'nctrees_merge_tables' => [ 'member', 'sequence', 'method_link_species_set_tag', 'other_member_sequence', 'hmm_profile', 'CAFE_gene_family', 'CAFE_species_gene' ],
+        'nctrees_merge_tables' => [ 'seq_member', 'gene_member', 'sequence', 'method_link_species_set_tag', 'other_member_sequence', 'hmm_profile', 'CAFE_gene_family', 'CAFE_species_gene' ],
 
         'copying_capacity'  => 10,                                  # how many tables can be dumped and re-created in parallel (too many will slow the process down)
         'compara_innodb_schema' => 0,                               # to override the default Compara setting
@@ -143,13 +147,13 @@ sub pipeline_analyses {
                 { 'fan_branch_code' => 2, 'db_conn' => $self->o('families_db'),  'inputlist'  => $self->o('families_copy_tables') },
                 { 'fan_branch_code' => 4, 'db_conn' => $self->o('families_db'),  'inputlist'  => $self->o('families_merge_tables') },
 
-                { 'fan_branch_code' => 2, 'db_conn' => $self->o('genetrees_db'), 'inputquery' => "SHOW TABLES LIKE 'peptide\_align\_feature\_%'" },
-                { 'fan_branch_code' => 2, 'db_conn' => $self->o('genetrees_db'), 'inputlist'  => $self->o('genetrees_copy_tables') },
-                { 'fan_branch_code' => 4, 'db_conn' => $self->o('genetrees_db'), 'inputlist'  => $self->o('genetrees_merge_tables') },
-                { 'fan_branch_code' => 4, 'db_conn' => $self->o('genetrees_db'), 'inputquery' => "SHOW TABLES LIKE 'gene\_tree\_%'" },
-                { 'fan_branch_code' => 4, 'db_conn' => $self->o('genetrees_db'), 'inputquery' => "SHOW TABLES LIKE 'gene\_align%'" },
-                { 'fan_branch_code' => 4, 'db_conn' => $self->o('genetrees_db'), 'inputquery' => "SHOW TABLES LIKE 'homology%'" },
-                { 'fan_branch_code' => 4, 'db_conn' => $self->o('genetrees_db'), 'inputquery' => "SHOW TABLES LIKE 'species\_tree\_%'" },
+                { 'fan_branch_code' => 2, 'db_conn' => $self->o('proteintrees_db'), 'inputquery' => "SHOW TABLES LIKE 'peptide\_align\_feature\_%'" },
+                { 'fan_branch_code' => 2, 'db_conn' => $self->o('proteintrees_db'), 'inputlist'  => $self->o('proteintrees_copy_tables') },
+                { 'fan_branch_code' => 4, 'db_conn' => $self->o('proteintrees_db'), 'inputlist'  => $self->o('proteintrees_merge_tables') },
+                { 'fan_branch_code' => 4, 'db_conn' => $self->o('proteintrees_db'), 'inputquery' => "SHOW TABLES LIKE 'gene\_tree\_%'" },
+                { 'fan_branch_code' => 4, 'db_conn' => $self->o('proteintrees_db'), 'inputquery' => "SHOW TABLES LIKE 'gene\_align%'" },
+                { 'fan_branch_code' => 4, 'db_conn' => $self->o('proteintrees_db'), 'inputquery' => "SHOW TABLES LIKE 'homology%'" },
+                { 'fan_branch_code' => 4, 'db_conn' => $self->o('proteintrees_db'), 'inputquery' => "SHOW TABLES LIKE 'species\_tree\_%'" },
 
                 { 'fan_branch_code' => 2, 'db_conn' => $self->o('nctrees_db'),   'inputlist'  => $self->o('nctrees_copy_tables') },
                 { 'fan_branch_code' => 4, 'db_conn' => $self->o('nctrees_db'),   'inputlist'  => $self->o('nctrees_merge_tables') },
@@ -179,6 +183,17 @@ sub pipeline_analyses {
                 'mode'          => 'topup',
             },
             -hive_capacity => 1,    # prevent several workers from updating the same table (brute force)
+        },
+
+        {   -logic_name     => 'write_member_counts',
+            -module         => 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
+            -input_ids      => [{}],
+            -parameters     => {
+                'member_count_sql'  => $self->o('ensembl_cvs_root_dir').'/ensembl-compara/scripts/production/populate_member_production_counts_table.sql',
+                'db_cmd'            => $self->db_cmd(),
+                'cmd'               => '#db_cmd# < #member_count_sql#',
+            },
+            -wait_for       => [ 'generate_job_list', 'copy_table', 'merge_table' ],
         },
 
     ];

@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2013] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -20,16 +20,14 @@ limitations under the License.
 =head1 CONTACT
 
   Please email comments or questions to the public Ensembl
-  developers list at <dev@ensembl.org>.
+  developers list at <http://lists.ensembl.org/mailman/listinfo/dev>.
 
   Questions may also be sent to the Ensembl help desk at
-  <helpdesk@ensembl.org>.
+  <http://www.ensembl.org/Help/Contact>.
 
 =head1 NAME
 
 Bio::EnsEMBL::Compara::GenomicAlignTree
-
-=head1 SYNOPSIS
 
 =head1 DESCRIPTION
 
@@ -466,13 +464,13 @@ sub group_id {
     } elsif (!defined($self->{'group_id'}) and defined($self->{adaptor})) {
         # Try to get the ID from other sources...
         my %group_ids;
-        my $genomic_align_block_adaptor = $self->adaptor->dba->get_GenomicAlignBlockAdaptor;
+        my $genomic_align_block_adaptor = $self->adaptor->db->get_GenomicAlignBlockAdaptor;
         foreach my $this_genomic_align_node (@{$self->get_all_nodes()}) {
 	    next if (!defined $this_genomic_align_node->genomic_align_group);
 	    foreach my $genomic_align (@{$this_genomic_align_node->genomic_align_group->get_all_GenomicAligns}) {
 		my $this_genomic_align_block_id = $genomic_align->genomic_align_block_id;
 		my $this_genomic_align_block = $genomic_align_block_adaptor->fetch_by_dbID($this_genomic_align_block_id);
-		if ($this_genomic_align_block->group_id) {
+		if ($this_genomic_align_block and $this_genomic_align_block->group_id) {
 		    $group_ids{$this_genomic_align_block->group_id} = 1;
 		} else {
 		    $group_ids{"undef"} = 1;
@@ -516,15 +514,7 @@ sub name {
       ## Bio::EnsEMBL::Compara::GenomicAlignTree in the Ortheus pipeline
       $self->{_name} = $self->SUPER::name();
     } elsif ($self->is_leaf) {
-    	my $gdb_name;
-      if($genomic_align_group->genome_db->name =~ /(.)[^ ]+_(.{3})/) {
-      	$gdb_name = "${1}${2}";
-      }
-      else {
-      	$gdb_name = $genomic_align_group->genome_db->name();
-      	$gdb_name =~ tr/_//;
-      }
-      $gdb_name = ucfirst($gdb_name);
+      my $gdb_name = $genomic_align_group->genome_db->name();
       $self->{_name} = $gdb_name.'_'.$genomic_align_group->dnafrag->name."_".
           $genomic_align_group->dnafrag_start."_".$genomic_align_group->dnafrag_end."[".
           (($genomic_align_group->dnafrag_strand eq "-1")?"-":"+")."]";
@@ -704,54 +694,6 @@ sub restrict_between_alignment_positions {
 }
 
 
-=head2 restrict_between_reference_positions
-
-  Arg[1]     : [optional] int $start, refers to the reference_dnafrag
-  Arg[2]     : [optional] int $end, refers to the reference_dnafrag
-  Arg[3]     : [optional] Bio::EnsEMBL::Compara::GenomicAlign $reference_GenomicAlign
-  Arg[4]     : [optional] boolean $skip_empty_GenomicAligns [ALWAYS FALSE]
-  Example    : none
-  Description: restrict this GenomicAlignBlock. It returns a new object unless no
-               restriction is needed. In that case, it returns the original unchanged
-               object
-               It might be the case that the restricted region coincide with a gap
-               in one or several GenomicAligns. By default these GenomicAligns are
-               returned with a dnafrag_end equals to its dnafrag_start + 1. For instance,
-               a GenomicAlign with dnafrag_start = 12345 and dnafrag_end = 12344
-               correspond to a block which goes on this region from before 12345 to
-               after 12344, ie just between 12344 and 12345. You can choose to remove
-               these empty GenomicAligns by setting $skip_empty_GenomicAligns to any
-               true value.
-  Returntype : Bio::EnsEMBL::Compara::GenomicAlignBlock object in scalar context. In
-               list context, returns the previous object and the start and end
-               positions of the restriction in alignment coordinates (from 1 to
-               alignment_length)
-  Exceptions : return undef if reference positions lie outside of the alignment
-  Caller     : general
-  Status     : At risk
-
-=cut
-
-=comment 
-
-sub restrict_between_reference_positions {
-  my ($self, $start, $end, $reference_genomic_align, $skip_empty_GenomicAligns) = @_;
-  my $genomic_align_tree;
-
-  $reference_genomic_align ||= $self->reference_genomic_align;
-  throw("A reference Bio::EnsEMBL::Compara::GenomicAlignTree must be given")
-      if (!$reference_genomic_align);
-
-   my @restricted_genomic_align_tree_params = $self->SUPER::restrict_between_reference_positions($start, $end, $reference_genomic_align, $skip_empty_GenomicAligns);
-  my $restricted_genomic_align_tree = $restricted_genomic_align_tree_params[0];
-
-  #return $self if (!$restricted_genomic_align_tree or $restricted_genomic_align_tree eq $self);
-
-  return wantarray ? @restricted_genomic_align_tree_params : $restricted_genomic_align_tree;
-}
-
-=cut
-
 =head2 copy
 
   Arg         : none
@@ -917,6 +859,25 @@ sub get_all_leaves {
 }
 
 
+=head2 sort_children
+
+  Arg         : none
+  Example     : sort_children @$children
+  Description : sort the nodes of a Bio::EnsEMBL::Compara::GenomicAlignTree object
+  Returntype  : int (-1,0,1)
+  Exceptions  : none
+  Caller      : general
+  Status      : At risk
+
+=cut
+
+sub sort_children {
+  my ($self) = @_;
+
+  my @sortedkids = sort _sort_children @{$self->children};
+  return \@sortedkids;
+}
+
 =head2 _sort_children
 
   Arg         : none
@@ -1022,13 +983,17 @@ sub reverse_complement {
 
 sub length {
   my ($self, $length) = @_;
- 
 
   if (defined($length)) {
-      $self->{'length'} = $length;
+    $self->{'length'} = $length;
   } elsif (!defined($self->{'length'})) {
-      # Try to get the ID from other sources...
-      if (defined($self->{'adaptor'}) and defined($self->dbID)) {
+    # Try to get the ID from other sources...
+    my $dbID;
+    eval {
+      $dbID = $self->dbID;
+    };
+      if (defined($self->{'adaptor'}) and (defined $dbID) and ($self->can('retrieve_all_direct_attributes'))) {
+
 	  # ...from the database, using the dbID of the Bio::Ensembl::Compara::GenomicAlignBlock object
 	  $self->adaptor->retrieve_all_direct_attributes($self);
       } elsif (@{$self->get_all_genomic_aligns_for_node} and $self->get_all_genomic_aligns_for_node->[0]->aligned_sequence("+FAKE_SEQ")) {
@@ -1129,13 +1094,82 @@ sub release_tree {
   $self->SUPER::release_tree();
 }
 
+=head2 repeatmask
+
+  Arg [1]    : string. Can be "soft" or "hard"
+  Example    : $genomic_align_tree->repeatmask("soft")
+  Description: Adds masking to sequences in the GenomicAlignTree object
+  Returntype : Masked sequences in original GenomicAlignTree object
+  Exceptions : none
+  Caller     : general
+  Status     : At risk
+
+=cut
+
+sub repeatmask {
+  my ($self, $mask) = @_;
+
+  #apply masking
+  foreach my $this_node (@{$self->get_all_sorted_genomic_align_nodes()}) {
+    my $genomic_align_group = $this_node->genomic_align_group;
+    next if (!$genomic_align_group);
+      
+    foreach my $this_genomic_align (@{$genomic_align_group->get_all_GenomicAligns}) {
+      if ($mask && $this_genomic_align->dnafrag->name !~ /Ancestor/) {
+	if ($mask =~ /^soft/) {
+	    $this_genomic_align->original_sequence($this_genomic_align->get_Slice->get_repeatmasked_seq(undef,1)->seq);
+	  } elsif ($mask =~ /^hard/) {
+	    $this_genomic_align->original_sequence($this_genomic_align->get_Slice->get_repeatmasked_seq()->seq);
+	  }
+      }
+    }
+  }
+  return $self;
+}
+
+=head2 prune
+
+  Arg [1]    : arrayref of species to be displayed. Must be a sub-set of the species in the GenomicAlignTree.
+  Example    : my $new_tree = $genomic_align_tree->prune(["human", "chimp"])
+  Description: Prunes a GenomicAlignTree object to return a sub-set of species
+  Returntype : Pruned GenomicAlignTree object
+  Exceptions : none
+  Caller     : general
+  Status     : At risk
+
+=cut
+
+sub prune {
+    my ($self, $display_species_set) = @_;
+    
+    #prune tree to keep only those species in the display_species_set (plus their ancestral nodes)
+    return $self unless (defined $display_species_set && @$display_species_set > 0);
+        
+    #use registry names and convert to scientific names
+    my @display_species_set_scientific_names;
+    foreach my $species (@$display_species_set) {
+        my $genome_db = $self->adaptor->db->get_GenomeDBAdaptor->fetch_by_registry_name($species);
+        push @display_species_set_scientific_names, $genome_db->name;
+    }
+    
+    foreach my $this_leaf (@{$self->get_all_leaves}) {
+        my $genomic_aligns = $this_leaf->genomic_align_group->get_all_GenomicAligns;
+        my $species_name = $genomic_aligns->[0]->genome_db->name;
+        #unless ($species_name ~~ @display_species_set_scientific_names) {
+        unless (grep {$species_name eq $_}  @display_species_set_scientific_names) {
+            $this_leaf->disavow_parent;
+        }
+    }
+    #returns a new tree because the root may have changed
+    return $self->minimize_tree;    
+}
+
 =head2 summary_as_hash
 
-  Arg [1]    : (optional) arrayref of species to be displayed. Must be a subset of the species in the GenomicAlignTree. Display all species if not set.
-  Arg [2]    : (optional) string. Can be "soft" or "hard"
-  Arg [3]    : (optional) boolean. Used when using fragmented (low coverage) genomes. If true, create a single sequence of concatenated fragments for each leaf. If false, create an array of sequences for each leaf.
-  Example    : $genomic_align_tree->summary_as_hash(undef, "soft")
-  Description: Retrieves a textual sumamry of this GenomicAlignTree object
+  Arg [1]    : (optional) boolean. Used for fragmented (low coverage) genomes. If true, create a single sequence of concatenated fragments for each leaf. If false, create an array of sequences for each leaf.
+  Arg [2]    : (optional) boolean. Use the aligned (true) or original (no insertions) sequence (false)
+  Example    : $genomic_align_tree->summary_as_hash(1, 1)
+  Description: Retrieves a textual summary of this GenomicAlignTree object
   Returntype : Array of hashref of descriptive strings
   Exceptions : none
   Caller     : general
@@ -1144,103 +1178,145 @@ sub release_tree {
 =cut
 
 sub summary_as_hash {
-  my ( $self, $display_species_set, $mask, $compact_all_alignments ) = @_;
+    my ( $self, $compact_alignments, $aligned ) = @_;
 
-  #if compact_all_alignments is false, expand the low coverage segments to 1 per line instead of concatenating them
-  my $all_genomic_aligns;
-  if ($compact_all_alignments) {
-    foreach my $this_genomic_align_tree (@{$self->get_all_sorted_genomic_align_nodes()}) {
-      next if (!$this_genomic_align_tree->genomic_align_group);
-      
-      if ($mask) {
-	foreach my $this_sub_genomic_align (@{$this_genomic_align_tree->get_all_genomic_aligns_for_node()}) {
-	  next if (!$this_sub_genomic_align->get_Slice);
-	  if ($mask =~ /^soft/ && $this_sub_genomic_align->get_Slice->seq_region_name !~ /Ancestor/) {
-	    $this_sub_genomic_align->original_sequence($this_sub_genomic_align->get_Slice->get_repeatmasked_seq(undef,1)->seq);
-	  } elsif ($mask =~ /^hard/ && $this_sub_genomic_align->get_Slice->seq_region_name !~ /Ancestor/) {
-	    $this_sub_genomic_align->original_sequence($this_sub_genomic_align->get_Slice->get_repeatmasked_seq()->seq);
-	  }
-	}
-      }
-      push(@{$all_genomic_aligns}, $this_genomic_align_tree->genomic_align_group);
-    }
-  } else {
+    my $reverse = 1 - $self->original_strand;
+  
+    my $all_genomic_aligns;
     foreach my $this_node (@{$self->get_all_sorted_genomic_align_nodes()}) {
       my $genomic_align_group = $this_node->genomic_align_group;
       next if (!$genomic_align_group);
-      my $new_genomic_aligns = [];
-      
-      foreach my $this_genomic_align (@{$genomic_align_group->get_all_GenomicAligns}) {
-	if ($mask && $this_genomic_align->dnafrag->name !~ /Ancestor/) {
-	  if ($mask =~ /^soft/) {
-	    $this_genomic_align->original_sequence($this_genomic_align->get_Slice->get_repeatmasked_seq(undef,1)->seq);
-	  } elsif ($mask =~ /^hard/) {
-	    $this_genomic_align->original_sequence($this_genomic_align->get_Slice->get_repeatmasked_seq()->seq);
-	  }
+      if  ($compact_alignments) {
+	push(@{$all_genomic_aligns}, [$this_node, $genomic_align_group]);
+      } else {
+	foreach my $this_genomic_align (@{$genomic_align_group->get_all_GenomicAligns}) {
+	  push @$all_genomic_aligns, [$this_node, $this_genomic_align];
 	}
-	push @$all_genomic_aligns, $this_genomic_align;
       }
     }
+    
+    my $genome_db_name_counter;
+    my $alignment_summary;
+    foreach my $this_node_and_genomic_align (@$all_genomic_aligns) {
+      my ($this_node, $genomic_align) = @$this_node_and_genomic_align;
+      my ($dnafrag_name, $dnafrag_start, $dnafrag_end, $dnafrag_length, $dnafrag_strand);
+      my $seq;
+      if ($aligned) {
+	#aligned sequence
+	$seq = $genomic_align->aligned_sequence;
+      } else {
+	#get original sequence
+	$seq = $genomic_align->original_sequence;
+      }
+      #next if($alignSeq=~/^[\.\-]+$/);
+      
+      my $species_name = $genomic_align->genome_db->name;
+      #Use node name for ancestral sequences
+      if ($species_name =~ /ancestral/) {
+        $species_name = $this_node->name;
+      }
+
+      my $description = "";
+      #Need to sort out composite genomic_aligns too (get_coordinates)
+      if ($genomic_align->can("get_all_GenomicAligns") and @{$genomic_align->get_all_GenomicAligns} > 1) {
+	## This is a composite segment.
+	## We need to fix the name
+	my @names;
+	foreach my $this_composite_genomic_align (@{$genomic_align->get_all_GenomicAligns}) {
+	  push(@names, $this_composite_genomic_align->get_Slice->name);
+	}
+	
+	$dnafrag_name = "Composite";
+	$description = "$dnafrag_name is: " . join(" + ", @names);
+	$dnafrag_start = 1; 
+	$dnafrag_end = $self->length;  
+	$dnafrag_strand = ($reverse?-1:1);
+      } else {
+	$dnafrag_name = $genomic_align->dnafrag->name;
+	$dnafrag_start = $genomic_align->dnafrag_start;
+	$dnafrag_end = $genomic_align->dnafrag_end;
+	$dnafrag_length = $genomic_align->dnafrag->length;
+	$dnafrag_strand = $genomic_align->dnafrag_strand;
+      }
+      
+      my $summary;
+      %$summary = ('start' => $dnafrag_start,
+		   'end' => $dnafrag_end,
+		   'strand' => $dnafrag_strand,
+		   'species' => $species_name,
+		   'seq_region' => $dnafrag_name,
+		   'seq' => $seq,
+		   'description' => $description);
+      push @$alignment_summary, $summary;
+    }
+    return $alignment_summary;
+}
+
+=head2 node_type
+
+  Arg [1]    : Getter/setter of the node_type attribute. Currently only "duplication"
+  Example    : $genomic_align_tree->node_type()
+  Description: It shows the event that took place at that node. 
+  Returntype : string
+  Exceptions : none
+  Caller     : general
+  Status     : At risk
+
+=cut
+
+sub node_type {
+  my $self = shift;
+
+  if (@_) {
+    $self->{node_type} = shift;
   }
 
-  my $reverse = 1 - $self->original_strand;
+  return $self->{node_type};
+}
 
-  my $genome_db_name_counter;
-  my $alignment_summary;
-  foreach my $genomic_align (@$all_genomic_aligns) {
-    my ($dnafrag_name, $dnafrag_start, $dnafrag_end, $dnafrag_length, $dnafrag_strand);
+=head2 annotate_node_type
 
-    #check if genomic_align is in $display_species_set list
-    if ($display_species_set) {
-#      next unless ($genomic_align->genome_db->name ~~ @$display_species_set);
-        my $found = 0;
-        foreach my $display_species (@$display_species_set) {
-            $found = 1 if ($display_species eq $genomic_align->genome_db->name);
+  Example    : $genomic_align_tree->annotate_node_type()
+  Description: Find and annotate the duplication nodes in a tree
+  Returntype : 
+  Exceptions : none
+  Caller     : general
+  Status     : At risk
+
+=cut
+
+sub annotate_node_type {
+    my ($self) = @_;
+
+    my $duplications;
+    my $leaf_names;
+
+    #find the 2 children of a node
+    my $children = $self->sorted_children;
+    my $child1 = $children->[0];
+    my $child2 = $children->[1];
+
+    #Find all the leaves of child1
+    my $all_leaves = $child1->get_all_leaves;
+    foreach my $this_leaf (@$all_leaves) {
+        my $name = $this_leaf->get_all_genomic_aligns_for_node->[0]->genome_db->name;
+        $duplications->{$name} = 1;
+    }
+
+    #Find all the leaves of child2 and if there are any shared species with child1, we have found a 
+    #duplication node.
+    $all_leaves = $child2->get_all_leaves;
+    foreach my $this_leaf (@$all_leaves) {
+        my $name = $this_leaf->get_all_genomic_aligns_for_node->[0]->genome_db->name;
+        if ($duplications->{$name}) {
+            $self->node_type("duplication");
         }
-        next unless $found;
     }
 
-    my $alignSeq = $genomic_align->aligned_sequence;
-
-    #next if($alignSeq=~/^[\.\-]+$/);
-
-    my $species_name = $genomic_align->genome_db->name;
-    $species_name =~ s/(.)\w* (...)\w*/$1$2/;
-
-    my $description = "";
-    #Need to sort out composite genomic_aligns too (get_coordinates)
-    if ($genomic_align->can("get_all_GenomicAligns") and @{$genomic_align->get_all_GenomicAligns} > 1) {
-       ## This is a composite segment.
-      ## We need to fix the name
-      my @names;
-      foreach my $this_composite_genomic_align (@{$genomic_align->get_all_GenomicAligns}) {
-	push(@names, $this_composite_genomic_align->get_Slice->name);
-      }
-
-      $dnafrag_name = "Composite";
-      $description = "$dnafrag_name is: " . join(" + ", @names);
-      $dnafrag_start = 1; 
-      $dnafrag_end = $self->length;  
-      $dnafrag_strand = ($reverse?-1:1);
-    } else {
-      $dnafrag_name = $genomic_align->dnafrag->name;
-      $dnafrag_start = $genomic_align->dnafrag_start;
-      $dnafrag_end = $genomic_align->dnafrag_end;
-      $dnafrag_length = $genomic_align->dnafrag->length;
-      $dnafrag_strand = $genomic_align->dnafrag_strand;
+    #recurse for each child until we get to the leaves
+    foreach my $child (@$children) {
+        annotate_node_type($child) unless ($child->is_leaf);
     }
-
-    my $summary;
-    %$summary = ('start' => $dnafrag_start,
-		 'end' => $dnafrag_end,
-		 'strand' => $dnafrag_strand,
-		 'species' => $species_name,
-		 'seq_region' => $dnafrag_name,
-		 'seq' => $alignSeq,
-		 'description' => $description);
-    push @$alignment_summary, $summary;
-  }
-  return $alignment_summary;
 }
 
 #sub DESTROY {

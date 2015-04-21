@@ -1,5 +1,5 @@
 #!/usr/bin/env perl
-# Copyright [1999-2013] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+# Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 # 
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -17,31 +17,21 @@
 use warnings;
 use strict;
 
-my $description = q{
-###########################################################################
-##
-## PROGRAM create_mlss.pl
-##
-## AUTHORS
-##    Javier Herrero (jherrero@ebi.ac.uk)
-##
-## DESCRIPTION
-##    This script creates a new MethodLinkSpeciesSet based on the
-##    information provided through the command line and tries to store
-##    it in the database 
-##
-###########################################################################
-
-};
-
 =head1 NAME
 
 create_mlss.pl
 
 =head1 AUTHORS
 
- Javier Herrero (jherrero@ebi.ac.uk)
+ Javier Herrero
 
+=head1 CONTACT
+
+Please email comments or questions to the public Ensembl
+developers list at <http://lists.ensembl.org/mailman/listinfo/dev>.
+
+Questions may also be sent to the Ensembl help desk at
+<http://www.ensembl.org/Help/Contact>.
 
 =head1 DESCRIPTION
 
@@ -158,6 +148,7 @@ use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
 use Bio::EnsEMBL::Registry;
 use Bio::EnsEMBL::Compara::MethodLinkSpeciesSet;
 use Bio::EnsEMBL::Utils::Exception qw(throw warning);
+use Bio::EnsEMBL::Utils::SqlHelper;
 use Getopt::Long;
 
 my $help;
@@ -209,7 +200,8 @@ if (scalar(@input_genome_db_ids) && $collection) {
 
 # Print Help and exit if help is requested
 if ($help) {
-  exec("/usr/bin/env perldoc $0");
+    use Pod::Usage;
+    pod2usage({-exitvalue => 0, -verbose => 2});
 }
 
 #################################################
@@ -226,6 +218,7 @@ if ($compara =~ /mysql:\/\//) {
 if (!$compara_dba) {
   die "Cannot connect to compara database <$compara>.";
 }
+my $helper = Bio::EnsEMBL::Utils::SqlHelper->new(-DB_CONNECTION => $compara_dba->dbc);
 my $gdba = $compara_dba->get_GenomeDBAdaptor();
 my $ma = $compara_dba->get_MethodAdaptor();
 my $mlssa = $compara_dba->get_MethodLinkSpeciesSetAdaptor();
@@ -247,7 +240,7 @@ if ($collection) {
   } elsif (scalar(@$ss) > 1) {
     die "There are multiple collections '$collection'";
   }
-  @input_genome_db_ids = map {$_->dbID} @{$ss->[0]->genome_dbs};
+  @input_genome_db_ids = map {$_->dbID} (grep {not $_->genome_component}  @{$ss->[0]->genome_dbs});
 }
 
 my @new_input_genome_db_ids;
@@ -366,6 +359,13 @@ foreach my $genome_db_ids (@new_input_genome_db_ids) {
   }
   ##
   #################################################
+  # Simple check to allow running create_mlss for homoeologues on the whole
+  # collection
+  if (($method_link_type eq 'ENSEMBL_HOMOEOLOGUES') and (not $all_genome_dbs->[0]->is_polyploid)) {
+    print "Skipping this MLSS because ENSEMBL_HOMOEOLOGUES only applies to polyploid species\n";
+    next;
+  }
+
   print "You are about to store the following MethodLinkSpeciesSet\n  $method_link_type: ",
     join(" - ", map {$_->name."(".$_->assembly.")"} @$all_genome_dbs), "\n",
       "  Name: $name\n",
@@ -394,14 +394,15 @@ foreach my $genome_db_ids (@new_input_genome_db_ids) {
                                                                  -source => $source,
                                                                  -url => $url);
 
-  $mlssa->store($new_mlss);
+  $helper->transaction( -CALLBACK => sub {
+    $mlssa->store($new_mlss);
+    if ($species_set_name) {
+      $species_set->store_tag('name', $species_set_name);
+    }
+  } );
+
   print "  MethodLinkSpeciesSet has dbID: ", $new_mlss->dbID, "\n";
   $name = undef if ($pairwise || $singleton);
-
-  if ($species_set_name) {
-      $species_set->store_tag('name', $species_set_name);
-  }
-
 }
 
 

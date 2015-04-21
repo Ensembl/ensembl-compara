@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2013] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -20,10 +20,10 @@ limitations under the License.
 =head1 CONTACT
 
   Please email comments or questions to the public Ensembl
-  developers list at <dev@ensembl.org>.
+  developers list at <http://lists.ensembl.org/mailman/listinfo/dev>.
 
   Questions may also be sent to the Ensembl help desk at
-  <helpdesk@ensembl.org>.
+  <http://www.ensembl.org/Help/Contact>.
 
 =head1 NAME
 
@@ -55,6 +55,8 @@ Internal methods are usually preceded with a _
 package Bio::EnsEMBL::Compara::RunnableDB::PairAligner::PairAlignerCodingExonStats;
 
 use strict;
+use warnings;
+
 use Bio::EnsEMBL::Hive::Utils 'stringify';  # import 'stringify()'
 
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
@@ -104,15 +106,14 @@ sub run {
   my $mlss_id = $self->param('mlss_id');
   my $mlss = $mlss_adaptor->fetch_by_dbID($mlss_id);
 
-  my $slice_adaptor = $reg->get_adaptor($ref_species, 'core', 'Slice');
-  throw("Registry configuration file has no data for connecting to <$ref_species>") if (!$slice_adaptor);
+  my $genome_db = $genome_db_adaptor->fetch_by_registry_name($ref_species);
+  my $dnafrag = $dnafrag_adaptor->fetch_by_GenomeDB_and_name($genome_db, $seq_region);
+
+  my $slice_adaptor = $genome_db->db_adaptor->get_SliceAdaptor();
 
   #Necessary to get unique bits of Y
   my $slices = $slice_adaptor->fetch_by_region_unique('toplevel', $seq_region);
 
-  my $genome_db = $genome_db_adaptor->fetch_by_registry_name($ref_species);
-  my $dnafrag = $dnafrag_adaptor->fetch_by_GenomeDB_and_name($genome_db, $seq_region);
-  
   my $coding_exons = [];
   foreach my $slice (@$slices) {
       $coding_exons = get_coding_exon_regions($slice, $coding_exons);

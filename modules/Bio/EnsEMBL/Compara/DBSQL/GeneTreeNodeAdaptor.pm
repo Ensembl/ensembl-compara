@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2013] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -20,10 +20,10 @@ limitations under the License.
 =head1 CONTACT
 
   Please email comments or questions to the public Ensembl
-  developers list at <dev@ensembl.org>.
+  developers list at <http://lists.ensembl.org/mailman/listinfo/dev>.
 
   Questions may also be sent to the Ensembl help desk at
-  <helpdesk@ensembl.org>.
+  <http://www.ensembl.org/Help/Contact>.
 
 =head1 NAME
 
@@ -41,15 +41,7 @@ Adaptor to retrieve nodes of gene trees
 
 =head1 AUTHORSHIP
 
-Ensembl Team. Individual contributions can be found in the CVS log.
-
-=head1 MAINTAINER
-
-$Author$
-
-=head VERSION
-
-$Revision$
+Ensembl Team. Individual contributions can be found in the GIT log.
 
 =head1 APPENDIX
 
@@ -63,9 +55,11 @@ package Bio::EnsEMBL::Compara::DBSQL::GeneTreeNodeAdaptor;
 use strict;
 use warnings;
 
-use Bio::EnsEMBL::Utils::Exception qw(throw warning deprecate);
+use Bio::EnsEMBL::Utils::Exception qw(throw warning);
 use Bio::EnsEMBL::Utils::Argument qw(rearrange);
 use Bio::EnsEMBL::Utils::Scalar qw(:assert);
+
+use Bio::EnsEMBL::Compara::Utils::Scalar qw(:assert);
 
 use Bio::EnsEMBL::Compara::GeneTree;
 use Bio::EnsEMBL::Compara::GeneTreeNode;
@@ -91,9 +85,8 @@ use base ('Bio::EnsEMBL::Compara::DBSQL::NestedSetAdaptor', 'Bio::EnsEMBL::Compa
                NB: The definition of this argument is unstable and might change
                    in the future
   Example    : $all_members = $genetree_adaptor->fetch_all_AlignedMember_by_Member($member);
-  Description: Transforms the member into an AlignedMember. If the member is
-               not an ENSEMBLGENE, it has to be canoncal, otherwise, the
-               function would return an empty array
+  Description: Transforms the member into an AlignedMember.
+               If the member is a non-canonical SeqMember, returns []
   Returntype : arrayref of Bio::EnsEMBL::Compara::AlignedMember
   Exceptions : none
   Caller     : general
@@ -104,16 +97,15 @@ sub fetch_all_AlignedMember_by_Member {
     my ($self, $member, @args) = @_;
     my ($clusterset_id, $mlss) = rearrange([qw(CLUSTERSET_ID METHOD_LINK_SPECIES_SET)], @args);
 
-    # Discard the UNIPROT members
-    return [] if (ref($member) and not ($member->source_name =~ 'ENSEMBL'));
-
+    assert_ref_or_dbID($member, 'Bio::EnsEMBL::Compara::Member', 'member');
     my $member_id = (ref($member) ? $member->dbID : $member);
-    my $constraint = '((m.member_id = ?) OR (m.gene_member_id = ?))';
+    my $constraint = '((m.seq_member_id = ?) OR (m.gene_member_id = ?))';
     $self->bind_param_generic_fetch($member_id, SQL_INTEGER);
     $self->bind_param_generic_fetch($member_id, SQL_INTEGER);
 
-    my $mlss_id = (ref($mlss) ? $mlss->dbID : $mlss);
-    if (defined $mlss_id) {
+    if (defined $mlss) {
+        assert_ref_or_dbID($mlss, 'Bio::EnsEMBL::Compara::MethodLinkSpeciesSet', 'mlss');
+        my $mlss_id = (ref($mlss) ? $mlss->dbID : $mlss);
         $constraint .= ' AND (tr.method_link_species_set_id = ?)';
         $self->bind_param_generic_fetch($mlss_id, SQL_INTEGER);
     }
@@ -121,11 +113,6 @@ sub fetch_all_AlignedMember_by_Member {
     if (defined $clusterset_id) {
         $constraint .= ' AND (tr.clusterset_id = ?)';
         $self->bind_param_generic_fetch($clusterset_id, SQL_VARCHAR);
-    }
-
-    if (defined $self->_default_member_type) {
-        $constraint .= ' AND (tr.member_type = ?)';
-        $self->bind_param_generic_fetch($self->_default_member_type, SQL_VARCHAR);
     }
 
     my $join = [[['gene_tree_root', 'tr'], 't.root_id = tr.root_id']];
@@ -137,9 +124,8 @@ sub fetch_all_AlignedMember_by_Member {
 
   Arg[1]     : Member or member_id
   Example    : $align_member = $genetreenode_adaptor->fetch_adefault_AlignedMember_for_Member($member);
-  Description: Transforms the member into an AlignedMember. If the member is
-               not an ENSEMBLGENE, it has to be canoncal, otherwise, the
-               function would return undef
+  Description: Transforms the member into an AlignedMember.
+               If the member is a non-canonical SeqMember, returns undef
   Returntype : Bio::EnsEMBL::Compara::AlignedMember
   Exceptions : none
   Caller     : general
@@ -149,11 +135,9 @@ sub fetch_all_AlignedMember_by_Member {
 sub fetch_default_AlignedMember_for_Member {
     my ($self, $member) = @_;
 
-    # Discard the UNIPROT members
-    return undef if (ref($member) and not ($member->source_name =~ 'ENSEMBL'));
-
+    assert_ref_or_dbID($member, 'Bio::EnsEMBL::Compara::Member', 'member');
     my $member_id = (ref($member) ? $member->dbID : $member);
-    my $constraint = '((m.member_id = ?) OR (m.gene_member_id = ?))';
+    my $constraint = '((m.seq_member_id = ?) OR (m.gene_member_id = ?))';
     $self->bind_param_generic_fetch($member_id, SQL_INTEGER);
     $self->bind_param_generic_fetch($member_id, SQL_INTEGER);
 
@@ -180,7 +164,7 @@ sub fetch_default_AlignedMember_for_Member {
 sub fetch_all_AlignedMember_by_root_id {
   my ($self, $root_id) = @_;
 
-  my $constraint = '(t.member_id IS NOT NULL) AND (t.root_id = ?)';
+  my $constraint = '(t.seq_member_id IS NOT NULL) AND (t.root_id = ?)';
   $self->bind_param_generic_fetch($root_id, SQL_INTEGER);
   return $self->generic_fetch($constraint);
 
@@ -222,7 +206,7 @@ sub store_node {
     if (not($node->adaptor and $node->adaptor->isa('Bio::EnsEMBL::Compara::DBSQL::GeneTreeNodeAdaptor') and $node->adaptor eq $self)) {
         my $sth = $self->prepare("INSERT INTO gene_tree_node VALUES ()");
         $sth->execute();
-        $node->node_id( $sth->{'mysql_insertid'} );
+        $node->node_id( $self->dbc->db_handle->last_insert_id(undef, undef, 'gene_tree_node', 'node_id') );
     }
 
     my $parent_id = undef;
@@ -230,12 +214,12 @@ sub store_node {
 
     my $root_id = $node->root->node_id;
     #print "inserting parent_id=$parent_id, root_id=$root_id\n";
-    my $member_id = undef;
-    $member_id = $node->member_id if $node->isa('Bio::EnsEMBL::Compara::GeneTreeMember');
+    my $seq_member_id = undef;
+    $seq_member_id = $node->seq_member_id if $node->isa('Bio::EnsEMBL::Compara::GeneTreeMember');
 
-    my $sth = $self->prepare("UPDATE gene_tree_node SET parent_id=?, root_id=?, left_index=?, right_index=?, distance_to_parent=?, member_id=?  WHERE node_id=?");
+    my $sth = $self->prepare("UPDATE gene_tree_node SET parent_id=?, root_id=?, left_index=?, right_index=?, distance_to_parent=?, seq_member_id=?  WHERE node_id=?");
     #print "UPDATE gene_tree_node  (", $parent_id, ",", $root_id, ",", $node->left_index, ",", $node->right_index, ",", $node->distance_to_parent, ") for ", $node->node_id, "\n";
-    $sth->execute($parent_id, $root_id, $node->left_index, $node->right_index, $node->distance_to_parent, $member_id, $node->node_id);
+    $sth->execute($parent_id, $root_id, $node->left_index, $node->right_index, $node->distance_to_parent, $seq_member_id, $node->node_id);
     $sth->finish;
 
     $node->adaptor($self);
@@ -311,6 +295,17 @@ sub delete_nodes_not_in_tree
 }
 
 
+sub remove_seq_member {
+    my $self = shift;
+    my $leaf = shift;
+    $leaf->disavow_parent;
+    $self->delete_flattened_leaf( $leaf );
+    my $sth = $self->prepare('UPDATE gene_tree_backup SET is_removed = 1 WHERE seq_member_id = ?');
+    $sth->execute($leaf->seq_member_id);
+    $sth->finish;
+}
+
+
 ###################################
 #
 # tagging
@@ -343,7 +338,7 @@ sub _columns {
 }
 
 sub _tables {
-  return (['gene_tree_node', 't'], ['gene_tree_root', 'tr'], ['gene_align_member', 'gam'], ['member', 'm']);
+  return (['gene_tree_node', 't'], ['gene_tree_root', 'tr'], ['gene_align_member', 'gam'], ['seq_member', 'm']);
 }
 
 sub _default_where_clause {
@@ -352,8 +347,8 @@ sub _default_where_clause {
 
 sub _left_join {
     return (
-        ['gene_align_member', 'gam.member_id = t.member_id AND gam.gene_align_id = tr.gene_align_id'],
-        ['member', 't.member_id = m.member_id'],
+        ['gene_align_member', 'gam.seq_member_id = t.seq_member_id AND gam.gene_align_id = tr.gene_align_id'],
+        ['seq_member', 't.seq_member_id = m.seq_member_id'],
     );
 }
 
@@ -363,7 +358,7 @@ sub create_instance_from_rowhash {
   my $rowhash = shift;
 
   my $node;
-  if($rowhash->{'member_id'}) {
+  if($rowhash->{'seq_member_id'}) {
     $node = new Bio::EnsEMBL::Compara::GeneTreeMember;
   } else {
     $node = new Bio::EnsEMBL::Compara::GeneTreeNode;
@@ -400,12 +395,6 @@ sub init_instance_from_rowhash {
     $node->adaptor($self);
 
     return $node;
-}
-
-
-
-sub _default_member_type {
-    return undef;
 }
 
 

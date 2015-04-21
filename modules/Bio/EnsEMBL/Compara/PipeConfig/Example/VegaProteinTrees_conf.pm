@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2013] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -21,13 +21,11 @@ limitations under the License.
 
 =head1 NAME
 
-  Bio::EnsEMBL::Compara::PipeConfig::Example::VegaProteinTrees_conf
+Bio::EnsEMBL::Compara::PipeConfig::Example::VegaProteinTrees_conf
 
 =head1 SYNOPSIS
 
-    #1. update ensembl-hive, ensembl and ensembl-compara CVS repositories before each new release
-
-    #2. you may need to update 'schema_version' in meta table to the current release number in ensembl-hive/sql/tables.sql
+    #1. update ensembl-hive, ensembl and ensembl-compara GIT repositories before each new release
 
     #3. make sure that all default_options are set correctly
 
@@ -39,11 +37,11 @@ limitations under the License.
 
 =head1 DESCRIPTION  
 
-  The PipeConfig example file for Vega group's version of ProteinTrees pipeline
+The PipeConfig example file for Vega group's version of ProteinTrees pipeline
 
 =head1 CONTACT
 
-  Please contact Compara or Vega with questions/suggestions
+Please contact Compara or Vega with questions/suggestions
 
 =cut
 
@@ -65,7 +63,7 @@ sub resource_classes {
 }
 
 
-# each run you will need to edit and uncomment: version, mlss_id, (release) and maybe work_dir
+# each run you will need to edit and uncomment: version, mlss_id and maybe work_dir
 sub default_options {
   my ($self) = @_;
 
@@ -75,15 +73,17 @@ sub default_options {
 
     # parameters that are likely to change from execution to another:
     'mlss_id'               => '100032',   # equivalent to mlss_id for PROTEIN_TREES in the db (commented out to make it obligatory to specify)
-#    'release'               => '73',
 
-    'pipeline_name'         => 'vega_genetree_20130211_71_step3', #edit this each time
+    'pipeline_name'         => 'vega_genetree_20140905_76_new', #edit this each time
+
+    "registry_dbs" => [{"-host" => "vegabuild","-pass" => "","-port" => 5304,"-user" => "ottro"}],
 
     'rel_suffix'            => 'vega',
     'work_dir'              => '/lustre/scratch109/ensembl/'.$ENV{'USER'}.'/compara_generation/'.$self->o('pipeline_name'),
     'outgroups'             => { },   # affects 'hcluster_dump_input_per_genome'
     'taxlevels'             => [ 'Theria' ],
     'filter_high_coverage'  => 1,   # affects 'group_genomes_under_taxa'
+    'master_db_is_missing_dnafrags' => 1,
 
     # connection parameters to various databases:
     # the production database itself (will be created)
@@ -95,9 +95,7 @@ sub default_options {
     'master_db' => 'mysql://ottro@vegabuild:5304/vega_compara_master',
 
     # switch off the reuse:
-    'prev_core_sources_locs'    => [ ],
-    'prev_release'              => 0,   # 0 is the default and it means "take current release number and subtract 1"
-    'reuse_from_prev_rel_db'    => 0,
+    'prev_rel_db'               => undef,
     'do_stable_id_mapping'      => 0,
 
     # we're not interested in treefam
@@ -107,7 +105,7 @@ sub default_options {
     'store_sequences_capacity'  => 50,
     'blastp_capacity'           => 450,
     'mcoffee_capacity'          => 100,
-    'njtree_phyml_capacity'     => 70,
+    'treebest_capacity'         => 70,
     'ortho_tree_capacity'       => 50,
     'build_hmm_capacity'        => 50,
     'other_paralogs_capacity'   => 50,
@@ -143,9 +141,11 @@ sub pipeline_analyses {
     }
 
     #include non-reference slices
-    if ($name eq 'load_fresh_members') {
-      $_->{'-parameters'}{'include_nonreference'} = 1;
-      $_->{'-parameters'}{'include_reference'} = 1;
+    if ($name eq 'load_fresh_members_from_db') {
+      $analyses->[$i]{'-parameters'}{'include_nonreference'} = 1;
+      $analyses->[$i]{'-parameters'}{'include_reference'} = 1;
+      $analyses->[$i]{'-parameters'}{'store_missing_dnafrags'} = 1;
+      $analyses->[$i]{'-parameters'}{'force_unique_canonical'} = 1;
     }
   }
   return $analyses;

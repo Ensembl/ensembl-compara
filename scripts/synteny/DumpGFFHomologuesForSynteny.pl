@@ -1,5 +1,5 @@
 #!/usr/bin/env perl
-# Copyright [1999-2013] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+# Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 # 
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -106,12 +106,12 @@ foreach my $ortho_type (@A_ortholog_types) {
         $Q_chr_start = $member->dnafrag_start();
         $Q_chr_end = $member->dnafrag_end();
         $Q_chr_std = $member->dnafrag_strand();
-        $Q_chr_name = $member->chr_name();
+        $Q_chr_name = $member->dnafrag->name();
       } elsif ($genom eq $tg_species) {
         $T_chr_start = $member->dnafrag_start();
         $T_chr_end = $member->dnafrag_end();
         $T_chr_std = $member->dnafrag_strand();
-        $T_chr_name = $member->chr_name();
+        $T_chr_name = $member->dnafrag->name();
       } else {
         print STDERR "WARNING!! This genome is neither QUERY nor SPECIES!\n" ;
       }

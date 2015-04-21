@@ -1,5 +1,5 @@
 #!/usr/bin/env perl
-# Copyright [1999-2013] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+# Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 # 
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -39,7 +39,7 @@ $gene_name="ENSDARG00000052960" unless(defined($gene_name));
 
 # get compara DBAdaptor
 my $comparaDBA = Bio::EnsEMBL::Registry-> get_DBAdaptor('Multi', 'compara');
-my $gene_member = $comparaDBA->get_GeneMemberAdaptor->fetch_by_source_stable_id("ENSEMBLGENE", $gene_name);
+my $gene_member = $comparaDBA->get_GeneMemberAdaptor->fetch_by_stable_id($gene_name);
 my ($homologies, $genes) = $comparaDBA->get_HomologyAdaptor->fetch_orthocluster_with_Member($gene_member);
 
 foreach my $homology (@$homologies) {

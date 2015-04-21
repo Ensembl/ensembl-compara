@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2013] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -21,14 +21,14 @@ limitations under the License.
 =head1 CONTACT
 
   Please email comments or questions to the public Ensembl
-  developers list at <dev@ensembl.org>.
+  developers list at <http://lists.ensembl.org/mailman/listinfo/dev>.
 
   Questions may also be sent to the Ensembl help desk at
-  <helpdesk@ensembl.org>.
+  <http://www.ensembl.org/Help/Contact>.
 
 =head1 NAME
 
-  Bio::EnsEMBL::Compara::PipeConfig::Examples::EnsemblNcRnaTrees_conf
+Bio::EnsEMBL::Compara::PipeConfig::Examples::EnsemblNcRnaTrees_conf
 
 =head1 SYNOPSIS
 
@@ -36,24 +36,16 @@ limitations under the License.
 
 =head1 DESCRIPTION
 
-    This is the Ensembl PipeConfig for the ncRNAtree pipeline.
+This is the Ensembl PipeConfig for the ncRNAtree pipeline.
 
 =head1 AUTHORSHIP
 
-  Ensembl Team. Individual contributions can be found in the CVS log.
-
-=head1 MAINTAINER
-
-$Author$
-
-=head VERSION
-
-$Revision$
+Ensembl Team. Individual contributions can be found in the GIT log.
 
 =head1 APPENDIX
 
-  The rest of the documentation details each of the object methods.
-  Internal methods are usually preceded with an underscore (_)
+The rest of the documentation details each of the object methods.
+Internal methods are usually preceded with an underscore (_)
 
 =cut
 
@@ -69,15 +61,18 @@ sub default_options {
     return {
             %{$self->SUPER::default_options},
 
-            'mlss_id'          => 40094,
-            'release'          => '74',
-            'rel_suffix'       => 'c',
+            # User details
+            'email'                 => $self->o('ENV', 'USER').'@sanger.ac.uk',
+
+            'mlss_id'          => 40100,
+            # Found automatically if the Core API is in PERL5LIB
+            #'ensembl_release'          => '76',
+            'rel_suffix'       => 'b',
             'work_dir'         => '/lustre/scratch110/ensembl/' .
                                $self->o('ENV', 'USER') .
                                '/nc_trees_' .
                                $self->o('rel_with_suffix'),
 
-            'rel_with_suffix'  => $self->o('release').$self->o('rel_suffix'),
             'pipeline_name'    => $self->o('pipeline_basename') . '_' . $self->o('rel_with_suffix'),
 
 
@@ -100,10 +95,11 @@ sub default_options {
             'raxml_capacity'                  => 300,
             'recover_capacity'                => 250,
             'ss_picts_capacity'               => 200,
-            'hc_capacity'                     => 4,
 
-            # priority for non-LOCAL healthchecks;
+            # Params for healthchecks;
             'hc_priority'                     => 10,
+            'hc_capacity'                     => 40,
+            'hc_batch_size'                   => 10,
 
             # executable locations:
             'cmalign_exe'           => '/software/ensembl/compara/infernal/infernal-1.0.2/src/cmalign',
@@ -117,9 +113,15 @@ sub default_options {
             'parsimonator_exe'      => '/software/ensembl/compara/parsimonator/Parsimonator-1.0.2/parsimonator-SSE3',
             'ktreedist_exe'         => '/software/ensembl/compara/ktreedist/Ktreedist.pl',
             'fasttree_exe'          => '/software/ensembl/compara/fasttree/FastTree',
-            'treebest_exe'          => '/software/ensembl/compara/treebest.doubletracking',
+            'treebest_exe'          => '/software/ensembl/compara/treebest',
             'quicktree_exe'         => '/software/ensembl/compara/quicktree_1.1/bin/quicktree',
             'r2r_exe'               => '/software/ensembl/compara/R2R-1.0.3/src/r2r',
+
+            # RFAM parameters
+            'rfam_ftp_url'           => 'ftp://ftp.sanger.ac.uk/pub/databases/Rfam/11.0/',
+            'rfam_remote_file'       => 'Rfam.cm.gz',
+            'rfam_expanded_basename' => 'Rfam.cm',
+            'rfam_expander'          => 'gunzip ',
 
             # Other parameters
             'raxml_number_of_cores' => 2,
@@ -127,7 +129,7 @@ sub default_options {
             # connection parameters
             'pipeline_db' => {
                               -driver => 'mysql',
-                              -host   => 'compara4',
+                              -host   => 'compara3',
                               -port   => 3306,
                               -user   => 'ensadmin',
                               -pass   => $self->o('password'),
@@ -157,11 +159,11 @@ sub default_options {
                            },
 
             'epo_db' => {   # ideally, the current release database with epo pipeline results already loaded
-                         -host   => 'compara2',
+                         -host   => 'compara4',
                          -port   => 3306,
                          -user   => 'ensro',
                          -pass   => '',
-                         -dbname => 'lg4_ensembl_compara_73',
+                         -dbname => 'mp14_ensembl_compara_78',
                         },
 
 

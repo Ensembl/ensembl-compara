@@ -1,5 +1,5 @@
 #!/usr/bin/env perl
-# Copyright [1999-2013] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+# Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 # 
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -63,7 +63,7 @@ while (my $f = shift @$families) {
     }
 
     if ($f->Member_count_by_source('ENSEMBLPEP') >= $min_fam_size) {
-        my $n = $f->print_sequences_to_file(-file => $file_name, id_type => 'VERSION', source_name => 'ENSEMBLPEP');
+        my $n = $f->print_sequences_to_file($file_name, id_type => 'VERSION');
         warn "$file_name ($n members)\n";
     }
 }

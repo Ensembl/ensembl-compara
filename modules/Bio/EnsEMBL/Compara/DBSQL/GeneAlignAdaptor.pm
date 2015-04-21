@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2013] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -27,6 +27,8 @@ use Bio::EnsEMBL::Compara::DBSQL::BaseRelationAdaptor;
 
 use Bio::EnsEMBL::Utils::Scalar qw(:assert);
 
+use Bio::EnsEMBL::Compara::Utils::Scalar qw(:assert);
+
 use DBI qw(:sql_types);
 
 our @ISA = qw(Bio::EnsEMBL::Compara::DBSQL::BaseRelationAdaptor);
@@ -38,7 +40,6 @@ our @ISA = qw(Bio::EnsEMBL::Compara::DBSQL::BaseRelationAdaptor);
  Example    : $alignments = $GeneAlignAdaptor->fetch_all_by_SeqMember($member);
  Description: find the alignments to which the given member belongs to
  Returntype : an array reference of Bio::EnsEMBL::Compara::GeneAlign objects
-              (could be empty or contain more than one GeneAlign in the case of ENSEMBLGENE only)
  Exceptions : when missing arguments
  Caller     : general
 
@@ -50,7 +51,7 @@ sub fetch_all_by_SeqMember {
   assert_ref($member, 'Bio::EnsEMBL::Compara::SeqMember');
 
   my $join = [[['gene_align_member', 'gam'], 'ga.gene_align_id = gam.gene_align_id']];
-  my $constraint = 'gam.member_id = ?';
+  my $constraint = 'gam.seq_member_id = ?';
 
   $self->bind_param_generic_fetch($member->dbID, SQL_INTEGER);
   return $self->generic_fetch($constraint, $join);
@@ -87,8 +88,8 @@ sub _objs_from_sth {
   
   while ($sth->fetch()) {
     push @alignments, Bio::EnsEMBL::Compara::AlignedMemberSet->new_fast({
-            '_adaptor'          => $self,       # field name NOT in sync with Bio::EnsEMBL::Storable
-            '_dbID'             => $gene_align_id,
+            'adaptor'           => $self,
+            'dbID'              => $gene_align_id,
             '_aln_method'       => $aln_method,
             '_aln_length'       => $aln_length,
             '_seq_type'         => $seq_type,
@@ -105,6 +106,7 @@ sub _objs_from_sth {
 =head2 store
 
  Arg [1]    : Bio::EnsEMBL::Compara::AlignedMemberSet $aln
+ Arg [2]    : Boolean $force_new_alignment: whether to force a new gene_align entry to be created
  Example    : $AlignedMemberAdaptor->store($fam)
  Description: Stores an AlignedMemberSet object into a Compara database
  Returntype : none
@@ -114,19 +116,31 @@ sub _objs_from_sth {
 =cut
 
 sub store {
-    my ($self, $aln) = @_;
+    my ($self, $aln, $force_new_alignment) = @_;
     assert_ref($aln, 'Bio::EnsEMBL::Compara::AlignedMemberSet');
   
-    # dbID for GeneTree is too dodgy
+    # dbID for GeneTree is too dodgy, so we need to use gene_align_id
     my $id = $aln->isa('Bio::EnsEMBL::Compara::GeneTree') ? $aln->gene_align_id() : $aln->dbID();
 
-    if ($id) {
+    if ($id and not $force_new_alignment) {
         my $sth = $self->prepare('UPDATE gene_align SET seq_type = ?, aln_length = ?, aln_method = ? WHERE gene_align_id = ?');
         $sth->execute($aln->seq_type, $aln->aln_length, $aln->aln_method, $id);
+
+        # We need to remove the gene_align_member entries that are not in the aligment any more
+        my $all_ids = $self->dbc->db_handle->selectall_arrayref('SELECT seq_member_id FROM gene_align_member WHERE gene_align_id = ?', undef, $id);
+        my %hash_ids_in_db = map {$_->[0] => 1} @$all_ids;
+        foreach my $member (@{$aln->get_all_Members}) {
+            delete $hash_ids_in_db{$member->seq_member_id};
+        }
+        $sth = $self->prepare('DELETE FROM gene_align_member WHERE gene_align_id = ? AND seq_member_id = ?');
+        foreach my $seq_member_id (keys %hash_ids_in_db) {
+            $sth->execute($id, $seq_member_id);
+        }
+
     } else {
         my $sth = $self->prepare('INSERT INTO gene_align (seq_type, aln_length, aln_method) VALUES (?,?,?)');
         $sth->execute($aln->seq_type, $aln->aln_length, $aln->aln_method);
-        $id = $sth->{'mysql_insertid'};
+        $id = $self->dbc->db_handle->last_insert_id(undef, undef, 'gene_align', 'gene_align_id');
 
         if ($aln->isa('Bio::EnsEMBL::Compara::GeneTree')) {
             $aln->gene_align_id($id);
@@ -135,10 +149,10 @@ sub store {
         }
     }
  
-    my $sth = $self->prepare('REPLACE INTO gene_align_member (gene_align_id, member_id, cigar_line) VALUES (?,?,?)');
+    my $sth = $self->prepare('REPLACE INTO gene_align_member (gene_align_id, seq_member_id, cigar_line) VALUES (?,?,?)');
 
     foreach my $member (@{$aln->get_all_Members}) {
-        $sth->execute($id, $member->member_id, $member->cigar_line) if $member->cigar_line;
+        $sth->execute($id, $member->seq_member_id, $member->cigar_line) if $member->cigar_line;
     }
 
     $sth->finish;
@@ -167,9 +181,10 @@ sub store {
 sub delete {
     my ($self, $aln) = @_;
 
+    assert_ref_or_dbID($aln, 'Bio::EnsEMBL::Compara::AlignedMemberSet', 'aln');
     my $dbID = ref($aln) ? $aln->dbID : $aln;
-    $self->dbc->do("DELETE FROM gene_align_member WHERE gene_align_id = $dbID");
-    $self->dbc->do("DELETE FROM gene_align        WHERE gene_align_id = $dbID");
+    $self->dbc->do('DELETE FROM gene_align_member WHERE gene_align_id = ?', undef, $dbID);
+    $self->dbc->do('DELETE FROM gene_align        WHERE gene_align_id = ?', undef, $dbID);
 }
 
 1;

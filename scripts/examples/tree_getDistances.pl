@@ -1,5 +1,5 @@
 #!/usr/bin/env perl
-# Copyright [1999-2013] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+# Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 # 
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -42,7 +42,7 @@ my $gene_tree_adaptor = $reg->get_adaptor ("Multi", "compara", "GeneTree");
 my $genes = $human_gene_adaptor-> fetch_all_by_external_name('PAX6');
 
 foreach my $gene (@$genes) {
-  my $gene_member = $gene_member_adaptor-> fetch_by_source_stable_id("ENSEMBLGENE", $gene->stable_id);
+  my $gene_member = $gene_member_adaptor-> fetch_by_stable_id($gene->stable_id);
   die "no members" unless (defined $gene_member);
 
   # Fetch the gene tree

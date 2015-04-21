@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2013] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -18,9 +18,7 @@ limitations under the License.
 
 =head1 NAME
 
-Node - DESCRIPTION of Object
-
-=head1 SYNOPSIS
+Bio::EnsEMBL::Compara::Graph::Node
 
 =head1 DESCRIPTION
 
@@ -49,8 +47,11 @@ Convenience methods to simplify this process
 
 =head1 CONTACT
 
-  Contact Jessica Severin on implemetation/design detail: jessica@ebi.ac.uk
-  Contact Ewan Birney on EnsEMBL in general: birney@sanger.ac.uk
+Please email comments or questions to the public Ensembl
+developers list at <http://lists.ensembl.org/mailman/listinfo/dev>.
+
+Questions may also be sent to the Ensembl help desk at
+<http://www.ensembl.org/Help/Contact>.
 
 =head1 APPENDIX
 
@@ -85,14 +86,16 @@ sub new {
   my $self = {};
   bless $self,$class;
   $self->{'_node_id'} = undef;
-  $self->{'_adaptor'} = undef;
   return $self;
 }
 
 sub copy {
   my $self = shift;
   
-  my $mycopy = new Bio::EnsEMBL::Compara::Graph::Node;
+  my $mycopy = @_ ? shift : {};
+  bless $mycopy, ref($self);
+
+  $mycopy->{'_node_id'} = undef;
 
   if($self->{'_tags'}) {
     %{$mycopy->{'_tags'}} = %{$self->{'_tags'}};
@@ -156,31 +159,6 @@ sub node_id {
   $self->{'_node_id'} = shift if(@_);
   return $self unless(defined($self->{'_node_id'}));
   return $self->{'_node_id'};
-}
-
-=head2 adaptor
-
-  Arg [1]    : (opt.) subcalss of Bio::EnsEMBL::DBSQL::BaseAdaptor
-  Example    : my $object_adaptor = $object->adaptor();
-  Example    : $object->adaptor($object_adaptor);
-  Description: Getter/Setter for the adaptor this object uses for database
-               interaction.
-  Returntype : subclass of Bio::EnsEMBL::DBSQL::BaseAdaptor
-  Exceptions : none
-  Caller     : general
-
-=cut
-
-sub adaptor {
-  my $self = shift;
-  $self->{'_adaptor'} = shift if(@_);
-  return $self->{'_adaptor'};
-}
-
-sub store {
-  my $self = shift;
-  throw("adaptor must be defined") unless($self->adaptor);
-  $self->adaptor->store($self) if $self->adaptor->can("store");
 }
 
 sub name {

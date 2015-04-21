@@ -1,5 +1,5 @@
 #!/usr/bin/env perl
-# Copyright [1999-2013] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+# Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 # 
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -22,7 +22,7 @@ use Bio::AlignIO;
 
 
 #
-# This script gets all the BLASTZ alignments covering the orthologues
+# This script gets all the LASTZ alignments covering the orthologues
 # between human and mouse (via GenomicAlignBlocks)
 #
 
@@ -43,9 +43,9 @@ my $human_gdb_id = $humanGDB->dbID;
 my $mouseGDB = $comparaDBA->get_GenomeDBAdaptor->fetch_by_registry_name("mouse");
 my $mouse_gdb_id = $mouseGDB->dbID;
 
-# get MethodLinkSpeciesSet for BLASTZ_NET alignments between human and mouse
+# get MethodLinkSpeciesSet for LASTZ_NET alignments between human and mouse
 my $blastz_mlss = $comparaDBA->get_MethodLinkSpeciesSetAdaptor->
-    fetch_by_method_link_type_GenomeDBs("BLASTZ_NET", [$humanGDB, $mouseGDB]);
+    fetch_by_method_link_type_GenomeDBs("LASTZ_NET", [$humanGDB, $mouseGDB]);
 
 my $homology_mlss = $comparaDBA->get_MethodLinkSpeciesSetAdaptor->
     fetch_by_method_link_type_genome_db_ids('ENSEMBL_ORTHOLOGUES',[$human_gdb_id,$mouse_gdb_id]);
@@ -72,7 +72,7 @@ foreach my $homology (@{$homology_list}) {
     $mouse_gene->print_member;
     $human_gene->print_member;
 
-    my $dnafrag = $comparaDBA->get_DnaFragAdaptor->fetch_by_GenomeDB_and_name($mouseGDB, $mouse_gene->chr_name);
+    my $dnafrag = $mouse_gene->dnafrag;
     unless($dnafrag) { print("oops no dnafrag\n"); next; }
 
 # get the alignments on a piece of the DnaFrag
@@ -82,8 +82,8 @@ foreach my $homology (@{$homology_list}) {
         my $all_genomic_aligns = $gab->get_all_GenomicAligns();
         my $valid = 1;
         foreach my $ga (@$all_genomic_aligns) {
-            $valid = 0 if (($ga->dnafrag->genome_db->dbID == $human_gdb_id) and ($ga->dnafrag->name ne $human_gene->chr_name));
-            $valid = 0 if (($ga->dnafrag->genome_db->dbID == $mouse_gdb_id) and ($ga->dnafrag->name ne $mouse_gene->chr_name));
+            $valid = 0 if (($ga->dnafrag->genome_db->dbID == $human_gdb_id) and ($ga->dnafrag->name ne $human_gene->dnafrag->name));
+            $valid = 0 if (($ga->dnafrag->genome_db->dbID == $mouse_gdb_id) and ($ga->dnafrag->name ne $mouse_gene->dnafrag->name));
         }
         next unless ($valid);
 

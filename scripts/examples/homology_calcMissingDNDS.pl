@@ -1,5 +1,5 @@
 #!/usr/bin/env perl
-# Copyright [1999-2013] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+# Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 # 
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -54,7 +54,7 @@ my $result = undef;
 
 print "spa,labela,spb,labelb,dn,ds\n";
 foreach my $gene_id (split(':',$input)) {
-  my $member = $gene_member_adaptor->fetch_by_source_stable_id("ENSEMBLGENE",$gene_id);
+  my $member = $gene_member_adaptor->fetch_by_stable_id($gene_id);
   next unless (defined($member));
   my $all_homologies;
   $all_homologies = $homology_adaptor->fetch_all_by_Member($member) unless (defined $species2);
@@ -66,10 +66,9 @@ foreach my $gene_id (split(':',$input)) {
     # next unless ($description =~ /para/);    # uncomment for paralogues only
     # next unless ($description =~ /orth/);    # uncomment for orthologs only
     # next unless ($description =~ /one2one/); # uncomment for one2one orthologs only
-    my $first_found = 0;
     my ($a,$b) = @{$this_homology->gene_list};
-    my $spa = $a->taxon->short_name;
-    my $spb = $b->taxon->short_name;
+    my $spa = $a->taxon->get_short_name;
+    my $spb = $b->taxon->get_short_name;
     my $labela = $a->stable_id;
     $labela .= "(" . $a->display_label . ")" if $a->display_label;
     my $labelb = $b->stable_id;

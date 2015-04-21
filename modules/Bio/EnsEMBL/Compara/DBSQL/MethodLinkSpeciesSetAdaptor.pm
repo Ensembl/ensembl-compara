@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2013] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -20,10 +20,10 @@ limitations under the License.
 =head1 CONTACT
 
   Please email comments or questions to the public Ensembl
-  developers list at <dev@ensembl.org>.
+  developers list at <http://lists.ensembl.org/mailman/listinfo/dev>.
 
   Questions may also be sent to the Ensembl help desk at
-  <helpdesk@ensembl.org>.
+  <http://www.ensembl.org/Help/Contact>.
 
 =cut
 
@@ -188,7 +188,7 @@ sub store {
                     WHERE method_link_species_set_id BETWEEN $min_mlss_id AND $max_mlss_id
                     ");
                 my $r = $sth2->execute(@mlss_data);
-                $dbID = $sth2->{'mysql_insertid'};
+                $dbID = $self->dbc->db_handle->last_insert_id(undef, undef, 'method_link_species_set', 'method_link_species_set_id');
                 $sth2->finish();
                 return $r;
             }
@@ -304,6 +304,29 @@ sub _unique_attributes {
 ###################
 # fetch_* methods #
 ###################
+
+=head2 fetch_all_by_species_set_id
+
+  Arg 1       : int $species_set_id
+  Example     : my $method_link_species_set =
+                  $mlss_adaptor->fetch_all_by_species_set_id($ss->dbID)
+  Description : Retrieve the Bio::EnsEMBL::Compara::MethodLinkSpeciesSet objects
+                corresponding to the given species_set_id
+  Returntype  : Bio::EnsEMBL::Compara::MethodLinkSpeciesSet
+  Exceptions  : none
+
+=cut
+
+sub fetch_all_by_species_set_id {
+    my ($self, $species_set_id, $no_warning) = @_;
+
+    my $mlss = $self->_id_cache->get_all_by_additional_lookup('species_set_id', $species_set_id);
+    if (not $mlss and not $no_warning) {
+        warning("Unable to find method_link_species_set with species_set='$species_set_id'");
+    }
+    return $mlss;
+}
+
 
 =head2 fetch_by_method_link_id_species_set_id
 
@@ -435,8 +458,12 @@ sub fetch_all_by_method_link_type_GenomeDB {
 sub fetch_by_method_link_type_GenomeDBs {
     my ($self, $method_link_type, $genome_dbs, $no_warning) = @_;
 
-    my $method = $self->db->get_MethodAdaptor->fetch_by_type($method_link_type)
-        or die "Could not fetch Method with type='$method_link_type'\n";
+    my $method = $self->db->get_MethodAdaptor->fetch_by_type($method_link_type);
+    if (not defined $method) {
+        # Do not complain if ENSEMBL_HOMOEOLOGUES does not exist
+        return undef if $method_link_type eq 'ENSEMBL_HOMOEOLOGUES';
+        die "Could not fetch Method with type='$method_link_type'";
+    }
     my $method_link_id = $method->dbID;
     my $species_set = $self->db->get_SpeciesSetAdaptor->fetch_by_GenomeDBs( $genome_dbs );
     unless ($species_set) {
@@ -477,8 +504,12 @@ sub fetch_by_method_link_type_GenomeDBs {
 sub fetch_by_method_link_type_genome_db_ids {
     my ($self, $method_link_type, $genome_db_ids) = @_;
 
-    my $method = $self->db->get_MethodAdaptor->fetch_by_type($method_link_type)
-        or die "Could not fetch Method with type='$method_link_type'";
+    my $method = $self->db->get_MethodAdaptor->fetch_by_type($method_link_type);
+    if (not defined $method) {
+        # Do not complain if ENSEMBL_HOMOEOLOGUES does not exist
+        return undef if $method_link_type eq 'ENSEMBL_HOMOEOLOGUES';
+        die "Could not fetch Method with type='$method_link_type'";
+    }
     my $method_link_id = $method->dbID;
     my $species_set = $self->db->get_SpeciesSetAdaptor->fetch_by_GenomeDBs( $genome_db_ids );
 

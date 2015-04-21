@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2013] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -20,10 +20,10 @@ limitations under the License.
 =head1 CONTACT
 
   Please email comments or questions to the public Ensembl
-  developers list at <dev@ensembl.org>.
+  developers list at <http://lists.ensembl.org/mailman/listinfo/dev>.
 
   Questions may also be sent to the Ensembl help desk at
-  <helpdesk@ensembl.org>.
+  <http://www.ensembl.org/Help/Contact>.
 
 =head1 NAME
 
@@ -47,15 +47,7 @@ standaloneJob.pl Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::DumpAllTreesOrtho
 
 =head1 AUTHORSHIP
 
-Ensembl Team. Individual contributions can be found in the CVS log.
-
-=head1 MAINTAINER
-
-$Author$
-
-=head VERSION
-
-$Revision$
+Ensembl Team. Individual contributions can be found in the GIT log.
 
 =head1 APPENDIX
 
@@ -111,13 +103,13 @@ sub run {
         $constraint .= ' AND gtr.tree_type = "tree"';
         $constraint .= ' AND gtr.clusterset_id = "default"';
         $constraint .= ' AND gtr.member_type = "'.($self->param('member_type')).'"' if defined $self->param('member_type');
-        my $join = [[['gene_tree_node', 'gtn'], 'm.member_id = gtn.member_id', undef], [['gene_tree_root', 'gtr'], 'gtn.root_id = gtr.root_id', undef]];
+        my $join = [[['gene_tree_node', 'gtn'], 'm.seq_member_id = gtn.seq_member_id', undef], [['gene_tree_root', 'gtr'], 'gtn.root_id = gtr.root_id', undef]];
         return $seq_member_adaptor->generic_fetch($constraint, $join);
     };
 
     my $list_species = $self->compara_dba->get_GenomeDBAdaptor->fetch_all;
     # Launches the dump
-    $self->param('writer')->write_data($list_species, $callback_list_members, $self->param('tree_list'));
+    $self->param('writer')->_write_data($list_species, $callback_list_members, $self->param('tree_list'));
 }
 
 

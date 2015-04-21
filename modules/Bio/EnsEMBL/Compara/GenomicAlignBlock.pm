@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2013] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -20,17 +20,17 @@ limitations under the License.
 =head1 CONTACT
 
   Please email comments or questions to the public Ensembl
-  developers list at <dev@ensembl.org>.
+  developers list at <http://lists.ensembl.org/mailman/listinfo/dev>.
 
   Questions may also be sent to the Ensembl help desk at
-  <helpdesk@ensembl.org>.
+  <http://www.ensembl.org/Help/Contact>.
 
 =head1 NAME
 
 Bio::EnsEMBL::Compara::GenomicAlignBlock - Alignment of two or more pieces of genomic DNA
 
 =head1 SYNOPSIS
-  
+
   use Bio::EnsEMBL::Compara::GenomicAlignBlock;
   
   my $genomic_align_block = new Bio::EnsEMBL::Compara::GenomicAlignBlock(
@@ -163,8 +163,11 @@ use Bio::EnsEMBL::Utils::Exception qw(throw warning info deprecate verbose);
 use Bio::EnsEMBL::Compara::GenomicAlign;
 use Bio::SimpleAlign;
 use Bio::EnsEMBL::Compara::BaseGenomicAlignSet;
+use Bio::EnsEMBL::Compara::GenomicAlignGroup;
+use Bio::EnsEMBL::Compara::Utils::SpeciesTree;
+use Bio::EnsEMBL::Compara::Graph::NewickParser;
 
-our @ISA = qw(Bio::EnsEMBL::Compara::BaseGenomicAlignSet);
+our @ISA = qw(Bio::EnsEMBL::Compara::BaseGenomicAlignSet Bio::EnsEMBL::Storable);
 
 =head2 new (CONSTRUCTOR)
 
@@ -255,78 +258,6 @@ sub new {
   $self->starting_genomic_align_id($starting_genomic_align_id) if (defined($starting_genomic_align_id));
 
   return $self;
-}
-
-=head2 new_fast
-
-  Arg [1]    : hash reference $hashref
-  Example    : none
-  Description: This is an ultra fast constructor which requires knowledge of
-               the objects internals to be used.
-  Returntype :
-  Exceptions : none
-  Caller     :
-  Status     : Stable
-
-=cut
-
-sub new_fast {
-  my $class = shift;
-  my $hashref = shift;
-
-  return bless $hashref, $class;
-}
-
-
-=head2 adaptor
-
-  Arg [1]    : Bio::EnsEMBL::Compara::DBSQL::GenomicAlignBlockAdaptor $adaptor
-  Example    : my $gen_ali_blk_adaptor = $genomic_align_block->adaptor();
-  Example    : $genomic_align_block->adaptor($gen_ali_blk_adaptor);
-  Description: Getter/Setter for the adaptor this object uses for database
-               interaction.
-  Returntype : Bio::EnsEMBL::Compara::DBSQL::GenomicAlignBlockAdaptor object
-  Exceptions : thrown if $adaptor is not a
-               Bio::EnsEMBL::Compara::DBSQL::GenomicAlignBlockAdaptor object
-  Caller     : general
-  Status     : Stable
-
-=cut
-
-sub adaptor {
-  my ($self, $adaptor) = @_;
-
-  if (defined($adaptor)) {
-    throw("$adaptor is not a Bio::EnsEMBL::Compara::DBSQL::GenomicAlignBlockAdaptor object")
-        unless ($adaptor->isa("Bio::EnsEMBL::Compara::DBSQL::GenomicAlignBlockAdaptor"));
-    $self->{'adaptor'} = $adaptor;
-  }
-
-  return $self->{'adaptor'};
-}
-
-
-=head2 dbID
-
-  Arg [1]    : integer $dbID
-  Example    : my $dbID = $genomic_align_block->dbID();
-  Example    : $genomic_align_block->dbID(12);
-  Description: Getter/Setter for the attribute dbID
-  Returntype : integer
-  Exceptions : none
-  Caller     : general
-  Status     : Stable
-
-=cut
-
-sub dbID {
-  my ($self, $dbID) = @_;
-
-  if (defined($dbID)) {
-    $self->{'dbID'} = $dbID;
-  }
-
-  return $self->{'dbID'};
 }
 
 
@@ -1018,10 +949,12 @@ sub summary_as_hash {
     my $seq_region =  $genomic_align->dnafrag->name;
 
     #No repeat masking for ancestral sequences
-    if ($mask =~ /^soft/ && $seq_region !~ /Ancestor/) {
-      $genomic_align->original_sequence($genomic_align->get_Slice->get_repeatmasked_seq(undef,1)->seq);
-    } elsif ($mask =~ /^hard/ && $seq_region !~ /Ancestor/) {
-      $genomic_align->original_sequence($genomic_align->get_Slice->get_repeatmasked_seq()->seq);
+    if ($mask) {
+        if ($mask =~ /^soft/ && $seq_region !~ /Ancestor/) {
+            $genomic_align->original_sequence($genomic_align->get_Slice->get_repeatmasked_seq(undef,1)->seq);
+        } elsif ($mask =~ /^hard/ && $seq_region !~ /Ancestor/) {
+            $genomic_align->original_sequence($genomic_align->get_Slice->get_repeatmasked_seq()->seq);
+        }
     }
 
     my $alignSeq = $genomic_align->aligned_sequence;
@@ -1100,9 +1033,11 @@ sub get_SimpleAlign {
 
     my $loc_seq = Bio::LocatableSeq->new(-SEQ    => $uc ? uc $alignSeq : lc $alignSeq,
                                          -START  => $genomic_align->dnafrag_start,
-                                         -END    => $genomic_align->dnafrag_end,
+                                         #-END    => $genomic_align->dnafrag_end,
                                          -ID     => $display_id ? $genomic_align->display_id : ($genomic_align->dnafrag->genome_db->name . "/" . $genomic_align->dnafrag->name),
                                          -STRAND => $genomic_align->dnafrag_strand);
+    # Avoid warning in BioPerl about len(seq) != end-start+1
+    $loc_seq->{end} = $genomic_align->dnafrag_end;
 
     $loc_seq->seq($uc ? uc $loc_seq->translate->seq
                       : lc $loc_seq->translate->seq) if ($translated);
@@ -1538,6 +1473,109 @@ sub restrict_between_alignment_positions {
   return $genomic_align_block;
 }
 
+=head2 get_GenomicAlignTree
+
+  Arg [1]    : none
+  Example    : $genomic_align_block->get_GenomicAlignTree
+  Description: Return a Bio::EnsEMBL::Compara::GenomicAlignTree object either from a GenomicAlignTreeAdaptor, a SpeciesTreeAdaptor or from the species set.
+  Returntype : Bio::EnsEMBL::Compara::GenomicAlignTree
+  Exceptions : throw if duplicate species found but no GenomicAlignTree object in the database
+  Caller     : object::methodname
+  Status     : At risk
+
+=cut
+
+sub get_GenomicAlignTree {
+    my ($self) = @_;
+
+    #Check if a GenomicAlignTree object already exists and return
+    my $genomic_align_tree;
+    eval {
+        my $genomic_align_tree_adaptor = $self->adaptor->db->get_GenomicAlignTreeAdaptor;
+        $genomic_align_tree = $genomic_align_tree_adaptor->fetch_by_GenomicAlignBlock($self);
+    };
+    return ($genomic_align_tree) if ($genomic_align_tree);
+
+    #Create lookup of names to GenomicAlign objects
+    my $leaf_names;
+    my $genomic_aligns = $self->get_all_GenomicAligns();
+    foreach my $genomic_align (@$genomic_aligns) {
+
+        #Throw if duplicates are found (and no GenomicAlignTree has been found)
+        if (defined  $leaf_names->{$genomic_align->genome_db->name}) {
+            throw ("Duplicate found for species " . $leaf_names->{$genomic_align->genome_db->name});
+        }
+        $leaf_names->{$genomic_align->genome_db->name} = $genomic_align;
+    }
+
+    #Create a tree as a newick format string
+    my $species_tree_string;
+    #For a pairwise GenomicAlignBlock, create a tree from scratch.
+    if ($self->method_link_species_set->method->class eq "GenomicAlignBlock.pairwise_alignment") {
+        my $species_set = $self->method_link_species_set->species_set_obj;
+        
+        #Create species_tree in newick format. Do not get the branch lengths.
+        $species_tree_string = Bio::EnsEMBL::Compara::Utils::SpeciesTree->create_species_tree(-compara_dba => $self->adaptor->db,
+                                                                                              -species_set => $species_set)->newick_format('ncbi_name');
+    } else {
+        #Multiple alignment 
+        #Get SpeciesTree from database.
+        my $species_tree_adaptor = $self->adaptor->db->get_SpeciesTreeAdaptor;
+        my $label = "default";
+
+        eval {
+            #Read tree from SpeciesTreeNode table
+            $species_tree_string = $species_tree_adaptor->fetch_by_method_link_species_set_id_label($self->method_link_species_set->dbID, $label)->species_tree();
+        };
+        if ($@) {
+            #backwards compatibility to e73
+            $species_tree_string = $self->method_link_species_set->get_value_for_tag("species_tree");
+        }
+    }
+    #print "string $species_tree_string\n";
+
+    #Convert the newick format tree into a GenomicAlignTree object
+    $genomic_align_tree = Bio::EnsEMBL::Compara::Graph::NewickParser::parse_newick_into_tree($species_tree_string, "Bio::EnsEMBL::Compara::GenomicAlignTree");
+
+    my $ref_genomic_align = $self->reference_genomic_align;
+    my $ref_genomic_align_node;
+
+    #Prune the tree to just contain the species in this GenomicAlignBlock and add GenomicAlignGroup objects on the leaves
+    my $all_leaves = $genomic_align_tree->get_all_leaves;
+    foreach my $this_leaf (@$all_leaves) {        
+        my $this_leaf_name = lc($this_leaf->name);
+        #Replace spaces with _ (necessary for output from create_species_tree)
+        $this_leaf_name =~ s/ /_/;
+
+        #Set the leaf name to be all lowercase to be consistent with the genome_db name
+	$this_leaf->name($this_leaf_name);
+
+        if ($leaf_names->{$this_leaf_name}) {
+            #add GenomicAlignGroup populated with GenomicAlign to leaf
+	    my $this_genomic_align = $leaf_names->{$this_leaf_name};
+            my $genomic_align_group = new Bio::EnsEMBL::Compara::GenomicAlignGroup();
+            $genomic_align_group->add_GenomicAlign($leaf_names->{$this_leaf_name});
+            $this_leaf->genomic_align_group($genomic_align_group);
+	    if ($this_genomic_align->genome_db->name eq $ref_genomic_align->genome_db->name and
+		$this_genomic_align->dnafrag->name eq $ref_genomic_align->dnafrag->name and
+		$this_genomic_align->dnafrag_start eq $ref_genomic_align->dnafrag_start and
+		$this_genomic_align->dnafrag_end eq $ref_genomic_align->dnafrag_end) {
+	      $genomic_align_tree->reference_genomic_align_node($this_leaf);
+	      $genomic_align_tree->reference_genomic_align($this_genomic_align);
+	      $ref_genomic_align_node = $this_leaf;
+	    }
+        } else {
+            #remove this leaf
+            $this_leaf->disavow_parent;
+            $genomic_align_tree = $genomic_align_tree->minimize_tree;
+        }
+    }
+    $genomic_align_tree->root->reference_genomic_align($ref_genomic_align);
+    $genomic_align_tree->root->reference_genomic_align_node($ref_genomic_align_node);
+
+    return $genomic_align_tree;
+}
+
 =head2 _print
 
   Arg [1]    : none
@@ -1596,7 +1634,7 @@ alignments will throw an exception.
 
 
 =head2 get_old_consensus_genomic_align [FOR BACKWARDS COMPATIBILITY ONLY]
- 
+
   Arg [1]    : none
   Example    : $old_consensus_genomic_aligns = $genomic_align_group->get_old_consensus_genomic_align();
   Description: get the Bio::EnsEMBL::Compara::GenomicAlign object following the convention for backwards
@@ -1604,7 +1642,7 @@ alignments will throw an exception.
   Returntype : Bio::EnsEMBL::Compara::GenomicAlign object
   Exceptions : 
   Caller     : general
- 
+
 =cut
 
 sub get_old_consensus_genomic_align {
@@ -1663,7 +1701,7 @@ sub get_old_consensus_genomic_align {
 
 
 =head2 get_old_query_genomic_align [FOR BACKWARDS COMPATIBILITY ONLY]
- 
+
   Arg [1]    : none
   Example    : $old_query_genomic_aligns = $genomic_align_group->get_old_query_genomic_align();
   Description: get the Bio::EnsEMBL::Compara::GenomicAlign object following the convention for backwards
@@ -1671,7 +1709,7 @@ sub get_old_consensus_genomic_align {
   Returntype : Bio::EnsEMBL::Compara::GenomicAlign object
   Exceptions : 
   Caller     : general
- 
+
 =cut
 
 sub get_old_query_genomic_align {

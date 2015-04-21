@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2013] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -20,10 +20,10 @@ limitations under the License.
 =head1 CONTACT
 
   Please email comments or questions to the public Ensembl
-  developers list at <dev@ensembl.org>.
+  developers list at <http://lists.ensembl.org/mailman/listinfo/dev>.
 
   Questions may also be sent to the Ensembl help desk at
-  <helpdesk@ensembl.org>.
+  <http://www.ensembl.org/Help/Contact>.
 
 =cut
 
@@ -64,7 +64,7 @@ package Bio::EnsEMBL::Compara::RunnableDB::ncRNAtrees::NCFastTrees;
 
 use strict;
 use Bio::EnsEMBL::Compara::Graph::NewickParser;
-use base ('Bio::EnsEMBL::Compara::RunnableDB::RunCommand', 'Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable', 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::StoreTree');
+use base ('Bio::EnsEMBL::Compara::RunnableDB::RunCommand', 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::StoreTree');
 
 =head2 fetch_input
 
@@ -87,13 +87,12 @@ sub fetch_input {
     my $nc_tree_id = $self->param_required('gene_tree_id');
 
     my $nc_tree = $self->compara_dba->get_GeneTreeAdaptor->fetch_by_dbID($nc_tree_id) or $self->throw("Couldn't fetch nc_tree with id $nc_tree_id\n");
+    $nc_tree->species_tree->attach_to_genome_dbs();
     $self->param('nc_tree', $nc_tree);
 
-    my $alignment_id = $self->param('alignment_id');
-    my $aln_seq_type = $self->param('aln_seq_type');
-    $nc_tree->gene_align_id($alignment_id);
-    my $aln = Bio::EnsEMBL::Compara::AlignedMemberSet->new(-seq_type => $aln_seq_type, -dbID => $alignment_id, -adaptor => $self->compara_dba->get_AlignedMemberAdaptor);
-    $nc_tree->attach_alignment($aln);
+    my $aln = $self->compara_dba->get_GeneAlignAdaptor->fetch_by_dbID($self->param_required('alignment_id'));
+    print STDERR scalar (@{$nc_tree->get_all_Members}), "\n";
+    $nc_tree->alignment($aln);
 
     if (my $input_aln = $self->_dumpMultipleAlignmentStructToWorkdir($nc_tree) ) {
         $self->param('input_aln', $input_aln);
@@ -156,9 +155,7 @@ sub _run_fasttree {
     my $root_id = $self->param('nc_tree')->root_id;
     my $fasttree_tag = $root_id . ".". $self->worker->process_id . ".fasttree";
 
-    my $fasttree_exe = $self->param_required('fasttree_exe');
-
-    die "Cannot execute '$fasttree_exe'" unless(-x $fasttree_exe);
+    my $fasttree_exe = $self->require_executable('fasttree_exe');
 
     my $fasttree_output = $self->worker_temp_directory . "FastTree.$fasttree_tag";
     my $tag = defined $self->param('fastTreeTag') ? $self->param('fastTreeTag') : 'ft_it_nj';
@@ -188,9 +185,7 @@ sub _run_parsimonator {
     my $root_id = $self->param('nc_tree')->root_id;
     my $parsimonator_tag = $root_id . "." . $self->worker->process_id . ".parsimonator";
 
-    my $parsimonator_exe = $self->param_required('parsimonator_exe');
-
-    die "Cannot execute '$parsimonator_exe'" unless(-x $parsimonator_exe);
+    my $parsimonator_exe = $self->require_executable('parsimonator_exe');
 
     my $cmd = $parsimonator_exe;
     $cmd .= " -s $aln_file";
@@ -217,10 +212,8 @@ sub _run_raxml_light {
 
     my $raxmlight_tag = $root_id . "." . $self->worker->process_id . ".raxmlight";
 
-    my $raxmlLight_exe = $self->param_required('raxmlLight_exe');
+    my $raxmlLight_exe = $self->require_executable('raxmlLight_exe');
     my $raxml_number_of_cores = $self->param('raxml_number_of_cores');
-
-    die "Cannot execute '$raxmlLight_exe'" unless(-x $raxmlLight_exe);
 
     my $tag = defined $self->param('raxmlLightTag') ? $self->param('raxmlLightTag') : 'ft_it_ml';
 #    my $tag = 'ft_it_ml';
@@ -252,8 +245,8 @@ sub _dumpMultipleAlignmentStructToWorkdir {
   my $root_id = $tree->root_id;
   my $leafcount = scalar(@{$tree->get_all_leaves});
   if($leafcount<4) {
-      $self->input_job->incomplete(0);
-      $self->throw("tree cluster $root_id has <4 proteins - can not build a raxml tree\n");
+      $self->input_job->autoflow(0);
+      $self->complete_early("tree cluster $root_id has <4 proteins - can not build a raxml tree\n");
   }
 
   my $file_root = $self->worker_temp_directory. "nctree_". $root_id;
@@ -264,12 +257,11 @@ sub _dumpMultipleAlignmentStructToWorkdir {
   open(OUTSEQ, ">$aln_file")
     or $self->throw("Error opening $aln_file for write");
 
-  $self->prepareTemporaryMemberNames($tree);
-  my $sa = $tree->get_SimpleAlign(-id_type => 'TMP');
+  my $sa = $tree->get_SimpleAlign(-APPEND_SPECIES_TREE_NODE_ID => 1, -ID_TYPE => 'MEMBER');
   $sa->set_displayname_flat(1);
 
     # Aln in fasta format (if needed)
-    if ($sa->length() >= 5000) {
+    if ($sa->length() >= 4000) {
         # For FastTree it is better to give the alignment in fasta format
         my $aln_fasta = $file_root . ".fa";
         open my $aln_fasta_fh, ">" , $aln_fasta or $self->throw("Error opening $aln_fasta for writing");
@@ -284,9 +276,9 @@ sub _dumpMultipleAlignmentStructToWorkdir {
 
 
   # Phylip header
-  print OUTSEQ $sa->no_sequences, " ", $sa->length, "\n";
+  print OUTSEQ $sa->num_sequences, " ", $sa->length, "\n";
 
-  $self->param('tag_residue_count', $sa->no_sequences * $sa->length);
+  $self->param('tag_residue_count', $sa->num_sequences * $sa->length);
   # Phylip body
   my $count = 0;
   foreach my $aln_seq ($sa->each_seq) {

@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2013] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -20,10 +20,10 @@ limitations under the License.
 =head1 CONTACT
 
   Please email comments or questions to the public Ensembl
-  developers list at <dev@ensembl.org>.
+  developers list at <http://lists.ensembl.org/mailman/listinfo/dev>.
 
   Questions may also be sent to the Ensembl help desk at
-  <helpdesk@ensembl.org>.
+  <http://www.ensembl.org/Help/Contact>.
 
 =head1 NAME
 
@@ -60,15 +60,7 @@ $quicktreebreak->write_output(); #writes to DB
 
 =head1 AUTHORSHIP
 
-Ensembl Team. Individual contributions can be found in the CVS log.
-
-=head1 MAINTAINER
-
-$Author$
-
-=head VERSION
-
-$Revision$
+Ensembl Team. Individual contributions can be found in the GIT log.
 
 =head1 APPENDIX
 
@@ -82,8 +74,6 @@ package Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::QuickTreeBreak;
 use strict;
 use IO::File;
 use File::Basename;
-
-use Bio::AlignIO;
 
 use Bio::EnsEMBL::Compara::Graph::NewickParser;
 use Bio::EnsEMBL::Compara::GeneTree;
@@ -113,8 +103,7 @@ sub fetch_input {
     # We reload the cigar lines in case the subtrees are partially written
     $self->param('cigar_lines', $self->compara_dba->get_AlignedMemberAdaptor->fetch_all_by_gene_align_id($gene_tree->gene_align_id));
 
-    my $exe = $self->param_required('quicktree_exe');
-    die "Cannot execute '$exe'" unless (-x $exe);
+    $self->require_executable('quicktree_exe');
 
     ## 'tags_to_copy' can also be set
 }
@@ -146,13 +135,13 @@ sub run {
 
     my %cigars;
     foreach my $member (@{$self->param('cigar_lines')}) {
-        $cigars{$member->member_id} = $member->cigar_line;
+        $cigars{$member->seq_member_id} = $member->cigar_line;
     }
     print STDERR scalar(keys %cigars), " cigars loaded\n" if $self->debug;
 
     foreach my $member (@{$supertree->get_all_Members}) {
         $tree->add_Member($member);
-        $member->cigar_line($cigars{$member->member_id});
+        $member->cigar_line($cigars{$member->seq_member_id});
     }
     print STDERR scalar(@{$supertree->get_all_Members}), " members found in the super-tree\n" if $self->debug;
 
@@ -241,7 +230,7 @@ sub post_cleanup {
 sub do_quicktree_loop {
     my $self = shift;
     my $supertree_root = shift;
-    my $input_aln = $self->dumpAlignedMemberSetAsStockholm($supertree_root->children->[0]);
+    my $input_aln = $self->dumpTreeMultipleAlignmentToWorkdir($supertree_root->children->[0]->get_AlignedMemberSet(), 'stockholm');
     my $quicktree_newick_string = $self->run_quicktreebreak($input_aln);
     my $newtree = Bio::EnsEMBL::Compara::Graph::NewickParser::parse_newick_into_tree($quicktree_newick_string);
     my @todo = ();
@@ -382,7 +371,7 @@ sub generate_subtrees {
     }
 
     foreach my $leaf (@{$members}) {
-        if (defined $in_cluster1{$leaf->member_id}) {
+        if (defined $in_cluster1{$leaf->seq_member_id}) {
             $cluster1->add_Member($leaf);
         } else {
             $cluster2->add_Member($leaf);

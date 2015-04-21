@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2013] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -16,7 +16,9 @@ limitations under the License.
 
 =cut
 
-=head1 NAME - Bio::EnsEMBL::Compara::PeptideAlignFeature
+=head1 NAME
+
+Bio::EnsEMBL::Compara::PeptideAlignFeature
 
 =head1 SYNOPSIS
 
@@ -46,17 +48,13 @@ limitations under the License.
 
 =head1 DESCRIPTION
 
-=head1 CONTACT
-
-Describe contact details here
+Object that describes a blast hit between two proteins (seq_members)
 
 =head1 APPENDIX
 
 The rest of the documentation details each of the object methods. Internal methods are usually preceded with a _
 
 =cut
-
-my $_paf_build_homology_idx = time(); #global index counter
 
 package Bio::EnsEMBL::Compara::PeptideAlignFeature;
 
@@ -70,16 +68,7 @@ use Bio::EnsEMBL::Compara::Utils::Cigars;
 
 #se overload '<=>' => "sort_by_score_evalue_and_pid";   # named method
 
-sub new {
-  my ($class) = @_;
-  my $self = {};
-
-  bless $self,$class;
-
-  $self->query_member(new Bio::EnsEMBL::Compara::Member);
-  $self->hit_member(new Bio::EnsEMBL::Compara::Member);
-  return $self;
-}
+use base ('Bio::EnsEMBL::Storable');        # inherit dbID(), adaptor() and new() methods
 
 
 sub create_homology
@@ -88,15 +77,6 @@ sub create_homology
 
   # create an Homology object
   my $homology = new Bio::EnsEMBL::Compara::Homology;
-
-  my $stable_id;
-  if($self->query_member->taxon_id < $self->hit_member->taxon_id) {
-    $stable_id = $self->query_member->taxon_id() . "_" . $self->hit_member->taxon_id . "_";
-  } else {
-    $stable_id = $self->hit_member->taxon_id . "_" . $self->query_member->taxon_id . "_";
-  }
-  $stable_id .= sprintf ("%011.0d",$_paf_build_homology_idx++);
-  $homology->stable_id($stable_id);
 
   my $cigar_line = $self->cigar_line;
   $cigar_line =~ s/I/M/g;
@@ -334,12 +314,6 @@ sub hit_rank {
   return $self->{_hit_rank};
 }
 
-sub dbID {
-  my ( $self, $dbID ) = @_;
-  $self->{'_dbID'} = $dbID if defined $dbID;
-  return $self->{'_dbID'};
-}
-
 sub rhit_dbID {
   my ( $self, $dbID ) = @_;
   $self->{'_rhit_dbID'} = $dbID if defined $dbID;
@@ -368,9 +342,9 @@ sub get_description {
   while(length($header)<17) { $header .= ' '; }
 
   my $qmem = sprintf("%s(%d,%d)(%s:%d)",
-        $qm->stable_id, $self->qstart, $self->qend, $qm->chr_name, $qm->dnafrag_start);
+        $qm->stable_id, $self->qstart, $self->qend, $qm->dnafrag->name, $qm->dnafrag_start);
   my $hmem = sprintf("%s(%d,%d)(%s:%d)",
-        $hm->stable_id, $self->hstart, $self->hend, $hm->chr_name, $hm->dnafrag_start);
+        $hm->stable_id, $self->hstart, $self->hend, $hm->dnafrag->name, $hm->dnafrag_start);
   while(length($qmem)<50) { $qmem .= ' '; }
   while(length($hmem)<50) { $hmem .= ' '; }
 
@@ -386,34 +360,5 @@ sub get_description {
   return $desc_string;
 }
 
-
-=head2 hash_key
-  Args       : none
-  Example    : $somehash->{$paf->hash_key} = $someValue;
-  Description: used for keeping track of known/stored gene/gene relationships
-  Returntype : string $key
-  Exceptions : none
-  Caller     : general
-=cut
-
-sub hash_key
-{
-  my $self = shift;
-  my $key = '1';
-
-  return $key unless($self->query_member);
-  return $key unless($self->hit_member);
-  my $gene1 = $self->query_member->gene_member;
-  my $gene2 = $self->hit_member->gene_member;
-  $gene1 = $self->query_member unless($gene1);
-  $gene2 = $self->hit_member unless($gene2);
-  if($gene1->genome_db_id > $gene2->genome_db_id) {
-    my $temp = $gene1;
-    $gene1 = $gene2;
-    $gene2 = $temp;
-  }
-  $key = $gene1->stable_id . '_' . $gene2->stable_id;
-  return $key;
-}
 
 1;

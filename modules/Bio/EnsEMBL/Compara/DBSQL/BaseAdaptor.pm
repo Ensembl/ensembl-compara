@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2013] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -44,9 +44,9 @@ sub attach {
                the arrayref $join should contain arrayrefs of this form
                [['family_member', 'fm'],
                 # the table to join with synonym (mandatory) as an arrayref
-                'm.member_id = fm.member_id',
+                'm.seq_member_id = fm.seq_member_id',
                 # the join condition (mandatory)
-                [qw(fm.family_id fm.member_id fm.cigar_line)]]
+                [qw(fm.family_id fm.seq_member_id fm.cigar_line)]]
                 # any additional columns that the join could imply (optional)
                 # as an arrayref 
   Arg [3]    : (optional) string $final_clause
@@ -148,7 +148,7 @@ sub construct_sql_query {
   Exceptions : none
   Caller     : various adaptors' specific fetch_ subroutines
 =cut
- 
+
 sub generic_fetch {
     my $self = shift;
     my $sql = $self->construct_sql_query(@_);
@@ -184,7 +184,7 @@ sub generic_fetch {
   Exceptions : none
   Caller     : various adaptors' specific fetch_ subroutines
 =cut
- 
+
 sub generic_fetch_one {
     my ($self, $constraint, $join, $final_clause) = @_;
 
@@ -221,7 +221,7 @@ sub generic_fetch_Iterator {
 
     my ($name, $syn) = @{($self->_tables)[0]};
     # Fetch all the dbIDs
-    my $sql = "SELECT ${name}.${name}_id FROM ${name}";
+    my $sql = "SELECT ${name}_id FROM ${name}";
     if ($constraint) {
         $sql .= " WHERE $constraint";
     }
@@ -269,8 +269,12 @@ sub _synchronise {
     my @unique_key_check  = ();
 
     foreach my $attr ($self->_unique_attributes) {
-        push @unique_data_check, $object->$attr;
-        push @unique_key_check,  "$attr = ?";
+        if (defined $object->$attr) {
+            push @unique_data_check, $object->$attr;
+            push @unique_key_check,  "$attr = ?";
+        } else {
+            push @unique_key_check,  "$attr IS NULL";
+        }
     }
 
     my ($table) = $self->_tables();

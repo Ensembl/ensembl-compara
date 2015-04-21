@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2013] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -18,20 +18,17 @@ limitations under the License.
 
 =head1 NAME
 
- Bio::EnsEMBL::Compara::PipeConfig::EPO_pt2_conf
+Bio::EnsEMBL::Compara::PipeConfig::EPO_pt2_conf
 
 =head1 SYNOPSIS
 
-    #1. Update ensembl-hive, ensembl and ensembl-compara CVS repositories before each new release
-
-    #2. You may need to update 'schema_version' in meta table to the current release number in ensembl-hive/sql/tables.sql
+    #1. Update ensembl-hive, ensembl and ensembl-compara GIT repositories before each new release
 
     #3. Check all default_options, you will probably need to change the following :
-        release
         pipeline_db (-host)
         resource_classes 
 
-	'ensembl_cvs_root_dir' - the path to the compara/hive/ensembl cvs checkout - set as an environment variable in your shell
+	'ensembl_cvs_root_dir' - the path to the compara/hive/ensembl GIT checkouts - set as an environment variable in your shell
         'password' - your mysql password
 	'compara_anchor_db' - database containing the anchor sequences (entered in the anchor_sequence table)
 	'compara_master' - location of your master db containing relevant info in the genome_db, dnafrag, species_set, method_link* tables
@@ -51,7 +48,11 @@ limitations under the License.
 
 =head1 CONTACT
 
-  Please contact ehive-users@ebi.ac.uk mailing list with questions/suggestions.
+Please email comments or questions to the public Ensembl
+developers list at <http://lists.ensembl.org/mailman/listinfo/dev>.
+
+Questions may also be sent to the Ensembl help desk at
+<http://www.ensembl.org/Help/Contact>.
 
 =cut
 
@@ -68,11 +69,7 @@ sub default_options {
     return {
 	%{$self->SUPER::default_options},
         'pipeline_name' => 'compara_MapAnchors',
-	   # parameters that are likely to change from execution to another:
-	'release'               => '74',
-	'rel_suffix'            => '',    # an empty string by default, a letter otherwise
-	   # dependent parameters:
-	'rel_with_suffix'       => $self->o('release').$self->o('rel_suffix'),
+
 	   # connection parameters to various databases:
 	'pipeline_db' => { # the production database itself (will be created)
 		-driver => 'mysql',
@@ -80,7 +77,7 @@ sub default_options {
 		-port   => 3306,
                 -user   => 'ensadmin',
 		-pass   => $self->o('password'),
-		-dbname => $ENV{'USER'}.'_15mammals_epo_anchor_mappings'.$self->o('rel_with_suffix'),
+		-dbname => $ENV{'USER'}.'_17mammals_epo_anchor_mappings'.$self->o('rel_with_suffix'),
    	},
 	  # database containing the anchors for mapping
 	'compara_anchor_db' => {
@@ -93,10 +90,10 @@ sub default_options {
 		-dbname => 'sf5_TEST_gen_anchors_mammals_cat_100',
 	},
 	  # genome_db_id(s) to which to map the anchors
-	'genome_db_ids_of_species_to_map' => '31,60,61,90,108,117,122,123,125,132,134,135,140,146,139',
+	'genome_db_ids_of_species_to_map' => '147,150,151,153',
 	  # location of species core dbs to map to
-	'core_db_urls' => [ 'mysql://ensro@ensdb-archive.internal.sanger.ac.uk:5304/73','mysql://ensro@compara1:3306/73' ],
-	# 'core_db_urls' => [ 'mysql://ensro@ens-staging1:3306/68', 'mysql://ensro@ens-staging2:3306/68' ],
+	#'core_db_urls' => [ 'mysql://ensro@ensdb-archive.internal.sanger.ac.uk:5304/73','mysql://ensro@compara1:3306/73' ],
+	 'core_db_urls' => [ 'mysql://ensro@ens-staging1:3306/77', 'mysql://ensro@ens-staging2:3306/77' ],
 	'mapping_exe' => "/software/ensembl/compara/exonerate/exonerate",
 	'species_set_id' => 10000, # dummy value - should not need to change
 	'anchors_mlss_id' => 10000, # this should correspond to the mlss_id in the anchor_sequence table of the compara_anchor_db database (from EPO_pt1_conf.pm)
@@ -105,7 +102,7 @@ sub default_options {
 	'mapping_mlssid' => 10000, # dummy value - should not need to change
 	'trimmed_mapping_mlssid' => 11000, # dummy value - should not need to change
 	 # place to dump the genome sequences
-	'seq_dump_loc' => '/data/blastdb/Ensembl/' . 'compara_genomes_test_' . $self->o('release'),
+	'seq_dump_loc' => '/data/blastdb/Ensembl/' . 'compara_genomes_test_' . $self->o('ensembl_release'),
 	 # dont overwrite genome_db row if locator field is filled 
 	'dont_change_if_locator' => 1, 
 	 # dont dump the MT sequence for mapping
@@ -125,10 +122,10 @@ sub default_options {
 	'compara_master' => {
 		-user => 'ensro',
 		-port => 3306,
-		-host => 'compara3',
+		-host => 'compara1',
 		-driver => 'mysql',
 		-pass => '',
-		-dbname => 'sf5_test_74_mammal_master',
+		-dbname => 'sf5_ensembl_compara_master',
 	},
      };
 }
@@ -145,10 +142,6 @@ sub resource_classes {
     my ($self) = @_; 
     return {
 	%{$self->SUPER::resource_classes},  # inherit 'default' from the parent class
-#	'default' => {'LSF' => '-C0 -M2500000 -R"select[mem>2500] rusage[mem=2500]"' }, # farm2 lsf syntax
-#	'mem3500' => {'LSF' => '-C0 -M3500000 -R"select[mem>3500] rusage[mem=3500]"' },
-#	'mem7500' => {'LSF' => '-C0 -M7500000 -R"select[mem>7500] rusage[mem=7500]"' },
-#	'hugemem' => {'LSF' => '-q hugemem -C0 -M30000000 -R"select[mem>30000] rusage[mem=30000]"' },
 	'default' => {'LSF' => '-C0 -M2500 -R"select[mem>2500] rusage[mem=2500]"' }, # farm3 lsf syntax
 	'mem3500' => {'LSF' => '-C0 -M3500 -R"select[mem>3500] rusage[mem=3500]"' },
 	'mem7500' => {'LSF' => '-C0 -M7500 -R"select[mem>7500] rusage[mem=7500]"' },

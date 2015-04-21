@@ -1,0 +1,28 @@
+{
+  'port'   => '3306',
+  'driver' => 'mysql',
+  'user'   => 'travis',
+  'pass'   => '',
+  'host'   => '127.0.0.1',
+
+#add a line with the dbname and module
+ 'databases' => {
+    'multi' => { 'compara'    => 'Bio::EnsEMBL::Compara::DBSQL::DBAdaptor' },
+    'homo_sapiens' => { 'core' => 'Bio::EnsEMBL::DBSQL::DBAdaptor' },
+    'mus_musculus' => { 'core' => 'Bio::EnsEMBL::DBSQL::DBAdaptor' },
+    'rattus_norvegicus' => { 'core' => 'Bio::EnsEMBL::DBSQL::DBAdaptor' },
+    'equus_caballus' => { 'core' => 'Bio::EnsEMBL::DBSQL::DBAdaptor' },
+    'felis_catus' => { 'core' => 'Bio::EnsEMBL::DBSQL::DBAdaptor' },
+    'canis_familiaris' => { 'core' => 'Bio::EnsEMBL::DBSQL::DBAdaptor' },
+    'gorilla_gorilla' => { 'core' => 'Bio::EnsEMBL::DBSQL::DBAdaptor' },
+    'loxodonta_africana' => { 'core' => 'Bio::EnsEMBL::DBSQL::DBAdaptor' },
+    'oryctolagus_cuniculus' => { 'core' => 'Bio::EnsEMBL::DBSQL::DBAdaptor' },
+    'pan_troglodytes' => { 'core' => 'Bio::EnsEMBL::DBSQL::DBAdaptor' },
+    'sus_scrofa' => { 'core' => 'Bio::EnsEMBL::DBSQL::DBAdaptor' },
+    'tarsius_syrichta' => { 'core' => 'Bio::EnsEMBL::DBSQL::DBAdaptor' },
+    'macaca_mulatta' => { 'core' => 'Bio::EnsEMBL::DBSQL::DBAdaptor' },
+    'pongo_abelii' => { 'core' => 'Bio::EnsEMBL::DBSQL::DBAdaptor' },
+    'callithrix_jacchus' => { 'core' => 'Bio::EnsEMBL::DBSQL::DBAdaptor' },
+    'bos_taurus' => { 'core' => 'Bio::EnsEMBL::DBSQL::DBAdaptor' },
+ }
+}

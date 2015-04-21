@@ -1,5 +1,5 @@
 #!/usr/bin/env perl
-# Copyright [1999-2013] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+# Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 # 
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -46,14 +46,12 @@ my $genes = $human_gene_adaptor->fetch_all_by_external_name('BRCA2');
 
 my $verbose = 0;
 foreach my $gene (@$genes) {
-  my $member = $gene_member_adaptor->
-    fetch_by_source_stable_id("ENSEMBLGENE",$gene->stable_id);
+  my $member = $gene_member_adaptor->fetch_by_stable_id($gene->stable_id);
   die "no members" unless (defined $member);
   my $all_homologies = $homology_adaptor->fetch_all_by_Member($member);
   foreach my $homology (@$all_homologies) {
-    my @two_ids = map { $_->get_canonical_SeqMember->member_id } @{$homology->gene_list};
-    my $leaf_node_id = $homology->node_id;
-    my $tree = $genetreenode_adaptor->fetch_node_by_node_id($leaf_node_id);
+    my @two_ids = map { $_->seq_member_id } @{$homology->get_all_Members};
+    my $tree_node = $homology->gene_tree_node;
     my $node_a = $genetreenode_adaptor->fetch_default_AlignedMember_for_Member($two_ids[0]);
     my $node_b = $genetreenode_adaptor->fetch_default_AlignedMember_for_Member($two_ids[1]);
     $node_a->root->merge_node_via_shared_ancestor($node_b);
@@ -65,7 +63,7 @@ foreach my $gene (@$genes) {
           $node_b->stable_id, ",",
           $ancestor->get_tagvalue("taxon_name"), ",",
           $ncbitaxon_adaptor->fetch_by_dbID($ancestor->get_tagvalue('taxon_id'))->get_tagvalue('ensembl timetree mya'), ",",
-          $tree->get_tagvalue("taxon_name"), ",",
+          $tree_node->taxonomy_level, ",",
           $distance_a, ",",
           $distance_b, "\n";
   }

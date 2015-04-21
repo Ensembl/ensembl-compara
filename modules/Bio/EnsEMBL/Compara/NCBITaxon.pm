@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2013] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -18,10 +18,10 @@ limitations under the License.
 
 =head1 NAME
 
-NCBITaxon - DESCRIPTION of Object
+Bio::EnsEMBL::Compara::NCBITaxon
 
 =head1 DESCRIPTION
-  
+
   An object that hold a node within a taxonomic tree.  Inherits from NestedSet.
 
   From Bio::Species
@@ -40,8 +40,11 @@ NCBITaxon - DESCRIPTION of Object
 
 =head1 CONTACT
 
-  Contact Jessica Severin on implemetation/design detail: jessica@ebi.ac.uk
-  Contact Ewan Birney on EnsEMBL in general: birney@sanger.ac.uk
+Please email comments or questions to the public Ensembl
+developers list at <http://lists.ensembl.org/mailman/listinfo/dev>.
+
+Questions may also be sent to the Ensembl help desk at
+<http://www.ensembl.org/Help/Contact>.
 
 =head1 APPENDIX
 
@@ -62,12 +65,7 @@ our @ISA = qw(Bio::EnsEMBL::Compara::NestedSet);
 
 =head2 copy
 
-  Arg [1]    : int $member_id (optional)
-  Example    :
   Description: returns copy of object, calling superclass copy method
-  Returntype :
-  Exceptions :
-  Caller     :
 
 =cut
 
@@ -75,7 +73,6 @@ sub copy {
   my $self = shift;
   
   my $mycopy = $self->SUPER::copy;
-  bless $mycopy, "Bio::EnsEMBL::Compara::NCBITaxon";
   
   $mycopy->ncbi_taxid($self->ncbi_taxid);
   $mycopy->rank($self->rank);
@@ -378,7 +375,7 @@ sub ensembl_alias_name {
 }
 
 
-=head scientific_name
+=head2 scientific_name
 
   Example    : $ncbi->scientific_name;
   Description: The scientific name of this taxon
@@ -434,18 +431,19 @@ sub ensembl_alias {
 }
 
 
-=head2 short_name
+=head2 get_short_name
 
-  Example    : $ncbi->short_name;
+  Example    : $ncbi->get_short_name;
   Description: The name of this genome in the Gspe ('G'enera
-               'spe'cies) format.
+               'spe'cies) format. Further names are just added
+               at the end (Gen Spec Subname -> GSpeSubname)
   Returntype : string
   Exceptions : none
   Caller     : general
 
 =cut
 
-sub short_name {
+sub get_short_name {
   my $self = shift;
   my $name = $self->name;
   $name =~  s/(\S)\S+\s(\S{3})\S+/$1$2/;
@@ -453,9 +451,10 @@ sub short_name {
   return $name;
 }
 
-sub get_short_name {
+sub short_name {
   my $self = shift;
-  return $self->short_name;
+  deprecate('NCBITaxon::short_name() is deprecated in favour of get_short_name(), and will be removed in e76');
+  return $self->get_short_name;
 }
 
 

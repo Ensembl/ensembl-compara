@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2013] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -20,10 +20,10 @@ limitations under the License.
 =head1 CONTACT
 
   Please email comments or questions to the public Ensembl
-  developers list at <dev@ensembl.org>.
+  developers list at <http://lists.ensembl.org/mailman/listinfo/dev>.
 
   Questions may also be sent to the Ensembl help desk at
-  <helpdesk@ensembl.org>.
+  <http://www.ensembl.org/Help/Contact>.
 
 =head1 NAME
 
@@ -173,7 +173,7 @@ use Bio::EnsEMBL::Compara::BaseGenomicAlignSet;
 use Bio::EnsEMBL::Compara::MethodLinkSpeciesSet;
 use Bio::EnsEMBL::Mapper;
 
-use base qw(Bio::EnsEMBL::Compara::Locus);
+use base qw(Bio::EnsEMBL::Compara::Locus Bio::EnsEMBL::Storable);
 
 =head2 new (CONSTRUCTOR)
 
@@ -268,26 +268,6 @@ sub new {
     return $self;
 }
 
-=head2 new_fast
-
-  Arg [1]    : hash reference $hashref
-  Example    : none
-  Description: This is an ultra fast constructor which requires knowledge of
-               the objects internals to be used.
-  Returntype :
-  Exceptions : none
-  Caller     :
-  Status     : Stable
-
-=cut
-
-sub new_fast {
-  my $class = shift;
-  my $hashref = shift;
-
-  return bless $hashref, $class;
-}
-
 
 =head2 copy (CONSTRUCTOR)
 
@@ -311,58 +291,6 @@ sub copy {
   }
 
   return $new_copy;
-}
-
-
-=head2 adaptor
-
-  Arg [1]    : Bio::EnsEMBL::Compara::DBSQL::GenomicAlignAdaptor
-  Example    : $adaptor = $genomic_align->adaptor;
-  Example    : $genomic_align->adaptor($adaptor);
-  Description: Getter/Setter for the adaptor this object uses for database
-               interaction.
-  Returntype : Bio::EnsEMBL::Compara::DBSQL::GenomicAlignAdaptor
-  Exceptions : thrown if $adaptor is not a
-               Bio::EnsEMBL::Compara::DBSQL::GenomicAlignAdaptor object
-  Caller     : object->methodname
-  Status     : Stable
-
-=cut
-
-sub adaptor {
-  my $self = shift;
-
-  if (@_) {
-    $self->{'adaptor'} = shift;
-    throw($self->{'adaptor'}." is not a Bio::EnsEMBL::Compara::DBSQL::GenomicAlignAdaptor object")
-        if ($self->{'adaptor'} and !UNIVERSAL::isa($self->{'adaptor'}, "Bio::EnsEMBL::Compara::DBSQL::GenomicAlignAdaptor"));
-  }
-
-  return $self->{'adaptor'};
-}
-
-
-=head2 dbID
-
-  Arg [1]    : integer $dbID
-  Example    : $dbID = $genomic_align->dbID;
-  Example    : $genomic_align->dbID(12);
-  Description: Getter/Setter for the attribute dbID
-  Returntype : integer
-  Exceptions : none
-  Caller     : object->methodname
-  Status     : Stable
-
-=cut
-
-sub dbID {
-  my ($self, $dbID) = @_;
-
-  if (defined($dbID)) {
-     $self->{'dbID'} = $dbID;
-  }
-
-  return $self->{'dbID'};
 }
 
 
@@ -395,7 +323,7 @@ sub genomic_align_block {
     weaken($self->{'genomic_align_block'} = $genomic_align_block);
 
     ## Add adaptor to genomic_align_block object if possible and needed
-    if (!defined($genomic_align_block->{'adaptor'}) and !defined($genomic_align_block->{'_adaptor'}) and defined($self->{'adaptor'})) {
+    if (!defined($genomic_align_block->{'adaptor'}) and !defined($genomic_align_block->{'adaptor'}) and defined($self->{'adaptor'})) {
       $genomic_align_block->adaptor($self->adaptor->db->get_GenomicAlignBlockAdaptor);
     }
 
@@ -978,6 +906,28 @@ sub original_sequence {
   return $self->{'original_sequence'};
 }
 
+=head2 original_dbID
+
+  Args       : none
+  Example    : my $original_dbID = $genomic_align->original_dbID
+  Description: getter/setter of original_dbID attribute. When a GenomicAlign is restricted, this attribute is set to the dbID of the original GenomicAlign object
+  Returntype : none
+  Exceptions : none
+  Caller     : general
+  Status     : At risk
+
+=cut
+
+sub original_dbID {
+  my ($self, $original_dbID) = @_;
+
+  if (defined $original_dbID) {
+    $self->{_original_dbID} = $original_dbID;
+  }
+
+  return $self->{_original_dbID};
+}
+
 =head2 _get_cigar_line_from_aligned_sequence
 
   Arg [1]    : string $aligned_sequence
@@ -1417,6 +1367,7 @@ sub get_Mapper {
   Status     : At risk
 
 =cut
+
 sub _count_cigar_elements {
     my ($cigar_line) = @_;
 
@@ -1450,6 +1401,7 @@ sub _count_cigar_elements {
   Status     : At risk
 
 =cut
+
 sub _get_sub_cigar_line {
     my ($target_cigar_pieces, $offset, $length, $start_array_index, $start_target_pos) = @_;
     my $ref_pos = $offset + $length;
@@ -1600,6 +1552,7 @@ sub _get_sub_cigar_line_slow {
   Status     : At risk
 
 =cut
+
 sub _cigar_element {
     my ($mode, $len) = @_;
     my $elem;
@@ -1816,7 +1769,7 @@ sub restrict {
   delete($restricted_genomic_align->{aligned_sequence});
   delete($restricted_genomic_align->{cigar_line});
   delete($restricted_genomic_align->{cigar_arrayref});
-  $restricted_genomic_align->{_original_dbID} = $self->{dbID} if ($self->{dbID});
+  $restricted_genomic_align->original_dbID($self->dbID or $self->original_dbID);
 
   # Need to calculate the original aligned sequence length myself
   if (!$aligned_seq_length) {
@@ -1931,10 +1884,9 @@ sub restrict {
 
         ## We don't want to end with an insertion. Trim it!
         while (@$cigar_arrayref and $cigar_arrayref->[-1] =~ "I") {
-          my $cigar_type = substr($cigar_arrayref->[0], -1, 1);
-          my $cigar_num = substr($cigar_arrayref->[0], 0 , -1);
+          my $cigar_type = substr($cigar_arrayref->[-1], -1, 1);
+          my $cigar_num = substr($cigar_arrayref->[-1], 0 , -1);
           $cigar_num = 1 if ($cigar_num eq "");
-
           $counter_of_trimmed_base_pairs += $cigar_num;
           pop(@$cigar_arrayref);
         }

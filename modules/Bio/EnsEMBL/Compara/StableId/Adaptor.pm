@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2013] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -20,14 +20,12 @@ limitations under the License.
 
 =head1 NAME
 
-  Bio::EnsEMBL::Compara::StableId::Adaptor
-
-=head1 SYNOPSIS
+Bio::EnsEMBL::Compara::StableId::Adaptor
 
 =head1 DESCRIPTION
 
-    All database I/O should be done via this class,
-    which has a general functionality of an adaptor, but strictly speaking isn't.
+All database I/O should be done via this class,
+which has a general functionality of an adaptor, but strictly speaking isn't.
 
 =cut
 
@@ -131,18 +129,18 @@ sub load_compara_ncs {
     my $step = ($ncs->type() eq 'f') ? 100000 : 30000;
     my $sql;
     if ($ncs->type() eq 'f') {
+        my $member_name = $schema_version < 76 ? 'member' : 'seq_member';
         $sql = qq{
-            SELECT f.family_id, }.(($schema_version<53)?"f.stable_id":"CONCAT(f.stable_id,'.',f.version)").qq{,
-                IF(m.source_name='ENSEMBLPEP', SUBSTRING_INDEX(TRIM(LEADING 'Transcript:' FROM m.description),' ',1), m.stable_id)
-                    FROM family f, family_member fm, member m
+            SELECT f.family_id, }.(($schema_version<53)?"f.stable_id":"CONCAT(f.stable_id,'.',f.version)").qq{, m.stable_id
+                    FROM family f, family_member fm, $member_name m
                     WHERE f.family_id=fm.family_id
-                    AND   fm.member_id=m.member_id
+                    AND   fm.${member_name}_id=m.${member_name}_id
                     AND   m.source_name <> 'ENSEMBLGENE'
             } ;
     } elsif ($ncs->type() eq 't') {
         if ($schema_version <= 52) {
             $sql = qq{
-                SELECT ptn.node_id, CONCAT('Node_',ptn.node_id), IF(m.source_name='ENSEMBLPEP', SUBSTRING_INDEX(TRIM(LEADING 'Transcript:' FROM m.description),' ',1), m.stable_id)
+                SELECT ptn.node_id, CONCAT('Node_',ptn.node_id), m.stable_id
                     FROM protein_tree_node ptn
                     LEFT JOIN protein_tree_member n2m ON ptn.node_id=n2m.node_id
                     LEFT JOIN member m ON n2m.member_id=m.member_id
@@ -151,7 +149,7 @@ sub load_compara_ncs {
             };
         } elsif ($schema_version <= 54) {
             $sql = qq{
-                SELECT ptn.node_id, IFNULL(CONCAT(ptsi.stable_id,'.',ptsi.version), CONCAT('Node_',ptn.node_id)), IF(m.source_name='ENSEMBLPEP', SUBSTRING_INDEX(TRIM(LEADING 'Transcript:' FROM m.description),' ',1), m.stable_id)
+                SELECT ptn.node_id, IFNULL(CONCAT(ptsi.stable_id,'.',ptsi.version), CONCAT('Node_',ptn.node_id)), m.stable_id
                     FROM protein_tree_node ptn
                     LEFT JOIN protein_tree_member n2m ON ptn.node_id=n2m.node_id
                     LEFT JOIN member m ON n2m.member_id=m.member_id
@@ -161,7 +159,7 @@ sub load_compara_ncs {
             };
         } elsif ($schema_version <= 64) {
             $sql = qq{
-                SELECT ptn.node_id, IFNULL(CONCAT(ptsi.stable_id,'.',ptsi.version), CONCAT('Node_',ptn.node_id)), IF(m.source_name='ENSEMBLPEP', SUBSTRING_INDEX(TRIM(LEADING 'Transcript:' FROM m.description),' ',1), m.stable_id)
+                SELECT ptn.node_id, IFNULL(CONCAT(ptsi.stable_id,'.',ptsi.version), CONCAT('Node_',ptn.node_id)), m.stable_id
                     FROM protein_tree_node ptn
                     LEFT JOIN protein_tree_member n2m ON ptn.node_id=n2m.node_id
                     LEFT JOIN member m ON n2m.member_id=m.member_id
@@ -171,7 +169,7 @@ sub load_compara_ncs {
             };
         } elsif ($schema_version == 65) {
             $sql = qq{
-                SELECT ptn.node_id, IFNULL(CONCAT(ptsi.stable_id,'.',ptsi.version), CONCAT('Node_',ptn.node_id)), IF(m.source_name='ENSEMBLPEP', SUBSTRING_INDEX(TRIM(LEADING 'Transcript:' FROM m.description),' ',1), m.stable_id)
+                SELECT ptn.node_id, IFNULL(CONCAT(ptsi.stable_id,'.',ptsi.version), CONCAT('Node_',ptn.node_id)), m.stable_id
                     FROM protein_tree_node ptn
                     LEFT JOIN protein_tree_member n2m ON ptn.node_id=n2m.node_id
                     LEFT JOIN member m ON n2m.member_id=m.member_id
@@ -181,7 +179,7 @@ sub load_compara_ncs {
             };
         } elsif ($schema_version == 66) {
             $sql = qq{
-                SELECT gtn.node_id, IFNULL(CONCAT(gtr.stable_id,'.',gtr.version), CONCAT('Node_',gtn.node_id)), IF(m.source_name='ENSEMBLPEP', SUBSTRING_INDEX(TRIM(LEADING 'Transcript:' FROM m.description),' ',1), m.stable_id)
+                SELECT gtn.node_id, IFNULL(CONCAT(gtr.stable_id,'.',gtr.version), CONCAT('Node_',gtn.node_id)), m.stable_id
                     FROM gene_tree_node gtn
                     JOIN gene_tree_root gtr USING (root_id)
                     LEFT JOIN gene_tree_member gtm USING (node_id)
@@ -191,7 +189,7 @@ sub load_compara_ncs {
             };
         } elsif ($schema_version == 67) {
             $sql = qq{
-                SELECT gtn.node_id, IFNULL(CONCAT(gtr.stable_id,'.',gtr.version), CONCAT('Node_',gtn.node_id)), IF(m.source_name='ENSEMBLPEP', SUBSTRING_INDEX(TRIM(LEADING 'Transcript:' FROM m.description),' ',1), m.stable_id)
+                SELECT gtn.node_id, IFNULL(CONCAT(gtr.stable_id,'.',gtr.version), CONCAT('Node_',gtn.node_id)), m.stable_id
                     FROM gene_tree_node gtn
                     JOIN gene_tree_root gtr USING (root_id)
                     LEFT JOIN gene_tree_member gtm USING (node_id)
@@ -201,7 +199,7 @@ sub load_compara_ncs {
             };
         } elsif ($schema_version < 70) {
             $sql = qq{
-                SELECT gtn.node_id, IFNULL(CONCAT(gtr.stable_id,'.',gtr.version), CONCAT('Node_',gtn.node_id)), IF(m.source_name='ENSEMBLPEP', SUBSTRING_INDEX(TRIM(LEADING 'Transcript:' FROM m.description),' ',1), m.stable_id)
+                SELECT gtn.node_id, IFNULL(CONCAT(gtr.stable_id,'.',gtr.version), CONCAT('Node_',gtn.node_id)), m.stable_id
                     FROM gene_tree_node gtn
                     JOIN gene_tree_root gtr USING (root_id)
                     LEFT JOIN gene_tree_member gtm USING (node_id)
@@ -209,21 +207,31 @@ sub load_compara_ncs {
                     WHERE (gtn.node_id = gtn.root_id OR m.stable_id IS NOT NULL) AND left_index AND right_index AND gtr.tree_type = 'tree' AND gtr.clusterset_id = 'default'
                     ORDER BY root_id, left_index
             };
-        } else {
+        } elsif ($schema_version < 76) {
             $sql = qq{
-                SELECT gtn.node_id, IFNULL(CONCAT(gtr.stable_id,'.',gtr.version), CONCAT('Node_',gtn.node_id)), IF(m.source_name='ENSEMBLPEP', SUBSTRING_INDEX(TRIM(LEADING 'Transcript:' FROM m.description),' ',1), m.stable_id)
+                SELECT gtn.node_id, IFNULL(CONCAT(gtr.stable_id,'.',gtr.version), CONCAT('Node_',gtn.node_id)), m.stable_id
                     FROM gene_tree_node gtn
                     JOIN gene_tree_root gtr USING (root_id)
                     LEFT JOIN member m USING (member_id)
                     WHERE (gtn.node_id = gtn.root_id OR m.stable_id IS NOT NULL) AND left_index AND right_index AND gtr.tree_type = 'tree' AND gtr.clusterset_id = 'default'
                     ORDER BY root_id, left_index
             };
+        } else {
+            $sql = qq{
+                SELECT gtn.node_id, IFNULL(CONCAT(gtr.stable_id,'.',gtr.version), CONCAT('Node_',gtn.node_id)), m.stable_id
+                    FROM gene_tree_node gtn
+                    JOIN gene_tree_root gtr USING (root_id)
+                    LEFT JOIN seq_member m USING (seq_member_id)
+                    WHERE (gtn.node_id = gtn.root_id OR m.stable_id IS NOT NULL) AND left_index AND right_index AND gtr.tree_type = 'tree' AND gtr.clusterset_id = 'default'
+                    ORDER BY root_id, left_index
+            };
         }
 
     } else {
+        # TreeFam
         if ($schema_version <= 70) {
             $sql = qq{
-                SELECT gtn.node_id, IFNULL(gtrt.value, CONCAT('Node_',gtn.node_id)), IF(m.description LIKE "Transcript:%", SUBSTRING_INDEX(TRIM(LEADING 'Transcript:' FROM m.description),' ',1), m.stable_id)
+                SELECT gtn.node_id, IFNULL(gtrt.value, CONCAT('Node_',gtn.node_id)), m.stable_id
                     FROM gene_tree_node gtn
                     JOIN gene_tree_root gtr USING (root_id)
                     JOIN gene_tree_root_tag gtrt ON gtr.root_id=gtrt.root_id AND gtrt.tag = "model_name"
@@ -278,7 +286,7 @@ sub load_compara_ncs {
 }
 
 sub store_map {
-    my ($self, $map, $dbh) = @_;
+    my ($self, $map, $dbc) = @_;
 
     my $step = 3000;
 
@@ -291,7 +299,7 @@ sub store_map {
     ? qq{
         UPDATE gene_tree_root SET stable_id=?, version=? WHERE root_id=?
     } : die "Cannot store mapping in database. Type must be either 'f' or 't'";
-    my $sth = $dbh->prepare($sql);
+    my $sth = $dbc->prepare($sql);
 
     my $counter = 0;
     foreach my $clid (@{ $map->get_all_clids }) {
@@ -308,14 +316,14 @@ sub store_map {
 }
 
 sub store_history {
-    my ($self, $ncsl, $dbh, $timestamp, $master_dbh) = @_;
+    my ($self, $ncsl, $dbc, $timestamp, $master_dbc) = @_;
     
-    my $mapping_session_id = $self->_get_mapping_session_id($ncsl, $timestamp, $dbh, $master_dbh);
+    my $mapping_session_id = $self->_get_mapping_session_id($ncsl, $timestamp, $dbc, $master_dbc);
     
     my $step = 2000;
     my $counter = 0;
 
-    my $sth = $dbh->prepare(
+    my $sth = $dbc->prepare(
         "INSERT INTO stable_id_history(mapping_session_id, stable_id_from, version_from, stable_id_to, version_to, contribution) VALUES (?, ?, ?, ?, ?, ?)"
     );
 
@@ -370,10 +378,10 @@ sub store_history {
 }
 
 sub _get_mapping_session_id {
-  my ($self, $ncsl, $timestamp, $dbh, $master_dbh) = @_;
+  my ($self, $ncsl, $timestamp, $dbc, $master_dbc) = @_;
   
   $timestamp  ||= time();
-  $master_dbh ||= $dbh;       # in case no master was given (so please provide the $master_dbh to avoid doing unnecessary work afterwards)
+  $master_dbc ||= $dbc;       # in case no master was given (so please provide the $master_dbc to avoid doing unnecessary work afterwards)
   
   my $type = $ncsl->to->type();
   my $fulltype = { 'f' => 'family', 't' => 'tree' }->{$type} || die "Cannot store history for type '$type'";
@@ -388,15 +396,25 @@ sub _get_mapping_session_id {
   my $prefix = $generator->prefix();
   my $prefix_to_remove = { f => 'FM', t => 'GT' }->{$type} || die "Do not know the extension for type '${type}'";
   $prefix =~ s/$prefix_to_remove \Z//xms;
-  
-  my $ms_sth = $master_dbh->prepare( "INSERT INTO mapping_session(type, rel_from, rel_to, when_mapped, prefix) VALUES (?, ?, ?, FROM_UNIXTIME(?), ?)" );
-  $ms_sth->execute($fulltype, $ncsl->from->release(), $ncsl->to->release(), $timestamp, $prefix);
-  my $mapping_session_id = $ms_sth->{'mysql_insertid'};
-  warn "newly generated mapping_session_id = '$mapping_session_id' for prefix '${prefix}'\n";
+
+  my $ms_sth = $master_dbc->prepare( "SELECT mapping_session_id FROM mapping_session WHERE type = ? AND rel_from = ? AND rel_to = ? AND prefix = ?" );
+  $ms_sth->execute($fulltype, $ncsl->from->release(), $ncsl->to->release(), $prefix);
+  my ($mapping_session_id) = $ms_sth->fetchrow_array();
   $ms_sth->finish();
 
-  if($dbh != $master_dbh) {   # replicate it in the release database:
-      my $ms_sth2 = $dbh->prepare( "INSERT INTO mapping_session(mapping_session_id, type, rel_from, rel_to, when_mapped, prefix) VALUES (?, ?, ?, ?, FROM_UNIXTIME(?), ?)" );
+  if (defined $mapping_session_id) {
+    warn "reusing previously generated mapping_session_id = '$mapping_session_id' for prefix '${prefix}'\n";
+
+  } else {
+    $ms_sth = $master_dbc->prepare( "INSERT INTO mapping_session(type, rel_from, rel_to, when_mapped, prefix) VALUES (?, ?, ?, FROM_UNIXTIME(?), ?)" );
+    $ms_sth->execute($fulltype, $ncsl->from->release(), $ncsl->to->release(), $timestamp, $prefix);
+    $mapping_session_id = $master_dbc->db_handle->last_insert_id(undef, undef, 'mapping_session', 'mapping_session_id');
+    warn "newly generated mapping_session_id = '$mapping_session_id' for prefix '${prefix}'\n";
+    $ms_sth->finish();
+  }
+
+  if($dbc != $master_dbc) {   # replicate it in the release database:
+      my $ms_sth2 = $dbc->prepare( "INSERT INTO mapping_session(mapping_session_id, type, rel_from, rel_to, when_mapped, prefix) VALUES (?, ?, ?, ?, FROM_UNIXTIME(?), ?)" );
       $ms_sth2->execute($mapping_session_id, $fulltype, $ncsl->from->release(), $ncsl->to->release(), $timestamp, $prefix);
       $ms_sth2->finish();
   }

@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2013] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -19,11 +19,11 @@ limitations under the License.
 
 =head1 CONTACT
 
-  Please email comments or questions to the public Ensembl
-  developers list at <dev@ensembl.org>.
+Please email comments or questions to the public Ensembl
+developers list at <http://lists.ensembl.org/mailman/listinfo/dev>.
 
-  Questions may also be sent to the Ensembl help desk at
-  <helpdesk@ensembl.org>.
+Questions may also be sent to the Ensembl help desk at
+<http://www.ensembl.org/Help/Contact>.
 
 =head1 NAME
 
@@ -32,10 +32,12 @@ Bio::EnsEMBL::Compara::GeneTreeMember
 =head1 DESCRIPTION
 
 Currently the GeneTreeMember objects are used to represent the leaves of
-the gene trees (whether they contain proteins or non-coding RNas).
+the gene trees (whether they contain proteins or non-coding RNAs).
 
 Each GeneTreeMember object is simultaneously a tree node (inherits from
 GeneTreeNode) and an aligned member (inherits from AlignedMember).
+
+The object only overrides a few methods from its parents, and does not have additional functionality.
 
 =head1 INHERITANCE TREE
 
@@ -45,20 +47,14 @@ GeneTreeNode) and an aligned member (inherits from AlignedMember).
 
 =head1 AUTHORSHIP
 
-Ensembl Team. Individual contributions can be found in the CVS log.
-
-=head1 MAINTAINER
-
-$Author$
-
-=head VERSION
-
-$Revision$
+Ensembl Team. Individual contributions can be found in the GIT log.
 
 =head1 APPENDIX
 
 The rest of the documentation details each of the object methods.
 Internal methods are usually preceded with an underscore (_)
+
+=head1 METHODS
 
 =cut
 
@@ -87,7 +83,6 @@ sub copy {
   
   my $mycopy = $self->Bio::EnsEMBL::Compara::GeneTreeNode::copy;
                $self->Bio::EnsEMBL::Compara::AlignedMember::copy($mycopy);     # we could rename this method into topup() as it is not needed by 'AlignedMember' class itself
-  bless $mycopy, 'Bio::EnsEMBL::Compara::GeneTreeMember';
   
   return $mycopy;
 }
@@ -101,7 +96,7 @@ sub copy {
                 left and right indexes are printed, then the species name. If the
                 gene member can be determined, the methods prints the stable_id,
                 the display label and location of the gene member, otherwise the
-                member_id and stable_id of the object are printed.
+                seq_member_id and stable_id of the object are printed.
   Returntype  : none
   Exceptions  : none
   Caller      : general
@@ -115,12 +110,12 @@ sub string_node {
     if($self->genome_db_id and $self->adaptor) {
       $str .= sprintf(" %s", $self->genome_db->name) 
     }
-  if($self->gene_member) {
-    $str .= sprintf(" %s %s %s:%d-%d",
-      $self->gene_member->stable_id, $self->gene_member->display_label || '', $self->gene_member->chr_name || '',
-      $self->gene_member->dnafrag_start || 0, $self->gene_member->dnafrag_end || 0);
+  if(my $gene_member = $self->gene_member) {
+    $str .= " ".$gene_member->stable_id;
+    $str .= sprintf(" (%s)", $gene_member->display_label) if $gene_member->display_label;
+    $str .= sprintf(" %s:%d-%d", $gene_member->dnafrag->name, $gene_member->dnafrag_start, $gene_member->dnafrag_end) if $gene_member->dnafrag_id;
   } elsif($self->stable_id) {
-    $str .= sprintf(" (%d) %s", $self->member_id, $self->stable_id);
+    $str .= sprintf(" (%d) %s", $self->seq_member_id, $self->stable_id);
   }
   $str .= "\n";
 }

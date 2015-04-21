@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2013] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -20,10 +20,10 @@ limitations under the License.
 =head1 CONTACT
 
   Please email comments or questions to the public Ensembl
-  developers list at <dev@ensembl.org>.
+  developers list at <http://lists.ensembl.org/mailman/listinfo/dev>.
 
   Questions may also be sent to the Ensembl help desk at
-  <helpdesk@ensembl.org>.
+  <http://www.ensembl.org/Help/Contact>.
 
 =head1 NAME
 
@@ -31,7 +31,7 @@ Bio::EnsEMBL::Compara::RunnableDB::DBMergeCheck
 
 =head1 AUTHORSHIP
 
-Ensembl Team. Individual contributions can be found in the CVS log.
+Ensembl Team. Individual contributions can be found in the GIT log.
 
 =head1 SYNOPSYS
 
@@ -52,7 +52,7 @@ It works by:
     - first by comparing the interval of the primary key
     - then comparing the actual values if needed
  4. If everything is fine, the jobs are all dataflown
- 
+
 Primary keys can most of the time be guessed from the schema.
 However, you can define the hash primary_keys as 'table' => 'column_name'
 to override some of the keys / provide them if they are not part of the schema.
@@ -91,8 +91,8 @@ sub param_defaults {
         'master_name'       => 'master_db',     # the master database (gives the list of tables that shouldn't be copied)
 
         # Static list of tables that must be ignored
-        'production_tables' => [qw(ktreedist_score recovered_member removed_member cmsearch_hit CAFE_data protein_tree_backup protein_tree_qc split_genes mcl_sparse_matrix statistics constrained_element_production dnafrag_chunk lr_index_offset dnafrag_chunk_set dna_collection)],
-        'hive_tables'       => [qw(hive_meta analysis_base analysis_data job job_file log_message analysis_stats analysis_stats_monitor analysis_ctrl_rule dataflow_rule worker monitor resource_description resource_class lsf_report analysis job_message)],
+        'production_tables' => [qw(ktreedist_score recovered_member cmsearch_hit CAFE_data gene_tree_backup split_genes mcl_sparse_matrix statistics constrained_element_production dnafrag_chunk lr_index_offset dnafrag_chunk_set dna_collection)],
+        'hive_tables'       => [qw(accu hive_meta analysis_base analysis_data job job_file log_message analysis_stats analysis_stats_monitor analysis_ctrl_rule dataflow_rule worker monitor resource_description resource_class lsf_report analysis job_message pipeline_wide_parameters role worker_resource_usage)],
 
         # How to compare overlapping data. Primary keys are read from the schema unless overriden here
         'primary_keys'      => {
@@ -291,8 +291,7 @@ sub run {
                     $sql = "SELECT DISTINCT $key FROM $table";
                     my %all_values = ();
                     foreach my $db (@dbs) {
-                        my $sth = $dbconnections->{$db}->prepare($sql);
-                        $sth->{mysql_use_result} = 1;
+                        my $sth = $dbconnections->{$db}->prepare($sql, { 'mysql_use_result' => 1 });
                         $sth->execute;
                         my $value;
                         $sth->bind_columns(\$value);
@@ -331,11 +330,12 @@ sub write_output {
 
     while ( my ($table, $dbs) = each(%{$self->param('merge')}) ) {
         my $n_total_rows = $table_size->{$curr_rel_name}->{$table} || 0;
+        my @inputlist = ();
         foreach my $db (@$dbs) {
-            $self->dataflow_output_id( {'src_db_conn' => "#$db#", 'table' => $table}, 3);
+            push @inputlist, [ "#$db#" ];
             $n_total_rows += $table_size->{$db}->{$table};
         }
-        $self->dataflow_output_id( {'table' => $table, 'n_total_rows' => $n_total_rows, 'key' => $primary_keys->{$table}}, 4);
+        $self->dataflow_output_id( {'table' => $table, 'inputlist' => \@inputlist, 'n_total_rows' => $n_total_rows, 'key' => $primary_keys->{$table}}, 3);
     }
 
 }

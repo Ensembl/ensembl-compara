@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2013] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -20,17 +20,14 @@ limitations under the License.
 =head1 CONTACT
 
   Please email comments or questions to the public Ensembl
-  developers list at <dev@ensembl.org>.
+  developers list at <http://lists.ensembl.org/mailman/listinfo/dev>.
 
   Questions may also be sent to the Ensembl help desk at
-  <helpdesk@ensembl.org>.
+  <http://www.ensembl.org/Help/Contact>.
 
 =head1 NAME
 
 Bio::EnsEMBL::Compara::RunnableDB::MercatorPecan::DumpMercatorFiles 
-
-=head1 SYNOPSIS
-
 
 =head1 DESCRIPTION
 
@@ -133,7 +130,7 @@ sub dumpMercatorFiles {
 	      next if ($this_mapping->length < $max_gap);
 	      # print join(" :: ", $df->name, $this_mapping->length, $this_mapping->start, $this_mapping->end), "\n";
 	      print F $df->name . "--$part\t" . $df->length,"\n";
-	      $dnafrags->{$df->name}->{$this_mapping->start} = $df->name."--".$part;
+	      $dnafrags->{$df->dbID}->{$this_mapping->start} = $df->name."--".$part;
 	      $part++;
 	  }
       }
@@ -143,21 +140,21 @@ sub dumpMercatorFiles {
   ## Create the anchor file for Mercator
   $file = $self->param('input_dir') . "/$gdb_id.anchors";
   open F, ">$file";
-  foreach my $member (@{$ma->fetch_all_by_source_genome_db_id('ENSEMBLPEP', $gdb_id)}) {
+  foreach my $member (@{$ma->fetch_all_by_GenomeDB($gdb_id)}) {
       my $strand = "+";
       $strand = "-" if ($member->dnafrag_strand == -1);
-      my $chr_name = $member->chr_name;
-      if (defined($dnafrags->{$member->chr_name})) {
-	  foreach my $this_start (sort {$a <=> $b} keys %{$dnafrags->{$member->chr_name}}) {
+      my $dnafrag_name = $member->dnafrag->name;
+      if (defined($dnafrags->{$member->dnafrag_id})) {
+	  foreach my $this_start (sort {$a <=> $b} keys %{$dnafrags->{$member->dnafrag_id}}) {
 	      if ($this_start > $member->dnafrag_start - 1) {
 		  last;
 	      } else {
-		  $chr_name = ($dnafrags->{$member->chr_name}->{$this_start} or $member->chr_name);
+		  $dnafrag_name = ($dnafrags->{$member->dnafrag_id}->{$this_start} or $member->dnafrag->name);
 	      }
 	  }
       }
       print F $member->dbID . "\t" .
-        $chr_name ."\t" .
+        $dnafrag_name ."\t" .
           $strand . "\t" .
             ($member->dnafrag_start - 1) ."\t" .
               $member->dnafrag_end ."\t1\n";

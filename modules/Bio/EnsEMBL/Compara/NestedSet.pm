@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2013] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -18,9 +18,7 @@ limitations under the License.
 
 =head1 NAME
 
-NestedSet - DESCRIPTION of Object
-
-=head1 SYNOPSIS
+Bio::EnsEMBL::Compara::NestedSet
 
 =head1 DESCRIPTION
 
@@ -32,9 +30,11 @@ Designed to be used as the Root class for all Compara 'proxy' classes
 
 =head1 CONTACT
 
-  Contact Albert Vilella on implementation detail: avilella@ebi.ac.uk
-  Contact Jessica Severin on implementation/design detail: jessica@ebi.ac.uk
-  Contact Ewan Birney on EnsEMBL in general: birney@sanger.ac.uk
+Please email comments or questions to the public Ensembl
+developers list at <http://lists.ensembl.org/mailman/listinfo/dev>.
+
+Questions may also be sent to the Ensembl help desk at
+<http://www.ensembl.org/Help/Contact>.
 
 =head1 APPENDIX
 
@@ -52,12 +52,16 @@ use warnings;
 use Bio::EnsEMBL::Utils::Exception;
 use Bio::EnsEMBL::Utils::Argument;
 
-use Bio::EnsEMBL::Utils::Exception qw(deprecate throw);
+use Bio::EnsEMBL::Utils::Exception qw(throw warning);
 use Bio::EnsEMBL::Utils::Scalar qw(:assert);
 
+use Bio::EnsEMBL::Storable;
+
 use Bio::TreeIO;
+
 use Bio::EnsEMBL::Compara::Graph::Node;
-our @ISA = qw(Bio::EnsEMBL::Compara::Graph::Node);
+
+our @ISA = qw(Bio::EnsEMBL::Compara::Graph::Node Bio::EnsEMBL::Storable);
 
 #################################################
 # Factory methods
@@ -113,8 +117,7 @@ sub cast {
 sub copy {
   my $self = shift;
 
-  my $mycopy = $self->SUPER::copy; 
-  bless $mycopy, ref $self;
+  my $mycopy = $self->SUPER::copy(@_);
 
   $mycopy->distance_to_parent($self->distance_to_parent);
   $mycopy->left_index($self->left_index);
@@ -145,6 +148,13 @@ sub release_tree {
   $self->disavow_parent;
   $self->cascade_unlink if($child_count);
   return undef;
+}
+
+
+sub dbID {
+    my ($self) = @_;
+#    throw("NestedSet objects do not implement dbID()");
+    return $self->node_id;
 }
 
 #################################################
@@ -455,11 +465,38 @@ sub get_all_nodes {
 
   push @$node_array, $self;
   foreach my $child (@{$self->children}) {
+    no warnings 'recursion';
     $child->get_all_nodes($node_array);
   }
 
   return $node_array;
 }
+
+=head2 get_all_sorted_nodes
+
+  Arg 1       : arrayref $node_array [used for recursivity, do not use it!]
+  Example     : my $all_sorted_nodes = $root->get_sorted_nodes();
+  Description : Returns this and all underlying sub nodes ordered
+  ReturnType  : listref of Bio::EnsEMBL::Compara::NestedSet objects
+  Exceptions  : none
+  Caller      : general
+  Status      : Stable
+
+=cut
+
+sub get_all_sorted_nodes {
+  my $self = shift;
+  my $node_array = shift || [];
+
+  push @$node_array, $self;
+  foreach my $child (@{$self->sorted_children}) {
+    no warnings 'recursion';
+    $child->get_all_sorted_nodes($node_array);
+  }
+
+  return $node_array;
+}
+
 
 
 =head2 get_all_nodes_by_tag_value
@@ -584,7 +621,7 @@ sub get_all_adjacent_subtrees {
   Status      : At risk (relies on left and right indexes)
 
 =cut
-#'
+
 sub num_leaves {
    my $self = shift;
 
@@ -897,19 +934,19 @@ sub string_node {
     my $isdub = ($self->get_tagvalue('node_type', '') eq 'dubious');
 
     if ($isdup) {
-        if ((defined $self->species_tree_node) && ($self->species_tree_node->genome_db_id)) {
+        if ($self->isa('Bio::EnsEMBL::Compara::GeneTreeNode') and (defined $self->species_tree_node) && ($self->species_tree_node->genome_db_id)) {
             $str .= "Dup ";
         } else {
             $str .= "DUP ";
         }
        my $sis = $self->get_tagvalue('duplication_confidence_score', 0) * 100;
-       $str .= sprintf('SIS=%d ', $sis);
+       $str .= sprintf('SIS=%.2f ', $sis);
     } elsif ($isdub) {
         $str .= "DD  ";
        $str .= 'SIS=0 ';
     }
     if($self->has_tag("bootstrap")) { my $bootstrap_value = $self->bootstrap(); $str .= "B=$bootstrap_value "; }
-    if($self->taxonomy_level) { my $taxon_name_value = $self->taxonomy_level(); $str .="T=$taxon_name_value "; }
+    if($self->can('taxonomy_level') && $self->taxonomy_level) { my $taxon_name_value = $self->taxonomy_level(); $str .="T=$taxon_name_value "; }
     $str .= sprintf("%s %d,%d)", $self->node_id, $self->left_index, $self->right_index);
     $str .= sprintf("%s\n", $self->name || '');
     return $str;
@@ -922,7 +959,7 @@ sub string_node {
   Example     : $this_node->newick_format("full");
   Description : Prints this tree in Newick format. Several modes are
                 available: full, display_label_composite, simple, species,
-                species_short_name, ncbi_taxon, ncbi_name, njtree and phylip
+                species_short_name, ncbi_taxon, ncbi_name, phylip
   Returntype  : string
   Exceptions  :
   Caller      : general
@@ -933,24 +970,23 @@ sub string_node {
 my %ryo_modes = (
     'member_id' => '%{^-m}:%{d}',
     'member_id_taxon_id' => '%{-m}%{"_"-x}:%{d}',
-    'display_label_composite' => '%{-l"_"}%{n}%{"_"-s}:%{d}',
+    'display_label_composite' => '%{-l,"_"}%{n}%{"_"-s}:%{d}',
     'full_common' => '%{n}%{" "-c.^}%{"."-g}%{"_"-t"_MYA"}:%{d}',
     'gene_stable_id_composite' => '%{-i"_"}%{n}%{"_"-s}:%{d}',
     'gene_stable_id' => '%{-i}:%{d}',
     'ncbi_taxon' => '%{o}',
     'ncbi_name' => '%{n}',
-    'simple' => '%{^-n}:%{d}',
-    'full' => '%{n}:%{d}',
+    'simple' => '%{^-n|i}:%{d}',
+    'full' => '%{n|i}:%{d}',
     'species' => '%{^-S|p}',
     'species_short_name' => '%{^-s|p}',
     'otu_id' => '%{-s"|"}%{-l"|"}%{n}:%{d}',
     'int_node_id' => '%{-n}%{o-}:%{d}',
     'full_web' => '%{n-}%{-n|p}%{"_"-s"_"}%{":"d}',
     'phylip' => '%21{n,}:%{d}',
-    'njtree' => '%{o}%{-T(is_incomplete)|E"*"}%{-T(is_incomplete,0,*)}',
 );
 
-my $nhx0 = '%{n-_|C(taxonomy_level)}:%{d}';
+my $nhx0 = '%{-n,|i|C(taxonomy_level)}:%{d}';
 my $nhx1 = ':%{-E"D=N"}%{C(_newick_dup_code)-}%{":B="C(bootstrap)}';
 my $nhx2 = ':T=%{-x}%{C(species_tree_node,taxon_id)-}';
 
@@ -961,8 +997,8 @@ my %nhx_ryo_modes_1 = (
     'gene_id' => '%{-i}'.$nhx0,
     'full' => $nhx0,
     'full_web' => $nhx0,
-    'display_label' => '%{-L|i}%{"_"-s}'.$nhx0,
-    'display_label_composite' => '%{-L"_"}%{-i}%{"_"-s}'.$nhx0,
+    'display_label' => '%{-l,|i}%{"_"-s}'.$nhx0,
+    'display_label_composite' => '%{-l,"_"}%{-i}%{"_"-s}'.$nhx0,
     'treebest_ortho' => '%{-m}%{"_"-x}'.$nhx0,
     'simple' => $ryo_modes{'simple'},
     'phylip' => $ryo_modes{'phylip'},
@@ -1002,6 +1038,22 @@ sub newick_format {
     return $self->_internal_newick_format_ryo($ryo_string);
 }
 
+
+=head2 nhx_format
+
+  Arg [1]     : string $format_mode
+  Example     : $this_node->nhx_format("full");
+  Description : Prints this tree in NHX format. Several modes are:
+                member_id_taxon_id, protein_id, transcript_id, gene_id,
+                full, full_web, display_label, display_label_composite,
+                treebest_ortho, simple, phylip
+  Returntype  : string
+  Exceptions  :
+  Caller      : general
+  Status      : Stable
+
+=cut
+
 sub nhx_format {
     my ($self, $format_mode) = @_;
     my $ryo_string1;
@@ -1031,8 +1083,8 @@ sub _internal_newick_format_ryo {
     my ($self, $ryo_string) = @_;
     my $newick_str;
     eval {
-        use Bio::EnsEMBL::Compara::FormatTree;
-        my $ryo_formatter = Bio::EnsEMBL::Compara::FormatTree->new($ryo_string);
+        use Bio::EnsEMBL::Compara::Utils::FormatTree;
+        my $ryo_formatter = Bio::EnsEMBL::Compara::Utils::FormatTree->new($ryo_string);
         $newick_str = $ryo_formatter->format_newick($self);
     };
     if ($@) {
@@ -1041,17 +1093,6 @@ sub _internal_newick_format_ryo {
     return "$newick_str;";
 }
 
-=head2 newick_simple_format
-
-    DEPRECATED. Use newick_format("simple") instead
-
-=cut
-
-sub newick_simple_format {
-  my $self = shift;
-  deprecate('Use newick_format("simple") instead.');
-  return $self->newick_format('simple'); 
-}
 
 
 ##################################

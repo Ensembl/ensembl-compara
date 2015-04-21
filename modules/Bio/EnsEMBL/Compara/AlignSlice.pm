@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2013] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -20,10 +20,10 @@ limitations under the License.
 =head1 CONTACT
 
   Please email comments or questions to the public Ensembl
-  developers list at <dev@ensembl.org>.
+  developers list at <http://lists.ensembl.org/mailman/listinfo/dev>.
 
   Questions may also be sent to the Ensembl help desk at
-  <helpdesk@ensembl.org>.
+  <http://www.ensembl.org/Help/Contact>.
 
 =head1 NAME
 
@@ -122,9 +122,9 @@ and invert(). Some other methods work as expected (seq, subseq, get_all_Attribut
 get_all_VariationFeatures, get_all_RepeatFeatures...). All these Bio::EnsEMBL::Compara::AlignSlice::Slice
 share the same fake coordinate system defined by the Bio::EnsEMBL::Compara::AlignSlice. This allows to
 map features from one species onto the others.
-  
+
 =head1 SYNOPSIS
-  
+
   use Bio::EnsEMBL::Compara::AlignSlice;
   
   ## You may create your own AlignSlice objects but if you are interested in
@@ -195,6 +195,8 @@ package Bio::EnsEMBL::Compara::AlignSlice;
 
 use strict;
 use warnings;
+
+use Scalar::Util qw(weaken);
 
 use Bio::EnsEMBL::Utils::Argument qw(rearrange);
 use Bio::EnsEMBL::Utils::Exception qw(throw warning info verbose);
@@ -441,14 +443,22 @@ sub get_all_Slices {
   my $slices = [];
 
   if (@species_names) {
+
+    #Substitute _ for spaces & check if the current GenomeDB matches with any of them
+    my %species_to_keep = ();
+    foreach my $this_species_name (@species_names) {
+      ( my $space_species_name = $this_species_name ) =~ s/_/ /g;
+      $species_to_keep{$this_species_name} = 1;
+      $species_to_keep{$space_species_name} = 1;
+    }
+
+    my %removed_species = ();
+    $self->{_removed_species} = \%removed_species;
     foreach my $slice ( @{ $self->{_slices} } ) {
-      #Substitute _ for spaces & check if the current GenomeDB matches with 
-      #or without them
-      foreach my $this_species_name (@species_names) {
-        ( my $space_species_name = $this_species_name ) =~ s/_/ /g;
-        push( @$slices, $slice )
-          if ( ( $this_species_name eq $slice->genome_db->name )
-          || ( $space_species_name eq $slice->genome_db->name ) );
+      if ($species_to_keep{$slice->genome_db->name}) {
+        push @$slices, $slice;
+      } else {
+        $removed_species{$slice->genome_db->name} = 1;
       }
     }
   }
@@ -654,10 +664,13 @@ sub get_SimpleAlign {
     my $seq = Bio::LocatableSeq->new(
             -SEQ    => $slice->seq,
             -START  => $slice->start,
-            -END    => $slice->end,
+            #-END    => $slice->end,
             -ID     => $slice->genome_db->name.($genome_db_name_counter->{$slice->genome_db->name} or ""),
             -STRAND => $slice->strand
         );
+    # Avoid warning in BioPerl about len(seq) != end-start+1
+    $seq->{end} = $slice->end;
+
     ## This allows to have several sequences for the same species. Bio::SimpleAlign complains
     ## about having the same ID, START and END for two sequences...
     if (!defined($genome_db_name_counter->{$slice->genome_db->name})) {
@@ -742,6 +755,7 @@ sub get_all_ConservationScores {
   Status     : At risk
 
 =cut
+
 sub _get_expanded_conservation_scores {
     my ($self, $conservation_score_adaptor, $display_size, $display_type, $window_size) = @_;
     my $y_axis_min;
@@ -829,6 +843,7 @@ sub _get_expanded_conservation_scores {
   Status     : At risk
 
 =cut
+
 sub _get_condensed_conservation_scores {
     my ($self, $conservation_score_adaptor, $display_size, $display_type, $window_size) = @_;
 
@@ -1236,6 +1251,8 @@ sub _add_GenomicAlign_to_a_Slice {
           $simple_tree =~ s/\_[^\_]+\_\d+\_\d+\[[\+\-]\]//g;
           $simple_tree =~ s/\:[\d\.]+//g;
           $this_core_slice->{_tree} = $simple_tree;
+          $this_core_slice->{_node_in_tree} = $genomic_align_node;
+          weaken($this_core_slice->{_node_in_tree});
           last;
         }
       }
@@ -1432,11 +1449,13 @@ sub _sort_and_restrict_GenomicAlignBlocks {
         $this_genomic_align_block = $this_genomic_align_block->restrict_between_reference_positions($last_end + 1, undef);
       } else {
 	  warning("Ignoring GenomicAlignBlock because it overlaps".
-                " previous GenomicAlignBlock " . $this_genomic_align_block->dbID);
+                " previous GenomicAlignBlock ");
+#                " previous GenomicAlignBlock " . $this_genomic_align_block->dbID);
         next;
       }
     }
     $last_end = $this_genomic_align_block->reference_genomic_align->dnafrag_end;
+
     push(@$sorted_genomic_align_blocks, $this_genomic_align_block);
   }
 
@@ -1598,7 +1617,7 @@ sub _sort_and_compile_GenomicAlignBlocks {
       # there is a gap between this genomic_align_block and the previous one. Close and save
       # this set_of_genomic_align_blocks (if it exists) and start a new one.
       push(@{$sets_of_genomic_align_blocks}, [$start_pos, $end_pos, $this_set_of_genomic_align_blocks])
-          if (defined(@$this_set_of_genomic_align_blocks));
+          if (@$this_set_of_genomic_align_blocks);
       $start_pos = $this_start_pos;
       $end_pos = $this_end_pos;
       $this_set_of_genomic_align_blocks = [];
@@ -1606,7 +1625,7 @@ sub _sort_and_compile_GenomicAlignBlocks {
     push(@$this_set_of_genomic_align_blocks, $this_genomic_align_block);
   }
   push(@{$sets_of_genomic_align_blocks}, [$start_pos, $end_pos, $this_set_of_genomic_align_blocks])
-        if (defined(@$this_set_of_genomic_align_blocks));
+        if (@$this_set_of_genomic_align_blocks);
   ##
   ##############################################################################################
 

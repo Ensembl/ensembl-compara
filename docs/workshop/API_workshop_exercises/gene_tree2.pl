@@ -1,4 +1,4 @@
-# Copyright [1999-2013] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+# Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 # 
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -28,7 +28,7 @@ my $gene_member_adaptor = $reg->get_adaptor("Multi", "compara", "GeneMember");
 my $gene_tree_adaptor = $reg->get_adaptor("Multi", "compara", "GeneTree");
 
 ## Get the compara member
-my $gene_member = $gene_member_adaptor->fetch_by_source_stable_id("ENSEMBLGENE", "ENSG00000238344");
+my $gene_member = $gene_member_adaptor->fetch_by_stable_id("ENSG00000238344");
 
 ## Get the tree for this member
 my $tree = $gene_tree_adaptor->fetch_default_for_Member($gene_member);

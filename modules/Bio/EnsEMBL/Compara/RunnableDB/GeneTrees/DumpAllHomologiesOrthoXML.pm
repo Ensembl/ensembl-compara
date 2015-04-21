@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2013] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -20,10 +20,10 @@ limitations under the License.
 =head1 CONTACT
 
   Please email comments or questions to the public Ensembl
-  developers list at <dev@ensembl.org>.
+  developers list at <http://lists.ensembl.org/mailman/listinfo/dev>.
 
   Questions may also be sent to the Ensembl help desk at
-  <helpdesk@ensembl.org>.
+  <http://www.ensembl.org/Help/Contact>.
 
 =head1 NAME
 
@@ -47,15 +47,7 @@ standaloneJob.pl Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::DumpAllHomologies
 
 =head1 AUTHORSHIP
 
-Ensembl Team. Individual contributions can be found in the CVS log.
-
-=head1 MAINTAINER
-
-$Author$
-
-=head VERSION
-
-$Revision$
+Ensembl Team. Individual contributions can be found in the GIT log.
 
 =head1 APPENDIX
 
@@ -103,8 +95,8 @@ sub run {
     print $HANDLE "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n";
     print $HANDLE "<orthoXML xmlns=\"http://orthoXML.org/2011/\" origin=\"Ensembl Compara\" version=\"0.3\" originVersion=\"$version\">\n";
 
-    my $sql = 'SELECT member.taxon_id, name, member_id, member.stable_id, assembly, genebuild,source_name FROM gene_tree_root JOIN gene_tree_node USING (root_id) JOIN member USING (member_id) JOIN genome_db USING (genome_db_id) WHERE clusterset_id = "default" GROUP BY taxon_id, member_id';
-    my $sth = $self->compara_dba->dbc->prepare($sql, {mysql_use_result=>1});
+    my $sql = 'SELECT seq_member.taxon_id, name, seq_member_id, seq_member.stable_id, assembly, genebuild,source_name FROM gene_tree_root JOIN gene_tree_node USING (root_id) JOIN seq_member USING (seq_member_id) JOIN genome_db USING (genome_db_id) WHERE clusterset_id = "default" GROUP BY taxon_id, seq_member_id';
+    my $sth = $self->compara_dba->dbc->prepare($sql, { 'mysql_use_result' => 1 });
     $sth->execute;
     my $last;
     while(my $rowhash = $sth->fetchrow_hashref) {
@@ -113,12 +105,12 @@ sub run {
             $last = ${$rowhash}{taxon_id};
             print $HANDLE "<species name=\"", ${$rowhash}{name}, "\" NCBITaxId=\"", $last, "\"><database name=\"Unknown\" version=\"", ${$rowhash}{assembly}, "/", ${$rowhash}{genebuild}, "\"><genes>\n";
         }
-        print $HANDLE "\t<gene id=\"", ${$rowhash}{member_id}, "\" ".(${$rowhash}{source_name} eq 'ENSEMBLPEP' ? "protId" : "transcriptId")."=\"", ${$rowhash}{stable_id}, "\"/>\n";
+        print $HANDLE "\t<gene id=\"", ${$rowhash}{seq_member_id}, "\" ".(${$rowhash}{source_name} =~ /PEP$/ ? "protId" : "transcriptId")."=\"", ${$rowhash}{stable_id}, "\"/>\n";
     }
     print $HANDLE "</genes></database></species>\n" if defined $last;
     print $HANDLE "<groups>\n";
 
-    $sql = "SELECT homology_id, peptide_member_id, homology.description FROM homology_member JOIN homology USING (homology_id) JOIN method_link_species_set USING (method_link_species_set_id) WHERE method_link_id=".$self->param('ortholog_method_link_id');
+    $sql = "SELECT homology_id, seq_member_id, homology.description FROM homology_member JOIN homology USING (homology_id) JOIN method_link_species_set USING (method_link_species_set_id) WHERE method_link_id=".$self->param('ortholog_method_link_id');
     if (defined $self->param('id_range')) {
         my $range = $self->param('id_range');
         $range =~ s/-/ AND /;
@@ -127,16 +119,16 @@ sub run {
     if ($self->param('strict_orthologies')) {
         $sql .= " AND is_tree_compliant = 1";
     }
-    $sth = $self->compara_dba->dbc->prepare($sql, {mysql_use_result=>1});
+    $sth = $self->compara_dba->dbc->prepare($sql, { 'mysql_use_result' => 1 });
 
     $sth->execute;
     my %seen;
     while(my $rowhash = $sth->fetchrow_hashref) {
         if (exists $seen{${$rowhash}{homology_id}}) {
-            print $HANDLE "<orthologGroup id=\"", ${$rowhash}{homology_id}, "\"><property name=\"homology_description\" value=\"", ${$rowhash}{description}, "\" /><geneRef id=\"", ${$rowhash}{peptide_member_id}, "\" /><geneRef id=\"", $seen{${$rowhash}{homology_id}}, "\" /></orthologGroup>\n";
+            print $HANDLE "<orthologGroup id=\"", ${$rowhash}{homology_id}, "\"><property name=\"homology_description\" value=\"", ${$rowhash}{description}, "\" /><geneRef id=\"", ${$rowhash}{seq_member_id}, "\" /><geneRef id=\"", $seen{${$rowhash}{homology_id}}, "\" /></orthologGroup>\n";
             delete $seen{${$rowhash}{homology_id}};
         } else {
-            $seen{${$rowhash}{homology_id}} = ${$rowhash}{peptide_member_id};
+            $seen{${$rowhash}{homology_id}} = ${$rowhash}{seq_member_id};
         }
     }
     

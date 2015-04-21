@@ -1,5 +1,5 @@
 #!/usr/bin/env perl
-# Copyright [1999-2013] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+# Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 # 
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -59,7 +59,6 @@ my $genomic_align_adaptor = $compara_db_adaptor->get_GenomicAlignAdaptor();
 my $genomic_align_block_adaptor = $compara_db_adaptor->get_GenomicAlignBlockAdaptor();
 my $method_link_species_set_adaptor = $compara_db_adaptor->get_MethodLinkSpeciesSetAdaptor();
 my $dnafrag_adaptor = $compara_db_adaptor->get_DnaFragAdaptor();
-my $genomic_align_group_adaptor = $compara_db_adaptor->get_GenomicAlignGroupAdaptor();
 my $genomeDB_adaptor = $compara_db_adaptor->get_GenomeDBAdaptor();
 my $fail;
 
@@ -183,7 +182,7 @@ subtest "Test dnafrag throw conditions", sub {
                                                                 -dbID => $dbID,
                                                                 -dnafrag_id => $dnafrag_id + 1
                                                             );
-    is(eval{$genomic_align->dnafrag($dnafrag)}, undef,"Testing throw condition");
+   is(eval{$genomic_align->dnafrag($dnafrag)}, undef,"Testing throw condition");
 
     done_testing();
 };
@@ -209,6 +208,25 @@ subtest "Test Bio::EnsEMBL::Compara::GenomicAlign::copy", sub {
 
 };
 
+subtest "Test Bio::EnsEMBL::Compara::GenomicAlign::original_sequence method", sub {
+    my $original_sequence = "AAGGTCCCTAGTCCTCTAAAAGTCCTTGAGTCCTACTCTGCTGAACCTAACTGGTCAAGAACTAAGGACCTGATCAGCAAGGTTTGTGAGCATCAGTTGG";
+    my $cigar_line = "10M3D90M";
+    my $aligned_sequence = "AAGGTCCCTA---GTCCTCTAAAAGTCCTTGAGTCCTACTCTGCTGAACCTAACTGGTCAAGAACTAAGGACCTGATCAGCAAGGTTTGTGAGCATCAGTTGG";
+    my $length = 103;
+
+    my $genomic_align = new Bio::EnsEMBL::Compara::GenomicAlign(
+                                                                -dnafrag => $dnafrag,
+                                                                -dnafrag_start => 1,
+                                                                -dnafrag_end => 100,
+                                                                -dnafrag_strand => 1,
+                                                               );
+    #Need to set this separately
+    $genomic_align->aligned_sequence($aligned_sequence);
+    is($genomic_align->original_sequence, $original_sequence, "Trying to get original_sequence from aligned_sequence");
+    is($genomic_align->length, $length, "length");
+    done_testing();
+
+};
 
 subtest "Test Bio::EnsEMBL::Compara::GenomicAlign::aligned_sequence method", sub {
     my $original_sequence = "AAGGTCCCTAGTCCTCTAAAAGTCCTTGAGTCCTACTCTGCTGAACCTAACTGGTCAAGAACTAAGGACCTGATCAGCAAGGTTTGTGAGCATCAGTTGG";
@@ -313,8 +331,9 @@ subtest "Test Bio::EnsEMBL::Compara::GenomicAlign::cigar_line method", sub {
     my $genomic_align = new Bio::EnsEMBL::Compara::GenomicAlign(
                                                                 -adaptor => $genomic_align_adaptor,
                                                                 -dbID => $dbID,
-                                                                -aligned_sequence => $aligned_sequence,
+#                                                                -aligned_sequence => $aligned_sequence,
                                                                );
+    $genomic_align->aligned_sequence($aligned_sequence);
 
     is($genomic_align->cigar_line, $cigar_line, "Trying to get cigar_line from aligned_sequence");
     is($genomic_align->original_sequence, $original_sequence, "Trying to get original_sequence from aligned_sequence");

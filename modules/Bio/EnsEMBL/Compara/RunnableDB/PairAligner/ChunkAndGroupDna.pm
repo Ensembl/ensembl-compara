@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2013] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -20,10 +20,10 @@ limitations under the License.
 =head1 CONTACT
 
   Please email comments or questions to the public Ensembl
-  developers list at <dev@ensembl.org>.
+  developers list at <http://lists.ensembl.org/mailman/listinfo/dev>.
 
   Questions may also be sent to the Ensembl help desk at
-  <helpdesk@ensembl.org>.
+  <http://www.ensembl.org/Help/Contact>.
 
 =head1 NAME
 
@@ -254,18 +254,17 @@ sub create_chunks
                                                         $self->param('chunkset_counter')));
 
   $self->param('chunkset_counter', ($self->param('chunkset_counter') + 1));
-  
   #Temporary fix to problem in core when masking haplotypes because the
   #assembly mapper is cached but shouldn't be
   #if including haplotypes
-  my $asm;
-  if (defined $self->param('include_non_reference')) {
-      my $asma = $genome_db->db_adaptor->get_AssemblyMapperAdaptor;
-      my $csa = $genome_db->db_adaptor->get_CoordSystemAdaptor;
-      my $cs1 = $csa->fetch_by_name("Chromosome",$genome_db->assembly);
-      my $cs2 = $csa->fetch_by_name("Contig");
-      $asm = $asma->fetch_by_CoordSystems($cs1,$cs2);
-  }
+#  my $asm;
+#  if (defined $self->param('include_non_reference')) {
+#      my $asma = $genome_db->db_adaptor->get_AssemblyMapperAdaptor;
+#      my $csa = $genome_db->db_adaptor->get_CoordSystemAdaptor;
+#      my $cs1 = $csa->fetch_by_name("Chromosome",$genome_db->assembly);
+#      my $cs2 = $csa->fetch_by_name("Contig");
+#      $asm = $asma->fetch_by_CoordSystems($cs1,$cs2);
+#  }
   my $starttime = time();
 
   foreach my $chr (@{$chromosomes}) {
@@ -305,9 +304,9 @@ sub create_chunks
     $self->create_dnafrag_chunks($dnafrag, $masking_options, $chr->start, $chr->end);
     #Temporary fix to problem in core when masking haplotypes because the
     #assembly mapper is cached but shouldn't be  
-    if (defined $asm) {
-	$asm->flush;
-    }
+    #if (defined $asm) {
+#	$asm->flush;
+#    }
   }
 
   print "genome_db ",$genome_db->dbID, " : total time ", (time()-$starttime), " secs\n";

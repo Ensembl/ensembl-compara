@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2013] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -34,7 +34,7 @@ Example:
 supported keys:
     'genome_db_id'  => <number>
         the id of the genome to be checked (main input_id parameter)
-        
+
     'registry_dbs'  => <list_of_dbconn_hashes>
         list of hashes with registry connection parameters (tried in succession).
 
@@ -62,10 +62,26 @@ sub fetch_input {
     my $self = shift @_;
 
     my $genome_db_adaptor   = $self->compara_dba->get_GenomeDBAdaptor;
+    $genome_db_adaptor->_id_cache->clear_cache();
 
     my $genome_db_id = $self->param('genome_db_id');
     my $genome_db    = $genome_db_adaptor->fetch_by_dbID($genome_db_id) or die "Could not fetch genome_db with genome_db_id='$genome_db_id'";
     my $species_name = $self->param('species_name', $genome_db->name());
+
+    # For polyploid genomes, the reusability is only assessed on the principal genome
+    if ($genome_db->genome_component) {
+        # -1 means that we haven't checked the species
+        $self->param('reuse_this', -1);
+        return;
+
+    # But in fact, we can't assess the reusability of a polyploid genomes
+    # that comes from files. This is because we would have to read the
+    # files of the components, which shouldn't be done in this module (this
+    # module only deals with *1* genome at a time)
+    } elsif ($genome_db->is_polyploid and not comes_from_core_database($genome_db)) {
+        $self->param('reuse_this', 0);
+        return;
+    }
 
     return if(defined($self->param('reuse_this')));  # bypass fetch_input() and run() in case 'reuse_this' has already been passed
 
@@ -97,10 +113,12 @@ sub fetch_input {
         eval {
             $reuse_genome_db = $reuse_genome_db_adaptor->fetch_by_name_assembly($species_name, $genome_db->assembly);
         };
-        unless($reuse_genome_db) {
+        if (not $reuse_genome_db and ($@ and $@ =~ /No matches found for name/)) {
             $self->warning("Could not fetch genome_db object for name='$species_name' and assembly='".$genome_db->assembly."' from reuse_db");
             $self->param('reuse_this', 0);
             return;
+        } elsif ($@) {
+            die $@;
         }
         my $reuse_genome_db_id = $reuse_genome_db->dbID();
 
@@ -144,8 +162,8 @@ sub fetch_input {
         if ($prev_core_dba) {
             my $curr_core_dba = $self->param('curr_core_dba', $genome_db->db_adaptor);
 
-            my $curr_assembly = $curr_core_dba->extract_assembly_name;
-            my $prev_assembly = $prev_core_dba->extract_assembly_name;
+            my $curr_assembly = $curr_core_dba->assembly_name;
+            my $prev_assembly = $prev_core_dba->assembly_name;
 
             if($curr_assembly ne $prev_assembly) {
 
@@ -207,7 +225,8 @@ sub write_output {      # store the genome_db and dataflow
     $self->dataflow_output_id( $output_hash, 1);
 
         # in addition, the flow is split between branches 2 and 3 depending on $reuse_this:
-    $self->dataflow_output_id( $output_hash, $reuse_this ? 2 : 3);
+        # reuse_this=-1 is ignored
+    $self->dataflow_output_id( $output_hash, $reuse_this ? 2 : 3) if $reuse_this >= 0;
 }
 
 
@@ -217,15 +236,6 @@ sub comes_from_core_database {
     my $genome_db = shift;
     return 1 unless defined $genome_db->locator;
     return ($genome_db->locator =~ /^Bio::EnsEMBL::Compara::GenomeMF/ ? 0 : 1);
-}
-
-sub Bio::EnsEMBL::DBSQL::DBAdaptor::extract_assembly_name {
-    my $self = shift @_;
-
-    my ($cs) = @{$self->get_CoordSystemAdaptor->fetch_all()};
-    my $assembly_name = $cs->version;
-
-    return $assembly_name;
 }
 
 
@@ -240,14 +250,14 @@ sub hash_all_exons_from_dbc {
            AND et.exon_id=e.exon_id
            AND t.seq_region_id = sr.seq_region_id
            AND sr.coord_system_id = cs.coord_system_id
-           AND t.biotype=?
+           AND t.canonical_translation_id IS NOT NULL
            AND cs.species_id =?
     };
 
     my %exon_set = ();
 
     my $sth = $dbc->prepare($sql);
-    $sth->execute('protein_coding', $dba->species_id());
+    $sth->execute($dba->species_id());
 
     while(my ($key) = $sth->fetchrow()) {
         $exon_set{$key} = 1;
@@ -259,7 +269,7 @@ sub hash_all_exons_from_dbc {
 sub hash_all_sequences_from_db {
     my $genome_db = shift;
 
-    my $sql = 'SELECT stable_id, MD5(sequence) FROM member JOIN sequence USING (sequence_id) WHERE genome_db_id = ?';
+    my $sql = 'SELECT stable_id, MD5(sequence) FROM seq_member JOIN sequence USING (sequence_id) WHERE genome_db_id = ?';
     my $sth = $genome_db->adaptor->dbc->prepare($sql);
     $sth->execute($genome_db->dbID);
 

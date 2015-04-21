@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2013] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -32,14 +32,6 @@ Used as a base for
 
 See inline
 
-=head1 MAINTAINER
-
-$Author$
-
-=head VERSION
-
-$Revision$
-
 =head1 REQUIREMENTS
 
 =over 8
@@ -54,12 +46,13 @@ $Revision$
 =head1 CONTACT
 
  Please email comments or questions to the public Ensembl
- developers list at <dev@ensembl.org>.
+ developers list at <http://lists.ensembl.org/mailman/listinfo/dev>.
 
  Questions may also be sent to the Ensembl help desk at
- <helpdesk@ensembl.org>.
+ <http://www.ensembl.org/Help/Contact>.
 
 =cut
+
 use strict;
 use warnings;
 
@@ -82,7 +75,7 @@ use Bio::EnsEMBL::Utils::Exception qw(throw warning);
   Returntype  : Instance of the writer
   Exceptions  : None
   Status      : Internal  
-  
+
 =cut
 
 sub new {
@@ -108,7 +101,7 @@ sub new {
   Returntype : IO::Handle
   Exceptions : Thrown if we cannot open a file handle
   Status     : Stable
-  
+
 =cut
 
 sub handle {
@@ -134,7 +127,7 @@ sub handle {
   Returntype : String
   Exceptions : None
   Status     : Stable
-  
+
 =cut
 
 sub file {

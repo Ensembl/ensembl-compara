@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2013] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -20,20 +20,16 @@ limitations under the License.
 =head1 CONTACT
 
   Please email comments or questions to the public Ensembl
-  developers list at <dev@ensembl.org>.
+  developers list at <http://lists.ensembl.org/mailman/listinfo/dev>.
 
   Questions may also be sent to the Ensembl help desk at
-  <helpdesk@ensembl.org>.
+  <http://www.ensembl.org/Help/Contact>.
 
 =cut
 
 =head1 NAME
 
 Bio::EnsEMBL::Compara::RunnableDB::ncRNAtrees::SecStructModelTree
-
-=head1 SYNOPSIS
-
-=head1 DESCRIPTION
 
 =head1 INHERITANCE TREE
 
@@ -53,7 +49,7 @@ package Bio::EnsEMBL::Compara::RunnableDB::ncRNAtrees::SecStructModelTree;
 use strict;
 use Bio::EnsEMBL::Compara::Graph::NewickParser;
 
-use base ('Bio::EnsEMBL::Compara::RunnableDB::RunCommand', 'Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable', 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::StoreTree');
+use base ('Bio::EnsEMBL::Compara::RunnableDB::RunCommand', 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::StoreTree');
 
 
 =head2 fetch_input
@@ -72,19 +68,15 @@ sub fetch_input {
     my $nc_tree_id = $self->param_required('gene_tree_id');
 
     my $nc_tree = $self->compara_dba->get_GeneTreeAdaptor->fetch_by_dbID($nc_tree_id) or die "Could not fetch nc_tree with id=$nc_tree_id\n";
+    $nc_tree->species_tree->attach_to_genome_dbs();
     $self->param('gene_tree',$nc_tree);
 
-    my $alignment_id = $self->param('alignment_id');
-    $nc_tree->gene_align_id($alignment_id);
+    my $alignment_id = $self->param_required('alignment_id');
     print STDERR "ALN INPUT ID: $alignment_id\n" if ($self->debug());
 
-    ## This has changed in the API. We now have an adaptor for gene_align/gene_align_member tables called GeneAlignAdaptor.pm
-    # This should be:
     my $aln = $self->compara_dba->get_GeneAlignAdaptor->fetch_by_dbID($alignment_id);
-#    my $aln = Bio::EnsEMBL::Compara::AlignedMemberSet->new(-seq_type => 'filtered', -dbID => $alignment_id, -adaptor => $self->compara_dba->get_AlignedMemberAdaptor);
-    $nc_tree->attach_alignment($aln);
-    ## TODO!! Remember to remove the ->seq_type($seq_type) call in GeneTree.pm
-#    $nc_tree->attach_alignment($alignment_id, 'filtered');
+    print STDERR scalar (@{$nc_tree->get_all_Members}), "\n";
+    $nc_tree->alignment($aln);
     if(my $input_aln = $self->_dumpMultipleAlignmentStructToWorkdir($nc_tree) ) {
         $self->param('input_aln', $input_aln);
     } else {
@@ -106,9 +98,7 @@ sub run {
     my $raxml_tag = $root_id . "." . $self->worker->process_id . ".raxml";
     $self->param('raxml_tag', $raxml_tag);
 
-    my $raxml_exe = $self->param_required('raxml_exe');
-
-    die "Cannot execute '$raxml_exe'" unless(-x $raxml_exe);
+    my $raxml_exe = $self->require_executable('raxml_exe');
 
     my $tag = 'ss_it_' . $model;
     if ($self->param('gene_tree')->has_tag($tag)) {
@@ -143,8 +133,8 @@ sub run {
     if ($command->out =~ /(Empirical base frequency for state number \d+ is equal to zero in DNA data partition)/) {
         # This can happen when there is not one of the nucleotides in one of the DNA data partition (RAxML-7.2.8)
         # RAxML will refuse to run this, we can safely skip this model (the rest of the models for this cluster will also fail).
-        $self->input_job->incomplete(0);
-        die "$1\n";
+        $self->input_job->autoflow(0);
+        $self->complete_early($1);
     }
 
     # Inspect error
@@ -155,9 +145,8 @@ sub run {
     if ($err_msg) {
         print STDERR "We have a problem running RAxML -- Inspecting error file\n";
         if ($err_msg =~ /Assertion(.+)failed/) {
-            my $assertion_failed = $1;
-            $self->input_job->incomplete(0);
-            die "Assertion failed for RAxML: $assertion_failed\n";
+            $self->input_job->autoflow(0);
+            $self->complete_early("Assertion failed for RAxML: $1\n");
         } else {
             $self->throw("error running raxml\ncd $worker_temp_directory; $cmd\n$err_msg\n");
         }
@@ -221,8 +210,8 @@ sub _dumpMultipleAlignmentStructToWorkdir {
     my $leafcount = scalar(@{$tree->get_all_leaves});
     if($leafcount<4) {
         my $node_id = $tree->root_id;
-        $self->input_job->incomplete(0);
-        die ("tree cluster $node_id has <4 proteins - can not build a raxml tree\n");
+        $self->input_job->autoflow(0);
+        $self->complete_early("tree cluster $node_id has <4 proteins - can not build a raxml tree\n");
     }
 
     my $file_root = $self->worker_temp_directory. "nctree_". $tree->root_id;
@@ -234,10 +223,10 @@ sub _dumpMultipleAlignmentStructToWorkdir {
     open(OUTSEQ, ">$aln_file")
         or $self->throw("Error opening $aln_file for write");
 
-    $self->prepareTemporaryMemberNames($tree);
     my $sa = $tree->get_SimpleAlign
         (
-         -id_type => 'TMP',
+         -ID_TYPE => 'MEMBER',
+         -APPEND_SPECIES_TREE_NODE_ID => 1,
          -keep_gaps => 1,
         );
     $sa->set_displayname_flat(1);
@@ -267,8 +256,8 @@ sub _dumpMultipleAlignmentStructToWorkdir {
 
     my $struct_file = $file_root . ".struct";
     if ($struct_string =~ /^\.+$/) {
-        $self->input_job->incomplete(0);
-        die "struct string is $struct_string\n";
+        $self->input_job->autoflow(0);
+        $self->complete_early("struct string is $struct_string\n");
     } else {
         open(STRUCT, ">$struct_file")
             or $self->throw("Error opening $struct_file for write");

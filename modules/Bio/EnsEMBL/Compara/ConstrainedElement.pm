@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2013] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -20,17 +20,17 @@ limitations under the License.
 =head1 CONTACT
 
   Please email comments or questions to the public Ensembl
-  developers list at <dev@ensembl.org>.
+  developers list at <http://lists.ensembl.org/mailman/listinfo/dev>.
 
   Questions may also be sent to the Ensembl help desk at
-  <helpdesk@ensembl.org>.
+  <http://www.ensembl.org/Help/Contact>.
 
 =head1 NAME
 
 Bio::EnsEMBL::Compara::ConstrainedElement - constrained element data produced by Gerp
 
 =head1 SYNOPSIS
-  
+
   use Bio::EnsEMBL::Compara::ConstrainedElement;
   
   my $constrained_element = new Bio::EnsEMBL::Compara::ConstrainedElement(
@@ -56,8 +56,8 @@ GET / SET VALUES
   $constrained_element->seq_region_end($self->slice->start + $self->{'end'} - 1);
   $constrained_element->strand($strand);
   $constrained_element->reference_dnafrag_id($dnafrag_id);
- 
   $constrained_element->get_all_overlapping_exons();
+
 =head1 OBJECT ATTRIBUTES
 
 =over
@@ -133,10 +133,12 @@ use warnings;
 
 # Object preamble
 use Bio::EnsEMBL::Utils::Argument qw(rearrange);
-use Bio::EnsEMBL::Utils::Exception qw(throw warning info deprecate verbose);
+use Bio::EnsEMBL::Utils::Exception qw(throw warning info verbose);
 use Bio::EnsEMBL::Compara::DnaFrag;
 use Bio::SimpleAlign;
 use Data::Dumper;
+
+use base ('Bio::EnsEMBL::Storable');        # inherit dbID(), adaptor() and new() methods
 
 
 =head2 new (CONSTRUCTOR)
@@ -192,22 +194,18 @@ use Data::Dumper;
 sub new {
   my($class, @args) = @_;
   
-  my $self = {};
-  bless $self,$class;
+  my $self = $class->SUPER::new(@args);       # deal with Storable stuff
     
-  my ($adaptor, $dbID, $alignment_segments, 
+  my ($alignment_segments,
 	$method_link_species_set_id, $score, $p_value, 
 	$slice, $start, $end, $strand, $reference_dnafrag_id) = 
     rearrange([qw(
-        ADAPTOR DBID ALIGNMENT_SEGMENTS 
+        ALIGNMENT_SEGMENTS
   METHOD_LINK_SPECIES_SET_ID SCORE P_VALUE 
   SLICE START END STRAND REFERENCE_DNAFRAG_ID 
 	)],
             @args);
 
-  $self->adaptor($adaptor) if (defined ($adaptor));
-  $self->dbID($dbID) 
-	if (defined ($dbID));
   $self->method_link_species_set_id($method_link_species_set_id)
       if (defined ($method_link_species_set_id));
   $self->alignment_segments($alignment_segments) 
@@ -221,61 +219,6 @@ sub new {
   $self->reference_dnafrag_id($reference_dnafrag_id)
       if (defined($reference_dnafrag_id));
   return $self;
-}
-
-sub new_fast {
-  my $class = shift;
-  my $hashref = shift;
-
-  return bless $hashref, $class;
-}
-
-=head2 adaptor
-
-  Arg [1]    : Bio::EnsEMBL::Compara::DBSQL::ConstrainedElementAdaptor
-  Example    : my $cons_ele_adaptor = $constrained_element->adaptor();
-  Example    : $cons_ele_adaptor->adaptor($cons_ele_adaptor);
-  Description: Getter/Setter for the adaptor this object uses for database
-               interaction.
-  Returntype : Bio::EnsEMBL::Compara::DBSQL::ConstrainedElementAdaptor object
-  Exceptions : thrown if $adaptor is not a
-               Bio::EnsEMBL::Compara::DBSQL::ConstrainedElementAdaptor object
-  Caller     : general
-
-=cut
-
-sub adaptor {
-  my ($self, $adaptor) = @_;
-
-  if (defined($adaptor)) {
-    throw("$adaptor is not a Bio::EnsEMBL::Compara::DBSQL::ConstrainedElementAdaptor object")
-        unless ($adaptor->isa("Bio::EnsEMBL::Compara::DBSQL::ConstrainedElementAdaptor"));
-    $self->{'adaptor'} = $adaptor;
-  }
-
-  return $self->{'adaptor'};
-}
-
-=head2 dbID
-
-  Arg [1]    : integer $dbID
-  Example    : my $dbID = $constrained_element->dbID();
-  Example    : $constrained_element->dbID(2);
-  Description: Getter/Setter for the attribute dbID 
-  Returntype : integer
-  Exceptions : returns undef if no ref.dbID
-  Caller     : general
-
-=cut
-
-sub dbID {
-  my ($self, $dbID) = @_;
-
-  if (defined($dbID)) {
-    $self->{'dbID'} = $dbID;
-  }
-
-  return $self->{'dbID'};
 }
 
 
@@ -346,7 +289,7 @@ sub method_link_species_set_id {
 }
 
 =head2 alignment_segments
- 
+
   Arg [1]    : listref $alignment_segments [ [ $dnafrag_id, $start, $end, $genome_db_id, $dnafrag_name ], .. ]
   Example    : my $alignment_segments = $constrained_element->alignment_segments();
                $constrained_element->alignment_segments($alignment_segments);
@@ -446,6 +389,7 @@ sub end {
   Caller     : object::methodname
 
 =cut
+
 sub seq_region_start {
 	my ($self, $seq_region_start) = @_;
 	
@@ -469,6 +413,7 @@ sub seq_region_start {
   Caller     : object::methodname
 
 =cut
+
 sub seq_region_end {
 	my ($self, $seq_region_end) = @_;
 	
@@ -591,15 +536,17 @@ sub get_SimpleAlign {
 		($self->slice->start + $self->end - 1),
 		$reference_genomic_align,
 		$skip_empty_GenomicAligns);
-	print "dbID: ", $this_genomic_align_block->dbID, ". "; 
+#        print "dbID: ", $this_genomic_align_block->dbID, ". ";
 	foreach my $genomic_align( @{ $restricted_gab->get_all_GenomicAligns } ) {
 		my $alignSeq = $genomic_align->aligned_sequence;
 		my $loc_seq = Bio::LocatableSeq->new(
 			-SEQ    => $uc ? uc $alignSeq : lc $alignSeq,
 			-START  => $genomic_align->dnafrag_start,
-			-END    => $genomic_align->dnafrag_end,
+			#-END    => $genomic_align->dnafrag_end,
 			-ID     => $genomic_align->dnafrag->genome_db->name . "/" . $genomic_align->dnafrag->name,
 			-STRAND => $genomic_align->dnafrag_strand);
+                # Avoid warning in BioPerl about len(seq) != end-start+1
+                $loc_seq->{end} = $genomic_align->dnafrag_end;
 
 		if($bio07) { 
 			$sa->addSeq($loc_seq); 
@@ -632,13 +579,13 @@ sub summary_as_hash {
 }
 
 =head2 add_alignment_segments
- 
+
  Example       : my $CEs = $constrained_element_adaptor->fetch_all_by_MethodLinkSpeciesSet_Slice($mlss, $slice);
                  foreach my $constrained_element( @{ $CE }) {
                   $constrained_element->add_alignment_segments;
                  }
  Description   : Add the alignments segments to constrained element objects retrieved by coordinate-based 'fetch_all'
-                 methods such as fetch_all_by_MethodLinkSpeciesSet_Slice and fetch_all_by_MethodLinkSpeciesSet_Dnafrag
+                 methods such as fetch_all_by_MethodLinkSpeciesSet_Slice and fetch_all_by_MethodLinkSpeciesSet_DnaFrag
  Returns       : Nothing
 
 =cut

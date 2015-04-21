@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2013] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -59,7 +59,7 @@ sub all_from_file {
 
     # List of fields that must / can be present
     my @obligatory_fields = qw(production_name taxonomy_id assembly genebuild prot_fasta cds_fasta);
-    my $possible_fields = {map {$_ => 1} (@obligatory_fields, qw(gene_coord_gff))};
+    my $possible_fields = {map {$_ => 1} (@obligatory_fields, qw(gene_coord_gff is_high_coverage has_karyotype))};
 
     # Checks the integrity of the file
     my $i = 0;
@@ -162,7 +162,17 @@ sub AUTOLOAD {
     }
 }
 
-sub extract_assembly_name {
+sub has_karyotype {
+    my $self = shift;
+    return $self->{'has_karyotype'};
+}
+
+sub is_high_coverage {
+    my $self = shift;
+    return $self->{'is_high_coverage'};
+}
+
+sub assembly_name {
     my $self = shift;
     return $self->{'assembly'};
 }

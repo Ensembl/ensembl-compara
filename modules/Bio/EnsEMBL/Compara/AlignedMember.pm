@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2013] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -19,32 +19,57 @@ limitations under the License.
 
 =head1 CONTACT
 
-  Please email comments or questions to the public Ensembl
-  developers list at <dev@ensembl.org>.
+Please email comments or questions to the public Ensembl
+developers list at <http://lists.ensembl.org/mailman/listinfo/dev>.
 
-  Questions may also be sent to the Ensembl help desk at
-  <helpdesk@ensembl.org>.
+Questions may also be sent to the Ensembl help desk at
+<http://www.ensembl.org/Help/Contact>.
 
 =head1 AUTHORSHIP
 
-Ensembl Team. Individual contributions can be found in the CVS log.
+Ensembl Team. Individual contributions can be found in the GIT log.
 
 =cut
 
 =head1 NAME
 
-AlignedMember - DESCRIPTION of Object
+Bio::EnsEMBL::Compara::AlignedMember
 
 =head1 DESCRIPTION
 
 A subclass of SeqMember which extends it to allow it to be aligned with other AlignedMember objects.
 General enough to allow for global, local, pair-wise and multiple alignments.
-At the moment used primarily in NestedSet Tree data-structure, but there are plans to extend its usage.
 
 =head1 INHERITANCE TREE
 
   Bio::EnsEMBL::Compara::AlignedMember
-  +- Bio::EnsEMBL::Compara::SeqMember
+  `- Bio::EnsEMBL::Compara::SeqMember
+
+=head1 SYNOPSIS
+
+The alignment of this SeqMember:
+ - alignment_string()
+ - cigar_line()
+ - cigar_start()   # always returns undef
+ - cigar_end()     # always returns undef
+
+Statistics about the alignment of this SeqMember:
+ - perc_cov()
+ - perc_id()
+ - perc_pos()
+ - num_matches()
+ - num_pos_matches()
+ - num_mismatches()
+ - update_alignment_stats()    # to update the above counters
+NB: Only Homology::perc_*() are pre-computed. To query num_*() on an Homology
+object, or any counter on a GeneTree / Family object, first initialize them with
+update_alignment_stats(). The latter is also useful to get the statistics on a
+different sequence type (e.g. the CDS sequence instead of the protein sequence).
+
+Links to the AlignedMemberSet:
+ - set()
+ - method_link_species_set_id()
+
 
 =head1 METHODS
 
@@ -82,9 +107,7 @@ use base ('Bio::EnsEMBL::Compara::SeqMember');
 sub copy {
   my $self = shift;
   
-  my $mycopy = @_ ? shift : {};     # extending or from scratch?
-               $self->SUPER::copy($mycopy);
-  bless $mycopy, 'Bio::EnsEMBL::Compara::AlignedMember';
+  my $mycopy = $self->SUPER::copy(@_);
 
   # The following does not Work if the initial object is only a Member
   if (UNIVERSAL::isa($self, 'Bio::EnsEMBL::Compara::AlignedMember')) {
@@ -94,6 +117,9 @@ sub copy {
     $mycopy->perc_cov($self->perc_cov);
     $mycopy->perc_id($self->perc_id);
     $mycopy->perc_pos($self->perc_pos);
+    $mycopy->num_matches($self->num_matches);
+    $mycopy->num_pos_matches($self->num_pos_matches);
+    $mycopy->num_mismatches($self->num_mismatches);
     $mycopy->method_link_species_set_id($self->method_link_species_set_id);
   }
 
@@ -131,7 +157,7 @@ sub cigar_line {
   my $self = shift;
   if (@_) {
     my $cigar = shift;
-    if ($self->{'_cigar_line'} and $self->{'_cigar_line'} ne $cigar) {
+    if ($cigar and $self->{'_cigar_line'} and $self->{'_cigar_line'} ne $cigar) {
       foreach my $k (keys %$self) {
         delete $self->{$k} if $k =~ /alignment_string/;
       }
@@ -197,12 +223,12 @@ sub cigar_end {
   Arg [1]     : (optional) $perc_cov
   Example     : $object->perc_cov($perc_cov);
   Example     : $perc_cov = $object->perc_cov();
-  Description : Getter/setter for the perc_cov attribute. For non-global
-                alignments, this represent the coverage of the alignment in
-                percentage of the total length of the sequence.
-                Currently the data provided as AlignedMembers (leaves of the
-                GeneTree) are obtained using global alignments (the whole
-                sequence is always included) and the perc_cov is always undefined.
+  Description : Getter/setter for the perc_cov attribute. This represents the number
+                of positions in the sequence that are aligned to a non-gap in the
+                other sequence.
+                perc_cov is by default only populated for homologies, but can be
+                computed on gene-tree leaves and family members by calling
+                update_alignment_stats() on the GeneTree / Family object.
   Returntype  : integer
   Exceptions  : none
   Caller      : general
@@ -222,13 +248,11 @@ sub perc_cov {
   Arg [1]     : (optional) $perc_id
   Example     : $object->perc_id($perc_id);
   Example     : $perc_id = $object->perc_id();
-  Description : Getter/setter for the perc_id attribute. This is generally
-                used for pairwise relationships. The percentage identity
-                reprensents the number of positions that are identical in
-                the alignment in both sequences.
-                Currently the data provided as AlignedMembers (leaves of the
-                GeneTree) are obtained using multiple alignments and the
-                perc_id is always undefined.
+  Description : Getter/setter for the perc_id attribute. This represents the number
+                of identical positions between the sequences
+                perc_id is by default only populated for homologies, but can be
+                computed on gene-tree leaves and family members by calling
+                update_alignment_stats() on the GeneTree / Family object.
   Returntype  : integer
   Exceptions  : none
   Caller      : general
@@ -248,14 +272,13 @@ sub perc_id {
   Arg [1]     : (optional) $perc_pos
   Example     : $object->perc_pos($perc_pos);
   Example     : $perc_pos = $object->perc_pos();
-  Description : Getter/setter for the perc_pos attribute. This is generally
-                used for pairwise relationships. The percentage positivity
-                reprensents the number of positions that are positive in
-                the alignment in both sequences. Currently, this is calculated
-                for protein sequences using the BLOSUM62 scoring matrix.
-                Currently the data provided as AlignedMembers (leaves of the
-                GeneTree) are obtained using multiple alignments and the
-                perc_cov is always undefined.
+  Description : Getter/setter for the perc_pos attribute. This represents the number
+                of positions that are positive in the alignment in both sequences.
+                Currently, this is calculated for protein sequences using the BLOSUM62
+                scoring matrix.
+                perc_pos is by default only populated for homologies, but can be
+                computed on gene-tree leaves and family members by calling
+                update_alignment_stats() on the GeneTree / Family object.
   Returntype  : integer
   Exceptions  : none
   Caller      : general
@@ -268,6 +291,66 @@ sub perc_pos {
   $self->{'perc_pos'} = shift if(@_);
   return $self->{'perc_pos'};
 }
+
+
+=head2 num_matches
+
+  Example     : my $num_matches = $aligned_member->num_matches();
+  Example     : $aligned_member->num_matches($num_matches);
+  Description : Getter/Setter for the number of matches in the alignment
+  Returntype  : integer
+  Exceptions  : none
+  Caller      : general
+  Status      : Stable
+
+=cut
+
+sub num_matches {
+    my $self = shift;
+    $self->{'_num_matches'} = shift if @_;
+    return $self->{'_num_matches'};
+}
+
+
+=head2 num_pos_matches
+
+  Example     : my $num_pos_matches = $aligned_member->num_pos_matches();
+  Example     : $aligned_member->num_pos_matches($num_pos_matches);
+  Description : Getter/Setter for the number of positive matches in the
+                alignment (only for protein sequences, using the BLOSUM62
+                scoring matrix)
+  Returntype  : integer
+  Exceptions  : none
+  Caller      : general
+  Status      : Stable
+
+=cut
+
+sub num_pos_matches {
+    my $self = shift;
+    $self->{'_num_pos_matches'} = shift if @_;
+    return $self->{'_num_pos_matches'};
+}
+
+
+=head2 num_mismatches
+
+  Example     : my $num_mismatches = $aligned_member->num_mismatches();
+  Example     : $aligned_member->num_mismatches($num_mismatches);
+  Description : Getter/Setter for the number of mismatches in the alignment
+  Returntype  : integer
+  Exceptions  : none
+  Caller      : general
+  Status      : Stable
+
+=cut
+
+sub num_mismatches {
+    my $self = shift;
+    $self->{'_num_mismatches'} = shift if @_;
+    return $self->{'_num_mismatches'};
+}
+
 
 
 =head2 method_link_species_set_id
@@ -335,7 +418,7 @@ sub alignment_string {
     if ($seq_type) {
         if ("$seq_type" eq '1') {
             $seq_type = 'exon_cased';
-            deprecate('AlignedMember::alignment_string(1) is deprecated. Please use AlignedMember::alignment_string("exon_cased") instead');
+            deprecate('AlignedMember::alignment_string(1) is deprecated, its support will end with e77. Please use AlignedMember::alignment_string("exon_cased") instead');
         }
         $key .= "_$seq_type";
 
@@ -359,28 +442,16 @@ sub alignment_string {
 
 
 
-=head2 alignment_string_bounded
-
-  Description : DEPRECATED: Use alignment_string('exon_bounded') instead. alignment_string_bounded() will be removed in e76
-
-=cut
-
 sub alignment_string_bounded {  ## DEPRECATED
     my $self = shift;
-    deprecate('AlignedMember::alignment_string_bounded() is deprecated and will be removed in e76. Please use SeqMember::alignment_string("exon_bounded") instead');
+    deprecate('AlignedMember::alignment_string_bounded() is deprecated and will be removed in e79. Please use SeqMember::alignment_string("exon_bounded") instead');
     return $self->alignment_string('exon_bounded');
 }
 
 
-=head2 cdna_alignment_string
-
-  Description : DEPRECATED: Use alignment_string('cds') instead. cdna_alignment_string() will be removed in e76
-
-=cut
-
 sub cdna_alignment_string { ## DEPRECATED
     my $self = shift;
-    deprecate('AlignedMember::cdna_alignment_string() is deprecated and will be removed in e76. Please use SeqMember::alignment_string("cds") instead');
+    deprecate('AlignedMember::cdna_alignment_string() is deprecated and will be removed in e79. Please use SeqMember::alignment_string("cds") instead');
     return $self->alignment_string('cds');
 }
 

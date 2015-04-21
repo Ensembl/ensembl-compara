@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2013] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -20,13 +20,11 @@ limitations under the License.
 
 =head1 NAME
 
- Bio::EnsEMBL::Compara::PipeConfig::ImportUcscChainNet_conf
+Bio::EnsEMBL::Compara::PipeConfig::ImportUcscChainNet_conf
 
 =head1 SYNOPSIS
 
-    #1. Update ensembl-hive, ensembl and ensembl-compara CVS repositories before each new release
-
-    #2. You may need to update 'schema_version' in meta table to the current release number in ensembl-hive/sql/tables.sql
+    #1. Update ensembl-hive, ensembl and ensembl-compara GIT repositories before each new release
 
     #3. Download the chain and net files from UCSC
         a) Goto the downloads directory:
@@ -42,7 +40,6 @@ limitations under the License.
           wget http://hgdownload.cse.ucsc.edu/goldenPath/hg19/database/ctgPos.txt.gz
 
     #4. Make sure that all default_options are set correctly, especially:
-        release
         pipeline_db (-host)
         resource_classes 
         ref_species (if not homo_sapiens)
@@ -61,7 +58,11 @@ It is recommended that you provide a meaningful database name (--dbname). The us
 
 =head1 CONTACT
 
-  Please contact ehive-users@ebi.ac.uk mailing list with questions/suggestions.
+Please email comments or questions to the public Ensembl
+developers list at <http://lists.ensembl.org/mailman/listinfo/dev>.
+
+Questions may also be sent to the Ensembl help desk at
+<http://www.ensembl.org/Help/Contact>.
 
 =cut
 
@@ -76,14 +77,10 @@ sub default_options {
     return {
 	%{$self->SUPER::default_options},   # inherit the generic ones
 
-        'ensembl_cvs_root_dir' => $ENV{'ENSEMBL_CVS_ROOT_DIR'},
-
-	'release'               => '69',
         'release_suffix'        => '',    # an empty string by default, a letter otherwise
-	'dbname'               => 'ucsc_import_'.$self->o('release').$self->o('release_suffix'), #It is recommended this is set on the command line to allow more meaningful database naming
+	'dbname'               => 'ucsc_import_'.$self->o('enembl_release').$self->o('release_suffix'), #It is recommended this is set on the command line to allow more meaningful database naming
 
          # dependent parameters:
-        'rel_with_suffix'       => $self->o('release').$self->o('release_suffix'),
         'pipeline_name'         => 'UCSC_'.$self->o('rel_with_suffix'),   # name the pipeline to differentiate the submitted processes
 
         'pipeline_db' => {                                  # connection parameters
@@ -183,7 +180,7 @@ sub pipeline_create_commands {
     return [
         @{$self->SUPER::pipeline_create_commands},  # inheriting database and hive tables' creation
        'mkdir -p '.$self->o('output_dir'), #Make dump_dir directory
-       'mysql ' . $self->dbconn_2_mysql('pipeline_db', 1) . " -e 'CREATE TABLE ucsc_to_ensembl_mapping (genome_db_id int(10) unsigned, ucsc varchar(40),ensembl  varchar(40)) ENGINE=InnoDB'",
+       $self->db_cmd('CREATE TABLE ucsc_to_ensembl_mapping (genome_db_id int(10) unsigned, ucsc varchar(40),ensembl  varchar(40)) ENGINE=InnoDB'),
 
     ];
 }
@@ -261,7 +258,7 @@ sub pipeline_analyses {
 
 				'call_list'             => [ 'compara_dba', 'get_MethodLinkSpeciesSetAdaptor', ['fetch_by_dbID', '#mlss_id#'], 'species_set_obj', 'genome_dbs'],
 
-				'column_names2getters'  => { 'genome_db_id' => 'dbID', 'species_name' => 'name', 'assembly_name' => 'assembly', 'genebuild' => 'genebuild', 'locator' => 'locator' },
+				'column_names2getters'  => { 'genome_db_id' => 'dbID', 'species_name' => 'name', 'assembly_name' => 'assembly', 'genebuild' => 'genebuild', 'locator' => 'locator', 'has_karyotype' => 'has_karyotype', 'is_high_coverage' => 'is_high_coverage' },
 
 				'fan_branch_code'       => 2,
 			       },
@@ -276,7 +273,7 @@ sub pipeline_analyses {
 		-module     => 'Bio::EnsEMBL::Compara::RunnableDB::LoadOneGenomeDB',
 		-parameters => {
 				'registry_dbs'  => $self->o('curr_core_sources_locs'),
-                                'db_version'    => $self->o('release'),
+                                'db_version'    => $self->o('ensembl_release'),
 			       },
 		-hive_capacity => 1,    # they are all short jobs, no point doing them in parallel
                 -rc_name => '100Mb',
@@ -410,7 +407,7 @@ sub pipeline_analyses {
  	      -module => 'Bio::EnsEMBL::Compara::RunnableDB::HealthCheck',
  	      -parameters => {
  			      'previous_db' => $self->o('previous_db'),
- 			      'ensembl_release' => $self->o('release'),
+ 			      'ensembl_release' => $self->o('ensembl_release'),
  			      'prev_release' => $self->o('prev_release'),
  			      'max_percent_diff' => $self->o('max_percent_diff'),
  			     },
@@ -429,7 +426,7 @@ sub pipeline_analyses {
 			      'compare_beds' => $self->o('compare_beds_exe'),
 			      'create_pair_aligner_page' => $self->o('create_pair_aligner_page_exe'),
 			      'bed_dir' => $self->o('bed_dir'),
-			      'ensembl_release' => $self->o('release'),
+			      'ensembl_release' => $self->o('ensembl_release'),
 			      'reg_conf' => $self->o('reg_conf'),
 			      'output_dir' => $self->o('output_dir'),
                               'ucsc_url' => $self->o('ucsc_url'),

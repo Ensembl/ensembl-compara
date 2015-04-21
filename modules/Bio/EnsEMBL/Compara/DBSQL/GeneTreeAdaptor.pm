@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2013] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -20,10 +20,10 @@ limitations under the License.
 =head1 CONTACT
 
   Please email comments or questions to the public Ensembl
-  developers list at <dev@ensembl.org>.
+  developers list at <http://lists.ensembl.org/mailman/listinfo/dev>.
 
   Questions may also be sent to the Ensembl help desk at
-  <helpdesk@ensembl.org>.
+  <http://www.ensembl.org/Help/Contact>.
 
 =head1 NAME
 
@@ -43,15 +43,7 @@ with the GeneTreeNodeAdaptor).
 
 =head1 AUTHORSHIP
 
-Ensembl Team. Individual contributions can be found in the CVS log.
-
-=head1 MAINTAINER
-
-$Author$
-
-=head VERSION
-
-$Revision$
+Ensembl Team. Individual contributions can be found in the GIT log.
 
 =head1 APPENDIX
 
@@ -68,6 +60,8 @@ use warnings;
 use Data::Dumper;
 use Bio::EnsEMBL::Utils::Argument qw(rearrange);
 use Bio::EnsEMBL::Utils::Scalar qw(:assert);
+
+use Bio::EnsEMBL::Compara::Utils::Scalar qw(:assert);
 
 use Bio::EnsEMBL::Compara::GeneTree;
 use DBI qw(:sql_types);
@@ -119,8 +113,9 @@ sub fetch_all {
         $self->bind_param_generic_fetch($member_type, SQL_VARCHAR);
     }
 
-    my $mlss_id = (ref($mlss) ? $mlss->dbID : $mlss);
-    if (defined $mlss_id) {
+    if (defined $mlss) {
+        assert_ref_or_dbID($mlss, 'Bio::EnsEMBL::Compara::MethodLinkSpeciesSet', 'mlss');
+        my $mlss_id = (ref($mlss) ? $mlss->dbID : $mlss);
         push @constraint, '(gtr.method_link_species_set_id = ?)';
         $self->bind_param_generic_fetch($mlss_id, SQL_INTEGER);
     }
@@ -223,8 +218,7 @@ sub fetch_by_node_id {
              : string: the name of the clusterset (default is "default")
   Example    : $all_trees = $genetree_adaptor->fetch_all_by_Member($member);
   Description: Fetches from the database all the gene trees that contains this member
-               If the member is not an ENSEMBLGENE, it has to be canoncal, otherwise,
-                 the function would return undef
+               If the member is a non-canonical SeqMember, returns an empty list
   Returntype : arrayref of Bio::EnsEMBL::Compara::GeneTree
   Exceptions : none
   Caller     : general
@@ -235,18 +229,17 @@ sub fetch_all_by_Member {
     my ($self, $member, @args) = @_;
     my ($clusterset_id, $mlss) = rearrange([qw(CLUSTERSET_ID METHOD_LINK_SPECIES_SET)], @args);
 
-    # Discard the UNIPROT members
-    return [] if (ref($member) and not ($member->source_name =~ 'ENSEMBL'));
+    assert_ref_or_dbID($member, 'Bio::EnsEMBL::Compara::Member', 'member');
 
-    my $join = [[['gene_tree_node', 'gtn'], 'gtn.root_id = gtr.root_id'], [['member', 'm'], 'gtn.member_id = m.member_id']];
-    my $constraint = '((m.member_id = ?) OR (m.gene_member_id = ?))';
+    my $join = [[['gene_tree_node', 'gtn'], 'gtn.root_id = gtr.root_id']];
+    my $constraint = '(gtn.seq_member_id = ?)';
     
-    my $member_id = (ref($member) ? $member->dbID : $member);
-    $self->bind_param_generic_fetch($member_id, SQL_INTEGER);
+    my $member_id = (ref($member) ? ($member->isa('Bio::EnsEMBL::Compara::GeneMember') ? $member->canonical_member_id : $member->dbID) : $member);
     $self->bind_param_generic_fetch($member_id, SQL_INTEGER);
     
-    my $mlss_id = (ref($mlss) ? $mlss->dbID : $mlss);
-    if (defined $mlss_id) {
+    if (defined $mlss) {
+        assert_ref_or_dbID($mlss, 'Bio::EnsEMBL::Compara::MethodLinkSpeciesSet', 'mlss');
+        my $mlss_id = (ref($mlss) ? $mlss->dbID : $mlss);
         $constraint .= ' AND (gtr.method_link_species_set_id = ?)';
         $self->bind_param_generic_fetch($mlss_id, SQL_INTEGER);
     }
@@ -264,8 +257,7 @@ sub fetch_all_by_Member {
   Arg[1]     : Member or member_id
   Example    : $trees = $genetree_adaptor->fetch_default_for_Member($member);
   Description: Fetches from the database the default gene tree that contains this member
-               If the member is not an ENSEMBLGENE, it has to be canoncal, otherwise,
-                 the function would return undef
+               If the member is a non-canonical SeqMember, returns undef
   Returntype : Bio::EnsEMBL::Compara::GeneTree
   Exceptions : none
   Caller     : general
@@ -275,19 +267,7 @@ sub fetch_all_by_Member {
 sub fetch_default_for_Member {
     my ($self, $member) = @_;
 
-    # Discard the UNIPROT members
-    return undef if (ref($member) and not ($member->source_name =~ 'ENSEMBL'));
-    # Returns if $member is not defined or 0
-    return undef unless $member;
-
-    my $join = [[['gene_tree_node', 'gtn'], 'gtn.root_id = gtr.root_id'], [['member', 'm'], 'gtn.member_id = m.member_id']];
-    my $constraint = '((m.member_id = ?) OR (m.gene_member_id = ?)) AND (gtr.clusterset_id = "default")';
-    
-    my $member_id = (ref($member) ? $member->dbID : $member);
-    $self->bind_param_generic_fetch($member_id, SQL_INTEGER);
-    $self->bind_param_generic_fetch($member_id, SQL_INTEGER);
-    
-    return $self->generic_fetch_one($constraint, $join);
+    return $self->fetch_all_by_Member($member, -CLUSTERSET_ID => 'default')->[0];
 }
 
 
@@ -305,6 +285,7 @@ sub fetch_default_for_Member {
 sub fetch_parent_tree {
     my ($self, $tree) = @_;
 
+    assert_ref_or_dbID($tree, 'Bio::EnsEMBL::Compara::GeneTree', 'tree');
     my $tree_id = (ref($tree) ? $tree->root_id : $tree);
 
     my $join = [[['gene_tree_node', 'gtn1'], 'gtn1.root_id = gtr.root_id'], [['gene_tree_node', 'gtn2'], 'gtn1.node_id = gtn2.parent_id']];
@@ -329,6 +310,7 @@ sub fetch_parent_tree {
 sub fetch_subtrees {
     my ($self, $tree) = @_;
 
+    assert_ref_or_dbID($tree, 'Bio::EnsEMBL::Compara::GeneTree', 'tree');
     my $tree_id = (ref($tree) ? $tree->root_id : $tree);
 
     my $join = [[['gene_tree_node', 'gtn2'], 'gtn2.node_id = gtr.root_id', ['gtn2.parent_id']], [['gene_tree_node', 'gtn1'], 'gtn1.node_id = gtn2.parent_id']];
@@ -358,11 +340,14 @@ sub fetch_all_linked_trees {
     if ($tree->ref_root_id) {
         # Trees that share the same reference
         $self->bind_param_generic_fetch($tree->ref_root_id, SQL_INTEGER);
+        $self->bind_param_generic_fetch($tree->root_id, SQL_INTEGER);
+        $self->bind_param_generic_fetch($tree->ref_root_id, SQL_INTEGER);
+        return $self->generic_fetch('(ref_root_id = ? AND root_id != ?) OR (root_id = ?)');
     } else {
         # The given tree is the reference
         $self->bind_param_generic_fetch($tree->root_id, SQL_INTEGER);
+        return $self->generic_fetch('ref_root_id = ?');
     }
-    return $self->generic_fetch('ref_root_id = ?');
 }
 
 
@@ -421,12 +406,12 @@ sub delete_tree {
 
     # Only for "default" trees
     unless ($tree->ref_root_id) {
-        # The alignment
-        $gene_tree_node_Adaptor->db->get_GeneAlignAdaptor->delete($tree->gene_align_id);
+        # The alignment only if it exists (In NCRecoverEPO we don't have an alignment yet)
+        $gene_tree_node_Adaptor->db->get_GeneAlignAdaptor->delete($tree->gene_align_id) if (defined $tree->gene_align_id);
 
         # The HMM profile
         my $root_id = $tree->root->node_id;
-        $self->dbc->do("DELETE FROM hmm_profile WHERE model_id = '$root_id'");
+        $self->dbc->db_handle->do('DELETE FROM hmm_profile WHERE model_id = ?', undef, $root_id);
     }
 
 }
@@ -447,8 +432,15 @@ sub _tag_capabilities {
 
 sub _tables {
 
-    return (['gene_tree_root', 'gtr'])
+    return (['gene_tree_root', 'gtr'], ['gene_align', 'ga'])
 }
+
+sub _left_join {
+    return (
+        ['gene_align', 'gtr.gene_align_id = ga.gene_align_id'],
+    );
+}
+
 
 sub _columns {
 
@@ -462,6 +454,9 @@ sub _columns {
         gtr.stable_id
         gtr.version
         gtr.ref_root_id
+        ga.seq_type
+        ga.aln_length
+        ga.aln_method
     );
 }
 
@@ -472,8 +467,8 @@ sub _objs_from_sth {
   while(my $rowhash = $sth->fetchrow_hashref) {
     #my $tree = new Bio::EnsEMBL::Compara::GeneTree(-adaptor => $self, %$rowhash);
     my $tree = Bio::EnsEMBL::Compara::GeneTree->new_fast({
-        _adaptor                    => $self,                   # field name NOT in sync with Bio::EnsEMBL::Storable
-        _root_id                    => $rowhash->{root_id},     # field name NOT in sync with Bio::EnsEMBL::Storable
+        adaptor                     => $self,
+        _root_id                    => $rowhash->{root_id},
         _tree_type                  => $rowhash->{tree_type},
         _member_type                => $rowhash->{member_type},
         _clusterset_id              => $rowhash->{clusterset_id},
@@ -483,6 +478,9 @@ sub _objs_from_sth {
         _version                    => $rowhash->{version},
         _ref_root_id                => $rowhash->{ref_root_id},
         _parent_id                  => $rowhash->{parent_id},
+        _seq_type                   => $rowhash->{seq_type},
+        _aln_length                 => $rowhash->{aln_length},
+        _aln_method                 => $rowhash->{aln_method},
     });
     push @tree_list, $tree;
   }

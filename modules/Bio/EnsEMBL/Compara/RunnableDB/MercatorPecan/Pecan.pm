@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2013] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -20,10 +20,10 @@ limitations under the License.
 =head1 CONTACT
 
   Please email comments or questions to the public Ensembl
-  developers list at <dev@ensembl.org>.
+  developers list at <http://lists.ensembl.org/mailman/listinfo/dev>.
 
   Questions may also be sent to the Ensembl help desk at
-  <helpdesk@ensembl.org>.
+  <http://www.ensembl.org/Help/Contact>.
 
 =head1 NAME
 
@@ -157,9 +157,7 @@ sub run
   my $fake_analysis     = Bio::EnsEMBL::Analysis->new;
 
   #Check whether can see exonerate to try to prevent errors in java where the autoloader doesn't seem to always work
-  unless (-x $self->param('exonerate')) {
-      throw("Pecan: Unable to execute " . $self->param('exonerate'));
-  }
+  $self->require_executable('exonerate');
 
   $self->compara_dba->dbc->disconnect_when_inactive(1); 
   my $runnable = new Bio::EnsEMBL::Analysis::Runnable::Pecan(
@@ -233,8 +231,6 @@ sub _write_output {
   my $mlss = $mlssa->fetch_by_dbID($self->param('mlss_id'));
   my $gaba = $self->compara_dba->get_GenomicAlignBlockAdaptor;
   my $gaa = $self->compara_dba->get_GenomicAlignAdaptor;
-
-  my $gaga = $self->compara_dba->get_GenomicAlignGroupAdaptor;
 
   foreach my $gab (@{$self->param('runnable')->output}) {
       foreach my $ga (@{$gab->genomic_align_array}) {

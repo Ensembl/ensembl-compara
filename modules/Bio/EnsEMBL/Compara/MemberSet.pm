@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2013] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -19,28 +19,27 @@ limitations under the License.
 
 =head1 CONTACT
 
-  Please email comments or questions to the public Ensembl
-  developers list at <dev@ensembl.org>.
+Please email comments or questions to the public Ensembl
+developers list at <http://lists.ensembl.org/mailman/listinfo/dev>.
 
-  Questions may also be sent to the Ensembl help desk at
-  <helpdesk@ensembl.org>.
+Questions may also be sent to the Ensembl help desk at
+<http://www.ensembl.org/Help/Contact>.
 
 =head1 AUTHORSHIP
 
-Ensembl Team. Individual contributions can be found in the CVS log.
-
-=cut
+Ensembl Team. Individual contributions can be found in the GIT log.
 
 =head1 NAME
 
-MemberSet - A superclass for pairwise or multiple relationships, base of
-Bio::EnsEMBL::Compara::Family, Bio::EnsEMBL::Compara::Homology and
-Bio::EnsEMBL::Compara::Domain.
+MemberSet - A superclass for pairwise or multiple gene relationships
 
 =head1 DESCRIPTION
 
-A superclass for pairwise and multiple relationships
+A superclass for pairwise and multiple gene relationships
 
+MemberSet is the deepest base class of Bio::EnsEMBL::Compara::Family, Bio::EnsEMBL::Compara::Homology and Bio::EnsEMBL::Compara::GeneTree
+
+It holds the methods to construct / use a set of Bio::EnsEMBL::Compara::Member
 Currently the Member objects are used in the GeneTree structure
 to represent the leaves of the trees. Each leaf contains an aligned
 sequence, which is represented as an Member object.
@@ -48,6 +47,30 @@ sequence, which is represented as an Member object.
 =head1 INHERITANCE TREE
 
   Bio::EnsEMBL::Compara::MemberSet
+
+=head1 SYNOPSIS
+
+Global properties of the set:
+ - stable_id() and version()
+ - description()
+ - method_link_species_set()
+
+Be aware that not all of the above methods are implemented in all the derived objects (for instance, Homologies do not have stable_id)
+
+The set of members can be accessed / edited with:
+ - add_Member()
+ - get_all_Members()
+ - get_all_GeneMembers()
+ - clear()
+ - get_Member_by_*() and Member_count_by_*()
+
+I/O:
+ - print_sequences_to_file()
+
+Methods about the set of species refered to by the members:
+ - get_all_taxa_by_member_source_name()
+ - get_all_GenomeDBs_by_member_source_name()
+ - has_species_by_name()
 
 =head1 METHODS
 
@@ -66,6 +89,9 @@ use Bio::EnsEMBL::Utils::Argument;
 use Bio::EnsEMBL::Utils::Scalar qw(:all);
 use Bio::EnsEMBL::Utils::Exception;
 use Bio::EnsEMBL::Compara::Member;
+
+use base ('Bio::EnsEMBL::Storable');        # inherit dbID(), adaptor() and new() methods
+
 
 
 ####################################
@@ -101,19 +127,17 @@ use Bio::EnsEMBL::Compara::Member;
 sub new {
     my ($class, @args) = @_;
 
-    my $self = bless {}, $class;
+    my $self = $class->SUPER::new(@args);       # deal with Storable stuff
 
     if (scalar @args) {
         #do this explicitly.
-        my ($dbid, $stable_id, $version, $method_link_species_set_id, $description, $adaptor, $members)
-            = rearrange([qw(DBID STABLE_ID VERSION METHOD_LINK_SPECIES_SET_ID DESCRIPTION ADAPTOR MEMBERS)], @args);
+        my ($stable_id, $version, $method_link_species_set_id, $description, $members)
+            = rearrange([qw(STABLE_ID VERSION METHOD_LINK_SPECIES_SET_ID DESCRIPTION MEMBERS)], @args);
 
-        $dbid && $self->dbID($dbid);
         $stable_id && $self->stable_id($stable_id);
         $version && $self->version($version);
         $description && $self->description($description);
         $method_link_species_set_id && $self->method_link_species_set_id($method_link_species_set_id);
-        $adaptor && $self->adaptor($adaptor);
         if ($members) {
             $self->clear;
             foreach my $member (@$members) {
@@ -123,43 +147,6 @@ sub new {
     }
 
     return $self;
-}
-
-=head2 new_fast
-
-  Arg [1]    : hash reference $hashref
-  Example    : none
-  Description: This is an ultra fast constructor which requires knowledge of
-               the objects internals to be used.
-  Returntype : 
-  Exceptions : none
-  Caller     : 
-  Status     : Stable
-
-=cut
-
-sub new_fast {
-    my ($class, $hashref) = @_;
-
-    return bless $hashref, $class;
-}
-
-=head2 dbID
-
-  Arg [1]    : int $dbID (optional)
-  Example    : 
-  Description: Getter/setter for the internal ID of this relation
-  Returntype : int
-  Exceptions : none
-  Caller     : general
-  Status     : Stable
-
-=cut
-
-sub dbID {
-    my $self = shift;
-    $self->{'_dbID'} = shift if(@_);
-    return $self->{'_dbID'};
 }
 
 =head2 stable_id
@@ -273,28 +260,6 @@ sub method_link_species_set_id {
 }
 
 
-=head2 adaptor
-
-  Arg [1]    : string $adaptor (optional)
-               corresponding to a perl module
-  Example    : 
-  Description: getter/setter method for the adaptor for this relation. Usually
-               this will be either GeneTreeAdaptor, FamilyAdaptor, or
-               HomologyAdaptor
-  Returntype : Bio::EnsEMBL::Compara::DBSQL::BaseAdaptor object
-  Exceptions : none
-  Caller     : general
-  Status     : Stable
-
-=cut
-
-sub adaptor {
-    my $self = shift;
-    $self->{'_adaptor'} = shift if(@_);
-    return $self->{'_adaptor'};
-}
-
-
 
 ###########################
 #                         #
@@ -325,7 +290,7 @@ sub member_class {
 =cut
 
 sub _attr_to_copy_list {
-    return qw(_dbID _adaptor _version _stable_id _description _method_link_species_set_id);
+    return qw(dbID adaptor _version _stable_id _description _method_link_species_set_id);
 }
 
 =head2 deep_copy
@@ -400,9 +365,8 @@ sub add_Member {
 
 =head2 get_all_Members
 
-  Arg [1]    : None
   Example    : 
-  Description: 
+  Description: Returns all the members in this set
   Returntype : array reference of Bio::EnsEMBL::Compara::Member
   Exceptions : 
   Caller     : 
@@ -420,7 +384,7 @@ sub get_all_Members {
         if ($self->isa('Bio::EnsEMBL::Compara::AlignedMemberSet')) {
             $members = $self->adaptor->db->get_AlignedMemberAdaptor->fetch_all_by_AlignedMemberSet($self);
         } else {
-            my $members = $self->adaptor->db->get_MemberAdaptor->fetch_all_by_MemberSet($self);
+            $members = $self->adaptor->db->get_MemberAdaptor->fetch_all_by_MemberSet($self);
         }
         foreach my $member (@{$members}) {
             $self->add_Member($member);
@@ -448,7 +412,7 @@ sub clear {
 } 
 
 
-=head2 get_all_GeneMember
+=head2 get_all_GeneMembers
 
   Arg [1]    : None
   Example    : 
@@ -462,13 +426,20 @@ sub clear {
 sub get_all_GeneMembers {
     my ($self) = @_;
 
-    my $members = [];
+    my %seen_gene_members = ();
     foreach my $aligned_member (@{$self->get_all_Members}) {
-        push @$members, $aligned_member->gene_member if defined $aligned_member->gene_member;
+        next unless $aligned_member->gene_member_id;
+        if ($seen_gene_members{$aligned_member->gene_member_id}) {
+            $aligned_member->gene_member($seen_gene_members{$aligned_member->gene_member_id});
+        } else {
+            $seen_gene_members{$aligned_member->gene_member_id} = $aligned_member->gene_member;
+        }
     }
 
-    return $members;
+    return [values %seen_gene_members];
 }
+
+
 =head2 gene_list
 
   Example    : my $pair = $homology->gene_list
@@ -478,32 +449,46 @@ sub get_all_GeneMembers {
 
 =cut
 
-
-sub gene_list {  # DEPRECATED
+sub gene_list {  # DEPRECATED ?
     my $self = shift;
     return $self->get_all_GeneMembers
 }
 
 
-sub print_sequences_to_fasta {
+sub print_sequences_to_fasta {  ## DEPRECATED
     my ($self, $pep_file) = @_;
+    deprecate('print_sequences_to_fasta() is deprecated and will be removed in e79. Please use print_sequences_to_file(-file => $pep_file, -format => "fasta", -id_type => "MEMBER") instead');
     return $self->print_sequences_to_file(-file => $pep_file, -format => 'fasta', -id_type => 'MEMBER');
 }
 
+
+=head2 print_sequences_to_file
+
+  Arg [1]     : scalar (string or file handle) - output file
+  Arg [-FORMAT]   : string - format of the output (cf BioPerl capabilities) (example: 'fasta')
+  Arg [-UNIQ_SEQ] : boolean - whether only 1 copy of each sequence should be printed
+                    (when multiple proteins share the same sequence)
+  Arg [...]  : all the other arguments of SeqMember::bioseq()
+  Example    : $family->print_sequences_to_file(-file => 'output.fa', -format => 'fasta', -id_type => 'MEMBER');
+  Description: Prints the sequences of the members into a file
+  Returntype : number of unique sequences in the set
+  Exceptions : none
+  Caller     : general
+  Status     : Stable
+
+=cut
+
 sub print_sequences_to_file {
-    my $self = shift;
+    my ($self, $file, @args) = @_;
+    my ($format, $unique_seqs) = rearrange([qw(FORMAT UNIQ_SEQ)], @args);
 
-    my ($file, $fh, $format, $unique_seqs, $seq_type, $id_type) =
-        rearrange([qw(FILE FH FORMAT UNIQ_SEQ SEQ_TYPE ID_TYPE)], @_);
-
-    my $seqio = Bio::SeqIO->new( -file => ($file ? ">$file" : undef), -fh => $fh, -format => $format );
+    my $seqio = Bio::SeqIO->new( ref($file) ? (-fh => $file) : (-file => ">$file"), -format => $format );
 
     my %seq_hash = ();
     foreach my $member (@{$self->get_all_Members}) {
-        next if $member->source_name eq 'ENSEMBLGENE';
         next unless $member->isa('Bio::EnsEMBL::Compara::SeqMember');
 
-        my $bioseq = $member->bioseq(-SEQ_TYPE => $seq_type, -ID_TYPE => $id_type);
+        my $bioseq = $member->bioseq(@args);
         next if $unique_seqs and $seq_hash{$bioseq->seq};
         $seq_hash{$bioseq->seq} = 1;
 
@@ -512,6 +497,47 @@ sub print_sequences_to_file {
     return scalar(keys %seq_hash);
 }
 
+sub _load_all_missing_sequences {
+    my ($self, $seq_type) = @_;
+
+    my $random_adaptor = $self->adaptor ? $self->adaptor : $self->get_all_Members->[0]->adaptor;
+    my $sequence_adaptor = $random_adaptor->db->get_SequenceAdaptor;
+
+    if ($seq_type) {
+
+        my $key = "_sequence_$seq_type";
+
+        my %member_id2member = ();
+        foreach my $member (@{$self->get_all_Members}) {
+            next unless $member->isa('Bio::EnsEMBL::Compara::SeqMember');
+            next if $member->{$key};
+            $member_id2member{$member->seq_member_id} = $member if $member->seq_member_id;
+        }
+        my @member_ids = keys %member_id2member;
+        my $seqs = $sequence_adaptor->fetch_other_sequences_by_member_ids_type(\@member_ids, $seq_type);
+        while (my ($id, $seq) = each %$seqs) {
+            $member_id2member{$id}->{$key} = $seq;
+        }
+
+    } else {
+
+        my %seq_id2member = ();
+        foreach my $member (@{$self->get_all_Members}) {
+            next unless $member->isa('Bio::EnsEMBL::Compara::SeqMember');
+            next if $member->{'_sequence'};
+            my $seq_id = $member->{'_sequence_id'};
+            push @{$seq_id2member{$seq_id}}, $member if $seq_id;
+        }
+
+        my @seq_ids = keys %seq_id2member;
+        my $seqs = $sequence_adaptor->fetch_by_dbIDs(\@seq_ids);
+        while (@$seqs) {
+            my $seq_id = shift @seq_ids;
+            my $seq = shift @$seqs;
+            $_->{'_sequence'} = $seq for @{$seq_id2member{$seq_id}};
+        }
+    }
+}
 
 
 #################################
@@ -543,7 +569,7 @@ sub get_Member_by_source {
 
   Arg [1]    : string $source_name
   Arg [2]    : int $taxon_id
-  Example    : $domain->get_Member_by_source_taxon('ENSEMBLPEP',9606)
+  Example    : $family->get_Member_by_source_taxon('ENSEMBLPEP',9606)
   Description: 
   Returntype : array reference of Bio::EnsEMBL::Compara::Member
   Exceptions : 
@@ -561,7 +587,7 @@ sub get_Member_by_source_taxon {
 =head2 get_Member_by_GenomeDB
 
   Arg [1]    : Bio::EnsEMBL::Compara::GenomeDB $genome_db
-  Example    : $domain->get_Member_by_GenomeDB($genome_db)
+  Example    : $family->get_Member_by_GenomeDB($genome_db)
   Description: Returns all [Member] entries linked to this GenomeDB. 
                This will only return EnsEMBL based entries since UniProtKB 
                entries are not linked to a GenomeDB.
@@ -583,7 +609,7 @@ sub get_Member_by_GenomeDB {
 
   Arg [1]    : string $source_name
   Arg [2]    : Bio::EnsEMBL::Compara::GenomeDB $genome_db
-  Example    : $domain->get_Member_by_source_taxon('ENSEMBLPEP', $genome_db)
+  Example    : $family->get_Member_by_source_taxon('ENSEMBLPEP', $genome_db)
   Description: Returns all [Member] entries linked to this GenomeDB
                and the given source_name. This will only return EnsEMBL based 
                entries since UniProtKB entries are not linked to a GenomeDB.
@@ -605,7 +631,7 @@ sub get_Member_by_source_GenomeDB {
 
   Arg [1]    : string $scope
   Arg [2]    : string $key
-  Example    : $domain->_get_Member('_members_by_source', 'ENSEMBLPEP')
+  Example    : $family->_get_Member('_members_by_source', 'ENSEMBLPEP')
   Description: Used as the generic reference point for all 
                get_Memeber_by* methods. The method searches the given
                scope & if the values cannot be found will initalize that value
@@ -628,7 +654,7 @@ sub _get_Member {
 
   Arg [1]    : string $source_name
                e.g. "ENSEMBLPEP"
-  Example    : $domain->Member_count_by_source('ENSEMBLPEP');
+  Example    : $family->Member_count_by_source('ENSEMBLPEP');
   Description: 
   Returntype : int
   Exceptions : 

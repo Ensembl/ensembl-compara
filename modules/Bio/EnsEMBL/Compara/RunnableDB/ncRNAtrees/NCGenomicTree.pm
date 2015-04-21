@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2013] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -24,18 +24,19 @@ use Data::Dumper;
 
 use Bio::EnsEMBL::Compara::Graph::NewickParser;
 
-use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable', 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::TreeBest', 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::StoreTree');
+use base ('Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::TreeBest', 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::StoreTree');
 
 sub fetch_input {
     my ($self) = @_;
     my $nc_tree_id = $self->param('gene_tree_id');
     my $nc_tree = $self->compara_dba->get_GeneTreeAdaptor->fetch_by_dbID($nc_tree_id);
     $self->param('gene_tree', $nc_tree);
+    $nc_tree->species_tree->attach_to_genome_dbs();
     my $alignment_id = $self->param('alignment_id');
     $nc_tree->gene_align_id($alignment_id);
     print STDERR "ALN INPUT ID: " . $alignment_id . "\n" if ($self->debug);
     my $aln = $self->compara_dba->get_GeneAlignAdaptor->fetch_by_dbID($alignment_id);
-    my $aln_file = $self->dumpTreeMultipleAlignmentToWorkdir($aln);
+    my $aln_file = $self->dumpTreeMultipleAlignmentToWorkdir($aln, 'fasta', {-APPEND_SPECIES_TREE_NODE_ID => 1});
     if (! defined $aln_file) {
         $self->throw("I can not dump the alignment in $alignment_id");
     }
@@ -59,9 +60,9 @@ sub run_ncgenomic_tree {
     my $input_aln = $self->param('aln_input');
     print STDERR "INPUT ALN: $input_aln\n";
     die "$input_aln doesn't exist" unless (-e $input_aln);
-    if ($method eq "phyml" && (scalar $cluster->get_all_leaves < 4)) {
-        $self->input_job->incomplete(0);
-        die ("tree cluster $nc_tree_id has ".(scalar $cluster->get_all_leaves)." proteins - can not build a phyml tree\n");
+    if ($method eq "phyml" && (scalar(@{$cluster->get_all_leaves}) < 4)) {
+        $self->input_job->autoflow(0);
+        $self->complete_early(sprintf("tree cluster %d has %d proteins - can not build a phyml tree.\n", $nc_tree_id, scalar(@{$cluster->get_all_leaves})));
     }
 
     my $newick;

@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2013] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -26,9 +26,7 @@ Bio::EnsEMBL::Compara::PipeConfig::CAFE_conf
 
     #0. make sure that ncRNA pipeline (whose gene clusters you want to incorporate) is already past member the RFAMClassify analysis
 
-    #1. update ensembl-hive, ensembl and ensembl-compara CVS repositories before each new release
-
-    #2. you may need to update 'schema_version' in meta table to the current release number in ensembl-hive/sql/tables.sql
+    #1. update ensembl-hive, ensembl and ensembl-compara GIT repositories before each new release
 
     #3. make sure that all default_options are set correctly
 
@@ -77,9 +75,36 @@ init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::CAFE_conf -password <your_pa
   proteinTrees pipeline:
   init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::CAFE_conf -mlss_id 40093 -work_dir /lustre/scratch110/ensembl/mp12/protein_trees_74_CAFE -analysis_topup -wait_for backbone_fire_dnds -per_family_table 1 -type prot -pipeline_name mm14_protein_trees_74_with_sheep -host compara1 -cafe_species []
 
+  Release 76:
+  ncRNAtrees:
+  init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::CAFE_conf -mlss_id 40095 -work_dir /lustre/scratch109/ensembl/mp12/nc_trees_76 -wait_for backbone_fire_db_prepare -per_family_table 0 -type nc -pipeline_url mysql://ensadmin:ensembl@compara4/mp12_compara_nctrees_76b -cafe_species "['danio.rerio', 'taeniopygia.guttata', 'callithrix.jacchus', 'pan.troglodytes', 'homo.sapiens', 'mus.musculus']"
+
+  proteinTrees pipeline:
+  init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::CAFE_conf -mlss_id 40096 -work_dir /lustre/scratch110/ensembl/mp12/protein_trees_76_CAFE -wait_for backbone_fire_dnds -per_family_table 1 -type prot -pipeline_url mysql://ensadmin:ensembl@compara3/mm14_protein_trees_76b -cafe_species []
+
+
+  Release 77:
+  ncRNAtrees:
+  init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::CAFE_conf -mlss_id 40098 -wait_for backbone_fire_db_prepare -per_family_table 0 -type nc -pipeline_url mysql://ensadmin:ensembl@compara3/mm14_compara_nctrees_77 -cafe_species "['danio.rerio', 'taeniopygia.guttata', 'callithrix.jacchus', 'pan.troglodytes', 'homo.sapiens', 'mus.musculus']"
+
+  proteinTrees:
+  init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::CAFE_conf -mlss_id 40097 -wait_for backbone_fire_dnds -per_family_table 1 -type prot -pipeline_url mysql://ensadmin:ensembl@compara1/mm14_protein_trees_77 -cafe_species []
+
+  Release 78:
+  ncRNAtrees:
+  init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::CAFE_conf -mlss_id 40098 -wait_for backbone_fire_db_prepare -per_family_table 0 -type nc -pipeline_url mysql://ensadmin:ensembl@compara3/mp12_compara_nctrees_78a -cafe_species "['danio.rerio', 'taeniopygia.guttata', 'callithrix.jacchus', 'pan.troglodytes', 'homo.sapiens', 'mus.musculus']"
+
+  Release 79:
+  init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::CAFE_conf -mlss_id 40100 -work_dir scratch/109/cafe_nctrees_79 -wait_for backbone_fire_db_prepare -per_family_table 0 -type nc -pipeline_url mysql://ensadmin:ensembl@compara3/mm14_compara_nctrees_79b -cafe_species "['danio.rerio', 'taeniopygia.guttata', 'callithrix.jacchus', 'pan.troglodytes', 'homo.sapiens', 'mus.musculus']" -hive_no_init 1
+  init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::CAFE_conf -mlss_id 40099 -work_dir scratch/109/cafe_proteintrees_79 -wait_for backbone_fire_dnds -per_family_table 1 -type prot -pipeline_url mysql://ensadmin:ensembl@compara1/mm14_protein_trees_79 -cafe_species [] -hive_no_init 1
+
 =head1 CONTACT
 
-  Please contact ehive-users@ebi.ac.uk mailing list with questions/suggestions.
+Please email comments or questions to the public Ensembl
+developers list at <http://lists.ensembl.org/mailman/listinfo/dev>.
+
+Questions may also be sent to the Ensembl help desk at
+<http://www.ensembl.org/Help/Contact>.
 
 =cut
 
@@ -94,7 +119,7 @@ sub default_options {
     return {
             %{$self->SUPER::default_options},
 
-            # You need to specify -pipeline_name, -host, -work_dir and -password on command line (if they are not already set as an environmental variable)
+            # You need to specify -pipeline_name, -host and -password on command line (if they are not already set as an environmental variable)
 
             # Data needed for CAFE
             'cafe_lambdas'             => '',  # For now, we don't supply lambdas
@@ -114,26 +139,6 @@ sub default_options {
            };
 }
 
-## WARNING!!
-## Currently init_pipeline.pl doesn't run this method when a pipeline is created with the -analysis_topup option
-## So make sure that $self->o('work_dir') exists in the filesystem before running the pipeline
-## This method remains here for documentation purposes (to support this warning) and in case the init_pipeline/hive is modified to allow topup analysis create its own commands
-sub pipeline_create_commands {
-    my ($self) = @_;
-    return [
-        'mkdir -p '.$self->o('work_dir'),
-    ];
-}
-
-
-sub resource_classes {
-    my ($self) = @_;
-    return {
-            'cafe_default' => { 'LSF' => '-C0 -M1000 -R"select[mem>1000] rusage[mem=1000]"' },
-            'cafe' => { 'LSF' => '-S 1024 -C0 -M1000 -R"select[mem>1000] rusage[mem=1000]"' },
-           };
-}
-
 sub pipeline_analyses {
     my ($self) = @_;
     return [
@@ -145,7 +150,6 @@ sub pipeline_analyses {
                              'mlss_id'  => $self->o('mlss_id'),
                              'label'    => $self->o('full_species_tree_label'),
                             },
-             -hive_capacity => -1,   # to allow for parallelization
              -wait_for => [$self->o('wait_for')],
              -flow_into  => {
                              # 3 => { 'mysql:////meta' => { 'meta_key' => $self->o('species_tree_meta_key'), 'meta_value' => '#species_tree_string#' } },
@@ -161,7 +165,6 @@ sub pipeline_analyses {
                              'mlss_id'      => $self->o('mlss_id'),
                              'label'        => $self->o('full_species_tree_label')
                             },
-             -hive_capacity => -1, # to allow for parallelization
              -flow_into => {
 #                            '1->A' => ['BadiRate'],
                             1 => ['CAFE_table'],
@@ -182,7 +185,6 @@ sub pipeline_analyses {
              -logic_name => 'CAFE_table',
              -module => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::CAFETable',
              -parameters => {
-                             'work_dir'     => $self->o('work_dir'),
                              'cafe_species' => $self->o('cafe_species'),
                              'mlss_id'      => $self->o('mlss_id'),
                              'type'         => $self->o('type'),   # [nc|prot]
@@ -190,8 +192,8 @@ sub pipeline_analyses {
                              'mlss_id'      => $self->o('mlss_id'),
                              'cafe_shell'   => $self->o('cafe_shell'),
                             },
-             -hive_capacity => -1,
-             -rc_name => 'cafe_default',
+             -rc_name => '1Gb_job',
+             -meadow_type => 'LSF',
              -flow_into => {
                             2 => ['CAFE_analysis'],
                            },
@@ -201,22 +203,14 @@ sub pipeline_analyses {
              -logic_name => 'CAFE_analysis',
              -module => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::CAFEAnalysis',
              -parameters => {
-                             'work_dir'             => $self->o('work_dir'),
 #                             'cafe_lambdas'         => $self->o('cafe_lambdas'),
 #                             'cafe_struct_taxons'  => $self->o('cafe_'),
                              'cafe_struct_tree_str' => $self->o('cafe_struct_tree_str'),
                              'mlss_id'              => $self->o('mlss_id'),
                              'cafe_shell'           => $self->o('cafe_shell'),
                             },
-             -rc_name => 'cafe',
-             -hive_capacity => -1,
-             -flow_into => {
-                            3 => {
-                                  'mysql:////meta' => { 'meta_key' => 'cafe_lambda', 'meta_value' => '#cafe_lambda#' },
-                                  'mysql:////meta' => { 'meta_key' => 'cafe_table_file', 'meta_value' => '#cafe_table_file#' },
-                                  'mysql:////meta' => { 'meta_key' => 'CAFE_tree_string', 'meta_value' => '#cafe_tree_string#' },
-                                 },
-                           },
+             -rc_name => '1Gb_job',
+             -meadow_type => 'LSF',
              -priority => 10,
             },
            ]

@@ -1,5 +1,5 @@
 #!/usr/bin/env perl
-# Copyright [1999-2013] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+# Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 # 
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -22,7 +22,7 @@ use Bio::EnsEMBL::Registry;
 
 #
 # This scripts maps genomic positions between two genomes, thanks to
-# the BLASTZ alignment
+# the LASTZ alignment
 #
 
 
@@ -30,7 +30,7 @@ my $reg = "Bio::EnsEMBL::Registry";
 $reg->load_registry_from_url('mysql://anonymous@ensembldb.ensembl.org:5306');
 
 
-my $alignment_type = "BLASTZ_NET";
+my $alignment_type = "LASTZ_NET";
 my $set_of_species = "Homo sapiens:Pan troglodytes";
 my $reference_species = "human";
 

@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2013] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -20,18 +20,16 @@ limitations under the License.
 =head1 CONTACT
 
   Please email comments or questions to the public Ensembl
-  developers list at <dev@ensembl.org>.
+  developers list at <http://lists.ensembl.org/mailman/listinfo/dev>.
 
   Questions may also be sent to the Ensembl help desk at
-  <helpdesk@ensembl.org>.
+  <http://www.ensembl.org/Help/Contact>.
 
 =cut
 
 =head1 NAME
 
 Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::CAFEAnalysis
-
-=head1 SYNOPSIS
 
 =head1 DESCRIPTION
 
@@ -97,19 +95,11 @@ sub fetch_input {
 sub run {
     my ($self) = @_;
     $self->run_cafe_script;
-    $self->parse_cafe_output;
 }
 
 sub write_output {
     my ($self) = @_;
-
-    my $lambda = $self->param('lambda');
-    $self->dataflow_output_id ( {
-                                 'cafe_lambda' => $self->param('lambda'),
-                                 'cafe_table_file' => $self->param('work_dir') . "/" . $self->param('cafe_table_file'),
-                                 'cafe_tree_string' => $self->param('cafe_tree_string'),
-                                }, 3);
-
+    $self->parse_cafe_output;
 }
 
 ###########################################
@@ -157,13 +147,12 @@ sub run_cafe_script {
     chop($cafe_tree_str); #remove final semicolon
     $cafe_tree_str =~ s/:\d+$//; # remove last branch length
 
-#    my $cafe_table_file = $self->param('work_dir') . "/" . $self->param('cafe_table_file');
     my $lambda = $self->param('lambda');  ## For now, it only works with 1 lambda
     my $cafe_struct_tree = $self->param('cafe_struct_tree_str');
 
     print $sf '#!' . $cafe_shell . "\n\n";
     print $sf "tree $cafe_tree_str\n\n";
-    print $sf "load -p ${pval_lim} -i $cafe_table_file\n\n";
+    print $sf "load -p ${pval_lim} -i $cafe_table_file -t 1\n\n";
     print $sf "lambda -l $lambda\n";
 #    print $sf $cafe_lambdas ? " -l $cafe_lambdas\n\n" : " -s\n\n";
 #    print $sf $cafe_lambdas ? "-l $cafe_lambdas -t $cafe_struct_tree\n\n" : " -s\n\n";
@@ -175,13 +164,9 @@ sub run_cafe_script {
     chmod 0755, $script_file;
 
     $self->compara_dba->dbc->disconnect_when_inactive(0);
+
     unless ((my $err = system($script_file)) == 4096) {
         print STDERR "CAFE returning error $err\n";
-#         for my $f (glob "$cafe_out_file*") {
-#             system(`head $f >> /lustre/scratch101/ensembl/mp12/kkkk`);
-#         }
-        # It seems that CAFE doesn't exit with error code 0 never (usually 4096?)
-#        $self->throw("problem running script $cafe_out_file: $err\n");
     }
     $self->compara_dba->dbc->disconnect_when_inactive(1);
     return;
@@ -300,6 +285,10 @@ sub parse_cafe_output {
         my $root_id = $cafeGeneFamily->root->node_id();
 
         my $lca_taxon_id = $tree->root->name;
+        if ($lca_taxon_id eq 'Testudines+Archosauriagroup') {
+            $lca_taxon_id = 'Testudines + Archosauria group';
+        }
+
         print STDERR "LCA TAXON ID IS $lca_taxon_id\n" if ($self->debug);
 
         my $lca_node = $speciesTree->root->find_nodes_by_field_value('node_name', $lca_taxon_id)->[0]; # Allows _dup
@@ -314,13 +303,23 @@ sub parse_cafe_output {
             my $n = $node->name();
             $n =~ s/\./_/g;
             $n =~ s/_\d+$//;
+#            $n =~ s/_dup\d+//;
             print STDERR "Storing node name $n\n" if ($self->debug);
 
             my $n_members = $info_by_nodes{$n}{n_members};
             my $pvalue = $info_by_nodes{$n}{pvalue};
 
+            if ($n eq 'Testudines+Archosauriagroup') {
+                $n = 'Testudines + Archosauria group';
+            }
+
+            if ($pvalue eq '') {
+                $pvalue = 0.5;
+            }
+
             print STDERR "Storing N_MEMBERS: $n_members, PVALUE: $pvalue\n" if ($self->debug);
-            my $cafe_nodes = $cafeGeneFamily->root->find_nodes_by_taxon_id_or_species_name($n, $node->is_leaf);
+#            my $cafe_nodes = $cafeGeneFamily->root->find_nodes_by_taxon_id_or_species_name($n, $node->is_leaf);
+            my $cafe_nodes = $cafeGeneFamily->root->find_nodes_by_name($n, $node->is_leaf);
 
             for my $cafe_node (@$cafe_nodes) {
                 $cafe_node->n_members($n_members);

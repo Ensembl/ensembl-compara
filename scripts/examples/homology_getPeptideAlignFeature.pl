@@ -1,5 +1,5 @@
 #!/usr/bin/env perl
-# Copyright [1999-2013] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+# Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 # 
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -85,7 +85,7 @@ if ($compara_url) {
 #
 ###########################
 
-my $gene_member = $compara_dba->get_GeneMemberAdaptor->fetch_by_source_stable_id("ENSEMBLGENE", $gene_stable_id);
+my $gene_member = $compara_dba->get_GeneMemberAdaptor->fetch_by_stable_id($gene_stable_id);
 my $peptide_member = $gene_member->get_canonical_SeqMember;
 print "QUERY PEP: ";
 $peptide_member->print_member();

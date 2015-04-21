@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2013] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -20,17 +20,14 @@ limitations under the License.
 =head1 CONTACT
 
   Please email comments or questions to the public Ensembl
-  developers list at <dev@ensembl.org>.
+  developers list at <http://lists.ensembl.org/mailman/listinfo/dev>.
 
   Questions may also be sent to the Ensembl help desk at
-  <helpdesk@ensembl.org>.
+  <http://www.ensembl.org/Help/Contact>.
 
 =head1 NAME
 
 Bio::EnsEMBL::Compara::DBSQL::CAFEGeneFamilyAdaptor
-
-=head1 SYNOPSIS
-
 
 =head1 DESCRIPTION
 
@@ -55,6 +52,12 @@ use Bio::EnsEMBL::Compara::CAFEGeneFamily;
 
 use base ('Bio::EnsEMBL::Compara::DBSQL::SpeciesTreeAdaptor');
 
+
+sub fetch_all {
+    my ($self) = @_;
+
+    return $self->generic_fetch();
+}
 
 sub fetch_by_GeneTree {
     my ($self, $geneTree) = @_;
@@ -94,7 +97,7 @@ sub store {
 
     my $sth = $self->prepare("INSERT INTO CAFE_gene_family (root_id, lca_id, gene_tree_root_id, pvalue_avg, lambdas) VALUES (?,?,?,?,?)");
     $sth->execute($tree->root->node_id, $tree->lca_id, $tree->gene_tree_root_id, $tree->pvalue_avg, $tree->lambdas);
-    my $cafe_gene_family_id = $sth->{'mysql_insertid'};
+    my $cafe_gene_family_id = $self->dbc->db_handle->last_insert_id(undef, undef, 'CAFE_gene_family', 'cafe_gene_family_id');
     $sth->finish;
 
     my $cafe_gene_family_node_adaptor = $self->db->get_CAFEGeneFamilyNodeAdaptor();

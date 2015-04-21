@@ -1,5 +1,5 @@
-#!/usr/local/ensembl/bin/perl
-# Copyright [1999-2013] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+#!/usr/bin/env perl
+# Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 # 
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -34,7 +34,6 @@ my $usage = "$0
 
 my $help = 0;
 my ($dbname,$qy_species, $tg_species, $reg_conf, $mlss_id);
-my $method_link_type = "SYNTENY";
 
 GetOptions('help' => \$help,
 	   'dbname=s' => \$dbname,
@@ -64,12 +63,32 @@ my $mlssa = $dba->get_MethodLinkSpeciesSetAdaptor();
 my $qy_gdb = $gdba->fetch_by_registry_name($qy_species);
 my $tg_gdb = $gdba->fetch_by_registry_name($tg_species);
 
-my $mlss = Bio::EnsEMBL::Compara::MethodLinkSpeciesSet->new(
-    -method => Bio::EnsEMBL::Compara::Method->new( -type => $method_link_type ),
-    -species_set_obj => Bio::EnsEMBL::Compara::SpeciesSet->new( -genome_dbs => [$qy_gdb, $tg_gdb] ),
-);
-$mlssa->store($mlss);
-warn ("A new MLSS has been created with the dbID ".($mlss->dbID)." instead of $mlss_id") if defined $mlss_id and $mlss_id != $mlss->dbID;
+print ref($qy_gdb), " *** ", ref($tg_gdb), "\n";
+
+my $mlss;
+if ($mlss_id) {
+    $mlss = $mlssa->fetch_by_dbID($mlss_id);
+    my $genome_dbs = $mlss->species_set_obj->genome_dbs;
+   # die "The mlss_id $mlss_id does not match the same species set\n" unless ($genome_dbs ~~ [$qy_gdb, $tg_gdb]) or ($genome_dbs ~~ [$tg_gdb, $qy_gdb]);
+    die "The mlss_id $mlss_id does not match the right method_link\n" if $mlss->method->type ne 'SYNTENY';
+    my($qy_match, $tg_match)=(0,0);
+    foreach my$this_genome_db(@$genome_dbs){
+     if($this_genome_db->dbID == $qy_gdb->dbID){ 
+      $qy_match++;
+     } 
+     elsif($this_genome_db->dbID == $tg_gdb->dbID){
+      $tg_match++;
+     }
+    }
+    die "The mlss_id $mlss_id does not match the same species set\n" unless($tg_match && $qy_match);
+    
+} else {
+    $mlss = Bio::EnsEMBL::Compara::MethodLinkSpeciesSet->new(
+        -method => Bio::EnsEMBL::Compara::Method->new( -type => 'SYNTENY', -class => 'SyntenyRegion.synteny' ),
+        -species_set_obj => Bio::EnsEMBL::Compara::SpeciesSet->new( -genome_dbs => [$qy_gdb, $tg_gdb] ),
+    );
+    $mlssa->store($mlss);
+}
 
 my $qy_slices = get_slices($qy_gdb);
 my $tg_slices = get_slices($tg_gdb);
@@ -90,7 +109,7 @@ while (defined (my $line = <>) ) {
 # print STDERR "1: $qy_chr, 2: $tg_chr, qy_end: " .$qy_dnafrag->end.", tg_end: ". $tg_dnafrag->end."\n";
   
     $sth_synteny_region->execute($mlss->dbID);
-    my $synteny_region_id = $sth_synteny_region->{'mysql_insertid'};
+    my $synteny_region_id = $dbc->db_handle->last_insert_id(undef, undef, 'synteny_region', 'synteny_region_id');
     $sth_dnafrag_region->execute($synteny_region_id, $qy_dnafrag->dbID, $qy_start, $qy_end, 1);
     $sth_dnafrag_region->execute($synteny_region_id, $tg_dnafrag->dbID, $tg_start, $tg_end, $rel);
     print STDERR "synteny region line number $line_number loaded\n";

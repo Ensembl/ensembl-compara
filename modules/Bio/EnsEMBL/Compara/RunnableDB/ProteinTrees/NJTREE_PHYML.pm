@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2013] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -20,10 +20,10 @@ limitations under the License.
 =head1 CONTACT
 
   Please email comments or questions to the public Ensembl
-  developers list at <dev@ensembl.org>.
+  developers list at <http://lists.ensembl.org/mailman/listinfo/dev>.
 
   Questions may also be sent to the Ensembl help desk at
-  <helpdesk@ensembl.org>.
+  <http://www.ensembl.org/Help/Contact>.
 
 =head1 NAME
 
@@ -40,15 +40,7 @@ input_id/parameters format eg: "{'gene_tree_id'=>1234}"
 
 =head1 AUTHORSHIP
 
-Ensembl Team. Individual contributions can be found in the CVS log.
-
-=head1 MAINTAINER
-
-$Author$
-
-=head VERSION
-
-$Revision$
+Ensembl Team. Individual contributions can be found in the GIT log.
 
 =head1 APPENDIX
 
@@ -74,9 +66,11 @@ use base ('Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::TreeBest', 'Bio::EnsEMB
 sub param_defaults {
     return {
             'cdna'              => 1,   # always use cdna for njtree_phyml
-		'check_split_genes' => 1,
+            'check_split_genes' => 1,
             'store_tree_support'    => 1,
             'intermediate_prefix'   => 'interm',
+            'extra_lk_scale'    => undef,
+            'treebest_stderr'   => undef,
     };
 }
 
@@ -86,14 +80,14 @@ sub fetch_input {
 
     $self->param('tree_adaptor', $self->compara_dba->get_GeneTreeAdaptor);
 
-    my $protein_tree_id     = $self->param_required('gene_tree_id');
-    my $protein_tree        = $self->param('tree_adaptor')->fetch_by_dbID( $protein_tree_id )
-                                        or die "Could not fetch protein_tree with gene_tree_id='$protein_tree_id'";
-    $protein_tree->preload();
-    $protein_tree->print_tree(10) if($self->debug);
+    my $gene_tree_id     = $self->param_required('gene_tree_id');
+    my $gene_tree        = $self->param('tree_adaptor')->fetch_by_dbID( $gene_tree_id )
+                                        or die "Could not fetch gene_tree with gene_tree_id='$gene_tree_id'";
+    $gene_tree->preload();
+    $gene_tree->print_tree(10) if($self->debug);
 
-    $self->param('protein_tree', $protein_tree);
-
+    $self->param('gene_tree', $gene_tree);
+    $self->_load_species_tree_string_from_db();
 }
 
 
@@ -107,25 +101,74 @@ sub run {
 sub write_output {
     my $self = shift;
 
-    my @ref_support = qw(phyml_nt nj_ds phyml_aa nj_dn nj_mm);
-    $self->store_genetree($self->param('protein_tree'), \@ref_support);
-
     my @dataflow = ();
+
+    my @ref_support = qw(phyml_nt nj_ds phyml_aa nj_dn nj_mm);
+
+    my $treebest_stored_tree = $self->param('gene_tree');
+    if ($self->param('output_clusterset_id') and ($self->param('output_clusterset_id') ne 'default')) {
+        $treebest_stored_tree = $self->store_alternative_tree($self->param('treebest_stdout'), $self->param('output_clusterset_id'), $self->param('gene_tree'), \@ref_support);
+    } else {
+        #parse the tree into the datastucture:
+        if ($self->parse_newick_into_tree( $self->param('treebest_stdout'), $self->param('gene_tree'), \@ref_support )) {
+            $self->store_genetree($self->param('gene_tree'));
+        } else {
+            $treebest_stored_tree = undef;
+        }
+    }
+
+    if (not $treebest_stored_tree) {
+        $self->input_job->transient_error(0);
+        $self->throw('The filtered alignment is empty. Cannot build a tree');
+    } else {
+        push @dataflow, $treebest_stored_tree->root_id;
+    }
+
+    $self->param('gene_tree')->store_tag('treebest_runtime_msec', $self->param('treebest_runtime'));
+
+    if ($self->param('treebest_stderr')) {
+        foreach my $stderr_line (split /\n/, $self->param('treebest_stderr')) {
+            if ($stderr_line =~ / ([\w-]*) \(Loglk,LoglkSpec\) = \((.*),(.*)\)$/) {
+                $self->param('gene_tree')->store_tag(sprintf('treebest_%s_lk', $1), $2);
+                $self->param('gene_tree')->store_tag(sprintf('treebest_%s_lk_spec', $1), $3);
+                $self->param('gene_tree')->store_tag(sprintf('treebest_%s_lk_seq', $1), $2-$3);
+            }
+        }
+    }
+
     if ($self->param('store_intermediate_trees')) {
+        delete $self->param('gene_tree')->{'_member_array'};   # To make sure we use teh freshest data
         foreach my $filename (glob(sprintf('%s/%s.*.nhx', $self->worker_temp_directory, $self->param('intermediate_prefix')) )) {
             $filename =~ /\.([^\.]*)\.nhx$/;
             my $clusterset_id = $1;
             next if $clusterset_id eq 'mmerge';
             next if $clusterset_id eq 'phyml';
             print STDERR "Found file $filename for clusterset $clusterset_id\n";
-            my $newtree = $self->store_alternative_tree($self->_slurp($filename), $clusterset_id, $self->param('protein_tree'));
+            my $newtree = $self->store_alternative_tree($self->_slurp($filename), $clusterset_id, $self->param('gene_tree'), [], 1);
             push @dataflow, $newtree->root_id;
         }
     }
 
     if ($self->param('store_filtered_align')) {
-        my $filename = sprintf('%s/filtalign.fa', $self->worker_temp_directory);
-        $self->store_filtered_align($filename) if (-e $filename);
+        my $alnfile_filtered = sprintf('%s/filtalign.fa', $self->worker_temp_directory);
+        if (-e $alnfile_filtered) {
+            $self->param('default_gene_tree', $self->param('gene_tree'));
+            # 3rd argument is set because the coordinates are for the CDNA alignments
+            my $removed_columns;
+            eval {
+                $removed_columns = $self->parse_filtered_align($self->param('input_aln'), $alnfile_filtered, 1);
+            };
+            if ($@) {
+                if ($@ =~ /^Could not match alignments at /) {
+                    $self->warning($@);
+                } else {
+                    die $@;
+                }
+            } else {
+                print "TreeBest's filtered alignment: ", Dumper $removed_columns if ( $self->debug() );
+                $self->param('gene_tree')->store_tag('removed_columns', $removed_columns);
+            }
+        }
     }
 
     if (defined $self->param('output_dir')) {
@@ -141,10 +184,10 @@ sub write_output {
 sub post_cleanup {
   my $self = shift;
 
-  if(my $protein_tree = $self->param('protein_tree')) {
+  if(my $gene_tree = $self->param('gene_tree')) {
     printf("NJTREE_PHYML::post_cleanup  releasing tree\n") if($self->debug);
-    $protein_tree->release_tree;
-    $self->param('protein_tree', undef);
+    $gene_tree->release_tree;
+    $self->param('gene_tree', undef);
   }
 
   $self->SUPER::post_cleanup if $self->can("SUPER::post_cleanup");
@@ -161,82 +204,39 @@ sub post_cleanup {
 sub run_njtree_phyml {
     my $self = shift;
 
-    my $protein_tree = $self->param('protein_tree');
+    my $gene_tree = $self->param('gene_tree');
     my $newick;
 
     my $starttime = time()*1000;
     
+    $self->param('hidden_genes', [] );
+    $self->merge_split_genes($gene_tree) if $self->param('check_split_genes');
+    my $genes_for_treebest = scalar(@{$gene_tree->get_all_leaves});
 
-    if (scalar(@{$protein_tree->get_all_Members}) == 2) {
+    if ($genes_for_treebest < 2) {
 
-        warn "Number of elements: 2 leaves, N/A split genes\n";
-        $self->prepareTemporaryMemberNames($protein_tree);
-        my @goodgenes = map {$_->{_tmp_name}} @{$protein_tree->get_all_Members};
+        $self->throw("Cannot build a tree with $genes_for_treebest genes");
+
+    } elsif ($genes_for_treebest == 2) {
+
+        warn "2 leaves only, we only need sdi\n";
+        my @goodgenes = map { sprintf('%d_%d', $_->seq_member_id, $_->genome_db->_species_tree_node_id) } @{$gene_tree->get_all_leaves};
         $newick = $self->run_treebest_sdi_genepair(@goodgenes);
     
     } else {
 
-        my $input_aln = $self->dumpTreeMultipleAlignmentToWorkdir($protein_tree);
+        my $input_aln = $self->dumpTreeMultipleAlignmentToWorkdir($gene_tree, 'fasta', {-APPEND_SPECIES_TREE_NODE_ID => 1});
         $self->param('input_aln', $input_aln);
-        
-        warn sprintf("Number of elements: %d leaves, %d split genes\n", scalar(@{$protein_tree->get_all_Members}), scalar(keys %{$self->param('split_genes')}));
 
-        my $genes_for_treebest = scalar(@{$protein_tree->get_all_Members}) - scalar(keys %{$self->param('split_genes')});
-        $self->throw("Cannot build a tree with $genes_for_treebest genes (exclud. split genes)") if $genes_for_treebest < 2;
-
-        if ($genes_for_treebest == 2) {
-
-            my @goodgenes = grep {not exists $self->param('split_genes')->{$_}} (map {$_->{_tmp_name}} @{$protein_tree->get_all_Members});
-            $newick = $self->run_treebest_sdi_genepair(@goodgenes);
-
-        } else {
-
-            $newick = $self->run_treebest_best($input_aln);
+        my $extra_lk_scale = $self->param('extra_lk_scale');
+        if ((defined $extra_lk_scale) and ($extra_lk_scale < 0)) {
+            $extra_lk_scale = -$extra_lk_scale * $gene_tree->get_value_for_tag('aln_num_residues') / $gene_tree->get_value_for_tag('gene_count');
         }
+        $newick = $self->run_treebest_best($input_aln, $extra_lk_scale);
     }
 
-    #parse the tree into the datastucture:
-    unless ($self->parse_newick_into_tree( $newick, $self->param('protein_tree') )) {
-        $self->input_job->transient_error(0);
-        $self->throw('The filtered alignment is empty. Cannot build a tree');
-    }
-
-    $protein_tree->store_tag('NJTREE_PHYML_runtime_msec', time()*1000-$starttime);
-}
-
-
-sub store_filtered_align {
-    my ($self, $filename) = @_;
-    print STDERR "Found filtered alignment: $filename\n";
-
-    # Loads the filtered alignment strings
-    my %hash_filtered_strings = ();
-    {
-        my $alignio = Bio::AlignIO->new(-file => $filename, -format => 'fasta');
-        my $aln = $alignio->next_aln;
-        
-        unless ($aln) {
-            $self->warning("Cannot store the filtered alignment for this tree\n");
-            return;
-        }
-
-        foreach my $seq ($aln->each_seq) {
-            $hash_filtered_strings{$seq->display_id()} = $seq->seq();
-        }
-    }
-
-    my %hash_initial_strings = ();
-    {
-        my $alignio = Bio::AlignIO->new(-file => $self->param('input_aln'), -format => 'fasta');
-        my $aln = $alignio->next_aln or die "The input alignment was lost in the process";
-
-        foreach my $seq ($aln->each_seq) {
-            $hash_initial_strings{$seq->display_id()} = $seq->seq();
-        }
-    }
-
-    my $removed_columns = Bio::EnsEMBL::Compara::Utils::Cigars::identify_removed_columns(\%hash_initial_strings, \%hash_filtered_strings);
-    $self->param('protein_tree')->store_tag('removed_columns', $removed_columns);
+    $self->param('treebest_stdout', $newick);
+    $self->param('treebest_runtime', time()*1000-$starttime);
 }
 
 

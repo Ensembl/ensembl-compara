@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2013] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -20,14 +20,12 @@ limitations under the License.
 
 =head1 NAME
 
-  Bio::EnsEMBL::Compara::StableId::NamedClusterSet
-
-=head1 SYNOPSIS
+Bio::EnsEMBL::Compara::StableId::NamedClusterSet
 
 =head1 DESCRIPTION
 
-    A data container object (the only methods are getters/setters)
-    that maintains membername-2-clusterid and clusterid-2-clustername relationships
+A data container object (the only methods are getters/setters)
+that maintains membername-2-clusterid and clusterid-2-clustername relationships
 
 =cut
 

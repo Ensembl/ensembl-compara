@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2013] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -20,10 +20,10 @@ limitations under the License.
 =head1 CONTACT
 
   Please email comments or questions to the public Ensembl
-  developers list at <dev@ensembl.org>.
+  developers list at <http://lists.ensembl.org/mailman/listinfo/dev>.
 
   Questions may also be sent to the Ensembl help desk at
-  <helpdesk@ensembl.org>.
+  <http://www.ensembl.org/Help/Contact>.
 
 =head1 NAME
 
@@ -86,7 +86,7 @@ sub object_class {
 =head2 fetch_by_name_assembly
 
   Arg [1]    : string $name
-  Arg [2]    : string $assembly
+  Arg [2]    : string $assembly (optional)
   Example    : $gdb = $gdba->fetch_by_name_assembly("Homo sapiens", 'NCBI36');
   Description: Retrieves a genome db using the name of the species and
                the assembly version.
@@ -218,7 +218,32 @@ sub fetch_by_Slice {
   }
 
   my $core_dba = $slice->adaptor()->db();
-  return $self->fetch_by_core_DBAdaptor($core_dba);
+  my $gdb = $self->fetch_by_core_DBAdaptor($core_dba);
+
+  # 2015-03-18: the code below is greedy: it tries to find the component
+  # genome_db that matches the slice instead of returning the principal
+  # genome_db. It seems that we currently don't need to return component
+  # genome_dbs here, so let's just skip this part for now.
+  return $gdb;
+
+  # We need to return the right genome_db if the slice is from a polyploid
+  # genome. There are several ways of checking that:
+  #  - meta key in the core database
+  #  - slice attribute
+  #  - component genome_dbs in the compara database
+  # I have chosen the latter solution because the information is already in
+  # memory and it saves us from doing another trip to the database
+  if ($gdb->is_polyploid) {
+    # That said, we now have to query the database if it is a polyploid genome
+    my $all_comp_attr = $slice->get_all_Attributes('genome_component');
+    throw("No 'genome_component' attribute found\n") unless scalar(@$all_comp_attr);
+    throw("Too many 'genome_component' attributes !\n") if scalar(@$all_comp_attr) > 1;
+    my $comp_name = $all_comp_attr->[0]->value;
+    my $comp_gdb = $gdb->component_genome_dbs($comp_name) || throw("No genome_db for the component '$comp_name'\n");
+    return $comp_gdb;
+  } else {
+    return $gdb;
+  }
 }
 
 
@@ -256,35 +281,17 @@ sub fetch_all_by_ancestral_taxon_id {
 
 =head2 fetch_all_by_low_coverage
 
-  Example    : $gdb = $gdba->fetch_all_by_low_coverage();
+  Example    : $low_cov_gdbs = $gdba->fetch_all_by_low_coverage();
   Description: Retrieves all the genome dbs that have low coverage
   Returntype : listref of Bio::EnsEMBL::Compara::GenomeDB obejcts
-  Exceptions : thrown if core_db could not be connected to
+  Exceptions : none
   Caller     : general
 
 =cut
 
 sub fetch_all_by_low_coverage {
     my ($self) = @_;
-
-    my $all_genome_dbs = $self->fetch_all();
-
-    my @low_coverage_genome_dbs = ();
-    foreach my $curr_gdb (@$all_genome_dbs) {
-        next if (!$curr_gdb->assembly_default);
-        next if ($curr_gdb->name eq "ancestral_sequences");
-        next if ($curr_gdb->name eq "caenorhabditis_elegans");  # why?
-
-        my $core_dba = $curr_gdb->db_adaptor
-            or throw "Cannot connect to ".$curr_gdb->name." core DB";
-        my $meta_container = $core_dba->get_MetaContainer;
-        my $coverage_depth = $meta_container->list_value_by_key("assembly.coverage_depth")->[0];
-        if ($coverage_depth eq "low") {
-            push(@low_coverage_genome_dbs, $curr_gdb);
-        }
-    }
-
-    return \@low_coverage_genome_dbs;
+    return $self->_id_cache->get_all_by_additional_lookup('is_high_coverage', 0);
 }
 
 
@@ -302,14 +309,28 @@ sub fetch_all_by_low_coverage {
 =cut
 
 sub fetch_by_core_DBAdaptor {
-	my ($self, $core_dba) = @_;
-	my $species_name = $core_dba->get_MetaContainer->get_production_name();
-	my ($highest_cs) = @{$core_dba->get_CoordSystemAdaptor->fetch_all()};
-  my $species_assembly = $highest_cs->version();
-  return $self->fetch_by_name_assembly($species_name, $species_assembly);
+    my ($self, $core_dba) = @_;
+    my $species_name = $core_dba->get_MetaContainer->get_production_name();
+    my $species_assembly = $core_dba->assembly_name();
+    return $self->fetch_by_name_assembly($species_name, $species_assembly);
 }
 
 
+
+=head2 fetch_all_polyploid
+
+  Example     : $polyploid_gdbs = $genome_db_adaptor->fetch_all_polyploid();
+  Description : Returns all the GenomeDBs of polyploid genomes
+  Returntype  : Arrayref of Bio::EnsEMBL::Compara::GenomeDB
+  Exceptions  : none
+  Caller      : general
+
+=cut
+
+sub fetch_all_polyploid {
+    my $self = shift;
+    return $self->_id_cache->get_all_by_additional_lookup('is_polyploid', 0);
+}
 
 
 ##################
@@ -340,9 +361,9 @@ sub store {
     if($self->_synchronise($gdb)) {
         return $self->update($gdb);
     } else {
-        my $sql = 'INSERT INTO genome_db (genome_db_id, name, assembly, genebuild, taxon_id, assembly_default, locator) VALUES (?, ?, ?, ?, ?, ?, ?)';
+        my $sql = 'INSERT INTO genome_db (genome_db_id, name, assembly, genebuild, has_karyotype, is_high_coverage, taxon_id, assembly_default, genome_component, locator) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)';
         my $sth= $self->prepare( $sql ) or die "Could not prepare '$sql'\n";
-        my $return_code = $sth->execute( $gdb->dbID, $gdb->name, $gdb->assembly, $gdb->genebuild, $gdb->taxon_id, $gdb->assembly_default, $gdb->locator )
+        my $return_code = $sth->execute( $gdb->dbID, $gdb->name, $gdb->assembly, $gdb->genebuild, $gdb->has_karyotype, $gdb->is_high_coverage, $gdb->taxon_id, $gdb->assembly_default, $gdb->genome_component, $gdb->locator )
             or die "Could not store gdb(name='".$gdb->name."', assembly='".$gdb->assembly."', genebuild='".$gdb->genebuild."')\n";
 
         $self->attach($gdb, $self->dbc->db_handle->last_insert_id(undef, undef, 'genome_db', 'genome_db_id') );
@@ -388,15 +409,45 @@ sub update {
         $reference_dba->get_GenomeDBAdaptor->update( $gdb );
     }
 
-    my $sql = 'UPDATE genome_db SET name=?, assembly=?, genebuild=?, taxon_id=?, assembly_default=?, locator=? WHERE genome_db_id=?';
+    my $sql = 'UPDATE genome_db SET name=?, assembly=?, genebuild=?, taxon_id=?, assembly_default=?, genome_component=?, locator=? WHERE genome_db_id=?';
     my $sth = $self->prepare( $sql ) or die "Could not prepare '$sql'\n";
-    $sth->execute( $gdb->name, $gdb->assembly, $gdb->genebuild, $gdb->taxon_id, $gdb->assembly_default, $gdb->locator, $gdb->dbID );
+    $sth->execute( $gdb->name, $gdb->assembly, $gdb->genebuild, $gdb->taxon_id, $gdb->assembly_default, $gdb->genome_component, $gdb->locator, $gdb->dbID );
 
     $self->attach($gdb, $gdb->dbID() );     # make sure it is (re)attached to the "$self" adaptor in case it got stuck to the $reference_dba
     $self->_id_cache->remove($gdb->dbID);
     $self->_id_cache->put($gdb->dbID, $gdb);
 
     return $gdb;
+}
+
+
+=head2 set_non_default
+
+  Arg [1]    : Bio::EnsEMBL::Compara::GenomeDB $gdb
+  Example    : $gdba->set_non_default($gdb);
+  Description: Makes the GenomeDB object in the database
+  Returntype : Bio::EnsEMBL::Compara::GenomeDB
+  Exceptions : thrown if the argument is not a Bio::EnsEMBL::Compara:GenomeDB
+  Caller     : general
+  Status     : Stable
+
+=cut
+
+sub set_non_default {
+    my ($self, $gdb) = @_;
+
+    assert_ref($gdb, 'Bio::EnsEMBL::Compara::GenomeDB');
+
+    die "This GenomeDB is already non-default\n" unless $gdb->assembly_default;
+    my $sth = $self->prepare('UPDATE genome_db SET assembly_default = 0 WHERE genome_db_id = ?');
+    my $nrows = $sth->execute($gdb->dbID);
+    $sth->finish();
+    die "assembly_default has not been updated |\n" unless $nrows;
+
+    $gdb->assembly_default(0);
+    # Update the cache (e.g. remove this $gdb from the *_default_assembly lookups)
+    $self->_id_cache->remove($gdb->dbID);
+    $self->_id_cache->put($gdb->dbID, $gdb);
 }
 
 
@@ -416,8 +467,7 @@ sub _find_missing_DBAdaptors {
         # Get the production name and assembly to compare to our GenomeDBs
         my $mc = $db_adaptor->get_MetaContainer();
         my $that_species = $mc->get_production_name();
-        my ($highest_cs) = @{$db_adaptor->get_CoordSystemAdaptor->fetch_all()};
-        my $that_assembly = $highest_cs->version();
+        my $that_assembly = $db_adaptor->assembly_name();
         $db_adaptor->dbc->disconnect_if_idle();
 
         eval {
@@ -452,6 +502,9 @@ sub _columns {
         g.taxon_id
         g.assembly_default
         g.genebuild
+        g.has_karyotype
+        g.is_high_coverage
+        g.genome_component
         g.locator
     )
 }
@@ -462,6 +515,7 @@ sub _unique_attributes {
         name
         assembly
         genebuild
+        genome_component
     )
 }
 
@@ -470,8 +524,8 @@ sub _objs_from_sth {
     my ($self, $sth) = @_;
     my @genome_db_list = ();
 
-    my ($dbid, $name, $assembly, $taxon_id, $assembly_default, $genebuild, $locator);
-    $sth->bind_columns(\$dbid, \$name, \$assembly, \$taxon_id, \$assembly_default, \$genebuild, \$locator);
+    my ($dbid, $name, $assembly, $taxon_id, $assembly_default, $genebuild, $has_karyotype, $is_high_coverage, $genome_component, $locator);
+    $sth->bind_columns(\$dbid, \$name, \$assembly, \$taxon_id, \$assembly_default, \$genebuild, \$has_karyotype, \$is_high_coverage, \$genome_component, \$locator);
     while ($sth->fetch()) {
 
         my $gdb = Bio::EnsEMBL::Compara::GenomeDB->new_fast( {
@@ -481,7 +535,10 @@ sub _objs_from_sth {
             'assembly'  => $assembly,
             'assembly_default' => $assembly_default,
             'genebuild' => $genebuild,
+            'has_karyotype' => $has_karyotype,
+            'is_high_coverage' => $is_high_coverage,
             'taxon_id'  => $taxon_id,
+            '_genome_component'  => $genome_component,
             'locator'   => $locator,
         } );
 
@@ -489,6 +546,15 @@ sub _objs_from_sth {
 
         push @genome_db_list, $gdb;
     }
+
+    # Here, we need to connect the genome_dbs for polyploid genomes
+    my %gdb_per_key = map {$_->_get_unique_key => $_} (grep {not $_->genome_component} @genome_db_list);
+    foreach my $gdb (@genome_db_list) {
+        next unless $gdb->genome_component;
+        my $key = $gdb->_get_unique_key;
+        $gdb_per_key{$key}->component_genome_dbs($gdb->genome_component, $gdb) if $gdb_per_key{$key};
+    }
+
     return \@genome_db_list;
 }
 
@@ -517,10 +583,14 @@ sub support_additional_lookups {
 sub compute_keys {
     my ($self, $genome_db) = @_;
     return {
-            name_assembly => sprintf('%s_____%s', lc $genome_db->name, lc $genome_db->assembly),
+            ($genome_db->genome_component ? 'genome_component' : 'name_assembly') => sprintf('%s_____%s', lc $genome_db->name, lc $genome_db->assembly), # Should in theory add the genebuild
             $genome_db->taxon_id ? (taxon_id => $genome_db->taxon_id) : (),
             $genome_db->taxon_id ? (taxon_id_assembly => sprintf('%s____%s_', $genome_db->taxon_id, lc $genome_db->assembly)) : (),
-            ($genome_db->taxon_id and $genome_db->assembly_default) ? (taxon_id_default_assembly => $genome_db->taxon_id) : (),
+            ($genome_db->taxon_id and $genome_db->assembly_default) ? (
+                taxon_id_default_assembly => $genome_db->taxon_id,
+                is_high_coverage => $genome_db->is_high_coverage,
+                is_polyploid => $genome_db->is_polyploid,
+            ) : (),
             $genome_db->assembly_default ? (name_default_assembly => lc $genome_db->name) : (),
            }
 }

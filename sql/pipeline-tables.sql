@@ -1,4 +1,4 @@
--- Copyright [1999-2013] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+-- Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 -- 
 -- Licensed under the Apache License, Version 2.0 (the "License");
 -- you may not use this file except in compliance with the License.
@@ -235,16 +235,6 @@ CREATE TABLE recovered_member (
   UNIQUE KEY (stable_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 
-DROP TABLE IF EXISTS removed_member; 
-CREATE TABLE removed_member (
-  removed_id  int(10) unsigned NOT NULL AUTO_INCREMENT,
-  node_id int(10) unsigned NOT NULL,
-  stable_id varchar(128) NOT NULL,
-  genome_db_id int(10) unsigned DEFAULT NULL,
-  PRIMARY KEY (removed_id),
-  UNIQUE KEY (stable_id)
-) ENGINE=InnoDB DEFAULT CHARSET=latin1;
-
 DROP TABLE IF EXISTS cmsearch_hit; 
 CREATE TABLE cmsearch_hit (
   hit_id int(10) unsigned NOT NULL AUTO_INCREMENT,
@@ -273,51 +263,50 @@ CREATE TABLE CAFE_data (
 PRIMARY KEY (fam_id)
 ) ENGINE=InnoDB;
 
--- ----------------------------------------------------------------------------------
---
--- Table structure for table 'protein_tree_qc'
---
--- overview: This table contains statistics related to the protein trees
--- semantics:
---   genome_db_id  - link to genome_db table id
---   total_orphans_num   - number of orphaned genes (not in the set)
---   prop_orphans        - proportion of orphaned genes, compared to the whole set
---   common_orphans_num  - number of still orphaned genes (only if the species is reused)
---   new_orphans_num     - number of new orphaned genes (only if the species is reused)
-
-
-CREATE TABLE protein_tree_qc (
-    genome_db_id                       int(10) unsigned NOT NULL,
-
-    total_orphans_num                  INT UNSIGNED,
-    prop_orphans                       DOUBLE,
-    common_orphans_num                 INT UNSIGNED,
-    new_orphans_num                    INT UNSIGNED,
-
-    PRIMARY KEY (genome_db_id),
-    FOREIGN KEY (genome_db_id) REFERENCES genome_db(genome_db_id)
-
-) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 
 
 
 CREATE TABLE split_genes (
-	member_id   	int(10) unsigned UNIQUE NOT NULL,
+	seq_member_id   	int(10) unsigned UNIQUE NOT NULL,
 	gene_split_id	int(10) unsigned NOT NULL AUTO_INCREMENT,
 
-	PRIMARY KEY (member_id),
+	PRIMARY KEY (seq_member_id),
 	KEY gene_split_id (gene_split_id),
 
-	FOREIGN KEY member_id (member_id) REFERENCES member (member_id)
+	FOREIGN KEY seq_member_id (seq_member_id) REFERENCES seq_member (seq_member_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 
 
-CREATE TABLE protein_tree_backup (
-	member_id	int(10) unsigned NOT NULL,
+CREATE TABLE gene_tree_backup (
+	seq_member_id	int(10) unsigned NOT NULL,
 	root_id	int(10) unsigned NOT NULL,
+	is_removed      tinyint(1) DEFAULT 0,
 
-	PRIMARY KEY (root_id, member_id),
-	KEY (member_id)
+	PRIMARY KEY (root_id, seq_member_id),
+	KEY (is_removed),
+	KEY (seq_member_id)
 
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+
+
+
+-- ----------------------------------------------------------------------------------
+--
+-- Table structure for tables 'panther_annot'
+--
+-- overview: These tables contain the InterPro classification of the Ensembl proteins
+
+CREATE TABLE IF NOT EXISTS panther_annot (
+	upi char(13) NOT NULL,
+	ensembl_id char(50) NOT NULL,
+	ensembl_div char(15) NOT NULL,
+	panther_family_id char(15) NOT NULL,
+	start int(11) NOT NULL,
+	end int(11) NOT NULL,
+	score int(11) NOT NULL,
+	evalue char(25) NOT NULL,
+
+	PRIMARY KEY (ensembl_id)
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+
 

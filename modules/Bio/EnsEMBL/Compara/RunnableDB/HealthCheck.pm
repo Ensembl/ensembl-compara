@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2013] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -123,7 +123,11 @@ Run the conservation_scores test. Specify the method_link_species_set_id for the
 
 =head1 CONTACT
 
-Javier Herrero <jherrero@ebi.ac.uk>
+Please email comments or questions to the public Ensembl
+developers list at <http://lists.ensembl.org/mailman/listinfo/dev>.
+
+Questions may also be sent to the Ensembl help desk at
+<http://www.ensembl.org/Help/Contact>.
 
 =cut
 
@@ -260,10 +264,7 @@ sub _run_conservation_jobs_test {
 sub _run_conservation_scores_test {
   my ($self, $parameters) = @_;
 
-  my $method_link_species_set_id = 0;
-  $method_link_species_set_id = $self->param('method_link_species_set_id') if (defined($self->param('method_link_species_set_id')));
-
-  $method_link_species_set_id = $self->param('mlss_id') if (defined($self->param('mlss_id')));
+  my $method_link_species_set_id = $self->param('method_link_species_set_id') if (defined($self->param('method_link_species_set_id')));
 
   $self->test_table("conservation_score");
   $self->test_table("genomic_align_block");

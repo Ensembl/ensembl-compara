@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2013] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -20,10 +20,10 @@ limitations under the License.
 =head1 CONTACT
 
   Please email comments or questions to the public Ensembl
-  developers list at <dev@ensembl.org>.
+  developers list at <http://lists.ensembl.org/mailman/listinfo/dev>.
 
   Questions may also be sent to the Ensembl help desk at
-  <helpdesk@ensembl.org>.
+  <http://www.ensembl.org/Help/Contact>.
 
 =head1 NAME
 
@@ -47,15 +47,7 @@ This object represents the handle for a comparative DNA alignment database
 
 =head1 AUTHORSHIP
 
-Ensembl Team. Individual contributions can be found in the CVS log.
-
-=head1 MAINTAINER
-
-$Author$
-
-=head VERSION
-
-$Revision$
+Ensembl Team. Individual contributions can be found in the GIT log.
 
 =head1 APPENDIX
 
@@ -154,7 +146,8 @@ sub get_available_adaptors {
         'SpeciesSet'            => 'Bio::EnsEMBL::Compara::DBSQL::SpeciesSetAdaptor',
         'MethodLinkSpeciesSet'  => 'Bio::EnsEMBL::Compara::DBSQL::MethodLinkSpeciesSetAdaptor',
         'NCBITaxon'             => 'Bio::EnsEMBL::Compara::DBSQL::NCBITaxonAdaptor',
-        'HMMProfile'            => 'Bio::EnsEMBL::Compara::DBSQL::HMMProfileAdaptor',
+        'SpeciesTree'           => 'Bio::EnsEMBL::Compara::DBSQL::SpeciesTreeAdaptor',
+        'SpeciesTreeNode'       => 'Bio::EnsEMBL::Compara::DBSQL::SpeciesTreeNodeAdaptor',
 
             # genomic:
         'DnaFrag'               => 'Bio::EnsEMBL::Compara::DBSQL::DnaFragAdaptor',
@@ -163,7 +156,6 @@ sub get_available_adaptors {
         'DnaAlignFeature'       => 'Bio::EnsEMBL::Compara::DBSQL::DnaAlignFeatureAdaptor',
         'GenomicAlignBlock'     => 'Bio::EnsEMBL::Compara::DBSQL::GenomicAlignBlockAdaptor',
         'GenomicAlign'          => 'Bio::EnsEMBL::Compara::DBSQL::GenomicAlignAdaptor',
-        'GenomicAlignGroup'     => 'Bio::EnsEMBL::Compara::DBSQL::GenomicAlignGroupAdaptor',
         'GenomicAlignTree'      => 'Bio::EnsEMBL::Compara::DBSQL::GenomicAlignTreeAdaptor',
         'ConservationScore'     => 'Bio::EnsEMBL::Compara::DBSQL::ConservationScoreAdaptor',
         'ConstrainedElement'    => 'Bio::EnsEMBL::Compara::DBSQL::ConstrainedElementAdaptor',
@@ -178,7 +170,6 @@ sub get_available_adaptors {
 
             # gene-product:
         'Sequence'              => 'Bio::EnsEMBL::Compara::DBSQL::SequenceAdaptor',
-        'Member'                => 'Bio::EnsEMBL::Compara::DBSQL::MemberAdaptor',
         'GeneMember'            => 'Bio::EnsEMBL::Compara::DBSQL::GeneMemberAdaptor',
         'SeqMember'             => 'Bio::EnsEMBL::Compara::DBSQL::SeqMemberAdaptor',
         'GeneAlign'             => 'Bio::EnsEMBL::Compara::DBSQL::GeneAlignAdaptor',
@@ -189,13 +180,10 @@ sub get_available_adaptors {
         'GeneTree'              => 'Bio::EnsEMBL::Compara::DBSQL::GeneTreeAdaptor',
         'GeneTreeNode'          => 'Bio::EnsEMBL::Compara::DBSQL::GeneTreeNodeAdaptor',
         'CAFEGeneFamily'        => 'Bio::EnsEMBL::Compara::DBSQL::CAFEGeneFamilyAdaptor',
-        'SpeciesTree'           => 'Bio::EnsEMBL::Compara::DBSQL::SpeciesTreeAdaptor',
-        'SpeciesTreeNode'       => 'Bio::EnsEMBL::Compara::DBSQL::SpeciesTreeNodeAdaptor',
         'CAFEGeneFamilyNode'    => 'Bio::EnsEMBL::Compara::DBSQL::CAFEGeneFamilyNodeAdaptor',
+        'HMMProfile'            => 'Bio::EnsEMBL::Compara::DBSQL::HMMProfileAdaptor',
+        'HMMAnnot'              => 'Bio::EnsEMBL::Compara::DBSQL::HMMAnnotAdaptor',
 
-            # obsolete:
-        'Domain'                => 'Bio::EnsEMBL::Compara::DBSQL::DomainAdaptor',
-        'SitewiseOmega'         => 'Bio::EnsEMBL::Compara::DBSQL::SitewiseOmegaAdaptor',
     );
 
     return (\%pairs);

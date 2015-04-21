@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2013] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -45,7 +45,7 @@ Finds a good splitting point within the anchors. Leave the anchors as a 2bp long
 
 =head1 CONTACT
 
-dev@ensembl.org
+http://lists.ensembl.org/mailman/listinfo/dev
 
 =cut
 
@@ -340,7 +340,7 @@ sub get_trimmed_anchor_aligns {
     %$new_anchor_align = %$this_anchor_align;
     bless $new_anchor_align, ref($this_anchor_align);
     delete($new_anchor_align->{'_seq'});
-    delete($new_anchor_align->{'_dbID'});
+    delete($new_anchor_align->{'dbID'});
     $new_anchor_align->dnafrag_start($start);
     $new_anchor_align->dnafrag_end($end);
     $new_anchor_align->method_link_species_set_id($self->param('output_method_link_species_set_id'));

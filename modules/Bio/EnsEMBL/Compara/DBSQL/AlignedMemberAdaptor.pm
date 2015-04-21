@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2013] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -20,10 +20,10 @@ limitations under the License.
 =head1 CONTACT
 
   Please email comments or questions to the public Ensembl
-  developers list at <dev@ensembl.org>.
+  developers list at <http://lists.ensembl.org/mailman/listinfo/dev>.
 
   Questions may also be sent to the Ensembl help desk at
-  <helpdesk@ensembl.org>.
+  <http://www.ensembl.org/Help/Contact>.
 
 =head1 NAME
 
@@ -41,15 +41,7 @@ alignment.
 
 =head1 AUTHORSHIP
 
-Ensembl Team. Individual contributions can be found in the CVS log.
-
-=head1 MAINTAINER
-
-$Author$
-
-=head VERSION
-
-$Revision$
+Ensembl Team. Individual contributions can be found in the GIT log.
 
 =head1 APPENDIX
 
@@ -63,11 +55,11 @@ package Bio::EnsEMBL::Compara::DBSQL::AlignedMemberAdaptor;
 use strict; 
 use warnings;
 
-use Bio::EnsEMBL::Utils::Exception qw(throw deprecate);
+use Bio::EnsEMBL::Utils::Exception qw(throw);
 use Bio::EnsEMBL::Utils::Scalar qw(:assert);
 
 use Bio::EnsEMBL::Compara::AlignedMember;
-use Bio::EnsEMBL::Compara::DBSQL::MemberAdaptor;
+use Bio::EnsEMBL::Compara::DBSQL::SeqMemberAdaptor;
 use DBI qw(:sql_types);
 
 use base ('Bio::EnsEMBL::Compara::DBSQL::BaseAdaptor');
@@ -121,7 +113,7 @@ sub fetch_all_by_Homology {
     assert_ref($homology, 'Bio::EnsEMBL::Compara::Homology');
 
     my $extra_columns = ['hm.cigar_line', 'hm.perc_cov', 'hm.perc_id', 'hm.perc_pos'];
-    my $join = [[['homology_member', 'hm'], 'm.member_id = hm.peptide_member_id', $extra_columns]];
+    my $join = [[['homology_member', 'hm'], 'm.seq_member_id = hm.seq_member_id', $extra_columns]];
     my $constraint = 'hm.homology_id = ?';
 
     $self->bind_param_generic_fetch($homology->dbID, SQL_INTEGER);
@@ -144,7 +136,7 @@ sub fetch_all_by_Family {
     assert_ref($family, 'Bio::EnsEMBL::Compara::Family');
 
     my $extra_columns = ['fm.cigar_line'];
-    my $join = [[['family_member', 'fm'], 'm.member_id = fm.member_id', $extra_columns]];
+    my $join = [[['family_member', 'fm'], 'm.seq_member_id = fm.seq_member_id', $extra_columns]];
     my $constraint = 'fm.family_id = ?';
     my $final_clause = 'ORDER BY m.source_name';
 
@@ -188,7 +180,7 @@ sub fetch_all_by_gene_align_id {
     my ($self, $id) = @_;
 
     my $extra_columns = ['gam.cigar_line'];
-    my $join = [[['gene_align_member', 'gam'], 'm.member_id = gam.member_id', $extra_columns]];
+    my $join = [[['gene_align_member', 'gam'], 'm.seq_member_id = gam.seq_member_id', $extra_columns]];
     my $constraint = 'gam.gene_align_id = ?';
 
     $self->bind_param_generic_fetch($id, SQL_INTEGER);
@@ -201,11 +193,11 @@ sub fetch_all_by_gene_align_id {
 ################################
 
 sub _tables {
-    return Bio::EnsEMBL::Compara::DBSQL::MemberAdaptor::_tables();
+    return Bio::EnsEMBL::Compara::DBSQL::SeqMemberAdaptor::_tables();
 }
 
 sub _columns {
-    return Bio::EnsEMBL::Compara::DBSQL::MemberAdaptor::_columns();
+    return Bio::EnsEMBL::Compara::DBSQL::SeqMemberAdaptor::_columns();
 }
 
 sub _objs_from_sth {
@@ -215,7 +207,7 @@ sub _objs_from_sth {
 
     while(my $rowhash = $sth->fetchrow_hashref) {
         my $member = Bio::EnsEMBL::Compara::AlignedMember->new;
-        $member = Bio::EnsEMBL::Compara::DBSQL::MemberAdaptor::init_instance_from_rowhash($self, $member, $rowhash);
+        $member = Bio::EnsEMBL::Compara::DBSQL::SeqMemberAdaptor::init_instance_from_rowhash($self, $member, $rowhash);
         foreach my $attr (qw(cigar_line cigar_start cigar_end perc_cov perc_id perc_pos)) {
             $member->$attr($rowhash->{$attr}) if defined $rowhash->{$attr};
         }

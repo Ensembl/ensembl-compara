@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2013] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -22,6 +22,16 @@ use strict;
 use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
 
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
+
+sub param_defaults {
+    return {
+            # --anysymbol helps when Uniprot sequence contains 'U' or other funny aminoacid codes
+            # --thread 1 is supposed to prevent forking
+        'mafft_cmdline_args'    => '--anysymbol --thread 1',
+        'mafft_exec'            => '#mafft_root_dir#/bin/mafft',
+    };
+}
+
 
 sub fetch_input {
     my $self = shift @_;
@@ -48,7 +58,7 @@ sub fetch_input {
     my $pep_file    = $worker_temp_directory . "family_${family_id}.fa";
     my $mafft_file  = $worker_temp_directory . "family_${family_id}.mafft";
 
-    my $pep_counter = $family->print_sequences_to_file($pep_file);
+    my $pep_counter = $family->print_sequences_to_file( $pep_file, -format => 'fasta' );
 
     if ($pep_counter == 0) {
         unlink $pep_file;
@@ -57,7 +67,7 @@ sub fetch_input {
     } elsif ($pep_counter == 1) {
 
         unlink $pep_file;
-        my $member = (grep {$_->source_name ne 'ENSEMBLGENE'} @{$family->get_all_Members})[0];
+        my $member = $family->get_all_Members()->[0];
         my $cigar_line = length($member->sequence).'M';
         eval {$member->cigar_line($cigar_line) };
         if($@) {
@@ -68,8 +78,8 @@ sub fetch_input {
         return;
 
     } elsif ($pep_counter>=20000) {
-        my $mafft_args = $self->param('mafft_args') || '';
-        $self->param('mafft_args', $mafft_args.' --parttree' );
+        my $mafft_cmdline_args = $self->param('mafft_cmdline_args') || '';
+        $self->param('mafft_cmdline_args', $mafft_cmdline_args.' --parttree' );
     }
 
         # if these two parameters are set, run() will need to actually execute mafft
@@ -84,20 +94,13 @@ sub run {
 
     my $family_id               = $self->param('family_id');
     my $mafft_root_dir          = $self->param_required('mafft_root_dir');
-    my $mafft_executable        = $self->param('mafft_exec')     || ( $mafft_root_dir . '/bin/mafft' );
-    my $mafft_args              = $self->param('mafft_args')     || '';
-
-    my $pep_file                = $self->param('pep_file');
+    my $mafft_executable        = $self->param_required('mafft_exec');
+    my $mafft_cmdline_args      = $self->param('mafft_cmdline_args') || '';
+    my $pep_file                = $self->param('pep_file') or return;   # if we have no more work to do just exit gracefully
     my $mafft_file              = $self->param('mafft_file');
 
-    unless($pep_file) { # if we have no more work to do just exit gracefully
-        return;
-    }
+    my $cmd_line = "$mafft_executable $mafft_cmdline_args $pep_file > $mafft_file";
 
-    # $ENV{MAFFT_BINARIES} = $mafft_root_dir.'/bin'; # not needed (actually, in the way) for newer versions of MAFFT
-
-    my $cmd_line = "$mafft_executable --anysymbol $mafft_args $pep_file > $mafft_file"; # helps when Uniprot sequence contains 'U' or other funny aminoacid codes
-    # my $cmd_line = "$mafft_executable $mafft_args $pep_file > $mafft_file";
     if($self->debug) {
         warn "About to execute: $cmd_line\n";
     }
@@ -124,7 +127,7 @@ sub write_output {
     } elsif(my $mafft_file = $self->param('mafft_file')) {
 
         my $family = $self->param('family');
-        $family->load_cigars_from_fasta($mafft_file);
+        $family->load_cigars_from_file($mafft_file, -format => 'fasta', -CHECK_SEQ => 1);
         $family->adaptor->update($family, 1);
 
         unless($self->debug) {

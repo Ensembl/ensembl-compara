@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2013] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -20,12 +20,11 @@ limitations under the License.
 
 =head1 NAME
 
-    Bio::EnsEMBL::Compara::PipeConfig::ImportAltAlleGroupsAsHomologies_conf
+Bio::EnsEMBL::Compara::PipeConfig::ImportAltAlleGroupsAsHomologies_conf
 
 =head1 DESCRIPTION  
 
-    The PipeConfig file for the pipeline that imports alternative alleles
-    as homologies.
+The PipeConfig file for the pipeline that imports alternative alleles as homologies.
 
 =cut
 
@@ -41,19 +40,19 @@ sub default_options {
     return {
         %{$self->SUPER::default_options},
 
-        'host'            => 'compara3',    # where the pipeline database will be created
+        'host'            => 'compara1',    # where the pipeline database will be created
 
-        'pipeline_name'   => 'homology_projections_'.$self->o('ensembl_release'),   # also used to differentiate submitted processes
+        'pipeline_name'   => 'homology_projections_'.$self->o('rel_with_suffix'),   # also used to differentiate submitted processes
 
         # URLs of other databases (from which we inherit the members and sequences, and base objects)
         'master_db'       => 'mysql://ensro@compara1/sf5_ensembl_compara_master',
-        'family_db'       => 'mysql://ensro@compara2/lg4_compara_families_74_with_sheep',
-        'ncrnatrees_db'   => 'mysql://ensro@compara4/mp12_compara_nctrees_74sheep',
+        'family_db'       => 'mysql://ensro@compara2/lg4_families_79',
+        'ncrnatrees_db'   => 'mysql://ensro@compara3/mm14_compara_nctrees_79b',
 
         # Tables to copy and merge
         'tables_from_master'    => [ 'method_link', 'species_set', 'method_link_species_set', 'ncbi_taxa_node', 'ncbi_taxa_name' ],
-        'tables_to_merge'       => [ 'member', 'sequence' ],
-        'tables_to_copy'        => [ 'genome_db' ],
+        'tables_from_family_db' => [ 'dnafrag', 'genome_db' ],
+        'tables_to_merge'       => [ 'seq_member', 'gene_member', 'sequence' ],
     };
 }
 
@@ -112,7 +111,7 @@ sub pipeline_analyses {
         {   -logic_name => 'copy_from_familydb_factory',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
             -parameters => {
-                'inputlist'     => $self->o('tables_to_copy'),
+                'inputlist'     => $self->o('tables_from_family_db'),
                 'column_names'  => [ 'table' ],
             },
             -flow_into => {
@@ -155,7 +154,8 @@ sub pipeline_analyses {
             -parameters => {
                 'sql'   => [
                     'ALTER TABLE sequence       AUTO_INCREMENT=300000001',
-                    'ALTER TABLE member         AUTO_INCREMENT=300000001',
+                    'ALTER TABLE gene_member    AUTO_INCREMENT=300000001',
+                    'ALTER TABLE seq_member     AUTO_INCREMENT=300000001',
                     'ALTER TABLE homology       AUTO_INCREMENT=300000001',
                 ],
             },
@@ -203,6 +203,22 @@ sub pipeline_analyses {
             -parameters => {
                 'die_if_no_core_adaptor'  => 1,
                 'replace'                 => 1,
+                'mode'                    => 'display_label',
+                'source_name'             => 'ENSEMBLGENE',
+                'genome_db_ids'           => [ '#genome_db_id#' ],
+            },
+            -flow_into => [ 'update_seq_member_display_labels' ],
+            -rc_name => '500Mb_job',
+        },
+
+        {
+            -logic_name => 'update_seq_member_display_labels',
+            -module => 'Bio::EnsEMBL::Compara::RunnableDB::MemberDisplayLabelUpdater',
+            -parameters => {
+                'die_if_no_core_adaptor'  => 1,
+                'replace'                 => 1,
+                'mode'                    => 'display_label',
+                'source_name'             => 'ENSEMBLPEP',
                 'genome_db_ids'           => [ '#genome_db_id#' ],
             },
             -flow_into => [ 'update_member_descriptions' ],

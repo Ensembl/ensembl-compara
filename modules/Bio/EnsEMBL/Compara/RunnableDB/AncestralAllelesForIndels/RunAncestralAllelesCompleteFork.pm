@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2013] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -20,10 +20,10 @@ limitations under the License.
 =head1 CONTACT
 
   Please email comments or questions to the public Ensembl
-  developers list at <dev@ensembl.org>.
+  developers list at <http://lists.ensembl.org/mailman/listinfo/dev>.
 
   Questions may also be sent to the Ensembl help desk at
-  <helpdesk@ensembl.org>.
+  <http://www.ensembl.org/Help/Contact>.
 
 =head1 NAME
 
@@ -153,7 +153,7 @@ sub write_output {
     my $sth = $self->compara_dba->dbc->prepare($sql);
 
     $sth->execute($output->{'seq_region'}, $output->{'seq_region_start'},  $output->{'seq_region_end'}, $output->{'total_bases'}, $output->{'all_N'},$output->{'count_low_complexity'}, $output->{'multiple_gats'},$output->{'no_gat'},$output->{'insufficient_gat'},$output->{'long_alignment'},$output->{'align_all_N'},$output->{'num_bases_analysed'});
-    my $statistics_id = $sth->{'mysql_insertid'};
+    my $statistics_id = $self->dbc->db_handle->last_insert_id(undef, undef, 'statistics', 'statistics_id');
     $sth->finish;
 
     $sql = "INSERT INTO event (statistics_id, indel, type, detail, detail1, improvement, detail2, count) VALUES (?,?,?,?,?,?,?,?)";
@@ -179,7 +179,7 @@ sub run_ortheus {
     #Call ortheus
     my $fasta_str = join " ", @{$ordered_fasta_files};
 
-    my $ortheus_exe = "/software/ensembl/compara/OrtheusC/bin/OrtheusC";
+    my $ortheus_exe = $self->param('ortheus_bin');
 
     my $tree_state_file = $dump_dir . "/output.$$.tree";
     my $out_align = $dump_dir . "/output.$$.mfa";
@@ -196,7 +196,7 @@ sub run_ortheus {
 
     if ($return_status ne "OK") {
         print "ortheus execution failed at position $curr_pos ($return_status)\n";
-        $self->warning("ortheus execution failed at position $curr_pos ($return_status)"); 
+        $self->warning("ortheus execution failed at position $curr_pos ($return_status)\n$ortheus_cmd");
         return;
     }
 

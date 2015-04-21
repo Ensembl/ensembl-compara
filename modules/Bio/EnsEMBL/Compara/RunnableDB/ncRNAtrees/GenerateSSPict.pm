@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2013] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -21,7 +21,7 @@ limitations under the License.
 
 =head1 NAME
 
-    Bio::EnsEMBL::Compara::RunnableDB::ncRNAtrees::GenerateSSPict
+Bio::EnsEMBL::Compara::RunnableDB::ncRNAtrees::GenerateSSPict
 
 =head1 DESCRIPTION
 
@@ -33,10 +33,10 @@ of the family, plots for individual members are also created.
 =head1 CONTACT
 
    Please email comments or questions to the public Ensembl
-   developers list at <dev@ensembl.org>.
+   developers list at <http://lists.ensembl.org/mailman/listinfo/dev>.
 
    Questions may also be sent to the Ensembl help desk at
-   <helpdesk@ensembl.org>
+   <http://www.ensembl.org/Help/Contact>
 
 =head1 APPENDIX
 
@@ -53,7 +53,7 @@ use strict;
 use warnings;
 use Data::Dumper;
 
-use base ('Bio::EnsEMBL::Compara::RunnableDB::RunCommand', 'Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
+use base ('Bio::EnsEMBL::Compara::RunnableDB::RunCommand');
 
 
 sub fetch_input {
@@ -104,8 +104,8 @@ sub _dumpMultipleAlignment {
     my $ss_cons = $self->param('ss_cons');
 
     if ($ss_cons =~ /^\.d+$/) {
-        $self->input_job->incomplete(0);
-        die "tree " . $self->param('gene_tree_id') . " has no structure: $ss_cons\n";
+        $self->input_job->autoflow(0);
+        $self->complete_early("tree " . $self->param('gene_tree_id') . " has no structure: $ss_cons\n");
     }
 
     my $ss_model_picts_dir = $self->param('ss_model_picts_dir');
@@ -156,12 +156,12 @@ sub get_plot {
     my $meta_file = $aln_file . ".meta";
     ## One svg pic per member
     for my $member (@{$tree->get_all_Members}) {
-        my $member_id = $member->name();
+        my $seq_member_id = $member->name();
         open my $meta_fh, ">", $meta_file or die $!;
         print $meta_fh "$out_aln_file\n";
-        print $meta_fh "$aln_file\toneseq\t$member_id\n";
+        print $meta_fh "$aln_file\toneseq\t$seq_member_id\n";
         close($meta_fh);
-        my $svg_pic_filename = "${out_aln_file}-${member_id}.svg";
+        my $svg_pic_filename = "${out_aln_file}-${seq_member_id}.svg";
         $self->run_r2r_and_check("", $meta_file, $svg_pic_filename, "");
     }
     return;

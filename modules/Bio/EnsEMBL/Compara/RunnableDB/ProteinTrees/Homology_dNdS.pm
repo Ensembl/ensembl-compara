@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2013] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -24,26 +24,23 @@ limitations under the License.
 
 Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::Homology_dNdS
 
-=cut
+=head1 DESCRIPTION
 
-=head1 SYNOPSIS
+To summarize:
+ - We run codeml
+ - We "refine" the dN and dS values from codeml with Jukes-Cantor when needed
+ - We cap the values of dS and don't compute dN/dS if ds is 0 or too high
 
-my $db      = Bio::EnsEMBL::Compara::DBAdaptor->new($locator);
-my $repmask = Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::Homology_dNdS->new ( 
-                                                    -db      => $db,
-                                                    -input_id   => $input_id
-                                                    -analysis   => $analysis );
-$repmask->fetch_input(); #reads from DB
-$repmask->run();
-$repmask->write_output(); #writes to DB
+More details:
 
-=cut
-
-=head1 CONTACT
-
-Describe contact details here
-
-=cut
+The module is running codeml/PAML (via BioPerl) on each of the homologies
+we are inferring in Ensembl.
+Now, around line 250 (search for REF1 in this file), there is a test for
+very low values of dS (and dN). We then fall-back to a more traditional
+way of computing Ka and Ks: still with BioPerl, but with a Jukes-Cantor
+model instead of maximum likelihood.
+Even with this method, there is an additional test that would transform
+the very low values into zeros.
 
 =head1 APPENDIX
 
@@ -101,8 +98,7 @@ sub run {
         next if ($homology->s or $homology->n);
 
         # Compute ds
-        eval { $self->calc_genetic_distance($homology, $codeml_parameters); };
-        $self->warning($@) if $@;
+        $self->calc_genetic_distance($homology, $codeml_parameters);
         push @updated_homologies, $homology if $homology->s or $homology->n;
 
         # To save memory
@@ -138,7 +134,7 @@ sub calc_genetic_distance {
   #print("use codeml to get genetic distance of homology\n");
   $homology->print_homology if ($self->debug);
   
-  my $aln = $homology->get_SimpleAlign(-seq_type => 'cds');
+  my $aln = $homology->get_SimpleAlign(-seq_type => 'cds', -ID_TYPE => 'member');
 
   $self->compara_dba->dbc->disconnect_when_inactive(1);
   
@@ -155,9 +151,24 @@ sub calc_genetic_distance {
      $codeml->set_parameter($key, $value);
   }
   $codeml->alignment($aln);
-  if (0 != $aln->{_special_codeml_icode}) {
-    $codeml->set_parameter("icode",$aln->{_special_codeml_icode})
+
+  # Select the correct codon table for codeml
+  # default is 0: universal code
+  foreach my $member (@{$homology->get_all_Members}) {
+      if ($member->dnafrag_id and $member->dnafrag->name =~ /MT/i) {
+          ## 7742 is the taxon_id of vertebrates (Vertebrata)
+          if (grep {$_->taxon_id == 7742} @{$member->taxon->get_all_ancestors}) {
+              # 1:mamalian mt
+              $codeml->set_parameter("icode", 1);
+              last;
+          } else {
+              # 4:invertebrate mt
+              $codeml->set_parameter("icode", 4);
+              last;
+          }
+      }
   }
+
   my ($rc,$parser) = $codeml->run();
   if($rc == 0) {
     print_simple_align($aln, 80);
@@ -193,7 +204,7 @@ sub calc_genetic_distance {
   }
   my $MLmatrix = $result->get_MLmatrix();
 
-  if($MLmatrix->[0]->[1]->{'dS'} eq 'nan') {
+  if($MLmatrix->[0]->[1]->{'dS'} =~ /nan/i) {
       # Can happen for spectacularly bad matches, behave as per
       # Bio::Root::NotImplemented case above.
       warn "dS is NaN. Ignoring as this can be generated from bad alignments";
@@ -214,10 +225,21 @@ sub calc_genetic_distance {
   $homology->ds($MLmatrix->[0]->[1]->{'dS'});
   $homology->lnl($MLmatrix->[0]->[1]->{'lnL'});
 
+  $homology->update_alignment_stats;
+
+  if (not ($homology->get_all_Members->[0]->num_mismatches or $homology->get_all_Members->[1]->num_mismatches) ) {
+    # Bug 2015-01-26: Can't take log of 0 at [...]/bioperl-live/Bio/Align/DNAStatistics.pm line 1461,
+    # No such case reported, but in case it happens ... Identical sequences
+    # should lead to dn=ds=0
+    # Bug 2015-02-16: Illegal division by zero at [...]/bioperl-live/Bio/Align/DNAStatistics.pm line 1403
+    $homology->dn(0);
+    $homology->ds(0);
+
+  # REF1
   # We check that the sequences differ to avoid the dS=0.000N0 codeml
   # problem - there is one case in the DB with dS=0.00110 that is
   # clearly a 0 because dS*S is way lower than 1
-  if ( (1 > ((($homology->{_ds})*$homology->{_s})+0.1)) || (1 > ((($homology->{_dn})*$homology->{_n})+0.1)) ) {
+  } elsif ( (1 > ((($homology->{_ds})*$homology->{_s})+0.1)) || (1 > ((($homology->{_dn})*$homology->{_n})+0.1)) ) {
     # Bioperl version
     eval {require Bio::Align::DNAStatistics;};
     unless ($@) {

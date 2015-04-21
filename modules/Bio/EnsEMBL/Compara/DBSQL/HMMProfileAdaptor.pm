@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2013] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -18,13 +18,7 @@ limitations under the License.
 
 =head1 NAME
 
-HMMProfileAdaptor
-
-=head1 SYNOPSIS
-
-=head1 DESCRIPTION
-
-=head1 CONTACT
+Bio::EnsEMBL::Compara::DBSQL::HMMProfileAdaptor
 
 =head1 APPENDIX
 
@@ -41,7 +35,7 @@ use Data::Dumper;
 
 use Bio::EnsEMBL::Compara::HMMProfile;
 
-use Bio::EnsEMBL::Utils::Exception qw(throw warning deprecate); ## All needed?
+use Bio::EnsEMBL::Utils::Exception qw(throw warning); ## All needed?
 
 use Bio::EnsEMBL::Utils::IO qw/:slurp/;
 
@@ -158,13 +152,10 @@ sub fetch_all_by_column_names {
 
     my $sth = $self->prepare("SELECT $columns FROM hmm_profile" . $constraint);
     $sth->execute();
-    my @id_list = ();
-    while (my $idref = $sth->fetchrow_hashref()) {
-        push @id_list, $idref;
-    }
+    my $id_list = $sth->fetchall_arrayref();
     $sth->finish;
 
-    return [@id_list];
+    return $id_list;
 }
 
 ###############################

@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2013] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -39,17 +39,11 @@ $rdb->run;
 
 =cut
 
-=head1 DESCRIPTION
-
-Blah
-
-=cut
-
 =head1 CONTACT
 
-  Please email comments or questions to the public Ensembl developers list at <dev@ensembl.org>.
+  Please email comments or questions to the public Ensembl developers list at <http://lists.ensembl.org/mailman/listinfo/dev>.
 
-  Questions may also be sent to the Ensembl help desk at <helpdesk@ensembl.org>.
+  Questions may also be sent to the Ensembl help desk at <http://www.ensembl.org/Help/Contact>.
 
 =cut
 
@@ -63,7 +57,8 @@ Internal methods are usually preceded with a _
 package Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::HclusterPrepare;
 
 use strict;
-use Bio::EnsEMBL::Compara::MethodLinkSpeciesSet;
+use warnings;
+
 use Time::HiRes qw(time gettimeofday tv_interval);
 
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
@@ -76,6 +71,10 @@ sub fetch_input {
 
     my $genome_db_id = $self->param_required('genome_db_id');
     my $genome_db    = $self->compara_dba->get_GenomeDBAdaptor->fetch_by_dbID($genome_db_id) or die "no genome_db for id='$genome_db_id'";
+
+    if ($genome_db->is_polyploid) {
+        $self->complete_early("Polyploid genomes don't have blastp hits attached to them\n");
+    }
 
     my $table_name  = 'peptide_align_feature_' . $genome_db_id;
     $self->param('table_name', $table_name);
@@ -97,11 +96,6 @@ sub run {
 }
 
 
-sub write_output {
-    my $self = shift @_;
-
-}
-
 ##########################################
 #
 # internal methods
@@ -122,11 +116,13 @@ sub analyze_table {
   print("$sql\n") if ($self->debug);
   my $sth = $self->compara_dba->dbc->prepare($sql);
   $sth->execute();
+  $sth->finish();
 
   $sql = "ANALYZE TABLE $table_name";
   print("$sql\n") if ($self->debug);
   $sth = $self->compara_dba->dbc->prepare($sql);
   $sth->execute();
+  $sth->finish();
 
   printf("  %1.3f secs to ANALYZE TABLE\n", (time()-$starttime));
 }
@@ -152,12 +148,11 @@ sub fetch_distances {
        AND paf.qgenome_db_id=$genome_db_id
   };
   print +("$sql\n") if ($self->debug);
-  my $sth = $self->compara_dba->dbc->prepare($sql);
-  $sth->{mysql_use_result} = 1;
+  my $sth = $self->compara_dba->dbc->prepare($sql, { 'mysql_use_result' => 1 });
   $sth->execute();
   printf("%1.3f secs to execute\n", (time()-$starttime));
 
-  my $filename = $self->param('cluster_dir') . '/' . "$table_name.hcluster.txt";
+  my $filename = $self->param('cluster_dir') . "/$table_name.hcluster.txt";
   open(FILE, ">$filename") or die "Could not open '$filename' for writing : $!";
   my ($query_id, $hit_id, $score);
   $sth->bind_columns(\$query_id, \$hit_id, \$score);
@@ -183,18 +178,18 @@ sub fetch_categories {
             "qmember_id ".
              "FROM $table_name WHERE qgenome_db_id=$genome_db_id;";
   print +("$sql\n") if ($self->debug);
-  my $sth = $self->compara_dba->dbc->prepare($sql);
-  $sth->{mysql_use_result} = 1;
+  my $sth = $self->compara_dba->dbc->prepare($sql, { 'mysql_use_result' => 1 });
   $sth->execute();
   printf("%1.3f secs to execute\n", (time()-$starttime));
 
-  my $filename = $self->param('cluster_dir') . '/' . "$table_name.hcluster.cat";
+  my $filename = $self->param('cluster_dir') . "/$table_name.hcluster.cat";
   open(FILE, ">$filename") or die "Could not open '$filename' for writing : $!";
-  my $member_id;
-  $sth->bind_columns(\$member_id);
+  my $seq_member_id;
+  $sth->bind_columns(\$seq_member_id);
   while ($sth->fetch) {
-    print FILE "${member_id}_${genome_db_id}\t${outgroup_category}\n";
+    print FILE "${seq_member_id}_${genome_db_id}\t${outgroup_category}\n";
   }
+  $sth->finish();
   close FILE;
   printf("%1.3f secs to fetch/process\n", (time()-$starttime));
 }

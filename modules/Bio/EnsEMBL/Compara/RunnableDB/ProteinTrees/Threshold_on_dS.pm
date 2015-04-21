@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2013] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -22,24 +22,26 @@ limitations under the License.
 
 Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::Threshold_on_dS
 
-=cut
-
 =head1 DESCRIPTION
 
-This is a homology compara specific runnableDB, that based on a
-method_link_species_set_id, calculates the median dS where dS
-values are available, and stores 2*median in the threshold_on_ds
-tag of the current method_link_species_set
+This module defines the highest acceptable value of dS, for a given
+pair of species. We take all the orthologues between the two
+species, and get the median value of dS. If the median is > 1, the
+threshold will be defined as 2. Otherwise, the threshold will be 1.
+It is stored as a method_link_species_set tag.
 
-=cut
+This threshold is used by the API the following way. You can get the
+pre-computed value of dN or dS with the API. But if you call the
+"dnds_ratio" method, the API will return undef if dS is higher than the
+threshold previously defined, or if it is 0.
 
 =head1 CONTACT
 
   Please email comments or questions to the public Ensembl
-  developers list at <dev@ensembl.org>.
+  developers list at <http://lists.ensembl.org/mailman/listinfo/dev>.
 
   Questions may also be sent to the Ensembl help desk at
-  <helpdesk@ensembl.org>.
+  <http://www.ensembl.org/Help/Contact>.
 
 =cut
 
@@ -56,7 +58,7 @@ use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
 sub fetch_input {
     my $self = shift @_;
-    my $mlss_id = $self->param_required('mlss_id');
+    my $mlss_id = $self->param_required('homo_mlss_id');
 
     my $stats = new Statistics::Descriptive::Full;
 
@@ -80,7 +82,7 @@ sub run {
     my $self = shift @_;
 
     my $stats = $self->param('stats');
-    my $mlss_id = $self->param('mlss_id');
+    my $mlss_id = $self->param('homo_mlss_id');
 
     # Finds the right threshold from the median
     if ($stats->count) {
@@ -105,7 +107,7 @@ sub write_output {
     my $self = shift @_;
 
     # Updates the tag
-    my $mlss = $self->compara_dba->get_MethodLinkSpeciesSetAdaptor->fetch_by_dbID($self->param('mlss_id'));
+    my $mlss = $self->compara_dba->get_MethodLinkSpeciesSetAdaptor->fetch_by_dbID($self->param('homo_mlss_id'));
     $mlss->store_tag('threshold_on_ds', $self->param('threshold'));
 }
 

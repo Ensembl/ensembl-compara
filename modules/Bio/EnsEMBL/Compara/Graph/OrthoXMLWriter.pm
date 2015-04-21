@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2013] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -70,22 +70,13 @@ a new XML document create a new instance of this object.
 
 See inline
 
-=head1 MAINTAINER
-
-$Author$
-
-=head VERSION
-
-$Revision$
-
-
 =head1 CONTACT
 
  Please email comments or questions to the public Ensembl
- developers list at <dev@ensembl.org>.
+ developers list at <http://lists.ensembl.org/mailman/listinfo/dev>.
 
  Questions may also be sent to the Ensembl help desk at
- <helpdesk@ensembl.org>.
+ <http://www.ensembl.org/Help/Contact>.
 
 =cut
 
@@ -123,7 +114,7 @@ my $ortho_uri = 'http://orthoXML.org';
                   -SOURCE => 'Ensembl',  -HANDLE => $handle
                 );
   Status      : Stable  
-  
+
 =cut
 
 sub new {
@@ -167,7 +158,7 @@ sub namespaces {
   Returntype : Boolean
   Exceptions : None
   Status     : Stable
- 
+
 =cut
 
 sub no_release_trees {
@@ -186,7 +177,7 @@ sub no_release_trees {
   Returntype : String
   Exceptions : None
   Status     : Stable
-  
+
 =cut
 
 sub source {
@@ -204,7 +195,7 @@ sub source {
   Returntype : String
   Exceptions : None
   Status     : Stable
-  
+
 =cut
 
 sub source_version {
@@ -212,6 +203,29 @@ sub source_version {
   $self->{source_version} = $source_version if defined $source_version;
   return $self->{source_version};
 }
+
+=pod
+
+
+=head2 write_homologies()
+
+  Arg[0]      : The homology to write. Can be a single Homology or an ArrayRef
+  Description : Writes an homology into the backing document representation
+  Returntype  : None
+  Exceptions  : Possible if there is an issue with retrieving data from the homology
+  instance
+  Example     : $writer->write_homologies($homology);
+                $writer->write_homologies([$homology_one, $homology_two]);
+  Status      : Stable
+
+=cut
+
+sub write_homologies {
+    my ($self, $homologies) = @_;
+
+    return $self->_write_AlignedMemberSets($homologies);
+}
+
 
 =pod
 
@@ -226,34 +240,47 @@ sub source_version {
   Example     : $writer->write_trees($tree);
                 $writer->write_trees([$tree_one, $tree_two]);
   Status      : Stable  
-  
+
 =cut
 
 sub write_trees {
-  my ($self, $trees) = @_;
+    my ($self, $trees) = @_;
 
-  $trees = wrap_array($trees);
+    return $self->_write_AlignedMemberSets($trees);
+}
+
+
+sub _write_AlignedMemberSets {
+  my ($self, $alns_sets) = @_;
+
+  $alns_sets = wrap_array($alns_sets);
 
   # Create a list of all members, grouped by species
   my $hash_members = {};
   my $list_species = [];
-  foreach my $tree (@{$trees}) {
-    $self->_get_members_list($tree, $list_species, $hash_members);
+  foreach my $aln_set (@{$alns_sets}) {
+    foreach my $member (@{$aln_set->get_all_Members}) {
+      if (not exists $hash_members->{$member->genome_db_id}) {
+        push @{$list_species}, $member->genome_db;
+        $hash_members->{$member->genome_db_id} = {};
+      }
+      $hash_members->{$member->genome_db_id}->{$member->seq_member_id} = $member;
+    }
   }
 
-  return $self->write_data(
+  return $self->_write_data(
     $list_species,
     sub {
       my ($species) = @_;
-	return ${$hash_members}{$species->dbID};
+      return [values %{$hash_members->{$species->dbID}}];
     },
-    $trees
+    $alns_sets,
   );
 }
 
 =pod
 
-=head2 write_data()
+=head2 _write_data()
 
   Arg[0]      : List reference of all the species (must contain GenomeDB objects)
   Arg[1]      : A function that, given a GenomeDB, returns a list of all the
@@ -264,11 +291,11 @@ sub write_trees {
   Exceptions  : Possible if there is an issue with retrieving data from the tree
   instance
   Status      : Stable  
-  
+
 =cut
 
-sub write_data {
-  my ($self, $list_species, $callback_list_members, $list_trees) = @_;
+sub _write_data {
+  my ($self, $list_species, $callback_list_members, $list_data_objects) = @_;
   my $w = $self->_writer();
 
   # Prints each database
@@ -283,7 +310,7 @@ sub write_data {
     $w->startTag("genes");
 
     foreach my $member (@$all_members) {
-	$w->emptyTag("gene", "id" => $member->member_id, "geneId" => $member->gene_member->stable_id, ($member->source_name eq "ENSEMBLPEP" ? "protId" : "transcriptId") => $member->stable_id);
+	$w->emptyTag("gene", "id" => $member->seq_member_id, "geneId" => $member->gene_member->stable_id, ($member->source_name =~ /PEP$/ ? "protId" : "transcriptId") => $member->stable_id);
     }
 
     $w->endTag("genes");
@@ -295,13 +322,26 @@ sub write_data {
   $w->startTag("scores");
   $w->emptyTag("scoreDef", "id" => "bootstrap", "desc" => "Reliability of the branch");
   $w->emptyTag("scoreDef", "id" => "duplication_confidence_score", "desc" => "Reliability of the duplication");
+  $w->emptyTag("scoreDef", "id" => "n", "desc" => "Number of non-synonymous mutations");
+  $w->emptyTag("scoreDef", "id" => "s", "desc" => "Number of synonymous mutations");
+  $w->emptyTag("scoreDef", "id" => "dn", "desc" => "Rate of non-synonymous mutations");
+  $w->emptyTag("scoreDef", "id" => "ds", "desc" => "Rate of synonymous mutations");
+  $w->emptyTag("scoreDef", "id" => "lnl", "desc" => "Likelihood of the n/s scores");
+  $w->emptyTag("scoreDef", "id" => "dnds_ratio", "desc" => "dN/dS ratio");
+  $w->emptyTag("scoreDef", "id" => "perc_identity", "desc" => "Percentage of identity of this protein to the alignment");
   $w->endTag("scores");
 
   # Prints each tree
   $w->startTag("groups");
-  foreach my $tree (@{$list_trees}) {
-    $self->_write_tree($tree->root);
-    $tree->root->release_tree() if ! $self->no_release_trees;
+  foreach my $object (@{$list_data_objects}) {
+    if ($object->isa('Bio::EnsEMBL::Compara::GeneTree')) {
+      $self->_find_valid_genetree_roots($object->root);
+      $object->root->release_tree() if ! $self->no_release_trees;
+    } elsif ($object->isa('Bio::EnsEMBL::Compara::Homology')) {
+      $self->_homology_body($object);
+    } else {
+      die "Cannot handle ".ref($object)."\n";
+    }
   }
   $w->endTag("groups");
 
@@ -331,61 +371,26 @@ sub _write_closing {
   $self->_writer()->endTag("orthoXML");
 }
 
-sub _get_members_list {
-  my ($self, $tree, $list_species, $hash_members) = @_;
 
-  foreach my $leaf (@{$tree->get_all_leaves}) {
-    if (not defined ${$hash_members}{$leaf->genome_db_id}) {
-      push @{$list_species}, $leaf->genome_db;
-	${$hash_members}{$leaf->genome_db_id} = [];
-    }
-    push @{${$hash_members}{$leaf->genome_db_id}}, $leaf;
-  }
-}
-
-sub _write_tree {
+# an OrthoXML file must begin with a orthologGroup
+# We need to scan the tree to call _genetreenode_body() on all such nodes
+sub _find_valid_genetree_roots {
   my ($self, $tree) = @_;
   no warnings 'recursion';
   
-  # an OrthoXML file must begin with a orthologGroup
   if (not $tree->is_leaf() and ($tree->node_type ne 'speciation')) {
     # Goes recursively until the next speciation node
     foreach my $child (@{$tree->children()}) {
-      $self->_write_tree($child);
+      $self->_find_valid_genetree_roots($child);
     }
   } elsif (not $tree->is_leaf) {
     # Can now write the tree
-    $self->_process($tree);
+    $self->_genetreenode_body($tree);
   }
   
   return;
 }
 
-
-sub _process {
-  my ($self, $node) = @_;
-  no warnings 'recursion';
-
-  if(check_ref($node, 'Bio::EnsEMBL::Compara::GeneTreeMember')) {
-    return $self->_writer->emptyTag("geneRef", "id" => $node->member_id);
-  }
-  elsif(check_ref($node, 'Bio::EnsEMBL::Compara::GeneTreeNode')) {
-    my $tagname = $node->node_type ne 'speciation' ? "paralogGroup" : "orthologGroup";
-
-    my $w = $self->_writer();
-    $w->startTag(
-      $tagname,
-      $node->can("stable_id") ? ("id" => $node->stable_id()) : ("id" => $node->node_id()),
-    );
- 
-    $self->_genetreenode_body($node);
- 
-    $w->endTag($tagname);
-    return;
-  }
-  my $ref = ref($node);
-  throw("Cannot process type $ref");
-}
 
 ###### PROCESSORS
 
@@ -396,6 +401,17 @@ sub _genetreenode_body {
   
   my $w = $self->_writer();
   
+  if ($node->is_leaf) {
+    return $w->emptyTag("geneRef", "id" => $node->seq_member_id);
+  }
+
+  my $tagname = $node->node_type ne 'speciation' ? "paralogGroup" : "orthologGroup";
+
+  $w->startTag(
+    $tagname,
+    $node->can("stable_id") ? ("id" => $node->stable_id()) : ("id" => $node->node_id()),
+  );
+
    # Scores
   foreach my $tag (qw(duplication_confidence_score bootstrap)) {
     next unless $node->has_tag($tag);
@@ -406,12 +422,7 @@ sub _genetreenode_body {
   }
   
   # Properties
-  my $tax_level = $node->taxonomy_level;
-  if ($tax_level) {
-      $w->emptyTag('property', 'name' => 'taxon_name', 'value' => $tax_level);
-      my $tax_id    = $node->species_tree_node->taxon_id;
-      $w->emptyTag('property', 'name' => 'taxon_id', 'value' => $tax_id) if $tax_id;
-    }
+  _taxonomy_info_properties($w, $node->species_tree_node);
 
   # dubious_duplication is in another field
   if ($node->get_tagvalue('node_type', '') eq 'dubious') {
@@ -420,11 +431,53 @@ sub _genetreenode_body {
   
   if($node->get_child_count()) {
     foreach my $child (@{$node->children()}) {
-      $self->_process($child);
+      $self->_genetreenode_body($child);
     }
     }
   
-  return;
+  return $w->endTag($tagname);
+}
+
+
+sub _homology_body {
+    my ($self, $homology) = @_;
+
+    my $w = $self->_writer();
+
+    my $tagname = $homology->method_link_species_set->method->type eq 'ENSEMBL_PARALOGUES' ? "paralogGroup" : "orthologGroup";
+
+    $w->startTag($tagname, 'id' => $homology->dbID);
+
+    # Scores
+    foreach my $tag (qw(n s dn ds lnl dnds_ratio)) {
+        my $value = $homology->$tag;
+        if (defined $value and $value ne '') {
+            $w->emptyTag('score', 'id' => $tag, 'value' => $value);
+        }
+    }
+
+    # Properties
+    _taxonomy_info_properties($w, $homology->species_tree_node);
+    foreach my $tag (qw(description is_tree_compliant)) {
+        $w->emptyTag('property', 'name' => $tag, 'value' => $homology->$tag);
+    }
+
+    foreach my $member (@{$homology->get_all_Members}) {
+        $w->startTag("geneRef", "id" => $member->seq_member_id);
+        $w->emptyTag('score', 'id' => 'perc_identity', 'value' => $member->perc_id);
+        $w->endTag('geneRef');
+    }
+
+    return $w->endTag($tagname);
+}
+
+
+sub _taxonomy_info_properties {
+    my ($w, $species_tree_node) = @_;
+    return unless $species_tree_node;
+    $w->emptyTag('property', 'name' => 'taxon_name', 'value' => $species_tree_node->node_name);
+    my $tax_id    = $species_tree_node->taxon_id;
+    $w->emptyTag('property', 'name' => 'taxon_id', 'value' => $tax_id) if $tax_id;
 }
 
 

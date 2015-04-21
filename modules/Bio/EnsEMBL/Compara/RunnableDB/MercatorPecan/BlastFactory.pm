@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2013] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -20,17 +20,14 @@ limitations under the License.
 =head1 CONTACT
 
   Please email comments or questions to the public Ensembl
-  developers list at <dev@ensembl.org>.
+  developers list at <http://lists.ensembl.org/mailman/listinfo/dev>.
 
   Questions may also be sent to the Ensembl help desk at
-  <helpdesk@ensembl.org>.
+  <http://www.ensembl.org/Help/Contact>.
 
 =head1 NAME
 
 Bio::EnsEMBL::Compara::RunnableDB::MercatorPecan::BlastFactory 
-
-=head1 SYNOPSIS
-
 
 =head1 DESCRIPTION
 
@@ -72,19 +69,19 @@ sub write_output {
 
 
     #Fetch members for genome_db_id
-    my $sql = 'SELECT member_id FROM member WHERE genome_db_id = ? ORDER BY member_id';
+    my $sql = 'SELECT seq_member_id FROM seq_member WHERE genome_db_id = ? ORDER BY seq_member_id';
     my $sth = $self->compara_dba->dbc->prepare( $sql );
     $sth->execute($self->param('genome_db_id'));
     
-    my $member_id_list;
-    while( my ($member_id) = $sth->fetchrow() ) {
-	push @$member_id_list, $member_id;
+    my $seq_member_id_list;
+    while( my ($seq_member_id) = $sth->fetchrow() ) {
+	push @$seq_member_id_list, $seq_member_id;
     }
 
     my $step = $self->param('step');
 
-    while (@$member_id_list) {
-        my @job_array = splice(@$member_id_list, 0, $step);
+    while (@$seq_member_id_list) {
+        my @job_array = splice(@$seq_member_id_list, 0, $step);
         my $output_id = {'genome_db_id' => $self->param('genome_db_id'), 'start_member_id' => $job_array[0], 'end_member_id' => $job_array[-1] };
         $self->dataflow_output_id($output_id, 2);
     }

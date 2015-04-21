@@ -12,10 +12,10 @@ This README describes the pipeline for importing the chain and net files from UC
 1.2 Code checkout
 
       cvs -d :ext:bio.perl.org:/home/repository/bioperl co -r branch-07 bioperl-live
-      cvs -d :ext:cvs.sanger.ac.uk:/nfs/ensembl/cvsroot co ensembl
-      cvs -d :ext:cvs.sanger.ac.uk:/nfs/ensembl/cvsroot co ensembl-compara
-      cvs -d :ext:cvs.sanger.ac.uk:/nfs/ensembl/cvsroot co ensembl-hive
-      cvs -d :ext:cvs.sanger.ac.uk:/nfs/ensembl/cvsroot co ensembl-analysis
+      git clone https://github.com/Ensembl/ensembl.git
+      git clone https://github.com/Ensembl/ensembl-compara.git
+      git clone https://github.com/Ensembl/ensembl-hive.git
+      git clone https://github.com/Ensembl/ensembl-analysis.git
 
 in tcsh
     setenv BASEDIR   /some/path/to/modules
@@ -87,7 +87,7 @@ Options most likely to need changing are:
 
 mlss_id                         => it is recommended that this is set on the command line rather than in the conf file
 release                         => ensembl release
-ensembl_cvs_root_dir            => location of ensembl cvs root directory
+ensembl_cvs_root_dir            => root directory of the ensembl checkouts
 output_dir			=> directory for dumps used for creating coverage statistics
 
 pipeline_db			=> production database			

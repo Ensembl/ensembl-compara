@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2013] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -20,10 +20,10 @@ limitations under the License.
 =head1 CONTACT
 
   Please email comments or questions to the public Ensembl
-  developers list at <dev@ensembl.org>.
+  developers list at <http://lists.ensembl.org/mailman/listinfo/dev>.
 
   Questions may also be sent to the Ensembl help desk at
-  <helpdesk@ensembl.org>.
+  <http://www.ensembl.org/Help/Contact>.
 
 =head1 NAME
 
@@ -47,6 +47,7 @@ This module is intended to update the pair_aligner_conf database by firstly addi
 
 =head1 OPTIONS
 
+=over
 
 =item ref_species
 
@@ -91,6 +92,8 @@ Ensembl release if not the same as contained in the pair aligner compara databas
 =back
 
 =head1 EXAMPLES
+
+=over
 
 =item {'ref_species' => 'danio_rerio', 'method_link_type'=>'TRANSLATED_BLAT_NET', 'genome_db_ids'=>'[65,110]', 'bed_dir' => '/lustre/scratch103/ensembl/kb3/scratch/tests/test_config/pipeline', 'config_url' => 'mysql://USER:PASS@compara1:3306/kb3_pair_aligner_config_test', 'config_file' => '/nfs/users/nfs_k/kb3/work/projects/tests/test_config/tblat.conf',}
 
@@ -267,22 +270,22 @@ sub dump_bed_file {
     my $exon_bed_file = $self->param('bed_dir') . "/" . $name . "." . $assembly . "." . "coding_exons.bed";
 
     if (-e $genome_bed_file && !(-z $genome_bed_file)) {
-	print "$genome_bed_file already exists and not empty. Not overwriting.\n";
+        print "$genome_bed_file already exists and not empty. Not overwriting.\n";
     } else {
-	#Need to dump toplevel features
-	my $cmd;
-	my $compara_url = $self->compara_dba->dbc->url;
-	if ($reg_conf) {
-	    #Need to define compara_url even though it isn't used to stop dump_features complaining
-	    $cmd = $self->param('dump_features') . " --reg_conf $reg_conf --species $name --feature toplevel --compara_url $compara_url > $genome_bed_file";
-	} else {
-	    #Non-standard core name. Use DBAdaptor info
-	    my ($user, $host, $port, $dbname) = $dbc_url =~ /mysql:\/\/(\w*)@(.*):(\d*)\/(.*)/;
-	    $cmd = $self->param('dump_features') . " --host $host --user $user --port $port --dbname $dbname --species $name --feature toplevel > $genome_bed_file";
-	}
-	unless (system($cmd) == 0) {
-	    die("$cmd execution failed\n");
-	}
+        #Need to dump toplevel features
+        my $cmd;
+        my $compara_url = $self->compara_dba->dbc->url;
+        if ($reg_conf) {
+            #Need to define compara_url even though it isn't used to stop dump_features complaining
+            $cmd = $self->param('dump_features') . " --reg_conf $reg_conf --species $name --feature toplevel --compara_url '$compara_url' > $genome_bed_file";
+        } else {
+            #Non-standard core name. Use DBAdaptor info
+            my ($user, $host, $port, $dbname) = $dbc_url =~ /mysql:\/\/(\w*)@(.*):(\d*)\/(\w+)/;
+            $cmd = $self->param('dump_features') . " --host $host --user $user --port $port --dbname $dbname --species $name --feature toplevel > $genome_bed_file";
+        }
+        unless (system($cmd) == 0) {
+            die("$cmd execution failed\n");
+        }
     }
     
     #Always overwrite the coding exon file since this will usually be updated each release for human
@@ -296,7 +299,7 @@ sub dump_bed_file {
 	    $cmd = $self->param('dump_features') . " --reg_conf " . $reg_conf ." --species $name --feature coding-exons > $exon_bed_file";
 	} else {
 	    #Non-standard core name. Use DBAdaptor info
-	    my ($user, $host, $port, $dbname) = $dbc_url =~ /mysql:\/\/(\w*)@(.*):(\d*)\/(.*)/;
+	    my ($user, $host, $port, $dbname) = $dbc_url =~ /mysql:\/\/(\w*)@(.*):(\d*)\/(\w+)/;
 	    $cmd = $self->param('dump_features') . " --host $host --user $user --port $port --dbname $dbname --species $name --feature coding-exons > $exon_bed_file";
 	}
 	unless (system($cmd) == 0) {
@@ -313,14 +316,14 @@ sub run_update_config_database {
 
     my $cmd = "perl " . $self->param('update_config_database') . 
       " --ref_species " . $self->param('ref_species') . 
-      " --compara_url " . $self->compara_dba->dbc->url . 
+      " --compara_url '" . $self->compara_dba->dbc->url . "'" .
       " --mlss_id " . $self->param('mlss_id') . 
       " --ensembl_release " . $self->param('ensembl_release');
 
     $cmd .= " --config_url " . $self->param('config_url') if ($self->param('config_url'));
     $cmd .= " --config_file " . $self->param('config_file') if ($self->param('config_file')); 
-    $cmd .= " --ref_dbc_url " . $self->param('ref_dbc_url') if ($self->param('ref_dbc_url'));
-    $cmd .= " --non_ref_dbc_url " . $self->param('non_ref_dbc_url') if ($self->param('non_ref_dbc_url'));
+    $cmd .= " --ref_dbc_url '" . $self->param('ref_dbc_url') ."'" if ($self->param('ref_dbc_url'));
+    $cmd .= " --non_ref_dbc_url '" . $self->param('non_ref_dbc_url') ."'" if ($self->param('non_ref_dbc_url'));
     $cmd .= " --reg_conf " . $self->param('reg_conf') if ($self->param('reg_conf'));
     $cmd .= " --output_dir " . $self->param('output_dir') if ($self->param('output_dir'));
     $cmd .= " --pair_aligner_options \'" . $self->param('pair_aligner_options') ."\'" if ($self->param('pair_aligner_options')) ;

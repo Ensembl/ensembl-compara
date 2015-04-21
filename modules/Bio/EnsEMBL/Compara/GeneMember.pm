@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2013] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -19,11 +19,11 @@ limitations under the License.
 
 =head1 CONTACT
 
-  Please email comments or questions to the public Ensembl
-  developers list at <dev@ensembl.org>.
+Please email comments or questions to the public Ensembl
+developers list at <http://lists.ensembl.org/mailman/listinfo/dev>.
 
-  Questions may also be sent to the Ensembl help desk at
-  <helpdesk@ensembl.org>.
+Questions may also be sent to the Ensembl help desk at
+<http://www.ensembl.org/Help/Contact>.
 
 =head1 NAME
 
@@ -34,22 +34,31 @@ Bio::EnsEMBL::Compara::GeneMember
 Class to represent a member that is a gene.
 Genes do not have any sequences attached (see SeqMember for that purpose).
 
+For each gene, we define a "canonical" or "representative" SeqMember, that
+will be used in the gene-tree pipelines and the homologies.
+This definition is purely internal and is not related to the biological importance
+of that gene product.
+
 =head1 INHERITANCE TREE
 
   Bio::EnsEMBL::Compara::GeneMember
-  +- Bio::EnsEMBL::Compara::Member
+  `- Bio::EnsEMBL::Compara::Member
+
+=head1 SYNOPSIS
+
+Member properties:
+ - gene_member_id() is an alias for dbID()
+
+Links with the Ensembl Core objects:
+ - get_Gene()
+
+Links with other Ensembl Compara Member objects:
+ - get_canonical_SeqMember() and canonical_member_id()
+ - get_all_SeqMembers()
 
 =head1 AUTHORSHIP
 
-Ensembl Team. Individual contributions can be found in the CVS log.
-
-=head1 MAINTAINER
-
-$Author$
-
-=head VERSION
-
-$Revision$
+Ensembl Team. Individual contributions can be found in the GIT log.
 
 =head1 APPENDIX
 
@@ -72,11 +81,11 @@ use base ('Bio::EnsEMBL::Compara::Member');
 
 
 
-=head2 new_from_gene
+=head2 new_from_Gene
 
   Arg [-GENE] : Bio::Ensembl:Gene
   Arg [-GENOME_DB] : Bio::Ensembl:Compara:GenomeDB 
-  Example    : $member = Bio::EnsEMBL::Compara::GeneMember->new_from_gene(
+  Example    : $member = Bio::EnsEMBL::Compara::GeneMember->new_from_Gene(
                 -gene   => $gene,
                 -genome_db => $genome_db);
   Description: contructor method which takes an Ensembl::Gene object
@@ -88,11 +97,8 @@ use base ('Bio::EnsEMBL::Compara::Member');
 
 =cut
 
-sub new_from_gene {
-  my ($class, @args) = @_;
-  my $self = $class->new(@args);
-
-  if (scalar @args) {
+sub new_from_Gene {
+    my ($class, @args) = @_;
 
     my ($gene, $genome_db) = rearrange([qw(GENE GENOME_DB)], @args);
 
@@ -102,116 +108,49 @@ sub new_from_gene {
       throw("COREDB error: does not contain gene_stable_id for gene_id ". $gene->dbID."\n");
     }
 
-    $self->stable_id($gene->stable_id);
-    $self->taxon_id($genome_db->taxon_id);
-    $self->description($gene->description);
-    $self->genome_db_id($genome_db->dbID);
-    $self->chr_name($gene->seq_region_name);
-    $self->dnafrag_start($gene->seq_region_start);
-    $self->dnafrag_end($gene->seq_region_end);
-    $self->dnafrag_strand($gene->seq_region_strand);
-    $self->source_name("ENSEMBLGENE");
-    $self->display_label($gene->display_xref->display_id) if $gene->display_xref;
-  }
-  return $self;
+    my $gene_member = Bio::EnsEMBL::Compara::GeneMember->new(
+        -STABLE_ID => $gene->stable_id,
+        -DISPLAY_LABEL => ($gene->display_xref ? $gene->display_xref->display_id : undef),
+        -DNAFRAG_START => $gene->seq_region_start,
+        -DNAFRAG_END => $gene->seq_region_end,
+        -DNAFRAG_STRAND => $gene->seq_region_strand,
+
+        -DNAFRAG => $genome_db->adaptor->db->get_DnaFragAdaptor->fetch_by_GenomeDB_and_name($genome_db, $gene->seq_region_name),
+        -GENOME_DB_ID => $genome_db->dbID,
+        -TAXON_ID => $genome_db->taxon_id,
+
+        -SOURCE_NAME => 'ENSEMBLGENE',
+        -DESCRIPTION => $gene->description,
+    );
+    $gene_member->{core_gene} = $gene;
+    return $gene_member;
+}
+
+
+sub member_id { ## DEPRECATED
+  my $self = shift;
+  deprecate('GeneMember::member_id() is deprecated and will be removed in e79. Please use gene_member_id() instead');
+  return $self->dbID(@_);
 }
 
 
 
-### SECTION 3 ###
-#
-# Global methods
-###################
+=head2 gene_member_id
 
+  Arg [1]    : (opt) integer
+  Description: alias for dbID()
 
+=cut
 
+sub gene_member_id {
+  my $self = shift;
+  return $self->dbID(@_);
+}
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-### SECTION 4 ###
-#
-# Sequence methods
-#####################
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-### SECTION 5 ###
-#
-# print a member
-##################
-
-
-
-
-
-
-
-
-### SECTION 6 ###
 #
 # connection to core
 #####################
-
-
-
 
 
 =head2 get_Gene
@@ -251,13 +190,6 @@ sub get_Gene {
 
 
 
-
-
-
-
-
-
-### SECTION 7 ###
 #
 # canonical transcripts
 ########################
@@ -304,12 +236,9 @@ sub canonical_member_id {
 
 
 
-### SECTION 8 ###
 #
 # sequence links
 ####################
-
-
 
 
 =head2 get_all_SeqMembers
@@ -328,27 +257,89 @@ sub get_all_SeqMembers {
 
     throw("adaptor undefined, cannot access database") unless($self->adaptor);
 
-    my $able_adaptor = UNIVERSAL::can($self->adaptor, 'fetch_all_by_gene_member_id')
+    my $able_adaptor = UNIVERSAL::can($self->adaptor, 'fetch_all_by_GeneMember')
         ? $self->adaptor    # a MemberAdaptor or derivative
         : $self->adaptor->db->get_SeqMemberAdaptor;
 
 
-    return $able_adaptor->fetch_all_by_gene_member_id($self->dbID);
+    return $able_adaptor->fetch_all_by_GeneMember($self);
 }
 
 
+sub number_of_families {
+  my ($self, $num_families) = @_;
+  if (defined $num_families) {
+      $self->{'_num_families'} = $num_families;
+  }
+  return $self->{'_num_families'};
+}
+
+sub has_GeneTree {
+  my ($self, $has_genetree) = @_;
+  if (defined $has_genetree) {
+      $self->{'_has_genetree'} = $has_genetree;
+  }
+  return $self->{'_has_genetree'};
+}
+
+sub has_GeneGainLossTree {
+  my ($self, $has_genegainlosstree) = @_;
+  if (defined $has_genegainlosstree) {
+      $self->{'_has_genegainlosstree'} = $has_genegainlosstree;
+  }
+  return $self->{'_has_genegainlosstree'};
+}
+
+sub number_of_orthologues {
+  my ($self, $num_orthologues) = @_;
+  if (defined $num_orthologues) {
+      $self->{'_num_orthologues'} = $num_orthologues;
+  }
+  return $self->{'_num_orthologues'};
+}
+
+sub number_of_paralogues {
+  my ($self, $num_paralogues) = @_;
+  if (defined $num_paralogues) {
+      $self->{'_num_paralogues'} = $num_paralogues;
+  }
+  return $self->{'_num_paralogues'};
+}
+
+sub number_of_homoeologues {
+  my ($self, $num_homoeologues) = @_;
+  if (defined $num_homoeologues) {
+      $self->{'_num_homoeologues'} = $num_homoeologues;
+  }
+  return $self->{'_num_homoeologues'};
+}
 
 
+### Deprecated methods
 
-### SECTION 9 ###
-#
-# WRAPPERS
-###########
+sub get_all_peptide_Members {  # DEPRECATED
+    my $self = shift;
+    deprecate('get_all_peptide_Members() is deprecated and will be removed in e79. Use get_all_SeqMembers() instead.');
+    return $self->get_all_SeqMembers();
+}
 
+sub get_canonical_Member {  # DEPRECATED
+    my $self = shift;
+    deprecate('get_canonical_Member() is deprecated and will be removed in e79. Use get_canonical_SeqMember() instead.');
+    return $self->get_canonical_SeqMember();
+}
 
+sub get_canonical_peptide_Member {  # DEPRECATED
+    my $self = shift;
+    deprecate('get_canonical_peptide_Member() is deprecated and will be removed in e79. Use get_canonical_SeqMember() instead.');
+    return $self->get_canonical_SeqMember();
+}
 
-
-
+sub get_canonical_transcript_Member {  # DEPRECATED
+    my $self = shift;
+    deprecate('get_canonical_transcript_Member() is deprecated and will be removed in e79. Use get_canonical_SeqMember() instead.');
+    return $self->get_canonical_transcript_Member();
+}
 
 
 1;

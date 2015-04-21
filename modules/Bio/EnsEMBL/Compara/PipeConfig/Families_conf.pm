@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2013] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -21,15 +21,13 @@ limitations under the License.
 
 =head1 NAME
 
-    Bio::EnsEMBL::Compara::PipeConfig::Families_conf
+Bio::EnsEMBL::Compara::PipeConfig::Families_conf
 
 =head1 SYNOPSIS
 
     #0. make sure that ProteinTree pipeline (whose EnsEMBL peptide members you want to incorporate) is already past member loading stage
 
-    #1. update ensembl-hive, ensembl and ensembl-compara CVS repositories before each new release
-
-    #2. you may need to update 'schema_version' in meta table to the current release number in ensembl-hive/sql/tables.sql
+    #1. update ensembl-hive, ensembl and ensembl-compara GIT repositories before each new release
 
     #3. make sure that all default_options are set correctly
 
@@ -43,11 +41,15 @@ limitations under the License.
 
 =head1 DESCRIPTION  
 
-    The PipeConfig file for Families pipeline that should automate most of the tasks
+The PipeConfig file for Families pipeline that should automate most of the tasks
 
 =head1 CONTACT
 
-  Please contact ehive-users@ebi.ac.uk mailing list with questions/suggestions.
+Please email comments or questions to the public Ensembl
+developers list at <http://lists.ensembl.org/mailman/listinfo/dev>.
+
+Questions may also be sent to the Ensembl help desk at
+<http://www.ensembl.org/Help/Contact>.
 
 =cut
 
@@ -57,6 +59,9 @@ package Bio::EnsEMBL::Compara::PipeConfig::Families_conf;
 
 use strict;
 use warnings;
+
+use Bio::EnsEMBL::Hive::Version 2.3;
+
 use base ('Bio::EnsEMBL::Compara::PipeConfig::ComparaGeneric_conf');
 
 sub default_options {
@@ -64,20 +69,22 @@ sub default_options {
     return {
         %{$self->SUPER::default_options},
 
-#       'mlss_id'         => 30043,         # it is very important to check that this value is current (commented out to make it obligatory to specify)
+#       'mlss_id'         => 30046,         # it is very important to check that this value is current (commented out to make it obligatory to specify)
         'host'            => 'compara2',    # where the pipeline database will be created
-        'rel_suffix'      => '',            # an empty string by default, a letter otherwise
-        'rel_with_suffix' => $self->o('ensembl_release').$self->o('rel_suffix'),
         'file_basename'   => 'metazoa_families_'.$self->o('rel_with_suffix'),
-
-        'pipeline_name'   => 'compara_families_'.$self->o('rel_with_suffix'),   # also used to differentiate submitted processes
 
         'email'           => $self->o('ENV', 'USER').'@ebi.ac.uk',    # NB: your EBI address may differ from the Sanger one!
 
+            # HMM clustering
+        'hmm_clustering'  => 0,
+        'hmm_library_basedir'       => '/lustre/scratch109/sanger/fs9/treefam8_hmms',
+        'pantherScore_path'         => '/software/ensembl/compara/pantherScore1.03',
+        'hmmer2_home'               => '/software/ensembl/compara/hmmer-2.3.2/src/',
+
             # code directories:
-        'blast_bin_dir'   => '/software/ensembl/compara/ncbi-blast-2.2.27+/bin',
+        'blast_bin_dir'   => '/software/ensembl/compara/ncbi-blast-2.2.28+/bin',
         'mcl_bin_dir'     => '/software/ensembl/compara/mcl-12-135/bin',
-        'mafft_root_dir'  => '/software/ensembl/compara/mafft-7.017',
+        'mafft_root_dir'  => '/software/ensembl/compara/mafft-7.113',
             
             # data directories:
         'work_dir'        => '/lustre/scratch109/ensembl/'.$self->o('ENV', 'USER').'/'.$self->o('pipeline_name'),
@@ -91,23 +98,25 @@ sub default_options {
         'first_n_big_families'  => 2,   # these are known to be big, so no point trying in small memory
 
             # resource requirements:
-        'blast_gigs'      => 2,
-        'mcl_gigs'        => 50,
+        'blast_gigs'      =>  2,
+        'blast_hm_gigs'   =>  4,
+        'mcl_gigs'        => 64,
         'mcl_procs'       =>  4,
         'lomafft_gigs'    =>  4,
         'himafft_gigs'    => 14,
-        'dbresource'      => 'my'.$self->o('host'),                 # will work for compara1..compara4, but will have to be set manually otherwise
-        'blast_capacity'  => 1000,                                  # work both as hive_capacity and resource-level throttle
+        'dbresource'      => 'my'.$self->o('host'),                 # will work for compara1..compara5, but will have to be set manually otherwise
+        'blast_capacity'  => 3000,                                  # work both as hive_capacity and resource-level throttle
         'mafft_capacity'  =>  400,
         'cons_capacity'   =>  400,
+        'HMMer_classify_capacity' => 100,
         'reservation_sfx' => '',    # set to '000' for farm2, to '' for farm3 and EBI
 
             # homology database connection parameters (we inherit half of the members and sequences from there):
-#        'protein_trees_db'  => 'mysql://ensro@compara1/mm14_protein_trees_'.$self->o('ensembl_release'),
-        'protein_trees_db'  => 'mysql://ensro@compara1/mm14_protein_trees_'.$self->o('rel_with_suffix'),
+        'protein_trees_db'  => 'mysql://ensro@compara1/mm14_protein_trees_'.$self->o('ensembl_release'),
+#        'protein_trees_db'  => 'mysql://ensro@compara3/mm14_protein_trees_'.$self->o('rel_with_suffix'),
 
             # used by the StableIdMapper as the reference:
-        'prev_rel_db' => 'mysql://ensadmin:'.$self->o('password').'@compara2/lg4_ensembl_compara_73',
+        'prev_rel_db' => 'mysql://ensadmin:'.$self->o('password').'@compara4/mp14_ensembl_compara_78',
 
             # used by the StableIdMapper as the location of the master 'mapping_session' table:
         'master_db' => 'mysql://ensadmin:'.$self->o('password').'@compara1/sf5_ensembl_compara_master',    
@@ -153,20 +162,14 @@ sub resource_classes {
         %{$self->SUPER::resource_classes},  # inherit 'default' from the parent class
 
         'urgent'       => { 'LSF' => '-q yesterday' },
-        'LongBlast'    => { 'LSF' => '-C0 -M'.$self->o('blast_gigs').$self->o('reservation_sfx').'000 -q long -R"select['.$self->o('dbresource').'<'.$self->o('blast_capacity').' && mem>'.$self->o('blast_gigs').'000] rusage['.$self->o('dbresource').'=10:duration=10:decay=1, mem='.$self->o('blast_gigs').'000]"' },
+        'LongBlast'    => { 'LSF' => [ '-C0 -M'.$self->o('blast_gigs').$self->o('reservation_sfx').'000 -q long -R"select['.$self->o('dbresource').'<'.$self->o('blast_capacity').' && mem>'.$self->o('blast_gigs').'000] rusage['.$self->o('dbresource').'=10:duration=10:decay=1, mem='.$self->o('blast_gigs').'000]"', '-lifespan 1440' ]  },
+        'LongBlastHM'  => { 'LSF' => [ '-C0 -M'.$self->o('blast_hm_gigs').$self->o('reservation_sfx').'000 -q long -R"select['.$self->o('dbresource').'<'.$self->o('blast_capacity').' && mem>'.$self->o('blast_hm_gigs').'000] rusage['.$self->o('dbresource').'=10:duration=10:decay=1, mem='.$self->o('blast_hm_gigs').'000]"', '-lifespan 1440' ]  },
         'BigMcxload'   => { 'LSF' => '-C0 -M'.$self->o('mcl_gigs').$self->o('reservation_sfx').'000 -q hugemem -R"select[mem>'.$self->o('mcl_gigs').'000] rusage[mem='.$self->o('mcl_gigs').'000]"' },
         'BigMcl'       => { 'LSF' => '-C0 -M'.$self->o('mcl_gigs').$self->o('reservation_sfx').'000 -n '.$self->o('mcl_procs').' -q hugemem -R"select[ncpus>='.$self->o('mcl_procs').' && mem>'.$self->o('mcl_gigs').'000] rusage[mem='.$self->o('mcl_gigs').'000] span[hosts=1]"' },
-        'BigMafft'     => { 'LSF' => '-C0 -M'.$self->o('himafft_gigs').$self->o('reservation_sfx').'000 -R"select['.$self->o('dbresource').'<'.$self->o('mafft_capacity').' && mem>'.$self->o('himafft_gigs').'000] rusage['.$self->o('dbresource').'=10:duration=10:decay=1, mem='.$self->o('himafft_gigs').'000]"' },
+        'BigMafft'     => { 'LSF' => '-C0 -M'.$self->o('himafft_gigs').$self->o('reservation_sfx').'000 -q long -R"select['.$self->o('dbresource').'<'.$self->o('mafft_capacity').' && mem>'.$self->o('himafft_gigs').'000] rusage['.$self->o('dbresource').'=10:duration=10:decay=1, mem='.$self->o('himafft_gigs').'000]"' },
         '4GigMem'      => { 'LSF' => '-C0 -M'.$self->o('lomafft_gigs').$self->o('reservation_sfx').'000 -R"select['.$self->o('dbresource').'<'.$self->o('mafft_capacity').' && mem>'.$self->o('lomafft_gigs').'000] rusage['.$self->o('dbresource').'=10:duration=10:decay=1, mem='.$self->o('lomafft_gigs').'000]"' },
         '2GigMem'      => { 'LSF' => '-C0 -M2'.$self->o('reservation_sfx').'000 -R"select[mem>2000] rusage[mem=2000]"' },
     };
-}
-
-
-sub beekeeper_extra_cmdline_options {
-    my ($self) = @_;
-
-    return '-lifespan 1440';
 }
 
 
@@ -178,14 +181,18 @@ sub pipeline_analyses {
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
             -parameters => {
                 'inputlist'     => [
-                                        [ $self->o('protein_trees_db')   => 'ncbi_taxa_node' ],
-                                        [ $self->o('protein_trees_db')   => 'ncbi_taxa_name' ],
                                         [ $self->o('protein_trees_db')   => 'genome_db' ],       # we need them in "located" state
                                         [ $self->o('protein_trees_db')   => 'sequence' ],
-                                        [ $self->o('protein_trees_db')   => 'member' ],
+                                        [ $self->o('protein_trees_db')   => 'seq_member' ],
+                                        [ $self->o('protein_trees_db')   => 'gene_member' ],
+                                        [ $self->o('protein_trees_db')   => 'hmm_annot' ],
+                                        [ $self->o('protein_trees_db')   => 'hmm_curated_annot' ],
+                                        [ $self->o('master_db')     => 'ncbi_taxa_node' ],
+                                        [ $self->o('master_db')     => 'ncbi_taxa_name' ],
                                         [ $self->o('master_db')     => 'method_link' ],
                                         [ $self->o('master_db')     => 'species_set' ],
                                         [ $self->o('master_db')     => 'method_link_species_set' ],
+                                        [ $self->o('master_db')     => 'dnafrag' ],
                                     ],
                 'column_names'  => [ 'src_db_conn', 'table' ],
             },
@@ -209,10 +216,15 @@ sub pipeline_analyses {
             -parameters => {
                 'sql'   => [
                     'ALTER TABLE sequence                   AUTO_INCREMENT=200000001',
-                    'ALTER TABLE member                     AUTO_INCREMENT=200000001',
+                    'ALTER TABLE gene_member                AUTO_INCREMENT=200000001',
+                    'ALTER TABLE seq_member                 AUTO_INCREMENT=200000001',
                     'ALTER TABLE method_link                ENGINE=InnoDB',
+                    'ALTER TABLE ncbi_taxa_node             ENGINE=InnoDB',
+                    'ALTER TABLE ncbi_taxa_name             ENGINE=InnoDB',
                     'ALTER TABLE species_set                ENGINE=InnoDB',
                     'ALTER TABLE method_link_species_set    ENGINE=InnoDB',
+                    'ALTER TABLE dnafrag                    ENGINE=InnoDB',
+                    'ALTER TABLE dnafrag                    AUTO_INCREMENT=200000000000001',
                 ],
             },
             -flow_into => {
@@ -229,7 +241,7 @@ sub pipeline_analyses {
             },
             -flow_into => {
                 '2->A' => [ 'load_nonref_members' ],
-                'A->1' => [ 'load_uniprot_superfactory' ],
+                'A->1' => [ 'hc_nonref_members' ],
             },
         },
 
@@ -241,6 +253,14 @@ sub pipeline_analyses {
                 'include_reference'     => 0,
             },
             -rc_name => '2GigMem',
+        },
+
+        {   -logic_name         => 'hc_nonref_members',
+            -module             => 'Bio::EnsEMBL::Compara::RunnableDB::Families::SqlHealthChecks',
+            -parameters         => {
+                mode            => 'nonref_members',
+            },
+            -flow_into  => [ 'load_uniprot_superfactory' ],
         },
 
         {   -logic_name => 'load_uniprot_superfactory',
@@ -295,24 +315,23 @@ sub pipeline_analyses {
         {   -logic_name => 'snapshot_after_load_uniprot',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::DatabaseDumper',
             -parameters => {
-                'output_file'      => '#work_dir#/snapshot_after_load_uniprot.sql',
+                'output_file'      => '#work_dir#/snapshot_after_load_uniprot.sql.gz',
                 'blastdb_name'  => $self->o('blastdb_name'),
             },
             -flow_into => {
-                1 => { 'dump_member_proteins' => { 'fasta_name' => '#blastdb_dir#/#blastdb_name#', 'blastdb_name' => '#blastdb_name#' } },
+                1 => $self->o('hmm_clustering') ? 'HMMer_classifyCurated' : { 'dump_member_proteins' => { 'fasta_name' => '#blastdb_dir#/#blastdb_name#', 'blastdb_name' => '#blastdb_name#' } },
             },
         },
         
         {   -logic_name => 'dump_member_proteins',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::DumpMemberSequencesIntoFasta',
             -parameters => {
-                'source_names' => [ 'ENSEMBLPEP','Uniprot/SWISSPROT','Uniprot/SPTREMBL' ],
                 'idprefixed'   => 1,
             },
             -flow_into => {
                 1 => [ 'make_blastdb' ],
             },
-            -rc_name => '4GigMem',    # NB: now needs more memory than what is given by default (actually, 2G RAM & 2G SWAP). Does the code need checking for leaks?
+            -rc_name => 'BigMafft',    # NB: now needs more memory than what is given by default (actually, 2G RAM & 2G SWAP). Does the code need checking for leaks?
         },
 
         {   -logic_name => 'make_blastdb',
@@ -329,14 +348,14 @@ sub pipeline_analyses {
         {   -logic_name => 'blast_factory',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
             -parameters => {
-                'inputquery'      => 'SELECT DISTINCT s.sequence_id seqid FROM member m, sequence s WHERE m.sequence_id=s.sequence_id AND m.source_name IN ("Uniprot/SPTREMBL", "Uniprot/SWISSPROT", "ENSEMBLPEP") ',
+                'inputquery'      => 'SELECT DISTINCT m.sequence_id seqid FROM seq_member m',
                 'step'            => 100,
             },
             -flow_into => {
                 '2->A' => { 'blast' => { 'sequence_id' => '#_start_seqid#', 'minibatch' => '#_range_count#' } },
                 'A->1' => [ 'snapshot_after_blast' ],
             },
-            -rc_name => '2GigMem',
+            -rc_name => '4GigMem',
         },
 
         {   -logic_name    => 'blast',
@@ -366,24 +385,83 @@ sub pipeline_analyses {
             -flow_into => {
                 3 => [ ':////mcl_sparse_matrix?insertion_method=REPLACE' ],
             },
-            -rc_name => '4GigMem',
+            -rc_name => 'LongBlastHM',
         },
 
         {   -logic_name => 'snapshot_after_blast',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::DatabaseDumper',
             -parameters => {
-                'output_file'  => '#work_dir#/snapshot_after_blast.sql',
+                'output_file'  => '#work_dir#/snapshot_after_blast.sql.gz',
             },
             -flow_into => {
                 1 => [ 'mcxload_matrix' ],
             },
         },
 
+        {
+            -logic_name     => 'HMMer_classifyCurated',
+            -module         => 'Bio::EnsEMBL::Hive::RunnableDB::SqlCmd',
+            -parameters     => {
+                'sql'   => 'INSERT IGNORE INTO hmm_annot SELECT seq_member_id, model_id, NULL FROM hmm_curated_annot hca JOIN seq_member sm ON sm.stable_id = hca.seq_member_stable_id',
+            },
+            -flow_into      => [ 'HMMer_classifyInterpro' ],
+        },
+
+        {
+            -logic_name     => 'HMMer_classifyInterpro',
+            -module         => 'Bio::EnsEMBL::Hive::RunnableDB::SqlCmd',
+            -parameters     => {
+                'sql'   => 'INSERT IGNORE INTO hmm_annot SELECT seq_member_id, panther_family_id, evalue FROM panther_annot pa JOIN seq_member sm ON sm.stable_id = pa.ensembl_id',
+            },
+            -flow_into      => [ 'HMMer_classify_factory' ],
+        },
+
+
+        {   -logic_name => 'HMMer_classify_factory',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ComparaHMM::FactoryUnannotatedMembers',
+            -parameters => {
+                'only_canonical'    => 0,
+            },
+            -rc_name       => '2GigMem',
+            -flow_into => {
+                '2->A'  => [ 'HMMer_classifyPantherScore' ],
+                'A->1'  => [ 'HMM_clusterize' ],
+            },
+        },
+
+
+            {
+             -logic_name => 'HMMer_classifyPantherScore',
+             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ComparaHMM::HMMClassifyPantherScore',
+             -parameters => {
+                             'blast_bin_dir'       => $self->o('blast_bin_dir'),
+                             'pantherScore_path'   => $self->o('pantherScore_path'),
+                             'hmmer_path'          => $self->o('hmmer2_home'),
+                             'hmm_library_basedir' => $self->o('hmm_library_basedir'),
+                             'only_canonical'      => 0,
+                            },
+             -hive_capacity => $self->o('HMMer_classify_capacity'),
+             -rc_name => '4GigMem',
+            },
+
+
+            {
+             -logic_name => 'HMM_clusterize',
+             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::Families::HMMClusterize',
+             -rc_name => '4GigMem',
+             -flow_into  => {
+                '1->A'  => [ 'fire_family_building' ],
+                'A->1'  => [ 'notify_pipeline_completed' ],
+             },
+            },
+
+
+
         {   -logic_name => 'mcxload_matrix',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
             -parameters => {
-                'db_conn'  => $self->dbconn_2_mysql('pipeline_db', 1), # to conserve the valuable input_id space
-                'cmd'      => "mysql #db_conn# -N -q -e 'select * from mcl_sparse_matrix' | #mcl_bin_dir#/mcxload -abc - -ri max -o #work_dir#/#file_basename#.tcx -write-tab #work_dir#/#file_basename#.itab",
+                'db_cmd'   => $self->db_cmd(), # to conserve the valuable input_id space
+                'cmd'      => "#db_cmd# --append -N --append -q -sql 'select * from mcl_sparse_matrix' | #mcl_bin_dir#/mcxload -abc - -ri max -o #work_dir#/#file_basename#.tcx -write-tab #work_dir#/#file_basename#.itab",
             },
             -flow_into => {
                 1 => [ 'mcl' ],
@@ -409,12 +487,23 @@ sub pipeline_analyses {
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::Families::ParseMCLintoFamilies',
             -parameters => {
                 'family_prefix'         => 'fam'.$self->o('rel_with_suffix'),
+            },
+             -flow_into => {
+                 1 => {
+                    'archive_long_files'    => { 'input_filenames' => '#work_dir#/#file_basename#.mcl' },
+                    'fire_family_building'  => { },
+                 },
+            },
+            -rc_name => 'urgent',
+        },
+
+        {   -logic_name => 'fire_family_building',
+            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
+            -parameters => {
                 'first_n_big_families'  => $self->o('first_n_big_families'),
             },
-            -hive_capacity => 20, # to enable parallel branches
             -flow_into => {
                 1 => {
-                    'archive_long_files'    => { 'input_filenames' => '#work_dir#/#file_basename#.mcl' },
                     'consensifier_factory'  => [
                         { 'step' => 1,   'inputquery' => 'SELECT family_id FROM family WHERE family_id<=200',},
                         { 'step' => 100, 'inputquery' => 'SELECT family_id FROM family WHERE family_id>200',},
@@ -481,9 +570,9 @@ sub pipeline_analyses {
             -parameters => {
                 'sql'   => [
                         # find cigars:
-                    "CREATE TEMPORARY TABLE singletons SELECT family_id, length(s.sequence) len, count(*) cnt FROM family_member fm, member m, sequence s WHERE fm.member_id=m.member_id AND m.sequence_id=s.sequence_id GROUP BY family_id HAVING cnt=1",
+                    "CREATE TEMPORARY TABLE singletons SELECT family_id, length(s.sequence) len, count(*) cnt FROM family_member fm, seq_member m, sequence s WHERE fm.seq_member_id=m.seq_member_id AND m.sequence_id=s.sequence_id GROUP BY family_id HAVING cnt=1",
                         # update them:
-                    "UPDATE family_member fm, member m, singletons st SET fm.cigar_line=concat(st.len, 'M') WHERE fm.family_id=st.family_id AND m.member_id=fm.member_id AND m.source_name<>'ENSEMBLGENE'",
+                    "UPDATE family_member fm, seq_member m, singletons st SET fm.cigar_line=concat(st.len, 'M') WHERE fm.family_id=st.family_id AND m.seq_member_id=fm.seq_member_id",
                 ],
             },
             -hive_capacity => 20, # to enable parallel branches
@@ -496,23 +585,12 @@ sub pipeline_analyses {
         {   -logic_name => 'insert_redundant_peptides',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::SqlCmd',
             -parameters => {
-                'sql' => "INSERT INTO family_member SELECT family_id, m2.member_id, cigar_line FROM family_member fm, member m1, member m2 WHERE fm.member_id=m1.member_id AND m1.sequence_id=m2.sequence_id AND m1.member_id<>m2.member_id",
+                'sql' => "INSERT INTO family_member SELECT family_id, m2.seq_member_id, cigar_line FROM family_member fm, seq_member m1, seq_member m2 WHERE fm.seq_member_id=m1.seq_member_id AND m1.sequence_id=m2.sequence_id AND m1.seq_member_id<>m2.seq_member_id",
             },
             -hive_capacity => 20, # to enable parallel branches
-            -flow_into => {
-                1 => [ 'insert_ensembl_genes' ],
-            },
             -rc_name => 'urgent',
         },
 
-        {   -logic_name => 'insert_ensembl_genes',
-            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::SqlCmd',
-            -parameters => {
-                'sql' => "INSERT INTO family_member SELECT fm.family_id, m.gene_member_id, NULL FROM member m, family_member fm WHERE m.member_id=fm.member_id AND m.source_name='ENSEMBLPEP' GROUP BY family_id, gene_member_id",
-            },
-            -hive_capacity => 20, # to enable parallel branches
-            -rc_name => 'urgent',
-        },
 # </Mafft sub-branch>
 
 # <Consensifier sub-branch>
@@ -542,11 +620,21 @@ sub pipeline_analyses {
                 'release'     => $self->o('ensembl_release'),
             },
             -flow_into => {
-                1 => [ 'notify_pipeline_completed' ],
+                1 => [ 'write_member_counts' ],
             },
-            -rc_name => '4GigMem',    # NB: make sure you give it enough memory or it will crash
+            -rc_name => 'BigMafft',    # NB: make sure you give it enough memory or it will crash
         },
         
+        {   -logic_name     => 'write_member_counts',
+            -module         => 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
+            -parameters     => {
+                'member_count_sql'  => $self->o('ensembl_cvs_root_dir').'/ensembl-compara/scripts/production/populate_member_production_counts_table.sql',
+                'db_cmd'            => $self->db_cmd(),
+                'cmd'               => '#db_cmd# < #member_count_sql#',
+            },
+            -flow_into => [ 'notify_pipeline_completed' ],
+        },
+
         {   -logic_name => 'notify_pipeline_completed',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::NotifyByEmail',
             -parameters => {
@@ -565,6 +653,101 @@ sub pipeline_analyses {
 1;
 
 =head1 STATS and TIMING
+
+=head2 rel.79 stats
+
+    sequences to cluster:           6,968,981       [ SELECT count(*) from sequence; ] -- took 1.5m to run
+    distances by Blast:         1,338,935,992       [ SELECT count(*) from mcl_sparse_matrix; ] -- took 37m20 to run
+
+    non-reference genes:         2851               [ SELECT count(*) FROM gene_member WHERE gene_member_id>=200000001 AND source_name='ENSEMBLGENE'; ]
+    non-reference peps:          8074               [ SELECT count(*) FROM seq_member WHERE seq_member_id>=200000001 AND source_name='ENSEMBLPEP'; ]
+
+    uniprot loading method:     { 20 x pfetch }
+
+    total running time:          ?                  [ call time_analysis('%'); ]
+    uniprot_loading time:        5.6h               [ call time_analysis('load_uniprot%'); ]    # Sun-Mon overnight
+    blasting time:               6.8d +++           [ call time_analysis('blast%'); ]           # Estimate is wrong. Had to be stopped, topped-up and restarted.
+    mcxload running time:       31.7h               [ call time_analysis('mcxload_matrix'); ]
+    mcl running time:           32.4h               [ call time_analysis('mcl'); ]
+
+    memory used by mcxload:     35.5G               [ SELECT mem_megs, swap_megs FROM analysis_base JOIN role USING(analysis_id) JOIN worker_resource_usage USING(worker_id) WHERE logic_name='mcxload_matrix'; ]
+    memory used by mcl:         53.3G               [ SELECT mem_megs, swap_megs FROM analysis_base JOIN role USING(analysis_id) JOIN worker_resource_usage USING(worker_id) WHERE logic_name='mcl'; ]
+
+=head2 rel.78 stats
+
+    sequences to cluster:           6,801,213       [ SELECT count(*) from sequence; ] -- took a few seconds to run
+    distances by Blast:         1,303,980,213       [ SELECT count(*) from mcl_sparse_matrix; ] -- took 38m to run
+
+    non-reference genes:         2718               [ SELECT count(*) FROM gene_member WHERE gene_member_id>=200000001 AND source_name='ENSEMBLGENE'; ]
+    non-reference peps:          7075               [ SELECT count(*) FROM seq_member WHERE seq_member_id>=200000001 AND source_name='ENSEMBLPEP'; ]
+
+    uniprot loading method:     { 20 x pfetch }
+
+    total running time:          7.7d               [ call time_analysis('%'); ]
+    uniprot_loading time:        9.0h               [ call time_analysis('load_uniprot%'); ]
+    blasting time:               4.9d               [ call time_analysis('blast%'); ]
+    mcxload running time:        5.1h               [ call time_analysis('mcxload_matrix'); ]
+    mcl running time:           11.7h               [ call time_analysis('mcl'); ]
+
+    memory used by mcxload:     34.6G               [ SELECT mem_megs, swap_megs FROM analysis_base JOIN role USING(analysis_id) JOIN worker_resource_usage USING(worker_id) WHERE logic_name='mcxload_matrix'; ]
+    memory used by mcl:         52.0G               [ SELECT mem_megs, swap_megs FROM analysis_base JOIN role USING(analysis_id) JOIN worker_resource_usage USING(worker_id) WHERE logic_name='mcl'; ]
+
+=head2 rel.77 stats
+
+    sequences to cluster:       6,546,543           [ SELECT count(*) from sequence; ] -- took 1.5m to run
+    distances by Blast:         1,251,923,987       [ SELECT count(*) from mcl_sparse_matrix; ] -- took 34m to run
+
+    non-reference genes:         2699               [ SELECT count(*) FROM gene_member WHERE gene_member_id>=200000001 AND source_name='ENSEMBLGENE'; ]
+    non-reference peps:          7021               [ SELECT count(*) FROM seq_member WHERE seq_member_id>=200000001 AND source_name='ENSEMBLPEP'; ]
+
+    uniprot loading method:     { 20 x pfetch }
+
+    total running time:         12.9d               [ call time_analysis('%'); ]
+    uniprot_loading time:       11.0h               [ call time_analysis('load_uniprot%'); ]
+    blasting time:               4.5d               [ call time_analysis('blast%'); ]
+    mcxload running time:        2.6h               [ call time_analysis('mcxload_matrix'); ]
+    mcl running time:           10.9h               [ call time_analysis('mcl'); ]
+
+    memory used by mcxload:     33.2G               [ SELECT mem_megs, swap_megs FROM analysis_base JOIN role USING(analysis_id) JOIN worker_resource_usage USING(worker_id) WHERE logic_name='mcxload_matrix'; ]
+    memory used by mcl:         50.0G               [ SELECT mem_megs, swap_megs FROM analysis_base JOIN role USING(analysis_id) JOIN worker_resource_usage USING(worker_id) WHERE logic_name='mcl'; ]
+
+=head2 rel.76 stats
+
+    sequences to cluster:       6,293,923           [ SELECT count(*) from sequence; ] -- took 2 minutes to run
+    distances by Blast:         1,204,402,584       [ SELECT count(*) from mcl_sparse_matrix; ] -- took 1h18m to run
+
+    non-reference genes:         2182               [ SELECT count(*) FROM gene_member WHERE gene_member_id>=200000001 AND source_name='ENSEMBLGENE'; ]
+    non-reference peps:          6394               [ SELECT count(*) FROM seq_member WHERE seq_member_id>=200000001 AND source_name='ENSEMBLPEP'; ]
+
+    uniprot loading method:     { 20 x pfetch }
+
+    total running time:         10.8d               [ call time_analysis('%'); ]
+    uniprot_loading time:        3.8h               [ call time_analysis('load_uniprot%'); ]
+    blasting time:               6.0d               [ call time_analysis('blast%'); ]
+    mcxload running time:        3.0h               [ call time_analysis('mcxload_matrix'); ]
+    mcl running time:           15.8h               [ call time_analysis('mcl'); ]
+
+    memory used by mcxload:     32.5G               [ SELECT mem_megs, swap_megs FROM analysis_base JOIN role USING(analysis_id) JOIN worker_resource_usage USING(worker_id) WHERE logic_name='mcxload_matrix'; ]
+    memory used by mcl:         48.2G               [ SELECT mem_megs, swap_megs FROM analysis_base JOIN role USING(analysis_id) JOIN worker_resource_usage USING(worker_id) WHERE logic_name='mcl'; ]
+
+=head2 rel.75 stats
+
+    sequences to cluster:       5,611,558           [ SELECT count(*) from sequence; ]
+    distances by Blast:         1,063,102,033       [ SELECT count(*) from mcl_sparse_matrix; ] -- took 27 minutes to run
+
+    non-reference genes:         3090               [ SELECT count(*) FROM member WHERE member_id>=200000001 AND source_name='ENSEMBLGENE'; ]
+    non-reference peps:         10006               [ SELECT count(*) FROM member WHERE member_id>=200000001 AND source_name='ENSEMBLPEP'; ]
+
+    uniprot loading method:     { 20 x pfetch }
+
+    total running time:         17.0d               [ call time_analysis('%'); ]
+    uniprot_loading time:        2.8h               [ call time_analysis('load_uniprot%'); ]
+    blasting time:               4.7d               [ call time_analysis('blast%'); ]
+    mcxload running time:        0.9d               [ call time_analysis('mcxload_matrix'); ]
+    mcl running time:            1.1d               [ call time_analysis('mcl'); ]
+
+    memory used by mcxload:     28.5G               [ SELECT mem_megs, swap_megs FROM analysis_base JOIN worker USING(analysis_id) JOIN lsf_report USING(process_id) WHERE logic_name='mcxload_matrix'; ]
+    memory used by mcl:         42.5G               [ SELECT mem_megs, swap_megs FROM analysis_base JOIN worker USING(analysis_id) JOIN lsf_report USING(process_id) WHERE logic_name='mcl'; ]
 
 =head2 rel.74 stats
 

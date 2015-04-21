@@ -1,7 +1,7 @@
 This README describes how to set up the multiple aligner system using the init_pipeline configuration system. 
 This pipeline has only been tested for the Mercator and Pecan combination. 
 
-All the scripts are located relative to $ENSEMBL_CVS_ROOT_DIR (location of the cvs checkout)
+All the scripts are located relative to $ENSEMBL_CVS_ROOT_DIR (location of the GIT checkout)
 
 This replaces $ENSEMBL_CVS_ROOT_DIR/ensembl-compara/scripts/pipeline/README-multiplealigner, $ENSEMBL_CVS_ROOT_DIR/compara-hive-multiplealigner.conf.example and the $ENSEMBL_CVS_ROOT_DIR/ensembl-compara/scripts/pipeline/loadMultipleAlignerSystem.pl script. This previous method is no longer supported after ensembl release 65. 
 
@@ -40,10 +40,10 @@ $ENSEMBL_CVS_ROOT_DIR/ensembl-compara/modules/Bio/EnsEMBL/Compara/PipeConfig/Mer
 2.1 Code checkout
 
       cvs -d :ext:bio.perl.org:/home/repository/bioperl co -r branch-07 bioperl-live
-      cvs -d :ext:cvs.sanger.ac.uk:/nfs/ensembl/cvsroot co ensembl
-      cvs -d :ext:cvs.sanger.ac.uk:/nfs/ensembl/cvsroot co ensembl-compara
-      cvs -d :ext:cvs.sanger.ac.uk:/nfs/ensembl/cvsroot co ensembl-hive
-      cvs -d :ext:cvs.sanger.ac.uk:/nfs/ensembl/cvsroot co ensembl-analysis
+      git clone https://github.com/Ensembl/ensembl.git
+      git clone https://github.com/Ensembl/ensembl-compara.git
+      git clone https://github.com/Ensembl/ensembl-hive.git
+      git clone https://github.com/Ensembl/ensembl-analysis.git
 
 in tcsh
     setenv ENSEMBL_CVS_ROOT_DIR  /some/path/to/modules
@@ -81,7 +81,7 @@ Check that the default_options are set correctly.
 Options most likely to need changing are:
 mlss_id, ce_mlss_id, cs_mlss_id => it is recommended that these are set on the command line rather than in the conf file
 release                         => ensembl release
-ensembl_cvs_root_dir            => location of ensembl cvs root directory
+ensembl_cvs_root_dir            => root directory of the ensembl checkouts
 work_dir                        => directory for writing files needed by blast and mercator.
 jar_file                        => location of Pecan jar file
 gerp_exe_dir                    => location of gerp executable directory

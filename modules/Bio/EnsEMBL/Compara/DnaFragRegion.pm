@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2013] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -20,10 +20,10 @@ limitations under the License.
 =head1 CONTACT
 
   Please email comments or questions to the public Ensembl
-  developers list at <dev@ensembl.org>.
+  developers list at <http://lists.ensembl.org/mailman/listinfo/dev>.
 
   Questions may also be sent to the Ensembl help desk at
-  <helpdesk@ensembl.org>.
+  <http://www.ensembl.org/Help/Contact>.
 
 =head1 NAME
 
@@ -96,7 +96,7 @@ use warnings;
 use Bio::EnsEMBL::Utils::Argument;
 use Bio::EnsEMBL::Utils::Exception;
 
-use base qw(Bio::EnsEMBL::Compara::Locus);
+use base qw(Bio::EnsEMBL::Compara::Locus Bio::EnsEMBL::Storable);
 
 
 =head2 new
@@ -127,6 +127,10 @@ sub new {
   return $self;
 }
 
+sub dbID {
+    throw("DnaFragRegion objects do not implement dbID()");
+}
+
 
 =head2 synteny_region_id
 
@@ -150,29 +154,6 @@ sub synteny_region_id {
   return $obj->{'synteny_region_id'};
 }
 
-
-=head2 adaptor
-
-  Arg 1       : (optional) Bio::EnsEMBL::Compara::DBSQL::DnaFragRegioAdaptor $adaptor
-  Example     : my $adaptor = $dnafrag->adaptor;
-  Description : Getter/setter for the corresponding
-                Bio::EnsEMBL::Compara::DBSQL::DnaFragRegioAdaptor object
-  Returntype  : Bio::EnsEMBL::Compara::DBSQL::DnaFragRegioAdaptor object
-  Exceptions  : none
-  Caller      : general
-
-=cut
-
-sub adaptor {
-  my $obj = shift;
-
-  if (@_) {
-    my $value = shift;
-    $obj->{'adaptor'} = $value;
-  }
-
-  return $obj->{'adaptor'};
-}
 
 =head2 slice
 

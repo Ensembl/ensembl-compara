@@ -1,5 +1,5 @@
 #!/usr/bin/env perl -w
-# Copyright [1999-2013] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+# Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 # 
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -20,8 +20,8 @@ my $description = q{
 ## PROGRAM DumpMultiAlign.pl
 ##
 ## AUTHORS
-##    Abel Ureta-Vidal (abel@ebi.ac.uk)
-##    Javier Herrero (jherrero@ebi.ac.uk)
+##    Abel Ureta-Vidal
+##    Javier Herrero
 ##
 ## DESCRIPTION
 ##    This script dumps (pairwise or multiple) genomic alignments from
@@ -35,10 +35,18 @@ my $description = q{
 
 DumpMultiAlign.pl
 
+=head1 CONTACT
+
+Please email comments or questions to the public Ensembl
+developers list at <http://lists.ensembl.org/mailman/listinfo/dev>.
+
+Questions may also be sent to the Ensembl help desk at
+<http://www.ensembl.org/Help/Contact>.
+
 =head1 AUTHORS
 
- Abel Ureta-Vidal (abel@ebi.ac.uk)
- Javier Herrero (jherrero@ebi.ac.uk)
+ Abel Ureta-Vidal
+ Javier Herrero
 
 =head1 COPYRIGHT
 
@@ -245,6 +253,8 @@ perl DumpMultiAlign.pl --species "human" \
   --alignment_type GERP_CONSERVATION_SCORE --seq_region 19 --masked_seq 1 \
   --split_size 200 --output_format emf --output_file 10way_pecan_chr19.out \
   --chunk_num 2
+
+=back
 
 =cut
 
@@ -1061,12 +1071,13 @@ sub get_coordinates {
   my $species_name = $this_genomic_align->genome_db->name;
   if ($this_genomic_align->can("get_all_GenomicAligns") and @{$this_genomic_align->get_all_GenomicAligns} > 1) {
     ## This is a composite segment.
-    ## We need to fix the name and the length
     my @names;
     $dnafrag_length = 0;
     foreach my $this_composite_genomic_align (@{$this_genomic_align->get_all_GenomicAligns}) {
       push(@names, $this_composite_genomic_align->get_Slice->name);
-      $dnafrag_length += $this_composite_genomic_align->length;
+      my $aligned_seq = $this_composite_genomic_align->aligned_sequence;
+      $aligned_seq=~s/[-\.]//g; #remove the gaps and padding
+      $dnafrag_length += length($aligned_seq);
     }
     my $dbID;
     if ($this_genomic_align->dbID) {

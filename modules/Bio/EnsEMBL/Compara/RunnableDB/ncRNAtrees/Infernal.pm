@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2013] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -53,10 +53,10 @@ cigar_lines for each sequence.
 =head1 CONTACT
 
   Please email comments or questions to the public Ensembl
-  developers list at <dev@ensembl.org>.
+  developers list at <http://lists.ensembl.org/mailman/listinfo/dev>.
 
   Questions may also be sent to the Ensembl help desk at
-  <helpdesk@ensembl.org>
+  <http://www.ensembl.org/Help/Contact>
 
 
 =head1 APPENDIX
@@ -78,7 +78,7 @@ use Bio::EnsEMBL::BaseAlignFeature;
 use Bio::EnsEMBL::Compara::HMMProfile;
 use Bio::EnsEMBL::Compara::Utils::Cigars;
 
-use base ('Bio::EnsEMBL::Compara::RunnableDB::RunCommand', 'Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
+use base ('Bio::EnsEMBL::Compara::RunnableDB::RunCommand');
 
 
 sub param_defaults {
@@ -200,14 +200,12 @@ sub dump_sequences_to_workdir {
 
   my $tag_gene_count = scalar(@{$cluster->get_all_leaves});
   if ($tag_gene_count < 2) {
-#      $self->input_job->transient_error(0);
-      $self->input_job->incomplete(0);
-      die ("Only one member for cluster [$root_id]");
-#      return undef
+      $self->input_job->autoflow(0);
+      $self->complete_early("Only one member for cluster [$root_id]");
   }
   print STDERR "Counting number of members\n" if ($self->debug);
 
-  my $count = $cluster->print_sequences_to_file( -file => $fastafile, -uniq_seq => 1, -id_type => 'SEQUENCE');
+  my $count = $cluster->print_sequences_to_file( $fastafile, -uniq_seq => 1, -id_type => 'SEQUENCE');
 
   if ($count == 1) {
     $self->update_single_peptide_tree($cluster);
@@ -240,15 +238,9 @@ sub run_infernal {
   my $stk_output = $self->worker_temp_directory . "output.stk";
   my $nc_tree_id = $self->param('gene_tree_id');
 
-  my $cmalign_exe = $self->param_required('cmalign_exe');
+  my $cmalign_exe = $self->require_executable('cmalign_exe');
 
-  die "Cannot execute '$cmalign_exe'" unless(-x $cmalign_exe);
-
-
-  my $model_id;
-
-  $model_id = $self->param('gene_tree')->get_tagvalue('clustering_id') or $self->throw("'clustering_id' tag for this tree is not defined");
-
+  my $model_id = $self->param('gene_tree')->get_tagvalue('clustering_id') or $self->throw("'clustering_id' tag for this tree is not defined");
   $self->param('model_id', $model_id );
 
   print STDERR "Model_id : $model_id\n" if ($self->debug);
@@ -296,9 +288,7 @@ sub run_infernal {
   my $refined_stk_output = $stk_output . ".refined";
   my $refined_profile = $self->param('profile_file') . ".refined";
 
-  my $cmbuild_exe = $self->param_required('cmbuild_exe');
-
-  die "Cannot execute '$cmbuild_exe'" unless(-x $cmbuild_exe);
+  my $cmbuild_exe = $self->require_executable('cmbuild_exe');
 
   $cmd = $cmbuild_exe;
   $cmd .= " --refine $refined_stk_output";
@@ -343,7 +333,6 @@ sub parse_and_store_alignment_into_tree {
   #
   # parse SS_cons lines and store into nc_tree_tag
   #
-  my $stk_output = $self->param('stk_output');
   open (STKFILE, $stk_output) or $self->throw("Couldnt open STK file [$stk_output]");
   my $ss_cons_string = '';
   while(<STKFILE>) {

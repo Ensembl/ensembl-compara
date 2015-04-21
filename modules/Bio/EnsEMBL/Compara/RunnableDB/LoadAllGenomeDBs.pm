@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2013] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -48,7 +48,7 @@ sub run {
 
     my @genome_dbs;
     foreach my $core_dba (@{$self->param('all_core_dbas')}) {
-        next unless $core_dba->extract_assembly_name;
+        next unless $core_dba->assembly_name;
         push @genome_dbs, $self->create_genome_db($core_dba);
     }
     $self->param('genome_dbs', \@genome_dbs);

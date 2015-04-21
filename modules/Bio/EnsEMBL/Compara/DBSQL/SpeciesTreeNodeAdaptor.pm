@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2013] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -20,17 +20,14 @@ limitations under the License.
 =head1 CONTACT
 
   Please email comments or questions to the public Ensembl
-  developers list at <dev@ensembl.org>.
+  developers list at <http://lists.ensembl.org/mailman/listinfo/dev>.
 
   Questions may also be sent to the Ensembl help desk at
-  <helpdesk@ensembl.org>.
+  <http://www.ensembl.org/Help/Contact>.
 
 =head1 NAME
 
 Bio::EnsEMBL::Compara::DBSQL::SpeciesTreeNodeAdaptor
-
-=head1 SYNOPSIS
-
 
 =head1 DESCRIPTION
 
@@ -54,7 +51,7 @@ use Bio::EnsEMBL::Compara::SpeciesTreeNode;
 use Bio::EnsEMBL::Utils::Exception qw(throw warning);
 use Bio::EnsEMBL::Utils::Scalar qw(:assert);
 
-use base ('Bio::EnsEMBL::Compara::DBSQL::NestedSetAdaptor');
+use base ('Bio::EnsEMBL::Compara::DBSQL::NestedSetAdaptor', 'Bio::EnsEMBL::Compara::DBSQL::TagAdaptor');
 
 =head2 new_from_NestedSet
 
@@ -143,23 +140,25 @@ sub store_node {
     assert_ref($node, 'Bio::EnsEMBL::Compara::SpeciesTreeNode');
 
     if (not($node->adaptor and $node->adaptor->isa('Bio::EnsEMBL::Compara::DBSQL::SpeciesTreeNodeAdaptor') and $node->adaptor eq $self)) {
-        my $sth1 = $self->prepare("INSERT INTO species_tree_node VALUES ()");
-        $sth1->execute();
-        my $node_id = $sth1->{'mysql_insertid'};
-        $sth1->finish();
-        ## $node_id is 1 if table is empty then $node_id should be mlss_id * 1000
-        if ($node_id == 1) {
+
+        my $count_current_rows = $self->dbc->db_handle->selectall_arrayref("SELECT COUNT(*) FROM species_tree_node")->[0]->[0];
+
+        my $node_id;
+        if ($count_current_rows) {
+            my $sth1 = $self->prepare("INSERT INTO species_tree_node VALUES ()");
+            $sth1->execute();
+            $node_id = $self->dbc->db_handle->last_insert_id(undef, undef, 'species_tree_node', 'node_id');
+            $sth1->finish();
+
+        } else {
+            ## if table is empty then $node_id should be mlss_id * 1000
             $node_id = $mlss_id * 1000;
-            my $sth2 = $self->prepare("TRUNCATE species_tree_node");
-            $sth2->execute();
-            $sth2->finish();
             my $sth3 = $self->prepare("INSERT INTO species_tree_node (node_id) VALUES (?)");
             $sth3->execute($node_id);
             $sth3->finish();
         }
 
         $node->node_id( $node_id );
-        $sth1->finish();
     }
 
     my $parent_id = $node->parent->node_id if($node->parent);
@@ -179,6 +178,12 @@ sub store_node {
 }
 
 
+#
+# tagging
+#
+sub _tag_capabilities {
+    return ('species_tree_node_tag', undef, 'node_id', 'node_id');
+}
 
 
 #################################################

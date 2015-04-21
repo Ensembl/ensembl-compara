@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2013] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -20,7 +20,7 @@ limitations under the License.
 
 =head1 NAME
 
-  Bio::EnsEMBL::Compara::PipeConfig::AncestralAllelesForCompleteIndels_conf
+Bio::EnsEMBL::Compara::PipeConfig::AncestralAllelesForCompleteIndels_conf
 
 =head1 SYNOPSIS
 
@@ -74,7 +74,11 @@ A more verbose output can be obtained by setting the verbose_vep flag. More outp
 
 =head1 CONTACT
 
-  Please contact ehive-users@ebi.ac.uk mailing list with questions/suggestions.
+Please email comments or questions to the public Ensembl
+developers list at <http://lists.ensembl.org/mailman/listinfo/dev>.
+
+Questions may also be sent to the Ensembl help desk at
+<http://www.ensembl.org/Help/Contact>.
 
 =cut
 
@@ -89,7 +93,6 @@ sub default_options {
     my ($self) = @_;
     return {
         %{$self->SUPER::default_options},
-            'ensembl_cvs_root_dir' => $ENV{'HOME'}.'/src/ensembl_main/',    
             'db_version' => 73, #ensembl version (to load core dbs)
 
             'pipeline_name' => 'ancestral_' . $self->o('db_version'),
@@ -166,9 +169,9 @@ sub pipeline_create_commands {
         @{$self->SUPER::pipeline_create_commands},  # inheriting database and hive tables' creation
         
         #Store DumpMultiAlign healthcheck results
-        'mysql ' . $self->dbconn_2_mysql('pipeline_db', 1) . ' -e "CREATE TABLE IF NOT EXISTS statistics (
+        $self->db_cmd('CREATE TABLE IF NOT EXISTS statistics (
         statistics_id               INT(10) unsigned NOT NULL AUTO_INCREMENT,
-        seq_region                  varchar(40) DEFAULT \'\' NOT NULL,
+        seq_region                  varchar(40) DEFAULT "" NOT NULL,
         seq_region_start            INT(10) DEFAULT 1,
         seq_region_end              INT(10) DEFAULT 0,
         total_bases		    INT(10) DEFAULT 0,
@@ -182,20 +185,20 @@ sub pipeline_create_commands {
         num_bases_analysed          INT(10) DEFAULT 0,
         PRIMARY KEY (statistics_id),
         UNIQUE KEY seq_region_start_end  (seq_region, seq_region_start, seq_region_end)
-        ) COLLATE=latin1_swedish_ci ENGINE=InnoDB;"',
+        ) COLLATE=latin1_swedish_ci ENGINE=InnoDB;'),
 
-        'mysql ' . $self->dbconn_2_mysql('pipeline_db', 1) . ' -e "CREATE TABLE IF NOT EXISTS event (
+        $self->db_cmd('CREATE TABLE IF NOT EXISTS event (
          statistics_id              INT(10) unsigned NOT NULL,
 #         microinversion             tinyint(2) unsigned NOT NULL DEFAULT 0,
-         indel                      ENUM(\'insertion\', \'deletion\'),
-         type                       ENUM(\'novel\', \'recovery\', \'unsure\'),
-         detail                     ENUM(\'of_allele_base\', \'strict\', \'shuffle\', \'realign\', \'neighbouring_deletion\', \'neighbouring_insertion\', \'complex\'),
-         detail1                    ENUM(\'strict1\', \'shuffle1\'),
-         improvement                ENUM(\'better\', \'worse\'),
-         detail2                    ENUM(\'polymorphic_insertion\',\'polymorphic_deletion\',\'complex_polymorphic_insertion\', \'complex_polymorphic_deletion\', \'funny_polymorphic_insertion\', \'funny_polymorphic_deletion\'),
+         indel                      ENUM("insertion", "deletion"),
+         type                       ENUM("novel", "recovery", "unsure"),
+         detail                     ENUM("of_allele_base", "strict", "shuffle", "realign", "neighbouring_deletion", "neighbouring_insertion", "complex"),
+         detail1                    ENUM("strict1", "shuffle1"),
+         improvement                ENUM("better", "worse"),
+         detail2                    ENUM("polymorphic_insertion","polymorphic_deletion","complex_polymorphic_insertion", "complex_polymorphic_deletion", "funny_polymorphic_insertion", "funny_polymorphic_deletion"),
          count                      INT(10) DEFAULT 0,
          FOREIGN KEY (statistics_id) REFERENCES statistics(statistics_id)
-        ) COLLATE=latin1_swedish_ci ENGINE=InnoDB;"',
+        ) COLLATE=latin1_swedish_ci ENGINE=InnoDB;'),
 
     ];
 }
@@ -245,7 +248,7 @@ sub pipeline_analyses {
 				'mlss_id'       => $self->o('mlss_id'),
 				
 				'call_list'             => [ 'compara_dba', 'get_MethodLinkSpeciesSetAdaptor', ['fetch_by_dbID', '#mlss_id#'], 'species_set_obj', 'genome_dbs'],
-				'column_names2getters'  => { 'genome_db_id' => 'dbID', 'species_name' => 'name', 'assembly_name' => 'assembly', 'genebuild' => 'genebuild', 'locator' => 'locator' },
+				'column_names2getters'  => { 'genome_db_id' => 'dbID', 'species_name' => 'name', 'assembly_name' => 'assembly', 'genebuild' => 'genebuild', 'locator' => 'locator', 'has_karyotype' => 'has_karyotype', 'is_high_coverage' => 'is_high_coverage' },
 				
 				'fan_branch_code'       => 2,
 			       },

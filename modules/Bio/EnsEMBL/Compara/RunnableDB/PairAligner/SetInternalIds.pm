@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2013] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -24,18 +24,13 @@ limitations under the License.
 
 Bio::EnsEMBL::Compara::RunnableDB::PairAligner::SetInternalIds
 
-=head1 SYNOPSIS
-
-
 =head1 DESCRIPTION
 
 This module makes the internal ids unique by setting auto_increment to start at method_link_species_set_id * 10**10. This will do this on the following tables: genomic_align_block, genomic_align, genomic_align_group, genomic_align_tree
 
-=head1 PARAMETERS
-
 =head1 CONTACT
 
-Post questions to the Ensembl development list: dev@ensembl.org
+Post questions to the Ensembl development list: http://lists.ensembl.org/mailman/listinfo/dev
 
 
 =head1 APPENDIX
@@ -128,6 +123,12 @@ sub setInternalIds {
     
     if (!defined $mlss_id) {
 	throw ("Unable to find method_link_species_set_id");
+    }
+
+    my $gdbs = $dba->get_GenomeDBAdaptor->fetch_all();
+    if (scalar(@$gdbs) > 2) {
+        $self->warning('The AUTO_INCREMENT method does not work for collections. IDs will be restored later by "set_internal_ids_collection".');
+        return;
     }
 
     my $table_names;

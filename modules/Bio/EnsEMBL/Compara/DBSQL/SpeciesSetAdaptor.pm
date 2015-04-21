@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2013] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -267,6 +267,81 @@ sub fetch_by_GenomeDBs {
     return $self->_id_cache->get_by_additional_lookup('genome_db_ids', _ids_string($genome_dbs));
 }
 
+
+
+###########################################
+# Interface for "collection" species sets #
+###########################################
+
+=head2 fetch_collection_by_name
+
+  Arg [1]     : string $collection
+  Example     : my $collection = $species_set_adaptor->fetch_collection_by_name('ensembl');
+  Description : Fetches the "collection" SpeciesSet object with that name
+  Returntype  : Bio::EnsEMBL::Compara::SpeciesSet
+  Exceptions  : thrown if $genome_name_or_id is missing
+  Caller      : general
+
+=cut
+
+sub fetch_collection_by_name {
+    my ($self, $collection) = @_;
+
+    throw('$collection is required') unless $collection;
+
+    my $all_ss = $self->fetch_all_by_tag_value("name", "collection-$collection");
+
+    if (scalar(@$all_ss) == 0) {
+        warn "cannot find the collection '$collection'\n";
+        return undef;
+    } elsif (scalar(@$all_ss) > 1) {
+        die "There are multiple collections '$collection'\n";
+    } else {
+        return $all_ss->[0];
+    }
+}
+
+=head2 fetch_all_collections_by_genome
+
+  Arg [1]     : scalar $genome_name_or_id
+  Example     : my $collections = $species_set_adaptor->fetch_all_collections_by_genome('homo_sapiens');
+  Description : Fetches all the "collection" SpeciesSet object for that GenomeDB
+  Returntype  : arrayref of Bio::EnsEMBL::Compara::SpeciesSet
+  Exceptions  : thrown if $genome_name_or_id is missing
+  Caller      : general
+
+=cut
+
+sub fetch_all_collections_by_genome {
+    my ($self, $genome_name_or_id) = @_;
+
+    throw('$genome_name_or_id is required') unless $genome_name_or_id;
+
+    my $field_name = looks_like_number($genome_name_or_id) ? 'genome_db_id' : 'name';
+    my $sql = sprintf('SELECT species_set_id FROM species_set_tag JOIN species_set USING (species_set_id) JOIN genome_db USING (genome_db_id) WHERE tag = "name" AND value LIKE "collection-%%" AND %s = ?', $field_name);
+    return $self->_id_cache->get_by_sql($sql, [$genome_name_or_id]);
+}
+
+
+sub update_collection {
+    my ($self, $old_ss, $new_genome_dbs) = @_;
+
+    my $species_set = Bio::EnsEMBL::Compara::SpeciesSet->new( -genome_dbs => $new_genome_dbs );
+    $self->store($species_set);
+    return $old_ss if $old_ss->dbID == $species_set->dbID;
+
+    my $sql = 'REPLACE INTO species_set_tag SELECT ?, tag, value FROM species_set_tag WHERE species_set_id = ? AND tag = "name"';
+    my $sth = $self->prepare($sql);
+    $sth->execute($species_set->dbID, $old_ss->dbID);
+    $sth->finish();
+
+    $sql = 'UPDATE species_set_tag SET value = CONCAT("old", value) WHERE species_set_id = ? AND tag = "name"';
+    $sth = $self->prepare($sql);
+    $sth->execute($old_ss->dbID);
+    $sth->finish();
+
+    return $species_set;
+}
 
 
 #######################################################
