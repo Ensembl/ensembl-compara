@@ -66,7 +66,7 @@ package Bio::EnsEMBL::Compara::PipeConfig::EPO_pt3_conf;
 use strict;
 use warnings;
 
-use Bio::EnsEMBL::Hive::Version 2.2;
+use Bio::EnsEMBL::Hive::Version 2.3;
 
 use base ('Bio::EnsEMBL::Compara::PipeConfig::ComparaGeneric_conf');
 
