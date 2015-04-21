@@ -359,7 +359,7 @@ sub new {
               height => 8,
               text => $texts[$i],
               colour    => 'black',
-              x => -$label_width - $margin -4,
+              x => -$label_width - $margin,
               y => $sec_off,
               width => $label_width,
               halign => 'left',
@@ -411,19 +411,22 @@ sub new {
               dotted        => 'small'
             }));
           }
-          if($glyphset->section) {
-            my $sec_colour = $section_colour{$glyphset->section};
-            $glyphset->push($glyphset->Rect({
-              x => $glyphset->label->x - 4,
-              y => $glyphset->label->y + 2,
-              width => 2,
-              height => $glyphset->label->height,
-              absolutex => 1,
-              absolutewidth => 1,
-              absolutey => 1,
-              colour => $sec_colour,
-            }));
-          }
+        }
+        if($glyphset->section) {
+          my $sec_colour = $section_colour{$glyphset->section};
+          my $band_min = $glyphset->miny + $glyphset->section_height;
+          my $band_max = $glyphset->maxy;
+          my $fashionable_gap = 4;
+          $glyphset->push($glyphset->Rect({
+            x => -122,
+            y => $band_min + $fashionable_gap,
+            width => 2,
+            height => $band_max-$band_min - 2 * $fashionable_gap,
+            absolutex => 1,
+            absolutewidth => 1,
+            absolutey => 1,
+            colour => $sec_colour,
+          }));
         }
 
         $glyphset->transform;
