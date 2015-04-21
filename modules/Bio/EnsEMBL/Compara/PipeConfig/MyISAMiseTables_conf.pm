@@ -103,13 +103,12 @@ sub pipeline_analyses {
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
             -parameters => {
                 'db_conn'         => $self->o('rel_db'),
+                'inputquery'      => "SHOW TABLE STATUS WHERE Engine = 'InnoDB'",
                 'fan_branch_code' => 2,
             },
-            -input_ids => [
-                { 'inputquery' => "SELECT table_name FROM information_schema.tables WHERE table_schema ='#mysql_dbname:db_conn#' AND engine='InnoDB' " },
-            ],
+            -input_ids => [ {} ],
             -flow_into => {
-                2 => [ 'myisamise_table'  ],
+                2 => { 'myisamise_table' => { 'table_name' => '#Name#' } },
             },
         },
 
