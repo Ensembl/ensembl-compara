@@ -24,6 +24,8 @@ use strict;
 
 use List::Util qw(min max);
 
+sub _min_defined(@) { min(grep { defined $_ } @_); }
+
 use base qw(EnsEMBL::Draw::GlyphSet);
 
 sub add_legend_box {
@@ -321,37 +323,39 @@ sub _feature_values {
   return ($start,$end,$score);
 }
 
+sub _feature_href {
+  my ($self,$f,$hrefs) = @_;
+
+  if(ref $f ne 'HASH' && $f->can('display_id')) {
+    return $hrefs->{$f->display_id};
+  }
+  return '';
+}
+
 sub draw_wiggle_points {
   my ($self, $features, $slice, $parameters, $top_offset, $pix_per_score, $colour, $zero_offset) = @_;
   my $hrefs     = $parameters->{'hrefs'};
   my $use_points    = $parameters->{'graph_type'} eq 'points';
-  my $max_score = max($parameters->{'max_score'}, 0);
+  my $max_score = $parameters->{'max_score'};
   my $zero      = $top_offset + $zero_offset;
   my $slice_length = $slice->length;
 
   foreach my $f (@$features) {
-    my ($height, $width, $x, $y);
-    my $href        = ref $f ne 'HASH' && $f->can('display_id') ? $hrefs->{$f->display_id} : '';
-
+    my $href = $self->_feature_href($f,$hrefs||{});
     my $colour = $self->_special_colour($f,$parameters) || $colour;
     my ($start,$end,$score) = $self->_feature_values($f,$slice_length);
-
-    $x     = $start - 1;
-    $width = $end - $start + 1;
-
-    $height = ($max_score ? min($score, $max_score) : $score) * $pix_per_score;
-    $y      = $zero - max($height, 0);
-    $height = $use_points ? 0 : abs $height;
+    my $height = _min_defined($score, $max_score) * $pix_per_score;
+    my $title = sprintf('%.2f',$score);
 
     $self->push($self->Rect({
-      y         => $y,
-      height    => $height,
-      x         => $x,
-      width     => $width,
+      y         => $zero - max($height, 0),
+      height    => $use_points ? 0 : abs $height,
+      x         => $start - 1,
+      width     => $end - $start + 1,
       absolutey => 1,
       colour    => $colour,
       alpha     => $parameters->{'use_alpha'} ? 0.5 : 0,
-      title     => $parameters->{'no_titles'} ? undef : sprintf('%.2f', $score),
+      title     => $parameters->{'no_titles'} ? undef : $title,
       href      => $href,
     }));
 
