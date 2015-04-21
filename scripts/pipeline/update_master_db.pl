@@ -166,7 +166,7 @@ foreach my $db_adaptor (@{Bio::EnsEMBL::Registry->get_all_DBAdaptors(-GROUP => '
             $proper_genome_db->dbID($master_genome_db->dbID);
             unless ($dry_run) {
                 $genome_db_adaptor->update($proper_genome_db);
-                warn "\t> Successfully the master database\n";
+                warn "\t> Successfully updated the master database\n";
             }
         } else {
             print "> '$that_species' (assembly '$that_assembly') OK\n";
