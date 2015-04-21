@@ -125,12 +125,11 @@ sub pipeline_analyses {
                 'skipped_tables'  => $self->o('skipped_tables'),
                 'merged_tables'   => $self->o('merged_tables'),
                 'fan_branch_code' => 2,
+                'inputquery'      => 'SHOW TABLE STATUS WHERE Name NOT IN (#csvq:skipped_tables#) AND Name NOT IN (#csvq:merged_tables#) AND Rows',
             },
-            -input_ids => [
-                { 'inputquery' => 'SELECT table_name AS `table` FROM information_schema.tables WHERE table_schema ="#mysql_dbname:db_conn#" AND table_name NOT IN (#csvq:skipped_tables#) AND table_name NOT IN (#csvq:merged_tables#) AND table_rows' },
-            ],
+            -input_ids => [ {} ],
             -flow_into => {
-                2 => [ 'copy_table'  ],
+                2 => { 'copy_table' => { 'table' => '#Name#' } },
             },
         },
 
