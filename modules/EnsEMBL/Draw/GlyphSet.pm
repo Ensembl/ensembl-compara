@@ -1217,7 +1217,7 @@ sub section_text {
 
 sub section_height {
   return 0 unless $_[0]->{'section_text'};
-  return 32;
+  return 38;
 }
 
 

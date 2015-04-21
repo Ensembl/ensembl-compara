@@ -41,19 +41,18 @@ sub subtitle_text {
   return $label;
 }
 
-## Draw the special box found on regulation multi-wiggle tracks
-sub add_legend_box {
-  my ($self,$click_text,$content,$y) = @_;
+## Draw the special box found on reg. multi-wiggle tracks
+sub _add_sublegend_box {
+  my ($self,$offset,$content,$click_text) = @_;
 
   my %font_details = $self->get_font_details('innertext', 1);
   my @text = $self->get_text_width(0,$click_text, '', %font_details);
   my ($width,$height) = @text[2,3];
-  # add colour key legend
   $self->push($self->Rect({
     width         => $width + 15,
     absolutewidth => $width + 15,
     height        => $height + 2,
-    y             => $y,
+    y             => $offset+13,
     x             => -119,
     absolutey     => 1,
     absolutex     => 1,
@@ -67,7 +66,7 @@ sub add_legend_box {
     halign    => 'left',
     valign    => 'bottom',
     colour    => '#336699',
-    y         => $y,
+    y         => $offset+13,
     x         => -118,
     absolutey => 1,
     absolutex => 1,
@@ -76,12 +75,77 @@ sub add_legend_box {
     width     => 6,
     height    => 5,
     direction => 'down',
-    mid_point => [ -123 + $width + 10, $y + 10 ],
+    mid_point => [ -123 + $width + 10, $offset+23 ],
     colour    => '#336699',
     absolutex => 1,
     absolutey => 1,
   }));
+  return $height;
+}
+
+## Contents of the ZMenu of the special box found on reg. multi-wiggles
+sub _sublegend_box_content {
+  my ($self,$parameters,$header_label,$labels,$colours) = @_;
+
+  my $legend_alt_text = $self->_build_reg_legend_text($labels,$colours);
+  my $title = join(', ',$header_label,
+                          @{$parameters->{'zmenu_extra_title'}||[]});
+  return [$title,"[ $legend_alt_text ]",
+                 @{$parameters->{'zmenu_extra_content'}||[]}];
+}
+
+## Draw the mini label founf on reg. multi-wiggle tracks
+sub _draw_mini_label {
+  my ($self,$label,$offset) = @_;
+
+  my %font_details = $self->get_font_details('innertext', 1);
+  my @res_analysis = $self->get_text_width(0,'Legend & More', '',
+                                           %font_details);
+  $self->push($self->Text({
+    text      => $label,
+    height    => $res_analysis[3],
+    width     => $res_analysis[2],
+    halign    => 'left',
+    valign    => 'bottom',
+    colour    => 'black',
+    y         => $offset,
+    x         => -118,
+    absolutey => 1,
+    absolutex => 1,
+    %font_details,
+  }));
+}
+
+## Draw the mini label and special box found on reg. multi-wiggle tracks
+sub _add_sublegend {
+  my ($self,$parameters,$offset,$labels,$colours) = @_;
+
+  # The label
+  my $header_label = shift @$labels;
+  $self->_draw_mini_label($header_label,$offset);
+  # The box
+  my $content = $self->_sublegend_box_content($parameters,$header_label,                                                  $labels,$colours);
+  my $click_text = $parameters->{'zmenu_click_text'} || 'Legend';
+  my $height = $self->_add_sublegend_box($offset,$content,$click_text);
   return $height+4;
+}
+
+sub _build_reg_legend_text {
+  my ($self,$labels,$colours) = @_;
+
+  my ($legend_alt_text, %seen);
+  my $max = scalar @$labels - 1;
+  for (my $i = 0; $i <= $max; $i++) {
+    my $name = $labels->[$i];
+    my $colour = $colours->[$i];
+
+    if (!exists $seen{$name}) {
+      $legend_alt_text .= "$name:$colour,";
+      $seen{$name} = 1;
+    }
+  }
+  $legend_alt_text =~ s/,$//;
+  return $legend_alt_text;
 }
 
 sub do_draw_wiggle {
@@ -108,6 +172,7 @@ sub do_draw_wiggle {
   }
   my $top_offset    = 0;
   my $offset        = ($parameters->{'initial_offset'} || 0);
+  $offset = 0;
   my $initial_offset= $offset;
   my $bottom_offset = $max_score == $min_score ? 0 : (($max_score - ($min_score > 0 ? $min_score : 0)) || 1) * $pix_per_score;
   my $zero_offset   = $max_score * $pix_per_score;
@@ -118,56 +183,9 @@ sub do_draw_wiggle {
   # Draw the labels
   ## Only done if we have multiple data sets
   if ($labels) {
-    my $header_label = shift @$labels;
-    my $y            = $offset;
-    my $y_offset     = 0;
-    my %font_details = $self->get_font_details('innertext', 1);
-    my @res_analysis = $self->get_text_width(0,'Legend & More', '', %font_details);
-    my $max          = scalar @$labels - 1;
-    my ($legend_alt_text, %seen);
-
-    if ($header_label eq 'CTCF') {
-      $y     += 15;
-      $colour = shift @$colours;
-    } else {
-      $self->push($self->Text({
-        text      => $header_label,
-        height    => $res_analysis[3],
-        width     => $res_analysis[2],
-        halign    => 'left',
-        valign    => 'bottom',
-        colour    => 'black',
-        y         => $y,
-        x         => -118,
-        absolutey => 1,
-        absolutex => 1,
-        %font_details,
-      }));
-    }
-
-    for (my $i = 0; $i <= $max; $i++) {
-      my $name   = $labels->[$i];
-      my $colour = $colours->[$i];
-
-      if (!exists $seen{$name}) {
-        $legend_alt_text .= "$name:$colour,";
-        $seen{$name}      = 1;
-      }
-    }
-
-    $legend_alt_text =~ s/,$//;
-    $y              += 13;
-
-    my $zmenu_title = join(', ',$header_label,
-                           @{$parameters->{'zmenu_extra_title'}||[]});
-    my $zmenu_content = [$zmenu_title,"[ $legend_alt_text ]",
-                             @{$parameters->{'zmenu_extra_content'}||[]}];
-    my $zmenu_click = $parameters->{'zmenu_click_text'} || 'Legend';
-    $self->add_legend_box($zmenu_click,$zmenu_content,$y);
-
-    $y_offset   += 12;
+    $self->_add_sublegend($parameters,$offset,$labels,$colours);
     $top_offset += 15;
-    $offset += $y_offset;
+    $offset += 12;
   }
 
   # Draw max and min score
