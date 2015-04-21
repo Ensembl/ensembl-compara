@@ -78,6 +78,16 @@ sub default_options {
 }
 
 
+sub pipeline_wide_parameters {
+    my ($self) = @_;
+    return {
+        %{$self->SUPER::pipeline_wide_parameters},
+
+        'prev_ancestral_db'     => $self->o('prev_ancestral_db'),
+    };
+}
+
+
 sub pipeline_create_commands {
     my ($self) = @_;
     return [
@@ -104,7 +114,7 @@ sub pipeline_analyses {
         {   -logic_name => 'copy_coord_system',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::MySQLTransfer',
             -parameters => {
-                'src_db_conn'   => $self->o('prev_ancestral_db'),
+                'src_db_conn'   => '#prev_ancestral_db#',
                 'table'         => 'coord_system',
                 'mode'          => 'insertignore',
             },
@@ -120,10 +130,10 @@ sub pipeline_analyses {
             -parameters => {
                 'inputlist'         => [        # this table needs to be edited prior to running the pipeline:
                         # copying from previous release:
-                                        [ '528' => $self->o('prev_ancestral_db'), ],     # 5 teleost fish
-                                        [ '647' => $self->o('prev_ancestral_db'), ],     # 4 sauropsids
-                                        [ '755' => $self->o('prev_ancestral_db'), ],     # 17 eutherian mammals
-                                        [ '756' => $self->o('prev_ancestral_db'), ],     # 8 primates
+                                        [ '528' => '#prev_ancestral_db#', ],     # 5 teleost fish
+                                        [ '647' => '#prev_ancestral_db#', ],     # 4 sauropsids
+                                        [ '755' => '#prev_ancestral_db#', ],     # 17 eutherian mammals
+                                        [ '756' => '#prev_ancestral_db#', ],     # 8 primates
 
                         # copying from new sources:
                      #[ '756' => 'mysql://ensadmin:'.$self->o('password').'@compara5/sf5_epo_8primates_ancestral_core_77' ],   # 8-way primates
