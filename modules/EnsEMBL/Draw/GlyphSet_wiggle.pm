@@ -376,21 +376,13 @@ sub draw_wiggle_points_as_line {
   my $slice = $self->{'container'};
   my $slice_length = $slice->length;
   my $discrete_features = $self->_discrete_features($features);
-  $features = [ sort { $a->start <=> $b->start } @$features ] if $discrete_features;
-
-  my ($previous_x,$previous_score);
-  if ($discrete_features) {
-    $previous_score = $features->[0]->scores->[0];
-    $previous_x     = ($features->[0]->end + $features->[0]->start) / 2;
-  } else {
-    $previous_x = ($features->[0]->{'end'}+$features->[0]->{'start'})/2;
-    $previous_score = $features->[0]->{'score'};
+  if($discrete_features) {
+    $features = [ sort { $a->start <=> $b->start } @$features ];
   }
 
-  my $previous_y = max(0,$previous_score) * $pix_per_score - $offset;
-
-  for (my $i = 1; $i <= @$features; $i++) {
-    my $f             = $features->[$i];
+  my ($previous_x,$previous_y);
+  for (my $i = 0; $i <= @$features; $i++) {
+    my $f = $features->[$i];
     next if ref $f eq 'HASH' and $discrete_features;
 
     my ($current_x,$current_score);
@@ -401,27 +393,22 @@ sub draw_wiggle_points_as_line {
       $current_x     = ($f->{'end'} + $f->{'start'}) / 2;
       $current_score = $f->{'score'};
     }
-
-    my $width     = 1 - (($current_x - $previous_x) + 1);
-
-    next if $width >= 1;
-
-    my $y_coord = $offset - max(0,$current_score) * $pix_per_score;
-    my $height  = 1 - ($y_coord + $previous_y);
-
+    my $current_y = $offset - max(0,$current_score) * $pix_per_score;
     next unless $current_x <= $slice_length;
 
-    $self->push($self->Line({
-      x         => $current_x,
-      y         => $y_coord,
-      width     => $width,
-      height    => $height,
-      colour    => $colour,
-      absolutey => 1,
-    }));
+    if($i) {
+      $self->push($self->Line({
+        x         => $current_x,
+        y         => $current_y,
+        width     => $previous_x - $current_x,
+        height    => $previous_y - $current_y,
+        colour    => $colour,
+        absolutey => 1,
+      }));
+    }
 
     $previous_x     = $current_x;
-    $previous_y     = -$y_coord;
+    $previous_y     = $current_y;
   }
 }
 
