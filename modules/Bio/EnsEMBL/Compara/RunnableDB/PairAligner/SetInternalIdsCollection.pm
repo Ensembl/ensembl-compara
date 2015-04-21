@@ -49,6 +49,11 @@ use Bio::EnsEMBL::Utils::SqlHelper;
 
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
+sub param_defaults {
+    return {
+        'mlss_padding_n_zeros' => 10.
+    }
+}
 
 sub fetch_input {
     my $self = shift;
@@ -73,26 +78,36 @@ sub _setInternalIds {
     my $self = shift;
 
     my $mlss_id = $self->param('method_link_species_set_id');
-    my $gdbs = $self->compara_dba->get_GenomeDBAdaptor->fetch_all();
+#    my $gdbs = $self->compara_dba->get_GenomeDBAdaptor->fetch_all();
 #    if (scalar(@$gdbs) <= 2) {
 #        $self->warning('AUTO_INCREMENT should have been set earlier by "set_internal_ids". Nothing to do now');
 #    }
 
+    my $magic_number = '1'.('0' x $self->param('mlss_padding_n_zeros'));
 
     # Write new blocks in the correct range
-    my $sql1 = 'INSERT INTO genomic_align_block SELECT (method_link_species_set_id*10000000000 + (genomic_align_block_id % 10000000000)), method_link_species_set_id, score , perc_id, length , group_id , level_id FROM genomic_align_block WHERE FLOOR(genomic_align_block_id / 10000000000) != method_link_species_set_id AND method_link_species_set_id = ?';
+    my $sql0 = "SELECT MIN(genomic_align_id % $magic_number), MIN(genomic_align_block_id % $magic_number) FROM genomic_align WHERE (FLOOR(genomic_align_block_id / $magic_number) != method_link_species_set_id OR FLOOR(genomic_align_id / $magic_number) != method_link_species_set_id) AND method_link_species_set_id = ?";
+    my $sql1 = "INSERT INTO genomic_align_block SELECT (genomic_align_block_id % $magic_number) + ?, method_link_species_set_id, score , perc_id, length , group_id , level_id FROM genomic_align_block WHERE FLOOR(genomic_align_block_id / $magic_number) != method_link_species_set_id AND method_link_species_set_id = ?";
     # Update the dbIDs in genomic_align
-    my $sql2 = 'UPDATE genomic_align SET genomic_align_block_id = (method_link_species_set_id*10000000000 + (genomic_align_block_id % 10000000000)), genomic_align_id = (method_link_species_set_id*10000000000 + (genomic_align_id % 10000000000)) WHERE (FLOOR(genomic_align_block_id / 10000000000) != method_link_species_set_id OR FLOOR(genomic_align_id / 10000000000) != method_link_species_set_id) AND method_link_species_set_id = ?';
+    my $sql2 = "UPDATE genomic_align SET genomic_align_block_id = ? + (genomic_align_block_id % $magic_number), genomic_align_id = ? + (genomic_align_id % $magic_number) WHERE (FLOOR(genomic_align_block_id / $magic_number) != method_link_species_set_id OR FLOOR(genomic_align_id / $magic_number) != method_link_species_set_id) AND method_link_species_set_id = ?";
     # Remove the old blocks
-    my $sql3 = 'DELETE FROM genomic_align_block WHERE FLOOR(genomic_align_block_id / 10000000000) != method_link_species_set_id AND method_link_species_set_id = ?';
+    my $sql3 = "DELETE FROM genomic_align_block WHERE FLOOR(genomic_align_block_id / $magic_number) != method_link_species_set_id AND method_link_species_set_id = ?";
 
     # We really need a transaction to ensure we're not screwing the database
     my $dbc = $self->compara_dba->dbc;
     my $helper = Bio::EnsEMBL::Utils::SqlHelper->new(-DB_CONNECTION => $dbc);
     $helper->transaction( -CALLBACK => sub {
-            $dbc->do($sql1, undef, $mlss_id);
-            $dbc->do($sql2, undef, $mlss_id);
-            $dbc->do($sql3, undef, $mlss_id);
+            my ($min_ga, $min_gab) = $dbc->db_handle->selectrow_array($sql0, undef, $mlss_id);
+            if (not defined $min_ga) {
+                $self->warning("Entries for mlss_id=$mlss_id are already in the correct range. Nothing to do");
+                return;
+            };
+            my $offset_ga = $mlss_id * $magic_number + 1 - $min_ga;
+            my $offset_gab = $mlss_id * $magic_number + 1 - $min_gab;
+            print STDERR "Offsets: genomic_align_block_id=$offset_gab genomic_align_id=$offset_ga\n";
+            print STDERR $dbc->do($sql1, undef, $offset_gab, $mlss_id), " rows duplicated in genomic_align_block\n";
+            print STDERR $dbc->do($sql2, undef, $offset_gab, $offset_ga, $mlss_id), " rows of genomic_align redirected to the new entries in genomic_align_block \n";
+            print STDERR $dbc->do($sql3, undef, $mlss_id), " rows removed from genomic_align_block\n";
         }
     );
 }
