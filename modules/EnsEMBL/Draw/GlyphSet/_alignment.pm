@@ -723,7 +723,7 @@ sub render_interaction {
     my (%id, $y_pos);
     foreach (sort { $a->[0] <=> $b->[0] }  map [ $_->start_1, $_->end_1, $_->start_2, $_->end_2, $_], @features) {
       my ($s1, $e1, $s2, $e2, $f) = @$_;
-  
+
       my $fgroup_name = $self->feature_group($f);
 
       push @{$id{$fgroup_name}}, [ $s1, $e1, $s2, $e2, $f,
@@ -780,82 +780,61 @@ sub render_interaction {
         ## Arc between features
 
         ## Set some sensible limits
-        my $max_width = $self->image_width;
-        my $max_depth = 250; 
+        my $max_width = $self->image_width * 2;
+        my $max_depth = 250; ## should be less than image width! 
 
         ## Start with a basic circular arc, then constrain to above limits
+        my $start_point   = 0; ## righthand end of arc
+        my $end_point     = 180; ### lefthand end of arc
         my $major_axis    = abs(ceil(($start_2 - $end_1) * $pix_per_bp));
         my $minor_axis    = $major_axis;
         $major_axis       = $max_width if $major_axis > $max_width; 
         $minor_axis       = $max_depth if $minor_axis > $max_depth; 
         
-        my $start_point   = 0; ## righthand end of arc
-        my $end_point     = 180; ### lefthand end of arc
+        ## Measurements needed for drawing partial arcs
+        my $centre        = ceil($end_1 * $pix_per_bp + $major_axis/2);
         my $left_height   = $minor_axis; ## height of curve at left of image
         my $right_height  = $minor_axis; ## height of curve at right of image
-        warn "... ARC $major_axis x $minor_axis, from $start_point to $end_point";
-
-
-=pod
-        ## Height of track needs to be proportional, or it becomes enormous at high zoom levels! 
-        ## Use double the image width as the maximum arc length, so that we get some information
-        ## about off-screen features without the track getting crazy proportions
-        my $distance    = ceil(($start_2 - $end_1) * $pix_per_bp);
-        my $max_width   = ceil($self->image_width * 2);
-        my $major_axis  = $distance > $max_width ? $max_width : $distance;
-        my $cutoff      = $major_axis > $max_width ? $max_width : $major_axis;
-        my $minor_axis  = ceil(($cutoff / $max_width) * $track_depth);
-        my $radius      = $major_axis / 2;
-        warn ">>> MAJOR $major_axis, MINOR $minor_axis";
-
 
         ## Cut curve off at edge of track if ends lie outside the current window
-        my $radius  = $major_axis / 2;
-        if ($e1 < 0) {
-          ## Compensate for truncated distances
-          my $off_screen = $distance > $max_width ? ($s2 - $major_axis / $pix_per_bp) : $e1;
-          warn ">>> DISTANCE OFF-SCREEN $off_screen";
-          my $cos = ($radius + $off_screen * $pix_per_bp)/$radius;
-          warn ">>> LEFT COS $cos";
-          ## For some reason, unless one degree is added here, the left end
-          ## of the arc overlaps the track name column 
-          $end_point -= $self->acos_in_degrees($cos) + 1;
-          $left_height = abs(sin($end_point) * $radius); 
+        if ($end_1 < 0) {
+          my $cos = $centre / $major_axis;
+          my $acos = $self->acos_in_degrees($cos);
+          ## Tweak by 5 degrees to ensure arc doesn't overlap image
+          $end_point -= $acos + 5;
+          $left_height = abs(sin($acos) * $minor_axis);
         }
-        elsif ($s2 > $length) {
-          ## Compensate for truncated distances
-          my $off_screen = $distance > $max_width ? ($e1 + $major_axis / $pix_per_bp) : $s2;
-          warn ">>> DISTANCE OFF-SCREEN $off_screen";
-          my $cos = ($radius - (($off_screen - $length) * $pix_per_bp))/$radius;
-          warn ">>> RIGHT COS $cos";
-          $start_point = $self->acos_in_degrees($cos);
-          $right_height = abs(sin(180 - $start_point) * $radius); 
+        if ($s2 >= $length) {
+          my $cos = ($self->image_width - $centre) / $major_axis;
+          my $acos = $self->acos_in_degrees($cos);
+          ## Tweak by 5 degrees to ensure arc doesn't overlap image
+          $start_point = $acos + 5;
+          $right_height = abs(sin($acos) * $minor_axis);
         }
 
         ## Are one or both ends of this interaction visible?
         my $end = {};
-        $end->{'left'} = 1 if $e1 > 0;
+        $end->{'left'} = 1 if $end_1 > 0;
         $end->{'right'} = 1 if $s2 < $length;
 
         ## Keep track of the maximum visible arc height, to save us a lot of grief
         ## trying to get rid of white space below the arcs
         ## Only use arc cutoff if there's a feature at one end of it
         ## otherwise we end up with no track height at all!
-        if (keys %$end == 1) {
+        if (keys %$end < 2) {
           $max_arc = $left_height if (!$end->{'left'} && $left_height > $max_arc);
           $max_arc = $right_height if (!$end->{'right'} && $right_height > $max_arc);
         }
         else {
           $max_arc = $minor_axis if $minor_axis > $max_arc;
         }
-=cut
-        $max_arc = $minor_axis if $minor_axis > $max_arc;
+
         ## modify dimensions to allow for 2-pixel width of brush
         $self->push($self->Arc({
-              x             => $start_2 + ($h),
+              x             => $end_1 + ($major_axis / $pix_per_bp),
               y             => ($minor_axis / 2) + $h,
-              width         => $major_axis + 4,
-              height        => $minor_axis + 4,
+              width         => $major_axis,
+              height        => $minor_axis,
               start_point   => $start_point,
               end_point     => $end_point,
               colour        => $join_colour,
