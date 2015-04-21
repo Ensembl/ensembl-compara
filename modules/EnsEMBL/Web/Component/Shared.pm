@@ -1219,7 +1219,15 @@ sub render_sift_polyphen {
     'benign'            => 'good',
     'unknown'           => 'neutral',
     'tolerated'         => 'good',
-    'deleterious'       => 'bad'
+    'deleterious'       => 'bad',
+    
+    # slightly different format for SIFT low confidence states
+    # depending on whether they come direct from the API
+    # or via the VEP's no-whitespace processing
+    'tolerated - low confidence'   => 'neutral',
+    'deleterious - low confidence' => 'neutral',
+    'tolerated low confidence'     => 'neutral',
+    'deleterious low confidence'   => 'neutral',
   );
   
   my %ranks = (
