@@ -124,14 +124,15 @@ sub pipeline_analyses {
             -parameters => {
                 'inputlist'         => [        # this table needs to be edited prior to running the pipeline:
                         # copying from previous release:
-                                        [ '528' => '#prev_ancestral_db#', ],     # 5 teleost fish
+                                        #[ '528' => '#prev_ancestral_db#', ],     # 5 teleost fish
                                         [ '647' => '#prev_ancestral_db#', ],     # 4 sauropsids
-                                        [ '755' => '#prev_ancestral_db#', ],     # 17 eutherian mammals
+                                        #[ '755' => '#prev_ancestral_db#', ],     # 17 eutherian mammals
                                         [ '756' => '#prev_ancestral_db#', ],     # 8 primates
 
                         # copying from new sources:
                      #[ '756' => 'mysql://ensadmin:'.$self->o('password').'@compara5/sf5_epo_8primates_ancestral_core_77' ],   # 8-way primates
-                     #[ '755' => 'mysql://ensadmin:'.$self->o('password').'@compara4/sf5_epo_17mammals_ancestral_core_77' ],   # 17-way mammals
+                     [ '780' => 'mysql://ensadmin:'.$self->o('password').'@compara4/mp14_epo_17mammals_ancestral_core_80' ],   # 17-way mammals
+                     [ '768' => 'mysql://ensadmin:'.$self->o('password').'@compara4/sf5_epo_5fish_ancestral_core_79' ],   # 5-way fish
                 ],
             },
             -flow_into => {
