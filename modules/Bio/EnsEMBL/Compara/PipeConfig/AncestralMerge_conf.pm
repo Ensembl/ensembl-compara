@@ -58,16 +58,9 @@ sub default_options {
     return {
          %{$self->SUPER::default_options},
 
-        'pipeline_name' => 'ensembl_ancestral_'.$self->o('rel_with_suffix'),        # name used by the beekeeper to prefix job names on the farm
-
-        'pipeline_db' => { # the production database itself (will be created)
-                -host   => 'compara5',
-                -driver => 'mysql',
-                -port   => 3306,
-                -user   => 'ensadmin',
-                -pass   => $self->o('password'),
-                -dbname => $ENV{'USER'}."_".$self->o('pipeline_name'),
-        },  
+         # The production database itself (will be created). That's where the ancestral sequences will be
+        'pipeline_name' => 'ensembl_ancestral_'.$self->o('rel_with_suffix'),
+        'host'          => 'compara5',
 
         'merge_script'  => $self->o('ensembl_cvs_root_dir').'/ensembl-compara/scripts/pipeline/copy_ancestral_core.pl',
 
