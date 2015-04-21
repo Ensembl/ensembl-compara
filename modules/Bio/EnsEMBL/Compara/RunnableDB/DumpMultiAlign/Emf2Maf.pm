@@ -35,10 +35,9 @@ This RunnableDB module is part of the DumpMultiAlign pipeline.
 
 =head1 DESCRIPTION
 
-The RunnableDB module runs emf2maf jobs. It creates compression jobs
+The RunnableDB module runs emf2maf jobs.
 
 =cut
-
 
 package Bio::EnsEMBL::Compara::RunnableDB::DumpMultiAlign::Emf2Maf;
 
@@ -74,38 +73,23 @@ sub run {
     #Check number of genomic_align_blocks written is correct
     # 
     $self->_healthcheck();
+
+     #
+     #Delete emf file
+     #
+     my $full_path = $self->param('output_dir') . "/" . $self->param('output_file');
+     my $cmd2      = "rm " . $full_path;
+
+    if(my $return_value = system($cmd2)) {
+        $return_value >>= 8;
+        die "system( $cmd2 ) failed: $return_value";
+    }
+
 }
 
 sub write_output {
-    my $self = shift @_;
-
-    #
-    #Check if dummy jobs
-    #
-    if (!$self->param('output_file')) {
-	return 1;
-    }
-
-    #Create emf Compress job
-    my $emf_file = $self->param('output_file');
-    my $emf_output_ids = {"output_file"=>$emf_file};
-    $self->dataflow_output_id($emf_output_ids, 2);
-
-    #
-    #Create maf Compress jobs
-    #
-    my $maf_file = $self->param('output_file');
-    $maf_file =~ s/\.emf$/.maf/;
-
-    my $output_ids = "{\"output_file\"=>\"" . $maf_file . "\"";
-    if ($self->param('maf_output_dir')) {
-	$output_ids .= ",\"maf_output_dir\" => \"" . $self->param('maf_output_dir') . "\"";
-    }
-    $output_ids .= "}";
-
-    $self->dataflow_output_id($output_ids, 2);
-
-
+     my $self = shift @_;
+ 
 }
 
 #
@@ -121,7 +105,8 @@ sub _healthcheck {
     my $num_blocks = `$cmd`;
     chomp $num_blocks;
     if ($num_blocks != $self->param('num_blocks')) {
-	die("Number of block dumped is $num_blocks but should be " . $self->param('num_blocks'));
+	warn("Number of block dumped is $num_blocks but should be " . $self->param('num_blocks'));
+	#die("Number of block dumped is $num_blocks but should be " . $self->param('num_blocks'));
     } else {
 	print "Wrote " . $self->param('num_blocks') . " blocks\n";
 	#Store results in table. Not really necessary but good to have 
