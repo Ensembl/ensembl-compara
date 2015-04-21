@@ -654,9 +654,9 @@ sub core_pipeline_analyses {
         {   -logic_name => 'check_reuse_db_is_myisam',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::SqlHealthcheck',
             -parameters => {
+                'db_conn'       => '#reuse_db#',
                 'description'   => 'The pipeline can only reuse the "other_member_sequence" table if it is in MyISAM',
-                'query'         => 'SELECT * FROM information_schema.TABLES WHERE ENGINE NOT LIKE "MyISAM" AND TABLE_NAME = "other_member_sequence" AND TABLE_SCHEMA = "#db_name#"',
-                'db_name'       => '#expr( Bio::EnsEMBL::Hive::DBSQL::DBConnection->new( -url => #reuse_db#)->dbname  )expr#',
+                'query'         => 'SHOW TABLE STATUS WHERE Name = "other_member_sequence" AND Engine NOT LIKE "MyISAM" -- limit',      # -- limit is a trick to ask SqlHealthcheck not to add "LIMIT 1" at the end of the query
             },
         },
 
