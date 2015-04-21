@@ -37,6 +37,8 @@ sub new {
   $self->SUPER::new(@_);
 }
 
+sub wiggle_subtitle { $_[0]->my_colour('score','text'); }
+
 sub get_block_features {
 
   ### block_features

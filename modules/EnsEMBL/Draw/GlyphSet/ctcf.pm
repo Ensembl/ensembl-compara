@@ -33,6 +33,7 @@ use EnsEMBL::Web::Utils::Tombstone qw(tombstone);
 use base qw(EnsEMBL::Draw::GlyphSet_wiggle_and_block);
 
 sub my_helplink { return "ctcf"; }
+sub wiggle_subtitle { $_[0]->my_colour('score','text'); }
 
 sub new {
   my $self = shift;

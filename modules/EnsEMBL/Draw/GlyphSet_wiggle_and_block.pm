@@ -25,7 +25,7 @@ use strict;
 
 use List::Util qw(min max);
 
-use base qw(EnsEMBL::Draw::GlyphSet EnsEMBL::Draw::GlyphSet_wiggle);
+use base qw(EnsEMBL::Draw::GlyphSet_wiggle);
 
 sub draw_error {}
 

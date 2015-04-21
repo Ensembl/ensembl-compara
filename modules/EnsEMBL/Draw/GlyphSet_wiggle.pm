@@ -28,6 +28,20 @@ sub _min_defined(@) { min(grep { defined $_ } @_); }
 
 use base qw(EnsEMBL::Draw::GlyphSet);
 
+sub supports_subtitles { 1; }
+sub wiggle_subtitle { undef; }
+sub subtitle_colour { $_[0]->{'subtitle_colour'} || 'slategray' }
+sub subtitle_text {
+  my ($self) = @_;
+
+  my $name = $self->my_config('short_name') || $self->my_config('name');
+  my $label = $self->wiggle_subtitle;
+  $label =~ s/\[\[name\]\]/$name/;
+  $label =~ s/<.*?>//g;
+  return $label;
+}
+
+## Draw the special box found on regulation multi-wiggle tracks
 sub add_legend_box {
   my ($self,$click_text,$content,$y) = @_;
 
@@ -86,9 +100,6 @@ sub do_draw_wiggle {
   my $name          = $self->my_config('short_name') || $self->my_config('name');
   my $colour        = $parameters->{'score_colour'}  || $self->my_colour('score') || 'blue';
   my $axis_colour   = $parameters->{'axis_colour'}   || $self->my_colour('axis')  || 'red';
-  my $label         = $parameters->{'description'}   || $self->my_colour('score', 'text');
-     $label         =~ s/\[\[name\]\]/$name/;
-  my $textheight    = [ $self->get_text_width(0, $label, '', %font) ]->[3];
   my $pix_per_score = 8; # If all else fails, ie no data and no label
   if($max_score == $min_score) {
     $pix_per_score = $self->label->height if $self->label;
@@ -100,6 +111,9 @@ sub do_draw_wiggle {
   my $initial_offset= $offset;
   my $bottom_offset = $max_score == $min_score ? 0 : (($max_score - ($min_score > 0 ? $min_score : 0)) || 1) * $pix_per_score;
   my $zero_offset   = $max_score * $pix_per_score;
+
+  # Set subtitle colour
+  $self->{'subtitle_colour'} ||= $colour;
 
   # Draw the labels
   ## Only done if we have multiple data sets
@@ -226,7 +240,7 @@ sub do_draw_wiggle {
       $colour = shift @$colours;
 
       if ($parameters->{'graph_type'} eq 'line') {
-        $self->draw_wiggle_points_as_line($feature_set, $slice, $parameters, $initial_offset + $top_offset + $zero_offset, $pix_per_score, $colour);
+        $self->draw_wiggle_points_as_line($feature_set, $parameters, $initial_offset + $top_offset + $zero_offset, $pix_per_score, $colour);
       } else {
         $self->draw_wiggle_points($feature_set, $slice, $parameters, $top_offset + $zero_offset, $pix_per_score, $colour);
       }
@@ -235,21 +249,7 @@ sub do_draw_wiggle {
     $self->draw_wiggle_points($features, $slice, $parameters, $top_offset+$zero_offset, $pix_per_score, $colour);
   }
 
-  # Add line of text
-  $self->push($self->Text({
-    text      => $label,
-    width     => [ $self->get_text_width(0, $label, '', %font) ]->[2],
-    halign    => 'left',
-    colour    => $colour,
-    y         => $bottom_offset,
-    height    => $textheight,
-    x         => 1,
-    absolutey => 1,
-    absolutex => 1,
-    %font,
-  }));
-
-  $offset += $row_height + $textheight;
+  $offset += $row_height;
 
   return $offset - $initial_offset;
 }
@@ -372,9 +372,8 @@ sub _discrete_features {
 }
 
 sub draw_wiggle_points_as_line {
-  my ($self, $features, $slice, $parameters, $offset, $pix_per_score, $colour) = @_;
-  my $slice = $self->{'container'};
-  my $slice_length = $slice->length;
+  my ($self, $features, $parameters, $offset, $pix_per_score, $colour) = @_;
+  my $slice_length = $self->{'container'}->length;
   my $discrete_features = $self->_discrete_features($features);
   if($discrete_features) {
     $features = [ sort { $a->start <=> $b->start } @$features ];

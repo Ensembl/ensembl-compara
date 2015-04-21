@@ -257,6 +257,8 @@ sub new {
         ## load everything from the database
         my $name         = $glyphset->{'my_config'}->id;
         my $ref_glyphset = ref $glyphset;
+        # NB: we guarantee render will always be called before the
+        #       subititle_* methods.
         $glyphset->render;
         next if scalar @{$glyphset->{'glyphs'}} == 0;
         my $new_section = $glyphset->section;
@@ -348,6 +350,8 @@ sub new {
           my $sec_off = -4;
           unshift @texts,'' while @texts < 2;
           unshift @texts,''; # top blank
+          my $leading = 12;
+          my $sec_off = $glyphset->miny - $glyphset->section_height;
           foreach my $i (0..min(scalar(@texts)-1,2)) {
             $glyphset->push($glyphset->Text({
               font => 'Arial',
@@ -356,18 +360,18 @@ sub new {
               text => $texts[$i],
               colour    => 'black',
               x => -$label_width - $margin -4,
-              y => -$glyphset->section_height + $sec_off ,
+              y => $sec_off,
               width => $label_width,
               halign => 'left',
               absolutex => 1,
               absolutewidth => 1,
               href => $url,
             }));
-            $sec_off += 12;
+            $sec_off += $leading;
           }
           $glyphset->push($glyphset->Rect({
             x => $sx -4,
-            y => $sy + $sec_off - 4,
+            y => $sec_off,
             width => $label_width - 4,
             height => 2,
             absolutex => 1,
@@ -383,6 +387,7 @@ sub new {
 
           my ($miny,$maxy) = ($glyphset->miny,$glyphset->maxy);
           my $liney;
+          $glyphset->{'label_y_offset'} = 0;
           $glyphset->label->y($gminy + ($glyphset->{'label_y_offset'}||0));
           $liney = $gminy+$gh+1+($glyphset->{'label_y_offset'}||0);
           $glyphset->label->height($gh);

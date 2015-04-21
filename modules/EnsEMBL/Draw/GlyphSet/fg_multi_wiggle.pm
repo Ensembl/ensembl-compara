@@ -26,6 +26,7 @@ use strict;
 use base qw(EnsEMBL::Draw::GlyphSet_wiggle_and_block);
 
 sub label { return undef; }
+sub wiggle_subtitle { $_[0]->my_colour('score','text'); }
 
 # Lazy evaluation
 sub data_by_cell_line {
