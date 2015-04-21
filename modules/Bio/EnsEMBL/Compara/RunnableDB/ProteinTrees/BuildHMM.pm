@@ -184,6 +184,11 @@ sub run_buildhmm {
     );
     my $cmd_out = $self->run_command($cmd);
     die sprintf("Could not run hmmbuild:\nSTDOUT %s\nSTDERR %s\n", $cmd_out->out, $cmd_out->err) if ($cmd_out->exit_code);
+    unless ((-e $hmm_file) and (-s $hmm_file)) {
+        # The file is not there / empty ... MEMLIMIT going on ? Let's have
+        # a break and give LSF the chance to kill us
+        sleep 30;
+    }
 
     my $runtime_msec = $cmd_out->runtime_msec;
     if ($self->param_required('hmmer_version') eq '2') {
