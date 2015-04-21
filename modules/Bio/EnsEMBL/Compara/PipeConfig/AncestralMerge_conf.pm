@@ -71,7 +71,7 @@ sub default_options {
 
         'merge_script'  => $self->o('ensembl_cvs_root_dir').'/ensembl-compara/scripts/pipeline/copy_ancestral_core.pl',
 
-        'prev_ancestral_db' => 'mysql://ensadmin:' . $self->o('password') . '@ens-livemirror/ensembl_ancestral_78',
+        'prev_ancestral_db' => 'mysql://ensadmin:' . $self->o('password') . '@ens-livemirror/ensembl_ancestral_#expr( #ensembl_release# - 1)expr#',
 
         'reservation_sfx' => '',    # set to '000' for farm2, to '' for farm3 and EBI
     };
@@ -83,6 +83,7 @@ sub pipeline_wide_parameters {
     return {
         %{$self->SUPER::pipeline_wide_parameters},
 
+        'ensembl_release'       => $self->o('ensembl_release'),
         'prev_ancestral_db'     => $self->o('prev_ancestral_db'),
     };
 }
