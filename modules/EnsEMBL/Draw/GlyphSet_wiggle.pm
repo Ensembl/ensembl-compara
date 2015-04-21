@@ -358,10 +358,6 @@ sub draw_wiggle_points {
       title     => $parameters->{'no_titles'} ? undef : $title,
       href      => $href,
     }));
-
-    # If 'bumped' flag is on, this bumping is different than bumping on other tracks since this one only adds
-    # an offset to the y coords to the next rectangle to be drawn so it doesn't overlap with the previous one
-    $zero -= $height + 2 if $parameters->{'bumped'};
   }
 
   return 1;
