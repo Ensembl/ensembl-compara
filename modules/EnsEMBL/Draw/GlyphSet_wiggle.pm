@@ -300,9 +300,8 @@ sub _special_colour {
 
 ## Given a feature, extract coords, value, and colour for this point
 sub _feature_values {
-  my ($self,$f,$slice_length,$colour,$parameters) = @_;
+  my ($self,$f,$slice_length) = @_;
 
-  my $this_colour = $self->_special_colour($f,$parameters) || $colour;
   my @out;
   my ($start,$end,$score);
   if (ref $f eq 'HASH') {
@@ -319,15 +318,7 @@ sub _feature_values {
   }
   $start = max($start,1);
   $end = min($end,$slice_length);
-  # Special case for ReadCoverageCollection
-  if(ref($f) ne 'HASH' and
-     $f->isa('Bio::EnsEMBL::Variation::ReadCoverageCollection')) {
-    push @out,{ colour => $this_colour, score => $f->read_coverage_max },
-              { colour => 'steelblue',  score => $f->read_coverage_min };
-  } else {
-    push @out,{ colour => $this_colour, score => $score };
-  }
-  return ($start,$end,\@out);
+  return ($start,$end,$score);
 }
 
 sub draw_wiggle_points {
@@ -342,28 +333,27 @@ sub draw_wiggle_points {
     my ($height, $width, $x, $y);
     my $href        = ref $f ne 'HASH' && $f->can('display_id') ? $hrefs->{$f->display_id} : '';
 
-    my ($start,$end,$points) = $self->_feature_values($f,$slice_length,$colour,$parameters);
+    my $colour = $self->_special_colour($f,$parameters) || $colour;
+    my ($start,$end,$score) = $self->_feature_values($f,$slice_length);
 
     $x     = $start - 1;
     $width = $end - $start + 1;
 
-    foreach my $p (@$points) {
-      $height = ($max_score ? min($p->{'score'}, $max_score) : $p->{'score'}) * $pix_per_score;
-      $y      = $zero - max($height, 0);
-      $height = $use_points ? 0 : abs $height;
+    $height = ($max_score ? min($score, $max_score) : $score) * $pix_per_score;
+    $y      = $zero - max($height, 0);
+    $height = $use_points ? 0 : abs $height;
 
-      $self->push($self->Rect({
-        y         => $y,
-        height    => $height,
-        x         => $x,
-        width     => $width,
-        absolutey => 1,
-        colour    => $p->{'colour'},
-        alpha     => $parameters->{'use_alpha'} ? 0.5 : 0,
-        title     => $parameters->{'no_titles'} ? undef : sprintf('%.2f', $p->{'score'}),
-        href      => $href,
-      }));
-    }
+    $self->push($self->Rect({
+      y         => $y,
+      height    => $height,
+      x         => $x,
+      width     => $width,
+      absolutey => 1,
+      colour    => $colour,
+      alpha     => $parameters->{'use_alpha'} ? 0.5 : 0,
+      title     => $parameters->{'no_titles'} ? undef : sprintf('%.2f', $score),
+      href      => $href,
+    }));
 
     # If 'bumped' flag is on, this bumping is different than bumping on other tracks since this one only adds
     # an offset to the y coords to the next rectangle to be drawn so it doesn't overlap with the previous one
