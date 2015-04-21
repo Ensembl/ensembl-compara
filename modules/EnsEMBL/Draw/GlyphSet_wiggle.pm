@@ -226,13 +226,13 @@ sub do_draw_wiggle {
       $colour = shift @$colours;
 
       if ($parameters->{'graph_type'} eq 'line') {
-        $self->draw_wiggle_points_as_line($feature_set, $slice, $parameters, $initial_offset + $top_offset, $pix_per_score, $colour, $zero_offset);
+        $self->draw_wiggle_points_as_line($feature_set, $slice, $parameters, $initial_offset + $top_offset + $zero_offset, $pix_per_score, $colour);
       } else {
-        $self->draw_wiggle_points($feature_set, $slice, $parameters, $top_offset, $pix_per_score, $colour, $zero_offset);
+        $self->draw_wiggle_points($feature_set, $slice, $parameters, $top_offset + $zero_offset, $pix_per_score, $colour);
       }
     }
   } else {
-    $self->draw_wiggle_points($features, $slice, $parameters, $top_offset, $pix_per_score, $colour, $zero_offset);
+    $self->draw_wiggle_points($features, $slice, $parameters, $top_offset+$zero_offset, $pix_per_score, $colour);
   }
 
   # Add line of text
@@ -333,11 +333,11 @@ sub _feature_href {
 }
 
 sub draw_wiggle_points {
-  my ($self, $features, $slice, $parameters, $top_offset, $pix_per_score, $colour, $zero_offset) = @_;
+  my ($self,$features,$slice,$parameters,$zero,$pix_per_score,$colour) = @_;
+
   my $hrefs     = $parameters->{'hrefs'};
   my $use_points    = $parameters->{'graph_type'} eq 'points';
   my $max_score = $parameters->{'max_score'};
-  my $zero      = $top_offset + $zero_offset;
   my $slice_length = $slice->length;
 
   foreach my $f (@$features) {
@@ -359,49 +359,57 @@ sub draw_wiggle_points {
       href      => $href,
     }));
   }
+}
 
-  return 1;
+sub _discrete_features {
+  my ($self,$ff) = @_;
+
+  if(ref($ff->[0]) eq 'HASH' or $ff->[0]->window_size) {
+    return 0;
+  } else {
+    return 1;
+  }
 }
 
 sub draw_wiggle_points_as_line {
-  my ($self, $features, $slice, $parameters, $top_offset, $pix_per_score, $colour, $zero_offset) = @_;
-  my $slice          = $self->{'container'};
-  my $vclen          = $slice->length;
-  my $window_size    = ref $features->[0] eq 'HASH' ? 10 : $features->[0]->window_size;
-     $features       = [ sort { $a->start <=> $b->start } @$features ] if $window_size == 0;
-  my $previous_f     = $features->[0];
-  my $previous_x     = ($previous_f->{'end'} + $previous_f->{'start'}) / 2;
-  my $previous_score = $previous_f->{'score'};
+  my ($self, $features, $slice, $parameters, $offset, $pix_per_score, $colour) = @_;
+  my $slice = $self->{'container'};
+  my $slice_length = $slice->length;
+  my $discrete_features = $self->_discrete_features($features);
+  $features = [ sort { $a->start <=> $b->start } @$features ] if $discrete_features;
 
-  if ($window_size == 0) {
-    $previous_score = $previous_f->scores->[0];
-    $previous_x     = ($previous_f->end + $previous_f->start) / 2;
+  my ($previous_x,$previous_score);
+  if ($discrete_features) {
+    $previous_score = $features->[0]->scores->[0];
+    $previous_x     = ($features->[0]->end + $features->[0]->start) / 2;
+  } else {
+    $previous_x = ($features->[0]->{'end'}+$features->[0]->{'start'})/2;
+    $previous_score = $features->[0]->{'score'};
   }
 
-  my $previous_y = $previous_score < 0 ? 0 : -$previous_score * $pix_per_score;
-     $previous_y = $top_offset + $zero_offset + $previous_y;
+  my $previous_y = max(0,$previous_score) * $pix_per_score - $offset;
 
   for (my $i = 1; $i <= @$features; $i++) {
     my $f             = $features->[$i];
-    my $current_x     = ($f->{'end'} + $f->{'start'}) / 2;
-    my $current_score = $f->{'score'};
+    next if ref $f eq 'HASH' and $discrete_features;
 
-    if ($window_size == 0) {
-      next if ref $f eq 'HASH';
-
+    my ($current_x,$current_score);
+    if ($discrete_features) {
       $current_score = $f->scores->[0];
       $current_x     = ($f->end + $f->start) / 2;
+    } else {
+      $current_x     = ($f->{'end'} + $f->{'start'}) / 2;
+      $current_score = $f->{'score'};
     }
 
-    my $current_y = $current_score < 0 ? 0 : -$current_score * $pix_per_score;
     my $width     = 1 - (($current_x - $previous_x) + 1);
 
     next if $width >= 1;
 
-    my $y_coord = $top_offset + $zero_offset + $current_y;
-    my $height  = 1 - ($y_coord - $previous_y);
+    my $y_coord = $offset - max(0,$current_score) * $pix_per_score;
+    my $height  = 1 - ($y_coord + $previous_y);
 
-    next unless $current_x <= $vclen;
+    next unless $current_x <= $slice_length;
 
     $self->push($self->Line({
       x         => $current_x,
@@ -413,9 +421,7 @@ sub draw_wiggle_points_as_line {
     }));
 
     $previous_x     = $current_x;
-    $previous_y     = $y_coord;
-    $previous_f     = $f;
-    $previous_score = $current_score;
+    $previous_y     = -$y_coord;
   }
 }
 
