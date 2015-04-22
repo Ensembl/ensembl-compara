@@ -284,6 +284,16 @@ sub transform {
   }
 }
 
+sub track_style_config {
+### Bring together the various config options in a format
+### that can be used by the new Style modules
+  my $self = shift;
+  return {
+          'image_config' => $self->{'config'},
+          'track_config' => $self->{'my_config'},
+          'pix_per_bp'   => $self->{'config'}->image_width / $self->{'container'}->length, 
+          };
+}
 
 ############### GENERIC RENDERING ####################
 
