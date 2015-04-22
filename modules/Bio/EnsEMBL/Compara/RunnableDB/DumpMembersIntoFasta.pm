@@ -81,9 +81,22 @@ sub fetch_input {
     } else {
         $members = $self->compara_dba->get_SeqMemberAdaptor->fetch_all_by_GenomeDB($genome_db_id);
     }
+    $self->param('members', $members);
+}
+
+sub run {
+    my $self = shift @_;
+
+    my $members = $self->param('members');
+    my $fasta_file = $self->param('fasta_file');
 
     # write fasta file:
     Bio::EnsEMBL::Compara::MemberSet->new(-members => $members)->print_sequences_to_file($fasta_file);
+
+    my $n_seq_expected = scalar(@$members);
+    my $n_seq_in_file = `grep -c "^>" "$fasta_file"`;
+    chomp $n_seq_in_file;
+    die "Found $n_seq_in_file sequences in the file instead of $n_seq_expected. Please investigate.\n" if $n_seq_expected ne $n_seq_in_file;
 }
 
 sub write_output {

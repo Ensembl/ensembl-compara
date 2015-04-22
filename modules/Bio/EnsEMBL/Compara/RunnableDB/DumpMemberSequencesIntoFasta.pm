@@ -67,6 +67,7 @@ sub run {
     my ($sequence_id, $stable_id, $description, $sequence);
     $sth->bind_columns( \$sequence_id, \$stable_id, \$description, \$sequence );
 
+    my $n_seq = 0;
     while( $sth->fetch() ) {
         if ($sequence =~ /^X+$/) {
             print STDERR "$stable_id is all X not dumped\n";
@@ -76,10 +77,15 @@ sub run {
         chomp $sequence;
         my $nameprefix = $idprefixed ? ('seq_id_'.$sequence_id.'_') : '';
         print FASTAFILE ">${nameprefix}${stable_id} $description\n$sequence\n";
+        $n_seq++;
     }
     $sth->finish();
 
     close FASTAFILE;
+
+    my $n_seq_in_file = `grep -c "^>" "$fasta_name"`;
+    chomp $n_seq_in_file;
+    die "Found $n_seq_in_file sequences in the file instead of $n_seq. Please investigate.\n" if $n_seq ne $n_seq_in_file;
 }
 
 1;
