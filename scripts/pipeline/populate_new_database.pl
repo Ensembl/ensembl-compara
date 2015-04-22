@@ -188,6 +188,7 @@ and skip the method_link_species_sets corresponding to these IDs.
 use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
 use Bio::EnsEMBL::Registry;
 use Bio::EnsEMBL::Utils::Exception qw(throw warning);
+use Bio::EnsEMBL::Utils::Scalar qw(:assert);
 use Getopt::Long;
 use Data::Dumper;
 
@@ -358,11 +359,9 @@ sub copy_table {
   my ($from_dba, $to_dba, $table_name) = @_;
 
   print "Copying table $table_name...\n";
-  throw("[$from_dba] should be a Bio::EnsEMBL::Compara::DBSQL::DBAdaptor")
-      unless (UNIVERSAL::isa($from_dba, "Bio::EnsEMBL::Compara::DBSQL::DBAdaptor"));
+  assert_ref($from_dba, 'Bio::EnsEMBL::Compara::DBSQL::DBAdaptor', 'from_dba');
+  assert_ref($to_dba, 'Bio::EnsEMBL::Compara::DBSQL::DBAdaptor', 'to_dba');
 
-  throw("[$to_dba] should be a Bio::EnsEMBL::Compara::DBSQL::DBAdaptor")
-      unless (UNIVERSAL::isa($to_dba, "Bio::EnsEMBL::Compara::DBSQL::DBAdaptor"));
 
   my $user = $to_dba->dbc->username;
   my $pass = $to_dba->dbc->password;
@@ -454,8 +453,7 @@ sub update_schema_version {
 sub get_all_default_genome_dbs {
   my ($compara_dba, $species_names, $mlss_ids, $collection) = @_;
 
-  throw("[$compara_dba] should be a Bio::EnsEMBL::Compara::DBSQL::DBAdaptor")
-      unless (UNIVERSAL::isa($compara_dba, "Bio::EnsEMBL::Compara::DBSQL::DBAdaptor"));
+  assert_ref($compara_dba, 'Bio::EnsEMBL::Compara::DBSQL::DBAdaptor', 'compara_dba');
 
   my $all_species;
 
@@ -538,8 +536,7 @@ sub get_all_method_link_species_sets {
   my ($compara_dba, $genome_dbs, $mlss_ids) = @_;
   my $all_method_link_species_sets = {};
 
-  throw("[$compara_dba] should be a Bio::EnsEMBL::Compara::DBSQL::DBAdaptor")
-      unless (UNIVERSAL::isa($compara_dba, "Bio::EnsEMBL::Compara::DBSQL::DBAdaptor"));
+  assert_ref($compara_dba, 'Bio::EnsEMBL::Compara::DBSQL::DBAdaptor', 'compara_dba');
 
   my $method_link_species_set_adaptor = $compara_dba->get_MethodLinkSpeciesSetAdaptor();
   throw("Error while getting Bio::EnsEMBL::Compara::DBSQL::MethodLinkSpeciesSetAdaptor")
@@ -564,8 +561,7 @@ sub get_all_method_link_species_sets {
 
   my $these_genome_dbs = {};
   foreach my $this_genome_db (@$genome_dbs) {
-    throw("[$this_genome_db] should be a Bio::EnsEMBL::Compara::GenomeDB")
-        unless (UNIVERSAL::isa($this_genome_db, "Bio::EnsEMBL::Compara::GenomeDB"));
+    assert_ref($this_genome_db, 'Bio::EnsEMBL::Compara::GenomeDB', 'this_genome_db');
     $these_genome_dbs->{$this_genome_db->dbID} = $this_genome_db;
   }
 
@@ -608,8 +604,7 @@ sub get_all_species_sets_with_tags {
   my ($compara_dba, $genome_dbs, $mlss_ids) = @_;
   my $all_species_sets = {};
 
-  throw("[$compara_dba] should be a Bio::EnsEMBL::Compara::DBSQL::DBAdaptor")
-      unless (UNIVERSAL::isa($compara_dba, "Bio::EnsEMBL::Compara::DBSQL::DBAdaptor"));
+  assert_ref($compara_dba, 'Bio::EnsEMBL::Compara::DBSQL::DBAdaptor', 'compara_dba');
 
   my $species_set_adaptor = $compara_dba->get_SpeciesSetAdaptor();
   throw("Error while getting Bio::EnsEMBL::Compara::DBSQL::SpeciesSetAdaptor")
@@ -625,8 +620,7 @@ sub get_all_species_sets_with_tags {
 
   my $these_genome_dbs = {};
   foreach my $this_genome_db (@$genome_dbs) {
-    throw("[$this_genome_db] should be a Bio::EnsEMBL::Compara::GenomeDB")
-        unless (UNIVERSAL::isa($this_genome_db, "Bio::EnsEMBL::Compara::GenomeDB"));
+    assert_ref($this_genome_db, 'Bio::EnsEMBL::Compara::GenomeDB', 'this_genome_db');
     $these_genome_dbs->{$this_genome_db->dbID} = $this_genome_db;
   }
 
@@ -666,11 +660,8 @@ sub get_all_species_sets_with_tags {
 sub copy_all_dnafrags {
   my ($from_dba, $to_dba, $genome_dbs, $MT_only) = @_;
 
-  throw("[$from_dba] should be a Bio::EnsEMBL::Compara::DBSQL::DBAdaptor")
-      unless (UNIVERSAL::isa($from_dba, "Bio::EnsEMBL::Compara::DBSQL::DBAdaptor"));
-
-  throw("[$to_dba] should be a Bio::EnsEMBL::Compara::DBSQL::DBAdaptor")
-      unless (UNIVERSAL::isa($to_dba, "Bio::EnsEMBL::Compara::DBSQL::DBAdaptor"));
+  assert_ref($from_dba, 'Bio::EnsEMBL::Compara::DBSQL::DBAdaptor', 'from_dba');
+  assert_ref($to_dba, 'Bio::EnsEMBL::Compara::DBSQL::DBAdaptor', 'to_dba');
 
   my $user = $new_dba->dbc->username;
   my $pass = $new_dba->dbc->password;
@@ -730,11 +721,9 @@ sub copy_all_dnafrags {
 sub copy_all_mlss_tags {
   my ($from_dba, $to_dba, $mlsss) = @_;
 
-  throw("[$from_dba] should be a Bio::EnsEMBL::Compara::DBSQL::DBAdaptor")
-      unless (UNIVERSAL::isa($from_dba, "Bio::EnsEMBL::Compara::DBSQL::DBAdaptor"));
+  assert_ref($from_dba, 'Bio::EnsEMBL::Compara::DBSQL::DBAdaptor', 'from_dba');
 
-  throw("[$to_dba] should be a Bio::EnsEMBL::Compara::DBSQL::DBAdaptor")
-      unless (UNIVERSAL::isa($to_dba, "Bio::EnsEMBL::Compara::DBSQL::DBAdaptor"));
+  assert_ref($to_dba, 'Bio::EnsEMBL::Compara::DBSQL::DBAdaptor', 'to_dba');
 
   my $user = $new_dba->dbc->username;
   my $pass = $new_dba->dbc->password;
