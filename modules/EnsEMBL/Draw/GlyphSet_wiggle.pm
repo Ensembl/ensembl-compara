@@ -117,13 +117,23 @@ sub _draw_mini_label {
   }));
 }
 
+## Should we draw the mini-label. Yes except CTCF.
+# This code should be deleted when the ctcf glyphset goes in e82.
+sub _should_draw_mini_label {
+  my ($self,$text) = @_;
+
+  return $text ne 'CTCF';
+}
+
 ## Draw the mini label and special box found on reg. multi-wiggle tracks
 sub _add_sublegend {
   my ($self,$parameters,$offset,$labels,$colours) = @_;
 
   # The label
   my $header_label = shift @$labels;
-  $self->_draw_mini_label($header_label,$offset);
+  if($self->_should_draw_mini_label($header_label)) {
+    $self->_draw_mini_label($header_label,$offset);
+  }
   # The box
   my $content = $self->_sublegend_box_content($parameters,$header_label,                                                  $labels,$colours);
   my $click_text = $parameters->{'zmenu_click_text'} || 'Legend';
