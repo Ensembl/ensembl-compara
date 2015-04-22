@@ -375,6 +375,10 @@ sub copy_table {
   $sth->execute();
   my $all_rows = $sth->fetchall_arrayref();
   $sth->finish;
+  if (!@$all_rows) {
+    print "Nothing to copy.\n";
+    return
+  }
   my $filename = "/tmp/$table_name.populate_new_database.$id.$$.txt";
   open(TEMP, ">$filename") or die;
   foreach my $this_row (@$all_rows) {
