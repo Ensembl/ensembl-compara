@@ -61,7 +61,7 @@ sub content {
   
   my $html = $alert_box;
   
-  if ($type eq 'Gene') {
+  if ($type eq 'Gene' && $align) {
     my $location = $object->Obj; # Use this instead of $slice because the $slice region includes flanking
     
     $html .= sprintf(
@@ -84,8 +84,8 @@ sub content {
   my $is_low_coverage_species = 0; #is this species part of the low coverage set in the EPO_LOW_COVERAGE alignments
 
   #method_link_species_set class and type
-  my $method_class = $hub->species_defs->multi_hash->{'DATABASE_COMPARA'}{'ALIGNMENTS'}{$align}{'class'};
-  my $method_type = $hub->species_defs->multi_hash->{'DATABASE_COMPARA'}{'ALIGNMENTS'}{$align}{'type'};
+  my $method_class = $hub->species_defs->multi_hash->{'DATABASE_COMPARA'}{'ALIGNMENTS'}{$align}{'class'} if ($align);
+  my $method_type = $hub->species_defs->multi_hash->{'DATABASE_COMPARA'}{'ALIGNMENTS'}{$align}{'type'} if ($align);
 
   # Get all alignment blocks and group_ids when asking for a specific alignment
   if ($align) {
@@ -149,7 +149,6 @@ sub content {
   #If the slice_length is long, split the sequence into chunks to speed up the process
   #Note that slice_length is not set if need to display a target_slice_eable
   if ($align && $slice_length && $slice_length >= $self->{'subslice_length'}) {
-
     my ($table, $padding) = $self->get_slice_table($slices, 1);
     $html .= $self->draw_tree($cdb, $align_blocks, $slice, $align, $method_class, $groups, $slices);
     $html .= $table . $self->chunked_content($slice_length, $self->{'subslice_length'}, { padding => $padding, length => $slice_length });
@@ -164,9 +163,10 @@ sub content {
     } else {
       #Write out sequence if length is short enough
       $html .= $self->draw_tree($cdb, $align_blocks, $slice, $align, $method_class, $groups, $slices) if ($align);
-      $html .= $self->content_sub_slice($slice, $slices, undef, $cdb); # Direct call if the sequence length is short enough
+      $html .= $self->content_sub_slice($slice, $slices, undef, $cdb) if($align); # Direct call if the sequence length is short enough
     }
   }
+  
   $html .= $self->show_warnings($warnings);
  
   return $html;
@@ -186,7 +186,7 @@ sub _get_sequence {
   my $hub          = $self->hub;
   my $object       = $self->object || $hub->core_object($hub->param('data_type'));
      $slice      ||= $object->slice;
-     $slice        = $slice->invert if !$_[0] && $hub->param('strand') == -1;
+     $slice        = $slice->invert if !$_[0] && $hub->param('strand') && $hub->param('strand') == -1;
   my $species_defs = $hub->species_defs;
   my $start        = $hub->param('subslice_start');
   my $end          = $hub->param('subslice_end');
@@ -659,9 +659,13 @@ sub export_options {
   my $hub = $self->hub;
   my @species_options;
   my $align = $hub->param('align');
-  foreach (grep { /species_$align/ } $hub->param) {
-    push @species_options, $_;  
+  
+  if($align) {
+    foreach (grep { /species_$align/ } $hub->param) {
+      push @species_options, $_;  
+    }
   }
+  
   return {
           'action'  => 'TextAlignments', 
           'params'  => ['align', @species_options], 
