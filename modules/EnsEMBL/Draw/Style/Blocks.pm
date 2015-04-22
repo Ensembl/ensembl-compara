@@ -55,40 +55,38 @@ sub glyphs {
   my $data          = $self->data;
   my $track_config  = $self->track_config;
   my @glyphs        = ();
-
-  foreach my $datum (@$data) {
-
-    ## Map raw coordinates onto image
-    my ($start, $end) = $self->map_to_image($datum->{'start'}, $datum->{'end'});
+  
+  foreach my $block (@$data) {
+    my @text_info = $self->get_text_width(0, $block->{'label'}, '', 
+                                              font   => $self->{'font_name'}, 
+                                              ptsize => $self->{'font_size'});
+    my $height = $track_config->{'height'} || $text_info[3] + 2;
 
     ## Set parameters
     my $params = {
-                    x            => $start,
+                    x            => $block->{'start'},
                     y            => 0,
-                    width        => $end - $start + 1,
-                    height       => $track_config->{'glyph_height'},
-                    colour       => $datum->{'colour'},
+                    width        => $block->{'end'} - $block->{'start'} + 1,
+                    height       => $height,
+                    colour       => $block->{'colour'},
                     absolutey    => 1,
                   };
-    $params->{'href'} = $datum->{'url'} if $datum->{'url'};
+    $params->{'href'} = $block->{'url'} if $block->{'url'};
 
     ## Create glyph
     push @glyphs, $self->Rect($params);
 
     ## Optional label
-    if ($track_config->{'has_labels'} && $datum->{'label'}) {
-      my $label_colour = $datum->{'label_colour'} || $datum->{'colour'} || 'black';
-      my @text_info = $self->get_text_width(0, $datum->{'label'}, '', 
-                                              font   => $self->{'font_name'}, 
-                                              ptsize => $self->{'font_size'});
+    if ($track_config->get('has_labels') && $block->{'label'}) {
+      my $label_colour = $block->{'label_colour'} || $block->{'colour'} || 'black';
       my $label = {
                     font      => $self->{'font_name'},
                     colour    => $label_colour,
                     height    => $self->{'font_size'},
                     ptsize    => $self->{'font_size'},
-                    text      => $datum->{'label'},
-                    x         => $start,
-                    y         => $track_config->{'glyph_height'} + 4,
+                    text      => $block->{'label'},
+                    x         => $block->{'start'},
+                    y         => $height + 4,
                     width     => $text_info[2],
                     height    => $text_info[3],
                     absolutey => 1,
@@ -101,3 +99,5 @@ sub glyphs {
 
   return @glyphs;
 }
+
+1;
