@@ -2526,7 +2526,7 @@ sub add_simple_features {
     
     next unless $menu;
     
-    my $glyphset = $data->{$_}{'glyphset'} ? $data->{$_}{'glyphset'}: '_simple';
+    my $glyphset = $data->{$_}{'glyphset'} ? $data->{$_}{'glyphset'}: 'simple_features';
     my %options  = (
       glyphset  => $glyphset,
       colourset => 'simple',
