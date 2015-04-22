@@ -138,7 +138,7 @@ sub gene_phenotypes {
     }
   }
   else {
-    $html = "<p>No phenotypes associated with gene $g_name.</p>";
+    $html = "<p>No phenotypes directly associated with gene $g_name.</p>";
   }
   return $html;
 }
