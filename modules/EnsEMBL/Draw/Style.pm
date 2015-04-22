@@ -27,6 +27,7 @@ package EnsEMBL::Draw::Style;
 
 ### sub render_normal {
 ### ...
+###   my $config = $self->track_style_config;
 ###   my $data = [];
 ### ... # Munge data
 ###   my $output = EnsEMBL::Draw::Style::NameOfStyle->new($config, $data);
@@ -35,6 +36,10 @@ package EnsEMBL::Draw::Style;
 
 use strict;
 use warnings;
+
+use GD::Simple;
+
+use EnsEMBL::Draw::Utils::LocalCache;
 
 use EnsEMBL::Draw::Glyph::Arc;
 use EnsEMBL::Draw::Glyph::Circle;
@@ -65,12 +70,20 @@ sub Triangle   { my $self = shift; return EnsEMBL::Draw::Glyph::Triangle->new(@_
 sub new {
   my ($class, $config, $data) = @_;
 
+  my $cache = $config->{'image_config'}->hub->cache || new EnsEMBL::Draw::Utils::LocalCache;
+
   my $self = {
-              'data' => $data,
+              'data'  => $data,
+              'cache' => $cache,
               %$config
               };
 
   bless $self, $class;
+
+  my @text_info = $self->get_text_width(0, 'X', '', 
+                                         ptsize => $self->{'font_size'}, 
+                                         font => $self->{'font_name'});
+  $self->{'label_height'} = $text_info[3];
 
   return $self;
 }
@@ -84,6 +97,13 @@ sub glyphs {
 }
 
 #### BASIC ACCESSORS #################
+
+sub data {
+### Accessor
+### @return ArrayRef containing the feature(s) to be drawn 
+  my $self = shift;
+  return $self->{'data'};
+}
 
 sub image_config {
 ### Accessor
@@ -107,33 +127,100 @@ sub strand {
 }
 
 sub cache {
-### Accessor (setter/getter)
-### @param key String - a key to a cached value
-### @param value (optional) - a value to be set in the cache
-### @return an arbitrary value from the web cache (if we have caching turned on)
-  my ($self, $key, $value) = @_;
-  return unless $key;
-  $self->{'image_config'}{'_cache'}{$key} = $value if $value;
-  return $self->{'image_config'}{'_cache'}{$key};
+### Accessor 
+### @return object - either EnsEMBL::Web::Cache or EnsEMBL::Draw::Utils::LocalCache 
+  my $self = shift;
+  return $self->{'cache'};
 }
 
-#### MANIPULATE RAW COORDINATES INTO DRAWING COORDINATES ####
+#### COPIED FROM GlyphSet.pm #########
 
-sub map_to_image {
-### Map absolute coordinates onto image coordinates
-### @param coords Array - start and/or end coordinates of a feature
-### @return Array - the mapped coordinates
-  my ($self, @coords) = @_;
-  my @mapped;
+## TODO - move these methods to a utility module (TextHelper?)
 
-  foreach (@coords) {
-    ## Map coordinates relative to slice
+sub get_text_width {
+  my ($self, $width, $text, $short_text, %parameters) = @_;
+     $text = 'X' if length $text == 1 && $parameters{'font'} =~ /Cour/i;               # Adjust the text for courier fonts
+  my $key  = "$width--$text--$short_text--$parameters{'font'}--$parameters{'ptsize'}"; # Look in the cache for a previous entry 
+  #warn ">>> KEY $key";
 
-    ## Scale coordinates to image
-    $_ *= $self->{'pix_per_bp'};
+  my @res = @{$self->cache->get($key)||[]};
+  return @res if scalar(@res);
 
-    push @mapped, $_;
+  my $gd = $self->_get_gd($parameters{'font'}, $parameters{'ptsize'});
+
+  return unless $gd;
+
+  # Use the text object to determine height/width of the given text;
+  $width ||= 1e6; # Make initial width very big by default
+
+  my ($w, $h) = $gd->stringBounds($text);
+
+  if ($w < $width) {
+    @res = ($text, 'full', $w, $h);
+  } elsif ($short_text) {
+    ($w, $h) = $gd->stringBounds($text);
+    @res = $w < $width ? ($short_text, 'short', $w, $h) : ('', 'none', 0, 0);
+  } elsif ($parameters{'ellipsis'}) {
+    my $string = $text;
+
+    while ($string) {
+      chop $string;
+
+      ($w, $h) = $gd->stringBounds("$string...");
+
+      if ($w < $width) {
+        @res = ("$string...", 'truncated', $w, $h);
+        last;
+      }
+    }
+  } else {
+    @res = ('', 'none', 0, 0);
   }
 
-  return @mapped;
+  $self->cache->set($key, \@res); # Update the cache
+
+  return @res;
 }
+
+sub _get_gd {
+  ### Returns the GD::Simple object appropriate for the given fontname
+  ### and fontsize. GD::Simple objects are cached against fontname and fontsize.
+
+  my $self     = shift;
+  my $font     = shift || 'Arial';
+  my $ptsize   = shift || 10;
+  my $font_key = "${font}--${ptsize}";
+
+  my $gd = $self->cache->get($font_key);
+
+  return $gd if $gd; 
+
+  my $fontpath = $self->image_config->species_defs->ENSEMBL_STYLE->{'GRAPHIC_TTF_PATH'}. "/$font.ttf";
+  $gd = GD::Simple->new(400, 400);
+
+  eval {
+    if (-e $fontpath) {
+      $gd->font($fontpath, $ptsize);
+    } elsif ($font eq 'Tiny') {
+      $gd->font(gdTinyFont);
+    } elsif ($font eq 'MediumBold') {
+      $gd->font(gdMediumBoldFont);
+    } elsif ($font eq 'Large') {
+      $gd->font(gdLargeFont);
+    } elsif ($font eq 'Giant') {
+      $gd->font(gdGiantFont);
+    } else {
+      $font = 'Small';
+      $gd->font(gdSmallFont);
+    }
+  };
+
+  warn $@ if $@;
+
+  $self->cache->set($font_key, $gd); # Update font cache
+
+  return $gd; 
+}
+
+
+1;
