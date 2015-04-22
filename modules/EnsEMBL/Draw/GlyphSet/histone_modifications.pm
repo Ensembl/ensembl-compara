@@ -123,8 +123,8 @@ sub draw_features {
       my $features = $fset->get_Features_by_Slice($slice ) ;
       next unless @$features;
       $drawn_flag = "block_features";
-      $self->draw_block_features( $features, $colour );
       $self->draw_track_name($display_label, $colour);
+      $self->draw_block_features( $features, $colour );
    # }
    }
 
