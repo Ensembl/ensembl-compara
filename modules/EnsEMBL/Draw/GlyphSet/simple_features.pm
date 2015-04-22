@@ -49,11 +49,12 @@ sub render_normal {
 
   foreach my $f (@{$self->features || []}) {
     push @$data, {
-                  'start'   => $f->start,
-                  'end'     => $f->end,
-                  'colour'  => $colours->{$f->analysis->logic_name},
-                  'label'   => $f->display_id,
-                  'href'    => $self->href($f),
+                  'start'         => $f->start,
+                  'end'           => $f->end,
+                  'colour'        => $colours->{$f->analysis->logic_name}{'default'},
+                  'label'         => $f->id,
+                  'label_colour'  => $colours->{$f->analysis->logic_name}{'text'},
+                  'href'          => $self->href($f),
                   };
   }
 
