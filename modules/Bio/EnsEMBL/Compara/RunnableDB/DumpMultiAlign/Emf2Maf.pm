@@ -80,10 +80,19 @@ sub run {
      my $full_path = $self->param('output_dir') . "/" . $self->param('output_file');
      my $cmd2      = "rm " . $full_path;
 
+<<<<<<< HEAD
     if(my $return_value = system($cmd2)) {
         $return_value >>= 8;
         die "system( $cmd2 ) failed: $return_value";
     }
+=======
+    my $output_ids = { "output_file" => $maf_file };
+    if ($self->param('maf_output_dir')) {
+	$output_ids->{maf_output_dir} = $self->param('maf_output_dir');
+    }
+
+    $self->dataflow_output_id($output_ids, 2);
+>>>>>>> upstream/master
 
 }
 
