@@ -288,10 +288,13 @@ sub track_style_config {
 ### Bring together the various config options in a format
 ### that can be used by the new Style modules
   my $self = shift;
+  my ($fontname, $fontsize) = $self->get_font_details('outertext');
   return {
           'image_config' => $self->{'config'},
           'track_config' => $self->{'my_config'},
           'pix_per_bp'   => $self->{'config'}->image_width / $self->{'container'}->length, 
+          'font_name'    => $fontname,
+          'font_size'    => $fontsize,
           };
 }
 
