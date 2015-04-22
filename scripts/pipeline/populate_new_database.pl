@@ -228,6 +228,7 @@ if ($help or !$master or !$new) {
   exec("/usr/bin/env perldoc $0");
 }
 
+my %methods_to_skip = map {$_=>1} qw(ENSEMBL_ORTHOLOGUES ENSEMBL_PARALOGUES ENSEMBL_HOMOEOLOGUES);
 
 #################################################
 ## Get the DBAdaptors from the Registry
@@ -742,8 +743,9 @@ sub copy_all_mlss_tags {
   my $dbname = $new_dba->dbc->dbname;
 
   my $mlss_tag_fetch_sth = $from_dba->dbc->prepare("SELECT * FROM method_link_species_set_tag".
-      " WHERE method_link_species_set_id = ? AND tag != 'threshold_on_ds'");
+      " WHERE method_link_species_set_id = ?");
   foreach my $this_mlss (@$mlsss) {
+    next if $methods_to_skip{$this_mlss->method->type};
     $mlss_tag_fetch_sth->execute($this_mlss->dbID);
     my $all_rows = $mlss_tag_fetch_sth->fetchall_arrayref;
     if (!@$all_rows) {
