@@ -304,7 +304,7 @@ sub run {
                         my $value;
                         $sth->bind_columns(\$value);
                         while ($sth->fetch) {
-                            die sprintf(" -ERROR- for the key '%s', the value '%s' is present in several copies\n", $key, $value) if exists $all_values{$value};
+                            die sprintf(" -ERROR- for the key '%s.%s', the value '%s' is present in several copies\n", $table, $key, $value) if exists $all_values{$value};
                             $all_values{$value} = 1
                         }
                     }
