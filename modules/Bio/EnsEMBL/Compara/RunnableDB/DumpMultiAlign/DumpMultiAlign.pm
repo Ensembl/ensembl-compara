@@ -45,10 +45,6 @@ package Bio::EnsEMBL::Compara::RunnableDB::DumpMultiAlign::DumpMultiAlign;
 use strict;
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
-sub fetch_input {
-    my $self = shift;
-}
-
 sub run {
     my $self = shift;
 
@@ -85,8 +81,12 @@ sub run {
     #
     #Run DumpMultiAlign cmd
     #
+<<<<<<< HEAD
     $self->compara_dba->dbc->disconnect_when_inactive(1);
 
+=======
+    $self->dbc->disconnect_if_idle;
+>>>>>>> upstream/master
     if(my $return_value = system($cmd)) {
         $return_value >>= 8;
         die "system( $cmd ) failed: $return_value";
