@@ -186,12 +186,14 @@ sub _draw_axes {
 }
 
 sub _draw_score {
-  my ($self,$y,$value,$colour) = @_;
+  my ($self,$y,$value,$parameters) = @_;
 
   my $text = sprintf('%.2f',$value);
   my %font = $self->get_font_details('innertext', 1);
   my $width = [ $self->get_text_width(0, $text, '', %font) ]->[2];
   my $height = [ $self->get_text_width(0, 1, '', %font) ]->[3];
+  my $colour =
+      $parameters->{'axis_colour'} || $self->my_colour('axis')  || 'red';
   $self->push($self->Text({
     text          => $text,
     height        => $height,
@@ -215,68 +217,6 @@ sub _draw_score {
     absolutex     => 1,
     absolutewidth => 1,
   }));
-}
-
-# top: top of graph in pixel units, offset from track top (usu. 0)
-# line_score: value to draw "to" up/down, in score units (usu. 0)
-# line_px: value to draw "to" up/down, in pixel units (usu. 0)
-# bottom: bottom of graph in pixel units (usu. approx. pixel height)
-
-sub do_draw_wiggle {
-  ### Wiggle plot
-  ### Args: array_ref of features in score order, colour, min score for features, max_score for features, display label
-  ### Description: draws wiggle plot using the score of the features
-  ### Returns 1
-
-  my ($self, $features, $parameters, $colours, $labels) = @_;
-  my $slice         = $self->{'container'};
-  my $row_height    = $self->my_config('height') || 60;
-  my $max_score     = $parameters->{'max_score'};
-  my $min_score     = $parameters->{'min_score'};
-  my $axis_style    = $parameters->{'graph_type'} eq 'line' ? 0 : 1;
-  my $axis_colour   = $parameters->{'axis_colour'}   || $self->my_colour('axis')  || 'red';
-
-  my $range = $max_score-$min_score;
-  $max_score = $min_score + $range;
-
-  my $pix_per_score = $row_height/$range;
-  my $top = ($parameters->{'initial_offset'}||0);
-  my $line_score = max(0,$min_score);
-  my $bottom = $top + $pix_per_score * $range;
-  my $line_px = $bottom - ($line_score-$min_score) * $pix_per_score;
-
-  $self->{'subtitle_colour'} ||=
-    $parameters->{'score_colour'} || $self->my_colour('score') || 'blue';
-
-  $self->_add_sublegend($parameters,$top,$labels,$colours) if $labels;
-
-  if (!$parameters->{'no_axis'}) {
-    $self->_draw_axes($top,$line_px,$bottom,$slice->length,
-                      $parameters);
-  }
-
-  if ($parameters->{'axis_label'} ne 'off') {
-    $self->_draw_score($top,$max_score,$axis_colour);
-    $self->_draw_score($bottom,$min_score,$axis_colour);
-  }
-
-  # Draw wiggly plot
-  ## Check to see if we have multiple data sets to draw on one axis
-  if (ref $features->[0] eq 'ARRAY') {
-    foreach my $feature_set (@$features) {
-      my $colour = shift @$colours;
-      if ($parameters->{'graph_type'} eq 'line') {
-        $self->draw_wiggle_points_as_line($feature_set, $parameters, $line_score, $line_px, $pix_per_score, $colour);
-      } else {
-        $self->draw_wiggle_points($feature_set, $slice, $parameters, $line_score,$line_px, $pix_per_score, $colour);
-      }
-    }
-  } else {
-    my $colour = $parameters->{'score_colour'}  || $self->my_colour('score') || 'blue';
-    $self->draw_wiggle_points($features, $slice, $parameters, $line_score, $line_px, $pix_per_score, $colour);
-  }
-
-  return $row_height;
 }
 
 # eg. Sarcophilus harrisii as of e80
@@ -357,23 +297,23 @@ sub _feature_href {
   return '';
 }
 
-sub draw_wiggle_points {
-  my ($self,$features,$slice,$parameters,$line_score,$line_px,$pix_per_score,$colour) = @_;
+sub _draw_wiggle_points_as_bar_or_points {
+  my ($self,$c,$features,$parameters) = @_;
 
   my $hrefs     = $parameters->{'hrefs'};
   my $use_points    = $parameters->{'graph_type'} eq 'points';
   my $max_score = $parameters->{'max_score'};
-  my $slice_length = $slice->length;
+  my $slice_length = $self->{'container'}->length;
 
   foreach my $f (@$features) {
     my $href = $self->_feature_href($f,$hrefs||{});
-    my $colour = $self->_special_colour($f,$parameters) || $colour;
+    my $colour = $self->_special_colour($f,$parameters) || $c->{'colour'};
     my ($start,$end,$score) = $self->_feature_values($f,$slice_length);
-    my $height = ($score-$line_score) * $pix_per_score;
+    my $height = ($score-$c->{'line_score'}) * $c->{'pix_per_score'};
     my $title = sprintf('%.2f',$score);
 
     $self->push($self->Rect({
-      y         => $line_px - max($height, 0),
+      y         => $c->{'line_px'} - max($height, 0),
       height    => $use_points ? 0 : abs $height,
       x         => $start - 1,
       width     => $end - $start + 1,
@@ -396,8 +336,8 @@ sub _discrete_features {
   }
 }
 
-sub draw_wiggle_points_as_line {
-  my ($self, $features, $parameters, $line_score,$line_px, $pix_per_score, $colour) = @_;
+sub _draw_wiggle_points_as_line {
+  my ($self, $c, $features) = @_;
   my $slice_length = $self->{'container'}->length;
   my $discrete_features = $self->_discrete_features($features);
   if($discrete_features) {
@@ -417,7 +357,7 @@ sub draw_wiggle_points_as_line {
       $current_x     = ($f->{'end'} + $f->{'start'}) / 2;
       $current_score = $f->{'score'};
     }
-    my $current_y = $line_px-($current_score-$line_score) * $pix_per_score;
+    my $current_y = $c->{'line_px'}-($current_score-$c->{'line_score'}) * $c->{'pix_per_score'};
     next unless $current_x <= $slice_length;
 
     if($i) {
@@ -426,7 +366,7 @@ sub draw_wiggle_points_as_line {
         y         => $current_y,
         width     => $previous_x - $current_x,
         height    => $previous_y - $current_y,
-        colour    => $colour,
+        colour    => $c->{'colour'},
         absolutey => 1,
       }));
     }
@@ -434,6 +374,77 @@ sub draw_wiggle_points_as_line {
     $previous_x     = $current_x;
     $previous_y     = $current_y;
   }
+}
+
+sub draw_wiggle_points {
+  my ($self,$c,$features,$parameters) = @_;
+
+  if($parameters->{'graph_type'} eq 'line') {
+    $self->_draw_wiggle_points_as_line($c,$features,$parameters);
+  } else {
+    $self->_draw_wiggle_points_as_bar_or_points($c,$features,$parameters);
+  }
+}
+
+sub do_draw_wiggle {
+  my ($self, $features, $parameters, $colours, $labels) = @_;
+
+  my $slice         = $self->{'container'};
+  my $row_height    = $self->my_config('height') || 60;
+ 
+  # max_score: score at top of y-axis on graph
+  # min_score: score at bottom of y-axis on graph
+  # range: scores spanned by graph (small value used if identically zero)
+  # pix_per_score: vertical pixels per unit score
+  my $max_score     = $parameters->{'max_score'};
+  my $min_score     = $parameters->{'min_score'};
+  my $range = max(1e-6,$max_score-$min_score); # min range to avoid div zero
+  $max_score = $min_score + $range; # range may have changed, recalc
+  my $pix_per_score = $row_height/$range;
+
+  # top: top of graph in pixel units, offset from track top (usu. 0)
+  # line_score: value to draw "to" up/down, in score units (usu. 0)
+  # line_px: value to draw "to" up/down, in pixel units (usu. 0)
+  # bottom: bottom of graph in pixel units (usu. approx. pixel height)
+  my $top = ($parameters->{'initial_offset'}||0);
+  my $line_score = max(0,$min_score);
+  my $bottom = $top + $pix_per_score * $range;
+  my $line_px = $bottom - ($line_score-$min_score) * $pix_per_score;
+
+  # Make sure subtitles will be correctly coloured
+  $self->{'subtitle_colour'} ||=
+    $parameters->{'score_colour'} || $self->my_colour('score') || 'blue';
+
+  # Extra regulation left-legend stuff
+  $self->_add_sublegend($parameters,$top,$labels,$colours) if $labels;
+
+  # Draw axes and their numerical labels
+  if (!$parameters->{'no_axis'}) {
+    $self->_draw_axes($top,$line_px,$bottom,$slice->length,$parameters);
+  }
+  if ($parameters->{'axis_label'} ne 'off') {
+    $self->_draw_score($top,$max_score,$parameters);
+    $self->_draw_score($bottom,$min_score,$parameters);
+  }
+
+  # Single line? Build into singleton set.
+  $features = [ $features ] if ref $features->[0] ne 'ARRAY';
+ 
+  # Draw them! 
+  my $plot_conf = {
+    line_score => $line_score,
+    line_px => $line_px,
+    pix_per_score => $pix_per_score,
+    colour =>
+      $parameters->{'score_colour'}  || $self->my_colour('score') || 'blue',
+  };
+  foreach my $feature_set (@$features) {
+    $plot_conf->{'colour'} = shift(@$colours) if $colours and @$colours;
+    $self->draw_wiggle_points($plot_conf,$feature_set, $parameters);
+  }
+
+  # 16 is separation between multiple tracks in one graph
+  return $row_height + 16;
 }
 
 1;
