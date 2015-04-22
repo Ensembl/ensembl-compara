@@ -282,10 +282,7 @@ my @all_method_link_species_sets = values %all_mlss_objects;
 print "\n-------------------------------\nWill be adding a total of ".scalar(@all_method_link_species_sets)." MLSS objects\n";
 
 if($dry_run) {
-    print "\n\t*** Exiting in dry_run mode now, please remove the --dry_run flag if you want the script to copy anything\n";
-    exit (0);
-} else {
-    print "\n\t*** Starting the actual copying...\n\n";
+    print "\n\t*** This is the dry_run mode. Please remove the --dry_run flag if you want the script to copy anything\n";
 }
 
 my $ini_re_enable = $re_enable;
@@ -532,6 +529,7 @@ sub copy_genomic_align_blocks {
   if ($merge) {
         # make sure keys are on if we are merging
       foreach my $table_name ('genomic_align', 'genomic_align_block', 'genomic_align_tree') {
+          last if $dry_run;
           print "Enabling keys on '$table_name' in merge mode...\n";
           $to_dba->dbc->do("ALTER TABLE `$table_name` ENABLE KEYS");
           print "done enabling keys on '$table_name'.\n";
@@ -657,6 +655,7 @@ sub copy_genomic_align_blocks {
    $index_offset = $to_index_range_start-$from_index_range_start; # may go negative, it's fine
   }
 
+  return if $dry_run;
 
   #copy genomic_align_block table
    copy_data($from_dba, $to_dba,
@@ -877,6 +876,8 @@ sub copy_conservation_scores {
     exit(1);
   }
 
+  return if $dry_run;
+
   # Most of the times, you want to copy all the data. Check if this is the case as it will be much faster!
   $sth = $from_dba->dbc->prepare("SELECT count(*)
       FROM conservation_score LEFT JOIN genomic_align_block
@@ -977,6 +978,8 @@ sub copy_constrained_elements {
       " ** ERROR **  convention!\n";
     exit(1);
   }
+
+  return if $dry_run;
 
   # Most of the times, you want to copy all the data. Check if this is the case as it will be much faster!
   $sth = $from_dba->dbc->prepare("SELECT count(*)
