@@ -90,6 +90,7 @@ sub _sublegend_box_content {
   my $legend_alt_text = $self->_build_reg_legend_text($labels,$colours);
   my $title = join(', ',$header_label,
                           @{$parameters->{'zmenu_extra_title'}||[]});
+  $title =~ s/&/and/g; # amps problematic; not just a matter of encoding
   return [$title,"[ $legend_alt_text ]",
                  @{$parameters->{'zmenu_extra_content'}||[]}];
 }
