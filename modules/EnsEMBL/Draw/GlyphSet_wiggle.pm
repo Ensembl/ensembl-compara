@@ -158,6 +158,69 @@ sub _build_reg_legend_text {
   $legend_alt_text =~ s/,$//;
   return $legend_alt_text;
 }
+    
+sub _draw_axes {
+  my ($self,$top,$zero,$bottom,$slice_length,$parameters) = @_;
+
+  my $axis_style = $parameters->{'graph_type'} eq 'line' ? 0 : 1;
+  my $axis_colour =
+    $parameters->{'axis_colour'} || $self->my_colour('axis') || 'red';
+  $self->push($self->Line({ # horizontal line
+    x         => 0,
+    y         => $zero,
+    width     => $slice_length,
+    height    => 0,
+    absolutey => 1,
+    colour    => $axis_colour,
+    dotted    => $axis_style,
+  }), $self->Line({ # vertical line
+    x         => 0,
+    y         => $top,
+    width     => 0,
+    height    => $bottom,
+    absolutey => 1,
+    absolutex => 1,
+    colour    => $axis_colour,
+    dotted    => $axis_style,
+  }));
+}
+
+sub _draw_score {
+  my ($self,$y,$value,$colour) = @_;
+
+  my $text = sprintf('%.2f',$value);
+  my %font = $self->get_font_details('innertext', 1);
+  my $width = [ $self->get_text_width(0, $text, '', %font) ]->[2];
+  my $height = [ $self->get_text_width(0, 1, '', %font) ]->[3];
+  $self->push($self->Text({
+    text          => $text,
+    height        => $height,
+    width         => $width,
+    textwidth     => $width,
+    halign        => 'right',
+    colour        => $colour,
+    y             => $y - $height/2,
+    x             => -10 - $width,
+    absolutey     => 1,
+    absolutex     => 1,
+    absolutewidth => 1,
+    %font,
+  }), $self->Rect({
+    height        => 0,
+    width         => 5,
+    colour        => $colour,
+    y             => $y,
+    x             => -8,
+    absolutey     => 1,
+    absolutex     => 1,
+    absolutewidth => 1,
+  }));
+}
+
+# top: top of graph in pixel units, offset from track top (usu. 0)
+# line_score: value to draw "to" up/down, in score units (usu. 0)
+# line_px: value to draw "to" up/down, in pixel units (usu. 0)
+# bottom: bottom of graph in pixel units (usu. approx. pixel height)
 
 sub do_draw_wiggle {
   ### Wiggle plot
@@ -171,116 +234,49 @@ sub do_draw_wiggle {
   my $max_score     = $parameters->{'max_score'};
   my $min_score     = $parameters->{'min_score'};
   my $axis_style    = $parameters->{'graph_type'} eq 'line' ? 0 : 1;
-  my %font          = $self->get_font_details('innertext', 1);
-  my $name          = $self->my_config('short_name') || $self->my_config('name');
-  my $colour        = $parameters->{'score_colour'}  || $self->my_colour('score') || 'blue';
   my $axis_colour   = $parameters->{'axis_colour'}   || $self->my_colour('axis')  || 'red';
-  my $pix_per_score = 8; # If all else fails, ie no data and no label
-  if($max_score == $min_score) {
-    $pix_per_score = $self->label->height if $self->label;
-  } else {
-    $pix_per_score = $row_height / ($max_score-$min_score);
-  }
-  my $top_offset    = 0;
-  my $offset        = ($parameters->{'initial_offset'} || 0);
-  $offset = 0;
-  my $initial_offset= $offset;
-  my $bottom_offset = $max_score == $min_score ? 0 : (($max_score - ($min_score > 0 ? $min_score : 0)) || 1) * $pix_per_score;
-  my $zero_offset   = $max_score * $pix_per_score;
 
-  # Set subtitle colour
-  $self->{'subtitle_colour'} ||= $colour;
+  my $range = $max_score-$min_score;
+  $max_score = $min_score + $range;
 
-  # Draw the labels
-  ## Only done if we have multiple data sets
-  if ($labels) {
-    $self->_add_sublegend($parameters,$offset,$labels,$colours);
-    $top_offset += 15;
-    $offset += 12;
-  }
+  my $pix_per_score = $row_height/$range;
+  my $top = ($parameters->{'initial_offset'}||0);
+  my $line_score = max(0,$min_score);
+  my $bottom = $top + $pix_per_score * $range;
+  my $line_px = $bottom - ($line_score-$min_score) * $pix_per_score;
 
-  # Draw max and min score
-  if ($parameters->{'axis_label'} ne 'off') {
-    my $height        = [ $self->get_text_width(0, 1, '', %font) ]->[3];
-    my $label_height  = 0;
-    $label_height = $self->label->height if($self->label);
-    $bottom_offset = max($bottom_offset, $top_offset + $label_height + $height);
-    $pix_per_score = $bottom_offset / (($max_score - ($min_score < 0 ? $min_score : 0)) || 1);
-    $zero_offset   = $max_score * $pix_per_score;
+  $self->{'subtitle_colour'} ||=
+    $parameters->{'score_colour'} || $self->my_colour('score') || 'blue';
 
-    foreach ([ $max_score, $top_offset ], [ $min_score, $top_offset+$zero_offset ]) {
-      my $text  = sprintf '%.2f', $_->[0];
-      my $width = [ $self->get_text_width(0, $text, '', %font) ]->[2];
+  $self->_add_sublegend($parameters,$top,$labels,$colours) if $labels;
 
-      $self->push($self->Text({
-        text          => $text,
-        height        => $height,
-        width         => $width,
-        textwidth     => $width,
-        halign        => 'right',
-        colour        => $axis_colour,
-        y             => $_->[1] + $initial_offset - $height / 2,
-        x             => -10 - $width,
-        absolutey     => 1,
-        absolutex     => 1,
-        absolutewidth => 1,
-        %font,
-      }), $self->Rect({
-        height        => 0,
-        width         => 5,
-        colour        => $axis_colour,
-        y             => $_->[1] + $initial_offset,
-        x             => -8,
-        absolutey     => 1,
-        absolutex     => 1,
-        absolutewidth => 1,
-      }));
-    }
-
-    $self->{'label_y_offset'} = $top_offset+($zero_offset/2)-$label_height/2;
-  }
-
-  # Draw the axis
   if (!$parameters->{'no_axis'}) {
-    $self->push($self->Line({ # horizontal line
-      x         => 0,
-      y         => $top_offset + $zero_offset + $initial_offset,
-      width     => $slice->length,
-      height    => 0,
-      absolutey => 1,
-      colour    => $axis_colour,
-      dotted    => $axis_style,
-    }), $self->Line({ # vertical line
-      x         => 0,
-      y         => $top_offset + $initial_offset,
-      width     => 0,
-      height    => $row_height,
-      absolutey => 1,
-      absolutex => 1,
-      colour    => $axis_colour,
-      dotted    => $axis_style,
-    }));
+    $self->_draw_axes($top,$line_px,$bottom,$slice->length,
+                      $parameters);
+  }
+
+  if ($parameters->{'axis_label'} ne 'off') {
+    $self->_draw_score($top,$max_score,$axis_colour);
+    $self->_draw_score($bottom,$min_score,$axis_colour);
   }
 
   # Draw wiggly plot
   ## Check to see if we have multiple data sets to draw on one axis
   if (ref $features->[0] eq 'ARRAY') {
     foreach my $feature_set (@$features) {
-      $colour = shift @$colours;
-
+      my $colour = shift @$colours;
       if ($parameters->{'graph_type'} eq 'line') {
-        $self->draw_wiggle_points_as_line($feature_set, $parameters, $initial_offset + $top_offset + $zero_offset, $pix_per_score, $colour);
+        $self->draw_wiggle_points_as_line($feature_set, $parameters, $line_score, $line_px, $pix_per_score, $colour);
       } else {
-        $self->draw_wiggle_points($feature_set, $slice, $parameters, $top_offset + $zero_offset, $pix_per_score, $colour);
+        $self->draw_wiggle_points($feature_set, $slice, $parameters, $line_score,$line_px, $pix_per_score, $colour);
       }
     }
   } else {
-    $self->draw_wiggle_points($features, $slice, $parameters, $top_offset+$zero_offset, $pix_per_score, $colour);
+    my $colour = $parameters->{'score_colour'}  || $self->my_colour('score') || 'blue';
+    $self->draw_wiggle_points($features, $slice, $parameters, $line_score, $line_px, $pix_per_score, $colour);
   }
 
-  $offset += $row_height;
-
-  return $offset - $initial_offset;
+  return $row_height;
 }
 
 # eg. Sarcophilus harrisii as of e80
@@ -362,7 +358,7 @@ sub _feature_href {
 }
 
 sub draw_wiggle_points {
-  my ($self,$features,$slice,$parameters,$zero,$pix_per_score,$colour) = @_;
+  my ($self,$features,$slice,$parameters,$line_score,$line_px,$pix_per_score,$colour) = @_;
 
   my $hrefs     = $parameters->{'hrefs'};
   my $use_points    = $parameters->{'graph_type'} eq 'points';
@@ -373,11 +369,11 @@ sub draw_wiggle_points {
     my $href = $self->_feature_href($f,$hrefs||{});
     my $colour = $self->_special_colour($f,$parameters) || $colour;
     my ($start,$end,$score) = $self->_feature_values($f,$slice_length);
-    my $height = _min_defined($score, $max_score) * $pix_per_score;
+    my $height = ($score-$line_score) * $pix_per_score;
     my $title = sprintf('%.2f',$score);
 
     $self->push($self->Rect({
-      y         => $zero - max($height, 0),
+      y         => $line_px - max($height, 0),
       height    => $use_points ? 0 : abs $height,
       x         => $start - 1,
       width     => $end - $start + 1,
@@ -401,7 +397,7 @@ sub _discrete_features {
 }
 
 sub draw_wiggle_points_as_line {
-  my ($self, $features, $parameters, $offset, $pix_per_score, $colour) = @_;
+  my ($self, $features, $parameters, $line_score,$line_px, $pix_per_score, $colour) = @_;
   my $slice_length = $self->{'container'}->length;
   my $discrete_features = $self->_discrete_features($features);
   if($discrete_features) {
@@ -421,7 +417,7 @@ sub draw_wiggle_points_as_line {
       $current_x     = ($f->{'end'} + $f->{'start'}) / 2;
       $current_score = $f->{'score'};
     }
-    my $current_y = $offset - max(0,$current_score) * $pix_per_score;
+    my $current_y = $line_px-($current_score-$line_score) * $pix_per_score;
     next unless $current_x <= $slice_length;
 
     if($i) {
