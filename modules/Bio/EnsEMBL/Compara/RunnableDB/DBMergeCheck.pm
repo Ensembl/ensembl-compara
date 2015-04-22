@@ -150,12 +150,12 @@ sub fetch_input {
         # We may want to ignore some more tables
         push @bad_tables_list, @{$ignored_tables->{$db}} if exists $ignored_tables->{$db};
         my @wildcards =  grep {$_ =~ /\%/} @{$ignored_tables->{$db}};
-        $extra .= join("", map {" AND table_name NOT LIKE '$_' "} @wildcards);
+        $extra .= join("", map {" AND Name NOT LIKE '$_' "} @wildcards);
 
         my $bad_tables = join(',', map {"'$_'"} @bad_tables_list);
-        my $sql = "SELECT table_name, table_rows FROM information_schema.tables WHERE table_schema = ? AND table_type = 'BASE TABLE' AND table_name NOT IN ($bad_tables) AND table_rows $extra";
-        my $list = $dbconnections->{$db}->db_handle->selectall_arrayref($sql, undef, $connection_params->{$db}->{-dbname});
-        $table_size->{$db} = {map {$_->[0] => $_->[1]} @$list};
+        my $sql = "SHOW TABLE STATUS WHERE Engine IS NOT NULL AND Name NOT IN ($bad_tables) AND Rows $extra";
+        my $list = $dbconnections->{$db}->db_handle->selectall_arrayref($sql, undef);
+        $table_size->{$db} = {map {$_->[0] => $_->[4]} @$list};
     }
     print Dumper($table_size) if $self->debug;
     # WARNING: In InnoDB mode, table_rows is an approximation of the true number of rows
