@@ -240,8 +240,6 @@ sub draw_features {
       axis_colour  => $colour,
       no_titles    => defined $no_titles,
     });
-    
-    $self->draw_space_glyph;
   }
 
   warn q{bigwig glyphset doesn't draw blocks} if !$wiggle || $wiggle eq 'both';

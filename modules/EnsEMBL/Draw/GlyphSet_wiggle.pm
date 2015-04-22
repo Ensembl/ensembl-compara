@@ -177,7 +177,7 @@ sub _draw_axes {
     x         => 0,
     y         => $top,
     width     => 0,
-    height    => $bottom,
+    height    => $bottom - $top,
     absolutey => 1,
     absolutex => 1,
     colour    => $axis_colour,
@@ -416,7 +416,13 @@ sub do_draw_wiggle {
     $parameters->{'score_colour'} || $self->my_colour('score') || 'blue';
 
   # Shift down the lhs label to between the axes
-  $self->{'label_y_offset'} = ($bottom-$top)/2;
+  if($bottom-$top > 50) {
+    # luxurious space for centred label
+    $self->{'label_y_offset'} = ($bottom-$top)/2;
+  } else {
+    # tight, just squeeze it down a little
+    $self->{'label_y_offset'} = 0;
+  }
 
   # Extra regulation left-legend stuff
   $self->_add_sublegend($parameters,$top,$labels,$colours) if $labels;
@@ -446,8 +452,7 @@ sub do_draw_wiggle {
     $self->draw_wiggle_points($plot_conf,$feature_set, $parameters);
   }
 
-  # 16 is separation between multiple tracks in one graph
-  return $row_height + 16;
+  return $row_height;
 }
 
 1;

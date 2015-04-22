@@ -128,7 +128,6 @@ sub draw_features {
    # }
    }
 
-  $self->draw_space_glyph() if $drawn_flag;
   my $error = $self->draw_error_tracks($drawn_flag, $drawn_wiggle_flag);
   return $error;
 }

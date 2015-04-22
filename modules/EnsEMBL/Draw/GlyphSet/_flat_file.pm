@@ -45,7 +45,10 @@ sub draw_features {
  
   $self->{'subtitle'} = []; 
   if ($wiggle) {
+    my $first = 1;
     foreach my $key ($self->sort_features_by_priority(%data)) {
+      $self->draw_space_glyph() unless $first;
+      $first = 0;
       my ($features, $config)     = @{$data{$key}||[]};
       my $graph_type              = ($config->{'useScore'} && $config->{'useScore'} == 4) || ($config->{'graphType'} && $config->{'graphType'} eq 'points') ? 'points' : 'bar';
       my ($min_score, $max_score) = split ':', $config->{'viewLimits'};

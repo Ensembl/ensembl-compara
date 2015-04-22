@@ -295,8 +295,6 @@ sub wiggle_plot {
   
   return 0 unless scalar @$features;
 
-  $self->draw_space_glyph;
-  
   my $min_score = 0;
   my $max_score = 0;
   

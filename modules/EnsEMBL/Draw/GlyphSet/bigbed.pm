@@ -175,7 +175,6 @@ sub _draw_wiggle {
       max_score => max(@scores),
       score_colour => $self->my_config('colour'),
   }); 
-  $self->draw_space_glyph();
   return (); # No error
 }
 
