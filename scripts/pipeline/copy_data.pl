@@ -282,7 +282,7 @@ my @all_method_link_species_sets = values %all_mlss_objects;
 print "\n-------------------------------\nWill be adding a total of ".scalar(@all_method_link_species_sets)." MLSS objects\n";
 
 if($dry_run) {
-    print "\n\t*** This is the dry_run mode. Please remove the --dry_run flag if you want the script to copy anything\n";
+    print "\n\t*** This is the dry_run mode. Please remove the --dry_run flag if you want the script to copy anything\n\n";
 }
 
 my $ini_re_enable = $re_enable;
@@ -304,7 +304,7 @@ while (my $method_link_species_set = shift @all_method_link_species_sets) {
             "SELECT stn.* " .
             " FROM species_tree_node stn" .
             " JOIN species_tree_root str using(root_id)" .
-            " WHERE str.method_link_species_set_id = $mlss_id");
+            " WHERE str.method_link_species_set_id = $mlss_id") unless $dry_run;
 
   #Copy the species_tree_root data if present
   copy_data($from_dba, $to_dba,
@@ -312,7 +312,7 @@ while (my $method_link_species_set = shift @all_method_link_species_sets) {
             undef, undef, undef,
             "SELECT * " .
             " FROM species_tree_root" .
-            " WHERE method_link_species_set_id = $mlss_id");
+            " WHERE method_link_species_set_id = $mlss_id") unless $dry_run;
 
   #Copy all entries in method_link_species_set_tag table for a method_link_speceies_set_id
   copy_data($from_dba, $to_dba,
@@ -320,7 +320,7 @@ while (my $method_link_species_set = shift @all_method_link_species_sets) {
 	  undef, undef, undef,
 	  "SELECT method_link_species_set_id, tag, value" .
 	  " FROM method_link_species_set_tag " .
-	  " WHERE method_link_species_set_id = $mlss_id");
+	  " WHERE method_link_species_set_id = $mlss_id") unless $dry_run;
 
   if ($class =~ /^GenomicAlignBlock/ or $class =~ /^GenomicAlignTree/) {
     copy_genomic_align_blocks($from_dba, $to_dba, $method_link_species_set);
