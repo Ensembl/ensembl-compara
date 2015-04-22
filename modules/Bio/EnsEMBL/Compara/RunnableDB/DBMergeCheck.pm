@@ -268,15 +268,23 @@ sub run {
             my $min_max = {map {$_ => $dbconnections->{$_}->db_handle->selectall_arrayref($sql)->[0] } @dbs};
             my $bad = 0;
             map { $table_size->{$_}->{$table} = $min_max->{$_}->[2] } @dbs;
+            my $sql_overlap = "SELECT COUNT(*) FROM $table WHERE $key BETWEEN ? AND ?";
 
             # min and max values must not overlap
             foreach my $db1 (@dbs) {
                 foreach my $db2 (@dbs) {
                     next if $db2 le $db1;
+                    # Do the intervals overlap ?
                     if ($is_string_type) {
                         $bad = 1 if $min_max->{$db1}->[1] ge $min_max->{$db2}->[0] and $min_max->{$db2}->[1] ge $min_max->{$db1}->[0];
                     } else {
                         $bad = 1 if $min_max->{$db1}->[1] >= $min_max->{$db2}->[0] and $min_max->{$db2}->[1] >= $min_max->{$db1}->[0];
+                    }
+                    # Is one interval in a "hole" ?
+                    if ($bad) {
+                        my ($c2_in_1) = $dbconnections->{$db1}->db_handle->selectrow_array($sql_overlap, undef, $min_max->{$db2}->[0], $min_max->{$db2}->[1]);
+                        my ($c1_in_2) = $dbconnections->{$db2}->db_handle->selectrow_array($sql_overlap, undef, $min_max->{$db1}->[0], $min_max->{$db1}->[1]);
+                        $bad = 0 if ($c2_in_1 or $c1_in_2);
                     }
                     last if $bad;
                 }
