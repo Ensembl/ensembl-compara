@@ -265,7 +265,7 @@ sub run {
             print "$table is merged from ", join(" and ", @dbs), "\n" if $self->debug;
 
             my $sql = "SELECT MIN($key), MAX($key), COUNT($key) FROM $table";
-            my $min_max = {map {$_ => $dbconnections->{$_}->db_handle->selectall_arrayref($sql)->[0] } @dbs};
+            my $min_max = {map {$_ => $dbconnections->{$_}->db_handle->selectrow_arrayref($sql) } @dbs};
             my $bad = 0;
             map { $table_size->{$_}->{$table} = $min_max->{$_}->[2] } @dbs;
             my $sql_overlap = "SELECT COUNT(*) FROM $table WHERE $key BETWEEN ? AND ?";
