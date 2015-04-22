@@ -356,12 +356,14 @@ exit(0);
 =cut
 
 sub copy_table {
-  my ($from_dba, $to_dba, $table_name) = @_;
+  my ($from_dba, $to_dba, $table_name, $constraint, $id, $name) = @_;
 
-  print "Copying table $table_name...\n";
+  print "Copying table $table_name ($name) ...\n";
   assert_ref($from_dba, 'Bio::EnsEMBL::Compara::DBSQL::DBAdaptor', 'from_dba');
   assert_ref($to_dba, 'Bio::EnsEMBL::Compara::DBSQL::DBAdaptor', 'to_dba');
 
+  $name ||= 'all';
+  $id ||= 'all';
 
   my $user = $to_dba->dbc->username;
   my $pass = $to_dba->dbc->password;
@@ -369,11 +371,11 @@ sub copy_table {
   my $port = $to_dba->dbc->port;
   my $dbname = $to_dba->dbc->dbname;
 
-  my $sth = $from_dba->dbc->prepare("SELECT * FROM $table_name");
+  my $sth = $from_dba->dbc->prepare("SELECT $table_name.* FROM $table_name ".($constraint || ''));
   $sth->execute();
   my $all_rows = $sth->fetchall_arrayref();
   $sth->finish;
-  my $filename = "/tmp/$table_name.populate_new_database.$$.txt";
+  my $filename = "/tmp/$table_name.populate_new_database.$id.$$.txt";
   open(TEMP, ">$filename") or die;
   foreach my $this_row (@$all_rows) {
     print TEMP join("\t", @$this_row), "\n";
