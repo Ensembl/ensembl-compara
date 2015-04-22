@@ -387,7 +387,6 @@ sub new {
 
           my ($miny,$maxy) = ($glyphset->miny,$glyphset->maxy);
           my $liney;
-          $glyphset->{'label_y_offset'} = 0;
           $glyphset->label->y($gminy + ($glyphset->{'label_y_offset'}||0));
           $liney = $gminy+$gh+1+($glyphset->{'label_y_offset'}||0);
           $glyphset->label->height($gh);

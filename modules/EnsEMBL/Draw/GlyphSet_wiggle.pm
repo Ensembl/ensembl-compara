@@ -415,6 +415,9 @@ sub do_draw_wiggle {
   $self->{'subtitle_colour'} ||=
     $parameters->{'score_colour'} || $self->my_colour('score') || 'blue';
 
+  # Shift down the lhs label to between the axes
+  $self->{'label_y_offset'} = ($bottom-$top)/2;
+
   # Extra regulation left-legend stuff
   $self->_add_sublegend($parameters,$top,$labels,$colours) if $labels;
 
