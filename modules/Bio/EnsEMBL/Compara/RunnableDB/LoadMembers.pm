@@ -181,15 +181,16 @@ sub loadMembersFromCoreSlices {
   #and then all transcripts in gene to store as members in compara
 
   my @genes;
+  my $dnafrag_adaptor = $self->compara_dba->get_DnaFragAdaptor;
 
   foreach my $slice (@$slices) {
     $self->param('sliceCount', $self->param('sliceCount')+1 );
     #print("slice " . $slice->name . "\n");
-    my $dnafrag = $self->compara_dba->get_DnaFragAdaptor->fetch_by_GenomeDB_and_name($self->param('genome_db'), $slice->seq_region_name);
+    my $dnafrag = $dnafrag_adaptor->fetch_by_GenomeDB_and_name($self->param('genome_db'), $slice->seq_region_name);
     unless ($dnafrag) {
         if ($self->param('store_missing_dnafrags')) {
             $dnafrag = Bio::EnsEMBL::Compara::DnaFrag->new_from_Slice($slice, $self->param('genome_db'));
-            $self->compara_dba->get_DnaFragAdaptor->store($dnafrag);
+            $dnafrag_adaptor->store($dnafrag);
         } else {
             $self->throw(sprintf('Cannot find / create a DnaFrag with name "%s" for "%s"', $slice->seq_region_name, $self->param('genome_db')->name));
         }
