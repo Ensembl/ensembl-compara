@@ -18,8 +18,31 @@ limitations under the License.
 
 package EnsEMBL::Draw::Style::Blocks;
 
-### Renders a track as a series of simple unconnected blocks
-### on one line (i.e. not stacked or bumped)
+=pod
+Renders a track as a series of simple unconnected blocks
+on one line (i.e. not stacked or bumped)
+
+This module expects data in the following format:
+
+  $data = [
+            {
+              'start'         => 123456,
+              'end'           => 123789,
+              'colour'        => 'red',
+              'url'           => '',            # optional  
+              'label'         => 'Feature 1',   # optional
+              'label_colour'  => 'red',         # optional
+            },
+            {
+              'start'         => 123654,
+              'end'           => 123987,
+              'colour'        => 'blue',
+              'url'           => '',            # optional  
+              'label'         => 'Feature 1',   # optional
+              'label_colour'  => 'red',         # optional
+            },
+          ];
+=cut
 
 use strict;
 use warnings;
@@ -51,6 +74,29 @@ sub glyphs {
 
     ## Create glyph
     push @glyphs, $self->Rect($params);
+
+    ## Optional label
+    if ($track_config->{'has_labels'} && $datum->{'label'}) {
+      my $label_colour = $datum->{'label_colour'} || $datum->{'colour'} || 'black';
+      my @text_info = $self->get_text_width(0, $datum->{'label'}, '', 
+                                              font   => $self->{'font_name'}, 
+                                              ptsize => $self->{'font_size'});
+      my $label = {
+                    font      => $self->{'font_name'},
+                    colour    => $label_colour,
+                    height    => $self->{'font_size'},
+                    ptsize    => $self->{'font_size'},
+                    text      => $datum->{'label'},
+                    x         => $start,
+                    y         => $track_config->{'glyph_height'} + 4,
+                    width     => $text_info[2],
+                    height    => $text_info[3],
+                    absolutey => 1,
+                  };
+      push @glyphs, $self->Text($label);
+    }
+
+
   }
 
   return @glyphs;
