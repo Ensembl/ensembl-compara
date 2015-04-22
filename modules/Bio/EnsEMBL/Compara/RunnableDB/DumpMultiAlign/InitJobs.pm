@@ -39,8 +39,6 @@ This RunnableDB module creates 3 jobs: 1) gabs on chromosomes 2) gabs on
 supercontigs 3) gabs without $species (others)
 
 =cut
-
-
 package Bio::EnsEMBL::Compara::RunnableDB::DumpMultiAlign::InitJobs;
 
 use strict;
@@ -53,8 +51,15 @@ use Bio::EnsEMBL::Registry;
 sub fetch_input {
     my $self = shift;
 
+<<<<<<< HEAD
+    my $file_prefix      = "Compara";
+    my $reg              = "Bio::EnsEMBL::Registry";
+    my $method_link_type = $self->param('method_link_type');
+ 
+=======
     my $file_prefix = "Compara";
 
+>>>>>>> upstream/master
     #
     #Load registry and get compara database adaptor
     #
@@ -67,6 +72,12 @@ sub fetch_input {
 	}
     } # By default, we expect the genome_dbs to have a locator
 
+<<<<<<< HEAD
+    #Note this is using the database set in $self->param('compara_db') rather than the underlying compara database.
+    my $compara_dba       = $self->compara_dba;
+    my $genome_db_adaptor = $compara_dba->get_GenomeDBAdaptor;
+    my $genome_db         = $genome_db_adaptor->fetch_by_registry_name($self->param('species'));
+=======
     #Note this is using the database set in $self->param('compara_db').
     my $compara_dba = $self->compara_dba;
 
@@ -75,6 +86,7 @@ sub fetch_input {
     my $coord_systems = $genome_db->db_adaptor->get_CoordSystemAdaptor->fetch_all_by_attrib('default_version');;
 
     $self->param('coord_systems', [map {$_->name} @$coord_systems]);
+>>>>>>> upstream/master
     $self->param('genome_db_id', $genome_db->dbID);
 
     #
@@ -82,16 +94,22 @@ sub fetch_input {
     #and store in param('mlss_id')
     #
     my $mlss_adaptor = $compara_dba->get_adaptor("MethodLinkSpeciesSet");
-    $self->param('mlss_id', $self->param('dump_mlss_id'));
-    my $mlss = $mlss_adaptor->fetch_by_dbID($self->param('mlss_id'));
+    my $mlss         = $mlss_adaptor->fetch_by_dbID($self->param('mlss_id'));
+
     if ($mlss->method->type eq "GERP_CONSERVATION_SCORE") {
       $self->param('mlss_id', $mlss->get_value_for_tag('msa_mlss_id'));
     }
 
-    $mlss = $mlss_adaptor->fetch_by_dbID($self->param('mlss_id'));
-    my $filename = $mlss->name;
-    $filename =~ tr/ /_/;
-    $filename = $file_prefix . "." . $filename;
+    $mlss          = $mlss_adaptor->fetch_by_dbID($self->param('mlss_id'));
+    my $genome_dbs = $mlss->species_set_obj->genome_dbs();
+    my @filenames;
+
+    foreach my $gdb (@$genome_dbs){
+        push @filenames, $gdb->name().".".$gdb->assembly(); 
+    }
+    
+    my $filename = join '-',@filenames;
+    $filename = $file_prefix . "." . $filename . "_" . $method_link_type;
     $self->param('filename', $filename);
 }
 
@@ -103,6 +121,20 @@ sub write_output {
     #Pass on input_id and add on new parameters: multi-align mlss_id, filename,
     #emf2maf
     #
+<<<<<<< HEAD
+    #my $output_ids = $self->input_id;
+    my $output_ids;
+    my $extra_args = "\"mlss_id\" => \"". $self->param('mlss_id') . "\"";
+    $extra_args .= ",\"genome_db_id\" => \"". $self->param('genome_db_id') . "\"";
+    $extra_args .= ",\"filename\" => \"". $self->param('filename') ."\"";
+    $extra_args .= ",\"species\" => \"". $self->param('species') . "\"";
+    $extra_args .= ",\"output_dir\" => \"". $self->param('output_dir') ."\"";
+
+    $output_ids = "{$extra_args}";
+
+    my $out_file = $self->param('filename');
+    $out_file=~s/[\(\)]+//g;
+=======
 
     my $output_ids = {
         mlss_id         => $self->param('mlss_id'),
@@ -119,10 +151,18 @@ sub write_output {
     foreach my $other_cs (@all_cs) {
         $self->dataflow_output_id( {%$output_ids, 'coord_system_name' => $other_cs}, 3);
     }
+>>>>>>> upstream/master
 
-    #Set up other job
-    $self->dataflow_output_id($output_ids, 4);
+    # If there were no jobs for the output channel 1, hive will invoke
+    # autoflow by default. This will mess up the pipeline and must be
+    # prevented here.
+    $self->input_job->autoflow(0);
 
+<<<<<<< HEAD
+    #Set up chromosome/supercontig/other job
+    $self->dataflow_output_id($output_ids, 2);
+    $self->dataflow_output_id({'out_file' => $out_file, 'output_dir' => $self->param_required('output_dir')}, 1);
+=======
     #Automatic flow through to md5sum for emf files on branch 1
     #Needs to be here and not after Compress because need one md5sum per
     #directory NOT per file
@@ -132,6 +172,7 @@ sub write_output {
 	my $md5sum_output_ids = {"output_dir" => $self->param('maf_output_dir') };
 	$self->dataflow_output_id($md5sum_output_ids, 5);
     }
+>>>>>>> upstream/master
 
 }
 
