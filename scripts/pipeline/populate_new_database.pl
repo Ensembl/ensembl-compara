@@ -727,39 +727,9 @@ sub copy_all_dnafrags {
 sub copy_all_mlss_tags {
   my ($from_dba, $to_dba, $mlsss) = @_;
 
-  assert_ref($from_dba, 'Bio::EnsEMBL::Compara::DBSQL::DBAdaptor', 'from_dba');
-
-  assert_ref($to_dba, 'Bio::EnsEMBL::Compara::DBSQL::DBAdaptor', 'to_dba');
-
-  my $user = $new_dba->dbc->username;
-  my $pass = $new_dba->dbc->password;
-  my $host = $new_dba->dbc->host;
-  my $port = $new_dba->dbc->port;
-  my $dbname = $new_dba->dbc->dbname;
-
-  my $mlss_tag_fetch_sth = $from_dba->dbc->prepare("SELECT * FROM method_link_species_set_tag".
-      " WHERE method_link_species_set_id = ?");
   foreach my $this_mlss (@$mlsss) {
     next if $methods_to_skip{$this_mlss->method->type};
-    $mlss_tag_fetch_sth->execute($this_mlss->dbID);
-    my $all_rows = $mlss_tag_fetch_sth->fetchall_arrayref;
-    if (!@$all_rows) {
-      next;
-    }
-    my $filename = "/tmp/method_link_species_set_tag.populate_new_database.".$this_mlss->dbID.".$$.txt";
-    open(TEMP, ">$filename") or die;
-    foreach my $this_row (@$all_rows) {
-      print TEMP join("\t", @$this_row), "\n";
-    }
-    close(TEMP);
-    print "Copying method_link_species_set_tag for ", $this_mlss->name, ":\n . ";
-
-    if ($pass) {
-      system("mysqlimport", "-u$user", "-p$pass", "-h$host", "-P$port", "-L", "-l", "-i", $dbname, $filename);
-    } else {
-      system("mysqlimport", "-u$user", "-h$host", "-P$port", "-L", "-l", "-i", $dbname, $filename);
-    }
-    unlink("$filename");
+    copy_table($from_dba, $to_dba, 'method_link_species_set_tag', "WHERE method_link_species_set_id = ".($this_mlss->dbID), $this_mlss->dbID, $this_mlss->name);
   }
 }
 
@@ -901,54 +871,10 @@ sub copy_ancestor_dnafrag {
 sub copy_synteny_data {
   my ($old_dba, $new_dba, $method_link_species_sets) = @_;
 
-  my $user = $new_dba->dbc->username;
-  my $pass = $new_dba->dbc->password;
-  my $host = $new_dba->dbc->host;
-  my $port = $new_dba->dbc->port;
-  my $dbname = $new_dba->dbc->dbname;
-
-  my $synteny_region_fetch_sth = $old_dba->dbc->prepare("SELECT * FROM synteny_region".
-      " WHERE method_link_species_set_id = ?");
-  my $dnafrag_region_fetch_sth = $old_dba->dbc->prepare("SELECT dnafrag_region.* FROM synteny_region".
-      " LEFT JOIN dnafrag_region using (synteny_region_id) WHERE method_link_species_set_id = ?");
-  foreach my $this_method_link_species_set (@$method_link_species_sets) {
-    $synteny_region_fetch_sth->execute($this_method_link_species_set->dbID);
-    my $all_rows = $synteny_region_fetch_sth->fetchall_arrayref;
-    if (!@$all_rows) {
-      next;
-    }
-    my $filename = "/tmp/synteny_region.populate_new_database.".$this_method_link_species_set->dbID.".$$.txt";
-    open(TEMP, ">$filename") or die;
-    foreach my $this_row (@$all_rows) {
-      print TEMP join("\t", @$this_row), "\n";
-    }
-    close(TEMP);
-    print "Copying dna-dna alignments for ", $this_method_link_species_set->name, ":\n . ";
-    if ($pass) {
-      system("mysqlimport", "-u$user", "-p$pass", "-h$host", "-P$port", "-L", "-l", "-i", $dbname, $filename);
-    } else {
-      system("mysqlimport", "-u$user", "-h$host", "-P$port", "-L", "-l", "-i", $dbname, $filename);
-    }
-    unlink("$filename");
-
-    $dnafrag_region_fetch_sth->execute($this_method_link_species_set->dbID);
-    $all_rows = $dnafrag_region_fetch_sth->fetchall_arrayref;
-    if (!@$all_rows) {
-      next;
-    }
-    $filename = "/tmp/dnafrag_region.populate_new_database.".$this_method_link_species_set->dbID.".$$.txt";
-    open(TEMP, ">$filename") or die;
-    foreach my $this_row (@$all_rows) {
-      print TEMP join("\t", @$this_row), "\n";
-    }
-    close(TEMP);
-    print " . ";
-    if ($pass) {
-      system("mysqlimport", "-u$user", "-p$pass", "-h$host", "-P$port", "-L", "-l", "-i", $dbname, $filename);
-    } else {
-      system("mysqlimport", "-u$user", "-h$host", "-P$port", "-L", "-l", "-i", $dbname, $filename);
-    }
-    unlink("$filename");
+  foreach my $this_mlss (@$method_link_species_sets) {
+    next unless $this_mlss->method->class eq 'SyntenyRegion.synteny';
+    copy_table($old_dba, $new_dba, 'synteny_region', "WHERE method_link_species_set_id = ".($this_mlss->dbID), $this_mlss->dbID, $this_mlss->name);
+    copy_table($old_dba, $new_dba, 'dnafrag_region', "JOIN synteny_region USING (synteny_region_id) WHERE method_link_species_set_id = ".($this_mlss->dbID), $this_mlss->dbID, $this_mlss->name);
   }
 }
 
