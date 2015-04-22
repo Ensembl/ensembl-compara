@@ -42,19 +42,24 @@ supercontigs 3) gabs without $species (others)
 package Bio::EnsEMBL::Compara::RunnableDB::DumpMultiAlign::InitJobs;
 
 use strict;
+use warnings;
+
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
-use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
 use Bio::EnsEMBL::Registry;
-use Bio::EnsEMBL::Utils::Exception qw(throw);
 
 sub fetch_input {
     my $self = shift;
 
+<<<<<<< HEAD
     my $file_prefix      = "Compara";
     my $reg              = "Bio::EnsEMBL::Registry";
     my $method_link_type = $self->param('method_link_type');
  
+=======
+    my $file_prefix = "Compara";
+
+>>>>>>> upstream/master
     #
     #Load registry and get compara database adaptor
     #
@@ -65,14 +70,23 @@ sub fetch_input {
 	foreach my $db_url (@$db_urls) {
 	    Bio::EnsEMBL::Registry->load_registry_from_url($db_url);
 	}
-    } else {
-	Bio::EnsEMBL::Registry->load_all();
-    }
+    } # By default, we expect the genome_dbs to have a locator
 
+<<<<<<< HEAD
     #Note this is using the database set in $self->param('compara_db') rather than the underlying compara database.
     my $compara_dba       = $self->compara_dba;
     my $genome_db_adaptor = $compara_dba->get_GenomeDBAdaptor;
     my $genome_db         = $genome_db_adaptor->fetch_by_registry_name($self->param('species'));
+=======
+    #Note this is using the database set in $self->param('compara_db').
+    my $compara_dba = $self->compara_dba;
+
+    my $genome_db_adaptor = $compara_dba->get_GenomeDBAdaptor;
+    my $genome_db = $genome_db_adaptor->fetch_by_name_assembly($self->param('species'));
+    my $coord_systems = $genome_db->db_adaptor->get_CoordSystemAdaptor->fetch_all_by_attrib('default_version');;
+
+    $self->param('coord_systems', [map {$_->name} @$coord_systems]);
+>>>>>>> upstream/master
     $self->param('genome_db_id', $genome_db->dbID);
 
     #
@@ -99,10 +113,6 @@ sub fetch_input {
     $self->param('filename', $filename);
 }
 
-sub run {
-    my $self = shift;
-
-}
 
 sub write_output {
     my $self = shift @_;
@@ -111,6 +121,7 @@ sub write_output {
     #Pass on input_id and add on new parameters: multi-align mlss_id, filename,
     #emf2maf
     #
+<<<<<<< HEAD
     #my $output_ids = $self->input_id;
     my $output_ids;
     my $extra_args = "\"mlss_id\" => \"". $self->param('mlss_id') . "\"";
@@ -123,15 +134,45 @@ sub write_output {
 
     my $out_file = $self->param('filename');
     $out_file=~s/[\(\)]+//g;
+=======
+
+    my $output_ids = {
+        mlss_id         => $self->param('mlss_id'),
+        genome_db_id    => $self->param('genome_db_id'),
+        filename        => $self->param('filename'),
+    };
+
+    my @all_cs = @{$self->param('coord_systems')};
+    #Set up chromosome job
+    my $cs = shift @all_cs;
+    $self->dataflow_output_id( {%$output_ids, 'coord_system_name' => $cs}, 2);
+
+    #Set up supercontig job
+    foreach my $other_cs (@all_cs) {
+        $self->dataflow_output_id( {%$output_ids, 'coord_system_name' => $other_cs}, 3);
+    }
+>>>>>>> upstream/master
 
     # If there were no jobs for the output channel 1, hive will invoke
     # autoflow by default. This will mess up the pipeline and must be
     # prevented here.
     $self->input_job->autoflow(0);
 
+<<<<<<< HEAD
     #Set up chromosome/supercontig/other job
     $self->dataflow_output_id($output_ids, 2);
     $self->dataflow_output_id({'out_file' => $out_file, 'output_dir' => $self->param_required('output_dir')}, 1);
+=======
+    #Automatic flow through to md5sum for emf files on branch 1
+    #Needs to be here and not after Compress because need one md5sum per
+    #directory NOT per file
+
+    #Set up md5sum for emf2maf if necessary
+    if ($self->param('maf_output_dir') ne "") {
+	my $md5sum_output_ids = {"output_dir" => $self->param('maf_output_dir') };
+	$self->dataflow_output_id($md5sum_output_ids, 5);
+    }
+>>>>>>> upstream/master
 
 }
 
