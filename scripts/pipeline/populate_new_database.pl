@@ -382,7 +382,7 @@ sub copy_table {
   my $filename = "/tmp/$table_name.populate_new_database.$id.$$.txt";
   open(TEMP, ">$filename") or die;
   foreach my $this_row (@$all_rows) {
-    print TEMP join("\t", @$this_row), "\n";
+    print TEMP join("\t", map {defined $_ ? $_ : '\N'} @$this_row), "\n";
   }
   close(TEMP);
   if ($pass) {
