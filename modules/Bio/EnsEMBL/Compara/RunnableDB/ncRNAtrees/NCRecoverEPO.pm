@@ -355,12 +355,19 @@ sub run_low_coverage_best_in_alignment {
   my %epo_low_restricted_gabIDs = ();
 
   # First round to get the candidate GenomicAlignTrees
-  foreach my $leaf (@{$self->param('nc_tree')->get_all_leaves}) {
-    my $gdb_name = $leaf->genome_db->name;
-    next if (defined($self->param('epo_gdb')->{$leaf->genome_db_id}));
+  # We first iterate over the interesting genome_dbs to group the
+  # connections to the same core database
+  foreach my $gdb_id (keys %{$self->param('epo_low_cov_gdbs')}) {
+   next if (defined($self->param('epo_gdb')->{$gdb_id}));
 
-    next unless (defined($self->param('epo_low_cov_gdbs')->{$leaf->genome_db_id}));
-    my $slice = $leaf->genome_db->db_adaptor->get_SliceAdaptor->fetch_by_transcript_stable_id($leaf->stable_id);
+   my $genome_db = $self->compara_dba->get_GenomeDBAdaptor->fetch_by_dbID($gdb_id);
+   my $gdb_name = $genome_db->name;
+   my $leaves = $self->param('nc_tree')->root->find_leaves_by_field('genome_db_id', $gdb_id);
+   my $core_db_adaptor = $genome_db->db_adaptor;
+   my @leaf_slice_gabs = ();
+   $core_db_adaptor->dbc->prevent_disconnect( sub {
+   foreach my $leaf (@$leaves) {
+    my $slice = $core_db_adaptor->get_SliceAdaptor->fetch_by_transcript_stable_id($leaf->stable_id);
     next unless (defined($slice));
     my $genomic_align_blocks = [];
     for my $epo_low_mlss (@{$epo_low_mlsss}) {
@@ -371,11 +378,16 @@ sub run_low_coverage_best_in_alignment {
     }
 #    my $genomic_align_blocks = $self->param('epo_gab_adaptor')->fetch_all_by_MethodLinkSpeciesSet_Slice($epo_low_mlss,$slice);
     next unless(0 < scalar(@$genomic_align_blocks));
+    push @leaf_slice_gabs, [$slice, $genomic_align_blocks];
+   }
+   } );
+   foreach my $sgabs (@leaf_slice_gabs) {
+    my ($slice, $genomic_align_blocks) = @$sgabs;
     print STDERR "# CANDIDATE EPO_LOW_COVERAGE $gdb_name\n" if ($self->debug);
     foreach my $genomic_align_block (@$genomic_align_blocks) {
       if (!defined($genomic_align_block->dbID)) {
         # It's considered 2x in the epo_low_cov, so add to the list and skip
-        $self->param('epo_low_cov_gdbs')->{$leaf->genome_db_id}++;
+        $self->param('epo_low_cov_gdbs')->{$gdb_id}++;
         next;
       }
       my $epo_low_restricted_gab = $genomic_align_block->restrict_between_reference_positions($slice->start,$slice->end);
@@ -383,13 +395,14 @@ sub run_low_coverage_best_in_alignment {
       my $gab_start = $epo_low_restricted_gab->{restricted_aln_start};
       my $gab_end   = $genomic_align_block->length - $epo_low_restricted_gab->{restricted_aln_end};
       my $boundary = 10;
-      $epo_low_restricted_gab_hash{$leaf->genome_db_id}{gabID}          = $genomic_align_block->dbID;
-      $epo_low_restricted_gab_hash{$leaf->genome_db_id}{start}          = $gab_start;
-      $epo_low_restricted_gab_hash{$leaf->genome_db_id}{end}            = $gab_end;
-      $epo_low_restricted_gab_hash{$leaf->genome_db_id}{slice_length}   = $slice->length;
-      $epo_low_restricted_gab_hash{$leaf->genome_db_id}{gdb_name}       = $gdb_name;
+      $epo_low_restricted_gab_hash{$gdb_id}{gabID}          = $genomic_align_block->dbID;
+      $epo_low_restricted_gab_hash{$gdb_id}{start}          = $gab_start;
+      $epo_low_restricted_gab_hash{$gdb_id}{end}            = $gab_end;
+      $epo_low_restricted_gab_hash{$gdb_id}{slice_length}   = $slice->length;
+      $epo_low_restricted_gab_hash{$gdb_id}{gdb_name}       = $gdb_name;
       $epo_low_restricted_gabIDs{$genomic_align_block->dbID}++;
     }
+   }
   }
   my $max = 0; my $max_gabID;
   foreach my $gabID (keys %epo_low_restricted_gabIDs) {
