@@ -2,9 +2,6 @@
 
 use strict;
 use warnings;
-no warnings 'recursion';
-
-use Data::Dumper;
 
 use Getopt::Long;
 
@@ -186,13 +183,13 @@ usage: atac-parser.pl [options]
 required options:
   --atac filename            file containing ATAC output
   --reg-conf reg_conf_file   registry file pointing to the compara database to load to
-  --r-gdb-id genome_db_id    genome_db_id of reference genome (first set of columns in standard ATAC output)
-  --q-gdb-id genome_db_id    genome_db_id of query genome (secnod set of columns in standard ATAC output)
+  --r-gdb-id genome_db_id    genome_db_id of reference genome (second set of columns in standard ATAC output)
+  --q-gdb-id genome_db_id    genome_db_id of query genome (first set of columns in standard ATAC output)
   --mlss mlss_id             mlss_id for storing alignments
   --starting-group-id int    new group_id number to start with (for genomic_align_blocks)
 optional options:
   --logfile filename         log of script progress
-  --nodb                     if set, do not write to database. Doesn't do much else in this version
+  --nodb                     if set, do not write to database
 END_USAGE
   print STDERR "$usagestr\n";
 }
