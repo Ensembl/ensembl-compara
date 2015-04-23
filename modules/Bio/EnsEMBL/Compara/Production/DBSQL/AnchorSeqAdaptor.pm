@@ -32,6 +32,7 @@ sub store {
 	rearrange([qw(ANCHOR_ID, DNAFRAG_ID, START, END, STRAND, MLSSID, SEQUENCE, LENGTH)], @args);
 
 
+  # FIXME: disconnect_when_inactive(): why do we need a LOCK here ?
   my $dcs = $self->dbc->disconnect_when_inactive();
   $self->dbc->disconnect_when_inactive(0);
   

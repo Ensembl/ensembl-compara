@@ -104,6 +104,7 @@ sub store_mapping_hits {
 	my $out_put_mlssid = shift;
 	throw() unless($batch_records);
 	
+        # FIXME: disconnect_when_inactive(): why do we need a LOCK here ?
 	my $dcs = $self->dbc->disconnect_when_inactive();
 	$self->dbc->disconnect_when_inactive(0);
 	$self->dbc->do("LOCK TABLE anchor_align WRITE");
@@ -129,6 +130,7 @@ sub store_exonerate_hits {
         my $out_put_mlssid = shift;
         throw() unless($batch_records);
     
+        # FIXME: disconnect_when_inactive(): why do we need a LOCK here ?
         my $dcs = $self->dbc->disconnect_when_inactive();
         $self->dbc->disconnect_when_inactive(0);
         $self->dbc->do("LOCK TABLE anchor_align WRITE");

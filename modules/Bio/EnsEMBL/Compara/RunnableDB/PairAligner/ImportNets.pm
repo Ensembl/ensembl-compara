@@ -252,6 +252,7 @@ sub run {
 sub write_output {
     my $self = shift;
 
+    # FIXME: disconnect_when_inactive() probably not needed
     my $disconnect_when_inactive_default = $self->compara_dba->dbc->disconnect_when_inactive;
     $self->compara_dba->dbc->disconnect_when_inactive(0);
     $self->SUPER::write_output;

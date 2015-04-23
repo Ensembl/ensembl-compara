@@ -181,6 +181,9 @@ sub store_no_redundancy {
 
   return 0 unless($sequence);
 
+  # NOTE: disconnect_when_inactive() OK: we need to make sure we don't
+  # disconnect just after acquiring the lock
+  # Use $self->dbc->prevent_disconnect(sub {...} ) ?
   my $dcs = $self->dbc->disconnect_when_inactive();
   $self->dbc->disconnect_when_inactive(0);
 
