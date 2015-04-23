@@ -80,17 +80,20 @@ sub create_glyphs {
       $row = bump($self->bump_tally, @coords);
     }
 
+    my $show_label = $track_config->get('has_labels') && $block->{'label'};
+
     ## Feature
-    my $height    = $track_config->get('height') || ($text_info->{'height'} + 2);
+    my $block_height = $track_config->get('height') || ($text_info->{'height'} + 2);
+    my $label_height = $show_label ? $row * $text_info->{'height'} : 0;
     my $position  = {
-                    'y'       => ($row + 1) * ($height + 4) + ($row * $text_info->{'height'}),
-                    'height'  => $height,
+                    'y'       => ($row + 1) * ($block_height + 4) + ($row * $label_height),
+                    'height'  => $block_height,
                     };
     $self->draw_block($block, $position);
 
     ## Optional label
-    if ($track_config->get('has_labels') && $block->{'label'}) {
-      $new_y = $position->{'y'} + $height;
+    if ($show_label) {
+      $new_y = $position->{'y'} + $block_height;
       $position = {
                     'y'       => $new_y,
                     'width'   => $text_info->{'width'}, 
