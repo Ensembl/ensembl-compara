@@ -50,55 +50,70 @@ use warnings;
 
 use parent qw(EnsEMBL::Draw::Style);
 
-sub glyphs {
+sub create_glyphs {
   my $self = shift;
 
   my $data          = $self->data;
   my $track_config  = $self->track_config;
-  my @glyphs        = ();
   
   foreach my $block (@$data) {
-    my @text_info = $self->get_text_width(0, $block->{'label'}, '', 
+    my $text      = $block->{'label'} || 'X';
+    my @text_info = $self->get_text_width(0, $text, '', 
                                               font   => $self->{'font_name'}, 
                                               ptsize => $self->{'font_size'});
-    my $height = $track_config->{'height'} || $text_info[3] + 2;
 
-    ## Set parameters
-    my $params = {
-                    x            => $block->{'start'},
-                    y            => 0,
-                    width        => $block->{'end'} - $block->{'start'} + 1,
-                    height       => $height,
-                    colour       => $block->{'colour'},
-                    absolutey    => 1,
-                  };
-    $params->{'href'} = $block->{'href'} if $block->{'href'};
+    ## Feature (non-bumped)
+    my $height = $self->track_config->{'height'} || ($text_info[3] + 2);
+    $self->draw_block($block, {'height' => $height});
 
-    ## Create glyph
-    push @glyphs, $self->Rect($params);
-
-    ## Optional label
+    ## Optional label (needs to be bumped)
     if ($track_config->get('has_labels') && $block->{'label'}) {
-      my $label_colour = $block->{'label_colour'} || $block->{'colour'} || 'black';
-      my $label = {
-                    font      => $self->{'font_name'},
-                    colour    => $label_colour,
-                    height    => $self->{'font_size'},
-                    ptsize    => $self->{'font_size'},
-                    text      => $block->{'label'},
-                    x         => $block->{'start'},
-                    y         => $height + 4,
-                    width     => $text_info[2],
-                    height    => $text_info[3],
-                    absolutey => 1,
-                  };
-      push @glyphs, $self->Text($label);
+      my $position = {'y' => $height + 4, 'width' => $text_info[2], 'height' => $text_info[3]};
+      $self->add_label($block, $position);
     }
-
 
   }
 
-  return @glyphs;
+  return @{$self->glyphs||[]};
+}
+
+sub draw_block {
+### Create a glyph that's a simple filled rectangle
+  my ($self, $block, $position) = @_;
+
+
+  ## Set parameters
+  my $params = {
+                  x            => $block->{'start'},
+                  y            => 0,
+                  width        => $block->{'end'} - $block->{'start'} + 1,
+                  height       => $position->{'height'},
+                  colour       => $block->{'colour'},
+                  absolutey    => 1,
+                };
+  $params->{'href'} = $block->{'href'} if $block->{'href'};
+
+  push @{$self->glyphs}, $self->Rect($params);
+}
+
+sub add_label {
+### Create a text label
+  my ($self, $block, $position) = @_;
+
+  my $label_colour = $block->{'label_colour'} || $block->{'colour'} || 'black';
+  my $label = {
+                font      => $self->{'font_name'},
+                colour    => $label_colour,
+                height    => $self->{'font_size'},
+                ptsize    => $self->{'font_size'},
+                text      => $block->{'label'},
+                x         => $block->{'start'},
+                y         => $position->{'y'},
+                width     => $position->{'width'},
+                height    => $position->{'height'},
+                absolutey => 1,
+              };
+  push @{$self->glyphs}, $self->Text($label);
 }
 
 1;

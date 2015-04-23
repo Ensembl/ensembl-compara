@@ -73,8 +73,9 @@ sub new {
   my $cache = $config->{'image_config'}->hub->cache || new EnsEMBL::Draw::Utils::LocalCache;
 
   my $self = {
-              'data'  => $data,
-              'cache' => $cache,
+              'data'    => $data,
+              'cache'   => $cache,
+              'glyphs'  => [],
               %$config
               };
 
@@ -88,15 +89,22 @@ sub new {
   return $self;
 }
   
-sub glyphs {
+sub create_glyphs {
 ### Method to create the glyphs needed by a given style
 ### Returns an array of Glyph objects
 ### Stub - must be implemented in child modules
   my $self = shift;
-  warn "!!! MANDATORY METHOD ".ref($self).'::glyphs HAS NOT BEEN IMPLEMENTED!';
+  warn "!!! MANDATORY METHOD ".ref($self).'::create_glyphs HAS NOT BEEN IMPLEMENTED!';
 }
 
 #### BASIC ACCESSORS #################
+
+sub glyphs {
+### Accessor
+### @return ArrayRef of EnsEMBL::Draw::Glyph objects 
+  my $self = shift;
+  return $self->{'glyphs'};
+}
 
 sub data {
 ### Accessor
