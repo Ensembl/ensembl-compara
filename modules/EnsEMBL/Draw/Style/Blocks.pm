@@ -23,6 +23,9 @@ Renders a track as a series of simple unconnected blocks
 on one line (i.e. not stacked or bumped). Often referred to 
 in the interface as "compact".
 
+Also a parent module to most styles that render individual features
+rather than graphs or other aggregate data.
+
 This module expects data in the following format:
 
   $data = [
@@ -57,10 +60,7 @@ sub create_glyphs {
   my $track_config  = $self->track_config;
   
   foreach my $block (@$data) {
-    my $text      = $block->{'label'} || 'X';
-    my @text_info = $self->get_text_width(0, $text, '', 
-                                              font   => $self->{'font_name'}, 
-                                              ptsize => $self->{'font_size'});
+    my @text_info = $self->get_text_info($block->{'label'});
 
     ## Feature (non-bumped)
     my $height = $self->track_config->{'height'} || ($text_info[3] + 2);

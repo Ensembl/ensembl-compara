@@ -145,6 +145,12 @@ sub cache {
 
 ## TODO - move these methods to a utility module (TextHelper?)
 
+sub get_text_info {
+  my ($self, $text) = @_;
+  $text ||= 'X';
+  return $self->get_text_width(0, $text, '', font => $self->{'font_name'}, ptsize => $self->{'font_size'});
+}
+
 sub get_text_width {
   my ($self, $width, $text, $short_text, %parameters) = @_;
      $text = 'X' if length $text == 1 && $parameters{'font'} =~ /Cour/i;               # Adjust the text for courier fonts
