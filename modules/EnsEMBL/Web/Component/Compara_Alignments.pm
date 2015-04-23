@@ -57,15 +57,15 @@ sub content {
                     'species' => $self->object->species,
                   });
   return $alert_box if $error;
-  my $warnings;
+  my ($warnings, $image_link);
   
   my $html = $alert_box;
   
   if ($type eq 'Gene' && $align) {
     my $location = $object->Obj; # Use this instead of $slice because the $slice region includes flanking
     
-    $html .= sprintf(
-      '<p style="font-weight:bold"><a href="%s">Go to a graphical view of this alignment</a></p>',
+    $image_link = sprintf(
+      '<p style="font-weight:bold"><a href="%s">View an image of this alignment</a></p>',
       $hub->url({
         type   => 'Location',
         action => 'Compara_Alignments/Image',
@@ -75,7 +75,7 @@ sub content {
     );
   }
   
-  $slice = $slice->invert if $hub->param('strand') == -1;
+  $slice = $slice->invert if ($hub->param('strand') && $hub->param('strand') == -1);
 
   my $align_blocks;
   my $num_groups = 0;
@@ -150,8 +150,8 @@ sub content {
   #Note that slice_length is not set if need to display a target_slice_eable
   if ($align && $slice_length && $slice_length >= $self->{'subslice_length'}) {
     my ($table, $padding) = $self->get_slice_table($slices, 1);
-    $html .= $self->draw_tree($cdb, $align_blocks, $slice, $align, $method_class, $groups, $slices);
-    $html .= $table . $self->chunked_content($slice_length, $self->{'subslice_length'}, { padding => $padding, length => $slice_length });
+    $html .= $self->draw_tree($cdb, $align_blocks, $slice, $align, $method_class, $groups, $slices);    
+    $html .= $image_link . $table . $self->chunked_content($slice_length, $self->{'subslice_length'}, { padding => $padding, length => $slice_length });
 
   } else {
     my ($table, $padding);
@@ -159,11 +159,11 @@ sub content {
     #Draw target_slice_table for overlapping alignments
     if ($need_target_slice_table) {
       $table = $self->_get_target_slice_table($slice, $align, $align_blocks, $groups, $method_class, $method_type, $is_low_coverage_species, $cdb);
-      $html .= $table;
+      $html .= $image_link . $table;
     } else {
       #Write out sequence if length is short enough
       $html .= $self->draw_tree($cdb, $align_blocks, $slice, $align, $method_class, $groups, $slices) if ($align);
-      $html .= $self->content_sub_slice($slice, $slices, undef, $cdb) if($align); # Direct call if the sequence length is short enough
+      $html .= $image_link . $self->content_sub_slice($slice, $slices, undef, $cdb) if($align); # Direct call if the sequence length is short enough
     }
   }
   
@@ -660,10 +660,10 @@ sub export_options {
   my @species_options;
   my $align = $hub->param('align');
   
-  if($align) {
-    foreach (grep { /species_$align/ } $hub->param) {
-      push @species_options, $_;  
-    }
+  return unless $align;  
+
+  foreach (grep { /species_$align/ } $hub->param) {
+    push @species_options, $_;  
   }
   
   return {
