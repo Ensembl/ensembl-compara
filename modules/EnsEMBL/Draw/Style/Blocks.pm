@@ -20,7 +20,8 @@ package EnsEMBL::Draw::Style::Blocks;
 
 =pod
 Renders a track as a series of simple unconnected blocks
-on one line (i.e. not stacked or bumped)
+on one line (i.e. not stacked or bumped). Often referred to 
+in the interface as "compact".
 
 This module expects data in the following format:
 
@@ -29,17 +30,17 @@ This module expects data in the following format:
               'start'         => 123456,
               'end'           => 123789,
               'colour'        => 'red',
-              'url'           => '',            # optional  
-              'label'         => 'Feature 1',   # optional
-              'label_colour'  => 'red',         # optional
+              'href'          => '/Location/View?r=123456-124789',  # optional  
+              'label'         => 'Feature 1',                       # optional
+              'label_colour'  => 'red',                             # optional
             },
             {
               'start'         => 123654,
               'end'           => 123987,
               'colour'        => 'blue',
-              'url'           => '',            # optional  
-              'label'         => 'Feature 1',   # optional
-              'label_colour'  => 'red',         # optional
+              'href'         => '/Location/View?r=123654-124987',   # optional  
+              'label'         => 'Feature 2',                       # optional
+              'label_colour'  => 'blue',                            # optional
             },
           ];
 =cut
@@ -71,7 +72,7 @@ sub glyphs {
                     colour       => $block->{'colour'},
                     absolutey    => 1,
                   };
-    $params->{'href'} = $block->{'url'} if $block->{'url'};
+    $params->{'href'} = $block->{'href'} if $block->{'href'};
 
     ## Create glyph
     push @glyphs, $self->Rect($params);
