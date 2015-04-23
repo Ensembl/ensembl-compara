@@ -3089,12 +3089,16 @@ sub core_pipeline_analyses {
 
         {   -logic_name => 'orthology_stats',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::OrthologyStats',
+            -parameters => {
+                'member_type'           => 'protein',
+            },
             -hive_capacity => $self->o('ortho_stats_capacity'),
         },
 
         {   -logic_name => 'paralogy_stats',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::ParalogyStats',
             -parameters => {
+                'member_type'           => 'protein',
                 'species_tree_label'    => $self->o('use_notung') ? 'binary' : 'default',
             },
             -hive_capacity => $self->o('ortho_stats_capacity'),

@@ -463,7 +463,7 @@ sub pipeline_analyses {
             -parameters     => {
                 'input_file'    => $self->o('ensembl_cvs_root_dir').'/ensembl-compara/sql/tree-stats-as-stn_tags.sql',
             },
-            -flow_into      => [ 'email_tree_stats_report', 'write_member_counts', WHEN('#initialise_cafe_pipeline#', 'CAFE_table') ],
+            -flow_into      => [ 'email_tree_stats_report', 'write_member_counts', 'homology_stats_factory', WHEN('#initialise_cafe_pipeline#', 'CAFE_table') ],
         },
 
         {   -logic_name     => 'email_tree_stats_report',
@@ -783,6 +783,40 @@ sub pipeline_analyses {
                 mode            => 'tree_homologies',
             },
             %hc_params,
+        },
+
+        {   -logic_name => 'homology_stats_factory',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::MLSSIDFactory',
+            -parameters => {
+                'methods'   => {
+                    'ENSEMBL_ORTHOLOGUES'   => 2,
+                    'ENSEMBL_PARALOGUES'    => 3,
+                },
+            },
+            -flow_into => {
+                2 => {
+                    'orthology_stats' => { 'homo_mlss_id' => '#mlss_id#' },
+                },
+                3 => {
+                    'paralogy_stats' => { 'homo_mlss_id' => '#mlss_id#' },
+                },
+            },
+        },
+
+        {   -logic_name => 'orthology_stats',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::OrthologyStats',
+            -parameters => {
+                'member_type'           => 'ncrna',
+            },
+            -hive_capacity => $self->o('ortho_stats_capacity'),
+        },
+
+        {   -logic_name => 'paralogy_stats',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::ParalogyStats',
+            -parameters => {
+                'member_type'           => 'ncrna',
+            },
+            -hive_capacity => $self->o('ortho_stats_capacity'),
         },
 
         @$analyses_full_species_tree,

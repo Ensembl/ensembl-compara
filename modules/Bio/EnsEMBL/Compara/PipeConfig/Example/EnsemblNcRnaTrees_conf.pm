@@ -95,6 +95,7 @@ sub default_options {
             'raxml_capacity'                  => 300,
             'recover_capacity'                => 150,
             'ss_picts_capacity'               => 200,
+            'ortho_stats_capacity'            => 10,
 
             # Params for healthchecks;
             'hc_priority'                     => 10,
