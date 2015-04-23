@@ -424,18 +424,24 @@ sub run_low_coverage_best_in_alignment {
   $self->param('low_cov_leaves_to_delete_pmember_id', {});
 
   # Second round to get the low-covs on the max_gabID
-  foreach my $leaf (@{$self->param('nc_tree')->get_all_leaves}) {
-    my $gdb_name = $leaf->genome_db->name;
-    next unless (defined($self->param('epo_gdb')->{$leaf->genome_db_id}));
-    next unless (defined($self->param('epo_low_cov_gdbs')->{$leaf->genome_db_id}));
+  # We apply the same trick as above
+  foreach my $gdb_id (keys %{$self->param('epo_low_cov_gdbs')}) {
+   next unless (defined($self->param('epo_gdb')->{$gdb_id}));
+
+   my $genome_db = $self->compara_dba->get_GenomeDBAdaptor->fetch_by_dbID($gdb_id);
+   my $gdb_name = $genome_db->name;
+   my $leaves = $self->param('nc_tree')->root->find_leaves_by_field('genome_db_id', $gdb_id);
+   my $core_db_adaptor = $genome_db->db_adaptor;
+   $core_db_adaptor->dbc->prevent_disconnect( sub {
+   foreach my $leaf (@$leaves) {
     if (! defined $epo_low_mlss) {
         ## We delete this leaf because it is a low_cov slice that is not in the epo_low_cov
         $self->param('low_cov_leaves_to_delete_pmember_id')->{$leaf->seq_member_id} = $leaf->gene_member->stable_id;
         next;
     }
-    my $slice = $leaf->genome_db->db_adaptor->get_SliceAdaptor->fetch_by_transcript_stable_id($leaf->stable_id);
-    $self->throw("Unable to fetch slice for this genome_db leaf: $gdb_name") unless (defined($slice));
-    $low_cov_slice_seqs{$leaf->genome_db_id}{$leaf->seq_member_id} = $slice;
+    my $slice = $core_db_adaptor->get_SliceAdaptor->fetch_by_transcript_stable_id($leaf->stable_id);
+    die "Unable to fetch slice for this genome_db leaf: $gdb_name\n" unless (defined($slice));
+    $low_cov_slice_seqs{$gdb_id}{$leaf->seq_member_id} = $slice;
     my $low_cov_genomic_align_blocks = $self->param('epo_gab_adaptor')->fetch_all_by_MethodLinkSpeciesSet_Slice($epo_low_mlss,$slice);
     unless (0 < scalar(@$low_cov_genomic_align_blocks)) {
       # $DB::single=1;1;
@@ -452,6 +458,8 @@ sub run_low_coverage_best_in_alignment {
         $low_cov_leaves_pmember_id_slice_to_check_coord_system{$leaf->seq_member_id} = $leaf->gene_member->stable_id;
       }
     }
+   }
+   } );
   }
 
   my %low_cov_same_slice = ();
