@@ -117,6 +117,8 @@ sub draw_block {
                   width        => $block->{'end'} - $block->{'start'} + 1,
                   height       => $position->{'height'},
                   colour       => $block->{'colour'},
+                  href         => $block->{'href'},
+                  title        => $block->{'title'},
                   absolutey    => 1,
                 };
   $params->{'href'} = $block->{'href'} if $block->{'href'};
@@ -141,6 +143,8 @@ sub add_label {
                 y         => $position->{'y'},
                 width     => $position->{'width'},
                 height    => $position->{'height'},
+                href      => $block->{'href'},
+                title     => $block->{'title'},
                 absolutey => 1,
               };
   push @{$self->glyphs}, $self->Text($label);

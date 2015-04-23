@@ -57,6 +57,7 @@ sub render_normal {
                   'label'         => $f->display_id,
                   'label_colour'  => $colours->{$f->analysis->logic_name}{'text'},
                   'href'          => $self->href($f),
+                  'title'         => $self->title($f),
                   };
   }
 
