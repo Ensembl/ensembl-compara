@@ -364,7 +364,6 @@ sub run_low_coverage_best_in_alignment {
    my $gdb_name = $genome_db->name;
    my $leaves = $self->param('nc_tree')->root->find_leaves_by_field('genome_db_id', $gdb_id);
    my $core_db_adaptor = $genome_db->db_adaptor;
-   my @leaf_slice_gabs = ();
    $core_db_adaptor->dbc->prevent_disconnect( sub {
    foreach my $leaf (@$leaves) {
     my $slice = $core_db_adaptor->get_SliceAdaptor->fetch_by_transcript_stable_id($leaf->stable_id);
@@ -378,11 +377,6 @@ sub run_low_coverage_best_in_alignment {
     }
 #    my $genomic_align_blocks = $self->param('epo_gab_adaptor')->fetch_all_by_MethodLinkSpeciesSet_Slice($epo_low_mlss,$slice);
     next unless(0 < scalar(@$genomic_align_blocks));
-    push @leaf_slice_gabs, [$slice, $genomic_align_blocks];
-   }
-   } );
-   foreach my $sgabs (@leaf_slice_gabs) {
-    my ($slice, $genomic_align_blocks) = @$sgabs;
     print STDERR "# CANDIDATE EPO_LOW_COVERAGE $gdb_name\n" if ($self->debug);
     foreach my $genomic_align_block (@$genomic_align_blocks) {
       if (!defined($genomic_align_block->dbID)) {
@@ -403,6 +397,7 @@ sub run_low_coverage_best_in_alignment {
       $epo_low_restricted_gabIDs{$genomic_align_block->dbID}++;
     }
    }
+   } );
   }
   my $max = 0; my $max_gabID;
   foreach my $gabID (keys %epo_low_restricted_gabIDs) {
@@ -461,6 +456,8 @@ sub run_low_coverage_best_in_alignment {
    }
    } );
   }
+  # We don't need the connection to the EPO database any more;
+  $self->param('epo_gab_adaptor')->dbc->disconnect_if_idle();
 
   my %low_cov_same_slice = ();
 
