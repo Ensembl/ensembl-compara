@@ -83,6 +83,13 @@ sub new {
   my @text_info = $self->get_text_info;
   $self->{'label_height'} = $text_info[3];
 
+  $self->{'bump_tally'} = {'_bump' => {
+                                    'length' => $self->image_config->container_width,
+                                    'rows'   => $self->track_config->get('depth') || 6,
+                                    'array'  => [],
+                                      }
+                            }; 
+
   return $self;
 }
   
@@ -130,6 +137,13 @@ sub track_config {
 ### @return the menu Node object which contains the track configuration
   my $self = shift;
   return $self->{'track_config'};
+}
+
+sub bump_tally {
+### Accessor
+### @return a Hashref that keeps track of bumping 
+  my $self = shift;
+  return $self->{'bump_tally'};
 }
 
 sub strand {
