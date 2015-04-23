@@ -54,6 +54,8 @@ use warnings;
 use parent qw(EnsEMBL::Draw::Style);
 
 sub create_glyphs {
+### Create all the glyphs required by this style
+### @return ArrayRef of EnsEMBL::Web::Glyph objects
   my $self = shift;
 
   my $data          = $self->data;
@@ -83,6 +85,8 @@ sub create_glyphs {
 
 sub draw_block {
 ### Create a glyph that's a simple filled rectangle
+### @param block Hashref - data for a single feature
+### @param position Hashref - information about the feature's size and position
   my ($self, $block, $position) = @_;
 
 
@@ -102,6 +106,8 @@ sub draw_block {
 
 sub add_label {
 ### Create a text label
+### @param block Hashref - data for a single feature
+### @param position Hashref - information about the label's size and position
   my ($self, $block, $position) = @_;
 
   my $label_colour = $block->{'label_colour'} || $block->{'colour'} || 'black';
