@@ -60,15 +60,19 @@ sub create_glyphs {
   my $track_config  = $self->track_config;
   
   foreach my $block (@$data) {
-    my @text_info = $self->get_text_info($block->{'label'});
+    my $text_info = $self->get_text_info($block->{'label'});
 
     ## Feature (non-bumped)
-    my $height = $self->track_config->{'height'} || ($text_info[3] + 2);
+    my $height = $self->track_config->{'height'} || ($text_info->{'height'} + 2);
     $self->draw_block($block, {'height' => $height});
 
     ## Optional label (needs to be bumped)
     if ($track_config->get('has_labels') && $block->{'label'}) {
-      my $position = {'y' => $height + 4, 'width' => $text_info[2], 'height' => $text_info[3]};
+      my $position = {
+                        'y'       => $height + 4, 
+                        'width'   => $text_info->{'width'}, 
+                        'height'  => $text_info->{'height'},
+                      };
       $self->add_label($block, $position);
     }
 

@@ -98,7 +98,8 @@ sub get_text_info {
 ### Get text dimensions
   my ($self, $text) = @_;
   $text ||= 'X';
-  return EnsEMBL::Draw::Utils::Text::get_text_info($self->cache, $self->image_config, 0, $text, '', font => $self->{'font_name'}, ptsize => $self->{'font_size'});
+  my @info = EnsEMBL::Draw::Utils::Text::get_text_info($self->cache, $self->image_config, 0, $text, '', font => $self->{'font_name'}, ptsize => $self->{'font_size'});
+  return {'width' => $info[2], 'height' => $info[3]};
 }
 
 #### BASIC ACCESSORS #################
