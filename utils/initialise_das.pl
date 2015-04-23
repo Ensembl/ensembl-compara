@@ -13,7 +13,7 @@ use Pod::Usage;
 use DBI;
 use Data::Dumper;
 use Compress::Zlib;
-
+use LWP::UserAgent;
 
 # --- load libraries needed for reading config ---
 use vars qw( $SERVERROOT );
