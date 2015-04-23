@@ -188,9 +188,6 @@ if( $species_list eq 'ALL' ) {
   foreach my $sp (@{$SD->ENSEMBL_DATASETS}) {
     push @species,$sp unless exists $ignored{$sp};
   }
-  use Data::Dumper;
-  warn Dumper(\%ignored,\@species);
-  die;
 }
 else {
   @species = grep {$_} map { $X{lc($_)} } @species;
