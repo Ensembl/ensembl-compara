@@ -60,7 +60,7 @@ sub render_normal {
 
   my $config = $self->track_style_config;
   my $output = EnsEMBL::Draw::Style::Blocks->new($config, $data);
-  $self->push($output->glyphs);
+  $self->push($output->create_glyphs);
 }
 
 sub title {
