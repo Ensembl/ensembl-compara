@@ -188,32 +188,6 @@ sub init {
     });
   }
 
-  $self->add_track('decorations', 'ctcf', 'Undead CTCF', 'ctcf',{
-    renderers => [
-      'off', 'off',
-      'tiling', 'tiling'
-    ]
-  });
-  $self->add_track('decorations', 'histone_modifications', 'Undead Histones', 'histone_modifications',{
-    renderers => [
-      'off', 'off',
-      'tiling', 'tiling'
-    ]
-  });
-  $self->add_track('decorations', 'simple_histogram', 'Undead Simple Histogram', 'simple_histogram',{
-    logic_names => ['eponine','cpg'],
-    renderers => [
-      'off', 'off',
-      'tiling', 'tiling'
-    ]
-  });
-  $self->add_track('decorations', 'fg_wiggle', 'Undead fg_wiggle', 'fg_wiggle',{
-    renderers => [
-      'off', 'off',
-      'tiling', 'tiling'
-    ]
-  });
-
   $self->add_tracks('information',
     [ 'missing', '', 'text', { display => 'normal', strand => 'r', name => 'Disabled track summary', description => 'Show counts of number of tracks turned off by the user' }],
     [ 'info',    '', 'text', { display => 'normal', strand => 'r', name => 'Information',            description => 'Details of the region shown in the image' }]
