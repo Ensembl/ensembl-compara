@@ -94,7 +94,7 @@ sub default_options {
             'genomic_alignment_capacity'      => 300,
             'fast_trees_capacity'             => 300,
             'raxml_capacity'                  => 300,
-            'recover_capacity'                => 250,
+            'recover_capacity'                => 150,
             'ss_picts_capacity'               => 200,
 
             # Params for healthchecks;
