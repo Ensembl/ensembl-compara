@@ -103,8 +103,8 @@ sub build_tracks {
 		  $chr_min_data = $mean if ($mean < $chr_min_data || $chr_min_data eq undef); 
 		  $chr_max_data = $mean if $mean > $chr_max_data;
       ## Scale data for actual display
-      my $max = $max_data || $chr_max_data || 1; 
-      push @$scaled_scores, $_/$max * $width;
+      my $max = $max_value || $chr_max_data || 1; 
+      push @$scaled_scores, $mean/$max * $width;
 	  }
     $T->{'scores'} = $scaled_scores;
     $T->{'mins'}   = $mins;
@@ -121,8 +121,8 @@ sub build_tracks {
     # max line (max)
     $self->push( $self->Line({
       'x'      => $v_offset ,
-      'y'      => $chr_max_data,
-     'width'  => $max_len - $v_offset ,
+      'y'      => $width,
+     'width'  => $max_len - $v_offset,
      'height' => 0,
      'colour' => 'lavender',
      'absolutey' => 1,

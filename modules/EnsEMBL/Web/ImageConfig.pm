@@ -1201,6 +1201,23 @@ sub _add_vcf_track {
   );
 }
 
+sub _add_pairwise_tabix_track {
+  shift->_add_file_format_track(
+    format    => 'PAIRWISE',
+    renderers => [
+      'off',                'Off', 
+      'interaction',        'Pairwise interaction',
+      'interaction_label',  'Pairwise interaction with labels'
+    ],
+    options => {
+      external   => 'external',
+      subtype    => 'pairwise',
+    },
+    @_
+  );
+  
+}
+
 sub _add_flat_file_track {
   my ($self, $menu, $sub_type, $key, $name, $description, %options) = @_;
 
@@ -1274,7 +1291,12 @@ sub _user_track_settings {
   my ($self, $style, $format) = @_;
   my ($strand, @user_renderers);
 
-  if ($style =~ /^(wiggle|WIG)$/) {
+  if (lc($format) eq 'pairwise') {
+    $strand         = 'f';
+    @user_renderers = ('off', 'Off', 'interaction', 'Pairwise interaction',
+                        'interaction_label', 'Pairwise interaction with labels');
+  }
+  elsif ($style =~ /^(wiggle|WIG)$/) {
     $strand         = 'r';
     @user_renderers = ('off', 'Off', 'tiling', 'Wiggle plot');
   }

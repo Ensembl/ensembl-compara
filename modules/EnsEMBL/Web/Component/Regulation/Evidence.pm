@@ -92,12 +92,15 @@ sub get_motif_rows {
   my @motif_rows; 
 
   foreach my $mf (@{$f->get_associated_MotifFeatures}) {
-    my ($name, $binding_matrix_name) = split /:/, $mf->display_label;
+    my @A = split /:/, $mf->display_label;
+    my ($name, $binding_matrix_name) = $A[0], $A[-1];
+    my $link = $hub->get_ExtURL_link($binding_matrix_name, 'JASPAR', $binding_matrix_name);
+    $name .= " ($link)" if $link;
 
     push @motif_rows, {
       type     => $f->feature_type->evidence_type_label,
       location => $mf->seq_region_name . ':' . $mf->seq_region_start . '-' . $mf->seq_region_end,
-      feature  => sprintf('%s (%s)', $name, $hub->get_ExtURL_link($binding_matrix_name, 'JASPAR', $binding_matrix_name)),
+      feature  => $name,
       cell     => $cell_line
     };
   }

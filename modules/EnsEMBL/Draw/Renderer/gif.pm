@@ -254,6 +254,34 @@ sub render_Ellipse {
    );
 }
 
+sub render_Arc {
+  my ($self, $glyph) = @_;
+
+  my $canvas         = $self->{'canvas'};
+  my $gcolour        = $glyph->{'colour'};
+  my $colour         = $self->colour($gcolour);
+  my $filled         = $glyph->filled();
+  my ($cx, $cy)      = $glyph->pixelcentre();
+
+  $canvas->setThickness($glyph->{'thickness'});
+
+  my $method = $filled ? 'filledArc' : 'arc';
+  $canvas->$method(
+    $self->{sf} * ($cx-$glyph->{'pixelwidth'}/2),
+    $self->{sf} * ($cy-$glyph->{'pixelheight'}/2),
+    $self->{sf} *  $glyph->{'pixelwidth'},
+    $self->{sf} *  $glyph->{'pixelheight'},
+    $self->{sf} *  $glyph->{'start_point'},
+    $self->{sf} *  $glyph->{'end_point'},
+    $colour
+   );
+
+  ## Reset brush thickness
+  $canvas->setThickness(1);
+}
+
+
+
 sub render_Intron {
   my ($self, $glyph) = @_;
 

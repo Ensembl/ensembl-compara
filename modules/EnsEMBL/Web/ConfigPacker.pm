@@ -1757,6 +1757,9 @@ sub _munge_file_formats {
     'rtf'       => {'ext' => 'rtf',  'label' => 'RTF'},
     'stockholm' => {'ext' => 'stk',  'label' => 'Stockholm'},
     'emboss'    => {'ext' => 'txt',  'label' => 'EMBOSS'},
+    ## WashU formats
+    'pairwise'  => {'ext' => 'txt', 'label' => 'Pairwise interactions', 'display' => 'feature'},
+    'pairwise_tabix' => {'ext' => 'txt', 'label' => 'Pairwise interactions (indexed)', 'display' => 'feature', 'indexed' => 1},
   );
 
   ## Munge into something useful to this website
