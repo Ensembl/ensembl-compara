@@ -41,124 +41,6 @@ sub subtitle_text {
   return $label;
 }
 
-## Draw the special box found on reg. multi-wiggle tracks
-sub _add_sublegend_box {
-  my ($self,$offset,$content,$click_text) = @_;
-
-  my %font_details = $self->get_font_details('innertext', 1);
-  my @text = $self->get_text_width(0,$click_text, '', %font_details);
-  my ($width,$height) = @text[2,3];
-  $self->push($self->Rect({
-    width         => $width + 15,
-    absolutewidth => $width + 15,
-    height        => $height + 2,
-    y             => $offset+13,
-    x             => -117,
-    absolutey     => 1,
-    absolutex     => 1,
-    title         => join('; ',@$content),
-    class         => 'coloured',
-    bordercolour  => '#336699',
-    colour        => 'white',
-  }), $self->Text({
-    text      => $click_text,
-    height    => $height,
-    halign    => 'left',
-    valign    => 'bottom',
-    colour    => '#336699',
-    y         => $offset+13,
-    x         => -116,
-    absolutey => 1,
-    absolutex => 1,
-    %font_details,
-  }), $self->Triangle({
-    width     => 6,
-    height    => 5,
-    direction => 'down',
-    mid_point => [ -123 + $width + 10, $offset+23 ],
-    colour    => '#336699',
-    absolutex => 1,
-    absolutey => 1,
-  }));
-  return $height;
-}
-
-## Contents of the ZMenu of the special box found on reg. multi-wiggles
-sub _sublegend_box_content {
-  my ($self,$parameters,$header_label,$labels,$colours) = @_;
-
-  my $legend_alt_text = $self->_build_reg_legend_text($labels,$colours);
-  my $title = join(', ',$header_label,
-                          @{$parameters->{'zmenu_extra_title'}||[]});
-  $title =~ s/&/and/g; # amps problematic; not just a matter of encoding
-  return [$title,"[ $legend_alt_text ]",
-                 @{$parameters->{'zmenu_extra_content'}||[]}];
-}
-
-## Draw the mini label founf on reg. multi-wiggle tracks
-sub _draw_mini_label {
-  my ($self,$label,$offset) = @_;
-
-  my %font_details = $self->get_font_details('innertext', 1);
-  my @res_analysis = $self->get_text_width(0,'Legend & More', '',
-                                           %font_details);
-  $self->push($self->Text({
-    text      => $label,
-    height    => $res_analysis[3],
-    width     => $res_analysis[2],
-    halign    => 'left',
-    valign    => 'bottom',
-    colour    => 'black',
-    y         => $offset,
-    x         => -118,
-    absolutey => 1,
-    absolutex => 1,
-    %font_details,
-  }));
-}
-
-## Should we draw the mini-label. Yes except CTCF.
-# This code should be deleted when the ctcf glyphset goes in e82.
-sub _should_draw_mini_label {
-  my ($self,$text) = @_;
-
-  return $text ne 'CTCF';
-}
-
-## Draw the mini label and special box found on reg. multi-wiggle tracks
-sub _add_sublegend {
-  my ($self,$parameters,$offset,$labels,$colours) = @_;
-
-  # The label
-  my $header_label = shift @$labels;
-  if($self->_should_draw_mini_label($header_label)) {
-    $self->_draw_mini_label($header_label,$offset);
-  }
-  # The box
-  my $content = $self->_sublegend_box_content($parameters,$header_label,                                                  $labels,$colours);
-  my $click_text = $parameters->{'zmenu_click_text'} || 'Legend';
-  my $height = $self->_add_sublegend_box($offset,$content,$click_text);
-  return $height+4;
-}
-
-sub _build_reg_legend_text {
-  my ($self,$labels,$colours) = @_;
-
-  my ($legend_alt_text, %seen);
-  my $max = scalar @$labels - 1;
-  for (my $i = 0; $i <= $max; $i++) {
-    my $name = $labels->[$i];
-    my $colour = $colours->[$i];
-
-    if (!exists $seen{$name}) {
-      $legend_alt_text .= "$name:$colour,";
-      $seen{$name} = 1;
-    }
-  }
-  $legend_alt_text =~ s/,$//;
-  return $legend_alt_text;
-}
-    
 sub _draw_axes {
   my ($self,$top,$zero,$bottom,$slice_length,$parameters) = @_;
 
@@ -386,6 +268,25 @@ sub draw_wiggle_points {
   }
 }
 
+## Should we draw the mini-label. Yes except CTCF.
+# This code should be deleted when the ctcf glyphset goes in e82.
+sub _should_draw_mini_label {
+  my ($self,$text) = @_;
+
+  return $text ne 'CTCF';
+}
+
+sub _add_regulation_minilabel {
+  my ($self,$parameters,$top,$labels,$colours) = @_;
+
+  my $header_label = shift @$labels;
+  $header_label = '' unless $self->_should_draw_mini_label($header_label);
+  my $click_text = $parameters->{'zmenu_click_text'} || 'Legend';
+  my $extra_content = $parameters->{'zmenu_extra_content'};
+  $self->_add_sublegend($header_label,$click_text,$header_label,
+                        $extra_content,$top,$labels,$colours);
+}
+
 sub do_draw_wiggle {
   my ($self, $features, $parameters, $colours, $labels) = @_;
 
@@ -425,7 +326,9 @@ sub do_draw_wiggle {
   }
 
   # Extra regulation left-legend stuff
-  $self->_add_sublegend($parameters,$top,$labels,$colours) if $labels;
+  if($labels) {
+    $self->_add_regulation_minilabel($parameters,$top,$labels,$colours);
+  }
 
   # Draw axes and their numerical labels
   if (!$parameters->{'no_axis'}) {

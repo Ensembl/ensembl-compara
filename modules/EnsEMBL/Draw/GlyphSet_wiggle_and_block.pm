@@ -33,6 +33,114 @@ sub render_compact        { return $_[0]->_render;           }
 sub render_tiling         { return $_[0]->_render('wiggle'); }
 sub render_tiling_feature { return $_[0]->_render('both');   }
 
+### SPECIAL REGULATION SIDE LEGEND STUFF ###
+
+## Draw the special box found on reg. multi-wiggle tracks
+sub _add_sublegend_box {
+  my ($self,$offset,$content,$click_text) = @_;
+
+  my %font_details = $self->get_font_details('innertext', 1);
+  my @text = $self->get_text_width(0,$click_text, '', %font_details);
+  my ($width,$height) = @text[2,3];
+  $self->push($self->Rect({
+    width         => $width + 15,
+    absolutewidth => $width + 15,
+    height        => $height + 2,
+    y             => $offset+13,
+    x             => -117,
+    absolutey     => 1,
+    absolutex     => 1,
+    title         => join('; ',@$content),
+    class         => 'coloured',
+    bordercolour  => '#336699',
+    colour        => 'white',
+  }), $self->Text({
+    text      => $click_text,
+    height    => $height,
+    halign    => 'left',
+    valign    => 'bottom',
+    colour    => '#336699',
+    y         => $offset+13,
+    x         => -116,
+    absolutey => 1,
+    absolutex => 1,
+    %font_details,
+  }), $self->Triangle({
+    width     => 6,
+    height    => 5,
+    direction => 'down',
+    mid_point => [ -123 + $width + 10, $offset+23 ],
+    colour    => '#336699',
+    absolutex => 1,
+    absolutey => 1,
+  }));
+  return $height;
+}
+
+sub _build_reg_legend_text {
+  my ($self,$labels,$colours) = @_;
+
+  return '' unless $labels and $colours;
+  my ($legend_alt_text, %seen);
+  my $max = scalar @$labels - 1;
+  for (my $i = 0; $i <= $max; $i++) {
+    my $name = $labels->[$i];
+    my $colour = $colours->[$i];
+
+    if (!exists $seen{$name}) {
+      $legend_alt_text .= "$name:$colour,";
+      $seen{$name} = 1;
+    }
+  }
+  $legend_alt_text =~ s/,$//;
+  return $legend_alt_text;
+}
+
+## Contents of the ZMenu of the special box found on reg. multi-wiggles
+sub _sublegend_box_content {
+  my ($self,$title,$labels,$colours,$extra_content) = @_;
+
+  my $legend_alt_text = $self->_build_reg_legend_text($labels,$colours);
+  $title =~ s/&/and/g; # amps problematic; not just a matter of encoding
+  return [$title,"[ $legend_alt_text ]",@{$extra_content||[]}];
+}
+
+## Draw the mini label founf on reg. multi-wiggle tracks
+sub _draw_mini_label {
+  my ($self,$label,$offset) = @_;
+
+  my %font_details = $self->get_font_details('innertext', 1);
+  my @res_analysis = $self->get_text_width(0,'Legend & More', '',
+                                           %font_details);
+  $self->push($self->Text({
+    text      => $label,
+    height    => $res_analysis[3],
+    width     => $res_analysis[2],
+    halign    => 'left',
+    valign    => 'bottom',
+    colour    => 'black',
+    y         => $offset,
+    x         => -118,
+    absolutey => 1,
+    absolutex => 1,
+    %font_details,
+  }));
+}
+
+## Draw the mini label and special box found on reg. multi-wiggle tracks
+sub _add_sublegend {
+  my ($self,$mini_title,$box_click_text,$zmenu_heading,$extra_content,
+      $offset,$labels,$colours) = @_;
+
+  $self->_draw_mini_label($mini_title,$offset) if $mini_title;
+  my $content = $self->_sublegend_box_content($zmenu_heading,$labels,
+                                              $colours,$extra_content);
+  my $height = $self->_add_sublegend_box($offset,$content,$box_click_text);
+  return $height+4;
+}
+
+### END OF SPECIAL REGULATION SIDE LEGEND STUFF ###
+
 sub render_text {
   my ($self, $wiggle) = @_;
   my $container    = $self->{'container'};
