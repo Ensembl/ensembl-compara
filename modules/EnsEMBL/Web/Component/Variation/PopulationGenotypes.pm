@@ -114,7 +114,7 @@ sub format_frequencies {
     ### format population name      
     my $name = $freq_data->{$pop_id}{'pop_info'}{'Name'};
     # Display the last part of the population name in bold
-    if ($name =~ /^.+\:.+$/) {
+    if ($name =~ /^.+\:.+$/ and $name !~ /(http|https):/) {
       my @composed_name = split(':', $name);
       $composed_name[$#composed_name] = '<b>'.$composed_name[$#composed_name].'</b>';
       $freq_data->{$pop_id}{'pop_info'}{'Name'} = join(':',@composed_name);
