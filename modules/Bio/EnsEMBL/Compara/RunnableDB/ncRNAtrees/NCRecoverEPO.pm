@@ -179,6 +179,7 @@ sub write_output {
 #
 ##########################################
 
+# This is currently not called
 sub run_ncrecoverepo {
   my $self = shift;
 
@@ -336,10 +337,12 @@ sub run_ncrecoverepo {
   return 1;
 }
 
+# This one is called
 sub run_low_coverage_best_in_alignment {
   my $self = shift;
 
   $self->param('epo_low_cov_gdbs', {});
+  $self->compara_dba->dbc->disconnect_if_idle();
 
   my $epo_low_mlsss = $self->param('epo_mlss_adaptor')->fetch_all_by_method_link_type('EPO_LOW_COVERAGE'); ## This is now an array
   for my $epo_low_mlss (@{$epo_low_mlsss}) {
