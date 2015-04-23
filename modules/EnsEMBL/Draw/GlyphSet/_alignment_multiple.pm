@@ -33,6 +33,7 @@ use List::Util qw(min max);
 
 sub colour { return $_[0]->{'feature_colour'}, $_[0]->{'label_colour'}, $_[0]->{'part_to_colour'}; }
 
+sub wiggle_subtitle { $_[0]->my_colour('score','text'); }
 
 sub draw_features {
   ### Called from {{EnsEMBL::Draw::GlyphSet_wiggle_and_block.pm}}
@@ -294,8 +295,6 @@ sub wiggle_plot {
   
   return 0 unless scalar @$features;
 
-  $self->draw_space_glyph;
-  
   my $min_score = 0;
   my $max_score = 0;
   

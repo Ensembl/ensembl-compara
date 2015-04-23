@@ -28,6 +28,8 @@ use POSIX qw(floor ceil);
 
 use base qw(EnsEMBL::Draw::GlyphSet_wiggle_and_block EnsEMBL::Draw::GlyphSet::_difference);
 
+sub wiggle_subtitle { $_[0]->my_config('caption'); }
+
 #==============================================================================
 # The following functions can be overridden if the class does require
 # something different - main one to be overridden is probably the

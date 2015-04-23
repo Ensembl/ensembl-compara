@@ -36,6 +36,7 @@ use EnsEMBL::Web::File::Utils::URL;
 use base qw(EnsEMBL::Draw::GlyphSet::_alignment EnsEMBL::Draw::GlyphSet_wiggle_and_block);
 
 sub href_bgd       { return $_[0]->_url({ action => 'UserData' }); }
+sub wiggle_subtitle { return $_[0]->my_config('caption'); }
 
 sub bigwig_adaptor { 
   my $self = shift;
@@ -202,7 +203,6 @@ sub wiggle_features {
 sub draw_features {
   my ($self, $wiggle) = @_;
   my $slice        = $self->{'container'};
-  my $feature_type = $self->my_config('caption');
   my $colour       = $self->my_config('colour') || 'slategray';
 
   # render wiggle if wiggle
@@ -236,13 +236,10 @@ sub draw_features {
     $self->draw_wiggle_plot($features, {
       min_score    => $min_score, 
       max_score    => $max_score, 
-      description  => $feature_type,
       score_colour => $colour,
       axis_colour  => $colour,
       no_titles    => defined $no_titles,
     });
-    
-    $self->draw_space_glyph;
   }
 
   warn q{bigwig glyphset doesn't draw blocks} if !$wiggle || $wiggle eq 'both';

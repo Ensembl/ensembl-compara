@@ -31,6 +31,18 @@ use strict;
 use base qw(EnsEMBL::Draw::GlyphSet_wiggle_and_block);
 use EnsEMBL::Web::Utils::Tombstone qw(tombstone);
 
+sub wiggle_subtitle { $_[0]->my_colour('score','text'); }
+
+# Lazy evaluation
+sub data_by_cell_line {
+  my ($self,$config) = @_;
+
+  my $data = $config->{'data_by_cell_line'};
+  $data = $data->() if ref($data) eq 'CODE';
+  $config->{'data_by_cell_line'} = $data;
+  return $data||{};
+}
+
 sub new {
   my $self = shift;
   tombstone('2015-04-16','ds23');

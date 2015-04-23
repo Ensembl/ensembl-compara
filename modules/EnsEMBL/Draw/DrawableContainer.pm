@@ -257,6 +257,8 @@ sub new {
         ## load everything from the database
         my $name         = $glyphset->{'my_config'}->id;
         my $ref_glyphset = ref $glyphset;
+        # NB: we guarantee render will always be called before the
+        #       subititle_* methods.
         $glyphset->render;
         next if scalar @{$glyphset->{'glyphs'}} == 0;
         my $new_section = $glyphset->section;
@@ -274,7 +276,7 @@ sub new {
           $section_title_pending = $section;
         }
         if($section_title_pending and not $glyphset->section_no_text) {
-          $glyphset->section_text($section_title_pending);
+          $glyphset->section_text($section_title_pending,$label_width);
           $section_title_pending = undef;
         }
       
@@ -336,8 +338,6 @@ sub new {
               }),
             });
           }
-          my @texts = @{$glyphset->wrap($section,$label_width,'Arial',8)};
-          @texts = @texts[0..1] if @texts>2;
 
           my $sec_colour = $section_colour{$section};
           unless($sec_colour) {
@@ -346,8 +346,10 @@ sub new {
             $next_section_col = ($next_section_col+1) % @section_colours;
           }
           my $sec_off = -4;
-          unshift @texts,'' while @texts < 2;
+          my @texts = @{$glyphset->section_lines};
           unshift @texts,''; # top blank
+          my $leading = 12;
+          my $sec_off = $glyphset->miny - $glyphset->section_height;
           foreach my $i (0..min(scalar(@texts)-1,2)) {
             $glyphset->push($glyphset->Text({
               font => 'Arial',
@@ -355,19 +357,19 @@ sub new {
               height => 8,
               text => $texts[$i],
               colour    => 'black',
-              x => -$label_width - $margin -4,
-              y => -$glyphset->section_height + $sec_off ,
+              x => -$label_width - $margin,
+              y => $sec_off,
               width => $label_width,
               halign => 'left',
               absolutex => 1,
               absolutewidth => 1,
               href => $url,
             }));
-            $sec_off += 12;
+            $sec_off += $leading;
           }
           $glyphset->push($glyphset->Rect({
             x => $sx -4,
-            y => $sy + $sec_off - 4,
+            y => $sec_off - 2,
             width => $label_width - 4,
             height => 2,
             absolutex => 1,
@@ -406,19 +408,22 @@ sub new {
               dotted        => 'small'
             }));
           }
-          if($glyphset->section) {
-            my $sec_colour = $section_colour{$glyphset->section};
-            $glyphset->push($glyphset->Rect({
-              x => $glyphset->label->x - 4,
-              y => $glyphset->label->y + 2,
-              width => 2,
-              height => $glyphset->label->height,
-              absolutex => 1,
-              absolutewidth => 1,
-              absolutey => 1,
-              colour => $sec_colour,
-            }));
-          }
+        }
+        if($glyphset->section) {
+          my $sec_colour = $section_colour{$glyphset->section};
+          my $band_min = $glyphset->miny + $glyphset->section_height;
+          my $band_max = $glyphset->maxy;
+          my $fashionable_gap = 4;
+          $glyphset->push($glyphset->Rect({
+            x => -122,
+            y => $band_min + $fashionable_gap,
+            width => 2,
+            height => $band_max-$band_min - 2 * $fashionable_gap,
+            absolutex => 1,
+            absolutewidth => 1,
+            absolutey => 1,
+            colour => $sec_colour,
+          }));
         }
 
         $glyphset->transform;

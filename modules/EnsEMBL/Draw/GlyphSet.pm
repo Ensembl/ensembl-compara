@@ -1213,15 +1213,22 @@ sub section {
 
 sub section_zmenu { $_[0]->my_config('section_zmenu'); }
 sub section_no_text { $_[0]->my_config('no_section_text'); }
+sub section_lines { $_[0]->{'section_lines'}; }
 
 sub section_text {
-  $_[0]->{'section_text'} = $_[1] if @_>1;
+  if(@_>1) {
+    $_[0]->{'section_text'} = $_[1];
+    my @texts = @{$_[0]->wrap($_[1],$_[2],'Arial',8)};
+    @texts = @texts[0..1] if @texts>2;
+    $_[0]->{'section_lines'} = \@texts;
+  }
   return $_[0]->{'section_text'};
 }
 
 sub section_height {
   return 0 unless $_[0]->{'section_text'};
-  return 32;
+  return 24 if @{ $_[0]->{'section_lines'}} == 1;
+  return 36;
 }
 
 

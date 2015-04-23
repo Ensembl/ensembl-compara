@@ -37,6 +37,8 @@ sub new {
   $self->SUPER::new(@_);
 }
 
+sub wiggle_subtitle { $_[0]->my_colour('score','text'); }
+
 sub get_block_features {
 
   ### block_features
@@ -105,12 +107,11 @@ sub draw_features {
       my $features = $fset->get_Features_by_Slice($slice ) ;
       next unless @$features;
       $drawn_flag = "block_features";
-      $self->draw_block_features( $features, $colour );
       $self->draw_track_name($display_label, $colour);
+      $self->draw_block_features( $features, $colour );
    # }
    }
 
-  $self->draw_space_glyph() if $drawn_flag;
   my $error = $self->draw_error_tracks($drawn_flag, $drawn_wiggle_flag);
   return $error;
 }
