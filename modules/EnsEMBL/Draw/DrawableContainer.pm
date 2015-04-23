@@ -276,7 +276,7 @@ sub new {
           $section_title_pending = $section;
         }
         if($section_title_pending and not $glyphset->section_no_text) {
-          $glyphset->section_text($section_title_pending);
+          $glyphset->section_text($section_title_pending,$label_width);
           $section_title_pending = undef;
         }
       
@@ -338,8 +338,6 @@ sub new {
               }),
             });
           }
-          my @texts = @{$glyphset->wrap($section,$label_width,'Arial',8)};
-          @texts = @texts[0..1] if @texts>2;
 
           my $sec_colour = $section_colour{$section};
           unless($sec_colour) {
@@ -348,7 +346,7 @@ sub new {
             $next_section_col = ($next_section_col+1) % @section_colours;
           }
           my $sec_off = -4;
-          unshift @texts,'' while @texts < 2;
+          my @texts = @{$glyphset->section_lines};
           unshift @texts,''; # top blank
           my $leading = 12;
           my $sec_off = $glyphset->miny - $glyphset->section_height;
@@ -371,7 +369,7 @@ sub new {
           }
           $glyphset->push($glyphset->Rect({
             x => $sx -4,
-            y => $sec_off,
+            y => $sec_off - 2,
             width => $label_width - 4,
             height => 2,
             absolutex => 1,
