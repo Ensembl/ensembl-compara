@@ -51,19 +51,53 @@ sub init {
     $self->no_features;
     return [];
   }
-  
+
+  ## Set track depth (i.e. number of rows of features)  
   my $depth = $self->depth;
   $depth    = 1e3 unless defined $depth;
   $self->{'my_config'}->set('depth', $depth); 
 
+  ## Set track height
   my ($font, $fontsize) = $self->get_font_details($self->my_config('font') || 'innertext');
   my $height            = $self->my_config('height') || [$self->get_text_width(0, 'X', '', font => $font, ptsize => $fontsize)]->[3] + 2;
   $height               = 4 if $depth > 0 && $self->get_parameter('squishable_features') eq 'yes' && $self->my_config('squish');
   $height               = $self->{'extras'}{'height'} if $self->{'extras'} && $self->{'extras'}{'height'};
   $self->{'my_config'}->set('height', $height); 
 
+  ## OK, done!
   return @$features; 
 }
 
+sub ok_feature {
+### Check if this feature is OK to display
+### @param feature - some kind of feature object
+### The following two parameters are only required if the track
+### is optimizable (currently only possible for repeats)
+### @param previous_start Integer (optional) - start of previous feature
+### @param previous_end Integer (optional) - end of previous feature
+### @return array - start and end of feature
+  my ($self, $f, $previous_start, $previous_end) = @_;
+
+  my $fstrand = $f->strand || -1;
+  my $strand_flag = $self->my_config('strand');
+
+  return 0 if $strand_flag eq 'b' && $self->strand != $fstrand;
+
+  my $start = $f->start;
+  my $end   = $f->end;
+
+  my $slice         = $self->{'container'};
+  my $slice_length  = $slice->length;
+  return 0 if $start > $slice_length || $end < 1; ## Skip if totally outside slice
+
+  $start            = 1             if $start < 1;
+  $end              = $slice_length if $end > $slice_length;
+
+  my $optimizable   = $self->my_config('optimizable') && $self->my_config('depth') < 1;
+  my $pix_per_bp    = $self->scalex;
+  return 0 if $optimizable && ($slice->strand < 0 ? $previous_start - $start < 0.5 / $pix_per_bp : $end - $previous_end < 0.5 / $pix_per_bp);
+  
+  return ($start, $end);
+}
 
 1;
