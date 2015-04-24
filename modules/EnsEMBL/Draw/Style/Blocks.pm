@@ -65,27 +65,34 @@ sub create_glyphs {
   my $track_config  = $self->track_config;
  
   foreach my $block (@$data) {
+    my $show_label = $track_config->get('show_labels') && $block->{'label'};
     my $text_info = $self->get_text_info($block->{'label'});
-    my $row = 0;
+    my $feature_row = 0;
+    my $label_row   = 0;
     my $new_y;
 
-    my $show_label = $track_config->get('has_labels') && $block->{'label'};
-
-    if ($track_config->get('bumped')) {
-      $row = $self->set_bump_row($block->{'start'}, $block->{'end'}, $show_label, $text_info);
+    ## Work out if we're bumping the whole feature or just the label
+    my $bumped     = $track_config->get('bumped');
+    if ($bumped) {
+      my $bump = $self->set_bump_row($block->{'start'}, $block->{'end'}, $show_label, $text_info);
+      $label_row   = $bump;
+      $feature_row = $bump unless $bumped eq 'labels_only';       
     }
-    next if $row == -1; ## Bumping code returns -1 if there's a problem 
+    next if $feature_row < 0; ## Bumping code returns -1 if there's a problem 
 
-    ## Feature
-    my $block_height  = $track_config->get('height') || ($text_info->{'height'} + 2);
+    ## Work out where to place the feature
+    my $block_height  = $track_config->get('height') || $text_info->{'height'};
     my $label_height  = $show_label ? $text_info->{'height'} : 0;
 
     my $block_width   = $block->{'end'} - $block->{'start'} + 1;
     my $slice_width   = $image_config->container_width;
     $block_width      = $slice_width - $block->{'start'} if ($block_width > $slice_width);
 
+    my $labels_height = $label_row * $label_height;
+    my $add_labels    = !$bumped || $bumped eq 'labels_only' ? 0 : $labels_height;
+
     my $position  = {
-                    'y'       => (($row + 1) * ($block_height + 4)) + $row * $label_height,
+                    'y'       => (($feature_row + 1) * ($block_height + 4)) + $add_labels,
                     'width'   => $block_width,
                     'height'  => $block_height,
                     };
@@ -95,6 +102,7 @@ sub create_glyphs {
     ## Optional label
     if ($show_label) {
       $new_y = $position->{'y'} + $block_height;
+      $new_y += $labels_height if ($bumped eq 'labels_only');
       $position = {
                     'y'       => $new_y,
                     'width'   => $text_info->{'width'}, 
