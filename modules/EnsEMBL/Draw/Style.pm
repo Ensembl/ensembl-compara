@@ -39,6 +39,7 @@ use warnings;
 
 use POSIX qw(ceil);
 
+use EnsEMBL::Draw::Utils::Bump qw(bump);
 use EnsEMBL::Draw::Utils::Text;
 use EnsEMBL::Draw::Utils::LocalCache;
 

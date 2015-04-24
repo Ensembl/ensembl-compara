@@ -53,8 +53,6 @@ This module expects data in the following format:
 use strict;
 use warnings;
 
-use EnsEMBL::Draw::Utils::Bump qw(bump);
-
 use parent qw(EnsEMBL::Draw::Style);
 
 sub create_glyphs {
