@@ -50,9 +50,9 @@ sub get_block_features {
       warn ("Cannot get get adaptors: $data_set_adaptor");
       return [];
     }
-    #my $features = $data_set_adaptor->fetch_all_displayable_by_feature_type_class('HISTONE') || [] ;
+    #my $features = $feature_adaptor->fetch_all_displayable_by_feature_type_class('HISTONE') || [] ;
     ### Hack to display features for release 51
-    my $features = $data_set_adaptor->fetch_by_name('Osteobl_H3K4me3_ENCODE_Broad_SWEmbl_R0005_IDR');
+    my $features = $data_set_adaptor->fetch_by_name('Vienna MEFf H3K4me3');
     my @feat = ($features);
     $self->{'block_features'} = \@feat;
   }
@@ -68,7 +68,7 @@ sub draw_features {
   ### Returns 1 if draws blocks. Returns 0 if no blocks drawn
 
   my ($self, $wiggle)= @_;
-  my $db =  $self->dbadaptor( 'homo_sapiens', 'FUNCGEN' );
+  my $db =  $self->dbadaptor( 'mus_musculus', 'FUNCGEN' );
   my ($block_features, $colour) = $self->get_block_features($db);
   my $drawn_flag = 0;
   my $drawn_wiggle_flag = $wiggle ? 0: "wiggle";
@@ -85,22 +85,6 @@ sub draw_features {
 	      #get features for slice and experimtenal chip set
 	     # my @features = @{ $result_set->get_displayable_ResultFeatures_by_Slice($slice) };
         my @features = @{ $result_set->get_ResultFeatures_by_Slice($slice) };
-        my @out;
-        foreach my $score (@{$features[0]->{'scores'}}) {
-          my $rf = bless {
-            start => $features[0]->{'start'},
-            end => $features[0]->{'end'},
-            strand => $features[0]->{'strand'},
-            score => $score,
-            probe => $features[0]->{'probe'},
-            result_set_id => $features[0]->{'result_set_id'},
-            window_size => $features[0]->{'window_size'},
-            analysis => $features[0]->analysis,
-          },"Bio::EnsEMBL::Funcgen::ResultFeature";
-
-          push @out,$rf;
-        }
-        @features = @out;
 
 	      next unless @features;
 	      $drawn_wiggle_flag = "wiggle";
