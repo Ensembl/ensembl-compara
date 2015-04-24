@@ -106,7 +106,9 @@ sub get_text_info {
   my ($self, $text) = @_;
   $text ||= 'X';
   my @info = EnsEMBL::Draw::Utils::Text::get_text_info($self->cache, $self->image_config, 0, $text, '', font => $self->{'font_name'}, ptsize => $self->{'font_size'});
-  return {'width' => $info[2], 'height' => $info[3]};
+  ## Pad the text on the right side by 10 pixels so it doesn't 
+  ## run into the next one and compromise readability
+  return {'width' => $info[2] + 10, 'height' => $info[3]};
 }
 
 #### BASIC ACCESSORS #################
