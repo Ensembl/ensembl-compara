@@ -473,7 +473,9 @@ sub pipeline_analyses {
             -parameters => {
                 'append'        => [qw(-N -q)],
                 'input_query'   => 'select * from mcl_sparse_matrix',
-                'command_out'   => [qw(#mcl_bin_dir#/mcxload -abc - -ri max -o #work_dir#/#file_basename#.tcx -write-tab #work_dir#/#file_basename#.itab)],
+                'command_out'   => ['#mcl_bin_dir#/mcxload', '-abc', '-', '-ri', 'max', '-o', '#work_dir#/#file_basename#.tcx', '-write-tab', '#work_dir#/#file_basename#.itab',    # run the actual command
+                                    ';',
+                                    'tail', '-n', '1', '#work_dir#/#file_basename#.tcx', '|', 'grep', ')' ],    # then test that the file finishes with a closing round bracket
             },
             -flow_into => {
                 1 => [ 'mcl' ],
