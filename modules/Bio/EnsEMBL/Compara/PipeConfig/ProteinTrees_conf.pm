@@ -1247,12 +1247,13 @@ sub core_pipeline_analyses {
                 'blast_bin_dir' => $self->o('blast_bin_dir'),
                 'cmd' => '#blast_bin_dir#/makeblastdb -dbtype prot -parse_seqids -logfile #fasta_name#.blastdb_log -in #fasta_name#',
             },
+            -rc_name       => '4Gb_job',
             -flow_into  => [ 'unannotated_all_vs_all_factory' ],
         },
 
         {   -logic_name => 'unannotated_all_vs_all_factory',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ComparaHMM::FactoryUnannotatedMembers',
-            -rc_name       => '250Mb_job',
+            -rc_name       => '4Gb_job',
             -hive_capacity => $self->o('blast_factory_capacity'),
             -flow_into => {
                 '2->A' => [ 'blastp_unannotated' ],
@@ -1268,7 +1269,7 @@ sub core_pipeline_analyses {
                 'blast_bin_dir'             => $self->o('blast_bin_dir'),
                 'evalue_limit'              => 1e-10,
             },
-            -rc_name       => '250Mb_job',
+            -rc_name       => '2Gb_job',
             -hive_capacity => $self->o('blastpu_capacity'),
         },
 
@@ -1277,6 +1278,7 @@ sub core_pipeline_analyses {
             -parameters => {
                 'outgroups'     => $self->o('outgroups'),
             },
+            -rc_name       => '4Gb_job',
             -hive_capacity => $self->o('reuse_capacity'),
             -flow_into  => [ 'hcluster_run' ],
         },
@@ -1432,7 +1434,7 @@ sub core_pipeline_analyses {
             -parameters => {
                 'division'                  => $self->o('division'),
             },
-            -rc_name => '250Mb_job',
+            -rc_name => '4Gb_job',
         },
 
         {   -logic_name => 'copy_clusters',
@@ -1506,6 +1508,7 @@ sub core_pipeline_analyses {
                 'inputquery'        => 'SELECT root_id AS gene_tree_id FROM gene_tree_root WHERE tree_type = "tree" AND clusterset_id="default"',
                 'fan_branch_code'   => 2,
             },
+            -rc_name => '4Gb_job',
             -flow_into  => {
                  '2->A' => [ 'alignment_entry_point' ],
                  'A->1' => [ 'hc_global_tree_set' ],
@@ -1791,6 +1794,7 @@ sub core_pipeline_analyses {
             -parameters => {
                 'condition'             => '#tree_gene_count# < 4',
             },
+            -batch_size     => 10,
             -flow_into  => {
                 2  => [ 'treebest_small_families' ],
                 3  => [ 'prottest' ],
@@ -1809,10 +1813,11 @@ sub core_pipeline_analyses {
             },
             -hive_capacity				=> $self->o('prottest_capacity'),
             -rc_name    				=> '16Gb_16c_job',
-            -max_retry_count			=> 0,
+            -max_retry_count			=> 3,
             -flow_into  => {
                 -1 => [ 'prottest_himem' ],
                 1 => [ 'raxml_decision' ],
+                2 => [ 'treebest_small_families' ],
             }
         },
 
@@ -1826,7 +1831,7 @@ sub core_pipeline_analyses {
             },
             -hive_capacity				=> $self->o('prottest_capacity'),
             -rc_name					=> '64Gb_16c_job',
-            -max_retry_count 			=> 0,
+            -max_retry_count 			=> 3,
             -flow_into  => {
                 -1 => [ 'raxml_decision' ],
                 1 => [ 'raxml_decision' ],
@@ -2071,7 +2076,7 @@ sub core_pipeline_analyses {
                 'output_clusterset_id'      => $self->o('use_notung') ? 'raxml' : 'default',
             },
             -hive_capacity        => $self->o('treebest_capacity'),
-            -rc_name    => '1Gb_job',
+            -rc_name    => '4Gb_job',
         },
 
         {   -logic_name => 'raxml_multi_core',
@@ -2111,7 +2116,6 @@ sub core_pipeline_analyses {
                 'input_clusterset_id'       => $self->o('use_raxml') ? 'raxml' : 'raxml_bl',
                 'output_clusterset_id'      => 'notung',
                 'notung_memory'             => 1500,
-                'escape_branch'             => -1,
             },
             -hive_capacity  => $self->o('notung_capacity'),
             -rc_name        => '2Gb_job',
