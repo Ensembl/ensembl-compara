@@ -69,7 +69,7 @@ sub default_options {
     return {
         %{$self->SUPER::default_options},
 
-#       'mlss_id'         => 30046,         # it is very important to check that this value is current (commented out to make it obligatory to specify)
+#       'mlss_id'         => 30047,         # it is very important to check that this value is current (commented out to make it obligatory to specify)
         'host'            => 'compara2',    # where the pipeline database will be created
         'file_basename'   => 'metazoa_families_'.$self->o('rel_with_suffix'),
 
@@ -98,14 +98,14 @@ sub default_options {
         'first_n_big_families'  => 2,   # these are known to be big, so no point trying in small memory
 
             # resource requirements:
-        'blast_gigs'      =>  2,
-        'blast_hm_gigs'   =>  4,
+        'blast_gigs'      =>  3,
+        'blast_hm_gigs'   =>  6,
         'mcl_gigs'        => 64,
-        'mcl_procs'       =>  4,
+        'mcl_threads'     => 12,
         'lomafft_gigs'    =>  4,
         'himafft_gigs'    => 14,
         'dbresource'      => 'my'.$self->o('host'),                 # will work for compara1..compara5, but will have to be set manually otherwise
-        'blast_capacity'  => 3000,                                  # work both as hive_capacity and resource-level throttle
+        'blast_capacity'  => 4000,                                  # work both as hive_capacity and resource-level throttle
         'mafft_capacity'  =>  400,
         'cons_capacity'   =>  400,
         'HMMer_classify_capacity' => 100,
@@ -161,10 +161,10 @@ sub resource_classes {
         %{$self->SUPER::resource_classes},  # inherit 'default' from the parent class
 
         'urgent'       => { 'LSF' => '-q yesterday' },
-        'LongBlast'    => { 'LSF' => [ '-C0 -M'.$self->o('blast_gigs').$self->o('reservation_sfx').'000 -q long -R"select['.$self->o('dbresource').'<'.$self->o('blast_capacity').' && mem>'.$self->o('blast_gigs').'000] rusage['.$self->o('dbresource').'=10:duration=10:decay=1, mem='.$self->o('blast_gigs').'000]"', '-lifespan 1440' ]  },
+        'RegBlast'    => { 'LSF' => [ '-C0 -M'.$self->o('blast_gigs').$self->o('reservation_sfx').'000 -q normal -R"select['.$self->o('dbresource').'<'.$self->o('blast_capacity').' && mem>'.$self->o('blast_gigs').'000] rusage['.$self->o('dbresource').'=10:duration=10:decay=1, mem='.$self->o('blast_gigs').'000]"', '-lifespan 360' ]  },
         'LongBlastHM'  => { 'LSF' => [ '-C0 -M'.$self->o('blast_hm_gigs').$self->o('reservation_sfx').'000 -q long -R"select['.$self->o('dbresource').'<'.$self->o('blast_capacity').' && mem>'.$self->o('blast_hm_gigs').'000] rusage['.$self->o('dbresource').'=10:duration=10:decay=1, mem='.$self->o('blast_hm_gigs').'000]"', '-lifespan 1440' ]  },
         'BigMcxload'   => { 'LSF' => '-C0 -M'.$self->o('mcl_gigs').$self->o('reservation_sfx').'000 -q hugemem -R"select[mem>'.$self->o('mcl_gigs').'000] rusage[mem='.$self->o('mcl_gigs').'000]"' },
-        'BigMcl'       => { 'LSF' => '-C0 -M'.$self->o('mcl_gigs').$self->o('reservation_sfx').'000 -n '.$self->o('mcl_procs').' -q hugemem -R"select[ncpus>='.$self->o('mcl_procs').' && mem>'.$self->o('mcl_gigs').'000] rusage[mem='.$self->o('mcl_gigs').'000] span[hosts=1]"' },
+        'BigMcl'       => { 'LSF' => '-C0 -M'.$self->o('mcl_gigs').$self->o('reservation_sfx').'000 -n '.$self->o('mcl_threads').' -q hugemem -R"select[ncpus>='.$self->o('mcl_threads').' && mem>'.$self->o('mcl_gigs').'000] rusage[mem='.$self->o('mcl_gigs').'000] span[hosts=1]"' },
         'BigMafft'     => { 'LSF' => '-C0 -M'.$self->o('himafft_gigs').$self->o('reservation_sfx').'000 -q long -R"select['.$self->o('dbresource').'<'.$self->o('mafft_capacity').' && mem>'.$self->o('himafft_gigs').'000] rusage['.$self->o('dbresource').'=10:duration=10:decay=1, mem='.$self->o('himafft_gigs').'000]"' },
         '4GigMem'      => { 'LSF' => '-C0 -M'.$self->o('lomafft_gigs').$self->o('reservation_sfx').'000 -R"select['.$self->o('dbresource').'<'.$self->o('mafft_capacity').' && mem>'.$self->o('lomafft_gigs').'000] rusage['.$self->o('dbresource').'=10:duration=10:decay=1, mem='.$self->o('lomafft_gigs').'000]"' },
         '2GigMem'      => { 'LSF' => '-C0 -M2'.$self->o('reservation_sfx').'000 -R"select[mem>2000] rusage[mem=2000]"' },
@@ -176,13 +176,14 @@ sub pipeline_analyses {
     my ($self) = @_;
     return [
 
-        {   -logic_name => 'find_other_mlss',
+        {   -logic_name => 'find_protein_trees_db',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::FindMLSS',
-            -input_ids => [ {
+            -parameters => {
                 method_links => {
                     PROTEIN_TREES => 'protein_trees_db',
                 },
-            } ],
+            },
+            -input_ids => [ {} ],
             -flow_into => [ 'copy_table_factory' ],
         },
 
@@ -357,7 +358,7 @@ sub pipeline_analyses {
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
             -parameters => {
                 'inputquery'      => 'SELECT DISTINCT m.sequence_id seqid FROM seq_member m',
-                'step'            => 100,
+                'step'            => 50,
             },
             -flow_into => {
                 '2->A' => { 'blast' => { 'sequence_id' => '#_start_seqid#', 'minibatch' => '#_range_count#' } },
@@ -379,7 +380,7 @@ sub pipeline_analyses {
                 3 => [ ':////mcl_sparse_matrix?insertion_method=REPLACE' ],
                 -1 => 'blast_himem',
             },
-            -rc_name => 'LongBlast',
+            -rc_name => 'RegBlast',
         },
 
         {   -logic_name    => 'blast_himem',
@@ -659,6 +660,26 @@ sub pipeline_analyses {
 1;
 
 =head1 STATS and TIMING
+
+=head2 rel.80 stats
+
+    sequences to cluster:           7,501,655       [ SELECT count(*) from sequence; ] -- took 3 seconds to run
+    distances by Blast:         1,466,437,751       [ SELECT count(*) from mcl_sparse_matrix; ] -- took 37m20 to run
+
+    non-reference genes:         2848               [ SELECT count(*) FROM gene_member WHERE gene_member_id>=200000001 AND source_name='ENSEMBLGENE'; ]
+    non-reference peps:          8069               [ SELECT count(*) FROM seq_member WHERE seq_member_id>=200000001 AND source_name='ENSEMBLPEP'; ]
+
+    uniprot loading method:     { 20 x pfetch }
+
+    total running time:         14.0d               [ call time_analysis('%'); ]    -- could have been shorter by 2-3 days (due to the mcxload initial misconfig and scratch109 instability/quota/limit issues)
+    uniprot_loading time:       14.0h               [ call time_analysis('load_uniprot%'); ]
+    blasting time:               5.9d               [ call time_analysis('blast%'); ]
+    mcxload running time:        2.8h               [ select (UNIX_TIMESTAMP(when_finished)-UNIX_TIMESTAMP(when_started))/3600 hours from role join analysis_base using(analysis_id) where done_jobs=1 and logic_name='mcxload_matrix' order by role_id DESC limit 1; ]
+    mcl running time:           42.3h               [ select (UNIX_TIMESTAMP(when_finished)-UNIX_TIMESTAMP(when_started))/3600 hours from role join analysis_base using(analysis_id) where done_jobs=1 and logic_name='mcl' order by role_id DESC limit 1; ]
+
+    memory used by mcxload:     38.9G               [ SELECT mem_megs, swap_megs FROM analysis_base JOIN role USING(analysis_id) JOIN worker_resource_usage USING(worker_id) WHERE logic_name='mcxload_matrix'; ]
+    memory used by mcl:         58.6G               [ SELECT mem_megs, swap_megs FROM analysis_base JOIN role USING(analysis_id) JOIN worker_resource_usage USING(worker_id) WHERE logic_name='mcl'; ]
+
 
 =head2 rel.79 stats
 
