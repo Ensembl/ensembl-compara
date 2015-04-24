@@ -33,7 +33,7 @@ use List::Util qw(min max);
 
 sub colour { return $_[0]->{'feature_colour'}, $_[0]->{'label_colour'}, $_[0]->{'part_to_colour'}; }
 
-sub wiggle_subtitle { $_[0]->my_colour('score','text'); }
+sub wiggle_subtitle { $_[0]->{'subtitle_text'} || $_[0]->my_colour('score','text'); }
 
 sub draw_features {
   ### Called from {{EnsEMBL::Draw::GlyphSet_wiggle_and_block.pm}}
@@ -175,7 +175,10 @@ sub draw_features {
     }
     
     $self->_offset($h);
-    $self->draw_track_name($feature_text, $feature_colour) if $drawn_block;
+    if($drawn_block) {
+      $self->{'subtitle_colour'} ||= $feature_colour;
+      $self->{'subtitle_text'} = $feature_text;
+    }
   }
   
   my $drawn_wiggle = $wiggle ? $self->wiggle_plot : 1;
