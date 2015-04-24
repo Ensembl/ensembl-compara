@@ -49,12 +49,15 @@ sub render_normal {
   my $colours = $self->{'my_config'}->get('colours');
   my $default_colour = 'red';
   $self->{'my_config'}->set('bumped', 1);
+
   my $data = [];
 
   foreach my $f (@features) {
+    my ($start, $end) = $self->ok_feature($f);
+    next unless $start;
     push @$data, {
-                  'start'         => $f->start,
-                  'end'           => $f->end,
+                  'start'         => $start,
+                  'end'           => $end,
                   'colour'        => $colours->{$f->analysis->logic_name}{'default'}
                                         || $default_colour,
                   'label'         => $f->display_id,
