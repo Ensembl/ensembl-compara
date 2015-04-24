@@ -84,7 +84,7 @@ sub create_glyphs {
       $end          = $text_end if $text_end > $end;
       $row          = bump($self->bump_tally, $block->{'start'}, $end);
     }
-    next if $row >= 1e9; ### We've run out of bumping rows, so skip this feature
+    next if $row == -1; ## Bumping code returns -1 if there's a problem 
 
     ## Feature
     my $block_height  = $track_config->get('height') || ($text_info->{'height'} + 2);
