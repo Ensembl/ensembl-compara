@@ -85,7 +85,7 @@ sub new {
 
   $self->{'bump_tally'} = {'_bump' => {
                                     'length' => $self->image_config->container_width,
-                                    'rows'   => $self->track_config->get('depth') || 6,
+                                    'rows'   => $self->track_config->get('depth') || 1e3,
                                     'array'  => [],
                                       }
                             }; 
