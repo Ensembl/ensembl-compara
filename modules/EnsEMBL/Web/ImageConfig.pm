@@ -2518,7 +2518,6 @@ sub add_simple_features {
   return unless $menu;
   
   my ($keys, $data) = $self->_merge($hashref->{'simple_feature'});
-  use Data::Dumper;
   
   foreach (grep !$data->{$_}{'transcript_associated'}, @$keys) {  
     # Allow override of default glyphset, menu etc.
