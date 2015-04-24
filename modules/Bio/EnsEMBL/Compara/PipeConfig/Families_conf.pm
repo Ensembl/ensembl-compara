@@ -87,7 +87,8 @@ sub default_options {
         'mafft_root_dir'  => '/software/ensembl/compara/mafft-7.113',
             
             # data directories:
-        'work_dir'        => '/lustre/scratch109/ensembl/'.$self->o('ENV', 'USER').'/'.$self->o('pipeline_name'),
+        'work_dir'        => '/lustre/scratch110/ensembl/'.$self->o('ENV', 'USER').'/'.$self->o('pipeline_name'),
+        'warehouse_dir'   => '/warehouse/ensembl05/lg4/families/',      # ToDo: move to a Compara-wide warehouse location
         'blastdb_dir'     => $self->o('work_dir').'/blast_db',
         'blastdb_name'    => $self->o('file_basename').'.pep',
 
@@ -143,6 +144,7 @@ sub pipeline_wide_parameters {  # these parameter values are visible to all anal
         'mlss_id'           => $self->o('mlss_id'),
 
         'work_dir'          => $self->o('work_dir'),                # data directories and filenames
+        'warehouse_dir'     => $self->o('warehouse_dir'),
         'blastdb_dir'       => $self->o('blastdb_dir'),
         'file_basename'     => $self->o('file_basename'),
 
@@ -460,7 +462,7 @@ sub pipeline_analyses {
              -rc_name => '4GigMem',
              -flow_into  => {
                 '1->A'  => [ 'fire_family_building' ],
-                'A->1'  => [ 'notify_pipeline_completed' ],
+                'A->1'  => [ 'warehouse_working_directory' ],
              },
             },
 
@@ -639,6 +641,15 @@ sub pipeline_analyses {
             -parameters     => {
                 'input_file'    => $self->o('ensembl_cvs_root_dir').'/ensembl-compara/scripts/production/populate_member_production_counts_table.sql',
             },
+            -flow_into => [ 'warehouse_working_directory' ],
+        },
+
+        {   -logic_name => 'warehouse_working_directory',
+            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
+            -parameters => {
+                'cmd'   => 'cp -r #work_dir# #warehouse_dir#',
+            },
+            -rc_name => 'urgent',
             -flow_into => [ 'notify_pipeline_completed' ],
         },
 
