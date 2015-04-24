@@ -111,6 +111,20 @@ sub get_text_info {
   return {'width' => $info[2] + 10, 'height' => $info[3]};
 }
 
+sub set_bump_row {
+  my ($self, $start, $end, $show_label, $text_info) = @_;
+  my $row = 0;
+
+  ## Set bumping based on longest of feature and label
+  my $text_end  = $show_label ?
+                        ceil($start + $text_info->{'width'} / $self->{'pix_per_bp'})
+                        : 0;
+  $end          = $text_end if $text_end > $end;
+
+  $row = bump($self->bump_tally, $start, $end);
+  return $row;
+}
+
 #### BASIC ACCESSORS #################
 
 sub glyphs {

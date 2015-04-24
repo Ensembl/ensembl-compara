@@ -76,13 +76,7 @@ sub create_glyphs {
     my $show_label = $track_config->get('has_labels') && $block->{'label'};
 
     if ($track_config->get('bumped')) {
-      ## Set bumping based on longest of feature and label
-      my $end       = $block->{'end'};
-      my $text_end  = $show_label ?
-                        ceil($block->{'start'} + ($text_info->{'width'} / $self->{'pix_per_bp'}))
-                        : 0;
-      $end          = $text_end if $text_end > $end;
-      $row          = bump($self->bump_tally, $block->{'start'}, $end);
+      $row = $self->set_bump_row($block->{'start'}, $block->{'end'}, $show_label, $text_info);
     }
     next if $row == -1; ## Bumping code returns -1 if there's a problem 
 
