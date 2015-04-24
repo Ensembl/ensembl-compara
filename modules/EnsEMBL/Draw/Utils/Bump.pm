@@ -73,7 +73,7 @@ sub bump {
     $row++; # Can't fit in on this row go to the next row..
   }
 
-  return 1e9; # If we get to this point we can't draw the feature so return a very large number!
+  return -1; # If we get to this point we can't draw the feature
 }
 
 sub bump_row {
