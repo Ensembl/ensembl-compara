@@ -88,7 +88,7 @@ use Bio::EnsEMBL::Utils::Exception;
 use base ('Bio::EnsEMBL::Storable');        # inherit dbID(), adaptor() and new() methods
 
 
-=head2 new_fast
+=head2 new
 
   Arg [-DBID] : integer $dbID
   Arg [-METHOD_LINK_SPECIES_SET_ID]
