@@ -32,20 +32,20 @@ This module expects data in the following format:
             {
               'start'         => 123456,
               'end'           => 123789,
-              'strand'        => 1,
               'colour'        => 'red',
-              'href'          => '/Location/View?r=123456-124789',  # optional  
               'label'         => 'Feature 1',                       # optional
               'label_colour'  => 'red',                             # optional
+              'href'          => '/Location/View?r=123456-124789',  # optional  
+              'title'         => 'Some text goes here',             # optional  
             },
             {
               'start'         => 123654,
               'end'           => 123987,
-              'strand'        => 1,
               'colour'        => 'blue',
-              'href'         => '/Location/View?r=123654-124987',   # optional  
               'label'         => 'Feature 2',                       # optional
               'label_colour'  => 'blue',                            # optional
+              'href'         => '/Location/View?r=123654-124987',   # optional  
+              'title'         => 'Some other text goes here',       # optional  
             },
           ];
 =cut
