@@ -45,6 +45,7 @@ sub render_normal {
   my $self = shift;
 
   my $colours = $self->{'my_config'}->get('colours');
+  my $default_colour = 'red';
   $self->{'my_config'}->set('bumped', 1);
   my $data = [];
 
@@ -53,9 +54,12 @@ sub render_normal {
                   'start'         => $f->start,
                   'end'           => $f->end,
                   'strand'        => $f->strand,
-                  'colour'        => $colours->{$f->analysis->logic_name}{'default'},
+                  'colour'        => $colours->{$f->analysis->logic_name}{'default'}
+                                        || $default_colour,
                   'label'         => $f->display_id,
-                  'label_colour'  => $colours->{$f->analysis->logic_name}{'text'},
+                  'label_colour'  => $colours->{$f->analysis->logic_name}{'text'}
+                                        || $colours->{$f->analysis->logic_name}{'default'}
+                                        || $default_colour,
                   'href'          => $self->href($f),
                   'title'         => $self->title($f),
                   };
