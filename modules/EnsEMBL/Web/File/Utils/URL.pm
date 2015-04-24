@@ -219,9 +219,9 @@ sub read_file {
     }
     my $http = HTTP::Tiny->new(%params);
 
-    my @http_params = ('GET', $url);
-    push @http_params, $args->{'headers'} if $args->{'headers'};
-    my $response = $http->request(@http_params);
+    my $params = {};
+    $params->{'headers'} = $args->{'headers'} if $args->{'headers'};
+    my $response = $http->request('GET',$url,$params);
     if ($response->{'success'}) {
       $content = $response->{'content'};
     }

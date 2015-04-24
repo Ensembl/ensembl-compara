@@ -236,7 +236,7 @@ sub render {
       if ($self->can($method)) {
         $self->$method($_, $Ta);
       } else {
-        print STDERR "Sanger::Graphics::Renderer::render: Do not know how to $method\n";
+        print STDERR "Sanger::Graphics::Renderer::render: $self does not know how to $method\n";
       }
       
       $Ta->{$method} ||= [];

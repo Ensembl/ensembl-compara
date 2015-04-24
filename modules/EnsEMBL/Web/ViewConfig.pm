@@ -504,6 +504,7 @@ sub build_imageconfig_form {
   foreach my $node (@{$image_config->tree->child_nodes}) {
     my $section = $node->id;
     
+    $section =~ s|-|_|g;
     next if $section eq 'track_order';
     
     my $data    = $node->data;
