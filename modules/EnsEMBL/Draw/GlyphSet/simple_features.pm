@@ -64,9 +64,16 @@ sub render_normal {
                   };
   }
 
-  my $config = $self->track_style_config;
-  my $style  = EnsEMBL::Draw::Style::Blocks->new($config, $data);
-  $self->push($style->create_glyphs);
+  if (scalar(@$data)) {
+    my $config = $self->track_style_config;
+    my $style  = EnsEMBL::Draw::Style::Blocks->new($config, $data);
+    $self->push($style->create_glyphs);
+  }
+  else {
+    ## No features show "empty track line" if option set
+    my $track_name = $self->label_text || '';
+    $self->errorTrack("No $track_name features in this region") if $self->{'config'}->get_option('opt_empty_tracks') == 1;
+  }
 }
 
 sub title {
