@@ -53,6 +53,8 @@ This module expects data in the following format:
 use strict;
 use warnings;
 
+use POSIX qw(ceil);
+
 use EnsEMBL::Draw::Utils::Bump qw(bump);
 
 use parent qw(EnsEMBL::Draw::Style);
@@ -63,32 +65,41 @@ sub create_glyphs {
   my $self = shift;
 
   my $data          = $self->data;
+  my $image_config  = $self->image_config;
   my $track_config  = $self->track_config;
-  
+ 
   foreach my $block (@$data) {
     my $text_info = $self->get_text_info($block->{'label'});
     my $row = 0;
     my $new_y;
 
+    my $show_label = $track_config->get('has_labels') && $block->{'label'};
+
     if ($track_config->get('bumped')) {
       ## Set bumping based on longest of feature and label
       my $end       = $block->{'end'};
-      my $text_end  = $block->{'start'} + ($text_info->{'width'} / $self->{'pix_per_bp'});
+      my $text_end  = $show_label ?
+                        ceil($block->{'start'} + ($text_info->{'width'} / $self->{'pix_per_bp'}))
+                        : 0;
       $end          = $text_end if $text_end > $end;
-      my @coords    = $block->{'strand'} == 1 ? ($block->{'start'}, $end)
-                                              : ($end, $block->{'start'});
-      $row = bump($self->bump_tally, @coords);
+      $row          = bump($self->bump_tally, $block->{'start'}, $end);
     }
-
-    my $show_label = $track_config->get('has_labels') && $block->{'label'};
+    next if $row >= 1e9; ### We've run out of bumping rows, so skip this feature
 
     ## Feature
-    my $block_height = $track_config->get('height') || ($text_info->{'height'} + 2);
-    my $label_height = $show_label ? $row * $text_info->{'height'} : 0;
+    my $block_height  = $track_config->get('height') || ($text_info->{'height'} + 2);
+    my $label_height  = $show_label ? $text_info->{'height'} : 0;
+
+    my $block_width   = $block->{'end'} - $block->{'start'} + 1;
+    my $slice_width   = $image_config->container_width;
+    $block_width      = $slice_width - $block->{'start'} if ($block_width > $slice_width);
+
     my $position  = {
-                    'y'       => ($row + 1) * ($block_height + 4) + ($row * $label_height),
+                    'y'       => (($row + 1) * ($block_height + 4)) + $row * $label_height,
+                    'width'   => $block_width,
                     'height'  => $block_height,
                     };
+    
     $self->draw_block($block, $position);
 
     ## Optional label
@@ -112,19 +123,17 @@ sub draw_block {
 ### @param position Hashref - information about the feature's size and position
   my ($self, $block, $position) = @_;
 
-
   ## Set parameters
   my $params = {
                   x            => $block->{'start'},
                   y            => $position->{'y'},
-                  width        => $block->{'end'} - $block->{'start'} + 1,
+                  width        => $position->{'width'},
                   height       => $position->{'height'},
                   colour       => $block->{'colour'},
                   href         => $block->{'href'},
                   title        => $block->{'title'},
                   absolutey    => 1,
                 };
-  $params->{'href'} = $block->{'href'} if $block->{'href'};
 
   push @{$self->glyphs}, $self->Rect($params);
 }
@@ -135,10 +144,9 @@ sub add_label {
 ### @param position Hashref - information about the label's size and position
   my ($self, $block, $position) = @_;
 
-  my $label_colour = $block->{'label_colour'} || $block->{'colour'} || 'black';
   my $label = {
                 font      => $self->{'font_name'},
-                colour    => $label_colour,
+                colour    => $block->{'label_colour'} || 'black',
                 height    => $self->{'font_size'},
                 ptsize    => $self->{'font_size'},
                 text      => $block->{'label'},
@@ -150,6 +158,7 @@ sub add_label {
                 title     => $block->{'title'},
                 absolutey => 1,
               };
+
   push @{$self->glyphs}, $self->Text($label);
 }
 
