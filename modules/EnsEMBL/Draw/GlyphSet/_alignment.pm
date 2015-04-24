@@ -27,7 +27,7 @@ use List::Util qw(min max);
 
 use base qw(EnsEMBL::Draw::GlyphSet_wiggle_and_block EnsEMBL::Draw::GlyphSet::_difference);
 
-sub wiggle_subtitle { $_[0]->my_config('caption'); }
+sub wiggle_subtitle {}
 
 #==============================================================================
 # The following functions can be overridden if the class does require
