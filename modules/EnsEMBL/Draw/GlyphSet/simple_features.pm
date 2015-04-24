@@ -24,7 +24,7 @@ use strict;
 
 use EnsEMBL::Draw::Style::Blocks;
 
-use base qw(EnsEMBL::Draw::GlyphSet);
+use parent qw(EnsEMBL::Draw::GlyphSet::Simple);
 
 sub features { 
   my $self     = shift;
@@ -44,12 +44,14 @@ sub render_labels {
 sub render_normal {
   my $self = shift;
 
+  my @features = $self->init;
+
   my $colours = $self->{'my_config'}->get('colours');
   my $default_colour = 'red';
   $self->{'my_config'}->set('bumped', 1);
   my $data = [];
 
-  foreach my $f (@{$self->features || []}) {
+  foreach my $f (@features) {
     push @$data, {
                   'start'         => $f->start,
                   'end'           => $f->end,
