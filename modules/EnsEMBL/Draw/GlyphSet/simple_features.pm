@@ -53,7 +53,6 @@ sub render_normal {
     push @$data, {
                   'start'         => $f->start,
                   'end'           => $f->end,
-                  'strand'        => $f->strand,
                   'colour'        => $colours->{$f->analysis->logic_name}{'default'}
                                         || $default_colour,
                   'label'         => $f->display_id,
