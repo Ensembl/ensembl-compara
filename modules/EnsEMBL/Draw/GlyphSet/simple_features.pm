@@ -37,7 +37,7 @@ sub features {
 
 sub render_labels {
   my $self = shift;
-  $self->{'my_config'}->set('has_labels', 1);
+  $self->{'my_config'}->set('show_labels', 1);
   $self->render_normal;
 }
 
