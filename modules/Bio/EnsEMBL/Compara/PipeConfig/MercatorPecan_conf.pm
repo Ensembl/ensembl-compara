@@ -185,11 +185,11 @@ sub default_options {
        'curr_core_sources_locs'    => [ $self->o('staging_loc1'), $self->o('staging_loc2'), ],
 
        'reuse_db' => {   # usually previous pecan production database
-           -host   => 'compara3',
+           -host   => 'compara5',
            -port   => 3306,
            -user   => 'ensro',
            -pass   => '',
-           -dbname => 'kb3_pecan_20way_71',
+           -dbname => 'sf5_pecan_23way_pt2_77',
 	   -driver => 'mysql',
         },
 
@@ -199,7 +199,7 @@ sub default_options {
             -port   => 5304,
             -user   => 'ensro',
             -pass   => '',
-            -db_version => '61'
+            -db_version => '78'
         },
 
         'curr_loc' => {                   # general location of the current release core databases (for checking their reusability)
@@ -207,7 +207,7 @@ sub default_options {
             -port   => 3306,
             -user   => 'ensro',
             -pass   => '',
-            -db_version => '62'
+            -db_version => '79'
         },
 #        'reuse_core_sources_locs'   => [ $self->o('reuse_loc') ],
 #        'curr_core_sources_locs'    => [ $self->o('curr_loc'), ],
